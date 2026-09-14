@@ -34,10 +34,6 @@ on:
   pull_request_review:
     types: [submitted]
 
-concurrency:
-  group: agent-pipeline
-  cancel-in-progress: false
-
 jobs:
   claude:
     if: |
@@ -45,6 +41,16 @@ jobs:
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
       (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+    # On the job, not the workflow: this workflow's own trigger list fires on every issue/PR
+    # comment and every issue opened, almost none of which mention "@claude". A workflow-level
+    # group is claimed before the `if:` above is ever evaluated, so every one of those events
+    # would queue against agent-plan.yml/agent-implement.yml regardless of doing nothing once
+    # queued -- confirmed in this repo's own Actions history the night this was fixed: several
+    # "Claude · mention" runs show conclusion "cancelled" (not "skipped") at the exact
+    # timestamps new issues were filed, competing for the same slot agent-plan.yml needed.
+    concurrency:
+      group: agent-pipeline
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     permissions:
       contents: read

@@ -29,15 +29,17 @@ on:
   pull_request:
     types: [closed]
 
-concurrency:
-  group: agent-pipeline
-  cancel-in-progress: false
-
 permissions: {}
 
 jobs:
   followups:
     if: github.event.pull_request.merged == true
+    # On the job, not the workflow: `pull_request: closed` fires on every close, most of which
+    # are not merges, and a workflow-level group claims its slot before this `if:` runs. Same
+    # bug, same fix, as claude.yml -- see that file's comment for the confirmed evidence.
+    concurrency:
+      group: agent-pipeline
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
