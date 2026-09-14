@@ -22,7 +22,8 @@ before it means anything:
      exactly that -- unresolved -- not guessed at.
 
 The decode is a linear best-effort walk, not a disassembler: it stops at
-the first control-flow instruction and cannot follow branches. Treat the
+the first control-flow instruction and cannot follow branches (disasm8051.py
+holds the opcode tables and says what else it cannot do). Treat the
 mnemonics as a reading aid and confirm anything load-bearing with
 `--r2-commands` output (or make_bank_image.py + r2 by hand). As with
 scan_refs.py, indirect/pointer XDATA access is invisible here, so "0 sites
@@ -32,10 +33,14 @@ Usage:
     python3 trace_xdata_refs.py ../firmware/GMxMGxx_11.800 0x07E2 0x07E3
     python3 trace_xdata_refs.py ../firmware/GMxMGxx_11.800 0x07D0 --counts-only
     python3 trace_xdata_refs.py ../firmware/GMxMGxx_11.800 0x07E2 --r2-commands
+    python3 trace_xdata_refs.py ../firmware/GMxMGxx_11.800 0x07D0 --csv > sites.csv
 """
 import argparse
 import collections
+import csv
 import sys
+
+from disasm8051 import FLOW_OPCODES, OPCODE_LEN, converges_from, mnemonic
 
 # Image map for ec/firmware/GMxMGxx_11.800. `runtime` is the address a site
 # has once the image is loaded for disassembly; for the main EC that means
@@ -63,87 +68,6 @@ R2_IMAGE = {"common": "bank0.bin", "bank0": "bank0.bin",
             "bank1": "bank1.bin", "pd-image": "pd.bin"}
 
 MOV_DPTR = 0x90
-
-# Instruction lengths for the full 8051 opcode map -- needed to walk
-# forward from a site without mis-framing; mnemonics below cover only the
-# subset worth naming in the output.
-OPCODE_LEN = (
-    b"\x01\x02\x03\x01\x01\x02\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
-    b"\x03\x02\x03\x01\x01\x02\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
-    b"\x03\x02\x01\x01\x02\x02\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
-    b"\x03\x02\x01\x01\x02\x02\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
-    b"\x02\x02\x02\x03\x02\x02\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
-    b"\x02\x02\x02\x03\x02\x02\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
-    b"\x02\x02\x02\x03\x02\x02\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
-    b"\x02\x02\x02\x01\x02\x03\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02"
-    b"\x02\x02\x02\x01\x01\x03\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02"
-    b"\x03\x02\x02\x01\x02\x02\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
-    b"\x02\x02\x02\x01\x01\x01\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02"
-    b"\x02\x02\x02\x01\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03"
-    b"\x02\x02\x02\x01\x01\x02\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
-    b"\x02\x02\x02\x01\x01\x03\x01\x01\x02\x02\x02\x02\x02\x02\x02\x02"
-    b"\x01\x02\x01\x01\x01\x02\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
-    b"\x01\x02\x01\x01\x01\x02\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
-)
-
-# Opcodes that end the linear walk: past one of these the next bytes are
-# not necessarily what executes.
-FLOW_OPCODES = {0x02, 0x12, 0x22, 0x32, 0x40, 0x50, 0x60, 0x70, 0x80,
-                0x10, 0x20, 0x30, 0xB4, 0xB5, 0xD5, 0x73}
-FLOW_OPCODES |= set(range(0x01, 0x100, 0x20))  # AJMP
-FLOW_OPCODES |= set(range(0x11, 0x100, 0x20))  # ACALL
-FLOW_OPCODES |= set(range(0xB6, 0xC0))         # CJNE @Ri/Rn
-FLOW_OPCODES |= set(range(0xD8, 0xE0))         # DJNZ Rn
-
-
-def mnemonic(d: bytes, i: int) -> str:
-    op = d[i]
-    if op == 0x90:
-        return f"mov  dptr,#0x{(d[i + 1] << 8) | d[i + 2]:04x}"
-    if op == 0xE0:
-        return "movx a,@dptr"
-    if op == 0xF0:
-        return "movx @dptr,a"
-    if op == 0xA3:
-        return "inc  dptr"
-    if op == 0xE4:
-        return "clr  a"
-    if op in (0x54, 0x44, 0x64, 0x74, 0x24, 0x94):
-        name = {0x54: "anl", 0x44: "orl", 0x64: "xrl",
-                0x74: "mov", 0x24: "add", 0x94: "subb"}[op]
-        return f"{name:<4} a,#0x{d[i + 1]:02x}"
-    if op in (0x55, 0x45, 0x65, 0x25, 0x95):
-        name = {0x55: "anl", 0x45: "orl", 0x65: "xrl",
-                0x25: "add", 0x95: "subb"}[op]
-        return f"{name:<4} a,0x{d[i + 1]:02x}"
-    if 0x28 <= op <= 0x9F and (op & 0x0F) >= 0x08 and (op & 0xF0) in (0x20, 0x30, 0x40, 0x50, 0x60, 0x90):
-        name = {0x20: "add", 0x30: "addc", 0x40: "orl",
-                0x50: "anl", 0x60: "xrl", 0x90: "subb"}[op & 0xF0]
-        return f"{name:<4} a,r{op & 0x07}"
-    if op in (0x40, 0x50, 0x60, 0x70, 0x80):
-        name = {0x40: "jc", 0x50: "jnc", 0x60: "jz", 0x70: "jnz", 0x80: "sjmp"}[op]
-        return f"{name:<4} +0x{d[i + 1]:02x}"
-    if op == 0xB4:
-        return f"cjne a,#0x{d[i + 1]:02x},+0x{d[i + 2]:02x}"
-    if op in (0x02, 0x12):
-        return f"{'ljmp' if op == 0x02 else 'lcall'} 0x{(d[i + 1] << 8) | d[i + 2]:04x}"
-    if 0xE8 <= op <= 0xEF:
-        return f"mov  a,r{op - 0xE8}"
-    if 0xF8 <= op <= 0xFF:
-        return f"mov  r{op - 0xF8},a"
-    if op == 0xE5:
-        return f"mov  a,0x{d[i + 1]:02x}"
-    if op == 0xF5:
-        return f"mov  0x{d[i + 1]:02x},a"
-    if op == 0x75:
-        return f"mov  0x{d[i + 1]:02x},#0x{d[i + 2]:02x}"
-    if op == 0x33:
-        return "rlc  a"
-    if op == 0xC4:
-        return "swap a"
-    if op == 0x22:
-        return "ret"
-    return f"db   0x{op:02x}"
 
 
 def region_of(off: int, pd_verified: bool):
@@ -215,6 +139,27 @@ def sites_for(d: bytes, addr: int):
             if d[i] == MOV_DPTR and d[i + 1] == hi and d[i + 2] == lo]
 
 
+def write_csv(d: bytes, addrs, pd_verified: bool) -> None:
+    """One row per site, for a reader who wants to re-derive a table without
+    re-running anything. `frame_onto`/`frame_over` are disasm8051's anchor
+    sweep -- see converges_from() for why neither number settles framing on
+    its own."""
+    w = csv.writer(sys.stdout)
+    w.writerow(["addr", "file_offset", "region", "runtime", "frame_onto",
+                "frame_over", "access", "window"])
+    for text in addrs:
+        addr = int(text, 16)
+        for o in sites_for(d, addr):
+            name, _, _, _ = region_of(o, pd_verified)
+            rt = runtime_addr(o, pd_verified)
+            onto, over = converges_from(d, o)
+            insns = walk(d, o)
+            w.writerow([f"0x{addr:04X}", f"0x{o:05X}", name,
+                        f"0x{rt:04X}" if rt is not None else "",
+                        onto, over, classify(insns),
+                        " ; ".join(" ".join(mn.split()) for _, _, mn in insns[1:])])
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -224,14 +169,21 @@ def main() -> None:
                     help="per-image reference counts only, no site decode")
     ap.add_argument("--r2-commands", action="store_true",
                     help="also print ready-to-paste `r2 -a 8051` seek/pd commands per site")
+    ap.add_argument("--csv", action="store_true",
+                    help="write the site table as CSV on stdout instead of the decode")
     args = ap.parse_args()
 
     d = open(args.firmware, "rb").read()
     off, magic = PD_MARKER
     pd_verified = d[off:off + len(magic)] == magic
     if not pd_verified:
+        # stderr, so that --csv output stays a clean CSV when redirected.
         print(f"note: no {magic.decode()!r} marker at file 0x{off:05X} -- "
-              "sites in 0x20000-0x2FFFF will be reported as region 'unknown'\n")
+              "sites in 0x20000-0x2FFFF will be reported as region 'unknown'\n",
+              file=sys.stderr)
+
+    if args.csv:
+        return write_csv(d, args.addrs, pd_verified)
 
     for text in args.addrs:
         addr = int(text, 16)

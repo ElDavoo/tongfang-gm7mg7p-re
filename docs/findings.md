@@ -116,6 +116,42 @@ Two knock-on notes, since the same conflation reaches other entries:
   nothing about a register confirmed live), so the §4d validation set is not
   affected by this.
 
+### 3b. The 254 `0x07D0` sites, one by one
+
+§3a left "map the 254 call sites" as a PD-firmware task. It is done:
+`../ec/annotations/ec-0x07d0-sites.md`, with the site table beside it as
+`ec-0x07d0-sites.csv`. Short version — the issue asked whether this is one
+function called 254 times or 254 distinct sites, and it is the second: 254
+distinct offsets spread over every populated 4 KiB page of the PD image, from
+runtime `0x3478` to `0xE8F9`. 229 read the byte, 15 write it, 2 increment it
+in place, 8 are unresolved by this method. Read sites feed it into address
+arithmetic (`DPTR = base + value × stride`, strides `0x5E`/`0x60`/`0x77`),
+which is the shape of an index or iteration state, not of a threshold. What
+it indexes is not identified and was not guessed at.
+
+**This changes nothing about the EC's `0x07D0`**, which is a different
+program's address space and still has zero direct references in the EC image.
+`registers.yaml` moves the entry from `present-untested` to
+`unknown-not-absent` — "present" had rested on those 254 references — and
+keeps `DO-NOT-WRITE-BLIND`. §4c's paired UP/DOWN write is still the
+experiment that would settle it, and still a human step at the machine.
+
+Two further boundaries on what a `MOV DPTR,#addr` count can mean, found while
+doing this and distinct from the indirect-addressing blind spot in §4c and
+the two-programs-in-one-dump problem in §3a:
+
+- **`MOV DPTR,#imm16` also builds CODE pointers**, not only XDATA ones. In
+  the PD image, CODE `0x07D0` sits inside the float-formatting string table
+  (`"NaN"`/`"+INF"`/`"-INF"`). None of the 254 turned out to be that — every
+  site whose direction resolves is a `movx` — but the byte pattern alone
+  cannot tell the two apart.
+- **Inline call arguments defeat linear framing.** 68 of the 254 sit directly
+  after `lcall 0x104D`, a helper that pops its own return address and reads
+  four argument bytes out of the code stream before resuming past them. A
+  linear decoder walks into those bytes and comes out misaligned, which is
+  why `disasm8051.py --converge` reports evidence about instruction framing
+  rather than a verdict on it.
+
 ## 4. The charge limit: two retractions, in order
 
 This is the part of the investigation that went wrong twice, in opposite
@@ -244,6 +280,10 @@ whole `0x0780`-`0x07FF` range) is flagged **do-not-write-blind** until those
 sites are actually disassembled, precisely because "used a lot" and "used
 for a simple threshold byte" don't obviously fit together.
 
+*(Those sites have since been disassembled — §3b. They are all in the PD
+image, so the "used a lot" premise was never about this register; the
+do-not-write-blind flag stays, for the reason in §3b rather than this one.)*
+
 ## 5. Net status going into the issue tracker
 
 - Charging-cap-on-Linux is an **open problem**, not a closed negative. The
@@ -255,4 +295,6 @@ for a simple threshold byte" don't obviously fit together.
 - Decrypting the anti-tamper-protected `BatteryProtection2` method bodies
   (`windows/antitamper/`) would settle both open EC questions
   (`0x07D0`'s real role, and whether enforcement is EC-side or
-  polling-software-side) without any further live experimentation risk.
+  polling-software-side) without any further live experimentation risk. The
+  static route to `0x07D0` is now exhausted on the firmware side: §3b mapped
+  every reference the image has and none of them is the EC's.

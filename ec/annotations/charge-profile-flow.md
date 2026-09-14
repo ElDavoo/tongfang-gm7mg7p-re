@@ -67,5 +67,11 @@ Both Trickle and Long_Life still show >1 A flowing at 95%.
 No code path in this function (or found so far anywhere in the image via
 direct-DPTR scan) compares against `0x07B9` or reads/writes `0x07D0`. Given
 the retraction in `docs/findings.md`, treat that as "not found by this
-method" rather than "does not exist" — mapping the 254 call sites that
-reference `0x07D0` is the next concrete step (see the repo's GitHub issues).
+method" rather than "does not exist".
+
+The 254 call sites referencing `0x07D0` — the step this section used to
+point at as next — are now enumerated in [`ec-0x07d0-sites.md`](ec-0x07d0-sites.md).
+All of them are in the `ITE8850-PD` image, none in the EC image, so they do
+not add a `0x07D0` path to the flow traced above; the EC-side question is
+unchanged and still needs the paired-write experiment in `docs/findings.md`
+§5.
