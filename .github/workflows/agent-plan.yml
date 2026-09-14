@@ -109,6 +109,12 @@ jobs:
       contents: read
       id-token: write
       issues: write
+      # Missing on the copy this repo started from: the capacity step below calls
+      # `gh pr list`, which GitHub serves over GraphQL for the --json fields it asks for, and a
+      # GraphQL call against pullRequests without this scope fails with "Resource not
+      # accessible by integration (repository.pullRequests)" -- confirmed in this repo's own
+      # Actions history, not a hypothetical. Every plan run hits this, not just some.
+      pull-requests: read
     needs: [triage, gate]
     # `always()` is load-bearing and not decoration: without it a *skipped* gate skips this job
     # too, and skipped is exactly the path a maintainer's own issues take. A rejected deployment
