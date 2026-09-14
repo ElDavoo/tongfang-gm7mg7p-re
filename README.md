@@ -15,7 +15,23 @@ controller and RGB/battery subsystems of a PCSpecialist-branded TongFang
 
 **Start here:** [`docs/findings.md`](docs/findings.md) — the full narrative,
 written to include the two points where an earlier conclusion turned out to
-be wrong and why, not just the parts that held up.
+be wrong and why, not just the parts that held up. [`docs/MISSION.md`](docs/MISSION.md)
+is the longer-term goal these three items sit under.
+
+## Automation
+
+Issues here run through [`agent-pipeline`](https://github.com/ElDavoo/agent-pipeline):
+file an issue, get a planned, implemented, reviewed, CI-passing pull
+request without clicking anything in between. `docs/agent-pipeline.md`
+covers what's specific to this copy, including a billing-plan limitation
+on this private repo that currently leaves the approval gate unenforced —
+read that before filing anything as someone other than the repo owner, or
+before this repo gains a collaborator or goes public.
+
+Every merged pull request is also read against `docs/MISSION.md` and the
+open issue list by `.github/workflows/agent-followups.yml`, which opens
+whatever follow-up work it reveals — the queue is meant to keep refilling
+itself rather than running dry while the mission is incomplete.
 
 ## Layout
 

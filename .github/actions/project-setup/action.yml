@@ -1,0 +1,28 @@
+name: Project setup
+description: >
+  Toolchain for TongFang GM7MG7P RE work: Python + PyYAML for the register
+  cross-reference and its validation, radare2 for EC firmware disassembly,
+  sdcc (sdas8051/sdld) for the 8051 assemble/link round-trip referenced in
+  ec/README.md, and innoextract for the Windows installer pipeline in
+  windows/tools/extract.sh. shellcheck ships preinstalled on the
+  ubuntu-latest image, so it isn't installed here.
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+      with:
+        python-version: '3.12'
+        cache: pip
+
+    - name: Python dependencies
+      shell: bash
+      run: pip install --disable-pip-version-check pyyaml
+
+    - name: apt packages
+      shell: bash
+      # radare2 in the 24.04 (noble) archive is recent enough for -a 8051;
+      # sdcc ships sdas8051/sdld/sdld as one package on Debian/Ubuntu.
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends radare2 sdcc innoextract

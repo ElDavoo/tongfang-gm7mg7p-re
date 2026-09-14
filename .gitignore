@@ -13,3 +13,12 @@
 # editor/OS noise
 .DS_Store
 *.swp
+
+# python bytecode -- agent-gates.sh's py_compile check writes these as a
+# side effect wherever it runs, including in every agent-pipeline run
+__pycache__/
+*.pyc
+
+# agent-followups.yml's scratch context, written inside the checkout on
+# purpose (see that workflow's comments) and never meant to be committed
+.agent-context/
