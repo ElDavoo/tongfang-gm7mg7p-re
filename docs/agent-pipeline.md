@@ -38,8 +38,32 @@ only covers what's specific to *this* copy.
   comment for what it does and why it uses `AGENT_PUSH_TOKEN` rather than
   the default `GITHUB_TOKEN` to open issues.
 
-Everything else is an unmodified copy. If the upstream template fixes a
-bug in one of those files, re-copy it rather than patching around it here.
+Everything else under `.github/workflows/agent-*.yml` is an unmodified
+copy of the `agent-pipeline` template. If it fixes a bug in one of those
+files, re-copy it rather than patching around it here.
+
+## `claude.yml` — not from agent-pipeline, from `/install-github-app`
+
+Anthropic's own Claude Code CLI has an `/install-github-app` setup command
+that, independently of `agent-pipeline`, installs its standard quickstart
+templates: an `@claude`-mention assistant (`claude.yml`) and an
+automatic PR reviewer (`claude-code-review.yml`, since removed — see
+`claude.yml`'s own header comment for why). Both use the same
+`CLAUDE_CODE_OAUTH_TOKEN` secret `agent-pipeline` needs anyway, so running
+that command was a reasonable way to get the secret set — but as shipped,
+neither template knows `agent-pipeline` exists: `claude-code-review.yml`
+duplicated `agent-review.yml`'s job outright, and `claude.yml` shared no
+concurrency group with anything, so an `@claude` mention on an
+agent-authored pull request would have run a second, fully independent
+session in parallel with whatever the pipeline was doing on it.
+
+`claude.yml` was kept — a mention-triggered conversation is a real
+capability the autonomous pipeline doesn't have — but joined to the shared
+`agent-pipeline` concurrency group, and it doesn't check who wrote the
+mention the way `agent-plan.yml`'s triage job checks who filed an issue.
+Both points, and exactly what would need to change if either stops being
+true, are in the comment at the top of that file now; don't restate them
+here where they can drift out of sync with it.
 
 ## Setup steps still needed
 

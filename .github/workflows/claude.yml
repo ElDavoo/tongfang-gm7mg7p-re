@@ -1,4 +1,28 @@
-name: Claude Code
+name: Claude · mention
+
+# Added by /install-github-app (Anthropic's standard quickstart template), not by
+# agent-pipeline. Kept for what it does that the pipeline doesn't -- an ad-hoc "@claude, ..."
+# conversation on an issue or PR comment, without going through plan/implement -- but two
+# things about it needed fixing to coexist with the pipeline rather than fight it:
+#
+#   - It shares no concurrency group with agent-plan.yml/agent-implement.yml/agent-review.yml/
+#     agent-fix-ci.yml, and its own trigger list (any comment containing "@claude", on anything)
+#     overlaps theirs directly. As shipped, an "@claude" reply on an agent-authored pull request
+#     mid-review runs a second, fully independent Claude session in parallel with whatever the
+#     pipeline is doing, against the same CLAUDE_CODE_OAUTH_TOKEN budget -- exactly what the
+#     shared `agent-pipeline` group exists to prevent. Fixed below by joining that group.
+#   - Its sibling template, claude-code-review.yml, triggered on the same pull_request events
+#     agent-review.yml already covers and was removed outright rather than reconciled: it
+#     duplicated that stage's job with none of its trust model, and every PR would otherwise
+#     have been reviewed twice by two independently-configured mechanisms.
+#
+# What's still true of this file, unchanged, and worth knowing rather than silently fixing:
+# the `if:` below checks only for the literal text "@claude" -- unlike agent-plan.yml's
+# collaborator-permission triage, it does not check who wrote it. On a private single-owner
+# repo that is nobody but the owner; it stops being nobody the day this repo gains a
+# collaborator or goes public, at which point anyone who can comment can run an agent session
+# with this action's full default tool access and no approval gate. Add a triage job matching
+# agent-plan.yml's if either of those happens, rather than assume this comment still applies.
 
 on:
   issue_comment:
@@ -9,6 +33,10 @@ on:
     types: [opened, assigned]
   pull_request_review:
     types: [submitted]
+
+concurrency:
+  group: agent-pipeline
+  cancel-in-progress: false
 
 jobs:
   claude:
@@ -26,13 +54,22 @@ jobs:
       actions: read # Required for Claude to read CI results on PRs
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        # Pinned to the v4 release this template shipped with, not the v7 the rest of this
+        # repo's own workflows use -- that pin is a deliberate, separate upgrade this file
+        # wasn't touched for.
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 1
+          persist-credentials: false
 
       - name: Run Claude Code
         id: claude
-        uses: anthropics/claude-code-action@v1
+        # Pinned to the same commit every other claude-code-action call in this repo uses,
+        # for consistency, not because it's the newest -- the v1 tag has moved past this
+        # commit since (verified 2026-09-14: v1 -> a73a99c, this pin -> 1f291e1). Upgrading
+        # it here alone would make this the only stage running different code from the rest
+        # of the pipeline; a version bump belongs in a change that moves every pin together.
+        uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
