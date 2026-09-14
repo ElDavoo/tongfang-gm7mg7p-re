@@ -10,10 +10,17 @@ description: >
 runs:
   using: composite
   steps:
+    # No cache: key: -- setup-python's `cache: pip` needs a requirements.txt
+    # or pyproject.toml to hash for the cache key, and this repo, not being
+    # a Python package, has neither. Asking for it anyway isn't a warning,
+    # it's a hard failure of this step before pip ever runs (confirmed by
+    # running this in CI: "No file ... matched to [**/requirements.txt or
+    # **/pyproject.toml]"). One package installs in about a second
+    # uncached, which is not worth carrying a lockfile-shaped file whose
+    # only job would be satisfying this cache key.
     - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
       with:
         python-version: '3.12'
-        cache: pip
 
     - name: Python dependencies
       shell: bash
