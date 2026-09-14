@@ -1,0 +1,7 @@
+#!/nix/store/7a60q5dgnv6z96c279rc1nalyiw4mgqn-bash-interactive-5.3p15/bin/bash
+export PATH=/run/current-system/sw/bin:/run/wrappers/bin
+F=/var/log/battery-trace/trace.csv
+echo "campioni: $(( $(wc -l < $F) - 1 ))"
+echo "--- transizioni di stato / min-max per fase:"
+awk -F, 'NR>1{if($3!=p){printf "%s  %-12s cap=%s%%\n",$1,$3,$4; p=$3}; if($3=="Charging"){if($4+0>mx)mx=$4}}END{if(mx)printf "\nmax capacity raggiunta in carica: %s%%\n",mx}' $F
+echo "--- ultimi 5:"; cut -d, -f1-8 $F | tail -5

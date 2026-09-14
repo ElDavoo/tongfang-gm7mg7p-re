@@ -1,0 +1,213 @@
+# Findings
+
+Research log for reverse-engineering charging behaviour, RGB lighting, and
+other `uniwill-laptop` driver features on the PCSpecialist/TongFang
+`GM7MG7P` (Uniwill `GM5MG7Y`). See `hardware-identity.md` for the board
+identity and `../ec/annotations/registers.yaml` for the full register
+cross-reference. This document is the narrative; that file is the data.
+
+**This document includes two retractions of earlier conclusions in this same
+investigation.** They're kept in, not edited out, because the *reason* each
+one was wrong is itself a finding about the limits of the methods used.
+
+## 1. Battery health, honestly
+
+`charge_full` / `charge_full_design` = 2000/4100 mAh, 445 cycles. Genuinely
+degraded — not a scaling artifact. This matters because the EC's own `_BIF`/
+`_BST` ACPI methods (`evidence/acpi/dsdt.dsl`) deliberately mask early
+capacity fade: below 50 cycles they report *design* capacity and rescale the
+remaining-capacity reading to match; only at cycle ≥50 do they report the
+true measured full-charge capacity. At 445 cycles, the numbers on this
+machine are the honest ones.
+
+## 2. Feature-by-feature driver verification
+
+Tested one feature at a time, live, with the user observing (not batch
+tested — an EC is a single shared resource and batch writes make it
+impossible to attribute cause). Full detail in
+`../ec/annotations/registers.yaml`; summary:
+
+| feature | verdict |
+|---|---|
+| `CPU_TEMP` / `GPU_TEMP` | confirmed (cross-checked vs. coretemp / nvidia-smi) |
+| `PRIMARY_FAN` / `SECONDARY_FAN` | confirmed (RPM sysfs matches physical sound) |
+| `FN_LOCK` | confirmed (physical F10 behaviour changes) |
+| `SUPER_KEY` | confirmed (physical Super key goes dead) |
+| `TOUCHPAD_TOGGLE` | fails — Fn+F5 emits no WMI event at all |
+| `KEYBOARD_BACKLIGHT` (hotkey path) | confirmed (Fn+F6/F7, WMI codes 177/178) |
+| `LIGHTBAR` (EC path) | **wrong mechanism, not a hardware fault** — see §3 |
+| `BATTERY_CHARGE_MODES` | **writes accepted, does not cap charging** — see §4 |
+| `BATTERY_CHARGE_LIMIT` | **status corrected from "absent" to "unknown"** — see §4 |
+| `AC_AUTO_BOOT`, `USB_POWERSHARE` | EC bit flips on write; real-world effect untested |
+| `USB_C_POWER_PRIORITY`, `NVIDIA_CTGP_CONTROL` | untested |
+
+## 3. The lightbar: EC path is real, just not for this chassis
+
+Live testing wrote every uniwill EC lightbar register (`0x0748`-`0x074B`:
+colour, `WELCOME`/rainbow toggle, `S0_OFF`) with the animation running the
+whole time. Every write landed (read back correctly) and changed nothing
+visible — the lightbar kept its own rainbow pattern regardless.
+
+That looked at first like "hardware doesn't support it here." It isn't.
+Three independent facts, found after the user recalled Windows *could*
+control it:
+
+1. Static scan: `0x0748`-`0x074B` have **zero** direct references anywhere
+   in the 256 KiB EC image.
+2. The Windows service logs `LM_Manager|LB_Init for HidLightbar : ITE
+   solution` — found via `strings -e l` on the raw `.exe`; the containing
+   method (`LM_Manager.LB_Init`, in
+   `windows/decompiled/v3.9.18.0/LightingModel/LM_Manager.cs`) is
+   itself anti-tamper encrypted and did not decompile, so this came from
+   the string table, not from reading the logic (see
+   `windows/antitamper/README.md`).
+3. Live hardware exposes **two** ITE 8291 HID devices, not one:
+   `048D:CE00` (usage page `0xFF12`, matches `ITE_SPEC.USAGE_PAGE_4Zone`) and
+   `048D:6005` (usage page `0xFF03`, matches `ITE_SPEC.USAGE_PAGE_Ligbar`).
+   Only the first is claimed, by `hid-generic`. Nothing claims `6005`.
+
+The lightbar on this chassis is a USB HID peripheral running its own
+firmware default, not an EC-mapped device. `tuxedo-drivers`' `ite_8291_lb`
+already implements this protocol for PIDs `7000`/`7001`/`6010`; `6005` would
+be a new PID, likely a small addition rather than new driver work.
+
+## 4. The charge limit: two retractions, in order
+
+This is the part of the investigation that went wrong twice, in opposite
+directions, before landing somewhere defensible. Both mistakes are kept
+here verbatim-in-spirit because the *pattern* — trusting a single measurement
+type as decisive — is the actual lesson.
+
+### 4a. First claim: "the cap is proven, right now" — WRONG
+
+Early in one session, `capacity` sysfs reported `100%`/`Full` while
+`voltage_now` read 16.349 V on a 4S pack (4.087 V/cell). Reasoning at the
+time: a genuinely full Li-ion cell rests at 4.15-4.20 V, so a lower resting
+voltage while claiming "Full" was read as proof the Stationary/Trickle
+profile was capping real charge below 100% and the gauge just hadn't caught
+up.
+
+**This was wrong, and the user caught it by pointing at an earlier session's
+actual measurement.** A cell's voltage legitimately relaxes downward for a
+while *after* charging stops normally, for any profile including 100%. A
+below-4.20V resting voltage on AC proves nothing about a cap — it's
+consistent with "charged to 100% a while ago and has since relaxed," which
+is exactly what an uncapped charge looks like hours later. The right
+instrument is `current_now` measured *while* `capacity` is climbing through
+the claimed cap, not a resting voltage measured after the fact.
+
+### 4b. The actual coulomb-counted evidence (from `evidence/battery-traces/`)
+
+A prior session's 60-second-interval trace (`2026-09-09-profiles.csv`)
+recorded full charge cycles under both `Trickle` and `Long_Life`. Current
+draw at each capacity level:
+
+| profile | 85% | 90% | 95% | 98% |
+|---|---|---|---|---|
+| Trickle | 1496 mA | 1326 mA | 1224 mA | 1020 mA |
+| Long_Life | 1530 mA | 1292 mA | 1122 mA | 918 mA |
+
+Over 1 A still flowing at 95% under both profiles, tapering smoothly to
+100%. **No cap. No emulation either** (a genuinely emulated "fake" climb
+would show current near zero while capacity still climbs — see the contrast
+with real Windows behaviour in §4c). The three-profile mechanism, traced in
+`ec/annotations/charge-profile-flow.md`, changes *how fast current tapers
+near 100%* (a firmware constant used as a divisor/multiplier at EC
+addresses `0xB2E2`/`0xB330`), not a hard stop.
+
+### 4c. Second claim: "0x07B9 is definitively gone" — WRONG
+
+A separate, earlier line of investigation concluded the numeric threshold
+register `0x07B9` (`charge_control_end_threshold` in the driver) was
+categorically unusable on this board, from four angles at once:
+
+1. Zero direct references anywhere in the EC firmware image (static scan).
+2. The DSDT's `ECMG` field list steps over exactly that byte
+   (`evidence/acpi/dsdt.dsl`, `Offset(0x7B3)... Offset(0x7BA)` — 0x7B9 never
+   named).
+3. `uniwill-laptop`'s own `force=1` path explicitly masks
+   `UNIWILL_FEATURE_BATTERY_CHARGE_LIMIT` for un-validated boards.
+4. Upstream `uniwill-laptop` issue #7: a TUXEDO engineer stated the charge
+   *limit* feature (as opposed to charge *modes*) was, at the time,
+   validated only on "Intel Project" Uniwill boards — this one is
+   `PROJECT_ID_CML_GAMING`, not an Intel Project.
+
+Separately, a live test (`force_charge_limit=1`, threshold written to 80,
+confirmed readback `0x07B9 = 0x50`) **did not stop charging** — the trace in
+`evidence/battery-traces/2026-09-09-threshold80.csv` shows charging past 93%
+with the threshold nominally at 80.
+
+Put together, this looked like a closed case: four static/structural
+signals plus one live null-result, all pointing the same way.
+
+**It wasn't closed.** The user's 2021 Windows screenshot
+(`evidence/screenshots/2021-11-27-batteryinfoview-windows.png`) shows real
+charging stopping at ~86%, followed by 2.5 minutes of the percentage
+climbing to 100% at 0 mW with **falling** voltage — the actual signature of
+gauge relaxation after a real stop, i.e. Windows genuinely caps charging on
+this exact machine. And `windows/decompiled/v3.1.6.0/ECSpec.cs`
+gives the reason all four static signals were misleading:
+
+```csharp
+public const ushort ADDR_BATTERY_CHARGE_LIMIT_UP   = 1977;  // 0x07B9
+public const ushort ADDR_BATTERY_CHARGE_LIMIT_DOWN = 2000;  // 0x07D0
+```
+
+Windows writes **both** addresses as a pair (`Battery_Commands` enum:
+`CHARGING_UP_LIMIT`, `CHARGING_DOWN_LIMIT`) every time it sets a limit. The
+Linux-side live test only ever wrote the upper bound. Whatever the EC does
+internally to enforce a cap, it may require both values, or the write
+sequencing, or something else the pair-write triggers that a single write
+doesn't. **This has not been tested and is the highest-value remaining
+experiment** (see GitHub issues).
+
+The four original signals are re-graded, not deleted, in
+`ec/annotations/registers.yaml`:
+
+- Static-scan zero-refs: downgraded from "proof of absence" to "not found by
+  this method" — the scan only sees direct `MOV DPTR,#addr`; it cannot see
+  pointer-based/indirect XDATA access, and `0x07B9` is a proven case of that
+  blind spot (Windows demonstrably uses the address; the scan cannot find
+  how).
+- DSDT field-list gap: still true, but now understood as "ACPI can't reach
+  it" rather than "the EC doesn't have it" — Windows doesn't go through
+  ACPI for this at all, it talks to the EC via `ACPIDriver.sys`'s custom
+  IOCTL (`windows/native/README.md`), a different path than the DSDT
+  `OperationRegion`.
+- `force=1` masking: still literally true (the flag exists and masks the
+  feature) but is a *driver policy choice*, not evidence about the
+  hardware — the driver is being conservative, correctly, about a register
+  nobody had validated yet.
+- Upstream issue #7 "Intel Project only": now read as "nobody had tried the
+  paired write on a non-Intel-Project board", not "the hardware can't do
+  it."
+
+### 4d. Static-scan validation (why the method is trusted at all, despite 4c)
+
+Before the retraction in §4c, the same static-scan method was checked
+against 20 registers with independently confirmed live behaviour — 15 known
+to work, 5 known not to (from the manual per-feature testing in §2 plus the
+lightbar-register nulls in §3). The scan predicted all 20 correctly.
+
+That validation still stands; it just has a documented boundary now. The
+method is reliable for direct-addressed 8051 code (the large majority of
+what Keil C51 generates for simple register I/O) and blind to indirect
+addressing. `0x07B9`/`0x07B0`-`0x07BE` is flagged in
+`ec/annotations/registers.yaml` as a confirmed instance of the blind spot,
+and `0x07D0` (254 references — the busiest address the scan found in the
+whole `0x0780`-`0x07FF` range) is flagged **do-not-write-blind** until those
+sites are actually disassembled, precisely because "used a lot" and "used
+for a simple threshold byte" don't obviously fit together.
+
+## 5. Net status going into the issue tracker
+
+- Charging-cap-on-Linux is an **open problem**, not a closed negative. The
+  concrete next experiment (write both `0x07B9` and `0x07D0` together, then
+  coulomb-count through the claimed cap exactly as in §4b) is unambiguous
+  and cheap to run.
+- Lightbar is a **driver-scope problem, not a hardware problem** — claim
+  `048D:6005` for `ite_8291_lb` and test.
+- Decrypting the anti-tamper-protected `BatteryProtection2` method bodies
+  (`windows/antitamper/`) would settle both open EC questions
+  (`0x07D0`'s real role, and whether enforcement is EC-side or
+  polling-software-side) without any further live experimentation risk.

@@ -1,0 +1,15 @@
+# scratch space for re-running extraction/disassembly tools locally
+/tmp/
+*.tmp
+/out/
+/scratch/
+
+# intermediate extraction artifacts reproducible from vendor/ via
+# windows/tools/extract.sh -- not committed to avoid duplicating the
+# ~74MB of vendor binaries a second time in extracted form
+/windows/decompiled/**/inno/
+/windows/decompiled/**/msix/
+
+# editor/OS noise
+.DS_Store
+*.swp

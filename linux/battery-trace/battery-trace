@@ -1,0 +1,30 @@
+#!/nix/store/7a60q5dgnv6z96c279rc1nalyiw4mgqn-bash-interactive-5.3p15/bin/bash
+export PATH=/run/current-system/sw/bin:/run/wrappers/bin
+# Traccia lo stato di carica + lo spazio EC (0x00-0xFF) per capire se il
+# profilo "Trickle" (STATIONARY) venga mai applicato davvero dall'EC.
+# Ipotesi sotto test: la soglia ~80% si attiva solo dopo una scarica
+# sufficiente (isteresi), es. sotto il 70%.
+set -u
+B=/sys/class/power_supply/BAT0
+OUT=/var/log/battery-trace/trace-threshold.csv
+EC=/sys/kernel/debug/ec/ec0/io
+
+modprobe ec_sys 2>/dev/null || true
+mountpoint -q /sys/kernel/debug || mount -t debugfs none /sys/kernel/debug 2>/dev/null || true
+
+if [ ! -s "$OUT" ]; then
+  echo "ts,ac,status,capacity,charge_now,current_now,voltage_now,thr,r7b9,r7a6" > "$OUT"
+fi
+
+while :; do
+  ac=$(cat /sys/class/power_supply/A*/online 2>/dev/null | head -1)
+  thr=$(cat "$B/charge_control_end_threshold" 2>/dev/null)
+  regs=/sys/kernel/debug/regmap/INOU0000:00/registers
+  r7b9=$(grep -E '^7b9' $regs 2>/dev/null | cut -d' ' -f2)
+  r7a6=$(grep -E '^7a6' $regs 2>/dev/null | cut -d' ' -f2)
+  printf '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' \
+    "$(date -Is)" "$ac" "$(cat $B/status)" "$(cat $B/capacity)" \
+    "$(cat $B/charge_now)" "$(cat $B/current_now)" "$(cat $B/voltage_now)" \
+    "$thr" "$r7b9" "$r7a6" >> "$OUT"
+  sleep 60 || exit 1
+done

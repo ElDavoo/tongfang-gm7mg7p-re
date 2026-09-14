@@ -1,0 +1,216 @@
+# EC register cross-reference for TongFang GM7MG7P / GM5MG7Y, ITE EC-V14.6
+# (file ec/firmware/GMxMGxx_11.800), PROJECT_ID_CML_GAMING (0x0F).
+#
+# Sources, tagged per-register below:
+#   uniwill-laptop : linux/drivers/platform/x86/uniwill/uniwill-acpi.c address/bit defines
+#   ecspec-3.1.6.0 : Define.ECSpec constants from the unobfuscated Windows service
+#                    (windows/decompiled/v3.1.6.0/ECSpec.cs)
+#   static-scan    : ec/tools/scan_refs.py reference count against the EC image
+#   live           : read back on real hardware via regmap debugfs / /dev/mem
+#   dsdt           : mentioned in evidence/acpi/dsdt.dsl ECMG field list
+#
+# status values:
+#   confirmed-working   : live behaviour matches the driver's model
+#   confirmed-inert      : write accepted, EC does not act on it (proven live)
+#   present-untested     : static-scan finds real references, not yet exercised live
+#   absent                : static-scan finds zero direct references
+#                            (NOTE: absence is not proof -- see docs/findings.md,
+#                            "Static-scan validation" and "Retraction". 0x07B0-0x07BE
+#                            is a known blind spot: Windows writes 0x07B9 and it works,
+#                            but no direct MOV DPTR reference exists anywhere in image.)
+
+registers:
+  - name: PROJECT_ID
+    addr: 0x0740
+    sources: [uniwill-laptop, ecspec-3.1.6.0, live]
+    static_refs: 1
+    status: confirmed-working
+    note: "reads 0x0F = PROJECT_ID_CML_GAMING on this board"
+
+  - name: AP_OEM (ENABLE_MANUAL_CTRL)
+    addr: 0x0741
+    bit: 0
+    sources: [uniwill-laptop, live]
+    static_refs: 35
+    status: confirmed-working
+    note: >
+      Gate for the charge-profile write path (see docs/findings.md).
+      EC firmware clears the profile back to High Capacity at 0xB13A
+      unless this bit is set. Driver sets it in uniwill_ec_init(),
+      clears it in uniwill_shutdown() -- profile must be reapplied
+      every boot by design, not as a workaround.
+
+  - name: CTGP_DB_CTRL / OFFSET
+    addr: [0x0743, 0x0744, 0x0745, 0x0746]
+    sources: [uniwill-laptop]
+    static_refs: [7, 1, 1, 1]
+    status: present-untested
+    note: "NVIDIA_CTGP_CONTROL feature bits, not yet exercised live"
+
+  - name: BIOS_OEM (FN_LOCK_STATUS)
+    addr: 0x074E
+    bit: 4
+    sources: [uniwill-laptop, live]
+    static_refs: 4
+    status: confirmed-working
+    note: "Fn+F10 verified physically to toggle F-key behaviour"
+
+  - name: SUPPORT_1
+    addr: 0x0765
+    sources: [uniwill-laptop]
+    static_refs: 0
+    status: absent
+    note: "driver reads this for capability bits (SUPER_KEY_LOCK, LIGHTBAR, FAN_BOOST); not referenced by this firmware build"
+
+  - name: SUPPORT_2
+    addr: 0x0766
+    sources: [uniwill-laptop]
+    static_refs: 7
+    status: present-untested
+
+  - name: TRIGGER
+    addr: 0x0767
+    sources: [uniwill-laptop, live]
+    static_refs: 10
+    status: confirmed-working
+    note: "TRIGGER_SUPER_KEY_LOCK bit flips SWITCH_STATUS; used for super-key toggle test"
+
+  - name: SWITCH_STATUS (SUPER_KEY_LOCK_STATUS)
+    addr: 0x0768
+    bit: 0
+    sources: [uniwill-laptop, live]
+    static_refs: 8
+    status: confirmed-working
+    note: "physically confirmed: Super key went dead when bit cleared"
+
+  - name: OEM_9 (AC_AUTO_BOOT_ENABLE)
+    addr: 0x0726
+    bit: 3
+    sources: [uniwill-laptop]
+    static_refs: 0
+    status: absent
+    note: >
+      Write via driver was accepted (EC bit visibly flipped) but firmware
+      never reads this address anywhere findable by direct-DPTR scan.
+      DOWNGRADED from earlier (wrong) "confirmed-inert" call -- a write
+      being accepted is not evidence the EC acts on it, and per the
+      0x07B9 retraction, "0 direct refs" is not proof it's ignored either.
+      Real verdict: unknown, needs a live behavioural test (does the
+      laptop actually auto-boot on AC insert while off?).
+
+  - name: OEM_4 (CHARGING_PROFILE_MASK)
+    addr: 0x07A6
+    bits: [4, 5]
+    sources: [uniwill-laptop, ecspec-3.1.6.0(BatteryLimitationMode), live]
+    static_refs: 7
+    status: confirmed-working-partially
+    note: >
+      Writing the 3 profile values (00=High Capacity/01=Balanced/10=Stationary)
+      is accepted and the EC selects a different early-exit current limit at
+      firmware sites 0xB2E2/0xB330 (ec/annotations/charge-profile-flow.md).
+      BUT: coulomb-counted live traces (evidence/battery-traces/2026-09-09-profiles.csv)
+      show >1A still flowing at 95% under both Trickle and Long_Life -- the
+      profile changes the *taper*, not a hard stop. See docs/findings.md.
+
+  - name: CHARGE_CTRL (numeric threshold)
+    addr: 0x07B9
+    bits: "0-6 value, bit 7 REACHED"
+    sources: [uniwill-laptop, ecspec-3.1.6.0(BATTERY_CHARGE_LIMIT_UP), dsdt, live]
+    static_refs: 0
+    status: unknown-not-absent
+    note: >
+      *** RETRACTION, see docs/findings.md "Two retractions" ***
+      Earlier analysis called this "definitively gone" from 4 angles:
+      zero static-scan refs, DSDT ECMG field list steps over the byte,
+      driver's own force=1 masks it, and TUXEDO upstream saying it's
+      "Intel Project only". All four are now known to be insufficient:
+      the Windows service (ECSpec.ADDR_BATTERY_CHARGE_LIMIT_UP = 1977 =
+      0x07B9) writes to exactly this address as part of BatteryProtection2,
+      and Windows genuinely caps charging (screenshot evidence + vendor UI
+      text). Zero direct MOV DPTR refs in the whole image proves only that
+      this scan technique cannot see how it's accessed (indirect/pointer
+      addressing, or an access pattern the scan doesn't recognise) -- not
+      that the EC ignores it. Driver-side write (force_charge_limit=1,
+      threshold=80) did NOT stop charging in the one live test we ran
+      (evidence/battery-traces/2026-09-09-threshold80.csv) -- but that test
+      never wrote the paired DOWN register (see next entry), which Windows
+      always sets together with UP.
+
+  - name: BATTERY_CHARGE_LIMIT_DOWN (Windows-only address, no uniwill-laptop equivalent)
+    addr: 0x07D0
+    sources: [ecspec-3.1.6.0(BATTERY_CHARGE_LIMIT_DOWN)]
+    static_refs: 254
+    status: present-untested-DO-NOT-WRITE-BLIND
+    note: >
+      Windows always sets an UP/DOWN pair (Battery_Commands.CHARGING_UP_LIMIT
+      + CHARGING_DOWN_LIMIT) via BatteryProtection2. uniwill-laptop has no
+      concept of a "resume charging below" threshold and has never written
+      this address. 254 direct references is the busiest address in the
+      whole 0x0780-0x07FF range -- too busy to be a single-purpose "resume
+      threshold" byte on this firmware. Needs disassembly of all 254 sites
+      before writing to it (see issue: "map 0x07D0 call sites").
+
+  - name: LIGHTBAR_AC_CTRL / RED / GREEN / BLUE
+    addr: [0x0748, 0x0749, 0x074A, 0x074B]
+    sources: [uniwill-laptop]
+    static_refs: [0, 0, 0, 0]
+    status: confirmed-not-this-mechanism
+    note: >
+      Live test wrote every one of these bytes (WELCOME/rainbow toggle,
+      S0_OFF, RGB 0xC8) with zero observable effect -- lightbar kept
+      animating its own rainbow pattern regardless. Independently, the
+      Windows service logs "LM_Manager|LB_Init for HidLightbar : ITE
+      solution" and the live hardware exposes a second ITE 048D:6005 HID
+      device on usage page 0xFF03 (ITE_SPEC.USAGE_PAGE_Ligbar) that no
+      Linux driver currently claims. The lightbar on this chassis is a
+      USB HID device (ITE 8291), not an EC-mapped peripheral -- these 4
+      registers may belong to a different Uniwill chassis design and are
+      correctly absent here for that reason, independent of the general
+      static-scan caveat above (this one has 3-way corroboration: live
+      null-result + vendor log string + HID usage-page match).
+
+  - name: LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE
+    addr: [0x07E2, 0x07E3, 0x07E4, 0x07E5]
+    sources: [uniwill-laptop]
+    static_refs: [15, 9, 4, 10]
+    status: present-untested
+    note: >
+      Unlike the AC-side lightbar registers, these ARE referenced by the
+      firmware. Not yet determined what they actually drive on this board
+      (battery-mode lightbar? something unrelated reusing the address
+      range?). Open question, see docs/findings.md.
+
+  - name: KBD_STATUS
+    addr: 0x078C
+    sources: [uniwill-laptop]
+    static_refs: 7
+    status: present-untested
+    note: "Fn+F6/F7 hotkeys (WMI events 177/178, EC_RGBKBBKL_LEVEL_DOWN/UP in ITE_SPEC) confirmed working; this is the *software* LED-class path, separate and untested"
+
+  - name: USB_C_POWER_PRIORITY
+    addr: 0x07CC
+    bit: 7
+    sources: [uniwill-laptop]
+    static_refs: 6
+    status: present-untested
+
+  - name: CPU_TEMP
+    addr: 0x043E
+    sources: [uniwill-laptop, live]
+    static_refs: 15
+    status: confirmed-working
+    note: "cross-checked against coretemp (50 vs 51C)"
+
+  - name: GPU_TEMP
+    addr: 0x044F
+    sources: [uniwill-laptop, live]
+    static_refs: 14
+    status: confirmed-working
+    note: "cross-checked against nvidia-smi (48 vs 49C)"
+
+  - name: BAT_CYCLE_COUNT
+    addr: [0x04A6, 0x04A7]
+    sources: [uniwill-laptop, live]
+    static_refs: [7, 2]
+    status: confirmed-working
+    note: "445 cycles; also gates the DSDT _BIF/_BST capacity-reporting rescale at cycle 50, see docs/findings.md"

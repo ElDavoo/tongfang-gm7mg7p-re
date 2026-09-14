@@ -1,0 +1,36 @@
+diff --git a/uniwill-acpi.c b/uniwill-acpi.c
+index 7a2eeae..74d8985 100644
+--- a/uniwill-acpi.c
++++ b/uniwill-acpi.c
+@@ -438,6 +438,10 @@ static bool force;
+ module_param_unsafe(force, bool, 0);
+ MODULE_PARM_DESC(force, "Force loading without checking for supported devices\n");
+ 
++static bool force_charge_limit;
++module_param_unsafe(force_charge_limit, bool, 0);
++MODULE_PARM_DESC(force_charge_limit, "Use the charge limit instead of the charge modes when forcing\n");
++
+ /*
+  * Contains device specific data like the feature bitmap since
+  * the associated registers are not always reliable.
+@@ -3349,8 +3353,18 @@ static int __init uniwill_init(void)
+ 	}
+ 
+ 	if (force) {
+-		/* Assume that the device supports all features except the charge limit */
+-		device_descriptor.features = UINT_MAX & ~UNIWILL_FEATURE_BATTERY_CHARGE_LIMIT;
++		/*
++		 * Assume that the device supports all features except the charge limit,
++		 * which is masked because an unvalidated threshold register could harm
++		 * the battery. On some boards (e.g. the GM5MG7Y) the EC stores the
++		 * charge mode in EC_ADDR_OEM_4 but never derives a threshold from it,
++		 * so the charge modes are inert and the charge limit is the only
++		 * working interface. Allow opting into it explicitly.
++		 */
++		if (force_charge_limit)
++			device_descriptor.features = UINT_MAX & ~UNIWILL_FEATURE_BATTERY_CHARGE_MODES;
++		else
++			device_descriptor.features = UINT_MAX & ~UNIWILL_FEATURE_BATTERY_CHARGE_LIMIT;
+ 		/* Some models only have a (white) single color keyboard backlight */
+ 		device_descriptor.kbd_led_single_color = false;
+ 		/* Some models only support 3 brightness levels */

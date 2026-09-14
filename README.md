@@ -1,0 +1,58 @@
+# tongfang-gm7mg7p-re
+
+Reverse-engineering notes, tools, and vendor artifacts for the embedded
+controller and RGB/battery subsystems of a PCSpecialist-branded TongFang
+**GM7MG7P** (Uniwill platform **GM5MG7Y**), toward:
+
+1. A correct DMI descriptor / feature list for upstream
+   [`uniwill-laptop`](https://github.com/Wer-Wolf/uniwill-laptop) (this board
+   isn't in its match table).
+2. Resolving a real discrepancy: Windows caps battery charging on this
+   machine, Linux currently doesn't, and the reason turned out to be more
+   specific than "unsupported register" — see `docs/findings.md`.
+3. Getting the lightbar working under Linux, which turned out to need a
+   different driver (`ite_8291_lb`) rather than a fix to `uniwill-laptop`.
+
+**Start here:** [`docs/findings.md`](docs/findings.md) — the full narrative,
+written to include the two points where an earlier conclusion turned out to
+be wrong and why, not just the parts that held up.
+
+## Layout
+
+```
+docs/                    findings.md (start here), hardware-identity.md
+ec/                       EC firmware (ITE 8051, banked), disassembly tools,
+                          the register cross-reference (annotations/registers.yaml)
+windows/                  Decompiled vendor Windows service, anti-tamper notes,
+                          extraction pipeline
+linux/                    uniwill-laptop patch, NixOS module config, battery
+                          tracing scripts used to gather the evidence below
+vendor/                   Vendor binaries as shipped (BIOS/EC update package,
+                          two Control Center versions) -- inputs, not outputs
+evidence/                 Traces, screenshots, ACPI dump, HID report descriptors
+                          that specific claims in docs/findings.md cite
+```
+
+## Quick facts
+
+See `docs/hardware-identity.md` for the full table. Short version: Uniwill
+`PROJECT_ID_CML_GAMING` (0x0F), ITE EC firmware `V14.6`, two ITE 8291 HID
+RGB controllers on different USB ports (one claimed by the kernel, one not).
+
+## Status
+
+Research/scaffolding stage — see the GitHub issue tracker for concrete next
+steps. Issues tagged `windows` need to run vendor code under Windows (a VM
+is enough for the anti-tamper work); everything else is doable from Linux
+with the tools already in `ec/tools/` and `windows/tools/`.
+
+## A note on the vendor files in `vendor/`
+
+These are the vendor's own BIOS/EC update package and Control Center
+installers, kept here (this repo is private) so every claim in
+`docs/findings.md` and `ec/annotations/registers.yaml` is independently
+re-derivable from a committed input, not just from an unrepeatable analysis
+session. They are not redistributed anywhere from here; if any of this work
+is later cited in a public upstream PR, cite it by the specific evidence
+(register addresses, firmware offsets, register names) rather than by
+linking these binaries.

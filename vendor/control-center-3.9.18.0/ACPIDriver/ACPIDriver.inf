@@ -1,0 +1,70 @@
+;
+; ACPIDriver.inf
+;
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=System
+ClassGuid={4d36e97d-e325-11ce-bfc1-08002be10318}
+Provider=%MSFT%
+DriverVer = 09/14/2020,14.20.30.355
+CatalogFile=ACPIDriver.cat
+
+
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+ACPIDriver.sys=1
+[DestinationDirs]
+DefaultDestDir = 12
+
+[ControlFlags]
+;
+; Exclude all devices from Select Device list
+;
+ExcludeFromSelect = *
+
+[Manufacturer]
+%MSFT%=Microsoft,NTamd64
+
+;[Microsoft.NTx86]
+;%*INOU0000.DeviceDesc% = ACPIDriver_Inst,*INOU0000
+
+[Microsoft.NTamd64]
+%*INOU0000.DeviceDesc% = ACPIDriver_Inst,ACPI\INOU0000
+
+[ACPIDriver_Inst.NT]
+CopyFiles = CopyFilesSYS
+
+[ACPIDriver_Inst.NT.Services]
+AddService = ACPIDriver,%SPSVCINST_ASSOCSERVICE%,ACPIDriver_Service_Inst
+
+[ACPIDriver_Service_Inst]
+DisplayName    = %ACPIDriver.SvcDesc%
+ServiceType    = %SERVICE_KERNEL_DRIVER%
+StartType      = %SERVICE_BOOT_START%
+ErrorControl   = %SERVICE_ERROR_NORMAL%
+ServiceBinary  = %12%\ACPIDriver.sys
+LoadOrderGroup = System Bus Extender
+
+[CopyFilesSYS]
+ACPIDriver.sys
+
+[strings]
+MSFT                  = "Uniwill"
+*INOU0000.DeviceDesc = "ACPIDriver"
+DiskName              = "ACPIDriver Source Disk"
+ACPIDriver.SvcDesc	      = "ACPIDriver Driver"
+SPSVCINST_TAGTOFRONT  = 0x00000003
+SPSVCINST_ASSOCSERVICE= 0x00000002
+SERVICE_KERNEL_DRIVER = 1
+SERVICE_BOOT_START    = 0
+SERVICE_SYSTEM_START  = 1
+SERVICE_ERROR_NORMAL  = 1
+SERVICE_ERROR_IGNORE  = 0
+REG_EXPAND_SZ         = 0x00020000
+REG_DWORD             = 0x00010001
+REG_SZ                = 0x00000000
+
