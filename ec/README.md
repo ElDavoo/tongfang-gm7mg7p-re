@@ -23,6 +23,17 @@ callers in this build:
 File regions `0x18000-0x1FFFF`, `0x30000-0x3FFFF` are 100% `0xFF` — erased
 flash / unused capacity, not code.
 
+`0x20000-0x2FFFF` is **not** part of the EC firmware above. It is a second,
+self-contained 8051 image identifying itself as `ITE8850-PD` (marker at file
+`0x20040`, USB Power-Delivery protocol strings throughout), with its own
+reset/interrupt vector table at its own offset 0, its own C startup stub, and
+none of the bank-switch stubs. It therefore has its own 64 KiB address space
+and its own XDATA map — a `MOV DPTR,#0x07E2` in there is not a reference to
+the EC register at `0x07E2`. `annotations/lightbar-bat-flow.md` §2 has the
+evidence, and §6 the registers it changes the reading of. Extract it with
+`dd if=firmware/GMxMGxx_11.800 of=pd.bin bs=64k skip=2 count=1`; it loads flat
+into `r2 -a 8051` with no stitching needed.
+
 ## Tools
 
 - **`tools/scan_refs.py`** — counts direct `MOV DPTR,#addr` references to a
@@ -30,6 +41,14 @@ flash / unused capacity, not code.
   implement register X". Validated 20/20 against live-hardware ground truth
   (see `docs/findings.md`), but has a known blind spot for pointer/indirect
   addressing — treat "0 refs" as "not found by this method", not "absent".
+- **`tools/trace_xdata_refs.py`** — same `MOV DPTR,#addr` sites as
+  `scan_refs.py`, but reports *which image* each one is in (common area, a
+  CODE bank, or the separate PD image above) and decodes the access direction
+  from the opcodes that follow. Use it before reading anything into a
+  `scan_refs.py` total, since that total is file-wide and this dump holds two
+  programs. The mnemonics are a linear best-effort walk, not a disassembler —
+  `--r2-commands` prints the seek lines to confirm anything load-bearing, and
+  the indirect-addressing blind spot above applies here unchanged.
 - **`tools/find_banks.py`** — locates the bank-switch stubs and scores which
   file offset each bank maps to. Re-run this against any other firmware dump
   before trusting the offsets in the table above.
@@ -51,6 +70,10 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
 - **`annotations/charge-profile-flow.md`** — full traced control flow for the
   three charge profiles, including the manual-control gate that made the
   systemd per-boot reapply necessary.
+- **`annotations/lightbar-bat-flow.md`** — the `0x07E2`-`0x07E5` site map, the
+  evidence that those sites belong to the PD image rather than the EC, and the
+  live probe still needed to say what (if anything) the EC does with those
+  bytes.
 
 ## Recompilation — status: toolchain proven, not attempted
 
@@ -81,4 +104,5 @@ Treat this as the honest state: a documented, reproducible starting point
 for a Ghidra 8051-processor-module project (`ghidra/` is a placeholder for
 that), not a finished decompiler. See the repo's GitHub issues for the
 concrete next steps, several of which are independently useful (e.g. mapping
-the 254 call sites referencing `0x07D0`) without requiring full coverage.
+the 254 call sites referencing `0x07D0` — which `trace_xdata_refs.py` now
+places in the PD image, not the EC) without requiring full coverage.

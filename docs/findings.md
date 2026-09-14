@@ -71,6 +71,51 @@ firmware default, not an EC-mapped device. `tuxedo-drivers`' `ite_8291_lb`
 already implements this protocol for PIDs `7000`/`7001`/`6010`; `6005` would
 be a new PID, likely a small addition rather than new driver work.
 
+### 3a. The battery-side lightbar registers: the reference count was counting the wrong program
+
+`0x07E2`-`0x07E5` (`LIGHTBAR_BAT_CTRL/RED/GREEN/BLUE` in `uniwill-laptop`'s
+layout) were the one part of §3 that looked alive: 15/9/4/10 direct references,
+against zero for the AC-side set. Tracing those sites
+(`../ec/annotations/lightbar-bat-flow.md`) shows the counts are real and the
+inference from them was not.
+
+All 38 sites are in a **second 8051 program sharing the flash dump** — an
+`ITE8850-PD` USB Power-Delivery image at file offset `0x20000`, with its own
+reset and interrupt vectors, its own C startup stub, none of the EC's Keil
+bank-switch stubs, and therefore its own XDATA allocation. Its `0x07E2` is not
+the EC's `0x07E2`. In that image the four bytes are ordinary variables inside a
+dense compiler-allocated block spanning `0x07CF`-`0x07E9` with no gaps: written
+and read as 16-bit big-endian pairs, compared with a 16-bit `subb`, and packed
+into bit-fields at `0x8F34`-`0x8F53`. The main EC image (`0x00000`-`0x17FFF`)
+references all four addresses **zero** times.
+
+The open question therefore narrows rather than closing: the reason to think
+the EC firmware handles these bytes is gone, but "zero direct references" is
+exactly the signal §4c retracted for `0x07B9`, and it carries the same
+indirect-addressing blind spot. `registers.yaml` moves them from
+`present-untested` to `unknown-not-absent`. **No write to `0x07E2`-`0x07E5`
+has ever been attempted on this machine**; the discriminating experiment is
+written up as a step-by-step probe in `../ec/annotations/lightbar-bat-flow.md`
+§5, for a human at the hardware.
+
+Two knock-on notes, since the same conflation reaches other entries:
+
+- `0x07D0`'s 254 references (§4d, and the `BATTERY_CHARGE_LIMIT_DOWN` entry in
+  `../ec/annotations/registers.yaml`) are **all** in the PD image; the EC image
+  references it zero times. The count is right; the "too busy to be a
+  single-purpose threshold byte" reading of it was a statement about the PD
+  firmware's variables. `DO-NOT-WRITE-BLIND` is unchanged — a byte Windows
+  demonstrably writes, with no traceable EC-side handler, is less understood
+  than before, not more — but "map the 254 call sites" is now a PD-firmware
+  task.
+- `0x07CC` (`USB_C_POWER_PRIORITY`, 6 refs) is in the same position.
+- `ec/tools/scan_refs.py` is unchanged and still correct for what it claims to
+  count. `ec/tools/trace_xdata_refs.py` splits a count per image. Every
+  live-confirmed register in §2 does have references in the EC image
+  (`BAT_CYCLE_COUNT`'s `0x04A6` has some in the PD image too, which changes
+  nothing about a register confirmed live), so the §4d validation set is not
+  affected by this.
+
 ## 4. The charge limit: two retractions, in order
 
 This is the part of the investigation that went wrong twice, in opposite
