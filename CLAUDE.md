@@ -27,6 +27,24 @@ Apply the same standard to anything you write here:
   correction next to it (see `docs/findings.md` §4a-4d for the pattern),
   don't silently edit history.
 
+## Nothing gets opened in another repository without explicit approval
+
+The mission (`docs/MISSION.md`) eventually means a PR against
+`Wer-Wolf/uniwill-laptop` or `tuxedo-drivers`, and issue #10 is tracking
+that. Until a human explicitly says to submit it, **no stage opens an
+issue or pull request anywhere other than this repository.** The
+deliverable for that work is a prepared patch and PR description *in this
+repo* (a file under a path like `upstream/`, or a diff attached to the
+issue) — never an actual `gh pr create`/`gh issue create` against another
+repository's slug, no matter how confident the plan or the CI-green PR is.
+
+This is mechanically backstopped as long as `AGENT_PUSH_TOKEN` stays
+scoped to this repository only, the way the setup docs ask for it — a
+call against another repo's slug then fails outright rather than needing
+the model to decline. Don't treat that as a substitute for the rule above;
+a token re-scoped later (an org-wide PAT, a broader grant) would remove
+the backstop silently, and the instruction needs to still hold on its own.
+
 ## Cloud agents cannot reach the hardware
 
 This pipeline runs on GitHub-hosted runners. There is no physical laptop

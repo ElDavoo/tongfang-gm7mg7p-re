@@ -210,6 +210,14 @@ jobs:
             either scope down to whatever doesn't depend on it, or plan no diff at all and say
             why — do not treat "blocked" as a reason the issue should have been refused.
 
+            The mission eventually means a pull request against an upstream repository
+            (`Wer-Wolf/uniwill-laptop`, `tuxedo-drivers`) — see issue #10 and CLAUDE.md. Never
+            plan to actually open that issue or pull request: the deliverable is the prepared
+            patch and description, committed in *this* repository, for a human to submit
+            manually. Put "submit it upstream" under out of scope every time, the same way the
+            workflow-files constraint above is handled, not only for issue #10 but for any issue
+            whose plan ends at an upstream contribution.
+
             CUSTOMISE: anything else this repository cannot have an agent do unattended belongs
             here, phrased the same way — as a thing to plan around and declare out of scope,
             not as a reason to refuse the issue. Signing keys and publishing credentials,
