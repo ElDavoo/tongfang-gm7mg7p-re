@@ -17,7 +17,10 @@ This file audits all 29 addresses in `registers.yaml`, one table row each, so
 the split is checkable rather than assertable. `registers.yaml` now carries
 `static_refs_main_ec:` and `static_refs_pd_image:` on every entry — an entry
 without them has not been audited — and `../tools/check_register_counts.py`
-recomputes both from the committed image and fails on a mismatch.
+recomputes both from the committed image and fails on a mismatch. §5 takes the
+same 29 addresses one level further and classifies what each site *does*, from
+`../tools/register_ref_table.py`, which re-derives the split and the access
+classes in one pass.
 
 **What a `0` here means.** "Not found by this method", never "absent". The
 indirect-addressing blind spot documented in `../../docs/findings.md` §4c
@@ -203,3 +206,192 @@ framing is that it is now a tested assumption rather than an untested one,
 and that 40 of the span's 1024 addresses collide between the images — so
 `0x04A6` was never special, only the only collision this audit's 29 addresses
 happened to include.
+
+## 5. Access direction per address
+
+A count says a site exists; it does not say the site accesses a register. Two
+things inflate a `MOV DPTR,#imm16` total without being an XDATA access at all:
+the instruction also builds **CODE** pointers (`movc a,@a+dptr`, `jmp @a+dptr`
+into a string or jump table — the boundary `ec-0x07d0-sites.md` §5 wrote down),
+and a site may hand DPTR to a subroutine, where nothing at the site says which
+direction the access has. This section classifies all 29 addresses' sites so
+those populations are visible rather than averaged into a number.
+
+**What a class does and does not mean.** `write` means an instruction stores to
+the address; it is not evidence the EC acts on the value — only a live
+behavioural test is (`../../docs/findings.md` §4a). `read` likewise means an
+instruction loads it. `handoff` is *unresolved*, not absent: the callee very
+likely performs the access, and `ec-0x07d0-sites.md` §3 resolved 79 of them one
+level deeper by decoding the callee's first instruction, which this table
+deliberately does not do. `none` ("no movx in window") is the weakest cell in
+the table and means only that the 8-instruction walk ended — usually at a
+branch — before any `movx`; see the three EC-side examples below. A `movc` or
+`jmp @a+dptr` class is the one that subtracts from a count's meaning: it says
+the site is about CODE at that number, not a register. Nothing here was
+measured on hardware.
+
+```console
+$ python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800
+| addr | register | total | main EC | PD | read | write | r+w | movc | jmp | handoff | none |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| `0x0740` | `PROJECT_ID` | 1 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 |
+| `0x0741` | `AP_OEM` | 35 | 35 | 0 | 25 | 0 | 10 | 0 | 0 | 0 | 0 |
+| `0x0743` | `CTGP_DB_CTRL / OFFSET` | 7 | 7 | 0 | 5 | 0 | 2 | 0 | 0 | 0 | 0 |
+| `0x0744` | `CTGP_DB_CTRL / OFFSET` | 1 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `0x0745` | `CTGP_DB_CTRL / OFFSET` | 1 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `0x0746` | `CTGP_DB_CTRL / OFFSET` | 1 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `0x074E` | `BIOS_OEM` | 4 | 4 | 0 | 2 | 0 | 2 | 0 | 0 | 0 | 0 |
+| `0x0765` | `SUPPORT_1` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `0x0766` | `SUPPORT_2` | 7 | 7 | 0 | 5 | 0 | 2 | 0 | 0 | 0 | 0 |
+| `0x0767` | `TRIGGER` | 10 | 10 | 0 | 8 | 0 | 2 | 0 | 0 | 0 | 0 |
+| `0x0768` | `SWITCH_STATUS` | 8 | 8 | 0 | 2 | 1 | 3 | 0 | 0 | 0 | 2 |
+| `0x0726` | `OEM_9` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `0x07A6` | `OEM_4` | 7 | 7 | 0 | 3 | 0 | 4 | 0 | 0 | 0 | 0 |
+| `0x07B9` | `CHARGE_CTRL` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `0x07D0` | `BATTERY_CHARGE_LIMIT_DOWN` | 254 | 0 | 254 | 157 | 8 | 2 | 0 | 0 | 79 | 8 |
+| `0x0748` | `LIGHTBAR_AC_CTRL / RED / GREEN / BLUE` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `0x0749` | `LIGHTBAR_AC_CTRL / RED / GREEN / BLUE` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `0x074A` | `LIGHTBAR_AC_CTRL / RED / GREEN / BLUE` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `0x074B` | `LIGHTBAR_AC_CTRL / RED / GREEN / BLUE` | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `0x07E2` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 15 | 0 | 15 | 7 | 4 | 0 | 0 | 0 | 4 | 0 |
+| `0x07E3` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 9 | 0 | 9 | 2 | 2 | 0 | 0 | 0 | 5 | 0 |
+| `0x07E4` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 4 | 0 | 4 | 3 | 1 | 0 | 0 | 0 | 0 | 0 |
+| `0x07E5` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 10 | 0 | 10 | 5 | 3 | 0 | 0 | 0 | 2 | 0 |
+| `0x078C` | `KBD_STATUS` | 7 | 7 | 0 | 4 | 0 | 3 | 0 | 0 | 0 | 0 |
+| `0x07CC` | `USB_C_POWER_PRIORITY` | 6 | 0 | 6 | 3 | 2 | 1 | 0 | 0 | 0 | 0 |
+| `0x043E` | `CPU_TEMP` | 15 | 15 | 0 | 14 | 0 | 0 | 0 | 0 | 0 | 1 |
+| `0x044F` | `GPU_TEMP` | 14 | 14 | 0 | 12 | 2 | 0 | 0 | 0 | 0 | 0 |
+| `0x04A6` | `BAT_CYCLE_COUNT` | 7 | 3 | 4 | 1 | 1 | 0 | 0 | 0 | 5 | 0 |
+| `0x04A7` | `BAT_CYCLE_COUNT` | 2 | 2 | 0 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
+19 entries / 29 addresses: class buckets sum to the site count and main + PD to the file-wide total for every address
+```
+
+`--csv` writes one row per site (`addr,register,file_offset,region,runtime,class,window`)
+so the table above is a group-by over committed-image data rather than a
+number to be taken on trust; the tool exits non-zero if the class buckets for
+any address fail to sum to its site count, or if main + PD fails to sum to the
+file-wide total.
+
+### 5.1 No CODE pointer contaminates any of the 29 — and the classifier can see one
+
+**Null result: the `movc` and `jmp` columns are zero for every address.** That
+extends `ec-0x07d0-sites.md` §5's finding, which covered only `0x07D0`'s 254,
+to all 29 addresses `registers.yaml` holds. No count in this repo is inflated
+by a string-table or jump-table pointer by this method.
+
+A column of zeroes is also what a classifier that cannot see the thing would
+print, so the branch was checked against sites that do have it. Image-wide
+there are 54 such sites across 48 addresses, none of them an address in
+`registers.yaml`, and `r2 -a 8051` agrees with the decode on both shapes:
+
+```console
+$ python3 ec/tools/make_bank_image.py ec/firmware/GMxMGxx_11.800 0 0x08000 /tmp/bank0.bin
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0xa6a4; pd 4' /tmp/bank0.bin
+            0x0000a6a4      9063be         mov dptr, #0x63be
+            0x0000a6a7      93             movc a, @a+dptr
+            0x0000a6a8      901803         mov dptr, #0x1803
+            0x0000a6ab      f0             movx @dptr, a
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0x1051; pd 4' /tmp/bank0.bin
+            0x00001051      901100         mov dptr, #0x1100
+            0x00001054      73             jmp @a+dptr
+            0x00001055      0a             inc r2
+            0x00001056      1e             dec r6
+```
+
+`0x63BE` is the canonical shape of the blind spot: a `90 63 be` that a count of
+"references to XDATA `0x63BE`" would have collected, and that is a table read
+in CODE. The two `movx` controls check the other direction — that an ordinary
+XDATA site is still classified as one:
+
+```console
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0x879d; pd 4' /tmp/bank0.bin
+            0x0000879d      900741         mov dptr, #0x0741
+            0x000087a0      e0             movx a, @dptr
+            0x000087a1      4420           orl a, #0x20
+            0x000087a3      f0             movx @dptr, a
+$ dd if=ec/firmware/GMxMGxx_11.800 of=/tmp/pd.bin bs=64k skip=2 count=1
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0x3478; pd 2' /tmp/pd.bin
+            0x00003478      9007d0         mov dptr, #0x07d0
+            0x0000347b      e0             movx a, @dptr
+```
+
+(the first is one of `0x0741`'s ten `r+w` rows, the second the `0x07D0` read
+`ec-0x07d0-sites.md` §4 decodes).
+
+### 5.2 Where the population is not mostly `movx`
+
+Five addresses have a non-`movx` share worth naming. None of them is a `movc`
+case; all are unresolved handoffs, and an unresolved handoff is not evidence of
+absence — the callee is where the access is:
+
+| addr | register | non-`movx` sites | which image |
+|---|---|---|---|
+| `0x04A6` | `BAT_CYCLE_COUNT` | 5 of 7 (handoff) | 4 PD, 1 `bank1` |
+| `0x07E3` | `LIGHTBAR_BAT_RED` | 5 of 9 (handoff) | all PD |
+| `0x07D0` | `BATTERY_CHARGE_LIMIT_DOWN` | 87 of 254 (79 handoff, 8 `none`) | all PD |
+| `0x07E2` | `LIGHTBAR_BAT_CTRL` | 4 of 15 (handoff) | all PD |
+| `0x07E5` | `LIGHTBAR_BAT_BLUE` | 2 of 10 (handoff) | all PD |
+
+`0x07D0`'s row is the one already resolved a level deeper: `ec-0x07d0-sites.md`
+§3 decodes the 25 callees and lands on 229 reads / 15 writes / 2
+read-modify-writes, so its 79 handoffs are unresolved *by this table*, not
+unresolved in this repo. `0x04A6`'s four PD handoffs are likewise already
+decoded, in `pd-xdata-overlap.md` §3 — every one of them calls the Keil
+`DPTR += A×B` helper at `0x10BC` or a variant of it, which is why those sites
+use the address as an arithmetic base and never touch the byte.
+(That file's §5.4 also checked `0x04A6` for CODE pointers by hand and found
+none, so one cell of §5.1's zero column was already established independently
+of this tool.)
+
+The `LIGHTBAR_BAT_*` handoffs have not been chased, and doing so is the obvious
+follow-up: the callees are named in the `--csv` `window` column
+(`0x35DA`, `0x10E8`, `0x9CC2`, `0x9CA4`, `0x1041`, `0x383A`, `0x10C8`,
+`0xB1F2`), and resolving them would say whether the PD image reads or writes
+those four bytes — still a PD-image question, not an EC-side one, and not a
+`status:` question either way.
+
+`0x04A6` is also the only one of the five with an EC-side non-`movx` site, at
+`bank1` runtime `0xDFD0`: it calls `0x888C`, which `pd-xdata-overlap.md` §2
+decodes as the 16-bit store of `R1`/`R2` into `0x04A6`/`0x04A7`. So that cell
+is a write one level down, and the EC-side reading of the entry is unchanged.
+
+Note what the table does *not* show: no EC-side address is handoff-dominated.
+Every main-EC site behind a `present-untested` or `confirmed-working` grading
+resolves to a `movx` at the site itself, except that one handoff and the three
+in §5.3.
+
+### 5.3 What a `none` cell actually is
+
+Three EC-side sites classify as "no `movx` in window", and all three are the
+walk giving up at a branch rather than a site that does nothing:
+
+```console
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0xa39c; pd 5' /tmp/bank0.bin
+            0x0000a39c      900768         mov dptr, #0x0768
+        ┌─< 0x0000a39f      30e606         jnb acc.6, 0xa3a8
+        │   0x0000a3a2      e0             movx a, @dptr
+        │   0x0000a3a3      54fd           anl a, #0xfd
+        │   0x0000a3a5      f0             movx @dptr, a
+```
+
+`0x0A848` (`0x0768`) is the same shape behind `cjne a,#0xa5`. `0x0E066`
+(`0x043E`) is the other idiom: a chain that picks a DPTR per sensor
+(`0x043E`, `0x043F`, …) and `sjmp`s to one shared load at `0xE091`, so the
+read is at the jump target rather than in the window:
+
+```console
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0xe091; pd 1' /tmp/bank0.bin
+            0x0000e091      e0             movx a, @dptr
+```
+
+All three sites
+do access the register; the branch is simply where a linear walk has to give
+up. `none` means "this method stopped", and reading
+it as "this site does not access the register" would be exactly the
+`docs/findings.md` §4c error in miniature. Eight more `none` cells sit in
+`0x07D0`'s PD population and are accounted for in `ec-0x07d0-sites.md` §3
+(seven `lcall 0xF739 ; mov dptr,#0x07d0 ; ret`, one `jnz`).
+
+**No `status:` value changed here, and no `static_refs*` number moved** —
+`check_register_counts.py` re-verifies all three counts per address and is the
+guard on that. Issue #32 owns the grading question this table feeds.

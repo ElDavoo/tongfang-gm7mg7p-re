@@ -31,7 +31,10 @@
 # The recorded numbers are reproducible from the committed image, and
 # ec/tools/check_register_counts.py recomputes them and fails on a mismatch.
 # The per-address audit, with the command that produced it, is in
-# ec/annotations/static-refs-audit.md.
+# ec/annotations/static-refs-audit.md. None of the three is a count of
+# *register accesses*: a site can build a CODE pointer or hand DPTR to a
+# subroutine instead. What each site does is classified per address in
+# 5 of that file, from ec/tools/register_ref_table.py.
 #   live           : read back on real hardware via regmap debugfs / /dev/mem
 #   dsdt           : mentioned in evidence/acpi/dsdt.dsl ECMG field list
 #
@@ -286,6 +289,13 @@ registers:
       is still undetermined, and no write to them has ever been attempted
       here -- lightbar-bat-flow.md 5 is the live probe that would settle
       it, for a human at the machine.
+      Classified by access direction (ec/annotations/static-refs-audit.md
+      5.2), 11 of the 38 PD sites resolve no further than "DPTR handed to a
+      subroutine" -- for 0x07E3 that is 5 of its 9, a majority of that
+      address's population. Those callees have not been decoded, so
+      how much of the PD image's use of these bytes is a read and how much a
+      write is only partly known; none of the 38 is a movc, so at least none
+      of the count is a CODE-pointer artefact.
 
   - name: KBD_STATUS
     addr: 0x078C
@@ -348,3 +358,9 @@ registers:
       0x04A6 as the base of strided address arithmetic and never access the
       byte, so the PD image is not a second writer of the cycle count --
       static evidence only, and the status here is unaffected either way.
+      0x04A6 is also the count in this file least made of direct accesses:
+      5 of its 7 sites hand DPTR to a subroutine rather than perform a movx
+      at the site (ec/annotations/static-refs-audit.md 5.2). All 5 are
+      resolved a level deeper elsewhere -- the 4 PD ones by the file above,
+      the EC-side one at 0xDFD0 by that file's 2 (a 16-bit store helper) --
+      so this is a shape of the count, not a gap in the evidence.
