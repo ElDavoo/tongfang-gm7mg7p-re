@@ -255,6 +255,12 @@ The four original signals are re-graded, not deleted, in
   ACPI for this at all, it talks to the EC via `ACPIDriver.sys`'s custom
   IOCTL (`windows/native/README.md`), a different path than the DSDT
   `OperationRegion`.
+  *(**Correction, see §4e.** "Windows doesn't go through ACPI for this at
+  all" is wrong: the custom IOCTL is `IOCTL_ACPI_EVAL_METHOD`, and the
+  method it evaluates writes into the same `ECMG` region. "ACPI can't
+  reach it" is also wrong — the byte is unnamed in the field list, not
+  outside the window. The conclusion this bullet supports, that the gap
+  is not evidence the EC lacks the register, survives both corrections.)*
 - `force=1` masking: still literally true (the flag exists and masks the
   feature) but is a *driver policy choice*, not evidence about the
   hardware — the driver is being conservative, correctly, about a register
@@ -284,12 +290,71 @@ for a simple threshold byte" don't obviously fit together.
 image, so the "used a lot" premise was never about this register; the
 do-not-write-blind flag stays, for the reason in §3b rather than this one.)*
 
+### 4e. The Windows write path, traced end to end
+
+§4c says Windows "talks to the EC via `ACPIDriver.sys`'s custom IOCTL, a
+different path than the DSDT `OperationRegion`." Both halves of that
+sentence are now checked, and the second half needs correcting: it is a
+different path than the DSDT's *named `ECMG` fields*, but it is still
+ACPI, and it lands in the same region those fields describe.
+
+`ACPIDriver.sys` and `ACPIDriverDll.dll` were statically disassembled
+(`windows/native/ACPIDriver.sys.analysis.md`, and the `.dll` file beside
+it; regenerate with `windows/tools/pe_triage.py` and
+`windows/tools/disasm.sh`). The chain, each link decoded from a committed
+file rather than inferred:
+
+1. `ACPIDriverDll.dll!WriteEC(addr, val)` opens `\\.\ACPIDriver` and sends
+   `DeviceIoControl` code `0x9C40A48C`, with `addr` as a 16-bit value at
+   buffer offset 0 and `val` at offset 4.
+2. `ACPIDriver.sys`'s handler for that code (`0x140002038`) packs those
+   into an `ACPI_EVAL_INPUT_BUFFER_COMPLEX` naming method `ECRW` and
+   forwards `IOCTL_ACPI_EVAL_METHOD` (`0x0032C004`) to `\Driver\ACPI`. The
+   driver contains no port-I/O instruction and imports no port-I/O
+   routine.
+3. `evidence/acpi/dsdt.dsl:50504` implements `ECRW` as
+   `MMRW(0xFE410000 + Arg0, One, Zero, Arg1)` — a byte write to physical
+   memory. All 21 methods the driver can name exist as methods of
+   `Device (INOU)`, `_HID "INOU0000"`.
+
+So a Windows write to `0x07B9` is a byte written at physical
+`0xFE4107B9`. That address is inside
+`OperationRegion (ECMG, SystemMemory, 0xFE410000, 0x00010000)`
+(`dsdt.dsl:52193`) — the very field list §4c cites. Its offsets are EC
+register addresses: `Offset(0x43E) CPTM` and `Offset(0x44F) VGAT` are the
+`CPU_TEMP` and `GPU_TEMP` entries `registers.yaml` marks
+`confirmed-working` against live hardware.
+
+**What this re-grades.** §4c's second signal — "the DSDT's `ECMG` field
+list steps over `0x7B9`" — was read as "ACPI can't reach it." It should
+have been read as "the BIOS didn't give that byte a name." The window
+covers it, and `ECRW` takes an arbitrary offset into the window, so ACPI
+reaches it fine. This is the same shape of error as the other two in this
+section: a gap in what one method can see, reported as a gap in the
+hardware.
+
+**What this does not change.** The failed live test still stands
+unexplained by this. The Linux-side write went through `uniwill-laptop`
+and read back correctly, so that path reaches the byte too; the paired
+UP/DOWN write of §4c is still the untested variable, and nothing here
+makes it more or less likely to work.
+
+**What it opens.** `0xFE4107B9` and `0xFE4107D0` are plain physical
+addresses in a region the BIOS already maps, so the paired write is
+reachable on Linux without the vendor driver and without an ACPI method
+call. Whether writing them that way behaves like the vendor path is a
+live question on the physical machine — no such test has been run, and
+none can be from here.
+
 ## 5. Net status going into the issue tracker
 
 - Charging-cap-on-Linux is an **open problem**, not a closed negative. The
   concrete next experiment (write both `0x07B9` and `0x07D0` together, then
   coulomb-count through the claimed cap exactly as in §4b) is unambiguous
-  and cheap to run.
+  and cheap to run. §4e adds a second way to run it — the same pair at
+  physical `0xFE4107B9`/`0xFE4107D0`, the address Windows' own writes land
+  at — which would distinguish "the EC ignores this pair" from "the
+  `uniwill-laptop` access path differs from the vendor's."
 - Lightbar is a **driver-scope problem, not a hardware problem** — claim
   `048D:6005` for `ite_8291_lb` and test.
 - Decrypting the anti-tamper-protected `BatteryProtection2` method bodies
