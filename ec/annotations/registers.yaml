@@ -292,10 +292,18 @@ registers:
       Classified by access direction (ec/annotations/static-refs-audit.md
       5.2), 11 of the 38 PD sites resolve no further than "DPTR handed to a
       subroutine" -- for 0x07E3 that is 5 of its 9, a majority of that
-      address's population. Those callees have not been decoded, so
-      how much of the PD image's use of these bytes is a read and how much a
-      write is only partly known; none of the 38 is a movc, so at least none
-      of the count is a CODE-pointer artefact.
+      address's population. Nine of those eleven have since been decoded one
+      level down (register_ref_table.py --callee-depth 1, per-site rows in
+      lightbar-bat-flow.md 3.4-3.5): 3 call a routine that loads from the
+      handed address, 6 call one that stores to it, and 2 hand DPTR on a
+      second time and stay unresolved. So the PD image's 38 sites are now 20
+      reads, 16 writes and 2 unresolved by this method -- instructions in the
+      PD image do store to these bytes, in runs that reach past 0x07E5 into
+      0x07E6-0x07E8, which is the compiler-allocated-block shape above and
+      not four control bytes. None of the 38 is a movc, so none of the count
+      is a CODE-pointer artefact. All of that is static decode of the PD
+      image only: it says nothing about the EC's own 0x07E2-0x07E5, and a
+      decoded store is not evidence anything acts on the value.
 
   - name: KBD_STATUS
     addr: 0x078C

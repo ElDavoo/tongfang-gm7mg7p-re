@@ -86,6 +86,45 @@ def runtime_addr(off: int, pd_verified: bool):
     return base + (off - lo)
 
 
+def offset_for_runtime(runtime: int, region: str):
+    """File offset of runtime address `runtime` as seen from code in `region`
+    -- the inverse of runtime_addr(), off the same REGIONS table so the two
+    cannot drift. None when the bytes are not reachable from that region.
+
+    For the banked main EC this assumes the ordinary Keil banking convention:
+    a target below 0x8000 is in the common area (mapped in every bank), and a
+    target at or above 0x8000 is in the *same* bank as the caller. This repo
+    has not verified that no cross-bank call exists in this image, and such a
+    call would be decoded against the wrong bank's bytes. A target at or above
+    0x8000 seen from the common area is unresolvable for the same reason --
+    nothing in the byte says which bank is mapped -- and returns None. The PD
+    image is flat, so nothing in it is affected by any of this.
+    """
+    home = next(((lo, hi, base) for name, lo, hi, base, _ in REGIONS
+                 if name == region and base is not None), None)
+    if home is None:
+        return None
+    lo, hi, base = home
+    if base == 0x8000 and runtime < 0x8000:
+        common_lo, common_base = next((lo2, base2) for name, lo2, _, base2, _
+                                      in REGIONS if name == "common")
+        return common_lo + (runtime - common_base)
+    if not base <= runtime < base + (hi - lo):
+        return None
+    return lo + (runtime - base)
+
+
+def call_target(raw: bytes):
+    """Absolute target of the `ljmp`/`lcall` classify() reports as a handoff.
+
+    Those two opcodes are the only handoff shapes classify() recognises;
+    `ajmp`/`acall` are not, and this does not change that. None for anything
+    else, so a caller can hand it any instruction from a walk()."""
+    if raw[0] not in (0x02, 0x12) or len(raw) < 3:
+        return None
+    return (raw[1] << 8) | raw[2]
+
+
 def walk(d: bytes, start: int, max_insns: int = 8):
     """Decode forward from a site until the first control-flow instruction."""
     out = []
@@ -103,7 +142,7 @@ def walk(d: bytes, start: int, max_insns: int = 8):
     return out
 
 
-def classify(insns):
+def classify(insns, skip: int = 1):
     """Summarise a walk: access direction, and how far `inc dptr` walks on.
 
     `MOV DPTR,#imm16` builds CODE pointers as well as XDATA ones, so a site
@@ -111,11 +150,16 @@ def classify(insns):
     and says nothing about a register of that number -- the blind spot
     ../annotations/ec-0x07d0-sites.md 5 warns about. Those two are named
     rather than folded into the "no movx" catch-all, which would read as
-    "the walk found nothing" when the walk in fact found the answer."""
+    "the walk found nothing" when the walk in fact found the answer.
+
+    `skip` is how many leading instructions carry no direction: 1 for a
+    reference site, whose first instruction is the `MOV DPTR` itself, and 0
+    for a walk that starts at a subroutine entry point, where the first
+    instruction is already an access on the DPTR the caller handed over."""
     reads = writes = movc = 0
     span = 1
     handoff = jmp_dptr = None
-    for _, raw, text in insns[1:]:
+    for _, raw, text in insns[skip:]:
         op = raw[0]
         if op == 0xE0:
             reads += 1

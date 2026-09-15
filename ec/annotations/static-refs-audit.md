@@ -222,8 +222,11 @@ the address; it is not evidence the EC acts on the value — only a live
 behavioural test is (`../../docs/findings.md` §4a). `read` likewise means an
 instruction loads it. `handoff` is *unresolved*, not absent: the callee very
 likely performs the access, and `ec-0x07d0-sites.md` §3 resolved 79 of them one
-level deeper by decoding the callee's first instruction, which this table
-deliberately does not do. `none` ("no movx in window") is the weakest cell in
+level deeper by decoding the callee's first instruction, which this table does
+not do by default. `register_ref_table.py --callee-depth 1` now does it for
+every address, splitting the column into `handoff->read`/`write`/`r+w`/
+`unresolved` (§5.2); the transcript pasted below is the depth-0 output, which
+is unchanged by that option. `none` ("no movx in window") is the weakest cell in
 the table and means only that the 8-instruction walk ended — usually at a
 branch — before any `movx`; see the three EC-side examples below. A `movc` or
 `jmp @a+dptr` class is the one that subtracts from a count's meaning: it says
@@ -343,12 +346,37 @@ use the address as an arithmetic base and never touch the byte.
 none, so one cell of §5.1's zero column was already established independently
 of this tool.)
 
-The `LIGHTBAR_BAT_*` handoffs have not been chased, and doing so is the obvious
-follow-up: the callees are named in the `--csv` `window` column
-(`0x35DA`, `0x10E8`, `0x9CC2`, `0x9CA4`, `0x1041`, `0x383A`, `0x10C8`,
-`0xB1F2`), and resolving them would say whether the PD image reads or writes
-those four bytes — still a PD-image question, not an EC-side one, and not a
-`status:` question either way.
+The `LIGHTBAR_BAT_*` handoffs have since been chased too, and the tool does
+the chasing rather than another hand table — `--callee-depth 1` re-buckets
+every handoff in this section by what the callee's own entry point does:
+
+```console
+$ python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-depth 1 \
+  | grep -E '0x04A6|0x07D0|0x07E2|0x07E3|0x07E5'
+| `0x07D0` | `BATTERY_CHARGE_LIMIT_DOWN` | 254 | 0 | 254 | 157 | 8 | 2 | 0 | 0 | 72 | 7 | 0 | 0 | 8 |
+| `0x07E2` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 15 | 0 | 15 | 7 | 4 | 0 | 0 | 0 | 2 | 1 | 0 | 1 | 0 |
+| `0x07E3` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 9 | 0 | 9 | 2 | 2 | 0 | 0 | 0 | 1 | 4 | 0 | 0 | 0 |
+| `0x07E5` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 10 | 0 | 10 | 5 | 3 | 0 | 0 | 0 | 0 | 1 | 0 | 1 | 0 |
+| `0x04A6` | `BAT_CYCLE_COUNT` | 7 | 3 | 4 | 1 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 4 | 0 |
+```
+
+(columns after `jmp` are `handoff->read`, `handoff->write`, `handoff->r+w`,
+`handoff->unresolved`, `none`.) Nine of the eleven `LIGHTBAR_BAT_*` handoffs
+resolve — 3 to a callee that loads, 6 to one that stores — and the remaining
+two hand DPTR on a second time, which stays `handoff->unresolved` because
+depth 2 is not attempted. `lightbar-bat-flow.md` §3.4 carries the per-site
+rows and §3.5 decodes each of the eight callees against `r2 -a 8051`. It is
+still a PD-image question, not an EC-side one, and not a `status:` question
+either way.
+
+**The two rows already resolved by hand are the cross-check, and the tool
+agrees with both.** `0x07D0`'s 79 come out 72 read / 7 write, exactly the
+split `ec-0x07d0-sites.md` §3 reached by hand. `0x04A6`'s single EC-side
+handoff comes out a write — the `0x888C` 16-bit store `pd-xdata-overlap.md` §2
+decodes — and its four PD-image ones stay unresolved, which is that file's §3
+result in the tool's vocabulary: they call the `0x10BC` `DPTR += A × B` family,
+which never dereferences DPTR, so there is no direction to report. Neither of
+those files needed a correction, and neither was edited for this.
 
 `0x04A6` is also the only one of the five with an EC-side non-`movx` site, at
 `bank1` runtime `0xDFD0`: it calls `0x888C`, which `pd-xdata-overlap.md` §2
