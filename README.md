@@ -15,18 +15,40 @@ controller and RGB/battery subsystems of a PCSpecialist-branded TongFang
 
 **Start here:** [`docs/findings.md`](docs/findings.md) — the full narrative,
 written to include the two points where an earlier conclusion turned out to
-be wrong and why, not just the parts that held up. [`docs/MISSION.md`](docs/MISSION.md)
-is the longer-term goal these three items sit under.
+be wrong and why, not just the parts that held up.
+
+## Mission
+
+Those three items are where the work started. The goal they sit under is
+bigger ([`docs/MISSION.md`](docs/MISSION.md) is the canonical copy):
+
+- **Functional:** unlock everything the BIOS and the EC on this machine have
+  to offer, and write the Linux interface for it: a kernel driver, either an
+  addition to upstream `uniwill-laptop` or a new driver where that's the
+  wrong fit (like `ite_8291_lb` for the lightbar). Where feasible, unlock
+  hidden/locked BIOS setup menus too.
+- **Technical:** that requires complete reverse engineering of all three
+  closed-source components in the stack: the Windows userspace service
+  (`GCUService.exe` and friends), the BIOS/UEFI firmware, and the EC
+  firmware.
+
+No single change finishes it. Progress is one more register's behaviour
+confirmed, one more Windows class decrypted, one more BIOS menu entry
+understood, one more upstream contribution prepared. The
+[issue tracker](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues) is the
+work queue.
 
 ## Automation
 
 Issues here run through [`agent-pipeline`](https://github.com/ElDavoo/agent-pipeline):
 file an issue, get a planned, implemented, reviewed, CI-passing pull
-request without clicking anything in between. `docs/agent-pipeline.md`
-covers what's specific to this copy, including a billing-plan limitation
-on this private repo that currently leaves the approval gate unenforced —
-read that before filing anything as someone other than the repo owner, or
-before this repo gains a collaborator or goes public.
+request without clicking anything in between. Agents run on GitHub-hosted
+runners with no access to the laptop or to Windows, so hardware and Windows
+issues come back as prepared scripts and procedures for a human to run,
+never as claimed results. `docs/agent-pipeline.md` covers what's specific
+to this copy. Issue and pull request creation is limited to collaborators,
+and anything filed by someone without write access waits for the owner's
+approval before an agent reads it.
 
 Every merged pull request is also read against `docs/MISSION.md` and the
 open issue list by `.github/workflows/agent-followups.yml`, which opens

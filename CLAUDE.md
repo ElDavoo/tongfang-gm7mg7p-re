@@ -1,9 +1,46 @@
 # CLAUDE.md
 
 Reverse-engineering repo for a TongFang GM7MG7P / Uniwill GM5MG7Y laptop's
-EC, BIOS, and Windows vendor stack. Read `docs/MISSION.md` first for why
-this repo exists, `docs/findings.md` for what's known so far. This file is
-about *how to work here*, not what's been found.
+EC, BIOS, and Windows vendor stack. `docs/findings.md` is what's known so
+far; the rest of this file is *how to work here*. First, what it's all for.
+
+## The mission
+
+`docs/MISSION.md` is the canonical copy. It's repeated here because every
+agent stage reads this file and not always that one, and a stage that
+doesn't know the goal optimises for closing its issue instead. If you change
+the mission, change it in `docs/MISSION.md`, here, and in `README.md`
+together.
+
+**Functional goal.** Unlock everything the BIOS and the EC on this machine
+have to offer, and write the Linux interface for it: a kernel driver, either
+an addition to upstream `uniwill-laptop` or a new driver where that's the
+wrong fit (e.g. `ite_8291_lb` for the lightbar). Where feasible, unlock
+hidden/locked BIOS setup menus too.
+
+**Technical goal.** That requires complete reverse engineering of all three
+closed-source components in the stack: the Windows userspace driver/service
+(`GCUService.exe` and friends), the BIOS/UEFI firmware, and the EC firmware.
+
+**What progress looks like.** No single PR finishes this. Progress is one
+more register's real behaviour confirmed, one more Windows class decrypted,
+one more BIOS menu entry understood, one more upstream contribution
+prepared. The issue tracker is the work queue, and it should not run dry
+while the goal is open: every merge is read against the mission by
+`agent-followups.yml`, and finishing an issue is expected to reveal zero or
+more new ones.
+
+**What this means for any single piece of work.**
+- Judge it by whether it moves one of the three components closer to fully
+  understood, or a feature closer to a Linux driver, not by whether the
+  issue's literal wording was met.
+- When a finding opens a new question (a register with a second writer, a
+  second firmware image in the dump, a method that won't decompile), say so
+  explicitly in the PR. That's what the follow-up pass turns into the next
+  issue.
+- The end product is upstream code, so evidence has to hold up to an
+  upstream maintainer: cited, reproducible from committed inputs, and
+  calibrated (next section).
 
 ## The rule that matters most: calibrate, don't overclaim
 
@@ -108,3 +145,10 @@ casually — the plan stage's push token has no `workflow` scope and cannot
 land such a change anyway, so an issue asking for one gets planned with
 that piece explicitly out of scope. Pipeline behaviour changes go through
 `ElDavoo/agent-pipeline` upstream, then get re-copied here.
+
+What differs from the template on purpose (details in
+`docs/agent-pipeline.md`): the plan prompt's hardware, Windows and upstream
+constraints; the review stage's blocking list, which holds PRs to this
+file's rules rather than the template's examples; `agent-followups.yml`'s
+mission prompt and label set; and `claude.yml`, which isn't from the
+template at all. Re-copying a template file means carrying those across.

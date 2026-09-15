@@ -32,8 +32,13 @@ only covers what's specific to *this* copy.
   hardware/Windows-access constraint from `CLAUDE.md`, so the plan stage
   scopes issues needing the physical laptop or a Windows box down to
   prep-work-only rather than planning a live test it cannot run.
-- **`.github/workflows/agent-followups.yml`** — not part of the upstream
-  template. Added here specifically so the issue queue doesn't dry up
+- **`.github/workflows/agent-review.yml`**'s blocking list — the template
+  ships example invariants from another project; this copy blocks on
+  `CLAUDE.md`'s rules instead (overclaiming, implied live tests,
+  silent retractions, `registers.yaml` conventions, anything opened outside
+  this repository, `vendor/` changes).
+- **`.github/workflows/agent-followups.yml`** — its prompt reads
+  `docs/MISSION.md`, and its label set is this repository's. Added here specifically so the issue queue doesn't dry up
   while `docs/MISSION.md`'s goal is nowhere near done; see its own header
   comment for what it does and why it uses `AGENT_PUSH_TOKEN` rather than
   the default `GITHUB_TOKEN` to open issues.
@@ -59,76 +64,36 @@ session in parallel with whatever the pipeline was doing on it.
 
 `claude.yml` was kept — a mention-triggered conversation is a real
 capability the autonomous pipeline doesn't have — but joined to the shared
-`agent-pipeline` concurrency group, and it doesn't check who wrote the
-mention the way `agent-plan.yml`'s triage job checks who filed an issue.
-Both points, and exactly what would need to change if either stops being
-true, are in the comment at the top of that file now; don't restate them
-here where they can drift out of sync with it.
+`agent-pipeline` concurrency group (on the job, not the workflow), and
+since the repository went public it only runs for a mention by the owner,
+a member or a collaborator. The reasoning for both is in the comment at the
+top of that file; don't restate it here where it can drift out of sync.
 
-## Setup steps still needed
+## Setup state
 
-Done from this session, against the GitHub API: the six labels, the
-`agent-approval` environment (created, but see below), and the Actions
-setting that lets `github-actions[bot]` approve pull requests
-(`can_approve_pull_request_reviews`).
+Everything the upstream README's setup section asks for is in place, as of
+2026-09-15, when the repository went public:
 
-**Two setup steps are blocked by this account's billing plan, not by
-anything this session could configure differently:**
+- Both secrets (`CLAUDE_CODE_OAUTH_TOKEN`, `AGENT_PUSH_TOKEN`). The PAT is
+  fine-grained, scoped to this repository only, with Contents, Pull
+  requests, Issues and Actions write, and no `workflow` scope. Actions
+  write is what `gh workflow run` needs; without it every hand-over from
+  plan to implement fails with `HTTP 403: Resource not accessible by
+  personal access token`.
+- The labels, including `agent:queued`.
+- The `agent-approval` environment, with the owner as required reviewer.
+- A ruleset on `main`: pull request with one approval (stale approvals
+  dismissed on push), required checks `gates` and `workflows`, no deletion
+  or force-push, repository admins as bypass actors.
+- Actions settings: default `GITHUB_TOKEN` read-only (every workflow
+  declares its own permissions), Actions allowed to approve pull requests,
+  approval required for workflow runs from any outside contributor's
+  fork, auto-merge on, merged branches deleted.
+- Issue and pull request creation limited to collaborators. The pipeline
+  is unaffected: it creates issues and pull requests with
+  `AGENT_PUSH_TOKEN`, which is the owner's.
 
-- **Required reviewers on the `agent-approval` environment** — the API
-  call to attach the protection rule failed: *"Please ensure the billing
-  plan supports the required reviewers protection rule."* This is a known
-  GitHub limitation: environment protection rules on a **private** repo
-  need GitHub Team or Enterprise; they're free on a **public** repo at any
-  plan. The environment exists but currently holds no reviewers and blocks
-  nothing — every issue would sail through the gate the pipeline's README
-  describes as its main defence against untrusted content.
-- **The branch ruleset on `main`** — the API call failed with *"Upgrade to
-  GitHub Pro or make this repository public to enable this feature."*
-  Rulesets on a private repo need at least GitHub Pro. Without it, nothing
-  stops a direct push to `main` bypassing review, and there's no
-  server-side requirement that CI (`gates`, `workflows`) pass before merge.
-
-**Why this is a live gap rather than latent**: `docs/MISSION.md`'s
-"backlog should not run dry" premise means this repo runs on
-`AGENT_PUSH_TOKEN` for both the plan stage's trust check and the
-follow-ups workflow's issue creation, and the whole design leans on the
-approval gate as the backstop for anything unattended. Right now that
-backstop is unenforced.
-
-Practical read for a single-owner private repo today: since nobody but
-the owner can file an issue here at all, the trust check would resolve to
-"trusted" regardless, so the missing gate doesn't currently let anything
-through it wouldn't have let through anyway. That stops being true the
-moment this repo gains a collaborator or goes public — do one of the
-following *before* either happens:
-
-- Upgrade to GitHub Pro (~$4/month at the time of writing) — unlocks both
-  the ruleset and, since Pro repos can still be private, the environment
-  protection rule stays gated on Team/Enterprise unless the repo goes
-  public too. Check GitHub's current docs for which plan actually unlocks
-  environment reviewers on a private repo before assuming Pro alone is
-  enough.
-- Or make the repository public — unlocks both features on any plan, at
-  the cost the private-repo choice was made to avoid (see the top-level
-  `README.md`'s note on `vendor/`).
-- Or accept the gap deliberately while the repo stays private and
-  single-owner, and revisit before either condition changes.
-
-Two more setup steps need a human with credentials this session doesn't
-have and shouldn't ask for in chat:
-
-1. **`CLAUDE_CODE_OAUTH_TOKEN`** — run `claude setup-token` locally (it's
-   an interactive OAuth flow) and add the result as a repository secret:
-   `gh secret set CLAUDE_CODE_OAUTH_TOKEN --repo ElDavoo/tongfang-gm7mg7p-re`.
-2. **`AGENT_PUSH_TOKEN`** — create a fine-grained PAT at
-   <https://github.com/settings/personal-access-tokens/new>, scoped to
-   this repository only, with **Contents: write**, **Pull requests:
-   write**, **Issues: write**, **Actions: write**, and explicitly
-   *without* `workflow` scope (see the upstream README's "Who is trusted"
-   section for why). Then:
-   `gh secret set AGENT_PUSH_TOKEN --repo ElDavoo/tongfang-gm7mg7p-re`.
-
-Until both secrets are set, every stage will run and stall (`agent:stalled`,
-then `agent:stuck` after three retries) rather than silently doing nothing —
-worth knowing so the first few issues filed don't look like they vanished.
+While the repository was private, required environment reviewers and
+rulesets were both unavailable on its billing plan, so the approval gate
+enforced nothing and PR #21 merged without a completed review. Going
+public is what closed both gaps.
