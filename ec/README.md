@@ -49,6 +49,14 @@ into `r2 -a 8051` with no stitching needed.
   programs. The mnemonics are a linear best-effort walk, not a disassembler —
   `--r2-commands` prints the seek lines to confirm anything load-bearing, and
   the indirect-addressing blind spot above applies here unchanged.
+- **`tools/disasm8051.py`** — the opcode tables `trace_xdata_refs.py` decodes
+  with, plus a CLI for reading a window of instructions at a file offset
+  (`--at`) and for measuring how many nearby anchors a linear walk syncs onto
+  it from (`--converge`). Not a disassembler: linear only, no branch
+  following, no code/data separation. `python3 tools/disasm8051.py --self-test`
+  re-decodes the two windows `annotations/charge-profile-flow.md` transcribed
+  from `r2` by hand and diffs against them — run it after touching either
+  table.
 - **`tools/find_banks.py`** — locates the bank-switch stubs and scores which
   file offset each bank maps to. Re-run this against any other firmware dump
   before trusting the offsets in the table above.
@@ -70,6 +78,10 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
 - **`annotations/charge-profile-flow.md`** — full traced control flow for the
   three charge profiles, including the manual-control gate that made the
   systemd per-boot reapply necessary.
+- **`annotations/ec-0x07d0-sites.md`** — all 254 `0x07D0` reference sites
+  enumerated and classified, with `annotations/ec-0x07d0-sites.csv` as the
+  machine-readable table behind it. Answers what the sites *are*; deliberately
+  does not answer what the EC does with the address of the same number.
 - **`annotations/lightbar-bat-flow.md`** — the `0x07E2`-`0x07E5` site map, the
   evidence that those sites belong to the PD image rather than the EC, and the
   live probe still needed to say what (if anything) the EC does with those
@@ -103,6 +115,7 @@ needs:
 Treat this as the honest state: a documented, reproducible starting point
 for a Ghidra 8051-processor-module project (`ghidra/` is a placeholder for
 that), not a finished decompiler. See the repo's GitHub issues for the
-concrete next steps, several of which are independently useful (e.g. mapping
-the 254 call sites referencing `0x07D0` — which `trace_xdata_refs.py` now
-places in the PD image, not the EC) without requiring full coverage.
+concrete next steps, several of which are independently useful (e.g. the 254
+call sites referencing `0x07D0`, which `trace_xdata_refs.py` places in the PD
+image rather than the EC and `annotations/ec-0x07d0-sites.md` now maps one by
+one) without requiring full coverage.

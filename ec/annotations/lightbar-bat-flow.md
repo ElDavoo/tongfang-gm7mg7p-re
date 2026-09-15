@@ -285,6 +285,8 @@ That does not change the `DO-NOT-WRITE-BLIND` status — if anything a byte with
 no traceable EC-side handler is *less* understood, not more — but the "too
 busy" argument no longer supports what it was doing, and mapping those 254
 sites (the next step `docs/findings.md` §5 flags) is now a question about the
-PD firmware, not the EC. Worth re-checking `0x07CC`
+PD firmware, not the EC. That map has since been made —
+[`ec-0x07d0-sites.md`](ec-0x07d0-sites.md) — and lands where this section
+predicted: a PD-image index variable, nothing EC-side. Worth re-checking `0x07CC`
 (`USB_C_POWER_PRIORITY`, 6 refs, all in the PD image) on the same basis before
 anyone treats its reference count as EC-side evidence.
