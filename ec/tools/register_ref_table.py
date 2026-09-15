@@ -31,9 +31,18 @@ sum to the site count, and main + PD to the file-wide total -- and exits
 non-zero if either fails, so a silently dropped site is a failure rather
 than a quieter table.
 
+`--callee-depth 1` resolves the handoff bucket one level down, by decoding
+the called routine's own entry point the way ec-0x07d0-sites.md 3 and
+pd-xdata-overlap.md 3 did by hand for 0x07D0 and 0x04A6. It inherits every
+limit above *twice over*, once for the site's walk and once for the callee's:
+a callee that hands DPTR on again, ends its window at a branch, or is not
+reachable from the calling site's region stays `handoff->unresolved`, which
+is a verdict of this method and not a statement that the callee does nothing.
+
 Usage:
     python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800
     python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --csv > sites.csv
+    python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-depth 1
 """
 import argparse
 import collections
@@ -43,8 +52,11 @@ import sys
 import yaml
 
 from check_register_counts import DEFAULT_YAML, counts_for
-from trace_xdata_refs import (PD_MARKER, classify, mnemonic, region_of,
-                              runtime_addr, sites_for, walk)
+from trace_xdata_refs import (PD_MARKER, call_target, classify, mnemonic,
+                              offset_for_runtime, region_of, runtime_addr,
+                              sites_for, walk)
+
+HANDOFF = "handed to lcall/ljmp (unresolved)"
 
 # Bucket label -> markdown column header. Order is the table's column order,
 # and the labels are what --csv writes, so the two stay the same vocabulary.
@@ -54,15 +66,37 @@ CLASSES = (
     ("read+write", "r+w"),
     ("movc (CODE pointer)", "movc"),
     ("jmp @a+dptr", "jmp"),
-    ("handed to lcall/ljmp (unresolved)", "handoff"),
+    (HANDOFF, "handoff"),
     ("no movx in window", "none"),
 )
+
+# What the handoff column becomes at --callee-depth 1. The unresolved bucket
+# keeps the depth-0 label: it is the same verdict, reached one level further
+# in, so nothing has to special-case it.
+HANDOFF_CLASSES = (
+    ("handed to lcall/ljmp -> callee reads", "handoff->read"),
+    ("handed to lcall/ljmp -> callee writes", "handoff->write"),
+    ("handed to lcall/ljmp -> callee reads+writes", "handoff->r+w"),
+    (HANDOFF, "handoff->unresolved"),
+)
+
+
+def classes_for(callee_depth: int):
+    """Column order for a depth. At depth 1 the single handoff column is
+    replaced in place by the four it resolves into, so the two modes never
+    both describe the same site and depth 0 stays byte-identical to before."""
+    if not callee_depth:
+        return CLASSES
+    out = []
+    for label, short in CLASSES:
+        out.extend(HANDOFF_CLASSES if label == HANDOFF else [(label, short)])
+    return tuple(out)
 
 
 def bucket(access: str) -> str:
     """Map one classify() string onto one of CLASSES."""
     if access.startswith("DPTR handed"):
-        return "handed to lcall/ljmp (unresolved)"
+        return HANDOFF
     if access.startswith("movc"):
         return "movc (CODE pointer)"
     if access.startswith("jmp"):
@@ -77,6 +111,51 @@ def bucket(access: str) -> str:
     return "no movx in window"
 
 
+def resolve_handoff(d: bytes, off: int, insns, pd_verified: bool):
+    """(bucket, callee runtime, callee window) for one handoff site.
+
+    The callee's entry point is decoded with the same walk, classified with
+    skip=0 because the instruction at the entry point is itself the access.
+    Anything that is not a plain movx direction -- another handoff, a movc, a
+    walk that ends at a branch -- stays in the unresolved bucket with the
+    callee's own verdict as the window, so the reason is on the row."""
+    # walk() stops at the first control-flow instruction, so the lcall/ljmp
+    # classify() saw is the last one it decoded.
+    target = call_target(insns[-1][1])
+    if target is None:
+        return HANDOFF, None, "handoff is not an lcall/ljmp"
+    region = region_of(off, pd_verified)[0]
+    coff = offset_for_runtime(target, region)
+    if coff is None:
+        return HANDOFF, target, f"callee not reachable from region {region}"
+    cinsns = walk(d, coff)
+    access = classify(cinsns, skip=0)
+    window = " ; ".join(" ".join(mn.split()) for _, _, mn in cinsns)
+    read, write = "read" in access, "write" in access
+    if read and write:
+        return "handed to lcall/ljmp -> callee reads+writes", target, window
+    if read:
+        return "handed to lcall/ljmp -> callee reads", target, window
+    if write:
+        return "handed to lcall/ljmp -> callee writes", target, window
+    return HANDOFF, target, f"{access} | {window}"
+
+
+def site_rows(d: bytes, addr: int, pd_verified: bool, callee_depth: int):
+    """One (offset, region, runtime, bucket, callee, callee_window) per site.
+    The markdown table is a group-by over these, so both outputs classify the
+    same sites the same way."""
+    for o in sites_for(d, addr):
+        insns = walk(d, o)
+        label = bucket(classify(insns))
+        callee = window = None
+        if callee_depth and label == HANDOFF:
+            label, callee, window = resolve_handoff(d, o, insns, pd_verified)
+        yield (o, region_of(o, pd_verified)[0], runtime_addr(o, pd_verified),
+               label, callee, window,
+               " ; ".join(" ".join(mn.split()) for _, _, mn in insns[1:]))
+
+
 def addresses(regs):
     """(name, addr) for every address in registers.yaml, file order."""
     for r in regs:
@@ -86,16 +165,15 @@ def addresses(regs):
             yield name, addr
 
 
-def row_for(d: bytes, addr: int, pd_verified: bool):
+def row_for(d: bytes, addr: int, pd_verified: bool, rows):
     """(total, main, pd, {bucket: count}) for one address."""
     total, main, pd = counts_for(d, addr, pd_verified)
-    hist = collections.Counter()
-    for o in sites_for(d, addr):
-        hist[bucket(classify(walk(d, o)))] += 1
+    hist = collections.Counter(r[3] for r in rows)
     return total, main, pd, hist
 
 
-def reconcile(name: str, addr: int, total: int, main: int, pd: int, hist) -> int:
+def reconcile(name: str, addr: int, total: int, main: int, pd: int, hist,
+              classes) -> int:
     problems = 0
     classified = sum(hist.values())
     if classified != total:
@@ -110,7 +188,7 @@ def reconcile(name: str, addr: int, total: int, main: int, pd: int, hist) -> int
               f"{total} -- some site is outside the mapped regions, "
               "re-derive them with find_banks.py", file=sys.stderr)
         problems += 1
-    unknown = set(hist) - {label for label, _ in CLASSES}
+    unknown = set(hist) - {label for label, _ in classes}
     if unknown:
         print(f"{name} 0x{addr:04X}: unbucketed class(es) {sorted(unknown)} -- "
               "classify() gained a verdict bucket() does not know",
@@ -119,44 +197,52 @@ def reconcile(name: str, addr: int, total: int, main: int, pd: int, hist) -> int
     return problems
 
 
-def write_markdown(d: bytes, regs, pd_verified: bool) -> int:
+def write_markdown(d: bytes, regs, pd_verified: bool, callee_depth: int) -> int:
     problems = 0
+    classes = classes_for(callee_depth)
     header = ["addr", "register", "total", "main EC", "PD"]
-    header += [short for _, short in CLASSES]
+    header += [short for _, short in classes]
     align = ["---", "---"] + ["---:"] * (len(header) - 2)
     print("| " + " | ".join(header) + " |")
     print("|" + "|".join(align) + "|")
     for name, addr in addresses(regs):
-        total, main, pd, hist = row_for(d, addr, pd_verified)
-        problems += reconcile(name, addr, total, main, pd, hist)
+        rows = list(site_rows(d, addr, pd_verified, callee_depth))
+        total, main, pd, hist = row_for(d, addr, pd_verified, rows)
+        problems += reconcile(name, addr, total, main, pd, hist, classes)
         # The parenthetical half of a name is commentary ("(Windows-only
         # address, ...)"), and one of them is longer than the rest of the
         # row put together; --csv keeps the name verbatim for grepping.
         short_name = name.split(" (")[0]
         cells = [f"`0x{addr:04X}`", f"`{short_name}`", str(total), str(main), str(pd)]
-        cells += [str(hist.get(label, 0)) for label, _ in CLASSES]
+        cells += [str(hist.get(label, 0)) for label, _ in classes]
         print("| " + " | ".join(cells) + " |")
     return problems
 
 
-def write_csv(d: bytes, regs, pd_verified: bool) -> int:
+def write_csv(d: bytes, regs, pd_verified: bool, callee_depth: int) -> int:
     """One row per site. The markdown table is a group-by over this, so a
-    reader can re-derive it without re-running anything."""
+    reader can re-derive it without re-running anything. At depth 1 the two
+    extra columns carry the callee the class came from, so a row's verdict
+    can be checked against an independent disassembler."""
     problems = 0
+    classes = classes_for(callee_depth)
     w = csv.writer(sys.stdout)
-    w.writerow(["addr", "register", "file_offset", "region", "runtime",
-                "class", "window"])
+    head = ["addr", "register", "file_offset", "region", "runtime", "class",
+            "window"]
+    if callee_depth:
+        head += ["callee", "callee_window"]
+    w.writerow(head)
     for name, addr in addresses(regs):
-        total, main, pd, hist = row_for(d, addr, pd_verified)
-        problems += reconcile(name, addr, total, main, pd, hist)
-        for o in sites_for(d, addr):
-            region = region_of(o, pd_verified)[0]
-            rt = runtime_addr(o, pd_verified)
-            insns = walk(d, o)
-            w.writerow([f"0x{addr:04X}", name, f"0x{o:05X}", region,
-                        f"0x{rt:04X}" if rt is not None else "",
-                        bucket(classify(insns)),
-                        " ; ".join(" ".join(mn.split()) for _, _, mn in insns[1:])])
+        rows = list(site_rows(d, addr, pd_verified, callee_depth))
+        total, main, pd, hist = row_for(d, addr, pd_verified, rows)
+        problems += reconcile(name, addr, total, main, pd, hist, classes)
+        for o, region, rt, label, callee, callee_window, window in rows:
+            cells = [f"0x{addr:04X}", name, f"0x{o:05X}", region,
+                     f"0x{rt:04X}" if rt is not None else "", label, window]
+            if callee_depth:
+                cells += [f"0x{callee:04X}" if callee is not None else "",
+                          callee_window or ""]
+            w.writerow(cells)
     return problems
 
 
@@ -170,6 +256,9 @@ def main() -> int:
                     help="write one row per site on stdout instead of the markdown table")
     ap.add_argument("--markdown", action="store_true",
                     help="markdown table (the default; accepted so a pasted command can be explicit)")
+    ap.add_argument("--callee-depth", type=int, choices=(0, 1), default=0,
+                    help="1: split the handoff bucket by what the called routine's "
+                         "own entry point does with DPTR (default 0, site only)")
     args = ap.parse_args()
 
     d = open(args.firmware, "rb").read()
@@ -183,7 +272,8 @@ def main() -> int:
     with open(args.registers) as f:
         regs = yaml.safe_load(f)["registers"]
 
-    problems = (write_csv if args.csv else write_markdown)(d, regs, pd_verified)
+    problems = (write_csv if args.csv else write_markdown)(
+        d, regs, pd_verified, args.callee_depth)
     addrs = sum(1 for _ in addresses(regs))
     if problems:
         print(f"{problems} reconciliation problem(s) across {len(regs)} entries "
