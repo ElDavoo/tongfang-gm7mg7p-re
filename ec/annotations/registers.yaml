@@ -126,7 +126,8 @@ registers:
   - name: CHARGE_CTRL (numeric threshold)
     addr: 0x07B9
     bits: "0-6 value, bit 7 REACHED"
-    sources: [uniwill-laptop, ecspec-3.1.6.0(BATTERY_CHARGE_LIMIT_UP), dsdt, live]
+    sources: [uniwill-laptop, ecspec-3.1.6.0(BATTERY_CHARGE_LIMIT_UP), dsdt,
+              acpidriver-3.9.18.0(ECRR/ECRW), live]
     static_refs: 0
     status: unknown-not-absent
     note: >
@@ -146,10 +147,17 @@ registers:
       (evidence/battery-traces/2026-09-09-threshold80.csv) -- but that test
       never wrote the paired DOWN register (see next entry), which Windows
       always sets together with UP.
+      The Windows write path is now traced end to end (docs/findings.md 4e,
+      windows/native/ACPIDriver.sys.analysis.md): ACPIDriverDll!WriteEC ->
+      IOCTL 0x9C40A48C -> ACPI method ECRW -> byte write at physical
+      0xFE410000 + 0x07B9. Status is unchanged -- that is a decoded path,
+      not an observed effect, and the DSDT ECMG gap it re-grades was never
+      what made this entry uncertain.
 
   - name: BATTERY_CHARGE_LIMIT_DOWN (Windows-only address, no uniwill-laptop equivalent)
     addr: 0x07D0
-    sources: [ecspec-3.1.6.0(BATTERY_CHARGE_LIMIT_DOWN)]
+    sources: [ecspec-3.1.6.0(BATTERY_CHARGE_LIMIT_DOWN),
+              acpidriver-3.9.18.0(ECRR/ECRW)]
     static_refs: 254
     static_refs_main_ec: 0
     static_refs_pd_image: 254
@@ -181,6 +189,11 @@ registers:
       in the EC image. DO-NOT-WRITE-BLIND stands; the paired UP/DOWN write
       in docs/findings.md 5 is still the experiment that would settle it,
       and is still a human step.
+      Reachable by the same ECRW path as the UP register (docs/findings.md
+      4e): physical 0xFE4107D0. Unlike 0x07B9 this offset IS named in the
+      DSDT ECMG field list, as DBD1 (with DBD2 at 0x07D1) -- what DBD1 is
+      for is not established, and reading the vendor's name as "the resume
+      threshold" would be a guess.
 
   - name: LIGHTBAR_AC_CTRL / RED / GREEN / BLUE
     addr: [0x0748, 0x0749, 0x074A, 0x074B]

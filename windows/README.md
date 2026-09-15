@@ -59,12 +59,16 @@ reproduces the extraction from those into plain PE/.NET assemblies.
 
 `vendor/control-center-3.9.18.0/ACPIDriver/{ACPIDriver.sys,ACPIDriver.inf,acpidriver.cat}`
 binds to `ACPI\INOU0000`, the exact device ID `uniwill-laptop` also matches.
-Its `.inf` calls it a "System" class filter driver; log strings (`ACPIDriver
-SendDownStreamIrp`, `ACPI_EVAL_OUTPUT_BUFFER_SIGNATURE`) indicate it's a thin
-IOCTL-to-ACPI-method-evaluation shim, not where the charge-limit logic
-lives — that's consistent with the logic living in `GCUService.exe`
-(userspace) as found above. Not yet actually disassembled (it's a native PE,
-needs Ghidra/IDA/r2, not ilspycmd); see `native/README.md`.
+Its `.inf` calls it a "System" class filter driver. Both it and
+`ACPIDriverDll.dll` are now disassembled (`native/README.md`, and the two
+analysis files it links): the driver is an IOCTL-to-ACPI-method-evaluation
+shim with no port I/O of its own, so the charge-limit logic does live in
+`GCUService.exe` userspace as assumed above. What it forwards, though, is
+a general hardware-access kit rather than `_DSM` — 21 ACPI methods
+including `ECRR`/`ECRW`, an EC register read/write pair addressed by
+16-bit address, which the DSDT implements as a byte access at physical
+`0xFE410000 + addr`. `tools/pe_triage.py` and `tools/disasm.sh` regenerate
+every number in those write-ups.
 
 ## What's proven vs. what needs a Windows box
 
