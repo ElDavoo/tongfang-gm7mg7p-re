@@ -110,17 +110,23 @@ is not one: its 7 sites are `bank0=5`, `bank1=2`, no PD image. `USB_C_POWER_PRIO
 already says the count is not EC-side evidence, and re-grading it is a
 vocabulary question this audit deliberately does not open.
 
-Two results worth naming because they were not known before this audit:
+Two results worth naming:
 
 - **`0x04A6` (`BAT_CYCLE_COUNT`) is the only split address outside
   `0x0700`-`0x07FF`**: 3 of its 7 sites are in the EC image and 4 in the PD
-  image. Its status is confirmed-working from a live read (445 cycles), and
-  a live confirmation is not weakened by where static sites sit. What the PD
-  image does with its own `0x04A6` is untouched by this and unanswered.
-- **The PD contamination is confined to five addresses** — `0x04A6`,
-  `0x07CC`, `0x07D0`, `0x07E2`-`0x07E5` — of which four were already known
-  (`lightbar-bat-flow.md` §6). Every other address in the file is either
-  wholly EC-side or has no sites at all. That is a measurement over the 29
+  image. That it has PD-image sites at all was already noted in
+  `docs/findings.md` §3a ("has some in the PD image too"); the 3/4 split and
+  the "only one outside the range" part are new here. Its status is
+  confirmed-working from a live read (445 cycles), and a live confirmation is
+  not weakened by where static sites sit. What the PD image does with its own
+  `0x04A6` is untouched by this and unanswered.
+- **The PD contamination reaches seven addresses** — `0x04A6`, `0x07CC`,
+  `0x07D0`, `0x07E2`-`0x07E5` — and none of the seven is a new discovery:
+  `0x07E2`-`0x07E5` are `lightbar-bat-flow.md` §1 and §3, `0x07D0` and
+  `0x07CC` are §6 of that file, and `0x04A6` is `docs/findings.md` §3a. What
+  this audit adds is that the set is exactly these seven and that each count
+  is machine-checkable: every other address in the file is either wholly
+  EC-side or has no sites at all. That is a measurement over the 29
   addresses `registers.yaml` holds; it is not a statement about addresses
   nobody has looked at.
 
