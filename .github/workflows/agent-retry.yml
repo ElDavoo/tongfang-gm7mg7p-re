@@ -389,6 +389,13 @@ jobs:
         run: |
           set -euo pipefail
 
+          # The stage is optional -- see the top of agent-followups.yml -- so a copy without it
+          # skips this sweep rather than failing on a workflow that is not there.
+          if ! gh workflow view agent-followups.yml >/dev/null 2>&1; then
+            echo "no follow-up stage in this repository"
+            exit 0
+          fi
+
           since=$(date -u -d "-${LOOKBACK_DAYS} days" +%Y-%m-%dT%H:%M:%SZ)
           merged=$(gh pr list --state merged --limit 50 --json number,headRefOid,mergedAt \
                      | jq -r --arg since "$since" '[ .[] | select(.mergedAt >= $since) ]
