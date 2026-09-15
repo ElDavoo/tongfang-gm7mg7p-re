@@ -16,13 +16,13 @@ name: Claude · mention
 #     duplicated that stage's job with none of its trust model, and every PR would otherwise
 #     have been reviewed twice by two independently-configured mechanisms.
 #
-# What's still true of this file, unchanged, and worth knowing rather than silently fixing:
-# the `if:` below checks only for the literal text "@claude" -- unlike agent-plan.yml's
-# collaborator-permission triage, it does not check who wrote it. On a private single-owner
-# repo that is nobody but the owner; it stops being nobody the day this repo gains a
-# collaborator or goes public, at which point anyone who can comment can run an agent session
-# with this action's full default tool access and no approval gate. Add a triage job matching
-# agent-plan.yml's if either of those happens, rather than assume this comment still applies.
+# Who may trigger it: only the owner, members and collaborators, by the event's
+# author_association. Added the day this repository went public. claude-code-action refuses an
+# actor without write access on its own, but only once its job has started -- by then the job has
+# taken the shared `agent-pipeline` group, and a third arrival cancels whichever run was pending.
+# Unfiltered, any stranger's "@claude" comment could displace a pipeline stage. author_association
+# is in the event payload, so this needs no API call and fits in the `if:`. That makes the job
+# skip before it asks for the group.
 
 on:
   issue_comment:
@@ -37,10 +37,14 @@ on:
 jobs:
   claude:
     if: |
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
-      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')
+        && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')
+        && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')
+        && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.review.author_association)) ||
+      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude'))
+        && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association))
     # On the job, not the workflow: this workflow's own trigger list fires on every issue/PR
     # comment and every issue opened, almost none of which mention "@claude". A workflow-level
     # group is claimed before the `if:` above is ever evaluated, so every one of those events
