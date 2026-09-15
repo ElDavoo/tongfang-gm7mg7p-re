@@ -38,17 +38,25 @@ into `r2 -a 8051` with no stitching needed.
 
 - **`tools/scan_refs.py`** — counts direct `MOV DPTR,#addr` references to a
   given XDATA address. Fast way to check "does this EC firmware build
-  implement register X". Validated 20/20 against live-hardware ground truth
-  (see `docs/findings.md`), but has a known blind spot for pointer/indirect
+  implement register X". Every count comes out split `ec=`/`pd=` across the
+  two programs in this dump, with the two-programs caveat in its own preamble,
+  so a bare file-wide total can't be quoted out of it by a reader who skipped
+  this README. Validated 20/20 against live-hardware ground truth (see
+  `docs/findings.md`), but has a known blind spot for pointer/indirect
   addressing — treat "0 refs" as "not found by this method", not "absent".
-- **`tools/trace_xdata_refs.py`** — same `MOV DPTR,#addr` sites as
-  `scan_refs.py`, but reports *which image* each one is in (common area, a
-  CODE bank, or the separate PD image above) and decodes the access direction
-  from the opcodes that follow. Use it before reading anything into a
-  `scan_refs.py` total, since that total is file-wide and this dump holds two
-  programs. The mnemonics are a linear best-effort walk, not a disassembler —
+- **`tools/trace_xdata_refs.py`** — same `MOV DPTR,#addr` sites and the same
+  image split as `scan_refs.py`, but down to the individual site: which region
+  each one is in (common area, a CODE bank, or the separate PD image above),
+  its runtime address, and the access direction decoded from the opcodes that
+  follow. Reach for it when *which sites* matters rather than how many. The
+  mnemonics are a linear best-effort walk, not a disassembler —
   `--r2-commands` prints the seek lines to confirm anything load-bearing, and
   the indirect-addressing blind spot above applies here unchanged.
+- **`tools/check_register_counts.py`** — recomputes every `static_refs`,
+  `static_refs_main_ec` and `static_refs_pd_image` in
+  `annotations/registers.yaml` from the image and exits non-zero on a mismatch
+  or on an entry missing the split. Run by `.github/scripts/agent-gates.sh`;
+  the numbers it guards are tabulated in `annotations/static-refs-audit.md`.
 - **`tools/disasm8051.py`** — the opcode tables `trace_xdata_refs.py` decodes
   with, plus a CLI for reading a window of instructions at a file offset
   (`--at`) and for measuring how many nearby anchors a linear walk syncs onto
@@ -75,6 +83,10 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   driver or the Windows service touches, cross-referenced against static-scan
   results and live-hardware behaviour. This is the primary research output;
   start here.
+- **`annotations/static-refs-audit.md`** — the per-image reference count for
+  every address in `registers.yaml`, the command that produced it, and the
+  subset of it that backs the static-scan validation in `docs/findings.md`
+  §4d. Read it before arguing from any reference count in this repo.
 - **`annotations/charge-profile-flow.md`** — full traced control flow for the
   three charge profiles, including the manual-control gate that made the
   systemd per-boot reapply necessary.

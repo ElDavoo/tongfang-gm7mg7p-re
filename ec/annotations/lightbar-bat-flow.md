@@ -38,9 +38,11 @@ $ python3 ec/tools/trace_xdata_refs.py ec/firmware/GMxMGxx_11.800 \
 0x07E5: 10 direct MOV DPTR site(s)  pd-image=10
 ```
 
-15/9/4/10 is exactly what `scan_refs.py` reports and what
-`annotations/registers.yaml` and the issue both cite — the two tools agree on
-*where the bytes are*; they disagree only about what a file-wide total means.
+15/9/4/10 is exactly what `scan_refs.py` reports as the file-wide total and
+what `annotations/registers.yaml` and the issue both cite — the two tools agree
+on *where the bytes are*; they disagreed only about what a file-wide total
+means, and `scan_refs.py` now prints the same `ec=`/`pd=` split rather than the
+bare total that caused this.
 Drop `--counts-only` for the per-site decode, add `--r2-commands` for
 paste-able seek lines.
 

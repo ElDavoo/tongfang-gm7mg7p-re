@@ -109,12 +109,21 @@ Two knock-on notes, since the same conflation reaches other entries:
   than before, not more — but "map the 254 call sites" is now a PD-firmware
   task.
 - `0x07CC` (`USB_C_POWER_PRIORITY`, 6 refs) is in the same position.
-- `ec/tools/scan_refs.py` is unchanged and still correct for what it claims to
-  count. `ec/tools/trace_xdata_refs.py` splits a count per image. Every
-  live-confirmed register in §2 does have references in the EC image
-  (`BAT_CYCLE_COUNT`'s `0x04A6` has some in the PD image too, which changes
-  nothing about a register confirmed live), so the §4d validation set is not
-  affected by this.
+- `ec/tools/scan_refs.py` was correct for what it claimed to count but handed
+  out a bare file-wide total, which is the number that caused this; it now
+  prints the same `ec=`/`pd=` split `ec/tools/trace_xdata_refs.py` does.
+  All 29 addresses in `../ec/annotations/registers.yaml` have since been
+  audited per image — the table is `../ec/annotations/static-refs-audit.md`,
+  and `ec/tools/check_register_counts.py` re-derives every number in it from
+  the committed image. Measured result: each of the 10 live-working addresses
+  the repo records an address for has references in the EC image, and the 4
+  live-negative ones have none in either image, so the §4d validation set is
+  not affected by this. `BAT_CYCLE_COUNT`'s `0x04A6` turns out to be split
+  3 EC-side / 4 PD-side, which changes nothing about a register confirmed
+  live. The caveat on that sentence is the audit's own: §4d's 20 registers
+  include features (`PRIMARY_FAN`/`SECONDARY_FAN`, `TOUCHPAD_TOGGLE`,
+  `USB_POWERSHARE`) whose EC addresses are nowhere in this repo, so they
+  could not be checked either way.
 
 ### 3b. The 254 `0x07D0` sites, one by one
 
@@ -289,6 +298,16 @@ for a simple threshold byte" don't obviously fit together.
 *(Those sites have since been disassembled — §3b. They are all in the PD
 image, so the "used a lot" premise was never about this register; the
 do-not-write-blind flag stays, for the reason in §3b rather than this one.)*
+
+*(The per-image numbers behind this validation are tabulated in
+`../ec/annotations/static-refs-audit.md` §3 — every address `registers.yaml`
+holds whose status came from live observation, 14 of them. That set is not
+provably the same 20: this validation was never enumerated register by
+register here, and several §2 features (the fans, the touchpad toggle, USB
+powershare) have no EC address anywhere in this repo, so they are named in the
+audit as unresolvable rather than guessed at. "The scan predicted all 20
+correctly" therefore still rests on the original testing notes; what is
+re-derivable from committed files is the 14.)*
 
 ### 4e. The Windows write path, traced end to end
 

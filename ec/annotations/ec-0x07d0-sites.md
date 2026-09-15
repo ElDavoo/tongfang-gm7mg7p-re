@@ -28,7 +28,13 @@ guess and is not made.
 
 ```console
 $ python3 ec/tools/scan_refs.py ec/firmware/GMxMGxx_11.800 0x07D0
-0x07D0  refs=254   referenced   0x07D0
+This dump holds two 8051 programs; ec= counts sites in the EC firmware
+(common area + CODE banks), pd= sites in the separate ITE8850-PD image,
+whose XDATA map is unrelated. A pd-only count is not EC-side evidence.
+A zero means 'not found by this scan', never 'absent' -- see the
+indirect-addressing blind spot in docs/findings.md.
+
+0x07D0  refs=254   ec=0     pd=254   referenced in the PD image ONLY, not by the EC   0x07D0
 
 $ python3 ec/tools/trace_xdata_refs.py ec/firmware/GMxMGxx_11.800 0x07D0 --counts-only
 0x07D0: 254 direct MOV DPTR site(s)  pd-image=254

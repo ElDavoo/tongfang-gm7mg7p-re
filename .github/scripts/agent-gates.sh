@@ -61,6 +61,14 @@ check_scan_refs_smoke_test() {
   echo "$out" | grep -q 'refs=15' && echo "$out" | grep -q 'referenced'
 }
 
+# The per-image reference counts in registers.yaml are the evidence several
+# statuses rest on, and a file-wide total hiding PD-image references is the
+# mistake docs/findings.md §3a had to correct. This recomputes every count
+# from the committed image, so the audit stays checkable rather than trusted.
+check_register_counts() {
+  python3 ec/tools/check_register_counts.py ec/firmware/GMxMGxx_11.800
+}
+
 check_python_syntax() {
   local f rc=0
   for f in ec/tools/*.py; do
@@ -93,6 +101,7 @@ check_doc_links() {
 
 gate 'registers.yaml'  check_registers_yaml
 gate 'scan_refs.py smoke test' check_scan_refs_smoke_test
+gate 'register counts'  check_register_counts
 gate 'python syntax'   check_python_syntax
 gate 'shellcheck'      check_shellcheck
 gate 'doc links'       check_doc_links
