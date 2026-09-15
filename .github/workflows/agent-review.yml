@@ -100,16 +100,36 @@ jobs:
             catch a change breaking, and it is the standard you are holding this to.
 
             Block on, and only on:
-            - a correctness bug, including a broken invariant CLAUDE.md names (SessionRepository's
-              idempotence and its no-counting-across-a-boot rule; the widget composed-tree shape;
-              device-identity keying on the last two octets; day bucketing by ZoneId);
-            - a gate weakened rather than satisfied — a lowered coverage floor, a new lint.xml
-              suppression, a lint baseline, a deleted or defanged assertion;
-            - a user-visible string added to `values/` but not to every translated locale;
-            - a schema change without a migration;
-            - work that does not actually implement the issue, or that quietly does more than
-              the issue asked;
-            - a missing test for behaviour the repository would normally pin.
+            - an overclaim -- the rule CLAUDE.md puts above every other. That means: a zero-hit
+              static scan written up as "absent" rather than "not found by this method"; an
+              accepted write or matching readback written up as "works"; a claim that cites no
+              file in `evidence/`, `windows/decompiled/`, `ec/firmware/` or a tool run in this
+              diff; or a confident phrasing where the evidence only supports a hedged one;
+            - anything stating or implying a live test happened -- a register read back, a
+              behaviour observed, a program run on Windows or on the laptop -- unless it is cited
+              from a file already in `evidence/`. This pipeline has no hardware and no Windows
+              machine; hardware work ships as preparation for a human to run;
+            - a claim that is wrong on the evidence in the repository: check it yourself. Re-run
+              the tool the PR relies on against the committed firmware (`ec/tools/*.py`,
+              `ec/firmware/`), or `grep` the decompiled source for the symbol the PR cites,
+              rather than trusting the PR's summary of what it found;
+            - a retraction done by silent edit: an earlier conclusion in `docs/findings.md` or
+              `ec/annotations/registers.yaml` rewritten or deleted instead of left visible with a
+              correction next to it (the `docs/findings.md` §4 pattern);
+            - `ec/annotations/registers.yaml` breaking its conventions: a `status:` value outside
+              the existing vocabulary, or a register whose status the PR's own evidence changes
+              left un-updated in the same PR;
+            - an issue or pull request opened, or prepared to be opened automatically, against
+              any repository other than this one -- upstream work ships as a patch and
+              description committed here, for a human to submit;
+            - `vendor/` binaries modified, regenerated or removed -- they are committed inputs;
+            - a gate weakened rather than satisfied -- `.github/scripts/agent-gates.sh` checks
+              relaxed or a tool's self-test deleted or defanged;
+            - work that does not actually implement the issue, or that quietly does more than the
+              issue asked;
+            - a new tool without a way to check it: an analysis script with no self-test or no
+              recorded known-answer run against the committed firmware, when its output is what
+              the PR's claims rest on.
 
             Do not block on style, naming, or preference. A second pass runs after you and leaves
             those inline on the pull request; they are not yours to raise here. A change that is
