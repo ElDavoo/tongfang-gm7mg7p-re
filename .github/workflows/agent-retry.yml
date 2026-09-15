@@ -369,9 +369,8 @@ jobs:
 
       # Not in the upstream template: agent-followups.yml is this repository's own stage, and
       # it can be displaced like any other. Its trace is a recent merge with neither a finished
-      # event run of that workflow on the pull request's head commit nor the bot's
-      # `agent-followups-done` marker (a dispatched run's head commit is main's, so the marker is
-      # the only way to recognise one). Placed after implement and before plan: it only proposes
+      # event run of that workflow on the pull request's head commit nor a finished dispatched one
+      # (recognised by its markers -- see the top of agent-followups.yml). Placed after implement and before plan: it only proposes
       # new issues, so it matters less than finishing the work already in flight, but a plan
       # would draw from the issues it opens.
       #
@@ -403,22 +402,27 @@ jobs:
                         --json headSha,conclusion --jq '.[] | select(.conclusion == "success") | .headSha')
 
           while read -r pr sha <&3; do
-            if grep -qxF "$sha" <<<"$done_shas"; then
-              continue
-            fi
             bodies=$(gh api --paginate --slurp "repos/${GITHUB_REPOSITORY}/issues/${pr}/comments" \
                        | jq -c '[.[] | .[] | select(.user.login == "github-actions[bot]" and .user.type == "Bot") | .body]')
-            if [ "$(jq '[.[] | select(contains("<!-- agent-followups-done -->"))] | length' <<<"$bodies")" -gt 0 ]; then
-              continue
-            fi
+            # The last of the two markers decides, when there is one: `done` last means the latest
+            # pass finished, `queued` last means a dispatched pass never did. With neither, no pass
+            # was ever dispatched, and run history on the head commit is the only record.
+            last=$(jq -r '[.[] | (if contains("<!-- agent-followups-done -->") then "done"
+                                  elif contains("<!-- agent-followups-queued -->") then "queued"
+                                  else empty end)] | last // "none"' <<<"$bodies")
+            case "$last" in
+              done) continue ;;
+              none) if grep -qxF "$sha" <<<"$done_shas"; then continue; fi ;;
+            esac
             started=$(jq '[.[] | select(contains("<!-- agent-followups-queued -->"))] | length' <<<"$bodies")
             if [ "$started" -ge "$MAX_RETRIES" ]; then
               echo "PR #$pr: follow-ups started $started times already — skipping it"
               continue
             fi
 
+            # No comment here: the dispatched run's own `queue` job posts the queued marker, so a
+            # start is counted once whether this sweep or a human dispatched it.
             echo "pipeline idle — proposing follow-ups for PR #$pr"
-            gh pr comment "$pr" --body "Proposing follow-ups for this merge now — the pipeline runs one agent at a time and this pass never got its turn. <!-- agent-followups-queued -->"
             GH_TOKEN="$DISPATCH_TOKEN" gh workflow run agent-followups.yml -f pr="$pr"
             echo "PIPELINE_STARTED=true" >> "$GITHUB_ENV"
             exit 0

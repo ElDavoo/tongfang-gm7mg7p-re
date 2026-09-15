@@ -31,7 +31,10 @@ name: Agent · followups
 # no finished run of this workflow and dispatches it with the pull request's number -- which is
 # what the `workflow_dispatch` trigger is for, and also how to run it by hand for an older merge.
 # A dispatched run's head commit is main's, not the pull request's, so it cannot be recognised by
-# run history the way an event run is; the last step leaves a marker comment instead.
+# run history the way an event run is. Instead it leaves two markers on the pull request: the
+# `queue` job posts `agent-followups-queued` straight away, outside the concurrency group, and the
+# last step posts `agent-followups-done`. A queued marker with no done marker after it is a
+# dispatched pass that was displaced -- the same trick agent-plan.yml's `agent:queued` label plays.
 
 on:
   pull_request:
@@ -46,8 +49,32 @@ on:
 permissions: {}
 
 jobs:
+  # Dispatch only, and outside the group, so the trace is written even when the job below is about
+  # to be displaced. An event run needs none: a displaced one shows in run history as a cancelled
+  # run on the pull request's head commit, which is what the sweep reads for it. Posting the marker
+  # here rather than from the sweep also counts a hand-started pass towards the retry bound.
+  queue:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Mark the pass as queued
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ inputs.pr }}
+        run: |
+          gh pr comment "$PR" --body "Follow-up pass for this merge queued — the pipeline runs one agent at a time. <!-- agent-followups-queued -->"
+
   followups:
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+    needs: [queue]
+    # always(): an event run skips `queue`, and a skipped need would skip this job too.
+    if: >-
+      always()
+      && needs.queue.result != 'failure'
+      && (github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true)
     # On the job, not the workflow: `pull_request: closed` fires on every close, most of which
     # are not merges, and a workflow-level group claims its slot before this `if:` runs. Same
     # bug, same fix, as claude.yml -- see that file's comment for the confirmed evidence.
