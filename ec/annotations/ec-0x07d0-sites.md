@@ -55,7 +55,11 @@ one names the command that re-derives it.
 Drop `--csv` for the per-site decode, add `--r2-commands` for paste-able
 `r2 -a 8051` seek lines (radare2 is not installed on the CI runner, so
 nothing here was produced by it — the commands are there so a human with r2
-can spot-check any site against an independent disassembler). Individual
+can spot-check any site against an independent disassembler). **Correction:
+radare2 *is* installed on the runner** — `.github/actions/project-setup/action.yml`
+installs it, and `pd-xdata-overlap.md` was produced by running it there. The
+parenthesis above is left as written; what is still true of *this* file is
+that nothing in it was produced by r2. Individual
 windows below were produced with `ec/tools/disasm8051.py`, whose opcode
 tables are pinned by `--self-test` against the two windows
 `charge-profile-flow.md` transcribed from r2 by hand:

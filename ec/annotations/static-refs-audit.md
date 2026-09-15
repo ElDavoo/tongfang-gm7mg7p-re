@@ -8,6 +8,11 @@ XDATA map is its own — the conflation that had `LIGHTBAR_BAT_*` recorded as
 present in firmware that references it zero times (`../../docs/findings.md`
 §3a).
 
+When this file was written, "whose XDATA map is its own" was an assumption
+inherited from the two programs being separate, and is left standing above
+as it was written. It has since been tested against the one address that
+collides — see §4 — and survived, with the hedge that test carries.
+
 This file audits all 29 addresses in `registers.yaml`, one table row each, so
 the split is checkable rather than assertable. `registers.yaml` now carries
 `static_refs_main_ec:` and `static_refs_pd_image:` on every entry — an entry
@@ -119,7 +124,9 @@ Two results worth naming:
   the "only one outside the range" part are new here. Its status is
   confirmed-working from a live read (445 cycles), and a live confirmation is
   not weakened by where static sites sit. What the PD image does with its own
-  `0x04A6` is untouched by this and unanswered.
+  `0x04A6` is untouched by this and unanswered. (Answered since, in
+  `pd-xdata-overlap.md`: it is the base of strided address arithmetic, not a
+  counter. §4.)
 - **The PD contamination reaches seven addresses** — `0x04A6`, `0x07CC`,
   `0x07D0`, `0x07E2`-`0x07E5` — and none of the seven is a new discovery:
   `0x07E2`-`0x07E5` are `lightbar-bat-flow.md` §1 and §3, `0x07D0` and
@@ -176,3 +183,23 @@ only a patch and a `BASE_COMMIT` (`../../linux/patches/`). Filling those rows
 would mean inventing addresses, so they are left out and named here instead.
 Resolving them needs the driver source pulled at that commit and its address
 defines read off; that is a follow-up issue, not a gap quietly dropped.
+
+## 4. The separate-maps premise, tested
+
+`0x04A6` was the lever: the only address in §2's table with sites in both
+images, so the only one where "the PD image's `0x04A6` is not the EC's" could
+be checked rather than assumed. `pd-xdata-overlap.md` decodes all seven sites
+and surveys both images across `0x0400`-`0x07FF`. **Verdict: the maps look
+independent as far as that evidence goes** — the EC image maintains
+`0x04A6`/`0x04A7` as a 16-bit counter incremented together, while all four PD
+sites use `0x04A6` as the base of strided address arithmetic and the PD image
+never references `0x04A7` at all — with the hedge that static code shape is
+not memory topology, and that only a runtime observation on the machine can
+tell a genuinely separate map from two programs fighting over one.
+
+No status in `registers.yaml` changed, and none of the `unknown-not-absent`
+gradings is re-read on the strength of this. What that file adds for §2's
+framing is that it is now a tested assumption rather than an untested one,
+and that 40 of the span's 1024 addresses collide between the images — so
+`0x04A6` was never special, only the only collision this audit's 29 addresses
+happened to include.

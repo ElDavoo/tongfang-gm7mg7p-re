@@ -120,7 +120,10 @@ Two knock-on notes, since the same conflation reaches other entries:
   live-negative ones have none in either image, so the §4d validation set is
   not affected by this. `BAT_CYCLE_COUNT`'s `0x04A6` turns out to be split
   3 EC-side / 4 PD-side, which changes nothing about a register confirmed
-  live. The caveat on that sentence is the audit's own: §4d's 20 registers
+  live. Those seven sites have since been decoded — the split is the one
+  place the "separate XDATA maps" premise could be tested, and it held:
+  `../ec/annotations/pd-xdata-overlap.md`. The caveat on that sentence is
+  the audit's own: §4d's 20 registers
   include features (`PRIMARY_FAN`/`SECONDARY_FAN`, `TOUCHPAD_TOGGLE`,
   `USB_POWERSHARE`) whose EC addresses are nowhere in this repo, so they
   could not be checked either way.

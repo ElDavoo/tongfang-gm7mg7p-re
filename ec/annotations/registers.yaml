@@ -12,7 +12,11 @@
 #                    with its own vectors and its own XDATA map. Refs in the PD
 #                    image are not refs to an EC register. ec/tools/trace_xdata_refs.py
 #                    splits a count per image. See
-#                    ec/annotations/lightbar-bat-flow.md.)
+#                    ec/annotations/lightbar-bat-flow.md. "Its own XDATA map"
+#                    was an assumption until 0x04A6, the one address with
+#                    sites in both images, was decoded both ways in
+#                    ec/annotations/pd-xdata-overlap.md; it held there, on
+#                    static evidence, which is not the same as proven.)
 #
 # reference-count keys (all three are direct MOV DPTR,#addr site counts,
 # and all three inherit the blind spot in the "absent" note below):
@@ -340,3 +344,7 @@ registers:
       unchanged -- it is confirmed live, and where the static sites sit
       cannot weaken a live read. What the PD image's 4 sites do is a
       separate, unanswered question about that program.
+      Since answered, in ec/annotations/pd-xdata-overlap.md: all 4 use
+      0x04A6 as the base of strided address arithmetic and never access the
+      byte, so the PD image is not a second writer of the cycle count --
+      static evidence only, and the status here is unaffected either way.
