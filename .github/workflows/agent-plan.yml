@@ -96,6 +96,8 @@ jobs:
         id: who
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # No checkout in this job, so gh cannot infer the repository from a git remote.
+          GH_REPO: ${{ github.repository }}
           EVENT: ${{ github.event_name }}
           EVENT_ISSUE: ${{ github.event.issue.number }}
           EVENT_AUTHOR: ${{ github.event.issue.user.login }}
@@ -168,6 +170,8 @@ jobs:
       - name: Record the approval
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # No checkout in this job, so gh cannot infer the repository from a git remote.
+          GH_REPO: ${{ github.repository }}
           APPROVER: ${{ github.actor }}
           ISSUE: ${{ needs.triage.outputs.issue }}
         run: |
@@ -222,6 +226,8 @@ jobs:
         id: issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # No checkout in this job, so gh cannot infer the repository from a git remote.
+          GH_REPO: ${{ github.repository }}
           EVENT: ${{ github.event_name }}
           ISSUE: ${{ needs.triage.outputs.issue }}
           EVENT_TITLE: ${{ github.event.issue.title }}
