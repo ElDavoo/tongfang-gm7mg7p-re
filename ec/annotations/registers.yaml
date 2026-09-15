@@ -11,9 +11,23 @@
 #                    and a separate ITE8850-PD USB-PD image at 0x20000-0x2FFFF,
 #                    with its own vectors and its own XDATA map. Refs in the PD
 #                    image are not refs to an EC register. ec/tools/trace_xdata_refs.py
-#                    splits a count per image; entries where that split matters
-#                    carry a static_refs_main_ec key below. See
+#                    splits a count per image. See
 #                    ec/annotations/lightbar-bat-flow.md.)
+#
+# reference-count keys (all three are direct MOV DPTR,#addr site counts,
+# and all three inherit the blind spot in the "absent" note below):
+#   static_refs          : file-wide total over all 256 KiB, as scan_refs.py
+#                          reports it. Kept verbatim; it is the number older
+#                          notes in this repo quote.
+#   static_refs_main_ec  : sites in the EC firmware itself (file 0x00000-0x17FFF:
+#                          common area + CODE banks 0 and 1).
+#   static_refs_pd_image : sites in the ITE8850-PD image (file 0x20000-0x2FFFF),
+#                          which are references to a different program's XDATA.
+# Every entry carries the split; an entry without it has not been audited.
+# The recorded numbers are reproducible from the committed image, and
+# ec/tools/check_register_counts.py recomputes them and fails on a mismatch.
+# The per-address audit, with the command that produced it, is in
+# ec/annotations/static-refs-audit.md.
 #   live           : read back on real hardware via regmap debugfs / /dev/mem
 #   dsdt           : mentioned in evidence/acpi/dsdt.dsl ECMG field list
 #
@@ -35,6 +49,8 @@ registers:
     addr: 0x0740
     sources: [uniwill-laptop, ecspec-3.1.6.0, live]
     static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
     status: confirmed-working
     note: "reads 0x0F = PROJECT_ID_CML_GAMING on this board"
 
@@ -43,6 +59,8 @@ registers:
     bit: 0
     sources: [uniwill-laptop, live]
     static_refs: 35
+    static_refs_main_ec: 35
+    static_refs_pd_image: 0
     status: confirmed-working
     note: >
       Gate for the charge-profile write path (see docs/findings.md).
@@ -55,14 +73,18 @@ registers:
     addr: [0x0743, 0x0744, 0x0745, 0x0746]
     sources: [uniwill-laptop]
     static_refs: [7, 1, 1, 1]
+    static_refs_main_ec: [7, 1, 1, 1]
+    static_refs_pd_image: [0, 0, 0, 0]
     status: present-untested
-    note: "NVIDIA_CTGP_CONTROL feature bits, not yet exercised live"
+    note: "NVIDIA_CTGP_CONTROL feature bits, not yet exercised live; all 10 sites are EC-side, so the count that makes this present-untested is not PD contamination (ec/annotations/static-refs-audit.md)"
 
   - name: BIOS_OEM (FN_LOCK_STATUS)
     addr: 0x074E
     bit: 4
     sources: [uniwill-laptop, live]
     static_refs: 4
+    static_refs_main_ec: 4
+    static_refs_pd_image: 0
     status: confirmed-working
     note: "Fn+F10 verified physically to toggle F-key behaviour"
 
@@ -70,6 +92,8 @@ registers:
     addr: 0x0765
     sources: [uniwill-laptop]
     static_refs: 0
+    static_refs_main_ec: 0
+    static_refs_pd_image: 0
     status: absent
     note: "driver reads this for capability bits (SUPER_KEY_LOCK, LIGHTBAR, FAN_BOOST); not referenced by this firmware build"
 
@@ -77,12 +101,23 @@ registers:
     addr: 0x0766
     sources: [uniwill-laptop]
     static_refs: 7
+    static_refs_main_ec: 7
+    static_refs_pd_image: 0
     status: present-untested
+    note: >
+      Status rests on the reference count alone, so it was the entry most
+      at risk from the file-wide/PD conflation corrected for 0x07E2-0x07E5.
+      The audit (ec/annotations/static-refs-audit.md) puts all 7 sites in
+      the EC image (bank0=5, bank1=2) and none in the PD image, so the
+      count still says what the status claims it says. Still not exercised
+      live.
 
   - name: TRIGGER
     addr: 0x0767
     sources: [uniwill-laptop, live]
     static_refs: 10
+    static_refs_main_ec: 10
+    static_refs_pd_image: 0
     status: confirmed-working
     note: "TRIGGER_SUPER_KEY_LOCK bit flips SWITCH_STATUS; used for super-key toggle test"
 
@@ -91,6 +126,8 @@ registers:
     bit: 0
     sources: [uniwill-laptop, live]
     static_refs: 8
+    static_refs_main_ec: 8
+    static_refs_pd_image: 0
     status: confirmed-working
     note: "physically confirmed: Super key went dead when bit cleared"
 
@@ -99,6 +136,8 @@ registers:
     bit: 3
     sources: [uniwill-laptop]
     static_refs: 0
+    static_refs_main_ec: 0
+    static_refs_pd_image: 0
     status: absent
     note: >
       Write via driver was accepted (EC bit visibly flipped) but firmware
@@ -114,6 +153,8 @@ registers:
     bits: [4, 5]
     sources: [uniwill-laptop, ecspec-3.1.6.0(BatteryLimitationMode), live]
     static_refs: 7
+    static_refs_main_ec: 7
+    static_refs_pd_image: 0
     status: confirmed-working-partially
     note: >
       Writing the 3 profile values (00=High Capacity/01=Balanced/10=Stationary)
@@ -129,6 +170,8 @@ registers:
     sources: [uniwill-laptop, ecspec-3.1.6.0(BATTERY_CHARGE_LIMIT_UP), dsdt,
               acpidriver-3.9.18.0(ECRR/ECRW), live]
     static_refs: 0
+    static_refs_main_ec: 0
+    static_refs_pd_image: 0
     status: unknown-not-absent
     note: >
       *** RETRACTION, see docs/findings.md "Two retractions" ***
@@ -199,6 +242,8 @@ registers:
     addr: [0x0748, 0x0749, 0x074A, 0x074B]
     sources: [uniwill-laptop]
     static_refs: [0, 0, 0, 0]
+    static_refs_main_ec: [0, 0, 0, 0]
+    static_refs_pd_image: [0, 0, 0, 0]
     status: confirmed-not-this-mechanism
     note: >
       Live test wrote every one of these bytes (WELCOME/rainbow toggle,
@@ -219,6 +264,7 @@ registers:
     sources: [uniwill-laptop]
     static_refs: [15, 9, 4, 10]
     static_refs_main_ec: [0, 0, 0, 0]
+    static_refs_pd_image: [15, 9, 4, 10]
     status: unknown-not-absent
     note: >
       *** CORRECTION, see ec/annotations/lightbar-bat-flow.md ***
@@ -241,8 +287,10 @@ registers:
     addr: 0x078C
     sources: [uniwill-laptop]
     static_refs: 7
+    static_refs_main_ec: 7
+    static_refs_pd_image: 0
     status: present-untested
-    note: "Fn+F6/F7 hotkeys (WMI events 177/178, EC_RGBKBBKL_LEVEL_DOWN/UP in ITE_SPEC) confirmed working; this is the *software* LED-class path, separate and untested"
+    note: "Fn+F6/F7 hotkeys (WMI events 177/178, EC_RGBKBBKL_LEVEL_DOWN/UP in ITE_SPEC) confirmed working; this is the *software* LED-class path, separate and untested. All 7 sites are EC-side (ec/annotations/static-refs-audit.md), so present-untested still rests on EC references."
 
   - name: USB_C_POWER_PRIORITY
     addr: 0x07CC
@@ -250,6 +298,7 @@ registers:
     sources: [uniwill-laptop]
     static_refs: 6
     static_refs_main_ec: 0
+    static_refs_pd_image: 6
     status: present-untested
     note: >
       All 6 sites are in the ITE8850-PD image, not the EC firmware
@@ -261,6 +310,8 @@ registers:
     addr: 0x043E
     sources: [uniwill-laptop, live]
     static_refs: 15
+    static_refs_main_ec: 15
+    static_refs_pd_image: 0
     status: confirmed-working
     note: "cross-checked against coretemp (50 vs 51C)"
 
@@ -268,6 +319,8 @@ registers:
     addr: 0x044F
     sources: [uniwill-laptop, live]
     static_refs: 14
+    static_refs_main_ec: 14
+    static_refs_pd_image: 0
     status: confirmed-working
     note: "cross-checked against nvidia-smi (48 vs 49C)"
 
@@ -275,5 +328,15 @@ registers:
     addr: [0x04A6, 0x04A7]
     sources: [uniwill-laptop, live]
     static_refs: [7, 2]
+    static_refs_main_ec: [3, 2]
+    static_refs_pd_image: [4, 0]
     status: confirmed-working
-    note: "445 cycles; also gates the DSDT _BIF/_BST capacity-reporting rescale at cycle 50, see docs/findings.md"
+    note: >
+      445 cycles; also gates the DSDT _BIF/_BST capacity-reporting rescale
+      at cycle 50, see docs/findings.md.
+      The only audited entry outside 0x0700-0x07FF whose count is split
+      across both images: of 0x04A6's 7 sites, 3 are EC-side and 4 are in
+      the ITE8850-PD image, which has its own unrelated 0x04A6. Status is
+      unchanged -- it is confirmed live, and where the static sites sit
+      cannot weaken a live read. What the PD image's 4 sites do is a
+      separate, unanswered question about that program.
