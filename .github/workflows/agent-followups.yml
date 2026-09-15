@@ -25,15 +25,29 @@ name: Agent · followups
 #     maintainer's own issues -- see agent-plan.yml's "who is trusted" triage -- and means the
 #     new issue runs unattended instead of idling at the approval gate for no reason.
 
+#
+# Recovered when displaced, like the pipeline's own stages: it shares their concurrency group, so
+# a third arrival can cancel it before its first step. agent-retry.yml finds a recent merge with
+# no finished run of this workflow and dispatches it with the pull request's number -- which is
+# what the `workflow_dispatch` trigger is for, and also how to run it by hand for an older merge.
+# A dispatched run's head commit is main's, not the pull request's, so it cannot be recognised by
+# run history the way an event run is; the last step leaves a marker comment instead.
+
 on:
   pull_request:
     types: [closed]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Number of a merged pull request to propose follow-ups for
+        required: true
+        type: number
 
 permissions: {}
 
 jobs:
   followups:
-    if: github.event.pull_request.merged == true
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     # On the job, not the workflow: `pull_request: closed` fires on every close, most of which
     # are not merges, and a workflow-level group claims its slot before this `if:` runs. Same
     # bug, same fix, as claude.yml -- see that file's comment for the confirmed evidence.
@@ -44,14 +58,44 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
-      pull-requests: read
+      # write only for the "follow-ups ran" marker comment at the end; issues are created with
+      # the PAT, not this token.
+      pull-requests: write
       issues: read
 
     steps:
+      # A dispatch carries only a number, so the merge commit is looked up; an event run already
+      # has both. Refused unless the pull request actually merged -- a closed-unmerged one has no
+      # merge commit to read against.
+      - name: Resolve the pull request
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # No checkout yet, so gh cannot infer the repository from a git remote.
+          GH_REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          EVENT_PR: ${{ github.event.pull_request.number }}
+          EVENT_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          INPUT_PR: ${{ inputs.pr }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = workflow_dispatch ]; then
+            view=$(gh pr view "$INPUT_PR" --json state,mergeCommit)
+            if [ "$(jq -r .state <<<"$view")" != MERGED ]; then
+              echo "::error::PR #$INPUT_PR is not merged"
+              exit 1
+            fi
+            echo "number=$INPUT_PR" >> "$GITHUB_OUTPUT"
+            echo "merge_sha=$(jq -r .mergeCommit.oid <<<"$view")" >> "$GITHUB_OUTPUT"
+          else
+            echo "number=$EVENT_PR" >> "$GITHUB_OUTPUT"
+            echo "merge_sha=$EVENT_SHA" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout at the merge commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          ref: ${{ steps.pr.outputs.merge_sha }}
           persist-credentials: false
 
       # Gathered in shell, not left for Claude's own `gh` calls, so the exact same list a human
@@ -68,7 +112,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
-          PR: ${{ github.event.pull_request.number }}
+          PR: ${{ steps.pr.outputs.number }}
         run: |
           set -euo pipefail
           mkdir -p .agent-context
@@ -153,7 +197,7 @@ jobs:
           GH_TOKEN: ${{ secrets.AGENT_PUSH_TOKEN }}
           GH_REPO: ${{ github.repository }}
           OUT: ${{ steps.propose.outputs.structured_output }}
-          PR: ${{ github.event.pull_request.number }}
+          PR: ${{ steps.pr.outputs.number }}
         run: |
           set -euo pipefail
 
@@ -188,4 +232,30 @@ jobs:
 
             url=$(gh issue create --title "$title" --body-file /tmp/issue-body.md "${label_args[@]}")
             echo "opened: $url"
+            echo "- $url" >> /tmp/opened.txt
           done
+
+      # The trace agent-retry.yml looks for, on both paths -- including the quiet stop above,
+      # since a pass that ran and failed is not retried (see the top of this file). Posted with
+      # GITHUB_TOKEN, so it is github-actions[bot]'s, which is the authorship the sweep filters on.
+      - name: Record that follow-ups ran
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ steps.pr.outputs.number }}
+          OUTCOME: ${{ steps.propose.outcome == 'success' && steps.propose.outputs.conclusion == 'success' }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          {
+            if [ "$OUTCOME" != true ]; then
+              printf 'The [follow-up pass](%s) for this merge did not finish; no issues were opened.\n' "$RUN_URL"
+            elif [ -s /tmp/opened.txt ]; then
+              printf 'The [follow-up pass](%s) for this merge opened:\n\n' "$RUN_URL"
+              cat /tmp/opened.txt
+            else
+              printf 'The [follow-up pass](%s) for this merge found nothing new to open.\n' "$RUN_URL"
+            fi
+            printf '\n<!-- agent-followups-done -->\n'
+          } > /tmp/done.md
+          gh pr comment "$PR" --body-file /tmp/done.md
