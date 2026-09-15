@@ -104,10 +104,17 @@ def walk(d: bytes, start: int, max_insns: int = 8):
 
 
 def classify(insns):
-    """Summarise a walk: access direction, and how far `inc dptr` walks on."""
-    reads = writes = 0
+    """Summarise a walk: access direction, and how far `inc dptr` walks on.
+
+    `MOV DPTR,#imm16` builds CODE pointers as well as XDATA ones, so a site
+    followed by `movc a,@a+dptr` or `jmp @a+dptr` is a table lookup in CODE
+    and says nothing about a register of that number -- the blind spot
+    ../annotations/ec-0x07d0-sites.md 5 warns about. Those two are named
+    rather than folded into the "no movx" catch-all, which would read as
+    "the walk found nothing" when the walk in fact found the answer."""
+    reads = writes = movc = 0
     span = 1
-    handoff = None
+    handoff = jmp_dptr = None
     for _, raw, text in insns[1:]:
         op = raw[0]
         if op == 0xE0:
@@ -116,12 +123,21 @@ def classify(insns):
             writes += 1
         elif op == 0xA3:
             span += 1
-        elif op in (0x02, 0x12) and not reads and not writes:
+        elif op == 0x93:
+            movc += 1
+        elif op == 0x73:
+            jmp_dptr = text
+            break
+        elif op in (0x02, 0x12) and not reads and not writes and not movc:
             handoff = text
             break
     if handoff:
         return f"DPTR handed to {handoff} -- direction unresolved here"
     if not reads and not writes:
+        if movc:
+            return f"movc a,@a+dptr x{movc} -- CODE pointer, not an XDATA access"
+        if jmp_dptr:
+            return f"{jmp_dptr.strip()} -- CODE pointer into a jump table"
         return "no movx found in the decoded window"
     parts = []
     if reads:

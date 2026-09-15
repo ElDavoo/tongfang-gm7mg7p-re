@@ -57,6 +57,14 @@ into `r2 -a 8051` with no stitching needed.
   `annotations/registers.yaml` from the image and exits non-zero on a mismatch
   or on an entry missing the split. Run by `.github/scripts/agent-gates.sh`;
   the numbers it guards are tabulated in `annotations/static-refs-audit.md`.
+- **`tools/register_ref_table.py`** — the whole `annotations/registers.yaml`
+  table in one pass: per-image count split *and* what each site behind it does
+  (`read`/`write`/`movc` CODE pointer/handed to a subroutine/…), as a markdown
+  table or, with `--csv`, one row per site. Reconciles class buckets against
+  the site count and main + PD against the file-wide total, and exits non-zero
+  if either fails. The classification inherits the 8-instruction linear walk's
+  limits — `annotations/static-refs-audit.md` §5 is the table it produced and
+  the caveats that go with it.
 - **`tools/disasm8051.py`** — the opcode tables `trace_xdata_refs.py` decodes
   with, plus a CLI for reading a window of instructions at a file offset
   (`--at`) and for measuring how many nearby anchors a linear walk syncs onto
