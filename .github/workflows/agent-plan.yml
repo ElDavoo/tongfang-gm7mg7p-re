@@ -315,6 +315,15 @@ jobs:
             the pipeline's token has no `workflow` scope, so a branch touching them fails at
             the very end rather than at the start. Leave them out of scope and say so.
 
+            Your runner is not the one the change gets built on. This stage checks out the
+            repository and nothing else, and your tools can only read; the implement stage runs
+            `.github/actions/project-setup` first, and every tool that action installs is
+            available there. Read that file to learn what the implement stage will have. Do not
+            probe your own environment for it: `which` here says nothing about there, and a plan
+            that routes around a tool the implement stage actually has throws that tool away. If
+            the work needs something project-setup does not install, say so under out of scope
+            -- the action lives under `.github/`, so adding it is a human's change.
+
             This repository is reverse-engineering a physical laptop's EC/BIOS and its Windows
             vendor driver. You are running on a GitHub-hosted runner: there is no physical
             laptop and no Windows machine reachable from here, ever, regardless of what the
