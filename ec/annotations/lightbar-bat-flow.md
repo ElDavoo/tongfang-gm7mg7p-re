@@ -399,14 +399,20 @@ common calling 0x8000 -> None (which bank is unknowable)
 
 The banking assumption in those last two lines — a call below `0x8000` reaches
 the common area, a call at or above it stays in the caller's own bank — is the
-ordinary Keil convention and is *not* something this repo has verified against
-this image; a cross-bank call would be decoded against the wrong bytes, and a
-call the helper cannot place returns `None` and leaves the site
-`handoff→unresolved`. None of that touches this file: the PD image is flat, so
-all eleven sites and all eight callees here are one region with one mapping.
-The one place it does bite is `0x04A6`'s EC-side handoff, and there the result
-is the same `0x888C` store [`pd-xdata-overlap.md`](pd-xdata-overlap.md) §2
-reached by hand against a `make_bank_image.py` bank-1 image.
+ordinary Keil convention, and a cross-bank call would be decoded against the
+wrong bytes; a call the helper cannot place returns `None` and leaves the site
+`handoff→unresolved`. [`bank-call-audit.md`](bank-call-audit.md) enumerates
+every `lcall`/`ljmp` in the main EC image against exactly that question: no
+direct cross-bank call was found by that method, the linker's own cross-bank
+path turns out to be an indirect trampoline block, and the assumption still
+cannot be *verified* from the bytes because a same-bank and a cross-bank direct
+call are byte-identical. None of that touches this file either way: the PD
+image is flat, so all eleven sites and all eight callees here are one region
+with one mapping. The one place it does bite is `0x04A6`'s EC-side handoff, and
+there the result is the same `0x888C` store
+[`pd-xdata-overlap.md`](pd-xdata-overlap.md) §2 reached by hand against a
+`make_bank_image.py` bank-1 image — one agreement, on the one site, which
+`bank-call-audit.md` §6 records as such rather than as a validation.
 
 **The two unresolved ones, and why they stay unresolved.** `0xB1F2` and
 `0x383A` each pass the DPTR they were given straight to a further routine —

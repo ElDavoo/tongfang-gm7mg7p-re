@@ -76,6 +76,14 @@ into `r2 -a 8051` with no stitching needed.
 - **`tools/find_banks.py`** — locates the bank-switch stubs and scores which
   file offset each bank maps to. Re-run this against any other firmware dump
   before trusting the offsets in the table above.
+- **`tools/audit_call_targets.py`** — every direct `lcall`/`ljmp` in the common
+  area and both banks, bucketed by where its target can be: common area, the
+  caller's own bank (the assumption `trace_xdata_refs.offset_for_runtime()`
+  rests on), or unresolvable. Prints a byte-scan upper bound *and* an
+  anchored-decode count for each, because neither framing settles on its own.
+  `--self-test` re-checks the four BL51 stub sites and the
+  `offset_for_runtime`/`runtime_addr` round-trip;
+  `annotations/bank-call-audit.md` is the transcript and the verdict.
 - **`tools/make_bank_image.py`** — stitches common area + one bank into a
   flat 64 KiB image loadable by `r2 -a 8051` (or any other 8051 disassembler
   expecting linear addressing).
@@ -106,6 +114,11 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   evidence that those sites belong to the PD image rather than the EC, and the
   live probe still needed to say what (if anything) the EC does with those
   bytes.
+- **`annotations/bank-call-audit.md`** — the call-target census behind every
+  EC-side handoff this repo resolves: how many direct calls stay in the common
+  area, how many assume the caller's own bank, how many are unresolvable, and
+  why the same-bank assumption cannot be verified from these bytes however the
+  counts come out. `annotations/bank-call-targets.csv` is the per-site table.
 
 ## Recompilation — status: toolchain proven, not attempted
 

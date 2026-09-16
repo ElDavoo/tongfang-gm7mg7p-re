@@ -93,12 +93,21 @@ def offset_for_runtime(runtime: int, region: str):
 
     For the banked main EC this assumes the ordinary Keil banking convention:
     a target below 0x8000 is in the common area (mapped in every bank), and a
-    target at or above 0x8000 is in the *same* bank as the caller. This repo
-    has not verified that no cross-bank call exists in this image, and such a
-    call would be decoded against the wrong bank's bytes. A target at or above
-    0x8000 seen from the common area is unresolvable for the same reason --
-    nothing in the byte says which bank is mapped -- and returns None. The PD
-    image is flat, so nothing in it is affected by any of this.
+    target at or above 0x8000 is in the *same* bank as the caller. A cross-bank
+    call would be decoded against the wrong bank's bytes, so audit_call_targets.py
+    enumerates every lcall/ljmp in this image looking for one: none was found
+    by that method, and the linker's own cross-bank path turns out to be the
+    BL51 trampoline block, which is indirect and never reaches bucket B at all.
+    That is "not found", not "absent" -- a same-bank and a cross-bank direct
+    call are byte-identical, so 3220 of the 3261 such sites are decided by this
+    assumption rather than by evidence. ../annotations/bank-call-audit.md has
+    the counts and the blind spots.
+
+    A target at or above 0x8000 seen from the common area is unresolvable --
+    nothing in the byte says which bank is mapped -- and returns None. That
+    case does occur: 140 sites by byte scan, 83 of them anchored, per 5 of
+    the same file. The PD image is flat, so nothing in it is affected by any
+    of this.
     """
     home = next(((lo, hi, base) for name, lo, hi, base, _ in REGIONS
                  if name == region and base is not None), None)
