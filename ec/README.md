@@ -99,6 +99,19 @@ into `r2 -a 8051` with no stitching needed.
   `annotations/index-table-spans.csv`, and `--self-test` re-checks the
   reader's bytes, the table's extent and stride, the whole 15-site census and
   the census rows each span accounts for against the committed image.
+- **`tools/pd_index_geometry.py`** — the `ITE8850-PD` image's DPTR index
+  helpers, the bases they are called against, and who calls the routines that
+  do it. `--helpers` decodes each helper to its `ret` into a symbolic "what
+  this adds to DPTR"; `--bases` reports every PD `MOV DPTR,#imm16` in the
+  `0x0400`-`0x04A8` run with the chain of helper terms it runs and where that
+  chain stopped; `--callers` bounds a site's caller set. It is not a
+  disassembler and not a call graph: the term model is two byte templates, and
+  anything outside it is reported `unmodelled` rather than fitted, while the
+  caller scan over-counts on phantoms and under-counts on indirection at the
+  same time. `--self-test` re-checks the helper bodies against the `r2`
+  listings in `annotations/pd-xdata-overlap.md` §3, the four `0x04A6` site
+  offsets against `trace_xdata_refs.py`, the per-base site counts against §1
+  and §5.2 of the same file, and both CSVs below against a live regeneration.
 - **`tools/make_bank_image.py`** — stitches common area + one bank into a
   flat 64 KiB image loadable by `r2 -a 8051` (or any other 8051 disassembler
   expecting linear addressing).
@@ -151,6 +164,15 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   table's eight entries too, so a consumer of the span list below needs no
   special case for it — `annotations/bank0-8038-dispatch-table.csv` stays the
   file §9 cites.
+- **`annotations/pd-index-geometry.md`** — the PD image's index-helper family
+  decoded, the `0x0400`-`0x04A8` base run's stride and field layout, and the
+  callers of the four `0x04A6` sites. Answers the address *arithmetic*
+  `annotations/ec-0x07d0-sites.md` §4 and `annotations/pd-xdata-overlap.md`
+  §3-§6 stop at, and deliberately stops where they do: no record count, no name
+  for the contents, no claim that the caller list is complete.
+  `annotations/pd-index-helpers.csv` and `annotations/pd-index-callers.csv` are
+  the per-helper and per-caller tables, produced by
+  `tools/pd_index_geometry.py --helpers-csv` / `--callers-csv`.
 - **`annotations/index-table-spans.csv`** — one row per candidate call site:
   the table's span, its case range, and the site's own `frame_onto`/
   `frame_over`. It is the census, not a filtered view of it, so a site whose

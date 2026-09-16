@@ -214,6 +214,14 @@ image's strings, and the containing routines were not traced to an entry
 point. Recorded as "index into `0x0408`-based records, contents
 unidentified".
 
+`pd-index-geometry.md` decodes the helper family around `0x10BC` and the whole
+`0x0400`-`0x04A8` base run, `0x0408` included. It finds `0x60` used as a stride
+by every base in that run that resolves one, but often as only one of two index
+terms: two of `0x0408`'s seven sites also add `0x200 × Rn`, and across the run
+that second register is the same one as the `×0x60` index wherever both are
+identified, making the effective stride `0x260`. It does not identify the
+contents either, and states no record count — the recording above stands.
+
 ## 5. Are all 254 real instructions?
 
 `scan_refs.py` counts the byte pattern `90 07 D0` with no instruction

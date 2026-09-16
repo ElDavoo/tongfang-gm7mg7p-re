@@ -389,6 +389,13 @@ two or three index terms deep. Naming what the records hold would be a guess
 and is not made here — `ec-0x07d0-sites.md` §4 stopped at the same line for
 the `0x0408`-based array, and this is the same unanswered question.
 
+`pd-index-geometry.md` takes the *arithmetic* further without crossing that
+line: it decodes all eleven helper routines named in §3 and §5.2, and finds
+that where a site's two index terms both name an identified register it is the
+same register, so the effective stride is `0x60 + 0x200` = `0x260` rather than
+the `0x60` quoted above. It still names nothing and still states no record
+count — §4's verdict here stands as written.
+
 ## 5. The structural question
 
 ### 5.1 Both images over `0x0400`-`0x07FF`
@@ -526,6 +533,11 @@ $ xxd -s 0x20490 -l 32 ec/firmware/GMxMGxx_11.800
   what the index registers hold when they are called, and what the records
   contain are all untraced (`../README.md`, "toolchain proven, not
   attempted"), as is `#26`'s wider characterisation of the PD image.
+  `pd-index-geometry.md` §4 bounds the first of those three — each of the four
+  routines gets a containing entry and one anchored caller — by a byte scan
+  with framing evidence, not by a call graph. It leaves the other two exactly
+  where this bullet does: no caller found there loads a literal into any of the
+  index registers, so no index range and no record count follows.
 - **`BAT_CYCLE_COUNT` is untouched either way.** Its `confirmed-working`
   status comes from a live read of 445 cycles; a static decode can neither
   strengthen nor weaken that, and no status in `registers.yaml` changed in

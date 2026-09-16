@@ -1,0 +1,6 @@
+site,entry,entry_pick,entry_reaches_site,entry_preceded_by,entry_gap_jmps,caller_file_offset,caller_runtime,kind,opcode,frame_onto,frame_over,literals,status
+0x7421,0x7420,byte-scan,reaches the site with no intervening `ret`,"mov  0xf0,#0x60",0,0x2C9DD,0xC9DD,call,lcall 0x7420,1,23,,unresolved
+0x7421,0x7392,containing,reaches the site with no intervening `ret`,ret,1,0x27CD1,0x7CD1,call,lcall 0x7392,24,0,,unresolved
+0x9DEC,0x9D51,byte-scan,reaches the site with no intervening `ret`,ret,1,0x2B452,0xB452,call,lcall 0x9d51,24,0,,unresolved
+0xB5D3,0xB59B,byte-scan,reaches the site with no intervening `ret`,ret,0,0x2B838,0xB838,call,lcall 0xb59b,24,0,,unresolved
+0xE9F5,0xE9E3,byte-scan,reaches the site with no intervening `ret`,ret,0,0x266E4,0x66E4,call,lcall 0xe9e3,24,0,R1=#0x00 R2=#0x08 R3=#0x01,literal index loads found
