@@ -402,7 +402,10 @@ the common area, a call at or above it stays in the caller's own bank — is the
 ordinary Keil convention, and a cross-bank call would be decoded against the
 wrong bytes; a call the helper cannot place returns `None` and leaves the site
 `handoff→unresolved`. [`bank-call-audit.md`](bank-call-audit.md) enumerates
-every `lcall`/`ljmp` in the main EC image against exactly that question: no
+every direct call in the main EC image against exactly that question — the
+absolute `lcall`/`ljmp` forms in §1-§6, the paged `ajmp`/`acall` ones in §7,
+which cannot leave the caller's own 2 KiB page and so never reach the
+question at all. For the absolute forms: no
 direct cross-bank call was found by that method, the linker's own cross-bank
 path turns out to be an indirect trampoline block, and the assumption still
 cannot be *verified* from the bytes because a same-bank and a cross-bank direct

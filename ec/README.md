@@ -81,9 +81,12 @@ into `r2 -a 8051` with no stitching needed.
   caller's own bank (the assumption `trace_xdata_refs.offset_for_runtime()`
   rests on), or unresolvable. Prints a byte-scan upper bound *and* an
   anchored-decode count for each, because neither framing settles on its own.
-  `--self-test` re-checks the four BL51 stub sites and the
-  `offset_for_runtime`/`runtime_addr` round-trip;
-  `annotations/bank-call-audit.md` is the transcript and the verdict.
+  Also counts the 2-byte `ajmp`/`acall` family separately (`--paged-csv`),
+  which is not a banking question at all: a paged target cannot leave the
+  caller's own 2 KiB page. `--self-test` re-checks the four BL51 stub sites,
+  the `offset_for_runtime`/`runtime_addr` round-trip and the page arithmetic
+  against two hand decodes; `annotations/bank-call-audit.md` is the transcript
+  and the verdict.
 - **`tools/make_bank_image.py`** — stitches common area + one bank into a
   flat 64 KiB image loadable by `r2 -a 8051` (or any other 8051 disassembler
   expecting linear addressing).
@@ -118,7 +121,9 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   EC-side handoff this repo resolves: how many direct calls stay in the common
   area, how many assume the caller's own bank, how many are unresolvable, and
   why the same-bank assumption cannot be verified from these bytes however the
-  counts come out. `annotations/bank-call-targets.csv` is the per-site table.
+  counts come out — plus §7, the paged `ajmp`/`acall` family, which the
+  assumption never has to carry. `annotations/bank-call-targets.csv` and
+  `annotations/bank-paged-call-targets.csv` are the per-site tables.
 
 ## Recompilation — status: toolchain proven, not attempted
 

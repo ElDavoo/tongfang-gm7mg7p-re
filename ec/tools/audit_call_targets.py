@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-"""Enumerate every direct `lcall`/`ljmp` in the main EC image and bucket its
-target, to test the banking assumption trace_xdata_refs.offset_for_runtime()
-rests on.
+"""Enumerate every direct call in the main EC image and bucket its target, to
+test the banking assumption trace_xdata_refs.offset_for_runtime() rests on.
+
+Sections 1-4 cover the 3-byte absolute forms `lcall`/`ljmp`, which are the
+ones that can name an address in another bank; section 5 covers the 2-byte
+paged forms, which cannot.
 
 offset_for_runtime() maps a call target back to a file offset by assuming the
 ordinary Keil convention: a target below 0x8000 is in the common area, a
@@ -35,15 +38,26 @@ Neither settles framing (converges_from()'s own docstring says why), and the
 anchored count is demonstrably not phantom-free: section 4 lists sites that
 score 24 of 24 and are plainly inside an address table. Read the pair.
 
-Blind spots, none of which this tool closes: `ajmp`/`acall` are not
-recognised (call_target() does not, and this does not change that), computed
-targets via `jmp @a+dptr` or the trampoline's DPTR-carried target are
-invisible to any byte scan, and banks 2 and 3 are taken as unused on the word
-of find_banks.py rather than re-derived.
+Section 5 adds the 2-byte paged family, `ajmp`/`acall`. Those are not a
+banking question the way the absolute forms are -- a paged target is inside
+the page the caller is already executing from, so it cannot leave the
+caller's own region and needs no bank chosen for it -- so they are counted
+separately rather than bucketed A/B/C. The point of counting them is that it
+*shrinks* the population offset_for_runtime()'s same-bank assumption carries;
+it settles nothing about bucket B. And the byte scan over-counts harder here
+than above, not less: a 2-byte opcode matches 16 of the 256 byte values, so
+any dense data table produces paged phantoms by the hundred.
+
+Blind spots, none of which this tool closes: framing is unsettled in both
+directions (section 2), computed targets via `jmp @a+dptr` or the
+trampoline's DPTR-carried target are invisible to any byte scan, and banks 2
+and 3 are taken as unused on the word of find_banks.py rather than
+re-derived.
 
 Usage:
     python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800
     python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --csv > sites.csv
+    python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --paged-csv > paged.csv
     python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --self-test
 """
 import argparse
@@ -51,12 +65,18 @@ import collections
 import csv
 import sys
 
-from disasm8051 import converges_from
+from disasm8051 import converges_from, paged_target
 from find_banks import START_OPCODES, STUB_PROLOGUE, find_stubs
 from trace_xdata_refs import (PD_MARKER, REGIONS, offset_for_runtime,
                               runtime_addr)
 
-CALL_OPCODES = (0x02, 0x12)  # ljmp, lcall -- the two call_target() recognises
+CALL_OPCODES = (0x02, 0x12)  # ljmp, lcall -- the 3-byte absolute forms
+
+# The 2-byte paged forms are a whole opcode family: the low 5 bits are fixed
+# and the high 3 carry target bits, so `op & 0x1F` is the whole test.
+PAGED_OPCODES = (0x01, 0x11)  # ajmp, acall
+
+PAGE = 0x800  # what a paged target cannot leave
 
 # Regions this audit covers, in REGIONS order. The PD image is flat, so its
 # calls are not a banking question and are out of scope here.
@@ -105,6 +125,18 @@ def call_sites(d: bytes, lo: int, hi: int):
     for i in range(lo, hi - 2):
         if d[i] in CALL_OPCODES:
             yield i, d[i], (d[i + 1] << 8) | d[i + 2]
+
+
+def paged_sites(d: bytes, lo: int, hi: int):
+    """(offset, opcode, target) for every ajmp/acall-shaped byte in [lo, hi).
+
+    Stops at hi - 1 so both bytes of the instruction are inside the region:
+    the alternative reads the first byte of the next region as an operand,
+    which is the one shape whose target could land outside the caller's
+    region."""
+    for i in range(lo, hi - 1):
+        if d[i] & 0x1F in PAGED_OPCODES:
+            yield i, d[i], paged_target(d[i], d[i + 1], runtime_addr(i, True))
 
 
 def bucket_of(region: str, target: int) -> str:
@@ -170,6 +202,42 @@ def survey(d: bytes):
                 row["other_bank"] = byte_class(
                     d, offset_for_runtime(target, other), runs[other])
             rows.append(row)
+    return rows, stubs, tramp
+
+
+def paged_survey(d: bytes):
+    """Every audited paged site, in the same one-pass shape survey() has, so
+    section 5 and --paged-csv cannot disagree either.
+
+    There is no bucket column: a paged target is in the caller's own page and
+    therefore its own region, so the A/B/C question the absolute forms raise
+    does not arise. `in_region` is that claim re-derived per site rather than
+    assumed -- --self-test fails on any row where it is false."""
+    stubs = bank_switch_stubs(d)
+    tramp = trampolines(d, stubs)
+    runs = {name: erased_runs(d, *region_bounds(name)) for name in AUDITED}
+    rows = []
+    for name in AUDITED:
+        lo, hi = region_bounds(name)
+        for off, op, target in paged_sites(d, lo, hi):
+            onto, over = converges_from(d, off)
+            toff = offset_for_runtime(target, name)
+            inside = toff is not None and lo <= toff < hi
+            rows.append({
+                "region": name,
+                "file_offset": off,
+                "runtime": runtime_addr(off, True),
+                "opcode": "ajmp" if op & 0x1F == 0x01 else "acall",
+                "target": target,
+                "target_offset": toff,
+                "in_region": inside,
+                "target_class": byte_class(d, toff, runs[name]) if inside else "",
+                "anchored": onto > 0,
+                "frame_onto": onto,
+                "frame_over": over,
+                "calls_stub": stubs.get(target),
+                "calls_trampoline": tramp[target][0] if target in tramp else None,
+            })
     return rows, stubs, tramp
 
 
@@ -282,6 +350,66 @@ def print_bucket_c(d: bytes, rows, tramp) -> None:
     print()
 
 
+def print_paged(rows) -> None:
+    print("## 5. The 2-byte paged family: `ajmp`/`acall`")
+    print()
+    print("A paged target is the *next* instruction's 2 KiB page with 11 bits")
+    print("substituted in, so it never leaves the page the caller is executing")
+    print("from, and never leaves the caller's region -- every mapped region is a")
+    print("whole number of aligned pages. That is opcode semantics plus a checked")
+    print("property of REGIONS, not a result read out of this image, and it says")
+    print("nothing about whether the bucket-B assumption above holds; it only")
+    print("removes this family from the population that needs it.")
+    print()
+    print("The byte scan over-counts harder here than for the 3-byte forms: 16 of")
+    print("the 256 byte values open a paged instruction, so read the pair.")
+    print()
+    print("| region | ajmp | acall | both |")
+    print("|---|---:|---:|---:|")
+    for name in AUDITED:
+        cells = []
+        for op in ("ajmp", "acall", None):
+            match = {"region": name} if op is None else {"region": name, "opcode": op}
+            upper, anchored = counted(rows, **match)
+            cells.append("-" if not upper else f"{upper} / {anchored}")
+        print(f"| `{name}` | " + " | ".join(cells) + " |")
+    print()
+    print("What the target byte reads as -- `entry` is find_banks.py's START_OPCODES")
+    print(f"heuristic, `erased` a run of at least {MIN_ERASED_RUN} 0xFF bytes, `other` neither.")
+    print("Used as the scoring aid it is: `erased` marks a target worth reading bytes")
+    print("for, `entry` is not a decode:")
+    print()
+    print("| region | entry | other | erased |")
+    print("|---|---:|---:|---:|")
+    for name in AUDITED:
+        cells = []
+        for cls in ("entry", "other", "erased"):
+            upper, anchored = counted(rows, region=name, target_class=cls)
+            cells.append("-" if not upper else f"{upper} / {anchored}")
+        print(f"| `{name}` | " + " | ".join(cells) + " |")
+    print()
+    print("Paged sites landing on the BL51 path. The trampoline block 0x1150-0x1ABC")
+    print("spans pages a common-area paged call can reach from inside, so unlike the")
+    print("banks this is a route a paged instruction could take:")
+    for name in AUDITED:
+        for bank in (0, 1):
+            upper, anchored = counted(rows, region=name, calls_trampoline=bank)
+            if upper:
+                print(f"  {name}: {upper} / {anchored} onto a bank-{bank} trampoline entry")
+        for bank in sorted({r["calls_stub"] for r in rows if r["calls_stub"] is not None}):
+            upper, anchored = counted(rows, region=name, calls_stub=bank)
+            if upper:
+                print(f"  {name}: {upper} / {anchored} onto the bank-{bank} stub itself")
+    if not any(r["calls_trampoline"] is not None or r["calls_stub"] is not None
+               for r in rows):
+        print("  none, by this scan")
+    escaped = [r for r in rows if not r["in_region"]]
+    print()
+    print(f"  {len(escaped)} of {len(rows)} paged site(s) resolve outside the caller's "
+          "own region")
+    print()
+
+
 def write_csv(rows) -> None:
     w = csv.writer(sys.stdout)
     w.writerow(["file_offset", "region", "runtime", "opcode", "target", "bucket",
@@ -299,11 +427,43 @@ def write_csv(rows) -> None:
         ])
 
 
+def write_paged_csv(rows) -> None:
+    """A sibling of write_csv() rather than more columns on it: `bucket`,
+    `own_bank` and `other_bank` are absolute-form questions that have no
+    answer for a paged site, and bank-call-targets.csv stays as committed."""
+    w = csv.writer(sys.stdout)
+    w.writerow(["file_offset", "region", "runtime", "opcode", "target",
+                "target_offset", "in_region", "target_class", "frame_onto",
+                "frame_over", "calls_stub", "calls_trampoline"])
+    for r in rows:
+        w.writerow([
+            f"0x{r['file_offset']:05X}", r["region"], f"0x{r['runtime']:04X}",
+            r["opcode"], f"0x{r['target']:04X}",
+            f"0x{r['target_offset']:05X}" if r["target_offset"] is not None else "",
+            "yes" if r["in_region"] else "no", r["target_class"],
+            r["frame_onto"], r["frame_over"],
+            "" if r["calls_stub"] is None else r["calls_stub"],
+            "" if r["calls_trampoline"] is None else r["calls_trampoline"],
+        ])
+
+
 # The four stub sites ec/annotations/lightbar-bat-flow.md 2 records, and the
 # round-trip assertion its 3.5 prints. Both are load-bearing for this audit:
 # section 2 is the stub evidence, and offset_for_runtime() is the function
 # under test.
 STUB_SITES = ((0x1100, 0), (0x1114, 1), (0x1128, 2), (0x113C, 3))
+
+# Paged sites hand-decoded with `r2 -a 8051` against a make_bank_image.py
+# image, as (file offset, runtime address, bytes, target). 0x02190 is the
+# `ajmp 0x2009` ../annotations/bank-call-audit.md 5 already transcribed while
+# reading bucket C. 0x167FF is this image's only paged site whose next PC
+# crosses a page boundary, so its target is in the *following* page -- the
+# off-by-one page arithmetic invites, and the reason paged_target() adds 2
+# before masking. Commands in 7 of the same file.
+PAGED_SITES = (
+    (0x02190, 0x2190, b"\x01\x09", 0x2009),
+    (0x167FF, 0xE7FF, b"\x01\x53", 0xE853),
+)
 
 
 def self_test(d: bytes) -> int:
@@ -341,6 +501,36 @@ def self_test(d: bytes) -> int:
     check(offset_for_runtime(0x8000, "common") is None,
           "a common-area call to 0x8000 stays unresolvable (bucket C returns None)")
 
+    for foff, rt, raw, want in PAGED_SITES:
+        got = paged_target(raw[0], raw[1], rt)
+        check(d[foff:foff + 2] == raw and got == want,
+              f"file 0x{foff:05X} (runtime 0x{rt:04X}) is `{raw.hex(' ')}` targeting "
+              f"0x{want:04X} (got `{d[foff:foff + 2].hex(' ')}` -> 0x{got:04X})")
+
+    _, rt, _, want = PAGED_SITES[1]
+    check(want & ~(PAGE - 1) == (rt + 2) & ~(PAGE - 1) != rt & ~(PAGE - 1),
+          f"0x{rt:04X}'s target 0x{want:04X} is in the next instruction's page "
+          f"0x{(rt + 2) & ~(PAGE - 1):04X}, not the opcode's own 0x{rt & ~(PAGE - 1):04X}")
+
+    misaligned = [f"{name} 0x{lo:05X}" for name, lo, hi, base, _ in REGIONS
+                  if base is not None and ((lo - base) % PAGE or (hi - lo) % PAGE)]
+    check(not misaligned,
+          "every mapped region is a whole number of 2 KiB pages aligned identically "
+          "in file offset and runtime base -- the property the never-leaves-its-region "
+          f"claim rests on{'' if not misaligned else ' -- broken at ' + ', '.join(misaligned)}")
+
+    escaped, total = [], 0
+    for name in AUDITED:
+        lo, hi = region_bounds(name)
+        for off, _, target in paged_sites(d, lo, hi):
+            total += 1
+            toff = offset_for_runtime(target, name)
+            if toff is None or not lo <= toff < hi:
+                escaped.append(f"0x{off:05X}")
+    check(not escaped,
+          f"all {total} paged site(s) in the audited regions resolve inside the "
+          f"caller's own region{'' if not escaped else ' -- escaped at ' + ', '.join(escaped[:8])}")
+
     print()
     print("self-test FAILED" if bad else "self-test passed")
     return 1 if bad else 0
@@ -352,8 +542,11 @@ def main() -> int:
     ap.add_argument("firmware", help="raw EC firmware image (e.g. ec/firmware/GMxMGxx_11.800)")
     ap.add_argument("--csv", action="store_true",
                     help="write one row per call site on stdout instead of the tables")
+    ap.add_argument("--paged-csv", action="store_true",
+                    help="write one row per ajmp/acall site on stdout instead of the tables")
     ap.add_argument("--self-test", action="store_true",
-                    help="re-check the stub sites and the offset_for_runtime round-trip")
+                    help="re-check the stub sites, the offset_for_runtime round-trip "
+                         "and the paged page arithmetic")
     args = ap.parse_args()
 
     d = open(args.firmware, "rb").read()
@@ -366,6 +559,10 @@ def main() -> int:
     if args.self_test:
         return self_test(d)
 
+    if args.paged_csv:
+        write_paged_csv(paged_survey(d)[0])
+        return 0
+
     rows, stubs, tramp = survey(d)
     if args.csv:
         write_csv(rows)
@@ -375,6 +572,7 @@ def main() -> int:
     print_trampolines(rows, stubs, tramp)
     print_bucket_b(rows)
     print_bucket_c(d, rows, tramp)
+    print_paged(paged_survey(d)[0])
     return 0
 
 
