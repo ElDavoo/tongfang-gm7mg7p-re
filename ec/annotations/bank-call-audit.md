@@ -40,6 +40,15 @@ does establish:
   leave the caller's region — 4 of the 9076 do, all from within 96 bytes of
   `bank0`'s start, and all 4 were read byte by byte: three are operand bytes of
   an `lcall` and the fourth an address-table entry. §8.
+- **That address table is now decoded against the code that reads it, and §8's
+  reading of its layout was wrong.** 8 entries at `bank0` `0x8038`, each an
+  address *then* a case value — not the case-then-address triples §8 wrote —
+  consumed by one common-area subroutine that 15 call sites across the image
+  share. The table's 28 bytes alone account for 11 rows across the three
+  per-site CSVs this file produces — including `0x08040`, the site §6 picked
+  to illustrate the both-banks-live ambiguity with, which is two table entries
+  rather than an `ljmp`. §6's count and verdict are unaffected; its example
+  carries a correction. §9.
 
 No code change to `offset_for_runtime()` follows from this: its `None` return
 for bucket C is unchanged, and its same-bank reading for bucket B is not
@@ -360,6 +369,15 @@ $ r2 -a 8051 -e scr.color=0 -q -c 's 0x811a; pd 3' /tmp/bank1.bin
 Nothing in the instruction distinguishes them. This is the population the
 assumption actually carries, and it is the majority of it. The assumption is
 what decides these, not the evidence.
+
+**Correction to the site this example picks: `0x8040` is not an instruction.**
+§9 decodes the bytes around it as a dispatch table, in which `0x8040` is one
+entry's case byte followed by the next entry's address field. The illustration
+above still shows what it was chosen to show — `0x811A` decodes as plausible
+code in both banks, and nothing in an `lcall`/`ljmp` names a bank — but a
+reader should not take *this* site as one of the 1288 ambiguous pairs. The
+count and the verdict are unaffected: the pairs were counted by the scan, not
+by this example.
 
 **Both banks erased (6 targets, 8 sites) — the site is misframed.** `bank0`
 runtime `0x863D` scans as `ljmp 0xF566`, and `0xF566` is erased in both banks.
@@ -684,6 +702,16 @@ scoring aid pointing at the same conclusion. That is a reading of the bytes,
 not an execution trace; what it does establish is that a 24-of-24 anchor score
 is not evidence of a branch, which §2 already said.
 
+**Correction to the sentence above: the triples are the other way round.**
+"`sjmp 0x808E` at `0x8038`, then `index, big-endian address` triples" is the
+wrong layout, and it is left standing here rather than edited away, per
+[`../../docs/findings.md`](../../docs/findings.md) §4a-4d. Read against the
+subroutine that consumes the table, each entry is a big-endian *address*
+followed by a case value, there is no `sjmp`, and `0x8054` is the first
+entry's target rather than a default jump. The conclusion §8 drew from it —
+`0x0803B` is data, and a 24-of-24 score bought nothing — is unaffected;
+everything about the table's shape is superseded by §9.
+
 **The counts, and the framing caveat is worse again.** 9076 sites by byte scan,
 6675 anchored — 74%, against 48% for the paged forms (§7) and 89% for the
 absolute ones (§1). 29 of the 256 byte values open a relative branch, against
@@ -750,3 +778,365 @@ enumeration half only: `classify()` in `../tools/register_ref_table.py` still
 stops at a relative opcode rather than following it, so a `--callee-depth 1`
 handoff made by a conditional branch is still invisible to it. That is issue
 #40, and it stays open.
+
+## 9. The `0x8038` table, read against its reader
+
+§8 met this table sideways and read it out of context. The span *is* data —
+that part holds, and `0x0803B`'s 24 of 24 anchors still bought nothing — but
+the layout §8 gave it is wrong, and this section is the correction rather
+than a silent edit of §8's paragraph.
+
+The difference is not cosmetic: §8's framing puts an `sjmp` at the head of
+the table and a case value in front of each address, which shifts every entry
+by one byte, turns the last one into an index `07` pointing at `0x0000`, and
+hides the default address behind it entirely. Nothing in the image loads DPTR
+with `#0x8038` or `#0x803A`, so the table cannot be found by the scan that
+would ordinarily find a table. It is found by its reader, and the reader is
+what the entry layout is read off.
+
+```console
+$ python3 ec/tools/decode_index_table.py ec/firmware/GMxMGxx_11.800
+$ python3 ec/tools/decode_index_table.py ec/firmware/GMxMGxx_11.800 --all-tables
+$ python3 ec/tools/decode_index_table.py ec/firmware/GMxMGxx_11.800 --self-test
+```
+
+**The reader, and how it is reachable at all.** The table sits inline
+immediately after an `lcall`, and the callee pops the return address the call
+pushed into DPTR — so the pointer to the table is never an immediate, and the
+accumulator arrives carrying the selector. That is the shape Keil C51 emits
+for a `switch` on a byte (its runtime names the helper `?C?CCASE`); the name
+is a name for the idiom, not a symbol read out of this image.
+
+```console
+$ python3 ec/tools/make_bank_image.py ec/firmware/GMxMGxx_11.800 0 0x08000 /tmp/bank0.bin
+$ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0x8031; pd 3' /tmp/bank0.bin
+            0x00008031      9008e0         mov dptr, #0x08e0
+            0x00008034      e0             movx a, @dptr
+            0x00008035      127151         lcall 0x7151
+$ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0x7151; pd 22' /tmp/bank0.bin
+            0x00007151      d083           pop dph
+            0x00007153      d082           pop dpl
+            0x00007155      f8             mov r0, a
+            0x00007156      e4             clr a
+            0x00007157      93             movc a, @a+dptr
+        ┌─< 0x00007158      7012           jnz 0x716c
+        │   0x0000715a      7401           mov a, #0x01
+        │   0x0000715c      93             movc a, @a+dptr
+       ┌──< 0x0000715d      700d           jnz 0x716c
+       ││   0x0000715f      a3             inc dptr
+       ││   0x00007160      a3             inc dptr
+       ││   0x00007161      93             movc a, @a+dptr
+       ││   0x00007162      f8             mov r0, a
+       ││   0x00007163      7401           mov a, #0x01
+       ││   0x00007165      93             movc a, @a+dptr
+       ││   0x00007166      f582           mov dpl, a
+       ││   0x00007168      8883           mov dph, r0
+       ││   0x0000716a      e4             clr a
+       ││   0x0000716b      73             jmp @a+dptr
+       └└─> 0x0000716c      7402           mov a, #0x02
+            0x0000716e      93             movc a, @a+dptr
+            0x0000716f      68             xrl a, r0
+```
+
+The layout is read off that routine's 38 bytes and off nothing else, which is
+why `decode_index_table.py --self-test` asserts them. `0x716C` reads offset
+**2** of an entry and compares it against the selector saved in `r0`, so the
+case value is the *third* byte. `0x7161` reads offsets **0** and **1** into
+`dph`/`dpl`, so the address is the first two, big-endian. `0x7156`-`0x715D`
+stops the walk when offsets 0 and 1 are both zero, and `0x715F`'s two
+`inc dptr` step past that zero address so the same two loads pick up the two
+bytes after it — the default. `0x7172` (not shown, `a3 a3 a3` then
+`sjmp 0x7156`) advances by 3. The `jmp @a+dptr` at `0x716B` is the dispatch,
+with `a` cleared first, and it is a computed target: all three scans in this
+file resolve an edge out of the branching instruction's own bytes, and `73`
+carries none, so none of them can see it.
+
+**Extent, stride, terminator.** 8 entries of 3 bytes at file `0x08038`, a
+terminating `00 00` at file `0x08050`, the default address `0x8274` at file
+`0x08052`, and the table ends at file `0x08054`, which is its own first
+target:
+
+```console
+$ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0x8038; px 32' /tmp/bank0.bin
+- offset -   0 1  2 3  4 5  6 7  8 9  A B  C D  E F  0123456789ABCDEF
+0x00008038  8054 0080 9401 80d7 0281 1a03 815d 0481  .T...........]..
+0x00008048  9d05 81df 0682 3107 0000 8274 9019 04e0  ......1....t....
+```
+
+Grouped the way the reader reads it: `8054 00 | 8094 01 | 80d7 02 | 811a 03 |
+815d 04 | 819d 05 | 81df 06 | 8231 07 | 0000 | 8274`. The case values are
+`0x00`-`0x07` with no gaps, and the target stride §8 read off the first three
+entries does **not** hold across the table: `0x40 0x43 0x43 0x43 0x40 0x42
+0x52`, i.e. `0x43` for three steps and then three other values. That is a
+result, not an assumption — it is asserted by `decode_index_table.py
+--self-test`, so a different dump gets it re-checked rather than inheriting
+this image's answer.
+[`bank0-8038-dispatch-table.csv`](bank0-8038-dispatch-table.csv) is the
+per-entry table, regenerated by `--csv`. It has no comment header, so
+`csv.DictReader` reads it directly; the note that belongs in one is here —
+whatever region map issue #50 lands is free to fold this file in or supersede
+it, and this PR deliberately does not guess at that schema, nor teach
+`audit_call_targets.py` to mark the span itself.
+
+**The selector.** `0x08E0`, read at `0x8031` immediately before the call.
+`trace_xdata_refs.py` finds three direct sites for it in the whole image and
+they are all in `bank0`: the read at `0x8031`, an increment at `0x8228`, and a
+write of a cleared `a` at `0xBCB8`, which is the tail of the `0xBCB1` routine
+two of the windows below call. So the index is not passed in from anywhere —
+by this method it is a counter this code advances and clears itself.
+
+**The eight handlers.** They are one handler written eight times, and the
+first four and the last four differ only in which slots they touch. The
+skeleton, from case `0x00`:
+
+```console
+$ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0x8054; pd 4' /tmp/bank0.bin
+            0x00008054      901904         mov dptr, #0x1904
+            0x00008057      e0             movx a, @dptr
+        ┌─< 0x00008058      20e703         jb acc.7, 0x805e
+       ┌──< 0x0000805b      028274         ljmp 0x8274
+$ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0x8083; pd 6' /tmp/bank0.bin
+            0x00008083      900610         mov dptr, #0x0610
+            0x00008086      e0             movx a, @dptr
+            0x00008087      4401           orl a, #0x01
+            0x00008089      12ba3d         lcall 0xba3d
+            0x0000808c      12be7e         lcall 0xbe7e
+            0x0000808f      7481           mov a, #0x81
+```
+
+Bit 7 of a gate byte clear sends the handler straight to the default at
+`0x8274`; otherwise it stores a 16-bit value left in `r6`/`r7` by its helper
+calls into a word slot, shuffles a byte pair through the scratch byte `0x0A59`
+across a call to `0xB965`, sets its own bit in the flag byte `0x0610`, and
+leaves with `a` holding `0x81 + case`. Per case:
+
+| case | target | gate | word slot | byte pair | `0x0610` bit | distinct helpers |
+|---:|---|---|---|---|---:|---|
+| `0x00` | `0x8054` | `0x1904` | `0x08D0` | `0x0600`/`0x0601` | `0x01` | `0xB9DF` `0xBE7E` |
+| `0x01` | `0x8094` | `0x1906` | `0x08D2` | `0x0602`/`0x0603` | `0x02` | `0xBDAE` `0xB9EA` `0xBB9A` |
+| `0x02` | `0x80D7` | `0x1909` | `0x08D4` | `0x0604`/`0x0605` | `0x04` | `0xBDBA` `0xB9EA` `0xBE88` |
+| `0x03` | `0x811A` | `0x190C` | `0x08D6` | `0x0606`/`0x0607` | `0x08` | `0xBDC6` `0xB9EA` `0xBE92` |
+| `0x04` | `0x815D` | `0x1904` | `0x08D8` | `0x0608`/`0x0609` | `0x10` | `0xB9DF` `0xBE7E` |
+| `0x05` | `0x819D` | `0x1906` | `0x08DA` | `0x060A`/`0x060B` | `0x20` | `0xBDAE` `0xB9EA` `0xBB9A` |
+| `0x06` | `0x81DF` | `0x1909` | `0x08DC` | `0x060C`/`0x060D` | `0x40` | `0xBDBA` `0xB9EA` `0xBE88` |
+| `0x07` | `0x8231` | `0x190C` | `0x08DE` | `0x060E`/`0x060F` | `0x80` | `0xBDC6` `0xB9EA` `0xBE92` |
+
+`0xB965` and `0xBA3D` are called by all eight and are left out of the last
+column. Each row is a linear decode of the window between one target and the
+next, not a control-flow trace of the handler — a `charge-profile-flow.md`-
+grade walk of eight handlers is a separate piece of work, and if any of these
+bodies turns out to reach further than its window shows, this table is what
+would have to be revisited.
+
+**Where a handler goes afterwards, and what the default does.** Cases `0x00`
+through `0x06` end in a jump to the shared epilogue at `0x821F`, which
+advances the selector:
+
+```console
+$ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0x821f; pd 6' /tmp/bank0.bin
+            0x0000821f      12bb08         lcall 0xbb08
+            0x00008222      9008e1         mov dptr, #0x08e1
+            0x00008225      7406           mov a, #0x06
+            0x00008227      f0             movx @dptr, a
+            0x00008228      9008e0         mov dptr, #0x08e0
+            0x0000822b      e0             movx a, @dptr
+```
+
+`0x0822C`-`0x0822D` is `inc a ; movx @dptr,a` and `0x0822E` an `ljmp 0x8274`.
+Case `0x07` does not take that path: it calls `0xBCB1`, which writes `0x06` to
+`0x08E1` and `0` to `0x08E0`, and falls into `0x8274`. The default at `0x8274`
+decrements `0x08E1` and returns while it is non-zero; when it is zero it runs
+a longer body (`0x827E`-`0x8293`) that touches `0x1904` and `0x190C`, calls
+`0xBCB1` in its turn, and returns. Nothing above is a claim that any of this
+executes, or in what order: it is what the bytes decode to.
+
+**None of those addresses is in `registers.yaml`, and no `status:` moves.**
+`0x0600`-`0x0610`, `0x08D0`-`0x08E1`, `0x0A59`, `0x1904`/`0x1906`/`0x1909`/
+`0x190C`: not one of the 29 addresses in [`registers.yaml`](registers.yaml)
+appears among them.
+
+```console
+$ python3 -c '
+import csv, yaml
+known = set()
+for r in yaml.safe_load(open("ec/annotations/registers.yaml"))["registers"]:
+    a = r["addr"]
+    known.update(a if isinstance(a, list) else [a])
+named = set()
+for row in csv.DictReader(open("ec/annotations/bank0-8038-dispatch-table.csv")):
+    named.update(int(w, 16) for w in row["notes"].split() if w.startswith("0x"))
+print("addresses named:", len(named), " also in registers.yaml:", sorted(named & known) or "none")
+'
+addresses named: 32  also in registers.yaml: none
+```
+
+A decode would not be evidence about behaviour even if one of them matched —
+`CLAUDE.md`'s rule and [`../../docs/findings.md`](../../docs/findings.md) §4c's
+retraction both say so — so this stays a byte reading with no hardware behind
+it.
+
+**The three sites offered as corroboration are all phantoms.** Issue #56 cites
+[`bank-call-targets.csv`](bank-call-targets.csv) line 2648 (`bank0` `0xAA19`
+`ljmp 0x8038`), line 1928 (`0x8040` `ljmp 0x811A`) and lines 5771/5782 (two
+`bank1` sites `ljmp 0x80D7`) as three independent entries into this region.
+Read byte by byte, not one of the three starts an instruction:
+
+```console
+$ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0xaa17; pd 2' /tmp/bank0.bin
+        ┌─< 0x0000aa17      30e102         jnb acc.1, 0xaa1c
+       ┌──< 0x0000aa1a      8038           sjmp 0xaa54
+$ python3 ec/tools/make_bank_image.py ec/firmware/GMxMGxx_11.800 1 0x10000 /tmp/bank1.bin
+$ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0xe5d1; pd 2' /tmp/bank1.bin
+       ┌──< 0x0000e5d1      4002           jc 0xe5d5
+       │└─< 0x0000e5d3      80d7           sjmp 0xe5ac
+$ r2 -a 8051 -e scr.color=0 -e asm.comments=0 -q -c 's 0x803e; pd 2' /tmp/bank0.bin
+        └─< 0x0000803e      80d7           sjmp 0x8017
+        ┌─< 0x00008040      02811a         ljmp 0x811a
+```
+
+`0xAA19`'s `0x02` is the displacement of the `jnb` at `0xAA17`, and its `80 38`
+the `sjmp 0xAA54` that follows — the CSV records `frame_onto` 0 and
+`frame_over` 24 for it, which is the scan's own evidence pointing the same
+way. Both `bank1` sites (`0xE5D2` and `0xE6C7`) have the identical shape: a
+`jc` displacement `0x02` followed by `80 d7`, `frame_over` 24 each. `0x8040`
+is the one with `frame_onto` 24 of 24, and it is the case byte of the `0x02`
+entry followed by the address field of the `0x03` one — a phantom assembled
+out of two table entries, which is exactly §2's lesson about what an anchor
+score is worth. So the "classic `sjmp default; <search table>`" reading in the
+issue is right about there being a search table and wrong about everything
+else.
+
+Once those three are set aside, no edge into the eight handlers survives in
+any of the three CSVs. Every other row whose target is one of them or the
+default is one of the nine `0x8274` jumps the handlers make themselves, plus
+one `bank1` branch to `bank1`'s own `0x811A`, which is a different byte from
+`bank0`'s:
+
+```console
+$ python3 -c '
+import csv
+targets = {0x8054: "case 0x00", 0x8094: "case 0x01", 0x80D7: "case 0x02",
+           0x811A: "case 0x03", 0x815D: "case 0x04", 0x819D: "case 0x05",
+           0x81DF: "case 0x06", 0x8231: "case 0x07", 0x8274: "default"}
+for name in ("bank-call-targets", "bank-paged-call-targets", "bank-relative-branch-targets"):
+    for r in csv.DictReader(open("ec/annotations/%s.csv" % name)):
+        if int(r["target"], 16) in targets:
+            print("%-30s %s %-6s %-5s -> %s %s" % (name, r["file_offset"], r["region"],
+                                                   r["opcode"], r["target"], targets[int(r["target"], 16)]))
+' | grep -v '0x8274'
+bank-call-targets              0x08040 bank0  ljmp  -> 0x811A case 0x03
+bank-call-targets              0x165D2 bank1  ljmp  -> 0x80D7 case 0x02
+bank-call-targets              0x166C7 bank1  ljmp  -> 0x80D7 case 0x02
+bank-relative-branch-targets   0x10116 bank1  jz    -> 0x811A case 0x03
+```
+
+The fourth, `bank1` `0x10116`, is an in-region `jz` inside `bank1` and reaches
+`bank1`'s `0x811A`, not this handler — `REGIONS` gives both banks base
+`0x8000`, which is the §6 ambiguity showing up in a group-by rather than a new
+finding. By these three scans nothing reaches these handlers at all; the only
+path into them found by *reading* is the computed dispatch at `0x716B`.
+
+**What the table costs the three committed censuses.** The 28 bytes of this
+one table produce 11 rows across them, all data read as code:
+
+```console
+$ python3 -c '
+import csv, sys
+sys.path.insert(0, "ec/tools")
+from decode_index_table import census, find_readers, reader_call_sites
+from trace_xdata_refs import runtime_addr
+d = open("ec/firmware/GMxMGxx_11.800", "rb").read()
+rows = census(d, reader_call_sites(d, runtime_addr(find_readers(d)[0], True)))
+spans = [(t["file_offset"], t["end"]) for _, t, bad in rows if t and not bad]
+this = [s for s in spans if s[0] == 0x08038]
+for name in ("bank-call-targets", "bank-paged-call-targets", "bank-relative-branch-targets"):
+    sites = [int(r["file_offset"], 16) for r in csv.DictReader(open("ec/annotations/%s.csv" % name))]
+    inside = lambda sp: sum(1 for o in sites if any(a <= o < b for a, b in sp))
+    print("%-30s %5d rows %3d in the 0x8038 table %4d in all 15" % (name, len(sites), inside(this), inside(spans)))
+'
+bank-call-targets               5998 rows   1 in the 0x8038 table    9 in all 15
+bank-paged-call-targets         3481 rows   6 in the 0x8038 table   52 in all 15
+bank-relative-branch-targets    9076 rows   4 in the 0x8038 table   72 in all 15
+```
+
+**"All 15": this table is one of a family, and that is the follow-up.** The
+reader at `0x7151` is the only subroutine in the main EC image opening
+`d0 83 d0 82 f8`, and 15 `lcall` byte sites name it. All 15 are followed by a
+table that decodes well-formed — case values strictly ascending, every target
+and default resolving inside the caller's own region, and the byte after the
+table being one of its own targets, which is the fall-through a compiler emits
+for the first case. 663 bytes of this image read as table data that way,
+carrying 133 of the rows in the three CSVs above.
+
+```console
+$ python3 ec/tools/decode_index_table.py ec/firmware/GMxMGxx_11.800 --all-tables
+reader search: 1 subroutine(s) in the main EC image open `d0 83 d0 82 f8`
+  file 0x07151 runtime 0x7151 (common)
+  `mov dptr,#0x8038` byte sites file-wide: 0
+  `mov dptr,#0x803A` byte sites file-wide: 0
+  15 `lcall` byte site(s) name the reader
+
+15 of 15 candidate site(s) are followed by a well-formed table
+
+  site      region  frame   entries  span              cases
+  0x00DD3  common  23/24        9  0x00DD6-0x00DF4  0x02-0x12
+  0x04064  common  24/24       15  0x04067-0x04097  0xEC-0xFF
+  0x041EE  common  24/24       14  0x041F1-0x0421E  0x60-0xD4
+  0x0424B  common  24/24       49  0x0424E-0x042E4  0x20-0xFF
+  0x08035  bank0   24/24        8  0x08038-0x08053  0x00-0x07
+  0x08662  bank0   23/24        8  0x08665-0x08680  0x00-0x09
+  0x0918A  bank0   24/24       10  0x0918D-0x091AE  0x00-0x09
+  0x09284  bank0   24/24        7  0x09287-0x0929F  0x08-0x38
+  0x0A34A  bank0   24/24        7  0x0A34D-0x0A365  0x00-0x06
+  0x0A682  bank0   24/24        7  0x0A685-0x0A69D  0x01-0xFE
+  0x0D148  bank0   24/24       12  0x0D14B-0x0D172  0x06-0x39
+  0x0D435  bank0   24/24       24  0x0D438-0x0D483  0x90-0xDD
+  0x0DDBB  bank0   24/24       16  0x0DDBE-0x0DDF1  0x80-0xFE
+  0x0EBDC  bank0   24/24        8  0x0EBDF-0x0EBFA  0x00-0x08
+  0x0F254  bank0   24/24        7  0x0F257-0x0F26F  0x00-0x08
+
+  663 bytes of this image read as table data by this method
+```
+
+Only the `0x08035` one was read entry by entry here; the other 14 are
+enumerated and not decoded, and none of their handlers was looked at. **No
+`bank1` site was found**, which is "not found by this scan" and not "there are
+none" — the reader is common-area and a `bank1` caller would look identical.
+
+**Blind spots, and what this section is not.** The reader search is for one
+prologue shape and for `lcall` bytes naming what it finds: a second reader
+spelled differently (`pop dpl` first, a `ret`-based thunk) would be invisible
+to it, as would a caller reaching `0x7151` through a BL51 trampoline or a
+computed target. The 2-byte `acall` form is *not* one of those blind spots
+here — the committed CSVs agree with this tool on the caller set, listing the
+same 15 `lcall` sites and no paged or relative site at all targeting `0x7151`:
+
+```console
+$ python3 -c '
+import csv
+for name in ("bank-call-targets", "bank-paged-call-targets", "bank-relative-branch-targets"):
+    rows = [r for r in csv.DictReader(open("ec/annotations/%s.csv" % name))
+            if int(r["target"], 16) == 0x7151]
+    print("%-30s %2d site(s)" % (name, len(rows)))
+'
+bank-call-targets              15 site(s)
+bank-paged-call-targets         0 site(s)
+bank-relative-branch-targets    0 site(s)
+```
+
+The 15 sites are a byte scan and could in principle include a phantom whose
+following bytes happen to pass all three well-formedness checks; `frame_onto`
+is reported per site so the weakest ones (`0x00DD3` and `0x08662`, 23 of 24)
+are visible rather than averaged away. `0x811A` is §6's worked example of the
+both-banks-live ambiguity: §9 costs §6 the *site* it illustrated with,
+`0x8040`, which is two table entries rather than an
+`ljmp`, and nothing else — decoding `0x811A` here against `/tmp/bank0.bin` is
+a bank-0 reading, not a claim about which bank executes, and §6's count and
+verdict are unmoved. Nothing in this section was run on hardware, no register
+was read, and no `status:` in
+[`registers.yaml`](registers.yaml) changes. The three open questions it hands
+on: the other 14 tables and their handlers (a census #50's region map would
+want anyway), the computed `jmp @a+dptr` dispatch at `0x716B` as an input to
+the CODE-pointer site list (#41) and to a recursive-descent map (#53), and the
+eight handlers' full control flow, which this section deliberately did not
+walk.
