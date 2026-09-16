@@ -18,8 +18,9 @@ before it means anything:
   2. *What does the site do?* Direction is taken from the opcodes that
      follow (0xE0 `movx a,@dptr` read, 0xF0 `movx @dptr,a` write, 0xA3
      `inc dptr` sequential walk into the following bytes). Where the site
-     hands DPTR to a subroutine (`lcall`) instead, that is reported as
-     exactly that -- unresolved -- not guessed at.
+     hands DPTR to a subroutine (`lcall`/`acall`, or the `ljmp`/`ajmp`
+     tail-call forms) instead, that is reported as exactly that --
+     unresolved -- not guessed at.
 
 The decode is a linear best-effort walk, not a disassembler: it stops at
 the first control-flow instruction and cannot follow branches (disasm8051.py
@@ -40,7 +41,8 @@ import collections
 import csv
 import sys
 
-from disasm8051 import FLOW_OPCODES, OPCODE_LEN, converges_from, mnemonic
+from disasm8051 import (FLOW_OPCODES, OPCODE_LEN, converges_from, mnemonic,
+                        paged_target)
 
 # Image map for ec/firmware/GMxMGxx_11.800. `runtime` is the address a site
 # has once the image is loaded for disassembly; for the main EC that means
@@ -103,6 +105,17 @@ def offset_for_runtime(runtime: int, region: str):
     assumption rather than by evidence. ../annotations/bank-call-audit.md has
     the counts and the blind spots.
 
+    The 2-byte paged forms carry none of that assumption. An `ajmp`/`acall`
+    target is the next instruction's own 2 KiB page with 11 bits substituted
+    in, so it lands in the page the caller is already executing from; every
+    mapped main-EC region in REGIONS is a whole number of 2 KiB pages aligned
+    identically in file offset and runtime base (audit_call_targets.py
+    --self-test checks that), so such a target cannot leave the caller's own
+    region and needs no bank chosen for it. The one shape that would escape
+    -- an instruction in a region's last two bytes, whose next PC is already
+    past the end -- occurs nowhere in this image, which the same self-test
+    checks site by site.
+
     A target at or above 0x8000 seen from the common area is unresolvable --
     nothing in the byte says which bank is mapped -- and returns None. That
     case does occur: 140 sites by byte scan, 83 of them anchored, per 5 of
@@ -123,15 +136,21 @@ def offset_for_runtime(runtime: int, region: str):
     return lo + (runtime - base)
 
 
-def call_target(raw: bytes):
-    """Absolute target of the `ljmp`/`lcall` classify() reports as a handoff.
+def call_target(raw: bytes, addr: int = None):
+    """Absolute target of a handoff instruction classify() reports.
 
-    Those two opcodes are the only handoff shapes classify() recognises;
-    `ajmp`/`acall` are not, and this does not change that. None for anything
-    else, so a caller can hand it any instruction from a walk()."""
-    if raw[0] not in (0x02, 0x12) or len(raw) < 3:
-        return None
-    return (raw[1] << 8) | raw[2]
+    The 3-byte absolute forms `ljmp`/`lcall` carry their whole target in the
+    instruction, so they resolve with or without `addr`. The 2-byte paged
+    forms `ajmp`/`acall` take their page from the address of the instruction
+    *after* them, so they resolve only when the caller supplies `addr` -- a
+    caller that cannot say where the instruction runs still gets None rather
+    than a target picked from some assumed page. None for anything else, so a
+    caller can hand it any instruction from a walk()."""
+    if raw[0] in (0x02, 0x12) and len(raw) >= 3:
+        return (raw[1] << 8) | raw[2]
+    if raw[0] & 0x1F in (0x01, 0x11) and len(raw) >= 2 and addr is not None:
+        return paged_target(raw[0], raw[1], addr)
+    return None
 
 
 def walk(d: bytes, start: int, max_insns: int = 8):
@@ -181,7 +200,8 @@ def classify(insns, skip: int = 1):
         elif op == 0x73:
             jmp_dptr = text
             break
-        elif op in (0x02, 0x12) and not reads and not writes and not movc:
+        elif (op in (0x02, 0x12) or op & 0x1F in (0x01, 0x11)) \
+                and not reads and not writes and not movc:
             handoff = text
             break
     if handoff:

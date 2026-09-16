@@ -1,4 +1,4 @@
-# Direct `lcall`/`ljmp` targets in the main EC image — is the same-bank assumption safe?
+# Direct call targets in the main EC image — is the same-bank assumption safe?
 
 `../tools/trace_xdata_refs.py`'s `offset_for_runtime()` maps a call target back
 to a file offset on the ordinary Keil banking convention: a target below
@@ -27,6 +27,12 @@ does establish:
   one this file read the bytes for turned out to be a misframed address table
   rather than a call, but 83 sites were not cleared one by one and this file
   does not claim they were. §5.
+- **The 2-byte paged family is now counted too, and it is not a banking
+  question.** 3481 `ajmp`/`acall` sites by byte scan, 1667 of them anchored.
+  An `ajmp`/`acall` target is inside the page the caller is already executing
+  from, so it cannot cross a bank — which *narrows* the population the
+  same-bank assumption carries rather than telling us anything new about it.
+  §7.
 
 No code change to `offset_for_runtime()` follows from this: its `None` return
 for bucket C is unchanged, and its same-bank reading for bucket B is not
@@ -110,19 +116,52 @@ worth reading bytes for before treating any of this bucket as a call:
 | `0x055EA` | ljmp | `0x9702` | 17/24 | `02 bc 02 af 02 a3` |
 | `0x00381` | lcall | `0x9402` | 15/24 | `12 88 02 12 8e 02` |
 
+## 5. The 2-byte paged family: `ajmp`/`acall`
+[...the confinement argument and the over-counting caveat, both in §7 below...]
+
+| region | ajmp | acall | both |
+|---|---:|---:|---:|
+| `common` | 692 / 378 | 784 / 439 | 1476 / 817 |
+| `bank0` | 666 / 230 | 338 / 168 | 1004 / 398 |
+| `bank1` | 703 / 306 | 298 / 146 | 1001 / 452 |
+
+| region | entry | other | erased |
+|---|---:|---:|---:|
+| `common` | 309 / 151 | 1163 / 663 | 4 / 3 |
+| `bank0` | 247 / 94 | 738 / 298 | 19 / 6 |
+| `bank1` | 245 / 109 | 681 / 338 | 75 / 5 |
+
+Paged sites landing on the BL51 path. The trampoline block 0x1150-0x1ABC
+spans pages a common-area paged call can reach from inside, so unlike the
+banks this is a route a paged instruction could take:
+  common: 17 / 4 onto a bank-0 trampoline entry
+  common: 1 / 0 onto a bank-1 trampoline entry
+
+  0 of 3481 paged site(s) resolve outside the caller's own region
+
 $ python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --self-test
   ok   4 BL51 stub sites at 0x1100, 0x1114, 0x1128, 0x113C selecting banks 0-3 (got 0x1100=bank0, 0x1114=bank1, 0x1128=bank2, 0x113C=bank3)
   ok   the `C0 08 74` prologue occurs 4 times in the main EC image (got 4)
   ok   and 0 times in the PD image (got 0)
   ok   offset_for_runtime()/runtime_addr() round-trip for every mapped region
   ok   a common-area call to 0x8000 stays unresolvable (bucket C returns None)
+  ok   file 0x02190 (runtime 0x2190) is `01 09` targeting 0x2009 (got `01 09` -> 0x2009)
+  ok   file 0x167FF (runtime 0xE7FF) is `01 53` targeting 0xE853 (got `01 53` -> 0xE853)
+  ok   0xE7FF's target 0xE853 is in the next instruction's page 0xE800, not the opcode's own 0xE000
+  ok   every mapped region is a whole number of 2 KiB pages aligned identically in file offset and runtime base -- the property the never-leaves-its-region claim rests on
+  ok   all 3481 paged site(s) in the audited regions resolve inside the caller's own region
 
 self-test passed
 ```
 
 [`bank-call-targets.csv`](bank-call-targets.csv) is `--csv` on the same image —
-one row per call site, 5998 of them — so every table above is a group-by over
-committed data rather than a number to be taken on trust.
+one row per `lcall`/`ljmp` site, 5998 of them — and
+[`bank-paged-call-targets.csv`](bank-paged-call-targets.csv) is `--paged-csv`,
+one row per `ajmp`/`acall` site, 3481 of them. Every table above is a group-by
+over committed data rather than a number to be taken on trust. The two files
+are siblings rather than one file, because `bucket`, `own_bank` and
+`other_bank` are absolute-form questions with no answer for a paged site;
+`bank-call-targets.csv` is byte-identical to what it was before §7 existed.
 
 ## 2. Why two numbers per count, and why neither is the number
 
@@ -363,12 +402,115 @@ not survive the other reading. That is one agreement with an independent hand
 decode, on one site, which is what §5.2 already said it was; it is not a
 validation of the other 1304 pairs.
 
-**Blind spots, named rather than left implicit.** `ajmp`/`acall` are not
-enumerated — `trace_xdata_refs.call_target()` deliberately does not recognise
-them and this tool inherits that, so an `acall` crossing a bank would be
-invisible here. Computed targets (`jmp @a+dptr`, and the trampoline's own
-DPTR-carried target) are invisible to any byte scan. Instruction framing is
+**Blind spots, named rather than left implicit.** `ajmp`/`acall` *are* now
+enumerated (§7), and they are not a fifth cross-bank risk: the opcode cannot
+name an address outside the caller's own 2 KiB page. What is still uncovered
+is the framing of those 3481 sites, which is worse than for the 3-byte forms
+rather than better — 16 byte values open a paged instruction, so the byte
+scan produces paged phantoms wherever the image holds dense data. Computed
+targets (`jmp @a+dptr`, and the trampoline's own DPTR-carried target) remain
+invisible to any byte scan, paged or absolute. Instruction framing is
 unsettled in both directions, as §2 shows in both. Banks 2 and 3 are taken as
 unused on `find_banks.py`'s word and were not re-derived. And none of this was
 run on the machine: the whole file is a statement about bytes in
 `ec/firmware/GMxMGxx_11.800`, not about anything observed executing.
+
+## 7. The 2-byte paged family — counted, and why it shrinks the question
+
+`ajmp` is `0x01/0x21/…/0xE1` and `acall` is `0x11/0x31/…/0xF1`: the low five
+bits fix the family, the high three carry target bits. The target is the
+*next* instruction's address with its low 11 bits replaced by the opcode's
+high 3 and the operand byte —
+
+```
+target = ((pc + 2) & 0xF800) | ((op & 0xE0) << 3) | operand
+```
+
+— so it is always inside one fixed 2 KiB page, and the caller is executing
+from that same page unless the instruction straddles the page boundary.
+
+**Why that shrinks the same-bank population instead of growing it.** Every
+mapped main-EC region in `REGIONS` is a whole number of 2 KiB pages, aligned
+identically in file offset and runtime base; `--self-test` checks that rather
+than assuming it. A target inside the caller's page is therefore inside the
+caller's region, so `offset_for_runtime()` resolves it without choosing a
+bank at all, and §6's assumption is simply not consulted for these 3481
+sites. This is opcode semantics plus a checked property of the region table
+— **not** a result derived from this image, and **not** evidence about bucket
+B, which stays exactly where §6 left it.
+
+The one shape that would escape is an instruction in a region's last two
+bytes, whose next PC is already past the end of the region. `paged_sites()`
+does not read the first byte of the next region as an operand, and the
+image-wide self-test confirms **0 of 3481** sites resolve outside their
+caller's region. Both are statements about this image; a different dump gets
+them re-checked, not inherited.
+
+**The counts, and the framing caveat is bigger here.** 3481 sites by byte
+scan, 1667 anchored — 48%, against 89% for the absolute forms in §1. That is
+the expected direction: 16 of 256 byte values open a paged instruction
+against 2 of 256, so a byte scan over-counts harder, not less. Read the pair,
+and do not read the upper bound as a site count.
+
+**Page arithmetic, pinned against two hand decodes.** The first is the `ajmp`
+already transcribed in §5 while reading bucket C; the second is this image's
+only paged site whose next PC crosses a page boundary, so its target is in
+the *following* page — the off-by-one the arithmetic invites:
+
+```console
+$ python3 ec/tools/make_bank_image.py ec/firmware/GMxMGxx_11.800 0 0x08000 /tmp/bank0.bin
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0x2190; pd 1' /tmp/bank0.bin
+        └─< 0x00002190      0109           ajmp 0x2009
+$ python3 ec/tools/make_bank_image.py ec/firmware/GMxMGxx_11.800 1 0x10000 /tmp/bank1.bin
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0xe7fd; pd 3' /tmp/bank1.bin
+        └─< 0x0000e7fd      015b           ajmp 0xe05b
+        ┌─< 0x0000e7ff      0153           ajmp 0xe853
+       ┌──< 0x0000e801      014a           ajmp 0xe84a
+```
+
+`0xE7FD` and `0xE7FF` are the same opcode two bytes apart and land 2 KiB
+apart, because `0xE7FF`'s next PC is `0xE801`. Both sites are `--self-test`
+cases; if `paged_target()` ever loses the `+ 2`, the second fails.
+
+**The BL51 path, and what the 18 hits on it actually are.** 17 paged sites
+resolve onto a bank-0 trampoline entry and 1 onto a bank-1 one; none resolves
+onto a stub. That is a route the geometry allows — the trampoline block
+`0x1150`-`0x1ABC` is in the common area, so a common-area paged call can
+reach it from inside its own page, which a bank never can. The sites do not
+look like real calls, though: the best of the 18 scores 1 of 24 anchors and
+14 score 0. Two were read by hand, and both are the trampoline block's own
+bytes misframed:
+
+```console
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0x15b8; pd 2' /tmp/bank0.bin
+            0x000015b8      90c881         mov dptr, #0xc881
+        └─< 0x000015bb      021100         ljmp 0x1100
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0x110d; pd 3' /tmp/bank0.bin
+            0x0000110d      c290           clr p1.0
+            0x0000110f      c291           clr p1.1
+            0x00001111      c292           clr p1.2
+```
+
+The scan's `ajmp` at `0x15BA` is the `0x81` low byte of a trampoline's
+`mov dptr,#0xc881`; its `acall` at `0x1110` is the `0x91` of a `clr p1.1`
+inside the bank-0 stub. The other 16 were **not** read one by one, so "these
+18 are phantoms" is not the claim — "two of them are, and the anchor scores
+of the rest give no reason to think otherwise" is.
+
+**What the false-negative fix found: nothing, in this image.** The mission
+half of this was `register_ref_table.py --callee-depth 1` silently dropping a
+handoff made by `acall`. `classify()` now treats a paged opcode as a handoff
+on the same footing as `lcall`/`ljmp`, and `resolve_handoff()` passes the
+handing-off instruction's runtime address down so the page can be named. Both
+`--callee-depth 0` and `--callee-depth 1` come out **byte-identical to
+before** across all 19 entries / 29 addresses in
+[`registers.yaml`](registers.yaml): not one of those sites' decoded windows
+contains a paged instruction at all in this image, so no committed
+transcript in [`static-refs-audit.md`](static-refs-audit.md),
+[`lightbar-bat-flow.md`](lightbar-bat-flow.md),
+[`ec-0x07d0-sites.md`](ec-0x07d0-sites.md) or [`../README.md`](../README.md)
+moves. Per [`../../docs/findings.md`](../../docs/findings.md) §4c that is "not
+found by this method", not "there are none": the false-negative shape was
+real, the tool no longer has it, and this image happens not to exhibit it.
+Nothing here is evidence about behaviour, so no `status:` in
+[`registers.yaml`](registers.yaml) moves either.

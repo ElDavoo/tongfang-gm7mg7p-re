@@ -75,6 +75,17 @@ def bit_name(b: int) -> str:
     return f"0x{0x20 + (b >> 3):02x}.{b & 0x07}"
 
 
+def paged_target(op: int, operand: int, addr: int) -> int:
+    """Absolute target of the 2-byte `ajmp`/`acall` at runtime address `addr`.
+
+    The page comes from the address of the *next* instruction, not from the
+    opcode's own -- so a site in the last two bytes of a page targets the
+    following page. Target bits are that next-PC's top 5, the opcode's high
+    3, and the operand byte, which puts the target inside one fixed 2 KiB
+    page for any given site."""
+    return ((addr + 2) & 0xF800) | ((op & 0xE0) << 3) | operand
+
+
 def mnemonic(d: bytes, i: int, addr: int = None) -> str:
     """Render the instruction at d[i]. `addr` is that instruction's runtime
     address; supply it to get absolute branch targets, omit it to get the
@@ -138,6 +149,14 @@ def mnemonic(d: bytes, i: int, addr: int = None) -> str:
         return f"djnz 0x{d[i + 1]:02x},{rel(2)}"
     if op in (0x02, 0x12):
         return f"{'ljmp' if op == 0x02 else 'lcall'} 0x{(d[i + 1] << 8) | d[i + 2]:04x}"
+    if op & 0x1F in (0x01, 0x11):
+        name = "ajmp" if op & 0x1F == 0x01 else "acall"
+        if addr is None:
+            # `page+0x53` rather than `0x0053`, because without an address the
+            # 11 target bits are not knowable and a bare hex number here would
+            # read like one of the absolute forms above.
+            return f"{name:<4} page+0x{d[i + 1]:02x}"
+        return f"{name:<4} 0x{paged_target(op, d[i + 1], addr):04x}"
     if 0xE8 <= op <= 0xEF:
         return f"mov  a,r{op - 0xE8}"
     if 0xF8 <= op <= 0xFF:

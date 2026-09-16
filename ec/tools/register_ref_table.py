@@ -56,6 +56,9 @@ from trace_xdata_refs import (PD_MARKER, call_target, classify, mnemonic,
                               offset_for_runtime, region_of, runtime_addr,
                               sites_for, walk)
 
+# Names the absolute forms because that is what it meant when the committed
+# transcripts and ec-0x07d0-sites.csv were taken; the bucket now also holds
+# the paged ajmp/acall handoffs classify() learned to see.
 HANDOFF = "handed to lcall/ljmp (unresolved)"
 
 # Bucket label -> markdown column header. Order is the table's column order,
@@ -119,12 +122,20 @@ def resolve_handoff(d: bytes, off: int, insns, pd_verified: bool):
     Anything that is not a plain movx direction -- another handoff, a movc, a
     walk that ends at a branch -- stays in the unresolved bucket with the
     callee's own verdict as the window, so the reason is on the row."""
-    # walk() stops at the first control-flow instruction, so the lcall/ljmp
-    # classify() saw is the last one it decoded.
-    target = call_target(insns[-1][1])
+    # walk() stops at the first control-flow instruction, so the call
+    # classify() saw is the last one it decoded. Its runtime address is what
+    # the paged forms need to name a page at all -- without it call_target()
+    # would return None for every ajmp/acall and they would all land in the
+    # unresolved bucket.
+    hoff, raw, _ = insns[-1]
+    target = call_target(raw, runtime_addr(hoff, pd_verified))
     if target is None:
-        return HANDOFF, None, "handoff is not an lcall/ljmp"
+        return HANDOFF, None, "handoff target is not resolvable from the bytes"
     region = region_of(off, pd_verified)[0]
+    # For an ajmp/acall this lands in the caller's own region by construction
+    # -- the target is inside the page the handoff itself runs in -- so the
+    # same-bank assumption offset_for_runtime() carries is not load-bearing
+    # for those rows, only for the absolute forms.
     coff = offset_for_runtime(target, region)
     if coff is None:
         return HANDOFF, target, f"callee not reachable from region {region}"
