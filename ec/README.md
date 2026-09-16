@@ -87,6 +87,16 @@ into `r2 -a 8051` with no stitching needed.
   the `offset_for_runtime`/`runtime_addr` round-trip and the page arithmetic
   against two hand decodes; `annotations/bank-call-audit.md` is the transcript
   and the verdict.
+- **`tools/decode_index_table.py`** — decodes the inline `switch` tables the
+  main EC image's one table-reading subroutine consumes, starting with the
+  `bank0` `0x8038` one that `annotations/bank-call-audit.md` §8 met as a
+  misframed rel8 escape and §9 corrects. Finds them by that reader's prologue
+  and the `lcall` sites naming it, not by a DPTR scan — nothing in this image
+  loads such a table's address as an immediate. `--all-tables` is the
+  image-wide census, `--csv` regenerates
+  `annotations/bank0-8038-dispatch-table.csv`, and `--self-test` re-checks the
+  reader's bytes, the table's extent and stride, and the census count against
+  the committed image.
 - **`tools/make_bank_image.py`** — stitches common area + one bank into a
   flat 64 KiB image loadable by `r2 -a 8051` (or any other 8051 disassembler
   expecting linear addressing).
@@ -126,6 +136,12 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   `annotations/bank-call-targets.csv`,
   `annotations/bank-paged-call-targets.csv` and
   `annotations/bank-relative-branch-targets.csv` are the per-site tables.
+- **`annotations/bank0-8038-dispatch-table.csv`** — the per-entry table behind
+  `annotations/bank-call-audit.md` §9: the eight entries of the `bank0`
+  `0x8038` inline `switch` table, each with the XDATA addresses its handler's
+  window names. Produced by `tools/decode_index_table.py --csv`, and written
+  without a comment header so a later region map can read it with
+  `csv.DictReader` and fold it in or supersede it.
 
 ## Recompilation — status: toolchain proven, not attempted
 
