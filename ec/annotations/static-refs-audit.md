@@ -383,6 +383,18 @@ those files needed a correction, and neither was edited for this.
 decodes as the 16-bit store of `R1`/`R2` into `0x04A6`/`0x04A7`. So that cell
 is a write one level down, and the EC-side reading of the entry is unchanged.
 
+That decode picks bank 1's bytes at `0x888C` because `offset_for_runtime()`
+assumes a call from a bank stays in that bank, and
+[`bank-call-audit.md`](bank-call-audit.md) is the enumeration of what that
+assumption covers. It does not overturn this row — no direct cross-bank call
+was found anywhere in the image by that method, and the linker's own
+cross-bank path is an indirect trampoline — but it does place this site in the
+audit's *ambiguous* population: bank 0 also holds non-erased bytes at `0x888C`,
+a different instruction sequence that never dereferences the handed-over DPTR
+(§6 of that file lists both). So the `handoff->write` verdict here rests on the
+same-bank assumption plus its agreement with `pd-xdata-overlap.md` §2's hand
+decode, not on anything that distinguishes the two banks at the call site.
+
 Note what the table does *not* show: no EC-side address is handoff-dominated.
 Every main-EC site behind a `present-untested` or `confirmed-working` grading
 resolves to a `movx` at the site itself, except that one handoff and the three
