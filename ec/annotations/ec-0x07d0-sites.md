@@ -188,6 +188,14 @@ So the byte at `0x07D0` is the *index* and `0x0408` the base of an array of
 `0xDA9B` (stride `0x77`), and in `0x578E` (stride `0x77`) — several arrays,
 one index.
 
+`pd-index-geometry.md` §7 decodes all four and names the bases the other three
+index: `0x08F8` for `0xC2FA`, `0x0870` for `0xDA9B` (through helper `0x5950`)
+and `0x089B` for `0x578E`, which lands its pointer in `R2:R1` rather than in
+DPTR. It also answers what these arrays do *not* have: none of them carries the
+`0x200 × Rn` page term that makes the `0x0400`-`0x04A8` records `0x260` bytes
+wide, so the strides quoted above stand as the effective ones — as far as a
+static term decode resolves.
+
 Two sites advance it in place, which is what an index does and what a
 threshold does not:
 

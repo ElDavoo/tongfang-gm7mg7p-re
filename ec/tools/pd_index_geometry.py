@@ -11,23 +11,41 @@ here") and 6 ("no control-flow recovery"). This tool answers the mechanical
 half of it -- *what address the helper computes* -- and bounds, without
 resolving, the half that needs a call graph.
 
-Three modes, in increasing order of how much they assume:
+Five modes, in increasing order of how much they assume:
 
   --helpers   Decode each named helper entry to its `ret`, following a tail
               `ljmp`/`ajmp` and stepping into an `lcall`, and report the
-              symbolic term(s) it adds to DPTR. The term model is two byte
-              templates (Keil's `DPTR += A*B`, and `DPH += 2*A`) plus the
-              instructions that load A and B; a routine whose body is not
-              built out of those is reported `unmodelled` with its listing
+              symbolic term(s) it adds to DPTR. The term model is five byte
+              templates (Keil's `DPTR += A*B` and `DPH += 2*A`, and the three
+              `base + A*B` forms that build a pointer from an immediate base)
+              plus the instructions that load A and B; a routine whose body is
+              not built out of those is reported `unmodelled` with its listing
               rather than force-fitted into a term. This mode assumes only
-              that the entry address is an instruction boundary.
-  --bases     Every PD-image `MOV DPTR,#imm16` whose immediate is in the low
-              base run, with the chain of helpers it hands DPTR to, their term
+              that the entry address is an instruction boundary. With no
+              argument it decodes the eleven named helpers; with addresses it
+              decodes those instead, which is how a mid-routine entry such as
+              0x34D9 gets a term chain.
+  --bases     Every PD-image `MOV DPTR,#imm16` whose immediate is in a base
+              span, with the chain of helpers it hands DPTR to, their term
               sum resolved against the A/B the site's own frame sets, and what
-              ended the chain. The frame comes from the longest backward walk
-              that converges on the site (disasm8051.converges_from()'s
-              idiom), so A and B are "as decoded from an anchor", not "as
-              executed".
+              ended the chain. The span defaults to the low run and can be
+              widened (`--bases all`, `--bases 0x0800-0x08FF`); the header line
+              always names the span it actually walked. The frame comes from
+              the longest backward walk that converges on the site
+              (disasm8051.converges_from()'s idiom), so A and B are "as decoded
+              from an anchor", not "as executed".
+  --sites     The same decode anchored on PD runtime addresses the caller
+              names rather than on a `MOV DPTR` opcode, for the sites whose
+              base never appears as a `MOV DPTR` immediate because it is added
+              as `add a,#imm` inside the multiply itself. Unlike --bases the
+              chain is followed across a `movx`: the access consumes the
+              pointer but does not change DPTR, and at these sites the
+              arithmetic that matters comes after it.
+  --strides   Census of the stride constants the term decode resolves over a
+              span: how many sites and which bases produce each, and how many
+              sites in the span resolve no stride at all. A stride absent from
+              the census was not resolved by this method over that span, which
+              is not the same as it not being there.
   --callers   For a PD runtime site: two candidate routine entries -- the
               nearest preceding call target by byte scan, and the nearest that
               also passes the two structural tests in reaches() and
@@ -61,15 +79,21 @@ Read-only: it opens the firmware image for reading and writes nothing.
 
 Usage:
     python3 pd_index_geometry.py ../firmware/GMxMGxx_11.800 --helpers
+    python3 pd_index_geometry.py ../firmware/GMxMGxx_11.800 --helpers 0x34D9 0x578E
     python3 pd_index_geometry.py ../firmware/GMxMGxx_11.800 --bases
+    python3 pd_index_geometry.py ../firmware/GMxMGxx_11.800 --bases all
+    python3 pd_index_geometry.py ../firmware/GMxMGxx_11.800 --sites 0xC2FA 0xDA9B
+    python3 pd_index_geometry.py ../firmware/GMxMGxx_11.800 --strides all
     python3 pd_index_geometry.py ../firmware/GMxMGxx_11.800 \
             --callers 0x7421 0x9DEC 0xB5D3 0xE9F5
     python3 pd_index_geometry.py ../firmware/GMxMGxx_11.800 --helpers-csv
+    python3 pd_index_geometry.py ../firmware/GMxMGxx_11.800 --strides-csv all
     python3 pd_index_geometry.py ../firmware/GMxMGxx_11.800 --self-test
 """
 import argparse
 import csv
 import os
+import re
 import sys
 
 from disasm8051 import OPCODE_LEN, converges_from, mnemonic, paged_target
@@ -86,24 +110,49 @@ HELPERS = (0x10BC, 0x90CB, 0x998B, 0x9180, 0x998F, 0x9A99, 0x9A71, 0x9A98,
 
 # The low-address run pd-xdata-overlap.md 5.2 found in this image: a stride-4
 # set of bases, then a second stride-4 set, then the contiguous 0x04A1-0x04A6
-# and 0x04A8. Bounded rather than open-ended so --bases stays a statement
-# about that run and not a whole-image census.
+# and 0x04A8. It is the *default* span rather than the only one, so --bases
+# with no argument stays the statement about that run the annotations quote;
+# --bases all is the whole-image census.
 BASE_RUN = (0x0400, 0x04A8)
+WHOLE_IMAGE = (0x0000, 0xFFFF)
 
 # The four 0x04A6 sites this work exists to bound (pd-xdata-overlap.md 3).
 DEFAULT_CALLER_SITES = (0x7421, 0x9DEC, 0xB5D3, 0xE9F5)
 
-# Byte templates the term model recognises, longest first. Both are Keil
+# Byte templates the term model recognises, longest first. All five are Keil
 # library bodies, matched as whole byte runs rather than reconstructed from a
 # symbolic interpreter -- an interpreter would happily produce a term for
 # code that does something else, which is exactly the overclaim this file is
-# trying not to make.
-#   mul ab ; add a,dpl ; mov dpl,a ; mov a,b ; addc a,dph ; mov dph,a
-#   add a,acc ; add a,dph ; mov dph,a
+# trying not to make. A `..` stands for one byte the run does not pin; the
+# only bytes left open are the immediate halves of a base address, which the
+# match reads out and substitutes for {base}.
+#
+# Three of them *replace* DPTR (or build a generic pointer in R2:R1) from an
+# immediate base instead of advancing whatever it held, so their term carries
+# the REBASE marker below. They were transcribed from the sites
+# ../annotations/ec-0x07d0-sites.md 4 names: 0x34D9 and 0xC2FA for the first,
+# helper 0x5950 (called from 0xDA9B) for the second, 0x578E for the third.
 TERM_TEMPLATES = (
-    (bytes.fromhex("a42582f582e5f03583f583"), "{a}×{b}"),
-    (bytes.fromhex("25e02583f583"), "0x200×{a}"),
+    # mul ab ; add a,dpl ; mov dpl,a ; mov a,b ; addc a,dph ; mov dph,a
+    ("a42582f582e5f03583f583", "{a}×{b}"),
+    # mul ab ; add a,#lo ; mov dpl,a ; clr a ; addc a,#hi ; mov dph,a
+    ("a424..f582e434..f583", "=DPTR ← {base} + {a}×{b}"),
+    # add a,#lo ; mov dpl,a ; clr a ; addc a,#hi ; mov dph,a -- the same 16-bit
+    # add with no multiply, so the addend is A alone. It drops B, which means
+    # a caller that reached it through `mul ab` loses the product's high byte;
+    # 0xDA9B does exactly that, and the annotation says so rather than assuming
+    # the index is small enough for it not to matter.
+    ("24..f582e434..f583", "=DPTR ← {base} + {a}"),
+    # mul ab ; add a,#lo ; mov r1,a ; mov a,#hi ; addc a,b
+    ("a424..f974..35f0", "=R2:R1 ← {base} + {a}×{b}"),
+    # add a,acc ; add a,dph ; mov dph,a
+    ("25e02583f583", "0x200×{a}"),
 )
+
+# A term beginning with this replaces every term before it instead of adding
+# to them: the templates that build a pointer from an immediate base discard
+# whatever DPTR held at the site.
+REBASE = "="
 
 # Placeholders for an accumulator or B register the caller supplies. They stay
 # unsubstituted through a helper's own decode and are filled in per base site,
@@ -115,11 +164,24 @@ RETI = 0x32
 MOV_B_IMM = bytes((0x75, 0xF0))          # mov b,#imm
 MOV_A_IMM = 0x74                          # mov a,#imm
 CLR_A = 0xE4                              # clr a
+MOVX_A_DPTR = 0xE0                        # movx a,@dptr
+MOVX_DPTR_A = 0xF0                        # movx @dptr,a
+MUL_AB = 0xA4                             # mul ab
 CALL_OPS = (0x12,)                        # lcall; acall is op & 0x1F == 0x11
 JMP_OPS = (0x02,)                         # ljmp;  ajmp  is op & 0x1F == 0x01
 
 FRAME_BACK = 32       # bytes of backward anchor sweep for a site's own frame
 HELPER_MAX_INSNS = 24  # a leaf helper that has not hit `ret` by here is not one
+SITE_WINDOW = 16      # instructions --sites decodes forward from a named anchor
+STRIDE_BASES_SHOWN = 12  # bases per --strides line before the text view elides
+
+# The multiplier in a resolved term, e.g. `R7×0x5E`. The page term is written
+# `0x200×R7` and deliberately does not match: it is the same register's page
+# stride, not a second record size.
+STRIDE_RE = re.compile(r"×0x([0-9A-F]+)")
+REBASE_BASE_RE = re.compile(re.escape(REBASE) + r"[^←]*← 0x([0-9A-F]{4})")
+PAGE_TERM = "0x200×"
+UNRESOLVED_STRIDE = "unresolved"
 
 # Every opcode that leaves a new value in the accumulator. Needed in full,
 # because a frame scan that only watched the loads it recognises would report
@@ -147,6 +209,23 @@ R_WRITERS = frozenset(
     set(range(0x08, 0x10)) | set(range(0x18, 0x20)) | set(range(0xA8, 0xB0))
     | set(range(0xC8, 0xD0)) | set(range(0xD8, 0xE0)) | set(range(0xF8, 0x100))
 )
+
+
+def parse_span(arg):
+    """`None` -> None, a (lo, hi) tuple -> itself, `all` -> the whole 16-bit
+    space, `0xLO-0xHI` -> that span. Tuples pass through so argparse's `const`
+    can be the default span itself."""
+    if arg is None or isinstance(arg, tuple):
+        return arg
+    if arg.lower() == "all":
+        return WHOLE_IMAGE
+    lo, _, hi = arg.partition("-")
+    if not hi:
+        raise ValueError(f"span {arg!r} is not `all` or 0xLO-0xHI")
+    lo, hi = int(lo, 16), int(hi, 16)
+    if not 0 <= lo <= hi <= 0xFFFF:
+        raise ValueError(f"span {arg!r} is not inside 0x0000-0xFFFF")
+    return lo, hi
 
 
 def pd_verified(d: bytes) -> bool:
@@ -181,10 +260,37 @@ def branch_target(raw: bytes, addr: int):
     return None
 
 
+def product_sym(a_sym: str, b_sym: str) -> str:
+    """What a bare `mul ab` -- one that is not the head of a template -- leaves
+    in A: the low half of the product, the high half having gone to B. The
+    base templates such a multiply feeds take A alone, so writing the term as
+    `low(...)` is what keeps a wrapped address from reading as an exact one."""
+    return f"low({a_sym}×{b_sym})"
+
+
 def _match_template(d: bytes, i: int):
-    for raw, term in TERM_TEMPLATES:
-        if d[i:i + len(raw)] == raw:
-            return len(raw), term
+    """(length, term) for the first template matching at `i`, else (None, None).
+
+    A template's two open bytes are the low and high halves of an immediate
+    base, in that order -- the order Keil emits them, `add a,#lo` before
+    `addc a,#hi` -- so they are read out as one 16-bit base rather than left
+    as two loose numbers."""
+    for pattern, term in TERM_TEMPLATES:
+        n = len(pattern) // 2
+        if len(d) - i < n:
+            continue
+        open_bytes = []
+        for k in range(n):
+            want = pattern[2 * k:2 * k + 2]
+            if want == "..":
+                open_bytes.append(d[i + k])
+            elif d[i + k] != int(want, 16):
+                break
+        else:
+            if open_bytes:
+                base = (open_bytes[1] << 8) | open_bytes[0]
+                term = term.replace("{base}", f"0x{base:04X}")
+            return n, term
     return None, None
 
 
@@ -234,6 +340,14 @@ def walk_helper(d: bytes, entry: int, depth: int = 0, seen: frozenset = frozense
             a_sym = f"0x{raw[1]:02X}"
         elif op == CLR_A:
             a_sym = "0x00"
+        elif op in (MOVX_A_DPTR, MOVX_DPTR_A):
+            # A `movx` consumes the pointer but does not change DPTR, so the
+            # term chain carries across it. `movx a,@dptr` does clobber A, and
+            # what it loaded is not knowable from these bytes.
+            if op == MOVX_A_DPTR:
+                a_sym = UNKNOWN_A
+        elif op == MUL_AB:
+            a_sym, b_sym = product_sym(a_sym, b_sym), UNKNOWN_B
         elif is_call(op) or is_jmp(op):
             target = branch_target(raw, here)
             if target is None:
@@ -341,9 +455,11 @@ def ab_of(frame) -> tuple:
     return a_sym, b_sym
 
 
-def chain_from(d: bytes, off: int, a_sym: str, b_sym: str, max_insns: int = 12):
+def chain_from(d: bytes, start: int, a_sym: str, b_sym: str, max_insns: int = 12,
+               through_movx: bool = False):
     """Follow the run of index helpers a base site hands DPTR to, as
-    (helper entries, term list, stop reason).
+    (helper entries, term list, stop reason). `start` is the file offset of the
+    first instruction to decode, i.e. the one *after* the site's `MOV DPTR`.
 
     A site rarely applies one term. ../annotations/pd-xdata-overlap.md 3.2 has
     three stacked calls before the `movx`, so reporting only the first handoff
@@ -352,16 +468,37 @@ def chain_from(d: bytes, off: int, a_sym: str, b_sym: str, max_insns: int = 12):
     modelled helper -- and the reason it stopped is reported alongside it, so
     a truncated chain reads as truncated. Notably it stops at the `push dph`
     of 3.1's save-and-restore detour: DPTR surviving a stack round trip is
-    control flow, and this is not a control-flow recovery tool."""
+    control flow, and this is not a control-flow recovery tool.
+
+    `through_movx` keeps the walk going across the access instead of stopping
+    there. DPTR survives a `movx` unchanged, so continuing is arithmetic and
+    not a guess -- but for a base site the access is the end of what that base
+    was loaded for, which is why it is off by default and only --sites, where
+    the caller named the address deliberately, turns it on."""
     lo, _ = pd_bounds()
     helpers, terms = [], []
-    i = off + OPCODE_LEN[d[off]]
+    i = start
     for _ in range(max_insns):
+        # An inline template, as opposed to one reached through a call: the
+        # 0x07D0 sites of ../annotations/ec-0x07d0-sites.md 4 multiply in place
+        # rather than calling 0x10BC, and stopping at their `mul ab` would
+        # report no term for arithmetic the model does cover.
+        n, term = _match_template(d, i)
+        if term:
+            terms.append(term.format(a=a_sym, b=b_sym))
+            a_sym, b_sym = UNKNOWN_A, UNKNOWN_B
+            i += n
+            continue
         op = d[i]
         raw = d[i:i + OPCODE_LEN[op]]
         here = i - lo
-        if op in (0xE0, 0xF0):
-            return helpers, terms, "movx: DPTR dereferenced here"
+        if op in (MOVX_A_DPTR, MOVX_DPTR_A):
+            if not through_movx:
+                return helpers, terms, "movx: DPTR dereferenced here"
+            if op == MOVX_A_DPTR:
+                a_sym = UNKNOWN_A
+            i += OPCODE_LEN[op]
+            continue
         if op == MOV_DPTR:
             return helpers, terms, "DPTR reloaded"
         if is_call(op) or is_jmp(op):
@@ -384,6 +521,8 @@ def chain_from(d: bytes, off: int, a_sym: str, b_sym: str, max_insns: int = 12):
             a_sym = f"0x{raw[1]:02X}"
         elif op == CLR_A:
             a_sym = "0x00"
+        elif op == MUL_AB:
+            a_sym, b_sym = product_sym(a_sym, b_sym), UNKNOWN_B
         else:
             return helpers, terms, f"`{mnemonic(d, i, here).strip()}` at 0x{here:04X}"
         i += OPCODE_LEN[op]
@@ -397,21 +536,26 @@ def resolve_terms(terms, a_sym: str, b_sym: str):
     return [t.format(a=a_sym, b=b_sym) for t in terms]
 
 
-def base_sites(d: bytes):
-    """Every PD-image `MOV DPTR,#imm16` with an immediate in BASE_RUN, as
-    dicts. `terms` is the chain of helper terms with the site's own A/B
-    substituted, and `stopped` says what ended the chain -- read them
-    together, since a short chain and a complete one look alike otherwise."""
+def base_sites(d: bytes, span=BASE_RUN):
+    """Every PD-image `MOV DPTR,#imm16` with an immediate in `span`, as dicts.
+    `terms` is the chain of helper terms with the site's own A/B substituted,
+    and `stopped` says what ended the chain -- read them together, since a
+    short chain and a complete one look alike otherwise.
+
+    The span is a parameter and not the module constant, so widening it is a
+    caller's decision: every count the annotations quote comes from BASE_RUN
+    and has to stay reproducible from the default."""
     lo, hi = pd_bounds()
     rows = []
     for i in range(lo, hi - 2):
         if d[i] != MOV_DPTR:
             continue
         base = (d[i + 1] << 8) | d[i + 2]
-        if not BASE_RUN[0] <= base <= BASE_RUN[1]:
+        if not span[0] <= base <= span[1]:
             continue
         a_sym, b_sym = ab_of(frame_of(d, i))
-        helpers, terms, stopped = chain_from(d, i, a_sym, b_sym)
+        helpers, terms, stopped = chain_from(d, i + OPCODE_LEN[MOV_DPTR],
+                                             a_sym, b_sym)
         onto, over = converges_from(d, i)
         rows.append({
             "base": base, "file_offset": i, "runtime": runtime_addr(i, True),
@@ -419,6 +563,96 @@ def base_sites(d: bytes):
             "a": a_sym, "b": b_sym, "terms": terms, "stopped": stopped,
         })
     return rows
+
+
+def site_rows(d: bytes, addrs, max_insns: int = SITE_WINDOW):
+    """The same decode as base_sites(), anchored on PD runtime addresses the
+    caller names. One row per address, each carrying the window it walked so
+    an unmodelled row is read off its own listing rather than taken on trust.
+
+    An address that begins with `MOV DPTR,#imm16` is treated exactly as a base
+    site; any other address is decoded from its first byte, which is how a
+    mid-routine anchor gets a chain at all. Nothing checks that the address is
+    an instruction boundary -- the caller asserts that by naming it, and the
+    listing is there so a wrong assertion is visible."""
+    lo, _ = pd_bounds()
+    rows = []
+    for addr in addrs:
+        i = lo + addr
+        base = (d[i + 1] << 8) | d[i + 2] if d[i] == MOV_DPTR else None
+        start = i + OPCODE_LEN[MOV_DPTR] if base is not None else i
+        a_sym, b_sym = ab_of(frame_of(d, i))
+        helpers, terms, stopped = chain_from(d, start, a_sym, b_sym, max_insns,
+                                             through_movx=True)
+        onto, over = converges_from(d, i)
+        listing, j = [], i
+        for _ in range(max_insns):
+            listing.append((j, d[j:j + OPCODE_LEN[d[j]]]))
+            j += OPCODE_LEN[d[j]]
+        rows.append({
+            "addr": addr, "base": base, "file_offset": i,
+            "helpers": helpers, "frame_onto": onto, "frame_over": over,
+            "a": a_sym, "b": b_sym, "terms": terms, "stopped": stopped,
+            "listing": listing,
+        })
+    return rows
+
+
+def effective_terms(terms):
+    """The terms that survive, with A and B rendered as the bare register names
+    they stand for. A REBASE term drops everything before it, since the pointer
+    those terms built no longer exists once an immediate base replaces it --
+    which is why the census reads this and not the raw list."""
+    out = []
+    for term in terms:
+        term = term.format(a="A", b="B")
+        if term.startswith(REBASE):
+            out = [term[len(REBASE):]]
+        else:
+            out.append(term)
+    return out
+
+
+def effective_base(row) -> int:
+    """The base the chain actually indexes from: the site's `MOV DPTR`
+    immediate, unless a REBASE term replaced it with an immediate of its own.
+    Without this the census would file 0xC2FA's array under 0x07D0, which is
+    the index it reads, not the base it indexes."""
+    for term in reversed(row["terms"]):
+        m = REBASE_BASE_RE.match(term)
+        if m:
+            return int(m.group(1), 16)
+    return row["base"]
+
+
+def stride_census(d: bytes, span):
+    """Which stride constants the term decode resolves over `span`, as
+    (per-stride rows, site total). Each row is one constant with the sites and
+    effective bases that produced it, and how many of those sites also apply
+    the `0x200×` page term; `UNRESOLVED_STRIDE` collects the sites whose chain
+    resolved no `×0xNN` term at all. A site resolving two strides is counted
+    under both.
+
+    A constant missing from the census was not resolved *by this method over
+    this span*. The 0x07B9 retraction in ../../docs/findings.md 4c is the
+    standing reminder of what a zero from a static scan is worth."""
+    per = {}
+    rows = base_sites(d, span)
+    for r in rows:
+        found, page = set(), False
+        for term in effective_terms(r["terms"]):
+            found.update(STRIDE_RE.findall(term))
+            page = page or PAGE_TERM in term
+        for stride in found or {UNRESOLVED_STRIDE}:
+            bases, paged = per.setdefault(stride, (set(), []))
+            bases.add(effective_base(r))
+            paged.append(page)
+    out = [{"stride": s, "sites": len(paged), "bases": sorted(bases),
+            "paged": sum(paged)}
+           for s, (bases, paged) in per.items()]
+    out.sort(key=lambda x: (x["stride"] == UNRESOLVED_STRIDE, -x["sites"],
+                            x["stride"]))
+    return out, len(rows)
 
 
 def branch_index(d: bytes):
@@ -539,32 +773,69 @@ def caller_rows(d: bytes, sites):
 
 def fmt_terms(terms, note: str = "") -> str:
     """The term sum as a reader sees it, with any still-unsubstituted
-    placeholder printed as the bare register name it stands for."""
+    placeholder printed as the bare register name it stands for. A REBASE term
+    drops everything before it, since the pointer those terms built no longer
+    exists once an immediate base replaces it."""
     if note:
         return note
-    return " + ".join(t.format(a="A", b="B") for t in terms) if terms else "(no term)"
+    out = effective_terms(terms)
+    return " + ".join(out) if out else "(no term)"
 
 
-def print_helpers(d: bytes) -> None:
+def rebased(terms) -> bool:
+    """Does the chain end up on a pointer of its own rather than on an offset
+    from the site's `MOV DPTR` base? True once any REBASE term has applied."""
+    return any(t.startswith(REBASE) for t in terms)
+
+
+def fmt_address(terms, base=None, note: str = "") -> str:
+    """The address line as a reader sees it: `DPTR += ...` for a helper's
+    addend, `DPTR = <base> + ...` for a site's, and whatever destination a
+    rebasing term names for itself. The last of those matters -- one of the
+    base templates lands in R2:R1 and never touches DPTR, and labelling it
+    `DPTR` would be the sort of almost-right this file exists not to print."""
+    body = fmt_terms(terms, note)
+    if note or rebased(terms):
+        return body
+    return f"DPTR += {body}" if base is None else f"DPTR = 0x{base:04X} + {body}"
+
+
+def print_helpers(d: bytes, entries=None) -> None:
     lo, _ = pd_bounds()
-    print(f"{len(HELPERS)} helper entries named by ../annotations/pd-xdata-overlap.md "
-          "3 and 5.2\n")
-    for entry in HELPERS:
+    if entries is None:
+        entries = HELPERS
+        print(f"{len(HELPERS)} helper entries named by "
+              "../annotations/pd-xdata-overlap.md 3 and 5.2\n")
+    else:
+        print(f"{len(entries)} helper entry/entries named on the command line\n")
+    for entry in entries:
         terms, listing, note = walk_helper(d, entry)
-        head = note if note else f"DPTR += {fmt_terms(terms)}"
+        # Terms *and* a note is the ordinary case for a mid-routine entry that
+        # finishes its arithmetic and then tail-jumps into something else: the
+        # terms are resolved, the tail is not, and printing only the note would
+        # throw away the half that is known.
+        head = fmt_address(terms) if terms else ""
+        head = f"{head}; {note}" if head and note else head or note
         print(f"0x{entry:04X}  (file 0x{lo + entry:05X})  {head}")
         for i, raw in listing:
             print(f"    0x{i - lo:04x}  {raw.hex():<8} {mnemonic(d, i, i - lo)}")
         print()
 
 
-def print_bases(d: bytes) -> None:
-    rows = base_sites(d)
+def fmt_span(span) -> str:
+    return "the whole image" if tuple(span) == WHOLE_IMAGE \
+        else f"0x{span[0]:04X}-0x{span[1]:04X}"
+
+
+def print_bases(d: bytes, span=BASE_RUN) -> None:
+    rows = base_sites(d, span)
     per_base = {}
     for r in rows:
         per_base.setdefault(r["base"], []).append(r)
+    # The span is in the header because a widened run must never be mistaken
+    # for the low-run figures the annotations quote.
     print(f"{len(rows)} PD-image MOV DPTR site(s) with a base in "
-          f"0x{BASE_RUN[0]:04X}-0x{BASE_RUN[1]:04X}, over {len(per_base)} base(s)\n")
+          f"{fmt_span(span)}, over {len(per_base)} base(s)\n")
     for base in sorted(per_base):
         print(f"0x{base:04X}: {len(per_base[base])} site(s)")
         for r in per_base[base]:
@@ -572,9 +843,47 @@ def print_bases(d: bytes) -> None:
             print(f"    file 0x{r['file_offset']:05X}  runtime 0x{r['runtime']:04X}  "
                   f"frame {r['frame_onto']}/{r['frame_onto'] + r['frame_over']}  "
                   f"A={r['a'].format(a='A')} B={r['b'].format(b='B')}  -> {chain}")
-            print(f"      DPTR = 0x{base:04X} + {fmt_terms(r['terms'])} "
+            print(f"      {fmt_address(r['terms'], base)} "
                   f"[chain ends at {r['stopped']}]")
         print()
+
+
+def print_sites(d: bytes, addrs) -> None:
+    lo, _ = pd_bounds()
+    for r in site_rows(d, addrs):
+        anchor = (f"MOV DPTR base 0x{r['base']:04X}" if r["base"] is not None
+                  else "not a MOV DPTR site; decoded from the anchor itself")
+        chain = " ".join(f"0x{h:04X}" for h in r["helpers"]) or "-"
+        print(f"PD runtime 0x{r['addr']:04X}  (file 0x{r['file_offset']:05X})  "
+              f"{anchor}")
+        print(f"  frame {r['frame_onto']}/{r['frame_onto'] + r['frame_over']}  "
+              f"A={r['a'].format(a='A')} B={r['b'].format(b='B')}  -> {chain}")
+        print(f"  {fmt_address(r['terms'], r['base'])} "
+              f"[chain ends at {r['stopped']}]")
+        for i, raw in r["listing"]:
+            print(f"    0x{i - lo:04x}  {raw.hex():<8} {mnemonic(d, i, i - lo)}")
+        print()
+
+
+def print_strides(d: bytes, span=BASE_RUN) -> None:
+    rows, total = stride_census(d, span)
+    resolved = sum(1 for r in rows if r["stride"] != UNRESOLVED_STRIDE)
+    print(f"stride census over {fmt_span(span)}: {total} PD-image MOV DPTR "
+          f"site(s), {resolved} stride constant(s) resolved")
+    print("bases are effective bases: the one a rebasing chain ends on, not "
+          "the site's own immediate\n")
+    for r in rows:
+        shown = r["bases"][:STRIDE_BASES_SHOWN]
+        bases = " ".join(f"0x{b:04X}" for b in shown)
+        if len(shown) < len(r["bases"]):
+            # Truncated in the text view only, and said out loud: the CSV
+            # carries every base, so nothing is silently dropped.
+            bases += f" ... and {len(r['bases']) - len(shown)} more (see --strides-csv)"
+        label = ("no stride resolved" if r["stride"] == UNRESOLVED_STRIDE
+                 else f"0x{r['stride']}")
+        print(f"{label:<18} {r['sites']:>4} site(s)  {len(r['bases']):>3} base(s)  "
+              f"{r['paged']:>4} with 0x200×  {bases}")
+    print()
 
 
 def print_callers(d: bytes, sites) -> None:
@@ -613,6 +922,17 @@ def write_helpers_csv(d: bytes) -> None:
                     sum(len(raw) for _, raw in listing),
                     "" if note else fmt_terms(terms),
                     tail, "yes" if note else "no"])
+
+
+def write_strides_csv(d: bytes, span=WHOLE_IMAGE) -> None:
+    rows, _ = stride_census(d, span)
+    w = csv.writer(sys.stdout)
+    w.writerow(["stride", "sites", "sites_with_page_term", "bases", "base_list"])
+    for r in rows:
+        w.writerow([r["stride"] if r["stride"] == UNRESOLVED_STRIDE
+                    else f"0x{r['stride']}",
+                    r["sites"], r["paged"], len(r["bases"]),
+                    " ".join(f"0x{b:04X}" for b in r["bases"])])
 
 
 def write_callers_csv(d: bytes, sites) -> None:
@@ -665,8 +985,30 @@ HELPER_TERMS = {
 SITE_OFFSETS = {0x7421: 0x27421, 0x9DEC: 0x29DEC, 0xB5D3: 0x2B5D3, 0xE9F5: 0x2E9F5}
 BASE_COUNTS = {0x04A6: 4, 0x04A3: 5}
 
+# The four addresses ../annotations/ec-0x07d0-sites.md 4 names for the 0x5E and
+# 0x77 strides, and the term each one has to keep producing. The first two are
+# `MOV DPTR` sites and are pinned against ec-0x07d0-sites.csv's own
+# file_offset/window columns as well, so a decode that drifts off the sites
+# that section is about fails here rather than in prose; the last two are
+# routine entries and are not rows in that CSV.
+STRIDE_SITE_TERMS = {
+    0xC2FA: ("DPTR ← 0x08F8 + R7×0x5E", "mov 0xf0,#0x5e"),
+    0xDA9B: ("DPTR ← 0x0870 + low(R7×0x77)", "mov 0xf0,#0x77"),
+}
+STRIDE_HELPER_TERMS = {
+    0x34D9: "DPTR ← 0x08FC + A×0x5E",
+    0x578E: "R2:R1 ← 0x089B + A×0x77",
+}
+
+# The strides whose sites the whole-image census finds carrying the 0x200×
+# page term. pd-index-geometry.md 7 answers the issue's question off this set,
+# so it is pinned rather than re-read from the prose.
+PAGED_STRIDES = {"60", "1F"}
+
+SITES_CSV = "../annotations/ec-0x07d0-sites.csv"
 HELPERS_CSV = "../annotations/pd-index-helpers.csv"
 CALLERS_CSV = "../annotations/pd-index-callers.csv"
+STRIDES_CSV = "../annotations/pd-base-strides.csv"
 DEFAULT_FIRMWARE = "../firmware/GMxMGxx_11.800"
 
 
@@ -708,10 +1050,35 @@ def self_test(fw_path: str) -> int:
               f"PD runtime 0x{runtime:04X} is file 0x{want:05X} and holds "
               f"`mov dptr,#0x04a6` (got 0x{got:05X}, `{raw.hex()}`)")
 
+    site_csv = {r["runtime"]: r for r in _csv_rows(SITES_CSV)}
+    for runtime, (want, want_window) in STRIDE_SITE_TERMS.items():
+        row = site_csv.get(f"0x{runtime:04X}", {})
+        check(row.get("file_offset") == f"0x{lo + runtime:05X}"
+              and want_window in row.get("window", ""),
+              f"{SITES_CSV} puts 0x{runtime:04X} at file 0x{lo + runtime:05X} "
+              f"with `{want_window}` in its window "
+              f"(got {row.get('file_offset')}, `{row.get('window')}`)")
+        got = fmt_terms(site_rows(d, [runtime])[0]["terms"])
+        check(got == want, f"--sites 0x{runtime:04X} decodes to {want} (got {got})")
+
+    for entry, want in STRIDE_HELPER_TERMS.items():
+        terms, _, _ = walk_helper(d, entry)
+        got = fmt_terms(terms)
+        check(got == want,
+              f"--helpers 0x{entry:04X} decodes to {want} (got {got})")
+
     rows = base_sites(d)
     for base, want in BASE_COUNTS.items():
         got = sum(1 for r in rows if r["base"] == base)
         check(got == want, f"--bases finds {want} site(s) for 0x{base:04X} (got {got})")
+
+    # The widened span has to be exercised, not merely accepted: every default
+    # site must reappear in it, at the same offset and with the same terms.
+    wide = {r["file_offset"]: r for r in base_sites(d, WHOLE_IMAGE)}
+    check(all(r["file_offset"] in wide
+              and wide[r["file_offset"]]["terms"] == r["terms"] for r in rows),
+          f"--bases all is a superset of the default run ({len(rows)} site(s) "
+          f"of {len(wide)})")
 
     want_helpers = _csv_rows(HELPERS_CSV)
     check(len(want_helpers) == len(HELPERS),
@@ -727,6 +1094,25 @@ def self_test(fw_path: str) -> int:
         check((row["unmodelled"] == "yes") == bool(note),
               f"{row['entry']} unmodelled={row['unmodelled']} matches the decode")
 
+    want_strides = _csv_rows(STRIDES_CSV)
+    got_strides, _ = stride_census(d, WHOLE_IMAGE)
+    check(len(want_strides) == len(got_strides),
+          f"{STRIDES_CSV} has one row per census entry ({len(got_strides)}; "
+          f"got {len(want_strides)})")
+    for want, got in zip(want_strides, got_strides):
+        label = got["stride"] if got["stride"] == UNRESOLVED_STRIDE \
+            else f"0x{got['stride']}"
+        check(want["stride"] == label and want["sites"] == str(got["sites"])
+              and want["sites_with_page_term"] == str(got["paged"])
+              and want["base_list"] == " ".join(f"0x{b:04X}" for b in got["bases"]),
+              f"{STRIDES_CSV} row {label} regenerates unchanged "
+              f"({want['sites']} site(s), {want['sites_with_page_term']} paged)")
+    check({r["stride"] for r in got_strides
+           if r["paged"] and r["stride"] != UNRESOLVED_STRIDE} == PAGED_STRIDES,
+          f"only {sorted(PAGED_STRIDES)} have sites carrying the 0x200× page "
+          "term over the whole image -- the question pd-index-geometry.md 7 "
+          "answers")
+
     want_callers = _csv_rows(CALLERS_CSV)
     got_callers = sum(len(p["rows"]) for g in caller_rows(d, DEFAULT_CALLER_SITES)
                       for p in g["picks"])
@@ -741,8 +1127,9 @@ def self_test(fw_path: str) -> int:
     else:
         print(f"self-test passed: the helper bodies and terms match "
               f"pd-xdata-overlap.md 3, the four 0x04A6 sites sit where "
-              f"trace_xdata_refs.py puts them, and both CSVs regenerate "
-              f"unchanged (PD image at file 0x{lo:05X})")
+              f"trace_xdata_refs.py puts them, the four 0x5E/0x77 addresses sit "
+              f"where ec-0x07d0-sites.md 4 puts them, and all three CSVs "
+              f"regenerate unchanged (PD image at file 0x{lo:05X})")
     return 1 if bad else 0
 
 
@@ -751,14 +1138,24 @@ def main() -> int:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("firmware", nargs="?", default=None,
                     help="raw EC firmware image (e.g. ec/firmware/GMxMGxx_11.800)")
-    ap.add_argument("--helpers", action="store_true",
-                    help="decode each named index helper and report its DPTR term(s)")
-    ap.add_argument("--bases", action="store_true",
-                    help="every PD site whose MOV DPTR immediate is in the low base run")
+    ap.add_argument("--helpers", nargs="*", metavar="ADDR",
+                    help="decode each named index helper and report its DPTR "
+                         "term(s); with no argument, the eleven named ones")
+    ap.add_argument("--bases", nargs="?", const=BASE_RUN, metavar="SPAN",
+                    help="every PD site whose MOV DPTR immediate is in SPAN "
+                         "(`all`, or 0xLO-0xHI); with no argument, the low "
+                         f"base run 0x{BASE_RUN[0]:04X}-0x{BASE_RUN[1]:04X}")
+    ap.add_argument("--sites", nargs="+", metavar="ADDR",
+                    help="decode forward from these PD runtime addresses, e.g. 0xC2FA")
+    ap.add_argument("--strides", nargs="?", const=BASE_RUN, metavar="SPAN",
+                    help="census of the stride constants the decode resolves over SPAN")
     ap.add_argument("--callers", nargs="+", metavar="ADDR",
                     help="bound the caller set of these PD runtime sites, e.g. 0x7421")
     ap.add_argument("--helpers-csv", action="store_true",
                     help="write the helper table as CSV on stdout")
+    ap.add_argument("--strides-csv", nargs="?", const=WHOLE_IMAGE, metavar="SPAN",
+                    help="write the stride census as CSV; with no argument, "
+                         "the whole image, which is what the committed CSV holds")
     ap.add_argument("--callers-csv", action="store_true",
                     help="write the caller table for the four 0x04A6 sites as CSV")
     ap.add_argument("--self-test", action="store_true",
@@ -769,10 +1166,18 @@ def main() -> int:
     fw = args.firmware or os.path.join(here, DEFAULT_FIRMWARE)
     if args.self_test:
         return self_test(fw)
-    if not (args.helpers or args.bases or args.callers
-            or args.helpers_csv or args.callers_csv):
-        ap.error("pick a mode: --helpers, --bases, --callers, --helpers-csv, "
-                 "--callers-csv or --self-test")
+    modes = (args.helpers, args.bases, args.sites, args.strides, args.callers,
+             args.helpers_csv, args.strides_csv, args.callers_csv)
+    if all(m is None or m is False for m in modes):
+        ap.error("pick a mode: --helpers, --bases, --sites, --strides, "
+                 "--callers, --helpers-csv, --strides-csv, --callers-csv or "
+                 "--self-test")
+    try:
+        bases_span = parse_span(args.bases)
+        strides_span = parse_span(args.strides)
+        strides_csv_span = parse_span(args.strides_csv)
+    except ValueError as exc:
+        ap.error(str(exc))
 
     d = open(fw, "rb").read()
     if not pd_verified(d):
@@ -783,14 +1188,20 @@ def main() -> int:
               file=sys.stderr)
         return 1
 
-    if args.helpers:
-        print_helpers(d)
-    if args.bases:
-        print_bases(d)
+    if args.helpers is not None:
+        print_helpers(d, [int(a, 16) for a in args.helpers] or None)
+    if bases_span is not None:
+        print_bases(d, bases_span)
+    if args.sites:
+        print_sites(d, [int(a, 16) for a in args.sites])
+    if strides_span is not None:
+        print_strides(d, strides_span)
     if args.callers:
         print_callers(d, [int(a, 16) for a in args.callers])
     if args.helpers_csv:
         write_helpers_csv(d)
+    if strides_csv_span is not None:
+        write_strides_csv(d, strides_csv_span)
     if args.callers_csv:
         write_callers_csv(d, DEFAULT_CALLER_SITES)
     return 0

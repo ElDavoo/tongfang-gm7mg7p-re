@@ -166,13 +166,23 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   file §9 cites.
 - **`annotations/pd-index-geometry.md`** — the PD image's index-helper family
   decoded, the `0x0400`-`0x04A8` base run's stride and field layout, and the
-  callers of the four `0x04A6` sites. Answers the address *arithmetic*
+  callers of the four `0x04A6` sites, plus §7's whole-image widening: the
+  `0x5E`/`0x77` arrays `annotations/ec-0x07d0-sites.md` §4 names, decoded, and
+  the finding that none of them carries the `0x200 × Rn` page term — so `0x260`
+  is that run's shape and not the image's. Answers the address *arithmetic*
   `annotations/ec-0x07d0-sites.md` §4 and `annotations/pd-xdata-overlap.md`
   §3-§6 stop at, and deliberately stops where they do: no record count, no name
   for the contents, no claim that the caller list is complete.
   `annotations/pd-index-helpers.csv` and `annotations/pd-index-callers.csv` are
   the per-helper and per-caller tables, produced by
   `tools/pd_index_geometry.py --helpers-csv` / `--callers-csv`.
+- **`annotations/pd-base-strides.csv`** — the whole-image stride census behind
+  that §7: one row per stride constant the term decode resolves, with the site
+  count, how many of those sites also apply the `0x200 ×` page term, and every
+  effective base that produced it. The `unresolved` row is the sites that
+  resolve no stride, kept in the file rather than filtered out, because "not
+  resolved by this method" is a result too. Produced by
+  `tools/pd_index_geometry.py --strides-csv` and checked by its `--self-test`.
 - **`annotations/index-table-spans.csv`** — one row per candidate call site:
   the table's span, its case range, and the site's own `frame_onto`/
   `frame_over`. It is the census, not a filtered view of it, so a site whose
