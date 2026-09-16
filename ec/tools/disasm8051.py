@@ -21,7 +21,9 @@ the subset this firmware actually uses; anything else prints as `db`.
 `--self-test` decodes the two windows that ec/annotations/charge-profile-flow.md
 transcribed by hand from `r2 -a 8051` and requires a byte-for-byte match
 against those listings -- that is the oracle for the tables above, so run
-it after touching either.
+it after touching either. It then checks relative_target() against four more
+hand decodes (ec/annotations/bank-call-audit.md 8), because both windows
+branch forward only and a sign-extension bug would survive them.
 
 Usage:
     python3 disasm8051.py --self-test
@@ -59,6 +61,18 @@ FLOW_OPCODES |= set(range(0x11, 0x100, 0x20))  # ACALL
 FLOW_OPCODES |= set(range(0xB6, 0xC0))         # CJNE @Ri/Rn
 FLOW_OPCODES |= set(range(0xD8, 0xE0))         # DJNZ Rn
 
+# The PC-relative branch family, mapped to the mnemonic a caller would group
+# by. These are the opcodes whose *last* byte is a signed 8-bit displacement;
+# it is the second byte for the 2-byte forms and the third for the 3-byte ones,
+# which is why relative_target() consults OPCODE_LEN rather than a constant.
+# 29 of the 256 byte values, against 16 for the paged forms and 2 for the
+# absolute ones -- a byte scan for these over-counts correspondingly harder.
+REL_OPCODES = {0x80: "sjmp", 0x40: "jc", 0x50: "jnc", 0x60: "jz", 0x70: "jnz",
+               0x10: "jbc", 0x20: "jb", 0x30: "jnb",
+               0xB4: "cjne", 0xB5: "cjne", 0xD5: "djnz"}
+REL_OPCODES.update({op: "cjne" for op in range(0xB6, 0xC0)})  # CJNE @Ri/Rn
+REL_OPCODES.update({op: "djnz" for op in range(0xD8, 0xE0)})  # DJNZ Rn
+
 # Bit-addressable SFRs, for rendering the bit operand of JB/JNB/JBC/SETB
 # the way r2 prints it (`acc.0`, not `0xe0`).
 BIT_SFR = {0x80: "p0", 0x88: "tcon", 0x90: "p1", 0x98: "scon", 0xA0: "p2",
@@ -86,6 +100,18 @@ def paged_target(op: int, operand: int, addr: int) -> int:
     return ((addr + 2) & 0xF800) | ((op & 0xE0) << 3) | operand
 
 
+def relative_target(op: int, disp: int, addr: int) -> int:
+    """Absolute target of the PC-relative branch at runtime address `addr`.
+
+    `disp` is the instruction's *last* byte -- `d[i + OPCODE_LEN[op] - 1]`, not
+    `d[i + 1]`: the 3-byte forms (`jb`/`jnb`/`jbc`, `cjne`, `djnz direct`) put a
+    bit or operand byte in between, so handing this the second byte silently
+    resolves those to the wrong target. It is signed, and it is added to the
+    address of the *next* instruction, which is why OPCODE_LEN is consulted
+    rather than a constant that would only suit one of the two lengths."""
+    return (addr + OPCODE_LEN[op] + (disp - 256 if disp > 127 else disp)) & 0xFFFF
+
+
 def mnemonic(d: bytes, i: int, addr: int = None) -> str:
     """Render the instruction at d[i]. `addr` is that instruction's runtime
     address; supply it to get absolute branch targets, omit it to get the
@@ -95,8 +121,7 @@ def mnemonic(d: bytes, i: int, addr: int = None) -> str:
     def rel(n: int) -> str:
         if addr is None:
             return f"+0x{d[i + n]:02x}"
-        disp = d[i + n] - 256 if d[i + n] > 127 else d[i + n]
-        return f"0x{(addr + OPCODE_LEN[op] + disp) & 0xFFFF:04x}"
+        return f"0x{relative_target(op, d[i + n], addr):04x}"
 
     if op == 0x90:
         return f"mov  dptr,#0x{(d[i + 1] << 8) | d[i + 2]:04x}"
@@ -298,6 +323,19 @@ SELF_TEST = [
     ]),
 ]
 
+# Relative-branch sites hand-decoded with `r2 -a 8051` against a
+# make_bank_image.py bank-0 image, as (file offset, runtime address, bytes,
+# target); the transcripts are in ../annotations/bank-call-audit.md 8. Two are
+# from the SELF_TEST windows above and two are backward branches, which those
+# windows do not contain -- 0xFE24 doubles as the last-byte check, since
+# reading its displacement from d[i + 1] would give 0xFE08 rather than 0xFE0F.
+REL_SITES = (
+    (0x0B2EE, 0xB2EE, b"\x80\x6e", 0xB35E),
+    (0x0B137, 0xB137, b"\x20\xe0\x07", 0xB141),
+    (0x0F1B0, 0xF1B0, b"\xdf\xe6", 0xF198),
+    (0x0FE24, 0xFE24, b"\x30\xe1\xe8", 0xFE0F),
+)
+
 DEFAULT_FIRMWARE = "../firmware/GMxMGxx_11.800"
 BANK0_FILE_OFFSET = 0x08000
 
@@ -317,11 +355,21 @@ def self_test(fw_path: str) -> int:
                 bad += 1
             print(f"  {mark} 0x{got_a:04x}  {got_t:<24} expected 0x{want_a:04x}  {want_t}")
         print()
+    for foff, rt, raw, want in REL_SITES:
+        got = relative_target(raw[0], raw[-1], rt)
+        ok = d[foff:foff + len(raw)] == raw and got == want
+        if not ok:
+            bad += 1
+        print(f"  {'ok ' if ok else '!  '} file 0x{foff:05X} (runtime 0x{rt:04X}) is "
+              f"`{raw.hex(' ')}` targeting 0x{want:04X} "
+              f"(got `{d[foff:foff + len(raw)].hex(' ')}` -> 0x{got:04X})")
+    print()
     if bad:
-        print(f"self-test FAILED: {bad} instruction(s) disagree with "
-              "ec/annotations/charge-profile-flow.md")
+        print(f"self-test FAILED: {bad} instruction(s)/site(s) disagree with "
+              "ec/annotations/charge-profile-flow.md and bank-call-audit.md 8")
     else:
-        print("self-test passed: both charge-profile-flow.md windows decode identically")
+        print("self-test passed: both charge-profile-flow.md windows decode identically "
+              f"and all {len(REL_SITES)} relative-branch sites resolve as hand-decoded")
     return 1 if bad else 0
 
 

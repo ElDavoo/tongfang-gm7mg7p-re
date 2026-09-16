@@ -121,9 +121,11 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   EC-side handoff this repo resolves: how many direct calls stay in the common
   area, how many assume the caller's own bank, how many are unresolvable, and
   why the same-bank assumption cannot be verified from these bytes however the
-  counts come out — plus §7, the paged `ajmp`/`acall` family, which the
-  assumption never has to carry. `annotations/bank-call-targets.csv` and
-  `annotations/bank-paged-call-targets.csv` are the per-site tables.
+  counts come out — plus §7, the paged `ajmp`/`acall` family, and §8, the
+  PC-relative branches, neither of which the assumption ever has to carry.
+  `annotations/bank-call-targets.csv`,
+  `annotations/bank-paged-call-targets.csv` and
+  `annotations/bank-relative-branch-targets.csv` are the per-site tables.
 
 ## Recompilation — status: toolchain proven, not attempted
 
