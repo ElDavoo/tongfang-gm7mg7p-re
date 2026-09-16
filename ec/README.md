@@ -94,9 +94,11 @@ into `r2 -a 8051` with no stitching needed.
   and the `lcall` sites naming it, not by a DPTR scan — nothing in this image
   loads such a table's address as an immediate. `--all-tables` is the
   image-wide census, `--csv` regenerates
-  `annotations/bank0-8038-dispatch-table.csv`, and `--self-test` re-checks the
-  reader's bytes, the table's extent and stride, and the census count against
-  the committed image.
+  `annotations/bank0-8038-dispatch-table.csv`, `--all-csv` and `--spans-csv`
+  regenerate `annotations/index-table-entries.csv` and
+  `annotations/index-table-spans.csv`, and `--self-test` re-checks the
+  reader's bytes, the table's extent and stride, the whole 15-site census and
+  the census rows each span accounts for against the committed image.
 - **`tools/make_bank_image.py`** — stitches common area + one bank into a
   flat 64 KiB image loadable by `r2 -a 8051` (or any other 8051 disassembler
   expecting linear addressing).
@@ -142,6 +144,18 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   window names. Produced by `tools/decode_index_table.py --csv`, and written
   without a comment header so a later region map can read it with
   `csv.DictReader` and fold it in or supersede it.
+- **`annotations/index-table-entries.csv`** — the same per-entry decode for all
+  15 tables of that family, with a leading `site` column naming the `lcall`
+  each table follows. Produced by `tools/decode_index_table.py --all-csv`;
+  `annotations/bank-call-audit.md` §10 is the reading. It carries the `0x8038`
+  table's eight entries too, so a consumer of the span list below needs no
+  special case for it — `annotations/bank0-8038-dispatch-table.csv` stays the
+  file §9 cites.
+- **`annotations/index-table-spans.csv`** — one row per candidate call site:
+  the table's span, its case range, and the site's own `frame_onto`/
+  `frame_over`. It is the census, not a filtered view of it, so a site whose
+  bytes do not decode keeps a `well_formed=no` row rather than disappearing.
+  Produced by `tools/decode_index_table.py --spans-csv`.
 
 ## Recompilation — status: toolchain proven, not attempted
 

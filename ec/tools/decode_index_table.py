@@ -36,12 +36,21 @@ compiler emits for the first case. All of that is corroboration, not
 proof; nothing here is evidence that any handler executes, and no `status:`
 in ../annotations/registers.yaml follows from a decode.
 
+`--all-csv` and `--spans-csv` carry that caveat with them: the span list is
+the census, one row per `lcall` *byte* site, so a phantom site that happens to
+be followed by well-formed-looking bytes is in it. `frame_onto` rides along
+per site rather than averaged, which is what keeps the weak ones visible.
+
 Usage:
     python3 ec/tools/decode_index_table.py ec/firmware/GMxMGxx_11.800
     python3 ec/tools/decode_index_table.py ec/firmware/GMxMGxx_11.800 --at 0x0D148
     python3 ec/tools/decode_index_table.py ec/firmware/GMxMGxx_11.800 --all-tables
     python3 ec/tools/decode_index_table.py ec/firmware/GMxMGxx_11.800 --csv \
         > ec/annotations/bank0-8038-dispatch-table.csv
+    python3 ec/tools/decode_index_table.py ec/firmware/GMxMGxx_11.800 --all-csv \
+        > ec/annotations/index-table-entries.csv
+    python3 ec/tools/decode_index_table.py ec/firmware/GMxMGxx_11.800 --spans-csv \
+        > ec/annotations/index-table-spans.csv
     python3 ec/tools/decode_index_table.py ec/firmware/GMxMGxx_11.800 --self-test
 """
 import argparse
@@ -301,39 +310,104 @@ def print_census(d: bytes, rows) -> None:
     print()
 
 
+ENTRY_COLUMNS = ["index", "entry_file_offset", "entry_runtime", "target_runtime",
+                 "target_file_offset", "stride_from_prev", "target_first_insn",
+                 "notes"]
+
+SPAN_COLUMNS = ["site", "region", "site_runtime", "frame_onto", "frame_over",
+                "entries", "table_file_offset", "table_end", "table_runtime",
+                "first_case", "last_case", "default_runtime", "well_formed"]
+
+
+def xdata_note(summary) -> str:
+    """The `notes` cell for a window. Most of the 15 tables have windows only
+    a few bytes long -- a thunk that branches away names no XDATA at all, and
+    saying so beats a bare `xdata` with nothing after it."""
+    if not summary["xdata"]:
+        return "no xdata named in its window"
+    return "xdata " + " ".join(f"0x{a:04X}" for a in summary["xdata"])
+
+
+def entry_rows(d: bytes, tbl):
+    """One row per entry, then the `default` row, in ENTRY_COLUMNS order.
+
+    Shared by `--csv` and `--all-csv` so the single-table file and the
+    combined one cannot drift into two different readings of the same table."""
+    prev = None
+    for e in tbl["entries"]:
+        s = body_summary(d, tbl, e["target"])
+        yield [
+            f"0x{e['case']:02X}", f"0x{e['file_offset']:05X}",
+            f"0x{e['runtime']:04X}", f"0x{e['target']:04X}",
+            f"0x{offset_for_runtime(e['target'], tbl['region']):05X}",
+            "" if prev is None else f"0x{e['target'] - prev:02X}",
+            s["first_insn"], xdata_note(s),
+        ]
+        prev = e["target"]
+    s = body_summary(d, tbl, tbl["default"])
+    yield [
+        "default", f"0x{tbl['default_offset']:05X}",
+        f"0x{runtime_addr(tbl['default_offset'], True):04X}",
+        f"0x{tbl['default']:04X}",
+        f"0x{offset_for_runtime(tbl['default'], tbl['region']):05X}",
+        "", s["first_insn"],
+        "reached when no case matches; " + xdata_note(s),
+    ]
+
+
 def write_csv(d: bytes, tbl) -> None:
-    """One row per entry, plus a `default` row, on stdout.
+    """One table's entries on stdout.
 
     No comment header: the columns are named after the `bank-*-targets.csv`
     ones so that whatever region map issue #50 lands can read this with
     `csv.DictReader` and fold it in or supersede it, and a leading `#` line
     would be the one thing that stops it."""
     w = csv.writer(sys.stdout)
-    w.writerow(["index", "entry_file_offset", "entry_runtime", "target_runtime",
-                "target_file_offset", "stride_from_prev", "target_first_insn",
-                "notes"])
-    prev = None
-    for e in tbl["entries"]:
-        s = body_summary(d, tbl, e["target"])
-        w.writerow([
-            f"0x{e['case']:02X}", f"0x{e['file_offset']:05X}",
-            f"0x{e['runtime']:04X}", f"0x{e['target']:04X}",
-            f"0x{offset_for_runtime(e['target'], tbl['region']):05X}",
-            "" if prev is None else f"0x{e['target'] - prev:02X}",
-            s["first_insn"],
-            "xdata " + " ".join(f"0x{a:04X}" for a in s["xdata"]),
+    w.writerow(ENTRY_COLUMNS)
+    for row in entry_rows(d, tbl):
+        w.writerow(row)
+
+
+def write_all_csv(d: bytes, rows) -> None:
+    """Every well-formed table's entries in one file, in ascending file order,
+    each row naming the `lcall` site its table follows.
+
+    The 0x8038 table is in here too, so a reader of the span list never has to
+    special-case it -- bank0-8038-dispatch-table.csv stays the file section 9
+    cites, and this one duplicates its eight entries on purpose."""
+    w = csv.writer(sys.stdout)
+    w.writerow(["site"] + ENTRY_COLUMNS)
+    for site, tbl, bad in rows:
+        if tbl is None or bad:
+            continue
+        for row in entry_rows(d, tbl):
+            w.writerow([f"0x{site['file_offset']:05X}"] + row)
+
+
+def write_spans_csv(d: bytes, rows) -> None:
+    """One row per candidate call site: the census, not a filtered view of it.
+
+    A site whose bytes do not decode into a table keeps its row with
+    `well_formed=no` and empty span fields, because dropping it would turn
+    the byte scan's over-count into an invisible one. `table_end` is one past
+    the last table byte, so a span test is `table_file_offset <= off <
+    table_end`."""
+    w = csv.writer(sys.stdout)
+    w.writerow(SPAN_COLUMNS)
+    for site, tbl, bad in rows:
+        row = [f"0x{site['file_offset']:05X}", site["region"],
+               f"0x{site['runtime']:04X}", site["frame_onto"],
+               site["frame_over"]]
+        if tbl is None or bad:
+            w.writerow(row + [""] * 7 + ["no"])
+            continue
+        cases = [e["case"] for e in tbl["entries"]]
+        w.writerow(row + [
+            len(tbl["entries"]), f"0x{tbl['file_offset']:05X}",
+            f"0x{tbl['end']:05X}", f"0x{tbl['runtime']:04X}",
+            f"0x{min(cases):02X}", f"0x{max(cases):02X}",
+            f"0x{tbl['default']:04X}", "yes",
         ])
-        prev = e["target"]
-    s = body_summary(d, tbl, tbl["default"])
-    w.writerow([
-        "default", f"0x{tbl['default_offset']:05X}",
-        f"0x{runtime_addr(tbl['default_offset'], True):04X}",
-        f"0x{tbl['default']:04X}",
-        f"0x{offset_for_runtime(tbl['default'], tbl['region']):05X}",
-        "", s["first_insn"],
-        "reached when no case matches; xdata "
-        + " ".join(f"0x{a:04X}" for a in s["xdata"]),
-    ])
 
 
 # The reader, hand-decoded with `r2 -a 8051` against a make_bank_image.py
@@ -371,6 +445,71 @@ CORROBORATION_SITES = (
 )
 
 DEFAULT_FIRMWARE = "../firmware/GMxMGxx_11.800"
+
+# The whole census as section 10 commits it, one tuple per well-formed site:
+# (`lcall` file offset, frame_onto, entries, table file offset, one past the
+# table's last byte, lowest case, highest case). This is the oracle for
+# index-table-spans.csv the way TABLE_0X8038 is for the 0x8038 decode -- a
+# different dump gets the census re-derived rather than inheriting this one.
+CENSUS_SITES = (
+    (0x00DD3, 23, 9, 0x00DD6, 0x00DF5, 0x02, 0x12),
+    (0x04064, 24, 15, 0x04067, 0x04098, 0xEC, 0xFF),
+    (0x041EE, 24, 14, 0x041F1, 0x0421F, 0x60, 0xD4),
+    (0x0424B, 24, 49, 0x0424E, 0x042E5, 0x20, 0xFF),
+    (0x08035, 24, 8, 0x08038, 0x08054, 0x00, 0x07),
+    (0x08662, 23, 8, 0x08665, 0x08681, 0x00, 0x09),
+    (0x0918A, 24, 10, 0x0918D, 0x091AF, 0x00, 0x09),
+    (0x09284, 24, 7, 0x09287, 0x092A0, 0x08, 0x38),
+    (0x0A34A, 24, 7, 0x0A34D, 0x0A366, 0x00, 0x06),
+    (0x0A682, 24, 7, 0x0A685, 0x0A69E, 0x01, 0xFE),
+    (0x0D148, 24, 12, 0x0D14B, 0x0D173, 0x06, 0x39),
+    (0x0D435, 24, 24, 0x0D438, 0x0D484, 0x90, 0xDD),
+    (0x0DDBB, 24, 16, 0x0DDBE, 0x0DDF2, 0x80, 0xFE),
+    (0x0EBDC, 24, 8, 0x0EBDF, 0x0EBFB, 0x00, 0x08),
+    (0x0F254, 24, 7, 0x0F257, 0x0F270, 0x00, 0x08),
+)
+
+TABLE_DATA_BYTES = 663
+
+# The three committed per-site censuses whose rows this family's spans account
+# for.
+TARGET_CSVS = ("bank-call-targets", "bank-paged-call-targets",
+               "bank-relative-branch-targets")
+
+# Rows of those three CSVs that fall inside each CENSUS_SITES span, in the same
+# order: (bank-call, bank-paged-call, bank-relative-branch). They are all data
+# read as code, so the column totals -- 9, 52, 72, i.e. the 133 section 9
+# reports -- are what this family costs the three scans.
+PHANTOM_ROWS = (
+    (2, 1, 1), (0, 1, 18), (0, 3, 2), (1, 5, 3), (1, 6, 4), (0, 2, 1),
+    (1, 12, 4), (0, 1, 4), (1, 1, 0), (1, 2, 1), (0, 10, 0), (0, 3, 9),
+    (0, 2, 22), (2, 1, 1), (0, 2, 2),
+)
+
+# The two sites section 9 calls the weak ones at 23 of 24 anchors, as the bytes
+# section 10 reads by hand: (site, file offset of the instruction before it,
+# that instruction's bytes, the first table entry's bytes, its target, its case).
+# The preceding instruction is what settles the frame -- it ends exactly on the
+# site in both, so the one walk that steps over starts inside its operand.
+WEAK_SITES = (
+    (0x00DD3, 0x00DD1, bytes.fromhex("e545"), bytes.fromhex("0df502"),
+     0x0DF5, 0x02),
+    (0x08662, 0x0865F, bytes.fromhex("12ba36"), bytes.fromhex("868100"),
+     0x8681, 0x00),
+)
+
+
+def phantom_rows(spans):
+    """Rows of the three committed censuses whose site falls inside one of
+    `spans`, as one (call, paged, relative) tuple per span -- what reading a
+    table's bytes as code costs those scans."""
+    here = __file__.rsplit("/", 1)[0]
+    sites = []
+    for name in TARGET_CSVS:
+        with open(f"{here}/../annotations/{name}.csv", newline="") as fh:
+            sites.append([int(r["file_offset"], 16) for r in csv.DictReader(fh)])
+    return tuple(tuple(sum(1 for o in per_csv if lo <= o < hi)
+                       for per_csv in sites) for lo, hi in spans)
 
 
 def self_test(d: bytes) -> int:
@@ -446,6 +585,48 @@ def self_test(d: bytes) -> int:
           f"15 `lcall` byte sites name the reader and all 15 are followed by a "
           f"well-formed table (got {len(good)} of {len(rows)})")
 
+    got = tuple((s["file_offset"], s["frame_onto"], len(t["entries"]),
+                 t["file_offset"], t["end"],
+                 min(e["case"] for e in t["entries"]),
+                 max(e["case"] for e in t["entries"])) for s, t, _ in good)
+    differs = next((g for g, want in zip(got, CENSUS_SITES) if g != want), None)
+    check(got == CENSUS_SITES,
+          f"the {len(CENSUS_SITES)} spans of index-table-spans.csv, each with "
+          "its own frame_onto, entry count and case range"
+          + ("" if differs is None else f" (first differing site: {differs})"))
+
+    spans = [(t["file_offset"], t["end"]) for _, t, _ in good]
+    total = sum(hi - lo for lo, hi in spans)
+    check(total == TABLE_DATA_BYTES,
+          f"{TABLE_DATA_BYTES} bytes of this image read as table data by this "
+          f"method (got {total})")
+
+    counts = phantom_rows(spans)
+    check(counts == PHANTOM_ROWS,
+          "the rows each span costs the three committed censuses, per table")
+
+    per_csv = tuple(sum(c[i] for c in counts) for i in range(len(TARGET_CSVS)))
+    check(per_csv == (9, 52, 72),
+          "9 / 52 / 72 = 133 rows across bank-call-targets.csv, "
+          "bank-paged-call-targets.csv and bank-relative-branch-targets.csv, "
+          f"which is what section 9 reports (got {' / '.join(map(str, per_csv))} "
+          f"= {sum(per_csv)})")
+
+    # The two 23-of-24 sites, pinned as bytes rather than as the verdict read
+    # off them: section 10's hand decode is a reading of these and stops being
+    # worth anything if they are not what it read.
+    for site, prev_off, prev_raw, entry_raw, target, case in WEAK_SITES:
+        tbl = decode_table(d, site + 3)
+        check(d[prev_off:prev_off + len(prev_raw)] == prev_raw
+              and prev_off + len(prev_raw) == site
+              and d[site:site + 3] == bytes((LCALL, rt >> 8, rt & 0xFF))
+              and d[site + 3:site + 3 + ENTRY_LEN] == entry_raw
+              and tbl["entries"][0]["target"] == target
+              and tbl["entries"][0]["case"] == case,
+              f"file 0x{site:05X} is `{prev_raw.hex(' ')}` ending on the "
+              f"`lcall` and `{entry_raw.hex(' ')}` after it, i.e. "
+              f"0x{target:04X} case 0x{case:02X}")
+
     print()
     print("self-test FAILED" if bad else "self-test passed")
     return 1 if bad else 0
@@ -461,9 +642,16 @@ def main() -> int:
                     help="decode the table after every call site naming the reader")
     ap.add_argument("--csv", action="store_true",
                     help="write one row per entry on stdout instead of the tables")
+    ap.add_argument("--all-csv", action="store_true",
+                    help="write one row per entry for every well-formed table, "
+                         "prefixed with the call site it follows")
+    ap.add_argument("--spans-csv", action="store_true",
+                    help="write one row per candidate call site with its "
+                         "table's span, frame evidence and case range")
     ap.add_argument("--self-test", action="store_true",
-                    help="re-check the reader bytes, the 0x8038 table and the "
-                         "call-site census against the committed image")
+                    help="re-check the reader bytes, the 0x8038 table, every "
+                         "span of the call-site census and the rows each one "
+                         "costs the three committed censuses")
     args = ap.parse_args()
 
     d = open(args.firmware, "rb").read()
@@ -482,6 +670,11 @@ def main() -> int:
               f"{len(readers)} -- rerun --self-test", file=sys.stderr)
         return 1
     sites = reader_call_sites(d, runtime_addr(readers[0], True))
+
+    if args.all_csv or args.spans_csv:
+        rows = census(d, sites)
+        (write_all_csv if args.all_csv else write_spans_csv)(d, rows)
+        return 0
 
     site = int(args.at, 16) if args.at else SITE_0X8038
     tbl = decode_table(d, site + 3)
