@@ -207,7 +207,7 @@ jobs:
             output only; a separate step creates the issues from it.
           claude_args: >-
             --model opus
-            --effort medium
+            --effort low
             --max-turns 60
             --allowedTools "Read,Glob,Grep,Bash(git:*),Bash(rg:*),Bash(jq:*),Bash(find:*),Bash(ls:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(wc:*),Bash(sort:*),Bash(uniq:*),Bash(diff:*)"
             --disallowedTools "Write,Edit,Bash(gh:*),Bash(curl:*),Bash(wget:*),Bash(nc:*),Bash(ssh:*),Bash(scp:*),Bash(git push:*),Bash(git remote:*),Bash(git config:*),WebFetch,WebSearch"
