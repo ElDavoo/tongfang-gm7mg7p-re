@@ -33,6 +33,13 @@ does establish:
   from, so it cannot cross a bank — which *narrows* the population the
   same-bank assumption carries rather than telling us anything new about it.
   §7.
+- **The PC-relative family is now counted too, and it is the last
+  statically-resolvable one.** 9076 `sjmp`/`jc`/`jnc`/`jz`/`jnz`/`jb`/`jnb`/
+  `jbc`/`cjne`/`djnz` sites by byte scan, 6675 of them anchored. A rel8 target
+  sits within [-128, +127] of the next PC, so unlike a paged target it *can*
+  leave the caller's region — 4 of the 9076 do, all from within 96 bytes of
+  `bank0`'s start, and all 4 were read byte by byte: three are operand bytes of
+  an `lcall` and the fourth an address-table entry. §8.
 
 No code change to `offset_for_runtime()` follows from this: its `None` return
 for bucket C is unchanged, and its same-bank reading for bucket B is not
@@ -139,6 +146,39 @@ banks this is a route a paged instruction could take:
 
   0 of 3481 paged site(s) resolve outside the caller's own region
 
+## 6. The PC-relative family: `sjmp`/`jc`/`jnc`/`jz`/`jnz`/`jb`/`jnb`/`jbc`/`cjne`/`djnz`
+[...the rel8 reach argument and the over-counting caveat, both in §8 below...]
+
+| region | sjmp | jc | jnc | jz | jnz | jb | jnb | jbc | cjne | djnz | all |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| `common` | 340 / 307 | 200 / 160 | 69 / 58 | 255 / 241 | 203 / 183 | 197 / 157 | 359 / 306 | 423 / 65 | 566 / 307 | 173 / 107 | 2785 / 1891 |
+| `bank0` | 383 / 331 | 194 / 147 | 165 / 158 | 431 / 421 | 291 / 270 | 212 / 150 | 253 / 219 | 192 / 40 | 870 / 406 | 290 / 115 | 3281 / 2257 |
+| `bank1` | 601 / 532 | 256 / 217 | 161 / 151 | 289 / 279 | 295 / 288 | 289 / 230 | 236 / 195 | 127 / 59 | 570 / 462 | 186 / 114 | 3010 / 2527 |
+
+| region | 2-byte | 3-byte |
+|---|---:|---:|
+| `common` | 1223 / 1048 | 1562 / 843 |
+| `bank0` | 1737 / 1435 | 1544 / 822 |
+| `bank1` | 1774 / 1573 | 1236 / 954 |
+
+| region | entry | other | erased |
+|---|---:|---:|---:|
+| `common` | 1391 / 995 | 1393 / 896 | 1 / 0 |
+| `bank0` | 1829 / 1549 | 1442 / 700 | 6 / 5 |
+| `bank1` | 1766 / 1578 | 1244 / 949 | - |
+
+Relative sites landing on the BL51 path. A common-area branch can
+reach the trampoline block 0x1150-0x1ABC if it starts near enough to
+it; a bank never can:
+  common: 168 / 1 onto a bank-0 trampoline entry
+  common: 2 / 0 onto a bank-1 trampoline entry
+
+  4 of 9076 relative site(s) resolve outside the caller's own region
+    0x0803B sjmp -> 0x7FD1, 59 byte(s) from a bank0 edge, frame 24/24
+    0x0802C cjne -> 0x7FD2, 44 byte(s) from a bank0 edge, frame 3/24
+    0x0805F cjne -> 0x7FF2, 95 byte(s) from a bank0 edge, frame 1/24
+    0x08060 djnz -> 0x7FF2, 96 byte(s) from a bank0 edge, frame 0/24
+
 $ python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --self-test
   ok   4 BL51 stub sites at 0x1100, 0x1114, 0x1128, 0x113C selecting banks 0-3 (got 0x1100=bank0, 0x1114=bank1, 0x1128=bank2, 0x113C=bank3)
   ok   the `C0 08 74` prologue occurs 4 times in the main EC image (got 4)
@@ -150,18 +190,43 @@ $ python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --self-test
   ok   0xE7FF's target 0xE853 is in the next instruction's page 0xE800, not the opcode's own 0xE000
   ok   every mapped region is a whole number of 2 KiB pages aligned identically in file offset and runtime base -- the property the never-leaves-its-region claim rests on
   ok   all 3481 paged site(s) in the audited regions resolve inside the caller's own region
+  ok   file 0x0B2EE (runtime 0xB2EE) is `80 6e` targeting 0xB35E in the site walk (got `80 6e` -> 0xB35E)
+  ok   file 0x0B137 (runtime 0xB137) is `20 e0 07` targeting 0xB141 in the site walk (got `20 e0 07` -> 0xB141)
+  ok   file 0x0F1B0 (runtime 0xF1B0) is `df e6` targeting 0xF198 in the site walk (got `df e6` -> 0xF198)
+  ok   file 0x0FE24 (runtime 0xFE24) is `30 e1 e8` targeting 0xFE0F in the site walk (got `30 e1 e8` -> 0xFE0F)
+  ok   reading a 3-byte form's displacement from the second byte instead of the last misses: 0x0B137 -> 0xB11A, not 0xB141, 0x0FE24 -> 0xFE08, not 0xFE0F
+  ok   4 of 9076 relative site(s) resolve outside the caller's own region, every one of them within 128 bytes of a region edge as the rel8 range requires
 
 self-test passed
+
+$ python3 ec/tools/disasm8051.py --self-test | tail -6
+  ok  file 0x0B2EE (runtime 0xB2EE) is `80 6e` targeting 0xB35E (got `80 6e` -> 0xB35E)
+  ok  file 0x0B137 (runtime 0xB137) is `20 e0 07` targeting 0xB141 (got `20 e0 07` -> 0xB141)
+  ok  file 0x0F1B0 (runtime 0xF1B0) is `df e6` targeting 0xF198 (got `df e6` -> 0xF198)
+  ok  file 0x0FE24 (runtime 0xFE24) is `30 e1 e8` targeting 0xFE0F (got `30 e1 e8` -> 0xFE0F)
+
+self-test passed: both charge-profile-flow.md windows decode identically and all 4 relative-branch sites resolve as hand-decoded
 ```
 
 [`bank-call-targets.csv`](bank-call-targets.csv) is `--csv` on the same image —
-one row per `lcall`/`ljmp` site, 5998 of them — and
+one row per `lcall`/`ljmp` site, 5998 of them —
 [`bank-paged-call-targets.csv`](bank-paged-call-targets.csv) is `--paged-csv`,
-one row per `ajmp`/`acall` site, 3481 of them. Every table above is a group-by
-over committed data rather than a number to be taken on trust. The two files
-are siblings rather than one file, because `bucket`, `own_bank` and
-`other_bank` are absolute-form questions with no answer for a paged site;
-`bank-call-targets.csv` is byte-identical to what it was before §7 existed.
+one row per `ajmp`/`acall` site, 3481 of them, and
+[`bank-relative-branch-targets.csv`](bank-relative-branch-targets.csv) is
+`--relative-csv`, one row per relative-branch site, 9076 of them:
+
+```console
+$ python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --relative-csv \
+    > ec/annotations/bank-relative-branch-targets.csv
+```
+
+Every table above is a group-by over committed data rather than a number to be
+taken on trust — §8 shows the one that re-derives its own tables. The three
+files are siblings rather than one file, because `bucket`, `own_bank` and
+`other_bank` are absolute-form questions with no answer for a paged or relative
+site, while `length` and `disp` only mean anything for a relative one;
+`bank-call-targets.csv` and `bank-paged-call-targets.csv` are both
+byte-identical to what they were before §8 existed.
 
 ## 2. Why two numbers per count, and why neither is the number
 
@@ -407,9 +472,16 @@ enumerated (§7), and they are not a fifth cross-bank risk: the opcode cannot
 name an address outside the caller's own 2 KiB page. What is still uncovered
 is the framing of those 3481 sites, which is worse than for the 3-byte forms
 rather than better — 16 byte values open a paged instruction, so the byte
-scan produces paged phantoms wherever the image holds dense data. Computed
-targets (`jmp @a+dptr`, and the trampoline's own DPTR-carried target) remain
-invisible to any byte scan, paged or absolute. Instruction framing is
+scan produces paged phantoms wherever the image holds dense data. The
+PC-relative family is enumerated as well now (§8), and it carries the same
+two properties one step further: it is not a cross-bank risk either — a rel8
+target is within 128 bytes of the branch, so it can only leave the caller's
+region from within 128 bytes of a region edge, and the 4 sites in this image
+that do were read one by one — while its framing is worse again, 29 byte
+values against 16 and 2. Computed targets (`jmp @a+dptr`, and the
+trampoline's own DPTR-carried target) remain invisible to any byte scan,
+relative, paged or absolute: three enumerated classes is not all control
+flow. Instruction framing is
 unsettled in both directions, as §2 shows in both. Banks 2 and 3 are taken as
 unused on `find_banks.py`'s word and were not re-derived. And none of this was
 run on the machine: the whole file is a statement about bytes in
@@ -514,3 +586,167 @@ found by this method", not "there are none": the false-negative shape was
 real, the tool no longer has it, and this image happens not to exhibit it.
 Nothing here is evidence about behaviour, so no `status:` in
 [`registers.yaml`](registers.yaml) moves either.
+
+## 8. The PC-relative family — the last statically-resolvable class
+
+`sjmp` (`0x80`), `jc`/`jnc`/`jz`/`jnz` (`0x40`/`0x50`/`0x60`/`0x70`),
+`jbc`/`jb`/`jnb` (`0x10`/`0x20`/`0x30`), `cjne` (`0xB4`/`0xB5` and
+`0xB6`-`0xBF`) and `djnz` (`0xD5`, `0xD8`-`0xDF`) all end in a signed 8-bit
+displacement added to the address of the *next* instruction:
+
+```
+target = (pc + OPCODE_LEN[op] + signed(disp)) & 0xFFFF
+```
+
+`disasm8051.relative_target()` is that one line, and `mnemonic()`'s printed
+branch targets now go through it, so the listing and the enumeration cannot
+drift apart.
+
+**Where the displacement byte is, and why it is the off-by-one to pin.** The
+2-byte forms (`sjmp`, the four `j*`, `djnz Rn`) put it second; the 3-byte ones
+(`jb`/`jnb`/`jbc`, every `cjne`, `djnz direct`) put a bit or operand byte in
+between and the displacement *last*. Taking `d[i + 1]` for all of them is the
+mistake the opcode map invites, and it is silent — it yields a plausible
+in-region address, not an error. Four hand decodes from `r2 -a 8051` pin it,
+two of them backward branches, which neither
+[`charge-profile-flow.md`](charge-profile-flow.md) window contains:
+
+```console
+$ python3 ec/tools/make_bank_image.py ec/firmware/GMxMGxx_11.800 0 0x08000 /tmp/bank0.bin
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0xb136; pd 2' /tmp/bank0.bin
+            0x0000b136      e0             movx a, @dptr
+        ┌─< 0x0000b137      20e007         jb acc.0, 0xb141
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0xb2ee; pd 1' /tmp/bank0.bin
+       ┌──< 0x0000b2ee      806e           sjmp 0xb35e
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0xf1ae; pd 3' /tmp/bank0.bin
+        ╎   0x0000f1ae      ee             mov a, r6
+        ╎   0x0000f1af      f0             movx @dptr, a
+        └─< 0x0000f1b0      dfe6           djnz r7, 0xf198
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0xfe20; pd 3' /tmp/bank0.bin
+       ╎╎   0x0000fe20      901500         mov dptr, #0x1500
+       ╎╎   0x0000fe23      e0             movx a, @dptr
+       └──< 0x0000fe24      30e1e8         jnb acc.1, 0xfe0f
+```
+
+`0xFE24` is the load-bearing one: its second byte is `0xE1`, the bit address
+`acc.1`, and its displacement is the third, `0xE8`. Reading the second would
+give `0xFE08` instead of `0xFE0F`, and `0xB137`'s would give `0xB11A` instead
+of `0xB141`. `disasm8051.py --self-test` checks all four sites through
+`relative_target()` and `audit_call_targets.py --self-test` re-checks them
+through its own site walk, so the two cannot agree on a wrong byte index; the
+audit's self-test also asserts those two *wrong* answers stay wrong, which is
+the half a passing case alone would not catch.
+
+**The geometric bound, and why it is not §7's.** A rel8 target lies within
+[-128, +127] of the next PC, so a relative branch can only leave the caller's
+region from within 128 bytes of a region edge — opcode arithmetic plus the
+`REGIONS` table, not a result read out of this image. That is weaker than §7's
+claim: a paged target *cannot* leave its region, a relative one *can*, it just
+needs to start near an edge. So the escape count is a checked property of this
+image rather than an opcode fact, and `--self-test` walks all 9076 sites,
+counts the escapes and asserts of each only what the arithmetic guarantees
+(that it sits within 128 bytes of an edge). A different dump gets this
+re-checked, not inherited.
+
+**The four escapes, all read.** 4 of 9076 sites resolve outside the caller's
+region, all in `bank0` within 96 bytes of its start, all branching back into
+the common area — which is a legal place to branch to, since the common area
+is mapped in every bank image. All four were read byte by byte, and all four
+are byte-scan phantoms:
+
+```console
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0x8020; pd 8' /tmp/bank0.bin
+            0x00008020      901902         mov dptr, #0x1902
+            0x00008023      7415           mov a, #0x15
+            0x00008025      f0             movx @dptr, a
+            0x00008026      901905         mov dptr, #0x1905
+            0x00008029      7480           mov a, #0x80
+            0x0000802b      12bcb6         lcall 0xbcb6
+            0x0000802e      a3             inc dptr
+            0x0000802f      f0             movx @dptr, a
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0x8058; pd 3' /tmp/bank0.bin
+        ┌─< 0x00008058      20e703         jb acc.7, 0x805e
+       ┌──< 0x0000805b      028274         ljmp 0x8274
+       │└─> 0x0000805e      12b9df         lcall 0xb9df
+```
+
+`0x0802C`'s `0xBC` is the middle byte of `lcall 0xbcb6`; `0x0805F`'s `0xB9` and
+`0x08060`'s `0xDF` are the two operand bytes of `lcall 0xb9df`, which is why
+they produce the same target `0x7FF2` from two different opcodes. The fourth,
+`0x0803B`, scores 24 of 24 anchors and still reads as data rather than a
+branch — the §2 shape again. From `0x08038` the bytes run
+`80 54 | 00 | 80 94 | 01 80 d7 | 02 81 1a | 03 81 …`: past the `sjmp 0x808e`
+at `0x8038` they fall into `index, big-endian address` triples, indices `00`,
+`01`, `02`, `03` and addresses stepping by `0x43` — `0x8094`, `0x80D7`,
+`0x811A` — and the scan reads the `80 94` of the first entry as
+`sjmp 0x7FD1`. Its target is inside a run of `0xFF`, which is the tool's own
+scoring aid pointing at the same conclusion. That is a reading of the bytes,
+not an execution trace; what it does establish is that a 24-of-24 anchor score
+is not evidence of a branch, which §2 already said.
+
+**The counts, and the framing caveat is worse again.** 9076 sites by byte scan,
+6675 anchored — 74%, against 48% for the paged forms (§7) and 89% for the
+absolute ones (§1). 29 of the 256 byte values open a relative branch, against
+16 and 2, so the upper bound over-counts harder here than anywhere else in this
+file, and **74% anchored is not a cleanliness score**: `converges_from()` says
+a linear walk syncs onto the byte, and §2 shows a dense table does that too.
+The per-opcode spread is the visible warning: `sjmp` scores 1170 of 1324 while
+`jbc` scores 164 of 742, a fourfold difference in anchor rate between two
+families of the same instruction class. Read the pair, and read it per opcode;
+the upper bound is not a site count, and nothing here is a claim that any
+individual site executes.
+
+**The BL51 path.** 168 relative sites resolve onto a bank-0 trampoline entry
+and 2 onto a bank-1 one; none onto a stub. The geometry allows it for the same
+reason §7 gives — the trampoline block `0x1150`-`0x1ABC` is common-area, so a
+common-area branch starting within 128 bytes of an entry can reach it, and a
+bank never can. Exactly 1 of the 170 is anchored at all, which is a weaker
+population than §7's 18 rather than a stronger one. None of the 170 was read
+one by one, so "these are phantoms" is not the claim here; "one of 170 has any
+frame evidence behind it" is.
+
+**Reproducing every table in this section from the committed CSV.** Each of
+them is a group-by over
+[`bank-relative-branch-targets.csv`](bank-relative-branch-targets.csv), not a
+number the tool asks to be trusted on:
+
+```console
+$ python3 -c '
+import csv
+rows = list(csv.DictReader(open("ec/annotations/bank-relative-branch-targets.csv")))
+def pair(sel):
+    return "%d / %d" % (len(sel), sum(1 for r in sel if int(r["frame_onto"]) > 0))
+for key in ("opcode", "length", "target_class"):
+    for region in ("common", "bank0", "bank1"):
+        sel = [r for r in rows if r["region"] == region]
+        keys = sorted({r[key] for r in sel})
+        print(region, key, {k: pair([r for r in sel if r[key] == k]) for k in keys})
+print("escaped", pair([r for r in rows if r["in_region"] == "no"]), "of", len(rows))
+print("bank-0 trampoline", pair([r for r in rows if r["calls_trampoline"] == "0"]))
+'
+common opcode {'cjne': '566 / 307', 'djnz': '173 / 107', 'jb': '197 / 157', 'jbc': '423 / 65', 'jc': '200 / 160', 'jnb': '359 / 306', 'jnc': '69 / 58', 'jnz': '203 / 183', 'jz': '255 / 241', 'sjmp': '340 / 307'}
+bank0 opcode {'cjne': '870 / 406', 'djnz': '290 / 115', 'jb': '212 / 150', 'jbc': '192 / 40', 'jc': '194 / 147', 'jnb': '253 / 219', 'jnc': '165 / 158', 'jnz': '291 / 270', 'jz': '431 / 421', 'sjmp': '383 / 331'}
+bank1 opcode {'cjne': '570 / 462', 'djnz': '186 / 114', 'jb': '289 / 230', 'jbc': '127 / 59', 'jc': '256 / 217', 'jnb': '236 / 195', 'jnc': '161 / 151', 'jnz': '295 / 288', 'jz': '289 / 279', 'sjmp': '601 / 532'}
+common length {'2': '1223 / 1048', '3': '1562 / 843'}
+bank0 length {'2': '1737 / 1435', '3': '1544 / 822'}
+bank1 length {'2': '1774 / 1573', '3': '1236 / 954'}
+common target_class {'entry': '1391 / 995', 'erased': '1 / 0', 'other': '1393 / 896'}
+bank0 target_class {'': '4 / 3', 'entry': '1829 / 1549', 'erased': '6 / 5', 'other': '1442 / 700'}
+bank1 target_class {'entry': '1766 / 1578', 'other': '1244 / 949'}
+escaped 4 / 3 of 9076
+bank-0 trampoline 168 / 1
+```
+
+(`bank0`'s empty `target_class` is the four escapes: the column is only filled
+for a target inside the caller's own region.)
+
+**What this section is not.** It is a byte scan; it establishes edges, not
+behaviour, and nothing in it was run on the machine. It says nothing about the
+same-bank assumption of §6, which stays exactly where §6 left it — a relative
+target needs no bank chosen for it, so this family simply is not in that
+population either. No `status:` in [`registers.yaml`](registers.yaml) moves,
+because an edge is not evidence the EC acts on anything. And this is the
+enumeration half only: `classify()` in `../tools/register_ref_table.py` still
+stops at a relative opcode rather than following it, so a `--callee-depth 1`
+handoff made by a conditional branch is still invisible to it. That is issue
+#40, and it stays open.

@@ -48,6 +48,17 @@ it settles nothing about bucket B. And the byte scan over-counts harder here
 than above, not less: a 2-byte opcode matches 16 of the 256 byte values, so
 any dense data table produces paged phantoms by the hundred.
 
+Section 6 adds the third and last statically-resolvable family, the PC-relative
+branches -- `sjmp`, `jc`/`jnc`/`jz`/`jnz`, `jb`/`jnb`/`jbc`, `cjne`, `djnz`.
+Their targets are computable without a bank too, but for a different reason
+than the paged forms: a rel8 displacement reaches [-128, +127] of the next PC,
+so a relative branch can only leave the caller's region from within 128 bytes
+of a region edge. Unlike a paged target, that is *possible*, so whether this
+image has such a site is a checked property of this image rather than an
+opcode fact -- --self-test walks every site and reports it. And the byte scan
+over-counts harder again: 29 of the 256 byte values open a relative branch,
+against 16 paged and 2 absolute.
+
 Blind spots, none of which this tool closes: framing is unsettled in both
 directions (section 2), computed targets via `jmp @a+dptr` or the
 trampoline's DPTR-carried target are invisible to any byte scan, and banks 2
@@ -58,6 +69,7 @@ Usage:
     python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800
     python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --csv > sites.csv
     python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --paged-csv > paged.csv
+    python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --relative-csv > rel.csv
     python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --self-test
 """
 import argparse
@@ -65,7 +77,8 @@ import collections
 import csv
 import sys
 
-from disasm8051 import converges_from, paged_target
+from disasm8051 import (OPCODE_LEN, REL_OPCODES, REL_SITES, converges_from,
+                        paged_target, relative_target)
 from find_banks import START_OPCODES, STUB_PROLOGUE, find_stubs
 from trace_xdata_refs import (PD_MARKER, REGIONS, offset_for_runtime,
                               runtime_addr)
@@ -77,6 +90,10 @@ CALL_OPCODES = (0x02, 0x12)  # ljmp, lcall -- the 3-byte absolute forms
 PAGED_OPCODES = (0x01, 0x11)  # ajmp, acall
 
 PAGE = 0x800  # what a paged target cannot leave
+
+# How far a rel8 branch reaches either side of the next PC. A site further than
+# this from both of its region's edges therefore cannot resolve outside it.
+REL_REACH = 128
 
 # Regions this audit covers, in REGIONS order. The PD image is flat, so its
 # calls are not a banking question and are out of scope here.
@@ -137,6 +154,27 @@ def paged_sites(d: bytes, lo: int, hi: int):
     for i in range(lo, hi - 1):
         if d[i] & 0x1F in PAGED_OPCODES:
             yield i, d[i], paged_target(d[i], d[i + 1], runtime_addr(i, True))
+
+
+def relative_sites(d: bytes, lo: int, hi: int):
+    """(offset, opcode, target) for every relative-branch-shaped byte in
+    [lo, hi).
+
+    Same region discipline paged_sites() has, but the instruction is 2 or 3
+    bytes depending on the opcode, so the whole of it is required to fit: a
+    3-byte form in a region's last two bytes would take its displacement from
+    the next region. The displacement is the instruction's last byte, which is
+    what relative_target()'s docstring is about."""
+    for i in range(lo, hi):
+        op = d[i]
+        if op in REL_OPCODES and i + OPCODE_LEN[op] <= hi:
+            yield i, op, relative_target(op, d[i + OPCODE_LEN[op] - 1],
+                                         runtime_addr(i, True))
+
+
+def edge_distance(off: int, lo: int, hi: int) -> int:
+    """Bytes from `off` to the nearer edge of [lo, hi)."""
+    return min(off - lo, hi - 1 - off)
 
 
 def bucket_of(region: str, target: int) -> str:
@@ -228,6 +266,46 @@ def paged_survey(d: bytes):
                 "file_offset": off,
                 "runtime": runtime_addr(off, True),
                 "opcode": "ajmp" if op & 0x1F == 0x01 else "acall",
+                "target": target,
+                "target_offset": toff,
+                "in_region": inside,
+                "target_class": byte_class(d, toff, runs[name]) if inside else "",
+                "anchored": onto > 0,
+                "frame_onto": onto,
+                "frame_over": over,
+                "calls_stub": stubs.get(target),
+                "calls_trampoline": tramp[target][0] if target in tramp else None,
+            })
+    return rows, stubs, tramp
+
+
+def relative_survey(d: bytes):
+    """Every audited relative-branch site, in the same one-pass shape the other
+    two surveys have, so section 6 and --relative-csv cannot disagree.
+
+    `in_region` is not the settled claim it is for the paged family: a rel8
+    target can leave the caller's region, from within REL_REACH bytes of an
+    edge. It is recorded per site and counted, not asserted away. `length` and
+    `disp` are carried because the 2-byte/3-byte framing is what decides where
+    the displacement byte is, and a reader re-deriving a target from the CSV
+    needs both."""
+    stubs = bank_switch_stubs(d)
+    tramp = trampolines(d, stubs)
+    runs = {name: erased_runs(d, *region_bounds(name)) for name in AUDITED}
+    rows = []
+    for name in AUDITED:
+        lo, hi = region_bounds(name)
+        for off, op, target in relative_sites(d, lo, hi):
+            onto, over = converges_from(d, off)
+            toff = offset_for_runtime(target, name)
+            inside = toff is not None and lo <= toff < hi
+            rows.append({
+                "region": name,
+                "file_offset": off,
+                "runtime": runtime_addr(off, True),
+                "opcode": REL_OPCODES[op],
+                "length": OPCODE_LEN[op],
+                "disp": d[off + OPCODE_LEN[op] - 1],
                 "target": target,
                 "target_offset": toff,
                 "in_region": inside,
@@ -410,6 +488,87 @@ def print_paged(rows) -> None:
     print()
 
 
+REL_FAMILIES = ("sjmp", "jc", "jnc", "jz", "jnz", "jb", "jnb", "jbc",
+                "cjne", "djnz")
+
+
+def print_relative(rows) -> None:
+    print("## 6. The PC-relative family: `sjmp`/`jc`/`jnc`/`jz`/`jnz`/"
+          "`jb`/`jnb`/`jbc`/`cjne`/`djnz`")
+    print()
+    print("A rel8 displacement reaches [-128, +127] of the *next* PC, so a")
+    print("relative branch can only leave the caller's region from within")
+    print(f"{REL_REACH} bytes of a region edge. That is opcode arithmetic plus the")
+    print("region table; unlike a paged target it does not forbid the escape, so")
+    print("whether this image has one is counted below rather than assumed.")
+    print()
+    print("The byte scan over-counts harder here than anywhere above: 29 of the")
+    print("256 byte values open a relative branch, against 16 paged and 2")
+    print("absolute. Read the pair; the upper bound is not a site count.")
+    print()
+    header = " | ".join(REL_FAMILIES)
+    print(f"| region | {header} | all |")
+    print("|---" * (len(REL_FAMILIES) + 2) + "|")
+    for name in AUDITED:
+        cells = []
+        for op in REL_FAMILIES + (None,):
+            match = {"region": name} if op is None else {"region": name, "opcode": op}
+            upper, anchored = counted(rows, **match)
+            cells.append("-" if not upper else f"{upper} / {anchored}")
+        print(f"| `{name}` | " + " | ".join(cells) + " |")
+    print()
+    print("By instruction length, which is what decides where the displacement")
+    print("byte is read from:")
+    print()
+    print("| region | 2-byte | 3-byte |")
+    print("|---|---:|---:|")
+    for name in AUDITED:
+        cells = []
+        for n in (2, 3):
+            upper, anchored = counted(rows, region=name, length=n)
+            cells.append("-" if not upper else f"{upper} / {anchored}")
+        print(f"| `{name}` | " + " | ".join(cells) + " |")
+    print()
+    print("What the target byte reads as -- the same START_OPCODES/erased-run")
+    print("scoring aid section 5 uses, and no more of a decode here than there:")
+    print()
+    print("| region | entry | other | erased |")
+    print("|---|---:|---:|---:|")
+    for name in AUDITED:
+        cells = []
+        for cls in ("entry", "other", "erased"):
+            upper, anchored = counted(rows, region=name, target_class=cls)
+            cells.append("-" if not upper else f"{upper} / {anchored}")
+        print(f"| `{name}` | " + " | ".join(cells) + " |")
+    print()
+    print("Relative sites landing on the BL51 path. A common-area branch can")
+    print("reach the trampoline block 0x1150-0x1ABC if it starts near enough to")
+    print("it; a bank never can:")
+    for name in AUDITED:
+        for bank in (0, 1):
+            upper, anchored = counted(rows, region=name, calls_trampoline=bank)
+            if upper:
+                print(f"  {name}: {upper} / {anchored} onto a bank-{bank} trampoline entry")
+        for bank in sorted({r["calls_stub"] for r in rows if r["calls_stub"] is not None}):
+            upper, anchored = counted(rows, region=name, calls_stub=bank)
+            if upper:
+                print(f"  {name}: {upper} / {anchored} onto the bank-{bank} stub itself")
+    if not any(r["calls_trampoline"] is not None or r["calls_stub"] is not None
+               for r in rows):
+        print("  none, by this scan")
+    print()
+    escaped = [r for r in rows if not r["in_region"]]
+    print(f"  {len(escaped)} of {len(rows)} relative site(s) resolve outside the "
+          "caller's own region")
+    for r in sorted(escaped, key=lambda r: -r["frame_onto"])[:10]:
+        lo, hi = region_bounds(r["region"])
+        print(f"    0x{r['file_offset']:05X} {r['opcode']} -> 0x{r['target']:04X}, "
+              f"{edge_distance(r['file_offset'], lo, hi)} byte(s) from a "
+              f"{r['region']} edge, frame {r['frame_onto']}/"
+              f"{r['frame_onto'] + r['frame_over']}")
+    print()
+
+
 def write_csv(rows) -> None:
     w = csv.writer(sys.stdout)
     w.writerow(["file_offset", "region", "runtime", "opcode", "target", "bucket",
@@ -447,6 +606,28 @@ def write_paged_csv(rows) -> None:
         ])
 
 
+def write_relative_csv(rows) -> None:
+    """A third sibling: the paged table's columns minus the absolute-form ones,
+    plus `length` and `disp`, which are what a reader needs to re-derive a
+    target by hand. `calls_stub`/`calls_trampoline` stay, because a common-area
+    relative branch can reach the BL51 block the way a paged one can."""
+    w = csv.writer(sys.stdout)
+    w.writerow(["file_offset", "region", "runtime", "opcode", "length", "disp",
+                "target", "target_offset", "in_region", "target_class",
+                "frame_onto", "frame_over", "calls_stub", "calls_trampoline"])
+    for r in rows:
+        w.writerow([
+            f"0x{r['file_offset']:05X}", r["region"], f"0x{r['runtime']:04X}",
+            r["opcode"], r["length"], f"0x{r['disp']:02X}",
+            f"0x{r['target']:04X}",
+            f"0x{r['target_offset']:05X}" if r["target_offset"] is not None else "",
+            "yes" if r["in_region"] else "no", r["target_class"],
+            r["frame_onto"], r["frame_over"],
+            "" if r["calls_stub"] is None else r["calls_stub"],
+            "" if r["calls_trampoline"] is None else r["calls_trampoline"],
+        ])
+
+
 # The four stub sites ec/annotations/lightbar-bat-flow.md 2 records, and the
 # round-trip assertion its 3.5 prints. Both are load-bearing for this audit:
 # section 2 is the stub evidence, and offset_for_runtime() is the function
@@ -464,6 +645,12 @@ PAGED_SITES = (
     (0x02190, 0x2190, b"\x01\x09", 0x2009),
     (0x167FF, 0xE7FF, b"\x01\x53", 0xE853),
 )
+
+# The relative-branch hand decodes live in disasm8051.REL_SITES, next to the
+# function they pin; this tool re-checks them through its own site walk, which
+# is what would catch relative_sites() reading the displacement from the wrong
+# byte while relative_target() stayed correct. Transcripts in 8 of
+# ../annotations/bank-call-audit.md.
 
 
 def self_test(d: bytes) -> int:
@@ -531,6 +718,45 @@ def self_test(d: bytes) -> int:
           f"all {total} paged site(s) in the audited regions resolve inside the "
           f"caller's own region{'' if not escaped else ' -- escaped at ' + ', '.join(escaped[:8])}")
 
+    walked = {}
+    for name in AUDITED:
+        lo, hi = region_bounds(name)
+        for off, op, target in relative_sites(d, lo, hi):
+            walked[off] = (op, target)
+    for foff, rt, raw, want in REL_SITES:
+        got = walked.get(foff)
+        check(d[foff:foff + len(raw)] == raw and got is not None and got[1] == want,
+              f"file 0x{foff:05X} (runtime 0x{rt:04X}) is `{raw.hex(' ')}` targeting "
+              f"0x{want:04X} in the site walk "
+              f"(got `{d[foff:foff + len(raw)].hex(' ')}` -> "
+              f"{'no site' if got is None else f'0x{got[1]:04X}'})")
+
+    # The off-by-one pinned by a case that would fail, not only by ones that
+    # pass: taking a 3-byte form's displacement from d[i + 1] reads its bit or
+    # operand byte, and for these two that lands somewhere else entirely.
+    wrong = [(foff, want, relative_target(raw[0], raw[1], rt))
+             for foff, rt, raw, want in REL_SITES if len(raw) == 3]
+    check(all(got != want for _, want, got in wrong),
+          "reading a 3-byte form's displacement from the second byte instead of the "
+          "last misses: " + ", ".join(f"0x{f:05X} -> 0x{got:04X}, not 0x{want:04X}"
+                                      for f, want, got in wrong))
+
+    rel_escaped, rel_total, far = [], 0, []
+    for name in AUDITED:
+        lo, hi = region_bounds(name)
+        for off, _, target in relative_sites(d, lo, hi):
+            rel_total += 1
+            toff = offset_for_runtime(target, name)
+            if toff is None or not lo <= toff < hi:
+                rel_escaped.append(off)
+                if edge_distance(off, lo, hi) > REL_REACH:
+                    far.append(f"0x{off:05X}")
+    check(not far,
+          f"{len(rel_escaped)} of {rel_total} relative site(s) resolve outside the "
+          f"caller's own region, every one of them within {REL_REACH} bytes of a "
+          f"region edge as the rel8 range requires"
+          f"{'' if not far else ' -- not at ' + ', '.join(far[:8])}")
+
     print()
     print("self-test FAILED" if bad else "self-test passed")
     return 1 if bad else 0
@@ -544,9 +770,13 @@ def main() -> int:
                     help="write one row per call site on stdout instead of the tables")
     ap.add_argument("--paged-csv", action="store_true",
                     help="write one row per ajmp/acall site on stdout instead of the tables")
+    ap.add_argument("--relative-csv", action="store_true",
+                    help="write one row per PC-relative branch site on stdout "
+                         "instead of the tables")
     ap.add_argument("--self-test", action="store_true",
-                    help="re-check the stub sites, the offset_for_runtime round-trip "
-                         "and the paged page arithmetic")
+                    help="re-check the stub sites, the offset_for_runtime round-trip, "
+                         "the paged page arithmetic and the rel8 displacement "
+                         "arithmetic")
     args = ap.parse_args()
 
     d = open(args.firmware, "rb").read()
@@ -563,6 +793,10 @@ def main() -> int:
         write_paged_csv(paged_survey(d)[0])
         return 0
 
+    if args.relative_csv:
+        write_relative_csv(relative_survey(d)[0])
+        return 0
+
     rows, stubs, tramp = survey(d)
     if args.csv:
         write_csv(rows)
@@ -573,6 +807,7 @@ def main() -> int:
     print_bucket_b(rows)
     print_bucket_c(d, rows, tramp)
     print_paged(paged_survey(d)[0])
+    print_relative(relative_survey(d)[0])
     return 0
 
 
