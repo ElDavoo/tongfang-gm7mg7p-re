@@ -11,6 +11,10 @@
   "profile writes accepted, current doesn't actually stop" result in
   `../docs/findings.md` §4b — a `capacity`-only or single-snapshot check
   would have missed it.
+  `battery-trace/limit-pair-test` is the 2026-09-17 paired
+  `0x07B9`/`0x07D0` experiment (`../docs/findings.md` §4f); it writes
+  through `../ec/tools/ecmem.py`, i.e. the physical `ECMG` window rather
+  than the driver.
 - **`patches/`** — a small `uniwill-laptop` patch adding a module parameter
   to test the numeric charge-limit path instead of the charge-mode path.
   See `patches/README.md` for an important correction to its own commit

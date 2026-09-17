@@ -9,6 +9,10 @@ independently checkable rather than taken on faith:
 - **`battery-traces/2026-09-09-threshold80.csv`** — same, with
   `force_charge_limit=1` and `charge_control_end_threshold=80` set. Shows
   charging past 93% regardless (findings.md §4c).
+- **`battery-traces/2026-09-17-limit-pair.csv`** — 10s-interval trace of
+  the paired `0x07B9`/`0x07D0` write through the physical `ECMG` window
+  (`ec/tools/ecmem.py`, `linux/battery-trace/limit-pair-test`): five
+  value/order variants, all charged through. Source for findings.md §4f.
 - **`screenshots/2021-11-27-batteryinfoview-windows.png`** — user-provided
   BatteryInfoView log from Windows on this exact machine, showing charging
   genuinely stop around 86% followed by a falling-voltage/zero-current

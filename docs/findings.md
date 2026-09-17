@@ -368,15 +368,69 @@ call. Whether writing them that way behaves like the vendor path is a
 live question on the physical machine — no such test has been run, and
 none can be from here.
 
+### 4f. The paired write, run live (2026-09-17) — does not stop charging either
+
+The experiment §4c and §4e left open has now been run on the physical
+machine, through the vendor's own path: byte writes at physical
+`0xFE4107B9`/`0xFE4107D0` (`ec/tools/ecmem.py`, `/dev/mem` on the `ECMG`
+window), read back both through the window and through the
+`uniwill-laptop` regmap, and coulomb-counted with `current_now` every 10 s.
+Log: `evidence/battery-traces/2026-09-17-limit-pair.csv` (script:
+`linux/battery-trace/limit-pair-test`). AC plugged in throughout,
+`0x07A6` = `0x20` (Trickle / Stationary profile active), kernel 7.2.6.
+
+| phase | written | capacity | `current_now` | result |
+|---|---|---|---|---|
+| baseline | nothing | 79-80% | 1.94 A | charging |
+| up60 | `0x07B9`=60 | 80-83% | 1.90 A | charging, 2 min |
+| up60down55 | `0x07B9`=60, `0x07D0`=55 | 84-86% | 1.87 A | charging, 2 min |
+| up60bit7down55 | `0x07B9`=0xBC (60 + bit 7), `0x07D0`=55 | 89-92% | 1.80 A | charging, 2 min |
+| up95down90_below | `0x07B9`=95, `0x07D0`=90, set while at 93% | 93→98% | 1.77→1.67 A | charged straight through 95% |
+
+Every write read back correctly through both paths and stayed put (the EC
+did not clear or rewrite either byte during any phase). Current never
+stopped, never dropped below the normal taper, and `status` never left
+`Charging`. The last phase tests the natural objection to the first four
+(a cap set *below* the present level might not be expected to trigger a
+stop, only to prevent one): armed from below, the pair was charged
+through in five minutes at full taper current.
+
+**What this establishes.** Writing the UP/DOWN pair as plain percentages,
+with or without bit 7, from above or from below the cap, at the physical
+address Windows' `ECRW` lands on, does not by itself make this EC stop
+charging. That closes "the `uniwill-laptop` access path differs from the
+vendor's" as an explanation for §4c: the window path behaves the same.
+
+**What it does not establish.** It does not show the EC ignores the pair
+in general. The values Windows actually writes are still unknown
+(`BatteryProtection2`'s bodies are anti-tamper encrypted, issue #3), and
+the write may be gated on something else the service also does: a
+different `0x07A6` profile, a command/notify byte, or software-side
+polling that never involved the EC enforcing anything. The Windows
+screenshot in `evidence/screenshots/` remains the only evidence that a
+cap exists on this machine at all.
+
+**A second writer for `0x07D0`, found on the way.** The DSDT's `T1WR`
+method (`evidence/acpi/dsdt.dsl:50676`, `Arg0 == 0x1173`) stores
+`Arg1 * 8` into `DBD1` (`0x07D0`) and `Arg2 * 8` into `DBD2` (`0x07D1`),
+and mirrors the same values into `\_SB.NPCF.AMAT` / `AMIT` before
+`Notify (NPCF, 0xC0)`. `NPCF` is the NVIDIA platform-controller ACPI
+device, and the neighbouring `0x1171` branch feeds `CTGP`/`UOCT`. So the
+BIOS uses the `0x07D0`/`0x07D1` pair for a GPU power value in 1/8 W
+units, not for a battery threshold. That is compatible with `ECSpec.cs`
+naming `0x07D0` `BATTERY_CHARGE_LIMIT_DOWN` only if the EC image or the
+service reuses the byte, or if the vendor constant is stale for this
+board; which of those holds is not established. Either way, "resume
+charging below X%" is now the *less* supported reading of the byte.
+
 ## 5. Net status going into the issue tracker
 
-- Charging-cap-on-Linux is an **open problem**, not a closed negative. The
-  concrete next experiment (write both `0x07B9` and `0x07D0` together, then
-  coulomb-count through the claimed cap exactly as in §4b) is unambiguous
-  and cheap to run. §4e adds a second way to run it — the same pair at
-  physical `0xFE4107B9`/`0xFE4107D0`, the address Windows' own writes land
-  at — which would distinguish "the EC ignores this pair" from "the
-  `uniwill-laptop` access path differs from the vendor's."
+- Charging-cap-on-Linux is still an **open problem**, but narrower. The
+  paired `0x07B9`/`0x07D0` write has now been run (§4f) through the
+  vendor's physical path and did not stop charging in any of five
+  variants, so "the access path differs" is ruled out. What is left is
+  the encoding and sequence Windows actually uses, which only issue #3
+  (decrypting `BatteryProtection2`) or a Windows-side EC trace can give.
 - Lightbar is a **driver-scope problem, not a hardware problem** — claim
   `048D:6005` for `ite_8291_lb` and test.
 - Decrypting the anti-tamper-protected `BatteryProtection2` method bodies
