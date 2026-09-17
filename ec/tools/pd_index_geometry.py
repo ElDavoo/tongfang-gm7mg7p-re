@@ -75,6 +75,14 @@ What this cannot do, stated once so no output below has to repeat it:
     these bytes, which is why --callers reports literal loads it happens to
     see and reports every other row unresolved.
 
+The --accesses/--accesses-csv and --access-strides/--access-strides-csv
+modes independently scan immediate-base templates and bounded direct helper
+handoffs. They retain each MOVX snapshot and unconsumed construction. Their
+SPAN filters the constructed effective base, not the MOV-DPTR immediate.
+These candidates have separate denominators from --bases/--strides; body-only
+evidence is not an extra caller access. low8(x) = x & 0xFF; base-add carry is
+retained and every address wraps modulo 0x10000.
+
 Read-only: it opens the firmware image for reading and writes nothing.
 
 Usage:
@@ -92,11 +100,13 @@ Usage:
 """
 import argparse
 import csv
+import io
+from contextlib import redirect_stdout
 import os
 import re
 import sys
 
-from disasm8051 import OPCODE_LEN, converges_from, mnemonic, paged_target
+from disasm8051 import FLOW_OPCODES, OPCODE_LEN, converges_from, mnemonic, paged_target
 from trace_xdata_refs import (MOV_DPTR, PD_MARKER, REGIONS, offset_for_runtime,
                               runtime_addr)
 
@@ -127,7 +137,7 @@ DEFAULT_CALLER_SITES = (0x7421, 0x9DEC, 0xB5D3, 0xE9F5)
 # only bytes left open are the immediate halves of a base address, which the
 # match reads out and substitutes for {base}.
 #
-# Three of them *replace* DPTR (or build a generic pointer in R2:R1) from an
+# Three of them *replace* DPTR (or build a generic pointer in A:R1) from an
 # immediate base instead of advancing whatever it held, so their term carries
 # the REBASE marker below. They were transcribed from the sites
 # ../annotations/ec-0x07d0-sites.md 4 names: 0x34D9 and 0xC2FA for the first,
@@ -136,7 +146,7 @@ TERM_TEMPLATES = (
     # mul ab ; add a,dpl ; mov dpl,a ; mov a,b ; addc a,dph ; mov dph,a
     ("a42582f582e5f03583f583", "{a}×{b}"),
     # mul ab ; add a,#lo ; mov dpl,a ; clr a ; addc a,#hi ; mov dph,a
-    ("a424..f582e434..f583", "=DPTR ← {base} + {a}×{b}"),
+    ("a424..f582e434..f583", "=DPTR ← {base} + low8({a}×{b})"),
     # add a,#lo ; mov dpl,a ; clr a ; addc a,#hi ; mov dph,a -- the same 16-bit
     # add with no multiply, so the addend is A alone. It drops B, which means
     # a caller that reached it through `mul ab` loses the product's high byte;
@@ -144,7 +154,7 @@ TERM_TEMPLATES = (
     # the index is small enough for it not to matter.
     ("24..f582e434..f583", "=DPTR ← {base} + {a}"),
     # mul ab ; add a,#lo ; mov r1,a ; mov a,#hi ; addc a,b
-    ("a424..f974..35f0", "=R2:R1 ← {base} + {a}×{b}"),
+    ("a424..f974..35f0", "=A:R1 ← {base} + {a}×{b}"),
     # add a,acc ; add a,dph ; mov dph,a
     ("25e02583f583", "0x200×{a}"),
 )
@@ -264,8 +274,8 @@ def product_sym(a_sym: str, b_sym: str) -> str:
     """What a bare `mul ab` -- one that is not the head of a template -- leaves
     in A: the low half of the product, the high half having gone to B. The
     base templates such a multiply feeds take A alone, so writing the term as
-    `low(...)` is what keeps a wrapped address from reading as an exact one."""
-    return f"low({a_sym}×{b_sym})"
+    `low8(...)` is what keeps a wrapped address from reading as an exact one."""
+    return f"low8({a_sym}×{b_sym})"
 
 
 def _match_template(d: bytes, i: int):
@@ -792,7 +802,7 @@ def fmt_address(terms, base=None, note: str = "") -> str:
     """The address line as a reader sees it: `DPTR += ...` for a helper's
     addend, `DPTR = <base> + ...` for a site's, and whatever destination a
     rebasing term names for itself. The last of those matters -- one of the
-    base templates lands in R2:R1 and never touches DPTR, and labelling it
+    base templates lands in A:R1 and never touches DPTR, and labelling it
     `DPTR` would be the sort of almost-right this file exists not to print."""
     body = fmt_terms(terms, note)
     if note or rebased(terms):
@@ -954,6 +964,315 @@ def write_callers_csv(d: bytes, sites) -> None:
                             r["status"]])
 
 
+# This census has different units from base_sites(): templates and consumers,
+# not MOV-DPTR anchors. Keep its bounds and state separate from the baseline.
+ACCESS_MAX_INSNS = 48
+ACCESS_MAX_DEPTH = 3
+ACCESS_FIELDS = (
+    "construction_id", "access_id", "row_kind", "methods", "anchors",
+    "construction_runtime", "construction_file", "context", "matched_bytes",
+    "frame_start", "frame_onto", "frame_over", "effective_base", "destination",
+    "terms", "semantics", "consumer_runtime", "consumer_file", "direction",
+    "status", "stop_reason", "stop_runtime", "stop_file",
+)
+
+
+def immediate_templates(d):
+    lo, hi = pd_bounds()
+    d = d[:min(hi, len(d))]
+    out = {}
+    i = lo
+    while i < min(hi, len(d)):
+        n, term = _match_template(d, i)
+        if term and term.startswith(REBASE):
+            out[i] = (n, term)
+        # A direct handoff can enter the add-only suffix without executing MUL.
+        # Keep overlaps until the walk establishes their entry context; walks
+        # through the full template still merge by construction and consumer.
+        i += 1
+    return out
+
+
+def access_load(raw, a, b):
+    op = raw[0]
+    if raw[:2] == MOV_B_IMM:
+        return a, f"0x{raw[2]:02X}"
+    if 0xE8 <= op <= 0xEF:
+        return f"R{op - 0xE8}", b
+    if op == MOV_A_IMM:
+        return f"0x{raw[1]:02X}", b
+    if op == CLR_A:
+        return "0x00", b
+    if op == MUL_AB:
+        return product_sym(a, b), "B"
+    if op == MOVX_A_DPTR:
+        return "A", b
+    if op in (MOVX_DPTR_A, MOV_DPTR):
+        return a, b
+    return None
+
+
+def access_frames(d, off):
+    """Maximal supported backward frames, retaining every suffix anchor.
+
+    A suffix lacks context, not contradicts its own longer frame. Disjoint
+    framings remain alternatives; no longest-frame confidence vote is taken.
+    """
+    lo, _ = pd_bounds()
+    runs = []
+    for start in range(max(lo, off - FRAME_BACK), off + 1):
+        i, run = start, []
+        while i < off:
+            n = OPCODE_LEN[d[i]]
+            raw = d[i:i + n]
+            if i + n > off or access_load(raw, "A", "B") is None:
+                break
+            run.append(i)
+            i += n
+        if i == off:
+            runs.append(tuple(run + [off]))
+    maximal = [r for r in runs if not any(len(q) > len(r) and
+               q[-len(r):] == r for q in runs)]
+    return [(r[0], sorted({a for q in runs if len(q) <= len(r) and
+                          r[-len(q):] == q for a in q})) for r in maximal]
+
+
+def access_walk(d, start, templates, entries, budget=ACCESS_MAX_INSNS):
+    lo, hi = pd_bounds()
+    hi = min(hi, len(d))
+    a, b = "A", "B"
+    pointers, records, constructions = {}, [], []
+    stack, path, seen = [], (), set()
+    i, used = start, 0
+    reason = "instruction-budget"
+
+    def construct(off, base, dest, term, raw, kind):
+        obj = dict(off=off, base=base, dest=dest, term=term, raw=raw,
+                   path=path, kind=kind, accesses=[])
+        constructions.append(obj)
+        pointers[dest] = obj
+        return obj
+
+    while used < budget:
+        if not lo <= i < hi:
+            reason = "image-bound"
+            break
+        if (i, path) in seen:
+            reason = "loop"
+            break
+        seen.add((i, path))
+        op, n = d[i], OPCODE_LEN[d[i]]
+        if i + n > hi:
+            reason = "truncated-instruction"
+            break
+        raw = d[i:i + n]
+        if i in templates:
+            n, term = templates[i]
+            cost = len(list(_insns(d, i, n)))
+            if used + cost > budget:
+                reason = "instruction-budget"
+                break
+            term = term.format(a=a, b=b)[1:]
+            base = int(re.search(r"0x([0-9A-F]{4})", term)[1], 16)
+            dest = term.split(" ←")[0]
+            construct(i, base, dest, term, d[i:i + n].hex(), "template")
+            # The address halves replace A. B is also unknown after multiply;
+            # add-only forms preserve it, but it is not used to invent a term.
+            a = "A"
+            if op == MUL_AB:
+                b = "B"
+            used += cost
+            i += n
+            continue
+        used += 1
+        if op == MOV_DPTR:
+            base = int.from_bytes(raw[1:], "big")
+            construct(i, base, "DPTR", f"DPTR ← 0x{base:04X}", raw.hex(), "anchor")
+        elif op in (MOVX_A_DPTR, MOVX_DPTR_A):
+            ptr = pointers.get("DPTR")
+            if ptr:
+                access = (i, path, "read" if op == MOVX_A_DPTR else "write")
+                ptr["accesses"].append(access)
+            if op == MOVX_A_DPTR:
+                a = "A"
+        elif op == RET:
+            if not stack:
+                reason = "return-consumption-not-established"
+                break
+            i, path = stack.pop()
+            continue
+        elif is_call(op) or is_jmp(op):
+            target = lo + branch_target(raw, i - lo)
+            if target not in entries:
+                reason = "unmodelled-handoff"
+                break
+            if len(path) >= ACCESS_MAX_DEPTH:
+                reason = "recursion-bound"
+                break
+            if is_call(op):
+                stack.append((i + n, path))
+            path += ((i, target),)
+            i = target
+            continue
+        else:
+            state = access_load(raw, a, b)
+            if state is None:
+                reason = ("stack-detour" if op in (0xC0, 0xD0) else
+                          "unsupported-branch" if op in FLOW_OPCODES else
+                          "unsupported-instruction")
+                break
+            a, b = state
+        i += n
+    for c in constructions:
+        # The MOV-DPTR snapshots are contextual evidence only, not a second
+        # whole-image MOV-DPTR census. Keep those actually consumed here.
+        if c["kind"] == "anchor" and not c["accesses"]:
+            continue
+        for consumer in c["accesses"] or [None]:
+            records.append(dict(c, consumer=consumer, stop=i, reason=reason))
+    return records
+
+
+def access_entries(d, templates):
+    """Direct branch targets reaching a template in a bounded supported prefix."""
+    lo, hi = pd_bounds()
+    hi = min(hi, len(d))
+    branches = {}
+    for i in range(lo, hi):
+        n = OPCODE_LEN[d[i]]
+        if i + n <= hi and (is_call(d[i]) or is_jmp(d[i])):
+            branches[i] = lo + branch_target(d[i:i + n], i - lo)
+
+    def reaches_template(start, seen=(), depth=0):
+        i = start
+        if i in seen or depth > ACCESS_MAX_DEPTH:
+            return False
+        for _ in range(HELPER_MAX_INSNS):
+            if i in templates:
+                return True
+            if not lo <= i < hi:
+                return False
+            n = OPCODE_LEN[d[i]]
+            if i + n > hi:
+                return False
+            if i in branches:
+                return reaches_template(branches[i], seen + (start,), depth + 1)
+            if access_load(d[i:i + n], "A", "B") is None:
+                return False
+            i += n
+        return False
+
+    entries = {t for t in branches.values() if reaches_template(t)}
+    return entries, {i: t for i, t in branches.items() if t in entries}
+
+
+def access_rows(d, span=WHOLE_IMAGE, budget=ACCESS_MAX_INSNS):
+    templates = immediate_templates(d)
+    entries, branches = access_entries(d, templates)
+    lo, _ = pd_bounds()
+    merged = {}
+    for seed in sorted(set(templates) | set(branches)):
+        method = "template-scan" if seed in templates else "direct-handoff"
+        for start, anchors in access_frames(d, seed):
+            for r in access_walk(d, start, templates, entries, budget):
+                if not span[0] <= r["base"] <= span[1]:
+                    continue
+                context = r["path"]
+                consumer = r["consumer"]
+                key = (r["off"], context, consumer, r["term"], r["reason"], r["stop"])
+                item = merged.setdefault(key, dict(r, anchors=set(), methods=set(), frames=set()))
+                item["anchors"].update(anchors)
+                item["methods"].add(method)
+                if r["raw"].startswith("a424") and r["dest"] == "DPTR":
+                    item["methods"].add("overlapping-add-suffix")
+                item["frames"].add(start)
+    contextual = {r["off"] for r in merged.values() if r["path"]}
+    interpretations = {}
+    for r in merged.values():
+        interpretations.setdefault((r["off"], r["path"], r["consumer"]), set()).add(r["term"])
+
+    def rt(i):
+        return f"0x{i - lo:04X}"
+
+    def file(i):
+        return f"0x{i:05X}"
+
+    def ctx(path):
+        return ";".join(f"{rt(a)}>{rt(t)}" for a, t in path)
+
+    out = []
+    for r in merged.values():
+        consumer = r["consumer"]
+        cid = f"{r['kind']}:{rt(r['off'])}@{ctx(r['path']) or 'body'}"
+        aid = cid + (f"/{rt(consumer[0])}@{ctx(consumer[1]) or 'body'}" if consumer else "/none")
+        evidence = not r["path"] and r["off"] in contextual
+        kind = ("body-evidence" if evidence else "anchor-access" if r["kind"] == "anchor"
+                else "access" if consumer else "construction-only")
+        conflict = len(interpretations[(r["off"], r["path"], consumer)]) > 1
+        onto, over = converges_from(d, r["off"], min(24, r["off"] - lo))
+        out.append(dict(zip(ACCESS_FIELDS, (
+            cid, aid, kind, " ".join(sorted(r["methods"])),
+            " ".join(file(a) for a in sorted(r["anchors"])), rt(r["off"]), file(r["off"]),
+            ctx(r["path"]), r["raw"], " ".join(file(f) for f in sorted(r["frames"])),
+            onto, over, f"0x{r['base']:04X}", r["dest"], r["term"],
+            "low8(x)=x&0xFF; carry retained; address modulo 0x10000",
+            rt(consumer[0]) if consumer else "", file(consumer[0]) if consumer else "",
+            consumer[2] if consumer else "", "unresolved-alternative" if conflict else
+            "decoded-candidate" if consumer else "consumption-not-established",
+            r["reason"], rt(r["stop"]), file(r["stop"]),
+        ))))
+    return sorted(out, key=lambda r: tuple(str(r[k]) for k in ACCESS_FIELDS))
+
+
+def access_totals(rows):
+    canonical = [r for r in rows if r["row_kind"] != "body-evidence"]
+    templates = [r for r in canonical if r["construction_id"].startswith("template:")]
+    return dict(constructions=len({r["construction_id"] for r in templates}),
+                accesses=len({r["access_id"] for r in templates if r["consumer_file"]}),
+                construction_only=len({r["construction_id"] for r in templates if not r["consumer_file"]}),
+                anchor_accesses=len({r["access_id"] for r in canonical if r["row_kind"] == "anchor-access"}),
+                evidence_records=len(rows))
+
+
+def access_stride_rows(rows):
+    groups = {}
+    for r in rows:
+        if r["row_kind"] == "body-evidence":
+            continue
+        unit = r["row_kind"]
+        for s in set(STRIDE_RE.findall(r["terms"])) or {UNRESOLVED_STRIDE}:
+            group = groups.setdefault((s, unit), {"ids": set(), "bases": set()})
+            group["ids"].add(r["access_id"])
+            group["bases"].add(r["effective_base"])
+    return [dict(stride=s if s == UNRESOLVED_STRIDE else f"0x{s}",
+                 counting_unit=unit, candidates=len(g["ids"]),
+                 base_list=" ".join(sorted(g["bases"])))
+            for (s, unit), g in sorted(groups.items())]
+
+
+def write_access_csv(rows, strides=False):
+    if strides:
+        rows = access_stride_rows(rows)
+    fields = ("stride", "counting_unit", "candidates", "base_list") if strides else ACCESS_FIELDS
+    writer = csv.DictWriter(sys.stdout, fieldnames=fields)
+    writer.writeheader()
+    writer.writerows(rows)
+
+
+def print_accesses(rows, span, strides=False):
+    print(f"Immediate-base census; effective-base filter: {fmt_span(span)}")
+    print("Candidates, not execution evidence; distinct from MOV-DPTR anchor totals")
+    print(" ".join(f"{k}={v}" for k, v in access_totals(rows).items()))
+    if strides:
+        print("Each candidate counts once per distinct constant; totals are not additive")
+        write_access_csv(rows, True)
+    else:
+        for r in rows:
+            print(f"{r['access_id']} {r['row_kind']} {r['terms']} "
+                  f"{r['direction'] or 'no consumer'} [{r['status']}; "
+                  f"{r['stop_reason']} at {r['stop_runtime']}]")
+
+
 # --- self-test -------------------------------------------------------------
 #
 # Every expectation below is transcribed from text already committed to this
@@ -992,12 +1311,12 @@ BASE_COUNTS = {0x04A6: 4, 0x04A3: 5}
 # that section is about fails here rather than in prose; the last two are
 # routine entries and are not rows in that CSV.
 STRIDE_SITE_TERMS = {
-    0xC2FA: ("DPTR ← 0x08F8 + R7×0x5E", "mov 0xf0,#0x5e"),
-    0xDA9B: ("DPTR ← 0x0870 + low(R7×0x77)", "mov 0xf0,#0x77"),
+    0xC2FA: ("DPTR ← 0x08F8 + low8(R7×0x5E)", "mov 0xf0,#0x5e"),
+    0xDA9B: ("DPTR ← 0x0870 + low8(R7×0x77)", "mov 0xf0,#0x77"),
 }
 STRIDE_HELPER_TERMS = {
-    0x34D9: "DPTR ← 0x08FC + A×0x5E",
-    0x578E: "R2:R1 ← 0x089B + A×0x77",
+    0x34D9: "DPTR ← 0x08FC + low8(A×0x5E)",
+    0x578E: "A:R1 ← 0x089B + A×0x77",
 }
 
 # The strides whose sites the whole-image census finds carrying the 0x200×
@@ -1016,6 +1335,196 @@ def _csv_rows(path: str):
     here = os.path.dirname(os.path.abspath(__file__))
     with open(os.path.join(here, path), newline="") as fh:
         return list(csv.DictReader(fh))
+
+
+def access_self_test(d, check):
+    lo, hi = pd_bounds()
+
+    def fixture(chunks, end=None):
+        image = bytearray(b"\x22" * (hi if end is None else lo + end))
+        for off, text in chunks.items():
+            raw = bytes.fromhex(text)
+            image[lo + off:lo + off + len(raw)] = raw
+        return bytes(image)
+
+    rows = access_rows(d)
+    check(access_totals(rows) == dict(constructions=653, accesses=428,
+          construction_only=225, anchor_accesses=186, evidence_records=977),
+          "inspected census totals: 653 constructions, 428 accesses, 225 construction-only, 186 anchor accesses, 977 evidence rows")
+    check(len(base_sites(d)) == 151 and len(base_sites(d, WHOLE_IMAGE)) == 3176,
+          "legacy denominator remains 151 low-run / 3176 whole-image anchors")
+    templates = immediate_templates(d)
+    suffixes = {i for i in templates if i - 1 in templates and d[i - 1] == MUL_AB}
+    check(len(templates) == 304 and len(suffixes) == 134,
+          "304 immediate-base matches: 170 non-overlapping templates plus 134 add-only suffixes")
+    check(d[lo + 0x2BE1:lo + 0x2BE4].hex() == "1256d1" and
+          d[lo + 0x56D0:lo + 0x56DC].hex() == "a4246ff582e43408f583e022",
+          "committed bytes: 0x2BE1 calls 0x56D1, bypassing MUL at 0x56D0")
+    check(any(r["context"] == "0x2BE1>0x56D1" and
+              r["construction_runtime"] == "0x56D1" and
+              r["terms"] == "DPTR ← 0x086F + A" and
+              r["consumer_runtime"] == "0x56DA" and r["direction"] == "read"
+              for r in rows), "independently entered 0x56D1 suffix reaches MOVX at 0x56DA")
+    for off, raw in {0xC2FA: "9007d0eff075f05ea424f8f582e43408f583e0",
+                     0xDA9B: "9007d0eff075f077a4125950e0",
+                     0x34D9: "e075f05ea424fcf582e43408f583020faf",
+                     0x578E: "e075f077a4249bf9740835f022"}.items():
+        check(d[lo + off:lo + off + len(raw)//2].hex() == raw,
+              f"0x{off:04X} bytes match independent r2 listing")
+    for off, base, consumer, term, anchor in (
+            ("0xC302", "0x08F8", "0xC30C", "low8(R7×0x5E)", "0x2C2FA"),
+            ("0x5950", "0x0870", "0xDAA7", "low8(R7×0x77)", "0x2DA9B")):
+        found = [r for r in rows if r["construction_runtime"] == off and
+                 r["effective_base"] == base and r["consumer_runtime"] == consumer and
+                 term in r["terms"] and anchor in r["anchors"]]
+        check(bool(found), f"automatic discovery {anchor} -> {base} read {consumer}")
+    check(any(r["context"] == "0xDAA4>0x5950" and r["consumer_runtime"] == "0xDAA7"
+              for r in rows), "direct 0xDAA4 -> 0x5950 handoff retained")
+    for consumer in ("0xC2FE", "0xDA9F"):
+        check(any(r["consumer_runtime"] == consumer and r["effective_base"] == "0x07D0"
+                  and r["direction"] == "write" for r in rows),
+              f"preceding {consumer} store remains a separate 0x07D0 snapshot")
+    check(any(r["construction_runtime"] == "0x34DD" and "low8(A×0x5E)" in r["terms"]
+              and not r["consumer_file"] and r["stop_reason"] == "unmodelled-handoff"
+              for r in rows), "mid-routine MOVX clobbers old A; completed arithmetic survives reader tail")
+    check(any(r["construction_runtime"] == "0x5792" and r["destination"] == "A:R1"
+              and not r["consumer_file"] for r in rows), "0x578E returns A:R1 without an R2 assignment")
+
+    # Byte execution is independent of the string template: in particular CLR
+    # does not clear carry, and MOV A,#hi does not add the product high byte.
+    def byte_address(raw, a, b):
+        carry, regs = 0, {0x82: 0, 0x83: 0, 1: 0}
+        i = 0
+        while i < len(raw):
+            op = raw[i]
+            if op == 0xA4:
+                product = a*b
+                a, b, carry = product & 255, product >> 8, 0
+            elif op == 0x24:
+                total = a + raw[i+1]
+                a, carry = total & 255, total >> 8
+            elif op == 0x34:
+                total = a + raw[i+1] + carry
+                a, carry = total & 255, total >> 8
+            elif op == 0x35:
+                total = a + b + carry
+                a, carry = total & 255, total >> 8
+            elif op == 0xF5:
+                regs[raw[i+1]] = a
+            elif op == 0xF9:
+                regs[1] = a
+            elif op == 0xE4:
+                a = 0
+            elif op == 0x74:
+                a = raw[i+1]
+            else:
+                raise AssertionError(f"fixture opcode {op:02x}")
+            i += OPCODE_LEN[op]
+        return (a << 8 | regs[1]) if 0xF9 in raw else (regs[0x83] << 8 | regs[0x82])
+
+    arithmetic_ok = True
+    for base in (0x08F8, 0x0870, 0x089B, 0xFFFC):
+        for mult in (0x5E, 0x77):
+            for index in (0, 1, 2, 3, 4, 127, 255):
+                for full in (False, True):
+                    text = (f"a424{base&255:02x}f974{base>>8:02x}35f0" if full else
+                            f"a424{base&255:02x}f582e434{base>>8:02x}f583")
+                    raw = bytes.fromhex(text)
+                    _, term = _match_template(raw, 0)
+                    expr = term.format(a=str(index), b=str(mult)).split(" + ")[1]
+                    symbolic = (base + eval(expr.replace("×", "*"),
+                                {"__builtins__": {}, "low8": lambda x: x & 255})) & 65535
+                    arithmetic_ok &= symbolic == byte_address(raw, index, mult)
+                add = bytes.fromhex(f"24{base&255:02x}f582e434{base>>8:02x}f583")
+                arithmetic_ok &= byte_address(add, index*mult & 255, index*mult >> 8) == (
+                    base + (index*mult & 255)) & 65535
+    check(arithmetic_ok, "byte-level arithmetic agrees across product overflow, low-add carry, discarded B and 16-bit wrap")
+
+    raw = fixture({0x100: "ef75f05ea424f8f582e43408f583e0f022"})
+    found = access_rows(raw)
+    check(len(immediate_templates(raw)) == 2 and access_totals(found)["constructions"] == 1
+          and access_totals(found)["accesses"] == 2,
+          "no MOV-DPTR anchor: overlapping suffix merges; two consumers stay distinct")
+    check(all(len(r["anchors"].split()) > 1 for r in found),
+          "multiple backward anchors contribute provenance, not counts")
+    raw = fixture({0x100: "ef12030122", 0x200: "ee75f07712030022",
+                   0x300: "a4246ff582e43408f583e022"})
+    templates = immediate_templates(raw)
+    entries, _ = access_entries(raw, templates)
+    check(lo + 0x301 in templates and lo + 0x301 in entries and
+          any(r["term"] == "DPTR ← 0x086F + R7" and
+              r["consumer"] == (lo + 0x30A, ((lo + 0x101, lo + 0x301),), "read")
+              for r in access_walk(raw, lo + 0x100, templates, entries)),
+          "suffix survives discovery, direct-entry selection and caller walk")
+    found = access_rows(raw)
+    check({(r["context"], r["terms"], r["consumer_runtime"])
+           for r in found if r["row_kind"] == "access"} == {
+              ("0x0101>0x0301", "DPTR ← 0x086F + R7", "0x030A"),
+              ("0x0204>0x0300", "DPTR ← 0x086F + low8(R6×0x77)", "0x030A")}
+          and access_totals(found)["constructions"] == 2
+          and access_totals(found)["accesses"] == 2,
+          "independent MUL and ADD entries retain distinct terms at the same consumer")
+    raw = fixture({0x100: "75f074e4a424f8f582e43408f583e022"})
+    ambiguous = access_rows(raw)
+    check(len(ambiguous) == 2 and all(r["status"] == "unresolved-alternative" for r in ambiguous)
+          and access_totals(ambiguous)["accesses"] == 1,
+          "conflicting frames retain two unresolved alternatives but count one access")
+    raw = fixture({0x100: "ef75f05ea424f8f582e43408f583e0"
+                   "ef75f077a424f8f582e43408f583e022"})
+    check(access_totals(access_rows(raw))["constructions"] == 2 and
+          access_totals(access_rows(raw))["accesses"] == 2,
+          "two constructions at the same base remain separate after one anchor")
+    raw = fixture({0x100: "ef75f077a4120300e022", 0x200: "ee75f05ea4120300e022",
+                   0x300: "2470f582e43408f58322"})
+    found = access_rows(raw)
+    check(access_totals(found)["constructions"] == 2 and
+          access_totals(found)["accesses"] == 2 and
+          any(r["row_kind"] == "body-evidence" for r in found),
+          "two callers remain distinct; context-free helper evidence does not count again")
+    check({r["terms"] for r in found if r["row_kind"] == "access"} == {
+          "DPTR ← 0x0870 + low8(R7×0x77)", "DPTR ← 0x0870 + low8(R6×0x5E)"},
+          "bare multiply low product survives the helper handoff")
+    for movx, sym in (("f0", "R7"), ("e0", "A")):
+        raw = fixture({0x100: f"ef{movx}75f05ea424f8f582e43408f583e022"})
+        check(any(f"low8({sym}×0x5E)" in r["terms"] for r in access_rows(raw)),
+              f"MOVX {movx} accumulator preservation/clobber")
+    for tail, reason in (("700022", "unsupported-branch"), ("c08322", "stack-detour"),
+                         ("0422", "unsupported-instruction"), ("020100", "recursion-bound")):
+        raw = fixture({0x100: "ef75f05ea424f8f582e43408f583" + tail})
+        found = access_rows(raw)
+        check(bool(found) and all(r["stop_reason"] == reason for r in found),
+              f"completed arithmetic survives {reason}")
+    raw = fixture({0x100: "ef75f05ea424f8f582e43408f583e022"})
+    templates = immediate_templates(raw)
+    found = access_walk(raw, lo+0x100, templates, set(), budget=8)
+    check(bool(found) and all(r["reason"] == "instruction-budget" for r in found),
+          "instruction budget stops after completed template without dropping it")
+    check(access_rows(b"") == [] and access_rows(b"\x22" * (lo+2)) == [],
+          "short images are bounded")
+    raw = fixture({0x100: "a424f8f582e43408f58390"}, end=0x10B)
+    found = access_rows(raw)
+    check(bool(found) and all(r["stop_reason"] == "truncated-instruction" for r in found),
+          "truncated instruction retains preceding construction")
+    filtered = access_rows(d, (0x0800, 0x08FF))
+    check(all(0x800 <= int(r["effective_base"], 16) <= 0x8FF for r in filtered)
+          and any(r["consumer_runtime"] == "0xC30C" for r in filtered)
+          and not any(r["consumer_runtime"] == "0xC2FE" for r in filtered),
+          "new spans filter effective base, not preceding MOV-DPTR immediate")
+    for name, writer in ((HELPERS_CSV, lambda: write_helpers_csv(d)),
+                         (CALLERS_CSV, lambda: write_callers_csv(d, DEFAULT_CALLER_SITES)),
+                         (STRIDES_CSV, lambda: write_strides_csv(d, WHOLE_IMAGE)),
+                         ("../annotations/pd-index-accesses.csv", lambda: write_access_csv(rows)),
+                         ("../annotations/pd-access-strides.csv", lambda: write_access_csv(rows, True))):
+        output = io.StringIO(newline="")
+        with redirect_stdout(output):
+            writer()
+        path = os.path.join(os.path.dirname(__file__), name)
+        try:
+            with open(path, "rb") as fh:
+                expected = fh.read()
+        except FileNotFoundError:
+            expected = None
+        check(expected == output.getvalue().encode(), f"{name}: complete CSV bytes/schema/order regenerate")
 
 
 def self_test(fw_path: str) -> int:
@@ -1120,6 +1629,8 @@ def self_test(fw_path: str) -> int:
           f"{CALLERS_CSV} has {got_callers} row(s) for the four 0x04A6 sites "
           f"(got {len(want_callers)} committed)")
 
+    access_self_test(d, check)
+
     print()
     if bad:
         print(f"self-test FAILED: {bad} check(s) disagree with the committed "
@@ -1128,7 +1639,7 @@ def self_test(fw_path: str) -> int:
         print(f"self-test passed: the helper bodies and terms match "
               f"pd-xdata-overlap.md 3, the four 0x04A6 sites sit where "
               f"trace_xdata_refs.py puts them, the four 0x5E/0x77 addresses sit "
-              f"where ec-0x07d0-sites.md 4 puts them, and all three CSVs "
+              f"where ec-0x07d0-sites.md 4 puts them, and all five CSVs "
               f"regenerate unchanged (PD image at file 0x{lo:05X})")
     return 1 if bad else 0
 
@@ -1160,6 +1671,9 @@ def main() -> int:
                     help="write the caller table for the four 0x04A6 sites as CSV")
     ap.add_argument("--self-test", action="store_true",
                     help="re-check the decode against the committed annotations and CSVs")
+    for mode in ("accesses", "accesses-csv", "access-strides", "access-strides-csv"):
+        ap.add_argument("--" + mode, nargs="?", const=WHOLE_IMAGE, metavar="SPAN",
+                        help="immediate-base candidates; SPAN filters constructed effective base, not MOV-DPTR anchors (default all)")
     args = ap.parse_args()
 
     here = os.path.dirname(os.path.abspath(__file__))
@@ -1167,7 +1681,8 @@ def main() -> int:
     if args.self_test:
         return self_test(fw)
     modes = (args.helpers, args.bases, args.sites, args.strides, args.callers,
-             args.helpers_csv, args.strides_csv, args.callers_csv)
+             args.helpers_csv, args.strides_csv, args.callers_csv,
+             args.accesses, args.accesses_csv, args.access_strides, args.access_strides_csv)
     if all(m is None or m is False for m in modes):
         ap.error("pick a mode: --helpers, --bases, --sites, --strides, "
                  "--callers, --helpers-csv, --strides-csv, --callers-csv or "
@@ -1176,6 +1691,8 @@ def main() -> int:
         bases_span = parse_span(args.bases)
         strides_span = parse_span(args.strides)
         strides_csv_span = parse_span(args.strides_csv)
+        access_spans = [parse_span(v) for v in (args.accesses, args.accesses_csv,
+                        args.access_strides, args.access_strides_csv)]
     except ValueError as exc:
         ap.error(str(exc))
 
@@ -1188,6 +1705,13 @@ def main() -> int:
               file=sys.stderr)
         return 1
 
+    for idx, span in enumerate(access_spans):
+        if span is not None:
+            rows = access_rows(d, span)
+            if idx % 2:
+                write_access_csv(rows, idx >= 2)
+            else:
+                print_accesses(rows, span, idx >= 2)
     if args.helpers is not None:
         print_helpers(d, [int(a, 16) for a in args.helpers] or None)
     if bases_span is not None:

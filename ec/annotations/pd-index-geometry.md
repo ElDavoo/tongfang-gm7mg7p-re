@@ -8,8 +8,9 @@ computing `0x04A6 + R3×0x60 + 2×R3×0x100 + A×0x1F` and said naming the recor
 recovery" as the reason the callers were untraced.
 
 This file answers the *arithmetic* those two stopped short of and says
-explicitly which of the three questions it still cannot answer. It adds no
-retraction: both files' verdicts stand as written, including
+explicitly which of the three questions it still cannot answer. Historically
+it said "It adds no retraction"; **#74 corrects the full-product and R2:R1
+claims below, retaining them as history.** The independent-map verdict stands, including
 `pd-xdata-overlap.md`'s headline that the two images' XDATA maps look
 independent as far as static evidence goes.
 
@@ -48,6 +49,11 @@ on a live read, and the `unknown-not-absent` set, which `pd-xdata-overlap.md`
 `trace_xdata_refs.py`, and the opcode tables, `converges_from()` and
 `paged_target()` from `disasm8051.py`; nothing about the dump's layout or the
 8051 encoding is re-derived in it.
+
+**Historical output below (before #74), not current self-test output.** The
+`0xC2FA` and `0x34D9` expressions must include `low8(…×0x5E)`; `0x578E`
+constructs A:R1, not R2:R1. The `low(…)` spelling is now `low8(…)`.
+§8 gives the corrected semantics and new reproduction commands.
 
 ```console
 $ python3 ec/tools/pd_index_geometry.py ec/firmware/GMxMGxx_11.800 --self-test
@@ -558,6 +564,13 @@ What the census does settle, over the span it covers:
 
 ### 7.3 The four addresses
 
+**Historical tool output is retained in this section.** Correction (#74):
+`0x34D9` is `DPTR ← 0x08FC + low8(A×0x5E)` and `0xC2FA` is
+`DPTR ← 0x08F8 + low8(R7×0x5E)`, not the unrestricted products printed
+below. `0x578E` constructs **A:R1**, not R2:R1. The independent r2
+instruction listings themselves are unchanged and show why these corrections
+are necessary. `low(…)` below now prints as `low8(…)`.
+
 ```console
 0x34D9  (file 0x234D9)  DPTR ← 0x08FC + A×0x5E; unmodelled: 0x0FB0 `mov  r4,a` is outside the term model
     0x34d9  e0       movx a,@dptr
@@ -682,6 +695,11 @@ instruction does and stops there. In particular the `subb a,#0x05 ; jnc` four
 instructions later bounds the *byte read back from* `0x0870 + …` — the listing
 reads it, increments it and stores it — not the index that reached it.
 
+**Correction (#74):** "wraps inside the low page" above means the *product*
+is truncated to its low byte. Carry from `add a,#0x70` still increments the
+base high byte; the final address is `(0x0870 + low8(R7×0x77)) & 0xFFFF`,
+not `0x0800 | low8(0x70 + R7×0x77)`.
+
 ```console
 0x578E  (file 0x2578E)  R2:R1 ← 0x089B + A×0x77
     0x578e  e0       movx a,@dptr
@@ -721,6 +739,11 @@ its caller at `0xDAC4` completes the pointer with `lcall 0x5901`
 than `DPTR` because calling it DPTR would be wrong about which register the
 address lands in.
 
+**Correction (#74) to the preceding destination explanation:** the tool now
+labels the construction **A:R1**. R2 is not assigned by `0x578E`; r2 at
+`0x5901` independently confirms the later `fa` (`mov r2,a`) instruction.
+Construction and subsequent pointer completion must not be conflated.
+
 ### 7.4 The answer to the question the issue asks
 
 **No — as far as this method resolves, the `0x5E` and `0x77` arrays carry no
@@ -751,7 +774,18 @@ What that is **not**:
   annotation files stop at that line deliberately; this one stops there too.
 - It moved no `registers.yaml` status and could not have. See the preamble.
 
+**Correction (#74) to the preceding effective-stride conclusion:** absence
+of a decoded page term does not make a truncated multiplication globally
+linear. `low8(index×constant)` agrees with the full product only while that
+product fits in a byte. In particular `0x5E` and `0x77` overflow at index 3.
+The bounded scan supports multiplication constants and address expressions,
+not unconditional record widths.
+
 ### 7.5 What this opens
+
+**Historical scope:** the discovery gap in the first bullet is addressed by
+§8's separate census, not by changing §7.2's denominator. The second bullet's
+"first place" claim was incorrect: `0x34D9` and `0xC2FA` also discard B.
 
 - The `0x0870` base only appears via `--sites`, because the census follows the
   `MOV DPTR` path and `0xDA9B`'s chain crosses a `movx` first. A census that
@@ -763,3 +797,240 @@ What that is **not**:
 - `0x17`, `0x67` and `0x04` are three strides nothing in this repository has
   looked at. They are in `pd-base-strides.csv` with their bases and nothing
   more is claimed about them.
+
+## 8. Immediate-base constructions and access candidates (#74)
+
+### 8.1 Bit-accurate corrections and independent checks
+
+This section supersedes the full-product and destination claims explicitly
+marked as historical above. `low8(x) = x & 0xFF`; every address expression is
+modulo `0x10000`. Discarding the multiplication's B byte does **not** discard
+the carry from adding the low immediate base byte. Nor does it mean the
+address stays on the base's original high-byte page.
+
+| context / arithmetic runtime (file) | constructed address | destination | consumption evidence |
+|---|---|---|---|
+| `0xC2FA` / `0xC302` (`0x2C302`) | `0x08F8 + low8(R7×0x5E)` | DPTR | `0xC30C` MOVX read; preceding `0xC2FE` store is to `0x07D0` |
+| `0xDA9B → 0xDAA4 → 0x5950` (`0x25950`) | `0x0870 + low8(R7×0x77)` | DPTR | `0xDAA7` MOVX read; preceding `0xDA9F` store is to `0x07D0` |
+| `0x34D9` / `0x34DD` (`0x234DD`) | `0x08FC + low8(A×0x5E)` | DPTR | completed arithmetic; unmodelled reader tail, not an established complete consumer chain |
+| `0x578E` / `0x5792` (`0x25792`) | `0x089B + A×0x77` | A:R1 | returned halves; construction itself assigns neither R2 nor DPTR |
+
+`A` in the last two rows is the byte loaded by the entry's MOVX, not a
+preserved caller accumulator. For index 2, `2×0x5E = 0xBC`; the `0x08F8`
+form produces `0x09B4`, carrying out of the low base addition. For index 3,
+`3×0x5E = 0x011A`, but that form produces `0x0912`, not `0x0A12`.
+Likewise the `0x0870` form at index 3 produces `0x08D5`, not `0x09D5`.
+The full-product A:R1 form at index 3 produces `0x0A00`.
+
+Independent validation in this change used radare2 on a temporary flat image
+extracted from the committed input (no hardware observation):
+
+```sh
+dd if=ec/firmware/GMxMGxx_11.800 of=/tmp/pd-74.bin bs=65536 skip=2 count=1
+r2 -a 8051 -e scr.color=0 -q -c \
+  's 0xc2fa; pd 12; s 0xda9b; pd 8; s 0x5950; pd 6; s 0x34d9; pd 9; s 0x578e; pd 8; s 0x5901; pd 6' \
+  /tmp/pd-74.bin
+```
+
+This used radare2 **5.5.0**. The committed firmware's SHA-256 is
+`158d1c6416426939a814146b766a44e2ff0e9286b0abd237e70e51a0c03399c4`.
+The load-bearing runs reproduce §7.3's instruction listings:
+
+- `0xC302`: `a424f8f582e43408f583`, then `e0` at `0xC30C`.
+- `0xDAA3`: `a4125950e0`; `0x5950`: `2470f582e43408f58322`.
+- `0x34D9`: `e075f05ea424fcf582e43408f583020faf`.
+- `0x578E`: `e075f077a4249bf9740835f022`; R2's later assignment is
+  `fa` at `0x5901`, outside that construction.
+
+`clr a` before `addc a,#hi` in the DPTR forms discards B, whereas
+`addc a,b` in the A:R1 form retains it. These bytes, not the old term
+strings, are the arithmetic oracle.
+
+### 8.2 Reproduction and baseline separation
+
+Run from the repository root. Generate temporary outputs first, then compare;
+these commands do not overwrite the committed baseline:
+
+```sh
+python3 ec/tools/pd_index_geometry.py ec/firmware/GMxMGxx_11.800 --self-test
+python3 ec/tools/disasm8051.py --self-test
+python3 ec/tools/pd_index_geometry.py --helpers-csv > /tmp/pd-helpers.csv
+cmp /tmp/pd-helpers.csv ec/annotations/pd-index-helpers.csv
+python3 ec/tools/pd_index_geometry.py --callers-csv > /tmp/pd-callers.csv
+cmp /tmp/pd-callers.csv ec/annotations/pd-index-callers.csv
+python3 ec/tools/pd_index_geometry.py --strides-csv all > /tmp/pd-base-strides.csv
+cmp /tmp/pd-base-strides.csv ec/annotations/pd-base-strides.csv
+python3 ec/tools/pd_index_geometry.py --accesses-csv all > /tmp/pd-index-accesses.csv
+cmp /tmp/pd-index-accesses.csv ec/annotations/pd-index-accesses.csv
+python3 ec/tools/pd_index_geometry.py --access-strides-csv all > /tmp/pd-access-strides.csv
+cmp /tmp/pd-access-strides.csv ec/annotations/pd-access-strides.csv
+bash .github/scripts/agent-gates.sh
+```
+
+The legacy census still has **151 low-run MOV-DPTR anchors**, **3,176
+whole-image anchors**, and **3,047 anchors with no multiplication constant
+resolved**. Its default spans and first-MOVX stopping rule are unchanged.
+The helper/caller CSVs and `pd-base-strides.csv` remain unchanged. New access
+rows are not added to 3,176: they use a different counting unit and overlap
+with legacy anchors (the `0x07D0` stores are a concrete example).
+
+The new span filter is on the **constructed effective base**, not on an
+anchor's MOV-DPTR immediate. Thus selecting `0x0800-0x08FF` can include
+arithmetic discovered after a store to `0x07D0` without moving that store
+into the array's address range.
+
+### 8.3 Discovery, schema and counting rules
+
+**Correction (PR #76 review):** the initial scan reported **170 non-overlapping
+template locations** (134 truncated multiply/DPTR, 26 standalone add-only/DPTR,
+10 A:R1) and claimed that all 134 overlapping add-only suffixes were alternate
+evidence, not new constructions. That discarded independently entered suffixes
+before caller discovery. The corrected scan retains **304 overlapping template
+locations**: 134 truncated multiply/DPTR, 160 add-only/DPTR and 10 full-product
+A:R1 forms. The earlier independent r2 searches `/x a424..f582e434..f583`,
+`/x 24..f582e434..f583` and `/x a424..f974..35f0` returned those same 134, 160
+and 10 byte matches; r2 was not rerun for this correction. These are byte
+matches, not proof of executable code.
+
+For example, committed firmware file `0x22BE1` contains `1256d1` (LCALL
+`0x56D1`), and file `0x256D0` contains `a4246ff582e43408f583e022`.
+That entry bypasses MUL at runtime `0x56D0`: the suffix constructs
+`DPTR = 0x086F + A` and reaches the read at `0x56DA`. Its row in
+`pd-index-accesses.csv` retains context `0x2BE1>0x56D1`; A is unknown here.
+Walks that actually pass through the enclosing multiply still merge into
+that full-template construction. Independently entered suffixes retain their
+own location, expression and handoff context.
+
+Discovery scans the mapped PD image `[0x20000,0x30000)`, clipped to the input
+length. It scans direct LCALL/ACALL/LJMP/AJMP targets, admitting entries whose
+supported prefix reaches a template within 24 prefix steps and at most three
+recursive helper edges. Entries can begin with A/B loads, MOV-DPTR or MOVX;
+there is no named-helper allowlist or regression-address discovery list.
+The forward walk has a 48-instruction budget (template instructions count
+individually) and at most three active direct handoffs. Unsupported branches,
+stack detours, unknown instructions, image ends and truncated instructions
+stop the walk explicitly. An unmodelled handoff is not entered merely to
+obtain a consumer. In particular `0x34E7 → 0x0FAF` remains unresolved.
+
+For each template or admitted handoff seed, all supported backward frames
+within 32 bytes are considered. Suffix anchors are merged into their maximal
+supported frame: starting after a register load omits evidence rather than
+contradicting that load. Distinct framings that produce different expressions
+remain `unresolved-alternative` evidence rows. There are **zero such conflicting
+rows in this input**; a synthetic fixture pins their handling. Convergence
+uses the existing 24-byte sweep, clipped at the PD-image boundary. It measures
+framing evidence, not likelihood of execution.
+
+`pd-index-accesses.csv` is sorted lexicographically by all schema fields in
+header order, with uppercase hexadecimal offsets and stable CSV quoting.
+Columns mean:
+
+- `construction_id`: template/anchor location plus concrete direct-handoff
+  path, or `body` for context-free discovery. `access_id` adds consumer
+  location and consumer context (or `/none`). Separate constructions at the
+  same effective base remain distinct.
+- `row_kind`: `access` for a template's decoded MOVX candidate,
+  `construction-only` for arithmetic without established consumption,
+  `anchor-access` for a consumed MOV-DPTR snapshot within these contextual
+  walks, or `body-evidence` for a context-free construction also discovered
+  through concrete callers. Body evidence is preserved but excluded from
+  candidate aggregates; distinct caller paths remain distinct candidates.
+- `methods` and `anchors`: all contributing scan methods and backward anchor
+  **file offsets**; overlapping add suffixes are named in `methods`.
+- `construction_runtime`, `construction_file`, `matched_bytes`: reproducible
+  arithmetic span (or contextual MOV-DPTR instruction).
+- `context`: semicolon-separated `handoff-runtime>entry-runtime` edges.
+  Add `0x20000` to either side for file offsets. The consumer context is in
+  `access_id`; it can differ after a helper returns.
+- `frame_start`: contributing maximal-frame file offsets;
+  `frame_onto`/`frame_over`: construction-location convergence counts.
+- `effective_base`, `destination`, `terms`, `semantics`: base and actual
+  destination at construction, symbolic expression, low8/carry/wrap rules.
+  Bare A/B are unknown byte values, not known literal index bounds. The
+  walker stops on unmodelled register changes rather than reusing stale
+  symbols. A MOVX store preserves A; a MOVX load invalidates its previous
+  symbol. A:R1 construction does not replace the separate DPTR state.
+- `consumer_runtime`, `consumer_file`, `direction`: snapshot at each decoded
+  MOVX before later arithmetic can replace the pointer. Empty means no
+  consumption established, not an absent consumer.
+- `status`: decoded candidate, consumption not established, or unresolved
+  alternative. `stop_reason`, `stop_runtime`, `stop_file` describe where the
+  bounded walk ended even when an earlier consumer was decoded successfully.
+
+An evidence row distinguishes construction, consumer, expression and terminal
+outcome. Alternate anchors/methods merge; different expressions/outcomes remain
+visible. Candidate counts deduplicate by identity, not number of evidence
+rows. A construction with two decoded consumers counts as one construction
+and two accesses. Distinct paths to a shared helper are contextual candidates,
+not established unique dynamic accesses or recovered call-graph edges.
+
+### 8.4 Measured census and remaining questions
+
+**Correction (PR #76 review):** before retaining independently entered suffixes,
+the reported totals were 953 evidence records, 630 constructions, 410 template
+accesses, 220 construction-only candidates and 185 anchor snapshots. The old
+consumer/no-consumer counts were 668/285; terminal counts were 367 unsupported
+instructions, 293 unmodelled handoffs, 154 unsupported branches, 92 returns and
+47 stack detours. Those counts describe the incomplete scan, not the corrected
+census below. All 953 previous rows retain their non-provenance fields; 24 rows
+are added and some existing rows gain overlapping scan-anchor provenance.
+
+The generated all-base table now contains **977 deduplicated evidence records**:
+
+| counting unit | candidates / rows |
+|---|---:|
+| unique contextual template constructions | 653 |
+| decoded template access candidates | 428 |
+| template constructions without an established consumer | 225 |
+| contextual MOV-DPTR access snapshots | 186 |
+| context-free body evidence rows, excluded from the above counts | 138 |
+
+The evidence row kinds are 428 `access`, 225 `construction-only`, 186
+`anchor-access`, and 138 `body-evidence`. Across all evidence (including bodies),
+687 rows have decoded consumers and 290 have none. Terminal outcomes are 384
+unsupported instructions, 297 unmodelled handoffs, 157 unsupported branches,
+92 returns and 47 stack detours. A return stop does not negate an earlier
+MOVX snapshot. No result here establishes execution or runtime index bounds.
+
+`pd-access-strides.csv` is derived only from canonical (non-body-evidence)
+rows. Its fields are `stride`, `counting_unit`, `candidates`, `base_list`;
+rows sort by constant then unit, and base lists are sorted without elision.
+Each identity counts once per distinct multiplication constant. Rows with
+multiple constants occur under each, so totals are **not additive**. The
+`unresolved` group means no constant was extracted, not absence of arithmetic.
+Unknown symbols and unestablished consumers remain represented.
+
+| constant | legacy MOV-DPTR anchors (unchanged) | new decoded template accesses | new construction-only candidates |
+|---|---:|---:|---:|
+| `0x5E` | 6 | 244 | 97 |
+| `0x77` | 6 | 80 | 37 |
+| `0x17` | 9 | 53 | 61 |
+| `0x38` | not resolved | 0 | 4 |
+| `0x03` | not resolved | 0 | 2 |
+| unresolved constant | 3,047 | 51 (previously 33) | 24 (previously 19) |
+
+The new `0x5E` access bases include **`0x08F8`**; the new `0x77` access
+bases include **`0x0870`**. The legacy base lists remain exactly those in §7.2.
+There are also 186 unresolved-constant anchor snapshots (previously 185), kept separately in
+the stride table. A candidate can contribute to a constant group in one
+framing and unresolved in another; these are not probabilities or a partition
+of runtime traffic.
+
+Limitations and follow-ups remain explicit:
+
+- Direct-branch byte scans include operand/data phantoms. For example the
+  table includes unusual bases `0xD9F6`, `0xDA32` and `0xEAF9`; do not silently
+  discard these or promote them to identified arrays without framing work.
+- Helper body evidence is suppressed only as an extra **count**, not removed
+  from the artifact. Additional outer callers create longer contextual paths;
+  this is bounded context enumeration, not full call-graph recovery.
+- Reader tails, indirect calls, computed jumps, arbitrary arithmetic and stack
+  save/restore are not recovered. A missing consumer means not established by
+  this model. CODE-reader recovery (#61) and the unrelated helper inventory
+  (#67) remain separate work.
+- The supported backward context cannot establish index ranges. Multiplication
+  constants in low8 expressions are not unconditional record widths. Neither
+  page-term absence outside the bounded walk nor record contents/counts are
+  settled here.
+- No hardware test ran, no shared EC/PD XDATA claim follows, and neither
+  `registers.yaml` nor the committed firmware/vendor inputs changed.
