@@ -196,6 +196,19 @@ DPTR. It also answers what these arrays do *not* have: none of them carries the
 wide, so the strides quoted above stand as the effective ones — as far as a
 static term decode resolves.
 
+**Correction (#74), retaining the preceding claim as history.** `0x578E`
+returns the address halves in **A:R1**, not R2:R1; `mov r2,a` is a separate
+instruction at `0x5901` in a subsequent helper. The `0x34DD` and `0xC302`
+multiplies discard B, so their addresses are `0x08FC + low8(A × 0x5E)`
+and `0x08F8 + low8(R7 × 0x5E)`, respectively. `0xDAA3 → 0x5950` gives
+`0x0870 + low8(R7 × 0x77)`. Here `low8(x) = x & 0xFF`, the low-base
+addition still carries into the high byte, and addresses wrap at 16 bits.
+Only the `0x578E` form retains the full product: `0x089B + A × 0x77`.
+Thus the multiplication constants above are not globally linear record
+widths. No page term was resolved by this bounded decode; that is not proof
+that callers or unsupported idioms add none. See `pd-index-geometry.md` §8
+for independent byte checks and the separate construction/access census.
+
 Two sites advance it in place, which is what an index does and what a
 threshold does not:
 
