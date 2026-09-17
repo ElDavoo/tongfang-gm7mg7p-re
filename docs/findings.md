@@ -71,6 +71,31 @@ firmware default, not an EC-mapped device. `tuxedo-drivers`' `ite_8291_lb`
 already implements this protocol for PIDs `7000`/`7001`/`6010`; `6005` would
 be a new PID, likely a small addition rather than new driver work.
 
+**2026-09-17 correction and live result (issue #5).** The old statement above
+that nothing claims `6005` does not describe the current machine: the live
+probe found it bound to `hid-generic`, accessible through hidraw. Also,
+`new_id` or a one-line device-table change alone does **not** enable stock
+`ite_8291_lb` control: its command functions switch on `hdev->product` and
+return `-ENOSYS` for `6005`, even after binding. This was checked against
+`tuxedo-drivers` commit `2c6bf54075fb38a7fdbefc560734281984bf65bc`; exact source
+locations and request framing are in [the probe notes](../linux/lightbar/README.md).
+
+Instead, `linux/lightbar/probe-6005.py` sent the **6010 static-colour sequence**
+through hidraw to the physical `048d:6005` on GM7MG7P, Linux 7.2.6. Starting
+from the user's reported default BIOS rainbow, the user observed **red, then
+dark, with no keyboard change**. Four 8-byte feature requests returned 8;
+those returns alone are not the behavioural proof — the separate human
+observation is. Evidence: `evidence/hid/2026-09-17-6005-6010-static.jsonl` and
+[the user's observation](../evidence/hid/2026-09-17-6005-observation.md).
+
+This confirms static red/off control via USB HID on this machine, not full
+6010 protocol compatibility. The requested 20/100 brightness was not measured;
+green/blue, effects, persistence, driver initialization and suspend/resume
+remain untested. No module was loaded, no driver rebound, and no EC register
+was written by this HID probe. The lightbar was left dark, not restored to
+rainbow. The next driver work is an explicit 6005 static-protocol path and
+lifecycle testing, not an ID-only patch; #5 remains open for that work.
+
 ### 3a. The battery-side lightbar registers: the reference count was counting the wrong program
 
 `0x07E2`-`0x07E5` (`LIGHTBAR_BAT_CTRL/RED/GREEN/BLUE` in `uniwill-laptop`'s
@@ -445,6 +470,10 @@ charging below X%" is now the *less* supported reading of the byte.
   (decrypting `BatteryProtection2`) or a Windows-side EC trace can give.
 - Lightbar is a **driver-scope problem, not a hardware problem** — claim
   `048D:6005` for `ite_8291_lb` and test.
+  **2026-09-17 update:** static red/off now works through raw HID with the
+  6010 sequence (§3); the user confirmed no keyboard change. An ID-only
+  patch is insufficient: explicit 6005 command dispatch and driver lifecycle
+  validation remain, so issue #5 is still open.
 - Decrypting the anti-tamper-protected `BatteryProtection2` method bodies
   (`windows/antitamper/`) would settle both open EC questions
   (`0x07D0`'s real role, and whether enforcement is EC-side or
