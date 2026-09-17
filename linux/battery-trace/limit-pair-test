@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Issue #1: write the 0x07B9 (UP) / 0x07D0 (DOWN) charge-limit pair the
+# way Windows' BatteryProtection2 does, through the same physical window
+# (ec/tools/ecmem.py -> 0xFE410000+addr, docs/findings.md 4e), while the
+# battery is charging ABOVE the limit being written, and coulomb-count
+# (current_now) to see whether charging actually stops.
+#
+# Phases (each line of the CSV carries the phase name):
+#   baseline   nothing written
+#   up60       0x07B9=60 only (the uniwill-laptop path, but via the window)
+#   up60down55 0x07B9=60 and 0x07D0=55
+#   restore    both back to their pre-test values
+# Run as root with AC plugged in and capacity well above 60%.
+set -u
+cd "$(dirname "$0")/../.."
+B=/sys/class/power_supply/BAT0
+OUT=${1:-evidence/battery-traces/$(date +%F)-limit-pair.csv}
+ECM="python3 ec/tools/ecmem.py"
+REGS=/sys/kernel/debug/regmap/INOU0000:00/registers
+STEP=${STEP:-10}
+
+orig=$($ECM read 0x7b9 0x7d0 | tr '\n' ' ')
+echo "# original: $orig" >> "$OUT"
+echo "ts,phase,ac,status,capacity,charge_now,current_now,voltage_now,mem7b9,mem7d0,regmap7b9" >> "$OUT"
+
+sample() {
+  local phase=$1 n=$2 i
+  for ((i = 0; i < n; i++)); do
+    m=$($ECM read 0x7b9 0x7d0 | cut -d= -f2 | tr '\n' ',')
+    printf '%s,%s,%s,%s,%s,%s,%s,%s,%s%s\n' \
+      "$(date -Is)" "$phase" "$(cat /sys/class/power_supply/AC0/online)" \
+      "$(cat $B/status)" "$(cat $B/capacity)" "$(cat $B/charge_now)" \
+      "$(cat $B/current_now)" "$(cat $B/voltage_now)" "$m" \
+      "$(grep -E '^7b9:' $REGS | cut -d' ' -f2)" | tee -a "$OUT"
+    sleep "$STEP"
+  done
+}
+
+sample baseline 6
+$ECM write 0x7b9=60 >> "$OUT"
+sample up60 12
+$ECM write 0x7d0=55 >> "$OUT"
+sample up60down55 12
+$ECM write 0x7b9=0 0x7d0=0 >> "$OUT"
+sample restore 6

@@ -203,6 +203,15 @@ registers:
       0xFE410000 + 0x07B9. Status is unchanged -- that is a decoded path,
       not an observed effect, and the DSDT ECMG gap it re-grades was never
       what made this entry uncertain.
+      LIVE 2026-09-17 (docs/findings.md 4f, evidence/battery-traces/
+      2026-09-17-limit-pair.csv): written via the physical window
+      (ec/tools/ecmem.py) as 60, 60 with bit 7, and 95 armed from 93%,
+      each together with 0x07D0; read back through window and regmap;
+      charging continued at full taper current in every case; likewise
+      60/55 armed at 56% under each 0x07A6 profile and held untouched
+      from 72% through 91%. Status
+      stays unknown-not-absent: the byte is writable and stable, and the
+      values the vendor writes are still unknown.
 
   - name: BATTERY_CHARGE_LIMIT_DOWN (Windows-only address, no uniwill-laptop equivalent)
     addr: 0x07D0
@@ -244,6 +253,16 @@ registers:
       DSDT ECMG field list, as DBD1 (with DBD2 at 0x07D1) -- what DBD1 is
       for is not established, and reading the vendor's name as "the resume
       threshold" would be a guess.
+      WRITTEN LIVE 2026-09-17 (docs/findings.md 4f): 55 and 90, paired
+      with 0x07B9, via the physical window; accepted, stable, no effect
+      on charging within the sampled windows. DO-NOT-WRITE-BLIND is
+      relaxed to this extent only: byte values 0x00/0x37/0x5A caused no
+      visible misbehaviour over ~15 minutes. Second writer found: DSDT
+      T1WR (dsdt.dsl:50676, Arg0 == 0x1173) stores Arg1*8 into DBD1
+      (0x07D0) and Arg2*8 into DBD2 (0x07D1), mirrored to
+      \_SB.NPCF.AMAT/AMIT -- a GPU power value in 1/8 W, not a battery
+      threshold. Whether the EC firmware, the vendor service, or neither
+      reads it as a charge limit is not established.
 
   - name: LIGHTBAR_AC_CTRL / RED / GREEN / BLUE
     addr: [0x0748, 0x0749, 0x074A, 0x074B]
