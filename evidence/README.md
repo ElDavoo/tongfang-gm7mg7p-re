@@ -26,3 +26,11 @@ independently checkable rather than taken on faith:
   for both on-board ITE 8291 devices, parseable for their usage
   page/usage (`0xFF12`/`0xFF03`) to confirm which is the keyboard and which
   is the lightbar.
+- **`hid/2026-09-17-6005-6010-static.jsonl`** — live GM7MG7P raw-HID
+  feature-request trace: the 6010 static-colour sequence applied to 6005,
+  four 8-byte returns, with original `hid-generic` binding intact.
+- **`hid/2026-09-17-6005-observation.md`** — the user's subsequent physical
+  observation: default rainbow → red → dark, no keyboard change. Complements
+  the machine trace, which ended before the visual report was received.
+  Source for findings.md §3's 2026-09-17 static-control result; not evidence
+  of complete kernel-driver or lifecycle support.

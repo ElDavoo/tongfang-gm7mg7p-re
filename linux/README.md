@@ -15,6 +15,10 @@
   `0x07B9`/`0x07D0` experiment (`../docs/findings.md` §4f); it writes
   through `../ec/tools/ecmem.py`, i.e. the physical `ECMG` window rather
   than the driver.
+- **`lightbar/`** — the narrowly targeted `048d:6005` raw-HID probe and
+  offline tests. The 2026-09-17 live run produced red → off with no keyboard
+  change; [notes and remaining driver work](lightbar/README.md). Static
+  protocol control is confirmed, not complete `ite_8291_lb` integration.
 - **`patches/`** — a small `uniwill-laptop` patch adding a module parameter
   to test the numeric charge-limit path instead of the charge-mode path.
   See `patches/README.md` for an important correction to its own commit
