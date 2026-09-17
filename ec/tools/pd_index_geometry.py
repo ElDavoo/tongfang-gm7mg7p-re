@@ -986,9 +986,10 @@ def immediate_templates(d):
         n, term = _match_template(d, i)
         if term and term.startswith(REBASE):
             out[i] = (n, term)
-            i += n  # The add-only suffix is evidence for this same multiply.
-        else:
-            i += 1
+        # A direct handoff can enter the add-only suffix without executing MUL.
+        # Keep overlaps until the walk establishes their entry context; walks
+        # through the full template still merge by construction and consumer.
+        i += 1
     return out
 
 
@@ -1347,13 +1348,23 @@ def access_self_test(d, check):
         return bytes(image)
 
     rows = access_rows(d)
-    check(access_totals(rows) == dict(constructions=630, accesses=410,
-          construction_only=220, anchor_accesses=185, evidence_records=953),
-          "inspected census totals: 630 constructions, 410 accesses, 220 construction-only, 185 anchor accesses, 953 evidence rows")
+    check(access_totals(rows) == dict(constructions=653, accesses=428,
+          construction_only=225, anchor_accesses=186, evidence_records=977),
+          "inspected census totals: 653 constructions, 428 accesses, 225 construction-only, 186 anchor accesses, 977 evidence rows")
     check(len(base_sites(d)) == 151 and len(base_sites(d, WHOLE_IMAGE)) == 3176,
           "legacy denominator remains 151 low-run / 3176 whole-image anchors")
-    check(len(immediate_templates(d)) == 170,
-          "170 non-overlapping immediate-base templates (independent r2 byte search)")
+    templates = immediate_templates(d)
+    suffixes = {i for i in templates if i - 1 in templates and d[i - 1] == MUL_AB}
+    check(len(templates) == 304 and len(suffixes) == 134,
+          "304 immediate-base matches: 170 non-overlapping templates plus 134 add-only suffixes")
+    check(d[lo + 0x2BE1:lo + 0x2BE4].hex() == "1256d1" and
+          d[lo + 0x56D0:lo + 0x56DC].hex() == "a4246ff582e43408f583e022",
+          "committed bytes: 0x2BE1 calls 0x56D1, bypassing MUL at 0x56D0")
+    check(any(r["context"] == "0x2BE1>0x56D1" and
+              r["construction_runtime"] == "0x56D1" and
+              r["terms"] == "DPTR ← 0x086F + A" and
+              r["consumer_runtime"] == "0x56DA" and r["direction"] == "read"
+              for r in rows), "independently entered 0x56D1 suffix reaches MOVX at 0x56DA")
     for off, raw in {0xC2FA: "9007d0eff075f05ea424f8f582e43408f583e0",
                      0xDA9B: "9007d0eff075f077a4125950e0",
                      0x34D9: "e075f05ea424fcf582e43408f583020faf",
@@ -1431,11 +1442,28 @@ def access_self_test(d, check):
 
     raw = fixture({0x100: "ef75f05ea424f8f582e43408f583e0f022"})
     found = access_rows(raw)
-    check(len(immediate_templates(raw)) == 1 and access_totals(found)["constructions"] == 1
+    check(len(immediate_templates(raw)) == 2 and access_totals(found)["constructions"] == 1
           and access_totals(found)["accesses"] == 2,
           "no MOV-DPTR anchor: overlapping suffix merges; two consumers stay distinct")
     check(all(len(r["anchors"].split()) > 1 for r in found),
           "multiple backward anchors contribute provenance, not counts")
+    raw = fixture({0x100: "ef12030122", 0x200: "ee75f07712030022",
+                   0x300: "a4246ff582e43408f583e022"})
+    templates = immediate_templates(raw)
+    entries, _ = access_entries(raw, templates)
+    check(lo + 0x301 in templates and lo + 0x301 in entries and
+          any(r["term"] == "DPTR ← 0x086F + R7" and
+              r["consumer"] == (lo + 0x30A, ((lo + 0x101, lo + 0x301),), "read")
+              for r in access_walk(raw, lo + 0x100, templates, entries)),
+          "suffix survives discovery, direct-entry selection and caller walk")
+    found = access_rows(raw)
+    check({(r["context"], r["terms"], r["consumer_runtime"])
+           for r in found if r["row_kind"] == "access"} == {
+              ("0x0101>0x0301", "DPTR ← 0x086F + R7", "0x030A"),
+              ("0x0204>0x0300", "DPTR ← 0x086F + low8(R6×0x77)", "0x030A")}
+          and access_totals(found)["constructions"] == 2
+          and access_totals(found)["accesses"] == 2,
+          "independent MUL and ADD entries retain distinct terms at the same consumer")
     raw = fixture({0x100: "75f074e4a424f8f582e43408f583e022"})
     ambiguous = access_rows(raw)
     check(len(ambiguous) == 2 and all(r["status"] == "unresolved-alternative" for r in ambiguous)

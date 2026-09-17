@@ -881,13 +881,25 @@ into the array's address range.
 
 ### 8.3 Discovery, schema and counting rules
 
-The byte scan finds **170 non-overlapping template locations**: 134 truncated
-multiply/DPTR forms, 26 standalone add-only/DPTR forms and 10 full-product
-A:R1 forms. Independently, r2 `/x a424..f582e434..f583`,
-`/x 24..f582e434..f583` and `/x a424..f974..35f0` on the flat image return
-134, 160 and 10 code-image byte matches respectively. The 134 add-only
-suffixes inside multiply forms are alternate evidence, not new constructions.
-These are byte matches, not proof of executable code.
+**Correction (PR #76 review):** the initial scan reported **170 non-overlapping
+template locations** (134 truncated multiply/DPTR, 26 standalone add-only/DPTR,
+10 A:R1) and claimed that all 134 overlapping add-only suffixes were alternate
+evidence, not new constructions. That discarded independently entered suffixes
+before caller discovery. The corrected scan retains **304 overlapping template
+locations**: 134 truncated multiply/DPTR, 160 add-only/DPTR and 10 full-product
+A:R1 forms. The earlier independent r2 searches `/x a424..f582e434..f583`,
+`/x 24..f582e434..f583` and `/x a424..f974..35f0` returned those same 134, 160
+and 10 byte matches; r2 was not rerun for this correction. These are byte
+matches, not proof of executable code.
+
+For example, committed firmware file `0x22BE1` contains `1256d1` (LCALL
+`0x56D1`), and file `0x256D0` contains `a4246ff582e43408f583e022`.
+That entry bypasses MUL at runtime `0x56D0`: the suffix constructs
+`DPTR = 0x086F + A` and reaches the read at `0x56DA`. Its row in
+`pd-index-accesses.csv` retains context `0x2BE1>0x56D1`; A is unknown here.
+Walks that actually pass through the enclosing multiply still merge into
+that full-template construction. Independently entered suffixes retain their
+own location, expression and handoff context.
 
 Discovery scans the mapped PD image `[0x20000,0x30000)`, clipped to the input
 length. It scans direct LCALL/ACALL/LJMP/AJMP targets, admitting entries whose
@@ -954,20 +966,29 @@ not established unique dynamic accesses or recovered call-graph edges.
 
 ### 8.4 Measured census and remaining questions
 
-The generated all-base table contains **953 deduplicated evidence records**:
+**Correction (PR #76 review):** before retaining independently entered suffixes,
+the reported totals were 953 evidence records, 630 constructions, 410 template
+accesses, 220 construction-only candidates and 185 anchor snapshots. The old
+consumer/no-consumer counts were 668/285; terminal counts were 367 unsupported
+instructions, 293 unmodelled handoffs, 154 unsupported branches, 92 returns and
+47 stack detours. Those counts describe the incomplete scan, not the corrected
+census below. All 953 previous rows retain their non-provenance fields; 24 rows
+are added and some existing rows gain overlapping scan-anchor provenance.
+
+The generated all-base table now contains **977 deduplicated evidence records**:
 
 | counting unit | candidates / rows |
 |---|---:|
-| unique contextual template constructions | 630 |
-| decoded template access candidates | 410 |
-| template constructions without an established consumer | 220 |
-| contextual MOV-DPTR access snapshots | 185 |
+| unique contextual template constructions | 653 |
+| decoded template access candidates | 428 |
+| template constructions without an established consumer | 225 |
+| contextual MOV-DPTR access snapshots | 186 |
 | context-free body evidence rows, excluded from the above counts | 138 |
 
-The evidence row kinds are 410 `access`, 220 `construction-only`, 185
+The evidence row kinds are 428 `access`, 225 `construction-only`, 186
 `anchor-access`, and 138 `body-evidence`. Across all evidence (including bodies),
-668 rows have decoded consumers and 285 have none. Terminal outcomes are 367
-unsupported instructions, 293 unmodelled handoffs, 154 unsupported branches,
+687 rows have decoded consumers and 290 have none. Terminal outcomes are 384
+unsupported instructions, 297 unmodelled handoffs, 157 unsupported branches,
 92 returns and 47 stack detours. A return stop does not negate an earlier
 MOVX snapshot. No result here establishes execution or runtime index bounds.
 
@@ -986,11 +1007,11 @@ Unknown symbols and unestablished consumers remain represented.
 | `0x17` | 9 | 53 | 61 |
 | `0x38` | not resolved | 0 | 4 |
 | `0x03` | not resolved | 0 | 2 |
-| unresolved constant | 3,047 | 33 | 19 |
+| unresolved constant | 3,047 | 51 (previously 33) | 24 (previously 19) |
 
 The new `0x5E` access bases include **`0x08F8`**; the new `0x77` access
 bases include **`0x0870`**. The legacy base lists remain exactly those in §7.2.
-There are also 185 unresolved-constant anchor snapshots, kept separately in
+There are also 186 unresolved-constant anchor snapshots (previously 185), kept separately in
 the stride table. A candidate can contribute to a constant group in one
 framing and unresolved in another; these are not probabilities or a partition
 of runtime traffic.
