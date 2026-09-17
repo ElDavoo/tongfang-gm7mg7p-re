@@ -1016,6 +1016,20 @@ the stride table. A candidate can contribute to a constant group in one
 framing and unresolved in another; these are not probabilities or a partition
 of runtime traffic.
 
+**Manual follow-through (#77):** [pd-0x38-consumers.md](pd-0x38-consumers.md)
+traces all four `0x38` caller contexts and the separately entered `0xB2B2`
+add-only suffix with independent radare2 framing and byte evidence. The two
+`0xB2AE` contexts reach a four-byte XDATA reader and writer; the `0xB2D3`
+contexts reach two-byte reads/writes after a separate full-product `×2`
+addition, including the saved-DPTR stack detour. The suffix reaches the
+four-byte reader without itself executing MUL. These are **manual path
+outcomes**, not new census counts: the four construction-only `0x38` rows
+above and the suffix's unresolved-constant row remain correct descriptions
+of this walker's unmodelled handoffs/stack boundary. Both generated access
+CSVs and all legacy outputs are unchanged. Neither the additional consumers
+nor their transfer lengths establish unconditional record widths, contents,
+runtime index ranges, execution, or a shared EC/PD data map.
+
 Limitations and follow-ups remain explicit:
 
 - Direct-branch byte scans include operand/data phantoms. For example the

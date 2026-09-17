@@ -1390,6 +1390,55 @@ def access_self_test(d, check):
     check(any(r["construction_runtime"] == "0x5792" and r["destination"] == "A:R1"
               and not r["consumer_file"] for r in rows), "0x578E returns A:R1 without an R2 assignment")
 
+    # pd-0x38-consumers.md pins manual traces without widening the census's
+    # handoff/stack policy. The short readers/writers must include every access.
+    for off, raw in {
+            0xB2AE: "75f038a42446f582e43409f58322",
+            0xB2B2: "2446f582e43409f58322",
+            0xB2D3: "75f038a42476f582e43409f58322",
+            0xB28A: "900832e075f038a422",
+            0xB263: "1210bcef25e02583f58322",
+            0x0FCB: "e0f8a3e0f9a3e0faa3e0fb22",
+            0x0F0E: "eb9ff5f0ea9e42f0e99d42f0e89c45f022",
+            0xB24C: "fbfaf9f8c3020f0e",
+            0x4C27: "900832eff0900834eaf0a3ebf0ed12119c",
+            0x4C38: "4c5d004c92014c9e024d15034d2c044d5f054d6f064e8409"
+                    "4f5c0a4fc20b4fd60c00004fe1",
+            0x119C: "d083d082f8e4937012740193700da3a393f8740193f5828883"
+                    "e4737402936860efa3a3a380df",
+            0x4D6F: "900834e07004a3e064016003024fe1900832e0ff12f75cef7065",
+            0x4E7C: "900832e0ff02d8ee",
+            0xF75C: "ef12716ce0ff22",
+            0x716C: "75f05ea424e3f582e43408f58322",
+            0x104D: "a8828583f0d083d082121064121064121064121064e473"
+                    "e493a3c583c5f0c583c8c582c8f0a3c583c5f0c583c8c582c822",
+            0x4DB6: "90083d12104d0000000290084112104d00000000",
+            0x4D89: "900832e0ff75f06090049112b263120fcbef12b2ae120faf",
+            0x4DA7: "12b28a12b2b2120faf",
+            0x4DD2: "900832e0fb75f0609004911210bceb12b267120fafeb12b2ae121041",
+            0x4E84: "e490083af090083ae0ffc394024003024fe1",
+            0x4E96: "900832e0fe12b2d375f002ef1210bce0fca3e04c6003024f53",
+            0x4EAF: "900834e0fca3e0fdee12b2d3c083c08290083ae0d082d083"
+                    "75f0021210bcecf0a3edf0e490083bf0",
+            0x0FAF: "e0fca3e0fda3e0fea3e0ff22",
+            0x1041: "ecf0a3edf0a3eef0a3eff022",
+    }.items():
+        check(d[lo + off:lo + off + len(raw)//2].hex() == raw,
+              f"0x{off:04X} manual 0x38 trace bytes match independent r2 listing")
+    for context, construction, term, stop, reason in (
+            ("0x4D9B>0xB2AE", "0xB2B1", "low8(R7×0x38)", "0x4D9E", "unmodelled-handoff"),
+            ("0x4DE8>0xB2AE", "0xB2B1", "low8(R3×0x38)", "0x4DEB", "unmodelled-handoff"),
+            ("0x4E9B>0xB2D3", "0xB2D6", "low8(A×0x38)", "0x4EA2", "unmodelled-handoff"),
+            ("0x4EB8>0xB2D3", "0xB2D6", "low8(R6×0x38)", "0x4EBB", "stack-detour"),
+            ("0x4DAA>0xB2B2", "0xB2B2", "DPTR ← 0x0946 + A", "0x4DAD", "unmodelled-handoff")):
+        found = [r for r in rows if r["context"] == context and
+                 r["construction_runtime"] == construction]
+        check(len(found) == 1 and term in found[0]["terms"] and
+              found[0]["row_kind"] == "construction-only" and
+              not found[0]["consumer_file"] and found[0]["stop_runtime"] == stop and
+              found[0]["stop_reason"] == reason,
+              f"{context} retains bounded census outcome despite manual consumer evidence")
+
     # Byte execution is independent of the string template: in particular CLR
     # does not clear carry, and MOV A,#hi does not add the product high byte.
     def byte_address(raw, a, b):
@@ -1439,6 +1488,29 @@ def access_self_test(d, check):
                 arithmetic_ok &= byte_address(add, index*mult & 255, index*mult >> 8) == (
                     base + (index*mult & 255)) & 65535
     check(arithmetic_ok, "byte-level arithmetic agrees across product overflow, low-add carry, discarded B and 16-bit wrap")
+
+    for off, base in ((0xB2B1, 0x0946), (0xB2D6, 0x0976)):
+        raw = d[lo + off:lo + off + 10]
+        _, term = _match_template(d, lo + off)
+        arithmetic_ok = True
+        for index in range(256):
+            expr = term.format(a=str(index), b="56").split(" + ")[1]
+            symbolic = base + eval(expr.replace("×", "*"),
+                                   {"__builtins__": {}, "low8": lambda x: x & 255})
+            arithmetic_ok &= byte_address(raw, index, 0x38) == symbolic == (
+                base + (index * 0x38 & 255))
+        check(arithmetic_ok, f"0x{off:04X}: all byte indices retain low8 product and base carry")
+        check(byte_address(raw, 4, 0x38) == base + 0xE0 and
+              byte_address(raw, 5, 0x38) == base + 0x18,
+              f"0x{off:04X}: index 4 carries low-base addition; index 5 discards product high byte")
+    suffix = d[lo + 0xB2B2:lo + 0xB2BB]
+    check(all(byte_address(suffix, a, b) == 0x0946 + a
+              for a in range(256) for b in (0, 0x38, 255)),
+          "0xB2B2 uses supplied A, without multiplying again or adding B")
+    check(all(byte_address(suffix, index * 0x38 & 255, index * 0x38 >> 8) ==
+              byte_address(d[lo + 0xB2B1:lo + 0xB2BB], index, 0x38)
+              for index in range(256)),
+          "B28A product followed by B2B2 agrees with B2AE for all byte indices")
 
     raw = fixture({0x100: "ef75f05ea424f8f582e43408f583e0f022"})
     found = access_rows(raw)
