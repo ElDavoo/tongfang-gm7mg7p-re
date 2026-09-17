@@ -207,7 +207,9 @@ registers:
       2026-09-17-limit-pair.csv): written via the physical window
       (ec/tools/ecmem.py) as 60, 60 with bit 7, and 95 armed from 93%,
       each together with 0x07D0; read back through window and regmap;
-      charging continued at full taper current in every case. Status
+      charging continued at full taper current in every case; likewise
+      60/55 armed at 56% under each 0x07A6 profile and held untouched
+      from 72% through 91%. Status
       stays unknown-not-absent: the byte is writable and stable, and the
       values the vendor writes are still unknown.
 

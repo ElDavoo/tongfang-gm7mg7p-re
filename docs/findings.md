@@ -387,6 +387,18 @@ Log: `evidence/battery-traces/2026-09-17-limit-pair.csv` (script:
 | up60bit7down55 | `0x07B9`=0xBC (60 + bit 7), `0x07D0`=55 | 89-92% | 1.80 A | charging, 2 min |
 | up95down90_below | `0x07B9`=95, `0x07D0`=90, set while at 93% | 93→98% | 1.77→1.67 A | charged straight through 95% |
 
+Second session the same evening, after discharging to 56% so the cap
+could be *armed from below* with margin, and to test two more hypotheses
+(the profile in `0x07A6` gates the limit; the EC ignores the value and
+stops at a fixed ~85% like the Windows screenshot):
+
+| phase | written | `0x07A6` | capacity | `current_now` | result |
+|---|---|---|---|---|---|
+| armed56 Trickle | 60/55 | 0x20 | 57→62% | 2.01 A | through 60%, 3 min |
+| armed56 Standard | 60/55 | 0x00 | 62→67% | 2.01 A | charging, 3 min |
+| armed56 Long_Life | 60/55 | 0x10 | 67→72% | 2.01 A | charging, 3 min |
+| armed72 hold | 60/55, untouched | 0x20 | 72→91% | 2.01→1.9 A | through 85%, no stop |
+
 Every write read back correctly through both paths and stayed put (the EC
 did not clear or rewrite either byte during any phase). Current never
 stopped, never dropped below the normal taper, and `status` never left
@@ -396,9 +408,9 @@ stop, only to prevent one): armed from below, the pair was charged
 through in five minutes at full taper current.
 
 **What this establishes.** Writing the UP/DOWN pair as plain percentages,
-with or without bit 7, from above or from below the cap, at the physical
-address Windows' `ECRW` lands on, does not by itself make this EC stop
-charging. That closes "the `uniwill-laptop` access path differs from the
+with or without bit 7, from above or from below the cap, under all three
+`0x07A6` profiles, held through 85%, at the physical address Windows'
+`ECRW` lands on, does not by itself make this EC stop charging. That closes "the `uniwill-laptop` access path differs from the
 vendor's" as an explanation for §4c: the window path behaves the same.
 
 **What it does not establish.** It does not show the EC ignores the pair
