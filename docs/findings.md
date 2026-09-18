@@ -625,6 +625,73 @@ requires (`UWPClient_<N>` / `UWPClient_User_<N>` /
 `UWPClient_Pwd888881772688_<N>`) is recorded in `windows/mqtt-protocol.md`
 as protocol fact.
 
+### 4i. The 2021 fake-charge, and three live attempts to reproduce it (2026-09-19)
+
+`evidence/screenshots/2021-11-27-batteryinfoview-windows.png` is the only
+evidence a charge cap ever existed on this machine, and read carefully it
+shows something sharper than "a cap": a **fake charge**. Columns are time /
+status / percent / capacity (Wh) / charge-rate (mW) / voltage (mV):
+
+```
+19:58:47  Charging  86.0%  44.445  4651  16.654   real charging, current flowing
+19:58:47  Charging  88.0%  45.478     0  16.513   charge rate -> 0
+19:59:47  Charging  92.0%  47.546     0  16.490   ...but percent keeps climbing
+20:01:47  Charging 100.0%  51.680     0  16.490   "100%" reached at 0 mW
+20:02:17  AC Power  100.0%  51.680     0  16.466   done
+```
+
+Charge rate is **0 mW from ~88% to 100%**, while the percentage climbs
+88→100 in three minutes and the reported capacity rises 45.478→51.680 Wh
+(exactly `percent × 51.68`). No real energy is entering the pack — the EC
+holds true charge at ~86% and drives the gauge to 100%. That is why the
+retraction in §4a matters in the vendor's own data: a percentage or a
+resting voltage reads "100%, charged"; only the **rate/current** column
+shows the charge actually stopped at 86%.
+
+**This establishes the target signature precisely:** a working cap on this
+machine looks like `current -> ~0 near 86% while capacity keeps climbing and
+status stays Charging`. `battery_trace.py` logs exactly that pair
+(`ec_current_ma` = EC 0x0434, and the ACPI `wmi_rate_mw`).
+
+**It did not reproduce, in any of three live configurations today**
+(`evidence/battery-traces/2026-09-18-windows-stationary.csv`, EC image
+`GMxMGxx_11.800`, Control Center 3.1.39.0, Stationary/`HEALTHYMODE` = `0x07A6`
+`0x29` throughout):
+
+| configuration | what happened at ~86% |
+|---|---|
+| armed at initial plug-in (Stationary set, plugged at 28%, §4f-style) | charged through: 85% 952 mA → 91% 748 mA, smooth taper |
+| after mid-charge profile cycling (§4g) | charged through, same taper |
+| **clean unplug → discharge to 79% → replug, profile untouched** | charged through: 85% 1122 mA → 91% 816 mA, smooth taper |
+
+The third row is the arm/replug test — the hypothesis that the EC only
+latches the limit at charger-insertion, which would have explained why every
+Linux write (all made while already plugged) failed. It is **refuted**: a
+charger inserted with Stationary already armed and never touched afterward
+still charges straight through 86% at full taper current. In every case
+`ec_current_ma` and `wmi_rate_mw` decline together as a normal CC/CV taper —
+never the flat-zero-with-rising-percent of 2021.
+
+**What this establishes.** On this firmware + service combination the
+vendor's own battery protection does not stop or fake charging at ~86% under
+any profile or plug sequence tried. So "charge control doesn't work on
+Linux" is not a Linux-driver gap: the mechanism that produced the 2021 cap
+is not engaging under the current Windows stack either. The vendor UI's
+entire battery-protection surface is the three profile modes (§4h, confirmed
+over MQTT), and none of them caps here.
+
+**What it does not establish, and the question it opens.** It does not show
+the 2021 behaviour was imagined — the screenshot is real — only that the
+present configuration does not produce it. The 2021 capture predates this
+repo's committed inputs, and the difference is unidentified: a **different
+Control Center version**, a **different EC image** (the live EC self-reports
+`EcVersion = 1.18` in `HKLM\SOFTWARE\OEM\GamingCenter2\MyFanTable`, which is
+not obviously the same provenance as the committed `GMxMGxx_11.800`), or a
+BIOS setup difference are all candidates and none is ruled out. Identifying
+which — ideally recovering the 2021-era EC/CC version that did cap — is the
+next step for the charge-limit thread, and is a firmware-archaeology
+question, not a driver one.
+
 ## 5. Net status going into the issue tracker
 
 - Charging-cap-on-Linux is still an **open problem**, but much narrower.
@@ -641,9 +708,19 @@ as protocol fact.
   threshold". The one place a numeric threshold could still hide is inside
   `GCUService`/`BatteryProtection2` (issue #3); it is no longer on the wire
   and not in the registry (`HKLM\SOFTWARE\OEM\GamingCenter2\BatteryProtection2`
-  holds only `HealthProtectionStatus`, the mode index). A live
-  Stationary-charge coulomb-count from 28% is under way to test whether the
-  profile stops charging at all (`evidence/battery-traces/2026-09-18-windows-stationary.csv`).
+  holds only `HealthProtectionStatus`, the mode index). The live coulomb-count
+  that would have tested "does the profile stop charging at all" has now been
+  run (§4i): it does **not** — Stationary charged smoothly through ~86% at
+  full taper current from 28%, again after profile cycling, and again after a
+  clean unplug/replug with the profile armed and untouched. The 2021
+  fake-charge screenshot (charge rate → 0 at ~86%, gauge spoofed to 100%) did
+  not reproduce in any configuration. So on this EC image + Control Center
+  3.1.39.0 the vendor's own protection does not cap, which means the Linux
+  gap is not a driver gap — the mechanism is not engaging on Windows either.
+  The charge-limit thread now turns to firmware archaeology: identify the
+  2021-era EC image / CC version that did cap (live EC self-reports
+  `EcVersion = 1.18`, provenance vs the committed `GMxMGxx_11.800` unverified),
+  rather than to writing any register on the current one.
 - Lightbar is a **driver-scope problem, not a hardware problem** — claim
   `048D:6005` for `ite_8291_lb` and test.
   **2026-09-17 update:** static red/off now works through raw HID with the

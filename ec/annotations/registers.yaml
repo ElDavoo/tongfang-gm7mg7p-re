@@ -181,6 +181,13 @@ registers:
       (0x00/0x10/0x20) did not carry; what those bits mean is unknown.
       This is the only address the vendor's battery-protection UI was
       observed to write.
+      LIVE 2026-09-19 (docs/findings.md 4i): coulomb-counted charges under
+      Stationary (this=0x29) charged smoothly through ~86% at full taper
+      current -- from 28% armed-at-plug-in, after mid-charge cycling, and
+      after a clean unplug/discharge/replug with the profile untouched. The
+      2021 fake-charge (rate->0 at ~86%, gauge to 100%) did not reproduce.
+      So no profile value drives a hard stop on this EC image; the profile
+      selects a taper, consistent with the static trace at 0xB2E2.
 
   - name: CHARGE_CTRL (numeric threshold)
     addr: 0x07B9
