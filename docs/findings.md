@@ -535,6 +535,33 @@ in the window. `ECSpec.cs` naming the constants is still real. What has
 been removed is the reading that the pair is the live mechanism the vendor
 UI drives, which is what made issue #1 worth running.
 
+**Repeated over a wider range, and one hypothesis killed.** The cycle was
+run a second time while sweeping `0x0400-0x07FF`
+(`evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv`), for two
+reasons. First, to check the first run had not simply been watching too
+narrow a window: it had not — `0x07A6` is again the only settings-shaped
+change, everything else that moved being slow sensor drift (voltage at
+`0x0436`/`0x0438`, GPU temp at `0x044F`, the cycle counter at `0x04A6`
+ticking 449 → 450 during the charge).
+
+Second, to test a reading of `charge-profile-flow.md` §2 against the
+running machine. That section traced the EC's profile handler statically:
+`0xB2E2`/`0xB330` mask `0x07A6` bits 4-5, select 200 for Stationary or 100
+for Balanced, multiply against `0x0A47`, and store to `0x0522`/`0x0523`.
+Live, `0x0522`/`0x0523` reads `0x4010` = 16400 while the pack charges at
+16255 mV, which invited a tidy story — 16.4 V on a 4-cell pack is
+4.10 V/cell, the textbook longevity ceiling against 4.2 V/cell for a full
+charge — and would have explained §4f in one stroke.
+
+**It is wrong.** `0x0522`/`0x0523` did not change at all across all three
+profile switches. Whatever selects that value, it is not re-derived from
+`0x07A6` at the moment the profile changes, at least not at 43-46%
+capacity mid-charge. The static trace is not contradicted — the handler
+may only run near end-of-charge, or write the same value under these
+conditions — but the appealing "the profile sets a charge-voltage ceiling"
+reading has no support and is recorded here as refuted rather than
+dropped, per §4a. `0x0A47` reads `0xFF`.
+
 **Unexplained, and deliberately not interpreted.** At the instant AC was
 connected, `0x0783` and `0x0784` both went `0x00` → `0x4B` (75) and
 `0x0785` went `0x00` → `0xA5`. 75 is a suggestive number next to a
