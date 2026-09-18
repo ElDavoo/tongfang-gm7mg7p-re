@@ -460,6 +460,89 @@ service reuses the byte, or if the vendor constant is stale for this
 board; which of those holds is not established. Either way, "resume
 charging below X%" is now the *less* supported reading of the byte.
 
+### 4g. Watching the vendor stack instead of guessing at it (2026-09-18)
+
+§4f ends by saying the values Windows actually writes are unknown, and §5
+names "a Windows-side EC trace" as one of the two ways to find out. That
+trace is now possible without installing anything. The vendor's driver is
+already loaded on the machine (`UWACPIDriver.sys`, shipped with Control
+Center Service 3.1.39.0) and `windows/native/` already decoded its
+interface; `windows/tools/ecrw.py` is just that calling convention —
+`\.\ACPIDriver`, IOCTL `0x9C40A488`/`0x9C40A48C` — and
+`windows/tools/ec_watch.py` sweeps 2 KiB of EC space about 2.5 times a
+second, fast enough to catch a settings write as it lands.
+
+The driver present is not the build `windows/native/` analysed: that was
+`ACPIDriver.sys` from the 3.1.6.0 era, this is a smaller `UWACPIDriver.sys`.
+It creates the same `\DosDevices\ACPIDriver` symlink and carries all 21 of
+the same IOCTL codes in its dispatch chain with `ECRR`/`ECRW` present as
+method-name constants, which is why the documented convention still
+applies — checked from the binary, not assumed.
+
+**Why the reads are trusted.** `windows/tools/ec_validate.py` samples
+battery terminal voltage from EC `0x0438/0x0439` and from the ACPI battery
+driver (`root\wmi` `BatteryStatus`) at the same time. They never agree
+instant-for-instant, because `BatteryStatus` serves a cached value — but
+every WMI reading is an *exact copy* of one the EC held moments earlier.
+Over a 10-sample run in which the EC figure took 7 distinct values between
+13576 and 13849 mV, 10/10 WMI readings were exact copies of an EC value
+already seen. Separately, while charging, EC `0x0434/0x0435` read 2040 mA
+against `0x0438`'s 16021 mV — 32.68 W, against the ACPI driver's
+independently reported 32.683 W. So `0x0434` is battery current in mA and
+`0x0438` is terminal voltage in mV, and the coulomb-counting §4a requires
+is available on Windows too.
+
+**What the vendor's charge-limit UI actually writes: `0x07A6`, and
+nothing else.** Control Center 3.1.39.0 offers three battery modes, named
+in the UI "High capacity", "Balanced" and "Stationary" (internally
+`HighCapacityMode`, `BalancedMode`, `HealthyMode`, driven over a loopback
+MQTT topic `BatteryProtection/Control` — which is independent corroboration
+for issue #4's premise). Cycling all three while watching `0x0700-0x07FF`
+every 0.3 s for five minutes
+(`evidence/ec-watch/2026-09-18-profile-switch-0700-07ff.csv`) produced
+exactly three non-sensor changes, one per switch, all at the same address:
+
+| UI mode | `0x07A6` | bits 4-5 |
+|---|---|---|
+| Stationary | `0x29` | `10` |
+| High capacity | `0x09` | `00` |
+| Balanced | `0x19` | `01` |
+
+That is precisely the `bits: [4, 5]` encoding `registers.yaml` already
+records for `OEM_4 (CHARGING_PROFILE_MASK)`, now confirmed from the vendor
+side rather than from the driver's. The low nibble is a constant `0x09` on
+this machine, which the Linux-side traces (that saw `0x00`/`0x10`/`0x20`)
+did not carry; whether those bits mean anything is not established here.
+
+**`0x07B9` and `0x07D0` were never written.** Over a separate sweep of the
+whole `0x0000-0x07FF` space at 0.4 s intervals spanning the AC plug-in and
+all three profile switches — 32499 recorded byte changes
+(`evidence/ec-watch/2026-09-18-ac-plugin-sweep-summary.csv`) — `0x07B9`,
+`0x07D0` and `0x07D1` did not change once, and both read `0x00` throughout
+while the vendor's own service was running with a battery mode active.
+
+This is the observation §4f was missing, and it explains §4f's result
+rather than deepening the mystery: writing the `ECSpec.cs` UP/DOWN pair did
+nothing on Linux because *the vendor stack does not use that pair on this
+machine either*. It expresses the whole battery-protection feature as one
+profile byte and leaves the enforcement to the EC.
+
+**Scope, carefully.** "Not written" here means not written during an AC
+plug-in and three profile switches over about fifteen minutes. It is not
+"never written": a threshold crossing, a service restart, a cold boot or a
+Windows-side battery event could still touch them, and none of those was
+in the window. `ECSpec.cs` naming the constants is still real. What has
+been removed is the reading that the pair is the live mechanism the vendor
+UI drives, which is what made issue #1 worth running.
+
+**Unexplained, and deliberately not interpreted.** At the instant AC was
+connected, `0x0783` and `0x0784` both went `0x00` → `0x4B` (75) and
+`0x0785` went `0x00` → `0xA5`. 75 is a suggestive number next to a
+charge-threshold question and that is exactly the shape of the §4a
+mistake, so it is recorded as an observation and nothing more; the three
+bytes did not move when the profile changed, which is evidence against
+their being the cap.
+
 ## 5. Net status going into the issue tracker
 
 - Charging-cap-on-Linux is still an **open problem**, but narrower. The
