@@ -570,14 +570,80 @@ mistake, so it is recorded as an observation and nothing more; the three
 bytes did not move when the profile changed, which is evidence against
 their being the cap.
 
+### 4h. The UI→service command carries a mode name, not a threshold (2026-09-18, issue #4)
+
+Issue #4 asked what `GamingCenter3_Cross` actually sends `GCUService` when
+the user sets a charge limit, and whether it ever sends a numeric
+"down"/resume value. Captured non-invasively from the loopback MQTT broker
+(full protocol in `windows/mqtt-protocol.md`; evidence
+`evidence/mqtt-capture/2026-09-18-profile-and-connect.{pcapng,jsonl}`), the
+answer is that there is no numeric value on the wire at all. The entire
+battery-protection command surface is one topic carrying one of three mode
+names:
+
+```
+BatteryProtection/Control   {"Action":"PERFORMANCEDMODE"}   <- High capacity
+BatteryProtection/Control   {"Action":"BALANCEDMODE"}       <- Balanced
+BatteryProtection/Control   {"Action":"HEALTHYMODE"}        <- Stationary
+BatteryProtection/Control   {"Report":"GET"}                <- query current
+```
+
+The three line up exactly with the `0x07A6` bit values §4g measured, which
+ties the whole chain together end to end:
+
+| UI label | MQTT `Action` | `0x07A6` bits 4-5 | telemetry `HealthProtectionStatus` |
+|---|---|---|---|
+| High capacity | `PERFORMANCEDMODE` | `00` (0x09) | — |
+| Balanced | `BALANCEDMODE` | `01` (0x19) | — |
+| Stationary | `HEALTHYMODE` | `10` (0x29) | `"2"` |
+
+So: UI publishes `{"Action":"HEALTHYMODE"}` → `GCUService` sets `0x07A6`
+bits 4-5 = `10` (the one EC byte §4g saw change) → the EC picks its taper at
+`0xB2E2` (`charge-profile-flow.md`). `ECSpec.cs`'s
+`Battery_Commands.CHARGING_UP_LIMIT`/`CHARGING_DOWN_LIMIT` and the
+`0x07B9`/`0x07D0` numeric pair issue #1 is named after **appear nowhere in
+this exchange**, which is independent confirmation, from a second
+observation point, of §4g's finding that the vendor stack does not drive
+that pair on this machine.
+
+**On the polling question issue #4 raised.** `System/BatteryProtection` is
+published periodically (the `Battry_LifePercentChange` tick), but it flows
+*service → UI* and carries status, not a command:
+`{"BatteryPowerStatus":1,"BatteryPercent":64,…,"HealthProtectionStatus":"2",
+"TypeCAdaptorPrioritySwitch":"0","TypeCAdaptorPrioritySupport":false}`.
+Nothing re-issues a charge command each tick over MQTT. That does not by
+itself rule out `GCUService` poking the EC on its own timer without
+publishing anything — but it removes the wire-level "software rewrites the
+limit every tick" model as an explanation; the tick is telemetry.
+
+**Scope.** This shows the UI→service protocol only. The mode→register
+translation, and any numeric threshold `GCUService` may hold internally,
+are inside `BatteryProtection2`, still anti-tamper encrypted (issue #3).
+What #4 removes is the possibility that the number was passing over the
+wire where a capture could see it: it is not. The auth triplet the broker
+requires (`UWPClient_<N>` / `UWPClient_User_<N>` /
+`UWPClient_Pwd888881772688_<N>`) is recorded in `windows/mqtt-protocol.md`
+as protocol fact.
+
 ## 5. Net status going into the issue tracker
 
-- Charging-cap-on-Linux is still an **open problem**, but narrower. The
-  paired `0x07B9`/`0x07D0` write has now been run (§4f) through the
-  vendor's physical path and did not stop charging in any of five
-  variants, so "the access path differs" is ruled out. What is left is
-  the encoding and sequence Windows actually uses, which only issue #3
-  (decrypting `BatteryProtection2`) or a Windows-side EC trace can give.
+- Charging-cap-on-Linux is still an **open problem**, but much narrower.
+  The paired `0x07B9`/`0x07D0` write was run (§4f) through the vendor's
+  physical path and did not stop charging in any of five variants, ruling
+  out "the access path differs". The Windows-side EC trace §4f named as the
+  other route has now been taken (§4g, §4h): with the vendor service
+  running, the only EC byte its battery-protection UI drives is the
+  `0x07A6` profile mask, and the UI→service MQTT command carries a mode
+  name (`HEALTHYMODE`/`BALANCEDMODE`/`PERFORMANCEDMODE`) with no numeric
+  threshold at all. So the `0x07B9`/`0x07D0` pair is, on this machine, not
+  the mechanism — which reframes issue #1 from "write the pair correctly"
+  to "does any profile enforce a hard stop, and if so where is the
+  threshold". The one place a numeric threshold could still hide is inside
+  `GCUService`/`BatteryProtection2` (issue #3); it is no longer on the wire
+  and not in the registry (`HKLM\SOFTWARE\OEM\GamingCenter2\BatteryProtection2`
+  holds only `HealthProtectionStatus`, the mode index). A live
+  Stationary-charge coulomb-count from 28% is under way to test whether the
+  profile stops charging at all (`evidence/battery-traces/2026-09-18-windows-stationary.csv`).
 - Lightbar is a **driver-scope problem, not a hardware problem** — claim
   `048D:6005` for `ite_8291_lb` and test.
   **2026-09-17 update:** static red/off now works through raw HID with the
