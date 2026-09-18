@@ -37,7 +37,7 @@ on:
     secrets:
       AGENT_PUSH_TOKEN:
         required: true
-      OPENROUTER_API_KEY:
+      CLAUDE_CODE_OAUTH_TOKEN:
         required: true
 
 permissions:
@@ -193,17 +193,8 @@ jobs:
         if: steps.round.outputs.stuck != 'true' && steps.round.outputs.escalate != 'true'
         continue-on-error: true
         uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
-        env:
-          ANTHROPIC_BASE_URL: https://openrouter.ai/api
-          ANTHROPIC_AUTH_TOKEN: ${{ secrets.OPENROUTER_API_KEY }}
-          # Keep plugin/subagent aliases on the same provider and model.
-          ANTHROPIC_DEFAULT_OPUS_MODEL: stealth/union-alpha
-          ANTHROPIC_DEFAULT_SONNET_MODEL: stealth/union-alpha
-          ANTHROPIC_DEFAULT_HAIKU_MODEL: stealth/union-alpha
-          CLAUDE_CODE_SUBAGENT_MODEL: stealth/union-alpha
-          CLAUDE_CODE_EFFORT_LEVEL: max
         with:
-          anthropic_api_key: ${{ secrets.OPENROUTER_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             This is fix round ${{ steps.round.outputs.round }} of 10 on pull request
             #${{ inputs.pr }}, for issue #${{ inputs.issue }}. The branch is checked out.
@@ -224,9 +215,8 @@ jobs:
 
             Do not commit or push. Leave your work in the working tree.
           claude_args: >-
-            --model stealth/union-alpha
-            --effort max
-            --dangerously-skip-permissions
+            --model opus
+            --effort medium
             --max-turns 240
             --allowedTools "Read,Write,Edit,Glob,Grep,Bash"
             --disallowedTools "Bash(gh:*),Bash(curl:*),Bash(wget:*),Bash(nc:*),Bash(ssh:*),Bash(scp:*),Bash(git push:*),Bash(git remote:*),Bash(git config:*),WebFetch,WebSearch"
@@ -240,17 +230,8 @@ jobs:
         if: steps.round.outputs.stuck != 'true' && steps.round.outputs.escalate == 'true'
         continue-on-error: true
         uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
-        env:
-          ANTHROPIC_BASE_URL: https://openrouter.ai/api
-          ANTHROPIC_AUTH_TOKEN: ${{ secrets.OPENROUTER_API_KEY }}
-          # Keep plugin/subagent aliases on the same provider and model.
-          ANTHROPIC_DEFAULT_OPUS_MODEL: stealth/union-alpha
-          ANTHROPIC_DEFAULT_SONNET_MODEL: stealth/union-alpha
-          ANTHROPIC_DEFAULT_HAIKU_MODEL: stealth/union-alpha
-          CLAUDE_CODE_SUBAGENT_MODEL: stealth/union-alpha
-          CLAUDE_CODE_EFFORT_LEVEL: max
         with:
-          anthropic_api_key: ${{ secrets.OPENROUTER_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             Pull request #${{ inputs.pr }} (issue #${{ inputs.issue }}) has failed eight fix
             rounds. This is the escalation round. One round remains after this one, and then
@@ -283,9 +264,8 @@ jobs:
 
             Do not commit or push. Leave your work in the working tree.
           claude_args: >-
-            --model stealth/union-alpha
-            --effort max
-            --dangerously-skip-permissions
+            --model opus
+            --effort medium
             --max-turns 400
             --allowedTools "Read,Write,Edit,Glob,Grep,Bash"
             --disallowedTools "Bash(gh:*),Bash(curl:*),Bash(wget:*),Bash(nc:*),Bash(ssh:*),Bash(scp:*),Bash(git push:*),Bash(git remote:*),Bash(git config:*),WebFetch,WebSearch"

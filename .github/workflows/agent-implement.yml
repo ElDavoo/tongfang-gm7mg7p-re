@@ -240,17 +240,8 @@ jobs:
         # half-finished Claude run and push whatever was left on disk.
         continue-on-error: true
         uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
-        env:
-          ANTHROPIC_BASE_URL: https://openrouter.ai/api
-          ANTHROPIC_AUTH_TOKEN: ${{ secrets.OPENROUTER_API_KEY }}
-          # Keep plugin/subagent aliases on the same provider and model.
-          ANTHROPIC_DEFAULT_OPUS_MODEL: stealth/union-alpha
-          ANTHROPIC_DEFAULT_SONNET_MODEL: stealth/union-alpha
-          ANTHROPIC_DEFAULT_HAIKU_MODEL: stealth/union-alpha
-          CLAUDE_CODE_SUBAGENT_MODEL: stealth/union-alpha
-          CLAUDE_CODE_EFFORT_LEVEL: max
         with:
-          anthropic_api_key: ${{ secrets.OPENROUTER_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             Implement the plan in /tmp/plan.md, in this repository, for issue #${{ inputs.issue }}.
 
@@ -284,9 +275,8 @@ jobs:
             Do not commit, push, or touch git. Leave your work in the working tree; the
             workflow commits it.
           claude_args: >-
-            --model stealth/union-alpha
-            --effort max
-            --dangerously-skip-permissions
+            --model opus
+            --effort medium
             --max-turns 300
             --allowedTools "Read,Write,Edit,Glob,Grep,Bash"
             --disallowedTools "Bash(gh:*),Bash(curl:*),Bash(wget:*),Bash(nc:*),Bash(ssh:*),Bash(scp:*),Bash(git push:*),Bash(git remote:*),Bash(git config:*),WebFetch,WebSearch"
