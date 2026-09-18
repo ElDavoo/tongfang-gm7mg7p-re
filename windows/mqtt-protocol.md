@@ -51,11 +51,19 @@ seen in one session). `888881772688` is a fixed literal embedded in the
 password. Other client identities exist as strings in the binaries
 (`PluginClient`, `UWPSTDClient`, `UWPADATAClient`, `UWPIntelClient`,
 `MyControlCenterUser`, …) and presumably follow the same
-`X` / `X_User_<N>` / `X_Pwd888881772688_<N>` shape. A hand-rolled client
-using a bare id like `UWPClient` is refused with CONNACK code 2
-(identifier rejected) *before* auth, so the `_<N>` suffix and the
-credential triplet are both required to attach — the reason the passive
-sniff above is the route that works, rather than subscribing directly.
+`X` / `X_User_<N>` / `X_Pwd888881772688_<N>` shape.
+
+The `<N>` is **not** free-form: a hand-rolled `CONNECT` as
+`UWPClient_777` with the correct `UWPClient_User_777` /
+`UWPClient_Pwd888881772688_777` triplet is still refused with CONNACK
+code 2 (identifier rejected), *before* the password is even checked (a
+deliberately wrong password gives the same code 2, not code 4). So the
+broker accepts only client-ids it has itself provisioned — consistent with
+the `Service/SetPassword` topic and the per-client `_User_<N>`/`_Pwd…_<N>`
+slots — rather than anything matching the template. That is why the passive
+sniff above is the route that works: attaching as a new subscriber would
+need a broker-issued slot, and reusing a live one (`_3`, `_10`) would evict
+the real client that holds it. Not attempted here for that reason.
 
 This is local-only IPC with a shared embedded secret; it is an app-identity
 gate, not a security boundary, and it is recorded here as protocol fact,
