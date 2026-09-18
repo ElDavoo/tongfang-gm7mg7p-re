@@ -460,14 +460,267 @@ service reuses the byte, or if the vendor constant is stale for this
 board; which of those holds is not established. Either way, "resume
 charging below X%" is now the *less* supported reading of the byte.
 
+### 4g. Watching the vendor stack instead of guessing at it (2026-09-18)
+
+§4f ends by saying the values Windows actually writes are unknown, and §5
+names "a Windows-side EC trace" as one of the two ways to find out. That
+trace is now possible without installing anything. The vendor's driver is
+already loaded on the machine (`UWACPIDriver.sys`, shipped with Control
+Center Service 3.1.39.0) and `windows/native/` already decoded its
+interface; `windows/tools/ecrw.py` is just that calling convention —
+`\.\ACPIDriver`, IOCTL `0x9C40A488`/`0x9C40A48C` — and
+`windows/tools/ec_watch.py` sweeps 2 KiB of EC space about 2.5 times a
+second, fast enough to catch a settings write as it lands.
+
+The driver present is not the build `windows/native/` analysed: that was
+`ACPIDriver.sys` from the 3.1.6.0 era, this is a smaller `UWACPIDriver.sys`.
+It creates the same `\DosDevices\ACPIDriver` symlink and carries all 21 of
+the same IOCTL codes in its dispatch chain with `ECRR`/`ECRW` present as
+method-name constants, which is why the documented convention still
+applies — checked from the binary, not assumed.
+
+**Why the reads are trusted.** `windows/tools/ec_validate.py` samples
+battery terminal voltage from EC `0x0438/0x0439` and from the ACPI battery
+driver (`root\wmi` `BatteryStatus`) at the same time. They never agree
+instant-for-instant, because `BatteryStatus` serves a cached value — but
+every WMI reading is an *exact copy* of one the EC held moments earlier.
+Over a 10-sample run in which the EC figure took 7 distinct values between
+13576 and 13849 mV, 10/10 WMI readings were exact copies of an EC value
+already seen. Separately, while charging, EC `0x0434/0x0435` read 2040 mA
+against `0x0438`'s 16021 mV — 32.68 W, against the ACPI driver's
+independently reported 32.683 W. So `0x0434` is battery current in mA and
+`0x0438` is terminal voltage in mV, and the coulomb-counting §4a requires
+is available on Windows too.
+
+**What the vendor's charge-limit UI actually writes: `0x07A6`, and
+nothing else.** Control Center 3.1.39.0 offers three battery modes, named
+in the UI "High capacity", "Balanced" and "Stationary" (internally
+`HighCapacityMode`, `BalancedMode`, `HealthyMode`, driven over a loopback
+MQTT topic `BatteryProtection/Control` — which is independent corroboration
+for issue #4's premise). Cycling all three while watching `0x0700-0x07FF`
+every 0.3 s for five minutes
+(`evidence/ec-watch/2026-09-18-profile-switch-0700-07ff.csv`) produced
+exactly three non-sensor changes, one per switch, all at the same address:
+
+| UI mode | `0x07A6` | bits 4-5 |
+|---|---|---|
+| Stationary | `0x29` | `10` |
+| High capacity | `0x09` | `00` |
+| Balanced | `0x19` | `01` |
+
+That is precisely the `bits: [4, 5]` encoding `registers.yaml` already
+records for `OEM_4 (CHARGING_PROFILE_MASK)`, now confirmed from the vendor
+side rather than from the driver's. The low nibble is a constant `0x09` on
+this machine, which the Linux-side traces (that saw `0x00`/`0x10`/`0x20`)
+did not carry; whether those bits mean anything is not established here.
+
+**`0x07B9` and `0x07D0` were never written.** Over a separate sweep of the
+whole `0x0000-0x07FF` space at 0.4 s intervals spanning the AC plug-in and
+all three profile switches — 32499 recorded byte changes
+(`evidence/ec-watch/2026-09-18-ac-plugin-sweep-summary.csv`) — `0x07B9`,
+`0x07D0` and `0x07D1` did not change once, and both read `0x00` throughout
+while the vendor's own service was running with a battery mode active.
+
+This is the observation §4f was missing, and it explains §4f's result
+rather than deepening the mystery: writing the `ECSpec.cs` UP/DOWN pair did
+nothing on Linux because *the vendor stack does not use that pair on this
+machine either*. It expresses the whole battery-protection feature as one
+profile byte and leaves the enforcement to the EC.
+
+**Scope, carefully.** "Not written" here means not written during an AC
+plug-in and three profile switches over about fifteen minutes. It is not
+"never written": a threshold crossing, a service restart, a cold boot or a
+Windows-side battery event could still touch them, and none of those was
+in the window. `ECSpec.cs` naming the constants is still real. What has
+been removed is the reading that the pair is the live mechanism the vendor
+UI drives, which is what made issue #1 worth running.
+
+**Repeated over a wider range, and one hypothesis killed.** The cycle was
+run a second time while sweeping `0x0400-0x07FF`
+(`evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv`), for two
+reasons. First, to check the first run had not simply been watching too
+narrow a window: it had not — `0x07A6` is again the only settings-shaped
+change, everything else that moved being slow sensor drift (voltage at
+`0x0436`/`0x0438`, GPU temp at `0x044F`, the cycle counter at `0x04A6`
+ticking 449 → 450 during the charge).
+
+Second, to test a reading of `charge-profile-flow.md` §2 against the
+running machine. That section traced the EC's profile handler statically:
+`0xB2E2`/`0xB330` mask `0x07A6` bits 4-5, select 200 for Stationary or 100
+for Balanced, multiply against `0x0A47`, and store to `0x0522`/`0x0523`.
+Live, `0x0522`/`0x0523` reads `0x4010` = 16400 while the pack charges at
+16255 mV, which invited a tidy story — 16.4 V on a 4-cell pack is
+4.10 V/cell, the textbook longevity ceiling against 4.2 V/cell for a full
+charge — and would have explained §4f in one stroke.
+
+**It is wrong.** `0x0522`/`0x0523` did not change at all across all three
+profile switches. Whatever selects that value, it is not re-derived from
+`0x07A6` at the moment the profile changes, at least not at 43-46%
+capacity mid-charge. The static trace is not contradicted — the handler
+may only run near end-of-charge, or write the same value under these
+conditions — but the appealing "the profile sets a charge-voltage ceiling"
+reading has no support and is recorded here as refuted rather than
+dropped, per §4a. `0x0A47` reads `0xFF`.
+
+**Unexplained, and deliberately not interpreted.** At the instant AC was
+connected, `0x0783` and `0x0784` both went `0x00` → `0x4B` (75) and
+`0x0785` went `0x00` → `0xA5`. 75 is a suggestive number next to a
+charge-threshold question and that is exactly the shape of the §4a
+mistake, so it is recorded as an observation and nothing more; the three
+bytes did not move when the profile changed, which is evidence against
+their being the cap.
+
+### 4h. The UI→service command carries a mode name, not a threshold (2026-09-18, issue #4)
+
+Issue #4 asked what `GamingCenter3_Cross` actually sends `GCUService` when
+the user sets a charge limit, and whether it ever sends a numeric
+"down"/resume value. Captured non-invasively from the loopback MQTT broker
+(full protocol in `windows/mqtt-protocol.md`; evidence
+`evidence/mqtt-capture/2026-09-18-profile-and-connect.{pcapng,jsonl}`), the
+answer is that there is no numeric value on the wire at all. The entire
+battery-protection command surface is one topic carrying one of three mode
+names:
+
+```
+BatteryProtection/Control   {"Action":"PERFORMANCEDMODE"}   <- High capacity
+BatteryProtection/Control   {"Action":"BALANCEDMODE"}       <- Balanced
+BatteryProtection/Control   {"Action":"HEALTHYMODE"}        <- Stationary
+BatteryProtection/Control   {"Report":"GET"}                <- query current
+```
+
+The three line up exactly with the `0x07A6` bit values §4g measured, which
+ties the whole chain together end to end:
+
+| UI label | MQTT `Action` | `0x07A6` bits 4-5 | telemetry `HealthProtectionStatus` |
+|---|---|---|---|
+| High capacity | `PERFORMANCEDMODE` | `00` (0x09) | — |
+| Balanced | `BALANCEDMODE` | `01` (0x19) | — |
+| Stationary | `HEALTHYMODE` | `10` (0x29) | `"2"` |
+
+So: UI publishes `{"Action":"HEALTHYMODE"}` → `GCUService` sets `0x07A6`
+bits 4-5 = `10` (the one EC byte §4g saw change) → the EC picks its taper at
+`0xB2E2` (`charge-profile-flow.md`). `ECSpec.cs`'s
+`Battery_Commands.CHARGING_UP_LIMIT`/`CHARGING_DOWN_LIMIT` and the
+`0x07B9`/`0x07D0` numeric pair issue #1 is named after **appear nowhere in
+this exchange**, which is independent confirmation, from a second
+observation point, of §4g's finding that the vendor stack does not drive
+that pair on this machine.
+
+**On the polling question issue #4 raised.** `System/BatteryProtection` is
+published periodically (the `Battry_LifePercentChange` tick), but it flows
+*service → UI* and carries status, not a command:
+`{"BatteryPowerStatus":1,"BatteryPercent":64,…,"HealthProtectionStatus":"2",
+"TypeCAdaptorPrioritySwitch":"0","TypeCAdaptorPrioritySupport":false}`.
+Nothing re-issues a charge command each tick over MQTT. That does not by
+itself rule out `GCUService` poking the EC on its own timer without
+publishing anything — but it removes the wire-level "software rewrites the
+limit every tick" model as an explanation; the tick is telemetry.
+
+**Scope.** This shows the UI→service protocol only. The mode→register
+translation, and any numeric threshold `GCUService` may hold internally,
+are inside `BatteryProtection2`, still anti-tamper encrypted (issue #3).
+What #4 removes is the possibility that the number was passing over the
+wire where a capture could see it: it is not. The auth triplet the broker
+requires (`UWPClient_<N>` / `UWPClient_User_<N>` /
+`UWPClient_Pwd888881772688_<N>`) is recorded in `windows/mqtt-protocol.md`
+as protocol fact.
+
+### 4i. The 2021 fake-charge, and three live attempts to reproduce it (2026-09-19)
+
+`evidence/screenshots/2021-11-27-batteryinfoview-windows.png` is the only
+evidence a charge cap ever existed on this machine, and read carefully it
+shows something sharper than "a cap": a **fake charge**. Columns are time /
+status / percent / capacity (Wh) / charge-rate (mW) / voltage (mV):
+
+```
+19:58:47  Charging  86.0%  44.445  4651  16.654   real charging, current flowing
+19:58:47  Charging  88.0%  45.478     0  16.513   charge rate -> 0
+19:59:47  Charging  92.0%  47.546     0  16.490   ...but percent keeps climbing
+20:01:47  Charging 100.0%  51.680     0  16.490   "100%" reached at 0 mW
+20:02:17  AC Power  100.0%  51.680     0  16.466   done
+```
+
+Charge rate is **0 mW from ~88% to 100%**, while the percentage climbs
+88→100 in three minutes and the reported capacity rises 45.478→51.680 Wh
+(exactly `percent × 51.68`). No real energy is entering the pack — the EC
+holds true charge at ~86% and drives the gauge to 100%. That is why the
+retraction in §4a matters in the vendor's own data: a percentage or a
+resting voltage reads "100%, charged"; only the **rate/current** column
+shows the charge actually stopped at 86%.
+
+**This establishes the target signature precisely:** a working cap on this
+machine looks like `current -> ~0 near 86% while capacity keeps climbing and
+status stays Charging`. `battery_trace.py` logs exactly that pair
+(`ec_current_ma` = EC 0x0434, and the ACPI `wmi_rate_mw`).
+
+**It did not reproduce, in any of three live configurations today**
+(`evidence/battery-traces/2026-09-18-windows-stationary.csv`, EC image
+`GMxMGxx_11.800`, Control Center 3.1.39.0, Stationary/`HEALTHYMODE` = `0x07A6`
+`0x29` throughout):
+
+| configuration | what happened at ~86% |
+|---|---|
+| armed at initial plug-in (Stationary set, plugged at 28%, §4f-style) | charged through: 85% 952 mA → 91% 748 mA, smooth taper |
+| after mid-charge profile cycling (§4g) | charged through, same taper |
+| **clean unplug → discharge to 79% → replug, profile untouched** | charged through: 85% 1122 mA → 91% 816 mA, smooth taper |
+
+The third row is the arm/replug test — the hypothesis that the EC only
+latches the limit at charger-insertion, which would have explained why every
+Linux write (all made while already plugged) failed. It is **refuted**: a
+charger inserted with Stationary already armed and never touched afterward
+still charges straight through 86% at full taper current. In every case
+`ec_current_ma` and `wmi_rate_mw` decline together as a normal CC/CV taper —
+never the flat-zero-with-rising-percent of 2021.
+
+**What this establishes.** On this firmware + service combination the
+vendor's own battery protection does not stop or fake charging at ~86% under
+any profile or plug sequence tried. So "charge control doesn't work on
+Linux" is not a Linux-driver gap: the mechanism that produced the 2021 cap
+is not engaging under the current Windows stack either. The vendor UI's
+entire battery-protection surface is the three profile modes (§4h, confirmed
+over MQTT), and none of them caps here.
+
+**What it does not establish, and the question it opens.** It does not show
+the 2021 behaviour was imagined — the screenshot is real — only that the
+present configuration does not produce it. The 2021 capture predates this
+repo's committed inputs, and the difference is unidentified: a **different
+Control Center version**, a **different EC image** (the live EC self-reports
+`EcVersion = 1.18` in `HKLM\SOFTWARE\OEM\GamingCenter2\MyFanTable`, which is
+not obviously the same provenance as the committed `GMxMGxx_11.800`), or a
+BIOS setup difference are all candidates and none is ruled out. Identifying
+which — ideally recovering the 2021-era EC/CC version that did cap — is the
+next step for the charge-limit thread, and is a firmware-archaeology
+question, not a driver one.
+
 ## 5. Net status going into the issue tracker
 
-- Charging-cap-on-Linux is still an **open problem**, but narrower. The
-  paired `0x07B9`/`0x07D0` write has now been run (§4f) through the
-  vendor's physical path and did not stop charging in any of five
-  variants, so "the access path differs" is ruled out. What is left is
-  the encoding and sequence Windows actually uses, which only issue #3
-  (decrypting `BatteryProtection2`) or a Windows-side EC trace can give.
+- Charging-cap-on-Linux is still an **open problem**, but much narrower.
+  The paired `0x07B9`/`0x07D0` write was run (§4f) through the vendor's
+  physical path and did not stop charging in any of five variants, ruling
+  out "the access path differs". The Windows-side EC trace §4f named as the
+  other route has now been taken (§4g, §4h): with the vendor service
+  running, the only EC byte its battery-protection UI drives is the
+  `0x07A6` profile mask, and the UI→service MQTT command carries a mode
+  name (`HEALTHYMODE`/`BALANCEDMODE`/`PERFORMANCEDMODE`) with no numeric
+  threshold at all. So the `0x07B9`/`0x07D0` pair is, on this machine, not
+  the mechanism — which reframes issue #1 from "write the pair correctly"
+  to "does any profile enforce a hard stop, and if so where is the
+  threshold". The one place a numeric threshold could still hide is inside
+  `GCUService`/`BatteryProtection2` (issue #3); it is no longer on the wire
+  and not in the registry (`HKLM\SOFTWARE\OEM\GamingCenter2\BatteryProtection2`
+  holds only `HealthProtectionStatus`, the mode index). The live coulomb-count
+  that would have tested "does the profile stop charging at all" has now been
+  run (§4i): it does **not** — Stationary charged smoothly through ~86% at
+  full taper current from 28%, again after profile cycling, and again after a
+  clean unplug/replug with the profile armed and untouched. The 2021
+  fake-charge screenshot (charge rate → 0 at ~86%, gauge spoofed to 100%) did
+  not reproduce in any configuration. So on this EC image + Control Center
+  3.1.39.0 the vendor's own protection does not cap, which means the Linux
+  gap is not a driver gap — the mechanism is not engaging on Windows either.
+  The charge-limit thread now turns to firmware archaeology: identify the
+  2021-era EC image / CC version that did cap (live EC self-reports
+  `EcVersion = 1.18`, provenance vs the committed `GMxMGxx_11.800` unverified),
+  rather than to writing any register on the current one.
 - Lightbar is a **driver-scope problem, not a hardware problem** — claim
   `048D:6005` for `ite_8291_lb` and test.
   **2026-09-17 update:** static red/off now works through raw HID with the

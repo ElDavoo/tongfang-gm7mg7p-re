@@ -4,7 +4,7 @@ The vendor stack has three layers; only the middle one talks to the EC:
 
 ```
 GamingCenter3_Cross (UWP app, sandboxed)
-        │  MQTT (loopback, "GCU2" broker)         ← evidence/traces would help here
+        │  MQTT (loopback :13688, plaintext JSON)  ← captured: mqtt-protocol.md, issue #4
         ▼
 GCUService.exe (Win32 service, full trust)         ← EC/HID access lives here
         │  DeviceIoControl
@@ -33,8 +33,15 @@ reproduces the extraction from those into plain PE/.NET assemblies.
   bodies don't: `Battery_Commands` enum (`GET`, `CHARGING_UP_LIMIT`,
   `CHARGING_DOWN_LIMIT`, `RECOVERY`, `TYPE_C_ADAPTOR_PRIORITY_SWITCH_ON/OFF`),
   `SetBatteryChargingLimit_Up/Down(int)`, `Battry_LifePercentChange` (a
-  per-percent-change hook — evidence the cap is enforced by software polling
-  capacity changes, not purely in EC firmware).
+  per-percent-change hook). That hook was once read as evidence the cap is
+  enforced by software polling; the 2026-09-18 MQTT capture (issue #4,
+  `../docs/findings.md` §4h) shows the per-tick `System/BatteryProtection`
+  message is service→UI *telemetry*, not a re-issued command, so the hook is
+  not by itself evidence of software enforcement. Whether `GCUService` pokes
+  the EC on its own timer is still open and lives inside these still-encrypted
+  bodies (issue #3). Note the UI never sends a numeric limit over the wire at
+  all — only a mode name — so any number `SetBatteryChargingLimit_Up/Down`
+  carries is computed service-side, not received from the UI.
 - **`decompiled/v3.9.18.0/LightingModel/{ITE_SPEC,LM_ITE_RGB,LM_Manager}.cs`**
   — like `BatteryProtection2`, these are anti-tamper protected (see
   `antitamper/README.md`) and most method *bodies* don't decompile. What

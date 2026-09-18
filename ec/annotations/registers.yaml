@@ -170,6 +170,24 @@ registers:
       BUT: coulomb-counted live traces (evidence/battery-traces/2026-09-09-profiles.csv)
       show >1A still flowing at 95% under both Trickle and Long_Life -- the
       profile changes the *taper*, not a hard stop. See docs/findings.md.
+      LIVE 2026-09-18, from the Windows side (docs/findings.md 4g,
+      evidence/ec-watch/2026-09-18-profile-switch-0700-07ff.csv): cycling
+      Control Center 3.1.39.0's three battery modes while sweeping
+      0x0700-0x07FF every 0.3s changed exactly one non-sensor byte, this
+      one, once per switch -- Stationary 0x29, High capacity 0x09, Balanced
+      0x19, i.e. bits 4-5 = 10/00/01 exactly as recorded above, now
+      confirmed from the vendor stack and not only from uniwill-laptop.
+      The low nibble is a constant 0x09 here, which the Linux traces
+      (0x00/0x10/0x20) did not carry; what those bits mean is unknown.
+      This is the only address the vendor's battery-protection UI was
+      observed to write.
+      LIVE 2026-09-19 (docs/findings.md 4i): coulomb-counted charges under
+      Stationary (this=0x29) charged smoothly through ~86% at full taper
+      current -- from 28% armed-at-plug-in, after mid-charge cycling, and
+      after a clean unplug/discharge/replug with the profile untouched. The
+      2021 fake-charge (rate->0 at ~86%, gauge to 100%) did not reproduce.
+      So no profile value drives a hard stop on this EC image; the profile
+      selects a taper, consistent with the static trace at 0xB2E2.
 
   - name: CHARGE_CTRL (numeric threshold)
     addr: 0x07B9
@@ -212,6 +230,14 @@ registers:
       from 72% through 91%. Status
       stays unknown-not-absent: the byte is writable and stable, and the
       values the vendor writes are still unknown.
+      LIVE 2026-09-18 (docs/findings.md 4g): watched from Windows, with the
+      vendor service running and a battery mode active, across an AC
+      plug-in and three profile switches -- 32499 byte changes recorded
+      over 0x0000-0x07FF -- this address never changed and read 0x00
+      throughout. So the vendor stack was not observed to use it at all;
+      the battery-protection UI writes only 0x07A6. That is scoped to those
+      events over ~15 minutes, not to "never written": a threshold
+      crossing, service restart or cold boot was not in the window.
 
   - name: BATTERY_CHARGE_LIMIT_DOWN (Windows-only address, no uniwill-laptop equivalent)
     addr: 0x07D0
