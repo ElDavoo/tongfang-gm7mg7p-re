@@ -53,17 +53,34 @@ password. Other client identities exist as strings in the binaries
 `MyControlCenterUser`, …) and presumably follow the same
 `X` / `X_User_<N>` / `X_Pwd888881772688_<N>` shape.
 
-The `<N>` is **not** free-form: a hand-rolled `CONNECT` as
-`UWPClient_777` with the correct `UWPClient_User_777` /
-`UWPClient_Pwd888881772688_777` triplet is still refused with CONNACK
-code 2 (identifier rejected), *before* the password is even checked (a
-deliberately wrong password gives the same code 2, not code 4). So the
-broker accepts only client-ids it has itself provisioned — consistent with
-the `Service/SetPassword` topic and the per-client `_User_<N>`/`_Pwd…_<N>`
-slots — rather than anything matching the template. That is why the passive
-sniff above is the route that works: attaching as a new subscriber would
-need a broker-issued slot, and reusing a live one (`_3`, `_10`) would evict
-the real client that holds it. Not attempted here for that reason.
+The credential triplet is fully validated, and `<N>` is bounded. Measured
+directly against the live broker (2026-09-19):
+
+| `CONNECT` | CONNACK |
+|---|---|
+| `UWPClient_3` + matching `_User_3` / `_Pwd888881772688_3` | 0 accepted |
+| `UWPClient_1` / `_2` / `_5` / `_10`, each with its matching triplet | 0 accepted |
+| `PluginClient_1` + matching triplet | 0 accepted (other families work identically) |
+| `UWPClient_3` + **wrong password** | 4 bad user/pass — the password *is* checked |
+| `UWPClient_3` + wrong or missing username | 2 identifier rejected |
+| `UWPClient_777` + a correctly-patterned triplet | 2 identifier rejected — `<N>` is not free-form |
+| bare `UWPClient` (no `_<N>`) | 2 identifier rejected |
+
+So a subscriber *can* attach with a valid slot's triplet — verified live
+with `windows/tools/mqtt_sniff.py --client-id UWPClient_3 --username
+UWPClient_User_3 --password UWPClient_Pwd888881772688_3`, which subscribed
+to `#` and read the same topic map below plus a `Tray/Status`
+(`{"OperatingMode","FanBoostEnable"}`) the short pcap window had not caught.
+Two caveats make the passive sniff still the safer default: connecting with
+an id the live UI already holds (`UWPClient_3`/`_10` while Control Center is
+running) takes over that MQTT session and disconnects the UI (standard
+duplicate-client-id behaviour), so the live subscribe was done with Control
+Center closed to free the slot; and a subscriber only sees what is
+published while it is attached, whereas a pcap also captures the CONNECT
+handshakes. The earlier claim here — that a wrong password returns code 2
+"before the password is checked" — was wrong; it had been generalised from
+the out-of-range `_777`, where the id is rejected before auth. The valid-id
+case returns code 4.
 
 This is local-only IPC with a shared embedded secret; it is an app-identity
 gate, not a security boundary, and it is recorded here as protocol fact,
@@ -80,6 +97,7 @@ Representative payloads; `GET`-family omitted where obvious.
 | `Fan/Control` | UI → svc | `{"Action":"GETSTATUS"}`, `{"Action":"GET_FAN_SPEED_CURVE_SETTING"}` |
 | `Fan/Status` | svc → UI | full profile: `OperatingMode`, `CPU_PL1/PL2/PL4`, `GPU_ConfigurableTGP*`, `GPU_DynamicBoost*`, `GPU_WhisperMode*`, … |
 | `Fan/Table` | svc → UI | `{"Name":"M3T1","CPU":[{"ID":0,"UpT":0,"DownT":48,"Duty":0},…],"GPU":[…]}` |
+| `Tray/Status` | svc → UI | `{"OperatingMode":"2","FanBoostEnable":"0"}` (seen only on the live 2026-09-19 subscribe, not in the pcap) |
 | `Setting/Control` | UI → svc | `{"Action":"GETSTATUS"}` |
 | `Setting/Status` | svc → UI | `WinKey`, `LightBar`, `UsbCharger`, `DGpu`, `NumPad`, `FnKey`, `TouchpadToggle`, `AcRecoverySwitch_*`, … (string enums) |
 | `HidLightbar/Ctrl` | UI → svc | `{"Action":"GETSTATUS"}` |

@@ -65,21 +65,36 @@ def encode_str(s):
 
 
 class Mqtt:
-    def __init__(self, host, port, client_id, timeout=1.0):
+    def __init__(self, host, port, client_id, timeout=1.0,
+                 username=None, password=None):
         self.sock = socket.create_connection((host, port), timeout=5)
         self.sock.settimeout(timeout)
         self.buf = b""
-        self._connect(client_id)
+        self._connect(client_id, username, password)
 
     def _send(self, packet_type, payload, flags=0):
         self.sock.sendall(bytes([packet_type | flags]) + encode_len(len(payload))
                           + payload)
 
-    def _connect(self, client_id):
+    def _connect(self, client_id, username=None, password=None):
+        # This broker (GCUBridge) requires a credential triplet: the client-id
+        # must be <Family>_<N> for N in a bounded low range, with a matching
+        # <Family>_User_<N> username and <Family>_Pwd888881772688_<N> password.
+        # A wrong password gives CONNACK code 4; a missing/mismatched user or an
+        # out-of-range N gives code 2. See windows/mqtt-protocol.md.
+        connect_flags = 0x02                      # clean session
+        if username is not None:
+            connect_flags |= 0x80
+        if password is not None:
+            connect_flags |= 0x40
         payload = (encode_str("MQTT") + bytes([4])   # protocol level 3.1.1
-                   + bytes([0x02])                   # clean session, no will/auth
+                   + bytes([connect_flags])
                    + (60).to_bytes(2, "big")         # keepalive
                    + encode_str(client_id))
+        if username is not None:
+            payload += encode_str(username)
+        if password is not None:
+            payload += encode_str(password)
         self._send(CONNECT, payload)
         hdr, body = self._read_packet(blocking=True)
         if hdr is None or (hdr & 0xF0) != CONNACK:
@@ -161,10 +176,14 @@ def main(argv=None):
     ap.add_argument("--seconds", type=float, default=0)
     ap.add_argument("--out", help="append each message as one JSON object per line")
     ap.add_argument("--client-id", default="ec-re-observer")
+    ap.add_argument("--username", help="broker username (this broker needs one; "
+                    "see windows/mqtt-protocol.md)")
+    ap.add_argument("--password", help="broker password")
     args = ap.parse_args(argv)
 
     try:
-        m = Mqtt(args.host, args.port, args.client_id)
+        m = Mqtt(args.host, args.port, args.client_id,
+                 username=args.username, password=args.password)
     except Exception as e:
         print(f"could not attach to the broker at {args.host}:{args.port}: {e}",
               file=sys.stderr)
