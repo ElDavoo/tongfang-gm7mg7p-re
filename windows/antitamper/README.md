@@ -72,6 +72,20 @@ Approach 2 is the "tag: windows" item in the issue tracker — it needs a
 Windows machine (a VM is fine) and is otherwise independent of everything
 else in this repo.
 
+**Done for Control Center Service 3.1.39.0 (2026-09-19, issue #3).** No
+debugger was needed. The installed service was already running with its
+bodies decrypted, so `../tools/dotnet_dump.py` read its image out of the
+process and rebuilt it on the shipped file as a template.
+`../tools/dotnet_bodies.py` confirms the result: 3759 invalid method-body
+headers on disk, 0 in the dump. ConfuserEx also runs an **anti-dump** pass
+that wipes the in-memory CLI header and metadata root (the `BSJB` signature
+and stream names). The tool restores those from the shipped file, because
+anti-tamper never changes metadata. Output:
+`../decompiled/v3.1.39.0/` (whole service, `ilspycmd -p`). The same
+procedure should work for 3.1.6.0/3.9.18.0 on a machine with those
+versions running. It hasn't been tried; they are different builds with
+different obfuscation strength (see "Version note").
+
 ## Version note
 
 v3.1.6.0's `BatteryProtection2` is *more* obfuscated than v3.9.18.0's (40

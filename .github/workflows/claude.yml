@@ -72,6 +72,12 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
+      # Same toolchain the implement/fix stages get (radare2, sdcc/ucsim, Ghidra,
+      # ilspycmd, UEFIExtract, ifrextractor, ...), so an "@claude" conversation can
+      # run the repo's tools instead of only reading about them.
+      - name: Set up the toolchain
+        uses: ./.github/actions/project-setup
+
       - name: Run Claude Code
         id: claude
         # Pinned to the same commit every other claude-code-action call in this repo uses,

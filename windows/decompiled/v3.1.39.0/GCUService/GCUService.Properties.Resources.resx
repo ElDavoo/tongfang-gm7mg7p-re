@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+<resheader name="resmimetype"><value>text/microsoft-resx</value></resheader><resheader name="version"><value>1.3</value></resheader><resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader><resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader><data name="Msg_Disp_Change_Reset" xml:space="preserve"><value>Are you sure you want to reset screen settings to its original state?</value></data>
+  <data name="InvalidOperation_FatalError" xml:space="preserve"><value>Fatal error.</value></data>
+  <data name="Msg_Disp_Change_Rotate" xml:space="preserve"><value>Are you sure you want to rotate the screen?</value></data>
+  <data name="Msg_Disp_Change_Original" xml:space="preserve"><value>You are about to close the application. Are you sure you want to change screen settings to its original state?</value></data>
+  <data name="InvalidOperation_Disp_Change_BadDualView" xml:space="preserve"><value>The settings change was unsuccessful because system is DualView capable.</value></data>
+  <data name="InvalidOperation_Disp_Change_BadParam" xml:space="preserve"><value>An invalid parameter was passed in. This can include an invalid flag or combination of flags.</value></data>
+  <data name="InvalidOperation_Disp_Change_BadFlags" xml:space="preserve"><value>An invalid set of flags was passed in.</value></data>
+  <data name="Msg_Disp_Change" xml:space="preserve"><value>Your about to change display settings to</value></data>
+  <data name="InvalidOperation_Disp_Change_BadMode" xml:space="preserve"><value>The graphics mode is not supported.</value></data>
+  <data name="InvalidOperation_Disp_Change_Failed" xml:space="preserve"><value>The display driver failed the specified graphics mode.</value></data>
+  <data name="InvalidOperation_Disp_Change_NotUpdated" xml:space="preserve"><value>Unable to write settings to the registry.</value></data>
+  <data name="InvalidOperation_Disp_Change_Restart" xml:space="preserve"><value>The computer must be restarted in order for the graphics mode to work.</value></data>
+  <data name="Msg_Disp_Change_Successful" xml:space="preserve"><value>The settings change was successful.</value></data>
+  </root>

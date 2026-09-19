@@ -1,0 +1,11 @@
+namespace LightingModel;
+
+public enum VENDOR
+{
+	LITEON_GLOSSY,
+	EVERGREEN,
+	LITEON_CIE_JP,
+	LITEON_CIE_USUK,
+	LITEON_CLOUDY,
+	EVERGREEN_CIE
+}

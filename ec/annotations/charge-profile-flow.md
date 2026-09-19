@@ -62,6 +62,25 @@ Net effect confirmed on live hardware
 fast charge current tapers as capacity approaches 100%, not a hard stop.
 Both Trickle and Long_Life still show >1 A flowing at 95%.
 
+*(**Correction, 2026-09-19.** Both readings above are wrong, and the
+routine is now decoded end to end in
+[`charge-target-derating.md`](charge-target-derating.md). `R3` is not a
+current-limit multiplier: it is a **per-cell voltage derating in mV**.
+`[0x0A47]` is not a second EC value to multiply against: it is the **cell
+count** (4 on this pack), set at the top of the same function (`0xB176`). The
+result at `0x0522/0x0523` is the **charger's constant-voltage target**: the
+pack's requested ChargingVoltage (`0x030E`, 17400 mV) minus `R3 × cells`.
+The profile branches shown here are only two of the tiers. Stationary and
+Balanced set a *floor* of 200/100 mV per cell, and cycle count plus a
+temperature-weighted high-voltage-hours counter can push the derating
+higher. On this pack they have, to 250 mV/cell (target 16400 mV). That's why
+the profile makes no observable difference. The "changes the taper"
+reading came from comparing currents at equal gauge percentages across two
+separate charges. They differ by 34-102 mA, one to three steps of the EC's
+34 mA current resolution. Both charges, and the Standard one after them,
+plateau at the same 16466 mV in `2026-09-09-profiles.csv`, so the voltage
+target was the same under all three.)*
+
 ## 3. What is NOT here
 
 No code path in this function (or found so far anywhere in the image via

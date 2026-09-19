@@ -1,0 +1,270 @@
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+  <PropertyGroup>
+    <AssemblyName>GCUService</AssemblyName>
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <OutputType>WinExe</OutputType>
+    <UseWPF>True</UseWPF>
+    <TargetFramework>net461</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup>
+    <LangVersion>12.0</LangVersion>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RootNamespace />
+  </PropertyGroup>
+  <ItemGroup>
+    <None Remove="tray\language\hu-hu.baml" />
+    <None Remove="osd\language\ko-kr.xaml" />
+    <None Remove="osd\image\wlan_0.png" />
+    <None Remove="osd\image\wlan_1.png" />
+    <None Remove="osd\image\osd_universal\pad-20off.png" />
+    <None Remove="assets\div-info-frame.png" />
+    <None Remove="osd\language\es-es.xaml" />
+    <None Remove="mysystem\battry\notificationwindow.baml" />
+    <None Remove="osd\image\osd_home_lock.png" />
+    <None Remove="osd\image\osd_kb_light_4-03.png" />
+    <None Remove="osd\image\osd_kb_light_4-01.png" />
+    <None Remove="mysystem\battry\language\en-us.baml" />
+    <None Remove="osd\image\osd_kb_light_4-02.png" />
+    <None Remove="osd\image\osd_kb_light_4-05.png" />
+    <None Remove="osd\image\osd_kb_light_4-04.png" />
+    <None Remove="osd\language\zh-cn.xaml" />
+    <None Remove="osd\image\osd_universal\battery.png" />
+    <None Remove="osd\image\osd_universal\lock-20off.png" />
+    <None Remove="osd\image\osd_universal\scroll-20on.png" />
+    <None Remove="tray\language\fr-fr.baml" />
+    <None Remove="osd\image\osd_universal\performance.png" />
+    <None Remove="osd\image\balanced.png" />
+    <None Remove="osd\image\osd_universal\gaming-20on.png" />
+    <None Remove="osd\image\fanboost_on.png" />
+    <None Remove="osd\language\ru-ru.xaml" />
+    <None Remove="osd\image\osd_universal\rendering-20on.png" />
+    <None Remove="tray\trayicon\tray_icon_turbo_mode.ico" />
+    <None Remove="osd\image\gaming-20mode_296x62.png" />
+    <None Remove="windowsw\windoww.baml" />
+    <None Remove="tray\language\tr-tr.baml" />
+    <None Remove="windowsw\boxitem.baml" />
+    <None Remove="osd\image\osd-20enthusiast.png" />
+    <None Remove="tray\trayicon\tray_icon_gaming_mode.ico" />
+    <None Remove="tray\language\de-de.baml" />
+    <None Remove="tray\trayicon\tray_icon_office_mode.ico" />
+    <None Remove="osd\image\osd_universal\fn-20lock.png" />
+    <None Remove="osd\image\turbo-20mode_296x62.png" />
+    <None Remove="osd\language\fr-fr.xaml" />
+    <None Remove="osd\image\osd_universal\caps-20on.png" />
+    <None Remove="osd\image\capslock_0.png" />
+    <None Remove="osd\image\capslock_1.png" />
+    <None Remove="mysystem\battry\language\de-de.baml" />
+    <None Remove="tray\language\zh-tw.baml" />
+    <None Remove="osd\image\scrolllock_0.png" />
+    <None Remove="osd\image\scrolllock_1.png" />
+    <None Remove="mysystem\battry\language\ko-kr.baml" />
+    <None Remove="osd\image\numlock_0.png" />
+    <None Remove="osd\image\numlock_1.png" />
+    <None Remove="osd\osd.baml" />
+    <None Remove="assets\battery-step3.png" />
+    <None Remove="assets\battery-step1.png" />
+    <None Remove="assets\battery-step2.png" />
+    <None Remove="tray\trayview.baml" />
+    <None Remove="osd\language\ja-jp.xaml" />
+    <None Remove="osd\image\osd_universal\wifi-on.png" />
+    <None Remove="osd\language\en-us.xaml" />
+    <None Remove="tray\language\zh-cn.baml" />
+    <None Remove="tray\language\en-us.baml" />
+    <None Remove="osd\language\pl-pl.xaml" />
+    <None Remove="osd\language\tr-tr.xaml" />
+    <None Remove="osd\image\osd_universal\airplane-mode.png" />
+    <None Remove="mysystem\battry\language\pl-pl.baml" />
+    <None Remove="osd\image\osd_universal\balance.png" />
+    <None Remove="mysystem\battry\language\hu-hu.baml" />
+    <None Remove="tray\language\ru-ru.baml" />
+    <None Remove="tray\language\pl-pl.baml" />
+    <None Remove="osd\image\fanboost_off.png" />
+    <None Remove="osd\image\osd_home_unlock.png" />
+    <None Remove="osd\osd_vertical.baml" />
+    <None Remove="osd\image\osd-20overboost.png" />
+    <None Remove="osd\image\osd_universal\turbo-20on.png" />
+    <None Remove="osd\image\ups_1.png" />
+    <None Remove="osd\image\ups_0.png" />
+    <None Remove="assets\ico-calibration-done.png" />
+    <None Remove="mysystem\battry\language\fr-fr.baml" />
+    <None Remove="mysystem\battry\language\ja-jp.baml" />
+    <None Remove="mysystem\battry\language\pt-br.baml" />
+    <None Remove="osd\image\osd_universal\office-20on.png" />
+    <None Remove="osd\image\osd_universal\num-20on.png" />
+    <None Remove="osd\image\osd_universal\lock-20on.png" />
+    <None Remove="tray\language\es-es.baml" />
+    <None Remove="osd\image\touchpad_0.png" />
+    <None Remove="osd\image\touchpad_1.png" />
+    <None Remove="osd\image\enthusiast.png" />
+    <None Remove="osd\language\pt-br.xaml" />
+    <None Remove="osd\image\osd_universal\num-20off.png" />
+    <None Remove="tray\trayicon\gamingcenter256.ico" />
+    <None Remove="osd\image\osd-20balanced.png" />
+    <None Remove="mysystem\battry\language\es-es.baml" />
+    <None Remove="osd\image\osd_universal\pad-20on.png" />
+    <None Remove="osd\image\osd_universal\fn-20unlock.png" />
+    <None Remove="assets\icon-close.png" />
+    <None Remove="mysystem\battry\language\ru-ru.baml" />
+    <None Remove="mysystem\battry\language\zh-tw.baml" />
+    <None Remove="tray\language\ja-jp.baml" />
+    <None Remove="osd\language\hu-hu.xaml" />
+    <None Remove="osd\image\osd_universal\scroll-20off.png" />
+    <None Remove="osd\image\office-20mode_296x62.png" />
+    <None Remove="tray\language\ko-kr.baml" />
+    <None Remove="osd\language\de-de.xaml" />
+    <None Remove="app.baml" />
+    <None Remove="mysystem\battry\language\zh-cn.baml" />
+    <None Remove="tray\language\pt-br.baml" />
+    <None Remove="osd\image\osd_universal\caps-20off.png" />
+    <None Remove="mysystem\battry\language\tr-tr.baml" />
+    <None Remove="osd\language\zh-tw.xaml" />
+    <EmbeddedResource Include="tray\language\hu-hu.baml" LogicalName="tray/language/hu-hu.baml" />
+    <EmbeddedResource Include="osd\language\ko-kr.xaml" LogicalName="osd/language/ko-kr.xaml" />
+    <EmbeddedResource Include="osd\image\wlan_0.png" LogicalName="osd/image/wlan_0.png" />
+    <EmbeddedResource Include="osd\image\wlan_1.png" LogicalName="osd/image/wlan_1.png" />
+    <EmbeddedResource Include="osd\image\osd_universal\pad-20off.png" LogicalName="osd/image/osd_universal/pad%20off.png" />
+    <EmbeddedResource Include="assets\div-info-frame.png" LogicalName="assets/div-info-frame.png" />
+    <EmbeddedResource Include="osd\language\es-es.xaml" LogicalName="osd/language/es-es.xaml" />
+    <EmbeddedResource Include="mysystem\battry\notificationwindow.baml" LogicalName="mysystem/battry/notificationwindow.baml" />
+    <EmbeddedResource Include="osd\image\osd_home_lock.png" LogicalName="osd/image/osd_home_lock.png" />
+    <EmbeddedResource Include="osd\image\osd_kb_light_4-03.png" LogicalName="osd/image/osd_kb_light_4-03.png" />
+    <EmbeddedResource Include="osd\image\osd_kb_light_4-01.png" LogicalName="osd/image/osd_kb_light_4-01.png" />
+    <EmbeddedResource Include="mysystem\battry\language\en-us.baml" LogicalName="mysystem/battry/language/en-us.baml" />
+    <EmbeddedResource Include="osd\image\osd_kb_light_4-02.png" LogicalName="osd/image/osd_kb_light_4-02.png" />
+    <EmbeddedResource Include="osd\image\osd_kb_light_4-05.png" LogicalName="osd/image/osd_kb_light_4-05.png" />
+    <EmbeddedResource Include="osd\image\osd_kb_light_4-04.png" LogicalName="osd/image/osd_kb_light_4-04.png" />
+    <EmbeddedResource Include="osd\language\zh-cn.xaml" LogicalName="osd/language/zh-cn.xaml" />
+    <EmbeddedResource Include="osd\image\osd_universal\battery.png" LogicalName="osd/image/osd_universal/battery.png" />
+    <EmbeddedResource Include="osd\image\osd_universal\lock-20off.png" LogicalName="osd/image/osd_universal/lock%20off.png" />
+    <EmbeddedResource Include="osd\image\osd_universal\scroll-20on.png" LogicalName="osd/image/osd_universal/scroll%20on.png" />
+    <EmbeddedResource Include="tray\language\fr-fr.baml" LogicalName="tray/language/fr-fr.baml" />
+    <EmbeddedResource Include="osd\image\osd_universal\performance.png" LogicalName="osd/image/osd_universal/performance.png" />
+    <EmbeddedResource Include="osd\image\balanced.png" LogicalName="osd/image/balanced.png" />
+    <EmbeddedResource Include="osd\image\osd_universal\gaming-20on.png" LogicalName="osd/image/osd_universal/gaming%20on.png" />
+    <EmbeddedResource Include="osd\image\fanboost_on.png" LogicalName="osd/image/fanboost_on.png" />
+    <EmbeddedResource Include="osd\language\ru-ru.xaml" LogicalName="osd/language/ru-ru.xaml" />
+    <EmbeddedResource Include="osd\image\osd_universal\rendering-20on.png" LogicalName="osd/image/osd_universal/rendering%20on.png" />
+    <EmbeddedResource Include="tray\trayicon\tray_icon_turbo_mode.ico" LogicalName="tray/trayicon/tray_icon_turbo_mode.ico" />
+    <EmbeddedResource Include="osd\image\gaming-20mode_296x62.png" LogicalName="osd/image/gaming%20mode_296x62.png" />
+    <EmbeddedResource Include="windowsw\windoww.baml" LogicalName="windowsw/windoww.baml" />
+    <EmbeddedResource Include="tray\language\tr-tr.baml" LogicalName="tray/language/tr-tr.baml" />
+    <EmbeddedResource Include="windowsw\boxitem.baml" LogicalName="windowsw/boxitem.baml" />
+    <EmbeddedResource Include="osd\image\osd-20enthusiast.png" LogicalName="osd/image/osd%20enthusiast.png" />
+    <EmbeddedResource Include="tray\trayicon\tray_icon_gaming_mode.ico" LogicalName="tray/trayicon/tray_icon_gaming_mode.ico" />
+    <EmbeddedResource Include="tray\language\de-de.baml" LogicalName="tray/language/de-de.baml" />
+    <EmbeddedResource Include="tray\trayicon\tray_icon_office_mode.ico" LogicalName="tray/trayicon/tray_icon_office_mode.ico" />
+    <EmbeddedResource Include="osd\image\osd_universal\fn-20lock.png" LogicalName="osd/image/osd_universal/fn%20lock.png" />
+    <EmbeddedResource Include="osd\image\turbo-20mode_296x62.png" LogicalName="osd/image/turbo%20mode_296x62.png" />
+    <EmbeddedResource Include="osd\language\fr-fr.xaml" LogicalName="osd/language/fr-fr.xaml" />
+    <EmbeddedResource Include="osd\image\osd_universal\caps-20on.png" LogicalName="osd/image/osd_universal/caps%20on.png" />
+    <EmbeddedResource Include="osd\image\capslock_0.png" LogicalName="osd/image/capslock_0.png" />
+    <EmbeddedResource Include="osd\image\capslock_1.png" LogicalName="osd/image/capslock_1.png" />
+    <EmbeddedResource Include="mysystem\battry\language\de-de.baml" LogicalName="mysystem/battry/language/de-de.baml" />
+    <EmbeddedResource Include="tray\language\zh-tw.baml" LogicalName="tray/language/zh-tw.baml" />
+    <EmbeddedResource Include="osd\image\scrolllock_0.png" LogicalName="osd/image/scrolllock_0.png" />
+    <EmbeddedResource Include="osd\image\scrolllock_1.png" LogicalName="osd/image/scrolllock_1.png" />
+    <EmbeddedResource Include="mysystem\battry\language\ko-kr.baml" LogicalName="mysystem/battry/language/ko-kr.baml" />
+    <EmbeddedResource Include="osd\image\numlock_0.png" LogicalName="osd/image/numlock_0.png" />
+    <EmbeddedResource Include="osd\image\numlock_1.png" LogicalName="osd/image/numlock_1.png" />
+    <EmbeddedResource Include="osd\osd.baml" LogicalName="osd/osd.baml" />
+    <EmbeddedResource Include="assets\battery-step3.png" LogicalName="assets/battery-step3.png" />
+    <EmbeddedResource Include="assets\battery-step1.png" LogicalName="assets/battery-step1.png" />
+    <EmbeddedResource Include="assets\battery-step2.png" LogicalName="assets/battery-step2.png" />
+    <EmbeddedResource Include="tray\trayview.baml" LogicalName="tray/trayview.baml" />
+    <EmbeddedResource Include="osd\language\ja-jp.xaml" LogicalName="osd/language/ja-jp.xaml" />
+    <EmbeddedResource Include="osd\image\osd_universal\wifi-on.png" LogicalName="osd/image/osd_universal/wifi-on.png" />
+    <EmbeddedResource Include="osd\language\en-us.xaml" LogicalName="osd/language/en-us.xaml" />
+    <EmbeddedResource Include="tray\language\zh-cn.baml" LogicalName="tray/language/zh-cn.baml" />
+    <EmbeddedResource Include="tray\language\en-us.baml" LogicalName="tray/language/en-us.baml" />
+    <EmbeddedResource Include="osd\language\pl-pl.xaml" LogicalName="osd/language/pl-pl.xaml" />
+    <EmbeddedResource Include="osd\language\tr-tr.xaml" LogicalName="osd/language/tr-tr.xaml" />
+    <EmbeddedResource Include="osd\image\osd_universal\airplane-mode.png" LogicalName="osd/image/osd_universal/airplane-mode.png" />
+    <EmbeddedResource Include="mysystem\battry\language\pl-pl.baml" LogicalName="mysystem/battry/language/pl-pl.baml" />
+    <EmbeddedResource Include="osd\image\osd_universal\balance.png" LogicalName="osd/image/osd_universal/balance.png" />
+    <EmbeddedResource Include="mysystem\battry\language\hu-hu.baml" LogicalName="mysystem/battry/language/hu-hu.baml" />
+    <EmbeddedResource Include="tray\language\ru-ru.baml" LogicalName="tray/language/ru-ru.baml" />
+    <EmbeddedResource Include="tray\language\pl-pl.baml" LogicalName="tray/language/pl-pl.baml" />
+    <EmbeddedResource Include="osd\image\fanboost_off.png" LogicalName="osd/image/fanboost_off.png" />
+    <EmbeddedResource Include="osd\image\osd_home_unlock.png" LogicalName="osd/image/osd_home_unlock.png" />
+    <EmbeddedResource Include="osd\osd_vertical.baml" LogicalName="osd/osd_vertical.baml" />
+    <EmbeddedResource Include="osd\image\osd-20overboost.png" LogicalName="osd/image/osd%20overboost.png" />
+    <EmbeddedResource Include="osd\image\osd_universal\turbo-20on.png" LogicalName="osd/image/osd_universal/turbo%20on.png" />
+    <EmbeddedResource Include="osd\image\ups_1.png" LogicalName="osd/image/ups_1.png" />
+    <EmbeddedResource Include="osd\image\ups_0.png" LogicalName="osd/image/ups_0.png" />
+    <EmbeddedResource Include="assets\ico-calibration-done.png" LogicalName="assets/ico-calibration-done.png" />
+    <EmbeddedResource Include="mysystem\battry\language\fr-fr.baml" LogicalName="mysystem/battry/language/fr-fr.baml" />
+    <EmbeddedResource Include="mysystem\battry\language\ja-jp.baml" LogicalName="mysystem/battry/language/ja-jp.baml" />
+    <EmbeddedResource Include="mysystem\battry\language\pt-br.baml" LogicalName="mysystem/battry/language/pt-br.baml" />
+    <EmbeddedResource Include="osd\image\osd_universal\office-20on.png" LogicalName="osd/image/osd_universal/office%20on.png" />
+    <EmbeddedResource Include="osd\image\osd_universal\num-20on.png" LogicalName="osd/image/osd_universal/num%20on.png" />
+    <EmbeddedResource Include="osd\image\osd_universal\lock-20on.png" LogicalName="osd/image/osd_universal/lock%20on.png" />
+    <EmbeddedResource Include="tray\language\es-es.baml" LogicalName="tray/language/es-es.baml" />
+    <EmbeddedResource Include="osd\image\touchpad_0.png" LogicalName="osd/image/touchpad_0.png" />
+    <EmbeddedResource Include="osd\image\touchpad_1.png" LogicalName="osd/image/touchpad_1.png" />
+    <EmbeddedResource Include="osd\image\enthusiast.png" LogicalName="osd/image/enthusiast.png" />
+    <EmbeddedResource Include="osd\language\pt-br.xaml" LogicalName="osd/language/pt-br.xaml" />
+    <EmbeddedResource Include="osd\image\osd_universal\num-20off.png" LogicalName="osd/image/osd_universal/num%20off.png" />
+    <EmbeddedResource Include="tray\trayicon\gamingcenter256.ico" LogicalName="tray/trayicon/gamingcenter256.ico" />
+    <EmbeddedResource Include="osd\image\osd-20balanced.png" LogicalName="osd/image/osd%20balanced.png" />
+    <EmbeddedResource Include="mysystem\battry\language\es-es.baml" LogicalName="mysystem/battry/language/es-es.baml" />
+    <EmbeddedResource Include="osd\image\osd_universal\pad-20on.png" LogicalName="osd/image/osd_universal/pad%20on.png" />
+    <EmbeddedResource Include="osd\image\osd_universal\fn-20unlock.png" LogicalName="osd/image/osd_universal/fn%20unlock.png" />
+    <EmbeddedResource Include="assets\icon-close.png" LogicalName="assets/icon-close.png" />
+    <EmbeddedResource Include="mysystem\battry\language\ru-ru.baml" LogicalName="mysystem/battry/language/ru-ru.baml" />
+    <EmbeddedResource Include="mysystem\battry\language\zh-tw.baml" LogicalName="mysystem/battry/language/zh-tw.baml" />
+    <EmbeddedResource Include="tray\language\ja-jp.baml" LogicalName="tray/language/ja-jp.baml" />
+    <EmbeddedResource Include="osd\language\hu-hu.xaml" LogicalName="osd/language/hu-hu.xaml" />
+    <EmbeddedResource Include="osd\image\osd_universal\scroll-20off.png" LogicalName="osd/image/osd_universal/scroll%20off.png" />
+    <EmbeddedResource Include="osd\image\office-20mode_296x62.png" LogicalName="osd/image/office%20mode_296x62.png" />
+    <EmbeddedResource Include="tray\language\ko-kr.baml" LogicalName="tray/language/ko-kr.baml" />
+    <EmbeddedResource Include="osd\language\de-de.xaml" LogicalName="osd/language/de-de.xaml" />
+    <EmbeddedResource Include="app.baml" LogicalName="app.baml" />
+    <EmbeddedResource Include="mysystem\battry\language\zh-cn.baml" LogicalName="mysystem/battry/language/zh-cn.baml" />
+    <EmbeddedResource Include="tray\language\pt-br.baml" LogicalName="tray/language/pt-br.baml" />
+    <EmbeddedResource Include="osd\image\osd_universal\caps-20off.png" LogicalName="osd/image/osd_universal/caps%20off.png" />
+    <EmbeddedResource Include="mysystem\battry\language\tr-tr.baml" LogicalName="mysystem/battry/language/tr-tr.baml" />
+    <EmbeddedResource Include="osd\language\zh-tw.xaml" LogicalName="osd/language/zh-tw.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="WindowsBase" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="System.Management" />
+    <Reference Include="NAudio">
+      <HintPath>..\..\..\..\..\..\..\..\..\..\..\Program Files\OEM\Control Center\UniwillService\MyControlCenter\NAudio.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Core" />
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\..\..\..\..\..\..\..\..\..\..\Program Files\OEM\Control Center\UniwillService\MyControlCenter\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="Windows" />
+    <Reference Include="System.IdentityModel" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="Colourful">
+      <HintPath>..\..\..\..\..\..\..\..\..\..\..\Program Files\OEM\Control Center\UniwillService\MyControlCenter\Colourful.dll</HintPath>
+    </Reference>
+    <Reference Include="RegistryUtils">
+      <HintPath>..\..\..\..\..\..\..\..\..\..\..\Program Files\OEM\Control Center\UniwillService\MyControlCenter\RegistryUtils.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.RawInput">
+      <HintPath>..\..\..\..\..\..\..\..\..\..\..\Program Files\OEM\Control Center\UniwillService\MyControlCenter\SharpDX.RawInput.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX">
+      <HintPath>..\..\..\..\..\..\..\..\..\..\..\Program Files\OEM\Control Center\UniwillService\MyControlCenter\SharpDX.dll</HintPath>
+    </Reference>
+    <Reference Include="M2Mqtt.Net">
+      <HintPath>..\..\..\..\..\..\..\..\..\..\..\Program Files\OEM\Control Center\UniwillService\MyControlCenter\M2Mqtt.Net.dll</HintPath>
+    </Reference>
+    <Reference Include="IntelOverclockingSDK">
+      <HintPath>..\..\..\..\..\..\..\..\..\..\..\Program Files\OEM\Control Center\UniwillService\MyControlCenter\IntelOverclockingSDK.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Runtime.WindowsRuntime" />
+    <Reference Include="System.Data.SQLite" />
+    <Reference Include="Dapper" />
+  </ItemGroup>
+</Project>

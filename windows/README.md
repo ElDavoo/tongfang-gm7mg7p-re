@@ -20,6 +20,15 @@ reproduces the extraction from those into plain PE/.NET assemblies.
 
 ## Decompiled sources
 
+- **`decompiled/v3.1.39.0/`**: the **whole service, decrypted**. This is
+  the version installed on the machine (Control Center Service 3.1.39.0).
+  It was dumped from the running process after its anti-tamper had
+  decrypted it (`antitamper/README.md`, `tools/dotnet_dump.py`); every
+  method body is present. Start here for anything about what the service
+  actually does. Its README has the provenance and hashes.
+  `vendor-ec-map.md` maps the service's EC writes (issue #87), and
+  `docs/findings.md` §4k covers `BatteryProtection2`. The trees below are
+  older, partial versions and were written before this one existed.
 - **`decompiled/v3.1.6.0/ECSpec.cs`** — the single most useful
   file in this repo for the charge-limit question. Fully clean decompile,
   gives the complete EC address table the Windows service uses, including

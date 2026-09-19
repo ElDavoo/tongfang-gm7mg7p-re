@@ -1,0 +1,13 @@
+namespace DynamicDesk;
+
+public enum MONITORLOCATION
+{
+	RIGHT,
+	LEFT,
+	TOP,
+	BOTTOM,
+	RRGIHTTOP,
+	RIGHTBOTTOM,
+	LEFTTOP,
+	LEFTBOTTOM
+}

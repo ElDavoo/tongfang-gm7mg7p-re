@@ -20,6 +20,14 @@ remaining-capacity reading to match; only at cycle ≥50 do they report the
 true measured full-charge capacity. At 445 cycles, the numbers on this
 machine are the honest ones.
 
+*(**Qualification, 2026-09-19, §4l.** "Honest" needs one qualifier. The EC
+charges this pack to 16.4 V (4.1 V/cell) while the pack requests 17.4 V
+(4.35 V/cell), so the gauge learns full-charge capacity from charges that
+stop 0.25 V/cell short. The 2000 mAh is the capacity to 4.1 V/cell. That is
+still real fade: 4100 mAh is rated at 4.35 V/cell, and nothing here says
+how much of the gap is fade and how much is the lower ceiling. That split
+is unmeasured.)*
+
 ## 2. Feature-by-feature driver verification
 
 Tested one feature at a time, live, with the user observing (not batch
@@ -562,6 +570,20 @@ conditions — but the appealing "the profile sets a charge-voltage ceiling"
 reading has no support and is recorded here as refuted rather than
 dropped, per §4a. `0x0A47` reads `0xFF`.
 
+*(**Correction, 2026-09-19, §4l.** Half of this refutation was itself
+wrong, in the §4c direction: a null result read as settling more than it
+did. `0x0522/0x0523` **is** the charge-voltage target. The EC routine that
+writes it (`ec/annotations/charge-target-derating.md`) subtracts a per-cell
+derating from the pack's requested 17400 mV (`0x030E`), and 16.4 V is the
+ceiling the pack actually plateaus at. What does not hold is "the profile
+selects it". The profile only sets a *floor* on the derating (Stationary
+≥200 mV/cell, Balanced ≥100), and on this pack an age tier of 250 mV/cell
+already exceeds both. So `0x0522` not moving across profile switches was
+exactly what the routine predicts, not evidence against it being a ceiling.
+`0x0A47` reading `0xFF` is the host window not mapping that address (every
+byte in `0x0A40-0x0A5F` reads `0xFF`), not the EC's value. In that routine
+`0x0A47` is the cell count.)*
+
 **Unexplained, and deliberately not interpreted.** At the instant AC was
 connected, `0x0783` and `0x0784` both went `0x00` → `0x4B` (75) and
 `0x0785` went `0x00` → `0xA5`. 75 is a suggestive number next to a
@@ -569,6 +591,16 @@ charge-threshold question and that is exactly the shape of the §4a
 mistake, so it is recorded as an observation and nothing more; the three
 bytes did not move when the profile changed, which is evidence against
 their being the cap.
+
+*(**Resolved, 2026-09-19.** They are CPU power limits, not battery values.
+The DSDT names `0x0783`/`0x0784`/`0x0785` `APL1`/`APL2`/`APL4`
+(`evidence/acpi/dsdt.dsl`, `ECMG` field list). `ECSpec.cs` names them
+`ADDR_PL1/PL2/PL4_SETTING_VALUE` (1923-1925), and the decrypted service's
+`SetPL1Value`/`SetPL2Value`/`SetPL4Value` write them
+(`windows/decompiled/v3.1.39.0/ec-callsites.csv`). 75/75/165 W was the Turbo
+power mode the machine was in that day. On 2026-09-19, in Gaming mode
+after a BIOS reset, they read 60/60/165, matching
+`ADDR_GAMING_PL1/PL2/PL4_DEFAULT_VALUE` at `0x0730-0x0732`.)*
 
 ### 4h. The UI→service command carries a mode name, not a threshold (2026-09-18, issue #4)
 
@@ -692,7 +724,177 @@ which — ideally recovering the 2021-era EC/CC version that did cap — is the
 next step for the charge-limit thread, and is a firmware-archaeology
 question, not a driver one.
 
+*(**Reframed, 2026-09-19, §4l.** "Does not stop or fake charging at ~86%" is
+still what was measured. But "the vendor's own battery protection does not
+cap" is too strong: the EC does cap, by charge voltage (16.4 V against the
+pack's 17.4 V), and the 2021/2026 difference has an explanation in the
+current firmware. No different EC image or CC version is needed to account
+for it. The archaeology in #83 is no longer the only path.)*
+
+### 4j. BIOS defaults, HDMI unplugged, Gaming mode (2026-09-19) — charges through, same as before
+
+Two hypotheses for why the 2021 cap no longer engages were testable without
+new firmware: a BIOS setting (#86), and something about the external
+display. The owner loaded BIOS setup defaults and unplugged the HDMI monitor
+before this session. The power mode was also different from §4i: Gaming,
+the BIOS default, where §4i had run in Turbo (PL1/PL2 60/60 W vs 75/75 W,
+`0x0783/0x0784`). So three things changed at once; that is acceptable only
+because the result is a null.
+
+Coulomb-counted from 63% with Stationary armed
+(`evidence/battery-traces/2026-09-19-windows-bios-defaults.csv`, phase
+`biosdefaults_nohdmi_stationary`, EC sampled every 10 s):
+
+| capacity | 2026-09-18 (§4i) | 2026-09-19 (this run) |
+|---|---|---|
+| 65% | 1700 mA, 16466 mV | 1666 mA, 16466 mV |
+| 75% | 1326 mA | 1326 mA |
+| 86% | 918 mA | 952 mA |
+| 88% | 850 mA | 884 mA |
+
+The two runs match within one EC current step (34 mA) at every point.
+There was no stop, no rate-to-zero, and no gauge jump. With BIOS setup at
+defaults, no external display and the Gaming power mode, this machine
+charges through ~86% exactly as it did under §4i's conditions. That rules
+out "a non-default BIOS setting disabled the cap" and "the HDMI display
+changes charging" for this configuration. It does not rule out a
+*non-default* BIOS setting that would *enable* something; see §4l for why
+that's no longer the leading question.
+
+Also changed by the BIOS reset: `0x07A6` read `0x28` where §4g always saw
+`0x29`, i.e. bit 0 cleared. Bits 4-5 (Stationary) were untouched. Several
+vendor methods read-modify-write other bits of `0x07A6`
+(`windows/decompiled/v3.1.39.0/ec-callsites.csv`: touchpad toggle, mic-mute
+LED, `SetApExist`, `SetOverBoostByDynamicTemp`). Which one owns bit 0 was
+not established.
+
+The EC watch run during this charge was stopped at 86%, part-way through
+(see `docs/related-projects.md`: on a sibling Uniwill board, reading the
+fan-tachometer registers through `ECRR` stalled the fans).
+
+### 4k. `BatteryProtection2` decrypted: what the vendor service actually does (issue #3)
+
+The installed service (Control Center Service 3.1.39.0) was dumped from
+memory after its anti-tamper had decrypted it (`windows/tools/dotnet_dump.py`,
+`windows/decompiled/v3.1.39.0/README.md`). All 4951 method bodies parse
+(3759 were ciphertext on disk), and the whole service now decompiles:
+`windows/decompiled/v3.1.39.0/GCUService/`.
+`GCUService.MySystem/BatteryProtection2.cs` settles what issue #3 asked:
+
+- **The three modes are one read-modify-write of `0x07A6` bits 4-5 and
+  nothing else.** `SetHealthProtectionHigh/Middle/Low()` write `00`/`01`/`10`
+  and are the only EC writes on the mode path. This is §4g's observation,
+  now from the source.
+- **`SetBatteryChargingLimit_Up/Down` exist and are never called.** They are
+  private, and no method of the class calls them. `Receive()` has no branch
+  for `CHARGING_UP_LIMIT`/`CHARGING_DOWN_LIMIT`, even though the enum names
+  them. The bodies are simple: `0x07B9 = (old & 0x80) | limit` (100 means
+  "write 0"), and `0x07D0 = (old & 0x80) + limit` for 1-95. On this service
+  version the numeric pair is dead code, which is why §4g never saw it
+  written.
+- **A second, firmware-side path exists but is also dead.** The
+  `m_BatteryChargingLimit_Up/Down` and `m_BatteryLimitationMode` property
+  setters call `NvramVariable.SetFwVars("ChargeMaximumLimit" /
+  "ChargeMinimumLimit" / "BatteryLimitation", ...)`. Those are fields of
+  `NVRAM_STRUCT`, which `UEFI_Firmware.dll` reads and writes as UEFI variable
+  `UniWillVariable` `{9f33f85c-13ca-4fd1-9c4a-96217722c593}`. But
+  `SetFwVars(string, byte)`'s `switch` has no case for those three names,
+  so the write would leave the struct unchanged; and nothing calls the
+  setters anyway (`LoadBatteryLimitationDefault()` is itself uncalled).
+  Read live (`windows/tools/uefi_var.py`,
+  `evidence/uefi/2026-09-19-UniWillVariable.{bin,txt}`, after the BIOS
+  reset): all three bytes are 0. The variable is 180 bytes, exactly
+  `NVRAM_STRUCT`'s size with C# default alignment, so the decode is
+  unambiguous. Whether the BIOS *reads* those fields is a #86 question.
+- **The service sets High capacity whenever it stops.** `Application_Exit` →
+  `Disable()` and `Uninstall()` both call `SetHealthProtectionHigh()`.
+  `Init()` re-applies the saved mode from the registry on start and on
+  resume.
+- `SetTypeCAdaptorSwitch` drives `0x07CC` bit 7 (`ADDR_COMPLEX_POWER_STATUS`),
+  gated on `0x0742` bit 5 (`GetTypeCAdaptorPrioritySupport`). That is issue
+  #8's `USB_C_POWER_PRIORITY`.
+
+So the question §5 used to leave open, whether the cap is enforced by the
+EC or by Windows software polling, has its answer for this version. The
+service does not enforce anything. It sets a two-bit mode and leaves the
+rest to the EC.
+
+### 4l. The cap that is there: a charge-voltage target, derated by age (2026-09-19)
+
+Every Windows and Linux trace in this repository plateaus at the same pack
+voltage, **16466 mV**, while current tapers. That's constant-voltage
+charging at about 4.12 V/cell (`2026-09-09-profiles.csv` under Trickle,
+Long_Life and Standard; `2026-09-18-windows-stationary.csv`; this run). The
+pack is a 4S high-voltage Li-ion pack: its smart-battery block at EC `0x0300`
+reads manufacturer `BMS-GF`, design voltage 15200 mV (4 × 3.8 V), and
+**requested ChargingVoltage 17400 mV** at `0x030E` (4 × 4.35 V). The EC's
+charge target at `0x0522` is **16400 mV**, exactly 1000 mV less. So a cap
+*is* in force, in volts rather than percent: the pack is charged to about
+4.1 of its rated 4.35 V/cell.
+
+`ec/annotations/charge-target-derating.md` decodes the routine that sets it
+(bank 0 `0xB158`-`0xB38D`, the same function whose profile branches
+`charge-profile-flow.md` §2 found):
+
+```
+target = requested_voltage - tier * cells
+tier (mV/cell) = max( age tier from cycle count (150/250/350/450/550 -> 50..250),
+                      age tier from a temperature-weighted "hours above 4.1 V/cell" counter,
+                      200 if Stationary, 100 if Balanced, 0 if High capacity )
+```
+
+The live numbers pin it: 1000 mV over 4 cells is the **top tier, 250
+mV/cell**. That is above both profile floors, which is why no profile
+changes anything on this pack. That was also tested directly: switching to
+High capacity in the CV phase at 88% (trace phase `cv88_switch_to_highcap`,
+`0x07A6` = `0x08` for 5 minutes, then restored to `0x28`) left `0x0522` at
+16400 and the taper unchanged.
+
+This reconciles §4i with the 2021 screenshot without needing a different
+firmware:
+
+- In 2021 the pack was young, below every age tier, so Stationary's floor
+  (200 mV/cell) set the target: 17400 − 800 = **16600 mV**. With today's
+  +66 mV offset between the EC's reading and its target, that predicts about
+  16.65 V at the plateau. The screenshot shows **16.654 V** while charging at
+  86%.
+- The gauge had learned "full" at a higher voltage. When the charge
+  terminated at the lower ceiling, it smoothed RSOC up to 100% at zero
+  current: the "fake charge". mech-forza-control documents the same
+  gauge-learns-the-cap behaviour on another Uniwill board
+  (`docs/related-projects.md`).
+- By 2026 the age tier had passed the profile floor, the ceiling fell to
+  16.4 V, and the gauge relearned "full" there. A capped charge now looks
+  like an ordinary 0-100% charge, so there's no fake-charge signature left
+  to see.
+
+**Calibration.** The routine is a hand decode with a linear decoder, and its
+entry point has no direct caller in the image (it's reached indirectly), so
+when it runs is unresolved. `cells = 4` and `tier = 250` are inferred from
+the decode plus the live target; the counter (`0x09C9`) and the cell count
+(`0x0A47`) sit in EC RAM the host window doesn't map, so they can't be read
+back. The 2021 reading rests on one screenshot. What *is* measured: 17400
+requested, 16400 targeted, a 16466 mV plateau under every profile, and a
+profile switch that moves nothing.
+
+**What it means for the driver.** On this board, `charge_types`
+(`0x07A6` bits 4-5) is a real control with an EC effect, but only as a
+floor that age can overtake: Stationary means "at most 4.15 V/cell", not
+"80%". `charge_control_end_threshold` (`0x07B9`) has no EC consumer found
+by any method. The Mechrevo fix that makes `0x07B9` work on newer Uniwill
+ECs relies on logic this image doesn't appear to contain
+(`docs/related-projects.md`). Whether the host can override the target (a
+write to `0x0522`, which the routine rewrites) is untested and would need a
+supervised live test.
+
 ## 5. Net status going into the issue tracker
+
+*(**2026-09-19 update, read before the bullets below.** §4j–§4l change the
+charge-limit bullet. The cap exists on the current firmware as a
+charge-voltage target of 16.4 V (§4l), and the service-side question is
+closed by the decrypted source (§4k). The bullets below are kept as
+written.)*
+
 
 - Charging-cap-on-Linux is still an **open problem**, but much narrower.
   The paired `0x07B9`/`0x07D0` write was run (§4f) through the vendor's
@@ -733,3 +935,48 @@ question, not a driver one.
   polling-software-side) without any further live experimentation risk. The
   static route to `0x07D0` is now exhausted on the firmware side: §3b mapped
   every reference the image has and none of them is the EC's.
+  *(**2026-09-19:** done for 3.1.39.0, §4k. The service turns out to write
+  neither `0x07D0` nor `0x07B9`, and to enforce nothing itself.)*
+
+## 6. Firmware identity and UEFI variables (2026-09-19, issues #84 and #86)
+
+**The committed EC image is the one the committed BIOS package flashes.**
+`vendor/bios-1.09/BIOS_1.09.zip` contains `GM7MG7P/GMxMGxx_11.800`,
+byte-identical to `ec/firmware/GMxMGxx_11.800` (SHA-256 `158D1C64…99C4` for
+both). The package's `ecflash.nsh` flashes it with
+`IFUX64.efi GMxMGxx_11.800 0 1`. The live machine runs BIOS `N.1.09A08`
+(2021-03-18), and SMBIOS Type 0 reports EC firmware **1.18**. The vendor's
+`EcVersion` registry value is copied from exactly that
+(`HardwareInfoCollect.getECInfo()` reads WMI `MS_SystemInformation.ECFirmwareMajor/MinorRelease`).
+So the chain is: the BIOS 1.09 package ships `11.800`, and the machine
+runs BIOS 1.09 with an EC reporting 1.18. Reading "11.800" as "1 18 00"
+fits, but nothing here proves the running EC was flashed from this file
+rather than a later one. That still needs #84's byte-level dump.
+
+**The vendor flasher has no read mode.** `ifux64.efi` is "ITE Flash Utility
+2.0.3". From its strings: it sends KBC `0xAD` and EC `0xDC`, enters ITE
+follow mode, reads the SPI ID, then erases, programs and verifies. Its only
+usage is `ifu <ec filename> [burn offset] [reset]`. The pieces of a read
+path exist inside it (verify reads the flash back), but no dump option.
+Dumping the live EC flash therefore needs either a follow-mode reader
+written for the purpose, or an external SPI programmer. Both halt or bypass
+the running EC and are human steps.
+
+**Setup variables are not visible from the OS.**
+`windows/tools/uefi_var.py list` (`evidence/uefi/2026-09-19-variable-list.txt`)
+sees 114 runtime variables. `UniWillVariable`, `OcSetup`, `SetupCpuFeatures`
+and `CpuSetupVolatileData` are among them. AMI's `Setup`, `SaSetup`,
+`PchSetup`, `CpuSetup` and `MeSetup` are not: they are boot-services-only, so
+neither Windows nor Linux can read or write them after boot. A live read of
+a hidden setup option (#86) therefore has to happen pre-OS: a UEFI shell
+with a `setup_var`-style tool, at offsets taken from the Setup IFR. The IFR
+side is doable from committed files (`vendor/bios-1.09/`), and
+`.github/actions/project-setup` now installs UEFIExtract and ifrextractor
+for it. The extraction itself was not done this session.
+
+**`UniWillVariable`** (`{9f33f85c-13ca-4fd1-9c4a-96217722c593}`, 180 bytes,
+NV+BS+RT) is the settings block the vendor service shares with the BIOS;
+the layout comes from the decrypted `NVRAM_STRUCT.cs`. Its battery bytes
+(`BatteryLimitation`, `ChargeMaximumLimit`, `ChargeMinimumLimit`, offsets
+0x30-0x32) read 0 after the BIOS load-defaults. Which of its fields the BIOS
+consumes is not known.

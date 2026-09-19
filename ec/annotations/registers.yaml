@@ -75,6 +75,10 @@ registers:
       unless this bit is set. Driver sets it in uniwill_ec_init(),
       clears it in uniwill_shutdown() -- profile must be reapplied
       every boot by design, not as a workaround.
+      The vendor calls it "AP exist": MyEcCtrl.Set_APExistToEC(bool) is
+      a read-modify-write of bit 0
+      (windows/decompiled/v3.1.39.0/GCUService/MyECIO/MyEcCtrl.cs).
+      Read live 2026-09-19 as 0x01 with the vendor service running.
 
   - name: CTGP_DB_CTRL / OFFSET
     addr: [0x0743, 0x0744, 0x0745, 0x0746]
@@ -188,6 +192,26 @@ registers:
       2021 fake-charge (rate->0 at ~86%, gauge to 100%) did not reproduce.
       So no profile value drives a hard stop on this EC image; the profile
       selects a taper, consistent with the static trace at 0xB2E2.
+      CORRECTION 2026-09-19 (docs/findings.md 4l,
+      ec/annotations/charge-target-derating.md): "selects a taper" is
+      wrong. The 0xB2E2/0xB330 branches set a *floor* on a per-cell
+      charge-voltage derating (Stationary >= 200 mV/cell, Balanced >= 100,
+      High capacity 0). Cycle count and a temperature-weighted
+      high-voltage-hours counter can raise the derating above that floor,
+      and on this pack they have (250 mV/cell -> CHARGE_TARGET 0x0522 =
+      16400 mV). So the profile is a real EC control with no observable
+      effect on this pack at its current age. Confirmed live: a switch to
+      High capacity during the CV phase at 88% left 0x0522 at 16400 and
+      the taper unchanged (evidence/battery-traces/
+      2026-09-19-windows-bios-defaults.csv, phase cv88_switch_to_highcap).
+      Decrypted vendor source (windows/decompiled/v3.1.39.0/GCUService/
+      GCUService.MySystem/BatteryProtection2.cs): the three modes are a
+      read-modify-write of bits 4-5 only, and the service resets to High
+      capacity (00) whenever it exits. Other vendor methods RMW other bits
+      of this byte (touchpad toggle, mic-mute LED, SetApExist, overboost:
+      windows/decompiled/v3.1.39.0/ec-callsites.csv). After a BIOS
+      load-defaults on 2026-09-19 the byte read 0x28 instead of 0x29, so
+      bit 0 cleared; its owner was not established.
 
   - name: CHARGE_CTRL (numeric threshold)
     addr: 0x07B9
@@ -238,6 +262,18 @@ registers:
       the battery-protection UI writes only 0x07A6. That is scoped to those
       events over ~15 minutes, not to "never written": a threshold
       crossing, service restart or cold boot was not in the window.
+      2026-09-19, from decrypted source (docs/findings.md 4k): in Control
+      Center Service 3.1.39.0, BatteryProtection2.SetBatteryChargingLimit_Up
+      (0x07B9 = (old & 0x80) | limit) is private and has no caller, so the
+      scoping above can be dropped for this version: the service never
+      writes this byte. The only other writer in the service is
+      MyFanManager_QC.SetBatteryChargingLimit, and that class is never
+      instantiated in this build: MyFanCtrl picks MyFanManager or a
+      MyFanManager_RamFan1p5* variant. On newer Uniwill ECs (MECHREVO Wujie 14XA,
+      docs/related-projects.md) this byte only takes effect once a gate at
+      0x0742 bit 2 is opened through a stored limit at 0x087F. This image
+      has no direct reference to 0x087F, and its only 0x0742 write sets
+      bit 1, so that mechanism was not found here.
 
   - name: BATTERY_CHARGE_LIMIT_DOWN (Windows-only address, no uniwill-laptop equivalent)
     addr: 0x07D0
@@ -372,6 +408,14 @@ registers:
       (ec/annotations/lightbar-bat-flow.md 6). Plausible for a USB-C
       power-priority byte, but it means the reference count is not
       EC-side evidence -- untested either way.
+      Vendor side, from decrypted source (2026-09-19,
+      windows/decompiled/v3.1.39.0/GCUService/GCUService.MySystem/
+      BatteryProtection2.cs): SetTypeCAdaptorSwitch sets or clears bit 7
+      here (ECSpec name ADDR_COMPLEX_POWER_STATUS). The feature is gated on
+      MyEcCtrl.GetTypeCAdaptorPrioritySupport() = 0x0742 bit 5. Live
+      2026-09-19: 0x0742 = 0x02 (bit 5 clear) and this byte = 0x00. So by
+      the vendor's own test the feature is unsupported on this board,
+      which matters for issue #8.
 
   - name: CPU_TEMP
     addr: 0x043E
@@ -417,3 +461,62 @@ registers:
       resolved a level deeper elsewhere -- the 4 PD ones by the file above,
       the EC-side one at 0xDFD0 by that file's 2 (a 16-bit store helper) --
       so this is a shape of the count, not a gap in the evidence.
+      Also an input to the charge-voltage derating: bank0 0xB167 copies it
+      (big-endian) to 0x0A4C, where 150/250/350/450/550 cycles select 50-250
+      mV/cell (ec/annotations/charge-target-derating.md). Read 450 live on
+      2026-09-19, which puts it in the 200 mV/cell tier by count alone.
+
+  - name: CHARGE_TARGET_MV (charger constant-voltage target)
+    addr: [0x0522, 0x0523]
+    sources: [live, mech-forza-control(ADDR_BATTERY_CHARGE_TARGET)]
+    static_refs: [10, 1]
+    static_refs_main_ec: [10, 1]
+    static_refs_pd_image: [0, 0]
+    status: present-untested
+    note: >
+      Little-endian mV. Written by bank0 0xB378/0xB389 as the pack's
+      requested ChargingVoltage (SBS_CHARGING_VOLTAGE, 0x030E) minus a
+      per-cell derating times the cell count
+      (ec/annotations/charge-target-derating.md). Read live as 0x4010 =
+      16400 mV on 2026-09-18 and 2026-09-19, against 17400 requested. The
+      pack's CV plateau (EC 0x0438) sits at 16466 mV under every profile, in
+      every trace in evidence/battery-traces/. Never written from the host.
+      Whether a host write would stick, or be recomputed by the EC, is
+      untested; hence present-untested despite the live reads.
+      mech-forza-control uses the same address and name on a newer Uniwill
+      EC (docs/related-projects.md).
+
+  - name: SBS_CHARGING_VOLTAGE (pack-requested charge voltage)
+    addr: [0x030E, 0x030F]
+    sources: [live, mech-forza-control(ADDR_BATTERY_BASE_VOLTAGE)]
+    static_refs: [4, 1]
+    static_refs_main_ec: [4, 1]
+    static_refs_pd_image: [0, 0]
+    status: present-untested
+    note: >
+      Little-endian mV. Read live 2026-09-19 as 0x43F8 = 17400 (4 x 4.35
+      V/cell, a high-voltage 4S pack). It sits in a smart-battery data block
+      at 0x0300: "BMS-GF" (manufacturer), then 0x0310 = 3800 (probably the
+      requested ChargingCurrent, mA), 0x0312 = 4100 (design mAh), 0x0314 =
+      0x5195 (manufacture date 2020-12-21, SBS encoding), 0x0316 = 15200
+      (design mV), 0x031A = 2000 (full-charge mAh). The field meanings are
+      read from their values against the SBS layout, not from code. Read by
+      the charge-target routine at bank0 0xB292/0xB297.
+
+  - name: CPU_PL1 / PL2 / PL4 (APL1/APL2/APL4)
+    addr: [0x0783, 0x0784, 0x0785]
+    sources: [dsdt, ecspec-3.1.6.0(ADDR_PL1/PL2/PL4_SETTING_VALUE),
+              vendor-3.1.39.0(SetPL1Value/SetPL2Value/SetPL4Value), live]
+    static_refs: [5, 5, 5]
+    static_refs_main_ec: [5, 5, 5]
+    static_refs_pd_image: [0, 0, 0]
+    status: present-untested
+    note: >
+      Watts. The DSDT names them APL1/APL2/APL4 (ECMG field list), and the
+      decrypted service writes them per power mode
+      (windows/decompiled/v3.1.39.0/ec-callsites.csv). Read live as
+      75/75/165 in Turbo (2026-09-18, the "unexplained 0x4B" of
+      docs/findings.md 4g) and 60/60/165 in Gaming (2026-09-19), matching
+      ECSpec's ADDR_GAMING_PL1/PL2/PL4_DEFAULT_VALUE at 0x0730-0x0732 (read
+      live as 3C 3C A5). Office defaults are at 0x0734-0x0736 (23 23 A5 =
+      35/35/165). Not written from the host; untested as a control.

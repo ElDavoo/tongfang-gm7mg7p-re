@@ -1,0 +1,29 @@
+namespace Define;
+
+public enum ProjectID
+{
+	None,
+	GI,
+	GJ,
+	GK,
+	GICN,
+	GJCN,
+	GK5CN_X,
+	GK7CN_S,
+	GK7CPCS_GK5CQ7Z,
+	PF,
+	GK5CP_4X_5X_6X,
+	IDP,
+	IDY_6Y,
+	IDY_7Y,
+	PF4MU_PF4MN_PF5MU,
+	CML_Gaming,
+	GK7NXXR,
+	GM5MU1Y,
+	PH4TRX1,
+	PH4TUX1,
+	PH4TQx1,
+	PH6TRX1,
+	PH6TQxx,
+	PH4TQE1F1
+}
