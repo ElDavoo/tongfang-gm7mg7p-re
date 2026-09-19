@@ -1,0 +1,869 @@
+file,line,type,method,op,addr,addr_kind,addr_expr,value_expr
+GCUService.MyFan.Overclocking/GpuFeatures.cs,265,GCUService.MyFan.Overclocking.GpuFeatures,SetGpuConfigurableTgpFunCtrlEnable,read,0x0743,literal,1859,ref Data
+GCUService.MyFan.Overclocking/GpuFeatures.cs,267,GCUService.MyFan.Overclocking.GpuFeatures,SetGpuConfigurableTgpFunCtrlEnable,write,0x0743,literal,1859,b3
+GCUService.MyFan.Overclocking/GpuFeatures.cs,278,GCUService.MyFan.Overclocking.GpuFeatures,SetGpuConfigurableTGPTarget,write,0x0744,literal,1860,Convert.ToByte(num)
+GCUService.MyFan.Overclocking/GpuFeatures.cs,290,GCUService.MyFan.Overclocking.GpuFeatures,SetGpuDynamicBoostFunCtrlEnable,read,0x0743,literal,1859,ref Data
+GCUService.MyFan.Overclocking/GpuFeatures.cs,292,GCUService.MyFan.Overclocking.GpuFeatures,SetGpuDynamicBoostFunCtrlEnable,write,0x0743,literal,1859,b3
+GCUService.MyFan.Overclocking/GpuFeatures.cs,302,GCUService.MyFan.Overclocking.GpuFeatures,SetGpuDynamicBoostEnable,read,0x0743,literal,1859,ref Data
+GCUService.MyFan.Overclocking/GpuFeatures.cs,304,GCUService.MyFan.Overclocking.GpuFeatures,SetGpuDynamicBoostEnable,write,0x0743,literal,1859,b3
+GCUService.MyFan.Overclocking/GpuFeatures.cs,309,GCUService.MyFan.Overclocking.GpuFeatures,SetGpuDynamicBoostTotalProcessingPowerTarget,write,0x0745,literal,1861,Convert.ToByte(value)
+GCUService.MyFan.Overclocking/GpuFeatures.cs,314,GCUService.MyFan.Overclocking.GpuFeatures,SetGpuDynamicBoostMaxinumTGP,write,0x0746,literal,1862,Convert.ToByte(value)
+GCUService.MyFan.Overclocking/GpuFeatures.cs,352,GCUService.MyFan.Overclocking.GpuFeatures,SetGpuWhisperModeMainSwitch,read,0x07C5,literal,1989,ref Data
+GCUService.MyFan.Overclocking/GpuFeatures.cs,354,GCUService.MyFan.Overclocking.GpuFeatures,SetGpuWhisperModeMainSwitch,write,0x07C5,literal,1989,b3
+GCUService.MyFan.Overclocking/GpuFeatures.cs,364,GCUService.MyFan.Overclocking.GpuFeatures,SetWhisperModeStatusDisable,read,0x07C6,literal,1990,ref Data
+GCUService.MyFan.Overclocking/GpuFeatures.cs,366,GCUService.MyFan.Overclocking.GpuFeatures,SetWhisperModeStatusDisable,write,0x07C6,literal,1990,b3
+GCUService.MyFan.Overclocking/GpuFeatures.cs,375,GCUService.MyFan.Overclocking.GpuFeatures,GetWisperModeStatus,read,0x07C6,literal,1990,ref Data
+GCUService.MySetting.Muter/MicMuteControl.cs,45,GCUService.MySetting.Muter.MicMuteControl,SetLED,read,0x07A6,literal,1958,ref Data
+GCUService.MySetting.Muter/MicMuteControl.cs,48,GCUService.MySetting.Muter.MicMuteControl,SetLED,write,0x07A6,literal,1958,b
+GCUService.MySystem/BatteryProtection.cs,375,GCUService.MySystem.BatteryProtection,InitializeHealthSwitch,read,0x078E,literal,1934,ref Data
+GCUService.MySystem/BatteryProtection.cs,392,GCUService.MySystem.BatteryProtection,SetProtectionHigh,read,0x07A6,literal,1958,ref Data
+GCUService.MySystem/BatteryProtection.cs,397,GCUService.MySystem.BatteryProtection,SetProtectionHigh,write,0x07A6,literal,1958,data
+GCUService.MySystem/BatteryProtection.cs,404,GCUService.MySystem.BatteryProtection,SetProtectionMiddle,read,0x07A6,literal,1958,ref Data
+GCUService.MySystem/BatteryProtection.cs,409,GCUService.MySystem.BatteryProtection,SetProtectionMiddle,write,0x07A6,literal,1958,data
+GCUService.MySystem/BatteryProtection.cs,416,GCUService.MySystem.BatteryProtection,SetProtectionLow,read,0x07A6,literal,1958,ref Data
+GCUService.MySystem/BatteryProtection.cs,421,GCUService.MySystem.BatteryProtection,SetProtectionLow,write,0x07A6,literal,1958,data
+GCUService.MySystem/BatteryProtection2.cs,274,GCUService.MySystem.BatteryProtection2,SetHealthProtectionHigh,read,0x07A6,literal,1958,ref Data
+GCUService.MySystem/BatteryProtection2.cs,279,GCUService.MySystem.BatteryProtection2,SetHealthProtectionHigh,write,0x07A6,literal,1958,data
+GCUService.MySystem/BatteryProtection2.cs,285,GCUService.MySystem.BatteryProtection2,SetHealthProtectionMiddle,read,0x07A6,literal,1958,ref Data
+GCUService.MySystem/BatteryProtection2.cs,290,GCUService.MySystem.BatteryProtection2,SetHealthProtectionMiddle,write,0x07A6,literal,1958,data
+GCUService.MySystem/BatteryProtection2.cs,296,GCUService.MySystem.BatteryProtection2,SetHealthProtectionLow,read,0x07A6,literal,1958,ref Data
+GCUService.MySystem/BatteryProtection2.cs,301,GCUService.MySystem.BatteryProtection2,SetHealthProtectionLow,write,0x07A6,literal,1958,data
+GCUService.MySystem/BatteryProtection2.cs,316,GCUService.MySystem.BatteryProtection2,SetTypeCAdaptorSwitch,read,0x07CC,literal,1996,ref Data
+GCUService.MySystem/BatteryProtection2.cs,319,GCUService.MySystem.BatteryProtection2,SetTypeCAdaptorSwitch,write,0x07CC,literal,1996,b
+GCUService.MySystem/BatteryProtection2.cs,327,GCUService.MySystem.BatteryProtection2,SetBatteryChargingLimit_Up,read,0x07B9,literal,1977,ref Data
+GCUService.MySystem/BatteryProtection2.cs,329,GCUService.MySystem.BatteryProtection2,SetBatteryChargingLimit_Up,write,0x07B9,literal,1977,b2
+GCUService.MySystem/BatteryProtection2.cs,338,GCUService.MySystem.BatteryProtection2,ReadBatteryChargingLimit_Up,read,0x07B9,literal,1977,ref Data
+GCUService.MySystem/BatteryProtection2.cs,352,GCUService.MySystem.BatteryProtection2,SetBatteryChargingLimit_Down,read,0x07D0,literal,2000,ref Data
+GCUService.MySystem/BatteryProtection2.cs,356,GCUService.MySystem.BatteryProtection2,SetBatteryChargingLimit_Down,write,0x07D0,literal,2000,b2
+GCUService.MySystem/BatteryProtection2.cs,364,GCUService.MySystem.BatteryProtection2,ReadBatteryChargingLimit_Down,read,0x07D0,literal,2000,ref Data
+LightingModel/LM_EC_RGB.cs,19,LightingModel.LM_EC_RGB,ILM_RGBKB_Init,read,0x0740,literal,1856,ref Data
+LightingModel/LM_EC_RGB.cs,26,LightingModel.LM_EC_RGB,ILM_RGBKB_Init,read,0x0766,literal,1894,ref Data
+LightingModel/LM_EC_RGB.cs,38,LightingModel.LM_EC_RGB,ILM_RGBKB_Init,read,0x0740,literal,1856,ref Data
+LightingModel/LM_EC_RGB.cs,45,LightingModel.LM_EC_RGB,ILM_RGBKB_Init,read,0x0766,literal,1894,ref Data
+LightingModel/LM_ITE_RGB.cs,2114,LightingModel.LM_ITE_RGB,Enable_EC_OnkeyPressed,read,0x0741,literal,1857,ref Data
+LightingModel/LM_ITE_RGB.cs,2117,LightingModel.LM_ITE_RGB,Enable_EC_OnkeyPressed,write,0x0741,literal,1857,b
+LightingModel/LM_ITE_RGB.cs,3416,LightingModel.LM_ITE_RGB,ILM_RGBKB_Init,read,0x0740,literal,1856,ref Data
+LightingModel/LM_ITE_RGB.cs,3447,LightingModel.LM_ITE_RGB,ILM_RGBKB_Init,read,0x073C,literal,1852,ref Data2
+LightingModel/LM_ITE_RGB.cs,3467,LightingModel.LM_ITE_RGB,ILM_RGBKB_Init,read,0x073C,literal,1852,ref Data3
+LightingModel/LM_ITE_RGB.cs,3487,LightingModel.LM_ITE_RGB,ILM_RGBKB_Init,read,0x073C,literal,1852,ref Data4
+LightingModel/LM_ITE_RGB.cs,3522,LightingModel.LM_ITE_RGB,ILM_RGBKB_Init,read,0x0740,literal,1856,ref Data
+LightingModel/LM_ITE_RGB.cs,3557,LightingModel.LM_ITE_RGB,ILM_RGBKB_Init,read,0x073C,literal,1852,ref Data2
+LightingModel/LM_ITE_RGB.cs,3580,LightingModel.LM_ITE_RGB,ILM_RGBKB_Init,read,0x073C,literal,1852,ref Data3
+LightingModel/LM_ITE_RGB.cs,3602,LightingModel.LM_ITE_RGB,ILM_RGBKB_Init,read,0x073C,literal,1852,ref Data4
+LightingModel/LM_ITE_RGB.cs,3646,LightingModel.LM_ITE_RGB,ILM_RGBLB_Init,read,0x0740,literal,1856,ref Data
+LightingModel/LM_ITE_RGB.cs,3676,LightingModel.LM_ITE_RGB,ILM_RGBLB_Init,read,0x0740,literal,1856,ref Data
+LightingModel/WKDColor.cs,46,LightingModel.WKDColor,,read,0x0742,literal,1858,ref Data
+LightingModel/WKDColor.cs,69,LightingModel.WKDColor,,read,0x073D,literal,1853,ref Data
+LightingModel/WKDColor.cs,75,LightingModel.WKDColor,,read,0x078E,literal,1934,ref Data
+MyControlCenter/BatteryInfo.cs,45,MyControlCenter.BatteryInfo,GetECBatteryAlert,read,0x0494,literal,1172,ref Data
+MyControlCenter/BatteryInfo.cs,65,MyControlCenter.BatteryInfo,GetECBatteryCycleCount,read,0x04A6,literal,1190,ref Data
+MyControlCenter/BatteryInfo.cs,67,MyControlCenter.BatteryInfo,GetECBatteryCycleCount,read,0x04A7,literal,1191,ref Data
+MyControlCenter/FanFuctionErrorInfo.cs,19,MyControlCenter.FanFuctionErrorInfo,GetECFanAlert,read,0x0741,literal,1857,ref Data
+MyControlCenter/FanInfo.cs,13,MyControlCenter.FanInfo,GetEcCpuFanDuty,read,0x075B,literal,1883,ref Data
+MyControlCenter/FanInfo.cs,20,MyControlCenter.FanInfo,GetEcGpuFanDuty,read,0x075C,literal,1884,ref Data
+MyControlCenter/FanInfo.cs,27,MyControlCenter.FanInfo,GetEcCpuFanRpm,read,0x0464,literal,1124,ref Data
+MyControlCenter/FanInfo.cs,29,MyControlCenter.FanInfo,GetEcCpuFanRpm,read,0x0465,literal,1125,ref Data
+MyControlCenter/FanInfo.cs,37,MyControlCenter.FanInfo,GetEcGpuFanRpm,read,0x046C,literal,1132,ref Data
+MyControlCenter/FanInfo.cs,39,MyControlCenter.FanInfo,GetEcGpuFanRpm,read,0x046B,literal,1131,ref Data
+MyControlCenter/HwFuelGaugeInfo.cs,18,MyControlCenter.HwFuelGaugeInfo,GetECDesignVoltage,read,0x0408,literal,1032,ref Data
+MyControlCenter/HwFuelGaugeInfo.cs,20,MyControlCenter.HwFuelGaugeInfo,GetECDesignVoltage,read,0x0409,literal,1033,ref Data
+MyControlCenter/HwFuelGaugeInfo.cs,32,MyControlCenter.HwFuelGaugeInfo,GetECCurrent,read,0x0434,literal,1076,ref Data
+MyControlCenter/HwFuelGaugeInfo.cs,34,MyControlCenter.HwFuelGaugeInfo,GetECCurrent,read,0x0435,literal,1077,ref Data
+MyControlCenter/MyFanManager.cs,134,MyControlCenter.MyFanManager,Disable,write,0x0751,literal,1873,160
+MyControlCenter/MyFanManager.cs,138,MyControlCenter.MyFanManager,Disable,write,0x0751,literal,1873,0
+MyControlCenter/MyFanManager.cs,143,MyControlCenter.MyFanManager,Disable,write,0x0751,literal,1873,0
+MyControlCenter/MyFanManager.cs,1103,MyControlCenter.MyFanManager,SetFanBoost,write,0x0751,literal,1873,64
+MyControlCenter/MyFanManager.cs,1107,MyControlCenter.MyFanManager,SetFanBoost,write,0x0751,literal,1873,0
+MyControlCenter/MyFanManager.cs,1118,MyControlCenter.MyFanManager,SetFanMode,write,0x0751,literal,1873,64
+MyControlCenter/MyFanManager.cs,1122,MyControlCenter.MyFanManager,SetFanMode,write,0x0751,literal,1873,0
+MyControlCenter/MyFanManager.cs,1140,MyControlCenter.MyFanManager,SetFanMode,write,0x0751,literal,1873,160
+MyControlCenter/MyFanManager.cs,1167,MyControlCenter.MyFanManager,SetFanMode,write,0x0751,literal,1873,160
+MyControlCenter/MyFanManager.cs,1265,MyControlCenter.MyFanManager,SetFanMode,write,0x0751,literal,1873,16
+MyControlCenter/MyFanManager.cs,1294,MyControlCenter.MyFanManager,GetFanTablePWMDefault,read,0x0786,literal,1926,ref Data
+MyControlCenter/MyFanManager.cs,1295,MyControlCenter.MyFanManager,GetFanTablePWMDefault,read,0x0787,literal,1927,ref Data2
+MyControlCenter/MyFanManager.cs,1296,MyControlCenter.MyFanManager,GetFanTablePWMDefault,read,0x0788,literal,1928,ref Data3
+MyControlCenter/MyFanManager.cs,1297,MyControlCenter.MyFanManager,GetFanTablePWMDefault,read,0x0789,literal,1929,ref Data4
+MyControlCenter/MyFanManager.cs,1298,MyControlCenter.MyFanManager,GetFanTablePWMDefault,read,0x078A,literal,1930,ref Data5
+MyControlCenter/MyFanManager.cs,1328,MyControlCenter.MyFanManager,GetProjectIdFromEC,read,0x0740,literal,1856,ref Data
+MyControlCenter/MyFanManager.cs,1335,MyControlCenter.MyFanManager,SetFanBoost,read,0x0751,literal,1873,ref Data
+MyControlCenter/MyFanManager.cs,1338,MyControlCenter.MyFanManager,SetFanBoost,write,0x0751,literal,1873,b
+MyControlCenter/MyFanManager.cs,1345,MyControlCenter.MyFanManager,GetFanMode,read,0x0751,literal,1873,ref Data
+MyControlCenter/MyFanManager.cs,1386,MyControlCenter.MyFanManager,SetTurboMode,read,0x078C,literal,1932,ref Data
+MyControlCenter/MyFanManager.cs,1389,MyControlCenter.MyFanManager,SetTurboMode,write,0x078C,literal,1932,b3
+MyControlCenter/MyFanManager.cs,1398,MyControlCenter.MyFanManager,GetTurboModeLevel,read,0x078C,literal,1932,ref Data
+MyControlCenter/MyFanManager.cs,1420,MyControlCenter.MyFanManager,GetMyFan3p5Flag,read,0x078E,literal,1934,ref Data
+MyControlCenter/MyFanManager.cs,1437,MyControlCenter.MyFanManager,GetQkeyDefine,read,0x0782,literal,1922,ref Data
+MyControlCenter/MyFanManager.cs,1449,MyControlCenter.MyFanManager,GetOfficeModeFanTableType,read,0x0782,literal,1922,ref Data
+MyControlCenter/MyFanManager.cs,1461,MyControlCenter.MyFanManager,GetDefaultMode,read,0x0782,literal,1922,ref Data
+MyControlCenter/MyFanManager.cs,1476,MyControlCenter.MyFanManager,SetOfficeModeAdv_MinSpeed,write,0x079E,literal,1950,(byte)Level2Pwm(level)
+MyControlCenter/MyFanManager.cs,1481,MyControlCenter.MyFanManager,SetOfficeModeAdv_MinTemp,write,0x079F,literal,1951,(byte)temp
+MyControlCenter/MyFanManager.cs,1486,MyControlCenter.MyFanManager,SetOfficeModeAdv_ExtraSpeed,write,0x07A0,literal,1952,(byte)level
+MyControlCenter/MyFanManager.cs,1492,MyControlCenter.MyFanManager,IsOnApLoadFromEc,read,0x07A6,literal,1958,ref Data
+MyControlCenter/MyFanManager.cs,1503,MyControlCenter.MyFanManager,SetApExist,read,0x07A6,literal,1958,ref Data
+MyControlCenter/MyFanManager.cs,1506,MyControlCenter.MyFanManager,SetApExist,write,0x07A6,literal,1958,b
+MyControlCenter/MyFanManager.cs,1514,MyControlCenter.MyFanManager,GetGamingPLDefaultValue,read,0x0730,literal,1840,ref Data
+MyControlCenter/MyFanManager.cs,1515,MyControlCenter.MyFanManager,GetGamingPLDefaultValue,read,0x0731,literal,1841,ref Data2
+MyControlCenter/MyFanManager.cs,1516,MyControlCenter.MyFanManager,GetGamingPLDefaultValue,read,0x0732,literal,1842,ref Data3
+MyControlCenter/MyFanManager.cs,1527,MyControlCenter.MyFanManager,GetOfficePLDefaultValue,read,0x0734,literal,1844,ref Data
+MyControlCenter/MyFanManager.cs,1528,MyControlCenter.MyFanManager,GetOfficePLDefaultValue,read,0x0735,literal,1845,ref Data2
+MyControlCenter/MyFanManager.cs,1529,MyControlCenter.MyFanManager,GetOfficePLDefaultValue,read,0x0736,literal,1846,ref Data3
+MyControlCenter/MyFanManager.cs,1539,MyControlCenter.MyFanManager,GetTauDefaultValue,read,0x0738,literal,1848,ref Data
+MyControlCenter/MyFanManager.cs,1550,MyControlCenter.MyFanManager,SetBasicFanLevel,write,0x0751,literal,1873,(byte)(128 + level)
+MyControlCenter/MyFanManager.cs,1555,MyControlCenter.MyFanManager,SetFan_L1_PWM,write,0x0743,literal,1859,(byte)PWM2Byte(level)
+MyControlCenter/MyFanManager.cs,1560,MyControlCenter.MyFanManager,SetFan_L2_PWM,write,0x0744,literal,1860,(byte)PWM2Byte(level)
+MyControlCenter/MyFanManager.cs,1565,MyControlCenter.MyFanManager,SetFan_L3_PWM,write,0x0745,literal,1861,(byte)PWM2Byte(level)
+MyControlCenter/MyFanManager.cs,1570,MyControlCenter.MyFanManager,SetFan_L4_PWM,write,0x0746,literal,1862,(byte)PWM2Byte(level)
+MyControlCenter/MyFanManager.cs,1575,MyControlCenter.MyFanManager,SetFan_L5_PWM,write,0x0747,literal,1863,(byte)PWM2Byte(level)
+MyControlCenter/MyFanManager.cs,1600,MyControlCenter.MyFanManager,SetFan_Optimized_PWM,write,0x0743,literal,1859,pwm1
+MyControlCenter/MyFanManager.cs,1601,MyControlCenter.MyFanManager,SetFan_Optimized_PWM,write,0x0744,literal,1860,pwm2
+MyControlCenter/MyFanManager.cs,1602,MyControlCenter.MyFanManager,SetFan_Optimized_PWM,write,0x0745,literal,1861,pwm3
+MyControlCenter/MyFanManager.cs,1603,MyControlCenter.MyFanManager,SetFan_Optimized_PWM,write,0x0746,literal,1862,pwm4
+MyControlCenter/MyFanManager.cs,1604,MyControlCenter.MyFanManager,SetFan_Optimized_PWM,write,0x0747,literal,1863,pwm5
+MyControlCenter/MyFanManager.cs,1609,MyControlCenter.MyFanManager,SetFan_Optimized_PWM,write,0x0743,literal,1859,(byte)(Pwms.T1_PWM * 2)
+MyControlCenter/MyFanManager.cs,1610,MyControlCenter.MyFanManager,SetFan_Optimized_PWM,write,0x0744,literal,1860,(byte)(Pwms.T2_PWM * 2)
+MyControlCenter/MyFanManager.cs,1611,MyControlCenter.MyFanManager,SetFan_Optimized_PWM,write,0x0745,literal,1861,(byte)(Pwms.T3_PWM * 2)
+MyControlCenter/MyFanManager.cs,1612,MyControlCenter.MyFanManager,SetFan_Optimized_PWM,write,0x0746,literal,1862,(byte)(Pwms.T4_PWM * 2)
+MyControlCenter/MyFanManager.cs,1613,MyControlCenter.MyFanManager,SetFan_Optimized_PWM,write,0x0747,literal,1863,(byte)(Pwms.T5_PWM * 2)
+MyControlCenter/MyFanManager.cs,1618,MyControlCenter.MyFanManager,SetPL1Value,write,0x0783,literal,1923,(byte)PL1
+MyControlCenter/MyFanManager.cs,1623,MyControlCenter.MyFanManager,SetPL2Value,write,0x0784,literal,1924,(byte)PL2
+MyControlCenter/MyFanManager.cs,1628,MyControlCenter.MyFanManager,SetPL4Value,write,0x0785,literal,1925,(byte)PL4
+MyControlCenter/MyFanManager.cs,1794,MyControlCenter.MyFanManager,IsSupportMyFan3,read,0x0782,literal,1922,ref Data
+MyControlCenter/MyFanManager_Intel.cs,1456,MyControlCenter.MyFanManager_Intel,SetFanMode,write,0x0751,literal,1873,64
+MyControlCenter/MyFanManager_Intel.cs,1461,MyControlCenter.MyFanManager_Intel,SetFanMode,write,0x0751,literal,1873,0
+MyControlCenter/MyFanManager_Intel.cs,1468,MyControlCenter.MyFanManager_Intel,SetFanMode,write,0x0751,literal,1873,160
+MyControlCenter/MyFanManager_Intel.cs,1474,MyControlCenter.MyFanManager_Intel,SetFanMode,write,0x0751,literal,1873,160
+MyControlCenter/MyFanManager_Intel.cs,1478,MyControlCenter.MyFanManager_Intel,SetFanMode,write,0x0751,literal,1873,64
+MyControlCenter/MyFanManager_Intel.cs,1731,MyControlCenter.MyFanManager_Intel,GetFanTablePWMDefault,read,0x0786,literal,1926,ref Data
+MyControlCenter/MyFanManager_Intel.cs,1732,MyControlCenter.MyFanManager_Intel,GetFanTablePWMDefault,read,0x0787,literal,1927,ref Data2
+MyControlCenter/MyFanManager_Intel.cs,1733,MyControlCenter.MyFanManager_Intel,GetFanTablePWMDefault,read,0x0788,literal,1928,ref Data3
+MyControlCenter/MyFanManager_Intel.cs,1734,MyControlCenter.MyFanManager_Intel,GetFanTablePWMDefault,read,0x0789,literal,1929,ref Data4
+MyControlCenter/MyFanManager_Intel.cs,1735,MyControlCenter.MyFanManager_Intel,GetFanTablePWMDefault,read,0x078A,literal,1930,ref Data5
+MyControlCenter/MyFanManager_Intel.cs,1765,MyControlCenter.MyFanManager_Intel,GetProjectIdFromEC,read,0x0740,literal,1856,ref Data
+MyControlCenter/MyFanManager_Intel.cs,1772,MyControlCenter.MyFanManager_Intel,SetFanBoost,read,0x0751,literal,1873,ref Data
+MyControlCenter/MyFanManager_Intel.cs,1775,MyControlCenter.MyFanManager_Intel,SetFanBoost,write,0x0751,literal,1873,b
+MyControlCenter/MyFanManager_Intel.cs,1782,MyControlCenter.MyFanManager_Intel,GetFanMode,read,0x0751,literal,1873,ref Data
+MyControlCenter/MyFanManager_Intel.cs,1805,MyControlCenter.MyFanManager_Intel,SetGPUdstate,read,0x078B,literal,1931,ref Data
+MyControlCenter/MyFanManager_Intel.cs,1809,MyControlCenter.MyFanManager_Intel,SetGPUdstate,write,0x078B,literal,1931,(byte)num
+MyControlCenter/MyFanManager_Intel.cs,1828,MyControlCenter.MyFanManager_Intel,SetGPUdstateByGpuMode,read,0x078B,literal,1931,ref Data
+MyControlCenter/MyFanManager_Intel.cs,1832,MyControlCenter.MyFanManager_Intel,SetGPUdstateByGpuMode,write,0x078B,literal,1931,(byte)num2
+MyControlCenter/MyFanManager_Intel.cs,1857,MyControlCenter.MyFanManager_Intel,SetTurboMode,read,0x078C,literal,1932,ref Data
+MyControlCenter/MyFanManager_Intel.cs,1860,MyControlCenter.MyFanManager_Intel,SetTurboMode,write,0x078C,literal,1932,b3
+MyControlCenter/MyFanManager_Intel.cs,1869,MyControlCenter.MyFanManager_Intel,GetTurboModeLevel,read,0x078C,literal,1932,ref Data
+MyControlCenter/MyFanManager_Intel.cs,1891,MyControlCenter.MyFanManager_Intel,GetMyFan3p5Flag,read,0x078E,literal,1934,ref Data
+MyControlCenter/MyFanManager_Intel.cs,1908,MyControlCenter.MyFanManager_Intel,GetQkeyDefine,read,0x0782,literal,1922,ref Data
+MyControlCenter/MyFanManager_Intel.cs,1920,MyControlCenter.MyFanManager_Intel,GetOfficeModeFanTableType,read,0x0782,literal,1922,ref Data
+MyControlCenter/MyFanManager_Intel.cs,1932,MyControlCenter.MyFanManager_Intel,GetDefaultMode,read,0x0782,literal,1922,ref Data
+MyControlCenter/MyFanManager_Intel.cs,1947,MyControlCenter.MyFanManager_Intel,SetOfficeModeAdv_MinSpeed,write,0x079E,literal,1950,(byte)Level2Pwm(level)
+MyControlCenter/MyFanManager_Intel.cs,1952,MyControlCenter.MyFanManager_Intel,SetOfficeModeAdv_MinTemp,write,0x079F,literal,1951,(byte)temp
+MyControlCenter/MyFanManager_Intel.cs,1957,MyControlCenter.MyFanManager_Intel,SetOfficeModeAdv_ExtraSpeed,write,0x07A0,literal,1952,(byte)level
+MyControlCenter/MyFanManager_Intel.cs,1981,MyControlCenter.MyFanManager_Intel,SetPowerLedStatus,read,0x07A5,literal,1957,ref Data
+MyControlCenter/MyFanManager_Intel.cs,1984,MyControlCenter.MyFanManager_Intel,SetPowerLedStatus,write,0x07A5,literal,1957,b3
+MyControlCenter/MyFanManager_Intel.cs,1994,MyControlCenter.MyFanManager_Intel,SetFanQuietModeEnable,read,0x07A5,literal,1957,ref Data
+MyControlCenter/MyFanManager_Intel.cs,1997,MyControlCenter.MyFanManager_Intel,SetFanQuietModeEnable,write,0x07A5,literal,1957,b3
+MyControlCenter/MyFanManager_Intel.cs,2007,MyControlCenter.MyFanManager_Intel,SetUserHiModeToFantable,read,0x07A5,literal,1957,ref Data
+MyControlCenter/MyFanManager_Intel.cs,2010,MyControlCenter.MyFanManager_Intel,SetUserHiModeToFantable,write,0x07A5,literal,1957,b3
+MyControlCenter/MyFanManager_Intel.cs,2020,MyControlCenter.MyFanManager_Intel,SetOverBoostMode,read,0x07A5,literal,1957,ref Data
+MyControlCenter/MyFanManager_Intel.cs,2023,MyControlCenter.MyFanManager_Intel,SetOverBoostMode,write,0x07A5,literal,1957,b3
+MyControlCenter/MyFanManager_Intel.cs,2033,MyControlCenter.MyFanManager_Intel,SetPowerStatus,read,0x07A5,literal,1957,ref Data
+MyControlCenter/MyFanManager_Intel.cs,2036,MyControlCenter.MyFanManager_Intel,SetPowerStatus,write,0x07A5,literal,1957,b3
+MyControlCenter/MyFanManager_Intel.cs,2042,MyControlCenter.MyFanManager_Intel,IsFollowBiosIndex,read,0x07A5,literal,1957,ref Data
+MyControlCenter/MyFanManager_Intel.cs,2104,MyControlCenter.MyFanManager_Intel,SetOverBoostByDynamicTemp,read,0x07A6,literal,1958,ref Data
+MyControlCenter/MyFanManager_Intel.cs,2107,MyControlCenter.MyFanManager_Intel,SetOverBoostByDynamicTemp,write,0x07A6,literal,1958,b3
+MyControlCenter/MyFanManager_Intel.cs,2113,MyControlCenter.MyFanManager_Intel,IsOnApLoadFromEc,read,0x07A6,literal,1958,ref Data
+MyControlCenter/MyFanManager_Intel.cs,2124,MyControlCenter.MyFanManager_Intel,SetApExist,read,0x07A6,literal,1958,ref Data
+MyControlCenter/MyFanManager_Intel.cs,2127,MyControlCenter.MyFanManager_Intel,SetApExist,write,0x07A6,literal,1958,b
+MyControlCenter/MyFanManager_Intel.cs,2148,MyControlCenter.MyFanManager_Intel,SetModeProfileIndex,write,0x07AB,literal,1963,(byte)num
+MyControlCenter/MyFanManager_Intel.cs,2156,MyControlCenter.MyFanManager_Intel,GetModeProfileIndex,read,0x07AB,literal,1963,ref Data
+MyControlCenter/MyFanManager_Intel.cs,2175,MyControlCenter.MyFanManager_Intel,UpdatePLDefault_ByCheckPortId,read,0x07FB,literal,2043,ref Data
+MyControlCenter/MyFanManager_Intel.cs,2179,MyControlCenter.MyFanManager_Intel,UpdatePLDefault_ByCheckPortId,write,0x07FB,literal,2043,214
+MyControlCenter/MyFanManager_Intel.cs,2186,MyControlCenter.MyFanManager_Intel,UpdatePLDefault_ByCheckPortId,write,0x0730,literal,1840,(byte)GamingMode_PL1_Default
+MyControlCenter/MyFanManager_Intel.cs,2187,MyControlCenter.MyFanManager_Intel,UpdatePLDefault_ByCheckPortId,write,0x0731,literal,1841,(byte)GamingMode_PL2_Default
+MyControlCenter/MyFanManager_Intel.cs,2188,MyControlCenter.MyFanManager_Intel,UpdatePLDefault_ByCheckPortId,write,0x0734,literal,1844,(byte)OfficeMode_PL1_Default
+MyControlCenter/MyFanManager_Intel.cs,2189,MyControlCenter.MyFanManager_Intel,UpdatePLDefault_ByCheckPortId,write,0x0735,literal,1845,(byte)OfficeMode_PL2_Default
+MyControlCenter/MyFanManager_Intel.cs,2190,MyControlCenter.MyFanManager_Intel,UpdatePLDefault_ByCheckPortId,write,0x07A7,literal,1959,(byte)BatterySaver_PL1_Default
+MyControlCenter/MyFanManager_Intel.cs,2191,MyControlCenter.MyFanManager_Intel,UpdatePLDefault_ByCheckPortId,write,0x07A8,literal,1960,(byte)BatterySaver_PL2_Default
+MyControlCenter/MyFanManager_Intel.cs,2206,MyControlCenter.MyFanManager_Intel,GetGamingPLDefaultValue,read,0x0730,literal,1840,ref Data
+MyControlCenter/MyFanManager_Intel.cs,2207,MyControlCenter.MyFanManager_Intel,GetGamingPLDefaultValue,read,0x0731,literal,1841,ref Data2
+MyControlCenter/MyFanManager_Intel.cs,2208,MyControlCenter.MyFanManager_Intel,GetGamingPLDefaultValue,read,0x0732,literal,1842,ref Data3
+MyControlCenter/MyFanManager_Intel.cs,2220,MyControlCenter.MyFanManager_Intel,GetOfficePLDefaultValue,read,0x0734,literal,1844,ref Data
+MyControlCenter/MyFanManager_Intel.cs,2221,MyControlCenter.MyFanManager_Intel,GetOfficePLDefaultValue,read,0x0735,literal,1845,ref Data2
+MyControlCenter/MyFanManager_Intel.cs,2222,MyControlCenter.MyFanManager_Intel,GetOfficePLDefaultValue,read,0x0736,literal,1846,ref Data3
+MyControlCenter/MyFanManager_Intel.cs,2234,MyControlCenter.MyFanManager_Intel,GetBatterySaverPLDefaultValue,read,0x07A7,literal,1959,ref Data
+MyControlCenter/MyFanManager_Intel.cs,2235,MyControlCenter.MyFanManager_Intel,GetBatterySaverPLDefaultValue,read,0x07A8,literal,1960,ref Data2
+MyControlCenter/MyFanManager_Intel.cs,2236,MyControlCenter.MyFanManager_Intel,GetBatterySaverPLDefaultValue,read,0x07A9,literal,1961,ref Data3
+MyControlCenter/MyFanManager_Intel.cs,2247,MyControlCenter.MyFanManager_Intel,GetTauDefaultValue,read,0x0738,literal,1848,ref Data
+MyControlCenter/MyFanManager_Intel.cs,2258,MyControlCenter.MyFanManager_Intel,SetBasicFanLevel,write,0x0751,literal,1873,(byte)(128 + level)
+MyControlCenter/MyFanManager_Intel.cs,2263,MyControlCenter.MyFanManager_Intel,SetFan_L1_PWM,write,0x0743,literal,1859,(byte)PWM2Byte(level)
+MyControlCenter/MyFanManager_Intel.cs,2268,MyControlCenter.MyFanManager_Intel,SetFan_L2_PWM,write,0x0744,literal,1860,(byte)PWM2Byte(level)
+MyControlCenter/MyFanManager_Intel.cs,2273,MyControlCenter.MyFanManager_Intel,SetFan_L3_PWM,write,0x0745,literal,1861,(byte)PWM2Byte(level)
+MyControlCenter/MyFanManager_Intel.cs,2278,MyControlCenter.MyFanManager_Intel,SetFan_L4_PWM,write,0x0746,literal,1862,(byte)PWM2Byte(level)
+MyControlCenter/MyFanManager_Intel.cs,2283,MyControlCenter.MyFanManager_Intel,SetFan_L5_PWM,write,0x0747,literal,1863,(byte)PWM2Byte(level)
+MyControlCenter/MyFanManager_Intel.cs,2308,MyControlCenter.MyFanManager_Intel,SetFan_Optimized_PWM,write,0x0743,literal,1859,pwm1
+MyControlCenter/MyFanManager_Intel.cs,2309,MyControlCenter.MyFanManager_Intel,SetFan_Optimized_PWM,write,0x0744,literal,1860,pwm2
+MyControlCenter/MyFanManager_Intel.cs,2310,MyControlCenter.MyFanManager_Intel,SetFan_Optimized_PWM,write,0x0745,literal,1861,pwm3
+MyControlCenter/MyFanManager_Intel.cs,2311,MyControlCenter.MyFanManager_Intel,SetFan_Optimized_PWM,write,0x0746,literal,1862,pwm4
+MyControlCenter/MyFanManager_Intel.cs,2312,MyControlCenter.MyFanManager_Intel,SetFan_Optimized_PWM,write,0x0747,literal,1863,pwm5
+MyControlCenter/MyFanManager_Intel.cs,2317,MyControlCenter.MyFanManager_Intel,SetFan_Optimized_PWM,write,0x0743,literal,1859,(byte)(Pwms.T1_PWM * 2)
+MyControlCenter/MyFanManager_Intel.cs,2318,MyControlCenter.MyFanManager_Intel,SetFan_Optimized_PWM,write,0x0744,literal,1860,(byte)(Pwms.T2_PWM * 2)
+MyControlCenter/MyFanManager_Intel.cs,2319,MyControlCenter.MyFanManager_Intel,SetFan_Optimized_PWM,write,0x0745,literal,1861,(byte)(Pwms.T3_PWM * 2)
+MyControlCenter/MyFanManager_Intel.cs,2320,MyControlCenter.MyFanManager_Intel,SetFan_Optimized_PWM,write,0x0746,literal,1862,(byte)(Pwms.T4_PWM * 2)
+MyControlCenter/MyFanManager_Intel.cs,2321,MyControlCenter.MyFanManager_Intel,SetFan_Optimized_PWM,write,0x0747,literal,1863,(byte)(Pwms.T5_PWM * 2)
+MyControlCenter/MyFanManager_Intel.cs,2326,MyControlCenter.MyFanManager_Intel,SetPL1Value,write,0x0783,literal,1923,(byte)PL1
+MyControlCenter/MyFanManager_Intel.cs,2331,MyControlCenter.MyFanManager_Intel,SetPL2Value,write,0x0784,literal,1924,(byte)PL2
+MyControlCenter/MyFanManager_Intel.cs,2336,MyControlCenter.MyFanManager_Intel,SetPL4Value,write,0x0785,literal,1925,(byte)PL4
+MyControlCenter/MyFanManager_Intel.cs,2439,MyControlCenter.MyFanManager_Intel,IsSupportMyFan3,read,0x0782,literal,1922,ref Data
+MyControlCenter/MyFanManager_QC.cs,906,MyControlCenter.MyFanManager_QC,SetFanMode,write,0x0751,literal,1873,0
+MyControlCenter/MyFanManager_QC.cs,912,MyControlCenter.MyFanManager_QC,SetFanMode,write,0x0751,literal,1873,160
+MyControlCenter/MyFanManager_QC.cs,923,MyControlCenter.MyFanManager_QC,SetFanMode,write,0x0751,literal,1873,160
+MyControlCenter/MyFanManager_QC.cs,927,MyControlCenter.MyFanManager_QC,SetFanMode,write,0x0751,literal,1873,64
+MyControlCenter/MyFanManager_QC.cs,1178,MyControlCenter.MyFanManager_QC,GetFanTablePWMDefault,read,0x0786,literal,1926,ref Data
+MyControlCenter/MyFanManager_QC.cs,1179,MyControlCenter.MyFanManager_QC,GetFanTablePWMDefault,read,0x0787,literal,1927,ref Data2
+MyControlCenter/MyFanManager_QC.cs,1180,MyControlCenter.MyFanManager_QC,GetFanTablePWMDefault,read,0x0788,literal,1928,ref Data3
+MyControlCenter/MyFanManager_QC.cs,1181,MyControlCenter.MyFanManager_QC,GetFanTablePWMDefault,read,0x0789,literal,1929,ref Data4
+MyControlCenter/MyFanManager_QC.cs,1182,MyControlCenter.MyFanManager_QC,GetFanTablePWMDefault,read,0x078A,literal,1930,ref Data5
+MyControlCenter/MyFanManager_QC.cs,1212,MyControlCenter.MyFanManager_QC,GetProjectIdFromEC,read,0x0740,literal,1856,ref Data
+MyControlCenter/MyFanManager_QC.cs,1219,MyControlCenter.MyFanManager_QC,SetFanBoost,read,0x0751,literal,1873,ref Data
+MyControlCenter/MyFanManager_QC.cs,1222,MyControlCenter.MyFanManager_QC,SetFanBoost,write,0x0751,literal,1873,b
+MyControlCenter/MyFanManager_QC.cs,1229,MyControlCenter.MyFanManager_QC,GetFanMode,read,0x0751,literal,1873,ref Data
+MyControlCenter/MyFanManager_QC.cs,1252,MyControlCenter.MyFanManager_QC,SetGPUdstate,read,0x078B,literal,1931,ref Data
+MyControlCenter/MyFanManager_QC.cs,1256,MyControlCenter.MyFanManager_QC,SetGPUdstate,write,0x078B,literal,1931,(byte)num
+MyControlCenter/MyFanManager_QC.cs,1275,MyControlCenter.MyFanManager_QC,SetGPUdstateByGpuMode,read,0x078B,literal,1931,ref Data
+MyControlCenter/MyFanManager_QC.cs,1279,MyControlCenter.MyFanManager_QC,SetGPUdstateByGpuMode,write,0x078B,literal,1931,(byte)num2
+MyControlCenter/MyFanManager_QC.cs,1304,MyControlCenter.MyFanManager_QC,SetTurboMode,read,0x078C,literal,1932,ref Data
+MyControlCenter/MyFanManager_QC.cs,1307,MyControlCenter.MyFanManager_QC,SetTurboMode,write,0x078C,literal,1932,b3
+MyControlCenter/MyFanManager_QC.cs,1316,MyControlCenter.MyFanManager_QC,GetTurboModeLevel,read,0x078C,literal,1932,ref Data
+MyControlCenter/MyFanManager_QC.cs,1338,MyControlCenter.MyFanManager_QC,GetMyFan3p5Flag,read,0x078E,literal,1934,ref Data
+MyControlCenter/MyFanManager_QC.cs,1355,MyControlCenter.MyFanManager_QC,GetQkeyDefine,read,0x0782,literal,1922,ref Data
+MyControlCenter/MyFanManager_QC.cs,1367,MyControlCenter.MyFanManager_QC,GetOfficeModeFanTableType,read,0x0782,literal,1922,ref Data
+MyControlCenter/MyFanManager_QC.cs,1379,MyControlCenter.MyFanManager_QC,GetDefaultMode,read,0x0782,literal,1922,ref Data
+MyControlCenter/MyFanManager_QC.cs,1394,MyControlCenter.MyFanManager_QC,SetOfficeModeAdv_MinSpeed,write,0x079E,literal,1950,(byte)Level2Pwm(level)
+MyControlCenter/MyFanManager_QC.cs,1399,MyControlCenter.MyFanManager_QC,SetOfficeModeAdv_MinTemp,write,0x079F,literal,1951,(byte)temp
+MyControlCenter/MyFanManager_QC.cs,1404,MyControlCenter.MyFanManager_QC,SetOfficeModeAdv_ExtraSpeed,write,0x07A0,literal,1952,(byte)level
+MyControlCenter/MyFanManager_QC.cs,1414,MyControlCenter.MyFanManager_QC,SetFanDutyCycleReduction,read,0x07A3,literal,1955,ref Data
+MyControlCenter/MyFanManager_QC.cs,1416,MyControlCenter.MyFanManager_QC,SetFanDutyCycleReduction,write,0x07A3,literal,1955,b3
+MyControlCenter/MyFanManager_QC.cs,1426,MyControlCenter.MyFanManager_QC,SetFanNeverResolveToZero,read,0x07A3,literal,1955,ref Data
+MyControlCenter/MyFanManager_QC.cs,1428,MyControlCenter.MyFanManager_QC,SetFanNeverResolveToZero,write,0x07A3,literal,1955,b3
+MyControlCenter/MyFanManager_QC.cs,1434,MyControlCenter.MyFanManager_QC,GetFanNeverResolveToZero,read,0x07A3,literal,1955,ref Data
+MyControlCenter/MyFanManager_QC.cs,1463,MyControlCenter.MyFanManager_QC,SetPowerLedStatus,read,0x07A5,literal,1957,ref Data
+MyControlCenter/MyFanManager_QC.cs,1466,MyControlCenter.MyFanManager_QC,SetPowerLedStatus,write,0x07A5,literal,1957,b3
+MyControlCenter/MyFanManager_QC.cs,1476,MyControlCenter.MyFanManager_QC,SetFanQuietModeEnable,read,0x07A5,literal,1957,ref Data
+MyControlCenter/MyFanManager_QC.cs,1479,MyControlCenter.MyFanManager_QC,SetFanQuietModeEnable,write,0x07A5,literal,1957,b3
+MyControlCenter/MyFanManager_QC.cs,1489,MyControlCenter.MyFanManager_QC,SetUserHiModeToFantable,read,0x07A5,literal,1957,ref Data
+MyControlCenter/MyFanManager_QC.cs,1492,MyControlCenter.MyFanManager_QC,SetUserHiModeToFantable,write,0x07A5,literal,1957,b3
+MyControlCenter/MyFanManager_QC.cs,1502,MyControlCenter.MyFanManager_QC,SetOverBoostMode,read,0x07A5,literal,1957,ref Data
+MyControlCenter/MyFanManager_QC.cs,1505,MyControlCenter.MyFanManager_QC,SetOverBoostMode,write,0x07A5,literal,1957,b3
+MyControlCenter/MyFanManager_QC.cs,1515,MyControlCenter.MyFanManager_QC,SetPowerStatus,read,0x07A5,literal,1957,ref Data
+MyControlCenter/MyFanManager_QC.cs,1518,MyControlCenter.MyFanManager_QC,SetPowerStatus,write,0x07A5,literal,1957,b3
+MyControlCenter/MyFanManager_QC.cs,1553,MyControlCenter.MyFanManager_QC,FollowBiosIndex,read,0x07A5,literal,1957,ref Data
+MyControlCenter/MyFanManager_QC.cs,1587,MyControlCenter.MyFanManager_QC,SetOverBoostByDynamicTemp,read,0x07A6,literal,1958,ref Data
+MyControlCenter/MyFanManager_QC.cs,1590,MyControlCenter.MyFanManager_QC,SetOverBoostByDynamicTemp,write,0x07A6,literal,1958,b3
+MyControlCenter/MyFanManager_QC.cs,1596,MyControlCenter.MyFanManager_QC,SetApExist,read,0x07A6,literal,1958,ref Data
+MyControlCenter/MyFanManager_QC.cs,1599,MyControlCenter.MyFanManager_QC,SetApExist,write,0x07A6,literal,1958,b
+MyControlCenter/MyFanManager_QC.cs,1620,MyControlCenter.MyFanManager_QC,SetModeProfileIndex,write,0x07AB,literal,1963,(byte)num
+MyControlCenter/MyFanManager_QC.cs,1628,MyControlCenter.MyFanManager_QC,GetModeProfileIndex,read,0x07AB,literal,1963,ref Data
+MyControlCenter/MyFanManager_QC.cs,1665,MyControlCenter.MyFanManager_QC,SetModeProfileIndexHigh,read,0x07AB,literal,1963,ref Data
+MyControlCenter/MyFanManager_QC.cs,1667,MyControlCenter.MyFanManager_QC,SetModeProfileIndexHigh,write,0x07AB,literal,1963,b2
+MyControlCenter/MyFanManager_QC.cs,1688,MyControlCenter.MyFanManager_QC,SetModeProfileIndexLow,read,0x07AB,literal,1963,ref Data
+MyControlCenter/MyFanManager_QC.cs,1690,MyControlCenter.MyFanManager_QC,SetModeProfileIndexLow,write,0x07AB,literal,1963,b2
+MyControlCenter/MyFanManager_QC.cs,1699,MyControlCenter.MyFanManager_QC,GetModeProfileIndexHigh,read,0x07AB,literal,1963,ref Data
+MyControlCenter/MyFanManager_QC.cs,1721,MyControlCenter.MyFanManager_QC,GetModeProfileIndexLow,read,0x07AB,literal,1963,ref Data
+MyControlCenter/MyFanManager_QC.cs,1742,MyControlCenter.MyFanManager_QC,SetBatteryChargingLimit,read,0x07B9,literal,1977,ref Data
+MyControlCenter/MyFanManager_QC.cs,1744,MyControlCenter.MyFanManager_QC,SetBatteryChargingLimit,write,0x07B9,literal,1977,b2
+MyControlCenter/MyFanManager_QC.cs,1753,MyControlCenter.MyFanManager_QC,ReadBatteryChargingLimit,read,0x07B9,literal,1977,ref Data
+MyControlCenter/MyFanManager_QC.cs,1765,MyControlCenter.MyFanManager_QC,UpdatePLDefault_ByCheckPortId,read,0x07FB,literal,2043,ref Data
+MyControlCenter/MyFanManager_QC.cs,1769,MyControlCenter.MyFanManager_QC,UpdatePLDefault_ByCheckPortId,write,0x07FB,literal,2043,214
+MyControlCenter/MyFanManager_QC.cs,1776,MyControlCenter.MyFanManager_QC,UpdatePLDefault_ByCheckPortId,write,0x0730,literal,1840,(byte)GamingMode_PL1_Default
+MyControlCenter/MyFanManager_QC.cs,1777,MyControlCenter.MyFanManager_QC,UpdatePLDefault_ByCheckPortId,write,0x0731,literal,1841,(byte)GamingMode_PL2_Default
+MyControlCenter/MyFanManager_QC.cs,1778,MyControlCenter.MyFanManager_QC,UpdatePLDefault_ByCheckPortId,write,0x0734,literal,1844,(byte)OfficeMode_PL1_Default
+MyControlCenter/MyFanManager_QC.cs,1779,MyControlCenter.MyFanManager_QC,UpdatePLDefault_ByCheckPortId,write,0x0735,literal,1845,(byte)OfficeMode_PL2_Default
+MyControlCenter/MyFanManager_QC.cs,1780,MyControlCenter.MyFanManager_QC,UpdatePLDefault_ByCheckPortId,write,0x07A7,literal,1959,(byte)BatterySaver_PL1_Default
+MyControlCenter/MyFanManager_QC.cs,1781,MyControlCenter.MyFanManager_QC,UpdatePLDefault_ByCheckPortId,write,0x07A8,literal,1960,(byte)BatterySaver_PL2_Default
+MyControlCenter/MyFanManager_QC.cs,1796,MyControlCenter.MyFanManager_QC,GetGamingPLDefaultValue,read,0x0730,literal,1840,ref Data
+MyControlCenter/MyFanManager_QC.cs,1797,MyControlCenter.MyFanManager_QC,GetGamingPLDefaultValue,read,0x0731,literal,1841,ref Data2
+MyControlCenter/MyFanManager_QC.cs,1798,MyControlCenter.MyFanManager_QC,GetGamingPLDefaultValue,read,0x0732,literal,1842,ref Data3
+MyControlCenter/MyFanManager_QC.cs,1810,MyControlCenter.MyFanManager_QC,GetOfficePLDefaultValue,read,0x0734,literal,1844,ref Data
+MyControlCenter/MyFanManager_QC.cs,1811,MyControlCenter.MyFanManager_QC,GetOfficePLDefaultValue,read,0x0735,literal,1845,ref Data2
+MyControlCenter/MyFanManager_QC.cs,1812,MyControlCenter.MyFanManager_QC,GetOfficePLDefaultValue,read,0x0736,literal,1846,ref Data3
+MyControlCenter/MyFanManager_QC.cs,1824,MyControlCenter.MyFanManager_QC,GetBatterySaverPLDefaultValue,read,0x07A7,literal,1959,ref Data
+MyControlCenter/MyFanManager_QC.cs,1825,MyControlCenter.MyFanManager_QC,GetBatterySaverPLDefaultValue,read,0x07A8,literal,1960,ref Data2
+MyControlCenter/MyFanManager_QC.cs,1826,MyControlCenter.MyFanManager_QC,GetBatterySaverPLDefaultValue,read,0x07A9,literal,1961,ref Data3
+MyControlCenter/MyFanManager_QC.cs,1837,MyControlCenter.MyFanManager_QC,GetTauDefaultValue,read,0x0738,literal,1848,ref Data
+MyControlCenter/MyFanManager_QC.cs,1848,MyControlCenter.MyFanManager_QC,SetBasicFanLevel,write,0x0751,literal,1873,(byte)(128 + level)
+MyControlCenter/MyFanManager_QC.cs,1853,MyControlCenter.MyFanManager_QC,SetFan_L1_PWM,write,0x0743,literal,1859,(byte)PWM2Byte(level)
+MyControlCenter/MyFanManager_QC.cs,1858,MyControlCenter.MyFanManager_QC,SetFan_L2_PWM,write,0x0744,literal,1860,(byte)PWM2Byte(level)
+MyControlCenter/MyFanManager_QC.cs,1863,MyControlCenter.MyFanManager_QC,SetFan_L3_PWM,write,0x0745,literal,1861,(byte)PWM2Byte(level)
+MyControlCenter/MyFanManager_QC.cs,1868,MyControlCenter.MyFanManager_QC,SetFan_L4_PWM,write,0x0746,literal,1862,(byte)PWM2Byte(level)
+MyControlCenter/MyFanManager_QC.cs,1873,MyControlCenter.MyFanManager_QC,SetFan_L5_PWM,write,0x0747,literal,1863,(byte)PWM2Byte(level)
+MyControlCenter/MyFanManager_QC.cs,1898,MyControlCenter.MyFanManager_QC,SetFan_Optimized_PWM,write,0x0743,literal,1859,pwm1
+MyControlCenter/MyFanManager_QC.cs,1899,MyControlCenter.MyFanManager_QC,SetFan_Optimized_PWM,write,0x0744,literal,1860,pwm2
+MyControlCenter/MyFanManager_QC.cs,1900,MyControlCenter.MyFanManager_QC,SetFan_Optimized_PWM,write,0x0745,literal,1861,pwm3
+MyControlCenter/MyFanManager_QC.cs,1901,MyControlCenter.MyFanManager_QC,SetFan_Optimized_PWM,write,0x0746,literal,1862,pwm4
+MyControlCenter/MyFanManager_QC.cs,1902,MyControlCenter.MyFanManager_QC,SetFan_Optimized_PWM,write,0x0747,literal,1863,pwm5
+MyControlCenter/MyFanManager_QC.cs,1907,MyControlCenter.MyFanManager_QC,SetFan_Optimized_PWM,write,0x0743,literal,1859,(byte)(Pwms.T1_PWM * 2)
+MyControlCenter/MyFanManager_QC.cs,1908,MyControlCenter.MyFanManager_QC,SetFan_Optimized_PWM,write,0x0744,literal,1860,(byte)(Pwms.T2_PWM * 2)
+MyControlCenter/MyFanManager_QC.cs,1909,MyControlCenter.MyFanManager_QC,SetFan_Optimized_PWM,write,0x0745,literal,1861,(byte)(Pwms.T3_PWM * 2)
+MyControlCenter/MyFanManager_QC.cs,1910,MyControlCenter.MyFanManager_QC,SetFan_Optimized_PWM,write,0x0746,literal,1862,(byte)(Pwms.T4_PWM * 2)
+MyControlCenter/MyFanManager_QC.cs,1911,MyControlCenter.MyFanManager_QC,SetFan_Optimized_PWM,write,0x0747,literal,1863,(byte)(Pwms.T5_PWM * 2)
+MyControlCenter/MyFanManager_QC.cs,1916,MyControlCenter.MyFanManager_QC,SetPL1Value,write,0x0783,literal,1923,(byte)PL1
+MyControlCenter/MyFanManager_QC.cs,1921,MyControlCenter.MyFanManager_QC,SetPL2Value,write,0x0784,literal,1924,(byte)PL2
+MyControlCenter/MyFanManager_QC.cs,1926,MyControlCenter.MyFanManager_QC,SetPL4Value,write,0x0785,literal,1925,(byte)PL4
+MyControlCenter/MyFanManager_QC.cs,2025,MyControlCenter.MyFanManager_QC,IsSupportMyFan3,read,0x0782,literal,1922,ref Data
+MyControlCenter/MyRgbLightBarDefault.cs,300,MyControlCenter.MyRgbLightBarDefault,GetProjectIdFromEC,read,0x0740,literal,1856,ref Data
+MyControlCenter/MyRgbLightBarDefault.cs,307,MyControlCenter.MyRgbLightBarDefault,GetRGBLightBarModeFromEC,read,0x0740,literal,1856,ref Data
+MyControlCenter/MyRgbLightBarDefault.cs,314,MyControlCenter.MyRgbLightBarDefault,isSupportRGBLBFromEC,read,0x078E,literal,1934,ref Data
+MyControlCenter/MyRgbLightBarDefault.cs,370,MyControlCenter.MyRgbLightBarDefault,WriteECRAM,write,0x0748,literal,1864,128
+MyControlCenter/MyRgbLightBarDefault.cs,374,MyControlCenter.MyRgbLightBarDefault,WriteECRAM,write,0x0748,literal,1864,136
+MyControlCenter/MyRgbLightBarDefault.cs,376,MyControlCenter.MyRgbLightBarDefault,WriteECRAM,write,0x0749,literal,1865,0
+MyControlCenter/MyRgbLightBarDefault.cs,377,MyControlCenter.MyRgbLightBarDefault,WriteECRAM,write,0x074A,literal,1866,0
+MyControlCenter/MyRgbLightBarDefault.cs,378,MyControlCenter.MyRgbLightBarDefault,WriteECRAM,write,0x074B,literal,1867,0
+MyControlCenter/MyRgbLightBarDefault.cs,383,MyControlCenter.MyRgbLightBarDefault,WriteECRAM,write,0x0748,literal,1864,0
+MyControlCenter/MyRgbLightBarDefault.cs,387,MyControlCenter.MyRgbLightBarDefault,WriteECRAM,write,0x0748,literal,1864,8
+MyControlCenter/MyRgbLightBarDefault.cs,390,MyControlCenter.MyRgbLightBarDefault,WriteECRAM,write,0x0749,literal,1865,(byte)table
+MyControlCenter/MyRgbLightBarDefault.cs,392,MyControlCenter.MyRgbLightBarDefault,WriteECRAM,write,0x074A,literal,1866,(byte)table
+MyControlCenter/MyRgbLightBarDefault.cs,394,MyControlCenter.MyRgbLightBarDefault,WriteECRAM,write,0x074B,literal,1867,(byte)table
+MyControlCenter/MyRgbLightBarDefault.cs,398,MyControlCenter.MyRgbLightBarDefault,WriteECRAM,write,0x0748,literal,1864,8
+MyControlCenter/MyRgbLightBarDefault.cs,399,MyControlCenter.MyRgbLightBarDefault,WriteECRAM,write,0x0749,literal,1865,0
+MyControlCenter/MyRgbLightBarDefault.cs,400,MyControlCenter.MyRgbLightBarDefault,WriteECRAM,write,0x074A,literal,1866,0
+MyControlCenter/MyRgbLightBarDefault.cs,401,MyControlCenter.MyRgbLightBarDefault,WriteECRAM,write,0x074B,literal,1867,0
+MyControlCenter/MyRgbLightBarDefault_Intel.cs,47,MyControlCenter.MyRgbLightBarDefault_Intel,Uninstall,write,0x0748,literal,1864,8
+MyControlCenter/MyRgbLightBarDefault_Intel.cs,48,MyControlCenter.MyRgbLightBarDefault_Intel,Uninstall,write,0x0749,literal,1865,0
+MyControlCenter/MyRgbLightBarDefault_Intel.cs,49,MyControlCenter.MyRgbLightBarDefault_Intel,Uninstall,write,0x074A,literal,1866,0
+MyControlCenter/MyRgbLightBarDefault_Intel.cs,50,MyControlCenter.MyRgbLightBarDefault_Intel,Uninstall,write,0x074B,literal,1867,0
+MyControlCenter/MyRgbLightBarDefault_Intel.cs,153,MyControlCenter.MyRgbLightBarDefault_Intel,GetProjectIdFromEC,read,0x0740,literal,1856,ref Data
+MyControlCenter/MyRgbLightBarDefault_Intel.cs,163,MyControlCenter.MyRgbLightBarDefault_Intel,WriteECRAM,write,0x0748,literal,1864,128
+MyControlCenter/MyRgbLightBarDefault_Intel.cs,164,MyControlCenter.MyRgbLightBarDefault_Intel,WriteECRAM,write,0x0749,literal,1865,0
+MyControlCenter/MyRgbLightBarDefault_Intel.cs,165,MyControlCenter.MyRgbLightBarDefault_Intel,WriteECRAM,write,0x074A,literal,1866,0
+MyControlCenter/MyRgbLightBarDefault_Intel.cs,166,MyControlCenter.MyRgbLightBarDefault_Intel,WriteECRAM,write,0x074B,literal,1867,0
+MyControlCenter/MyRgbLightBarDefault_Intel.cs,170,MyControlCenter.MyRgbLightBarDefault_Intel,WriteECRAM,write,0x0748,literal,1864,0
+MyControlCenter/MyRgbLightBarDefault_Intel.cs,171,MyControlCenter.MyRgbLightBarDefault_Intel,WriteECRAM,write,0x0749,literal,1865,(byte)(_red_level * 2)
+MyControlCenter/MyRgbLightBarDefault_Intel.cs,172,MyControlCenter.MyRgbLightBarDefault_Intel,WriteECRAM,write,0x074A,literal,1866,(byte)(_green_level * 2)
+MyControlCenter/MyRgbLightBarDefault_Intel.cs,173,MyControlCenter.MyRgbLightBarDefault_Intel,WriteECRAM,write,0x074B,literal,1867,(byte)(_blue_level * 2)
+MyControlCenter/MyRgbLightBarDefault_Intel.cs,178,MyControlCenter.MyRgbLightBarDefault_Intel,WriteECRAM,write,0x0748,literal,1864,8
+MyControlCenter/MyRgbLightBarDefault_Intel.cs,179,MyControlCenter.MyRgbLightBarDefault_Intel,WriteECRAM,write,0x0749,literal,1865,0
+MyControlCenter/MyRgbLightBarDefault_Intel.cs,180,MyControlCenter.MyRgbLightBarDefault_Intel,WriteECRAM,write,0x074A,literal,1866,0
+MyControlCenter/MyRgbLightBarDefault_Intel.cs,181,MyControlCenter.MyRgbLightBarDefault_Intel,WriteECRAM,write,0x074B,literal,1867,0
+MyControlCenter/MyRgbLightBarDefault_QC.cs,47,MyControlCenter.MyRgbLightBarDefault_QC,Uninstall,write,0x0748,literal,1864,8
+MyControlCenter/MyRgbLightBarDefault_QC.cs,48,MyControlCenter.MyRgbLightBarDefault_QC,Uninstall,write,0x0749,literal,1865,0
+MyControlCenter/MyRgbLightBarDefault_QC.cs,49,MyControlCenter.MyRgbLightBarDefault_QC,Uninstall,write,0x074A,literal,1866,0
+MyControlCenter/MyRgbLightBarDefault_QC.cs,50,MyControlCenter.MyRgbLightBarDefault_QC,Uninstall,write,0x074B,literal,1867,0
+MyControlCenter/MyRgbLightBarDefault_QC.cs,153,MyControlCenter.MyRgbLightBarDefault_QC,GetProjectIdFromEC,read,0x0740,literal,1856,ref Data
+MyControlCenter/MyRgbLightBarDefault_QC.cs,163,MyControlCenter.MyRgbLightBarDefault_QC,WriteECRAM,write,0x0748,literal,1864,128
+MyControlCenter/MyRgbLightBarDefault_QC.cs,164,MyControlCenter.MyRgbLightBarDefault_QC,WriteECRAM,write,0x0749,literal,1865,0
+MyControlCenter/MyRgbLightBarDefault_QC.cs,165,MyControlCenter.MyRgbLightBarDefault_QC,WriteECRAM,write,0x074A,literal,1866,0
+MyControlCenter/MyRgbLightBarDefault_QC.cs,166,MyControlCenter.MyRgbLightBarDefault_QC,WriteECRAM,write,0x074B,literal,1867,0
+MyControlCenter/MyRgbLightBarDefault_QC.cs,170,MyControlCenter.MyRgbLightBarDefault_QC,WriteECRAM,write,0x0748,literal,1864,0
+MyControlCenter/MyRgbLightBarDefault_QC.cs,172,MyControlCenter.MyRgbLightBarDefault_QC,WriteECRAM,write,0x0749,literal,1865,(byte)table
+MyControlCenter/MyRgbLightBarDefault_QC.cs,174,MyControlCenter.MyRgbLightBarDefault_QC,WriteECRAM,write,0x074A,literal,1866,(byte)table
+MyControlCenter/MyRgbLightBarDefault_QC.cs,176,MyControlCenter.MyRgbLightBarDefault_QC,WriteECRAM,write,0x074B,literal,1867,(byte)table
+MyControlCenter/MyRgbLightBarDefault_QC.cs,181,MyControlCenter.MyRgbLightBarDefault_QC,WriteECRAM,write,0x0748,literal,1864,8
+MyControlCenter/MyRgbLightBarDefault_QC.cs,182,MyControlCenter.MyRgbLightBarDefault_QC,WriteECRAM,write,0x0749,literal,1865,0
+MyControlCenter/MyRgbLightBarDefault_QC.cs,183,MyControlCenter.MyRgbLightBarDefault_QC,WriteECRAM,write,0x074A,literal,1866,0
+MyControlCenter/MyRgbLightBarDefault_QC.cs,184,MyControlCenter.MyRgbLightBarDefault_QC,WriteECRAM,write,0x074B,literal,1867,0
+MyControlCenter/MyRgbLightbarManager.cs,438,MyControlCenter.MyRgbLightbarManager,SetColorful,read,0x0748,literal,1864,ref Data
+MyControlCenter/MyRgbLightbarManager.cs,443,MyControlCenter.MyRgbLightbarManager,SetColorful,write,0x0748,literal,1864,data
+MyControlCenter/MyRgbLightbarManager.cs,449,MyControlCenter.MyRgbLightbarManager,SetColorful,write,0x0748,literal,1864,data2
+MyControlCenter/MyRgbLightbarManager.cs,457,MyControlCenter.MyRgbLightbarManager,SetBreathingLightEffect,read,0x0748,literal,1864,ref Data
+MyControlCenter/MyRgbLightbarManager.cs,462,MyControlCenter.MyRgbLightbarManager,SetBreathingLightEffect,write,0x0748,literal,1864,data
+MyControlCenter/MyRgbLightbarManager.cs,467,MyControlCenter.MyRgbLightbarManager,SetBreathingLightEffect,write,0x0748,literal,1864,data2
+MyControlCenter/MyRgbLightbarManager.cs,476,MyControlCenter.MyRgbLightbarManager,SetMyLightBarOnOff,read,0x0748,literal,1864,ref Data
+MyControlCenter/MyRgbLightbarManager.cs,489,MyControlCenter.MyRgbLightbarManager,SetMyLightBarOnOff,write,0x0748,literal,1864,b
+MyControlCenter/MyRgbLightbarManager.cs,550,MyControlCenter.MyRgbLightbarManager,SetApExist,read,0x0748,literal,1864,ref Data
+MyControlCenter/MyRgbLightbarManager.cs,553,MyControlCenter.MyRgbLightbarManager,SetApExist,write,0x0748,literal,1864,b
+MyControlCenter/MyRgbLightbarManager.cs,564,MyControlCenter.MyRgbLightbarManager,SetRedLevel,write,0x0749,literal,1865,(byte)num
+MyControlCenter/MyRgbLightbarManager.cs,597,MyControlCenter.MyRgbLightbarManager,SetGreenLevel,write,0x074A,literal,1866,(byte)num
+MyControlCenter/MyRgbLightbarManager.cs,630,MyControlCenter.MyRgbLightbarManager,SetBlueLevel,write,0x074B,literal,1867,(byte)num
+MyControlCenter/MyRgbLightbarManager.cs,661,MyControlCenter.MyRgbLightbarManager,SetTriggerBit4,read,0x0748,literal,1864,ref Data
+MyControlCenter/MyRgbLightbarManager.cs,665,MyControlCenter.MyRgbLightbarManager,SetTriggerBit4,write,0x0748,literal,1864,b
+MyControlCenter/MyRgbLightbarManager.cs,679,MyControlCenter.MyRgbLightbarManager,SetTriggerBit5,read,0x0748,literal,1864,ref Data
+MyControlCenter/MyRgbLightbarManager.cs,683,MyControlCenter.MyRgbLightbarManager,SetTriggerBit5,write,0x0748,literal,1864,b
+MyControlCenter/MyRgbLightbarManager_Intel.cs,462,MyControlCenter.MyRgbLightbarManager_Intel,SetColorful,read,0x0748,literal,1864,ref Data
+MyControlCenter/MyRgbLightbarManager_Intel.cs,467,MyControlCenter.MyRgbLightbarManager_Intel,SetColorful,write,0x0748,literal,1864,data
+MyControlCenter/MyRgbLightbarManager_Intel.cs,473,MyControlCenter.MyRgbLightbarManager_Intel,SetColorful,write,0x0748,literal,1864,data2
+MyControlCenter/MyRgbLightbarManager_Intel.cs,481,MyControlCenter.MyRgbLightbarManager_Intel,SetBreathingLightEffect,read,0x0748,literal,1864,ref Data
+MyControlCenter/MyRgbLightbarManager_Intel.cs,486,MyControlCenter.MyRgbLightbarManager_Intel,SetBreathingLightEffect,write,0x0748,literal,1864,data
+MyControlCenter/MyRgbLightbarManager_Intel.cs,491,MyControlCenter.MyRgbLightbarManager_Intel,SetBreathingLightEffect,write,0x0748,literal,1864,data2
+MyControlCenter/MyRgbLightbarManager_Intel.cs,499,MyControlCenter.MyRgbLightbarManager_Intel,SetBreathingMordenStandby,read,0x0748,literal,1864,ref Data
+MyControlCenter/MyRgbLightbarManager_Intel.cs,504,MyControlCenter.MyRgbLightbarManager_Intel,SetBreathingMordenStandby,write,0x0748,literal,1864,data
+MyControlCenter/MyRgbLightbarManager_Intel.cs,510,MyControlCenter.MyRgbLightbarManager_Intel,SetBreathingMordenStandby,write,0x0748,literal,1864,data2
+MyControlCenter/MyRgbLightbarManager_Intel.cs,520,MyControlCenter.MyRgbLightbarManager_Intel,SetMyLightBarOnOff,read,0x0748,literal,1864,ref Data
+MyControlCenter/MyRgbLightbarManager_Intel.cs,531,MyControlCenter.MyRgbLightbarManager_Intel,SetMyLightBarOnOff,write,0x0748,literal,1864,b
+MyControlCenter/MyRgbLightbarManager_Intel.cs,542,MyControlCenter.MyRgbLightbarManager_Intel,SetApExist,read,0x0748,literal,1864,ref Data
+MyControlCenter/MyRgbLightbarManager_Intel.cs,545,MyControlCenter.MyRgbLightbarManager_Intel,SetApExist,write,0x0748,literal,1864,b
+MyControlCenter/MyRgbLightbarManager_Intel.cs,554,MyControlCenter.MyRgbLightbarManager_Intel,SetRedLevel,write,0x0749,literal,1865,(byte)(level * 2)
+MyControlCenter/MyRgbLightbarManager_Intel.cs,563,MyControlCenter.MyRgbLightbarManager_Intel,SetGreenLevel,write,0x074A,literal,1866,(byte)(level * 2)
+MyControlCenter/MyRgbLightbarManager_Intel.cs,572,MyControlCenter.MyRgbLightbarManager_Intel,SetBlueLevel,write,0x074B,literal,1867,(byte)(level * 2)
+MyControlCenter/MyRgbLightbarManager_Intel.cs,581,MyControlCenter.MyRgbLightbarManager_Intel,SetTriggerBit4,read,0x0748,literal,1864,ref Data
+MyControlCenter/MyRgbLightbarManager_Intel.cs,585,MyControlCenter.MyRgbLightbarManager_Intel,SetTriggerBit4,write,0x0748,literal,1864,b
+MyControlCenter/MyRgbLightbarManager_Intel.cs,599,MyControlCenter.MyRgbLightbarManager_Intel,SetTriggerBit5,read,0x0748,literal,1864,ref Data
+MyControlCenter/MyRgbLightbarManager_Intel.cs,603,MyControlCenter.MyRgbLightbarManager_Intel,SetTriggerBit5,write,0x0748,literal,1864,b
+MyControlCenter/MyRgbLightbarManager_QC.cs,469,MyControlCenter.MyRgbLightbarManager_QC,SetColorful,read,0x0748,literal,1864,ref Data
+MyControlCenter/MyRgbLightbarManager_QC.cs,474,MyControlCenter.MyRgbLightbarManager_QC,SetColorful,write,0x0748,literal,1864,data
+MyControlCenter/MyRgbLightbarManager_QC.cs,480,MyControlCenter.MyRgbLightbarManager_QC,SetColorful,write,0x0748,literal,1864,data2
+MyControlCenter/MyRgbLightbarManager_QC.cs,488,MyControlCenter.MyRgbLightbarManager_QC,SetBreathingLightEffect,read,0x0748,literal,1864,ref Data
+MyControlCenter/MyRgbLightbarManager_QC.cs,493,MyControlCenter.MyRgbLightbarManager_QC,SetBreathingLightEffect,write,0x0748,literal,1864,data
+MyControlCenter/MyRgbLightbarManager_QC.cs,498,MyControlCenter.MyRgbLightbarManager_QC,SetBreathingLightEffect,write,0x0748,literal,1864,data2
+MyControlCenter/MyRgbLightbarManager_QC.cs,506,MyControlCenter.MyRgbLightbarManager_QC,SetBreathingMordenStandby,read,0x0748,literal,1864,ref Data
+MyControlCenter/MyRgbLightbarManager_QC.cs,511,MyControlCenter.MyRgbLightbarManager_QC,SetBreathingMordenStandby,write,0x0748,literal,1864,data
+MyControlCenter/MyRgbLightbarManager_QC.cs,517,MyControlCenter.MyRgbLightbarManager_QC,SetBreathingMordenStandby,write,0x0748,literal,1864,data2
+MyControlCenter/MyRgbLightbarManager_QC.cs,527,MyControlCenter.MyRgbLightbarManager_QC,SetMyLightBarOnOff,read,0x0748,literal,1864,ref Data
+MyControlCenter/MyRgbLightbarManager_QC.cs,538,MyControlCenter.MyRgbLightbarManager_QC,SetMyLightBarOnOff,write,0x0748,literal,1864,b
+MyControlCenter/MyRgbLightbarManager_QC.cs,549,MyControlCenter.MyRgbLightbarManager_QC,SetApExist,read,0x0748,literal,1864,ref Data
+MyControlCenter/MyRgbLightbarManager_QC.cs,552,MyControlCenter.MyRgbLightbarManager_QC,SetApExist,write,0x0748,literal,1864,b
+MyControlCenter/MyRgbLightbarManager_QC.cs,563,MyControlCenter.MyRgbLightbarManager_QC,SetRedLevel,write,0x0749,literal,1865,(byte)num
+MyControlCenter/MyRgbLightbarManager_QC.cs,574,MyControlCenter.MyRgbLightbarManager_QC,SetGreenLevel,write,0x074A,literal,1866,(byte)num
+MyControlCenter/MyRgbLightbarManager_QC.cs,585,MyControlCenter.MyRgbLightbarManager_QC,SetBlueLevel,write,0x074B,literal,1867,(byte)num
+MyControlCenter/MyRgbLightbarManager_QC.cs,594,MyControlCenter.MyRgbLightbarManager_QC,SetTriggerBit4,read,0x0748,literal,1864,ref Data
+MyControlCenter/MyRgbLightbarManager_QC.cs,598,MyControlCenter.MyRgbLightbarManager_QC,SetTriggerBit4,write,0x0748,literal,1864,b
+MyControlCenter/MyRgbLightbarManager_QC.cs,612,MyControlCenter.MyRgbLightbarManager_QC,SetTriggerBit5,read,0x0748,literal,1864,ref Data
+MyControlCenter/MyRgbLightbarManager_QC.cs,616,MyControlCenter.MyRgbLightbarManager_QC,SetTriggerBit5,write,0x0748,literal,1864,b
+MyControlCenter/MySettingManager.cs,562,MyControlCenter.MySettingManager,UserSetTouchPadLedStatus,read,0x07A6,literal,1958,ref Data
+MyControlCenter/MySettingManager.cs,565,MyControlCenter.MySettingManager,UserSetTouchPadLedStatus,write,0x07A6,literal,1958,b
+MyControlCenter/MySettingManager.cs,767,MyControlCenter.MySettingManager,SingleZonePowerSupport,read,0x078E,literal,1934,ref Data
+MyControlCenter/MySettingManager.cs,1056,MyControlCenter.MySettingManager,GetFnKeyStatus,read,0x074E,literal,1870,ref Data
+MyControlCenter/MySettingManager.cs,1140,MyControlCenter.MySettingManager,GetStatus_LightBar,read,0x0768,literal,1896,ref Data
+MyControlCenter/MySettingManager.cs,1155,MyControlCenter.MySettingManager,SetWinKey,read,0x0768,literal,1896,ref Data
+MyControlCenter/MySettingManager.cs,1181,MyControlCenter.MySettingManager,WinKeyLock_Trigger,read,0x0767,literal,1895,ref Data
+MyControlCenter/MySettingManager.cs,1183,MyControlCenter.MySettingManager,WinKeyLock_Trigger,write,0x0767,literal,1895,(byte)(1 + b)
+MyControlCenter/MySettingManager.cs,1190,MyControlCenter.MySettingManager,LightBar_Trigger,read,0x0767,literal,1895,ref Data
+MyControlCenter/MySettingManager.cs,1192,MyControlCenter.MySettingManager,LightBar_Trigger,write,0x0767,literal,1895,(byte)(2 + b)
+MyControlCenter/MySettingManager.cs,1208,MyControlCenter.MySettingManager,USB_Charger_ON,read,0x0767,literal,1895,ref Data
+MyControlCenter/MySettingManager.cs,1211,MyControlCenter.MySettingManager,USB_Charger_ON,write,0x0767,literal,1895,ConvertToByte(bitArray)
+MyControlCenter/MySettingManager.cs,1218,MyControlCenter.MySettingManager,USB_Charger_OFF,read,0x0767,literal,1895,ref Data
+MyControlCenter/MySettingManager.cs,1221,MyControlCenter.MySettingManager,USB_Charger_OFF,write,0x0767,literal,1895,ConvertToByte(bitArray)
+MyControlCenter/MySettingManager.cs,1228,MyControlCenter.MySettingManager,TouchpadToggle_ON,read,0x07A6,literal,1958,ref Data
+MyControlCenter/MySettingManager.cs,1230,MyControlCenter.MySettingManager,TouchpadToggle_ON,write,0x07A6,literal,1958,data
+MyControlCenter/MySettingManager.cs,1241,MyControlCenter.MySettingManager,TouchpadToggle_OFF,read,0x07A6,literal,1958,ref Data
+MyControlCenter/MySettingManager.cs,1243,MyControlCenter.MySettingManager,TouchpadToggle_OFF,write,0x07A6,literal,1958,(byte)(64 + b)
+MyControlCenter/MySettingManager.cs,1253,MyControlCenter.MySettingManager,SetFnKey,read,0x074E,literal,1870,ref Data
+MyControlCenter/MySettingManager.cs,1256,MyControlCenter.MySettingManager,SetFnKey,write,0x074E,literal,1870,b
+MyControlCenter/MySettingManager.cs,1296,MyControlCenter.MySettingManager,Write_Support_BYTE,read,0x0766,literal,1894,ref Data
+MyControlCenter/MySettingManager.cs,1298,MyControlCenter.MySettingManager,Write_Support_BYTE,write,0x0766,literal,1894,data
+MyControlCenter/MySettingManager_Intel.cs,305,MyControlCenter.MySettingManager_Intel,UserSetTouchPadLedStatus,read,0x07A6,literal,1958,ref Data
+MyControlCenter/MySettingManager_Intel.cs,308,MyControlCenter.MySettingManager_Intel,UserSetTouchPadLedStatus,write,0x07A6,literal,1958,b
+MyControlCenter/MySettingManager_Intel.cs,314,MyControlCenter.MySettingManager_Intel,UserSetFnKey,read,0x074E,literal,1870,ref Data
+MyControlCenter/MySettingManager_Intel.cs,326,MyControlCenter.MySettingManager_Intel,UserSetFnKey,write,0x074E,literal,1870,b
+MyControlCenter/MySettingManager_Intel.cs,473,MyControlCenter.MySettingManager_Intel,GetFnKeyStatus,read,0x074E,literal,1870,ref Data
+MyControlCenter/MySettingManager_Intel.cs,486,MyControlCenter.MySettingManager_Intel,SetWinKey,read,0x0768,literal,1896,ref Data
+MyControlCenter/MySettingManager_Intel.cs,512,MyControlCenter.MySettingManager_Intel,WinKeyLock_Trigger,read,0x0767,literal,1895,ref Data
+MyControlCenter/MySettingManager_Intel.cs,514,MyControlCenter.MySettingManager_Intel,WinKeyLock_Trigger,write,0x0767,literal,1895,(byte)(1 + b)
+MyControlCenter/MySettingManager_Intel.cs,527,MyControlCenter.MySettingManager_Intel,Write_Support_BYTE,read,0x0766,literal,1894,ref Data
+MyControlCenter/MySettingManager_Intel.cs,529,MyControlCenter.MySettingManager_Intel,Write_Support_BYTE,write,0x0766,literal,1894,data
+MyControlCenter/MySettingManager_QC.cs,449,MyControlCenter.MySettingManager_QC,GetFnKeyStatus,read,0x074E,literal,1870,ref Data
+MyControlCenter/MySettingManager_QC.cs,464,MyControlCenter.MySettingManager_QC,SetFnKeySwapPower,read,0x07A4,literal,1956,ref Data
+MyControlCenter/MySettingManager_QC.cs,476,MyControlCenter.MySettingManager_QC,SetFnKeySwapPower,write,0x07A4,literal,1956,b
+MyControlCenter/MySettingManager_QC.cs,482,MyControlCenter.MySettingManager_QC,SetWinKey,read,0x0768,literal,1896,ref Data
+MyControlCenter/MySettingManager_QC.cs,508,MyControlCenter.MySettingManager_QC,WinKeyLock_Trigger,read,0x0767,literal,1895,ref Data
+MyControlCenter/MySettingManager_QC.cs,510,MyControlCenter.MySettingManager_QC,WinKeyLock_Trigger,write,0x0767,literal,1895,(byte)(1 + b)
+MyControlCenter/MySettingManager_QC.cs,527,MyControlCenter.MySettingManager_QC,Write_Support_BYTE,read,0x0766,literal,1894,ref Data
+MyControlCenter/MySettingManager_QC.cs,529,MyControlCenter.MySettingManager_QC,Write_Support_BYTE,write,0x0766,literal,1894,data
+MyControlCenter/NvramVariable.cs,435,MyControlCenter.NvramVariable,isSupportSingleColorKeyboardFromEC,read,0x078C,literal,1932,ref Data
+MyControlCenter/OSDManager.cs,361,MyControlCenter.OSDManager,ShowOSD,read,0x0751,literal,1873,ref Data
+MyControlCenter/OemServiceInfo.cs,206,MyControlCenter.OemServiceInfo,isSupportSingleColorKeyboardFromEC,read,0x078C,literal,1932,ref Data
+MyControlCenter/SingleColorKeyboard.cs,64,MyControlCenter.SingleColorKeyboard,,read,0x078C,literal,1932,ref Data
+MyControlCenter/SingleColorKeyboard.cs,74,MyControlCenter.SingleColorKeyboard,,read,0x078C,literal,1932,ref Data
+MyControlCenter/SingleColorKeyboard.cs,79,MyControlCenter.SingleColorKeyboard,,write,0x078C,literal,1932,Data
+MyControlCenter/SingleColorKeyboard.cs,87,MyControlCenter.SingleColorKeyboard,SetPower,read,0x078C,literal,1932,ref Data
+MyControlCenter/SingleColorKeyboard.cs,90,MyControlCenter.SingleColorKeyboard,SetPower,write,0x078C,literal,1932,b
+MyControlCenter/TrayCtrl.cs,101,MyControlCenter.TrayCtrl,GetFanModeCount,read,0x049F,literal,1183,ref Data
+MyControlCenter/TrayCtrl.cs,121,MyControlCenter.TrayCtrl,GetProjectIdFromEC,read,0x0740,literal,1856,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,537,MyControlCenter.MyFan.MyFanManager_RamFan1p5,FanBoostUpdate,read,0x0751,literal,1873,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,1957,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetFanMode,write,0x0751,literal,1873,ConvertToByte(bitArray3)
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,1961,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetFanMode,write,0x0751,literal,1873,0
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,1969,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetFanMode,write,0x0751,literal,1873,ConvertToByte(bitArray2)
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,1973,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetFanMode,write,0x0751,literal,1873,160
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,1981,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetFanMode,write,0x0751,literal,1873,ConvertToByte(bitArray)
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,1985,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetFanMode,write,0x0751,literal,1873,16
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2003,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetFanBoost,read,0x0751,literal,1873,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2006,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetFanBoost,write,0x0751,literal,1873,b
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2013,MyControlCenter.MyFan.MyFanManager_RamFan1p5,GetFanMode,read,0x0751,literal,1873,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2035,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetCpuVrmCurrentLimit,write,0x0753,literal,1875,(byte)limit
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2036,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetCpuVrmCurrentLimit,write,0x0754,literal,1876,(byte)maximum
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2041,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetPL1Value,write,0x0783,literal,1923,(byte)value
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2046,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetPL2Value,write,0x0784,literal,1924,(byte)value
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2051,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetPL4Value,write,0x0785,literal,1925,(byte)value
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2060,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetCpuTccOffset,write,0x0786,literal,1926,b
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2064,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetCpuTccOffset,write,0x0786,literal,1926,0
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2077,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetFanSwitchSpeed,write,0x0787,literal,1927,b
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2082,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetFanSwitchSpeed,write,0x0787,literal,1927,0
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2089,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetGPUdstate,read,0x078B,literal,1931,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2093,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetGPUdstate,write,0x078B,literal,1931,(byte)num
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2112,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetGPUdstateByGpuMode,read,0x078B,literal,1931,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2116,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetGPUdstateByGpuMode,write,0x078B,literal,1931,(byte)num2
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2123,MyControlCenter.MyFan.MyFanManager_RamFan1p5,GetQkeyDefine,read,0x0782,literal,1922,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2135,MyControlCenter.MyFan.MyFanManager_RamFan1p5,GetOfficeModeFanTableType,read,0x0782,literal,1922,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2146,MyControlCenter.MyFan.MyFanManager_RamFan1p5,GetDefaultMode,read,0x0782,literal,1922,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2175,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetPowerLedStatus,read,0x07A5,literal,1957,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2178,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetPowerLedStatus,write,0x07A5,literal,1957,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2188,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetFanQuietModeEnable,read,0x07A5,literal,1957,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2191,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetFanQuietModeEnable,write,0x07A5,literal,1957,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2197,MyControlCenter.MyFan.MyFanManager_RamFan1p5,GetFanSafetyProtectStatus,read,0x07A5,literal,1957,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2212,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetOverBoostMode,read,0x07A5,literal,1957,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2215,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetOverBoostMode,write,0x07A5,literal,1957,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2225,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetPowerStatus,read,0x07A5,literal,1957,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2228,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetPowerStatus,write,0x07A5,literal,1957,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2238,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetOverBoostByDynamicTemp,read,0x07A6,literal,1958,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2241,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SetOverBoostByDynamicTemp,write,0x07A6,literal,1958,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2250,MyControlCenter.MyFan.MyFanManager_RamFan1p5,GetGamingPLDefaultValue,read,0x0730,literal,1840,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2251,MyControlCenter.MyFan.MyFanManager_RamFan1p5,GetGamingPLDefaultValue,read,0x0731,literal,1841,ref Data2
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2252,MyControlCenter.MyFan.MyFanManager_RamFan1p5,GetGamingPLDefaultValue,read,0x0732,literal,1842,ref Data3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2253,MyControlCenter.MyFan.MyFanManager_RamFan1p5,GetGamingPLDefaultValue,read,0x0733,literal,1843,ref Data4
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2267,MyControlCenter.MyFan.MyFanManager_RamFan1p5,GetOfficePLDefaultValue,read,0x0734,literal,1844,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2268,MyControlCenter.MyFan.MyFanManager_RamFan1p5,GetOfficePLDefaultValue,read,0x0735,literal,1845,ref Data2
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2269,MyControlCenter.MyFan.MyFanManager_RamFan1p5,GetOfficePLDefaultValue,read,0x0736,literal,1846,ref Data3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2270,MyControlCenter.MyFan.MyFanManager_RamFan1p5,GetOfficePLDefaultValue,read,0x0737,literal,1847,ref Data4
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2284,MyControlCenter.MyFan.MyFanManager_RamFan1p5,GetTurboPLDefaultValue,read,0x07A7,literal,1959,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2285,MyControlCenter.MyFan.MyFanManager_RamFan1p5,GetTurboPLDefaultValue,read,0x07A8,literal,1960,ref Data2
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2286,MyControlCenter.MyFan.MyFanManager_RamFan1p5,GetTurboPLDefaultValue,read,0x07A9,literal,1961,ref Data3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2287,MyControlCenter.MyFan.MyFanManager_RamFan1p5,GetTurboPLDefaultValue,read,0x07AA,literal,1962,ref Data4
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2299,MyControlCenter.MyFan.MyFanManager_RamFan1p5,GetTauDefaultValue,read,0x0738,literal,1848,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2313,MyControlCenter.MyFan.MyFanManager_RamFan1p5,GetTccDefaultValue,read,0x07D8,literal,2008,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2314,MyControlCenter.MyFan.MyFanManager_RamFan1p5,GetTccDefaultValue,read,0x07D9,literal,2009,ref Data2
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2315,MyControlCenter.MyFan.MyFanManager_RamFan1p5,GetTccDefaultValue,read,0x07DA,literal,2010,ref Data3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2329,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SkipOfficeModeSafetyProtect,read,0x07C5,literal,1989,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5.cs,2331,MyControlCenter.MyFan.MyFanManager_RamFan1p5,SkipOfficeModeSafetyProtect,write,0x07C5,literal,1989,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,269,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,FanBoostUpdate,read,0x0751,literal,1873,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1003,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetFanMode,write,0x0751,literal,1873,ConvertToByte(bitArray3)
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1007,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetFanMode,write,0x0751,literal,1873,0
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1015,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetFanMode,write,0x0751,literal,1873,ConvertToByte(bitArray2)
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1019,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetFanMode,write,0x0751,literal,1873,160
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1027,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetFanMode,write,0x0751,literal,1873,ConvertToByte(bitArray)
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1031,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetFanMode,write,0x0751,literal,1873,16
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1049,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetFanBoost,read,0x0751,literal,1873,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1052,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetFanBoost,write,0x0751,literal,1873,b
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1059,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,GetFanMode,read,0x0751,literal,1873,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1081,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetPL1Value,write,0x0783,literal,1923,(byte)value
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1086,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetPL2Value,write,0x0784,literal,1924,(byte)value
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1091,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetPL4Value,write,0x0785,literal,1925,(byte)value
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1100,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetCpuTccOffset,write,0x0786,literal,1926,b
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1104,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetCpuTccOffset,write,0x0786,literal,1926,0
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1117,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetFanSwitchSpeed,write,0x0787,literal,1927,b
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1122,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetFanSwitchSpeed,write,0x0787,literal,1927,0
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1129,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetGPUdstate,read,0x078B,literal,1931,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1133,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetGPUdstate,write,0x078B,literal,1931,(byte)num
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1152,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetGPUdstateByGpuMode,read,0x078B,literal,1931,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1156,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetGPUdstateByGpuMode,write,0x078B,literal,1931,(byte)num2
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1163,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,GetQkeyDefine,read,0x0782,literal,1922,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1175,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,GetOfficeModeFanTableType,read,0x0782,literal,1922,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1186,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,GetDefaultMode,read,0x0782,literal,1922,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1215,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetPowerLedStatus,read,0x07A5,literal,1957,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1218,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetPowerLedStatus,write,0x07A5,literal,1957,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1228,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetFanQuietModeEnable,read,0x07A5,literal,1957,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1231,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetFanQuietModeEnable,write,0x07A5,literal,1957,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1241,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetOverBoostMode,read,0x07A5,literal,1957,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1244,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetOverBoostMode,write,0x07A5,literal,1957,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1254,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetPowerStatus,read,0x07A5,literal,1957,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1257,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetPowerStatus,write,0x07A5,literal,1957,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1267,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetOverBoostByDynamicTemp,read,0x07A6,literal,1958,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1270,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetOverBoostByDynamicTemp,write,0x07A6,literal,1958,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1279,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,GetGamingPLDefaultValue,read,0x0730,literal,1840,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1280,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,GetGamingPLDefaultValue,read,0x0731,literal,1841,ref Data2
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1281,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,GetGamingPLDefaultValue,read,0x0732,literal,1842,ref Data3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1282,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,GetGamingPLDefaultValue,read,0x0733,literal,1843,ref Data4
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1296,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,GetOfficePLDefaultValue,read,0x0734,literal,1844,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1297,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,GetOfficePLDefaultValue,read,0x0735,literal,1845,ref Data2
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1298,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,GetOfficePLDefaultValue,read,0x0736,literal,1846,ref Data3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1299,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,GetOfficePLDefaultValue,read,0x0737,literal,1847,ref Data4
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1313,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,GetTurboPLDefaultValue,read,0x07A7,literal,1959,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1314,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,GetTurboPLDefaultValue,read,0x07A8,literal,1960,ref Data2
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1315,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,GetTurboPLDefaultValue,read,0x07A9,literal,1961,ref Data3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1316,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,GetTurboPLDefaultValue,read,0x07AA,literal,1962,ref Data4
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1328,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,GetTauDefaultValue,read,0x0738,literal,1848,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1344,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SkipFanSafetyAbnormalProtection,read,0x07C5,literal,1989,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1346,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SkipFanSafetyAbnormalProtection,write,0x07C5,literal,1989,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1357,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetGpuWhisperModeSwitch,read,0x07C5,literal,1989,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1359,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetGpuWhisperModeSwitch,write,0x07C5,literal,1989,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1369,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetGpuDynamicBoostEnable,read,0x0743,literal,1859,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1371,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetGpuDynamicBoostEnable,write,0x0743,literal,1859,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1376,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetGpuConfigurableTGP,write,0x0744,literal,1860,Convert.ToByte(value)
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1381,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetGpuDynamicBoostTotalProcessingPowerTarget,write,0x0745,literal,1861,Convert.ToByte(value)
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_CML.cs,1386,MyControlCenter.MyFan.MyFanManager_RamFan1p5_CML,SetGpuDynamicBoostMaxinumTGP,write,0x0746,literal,1862,Convert.ToByte(value)
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,254,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,FanBoostUpdate,read,0x0751,literal,1873,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1009,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetFanMode,write,0x0751,literal,1873,ConvertToByte(bitArray3)
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1013,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetFanMode,write,0x0751,literal,1873,0
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1021,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetFanMode,write,0x0751,literal,1873,ConvertToByte(bitArray2)
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1025,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetFanMode,write,0x0751,literal,1873,160
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1033,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetFanMode,write,0x0751,literal,1873,ConvertToByte(bitArray)
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1037,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetFanMode,write,0x0751,literal,1873,16
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1055,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetFanBoost,read,0x0751,literal,1873,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1058,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetFanBoost,write,0x0751,literal,1873,b
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1065,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,GetFanMode,read,0x0751,literal,1873,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1087,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetPL1Value,write,0x0783,literal,1923,(byte)value
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1092,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetPL2Value,write,0x0784,literal,1924,(byte)value
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1097,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetPL4Value,write,0x0785,literal,1925,(byte)value
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1106,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetCpuTccOffset,write,0x0786,literal,1926,b
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1110,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetCpuTccOffset,write,0x0786,literal,1926,0
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1123,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetFanSwitchSpeed,write,0x0787,literal,1927,b
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1128,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetFanSwitchSpeed,write,0x0787,literal,1927,0
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1135,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetGPUdstate,read,0x078B,literal,1931,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1139,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetGPUdstate,write,0x078B,literal,1931,(byte)num
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1158,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetGPUdstateByGpuMode,read,0x078B,literal,1931,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1162,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetGPUdstateByGpuMode,write,0x078B,literal,1931,(byte)num2
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1169,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,GetQkeyDefine,read,0x0782,literal,1922,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1181,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,GetOfficeModeFanTableType,read,0x0782,literal,1922,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1192,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,GetDefaultMode,read,0x0782,literal,1922,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1221,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetPowerLedStatus,read,0x07A5,literal,1957,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1224,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetPowerLedStatus,write,0x07A5,literal,1957,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1234,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetFanQuietModeEnable,read,0x07A5,literal,1957,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1237,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetFanQuietModeEnable,write,0x07A5,literal,1957,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1247,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetOverBoostMode,read,0x07A5,literal,1957,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1250,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetOverBoostMode,write,0x07A5,literal,1957,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1260,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetPowerStatus,read,0x07A5,literal,1957,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1263,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetPowerStatus,write,0x07A5,literal,1957,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1273,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetOverBoostByDynamicTemp,read,0x07A6,literal,1958,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1276,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetOverBoostByDynamicTemp,write,0x07A6,literal,1958,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1285,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,GetGamingPLDefaultValue,read,0x0730,literal,1840,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1286,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,GetGamingPLDefaultValue,read,0x0731,literal,1841,ref Data2
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1287,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,GetGamingPLDefaultValue,read,0x0732,literal,1842,ref Data3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1288,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,GetGamingPLDefaultValue,read,0x0733,literal,1843,ref Data4
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1302,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,GetOfficePLDefaultValue,read,0x0734,literal,1844,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1303,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,GetOfficePLDefaultValue,read,0x0735,literal,1845,ref Data2
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1304,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,GetOfficePLDefaultValue,read,0x0736,literal,1846,ref Data3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1305,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,GetOfficePLDefaultValue,read,0x0737,literal,1847,ref Data4
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1319,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,GetTurboPLDefaultValue,read,0x07A7,literal,1959,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1320,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,GetTurboPLDefaultValue,read,0x07A8,literal,1960,ref Data2
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1321,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,GetTurboPLDefaultValue,read,0x07A9,literal,1961,ref Data3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1322,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,GetTurboPLDefaultValue,read,0x07AA,literal,1962,ref Data4
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1334,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,GetTauDefaultValue,read,0x0738,literal,1848,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1350,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SkipFanSafetyAbnormalProtection,read,0x07C5,literal,1989,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1352,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SkipFanSafetyAbnormalProtection,write,0x07C5,literal,1989,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1363,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetGpuWhisperModeSwitch,read,0x07C5,literal,1989,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1365,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetGpuWhisperModeSwitch,write,0x07C5,literal,1989,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1375,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetGpuDynamicBoostEnable,read,0x0743,literal,1859,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1377,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetGpuDynamicBoostEnable,write,0x0743,literal,1859,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1382,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetGpuConfigurableTGP,write,0x0744,literal,1860,Convert.ToByte(value)
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1387,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetGpuDynamicBoostTotalProcessingPowerTarget,write,0x0745,literal,1861,Convert.ToByte(value)
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_NV.cs,1392,MyControlCenter.MyFan.MyFanManager_RamFan1p5_NV,SetGpuDynamicBoostMaxinumTGP,write,0x0746,literal,1862,Convert.ToByte(value)
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,195,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,FanBoostUpdate,read,0x0751,literal,1873,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,506,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetFanMode,write,0x0751,literal,1873,ConvertToByte(bitArray3)
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,510,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetFanMode,write,0x0751,literal,1873,0
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,518,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetFanMode,write,0x0751,literal,1873,ConvertToByte(bitArray2)
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,522,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetFanMode,write,0x0751,literal,1873,160
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,530,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetFanMode,write,0x0751,literal,1873,ConvertToByte(bitArray)
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,534,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetFanMode,write,0x0751,literal,1873,16
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,552,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetFanBoost,read,0x0751,literal,1873,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,555,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetFanBoost,write,0x0751,literal,1873,b
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,562,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,GetFanMode,read,0x0751,literal,1873,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,584,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetPL1Value,write,0x0783,literal,1923,(byte)value
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,589,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetPL2Value,write,0x0784,literal,1924,(byte)value
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,594,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetPL4Value,write,0x0785,literal,1925,(byte)value
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,603,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetCpuTccOffset,write,0x0786,literal,1926,b
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,607,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetCpuTccOffset,write,0x0786,literal,1926,0
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,620,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetFanSwitchSpeed,write,0x0787,literal,1927,b
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,625,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetFanSwitchSpeed,write,0x0787,literal,1927,0
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,632,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetGPUdstate,read,0x078B,literal,1931,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,636,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetGPUdstate,write,0x078B,literal,1931,(byte)num
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,655,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetGPUdstateByGpuMode,read,0x078B,literal,1931,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,659,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetGPUdstateByGpuMode,write,0x078B,literal,1931,(byte)num2
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,666,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,GetQkeyDefine,read,0x0782,literal,1922,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,678,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,GetOfficeModeFanTableType,read,0x0782,literal,1922,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,689,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,GetDefaultMode,read,0x0782,literal,1922,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,718,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetPowerLedStatus,read,0x07A5,literal,1957,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,721,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetPowerLedStatus,write,0x07A5,literal,1957,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,731,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetFanQuietModeEnable,read,0x07A5,literal,1957,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,734,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetFanQuietModeEnable,write,0x07A5,literal,1957,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,744,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetOverBoostMode,read,0x07A5,literal,1957,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,747,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetOverBoostMode,write,0x07A5,literal,1957,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,757,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetPowerStatus,read,0x07A5,literal,1957,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,760,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetPowerStatus,write,0x07A5,literal,1957,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,770,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetOverBoostByDynamicTemp,read,0x07A6,literal,1958,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,773,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetOverBoostByDynamicTemp,write,0x07A6,literal,1958,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,782,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,GetGamingPLDefaultValue,read,0x0730,literal,1840,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,783,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,GetGamingPLDefaultValue,read,0x0731,literal,1841,ref Data2
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,784,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,GetGamingPLDefaultValue,read,0x0732,literal,1842,ref Data3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,785,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,GetGamingPLDefaultValue,read,0x0733,literal,1843,ref Data4
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,799,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,GetOfficePLDefaultValue,read,0x0734,literal,1844,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,800,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,GetOfficePLDefaultValue,read,0x0735,literal,1845,ref Data2
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,801,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,GetOfficePLDefaultValue,read,0x0736,literal,1846,ref Data3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,802,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,GetOfficePLDefaultValue,read,0x0737,literal,1847,ref Data4
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,816,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,GetTurboPLDefaultValue,read,0x07A7,literal,1959,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,817,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,GetTurboPLDefaultValue,read,0x07A8,literal,1960,ref Data2
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,818,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,GetTurboPLDefaultValue,read,0x07A9,literal,1961,ref Data3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,819,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,GetTurboPLDefaultValue,read,0x07AA,literal,1962,ref Data4
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,831,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,GetTauDefaultValue,read,0x0738,literal,1848,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,847,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SkipFanSafetyAbnormalProtection,read,0x07C5,literal,1989,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,849,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SkipFanSafetyAbnormalProtection,write,0x07C5,literal,1989,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,860,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetGpuWhisperModeSwitch,read,0x07C5,literal,1989,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,862,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetGpuWhisperModeSwitch,write,0x07C5,literal,1989,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,872,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetGpuDynamicBoostEnable,read,0x0743,literal,1859,ref Data
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,874,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetGpuDynamicBoostEnable,write,0x0743,literal,1859,b3
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,879,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetGpuConfigurableTGP,write,0x0744,literal,1860,Convert.ToByte(value)
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,884,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetGpuDynamicBoostTotalProcessingPowerTarget,write,0x0745,literal,1861,Convert.ToByte(value)
+MyControlCenter.MyFan/MyFanManager_RamFan1p5_Normal.cs,889,MyControlCenter.MyFan.MyFanManager_RamFan1p5_Normal,SetGpuDynamicBoostMaxinumTGP,write,0x0746,literal,1862,Convert.ToByte(value)
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,171,MyControlCenter.MyFan.FanTable.FanTable_Manager,SetFanTable_Test,write,0x0F00,computed,(ushort)(3840 + i),0
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,172,MyControlCenter.MyFan.FanTable.FanTable_Manager,SetFanTable_Test,write,0x0F10,computed,(ushort)(3856 + i),0
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,173,MyControlCenter.MyFan.FanTable.FanTable_Manager,SetFanTable_Test,write,0x0F20,computed,(ushort)(3872 + i),0
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,174,MyControlCenter.MyFan.FanTable.FanTable_Manager,SetFanTable_Test,write,0x0F30,computed,(ushort)(3888 + i),0
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,175,MyControlCenter.MyFan.FanTable.FanTable_Manager,SetFanTable_Test,write,0x0F40,computed,(ushort)(3904 + i),0
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,176,MyControlCenter.MyFan.FanTable.FanTable_Manager,SetFanTable_Test,write,0x0F50,computed,(ushort)(3920 + i),0
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,446,MyControlCenter.MyFan.FanTable.FanTable_Manager,SetCpuFanTable,write,0x0F00,computed,(ushort)(3840 + i),_fantable.Table[i + 1].UpT
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,450,MyControlCenter.MyFan.FanTable.FanTable_Manager,SetCpuFanTable,write,0x0F00,computed,(ushort)(3840 + i),byte.MaxValue
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,454,MyControlCenter.MyFan.FanTable.FanTable_Manager,SetCpuFanTable,write,0x0F10,computed,(ushort)(3856 + (i + 1)),_fantable.Table[i].DownT
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,456,MyControlCenter.MyFan.FanTable.FanTable_Manager,SetCpuFanTable,write,0x0F20,computed,(ushort)(3872 + i),(byte)(_fantable.Table[i].Duty * 2)
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,470,MyControlCenter.MyFan.FanTable.FanTable_Manager,SetGpuFanTable,write,0x0F30,computed,(ushort)(3888 + i),_fantable.Table[i + 1].UpT
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,474,MyControlCenter.MyFan.FanTable.FanTable_Manager,SetGpuFanTable,write,0x0F30,computed,(ushort)(3888 + i),byte.MaxValue
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,478,MyControlCenter.MyFan.FanTable.FanTable_Manager,SetGpuFanTable,write,0x0F40,computed,(ushort)(3904 + (i + 1)),_fantable.Table[i].DownT
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,480,MyControlCenter.MyFan.FanTable.FanTable_Manager,SetGpuFanTable,write,0x0F50,computed,(ushort)(3920 + i),(byte)(_fantable.Table[i].Duty * 2)
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,488,MyControlCenter.MyFan.FanTable.FanTable_Manager,ClearFanTable_Test,write,0x0F00,computed,(ushort)(3840 + i),0
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,489,MyControlCenter.MyFan.FanTable.FanTable_Manager,ClearFanTable_Test,write,0x0F10,computed,(ushort)(3856 + i),0
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,490,MyControlCenter.MyFan.FanTable.FanTable_Manager,ClearFanTable_Test,write,0x0F20,computed,(ushort)(3872 + i),0
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,491,MyControlCenter.MyFan.FanTable.FanTable_Manager,ClearFanTable_Test,write,0x0F30,computed,(ushort)(3888 + i),0
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,492,MyControlCenter.MyFan.FanTable.FanTable_Manager,ClearFanTable_Test,write,0x0F40,computed,(ushort)(3904 + i),0
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,493,MyControlCenter.MyFan.FanTable.FanTable_Manager,ClearFanTable_Test,write,0x0F50,computed,(ushort)(3920 + i),0
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,504,MyControlCenter.MyFan.FanTable.FanTable_Manager,CreateFanTableFileFromEC,read,0x0F00,computed,(ushort)(3840 + i),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,506,MyControlCenter.MyFan.FanTable.FanTable_Manager,CreateFanTableFileFromEC,read,0x0F10,computed,(ushort)(3856 + i),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,508,MyControlCenter.MyFan.FanTable.FanTable_Manager,CreateFanTableFileFromEC,read,0x0F20,computed,(ushort)(3872 + i),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,510,MyControlCenter.MyFan.FanTable.FanTable_Manager,CreateFanTableFileFromEC,read,0x0F30,computed,(ushort)(3888 + i),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,512,MyControlCenter.MyFan.FanTable.FanTable_Manager,CreateFanTableFileFromEC,read,0x0F40,computed,(ushort)(3904 + i),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager.cs,514,MyControlCenter.MyFan.FanTable.FanTable_Manager,CreateFanTableFileFromEC,read,0x0F50,computed,(ushort)(3920 + i),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,510,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,GetEcFanTable,read,0x0F00,computed,(ushort)(3840 + i - 1),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,515,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,GetEcFanTable,read,0x0F10,computed,(ushort)(3856 + i + 1),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,520,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,GetEcFanTable,read,0x0F10,computed,(ushort)(3856 + i),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,523,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,GetEcFanTable,read,0x0F20,computed,(ushort)(3872 + i),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,538,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,GetEcFanTable,read,0x0F30,computed,(ushort)(3888 + j - 1),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,543,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,GetEcFanTable,read,0x0F40,computed,(ushort)(3904 + j + 1),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,548,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,GetEcFanTable,read,0x0F40,computed,(ushort)(3904 + j),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,551,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,GetEcFanTable,read,0x0F50,computed,(ushort)(3920 + j),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,564,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,SetEcFanTable,write,0x0F00,computed,(ushort)(3840 + i),fantable.CPU[i + 1].UpT
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,568,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,SetEcFanTable,write,0x0F00,computed,(ushort)(3840 + i),byte.MaxValue
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,572,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,SetEcFanTable,write,0x0F10,computed,(ushort)(3856 + i + 1),fantable.CPU[i].DownT
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,574,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,SetEcFanTable,write,0x0F20,computed,(ushort)(3872 + i),(byte)(fantable.CPU[i].Duty * 2)
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,585,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,SetEcFanTable,write,0x0F30,computed,(ushort)(3888 + j),fantable.GPU[j + 1].UpT
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,589,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,SetEcFanTable,write,0x0F30,computed,(ushort)(3888 + j),byte.MaxValue
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,593,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,SetEcFanTable,write,0x0F40,computed,(ushort)(3904 + j + 1),fantable.GPU[j].DownT
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,595,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,SetEcFanTable,write,0x0F50,computed,(ushort)(3920 + j),(byte)(fantable.GPU[j].Duty * 2)
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,609,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,SetEcFanTable_Cpu,write,0x0F00,computed,(ushort)(3840 + i),fantable.CPU[i + 1].UpT
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,613,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,SetEcFanTable_Cpu,write,0x0F00,computed,(ushort)(3840 + i),byte.MaxValue
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,617,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,SetEcFanTable_Cpu,write,0x0F10,computed,(ushort)(3856 + i + 1),fantable.CPU[i].DownT
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,619,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,SetEcFanTable_Cpu,write,0x0F20,computed,(ushort)(3872 + i),(byte)(fantable.CPU[i].Duty * 2)
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,633,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,SetEcFanTable_Gpu,write,0x0F30,computed,(ushort)(3888 + i),fantable.GPU[i + 1].UpT
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,637,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,SetEcFanTable_Gpu,write,0x0F30,computed,(ushort)(3888 + i),byte.MaxValue
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,641,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,SetEcFanTable_Gpu,write,0x0F40,computed,(ushort)(3904 + i + 1),fantable.GPU[i].DownT
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,643,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,SetEcFanTable_Gpu,write,0x0F50,computed,(ushort)(3920 + i),(byte)(fantable.GPU[i].Duty * 2)
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,781,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,ClearFanTableAll,write,0x0F00,computed,(ushort)(3840 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,782,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,ClearFanTableAll,write,0x0F10,computed,(ushort)(3856 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,783,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,ClearFanTableAll,write,0x0F20,computed,(ushort)(3872 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,784,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,ClearFanTableAll,write,0x0F30,computed,(ushort)(3888 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,785,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,ClearFanTableAll,write,0x0F40,computed,(ushort)(3904 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,786,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,ClearFanTableAll,write,0x0F50,computed,(ushort)(3920 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,818,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,IsReadyToRead,read,0x0F5D,literal,3933,ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,819,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,IsReadyToRead,read,0x0F5E,literal,3934,ref Data2
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,830,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,RefreshDefaultFanTable,write,0x0F5F,literal,3935,mode
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,831,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,RefreshDefaultFanTable,write,0x0F5D,literal,3933,253
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,832,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,RefreshDefaultFanTable,write,0x0F5E,literal,3934,201
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,1013,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,SetEcFanControlRespective,read,0x07C5,literal,1989,ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5.cs,1015,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5,SetEcFanControlRespective,write,0x07C5,literal,1989,b3
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,303,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,GetEcFanTable,read,0x0F00,computed,(ushort)(3840 + i - 1),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,308,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,GetEcFanTable,read,0x0F10,computed,(ushort)(3856 + i + 1),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,313,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,GetEcFanTable,read,0x0F10,computed,(ushort)(3856 + i),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,316,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,GetEcFanTable,read,0x0F20,computed,(ushort)(3872 + i),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,331,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,GetEcFanTable,read,0x0F30,computed,(ushort)(3888 + j - 1),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,336,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,GetEcFanTable,read,0x0F40,computed,(ushort)(3904 + j + 1),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,341,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,GetEcFanTable,read,0x0F40,computed,(ushort)(3904 + j),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,344,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,GetEcFanTable,read,0x0F50,computed,(ushort)(3920 + j),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,357,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,SetEcFanTable,write,0x0F00,computed,(ushort)(3840 + i),fantable.CPU[i + 1].UpT
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,361,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,SetEcFanTable,write,0x0F00,computed,(ushort)(3840 + i),byte.MaxValue
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,365,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,SetEcFanTable,write,0x0F10,computed,(ushort)(3856 + i + 1),fantable.CPU[i].DownT
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,367,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,SetEcFanTable,write,0x0F20,computed,(ushort)(3872 + i),(byte)(fantable.CPU[i].Duty * 2)
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,378,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,SetEcFanTable,write,0x0F30,computed,(ushort)(3888 + j),fantable.GPU[j + 1].UpT
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,382,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,SetEcFanTable,write,0x0F30,computed,(ushort)(3888 + j),byte.MaxValue
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,386,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,SetEcFanTable,write,0x0F40,computed,(ushort)(3904 + j + 1),fantable.GPU[j].DownT
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,388,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,SetEcFanTable,write,0x0F50,computed,(ushort)(3920 + j),(byte)(fantable.GPU[j].Duty * 2)
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,402,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,SetEcFanTable_Cpu,write,0x0F00,computed,(ushort)(3840 + i),fantable.CPU[i + 1].UpT
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,406,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,SetEcFanTable_Cpu,write,0x0F00,computed,(ushort)(3840 + i),byte.MaxValue
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,410,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,SetEcFanTable_Cpu,write,0x0F10,computed,(ushort)(3856 + i + 1),fantable.CPU[i].DownT
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,412,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,SetEcFanTable_Cpu,write,0x0F20,computed,(ushort)(3872 + i),(byte)(fantable.CPU[i].Duty * 2)
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,426,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,SetEcFanTable_Gpu,write,0x0F30,computed,(ushort)(3888 + i),fantable.GPU[i + 1].UpT
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,430,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,SetEcFanTable_Gpu,write,0x0F30,computed,(ushort)(3888 + i),byte.MaxValue
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,434,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,SetEcFanTable_Gpu,write,0x0F40,computed,(ushort)(3904 + i + 1),fantable.GPU[i].DownT
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,436,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,SetEcFanTable_Gpu,write,0x0F50,computed,(ushort)(3920 + i),(byte)(fantable.GPU[i].Duty * 2)
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,574,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,ClearFanTableAll,write,0x0F00,computed,(ushort)(3840 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,575,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,ClearFanTableAll,write,0x0F10,computed,(ushort)(3856 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,576,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,ClearFanTableAll,write,0x0F20,computed,(ushort)(3872 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,577,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,ClearFanTableAll,write,0x0F30,computed,(ushort)(3888 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,578,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,ClearFanTableAll,write,0x0F40,computed,(ushort)(3904 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,579,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,ClearFanTableAll,write,0x0F50,computed,(ushort)(3920 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,611,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,IsReadyToRead,read,0x0F5D,literal,3933,ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,612,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,IsReadyToRead,read,0x0F5E,literal,3934,ref Data2
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,623,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,RefreshDefaultFanTable,write,0x0F5F,literal,3935,mode
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,624,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,RefreshDefaultFanTable,write,0x0F5D,literal,3933,253
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,625,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,RefreshDefaultFanTable,write,0x0F5E,literal,3934,201
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,743,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,SetEcFanControlRespective,read,0x07C5,literal,1989,ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager1p5_CML.cs,745,MyControlCenter.MyFan.FanTable.FanTable_Manager1p5_CML,SetEcFanControlRespective,write,0x07C5,literal,1989,b3
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,299,MyControlCenter.MyFan.FanTable.FanTable_Manager2,GetFanTable,read,0x0F00,computed,(ushort)(3840 + j - 1),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,301,MyControlCenter.MyFan.FanTable.FanTable_Manager2,GetFanTable,read,0x0F30,computed,(ushort)(3888 + j - 1),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,306,MyControlCenter.MyFan.FanTable.FanTable_Manager2,GetFanTable,read,0x0F10,computed,(ushort)(3856 + j + 1),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,308,MyControlCenter.MyFan.FanTable.FanTable_Manager2,GetFanTable,read,0x0F40,computed,(ushort)(3904 + j + 1),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,313,MyControlCenter.MyFan.FanTable.FanTable_Manager2,GetFanTable,read,0x0F10,computed,(ushort)(3856 + j),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,315,MyControlCenter.MyFan.FanTable.FanTable_Manager2,GetFanTable,read,0x0F40,computed,(ushort)(3904 + j),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,318,MyControlCenter.MyFan.FanTable.FanTable_Manager2,GetFanTable,read,0x0F20,computed,(ushort)(3872 + j),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,334,MyControlCenter.MyFan.FanTable.FanTable_Manager2,GetFanTable,read,0x0F50,computed,(ushort)(3920 + k - 1),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,336,MyControlCenter.MyFan.FanTable.FanTable_Manager2,GetFanTable,read,0x0F80,computed,(ushort)(3968 + k - 1),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,341,MyControlCenter.MyFan.FanTable.FanTable_Manager2,GetFanTable,read,0x0F60,computed,(ushort)(3936 + k + 1),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,343,MyControlCenter.MyFan.FanTable.FanTable_Manager2,GetFanTable,read,0x0F90,computed,(ushort)(3984 + k + 1),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,348,MyControlCenter.MyFan.FanTable.FanTable_Manager2,GetFanTable,read,0x0F60,computed,(ushort)(3936 + k),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,350,MyControlCenter.MyFan.FanTable.FanTable_Manager2,GetFanTable,read,0x0F90,computed,(ushort)(3984 + k),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,353,MyControlCenter.MyFan.FanTable.FanTable_Manager2,GetFanTable,read,0x0F70,computed,(ushort)(3952 + k),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,369,MyControlCenter.MyFan.FanTable.FanTable_Manager2,GetFanTable,read,0x0FA0,computed,(ushort)(4000 + i - 1),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,371,MyControlCenter.MyFan.FanTable.FanTable_Manager2,GetFanTable,read,0x0FD0,computed,(ushort)(4048 + i - 1),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,376,MyControlCenter.MyFan.FanTable.FanTable_Manager2,GetFanTable,read,0x0FB0,computed,(ushort)(4016 + i + 1),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,378,MyControlCenter.MyFan.FanTable.FanTable_Manager2,GetFanTable,read,0x0FE0,computed,(ushort)(4064 + i + 1),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,383,MyControlCenter.MyFan.FanTable.FanTable_Manager2,GetFanTable,read,0x0FB0,computed,(ushort)(4016 + i),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,385,MyControlCenter.MyFan.FanTable.FanTable_Manager2,GetFanTable,read,0x0FE0,computed,(ushort)(4064 + i),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,388,MyControlCenter.MyFan.FanTable.FanTable_Manager2,GetFanTable,read,0x0FC0,computed,(ushort)(4032 + i),ref Data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,407,MyControlCenter.MyFan.FanTable.FanTable_Manager2,SetFanTable_F1,write,0x0F00,computed,(ushort)(3840 + i),fantable.Table[i + 1].CpuUpT
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,408,MyControlCenter.MyFan.FanTable.FanTable_Manager2,SetFanTable_F1,write,0x0F30,computed,(ushort)(3888 + i),fantable.Table[i + 1].GpuUpT
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,412,MyControlCenter.MyFan.FanTable.FanTable_Manager2,SetFanTable_F1,write,0x0F00,computed,(ushort)(3840 + i),byte.MaxValue
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,413,MyControlCenter.MyFan.FanTable.FanTable_Manager2,SetFanTable_F1,write,0x0F30,computed,(ushort)(3888 + i),byte.MaxValue
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,417,MyControlCenter.MyFan.FanTable.FanTable_Manager2,SetFanTable_F1,write,0x0F10,computed,(ushort)(3856 + i + 1),fantable.Table[i].CpuDownT
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,418,MyControlCenter.MyFan.FanTable.FanTable_Manager2,SetFanTable_F1,write,0x0F40,computed,(ushort)(3904 + i + 1),fantable.Table[i].GpuDownT
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,420,MyControlCenter.MyFan.FanTable.FanTable_Manager2,SetFanTable_F1,write,0x0F20,computed,(ushort)(3872 + i),(byte)(fantable.Table[i].Duty * 2)
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,434,MyControlCenter.MyFan.FanTable.FanTable_Manager2,SetFanTable_F2,write,0x0F50,computed,(ushort)(3920 + i),fantable.Table[i + 1].CpuUpT
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,435,MyControlCenter.MyFan.FanTable.FanTable_Manager2,SetFanTable_F2,write,0x0F80,computed,(ushort)(3968 + i),fantable.Table[i + 1].GpuUpT
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,439,MyControlCenter.MyFan.FanTable.FanTable_Manager2,SetFanTable_F2,write,0x0F50,computed,(ushort)(3920 + i),byte.MaxValue
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,440,MyControlCenter.MyFan.FanTable.FanTable_Manager2,SetFanTable_F2,write,0x0F80,computed,(ushort)(3968 + i),byte.MaxValue
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,444,MyControlCenter.MyFan.FanTable.FanTable_Manager2,SetFanTable_F2,write,0x0F60,computed,(ushort)(3936 + i + 1),fantable.Table[i].CpuDownT
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,445,MyControlCenter.MyFan.FanTable.FanTable_Manager2,SetFanTable_F2,write,0x0F90,computed,(ushort)(3984 + i + 1),fantable.Table[i].GpuDownT
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,447,MyControlCenter.MyFan.FanTable.FanTable_Manager2,SetFanTable_F2,write,0x0F70,computed,(ushort)(3952 + i),(byte)(fantable.Table[i].Duty * 2)
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,461,MyControlCenter.MyFan.FanTable.FanTable_Manager2,SetFanTable_F3,write,0x0FA0,computed,(ushort)(4000 + i),fantable.Table[i + 1].CpuUpT
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,462,MyControlCenter.MyFan.FanTable.FanTable_Manager2,SetFanTable_F3,write,0x0FD0,computed,(ushort)(4048 + i),fantable.Table[i + 1].GpuUpT
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,466,MyControlCenter.MyFan.FanTable.FanTable_Manager2,SetFanTable_F3,write,0x0FA0,computed,(ushort)(4000 + i),byte.MaxValue
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,467,MyControlCenter.MyFan.FanTable.FanTable_Manager2,SetFanTable_F3,write,0x0FD0,computed,(ushort)(4048 + i),byte.MaxValue
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,471,MyControlCenter.MyFan.FanTable.FanTable_Manager2,SetFanTable_F3,write,0x0FB0,computed,(ushort)(4016 + i + 1),fantable.Table[i].CpuDownT
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,472,MyControlCenter.MyFan.FanTable.FanTable_Manager2,SetFanTable_F3,write,0x0FE0,computed,(ushort)(4064 + i + 1),fantable.Table[i].GpuDownT
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,474,MyControlCenter.MyFan.FanTable.FanTable_Manager2,SetFanTable_F3,write,0x0FC0,computed,(ushort)(4032 + i),(byte)(fantable.Table[i].Duty * 2)
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,483,MyControlCenter.MyFan.FanTable.FanTable_Manager2,ClearFanTableAll,write,0x0F00,computed,(ushort)(3840 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,484,MyControlCenter.MyFan.FanTable.FanTable_Manager2,ClearFanTableAll,write,0x0F10,computed,(ushort)(3856 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,485,MyControlCenter.MyFan.FanTable.FanTable_Manager2,ClearFanTableAll,write,0x0F20,computed,(ushort)(3872 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,486,MyControlCenter.MyFan.FanTable.FanTable_Manager2,ClearFanTableAll,write,0x0F30,computed,(ushort)(3888 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,487,MyControlCenter.MyFan.FanTable.FanTable_Manager2,ClearFanTableAll,write,0x0F40,computed,(ushort)(3904 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,488,MyControlCenter.MyFan.FanTable.FanTable_Manager2,ClearFanTableAll,write,0x0F50,computed,(ushort)(3920 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,489,MyControlCenter.MyFan.FanTable.FanTable_Manager2,ClearFanTableAll,write,0x0F60,computed,(ushort)(3936 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,490,MyControlCenter.MyFan.FanTable.FanTable_Manager2,ClearFanTableAll,write,0x0F70,computed,(ushort)(3952 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,491,MyControlCenter.MyFan.FanTable.FanTable_Manager2,ClearFanTableAll,write,0x0F80,computed,(ushort)(3968 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,492,MyControlCenter.MyFan.FanTable.FanTable_Manager2,ClearFanTableAll,write,0x0F90,computed,(ushort)(3984 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,493,MyControlCenter.MyFan.FanTable.FanTable_Manager2,ClearFanTableAll,write,0x0FA0,computed,(ushort)(4000 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,494,MyControlCenter.MyFan.FanTable.FanTable_Manager2,ClearFanTableAll,write,0x0FB0,computed,(ushort)(4016 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,495,MyControlCenter.MyFan.FanTable.FanTable_Manager2,ClearFanTableAll,write,0x0FC0,computed,(ushort)(4032 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,496,MyControlCenter.MyFan.FanTable.FanTable_Manager2,ClearFanTableAll,write,0x0FD0,computed,(ushort)(4048 + i),data
+MyControlCenter.MyFan.FanTable/FanTable_Manager2.cs,497,MyControlCenter.MyFan.FanTable.FanTable_Manager2,ClearFanTableAll,write,0x0FE0,computed,(ushort)(4064 + i),data
+MyControlCenter.MyFan.FanTable/MyFanTableCtrl.cs,123,MyControlCenter.MyFan.FanTable.MyFanTableCtrl,SetFanControlByRamFan1p5,read,0x07C6,literal,1990,ref Data
+MyControlCenter.MyFan.FanTable/MyFanTableCtrl.cs,125,MyControlCenter.MyFan.FanTable.MyFanTableCtrl,SetFanControlByRamFan1p5,write,0x07C6,literal,1990,b3
+MyControlCenter.MyRgbKeyboard/HIDKeyboard.cs,1091,MyControlCenter.MyRgbKeyboard.HIDKeyboard,AsyncBrignessToEC,read,0x078C,literal,1932,ref Data
+MyControlCenter.MyRgbKeyboard/HIDKeyboard.cs,1122,MyControlCenter.MyRgbKeyboard.HIDKeyboard,AsyncBrignessToEC,write,0x078C,literal,1932,data
+MyControlCenter.MyRgbKeyboard/HIDKeyboard.cs,1393,MyControlCenter.MyRgbKeyboard.HIDKeyboard,GetSingleZonePowerSupport,read,0x078E,literal,1934,ref Data
+MyControlCenter.MyRgbKeyboard/SingleZone.cs,368,MyControlCenter.MyRgbKeyboard.SingleZone,SetPowerDisable_EC,read,0x078C,literal,1932,ref Data
+MyControlCenter.MyRgbKeyboard/SingleZone.cs,372,MyControlCenter.MyRgbKeyboard.SingleZone,SetPowerDisable_EC,write,0x078C,literal,1932,data
+MyControlCenter.MyRgbKeyboard/SingleZone.cs,378,MyControlCenter.MyRgbKeyboard.SingleZone,SetBrightness_EC,read,0x078C,literal,1932,ref Data
+MyControlCenter.MyRgbKeyboard/SingleZone.cs,414,MyControlCenter.MyRgbKeyboard.SingleZone,SetBrightness_EC,write,0x078C,literal,1932,data
+MyControlCenter.MyRgbKeyboard/SingleZone.cs,1213,MyControlCenter.MyRgbKeyboard.SingleZone,ReadECRAM,read,,unresolved,Addr,ref Data
+MyControlCenter.MyRgbKeyboard/SingleZone.cs,1224,MyControlCenter.MyRgbKeyboard.SingleZone,WriteECRAM,write,,unresolved,Addr,Convert.ToByte(Value)
+MyECIO/MyEcCtrl.cs,87,MyECIO.MyEcCtrl,GetTurboModeSupport,read,0x049F,literal,1183,ref Data
+MyECIO/MyEcCtrl.cs,98,MyECIO.MyEcCtrl,GetTypeCAdaptorPrioritySupport,read,0x0742,literal,1858,ref Data
+MyECIO/MyEcCtrl.cs,121,MyECIO.MyEcCtrl,GetBiosProjctID,read,0x074C,literal,1868,ref Data
+MyECIO/MyEcCtrl.cs,164,MyECIO.MyEcCtrl,GetSku,read,0x07D3,literal,2003,ref Data
+MyRGBKeyboard/HIDRGBLightbar.cs,59,MyRGBKeyboard.HIDRGBLightbar,GetProjectID,read,0x0740,literal,1856,ref Data
+MyRGBKeyboard/HIDRGBLightbar.cs,336,MyRGBKeyboard.HIDRGBLightbar,OnMqttMessage,read,0x0782,literal,1922,ref Data
+MyRGBKeyboard/HIDRGBLightbar.cs,338,MyRGBKeyboard.HIDRGBLightbar,OnMqttMessage,write,0x0782,literal,1922,Data
+MyRGBKeyboard/RGBKeyboard.cs,77,MyRGBKeyboard.RGBKeyboard,GetProjectID,read,0x0740,literal,1856,ref Data
+MyRGBKeyboard/RGBKeyboard.cs,499,MyRGBKeyboard.RGBKeyboard,OnMqttMessage,read,0x0782,literal,1922,ref Data
+MyRGBKeyboard/RGBKeyboard.cs,501,MyRGBKeyboard.RGBKeyboard,OnMqttMessage,write,0x0782,literal,1922,Data
