@@ -15,7 +15,10 @@ controller and RGB/battery subsystems of a PCSpecialist-branded TongFang
 
 **Start here:** [`docs/findings.md`](docs/findings.md) — the full narrative,
 written to include the two points where an earlier conclusion turned out to
-be wrong and why, not just the parts that held up.
+be wrong and why, not just the parts that held up. Other people have
+reverse-engineered sibling Uniwill boards (HydroControl, mech-forza-control,
+w568w's charge-limit fix). [`docs/related-projects.md`](docs/related-projects.md)
+says what each found and which of it holds on this machine.
 
 ## Mission
 
@@ -30,7 +33,11 @@ bigger ([`docs/MISSION.md`](docs/MISSION.md) is the canonical copy):
 - **Technical:** that requires complete reverse engineering of all three
   closed-source components in the stack: the Windows userspace service
   (`GCUService.exe` and friends), the BIOS/UEFI firmware, and the EC
-  firmware.
+  firmware. For the EC, the end state is a C codebase that mirrors the
+  firmware function for function: decompiled, symbolized from
+  `registers.yaml`, and cited back to bank and address. It's a
+  reconstruction, since the vendor's source isn't available. Ghidra is the
+  starting point (issue #20, `ec/ghidra/README.md`).
 
 No single change finishes it. Progress is one more register's behaviour
 confirmed, one more Windows class decrypted, one more BIOS menu entry
@@ -58,7 +65,8 @@ itself rather than running dry while the mission is incomplete.
 ## Layout
 
 ```
-docs/                    findings.md (start here), hardware-identity.md
+docs/                    findings.md (start here), hardware-identity.md,
+                          related-projects.md (other Uniwill RE work)
 ec/                       EC firmware (ITE 8051, banked), disassembly tools,
                           the register cross-reference (annotations/registers.yaml)
 windows/                  Decompiled vendor Windows service, anti-tamper notes,
@@ -66,7 +74,7 @@ windows/                  Decompiled vendor Windows service, anti-tamper notes,
 linux/                    uniwill-laptop patch, NixOS module config, battery
                           tracing scripts used to gather the evidence below
 vendor/                   Vendor binaries as shipped (BIOS/EC update package,
-                          two Control Center versions) -- inputs, not outputs
+                          three Control Center versions) -- inputs, not outputs
 evidence/                 Traces, screenshots, ACPI dump, HID report descriptors
                           that specific claims in docs/findings.md cite
 ```

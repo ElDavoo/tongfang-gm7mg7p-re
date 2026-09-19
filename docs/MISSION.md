@@ -16,6 +16,15 @@ the BIOS/UEFI firmware, and the EC firmware. `docs/findings.md` is the
 running record of what that's turned up so far; `ec/annotations/registers.yaml`
 is the register-level detail.
 
+For the EC, "complete" has a concrete end state: **a C codebase that mirrors
+the EC firmware function for function** — decompiled from
+`ec/firmware/GMxMGxx_11.800`, symbolized from `registers.yaml`, every function
+cited back to its bank and address. The vendor's original source is not
+available; this is its reconstruction, and annotated disassembly is a step
+towards it, not a substitute. Ghidra's 8051 decompiler is the starting point
+(issue #20, `ec/ghidra/README.md`); `.github/actions/project-setup` installs
+it for every agent run.
+
 ## What "done" looks like, incrementally
 
 There is no single PR that finishes this. Progress looks like: one more

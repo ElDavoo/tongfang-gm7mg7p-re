@@ -21,6 +21,13 @@ hidden/locked BIOS setup menus too.
 **Technical goal.** That requires complete reverse engineering of all three
 closed-source components in the stack: the Windows userspace driver/service
 (`GCUService.exe` and friends), the BIOS/UEFI firmware, and the EC firmware.
+For the EC, "complete" means **a C codebase that mirrors the EC firmware
+function for function**, decompiled from the image, symbolized from
+`registers.yaml`, and cited back to bank and address. The vendor's source
+isn't available, so this is its reconstruction. Annotated disassembly is a
+step towards it, not a substitute. Ghidra (installed by
+`.github/actions/project-setup`) is the starting point; see issue #20 and
+`ec/ghidra/README.md`.
 
 **What progress looks like.** No single PR finishes this. Progress is one
 more register's real behaviour confirmed, one more Windows class decrypted,
@@ -99,6 +106,14 @@ For an issue labelled `needs-hardware-test` or `windows`:
 - It's fine, and expected, for such a PR to add a script under
   `ec/tools/`, `linux/battery-trace/`, or similar that a human runs later —
   that's real progress, distinct from claiming the test itself happened.
+
+## Other people's work on sibling boards
+
+`docs/related-projects.md` lists other Uniwill EC reverse-engineering
+projects (HydroControl, mech-forza-control, w568w's gists) and what each
+found. Check it before re-deriving a register or mechanism, and before
+trusting one of theirs: every row says whether it was verified against
+*this* EC image. Add to it when you find another.
 
 ## Repository conventions
 
