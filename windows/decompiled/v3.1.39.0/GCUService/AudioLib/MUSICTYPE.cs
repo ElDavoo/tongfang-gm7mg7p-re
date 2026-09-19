@@ -1,0 +1,10 @@
+namespace AudioLib;
+
+internal enum MUSICTYPE
+{
+	NORMAL,
+	STEREO,
+	LEFTRIGHTSTEREO,
+	CENTERLEFTRIGHTSTEREO,
+	BRIGHTNESS
+}
