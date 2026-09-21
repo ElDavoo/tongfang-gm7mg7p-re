@@ -120,7 +120,10 @@ What this predicts, and what was then observed:
   `0x0522` at 16400 and the current on its normal taper (884 → 748 mA over
   5 minutes, 16466 mV throughout). Profile cycling on 2026-09-18 (§4g) also
   left `0x0522` unmoved. The 2026-09-09 Linux traces show the same 16466 mV
-  plateau under Trickle, Long_Life and Standard.
+  plateau under Trickle, Long_Life and Standard. Reconfirmed 2026-09-21
+  (issue #91): a full CV charge run in **High capacity** (`0x07A6`=0x08,
+  floor 0 mV/cell) held `0x0522` at 16400 throughout, so even the highest
+  profile does not raise the target on this pack.
 - **2021 should have looked different**, with a young pack at low tiers. With
   Stationary at the 200 floor the target would have been 17400 − 800 =
   16600 mV. Today the EC's reading sits 66 mV above its target (16466 vs
@@ -132,16 +135,29 @@ What this predicts, and what was then observed:
 
 ## 3. What it does not say (open questions)
 
-- **When it runs.** The seconds counter implies a once-per-second caller,
-  but the entry point `0xB158` has no direct caller in the image
-  (function-pointer or trampoline dispatch). Whether the target is
-  recomputed every second, or only while on AC, is unresolved.
+- **When it runs (resolved 2026-09-21, issue #91).** `0xB158` has no *direct*
+  caller, but the path in is now found: the task-dispatch slot at `0x8539`
+  does `lcall 0xB12C`, and `0xB12C` falls through `0xB141`
+  (`jb acc.1,0xB158` on `0x0490` bit 1) into `0xB158`. The same slot also
+  `lcall`s `0xE010` — a second `0x0522` writer that copies the pack's
+  requested `0x030E` in first, before the derating overwrites it. So the
+  target is recomputed inside the periodic task loop, not on a
+  function-pointer/trampoline as this file previously guessed. The exact
+  tick rate is not read from the image, but live it is effectively
+  continuous: a host write to `0x0522` is reclaimed within a single ~100 µs
+  read (`docs/findings.md` §4m). That also answers "can the host override
+  the target": no — `0x0522` is host-read-only.
 - **Whether `stress` survives an EC reset.** `0x09C9/0x09CA` is XDATA RAM.
   If nothing persists it (to e-flash, or to the pack), a full EC power loss
   would reset the counter, and the derating would fall back to the
-  cycle-count tier (450 cycles → 200 mV/cell → 16600 mV). No persistence
-  code was looked for. Until someone does, don't treat an EC reset as a way
-  to "undo" the derating.
+  cycle-count tier (450 cycles → 200 mV/cell → 16600 mV). One data point
+  found while tracing the caller (#90): `0xB141`'s else-branch, taken when
+  `0x0490` bit 1 is clear, explicitly zeroes `0x09C7`–`0x09CA` (the seconds,
+  minutes and stress counters). So the counter *is* cleared under that
+  condition, and no e-flash write sits near this routine — but a dedicated
+  persistence path elsewhere was not searched for, so "survives a reset" is
+  still open. Until someone settles it, don't treat an EC reset as a way to
+  "undo" the derating.
 - **`cfg_0xBC8D`** (the source of the 0xC0/0x80 cell-count selector) was
   not decoded. "4 cells" is backed by the pack's own 15200 mV design voltage
   (4 × 3.8 V) and by the 1000 mV arithmetic above, not by that helper.

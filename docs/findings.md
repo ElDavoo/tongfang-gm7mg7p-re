@@ -884,8 +884,78 @@ floor that age can overtake: Stationary means "at most 4.15 V/cell", not
 by any method. The Mechrevo fix that makes `0x07B9` work on newer Uniwill
 ECs relies on logic this image doesn't appear to contain
 (`docs/related-projects.md`). Whether the host can override the target (a
-write to `0x0522`, which the routine rewrites) is untested and would need a
-supervised live test.
+write to `0x0522`, which the routine rewrites) was untested when this was
+written; §4m now runs it, and the answer is no.
+
+### 4m. The host cannot set the charge-voltage target: the EC owns 0x0522 (2026-09-21, issue #91)
+
+§4l left one experiment for the hardware: does a host write to the
+charge-voltage target `0x0522` stick, and does the charger follow it? Both
+are now tested live on the physical machine (`windows/tools/charge_target_test.py`,
+run elevated through the vendor driver, owner present). The tool only ever
+*lowers* the target — a CV ceiling below the pack voltage can reduce charging
+but never overcharge — and restores the original on exit.
+
+**A host write to `0x0522` does not persist, in any state tested.**
+
+| run | state | writes that held |
+|---|---|---|
+| `stick_100pct` | AC, 91-93%, not charging (`0x0490`=0x0E) | 0 / 11 |
+| `holdcheck_battery` | battery, 88%, re-asserted every 20 ms (`0x0490`=0x0E) | 0 / 3 |
+| `follow_cv_highcap` | AC, charging in CV at 82-83%, High capacity, re-asserted every 20 ms (`0x0490`=0x0F) | 0 / 8 |
+
+Every readback returned the EC's computed value (16400 mV), including the
+readback taken microseconds after the write. A tighter diagnostic settles that
+this is the EC reclaiming the byte, not a dead write path: writing `0x0522` =
+16300 and then hammering **2000 back-to-back reads** (~101 µs each, ~200 ms
+total) caught the written value **0 times**, while in the same run a control
+write to the known-writable dead byte `0x07B9` = 0x5A read back correctly
+(`held`). So the write path works this instant; `0x0522` specifically is
+reclaimed faster than a single ~100 µs host round-trip. Whether the host write
+lands-then-reverts or is dropped outright is not distinguished, but the
+driver-relevant conclusion holds either way: **the host cannot hold `0x0522`
+at a chosen value.**
+
+Because the target can't be held, question 2 — does the charger follow
+`0x0522`? — cannot be tested by override on this firmware. In the CV run the
+charge current tapered on its ordinary SoC schedule (1360 → 1258 mA as
+capacity rose 82 → 83%) with the pack pinned at 16466 mV throughout; it showed
+no response to the reverted writes, as expected when the byte never actually
+changed. The `0x0522`=16400 ↔ 16466 mV plateau relationship remains a
+correlation (plus the decode in `charge-target-derating.md`), not a
+host-demonstrated causation.
+
+**Live confirmation of profile-independence, as a bonus.** The CV run was done
+in **High capacity** mode (`0x07A6`=0x08, floor 0 mV/cell). The target read
+16400 mV throughout — the same value seen under Stationary and Balanced —
+which is the direct live confirmation of §4l's claim that on this aged pack
+(age tier 250 mV/cell) no profile can lower the target.
+
+**Who rewrites it (answers part of #89).** The derating routine at bank0
+`0xB158` has no direct caller, but it is reached: the task-dispatch slot at
+`0x8539` does `lcall 0xB12C`, which falls through `0xB141` (`jb acc.1,0xB158`
+on `0x0490` bit 1) into `0xB158`. The *same* slot also `lcall`s `0xE010`,
+a second `0x0522` writer that copies the pack's requested voltage (`0x030E`)
+in before the derating overwrites it. So `0x0522` is (re)computed inside the
+periodic task loop. The exact tick rate isn't measured from the image, but the
+live <101 µs reclaim shows it is effectively continuous from the host's point
+of view. (`0xB141`'s other branch, taken when `0x0490` bit 1 is clear, zeroes
+the stress counter `0x09C9/0x09CA` — a partial data point for #90: the counter
+is plain XDATA that the EC clears under that condition; whether it is persisted
+to e-flash or the pack elsewhere was not determined here.)
+
+**What this means for the driver.** There is no host-writable charge-limit
+control on this EC image. `0x07B9`/`0x07D0` have no EC consumer (§4f, §4k) and
+`0x0522` is EC-owned and un-writable from the host (this section). Capping
+charge voltage on Linux by poking a register is not available on this
+firmware; the cap is entirely internal to the EC. Evidence:
+`evidence/battery-traces/2026-09-21-0522-{stick,holdcheck,follow}.csv`.
+
+**Not closed by this.** Whether the charger *physically* tracks `0x0522`
+(rather than, say, `0x030E`) is the remaining causation question. It can't be
+reached by overriding the EC; the way to settle it is to read the charger IC's
+programmed ChargingVoltage over SMBus directly (a follow-up, needing the
+charger's SMBus map).
 
 ## 5. Net status going into the issue tracker
 
