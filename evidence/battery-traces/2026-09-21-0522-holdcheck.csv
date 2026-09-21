@@ -1,0 +1,4 @@
+ts,phase,t_s,target_written_mv,target_readback_mv,held,requested_mv,ec_current_ma,ec_voltage_mv,profile_07a6,gate_0490,ac,charging,capacity,remaining_mwh,wmi_rate_mw
+2026-09-21T20:10:53+02:00,holdcheck_battery,2.4,16300,16400,0,17400,2823,14595,0x28,0x0E,0,0,88,26752,-41698
+2026-09-21T20:10:55+02:00,holdcheck_battery,4.8,16300,16400,0,17400,2687,14571,0x28,0x0E,0,0,88,26752,-41698
+2026-09-21T20:10:57+02:00,holdcheck_battery,7.2,16300,16400,0,17400,2653,14571,0x28,0x0E,0,0,88,26752,-39648

@@ -472,19 +472,28 @@ registers:
     static_refs: [10, 1]
     static_refs_main_ec: [10, 1]
     static_refs_pd_image: [0, 0]
-    status: present-untested
+    status: confirmed-working
     note: >
-      Little-endian mV. Written by bank0 0xB378/0xB389 as the pack's
-      requested ChargingVoltage (SBS_CHARGING_VOLTAGE, 0x030E) minus a
-      per-cell derating times the cell count
-      (ec/annotations/charge-target-derating.md). Read live as 0x4010 =
-      16400 mV on 2026-09-18 and 2026-09-19, against 17400 requested. The
-      pack's CV plateau (EC 0x0438) sits at 16466 mV under every profile, in
-      every trace in evidence/battery-traces/. Never written from the host.
-      Whether a host write would stick, or be recomputed by the EC, is
-      untested; hence present-untested despite the live reads.
-      mech-forza-control uses the same address and name on a newer Uniwill
-      EC (docs/related-projects.md).
+      Little-endian mV, and HOST-READ-ONLY: this is an EC-owned output, not a
+      control surface. A host write does not persist -- across three live runs
+      (docs/findings.md 4m, issue #91) every readback returned the EC's value
+      16400, including one taken microseconds after the write; 2000 back-to-back
+      reads after a write caught the written value 0 times, while a control
+      write to the dead byte 0x07B9 held in the same run. The EC reclaims
+      0x0522 faster than a ~100 us host round-trip. So do NOT expect a Linux
+      charge cap by writing this.
+      Written by bank0 0xB378/0xB389 as the pack's requested ChargingVoltage
+      (SBS_CHARGING_VOLTAGE, 0x030E) minus a per-cell derating times the cell
+      count (ec/annotations/charge-target-derating.md), and recomputed in the
+      periodic task loop (slot 0x8539 -> 0xB12C -> 0xB158, plus a second writer
+      0xE010 in the same slot). Read live as 0x4010 = 16400 mV on 2026-09-18,
+      -19 and -21, against 17400 requested, under Stationary/Balanced/High
+      capacity alike. The pack's CV plateau (EC 0x0438) sits at 16466 mV under
+      every profile, in every trace in evidence/battery-traces/. Whether the
+      charger physically tracks this byte (vs 0x030E) is the open causation
+      question -- not reachable by host override, would need a charger SMBus
+      read. mech-forza-control uses the same address and name on a newer
+      Uniwill EC (docs/related-projects.md).
 
   - name: SBS_CHARGING_VOLTAGE (pack-requested charge voltage)
     addr: [0x030E, 0x030F]
