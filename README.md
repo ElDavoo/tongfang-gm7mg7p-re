@@ -66,7 +66,9 @@ itself rather than running dry while the mission is incomplete.
 
 ```
 docs/                    findings.md (start here), hardware-identity.md,
-                          related-projects.md (other Uniwill RE work)
+                          related-projects.md (other Uniwill RE work),
+                          hardware-tests/ (procedures written for a human at
+                          the machine to run -- never run by the pipeline)
 ec/                       EC firmware (ITE 8051, banked), disassembly tools,
                           the register cross-reference (annotations/registers.yaml)
 windows/                  Decompiled vendor Windows service, anti-tamper notes,
