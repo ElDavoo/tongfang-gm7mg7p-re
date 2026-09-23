@@ -79,15 +79,35 @@ registers:
       a read-modify-write of bit 0
       (windows/decompiled/v3.1.39.0/GCUService/MyECIO/MyEcCtrl.cs).
       Read live 2026-09-19 as 0x01 with the vendor service running.
+      The vendor also clears it while it asks the EC for its default fan
+      tables (FanTable_Manager1p5.RefreshDefaultFanTableAll; see
+      windows/vendor-ec-map.md "Fan tables"). Held at 0x01 throughout the
+      2026-09-23 power-mode capture.
 
   - name: CTGP_DB_CTRL / OFFSET
     addr: [0x0743, 0x0744, 0x0745, 0x0746]
-    sources: [uniwill-laptop]
+    sources: [uniwill-laptop, dsdt(GNEN/ECDC/CTVA/DBCT/MXDB),
+              vendor-3.1.39.0(GpuFeatures), live]
     static_refs: [7, 1, 1, 1]
     static_refs_main_ec: [7, 1, 1, 1]
     static_refs_pd_image: [0, 0, 0, 0]
     status: present-untested
-    note: "NVIDIA_CTGP_CONTROL feature bits, not yet exercised live; all 10 sites are EC-side, so the count that makes this present-untested is not PD contamination (ec/annotations/static-refs-audit.md)"
+    note: >
+      NVIDIA_CTGP_CONTROL feature bits. All 10 sites are EC-side, so the
+      count that makes this present-untested is not PD contamination
+      (ec/annotations/static-refs-audit.md). The vendor service's writes
+      are traced in windows/vendor-ec-map.md "Power modes" (issue #92), and
+      were observed live on 2026-09-23. On AC, in every mode: 0x0743 = 0x03
+      (bit 0 DB function control, bit 1 DB enable, bit 2 cTGP enable only if
+      the user turns cTGP on); 0x0744 = cTGP target - BIOS DefaultTGP =
+      125 - 115 = 0x0A; 0x0745 = 0xFF; 0x0746 = 5. On battery: 0x0743 = 0,
+      and 0x0745/0x0746 = 0. At the AC plug-in 0x0743 went 0x00 -> 0x02 ->
+      0x03, and 0x0745/0x0746 went 0 -> 0xFF/0x05
+      (evidence/ec-watch/2026-09-23-power-mode-cycle-0700-07ff.csv). Those
+      are vendor writes being accepted. Whether the GPU's power limit
+      actually follows them has not been measured, hence still
+      present-untested (issue #8). Upstream's cTGP init writes 25 to 0x0746;
+      this BIOS caps DynamicBoost at 15 W, and the vendor writes 5.
 
   - name: BIOS_OEM (FN_LOCK_STATUS)
     addr: 0x074E
@@ -529,3 +549,137 @@ registers:
       ECSpec's ADDR_GAMING_PL1/PL2/PL4_DEFAULT_VALUE at 0x0730-0x0732 (read
       live as 3C 3C A5). Office defaults are at 0x0734-0x0736 (23 23 A5 =
       35/35/165). Not written from the host; untested as a control.
+      2026-09-23 (issue #92, windows/vendor-ec-map.md "Power modes"): the
+      vendor's SetUserProfile writes the mode's profile values on every
+      mode switch and every AC/battery change: Office 35/35/165, Gaming
+      60/60/165, Turbo 75/75/165, and 0/0/0 on battery. The capture saw all
+      of them land (evidence/ec-watch/2026-09-23-power-mode-cycle-0700-07ff.csv,
+      evidence/ec-watch/2026-09-23-power-mode-snapshot-dc.txt). "Not written
+      from the host" above means by this repo's tools. The vendor service
+      writes them all the time. The DSDT can write them too (T1WR 0x81/0x82/0x84).
+      What the EC does with a value, including 0, is still untested.
+
+  - name: MANUAL_FAN_CTRL (power mode / fan mode)
+    addr: 0x0751
+    sources: [uniwill-laptop(EC_ADDR_MANUAL_FAN_CTRL), ecspec-3.1.6.0(ADDR_MAFAN_CONTROL_BYTE),
+              vendor-3.1.39.0(SetFanMode), live]
+    static_refs: 29
+    static_refs_main_ec: 29
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      The power-mode byte. MyFanManager_RamFan1p5.SetFanMode writes Office
+      0xA0, Gaming 0x00, Turbo 0x10, and adds bit 6 when Fan Boost is on.
+      Upstream's names for the bits: FAN_MODE_TURBO bit 4, FAN_MODE_HIGH
+      bit 5, FAN_MODE_BOOST bit 6, FAN_MODE_USER bit 7, fan level bits 0-2.
+      In those names Office is USER|HIGH. On 2026-09-23 six Fn-key mode
+      switches each wrote the predicted value
+      (evidence/ec-watch/2026-09-23-power-mode-cycle-0700-07ff.csv; trace
+      in windows/vendor-ec-map.md "Power modes", issue #92). The vendor
+      writes the PLs, a fan table and the GPU bytes in the same breath, so
+      the capture cannot say what the EC does with this byte alone. That
+      is the open question for a Linux platform profile, and the reason
+      this is still present-untested. Upstream defines the address but
+      never touches it.
+
+  - name: BIOS_OEM_2 (DEFAULT_MODE / FAN_QKEY / FAN_TABLE_OFFICE_MODE)
+    addr: 0x0782
+    sources: [uniwill-laptop(EC_ADDR_BIOS_OEM_2), ecspec-3.1.6.0(ADDR_BIOS_OEM_BYTE2),
+              vendor-3.1.39.0(GetDefaultMode/GetQkeyDefine), live]
+    static_refs: 11
+    static_refs_main_ec: 11
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Read-only to the vendor's fan manager. Bit 4 is the default power
+      mode (0 Office, 1 Gaming), bit 1 the Q-key, bit 2 the Office fan-table
+      type (its getter is never called). Read live on 2026-09-23 as 0x9D:
+      default Gaming, which matches the owner's "the BIOS default is
+      Gaming". The HID keyboard/lightbar classes also touch this byte
+      (ENABLE_CHINA_MODE bit 6 upstream). Those writers aren't traced here.
+
+  - name: BIOS_INFO_3 (Turbo mode supported)
+    addr: 0x049F
+    bit: 1
+    sources: [ecspec-3.1.6.0(ADDR_BIOS_INFO_3_BYTE), vendor-3.1.39.0(MyEcCtrl.GetTurboModeSupport), live]
+    static_refs: 15
+    static_refs_main_ec: 12
+    static_refs_pd_image: 3
+    status: present-untested
+    note: >
+      The vendor offers the Turbo mode only when bit 1 is set
+      (windows/decompiled/v3.1.39.0/GCUService/MyECIO/MyEcCtrl.cs:84).
+      Read live on 2026-09-23 as 0x0A (set), and the Fn key cycled through
+      Turbo. Upstream has a different Turbo capability bit (0x0742 bit 4,
+      FAN_TURBO_SUPPORTED). 0x0742 reads 0x02 here, so that bit is clear.
+      The two haven't been reconciled.
+
+  - name: MODE_PL_DEFAULTS (per-mode PL1/PL2/PL4/D-state defaults)
+    addr: [0x0730, 0x0731, 0x0732, 0x0733, 0x0734, 0x0735, 0x0736, 0x0737,
+           0x07A7, 0x07A8, 0x07A9, 0x07AA]
+    sources: [ecspec-3.1.6.0(ADDR_GAMING/OFFICE/BATTERYSAVER_PL*_DEFAULT_VALUE),
+              vendor-3.1.39.0(Get*PLDefaultValue), live]
+    static_refs: [2, 2, 1, 1, 1, 2, 1, 2, 2, 2, 1, 1]
+    static_refs_main_ec: [2, 2, 1, 1, 1, 2, 1, 2, 2, 2, 1, 1]
+    static_refs_pd_image: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    status: present-untested
+    note: >
+      The EC's defaults, four bytes per mode: Gaming 0x0730-0x0733, Office
+      0x0734-0x0737, Turbo 0x07A7-0x07AA (ECSpec calls the last block
+      BATTERYSAVER; the 3.1.39.0 fan manager reads it as Turbo). The
+      service seeds every profile slot from them (RefreshMode). Read live
+      as 3C 3C A5 01 / 23 23 A5 01 / 4B 4B A5 01 (2026-09-23). The
+      D-state byte is read but never written anywhere.
+
+  - name: MODE_TCC_OFFSET_DEFAULTS
+    addr: [0x07D8, 0x07D9, 0x07DA]
+    sources: [ecspec-3.1.6.0(ADDR_GAMING/OFFICE/TURBO_TCC_OFFSET_DEFAULT_VALUE),
+              vendor-3.1.39.0(GetTccDefaultValue), live]
+    static_refs: [34, 16, 53]
+    static_refs_main_ec: [1, 1, 1]
+    static_refs_pd_image: [33, 15, 52]
+    status: present-untested
+    note: >
+      CPU TCC offset defaults (degrees C) for Gaming/Office/Turbo. Read
+      live as 05 05 05 (2026-09-23), matching TccOffset 5 in every
+      UserPofiles slot. Almost all the file-wide sites are in the PD image,
+      which is a different program's XDATA. That includes the 0x07D8 operand
+      issue #45 follows from the PD image's 0x35DA callee. The one site
+      per address in the EC firmware is the one to read for this meaning.
+
+  - name: CPU_TCC_OFFSET (APTC/APTN)
+    addr: 0x0786
+    sources: [dsdt(APTC:7/APTN:1), vendor-3.1.39.0(SetCpuTccOffset),
+              uniwill-laptop(EC_ADDR_FAN_DEFAULT), live]
+    static_refs: 4
+    static_refs_main_ec: 4
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      The DSDT splits it into APTC (7 bits) + APTN (bit 7). The vendor
+      writes offset|0x80 when the user enables the TCC offset, and 0
+      otherwise (the default in every mode; it held 0x00 through the
+      2026-09-23 capture). Upstream names this address EC_ADDR_FAN_DEFAULT
+      (FAN_CURVE_LENGTH 5), and ECSpec 3.1.6.0 ADDR_L1_PWM_DEFAULT_MYFAN3.
+      Those don't agree with the DSDT or with 3.1.39.0 here, which agree
+      with each other.
+
+  - name: AP_OEM_6 (whisper status / universal fan control)
+    addr: 0x07C6
+    sources: [uniwill-laptop(EC_ADDR_AP_OEM_6), dsdt(WMS0), vendor-3.1.39.0, live]
+    static_refs: 12
+    static_refs_main_ec: 12
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Bit 2 (upstream ENABLE_UNIVERSAL_FAN_CTRL): the vendor clears it
+      before every fan-table write and sets it afterwards
+      (MyFanTableCtrl.SetFanControlByRamFan1p5). Seen live on 2026-09-23 as
+      a 1-2 s dip at every mode switch. Bits 0-1 (DSDT WMS0): the vendor
+      reads them back as the NVIDIA Whisper Mode setting
+      (GpuFeatures.GetWisperModeStatus) and only ever clears them. Yet they
+      went 0 -> 3 on every switch into Office and back on the way out. No
+      GCUService EC call site sets them, and the DSDT never writes WMS0 by
+      name, so the writer is unidentified. Upstream also names bit 3
+      BATTERY_CHARGE_FULL_OVER_24H and bit 4 BATTERY_ERM_STATUS_REACHED.
+      Live 0x04 at rest.
