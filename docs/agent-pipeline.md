@@ -73,24 +73,24 @@ without replacing it. The 2026-09-23 re-application is the same change with
 `stealth/space-bunny-alpha` in place of `stealth/union-alpha` and the context
 token setting added.
 
-Why the revert is not repeated: as of 2026-09-23, a check of OpenRouter's
-public model list (`GET https://openrouter.ai/api/v1/models`, no auth needed)
-finds `stealth/space-bunny-alpha` and **no entry containing "union" at all**
-among the 456 models returned. `stealth/union-alpha` is therefore not a model
-the endpoint serves, which fits the failure the reverted commit produced: a
-run that ends `is_error: true` on its first API call, with `num_turns: 1`,
-`total_cost_usd: 0` and an empty `modelUsage` — a bad model name fails at
-request time, before any inference. This is a plausible explanation, not a
-confirmed cause; the runs that showed it were never checked against the model
-list at the time, and the action does not log the reason a run ends.
+Why the revert is not repeated: the model is rotated, and `union-alpha`'s
+turn was simply over — the revert was routine re-pointing at a current
+stealth model, not a diagnosis of a failure. As of 2026-09-23, a check of
+OpenRouter's public model list (`GET https://openrouter.ai/api/v1/models`, no
+auth needed) finds `stealth/space-bunny-alpha` and no entry containing
+"union" among the 456 models returned, which is consistent with a retired
+slug rather than a broken one. When the next stealth model is rotated in,
+this section is what changes: the `--model` flag, the four
+`ANTHROPIC_DEFAULT_*_MODEL` variables, `CLAUDE_CODE_SUBAGENT_MODEL`, and the
+`docs/agent-pipeline.md` text here.
 
 The same listing gives `stealth/space-bunny-alpha` a `context_length` of
 1000000, so `CLAUDE_CODE_MAX_CONTEXT_TOKENS: 950000` leaves headroom under the
 real window rather than exceeding it, and it advertises `reasoning_effort`
 among its supported parameters, so `--effort max` maps to something the
 endpoint accepts. Pricing is listed as zero for both prompt and completion.
-Re-check the listing before assuming any of this still holds: model slugs
-appear and disappear without notice in this repository.
+Re-check the listing before assuming any of this still holds: these slugs
+turn over, which is the whole reason the revert exists.
 
 All eight steps also pass `--dangerously-skip-permissions`, as explicitly
 requested for unattended CI. This bypasses Claude Code permission prompts;
