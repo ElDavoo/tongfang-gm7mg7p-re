@@ -47,6 +47,23 @@ independently checkable rather than taken on faith:
   (with its decoded `.jsonl`) is a passive loopback capture of the vendor
   broker over the same window. Source for findings.md §7 and
   `windows/vendor-ec-map.md` "Power modes".
+- **`ec-watch/2026-09-23-0751-isolation.txt`**: the issue #99 run that wrote
+  `0x0751` alone, one block per value `0xA0`/`0x00`/`0x10`, from Turbo, with
+  Control Center 3.1.39.0 running and GCUService+GCUBridge up, watching
+  `0x0783-0x0787`, `0x07C5`, `0x07C6`, `0x0743-0x0746` and the `0x0F00-0x0F5F`
+  fan table. Nothing but `0x0751` itself moved. It could **not** answer
+  whether the fan-mode bits scale fan behaviour, which is the half of the
+  question `MANUAL_FAN_CTRL` is still `present-untested` for: the run was
+  near-idle, and the file's own closing note records that `0x075B`/`0x075C`
+  drifted as much under a no-op control write (`0x10` → `0x10`) as under a
+  real mode change, which is why the run puts that drift on the die rather
+  than on the byte. The PWM rows are not in the capture, only that note.
+  Source for the live half of the `MANUAL_FAN_CTRL` note in
+  `ec/annotations/registers.yaml`; the fixed-load re-run that would settle
+  the rest is §3 of `docs/hardware-tests/manual-fan-ctrl-0751-isolation.md`,
+  is not done, and needs the physical machine. That file's §6 names the
+  re-run's captures `<YYYY-MM-DD>-0751-isolation-…`, and they go in this index
+  next to this one.
 - **`uefi/2026-09-19-UniWillVariable.{bin,txt}`, `uefi/2026-09-19-variable-list.txt`**:
   the vendor's shared settings variable after a BIOS load-defaults, and
   every OS-visible UEFI variable. Source for findings.md §6.
