@@ -302,7 +302,12 @@ the listings the report measured — proving that needs the same assembler, and
 the one on a GitHub-hosted runner is a different and older ASxxxx, against
 which a full report would rewrite every `assembler` cell and could move the gap
 tallies above. That is why it is one-shot and why the tallies here are still the
-nix-pinned measurement.
+nix-pinned measurement. Auditing what it wrote is a separate command,
+`--verify-provenance` below, and it needs the full git history the two
+revisions it names live in: `git clone` without `--depth`. The agent stages
+check out with `fetch-depth: 0` and can run it; both of `ci.yml`'s checkouts
+are default-depth and cannot resolve `08b72e2` at all, which is why it is a
+full-clone command and not part of the per-commit gate.
 
 **For the committed column the history supplies the proof the command could
 not** (2026-09-23, issue #150). `a56b3bb` changed nothing in this file but the
@@ -324,7 +329,25 @@ the one thing the one-shot could not assert about itself. What stays open is
 what it never could: they were taken without a re-encode, so they attest to the
 measured text and not to its correctness — the paragraph above — and the guard
 stops a second run, not the first. A future migration still answers this from
-its own history. `docs/findings.md` §14f has the method.
+its own history. `docs/findings.md` §14f has the method, and this runs it:
+
+```
+$ python3 ../tools/verify_reassembly.py --verify-provenance \
+      --base 08b72e2 --migration a56b3bb --listings-from 8c7985e
+  listing text: 0 of them changed over 08b72e2..a56b3bb; the same pathspec returns 2705 file(s)
+  over 8c7985e..08b72e2, the window that last wrote them, so the first number is a measurement
+  report: 2705 of 2705 row(s) identical once listing_digest is dropped (present in the
+  base: no; in the migration: yes)
+  PASS  the migration changed the column and nothing beneath it, and no listing text
+  moved while it did.
+```
+
+`--listings-from` names the revision *before* the window that last wrote the
+listings, and the count it prints is the positive control: the 2,705 above is
+the same pathspec matching 2,705 files, which is what makes the zero next to it
+a measurement rather than a pathspec matching nothing. A migration that moved a
+listing, or touched any other cell of the report, fails with the file or the
+cell named.
 
 ## The annotation layer
 
