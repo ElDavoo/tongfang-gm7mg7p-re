@@ -94,6 +94,7 @@ check_ghidra_tooling() {
   for tool in ec/tools/gen_xdata_symbols.py \
               ec/tools/build_ec_decompile.py \
               ec/tools/verify_reassembly.py \
+              ec/tools/merge_annotation_shards.py \
               bios/tools/bios_extract.py \
               windows/tools/decompile_native.py; do
     [ -f "$tool" ] || continue
@@ -110,6 +111,12 @@ check_ghidra_tooling() {
       # confirms that the committed reassembly report still describes the
       # committed listings, and that nothing in it disagrees. The re-encode
       # itself needs sdas8051 and is a separate opt-in run.
+      # The annotation merge's refusals. It is what stands between a fan-out's
+      # CSV and main, and a check that has quietly stopped rejecting anything
+      # looks exactly like a check that is working.
+      *merge_annotation_shards.py)
+        python3 "$tool" --self-test || rc=1
+        ;;
       *verify_reassembly.py)
         python3 "$tool" --check || rc=1
         ;;
