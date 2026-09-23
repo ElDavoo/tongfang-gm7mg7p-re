@@ -1050,3 +1050,46 @@ the layout comes from the decrypted `NVRAM_STRUCT.cs`. Its battery bytes
 (`BatteryLimitation`, `ChargeMaximumLimit`, `ChargeMinimumLimit`, offsets
 0x30-0x32) read 0 after the BIOS load-defaults. Which of its fields the BIOS
 consumes is not known.
+
+## 7. Power modes: what Office, Gaming and Turbo write (2026-09-23, issue #92)
+
+The full trace, with file:line citations into the decrypted 3.1.39.0
+service, is in `../windows/vendor-ec-map.md` under "Power modes". In short:
+
+**A mode is a bundle, not a register.** On every switch, and on every AC ↔
+battery change, `MyFanManager_RamFan1p5.SetUserProfile` writes:
+
+- the fan-mode byte `0x0751` (Office `0xA0`, Gaming `0x00`, Turbo `0x10`);
+- PL1/PL2/PL4 at `0x0783-0x0785` (35/35/165, 60/60/165, 75/75/165 W, or
+  0/0/0 on battery), seeded from the EC's own per-mode default bytes;
+- a 96-byte fan table at `0x0F00-0x0F5F`, bracketed by `0x07C6` bit 2;
+- and, on AC, the same GPU cTGP/DynamicBoost bytes `0x0743-0x0746` in all
+  three modes.
+
+The "profiles 1-5" inside each mode are user slots that all start from the
+same defaults. The Fn mode key is EC event `0xB0`, and the *service* picks
+the next mode.
+
+**Confirmed live, as the vendor's writes.** An AC plug-in and six Fn-key
+switches were captured with `ec_watch.py` on `0x0700-0x07FF` and
+`0x0F00-0x0F5F`, alongside a passive pcap of the vendor MQTT broker
+(`../evidence/ec-watch/2026-09-23-power-mode-cycle-*`,
+`../evidence/mqtt-capture/2026-09-23-power-mode-cycle.*`). Every predicted
+byte landed. `windows/tools/fan_table_replay.py` shows all seven fan-table
+states the capture passed through equal the tables the service announced
+on `Fan/Table`, byte for byte. What this shows is that the vendor's writes
+land, not that the EC acts on each byte. In particular, **nothing here says
+what the EC does with `0x0751` alone**, because the service always wrote the
+whole bundle. That's the question a Linux platform profile hinges on, and it
+needs its own live test.
+
+**New questions.**
+- Who sets `0x07C6` bits 0-1 (DSDT `WMS0`, read back as NVIDIA Whisper
+  Mode) on every switch into Office? No GCUService EC call site does.
+- The EC answers a "give me your default fan table for mode N" handshake
+  through a mailbox in `0x0F5D-0x0F5F`. The EC side of it is unread, and
+  nobody has compared its answer against the stored JSONs.
+- Upstream `uniwill-laptop` names `0x0786` a fan default, where the DSDT and
+  the vendor use it as the CPU TCC offset. Upstream also treats `0x0742`
+  bit 4 as "Turbo supported"; that bit is clear here, yet the vendor offers
+  Turbo from `0x049F` bit 1.
