@@ -145,6 +145,13 @@ BIOS_SCRIPTS = os.path.join(REPO, "bios", "ghidra")
 SCRIPT_PATH = ";".join((SCRIPTS, BIOS_SCRIPTS))
 LOAD_MAP = os.path.join(REPO, "bios", "ghidra", "load-map.csv")
 INDEX = os.path.join(REPO, "bios", "ghidra", "index.csv")
+# The disassembly index, one row per function, out_file pointing at the .asm.
+LISTING_INDEX = os.path.join(REPO, "bios", "ghidra", "listing-index.csv")
+# One .asm per function, under <Module>/<ADDR>.asm. The whole-module listing
+# lives beside the .c in bios/decompiled/ for reading; these are what the index
+# points at, what an annotation cites, and what a 293-function module is broken
+# up into.
+LISTINGS = os.path.join(REPO, "bios", "ghidra", "listings")
 MANIFEST = os.path.join(REPO, "bios", "ghidra", "manifest.csv")
 # The five TE images, committed so `--check` and `--self-test` need neither
 # Ghidra nor a UEFIExtract run. bios/ghidra/README.md says why.
@@ -483,8 +490,8 @@ def ghidra_preflight(ghidra):
 # The Ghidra run
 # --------------------------------------------------------------------------
 
-def post_scripts(ghidra, project_dir, out_c, out_src, raw_index,
-                 context, basis, work):
+def post_scripts(ghidra, project_dir, out_c, out_src, out_fn, raw_index,
+                 raw_listing, raw_fn, context, basis, work):
     """Apply the annotations and export, on a COPY of the project.
 
     The copy is the point: the committed .rep is never opened for writing, so
@@ -501,6 +508,10 @@ def post_scripts(ghidra, project_dir, out_c, out_src, raw_index,
     for stale in os.listdir(work):
         if stale.startswith("index-raw.csv.") and stale.endswith(".counts"):
             os.remove(os.path.join(work, stale))
+        if (stale.startswith("listing-raw.csv.") or
+                stale.startswith("listing-fn-raw.csv.")) \
+                and stale.endswith(".listing-counts"):
+            os.remove(os.path.join(work, stale))
     # -process may only be given once, so this is one invocation over the whole
     # project rather than 38 of them: analyzeHeadless runs the scripts once per
     # program inside the one JVM, and a JVM start is ~9.5 s.
@@ -511,7 +522,18 @@ def post_scripts(ghidra, project_dir, out_c, out_src, raw_index,
            ANNOTATIONS if os.path.isfile(ANNOTATIONS) else "", "",
            os.path.join(work, "reports"),
            "-postScript", "ExportDecompile.java", out_src, raw_index,
-           "per-program", context, basis]
+           "per-program", context, basis,
+           # The disassembly, one .asm per module beside its .c. Same reason as
+           # the EC: a decompilation is a reading of the bytes, and the listing
+           # is what lets a reader check the reading.
+           "-postScript", "ExportListing.java", out_src, raw_listing,
+           "per-program", context, basis,
+           # ...and again per function, because a 293-function module is not a
+           # unit anybody can annotate or check. The per-program listing is
+           # what a human skims; the per-function ones are what a reader cites
+           # and what an annotator reads, and the index points at these.
+           "-postScript", "ExportListing.java", out_fn, raw_fn,
+           "per-function", context, basis]
     log = open(os.path.join(work, "ghidra-export.log"), "w")
     try:
         run(cmd, stdout=log, stderr=subprocess.STDOUT)
@@ -602,13 +624,21 @@ def join_index(raw_index):
     return raw, sorted(unmatched)
 
 
-def write_outputs(raw, found, digest, mode, rows, unmatched, work):
+def write_outputs(raw, found, digest, mode, rows, unmatched, work, listing=None):
     with open(INDEX, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=INDEX_COLUMNS, extrasaction="ignore",
                            lineterminator="\n")
         w.writeheader()
         for row in sorted(raw, key=lambda r: (r["program"], int(r["addr"], 16))):
             w.writerow(row)
+    # The disassembly index, same columns, pointing at the .asm beside each .c.
+    if listing is not None:
+        with open(LISTING_INDEX, "w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=INDEX_COLUMNS, extrasaction="ignore",
+                               lineterminator="\n")
+            w.writeheader()
+            for row in sorted(listing, key=lambda r: (r["program"], int(r["addr"], 16))):
+                w.writerow(row)
 
     per_program, applied = {}, {}
     for row in raw:
@@ -838,11 +868,14 @@ def build(args, work):
 
     out_c = os.path.join(work, "out")
     out_src = os.path.join(work, "named-src")
-    for d in (out_c, out_src):
+    out_fn = os.path.join(work, "listings")
+    for d in (out_c, out_src, out_fn):
         if os.path.isdir(d):
             shutil.rmtree(d)
         os.makedirs(d)
     raw_index = os.path.join(work, "index-raw.csv")
+    raw_listing = os.path.join(work, "listing-raw.csv")
+    raw_fn = os.path.join(work, "listing-fn-raw.csv")
     with open(raw_index, "w", newline="") as f:
         # Tab-separated: the Java exporter appends tab-separated rows.
         f.write("program\taddr\tname\tsize\tseed_basis\tannotated\t"
@@ -852,8 +885,12 @@ def build(args, work):
     if os.path.isdir(copy_dir):
         shutil.rmtree(copy_dir)
     shutil.copytree(project_dir, copy_dir)
-    post_scripts(args.ghidra, copy_dir, out_c, out_src, raw_index,
-                 context, basis, work)
+    for _p in (raw_listing, raw_fn):
+        with open(_p, "w", newline="") as f:
+            f.write("program\taddr\tname\tsize\tseed_basis\tannotated\t"
+                    "type\tbasis\tevidence\tout_file\n")
+    post_scripts(args.ghidra, copy_dir, out_c, out_src, out_fn, raw_index,
+                 raw_listing, raw_fn, context, basis, work)
 
     # The unedited export is the committed one. Compare the twelve that
     # existed before this build BEFORE overwriting them: a changed .c is a
@@ -871,6 +908,13 @@ def build(args, work):
         if not os.path.isfile(src):
             raise SystemExit("error: Ghidra produced no %s.c" % name)
         shutil.copyfile(src, os.path.join(DECOMPILED, name + ".c"))
+        # The disassembly, beside the decompile it belongs to. In per-program
+        # mode ExportListing writes one <Module>.asm holding every function,
+        # and the listing index points every row of that module at it.
+        _asm = os.path.join(out_src, name + ".asm")
+        if not os.path.isfile(_asm):
+            raise SystemExit("error: Ghidra produced no %s.asm" % name)
+        shutil.copyfile(_asm, os.path.join(DECOMPILED, name + ".asm"))
     if drift:
         print("\n  WARNING: these previously-committed decompiles changed and have\n"
               "  been overwritten with this build's output: %s" % ", ".join(drift))
@@ -879,7 +923,21 @@ def build(args, work):
               % len(LEGACY_MODULES))
 
     raw, unmatched = join_index(raw_index)
-    write_outputs(raw, found, digest, args.mode, rows, unmatched, work)
+    # The listing index is read straight from the exporter's tab-separated
+    # scratch file: in per-program mode there is no de-duplication to do and no
+    # annotation join, so the extra pass would only be a second place to be
+    # wrong.
+    if os.path.isdir(LISTINGS):
+        shutil.rmtree(LISTINGS)
+    shutil.copytree(out_fn, LISTINGS)
+    listing = []
+    if os.path.isfile(raw_fn):
+        listing = list(csv.DictReader(open(raw_fn, newline=""),
+                                      delimiter="\t"))
+        for _r in listing:
+            _r.setdefault("common", "")
+            _r.setdefault("also_in", "")
+    write_outputs(raw, found, digest, args.mode, rows, unmatched, work, listing)
     for scope, addr in unmatched:
         print("  annotation %s 0x%X resolves to no exported function -- either a "
               "typo or the project needs --mode rebuild-project" % (scope, addr))
@@ -1027,9 +1085,28 @@ def check():
 
     print("bios_extract.py --check")
     for path, what in ((MANIFEST, "manifest"), (INDEX, "index"),
+                       (LISTING_INDEX, "listing index"),
                        (LOAD_MAP, "load map")):
         if not os.path.isfile(path):
             fail("no %s at %s" % (what, os.path.relpath(path, REPO)))
+    if not ok:
+        return 1
+    # Every decompilation has its machine code beside it, and every listing
+    # names a file that exists. A .c with no .asm is a reading with nothing to
+    # check it against; a listing row pointing at a missing file is an export
+    # that has gone stale in a way the C index cannot see.
+    _rows = list(csv.DictReader(open(INDEX, newline="")))
+    _lrows = list(csv.DictReader(open(LISTING_INDEX, newline=""))) \
+        if os.path.isfile(LISTING_INDEX) else []
+    _seen = {(r["program"], r["addr"]) for r in _rows}
+    _lseen = {(r["program"], r["addr"]) for r in _lrows}
+    for r in _lrows:
+        if r["out_file"] and not r["out_file"].startswith("(") \
+                and not os.path.isfile(os.path.join(LISTINGS, r["out_file"])):
+            fail("listing row %s %s points at a missing file: %s"
+                 % (r["program"], r["addr"], r["out_file"]))
+    for prog, addr in _seen - _lseen:
+        fail("%s %s decompiles but has no disassembly listing" % (prog, addr))
     if not ok:
         return 1
     digest = rom_digest()

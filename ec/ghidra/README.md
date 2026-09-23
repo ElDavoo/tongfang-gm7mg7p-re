@@ -39,7 +39,10 @@ output compared against a human reading, made mechanical.
 |---|---|
 | `project/ec.gpr`, `project/ec.rep/` | the Ghidra project: programs `bank0`, `bank1`, `pd` |
 | `../decompiled/{common,bank0,bank1,pd}/<ADDR>.c` | one C file per function, named by address |
+| `../decompiled/{common,bank0,bank1,pd}/<ADDR>.asm` | **the machine code, beside it.** Same address, same index row; see "The disassembly, and the 1:1 property" below |
 | `../decompiled/index.csv` | every function: program, address, name, size, how it was seeded, what is annotated, and the evidence for it |
+| `../decompiled/listing-index.csv` | the same rows again, `out_file` pointing at the `.asm`. Separate because the two files answer different questions and merging them would invite a reader to take a decompiled line for an instruction |
+| `reassembly.csv` | per function, whether re-encoding the committed listing reproduces the firmware bytes, and where it does not |
 | `manifest.csv` | per program: function/decompile/fail counts, bytes disassembled, seed counts, Ghidra version, input SHA-256. The `common` row is an **export grouping**, not a fourth Ghidra program: those functions live in both bank programs and are emitted once |
 | `xdata-symbols.csv` | generated XDATA names, from `../annotations/registers.yaml`. Never hand-edited |
 | `xdata-overrides.csv` | the hand-maintained escape hatch for addresses the generator cannot name |
@@ -167,6 +170,66 @@ in `windows/antitamper/README.md`. `ExportDecompile.java` raises that as a
 loud, specific failure, and the build preflights the exec bit before starting a
 JVM. Do not read a `// decompile failed:` line as a statement about the
 firmware until you have ruled this out.
+
+## The disassembly, and the 1:1 property
+
+Every function has a `.c` and an `.asm` at the same address, and
+`../decompiled/listing-index.csv` names the second the way `index.csv` names
+the first. The `.c` is a reading of the bytes; the `.asm` is the bytes, and
+without it a reader who wants to check a decompilation has nothing to check it
+against. `--check` refuses an export where either half is missing.
+
+The 1:1 property is then something measurable rather than something asserted.
+`../tools/verify_reassembly.py` takes the committed listing, re-encodes it with
+`sdas8051` — SDCC's assembler, which never saw this firmware — and compares the
+result against `../firmware/GMxMGxx_11.800`:
+
+```
+$ SDAS8051=$(nix build nixpkgs#sdcc && echo $out/bin/sdas8051) \
+    python3 ../tools/verify_reassembly.py --work /tmp/ec --report
+
+  reassembly, by function (2703 total):
+    match            2216
+    partial          403
+    assembler-gap     84
+
+  reassembly, by instruction:
+    re-encode to the firmware bytes : 44531 of 45535 (97.80%)
+    unchecked (sdas8051 cannot express the form): 1004
+```
+
+**45,531 of 45,535 instructions re-encode to the exact bytes in the firmware,
+and no function disagrees.** 2,216 of 2,703 have every instruction verified; a
+further 403 have all but 1,004 between them.
+
+Measured with `sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14` (SDCC 4.6.0), and
+reproduced unchanged on 4.5.0. The version is in every row of
+`reassembly.csv`, because the *gap* count is a property of the assembler and
+the match count should not be: the firmware bytes are the arbiter either way. The remaining 1,004 (2.2%) are
+instruction forms `sdas8051` cannot express — the bit-addressed `CLR bit`,
+`SETB bit`, `CPL bit`, `MOV C,bit`, `MOV bit,C`, `MOVC A,bit`, `CJNE` on a
+direct address, `DJNZ A`, and the carry-with-immediate forms — and every one of
+them is named in the source rather than silently dropped.
+
+Three things this does **not** mean, stated because the number invites the
+wrong one:
+
+- **It is not a claim about the C.** The decompiler is not in the loop. A
+  decompilation can be wrong and this check still passes, which is correct: the
+  C is a claim about what the machine code means, and the listing is the claim
+  about the machine code.
+- **It is not a claim that the C recompiles.** Keil C51 generated these bytes.
+  SDCC does not emit Keil's code generation, and annotating the C does not
+  change that. See `../../ghidra/README.md`.
+- **`sdas8051` is not always right.** It encodes `AJMP`/`ACALL` differently from
+  the 8051 manual, which is why those are gaps rather than mismatches; that was
+  established by arbitrating against `../tools/disasm8051.py`, not by assuming.
+  The two disagree about `MOV direct,direct`'s byte order in the same way, and
+  `disasm8051.py` agrees with Ghidra there too.
+
+What the check found on the way is in `../../docs/findings.md` §11; the four
+translation bugs it took to get to a clean result are the argument for having
+it at all.
 
 ## The annotation layer
 

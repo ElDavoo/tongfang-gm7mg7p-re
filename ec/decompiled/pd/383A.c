@@ -10,18 +10,12 @@
    evidence: ec/annotations/lightbar-bat-flow.md
    basis: hand-decoded */
 
-byte unresolved_0x383A(char param_1,byte param_2,byte param_3,byte param_4,char param_5,char param_6
-                      ,char param_7,byte param_8)
+void unresolved_0x383A(void)
 
 {
-  byte bVar1;
-  byte bVar2;
-  
   load_xdata_to_r0_r1_r2_or_r3();
-  bVar1 = param_7 - (((param_4 < param_8) << 7) >> 7);
-  bVar2 = param_6 - (((param_3 < bVar1) << 7) >> 7);
-  return param_1 - (param_5 - (((param_2 < bVar2) << 7) >> 7)) |
-         param_4 - param_8 | param_3 - bVar1 | param_2 - bVar2;
+  sub_or_cmp_r0_r7();
+  return;
 }
 
 

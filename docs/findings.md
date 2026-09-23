@@ -1304,3 +1304,266 @@ take effect (a live test, starting with the XMP profile the DIMMs
 advertise, never the voltage override first); and whether Intel's
 Advanced form `0x2718` (with the CPU-side OverClocking Performance Menu)
 can be reached without reflashing.
+
+## 9. What the decompilers can and cannot do on this material (2026-09-23)
+
+The Ghidra projects now exist for all three components, and building them
+settled several questions that were assumptions before. These are
+methodological results rather than findings about the hardware, and they are
+recorded here because two of them are traps: a tool reported success, and
+the output was worthless.
+
+**Ghidra 12.1.3 does decompile this 8051 firmware.** The charge-target
+routine at bank 0 `0xB1F0` comes out as recognisable C, and the project
+holds 2,676 decompiled functions across the two banks, the common area and
+the PD image (`ec/ghidra/README.md`, `ec/decompiled/index.csv`).
+
+**But a raw 8051 import finds nothing at all.** Ghidra's 8051 SLEIGH has no
+reset-vector concept, so import plus auto-analysis produces an *empty*
+project — zero functions. Every function here is reached by seeding, and
+how it was seeded is recorded per function in `ec/decompiled/index.csv`.
+The first attempt at this work concluded that Ghidra could not decompile
+8051 at all; that conclusion was wrong, and the cause is the next item.
+
+**The decompiler can fail silently, and the failure looks like a result.**
+Unpacking the Ghidra release with something that drops the exec bit (Python's
+`zipfile` does) leaves the `decompile` and `sleigh` binaries under
+`Ghidra/Features/Decompiler/os/linux_x86_64/` non-executable.
+`DecompInterface.openProgram()` then returns false and `getLastMessage()`
+is the **empty string**. From the
+output that is indistinguishable from "this function will not decompile",
+which is the same failure shape as the ConfuserEx anti-tamper trap in
+`windows/antitamper/README.md` — and the first conclusion above was drawn
+from exactly that. The exporters now raise it as a loud, specific failure,
+and the build preflights the exec bit before starting a JVM. **Anyone
+reading a decompile failure in this repository should rule this out before
+concluding anything about the firmware.**
+
+**Ghidra cannot usefully decompile the .NET assemblies.** It reports success
+and emits `halt_baddata()`: `GCUService.dumped.exe` scores 400/400
+"decompiled" against bodies containing `halt_baddata()` and "Unable to
+resolve constructor". It does read .NET *method names* out of the metadata,
+so the project is useful as a symbol and call-graph index, but the C is not
+a decompilation and is not committed as one. `ilspycmd` is the tool for
+managed code, and `windows/decompiled/v3.1.39.0/` already holds the fully
+decrypted service. The encrypted original yields 8 functions against the
+dump's 400+, which is the anti-tamper showing through the tool rather than
+anything new about the anti-tamper.
+
+**The UWP app ships a matching PDB that nobody had used.**
+`vendor/control-center-3.9.18.0/GamingCenter3_Cross.UWP_3.9.18.0_x64.appxsym`
+is a 144 MB `GamingCenter3_Cross.pdb` for the 27 MB native
+`GamingCenter3_Cross.dll` inside the msixbundle. It matches, and Ghidra
+reads full C++/WinRT type information out of it. It is slow — the
+"PDB Function Internals" analyzer was still grinding past ten minutes, and
+turning the analyzer off is what makes it usable. See
+`windows/ghidra/native-binaries.csv`.
+
+**The routine the charge-cap question turns on is invisible to a call
+census.** `0xB158`, `charge_target_update`, has no `lcall` or `ljmp` to it
+anywhere in the image: it is entered by `jb acc.1` from `0xB141` on XDATA
+`0x0490` bit 1 (`ec/annotations/charge-target-derating.md`). A seeder built
+from direct calls therefore omits the best-understood routine in the
+firmware, and did. This is a general limit on any call-target census, and it
+is why the annotation layer can also declare a function entry rather than
+only annotate one.
+
+**Two coverage numbers, and only one of them is coverage.** Bytes
+disassembled is the honest figure; the sum of function body lengths is not,
+because Ghidra's bodies overlap and the sum can exceed the image size. Both
+are in `ec/ghidra/manifest.csv`, under `instruction_bytes` and `body_bytes`,
+so a later reader cannot accidentally quote the second as the first.
+
+**The BIOS holds 360 PE/TE modules; 12 had ever been decompiled.** There are
+32 `Oem*` modules — the TongFang/Uniwill-authored set — and 20 had never
+been touched, the largest being `OemServiceSmm` at 55 KB. Separately, the
+Intel overclocking chain (`OverClockSmiHandler`, `OverclockInterface`,
+`DxeOverClock`, `PeiOverClock`) had never been decompiled at all, and it is
+the code behind the memory-overclocking menu §8 and issues #104/#115/#117/
+#118/#119 are all working on. All 38 are decompiled now, 955 functions with
+no failures; see `bios/README.md`.
+
+**The 30-minute CI budget cannot hold a Ghidra rebuild**, so nothing in the
+gates runs one. The cheap half is each tool's `--check` and `--self-test`,
+which need no Ghidra and no network; the full end-to-end check against the
+hand reading in `charge-target-derating.md` is opt-in
+(`build_ec_decompile.py --self-test --oracle`).
+
+## 10. What the newly decompiled BIOS modules turned up (2026-09-23)
+
+Decompiling the 26 vendor modules that had never been touched (BIOS §9)
+answers one open question, corrects an assumption behind five others, and
+leaves one loose. Each claim below is as-decompiled, and each is checkable
+in the file cited.
+
+**`PeiOverClock` is a protocol-registration stub, and it is not where the
+overclocking is.** Issues #104, #115, #117, #118 and #119 all name it. The
+module is 672 bytes; Ghidra decoded **53 bytes of it into 2 functions**, and
+those 53 bytes are a PEIM that locates a protocol and registers an interface
+(`bios/decompiled/PeiOverClock.c`, `bios/ghidra/index.csv`):
+
+```c
+int entry(void) { iVar1 = FUN_ffcfbb55(); if (-1 < iVar1) { iVar1 = 0; } return iVar1; }
+
+void FUN_ffcfbb55(void) {
+  ...
+  (**(code **)(**(int **)(iStack_e + -4) + 0x18))(*(int **)(iStack_e + -4), &DAT_ffcfbbc0);
+}
+```
+
+The `+ 0x18` vtable slot with a GUID argument is `InstallProtocolInterface`.
+There is no overclocking logic in the module. The rest of its `.text` is
+unreached CRT. Whatever the five issues are looking for, it is in
+`DxeOverClock`, `OverClockSmiHandler`, `OverclockInterface` or
+`OemOcDxe` — all four of which are now decompiled — and not here.
+
+**`OemApControlDxe` is a third user of the same `0xA2`-`0xA5` EC command
+sequence.** §8 reads that block as a vendor command
+(`0xA3 07`, then `0xA2 lo`, then `0xA4`, `0xA5 val`) on the strength of
+`OemOcDxe` and `OemUniWillVariableDxe`. `bios/decompiled/OemApControlDxe.c`
+uses it a third time, verbatim:
+
+```c
+FUN_0000094c('b', 0xa3, 7);
+FUN_0000094c('b', 0xa2, param_3);
+FUN_0000094c('b', 0xa5, param_4);   /* and FUN_000007e8('b', 0xa4) */
+```
+
+`'b'` is the character `b`, the vendor's EC command prefix. Three
+independent call sites for one sequence is stronger support for the reading
+than two, and it is still not EC-side confirmation: nothing in the EC
+firmware has been matched to this sequence, which is issue #114's question.
+
+**`DxeOverClock`'s overclocking gate is real; what it gates on is not
+settled.** The module fetches `CpuSetup` and then tests a byte of its own:
+
+```c
+lVar1 = (**(code **)(DAT_00002698 + 0x48))(u_CpuSetup_000025d0, &DAT_00002540,
+                                          &DAT_00003460, &local_res10, &DAT_00002900);
+if ((-1 < lVar1) && (DAT_00002ab7 != '\0')) { ... }
+```
+
+It is tempting to read `DAT_00002ab7` as a cached copy of
+`CpuSetup[0x1B7]` — the "OverClocking Feature" byte that `OemOcDxe` clears on
+EC-0x0741 recovery, and which would put the stock Advanced page behind the
+same vendor byte as the vendor page's "Memory" link (§8). **That
+identification is not established.** The literal `1B7` appears nowhere in
+`DxeOverClock.c`; the only BIOS decompile that mentions it is `Setup.c`, the
+HII module. A module static read after a `CpuSetup` fetch is suggestive and
+nothing more — the byte could equally be a cached copy of some other offset,
+or an independent flag. Settling it means finding what writes `0x2AB7`, which
+is a question for the follow-up pass.
+
+*(An earlier reading of this decompile named the gate `CpuSetup[0x1B7]`
+directly. It is kept here rather than edited out because the reason it was
+wrong is the point: a `CpuSetup` fetch followed by a static test reads like
+a cached byte, and "reads like" is not "is".)*
+
+## 11. Proving the disassembly is 1:1, and what it took (2026-09-23)
+
+`ec/tools/verify_reassembly.py` re-encodes the committed EC listing with
+`sdas8051` and compares the result to `ec/firmware/GMxMGxx_11.800`. Ghidra's
+SLEIGH decodes; an assembler that never saw the firmware encodes; the firmware
+arbitrates. **45,531 of 45,535 instructions re-encode to the exact bytes in
+the image (97.80%), with no function in disagreement.** 2,216 of the 2,703
+functions have every instruction verified; a further 403 have all but 1,004
+between them. Reproduced unchanged on two SDCC versions (4.5.0 and 4.6.0,
+`sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14`).
+
+The interesting part is not the number, it is the four bugs the check found in
+*itself* before it got there. Each one produced a plausible-looking encoding
+that was not the instruction in the firmware, and each would have been accepted
+by a check that only asked "did the assembler run".
+
+**1. Relative branches took an absolute address.** sdas8051's `jz` takes a raw
+displacement. Handed `jz 0x0EC6` it emits the low byte of the address — a valid
+byte for a completely different instruction. The listing's absolute target has
+to be turned back into `target - (pc + size)` first. This alone accounted for
+358 of the 928 original mismatches.
+
+**2. Function bodies are not contiguous.** A 2-byte `jb` at `0x8058` is
+followed by a 3-byte `lcall` at `0x805E`, with four bytes between them that
+belong to no instruction in that function. sdas lays instructions out densely,
+so without an `.org` at every gap it packs the `lcall` against the `jb` and
+every later address shifts — 33 more mismatches, at addresses the decode never
+claimed. The fix is to re-anchor, and to open a fresh `.area` rather than a
+bare `.org` once the target moves outside the area (a bank-window function
+reaches 32 KiB easily, and sdas answers a far `.org` with `.org in REL area`).
+
+**3. Ghidra renders a direct address as the SFR it belongs to**, so direct
+`0xE0` prints as `A`. sdas reads `A` as the accumulator: `88 E0` is
+`MOV 0xE0,R0` in the firmware and came back as `E8`, `MOV R0,A`; `25 E0` is
+`ADD A,0xE0` and came back as `add a,a`, which sdas rejects outright. The
+decoder is not second-guessed — the operand is replaced by the literal byte
+from the instruction's own encoding, which is what the decoder already
+reported.
+
+**4. `MOV direct,direct` (opcode 0x85) takes the source byte first.** `85 F0
+00` is `MOV 0x00,0xF0`, not `MOV 0xF0,0x00`. Both decoders agree on this —
+Ghidra's operand text and `disasm8051.py` — and the firmware confirms it. I had
+the byte order backwards twice, which is the point: the check disagreed with
+me, and two independent decoders plus the image settled it.
+
+**What sdas8051 cannot express, counted rather than skipped.** 1,004
+instructions (2.2%) use forms it rejects: the bit-addressed `CLR bit`, `SETB
+bit`, `CPL bit`, `MOV C,bit`, `MOV bit,C`, `MOVC A,bit`; `CJNE` on a direct
+address; `DJNZ A`; and the carry-with-immediate forms. `AJMP` and `ACALL` are
+in the same list for a different reason — sdas encodes them differently from
+the 8051 manual (at PC `0x8044` the firmware and both decoders agree `81 5D` is
+`ajmp 0x845D`; sdas emits `84 5D`). Every one of these is named in the source
+rather than filtered silently, because a filter that quietly drops 2% of the
+instruction stream turns a measured number into a flattering one.
+
+**The claim this does not make.** That the C recompiles. Keil C51 generated
+these bytes; SDCC does not emit Keil's code generation, and no amount of
+annotation changes that. The 1:1 property here is that the committed
+*disassembly* regenerates the binary, and the readable C sits on top of it
+with a checkable correspondence. See `ghidra/README.md`.
+
+## 12. The common-area de-duplication was deleting a PD function (2026-09-23)
+
+The EC export groups a common-area function once, under `common`, when both
+bank programs carry it identically. The grouping collected "everything that is
+not bank0" as the rows to drop, and the PD image is a program too: a PD
+function at `0x0012` shared an address, a name and a size with the EC's
+`0x0012`, so it was folded into the common group and `pd/0012.c` and
+`pd/0012.asm` were deleted with it.
+
+**It is a real loss, not a cosmetic one.** The PD image is a separate 64 KiB
+program with its own address space, its own vector table and its own XDATA map
+(`ec/README.md`; `ec/annotations/lightbar-bat-flow.md` §2), so its `0x0012` is
+unrelated to the EC's. Folding them together asserts an identity that does not
+exist, and one PD function went missing from the tree.
+
+**Every gate still passed**, and the reason is the part worth keeping: the
+index row and the files it named were deleted *together*, so every
+file-existence check still held. A row that is gone cannot point at a file that
+is gone. Nothing in the pipeline was comparing what the exporter *reported*
+against what the pipeline *kept*.
+
+Two things now prevent it, and both are the general shape rather than the one
+instance:
+
+- the de-duplication pairs `bank0` with `bank1` and with nothing else;
+- `--check` asserts that every function the manifest records from the export is
+  still in the index. The manifest is what breaks the symmetry, because it
+  carries the count the exporter measured before anything was de-duplicated.
+
+**The same bug was also suppressing grouping it should have allowed.** The
+condition guarding the fold asked whether *every* non-bank0 row matched bank0,
+and the PD image's row was one of those. So a PD function at a common-area
+address whose size differed from the EC's vetoed the fold entirely, and twelve
+functions that both bank programs carry identically — `0x0000`, `0x0003`,
+`0x000B`, `0x0013`, `0x001B`, `0x0023`, `0x0C7A`, `0x0EF3`, `0x10F1`,
+`0x11C2`, `0x383A` — sat in `bank0/` and `bank1/` as two near-duplicates each
+instead of one entry under `common/`. With the pairing narrowed to
+bank0-versus-bank1 they group correctly, and the diff is 22 files moving to
+`common/`.
+
+Worth noting what the two sides of that address now show, because it is the
+whole argument: the common `0x0000` is an 18-line thunk and the PD's is a
+106-line `c_startup_idata_clear`. Same address, unrelated code, and before the
+fix one of them was deleted for looking like the other.
+
+`--self-test` reproduces the original failure on synthetic rows, and fails if
+the pairing is widened again.

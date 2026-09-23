@@ -11,21 +11,11 @@
    evidence: ec/annotations/lightbar-bat-flow.md
    basis: hand-decoded */
 
-void unresolved_0xB1F2(undefined1 *param_1,undefined1 param_2,char param_3)
+void unresolved_0xB1F2(void)
 
 {
   FUN_CODE_10c8();
-  if (param_3 == '\x01') {
-    *(undefined1 *)CONCAT11(param_2,param_1) = 1;
-    return;
-  }
-  if (param_3 == '\0') {
-    *param_1 = 1;
-    return;
-  }
-  if (param_3 == -2) {
-    *(undefined1 *)ZEXT12(param_1) = 1;
-  }
+  FUN_CODE_0c46(1);
   return;
 }
 

@@ -48,6 +48,11 @@ PROJECT = os.path.join(REPO, "ec", "ghidra", "project")
 SCRIPTS = os.path.join(REPO, "ghidra", "scripts")
 OUTDIR = os.path.join(REPO, "ec", "decompiled")
 INDEX = os.path.join(OUTDIR, "index.csv")
+# The disassembly index, one row per function, out_file pointing at the .asm
+# that sits beside the .c of the same address. Same columns as INDEX on purpose:
+# the two files describe the same functions, and a reader should be able to join
+# them on (program, addr) without a translation table.
+LISTING_INDEX = os.path.join(OUTDIR, "listing-index.csv")
 MANIFEST = os.path.join(REPO, "ec", "ghidra", "manifest.csv")
 XDATA = os.path.join(REPO, "ec", "ghidra", "xdata-symbols.csv")
 ANNOTATIONS = os.path.join(REPO, "ec", "annotations", "ghidra-functions.csv")
@@ -343,9 +348,20 @@ def analyze(ghidra, project_dir, work, imgs, spec, basis, context, digest,
     with open(raw_index, "w", newline="") as f:
         f.write("program\taddr\tname\tsize\tseed_basis\tannotated\t"
                 "type\tbasis\tevidence\tout_file\n")
+    # A second index for the disassembly, same columns, out_file pointing at the
+    # .asm beside each .c. It is a separate file because the two answer different
+    # questions -- one is a reading of the bytes, the other is the bytes -- and
+    # merging them would invite a reader to take a decompiled line as if it were
+    # an instruction.
+    raw_listing = os.path.join(work, "listing-raw.csv")
+    with open(raw_listing, "w", newline="") as f:
+        f.write("program\taddr\tname\tsize\tseed_basis\tannotated\t"
+                "type\tbasis\tevidence\tout_file\n")
     os.makedirs(project_dir, exist_ok=True)
     for stale in os.listdir(work):
         if stale.startswith("index-raw.csv.") and stale.endswith(".counts"):
+            os.remove(os.path.join(work, stale))
+        if stale.startswith("listing-raw.csv.") and stale.endswith(".listing-counts"):
             os.remove(os.path.join(work, stale))
     if mode == "rebuild-project":
         cmd = [ghidra, project_dir, "ec",
@@ -363,6 +379,8 @@ def analyze(ghidra, project_dir, work, imgs, spec, basis, context, digest,
                 os.path.join(work, "reports")]
         cmd += ["-postScript", "ExportDecompile.java", os.path.join(work, "out"),
                 raw_index, "per-function", context, basis]
+        cmd += ["-postScript", "ExportListing.java", os.path.join(work, "out"),
+                raw_listing, "per-function", context, basis]
         run(cmd, stdout=open(os.path.join(work, "ghidra.log"), "w"),
             stderr=subprocess.STDOUT)
     else:
@@ -380,20 +398,27 @@ def analyze(ghidra, project_dir, work, imgs, spec, basis, context, digest,
                  ANNOTATIONS if os.path.isfile(ANNOTATIONS) else "", XDATA,
                  os.path.join(work, "reports"),
                  "-postScript", "ExportDecompile.java", os.path.join(work, "out"),
-                 raw_index, "per-function", context, basis],
+                 raw_index, "per-function", context, basis,
+                 "-postScript", "ExportListing.java", os.path.join(work, "out"),
+                 raw_listing, "per-function", context, basis],
                 stdout=open(os.path.join(work, "ghidra-%s.log" % program), "w"),
                 stderr=subprocess.STDOUT)
-    return raw_index
+    return raw_index, raw_listing
 
 
-def join_index(raw_index, work):
-    """The exporter's scratch rows plus the annotation columns, and the
+def join_index(raw_index, raw_listing, work):
+    """The exporters' scratch rows plus the annotation columns, and the
     common-area de-duplication ec/ghidra/README.md asks for. De-duplication is
     by (addr, name, size) across the two bank programs: where those agree the
     function is emitted once under common/, and where they DISAGREE both are
     kept and flagged, because a difference there would be a real result -- a
-    linker patch of the common area between banks -- not noise to collapse."""
+    linker patch of the common area between banks -- not noise to collapse.
+
+    Both indexes are de-duplicated in one pass, and the .c and .asm files move
+    together: a decompiled C with no listing beside it, or a listing with no C,
+    is the failure mode this pairing exists to prevent."""
     raw = list(csv.DictReader(open(raw_index, newline=""), delimiter="\t"))
+    listing = list(csv.DictReader(open(raw_listing, newline=""), delimiter="\t"))
     annot = {}
     if os.path.isfile(ANNOTATIONS):
         for row in csv.DictReader(open(ANNOTATIONS, newline="")):
@@ -406,50 +431,78 @@ def join_index(raw_index, work):
             if row["scope"] == "common":
                 annot[("bank0", key_addr)] = row
                 annot[("bank1", key_addr)] = row
-    for row in raw:
-        key = (row["program"], row["addr"])
-        a = annot.get(key) or annot.get((row["program"], "0x" + row["addr"]))
-        row["type"] = a["type"] if a else ""
-        row["basis"] = a["basis"] if a else ""
-        row["evidence"] = a["evidence"] if a else ""
-        row["common"] = "yes" if int(row["addr"], 16) < COMMON_END else "no"
-        row["also_in"] = ""
+    for rows in (raw, listing):
+        for row in rows:
+            key = (row["program"], row["addr"])
+            a = annot.get(key) or annot.get((row["program"], "0x" + row["addr"]))
+            row["type"] = a["type"] if a else ""
+            row["basis"] = a["basis"] if a else ""
+            row["evidence"] = a["evidence"] if a else ""
+            row["common"] = "yes" if int(row["addr"], 16) < COMMON_END else "no"
+            row["also_in"] = ""
     by_addr = {}
     for row in raw:
         if row["common"] == "yes":
             by_addr.setdefault(row["addr"], []).append(row)
     drop = set()
+    listing_drop = set()
     for addr, rows in by_addr.items():
         programs = {r["program"] for r in rows}
         if not {"bank0", "bank1"} <= programs:
             continue
         b0 = next(r for r in rows if r["program"] == "bank0")
-        others = [r for r in rows if r["program"] != "bank0"]
+        # bank1 and bank1 only. The PD image is a separate 64 KiB program with
+        # its own address space (ec/README.md; ec/annotations/lightbar-bat-flow.md
+        # §2), so its 0x0012 is not the EC's 0x0012 and must never be folded in
+        # with it. It used to be: `others` was everything that was not bank0, so
+        # a PD function that happened to share an address, a name and a size
+        # with the common area was emitted once under common/ and its own
+        # pd/<addr>.c and .asm were deleted. The index row disappeared with them
+        # and every gate still passed, because a row that is gone cannot point
+        # at a file that is gone.
+        others = [r for r in rows if r["program"] == "bank1"]
         if all((r["name"], r["size"]) == (b0["name"], b0["size"]) for r in others):
-            b0["also_in"] = ",".join(sorted(r["program"] for r in others))
+            b0["also_in"] = "bank1"
             b0["program"] = "common"
-            src = os.path.join(work, "out", "bank0", addr + ".c")
             dst_dir = os.path.join(work, "out", "common")
             os.makedirs(dst_dir, exist_ok=True)
-            shutil.move(src, os.path.join(dst_dir, addr + ".c"))
-            b0["out_file"] = "common/" + addr + ".c"
+            for ext in (".c", ".asm"):
+                src = os.path.join(work, "out", "bank0", addr + ext)
+                if os.path.isfile(src):
+                    shutil.move(src, os.path.join(dst_dir, addr + ext))
+                if ext == ".c":
+                    b0["out_file"] = "common/" + addr + ".c"
             for r in others:
-                p = os.path.join(work, "out", r["program"], addr + ".c")
-                if os.path.isfile(p):
-                    os.remove(p)
+                for ext in (".c", ".asm"):
+                    p = os.path.join(work, "out", r["program"], addr + ext)
+                    if os.path.isfile(p):
+                        os.remove(p)
                 # The row goes too: leaving it would point the index at a file
                 # that is deliberately not there, and --check would (rightly)
                 # call the export stale.
                 drop.add(id(r))
+            listing_drop.add(addr)
         else:
             b0["differs"] = "yes"
             for r in others:
                 r["differs"] = "yes"
+    # The listing's common rows are matched by address, not by identity with the
+    # C index: the two exporters count a function's bytes slightly differently
+    # (body vs. instruction extent), so keying the listing on the C's size
+    # would drop listings that are perfectly good.
+    for row in listing:
+        if row["addr"] in listing_drop and row["program"] == "bank0":
+            row["also_in"] = "bank1"
+            row["program"] = "common"
+            if row["out_file"] and not row["out_file"].startswith("("):
+                row["out_file"] = "common/" + row["addr"] + ".asm"
+    listing = [r for r in listing
+               if not (r["addr"] in listing_drop and r["program"] == "bank1")]
     raw = [r for r in raw if id(r) not in drop]
-    return raw, len(drop)
+    return raw, listing, len(drop)
 
 
-def write_outputs(raw, work, digest, mode, seeds_info):
+def write_outputs(raw, listing, work, digest, mode, seeds_info):
     if os.path.isdir(OUTDIR):
         shutil.rmtree(OUTDIR)
     os.makedirs(OUTDIR, exist_ok=True)
@@ -462,6 +515,13 @@ def write_outputs(raw, work, digest, mode, seeds_info):
                            lineterminator="\n")
         w.writeheader()
         for row in sorted(raw, key=lambda r: (r["program"], int(r["addr"], 16))):
+            w.writerow(row)
+    # The disassembly index, same columns, pointing at the .asm beside each .c.
+    with open(LISTING_INDEX, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=INDEX_COLUMNS, extrasaction="ignore",
+                           lineterminator="\n")
+        w.writeheader()
+        for row in sorted(listing, key=lambda r: (r["program"], int(r["addr"], 16))):
             w.writerow(row)
     per_program = {}
     for row in raw:
@@ -574,17 +634,17 @@ def main(argv=None):
     project_dir = PROJECT
     # Ghidra names a raw-binary program after the file it was imported from,
     # so -process takes "bank0.bin", not "bank0".
-    raw_index = analyze(args.ghidra, project_dir, work, imgs, spec, basis,
-                        context, digest, args.mode,
-                        ["bank0.bin", "bank1.bin", "pd.bin"], annot_spec)
-    raw, deduped = join_index(raw_index, work)
+    raw_index, raw_listing = analyze(args.ghidra, project_dir, work, imgs, spec, basis,
+                                     context, digest, args.mode,
+                                     ["bank0.bin", "bank1.bin", "pd.bin"], annot_spec)
+    raw, listing, deduped = join_index(raw_index, raw_listing, work)
     if deduped:
         print("  de-duplicated %d common-area function(s) that both bank "
               "programs carry identically" % deduped)
     seeds_info = {"bank0": len({a for p, a, _ in rows if p == "bank0"}),
                   "bank1": len({a for p, a, _ in rows if p == "bank1"}),
                   "pd": len({a for p, a, _ in rows if p == "pd"})}
-    per_program = write_outputs(raw, work, digest, args.mode, seeds_info)
+    per_program = write_outputs(raw, listing, work, digest, args.mode, seeds_info)
     report(per_program, args.mode)
     if unattributed:
         print("\n  %d call-target rows name no bank (bucket C) and were NOT seeded: "
@@ -612,6 +672,43 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
             ok = False
 
     print("build_ec_decompile.py --self-test")
+
+    # The common-area de-dup, on synthetic rows. A PD-image function that shares
+    # an address, a name and a size with the EC's must survive it: the PD is a
+    # separate 64 KiB program with its own address space, so the two 0x0012
+    # bytes are unrelated and folding them together loses real code. It used to
+    # lose exactly that row, and every gate still passed, because the row and
+    # the files it named were deleted together.
+    import tempfile as _tf
+    _d = _tf.mkdtemp()
+    _hdr = ("program\taddr\tname\tsize\tseed_basis\tannotated\t"
+            "type\tbasis\tevidence\tout_file\n")
+    _defs = [("bank0", "0012", "FUN_CODE_0012", 1),
+             ("bank1", "0012", "FUN_CODE_0012", 1),
+             ("pd", "0012", "FUN_CODE_0012", 1),
+             ("bank0", "0020", "FUN_CODE_0020", 3),
+             ("bank1", "0020", "FUN_CODE_0020", 3)]
+    for _name, _lines in (("index-raw.csv", _hdr), ("listing-raw.csv", _hdr)):
+        with open(os.path.join(_d, _name), "w") as f:
+            f.write(_hdr)
+            for _prog, _addr, _fn, _size in _defs:
+                _ext = ".asm" if "listing" in _name else ".c"
+                f.write("%s\t%s\t%s\t%d\tvector\tno\t\t\t\t%s/%s%s\n"
+                        % (_prog, _addr, _fn, _size, _prog, _addr, _ext))
+                os.makedirs(os.path.join(_d, "out", _prog), exist_ok=True)
+                open(os.path.join(_d, "out", _prog, _addr + _ext), "w").write(";\n")
+    _c, _l, _n = join_index(os.path.join(_d, "index-raw.csv"),
+                            os.path.join(_d, "listing-raw.csv"), _d)
+    _cprogs = sorted({r["program"] for r in _c})
+    check("the common-area de-dup folds bank0 and bank1 together",
+          ("common", "0020") in {(r["program"], r["addr"]) for r in _c})
+    check("the de-dup does not touch the PD image, even at an identical "
+          "address, name and size", ("pd", "0012") in
+          {(r["program"], r["addr"]) for r in _c})
+    check("the de-dup does not touch the PD image in the listing index either",
+          ("pd", "0012") in {(r["program"], r["addr"]) for r in _l})
+    shutil.rmtree(_d, ignore_errors=True)
+
     seeded = {(p, a) for p, a, _ in rows}
     ec_vectors = discover_vector_table(fw[:COMMON_END])
     pd_vectors = discover_vector_table(pd)
@@ -807,6 +904,53 @@ def check(work):
             fail("index row %s %s points at a missing file: %s"
                  % (row["program"], row["addr"], row["out_file"]))
         seen_addr.add((row["program"], row["addr"]))
+    # Every decompilation must have its machine code beside it, and vice versa.
+    # This is the 1:1 property stated as a file-level invariant rather than a
+    # claim: a reader who wants to check a decompiled C against the instructions
+    # it came from can open <same address>.asm, and a listing with no C is
+    # visible as a function nobody has read yet. Neither half can rot
+    # unnoticed, which is the whole reason both are exported.
+    if not os.path.isfile(LISTING_INDEX):
+        fail("no listing index at %s: the export has no disassembly layer, so no "
+             "decompilation can be checked against its instructions. Re-run the "
+             "build." % os.path.relpath(LISTING_INDEX, REPO))
+        return 1
+    listing_rows = list(csv.DictReader(open(LISTING_INDEX, newline="")))
+    listing_seen = set()
+    for row in listing_rows:
+        if row["out_file"] not in ("", "(no-instructions)") \
+                and not os.path.isfile(os.path.join(OUTDIR, row["out_file"])):
+            fail("listing row %s %s points at a missing file: %s"
+                 % (row["program"], row["addr"], row["out_file"]))
+        listing_seen.add((row["program"], row["addr"]))
+    for program, addr in seen_addr:
+        if (program, addr) not in listing_seen:
+            fail("%s %s decompiles but has no disassembly listing" % (program, addr))
+    # Every function the exporter reported must still be in the index.
+    #
+    # The common-area de-dup once folded the PD image's 0x0012 into the common
+    # group, because it shares an address, a name and a size with the EC's
+    # 0x0012 -- and the PD image has its own address space, so those are two
+    # different bytes. The row and both files were deleted together, so every
+    # file-existence check below still passed: a row that is gone cannot point
+    # at a file that is gone. The manifest is what breaks that, because it
+    # carries the count the exporter measured before anything was de-duplicated.
+    if os.path.isfile(MANIFEST):
+        indexed = {}
+        for row in rows:
+            indexed[row["program"]] = indexed.get(row["program"], 0) + 1
+        for mrow in csv.DictReader(open(MANIFEST, newline="")):
+            prog = mrow["program"]
+            if prog == "common":
+                continue          # an export grouping, not a program
+            expected = int(mrow["functions"])
+            got = indexed.get(prog, 0)
+            if got != expected:
+                fail("%s: the manifest records %d function(s) from the export "
+                     "but the index holds %d. Something is dropping rows after "
+                     "the export -- a de-duplication that spans programs, or a "
+                     "filter that should not be there."
+                     % (prog, expected, got))
     for lock in (PROJECT,):
         for f in os.listdir(lock) if os.path.isdir(lock) else []:
             if f.endswith(".lock") or f.endswith(".lock~"):
