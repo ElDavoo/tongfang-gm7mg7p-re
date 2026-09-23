@@ -955,7 +955,48 @@ firmware; the cap is entirely internal to the EC. Evidence:
 (rather than, say, `0x030E`) is the remaining causation question. It can't be
 reached by overriding the EC; the way to settle it is to read the charger IC's
 programmed ChargingVoltage over SMBus directly (a follow-up, needing the
-charger's SMBus map).
+charger's SMBus map). See §4n.
+
+### 4n. The charger is on the EC's private SMBus — the host can't read it (2026-09-23, issue #98)
+
+#98 asked whether the charger IC's programmed ChargingVoltage can be read
+directly over SMBus, to settle the §4m causation question by a read instead
+of an override. The answer, from the ACPI topology plus a live anchor, is
+that the charger is **not reachable from the host**, so this route is a dead
+end — the outcome the issue told us to record if so.
+
+**The pack and its charger are behind the EC.** The DSDT has a host SMBus
+controller, `Device (SBUS)` at `_ADR 0x001F0004` (PCI `00:1f.4`), but its
+body is only a `_DSM` for PCI config — **no battery or charger child
+devices** (`evidence/acpi/dsdt.dsl:7809`). And `BAT0._BST` builds its status
+buffer entirely from EC fields — `^^PCI0.LPCB.EC0.XST0..XST3`, `CYCN`, `XIF1`,
+`XIF2` (`:53091`) — never from a host SMBus transaction. So the EC talks to
+the smart battery/charger over its own private SMBus and mirrors the data
+into EC RAM; the host reads that mirror, not the bus. The SBS block is live
+at EC `0x0300`: `42 4D 53 2D 47 46` = "BMS-GF", the pack manufacturer.
+
+**A host SMBus scan was not run.** RWEverything (`RwDrv.sys`) is installed and
+its driver opens, so a scan is *possible*, but (a) ACPI shows the pack is
+bridged, not on the host bus, and (b) a blind read sweep of the host SMBus
+risks disturbing whatever *is* on it (SPD EEPROMs and the like) for no gain
+given the topology. The one residual it could resolve — whether the pack also
+sits on the host bus at the SBS address `0x0B` in addition to being
+EC-bridged — is left for a deliberate, single-address read via RWEverything's
+SMBus GUI, noted here rather than done blind. (Standalone `Rw.exe /Command`
+runs produced no output in this session; its SMBus path is GUI-driven.)
+
+**The correlation, re-anchored live (2026-09-23).** With the charger
+unreadable, the §4m evidence stays correlational, and it still points one
+way. Read together this session, on AC: the pack's requested ChargingVoltage
+`0x030E` = `0x43F8` = **17400 mV**, the EC's CV target `0x0522` = `0x4010` =
+**16400 mV**, and the live battery voltage `0x0438` = `0x4052` = **16466 mV**
+— sitting at the EC's 16400 target (4.11 V/cell), a full 934 mV under the
+pack's own 17400 request. The charger is holding to `0x0522`, not to `0x030E`.
+That is consistent with the charger following the EC's target, but it remains
+inference: the charger's own register was not read, and #91 already showed
+the tie can't be broken by overriding `0x0522` from the host. So #98 closes
+as *unreachable*; the causation question is answered only as far as the
+matching plateau allows.
 
 ## 5. Net status going into the issue tracker
 
