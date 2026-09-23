@@ -161,7 +161,29 @@ def neighbour_text(index, scope, addr, span=3):
     return "\n".join(texts)
 
 
+# Where a listing's out_file can resolve, most specific first. The BIOS's
+# per-function listings live under bios/ghidra/listings/<Module>/ while its
+# decompile is one file per module beside it, so the two are in different trees
+# and a comment may cite either.
+SEARCH_BASES = (
+    os.path.join(REPO, "ec", "decompiled"),
+    os.path.join(REPO, "bios", "ghidra", "listings"),
+    os.path.join(REPO, "bios", "decompiled"),
+    os.path.join(REPO, "windows", "decompiled", "native"),
+)
+
+
+def _read(path):
+    return open(path, errors="replace").read() if os.path.isfile(path) else None
+
+
 def read_function_text(index, scope, addr):
+    """The .asm and, where there is one, the .c for this function.
+
+    A comment may cite either, so both are what a claim gets checked against.
+    The BIOS has no per-function .c -- its decompile is one file per module --
+    so the module's file is read too, on the grounds that a comment about a
+    BIOS function is entitled to the context its module provides."""
     row = index.get((scope, addr))
     if not row:
         return None
@@ -169,18 +191,17 @@ def read_function_text(index, scope, addr):
     for rel in (row.get("out_file", ""), row.get("listing_file", "")):
         if not rel or rel.startswith("("):
             continue
-        path = rel
-        if not os.path.isabs(path):
-            for base in (os.path.join(REPO, "ec", "decompiled"),
-                         os.path.join(REPO, "bios", "decompiled"),
-                         os.path.join(REPO, "windows", "decompiled", "native")):
-                cand = os.path.join(base, rel)
-                if os.path.isfile(cand):
-                    path = cand
-                    break
-        if os.path.isfile(path):
-            parts.append(open(path, errors="replace").read())
-    return "\n".join(parts)
+        for base in SEARCH_BASES:
+            text = _read(os.path.join(base, rel))
+            if text is not None:
+                parts.append(text)
+                break
+    for base in SEARCH_BASES:
+        text = _read(os.path.join(base, scope + ".c"))
+        if text is not None:
+            parts.append(text)
+            break
+    return "\n".join(parts) if parts else None
 
 
 def self_test():
