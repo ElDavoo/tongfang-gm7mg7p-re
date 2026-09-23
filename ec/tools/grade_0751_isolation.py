@@ -3,30 +3,40 @@
 capture, mechanically, so the sweep half of the procedure is read the same way
 twice.
 
-Input is what the procedure already produces: one or two `ec_watch.py --mark
---csv` captures (the `0x0700-0x07FF` sweep and the `0x0F00-0x0F5F` one) and,
-optionally, the `before-*`/`after-*` `ecrw.py dump` files from its steps 0 and
-5. Each mark in a CSV opens a window that runs to the next mark, and for every
-window this reports whether the bytes §4 names moved inside it:
+Input is what the procedure already produces: the `ec_watch.py --mark --csv`
+captures for the `0x0700-0x07FF` sweep, the `0x0F00-0x0F5F` fan table and the
+`0x0400-0x045F` temperature range, and, optionally, the `before-*`/`after-*`
+`ecrw.py dump` files from its steps 0 and 6. Each mark in a CSV opens a window
+that runs to the next mark, and for every window this reports whether the
+bytes §4 names moved inside it:
 
   * `0x0783-0x0785` -- PL1/PL2/PL4 (§4.1)
   * `0x0F00-0x0F5F` -- the fan table (§4.2)
   * `0x07C6`        -- the byte the vendor brackets its fan-table write with (§4.3)
 
-and whether `0x0751` still holds the written value in the after-dump (§4.6).
+and, reported but not graded, the candidate fan-PWM bytes `0x075B`/`0x075C`
+and `CPU_TEMP` `0x043E` / `GPU_TEMP` `0x044F` (§4.4/§4.5), plus whether
+`0x0751` still holds the written value in the after-dump (§4.6).
 
 **This is not the §7 call and cannot be.** §7 moves `MANUAL_FAN_CTRL` off
-`present-untested` on fan PWM or package power moving under a fixed load, and
-neither of those is in an EC sweep -- the PWM address is unconfirmed (§4.4)
-and package power is read by hand from HWiNFO (§4.5). What this script says is
+`present-untested` on fan PWM or package power moving under a fixed load.
+Those bytes are captured and printed here, but printing them is not grading
+them: the PWM address is unconfirmed (§4.4) and a fan's duty moves with the
+die whether or not anything wrote `0x0751` -- separating those is what the
+procedure's no-op control arm is for, not this script. Package power is read
+by hand from HWiNFO (§4.5) and is in no capture. What this script says is
 "of the bytes the sweep covers, these moved and these did not"; the call still
 comes from a human holding the rest of the notes.
+
+One action is marked in every watcher, so the same write appears as a MARK row
+per capture; marks within `MARK_MERGE_SECONDS` are one window, not several.
 
 Nothing here touches hardware; it reads files only.
 
 Usage:
     python3 ec/tools/grade_0751_isolation.py capture-0700-07ff.csv \
-        [capture-0f00-0f5f.csv] [--dump before-0700.txt] [--dump after-0700.txt]
+        [capture-0f00-0f5f.csv] [capture-0400-045f.csv] \
+        [--dump before-0700.txt] [--dump after-0700.txt]
     python3 ec/tools/grade_0751_isolation.py capture.csv --wrote 0xA0
 """
 import argparse
@@ -36,6 +46,13 @@ import sys
 
 MANUAL_FAN_CTRL = 0x0751
 
+# How close two marks have to be to count as one action. The procedure holds
+# ~30 s between the control arm and the write and ~60 s before the restore, so
+# this only has to be wide enough to cover pressing Enter in each of three
+# consoles; a window that opened twice for one action would report "nothing
+# moved" for half of it.
+MARK_MERGE_SECONDS = 5
+
 # The bytes §4 asks about, in its order. Everything else in the sweep is
 # reported as context only: §4.4 says to read the whole 0x0700-0x07FF range
 # rather than the two addresses issue #99 names, because neither is confirmed.
@@ -43,6 +60,20 @@ WATCHED = (
     ("PL1/PL2/PL4 (§4.1)", range(0x0783, 0x0786)),
     ("fan table (§4.2)", range(0x0F00, 0x0F60)),
     ("fan-table bracket byte 0x07C6 (§4.3)", range(0x07C6, 0x07C7)),
+)
+
+# The bytes §4.4/§4.5 name but this script does not grade. They get their own
+# section because they are what §7's call is made on, and a reader should not
+# have to find them in the generic "other addresses" list to notice them --
+# but they are printed per window precisely so the no-op control arm and the
+# write under test can be compared by eye. The PWM pair is where issue #99 says
+# to look and is in no entry of registers.yaml; the two temperatures are
+# confirmed-working, and are here as the record of whether the load was flat.
+CONTEXT = (
+    ("candidate fan PWM 0x075B/0x075C -- unconfirmed (§4.4)",
+     range(0x075B, 0x075D)),
+    ("CPU_TEMP 0x043E / GPU_TEMP 0x044F -- confirmed (§4.5)",
+     (0x043E, 0x044F)),
 )
 
 
@@ -105,6 +136,31 @@ def read_dump(path):
     return values
 
 
+def coalesce_marks(marks):
+    """One window per action, however many consoles recorded it.
+
+    The procedure runs one `--mark --csv` watcher per console, so a single
+    action lands as several MARK rows seconds apart. Left alone, the changes
+    that follow would be assigned to whichever of them happened to be last and
+    the other two would report "nothing moved" for a write that did move
+    things. A group starts at its *earliest* mark -- the window has to open
+    before the first press, or the reaction is attributed to the wrong action
+    -- and carries every label and source in it.
+    """
+    groups = []
+    for m in sorted(marks, key=lambda w: w.ts):
+        close = groups and (m.ts - groups[-1][-1].ts).total_seconds() \
+            <= MARK_MERGE_SECONDS
+        if close:
+            groups[-1].append(m)
+        else:
+            groups.append([m])
+    return [Window(g[0].ts,
+                   " / ".join(dict.fromkeys(m.label for m in g)),
+                   ", ".join(dict.fromkeys(m.source for m in g)))
+            for g in groups]
+
+
 def build_windows(marks, changes):
     """Assign every change to the last mark at or before it.
 
@@ -112,7 +168,7 @@ def build_windows(marks, changes):
     operator let the sweep settle for ~10 s before marking, so they are the
     settling noise, not a reaction to anything.
     """
-    windows = sorted(marks, key=lambda w: w.ts)
+    windows = coalesce_marks(marks)
     for c in sorted(changes, key=lambda c: c.ts):
         prior = [w for w in windows if w.ts <= c.ts]
         if prior:
@@ -140,11 +196,25 @@ def report_window(w, n, total):
     if not moved:
         print("    no watched byte moved in this window")
 
+    groups = [(name, [c for c in w.changes if c.addr in addrs])
+              for name, addrs in CONTEXT]
+    groups = [(name, hits) for name, hits in groups if hits]
+    if groups:
+        print("    candidate PWM / temperature bytes (§4.4/§4.5) -- context, "
+              "not graded here:")
+        for name, hits in groups:
+            print(f"      {name}:")
+            for c in hits:
+                dt = (c.ts - w.ts).total_seconds()
+                print(f"        0x{c.addr:04X}  0x{c.old:02X} -> 0x{c.new:02X}"
+                      f"   (+{dt:.1f}s)")
+
     others = sorted({c.addr for c in w.changes
-                     if not any(c.addr in a for _, a in WATCHED)})
+                     if not any(c.addr in a for _, a in WATCHED)
+                     and not any(c.addr in a for _, a in CONTEXT)})
     if others:
         print(f"    other addresses that moved ({len(others)}), not graded "
-              "here -- read them against §4.4 by hand:")
+              "here -- read them against §4.4 and §4.5 by hand:")
         print("      " + " ".join(f"0x{a:04X}" for a in others))
     return moved
 
@@ -221,11 +291,18 @@ def main(argv=None):
               "with the static prediction, for this capture's window only "
               "(§5: a byte that does not move inside the window may still "
               "move at the next suspend, AC transition or EC reset).")
-    print("  Fan PWM (§4.4) and CPU package power (§4.5) are NOT in this data. "
-          "§7 keys `confirmed-working` on one of those moving under a fixed "
-          "load, so this output is an input to that call and not the call "
-          "itself. `confirmed-inert` as a standalone control additionally "
-          "needs all three values, with and without the vendor service (§3a).")
+    print("  Any candidate PWM and temperature bytes printed above are "
+          "context, not a result: 0x075B/0x075C are where issue #99 says "
+          "to look, not a "
+          "confirmed fan-PWM register, and a fan's duty moves with the die "
+          "whether or not anything wrote 0x0751 -- which is what §3's no-op "
+          "control arm measures, and what this script cannot. CPU package "
+          "power (§4.5) is in no EC sweep and is still read by hand.")
+    print("  §7 keys `confirmed-working` on fan PWM or package power moving "
+          "under a fixed load, so this output is an input to that call and "
+          "not the call itself. `confirmed-inert` as a standalone control "
+          "additionally needs all three values, with and without the vendor "
+          "service (§3a).")
     return 0
 
 

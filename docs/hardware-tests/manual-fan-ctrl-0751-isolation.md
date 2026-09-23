@@ -12,8 +12,13 @@ the raw log is `evidence/ec-watch/2026-09-23-0751-isolation.txt`, and the
 result is folded into `MANUAL_FAN_CTRL` in `ec/annotations/registers.yaml`.
 The one part §7 leaves open — whether the fan-mode bits scale fan behaviour
 along the unchanged curve — was **not** settled (the run was near-idle); the
-fixed-load comparison below is still worth doing. The rest of this file is the
-original procedure, kept for that re-run and for anyone reproducing the test.
+fixed-load comparison below is still worth doing. Issue #122 tightened that
+re-run: §3 now opens with an explicit no-op control arm and sweeps
+`0x0400-0x045F` for the EC's own temperature bytes, so the PWM reading is
+taken against a measured die rather than an assumed one. The re-run itself is
+still **not** done — it needs the physical machine. The rest of this file is
+the original procedure, kept for that re-run and for anyone reproducing the
+test.
 
 ## 1. The question
 
@@ -49,6 +54,8 @@ watched.
   first sweep and stop it after the last.
 - A way to read CPU package power (HWiNFO, or `windows/tools/` equivalents).
   Note it by hand at the times you mark; it is not in the EC sweep.
+  Temperature is — §3's third watcher covers `0x043E`/`0x044F`, both
+  `confirmed-working` in `../../ec/annotations/registers.yaml`.
 - Record the starting value of `0x0751`, and the current mode as the vendor
   UI reports it. `evidence/ec-watch/2026-09-23-power-mode-snapshot-dc.txt`
   is the format to copy for the snapshot.
@@ -67,42 +74,72 @@ Do not sweep the fan-tach bytes — see issue #94.
 ## 3. The run, one variable at a time
 
 Repeat the block below once per target value, and keep the runs separate.
-Each is: snapshot, start the watchers, one write, wait, restore, stop.
+Each is: snapshot, start the watchers, no-op control arm, one write, wait,
+restore, stop. The control arm is not the restore step, and it is not
+optional — §4.4 says what it is for.
 
 ```console
 rem  --- 0. snapshot, read-only ---
 python windows\tools\ecrw.py dump 0x0700 0x0100  > before-0700.txt
 python windows\tools\ecrw.py dump 0x0F00 0x0060  > before-0f00.txt
 
-rem  --- 1. start both watchers (two consoles), with the load already running ---
-python windows\tools\ec_watch.py --start 0x0700 --len 0x0100 --seconds 90 ^
+rem  --- 1. start all three watchers (three consoles), with the load running ---
+python windows\tools\ec_watch.py --start 0x0700 --len 0x0100 --seconds 150 ^
        --mark --csv 0751-isolation-office-0700-07ff.csv
-python windows\tools\ec_watch.py --start 0x0F00 --len 0x0060 --seconds 90 ^
+python windows\tools\ec_watch.py --start 0x0F00 --len 0x0060 --seconds 150 ^
        --mark --csv 0751-isolation-office-0f00-0f5f.csv
+python windows\tools\ec_watch.py --start 0x0400 --len 0x0060 --seconds 150 ^
+       --mark --csv 0751-isolation-office-0400-045f.csv
 
-rem  --- 2. let both settle ~10 s, press Enter in each to mark, then write ---
+rem  --- 2. control arm: let all three settle ~10 s, mark each, then write
+rem  ---    the value already there back to itself and mark that as a no-op ---
+python windows\tools\ecrw.py write 0x0751=0x<current> --i-mean-it
+
+rem  --- 3. hold ~30 s, mark each, then the write under test, mark ---
 python windows\tools\ecrw.py write 0x0751=0xA0 --i-mean-it
 
-rem  --- 3. watch for ~60 s; mark again at the end ---
+rem  --- 4. watch for ~60 s; mark again at the end ---
 
-rem  --- 4. restore, and mark once more ---
+rem  --- 5. restore, and mark once more ---
 python windows\tools\ecrw.py write 0x0751=<original> --i-mean-it
 
-rem  --- 5. after both watchers exit ---
+rem  --- 6. after all three watchers exit ---
 python windows\tools\ecrw.py dump 0x0700 0x0100  > after-0700.txt
 python windows\tools\ecrw.py dump 0x0F00 0x0060  > after-0f00.txt
 ```
+
+The `0x0400-0x045F` watcher is the EC's own temperature reading: `0x043E` is
+`CPU_TEMP` and `0x044F` is `GPU_TEMP`, both `confirmed-working` in
+`../../ec/annotations/registers.yaml`. It stops at `0x045F` on purpose — the
+fan-tachometer bytes (`0x0460-0x046F`, issue #94) start right after, and
+reading those through `ECRR` stalled the fans on a sibling board
+(`../../docs/related-projects.md`). Every other byte in the range is context;
+§4.5 says what to do with it.
 
 `--mark` is what makes the CSV readable afterwards: without a timestamp for
 "I wrote it now", a byte that moves 400 ms later and one that moves 40 s
 later look the same in the log. With `--csv` it writes each mark into the
 capture itself as a `ts,MARK,,label` row, so the CSV is self-contained — type
-what you just did as the label (`wrote 0x0751=0xA0`, `restored 0x0751=0x10`)
-rather than keeping the timing in separate notes.
+what you just did as the label (`no-op wrote 0x0751=0xA0`,
+`wrote 0x0751=0x10`, `restored 0x0751=0xA0`) rather than keeping the timing
+in separate notes. Mark the same action in all three consoles within a few
+seconds of each other; the grader treats marks less than five seconds apart as
+one action, which is what keeps three consoles from reporting one write as
+three windows.
 
 Values to run, one block each: `0xA0` (Office), `0x00` (Gaming), `0x10`
 (Turbo). Start from a *different* mode each time — writing Turbo's `0x10`
 while already in Turbo tests nothing.
+
+The control arm writes the byte back to the value it already holds, so it
+leaves the mode you started in, and the rule above is what makes the two
+capture windows comparable: the only thing separating the control's from the
+write's is the write. Label it `no-op wrote ...` and not `wrote ...`; the
+grader windows on marks, and a control arm that reads like the write under
+test is indistinguishable from it. This is the arm the 2026-09-23 run already
+had in a weaker form, where `0x075B`/`0x075C` moved as much under the no-op as
+under a real mode change — thermally, which is why the fan half of the
+question is still open.
 
 ### 3a. Repeat with GCUService stopped
 
@@ -118,9 +155,16 @@ gone). Two reasons, both from the issue:
   persists with it stopped, that is the explanation and it is worth having
   in the record.
 
+If the day only allows two arms, repeat at least the Office-vs-Turbo pair
+(`0xA0` and `0x10`) with the service stopped. That pair settles both reasons
+above — neither of them turns on which value was written — and it is the
+minimum issue #122 asks for. It is not enough for §7's `confirmed-inert`,
+which names all three values, so a two-arm run closes the re-assert question
+and leaves the three-value sweep open.
+
 ## 4. What to read off
 
-For each run, from the two CSVs plus the by-hand power readings:
+For each run, from the three CSVs plus the by-hand power readings:
 
 1. **`0x0783`, `0x0784`, `0x0785`** — do they move on their own after the
    `0x0751` write? The static prediction is no. If they *do*, note what they
@@ -142,10 +186,23 @@ For each run, from the two CSVs plus the by-hand power readings:
    treat them as where to look first and read the whole `0x0700-0x07FF`
    sweep rather than only those two. The audible fan is evidence too —
    write down whether it changed, and when.
+   **Then compare the control arm's capture window against the write's.**
+   How far did `0x075B`/`0x075C` drift between the no-op's mark and the next
+   one? On 2026-09-23 that number is the whole reason the fan half stayed
+   `present-untested`. If the write window's movement is inside the control
+   arm's run-to-run spread, that is the answer to record and the status does
+   not move — per `../../CLAUDE.md`, an ambiguous result is a result, not a
+   reason to pick the confident-sounding phrasing.
 5. **CPU package power** under the same fixed load, by hand at each mark. If
    the PLs did not move but the power ceiling did, something other than
    `0x0783-0x0785` is enforcing it, and that is a new question, not a
-   result.
+   result. Temperature no longer needs an external tool: read it from the
+   `0x0400-0x045F` CSV, and use it for the job §4.4 needs — showing the load
+   was flat in both capture windows. A PWM difference between the control arm
+   and the write under test means something only if `0x043E` held steady
+   across both; if it climbed through the pair, the difference is the die and
+   not the byte. The rest of that page is sensors: read it for context, and
+   do not read a power number out of it.
 6. **Does `0x0751` still hold your value at the end of the window**, or did
    something put it back? Compare `before-*` and `after-*`.
 
@@ -172,16 +229,21 @@ Name the files the way the existing capture does, so a reader can pair them:
 ```
 evidence/ec-watch/<YYYY-MM-DD>-0751-isolation-0700-07ff.csv
 evidence/ec-watch/<YYYY-MM-DD>-0751-isolation-0f00-0f5f.csv
+evidence/ec-watch/<YYYY-MM-DD>-0751-isolation-0400-045f.csv
 evidence/ec-watch/<YYYY-MM-DD>-0751-isolation-snapshot.txt
 ```
 
-One set per value, or one pair of CSVs covering all three with the marks
-distinguishing them — either is fine as long as the snapshot says which. Add
-a header comment to the snapshot in the style of
+One set per value, or one set of CSVs covering all three with the marks
+distinguishing them — either is fine as long as the snapshot says which. The
+marks in all three CSVs of a set must carry the same labels, and they must
+tell the control arm from the write under test: `no-op wrote 0x0751=0xA0`,
+`wrote 0x0751=0x10`, `restored 0x0751=0xA0`.
+
+Add a header comment to the snapshot in the style of
 `evidence/ec-watch/2026-09-23-power-mode-snapshot-dc.txt`: date, AC/battery,
-mode, service running or stopped, what load was held, and what was written.
-Then add the files to `evidence/README.md`, which is the index every
-findings claim cites through.
+mode, service running or stopped, what load was held, what was written, and
+which mode each block started from. Then add the files to `evidence/README.md`,
+which is the index every findings claim cites through.
 
 `../../ec/tools/grade_0751_isolation.py` reads those CSVs (and the
 `before-*`/`after-*` dumps) and applies §4.1-§4.3 and §4.6 to them
@@ -190,13 +252,18 @@ mechanically, which is a cheaper first pass than doing it by eye:
 ```console
 python ec\tools\grade_0751_isolation.py ^
         <date>-0751-isolation-0700-07ff.csv <date>-0751-isolation-0f00-0f5f.csv ^
+        <date>-0751-isolation-0400-045f.csv ^
         --dump before-0700.txt --dump after-0700.txt --wrote 0xA0
 ```
 
-It is a first pass and not the answer: fan PWM (§4.4) and package power
-(§4.5) are not in an EC sweep at all, and they are what §7 keys
-`confirmed-working` on. The script says so in its own output and does not
-emit a status.
+It is a first pass and not the answer. It prints §4.4's candidate PWM bytes
+and §4.5's temperature bytes per window so the control arm and the write can
+be compared line for line, but it does not grade them and does not claim to:
+an unconfirmed PWM address drifting on a warming die moves whether or not
+anything wrote `0x0751`, and telling those apart is what the no-op arm in
+§3 measures and what a script cannot. Package power is in no capture and is
+still yours to note by hand. The script says so in its own output and does
+not emit a status.
 
 ## 7. What a result has to say
 
