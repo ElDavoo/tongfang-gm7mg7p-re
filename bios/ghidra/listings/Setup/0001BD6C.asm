@@ -4,191 +4,191 @@
 ; This is the machine code. The decompiled C for this address is 0001BD6C.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-0001BD6C 48 89 5c 24 08 mov      qword ptr [RSP + 0x8], RBX
-0001BD71 48 89 74 24 10 mov      qword ptr [RSP + 0x10], RSI
-0001BD76 48 89 7c 24 18 mov      qword ptr [RSP + 0x18], RDI
-0001BD7B 55         push     RBP
-0001BD7C 41 56      push     R14
-0001BD7E 41 57      push     R15
-0001BD80 48 8b ec   mov      RBP, RSP
-0001BD83 48 83 ec 50 sub      RSP, 0x50
-0001BD87 4d 8b f9   mov      R15, R9
-0001BD8A 49 8b f0   mov      RSI, R8
-0001BD8D 8b fa      mov      EDI, EDX
-0001BD8F 8b d9      mov      EBX, ECX
-0001BD91 e8 76 02 00 00 call     0x0001c00c
-0001BD96 4c 8b f0   mov      R14, RAX
-0001BD99 33 c0      xor      EAX, EAX
-0001BD9B 4d 85 f6   test     R14, R14
-0001BD9E 0f 88 48 02 00 00 js       0x0001bfec
-0001BDA4 83 eb 01   sub      EBX, 0x1
-0001BDA7 0f 84 b9 01 00 00 jz       0x0001bf66
-0001BDAD 83 eb 01   sub      EBX, 0x1
-0001BDB0 0f 84 f8 00 00 00 jz       0x0001beae
-0001BDB6 83 fb 01   cmp      EBX, 0x1
-0001BDB9 74 0f      jz       0x0001bdca
-0001BDBB 49 be 03 00 00 00 00 00 00 80 mov      R14, -0x7ffffffffffffffd
-0001BDC5 e9 22 02 00 00 jmp      0x0001bfec
-0001BDCA 0f ba ef 1f bts      EDI, 0x1f
-0001BDCE 89 45 d4   mov      dword ptr [RBP + -0x2c], EAX
-0001BDD1 8b d7      mov      EDX, EDI
-0001BDD3 b9 07 06 00 00 mov      ECX, 0x607
-0001BDD8 48 c1 ea 20 shr      RDX, 0x20
-0001BDDC 89 7d d0   mov      dword ptr [RBP + -0x30], EDI
-0001BDDF 8b c7      mov      EAX, EDI
-0001BDE1 0f 30      wrmsr    
-0001BDE3 b9 03 00 00 00 mov      ECX, 0x3
-0001BDE8 e8 1f 02 00 00 call     0x0001c00c
-0001BDED b9 07 06 00 00 mov      ECX, 0x607
-0001BDF2 0f 32      rdmsr    
-0001BDF4 48 c1 e2 20 shl      RDX, 0x20
-0001BDF8 48 8d 4d d0 lea      RCX, [RBP + -0x30]
-0001BDFC 48 0b c2   or       RAX, RDX
-0001BDFF bb 04 00 00 00 mov      EBX, 0x4
-0001BE04 48 8d 55 d8 lea      RDX, [RBP + -0x28]
-0001BE08 48 89 45 d8 mov      qword ptr [RBP + -0x28], RAX
-0001BE0C 44 8b c3   mov      R8D, EBX
-0001BE0F e8 cc 44 fe ff call     0x000002e0
-0001BE14 bf 08 06 00 00 mov      EDI, 0x608
-0001BE19 8b cf      mov      ECX, EDI
-0001BE1B 0f 32      rdmsr    
-0001BE1D 48 c1 e2 20 shl      RDX, 0x20
-0001BE21 48 8d 4d d4 lea      RCX, [RBP + -0x2c]
-0001BE25 48 0b c2   or       RAX, RDX
-0001BE28 44 8b c3   mov      R8D, EBX
-0001BE2B 48 8d 55 d8 lea      RDX, [RBP + -0x28]
-0001BE2F 48 89 45 d8 mov      qword ptr [RBP + -0x28], RAX
-0001BE33 e8 a8 44 fe ff call     0x000002e0
-0001BE38 8d 4b 06   lea      ECX, [RBX + 0x6]
-0001BE3B e8 78 3b 00 00 call     0x0001f9b8
-0001BE40 8d 4f ff   lea      ECX, [RDI + -0x1]
-0001BE43 0f 32      rdmsr    
-0001BE45 48 c1 e2 20 shl      RDX, 0x20
-0001BE49 48 8d 4d e8 lea      RCX, [RBP + -0x18]
-0001BE4D 48 0b c2   or       RAX, RDX
-0001BE50 44 8b c3   mov      R8D, EBX
-0001BE53 48 8d 55 d8 lea      RDX, [RBP + -0x28]
-0001BE57 48 89 45 d8 mov      qword ptr [RBP + -0x28], RAX
-0001BE5B e8 80 44 fe ff call     0x000002e0
-0001BE60 8b cf      mov      ECX, EDI
-0001BE62 0f 32      rdmsr    
-0001BE64 48 c1 e2 20 shl      RDX, 0x20
-0001BE68 48 8d 4d ec lea      RCX, [RBP + -0x14]
-0001BE6C 48 0b c2   or       RAX, RDX
-0001BE6F 44 8b c3   mov      R8D, EBX
-0001BE72 48 8d 55 d8 lea      RDX, [RBP + -0x28]
-0001BE76 48 89 45 d8 mov      qword ptr [RBP + -0x28], RAX
-0001BE7A e8 61 44 fe ff call     0x000002e0
-0001BE7F 8b 4d d0   mov      ECX, dword ptr [RBP + -0x30]
-0001BE82 3b 4d e8   cmp      ECX, dword ptr [RBP + -0x18]
-0001BE85 74 0c      jz       0x0001be93
-0001BE87 8b 45 ec   mov      EAX, dword ptr [RBP + -0x14]
-0001BE8A 39 45 d4   cmp      dword ptr [RBP + -0x2c], EAX
-0001BE8D 0f 85 2f 01 00 00 jnz      0x0001bfc2
-0001BE93 0f b6 c1   movzx    EAX, CL
-0001BE96 41 89 07   mov      dword ptr [R15], EAX
-0001BE99 48 8d 45 d4 lea      RAX, [RBP + -0x2c]
-0001BE9D 48 3b f0   cmp      RSI, RAX
-0001BEA0 0f 84 46 01 00 00 jz       0x0001bfec
-0001BEA6 4c 8b c3   mov      R8, RBX
-0001BEA9 e9 32 01 00 00 jmp      0x0001bfe0
-0001BEAE 89 7d e4   mov      dword ptr [RBP + -0x1c], EDI
-0001BEB1 48 8d 55 e0 lea      RDX, [RBP + -0x20]
-0001BEB5 c1 ef 18   shr      EDI, 0x18
-0001BEB8 48 8d 4d d8 lea      RCX, [RBP + -0x28]
-0001BEBC 40 80 cf 80 or       DIL, 0x80
-0001BEC0 89 45 e0   mov      dword ptr [RBP + -0x20], EAX
-0001BEC3 40 88 7d e7 mov      byte ptr [RBP + -0x19], DIL
-0001BEC7 bf 08 00 00 00 mov      EDI, 0x8
-0001BECC 44 8b c7   mov      R8D, EDI
-0001BECF e8 0c 44 fe ff call     0x000002e0
-0001BED4 48 8b 55 d8 mov      RDX, qword ptr [RBP + -0x28]
-0001BED8 bb 50 01 00 00 mov      EBX, 0x150
-0001BEDD 48 8b c2   mov      RAX, RDX
-0001BEE0 8b cb      mov      ECX, EBX
-0001BEE2 48 c1 ea 20 shr      RDX, 0x20
-0001BEE6 0f 30      wrmsr    
-0001BEE8 8d 4f fa   lea      ECX, [RDI + -0x6]
-0001BEEB e8 1c 01 00 00 call     0x0001c00c
-0001BEF0 8b cb      mov      ECX, EBX
-0001BEF2 0f 32      rdmsr    
-0001BEF4 48 c1 e2 20 shl      RDX, 0x20
-0001BEF8 48 8d 4d e0 lea      RCX, [RBP + -0x20]
-0001BEFC 48 0b c2   or       RAX, RDX
-0001BEFF 44 8b c7   mov      R8D, EDI
-0001BF02 48 8d 55 d8 lea      RDX, [RBP + -0x28]
-0001BF06 48 89 45 d8 mov      qword ptr [RBP + -0x28], RAX
-0001BF0A e8 d1 43 fe ff call     0x000002e0
-0001BF0F 8d 4f 02   lea      ECX, [RDI + 0x2]
-0001BF12 e8 a1 3a 00 00 call     0x0001f9b8
-0001BF17 8b cb      mov      ECX, EBX
-0001BF19 0f 32      rdmsr    
-0001BF1B 48 c1 e2 20 shl      RDX, 0x20
-0001BF1F 48 8d 4d f0 lea      RCX, [RBP + -0x10]
-0001BF23 48 0b c2   or       RAX, RDX
-0001BF26 44 8b c7   mov      R8D, EDI
-0001BF29 48 8d 55 d8 lea      RDX, [RBP + -0x28]
-0001BF2D 48 89 45 d8 mov      qword ptr [RBP + -0x28], RAX
-0001BF31 e8 aa 43 fe ff call     0x000002e0
-0001BF36 8b 45 f4   mov      EAX, dword ptr [RBP + -0xc]
-0001BF39 39 45 e4   cmp      dword ptr [RBP + -0x1c], EAX
-0001BF3C 74 08      jz       0x0001bf46
-0001BF3E 8b 45 f0   mov      EAX, dword ptr [RBP + -0x10]
-0001BF41 39 45 e0   cmp      dword ptr [RBP + -0x20], EAX
-0001BF44 75 7c      jnz      0x0001bfc2
-0001BF46 0f b6 45 e4 movzx    EAX, byte ptr [RBP + -0x1c]
-0001BF4A 41 89 07   mov      dword ptr [R15], EAX
-0001BF4D 48 8d 45 e0 lea      RAX, [RBP + -0x20]
-0001BF51 48 3b f0   cmp      RSI, RAX
-0001BF54 0f 84 92 00 00 00 jz       0x0001bfec
-0001BF5A 41 b8 04 00 00 00 mov      R8D, 0x4
-0001BF60 48 8d 55 e0 lea      RDX, [RBP + -0x20]
-0001BF64 eb 7e      jmp      0x0001bfe4
-0001BF66 89 45 d4   mov      dword ptr [RBP + -0x2c], EAX
-0001BF69 0f ba ef 1f bts      EDI, 0x1f
-0001BF6D 89 7d d0   mov      dword ptr [RBP + -0x30], EDI
-0001BF70 b8 48 00 00 e0 mov      EAX, 0xe0000048
-0001BF75 b9 01 00 00 00 mov      ECX, 0x1
-0001BF7A 8b 18      mov      EBX, dword ptr [RAX]
-0001BF7C 8b 45 d0   mov      EAX, dword ptr [RBP + -0x30]
-0001BF7F 83 e3 fe   and      EBX, 0xfffffffe
-0001BF82 8d bb a4 5d 00 00 lea      EDI, [RBX + 0x5da4]
-0001BF88 89 07      mov      dword ptr [RDI], EAX
-0001BF8A e8 7d 00 00 00 call     0x0001c00c
-0001BF8F 8b 07      mov      EAX, dword ptr [RDI]
-0001BF91 b9 0a 00 00 00 mov      ECX, 0xa
-0001BF96 89 45 d0   mov      dword ptr [RBP + -0x30], EAX
-0001BF99 8d 83 a0 5d 00 00 lea      EAX, [RBX + 0x5da0]
-0001BF9F 8b d8      mov      EBX, EAX
-0001BFA1 8b 00      mov      EAX, dword ptr [RAX]
-0001BFA3 89 45 d4   mov      dword ptr [RBP + -0x2c], EAX
-0001BFA6 e8 0d 3a 00 00 call     0x0001f9b8
-0001BFAB 8b 07      mov      EAX, dword ptr [RDI]
-0001BFAD 89 45 e8   mov      dword ptr [RBP + -0x18], EAX
-0001BFB0 8b 03      mov      EAX, dword ptr [RBX]
-0001BFB2 8b 4d d0   mov      ECX, dword ptr [RBP + -0x30]
-0001BFB5 89 45 ec   mov      dword ptr [RBP + -0x14], EAX
-0001BFB8 3b 4d e8   cmp      ECX, dword ptr [RBP + -0x18]
-0001BFBB 74 11      jz       0x0001bfce
-0001BFBD 39 45 d4   cmp      dword ptr [RBP + -0x2c], EAX
-0001BFC0 74 0c      jz       0x0001bfce
-0001BFC2 48 b8 02 00 00 00 00 00 00 80 mov      RAX, -0x7ffffffffffffffe
-0001BFCC eb 21      jmp      0x0001bfef
-0001BFCE 48 8d 45 d4 lea      RAX, [RBP + -0x2c]
-0001BFD2 41 89 0f   mov      dword ptr [R15], ECX
-0001BFD5 48 3b f0   cmp      RSI, RAX
-0001BFD8 74 12      jz       0x0001bfec
-0001BFDA 41 b8 04 00 00 00 mov      R8D, 0x4
-0001BFE0 48 8d 55 d4 lea      RDX, [RBP + -0x2c]
-0001BFE4 48 8b ce   mov      RCX, RSI
-0001BFE7 e8 f4 42 fe ff call     0x000002e0
-0001BFEC 49 8b c6   mov      RAX, R14
-0001BFEF 4c 8d 5c 24 50 lea      R11, [RSP + 0x50]
-0001BFF4 49 8b 5b 20 mov      RBX, qword ptr [R11 + 0x20]
-0001BFF8 49 8b 73 28 mov      RSI, qword ptr [R11 + 0x28]
-0001BFFC 49 8b 7b 30 mov      RDI, qword ptr [R11 + 0x30]
-0001C000 49 8b e3   mov      RSP, R11
-0001C003 41 5f      pop      R15
-0001C005 41 5e      pop      R14
-0001C007 5d         pop      RBP
-0001C008 c3         ret      
+0001BD6C 48 89 5c 24 08 - - - - - - -        mov      qword ptr [RSP + 0x8], RBX
+0001BD71 48 89 74 24 10 - - - - - - -        mov      qword ptr [RSP + 0x10], RSI
+0001BD76 48 89 7c 24 18 - - - - - - -        mov      qword ptr [RSP + 0x18], RDI
+0001BD7B 55 - - - - - - - - - - -            push     RBP
+0001BD7C 41 56 - - - - - - - - - -           push     R14
+0001BD7E 41 57 - - - - - - - - - -           push     R15
+0001BD80 48 8b ec - - - - - - - - -          mov      RBP, RSP
+0001BD83 48 83 ec 50 - - - - - - - -         sub      RSP, 0x50
+0001BD87 4d 8b f9 - - - - - - - - -          mov      R15, R9
+0001BD8A 49 8b f0 - - - - - - - - -          mov      RSI, R8
+0001BD8D 8b fa - - - - - - - - - -           mov      EDI, EDX
+0001BD8F 8b d9 - - - - - - - - - -           mov      EBX, ECX
+0001BD91 e8 76 02 00 00 - - - - - - -        call     0x0001c00c
+0001BD96 4c 8b f0 - - - - - - - - -          mov      R14, RAX
+0001BD99 33 c0 - - - - - - - - - -           xor      EAX, EAX
+0001BD9B 4d 85 f6 - - - - - - - - -          test     R14, R14
+0001BD9E 0f 88 48 02 00 00 - - - - - -       js       0x0001bfec
+0001BDA4 83 eb 01 - - - - - - - - -          sub      EBX, 0x1
+0001BDA7 0f 84 b9 01 00 00 - - - - - -       jz       0x0001bf66
+0001BDAD 83 eb 01 - - - - - - - - -          sub      EBX, 0x1
+0001BDB0 0f 84 f8 00 00 00 - - - - - -       jz       0x0001beae
+0001BDB6 83 fb 01 - - - - - - - - -          cmp      EBX, 0x1
+0001BDB9 74 0f - - - - - - - - - -           jz       0x0001bdca
+0001BDBB 49 be 03 00 00 00 00 00 00 80 - -   mov      R14, -0x7ffffffffffffffd
+0001BDC5 e9 22 02 00 00 - - - - - - -        jmp      0x0001bfec
+0001BDCA 0f ba ef 1f - - - - - - - -         bts      EDI, 0x1f
+0001BDCE 89 45 d4 - - - - - - - - -          mov      dword ptr [RBP + -0x2c], EAX
+0001BDD1 8b d7 - - - - - - - - - -           mov      EDX, EDI
+0001BDD3 b9 07 06 00 00 - - - - - - -        mov      ECX, 0x607
+0001BDD8 48 c1 ea 20 - - - - - - - -         shr      RDX, 0x20
+0001BDDC 89 7d d0 - - - - - - - - -          mov      dword ptr [RBP + -0x30], EDI
+0001BDDF 8b c7 - - - - - - - - - -           mov      EAX, EDI
+0001BDE1 0f 30 - - - - - - - - - -           wrmsr    
+0001BDE3 b9 03 00 00 00 - - - - - - -        mov      ECX, 0x3
+0001BDE8 e8 1f 02 00 00 - - - - - - -        call     0x0001c00c
+0001BDED b9 07 06 00 00 - - - - - - -        mov      ECX, 0x607
+0001BDF2 0f 32 - - - - - - - - - -           rdmsr    
+0001BDF4 48 c1 e2 20 - - - - - - - -         shl      RDX, 0x20
+0001BDF8 48 8d 4d d0 - - - - - - - -         lea      RCX, [RBP + -0x30]
+0001BDFC 48 0b c2 - - - - - - - - -          or       RAX, RDX
+0001BDFF bb 04 00 00 00 - - - - - - -        mov      EBX, 0x4
+0001BE04 48 8d 55 d8 - - - - - - - -         lea      RDX, [RBP + -0x28]
+0001BE08 48 89 45 d8 - - - - - - - -         mov      qword ptr [RBP + -0x28], RAX
+0001BE0C 44 8b c3 - - - - - - - - -          mov      R8D, EBX
+0001BE0F e8 cc 44 fe ff - - - - - - -        call     0x000002e0
+0001BE14 bf 08 06 00 00 - - - - - - -        mov      EDI, 0x608
+0001BE19 8b cf - - - - - - - - - -           mov      ECX, EDI
+0001BE1B 0f 32 - - - - - - - - - -           rdmsr    
+0001BE1D 48 c1 e2 20 - - - - - - - -         shl      RDX, 0x20
+0001BE21 48 8d 4d d4 - - - - - - - -         lea      RCX, [RBP + -0x2c]
+0001BE25 48 0b c2 - - - - - - - - -          or       RAX, RDX
+0001BE28 44 8b c3 - - - - - - - - -          mov      R8D, EBX
+0001BE2B 48 8d 55 d8 - - - - - - - -         lea      RDX, [RBP + -0x28]
+0001BE2F 48 89 45 d8 - - - - - - - -         mov      qword ptr [RBP + -0x28], RAX
+0001BE33 e8 a8 44 fe ff - - - - - - -        call     0x000002e0
+0001BE38 8d 4b 06 - - - - - - - - -          lea      ECX, [RBX + 0x6]
+0001BE3B e8 78 3b 00 00 - - - - - - -        call     0x0001f9b8
+0001BE40 8d 4f ff - - - - - - - - -          lea      ECX, [RDI + -0x1]
+0001BE43 0f 32 - - - - - - - - - -           rdmsr    
+0001BE45 48 c1 e2 20 - - - - - - - -         shl      RDX, 0x20
+0001BE49 48 8d 4d e8 - - - - - - - -         lea      RCX, [RBP + -0x18]
+0001BE4D 48 0b c2 - - - - - - - - -          or       RAX, RDX
+0001BE50 44 8b c3 - - - - - - - - -          mov      R8D, EBX
+0001BE53 48 8d 55 d8 - - - - - - - -         lea      RDX, [RBP + -0x28]
+0001BE57 48 89 45 d8 - - - - - - - -         mov      qword ptr [RBP + -0x28], RAX
+0001BE5B e8 80 44 fe ff - - - - - - -        call     0x000002e0
+0001BE60 8b cf - - - - - - - - - -           mov      ECX, EDI
+0001BE62 0f 32 - - - - - - - - - -           rdmsr    
+0001BE64 48 c1 e2 20 - - - - - - - -         shl      RDX, 0x20
+0001BE68 48 8d 4d ec - - - - - - - -         lea      RCX, [RBP + -0x14]
+0001BE6C 48 0b c2 - - - - - - - - -          or       RAX, RDX
+0001BE6F 44 8b c3 - - - - - - - - -          mov      R8D, EBX
+0001BE72 48 8d 55 d8 - - - - - - - -         lea      RDX, [RBP + -0x28]
+0001BE76 48 89 45 d8 - - - - - - - -         mov      qword ptr [RBP + -0x28], RAX
+0001BE7A e8 61 44 fe ff - - - - - - -        call     0x000002e0
+0001BE7F 8b 4d d0 - - - - - - - - -          mov      ECX, dword ptr [RBP + -0x30]
+0001BE82 3b 4d e8 - - - - - - - - -          cmp      ECX, dword ptr [RBP + -0x18]
+0001BE85 74 0c - - - - - - - - - -           jz       0x0001be93
+0001BE87 8b 45 ec - - - - - - - - -          mov      EAX, dword ptr [RBP + -0x14]
+0001BE8A 39 45 d4 - - - - - - - - -          cmp      dword ptr [RBP + -0x2c], EAX
+0001BE8D 0f 85 2f 01 00 00 - - - - - -       jnz      0x0001bfc2
+0001BE93 0f b6 c1 - - - - - - - - -          movzx    EAX, CL
+0001BE96 41 89 07 - - - - - - - - -          mov      dword ptr [R15], EAX
+0001BE99 48 8d 45 d4 - - - - - - - -         lea      RAX, [RBP + -0x2c]
+0001BE9D 48 3b f0 - - - - - - - - -          cmp      RSI, RAX
+0001BEA0 0f 84 46 01 00 00 - - - - - -       jz       0x0001bfec
+0001BEA6 4c 8b c3 - - - - - - - - -          mov      R8, RBX
+0001BEA9 e9 32 01 00 00 - - - - - - -        jmp      0x0001bfe0
+0001BEAE 89 7d e4 - - - - - - - - -          mov      dword ptr [RBP + -0x1c], EDI
+0001BEB1 48 8d 55 e0 - - - - - - - -         lea      RDX, [RBP + -0x20]
+0001BEB5 c1 ef 18 - - - - - - - - -          shr      EDI, 0x18
+0001BEB8 48 8d 4d d8 - - - - - - - -         lea      RCX, [RBP + -0x28]
+0001BEBC 40 80 cf 80 - - - - - - - -         or       DIL, 0x80
+0001BEC0 89 45 e0 - - - - - - - - -          mov      dword ptr [RBP + -0x20], EAX
+0001BEC3 40 88 7d e7 - - - - - - - -         mov      byte ptr [RBP + -0x19], DIL
+0001BEC7 bf 08 00 00 00 - - - - - - -        mov      EDI, 0x8
+0001BECC 44 8b c7 - - - - - - - - -          mov      R8D, EDI
+0001BECF e8 0c 44 fe ff - - - - - - -        call     0x000002e0
+0001BED4 48 8b 55 d8 - - - - - - - -         mov      RDX, qword ptr [RBP + -0x28]
+0001BED8 bb 50 01 00 00 - - - - - - -        mov      EBX, 0x150
+0001BEDD 48 8b c2 - - - - - - - - -          mov      RAX, RDX
+0001BEE0 8b cb - - - - - - - - - -           mov      ECX, EBX
+0001BEE2 48 c1 ea 20 - - - - - - - -         shr      RDX, 0x20
+0001BEE6 0f 30 - - - - - - - - - -           wrmsr    
+0001BEE8 8d 4f fa - - - - - - - - -          lea      ECX, [RDI + -0x6]
+0001BEEB e8 1c 01 00 00 - - - - - - -        call     0x0001c00c
+0001BEF0 8b cb - - - - - - - - - -           mov      ECX, EBX
+0001BEF2 0f 32 - - - - - - - - - -           rdmsr    
+0001BEF4 48 c1 e2 20 - - - - - - - -         shl      RDX, 0x20
+0001BEF8 48 8d 4d e0 - - - - - - - -         lea      RCX, [RBP + -0x20]
+0001BEFC 48 0b c2 - - - - - - - - -          or       RAX, RDX
+0001BEFF 44 8b c7 - - - - - - - - -          mov      R8D, EDI
+0001BF02 48 8d 55 d8 - - - - - - - -         lea      RDX, [RBP + -0x28]
+0001BF06 48 89 45 d8 - - - - - - - -         mov      qword ptr [RBP + -0x28], RAX
+0001BF0A e8 d1 43 fe ff - - - - - - -        call     0x000002e0
+0001BF0F 8d 4f 02 - - - - - - - - -          lea      ECX, [RDI + 0x2]
+0001BF12 e8 a1 3a 00 00 - - - - - - -        call     0x0001f9b8
+0001BF17 8b cb - - - - - - - - - -           mov      ECX, EBX
+0001BF19 0f 32 - - - - - - - - - -           rdmsr    
+0001BF1B 48 c1 e2 20 - - - - - - - -         shl      RDX, 0x20
+0001BF1F 48 8d 4d f0 - - - - - - - -         lea      RCX, [RBP + -0x10]
+0001BF23 48 0b c2 - - - - - - - - -          or       RAX, RDX
+0001BF26 44 8b c7 - - - - - - - - -          mov      R8D, EDI
+0001BF29 48 8d 55 d8 - - - - - - - -         lea      RDX, [RBP + -0x28]
+0001BF2D 48 89 45 d8 - - - - - - - -         mov      qword ptr [RBP + -0x28], RAX
+0001BF31 e8 aa 43 fe ff - - - - - - -        call     0x000002e0
+0001BF36 8b 45 f4 - - - - - - - - -          mov      EAX, dword ptr [RBP + -0xc]
+0001BF39 39 45 e4 - - - - - - - - -          cmp      dword ptr [RBP + -0x1c], EAX
+0001BF3C 74 08 - - - - - - - - - -           jz       0x0001bf46
+0001BF3E 8b 45 f0 - - - - - - - - -          mov      EAX, dword ptr [RBP + -0x10]
+0001BF41 39 45 e0 - - - - - - - - -          cmp      dword ptr [RBP + -0x20], EAX
+0001BF44 75 7c - - - - - - - - - -           jnz      0x0001bfc2
+0001BF46 0f b6 45 e4 - - - - - - - -         movzx    EAX, byte ptr [RBP + -0x1c]
+0001BF4A 41 89 07 - - - - - - - - -          mov      dword ptr [R15], EAX
+0001BF4D 48 8d 45 e0 - - - - - - - -         lea      RAX, [RBP + -0x20]
+0001BF51 48 3b f0 - - - - - - - - -          cmp      RSI, RAX
+0001BF54 0f 84 92 00 00 00 - - - - - -       jz       0x0001bfec
+0001BF5A 41 b8 04 00 00 00 - - - - - -       mov      R8D, 0x4
+0001BF60 48 8d 55 e0 - - - - - - - -         lea      RDX, [RBP + -0x20]
+0001BF64 eb 7e - - - - - - - - - -           jmp      0x0001bfe4
+0001BF66 89 45 d4 - - - - - - - - -          mov      dword ptr [RBP + -0x2c], EAX
+0001BF69 0f ba ef 1f - - - - - - - -         bts      EDI, 0x1f
+0001BF6D 89 7d d0 - - - - - - - - -          mov      dword ptr [RBP + -0x30], EDI
+0001BF70 b8 48 00 00 e0 - - - - - - -        mov      EAX, 0xe0000048
+0001BF75 b9 01 00 00 00 - - - - - - -        mov      ECX, 0x1
+0001BF7A 8b 18 - - - - - - - - - -           mov      EBX, dword ptr [RAX]
+0001BF7C 8b 45 d0 - - - - - - - - -          mov      EAX, dword ptr [RBP + -0x30]
+0001BF7F 83 e3 fe - - - - - - - - -          and      EBX, 0xfffffffe
+0001BF82 8d bb a4 5d 00 00 - - - - - -       lea      EDI, [RBX + 0x5da4]
+0001BF88 89 07 - - - - - - - - - -           mov      dword ptr [RDI], EAX
+0001BF8A e8 7d 00 00 00 - - - - - - -        call     0x0001c00c
+0001BF8F 8b 07 - - - - - - - - - -           mov      EAX, dword ptr [RDI]
+0001BF91 b9 0a 00 00 00 - - - - - - -        mov      ECX, 0xa
+0001BF96 89 45 d0 - - - - - - - - -          mov      dword ptr [RBP + -0x30], EAX
+0001BF99 8d 83 a0 5d 00 00 - - - - - -       lea      EAX, [RBX + 0x5da0]
+0001BF9F 8b d8 - - - - - - - - - -           mov      EBX, EAX
+0001BFA1 8b 00 - - - - - - - - - -           mov      EAX, dword ptr [RAX]
+0001BFA3 89 45 d4 - - - - - - - - -          mov      dword ptr [RBP + -0x2c], EAX
+0001BFA6 e8 0d 3a 00 00 - - - - - - -        call     0x0001f9b8
+0001BFAB 8b 07 - - - - - - - - - -           mov      EAX, dword ptr [RDI]
+0001BFAD 89 45 e8 - - - - - - - - -          mov      dword ptr [RBP + -0x18], EAX
+0001BFB0 8b 03 - - - - - - - - - -           mov      EAX, dword ptr [RBX]
+0001BFB2 8b 4d d0 - - - - - - - - -          mov      ECX, dword ptr [RBP + -0x30]
+0001BFB5 89 45 ec - - - - - - - - -          mov      dword ptr [RBP + -0x14], EAX
+0001BFB8 3b 4d e8 - - - - - - - - -          cmp      ECX, dword ptr [RBP + -0x18]
+0001BFBB 74 11 - - - - - - - - - -           jz       0x0001bfce
+0001BFBD 39 45 d4 - - - - - - - - -          cmp      dword ptr [RBP + -0x2c], EAX
+0001BFC0 74 0c - - - - - - - - - -           jz       0x0001bfce
+0001BFC2 48 b8 02 00 00 00 00 00 00 80 - -   mov      RAX, -0x7ffffffffffffffe
+0001BFCC eb 21 - - - - - - - - - -           jmp      0x0001bfef
+0001BFCE 48 8d 45 d4 - - - - - - - -         lea      RAX, [RBP + -0x2c]
+0001BFD2 41 89 0f - - - - - - - - -          mov      dword ptr [R15], ECX
+0001BFD5 48 3b f0 - - - - - - - - -          cmp      RSI, RAX
+0001BFD8 74 12 - - - - - - - - - -           jz       0x0001bfec
+0001BFDA 41 b8 04 00 00 00 - - - - - -       mov      R8D, 0x4
+0001BFE0 48 8d 55 d4 - - - - - - - -         lea      RDX, [RBP + -0x2c]
+0001BFE4 48 8b ce - - - - - - - - -          mov      RCX, RSI
+0001BFE7 e8 f4 42 fe ff - - - - - - -        call     0x000002e0
+0001BFEC 49 8b c6 - - - - - - - - -          mov      RAX, R14
+0001BFEF 4c 8d 5c 24 50 - - - - - - -        lea      R11, [RSP + 0x50]
+0001BFF4 49 8b 5b 20 - - - - - - - -         mov      RBX, qword ptr [R11 + 0x20]
+0001BFF8 49 8b 73 28 - - - - - - - -         mov      RSI, qword ptr [R11 + 0x28]
+0001BFFC 49 8b 7b 30 - - - - - - - -         mov      RDI, qword ptr [R11 + 0x30]
+0001C000 49 8b e3 - - - - - - - - -          mov      RSP, R11
+0001C003 41 5f - - - - - - - - - -           pop      R15
+0001C005 41 5e - - - - - - - - - -           pop      R14
+0001C007 5d - - - - - - - - - - -            pop      RBP
+0001C008 c3 - - - - - - - - - - -            ret      

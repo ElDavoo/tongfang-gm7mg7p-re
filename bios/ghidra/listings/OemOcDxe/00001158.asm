@@ -4,22 +4,22 @@
 ; This is the machine code. The decompiled C for this address is 00001158.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-00001158 89 4c 24 08 mov      dword ptr [RSP + 0x8], ECX
-0000115C 48 83 ec 28 sub      RSP, 0x28
-00001160 e8 9b ff ff ff call     0x00001100
-00001165 3c 02      cmp      AL, 0x2
-00001167 74 2a      jz       0x00001193
-00001169 48 8d 4c 24 30 lea      RCX, [RSP + 0x30]
-0000116E e8 c9 00 00 00 call     0x0000123c
-00001173 83 7c 24 30 01 cmp      dword ptr [RSP + 0x30], 0x1
-00001178 76 19      jbe      0x00001193
-0000117A 48 8d 4c 24 30 lea      RCX, [RSP + 0x30]
-0000117F e8 b8 00 00 00 call     0x0000123c
-00001184 b9 16 00 00 00 mov      ECX, 0x16
-00001189 66 3b 48 3a cmp      CX, word ptr [RAX + 0x3a]
-0000118D 73 04      jnc      0x00001193
-0000118F b0 01      mov      AL, 0x1
-00001191 eb 02      jmp      0x00001195
-00001193 32 c0      xor      AL, AL
-00001195 48 83 c4 28 add      RSP, 0x28
-00001199 c3         ret      
+00001158 89 4c 24 08 - - - - - - -        mov      dword ptr [RSP + 0x8], ECX
+0000115C 48 83 ec 28 - - - - - - -        sub      RSP, 0x28
+00001160 e8 9b ff ff ff - - - - - -       call     0x00001100
+00001165 3c 02 - - - - - - - - -          cmp      AL, 0x2
+00001167 74 2a - - - - - - - - -          jz       0x00001193
+00001169 48 8d 4c 24 30 - - - - - -       lea      RCX, [RSP + 0x30]
+0000116E e8 c9 00 00 00 - - - - - -       call     0x0000123c
+00001173 83 7c 24 30 01 - - - - - -       cmp      dword ptr [RSP + 0x30], 0x1
+00001178 76 19 - - - - - - - - -          jbe      0x00001193
+0000117A 48 8d 4c 24 30 - - - - - -       lea      RCX, [RSP + 0x30]
+0000117F e8 b8 00 00 00 - - - - - -       call     0x0000123c
+00001184 b9 16 00 00 00 - - - - - -       mov      ECX, 0x16
+00001189 66 3b 48 3a - - - - - - -        cmp      CX, word ptr [RAX + 0x3a]
+0000118D 73 04 - - - - - - - - -          jnc      0x00001193
+0000118F b0 01 - - - - - - - - -          mov      AL, 0x1
+00001191 eb 02 - - - - - - - - -          jmp      0x00001195
+00001193 32 c0 - - - - - - - - -          xor      AL, AL
+00001195 48 83 c4 28 - - - - - - -        add      RSP, 0x28
+00001199 c3 - - - - - - - - - -           ret      

@@ -4,33 +4,33 @@
 ; This is the machine code. The decompiled C for this address is FFFAC60C.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-FFFAC60C 55         push     EBP
-FFFAC60D 8b ec      mov      EBP, ESP
-FFFAC60F 83 ec 14   sub      ESP, 0x14
-FFFAC612 33 c0      xor      EAX, EAX
-FFFAC614 c7 45 fc 01 00 00 00 mov      dword ptr [EBP + -0x4], 0x1
-FFFAC61B 53         push     EBX
-FFFAC61C 89 45 f0   mov      dword ptr [EBP + -0x10], EAX
-FFFAC61F 89 45 f4   mov      dword ptr [EBP + -0xc], EAX
-FFFAC622 89 45 f8   mov      dword ptr [EBP + -0x8], EAX
-FFFAC625 8b 45 fc   mov      EAX, dword ptr [EBP + -0x4]
-FFFAC628 0f a2      cpuid    
-FFFAC62A 51         push     ECX
-FFFAC62B 8b 4d f8   mov      ECX, dword ptr [EBP + -0x8]
-FFFAC62E e3 02      jecxz    0xfffac632
-FFFAC630 89 01      mov      dword ptr [ECX], EAX
-FFFAC632 8b 4d f4   mov      ECX, dword ptr [EBP + -0xc]
-FFFAC635 e3 02      jecxz    0xfffac639
-FFFAC637 89 19      mov      dword ptr [ECX], EBX
-FFFAC639 58         pop      EAX
-FFFAC63A 8b 4d 0c   mov      ECX, dword ptr [EBP + 0xc]
-FFFAC63D e3 02      jecxz    0xfffac641
-FFFAC63F 89 01      mov      dword ptr [ECX], EAX
-FFFAC641 8b 4d f0   mov      ECX, dword ptr [EBP + -0x10]
-FFFAC644 e3 02      jecxz    0xfffac648
-FFFAC646 89 11      mov      dword ptr [ECX], EDX
-FFFAC648 8b 45 fc   mov      EAX, dword ptr [EBP + -0x4]
-FFFAC64B 5b         pop      EBX
-FFFAC64C 8b e5      mov      ESP, EBP
-FFFAC64E 5d         pop      EBP
-FFFAC64F c3         ret      
+FFFAC60C 55 - - - - - - -        push     EBP
+FFFAC60D 8b ec - - - - - -       mov      EBP, ESP
+FFFAC60F 83 ec 14 - - - - -      sub      ESP, 0x14
+FFFAC612 33 c0 - - - - - -       xor      EAX, EAX
+FFFAC614 c7 45 fc 01 00 00 00 -  mov      dword ptr [EBP + -0x4], 0x1
+FFFAC61B 53 - - - - - - -        push     EBX
+FFFAC61C 89 45 f0 - - - - -      mov      dword ptr [EBP + -0x10], EAX
+FFFAC61F 89 45 f4 - - - - -      mov      dword ptr [EBP + -0xc], EAX
+FFFAC622 89 45 f8 - - - - -      mov      dword ptr [EBP + -0x8], EAX
+FFFAC625 8b 45 fc - - - - -      mov      EAX, dword ptr [EBP + -0x4]
+FFFAC628 0f a2 - - - - - -       cpuid    
+FFFAC62A 51 - - - - - - -        push     ECX
+FFFAC62B 8b 4d f8 - - - - -      mov      ECX, dword ptr [EBP + -0x8]
+FFFAC62E e3 02 - - - - - -       jecxz    0xfffac632
+FFFAC630 89 01 - - - - - -       mov      dword ptr [ECX], EAX
+FFFAC632 8b 4d f4 - - - - -      mov      ECX, dword ptr [EBP + -0xc]
+FFFAC635 e3 02 - - - - - -       jecxz    0xfffac639
+FFFAC637 89 19 - - - - - -       mov      dword ptr [ECX], EBX
+FFFAC639 58 - - - - - - -        pop      EAX
+FFFAC63A 8b 4d 0c - - - - -      mov      ECX, dword ptr [EBP + 0xc]
+FFFAC63D e3 02 - - - - - -       jecxz    0xfffac641
+FFFAC63F 89 01 - - - - - -       mov      dword ptr [ECX], EAX
+FFFAC641 8b 4d f0 - - - - -      mov      ECX, dword ptr [EBP + -0x10]
+FFFAC644 e3 02 - - - - - -       jecxz    0xfffac648
+FFFAC646 89 11 - - - - - -       mov      dword ptr [ECX], EDX
+FFFAC648 8b 45 fc - - - - -      mov      EAX, dword ptr [EBP + -0x4]
+FFFAC64B 5b - - - - - - -        pop      EBX
+FFFAC64C 8b e5 - - - - - -       mov      ESP, EBP
+FFFAC64E 5d - - - - - - -        pop      EBP
+FFFAC64F c3 - - - - - - -        ret      

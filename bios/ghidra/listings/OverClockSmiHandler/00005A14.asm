@@ -4,8 +4,8 @@
 ; This is the machine code. The decompiled C for this address is 00005A14.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-00005A14 b8 00 00 00 e0 mov      EAX, 0xe0000000
-00005A19 c6 05 08 07 00 00 01 mov      byte ptr [0x00006128], 0x1
-00005A20 48 89 05 09 07 00 00 mov      qword ptr [0x00006130], RAX
-00005A27 33 c0      xor      EAX, EAX
-00005A29 c3         ret      
+00005A14 b8 00 00 00 e0 - - - - -      mov      EAX, 0xe0000000
+00005A19 c6 05 08 07 00 00 01 - - -    mov      byte ptr [0x00006128], 0x1
+00005A20 48 89 05 09 07 00 00 - - -    mov      qword ptr [0x00006130], RAX
+00005A27 33 c0 - - - - - - - -         xor      EAX, EAX
+00005A29 c3 - - - - - - - - -          ret      

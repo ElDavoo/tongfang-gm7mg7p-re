@@ -4,82 +4,82 @@
 ; This is the machine code. The decompiled C for this address is 000006D8.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-000006D8 48 89 5c 24 08 mov      qword ptr [RSP + 0x8], RBX
-000006DD 57         push     RDI
-000006DE 48 83 ec 40 sub      RSP, 0x40
-000006E2 48 8b 05 87 8d 02 00 mov      RAX, qword ptr [0x00029470]
-000006E9 4c 8d 0d 50 54 02 00 lea      R9, [0x25b40]
-000006F0 bb 11 00 05 00 mov      EBX, 0x50011
-000006F5 4c 8d 05 6c 54 02 00 lea      R8, [0x25b68]
-000006FC 48 8b f9   mov      RDI, RCX
-000006FF 48 83 78 18 00 cmp      qword ptr [RAX + 0x18], 0x0
-00000704 4c 0f 45 48 18 cmovnz   R9, qword ptr [RAX + 0x18]
-00000709 83 78 20 00 cmp      dword ptr [RAX + 0x20], 0x0
-0000070D 0f 45 58 20 cmovnz   EBX, dword ptr [RAX + 0x20]
-00000711 b8 0e 00 00 00 mov      EAX, 0xe
-00000716 0f b7 d0   movzx    EDX, AX
-00000719 89 5c 24 58 mov      dword ptr [RSP + 0x58], EBX
-0000071D e8 5e ff ff ff call     0x00000680
-00000722 44 0f b7 4c 24 5a movzx    R9D, word ptr [RSP + 0x5a]
-00000728 4c 8d 05 41 54 02 00 lea      R8, [0x25b70]
-0000072F b9 10 00 00 00 mov      ECX, 0x10
-00000734 0f b7 c3   movzx    EAX, BX
-00000737 0f b7 d1   movzx    EDX, CX
-0000073A 48 8b cf   mov      RCX, RDI
-0000073D 89 44 24 20 mov      dword ptr [RSP + 0x20], EAX
-00000741 e8 3a ff ff ff call     0x00000680
-00000746 bb 14 00 00 00 mov      EBX, 0x14
-0000074B c7 44 24 28 09 00 00 00 mov      dword ptr [RSP + 0x28], 0x9
-00000753 0f b7 d3   movzx    EDX, BX
-00000756 4c 8d 0d 23 54 02 00 lea      R9, [0x25b80]
-0000075D 4c 8d 05 2c 54 02 00 lea      R8, [0x25b90]
-00000764 c7 44 24 20 01 00 00 00 mov      dword ptr [RSP + 0x20], 0x1
-0000076C 48 8b cf   mov      RCX, RDI
-0000076F e8 0c ff ff ff call     0x00000680
-00000774 8d 4b 02   lea      ECX, [RBX + 0x2]
-00000777 0f b7 d1   movzx    EDX, CX
-0000077A 48 8d 05 2f 54 02 00 lea      RAX, [0x25bb0]
-00000781 48 8b cf   mov      RCX, RDI
-00000784 48 89 44 24 20 mov      qword ptr [RSP + 0x20], RAX
-00000789 4c 8d 0d 38 54 02 00 lea      R9, [0x25bc8]
-00000790 4c 8d 05 49 54 02 00 lea      R8, [0x25be0]
-00000797 e8 e4 fe ff ff call     0x00000680
-0000079C 4c 8b 05 75 8d 02 00 mov      R8, qword ptr [0x00029518]
-000007A3 41 b9 cd cc cc cc mov      R9D, 0xcccccccd
-000007A9 41 8b c1   mov      EAX, R9D
-000007AC 41 0f b7 48 08 movzx    ECX, word ptr [R8 + 0x8]
-000007B1 45 0f b7 50 0a movzx    R10D, word ptr [R8 + 0xa]
-000007B6 4c 8b 05 b3 8c 02 00 mov      R8, qword ptr [0x00029470]
-000007BD f7 e1      mul      ECX
-000007BF 41 0f b7 48 08 movzx    ECX, word ptr [R8 + 0x8]
-000007C4 41 8b c1   mov      EAX, R9D
-000007C7 45 0f b7 48 0a movzx    R9D, word ptr [R8 + 0xa]
-000007CC 44 8b da   mov      R11D, EDX
-000007CF f7 e1      mul      ECX
-000007D1 41 c1 eb 03 shr      R11D, 0x3
-000007D5 8d 43 fe   lea      EAX, [RBX + -0x2]
-000007D8 c1 ea 03   shr      EDX, 0x3
-000007DB 4c 8d 05 0e 54 02 00 lea      R8, [0x25bf0]
-000007E2 44 89 5c 24 30 mov      dword ptr [RSP + 0x30], R11D
-000007E7 48 8b cf   mov      RCX, RDI
-000007EA 44 89 54 24 28 mov      dword ptr [RSP + 0x28], R10D
-000007EF 89 54 24 20 mov      dword ptr [RSP + 0x20], EDX
-000007F3 0f b7 d0   movzx    EDX, AX
-000007F6 e8 85 fe ff ff call     0x00000680
-000007FB 8d 43 2f   lea      EAX, [RBX + 0x2f]
-000007FE 48 8b cf   mov      RCX, RDI
-00000801 0f b7 d0   movzx    EDX, AX
-00000804 44 8d 4b ef lea      R9D, [RBX + -0x11]
-00000808 4c 8d 05 0d 54 02 00 lea      R8, [0x25c1c]
-0000080F e8 6c fe ff ff call     0x00000680
-00000814 8d 43 31   lea      EAX, [RBX + 0x31]
-00000817 44 8b cb   mov      R9D, EBX
-0000081A 0f b7 d0   movzx    EDX, AX
-0000081D 4c 8d 05 f8 53 02 00 lea      R8, [0x25c1c]
-00000824 48 8b cf   mov      RCX, RDI
-00000827 e8 54 fe ff ff call     0x00000680
-0000082C 48 8b 5c 24 50 mov      RBX, qword ptr [RSP + 0x50]
-00000831 33 c0      xor      EAX, EAX
-00000833 48 83 c4 40 add      RSP, 0x40
-00000837 5f         pop      RDI
-00000838 c3         ret      
+000006D8 48 89 5c 24 08 - - - - - - -        mov      qword ptr [RSP + 0x8], RBX
+000006DD 57 - - - - - - - - - - -            push     RDI
+000006DE 48 83 ec 40 - - - - - - - -         sub      RSP, 0x40
+000006E2 48 8b 05 87 8d 02 00 - - - - -      mov      RAX, qword ptr [0x00029470]
+000006E9 4c 8d 0d 50 54 02 00 - - - - -      lea      R9, [0x25b40]
+000006F0 bb 11 00 05 00 - - - - - - -        mov      EBX, 0x50011
+000006F5 4c 8d 05 6c 54 02 00 - - - - -      lea      R8, [0x25b68]
+000006FC 48 8b f9 - - - - - - - - -          mov      RDI, RCX
+000006FF 48 83 78 18 00 - - - - - - -        cmp      qword ptr [RAX + 0x18], 0x0
+00000704 4c 0f 45 48 18 - - - - - - -        cmovnz   R9, qword ptr [RAX + 0x18]
+00000709 83 78 20 00 - - - - - - - -         cmp      dword ptr [RAX + 0x20], 0x0
+0000070D 0f 45 58 20 - - - - - - - -         cmovnz   EBX, dword ptr [RAX + 0x20]
+00000711 b8 0e 00 00 00 - - - - - - -        mov      EAX, 0xe
+00000716 0f b7 d0 - - - - - - - - -          movzx    EDX, AX
+00000719 89 5c 24 58 - - - - - - - -         mov      dword ptr [RSP + 0x58], EBX
+0000071D e8 5e ff ff ff - - - - - - -        call     0x00000680
+00000722 44 0f b7 4c 24 5a - - - - - -       movzx    R9D, word ptr [RSP + 0x5a]
+00000728 4c 8d 05 41 54 02 00 - - - - -      lea      R8, [0x25b70]
+0000072F b9 10 00 00 00 - - - - - - -        mov      ECX, 0x10
+00000734 0f b7 c3 - - - - - - - - -          movzx    EAX, BX
+00000737 0f b7 d1 - - - - - - - - -          movzx    EDX, CX
+0000073A 48 8b cf - - - - - - - - -          mov      RCX, RDI
+0000073D 89 44 24 20 - - - - - - - -         mov      dword ptr [RSP + 0x20], EAX
+00000741 e8 3a ff ff ff - - - - - - -        call     0x00000680
+00000746 bb 14 00 00 00 - - - - - - -        mov      EBX, 0x14
+0000074B c7 44 24 28 09 00 00 00 - - - -     mov      dword ptr [RSP + 0x28], 0x9
+00000753 0f b7 d3 - - - - - - - - -          movzx    EDX, BX
+00000756 4c 8d 0d 23 54 02 00 - - - - -      lea      R9, [0x25b80]
+0000075D 4c 8d 05 2c 54 02 00 - - - - -      lea      R8, [0x25b90]
+00000764 c7 44 24 20 01 00 00 00 - - - -     mov      dword ptr [RSP + 0x20], 0x1
+0000076C 48 8b cf - - - - - - - - -          mov      RCX, RDI
+0000076F e8 0c ff ff ff - - - - - - -        call     0x00000680
+00000774 8d 4b 02 - - - - - - - - -          lea      ECX, [RBX + 0x2]
+00000777 0f b7 d1 - - - - - - - - -          movzx    EDX, CX
+0000077A 48 8d 05 2f 54 02 00 - - - - -      lea      RAX, [0x25bb0]
+00000781 48 8b cf - - - - - - - - -          mov      RCX, RDI
+00000784 48 89 44 24 20 - - - - - - -        mov      qword ptr [RSP + 0x20], RAX
+00000789 4c 8d 0d 38 54 02 00 - - - - -      lea      R9, [0x25bc8]
+00000790 4c 8d 05 49 54 02 00 - - - - -      lea      R8, [0x25be0]
+00000797 e8 e4 fe ff ff - - - - - - -        call     0x00000680
+0000079C 4c 8b 05 75 8d 02 00 - - - - -      mov      R8, qword ptr [0x00029518]
+000007A3 41 b9 cd cc cc cc - - - - - -       mov      R9D, 0xcccccccd
+000007A9 41 8b c1 - - - - - - - - -          mov      EAX, R9D
+000007AC 41 0f b7 48 08 - - - - - - -        movzx    ECX, word ptr [R8 + 0x8]
+000007B1 45 0f b7 50 0a - - - - - - -        movzx    R10D, word ptr [R8 + 0xa]
+000007B6 4c 8b 05 b3 8c 02 00 - - - - -      mov      R8, qword ptr [0x00029470]
+000007BD f7 e1 - - - - - - - - - -           mul      ECX
+000007BF 41 0f b7 48 08 - - - - - - -        movzx    ECX, word ptr [R8 + 0x8]
+000007C4 41 8b c1 - - - - - - - - -          mov      EAX, R9D
+000007C7 45 0f b7 48 0a - - - - - - -        movzx    R9D, word ptr [R8 + 0xa]
+000007CC 44 8b da - - - - - - - - -          mov      R11D, EDX
+000007CF f7 e1 - - - - - - - - - -           mul      ECX
+000007D1 41 c1 eb 03 - - - - - - - -         shr      R11D, 0x3
+000007D5 8d 43 fe - - - - - - - - -          lea      EAX, [RBX + -0x2]
+000007D8 c1 ea 03 - - - - - - - - -          shr      EDX, 0x3
+000007DB 4c 8d 05 0e 54 02 00 - - - - -      lea      R8, [0x25bf0]
+000007E2 44 89 5c 24 30 - - - - - - -        mov      dword ptr [RSP + 0x30], R11D
+000007E7 48 8b cf - - - - - - - - -          mov      RCX, RDI
+000007EA 44 89 54 24 28 - - - - - - -        mov      dword ptr [RSP + 0x28], R10D
+000007EF 89 54 24 20 - - - - - - - -         mov      dword ptr [RSP + 0x20], EDX
+000007F3 0f b7 d0 - - - - - - - - -          movzx    EDX, AX
+000007F6 e8 85 fe ff ff - - - - - - -        call     0x00000680
+000007FB 8d 43 2f - - - - - - - - -          lea      EAX, [RBX + 0x2f]
+000007FE 48 8b cf - - - - - - - - -          mov      RCX, RDI
+00000801 0f b7 d0 - - - - - - - - -          movzx    EDX, AX
+00000804 44 8d 4b ef - - - - - - - -         lea      R9D, [RBX + -0x11]
+00000808 4c 8d 05 0d 54 02 00 - - - - -      lea      R8, [0x25c1c]
+0000080F e8 6c fe ff ff - - - - - - -        call     0x00000680
+00000814 8d 43 31 - - - - - - - - -          lea      EAX, [RBX + 0x31]
+00000817 44 8b cb - - - - - - - - -          mov      R9D, EBX
+0000081A 0f b7 d0 - - - - - - - - -          movzx    EDX, AX
+0000081D 4c 8d 05 f8 53 02 00 - - - - -      lea      R8, [0x25c1c]
+00000824 48 8b cf - - - - - - - - -          mov      RCX, RDI
+00000827 e8 54 fe ff ff - - - - - - -        call     0x00000680
+0000082C 48 8b 5c 24 50 - - - - - - -        mov      RBX, qword ptr [RSP + 0x50]
+00000831 33 c0 - - - - - - - - - -           xor      EAX, EAX
+00000833 48 83 c4 40 - - - - - - - -         add      RSP, 0x40
+00000837 5f - - - - - - - - - - -            pop      RDI
+00000838 c3 - - - - - - - - - - -            ret      

@@ -4,55 +4,55 @@
 ; This is the machine code. The decompiled C for this address is 00020B40.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-00020B40 88 4c 24 08 mov      byte ptr [RSP + 0x8], CL
-00020B44 55         push     RBP
-00020B45 48 8b ec   mov      RBP, RSP
-00020B48 48 83 ec 50 sub      RSP, 0x50
-00020B4C 48 8b 05 25 89 00 00 mov      RAX, qword ptr [0x00029478]
-00020B53 4c 8d 45 28 lea      R8, [RBP + 0x28]
-00020B57 33 d2      xor      EDX, EDX
-00020B59 48 8d 0d 50 29 00 00 lea      RCX, [0x234b0]
-00020B60 ff 90 40 01 00 00 call     qword ptr [RAX + 0x140]
-00020B66 48 85 c0   test     RAX, RAX
-00020B69 0f 88 ab 00 00 00 js       0x00020c1a
-00020B6F 48 8b 45 28 mov      RAX, qword ptr [RBP + 0x28]
-00020B73 48 8d 4d 10 lea      RCX, [RBP + 0x10]
-00020B77 ff 50 40   call     qword ptr [RAX + 0x40]
-00020B7A 48 85 c0   test     RAX, RAX
-00020B7D 0f 88 8d 00 00 00 js       0x00020c10
-00020B83 83 7d 10 00 cmp      dword ptr [RBP + 0x10], 0x0
-00020B87 0f 85 83 00 00 00 jnz      0x00020c10
-00020B8D 48 8b 45 28 mov      RAX, qword ptr [RBP + 0x28]
-00020B91 48 8d 4d 18 lea      RCX, [RBP + 0x18]
-00020B95 ff 50 38   call     qword ptr [RAX + 0x38]
-00020B98 48 85 c0   test     RAX, RAX
-00020B9B 78 67      js       0x00020c04
-00020B9D f6 45 18 0f test     byte ptr [RBP + 0x18], 0xf
-00020BA1 75 61      jnz      0x00020c04
-00020BA3 48 8b 45 28 mov      RAX, qword ptr [RBP + 0x28]
-00020BA7 4c 8d 4d 20 lea      R9, [RBP + 0x20]
-00020BAB 83 65 e8 00 and      dword ptr [RBP + -0x18], 0x0
-00020BAF 48 8d 55 e0 lea      RDX, [RBP + -0x20]
-00020BB3 83 65 f0 00 and      dword ptr [RBP + -0x10], 0x0
-00020BB7 41 b8 20 00 00 00 mov      R8D, 0x20
-00020BBD 83 65 f8 00 and      dword ptr [RBP + -0x8], 0x0
-00020BC1 33 c9      xor      ECX, ECX
-00020BC3 c6 44 24 28 08 mov      byte ptr [RSP + 0x28], 0x8
-00020BC8 c7 45 20 14 00 00 00 mov      dword ptr [RBP + 0x20], 0x14
-00020BCF c7 45 e0 00 00 05 00 mov      dword ptr [RBP + -0x20], 0x50000
-00020BD6 c7 45 e4 26 00 00 00 mov      dword ptr [RBP + -0x1c], 0x26
-00020BDD c7 45 ec 0c 00 00 00 mov      dword ptr [RBP + -0x14], 0xc
-00020BE4 c6 44 24 20 00 mov      byte ptr [RSP + 0x20], 0x0
-00020BE9 ff 10      call     qword ptr [RAX]
-00020BEB 48 85 c0   test     RAX, RAX
-00020BEE 78 2a      js       0x00020c1a
-00020BF0 83 7d e8 00 cmp      dword ptr [RBP + -0x18], 0x0
-00020BF4 48 b9 07 00 00 00 00 00 00 80 mov      RCX, -0x7ffffffffffffff9
-00020BFE 48 0f 45 c1 cmovnz   RAX, RCX
-00020C02 eb 16      jmp      0x00020c1a
-00020C04 48 b8 06 00 00 00 00 00 00 80 mov      RAX, -0x7ffffffffffffffa
-00020C0E eb 0a      jmp      0x00020c1a
-00020C10 48 b8 03 00 00 00 00 00 00 80 mov      RAX, -0x7ffffffffffffffd
-00020C1A 48 83 c4 50 add      RSP, 0x50
-00020C1E 5d         pop      RBP
-00020C1F c3         ret      
+00020B40 88 4c 24 08 - - - - - - - -         mov      byte ptr [RSP + 0x8], CL
+00020B44 55 - - - - - - - - - - -            push     RBP
+00020B45 48 8b ec - - - - - - - - -          mov      RBP, RSP
+00020B48 48 83 ec 50 - - - - - - - -         sub      RSP, 0x50
+00020B4C 48 8b 05 25 89 00 00 - - - - -      mov      RAX, qword ptr [0x00029478]
+00020B53 4c 8d 45 28 - - - - - - - -         lea      R8, [RBP + 0x28]
+00020B57 33 d2 - - - - - - - - - -           xor      EDX, EDX
+00020B59 48 8d 0d 50 29 00 00 - - - - -      lea      RCX, [0x234b0]
+00020B60 ff 90 40 01 00 00 - - - - - -       call     qword ptr [RAX + 0x140]
+00020B66 48 85 c0 - - - - - - - - -          test     RAX, RAX
+00020B69 0f 88 ab 00 00 00 - - - - - -       js       0x00020c1a
+00020B6F 48 8b 45 28 - - - - - - - -         mov      RAX, qword ptr [RBP + 0x28]
+00020B73 48 8d 4d 10 - - - - - - - -         lea      RCX, [RBP + 0x10]
+00020B77 ff 50 40 - - - - - - - - -          call     qword ptr [RAX + 0x40]
+00020B7A 48 85 c0 - - - - - - - - -          test     RAX, RAX
+00020B7D 0f 88 8d 00 00 00 - - - - - -       js       0x00020c10
+00020B83 83 7d 10 00 - - - - - - - -         cmp      dword ptr [RBP + 0x10], 0x0
+00020B87 0f 85 83 00 00 00 - - - - - -       jnz      0x00020c10
+00020B8D 48 8b 45 28 - - - - - - - -         mov      RAX, qword ptr [RBP + 0x28]
+00020B91 48 8d 4d 18 - - - - - - - -         lea      RCX, [RBP + 0x18]
+00020B95 ff 50 38 - - - - - - - - -          call     qword ptr [RAX + 0x38]
+00020B98 48 85 c0 - - - - - - - - -          test     RAX, RAX
+00020B9B 78 67 - - - - - - - - - -           js       0x00020c04
+00020B9D f6 45 18 0f - - - - - - - -         test     byte ptr [RBP + 0x18], 0xf
+00020BA1 75 61 - - - - - - - - - -           jnz      0x00020c04
+00020BA3 48 8b 45 28 - - - - - - - -         mov      RAX, qword ptr [RBP + 0x28]
+00020BA7 4c 8d 4d 20 - - - - - - - -         lea      R9, [RBP + 0x20]
+00020BAB 83 65 e8 00 - - - - - - - -         and      dword ptr [RBP + -0x18], 0x0
+00020BAF 48 8d 55 e0 - - - - - - - -         lea      RDX, [RBP + -0x20]
+00020BB3 83 65 f0 00 - - - - - - - -         and      dword ptr [RBP + -0x10], 0x0
+00020BB7 41 b8 20 00 00 00 - - - - - -       mov      R8D, 0x20
+00020BBD 83 65 f8 00 - - - - - - - -         and      dword ptr [RBP + -0x8], 0x0
+00020BC1 33 c9 - - - - - - - - - -           xor      ECX, ECX
+00020BC3 c6 44 24 28 08 - - - - - - -        mov      byte ptr [RSP + 0x28], 0x8
+00020BC8 c7 45 20 14 00 00 00 - - - - -      mov      dword ptr [RBP + 0x20], 0x14
+00020BCF c7 45 e0 00 00 05 00 - - - - -      mov      dword ptr [RBP + -0x20], 0x50000
+00020BD6 c7 45 e4 26 00 00 00 - - - - -      mov      dword ptr [RBP + -0x1c], 0x26
+00020BDD c7 45 ec 0c 00 00 00 - - - - -      mov      dword ptr [RBP + -0x14], 0xc
+00020BE4 c6 44 24 20 00 - - - - - - -        mov      byte ptr [RSP + 0x20], 0x0
+00020BE9 ff 10 - - - - - - - - - -           call     qword ptr [RAX]
+00020BEB 48 85 c0 - - - - - - - - -          test     RAX, RAX
+00020BEE 78 2a - - - - - - - - - -           js       0x00020c1a
+00020BF0 83 7d e8 00 - - - - - - - -         cmp      dword ptr [RBP + -0x18], 0x0
+00020BF4 48 b9 07 00 00 00 00 00 00 80 - -   mov      RCX, -0x7ffffffffffffff9
+00020BFE 48 0f 45 c1 - - - - - - - -         cmovnz   RAX, RCX
+00020C02 eb 16 - - - - - - - - - -           jmp      0x00020c1a
+00020C04 48 b8 06 00 00 00 00 00 00 80 - -   mov      RAX, -0x7ffffffffffffffa
+00020C0E eb 0a - - - - - - - - - -           jmp      0x00020c1a
+00020C10 48 b8 03 00 00 00 00 00 00 80 - -   mov      RAX, -0x7ffffffffffffffd
+00020C1A 48 83 c4 50 - - - - - - - -         add      RSP, 0x50
+00020C1E 5d - - - - - - - - - - -            pop      RBP
+00020C1F c3 - - - - - - - - - - -            ret      

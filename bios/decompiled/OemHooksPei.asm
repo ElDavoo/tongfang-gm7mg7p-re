@@ -3,1374 +3,1374 @@
 ; Source: GM7MG7P/GMxMGxxN109A08.ROM, OemHooksPei.efi (TE body, execute-in-place 0xFFF80E5C), SHA-256 dfe8047f35bb1125bbb45d69c96ad83d64e59dd5e50b8d88052c0db04a2d920e
 
 ; ==== entry @ FFF81031
-FFF81031 8b 54 24 08 mov      EDX, dword ptr [ESP + 0x8]
-FFF81035 e9 00 00 00 00 jmp      0xfff8103a
-FFF8103A 55         push     EBP
-FFF8103B 8b ec      mov      EBP, ESP
-FFF8103D 83 e4 f8   and      ESP, 0xfffffff8
-FFF81040 81 ec 00 08 00 00 sub      ESP, 0x800
-FFF81046 56         push     ESI
-FFF81047 8d 44 24 24 lea      EAX, [ESP + 0x24]
-FFF8104B c7 44 24 1c d8 07 00 00 mov      dword ptr [ESP + 0x1c], 0x7d8
-FFF81053 57         push     EDI
-FFF81054 8b f2      mov      ESI, EDX
-FFF81056 c7 44 24 0c 43 d6 87 ec mov      dword ptr [ESP + 0xc], 0xec87d643
-FFF8105E c7 44 24 10 a4 eb b5 4b mov      dword ptr [ESP + 0x10], 0x4bb5eba4
-FFF81066 c7 44 24 14 a1 e5 3f 3e mov      dword ptr [ESP + 0x14], 0x3e3fe5a1
-FFF8106E c7 44 24 18 36 b2 0d a9 mov      dword ptr [ESP + 0x18], 0xa90db236
-FFF81076 89 44 24 1c mov      dword ptr [ESP + 0x1c], EAX
-FFF8107A 8b 44 24 1c mov      EAX, dword ptr [ESP + 0x1c]
-FFF8107E 0f 01 08   sidt     dword ptr [EAX]
-FFF81081 8b 44 24 2a mov      EAX, dword ptr [ESP + 0x2a]
-FFF81085 8d 54 24 08 lea      EDX, [ESP + 0x8]
-FFF81089 52         push     EDX
-FFF8108A 8b 40 fc   mov      EAX, dword ptr [EAX + -0x4]
-FFF8108D 50         push     EAX
-FFF8108E 8b 08      mov      ECX, dword ptr [EAX]
-FFF81090 ff 51 28   call     dword ptr [ECX + 0x28]
-FFF81093 83 7c 24 10 11 cmp      dword ptr [ESP + 0x10], 0x11
-FFF81098 59         pop      ECX
-FFF81099 59         pop      ECX
-FFF8109A 74 19      jz       0xfff810b5
-FFF8109C 83 7c 24 08 20 cmp      dword ptr [ESP + 0x8], 0x20
-FFF810A1 74 12      jz       0xfff810b5
-FFF810A3 83 7c 24 08 12 cmp      dword ptr [ESP + 0x8], 0x12
-FFF810A8 74 0b      jz       0xfff810b5
-FFF810AA 6a 78      push     0x78
-FFF810AC 6a 50      push     0x50
-FFF810AE e8 19 08 00 00 call     0xfff818cc
-FFF810B3 59         pop      ECX
-FFF810B4 59         pop      ECX
-FFF810B5 51         push     ECX
-FFF810B6 51         push     ECX
-FFF810B7 e8 c9 05 00 00 call     0xfff81685
-FFF810BC 33 ff      xor      EDI, EDI
-FFF810BE 57         push     EDI
-FFF810BF 6a 56      push     0x56
-FFF810C1 e8 06 08 00 00 call     0xfff818cc
-FFF810C6 e8 67 06 00 00 call     0xfff81732
-FFF810CB 8b 06      mov      EAX, dword ptr [ESI]
-FFF810CD 8d 4c 24 34 lea      ECX, [ESP + 0x34]
-FFF810D1 51         push     ECX
-FFF810D2 57         push     EDI
-FFF810D3 57         push     EDI
-FFF810D4 68 1c 1d f8 ff push     0xfff81d1c
-FFF810D9 56         push     ESI
-FFF810DA ff 50 20   call     dword ptr [EAX + 0x20]
-FFF810DD 83 c4 24   add      ESP, 0x24
-FFF810E0 8d 44 24 30 lea      EAX, [ESP + 0x30]
-FFF810E4 50         push     EAX
-FFF810E5 8d 44 24 24 lea      EAX, [ESP + 0x24]
-FFF810E9 50         push     EAX
-FFF810EA 57         push     EDI
-FFF810EB 8d 44 24 18 lea      EAX, [ESP + 0x18]
-FFF810EF 50         push     EAX
-FFF810F0 8b 44 24 34 mov      EAX, dword ptr [ESP + 0x34]
-FFF810F4 68 fc 20 f8 ff push     0xfff820fc
-FFF810F9 50         push     EAX
-FFF810FA ff 10      call     dword ptr [EAX]
-FFF810FC 8a 84 24 74 07 00 00 mov      AL, byte ptr [ESP + 0x774]
-FFF81103 83 c4 18   add      ESP, 0x18
-FFF81106 3c 01      cmp      AL, 0x1
-FFF81108 75 13      jnz      0xfff8111d
-FFF8110A 33 d2      xor      EDX, EDX
-FFF8110C b9 0e 00 02 03 mov      ECX, 0x302000e
-FFF81111 e8 37 02 00 00 call     0xfff8134d
-FFF81116 8a 84 24 5c 07 00 00 mov      AL, byte ptr [ESP + 0x75c]
-FFF8111D 3c 02      cmp      AL, 0x2
-FFF8111F 75 0d      jnz      0xfff8112e
-FFF81121 33 d2      xor      EDX, EDX
-FFF81123 b9 13 00 00 03 mov      ECX, 0x3000013
-FFF81128 42         inc      EDX
-FFF81129 e8 1f 02 00 00 call     0xfff8134d
-FFF8112E b9 50 07 6e fd mov      ECX, 0xfd6e0750
-FFF81133 b8 54 07 6e fd mov      EAX, 0xfd6e0754
-FFF81138 8b 11      mov      EDX, dword ptr [ECX]
+FFF81031 8b 54 24 08 - - - - - -       mov      EDX, dword ptr [ESP + 0x8]
+FFF81035 e9 00 00 00 00 - - - - -      jmp      0xfff8103a
+FFF8103A 55 - - - - - - - - -          push     EBP
+FFF8103B 8b ec - - - - - - - -         mov      EBP, ESP
+FFF8103D 83 e4 f8 - - - - - - -        and      ESP, 0xfffffff8
+FFF81040 81 ec 00 08 00 00 - - - -     sub      ESP, 0x800
+FFF81046 56 - - - - - - - - -          push     ESI
+FFF81047 8d 44 24 24 - - - - - -       lea      EAX, [ESP + 0x24]
+FFF8104B c7 44 24 1c d8 07 00 00 - -   mov      dword ptr [ESP + 0x1c], 0x7d8
+FFF81053 57 - - - - - - - - -          push     EDI
+FFF81054 8b f2 - - - - - - - -         mov      ESI, EDX
+FFF81056 c7 44 24 0c 43 d6 87 ec - -   mov      dword ptr [ESP + 0xc], 0xec87d643
+FFF8105E c7 44 24 10 a4 eb b5 4b - -   mov      dword ptr [ESP + 0x10], 0x4bb5eba4
+FFF81066 c7 44 24 14 a1 e5 3f 3e - -   mov      dword ptr [ESP + 0x14], 0x3e3fe5a1
+FFF8106E c7 44 24 18 36 b2 0d a9 - -   mov      dword ptr [ESP + 0x18], 0xa90db236
+FFF81076 89 44 24 1c - - - - - -       mov      dword ptr [ESP + 0x1c], EAX
+FFF8107A 8b 44 24 1c - - - - - -       mov      EAX, dword ptr [ESP + 0x1c]
+FFF8107E 0f 01 08 - - - - - - -        sidt     dword ptr [EAX]
+FFF81081 8b 44 24 2a - - - - - -       mov      EAX, dword ptr [ESP + 0x2a]
+FFF81085 8d 54 24 08 - - - - - -       lea      EDX, [ESP + 0x8]
+FFF81089 52 - - - - - - - - -          push     EDX
+FFF8108A 8b 40 fc - - - - - - -        mov      EAX, dword ptr [EAX + -0x4]
+FFF8108D 50 - - - - - - - - -          push     EAX
+FFF8108E 8b 08 - - - - - - - -         mov      ECX, dword ptr [EAX]
+FFF81090 ff 51 28 - - - - - - -        call     dword ptr [ECX + 0x28]
+FFF81093 83 7c 24 10 11 - - - - -      cmp      dword ptr [ESP + 0x10], 0x11
+FFF81098 59 - - - - - - - - -          pop      ECX
+FFF81099 59 - - - - - - - - -          pop      ECX
+FFF8109A 74 19 - - - - - - - -         jz       0xfff810b5
+FFF8109C 83 7c 24 08 20 - - - - -      cmp      dword ptr [ESP + 0x8], 0x20
+FFF810A1 74 12 - - - - - - - -         jz       0xfff810b5
+FFF810A3 83 7c 24 08 12 - - - - -      cmp      dword ptr [ESP + 0x8], 0x12
+FFF810A8 74 0b - - - - - - - -         jz       0xfff810b5
+FFF810AA 6a 78 - - - - - - - -         push     0x78
+FFF810AC 6a 50 - - - - - - - -         push     0x50
+FFF810AE e8 19 08 00 00 - - - - -      call     0xfff818cc
+FFF810B3 59 - - - - - - - - -          pop      ECX
+FFF810B4 59 - - - - - - - - -          pop      ECX
+FFF810B5 51 - - - - - - - - -          push     ECX
+FFF810B6 51 - - - - - - - - -          push     ECX
+FFF810B7 e8 c9 05 00 00 - - - - -      call     0xfff81685
+FFF810BC 33 ff - - - - - - - -         xor      EDI, EDI
+FFF810BE 57 - - - - - - - - -          push     EDI
+FFF810BF 6a 56 - - - - - - - -         push     0x56
+FFF810C1 e8 06 08 00 00 - - - - -      call     0xfff818cc
+FFF810C6 e8 67 06 00 00 - - - - -      call     0xfff81732
+FFF810CB 8b 06 - - - - - - - -         mov      EAX, dword ptr [ESI]
+FFF810CD 8d 4c 24 34 - - - - - -       lea      ECX, [ESP + 0x34]
+FFF810D1 51 - - - - - - - - -          push     ECX
+FFF810D2 57 - - - - - - - - -          push     EDI
+FFF810D3 57 - - - - - - - - -          push     EDI
+FFF810D4 68 1c 1d f8 ff - - - - -      push     0xfff81d1c
+FFF810D9 56 - - - - - - - - -          push     ESI
+FFF810DA ff 50 20 - - - - - - -        call     dword ptr [EAX + 0x20]
+FFF810DD 83 c4 24 - - - - - - -        add      ESP, 0x24
+FFF810E0 8d 44 24 30 - - - - - -       lea      EAX, [ESP + 0x30]
+FFF810E4 50 - - - - - - - - -          push     EAX
+FFF810E5 8d 44 24 24 - - - - - -       lea      EAX, [ESP + 0x24]
+FFF810E9 50 - - - - - - - - -          push     EAX
+FFF810EA 57 - - - - - - - - -          push     EDI
+FFF810EB 8d 44 24 18 - - - - - -       lea      EAX, [ESP + 0x18]
+FFF810EF 50 - - - - - - - - -          push     EAX
+FFF810F0 8b 44 24 34 - - - - - -       mov      EAX, dword ptr [ESP + 0x34]
+FFF810F4 68 fc 20 f8 ff - - - - -      push     0xfff820fc
+FFF810F9 50 - - - - - - - - -          push     EAX
+FFF810FA ff 10 - - - - - - - -         call     dword ptr [EAX]
+FFF810FC 8a 84 24 74 07 00 00 - - -    mov      AL, byte ptr [ESP + 0x774]
+FFF81103 83 c4 18 - - - - - - -        add      ESP, 0x18
+FFF81106 3c 01 - - - - - - - -         cmp      AL, 0x1
+FFF81108 75 13 - - - - - - - -         jnz      0xfff8111d
+FFF8110A 33 d2 - - - - - - - -         xor      EDX, EDX
+FFF8110C b9 0e 00 02 03 - - - - -      mov      ECX, 0x302000e
+FFF81111 e8 37 02 00 00 - - - - -      call     0xfff8134d
+FFF81116 8a 84 24 5c 07 00 00 - - -    mov      AL, byte ptr [ESP + 0x75c]
+FFF8111D 3c 02 - - - - - - - -         cmp      AL, 0x2
+FFF8111F 75 0d - - - - - - - -         jnz      0xfff8112e
+FFF81121 33 d2 - - - - - - - -         xor      EDX, EDX
+FFF81123 b9 13 00 00 03 - - - - -      mov      ECX, 0x3000013
+FFF81128 42 - - - - - - - - -          inc      EDX
+FFF81129 e8 1f 02 00 00 - - - - -      call     0xfff8134d
+FFF8112E b9 50 07 6e fd - - - - -      mov      ECX, 0xfd6e0750
+FFF81133 b8 54 07 6e fd - - - - -      mov      EAX, 0xfd6e0754
+FFF81138 8b 11 - - - - - - - -         mov      EDX, dword ptr [ECX]
 FFF8113A c7 05 50 07 6e fd 00 01 00 44 mov      dword ptr [0xfd6e0750], 0x44000100
-FFF81144 8b 09      mov      ECX, dword ptr [ECX]
-FFF81146 8b 00      mov      EAX, dword ptr [EAX]
-FFF81148 25 ff c3 ff ff and      EAX, 0xffffc3ff
-FFF8114D a3 54 07 6e fd mov      [0xfd6e0754], EAX
-FFF81152 f6 c1 02   test     CL, 0x2
-FFF81155 74 05      jz       0xfff8115c
-FFF81157 83 ca 01   or       EDX, 0x1
-FFF8115A eb 03      jmp      0xfff8115f
-FFF8115C 83 e2 fe   and      EDX, 0xfffffffe
-FFF8115F 89 15 50 07 6e fd mov      dword ptr [0xfd6e0750], EDX
-FFF81165 6a 70      push     0x70
-FFF81167 59         pop      ECX
-FFF81168 66 8b d1   mov      DX, CX
-FFF8116B b0 f0      mov      AL, 0xf0
-FFF8116D ee         out      DX, AL
-FFF8116E 6a 71      push     0x71
-FFF81170 59         pop      ECX
-FFF81171 66 8b d1   mov      DX, CX
-FFF81174 b0 01      mov      AL, 0x1
-FFF81176 ee         out      DX, AL
-FFF81177 5f         pop      EDI
-FFF81178 33 c0      xor      EAX, EAX
-FFF8117A 5e         pop      ESI
-FFF8117B 8b e5      mov      ESP, EBP
-FFF8117D 5d         pop      EBP
-FFF8117E c3         ret      
+FFF81144 8b 09 - - - - - - - -         mov      ECX, dword ptr [ECX]
+FFF81146 8b 00 - - - - - - - -         mov      EAX, dword ptr [EAX]
+FFF81148 25 ff c3 ff ff - - - - -      and      EAX, 0xffffc3ff
+FFF8114D a3 54 07 6e fd - - - - -      mov      [0xfd6e0754], EAX
+FFF81152 f6 c1 02 - - - - - - -        test     CL, 0x2
+FFF81155 74 05 - - - - - - - -         jz       0xfff8115c
+FFF81157 83 ca 01 - - - - - - -        or       EDX, 0x1
+FFF8115A eb 03 - - - - - - - -         jmp      0xfff8115f
+FFF8115C 83 e2 fe - - - - - - -        and      EDX, 0xfffffffe
+FFF8115F 89 15 50 07 6e fd - - - -     mov      dword ptr [0xfd6e0750], EDX
+FFF81165 6a 70 - - - - - - - -         push     0x70
+FFF81167 59 - - - - - - - - -          pop      ECX
+FFF81168 66 8b d1 - - - - - - -        mov      DX, CX
+FFF8116B b0 f0 - - - - - - - -         mov      AL, 0xf0
+FFF8116D ee - - - - - - - - -          out      DX, AL
+FFF8116E 6a 71 - - - - - - - -         push     0x71
+FFF81170 59 - - - - - - - - -          pop      ECX
+FFF81171 66 8b d1 - - - - - - -        mov      DX, CX
+FFF81174 b0 01 - - - - - - - -         mov      AL, 0x1
+FFF81176 ee - - - - - - - - -          out      DX, AL
+FFF81177 5f - - - - - - - - -          pop      EDI
+FFF81178 33 c0 - - - - - - - -         xor      EAX, EAX
+FFF8117A 5e - - - - - - - - -          pop      ESI
+FFF8117B 8b e5 - - - - - - - -         mov      ESP, EBP
+FFF8117D 5d - - - - - - - - -          pop      EBP
+FFF8117E c3 - - - - - - - - -          ret      
 
 ; ==== FUN_fff8117f @ FFF8117F
-FFF8117F 51         push     ECX
-FFF81180 53         push     EBX
-FFF81181 55         push     EBP
-FFF81182 56         push     ESI
-FFF81183 8b d9      mov      EBX, ECX
-FFF81185 8d 4c 24 0c lea      ECX, [ESP + 0xc]
-FFF81189 57         push     EDI
-FFF8118A 8b fa      mov      EDI, EDX
-FFF8118C e8 4c 09 00 00 call     0xfff81add
-FFF81191 33 c9      xor      ECX, ECX
-FFF81193 0f b6 f3   movzx    ESI, BL
-FFF81196 8b e8      mov      EBP, EAX
-FFF81198 e8 40 04 00 00 call     0xfff815dd
-FFF8119D 3b d8      cmp      EBX, EAX
-FFF8119F 72 23      jc       0xfff811c4
-FFF811A1 e8 1c 04 00 00 call     0xfff815c2
-FFF811A6 3b d8      cmp      EBX, EAX
-FFF811A8 77 1a      ja       0xfff811c4
-FFF811AA 3b 74 24 10 cmp      ESI, dword ptr [ESP + 0x10]
-FFF811AE 73 14      jnc      0xfff811c4
-FFF811B0 6b c6 1e   imul     EAX, ESI, 0x1e
-FFF811B3 0f b7 44 28 1c movzx    EAX, word ptr [EAX + EBP*0x1 + 0x1c]
-FFF811B8 48         dec      EAX
-FFF811B9 c1 e8 05   shr      EAX, 0x5
-FFF811BC 3b f8      cmp      EDI, EAX
-FFF811BE 77 04      ja       0xfff811c4
-FFF811C0 b0 01      mov      AL, 0x1
-FFF811C2 eb 02      jmp      0xfff811c6
-FFF811C4 32 c0      xor      AL, AL
-FFF811C6 5f         pop      EDI
-FFF811C7 5e         pop      ESI
-FFF811C8 5d         pop      EBP
-FFF811C9 5b         pop      EBX
-FFF811CA 59         pop      ECX
-FFF811CB c3         ret      
+FFF8117F 51 - - - - - - - - -          push     ECX
+FFF81180 53 - - - - - - - - -          push     EBX
+FFF81181 55 - - - - - - - - -          push     EBP
+FFF81182 56 - - - - - - - - -          push     ESI
+FFF81183 8b d9 - - - - - - - -         mov      EBX, ECX
+FFF81185 8d 4c 24 0c - - - - - -       lea      ECX, [ESP + 0xc]
+FFF81189 57 - - - - - - - - -          push     EDI
+FFF8118A 8b fa - - - - - - - -         mov      EDI, EDX
+FFF8118C e8 4c 09 00 00 - - - - -      call     0xfff81add
+FFF81191 33 c9 - - - - - - - -         xor      ECX, ECX
+FFF81193 0f b6 f3 - - - - - - -        movzx    ESI, BL
+FFF81196 8b e8 - - - - - - - -         mov      EBP, EAX
+FFF81198 e8 40 04 00 00 - - - - -      call     0xfff815dd
+FFF8119D 3b d8 - - - - - - - -         cmp      EBX, EAX
+FFF8119F 72 23 - - - - - - - -         jc       0xfff811c4
+FFF811A1 e8 1c 04 00 00 - - - - -      call     0xfff815c2
+FFF811A6 3b d8 - - - - - - - -         cmp      EBX, EAX
+FFF811A8 77 1a - - - - - - - -         ja       0xfff811c4
+FFF811AA 3b 74 24 10 - - - - - -       cmp      ESI, dword ptr [ESP + 0x10]
+FFF811AE 73 14 - - - - - - - -         jnc      0xfff811c4
+FFF811B0 6b c6 1e - - - - - - -        imul     EAX, ESI, 0x1e
+FFF811B3 0f b7 44 28 1c - - - - -      movzx    EAX, word ptr [EAX + EBP*0x1 + 0x1c]
+FFF811B8 48 - - - - - - - - -          dec      EAX
+FFF811B9 c1 e8 05 - - - - - - -        shr      EAX, 0x5
+FFF811BC 3b f8 - - - - - - - -         cmp      EDI, EAX
+FFF811BE 77 04 - - - - - - - -         ja       0xfff811c4
+FFF811C0 b0 01 - - - - - - - -         mov      AL, 0x1
+FFF811C2 eb 02 - - - - - - - -         jmp      0xfff811c6
+FFF811C4 32 c0 - - - - - - - -         xor      AL, AL
+FFF811C6 5f - - - - - - - - -          pop      EDI
+FFF811C7 5e - - - - - - - - -          pop      ESI
+FFF811C8 5d - - - - - - - - -          pop      EBP
+FFF811C9 5b - - - - - - - - -          pop      EBX
+FFF811CA 59 - - - - - - - - -          pop      ECX
+FFF811CB c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff811cc @ FFF811CC
-FFF811CC 55         push     EBP
-FFF811CD 8b ec      mov      EBP, ESP
-FFF811CF 51         push     ECX
-FFF811D0 56         push     ESI
-FFF811D1 57         push     EDI
-FFF811D2 8b f9      mov      EDI, ECX
-FFF811D4 0f b6 f2   movzx    ESI, DL
-FFF811D7 8d 4d fc   lea      ECX, [EBP + -0x4]
-FFF811DA e8 fe 08 00 00 call     0xfff81add
-FFF811DF 8b d0      mov      EDX, EAX
-FFF811E1 83 ff 07   cmp      EDI, 0x7
-FFF811E4 0f 87 97 00 00 00 ja       0xfff81281
-FFF811EA ff 24 bd 90 12 f8 ff jmp      dword ptr [EDI*0x4 + 0xfff81290]
-FFF811F1 6b ce 1e   imul     ECX, ESI, 0x1e
-FFF811F4 03 ca      add      ECX, EDX
-FFF811F6 0f b7 51 04 movzx    EDX, word ptr [ECX + 0x4]
-FFF811FA eb 4b      jmp      0xfff81247
-FFF811FC 6b ce 1e   imul     ECX, ESI, 0x1e
-FFF811FF 03 ca      add      ECX, EDX
-FFF81201 0f b7 51 0c movzx    EDX, word ptr [ECX + 0xc]
-FFF81205 eb 40      jmp      0xfff81247
-FFF81207 6b ce 1e   imul     ECX, ESI, 0x1e
-FFF8120A 03 ca      add      ECX, EDX
-FFF8120C 0f b7 51 0a movzx    EDX, word ptr [ECX + 0xa]
-FFF81210 eb 35      jmp      0xfff81247
-FFF81212 6b ce 1e   imul     ECX, ESI, 0x1e
-FFF81215 03 ca      add      ECX, EDX
-FFF81217 0f b7 51 10 movzx    EDX, word ptr [ECX + 0x10]
-FFF8121B eb 2a      jmp      0xfff81247
-FFF8121D 6b ce 1e   imul     ECX, ESI, 0x1e
-FFF81220 03 ca      add      ECX, EDX
-FFF81222 0f b7 51 0e movzx    EDX, word ptr [ECX + 0xe]
-FFF81226 eb 1f      jmp      0xfff81247
-FFF81228 6b ce 1e   imul     ECX, ESI, 0x1e
-FFF8122B 03 ca      add      ECX, EDX
-FFF8122D 0f b7 51 14 movzx    EDX, word ptr [ECX + 0x14]
-FFF81231 eb 14      jmp      0xfff81247
-FFF81233 6b ce 1e   imul     ECX, ESI, 0x1e
-FFF81236 03 ca      add      ECX, EDX
-FFF81238 0f b7 51 16 movzx    EDX, word ptr [ECX + 0x16]
-FFF8123C eb 09      jmp      0xfff81247
-FFF8123E 6b ce 1e   imul     ECX, ESI, 0x1e
-FFF81241 03 ca      add      ECX, EDX
-FFF81243 0f b7 51 18 movzx    EDX, word ptr [ECX + 0x18]
-FFF81247 81 fa ff ff 00 00 cmp      EDX, 0xffff
-FFF8124D 74 32      jz       0xfff81281
-FFF8124F 83 ff 06   cmp      EDI, 0x6
-FFF81252 74 0d      jz       0xfff81261
-FFF81254 83 ff 07   cmp      EDI, 0x7
-FFF81257 74 08      jz       0xfff81261
-FFF81259 8b 45 08   mov      EAX, dword ptr [EBP + 0x8]
-FFF8125C 8d 04 82   lea      EAX, [EDX + EAX*0x4]
-FFF8125F eb 06      jmp      0xfff81267
-FFF81261 8b 45 08   mov      EAX, dword ptr [EBP + 0x8]
-FFF81264 8d 04 c2   lea      EAX, [EDX + EAX*0x8]
-FFF81267 0f b6 09   movzx    ECX, byte ptr [ECX]
-FFF8126A 81 c9 00 fd ff ff or       ECX, 0xfffffd00
-FFF81270 0f b7 c0   movzx    EAX, AX
-FFF81273 c1 e1 10   shl      ECX, 0x10
-FFF81276 0b c8      or       ECX, EAX
-FFF81278 8b 45 0c   mov      EAX, dword ptr [EBP + 0xc]
-FFF8127B 8b 09      mov      ECX, dword ptr [ECX]
-FFF8127D 89 08      mov      dword ptr [EAX], ECX
-FFF8127F eb 06      jmp      0xfff81287
-FFF81281 8b 45 0c   mov      EAX, dword ptr [EBP + 0xc]
-FFF81284 83 20 00   and      dword ptr [EAX], 0x0
-FFF81287 5f         pop      EDI
-FFF81288 5e         pop      ESI
-FFF81289 8b e5      mov      ESP, EBP
-FFF8128B 5d         pop      EBP
-FFF8128C c3         ret      
+; ==== read_pad_config_word @ FFF811CC
+FFF811CC 55 - - - - - - - - -          push     EBP
+FFF811CD 8b ec - - - - - - - -         mov      EBP, ESP
+FFF811CF 51 - - - - - - - - -          push     ECX
+FFF811D0 56 - - - - - - - - -          push     ESI
+FFF811D1 57 - - - - - - - - -          push     EDI
+FFF811D2 8b f9 - - - - - - - -         mov      EDI, ECX
+FFF811D4 0f b6 f2 - - - - - - -        movzx    ESI, DL
+FFF811D7 8d 4d fc - - - - - - -        lea      ECX, [EBP + -0x4]
+FFF811DA e8 fe 08 00 00 - - - - -      call     0xfff81add
+FFF811DF 8b d0 - - - - - - - -         mov      EDX, EAX
+FFF811E1 83 ff 07 - - - - - - -        cmp      EDI, 0x7
+FFF811E4 0f 87 97 00 00 00 - - - -     ja       0xfff81281
+FFF811EA ff 24 bd 90 12 f8 ff - - -    jmp      dword ptr [EDI*0x4 + 0xfff81290]
+FFF811F1 6b ce 1e - - - - - - -        imul     ECX, ESI, 0x1e
+FFF811F4 03 ca - - - - - - - -         add      ECX, EDX
+FFF811F6 0f b7 51 04 - - - - - -       movzx    EDX, word ptr [ECX + 0x4]
+FFF811FA eb 4b - - - - - - - -         jmp      0xfff81247
+FFF811FC 6b ce 1e - - - - - - -        imul     ECX, ESI, 0x1e
+FFF811FF 03 ca - - - - - - - -         add      ECX, EDX
+FFF81201 0f b7 51 0c - - - - - -       movzx    EDX, word ptr [ECX + 0xc]
+FFF81205 eb 40 - - - - - - - -         jmp      0xfff81247
+FFF81207 6b ce 1e - - - - - - -        imul     ECX, ESI, 0x1e
+FFF8120A 03 ca - - - - - - - -         add      ECX, EDX
+FFF8120C 0f b7 51 0a - - - - - -       movzx    EDX, word ptr [ECX + 0xa]
+FFF81210 eb 35 - - - - - - - -         jmp      0xfff81247
+FFF81212 6b ce 1e - - - - - - -        imul     ECX, ESI, 0x1e
+FFF81215 03 ca - - - - - - - -         add      ECX, EDX
+FFF81217 0f b7 51 10 - - - - - -       movzx    EDX, word ptr [ECX + 0x10]
+FFF8121B eb 2a - - - - - - - -         jmp      0xfff81247
+FFF8121D 6b ce 1e - - - - - - -        imul     ECX, ESI, 0x1e
+FFF81220 03 ca - - - - - - - -         add      ECX, EDX
+FFF81222 0f b7 51 0e - - - - - -       movzx    EDX, word ptr [ECX + 0xe]
+FFF81226 eb 1f - - - - - - - -         jmp      0xfff81247
+FFF81228 6b ce 1e - - - - - - -        imul     ECX, ESI, 0x1e
+FFF8122B 03 ca - - - - - - - -         add      ECX, EDX
+FFF8122D 0f b7 51 14 - - - - - -       movzx    EDX, word ptr [ECX + 0x14]
+FFF81231 eb 14 - - - - - - - -         jmp      0xfff81247
+FFF81233 6b ce 1e - - - - - - -        imul     ECX, ESI, 0x1e
+FFF81236 03 ca - - - - - - - -         add      ECX, EDX
+FFF81238 0f b7 51 16 - - - - - -       movzx    EDX, word ptr [ECX + 0x16]
+FFF8123C eb 09 - - - - - - - -         jmp      0xfff81247
+FFF8123E 6b ce 1e - - - - - - -        imul     ECX, ESI, 0x1e
+FFF81241 03 ca - - - - - - - -         add      ECX, EDX
+FFF81243 0f b7 51 18 - - - - - -       movzx    EDX, word ptr [ECX + 0x18]
+FFF81247 81 fa ff ff 00 00 - - - -     cmp      EDX, 0xffff
+FFF8124D 74 32 - - - - - - - -         jz       0xfff81281
+FFF8124F 83 ff 06 - - - - - - -        cmp      EDI, 0x6
+FFF81252 74 0d - - - - - - - -         jz       0xfff81261
+FFF81254 83 ff 07 - - - - - - -        cmp      EDI, 0x7
+FFF81257 74 08 - - - - - - - -         jz       0xfff81261
+FFF81259 8b 45 08 - - - - - - -        mov      EAX, dword ptr [EBP + 0x8]
+FFF8125C 8d 04 82 - - - - - - -        lea      EAX, [EDX + EAX*0x4]
+FFF8125F eb 06 - - - - - - - -         jmp      0xfff81267
+FFF81261 8b 45 08 - - - - - - -        mov      EAX, dword ptr [EBP + 0x8]
+FFF81264 8d 04 c2 - - - - - - -        lea      EAX, [EDX + EAX*0x8]
+FFF81267 0f b6 09 - - - - - - -        movzx    ECX, byte ptr [ECX]
+FFF8126A 81 c9 00 fd ff ff - - - -     or       ECX, 0xfffffd00
+FFF81270 0f b7 c0 - - - - - - -        movzx    EAX, AX
+FFF81273 c1 e1 10 - - - - - - -        shl      ECX, 0x10
+FFF81276 0b c8 - - - - - - - -         or       ECX, EAX
+FFF81278 8b 45 0c - - - - - - -        mov      EAX, dword ptr [EBP + 0xc]
+FFF8127B 8b 09 - - - - - - - -         mov      ECX, dword ptr [ECX]
+FFF8127D 89 08 - - - - - - - -         mov      dword ptr [EAX], ECX
+FFF8127F eb 06 - - - - - - - -         jmp      0xfff81287
+FFF81281 8b 45 0c - - - - - - -        mov      EAX, dword ptr [EBP + 0xc]
+FFF81284 83 20 00 - - - - - - -        and      dword ptr [EAX], 0x0
+FFF81287 5f - - - - - - - - -          pop      EDI
+FFF81288 5e - - - - - - - - -          pop      ESI
+FFF81289 8b e5 - - - - - - - -         mov      ESP, EBP
+FFF8128B 5d - - - - - - - - -          pop      EBP
+FFF8128C c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff812b0 @ FFF812B0
-FFF812B0 55         push     EBP
-FFF812B1 8b ec      mov      EBP, ESP
-FFF812B3 83 ec 10   sub      ESP, 0x10
-FFF812B6 83 65 f8 00 and      dword ptr [EBP + -0x8], 0x0
-FFF812BA 8b c2      mov      EAX, EDX
-FFF812BC 53         push     EBX
-FFF812BD 56         push     ESI
-FFF812BE 8b f1      mov      ESI, ECX
-FFF812C0 89 45 f4   mov      dword ptr [EBP + -0xc], EAX
-FFF812C3 57         push     EDI
-FFF812C4 8d 4d f0   lea      ECX, [EBP + -0x10]
-FFF812C7 0f b6 f8   movzx    EDI, AL
-FFF812CA e8 0e 08 00 00 call     0xfff81add
-FFF812CF 8b d0      mov      EDX, EAX
-FFF812D1 83 ee 06   sub      ESI, 0x6
-FFF812D4 74 21      jz       0xfff812f7
-FFF812D6 83 ee 01   sub      ESI, 0x1
-FFF812D9 75 3f      jnz      0xfff8131a
-FFF812DB 8b 5d 08   mov      EBX, dword ptr [EBP + 0x8]
-FFF812DE 8d 45 f8   lea      EAX, [EBP + -0x8]
-FFF812E1 8b 4d f4   mov      ECX, dword ptr [EBP + -0xc]
-FFF812E4 6b ff 1e   imul     EDI, EDI, 0x1e
-FFF812E7 50         push     EAX
-FFF812E8 03 fa      add      EDI, EDX
-FFF812EA 8b d3      mov      EDX, EBX
-FFF812EC 0f b7 77 18 movzx    ESI, word ptr [EDI + 0x18]
-FFF812F0 e8 77 01 00 00 call     0xfff8146c
-FFF812F5 eb 1a      jmp      0xfff81311
-FFF812F7 8b 5d 08   mov      EBX, dword ptr [EBP + 0x8]
-FFF812FA 8d 45 f8   lea      EAX, [EBP + -0x8]
-FFF812FD 8b 4d f4   mov      ECX, dword ptr [EBP + -0xc]
-FFF81300 6b ff 1e   imul     EDI, EDI, 0x1e
-FFF81303 50         push     EAX
-FFF81304 03 fa      add      EDI, EDX
-FFF81306 8b d3      mov      EDX, EBX
-FFF81308 0f b7 77 16 movzx    ESI, word ptr [EDI + 0x16]
-FFF8130C e8 e0 00 00 00 call     0xfff813f1
-FFF81311 59         pop      ECX
-FFF81312 81 fe ff ff 00 00 cmp      ESI, 0xffff
-FFF81318 75 07      jnz      0xfff81321
-FFF8131A b8 03 00 00 80 mov      EAX, 0x80000003
-FFF8131F eb 25      jmp      0xfff81346
-FFF81321 8b 45 f8   mov      EAX, dword ptr [EBP + -0x8]
-FFF81324 8d 55 f4   lea      EDX, [EBP + -0xc]
-FFF81327 23 45 0c   and      EAX, dword ptr [EBP + 0xc]
-FFF8132A 0b 45 10   or       EAX, dword ptr [EBP + 0x10]
-FFF8132D 8a 0f      mov      CL, byte ptr [EDI]
-FFF8132F 89 45 f4   mov      dword ptr [EBP + -0xc], EAX
-FFF81332 8d 45 ff   lea      EAX, [EBP + -0x1]
-FFF81335 6a 13      push     0x13
-FFF81337 50         push     EAX
-FFF81338 8d 04 de   lea      EAX, [ESI + EBX*0x8]
-FFF8133B 6a 00      push     0x0
-FFF8133D 50         push     EAX
-FFF8133E e8 bd 07 00 00 call     0xfff81b00
-FFF81343 83 c4 10   add      ESP, 0x10
-FFF81346 5f         pop      EDI
-FFF81347 5e         pop      ESI
-FFF81348 5b         pop      EBX
-FFF81349 8b e5      mov      ESP, EBP
-FFF8134B 5d         pop      EBP
-FFF8134C c3         ret      
+; ==== set_pad_index6_or_7_word @ FFF812B0
+FFF812B0 55 - - - - - - - - -          push     EBP
+FFF812B1 8b ec - - - - - - - -         mov      EBP, ESP
+FFF812B3 83 ec 10 - - - - - - -        sub      ESP, 0x10
+FFF812B6 83 65 f8 00 - - - - - -       and      dword ptr [EBP + -0x8], 0x0
+FFF812BA 8b c2 - - - - - - - -         mov      EAX, EDX
+FFF812BC 53 - - - - - - - - -          push     EBX
+FFF812BD 56 - - - - - - - - -          push     ESI
+FFF812BE 8b f1 - - - - - - - -         mov      ESI, ECX
+FFF812C0 89 45 f4 - - - - - - -        mov      dword ptr [EBP + -0xc], EAX
+FFF812C3 57 - - - - - - - - -          push     EDI
+FFF812C4 8d 4d f0 - - - - - - -        lea      ECX, [EBP + -0x10]
+FFF812C7 0f b6 f8 - - - - - - -        movzx    EDI, AL
+FFF812CA e8 0e 08 00 00 - - - - -      call     0xfff81add
+FFF812CF 8b d0 - - - - - - - -         mov      EDX, EAX
+FFF812D1 83 ee 06 - - - - - - -        sub      ESI, 0x6
+FFF812D4 74 21 - - - - - - - -         jz       0xfff812f7
+FFF812D6 83 ee 01 - - - - - - -        sub      ESI, 0x1
+FFF812D9 75 3f - - - - - - - -         jnz      0xfff8131a
+FFF812DB 8b 5d 08 - - - - - - -        mov      EBX, dword ptr [EBP + 0x8]
+FFF812DE 8d 45 f8 - - - - - - -        lea      EAX, [EBP + -0x8]
+FFF812E1 8b 4d f4 - - - - - - -        mov      ECX, dword ptr [EBP + -0xc]
+FFF812E4 6b ff 1e - - - - - - -        imul     EDI, EDI, 0x1e
+FFF812E7 50 - - - - - - - - -          push     EAX
+FFF812E8 03 fa - - - - - - - -         add      EDI, EDX
+FFF812EA 8b d3 - - - - - - - -         mov      EDX, EBX
+FFF812EC 0f b7 77 18 - - - - - -       movzx    ESI, word ptr [EDI + 0x18]
+FFF812F0 e8 77 01 00 00 - - - - -      call     0xfff8146c
+FFF812F5 eb 1a - - - - - - - -         jmp      0xfff81311
+FFF812F7 8b 5d 08 - - - - - - -        mov      EBX, dword ptr [EBP + 0x8]
+FFF812FA 8d 45 f8 - - - - - - -        lea      EAX, [EBP + -0x8]
+FFF812FD 8b 4d f4 - - - - - - -        mov      ECX, dword ptr [EBP + -0xc]
+FFF81300 6b ff 1e - - - - - - -        imul     EDI, EDI, 0x1e
+FFF81303 50 - - - - - - - - -          push     EAX
+FFF81304 03 fa - - - - - - - -         add      EDI, EDX
+FFF81306 8b d3 - - - - - - - -         mov      EDX, EBX
+FFF81308 0f b7 77 16 - - - - - -       movzx    ESI, word ptr [EDI + 0x16]
+FFF8130C e8 e0 00 00 00 - - - - -      call     0xfff813f1
+FFF81311 59 - - - - - - - - -          pop      ECX
+FFF81312 81 fe ff ff 00 00 - - - -     cmp      ESI, 0xffff
+FFF81318 75 07 - - - - - - - -         jnz      0xfff81321
+FFF8131A b8 03 00 00 80 - - - - -      mov      EAX, 0x80000003
+FFF8131F eb 25 - - - - - - - -         jmp      0xfff81346
+FFF81321 8b 45 f8 - - - - - - -        mov      EAX, dword ptr [EBP + -0x8]
+FFF81324 8d 55 f4 - - - - - - -        lea      EDX, [EBP + -0xc]
+FFF81327 23 45 0c - - - - - - -        and      EAX, dword ptr [EBP + 0xc]
+FFF8132A 0b 45 10 - - - - - - -        or       EAX, dword ptr [EBP + 0x10]
+FFF8132D 8a 0f - - - - - - - -         mov      CL, byte ptr [EDI]
+FFF8132F 89 45 f4 - - - - - - -        mov      dword ptr [EBP + -0xc], EAX
+FFF81332 8d 45 ff - - - - - - -        lea      EAX, [EBP + -0x1]
+FFF81335 6a 13 - - - - - - - -         push     0x13
+FFF81337 50 - - - - - - - - -          push     EAX
+FFF81338 8d 04 de - - - - - - -        lea      EAX, [ESI + EBX*0x8]
+FFF8133B 6a 00 - - - - - - - -         push     0x0
+FFF8133D 50 - - - - - - - - -          push     EAX
+FFF8133E e8 bd 07 00 00 - - - - -      call     0xfff81b00
+FFF81343 83 c4 10 - - - - - - -        add      ESP, 0x10
+FFF81346 5f - - - - - - - - -          pop      EDI
+FFF81347 5e - - - - - - - - -          pop      ESI
+FFF81348 5b - - - - - - - - -          pop      EBX
+FFF81349 8b e5 - - - - - - - -         mov      ESP, EBP
+FFF8134B 5d - - - - - - - - -          pop      EBP
+FFF8134C c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff8134d @ FFF8134D
-FFF8134D 51         push     ECX
-FFF8134E 56         push     ESI
-FFF8134F 57         push     EDI
-FFF81350 8b fa      mov      EDI, EDX
-FFF81352 8b f1      mov      ESI, ECX
-FFF81354 e8 4d 06 00 00 call     0xfff819a6
-FFF81359 84 c0      test     AL, AL
-FFF8135B 75 07      jnz      0xfff81364
-FFF8135D b8 02 00 00 80 mov      EAX, 0x80000002
-FFF81362 eb 1f      jmp      0xfff81383
-FFF81364 8b ce      mov      ECX, ESI
-FFF81366 e8 24 06 00 00 call     0xfff8198f
-FFF8136B 84 c0      test     AL, AL
-FFF8136D 75 07      jnz      0xfff81376
-FFF8136F b8 03 00 00 80 mov      EAX, 0x80000003
-FFF81374 eb 0d      jmp      0xfff81383
-FFF81376 57         push     EDI
-FFF81377 51         push     ECX
-FFF81378 8b ce      mov      ECX, ESI
-FFF8137A e8 7f 06 00 00 call     0xfff819fe
-FFF8137F 59         pop      ECX
-FFF81380 59         pop      ECX
-FFF81381 33 c0      xor      EAX, EAX
-FFF81383 5f         pop      EDI
-FFF81384 5e         pop      ESI
-FFF81385 59         pop      ECX
-FFF81386 c3         ret      
+; ==== set_composite_pad_value @ FFF8134D
+FFF8134D 51 - - - - - - - - -          push     ECX
+FFF8134E 56 - - - - - - - - -          push     ESI
+FFF8134F 57 - - - - - - - - -          push     EDI
+FFF81350 8b fa - - - - - - - -         mov      EDI, EDX
+FFF81352 8b f1 - - - - - - - -         mov      ESI, ECX
+FFF81354 e8 4d 06 00 00 - - - - -      call     0xfff819a6
+FFF81359 84 c0 - - - - - - - -         test     AL, AL
+FFF8135B 75 07 - - - - - - - -         jnz      0xfff81364
+FFF8135D b8 02 00 00 80 - - - - -      mov      EAX, 0x80000002
+FFF81362 eb 1f - - - - - - - -         jmp      0xfff81383
+FFF81364 8b ce - - - - - - - -         mov      ECX, ESI
+FFF81366 e8 24 06 00 00 - - - - -      call     0xfff8198f
+FFF8136B 84 c0 - - - - - - - -         test     AL, AL
+FFF8136D 75 07 - - - - - - - -         jnz      0xfff81376
+FFF8136F b8 03 00 00 80 - - - - -      mov      EAX, 0x80000003
+FFF81374 eb 0d - - - - - - - -         jmp      0xfff81383
+FFF81376 57 - - - - - - - - -          push     EDI
+FFF81377 51 - - - - - - - - -          push     ECX
+FFF81378 8b ce - - - - - - - -         mov      ECX, ESI
+FFF8137A e8 7f 06 00 00 - - - - -      call     0xfff819fe
+FFF8137F 59 - - - - - - - - -          pop      ECX
+FFF81380 59 - - - - - - - - -          pop      ECX
+FFF81381 33 c0 - - - - - - - -         xor      EAX, EAX
+FFF81383 5f - - - - - - - - -          pop      EDI
+FFF81384 5e - - - - - - - - -          pop      ESI
+FFF81385 59 - - - - - - - - -          pop      ECX
+FFF81386 c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff81387 @ FFF81387
-FFF81387 51         push     ECX
-FFF81388 53         push     EBX
-FFF81389 57         push     EDI
-FFF8138A 8b da      mov      EBX, EDX
-FFF8138C 8b f9      mov      EDI, ECX
-FFF8138E e8 13 06 00 00 call     0xfff819a6
-FFF81393 84 c0      test     AL, AL
-FFF81395 75 07      jnz      0xfff8139e
-FFF81397 b8 02 00 00 80 mov      EAX, 0x80000002
-FFF8139C eb 4f      jmp      0xfff813ed
-FFF8139E 8b c7      mov      EAX, EDI
-FFF813A0 8d 4c 24 08 lea      ECX, [ESP + 0x8]
-FFF813A4 c1 e8 10   shr      EAX, 0x10
-FFF813A7 56         push     ESI
-FFF813A8 0f b6 f0   movzx    ESI, AL
-FFF813AB 0f b7 ff   movzx    EDI, DI
-FFF813AE e8 2a 07 00 00 call     0xfff81add
-FFF813B3 6b f6 1e   imul     ESI, ESI, 0x1e
-FFF813B6 8b cf      mov      ECX, EDI
-FFF813B8 c1 e9 03   shr      ECX, 0x3
-FFF813BB 83 e7 07   and      EDI, 0x7
-FFF813BE 6a 03      push     0x3
-FFF813C0 0f b7 54 06 02 movzx    EDX, word ptr [ESI + EAX*0x1 + 0x2]
-FFF813C5 8d 0c 8a   lea      ECX, [EDX + ECX*0x4]
-FFF813C8 0f b6 14 06 movzx    EDX, byte ptr [ESI + EAX*0x1]
-FFF813CC 81 ca 00 fd ff ff or       EDX, 0xfffffd00
-FFF813D2 0f b7 c1   movzx    EAX, CX
-FFF813D5 c1 e2 10   shl      EDX, 0x10
-FFF813D8 8b cf      mov      ECX, EDI
-FFF813DA 0b d0      or       EDX, EAX
-FFF813DC c1 e1 02   shl      ECX, 0x2
-FFF813DF 8b 02      mov      EAX, dword ptr [EDX]
-FFF813E1 5a         pop      EDX
-FFF813E2 d3 e2      shl      EDX, CL
-FFF813E4 23 d0      and      EDX, EAX
-FFF813E6 d3 ea      shr      EDX, CL
-FFF813E8 33 c0      xor      EAX, EAX
-FFF813EA 89 13      mov      dword ptr [EBX], EDX
-FFF813EC 5e         pop      ESI
-FFF813ED 5f         pop      EDI
-FFF813EE 5b         pop      EBX
-FFF813EF 59         pop      ECX
-FFF813F0 c3         ret      
+; ==== read_pad_bit_field @ FFF81387
+FFF81387 51 - - - - - - - - -          push     ECX
+FFF81388 53 - - - - - - - - -          push     EBX
+FFF81389 57 - - - - - - - - -          push     EDI
+FFF8138A 8b da - - - - - - - -         mov      EBX, EDX
+FFF8138C 8b f9 - - - - - - - -         mov      EDI, ECX
+FFF8138E e8 13 06 00 00 - - - - -      call     0xfff819a6
+FFF81393 84 c0 - - - - - - - -         test     AL, AL
+FFF81395 75 07 - - - - - - - -         jnz      0xfff8139e
+FFF81397 b8 02 00 00 80 - - - - -      mov      EAX, 0x80000002
+FFF8139C eb 4f - - - - - - - -         jmp      0xfff813ed
+FFF8139E 8b c7 - - - - - - - -         mov      EAX, EDI
+FFF813A0 8d 4c 24 08 - - - - - -       lea      ECX, [ESP + 0x8]
+FFF813A4 c1 e8 10 - - - - - - -        shr      EAX, 0x10
+FFF813A7 56 - - - - - - - - -          push     ESI
+FFF813A8 0f b6 f0 - - - - - - -        movzx    ESI, AL
+FFF813AB 0f b7 ff - - - - - - -        movzx    EDI, DI
+FFF813AE e8 2a 07 00 00 - - - - -      call     0xfff81add
+FFF813B3 6b f6 1e - - - - - - -        imul     ESI, ESI, 0x1e
+FFF813B6 8b cf - - - - - - - -         mov      ECX, EDI
+FFF813B8 c1 e9 03 - - - - - - -        shr      ECX, 0x3
+FFF813BB 83 e7 07 - - - - - - -        and      EDI, 0x7
+FFF813BE 6a 03 - - - - - - - -         push     0x3
+FFF813C0 0f b7 54 06 02 - - - - -      movzx    EDX, word ptr [ESI + EAX*0x1 + 0x2]
+FFF813C5 8d 0c 8a - - - - - - -        lea      ECX, [EDX + ECX*0x4]
+FFF813C8 0f b6 14 06 - - - - - -       movzx    EDX, byte ptr [ESI + EAX*0x1]
+FFF813CC 81 ca 00 fd ff ff - - - -     or       EDX, 0xfffffd00
+FFF813D2 0f b7 c1 - - - - - - -        movzx    EAX, CX
+FFF813D5 c1 e2 10 - - - - - - -        shl      EDX, 0x10
+FFF813D8 8b cf - - - - - - - -         mov      ECX, EDI
+FFF813DA 0b d0 - - - - - - - -         or       EDX, EAX
+FFF813DC c1 e1 02 - - - - - - -        shl      ECX, 0x2
+FFF813DF 8b 02 - - - - - - - -         mov      EAX, dword ptr [EDX]
+FFF813E1 5a - - - - - - - - -          pop      EDX
+FFF813E2 d3 e2 - - - - - - - -         shl      EDX, CL
+FFF813E4 23 d0 - - - - - - - -         and      EDX, EAX
+FFF813E6 d3 ea - - - - - - - -         shr      EDX, CL
+FFF813E8 33 c0 - - - - - - - -         xor      EAX, EAX
+FFF813EA 89 13 - - - - - - - -         mov      dword ptr [EBX], EDX
+FFF813EC 5e - - - - - - - - -          pop      ESI
+FFF813ED 5f - - - - - - - - -          pop      EDI
+FFF813EE 5b - - - - - - - - -          pop      EBX
+FFF813EF 59 - - - - - - - - -          pop      ECX
+FFF813F0 c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff813f1 @ FFF813F1
-FFF813F1 56         push     ESI
-FFF813F2 57         push     EDI
-FFF813F3 8b f2      mov      ESI, EDX
-FFF813F5 8b f9      mov      EDI, ECX
-FFF813F7 e8 83 fd ff ff call     0xfff8117f
-FFF813FC 84 c0      test     AL, AL
-FFF813FE 75 07      jnz      0xfff81407
-FFF81400 b8 02 00 00 80 mov      EAX, 0x80000002
-FFF81405 eb 13      jmp      0xfff8141a
-FFF81407 ff 74 24 0c push     dword ptr [ESP + 0xc]
-FFF8140B 8b d7      mov      EDX, EDI
-FFF8140D 56         push     ESI
-FFF8140E 6a 06      push     0x6
-FFF81410 59         pop      ECX
-FFF81411 e8 b6 fd ff ff call     0xfff811cc
-FFF81416 59         pop      ECX
-FFF81417 59         pop      ECX
-FFF81418 33 c0      xor      EAX, EAX
-FFF8141A 5f         pop      EDI
-FFF8141B 5e         pop      ESI
-FFF8141C c3         ret      
+; ==== read_index6_word @ FFF813F1
+FFF813F1 56 - - - - - - - - -          push     ESI
+FFF813F2 57 - - - - - - - - -          push     EDI
+FFF813F3 8b f2 - - - - - - - -         mov      ESI, EDX
+FFF813F5 8b f9 - - - - - - - -         mov      EDI, ECX
+FFF813F7 e8 83 fd ff ff - - - - -      call     0xfff8117f
+FFF813FC 84 c0 - - - - - - - -         test     AL, AL
+FFF813FE 75 07 - - - - - - - -         jnz      0xfff81407
+FFF81400 b8 02 00 00 80 - - - - -      mov      EAX, 0x80000002
+FFF81405 eb 13 - - - - - - - -         jmp      0xfff8141a
+FFF81407 ff 74 24 0c - - - - - -       push     dword ptr [ESP + 0xc]
+FFF8140B 8b d7 - - - - - - - -         mov      EDX, EDI
+FFF8140D 56 - - - - - - - - -          push     ESI
+FFF8140E 6a 06 - - - - - - - -         push     0x6
+FFF81410 59 - - - - - - - - -          pop      ECX
+FFF81411 e8 b6 fd ff ff - - - - -      call     0xfff811cc
+FFF81416 59 - - - - - - - - -          pop      ECX
+FFF81417 59 - - - - - - - - -          pop      ECX
+FFF81418 33 c0 - - - - - - - -         xor      EAX, EAX
+FFF8141A 5f - - - - - - - - -          pop      EDI
+FFF8141B 5e - - - - - - - - -          pop      ESI
+FFF8141C c3 - - - - - - - - -          ret      
 
 ; ==== FUN_fff8141d @ FFF8141D
-FFF8141D 55         push     EBP
-FFF8141E 8b ec      mov      EBP, ESP
-FFF81420 51         push     ECX
-FFF81421 53         push     EBX
-FFF81422 57         push     EDI
-FFF81423 8b da      mov      EBX, EDX
-FFF81425 8b f9      mov      EDI, ECX
-FFF81427 e8 7a 05 00 00 call     0xfff819a6
-FFF8142C 84 c0      test     AL, AL
-FFF8142E 75 07      jnz      0xfff81437
-FFF81430 b8 02 00 00 80 mov      EAX, 0x80000002
-FFF81435 eb 2f      jmp      0xfff81466
-FFF81437 56         push     ESI
-FFF81438 8d 45 fc   lea      EAX, [EBP + -0x4]
-FFF8143B 0f b7 f7   movzx    ESI, DI
-FFF8143E 50         push     EAX
-FFF8143F 8b c6      mov      EAX, ESI
-FFF81441 c1 ef 10   shr      EDI, 0x10
-FFF81444 c1 e8 05   shr      EAX, 0x5
-FFF81447 8b d7      mov      EDX, EDI
-FFF81449 50         push     EAX
-FFF8144A 6a 06      push     0x6
-FFF8144C 59         pop      ECX
-FFF8144D e8 7a fd ff ff call     0xfff811cc
-FFF81452 8b 45 fc   mov      EAX, dword ptr [EBP + -0x4]
-FFF81455 83 e6 1f   and      ESI, 0x1f
-FFF81458 59         pop      ECX
-FFF81459 59         pop      ECX
-FFF8145A 8b ce      mov      ECX, ESI
-FFF8145C d3 e8      shr      EAX, CL
-FFF8145E 83 e0 01   and      EAX, 0x1
-FFF81461 89 03      mov      dword ptr [EBX], EAX
-FFF81463 33 c0      xor      EAX, EAX
-FFF81465 5e         pop      ESI
-FFF81466 5f         pop      EDI
-FFF81467 5b         pop      EBX
-FFF81468 8b e5      mov      ESP, EBP
-FFF8146A 5d         pop      EBP
-FFF8146B c3         ret      
+FFF8141D 55 - - - - - - - - -          push     EBP
+FFF8141E 8b ec - - - - - - - -         mov      EBP, ESP
+FFF81420 51 - - - - - - - - -          push     ECX
+FFF81421 53 - - - - - - - - -          push     EBX
+FFF81422 57 - - - - - - - - -          push     EDI
+FFF81423 8b da - - - - - - - -         mov      EBX, EDX
+FFF81425 8b f9 - - - - - - - -         mov      EDI, ECX
+FFF81427 e8 7a 05 00 00 - - - - -      call     0xfff819a6
+FFF8142C 84 c0 - - - - - - - -         test     AL, AL
+FFF8142E 75 07 - - - - - - - -         jnz      0xfff81437
+FFF81430 b8 02 00 00 80 - - - - -      mov      EAX, 0x80000002
+FFF81435 eb 2f - - - - - - - -         jmp      0xfff81466
+FFF81437 56 - - - - - - - - -          push     ESI
+FFF81438 8d 45 fc - - - - - - -        lea      EAX, [EBP + -0x4]
+FFF8143B 0f b7 f7 - - - - - - -        movzx    ESI, DI
+FFF8143E 50 - - - - - - - - -          push     EAX
+FFF8143F 8b c6 - - - - - - - -         mov      EAX, ESI
+FFF81441 c1 ef 10 - - - - - - -        shr      EDI, 0x10
+FFF81444 c1 e8 05 - - - - - - -        shr      EAX, 0x5
+FFF81447 8b d7 - - - - - - - -         mov      EDX, EDI
+FFF81449 50 - - - - - - - - -          push     EAX
+FFF8144A 6a 06 - - - - - - - -         push     0x6
+FFF8144C 59 - - - - - - - - -          pop      ECX
+FFF8144D e8 7a fd ff ff - - - - -      call     0xfff811cc
+FFF81452 8b 45 fc - - - - - - -        mov      EAX, dword ptr [EBP + -0x4]
+FFF81455 83 e6 1f - - - - - - -        and      ESI, 0x1f
+FFF81458 59 - - - - - - - - -          pop      ECX
+FFF81459 59 - - - - - - - - -          pop      ECX
+FFF8145A 8b ce - - - - - - - -         mov      ECX, ESI
+FFF8145C d3 e8 - - - - - - - -         shr      EAX, CL
+FFF8145E 83 e0 01 - - - - - - -        and      EAX, 0x1
+FFF81461 89 03 - - - - - - - -         mov      dword ptr [EBX], EAX
+FFF81463 33 c0 - - - - - - - -         xor      EAX, EAX
+FFF81465 5e - - - - - - - - -          pop      ESI
+FFF81466 5f - - - - - - - - -          pop      EDI
+FFF81467 5b - - - - - - - - -          pop      EBX
+FFF81468 8b e5 - - - - - - - -         mov      ESP, EBP
+FFF8146A 5d - - - - - - - - -          pop      EBP
+FFF8146B c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff8146c @ FFF8146C
-FFF8146C 56         push     ESI
-FFF8146D 57         push     EDI
-FFF8146E 8b f2      mov      ESI, EDX
-FFF81470 8b f9      mov      EDI, ECX
-FFF81472 e8 08 fd ff ff call     0xfff8117f
-FFF81477 84 c0      test     AL, AL
-FFF81479 75 07      jnz      0xfff81482
-FFF8147B b8 02 00 00 80 mov      EAX, 0x80000002
-FFF81480 eb 13      jmp      0xfff81495
-FFF81482 ff 74 24 0c push     dword ptr [ESP + 0xc]
-FFF81486 8b d7      mov      EDX, EDI
-FFF81488 56         push     ESI
-FFF81489 6a 07      push     0x7
-FFF8148B 59         pop      ECX
-FFF8148C e8 3b fd ff ff call     0xfff811cc
-FFF81491 59         pop      ECX
-FFF81492 59         pop      ECX
-FFF81493 33 c0      xor      EAX, EAX
-FFF81495 5f         pop      EDI
-FFF81496 5e         pop      ESI
-FFF81497 c3         ret      
+; ==== read_index7_word @ FFF8146C
+FFF8146C 56 - - - - - - - - -          push     ESI
+FFF8146D 57 - - - - - - - - -          push     EDI
+FFF8146E 8b f2 - - - - - - - -         mov      ESI, EDX
+FFF81470 8b f9 - - - - - - - -         mov      EDI, ECX
+FFF81472 e8 08 fd ff ff - - - - -      call     0xfff8117f
+FFF81477 84 c0 - - - - - - - -         test     AL, AL
+FFF81479 75 07 - - - - - - - -         jnz      0xfff81482
+FFF8147B b8 02 00 00 80 - - - - -      mov      EAX, 0x80000002
+FFF81480 eb 13 - - - - - - - -         jmp      0xfff81495
+FFF81482 ff 74 24 0c - - - - - -       push     dword ptr [ESP + 0xc]
+FFF81486 8b d7 - - - - - - - -         mov      EDX, EDI
+FFF81488 56 - - - - - - - - -          push     ESI
+FFF81489 6a 07 - - - - - - - -         push     0x7
+FFF8148B 59 - - - - - - - - -          pop      ECX
+FFF8148C e8 3b fd ff ff - - - - -      call     0xfff811cc
+FFF81491 59 - - - - - - - - -          pop      ECX
+FFF81492 59 - - - - - - - - -          pop      ECX
+FFF81493 33 c0 - - - - - - - -         xor      EAX, EAX
+FFF81495 5f - - - - - - - - -          pop      EDI
+FFF81496 5e - - - - - - - - -          pop      ESI
+FFF81497 c3 - - - - - - - - -          ret      
 
 ; ==== FUN_fff81498 @ FFF81498
-FFF81498 55         push     EBP
-FFF81499 8b ec      mov      EBP, ESP
-FFF8149B 51         push     ECX
-FFF8149C 53         push     EBX
-FFF8149D 57         push     EDI
-FFF8149E 8b da      mov      EBX, EDX
-FFF814A0 8b f9      mov      EDI, ECX
-FFF814A2 e8 ff 04 00 00 call     0xfff819a6
-FFF814A7 84 c0      test     AL, AL
-FFF814A9 75 07      jnz      0xfff814b2
-FFF814AB b8 02 00 00 80 mov      EAX, 0x80000002
-FFF814B0 eb 2f      jmp      0xfff814e1
-FFF814B2 56         push     ESI
-FFF814B3 8d 45 fc   lea      EAX, [EBP + -0x4]
-FFF814B6 0f b7 f7   movzx    ESI, DI
-FFF814B9 50         push     EAX
-FFF814BA 8b c6      mov      EAX, ESI
-FFF814BC c1 ef 10   shr      EDI, 0x10
-FFF814BF c1 e8 05   shr      EAX, 0x5
-FFF814C2 8b d7      mov      EDX, EDI
-FFF814C4 50         push     EAX
-FFF814C5 6a 07      push     0x7
-FFF814C7 59         pop      ECX
-FFF814C8 e8 ff fc ff ff call     0xfff811cc
-FFF814CD 8b 45 fc   mov      EAX, dword ptr [EBP + -0x4]
-FFF814D0 83 e6 1f   and      ESI, 0x1f
-FFF814D3 59         pop      ECX
-FFF814D4 59         pop      ECX
-FFF814D5 8b ce      mov      ECX, ESI
-FFF814D7 d3 e8      shr      EAX, CL
-FFF814D9 83 e0 01   and      EAX, 0x1
-FFF814DC 89 03      mov      dword ptr [EBX], EAX
-FFF814DE 33 c0      xor      EAX, EAX
-FFF814E0 5e         pop      ESI
-FFF814E1 5f         pop      EDI
-FFF814E2 5b         pop      EBX
-FFF814E3 8b e5      mov      ESP, EBP
-FFF814E5 5d         pop      EBP
-FFF814E6 c3         ret      
+FFF81498 55 - - - - - - - - -          push     EBP
+FFF81499 8b ec - - - - - - - -         mov      EBP, ESP
+FFF8149B 51 - - - - - - - - -          push     ECX
+FFF8149C 53 - - - - - - - - -          push     EBX
+FFF8149D 57 - - - - - - - - -          push     EDI
+FFF8149E 8b da - - - - - - - -         mov      EBX, EDX
+FFF814A0 8b f9 - - - - - - - -         mov      EDI, ECX
+FFF814A2 e8 ff 04 00 00 - - - - -      call     0xfff819a6
+FFF814A7 84 c0 - - - - - - - -         test     AL, AL
+FFF814A9 75 07 - - - - - - - -         jnz      0xfff814b2
+FFF814AB b8 02 00 00 80 - - - - -      mov      EAX, 0x80000002
+FFF814B0 eb 2f - - - - - - - -         jmp      0xfff814e1
+FFF814B2 56 - - - - - - - - -          push     ESI
+FFF814B3 8d 45 fc - - - - - - -        lea      EAX, [EBP + -0x4]
+FFF814B6 0f b7 f7 - - - - - - -        movzx    ESI, DI
+FFF814B9 50 - - - - - - - - -          push     EAX
+FFF814BA 8b c6 - - - - - - - -         mov      EAX, ESI
+FFF814BC c1 ef 10 - - - - - - -        shr      EDI, 0x10
+FFF814BF c1 e8 05 - - - - - - -        shr      EAX, 0x5
+FFF814C2 8b d7 - - - - - - - -         mov      EDX, EDI
+FFF814C4 50 - - - - - - - - -          push     EAX
+FFF814C5 6a 07 - - - - - - - -         push     0x7
+FFF814C7 59 - - - - - - - - -          pop      ECX
+FFF814C8 e8 ff fc ff ff - - - - -      call     0xfff811cc
+FFF814CD 8b 45 fc - - - - - - -        mov      EAX, dword ptr [EBP + -0x4]
+FFF814D0 83 e6 1f - - - - - - -        and      ESI, 0x1f
+FFF814D3 59 - - - - - - - - -          pop      ECX
+FFF814D4 59 - - - - - - - - -          pop      ECX
+FFF814D5 8b ce - - - - - - - -         mov      ECX, ESI
+FFF814D7 d3 e8 - - - - - - - -         shr      EAX, CL
+FFF814D9 83 e0 01 - - - - - - -        and      EAX, 0x1
+FFF814DC 89 03 - - - - - - - -         mov      dword ptr [EBX], EAX
+FFF814DE 33 c0 - - - - - - - -         xor      EAX, EAX
+FFF814E0 5e - - - - - - - - -          pop      ESI
+FFF814E1 5f - - - - - - - - -          pop      EDI
+FFF814E2 5b - - - - - - - - -          pop      EBX
+FFF814E3 8b e5 - - - - - - - -         mov      ESP, EBP
+FFF814E5 5d - - - - - - - - -          pop      EBP
+FFF814E6 c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff814e7 @ FFF814E7
-FFF814E7 56         push     ESI
-FFF814E8 57         push     EDI
-FFF814E9 8b f2      mov      ESI, EDX
-FFF814EB 8b f9      mov      EDI, ECX
-FFF814ED e8 8d fc ff ff call     0xfff8117f
-FFF814F2 84 c0      test     AL, AL
-FFF814F4 75 07      jnz      0xfff814fd
-FFF814F6 b8 02 00 00 80 mov      EAX, 0x80000002
-FFF814FB eb 17      jmp      0xfff81514
-FFF814FD 8b 44 24 0c mov      EAX, dword ptr [ESP + 0xc]
-FFF81501 8b d7      mov      EDX, EDI
-FFF81503 6a 00      push     0x0
-FFF81505 f7 d0      not      EAX
-FFF81507 50         push     EAX
-FFF81508 56         push     ESI
-FFF81509 6a 06      push     0x6
-FFF8150B 59         pop      ECX
-FFF8150C e8 9f fd ff ff call     0xfff812b0
-FFF81511 83 c4 0c   add      ESP, 0xc
-FFF81514 5f         pop      EDI
-FFF81515 5e         pop      ESI
-FFF81516 c3         ret      
+; ==== clear_index6_bits @ FFF814E7
+FFF814E7 56 - - - - - - - - -          push     ESI
+FFF814E8 57 - - - - - - - - -          push     EDI
+FFF814E9 8b f2 - - - - - - - -         mov      ESI, EDX
+FFF814EB 8b f9 - - - - - - - -         mov      EDI, ECX
+FFF814ED e8 8d fc ff ff - - - - -      call     0xfff8117f
+FFF814F2 84 c0 - - - - - - - -         test     AL, AL
+FFF814F4 75 07 - - - - - - - -         jnz      0xfff814fd
+FFF814F6 b8 02 00 00 80 - - - - -      mov      EAX, 0x80000002
+FFF814FB eb 17 - - - - - - - -         jmp      0xfff81514
+FFF814FD 8b 44 24 0c - - - - - -       mov      EAX, dword ptr [ESP + 0xc]
+FFF81501 8b d7 - - - - - - - -         mov      EDX, EDI
+FFF81503 6a 00 - - - - - - - -         push     0x0
+FFF81505 f7 d0 - - - - - - - -         not      EAX
+FFF81507 50 - - - - - - - - -          push     EAX
+FFF81508 56 - - - - - - - - -          push     ESI
+FFF81509 6a 06 - - - - - - - -         push     0x6
+FFF8150B 59 - - - - - - - - -          pop      ECX
+FFF8150C e8 9f fd ff ff - - - - -      call     0xfff812b0
+FFF81511 83 c4 0c - - - - - - -        add      ESP, 0xc
+FFF81514 5f - - - - - - - - -          pop      EDI
+FFF81515 5e - - - - - - - - -          pop      ESI
+FFF81516 c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff81517 @ FFF81517
-FFF81517 56         push     ESI
-FFF81518 57         push     EDI
-FFF81519 8b f2      mov      ESI, EDX
-FFF8151B 8b f9      mov      EDI, ECX
-FFF8151D e8 5d fc ff ff call     0xfff8117f
-FFF81522 84 c0      test     AL, AL
-FFF81524 75 07      jnz      0xfff8152d
-FFF81526 b8 02 00 00 80 mov      EAX, 0x80000002
-FFF8152B eb 14      jmp      0xfff81541
-FFF8152D ff 74 24 0c push     dword ptr [ESP + 0xc]
-FFF81531 8b d7      mov      EDX, EDI
-FFF81533 6a ff      push     -0x1
-FFF81535 56         push     ESI
-FFF81536 6a 06      push     0x6
-FFF81538 59         pop      ECX
-FFF81539 e8 72 fd ff ff call     0xfff812b0
-FFF8153E 83 c4 0c   add      ESP, 0xc
-FFF81541 5f         pop      EDI
-FFF81542 5e         pop      ESI
-FFF81543 c3         ret      
+; ==== write_index6_mask @ FFF81517
+FFF81517 56 - - - - - - - - -          push     ESI
+FFF81518 57 - - - - - - - - -          push     EDI
+FFF81519 8b f2 - - - - - - - -         mov      ESI, EDX
+FFF8151B 8b f9 - - - - - - - -         mov      EDI, ECX
+FFF8151D e8 5d fc ff ff - - - - -      call     0xfff8117f
+FFF81522 84 c0 - - - - - - - -         test     AL, AL
+FFF81524 75 07 - - - - - - - -         jnz      0xfff8152d
+FFF81526 b8 02 00 00 80 - - - - -      mov      EAX, 0x80000002
+FFF8152B eb 14 - - - - - - - -         jmp      0xfff81541
+FFF8152D ff 74 24 0c - - - - - -       push     dword ptr [ESP + 0xc]
+FFF81531 8b d7 - - - - - - - -         mov      EDX, EDI
+FFF81533 6a ff - - - - - - - -         push     -0x1
+FFF81535 56 - - - - - - - - -          push     ESI
+FFF81536 6a 06 - - - - - - - -         push     0x6
+FFF81538 59 - - - - - - - - -          pop      ECX
+FFF81539 e8 72 fd ff ff - - - - -      call     0xfff812b0
+FFF8153E 83 c4 0c - - - - - - -        add      ESP, 0xc
+FFF81541 5f - - - - - - - - -          pop      EDI
+FFF81542 5e - - - - - - - - -          pop      ESI
+FFF81543 c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff81544 @ FFF81544
-FFF81544 56         push     ESI
-FFF81545 8b f1      mov      ESI, ECX
-FFF81547 33 c0      xor      EAX, EAX
-FFF81549 0f b7 d6   movzx    EDX, SI
-FFF8154C 40         inc      EAX
-FFF8154D 8b ca      mov      ECX, EDX
-FFF8154F c1 ee 10   shr      ESI, 0x10
-FFF81552 83 e1 1f   and      ECX, 0x1f
-FFF81555 c1 ea 05   shr      EDX, 0x5
-FFF81558 d3 e0      shl      EAX, CL
-FFF8155A 8b ce      mov      ECX, ESI
-FFF8155C 50         push     EAX
-FFF8155D e8 b5 ff ff ff call     0xfff81517
-FFF81562 59         pop      ECX
-FFF81563 5e         pop      ESI
-FFF81564 c3         ret      
+; ==== write_index6_bit @ FFF81544
+FFF81544 56 - - - - - - - - -          push     ESI
+FFF81545 8b f1 - - - - - - - -         mov      ESI, ECX
+FFF81547 33 c0 - - - - - - - -         xor      EAX, EAX
+FFF81549 0f b7 d6 - - - - - - -        movzx    EDX, SI
+FFF8154C 40 - - - - - - - - -          inc      EAX
+FFF8154D 8b ca - - - - - - - -         mov      ECX, EDX
+FFF8154F c1 ee 10 - - - - - - -        shr      ESI, 0x10
+FFF81552 83 e1 1f - - - - - - -        and      ECX, 0x1f
+FFF81555 c1 ea 05 - - - - - - -        shr      EDX, 0x5
+FFF81558 d3 e0 - - - - - - - -         shl      EAX, CL
+FFF8155A 8b ce - - - - - - - -         mov      ECX, ESI
+FFF8155C 50 - - - - - - - - -          push     EAX
+FFF8155D e8 b5 ff ff ff - - - - -      call     0xfff81517
+FFF81562 59 - - - - - - - - -          pop      ECX
+FFF81563 5e - - - - - - - - -          pop      ESI
+FFF81564 c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff81565 @ FFF81565
-FFF81565 56         push     ESI
-FFF81566 57         push     EDI
-FFF81567 8b f2      mov      ESI, EDX
-FFF81569 8b f9      mov      EDI, ECX
-FFF8156B e8 0f fc ff ff call     0xfff8117f
-FFF81570 84 c0      test     AL, AL
-FFF81572 75 07      jnz      0xfff8157b
-FFF81574 b8 02 00 00 80 mov      EAX, 0x80000002
-FFF81579 eb 17      jmp      0xfff81592
-FFF8157B 8b 44 24 0c mov      EAX, dword ptr [ESP + 0xc]
-FFF8157F 8b d7      mov      EDX, EDI
-FFF81581 6a 00      push     0x0
-FFF81583 f7 d0      not      EAX
-FFF81585 50         push     EAX
-FFF81586 56         push     ESI
-FFF81587 6a 07      push     0x7
-FFF81589 59         pop      ECX
-FFF8158A e8 21 fd ff ff call     0xfff812b0
-FFF8158F 83 c4 0c   add      ESP, 0xc
-FFF81592 5f         pop      EDI
-FFF81593 5e         pop      ESI
-FFF81594 c3         ret      
+; ==== clear_index7_bits @ FFF81565
+FFF81565 56 - - - - - - - - -          push     ESI
+FFF81566 57 - - - - - - - - -          push     EDI
+FFF81567 8b f2 - - - - - - - -         mov      ESI, EDX
+FFF81569 8b f9 - - - - - - - -         mov      EDI, ECX
+FFF8156B e8 0f fc ff ff - - - - -      call     0xfff8117f
+FFF81570 84 c0 - - - - - - - -         test     AL, AL
+FFF81572 75 07 - - - - - - - -         jnz      0xfff8157b
+FFF81574 b8 02 00 00 80 - - - - -      mov      EAX, 0x80000002
+FFF81579 eb 17 - - - - - - - -         jmp      0xfff81592
+FFF8157B 8b 44 24 0c - - - - - -       mov      EAX, dword ptr [ESP + 0xc]
+FFF8157F 8b d7 - - - - - - - -         mov      EDX, EDI
+FFF81581 6a 00 - - - - - - - -         push     0x0
+FFF81583 f7 d0 - - - - - - - -         not      EAX
+FFF81585 50 - - - - - - - - -          push     EAX
+FFF81586 56 - - - - - - - - -          push     ESI
+FFF81587 6a 07 - - - - - - - -         push     0x7
+FFF81589 59 - - - - - - - - -          pop      ECX
+FFF8158A e8 21 fd ff ff - - - - -      call     0xfff812b0
+FFF8158F 83 c4 0c - - - - - - -        add      ESP, 0xc
+FFF81592 5f - - - - - - - - -          pop      EDI
+FFF81593 5e - - - - - - - - -          pop      ESI
+FFF81594 c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff81595 @ FFF81595
-FFF81595 56         push     ESI
-FFF81596 57         push     EDI
-FFF81597 8b f2      mov      ESI, EDX
-FFF81599 8b f9      mov      EDI, ECX
-FFF8159B e8 df fb ff ff call     0xfff8117f
-FFF815A0 84 c0      test     AL, AL
-FFF815A2 75 07      jnz      0xfff815ab
-FFF815A4 b8 02 00 00 80 mov      EAX, 0x80000002
-FFF815A9 eb 14      jmp      0xfff815bf
-FFF815AB ff 74 24 0c push     dword ptr [ESP + 0xc]
-FFF815AF 8b d7      mov      EDX, EDI
-FFF815B1 6a ff      push     -0x1
-FFF815B3 56         push     ESI
-FFF815B4 6a 07      push     0x7
-FFF815B6 59         pop      ECX
-FFF815B7 e8 f4 fc ff ff call     0xfff812b0
-FFF815BC 83 c4 0c   add      ESP, 0xc
-FFF815BF 5f         pop      EDI
-FFF815C0 5e         pop      ESI
-FFF815C1 c3         ret      
+; ==== write_index7_mask @ FFF81595
+FFF81595 56 - - - - - - - - -          push     ESI
+FFF81596 57 - - - - - - - - -          push     EDI
+FFF81597 8b f2 - - - - - - - -         mov      ESI, EDX
+FFF81599 8b f9 - - - - - - - -         mov      EDI, ECX
+FFF8159B e8 df fb ff ff - - - - -      call     0xfff8117f
+FFF815A0 84 c0 - - - - - - - -         test     AL, AL
+FFF815A2 75 07 - - - - - - - -         jnz      0xfff815ab
+FFF815A4 b8 02 00 00 80 - - - - -      mov      EAX, 0x80000002
+FFF815A9 eb 14 - - - - - - - -         jmp      0xfff815bf
+FFF815AB ff 74 24 0c - - - - - -       push     dword ptr [ESP + 0xc]
+FFF815AF 8b d7 - - - - - - - -         mov      EDX, EDI
+FFF815B1 6a ff - - - - - - - -         push     -0x1
+FFF815B3 56 - - - - - - - - -          push     ESI
+FFF815B4 6a 07 - - - - - - - -         push     0x7
+FFF815B6 59 - - - - - - - - -          pop      ECX
+FFF815B7 e8 f4 fc ff ff - - - - -      call     0xfff812b0
+FFF815BC 83 c4 0c - - - - - - -        add      ESP, 0xc
+FFF815BF 5f - - - - - - - - -          pop      EDI
+FFF815C0 5e - - - - - - - - -          pop      ESI
+FFF815C1 c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff815c2 @ FFF815C2
-FFF815C2 55         push     EBP
-FFF815C3 8b ec      mov      EBP, ESP
-FFF815C5 51         push     ECX
-FFF815C6 8d 4d fc   lea      ECX, [EBP + -0x4]
-FFF815C9 e8 0f 05 00 00 call     0xfff81add
-FFF815CE 8b 4d fc   mov      ECX, dword ptr [EBP + -0x4]
-FFF815D1 8d 49 ff   lea      ECX, [ECX + -0x1]
-FFF815D4 e8 04 00 00 00 call     0xfff815dd
-FFF815D9 8b e5      mov      ESP, EBP
-FFF815DB 5d         pop      EBP
-FFF815DC c3         ret      
+; ==== compute_max_entry_bound @ FFF815C2
+FFF815C2 55 - - - - - - - - -          push     EBP
+FFF815C3 8b ec - - - - - - - -         mov      EBP, ESP
+FFF815C5 51 - - - - - - - - -          push     ECX
+FFF815C6 8d 4d fc - - - - - - -        lea      ECX, [EBP + -0x4]
+FFF815C9 e8 0f 05 00 00 - - - - -      call     0xfff81add
+FFF815CE 8b 4d fc - - - - - - -        mov      ECX, dword ptr [EBP + -0x4]
+FFF815D1 8d 49 ff - - - - - - -        lea      ECX, [ECX + -0x1]
+FFF815D4 e8 04 00 00 00 - - - - -      call     0xfff815dd
+FFF815D9 8b e5 - - - - - - - -         mov      ESP, EBP
+FFF815DB 5d - - - - - - - - -          pop      EBP
+FFF815DC c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff815dd @ FFF815DD
-FFF815DD 56         push     ESI
-FFF815DE 8b f1      mov      ESI, ECX
-FFF815E0 e8 5b 00 00 00 call     0xfff81640
-FFF815E5 33 d2      xor      EDX, EDX
-FFF815E7 84 c0      test     AL, AL
-FFF815E9 0f 95 c2   setnz    DL
-FFF815EC 8d 42 03   lea      EAX, [EDX + 0x3]
-FFF815EF c1 e0 08   shl      EAX, 0x8
-FFF815F2 0b c6      or       EAX, ESI
-FFF815F4 5e         pop      ESI
-FFF815F5 c3         ret      
+; ==== compute_min_entry_bound @ FFF815DD
+FFF815DD 56 - - - - - - - - -          push     ESI
+FFF815DE 8b f1 - - - - - - - -         mov      ESI, ECX
+FFF815E0 e8 5b 00 00 00 - - - - -      call     0xfff81640
+FFF815E5 33 d2 - - - - - - - -         xor      EDX, EDX
+FFF815E7 84 c0 - - - - - - - -         test     AL, AL
+FFF815E9 0f 95 c2 - - - - - - -        setnz    DL
+FFF815EC 8d 42 03 - - - - - - -        lea      EAX, [EDX + 0x3]
+FFF815EF c1 e0 08 - - - - - - -        shl      EAX, 0x8
+FFF815F2 0b c6 - - - - - - - -         or       EAX, ESI
+FFF815F4 5e - - - - - - - - -          pop      ESI
+FFF815F5 c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff815f6 @ FFF815F6
-FFF815F6 a0 2c 1d f8 ff mov      AL, [0xfff81d2c]
-FFF815FB 3c ff      cmp      AL, 0xff
-FFF815FD 75 40      jnz      0xfff8163f
-FFF815FF b8 02 80 0f e0 mov      EAX, 0xe00f8002
-FFF81604 66 8b 00   mov      AX, word ptr [EAX]
-FFF81607 0f b7 c0   movzx    EAX, AX
-FFF8160A 25 e0 ff 00 00 and      EAX, 0xffe0
-FFF8160F 3d 80 02 00 00 cmp      EAX, 0x280
-FFF81614 74 22      jz       0xfff81638
-FFF81616 3d 80 06 00 00 cmp      EAX, 0x680
-FFF8161B 74 17      jz       0xfff81634
-FFF8161D 3d 80 9d 00 00 cmp      EAX, 0x9d80
-FFF81622 74 14      jz       0xfff81638
-FFF81624 3d 00 a3 00 00 cmp      EAX, 0xa300
-FFF81629 0f 94 c0   setz     AL
-FFF8162C fe c8      dec      AL
-FFF8162E 24 fe      and      AL, 0xfe
-FFF81630 fe c0      inc      AL
-FFF81632 eb 06      jmp      0xfff8163a
-FFF81634 b0 01      mov      AL, 0x1
-FFF81636 eb 02      jmp      0xfff8163a
-FFF81638 b0 02      mov      AL, 0x2
-FFF8163A a2 2c 1d f8 ff mov      [0xfff81d2c], AL
-FFF8163F c3         ret      
+; ==== classify_device_id @ FFF815F6
+FFF815F6 a0 2c 1d f8 ff - - - - -      mov      AL, [0xfff81d2c]
+FFF815FB 3c ff - - - - - - - -         cmp      AL, 0xff
+FFF815FD 75 40 - - - - - - - -         jnz      0xfff8163f
+FFF815FF b8 02 80 0f e0 - - - - -      mov      EAX, 0xe00f8002
+FFF81604 66 8b 00 - - - - - - -        mov      AX, word ptr [EAX]
+FFF81607 0f b7 c0 - - - - - - -        movzx    EAX, AX
+FFF8160A 25 e0 ff 00 00 - - - - -      and      EAX, 0xffe0
+FFF8160F 3d 80 02 00 00 - - - - -      cmp      EAX, 0x280
+FFF81614 74 22 - - - - - - - -         jz       0xfff81638
+FFF81616 3d 80 06 00 00 - - - - -      cmp      EAX, 0x680
+FFF8161B 74 17 - - - - - - - -         jz       0xfff81634
+FFF8161D 3d 80 9d 00 00 - - - - -      cmp      EAX, 0x9d80
+FFF81622 74 14 - - - - - - - -         jz       0xfff81638
+FFF81624 3d 00 a3 00 00 - - - - -      cmp      EAX, 0xa300
+FFF81629 0f 94 c0 - - - - - - -        setz     AL
+FFF8162C fe c8 - - - - - - - -         dec      AL
+FFF8162E 24 fe - - - - - - - -         and      AL, 0xfe
+FFF81630 fe c0 - - - - - - - -         inc      AL
+FFF81632 eb 06 - - - - - - - -         jmp      0xfff8163a
+FFF81634 b0 01 - - - - - - - -         mov      AL, 0x1
+FFF81636 eb 02 - - - - - - - -         jmp      0xfff8163a
+FFF81638 b0 02 - - - - - - - -         mov      AL, 0x2
+FFF8163A a2 2c 1d f8 ff - - - - -      mov      [0xfff81d2c], AL
+FFF8163F c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff81640 @ FFF81640
-FFF81640 e8 b1 ff ff ff call     0xfff815f6
-FFF81645 33 c9      xor      ECX, ECX
-FFF81647 3c 02      cmp      AL, 0x2
-FFF81649 0f 94 c1   setz     CL
-FFF8164C 8a c1      mov      AL, CL
-FFF8164E c3         ret      
+; ==== is_device_class_2 @ FFF81640
+FFF81640 e8 b1 ff ff ff - - - - -      call     0xfff815f6
+FFF81645 33 c9 - - - - - - - -         xor      ECX, ECX
+FFF81647 3c 02 - - - - - - - -         cmp      AL, 0x2
+FFF81649 0f 94 c1 - - - - - - -        setz     CL
+FFF8164C 8a c1 - - - - - - - -         mov      AL, CL
+FFF8164E c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff8164f @ FFF8164F
-FFF8164F e8 a2 ff ff ff call     0xfff815f6
-FFF81654 33 c9      xor      ECX, ECX
-FFF81656 3c 01      cmp      AL, 0x1
-FFF81658 0f 94 c1   setz     CL
-FFF8165B 8a c1      mov      AL, CL
-FFF8165D c3         ret      
+; ==== is_device_class_1 @ FFF8164F
+FFF8164F e8 a2 ff ff ff - - - - -      call     0xfff815f6
+FFF81654 33 c9 - - - - - - - -         xor      ECX, ECX
+FFF81656 3c 01 - - - - - - - -         cmp      AL, 0x1
+FFF81658 0f 94 c1 - - - - - - -        setz     CL
+FFF8165B 8a c1 - - - - - - - -         mov      AL, CL
+FFF8165D c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff8165e @ FFF8165E
-FFF8165E 55         push     EBP
-FFF8165F 8b ec      mov      EBP, ESP
-FFF81661 51         push     ECX
-FFF81662 51         push     ECX
-FFF81663 c7 45 fc 10 00 00 00 mov      dword ptr [EBP + -0x4], 0x10
-FFF8166A 8a 4d fc   mov      CL, byte ptr [EBP + -0x4]
-FFF8166D 33 d2      xor      EDX, EDX
-FFF8166F 8b 45 0c   mov      EAX, dword ptr [EBP + 0xc]
-FFF81672 f6 c1 20   test     CL, 0x20
-FFF81675 75 05      jnz      0xfff8167c
-FFF81677 8b d0      mov      EDX, EAX
-FFF81679 8b 45 08   mov      EAX, dword ptr [EBP + 0x8]
-FFF8167C 0f ad d0   shrd     EAX, EDX, CL
-FFF8167F d3 ea      shr      EDX, CL
-FFF81681 8b e5      mov      ESP, EBP
-FFF81683 5d         pop      EBP
-FFF81684 c3         ret      
+; ==== swap_dword_halves @ FFF8165E
+FFF8165E 55 - - - - - - - - -          push     EBP
+FFF8165F 8b ec - - - - - - - -         mov      EBP, ESP
+FFF81661 51 - - - - - - - - -          push     ECX
+FFF81662 51 - - - - - - - - -          push     ECX
+FFF81663 c7 45 fc 10 00 00 00 - - -    mov      dword ptr [EBP + -0x4], 0x10
+FFF8166A 8a 4d fc - - - - - - -        mov      CL, byte ptr [EBP + -0x4]
+FFF8166D 33 d2 - - - - - - - -         xor      EDX, EDX
+FFF8166F 8b 45 0c - - - - - - -        mov      EAX, dword ptr [EBP + 0xc]
+FFF81672 f6 c1 20 - - - - - - -        test     CL, 0x20
+FFF81675 75 05 - - - - - - - -         jnz      0xfff8167c
+FFF81677 8b d0 - - - - - - - -         mov      EDX, EAX
+FFF81679 8b 45 08 - - - - - - -        mov      EAX, dword ptr [EBP + 0x8]
+FFF8167C 0f ad d0 - - - - - - -        shrd     EAX, EDX, CL
+FFF8167F d3 ea - - - - - - - -         shr      EDX, CL
+FFF81681 8b e5 - - - - - - - -         mov      ESP, EBP
+FFF81683 5d - - - - - - - - -          pop      EBP
+FFF81684 c3 - - - - - - - - -          ret      
 
 ; ==== FUN_fff81685 @ FFF81685
-FFF81685 55         push     EBP
-FFF81686 8b ec      mov      EBP, ESP
-FFF81688 83 ec 2c   sub      ESP, 0x2c
-FFF8168B 56         push     ESI
-FFF8168C 33 c0      xor      EAX, EAX
-FFF8168E c7 45 d4 f8 03 f8 02 mov      dword ptr [EBP + -0x2c], 0x2f803f8
-FFF81695 be 80 80 0f 00 mov      ESI, 0xf8080
-FFF8169A c7 45 d8 20 02 28 02 mov      dword ptr [EBP + -0x28], 0x2280220
-FFF816A1 57         push     EDI
-FFF816A2 8b ce      mov      ECX, ESI
-FFF816A4 c7 45 dc 38 02 e8 02 mov      dword ptr [EBP + -0x24], 0x2e80238
-FFF816AB c7 45 e0 38 03 e8 03 mov      dword ptr [EBP + -0x20], 0x3e80338
-FFF816B2 c7 45 e4 f0 02 e0 02 mov      dword ptr [EBP + -0x1c], 0x2e002f0
-FFF816B9 66 89 45 e8 mov      word ptr [EBP + -0x18], AX
-FFF816BD c7 45 ec 78 03 78 02 mov      dword ptr [EBP + -0x14], 0x2780378
-FFF816C4 c7 45 f0 bc 03 00 00 mov      dword ptr [EBP + -0x10], 0x3bc
-FFF816CB c7 45 f4 f0 03 70 03 mov      dword ptr [EBP + -0xc], 0x37003f0
-FFF816D2 66 89 45 f8 mov      word ptr [EBP + -0x8], AX
-FFF816D6 e8 8a 05 00 00 call     0xfff81c65
-FFF816DB 0f b7 d0   movzx    EDX, AX
-FFF816DE 8b ce      mov      ECX, ESI
-FFF816E0 89 55 fc   mov      dword ptr [EBP + -0x4], EDX
-FFF816E3 e8 d6 05 00 00 call     0xfff81cbe
-FFF816E8 b8 70 27 88 fd mov      EAX, 0xfd882770
-FFF816ED 83 c6 02   add      ESI, 0x2
-FFF816F0 8b ce      mov      ECX, ESI
-FFF816F2 66 8b 00   mov      AX, word ptr [EAX]
-FFF816F5 0f b7 c0   movzx    EAX, AX
-FFF816F8 66 a3 70 27 88 fd mov      [0xfd882770], AX
-FFF816FE e8 62 05 00 00 call     0xfff81c65
-FFF81703 0f b7 d0   movzx    EDX, AX
-FFF81706 bf 00 08 00 00 mov      EDI, 0x800
-FFF8170B 0b d7      or       EDX, EDI
-FFF8170D 8b ce      mov      ECX, ESI
-FFF8170F 89 55 fc   mov      dword ptr [EBP + -0x4], EDX
-FFF81712 e8 a7 05 00 00 call     0xfff81cbe
-FFF81717 b8 74 27 88 fd mov      EAX, 0xfd882774
-FFF8171C 66 8b 00   mov      AX, word ptr [EAX]
-FFF8171F 0f b7 c0   movzx    EAX, AX
-FFF81722 0b c7      or       EAX, EDI
-FFF81724 5f         pop      EDI
-FFF81725 66 a3 74 27 88 fd mov      [0xfd882774], AX
-FFF8172B 33 c0      xor      EAX, EAX
-FFF8172D 5e         pop      ESI
-FFF8172E 8b e5      mov      ESP, EBP
-FFF81730 5d         pop      EBP
-FFF81731 c3         ret      
+FFF81685 55 - - - - - - - - -          push     EBP
+FFF81686 8b ec - - - - - - - -         mov      EBP, ESP
+FFF81688 83 ec 2c - - - - - - -        sub      ESP, 0x2c
+FFF8168B 56 - - - - - - - - -          push     ESI
+FFF8168C 33 c0 - - - - - - - -         xor      EAX, EAX
+FFF8168E c7 45 d4 f8 03 f8 02 - - -    mov      dword ptr [EBP + -0x2c], 0x2f803f8
+FFF81695 be 80 80 0f 00 - - - - -      mov      ESI, 0xf8080
+FFF8169A c7 45 d8 20 02 28 02 - - -    mov      dword ptr [EBP + -0x28], 0x2280220
+FFF816A1 57 - - - - - - - - -          push     EDI
+FFF816A2 8b ce - - - - - - - -         mov      ECX, ESI
+FFF816A4 c7 45 dc 38 02 e8 02 - - -    mov      dword ptr [EBP + -0x24], 0x2e80238
+FFF816AB c7 45 e0 38 03 e8 03 - - -    mov      dword ptr [EBP + -0x20], 0x3e80338
+FFF816B2 c7 45 e4 f0 02 e0 02 - - -    mov      dword ptr [EBP + -0x1c], 0x2e002f0
+FFF816B9 66 89 45 e8 - - - - - -       mov      word ptr [EBP + -0x18], AX
+FFF816BD c7 45 ec 78 03 78 02 - - -    mov      dword ptr [EBP + -0x14], 0x2780378
+FFF816C4 c7 45 f0 bc 03 00 00 - - -    mov      dword ptr [EBP + -0x10], 0x3bc
+FFF816CB c7 45 f4 f0 03 70 03 - - -    mov      dword ptr [EBP + -0xc], 0x37003f0
+FFF816D2 66 89 45 f8 - - - - - -       mov      word ptr [EBP + -0x8], AX
+FFF816D6 e8 8a 05 00 00 - - - - -      call     0xfff81c65
+FFF816DB 0f b7 d0 - - - - - - -        movzx    EDX, AX
+FFF816DE 8b ce - - - - - - - -         mov      ECX, ESI
+FFF816E0 89 55 fc - - - - - - -        mov      dword ptr [EBP + -0x4], EDX
+FFF816E3 e8 d6 05 00 00 - - - - -      call     0xfff81cbe
+FFF816E8 b8 70 27 88 fd - - - - -      mov      EAX, 0xfd882770
+FFF816ED 83 c6 02 - - - - - - -        add      ESI, 0x2
+FFF816F0 8b ce - - - - - - - -         mov      ECX, ESI
+FFF816F2 66 8b 00 - - - - - - -        mov      AX, word ptr [EAX]
+FFF816F5 0f b7 c0 - - - - - - -        movzx    EAX, AX
+FFF816F8 66 a3 70 27 88 fd - - - -     mov      [0xfd882770], AX
+FFF816FE e8 62 05 00 00 - - - - -      call     0xfff81c65
+FFF81703 0f b7 d0 - - - - - - -        movzx    EDX, AX
+FFF81706 bf 00 08 00 00 - - - - -      mov      EDI, 0x800
+FFF8170B 0b d7 - - - - - - - -         or       EDX, EDI
+FFF8170D 8b ce - - - - - - - -         mov      ECX, ESI
+FFF8170F 89 55 fc - - - - - - -        mov      dword ptr [EBP + -0x4], EDX
+FFF81712 e8 a7 05 00 00 - - - - -      call     0xfff81cbe
+FFF81717 b8 74 27 88 fd - - - - -      mov      EAX, 0xfd882774
+FFF8171C 66 8b 00 - - - - - - -        mov      AX, word ptr [EAX]
+FFF8171F 0f b7 c0 - - - - - - -        movzx    EAX, AX
+FFF81722 0b c7 - - - - - - - -         or       EAX, EDI
+FFF81724 5f - - - - - - - - -          pop      EDI
+FFF81725 66 a3 74 27 88 fd - - - -     mov      [0xfd882774], AX
+FFF8172B 33 c0 - - - - - - - -         xor      EAX, EAX
+FFF8172D 5e - - - - - - - - -          pop      ESI
+FFF8172E 8b e5 - - - - - - - -         mov      ESP, EBP
+FFF81730 5d - - - - - - - - -          pop      EBP
+FFF81731 c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff81732 @ FFF81732
-FFF81732 51         push     ECX
-FFF81733 e8 d0 04 00 00 call     0xfff81c08
-FFF81738 ba 01 00 41 fe mov      EDX, 0xfe410001
-FFF8173D 84 c0      test     AL, AL
-FFF8173F 74 13      jz       0xfff81754
-FFF81741 b8 a8 80 0f e0 mov      EAX, 0xe00f80a8
-FFF81746 8b 00      mov      EAX, dword ptr [EAX]
-FFF81748 25 00 00 ff ff and      EAX, 0xffff0000
-FFF8174D 3d 00 00 41 fe cmp      EAX, 0xfe410000
-FFF81752 74 0f      jz       0xfff81763
-FFF81754 e8 cd 04 00 00 call     0xfff81c26
-FFF81759 84 c0      test     AL, AL
-FFF8175B 75 1f      jnz      0xfff8177c
-FFF8175D 89 15 40 27 88 fd mov      dword ptr [0xfd882740], EDX
-FFF81763 b8 98 80 0f e0 mov      EAX, 0xe00f8098
-FFF81768 8b 00      mov      EAX, dword ptr [EAX]
-FFF8176A 83 e0 fe   and      EAX, 0xfffffffe
-FFF8176D a3 98 80 0f e0 mov      [0xe00f8098], EAX
-FFF81772 33 c0      xor      EAX, EAX
-FFF81774 89 15 98 80 0f e0 mov      dword ptr [0xe00f8098], EDX
-FFF8177A 59         pop      ECX
-FFF8177B c3         ret      
-FFF8177C b8 03 00 00 80 mov      EAX, 0x80000003
-FFF81781 59         pop      ECX
-FFF81782 c3         ret      
+; ==== write_cfg_magic_word @ FFF81732
+FFF81732 51 - - - - - - - - -          push     ECX
+FFF81733 e8 d0 04 00 00 - - - - -      call     0xfff81c08
+FFF81738 ba 01 00 41 fe - - - - -      mov      EDX, 0xfe410001
+FFF8173D 84 c0 - - - - - - - -         test     AL, AL
+FFF8173F 74 13 - - - - - - - -         jz       0xfff81754
+FFF81741 b8 a8 80 0f e0 - - - - -      mov      EAX, 0xe00f80a8
+FFF81746 8b 00 - - - - - - - -         mov      EAX, dword ptr [EAX]
+FFF81748 25 00 00 ff ff - - - - -      and      EAX, 0xffff0000
+FFF8174D 3d 00 00 41 fe - - - - -      cmp      EAX, 0xfe410000
+FFF81752 74 0f - - - - - - - -         jz       0xfff81763
+FFF81754 e8 cd 04 00 00 - - - - -      call     0xfff81c26
+FFF81759 84 c0 - - - - - - - -         test     AL, AL
+FFF8175B 75 1f - - - - - - - -         jnz      0xfff8177c
+FFF8175D 89 15 40 27 88 fd - - - -     mov      dword ptr [0xfd882740], EDX
+FFF81763 b8 98 80 0f e0 - - - - -      mov      EAX, 0xe00f8098
+FFF81768 8b 00 - - - - - - - -         mov      EAX, dword ptr [EAX]
+FFF8176A 83 e0 fe - - - - - - -        and      EAX, 0xfffffffe
+FFF8176D a3 98 80 0f e0 - - - - -      mov      [0xe00f8098], EAX
+FFF81772 33 c0 - - - - - - - -         xor      EAX, EAX
+FFF81774 89 15 98 80 0f e0 - - - -     mov      dword ptr [0xe00f8098], EDX
+FFF8177A 59 - - - - - - - - -          pop      ECX
+FFF8177B c3 - - - - - - - - -          ret      
+FFF8177C b8 03 00 00 80 - - - - -      mov      EAX, 0x80000003
+FFF81781 59 - - - - - - - - -          pop      ECX
+FFF81782 c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff81783 @ FFF81783
-FFF81783 51         push     ECX
-FFF81784 53         push     EBX
-FFF81785 55         push     EBP
-FFF81786 56         push     ESI
-FFF81787 57         push     EDI
-FFF81788 8a da      mov      BL, DL
-FFF8178A 33 f6      xor      ESI, ESI
-FFF8178C 6a 66      push     0x66
-FFF8178E 5d         pop      EBP
-FFF8178F 66 8b d5   mov      DX, BP
-FFF81792 ec         in       AL, DX
-FFF81793 a8 02      test     AL, 0x2
-FFF81795 74 25      jz       0xfff817bc
-FFF81797 bf 00 00 02 00 mov      EDI, 0x20000
-FFF8179C 3b f7      cmp      ESI, EDI
-FFF8179E 73 15      jnc      0xfff817b5
-FFF817A0 6a 0f      push     0xf
-FFF817A2 59         pop      ECX
-FFF817A3 e8 a0 01 00 00 call     0xfff81948
-FFF817A8 66 8b d5   mov      DX, BP
-FFF817AB ec         in       AL, DX
-FFF817AC 46         inc      ESI
-FFF817AD a8 02      test     AL, 0x2
-FFF817AF 75 eb      jnz      0xfff8179c
-FFF817B1 3b f7      cmp      ESI, EDI
-FFF817B3 72 07      jc       0xfff817bc
-FFF817B5 b8 07 00 00 80 mov      EAX, 0x80000007
-FFF817BA eb 08      jmp      0xfff817c4
-FFF817BC 66 8b d5   mov      DX, BP
-FFF817BF 8a c3      mov      AL, BL
-FFF817C1 ee         out      DX, AL
-FFF817C2 33 c0      xor      EAX, EAX
-FFF817C4 5f         pop      EDI
-FFF817C5 5e         pop      ESI
-FFF817C6 5d         pop      EBP
-FFF817C7 5b         pop      EBX
-FFF817C8 59         pop      ECX
-FFF817C9 c3         ret      
+; ==== write_port_0x66 @ FFF81783
+FFF81783 51 - - - - - - - - -          push     ECX
+FFF81784 53 - - - - - - - - -          push     EBX
+FFF81785 55 - - - - - - - - -          push     EBP
+FFF81786 56 - - - - - - - - -          push     ESI
+FFF81787 57 - - - - - - - - -          push     EDI
+FFF81788 8a da - - - - - - - -         mov      BL, DL
+FFF8178A 33 f6 - - - - - - - -         xor      ESI, ESI
+FFF8178C 6a 66 - - - - - - - -         push     0x66
+FFF8178E 5d - - - - - - - - -          pop      EBP
+FFF8178F 66 8b d5 - - - - - - -        mov      DX, BP
+FFF81792 ec - - - - - - - - -          in       AL, DX
+FFF81793 a8 02 - - - - - - - -         test     AL, 0x2
+FFF81795 74 25 - - - - - - - -         jz       0xfff817bc
+FFF81797 bf 00 00 02 00 - - - - -      mov      EDI, 0x20000
+FFF8179C 3b f7 - - - - - - - -         cmp      ESI, EDI
+FFF8179E 73 15 - - - - - - - -         jnc      0xfff817b5
+FFF817A0 6a 0f - - - - - - - -         push     0xf
+FFF817A2 59 - - - - - - - - -          pop      ECX
+FFF817A3 e8 a0 01 00 00 - - - - -      call     0xfff81948
+FFF817A8 66 8b d5 - - - - - - -        mov      DX, BP
+FFF817AB ec - - - - - - - - -          in       AL, DX
+FFF817AC 46 - - - - - - - - -          inc      ESI
+FFF817AD a8 02 - - - - - - - -         test     AL, 0x2
+FFF817AF 75 eb - - - - - - - -         jnz      0xfff8179c
+FFF817B1 3b f7 - - - - - - - -         cmp      ESI, EDI
+FFF817B3 72 07 - - - - - - - -         jc       0xfff817bc
+FFF817B5 b8 07 00 00 80 - - - - -      mov      EAX, 0x80000007
+FFF817BA eb 08 - - - - - - - -         jmp      0xfff817c4
+FFF817BC 66 8b d5 - - - - - - -        mov      DX, BP
+FFF817BF 8a c3 - - - - - - - -         mov      AL, BL
+FFF817C1 ee - - - - - - - - -          out      DX, AL
+FFF817C2 33 c0 - - - - - - - -         xor      EAX, EAX
+FFF817C4 5f - - - - - - - - -          pop      EDI
+FFF817C5 5e - - - - - - - - -          pop      ESI
+FFF817C6 5d - - - - - - - - -          pop      EBP
+FFF817C7 5b - - - - - - - - -          pop      EBX
+FFF817C8 59 - - - - - - - - -          pop      ECX
+FFF817C9 c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff817ca @ FFF817CA
-FFF817CA 51         push     ECX
-FFF817CB 53         push     EBX
-FFF817CC 55         push     EBP
-FFF817CD 56         push     ESI
-FFF817CE 57         push     EDI
-FFF817CF 8a da      mov      BL, DL
-FFF817D1 33 f6      xor      ESI, ESI
-FFF817D3 6a 66      push     0x66
-FFF817D5 5d         pop      EBP
-FFF817D6 66 8b d5   mov      DX, BP
-FFF817D9 ec         in       AL, DX
-FFF817DA a8 02      test     AL, 0x2
-FFF817DC 74 25      jz       0xfff81803
-FFF817DE bf 00 00 02 00 mov      EDI, 0x20000
-FFF817E3 3b f7      cmp      ESI, EDI
-FFF817E5 73 15      jnc      0xfff817fc
-FFF817E7 6a 0f      push     0xf
-FFF817E9 59         pop      ECX
-FFF817EA e8 59 01 00 00 call     0xfff81948
-FFF817EF 66 8b d5   mov      DX, BP
-FFF817F2 ec         in       AL, DX
-FFF817F3 46         inc      ESI
-FFF817F4 a8 02      test     AL, 0x2
-FFF817F6 75 eb      jnz      0xfff817e3
-FFF817F8 3b f7      cmp      ESI, EDI
-FFF817FA 72 07      jc       0xfff81803
-FFF817FC b8 07 00 00 80 mov      EAX, 0x80000007
-FFF81801 eb 0b      jmp      0xfff8180e
-FFF81803 6a 62      push     0x62
-FFF81805 58         pop      EAX
-FFF81806 66 8b d0   mov      DX, AX
-FFF81809 8a c3      mov      AL, BL
-FFF8180B ee         out      DX, AL
-FFF8180C 33 c0      xor      EAX, EAX
-FFF8180E 5f         pop      EDI
-FFF8180F 5e         pop      ESI
-FFF81810 5d         pop      EBP
-FFF81811 5b         pop      EBX
-FFF81812 59         pop      ECX
-FFF81813 c3         ret      
+; ==== write_port_0x62 @ FFF817CA
+FFF817CA 51 - - - - - - - - -          push     ECX
+FFF817CB 53 - - - - - - - - -          push     EBX
+FFF817CC 55 - - - - - - - - -          push     EBP
+FFF817CD 56 - - - - - - - - -          push     ESI
+FFF817CE 57 - - - - - - - - -          push     EDI
+FFF817CF 8a da - - - - - - - -         mov      BL, DL
+FFF817D1 33 f6 - - - - - - - -         xor      ESI, ESI
+FFF817D3 6a 66 - - - - - - - -         push     0x66
+FFF817D5 5d - - - - - - - - -          pop      EBP
+FFF817D6 66 8b d5 - - - - - - -        mov      DX, BP
+FFF817D9 ec - - - - - - - - -          in       AL, DX
+FFF817DA a8 02 - - - - - - - -         test     AL, 0x2
+FFF817DC 74 25 - - - - - - - -         jz       0xfff81803
+FFF817DE bf 00 00 02 00 - - - - -      mov      EDI, 0x20000
+FFF817E3 3b f7 - - - - - - - -         cmp      ESI, EDI
+FFF817E5 73 15 - - - - - - - -         jnc      0xfff817fc
+FFF817E7 6a 0f - - - - - - - -         push     0xf
+FFF817E9 59 - - - - - - - - -          pop      ECX
+FFF817EA e8 59 01 00 00 - - - - -      call     0xfff81948
+FFF817EF 66 8b d5 - - - - - - -        mov      DX, BP
+FFF817F2 ec - - - - - - - - -          in       AL, DX
+FFF817F3 46 - - - - - - - - -          inc      ESI
+FFF817F4 a8 02 - - - - - - - -         test     AL, 0x2
+FFF817F6 75 eb - - - - - - - -         jnz      0xfff817e3
+FFF817F8 3b f7 - - - - - - - -         cmp      ESI, EDI
+FFF817FA 72 07 - - - - - - - -         jc       0xfff81803
+FFF817FC b8 07 00 00 80 - - - - -      mov      EAX, 0x80000007
+FFF81801 eb 0b - - - - - - - -         jmp      0xfff8180e
+FFF81803 6a 62 - - - - - - - -         push     0x62
+FFF81805 58 - - - - - - - - -          pop      EAX
+FFF81806 66 8b d0 - - - - - - -        mov      DX, AX
+FFF81809 8a c3 - - - - - - - -         mov      AL, BL
+FFF8180B ee - - - - - - - - -          out      DX, AL
+FFF8180C 33 c0 - - - - - - - -         xor      EAX, EAX
+FFF8180E 5f - - - - - - - - -          pop      EDI
+FFF8180F 5e - - - - - - - - -          pop      ESI
+FFF81810 5d - - - - - - - - -          pop      EBP
+FFF81811 5b - - - - - - - - -          pop      EBX
+FFF81812 59 - - - - - - - - -          pop      ECX
+FFF81813 c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff81814 @ FFF81814
-FFF81814 53         push     EBX
-FFF81815 56         push     ESI
-FFF81816 57         push     EDI
-FFF81817 33 f6      xor      ESI, ESI
-FFF81819 6a 66      push     0x66
-FFF8181B 5b         pop      EBX
-FFF8181C 66 8b d3   mov      DX, BX
-FFF8181F ec         in       AL, DX
-FFF81820 a8 01      test     AL, 0x1
-FFF81822 74 34      jz       0xfff81858
-FFF81824 bf 00 00 02 00 mov      EDI, 0x20000
-FFF81829 3b f7      cmp      ESI, EDI
-FFF8182B 73 24      jnc      0xfff81851
-FFF8182D 6a 62      push     0x62
-FFF8182F 58         pop      EAX
-FFF81830 66 8b d0   mov      DX, AX
-FFF81833 ec         in       AL, DX
-FFF81834 ba 80 00 00 00 mov      EDX, 0x80
-FFF81839 ee         out      DX, AL
-FFF8183A b9 88 13 00 00 mov      ECX, 0x1388
-FFF8183F e8 04 01 00 00 call     0xfff81948
-FFF81844 66 8b d3   mov      DX, BX
-FFF81847 ec         in       AL, DX
-FFF81848 46         inc      ESI
-FFF81849 a8 01      test     AL, 0x1
-FFF8184B 75 dc      jnz      0xfff81829
-FFF8184D 3b f7      cmp      ESI, EDI
-FFF8184F 72 07      jc       0xfff81858
-FFF81851 b8 07 00 00 80 mov      EAX, 0x80000007
-FFF81856 eb 02      jmp      0xfff8185a
-FFF81858 33 c0      xor      EAX, EAX
-FFF8185A 5f         pop      EDI
-FFF8185B 5e         pop      ESI
-FFF8185C 5b         pop      EBX
-FFF8185D c3         ret      
+; ==== drain_port_0x62_to_0x80 @ FFF81814
+FFF81814 53 - - - - - - - - -          push     EBX
+FFF81815 56 - - - - - - - - -          push     ESI
+FFF81816 57 - - - - - - - - -          push     EDI
+FFF81817 33 f6 - - - - - - - -         xor      ESI, ESI
+FFF81819 6a 66 - - - - - - - -         push     0x66
+FFF8181B 5b - - - - - - - - -          pop      EBX
+FFF8181C 66 8b d3 - - - - - - -        mov      DX, BX
+FFF8181F ec - - - - - - - - -          in       AL, DX
+FFF81820 a8 01 - - - - - - - -         test     AL, 0x1
+FFF81822 74 34 - - - - - - - -         jz       0xfff81858
+FFF81824 bf 00 00 02 00 - - - - -      mov      EDI, 0x20000
+FFF81829 3b f7 - - - - - - - -         cmp      ESI, EDI
+FFF8182B 73 24 - - - - - - - -         jnc      0xfff81851
+FFF8182D 6a 62 - - - - - - - -         push     0x62
+FFF8182F 58 - - - - - - - - -          pop      EAX
+FFF81830 66 8b d0 - - - - - - -        mov      DX, AX
+FFF81833 ec - - - - - - - - -          in       AL, DX
+FFF81834 ba 80 00 00 00 - - - - -      mov      EDX, 0x80
+FFF81839 ee - - - - - - - - -          out      DX, AL
+FFF8183A b9 88 13 00 00 - - - - -      mov      ECX, 0x1388
+FFF8183F e8 04 01 00 00 - - - - -      call     0xfff81948
+FFF81844 66 8b d3 - - - - - - -        mov      DX, BX
+FFF81847 ec - - - - - - - - -          in       AL, DX
+FFF81848 46 - - - - - - - - -          inc      ESI
+FFF81849 a8 01 - - - - - - - -         test     AL, 0x1
+FFF8184B 75 dc - - - - - - - -         jnz      0xfff81829
+FFF8184D 3b f7 - - - - - - - -         cmp      ESI, EDI
+FFF8184F 72 07 - - - - - - - -         jc       0xfff81858
+FFF81851 b8 07 00 00 80 - - - - -      mov      EAX, 0x80000007
+FFF81856 eb 02 - - - - - - - -         jmp      0xfff8185a
+FFF81858 33 c0 - - - - - - - -         xor      EAX, EAX
+FFF8185A 5f - - - - - - - - -          pop      EDI
+FFF8185B 5e - - - - - - - - -          pop      ESI
+FFF8185C 5b - - - - - - - - -          pop      EBX
+FFF8185D c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff8185e @ FFF8185E
-FFF8185E 53         push     EBX
-FFF8185F 56         push     ESI
-FFF81860 57         push     EDI
-FFF81861 33 f6      xor      ESI, ESI
-FFF81863 6a 66      push     0x66
-FFF81865 5b         pop      EBX
-FFF81866 66 8b d3   mov      DX, BX
-FFF81869 ec         in       AL, DX
-FFF8186A a8 02      test     AL, 0x2
-FFF8186C 74 25      jz       0xfff81893
-FFF8186E bf 00 00 02 00 mov      EDI, 0x20000
-FFF81873 3b f7      cmp      ESI, EDI
-FFF81875 73 15      jnc      0xfff8188c
-FFF81877 6a 0f      push     0xf
-FFF81879 59         pop      ECX
-FFF8187A e8 c9 00 00 00 call     0xfff81948
-FFF8187F 66 8b d3   mov      DX, BX
-FFF81882 ec         in       AL, DX
-FFF81883 46         inc      ESI
-FFF81884 a8 02      test     AL, 0x2
-FFF81886 75 eb      jnz      0xfff81873
-FFF81888 3b f7      cmp      ESI, EDI
-FFF8188A 72 07      jc       0xfff81893
-FFF8188C b8 07 00 00 80 mov      EAX, 0x80000007
-FFF81891 eb 02      jmp      0xfff81895
-FFF81893 33 c0      xor      EAX, EAX
-FFF81895 5f         pop      EDI
-FFF81896 5e         pop      ESI
-FFF81897 5b         pop      EBX
-FFF81898 c3         ret      
+; ==== wait_for_port_0x66_bit1 @ FFF8185E
+FFF8185E 53 - - - - - - - - -          push     EBX
+FFF8185F 56 - - - - - - - - -          push     ESI
+FFF81860 57 - - - - - - - - -          push     EDI
+FFF81861 33 f6 - - - - - - - -         xor      ESI, ESI
+FFF81863 6a 66 - - - - - - - -         push     0x66
+FFF81865 5b - - - - - - - - -          pop      EBX
+FFF81866 66 8b d3 - - - - - - -        mov      DX, BX
+FFF81869 ec - - - - - - - - -          in       AL, DX
+FFF8186A a8 02 - - - - - - - -         test     AL, 0x2
+FFF8186C 74 25 - - - - - - - -         jz       0xfff81893
+FFF8186E bf 00 00 02 00 - - - - -      mov      EDI, 0x20000
+FFF81873 3b f7 - - - - - - - -         cmp      ESI, EDI
+FFF81875 73 15 - - - - - - - -         jnc      0xfff8188c
+FFF81877 6a 0f - - - - - - - -         push     0xf
+FFF81879 59 - - - - - - - - -          pop      ECX
+FFF8187A e8 c9 00 00 00 - - - - -      call     0xfff81948
+FFF8187F 66 8b d3 - - - - - - -        mov      DX, BX
+FFF81882 ec - - - - - - - - -          in       AL, DX
+FFF81883 46 - - - - - - - - -          inc      ESI
+FFF81884 a8 02 - - - - - - - -         test     AL, 0x2
+FFF81886 75 eb - - - - - - - -         jnz      0xfff81873
+FFF81888 3b f7 - - - - - - - -         cmp      ESI, EDI
+FFF8188A 72 07 - - - - - - - -         jc       0xfff81893
+FFF8188C b8 07 00 00 80 - - - - -      mov      EAX, 0x80000007
+FFF81891 eb 02 - - - - - - - -         jmp      0xfff81895
+FFF81893 33 c0 - - - - - - - -         xor      EAX, EAX
+FFF81895 5f - - - - - - - - -          pop      EDI
+FFF81896 5e - - - - - - - - -          pop      ESI
+FFF81897 5b - - - - - - - - -          pop      EBX
+FFF81898 c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff81899 @ FFF81899
-FFF81899 53         push     EBX
-FFF8189A 56         push     ESI
-FFF8189B 8a da      mov      BL, DL
-FFF8189D e8 bc ff ff ff call     0xfff8185e
-FFF818A2 8b f0      mov      ESI, EAX
-FFF818A4 85 f6      test     ESI, ESI
-FFF818A6 78 21      js       0xfff818c9
-FFF818A8 e8 67 ff ff ff call     0xfff81814
-FFF818AD 8a d3      mov      DL, BL
-FFF818AF e8 cf fe ff ff call     0xfff81783
-FFF818B4 e8 a5 ff ff ff call     0xfff8185e
-FFF818B9 8a 54 24 0c mov      DL, byte ptr [ESP + 0xc]
-FFF818BD e8 08 ff ff ff call     0xfff817ca
-FFF818C2 e8 4d ff ff ff call     0xfff81814
-FFF818C7 8b c6      mov      EAX, ESI
-FFF818C9 5e         pop      ESI
-FFF818CA 5b         pop      EBX
-FFF818CB c3         ret      
+; ==== write_two_bytes_via_0x66_0x62 @ FFF81899
+FFF81899 53 - - - - - - - - -          push     EBX
+FFF8189A 56 - - - - - - - - -          push     ESI
+FFF8189B 8a da - - - - - - - -         mov      BL, DL
+FFF8189D e8 bc ff ff ff - - - - -      call     0xfff8185e
+FFF818A2 8b f0 - - - - - - - -         mov      ESI, EAX
+FFF818A4 85 f6 - - - - - - - -         test     ESI, ESI
+FFF818A6 78 21 - - - - - - - -         js       0xfff818c9
+FFF818A8 e8 67 ff ff ff - - - - -      call     0xfff81814
+FFF818AD 8a d3 - - - - - - - -         mov      DL, BL
+FFF818AF e8 cf fe ff ff - - - - -      call     0xfff81783
+FFF818B4 e8 a5 ff ff ff - - - - -      call     0xfff8185e
+FFF818B9 8a 54 24 0c - - - - - -       mov      DL, byte ptr [ESP + 0xc]
+FFF818BD e8 08 ff ff ff - - - - -      call     0xfff817ca
+FFF818C2 e8 4d ff ff ff - - - - -      call     0xfff81814
+FFF818C7 8b c6 - - - - - - - -         mov      EAX, ESI
+FFF818C9 5e - - - - - - - - -          pop      ESI
+FFF818CA 5b - - - - - - - - -          pop      EBX
+FFF818CB c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff818cc @ FFF818CC
-FFF818CC 51         push     ECX
-FFF818CD 6a 07      push     0x7
-FFF818CF b2 a3      mov      DL, 0xa3
-FFF818D1 e8 c3 ff ff ff call     0xfff81899
-FFF818D6 59         pop      ECX
-FFF818D7 85 c0      test     EAX, EAX
-FFF818D9 78 22      js       0xfff818fd
-FFF818DB ff 74 24 08 push     dword ptr [ESP + 0x8]
-FFF818DF b2 a2      mov      DL, 0xa2
-FFF818E1 e8 b3 ff ff ff call     0xfff81899
-FFF818E6 59         pop      ECX
-FFF818E7 85 c0      test     EAX, EAX
-FFF818E9 78 12      js       0xfff818fd
-FFF818EB ff 74 24 0c push     dword ptr [ESP + 0xc]
-FFF818EF b2 a5      mov      DL, 0xa5
-FFF818F1 e8 a3 ff ff ff call     0xfff81899
-FFF818F6 59         pop      ECX
-FFF818F7 85 c0      test     EAX, EAX
-FFF818F9 78 02      js       0xfff818fd
-FFF818FB 33 c0      xor      EAX, EAX
-FFF818FD 59         pop      ECX
-FFF818FE c3         ret      
+; ==== write_three_bytes_via_0x66_0x62 @ FFF818CC
+FFF818CC 51 - - - - - - - - -          push     ECX
+FFF818CD 6a 07 - - - - - - - -         push     0x7
+FFF818CF b2 a3 - - - - - - - -         mov      DL, 0xa3
+FFF818D1 e8 c3 ff ff ff - - - - -      call     0xfff81899
+FFF818D6 59 - - - - - - - - -          pop      ECX
+FFF818D7 85 c0 - - - - - - - -         test     EAX, EAX
+FFF818D9 78 22 - - - - - - - -         js       0xfff818fd
+FFF818DB ff 74 24 08 - - - - - -       push     dword ptr [ESP + 0x8]
+FFF818DF b2 a2 - - - - - - - -         mov      DL, 0xa2
+FFF818E1 e8 b3 ff ff ff - - - - -      call     0xfff81899
+FFF818E6 59 - - - - - - - - -          pop      ECX
+FFF818E7 85 c0 - - - - - - - -         test     EAX, EAX
+FFF818E9 78 12 - - - - - - - -         js       0xfff818fd
+FFF818EB ff 74 24 0c - - - - - -       push     dword ptr [ESP + 0xc]
+FFF818EF b2 a5 - - - - - - - -         mov      DL, 0xa5
+FFF818F1 e8 a3 ff ff ff - - - - -      call     0xfff81899
+FFF818F6 59 - - - - - - - - -          pop      ECX
+FFF818F7 85 c0 - - - - - - - -         test     EAX, EAX
+FFF818F9 78 02 - - - - - - - -         js       0xfff818fd
+FFF818FB 33 c0 - - - - - - - -         xor      EAX, EAX
+FFF818FD 59 - - - - - - - - -          pop      ECX
+FFF818FE c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff818ff @ FFF818FF
-FFF818FF 53         push     EBX
-FFF81900 55         push     EBP
-FFF81901 56         push     ESI
-FFF81902 57         push     EDI
-FFF81903 8b f9      mov      EDI, ECX
-FFF81905 bd 08 18 00 00 mov      EBP, 0x1808
-FFF8190A 8b f7      mov      ESI, EDI
-FFF8190C c1 ee 16   shr      ESI, 0x16
-FFF8190F 81 e7 ff ff 3f 00 and      EDI, 0x3fffff
-FFF81915 66 8b d5   mov      DX, BP
-FFF81918 ed         in       EAX, DX
-FFF81919 8b d8      mov      EBX, EAX
-FFF8191B 81 e3 ff ff ff 00 and      EBX, 0xffffff
-FFF81921 03 df      add      EBX, EDI
-FFF81923 bf 00 00 40 00 mov      EDI, 0x400000
-FFF81928 eb 05      jmp      0xfff8192f
-FFF8192A f3 90      pause    
-FFF8192C 66 8b d5   mov      DX, BP
-FFF8192F ed         in       EAX, DX
-FFF81930 8b cb      mov      ECX, EBX
-FFF81932 2b c8      sub      ECX, EAX
-FFF81934 f7 c1 00 00 80 00 test     ECX, 0x800000
-FFF8193A 74 ee      jz       0xfff8192a
-FFF8193C 8b c6      mov      EAX, ESI
-FFF8193E 4e         dec      ESI
-FFF8193F 85 c0      test     EAX, EAX
-FFF81941 75 d2      jnz      0xfff81915
-FFF81943 5f         pop      EDI
-FFF81944 5e         pop      ESI
-FFF81945 5d         pop      EBP
-FFF81946 5b         pop      EBX
-FFF81947 c3         ret      
+; ==== delay_1808_counter @ FFF818FF
+FFF818FF 53 - - - - - - - - -          push     EBX
+FFF81900 55 - - - - - - - - -          push     EBP
+FFF81901 56 - - - - - - - - -          push     ESI
+FFF81902 57 - - - - - - - - -          push     EDI
+FFF81903 8b f9 - - - - - - - -         mov      EDI, ECX
+FFF81905 bd 08 18 00 00 - - - - -      mov      EBP, 0x1808
+FFF8190A 8b f7 - - - - - - - -         mov      ESI, EDI
+FFF8190C c1 ee 16 - - - - - - -        shr      ESI, 0x16
+FFF8190F 81 e7 ff ff 3f 00 - - - -     and      EDI, 0x3fffff
+FFF81915 66 8b d5 - - - - - - -        mov      DX, BP
+FFF81918 ed - - - - - - - - -          in       EAX, DX
+FFF81919 8b d8 - - - - - - - -         mov      EBX, EAX
+FFF8191B 81 e3 ff ff ff 00 - - - -     and      EBX, 0xffffff
+FFF81921 03 df - - - - - - - -         add      EBX, EDI
+FFF81923 bf 00 00 40 00 - - - - -      mov      EDI, 0x400000
+FFF81928 eb 05 - - - - - - - -         jmp      0xfff8192f
+FFF8192A f3 90 - - - - - - - -         pause    
+FFF8192C 66 8b d5 - - - - - - -        mov      DX, BP
+FFF8192F ed - - - - - - - - -          in       EAX, DX
+FFF81930 8b cb - - - - - - - -         mov      ECX, EBX
+FFF81932 2b c8 - - - - - - - -         sub      ECX, EAX
+FFF81934 f7 c1 00 00 80 00 - - - -     test     ECX, 0x800000
+FFF8193A 74 ee - - - - - - - -         jz       0xfff8192a
+FFF8193C 8b c6 - - - - - - - -         mov      EAX, ESI
+FFF8193E 4e - - - - - - - - -          dec      ESI
+FFF8193F 85 c0 - - - - - - - -         test     EAX, EAX
+FFF81941 75 d2 - - - - - - - -         jnz      0xfff81915
+FFF81943 5f - - - - - - - - -          pop      EDI
+FFF81944 5e - - - - - - - - -          pop      ESI
+FFF81945 5d - - - - - - - - -          pop      EBP
+FFF81946 5b - - - - - - - - -          pop      EBX
+FFF81947 c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff81948 @ FFF81948
-FFF81948 55         push     EBP
-FFF81949 8b ec      mov      EBP, ESP
-FFF8194B 83 ec 0c   sub      ESP, 0xc
-FFF8194E 83 65 fc 00 and      dword ptr [EBP + -0x4], 0x0
-FFF81952 56         push     ESI
-FFF81953 8b f1      mov      ESI, ECX
-FFF81955 89 75 f8   mov      dword ptr [EBP + -0x8], ESI
-FFF81958 b9 99 9e 36 00 mov      ECX, 0x369e99
-FFF8195D 8b c1      mov      EAX, ECX
-FFF8195F 0f af 4d fc imul     ECX, dword ptr [EBP + -0x4]
-FFF81963 f7 65 f8   mul      dword ptr [EBP + -0x8]
-FFF81966 03 d1      add      EDX, ECX
-FFF81968 89 45 f8   mov      dword ptr [EBP + -0x8], EAX
-FFF8196B 89 55 fc   mov      dword ptr [EBP + -0x4], EDX
-FFF8196E 8b 45 fc   mov      EAX, dword ptr [EBP + -0x4]
-FFF81971 b9 40 42 0f 00 mov      ECX, 0xf4240
-FFF81976 33 d2      xor      EDX, EDX
-FFF81978 f7 f1      div      ECX
-FFF8197A 50         push     EAX
-FFF8197B 8b 45 f8   mov      EAX, dword ptr [EBP + -0x8]
-FFF8197E f7 f1      div      ECX
-FFF81980 5a         pop      EDX
-FFF81981 8b c8      mov      ECX, EAX
-FFF81983 e8 77 ff ff ff call     0xfff818ff
-FFF81988 8b c6      mov      EAX, ESI
-FFF8198A 5e         pop      ESI
-FFF8198B 8b e5      mov      ESP, EBP
-FFF8198D 5d         pop      EBP
-FFF8198E c3         ret      
+; ==== scale_count_then_busy_wait @ FFF81948
+FFF81948 55 - - - - - - - - -          push     EBP
+FFF81949 8b ec - - - - - - - -         mov      EBP, ESP
+FFF8194B 83 ec 0c - - - - - - -        sub      ESP, 0xc
+FFF8194E 83 65 fc 00 - - - - - -       and      dword ptr [EBP + -0x4], 0x0
+FFF81952 56 - - - - - - - - -          push     ESI
+FFF81953 8b f1 - - - - - - - -         mov      ESI, ECX
+FFF81955 89 75 f8 - - - - - - -        mov      dword ptr [EBP + -0x8], ESI
+FFF81958 b9 99 9e 36 00 - - - - -      mov      ECX, 0x369e99
+FFF8195D 8b c1 - - - - - - - -         mov      EAX, ECX
+FFF8195F 0f af 4d fc - - - - - -       imul     ECX, dword ptr [EBP + -0x4]
+FFF81963 f7 65 f8 - - - - - - -        mul      dword ptr [EBP + -0x8]
+FFF81966 03 d1 - - - - - - - -         add      EDX, ECX
+FFF81968 89 45 f8 - - - - - - -        mov      dword ptr [EBP + -0x8], EAX
+FFF8196B 89 55 fc - - - - - - -        mov      dword ptr [EBP + -0x4], EDX
+FFF8196E 8b 45 fc - - - - - - -        mov      EAX, dword ptr [EBP + -0x4]
+FFF81971 b9 40 42 0f 00 - - - - -      mov      ECX, 0xf4240
+FFF81976 33 d2 - - - - - - - -         xor      EDX, EDX
+FFF81978 f7 f1 - - - - - - - -         div      ECX
+FFF8197A 50 - - - - - - - - -          push     EAX
+FFF8197B 8b 45 f8 - - - - - - -        mov      EAX, dword ptr [EBP + -0x8]
+FFF8197E f7 f1 - - - - - - - -         div      ECX
+FFF81980 5a - - - - - - - - -          pop      EDX
+FFF81981 8b c8 - - - - - - - -         mov      ECX, EAX
+FFF81983 e8 77 ff ff ff - - - - -      call     0xfff818ff
+FFF81988 8b c6 - - - - - - - -         mov      EAX, ESI
+FFF8198A 5e - - - - - - - - -          pop      ESI
+FFF8198B 8b e5 - - - - - - - -         mov      ESP, EBP
+FFF8198D 5d - - - - - - - - -          pop      EBP
+FFF8198E c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff8198f @ FFF8198F
-FFF8198F 55         push     EBP
-FFF81990 8b ec      mov      EBP, ESP
-FFF81992 51         push     ECX
-FFF81993 8d 55 fc   lea      EDX, [EBP + -0x4]
-FFF81996 e8 ec f9 ff ff call     0xfff81387
-FFF8199B 83 7d fc 00 cmp      dword ptr [EBP + -0x4], 0x0
-FFF8199F 0f 94 c0   setz     AL
-FFF819A2 8b e5      mov      ESP, EBP
-FFF819A4 5d         pop      EBP
-FFF819A5 c3         ret      
+; ==== is_callee_out_value_zero @ FFF8198F
+FFF8198F 55 - - - - - - - - -          push     EBP
+FFF81990 8b ec - - - - - - - -         mov      EBP, ESP
+FFF81992 51 - - - - - - - - -          push     ECX
+FFF81993 8d 55 fc - - - - - - -        lea      EDX, [EBP + -0x4]
+FFF81996 e8 ec f9 ff ff - - - - -      call     0xfff81387
+FFF8199B 83 7d fc 00 - - - - - -       cmp      dword ptr [EBP + -0x4], 0x0
+FFF8199F 0f 94 c0 - - - - - - -        setz     AL
+FFF819A2 8b e5 - - - - - - - -         mov      ESP, EBP
+FFF819A4 5d - - - - - - - - -          pop      EBP
+FFF819A5 c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff819a6 @ FFF819A6
-FFF819A6 55         push     EBP
-FFF819A7 8b ec      mov      EBP, ESP
-FFF819A9 51         push     ECX
-FFF819AA 56         push     ESI
-FFF819AB 57         push     EDI
-FFF819AC 8b f1      mov      ESI, ECX
-FFF819AE e8 8d fc ff ff call     0xfff81640
-FFF819B3 33 d2      xor      EDX, EDX
-FFF819B5 84 c0      test     AL, AL
-FFF819B7 8b c6      mov      EAX, ESI
-FFF819B9 0f 95 c2   setnz    DL
-FFF819BC c1 e8 18   shr      EAX, 0x18
-FFF819BF 83 c2 03   add      EDX, 0x3
-FFF819C2 3b c2      cmp      EAX, EDX
-FFF819C4 75 30      jnz      0xfff819f6
-FFF819C6 8d 4d fc   lea      ECX, [EBP + -0x4]
-FFF819C9 e8 0f 01 00 00 call     0xfff81add
-FFF819CE 8b c6      mov      EAX, ESI
-FFF819D0 c1 e8 10   shr      EAX, 0x10
-FFF819D3 0f b6 f8   movzx    EDI, AL
-FFF819D6 3b 7d fc   cmp      EDI, dword ptr [EBP + -0x4]
-FFF819D9 73 1b      jnc      0xfff819f6
-FFF819DB 8d 4d fc   lea      ECX, [EBP + -0x4]
-FFF819DE e8 fa 00 00 00 call     0xfff81add
-FFF819E3 6b cf 1e   imul     ECX, EDI, 0x1e
-FFF819E6 0f b7 4c 01 1c movzx    ECX, word ptr [ECX + EAX*0x1 + 0x1c]
-FFF819EB 0f b7 c6   movzx    EAX, SI
-FFF819EE 3b c1      cmp      EAX, ECX
-FFF819F0 73 04      jnc      0xfff819f6
-FFF819F2 b0 01      mov      AL, 0x1
-FFF819F4 eb 02      jmp      0xfff819f8
-FFF819F6 32 c0      xor      AL, AL
-FFF819F8 5f         pop      EDI
-FFF819F9 5e         pop      ESI
-FFF819FA 8b e5      mov      ESP, EBP
-FFF819FC 5d         pop      EBP
-FFF819FD c3         ret      
+; ==== check_selector_within_table_range @ FFF819A6
+FFF819A6 55 - - - - - - - - -          push     EBP
+FFF819A7 8b ec - - - - - - - -         mov      EBP, ESP
+FFF819A9 51 - - - - - - - - -          push     ECX
+FFF819AA 56 - - - - - - - - -          push     ESI
+FFF819AB 57 - - - - - - - - -          push     EDI
+FFF819AC 8b f1 - - - - - - - -         mov      ESI, ECX
+FFF819AE e8 8d fc ff ff - - - - -      call     0xfff81640
+FFF819B3 33 d2 - - - - - - - -         xor      EDX, EDX
+FFF819B5 84 c0 - - - - - - - -         test     AL, AL
+FFF819B7 8b c6 - - - - - - - -         mov      EAX, ESI
+FFF819B9 0f 95 c2 - - - - - - -        setnz    DL
+FFF819BC c1 e8 18 - - - - - - -        shr      EAX, 0x18
+FFF819BF 83 c2 03 - - - - - - -        add      EDX, 0x3
+FFF819C2 3b c2 - - - - - - - -         cmp      EAX, EDX
+FFF819C4 75 30 - - - - - - - -         jnz      0xfff819f6
+FFF819C6 8d 4d fc - - - - - - -        lea      ECX, [EBP + -0x4]
+FFF819C9 e8 0f 01 00 00 - - - - -      call     0xfff81add
+FFF819CE 8b c6 - - - - - - - -         mov      EAX, ESI
+FFF819D0 c1 e8 10 - - - - - - -        shr      EAX, 0x10
+FFF819D3 0f b6 f8 - - - - - - -        movzx    EDI, AL
+FFF819D6 3b 7d fc - - - - - - -        cmp      EDI, dword ptr [EBP + -0x4]
+FFF819D9 73 1b - - - - - - - -         jnc      0xfff819f6
+FFF819DB 8d 4d fc - - - - - - -        lea      ECX, [EBP + -0x4]
+FFF819DE e8 fa 00 00 00 - - - - -      call     0xfff81add
+FFF819E3 6b cf 1e - - - - - - -        imul     ECX, EDI, 0x1e
+FFF819E6 0f b7 4c 01 1c - - - - -      movzx    ECX, word ptr [ECX + EAX*0x1 + 0x1c]
+FFF819EB 0f b7 c6 - - - - - - -        movzx    EAX, SI
+FFF819EE 3b c1 - - - - - - - -         cmp      EAX, ECX
+FFF819F0 73 04 - - - - - - - -         jnc      0xfff819f6
+FFF819F2 b0 01 - - - - - - - -         mov      AL, 0x1
+FFF819F4 eb 02 - - - - - - - -         jmp      0xfff819f8
+FFF819F6 32 c0 - - - - - - - -         xor      AL, AL
+FFF819F8 5f - - - - - - - - -          pop      EDI
+FFF819F9 5e - - - - - - - - -          pop      ESI
+FFF819FA 8b e5 - - - - - - - -         mov      ESP, EBP
+FFF819FC 5d - - - - - - - - -          pop      EBP
+FFF819FD c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff819fe @ FFF819FE
-FFF819FE 55         push     EBP
-FFF819FF 8b ec      mov      EBP, ESP
-FFF81A01 83 ec 14   sub      ESP, 0x14
-FFF81A04 83 65 fc 00 and      dword ptr [EBP + -0x4], 0x0
-FFF81A08 83 65 f8 00 and      dword ptr [EBP + -0x8], 0x0
-FFF81A0C 53         push     EBX
-FFF81A0D 33 db      xor      EBX, EBX
-FFF81A0F 56         push     ESI
-FFF81A10 43         inc      EBX
-FFF81A11 f7 45 0c fe ff ff ff test     dword ptr [EBP + 0xc], 0xfffffffe
-FFF81A18 57         push     EDI
-FFF81A19 8b f9      mov      EDI, ECX
-FFF81A1B 74 29      jz       0xfff81a46
-FFF81A1D 8d 55 fc   lea      EDX, [EBP + -0x4]
-FFF81A20 e8 f8 f9 ff ff call     0xfff8141d
-FFF81A25 83 7d fc 00 cmp      dword ptr [EBP + -0x4], 0x0
-FFF81A29 74 1b      jz       0xfff81a46
-FFF81A2B 0f b7 d7   movzx    EDX, DI
-FFF81A2E 8b c3      mov      EAX, EBX
-FFF81A30 8b ca      mov      ECX, EDX
-FFF81A32 c1 ea 05   shr      EDX, 0x5
-FFF81A35 83 e1 1f   and      ECX, 0x1f
-FFF81A38 d3 e0      shl      EAX, CL
-FFF81A3A 8b cf      mov      ECX, EDI
-FFF81A3C 50         push     EAX
-FFF81A3D c1 e9 10   shr      ECX, 0x10
-FFF81A40 e8 a2 fa ff ff call     0xfff814e7
-FFF81A45 59         pop      ECX
-FFF81A46 8d 55 f8   lea      EDX, [EBP + -0x8]
-FFF81A49 8b cf      mov      ECX, EDI
-FFF81A4B e8 48 fa ff ff call     0xfff81498
-FFF81A50 83 7d f8 00 cmp      dword ptr [EBP + -0x8], 0x0
-FFF81A54 74 1b      jz       0xfff81a71
-FFF81A56 0f b7 d7   movzx    EDX, DI
-FFF81A59 8b c3      mov      EAX, EBX
-FFF81A5B 8b ca      mov      ECX, EDX
-FFF81A5D c1 ea 05   shr      EDX, 0x5
-FFF81A60 83 e1 1f   and      ECX, 0x1f
-FFF81A63 d3 e0      shl      EAX, CL
-FFF81A65 8b cf      mov      ECX, EDI
-FFF81A67 50         push     EAX
-FFF81A68 c1 e9 10   shr      ECX, 0x10
-FFF81A6B e8 f5 fa ff ff call     0xfff81565
-FFF81A70 59         pop      ECX
-FFF81A71 8b c7      mov      EAX, EDI
-FFF81A73 8d 4d f0   lea      ECX, [EBP + -0x10]
-FFF81A76 c1 e8 10   shr      EAX, 0x10
-FFF81A79 89 45 f4   mov      dword ptr [EBP + -0xc], EAX
-FFF81A7C 0f b6 f0   movzx    ESI, AL
-FFF81A7F e8 59 00 00 00 call     0xfff81add
-FFF81A84 6b d6 1e   imul     EDX, ESI, 0x1e
-FFF81A87 8b cf      mov      ECX, EDI
-FFF81A89 c1 e1 04   shl      ECX, 0x4
-FFF81A8C 66 03 4c 02 1a add      CX, word ptr [EDX + EAX*0x1 + 0x1a]
-FFF81A91 0f b6 04 02 movzx    EAX, byte ptr [EDX + EAX*0x1]
-FFF81A95 0d 00 fd ff ff or       EAX, 0xfffffd00
-FFF81A9A 0f b7 c9   movzx    ECX, CX
-FFF81A9D c1 e0 10   shl      EAX, 0x10
-FFF81AA0 0b c8      or       ECX, EAX
-FFF81AA2 8b 01      mov      EAX, dword ptr [ECX]
-FFF81AA4 83 e0 fe   and      EAX, 0xfffffffe
-FFF81AA7 0b 45 0c   or       EAX, dword ptr [EBP + 0xc]
-FFF81AAA 83 7d fc 00 cmp      dword ptr [EBP + -0x4], 0x0
-FFF81AAE 89 01      mov      dword ptr [ECX], EAX
-FFF81AB0 74 07      jz       0xfff81ab9
-FFF81AB2 8b cf      mov      ECX, EDI
-FFF81AB4 e8 8b fa ff ff call     0xfff81544
-FFF81AB9 83 7d f8 00 cmp      dword ptr [EBP + -0x8], 0x0
-FFF81ABD 74 17      jz       0xfff81ad6
-FFF81ABF 0f b7 d7   movzx    EDX, DI
-FFF81AC2 8b ca      mov      ECX, EDX
-FFF81AC4 c1 ea 05   shr      EDX, 0x5
-FFF81AC7 83 e1 1f   and      ECX, 0x1f
-FFF81ACA d3 e3      shl      EBX, CL
-FFF81ACC 8b 4d f4   mov      ECX, dword ptr [EBP + -0xc]
-FFF81ACF 53         push     EBX
-FFF81AD0 e8 c0 fa ff ff call     0xfff81595
-FFF81AD5 59         pop      ECX
-FFF81AD6 5f         pop      EDI
-FFF81AD7 5e         pop      ESI
-FFF81AD8 5b         pop      EBX
-FFF81AD9 8b e5      mov      ESP, EBP
-FFF81ADB 5d         pop      EBP
-FFF81ADC c3         ret      
+; ==== set_bitfield_in_mapped_register @ FFF819FE
+FFF819FE 55 - - - - - - - - -          push     EBP
+FFF819FF 8b ec - - - - - - - -         mov      EBP, ESP
+FFF81A01 83 ec 14 - - - - - - -        sub      ESP, 0x14
+FFF81A04 83 65 fc 00 - - - - - -       and      dword ptr [EBP + -0x4], 0x0
+FFF81A08 83 65 f8 00 - - - - - -       and      dword ptr [EBP + -0x8], 0x0
+FFF81A0C 53 - - - - - - - - -          push     EBX
+FFF81A0D 33 db - - - - - - - -         xor      EBX, EBX
+FFF81A0F 56 - - - - - - - - -          push     ESI
+FFF81A10 43 - - - - - - - - -          inc      EBX
+FFF81A11 f7 45 0c fe ff ff ff - - -    test     dword ptr [EBP + 0xc], 0xfffffffe
+FFF81A18 57 - - - - - - - - -          push     EDI
+FFF81A19 8b f9 - - - - - - - -         mov      EDI, ECX
+FFF81A1B 74 29 - - - - - - - -         jz       0xfff81a46
+FFF81A1D 8d 55 fc - - - - - - -        lea      EDX, [EBP + -0x4]
+FFF81A20 e8 f8 f9 ff ff - - - - -      call     0xfff8141d
+FFF81A25 83 7d fc 00 - - - - - -       cmp      dword ptr [EBP + -0x4], 0x0
+FFF81A29 74 1b - - - - - - - -         jz       0xfff81a46
+FFF81A2B 0f b7 d7 - - - - - - -        movzx    EDX, DI
+FFF81A2E 8b c3 - - - - - - - -         mov      EAX, EBX
+FFF81A30 8b ca - - - - - - - -         mov      ECX, EDX
+FFF81A32 c1 ea 05 - - - - - - -        shr      EDX, 0x5
+FFF81A35 83 e1 1f - - - - - - -        and      ECX, 0x1f
+FFF81A38 d3 e0 - - - - - - - -         shl      EAX, CL
+FFF81A3A 8b cf - - - - - - - -         mov      ECX, EDI
+FFF81A3C 50 - - - - - - - - -          push     EAX
+FFF81A3D c1 e9 10 - - - - - - -        shr      ECX, 0x10
+FFF81A40 e8 a2 fa ff ff - - - - -      call     0xfff814e7
+FFF81A45 59 - - - - - - - - -          pop      ECX
+FFF81A46 8d 55 f8 - - - - - - -        lea      EDX, [EBP + -0x8]
+FFF81A49 8b cf - - - - - - - -         mov      ECX, EDI
+FFF81A4B e8 48 fa ff ff - - - - -      call     0xfff81498
+FFF81A50 83 7d f8 00 - - - - - -       cmp      dword ptr [EBP + -0x8], 0x0
+FFF81A54 74 1b - - - - - - - -         jz       0xfff81a71
+FFF81A56 0f b7 d7 - - - - - - -        movzx    EDX, DI
+FFF81A59 8b c3 - - - - - - - -         mov      EAX, EBX
+FFF81A5B 8b ca - - - - - - - -         mov      ECX, EDX
+FFF81A5D c1 ea 05 - - - - - - -        shr      EDX, 0x5
+FFF81A60 83 e1 1f - - - - - - -        and      ECX, 0x1f
+FFF81A63 d3 e0 - - - - - - - -         shl      EAX, CL
+FFF81A65 8b cf - - - - - - - -         mov      ECX, EDI
+FFF81A67 50 - - - - - - - - -          push     EAX
+FFF81A68 c1 e9 10 - - - - - - -        shr      ECX, 0x10
+FFF81A6B e8 f5 fa ff ff - - - - -      call     0xfff81565
+FFF81A70 59 - - - - - - - - -          pop      ECX
+FFF81A71 8b c7 - - - - - - - -         mov      EAX, EDI
+FFF81A73 8d 4d f0 - - - - - - -        lea      ECX, [EBP + -0x10]
+FFF81A76 c1 e8 10 - - - - - - -        shr      EAX, 0x10
+FFF81A79 89 45 f4 - - - - - - -        mov      dword ptr [EBP + -0xc], EAX
+FFF81A7C 0f b6 f0 - - - - - - -        movzx    ESI, AL
+FFF81A7F e8 59 00 00 00 - - - - -      call     0xfff81add
+FFF81A84 6b d6 1e - - - - - - -        imul     EDX, ESI, 0x1e
+FFF81A87 8b cf - - - - - - - -         mov      ECX, EDI
+FFF81A89 c1 e1 04 - - - - - - -        shl      ECX, 0x4
+FFF81A8C 66 03 4c 02 1a - - - - -      add      CX, word ptr [EDX + EAX*0x1 + 0x1a]
+FFF81A91 0f b6 04 02 - - - - - -       movzx    EAX, byte ptr [EDX + EAX*0x1]
+FFF81A95 0d 00 fd ff ff - - - - -      or       EAX, 0xfffffd00
+FFF81A9A 0f b7 c9 - - - - - - -        movzx    ECX, CX
+FFF81A9D c1 e0 10 - - - - - - -        shl      EAX, 0x10
+FFF81AA0 0b c8 - - - - - - - -         or       ECX, EAX
+FFF81AA2 8b 01 - - - - - - - -         mov      EAX, dword ptr [ECX]
+FFF81AA4 83 e0 fe - - - - - - -        and      EAX, 0xfffffffe
+FFF81AA7 0b 45 0c - - - - - - -        or       EAX, dword ptr [EBP + 0xc]
+FFF81AAA 83 7d fc 00 - - - - - -       cmp      dword ptr [EBP + -0x4], 0x0
+FFF81AAE 89 01 - - - - - - - -         mov      dword ptr [ECX], EAX
+FFF81AB0 74 07 - - - - - - - -         jz       0xfff81ab9
+FFF81AB2 8b cf - - - - - - - -         mov      ECX, EDI
+FFF81AB4 e8 8b fa ff ff - - - - -      call     0xfff81544
+FFF81AB9 83 7d f8 00 - - - - - -       cmp      dword ptr [EBP + -0x8], 0x0
+FFF81ABD 74 17 - - - - - - - -         jz       0xfff81ad6
+FFF81ABF 0f b7 d7 - - - - - - -        movzx    EDX, DI
+FFF81AC2 8b ca - - - - - - - -         mov      ECX, EDX
+FFF81AC4 c1 ea 05 - - - - - - -        shr      EDX, 0x5
+FFF81AC7 83 e1 1f - - - - - - -        and      ECX, 0x1f
+FFF81ACA d3 e3 - - - - - - - -         shl      EBX, CL
+FFF81ACC 8b 4d f4 - - - - - - -        mov      ECX, dword ptr [EBP + -0xc]
+FFF81ACF 53 - - - - - - - - -          push     EBX
+FFF81AD0 e8 c0 fa ff ff - - - - -      call     0xfff81595
+FFF81AD5 59 - - - - - - - - -          pop      ECX
+FFF81AD6 5f - - - - - - - - -          pop      EDI
+FFF81AD7 5e - - - - - - - - -          pop      ESI
+FFF81AD8 5b - - - - - - - - -          pop      EBX
+FFF81AD9 8b e5 - - - - - - - -         mov      ESP, EBP
+FFF81ADB 5d - - - - - - - - -          pop      EBP
+FFF81ADC c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff81add @ FFF81ADD
-FFF81ADD 8b d1      mov      EDX, ECX
-FFF81ADF e8 5c fb ff ff call     0xfff81640
-FFF81AE4 84 c0      test     AL, AL
-FFF81AE6 74 0c      jz       0xfff81af4
-FFF81AE8 c7 02 0f 00 00 00 mov      dword ptr [EDX], 0xf
-FFF81AEE b8 34 1f f8 ff mov      EAX, 0xfff81f34
-FFF81AF3 c3         ret      
-FFF81AF4 c7 02 11 00 00 00 mov      dword ptr [EDX], 0x11
-FFF81AFA b8 34 1d f8 ff mov      EAX, 0xfff81d34
-FFF81AFF c3         ret      
+; ==== select_table_by_platform_predicate @ FFF81ADD
+FFF81ADD 8b d1 - - - - - - - -         mov      EDX, ECX
+FFF81ADF e8 5c fb ff ff - - - - -      call     0xfff81640
+FFF81AE4 84 c0 - - - - - - - -         test     AL, AL
+FFF81AE6 74 0c - - - - - - - -         jz       0xfff81af4
+FFF81AE8 c7 02 0f 00 00 00 - - - -     mov      dword ptr [EDX], 0xf
+FFF81AEE b8 34 1f f8 ff - - - - -      mov      EAX, 0xfff81f34
+FFF81AF3 c3 - - - - - - - - -          ret      
+FFF81AF4 c7 02 11 00 00 00 - - - -     mov      dword ptr [EDX], 0x11
+FFF81AFA b8 34 1d f8 ff - - - - -      mov      EAX, 0xfff81d34
+FFF81AFF c3 - - - - - - - - -          ret      
 
 ; ==== FUN_fff81b00 @ FFF81B00
-FFF81B00 51         push     ECX
-FFF81B01 8b 44 24 14 mov      EAX, dword ptr [ESP + 0x14]
-FFF81B05 53         push     EBX
-FFF81B06 8b da      mov      EBX, EDX
-FFF81B08 8a d1      mov      DL, CL
-FFF81B0A 55         push     EBP
-FFF81B0B 56         push     ESI
-FFF81B0C 57         push     EDI
-FFF81B0D 83 f8 01   cmp      EAX, 0x1
-FFF81B10 7e 19      jle      0xfff81b2b
-FFF81B12 83 f8 03   cmp      EAX, 0x3
-FFF81B15 7e 0a      jle      0xfff81b21
-FFF81B17 83 f8 07   cmp      EAX, 0x7
-FFF81B1A 7e 0f      jle      0xfff81b2b
-FFF81B1C 83 f8 13   cmp      EAX, 0x13
-FFF81B1F 74 0a      jz       0xfff81b2b
-FFF81B21 b8 02 00 00 80 mov      EAX, 0x80000002
-FFF81B26 e9 d7 00 00 00 jmp      0xfff81c02
-FFF81B2B b8 00 90 0f e0 mov      EAX, 0xe00f9000
-FFF81B30 b9 ff ff 00 00 mov      ECX, 0xffff
-FFF81B35 66 8b 00   mov      AX, word ptr [EAX]
-FFF81B38 0f b7 c0   movzx    EAX, AX
-FFF81B3B 66 3b c1   cmp      AX, CX
-FFF81B3E 75 0a      jnz      0xfff81b4a
-FFF81B40 b8 07 00 00 80 mov      EAX, 0x80000007
-FFF81B45 e9 b8 00 00 00 jmp      0xfff81c02
-FFF81B4A be ff ff ff 0f mov      ESI, 0xfffffff
-FFF81B4F bd d8 90 0f e0 mov      EBP, 0xe00f90d8
-FFF81B54 8b ce      mov      ECX, ESI
-FFF81B56 66 8b 45 00 mov      AX, word ptr [EBP]
-FFF81B5A 0f b7 c0   movzx    EAX, AX
-FFF81B5D a8 01      test     AL, 0x1
-FFF81B5F 74 05      jz       0xfff81b66
-FFF81B61 83 e9 01   sub      ECX, 0x1
-FFF81B64 75 f0      jnz      0xfff81b56
-FFF81B66 85 c9      test     ECX, ECX
-FFF81B68 75 0a      jnz      0xfff81b74
-FFF81B6A b8 12 00 00 80 mov      EAX, 0x80000012
-FFF81B6F e9 8e 00 00 00 jmp      0xfff81c02
-FFF81B74 8b 7c 24 20 mov      EDI, dword ptr [ESP + 0x20]
-FFF81B78 ff 74 24 1c push     dword ptr [ESP + 0x1c]
-FFF81B7C 0f b6 ca   movzx    ECX, DL
-FFF81B7F 8b 54 24 1c mov      EDX, dword ptr [ESP + 0x1c]
-FFF81B83 c1 e1 18   shl      ECX, 0x18
-FFF81B86 0f b7 c2   movzx    EAX, DX
-FFF81B89 0b c8      or       ECX, EAX
-FFF81B8B c6 07 04   mov      byte ptr [EDI], 0x4
-FFF81B8E 52         push     EDX
-FFF81B8F 89 0d d0 90 0f e0 mov      dword ptr [0xe00f90d0], ECX
-FFF81B95 e8 c4 fa ff ff call     0xfff8165e
-FFF81B9A a3 dc 90 0f e0 mov      [0xe00f90dc], EAX
-FFF81B9F 66 8b 45 00 mov      AX, word ptr [EBP]
-FFF81BA3 0f b7 c0   movzx    EAX, AX
-FFF81BA6 83 e0 7f   and      EAX, 0x7f
-FFF81BA9 0d 00 13 00 00 or       EAX, 0x1300
-FFF81BAE 66 a3 d8 90 0f e0 mov      [0xe00f90d8], AX
-FFF81BB4 b8 00 f0 00 00 mov      EAX, 0xf000
-FFF81BB9 66 a3 da 90 0f e0 mov      [0xe00f90da], AX
-FFF81BBF 8b 03      mov      EAX, dword ptr [EBX]
-FFF81BC1 a3 d4 90 0f e0 mov      [0xe00f90d4], EAX
-FFF81BC6 66 8b 45 00 mov      AX, word ptr [EBP]
-FFF81BCA 0f b7 c0   movzx    EAX, AX
-FFF81BCD 59         pop      ECX
-FFF81BCE 83 c8 01   or       EAX, 0x1
-FFF81BD1 59         pop      ECX
-FFF81BD2 66 a3 d8 90 0f e0 mov      [0xe00f90d8], AX
-FFF81BD8 66 8b 45 00 mov      AX, word ptr [EBP]
-FFF81BDC 0f b7 c0   movzx    EAX, AX
-FFF81BDF a8 01      test     AL, 0x1
-FFF81BE1 74 05      jz       0xfff81be8
-FFF81BE3 83 ee 01   sub      ESI, 0x1
-FFF81BE6 75 f0      jnz      0xfff81bd8
-FFF81BE8 85 f6      test     ESI, ESI
-FFF81BEA 0f 84 7a ff ff ff jz       0xfff81b6a
-FFF81BF0 d0 e8      shr      AL, 0x1
-FFF81BF2 24 03      and      AL, 0x3
-FFF81BF4 88 07      mov      byte ptr [EDI], AL
-FFF81BF6 0f b6 c0   movzx    EAX, AL
-FFF81BF9 f7 d8      neg      EAX
-FFF81BFB 1b c0      sbb      EAX, EAX
-FFF81BFD 25 07 00 00 80 and      EAX, 0x80000007
-FFF81C02 5f         pop      EDI
-FFF81C03 5e         pop      ESI
-FFF81C04 5d         pop      EBP
-FFF81C05 5b         pop      EBX
-FFF81C06 59         pop      ECX
-FFF81C07 c3         ret      
+FFF81B00 51 - - - - - - - - -          push     ECX
+FFF81B01 8b 44 24 14 - - - - - -       mov      EAX, dword ptr [ESP + 0x14]
+FFF81B05 53 - - - - - - - - -          push     EBX
+FFF81B06 8b da - - - - - - - -         mov      EBX, EDX
+FFF81B08 8a d1 - - - - - - - -         mov      DL, CL
+FFF81B0A 55 - - - - - - - - -          push     EBP
+FFF81B0B 56 - - - - - - - - -          push     ESI
+FFF81B0C 57 - - - - - - - - -          push     EDI
+FFF81B0D 83 f8 01 - - - - - - -        cmp      EAX, 0x1
+FFF81B10 7e 19 - - - - - - - -         jle      0xfff81b2b
+FFF81B12 83 f8 03 - - - - - - -        cmp      EAX, 0x3
+FFF81B15 7e 0a - - - - - - - -         jle      0xfff81b21
+FFF81B17 83 f8 07 - - - - - - -        cmp      EAX, 0x7
+FFF81B1A 7e 0f - - - - - - - -         jle      0xfff81b2b
+FFF81B1C 83 f8 13 - - - - - - -        cmp      EAX, 0x13
+FFF81B1F 74 0a - - - - - - - -         jz       0xfff81b2b
+FFF81B21 b8 02 00 00 80 - - - - -      mov      EAX, 0x80000002
+FFF81B26 e9 d7 00 00 00 - - - - -      jmp      0xfff81c02
+FFF81B2B b8 00 90 0f e0 - - - - -      mov      EAX, 0xe00f9000
+FFF81B30 b9 ff ff 00 00 - - - - -      mov      ECX, 0xffff
+FFF81B35 66 8b 00 - - - - - - -        mov      AX, word ptr [EAX]
+FFF81B38 0f b7 c0 - - - - - - -        movzx    EAX, AX
+FFF81B3B 66 3b c1 - - - - - - -        cmp      AX, CX
+FFF81B3E 75 0a - - - - - - - -         jnz      0xfff81b4a
+FFF81B40 b8 07 00 00 80 - - - - -      mov      EAX, 0x80000007
+FFF81B45 e9 b8 00 00 00 - - - - -      jmp      0xfff81c02
+FFF81B4A be ff ff ff 0f - - - - -      mov      ESI, 0xfffffff
+FFF81B4F bd d8 90 0f e0 - - - - -      mov      EBP, 0xe00f90d8
+FFF81B54 8b ce - - - - - - - -         mov      ECX, ESI
+FFF81B56 66 8b 45 00 - - - - - -       mov      AX, word ptr [EBP]
+FFF81B5A 0f b7 c0 - - - - - - -        movzx    EAX, AX
+FFF81B5D a8 01 - - - - - - - -         test     AL, 0x1
+FFF81B5F 74 05 - - - - - - - -         jz       0xfff81b66
+FFF81B61 83 e9 01 - - - - - - -        sub      ECX, 0x1
+FFF81B64 75 f0 - - - - - - - -         jnz      0xfff81b56
+FFF81B66 85 c9 - - - - - - - -         test     ECX, ECX
+FFF81B68 75 0a - - - - - - - -         jnz      0xfff81b74
+FFF81B6A b8 12 00 00 80 - - - - -      mov      EAX, 0x80000012
+FFF81B6F e9 8e 00 00 00 - - - - -      jmp      0xfff81c02
+FFF81B74 8b 7c 24 20 - - - - - -       mov      EDI, dword ptr [ESP + 0x20]
+FFF81B78 ff 74 24 1c - - - - - -       push     dword ptr [ESP + 0x1c]
+FFF81B7C 0f b6 ca - - - - - - -        movzx    ECX, DL
+FFF81B7F 8b 54 24 1c - - - - - -       mov      EDX, dword ptr [ESP + 0x1c]
+FFF81B83 c1 e1 18 - - - - - - -        shl      ECX, 0x18
+FFF81B86 0f b7 c2 - - - - - - -        movzx    EAX, DX
+FFF81B89 0b c8 - - - - - - - -         or       ECX, EAX
+FFF81B8B c6 07 04 - - - - - - -        mov      byte ptr [EDI], 0x4
+FFF81B8E 52 - - - - - - - - -          push     EDX
+FFF81B8F 89 0d d0 90 0f e0 - - - -     mov      dword ptr [0xe00f90d0], ECX
+FFF81B95 e8 c4 fa ff ff - - - - -      call     0xfff8165e
+FFF81B9A a3 dc 90 0f e0 - - - - -      mov      [0xe00f90dc], EAX
+FFF81B9F 66 8b 45 00 - - - - - -       mov      AX, word ptr [EBP]
+FFF81BA3 0f b7 c0 - - - - - - -        movzx    EAX, AX
+FFF81BA6 83 e0 7f - - - - - - -        and      EAX, 0x7f
+FFF81BA9 0d 00 13 00 00 - - - - -      or       EAX, 0x1300
+FFF81BAE 66 a3 d8 90 0f e0 - - - -     mov      [0xe00f90d8], AX
+FFF81BB4 b8 00 f0 00 00 - - - - -      mov      EAX, 0xf000
+FFF81BB9 66 a3 da 90 0f e0 - - - -     mov      [0xe00f90da], AX
+FFF81BBF 8b 03 - - - - - - - -         mov      EAX, dword ptr [EBX]
+FFF81BC1 a3 d4 90 0f e0 - - - - -      mov      [0xe00f90d4], EAX
+FFF81BC6 66 8b 45 00 - - - - - -       mov      AX, word ptr [EBP]
+FFF81BCA 0f b7 c0 - - - - - - -        movzx    EAX, AX
+FFF81BCD 59 - - - - - - - - -          pop      ECX
+FFF81BCE 83 c8 01 - - - - - - -        or       EAX, 0x1
+FFF81BD1 59 - - - - - - - - -          pop      ECX
+FFF81BD2 66 a3 d8 90 0f e0 - - - -     mov      [0xe00f90d8], AX
+FFF81BD8 66 8b 45 00 - - - - - -       mov      AX, word ptr [EBP]
+FFF81BDC 0f b7 c0 - - - - - - -        movzx    EAX, AX
+FFF81BDF a8 01 - - - - - - - -         test     AL, 0x1
+FFF81BE1 74 05 - - - - - - - -         jz       0xfff81be8
+FFF81BE3 83 ee 01 - - - - - - -        sub      ESI, 0x1
+FFF81BE6 75 f0 - - - - - - - -         jnz      0xfff81bd8
+FFF81BE8 85 f6 - - - - - - - -         test     ESI, ESI
+FFF81BEA 0f 84 7a ff ff ff - - - -     jz       0xfff81b6a
+FFF81BF0 d0 e8 - - - - - - - -         shr      AL, 0x1
+FFF81BF2 24 03 - - - - - - - -         and      AL, 0x3
+FFF81BF4 88 07 - - - - - - - -         mov      byte ptr [EDI], AL
+FFF81BF6 0f b6 c0 - - - - - - -        movzx    EAX, AL
+FFF81BF9 f7 d8 - - - - - - - -         neg      EAX
+FFF81BFB 1b c0 - - - - - - - -         sbb      EAX, EAX
+FFF81BFD 25 07 00 00 80 - - - - -      and      EAX, 0x80000007
+FFF81C02 5f - - - - - - - - -          pop      EDI
+FFF81C03 5e - - - - - - - - -          pop      ESI
+FFF81C04 5d - - - - - - - - -          pop      EBP
+FFF81C05 5b - - - - - - - - -          pop      EBX
+FFF81C06 59 - - - - - - - - -          pop      ECX
+FFF81C07 c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff81c08 @ FFF81C08
-FFF81C08 e8 42 fa ff ff call     0xfff8164f
-FFF81C0D 84 c0      test     AL, AL
-FFF81C0F 74 12      jz       0xfff81c23
-FFF81C11 b8 10 c2 72 fd mov      EAX, 0xfd72c210
-FFF81C16 8b 00      mov      EAX, dword ptr [EAX]
-FFF81C18 a9 00 10 00 00 test     EAX, 0x1000
-FFF81C1D 74 04      jz       0xfff81c23
-FFF81C1F 33 c0      xor      EAX, EAX
-FFF81C21 40         inc      EAX
-FFF81C22 c3         ret      
-FFF81C23 33 c0      xor      EAX, EAX
-FFF81C25 c3         ret      
+; ==== check_flag_bit12_after_predicate @ FFF81C08
+FFF81C08 e8 42 fa ff ff - - - - -      call     0xfff8164f
+FFF81C0D 84 c0 - - - - - - - -         test     AL, AL
+FFF81C0F 74 12 - - - - - - - -         jz       0xfff81c23
+FFF81C11 b8 10 c2 72 fd - - - - -      mov      EAX, 0xfd72c210
+FFF81C16 8b 00 - - - - - - - -         mov      EAX, dword ptr [EAX]
+FFF81C18 a9 00 10 00 00 - - - - -      test     EAX, 0x1000
+FFF81C1D 74 04 - - - - - - - -         jz       0xfff81c23
+FFF81C1F 33 c0 - - - - - - - -         xor      EAX, EAX
+FFF81C21 40 - - - - - - - - -          inc      EAX
+FFF81C22 c3 - - - - - - - - -          ret      
+FFF81C23 33 c0 - - - - - - - -         xor      EAX, EAX
+FFF81C25 c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff81c26 @ FFF81C26
-FFF81C26 e8 24 fa ff ff call     0xfff8164f
-FFF81C2B 84 c0      test     AL, AL
-FFF81C2D 74 0e      jz       0xfff81c3d
-FFF81C2F b8 d8 20 88 fd mov      EAX, 0xfd8820d8
-FFF81C34 8b 00      mov      EAX, dword ptr [EAX]
-FFF81C36 c1 e8 17   shr      EAX, 0x17
-FFF81C39 83 e0 01   and      EAX, 0x1
-FFF81C3C c3         ret      
-FFF81C3D b8 34 22 88 fd mov      EAX, 0xfd882234
-FFF81C42 8b 00      mov      EAX, dword ptr [EAX]
-FFF81C44 c1 e8 1f   shr      EAX, 0x1f
-FFF81C47 c3         ret      
+; ==== read_flag_bit_from_selected_dword @ FFF81C26
+FFF81C26 e8 24 fa ff ff - - - - -      call     0xfff8164f
+FFF81C2B 84 c0 - - - - - - - -         test     AL, AL
+FFF81C2D 74 0e - - - - - - - -         jz       0xfff81c3d
+FFF81C2F b8 d8 20 88 fd - - - - -      mov      EAX, 0xfd8820d8
+FFF81C34 8b 00 - - - - - - - -         mov      EAX, dword ptr [EAX]
+FFF81C36 c1 e8 17 - - - - - - -        shr      EAX, 0x17
+FFF81C39 83 e0 01 - - - - - - -        and      EAX, 0x1
+FFF81C3C c3 - - - - - - - - -          ret      
+FFF81C3D b8 34 22 88 fd - - - - -      mov      EAX, 0xfd882234
+FFF81C42 8b 00 - - - - - - - -         mov      EAX, dword ptr [EAX]
+FFF81C44 c1 e8 1f - - - - - - -        shr      EAX, 0x1f
+FFF81C47 c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff81c65 @ FFF81C65
-FFF81C65 53         push     EBX
-FFF81C66 56         push     ESI
-FFF81C67 57         push     EDI
-FFF81C68 8b f9      mov      EDI, ECX
-FFF81C6A 9c         pushfd   
-FFF81C6B 58         pop      EAX
-FFF81C6C 8b c8      mov      ECX, EAX
-FFF81C6E fa         cli      
-FFF81C6F bb f8 0c 00 00 mov      EBX, 0xcf8
-FFF81C74 66 8b d3   mov      DX, BX
-FFF81C77 ed         in       EAX, DX
-FFF81C78 8b f0      mov      ESI, EAX
-FFF81C7A 8b c7      mov      EAX, EDI
-FFF81C7C 8b d7      mov      EDX, EDI
-FFF81C7E c1 e8 04   shr      EAX, 0x4
-FFF81C81 81 e2 fc 00 00 00 and      EDX, 0xfc
-FFF81C87 25 00 ff ff 00 and      EAX, 0xffff00
-FFF81C8C 0b c2      or       EAX, EDX
-FFF81C8E 66 8b d3   mov      DX, BX
-FFF81C91 0d 00 00 00 80 or       EAX, 0x80000000
-FFF81C96 ef         out      DX, EAX
-FFF81C97 83 e7 02   and      EDI, 0x2
-FFF81C9A 8d 97 fc 0c 00 00 lea      EDX, [EDI + 0xcfc]
-FFF81CA0 66 ed      in       AX, DX
-FFF81CA2 0f b7 f8   movzx    EDI, AX
-FFF81CA5 66 8b d3   mov      DX, BX
-FFF81CA8 8b c6      mov      EAX, ESI
-FFF81CAA ef         out      DX, EAX
-FFF81CAB c1 e9 09   shr      ECX, 0x9
-FFF81CAE f6 c1 01   test     CL, 0x1
-FFF81CB1 74 03      jz       0xfff81cb6
-FFF81CB3 fb         sti      
-FFF81CB4 eb 01      jmp      0xfff81cb7
-FFF81CB6 fa         cli      
-FFF81CB7 66 8b c7   mov      AX, DI
-FFF81CBA 5f         pop      EDI
-FFF81CBB 5e         pop      ESI
-FFF81CBC 5b         pop      EBX
-FFF81CBD c3         ret      
+; ==== read_config_word_via_cf8_cfc @ FFF81C65
+FFF81C65 53 - - - - - - - - -          push     EBX
+FFF81C66 56 - - - - - - - - -          push     ESI
+FFF81C67 57 - - - - - - - - -          push     EDI
+FFF81C68 8b f9 - - - - - - - -         mov      EDI, ECX
+FFF81C6A 9c - - - - - - - - -          pushfd   
+FFF81C6B 58 - - - - - - - - -          pop      EAX
+FFF81C6C 8b c8 - - - - - - - -         mov      ECX, EAX
+FFF81C6E fa - - - - - - - - -          cli      
+FFF81C6F bb f8 0c 00 00 - - - - -      mov      EBX, 0xcf8
+FFF81C74 66 8b d3 - - - - - - -        mov      DX, BX
+FFF81C77 ed - - - - - - - - -          in       EAX, DX
+FFF81C78 8b f0 - - - - - - - -         mov      ESI, EAX
+FFF81C7A 8b c7 - - - - - - - -         mov      EAX, EDI
+FFF81C7C 8b d7 - - - - - - - -         mov      EDX, EDI
+FFF81C7E c1 e8 04 - - - - - - -        shr      EAX, 0x4
+FFF81C81 81 e2 fc 00 00 00 - - - -     and      EDX, 0xfc
+FFF81C87 25 00 ff ff 00 - - - - -      and      EAX, 0xffff00
+FFF81C8C 0b c2 - - - - - - - -         or       EAX, EDX
+FFF81C8E 66 8b d3 - - - - - - -        mov      DX, BX
+FFF81C91 0d 00 00 00 80 - - - - -      or       EAX, 0x80000000
+FFF81C96 ef - - - - - - - - -          out      DX, EAX
+FFF81C97 83 e7 02 - - - - - - -        and      EDI, 0x2
+FFF81C9A 8d 97 fc 0c 00 00 - - - -     lea      EDX, [EDI + 0xcfc]
+FFF81CA0 66 ed - - - - - - - -         in       AX, DX
+FFF81CA2 0f b7 f8 - - - - - - -        movzx    EDI, AX
+FFF81CA5 66 8b d3 - - - - - - -        mov      DX, BX
+FFF81CA8 8b c6 - - - - - - - -         mov      EAX, ESI
+FFF81CAA ef - - - - - - - - -          out      DX, EAX
+FFF81CAB c1 e9 09 - - - - - - -        shr      ECX, 0x9
+FFF81CAE f6 c1 01 - - - - - - -        test     CL, 0x1
+FFF81CB1 74 03 - - - - - - - -         jz       0xfff81cb6
+FFF81CB3 fb - - - - - - - - -          sti      
+FFF81CB4 eb 01 - - - - - - - -         jmp      0xfff81cb7
+FFF81CB6 fa - - - - - - - - -          cli      
+FFF81CB7 66 8b c7 - - - - - - -        mov      AX, DI
+FFF81CBA 5f - - - - - - - - -          pop      EDI
+FFF81CBB 5e - - - - - - - - -          pop      ESI
+FFF81CBC 5b - - - - - - - - -          pop      EBX
+FFF81CBD c3 - - - - - - - - -          ret      
 
-; ==== FUN_fff81cbe @ FFF81CBE
-FFF81CBE 53         push     EBX
-FFF81CBF 55         push     EBP
-FFF81CC0 56         push     ESI
-FFF81CC1 57         push     EDI
-FFF81CC2 66 8b da   mov      BX, DX
-FFF81CC5 8b f9      mov      EDI, ECX
-FFF81CC7 9c         pushfd   
-FFF81CC8 58         pop      EAX
-FFF81CC9 8b c8      mov      ECX, EAX
-FFF81CCB fa         cli      
-FFF81CCC bd f8 0c 00 00 mov      EBP, 0xcf8
-FFF81CD1 66 8b d5   mov      DX, BP
-FFF81CD4 ed         in       EAX, DX
-FFF81CD5 8b f0      mov      ESI, EAX
-FFF81CD7 8b c7      mov      EAX, EDI
-FFF81CD9 8b d7      mov      EDX, EDI
-FFF81CDB c1 e8 04   shr      EAX, 0x4
-FFF81CDE 81 e2 fc 00 00 00 and      EDX, 0xfc
-FFF81CE4 25 00 ff ff 00 and      EAX, 0xffff00
-FFF81CE9 0b c2      or       EAX, EDX
-FFF81CEB 66 8b d5   mov      DX, BP
-FFF81CEE 0d 00 00 00 80 or       EAX, 0x80000000
-FFF81CF3 ef         out      DX, EAX
-FFF81CF4 83 e7 02   and      EDI, 0x2
-FFF81CF7 66 8b c3   mov      AX, BX
-FFF81CFA 8d 97 fc 0c 00 00 lea      EDX, [EDI + 0xcfc]
-FFF81D00 66 ef      out      DX, AX
-FFF81D02 66 8b d5   mov      DX, BP
-FFF81D05 8b c6      mov      EAX, ESI
-FFF81D07 ef         out      DX, EAX
-FFF81D08 c1 e9 09   shr      ECX, 0x9
-FFF81D0B f6 c1 01   test     CL, 0x1
-FFF81D0E 74 03      jz       0xfff81d13
-FFF81D10 fb         sti      
-FFF81D11 eb 01      jmp      0xfff81d14
-FFF81D13 fa         cli      
-FFF81D14 5f         pop      EDI
-FFF81D15 5e         pop      ESI
-FFF81D16 5d         pop      EBP
-FFF81D17 66 8b c3   mov      AX, BX
-FFF81D1A 5b         pop      EBX
-FFF81D1B c3         ret      
+; ==== write_config_word_via_cf8_cfc @ FFF81CBE
+FFF81CBE 53 - - - - - - - - -          push     EBX
+FFF81CBF 55 - - - - - - - - -          push     EBP
+FFF81CC0 56 - - - - - - - - -          push     ESI
+FFF81CC1 57 - - - - - - - - -          push     EDI
+FFF81CC2 66 8b da - - - - - - -        mov      BX, DX
+FFF81CC5 8b f9 - - - - - - - -         mov      EDI, ECX
+FFF81CC7 9c - - - - - - - - -          pushfd   
+FFF81CC8 58 - - - - - - - - -          pop      EAX
+FFF81CC9 8b c8 - - - - - - - -         mov      ECX, EAX
+FFF81CCB fa - - - - - - - - -          cli      
+FFF81CCC bd f8 0c 00 00 - - - - -      mov      EBP, 0xcf8
+FFF81CD1 66 8b d5 - - - - - - -        mov      DX, BP
+FFF81CD4 ed - - - - - - - - -          in       EAX, DX
+FFF81CD5 8b f0 - - - - - - - -         mov      ESI, EAX
+FFF81CD7 8b c7 - - - - - - - -         mov      EAX, EDI
+FFF81CD9 8b d7 - - - - - - - -         mov      EDX, EDI
+FFF81CDB c1 e8 04 - - - - - - -        shr      EAX, 0x4
+FFF81CDE 81 e2 fc 00 00 00 - - - -     and      EDX, 0xfc
+FFF81CE4 25 00 ff ff 00 - - - - -      and      EAX, 0xffff00
+FFF81CE9 0b c2 - - - - - - - -         or       EAX, EDX
+FFF81CEB 66 8b d5 - - - - - - -        mov      DX, BP
+FFF81CEE 0d 00 00 00 80 - - - - -      or       EAX, 0x80000000
+FFF81CF3 ef - - - - - - - - -          out      DX, EAX
+FFF81CF4 83 e7 02 - - - - - - -        and      EDI, 0x2
+FFF81CF7 66 8b c3 - - - - - - -        mov      AX, BX
+FFF81CFA 8d 97 fc 0c 00 00 - - - -     lea      EDX, [EDI + 0xcfc]
+FFF81D00 66 ef - - - - - - - -         out      DX, AX
+FFF81D02 66 8b d5 - - - - - - -        mov      DX, BP
+FFF81D05 8b c6 - - - - - - - -         mov      EAX, ESI
+FFF81D07 ef - - - - - - - - -          out      DX, EAX
+FFF81D08 c1 e9 09 - - - - - - -        shr      ECX, 0x9
+FFF81D0B f6 c1 01 - - - - - - -        test     CL, 0x1
+FFF81D0E 74 03 - - - - - - - -         jz       0xfff81d13
+FFF81D10 fb - - - - - - - - -          sti      
+FFF81D11 eb 01 - - - - - - - -         jmp      0xfff81d14
+FFF81D13 fa - - - - - - - - -          cli      
+FFF81D14 5f - - - - - - - - -          pop      EDI
+FFF81D15 5e - - - - - - - - -          pop      ESI
+FFF81D16 5d - - - - - - - - -          pop      EBP
+FFF81D17 66 8b c3 - - - - - - -        mov      AX, BX
+FFF81D1A 5b - - - - - - - - -          pop      EBX
+FFF81D1B c3 - - - - - - - - -          ret      
 

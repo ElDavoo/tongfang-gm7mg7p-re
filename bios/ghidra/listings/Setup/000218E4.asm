@@ -4,27 +4,27 @@
 ; This is the machine code. The decompiled C for this address is 000218E4.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-000218E4 48 89 5c 24 08 mov      qword ptr [RSP + 0x8], RBX
-000218E9 57         push     RDI
-000218EA 48 83 ec 40 sub      RSP, 0x40
-000218EE 0f b7 da   movzx    EBX, DX
-000218F1 48 8b f9   mov      RDI, RCX
-000218F4 ba 07 00 00 00 mov      EDX, 0x7
-000218F9 48 8d 4c 24 30 lea      RCX, [RSP + 0x30]
-000218FE e8 3d ea fd ff call     0x00000340
-00021903 b9 02 00 00 00 mov      ECX, 0x2
-00021908 66 89 5c 24 32 mov      word ptr [RSP + 0x32], BX
-0002190D 33 c0      xor      EAX, EAX
-0002190F 66 89 4c 24 34 mov      word ptr [RSP + 0x34], CX
-00021914 44 8a c1   mov      R8B, CL
-00021917 88 44 24 28 mov      byte ptr [RSP + 0x28], AL
-0002191B 48 8d 54 24 30 lea      RDX, [RSP + 0x30]
-00021920 88 44 24 36 mov      byte ptr [RSP + 0x36], AL
-00021924 44 8d 49 05 lea      R9D, [RCX + 0x5]
-00021928 48 89 44 24 20 mov      qword ptr [RSP + 0x20], RAX
-0002192D 48 8b cf   mov      RCX, RDI
-00021930 e8 13 fe ff ff call     0x00021748
-00021935 48 8b 5c 24 50 mov      RBX, qword ptr [RSP + 0x50]
-0002193A 48 83 c4 40 add      RSP, 0x40
-0002193E 5f         pop      RDI
-0002193F c3         ret      
+000218E4 48 89 5c 24 08 - - - - - - -        mov      qword ptr [RSP + 0x8], RBX
+000218E9 57 - - - - - - - - - - -            push     RDI
+000218EA 48 83 ec 40 - - - - - - - -         sub      RSP, 0x40
+000218EE 0f b7 da - - - - - - - - -          movzx    EBX, DX
+000218F1 48 8b f9 - - - - - - - - -          mov      RDI, RCX
+000218F4 ba 07 00 00 00 - - - - - - -        mov      EDX, 0x7
+000218F9 48 8d 4c 24 30 - - - - - - -        lea      RCX, [RSP + 0x30]
+000218FE e8 3d ea fd ff - - - - - - -        call     0x00000340
+00021903 b9 02 00 00 00 - - - - - - -        mov      ECX, 0x2
+00021908 66 89 5c 24 32 - - - - - - -        mov      word ptr [RSP + 0x32], BX
+0002190D 33 c0 - - - - - - - - - -           xor      EAX, EAX
+0002190F 66 89 4c 24 34 - - - - - - -        mov      word ptr [RSP + 0x34], CX
+00021914 44 8a c1 - - - - - - - - -          mov      R8B, CL
+00021917 88 44 24 28 - - - - - - - -         mov      byte ptr [RSP + 0x28], AL
+0002191B 48 8d 54 24 30 - - - - - - -        lea      RDX, [RSP + 0x30]
+00021920 88 44 24 36 - - - - - - - -         mov      byte ptr [RSP + 0x36], AL
+00021924 44 8d 49 05 - - - - - - - -         lea      R9D, [RCX + 0x5]
+00021928 48 89 44 24 20 - - - - - - -        mov      qword ptr [RSP + 0x20], RAX
+0002192D 48 8b cf - - - - - - - - -          mov      RCX, RDI
+00021930 e8 13 fe ff ff - - - - - - -        call     0x00021748
+00021935 48 8b 5c 24 50 - - - - - - -        mov      RBX, qword ptr [RSP + 0x50]
+0002193A 48 83 c4 40 - - - - - - - -         add      RSP, 0x40
+0002193E 5f - - - - - - - - - - -            pop      RDI
+0002193F c3 - - - - - - - - - - -            ret      

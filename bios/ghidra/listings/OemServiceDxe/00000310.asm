@@ -4,7 +4,7 @@
 ; This is the machine code. The decompiled C for this address is 00000310.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-00000310 0f 31      rdtsc    
-00000312 48 c1 e2 20 shl      RDX, 0x20
-00000316 48 09 d0   or       RAX, RDX
-00000319 c3         ret      
+00000310 0f 31 - - - - - - - -         rdtsc    
+00000312 48 c1 e2 20 - - - - - -       shl      RDX, 0x20
+00000316 48 09 d0 - - - - - - -        or       RAX, RDX
+00000319 c3 - - - - - - - - -          ret      

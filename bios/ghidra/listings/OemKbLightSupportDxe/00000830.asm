@@ -4,16 +4,16 @@
 ; This is the machine code. The decompiled C for this address is 00000830.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-00000830 40 53      push     RBX
-00000832 48 83 ec 20 sub      RSP, 0x20
-00000836 48 69 d1 99 9e 36 00 imul     RDX, RCX, 0x369e99
-0000083D 48 8b d9   mov      RBX, RCX
+00000830 40 53 - - - - - - - -         push     RBX
+00000832 48 83 ec 20 - - - - - -       sub      RSP, 0x20
+00000836 48 69 d1 99 9e 36 00 - - -    imul     RDX, RCX, 0x369e99
+0000083D 48 8b d9 - - - - - - -        mov      RBX, RCX
 00000840 48 b8 db 34 b6 d7 82 de 1b 43 mov      RAX, 0x431bde82d7b634db
-0000084A 48 f7 e2   mul      RDX
-0000084D 48 c1 ea 12 shr      RDX, 0x12
-00000851 8b ca      mov      ECX, EDX
-00000853 e8 78 ff ff ff call     0x000007d0
-00000858 48 8b c3   mov      RAX, RBX
-0000085B 48 83 c4 20 add      RSP, 0x20
-0000085F 5b         pop      RBX
-00000860 c3         ret      
+0000084A 48 f7 e2 - - - - - - -        mul      RDX
+0000084D 48 c1 ea 12 - - - - - -       shr      RDX, 0x12
+00000851 8b ca - - - - - - - -         mov      ECX, EDX
+00000853 e8 78 ff ff ff - - - - -      call     0x000007d0
+00000858 48 8b c3 - - - - - - -        mov      RAX, RBX
+0000085B 48 83 c4 20 - - - - - -       add      RSP, 0x20
+0000085F 5b - - - - - - - - -          pop      RBX
+00000860 c3 - - - - - - - - -          ret      

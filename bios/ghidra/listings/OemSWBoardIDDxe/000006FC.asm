@@ -4,63 +4,63 @@
 ; This is the machine code. The decompiled C for this address is 000006FC.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-000006FC 48 89 5c 24 08 mov      qword ptr [RSP + 0x8], RBX
-00000701 48 89 6c 24 10 mov      qword ptr [RSP + 0x10], RBP
-00000706 48 89 74 24 18 mov      qword ptr [RSP + 0x18], RSI
-0000070B 57         push     RDI
-0000070C 41 56      push     R14
-0000070E 41 57      push     R15
-00000710 48 83 ec 20 sub      RSP, 0x20
-00000714 45 8a f0   mov      R14B, R8B
-00000717 40 8a f2   mov      SIL, DL
-0000071A 40 8a f9   mov      DIL, CL
-0000071D e8 76 ff ff ff call     0x00000698
-00000722 33 db      xor      EBX, EBX
-00000724 48 8b e8   mov      RBP, RAX
-00000727 48 85 c0   test     RAX, RAX
-0000072A 78 7d      js       0x000007a9
-0000072C 40 8a cf   mov      CL, DIL
-0000072F e8 dc fe ff ff call     0x00000610
-00000734 40 8a d6   mov      DL, SIL
-00000737 40 8a cf   mov      CL, DIL
-0000073A e8 59 fe ff ff call     0x00000598
-0000073F 40 8a cf   mov      CL, DIL
-00000742 e8 51 ff ff ff call     0x00000698
-00000747 8d 73 60   lea      ESI, [RBX + 0x60]
-0000074A 40 3a fe   cmp      DIL, SIL
-0000074D 8d 43 64   lea      EAX, [RBX + 0x64]
-00000750 8d 4b 66   lea      ECX, [RBX + 0x66]
-00000753 0f 45 c1   cmovnz   EAX, ECX
-00000756 44 0f b6 f8 movzx    R15D, AL
-0000075A 41 0f b7 d7 movzx    EDX, R15W
-0000075E ec         in       AL, DX
-0000075F a8 02      test     AL, 0x2
-00000761 74 28      jz       0x0000078b
-00000763 48 81 fb 00 00 02 00 cmp      RBX, 0x20000
-0000076A 73 32      jnc      0x0000079e
-0000076C b9 0f 00 00 00 mov      ECX, 0xf
-00000771 e8 1a 01 00 00 call     0x00000890
-00000776 41 0f b7 d7 movzx    EDX, R15W
-0000077A ec         in       AL, DX
-0000077B 48 ff c3   inc      RBX
-0000077E a8 02      test     AL, 0x2
-00000780 75 e1      jnz      0x00000763
-00000782 48 81 fb 00 00 02 00 cmp      RBX, 0x20000
-00000789 73 13      jnc      0x0000079e
-0000078B b8 62 00 00 00 mov      EAX, 0x62
-00000790 40 3a fe   cmp      DIL, SIL
-00000793 66 0f 45 f0 cmovnz   SI, AX
-00000797 41 8a c6   mov      AL, R14B
-0000079A 0f b7 d6   movzx    EDX, SI
-0000079D ee         out      DX, AL
-0000079E 40 8a cf   mov      CL, DIL
-000007A1 e8 6a fe ff ff call     0x00000610
-000007A6 48 8b c5   mov      RAX, RBP
-000007A9 48 8b 5c 24 40 mov      RBX, qword ptr [RSP + 0x40]
-000007AE 48 8b 6c 24 48 mov      RBP, qword ptr [RSP + 0x48]
-000007B3 48 8b 74 24 50 mov      RSI, qword ptr [RSP + 0x50]
-000007B8 48 83 c4 20 add      RSP, 0x20
-000007BC 41 5f      pop      R15
-000007BE 41 5e      pop      R14
-000007C0 5f         pop      RDI
-000007C1 c3         ret      
+000006FC 48 89 5c 24 08 - - - - -      mov      qword ptr [RSP + 0x8], RBX
+00000701 48 89 6c 24 10 - - - - -      mov      qword ptr [RSP + 0x10], RBP
+00000706 48 89 74 24 18 - - - - -      mov      qword ptr [RSP + 0x18], RSI
+0000070B 57 - - - - - - - - -          push     RDI
+0000070C 41 56 - - - - - - - -         push     R14
+0000070E 41 57 - - - - - - - -         push     R15
+00000710 48 83 ec 20 - - - - - -       sub      RSP, 0x20
+00000714 45 8a f0 - - - - - - -        mov      R14B, R8B
+00000717 40 8a f2 - - - - - - -        mov      SIL, DL
+0000071A 40 8a f9 - - - - - - -        mov      DIL, CL
+0000071D e8 76 ff ff ff - - - - -      call     0x00000698
+00000722 33 db - - - - - - - -         xor      EBX, EBX
+00000724 48 8b e8 - - - - - - -        mov      RBP, RAX
+00000727 48 85 c0 - - - - - - -        test     RAX, RAX
+0000072A 78 7d - - - - - - - -         js       0x000007a9
+0000072C 40 8a cf - - - - - - -        mov      CL, DIL
+0000072F e8 dc fe ff ff - - - - -      call     0x00000610
+00000734 40 8a d6 - - - - - - -        mov      DL, SIL
+00000737 40 8a cf - - - - - - -        mov      CL, DIL
+0000073A e8 59 fe ff ff - - - - -      call     0x00000598
+0000073F 40 8a cf - - - - - - -        mov      CL, DIL
+00000742 e8 51 ff ff ff - - - - -      call     0x00000698
+00000747 8d 73 60 - - - - - - -        lea      ESI, [RBX + 0x60]
+0000074A 40 3a fe - - - - - - -        cmp      DIL, SIL
+0000074D 8d 43 64 - - - - - - -        lea      EAX, [RBX + 0x64]
+00000750 8d 4b 66 - - - - - - -        lea      ECX, [RBX + 0x66]
+00000753 0f 45 c1 - - - - - - -        cmovnz   EAX, ECX
+00000756 44 0f b6 f8 - - - - - -       movzx    R15D, AL
+0000075A 41 0f b7 d7 - - - - - -       movzx    EDX, R15W
+0000075E ec - - - - - - - - -          in       AL, DX
+0000075F a8 02 - - - - - - - -         test     AL, 0x2
+00000761 74 28 - - - - - - - -         jz       0x0000078b
+00000763 48 81 fb 00 00 02 00 - - -    cmp      RBX, 0x20000
+0000076A 73 32 - - - - - - - -         jnc      0x0000079e
+0000076C b9 0f 00 00 00 - - - - -      mov      ECX, 0xf
+00000771 e8 1a 01 00 00 - - - - -      call     0x00000890
+00000776 41 0f b7 d7 - - - - - -       movzx    EDX, R15W
+0000077A ec - - - - - - - - -          in       AL, DX
+0000077B 48 ff c3 - - - - - - -        inc      RBX
+0000077E a8 02 - - - - - - - -         test     AL, 0x2
+00000780 75 e1 - - - - - - - -         jnz      0x00000763
+00000782 48 81 fb 00 00 02 00 - - -    cmp      RBX, 0x20000
+00000789 73 13 - - - - - - - -         jnc      0x0000079e
+0000078B b8 62 00 00 00 - - - - -      mov      EAX, 0x62
+00000790 40 3a fe - - - - - - -        cmp      DIL, SIL
+00000793 66 0f 45 f0 - - - - - -       cmovnz   SI, AX
+00000797 41 8a c6 - - - - - - -        mov      AL, R14B
+0000079A 0f b7 d6 - - - - - - -        movzx    EDX, SI
+0000079D ee - - - - - - - - -          out      DX, AL
+0000079E 40 8a cf - - - - - - -        mov      CL, DIL
+000007A1 e8 6a fe ff ff - - - - -      call     0x00000610
+000007A6 48 8b c5 - - - - - - -        mov      RAX, RBP
+000007A9 48 8b 5c 24 40 - - - - -      mov      RBX, qword ptr [RSP + 0x40]
+000007AE 48 8b 6c 24 48 - - - - -      mov      RBP, qword ptr [RSP + 0x48]
+000007B3 48 8b 74 24 50 - - - - -      mov      RSI, qword ptr [RSP + 0x50]
+000007B8 48 83 c4 20 - - - - - -       add      RSP, 0x20
+000007BC 41 5f - - - - - - - -         pop      R15
+000007BE 41 5e - - - - - - - -         pop      R14
+000007C0 5f - - - - - - - - -          pop      RDI
+000007C1 c3 - - - - - - - - -          ret      

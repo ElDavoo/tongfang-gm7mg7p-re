@@ -4,75 +4,75 @@
 ; This is the machine code. The decompiled C for this address is 000004F8.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-000004F8 48 89 4c 24 08 mov      qword ptr [RSP + 0x8], RCX
-000004FD 53         push     RBX
-000004FE 48 83 ec 20 sub      RSP, 0x20
-00000502 48 83 3d 9e 14 00 00 00 cmp      qword ptr [0x000019a8], 0x0
-0000050A 75 12      jnz      0x0000051e
-0000050C 48 89 15 95 14 00 00 mov      qword ptr [0x000019a8], RDX
-00000513 48 8b 42 58 mov      RAX, qword ptr [RDX + 0x58]
-00000517 48 89 05 82 14 00 00 mov      qword ptr [0x000019a0], RAX
-0000051E 41 b0 07   mov      R8B, 0x7
-00000521 b2 a3      mov      DL, 0xa3
-00000523 b1 62      mov      CL, 0x62
-00000525 33 db      xor      EBX, EBX
-00000527 e8 0c 0a 00 00 call     0x00000f38
-0000052C 48 85 c0   test     RAX, RAX
-0000052F 78 5a      js       0x0000058b
-00000531 41 b0 41   mov      R8B, 0x41
-00000534 b2 a2      mov      DL, 0xa2
-00000536 b1 62      mov      CL, 0x62
-00000538 e8 fb 09 00 00 call     0x00000f38
-0000053D 48 85 c0   test     RAX, RAX
-00000540 78 49      js       0x0000058b
-00000542 b2 a4      mov      DL, 0xa4
-00000544 b1 62      mov      CL, 0x62
-00000546 e8 89 08 00 00 call     0x00000dd4
-0000054B 48 85 c0   test     RAX, RAX
-0000054E 78 3b      js       0x0000058b
-00000550 8d 53 66   lea      EDX, [RBX + 0x66]
-00000553 ec         in       AL, DX
-00000554 a8 01      test     AL, 0x1
-00000556 75 29      jnz      0x00000581
-00000558 48 81 fb 00 00 02 00 cmp      RBX, 0x20000
-0000055F 73 2a      jnc      0x0000058b
-00000561 b9 0f 00 00 00 mov      ECX, 0xf
-00000566 e8 61 0b 00 00 call     0x000010cc
-0000056B ba 66 00 00 00 mov      EDX, 0x66
-00000570 ec         in       AL, DX
-00000571 48 ff c3   inc      RBX
-00000574 a8 01      test     AL, 0x1
-00000576 74 e0      jz       0x00000558
-00000578 48 81 fb 00 00 02 00 cmp      RBX, 0x20000
-0000057F 73 0a      jnc      0x0000058b
-00000581 ba 62 00 00 00 mov      EDX, 0x62
-00000586 ec         in       AL, DX
-00000587 8a d8      mov      BL, AL
-00000589 eb 04      jmp      0x0000058f
-0000058B 8a 5c 24 30 mov      BL, byte ptr [RSP + 0x30]
-0000058F 84 db      test     BL, BL
-00000591 79 38      jns      0x000005cb
-00000593 e8 e4 00 00 00 call     0x0000067c
-00000598 41 b0 07   mov      R8B, 0x7
-0000059B b2 a3      mov      DL, 0xa3
-0000059D b1 62      mov      CL, 0x62
-0000059F e8 94 09 00 00 call     0x00000f38
-000005A4 48 85 c0   test     RAX, RAX
-000005A7 78 27      js       0x000005d0
-000005A9 41 b0 41   mov      R8B, 0x41
-000005AC b2 a2      mov      DL, 0xa2
-000005AE b1 62      mov      CL, 0x62
-000005B0 e8 83 09 00 00 call     0x00000f38
-000005B5 48 85 c0   test     RAX, RAX
-000005B8 78 16      js       0x000005d0
-000005BA 80 e3 7f   and      BL, 0x7f
-000005BD b2 a5      mov      DL, 0xa5
-000005BF 44 8a c3   mov      R8B, BL
-000005C2 b1 62      mov      CL, 0x62
-000005C4 e8 6f 09 00 00 call     0x00000f38
-000005C9 eb 05      jmp      0x000005d0
-000005CB e8 d8 01 00 00 call     0x000007a8
-000005D0 33 c0      xor      EAX, EAX
-000005D2 48 83 c4 20 add      RSP, 0x20
-000005D6 5b         pop      RBX
-000005D7 c3         ret      
+000004F8 48 89 4c 24 08 - - - - - -       mov      qword ptr [RSP + 0x8], RCX
+000004FD 53 - - - - - - - - - -           push     RBX
+000004FE 48 83 ec 20 - - - - - - -        sub      RSP, 0x20
+00000502 48 83 3d 9e 14 00 00 00 - - -    cmp      qword ptr [0x000019a8], 0x0
+0000050A 75 12 - - - - - - - - -          jnz      0x0000051e
+0000050C 48 89 15 95 14 00 00 - - - -     mov      qword ptr [0x000019a8], RDX
+00000513 48 8b 42 58 - - - - - - -        mov      RAX, qword ptr [RDX + 0x58]
+00000517 48 89 05 82 14 00 00 - - - -     mov      qword ptr [0x000019a0], RAX
+0000051E 41 b0 07 - - - - - - - -         mov      R8B, 0x7
+00000521 b2 a3 - - - - - - - - -          mov      DL, 0xa3
+00000523 b1 62 - - - - - - - - -          mov      CL, 0x62
+00000525 33 db - - - - - - - - -          xor      EBX, EBX
+00000527 e8 0c 0a 00 00 - - - - - -       call     0x00000f38
+0000052C 48 85 c0 - - - - - - - -         test     RAX, RAX
+0000052F 78 5a - - - - - - - - -          js       0x0000058b
+00000531 41 b0 41 - - - - - - - -         mov      R8B, 0x41
+00000534 b2 a2 - - - - - - - - -          mov      DL, 0xa2
+00000536 b1 62 - - - - - - - - -          mov      CL, 0x62
+00000538 e8 fb 09 00 00 - - - - - -       call     0x00000f38
+0000053D 48 85 c0 - - - - - - - -         test     RAX, RAX
+00000540 78 49 - - - - - - - - -          js       0x0000058b
+00000542 b2 a4 - - - - - - - - -          mov      DL, 0xa4
+00000544 b1 62 - - - - - - - - -          mov      CL, 0x62
+00000546 e8 89 08 00 00 - - - - - -       call     0x00000dd4
+0000054B 48 85 c0 - - - - - - - -         test     RAX, RAX
+0000054E 78 3b - - - - - - - - -          js       0x0000058b
+00000550 8d 53 66 - - - - - - - -         lea      EDX, [RBX + 0x66]
+00000553 ec - - - - - - - - - -           in       AL, DX
+00000554 a8 01 - - - - - - - - -          test     AL, 0x1
+00000556 75 29 - - - - - - - - -          jnz      0x00000581
+00000558 48 81 fb 00 00 02 00 - - - -     cmp      RBX, 0x20000
+0000055F 73 2a - - - - - - - - -          jnc      0x0000058b
+00000561 b9 0f 00 00 00 - - - - - -       mov      ECX, 0xf
+00000566 e8 61 0b 00 00 - - - - - -       call     0x000010cc
+0000056B ba 66 00 00 00 - - - - - -       mov      EDX, 0x66
+00000570 ec - - - - - - - - - -           in       AL, DX
+00000571 48 ff c3 - - - - - - - -         inc      RBX
+00000574 a8 01 - - - - - - - - -          test     AL, 0x1
+00000576 74 e0 - - - - - - - - -          jz       0x00000558
+00000578 48 81 fb 00 00 02 00 - - - -     cmp      RBX, 0x20000
+0000057F 73 0a - - - - - - - - -          jnc      0x0000058b
+00000581 ba 62 00 00 00 - - - - - -       mov      EDX, 0x62
+00000586 ec - - - - - - - - - -           in       AL, DX
+00000587 8a d8 - - - - - - - - -          mov      BL, AL
+00000589 eb 04 - - - - - - - - -          jmp      0x0000058f
+0000058B 8a 5c 24 30 - - - - - - -        mov      BL, byte ptr [RSP + 0x30]
+0000058F 84 db - - - - - - - - -          test     BL, BL
+00000591 79 38 - - - - - - - - -          jns      0x000005cb
+00000593 e8 e4 00 00 00 - - - - - -       call     0x0000067c
+00000598 41 b0 07 - - - - - - - -         mov      R8B, 0x7
+0000059B b2 a3 - - - - - - - - -          mov      DL, 0xa3
+0000059D b1 62 - - - - - - - - -          mov      CL, 0x62
+0000059F e8 94 09 00 00 - - - - - -       call     0x00000f38
+000005A4 48 85 c0 - - - - - - - -         test     RAX, RAX
+000005A7 78 27 - - - - - - - - -          js       0x000005d0
+000005A9 41 b0 41 - - - - - - - -         mov      R8B, 0x41
+000005AC b2 a2 - - - - - - - - -          mov      DL, 0xa2
+000005AE b1 62 - - - - - - - - -          mov      CL, 0x62
+000005B0 e8 83 09 00 00 - - - - - -       call     0x00000f38
+000005B5 48 85 c0 - - - - - - - -         test     RAX, RAX
+000005B8 78 16 - - - - - - - - -          js       0x000005d0
+000005BA 80 e3 7f - - - - - - - -         and      BL, 0x7f
+000005BD b2 a5 - - - - - - - - -          mov      DL, 0xa5
+000005BF 44 8a c3 - - - - - - - -         mov      R8B, BL
+000005C2 b1 62 - - - - - - - - -          mov      CL, 0x62
+000005C4 e8 6f 09 00 00 - - - - - -       call     0x00000f38
+000005C9 eb 05 - - - - - - - - -          jmp      0x000005d0
+000005CB e8 d8 01 00 00 - - - - - -       call     0x000007a8
+000005D0 33 c0 - - - - - - - - -          xor      EAX, EAX
+000005D2 48 83 c4 20 - - - - - - -        add      RSP, 0x20
+000005D6 5b - - - - - - - - - -           pop      RBX
+000005D7 c3 - - - - - - - - - -           ret      

@@ -4,99 +4,99 @@
 ; This is the machine code. The decompiled C for this address is 00018160.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-00018160 48 8b c4   mov      RAX, RSP
-00018163 48 89 58 08 mov      qword ptr [RAX + 0x8], RBX
-00018167 48 89 68 10 mov      qword ptr [RAX + 0x10], RBP
-0001816B 48 89 70 18 mov      qword ptr [RAX + 0x18], RSI
-0001816F 48 89 78 20 mov      qword ptr [RAX + 0x20], RDI
-00018173 41 54      push     R12
-00018175 41 56      push     R14
-00018177 41 83 21 00 and      dword ptr [R9], 0x0
-0001817B 4c 8d 25 ae f8 00 00 lea      R12, [0x27a30]
-00018182 48 8b 74 24 38 mov      RSI, qword ptr [RSP + 0x38]
-00018187 4d 8b d9   mov      R11, R9
-0001818A 48 8b 5c 24 40 mov      RBX, qword ptr [RSP + 0x40]
-0001818F 33 ed      xor      EBP, EBP
-00018191 45 33 d2   xor      R10D, R10D
-00018194 41 8a c0   mov      AL, R8B
-00018197 f6 d8      neg      AL
-00018199 44 8b f2   mov      R14D, EDX
-0001819C c6 06 00   mov      byte ptr [RSI], 0x0
-0001819F 49 8b d4   mov      RDX, R12
-000181A2 45 1b c9   sbb      R9D, R9D
-000181A5 c6 03 00   mov      byte ptr [RBX], 0x0
-000181A8 41 83 e1 32 and      R9D, 0x32
-000181AC 41 83 c1 31 add      R9D, 0x31
-000181B0 3b 0a      cmp      ECX, dword ptr [RDX]
-000181B2 77 0e      ja       0x000181c2
-000181B4 41 8d 42 01 lea      EAX, [R10 + 0x1]
-000181B8 48 8d 04 40 lea      RAX, [RAX + RAX*0x2]
-000181BC 41 3b 0c 84 cmp      ECX, dword ptr [R12 + RAX*0x4]
-000181C0 77 0e      ja       0x000181d0
-000181C2 41 ff c2   inc      R10D
-000181C5 48 83 c2 0c add      RDX, 0xc
-000181C9 45 3b d1   cmp      R10D, R9D
-000181CC 73 0b      jnc      0x000181d9
-000181CE eb e0      jmp      0x000181b0
-000181D0 4b 8d 0c 52 lea      RCX, [R10 + R10*0x2]
-000181D4 41 8b 6c 8c 04 mov      EBP, dword ptr [R12 + RCX*0x4 + 0x4]
-000181D9 41 8b c2   mov      EAX, R10D
-000181DC 4b 8d 0c 52 lea      RCX, [R10 + R10*0x2]
-000181E0 41 8a 44 8c 08 mov      AL, byte ptr [R12 + RCX*0x4 + 0x8]
-000181E5 84 c0      test     AL, AL
-000181E7 0f 84 93 00 00 00 jz       0x00018280
-000181ED 33 c9      xor      ECX, ECX
-000181EF 0f b6 d0   movzx    EDX, AL
-000181F2 0f a3 ca   bt       EDX, ECX
-000181F5 72 19      jc       0x00018210
-000181F7 b8 04 00 00 00 mov      EAX, 0x4
-000181FC d3 e0      shl      EAX, CL
-000181FE 85 c2      test     EDX, EAX
-00018200 75 09      jnz      0x0001820b
-00018202 ff c1      inc      ECX
-00018204 83 f9 02   cmp      ECX, 0x2
-00018207 72 e9      jc       0x000181f2
-00018209 eb 0b      jmp      0x00018216
-0001820B c6 03 01   mov      byte ptr [RBX], 0x1
-0001820E eb 03      jmp      0x00018213
-00018210 c6 03 00   mov      byte ptr [RBX], 0x0
-00018213 41 89 0b   mov      dword ptr [R11], ECX
-00018216 b9 00 e1 f5 05 mov      ECX, 0x5f5e100
-0001821B b8 8f 58 8b 4f mov      EAX, 0x4f8b588f
-00018220 44 3b f1   cmp      R14D, ECX
-00018223 41 0f 43 ce cmovnc   ECX, R14D
-00018227 f7 e1      mul      ECX
-00018229 b8 ab 11 04 00 mov      EAX, 0x411ab
-0001822E 2b ca      sub      ECX, EDX
-00018230 d1 e9      shr      ECX, 0x1
-00018232 03 ca      add      ECX, EDX
-00018234 ba 40 0d 03 00 mov      EDX, 0x30d40
-00018239 c1 e9 10   shr      ECX, 0x10
-0001823C 41 83 3b 01 cmp      dword ptr [R11], 0x1
-00018240 0f 44 c2   cmovz    EAX, EDX
-00018243 33 d2      xor      EDX, EDX
-00018245 0f af c8   imul     ECX, EAX
-00018248 8b c5      mov      EAX, EBP
-0001824A 48 69 c0 00 ca 9a 3b imul     RAX, RAX, 0x3b9aca00
-00018251 48 f7 f1   div      RCX
-00018254 8d 88 f4 01 00 00 lea      ECX, [RAX + 0x1f4]
-0001825A b8 d3 4d 62 10 mov      EAX, 0x10624dd3
-0001825F f7 e1      mul      ECX
-00018261 c1 ea 06   shr      EDX, 0x6
-00018264 8b ca      mov      ECX, EDX
-00018266 48 83 f9 03 cmp      RCX, 0x3
-0001826A 72 14      jc       0x00018280
-0001826C 41 f6 d8   neg      R8B
-0001826F 48 1b c0   sbb      RAX, RAX
-00018272 83 e0 10   and      EAX, 0x10
-00018275 48 83 c0 0f add      RAX, 0xf
-00018279 48 3b c1   cmp      RAX, RCX
-0001827C 72 02      jc       0x00018280
-0001827E 88 0e      mov      byte ptr [RSI], CL
-00018280 48 8b 5c 24 18 mov      RBX, qword ptr [RSP + 0x18]
-00018285 48 8b 6c 24 20 mov      RBP, qword ptr [RSP + 0x20]
-0001828A 48 8b 74 24 28 mov      RSI, qword ptr [RSP + 0x28]
-0001828F 48 8b 7c 24 30 mov      RDI, qword ptr [RSP + 0x30]
-00018294 41 5e      pop      R14
-00018296 41 5c      pop      R12
-00018298 c3         ret      
+00018160 48 8b c4 - - - - - - - - -          mov      RAX, RSP
+00018163 48 89 58 08 - - - - - - - -         mov      qword ptr [RAX + 0x8], RBX
+00018167 48 89 68 10 - - - - - - - -         mov      qword ptr [RAX + 0x10], RBP
+0001816B 48 89 70 18 - - - - - - - -         mov      qword ptr [RAX + 0x18], RSI
+0001816F 48 89 78 20 - - - - - - - -         mov      qword ptr [RAX + 0x20], RDI
+00018173 41 54 - - - - - - - - - -           push     R12
+00018175 41 56 - - - - - - - - - -           push     R14
+00018177 41 83 21 00 - - - - - - - -         and      dword ptr [R9], 0x0
+0001817B 4c 8d 25 ae f8 00 00 - - - - -      lea      R12, [0x27a30]
+00018182 48 8b 74 24 38 - - - - - - -        mov      RSI, qword ptr [RSP + 0x38]
+00018187 4d 8b d9 - - - - - - - - -          mov      R11, R9
+0001818A 48 8b 5c 24 40 - - - - - - -        mov      RBX, qword ptr [RSP + 0x40]
+0001818F 33 ed - - - - - - - - - -           xor      EBP, EBP
+00018191 45 33 d2 - - - - - - - - -          xor      R10D, R10D
+00018194 41 8a c0 - - - - - - - - -          mov      AL, R8B
+00018197 f6 d8 - - - - - - - - - -           neg      AL
+00018199 44 8b f2 - - - - - - - - -          mov      R14D, EDX
+0001819C c6 06 00 - - - - - - - - -          mov      byte ptr [RSI], 0x0
+0001819F 49 8b d4 - - - - - - - - -          mov      RDX, R12
+000181A2 45 1b c9 - - - - - - - - -          sbb      R9D, R9D
+000181A5 c6 03 00 - - - - - - - - -          mov      byte ptr [RBX], 0x0
+000181A8 41 83 e1 32 - - - - - - - -         and      R9D, 0x32
+000181AC 41 83 c1 31 - - - - - - - -         add      R9D, 0x31
+000181B0 3b 0a - - - - - - - - - -           cmp      ECX, dword ptr [RDX]
+000181B2 77 0e - - - - - - - - - -           ja       0x000181c2
+000181B4 41 8d 42 01 - - - - - - - -         lea      EAX, [R10 + 0x1]
+000181B8 48 8d 04 40 - - - - - - - -         lea      RAX, [RAX + RAX*0x2]
+000181BC 41 3b 0c 84 - - - - - - - -         cmp      ECX, dword ptr [R12 + RAX*0x4]
+000181C0 77 0e - - - - - - - - - -           ja       0x000181d0
+000181C2 41 ff c2 - - - - - - - - -          inc      R10D
+000181C5 48 83 c2 0c - - - - - - - -         add      RDX, 0xc
+000181C9 45 3b d1 - - - - - - - - -          cmp      R10D, R9D
+000181CC 73 0b - - - - - - - - - -           jnc      0x000181d9
+000181CE eb e0 - - - - - - - - - -           jmp      0x000181b0
+000181D0 4b 8d 0c 52 - - - - - - - -         lea      RCX, [R10 + R10*0x2]
+000181D4 41 8b 6c 8c 04 - - - - - - -        mov      EBP, dword ptr [R12 + RCX*0x4 + 0x4]
+000181D9 41 8b c2 - - - - - - - - -          mov      EAX, R10D
+000181DC 4b 8d 0c 52 - - - - - - - -         lea      RCX, [R10 + R10*0x2]
+000181E0 41 8a 44 8c 08 - - - - - - -        mov      AL, byte ptr [R12 + RCX*0x4 + 0x8]
+000181E5 84 c0 - - - - - - - - - -           test     AL, AL
+000181E7 0f 84 93 00 00 00 - - - - - -       jz       0x00018280
+000181ED 33 c9 - - - - - - - - - -           xor      ECX, ECX
+000181EF 0f b6 d0 - - - - - - - - -          movzx    EDX, AL
+000181F2 0f a3 ca - - - - - - - - -          bt       EDX, ECX
+000181F5 72 19 - - - - - - - - - -           jc       0x00018210
+000181F7 b8 04 00 00 00 - - - - - - -        mov      EAX, 0x4
+000181FC d3 e0 - - - - - - - - - -           shl      EAX, CL
+000181FE 85 c2 - - - - - - - - - -           test     EDX, EAX
+00018200 75 09 - - - - - - - - - -           jnz      0x0001820b
+00018202 ff c1 - - - - - - - - - -           inc      ECX
+00018204 83 f9 02 - - - - - - - - -          cmp      ECX, 0x2
+00018207 72 e9 - - - - - - - - - -           jc       0x000181f2
+00018209 eb 0b - - - - - - - - - -           jmp      0x00018216
+0001820B c6 03 01 - - - - - - - - -          mov      byte ptr [RBX], 0x1
+0001820E eb 03 - - - - - - - - - -           jmp      0x00018213
+00018210 c6 03 00 - - - - - - - - -          mov      byte ptr [RBX], 0x0
+00018213 41 89 0b - - - - - - - - -          mov      dword ptr [R11], ECX
+00018216 b9 00 e1 f5 05 - - - - - - -        mov      ECX, 0x5f5e100
+0001821B b8 8f 58 8b 4f - - - - - - -        mov      EAX, 0x4f8b588f
+00018220 44 3b f1 - - - - - - - - -          cmp      R14D, ECX
+00018223 41 0f 43 ce - - - - - - - -         cmovnc   ECX, R14D
+00018227 f7 e1 - - - - - - - - - -           mul      ECX
+00018229 b8 ab 11 04 00 - - - - - - -        mov      EAX, 0x411ab
+0001822E 2b ca - - - - - - - - - -           sub      ECX, EDX
+00018230 d1 e9 - - - - - - - - - -           shr      ECX, 0x1
+00018232 03 ca - - - - - - - - - -           add      ECX, EDX
+00018234 ba 40 0d 03 00 - - - - - - -        mov      EDX, 0x30d40
+00018239 c1 e9 10 - - - - - - - - -          shr      ECX, 0x10
+0001823C 41 83 3b 01 - - - - - - - -         cmp      dword ptr [R11], 0x1
+00018240 0f 44 c2 - - - - - - - - -          cmovz    EAX, EDX
+00018243 33 d2 - - - - - - - - - -           xor      EDX, EDX
+00018245 0f af c8 - - - - - - - - -          imul     ECX, EAX
+00018248 8b c5 - - - - - - - - - -           mov      EAX, EBP
+0001824A 48 69 c0 00 ca 9a 3b - - - - -      imul     RAX, RAX, 0x3b9aca00
+00018251 48 f7 f1 - - - - - - - - -          div      RCX
+00018254 8d 88 f4 01 00 00 - - - - - -       lea      ECX, [RAX + 0x1f4]
+0001825A b8 d3 4d 62 10 - - - - - - -        mov      EAX, 0x10624dd3
+0001825F f7 e1 - - - - - - - - - -           mul      ECX
+00018261 c1 ea 06 - - - - - - - - -          shr      EDX, 0x6
+00018264 8b ca - - - - - - - - - -           mov      ECX, EDX
+00018266 48 83 f9 03 - - - - - - - -         cmp      RCX, 0x3
+0001826A 72 14 - - - - - - - - - -           jc       0x00018280
+0001826C 41 f6 d8 - - - - - - - - -          neg      R8B
+0001826F 48 1b c0 - - - - - - - - -          sbb      RAX, RAX
+00018272 83 e0 10 - - - - - - - - -          and      EAX, 0x10
+00018275 48 83 c0 0f - - - - - - - -         add      RAX, 0xf
+00018279 48 3b c1 - - - - - - - - -          cmp      RAX, RCX
+0001827C 72 02 - - - - - - - - - -           jc       0x00018280
+0001827E 88 0e - - - - - - - - - -           mov      byte ptr [RSI], CL
+00018280 48 8b 5c 24 18 - - - - - - -        mov      RBX, qword ptr [RSP + 0x18]
+00018285 48 8b 6c 24 20 - - - - - - -        mov      RBP, qword ptr [RSP + 0x20]
+0001828A 48 8b 74 24 28 - - - - - - -        mov      RSI, qword ptr [RSP + 0x28]
+0001828F 48 8b 7c 24 30 - - - - - - -        mov      RDI, qword ptr [RSP + 0x30]
+00018294 41 5e - - - - - - - - - -           pop      R14
+00018296 41 5c - - - - - - - - - -           pop      R12
+00018298 c3 - - - - - - - - - - -            ret      

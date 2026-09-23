@@ -4,46 +4,46 @@
 ; This is the machine code. The decompiled C for this address is 00018A8C.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-00018A8C 48 89 5c 24 08 mov      qword ptr [RSP + 0x8], RBX
-00018A91 57         push     RDI
-00018A92 48 83 ec 30 sub      RSP, 0x30
-00018A96 48 8b 7c 24 60 mov      RDI, qword ptr [RSP + 0x60]
-00018A9B 49 8b d9   mov      RBX, R9
-00018A9E 48 8b 07   mov      RAX, qword ptr [RDI]
-00018AA1 48 85 c0   test     RAX, RAX
-00018AA4 75 03      jnz      0x00018aa9
-00018AA6 49 21 01   and      qword ptr [R9], RAX
-00018AA9 48 89 44 24 20 mov      qword ptr [RSP + 0x20], RAX
-00018AAE 48 8d 15 eb a9 00 00 lea      RDX, [0x234a0]
-00018AB5 48 8b 05 e4 09 01 00 mov      RAX, qword ptr [0x000294a0]
-00018ABC 48 8d 0d c5 d1 00 00 lea      RCX, [0x25c88]
-00018AC3 45 33 c0   xor      R8D, R8D
-00018AC6 ff 50 48   call     qword ptr [RAX + 0x48]
-00018AC9 48 85 c0   test     RAX, RAX
-00018ACC 79 60      jns      0x00018b2e
-00018ACE 48 b9 05 00 00 00 00 00 00 80 mov      RCX, -0x7ffffffffffffffb
-00018AD8 48 3b c1   cmp      RAX, RCX
-00018ADB 75 51      jnz      0x00018b2e
-00018ADD 48 8b 0f   mov      RCX, qword ptr [RDI]
-00018AE0 48 85 c9   test     RCX, RCX
-00018AE3 74 0a      jz       0x00018aef
-00018AE5 48 8b 05 ac 09 01 00 mov      RAX, qword ptr [0x00029498]
-00018AEC ff 50 48   call     qword ptr [RAX + 0x48]
-00018AEF 48 8b 0b   mov      RCX, qword ptr [RBX]
-00018AF2 e8 51 4c 00 00 call     0x0001d748
-00018AF7 48 89 07   mov      qword ptr [RDI], RAX
-00018AFA 48 85 c0   test     RAX, RAX
-00018AFD 75 0c      jnz      0x00018b0b
-00018AFF 48 b8 09 00 00 00 00 00 00 80 mov      RAX, -0x7ffffffffffffff7
-00018B09 eb 23      jmp      0x00018b2e
-00018B0B 48 89 44 24 20 mov      qword ptr [RSP + 0x20], RAX
-00018B10 48 8d 15 89 a9 00 00 lea      RDX, [0x234a0]
-00018B17 48 8b 05 82 09 01 00 mov      RAX, qword ptr [0x000294a0]
-00018B1E 48 8d 0d 63 d1 00 00 lea      RCX, [0x25c88]
-00018B25 4c 8b cb   mov      R9, RBX
-00018B28 45 33 c0   xor      R8D, R8D
-00018B2B ff 50 48   call     qword ptr [RAX + 0x48]
-00018B2E 48 8b 5c 24 40 mov      RBX, qword ptr [RSP + 0x40]
-00018B33 48 83 c4 30 add      RSP, 0x30
-00018B37 5f         pop      RDI
-00018B38 c3         ret      
+00018A8C 48 89 5c 24 08 - - - - - - -        mov      qword ptr [RSP + 0x8], RBX
+00018A91 57 - - - - - - - - - - -            push     RDI
+00018A92 48 83 ec 30 - - - - - - - -         sub      RSP, 0x30
+00018A96 48 8b 7c 24 60 - - - - - - -        mov      RDI, qword ptr [RSP + 0x60]
+00018A9B 49 8b d9 - - - - - - - - -          mov      RBX, R9
+00018A9E 48 8b 07 - - - - - - - - -          mov      RAX, qword ptr [RDI]
+00018AA1 48 85 c0 - - - - - - - - -          test     RAX, RAX
+00018AA4 75 03 - - - - - - - - - -           jnz      0x00018aa9
+00018AA6 49 21 01 - - - - - - - - -          and      qword ptr [R9], RAX
+00018AA9 48 89 44 24 20 - - - - - - -        mov      qword ptr [RSP + 0x20], RAX
+00018AAE 48 8d 15 eb a9 00 00 - - - - -      lea      RDX, [0x234a0]
+00018AB5 48 8b 05 e4 09 01 00 - - - - -      mov      RAX, qword ptr [0x000294a0]
+00018ABC 48 8d 0d c5 d1 00 00 - - - - -      lea      RCX, [0x25c88]
+00018AC3 45 33 c0 - - - - - - - - -          xor      R8D, R8D
+00018AC6 ff 50 48 - - - - - - - - -          call     qword ptr [RAX + 0x48]
+00018AC9 48 85 c0 - - - - - - - - -          test     RAX, RAX
+00018ACC 79 60 - - - - - - - - - -           jns      0x00018b2e
+00018ACE 48 b9 05 00 00 00 00 00 00 80 - -   mov      RCX, -0x7ffffffffffffffb
+00018AD8 48 3b c1 - - - - - - - - -          cmp      RAX, RCX
+00018ADB 75 51 - - - - - - - - - -           jnz      0x00018b2e
+00018ADD 48 8b 0f - - - - - - - - -          mov      RCX, qword ptr [RDI]
+00018AE0 48 85 c9 - - - - - - - - -          test     RCX, RCX
+00018AE3 74 0a - - - - - - - - - -           jz       0x00018aef
+00018AE5 48 8b 05 ac 09 01 00 - - - - -      mov      RAX, qword ptr [0x00029498]
+00018AEC ff 50 48 - - - - - - - - -          call     qword ptr [RAX + 0x48]
+00018AEF 48 8b 0b - - - - - - - - -          mov      RCX, qword ptr [RBX]
+00018AF2 e8 51 4c 00 00 - - - - - - -        call     0x0001d748
+00018AF7 48 89 07 - - - - - - - - -          mov      qword ptr [RDI], RAX
+00018AFA 48 85 c0 - - - - - - - - -          test     RAX, RAX
+00018AFD 75 0c - - - - - - - - - -           jnz      0x00018b0b
+00018AFF 48 b8 09 00 00 00 00 00 00 80 - -   mov      RAX, -0x7ffffffffffffff7
+00018B09 eb 23 - - - - - - - - - -           jmp      0x00018b2e
+00018B0B 48 89 44 24 20 - - - - - - -        mov      qword ptr [RSP + 0x20], RAX
+00018B10 48 8d 15 89 a9 00 00 - - - - -      lea      RDX, [0x234a0]
+00018B17 48 8b 05 82 09 01 00 - - - - -      mov      RAX, qword ptr [0x000294a0]
+00018B1E 48 8d 0d 63 d1 00 00 - - - - -      lea      RCX, [0x25c88]
+00018B25 4c 8b cb - - - - - - - - -          mov      R9, RBX
+00018B28 45 33 c0 - - - - - - - - -          xor      R8D, R8D
+00018B2B ff 50 48 - - - - - - - - -          call     qword ptr [RAX + 0x48]
+00018B2E 48 8b 5c 24 40 - - - - - - -        mov      RBX, qword ptr [RSP + 0x40]
+00018B33 48 83 c4 30 - - - - - - - -         add      RSP, 0x30
+00018B37 5f - - - - - - - - - - -            pop      RDI
+00018B38 c3 - - - - - - - - - - -            ret      

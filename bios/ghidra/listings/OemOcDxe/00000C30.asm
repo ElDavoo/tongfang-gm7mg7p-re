@@ -4,27 +4,27 @@
 ; This is the machine code. The decompiled C for this address is 00000C30.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-00000C30 89 4c 24 08 mov      dword ptr [RSP + 0x8], ECX
-00000C34 48 83 ec 28 sub      RSP, 0x28
-00000C38 4c 8b ca   mov      R9, RDX
-00000C3B e8 18 05 00 00 call     0x00001158
-00000C40 84 c0      test     AL, AL
-00000C42 75 0c      jnz      0x00000c50
-00000C44 48 b8 02 00 00 00 00 00 00 80 mov      RAX, -0x7ffffffffffffffe
-00000C4E eb 34      jmp      0x00000c84
-00000C50 48 8d 4c 24 30 lea      RCX, [RSP + 0x30]
-00000C55 e8 e2 05 00 00 call     0x0000123c
-00000C5A 0f b6 50 1e movzx    EDX, byte ptr [RAX + 0x1e]
-00000C5E 0f b7 40 20 movzx    EAX, word ptr [RAX + 0x20]
-00000C62 48 81 ca 00 fd 00 00 or       RDX, 0xfd00
-00000C69 66 83 c0 08 add      AX, 0x8
-00000C6D 48 c1 e2 10 shl      RDX, 0x10
-00000C71 0f b7 c8   movzx    ECX, AX
-00000C74 48 0b d1   or       RDX, RCX
-00000C77 8b 02      mov      EAX, dword ptr [RDX]
-00000C79 c1 e8 18   shr      EAX, 0x18
-00000C7C 83 e0 03   and      EAX, 0x3
-00000C7F 41 89 01   mov      dword ptr [R9], EAX
-00000C82 33 c0      xor      EAX, EAX
-00000C84 48 83 c4 28 add      RSP, 0x28
-00000C88 c3         ret      
+00000C30 89 4c 24 08 - - - - - - -        mov      dword ptr [RSP + 0x8], ECX
+00000C34 48 83 ec 28 - - - - - - -        sub      RSP, 0x28
+00000C38 4c 8b ca - - - - - - - -         mov      R9, RDX
+00000C3B e8 18 05 00 00 - - - - - -       call     0x00001158
+00000C40 84 c0 - - - - - - - - -          test     AL, AL
+00000C42 75 0c - - - - - - - - -          jnz      0x00000c50
+00000C44 48 b8 02 00 00 00 00 00 00 80 -  mov      RAX, -0x7ffffffffffffffe
+00000C4E eb 34 - - - - - - - - -          jmp      0x00000c84
+00000C50 48 8d 4c 24 30 - - - - - -       lea      RCX, [RSP + 0x30]
+00000C55 e8 e2 05 00 00 - - - - - -       call     0x0000123c
+00000C5A 0f b6 50 1e - - - - - - -        movzx    EDX, byte ptr [RAX + 0x1e]
+00000C5E 0f b7 40 20 - - - - - - -        movzx    EAX, word ptr [RAX + 0x20]
+00000C62 48 81 ca 00 fd 00 00 - - - -     or       RDX, 0xfd00
+00000C69 66 83 c0 08 - - - - - - -        add      AX, 0x8
+00000C6D 48 c1 e2 10 - - - - - - -        shl      RDX, 0x10
+00000C71 0f b7 c8 - - - - - - - -         movzx    ECX, AX
+00000C74 48 0b d1 - - - - - - - -         or       RDX, RCX
+00000C77 8b 02 - - - - - - - - -          mov      EAX, dword ptr [RDX]
+00000C79 c1 e8 18 - - - - - - - -         shr      EAX, 0x18
+00000C7C 83 e0 03 - - - - - - - -         and      EAX, 0x3
+00000C7F 41 89 01 - - - - - - - -         mov      dword ptr [R9], EAX
+00000C82 33 c0 - - - - - - - - -          xor      EAX, EAX
+00000C84 48 83 c4 28 - - - - - - -        add      RSP, 0x28
+00000C88 c3 - - - - - - - - - -           ret      

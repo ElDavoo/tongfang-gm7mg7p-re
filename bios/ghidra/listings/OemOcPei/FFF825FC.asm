@@ -4,46 +4,46 @@
 ; This is the machine code. The decompiled C for this address is FFF825FC.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-FFF825FC 55         push     EBP
-FFF825FD 8b ec      mov      EBP, ESP
-FFF825FF 83 e4 f8   and      ESP, 0xfffffff8
-FFF82602 53         push     EBX
-FFF82603 55         push     EBP
-FFF82604 56         push     ESI
-FFF82605 57         push     EDI
-FFF82606 8a da      mov      BL, DL
-FFF82608 33 f6      xor      ESI, ESI
-FFF8260A 80 f9 60   cmp      CL, 0x60
-FFF8260D 0f 95 c0   setnz    AL
+FFF825FC 55 - - - - - -       push     EBP
+FFF825FD 8b ec - - - - -      mov      EBP, ESP
+FFF825FF 83 e4 f8 - - - -     and      ESP, 0xfffffff8
+FFF82602 53 - - - - - -       push     EBX
+FFF82603 55 - - - - - -       push     EBP
+FFF82604 56 - - - - - -       push     ESI
+FFF82605 57 - - - - - -       push     EDI
+FFF82606 8a da - - - - -      mov      BL, DL
+FFF82608 33 f6 - - - - -      xor      ESI, ESI
+FFF8260A 80 f9 60 - - - -     cmp      CL, 0x60
+FFF8260D 0f 95 c0 - - - -     setnz    AL
 FFF82610 8d 04 45 64 00 00 00 lea      EAX, [EAX*0x2 + 0x64]
-FFF82617 0f b6 f8   movzx    EDI, AL
-FFF8261A 66 8b d7   mov      DX, DI
-FFF8261D ec         in       AL, DX
-FFF8261E a8 02      test     AL, 0x2
-FFF82620 74 25      jz       0xfff82647
-FFF82622 bd 00 00 02 00 mov      EBP, 0x20000
-FFF82627 3b f5      cmp      ESI, EBP
-FFF82629 73 15      jnc      0xfff82640
-FFF8262B 6a 0f      push     0xf
-FFF8262D 59         pop      ECX
-FFF8262E e8 8a 02 00 00 call     0xfff828bd
-FFF82633 66 8b d7   mov      DX, DI
-FFF82636 ec         in       AL, DX
-FFF82637 46         inc      ESI
-FFF82638 a8 02      test     AL, 0x2
-FFF8263A 75 eb      jnz      0xfff82627
-FFF8263C 3b f5      cmp      ESI, EBP
-FFF8263E 72 07      jc       0xfff82647
-FFF82640 b8 07 00 00 80 mov      EAX, 0x80000007
-FFF82645 eb 08      jmp      0xfff8264f
-FFF82647 66 8b d7   mov      DX, DI
-FFF8264A 8a c3      mov      AL, BL
-FFF8264C ee         out      DX, AL
-FFF8264D 33 c0      xor      EAX, EAX
-FFF8264F 5f         pop      EDI
-FFF82650 5e         pop      ESI
-FFF82651 5d         pop      EBP
-FFF82652 5b         pop      EBX
-FFF82653 8b e5      mov      ESP, EBP
-FFF82655 5d         pop      EBP
-FFF82656 c3         ret      
+FFF82617 0f b6 f8 - - - -     movzx    EDI, AL
+FFF8261A 66 8b d7 - - - -     mov      DX, DI
+FFF8261D ec - - - - - -       in       AL, DX
+FFF8261E a8 02 - - - - -      test     AL, 0x2
+FFF82620 74 25 - - - - -      jz       0xfff82647
+FFF82622 bd 00 00 02 00 - -   mov      EBP, 0x20000
+FFF82627 3b f5 - - - - -      cmp      ESI, EBP
+FFF82629 73 15 - - - - -      jnc      0xfff82640
+FFF8262B 6a 0f - - - - -      push     0xf
+FFF8262D 59 - - - - - -       pop      ECX
+FFF8262E e8 8a 02 00 00 - -   call     0xfff828bd
+FFF82633 66 8b d7 - - - -     mov      DX, DI
+FFF82636 ec - - - - - -       in       AL, DX
+FFF82637 46 - - - - - -       inc      ESI
+FFF82638 a8 02 - - - - -      test     AL, 0x2
+FFF8263A 75 eb - - - - -      jnz      0xfff82627
+FFF8263C 3b f5 - - - - -      cmp      ESI, EBP
+FFF8263E 72 07 - - - - -      jc       0xfff82647
+FFF82640 b8 07 00 00 80 - -   mov      EAX, 0x80000007
+FFF82645 eb 08 - - - - -      jmp      0xfff8264f
+FFF82647 66 8b d7 - - - -     mov      DX, DI
+FFF8264A 8a c3 - - - - -      mov      AL, BL
+FFF8264C ee - - - - - -       out      DX, AL
+FFF8264D 33 c0 - - - - -      xor      EAX, EAX
+FFF8264F 5f - - - - - -       pop      EDI
+FFF82650 5e - - - - - -       pop      ESI
+FFF82651 5d - - - - - -       pop      EBP
+FFF82652 5b - - - - - -       pop      EBX
+FFF82653 8b e5 - - - - -      mov      ESP, EBP
+FFF82655 5d - - - - - -       pop      EBP
+FFF82656 c3 - - - - - -       ret      

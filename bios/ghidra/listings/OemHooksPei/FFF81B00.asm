@@ -4,90 +4,90 @@
 ; This is the machine code. The decompiled C for this address is FFF81B00.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-FFF81B00 51         push     ECX
-FFF81B01 8b 44 24 14 mov      EAX, dword ptr [ESP + 0x14]
-FFF81B05 53         push     EBX
-FFF81B06 8b da      mov      EBX, EDX
-FFF81B08 8a d1      mov      DL, CL
-FFF81B0A 55         push     EBP
-FFF81B0B 56         push     ESI
-FFF81B0C 57         push     EDI
-FFF81B0D 83 f8 01   cmp      EAX, 0x1
-FFF81B10 7e 19      jle      0xfff81b2b
-FFF81B12 83 f8 03   cmp      EAX, 0x3
-FFF81B15 7e 0a      jle      0xfff81b21
-FFF81B17 83 f8 07   cmp      EAX, 0x7
-FFF81B1A 7e 0f      jle      0xfff81b2b
-FFF81B1C 83 f8 13   cmp      EAX, 0x13
-FFF81B1F 74 0a      jz       0xfff81b2b
-FFF81B21 b8 02 00 00 80 mov      EAX, 0x80000002
-FFF81B26 e9 d7 00 00 00 jmp      0xfff81c02
-FFF81B2B b8 00 90 0f e0 mov      EAX, 0xe00f9000
-FFF81B30 b9 ff ff 00 00 mov      ECX, 0xffff
-FFF81B35 66 8b 00   mov      AX, word ptr [EAX]
-FFF81B38 0f b7 c0   movzx    EAX, AX
-FFF81B3B 66 3b c1   cmp      AX, CX
-FFF81B3E 75 0a      jnz      0xfff81b4a
-FFF81B40 b8 07 00 00 80 mov      EAX, 0x80000007
-FFF81B45 e9 b8 00 00 00 jmp      0xfff81c02
-FFF81B4A be ff ff ff 0f mov      ESI, 0xfffffff
-FFF81B4F bd d8 90 0f e0 mov      EBP, 0xe00f90d8
-FFF81B54 8b ce      mov      ECX, ESI
-FFF81B56 66 8b 45 00 mov      AX, word ptr [EBP]
-FFF81B5A 0f b7 c0   movzx    EAX, AX
-FFF81B5D a8 01      test     AL, 0x1
-FFF81B5F 74 05      jz       0xfff81b66
-FFF81B61 83 e9 01   sub      ECX, 0x1
-FFF81B64 75 f0      jnz      0xfff81b56
-FFF81B66 85 c9      test     ECX, ECX
-FFF81B68 75 0a      jnz      0xfff81b74
-FFF81B6A b8 12 00 00 80 mov      EAX, 0x80000012
-FFF81B6F e9 8e 00 00 00 jmp      0xfff81c02
-FFF81B74 8b 7c 24 20 mov      EDI, dword ptr [ESP + 0x20]
-FFF81B78 ff 74 24 1c push     dword ptr [ESP + 0x1c]
-FFF81B7C 0f b6 ca   movzx    ECX, DL
-FFF81B7F 8b 54 24 1c mov      EDX, dword ptr [ESP + 0x1c]
-FFF81B83 c1 e1 18   shl      ECX, 0x18
-FFF81B86 0f b7 c2   movzx    EAX, DX
-FFF81B89 0b c8      or       ECX, EAX
-FFF81B8B c6 07 04   mov      byte ptr [EDI], 0x4
-FFF81B8E 52         push     EDX
-FFF81B8F 89 0d d0 90 0f e0 mov      dword ptr [0xe00f90d0], ECX
-FFF81B95 e8 c4 fa ff ff call     0xfff8165e
-FFF81B9A a3 dc 90 0f e0 mov      [0xe00f90dc], EAX
-FFF81B9F 66 8b 45 00 mov      AX, word ptr [EBP]
-FFF81BA3 0f b7 c0   movzx    EAX, AX
-FFF81BA6 83 e0 7f   and      EAX, 0x7f
-FFF81BA9 0d 00 13 00 00 or       EAX, 0x1300
-FFF81BAE 66 a3 d8 90 0f e0 mov      [0xe00f90d8], AX
-FFF81BB4 b8 00 f0 00 00 mov      EAX, 0xf000
-FFF81BB9 66 a3 da 90 0f e0 mov      [0xe00f90da], AX
-FFF81BBF 8b 03      mov      EAX, dword ptr [EBX]
-FFF81BC1 a3 d4 90 0f e0 mov      [0xe00f90d4], EAX
-FFF81BC6 66 8b 45 00 mov      AX, word ptr [EBP]
-FFF81BCA 0f b7 c0   movzx    EAX, AX
-FFF81BCD 59         pop      ECX
-FFF81BCE 83 c8 01   or       EAX, 0x1
-FFF81BD1 59         pop      ECX
-FFF81BD2 66 a3 d8 90 0f e0 mov      [0xe00f90d8], AX
-FFF81BD8 66 8b 45 00 mov      AX, word ptr [EBP]
-FFF81BDC 0f b7 c0   movzx    EAX, AX
-FFF81BDF a8 01      test     AL, 0x1
-FFF81BE1 74 05      jz       0xfff81be8
-FFF81BE3 83 ee 01   sub      ESI, 0x1
-FFF81BE6 75 f0      jnz      0xfff81bd8
-FFF81BE8 85 f6      test     ESI, ESI
-FFF81BEA 0f 84 7a ff ff ff jz       0xfff81b6a
-FFF81BF0 d0 e8      shr      AL, 0x1
-FFF81BF2 24 03      and      AL, 0x3
-FFF81BF4 88 07      mov      byte ptr [EDI], AL
-FFF81BF6 0f b6 c0   movzx    EAX, AL
-FFF81BF9 f7 d8      neg      EAX
-FFF81BFB 1b c0      sbb      EAX, EAX
-FFF81BFD 25 07 00 00 80 and      EAX, 0x80000007
-FFF81C02 5f         pop      EDI
-FFF81C03 5e         pop      ESI
-FFF81C04 5d         pop      EBP
-FFF81C05 5b         pop      EBX
-FFF81C06 59         pop      ECX
-FFF81C07 c3         ret      
+FFF81B00 51 - - - - - - - - -          push     ECX
+FFF81B01 8b 44 24 14 - - - - - -       mov      EAX, dword ptr [ESP + 0x14]
+FFF81B05 53 - - - - - - - - -          push     EBX
+FFF81B06 8b da - - - - - - - -         mov      EBX, EDX
+FFF81B08 8a d1 - - - - - - - -         mov      DL, CL
+FFF81B0A 55 - - - - - - - - -          push     EBP
+FFF81B0B 56 - - - - - - - - -          push     ESI
+FFF81B0C 57 - - - - - - - - -          push     EDI
+FFF81B0D 83 f8 01 - - - - - - -        cmp      EAX, 0x1
+FFF81B10 7e 19 - - - - - - - -         jle      0xfff81b2b
+FFF81B12 83 f8 03 - - - - - - -        cmp      EAX, 0x3
+FFF81B15 7e 0a - - - - - - - -         jle      0xfff81b21
+FFF81B17 83 f8 07 - - - - - - -        cmp      EAX, 0x7
+FFF81B1A 7e 0f - - - - - - - -         jle      0xfff81b2b
+FFF81B1C 83 f8 13 - - - - - - -        cmp      EAX, 0x13
+FFF81B1F 74 0a - - - - - - - -         jz       0xfff81b2b
+FFF81B21 b8 02 00 00 80 - - - - -      mov      EAX, 0x80000002
+FFF81B26 e9 d7 00 00 00 - - - - -      jmp      0xfff81c02
+FFF81B2B b8 00 90 0f e0 - - - - -      mov      EAX, 0xe00f9000
+FFF81B30 b9 ff ff 00 00 - - - - -      mov      ECX, 0xffff
+FFF81B35 66 8b 00 - - - - - - -        mov      AX, word ptr [EAX]
+FFF81B38 0f b7 c0 - - - - - - -        movzx    EAX, AX
+FFF81B3B 66 3b c1 - - - - - - -        cmp      AX, CX
+FFF81B3E 75 0a - - - - - - - -         jnz      0xfff81b4a
+FFF81B40 b8 07 00 00 80 - - - - -      mov      EAX, 0x80000007
+FFF81B45 e9 b8 00 00 00 - - - - -      jmp      0xfff81c02
+FFF81B4A be ff ff ff 0f - - - - -      mov      ESI, 0xfffffff
+FFF81B4F bd d8 90 0f e0 - - - - -      mov      EBP, 0xe00f90d8
+FFF81B54 8b ce - - - - - - - -         mov      ECX, ESI
+FFF81B56 66 8b 45 00 - - - - - -       mov      AX, word ptr [EBP]
+FFF81B5A 0f b7 c0 - - - - - - -        movzx    EAX, AX
+FFF81B5D a8 01 - - - - - - - -         test     AL, 0x1
+FFF81B5F 74 05 - - - - - - - -         jz       0xfff81b66
+FFF81B61 83 e9 01 - - - - - - -        sub      ECX, 0x1
+FFF81B64 75 f0 - - - - - - - -         jnz      0xfff81b56
+FFF81B66 85 c9 - - - - - - - -         test     ECX, ECX
+FFF81B68 75 0a - - - - - - - -         jnz      0xfff81b74
+FFF81B6A b8 12 00 00 80 - - - - -      mov      EAX, 0x80000012
+FFF81B6F e9 8e 00 00 00 - - - - -      jmp      0xfff81c02
+FFF81B74 8b 7c 24 20 - - - - - -       mov      EDI, dword ptr [ESP + 0x20]
+FFF81B78 ff 74 24 1c - - - - - -       push     dword ptr [ESP + 0x1c]
+FFF81B7C 0f b6 ca - - - - - - -        movzx    ECX, DL
+FFF81B7F 8b 54 24 1c - - - - - -       mov      EDX, dword ptr [ESP + 0x1c]
+FFF81B83 c1 e1 18 - - - - - - -        shl      ECX, 0x18
+FFF81B86 0f b7 c2 - - - - - - -        movzx    EAX, DX
+FFF81B89 0b c8 - - - - - - - -         or       ECX, EAX
+FFF81B8B c6 07 04 - - - - - - -        mov      byte ptr [EDI], 0x4
+FFF81B8E 52 - - - - - - - - -          push     EDX
+FFF81B8F 89 0d d0 90 0f e0 - - - -     mov      dword ptr [0xe00f90d0], ECX
+FFF81B95 e8 c4 fa ff ff - - - - -      call     0xfff8165e
+FFF81B9A a3 dc 90 0f e0 - - - - -      mov      [0xe00f90dc], EAX
+FFF81B9F 66 8b 45 00 - - - - - -       mov      AX, word ptr [EBP]
+FFF81BA3 0f b7 c0 - - - - - - -        movzx    EAX, AX
+FFF81BA6 83 e0 7f - - - - - - -        and      EAX, 0x7f
+FFF81BA9 0d 00 13 00 00 - - - - -      or       EAX, 0x1300
+FFF81BAE 66 a3 d8 90 0f e0 - - - -     mov      [0xe00f90d8], AX
+FFF81BB4 b8 00 f0 00 00 - - - - -      mov      EAX, 0xf000
+FFF81BB9 66 a3 da 90 0f e0 - - - -     mov      [0xe00f90da], AX
+FFF81BBF 8b 03 - - - - - - - -         mov      EAX, dword ptr [EBX]
+FFF81BC1 a3 d4 90 0f e0 - - - - -      mov      [0xe00f90d4], EAX
+FFF81BC6 66 8b 45 00 - - - - - -       mov      AX, word ptr [EBP]
+FFF81BCA 0f b7 c0 - - - - - - -        movzx    EAX, AX
+FFF81BCD 59 - - - - - - - - -          pop      ECX
+FFF81BCE 83 c8 01 - - - - - - -        or       EAX, 0x1
+FFF81BD1 59 - - - - - - - - -          pop      ECX
+FFF81BD2 66 a3 d8 90 0f e0 - - - -     mov      [0xe00f90d8], AX
+FFF81BD8 66 8b 45 00 - - - - - -       mov      AX, word ptr [EBP]
+FFF81BDC 0f b7 c0 - - - - - - -        movzx    EAX, AX
+FFF81BDF a8 01 - - - - - - - -         test     AL, 0x1
+FFF81BE1 74 05 - - - - - - - -         jz       0xfff81be8
+FFF81BE3 83 ee 01 - - - - - - -        sub      ESI, 0x1
+FFF81BE6 75 f0 - - - - - - - -         jnz      0xfff81bd8
+FFF81BE8 85 f6 - - - - - - - -         test     ESI, ESI
+FFF81BEA 0f 84 7a ff ff ff - - - -     jz       0xfff81b6a
+FFF81BF0 d0 e8 - - - - - - - -         shr      AL, 0x1
+FFF81BF2 24 03 - - - - - - - -         and      AL, 0x3
+FFF81BF4 88 07 - - - - - - - -         mov      byte ptr [EDI], AL
+FFF81BF6 0f b6 c0 - - - - - - -        movzx    EAX, AL
+FFF81BF9 f7 d8 - - - - - - - -         neg      EAX
+FFF81BFB 1b c0 - - - - - - - -         sbb      EAX, EAX
+FFF81BFD 25 07 00 00 80 - - - - -      and      EAX, 0x80000007
+FFF81C02 5f - - - - - - - - -          pop      EDI
+FFF81C03 5e - - - - - - - - -          pop      ESI
+FFF81C04 5d - - - - - - - - -          pop      EBP
+FFF81C05 5b - - - - - - - - -          pop      EBX
+FFF81C06 59 - - - - - - - - -          pop      ECX
+FFF81C07 c3 - - - - - - - - -          ret      

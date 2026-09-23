@@ -4,66 +4,66 @@
 ; This is the machine code. The decompiled C for this address is 00017398.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-00017398 48 89 5c 24 08 mov      qword ptr [RSP + 0x8], RBX
-0001739D 66 89 54 24 10 mov      word ptr [RSP + 0x10], DX
-000173A2 57         push     RDI
-000173A3 48 83 ec 70 sub      RSP, 0x70
-000173A7 33 d2      xor      EDX, EDX
-000173A9 48 8b f9   mov      RDI, RCX
-000173AC 48 8d 4c 24 20 lea      RCX, [RSP + 0x20]
-000173B1 44 8d 42 50 lea      R8D, [RDX + 0x50]
-000173B5 e8 b6 bf 00 00 call     0x00023370
-000173BA 48 8b 05 d7 20 01 00 mov      RAX, qword ptr [0x00029498]
-000173C1 4c 8d 84 24 98 00 00 00 lea      R8, [RSP + 0x98]
-000173C9 33 d2      xor      EDX, EDX
-000173CB 48 8d 0d 4e d5 00 00 lea      RCX, [0x24920]
-000173D2 ff 90 40 01 00 00 call     qword ptr [RAX + 0x140]
-000173D8 33 db      xor      EBX, EBX
-000173DA 48 85 c0   test     RAX, RAX
-000173DD 79 0f      jns      0x000173ee
-000173DF 48 b8 03 00 00 00 00 00 00 80 mov      RAX, -0x7ffffffffffffffd
-000173E9 e9 96 00 00 00 jmp      0x00017484
-000173EE 48 8b 84 24 98 00 00 00 mov      RAX, qword ptr [RSP + 0x98]
-000173F6 4c 8d 8c 24 88 00 00 00 lea      R9, [RSP + 0x88]
-000173FE b2 01      mov      DL, 0x1
-00017400 4c 8d 84 24 90 00 00 00 lea      R8, [RSP + 0x90]
-00017408 8a ca      mov      CL, DL
-0001740A ff 50 40   call     qword ptr [RAX + 0x40]
-0001740D 48 85 c0   test     RAX, RAX
-00017410 78 cd      js       0x000173df
-00017412 4c 8b 84 24 90 00 00 00 mov      R8, qword ptr [RSP + 0x90]
-0001741A 48 8d 4c 24 20 lea      RCX, [RSP + 0x20]
-0001741F 41 8a 44 18 08 mov      AL, byte ptr [R8 + RBX*0x1 + 0x8]
-00017424 8a d0      mov      DL, AL
-00017426 c0 ea 04   shr      DL, 0x4
-00017429 80 fa 09   cmp      DL, 0x9
-0001742C 76 05      jbe      0x00017433
-0001742E 80 c2 37   add      DL, 0x37
-00017431 eb 03      jmp      0x00017436
-00017433 80 c2 30   add      DL, 0x30
-00017436 24 0f      and      AL, 0xf
-00017438 88 11      mov      byte ptr [RCX], DL
-0001743A 3c 09      cmp      AL, 0x9
-0001743C 76 04      jbe      0x00017442
-0001743E 04 37      add      AL, 0x37
-00017440 eb 02      jmp      0x00017444
-00017442 04 30      add      AL, 0x30
-00017444 88 41 01   mov      byte ptr [RCX + 0x1], AL
-00017447 48 ff c3   inc      RBX
-0001744A 48 83 c1 02 add      RCX, 0x2
-0001744E 48 83 fb 10 cmp      RBX, 0x10
-00017452 72 cb      jc       0x0001741f
-00017454 b8 c0 1a 00 00 mov      EAX, 0x1ac0
-00017459 4c 8d 4c 24 20 lea      R9, [RSP + 0x20]
-0001745E 0f b7 d0   movzx    EDX, AX
-00017461 4c 8d 05 c4 f2 00 00 lea      R8, [0x2672c]
-00017468 48 8b cf   mov      RCX, RDI
-0001746B e8 10 92 fe ff call     0x00000680
-00017470 48 8b 05 21 20 01 00 mov      RAX, qword ptr [0x00029498]
-00017477 48 8b 8c 24 90 00 00 00 mov      RCX, qword ptr [RSP + 0x90]
-0001747F ff 50 48   call     qword ptr [RAX + 0x48]
-00017482 33 c0      xor      EAX, EAX
-00017484 48 8b 9c 24 80 00 00 00 mov      RBX, qword ptr [RSP + 0x80]
-0001748C 48 83 c4 70 add      RSP, 0x70
-00017490 5f         pop      RDI
-00017491 c3         ret      
+00017398 48 89 5c 24 08 - - - - - - -        mov      qword ptr [RSP + 0x8], RBX
+0001739D 66 89 54 24 10 - - - - - - -        mov      word ptr [RSP + 0x10], DX
+000173A2 57 - - - - - - - - - - -            push     RDI
+000173A3 48 83 ec 70 - - - - - - - -         sub      RSP, 0x70
+000173A7 33 d2 - - - - - - - - - -           xor      EDX, EDX
+000173A9 48 8b f9 - - - - - - - - -          mov      RDI, RCX
+000173AC 48 8d 4c 24 20 - - - - - - -        lea      RCX, [RSP + 0x20]
+000173B1 44 8d 42 50 - - - - - - - -         lea      R8D, [RDX + 0x50]
+000173B5 e8 b6 bf 00 00 - - - - - - -        call     0x00023370
+000173BA 48 8b 05 d7 20 01 00 - - - - -      mov      RAX, qword ptr [0x00029498]
+000173C1 4c 8d 84 24 98 00 00 00 - - - -     lea      R8, [RSP + 0x98]
+000173C9 33 d2 - - - - - - - - - -           xor      EDX, EDX
+000173CB 48 8d 0d 4e d5 00 00 - - - - -      lea      RCX, [0x24920]
+000173D2 ff 90 40 01 00 00 - - - - - -       call     qword ptr [RAX + 0x140]
+000173D8 33 db - - - - - - - - - -           xor      EBX, EBX
+000173DA 48 85 c0 - - - - - - - - -          test     RAX, RAX
+000173DD 79 0f - - - - - - - - - -           jns      0x000173ee
+000173DF 48 b8 03 00 00 00 00 00 00 80 - -   mov      RAX, -0x7ffffffffffffffd
+000173E9 e9 96 00 00 00 - - - - - - -        jmp      0x00017484
+000173EE 48 8b 84 24 98 00 00 00 - - - -     mov      RAX, qword ptr [RSP + 0x98]
+000173F6 4c 8d 8c 24 88 00 00 00 - - - -     lea      R9, [RSP + 0x88]
+000173FE b2 01 - - - - - - - - - -           mov      DL, 0x1
+00017400 4c 8d 84 24 90 00 00 00 - - - -     lea      R8, [RSP + 0x90]
+00017408 8a ca - - - - - - - - - -           mov      CL, DL
+0001740A ff 50 40 - - - - - - - - -          call     qword ptr [RAX + 0x40]
+0001740D 48 85 c0 - - - - - - - - -          test     RAX, RAX
+00017410 78 cd - - - - - - - - - -           js       0x000173df
+00017412 4c 8b 84 24 90 00 00 00 - - - -     mov      R8, qword ptr [RSP + 0x90]
+0001741A 48 8d 4c 24 20 - - - - - - -        lea      RCX, [RSP + 0x20]
+0001741F 41 8a 44 18 08 - - - - - - -        mov      AL, byte ptr [R8 + RBX*0x1 + 0x8]
+00017424 8a d0 - - - - - - - - - -           mov      DL, AL
+00017426 c0 ea 04 - - - - - - - - -          shr      DL, 0x4
+00017429 80 fa 09 - - - - - - - - -          cmp      DL, 0x9
+0001742C 76 05 - - - - - - - - - -           jbe      0x00017433
+0001742E 80 c2 37 - - - - - - - - -          add      DL, 0x37
+00017431 eb 03 - - - - - - - - - -           jmp      0x00017436
+00017433 80 c2 30 - - - - - - - - -          add      DL, 0x30
+00017436 24 0f - - - - - - - - - -           and      AL, 0xf
+00017438 88 11 - - - - - - - - - -           mov      byte ptr [RCX], DL
+0001743A 3c 09 - - - - - - - - - -           cmp      AL, 0x9
+0001743C 76 04 - - - - - - - - - -           jbe      0x00017442
+0001743E 04 37 - - - - - - - - - -           add      AL, 0x37
+00017440 eb 02 - - - - - - - - - -           jmp      0x00017444
+00017442 04 30 - - - - - - - - - -           add      AL, 0x30
+00017444 88 41 01 - - - - - - - - -          mov      byte ptr [RCX + 0x1], AL
+00017447 48 ff c3 - - - - - - - - -          inc      RBX
+0001744A 48 83 c1 02 - - - - - - - -         add      RCX, 0x2
+0001744E 48 83 fb 10 - - - - - - - -         cmp      RBX, 0x10
+00017452 72 cb - - - - - - - - - -           jc       0x0001741f
+00017454 b8 c0 1a 00 00 - - - - - - -        mov      EAX, 0x1ac0
+00017459 4c 8d 4c 24 20 - - - - - - -        lea      R9, [RSP + 0x20]
+0001745E 0f b7 d0 - - - - - - - - -          movzx    EDX, AX
+00017461 4c 8d 05 c4 f2 00 00 - - - - -      lea      R8, [0x2672c]
+00017468 48 8b cf - - - - - - - - -          mov      RCX, RDI
+0001746B e8 10 92 fe ff - - - - - - -        call     0x00000680
+00017470 48 8b 05 21 20 01 00 - - - - -      mov      RAX, qword ptr [0x00029498]
+00017477 48 8b 8c 24 90 00 00 00 - - - -     mov      RCX, qword ptr [RSP + 0x90]
+0001747F ff 50 48 - - - - - - - - -          call     qword ptr [RAX + 0x48]
+00017482 33 c0 - - - - - - - - - -           xor      EAX, EAX
+00017484 48 8b 9c 24 80 00 00 00 - - - -     mov      RBX, qword ptr [RSP + 0x80]
+0001748C 48 83 c4 70 - - - - - - - -         add      RSP, 0x70
+00017490 5f - - - - - - - - - - -            pop      RDI
+00017491 c3 - - - - - - - - - - -            ret      

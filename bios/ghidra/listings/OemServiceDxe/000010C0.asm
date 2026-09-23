@@ -4,34 +4,34 @@
 ; This is the machine code. The decompiled C for this address is 000010C0.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-000010C0 48 89 5c 24 08 mov      qword ptr [RSP + 0x8], RBX
-000010C5 48 89 74 24 10 mov      qword ptr [RSP + 0x10], RSI
-000010CA 57         push     RDI
-000010CB 48 83 ec 20 sub      RSP, 0x20
-000010CF 8b d9      mov      EBX, ECX
-000010D1 8b f9      mov      EDI, ECX
-000010D3 c1 eb 16   shr      EBX, 0x16
-000010D6 81 e7 ff ff 3f 00 and      EDI, 0x3fffff
-000010DC ba 08 18 00 00 mov      EDX, 0x1808
-000010E1 ed         in       EAX, DX
-000010E2 8b f0      mov      ESI, EAX
-000010E4 81 e6 ff ff ff 00 and      ESI, 0xffffff
-000010EA 03 f7      add      ESI, EDI
-000010EC bf 00 00 40 00 mov      EDI, 0x400000
-000010F1 eb 0a      jmp      0x000010fd
-000010F3 e8 08 f2 ff ff call     0x00000300
-000010F8 ba 08 18 00 00 mov      EDX, 0x1808
-000010FD ed         in       EAX, DX
-000010FE 8b ce      mov      ECX, ESI
-00001100 2b c8      sub      ECX, EAX
-00001102 0f ba e1 17 bt       ECX, 0x17
-00001106 73 eb      jnc      0x000010f3
-00001108 8b c3      mov      EAX, EBX
-0000110A ff cb      dec      EBX
-0000110C 85 c0      test     EAX, EAX
-0000110E 75 cc      jnz      0x000010dc
-00001110 48 8b 5c 24 30 mov      RBX, qword ptr [RSP + 0x30]
-00001115 48 8b 74 24 38 mov      RSI, qword ptr [RSP + 0x38]
-0000111A 48 83 c4 20 add      RSP, 0x20
-0000111E 5f         pop      RDI
-0000111F c3         ret      
+000010C0 48 89 5c 24 08 - - - - -      mov      qword ptr [RSP + 0x8], RBX
+000010C5 48 89 74 24 10 - - - - -      mov      qword ptr [RSP + 0x10], RSI
+000010CA 57 - - - - - - - - -          push     RDI
+000010CB 48 83 ec 20 - - - - - -       sub      RSP, 0x20
+000010CF 8b d9 - - - - - - - -         mov      EBX, ECX
+000010D1 8b f9 - - - - - - - -         mov      EDI, ECX
+000010D3 c1 eb 16 - - - - - - -        shr      EBX, 0x16
+000010D6 81 e7 ff ff 3f 00 - - - -     and      EDI, 0x3fffff
+000010DC ba 08 18 00 00 - - - - -      mov      EDX, 0x1808
+000010E1 ed - - - - - - - - -          in       EAX, DX
+000010E2 8b f0 - - - - - - - -         mov      ESI, EAX
+000010E4 81 e6 ff ff ff 00 - - - -     and      ESI, 0xffffff
+000010EA 03 f7 - - - - - - - -         add      ESI, EDI
+000010EC bf 00 00 40 00 - - - - -      mov      EDI, 0x400000
+000010F1 eb 0a - - - - - - - -         jmp      0x000010fd
+000010F3 e8 08 f2 ff ff - - - - -      call     0x00000300
+000010F8 ba 08 18 00 00 - - - - -      mov      EDX, 0x1808
+000010FD ed - - - - - - - - -          in       EAX, DX
+000010FE 8b ce - - - - - - - -         mov      ECX, ESI
+00001100 2b c8 - - - - - - - -         sub      ECX, EAX
+00001102 0f ba e1 17 - - - - - -       bt       ECX, 0x17
+00001106 73 eb - - - - - - - -         jnc      0x000010f3
+00001108 8b c3 - - - - - - - -         mov      EAX, EBX
+0000110A ff cb - - - - - - - -         dec      EBX
+0000110C 85 c0 - - - - - - - -         test     EAX, EAX
+0000110E 75 cc - - - - - - - -         jnz      0x000010dc
+00001110 48 8b 5c 24 30 - - - - -      mov      RBX, qword ptr [RSP + 0x30]
+00001115 48 8b 74 24 38 - - - - -      mov      RSI, qword ptr [RSP + 0x38]
+0000111A 48 83 c4 20 - - - - - -       add      RSP, 0x20
+0000111E 5f - - - - - - - - -          pop      RDI
+0000111F c3 - - - - - - - - -          ret      

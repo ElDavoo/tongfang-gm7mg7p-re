@@ -4,44 +4,44 @@
 ; This is the machine code. The decompiled C for this address is 00000804.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-00000804 48 89 5c 24 08 mov      qword ptr [RSP + 0x8], RBX
-00000809 48 89 74 24 10 mov      qword ptr [RSP + 0x10], RSI
-0000080E 57         push     RDI
-0000080F 48 83 ec 20 sub      RSP, 0x20
-00000813 40 8a f9   mov      DIL, CL
-00000816 33 db      xor      EBX, EBX
-00000818 40 80 ff 60 cmp      DIL, 0x60
-0000081C 8d 43 64   lea      EAX, [RBX + 0x64]
-0000081F 8d 4b 66   lea      ECX, [RBX + 0x66]
-00000822 0f 45 c1   cmovnz   EAX, ECX
-00000825 0f b6 f0   movzx    ESI, AL
-00000828 0f b7 d6   movzx    EDX, SI
-0000082B ec         in       AL, DX
-0000082C a8 01      test     AL, 0x1
-0000082E 74 47      jz       0x00000877
-00000830 48 81 fb 00 00 02 00 cmp      RBX, 0x20000
-00000837 73 32      jnc      0x0000086b
-00000839 ba 60 00 00 00 mov      EDX, 0x60
-0000083E 40 3a fa   cmp      DIL, DL
-00000841 8d 4a 02   lea      ECX, [RDX + 0x2]
-00000844 66 0f 45 d1 cmovnz   DX, CX
-00000848 ec         in       AL, DX
-00000849 8d 51 1e   lea      EDX, [RCX + 0x1e]
-0000084C ee         out      DX, AL
-0000084D b9 88 13 00 00 mov      ECX, 0x1388
-00000852 e8 11 03 00 00 call     0x00000b68
-00000857 0f b7 d6   movzx    EDX, SI
-0000085A ec         in       AL, DX
-0000085B 48 ff c3   inc      RBX
-0000085E a8 01      test     AL, 0x1
-00000860 75 ce      jnz      0x00000830
-00000862 48 81 fb 00 00 02 00 cmp      RBX, 0x20000
-00000869 72 0c      jc       0x00000877
-0000086B 48 b8 07 00 00 00 00 00 00 80 mov      RAX, -0x7ffffffffffffff9
-00000875 eb 02      jmp      0x00000879
-00000877 33 c0      xor      EAX, EAX
-00000879 48 8b 5c 24 30 mov      RBX, qword ptr [RSP + 0x30]
-0000087E 48 8b 74 24 38 mov      RSI, qword ptr [RSP + 0x38]
-00000883 48 83 c4 20 add      RSP, 0x20
-00000887 5f         pop      RDI
-00000888 c3         ret      
+00000804 48 89 5c 24 08 - - - - - -       mov      qword ptr [RSP + 0x8], RBX
+00000809 48 89 74 24 10 - - - - - -       mov      qword ptr [RSP + 0x10], RSI
+0000080E 57 - - - - - - - - - -           push     RDI
+0000080F 48 83 ec 20 - - - - - - -        sub      RSP, 0x20
+00000813 40 8a f9 - - - - - - - -         mov      DIL, CL
+00000816 33 db - - - - - - - - -          xor      EBX, EBX
+00000818 40 80 ff 60 - - - - - - -        cmp      DIL, 0x60
+0000081C 8d 43 64 - - - - - - - -         lea      EAX, [RBX + 0x64]
+0000081F 8d 4b 66 - - - - - - - -         lea      ECX, [RBX + 0x66]
+00000822 0f 45 c1 - - - - - - - -         cmovnz   EAX, ECX
+00000825 0f b6 f0 - - - - - - - -         movzx    ESI, AL
+00000828 0f b7 d6 - - - - - - - -         movzx    EDX, SI
+0000082B ec - - - - - - - - - -           in       AL, DX
+0000082C a8 01 - - - - - - - - -          test     AL, 0x1
+0000082E 74 47 - - - - - - - - -          jz       0x00000877
+00000830 48 81 fb 00 00 02 00 - - - -     cmp      RBX, 0x20000
+00000837 73 32 - - - - - - - - -          jnc      0x0000086b
+00000839 ba 60 00 00 00 - - - - - -       mov      EDX, 0x60
+0000083E 40 3a fa - - - - - - - -         cmp      DIL, DL
+00000841 8d 4a 02 - - - - - - - -         lea      ECX, [RDX + 0x2]
+00000844 66 0f 45 d1 - - - - - - -        cmovnz   DX, CX
+00000848 ec - - - - - - - - - -           in       AL, DX
+00000849 8d 51 1e - - - - - - - -         lea      EDX, [RCX + 0x1e]
+0000084C ee - - - - - - - - - -           out      DX, AL
+0000084D b9 88 13 00 00 - - - - - -       mov      ECX, 0x1388
+00000852 e8 11 03 00 00 - - - - - -       call     0x00000b68
+00000857 0f b7 d6 - - - - - - - -         movzx    EDX, SI
+0000085A ec - - - - - - - - - -           in       AL, DX
+0000085B 48 ff c3 - - - - - - - -         inc      RBX
+0000085E a8 01 - - - - - - - - -          test     AL, 0x1
+00000860 75 ce - - - - - - - - -          jnz      0x00000830
+00000862 48 81 fb 00 00 02 00 - - - -     cmp      RBX, 0x20000
+00000869 72 0c - - - - - - - - -          jc       0x00000877
+0000086B 48 b8 07 00 00 00 00 00 00 80 -  mov      RAX, -0x7ffffffffffffff9
+00000875 eb 02 - - - - - - - - -          jmp      0x00000879
+00000877 33 c0 - - - - - - - - -          xor      EAX, EAX
+00000879 48 8b 5c 24 30 - - - - - -       mov      RBX, qword ptr [RSP + 0x30]
+0000087E 48 8b 74 24 38 - - - - - -       mov      RSI, qword ptr [RSP + 0x38]
+00000883 48 83 c4 20 - - - - - - -        add      RSP, 0x20
+00000887 5f - - - - - - - - - -           pop      RDI
+00000888 c3 - - - - - - - - - -           ret      

@@ -4,21 +4,21 @@
 ; This is the machine code. The decompiled C for this address is 00001E7C.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-00001E7C 40 53      push     RBX
-00001E7E 48 83 ec 20 sub      RSP, 0x20
-00001E82 e8 c1 ff ff ff call     0x00001e48
-00001E87 8b d8      mov      EBX, EAX
-00001E89 e8 86 ff ff ff call     0x00001e14
-00001E8E 3d 50 06 0a 00 cmp      EAX, 0xa0650
-00001E93 75 11      jnz      0x00001ea6
-00001E95 83 fb 01   cmp      EBX, 0x1
-00001E98 74 08      jz       0x00001ea2
-00001E9A 8d 4b fc   lea      ECX, [RBX + -0x4]
-00001E9D 83 f9 01   cmp      ECX, 0x1
-00001EA0 77 04      ja       0x00001ea6
-00001EA2 b0 01      mov      AL, 0x1
-00001EA4 eb 02      jmp      0x00001ea8
-00001EA6 32 c0      xor      AL, AL
-00001EA8 48 83 c4 20 add      RSP, 0x20
-00001EAC 5b         pop      RBX
-00001EAD c3         ret      
+00001E7C 40 53 - - - - - - - - -          push     RBX
+00001E7E 48 83 ec 20 - - - - - - -        sub      RSP, 0x20
+00001E82 e8 c1 ff ff ff - - - - - -       call     0x00001e48
+00001E87 8b d8 - - - - - - - - -          mov      EBX, EAX
+00001E89 e8 86 ff ff ff - - - - - -       call     0x00001e14
+00001E8E 3d 50 06 0a 00 - - - - - -       cmp      EAX, 0xa0650
+00001E93 75 11 - - - - - - - - -          jnz      0x00001ea6
+00001E95 83 fb 01 - - - - - - - -         cmp      EBX, 0x1
+00001E98 74 08 - - - - - - - - -          jz       0x00001ea2
+00001E9A 8d 4b fc - - - - - - - -         lea      ECX, [RBX + -0x4]
+00001E9D 83 f9 01 - - - - - - - -         cmp      ECX, 0x1
+00001EA0 77 04 - - - - - - - - -          ja       0x00001ea6
+00001EA2 b0 01 - - - - - - - - -          mov      AL, 0x1
+00001EA4 eb 02 - - - - - - - - -          jmp      0x00001ea8
+00001EA6 32 c0 - - - - - - - - -          xor      AL, AL
+00001EA8 48 83 c4 20 - - - - - - -        add      RSP, 0x20
+00001EAC 5b - - - - - - - - - -           pop      RBX
+00001EAD c3 - - - - - - - - - -           ret      

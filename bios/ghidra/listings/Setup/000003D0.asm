@@ -4,23 +4,23 @@
 ; This is the machine code. The decompiled C for this address is 000003D0.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-000003D0 53         push     RBX
-000003D1 89 c8      mov      EAX, ECX
-000003D3 50         push     RAX
-000003D4 52         push     RDX
-000003D5 0f a2      cpuid    
-000003D7 4d 85 c9   test     R9, R9
-000003DA 74 03      jz       0x000003df
-000003DC 41 89 09   mov      dword ptr [R9], ECX
-000003DF 59         pop      RCX
-000003E0 e3 02      jrcxz    0x000003e4
-000003E2 89 01      mov      dword ptr [RCX], EAX
-000003E4 4c 89 c1   mov      RCX, R8
-000003E7 e3 02      jrcxz    0x000003eb
-000003E9 89 19      mov      dword ptr [RCX], EBX
-000003EB 48 8b 4c 24 38 mov      RCX, qword ptr [RSP + 0x38]
-000003F0 e3 02      jrcxz    0x000003f4
-000003F2 89 11      mov      dword ptr [RCX], EDX
-000003F4 58         pop      RAX
-000003F5 5b         pop      RBX
-000003F6 c3         ret      
+000003D0 53 - - - - - - - - - - -            push     RBX
+000003D1 89 c8 - - - - - - - - - -           mov      EAX, ECX
+000003D3 50 - - - - - - - - - - -            push     RAX
+000003D4 52 - - - - - - - - - - -            push     RDX
+000003D5 0f a2 - - - - - - - - - -           cpuid    
+000003D7 4d 85 c9 - - - - - - - - -          test     R9, R9
+000003DA 74 03 - - - - - - - - - -           jz       0x000003df
+000003DC 41 89 09 - - - - - - - - -          mov      dword ptr [R9], ECX
+000003DF 59 - - - - - - - - - - -            pop      RCX
+000003E0 e3 02 - - - - - - - - - -           jrcxz    0x000003e4
+000003E2 89 01 - - - - - - - - - -           mov      dword ptr [RCX], EAX
+000003E4 4c 89 c1 - - - - - - - - -          mov      RCX, R8
+000003E7 e3 02 - - - - - - - - - -           jrcxz    0x000003eb
+000003E9 89 19 - - - - - - - - - -           mov      dword ptr [RCX], EBX
+000003EB 48 8b 4c 24 38 - - - - - - -        mov      RCX, qword ptr [RSP + 0x38]
+000003F0 e3 02 - - - - - - - - - -           jrcxz    0x000003f4
+000003F2 89 11 - - - - - - - - - -           mov      dword ptr [RCX], EDX
+000003F4 58 - - - - - - - - - - -            pop      RAX
+000003F5 5b - - - - - - - - - - -            pop      RBX
+000003F6 c3 - - - - - - - - - - -            ret      

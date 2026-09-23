@@ -4,17 +4,17 @@
 ; This is the machine code. The decompiled C for this address is 0001DAC4.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-0001DAC4 66 83 39 00 cmp      word ptr [RCX], 0x0
-0001DAC8 48 8b d1   mov      RDX, RCX
-0001DACB 74 21      jz       0x0001daee
-0001DACD 44 0f b7 02 movzx    R8D, word ptr [RDX]
-0001DAD1 41 8d 40 9f lea      EAX, [R8 + -0x61]
-0001DAD5 66 83 f8 19 cmp      AX, 0x19
-0001DAD9 77 09      ja       0x0001dae4
-0001DADB 66 41 83 e8 20 sub      R8W, 0x20
-0001DAE0 66 44 89 02 mov      word ptr [RDX], R8W
-0001DAE4 48 83 c2 02 add      RDX, 0x2
-0001DAE8 66 83 3a 00 cmp      word ptr [RDX], 0x0
-0001DAEC 75 df      jnz      0x0001dacd
-0001DAEE 48 8b c1   mov      RAX, RCX
-0001DAF1 c3         ret      
+0001DAC4 66 83 39 00 - - - - - - - -         cmp      word ptr [RCX], 0x0
+0001DAC8 48 8b d1 - - - - - - - - -          mov      RDX, RCX
+0001DACB 74 21 - - - - - - - - - -           jz       0x0001daee
+0001DACD 44 0f b7 02 - - - - - - - -         movzx    R8D, word ptr [RDX]
+0001DAD1 41 8d 40 9f - - - - - - - -         lea      EAX, [R8 + -0x61]
+0001DAD5 66 83 f8 19 - - - - - - - -         cmp      AX, 0x19
+0001DAD9 77 09 - - - - - - - - - -           ja       0x0001dae4
+0001DADB 66 41 83 e8 20 - - - - - - -        sub      R8W, 0x20
+0001DAE0 66 44 89 02 - - - - - - - -         mov      word ptr [RDX], R8W
+0001DAE4 48 83 c2 02 - - - - - - - -         add      RDX, 0x2
+0001DAE8 66 83 3a 00 - - - - - - - -         cmp      word ptr [RDX], 0x0
+0001DAEC 75 df - - - - - - - - - -           jnz      0x0001dacd
+0001DAEE 48 8b c1 - - - - - - - - -          mov      RAX, RCX
+0001DAF1 c3 - - - - - - - - - - -            ret      

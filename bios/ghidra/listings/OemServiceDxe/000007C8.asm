@@ -4,37 +4,37 @@
 ; This is the machine code. The decompiled C for this address is 000007C8.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-000007C8 48 83 ec 28 sub      RSP, 0x28
-000007CC 48 8b 05 cd 0b 00 00 mov      RAX, qword ptr [0x000013a0]
-000007D3 48 8d 4c 24 40 lea      RCX, [RSP + 0x40]
-000007D8 ba 01 00 00 00 mov      EDX, 0x1
-000007DD 44 8d 42 32 lea      R8D, [RDX + 0x32]
-000007E1 ff 50 18   call     qword ptr [RAX + 0x18]
-000007E4 48 85 c0   test     RAX, RAX
-000007E7 78 5d      js       0x00000846
-000007E9 8a 44 24 40 mov      AL, byte ptr [RSP + 0x40]
-000007ED 3c ff      cmp      AL, 0xff
-000007EF 75 0c      jnz      0x000007fd
+000007C8 48 83 ec 28 - - - - - -       sub      RSP, 0x28
+000007CC 48 8b 05 cd 0b 00 00 - - -    mov      RAX, qword ptr [0x000013a0]
+000007D3 48 8d 4c 24 40 - - - - -      lea      RCX, [RSP + 0x40]
+000007D8 ba 01 00 00 00 - - - - -      mov      EDX, 0x1
+000007DD 44 8d 42 32 - - - - - -       lea      R8D, [RDX + 0x32]
+000007E1 ff 50 18 - - - - - - -        call     qword ptr [RAX + 0x18]
+000007E4 48 85 c0 - - - - - - -        test     RAX, RAX
+000007E7 78 5d - - - - - - - -         js       0x00000846
+000007E9 8a 44 24 40 - - - - - -       mov      AL, byte ptr [RSP + 0x40]
+000007ED 3c ff - - - - - - - -         cmp      AL, 0xff
+000007EF 75 0c - - - - - - - -         jnz      0x000007fd
 000007F1 48 b8 06 00 00 00 00 00 00 80 mov      RAX, -0x7ffffffffffffffa
-000007FB eb 49      jmp      0x00000846
-000007FD 3c 08      cmp      AL, 0x8
-000007FF 72 0c      jc       0x0000080d
+000007FB eb 49 - - - - - - - -         jmp      0x00000846
+000007FD 3c 08 - - - - - - - -         cmp      AL, 0x8
+000007FF 72 0c - - - - - - - -         jc       0x0000080d
 00000801 48 b8 09 00 00 00 00 00 00 80 mov      RAX, -0x7ffffffffffffff7
-0000080B eb 39      jmp      0x00000846
-0000080D 4c 8d 4c 24 48 lea      R9, [RSP + 0x48]
-00000812 41 b0 9f   mov      R8B, 0x9f
-00000815 b2 04      mov      DL, 0x4
-00000817 e8 9c 07 00 00 call     0x00000fb8
-0000081C 48 85 c0   test     RAX, RAX
-0000081F 78 25      js       0x00000846
-00000821 44 8a 4c 24 40 mov      R9B, byte ptr [RSP + 0x40]
-00000826 41 b0 9f   mov      R8B, 0x9f
-00000829 41 c0 e1 03 shl      R9B, 0x3
-0000082D b2 04      mov      DL, 0x4
-0000082F 44 32 4c 24 48 xor      R9B, byte ptr [RSP + 0x48]
-00000834 41 80 e1 38 and      R9B, 0x38
-00000838 44 32 4c 24 48 xor      R9B, byte ptr [RSP + 0x48]
-0000083D 41 80 c9 04 or       R9B, 0x4
-00000841 e8 12 07 00 00 call     0x00000f58
-00000846 48 83 c4 28 add      RSP, 0x28
-0000084A c3         ret      
+0000080B eb 39 - - - - - - - -         jmp      0x00000846
+0000080D 4c 8d 4c 24 48 - - - - -      lea      R9, [RSP + 0x48]
+00000812 41 b0 9f - - - - - - -        mov      R8B, 0x9f
+00000815 b2 04 - - - - - - - -         mov      DL, 0x4
+00000817 e8 9c 07 00 00 - - - - -      call     0x00000fb8
+0000081C 48 85 c0 - - - - - - -        test     RAX, RAX
+0000081F 78 25 - - - - - - - -         js       0x00000846
+00000821 44 8a 4c 24 40 - - - - -      mov      R9B, byte ptr [RSP + 0x40]
+00000826 41 b0 9f - - - - - - -        mov      R8B, 0x9f
+00000829 41 c0 e1 03 - - - - - -       shl      R9B, 0x3
+0000082D b2 04 - - - - - - - -         mov      DL, 0x4
+0000082F 44 32 4c 24 48 - - - - -      xor      R9B, byte ptr [RSP + 0x48]
+00000834 41 80 e1 38 - - - - - -       and      R9B, 0x38
+00000838 44 32 4c 24 48 - - - - -      xor      R9B, byte ptr [RSP + 0x48]
+0000083D 41 80 c9 04 - - - - - -       or       R9B, 0x4
+00000841 e8 12 07 00 00 - - - - -      call     0x00000f58
+00000846 48 83 c4 28 - - - - - -       add      RSP, 0x28
+0000084A c3 - - - - - - - - -          ret      

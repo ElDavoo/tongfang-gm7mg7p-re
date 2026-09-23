@@ -4,190 +4,190 @@
 ; This is the machine code. The decompiled C for this address is 0000DC10.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-0000DC10 48 89 4c 24 08 mov      qword ptr [RSP + 0x8], RCX
-0000DC15 53         push     RBX
-0000DC16 55         push     RBP
-0000DC17 56         push     RSI
-0000DC18 57         push     RDI
-0000DC19 41 54      push     R12
-0000DC1B 41 56      push     R14
-0000DC1D 41 57      push     R15
-0000DC1F 48 83 ec 20 sub      RSP, 0x20
-0000DC23 bb 02 80 0f e0 mov      EBX, 0xe00f8002
-0000DC28 4d 8b f8   mov      R15, R8
-0000DC2B 4c 8b f2   mov      R14, RDX
-0000DC2E 4c 8b e1   mov      R12, RCX
-0000DC31 bf 04 00 00 00 mov      EDI, 0x4
-0000DC36 0f b7 03   movzx    EAX, word ptr [RBX]
-0000DC39 44 8b c8   mov      R9D, EAX
-0000DC3C 3d 88 06 00 00 cmp      EAX, 0x688
-0000DC41 77 2c      ja       0x0000dc6f
-0000DC43 3d 87 06 00 00 cmp      EAX, 0x687
-0000DC48 73 41      jnc      0x0000dc8b
-0000DC4A 41 81 e9 80 02 00 00 sub      R9D, 0x280
-0000DC51 74 3f      jz       0x0000dc92
-0000DC53 41 83 e9 01 sub      R9D, 0x1
-0000DC57 74 32      jz       0x0000dc8b
-0000DC59 44 2b cf   sub      R9D, EDI
-0000DC5C 74 34      jz       0x0000dc92
-0000DC5E 41 83 f9 01 cmp      R9D, 0x1
-0000DC62 74 27      jz       0x0000dc8b
-0000DC64 b9 01 00 00 00 mov      ECX, 0x1
-0000DC69 c6 42 33 01 mov      byte ptr [RDX + 0x33], 0x1
-0000DC6D eb 25      jmp      0x0000dc94
-0000DC6F 41 81 f9 85 9d 00 00 cmp      R9D, 0x9d85
-0000DC76 74 1a      jz       0x0000dc92
-0000DC78 41 81 f9 03 a3 00 00 cmp      R9D, 0xa303
-0000DC7F 74 11      jz       0x0000dc92
-0000DC81 05 f9 5c ff ff add      EAX, 0xffff5cf9
-0000DC86 83 f8 01   cmp      EAX, 0x1
-0000DC89 77 d9      ja       0x0000dc64
-0000DC8B b9 02 00 00 00 mov      ECX, 0x2
-0000DC90 eb d7      jmp      0x0000dc69
-0000DC92 33 c9      xor      ECX, ECX
-0000DC94 0f b7 03   movzx    EAX, word ptr [RBX]
-0000DC97 3d 90 06 00 00 cmp      EAX, 0x690
-0000DC9C 72 1c      jc       0x0000dcba
-0000DC9E 3d 91 06 00 00 cmp      EAX, 0x691
-0000DCA3 76 11      jbe      0x0000dcb6
-0000DCA5 3d 09 a3 00 00 cmp      EAX, 0xa309
-0000DCAA 74 0a      jz       0x0000dcb6
-0000DCAC 05 f0 5c ff ff add      EAX, 0xffff5cf0
-0000DCB1 83 f8 01   cmp      EAX, 0x1
-0000DCB4 77 04      ja       0x0000dcba
-0000DCB6 b0 01      mov      AL, 0x1
-0000DCB8 eb 02      jmp      0x0000dcbc
-0000DCBA 32 c0      xor      AL, AL
-0000DCBC 88 42 34   mov      byte ptr [RDX + 0x34], AL
-0000DCBF 85 c9      test     ECX, ECX
-0000DCC1 74 22      jz       0x0000dce5
-0000DCC3 b8 1f 10 00 00 mov      EAX, 0x101f
-0000DCC8 83 f9 01   cmp      ECX, 0x1
-0000DCCB 0f b7 d0   movzx    EDX, AX
-0000DCCE 49 8b cc   mov      RCX, R12
-0000DCD1 75 09      jnz      0x0000dcdc
-0000DCD3 4c 8d 05 36 8c 01 00 lea      R8, [0x26910]
-0000DCDA eb 1b      jmp      0x0000dcf7
-0000DCDC 4c 8d 05 9d 8c 01 00 lea      R8, [0x26980]
-0000DCE3 eb 12      jmp      0x0000dcf7
-0000DCE5 b8 1d 10 00 00 mov      EAX, 0x101d
-0000DCEA 4c 8d 05 ef 8c 01 00 lea      R8, [0x269e0]
-0000DCF1 0f b7 d0   movzx    EDX, AX
-0000DCF4 49 8b cc   mov      RCX, R12
-0000DCF7 e8 84 29 ff ff call     0x00000680
-0000DCFC 40 32 f6   xor      SIL, SIL
-0000DCFF 33 ed      xor      EBP, EBP
-0000DD01 44 8d 65 03 lea      R12D, [RBP + 0x3]
-0000DD05 4c 8d 05 f4 22 ff ff lea      R8, [0x0]
-0000DD0C e8 cf d9 00 00 call     0x0001b6e0
-0000DD11 3c 02      cmp      AL, 0x2
-0000DD13 b9 08 00 00 00 mov      ECX, 0x8
-0000DD18 41 0f 44 cc cmovz    ECX, R12D
-0000DD1C 3b e9      cmp      EBP, ECX
-0000DD1E 0f 83 a4 00 00 00 jnc      0x0000ddc8
-0000DD24 0f b7 03   movzx    EAX, word ptr [RBX]
-0000DD27 8b fd      mov      EDI, EBP
-0000DD29 e8 b2 d9 00 00 call     0x0001b6e0
-0000DD2E 3c 02      cmp      AL, 0x2
-0000DD30 75 0f      jnz      0x0000dd41
-0000DD32 49 3b fc   cmp      RDI, R12
-0000DD35 73 1a      jnc      0x0000dd51
-0000DD37 49 8b 9c e8 20 92 02 00 mov      RBX, qword ptr [R8 + RBP*0x8 + 0x29220]
-0000DD3F eb 20      jmp      0x0000dd61
-0000DD41 48 83 ff 08 cmp      RDI, 0x8
-0000DD45 73 0a      jnc      0x0000dd51
-0000DD47 49 8b 9c e8 e0 91 02 00 mov      RBX, qword ptr [R8 + RBP*0x8 + 0x291e0]
-0000DD4F eb 10      jmp      0x0000dd61
-0000DD51 83 64 24 78 00 and      dword ptr [RSP + 0x78], 0x0
-0000DD56 33 c0      xor      EAX, EAX
-0000DD58 89 44 24 7c mov      dword ptr [RSP + 0x7c], EAX
-0000DD5C 48 8b 5c 24 78 mov      RBX, qword ptr [RSP + 0x78]
-0000DD61 8b cb      mov      ECX, EBX
-0000DD63 48 89 5c 24 70 mov      qword ptr [RSP + 0x70], RBX
-0000DD68 e8 67 54 01 00 call     0x000231d4
-0000DD6D 84 c0      test     AL, AL
-0000DD6F 74 34      jz       0x0000dda5
-0000DD71 48 8d 54 24 68 lea      RDX, [RSP + 0x68]
-0000DD76 8b cb      mov      ECX, EBX
-0000DD78 e8 13 55 01 00 call     0x00023290
-0000DD7D 83 7c 24 68 00 cmp      dword ptr [RSP + 0x68], 0x0
-0000DD82 75 21      jnz      0x0000dda5
-0000DD84 8b cb      mov      ECX, EBX
-0000DD86 e8 b5 54 01 00 call     0x00023240
-0000DD8B 25 00 1c 00 00 and      EAX, 0x1c00
-0000DD90 0f ba e8 09 bts      EAX, 0x9
-0000DD94 c1 e8 09   shr      EAX, 0x9
-0000DD97 3b 44 24 74 cmp      EAX, dword ptr [RSP + 0x74]
-0000DD9B 75 08      jnz      0x0000dda5
-0000DD9D 42 c6 44 35 35 01 mov      byte ptr [RBP + R14*0x1 + 0x35], 0x1
-0000DDA3 eb 17      jmp      0x0000ddbc
-0000DDA5 42 80 7c 3d 56 01 cmp      byte ptr [RBP + R15*0x1 + 0x56], 0x1
-0000DDAB 75 09      jnz      0x0000ddb6
-0000DDAD 42 c6 44 3d 56 00 mov      byte ptr [RBP + R15*0x1 + 0x56], 0x0
-0000DDB3 40 b6 01   mov      SIL, 0x1
-0000DDB6 42 c6 44 35 35 00 mov      byte ptr [RBP + R14*0x1 + 0x35], 0x0
-0000DDBC ff c5      inc      EBP
-0000DDBE bb 02 80 0f e0 mov      EBX, 0xe00f8002
-0000DDC3 e9 3d ff ff ff jmp      0x0000dd05
-0000DDC8 4c 8b 64 24 60 mov      R12, qword ptr [RSP + 0x60]
-0000DDCD 32 c9      xor      CL, CL
-0000DDCF b8 0a 80 0b e0 mov      EAX, 0xe00b800a
-0000DDD4 bf 04 00 00 00 mov      EDI, 0x4
-0000DDD9 8a 00      mov      AL, byte ptr [RAX]
-0000DDDB 40 3a c7   cmp      AL, DIL
-0000DDDE 0f 94 c0   setz     AL
-0000DDE1 41 38 47 44 cmp      byte ptr [R15 + 0x44], AL
-0000DDE5 74 06      jz       0x0000dded
-0000DDE7 41 88 47 44 mov      byte ptr [R15 + 0x44], AL
-0000DDEB b1 01      mov      CL, 0x1
-0000DDED 40 0a f1   or       SIL, CL
-0000DDF0 32 db      xor      BL, BL
-0000DDF2 48 8d 0d 47 5a 01 00 lea      RCX, [0x23840]
-0000DDF9 e8 0e 1b 01 00 call     0x0001f90c
-0000DDFE 4c 8b c8   mov      R9, RAX
-0000DE01 48 85 c0   test     RAX, RAX
-0000DE04 75 26      jnz      0x0000de2c
-0000DE06 40 0a f3   or       SIL, BL
-0000DE09 80 3d 90 b5 01 00 00 cmp      byte ptr [0x000293a0], 0x0
-0000DE10 75 08      jnz      0x0000de1a
-0000DE12 49 8b cc   mov      RCX, R12
-0000DE15 e8 e6 f5 ff ff call     0x0000d400
-0000DE1A 40 8a c6   mov      AL, SIL
-0000DE1D 48 83 c4 20 add      RSP, 0x20
-0000DE21 41 5f      pop      R15
-0000DE23 41 5e      pop      R14
-0000DE25 41 5c      pop      R12
-0000DE27 5f         pop      RDI
-0000DE28 5e         pop      RSI
-0000DE29 5d         pop      RBP
-0000DE2A 5b         pop      RBX
-0000DE2B c3         ret      
-0000DE2C 45 33 c0   xor      R8D, R8D
-0000DE2F e8 ac d8 00 00 call     0x0001b6e0
-0000DE34 b9 18 00 00 00 mov      ECX, 0x18
-0000DE39 3c 02      cmp      AL, 0x2
-0000DE3B 8d 51 f8   lea      EDX, [RCX + -0x8]
-0000DE3E 0f 44 ca   cmovz    ECX, EDX
-0000DE41 44 3b c1   cmp      R8D, ECX
-0000DE44 73 2c      jnc      0x0000de72
-0000DE46 43 8a 44 08 19 mov      AL, byte ptr [R8 + R9*0x1 + 0x19]
-0000DE4B 43 88 44 30 3e mov      byte ptr [R8 + R14*0x1 + 0x3e], AL
-0000DE50 43 8a 44 08 31 mov      AL, byte ptr [R8 + R9*0x1 + 0x31]
-0000DE55 43 88 44 30 56 mov      byte ptr [R8 + R14*0x1 + 0x56], AL
-0000DE5A 43 80 7c 08 19 00 cmp      byte ptr [R8 + R9*0x1 + 0x19], 0x0
-0000DE60 75 0b      jnz      0x0000de6d
-0000DE62 43 c6 84 38 b8 00 00 00 00 mov      byte ptr [R8 + R15*0x1 + 0xb8], 0x0
-0000DE6B b3 01      mov      BL, 0x1
-0000DE6D 41 ff c0   inc      R8D
-0000DE70 eb bd      jmp      0x0000de2f
-0000DE72 45 33 c0   xor      R8D, R8D
-0000DE75 e8 66 d8 00 00 call     0x0001b6e0
-0000DE7A 3c 02      cmp      AL, 0x2
-0000DE7C b9 06 00 00 00 mov      ECX, 0x6
-0000DE81 0f 44 cf   cmovz    ECX, EDI
-0000DE84 44 3b c1   cmp      R8D, ECX
-0000DE87 0f 83 79 ff ff ff jnc      0x0000de06
-0000DE8D 43 8a 44 08 49 mov      AL, byte ptr [R8 + R9*0x1 + 0x49]
-0000DE92 43 88 44 30 6e mov      byte ptr [R8 + R14*0x1 + 0x6e], AL
-0000DE97 41 ff c0   inc      R8D
-0000DE9A eb d9      jmp      0x0000de75
+0000DC10 48 89 4c 24 08 - - - - - - -        mov      qword ptr [RSP + 0x8], RCX
+0000DC15 53 - - - - - - - - - - -            push     RBX
+0000DC16 55 - - - - - - - - - - -            push     RBP
+0000DC17 56 - - - - - - - - - - -            push     RSI
+0000DC18 57 - - - - - - - - - - -            push     RDI
+0000DC19 41 54 - - - - - - - - - -           push     R12
+0000DC1B 41 56 - - - - - - - - - -           push     R14
+0000DC1D 41 57 - - - - - - - - - -           push     R15
+0000DC1F 48 83 ec 20 - - - - - - - -         sub      RSP, 0x20
+0000DC23 bb 02 80 0f e0 - - - - - - -        mov      EBX, 0xe00f8002
+0000DC28 4d 8b f8 - - - - - - - - -          mov      R15, R8
+0000DC2B 4c 8b f2 - - - - - - - - -          mov      R14, RDX
+0000DC2E 4c 8b e1 - - - - - - - - -          mov      R12, RCX
+0000DC31 bf 04 00 00 00 - - - - - - -        mov      EDI, 0x4
+0000DC36 0f b7 03 - - - - - - - - -          movzx    EAX, word ptr [RBX]
+0000DC39 44 8b c8 - - - - - - - - -          mov      R9D, EAX
+0000DC3C 3d 88 06 00 00 - - - - - - -        cmp      EAX, 0x688
+0000DC41 77 2c - - - - - - - - - -           ja       0x0000dc6f
+0000DC43 3d 87 06 00 00 - - - - - - -        cmp      EAX, 0x687
+0000DC48 73 41 - - - - - - - - - -           jnc      0x0000dc8b
+0000DC4A 41 81 e9 80 02 00 00 - - - - -      sub      R9D, 0x280
+0000DC51 74 3f - - - - - - - - - -           jz       0x0000dc92
+0000DC53 41 83 e9 01 - - - - - - - -         sub      R9D, 0x1
+0000DC57 74 32 - - - - - - - - - -           jz       0x0000dc8b
+0000DC59 44 2b cf - - - - - - - - -          sub      R9D, EDI
+0000DC5C 74 34 - - - - - - - - - -           jz       0x0000dc92
+0000DC5E 41 83 f9 01 - - - - - - - -         cmp      R9D, 0x1
+0000DC62 74 27 - - - - - - - - - -           jz       0x0000dc8b
+0000DC64 b9 01 00 00 00 - - - - - - -        mov      ECX, 0x1
+0000DC69 c6 42 33 01 - - - - - - - -         mov      byte ptr [RDX + 0x33], 0x1
+0000DC6D eb 25 - - - - - - - - - -           jmp      0x0000dc94
+0000DC6F 41 81 f9 85 9d 00 00 - - - - -      cmp      R9D, 0x9d85
+0000DC76 74 1a - - - - - - - - - -           jz       0x0000dc92
+0000DC78 41 81 f9 03 a3 00 00 - - - - -      cmp      R9D, 0xa303
+0000DC7F 74 11 - - - - - - - - - -           jz       0x0000dc92
+0000DC81 05 f9 5c ff ff - - - - - - -        add      EAX, 0xffff5cf9
+0000DC86 83 f8 01 - - - - - - - - -          cmp      EAX, 0x1
+0000DC89 77 d9 - - - - - - - - - -           ja       0x0000dc64
+0000DC8B b9 02 00 00 00 - - - - - - -        mov      ECX, 0x2
+0000DC90 eb d7 - - - - - - - - - -           jmp      0x0000dc69
+0000DC92 33 c9 - - - - - - - - - -           xor      ECX, ECX
+0000DC94 0f b7 03 - - - - - - - - -          movzx    EAX, word ptr [RBX]
+0000DC97 3d 90 06 00 00 - - - - - - -        cmp      EAX, 0x690
+0000DC9C 72 1c - - - - - - - - - -           jc       0x0000dcba
+0000DC9E 3d 91 06 00 00 - - - - - - -        cmp      EAX, 0x691
+0000DCA3 76 11 - - - - - - - - - -           jbe      0x0000dcb6
+0000DCA5 3d 09 a3 00 00 - - - - - - -        cmp      EAX, 0xa309
+0000DCAA 74 0a - - - - - - - - - -           jz       0x0000dcb6
+0000DCAC 05 f0 5c ff ff - - - - - - -        add      EAX, 0xffff5cf0
+0000DCB1 83 f8 01 - - - - - - - - -          cmp      EAX, 0x1
+0000DCB4 77 04 - - - - - - - - - -           ja       0x0000dcba
+0000DCB6 b0 01 - - - - - - - - - -           mov      AL, 0x1
+0000DCB8 eb 02 - - - - - - - - - -           jmp      0x0000dcbc
+0000DCBA 32 c0 - - - - - - - - - -           xor      AL, AL
+0000DCBC 88 42 34 - - - - - - - - -          mov      byte ptr [RDX + 0x34], AL
+0000DCBF 85 c9 - - - - - - - - - -           test     ECX, ECX
+0000DCC1 74 22 - - - - - - - - - -           jz       0x0000dce5
+0000DCC3 b8 1f 10 00 00 - - - - - - -        mov      EAX, 0x101f
+0000DCC8 83 f9 01 - - - - - - - - -          cmp      ECX, 0x1
+0000DCCB 0f b7 d0 - - - - - - - - -          movzx    EDX, AX
+0000DCCE 49 8b cc - - - - - - - - -          mov      RCX, R12
+0000DCD1 75 09 - - - - - - - - - -           jnz      0x0000dcdc
+0000DCD3 4c 8d 05 36 8c 01 00 - - - - -      lea      R8, [0x26910]
+0000DCDA eb 1b - - - - - - - - - -           jmp      0x0000dcf7
+0000DCDC 4c 8d 05 9d 8c 01 00 - - - - -      lea      R8, [0x26980]
+0000DCE3 eb 12 - - - - - - - - - -           jmp      0x0000dcf7
+0000DCE5 b8 1d 10 00 00 - - - - - - -        mov      EAX, 0x101d
+0000DCEA 4c 8d 05 ef 8c 01 00 - - - - -      lea      R8, [0x269e0]
+0000DCF1 0f b7 d0 - - - - - - - - -          movzx    EDX, AX
+0000DCF4 49 8b cc - - - - - - - - -          mov      RCX, R12
+0000DCF7 e8 84 29 ff ff - - - - - - -        call     0x00000680
+0000DCFC 40 32 f6 - - - - - - - - -          xor      SIL, SIL
+0000DCFF 33 ed - - - - - - - - - -           xor      EBP, EBP
+0000DD01 44 8d 65 03 - - - - - - - -         lea      R12D, [RBP + 0x3]
+0000DD05 4c 8d 05 f4 22 ff ff - - - - -      lea      R8, [0x0]
+0000DD0C e8 cf d9 00 00 - - - - - - -        call     0x0001b6e0
+0000DD11 3c 02 - - - - - - - - - -           cmp      AL, 0x2
+0000DD13 b9 08 00 00 00 - - - - - - -        mov      ECX, 0x8
+0000DD18 41 0f 44 cc - - - - - - - -         cmovz    ECX, R12D
+0000DD1C 3b e9 - - - - - - - - - -           cmp      EBP, ECX
+0000DD1E 0f 83 a4 00 00 00 - - - - - -       jnc      0x0000ddc8
+0000DD24 0f b7 03 - - - - - - - - -          movzx    EAX, word ptr [RBX]
+0000DD27 8b fd - - - - - - - - - -           mov      EDI, EBP
+0000DD29 e8 b2 d9 00 00 - - - - - - -        call     0x0001b6e0
+0000DD2E 3c 02 - - - - - - - - - -           cmp      AL, 0x2
+0000DD30 75 0f - - - - - - - - - -           jnz      0x0000dd41
+0000DD32 49 3b fc - - - - - - - - -          cmp      RDI, R12
+0000DD35 73 1a - - - - - - - - - -           jnc      0x0000dd51
+0000DD37 49 8b 9c e8 20 92 02 00 - - - -     mov      RBX, qword ptr [R8 + RBP*0x8 + 0x29220]
+0000DD3F eb 20 - - - - - - - - - -           jmp      0x0000dd61
+0000DD41 48 83 ff 08 - - - - - - - -         cmp      RDI, 0x8
+0000DD45 73 0a - - - - - - - - - -           jnc      0x0000dd51
+0000DD47 49 8b 9c e8 e0 91 02 00 - - - -     mov      RBX, qword ptr [R8 + RBP*0x8 + 0x291e0]
+0000DD4F eb 10 - - - - - - - - - -           jmp      0x0000dd61
+0000DD51 83 64 24 78 00 - - - - - - -        and      dword ptr [RSP + 0x78], 0x0
+0000DD56 33 c0 - - - - - - - - - -           xor      EAX, EAX
+0000DD58 89 44 24 7c - - - - - - - -         mov      dword ptr [RSP + 0x7c], EAX
+0000DD5C 48 8b 5c 24 78 - - - - - - -        mov      RBX, qword ptr [RSP + 0x78]
+0000DD61 8b cb - - - - - - - - - -           mov      ECX, EBX
+0000DD63 48 89 5c 24 70 - - - - - - -        mov      qword ptr [RSP + 0x70], RBX
+0000DD68 e8 67 54 01 00 - - - - - - -        call     0x000231d4
+0000DD6D 84 c0 - - - - - - - - - -           test     AL, AL
+0000DD6F 74 34 - - - - - - - - - -           jz       0x0000dda5
+0000DD71 48 8d 54 24 68 - - - - - - -        lea      RDX, [RSP + 0x68]
+0000DD76 8b cb - - - - - - - - - -           mov      ECX, EBX
+0000DD78 e8 13 55 01 00 - - - - - - -        call     0x00023290
+0000DD7D 83 7c 24 68 00 - - - - - - -        cmp      dword ptr [RSP + 0x68], 0x0
+0000DD82 75 21 - - - - - - - - - -           jnz      0x0000dda5
+0000DD84 8b cb - - - - - - - - - -           mov      ECX, EBX
+0000DD86 e8 b5 54 01 00 - - - - - - -        call     0x00023240
+0000DD8B 25 00 1c 00 00 - - - - - - -        and      EAX, 0x1c00
+0000DD90 0f ba e8 09 - - - - - - - -         bts      EAX, 0x9
+0000DD94 c1 e8 09 - - - - - - - - -          shr      EAX, 0x9
+0000DD97 3b 44 24 74 - - - - - - - -         cmp      EAX, dword ptr [RSP + 0x74]
+0000DD9B 75 08 - - - - - - - - - -           jnz      0x0000dda5
+0000DD9D 42 c6 44 35 35 01 - - - - - -       mov      byte ptr [RBP + R14*0x1 + 0x35], 0x1
+0000DDA3 eb 17 - - - - - - - - - -           jmp      0x0000ddbc
+0000DDA5 42 80 7c 3d 56 01 - - - - - -       cmp      byte ptr [RBP + R15*0x1 + 0x56], 0x1
+0000DDAB 75 09 - - - - - - - - - -           jnz      0x0000ddb6
+0000DDAD 42 c6 44 3d 56 00 - - - - - -       mov      byte ptr [RBP + R15*0x1 + 0x56], 0x0
+0000DDB3 40 b6 01 - - - - - - - - -          mov      SIL, 0x1
+0000DDB6 42 c6 44 35 35 00 - - - - - -       mov      byte ptr [RBP + R14*0x1 + 0x35], 0x0
+0000DDBC ff c5 - - - - - - - - - -           inc      EBP
+0000DDBE bb 02 80 0f e0 - - - - - - -        mov      EBX, 0xe00f8002
+0000DDC3 e9 3d ff ff ff - - - - - - -        jmp      0x0000dd05
+0000DDC8 4c 8b 64 24 60 - - - - - - -        mov      R12, qword ptr [RSP + 0x60]
+0000DDCD 32 c9 - - - - - - - - - -           xor      CL, CL
+0000DDCF b8 0a 80 0b e0 - - - - - - -        mov      EAX, 0xe00b800a
+0000DDD4 bf 04 00 00 00 - - - - - - -        mov      EDI, 0x4
+0000DDD9 8a 00 - - - - - - - - - -           mov      AL, byte ptr [RAX]
+0000DDDB 40 3a c7 - - - - - - - - -          cmp      AL, DIL
+0000DDDE 0f 94 c0 - - - - - - - - -          setz     AL
+0000DDE1 41 38 47 44 - - - - - - - -         cmp      byte ptr [R15 + 0x44], AL
+0000DDE5 74 06 - - - - - - - - - -           jz       0x0000dded
+0000DDE7 41 88 47 44 - - - - - - - -         mov      byte ptr [R15 + 0x44], AL
+0000DDEB b1 01 - - - - - - - - - -           mov      CL, 0x1
+0000DDED 40 0a f1 - - - - - - - - -          or       SIL, CL
+0000DDF0 32 db - - - - - - - - - -           xor      BL, BL
+0000DDF2 48 8d 0d 47 5a 01 00 - - - - -      lea      RCX, [0x23840]
+0000DDF9 e8 0e 1b 01 00 - - - - - - -        call     0x0001f90c
+0000DDFE 4c 8b c8 - - - - - - - - -          mov      R9, RAX
+0000DE01 48 85 c0 - - - - - - - - -          test     RAX, RAX
+0000DE04 75 26 - - - - - - - - - -           jnz      0x0000de2c
+0000DE06 40 0a f3 - - - - - - - - -          or       SIL, BL
+0000DE09 80 3d 90 b5 01 00 00 - - - - -      cmp      byte ptr [0x000293a0], 0x0
+0000DE10 75 08 - - - - - - - - - -           jnz      0x0000de1a
+0000DE12 49 8b cc - - - - - - - - -          mov      RCX, R12
+0000DE15 e8 e6 f5 ff ff - - - - - - -        call     0x0000d400
+0000DE1A 40 8a c6 - - - - - - - - -          mov      AL, SIL
+0000DE1D 48 83 c4 20 - - - - - - - -         add      RSP, 0x20
+0000DE21 41 5f - - - - - - - - - -           pop      R15
+0000DE23 41 5e - - - - - - - - - -           pop      R14
+0000DE25 41 5c - - - - - - - - - -           pop      R12
+0000DE27 5f - - - - - - - - - - -            pop      RDI
+0000DE28 5e - - - - - - - - - - -            pop      RSI
+0000DE29 5d - - - - - - - - - - -            pop      RBP
+0000DE2A 5b - - - - - - - - - - -            pop      RBX
+0000DE2B c3 - - - - - - - - - - -            ret      
+0000DE2C 45 33 c0 - - - - - - - - -          xor      R8D, R8D
+0000DE2F e8 ac d8 00 00 - - - - - - -        call     0x0001b6e0
+0000DE34 b9 18 00 00 00 - - - - - - -        mov      ECX, 0x18
+0000DE39 3c 02 - - - - - - - - - -           cmp      AL, 0x2
+0000DE3B 8d 51 f8 - - - - - - - - -          lea      EDX, [RCX + -0x8]
+0000DE3E 0f 44 ca - - - - - - - - -          cmovz    ECX, EDX
+0000DE41 44 3b c1 - - - - - - - - -          cmp      R8D, ECX
+0000DE44 73 2c - - - - - - - - - -           jnc      0x0000de72
+0000DE46 43 8a 44 08 19 - - - - - - -        mov      AL, byte ptr [R8 + R9*0x1 + 0x19]
+0000DE4B 43 88 44 30 3e - - - - - - -        mov      byte ptr [R8 + R14*0x1 + 0x3e], AL
+0000DE50 43 8a 44 08 31 - - - - - - -        mov      AL, byte ptr [R8 + R9*0x1 + 0x31]
+0000DE55 43 88 44 30 56 - - - - - - -        mov      byte ptr [R8 + R14*0x1 + 0x56], AL
+0000DE5A 43 80 7c 08 19 00 - - - - - -       cmp      byte ptr [R8 + R9*0x1 + 0x19], 0x0
+0000DE60 75 0b - - - - - - - - - -           jnz      0x0000de6d
+0000DE62 43 c6 84 38 b8 00 00 00 00 - - -    mov      byte ptr [R8 + R15*0x1 + 0xb8], 0x0
+0000DE6B b3 01 - - - - - - - - - -           mov      BL, 0x1
+0000DE6D 41 ff c0 - - - - - - - - -          inc      R8D
+0000DE70 eb bd - - - - - - - - - -           jmp      0x0000de2f
+0000DE72 45 33 c0 - - - - - - - - -          xor      R8D, R8D
+0000DE75 e8 66 d8 00 00 - - - - - - -        call     0x0001b6e0
+0000DE7A 3c 02 - - - - - - - - - -           cmp      AL, 0x2
+0000DE7C b9 06 00 00 00 - - - - - - -        mov      ECX, 0x6
+0000DE81 0f 44 cf - - - - - - - - -          cmovz    ECX, EDI
+0000DE84 44 3b c1 - - - - - - - - -          cmp      R8D, ECX
+0000DE87 0f 83 79 ff ff ff - - - - - -       jnc      0x0000de06
+0000DE8D 43 8a 44 08 49 - - - - - - -        mov      AL, byte ptr [R8 + R9*0x1 + 0x49]
+0000DE92 43 88 44 30 6e - - - - - - -        mov      byte ptr [R8 + R14*0x1 + 0x6e], AL
+0000DE97 41 ff c0 - - - - - - - - -          inc      R8D
+0000DE9A eb d9 - - - - - - - - - -           jmp      0x0000de75

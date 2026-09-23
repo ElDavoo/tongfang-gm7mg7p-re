@@ -4,25 +4,25 @@
 ; This is the machine code. The decompiled C for this address is 00001504.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-00001504 4c 8b 0d dd 0c 00 00 mov      R9, qword ptr [0x000021e8]
-0000150B 33 d2      xor      EDX, EDX
-0000150D 4c 8b d9   mov      R11, RCX
-00001510 4d 85 c9   test     R9, R9
-00001513 74 2c      jz       0x00001541
-00001515 48 8b 05 d4 0c 00 00 mov      RAX, qword ptr [0x000021f0]
-0000151C 4c 8d 40 08 lea      R8, [RAX + 0x8]
-00001520 4d 8b 10   mov      R10, qword ptr [R8]
-00001523 4d 3b da   cmp      R11, R10
-00001526 72 0d      jc       0x00001535
-00001528 49 8b 40 08 mov      RAX, qword ptr [R8 + 0x8]
-0000152C 49 8d 0c 02 lea      RCX, [R10 + RAX*0x1]
-00001530 4c 3b d9   cmp      R11, RCX
-00001533 72 0f      jc       0x00001544
-00001535 48 ff c2   inc      RDX
-00001538 49 83 c0 20 add      R8, 0x20
-0000153C 49 3b d1   cmp      RDX, R9
-0000153F 72 df      jc       0x00001520
-00001541 32 c0      xor      AL, AL
-00001543 c3         ret      
-00001544 b0 01      mov      AL, 0x1
-00001546 c3         ret      
+00001504 4c 8b 0d dd 0c 00 00 - - -    mov      R9, qword ptr [0x000021e8]
+0000150B 33 d2 - - - - - - - -         xor      EDX, EDX
+0000150D 4c 8b d9 - - - - - - -        mov      R11, RCX
+00001510 4d 85 c9 - - - - - - -        test     R9, R9
+00001513 74 2c - - - - - - - -         jz       0x00001541
+00001515 48 8b 05 d4 0c 00 00 - - -    mov      RAX, qword ptr [0x000021f0]
+0000151C 4c 8d 40 08 - - - - - -       lea      R8, [RAX + 0x8]
+00001520 4d 8b 10 - - - - - - -        mov      R10, qword ptr [R8]
+00001523 4d 3b da - - - - - - -        cmp      R11, R10
+00001526 72 0d - - - - - - - -         jc       0x00001535
+00001528 49 8b 40 08 - - - - - -       mov      RAX, qword ptr [R8 + 0x8]
+0000152C 49 8d 0c 02 - - - - - -       lea      RCX, [R10 + RAX*0x1]
+00001530 4c 3b d9 - - - - - - -        cmp      R11, RCX
+00001533 72 0f - - - - - - - -         jc       0x00001544
+00001535 48 ff c2 - - - - - - -        inc      RDX
+00001538 49 83 c0 20 - - - - - -       add      R8, 0x20
+0000153C 49 3b d1 - - - - - - -        cmp      RDX, R9
+0000153F 72 df - - - - - - - -         jc       0x00001520
+00001541 32 c0 - - - - - - - -         xor      AL, AL
+00001543 c3 - - - - - - - - -          ret      
+00001544 b0 01 - - - - - - - -         mov      AL, 0x1
+00001546 c3 - - - - - - - - -          ret      

@@ -4,113 +4,113 @@
 ; This is the machine code. The decompiled C for this address is FFF81031.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-FFF81031 8b 54 24 08 mov      EDX, dword ptr [ESP + 0x8]
-FFF81035 e9 00 00 00 00 jmp      0xfff8103a
-FFF8103A 55         push     EBP
-FFF8103B 8b ec      mov      EBP, ESP
-FFF8103D 83 e4 f8   and      ESP, 0xfffffff8
-FFF81040 81 ec 00 08 00 00 sub      ESP, 0x800
-FFF81046 56         push     ESI
-FFF81047 8d 44 24 24 lea      EAX, [ESP + 0x24]
-FFF8104B c7 44 24 1c d8 07 00 00 mov      dword ptr [ESP + 0x1c], 0x7d8
-FFF81053 57         push     EDI
-FFF81054 8b f2      mov      ESI, EDX
-FFF81056 c7 44 24 0c 43 d6 87 ec mov      dword ptr [ESP + 0xc], 0xec87d643
-FFF8105E c7 44 24 10 a4 eb b5 4b mov      dword ptr [ESP + 0x10], 0x4bb5eba4
-FFF81066 c7 44 24 14 a1 e5 3f 3e mov      dword ptr [ESP + 0x14], 0x3e3fe5a1
-FFF8106E c7 44 24 18 36 b2 0d a9 mov      dword ptr [ESP + 0x18], 0xa90db236
-FFF81076 89 44 24 1c mov      dword ptr [ESP + 0x1c], EAX
-FFF8107A 8b 44 24 1c mov      EAX, dword ptr [ESP + 0x1c]
-FFF8107E 0f 01 08   sidt     dword ptr [EAX]
-FFF81081 8b 44 24 2a mov      EAX, dword ptr [ESP + 0x2a]
-FFF81085 8d 54 24 08 lea      EDX, [ESP + 0x8]
-FFF81089 52         push     EDX
-FFF8108A 8b 40 fc   mov      EAX, dword ptr [EAX + -0x4]
-FFF8108D 50         push     EAX
-FFF8108E 8b 08      mov      ECX, dword ptr [EAX]
-FFF81090 ff 51 28   call     dword ptr [ECX + 0x28]
-FFF81093 83 7c 24 10 11 cmp      dword ptr [ESP + 0x10], 0x11
-FFF81098 59         pop      ECX
-FFF81099 59         pop      ECX
-FFF8109A 74 19      jz       0xfff810b5
-FFF8109C 83 7c 24 08 20 cmp      dword ptr [ESP + 0x8], 0x20
-FFF810A1 74 12      jz       0xfff810b5
-FFF810A3 83 7c 24 08 12 cmp      dword ptr [ESP + 0x8], 0x12
-FFF810A8 74 0b      jz       0xfff810b5
-FFF810AA 6a 78      push     0x78
-FFF810AC 6a 50      push     0x50
-FFF810AE e8 19 08 00 00 call     0xfff818cc
-FFF810B3 59         pop      ECX
-FFF810B4 59         pop      ECX
-FFF810B5 51         push     ECX
-FFF810B6 51         push     ECX
-FFF810B7 e8 c9 05 00 00 call     0xfff81685
-FFF810BC 33 ff      xor      EDI, EDI
-FFF810BE 57         push     EDI
-FFF810BF 6a 56      push     0x56
-FFF810C1 e8 06 08 00 00 call     0xfff818cc
-FFF810C6 e8 67 06 00 00 call     0xfff81732
-FFF810CB 8b 06      mov      EAX, dword ptr [ESI]
-FFF810CD 8d 4c 24 34 lea      ECX, [ESP + 0x34]
-FFF810D1 51         push     ECX
-FFF810D2 57         push     EDI
-FFF810D3 57         push     EDI
-FFF810D4 68 1c 1d f8 ff push     0xfff81d1c
-FFF810D9 56         push     ESI
-FFF810DA ff 50 20   call     dword ptr [EAX + 0x20]
-FFF810DD 83 c4 24   add      ESP, 0x24
-FFF810E0 8d 44 24 30 lea      EAX, [ESP + 0x30]
-FFF810E4 50         push     EAX
-FFF810E5 8d 44 24 24 lea      EAX, [ESP + 0x24]
-FFF810E9 50         push     EAX
-FFF810EA 57         push     EDI
-FFF810EB 8d 44 24 18 lea      EAX, [ESP + 0x18]
-FFF810EF 50         push     EAX
-FFF810F0 8b 44 24 34 mov      EAX, dword ptr [ESP + 0x34]
-FFF810F4 68 fc 20 f8 ff push     0xfff820fc
-FFF810F9 50         push     EAX
-FFF810FA ff 10      call     dword ptr [EAX]
-FFF810FC 8a 84 24 74 07 00 00 mov      AL, byte ptr [ESP + 0x774]
-FFF81103 83 c4 18   add      ESP, 0x18
-FFF81106 3c 01      cmp      AL, 0x1
-FFF81108 75 13      jnz      0xfff8111d
-FFF8110A 33 d2      xor      EDX, EDX
-FFF8110C b9 0e 00 02 03 mov      ECX, 0x302000e
-FFF81111 e8 37 02 00 00 call     0xfff8134d
-FFF81116 8a 84 24 5c 07 00 00 mov      AL, byte ptr [ESP + 0x75c]
-FFF8111D 3c 02      cmp      AL, 0x2
-FFF8111F 75 0d      jnz      0xfff8112e
-FFF81121 33 d2      xor      EDX, EDX
-FFF81123 b9 13 00 00 03 mov      ECX, 0x3000013
-FFF81128 42         inc      EDX
-FFF81129 e8 1f 02 00 00 call     0xfff8134d
-FFF8112E b9 50 07 6e fd mov      ECX, 0xfd6e0750
-FFF81133 b8 54 07 6e fd mov      EAX, 0xfd6e0754
-FFF81138 8b 11      mov      EDX, dword ptr [ECX]
+FFF81031 8b 54 24 08 - - - - - -       mov      EDX, dword ptr [ESP + 0x8]
+FFF81035 e9 00 00 00 00 - - - - -      jmp      0xfff8103a
+FFF8103A 55 - - - - - - - - -          push     EBP
+FFF8103B 8b ec - - - - - - - -         mov      EBP, ESP
+FFF8103D 83 e4 f8 - - - - - - -        and      ESP, 0xfffffff8
+FFF81040 81 ec 00 08 00 00 - - - -     sub      ESP, 0x800
+FFF81046 56 - - - - - - - - -          push     ESI
+FFF81047 8d 44 24 24 - - - - - -       lea      EAX, [ESP + 0x24]
+FFF8104B c7 44 24 1c d8 07 00 00 - -   mov      dword ptr [ESP + 0x1c], 0x7d8
+FFF81053 57 - - - - - - - - -          push     EDI
+FFF81054 8b f2 - - - - - - - -         mov      ESI, EDX
+FFF81056 c7 44 24 0c 43 d6 87 ec - -   mov      dword ptr [ESP + 0xc], 0xec87d643
+FFF8105E c7 44 24 10 a4 eb b5 4b - -   mov      dword ptr [ESP + 0x10], 0x4bb5eba4
+FFF81066 c7 44 24 14 a1 e5 3f 3e - -   mov      dword ptr [ESP + 0x14], 0x3e3fe5a1
+FFF8106E c7 44 24 18 36 b2 0d a9 - -   mov      dword ptr [ESP + 0x18], 0xa90db236
+FFF81076 89 44 24 1c - - - - - -       mov      dword ptr [ESP + 0x1c], EAX
+FFF8107A 8b 44 24 1c - - - - - -       mov      EAX, dword ptr [ESP + 0x1c]
+FFF8107E 0f 01 08 - - - - - - -        sidt     dword ptr [EAX]
+FFF81081 8b 44 24 2a - - - - - -       mov      EAX, dword ptr [ESP + 0x2a]
+FFF81085 8d 54 24 08 - - - - - -       lea      EDX, [ESP + 0x8]
+FFF81089 52 - - - - - - - - -          push     EDX
+FFF8108A 8b 40 fc - - - - - - -        mov      EAX, dword ptr [EAX + -0x4]
+FFF8108D 50 - - - - - - - - -          push     EAX
+FFF8108E 8b 08 - - - - - - - -         mov      ECX, dword ptr [EAX]
+FFF81090 ff 51 28 - - - - - - -        call     dword ptr [ECX + 0x28]
+FFF81093 83 7c 24 10 11 - - - - -      cmp      dword ptr [ESP + 0x10], 0x11
+FFF81098 59 - - - - - - - - -          pop      ECX
+FFF81099 59 - - - - - - - - -          pop      ECX
+FFF8109A 74 19 - - - - - - - -         jz       0xfff810b5
+FFF8109C 83 7c 24 08 20 - - - - -      cmp      dword ptr [ESP + 0x8], 0x20
+FFF810A1 74 12 - - - - - - - -         jz       0xfff810b5
+FFF810A3 83 7c 24 08 12 - - - - -      cmp      dword ptr [ESP + 0x8], 0x12
+FFF810A8 74 0b - - - - - - - -         jz       0xfff810b5
+FFF810AA 6a 78 - - - - - - - -         push     0x78
+FFF810AC 6a 50 - - - - - - - -         push     0x50
+FFF810AE e8 19 08 00 00 - - - - -      call     0xfff818cc
+FFF810B3 59 - - - - - - - - -          pop      ECX
+FFF810B4 59 - - - - - - - - -          pop      ECX
+FFF810B5 51 - - - - - - - - -          push     ECX
+FFF810B6 51 - - - - - - - - -          push     ECX
+FFF810B7 e8 c9 05 00 00 - - - - -      call     0xfff81685
+FFF810BC 33 ff - - - - - - - -         xor      EDI, EDI
+FFF810BE 57 - - - - - - - - -          push     EDI
+FFF810BF 6a 56 - - - - - - - -         push     0x56
+FFF810C1 e8 06 08 00 00 - - - - -      call     0xfff818cc
+FFF810C6 e8 67 06 00 00 - - - - -      call     0xfff81732
+FFF810CB 8b 06 - - - - - - - -         mov      EAX, dword ptr [ESI]
+FFF810CD 8d 4c 24 34 - - - - - -       lea      ECX, [ESP + 0x34]
+FFF810D1 51 - - - - - - - - -          push     ECX
+FFF810D2 57 - - - - - - - - -          push     EDI
+FFF810D3 57 - - - - - - - - -          push     EDI
+FFF810D4 68 1c 1d f8 ff - - - - -      push     0xfff81d1c
+FFF810D9 56 - - - - - - - - -          push     ESI
+FFF810DA ff 50 20 - - - - - - -        call     dword ptr [EAX + 0x20]
+FFF810DD 83 c4 24 - - - - - - -        add      ESP, 0x24
+FFF810E0 8d 44 24 30 - - - - - -       lea      EAX, [ESP + 0x30]
+FFF810E4 50 - - - - - - - - -          push     EAX
+FFF810E5 8d 44 24 24 - - - - - -       lea      EAX, [ESP + 0x24]
+FFF810E9 50 - - - - - - - - -          push     EAX
+FFF810EA 57 - - - - - - - - -          push     EDI
+FFF810EB 8d 44 24 18 - - - - - -       lea      EAX, [ESP + 0x18]
+FFF810EF 50 - - - - - - - - -          push     EAX
+FFF810F0 8b 44 24 34 - - - - - -       mov      EAX, dword ptr [ESP + 0x34]
+FFF810F4 68 fc 20 f8 ff - - - - -      push     0xfff820fc
+FFF810F9 50 - - - - - - - - -          push     EAX
+FFF810FA ff 10 - - - - - - - -         call     dword ptr [EAX]
+FFF810FC 8a 84 24 74 07 00 00 - - -    mov      AL, byte ptr [ESP + 0x774]
+FFF81103 83 c4 18 - - - - - - -        add      ESP, 0x18
+FFF81106 3c 01 - - - - - - - -         cmp      AL, 0x1
+FFF81108 75 13 - - - - - - - -         jnz      0xfff8111d
+FFF8110A 33 d2 - - - - - - - -         xor      EDX, EDX
+FFF8110C b9 0e 00 02 03 - - - - -      mov      ECX, 0x302000e
+FFF81111 e8 37 02 00 00 - - - - -      call     0xfff8134d
+FFF81116 8a 84 24 5c 07 00 00 - - -    mov      AL, byte ptr [ESP + 0x75c]
+FFF8111D 3c 02 - - - - - - - -         cmp      AL, 0x2
+FFF8111F 75 0d - - - - - - - -         jnz      0xfff8112e
+FFF81121 33 d2 - - - - - - - -         xor      EDX, EDX
+FFF81123 b9 13 00 00 03 - - - - -      mov      ECX, 0x3000013
+FFF81128 42 - - - - - - - - -          inc      EDX
+FFF81129 e8 1f 02 00 00 - - - - -      call     0xfff8134d
+FFF8112E b9 50 07 6e fd - - - - -      mov      ECX, 0xfd6e0750
+FFF81133 b8 54 07 6e fd - - - - -      mov      EAX, 0xfd6e0754
+FFF81138 8b 11 - - - - - - - -         mov      EDX, dword ptr [ECX]
 FFF8113A c7 05 50 07 6e fd 00 01 00 44 mov      dword ptr [0xfd6e0750], 0x44000100
-FFF81144 8b 09      mov      ECX, dword ptr [ECX]
-FFF81146 8b 00      mov      EAX, dword ptr [EAX]
-FFF81148 25 ff c3 ff ff and      EAX, 0xffffc3ff
-FFF8114D a3 54 07 6e fd mov      [0xfd6e0754], EAX
-FFF81152 f6 c1 02   test     CL, 0x2
-FFF81155 74 05      jz       0xfff8115c
-FFF81157 83 ca 01   or       EDX, 0x1
-FFF8115A eb 03      jmp      0xfff8115f
-FFF8115C 83 e2 fe   and      EDX, 0xfffffffe
-FFF8115F 89 15 50 07 6e fd mov      dword ptr [0xfd6e0750], EDX
-FFF81165 6a 70      push     0x70
-FFF81167 59         pop      ECX
-FFF81168 66 8b d1   mov      DX, CX
-FFF8116B b0 f0      mov      AL, 0xf0
-FFF8116D ee         out      DX, AL
-FFF8116E 6a 71      push     0x71
-FFF81170 59         pop      ECX
-FFF81171 66 8b d1   mov      DX, CX
-FFF81174 b0 01      mov      AL, 0x1
-FFF81176 ee         out      DX, AL
-FFF81177 5f         pop      EDI
-FFF81178 33 c0      xor      EAX, EAX
-FFF8117A 5e         pop      ESI
-FFF8117B 8b e5      mov      ESP, EBP
-FFF8117D 5d         pop      EBP
-FFF8117E c3         ret      
+FFF81144 8b 09 - - - - - - - -         mov      ECX, dword ptr [ECX]
+FFF81146 8b 00 - - - - - - - -         mov      EAX, dword ptr [EAX]
+FFF81148 25 ff c3 ff ff - - - - -      and      EAX, 0xffffc3ff
+FFF8114D a3 54 07 6e fd - - - - -      mov      [0xfd6e0754], EAX
+FFF81152 f6 c1 02 - - - - - - -        test     CL, 0x2
+FFF81155 74 05 - - - - - - - -         jz       0xfff8115c
+FFF81157 83 ca 01 - - - - - - -        or       EDX, 0x1
+FFF8115A eb 03 - - - - - - - -         jmp      0xfff8115f
+FFF8115C 83 e2 fe - - - - - - -        and      EDX, 0xfffffffe
+FFF8115F 89 15 50 07 6e fd - - - -     mov      dword ptr [0xfd6e0750], EDX
+FFF81165 6a 70 - - - - - - - -         push     0x70
+FFF81167 59 - - - - - - - - -          pop      ECX
+FFF81168 66 8b d1 - - - - - - -        mov      DX, CX
+FFF8116B b0 f0 - - - - - - - -         mov      AL, 0xf0
+FFF8116D ee - - - - - - - - -          out      DX, AL
+FFF8116E 6a 71 - - - - - - - -         push     0x71
+FFF81170 59 - - - - - - - - -          pop      ECX
+FFF81171 66 8b d1 - - - - - - -        mov      DX, CX
+FFF81174 b0 01 - - - - - - - -         mov      AL, 0x1
+FFF81176 ee - - - - - - - - -          out      DX, AL
+FFF81177 5f - - - - - - - - -          pop      EDI
+FFF81178 33 c0 - - - - - - - -         xor      EAX, EAX
+FFF8117A 5e - - - - - - - - -          pop      ESI
+FFF8117B 8b e5 - - - - - - - -         mov      ESP, EBP
+FFF8117D 5d - - - - - - - - -          pop      EBP
+FFF8117E c3 - - - - - - - - -          ret      

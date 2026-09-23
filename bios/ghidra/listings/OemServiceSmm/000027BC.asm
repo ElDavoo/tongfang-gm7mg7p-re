@@ -4,23 +4,23 @@
 ; This is the machine code. The decompiled C for this address is 000027BC.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-000027BC 48 83 ec 28 sub      RSP, 0x28
-000027C0 4d 8b c8   mov      R9, R8
-000027C3 48 85 c9   test     RCX, RCX
-000027C6 75 0c      jnz      0x000027d4
-000027C8 48 b8 02 00 00 00 00 00 00 80 mov      RAX, -0x7ffffffffffffffe
-000027D2 eb 28      jmp      0x000027fc
-000027D4 44 8b c2   mov      R8D, EDX
-000027D7 4b 8d 04 08 lea      RAX, [R8 + R9*0x1]
-000027DB 48 3d 00 20 02 00 cmp      RAX, 0x22000
-000027E1 77 e5      ja       0x000027c8
-000027E3 ba 00 00 43 ff mov      EDX, 0xff430000
-000027E8 49 03 d1   add      RDX, R9
-000027EB 4d 85 c0   test     R8, R8
-000027EE 74 0a      jz       0x000027fa
-000027F0 48 3b ca   cmp      RCX, RDX
-000027F3 74 05      jz       0x000027fa
-000027F5 e8 86 e9 ff ff call     0x00001180
-000027FA 33 c0      xor      EAX, EAX
-000027FC 48 83 c4 28 add      RSP, 0x28
-00002800 c3         ret      
+000027BC 48 83 ec 28 - - - - - - -        sub      RSP, 0x28
+000027C0 4d 8b c8 - - - - - - - -         mov      R9, R8
+000027C3 48 85 c9 - - - - - - - -         test     RCX, RCX
+000027C6 75 0c - - - - - - - - -          jnz      0x000027d4
+000027C8 48 b8 02 00 00 00 00 00 00 80 -  mov      RAX, -0x7ffffffffffffffe
+000027D2 eb 28 - - - - - - - - -          jmp      0x000027fc
+000027D4 44 8b c2 - - - - - - - -         mov      R8D, EDX
+000027D7 4b 8d 04 08 - - - - - - -        lea      RAX, [R8 + R9*0x1]
+000027DB 48 3d 00 20 02 00 - - - - -      cmp      RAX, 0x22000
+000027E1 77 e5 - - - - - - - - -          ja       0x000027c8
+000027E3 ba 00 00 43 ff - - - - - -       mov      EDX, 0xff430000
+000027E8 49 03 d1 - - - - - - - -         add      RDX, R9
+000027EB 4d 85 c0 - - - - - - - -         test     R8, R8
+000027EE 74 0a - - - - - - - - -          jz       0x000027fa
+000027F0 48 3b ca - - - - - - - -         cmp      RCX, RDX
+000027F3 74 05 - - - - - - - - -          jz       0x000027fa
+000027F5 e8 86 e9 ff ff - - - - - -       call     0x00001180
+000027FA 33 c0 - - - - - - - - -          xor      EAX, EAX
+000027FC 48 83 c4 28 - - - - - - -        add      RSP, 0x28
+00002800 c3 - - - - - - - - - -           ret      

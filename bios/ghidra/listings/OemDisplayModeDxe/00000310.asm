@@ -4,12 +4,12 @@
 ; This is the machine code. The decompiled C for this address is 00000310.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-00000310 40 53      push     RBX
-00000312 48 83 ec 20 sub      RSP, 0x20
-00000316 48 8b da   mov      RBX, RDX
-00000319 e8 0e 00 00 00 call     0x0000032c
-0000031E 48 8b d3   mov      RDX, RBX
-00000321 e8 12 01 00 00 call     0x00000438
-00000326 48 83 c4 20 add      RSP, 0x20
-0000032A 5b         pop      RBX
-0000032B c3         ret      
+00000310 40 53 - - - - - - - -         push     RBX
+00000312 48 83 ec 20 - - - - - -       sub      RSP, 0x20
+00000316 48 8b da - - - - - - -        mov      RBX, RDX
+00000319 e8 0e 00 00 00 - - - - -      call     0x0000032c
+0000031E 48 8b d3 - - - - - - -        mov      RDX, RBX
+00000321 e8 12 01 00 00 - - - - -      call     0x00000438
+00000326 48 83 c4 20 - - - - - -       add      RSP, 0x20
+0000032A 5b - - - - - - - - -          pop      RBX
+0000032B c3 - - - - - - - - -          ret      

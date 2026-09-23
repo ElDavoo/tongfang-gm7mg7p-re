@@ -4,55 +4,55 @@
 ; This is the machine code. The decompiled C for this address is 00002290.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-00002290 88 4c 24 08 mov      byte ptr [RSP + 0x8], CL
-00002294 55         push     RBP
-00002295 48 8b ec   mov      RBP, RSP
-00002298 48 83 ec 50 sub      RSP, 0x50
-0000229C 48 8b 05 ed 03 00 00 mov      RAX, qword ptr [0x00002690]
-000022A3 4c 8d 45 28 lea      R8, [RBP + 0x28]
-000022A7 33 d2      xor      EDX, EDX
-000022A9 48 8d 0d 70 02 00 00 lea      RCX, [0x2520]
-000022B0 ff 90 40 01 00 00 call     qword ptr [RAX + 0x140]
-000022B6 48 85 c0   test     RAX, RAX
-000022B9 0f 88 ab 00 00 00 js       0x0000236a
-000022BF 48 8b 45 28 mov      RAX, qword ptr [RBP + 0x28]
-000022C3 48 8d 4d 10 lea      RCX, [RBP + 0x10]
-000022C7 ff 50 40   call     qword ptr [RAX + 0x40]
-000022CA 48 85 c0   test     RAX, RAX
-000022CD 0f 88 8d 00 00 00 js       0x00002360
-000022D3 83 7d 10 00 cmp      dword ptr [RBP + 0x10], 0x0
-000022D7 0f 85 83 00 00 00 jnz      0x00002360
-000022DD 48 8b 45 28 mov      RAX, qword ptr [RBP + 0x28]
-000022E1 48 8d 4d 18 lea      RCX, [RBP + 0x18]
-000022E5 ff 50 38   call     qword ptr [RAX + 0x38]
-000022E8 48 85 c0   test     RAX, RAX
-000022EB 78 67      js       0x00002354
-000022ED f6 45 18 0f test     byte ptr [RBP + 0x18], 0xf
-000022F1 75 61      jnz      0x00002354
-000022F3 48 8b 45 28 mov      RAX, qword ptr [RBP + 0x28]
-000022F7 4c 8d 4d 20 lea      R9, [RBP + 0x20]
-000022FB 83 65 e8 00 and      dword ptr [RBP + -0x18], 0x0
-000022FF 48 8d 55 e0 lea      RDX, [RBP + -0x20]
-00002303 83 65 f0 00 and      dword ptr [RBP + -0x10], 0x0
-00002307 41 b8 20 00 00 00 mov      R8D, 0x20
-0000230D 83 65 f8 00 and      dword ptr [RBP + -0x8], 0x0
-00002311 33 c9      xor      ECX, ECX
-00002313 c6 44 24 28 08 mov      byte ptr [RSP + 0x28], 0x8
-00002318 c7 45 20 14 00 00 00 mov      dword ptr [RBP + 0x20], 0x14
-0000231F c7 45 e0 00 00 05 00 mov      dword ptr [RBP + -0x20], 0x50000
-00002326 c7 45 e4 26 00 00 00 mov      dword ptr [RBP + -0x1c], 0x26
-0000232D c7 45 ec 0c 00 00 00 mov      dword ptr [RBP + -0x14], 0xc
-00002334 c6 44 24 20 00 mov      byte ptr [RSP + 0x20], 0x0
-00002339 ff 10      call     qword ptr [RAX]
-0000233B 48 85 c0   test     RAX, RAX
-0000233E 78 2a      js       0x0000236a
-00002340 83 7d e8 00 cmp      dword ptr [RBP + -0x18], 0x0
+00002290 88 4c 24 08 - - - - - -       mov      byte ptr [RSP + 0x8], CL
+00002294 55 - - - - - - - - -          push     RBP
+00002295 48 8b ec - - - - - - -        mov      RBP, RSP
+00002298 48 83 ec 50 - - - - - -       sub      RSP, 0x50
+0000229C 48 8b 05 ed 03 00 00 - - -    mov      RAX, qword ptr [0x00002690]
+000022A3 4c 8d 45 28 - - - - - -       lea      R8, [RBP + 0x28]
+000022A7 33 d2 - - - - - - - -         xor      EDX, EDX
+000022A9 48 8d 0d 70 02 00 00 - - -    lea      RCX, [0x2520]
+000022B0 ff 90 40 01 00 00 - - - -     call     qword ptr [RAX + 0x140]
+000022B6 48 85 c0 - - - - - - -        test     RAX, RAX
+000022B9 0f 88 ab 00 00 00 - - - -     js       0x0000236a
+000022BF 48 8b 45 28 - - - - - -       mov      RAX, qword ptr [RBP + 0x28]
+000022C3 48 8d 4d 10 - - - - - -       lea      RCX, [RBP + 0x10]
+000022C7 ff 50 40 - - - - - - -        call     qword ptr [RAX + 0x40]
+000022CA 48 85 c0 - - - - - - -        test     RAX, RAX
+000022CD 0f 88 8d 00 00 00 - - - -     js       0x00002360
+000022D3 83 7d 10 00 - - - - - -       cmp      dword ptr [RBP + 0x10], 0x0
+000022D7 0f 85 83 00 00 00 - - - -     jnz      0x00002360
+000022DD 48 8b 45 28 - - - - - -       mov      RAX, qword ptr [RBP + 0x28]
+000022E1 48 8d 4d 18 - - - - - -       lea      RCX, [RBP + 0x18]
+000022E5 ff 50 38 - - - - - - -        call     qword ptr [RAX + 0x38]
+000022E8 48 85 c0 - - - - - - -        test     RAX, RAX
+000022EB 78 67 - - - - - - - -         js       0x00002354
+000022ED f6 45 18 0f - - - - - -       test     byte ptr [RBP + 0x18], 0xf
+000022F1 75 61 - - - - - - - -         jnz      0x00002354
+000022F3 48 8b 45 28 - - - - - -       mov      RAX, qword ptr [RBP + 0x28]
+000022F7 4c 8d 4d 20 - - - - - -       lea      R9, [RBP + 0x20]
+000022FB 83 65 e8 00 - - - - - -       and      dword ptr [RBP + -0x18], 0x0
+000022FF 48 8d 55 e0 - - - - - -       lea      RDX, [RBP + -0x20]
+00002303 83 65 f0 00 - - - - - -       and      dword ptr [RBP + -0x10], 0x0
+00002307 41 b8 20 00 00 00 - - - -     mov      R8D, 0x20
+0000230D 83 65 f8 00 - - - - - -       and      dword ptr [RBP + -0x8], 0x0
+00002311 33 c9 - - - - - - - -         xor      ECX, ECX
+00002313 c6 44 24 28 08 - - - - -      mov      byte ptr [RSP + 0x28], 0x8
+00002318 c7 45 20 14 00 00 00 - - -    mov      dword ptr [RBP + 0x20], 0x14
+0000231F c7 45 e0 00 00 05 00 - - -    mov      dword ptr [RBP + -0x20], 0x50000
+00002326 c7 45 e4 26 00 00 00 - - -    mov      dword ptr [RBP + -0x1c], 0x26
+0000232D c7 45 ec 0c 00 00 00 - - -    mov      dword ptr [RBP + -0x14], 0xc
+00002334 c6 44 24 20 00 - - - - -      mov      byte ptr [RSP + 0x20], 0x0
+00002339 ff 10 - - - - - - - -         call     qword ptr [RAX]
+0000233B 48 85 c0 - - - - - - -        test     RAX, RAX
+0000233E 78 2a - - - - - - - -         js       0x0000236a
+00002340 83 7d e8 00 - - - - - -       cmp      dword ptr [RBP + -0x18], 0x0
 00002344 48 b9 07 00 00 00 00 00 00 80 mov      RCX, -0x7ffffffffffffff9
-0000234E 48 0f 45 c1 cmovnz   RAX, RCX
-00002352 eb 16      jmp      0x0000236a
+0000234E 48 0f 45 c1 - - - - - -       cmovnz   RAX, RCX
+00002352 eb 16 - - - - - - - -         jmp      0x0000236a
 00002354 48 b8 06 00 00 00 00 00 00 80 mov      RAX, -0x7ffffffffffffffa
-0000235E eb 0a      jmp      0x0000236a
+0000235E eb 0a - - - - - - - -         jmp      0x0000236a
 00002360 48 b8 03 00 00 00 00 00 00 80 mov      RAX, -0x7ffffffffffffffd
-0000236A 48 83 c4 50 add      RSP, 0x50
-0000236E 5d         pop      RBP
-0000236F c3         ret      
+0000236A 48 83 c4 50 - - - - - -       add      RSP, 0x50
+0000236E 5d - - - - - - - - -          pop      RBP
+0000236F c3 - - - - - - - - -          ret      

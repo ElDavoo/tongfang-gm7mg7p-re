@@ -4,50 +4,50 @@
 ; This is the machine code. The decompiled C for this address is FFF82657.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-FFF82657 55         push     EBP
-FFF82658 8b ec      mov      EBP, ESP
-FFF8265A 83 e4 f8   and      ESP, 0xfffffff8
-FFF8265D 53         push     EBX
-FFF8265E 55         push     EBP
-FFF8265F 56         push     ESI
-FFF82660 57         push     EDI
-FFF82661 8a fa      mov      BH, DL
-FFF82663 8a d9      mov      BL, CL
-FFF82665 33 f6      xor      ESI, ESI
-FFF82667 80 fb 60   cmp      BL, 0x60
-FFF8266A 0f 95 c0   setnz    AL
+FFF82657 55 - - - - - -       push     EBP
+FFF82658 8b ec - - - - -      mov      EBP, ESP
+FFF8265A 83 e4 f8 - - - -     and      ESP, 0xfffffff8
+FFF8265D 53 - - - - - -       push     EBX
+FFF8265E 55 - - - - - -       push     EBP
+FFF8265F 56 - - - - - -       push     ESI
+FFF82660 57 - - - - - -       push     EDI
+FFF82661 8a fa - - - - -      mov      BH, DL
+FFF82663 8a d9 - - - - -      mov      BL, CL
+FFF82665 33 f6 - - - - -      xor      ESI, ESI
+FFF82667 80 fb 60 - - - -     cmp      BL, 0x60
+FFF8266A 0f 95 c0 - - - -     setnz    AL
 FFF8266D 8d 04 45 64 00 00 00 lea      EAX, [EAX*0x2 + 0x64]
-FFF82674 0f b6 f8   movzx    EDI, AL
-FFF82677 66 8b d7   mov      DX, DI
-FFF8267A ec         in       AL, DX
-FFF8267B a8 02      test     AL, 0x2
-FFF8267D 74 25      jz       0xfff826a4
-FFF8267F bd 00 00 02 00 mov      EBP, 0x20000
-FFF82684 3b f5      cmp      ESI, EBP
-FFF82686 73 15      jnc      0xfff8269d
-FFF82688 6a 0f      push     0xf
-FFF8268A 59         pop      ECX
-FFF8268B e8 2d 02 00 00 call     0xfff828bd
-FFF82690 66 8b d7   mov      DX, DI
-FFF82693 ec         in       AL, DX
-FFF82694 46         inc      ESI
-FFF82695 a8 02      test     AL, 0x2
-FFF82697 75 eb      jnz      0xfff82684
-FFF82699 3b f5      cmp      ESI, EBP
-FFF8269B 72 07      jc       0xfff826a4
-FFF8269D b8 07 00 00 80 mov      EAX, 0x80000007
-FFF826A2 eb 14      jmp      0xfff826b8
-FFF826A4 33 c0      xor      EAX, EAX
-FFF826A6 80 fb 60   cmp      BL, 0x60
-FFF826A9 0f 95 c0   setnz    AL
+FFF82674 0f b6 f8 - - - -     movzx    EDI, AL
+FFF82677 66 8b d7 - - - -     mov      DX, DI
+FFF8267A ec - - - - - -       in       AL, DX
+FFF8267B a8 02 - - - - -      test     AL, 0x2
+FFF8267D 74 25 - - - - -      jz       0xfff826a4
+FFF8267F bd 00 00 02 00 - -   mov      EBP, 0x20000
+FFF82684 3b f5 - - - - -      cmp      ESI, EBP
+FFF82686 73 15 - - - - -      jnc      0xfff8269d
+FFF82688 6a 0f - - - - -      push     0xf
+FFF8268A 59 - - - - - -       pop      ECX
+FFF8268B e8 2d 02 00 00 - -   call     0xfff828bd
+FFF82690 66 8b d7 - - - -     mov      DX, DI
+FFF82693 ec - - - - - -       in       AL, DX
+FFF82694 46 - - - - - -       inc      ESI
+FFF82695 a8 02 - - - - -      test     AL, 0x2
+FFF82697 75 eb - - - - -      jnz      0xfff82684
+FFF82699 3b f5 - - - - -      cmp      ESI, EBP
+FFF8269B 72 07 - - - - -      jc       0xfff826a4
+FFF8269D b8 07 00 00 80 - -   mov      EAX, 0x80000007
+FFF826A2 eb 14 - - - - -      jmp      0xfff826b8
+FFF826A4 33 c0 - - - - -      xor      EAX, EAX
+FFF826A6 80 fb 60 - - - -     cmp      BL, 0x60
+FFF826A9 0f 95 c0 - - - -     setnz    AL
 FFF826AC 8d 14 45 60 00 00 00 lea      EDX, [EAX*0x2 + 0x60]
-FFF826B3 8a c7      mov      AL, BH
-FFF826B5 ee         out      DX, AL
-FFF826B6 33 c0      xor      EAX, EAX
-FFF826B8 5f         pop      EDI
-FFF826B9 5e         pop      ESI
-FFF826BA 5d         pop      EBP
-FFF826BB 5b         pop      EBX
-FFF826BC 8b e5      mov      ESP, EBP
-FFF826BE 5d         pop      EBP
-FFF826BF c3         ret      
+FFF826B3 8a c7 - - - - -      mov      AL, BH
+FFF826B5 ee - - - - - -       out      DX, AL
+FFF826B6 33 c0 - - - - -      xor      EAX, EAX
+FFF826B8 5f - - - - - -       pop      EDI
+FFF826B9 5e - - - - - -       pop      ESI
+FFF826BA 5d - - - - - -       pop      EBP
+FFF826BB 5b - - - - - -       pop      EBX
+FFF826BC 8b e5 - - - - -      mov      ESP, EBP
+FFF826BE 5d - - - - - -       pop      EBP
+FFF826BF c3 - - - - - -       ret      

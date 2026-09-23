@@ -4,38 +4,38 @@
 ; This is the machine code. The decompiled C for this address is FFF8117F.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-FFF8117F 51         push     ECX
-FFF81180 53         push     EBX
-FFF81181 55         push     EBP
-FFF81182 56         push     ESI
-FFF81183 8b d9      mov      EBX, ECX
-FFF81185 8d 4c 24 0c lea      ECX, [ESP + 0xc]
-FFF81189 57         push     EDI
-FFF8118A 8b fa      mov      EDI, EDX
-FFF8118C e8 4c 09 00 00 call     0xfff81add
-FFF81191 33 c9      xor      ECX, ECX
-FFF81193 0f b6 f3   movzx    ESI, BL
-FFF81196 8b e8      mov      EBP, EAX
-FFF81198 e8 40 04 00 00 call     0xfff815dd
-FFF8119D 3b d8      cmp      EBX, EAX
-FFF8119F 72 23      jc       0xfff811c4
-FFF811A1 e8 1c 04 00 00 call     0xfff815c2
-FFF811A6 3b d8      cmp      EBX, EAX
-FFF811A8 77 1a      ja       0xfff811c4
-FFF811AA 3b 74 24 10 cmp      ESI, dword ptr [ESP + 0x10]
-FFF811AE 73 14      jnc      0xfff811c4
-FFF811B0 6b c6 1e   imul     EAX, ESI, 0x1e
-FFF811B3 0f b7 44 28 1c movzx    EAX, word ptr [EAX + EBP*0x1 + 0x1c]
-FFF811B8 48         dec      EAX
-FFF811B9 c1 e8 05   shr      EAX, 0x5
-FFF811BC 3b f8      cmp      EDI, EAX
-FFF811BE 77 04      ja       0xfff811c4
-FFF811C0 b0 01      mov      AL, 0x1
-FFF811C2 eb 02      jmp      0xfff811c6
-FFF811C4 32 c0      xor      AL, AL
-FFF811C6 5f         pop      EDI
-FFF811C7 5e         pop      ESI
-FFF811C8 5d         pop      EBP
-FFF811C9 5b         pop      EBX
-FFF811CA 59         pop      ECX
-FFF811CB c3         ret      
+FFF8117F 51 - - - - - - - - -          push     ECX
+FFF81180 53 - - - - - - - - -          push     EBX
+FFF81181 55 - - - - - - - - -          push     EBP
+FFF81182 56 - - - - - - - - -          push     ESI
+FFF81183 8b d9 - - - - - - - -         mov      EBX, ECX
+FFF81185 8d 4c 24 0c - - - - - -       lea      ECX, [ESP + 0xc]
+FFF81189 57 - - - - - - - - -          push     EDI
+FFF8118A 8b fa - - - - - - - -         mov      EDI, EDX
+FFF8118C e8 4c 09 00 00 - - - - -      call     0xfff81add
+FFF81191 33 c9 - - - - - - - -         xor      ECX, ECX
+FFF81193 0f b6 f3 - - - - - - -        movzx    ESI, BL
+FFF81196 8b e8 - - - - - - - -         mov      EBP, EAX
+FFF81198 e8 40 04 00 00 - - - - -      call     0xfff815dd
+FFF8119D 3b d8 - - - - - - - -         cmp      EBX, EAX
+FFF8119F 72 23 - - - - - - - -         jc       0xfff811c4
+FFF811A1 e8 1c 04 00 00 - - - - -      call     0xfff815c2
+FFF811A6 3b d8 - - - - - - - -         cmp      EBX, EAX
+FFF811A8 77 1a - - - - - - - -         ja       0xfff811c4
+FFF811AA 3b 74 24 10 - - - - - -       cmp      ESI, dword ptr [ESP + 0x10]
+FFF811AE 73 14 - - - - - - - -         jnc      0xfff811c4
+FFF811B0 6b c6 1e - - - - - - -        imul     EAX, ESI, 0x1e
+FFF811B3 0f b7 44 28 1c - - - - -      movzx    EAX, word ptr [EAX + EBP*0x1 + 0x1c]
+FFF811B8 48 - - - - - - - - -          dec      EAX
+FFF811B9 c1 e8 05 - - - - - - -        shr      EAX, 0x5
+FFF811BC 3b f8 - - - - - - - -         cmp      EDI, EAX
+FFF811BE 77 04 - - - - - - - -         ja       0xfff811c4
+FFF811C0 b0 01 - - - - - - - -         mov      AL, 0x1
+FFF811C2 eb 02 - - - - - - - -         jmp      0xfff811c6
+FFF811C4 32 c0 - - - - - - - -         xor      AL, AL
+FFF811C6 5f - - - - - - - - -          pop      EDI
+FFF811C7 5e - - - - - - - - -          pop      ESI
+FFF811C8 5d - - - - - - - - -          pop      EBP
+FFF811C9 5b - - - - - - - - -          pop      EBX
+FFF811CA 59 - - - - - - - - -          pop      ECX
+FFF811CB c3 - - - - - - - - -          ret      

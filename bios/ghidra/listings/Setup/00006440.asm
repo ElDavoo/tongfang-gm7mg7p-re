@@ -4,66 +4,66 @@
 ; This is the machine code. The decompiled C for this address is 00006440.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-00006440 48 83 ec 28 sub      RSP, 0x28
-00006444 45 33 c9   xor      R9D, R9D
-00006447 4c 8b da   mov      R11, RDX
-0000644A 4c 8b d1   mov      R10, RCX
-0000644D 41 8b c1   mov      EAX, R9D
-00006450 66 44 39 09 cmp      word ptr [RCX], R9W
-00006454 0f 84 a3 00 00 00 jz       0x000064fd
-0000645A 48 8d 49 02 lea      RCX, [RCX + 0x2]
-0000645E 48 ff c0   inc      RAX
-00006461 66 44 39 09 cmp      word ptr [RCX], R9W
-00006465 75 f3      jnz      0x0000645a
-00006467 48 85 c0   test     RAX, RAX
-0000646A 0f 84 8d 00 00 00 jz       0x000064fd
-00006470 66 45 85 c0 test     R8W, R8W
-00006474 75 6c      jnz      0x000064e2
-00006476 48 8d 0d df fd 01 00 lea      RCX, [0x2625c]
-0000647D eb 0d      jmp      0x0000648c
-0000647F 66 3b 01   cmp      AX, word ptr [RCX]
-00006482 75 10      jnz      0x00006494
-00006484 48 83 c2 02 add      RDX, 0x2
-00006488 48 83 c1 02 add      RCX, 0x2
-0000648C 0f b7 02   movzx    EAX, word ptr [RDX]
-0000648F 66 85 c0   test     AX, AX
-00006492 75 eb      jnz      0x0000647f
-00006494 0f b7 09   movzx    ECX, word ptr [RCX]
-00006497 0f b7 02   movzx    EAX, word ptr [RDX]
-0000649A 3b c1      cmp      EAX, ECX
-0000649C 49 8b ca   mov      RCX, R10
-0000649F 75 44      jnz      0x000064e5
-000064A1 49 8b c1   mov      RAX, R9
-000064A4 48 8d 49 02 lea      RCX, [RCX + 0x2]
-000064A8 48 ff c0   inc      RAX
-000064AB 66 44 39 09 cmp      word ptr [RCX], R9W
-000064AF 75 f3      jnz      0x000064a4
-000064B1 48 85 c0   test     RAX, RAX
-000064B4 74 25      jz       0x000064db
-000064B6 49 8d 4a fe lea      RCX, [R10 + -0x2]
-000064BA 48 8d 0c 41 lea      RCX, [RCX + RAX*0x2]
-000064BE 66 83 39 5c cmp      word ptr [RCX], 0x5c
-000064C2 74 0a      jz       0x000064ce
-000064C4 48 83 e9 02 sub      RCX, 0x2
-000064C8 48 83 e8 01 sub      RAX, 0x1
-000064CC 75 f0      jnz      0x000064be
-000064CE 48 85 c0   test     RAX, RAX
-000064D1 74 08      jz       0x000064db
-000064D3 66 45 89 4c 42 fe mov      word ptr [R10 + RAX*0x2 + -0x2], R9W
-000064D9 eb 37      jmp      0x00006512
-000064DB 66 45 89 0c 42 mov      word ptr [R10 + RAX*0x2], R9W
-000064E0 eb 30      jmp      0x00006512
-000064E2 49 8b ca   mov      RCX, R10
-000064E5 48 8d 15 78 fd 01 00 lea      RDX, [0x26264]
-000064EC e8 f3 f9 ff ff call     0x00005ee4
-000064F1 49 8b d3   mov      RDX, R11
-000064F4 48 83 c4 28 add      RSP, 0x28
-000064F8 e9 e7 f9 ff ff jmp      0x00005ee4
-000064FD 4d 2b d3   sub      R10, R11
-00006500 41 0f b7 03 movzx    EAX, word ptr [R11]
-00006504 66 43 89 04 1a mov      word ptr [R10 + R11*0x1], AX
-00006509 4d 8d 5b 02 lea      R11, [R11 + 0x2]
-0000650D 66 85 c0   test     AX, AX
-00006510 75 ee      jnz      0x00006500
-00006512 48 83 c4 28 add      RSP, 0x28
-00006516 c3         ret      
+00006440 48 83 ec 28 - - - - - - - -         sub      RSP, 0x28
+00006444 45 33 c9 - - - - - - - - -          xor      R9D, R9D
+00006447 4c 8b da - - - - - - - - -          mov      R11, RDX
+0000644A 4c 8b d1 - - - - - - - - -          mov      R10, RCX
+0000644D 41 8b c1 - - - - - - - - -          mov      EAX, R9D
+00006450 66 44 39 09 - - - - - - - -         cmp      word ptr [RCX], R9W
+00006454 0f 84 a3 00 00 00 - - - - - -       jz       0x000064fd
+0000645A 48 8d 49 02 - - - - - - - -         lea      RCX, [RCX + 0x2]
+0000645E 48 ff c0 - - - - - - - - -          inc      RAX
+00006461 66 44 39 09 - - - - - - - -         cmp      word ptr [RCX], R9W
+00006465 75 f3 - - - - - - - - - -           jnz      0x0000645a
+00006467 48 85 c0 - - - - - - - - -          test     RAX, RAX
+0000646A 0f 84 8d 00 00 00 - - - - - -       jz       0x000064fd
+00006470 66 45 85 c0 - - - - - - - -         test     R8W, R8W
+00006474 75 6c - - - - - - - - - -           jnz      0x000064e2
+00006476 48 8d 0d df fd 01 00 - - - - -      lea      RCX, [0x2625c]
+0000647D eb 0d - - - - - - - - - -           jmp      0x0000648c
+0000647F 66 3b 01 - - - - - - - - -          cmp      AX, word ptr [RCX]
+00006482 75 10 - - - - - - - - - -           jnz      0x00006494
+00006484 48 83 c2 02 - - - - - - - -         add      RDX, 0x2
+00006488 48 83 c1 02 - - - - - - - -         add      RCX, 0x2
+0000648C 0f b7 02 - - - - - - - - -          movzx    EAX, word ptr [RDX]
+0000648F 66 85 c0 - - - - - - - - -          test     AX, AX
+00006492 75 eb - - - - - - - - - -           jnz      0x0000647f
+00006494 0f b7 09 - - - - - - - - -          movzx    ECX, word ptr [RCX]
+00006497 0f b7 02 - - - - - - - - -          movzx    EAX, word ptr [RDX]
+0000649A 3b c1 - - - - - - - - - -           cmp      EAX, ECX
+0000649C 49 8b ca - - - - - - - - -          mov      RCX, R10
+0000649F 75 44 - - - - - - - - - -           jnz      0x000064e5
+000064A1 49 8b c1 - - - - - - - - -          mov      RAX, R9
+000064A4 48 8d 49 02 - - - - - - - -         lea      RCX, [RCX + 0x2]
+000064A8 48 ff c0 - - - - - - - - -          inc      RAX
+000064AB 66 44 39 09 - - - - - - - -         cmp      word ptr [RCX], R9W
+000064AF 75 f3 - - - - - - - - - -           jnz      0x000064a4
+000064B1 48 85 c0 - - - - - - - - -          test     RAX, RAX
+000064B4 74 25 - - - - - - - - - -           jz       0x000064db
+000064B6 49 8d 4a fe - - - - - - - -         lea      RCX, [R10 + -0x2]
+000064BA 48 8d 0c 41 - - - - - - - -         lea      RCX, [RCX + RAX*0x2]
+000064BE 66 83 39 5c - - - - - - - -         cmp      word ptr [RCX], 0x5c
+000064C2 74 0a - - - - - - - - - -           jz       0x000064ce
+000064C4 48 83 e9 02 - - - - - - - -         sub      RCX, 0x2
+000064C8 48 83 e8 01 - - - - - - - -         sub      RAX, 0x1
+000064CC 75 f0 - - - - - - - - - -           jnz      0x000064be
+000064CE 48 85 c0 - - - - - - - - -          test     RAX, RAX
+000064D1 74 08 - - - - - - - - - -           jz       0x000064db
+000064D3 66 45 89 4c 42 fe - - - - - -       mov      word ptr [R10 + RAX*0x2 + -0x2], R9W
+000064D9 eb 37 - - - - - - - - - -           jmp      0x00006512
+000064DB 66 45 89 0c 42 - - - - - - -        mov      word ptr [R10 + RAX*0x2], R9W
+000064E0 eb 30 - - - - - - - - - -           jmp      0x00006512
+000064E2 49 8b ca - - - - - - - - -          mov      RCX, R10
+000064E5 48 8d 15 78 fd 01 00 - - - - -      lea      RDX, [0x26264]
+000064EC e8 f3 f9 ff ff - - - - - - -        call     0x00005ee4
+000064F1 49 8b d3 - - - - - - - - -          mov      RDX, R11
+000064F4 48 83 c4 28 - - - - - - - -         add      RSP, 0x28
+000064F8 e9 e7 f9 ff ff - - - - - - -        jmp      0x00005ee4
+000064FD 4d 2b d3 - - - - - - - - -          sub      R10, R11
+00006500 41 0f b7 03 - - - - - - - -         movzx    EAX, word ptr [R11]
+00006504 66 43 89 04 1a - - - - - - -        mov      word ptr [R10 + R11*0x1], AX
+00006509 4d 8d 5b 02 - - - - - - - -         lea      R11, [R11 + 0x2]
+0000650D 66 85 c0 - - - - - - - - -          test     AX, AX
+00006510 75 ee - - - - - - - - - -           jnz      0x00006500
+00006512 48 83 c4 28 - - - - - - - -         add      RSP, 0x28
+00006516 c3 - - - - - - - - - - -            ret      

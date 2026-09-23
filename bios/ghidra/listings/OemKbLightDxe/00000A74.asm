@@ -4,63 +4,63 @@
 ; This is the machine code. The decompiled C for this address is 00000A74.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-00000A74 48 89 5c 24 08 mov      qword ptr [RSP + 0x8], RBX
-00000A79 48 89 6c 24 10 mov      qword ptr [RSP + 0x10], RBP
-00000A7E 48 89 74 24 18 mov      qword ptr [RSP + 0x18], RSI
-00000A83 57         push     RDI
-00000A84 41 56      push     R14
-00000A86 41 57      push     R15
-00000A88 48 83 ec 20 sub      RSP, 0x20
-00000A8C 45 8a f0   mov      R14B, R8B
-00000A8F 40 8a f2   mov      SIL, DL
-00000A92 40 8a f9   mov      DIL, CL
-00000A95 e8 76 ff ff ff call     0x00000a10
-00000A9A 33 db      xor      EBX, EBX
-00000A9C 48 8b e8   mov      RBP, RAX
-00000A9F 48 85 c0   test     RAX, RAX
-00000AA2 78 7d      js       0x00000b21
-00000AA4 40 8a cf   mov      CL, DIL
-00000AA7 e8 dc fe ff ff call     0x00000988
-00000AAC 40 8a d6   mov      DL, SIL
-00000AAF 40 8a cf   mov      CL, DIL
-00000AB2 e8 59 fe ff ff call     0x00000910
-00000AB7 40 8a cf   mov      CL, DIL
-00000ABA e8 51 ff ff ff call     0x00000a10
-00000ABF 8d 73 60   lea      ESI, [RBX + 0x60]
-00000AC2 40 3a fe   cmp      DIL, SIL
-00000AC5 8d 43 64   lea      EAX, [RBX + 0x64]
-00000AC8 8d 4b 66   lea      ECX, [RBX + 0x66]
-00000ACB 0f 45 c1   cmovnz   EAX, ECX
-00000ACE 44 0f b6 f8 movzx    R15D, AL
-00000AD2 41 0f b7 d7 movzx    EDX, R15W
-00000AD6 ec         in       AL, DX
-00000AD7 a8 02      test     AL, 0x2
-00000AD9 74 28      jz       0x00000b03
-00000ADB 48 81 fb 00 00 02 00 cmp      RBX, 0x20000
-00000AE2 73 32      jnc      0x00000b16
-00000AE4 b9 0f 00 00 00 mov      ECX, 0xf
-00000AE9 e8 16 02 00 00 call     0x00000d04
-00000AEE 41 0f b7 d7 movzx    EDX, R15W
-00000AF2 ec         in       AL, DX
-00000AF3 48 ff c3   inc      RBX
-00000AF6 a8 02      test     AL, 0x2
-00000AF8 75 e1      jnz      0x00000adb
-00000AFA 48 81 fb 00 00 02 00 cmp      RBX, 0x20000
-00000B01 73 13      jnc      0x00000b16
-00000B03 b8 62 00 00 00 mov      EAX, 0x62
-00000B08 40 3a fe   cmp      DIL, SIL
-00000B0B 66 0f 45 f0 cmovnz   SI, AX
-00000B0F 41 8a c6   mov      AL, R14B
-00000B12 0f b7 d6   movzx    EDX, SI
-00000B15 ee         out      DX, AL
-00000B16 40 8a cf   mov      CL, DIL
-00000B19 e8 6a fe ff ff call     0x00000988
-00000B1E 48 8b c5   mov      RAX, RBP
-00000B21 48 8b 5c 24 40 mov      RBX, qword ptr [RSP + 0x40]
-00000B26 48 8b 6c 24 48 mov      RBP, qword ptr [RSP + 0x48]
-00000B2B 48 8b 74 24 50 mov      RSI, qword ptr [RSP + 0x50]
-00000B30 48 83 c4 20 add      RSP, 0x20
-00000B34 41 5f      pop      R15
-00000B36 41 5e      pop      R14
-00000B38 5f         pop      RDI
-00000B39 c3         ret      
+00000A74 48 89 5c 24 08 - - - - - -       mov      qword ptr [RSP + 0x8], RBX
+00000A79 48 89 6c 24 10 - - - - - -       mov      qword ptr [RSP + 0x10], RBP
+00000A7E 48 89 74 24 18 - - - - - -       mov      qword ptr [RSP + 0x18], RSI
+00000A83 57 - - - - - - - - - -           push     RDI
+00000A84 41 56 - - - - - - - - -          push     R14
+00000A86 41 57 - - - - - - - - -          push     R15
+00000A88 48 83 ec 20 - - - - - - -        sub      RSP, 0x20
+00000A8C 45 8a f0 - - - - - - - -         mov      R14B, R8B
+00000A8F 40 8a f2 - - - - - - - -         mov      SIL, DL
+00000A92 40 8a f9 - - - - - - - -         mov      DIL, CL
+00000A95 e8 76 ff ff ff - - - - - -       call     0x00000a10
+00000A9A 33 db - - - - - - - - -          xor      EBX, EBX
+00000A9C 48 8b e8 - - - - - - - -         mov      RBP, RAX
+00000A9F 48 85 c0 - - - - - - - -         test     RAX, RAX
+00000AA2 78 7d - - - - - - - - -          js       0x00000b21
+00000AA4 40 8a cf - - - - - - - -         mov      CL, DIL
+00000AA7 e8 dc fe ff ff - - - - - -       call     0x00000988
+00000AAC 40 8a d6 - - - - - - - -         mov      DL, SIL
+00000AAF 40 8a cf - - - - - - - -         mov      CL, DIL
+00000AB2 e8 59 fe ff ff - - - - - -       call     0x00000910
+00000AB7 40 8a cf - - - - - - - -         mov      CL, DIL
+00000ABA e8 51 ff ff ff - - - - - -       call     0x00000a10
+00000ABF 8d 73 60 - - - - - - - -         lea      ESI, [RBX + 0x60]
+00000AC2 40 3a fe - - - - - - - -         cmp      DIL, SIL
+00000AC5 8d 43 64 - - - - - - - -         lea      EAX, [RBX + 0x64]
+00000AC8 8d 4b 66 - - - - - - - -         lea      ECX, [RBX + 0x66]
+00000ACB 0f 45 c1 - - - - - - - -         cmovnz   EAX, ECX
+00000ACE 44 0f b6 f8 - - - - - - -        movzx    R15D, AL
+00000AD2 41 0f b7 d7 - - - - - - -        movzx    EDX, R15W
+00000AD6 ec - - - - - - - - - -           in       AL, DX
+00000AD7 a8 02 - - - - - - - - -          test     AL, 0x2
+00000AD9 74 28 - - - - - - - - -          jz       0x00000b03
+00000ADB 48 81 fb 00 00 02 00 - - - -     cmp      RBX, 0x20000
+00000AE2 73 32 - - - - - - - - -          jnc      0x00000b16
+00000AE4 b9 0f 00 00 00 - - - - - -       mov      ECX, 0xf
+00000AE9 e8 16 02 00 00 - - - - - -       call     0x00000d04
+00000AEE 41 0f b7 d7 - - - - - - -        movzx    EDX, R15W
+00000AF2 ec - - - - - - - - - -           in       AL, DX
+00000AF3 48 ff c3 - - - - - - - -         inc      RBX
+00000AF6 a8 02 - - - - - - - - -          test     AL, 0x2
+00000AF8 75 e1 - - - - - - - - -          jnz      0x00000adb
+00000AFA 48 81 fb 00 00 02 00 - - - -     cmp      RBX, 0x20000
+00000B01 73 13 - - - - - - - - -          jnc      0x00000b16
+00000B03 b8 62 00 00 00 - - - - - -       mov      EAX, 0x62
+00000B08 40 3a fe - - - - - - - -         cmp      DIL, SIL
+00000B0B 66 0f 45 f0 - - - - - - -        cmovnz   SI, AX
+00000B0F 41 8a c6 - - - - - - - -         mov      AL, R14B
+00000B12 0f b7 d6 - - - - - - - -         movzx    EDX, SI
+00000B15 ee - - - - - - - - - -           out      DX, AL
+00000B16 40 8a cf - - - - - - - -         mov      CL, DIL
+00000B19 e8 6a fe ff ff - - - - - -       call     0x00000988
+00000B1E 48 8b c5 - - - - - - - -         mov      RAX, RBP
+00000B21 48 8b 5c 24 40 - - - - - -       mov      RBX, qword ptr [RSP + 0x40]
+00000B26 48 8b 6c 24 48 - - - - - -       mov      RBP, qword ptr [RSP + 0x48]
+00000B2B 48 8b 74 24 50 - - - - - -       mov      RSI, qword ptr [RSP + 0x50]
+00000B30 48 83 c4 20 - - - - - - -        add      RSP, 0x20
+00000B34 41 5f - - - - - - - - -          pop      R15
+00000B36 41 5e - - - - - - - - -          pop      R14
+00000B38 5f - - - - - - - - - -           pop      RDI
+00000B39 c3 - - - - - - - - - -           ret      

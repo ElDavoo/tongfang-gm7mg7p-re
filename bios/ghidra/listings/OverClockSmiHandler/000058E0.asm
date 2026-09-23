@@ -4,5 +4,5 @@
 ; This is the machine code. The decompiled C for this address is 000058E0.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-000058E0 33 c0      xor      EAX, EAX
-000058E2 c3         ret      
+000058E0 33 c0 - - - - - - - -         xor      EAX, EAX
+000058E2 c3 - - - - - - - - -          ret      

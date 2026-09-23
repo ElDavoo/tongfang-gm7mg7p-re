@@ -4,10 +4,10 @@
 ; This is the machine code. The decompiled C for this address is 00000260.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-00000260 48 83 ec 28 sub      RSP, 0x28
-00000264 48 8b 42 60 mov      RAX, qword ptr [RDX + 0x60]
-00000268 48 89 05 79 0a 00 00 mov      qword ptr [0x00000ce8], RAX
-0000026F 48 89 15 6a 0a 00 00 mov      qword ptr [0x00000ce0], RDX
-00000276 e8 3d 02 00 00 call     0x000004b8
-0000027B 48 83 c4 28 add      RSP, 0x28
-0000027F c3         ret      
+00000260 48 83 ec 28 - - - - - -       sub      RSP, 0x28
+00000264 48 8b 42 60 - - - - - -       mov      RAX, qword ptr [RDX + 0x60]
+00000268 48 89 05 79 0a 00 00 - - -    mov      qword ptr [0x00000ce8], RAX
+0000026F 48 89 15 6a 0a 00 00 - - -    mov      qword ptr [0x00000ce0], RDX
+00000276 e8 3d 02 00 00 - - - - -      call     0x000004b8
+0000027B 48 83 c4 28 - - - - - -       add      RSP, 0x28
+0000027F c3 - - - - - - - - -          ret      

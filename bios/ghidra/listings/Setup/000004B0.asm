@@ -4,16 +4,16 @@
 ; This is the machine code. The decompiled C for this address is 000004B0.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-000004B0 48 89 5c 24 08 mov      qword ptr [RSP + 0x8], RBX
-000004B5 57         push     RDI
-000004B6 48 83 ec 20 sub      RSP, 0x20
-000004BA 48 8b da   mov      RBX, RDX
-000004BD 48 8b f9   mov      RDI, RCX
-000004C0 e8 17 00 00 00 call     0x000004dc
-000004C5 48 8b d3   mov      RDX, RBX
-000004C8 48 8b cf   mov      RCX, RDI
-000004CB e8 9c 07 00 00 call     0x00000c6c
-000004D0 48 8b 5c 24 30 mov      RBX, qword ptr [RSP + 0x30]
-000004D5 48 83 c4 20 add      RSP, 0x20
-000004D9 5f         pop      RDI
-000004DA c3         ret      
+000004B0 48 89 5c 24 08 - - - - - - -        mov      qword ptr [RSP + 0x8], RBX
+000004B5 57 - - - - - - - - - - -            push     RDI
+000004B6 48 83 ec 20 - - - - - - - -         sub      RSP, 0x20
+000004BA 48 8b da - - - - - - - - -          mov      RBX, RDX
+000004BD 48 8b f9 - - - - - - - - -          mov      RDI, RCX
+000004C0 e8 17 00 00 00 - - - - - - -        call     0x000004dc
+000004C5 48 8b d3 - - - - - - - - -          mov      RDX, RBX
+000004C8 48 8b cf - - - - - - - - -          mov      RCX, RDI
+000004CB e8 9c 07 00 00 - - - - - - -        call     0x00000c6c
+000004D0 48 8b 5c 24 30 - - - - - - -        mov      RBX, qword ptr [RSP + 0x30]
+000004D5 48 83 c4 20 - - - - - - - -         add      RSP, 0x20
+000004D9 5f - - - - - - - - - - -            pop      RDI
+000004DA c3 - - - - - - - - - - -            ret      

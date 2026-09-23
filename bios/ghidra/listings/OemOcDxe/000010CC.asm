@@ -4,16 +4,16 @@
 ; This is the machine code. The decompiled C for this address is 000010CC.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-000010CC 40 53      push     RBX
-000010CE 48 83 ec 20 sub      RSP, 0x20
-000010D2 48 69 d1 99 9e 36 00 imul     RDX, RCX, 0x369e99
-000010D9 48 8b d9   mov      RBX, RCX
-000010DC 48 b8 db 34 b6 d7 82 de 1b 43 mov      RAX, 0x431bde82d7b634db
-000010E6 48 f7 e2   mul      RDX
-000010E9 48 c1 ea 12 shr      RDX, 0x12
-000010ED 8b ca      mov      ECX, EDX
-000010EF e8 78 ff ff ff call     0x0000106c
-000010F4 48 8b c3   mov      RAX, RBX
-000010F7 48 83 c4 20 add      RSP, 0x20
-000010FB 5b         pop      RBX
-000010FC c3         ret      
+000010CC 40 53 - - - - - - - - -          push     RBX
+000010CE 48 83 ec 20 - - - - - - -        sub      RSP, 0x20
+000010D2 48 69 d1 99 9e 36 00 - - - -     imul     RDX, RCX, 0x369e99
+000010D9 48 8b d9 - - - - - - - -         mov      RBX, RCX
+000010DC 48 b8 db 34 b6 d7 82 de 1b 43 -  mov      RAX, 0x431bde82d7b634db
+000010E6 48 f7 e2 - - - - - - - -         mul      RDX
+000010E9 48 c1 ea 12 - - - - - - -        shr      RDX, 0x12
+000010ED 8b ca - - - - - - - - -          mov      ECX, EDX
+000010EF e8 78 ff ff ff - - - - - -       call     0x0000106c
+000010F4 48 8b c3 - - - - - - - -         mov      RAX, RBX
+000010F7 48 83 c4 20 - - - - - - -        add      RSP, 0x20
+000010FB 5b - - - - - - - - - -           pop      RBX
+000010FC c3 - - - - - - - - - -           ret      

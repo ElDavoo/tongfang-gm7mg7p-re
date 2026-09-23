@@ -4,175 +4,175 @@
 ; This is the machine code. The decompiled C for this address is 000017B4.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-000017B4 48 89 4c 24 08 mov      qword ptr [RSP + 0x8], RCX
-000017B9 55         push     RBP
-000017BA 53         push     RBX
-000017BB 56         push     RSI
-000017BC 57         push     RDI
-000017BD 41 56      push     R14
-000017BF 48 8d 6c 24 c9 lea      RBP, [RSP + -0x37]
-000017C4 48 81 ec f0 00 00 00 sub      RSP, 0xf0
-000017CB 48 83 65 7f 00 and      qword ptr [RBP + 0x7f], 0x0
-000017D0 49 8b f8   mov      RDI, R8
-000017D3 48 8b f2   mov      RSI, RDX
-000017D6 48 85 d2   test     RDX, RDX
-000017D9 75 12      jnz      0x000017ed
-000017DB 49 21 10   and      qword ptr [R8], RDX
-000017DE 48 b8 02 00 00 00 00 00 00 80 mov      RAX, -0x7ffffffffffffffe
-000017E8 e9 5e 02 00 00 jmp      0x00001a4b
-000017ED 48 8b 05 84 7c 02 00 mov      RAX, qword ptr [0x00029478]
-000017F4 4c 8d 44 24 30 lea      R8, [RSP + 0x30]
-000017F9 33 d2      xor      EDX, EDX
-000017FB 48 8d 0d fe 1e 02 00 lea      RCX, [0x23700]
-00001802 ff 90 40 01 00 00 call     qword ptr [RAX + 0x140]
-00001808 48 85 c0   test     RAX, RAX
-0000180B 0f 88 3a 02 00 00 js       0x00001a4b
-00001811 48 8b 15 40 46 02 00 mov      RDX, qword ptr [0x00025e58]
-00001818 41 be 0a 00 00 00 mov      R14D, 0xa
-0000181E 48 3b f2   cmp      RSI, RDX
-00001821 74 0d      jz       0x00001830
-00001823 45 8b c6   mov      R8D, R14D
-00001826 48 8b ce   mov      RCX, RSI
-00001829 e8 92 ea ff ff call     0x000002c0
-0000182E eb 02      jmp      0x00001832
-00001830 33 c0      xor      EAX, EAX
-00001832 48 85 c0   test     RAX, RAX
-00001835 74 05      jz       0x0000183c
-00001837 48 89 37   mov      qword ptr [RDI], RSI
-0000183A eb a2      jmp      0x000017de
-0000183C 48 8d 55 8f lea      RDX, [RBP + -0x71]
-00001840 48 8b ce   mov      RCX, RSI
-00001843 e8 d8 fa ff ff call     0x00001320
-00001848 48 85 c0   test     RAX, RAX
-0000184B 79 0f      jns      0x0000185c
-0000184D 48 b8 0e 00 00 00 00 00 00 80 mov      RAX, -0x7ffffffffffffff2
-00001857 e9 ef 01 00 00 jmp      0x00001a4b
-0000185C ba 20 00 00 00 mov      EDX, 0x20
-00001861 48 8d 5e 0a lea      RBX, [RSI + 0xa]
-00001865 48 8b cb   mov      RCX, RBX
-00001868 48 89 55 6f mov      qword ptr [RBP + 0x6f], RDX
-0000186C 4c 8d 44 24 38 lea      R8, [RSP + 0x38]
-00001871 e8 7e f7 ff ff call     0x00000ff4
-00001876 48 83 c3 40 add      RBX, 0x40
-0000187A 66 83 3b 26 cmp      word ptr [RBX], 0x26
-0000187E 74 08      jz       0x00001888
-00001880 48 89 1f   mov      qword ptr [RDI], RBX
-00001883 e9 56 ff ff ff jmp      0x000017de
-00001888 48 8b 15 b9 45 02 00 mov      RDX, qword ptr [0x00025e48]
-0000188F 48 8d 4b 02 lea      RCX, [RBX + 0x2]
-00001893 48 3b ca   cmp      RCX, RDX
-00001896 74 0a      jz       0x000018a2
-00001898 4d 8b c6   mov      R8, R14
-0000189B e8 20 ea ff ff call     0x000002c0
-000018A0 eb 02      jmp      0x000018a4
-000018A2 33 c0      xor      EAX, EAX
-000018A4 48 85 c0   test     RAX, RAX
-000018A7 75 d7      jnz      0x00001880
-000018A9 48 83 c3 0c add      RBX, 0xc
-000018AD 48 c7 45 6f 50 00 00 00 mov      qword ptr [RBP + 0x6f], 0x50
-000018B5 48 8b cb   mov      RCX, RBX
-000018B8 4c 8d 45 97 lea      R8, [RBP + -0x69]
-000018BC 48 8d 55 6f lea      RDX, [RBP + 0x6f]
-000018C0 e8 af f7 ff ff call     0x00001074
-000018C5 48 8b 45 6f mov      RAX, qword ptr [RBP + 0x6f]
-000018C9 48 8d 0c c3 lea      RCX, [RBX + RAX*0x8]
-000018CD 66 83 39 26 cmp      word ptr [RCX], 0x26
-000018D1 74 08      jz       0x000018db
-000018D3 48 89 0f   mov      qword ptr [RDI], RCX
-000018D6 e9 03 ff ff ff jmp      0x000017de
-000018DB 48 8b 45 7f mov      RAX, qword ptr [RBP + 0x7f]
-000018DF 4c 8d 4d 6f lea      R9, [RBP + 0x6f]
-000018E3 48 83 65 6f 00 and      qword ptr [RBP + 0x6f], 0x0
-000018E8 4c 8d 45 67 lea      R8, [RBP + 0x67]
-000018EC 48 89 44 24 20 mov      qword ptr [RSP + 0x20], RAX
-000018F1 48 8d 54 24 38 lea      RDX, [RSP + 0x38]
-000018F6 48 8b 05 8b 7b 02 00 mov      RAX, qword ptr [0x00029488]
-000018FD 48 8d 4d 97 lea      RCX, [RBP + -0x69]
-00001901 ff 50 48   call     qword ptr [RAX + 0x48]
-00001904 48 b9 05 00 00 00 00 00 00 80 mov      RCX, -0x7ffffffffffffffb
-0000190E 48 3b c1   cmp      RAX, RCX
-00001911 75 3b      jnz      0x0000194e
-00001913 48 8b 05 5e 7b 02 00 mov      RAX, qword ptr [0x00029478]
-0000191A 4c 8d 45 7f lea      R8, [RBP + 0x7f]
-0000191E 48 8b 55 6f mov      RDX, qword ptr [RBP + 0x6f]
-00001922 b9 04 00 00 00 mov      ECX, 0x4
-00001927 ff 50 40   call     qword ptr [RAX + 0x40]
-0000192A 48 8b 45 7f mov      RAX, qword ptr [RBP + 0x7f]
-0000192E 4c 8d 4d 6f lea      R9, [RBP + 0x6f]
-00001932 48 89 44 24 20 mov      qword ptr [RSP + 0x20], RAX
-00001937 4c 8d 45 67 lea      R8, [RBP + 0x67]
-0000193B 48 8b 05 46 7b 02 00 mov      RAX, qword ptr [0x00029488]
-00001942 48 8d 54 24 38 lea      RDX, [RSP + 0x38]
-00001947 48 8d 4d 97 lea      RCX, [RBP + -0x69]
-0000194B ff 50 48   call     qword ptr [RAX + 0x48]
-0000194E 48 85 c0   test     RAX, RAX
-00001951 79 2a      jns      0x0000197d
-00001953 48 8b 4d 7f mov      RCX, qword ptr [RBP + 0x7f]
-00001957 48 85 c9   test     RCX, RCX
-0000195A 74 0a      jz       0x00001966
-0000195C 48 8b 05 15 7b 02 00 mov      RAX, qword ptr [0x00029478]
-00001963 ff 50 48   call     qword ptr [RAX + 0x48]
-00001966 45 33 c0   xor      R8D, R8D
-00001969 c7 45 67 07 00 00 00 mov      dword ptr [RBP + 0x67], 0x7
-00001970 45 33 f6   xor      R14D, R14D
-00001973 4c 89 45 7f mov      qword ptr [RBP + 0x7f], R8
-00001977 4c 89 75 6f mov      qword ptr [RBP + 0x6f], R14
-0000197B eb 08      jmp      0x00001985
-0000197D 4c 8b 45 7f mov      R8, qword ptr [RBP + 0x7f]
-00001981 4c 8b 75 6f mov      R14, qword ptr [RBP + 0x6f]
-00001985 48 8b 44 24 30 mov      RAX, qword ptr [RSP + 0x30]
-0000198A 4c 8d 4d 6f lea      R9, [RBP + 0x6f]
-0000198E 48 8b d6   mov      RDX, RSI
-00001991 48 89 7c 24 20 mov      qword ptr [RSP + 0x20], RDI
-00001996 48 8b c8   mov      RCX, RAX
-00001999 ff 50 20   call     qword ptr [RAX + 0x20]
-0000199C 48 bb 02 00 00 00 00 00 00 80 mov      RBX, -0x7ffffffffffffffe
-000019A6 48 8b 4d 7f mov      RCX, qword ptr [RBP + 0x7f]
-000019AA 48 ba 07 00 00 00 00 00 00 80 mov      RDX, -0x7ffffffffffffff9
-000019B4 48 3b c2   cmp      RAX, RDX
-000019B7 74 0e      jz       0x000019c7
-000019B9 48 3b c3   cmp      RAX, RBX
-000019BC 75 55      jnz      0x00001a13
-000019BE 48 85 c9   test     RCX, RCX
-000019C1 0f 85 84 00 00 00 jnz      0x00001a4b
-000019C7 48 85 c9   test     RCX, RCX
-000019CA 74 0a      jz       0x000019d6
-000019CC 48 8b 05 a5 7a 02 00 mov      RAX, qword ptr [0x00029478]
-000019D3 ff 50 48   call     qword ptr [RAX + 0x48]
-000019D6 48 8b 05 9b 7a 02 00 mov      RAX, qword ptr [0x00029478]
-000019DD 4c 8d 45 7f lea      R8, [RBP + 0x7f]
-000019E1 48 8b 55 6f mov      RDX, qword ptr [RBP + 0x6f]
-000019E5 b9 04 00 00 00 mov      ECX, 0x4
-000019EA ff 50 40   call     qword ptr [RAX + 0x40]
-000019ED 48 85 c0   test     RAX, RAX
-000019F0 78 59      js       0x00001a4b
-000019F2 48 8b 44 24 30 mov      RAX, qword ptr [RSP + 0x30]
-000019F7 4c 8d 4d 6f lea      R9, [RBP + 0x6f]
-000019FB 4c 8b 45 7f mov      R8, qword ptr [RBP + 0x7f]
-000019FF 48 8b d6   mov      RDX, RSI
-00001A02 4c 8b 75 6f mov      R14, qword ptr [RBP + 0x6f]
-00001A06 48 8b c8   mov      RCX, RAX
-00001A09 48 89 7c 24 20 mov      qword ptr [RSP + 0x20], RDI
-00001A0E ff 50 20   call     qword ptr [RAX + 0x20]
-00001A11 eb 93      jmp      0x000019a6
-00001A13 48 85 c0   test     RAX, RAX
-00001A16 78 33      js       0x00001a4b
-00001A18 48 8b 45 7f mov      RAX, qword ptr [RBP + 0x7f]
-00001A1C 48 8d 54 24 38 lea      RDX, [RSP + 0x38]
-00001A21 44 8b 45 67 mov      R8D, dword ptr [RBP + 0x67]
-00001A25 48 8d 4d 97 lea      RCX, [RBP + -0x69]
-00001A29 48 89 44 24 20 mov      qword ptr [RSP + 0x20], RAX
-00001A2E 4d 8b ce   mov      R9, R14
-00001A31 48 8b 05 50 7a 02 00 mov      RAX, qword ptr [0x00029488]
-00001A38 ff 50 58   call     qword ptr [RAX + 0x58]
-00001A3B 48 8b 05 36 7a 02 00 mov      RAX, qword ptr [0x00029478]
-00001A42 48 8b 4d 7f mov      RCX, qword ptr [RBP + 0x7f]
-00001A46 ff 50 48   call     qword ptr [RAX + 0x48]
-00001A49 33 c0      xor      EAX, EAX
-00001A4B 48 81 c4 f0 00 00 00 add      RSP, 0xf0
-00001A52 41 5e      pop      R14
-00001A54 5f         pop      RDI
-00001A55 5e         pop      RSI
-00001A56 5b         pop      RBX
-00001A57 5d         pop      RBP
-00001A58 c3         ret      
+000017B4 48 89 4c 24 08 - - - - - - -        mov      qword ptr [RSP + 0x8], RCX
+000017B9 55 - - - - - - - - - - -            push     RBP
+000017BA 53 - - - - - - - - - - -            push     RBX
+000017BB 56 - - - - - - - - - - -            push     RSI
+000017BC 57 - - - - - - - - - - -            push     RDI
+000017BD 41 56 - - - - - - - - - -           push     R14
+000017BF 48 8d 6c 24 c9 - - - - - - -        lea      RBP, [RSP + -0x37]
+000017C4 48 81 ec f0 00 00 00 - - - - -      sub      RSP, 0xf0
+000017CB 48 83 65 7f 00 - - - - - - -        and      qword ptr [RBP + 0x7f], 0x0
+000017D0 49 8b f8 - - - - - - - - -          mov      RDI, R8
+000017D3 48 8b f2 - - - - - - - - -          mov      RSI, RDX
+000017D6 48 85 d2 - - - - - - - - -          test     RDX, RDX
+000017D9 75 12 - - - - - - - - - -           jnz      0x000017ed
+000017DB 49 21 10 - - - - - - - - -          and      qword ptr [R8], RDX
+000017DE 48 b8 02 00 00 00 00 00 00 80 - -   mov      RAX, -0x7ffffffffffffffe
+000017E8 e9 5e 02 00 00 - - - - - - -        jmp      0x00001a4b
+000017ED 48 8b 05 84 7c 02 00 - - - - -      mov      RAX, qword ptr [0x00029478]
+000017F4 4c 8d 44 24 30 - - - - - - -        lea      R8, [RSP + 0x30]
+000017F9 33 d2 - - - - - - - - - -           xor      EDX, EDX
+000017FB 48 8d 0d fe 1e 02 00 - - - - -      lea      RCX, [0x23700]
+00001802 ff 90 40 01 00 00 - - - - - -       call     qword ptr [RAX + 0x140]
+00001808 48 85 c0 - - - - - - - - -          test     RAX, RAX
+0000180B 0f 88 3a 02 00 00 - - - - - -       js       0x00001a4b
+00001811 48 8b 15 40 46 02 00 - - - - -      mov      RDX, qword ptr [0x00025e58]
+00001818 41 be 0a 00 00 00 - - - - - -       mov      R14D, 0xa
+0000181E 48 3b f2 - - - - - - - - -          cmp      RSI, RDX
+00001821 74 0d - - - - - - - - - -           jz       0x00001830
+00001823 45 8b c6 - - - - - - - - -          mov      R8D, R14D
+00001826 48 8b ce - - - - - - - - -          mov      RCX, RSI
+00001829 e8 92 ea ff ff - - - - - - -        call     0x000002c0
+0000182E eb 02 - - - - - - - - - -           jmp      0x00001832
+00001830 33 c0 - - - - - - - - - -           xor      EAX, EAX
+00001832 48 85 c0 - - - - - - - - -          test     RAX, RAX
+00001835 74 05 - - - - - - - - - -           jz       0x0000183c
+00001837 48 89 37 - - - - - - - - -          mov      qword ptr [RDI], RSI
+0000183A eb a2 - - - - - - - - - -           jmp      0x000017de
+0000183C 48 8d 55 8f - - - - - - - -         lea      RDX, [RBP + -0x71]
+00001840 48 8b ce - - - - - - - - -          mov      RCX, RSI
+00001843 e8 d8 fa ff ff - - - - - - -        call     0x00001320
+00001848 48 85 c0 - - - - - - - - -          test     RAX, RAX
+0000184B 79 0f - - - - - - - - - -           jns      0x0000185c
+0000184D 48 b8 0e 00 00 00 00 00 00 80 - -   mov      RAX, -0x7ffffffffffffff2
+00001857 e9 ef 01 00 00 - - - - - - -        jmp      0x00001a4b
+0000185C ba 20 00 00 00 - - - - - - -        mov      EDX, 0x20
+00001861 48 8d 5e 0a - - - - - - - -         lea      RBX, [RSI + 0xa]
+00001865 48 8b cb - - - - - - - - -          mov      RCX, RBX
+00001868 48 89 55 6f - - - - - - - -         mov      qword ptr [RBP + 0x6f], RDX
+0000186C 4c 8d 44 24 38 - - - - - - -        lea      R8, [RSP + 0x38]
+00001871 e8 7e f7 ff ff - - - - - - -        call     0x00000ff4
+00001876 48 83 c3 40 - - - - - - - -         add      RBX, 0x40
+0000187A 66 83 3b 26 - - - - - - - -         cmp      word ptr [RBX], 0x26
+0000187E 74 08 - - - - - - - - - -           jz       0x00001888
+00001880 48 89 1f - - - - - - - - -          mov      qword ptr [RDI], RBX
+00001883 e9 56 ff ff ff - - - - - - -        jmp      0x000017de
+00001888 48 8b 15 b9 45 02 00 - - - - -      mov      RDX, qword ptr [0x00025e48]
+0000188F 48 8d 4b 02 - - - - - - - -         lea      RCX, [RBX + 0x2]
+00001893 48 3b ca - - - - - - - - -          cmp      RCX, RDX
+00001896 74 0a - - - - - - - - - -           jz       0x000018a2
+00001898 4d 8b c6 - - - - - - - - -          mov      R8, R14
+0000189B e8 20 ea ff ff - - - - - - -        call     0x000002c0
+000018A0 eb 02 - - - - - - - - - -           jmp      0x000018a4
+000018A2 33 c0 - - - - - - - - - -           xor      EAX, EAX
+000018A4 48 85 c0 - - - - - - - - -          test     RAX, RAX
+000018A7 75 d7 - - - - - - - - - -           jnz      0x00001880
+000018A9 48 83 c3 0c - - - - - - - -         add      RBX, 0xc
+000018AD 48 c7 45 6f 50 00 00 00 - - - -     mov      qword ptr [RBP + 0x6f], 0x50
+000018B5 48 8b cb - - - - - - - - -          mov      RCX, RBX
+000018B8 4c 8d 45 97 - - - - - - - -         lea      R8, [RBP + -0x69]
+000018BC 48 8d 55 6f - - - - - - - -         lea      RDX, [RBP + 0x6f]
+000018C0 e8 af f7 ff ff - - - - - - -        call     0x00001074
+000018C5 48 8b 45 6f - - - - - - - -         mov      RAX, qword ptr [RBP + 0x6f]
+000018C9 48 8d 0c c3 - - - - - - - -         lea      RCX, [RBX + RAX*0x8]
+000018CD 66 83 39 26 - - - - - - - -         cmp      word ptr [RCX], 0x26
+000018D1 74 08 - - - - - - - - - -           jz       0x000018db
+000018D3 48 89 0f - - - - - - - - -          mov      qword ptr [RDI], RCX
+000018D6 e9 03 ff ff ff - - - - - - -        jmp      0x000017de
+000018DB 48 8b 45 7f - - - - - - - -         mov      RAX, qword ptr [RBP + 0x7f]
+000018DF 4c 8d 4d 6f - - - - - - - -         lea      R9, [RBP + 0x6f]
+000018E3 48 83 65 6f 00 - - - - - - -        and      qword ptr [RBP + 0x6f], 0x0
+000018E8 4c 8d 45 67 - - - - - - - -         lea      R8, [RBP + 0x67]
+000018EC 48 89 44 24 20 - - - - - - -        mov      qword ptr [RSP + 0x20], RAX
+000018F1 48 8d 54 24 38 - - - - - - -        lea      RDX, [RSP + 0x38]
+000018F6 48 8b 05 8b 7b 02 00 - - - - -      mov      RAX, qword ptr [0x00029488]
+000018FD 48 8d 4d 97 - - - - - - - -         lea      RCX, [RBP + -0x69]
+00001901 ff 50 48 - - - - - - - - -          call     qword ptr [RAX + 0x48]
+00001904 48 b9 05 00 00 00 00 00 00 80 - -   mov      RCX, -0x7ffffffffffffffb
+0000190E 48 3b c1 - - - - - - - - -          cmp      RAX, RCX
+00001911 75 3b - - - - - - - - - -           jnz      0x0000194e
+00001913 48 8b 05 5e 7b 02 00 - - - - -      mov      RAX, qword ptr [0x00029478]
+0000191A 4c 8d 45 7f - - - - - - - -         lea      R8, [RBP + 0x7f]
+0000191E 48 8b 55 6f - - - - - - - -         mov      RDX, qword ptr [RBP + 0x6f]
+00001922 b9 04 00 00 00 - - - - - - -        mov      ECX, 0x4
+00001927 ff 50 40 - - - - - - - - -          call     qword ptr [RAX + 0x40]
+0000192A 48 8b 45 7f - - - - - - - -         mov      RAX, qword ptr [RBP + 0x7f]
+0000192E 4c 8d 4d 6f - - - - - - - -         lea      R9, [RBP + 0x6f]
+00001932 48 89 44 24 20 - - - - - - -        mov      qword ptr [RSP + 0x20], RAX
+00001937 4c 8d 45 67 - - - - - - - -         lea      R8, [RBP + 0x67]
+0000193B 48 8b 05 46 7b 02 00 - - - - -      mov      RAX, qword ptr [0x00029488]
+00001942 48 8d 54 24 38 - - - - - - -        lea      RDX, [RSP + 0x38]
+00001947 48 8d 4d 97 - - - - - - - -         lea      RCX, [RBP + -0x69]
+0000194B ff 50 48 - - - - - - - - -          call     qword ptr [RAX + 0x48]
+0000194E 48 85 c0 - - - - - - - - -          test     RAX, RAX
+00001951 79 2a - - - - - - - - - -           jns      0x0000197d
+00001953 48 8b 4d 7f - - - - - - - -         mov      RCX, qword ptr [RBP + 0x7f]
+00001957 48 85 c9 - - - - - - - - -          test     RCX, RCX
+0000195A 74 0a - - - - - - - - - -           jz       0x00001966
+0000195C 48 8b 05 15 7b 02 00 - - - - -      mov      RAX, qword ptr [0x00029478]
+00001963 ff 50 48 - - - - - - - - -          call     qword ptr [RAX + 0x48]
+00001966 45 33 c0 - - - - - - - - -          xor      R8D, R8D
+00001969 c7 45 67 07 00 00 00 - - - - -      mov      dword ptr [RBP + 0x67], 0x7
+00001970 45 33 f6 - - - - - - - - -          xor      R14D, R14D
+00001973 4c 89 45 7f - - - - - - - -         mov      qword ptr [RBP + 0x7f], R8
+00001977 4c 89 75 6f - - - - - - - -         mov      qword ptr [RBP + 0x6f], R14
+0000197B eb 08 - - - - - - - - - -           jmp      0x00001985
+0000197D 4c 8b 45 7f - - - - - - - -         mov      R8, qword ptr [RBP + 0x7f]
+00001981 4c 8b 75 6f - - - - - - - -         mov      R14, qword ptr [RBP + 0x6f]
+00001985 48 8b 44 24 30 - - - - - - -        mov      RAX, qword ptr [RSP + 0x30]
+0000198A 4c 8d 4d 6f - - - - - - - -         lea      R9, [RBP + 0x6f]
+0000198E 48 8b d6 - - - - - - - - -          mov      RDX, RSI
+00001991 48 89 7c 24 20 - - - - - - -        mov      qword ptr [RSP + 0x20], RDI
+00001996 48 8b c8 - - - - - - - - -          mov      RCX, RAX
+00001999 ff 50 20 - - - - - - - - -          call     qword ptr [RAX + 0x20]
+0000199C 48 bb 02 00 00 00 00 00 00 80 - -   mov      RBX, -0x7ffffffffffffffe
+000019A6 48 8b 4d 7f - - - - - - - -         mov      RCX, qword ptr [RBP + 0x7f]
+000019AA 48 ba 07 00 00 00 00 00 00 80 - -   mov      RDX, -0x7ffffffffffffff9
+000019B4 48 3b c2 - - - - - - - - -          cmp      RAX, RDX
+000019B7 74 0e - - - - - - - - - -           jz       0x000019c7
+000019B9 48 3b c3 - - - - - - - - -          cmp      RAX, RBX
+000019BC 75 55 - - - - - - - - - -           jnz      0x00001a13
+000019BE 48 85 c9 - - - - - - - - -          test     RCX, RCX
+000019C1 0f 85 84 00 00 00 - - - - - -       jnz      0x00001a4b
+000019C7 48 85 c9 - - - - - - - - -          test     RCX, RCX
+000019CA 74 0a - - - - - - - - - -           jz       0x000019d6
+000019CC 48 8b 05 a5 7a 02 00 - - - - -      mov      RAX, qword ptr [0x00029478]
+000019D3 ff 50 48 - - - - - - - - -          call     qword ptr [RAX + 0x48]
+000019D6 48 8b 05 9b 7a 02 00 - - - - -      mov      RAX, qword ptr [0x00029478]
+000019DD 4c 8d 45 7f - - - - - - - -         lea      R8, [RBP + 0x7f]
+000019E1 48 8b 55 6f - - - - - - - -         mov      RDX, qword ptr [RBP + 0x6f]
+000019E5 b9 04 00 00 00 - - - - - - -        mov      ECX, 0x4
+000019EA ff 50 40 - - - - - - - - -          call     qword ptr [RAX + 0x40]
+000019ED 48 85 c0 - - - - - - - - -          test     RAX, RAX
+000019F0 78 59 - - - - - - - - - -           js       0x00001a4b
+000019F2 48 8b 44 24 30 - - - - - - -        mov      RAX, qword ptr [RSP + 0x30]
+000019F7 4c 8d 4d 6f - - - - - - - -         lea      R9, [RBP + 0x6f]
+000019FB 4c 8b 45 7f - - - - - - - -         mov      R8, qword ptr [RBP + 0x7f]
+000019FF 48 8b d6 - - - - - - - - -          mov      RDX, RSI
+00001A02 4c 8b 75 6f - - - - - - - -         mov      R14, qword ptr [RBP + 0x6f]
+00001A06 48 8b c8 - - - - - - - - -          mov      RCX, RAX
+00001A09 48 89 7c 24 20 - - - - - - -        mov      qword ptr [RSP + 0x20], RDI
+00001A0E ff 50 20 - - - - - - - - -          call     qword ptr [RAX + 0x20]
+00001A11 eb 93 - - - - - - - - - -           jmp      0x000019a6
+00001A13 48 85 c0 - - - - - - - - -          test     RAX, RAX
+00001A16 78 33 - - - - - - - - - -           js       0x00001a4b
+00001A18 48 8b 45 7f - - - - - - - -         mov      RAX, qword ptr [RBP + 0x7f]
+00001A1C 48 8d 54 24 38 - - - - - - -        lea      RDX, [RSP + 0x38]
+00001A21 44 8b 45 67 - - - - - - - -         mov      R8D, dword ptr [RBP + 0x67]
+00001A25 48 8d 4d 97 - - - - - - - -         lea      RCX, [RBP + -0x69]
+00001A29 48 89 44 24 20 - - - - - - -        mov      qword ptr [RSP + 0x20], RAX
+00001A2E 4d 8b ce - - - - - - - - -          mov      R9, R14
+00001A31 48 8b 05 50 7a 02 00 - - - - -      mov      RAX, qword ptr [0x00029488]
+00001A38 ff 50 58 - - - - - - - - -          call     qword ptr [RAX + 0x58]
+00001A3B 48 8b 05 36 7a 02 00 - - - - -      mov      RAX, qword ptr [0x00029478]
+00001A42 48 8b 4d 7f - - - - - - - -         mov      RCX, qword ptr [RBP + 0x7f]
+00001A46 ff 50 48 - - - - - - - - -          call     qword ptr [RAX + 0x48]
+00001A49 33 c0 - - - - - - - - - -           xor      EAX, EAX
+00001A4B 48 81 c4 f0 00 00 00 - - - - -      add      RSP, 0xf0
+00001A52 41 5e - - - - - - - - - -           pop      R14
+00001A54 5f - - - - - - - - - - -            pop      RDI
+00001A55 5e - - - - - - - - - - -            pop      RSI
+00001A56 5b - - - - - - - - - - -            pop      RBX
+00001A57 5d - - - - - - - - - - -            pop      RBP
+00001A58 c3 - - - - - - - - - - -            ret      

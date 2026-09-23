@@ -4,126 +4,126 @@
 ; This is the machine code. The decompiled C for this address is 00017494.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-00017494 48 89 5c 24 08 mov      qword ptr [RSP + 0x8], RBX
-00017499 48 89 74 24 10 mov      qword ptr [RSP + 0x10], RSI
-0001749E 55         push     RBP
-0001749F 57         push     RDI
-000174A0 41 55      push     R13
-000174A2 41 56      push     R14
-000174A4 41 57      push     R15
-000174A6 48 8d 6c 24 c9 lea      RBP, [RSP + -0x37]
-000174AB 48 81 ec 90 00 00 00 sub      RSP, 0x90
-000174B2 45 33 c0   xor      R8D, R8D
-000174B5 48 8d 45 0f lea      RAX, [RBP + 0xf]
-000174B9 48 89 44 24 20 mov      qword ptr [RSP + 0x20], RAX
-000174BE 4c 8d 4d 7f lea      R9, [RBP + 0x7f]
-000174C2 48 8b 05 cf 1f 01 00 mov      RAX, qword ptr [0x00029498]
-000174C9 48 8d 15 d0 c1 00 00 lea      RDX, [0x236a0]
-000174D0 4c 8b f9   mov      R15, RCX
-000174D3 45 8d 68 02 lea      R13D, [R8 + 0x2]
-000174D7 41 8b cd   mov      ECX, R13D
-000174DA ff 90 38 01 00 00 call     qword ptr [RAX + 0x138]
-000174E0 48 85 c0   test     RAX, RAX
-000174E3 0f 88 5a 01 00 00 js       0x00017643
-000174E9 33 ff      xor      EDI, EDI
-000174EB 48 39 7d 7f cmp      qword ptr [RBP + 0x7f], RDI
-000174EF 0f 86 4e 01 00 00 jbe      0x00017643
-000174F5 48 8b 4d 0f mov      RCX, qword ptr [RBP + 0xf]
-000174F9 4c 8d 45 77 lea      R8, [RBP + 0x77]
-000174FD 48 83 65 17 00 and      qword ptr [RBP + 0x17], 0x0
-00017502 48 8d 15 97 c1 00 00 lea      RDX, [0x236a0]
-00017509 48 83 65 f7 00 and      qword ptr [RBP + -0x9], 0x0
-0001750E bb 04 00 00 00 mov      EBX, 0x4
-00017513 48 83 65 ff 00 and      qword ptr [RBP + -0x1], 0x0
-00017518 48 83 65 07 00 and      qword ptr [RBP + 0x7], 0x0
-0001751D 48 8b 05 74 1f 01 00 mov      RAX, qword ptr [0x00029498]
-00017524 48 8b 0c f9 mov      RCX, qword ptr [RCX + RDI*0x8]
-00017528 ff 90 98 00 00 00 call     qword ptr [RAX + 0x98]
-0001752E 48 8d 45 1f lea      RAX, [RBP + 0x1f]
-00017532 44 8b cb   mov      R9D, EBX
-00017535 48 89 44 24 20 mov      qword ptr [RSP + 0x20], RAX
-0001753A 45 33 c0   xor      R8D, R8D
-0001753D 48 8b 45 77 mov      RAX, qword ptr [RBP + 0x77]
-00017541 41 8b d5   mov      EDX, R13D
-00017544 48 8b c8   mov      RCX, RAX
-00017547 ff 50 30   call     qword ptr [RAX + 0x30]
-0001754A 0f b7 75 1f movzx    ESI, word ptr [RBP + 0x1f]
-0001754E 48 8d 45 07 lea      RAX, [RBP + 0x7]
-00017552 8a 5d 2a   mov      BL, byte ptr [RBP + 0x2a]
-00017555 4c 8d 4d ff lea      R9, [RBP + -0x1]
-00017559 44 8a 75 29 mov      R14B, byte ptr [RBP + 0x29]
-0001755D 4c 8d 45 f7 lea      R8, [RBP + -0x9]
-00017561 48 89 44 24 20 mov      qword ptr [RSP + 0x20], RAX
-00017566 48 8d 55 17 lea      RDX, [RBP + 0x17]
-0001756A 48 8b 45 77 mov      RAX, qword ptr [RBP + 0x77]
-0001756E 48 8b c8   mov      RCX, RAX
-00017571 ff 50 70   call     qword ptr [RAX + 0x70]
-00017574 41 3a dd   cmp      BL, R13B
-00017577 75 05      jnz      0x0001757e
-00017579 45 84 f6   test     R14B, R14B
-0001757C 74 12      jz       0x00017590
-0001757E 48 ff c7   inc      RDI
-00017581 48 3b 7d 7f cmp      RDI, qword ptr [RBP + 0x7f]
-00017585 0f 83 b8 00 00 00 jnc      0x00017643
-0001758B e9 65 ff ff ff jmp      0x000174f5
-00017590 b8 ec 10 00 00 mov      EAX, 0x10ec
-00017595 66 3b f0   cmp      SI, AX
-00017598 0f 85 a5 00 00 00 jnz      0x00017643
-0001759E 48 8b 45 ff mov      RAX, qword ptr [RBP + -0x1]
-000175A2 0f b6 4d f7 movzx    ECX, byte ptr [RBP + -0x9]
-000175A6 83 e0 1f   and      EAX, 0x1f
-000175A9 48 c1 e1 05 shl      RCX, 0x5
-000175AD 48 0b c8   or       RCX, RAX
-000175B0 48 8b 45 07 mov      RAX, qword ptr [RBP + 0x7]
-000175B4 83 e0 07   and      EAX, 0x7
-000175B7 48 c1 e1 03 shl      RCX, 0x3
-000175BB 48 0b c8   or       RCX, RAX
-000175BE b8 00 00 00 e0 mov      EAX, 0xe0000000
-000175C3 48 c1 e1 0c shl      RCX, 0xc
-000175C7 48 83 c9 10 or       RCX, 0x10
-000175CB 0f b7 1c 01 movzx    EBX, word ptr [RCX + RAX*0x1]
-000175CF b8 fe ff 00 00 mov      EAX, 0xfffe
-000175D4 66 23 d8   and      BX, AX
-000175D7 8d 53 05   lea      EDX, [RBX + 0x5]
-000175DA ec         in       AL, DX
-000175DB 0f b6 c8   movzx    ECX, AL
-000175DE ba 04 00 00 00 mov      EDX, 0x4
-000175E3 03 d3      add      EDX, EBX
-000175E5 ec         in       AL, DX
-000175E6 44 0f b6 d8 movzx    R11D, AL
-000175EA 8d 53 03   lea      EDX, [RBX + 0x3]
-000175ED ec         in       AL, DX
-000175EE 44 0f b6 c0 movzx    R8D, AL
-000175F2 42 8d 14 2b lea      EDX, [RBX + R13*0x1]
-000175F6 ec         in       AL, DX
-000175F7 44 0f b6 d0 movzx    R10D, AL
-000175FB ba 01 00 00 00 mov      EDX, 0x1
-00017600 03 d3      add      EDX, EBX
-00017602 ec         in       AL, DX
-00017603 44 0f b6 c8 movzx    R9D, AL
-00017607 0f b7 d3   movzx    EDX, BX
-0001760A ec         in       AL, DX
-0001760B 89 4c 24 40 mov      dword ptr [RSP + 0x40], ECX
-0001760F 41 8b d3   mov      EDX, R11D
-00017612 89 54 24 38 mov      dword ptr [RSP + 0x38], EDX
-00017616 45 8b d9   mov      R11D, R9D
-00017619 44 89 44 24 30 mov      dword ptr [RSP + 0x30], R8D
-0001761E 49 8b cf   mov      RCX, R15
-00017621 44 0f b6 c8 movzx    R9D, AL
-00017625 4c 8d 05 84 03 01 00 lea      R8, [0x279b0]
-0001762C b8 cd 1a 00 00 mov      EAX, 0x1acd
-00017631 44 89 54 24 28 mov      dword ptr [RSP + 0x28], R10D
-00017636 0f b7 d0   movzx    EDX, AX
-00017639 44 89 5c 24 20 mov      dword ptr [RSP + 0x20], R11D
-0001763E e8 3d 90 fe ff call     0x00000680
-00017643 4c 8d 9c 24 90 00 00 00 lea      R11, [RSP + 0x90]
-0001764B 33 c0      xor      EAX, EAX
-0001764D 49 8b 5b 30 mov      RBX, qword ptr [R11 + 0x30]
-00017651 49 8b 73 38 mov      RSI, qword ptr [R11 + 0x38]
-00017655 49 8b e3   mov      RSP, R11
-00017658 41 5f      pop      R15
-0001765A 41 5e      pop      R14
-0001765C 41 5d      pop      R13
-0001765E 5f         pop      RDI
-0001765F 5d         pop      RBP
-00017660 c3         ret      
+00017494 48 89 5c 24 08 - - - - - - -        mov      qword ptr [RSP + 0x8], RBX
+00017499 48 89 74 24 10 - - - - - - -        mov      qword ptr [RSP + 0x10], RSI
+0001749E 55 - - - - - - - - - - -            push     RBP
+0001749F 57 - - - - - - - - - - -            push     RDI
+000174A0 41 55 - - - - - - - - - -           push     R13
+000174A2 41 56 - - - - - - - - - -           push     R14
+000174A4 41 57 - - - - - - - - - -           push     R15
+000174A6 48 8d 6c 24 c9 - - - - - - -        lea      RBP, [RSP + -0x37]
+000174AB 48 81 ec 90 00 00 00 - - - - -      sub      RSP, 0x90
+000174B2 45 33 c0 - - - - - - - - -          xor      R8D, R8D
+000174B5 48 8d 45 0f - - - - - - - -         lea      RAX, [RBP + 0xf]
+000174B9 48 89 44 24 20 - - - - - - -        mov      qword ptr [RSP + 0x20], RAX
+000174BE 4c 8d 4d 7f - - - - - - - -         lea      R9, [RBP + 0x7f]
+000174C2 48 8b 05 cf 1f 01 00 - - - - -      mov      RAX, qword ptr [0x00029498]
+000174C9 48 8d 15 d0 c1 00 00 - - - - -      lea      RDX, [0x236a0]
+000174D0 4c 8b f9 - - - - - - - - -          mov      R15, RCX
+000174D3 45 8d 68 02 - - - - - - - -         lea      R13D, [R8 + 0x2]
+000174D7 41 8b cd - - - - - - - - -          mov      ECX, R13D
+000174DA ff 90 38 01 00 00 - - - - - -       call     qword ptr [RAX + 0x138]
+000174E0 48 85 c0 - - - - - - - - -          test     RAX, RAX
+000174E3 0f 88 5a 01 00 00 - - - - - -       js       0x00017643
+000174E9 33 ff - - - - - - - - - -           xor      EDI, EDI
+000174EB 48 39 7d 7f - - - - - - - -         cmp      qword ptr [RBP + 0x7f], RDI
+000174EF 0f 86 4e 01 00 00 - - - - - -       jbe      0x00017643
+000174F5 48 8b 4d 0f - - - - - - - -         mov      RCX, qword ptr [RBP + 0xf]
+000174F9 4c 8d 45 77 - - - - - - - -         lea      R8, [RBP + 0x77]
+000174FD 48 83 65 17 00 - - - - - - -        and      qword ptr [RBP + 0x17], 0x0
+00017502 48 8d 15 97 c1 00 00 - - - - -      lea      RDX, [0x236a0]
+00017509 48 83 65 f7 00 - - - - - - -        and      qword ptr [RBP + -0x9], 0x0
+0001750E bb 04 00 00 00 - - - - - - -        mov      EBX, 0x4
+00017513 48 83 65 ff 00 - - - - - - -        and      qword ptr [RBP + -0x1], 0x0
+00017518 48 83 65 07 00 - - - - - - -        and      qword ptr [RBP + 0x7], 0x0
+0001751D 48 8b 05 74 1f 01 00 - - - - -      mov      RAX, qword ptr [0x00029498]
+00017524 48 8b 0c f9 - - - - - - - -         mov      RCX, qword ptr [RCX + RDI*0x8]
+00017528 ff 90 98 00 00 00 - - - - - -       call     qword ptr [RAX + 0x98]
+0001752E 48 8d 45 1f - - - - - - - -         lea      RAX, [RBP + 0x1f]
+00017532 44 8b cb - - - - - - - - -          mov      R9D, EBX
+00017535 48 89 44 24 20 - - - - - - -        mov      qword ptr [RSP + 0x20], RAX
+0001753A 45 33 c0 - - - - - - - - -          xor      R8D, R8D
+0001753D 48 8b 45 77 - - - - - - - -         mov      RAX, qword ptr [RBP + 0x77]
+00017541 41 8b d5 - - - - - - - - -          mov      EDX, R13D
+00017544 48 8b c8 - - - - - - - - -          mov      RCX, RAX
+00017547 ff 50 30 - - - - - - - - -          call     qword ptr [RAX + 0x30]
+0001754A 0f b7 75 1f - - - - - - - -         movzx    ESI, word ptr [RBP + 0x1f]
+0001754E 48 8d 45 07 - - - - - - - -         lea      RAX, [RBP + 0x7]
+00017552 8a 5d 2a - - - - - - - - -          mov      BL, byte ptr [RBP + 0x2a]
+00017555 4c 8d 4d ff - - - - - - - -         lea      R9, [RBP + -0x1]
+00017559 44 8a 75 29 - - - - - - - -         mov      R14B, byte ptr [RBP + 0x29]
+0001755D 4c 8d 45 f7 - - - - - - - -         lea      R8, [RBP + -0x9]
+00017561 48 89 44 24 20 - - - - - - -        mov      qword ptr [RSP + 0x20], RAX
+00017566 48 8d 55 17 - - - - - - - -         lea      RDX, [RBP + 0x17]
+0001756A 48 8b 45 77 - - - - - - - -         mov      RAX, qword ptr [RBP + 0x77]
+0001756E 48 8b c8 - - - - - - - - -          mov      RCX, RAX
+00017571 ff 50 70 - - - - - - - - -          call     qword ptr [RAX + 0x70]
+00017574 41 3a dd - - - - - - - - -          cmp      BL, R13B
+00017577 75 05 - - - - - - - - - -           jnz      0x0001757e
+00017579 45 84 f6 - - - - - - - - -          test     R14B, R14B
+0001757C 74 12 - - - - - - - - - -           jz       0x00017590
+0001757E 48 ff c7 - - - - - - - - -          inc      RDI
+00017581 48 3b 7d 7f - - - - - - - -         cmp      RDI, qword ptr [RBP + 0x7f]
+00017585 0f 83 b8 00 00 00 - - - - - -       jnc      0x00017643
+0001758B e9 65 ff ff ff - - - - - - -        jmp      0x000174f5
+00017590 b8 ec 10 00 00 - - - - - - -        mov      EAX, 0x10ec
+00017595 66 3b f0 - - - - - - - - -          cmp      SI, AX
+00017598 0f 85 a5 00 00 00 - - - - - -       jnz      0x00017643
+0001759E 48 8b 45 ff - - - - - - - -         mov      RAX, qword ptr [RBP + -0x1]
+000175A2 0f b6 4d f7 - - - - - - - -         movzx    ECX, byte ptr [RBP + -0x9]
+000175A6 83 e0 1f - - - - - - - - -          and      EAX, 0x1f
+000175A9 48 c1 e1 05 - - - - - - - -         shl      RCX, 0x5
+000175AD 48 0b c8 - - - - - - - - -          or       RCX, RAX
+000175B0 48 8b 45 07 - - - - - - - -         mov      RAX, qword ptr [RBP + 0x7]
+000175B4 83 e0 07 - - - - - - - - -          and      EAX, 0x7
+000175B7 48 c1 e1 03 - - - - - - - -         shl      RCX, 0x3
+000175BB 48 0b c8 - - - - - - - - -          or       RCX, RAX
+000175BE b8 00 00 00 e0 - - - - - - -        mov      EAX, 0xe0000000
+000175C3 48 c1 e1 0c - - - - - - - -         shl      RCX, 0xc
+000175C7 48 83 c9 10 - - - - - - - -         or       RCX, 0x10
+000175CB 0f b7 1c 01 - - - - - - - -         movzx    EBX, word ptr [RCX + RAX*0x1]
+000175CF b8 fe ff 00 00 - - - - - - -        mov      EAX, 0xfffe
+000175D4 66 23 d8 - - - - - - - - -          and      BX, AX
+000175D7 8d 53 05 - - - - - - - - -          lea      EDX, [RBX + 0x5]
+000175DA ec - - - - - - - - - - -            in       AL, DX
+000175DB 0f b6 c8 - - - - - - - - -          movzx    ECX, AL
+000175DE ba 04 00 00 00 - - - - - - -        mov      EDX, 0x4
+000175E3 03 d3 - - - - - - - - - -           add      EDX, EBX
+000175E5 ec - - - - - - - - - - -            in       AL, DX
+000175E6 44 0f b6 d8 - - - - - - - -         movzx    R11D, AL
+000175EA 8d 53 03 - - - - - - - - -          lea      EDX, [RBX + 0x3]
+000175ED ec - - - - - - - - - - -            in       AL, DX
+000175EE 44 0f b6 c0 - - - - - - - -         movzx    R8D, AL
+000175F2 42 8d 14 2b - - - - - - - -         lea      EDX, [RBX + R13*0x1]
+000175F6 ec - - - - - - - - - - -            in       AL, DX
+000175F7 44 0f b6 d0 - - - - - - - -         movzx    R10D, AL
+000175FB ba 01 00 00 00 - - - - - - -        mov      EDX, 0x1
+00017600 03 d3 - - - - - - - - - -           add      EDX, EBX
+00017602 ec - - - - - - - - - - -            in       AL, DX
+00017603 44 0f b6 c8 - - - - - - - -         movzx    R9D, AL
+00017607 0f b7 d3 - - - - - - - - -          movzx    EDX, BX
+0001760A ec - - - - - - - - - - -            in       AL, DX
+0001760B 89 4c 24 40 - - - - - - - -         mov      dword ptr [RSP + 0x40], ECX
+0001760F 41 8b d3 - - - - - - - - -          mov      EDX, R11D
+00017612 89 54 24 38 - - - - - - - -         mov      dword ptr [RSP + 0x38], EDX
+00017616 45 8b d9 - - - - - - - - -          mov      R11D, R9D
+00017619 44 89 44 24 30 - - - - - - -        mov      dword ptr [RSP + 0x30], R8D
+0001761E 49 8b cf - - - - - - - - -          mov      RCX, R15
+00017621 44 0f b6 c8 - - - - - - - -         movzx    R9D, AL
+00017625 4c 8d 05 84 03 01 00 - - - - -      lea      R8, [0x279b0]
+0001762C b8 cd 1a 00 00 - - - - - - -        mov      EAX, 0x1acd
+00017631 44 89 54 24 28 - - - - - - -        mov      dword ptr [RSP + 0x28], R10D
+00017636 0f b7 d0 - - - - - - - - -          movzx    EDX, AX
+00017639 44 89 5c 24 20 - - - - - - -        mov      dword ptr [RSP + 0x20], R11D
+0001763E e8 3d 90 fe ff - - - - - - -        call     0x00000680
+00017643 4c 8d 9c 24 90 00 00 00 - - - -     lea      R11, [RSP + 0x90]
+0001764B 33 c0 - - - - - - - - - -           xor      EAX, EAX
+0001764D 49 8b 5b 30 - - - - - - - -         mov      RBX, qword ptr [R11 + 0x30]
+00017651 49 8b 73 38 - - - - - - - -         mov      RSI, qword ptr [R11 + 0x38]
+00017655 49 8b e3 - - - - - - - - -          mov      RSP, R11
+00017658 41 5f - - - - - - - - - -           pop      R15
+0001765A 41 5e - - - - - - - - - -           pop      R14
+0001765C 41 5d - - - - - - - - - -           pop      R13
+0001765E 5f - - - - - - - - - - -            pop      RDI
+0001765F 5d - - - - - - - - - - -            pop      RBP
+00017660 c3 - - - - - - - - - - -            ret      

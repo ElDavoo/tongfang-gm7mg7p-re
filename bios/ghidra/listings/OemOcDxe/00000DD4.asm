@@ -4,40 +4,40 @@
 ; This is the machine code. The decompiled C for this address is 00000DD4.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-00000DD4 48 89 5c 24 08 mov      qword ptr [RSP + 0x8], RBX
-00000DD9 48 89 74 24 10 mov      qword ptr [RSP + 0x10], RSI
-00000DDE 57         push     RDI
-00000DDF 48 83 ec 20 sub      RSP, 0x20
-00000DE3 40 8a f2   mov      SIL, DL
-00000DE6 33 db      xor      EBX, EBX
-00000DE8 8d 53 66   lea      EDX, [RBX + 0x66]
-00000DEB 80 f9 60   cmp      CL, 0x60
-00000DEE 8d 43 64   lea      EAX, [RBX + 0x64]
-00000DF1 0f 45 c2   cmovnz   EAX, EDX
-00000DF4 0f b6 f8   movzx    EDI, AL
-00000DF7 0f b7 d7   movzx    EDX, DI
-00000DFA ec         in       AL, DX
-00000DFB a8 02      test     AL, 0x2
-00000DFD 74 33      jz       0x00000e32
-00000DFF 48 81 fb 00 00 02 00 cmp      RBX, 0x20000
-00000E06 73 1e      jnc      0x00000e26
-00000E08 b9 0f 00 00 00 mov      ECX, 0xf
-00000E0D e8 ba 02 00 00 call     0x000010cc
-00000E12 0f b7 d7   movzx    EDX, DI
-00000E15 ec         in       AL, DX
-00000E16 48 ff c3   inc      RBX
-00000E19 a8 02      test     AL, 0x2
-00000E1B 75 e2      jnz      0x00000dff
-00000E1D 48 81 fb 00 00 02 00 cmp      RBX, 0x20000
-00000E24 72 0c      jc       0x00000e32
-00000E26 48 b8 07 00 00 00 00 00 00 80 mov      RAX, -0x7ffffffffffffff9
-00000E30 eb 09      jmp      0x00000e3b
-00000E32 0f b7 d7   movzx    EDX, DI
-00000E35 40 8a c6   mov      AL, SIL
-00000E38 ee         out      DX, AL
-00000E39 33 c0      xor      EAX, EAX
-00000E3B 48 8b 5c 24 30 mov      RBX, qword ptr [RSP + 0x30]
-00000E40 48 8b 74 24 38 mov      RSI, qword ptr [RSP + 0x38]
-00000E45 48 83 c4 20 add      RSP, 0x20
-00000E49 5f         pop      RDI
-00000E4A c3         ret      
+00000DD4 48 89 5c 24 08 - - - - - -       mov      qword ptr [RSP + 0x8], RBX
+00000DD9 48 89 74 24 10 - - - - - -       mov      qword ptr [RSP + 0x10], RSI
+00000DDE 57 - - - - - - - - - -           push     RDI
+00000DDF 48 83 ec 20 - - - - - - -        sub      RSP, 0x20
+00000DE3 40 8a f2 - - - - - - - -         mov      SIL, DL
+00000DE6 33 db - - - - - - - - -          xor      EBX, EBX
+00000DE8 8d 53 66 - - - - - - - -         lea      EDX, [RBX + 0x66]
+00000DEB 80 f9 60 - - - - - - - -         cmp      CL, 0x60
+00000DEE 8d 43 64 - - - - - - - -         lea      EAX, [RBX + 0x64]
+00000DF1 0f 45 c2 - - - - - - - -         cmovnz   EAX, EDX
+00000DF4 0f b6 f8 - - - - - - - -         movzx    EDI, AL
+00000DF7 0f b7 d7 - - - - - - - -         movzx    EDX, DI
+00000DFA ec - - - - - - - - - -           in       AL, DX
+00000DFB a8 02 - - - - - - - - -          test     AL, 0x2
+00000DFD 74 33 - - - - - - - - -          jz       0x00000e32
+00000DFF 48 81 fb 00 00 02 00 - - - -     cmp      RBX, 0x20000
+00000E06 73 1e - - - - - - - - -          jnc      0x00000e26
+00000E08 b9 0f 00 00 00 - - - - - -       mov      ECX, 0xf
+00000E0D e8 ba 02 00 00 - - - - - -       call     0x000010cc
+00000E12 0f b7 d7 - - - - - - - -         movzx    EDX, DI
+00000E15 ec - - - - - - - - - -           in       AL, DX
+00000E16 48 ff c3 - - - - - - - -         inc      RBX
+00000E19 a8 02 - - - - - - - - -          test     AL, 0x2
+00000E1B 75 e2 - - - - - - - - -          jnz      0x00000dff
+00000E1D 48 81 fb 00 00 02 00 - - - -     cmp      RBX, 0x20000
+00000E24 72 0c - - - - - - - - -          jc       0x00000e32
+00000E26 48 b8 07 00 00 00 00 00 00 80 -  mov      RAX, -0x7ffffffffffffff9
+00000E30 eb 09 - - - - - - - - -          jmp      0x00000e3b
+00000E32 0f b7 d7 - - - - - - - -         movzx    EDX, DI
+00000E35 40 8a c6 - - - - - - - -         mov      AL, SIL
+00000E38 ee - - - - - - - - - -           out      DX, AL
+00000E39 33 c0 - - - - - - - - -          xor      EAX, EAX
+00000E3B 48 8b 5c 24 30 - - - - - -       mov      RBX, qword ptr [RSP + 0x30]
+00000E40 48 8b 74 24 38 - - - - - -       mov      RSI, qword ptr [RSP + 0x38]
+00000E45 48 83 c4 20 - - - - - - -        add      RSP, 0x20
+00000E49 5f - - - - - - - - - -           pop      RDI
+00000E4A c3 - - - - - - - - - -           ret      

@@ -4,16 +4,16 @@
 ; This is the machine code. The decompiled C for this address is 0001BB38.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-0001BB38 4c 8b dc   mov      R11, RSP
-0001BB3B 48 83 ec 48 sub      RSP, 0x48
-0001BB3F 49 8d 43 f4 lea      RAX, [R11 + -0xc]
-0001BB43 b9 01 00 00 00 mov      ECX, 0x1
-0001BB48 4d 8d 4b f0 lea      R9, [R11 + -0x10]
-0001BB4C 49 89 43 d8 mov      qword ptr [R11 + -0x28], RAX
-0001BB50 4d 8d 43 ec lea      R8, [R11 + -0x14]
-0001BB54 49 8d 53 e8 lea      RDX, [R11 + -0x18]
-0001BB58 e8 73 48 fe ff call     0x000003d0
-0001BB5D 8b 44 24 30 mov      EAX, dword ptr [RSP + 0x30]
-0001BB61 25 f0 0f ff 0f and      EAX, 0xfff0ff0
-0001BB66 48 83 c4 48 add      RSP, 0x48
-0001BB6A c3         ret      
+0001BB38 4c 8b dc - - - - - - - - -          mov      R11, RSP
+0001BB3B 48 83 ec 48 - - - - - - - -         sub      RSP, 0x48
+0001BB3F 49 8d 43 f4 - - - - - - - -         lea      RAX, [R11 + -0xc]
+0001BB43 b9 01 00 00 00 - - - - - - -        mov      ECX, 0x1
+0001BB48 4d 8d 4b f0 - - - - - - - -         lea      R9, [R11 + -0x10]
+0001BB4C 49 89 43 d8 - - - - - - - -         mov      qword ptr [R11 + -0x28], RAX
+0001BB50 4d 8d 43 ec - - - - - - - -         lea      R8, [R11 + -0x14]
+0001BB54 49 8d 53 e8 - - - - - - - -         lea      RDX, [R11 + -0x18]
+0001BB58 e8 73 48 fe ff - - - - - - -        call     0x000003d0
+0001BB5D 8b 44 24 30 - - - - - - - -         mov      EAX, dword ptr [RSP + 0x30]
+0001BB61 25 f0 0f ff 0f - - - - - - -        and      EAX, 0xfff0ff0
+0001BB66 48 83 c4 48 - - - - - - - -         add      RSP, 0x48
+0001BB6A c3 - - - - - - - - - - -            ret      

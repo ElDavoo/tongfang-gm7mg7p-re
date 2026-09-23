@@ -4,16 +4,16 @@
 ; This is the machine code. The decompiled C for this address is 00000890.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-00000890 40 53      push     RBX
-00000892 48 83 ec 20 sub      RSP, 0x20
-00000896 48 69 d1 99 9e 36 00 imul     RDX, RCX, 0x369e99
-0000089D 48 8b d9   mov      RBX, RCX
+00000890 40 53 - - - - - - - -         push     RBX
+00000892 48 83 ec 20 - - - - - -       sub      RSP, 0x20
+00000896 48 69 d1 99 9e 36 00 - - -    imul     RDX, RCX, 0x369e99
+0000089D 48 8b d9 - - - - - - -        mov      RBX, RCX
 000008A0 48 b8 db 34 b6 d7 82 de 1b 43 mov      RAX, 0x431bde82d7b634db
-000008AA 48 f7 e2   mul      RDX
-000008AD 48 c1 ea 12 shr      RDX, 0x12
-000008B1 8b ca      mov      ECX, EDX
-000008B3 e8 78 ff ff ff call     0x00000830
-000008B8 48 8b c3   mov      RAX, RBX
-000008BB 48 83 c4 20 add      RSP, 0x20
-000008BF 5b         pop      RBX
-000008C0 c3         ret      
+000008AA 48 f7 e2 - - - - - - -        mul      RDX
+000008AD 48 c1 ea 12 - - - - - -       shr      RDX, 0x12
+000008B1 8b ca - - - - - - - -         mov      ECX, EDX
+000008B3 e8 78 ff ff ff - - - - -      call     0x00000830
+000008B8 48 8b c3 - - - - - - -        mov      RAX, RBX
+000008BB 48 83 c4 20 - - - - - -       add      RSP, 0x20
+000008BF 5b - - - - - - - - -          pop      RBX
+000008C0 c3 - - - - - - - - -          ret      

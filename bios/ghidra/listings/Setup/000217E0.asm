@@ -4,12 +4,12 @@
 ; This is the machine code. The decompiled C for this address is 000217E0.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-000217E0 48 83 ec 38 sub      RSP, 0x38
-000217E4 c6 44 24 28 00 mov      byte ptr [RSP + 0x28], 0x0
-000217E9 48 8d 54 24 48 lea      RDX, [RSP + 0x48]
-000217EE 48 83 64 24 20 00 and      qword ptr [RSP + 0x20], 0x0
-000217F4 41 b9 02 00 00 00 mov      R9D, 0x2
-000217FA 41 b0 29   mov      R8B, 0x29
-000217FD e8 46 ff ff ff call     0x00021748
-00021802 48 83 c4 38 add      RSP, 0x38
-00021806 c3         ret      
+000217E0 48 83 ec 38 - - - - - - - -         sub      RSP, 0x38
+000217E4 c6 44 24 28 00 - - - - - - -        mov      byte ptr [RSP + 0x28], 0x0
+000217E9 48 8d 54 24 48 - - - - - - -        lea      RDX, [RSP + 0x48]
+000217EE 48 83 64 24 20 00 - - - - - -       and      qword ptr [RSP + 0x20], 0x0
+000217F4 41 b9 02 00 00 00 - - - - - -       mov      R9D, 0x2
+000217FA 41 b0 29 - - - - - - - - -          mov      R8B, 0x29
+000217FD e8 46 ff ff ff - - - - - - -        call     0x00021748
+00021802 48 83 c4 38 - - - - - - - -         add      RSP, 0x38
+00021806 c3 - - - - - - - - - - -            ret      

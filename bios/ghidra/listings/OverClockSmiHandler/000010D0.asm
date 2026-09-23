@@ -4,23 +4,23 @@
 ; This is the machine code. The decompiled C for this address is 000010D0.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-000010D0 53         push     RBX
-000010D1 89 c8      mov      EAX, ECX
-000010D3 50         push     RAX
-000010D4 52         push     RDX
-000010D5 0f a2      cpuid    
-000010D7 4d 85 c9   test     R9, R9
-000010DA 74 03      jz       0x000010df
-000010DC 41 89 09   mov      dword ptr [R9], ECX
-000010DF 59         pop      RCX
-000010E0 e3 02      jrcxz    0x000010e4
-000010E2 89 01      mov      dword ptr [RCX], EAX
-000010E4 4c 89 c1   mov      RCX, R8
-000010E7 e3 02      jrcxz    0x000010eb
-000010E9 89 19      mov      dword ptr [RCX], EBX
-000010EB 48 8b 4c 24 38 mov      RCX, qword ptr [RSP + 0x38]
-000010F0 e3 02      jrcxz    0x000010f4
-000010F2 89 11      mov      dword ptr [RCX], EDX
-000010F4 58         pop      RAX
-000010F5 5b         pop      RBX
-000010F6 c3         ret      
+000010D0 53 - - - - - - - - -          push     RBX
+000010D1 89 c8 - - - - - - - -         mov      EAX, ECX
+000010D3 50 - - - - - - - - -          push     RAX
+000010D4 52 - - - - - - - - -          push     RDX
+000010D5 0f a2 - - - - - - - -         cpuid    
+000010D7 4d 85 c9 - - - - - - -        test     R9, R9
+000010DA 74 03 - - - - - - - -         jz       0x000010df
+000010DC 41 89 09 - - - - - - -        mov      dword ptr [R9], ECX
+000010DF 59 - - - - - - - - -          pop      RCX
+000010E0 e3 02 - - - - - - - -         jrcxz    0x000010e4
+000010E2 89 01 - - - - - - - -         mov      dword ptr [RCX], EAX
+000010E4 4c 89 c1 - - - - - - -        mov      RCX, R8
+000010E7 e3 02 - - - - - - - -         jrcxz    0x000010eb
+000010E9 89 19 - - - - - - - -         mov      dword ptr [RCX], EBX
+000010EB 48 8b 4c 24 38 - - - - -      mov      RCX, qword ptr [RSP + 0x38]
+000010F0 e3 02 - - - - - - - -         jrcxz    0x000010f4
+000010F2 89 11 - - - - - - - -         mov      dword ptr [RCX], EDX
+000010F4 58 - - - - - - - - -          pop      RAX
+000010F5 5b - - - - - - - - -          pop      RBX
+000010F6 c3 - - - - - - - - -          ret      

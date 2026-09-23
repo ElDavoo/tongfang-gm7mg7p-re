@@ -4,11 +4,11 @@
 ; This is the machine code. The decompiled C for this address is 00000260.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-00000260 57         push     RDI
-00000261 4c 89 c0   mov      RAX, R8
-00000264 48 89 cf   mov      RDI, RCX
-00000267 48 87 ca   xchg     RDX, RCX
-0000026A f3 aa      stosb.rep RDI
-0000026C 48 89 d0   mov      RAX, RDX
-0000026F 5f         pop      RDI
-00000270 c3         ret      
+00000260 57 - - - - - - - - -          push     RDI
+00000261 4c 89 c0 - - - - - - -        mov      RAX, R8
+00000264 48 89 cf - - - - - - -        mov      RDI, RCX
+00000267 48 87 ca - - - - - - -        xchg     RDX, RCX
+0000026A f3 aa - - - - - - - -         stosb.rep RDI
+0000026C 48 89 d0 - - - - - - -        mov      RAX, RDX
+0000026F 5f - - - - - - - - -          pop      RDI
+00000270 c3 - - - - - - - - -          ret      

@@ -4,34 +4,34 @@
 ; This is the machine code. The decompiled C for this address is 00000ED4.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-00000ED4 48 89 5c 24 08 mov      qword ptr [RSP + 0x8], RBX
-00000ED9 57         push     RDI
-00000EDA 48 83 ec 20 sub      RSP, 0x20
-00000EDE 33 db      xor      EBX, EBX
-00000EE0 8d 53 66   lea      EDX, [RBX + 0x66]
-00000EE3 80 f9 60   cmp      CL, 0x60
-00000EE6 8d 43 64   lea      EAX, [RBX + 0x64]
-00000EE9 0f 45 c2   cmovnz   EAX, EDX
-00000EEC 0f b6 f8   movzx    EDI, AL
-00000EEF 0f b7 d7   movzx    EDX, DI
-00000EF2 ec         in       AL, DX
-00000EF3 a8 02      test     AL, 0x2
-00000EF5 74 33      jz       0x00000f2a
-00000EF7 48 81 fb 00 00 02 00 cmp      RBX, 0x20000
-00000EFE 73 1e      jnc      0x00000f1e
-00000F00 b9 0f 00 00 00 mov      ECX, 0xf
-00000F05 e8 c2 01 00 00 call     0x000010cc
-00000F0A 0f b7 d7   movzx    EDX, DI
-00000F0D ec         in       AL, DX
-00000F0E 48 ff c3   inc      RBX
-00000F11 a8 02      test     AL, 0x2
-00000F13 75 e2      jnz      0x00000ef7
-00000F15 48 81 fb 00 00 02 00 cmp      RBX, 0x20000
-00000F1C 72 0c      jc       0x00000f2a
-00000F1E 48 b8 07 00 00 00 00 00 00 80 mov      RAX, -0x7ffffffffffffff9
-00000F28 eb 02      jmp      0x00000f2c
-00000F2A 33 c0      xor      EAX, EAX
-00000F2C 48 8b 5c 24 30 mov      RBX, qword ptr [RSP + 0x30]
-00000F31 48 83 c4 20 add      RSP, 0x20
-00000F35 5f         pop      RDI
-00000F36 c3         ret      
+00000ED4 48 89 5c 24 08 - - - - - -       mov      qword ptr [RSP + 0x8], RBX
+00000ED9 57 - - - - - - - - - -           push     RDI
+00000EDA 48 83 ec 20 - - - - - - -        sub      RSP, 0x20
+00000EDE 33 db - - - - - - - - -          xor      EBX, EBX
+00000EE0 8d 53 66 - - - - - - - -         lea      EDX, [RBX + 0x66]
+00000EE3 80 f9 60 - - - - - - - -         cmp      CL, 0x60
+00000EE6 8d 43 64 - - - - - - - -         lea      EAX, [RBX + 0x64]
+00000EE9 0f 45 c2 - - - - - - - -         cmovnz   EAX, EDX
+00000EEC 0f b6 f8 - - - - - - - -         movzx    EDI, AL
+00000EEF 0f b7 d7 - - - - - - - -         movzx    EDX, DI
+00000EF2 ec - - - - - - - - - -           in       AL, DX
+00000EF3 a8 02 - - - - - - - - -          test     AL, 0x2
+00000EF5 74 33 - - - - - - - - -          jz       0x00000f2a
+00000EF7 48 81 fb 00 00 02 00 - - - -     cmp      RBX, 0x20000
+00000EFE 73 1e - - - - - - - - -          jnc      0x00000f1e
+00000F00 b9 0f 00 00 00 - - - - - -       mov      ECX, 0xf
+00000F05 e8 c2 01 00 00 - - - - - -       call     0x000010cc
+00000F0A 0f b7 d7 - - - - - - - -         movzx    EDX, DI
+00000F0D ec - - - - - - - - - -           in       AL, DX
+00000F0E 48 ff c3 - - - - - - - -         inc      RBX
+00000F11 a8 02 - - - - - - - - -          test     AL, 0x2
+00000F13 75 e2 - - - - - - - - -          jnz      0x00000ef7
+00000F15 48 81 fb 00 00 02 00 - - - -     cmp      RBX, 0x20000
+00000F1C 72 0c - - - - - - - - -          jc       0x00000f2a
+00000F1E 48 b8 07 00 00 00 00 00 00 80 -  mov      RAX, -0x7ffffffffffffff9
+00000F28 eb 02 - - - - - - - - -          jmp      0x00000f2c
+00000F2A 33 c0 - - - - - - - - -          xor      EAX, EAX
+00000F2C 48 8b 5c 24 30 - - - - - -       mov      RBX, qword ptr [RSP + 0x30]
+00000F31 48 83 c4 20 - - - - - - -        add      RSP, 0x20
+00000F35 5f - - - - - - - - - -           pop      RDI
+00000F36 c3 - - - - - - - - - -           ret      
