@@ -138,6 +138,15 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   enumerated and classified, with `annotations/ec-0x07d0-sites.csv` as the
   machine-readable table behind it. Answers what the sites *are*; deliberately
   does not answer what the EC does with the address of the same number.
+- **`annotations/xdata-0400-045f.md`** — the `0x0400-0x045F` page the fan
+  isolation run sweeps, site by site: which of its 96 bytes the EC firmware
+  references at all, in which image, reading or writing or handing DPTR to one
+  of six pair helpers, and from which routine. `xdata-0400-045f-sites.csv` is
+  the per-site table behind it and reproduces every count in
+  `annotations/registers.yaml` for the page. Answers what the EC side of the
+  battery/temperature block does, and deliberately stops at naming: the 32
+  bytes with no cited name are `XDATA_04XX` in the symbol table, and §9 of
+  that file says where each name that *is* used came from.
 - **`annotations/lightbar-bat-flow.md`** — the `0x07E2`-`0x07E5` site map, the
   evidence that those sites belong to the PD image rather than the EC, and the
   live probe still needed to say what (if anything) the EC does with those

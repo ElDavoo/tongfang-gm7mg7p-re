@@ -553,6 +553,18 @@ change, everything else that moved being slow sensor drift (voltage at
 `0x0436`/`0x0438`, GPU temp at `0x044F`, the cycle counter at `0x04A6`
 ticking 449 → 450 during the charge).
 
+**CORRECTION to the `0x0436`/`0x0438` pairing in that sentence, added after
+the page was swept (`ec/annotations/xdata-0400-045f.md` §8).** Calling
+`0x0436` a voltage does not survive the capture it is citing.
+`evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv` has `0x0436` moving
+4 times — `0x70 → 0x84 → 0x98 → 0xAC → 0xC0`, exactly `+0x14` every ~35 s with
+no scatter and `0x0437` never moving — and `0x0438` moving exactly **once**,
+`0x97 → 0xAE` at 23:03:49. So the low byte stepping by a constant every 35
+seconds is a periodic update, not a charge reading, and `0x0438` is the voltage
+one, separately established three ways (§4g). `0x0436` is left unnamed pending
+a live read beside WMI `RemainingCapacity`; `0x0438` is
+`BAT_VOLTAGE_MV`.
+
 Second, to test a reading of `charge-profile-flow.md` §2 against the
 running machine. That section traced the EC's profile handler statically:
 `0xB2E2`/`0xB330` mask `0x07A6` bits 4-5, select 200 for Stationary or 100
