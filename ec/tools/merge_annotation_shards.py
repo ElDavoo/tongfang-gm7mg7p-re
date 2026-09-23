@@ -81,6 +81,13 @@ TYPES = {
 
 BASES = {"hand-decoded", "restatement", "inferred"}
 
+# A comment longer than this is refused. The point is not brevity for its own
+# sake -- several functions here genuinely need a paragraph -- it is that a
+# 1,500-character block above a six-instruction function is a document that
+# happens to be in the wrong place, and it should be written as one rather than
+# smuggled in as a comment.
+MAX_COMMENT_CHARS = 1200
+
 # A *register reference* in a comment: an address qualified by the word that
 # says what kind of memory it is.
 #
@@ -443,6 +450,12 @@ def main():
             # empty field was being rejected and merged in the same breath.
             # Found by feeding this tool a row with no evidence: it appeared in
             # the rejected list and in the output.
+            if len(row.get("comment") or "") > MAX_COMMENT_CHARS:
+                bad("comment is %d characters, over the %d this merge accepts; "
+                    "a comment that long is an essay and belongs in a document "
+                    "rather than above a function"
+                    % (len(row["comment"]), MAX_COMMENT_CHARS))
+                continue
             complete = True
             for field in ("name", "comment", "type", "evidence"):
                 if not (row.get(field) or "").strip():
@@ -559,6 +572,18 @@ def main():
           % (len(shards), accepted, len(rejected), unresolved))
     print("  %d name(s) disambiguated by address where two functions in one "
           "program were given the same name" % disambiguated)
+    # Comment length, reported rather than capped. A median around 300
+    # characters is three or four sentences, which is what the brief asks for
+    # and what fits above a function; the tail runs longer because some
+    # functions are long, and cutting an accurate description to fit a line
+    # budget would be trading analysis for tidiness. Only the absurd is
+    # refused, and the distribution is printed so a reviewer can see the shape
+    # rather than discover it.
+    lens = sorted(len(r["comment"]) for r in merged if r.get("comment"))
+    if lens:
+        print("  comment length: median %d, p90 %d, longest %d over %d row(s)"
+              % (lens[len(lens) // 2], lens[int(len(lens) * 0.9)], lens[-1],
+                 len(lens)))
     print("  %d address reference(s) in accepted comments are established by a "
           "neighbouring function or by a callee the comment names, rather than "
           "by this one" % cross_referenced)
