@@ -1956,11 +1956,45 @@ listing-index row(s), 4 manifest program(s)`, and the same shape for 955/955/38)
 and both `--self-test`s assert the totals, so the table above is a fact the
 repository re-checks rather than a paragraph somebody wrote once.
 
+A later change widened the same four guards — strict read, a row that did not
+come out whole, a key written twice, the file's own header — to the four
+committed CSVs that are inputs to a run rather than scratch output of one: the
+two annotation layers, the EC call-target census and the BIOS load map. The
+known answer on those is clean as well, measured the same way, with the same
+reader:
+
+| file | records | header | short rows | duplicate keys |
+|---|---|---|---|---|
+| `ec/annotations/ghidra-functions.csv` | **1,769** | 8 columns | 0 | 0 on `(scope, addr)` |
+| `bios/annotations/ghidra-functions.csv` | **788** | 8 columns | 0 | 0 on `(scope, addr)` |
+| `ec/annotations/bank-call-targets.csv` | **5,998** | 12 columns | 0 | 0 on `(file_offset, target)` |
+| `bios/ghidra/load-map.csv` | **38** | 6 columns | 0 | 0 on `program` |
+
+**1,769 is not the 1,771 the follow-up issue quoted, and the difference is worth
+a line rather than a quiet edit.** The EC annotations file is 1,772 physical
+lines: one header, 1,769 records, and two extra physical lines belonging to one
+record — `bank0,0x0EA2,timer1_counted_delay_using_0a56`, whose quoted `comment`
+runs to three. 1,771 is that file's physical data-line count, which is what a
+line count reports and not what a `DictReader` returns; the default reader and
+`strict=True` both return the same 1,769 rows, so nothing about the parse as it
+stands changes. The number `--self-test` pins is the record count, measured, and
+the issue's figure is left on the record here for the same reason §4's wrong
+claims are.
+
+**The duplicate key is a normalised address, and that is asserted rather than
+assumed.** Both annotation files spell an address both ways — 1,039 bare `0EA2`
+rows against 730 `0x0B158` ones in the EC file, 210 and 578 in the BIOS one — so
+a plain string key would call `0B158` and `0x0B158` two different functions and
+miss the one duplicate this is looking for. Raw and normalised distinct-key
+counts are equal for all three key-bearing committed files, and each
+`--self-test` asserts that equality, which is what makes the normalisation a
+fact about the data rather than an assumption about it.
+
 **What a clean result means, precisely: the committed files carry no structural
 fault today.** It is not evidence that the export has always been correct, it
 says nothing about the firmware, and nothing here ran on the machine — this is
 entirely committed-file checking, with no register read back and no behaviour
-observed.
+observed. Both this block and the one above it are guards against drift.
 
 ### 15a. What the guard is actually worth
 
@@ -2019,9 +2053,43 @@ quoted are updated to the measured pair. The EC `--check` measured 0.19 s before
 this change and 0.19 s after, so what was added — string comparisons over two
 committed CSVs — is not what the cheap tier's cost is made of.
 
-Deliberately **not** widened to: the annotations CSVs, the BIOS load map, the
-raw exporter CSVs, or the per-row reads of those inside the export path. They
-have their own guards (evidence citation non-empty, an annotation address that
-resolves to an exported function), they are not "the EC and BIOS indexes", and
-widening `strict=True` to them is a separate call with its own blast radius.
+Widening the guards to the four annotation-side CSVs was measured the same way,
+before and after, five runs each, both sides on one runner: the EC `--check`
+**0.25 s → 0.27 s**, the EC `--self-test` **0.17 s → 0.20 s**, the BIOS
+`--check` **0.33 s → 0.32 s**, the BIOS `--self-test` **0.08 s → 0.09 s**. So
+strict-parsing 8,593 committed rows and keying them costs about 0.03 s on the EC
+self-test and nothing measurable on the BIOS, which is not what the cheap tier's
+cost is made of either.
+
+Those pairs are also a correction worth leaving visible: the absolute figures in
+the paragraph above do not reproduce at that precision on a later runner — the
+unchanged tools measure 0.02–0.08 s slower across all four commands there, and of
+the README figures only the BIOS `--check`'s 0.33 s reproduces exactly. Since
+both sides of each pair above were measured the same way on the same machine,
+the deltas are the figures that mean something, and replacing a README's absolute
+with a number from a different runner would have imported the difference between
+the two. `ec/ghidra/README.md` therefore records the measured 0.03 s its
+`--self-test` figure moved rather than a new absolute, and
+`bios/ghidra/README.md` is untouched: its `--check` did not move, and its
+`--self-test` moved 0.01 s against a baseline that already differs from the
+number it prints by that much.
+
+Deliberately **not** widened to: the raw exporter CSVs — `index-raw.csv`,
+`listing-raw.csv` — and the per-row reads of those inside the export path. They
+are written into the scratch work dir on every run rather than committed, so a
+fault in one is a fault in this run's output and not drift in a committed input,
+and the committed index they feed is structurally guarded in its own right now.
 Named here as a possible follow-up, not silently skipped.
+
+Also outside this change, and named rather than quietly passed over: the readers
+on the other side of the same annotation files.
+`ghidra/scripts/ApplyAnnotations.java` is not a `DictReader` path and does not
+behave like one. It joins lines until the quotes balance, which is what lets the
+one multi-line record above parse as the single record it is, and it pads a short
+row out to eight columns rather than failing on it — a deliberate tolerance for a
+hand-written file that leaves the empty `signature` cell off, and a third set of
+rules to impose on a pre-script all three components share.
+`ec/tools/merge_annotation_shards.py`, which is where the EC annotations are
+rewritten from a fan-out, already refuses a duplicate `(scope, addr)` and
+asserts that it does in its own self-test. The gap there is the short row, and
+closing it is a separate call on a tool this change did not otherwise touch.
