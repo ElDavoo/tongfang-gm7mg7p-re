@@ -1504,6 +1504,29 @@ Ghidra's operand text and `disasm8051.py` — and the firmware confirms it. I ha
 the byte order backwards twice, which is the point: the check disagreed with
 me, and two independent decoders plus the image settled it.
 
+**A listing format that could not be parsed unambiguously.** The byte column
+was objdump's shape — variable width, mnemonic at whatever column that left
+it — and the 8051 has a reserved one-byte instruction the SLEIGH spells
+`da A`. `da` is two hex digits, so
+
+    D438  d4  da  A
+
+reads equally as the one-byte instruction `d4` with mnemonic `da`, which is
+what it is, and the two-byte instruction `d4 da` with mnemonic `A`, which it
+is not. Five instructions in bank 0 are affected. The byte column is now
+always three slots with `-` for a missing byte, and `-` is not a hex digit, so
+the mnemonic cannot run into it.
+
+It was found by a check that had not existed until this work: comparing every
+byte of every committed listing against the firmware image, which needs no
+assembler and therefore covers the 2.2% of instructions sdas8051 cannot
+express. The first version of that check reported *zero* disagreements while
+parsing 30% of each file, because the listings were the old format and the
+parser the new one — so it now counts the lines beginning with an address and
+fails if the parser does not get all of them. A parser that reads a third of a
+file and finds nothing wrong in it is worse than one that reads none, because
+it reports a pass.
+
 **What sdas8051 cannot express, counted rather than skipped.** 1,004
 instructions (2.2%) use forms it rejects: the bit-addressed `CLR bit`, `SETB
 bit`, `CPL bit`, `MOV C,bit`, `MOV bit,C`, `MOVC A,bit`; `CJNE` on a direct
