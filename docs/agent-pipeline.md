@@ -83,6 +83,29 @@ only covers what's specific to *this* copy.
      guard the tool rather than the tree. Adding `--self-test` to that case is
      a one-line change to a template-copied file, and needs the re-copy note
      above — which is why it is named here rather than done in passing.
+  3. **`verify_gap_text.py --check` is not in the cheap tier yet, and should
+     be.** Issue #151 (2026-09-23) added
+     `ec/tools/verify_gap_text.py`, which cross-decodes the 143 instructions
+     `sdas8051` cannot re-encode — the ones no assembler reaches, which were
+     read by no check at all before it. By cost and by kind it belongs in the
+     cheap tier: it needs only `python3` and the committed firmware, no
+     assembler and no Ghidra, and takes well under a second. Adding it is a
+     `case` arm in `check_ghidra_tooling()` mirroring the
+     `*verify_reassembly.py` one, plus the path in the tool list above it:
+
+     ```sh
+           *verify_gap_text.py)
+             python3 "$tool" --check || rc=1
+             ;;
+     ```
+
+     It is not here because this is a template-copied file and the plan
+     stage's push token has no `workflow` scope, so a branch editing it fails
+     at the end of the PR rather than the start. **Until a human lands it,
+     nothing runs `--check` per commit** and the committed verdicts in
+     `ec/ghidra/gap-text-check.csv` can go stale in an otherwise-green commit
+     — the same shape as item 1, and for the same reason. The command is named
+     here so a template re-copy carries it.
 - **`.github/workflows/agent-plan.yml`**'s `CUSTOMISE` section — added the
   hardware/Windows-access constraint from `CLAUDE.md`, so the plan stage
   scopes issues needing the physical laptop or a Windows box down to

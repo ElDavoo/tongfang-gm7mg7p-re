@@ -23,7 +23,9 @@ transcribed by hand from `r2 -a 8051` and requires a byte-for-byte match
 against those listings -- that is the oracle for the tables above, so run
 it after touching either. It then checks relative_target() against four more
 hand decodes (ec/annotations/bank-call-audit.md 8), because both windows
-branch forward only and a sign-extension bug would survive them.
+branch forward only and a sign-extension bug would survive them, and mnemonics
+against BIT_SITES, which covers the bit-addressable carry forms the windows
+above contain none of.
 
 Usage:
     python3 disasm8051.py --self-test
@@ -159,9 +161,44 @@ def mnemonic(d: bytes, i: int, addr: int = None) -> str:
     if op in (0x20, 0x30, 0x10):
         name = {0x20: "jb", 0x30: "jnb", 0x10: "jbc"}[op]
         return f"{name:<4} {bit_name(d[i + 1])},{rel(2)}"
-    if op in (0xD2, 0xC2, 0xB2):
-        name = {0xD2: "setb", 0xC2: "clr", 0xB2: "cpl"}[op]
+    if op in (0xD2, 0xB2):
+        name = {0xD2: "setb", 0xB2: "cpl"}[op]
         return f"{name:<4} {bit_name(d[i + 1])}"
+    # The carry forms. 0x92 was the one opcode missing from this table that a
+    # committed listing actually uses, so `mov 0xd5,CY` decoded as `db 0x92` --
+    # and a cross-decode can only "agree" with a `db` vacuously.
+    if op in (0x92, 0xA2):
+        # The same two bytes read in either order: 0x92 writes the bit, 0xA2
+        # reads it. They are the only such pair in the map.
+        if op == 0x92:
+            return f"mov  {bit_name(d[i + 1])},c"
+        return f"mov  c,{bit_name(d[i + 1])}"
+    if op in (0xA0, 0xB0):
+        # ANL C,/bit and ORL C,/bit -- and which opcode is which is *not*
+        # settled in this repository. Ghidra's SLEIGH, r2 and sdas8051 all put
+        # ORL at 0xA0 and ANL at 0xB0; the MCS-51 manual as reproduced in
+        # common references has them the other way round. Three decoders
+        # agreeing is why this table follows them and not the manual, and none
+        # of the three arbitrating the other two is why that is a comment and
+        # not a correction. No committed instruction is affected either way:
+        # 0xA0/0xB0 are the bit forms sdas8051 *does* express, so all 12
+        # occurrences sit inside the 45,394 the re-encode covers.
+        name = {0xA0: "orl", 0xB0: "anl"}[op]
+        return f"{name:<4} c,/{bit_name(d[i + 1])}"
+    if op == 0xC1:
+        # CLR bit, kept out of the 0xD2/0xB2 tuple above because 0xC2 is CLR
+        # *direct*: the two are the same length and differ only in what the
+        # byte means, which is the form sdas8051 assembles to a plausible
+        # wrong instruction without complaining (see
+        # verify_reassembly.BIT_UNSUPPORTED).
+        return f"clr  {bit_name(d[i + 1])}"
+    if op == 0xC2:
+        # CLR direct, and the operand is a byte address: `clr 0x7f` clears all
+        # eight bits of 0x7F. This was grouped with the bit forms above, which
+        # printed it as `clr 0x2f.7` -- a different instruction, for all 180
+        # committed CLR direct instructions. Found by the TEXTBOOK_BIT_SITES
+        # pair that keeps 0xC1 and 0xC2 apart.
+        return f"clr  0x{d[i + 1]:02x}"
     if op == 0xB4:
         return f"cjne a,#0x{d[i + 1]:02x},{rel(2)}"
     if op == 0xB5:
@@ -336,6 +373,47 @@ REL_SITES = (
     (0x0FE24, 0xFE24, b"\x30\xe1\xe8", 0xFE0F),
 )
 
+# The bit-addressed carry forms, as (file offset, runtime address, bytes,
+# expected text). The expected text is transcribed from `r2 -a 8051` against a
+# make_bank_image.py bank-0 image, and every site is in bank 0 or the common
+# area, where the runtime address and the file offset are the same number --
+# which is what lets the bytes be read out of the raw image the way REL_SITES
+# does, and is why a bank-1 site (the `djnz` at 0xA599) is not here.
+#
+# These are the opcodes the two windows above do not contain, and the ones
+# verify_gap_text.py needs to judge: `cpl bit` and `mov bit,c` are 32 of the 143
+# instructions sdas8051 cannot re-encode, and before the cases were added this
+# table would print `db` for the 19 `mov bit,c` among them -- a comparison that
+# can only agree vacuously. `0x8044` is the AJMP the 8051 manual's page rule is
+# usually argued from (see GAP_MNEMONICS in verify_reassembly.py).
+BIT_SITES = (
+    (0x08044, 0x8044, b"\x81\x5d", "ajmp 0x845d"),
+    (0x09287, 0x9287, b"\x92\xa0", "mov  p2.0,c"),
+    (0x0D783, 0xD783, b"\x92\xe4", "mov  acc.4,c"),
+    (0x03FED, 0x3FED, b"\x92\x48", "mov  0x29.0,c"),
+    (0x0D77C, 0xD77C, b"\xa2\xe0", "mov  c,acc.0"),
+    (0x0EDA4, 0xEDA4, b"\xa2\x22", "mov  c,0x24.2"),
+    (0x0E064, 0xE064, b"\xa0\x05", "orl  c,/0x20.5"),
+    (0x0D458, 0xD458, b"\xa0\xd4", "orl  c,/psw.4"),
+    (0x0A354, 0xA354, b"\xb0\x02", "anl  c,/0x20.2"),
+    (0x07251, 0x7251, b"\xb2\xd5", "cpl  psw.5"),
+    (0x067F5, 0x67F5, b"\xb2\xb4", "cpl  p3.4"),
+)
+
+# CLR bit has no entry in BIT_SITES because this firmware contains no
+# instruction-start byte 0xC1 at all (measured over every committed listing,
+# and why verify_reassembly.BIT_UNSUPPORTED calls it a latent hole rather than
+# a live one). Its encoding is therefore stated here from the 8051 manual
+# rather than transcribed from the image, in the same spirit as
+# verify_reassembly.self_test()'s textbook encodings: an oracle derived from
+# the tool it is testing asserts nothing. The pairing below is what the
+# assertion is for -- 0xC1 and 0xC2 differ only in the opcode, and a decoder
+# that keyed on the operand text would collapse them.
+TEXTBOOK_BIT_SITES = (
+    (b"\xc1\xd0", "clr  psw.0", "CLR bit (0xC1)"),
+    (b"\xc2\xd0", "clr  0xd0", "CLR direct (0xC2)"),
+)
+
 DEFAULT_FIRMWARE = "../firmware/GMxMGxx_11.800"
 BANK0_FILE_OFFSET = 0x08000
 
@@ -364,12 +442,43 @@ def self_test(fw_path: str) -> int:
               f"`{raw.hex(' ')}` targeting 0x{want:04X} "
               f"(got `{d[foff:foff + len(raw)].hex(' ')}` -> 0x{got:04X})")
     print()
+    for foff, rt, raw, want in BIT_SITES:
+        got = mnemonic(image, rt, rt)
+        ok = d[foff:foff + len(raw)] == raw and got == want
+        if not ok:
+            bad += 1
+        print(f"  {'ok ' if ok else '!  '} file 0x{foff:05X} (runtime 0x{rt:04X}) is "
+              f"`{raw.hex(' ')}` = `{got}`  (expected `{want}`, image has "
+              f"`{d[foff:foff + len(raw)].hex(' ')}`)")
+    for raw, want, what in TEXTBOOK_BIT_SITES:
+        got = mnemonic(raw, 0, 0)
+        ok = got == want
+        if not ok:
+            bad += 1
+        print(f"  {'ok ' if ok else '!  '} `{raw.hex(' ')}` = `{got}`  ({what}, "
+              f"expected `{want}`)")
+    # The page rule's edge, stated rather than transcribed: this firmware has
+    # no `ajmp`/`acall` in the last two bytes of a 2 KiB page, so there is no
+    # site to hand-read. The arithmetic is the claim under test -- a site at
+    # 0x07FE is followed by 0x0800, which is in the *next* page, so its target
+    # takes A15-A11 from 0x0800 and lands at 0x08FF. Reading the page off the
+    # site instead would give 0x00FF, a whole 2 KiB page away, and every
+    # `ajmp` in the listing would still decode to something.
+    edge = paged_target(0x01, 0xFF, 0x07FE)
+    if edge != 0x08FF:
+        bad += 1
+    print(f"  {'ok ' if edge == 0x08FF else '!  '} `01 ff` at 0x07FE targets "
+          f"0x{edge:04X}, the *following* page (expected 0x08FF)")
+    print()
     if bad:
         print(f"self-test FAILED: {bad} instruction(s)/site(s) disagree with "
-              "ec/annotations/charge-profile-flow.md and bank-call-audit.md 8")
+              "ec/annotations/charge-profile-flow.md, bank-call-audit.md 8 and "
+              "the `r2 -a 8051` transcriptions in BIT_SITES")
     else:
-        print("self-test passed: both charge-profile-flow.md windows decode identically "
-              f"and all {len(REL_SITES)} relative-branch sites resolve as hand-decoded")
+        print("self-test passed: both charge-profile-flow.md windows decode "
+              f"identically, all {len(REL_SITES)} relative-branch sites resolve "
+              f"as hand-decoded, and all {len(BIT_SITES)} bit-form sites decode "
+              "as transcribed")
     return 1 if bad else 0
 
 
