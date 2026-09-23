@@ -1,0 +1,57 @@
+addr,name,from_register,register_status,derivation,programs
+0x0740,PROJECT_ID,PROJECT_ID,confirmed-working,scalar-name,bank0;bank1
+0x0741,AP_OEM,AP_OEM (ENABLE_MANUAL_CTRL),confirmed-working,scalar-name,bank0;bank1
+0x0743,CTGP_DB_CTRL,CTGP_DB_CTRL / OFFSET,confirmed-working,override,bank0;bank1
+0x0744,CTGP_OFFSET,CTGP_DB_CTRL / OFFSET,confirmed-working,override,bank0;bank1
+0x0745,CTGP_DB_TPP_TARGET,CTGP_DB_CTRL / OFFSET,confirmed-working,override,bank0;bank1
+0x0746,CTGP_DB_MAX_TGP,CTGP_DB_CTRL / OFFSET,confirmed-working,override,bank0;bank1
+0x074E,BIOS_OEM,BIOS_OEM (FN_LOCK_STATUS),confirmed-working,scalar-name,bank0;bank1
+0x0765,SUPPORT_1,SUPPORT_1,absent,scalar-name,bank0;bank1
+0x0766,SUPPORT_2,SUPPORT_2,present-untested,scalar-name,bank0;bank1
+0x0767,TRIGGER,TRIGGER,confirmed-working,scalar-name,bank0;bank1
+0x0768,SWITCH_STATUS,SWITCH_STATUS (SUPER_KEY_LOCK_STATUS),confirmed-working,scalar-name,bank0;bank1
+0x0726,OEM_9,OEM_9 (AC_AUTO_BOOT_ENABLE),absent,scalar-name,bank0;bank1
+0x07A6,OEM_4_CHARGING_PROFILE,OEM_4 (CHARGING_PROFILE_MASK),confirmed-working-partially,override,bank0;bank1
+0x07B9,CHARGE_CTRL,CHARGE_CTRL (numeric threshold),unknown-not-absent,scalar-name,bank0;bank1
+0x07D0,BATTERY_CHARGE_LIMIT_DOWN,"BATTERY_CHARGE_LIMIT_DOWN (Windows-only address, no uniwill-laptop equivalent)",unknown-not-absent-DO-NOT-WRITE-BLIND,scalar-name,bank0;bank1
+0x0748,LIGHTBAR_AC_CTRL,LIGHTBAR_AC_CTRL / RED / GREEN / BLUE,confirmed-not-this-mechanism,name-split,bank0;bank1
+0x0749,LIGHTBAR_AC_CTRL_RED,LIGHTBAR_AC_CTRL / RED / GREEN / BLUE,confirmed-not-this-mechanism,name-split,bank0;bank1
+0x074A,LIGHTBAR_AC_CTRL_GREEN,LIGHTBAR_AC_CTRL / RED / GREEN / BLUE,confirmed-not-this-mechanism,name-split,bank0;bank1
+0x074B,LIGHTBAR_AC_CTRL_BLUE,LIGHTBAR_AC_CTRL / RED / GREEN / BLUE,confirmed-not-this-mechanism,name-split,bank0;bank1
+0x07E2,LIGHTBAR_BAT_CTRL,LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE,unknown-not-absent,name-split,bank0;bank1
+0x07E3,LIGHTBAR_BAT_CTRL_RED,LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE,unknown-not-absent,name-split,bank0;bank1
+0x07E4,LIGHTBAR_BAT_CTRL_GREEN,LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE,unknown-not-absent,name-split,bank0;bank1
+0x07E5,LIGHTBAR_BAT_CTRL_BLUE,LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE,unknown-not-absent,name-split,bank0;bank1
+0x078C,KBD_STATUS,KBD_STATUS,present-untested,scalar-name,bank0;bank1
+0x07CC,USB_C_POWER_PRIORITY,USB_C_POWER_PRIORITY,present-untested,scalar-name,bank0;bank1
+0x043E,CPU_TEMP,CPU_TEMP,confirmed-working,scalar-name,bank0;bank1
+0x044F,GPU_TEMP,GPU_TEMP,confirmed-working,scalar-name,bank0;bank1
+0x04A6,BAT_CYCLE_COUNT_0,BAT_CYCLE_COUNT,confirmed-working,override,bank0;bank1
+0x04A7,BAT_CYCLE_COUNT_1,BAT_CYCLE_COUNT,confirmed-working,override,bank0;bank1
+0x0522,CHARGE_TARGET_MV_0,CHARGE_TARGET_MV (charger constant-voltage target),confirmed-working,override,bank0;bank1
+0x0523,CHARGE_TARGET_MV_1,CHARGE_TARGET_MV (charger constant-voltage target),confirmed-working,override,bank0;bank1
+0x030E,SBS_CHARGING_VOLTAGE_0,SBS_CHARGING_VOLTAGE (pack-requested charge voltage),present-untested,override,bank0;bank1
+0x030F,SBS_CHARGING_VOLTAGE_1,SBS_CHARGING_VOLTAGE (pack-requested charge voltage),present-untested,override,bank0;bank1
+0x0783,CPU_PL1,CPU_PL1 / PL2 / PL4 (APL1/APL2/APL4),present-untested,name-split,bank0;bank1
+0x0784,CPU_PL1_PL2,CPU_PL1 / PL2 / PL4 (APL1/APL2/APL4),present-untested,name-split,bank0;bank1
+0x0785,CPU_PL1_PL4,CPU_PL1 / PL2 / PL4 (APL1/APL2/APL4),present-untested,name-split,bank0;bank1
+0x0751,MANUAL_FAN_CTRL,MANUAL_FAN_CTRL (power mode / fan mode),present-untested,scalar-name,bank0;bank1
+0x0782,BIOS_OEM_2,BIOS_OEM_2 (DEFAULT_MODE / FAN_QKEY / FAN_TABLE_OFFICE_MODE),present-untested,scalar-name,bank0;bank1
+0x049F,BIOS_INFO_3,BIOS_INFO_3 (Turbo mode supported),present-untested,scalar-name,bank0;bank1
+0x0730,MODE_PL_DEFAULTS_GAMING_PL1_0,MODE_PL_DEFAULTS (per-mode PL1/PL2/PL4/D-state defaults),present-untested,override,bank0;bank1
+0x0731,MODE_PL_DEFAULTS_GAMING_PL2_1,MODE_PL_DEFAULTS (per-mode PL1/PL2/PL4/D-state defaults),present-untested,override,bank0;bank1
+0x0732,MODE_PL_DEFAULTS_GAMING_PL4_2,MODE_PL_DEFAULTS (per-mode PL1/PL2/PL4/D-state defaults),present-untested,override,bank0;bank1
+0x0733,MODE_PL_DEFAULTS_GAMING_DSTATE_3,MODE_PL_DEFAULTS (per-mode PL1/PL2/PL4/D-state defaults),present-untested,override,bank0;bank1
+0x0734,MODE_PL_DEFAULTS_OFFICE_PL1_4,MODE_PL_DEFAULTS (per-mode PL1/PL2/PL4/D-state defaults),present-untested,override,bank0;bank1
+0x0735,MODE_PL_DEFAULTS_OFFICE_PL2_5,MODE_PL_DEFAULTS (per-mode PL1/PL2/PL4/D-state defaults),present-untested,override,bank0;bank1
+0x0736,MODE_PL_DEFAULTS_OFFICE_PL4_6,MODE_PL_DEFAULTS (per-mode PL1/PL2/PL4/D-state defaults),present-untested,override,bank0;bank1
+0x0737,MODE_PL_DEFAULTS_OFFICE_DSTATE_7,MODE_PL_DEFAULTS (per-mode PL1/PL2/PL4/D-state defaults),present-untested,override,bank0;bank1
+0x07A7,MODE_PL_DEFAULTS_TURBO_PL1_8,MODE_PL_DEFAULTS (per-mode PL1/PL2/PL4/D-state defaults),present-untested,override,bank0;bank1
+0x07A8,MODE_PL_DEFAULTS_TURBO_PL2_9,MODE_PL_DEFAULTS (per-mode PL1/PL2/PL4/D-state defaults),present-untested,override,bank0;bank1
+0x07A9,MODE_PL_DEFAULTS_TURBO_PL4_10,MODE_PL_DEFAULTS (per-mode PL1/PL2/PL4/D-state defaults),present-untested,override,bank0;bank1
+0x07AA,MODE_PL_DEFAULTS_TURBO_DSTATE_11,MODE_PL_DEFAULTS (per-mode PL1/PL2/PL4/D-state defaults),present-untested,override,bank0;bank1
+0x07D8,MODE_TCC_OFFSET_DEFAULTS_GAMING_0,MODE_TCC_OFFSET_DEFAULTS,present-untested,override,bank0;bank1
+0x07D9,MODE_TCC_OFFSET_DEFAULTS_OFFICE_1,MODE_TCC_OFFSET_DEFAULTS,present-untested,override,bank0;bank1
+0x07DA,MODE_TCC_OFFSET_DEFAULTS_TURBO_2,MODE_TCC_OFFSET_DEFAULTS,present-untested,override,bank0;bank1
+0x0786,CPU_TCC_OFFSET,CPU_TCC_OFFSET (APTC/APTN),present-untested,scalar-name,bank0;bank1
+0x07C6,AP_OEM_6,AP_OEM_6 (whisper status / universal fan control),present-untested,scalar-name,bank0;bank1

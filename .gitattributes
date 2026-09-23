@@ -1,0 +1,14 @@
+# Ghidra project databases are committed, but they are not text.
+#
+# A .rep is a mix of binary (the HSQLDB pages, *.gbf) and XML (project.prp and
+# the idata/*.prp property files). Without -merge, git is happy to text-merge
+# two branches' project.prp on a two-branch merge and produce a project that is
+# neither branch's -- a conflict-free merge that silently loses whichever side
+# lost. -merge makes git refuse instead, which is the correct outcome: a
+# project that two branches both rebuilt has to be re-rebuilt, not merged.
+#
+# This is not optional decoration; it is the difference between a loud conflict
+# and a corrupt database.
+*.gpr            binary -diff -merge
+*.gbf            binary -diff -merge
+**/*.rep/**      binary -diff -merge

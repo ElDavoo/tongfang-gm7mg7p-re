@@ -22,3 +22,15 @@ __pycache__/
 # agent-followups.yml's scratch context, written inside the checkout on
 # purpose (see that workflow's comments) and never meant to be committed
 .agent-context/
+
+# Ghidra's project lock markers. Written while a project is open and removed
+# when it closes; a committed one makes Ghidra treat the project as held by
+# another process and refuse to open it. Scoped to the project directories
+# rather than a blanket *.lock, which would hide unrelated files.
+*/ghidra/project/*.lock
+*/ghidra/project/*.lock~
+
+# Claude Code's local state, which can appear inside a checkout. Also worth
+# ignoring because agent-gates.sh's shellcheck pass runs `find . -name '*.sh'`
+# and would otherwise walk any worktree checkout under here.
+.claude/

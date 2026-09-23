@@ -183,6 +183,21 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   resolve no stride, kept in the file rather than filtered out, because "not
   resolved by this method" is a result too. Produced by
   `tools/pd_index_geometry.py --strides-csv` and checked by its `--self-test`.
+- **`tools/build_ec_decompile.py`** — builds the Ghidra project and the
+  decompiled C. Imports the three programs, seeds them, applies
+  `annotations/ghidra-functions.csv` and the generated XDATA names, and
+  exports one C file per function to `decompiled/`. Two modes: the default
+  re-exports from the committed project without touching it, and
+  `--mode rebuild-project` rewrites the project. `--check` and `--self-test`
+  run with no Ghidra and no network and are what CI calls.
+  `--self-test --oracle` additionally rebuilds and checks the output against
+  the hand reading in `annotations/charge-target-derating.md`. Method,
+  measured coverage and limits: `ghidra/README.md`.
+- **`tools/gen_xdata_symbols.py`** — turns `annotations/registers.yaml` into
+  the XDATA symbol table Ghidra applies, so the decompile reads `PROJECT_ID`
+  rather than `DAT_EXTMEM_0740`. It reads `registers.yaml` and never writes
+  it. Addresses it cannot name are reported, not dropped; the escape hatch is
+  `ghidra/xdata-overrides.csv`.
 - **`annotations/index-table-spans.csv`** — one row per candidate call site:
   the table's span, its case range, and the site's own `frame_onto`/
   `frame_over`. It is the census, not a filtered view of it, so a site whose
@@ -214,9 +229,12 @@ needs:
    laptop; issue #7 in upstream `uniwill-laptop` documents a case where a
    *register write* alone required a 30s power-button EC reset to recover.
 
-Treat this as the honest state: a documented, reproducible starting point
-for a Ghidra 8051-processor-module project (`ghidra/` is a placeholder for
-that), not a finished decompiler. See the repo's GitHub issues for the
+Treat this as the honest state: the Ghidra project now exists
+(`ghidra/project/`, with 2,676 decompiled functions under `decompiled/`), so
+items 1 and 2 above have a real starting point rather than a plan — but a
+*correct, complete* reassembly is still a project, not a script, and nothing
+here has been reassembled or reflashed. `ghidra/README.md` has the method, the
+measured coverage, and the limits. See the repo's GitHub issues for the
 concrete next steps, several of which are independently useful (e.g. the 254
 call sites referencing `0x07D0`, which `trace_xdata_refs.py` places in the PD
 image rather than the EC and `annotations/ec-0x07d0-sites.md` now maps one by
