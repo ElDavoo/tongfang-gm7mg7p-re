@@ -79,6 +79,13 @@ registers:
       a read-modify-write of bit 0
       (windows/decompiled/v3.1.39.0/GCUService/MyECIO/MyEcCtrl.cs).
       Read live 2026-09-19 as 0x01 with the vendor service running.
+      Bit 7 of the same byte, BIOS side only (docs/findings.md 7): BIOS
+      1.09's OemOcDxe reads 0x0741 on every boot (EC commands 0xA3 07,
+      0xA2 41, 0xA4). If bit 7 is set, it disables CpuSetup "OverClocking
+      Feature", sets UniWillVariable.OverClockRecoveryFlag, and writes the
+      byte back with bit 7 cleared (0xA5). So bit 7 reads as an
+      "overclock failed, recover" request from the EC. Which EC code sets it,
+      and when, is not traced; the status above is for bit 0 only.
 
   - name: CTGP_DB_CTRL / OFFSET
     addr: [0x0743, 0x0744, 0x0745, 0x0746]

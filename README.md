@@ -71,6 +71,8 @@ ec/                       EC firmware (ITE 8051, banked), disassembly tools,
                           the register cross-reference (annotations/registers.yaml)
 windows/                  Decompiled vendor Windows service, anti-tamper notes,
                           extraction pipeline
+bios/                     BIOS 1.09 Setup IFR and decompiled vendor Oem* modules,
+                          regenerated from vendor/ by bios/tools/bios_extract.py
 linux/                    uniwill-laptop patch, NixOS module config, battery
                           tracing scripts used to gather the evidence below
 vendor/                   Vendor binaries as shipped (BIOS/EC update package,

@@ -34,3 +34,13 @@ independently checkable rather than taken on faith:
   the machine trace, which ended before the visual report was received.
   Source for findings.md §3's 2026-09-17 static-control result; not evidence
   of complete kernel-driver or lifecycle support.
+- **`uefi/2026-09-19-UniWillVariable.{bin,txt}`, `uefi/2026-09-19-variable-list.txt`**:
+  the vendor's shared settings variable after a BIOS load-defaults, and
+  every OS-visible UEFI variable. Source for findings.md §6.
+- **`uefi/2026-09-23-UniWillVariable-{before,after}-memoc.bin`**,
+  **`uefi/2026-09-23-MemoryOverClockSwitch-set.txt`**: the live write
+  of `MemoryOverClockSwitch` (0x33) 0 → 1 with `windows/tools/uniwill_set.py`.
+  The two dumps differ at that byte only.
+- **`uefi/2026-09-23-memory-menu-observation.md`**: the owner's report
+  that the BIOS setup's "Memory" (Memory Overclocking Menu) entry appeared
+  after that write and a reboot. Source for findings.md §7's live result.
