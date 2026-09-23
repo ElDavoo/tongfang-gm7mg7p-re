@@ -1655,6 +1655,71 @@ up on a second address. `MANUAL_FAN_CTRL` therefore stays `present-untested`.
 `hardware-tests/manual-fan-ctrl-0751-isolation.md` is the procedure that
 would settle it, written for a human with the machine and **not run**.
 
+### 7b. The window stops at the branch: both arms of all 17 mode-bit branches (2026-09-23, issue #129)
+
+§7a is a statement about an 8-instruction window around each of the 29 sites,
+and the window ends at the first control-flow instruction. For 17 of them that
+instruction *is* a conditional branch on a mode bit, so both arms were
+unexamined when §7a was written — and the arms are where the code is. All 34
+are now walked, with `ec/tools/walk_branch_arms.py` and the committed table
+`../ec/annotations/manual-fan-ctrl-0751-arms.csv`; the per-site reading is §9
+of `../ec/annotations/manual-fan-ctrl-0751.md`.
+
+Three results, and the first is the one §7a was reaching for.
+
+- **Both candidate fan-PWM bytes are written on a path a `0x0751` bit
+  selects.** `0x075B` at the `0x89E0` and `0xBB29` write sites, on the Fan
+  Boost *not set* side of the `0x8942`/`0x899D` arms; `0x075C` at `0x8F0A`
+  and `0x8F11`, on *both* arms of `0x8E8B` (USER). A byte scan puts these two
+  bytes' write sites at five addresses in the main EC and the arms reach four
+  of them; the fifth, `0x87C5`, is not reachable from any of the 34, which is
+  the limit of the claim rather than a fact about the EC. Neither address is
+  in `registers.yaml` and
+  neither has ever been confirmed, so this is **not** "the fan PWM bytes are
+  the mode byte's effect" — it is that the EC stores to both bytes there, on a
+  path chosen by one bit. That is the static prediction
+  `hardware-tests/manual-fan-ctrl-0751-isolation.md` §4.4 was asking for: two
+  named bytes to watch and a named bit to flip, instead of a pointer at
+  `0x075B`/`0x075C` with no prior.
+- **The Fan Boost arms gate on temperature, and the EC writes `0x0751` back.**
+  `0x8942`'s BOOST-set arm reads `0x085F` against `0x3C` (60), `0x086C` against
+  `0x50` (80), then `CPU_TEMP` `0x043E` and `GPU_TEMP` `0x044F` against `0x46`
+  (70 °C) — and if both are under the limit, clears `BOOST` in the mode byte at
+  `0x8990`. So there are now three paths on which the EC writes `0x0751`
+  (§7a's two boot defaults, and this), and a host write need not persist. For
+  a driver that is a first-order fact, and it is not in §7a.
+- **§7a's no-PL-write conclusion survives the arms.** None of the 34 arms, nor
+  any of the 137 callee rows at `--callee-depth 1`, stores to `0x0783-0x0785`.
+  The arms do *read* `0x0784` and `0x0785` and branch on them, so the mode
+  bits gate code that consults the power limits rather than setting them. Read
+  and write are different claims and §7a's was about the write, so this
+  refines it rather than correcting it — no retraction is warranted.
+
+**Calibration, because the negatives are the deliverable.** Every arm reports
+`status: complete` at the tool's default bounds, so "no arm found by this
+method writes a PL" is not "the walk gave up first". The method's blind spots
+are still named per row in the CSV — indirect `movx @Ri`, a `DPTR` built at run
+time, a callee not followed — and one of them bit here in a way worth
+recording: the bank1 `0x9432` arms hand `0x93B6`/`0x93E6` to `r2`/`r1` and
+rebuild `DPTR` from them, so a tool tracking only `mov 0x82,a` would report
+`0x93E6` as an XDATA register. It is a **CODE** pointer — the same blind spot
+as §7a's computed `DPH`, on the other side of the same argument.
+
+There is a method finding inside the tool worth its own line, because it is
+the kind that silently corrupts a table: writing the PC-relative branches as
+the range `0xB4-0xDF` treats `clr c` (`0xC3`) and `setb c` (`0xD3`) as
+branches, and the walk then decoded the rest of a routine as `dec r0` /
+`db 0x06`. The correct set is `disasm8051.REL_OPCODES`, which the tool imports
+rather than restating, and `walk_branch_arms.py --self-test` now carries a
+fixture that fails if the range comes back.
+
+**None of this is a live test.** No register was read back and no hardware was
+observed; there is no laptop on this runner. `MANUAL_FAN_CTRL` stays
+`present-untested` and its `static_refs*` counts stay 29/29/0 — a static walk
+cannot move them, and the status vocabulary reserves `confirmed-inert` for a
+live three-value, both-service-states run that §7 of the isolation procedure
+specifies.
+
 ## 8. The Memory Overclocking Menu is behind one `UniWillVariable` byte (2026-09-23)
 
 **Result, confirmed live.** Setting `UniWillVariable.MemoryOverClockSwitch`

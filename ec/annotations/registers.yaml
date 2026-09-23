@@ -1316,6 +1316,36 @@ registers:
       under a no-op control write, i.e. thermally. That needs a fixed-load
       comparison. Upstream defines the address but never touches it.
 
+      2026-09-23 (issue #129), the branch arms the window above stops short
+      of, ec/annotations/manual-fan-ctrl-0751.md 9: all 34 arms of the 17
+      mode-bit branches walked with a new tool
+      (ec/tools/walk_branch_arms.py, committed table
+      manual-fan-ctrl-0751-arms.csv). This is a prediction for the
+      fixed-load run, not a result from it -- no hardware was reachable.
+      Three things the arms add, none of which moves the status:
+
+      (1) The two candidate fan-PWM bytes are written on a path a bit of
+      this byte selects. 0x075B at the 0x89E0 and 0xBB29 write sites, on
+      the Fan Boost *not set* side of 0x8942/0x899D; 0x075C at 0x8F0A and
+      0x8F11, on both arms of 0x8E8B. Neither address is in this file and neither
+      has been confirmed, so what is established is that the EC stores to
+      both there -- not that they are fan PWM, and not that anything
+      reacts to a value written here.
+
+      (2) The Fan Boost arms gate on temperature, not on a duty copy:
+      0x8942's BOOST-set arm compares CPU_TEMP (0x043E) and GPU_TEMP
+      (0x044F) against 0x46 (70 degC) and, if both are under it, clears
+      FAN BOOST in this byte at 0x8990. So the EC writes 0x0751 on at
+      least three paths, and a host write need not persist.
+
+      (3) The no-arm-writes-a-PL conclusion survives: none of the 34 arms,
+      nor any of the 137 callee rows at --callee-depth 1, stores to
+      0x0783-0x0785. The arms do *read* 0x0784 and 0x0785 and branch on
+      them, which is a different claim and does not change 9 of that file.
+      Every arm reports status: complete at the tool's default bounds, so
+      the negative is "no arm found by this method", not "the walk gave
+      up" -- and it is still not evidence the EC does not.
+
   - name: BIOS_OEM_2 (DEFAULT_MODE / FAN_QKEY / FAN_TABLE_OFFICE_MODE)
     addr: 0x0782
     sources: [uniwill-laptop(EC_ADDR_BIOS_OEM_2), ecspec-3.1.6.0(ADDR_BIOS_OEM_BYTE2),
