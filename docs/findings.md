@@ -2106,3 +2106,81 @@ have their own guards (evidence citation non-empty, an annotation address that
 resolves to an exported function), they are not "the EC and BIOS indexes", and
 widening `strict=True` to them is a separate call with its own blast radius.
 Named here as a possible follow-up, not silently skipped.
+
+## 16. The four offline suites are one command, and one of them was an ordering accident (2026-09-23, issue #162)
+
+The repository's offline `unittest` suites were four files that no gate and no
+workflow ran: `ec/tools/test_grade_0751_isolation.py` (16 tests),
+`windows/tools/test_manual_fan_ctrl_probe.py` (17), `windows/tools/test_ec_watch.py`
+(3) and `linux/lightbar/test_probe_6005.py` (4) — **40 tests, none of them
+executed by CI**. A green pipeline proved three of the four compile, because the
+cheap tier's `check_python_syntax` `py_compile`s the `windows/tools/*.py` and
+`ec/tools/*.py` globs, and it ran none of them. `tools/run-tests.sh` is the one
+command now: `bash tools/run-tests.sh` discovers every `test_*.py` under the
+repository, runs each in a fresh interpreter, and exits non-zero on any failure.
+`tools/README.md` is its documentation.
+
+**The finding is what the runner had to be built around, and it is a real one
+rather than a style choice.** Both `windows/tools` suites install a fake `ecrw`
+into `sys.modules` with `setdefault`, and the two fakes are not the same shape:
+
+- `test_manual_fan_ctrl_probe.py:38-40` — exports `Ec` only, which is all
+  `manual_fan_ctrl_probe.py:63` imports.
+- `test_ec_watch.py:86-89` — exports `Ec` and `EcError`, because
+  `ec_watch.py:42` does `from ecrw import Ec, EcError`.
+
+In one shared interpreter, whichever suite imports first wins that
+`setdefault`, and the second one dies. Measured, on a scratch copy of
+`windows/tools/` with the probe's suite renamed `test_aaa_probe_first.py` so it
+sorts first:
+
+```
+$ python3 -m unittest discover -s "$scratch" -p 'test_*.py'
+    from ecrw import Ec, EcError
+ImportError: cannot import name 'EcError' from 'ecrw' (unknown location)
+----------------------------------------------------------------------
+Ran 18 tests in 0.383s
+FAILED (errors=1)
+```
+
+18 rather than 20 because unittest synthesises a single `_FailedTest` for the
+module that failed to import, so the `ec_watch` suite's three tests never
+collected. The same copy under `bash tools/run-tests.sh "$scratch"` passes all
+20, one interpreter per file.
+
+**So both suites pass today only because `unittest` discovery sorts
+`test_ec_watch` before `test_manual_fan_ctrl_probe`**, and the fuller fake wins.
+That is an ordering accident, nothing asserts it, and a rename that reorders
+them turns it into a red build the moment a runner exists to run it. It was
+latent precisely because nothing ran them.
+
+Two consequences, and the second is the one to carry forward:
+
+1. **The runner isolates per *file*.** Per-directory isolation would not have
+   helped — both suites live in one directory — and neither would leaving it to
+   discovery order. The reason is written into the script at the loop, because
+   the next reader will otherwise helpfully collapse it into a single discovery
+   run and land the landmine.
+2. **The durable fix is to reconcile the two fakes**, and it is deliberately not
+   done here: it edits two currently-passing suites this issue did not ask
+   about. It is a follow-up, and the isolation is what keeps it from biting
+   meanwhile.
+
+**What this does and does not buy.** The suites are now one command a human or a
+future gate can call, and the runner is shellchecked for free by the existing
+`check_shellcheck` (which is why it is a shell script — `check_python_syntax`
+globs only the four component `tools/` directories and would not have covered a
+root `tools/*.py`). **It is not CI: no gate and no workflow calls it**, because
+`agent-gates.sh` is copied from `ElDavoo/agent-pipeline` and the pipeline token
+has no `workflow` scope. `docs/agent-pipeline.md` carries the one function and
+one `gate` line that wire it in, and the runner prints its own scope on every
+run so the deferral is visible in the output. The runner is **0.77 s** here
+(0.76–0.77 s over five runs) against a cheap tier §14e records at 5.9 s on a
+GitHub-hosted runner — two different machines, and the ratio rather than either
+absolute is the argument that the wiring is cheap.
+
+None of the 40 tests is hardware evidence. They mock device discovery, file
+opening and ioctls against hand-built fixtures, and the two `windows/tools`
+suites fake `ecrw` precisely so no Windows box is needed: no EC is opened, no
+register is read back, and no HID node is touched. What they establish is that
+the tools behave as specified on those fixtures, and nothing about the machine.

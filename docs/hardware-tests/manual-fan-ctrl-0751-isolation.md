@@ -266,6 +266,15 @@ hold is up. The two forms produce the same *kind* of number — net movement per
 arm, which is §4.4's comparison — but a probe block is a shorter block, and a
 run that used only the probe is not a §3 run that was quicker.
 
+What §3b lists is what the tool half is *specified* to do, and the tool half's
+behaviour is checked offline: `windows/tools/test_manual_fan_ctrl_probe.py`
+scripts both arms byte by byte, and `bash ../../tools/run-tests.sh` from the
+repository root runs it along with every other `test_*.py` there
+(`../../tools/README.md`). So the reader setting out for the machine is not
+taking the tool's first run to the EC: the arms, the sweep and the `0x0751`
+grader have all had a mocked, no-hardware pass, and none of it is evidence about
+this machine — which is what §7's `present-untested` still waits on.
+
 ## 4. What to read off
 
 For each run, from the three CSVs plus the by-hand power readings:

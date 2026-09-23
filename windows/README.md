@@ -86,6 +86,25 @@ including `ECRR`/`ECRW`, an EC register read/write pair addressed by
 `0xFE410000 + addr`. `tools/pe_triage.py` and `tools/disasm.sh` regenerate
 every number in those write-ups.
 
+## Offline tests
+
+Two of the tools carry offline `unittest` suites, and both run from Linux with
+no Windows box, no EC and no vendor code:
+
+```sh
+bash tools/run-tests.sh            # from the repository root: these two, and the other two
+bash tools/run-tests.sh windows/tools
+```
+
+`tools/test_manual_fan_ctrl_probe.py` scripts the probe's two arms byte by byte
+and `tools/test_ec_watch.py` checks the mark lands in the CSV between the two
+change rows. Both work by faking `ecrw` — the module binds kernel32 at import
+time and only loads on Windows — which is also what makes the arms scriptable.
+`../tools/README.md` is the canonical home for the command, and records why the
+runner gives each suite its own interpreter: the two `ecrw` fakes are not the
+same shape, and a single shared discovery over this directory breaks on
+whichever one imports second (`docs/findings.md` §16).
+
 ## What's proven vs. what needs a Windows box
 
 Everything above was done **without running any vendor code** — pure static
