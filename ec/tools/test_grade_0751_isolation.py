@@ -32,6 +32,43 @@ MULTI_MOVE = (str(HERE / 'testdata'
               str(HERE / 'testdata'
                   / '0751-isolation-example-multi-move-0400-045f.csv'))
 
+# §6 of the procedure, reconstructed. The one command line §6 gives a reader
+# to run, in §6's own order -- three captures, then the before-dump, then the
+# after-dump, then what the block wrote -- over the eight files that section
+# names, which testdata/0751-isolation-run/ holds under exactly those names.
+RUN = HERE / 'testdata' / '0751-isolation-run'
+RUN_CAPTURES = (str(RUN / '2026-01-01-0751-isolation-0700-07ff.csv'),
+                str(RUN / '2026-01-01-0751-isolation-0f00-0f5f.csv'),
+                str(RUN / '2026-01-01-0751-isolation-0400-045f.csv'))
+RUN_BEFORE = str(RUN / '2026-01-01-0751-isolation-a0-before-0700.txt')
+RUN_AFTER = str(RUN / '2026-01-01-0751-isolation-a0-after-0700.txt')
+# The runbook, whose §6 is the list these fixtures are named from.
+RUNBOOK = (HERE.resolve().parents[1] / 'docs' / 'hardware-tests'
+           / 'manual-fan-ctrl-0751-isolation.md')
+
+
+def section6_file_list(doc):
+    """The file names §6 lists, with the two placeholders substituted.
+
+    Read out of the runbook rather than restated, because §6 is the contract
+    the fixtures are named from: a rename on either side has to be a change
+    to both or a failing test, not a silent disagreement. Raises rather than
+    returning nothing if the section or its fenced list cannot be found, so a
+    restructure cannot turn this into a test that passes on an empty set.
+    """
+    if "\n## 6. " not in doc:
+        raise AssertionError("no §6 in the runbook; the file list to check "
+                             "the fixtures against has moved or gone")
+    section = doc.split("\n## 6. ", 1)[1].split("\n## 7. ", 1)[0]
+    fence = re.search(r"```\n(.*?)```", section, re.S)
+    if fence is None:
+        raise AssertionError("§6 has no fenced file list any more")
+    names = {line.strip().replace("<date>", "2026-01-01").replace("<value>", "a0")
+             for line in fence.group(1).splitlines() if line.strip()}
+    if not names:
+        raise AssertionError("§6's fenced block is empty")
+    return names
+
 
 def run(*argv):
     out, err = io.StringIO(), io.StringIO()
@@ -162,6 +199,70 @@ class GradeTests(unittest.TestCase):
             after.write_text('0750: 00 00\n')
             _, out, _ = run(QUIET, '--dump', str(after), '--wrote', '0xA0')
         self.assertIn('something put it back', out)
+
+    def test_a_dump_header_comment_is_skipped(self):
+        # §6 tells the operator to annotate what they hand in, and
+        # read_capture has always let them. A comment carrying a colon is the
+        # case that shows whether read_dump skips them too -- without the skip
+        # it reaches int() and raises instead of reading the dump.
+        with tempfile.TemporaryDirectory() as tmp:
+            plain = Path(tmp) / 'plain-0700.txt'
+            plain.write_text('0750: 00 a0 02 03\n')
+            annotated = Path(tmp) / 'annotated-0700.txt'
+            annotated.write_text('# ecrw.py dump 0x0700 0x0100: before, a0 block\n'
+                                 '0750: 00 a0 02 03\n')
+            self.assertEqual(grade.read_dump(str(plain))[0x0751], 0xA0)
+            self.assertEqual(grade.read_dump(str(annotated)),
+                             grade.read_dump(str(plain)))
+            _, out, _ = run(QUIET, '--dump', str(annotated), '--wrote', '0xA0')
+        self.assertIn('0x0751 = 0xA0', out)
+
+    # §6 end to end, over the eight files §6 names and by the command line §6
+    # gives. Everything a reader of that command line would take from its
+    # output, asserted here, because nothing in the repository had been
+    # through the whole of §6 before.
+    def test_section6_command_line_over_section6s_file_set(self):
+        rc, out, _ = run(*RUN_CAPTURES,
+                         '--dump', RUN_BEFORE, '--dump', RUN_AFTER,
+                         '--wrote', '0xA0')
+        self.assertEqual(rc, 0)
+        # Three actions, nine MARK rows: each is marked in all three
+        # watchers seconds apart, which is what the merge is for.
+        self.assertIn('=== 3 window(s), one per mark ===', out)
+        self.assertEqual(out.count('no watched byte moved in this window'), 3)
+        # §4.4's deciding pair, and it reads ambiguous: the candidate PWM
+        # netted 3 under the no-op and 2 under the write, so the write's
+        # movement is inside the control's spread. CPU_TEMP is up across both.
+        self.assertIn('window delta  0x075B  0x64 -> 0x67  net +3  (2 changes)',
+                      out)
+        self.assertIn('window delta  0x075B  0x67 -> 0x69  net +2  (1 change)',
+                      out)
+        self.assertIn('window delta  0x043E  0x33 -> 0x35  net +2  (1 change)',
+                      out)
+        # §4.1-§4.3, the half the script does apply, and the half the dumps
+        # then confirm: nothing the prediction named moved in any window.
+        self.assertIn('None of the §4.1-§4.3 bytes moved', out)
+        self.assertNotIn('At least one of the §4.1-§4.3 bytes moved', out)
+        # The fan-table capture contributes its three marks and no change
+        # rows at all -- §4.2's prediction as the grader sees it.
+        self.assertIn('2026-01-01-0751-isolation-0f00-0f5f.csv: 3 mark(s), '
+                      '0 change row(s)', out)
+        # §4.6: the after-dump is the last --dump, which is why §6 says to put
+        # it last -- and holding the written value is a readback, not a result.
+        self.assertIn('2026-01-01-0751-isolation-a0-before-0700.txt: '
+                      '0x0751 = 0x10', out)
+        self.assertIn('the last dump still holds the written 0xA0', out)
+        self.assertIn('that is a readback, not evidence', out)
+        self.assertIn('not the call itself', out)
+
+    # §6's list and the fixture set are the same set. Equality, not existence:
+    # a name changed on one side and not the other, and a stray file, both have
+    # to fail rather than quietly pass on a subset.
+    def test_section6s_file_list_is_the_fixture_set(self):
+        doc = RUNBOOK.read_text(encoding="utf-8")
+        listed = {Path(n).name for n in section6_file_list(doc)}
+        on_disk = {p.name for p in RUN.iterdir() if p.is_file()}
+        self.assertEqual(listed, on_disk)
 
 
 if __name__ == '__main__':

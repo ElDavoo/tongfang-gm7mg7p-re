@@ -131,10 +131,18 @@ def read_capture(path):
 
 
 def read_dump(path):
-    """addr -> byte, from `ecrw.py dump` output (`0700: 12 34 ...`)."""
+    """addr -> byte, from `ecrw.py dump` output (`0700: 12 34 ...`).
+
+    `#` lines are skipped, as `read_capture` skips them. The two are written
+    by the same operator out of the same run, and §6 tells them to annotate
+    what they hand in; a comment carrying a colon is otherwise read as a row
+    of bytes and raises out of `int()`.
+    """
     values = {}
     with open(path) as f:
         for line in f:
+            if line.startswith("#"):
+                continue
             base, _, rest = line.partition(":")
             if not rest.strip():
                 continue

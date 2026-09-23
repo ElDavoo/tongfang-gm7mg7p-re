@@ -7,8 +7,8 @@ in an interactive session on that machine. Writing `0x0751` alone to each of
 `0x07C6`, not the GPU bytes — confirming the static prediction that the EC
 does not derive the bundle from the mode byte. The run used the equivalent
 single-tool form `windows/tools/manual_fan_ctrl_probe.py` (which watches the
-same addresses and self-restores) rather than the two-`ec_watch` form in §5;
-the raw log is `evidence/ec-watch/2026-09-23-0751-isolation.txt`, and the
+same addresses and self-restores) rather than the three-`ec_watch` form in
+§3; the raw log is `evidence/ec-watch/2026-09-23-0751-isolation.txt`, and the
 result is folded into `MANUAL_FAN_CTRL` in `ec/annotations/registers.yaml`.
 The one part §7 leaves open — whether the fan-mode bits scale fan behaviour
 along the unchanged curve — was **not** settled (the run was near-idle); the
@@ -21,6 +21,15 @@ form runs the tightened procedure in one console. The re-run itself is
 still **not** done — it needs the physical machine. The rest of this file is
 the original procedure, kept for that re-run and for anyone reproducing the
 test.
+
+**This file is the reference; the tool is the half that moves.** The two used
+to carry different numbers — §3's ~30 s hold and `--interval 0.5` against the
+probe's 20 s and a hardcoded 0.3 s sweep — which is the defect issue #146 is
+about. The probe now defaults to §3's numbers and takes `--interval` instead
+of hardcoding a cadence. Neither that nor anything else here makes an interval
+safe: §3's pacing note is unchanged, and the §4.4 grading is still a human's
+call. §3b is the other half of the reconciliation — what the single-tool form
+does *not* do, and what a run using it must still do by hand.
 
 ## 1. The question
 
@@ -215,6 +224,44 @@ minimum issue #122 asks for. It is not enough for §7's `confirmed-inert`,
 which names all three values, so a two-arm run closes the re-assert question
 and leaves the three-value sweep open.
 
+### 3b. What the single-tool form does not cover
+
+`../../windows/tools/manual_fan_ctrl_probe.py` runs §3's no-op control arm, the
+write, and the restore in one console, and its defaults now match §3's hold
+and cadence. It is not the whole procedure, and four things a §3 run needs
+that a probe run does not produce are worth writing down, so that "the probe
+does §3" is not read as "the probe does all of this file".
+
+- **§3a's service-stopped pass.** The probe's two arms are two writes; it has
+  no way to be told the vendor service is stopped, and stopping it is a human's
+  step. §3a's second pass, at minimum the Office-vs-Turbo pair, is still a
+  separate run with the service down.
+- **§4.5's package-power notes.** No EC byte carries CPU package power, so no
+  sweep in §3 or in the probe can show it. Read it from HWiNFO by hand at each
+  mark, whichever form the block came from. The probe prints the two
+  temperature bytes because those *are* in the sweep; it does not substitute
+  for the power reading, and §7 keys `confirmed-working` on either.
+- **The `*-before-0700.txt` / `*-after-0700.txt` dump pair.** The probe writes
+  no dump, so §4.6 has nothing to read on a probe run: the question "does
+  `0x0751` still hold your value at the end of the window" needs the two range
+  dumps §3's steps 0 and 6 take, and `--dump` in
+  `../../ec/tools/grade_0751_isolation.py` is what reads them. A probe run
+  answers §4.4's PWM comparison and nothing else in §4.
+- **§6's eight files.** A probe run produces none of them — no MARK-CSV, no
+  dumps, no snapshot — so there is nothing to index in `evidence/README.md` and
+  nothing for the grader to apply §4.1-§4.3 and §4.6 to. If the day is taken
+  with the probe, the run stays a log the way 2026-09-23's did, and §7 has no
+  capture behind it.
+
+And one difference in shape, which the numbers do not show. A §3 block is
+~10 s settle + ~30 s hold + ~60 s watch, so ~100 s of observation in all, with
+marks at both ends of each of those three stages. A probe block is one hold
+per arm, ~30 s each by default: no separate settle and no separate post-write
+watch, because the tool snapshots once before each arm and sweeps until the
+hold is up. The two forms produce the same *kind* of number — net movement per
+arm, which is §4.4's comparison — but a probe block is a shorter block, and a
+run that used only the probe is not a §3 run that was quicker.
+
 ## 4. What to read off
 
 For each run, from the three CSVs plus the by-hand power readings:
@@ -284,19 +331,21 @@ expensive answer and the one worth being sure of.
 Name the files the way the existing capture does, so a reader can pair them:
 
 ```
-evidence/ec-watch/<YYYY-MM-DD>-0751-isolation-0700-07ff.csv
-evidence/ec-watch/<YYYY-MM-DD>-0751-isolation-0f00-0f5f.csv
-evidence/ec-watch/<YYYY-MM-DD>-0751-isolation-0400-045f.csv
-evidence/ec-watch/<YYYY-MM-DD>-0751-isolation-<value>-before-0700.txt
-evidence/ec-watch/<YYYY-MM-DD>-0751-isolation-<value>-before-0f00.txt
-evidence/ec-watch/<YYYY-MM-DD>-0751-isolation-<value>-after-0700.txt
-evidence/ec-watch/<YYYY-MM-DD>-0751-isolation-<value>-after-0f00.txt
-evidence/ec-watch/<YYYY-MM-DD>-0751-isolation-snapshot.txt
+evidence/ec-watch/<date>-0751-isolation-0700-07ff.csv
+evidence/ec-watch/<date>-0751-isolation-0f00-0f5f.csv
+evidence/ec-watch/<date>-0751-isolation-0400-045f.csv
+evidence/ec-watch/<date>-0751-isolation-<value>-before-0700.txt
+evidence/ec-watch/<date>-0751-isolation-<value>-before-0f00.txt
+evidence/ec-watch/<date>-0751-isolation-<value>-after-0700.txt
+evidence/ec-watch/<date>-0751-isolation-<value>-after-0f00.txt
+evidence/ec-watch/<date>-0751-isolation-snapshot.txt
 ```
 
-`<value>` is the value written in that block, lower case and without `0x`
-(`a0`, `00`, `10`) — the same `<date>` and `<value>` §3's commands take. The
-three CSVs are one set for the whole run: `ec_watch.py` appends to a `--csv`
+`<date>` is that run's YYYY-MM-DD and `<value>` the value written in that
+block, lower case and without `0x` (`a0`, `00`, `10`) — the same two
+placeholders §3's commands take, spelled the same way so a filename carries
+between the two without a rename. The three CSVs are one set for the whole
+run: `ec_watch.py` appends to a `--csv`
 file that already exists, and the marks say which write each row follows. The
 dumps are per block and have to be, because they are whole-range reads with
 no marks in them — nothing inside one says which write it brackets, so §3's

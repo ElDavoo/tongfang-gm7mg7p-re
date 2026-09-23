@@ -1,0 +1,24 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# byte below was written by hand. See ../README.md.
+# Shape: the same `ecrw.py dump 0x0700 0x0100` as §3's step 6 takes it, after
+# the block. 0x0751 reads back 0xA0, what was written, which per the
+# repository's CLAUDE.md is a readback and not evidence the EC acted on it --
+# the grader says the same in its own output. The four addresses that differ
+# from the before dump are the four the CSVs record moving. Every value here is
+# invented; not a prediction that a real page looks like this.
+0700: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0710: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0720: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0730: 3c 3c a5 01 23 23 a5 01 00 00 00 00 00 00 00 00
+0740: 00 01 02 00 0a 00 00 00 00 00 00 00 00 00 00 00
+0750: 00 a0 00 00 00 00 00 00 00 00 00 6a 51 00 00 00
+0760: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0770: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0780: 00 00 9d 00 00 00 00 00 00 00 00 00 00 00 6c 00
+0790: 00 00 00 00 00 00 30 00 00 00 00 00 00 00 00 00 00
+07a0: 00 00 00 00 00 00 29 4b 4b a5 01 00 00 00 00 00
+07b0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+07c0: 00 00 00 00 00 00 04 00 00 00 00 00 00 00 00 00 00
+07d0: 00 00 00 00 00 00 00 00 05 05 05 00 00 00 00 00
+07e0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+07f0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00

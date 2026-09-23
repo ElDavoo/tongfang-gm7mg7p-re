@@ -14,3 +14,16 @@ placeholder `2026-01-01` timestamp so the two can never be confused.
 | `0751-isolation-example-multi-move-0400-045f.csv` | `../grade_0751_isolation.py` | The temperature half of the same three marks, in a shape the pair above does not have: `CPU_TEMP` climbs two steps and then comes back down one inside the control window, so its first→last (`+1`) understates the three changes behind it and a window summary's endpoints and change count say different things. It is read alongside `...-fixed-load-0700-07ff.csv` above and was written to match that file's marks; the two are fixtures, not a run. It is *not* a prediction that a die will wander like that. |
 
 All are in `ec_watch.py --mark --csv` format, `MARK` rows included.
+
+`0751-isolation-run/` is the set §6 of
+`docs/hardware-tests/manual-fan-ctrl-0751-isolation.md` names, all eight
+files under exactly those names, so that section's command line can be run
+over it end to end offline. The three CSVs are one fixed-load `0xA0` block
+whose candidate PWM drifts *more* under the no-op than under the write, with
+`CPU_TEMP`/`GPU_TEMP` climbing throughout and nothing §4.1-§4.3 moving — the
+ambiguous, thermally-explained shape, and **not** a prediction that a re-run
+produces it. The four dumps are full `ecrw.py dump` ranges, `0x0751` reading
+`0x10` before and `0xA0` after, differing only where the CSVs record movement.
+Every file in the directory carries a `constructed` header saying no EC was
+read; `../test_grade_0751_isolation.py` asserts that the list in §6 and this
+directory are the same set, so a rename on one side and not the other fails.
