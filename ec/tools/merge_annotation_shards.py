@@ -109,6 +109,32 @@ def function_sources(index_path):
     return out
 
 
+# A call target the comment names: "calls 0xC030, which writes XDATA 0x1601".
+# A function that delegates its register work is making a true claim about a
+# register that is in the callee and not in itself, and rejecting that punishes
+# the more informative comment in favour of a vaguer one.
+CALLEE_REF = re.compile(r"(?i)\b(?:call|calls|called|calling|calls\s+into|at|to)"
+                        r"\s+(?:function\s+)?(?:0x)?([0-9a-f]{4})\b")
+
+
+def callee_text(index, comment, scope):
+    """The source of every function the comment names as a call target."""
+    prog = scope
+    texts = []
+    for m in CALLEE_REF.finditer(comment):
+        want = m.group(1).upper().lstrip("0") or "0"
+        for (p, a), row in index.items():
+            if p != prog:
+                continue
+            if (a.lstrip("0") or "0") != want:
+                continue
+            t = read_function_text(index, p, a)
+            if t:
+                texts.append(t)
+            break
+    return "\n".join(texts)
+
+
 def neighbour_text(index, scope, addr, span=3):
     """The source of the `span` functions either side of this one.
 
@@ -242,7 +268,7 @@ def self_test():
         row(comment="Writes the charge target to XDATA 0x0777 and sets the "
                     "fan enable bit.")])
     check("a comment naming a register the function does not touch is rejected",
-          "neither this function nor its neighbours" in out)
+          "nor a function it names" in out)
     shutil.rmtree(d, ignore_errors=True)
     return 0 if ok else 1
 
@@ -401,7 +427,8 @@ def main():
                     # establishes it, and an overclaim if nothing nearby
                     # does. Counted separately so the two are never
                     # confused for one another in the report.
-                    around = neighbour_text(index, eff_scope, addr)
+                    around = (neighbour_text(index, eff_scope, addr)
+                              + callee_text(index, row["comment"], eff_scope))
                     around = around.lower().replace(" ", "")
                     really_unsupported = [
                         t for t in unsupported
@@ -410,7 +437,8 @@ def main():
                             not in around)]
                     if really_unsupported:
                         bad("comment names address(es) %s that are in "
-                            "neither this function nor its neighbours"
+                            "neither this function, its neighbours, nor a "
+                            "function it names as a call target"
                             % ", ".join(sorted(set(really_unsupported))[:4]))
                         continue
                     cross_referenced += len(unsupported)
@@ -435,8 +463,9 @@ def main():
     print("\n  merged %d shard file(s): %d row(s) accepted, %d rejected, "
           "%d of the accepted are type=unresolved"
           % (len(shards), accepted, len(rejected), unresolved))
-    print("  %d address reference(s) in accepted comments resolve to a "
-          "neighbouring function rather than this one" % cross_referenced)
+    print("  %d address reference(s) in accepted comments are established by a "
+          "neighbouring function or by a callee the comment names, rather than "
+          "by this one" % cross_referenced)
     print("  %s: %d row(s) total" % (os.path.relpath(args.out, REPO), len(merged)))
     if args.report and rejected:
         print("\n  rejected rows:")
