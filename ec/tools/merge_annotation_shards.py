@@ -268,7 +268,7 @@ def self_test():
         print("  %s %s" % ("ok  " if cond else "FAIL", label))
         ok = ok and cond
 
-    def merge(rows):
+    def merge(rows, approved=None):
         # A fresh directory per case. The shard directory is globbed for *.csv,
         # so writing the output beside the input makes the previous case's
         # output the next case's input -- which is how six of these assertions
@@ -280,11 +280,20 @@ def self_test():
             for r in rows:
                 f.write(r + "\n")
         out = os.path.join(d, "out%d.csv" % next(_counter))
+        appr = None
+        if approved is not None:
+            appr = os.path.join(case, "approved.txt")
+            with open(appr, "w") as f:
+                for a in approved:
+                    f.write(a + "\n")
         import io
         import contextlib
         buf = io.StringIO()
+        argv = [EXISTING_DEFAULT, case, out, "--report"]
+        if appr:
+            argv += ["--approved", appr]
         with contextlib.redirect_stdout(buf):
-            rc = main_for([EXISTING_DEFAULT, case, out, "--report"])
+            rc = main_for(argv)
         accepted = []
         if os.path.isfile(out):
             accepted = list(csv.DictReader(open(out, newline="")))
@@ -326,6 +335,18 @@ def self_test():
     _, acc, out = merge([row(), row(comment="A second row, same address.")])
     check("a duplicate (scope, addr) is rejected",
           "duplicate (scope, addr)" in out)
+    # The verifier's whitelist. It was written once, then lost by an edit that
+    # rewrote the block around it, and the merge carried on accepting rows
+    # nobody had checked for several runs before anything noticed -- which is
+    # the exact failure the whole verification stage exists to prevent.
+    # A second real address, so the row reaches the whitelist rather than
+    # being rejected for not existing.
+    _, acc, out = merge([row(), row(addr="0x163C", name="other",
+                                    comment="Returns immediately without touching memory.")],
+                        approved=[row()])
+    check("a row the verifier did not approve is rejected",
+          "did not approve" in out)
+    check("an approved row still gets in", len(acc) >= 2)
     _, acc, out = merge([
         row(comment="Writes the charge target to XDATA 0x0777 and sets the "
                     "fan enable bit.")])
@@ -517,6 +538,12 @@ def main():
                             % ", ".join(sorted(set(really_unsupported))[:4]))
                         continue
                     cross_referenced += len(unsupported)
+                # The adversarial verifier's whitelist, when there is one. A
+                # row nobody checked is not a row that failed; it is a row with
+                # no second reading behind it, and it does not go in.
+                if approved_lines is not None and tuple(fields) not in approved_lines:
+                    bad("the adversarial verifier did not approve this row")
+                    continue
                 row["scope"] = eff_scope
                 row["addr"] = row["addr"].strip()
                 row["_swept"] = True
