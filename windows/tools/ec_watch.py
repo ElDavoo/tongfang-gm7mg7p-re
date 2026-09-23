@@ -21,6 +21,11 @@ wrote it, the EC wrote it itself, or it moved for an unrelated reason is exactly
 what a single run cannot distinguish -- run it again with and without the action
 before believing any of it.
 
+With both --mark and --csv, each mark is written into the CSV as its own row
+(`ts,MARK,,label`) as well as printed, so the capture alone says when the
+operator acted -- see ec/tools/grade_0751_isolation.py, which grades a capture
+by what moved between one mark and the next.
+
 Usage:
   ec_watch.py                                  # 0x0000-0x07FF until Ctrl-C
   ec_watch.py --start 0x0700 --len 0x100
@@ -41,12 +46,41 @@ def now():
     return datetime.datetime.now().astimezone().isoformat(timespec="milliseconds")
 
 
+class CsvSink:
+    """The CSV, plus the lock that makes it safe to write from two threads.
+
+    The sweep loop runs on the main thread and marks arrive on the stdin
+    thread, so without this a mark can land in the middle of a change row.
+    """
+
+    def __init__(self, path):
+        self._fh = open(path, "a", newline="")
+        self._writer = csv.writer(self._fh)
+        self._lock = threading.Lock()
+        if self._fh.tell() == 0:
+            self.row(["ts", "addr", "old", "new"])
+
+    def row(self, values):
+        with self._lock:
+            # A mark typed as the run ends arrives after close(); dropping it
+            # beats a traceback out of the stdin thread at the last moment.
+            if self._fh.closed:
+                return
+            self._writer.writerow(values)
+            self._fh.flush()
+
+    def close(self):
+        with self._lock:
+            self._fh.close()
+
+
 class Marker:
     """Lets the operator stamp 'I clicked the thing now' into the log."""
 
-    def __init__(self):
+    def __init__(self, sink=None):
         self.marks = []
         self._n = 0
+        self._sink = sink
 
     def start(self):
         t = threading.Thread(target=self._loop, daemon=True)
@@ -62,8 +96,11 @@ class Marker:
                 return
             self._n += 1
             label = label.strip() or f"mark {self._n}"
-            self.marks.append((now(), label))
-            print(f"--- {now()}  MARK: {label} ---", flush=True)
+            ts = now()
+            self.marks.append((ts, label))
+            if self._sink:
+                self._sink.row([ts, "MARK", "", label])
+            print(f"--- {ts}  MARK: {label} ---", flush=True)
 
 
 def main(argv=None):
@@ -77,22 +114,17 @@ def main(argv=None):
                     help="seconds between sweeps (default 0.25)")
     ap.add_argument("--csv", help="also write every change to this CSV")
     ap.add_argument("--mark", action="store_true",
-                    help="read stdin; each line stamps a labelled mark")
+                    help="read stdin; each line stamps a labelled mark, into "
+                         "the CSV too if --csv is given")
     args = ap.parse_args(argv)
 
     start = int(args.start, 0)
     length = int(args.length, 0)
     addrs = list(range(start, start + length))
 
-    writer = None
-    fh = None
-    if args.csv:
-        fh = open(args.csv, "a", newline="")
-        writer = csv.writer(fh)
-        if fh.tell() == 0:
-            writer.writerow(["ts", "addr", "old", "new"])
+    sink = CsvSink(args.csv) if args.csv else None
 
-    marker = Marker()
+    marker = Marker(sink)
     if args.mark:
         marker.start()
 
@@ -126,10 +158,9 @@ def main(argv=None):
                         ts = now()
                         print(f"{ts}  0x{a:04X}: 0x{old:02X} -> 0x{v:02X}",
                               flush=True)
-                        if writer:
-                            writer.writerow([ts, f"0x{a:04X}",
-                                             f"0x{old:02X}", f"0x{v:02X}"])
-                            fh.flush()
+                        if sink:
+                            sink.row([ts, f"0x{a:04X}",
+                                      f"0x{old:02X}", f"0x{v:02X}"])
                 if args.seconds and time.time() - t0 >= args.seconds:
                     break
     except KeyboardInterrupt:
@@ -138,8 +169,8 @@ def main(argv=None):
         print(f"error: {e}", file=sys.stderr)
         return 1
     finally:
-        if fh:
-            fh.close()
+        if sink:
+            sink.close()
 
     elapsed = time.time() - t0
     print(f"\n=== {sweeps} sweeps over {elapsed:.0f}s, "

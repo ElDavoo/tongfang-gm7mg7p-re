@@ -95,7 +95,10 @@ python windows\tools\ecrw.py dump 0x0F00 0x0060  > after-0f00.txt
 
 `--mark` is what makes the CSV readable afterwards: without a timestamp for
 "I wrote it now", a byte that moves 400 ms later and one that moves 40 s
-later look the same in the log.
+later look the same in the log. With `--csv` it writes each mark into the
+capture itself as a `ts,MARK,,label` row, so the CSV is self-contained — type
+what you just did as the label (`wrote 0x0751=0xA0`, `restored 0x0751=0x10`)
+rather than keeping the timing in separate notes.
 
 Values to run, one block each: `0xA0` (Office), `0x00` (Gaming), `0x10`
 (Turbo). Start from a *different* mode each time — writing Turbo's `0x10`
@@ -179,6 +182,21 @@ a header comment to the snapshot in the style of
 mode, service running or stopped, what load was held, and what was written.
 Then add the files to `evidence/README.md`, which is the index every
 findings claim cites through.
+
+`../../ec/tools/grade_0751_isolation.py` reads those CSVs (and the
+`before-*`/`after-*` dumps) and applies §4.1-§4.3 and §4.6 to them
+mechanically, which is a cheaper first pass than doing it by eye:
+
+```console
+python ec\tools\grade_0751_isolation.py ^
+        <date>-0751-isolation-0700-07ff.csv <date>-0751-isolation-0f00-0f5f.csv ^
+        --dump before-0700.txt --dump after-0700.txt --wrote 0xA0
+```
+
+It is a first pass and not the answer: fan PWM (§4.4) and package power
+(§4.5) are not in an EC sweep at all, and they are what §7 keys
+`confirmed-working` on. The script says so in its own output and does not
+emit a status.
 
 ## 7. What a result has to say
 
