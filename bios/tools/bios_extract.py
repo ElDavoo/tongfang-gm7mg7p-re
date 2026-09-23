@@ -170,6 +170,11 @@ MANIFEST_COLUMNS = ["program", "kind", "source", "sha256", "ghidra_version",
                     "mode"]
 LOAD_MAP_COLUMNS = ["program", "kind", "image_bytes", "image_sha256",
                     "load_addr", "entry"]
+# What the manifest's `mode` column may say. Kept as data because it is a
+# controlled vocabulary and a vocabulary is only enforced if something reads it
+# from one place: here the two modes the driver can produce, and --mode reads
+# the same tuple rather than repeating it.
+MANIFEST_MODES = ("export-only", "rebuild-project")
 
 
 def sha256(path):
@@ -1024,8 +1029,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--work", required=True, help="scratch directory (created)")
-    ap.add_argument("--mode", default="export-only",
-                    choices=["export-only", "rebuild-project"],
+    ap.add_argument("--mode", default="export-only", choices=MANIFEST_MODES,
                     help="export-only re-exports from the committed project; "
                          "rebuild-project re-imports from the ROM and writes it")
     ap.add_argument("--extract", action="store_true",
@@ -1057,6 +1061,81 @@ def main(argv=None):
 # Checks -- no Ghidra, no network, no UEFIExtract. One assertion per line.
 # --------------------------------------------------------------------------
 
+def read_index(path):
+    """Rows of a committed CSV -- an index or the manifest -- read strictly.
+
+    `strict=True` is the point. csv's default reader is forgiving about quoting
+    in the one way that hides an error rather than raising it: a bad quote ends
+    the row early, the row comes back with a missing field, and every count
+    taken from it is then quietly smaller than the file. A quoting mistake in a
+    committed index is exactly the kind of thing that should be loud, and it
+    costs nothing to make it so."""
+    with open(path, newline="") as f:
+        return list(csv.DictReader(f, strict=True))
+
+
+def index_structure_problems(index_rows, listing_rows):
+    """Structural faults in the two committed indexes: rows that did not come
+    out with the full header, and `(program, addr)` keys that appear twice.
+
+    A duplicate key is an export appended to twice, or a de-dup that missed one;
+    either way the row count no longer means "number of functions", which is
+    the only thing the counts around it are for. The bodies below are
+    header-agnostic, so this is the same check the other two components run over
+    their own column sets."""
+    out = []
+    for name, rows in (("index.csv", index_rows),
+                       ("listing-index.csv", listing_rows)):
+        seen = set()
+        for i, r in enumerate(rows, start=2):
+            if None in r or any(v is None for v in r.values()):
+                out.append(f"{name}: line {i} has fewer or more fields than the header")
+                continue
+            key = (r.get("program"), r.get("addr"))
+            if key in seen:
+                out.append(f"{name}: duplicate (program, addr) {key}")
+            seen.add(key)
+    return out
+
+
+def coverage_mismatches(manifest_rows, count_for_program):
+    """Manifest rows whose recorded `functions` is not the row count the index
+    carries for that module.
+
+    This is the cheap half of coverage: two committed CSVs compared against each
+    other, with no `.c` and no `.asm` opened. It catches the case that matters
+    most -- an index that gained or lost rows without the manifest being
+    regenerated, so a reader would take a function count that no longer
+    describes the export.
+
+    `count_for_program` maps a module name to its row count in an index. No
+    label translation goes in between, unlike the Windows check: here the
+    manifest's `program` column and the index's are both module names, so they
+    join directly."""
+    out = []
+    for r in manifest_rows:
+        program = r.get("program", "?")
+        try:
+            recorded = int(r["functions"])
+        except (KeyError, TypeError, ValueError):
+            out.append(f"{program}: functions is {r.get('functions')!r}, not a number")
+            continue
+        got = count_for_program(program)
+        if got != recorded:
+            out.append("%s: manifest records %d function(s), the index carries "
+                       "%d row(s) for it -- the export is stale, or a row was "
+                       "dropped after the manifest was written"
+                       % (program, recorded, got))
+    return out
+
+
+def manifest_mode_problems(manifest_rows):
+    """Manifest rows whose `mode` is outside the two the driver produces."""
+    return ["%s: mode is %r, not one of %s"
+            % (r.get("program", "?"), r.get("mode"), "|".join(MANIFEST_MODES))
+            for r in manifest_rows if r.get("mode") not in MANIFEST_MODES]
+
+
 def self_test():
     ok = True
 
@@ -1068,6 +1147,93 @@ def self_test():
             ok = False
 
     print("bios_extract.py --self-test")
+    # The committed index pair and the manifest, read through the same strict
+    # reader --check uses, so the known answers below are measured on the files
+    # the gate runs against rather than on a copy of them.
+    _ir, _lr, _mr = (read_index(p) if os.path.isfile(p) else []
+                     for p in (INDEX, LISTING_INDEX, MANIFEST))
+    for _p, _cols in ((INDEX, INDEX_COLUMNS), (LISTING_INDEX, INDEX_COLUMNS),
+                      (MANIFEST, MANIFEST_COLUMNS)):
+        check("%s carries this tool's own %d-column header"
+              % (os.path.relpath(_p, REPO), len(_cols)),
+              os.path.isfile(_p)
+              and next(csv.reader(open(_p, newline="")), None) == _cols)
+
+    # Structural faults, on synthetic row-lists. The known-good case is first on
+    # purpose: a guard exercised only on known-bad input cannot tell "clean"
+    # from "never ran".
+    _good = [{"program": "OemOcDxe", "addr": "00001000",
+              "out_file": "OemOcDxe/00001000.asm"},
+             {"program": "OemOcDxe", "addr": "00001010",
+              "out_file": "OemOcDxe/00001010.asm"}]
+    check("a clean pair of index row-lists has no structural problem",
+          not index_structure_problems(_good, _good))
+    _dup = [_good[0]] * 2
+    _p = index_structure_problems(_dup, [])
+    check("a duplicated (program, addr) key is reported", len(_p) == 1, str(_p))
+    _p = index_structure_problems(_dup, _dup)
+    check("a duplicated key is reported in each of the two indexes",
+          len(_p) == 2, str(_p))
+    _p = index_structure_problems([{"program": "OemOcDxe", "addr": "00001000",
+                                    "out_file": None}], [])
+    check("a row with fewer fields than the header is reported", len(_p) == 1,
+          str(_p))
+    # DictReader collects a row with too many fields under the None restkey.
+    _p = index_structure_problems([{"program": "OemOcDxe", "addr": "00001000",
+                                    "out_file": "a.asm", None: ["surplus"]}], [])
+    check("a row with more fields than the header is reported", len(_p) == 1,
+          str(_p))
+    _p = index_structure_problems(_good, [])
+    check("two different addresses in one module are not a duplicate",
+          not _p, str(_p))
+
+    # Coverage, on a manifest that agrees with its index and one that does not.
+    check("coverage: a manifest that agrees with the index passes",
+          not coverage_mismatches([{"program": "OemOcDxe", "functions": "31"}],
+                                  lambda program: 31))
+    _mm = coverage_mismatches([{"program": "OemOcDxe", "functions": "30"}],
+                              lambda program: 31)
+    check("coverage: a manifest whose functions disagrees with the index fails, "
+          "naming both numbers", len(_mm) == 1 and "30" in _mm[0]
+          and "31" in _mm[0], str(_mm))
+    _mm = coverage_mismatches([{"program": "OemOcDxe", "functions": ""}],
+                              lambda program: 31)
+    check("coverage: a manifest whose functions is not a number fails",
+          len(_mm) == 1, str(_mm))
+
+    # The mode vocabulary: documented, and enforced from the one place.
+    check("every mode in use today is in the documented set",
+          not manifest_mode_problems([{"program": "OemOcDxe", "mode": m}
+                                      for m in MANIFEST_MODES]))
+    _p = manifest_mode_problems([{"program": "OemOcDxe", "mode": "rebuild"}])
+    check("a mode outside the documented set is rejected", len(_p) == 1, str(_p))
+    check("the committed manifest uses only documented modes",
+          not manifest_mode_problems(_mr), str(manifest_mode_problems(_mr)))
+
+    # The known answers, on the committed files. These are docs/findings.md §15
+    # as assertions: a re-export that moves a total fails here loudly and gets a
+    # conscious update to the table in the same change, which is the point.
+    check("BIOS: index.csv is 955 rows, and the manifest records 955 functions "
+          "across 38 modules",
+          len(_ir) == 955 and len(_mr) == 38
+          and sum(int(r["functions"]) for r in _mr) == 955,
+          "%d row(s), %d manifest row(s)" % (len(_ir), len(_mr)))
+    check("BIOS: listing-index.csv is the same 955 rows", len(_lr) == 955,
+          "%d row(s)" % len(_lr))
+    check("BIOS: the manifest's module set is the index's, with no label mapping "
+          "in between",
+          {r["program"] for r in _mr} == {r["program"] for r in _ir} == set(MODULES),
+          str(sorted({r["program"] for r in _mr} ^ {r["program"] for r in _ir})))
+    # Every address here is 8 bare hex digits, so a (program, addr) key taken as
+    # a string and one taken as an int agree. That is what makes the duplicate
+    # check's string key a fact about the file rather than an assumption -- and
+    # a "00001000" alongside a "1000" would quietly make it a lie.
+    check("BIOS: addresses are uniformly 8 bare hex digits in both indexes, so "
+          "string and int (program, addr) keys agree",
+          all(len({(r["program"], r["addr"]) for r in rows})
+              == len({(r["program"], int(r["addr"], 16)) for r in rows}) == 955
+              for rows in (_ir, _lr)))
+
     te_path = os.path.join(TE_MODULES_DIR, "OemOcPei.efi")
     present = os.path.isfile(te_path)
     header = open(te_path, "rb").read(0x28) if present else b""
@@ -1168,13 +1334,34 @@ def check():
             fail("no %s at %s" % (what, os.path.relpath(path, REPO)))
     if not ok:
         return 1
+    # The two committed indexes and the manifest, read strictly once each and
+    # then used by every check below. A read error is reported as a failed check
+    # rather than a traceback, so a broken index reads as a broken index.
+    _read = {}
+    for _name, _path in (("index.csv", INDEX), ("listing-index.csv", LISTING_INDEX),
+                         ("manifest.csv", MANIFEST)):
+        try:
+            _read[_name] = read_index(_path)
+        except (OSError, csv.Error) as e:
+            fail("%s does not parse as strict CSV: %s" % (_name, e))
+    if not ok:
+        return 1
+    # Structure before content, and stop if it fails. A row that did not come
+    # out whole has no `out_file` to open and no address to key on, so every
+    # per-row check below would be reading past the end of it -- and the counts
+    # those checks compare are exactly the ones a short row has quietly made
+    # smaller. Reported and stopped, not carried on from.
+    _struct = index_structure_problems(_read["index.csv"],
+                                       _read["listing-index.csv"])
+    if _struct:
+        fail("; ".join(_struct[:3]))
+        return 1
     # Every decompilation has its machine code beside it, and every listing
     # names a file that exists. A .c with no .asm is a reading with nothing to
     # check it against; a listing row pointing at a missing file is an export
     # that has gone stale in a way the C index cannot see.
-    _rows = list(csv.DictReader(open(INDEX, newline="")))
-    _lrows = list(csv.DictReader(open(LISTING_INDEX, newline=""))) \
-        if os.path.isfile(LISTING_INDEX) else []
+    _rows = _read["index.csv"]
+    _lrows = _read["listing-index.csv"]
     _seen = {(r["program"], r["addr"]) for r in _rows}
     _lseen = {(r["program"], r["addr"]) for r in _lrows}
     for r in _lrows:
@@ -1216,23 +1403,34 @@ def check():
     if not ok:
         return 1
     digest = rom_digest()
-    manifest = {r["program"]: r
-                for r in csv.DictReader(open(MANIFEST, newline=""))}
+    manifest = {r["program"]: r for r in _read["manifest.csv"]}
     if set(manifest) != set(MODULES):
         fail("the manifest's modules are not MODULES")
     for name, row in sorted(manifest.items()):
         if row["sha256"] != digest:
             fail("%s: manifest SHA-256 does not match the committed zip -- the "
                  "export is stale, rebuild it" % name)
-        if int(row["functions"]) != int(row["decompiled"]) + int(row["failed"]):
+        try:
+            functions = int(row["functions"])
+            decompiled = int(row["decompiled"])
+            failed = int(row["failed"])
+        except (KeyError, TypeError, ValueError):
+            # coverage_mismatches() below names a `functions` that is not a
+            # number in its own words; this is only here so the same fault is
+            # not a traceback on the way to being told about it.
+            continue
+        if functions != decompiled + failed:
             fail("%s: functions != decompiled + failed" % name)
-        if int(row["decompiled"]) < int(row["functions"]) and row["failed"] == "0":
+        if decompiled < functions and failed == 0:
             fail("%s: decompiled < functions but failed == 0" % name)
+    _modes = manifest_mode_problems(_read["manifest.csv"])
+    if _modes:
+        fail("; ".join(_modes[:3]))
     if int(manifest[SETUP_MODULE]["image_bytes"]) < 0x10000:
         fail("%s: the manifest records %d bytes; the committed ROM's Setup body "
              "is 842592, so the export is not from this ROM"
              % (SETUP_MODULE, int(manifest[SETUP_MODULE]["image_bytes"])))
-    index = list(csv.DictReader(open(INDEX, newline="")))
+    index = _rows
     seen, per_program = set(), {}
     for row in index:
         seen.add((row["program"], int(row["addr"], 16)))
@@ -1241,6 +1439,23 @@ def check():
         if row["out_file"] not in ("", "(failed)") and not os.path.isfile(out):
             fail("index row %s %s points at a missing file: %s"
                  % (row["program"], row["addr"], row["out_file"]))
+    # The manifest's function count against both indexes' row counts, module by
+    # module. The twelve LEGACY_MODULES below are checked a third way -- against
+    # the `// ==== ` markers in the .c itself -- and that one is the expensive
+    # half: it opens a decompile per module. This covers all 38 for the price of
+    # two CSVs, and the manifest's join key needs no translation because its
+    # `program` column and the index's are both module names.
+    for _name, _irows in (("index.csv", _rows),
+                          ("listing-index.csv", _lrows)):
+        _counts = {}
+        for r in _irows:
+            _counts[r.get("program")] = _counts.get(r.get("program"), 0) + 1
+        _mm = coverage_mismatches(_read["manifest.csv"],
+                                  lambda p, c=_counts: c.get(p, 0))
+        if _mm:
+            fail("%s: %s" % (_name, "; ".join(_mm[:3])))
+    print("  coverage: %d index row(s), %d listing-index row(s), %d manifest "
+          "module(s)" % (len(_rows), len(_lrows), len(_read["manifest.csv"])))
     for name in LEGACY_MODULES:
         c = os.path.join(DECOMPILED, name + ".c")
         if not os.path.isfile(c):
@@ -1250,9 +1465,13 @@ def check():
         if not text.startswith("// %s.efi: Ghidra " % name):
             fail("%s.c does not carry the unedited DecompAll header" % name)
         n = text.count("// ==== ")
+        try:
+            recorded = int(manifest[name]["functions"]) if name in manifest else None
+        except (KeyError, TypeError, ValueError):
+            recorded = None        # the coverage check above has already named it
         if n == 0:
             fail("%s.c has no functions in it at all" % name)
-        elif name in manifest and n != int(manifest[name]["functions"]):
+        elif recorded is not None and n != recorded:
             fail("%s.c has %d functions, the manifest says %s"
                  % (name, n, manifest[name]["functions"]))
         if len(per_program.get(name, [])) != n:

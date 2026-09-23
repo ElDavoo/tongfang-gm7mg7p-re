@@ -1863,3 +1863,107 @@ No wall-clock budget was added to the gate. The elapsed-seconds line is
 printed, never asserted: a timing assertion in a gate is the flaky check that
 gets switched off, and deleting the assertion would be the only fix anyone
 reached for.
+
+## 15. The EC and BIOS indexes get the same structural guards (2026-09-23, issue #142)
+
+§14e ended with the always-on tier having *gained* structural checks — but for
+the Windows index only. `windows/tools/decompile_native.py` reads its committed
+CSVs with `csv.DictReader(..., strict=True)`, rejects a row that did not come
+out whole, rejects a `(program, addr)` key twice, compares the manifest's
+recorded `functions` against both indexes' row counts, and reads the `mode`
+column against a `MANIFEST_MODES` vocabulary. The other two read their committed
+indexes and manifests with a default `DictReader`, and the BIOS compared no
+manifest count against an index at all.
+
+**The known answer, measured on the committed files, is clean.** That is the
+point of stating it before the check exists, and the reason this is a guard
+against drift rather than a bug hunt:
+
+| | `index.csv` | `listing-index.csv` | manifest |
+|---|---|---|---|
+| EC (`ec/decompiled/`, `ec/ghidra/manifest.csv`) | 2,708 rows, 2,708 distinct `(program, addr)`, 0 dups, 0 short rows | 2,708 / 2,708, same | 4 rows, `functions` agrees with both indexes on every row and sums to 2,708; all `mode` = `export-only` |
+| BIOS (`bios/ghidra/`) | 955 rows, 955 distinct keys, 0 dups, 0 short rows | 955 / 955, same | 38 rows, `functions` agrees with both indexes on every row and sums to 955; all `mode` = `export-only` |
+
+Reproduce it, one command per component, with no Ghidra and no network:
+
+```
+python3 ec/tools/build_ec_decompile.py --work /tmp/x --check
+python3 ec/tools/build_ec_decompile.py --work /tmp/x --self-test
+python3 bios/tools/bios_extract.py   --work /tmp/x --check
+python3 bios/tools/bios_extract.py   --work /tmp/x --self-test
+```
+
+Both `--check`s now print the counts they compared (`2708 index row(s), 2708
+listing-index row(s), 4 manifest program(s)`, and the same shape for 955/955/38),
+and both `--self-test`s assert the totals, so the table above is a fact the
+repository re-checks rather than a paragraph somebody wrote once.
+
+**What a clean result means, precisely: the committed files carry no structural
+fault today.** It is not evidence that the export has always been correct, it
+says nothing about the firmware, and nothing here ran on the machine — this is
+entirely committed-file checking, with no register read back and no behaviour
+observed.
+
+### 15a. What the guard is actually worth
+
+Two failure shapes, both of which reach a committed index through the export
+rather than through a hand edit — the inputs include `ghidra-functions.csv` and
+`merge_annotation_shards.py`, and both indexes are rewritten from them on every
+run.
+
+- **A duplicated `(program, addr)`.** The row count then means something other
+  than "number of functions", which is the only thing the manifest's count is
+  compared against — and §12 is the worked example of what the manifest catches
+  when the count is wrong.
+- **A quoting error.** csv's default reader is forgiving about quoting in the one
+  way that hides an error rather than raising it. Given a row `a,0012,"FUN,3`
+  whose quote is never closed and the row `b,0020,FUN,3` after it, it returns
+  **one** row: `name` is `FUN,3` with the whole next line appended, and `size`
+  is `None`. Two rows of file read as one, and every count taken from it quietly
+  smaller than the file. Under `strict=True` the same input raises. That `None`
+  is visible if something looks for it, and nothing did.
+
+### 15b. The EC already had half of this, which is a correction worth recording
+
+The issue's summary said the EC "got none of it". That is right about
+`strict=True`, the structural check and the mode vocabulary, and wrong about
+coverage: `build_ec_decompile.py` already compared the manifest's `functions`
+against `index.csv`'s row counts — but skipped `common` as "an export grouping,
+not a program". The EC work was therefore to *extend and rehouse* that partial
+check (add `listing-index.csv`, cover `common` too) rather than to write a
+second one beside it. `common` is a grouping, and it is also 753 of the 2,708
+rows in the index, which is more than a grouping may cost quietly. The BIOS
+genuinely had none and got the whole set.
+
+The Windows coverage check needs an `export_label()` because its manifest names
+a binary and its index names an export label. **Neither the EC nor the BIOS
+needs one**, and that was verified on the files rather than assumed: the
+manifest's `program` set equals the index's exactly (the four EC program names,
+the 38 BIOS module names), so the two join directly. A `--self-test` assertion
+pins it in each tool, so a future manifest that starts disagreeing about the
+join key fails as a failing assertion rather than as a coverage mismatch that
+reads like drift.
+
+### 15c. Three copies, on purpose, and what the gate costs
+
+The four helpers are copied into each of the three drivers rather than factored
+into a shared module: `windows/tools/` is not a direction an EC build script
+should import from, the three column vocabularies differ, and a shared module
+is a structural change this work did not ask for. The cost is three copies that
+could drift, and the mitigation is that all three self-tests assert the same
+properties, so a divergence surfaces as a failing assertion. A fourth driver
+would be the moment to revisit that — worth its own issue then.
+
+Timing, on this runner with a warm page cache, five runs each: the EC
+`--check` is **0.19 s** and `--self-test` **0.13 s**; the BIOS `--check` is
+**0.25 s** and `--self-test` **0.06 s**. The 0.24 s / 0.15 s the two EC READMEs
+quoted are updated to the measured pair. The EC `--check` measured 0.19 s before
+this change and 0.19 s after, so what was added — string comparisons over two
+committed CSVs — is not what the cheap tier's cost is made of.
+
+Deliberately **not** widened to: the annotations CSVs, the BIOS load map, the
+raw exporter CSVs, or the per-row reads of those inside the export path. They
+have their own guards (evidence citation non-empty, an annotation address that
+resolves to an exported function), they are not "the EC and BIOS indexes", and
+widening `strict=True` to them is a separate call with its own blast radius.
+Named here as a possible follow-up, not silently skipped.
