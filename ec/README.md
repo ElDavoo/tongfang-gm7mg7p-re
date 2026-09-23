@@ -243,7 +243,7 @@ and `decompiled/listing-index.csv` points at the listings. A function named
 rather than called `FUN_CODE_…` carries a plate comment saying what it does and
 where the reading came from — those names come from
 `annotations/ghidra-functions.csv`, which is the editable surface. And the
-committed disassembly re-encodes to the firmware bytes: 45,531 of 45,535
+committed disassembly re-encodes to the firmware bytes: 45,392 of 45,535
 instructions, measured by `tools/verify_reassembly.py` and recorded in
 `ghidra/reassembly.csv`. That is a claim about the machine code, not about the
 C, and `ghidra/README.md` says at length what it is not. See the repo's GitHub issues for the

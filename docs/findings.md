@@ -1464,11 +1464,23 @@ a cached byte, and "reads like" is not "is".)*
 `ec/tools/verify_reassembly.py` re-encodes the committed EC listing with
 `sdas8051` and compares the result to `ec/firmware/GMxMGxx_11.800`. Ghidra's
 SLEIGH decodes; an assembler that never saw the firmware encodes; the firmware
-arbitrates. **45,531 of 45,535 instructions re-encode to the exact bytes in
-the image (97.80%), with no function in disagreement.** 2,216 of the 2,703
-functions have every instruction verified; a further 403 have all but 1,004
+arbitrates. **45,392 of 45,535 instructions re-encode to the exact bytes in
+the image (99.69%), with no function in disagreement.** 2,581 of the 2,703
+functions have every instruction verified; a further 77 have all but 143
 between them. Reproduced unchanged on two SDCC versions (4.5.0 and 4.6.0,
 `sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14`).
+
+*(A first pass reported 97.80% and 1,004 unchecked instructions. Four of the
+seven opcodes in the "sdas8051 cannot express this" list were wrong: 0xC0 is
+PUSH direct and not SETB bit, 0xC3 is CLR C and not CLR bit, 0x93 is MOVC
+A,@A+PC and not MOVC A,bit, and 0x82 is ANL C,bit, which sdas8051 encodes
+without a `/`. All four assemble correctly. So 712 of those 1,004 were never
+gaps at all -- `clr CY` and `movc A, @A+DPTR` were the two commonest
+instructions in the firmware and the report was calling both of them forms the
+assembler refuses. The wrong number is left here rather than edited out
+because the way it was found is the point: nothing failed, the check reported
+zero mismatches throughout, and the only thing that surfaced it was printing
+the composition of the "gaps" and looking at which instructions were in it.)*
 
 The interesting part is not the number, it is the four bugs the check found in
 *itself* before it got there. Each one produced a plausible-looking encoding

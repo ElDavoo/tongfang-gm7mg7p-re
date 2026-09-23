@@ -104,20 +104,28 @@ GAP_FORMS = {
     "subb c,#",
 }
 
-# Opcodes whose operand is a bit address rather than a direct address, and that
-# sdas8051 cannot express in any syntax. 0x92 MOV bit,C; 0xA2 MOV C,bit;
-# 0x93 MOVC A,bit; 0xB2 CPL bit; 0xC0 SETB bit; 0xC3 CLR bit.
+# Opcodes sdas8051 cannot express, measured by trying each one against it.
+#   0x92 MOV bit,C   -- no output, "Invalid Addressing Mode"
+#   0xB2 CPL bit     -- no output
+#   0xC1 CLR bit     -- assembles, but as CLR *direct* (0xC2), which is a
+#                       different instruction that happens to be the right
+#                       length. The dangerous one: it does not fail, it
+#                       produces a plausible wrong answer.
 #
-# The opcode is the discriminator, not the mnemonic or the operand text: `clr
-# 0x8e` and `clr /0x8e` are the same three characters to a text matcher and
-# different opcodes (0xC2 and 0xC3), so a matcher that guessed from the text
-# would assemble the direct form and report a mismatch against a correct
-# decode. Getting this wrong in the other direction is worse: it would hide a
-# real disagreement behind a "gap".
-BIT_UNSUPPORTED = {0x82, 0x92, 0x93, 0xA2, 0xB2, 0xC0, 0xC3}
+# The opcode is the discriminator, not the mnemonic or the operand text, and
+# that is not a stylistic choice. `clr 0x8e` is both CLR direct (0xC2) and CLR
+# bit (0xC1) depending on the byte in front of it, and a text matcher has to
+# guess.
+#
+# Four entries this list carried on the first pass were wrong, and 712 of the
+# 1,004 instructions it excluded were not gaps at all: 0xC0 is PUSH direct
+# (not SETB bit), 0xC3 is CLR C (not CLR bit), 0x93 is MOVC A,@A+PC (not
+# MOVC A,bit) and 0x82 is ANL C,bit, which sdas8051 encodes without a `/`. All
+# four assemble correctly here, and the `clr CY` and `movc A, @A+DPTR` forms
+# the report called gaps were simply sdas8051 doing its job.
+BIT_UNSUPPORTED = {0x92, 0xB2, 0xC1}
 
-# Opcodes sdas8051 *can* express in bit form, so the operand needs its `/`
-# prefix and the register spelled the way sdas spells it.
+# Opcodes whose bit operand sdas8051 spells with a leading `/`.
 BIT_SUPPORTED = {0xA0, 0xB0}
 
 # Mnemonics sdas8051 encodes differently from the 8051 manual, so its output
@@ -690,6 +698,12 @@ def self_test():
 
     assert_that(GAP_FORMS and "djnz a," in GAP_FORMS,
                 "the sdas8051 gap list is populated, not empty")
+    assert_that(BIT_UNSUPPORTED == {0x92, 0xB2, 0xC1},
+                "the unsupported-opcode set is the three forms sdas8051 "
+                "really cannot encode, measured rather than recalled")
+    assert_that(0xC0 not in BIT_UNSUPPORTED and 0xC3 not in BIT_UNSUPPORTED
+                and 0x93 not in BIT_UNSUPPORTED,
+                "PUSH direct, CLR C and MOVC A,@A+PC are not in the gap set")
     assert_that("ajmp" in GAP_MNEMONICS and "acall" in GAP_MNEMONICS,
                 "ajmp/acall are a known gap, not an unfiltered mismatch")
     assert_that(to_sdas("mov", "dptr,#0x1234", 0x0040) is not None,
@@ -716,8 +730,13 @@ def self_test():
     # but only one of them is a bit instruction.
     assert_that(to_sdas("clr", "0x8e", opcode=0xC2) == "\tclr\t0x8e",
                 "CLR direct is passed through as direct")
-    assert_that(to_sdas("clr", "0x8e", opcode=0xC3) is None,
-                "CLR bit is a gap, not a direct CLR the firmware does not hold")
+    assert_that(to_sdas("clr", "CY", opcode=0xC3) == "\tclr\tc",
+                "CLR C is assembled, not mistaken for a bit instruction: 0xC3 "
+                "is CLR C, which is 325 of the instructions an earlier opcode "
+                "table wrongly called a gap")
+    assert_that(to_sdas("clr", "0x8e", opcode=0xC1) is None,
+                "CLR bit is a gap: sdas8051 assembles the operand as CLR "
+                "*direct* and does not fail, which is worse than refusing")
     assert_that(to_sdas("cpl", "0xb4", opcode=0xB2) is None,
                 "CPL bit is a gap (0xB2, confirmed against disasm8051.py)")
     assert_that(to_sdas("cjne", "a,#0x10,0x0046", pc=0x0040, size=3)
@@ -728,8 +747,8 @@ def self_test():
                 "CJNE Rn is assembled, not skipped")
     assert_that(to_sdas("cjne", "0x30,#0x10,0x0046", pc=0x0040, size=3) is None,
                 "CJNE with a direct operand is a gap")
-    assert_that(to_sdas("mov", "CY, 0x2d", opcode=0xA2) is None,
-                "MOV C,bit is a gap")
+    assert_that(to_sdas("mov", "CY, 0x57", opcode=0xA2) == "\tmov\tc,0x57",
+                "MOV C,bit is assembled: 0xA2 is not a gap")
     assert_that(to_sdas("ajmp", "0x845d", pc=0x8044, size=2) is None,
                 "ajmp is skipped rather than compared against sdas' encoding")
     # The SFR-name substitution: `mov A, R0` as Ghidra renders `88 E0` is

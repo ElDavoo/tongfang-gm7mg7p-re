@@ -189,18 +189,26 @@ $ SDAS8051=$(nix build nixpkgs#sdcc && echo $out/bin/sdas8051) \
     python3 ../tools/verify_reassembly.py --work /tmp/ec --report
 
   reassembly, by function (2703 total):
-    match            2216
-    partial          403
-    assembler-gap     84
+    match            2581
+    partial           77
+    assembler-gap     45
 
   reassembly, by instruction:
-    re-encode to the firmware bytes : 44531 of 45535 (97.80%)
-    unchecked (sdas8051 cannot express the form): 1004
+    re-encode to the firmware bytes : 45392 of 45535 (99.69%)
+    unchecked (sdas8051 cannot express the form): 143
 ```
 
-**45,531 of 45,535 instructions re-encode to the exact bytes in the firmware,
-and no function disagrees.** 2,216 of 2,703 have every instruction verified; a
-further 403 have all but 1,004 between them.
+**45,392 of 45,535 instructions re-encode to the exact bytes in the firmware,
+and no function disagrees.** 2,581 of 2,703 have every instruction verified; a
+further 77 have all but 143 between them.
+
+The 143 are `MOV bit,C`, `CPL bit`, `CLR bit`, `CJNE` on a direct address,
+`DJNZ A` and the carry-with-immediate forms. `CLR bit` is the only one the
+assembler gets *silently* wrong rather than refusing -- it emits `CLR direct`,
+a different instruction of the same length, with no error -- and the rest of
+the list is safe because a refusal is a refusal. `docs/findings.md` §11 records
+the first pass, which reported 97.80% because four opcodes in that list were
+written from memory rather than measured.
 
 Measured with `sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14` (SDCC 4.6.0), and
 reproduced unchanged on 4.5.0. The version is in every row of
