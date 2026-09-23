@@ -824,6 +824,13 @@ def check(work):
                      "not an undecodable function" % os.path.join(dp, fn))
     if os.path.isfile(ANNOTATIONS):
         for a in csv.DictReader(open(ANNOTATIONS, newline="")):
+            # An annotation with no citation is a claim, not a finding, and the
+            # build refuses it -- but the build is not what CI runs, so the
+            # check has to refuse it too or an uncited row reaches main.
+            if not a.get("evidence", "").strip():
+                fail("annotation %s %s (%s) has no evidence citation: a row that "
+                     "names a function has to say where the reading came from"
+                     % (a["scope"], a["addr"], a.get("name", "")))
             key = (a["scope"], a["addr"].upper().replace("0X", ""))
             if key not in seen_addr and not (a["scope"] == "common"
                                              and any(k[0] == "common" for k in seen_addr)):
