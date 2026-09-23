@@ -107,18 +107,32 @@ check_ghidra_tooling() {
       *decompile_native.py)
         python3 "$tool" --check && python3 "$tool" --self-test || rc=1
         ;;
-      # The 1:1 check needs no Ghidra and no assembler for --check: it
-      # confirms that the committed reassembly report still describes the
-      # committed listings, and that nothing in it disagrees. The re-encode
-      # itself needs sdas8051 and is a separate opt-in run.
       # The annotation merge's refusals. It is what stands between a fan-out's
       # CSV and main, and a check that has quietly stopped rejecting anything
       # looks exactly like a check that is working.
       *merge_annotation_shards.py)
         python3 "$tool" --self-test || rc=1
         ;;
+      # --check needs no Ghidra and no assembler: it confirms that every byte of
+      # every committed listing is the byte in the firmware, and that the
+      # committed reassembly report still describes those listings with nothing
+      # in it disagreeing. That part runs everywhere.
+      #
+      # When sdas8051 IS on PATH -- CI installs sdcc, and `nix develop` has it
+      # -- the full re-encode runs too, and that is the stronger claim: an
+      # independent assembler encoding the listing back to bytes. About 90 s,
+      # which is affordable, and it is the difference between CI checking the
+      # bytes and CI checking the claim.
       *verify_reassembly.py)
         python3 "$tool" --check || rc=1
+        if command -v sdas8051 >/dev/null 2>&1; then
+          echo "  sdas8051 is on PATH: running the full re-encode as well"
+          python3 "$tool" --work "$scratch/reasm" --jobs 4 || rc=1
+        else
+          echo "  note  sdas8051 is not on PATH, so only the byte check ran"
+          echo "        here. CI installs sdcc and the nix dev shell has it,"
+          echo "        so both run there."
+        fi
         ;;
       *)
         # build_ec_decompile.py and bios_extract.py both take --work.

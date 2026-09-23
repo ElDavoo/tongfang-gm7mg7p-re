@@ -58,9 +58,23 @@ FIRMWARE = os.path.join(REPO, "ec", "firmware", "GMxMGxx_11.800")
 DECOMPILED = os.path.join(REPO, "ec", "decompiled")
 LISTING_INDEX = os.path.join(DECOMPILED, "listing-index.csv")
 REPORT = os.path.join(REPO, "ec", "ghidra", "reassembly.csv")
+# Where build_images() puts the flat per-bank images, so --check can compare a
+# listing against the firmware without a full Ghidra run.
+IMAGE_DIR = os.path.join(tempfile.gettempdir(), "ec-verify-images")
 
-# Instruction layouts: `addr  bytes  mnemonic  operands`, `;` for comments.
-LINE_RE = re.compile(r"^([0-9A-Fa-f]{1,8})\s+((?:[0-9a-f]{2}\s+)+)(\S+)\s*(.*)$")
+# Instruction layout: `addr  b1 b2 b3  mnemonic  operands`, `;` for comments.
+# The byte slots are fixed width and an absent byte is `-`, because the 8051's
+# reserved one-byte instruction is spelled `da A` and `da` is two hex digits --
+# a variable-width byte column makes `d4  da  A` readable as the two-byte
+# instruction `d4 da`, which is what it is not. `-` is not a hex digit, so the
+# byte column cannot run into the mnemonic.
+# A line that starts with an instruction address, whatever the rest of the
+# format is. Used to notice when the parser stops understanding the file.
+ADDRESS_LINE = re.compile(r"^[0-9A-Fa-f]{4,8}\s+\S")
+
+LINE_RE = re.compile(
+    r"^([0-9A-Fa-f]{1,8})\s+([0-9A-Fa-f]{2}|-)\s+([0-9A-Fa-f]{2}|-)\s+"
+    r"([0-9A-Fa-f]{2}|-)\s+(\S+)\s*(.*)$")
 
 # Forms sdas8051 (ASxxxx) cannot assemble. Measured, not guessed: each was
 # tried against the assembler and produced "Invalid Addressing Mode". They are
@@ -182,9 +196,9 @@ def parse_listing(path):
         m = LINE_RE.match(line.rstrip("\n"))
         if not m:
             continue
-        addr, hexbytes, mnem, ops = m.groups()
-        out.append((int(addr, 16), hexbytes.replace(" ", "").strip(),
-                    mnem.lower(), ops.strip()))
+        addr, b1, b2, b3, mnem, ops = m.groups()
+        hexbytes = "".join(b for b in (b1, b2, b3) if b != "-")
+        out.append((int(addr, 16), hexbytes, mnem.lower(), ops.strip()))
     return out
 
 
@@ -495,13 +509,97 @@ def write_report(results, sdas, path=REPORT):
     return path
 
 
+def check_listing_bytes():
+    """Every byte in every listing, against the firmware image. No assembler.
+
+    The re-encode above is the stronger claim but the weaker coverage: 2.2% of
+    the instructions use forms sdas8051 cannot express, so 1,004 of them are
+    unchecked. This checks all of them and needs nothing but the firmware, so it
+    runs in CI where the assembler does not.
+
+    It is a different check rather than a weaker one. Re-encoding asks "does an
+    independent assembler agree that these bytes mean this instruction"; this
+    asks "are these the bytes in the image", which catches an export whose
+    listing belongs to a different firmware, a stale .asm, and a decoder that
+    reports a length the image does not have. Neither implies the other: the
+    bytes can be right and the mnemonic wrong, and 1:1 needs both.
+
+    Returns (checked, bad) where bad is a list of (program, addr, detail)."""
+    ok = True
+    images = {}
+    for prog in ("bank0", "bank1", "pd"):
+        path = os.path.join(IMAGE_DIR, prog + ".bin")
+        if not os.path.isfile(path):
+            path = os.path.join(tempfile.gettempdir(), prog + "-verify.bin")
+        images[prog] = path
+    if not all(os.path.isfile(p) for p in images.values()):
+        # Rebuild them once; the EC driver makes these in seconds.
+        images = {p: os.path.join(IMAGE_DIR, p + ".bin")
+                  for p in ("bank0", "bank1", "pd")}
+        build_images(IMAGE_DIR)
+    loaded = {p: open(path, "rb").read() for p, path in images.items()}
+    bad = []
+    checked = 0
+    for row in csv.DictReader(open(LISTING_INDEX, newline="")):
+        rel = row["out_file"]
+        if not rel or rel.startswith("("):
+            continue
+        path = os.path.join(DECOMPILED, rel)
+        if not os.path.isfile(path):
+            bad.append((row["program"], row["addr"], "listing file missing"))
+            continue
+        prog = row["program"]
+        image = loaded.get(prog) or loaded["bank0"]
+        insns = parse_listing(path)
+        # Every line that starts with an address is an instruction, and the
+        # parser is supposed to get all of them. If it does not, the listing
+        # format and the parser have drifted apart -- and a parser that quietly
+        # reads 30% of a file reports 0 disagreements and looks like a pass.
+        # This is not hypothetical: it is what happened when the byte column
+        # went from variable width to three fixed slots and the committed
+        # listings had not been re-exported yet.
+        text = open(path, errors="replace").read()
+        address_lines = sum(1 for line in text.splitlines()
+                            if ADDRESS_LINE.match(line))
+        if len(insns) != address_lines:
+            bad.append((prog, row["addr"],
+                        "%d instruction line(s) but %d parsed -- the listing "
+                        "format and this parser disagree; re-export the "
+                        "listings" % (address_lines, len(insns))))
+            continue
+        for addr, hexbytes, _mnem, _ops in insns:
+            want = bytes.fromhex(hexbytes) if hexbytes.isalnum() else b""
+            if not want:
+                continue
+            checked += 1
+            got = image[addr:addr + len(want)]
+            if got != want:
+                bad.append((prog, "%04X" % addr,
+                            "listing says %s, image has %s"
+                            % (want.hex(), got.hex())))
+    print("  listing bytes: %d instruction(s) checked against the firmware, "
+          "%d disagreement(s)" % (checked, len(bad)))
+    for prog, addr, why in bad[:20]:
+        print("  FAIL %s %s: %s" % (prog, addr, why))
+    if len(bad) > 20:
+        print("  ... and %d more" % (len(bad) - 20))
+    ok = not bad
+    return ok, checked, len(bad)
+
+
 def check():
-    """No assembler required. Confirms the committed report still describes the
+    """No assembler required.
+
+    Two things. First, every byte of every listing against the firmware image,
+    which covers the 2.2% of instructions the assembler cannot express and runs
+    anywhere. Second, that the committed reassembly report still describes the
     committed listings: same functions, same outcomes. A report that has drifted
-    from the listings it was measured against is the failure this catches --
+    from the listings it was measured against is the failure that catches --
     it cannot tell you the bytes match, only that the claim on file is the one
     the current export supports."""
     ok = True
+    bytes_ok, n_insns, n_bad = check_listing_bytes()
+    ok = ok and bytes_ok
     if not os.path.isfile(REPORT):
         print("  FAIL no reassembly report at %s; run verify_reassembly.py"
               % os.path.relpath(REPORT, REPO))
@@ -615,14 +713,23 @@ def self_test():
     # A listing line written by ExportListing.java, parsed back.
     insns = parse_listing_str(
         "; bank0 @ BD54   store_be16_b   [named]\n"
-        "BD54  74 09       mov   dptr,#0x09\n"
-        "BD57  e0          movx  a,@dptr\n"
+        "BD54  74 09 -     mov   dptr,#0x09\n"
+        "BD57  e0  -  -    movx  a,@dptr\n"
         "\n"
-        "BD58  f0          movx  @dptr,a\n")
+        "BD58  f0  -  -    movx  @dptr,a\n")
     assert_that(len(insns) == 3, "a comment line and a blank line are skipped")
     assert_that(insns[0] == (0xBD54, "7409", "mov", "dptr,#0x09"),
                 "addr, bytes, mnemonic and operands parse apart")
     assert_that(insns[2][1] == "f0", "a one-byte instruction parses")
+    # The ambiguity that made the byte column fixed width in the first place.
+    amb = parse_listing_str(
+        "D438  d4  -  -    da      A\n"
+        "D439  84  -  -    div     AB\n")
+    assert_that(len(amb) == 2 and amb[0][1] == "d4" and amb[0][2] == "da",
+                "the reserved one-byte `da A` does not read as the two-byte "
+                "`d4 da`")
+    assert_that(amb[1][1] == "84" and amb[1][2] == "div",
+                "the instruction after it still parses")
 
     # The comparison itself, against a byte string we control. A check that
     # cannot fail on a wrong byte is not a check.
@@ -643,10 +750,10 @@ def self_test():
            "out_file": "listing-index.csv.tmp"}
     real = os.path.join(DECOMPILED, "listing-index.csv.tmp")
     with open(real, "w") as f:
-        f.write("0040  74 12       mov   a,#0x12\n"
+        f.write("0040  74 12 -     mov   a,#0x12\n"
                 "0042  02 00 45    ljmp  0x0045\n"
-                "0045  22          ret\n"
-                "0046  00          nop\n")
+                "0045  22  -  -    ret\n"
+                "0046  00  -  -    nop\n")
     try:
         outcome, detail, nchk, nskip = check_one(row, bytes(img), work, sdas)
         assert_that(outcome == "match",
