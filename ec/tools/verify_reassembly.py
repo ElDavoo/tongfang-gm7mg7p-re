@@ -82,9 +82,9 @@ IMAGE_DIR = os.path.join(tempfile.gettempdir(), "ec-verify-images")
 # format is. Used to notice when the parser stops understanding the file.
 ADDRESS_LINE = re.compile(r"^[0-9A-Fa-f]{4,8}\s+\S")
 
-LINE_RE = re.compile(
-    r"^([0-9A-Fa-f]{1,8})\s+([0-9A-Fa-f]{2}|-)\s+([0-9A-Fa-f]{2}|-)\s+"
-    r"([0-9A-Fa-f]{2}|-)\s+(\S+)\s*(.*)$")
+LINE_RE = re.compile(r"^([0-9A-Fa-f]{1,8})\s+(\S.*)$")
+# One token of the byte column: a hex pair, or the `-` that ends it.
+BYTE_SLOT = re.compile(r"^(?:[0-9A-Fa-f]{2}|-)$")
 
 # Forms sdas8051 (ASxxxx) cannot assemble. Measured, not guessed: each was
 # tried against the assembler and produced "Invalid Addressing Mode". They are
@@ -206,8 +206,40 @@ def parse_listing(path):
         m = LINE_RE.match(line.rstrip("\n"))
         if not m:
             continue
-        addr, b1, b2, b3, mnem, ops = m.groups()
-        hexbytes = "".join(b for b in (b1, b2, b3) if b != "-")
+        addr, rest = m.groups()
+        # The byte column ends at the first `-`, and the mnemonic is whatever
+        # follows. Taking a run of hex pairs instead would be ambiguous the
+        # moment the mnemonic is itself two hex digits -- which the 8051's
+        # reserved `da` is, and which is the whole reason the column is padded.
+        #
+        # The one case the padding cannot cover is a maximum-length instruction
+        # immediately followed by a two-hex-digit mnemonic: no `-` to stop at.
+        # It cannot arise here. `da` is one byte against the 8051's maximum of
+        # three, so it is always padded; and no x86-64 mnemonic is two hex
+        # digits. If a future processor breaks that, this needs a real
+        # delimiter rather than a wider assumption.
+        slots = rest.split()
+        take = 0
+        for i, tok in enumerate(slots):
+            if tok == "-":
+                # Padding ends the byte column. Everything after it is the
+                # mnemonic and operands, even if it looks like hex -- which it
+                # does for the 8051's `da`, and which is the entire reason the
+                # column is padded rather than variable width.
+                take = i
+                break
+            if not BYTE_SLOT.match(tok):
+                take = i
+                break
+            take = i + 1
+        hexbytes = "".join(slots[:take])
+        rest_at = take
+        while rest_at < len(slots) and slots[rest_at] == "-":
+            rest_at += 1          # skip the padding, not the mnemonic after it
+        tail = " ".join(slots[rest_at:]).strip()
+        if not tail:
+            continue
+        mnem, _, ops = tail.partition(" ")
         out.append((int(addr, 16), hexbytes, mnem.lower(), ops.strip()))
     return out
 
@@ -733,13 +765,27 @@ def self_test():
     assert_that(insns[2][1] == "f0", "a one-byte instruction parses")
     # The ambiguity that made the byte column fixed width in the first place.
     amb = parse_listing_str(
-        "D438  d4  -  -    da      A\n"
-        "D439  84  -  -    div     AB\n")
+        "D438  d4  -  -        da      A\n"
+        "D439  84  -  -        div     AB\n")
     assert_that(len(amb) == 2 and amb[0][1] == "d4" and amb[0][2] == "da",
                 "the reserved one-byte `da A` does not read as the two-byte "
                 "`d4 da`")
     assert_that(amb[1][1] == "84" and amb[1][2] == "div",
                 "the instruction after it still parses")
+    # The x86-64 shape, which is why the column width is per-program rather
+    # than a constant 3: a 7-byte instruction in a 15-slot column, and one
+    # that fills the column with no padding to stop at.
+    wide = parse_listing_str(
+        "00000268  48 89 05 79 0a 00 00 - - - - - - - -"
+        "  mov      qword ptr [0x00000ce8], RAX\n"
+        "0000026f  48 89 15 6a 0a 00 00 - - - - - - - -"
+        "  mov      qword ptr [0x00000ce0], RDX\n")
+    assert_that(len(wide) == 2
+                and wide[0][1] == "488905790a0000" and wide[0][2] == "mov",
+                "a 7-byte x86-64 instruction in a 15-slot column parses whole")
+    assert_that(wide[1][2] == "mov"
+                and "0x00000ce0" in wide[1][3],
+                "its operands are not mistaken for bytes")
 
     # The comparison itself, against a byte string we control. A check that
     # cannot fail on a wrong byte is not a check.

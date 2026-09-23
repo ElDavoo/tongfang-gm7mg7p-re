@@ -73,6 +73,12 @@ public class ExportListing extends GhidraScript {
         // it, in one pass. Function.getInstructions() is not on Function in
         // Ghidra 12 and getBody() is not worth depending on either; walking the
         // listing once is both cheaper and stable across versions.
+        // The byte column is padded to the widest instruction in *this*
+        // program, not to a fixed 3. The 8051's longest is 3 bytes; x86-64's
+        // is 15, and a fixed 3 would silently truncate every 7-byte `mov r64,
+        // [rip+disp32]` in a BIOS module -- a listing that looks fine and is
+        // wrong about the instruction it claims to show.
+        int maxBytes = 1;
         Map<Long, java.util.List<Instruction>> byEntry = new java.util.HashMap<>();
         ghidra.program.model.listing.InstructionIterator all =
             currentProgram.getListing().getInstructions(true);
@@ -85,7 +91,17 @@ public class ExportListing extends GhidraScript {
             }
             byEntry.computeIfAbsent(owner.getEntryPoint().getOffset(),
                 k -> new java.util.ArrayList<>()).add(ins);
+            int mb = ins.getMaxBytes();
+            if (mb > maxBytes) {
+                maxBytes = mb;
+            }
         }
+        if (maxBytes > 15) {
+            maxBytes = 15;
+        }
+        byteSlots = maxBytes;
+        println("ExportListing " + program + ": byte column padded to "
+                + maxBytes + " slot(s), the widest instruction in this program");
 
         TongFang.mkdirs(new File(outDir));
         PrintWriter index = new PrintWriter(new FileWriter(indexPath, true));
@@ -176,6 +192,10 @@ public class ExportListing extends GhidraScript {
      * that turns out to be necessary: the byte column is always three slots and
      * a missing byte is a `-`, so the mnemonic always begins at a known place.
      *
+     * The width is the widest instruction in the program, not a constant: 3 on
+     * the 8051, 15 on x86-64, and a fixed 3 would truncate every 7-byte
+     * `mov r64, [rip+disp32]` in a BIOS module.
+     *
      * The 8051 has a reserved one-byte instruction the SLEIGH spells `da A`,
      * and `da` is two hex digits. Rendered with a variable-width byte column --
      * which is what objdump does and what this did -- the line
@@ -189,15 +209,18 @@ public class ExportListing extends GhidraScript {
      * five instructions whose bytes were not in the firmware. Fixed slots make
      * it impossible rather than merely detectable.
      */
+    private int byteSlots = 3;
+
     private String format(Instruction ins) throws ghidra.program.model.mem.MemoryAccessException {
-        String[] slots = {"-", "-", "-"};
+        StringBuilder hex = new StringBuilder();
         byte[] bytes = ins.getBytes();
-        if (bytes != null) {
-            for (int i = 0; i < bytes.length && i < 3; i++) {
-                slots[i] = String.format("%02x", bytes[i] & 0xff);
+        int n = bytes == null ? 0 : Math.min(bytes.length, byteSlots);
+        for (int i = 0; i < byteSlots; i++) {
+            if (i > 0) {
+                hex.append(' ');
             }
+            hex.append(i < n ? String.format("%02x", bytes[i] & 0xff) : "-");
         }
-        String hex = slots[0] + " " + slots[1] + " " + slots[2];
         StringBuilder ops = new StringBuilder();
         for (int i = 0; i < ins.getNumOperands(); i++) {
             if (i > 0) {
@@ -206,8 +229,9 @@ public class ExportListing extends GhidraScript {
             ops.append(ins.getDefaultOperandRepresentation(i));
         }
         String mnem = ins.getMnemonicString().toLowerCase();
-        return String.format("%-8s %-9s %-8s %s",
-            TongFang.addrKey(ins.getAddress().toString()), hex, mnem, ops.toString());
+        return String.format("%-8s %-" + (byteSlots * 3 - 1) + "s %-8s %s",
+            TongFang.addrKey(ins.getAddress().toString()), hex.toString(),
+            mnem, ops.toString());
     }
 
     private void writeHeader(PrintWriter w, String program, Map<String, String> ctx, String ext) {
