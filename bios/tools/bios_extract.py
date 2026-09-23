@@ -721,6 +721,38 @@ def write_outputs(raw, found, digest, mode, rows, unmatched, work, listing=None)
 #
 # A `/* ---- ... ---- */` block header, which in these files always introduces a
 # function.
+# A disassembly line: an address, then the byte column, then the mnemonic. The
+# byte column ends at the first `-` and is padded to the program's widest
+# instruction, so taking hex pairs greedily would swallow a mnemonic that is
+# itself two hex digits -- which the 8051's reserved `da` is, and which is why
+# the column is padded. See ghidra/scripts/ExportListing.java.
+_ADDRESS_LINE = re.compile(r"^[0-9A-Fa-f]{4,8}\s+\S")
+_BYTE_SLOT = re.compile(r"^(?:[0-9A-Fa-f]{2}|-)$")
+
+
+def _parse_listing_lines(lines):
+    """-> [(addr, hexbytes)], skipping any line the layout does not explain."""
+    out = []
+    for line in lines:
+        parts = line.split()
+        if len(parts) < 2:
+            continue
+        try:
+            addr = int(parts[0], 16)
+        except ValueError:
+            continue
+        take = 0
+        for i, tok in enumerate(parts[1:]):
+            if tok == "-" or not _BYTE_SLOT.match(tok):
+                take = i
+                break
+            take = i + 1
+        if take == 0:
+            continue
+        out.append((addr, "".join(parts[1:1 + take])))
+    return out
+
+
 ANNOTATED_HEADER = re.compile(r"^/\* ---- (.*?) ----")
 # A trailing `/* 0x0C30: PCR[0x6E][0x38] bits 25:24 */` on a line of code:
 # how a call site cites the function it calls. EXACTLY four hex digits, which
@@ -1123,6 +1155,35 @@ def check():
                  % (r["program"], r["addr"], r["out_file"]))
     for prog, addr in _seen - _lseen:
         fail("%s %s decompiles but has no disassembly listing" % (prog, addr))
+
+    # Every line that starts with an address is an instruction, and the parser
+    # has to get all of them. A parser that reads a fraction of a file and
+    # finds nothing wrong in it reports a pass, which is worse than one that
+    # reads none -- this is not hypothetical, it is what happened on the EC
+    # when the listing format changed and the committed listings had not been
+    # re-exported.
+    insns, unparsed = 0, []
+    for r in _lrows:
+        rel = r.get("out_file", "")
+        if not rel or rel.startswith("("):
+            continue
+        path = os.path.join(LISTINGS, rel)
+        if not os.path.isfile(path):
+            continue
+        text = open(path, errors="replace").read()
+        lines = [l for l in text.splitlines() if _ADDRESS_LINE.match(l)]
+        got = _parse_listing_lines(lines)
+        insns += len(got)
+        if len(got) != len(lines):
+            unparsed.append("%s/%s: %d line(s), %d parsed"
+                            % (r["program"], r["addr"], len(lines), len(got)))
+    if _lrows:
+        print("  disassembly: %d instruction(s) parsed across %d listing(s)"
+              % (insns, len(_lrows)))
+    for why in unparsed[:10]:
+        fail("listing does not parse: %s" % why)
+    if len(unparsed) > 10:
+        fail("... and %d more listing(s) that do not parse" % (len(unparsed) - 10))
     if not ok:
         return 1
     digest = rom_digest()
