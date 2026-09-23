@@ -577,10 +577,24 @@ registers:
       (evidence/ec-watch/2026-09-23-power-mode-cycle-0700-07ff.csv; trace
       in windows/vendor-ec-map.md "Power modes", issue #92). The vendor
       writes the PLs, a fan table and the GPU bytes in the same breath, so
-      the capture cannot say what the EC does with this byte alone. That
-      is the open question for a Linux platform profile, and the reason
-      this is still present-untested. Upstream defines the address but
-      never touches it.
+      that capture could not say what the EC does with this byte alone.
+      2026-09-23 (issue #99): it was written alone. On AC, from Turbo, with
+      the vendor service running, 0x0751 was set to each of 0xA0/0x00/0x10
+      and held 20 s while 0x0783-0x0787, 0x07C5, 0x07C6, 0x0743-0x0746 and
+      the fan table 0x0F00-0x0F5F were watched
+      (evidence/ec-watch/2026-09-23-0751-isolation.txt,
+      windows/tools/manual_fan_ctrl_probe.py). Nothing else moved: the EC
+      does NOT copy its per-mode PL defaults (0x0730-0x0737/0x07A7-0x07AA)
+      into 0x0783-0x0785, nor load a fan table, when the mode byte changes.
+      A silent write persisted (the service, not event-triggered, did not
+      revert it). So a Linux platform profile has to write the PLs and the
+      fan table itself, from the EC default blocks; 0x0751 alone will not.
+      Still present-untested for one reason: whether the fan-mode bits
+      (4-7) change how the EC drives the fans along the (unchanged) curve
+      was not isolated -- the test ran near-idle with roughly steady
+      temperature, and fan PWM 0x075B/0x075C moved the same amount under a
+      no-op control write, i.e. thermally. That needs a fixed-load
+      comparison. Upstream defines the address but never touches it.
 
   - name: BIOS_OEM_2 (DEFAULT_MODE / FAN_QKEY / FAN_TABLE_OFFICE_MODE)
     addr: 0x0782
