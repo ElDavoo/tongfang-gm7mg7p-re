@@ -502,8 +502,12 @@ def post_scripts(ghidra, project_dir, out_c, out_src, out_fn, raw_index,
     DecompAll runs FIRST, before ApplyAnnotations renames anything, because
     bios/decompiled/<Module>.c is the unedited export and has to come out
     byte-identical across builds. ExportDecompile runs last, on the renamed
-    program, and is what fills the index, the manifest and the generated
-    .annotated.c.
+    program, and is what fills the index and the manifest.
+
+    `<Module>.annotated.c` is NOT produced here: it is hand written, and the
+    annotations CSV is transcribed from it rather than the other way round.
+    See "The hand restatement, and the guard that keeps it and the CSV
+    together" below.
     """
     for stale in os.listdir(work):
         if stale.startswith("index-raw.csv.") and stale.endswith(".counts"):
@@ -801,10 +805,22 @@ def check_annotated_layers(fail):
                 fail("%s has a row for 0x%04X marked hand-decoded with an empty "
                      "name, and the restatement does not cite that address"
                      % (fn, addr))
-    for scope in sorted({a["scope"].strip() for a in ann}):
-        if not os.path.isfile(os.path.join(DECOMPILED, scope + ".annotated.c")):
-            print("  note  %s has annotation rows but no hand restatement to "
-                  "check them against" % scope)
+    # A module with annotation rows and no hand restatement is the normal case,
+    # not a gap to be reported: the rows are read from the function's
+    # disassembly, which is a source in its own right, and only OemOcDxe has
+    # ever had a hand restatement. The note is here so the two are not confused
+    # -- a row with `basis: hand-decoded` in a module with a restatement IS
+    # transcribed from it and is checked above, and the same basis with no
+    # restatement means it was read from the listing.
+    restated = {a["scope"].strip() for a in ann
+                if os.path.isfile(os.path.join(
+                    DECOMPILED, a["scope"].strip() + ".annotated.c"))}
+    unstated = sorted({a["scope"].strip() for a in ann} - restated)
+    if unstated:
+        print("  note  %d module(s) have annotation rows read from their "
+              "disassembly with no hand restatement: %s"
+              % (len(unstated), ", ".join(unstated[:6])
+                 + (" ..." if len(unstated) > 6 else "")))
 
 
 # --------------------------------------------------------------------------
