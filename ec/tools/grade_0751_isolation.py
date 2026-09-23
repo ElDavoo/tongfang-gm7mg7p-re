@@ -25,6 +25,16 @@ new judgement: §4.4's deciding comparison is how far the PWM bytes drifted
 between one mark and the next, and reading that off the change rows means
 doing the subtraction by eye across two terminal windows.
 
+`--dump-pair` reads the same §4.1-§4.3 bytes a second, wider way, from a
+before/after dump pair per range -- the two range dumps §3's steps 0 and 6
+take, which bracket the whole block where each CSV window brackets one arm
+of it. That bracket is complementary to the windowed one, not a stronger
+form of it: a byte that moved at any point in the block and is back where it
+started by the after-dump reads unchanged here, and a byte that moves
+entirely between two of `ec_watch.py`'s sweeps is in no change row at all.
+Each read has a gap the other does not close. An address one dump covers and
+the other does not is a coverage gap, never a change.
+
 **This is not the §7 call and cannot be.** §7 moves `MANUAL_FAN_CTRL` off
 `present-untested` on fan PWM or package power moving under a fixed load.
 Those bytes are captured and printed here, but printing them is not grading
@@ -45,6 +55,9 @@ Usage:
         [capture-0f00-0f5f.csv] [capture-0400-045f.csv] \
         [--dump before-0700.txt] [--dump after-0700.txt]
     python3 ec/tools/grade_0751_isolation.py capture.csv --wrote 0xA0
+    python3 ec/tools/grade_0751_isolation.py capture.csv \
+        --dump-pair before-0700.txt after-0700.txt \
+        --dump-pair before-0f00.txt after-0f00.txt
 """
 import argparse
 import csv
@@ -268,6 +281,95 @@ def report_dumps(dumps, wrote):
               "run is what separates the vendor service from the EC.")
 
 
+def report_dump_pairs(pairs):
+    """The same watched bytes, read across a whole block instead of a window.
+
+    A pair is §3's own bracket for one range -- step 0 and step 6, ~100 s
+    apart -- and a CSV window is one arm of that block. So this is a wider
+    bracket on the same question, not a better answer: a byte that moved
+    anywhere in the block and is back at its starting value by the
+    after-dump reads unchanged here, and a byte that moves entirely between
+    two of `ec_watch.py`'s sweeps is in no change row at all. Each read has
+    a gap the other does not close, and neither emits a status.
+
+    Only the intersection of the two address sets is compared. `read_dump`
+    returns what it saw, so an address past the end of the shorter dump is
+    simply missing from it, and a plain `!=` over the union would call every
+    one of them a difference. A gap like that is coverage, printed as such.
+
+    The bucketing is `report_window`'s, unchanged: the §4.1-§4.3 bytes, then
+    the §4.4/§4.5 context bytes printed and not graded, then everything else
+    named for the human. No third category -- a byte's membership in one
+    bucket is the same question here as it is per window.
+    """
+    print("\n=== whole-block dump pairs (§4.1-§4.3) ===")
+    if not pairs:
+        print("  no dump pair given (--dump-pair); the whole-block read is not "
+              "checked")
+        return
+    for before_path, after_path, before, after in pairs:
+        common = sorted(set(before) & set(after))
+        moved = [a for a in common if before[a] != after[a]]
+        print(f"\n  {before_path} -> {after_path}, {len(common)} address(es) "
+              "compared")
+
+        only_before = sorted(set(before) - set(after))
+        only_after = sorted(set(after) - set(before))
+        if only_before or only_after:
+            print("    coverage gap, not a change: whatever moved in the part "
+                  "one of these does not cover is outside this read.")
+            print("      before dump only: "
+                  + (" ".join(f"0x{a:04X}" for a in only_before) or "none"))
+            print("      after dump only:  "
+                  + (" ".join(f"0x{a:04X}" for a in only_after) or "none"))
+
+        for name, addrs in WATCHED:
+            hits = [a for a in moved if a in addrs]
+            if not any(a in addrs for a in common):
+                # The fan table is not in a 0x0700 dump and the PLs are not
+                # in a 0x0F00 one, so §6's pairs each cover some of §4.1-§4.3
+                # and not all. Silence there would read as "nothing moved".
+                print(f"    {name}: not covered by this pair")
+            elif not hits:
+                print(f"    {name}: unchanged across the block")
+            else:
+                print(f"    {name}:")
+                for a in hits:
+                    print(f"      0x{a:04X}  0x{before[a]:02X} -> "
+                          f"0x{after[a]:02X}")
+
+        groups = [(name, [a for a in moved if a in addrs])
+                  for name, addrs in CONTEXT]
+        groups = [(name, hits) for name, hits in groups if hits]
+        if groups:
+            print("    candidate PWM / temperature bytes (§4.4/§4.5) -- "
+                  "context, not graded here:")
+            for name, hits in groups:
+                print(f"      {name}:")
+                for a in hits:
+                    print(f"        0x{a:04X}  0x{before[a]:02X} -> "
+                          f"0x{after[a]:02X}")
+
+        others = [a for a in moved
+                  if not any(a in addrs for _, addrs in WATCHED)
+                  and not any(a in addrs for _, addrs in CONTEXT)]
+        if others:
+            print(f"    other addresses that differ ({len(others)}), not "
+                  "graded here -- read them against §4.4 and §4.5 by hand:")
+            print("      " + " ".join(f"0x{a:04X}" for a in others))
+
+    print("\n  Every `unchanged` above says the byte did not differ between "
+          "these two reads, which is not a claim that it did not move inside "
+          "the block: §5, a byte that does not move inside a window may "
+          "still move at the next suspend, AC transition or EC reset. This "
+          "bracket is complementary to the windowed CSV read above, not a "
+          "stronger one -- a byte that moved and was back where it started "
+          "by the after-dump reads unchanged here whether or not the "
+          "captures recorded the move, and a byte that moves entirely "
+          "between two of ec_watch.py's sweeps is in no change row at all. "
+          "Neither gap is closed by the other read.")
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -275,6 +377,12 @@ def main(argv=None):
                     help="ec_watch.py --mark --csv capture(s)")
     ap.add_argument("--dump", action="append", default=[], metavar="FILE",
                     help="ecrw.py dump output; repeat for before- and after-")
+    ap.add_argument("--dump-pair", action="append", nargs=2, default=[],
+                    metavar=("BEFORE", "AFTER"),
+                    help="one range's ecrw.py dump before/after pair, as §3's "
+                         "steps 0 and 6 take it; repeat per range. Read for "
+                         "the whole-block report and independent of --dump, "
+                         "whose §4.6 readback still comes from the last one")
     ap.add_argument("--wrote", help="the value written to 0x0751 (e.g. 0xA0)")
     args = ap.parse_args(argv)
 
@@ -303,6 +411,13 @@ def main(argv=None):
     dumps = [(p, read_dump(p)) for p in args.dump]
     report_dumps(dumps, wrote)
 
+    # After the §4.6 readback, so the section order stays the one §6
+    # documents: the per-window read, then 0x0751 across the dumps, then the
+    # whole-block bracket on the same §4.1-§4.3 bytes.
+    pairs = [(b, a, read_dump(b), read_dump(a))
+             for b, a in args.dump_pair]
+    report_dump_pairs(pairs)
+
     print("\n=== what this does and does not settle ===")
     if any_moved:
         print("  At least one of the §4.1-§4.3 bytes moved after a mark. That "
@@ -315,6 +430,12 @@ def main(argv=None):
               "with the static prediction, for this capture's window only "
               "(§5: a byte that does not move inside the window may still "
               "move at the next suspend, AC transition or EC reset).")
+    if pairs:
+        print("  The whole-block dump pairs above were read as a second, "
+              "wider bracket on the same §4.1-§4.3 bytes. That is two "
+              "brackets, not two results: each has a gap the other does not "
+              "close, and neither grades the PWM or temperature bytes the "
+              "pairs happen to print.")
     print("  Any candidate PWM and temperature bytes printed above are "
           "context, not a result: 0x075B/0x075C are where issue #99 says "
           "to look, not a "

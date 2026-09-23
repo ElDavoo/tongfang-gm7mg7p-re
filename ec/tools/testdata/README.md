@@ -23,7 +23,14 @@ whose candidate PWM drifts *more* under the no-op than under the write, with
 `CPU_TEMP`/`GPU_TEMP` climbing throughout and nothing §4.1-§4.3 moving — the
 ambiguous, thermally-explained shape, and **not** a prediction that a re-run
 produces it. The four dumps are full `ecrw.py dump` ranges, `0x0751` reading
-`0x10` before and `0xA0` after, differing only where the CSVs record movement.
+`0x10` before and `0xA0` after; the `0x0700` pair differs only where the CSVs
+record movement, and the `0x0F00` pair is byte for byte identical by
+construction. That is what makes the second pair worth keeping: it is the
+one that exercises the whole-block read's *unchanged* branch, which the
+`0x0700` pair — always carrying the four addresses the captures record
+moving — cannot reach. Both pairs are now given to `--dump-pair` in §6's
+command, so all four dumps are consumed and the fixture set itself is
+unchanged.
 Every file in the directory carries a `constructed` header saying no EC was
 read; `../test_grade_0751_isolation.py` asserts that the list in §6 and this
 directory are the same set, so a rename on one side and not the other fails.
