@@ -42,9 +42,28 @@ RUN_CAPTURES = (str(RUN / '2026-01-01-0751-isolation-0700-07ff.csv'),
                 str(RUN / '2026-01-01-0751-isolation-0400-045f.csv'))
 RUN_BEFORE = str(RUN / '2026-01-01-0751-isolation-a0-before-0700.txt')
 RUN_AFTER = str(RUN / '2026-01-01-0751-isolation-a0-after-0700.txt')
+# The other pair §3's steps 0 and 6 take, for the fan-table range. These are
+# the two dumps §6 listed and nothing read, which is what issue #161 is
+# about: they are byte for byte identical by construction, so they exercise
+# the whole-block read's "unchanged" branch and its "not covered by this
+# pair" lines for §4.1 and §4.3.
+RUN_BEFORE_0F00 = str(RUN / '2026-01-01-0751-isolation-a0-before-0f00.txt')
+RUN_AFTER_0F00 = str(RUN / '2026-01-01-0751-isolation-a0-after-0f00.txt')
 # The runbook, whose §6 is the list these fixtures are named from.
 RUNBOOK = (HERE.resolve().parents[1] / 'docs' / 'hardware-tests'
            / 'manual-fan-ctrl-0751-isolation.md')
+
+
+def concrete(text):
+    """§6's two placeholders, resolved to the fixture's own values.
+
+    Shared by both §6 readers so the fence of names and the fence of the
+    command line are read with one spelling of the substitution and not
+    two, and applied to the runbook's text rather than to a fixture name --
+    it is §6 that carries the placeholders.
+    """
+    return (text.replace("<date>", "2026-01-01")
+                .replace("<value>", "a0"))
 
 
 def section6_file_list(doc):
@@ -63,11 +82,73 @@ def section6_file_list(doc):
     fence = re.search(r"```\n(.*?)```", section, re.S)
     if fence is None:
         raise AssertionError("§6 has no fenced file list any more")
-    names = {line.strip().replace("<date>", "2026-01-01").replace("<value>", "a0")
+    names = {concrete(line.strip())
              for line in fence.group(1).splitlines() if line.strip()}
     if not names:
         raise AssertionError("§6's fenced block is empty")
     return names
+
+
+def section6_command(doc):
+    """§6's fenced console block -- whichever fence holds the command line.
+
+    Found by what is in it, not by being the first fence, because §6 also
+    fences the eight file names and `section6_file_list` reads that one
+    first. A block added above the file names must not be able to take its
+    place unnoticed.
+    """
+    if "\n## 6. " not in doc:
+        raise AssertionError("no §6 in the runbook; the command line to "
+                             "check has moved or gone")
+    section = doc.split("\n## 6. ", 1)[1].split("\n## 7. ", 1)[0]
+    # The info string is matched because the command line's fence is tagged
+    # `console` and the file names' is not; a fence without one has to be
+    # found here too or this walks past the block it is looking for.
+    for fence in re.finditer(r"```[a-z]*\n(.*?)```", section, re.S):
+        if "grade_0751_isolation.py" in fence.group(1):
+            return fence.group(1)
+    raise AssertionError("§6 has no fenced command line any more")
+
+
+# A differing-address line as the report prints it, in the WATCHED and
+# CONTEXT buckets. The section cannot simply be swept for every `0xNNNN` it
+# holds: WATCHED's own §4.3 label names 0x07C6 whether or not it moved.
+VALUE_LINE = re.compile(r'(0x[0-9A-F]{4})  0x[0-9A-F]{2} -> 0x[0-9A-F]{2}')
+
+
+def differing_addresses(section):
+    """The addresses a whole-block section shows as differing, as printed.
+
+    Both buckets that name an address, because they do not print it the
+    same way: the graded and context bytes get a value line each, the
+    generic "other addresses" bucket gets a flat list on one line.
+    """
+    lines = section.splitlines()
+    found = set(VALUE_LINE.findall(section))
+    for i, line in enumerate(lines):
+        if line.lstrip().startswith('other addresses that differ'):
+            found |= set(re.findall(r'0x[0-9A-F]{4}', lines[i + 1]))
+    return found
+
+
+def dumped_change_addresses():
+    """The addresses the captures record moving that a dump actually covers.
+
+    Read out of the three CSVs and the four dumps rather than hardcoded, so
+    that editing a fixture on either side has to fail this. The
+    intersection is deliberate: the 0x0400-0x045F capture has change rows
+    and §3 takes no dump of that range, so no pair can be expected to show
+    them -- the captures are the windowed read, the dumps the whole-block
+    one, and neither covers everything.
+    """
+    moved = set()
+    for path in RUN_CAPTURES:
+        _, changes = grade.read_capture(path)
+        moved |= {c.addr for c in changes}
+    covered = set()
+    for path in (RUN_BEFORE, RUN_AFTER, RUN_BEFORE_0F00, RUN_AFTER_0F00):
+        covered |= set(grade.read_dump(path))
+    return {f"0x{a:04X}" for a in moved & covered}
 
 
 def run(*argv):
@@ -217,6 +298,90 @@ class GradeTests(unittest.TestCase):
             _, out, _ = run(QUIET, '--dump', str(annotated), '--wrote', '0xA0')
         self.assertIn('0x0751 = 0xA0', out)
 
+    # The intersection rule, on the branch §3's own pairs cannot reach: two
+    # dumps of one range are the same length, so no fixture has one reaching
+    # past the other. `read_dump` returns only what it saw, so comparing the
+    # union would call every address past the shorter dump a change -- and
+    # 0x0751 sits exactly where a truncated after-dump stops covering it.
+    def test_a_truncated_pair_is_a_coverage_gap_not_a_change(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            before = Path(tmp) / 'before-0700.txt'
+            before.write_text('0750: 00 a0 02 03 04 05 06 07\n')
+            after = Path(tmp) / 'after-0700.txt'
+            after.write_text('0750: 00 a0 02 03\n')
+            _, out, _ = run(QUIET, '--dump-pair', str(before), str(after))
+        section = out.split('=== whole-block dump pairs (§4.1-§4.3) ===')[1]
+        # Four addresses on both sides, and the four only the before dump
+        # has are named as a gap rather than reported as four differences.
+        self.assertIn('4 address(es) compared', section)
+        self.assertIn('before dump only: 0x0754 0x0755 0x0756 0x0757',
+                      section)
+        self.assertIn('after dump only:  none', section)
+        # None of §4.1-§4.3 is in this dump at all, so all three are named as
+        # not covered rather than passing as "unchanged".
+        self.assertEqual(section.count('not covered by this pair'), 3)
+        self.assertNotIn('unchanged across the block', section)
+
+    # §6's whole-block read, over the same §6 set: what the CSV windows
+    # cannot see is a byte that moves between the last mark and the
+    # after-dump, or moves and returns inside one sweep, and the two dump
+    # pairs §3 takes are the bracket for that.
+    def test_dump_pairs_read_the_whole_block(self):
+        rc, out, _ = run(*RUN_CAPTURES,
+                         '--dump', RUN_BEFORE, '--dump', RUN_AFTER,
+                         '--dump-pair', RUN_BEFORE, RUN_AFTER,
+                         '--dump-pair', RUN_BEFORE_0F00, RUN_AFTER_0F00,
+                         '--wrote', '0xA0')
+        self.assertEqual(rc, 0)
+        section = out.split('=== whole-block dump pairs (§4.1-§4.3) ===')[1]
+        section = section.split('=== what this does and does not settle')[0]
+
+        # The 0F00 pair is byte for byte identical by construction, which is
+        # §4.2's prediction in the one form a machine can hold: the fan
+        # table is unchanged across the whole block. §4.1 and §4.3 are not
+        # in a 0x0F00 dump at all, and are named as not covered rather than
+        # passed over in silence -- a range that was never read and a range
+        # that was read and did not move are different answers.
+        self.assertIn('96 address(es) compared', section)
+        self.assertIn('fan table (§4.2): unchanged across the block', section)
+        self.assertIn('PL1/PL2/PL4 (§4.1): not covered by this pair', section)
+        self.assertIn('fan-table bracket byte 0x07C6 (§4.3): not covered by '
+                      'this pair', section)
+
+        # The 0700 pair, the other way round: it covers §4.1 and §4.3 and not
+        # §4.2, and holds both of those unchanged across the block.
+        self.assertIn('256 address(es) compared', section)
+        self.assertIn('PL1/PL2/PL4 (§4.1): unchanged across the block',
+                      section)
+        self.assertIn('fan-table bracket byte 0x07C6 (§4.3): unchanged across '
+                      'the block', section)
+        self.assertIn('fan table (§4.2): not covered by this pair', section)
+
+        # The issue's criterion: across both pairs the report shows exactly
+        # the addresses the captures record moving -- 0x0751 and the
+        # sensor-looking 0x0796 in the "other" bucket, the §4.4 candidate
+        # PWM pair under its own heading, printed and not graded. Checked
+        # against the captures rather than a literal list, so a fixture
+        # edit on either side of this fails.
+        self.assertEqual(differing_addresses(section),
+                         dumped_change_addresses())
+        self.assertEqual(differing_addresses(section),
+                         {'0x0751', '0x075B', '0x075C', '0x0796'})
+        self.assertIn('candidate fan PWM 0x075B/0x075C -- unconfirmed '
+                      '(§4.4)', section)
+        self.assertIn('other addresses that differ (2), not graded here',
+                      section)
+
+        # A wider bracket, not a stronger one, and not a verdict. The
+        # closing line is what keeps "unchanged" from being read as "did not
+        # move", and the whole-block read stays out of §7's vocabulary.
+        self.assertIn('not a claim that it did not move inside the block',
+                      section)
+        self.assertIn('complementary to the windowed CSV read above, not a '
+                      'stronger one', section)
+        self.assertNotIn('confirmed-working', section)
+        self.assertNotIn('confirmed-inert', section)
+
     # §6 end to end, over the eight files §6 names and by the command line §6
     # gives. Everything a reader of that command line would take from its
     # output, asserted here, because nothing in the repository had been
@@ -224,6 +389,8 @@ class GradeTests(unittest.TestCase):
     def test_section6_command_line_over_section6s_file_set(self):
         rc, out, _ = run(*RUN_CAPTURES,
                          '--dump', RUN_BEFORE, '--dump', RUN_AFTER,
+                         '--dump-pair', RUN_BEFORE, RUN_AFTER,
+                         '--dump-pair', RUN_BEFORE_0F00, RUN_AFTER_0F00,
                          '--wrote', '0xA0')
         self.assertEqual(rc, 0)
         # Three actions, nine MARK rows: each is marked in all three
@@ -249,11 +416,17 @@ class GradeTests(unittest.TestCase):
                       '0 change row(s)', out)
         # §4.6: the after-dump is the last --dump, which is why §6 says to put
         # it last -- and holding the written value is a readback, not a result.
+        # The two --dump-pair flags do not disturb that: --dump keeps its own
+        # meaning and the readback is still taken from the last of those.
         self.assertIn('2026-01-01-0751-isolation-a0-before-0700.txt: '
                       '0x0751 = 0x10', out)
         self.assertIn('the last dump still holds the written 0xA0', out)
         self.assertIn('that is a readback, not evidence', out)
         self.assertIn('not the call itself', out)
+        # And the whole-block read §6's command now also produces.
+        self.assertIn('=== whole-block dump pairs (§4.1-§4.3) ===', out)
+        self.assertIn('The whole-block dump pairs above were read as a '
+                      'second, wider bracket', out)
 
     # §6's list and the fixture set are the same set. Equality, not existence:
     # a name changed on one side and not the other, and a stray file, both have
@@ -263,6 +436,18 @@ class GradeTests(unittest.TestCase):
         listed = {Path(n).name for n in section6_file_list(doc)}
         on_disk = {p.name for p in RUN.iterdir() if p.is_file()}
         self.assertEqual(listed, on_disk)
+
+    # The defect issue #161 was opened for: §6 named the two 0F00 dumps in
+    # its file list and nothing in the tool read them. `section6_file_list`
+    # takes §6's *first* fence, so a file-role block placed above the file
+    # names would take that fence's place and fail the set equality above --
+    # but the runbook must not be able to drift back to collecting all four
+    # dumps and handing two of them to nothing, either. So the command block
+    # is found by what is in it, and has to name every dump §6 lists.
+    def test_section6s_command_reads_every_dump_it_lists(self):
+        block = concrete(section6_command(RUNBOOK.read_text(encoding="utf-8")))
+        for path in (RUN_BEFORE, RUN_AFTER, RUN_BEFORE_0F00, RUN_AFTER_0F00):
+            self.assertIn(Path(path).name, block)
 
 
 if __name__ == '__main__':
