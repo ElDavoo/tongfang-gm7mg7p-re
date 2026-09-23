@@ -611,6 +611,12 @@ def main(argv=None):
     ap.add_argument("--oracle", action="store_true",
                     help="with --self-test, also run Ghidra and check the export "
                          "against the hand reading in charge-target-derating.md")
+    ap.add_argument("--cross-decoder", action="store_true",
+                    help="with --self-test, also compare Ghidra's C against "
+                         "ec/tools/disasm8051.py over each sampled function's "
+                         "opening instructions. Advisory: it prints, it does not "
+                         "fail the run, and it is what the deep gate tier runs "
+                         "(.github/scripts/agent-gates-deep.sh)")
     args = ap.parse_args(argv)
     work = os.path.abspath(args.work)
     os.makedirs(work, exist_ok=True)
@@ -662,8 +668,15 @@ def main(argv=None):
 
 def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     ok = True
-    ec_annotation_addrs = {int(r["addr"], 16) for r in read_csv(ANNOTATIONS)
+    # One read of the annotations CSV, split by scope. The PD set used to be
+    # built inside the generator of the check that uses it, so it re-read and
+    # re-parsed the whole file once per seed row -- 1,790 times, which is where
+    # this self-test's 18 s went. The EC-side set had been hoisted already; only
+    # the PD one had not, and the two now read the file once between them.
+    _ann = read_csv(ANNOTATIONS)
+    ec_annotation_addrs = {int(r["addr"], 16) for r in _ann
                            if r["scope"] in ("bank0", "bank1", "common")}
+    pd_annotation_addrs = {int(r["addr"], 16) for r in _ann if r["scope"] == "pd"}
 
     def check(label, cond):
         nonlocal ok
@@ -741,7 +754,7 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("no EC bank or common annotation is seeded into the PD program",
           not any(p == "pd" and a in ec_annotation_addrs
                   for p, a, _ in rows if _ == "annotation" and a not in
-                  {int(x["addr"], 16) for x in read_csv(ANNOTATIONS) if x["scope"] == "pd"}))
+                  pd_annotation_addrs))
     check("the PD image is never seeded from the EC call-target census",
           not any(p == "pd" and basis.startswith("call-target") for p, _, basis in rows))
     check("PD vector targets are all inside the PD image",
@@ -753,7 +766,16 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     print("  all assertions passed" if ok else "  FAILURES ABOVE")
     if not ok:
         return 1
-    check_cross_decoder_agreement()
+    # The cross-decoder comparison spawns disasm8051.py per sampled function.
+    # It is advisory -- its own docstring says so, and its result cannot fail
+    # this run either way -- so it runs only when asked for, which is what
+    # .github/scripts/agent-gates-deep.sh does. Worth being precise about what
+    # that is and is not: measured at 0.13 s, so this is a decision about where
+    # advisory output belongs, not a speed one. The self-test's actual 18 s was
+    # the set comprehension above, which re-read the annotations CSV once per
+    # seed row and is now 0.15 s in total.
+    if args.cross_decoder:
+        check_cross_decoder_agreement()
     if args.oracle:
         return opt_in_ghidra_oracle(args, work)
     return 0
@@ -808,6 +830,12 @@ def check_cross_decoder_agreement():
     confirms: Ghidra's 8051 decompile and this repository's own decoder,
     which share no code, agree instruction for instruction on the operands
     that both can see.
+
+    It runs on `--self-test --cross-decoder`, not on a bare `--self-test`.
+    `.github/scripts/agent-gates-deep.sh` is what passes the flag; the cheap
+    gate tier does not, and prints that it did not. Measured at 0.13 s, so
+    moving it is a statement about where advisory output belongs -- not a
+    speedup, and not a licence to assume the self-test's cost was here.
     """
     import re as _re
     import subprocess as _sp

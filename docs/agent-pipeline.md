@@ -9,6 +9,12 @@ because a repo-root `LICENSE` file would read as covering everything in
 this repo, including the `vendor/` binaries, which this project has no
 right to license).
 
+`.github/scripts/agent-gates-deep.sh` is **not** from the template — it is
+this repository's own, added when the gate was split into two tiers (see
+"What was customised for this repo" below). It is the one file under
+`.github/scripts/` that a re-copy of the template would not bring back, so it
+is the one to look for first when the upstream half of that change is done.
+
 Read that repository's own `README.md` for how the pipeline works — issue
 in, plan, implement, review, fix-loop against CI, squash-merge — and its
 `CLAUDE.md` for what must not drift if it's ever re-copied. This document
@@ -29,7 +35,33 @@ only covers what's specific to *this* copy.
   tool's `--check` and `--self-test` pass, which is what stops the committed
   Ghidra exports going stale without a Ghidra run in the gate; every `*.sh`
   passes `shellcheck`; every relative link between this repo's `.md` files
-  resolves.
+  resolves. It also prints, on every run, the two checks it does **not** run
+  and the one command that does — see the tier split below.
+- **`.github/scripts/agent-gates.sh` + `agent-gates-deep.sh`, the two tiers**
+  (2026-09-23, issue #137) — the gate is split by cost, and the split is
+  `AGENT_GATES_DEEP=1` plus one extra script. The cheap tier
+  (`agent-gates.sh`, what CI runs) is everything that is sub-second per step
+  and every check that opens a `.c` or an `.asm`: measured at **5.9 s** for the
+  whole script on a GitHub-hosted runner. The deep tier
+  (`.github/scripts/agent-gates-deep.sh`) is a **superset** — it runs the cheap
+  tier first, then the `sdas8051` re-encode and the advisory cross-decoder
+  comparison — so `AGENT_GATES_DEEP=1 .github/scripts/agent-gates.sh` is the
+  single command that checks everything, and the cheap tier's closing note
+  names that command on every run.
+  Two things to carry across if this file is ever re-copied from the template:
+  1. **The deep tier needs a schedule, and it does not have one.** Nothing in
+     `.github/workflows/` calls it, because the pipeline token has no
+     `workflow` scope. Until a human adds one, per-commit CI checks less than
+     it did before this split: the EC listing is no longer re-encoded from
+     bytes on every run. The intended schedule is a nightly or weekly
+     `schedule:` job that runs
+     `AGENT_GATES_DEEP=1 .github/scripts/agent-gates.sh`; the reason it is
+     opt-in rather than dropped is in `docs/findings.md`.
+  2. **The cheap tier's checks were strengthened, not moved.** The Windows
+     tool gained duplicate-key, strict-CSV, coverage and controlled-vocabulary
+     checks; nothing that catches a stale or silently-failed export was
+     deferred. The deep tier adds an independent re-derivation, it does not
+     substitute for anything.
 - **`.github/workflows/agent-plan.yml`**'s `CUSTOMISE` section — added the
   hardware/Windows-access constraint from `CLAUDE.md`, so the plan stage
   scopes issues needing the physical laptop or a Windows box down to

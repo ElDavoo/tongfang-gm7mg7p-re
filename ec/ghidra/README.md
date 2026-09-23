@@ -24,6 +24,7 @@ python3 ../tools/build_ec_decompile.py --work /tmp/ec --mode rebuild-project
 # what CI checks, with no Ghidra and no network
 python3 ../tools/build_ec_decompile.py --work /tmp/ec --check
 python3 ../tools/build_ec_decompile.py --work /tmp/ec --self-test
+python3 ../tools/build_ec_decompile.py --work /tmp/ec --self-test --cross-decoder  # advisory
 python3 ../tools/build_ec_decompile.py --work /tmp/ec --self-test --oracle   # also runs Ghidra
 ```
 
@@ -32,6 +33,14 @@ for: it rebuilds and then asserts that the bank-0 routine at `0xB1F0` comes
 out calling `FUN_CODE_bf08` and touching `EXTMEM 0x09c7`, the two facts
 `../annotations/charge-target-derating.md` established by hand. That is Ghidra's
 output compared against a human reading, made mechanical.
+
+`--check` and `--self-test` are what the cheap gate tier runs, at 0.24 s and
+0.15 s. `--cross-decoder` adds the advisory comparison against
+`disasm8051.py`; it is 0.13 s, it prints rather than fails, and
+`.github/scripts/agent-gates-deep.sh` is what passes the flag, so
+`AGENT_GATES_DEEP=1` gets it. See `docs/findings.md` §14 — the self-test used
+to take 18.8 s, and the cost was a set comprehension that re-read this
+repository's annotations CSV once per seed row, not the cross-decoder.
 
 ## What is here
 

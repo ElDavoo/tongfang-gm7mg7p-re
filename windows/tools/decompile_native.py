@@ -91,7 +91,17 @@ LISTING_INDEX = os.path.join(WINDOWS_DIR, "ghidra", "listing-index.csv")
 # byte column ends at the first `-` and is padded to the program's widest
 # instruction (15 on x86-64), which is what keeps a hex-looking mnemonic out of
 # it. See ghidra/scripts/ExportListing.java.
-_ADDRESS_LINE = re.compile(r"^[0-9A-Fa-f]{4,8}\s+\S")
+#
+# The address width has to clear the component's widest address, and this one is
+# 9: every image here is x86-64, and TongFang.addrKey() only strips the 0x and
+# the space prefix, so 140001000 is nine hex digits. The old {4,8} ceiling
+# matched no line in any of the five committed listings -- 0 of 2,875 in
+# ACPIDriver.asm -- so `lines` came out empty and "0 parsed == 0 lines" was
+# reported as a pass. That is the failure this check exists to catch: a parser
+# that reads a fraction of a file and finds nothing wrong in it reports a pass.
+# 16 is Ghidra's own widest address, so the ceiling is the format's, not a
+# number picked to fit today's five files.
+_ADDRESS_LINE = re.compile(r"^[0-9A-Fa-f]{4,16}\s+\S")
 _BYTE_SLOT = re.compile(r"^(?:[0-9A-Fa-f]{2}|-)$")
 
 
@@ -114,6 +124,35 @@ def _parse_listing_lines(lines):
         if take:
             out.append((addr, "".join(parts[1:1 + take])))
     return out
+
+
+def parse_listings(rows, outdir):
+    """Parse each DISTINCT listing the index names, once each.
+
+    The listing index has one row per function but, in per-program export mode,
+    one out_file per program: listing-index.csv's 10,664 rows name 5 files, and
+    10,141 of those rows name ACPIDriverDll.asm alone. Iterating rows re-read
+    and re-scanned that 35 MB file ten thousand times -- 358 GB of text to
+    re-derive what one pass already knows.
+
+    Returns (instruction_count, [(file, n_lines, n_parsed)], n_files_read)."""
+    insns, unparsed, seen, read = 0, [], set(), 0
+    for r in rows:
+        rel = (r.get("out_file") or "").strip()
+        if not rel or rel.startswith("(") or rel in seen:
+            continue
+        seen.add(rel)
+        path = os.path.join(outdir, rel)
+        if not os.path.isfile(path):
+            continue
+        read += 1
+        lines = [l for l in open(path, errors="replace").read().splitlines()
+                 if _ADDRESS_LINE.match(l)]
+        got = _parse_listing_lines(lines)
+        insns += len(got)
+        if len(got) != len(lines):
+            unparsed.append((rel, len(lines), len(got)))
+    return insns, unparsed, read
 
 # Shared Ghidra scripts (exporter, annotation applier, seeder) and the
 # Windows-only PDB pre-script. The seeder is not used here -- a PE has no
@@ -143,6 +182,10 @@ MANIFEST_HEADER = [
 # The raw index the shared exporter appends to: 10 tab-separated fields.
 INDEX_HEADER = ["program", "addr", "name", "size", "seed_basis", "annotated",
                 "type", "basis", "evidence", "out_file"]
+# What the manifest's `mode` column may say. Kept as data because it is a
+# controlled vocabulary and a vocabulary is only enforced if something reads it
+# from one place: the three modes the driver can produce, and nothing else.
+MANIFEST_MODES = ("rebuild-project", "export-only", "not-in-project")
 
 
 def log(msg):
@@ -279,14 +322,31 @@ def stage_pdb(target_local, scratch):
     return staged, True
 
 
-def _pe_is_managed(d):
-    """True if the PE image bytes have a CLR data directory (a COM descriptor)."""
-    if d[:2] != b"MZ":
+# DOS header + "PE\0\0" + 20-byte COFF header + room for the 15th data
+# directory. 256 bytes of optional header already covers the CLR entry on PE32
+# and PE32+; 512 leaves room for an optional header carrying more than either.
+_PE_HEADER_BYTES = 512
+
+
+def _pe_is_managed(f):
+    """True if the PE at the start of f has a CLR data directory (a COM
+    descriptor).
+
+    Reads the header, not the image. The CLR directory is number 14, so the last
+    byte this looks at is inside the 256-byte optional header; what follows is
+    the section table and then the code. The image behind that header is 27 MB
+    for GamingCenter3_Cross.dll, and a gate that asks this question on every run
+    should not pay to read the code with it."""
+    f.seek(0)
+    if f.read(2) != b"MZ":
         return False
-    pe = int.from_bytes(d[0x3c:0x40], "little")
-    if d[pe:pe + 4] != b"PE\0\0":
+    f.seek(0x3C)
+    pe = int.from_bytes(f.read(4), "little")
+    f.seek(pe)
+    d = f.read(_PE_HEADER_BYTES)
+    if len(d) < 26 or d[:4] != b"PE\0\0":
         return False
-    opt = pe + 24
+    opt = 24
     magic = int.from_bytes(d[opt:opt + 2], "little")
     ddoff = opt + (112 if magic == 0x20b else 96)
     clr_rva = int.from_bytes(d[ddoff + 14 * 8: ddoff + 14 * 8 + 4], "little")
@@ -296,27 +356,35 @@ def _pe_is_managed(d):
 def is_managed_assembly(path):
     try:
         with open(path, "rb") as f:
-            return _pe_is_managed(f.read())
+            return _pe_is_managed(f)
     except OSError:
         return False
 
 
-def managed_from_msix(repo, inside):
+def msix_inner_bytes(repo):
+    """The inner .msix out of the committed bundle, read whole.
+
+    Three of the six targets live in it and it is 17 MB, so whoever asks about
+    managed-ness reads this once, not once per target."""
+    import zipfile
+    bundle = os.path.join(repo, "vendor/control-center-3.9.18.0",
+                          "GamingCenter3_Cross.UWP_3.9.18.0_x64.msixbundle")
+    with zipfile.ZipFile(bundle) as zb:
+        inner = [n for n in zb.namelist() if n.endswith("_x64.msix")][0]
+        return zb.read(inner)
+
+
+def managed_from_msix(inner, inside):
     """Managed-ness of a target that lives in the UWP msixbundle, read straight
     out of the committed zip (no extraction). Returns True/False, or None if the
     member cannot be located."""
     marker = "v3.9.18.0/msix/"
-    if marker not in inside:
+    if inner is None or marker not in inside:
         return None
     member = inside.split(marker, 1)[1]
-    bundle = os.path.join(repo, "vendor/control-center-3.9.18.0",
-                          "GamingCenter3_Cross.UWP_3.9.18.0_x64.msixbundle")
     import zipfile
-    with zipfile.ZipFile(bundle) as zb:
-        inner = [n for n in zb.namelist() if n.endswith("_x64.msix")][0]
-        inner_bytes = zb.read(inner)
-    with zipfile.ZipFile(io.BytesIO(inner_bytes)) as zi:
-        return _pe_is_managed(zi.read(member))
+    with zipfile.ZipFile(io.BytesIO(inner)) as zi, zi.open(member) as f:
+        return _pe_is_managed(f)
 
 
 # The exporter's per-program export label (its .c filename and index key).
@@ -543,6 +611,89 @@ def write_manifest(rows, path=MANIFEST_CSV, excluded=()):
 # --check
 # --------------------------------------------------------------------------
 
+def read_index(path, delimiter=","):
+    """Rows of a committed index CSV, read strictly.
+
+    `strict=True` is the point. csv's default reader is forgiving about quoting
+    in the one way that hides an error rather than raising it: a bad quote ends
+    the row early, the row comes back with a missing field, and every count
+    taken from it is then quietly smaller than the file. A quoting mistake in a
+    committed index is exactly the kind of thing that should be loud, and it
+    costs nothing to make it so."""
+    with open(path, newline="") as f:
+        return list(csv.DictReader(f, delimiter=delimiter, strict=True))
+
+
+def index_structure_problems(index_rows, listing_rows):
+    """Structural faults in the two committed indexes: rows that did not come
+    out with the full header, and `(program, addr)` keys that appear twice.
+
+    A duplicate key is an export appended to twice, or a de-dup that missed one;
+    either way the row count no longer means "number of functions", which is
+    the only thing the counts around it are for."""
+    out = []
+    for name, rows in (("index.csv", index_rows),
+                       ("listing-index.csv", listing_rows)):
+        seen = set()
+        for i, r in enumerate(rows, start=2):
+            if None in r or any(v is None for v in r.values()):
+                out.append(f"{name}: line {i} has fewer or more fields than the header")
+                continue
+            key = (r.get("program"), r.get("addr"))
+            if key in seen:
+                out.append(f"{name}: duplicate (program, addr) {key}")
+            seen.add(key)
+    return out
+
+
+def coverage_mismatches(manifest_rows, count_for_label):
+    """Manifest rows whose recorded `functions` is not the row count the index
+    carries for that program's export label.
+
+    This is the cheap half of coverage: two committed CSVs, each of them a few
+    hundred KB, compared against each other, with no `.c` and no `.asm` opened.
+    It catches the case that matters most -- an index that gained or lost rows
+    without the manifest being regenerated, so a reader would take a function
+    count that no longer describes the export. What the deep tier adds on top is
+    the independent byte-level re-derivation (the sdas8051 re-encode), not
+    another count of the same rows.
+
+    `count_for_label` maps an export label to its row count in an index."""
+    out = []
+    for r in manifest_rows:
+        program = r.get("program", "?")
+        try:
+            recorded = int(r["functions"])
+        except (KeyError, TypeError, ValueError):
+            out.append(f"{program}: functions is {r.get('functions')!r}, not a number")
+            continue
+        got = count_for_label(export_label(program))
+        if got != recorded:
+            out.append("%s: manifest records %d function(s), index carries %d "
+                       "row(s) for export label %s"
+                       % (program, recorded, got, export_label(program)))
+    return out
+
+
+def manifest_mode_problems(manifest_rows):
+    """Manifest rows whose `mode` is outside the three the driver produces."""
+    return ["%s: mode is %r, not one of %s"
+            % (r.get("program", "?"), r.get("mode"), "|".join(MANIFEST_MODES))
+            for r in manifest_rows if r.get("mode") not in MANIFEST_MODES]
+
+
+def retained_decompilations():
+    """The `.c` files kept for a program in PROJECT_EXCLUDED.
+
+    Named by EXPORT LABEL, not by the binary's own file name: the exporter
+    writes the .c under the label, so GamingCenter3_Cross.dll is retained as
+    GamingCenter3_Cross.c. Building the name from the binary instead gives
+    GamingCenter3_Cross.dll.c, which nothing in this repository can ever write
+    -- so the carve-out never matched anything and the two checks that used it
+    have been red since the retention landed."""
+    return {export_label(name) + ".c" for name in PROJECT_EXCLUDED}
+
+
 def do_check():
     ok = True
 
@@ -558,13 +709,34 @@ def do_check():
     names = [t["binary"] for t in targets]
     check("target list has no duplicate binary names", len(names) == len(set(names)))
 
+    # The two committed indexes, read strictly once each and then used by every
+    # check below. Read errors are reported as a failed check rather than a
+    # traceback, so a broken index reads as a broken index.
+    irows, lrows = [], []
+    for _path, _name in ((INDEX_CSV, "index.csv"), (LISTING_INDEX, "listing-index.csv")):
+        if not os.path.isfile(_path):
+            print(f"  --    {_name} not present yet (run the tool to generate it)")
+            continue
+        try:
+            _rows = read_index(_path)
+        except (OSError, csv.Error) as e:
+            check(f"{_name} parses as strict CSV", False, e)
+            continue
+        check(f"{_name} parses as strict CSV", True)
+        if _name == "index.csv":
+            irows = _rows
+        else:
+            lrows = _rows
+    _struct = index_structure_problems(irows, lrows)
+    check("neither index has a short row or a duplicate (program, addr) key",
+          not _struct, "; ".join(_struct[:3]))
+
     # Every decompilation has its machine code beside it, and every listing row
     # names a file that exists. A .c with no .asm is a reading with nothing to
     # check it against; a listing row pointing at a missing file is an export
     # that has gone stale in a way the C index cannot see.
-    if os.path.isfile(LISTING_INDEX) and os.path.isdir(DECOMPILED_DIR):
-        _lrows = list(csv.DictReader(open(LISTING_INDEX, newline="")))
-        _missing = [r["out_file"] for r in _lrows
+    if lrows and os.path.isdir(DECOMPILED_DIR):
+        _missing = [r["out_file"] for r in lrows
                     if r.get("out_file") and not r["out_file"].startswith("(")
                     and not os.path.isfile(
                         os.path.join(DECOMPILED_DIR, r["out_file"]))]
@@ -575,37 +747,45 @@ def do_check():
                   if f.endswith(".c")
                   and not os.path.isfile(os.path.join(
                       DECOMPILED_DIR, f[:-2] + ".asm"))]
-        check("every decompilation has a listing beside it", not _noasm,
+        # The one .c that may have no listing beside it is a retained decompile
+        # of a program in PROJECT_EXCLUDED, which is not in the committed
+        # project, so its .asm cannot be re-exported. That is a real gap rather
+        # than a formality -- 56 MB of decompile with no machine code to check it
+        # against -- and nothing in this repository can close it. It is named on
+        # every run instead of being folded into a pass, because a carve-out
+        # that prints nothing is how a check stops meaning anything.
+        _retained_c = retained_decompilations()
+        _gap = [f for f in _noasm if f in _retained_c]
+        _noasm = [f for f in _noasm if f not in _retained_c]
+        for f in _gap:
+            print("  --    %s has no listing beside it: retained decompile of a "
+                  "program not in the project (PROJECT_EXCLUDED)" % f)
+        check("every decompilation this project can produce has a listing beside it",
+              not _noasm,
               "%d without, e.g. %s" % (len(_noasm), _noasm[:3]))
         # Every line that starts with an address is an instruction, and the
         # parser has to get all of them: a parser that reads a fraction of a
-        # file and finds nothing wrong in it reports a pass.
-        insns, unparsed = 0, []
-        for r in _lrows:
-            rel = r.get("out_file", "")
-            if not rel or rel.startswith("("):
-                continue
-            path = os.path.join(DECOMPILED_DIR, rel)
-            if not os.path.isfile(path):
-                continue
-            lines = [l for l in open(path, errors="replace").read().splitlines()
-                     if _ADDRESS_LINE.match(l)]
-            got = _parse_listing_lines(lines)
-            insns += len(got)
-            if len(got) != len(lines):
-                unparsed.append("%s: %d line(s), %d parsed"
-                                % (rel, len(lines), len(got)))
-        if _lrows:
-            print(f"  {'ok  ' if not unparsed else 'FAIL'}  "
-                  f"disassembly: {insns} instruction(s) parsed across "
-                  f"{len(_lrows)} listing(s)")
+        # file and finds nothing wrong in it reports a pass. One pass per
+        # distinct file -- the index has a row per function and an out_file per
+        # program, so iterating rows reads the 35 MB listing 10,141 times.
+        insns, unparsed, read = parse_listings(lrows, DECOMPILED_DIR)
+        print(f"  {'ok  ' if not unparsed else 'FAIL'}  "
+              f"disassembly: {insns} instruction(s) parsed across "
+              f"{read} distinct listing(s) of {len(lrows)} index row(s)")
         if unparsed:
             check("every listing line parses", False,
-                  "%d do not, e.g. %s" % (len(unparsed), unparsed[:3]))
+                  "%d file(s) do not, e.g. %s"
+                  % (len(unparsed), ["%s: %d line(s), %d parsed" % u
+                                     for u in unparsed[:3]]))
 
     # No managed assembly in the target list. Committed sources are read in
     # place; msix-sourced extract: targets are read straight out of the
     # committed .msixbundle. The one inno-sourced target is enforced at import.
+    # Three targets live in the same inner .msix, and it is read whole, so it
+    # is opened once here rather than once per target below. Each of those reads
+    # the member's PE header rather than the member: 26 MB for the .dll.
+    _msix = msix_inner_bytes(REPO) if any(
+        "v3.9.18.0/msix/" in t["source"] for t in targets) else None
     for t in targets:
         src = t["source"]
         if not src.startswith("extract:"):
@@ -613,7 +793,7 @@ def do_check():
                   not is_managed_assembly(os.path.join(REPO, src)))
             continue
         _, _, inside = src[len("extract:"):].partition("#")
-        managed = managed_from_msix(REPO, inside)
+        managed = managed_from_msix(_msix, inside)
         if managed is None:
             print(f"  --    {t['binary']}: managed-ness checked at import time (inno source)")
         else:
@@ -633,10 +813,11 @@ def do_check():
     # PROJECT_EXCLUDED with a reason. A binary that is in neither is a target
     # that silently stopped being covered, which is the shape of failure this
     # manifest exists to make visible.
-    _have = set()
-    if os.path.exists(MANIFEST_CSV):
-        _have = {r["program"] for r in csv.DictReader(open(MANIFEST_CSV, newline=""))}
     _targets = {os.path.basename(t["binary"]) for t in load_targets()}
+    mrows = []
+    if os.path.exists(MANIFEST_CSV):
+        mrows = list(csv.DictReader(open(MANIFEST_CSV, newline="")))
+    _have = {r["program"] for r in mrows}
     check("every target is in the manifest or in PROJECT_EXCLUDED, with a reason",
           all(n in _have or (n in PROJECT_EXCLUDED and PROJECT_EXCLUDED[n].strip())
               for n in _targets),
@@ -646,21 +827,31 @@ def do_check():
         check(f"{_n} is recorded in the manifest as not-in-project",
               _n in _have, "absent from the manifest, so the export looks complete")
 
-    if os.path.exists(MANIFEST_CSV):
-        mrows = list(csv.DictReader(open(MANIFEST_CSV, newline="")))
+    if mrows:
         for r in mrows:
             fn, dec, fail = int(r["functions"]), int(r["decompiled"]), int(r["failed"])
             check(f"manifest {r['program']}: functions == decompiled + failed",
                   fn == dec + fail, f"{fn} != {dec} + {fail}")
-            check(f"manifest {r['program']}: mode is "
-                  f"rebuild-project|export-only|not-in-project",
-                  r["mode"] in ("rebuild-project", "export-only", "not-in-project"),
-                  r["mode"])
+        _modes = manifest_mode_problems(mrows)
+        check("every manifest mode is " + "|".join(MANIFEST_MODES),
+              not _modes, "; ".join(_modes[:3]))
+        # Coverage, the cheap version: the manifest's function count against the
+        # two indexes' row counts for the same export label. Both are committed
+        # CSVs, so this costs milliseconds and needs no artefact opened. What it
+        # does not do is re-derive the counts from the .c files -- the deep tier
+        # adds the byte-level re-derivation, not another count.
+        for _name, _rows in (("index.csv", irows),
+                             ("listing-index.csv", lrows)):
+            _counts = {}
+            for r in _rows:
+                _counts[r.get("program")] = _counts.get(r.get("program"), 0) + 1
+            _mm = coverage_mismatches(mrows, lambda label, c=_counts: c.get(label, 0))
+            check(f"every manifest function count equals its {_name} row count",
+                  not _mm, "; ".join(_mm[:3]))
     else:
         print("  --    manifest.csv not present yet (run the tool to generate it)")
 
-    if os.path.exists(INDEX_CSV):
-        irows = list(csv.DictReader(open(INDEX_CSV, newline="")))
+    if irows:
         # Every program the index says decompiled must have its .c on disk, and
         # every .c on disk must be accounted for by the index -- so a .c the
         # index does not cover (or an index row with no .c) is caught here rather
@@ -678,16 +869,23 @@ def do_check():
         # away the work rather than the redundancy. It is retained, it is
         # named in the manifest, and this line is what says so; what it is not
         # is regenerated by `decompile_native.py` without a re-import.
-        retained = {n + ".c" for n in PROJECT_EXCLUDED}
+        retained = retained_decompilations()
         unexpected = have - expected - retained
         check("every .c on disk is accounted for by the index, or is a "
               "documented retention", not unexpected,
               ", ".join(sorted(unexpected)[:3]))
+        # Retained and the index's own set must not overlap: a .c the index
+        # claims to produce is one a default build would overwrite, which is the
+        # opposite of retained. The membership test that used to be here asked
+        # whether the .c's own name is a key in PROJECT_EXCLUDED, and it was
+        # asking about a key that could never be in that set -- the loop it was
+        # in never ran, because the retained set it iterated was spelled the
+        # same wrong way.
         for n in sorted(retained & have):
             check(f"{n} is retained output, not something the default build "
-                  f"regenerates", n in PROJECT_EXCLUDED)
-    else:
-        print("  --    index.csv not present yet")
+                  f"regenerates", n not in expected,
+                  "the index claims to produce it, so a default build would "
+                  "overwrite it")
 
     print("  all checks passed" if ok else "  FAILURES ABOVE")
     return 0 if ok else 1
@@ -707,13 +905,18 @@ def do_self_test():
             ok = False
 
     print("decompile_native.py --self-test")
-    check("manifest header is the documented 16 columns",
+    # 17 columns, not 16. `notes` was added when the manifest grew a row for the
+    # binary that is deliberately not in the project, and this assertion was not
+    # updated with it -- so it had been failing on every run since, which made
+    # `agent-gates.sh` exit non-zero on main. The header and the committed
+    # manifest both carry 17; the assertion is what was wrong.
+    check("manifest header is the documented 17 columns",
           MANIFEST_HEADER == [
               "program", "source", "sha256", "pdb_staged", "loader",
               "ghidra_version", "functions", "decompiled", "failed",
               "instruction_bytes", "body_bytes", "seeds_applied",
               "seeds_rejected", "annotations_applied", "annotations_unmatched",
-              "mode"])
+              "mode", "notes"])
     check("index header is the shared exporter's 10 columns",
           INDEX_HEADER == ["program", "addr", "name", "size", "seed_basis",
                            "annotated", "type", "basis", "evidence", "out_file"])
@@ -759,6 +962,112 @@ def do_self_test():
     check("every source is committed or extract:",
           all(t["source"].startswith("extract:") or t["source"].startswith("vendor/")
               for t in targets.values()))
+
+    # The listing parser, against a listing of its own. The two properties below
+    # are the ones --check depends on, and both were wrong until this change: a
+    # 9-hex-digit address matched nothing, so the check was passing over a parse
+    # that had read nothing, and the loop read one file once per index row.
+    _d = tempfile.mkdtemp(prefix="decompile_native_selftest_")
+    try:
+        _asm = "synthetic.asm"
+        with open(os.path.join(_d, _asm), "w") as f:
+            f.write("; a synthetic listing: two x86-64 instructions\n"
+                    ";\n"
+                    "140001000 48 89 5c 24 08 - - - - -      mov      qword ptr [RSP + 0x8], RBX\n"
+                    "140001005 48 89 74 24 10 - - - - -      mov      qword ptr [RSP + 0x10], RSI\n"
+                    "14000100A 57 - - - - - - - - -          push     RDI\n")
+        _lines = [l for l in open(os.path.join(_d, _asm)).read().splitlines()
+                  if _ADDRESS_LINE.match(l)]
+        _got = _parse_listing_lines(_lines)
+        check("a 9-hex-digit x86-64 address line parses (the width every address "
+              "in these five listings has)", len(_lines) == 3 and len(_got) == 3,
+              "%d line(s) matched, %d parsed" % (len(_lines), len(_got)))
+        check("the bytes of an instruction are taken, up to the first dash",
+              [b for _, b in _got] == ["48895c2408", "4889742410", "57"],
+              str([b for _, b in _got]))
+        # Ten thousand index rows naming one file must read it once. The count
+        # the caller reports is the number of files read, so this is what makes
+        # a per-program export cost what it should.
+        _rows = [{"out_file": _asm} for _ in range(10000)]
+        _insns, _unparsed, _read = parse_listings(_rows, _d)
+        check("a repeated out_file is read once, so 10,000 index rows cost one "
+              "file read", _read == 1 and _insns == 3 and not _unparsed,
+              "%d file(s) read, %d instruction(s)" % (_read, _insns))
+    finally:
+        shutil.rmtree(_d, ignore_errors=True)
+
+    # The real listing, for the same reason: the synthetic one proves the regex
+    # is wide enough, this proves it is wide enough for what is committed.
+    _committed = os.path.join(DECOMPILED_DIR, "ACPIDriver.asm")
+    if os.path.isfile(_committed):
+        _hits = len([l for l in open(_committed, errors="replace").read().splitlines()
+                     if _ADDRESS_LINE.match(l)])
+        check("the committed ACPIDriver.asm has address lines this parser matches",
+              _hits > 0, "0 matched, so the parse would be vacuously passing")
+
+    # The coverage check, on a manifest that agrees and one that does not. An
+    # index that gained or lost rows without the manifest being regenerated is
+    # the case it exists for, and the not-in-project row (no functions, no index
+    # rows) is the case that must NOT trip it.
+    check("coverage: a manifest that agrees with the index passes",
+          not coverage_mismatches([{"program": "ACPIDriver.sys", "functions": "55"}],
+                                  lambda label: 55))
+    check("coverage: a not-in-project row, which records no functions, passes",
+          not coverage_mismatches(
+              [{"program": "GamingCenter3_Cross.dll", "functions": "0"}],
+              lambda label: 0))
+    _mm = coverage_mismatches([{"program": "ACPIDriver.sys", "functions": "54"}],
+                              lambda label: 55)
+    check("coverage: a manifest whose functions disagrees with the index fails",
+          len(_mm) == 1 and "54" in _mm[0] and "55" in _mm[0], str(_mm))
+    _mm = coverage_mismatches([{"program": "ACPIDriver.sys", "functions": ""}],
+                              lambda label: 55)
+    check("coverage: a manifest whose functions is not a number fails",
+          len(_mm) == 1, str(_mm))
+
+    # Duplicate keys and short rows, on both indexes.
+    _dup = [{"program": "a", "addr": "140001000", "out_file": "a.c"}] * 2
+    _p = index_structure_problems(_dup, [])
+    check("a duplicated (program, addr) key is reported", len(_p) == 1, str(_p))
+    _p = index_structure_problems(_dup, _dup)
+    check("a duplicated key is reported in each of the two indexes",
+          len(_p) == 2, str(_p))
+    _p = index_structure_problems([{"program": "a", "addr": "140001000",
+                                    "out_file": None}], [])
+    check("a row with fewer fields than the header is reported", len(_p) == 1, str(_p))
+    # DictReader collects a row with too many fields under the None restkey.
+    _p = index_structure_problems([{"program": "a", "addr": "140001000",
+                                    "out_file": "a.c", None: ["surplus"]}], [])
+    check("a row with more fields than the header is reported", len(_p) == 1, str(_p))
+    _p = index_structure_problems(
+        [{"program": "a", "addr": "140001000", "out_file": "a.c"},
+         {"program": "a", "addr": "1400010D0", "out_file": "a.c"}], [])
+    check("two different addresses in one program are not a duplicate",
+          not _p, str(_p))
+
+    # The mode vocabulary: documented, and enforced from one place.
+    check("every mode in use today is in the documented set",
+          not manifest_mode_problems([{"program": p, "mode": m} for p, m in
+                                      (("a", "rebuild-project"),
+                                       ("b", "export-only"),
+                                       ("c", "not-in-project"))]))
+    _p = manifest_mode_problems([{"program": "a", "mode": "rebuild"}])
+    check("a mode outside the documented set is rejected", len(_p) == 1, str(_p))
+    check("the committed manifest uses only documented modes",
+          not manifest_mode_problems(
+              list(csv.DictReader(open(MANIFEST_CSV, newline="")))),
+          "")
+
+    # A retained decompile is named by its export label, and the name it is
+    # given has to be a file that exists -- that is the whole point of the
+    # carve-out, and spelling it from the binary instead gave a .c nothing here
+    # can ever write, which is how two checks sat red with no explanation.
+    _ret = retained_decompilations()
+    check("a retained decompile is named by export label, not by the binary",
+          _ret == {"GamingCenter3_Cross.c"}, str(sorted(_ret)))
+    for _f in sorted(_ret):
+        check("the retained decompile %s is actually on disk" % _f,
+              os.path.isfile(os.path.join(DECOMPILED_DIR, _f)))
 
     print("  all assertions passed" if ok else "  FAILURES ABOVE")
     return 0 if ok else 1

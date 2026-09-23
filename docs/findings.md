@@ -6,9 +6,10 @@ other `uniwill-laptop` driver features on the PCSpecialist/TongFang
 identity and `../ec/annotations/registers.yaml` for the full register
 cross-reference. This document is the narrative; that file is the data.
 
-**This document includes two retractions of earlier conclusions in this same
-investigation.** They're kept in, not edited out, because the *reason* each
-one was wrong is itself a finding about the limits of the methods used.
+**This document includes three retractions of earlier conclusions in this same
+investigation** (§4l, §9, and the gate claim corrected in §14). They're kept
+in, not edited out, because the *reason* each one was wrong is itself a finding
+about the limits of the methods used.
 
 ## 1. Battery health, honestly
 
@@ -1384,10 +1385,23 @@ the code behind the memory-overclocking menu §8 and issues #104/#115/#117/
 no failures; see `bios/README.md`.
 
 **The 30-minute CI budget cannot hold a Ghidra rebuild**, so nothing in the
-gates runs one. The cheap half is each tool's `--check` and `--self-test`,
-which need no Ghidra and no network; the full end-to-end check against the
-hand reading in `charge-target-derating.md` is opt-in
-(`build_ec_decompile.py --self-test --oracle`).
+gates runs one. What runs on every commit is the cheap tier of
+`.github/scripts/agent-gates.sh` — each tool's `--check` and `--self-test`,
+which need no Ghidra and no network, plus a few structural checks that read
+only committed text. The full end-to-end check against the hand reading in
+`charge-target-derating.md` is opt-in
+(`build_ec_decompile.py --self-test --oracle`). Two further opt-in steps live
+behind `AGENT_GATES_DEEP=1` in `.github/scripts/agent-gates-deep.sh`; see §14
+for what they are, what they cost, and what is lost while they are opt-in.
+
+*(**Correction, 2026-09-23, §14b.** "The cheap half is each tool's `--check` and
+`--self-test`" was true of the intent and not of one of the tools:
+`decompile_native.py --check`'s listing parser matched **zero** lines of all
+five committed Windows listings, because its regex capped addresses at 8 hex
+digits and every x86-64 address there is 9. It had been reporting a pass over
+a parse that had read nothing. The tier split that paragraph led to is real;
+so is the reason it was needed, which is not the one given in issue #137 — see
+§14's opening for which of that report's figures survive checking.)*
 
 ## 10. What the newly decompiled BIOS modules turned up (2026-09-23)
 
@@ -1646,3 +1660,183 @@ instructions sdas8051 does encode, which is a defensible way to take the 1:1
 claim to 100% but is a day's work for 143 instructions, so it is not started.
 
 **Everything about the hardware.** No live test has been run in any of this.
+
+## 14. The gate that was reading nothing, and reading it 10,000 times (2026-09-23, issue #137)
+
+Issue #137 reported that `.github/scripts/agent-gates.sh` had grown past the
+point where it is a quick check, and attributed the cost to its coverage checks
+re-deriving coverage from the artefacts: "it re-hashes the 387 MB-scale Windows
+project inputs and re-reads a **56 MB** decompiled C". The premise is right. Two
+of the attributions are not, and the difference is worth recording, because
+both read as measured and are not.
+
+Checked against the code as it stood:
+
+- **The 56 MB `.c` was never read.** The old `--check` touched
+  `windows/decompiled/native/*.c` only through `os.listdir` and `os.path.isfile`
+  — names, not contents. What *was* re-read per run was inside the committed
+  zip: the inner `.msix` was read whole (17,009,272 bytes) once per msix target,
+  three times, and each member then read whole on top of that — 51,027,816
+  bytes of bundle plus 27,090,528 for `GamingCenter3_Cross.dll` alone. Real
+  waste, and worth fixing, but not the file the report named, and small next to
+  §14a.
+- **50,887 instructions across 955 BIOS listings cost 0.33 s**, so that half of
+  the cost attribution needs no correction at all. It was never the problem.
+
+All timings below are this repository's own, taken on a GitHub-hosted runner on
+2026-09-23 with a warm page cache, each step on its own. Where a figure is
+someone else's it says so.
+
+### 14a. The 955 BIOS listings cost 0.33 s. The 35 MB Windows listing cost the gate its wall clock
+
+`bios_extract.py --check`, which parses all 50,887 instructions across 955
+listings, measures **0.33 s**. It was never the problem. Its index names one
+file per function — 955 rows, 955 distinct files — so there is nothing to
+deduplicate.
+
+`windows/ghidra/listing-index.csv` is 10,664 rows naming **5** distinct
+`out_file` values, because this tool exports per program: one `.c` and one
+`.asm` per binary, with a row per function pointing at it.
+`decompile_native.py --check` iterated *rows*, so `ACPIDriverDll.asm`
+(35,324,763 bytes), which 10,141 of those rows name, was opened and
+regex-scanned 10,141 times — **358.2 GB** of text to re-derive what one pass
+already knows. It now iterates distinct paths, and reports the distinct count
+rather than the row count, so the number in the output says what was read.
+
+**A listing index is a function index with a file column, and the row count is
+not a file count.** That is worth knowing before writing a loop over one.
+
+### 14b. The parse was vacuous: the regex matched zero lines in all five listings
+
+`windows/tools/decompile_native.py` selected disassembly lines with
+`^[0-9A-Fa-f]{4,8}\s+\S` — an address of 4 to 8 hex digits. Every image here
+is x86-64, and `TongFang.addrKey()` only strips the `0x` and the address-space
+prefix, so every address it emits is **9** digits (`140001000`).
+
+Measured across the five committed listings:
+
+| listing | address lines | widths present | matched by `{4,8}` |
+|---|---|---|---|
+| `ACPIDriver.asm` | 2,875 | 9 | **0** |
+| `ACPIDriverDll.asm` | 473,710 | 9 | **0** |
+| `UEFI_Firmware.asm` | 17,827 | 9 | **0** |
+| `clrcompression.asm` | 8,239 | 9 | **0** |
+| `GC3_launcher.asm` | 1 | 9 | **0** |
+
+So `lines` was empty, `len(got) == len(lines)` held trivially, and `--check`
+reported a pass over 358 GB of scanning in which it matched nothing. The
+ceiling is now `{4,16}` — 16 is Ghidra's own widest address, so it is the
+format's ceiling rather than a number fitted to today's five files. With it,
+`--check` parses **502,652 instructions** where it previously parsed 0.
+
+This is the failure the check's own comment warns about, and it is worth
+keeping the sentence: *"a parser that reads a fraction of a file and finds
+nothing wrong in it reports a pass."* A check that cannot fail is not a slow
+check, it is an absent one that costs the most.
+
+The EC and BIOS copies of the regex address 4-digit 8055 keys and 8-digit RVA
+keys respectively, and are correct as written. They are separate constants in
+separate tools and were not touched.
+
+### 14c. The gate was red on `main` for three reasons, not one
+
+The plan this work came from recorded that the gate exits non-zero on `main`,
+and attributed it to a single stale assertion. It is three, in two files, and
+none of them is fixed by making the gate faster — the point being that a gate
+which has been red long enough stops being read as a gate at all.
+
+1. **`decompile_native.py --self-test` asserted a 16-column manifest header.**
+   `MANIFEST_HEADER` has 17 entries and the committed `manifest.csv` has 17:
+   `notes` was added for the `not-in-project` row and the assertion was not
+   updated. The assertion was the thing that was wrong; it now asserts 17 and
+   the reason is in a comment beside it.
+2. **`--check` failed "every decompilation has a listing beside it" on
+   `GamingCenter3_Cross.c`.** True, and unfixable: that program is in
+   `PROJECT_EXCLUDED` because its Ghidra database is 337 MB, so its `.asm`
+   cannot be re-exported. The check now names the exception and prints it on
+   every run rather than folding it into a pass.
+3. **The "documented retention" carve-out never matched anything.** The comment
+   above it says a `.c` for a program in `PROJECT_EXCLUDED` is accounted for by
+   name, and the code built that name as `GamingCenter3_Cross.dll.c` — the
+   binary's file name plus `.c`. The exporter writes the file under the
+   **export label**, `GamingCenter3_Cross.c`. So the carve-out named a file
+   nothing in the repository can ever write, and the check it was there to
+   soften was red anyway.
+
+Failure 2 and failure 3 are the same event seen from two sides: a retention
+decision was made, one check learned about it, and the other was given a
+carve-out whose name was wrong. The lesson is the boring one — a carve-out that
+is never exercised is not a carve-out, and neither is a check that cannot fail.
+
+### 14d. The EC self-test's 18 s was a redundant read, not the cross-decoder
+
+Going in, the expectation was that `build_ec_decompile.py --self-test`'s cost
+was `check_cross_decoder_agreement()`, which spawns `disasm8051.py` per sampled
+function. Measured here it is **0.13 s**, and the self-test was **18.8 s**.
+
+The 18.8 s was one line. A set comprehension sat *inside* the generator
+expression of the "no EC bank or common annotation is seeded into the PD
+program" check, so the set of PD-scope annotation addresses was rebuilt from
+the whole annotations CSV once per seed row — 1,790 times, 22 s of
+`csv.DictReader`. The EC-side set three lines above it had been hoisted
+already; only the PD one had not. Hoisting both took the self-test to
+**0.15 s**.
+
+So the cross-decoder comparison is now behind `--cross-decoder` and runs in the
+deep tier, but that is a statement about **where advisory output belongs**, not
+about seconds: it is 0.13 s, it prints, and its result cannot fail the run in
+either direction, which its own docstring has said all along.
+
+**The generalisable half of this section is §14a and §14d together: two of the
+three slow things were a loop over the wrong collection, and profiling found
+them in a minute where reading the issue did not.** The cost was in the shape
+of the code, not in the amount of work it was supposed to do.
+
+### 14e. What the split is, and what it costs while the deep tier is opt-in
+
+The gate is now two scripts and one environment variable.
+`.github/scripts/agent-gates.sh` is the cheap tier; `AGENT_GATES_DEEP=1` hands
+off to `.github/scripts/agent-gates-deep.sh`, which re-runs the cheap tier
+first and then adds the `sdas8051` re-encode and the cross-decoder
+comparison. So `AGENT_GATES_DEEP=1 .github/scripts/agent-gates.sh` is a single
+command that checks everything, and the cheap tier prints that command's name on
+every run whether it passed or failed.
+
+| | before | after |
+|---|---|---|
+| whole gate, cheap tier | did not finish in 8 min 13 s (killed; all of it inside `decompile_native.py --check`) | **5.9 s** (5.88 / 5.85 / 5.89 over three runs) |
+| `decompile_native.py --check` | did not finish in 8 min 13 s | **1.72 s** |
+| `build_ec_decompile.py --self-test` | 18.77 s | **0.15 s** (0.27 s with `--cross-decoder`) |
+| whole gate, deep tier (superset) | n/a | **9.53 s** |
+| `verify_reassembly.py --check` | 0.45 s | 0.45 s (unchanged) |
+| `bios_extract.py --check` | 0.33 s | 0.33 s (unchanged) |
+| `sdas8051` re-encode alone | issue #137's figure: ~90 s | **4 s** here, `--jobs 4` |
+
+The deep tier is cheap **on this runner**; the 90 s is the issue reporter's
+figure and the two are not the same measurement. What is deferred does not
+change with the machine: it changes with whether anyone runs it.
+
+**The deferral is a real reduction in what CI checks on every commit, and it is
+not free.** The `sdas8051` re-encode is the strongest check the EC has — an
+independent assembler encoding the committed listing back to bytes, which is
+the difference between checking the bytes and checking the claim about them.
+It no longer runs per commit, and **nothing in `.github/workflows/` runs it on
+any schedule**, because the pipeline token has no `workflow` scope. Until a
+human adds a nightly or weekly job, that coverage is opt-in and off.
+`docs/agent-pipeline.md` records the intended schedule so a re-copy of the
+template, or whoever wires it, picks it up.
+
+What was **not** deferred, deliberately: every check that opens a `.c` or an
+`.asm`, the `DECOMPILER UNAVAILABLE` walks, the BIOS listing parse, the EC byte
+check. Together those are about 1.2 s, and deferring them would mean a
+silently-failed decompile or byte drift could land on `main` to save a second —
+which is the "gate weakened rather than satisfied" outcome, not a satisfied
+one. The always-on tier also **gained** structural checks: duplicate
+`(program, addr)` keys, `strict=True` CSV parsing so a quoting error fails
+instead of silently shortening a row, the manifest `mode:` vocabulary, and the
+manifest's recorded function count against both indexes' row counts.
+
+No wall-clock budget was added to the gate. The elapsed-seconds line is
+printed, never asserted: a timing assertion in a gate is the flaky check that
+gets switched off, and deleting the assertion would be the only fix anyone
+reached for.

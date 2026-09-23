@@ -55,6 +55,21 @@ manifest unless every program the index says decompiled has its `.c` on disk and
 every `.c` on disk is accounted for by the index — so a `.c` that is missing, or
 one the index does not cover, is caught rather than read as a complete export.
 
+`--check` also compares the manifest's recorded function count against **both**
+indexes' row counts for the same export label, checks both indexes for
+duplicate `(program, addr)` keys and rows that did not come out with the full
+header, and enforces the `mode:` vocabulary. Those are the cheap structural
+checks: committed text only, no `.c` and no `.asm` opened. The whole `--check`
+is 1.72 s, of which about 0.3 s is parsing all 502,652 disassembly lines across
+the five listings once each — see `docs/findings.md` §14 for why it used to
+read one of those files 10,141 times, and what it was parsing while it did.
+
+One `.c` is deliberately without a listing beside it:
+`GamingCenter3_Cross.c`, the 56 MB retained decompile of the program in
+`PROJECT_EXCLUDED`. It is named on every `--check` run rather than folded into
+a pass — the `.asm` cannot be re-exported, because the Ghidra database that
+would produce it is 337 MB and does not fit in git.
+
 ## The PDB, and its cost
 
 `vendor/control-center-3.9.18.0/GamingCenter3_Cross.UWP_3.9.18.0_x64.appxsym`
