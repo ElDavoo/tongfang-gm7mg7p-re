@@ -3,8 +3,7 @@ r"""Issue #8: does the EC's cTGP/DynamicBoost block (0x0743-0x0746) actually
 move the dGPU's enforced power limit? Read-modify-restore, values kept within
 the GPU's own reported max_limit."""
 import subprocess, sys, time
-sys.path.insert(0, r"C:\Users\dpfut\Desktop\tongfang-gm7mg7p-re\.claude\worktrees\github-high-value-issue-179852\windows\tools")
-from ecrw import Ec
+from ecrw import Ec  # run from windows/tools/, next to ecrw.py
 
 SMI = r"C:\Windows\System32\nvidia-smi.exe"
 
