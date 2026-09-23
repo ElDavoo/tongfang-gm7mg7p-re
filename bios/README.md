@@ -34,7 +34,7 @@ with an empty prompt are how the BIOS exposes such flags to conditions.
 boot-services-only on this machine (docs/findings.md §6). The OS cannot
 read or write them. `UniWillVariable` is runtime-writable, and vendor
 modules copy some of its bytes into those stores at boot, which is how the
-memory-overclocking menu gets unlocked (docs/findings.md §7).
+memory-overclocking menu gets unlocked (docs/findings.md §8).
 
 ## Default values
 

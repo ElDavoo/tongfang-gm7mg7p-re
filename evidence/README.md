@@ -34,6 +34,19 @@ independently checkable rather than taken on faith:
   the machine trace, which ended before the visual report was received.
   Source for findings.md §3's 2026-09-17 static-control result; not evidence
   of complete kernel-driver or lifecycle support.
+- **`ec-watch/2026-09-23-power-mode-cycle-0700-07ff.csv`**,
+  **`ec-watch/2026-09-23-power-mode-cycle-0f00-0f5f.csv`**: every EC byte
+  change in those two windows (`windows/tools/ec_watch.py`, 0.2 s sweeps)
+  across an AC plug-in, a battery-protection change and six Fn-key
+  power-mode switches, Office → Gaming → Turbo twice (Control Center
+  3.1.39.0). **`ec-watch/2026-09-23-power-mode-cycle-0f00-final.txt`** is the
+  fan-table window read back after the last switch, the anchor
+  `windows/tools/fan_table_replay.py` replays from.
+  **`ec-watch/2026-09-23-power-mode-snapshot-dc.txt`** holds read-only reads
+  taken on battery just before. **`mqtt-capture/2026-09-23-power-mode-cycle.pcapng`**
+  (with its decoded `.jsonl`) is a passive loopback capture of the vendor
+  broker over the same window. Source for findings.md §7 and
+  `windows/vendor-ec-map.md` "Power modes".
 - **`uefi/2026-09-19-UniWillVariable.{bin,txt}`, `uefi/2026-09-19-variable-list.txt`**:
   the vendor's shared settings variable after a BIOS load-defaults, and
   every OS-visible UEFI variable. Source for findings.md §6.
@@ -43,4 +56,4 @@ independently checkable rather than taken on faith:
   The two dumps differ at that byte only.
 - **`uefi/2026-09-23-memory-menu-observation.md`**: the owner's report
   that the BIOS setup's "Memory" (Memory Overclocking Menu) entry appeared
-  after that write and a reboot. Source for findings.md §7's live result.
+  after that write and a reboot. Source for findings.md §8's live result.

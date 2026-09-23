@@ -1044,7 +1044,7 @@ side is doable from committed files (`vendor/bios-1.09/`), and
 `.github/actions/project-setup` now installs UEFIExtract and ifrextractor
 for it. The extraction itself was not done this session.
 *(**2026-09-23:** done. `bios/tools/bios_extract.py` regenerates the IFR
-as `bios/ifr/Setup.en-US.ifr.txt`; §7 uses it.)*
+as `bios/ifr/Setup.en-US.ifr.txt`; §8 uses it.)*
 
 **`UniWillVariable`** (`{9f33f85c-13ca-4fd1-9c4a-96217722c593}`, 180 bytes,
 NV+BS+RT) is the settings block the vendor service shares with the BIOS;
@@ -1054,10 +1054,97 @@ the layout comes from the decrypted `NVRAM_STRUCT.cs`. Its battery bytes
 consumes is not known.
 *(**2026-09-23:** partly known now. `OemOcDxe` consumes
 `MemoryOverClockSwitch` (0x33), the core-voltage fields and `ApExistFlag`,
-and writes `OverClockRecoveryFlag` and the voltage ranges back (§7). The
+and writes `OverClockRecoveryFlag` and the voltage ranges back (§8). The
 battery bytes 0x30-0x32 are not among the fields it touches.)*
 
-## 7. The Memory Overclocking Menu is behind one `UniWillVariable` byte (2026-09-23)
+## 7. Power modes: what Office, Gaming and Turbo write (2026-09-23, issue #92)
+
+The full trace, with file:line citations into the decrypted 3.1.39.0
+service, is in `../windows/vendor-ec-map.md` under "Power modes". In short:
+
+**A mode is a bundle, not a register.** On every switch, and on every AC ↔
+battery change, `MyFanManager_RamFan1p5.SetUserProfile` writes:
+
+- the fan-mode byte `0x0751` (Office `0xA0`, Gaming `0x00`, Turbo `0x10`);
+- PL1/PL2/PL4 at `0x0783-0x0785` (35/35/165, 60/60/165, 75/75/165 W, or
+  0/0/0 on battery), seeded from the EC's own per-mode default bytes;
+- a 96-byte fan table at `0x0F00-0x0F5F`, bracketed by `0x07C6` bit 2;
+- and, on AC, the same GPU cTGP/DynamicBoost bytes `0x0743-0x0746` in all
+  three modes.
+
+The "profiles 1-5" inside each mode are user slots that all start from the
+same defaults. The Fn mode key is EC event `0xB0`, and the *service* picks
+the next mode.
+
+**Confirmed live, as the vendor's writes.** An AC plug-in and six Fn-key
+switches were captured with `ec_watch.py` on `0x0700-0x07FF` and
+`0x0F00-0x0F5F`, alongside a passive pcap of the vendor MQTT broker
+(`../evidence/ec-watch/2026-09-23-power-mode-cycle-*`,
+`../evidence/mqtt-capture/2026-09-23-power-mode-cycle.*`). Every predicted
+byte landed. `windows/tools/fan_table_replay.py` shows all seven fan-table
+states the capture passed through equal the tables the service announced
+on `Fan/Table`, byte for byte. What this shows is that the vendor's writes
+land, not that the EC acts on each byte. In particular, **nothing here says
+what the EC does with `0x0751` alone**, because the service always wrote the
+whole bundle. That's the question a Linux platform profile hinges on, and it
+needs its own live test.
+
+**New questions.**
+- Who sets `0x07C6` bits 0-1 (DSDT `WMS0`, read back as NVIDIA Whisper
+  Mode) on every switch into Office? No GCUService EC call site does.
+- The EC answers a "give me your default fan table for mode N" handshake
+  through a mailbox in `0x0F5D-0x0F5F`. The EC side of it is unread, and
+  nobody has compared its answer against the stored JSONs.
+- Upstream `uniwill-laptop` names `0x0786` a fan default, where the DSDT and
+  the vendor use it as the CPU TCC offset. Upstream also treats `0x0742`
+  bit 4 as "Turbo supported"; that bit is clear here, yet the vendor offers
+  Turbo from `0x049F` bit 1.
+
+### 7a. What the EC's own code does with `0x0751` (2026-09-23, issue #99)
+
+§7 left the question that sizes a Linux `platform_profile`: the service
+always writes the whole bundle, so what does the EC do with the mode byte
+*alone*? The static half is now answered as far as a site scan can answer
+it, in `../ec/annotations/manual-fan-ctrl-0751.md`, with the per-site table
+in `../ec/annotations/manual-fan-ctrl-0751-sites.csv`.
+
+All 29 direct reference sites are in the main EC image, and every one of
+them touches `0x0751` and no other XDATA byte — nineteen reads that mask or
+branch on the four bits upstream names (`TURBO` 4, `HIGH` 5, `BOOST` 6,
+`USER` 7), seven read-modify-writes of those same bits, one blind write, two
+whose `mov dptr` is staged before an unrelated test. Two results fall out:
+
+- **Nothing carries a per-mode default into a PL register.** The twelve
+  default bytes (`0x0730-0x0737`, `0x07A7-0x07AA`) have no read site
+  anywhere in the image; every site found is the EC *writing* them, for the
+  host to fetch — which is how the vendor uses them. The EC's only found
+  writer of `0x0783-0x0785` is at `0xA833-0xA83B`, it writes zero, and it is
+  gated on `AP_OEM` (`0x0741`) bit 0 — the host-present flag — not on the
+  mode. That gate is the more interesting half for a driver, and *when* the
+  routine runs is not established.
+- **The EC agrees with the service on the encoding.** Its own Turbo path
+  (`0xABE8`/`0xC741`, behind `0x049F` bit 1) produces `0x10`, and it sets a
+  boot default off `BIOS_OEM_2` (`0x0782`) bit 4 — Gaming `0x00`, or `USER`
+  set and `TURBO` cleared for Office. That is an independent confirmation of
+  the values §7 took from the vendor's constants; it says nothing about
+  whether the EC acts on a value the *host* wrote.
+
+**§7's "the EC side of the `0x0F5D-0x0F5F` mailbox is unread" is now partly
+read.** The handler at `0x888D` wants `0xFD`/`0xC9` as a magic in
+`0x0F5D`/`0x0F5E` and a selector of 1-3 in `0x0F5F`, and copies two 48-byte
+default fan tables out of CODE into `0x0F00` and `0x0F30`. Selector 3 is
+Office and picks between two tables on `0x0782` bit 2, the "Office fan-table
+type" bit whose vendor getter is never called. Comparing those built-in
+tables against the vendor's announced ones is still nobody's work.
+
+**None of this is a live test**, and the method is blind to indirect access
+— the same scan reports zero direct sites for `0x0F00-0x0F5C`, a page the EC
+provably writes through a computed `DPH`, which is §4d's blind spot showing
+up on a second address. `MANUAL_FAN_CTRL` therefore stays `present-untested`.
+`hardware-tests/manual-fan-ctrl-0751-isolation.md` is the procedure that
+would settle it, written for a human with the machine and **not run**.
+
+## 8. The Memory Overclocking Menu is behind one `UniWillVariable` byte (2026-09-23)
 
 **Result, confirmed live.** Setting `UniWillVariable.MemoryOverClockSwitch`
 (offset 0x33) to 1 from Windows and rebooting makes a "Memory" entry appear
