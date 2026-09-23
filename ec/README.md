@@ -189,7 +189,7 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   exports one C file per function to `decompiled/`. Two modes: the default
   re-exports from the committed project without touching it, and
   `--mode rebuild-project` rewrites the project. `--check` and `--self-test`
-  run with no Ghidra and no network and are what CI calls — 0.24 s and 0.15 s.
+  run with no Ghidra and no network and are what CI calls — 0.19 s and 0.13 s.
   `--self-test --cross-decoder` adds the advisory comparison against
   `disasm8051.py`; it is 0.13 s, it prints rather than fails, and the deep gate
   tier is what passes the flag. `--self-test --oracle` additionally rebuilds

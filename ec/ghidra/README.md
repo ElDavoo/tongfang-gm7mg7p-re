@@ -34,8 +34,8 @@ out calling `FUN_CODE_bf08` and touching `EXTMEM 0x09c7`, the two facts
 `../annotations/charge-target-derating.md` established by hand. That is Ghidra's
 output compared against a human reading, made mechanical.
 
-`--check` and `--self-test` are what the cheap gate tier runs, at 0.24 s and
-0.15 s. `--cross-decoder` adds the advisory comparison against
+`--check` and `--self-test` are what the cheap gate tier runs, at 0.19 s and
+0.13 s. `--cross-decoder` adds the advisory comparison against
 `disasm8051.py`; it is 0.13 s, it prints rather than fails, and
 `.github/scripts/agent-gates-deep.sh` is what passes the flag, so
 `AGENT_GATES_DEEP=1` gets it. See `docs/findings.md` §14 — the self-test used
