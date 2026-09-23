@@ -173,6 +173,11 @@ jobs:
           CLAUDE_CODE_MAX_CONTEXT_TOKENS: 950000
         with:
           anthropic_api_key: ${{ secrets.OPENROUTER_API_KEY }}
+          # TEMPORARY diagnostic: the action's default output filtered out the reason
+          # the run ended, leaving only `is_error: true` with no result text. This
+          # dumps every Claude message, tool result included, so a tool result that
+          # quotes a token would land in the log. Remove once the failure is read.
+          show_full_output: true
           prompt: |
             A pull request just merged into this repository. CLAUDE.md and docs/MISSION.md are
             checked out in the working directory and are authoritative -- read both before

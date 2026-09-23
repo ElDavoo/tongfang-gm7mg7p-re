@@ -71,8 +71,26 @@ The model was `stealth/union-alpha` when this override was first committed on
 2026-09-17, and `0bf971c` was reverted in full by `4bec8e4` on 2026-09-18
 without replacing it. The 2026-09-23 re-application is the same change with
 `stealth/space-bunny-alpha` in place of `stealth/union-alpha` and the context
-token setting added; the revert's reasoning is not recorded, so if the
-re-application fails the same way again, the revert is the place to look.
+token setting added.
+
+Why the revert is not repeated: as of 2026-09-23, a check of OpenRouter's
+public model list (`GET https://openrouter.ai/api/v1/models`, no auth needed)
+finds `stealth/space-bunny-alpha` and **no entry containing "union" at all**
+among the 456 models returned. `stealth/union-alpha` is therefore not a model
+the endpoint serves, which fits the failure the reverted commit produced: a
+run that ends `is_error: true` on its first API call, with `num_turns: 1`,
+`total_cost_usd: 0` and an empty `modelUsage` — a bad model name fails at
+request time, before any inference. This is a plausible explanation, not a
+confirmed cause; the runs that showed it were never checked against the model
+list at the time, and the action does not log the reason a run ends.
+
+The same listing gives `stealth/space-bunny-alpha` a `context_length` of
+1000000, so `CLAUDE_CODE_MAX_CONTEXT_TOKENS: 950000` leaves headroom under the
+real window rather than exceeding it, and it advertises `reasoning_effort`
+among its supported parameters, so `--effort max` maps to something the
+endpoint accepts. Pricing is listed as zero for both prompt and completion.
+Re-check the listing before assuming any of this still holds: model slugs
+appear and disappear without notice in this repository.
 
 All eight steps also pass `--dangerously-skip-permissions`, as explicitly
 requested for unattended CI. This bypasses Claude Code permission prompts;
