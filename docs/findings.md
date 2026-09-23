@@ -1602,3 +1602,47 @@ fix one of them was deleted for looking like the other.
 
 `--self-test` reproduces the original failure on synthetic rows, and fails if
 the pairing is widened again.
+
+## 13. What is still not assembled (2026-09-23)
+
+The three components have committed projects and decompiled output. This is the
+part that is **not** done, measured rather than estimated, because a plan that
+counts the remaining work from memory is how the earlier "~320 missing modules"
+figure in the build plan got there and turned out to be wrong.
+
+**The BIOS ROM, beyond the 38 vendor modules.** Unknown, and deliberately not
+guessed. `uefiextract rom all` is the only way to enumerate it and the tool
+measures that command at anywhere from 1.7 s to 49 min on this machine, so
+`bios_extract.py` runs it only for `--mode rebuild-project`. The ROM dumps
+cached from earlier runs are *partial* — 65 modules with an image body, but
+`OemOcDxe`, `Setup`, `DxeOverClock` and `EcPs2Kbd` are all absent from them,
+so the 65 is not a superset of the 38 and the difference is not 27. Getting
+the real number means one full dump; it has not been run. What the cached dumps
+do show is that the PEI/SMM material worth having is there: `S3Resume2Pei`,
+`PiSmmCommunicationPei`, `RstSecPeim`, `TrustedDeviceSetupApp` and a TPM
+policy module, none decompiled.
+
+**The Windows native stack of v3.1.6.0.** Four binaries are not in the Ghidra
+project: `NVControlSetting.dll`, `GPUInfoDLL.dll`, `DiskInfo64.dll` and
+Microsoft's `devcon.exe`. All plain x86-64 with no anti-tamper, so they
+decompile with the existing path — see
+`windows/decompiled/v3.1.6.0/README.md`, which also records the more useful
+result from the same extraction: the native EC-facing stack is byte-identical
+between 3.1.6.0 and 3.9.18.0, so the difference between the two versions is
+not in the driver, the driver wrapper or the firmware-bridge library.
+
+**The packed managed services.** `GCUService.exe` at 3.1.6.0 and 3.9.18.0 both
+encrypt their method bodies. `windows/tools/dotnet_dump.py` reads them out of a
+*running* process, so there is no static route and this pipeline has neither
+Windows nor the service running. The 3.9.18.0 dump is committed because a
+machine with Windows produced it; producing the 3.1.6.0 one is the deliverable
+for whoever has the hardware, and the command is the tool's `--help`.
+
+**The 143 EC instructions sdas8051 cannot encode** — `MOV bit,C`, `CPL bit`,
+`CLR bit`, `CJNE` on a direct address, `DJNZ A`, the carry-with-immediate
+forms. 0.31% of the instruction stream. Closing them means writing an 8051
+encoder here and cross-validating it against sdas8051 on the 45,394
+instructions sdas8051 does encode, which is a defensible way to take the 1:1
+claim to 100% but is a day's work for 143 instructions, so it is not started.
+
+**Everything about the hardware.** No live test has been run in any of this.
