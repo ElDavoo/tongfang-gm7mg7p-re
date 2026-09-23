@@ -1464,9 +1464,9 @@ a cached byte, and "reads like" is not "is".)*
 `ec/tools/verify_reassembly.py` re-encodes the committed EC listing with
 `sdas8051` and compares the result to `ec/firmware/GMxMGxx_11.800`. Ghidra's
 SLEIGH decodes; an assembler that never saw the firmware encodes; the firmware
-arbitrates. **45,392 of 45,535 instructions re-encode to the exact bytes in
-the image (99.69%), with no function in disagreement.** 2,581 of the 2,703
-functions have every instruction verified; a further 77 have all but 143
+arbitrates. **45,394 of 45,537 instructions re-encode to the exact bytes in
+the image (99.69%), with no function in disagreement.** 2,574 of the 2,705
+functions have every instruction verified; a further 73 have all but 143
 between them. Reproduced unchanged on two SDCC versions (4.5.0 and 4.6.0,
 `sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14`).
 
