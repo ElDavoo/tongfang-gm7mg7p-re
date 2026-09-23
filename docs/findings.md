@@ -1043,6 +1043,8 @@ with a `setup_var`-style tool, at offsets taken from the Setup IFR. The IFR
 side is doable from committed files (`vendor/bios-1.09/`), and
 `.github/actions/project-setup` now installs UEFIExtract and ifrextractor
 for it. The extraction itself was not done this session.
+*(**2026-09-23:** done. `bios/tools/bios_extract.py` regenerates the IFR
+as `bios/ifr/Setup.en-US.ifr.txt`; §8 uses it.)*
 
 **`UniWillVariable`** (`{9f33f85c-13ca-4fd1-9c4a-96217722c593}`, 180 bytes,
 NV+BS+RT) is the settings block the vendor service shares with the BIOS;
@@ -1050,6 +1052,10 @@ the layout comes from the decrypted `NVRAM_STRUCT.cs`. Its battery bytes
 (`BatteryLimitation`, `ChargeMaximumLimit`, `ChargeMinimumLimit`, offsets
 0x30-0x32) read 0 after the BIOS load-defaults. Which of its fields the BIOS
 consumes is not known.
+*(**2026-09-23:** partly known now. `OemOcDxe` consumes
+`MemoryOverClockSwitch` (0x33), the core-voltage fields and `ApExistFlag`,
+and writes `OverClockRecoveryFlag` and the voltage ranges back (§8). The
+battery bytes 0x30-0x32 are not among the fields it touches.)*
 
 ## 7. Power modes: what Office, Gaming and Turbo write (2026-09-23, issue #92)
 
@@ -1137,3 +1143,123 @@ provably writes through a computed `DPH`, which is §4d's blind spot showing
 up on a second address. `MANUAL_FAN_CTRL` therefore stays `present-untested`.
 `hardware-tests/manual-fan-ctrl-0751-isolation.md` is the procedure that
 would settle it, written for a human with the machine and **not run**.
+
+## 8. The Memory Overclocking Menu is behind one `UniWillVariable` byte (2026-09-23)
+
+**Result, confirmed live.** Setting `UniWillVariable.MemoryOverClockSwitch`
+(offset 0x33) to 1 from Windows and rebooting makes a "Memory" entry appear
+on the BIOS setup's Advanced page. It leads to Intel's full Memory
+Overclocking Menu. The write:
+`evidence/uefi/2026-09-23-MemoryOverClockSwitch-set.txt`, with before/after
+dumps differing only at 0x33. The owner's report after the reboot:
+`evidence/uefi/2026-09-23-memory-menu-observation.md`. The write tool is
+`windows/tools/uniwill_set.py`, which backs up, changes one field, checks
+the readback, and can restore. `uefi_var.py` stays read-only.
+
+**Why it works, from the committed BIOS.** All of the following is
+reproducible from `vendor/bios-1.09/BIOS_1.09.zip` with
+`bios/tools/bios_extract.py`. That script produces the Setup IFR
+(`bios/ifr/Setup.en-US.ifr.txt`) and Ghidra decompiles of the vendor
+modules (`bios/decompiled/`). The module that matters is annotated in
+`bios/decompiled/OemOcDxe.annotated.c`.
+
+- The IFR has two routes to form `0x27B1` "Memory Overclocking Menu". One
+  goes through Intel's own Advanced form `0x2718` → "OverClocking Performance
+  Menu" (`0x27AA`) → "Memory". Form `0x2718` is referenced only from the stock
+  root form `0x2710` and from a suppressed Ref, and it was not the Advanced
+  page reached here. The other route is a vendor-added Ref "Memory" on the
+  vendor Advanced form `0x2712`, which is the page setup displays. That Ref
+  sits inside three conditions:
+  - suppressed unless question `0xEC6` == 1, which is `Setup` offset
+    **0x7D7**, the last byte of the 0x7D8-byte `Setup` store. It is a hidden
+    numeric with no prompt;
+  - suppressed if question `0x30B` == 0, which is `CpuSetup` offset 0x1B7,
+    "OverClocking Feature". Its default is Enabled, both in the IFR and in
+    the ROM's `StdDefaults` store (value 1);
+  - suppressed and greyed out if `SystemAccess` == 1, i.e. in a
+    user-password session.
+- `Setup` is boot-services-only (§6), so the OS cannot set 0x7D7 directly.
+  But `OemOcDxe` runs on every boot and, unless it takes the recovery path
+  below, **copies `UniWillVariable[0x33]` into `Setup[0x7D7]`** (RVA 0x7A8).
+  `UniWillVariable` is NV+BS+RT, so the OS can write it. That is the whole
+  mechanism: the Control Center's memory-OC switch is also the BIOS menu's
+  visibility bit.
+- The menu itself stores into `SaSetup`: "Memory profile" at 0x134
+  (Default / Custom / XMP1 / XMP2; the XMP choices are suppressed by
+  `SaSetup[2]`, which reflects what the DIMMs' SPD offers), reference clock
+  0x0C (133/100 MHz), ratio 0x0E (Auto, 3-31), QCLK odd ratio 0x0F, primary
+  and secondary timings 0x10-0x23, "Realtime Memory Timing" 0x204, a
+  "Turn Around Timing" subform, and **"Memory Voltage" at 0x03, a VDDQ
+  override from 1.10 V to 1.65 V**. Whether the MRC on this i7-10875H (rated
+  DDR4-2933) honours any of these, and whether the board can actually move
+  VDDQ, has not been tested. The voltage knob is the one to leave alone
+  until someone knows what the board's regulator does with it.
+
+**Why Control Center has no working switch for it here.** The service
+publishes `MEM_MemoryOverClockSupport` from `UniWillVariable[0x60]`
+(`MyFanManager_RamFan1p5.cs`, `UpdateStatusToClient`). By its name, that is
+the flag a client shows the toggle on. The UWP UI isn't decompiled in this
+repo, so that last link is inferred. Live, 0x60 reads 0. The BIOS's own create-if-missing path in
+`OemUniWillVariableDxe` initialises it to **1**, along with 0xFF in the
+reserved bytes. The live variable has 0 in 0x60 and zeros in the reserved
+bytes, so something rewrote the whole block after creation. Which writer
+did that is not known. 0x60 was deliberately **left at 0** here. With it at
+1, the service's `SetUserProfile()` calls
+`SetMemoryOverClockSwitch(currentProfile.MEM.MemoryOverClockSwitch)`. It
+runs from `Init()` and on every power-mode change, and it would put the
+profile's saved 0 back. The
+service's `DebugMode` registry value also forces the support flag to 1, but
+the same block rewrites the SMAPC power table to PL1/PL2/PL4 = 120/120/165,
+so it is not a safe way in. One caveat stands regardless: the service
+caches the whole struct when it starts and writes the whole cached copy
+back on any field change. A Control Center action taken before the next
+boot can therefore revert 0x33.
+
+**What else `OemOcDxe` does with the same switch.**
+- **Overclocking recovery via the EC.** Before anything else it reads EC
+  RAM 0x0741 with vendor EC commands `0xA3 07`, `0xA2 41`, `0xA4`, read port
+  0x62. If bit 7 is set, it sets `CpuSetup[0x1B7]` ("OverClocking Feature")
+  to 0 and `UniWillVariable.OverClockRecoveryFlag` (0x5C) to 1, then writes
+  0x0741 back with bit 7 cleared (`0xA5`). On seeing that flag, the
+  service (`DetectRecoveryFlagFromBiosVariable`) restores its own defaults
+  and default fan tables, sets its default-notify flag, and clears the
+  flag. With "OverClocking Feature" at 0 the
+  "Memory" link is suppressed again, and only a Setup load-defaults (or the
+  unreachable Intel page) turns it back on. The read-address/read/write
+  meaning of `0xA2`-`0xA5` is inferred from use.
+  `OemUniWillVariableDxe` uses the same sequence with low byte 0x40 to fill
+  `ProjectID`, and EC 0x0740 is the confirmed `PROJECT_ID`, so the reading
+  is consistent. It is not confirmed from the EC side. **Which EC code sets
+  0x0741 bit 7, and on what condition (a failed POST? a watchdog?), is not
+  known.** So this recovery path is not something to rely on yet. Bit 0 of
+  the same byte is the known `AP_OEM` / "AP exist" bit (`registers.yaml`).
+- **A GPIO write.** When the switch is 1 and "OverClocking Feature" is 1,
+  on a CNL/CML-H PCH (it skips an LP one), it drives **GPP_B22**'s TX state
+  high: PCR PID 0x6E, PadCfg DW0 at 0x8F0 bit 0. It does this only if the
+  pad is host-owned, and it drops and restores the pad's TX lock through a
+  P2SB sideband write (opcode 0x13). The embedded tables are Intel's
+  `GPIO_GROUP_INFO` (group 1: PID 0x6E, PadCfg 0x790, 26 pads = GPP_B).
+  Nothing in the module drives it low again when the switch is 0. What
+  GPP_B22 is wired to on this board cannot be read from the BIOS. A DIMM
+  voltage select would fit the name, but that is a guess, not a finding. It
+  is observable, though: on Linux, `pinctrl-cannonlake` exposes GPP_B22's
+  state under debugfs, so switch-0 vs switch-1 boots can be compared.
+- **Core-voltage sync.** With `ApExistFlag` (0x5D) = 1 it copies the
+  service's CPU core-voltage values into `CpuSetup`. "Core Voltage Offset"
+  (0x1BD) and "Offset Prefix" (0x1BF) come from 0x3A or 0x64, chosen by
+  `ICpuCoreVoltageOffsetRangeType` (0x66). "Core Voltage" (0x1C0) comes from
+  0x34. It then rewrites the slider ranges 0x36 = 2000 and 0x3C = 100, which
+  is why those two values are non-zero in every live dump.
+
+**For Linux.** The switch is an ordinary runtime-writable UEFI variable. On
+Linux it is `/sys/firmware/efi/efivars/UniWillVariable-9f33f85c-13ca-4fd1-9c4a-96217722c593`
+(a 4-byte attribute prefix, then the 180 bytes; the file is immutable
+until `chattr -i`). So the same unlock needs no Windows at all. That route
+has not been exercised; only the Windows write above has been.
+
+**Open, and filed as follow-ups:** who sets EC 0x0741 bit 7; what GPP_B22
+drives; who zeroes `MemoryOverClockSupport`; whether the menu's settings
+take effect (a live test, starting with the XMP profile the DIMMs
+advertise, never the voltage override first); and whether Intel's
+Advanced form `0x2718` (with the CPU-side OverClocking Performance Menu)
+can be reached without reflashing.
