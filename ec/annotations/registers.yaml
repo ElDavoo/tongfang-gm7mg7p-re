@@ -98,23 +98,28 @@ registers:
     static_refs: [7, 1, 1, 1]
     static_refs_main_ec: [7, 1, 1, 1]
     static_refs_pd_image: [0, 0, 0, 0]
-    status: present-untested
+    status: confirmed-working
     note: >
       NVIDIA_CTGP_CONTROL feature bits. All 10 sites are EC-side, so the
-      count that makes this present-untested is not PD contamination
-      (ec/annotations/static-refs-audit.md). The vendor service's writes
-      are traced in windows/vendor-ec-map.md "Power modes" (issue #92), and
-      were observed live on 2026-09-23. On AC, in every mode: 0x0743 = 0x03
-      (bit 0 DB function control, bit 1 DB enable, bit 2 cTGP enable only if
-      the user turns cTGP on); 0x0744 = cTGP target - BIOS DefaultTGP =
-      125 - 115 = 0x0A; 0x0745 = 0xFF; 0x0746 = 5. On battery: 0x0743 = 0,
-      and 0x0745/0x0746 = 0. At the AC plug-in 0x0743 went 0x00 -> 0x02 ->
-      0x03, and 0x0745/0x0746 went 0 -> 0xFF/0x05
-      (evidence/ec-watch/2026-09-23-power-mode-cycle-0700-07ff.csv). Those
-      are vendor writes being accepted. Whether the GPU's power limit
-      actually follows them has not been measured, hence still
-      present-untested (issue #8). Upstream's cTGP init writes 25 to 0x0746;
-      this BIOS caps DynamicBoost at 15 W, and the vendor writes 5.
+      count is not PD contamination (ec/annotations/static-refs-audit.md).
+      Bit layout of 0x0743 (GpuFeatures): bit 0 DB function control, bit 1
+      DB enable, bit 2 cTGP enable. 0x0744 cTGP offset over BIOS DefaultTGP,
+      0x0745 DB total-processing-power target, 0x0746 DB max TGP. The vendor
+      writes them per power mode on AC: 0x0743=0x03, 0x0744=0x0A (125-115),
+      0x0745=0xFF, 0x0746=5; on battery 0x0743=0 and 0x0745/0x0746=0
+      (windows/vendor-ec-map.md "Power modes", issue #92).
+      2026-09-23 (issue #8), confirmed live against nvidia-smi on the RTX
+      3070 Laptop (evidence/ec-watch/2026-09-23-ctgp-live.txt): with the
+      dGPU default_limit 115 W and max 140 W, setting 0x0743 bit 2 (cTGP
+      enable) with 0x0744=0x0A raised the *enforced* power limit 120 -> 130 W
+      within ~1 s, and clearing it restored 120. So enforced = default 115 +
+      DynamicBoost 5 (0x0743 bit 1) + cTGP offset 10 (0x0744, when bit 2
+      set). This is exactly uniwill-laptop's ctgp_offset path (write 0x0744,
+      enable 0x0743), so that path is validated on this board. Caveat:
+      setting 0x0746 (DB max) to 0 did NOT change the static enforced limit,
+      so 0x0746's effect is runtime/opportunistic, not a static cap, and is
+      not separately confirmed. Upstream's cTGP init writes 25 to 0x0746;
+      this BIOS caps DynamicBoost at 15 W and the vendor writes 5.
 
   - name: BIOS_OEM (FN_LOCK_STATUS)
     addr: 0x074E
@@ -442,7 +447,8 @@ registers:
       MyEcCtrl.GetTypeCAdaptorPrioritySupport() = 0x0742 bit 5. Live
       2026-09-19: 0x0742 = 0x02 (bit 5 clear) and this byte = 0x00. So by
       the vendor's own test the feature is unsupported on this board,
-      which matters for issue #8.
+      which matters for issue #8. Re-read live 2026-09-23 (same values) alongside
+      the cTGP test below.
 
   - name: CPU_TEMP
     addr: 0x043E
