@@ -297,12 +297,34 @@ $ SDAS8051=$(nix build nixpkgs#sdcc && echo $out/bin/sdas8051) \
 `--add-digest-column` exists for the one migration that added the column to the
 committed report, and refuses to run a second time. It is the honest way to do
 that migration and also a trap worth naming: it adds digests from the listings
-on disk **without re-encoding**, so it cannot prove those are the listings the
-report measured — proving that needs the same assembler, and the one on a
-GitHub-hosted runner is a different and older ASxxxx, against which a full
-report would rewrite every `assembler` cell and could move the gap tallies
-above. That is why it is one-shot and why the tallies here are still the
+on disk **without re-encoding**, so the command itself cannot prove those are
+the listings the report measured — proving that needs the same assembler, and
+the one on a GitHub-hosted runner is a different and older ASxxxx, against
+which a full report would rewrite every `assembler` cell and could move the gap
+tallies above. That is why it is one-shot and why the tallies here are still the
 nix-pinned measurement.
+
+**For the committed column the history supplies the proof the command could
+not** (2026-09-23, issue #150). `a56b3bb` changed nothing in this file but the
+new column — drop `listing_digest` from its header and rows and all 2,705 are
+identical to `08b72e2`'s, which is therefore the last commit to write a
+non-digest cell and, by its own message, the last full `--report`. No listing
+text moved in between:
+
+```
+$ git diff --name-only 08b72e2 a56b3bb -- 'ec/decompiled/**/*.asm'
+$ # no output. The same pathspec returns all 2,705 files over
+$ # 8c7985e..08b72e2, so it is matching and the set is empty, not unstated.
+$ # The one ec/decompiled file the window touches is bank0/0EA2.c (cd3c7b0),
+$ # a decompiled C export; the digest is over the .asm instruction stream.
+```
+
+So the digests are of the listings the last full `--report` measured, which is
+the one thing the one-shot could not assert about itself. What stays open is
+what it never could: they were taken without a re-encode, so they attest to the
+measured text and not to its correctness — the paragraph above — and the guard
+stops a second run, not the first. A future migration still answers this from
+its own history. `docs/findings.md` §14f has the method.
 
 ## The annotation layer
 

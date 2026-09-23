@@ -1849,6 +1849,14 @@ split** — smaller in scope, but not the re-encode. The cheap tier now catches
 the edit a byte column cannot see; the tier that would say whether the edit was
 an improvement still has to be asked for.
 
+One premise of the paragraph above was itself unestablished when it was
+written, and is settled in §14f. The digests were taken without a re-encoding,
+so whether they were of the listings the last full `--report` measured was an
+open question, and "a digest that agrees means the text has not moved" rests on
+the answer. It was the empty set — no `ec/decompiled/**/*.asm` text moved
+between `08b72e2` and `a56b3bb` — so the column is anchored, and only the
+correctness half of that paragraph is still open.
+
 What was **not** deferred, deliberately: every check that opens a `.c` or an
 `.asm`, the `DECOMPILER UNAVAILABLE` walks, the BIOS listing parse, the EC byte
 check. Together those are about 1.2 s, and deferring them would mean a
@@ -1863,6 +1871,56 @@ No wall-clock budget was added to the gate. The elapsed-seconds line is
 printed, never asserted: a timing assertion in a gate is the flaky check that
 gets switched off, and deleting the assertion would be the only fix anyone
 reached for.
+
+### 14f. The `listing_digest` migration is anchored: no listing text moved under it (2026-09-23, issue #150)
+
+§14e added the column and, in doing so, left one question open without saying
+it was open. `add_digest_column()` wrote each row's digest from the listing on
+disk **without re-encoding**, which is the one shape that defeats the column: had
+a listing's text been edited between the last full `--report` and the migration,
+the migration would have digested the *edited* text, `--check` would recompute
+that same digest and agree, and the detector would be re-armed on text nobody
+re-encoded. The guard refuses a *second* run; it cannot audit the first. ".asm
+files say do not edit" is a convention, and a convention is not evidence.
+
+**It was the empty set.** The last commit to write a non-digest cell of
+`ec/ghidra/reassembly.csv` is `08b72e2` ("1,769 named EC functions, and the
+disassembly they are checked against", 2026-09-23), which by its own message is
+the full `--report`: 45,394 of 45,537 instructions re-encoding to the firmware
+bytes through `sdas8051`, 2,574 of 2,705 rows fully checked. `a56b3bb` is the
+migration, and it changed nothing else in the file — parsed with
+`csv.DictReader` and the `listing_digest` field dropped, all 2,705 rows are
+identical to `08b72e2`'s and the header is the old one, so the two differ by the
+column and by nothing beneath it. `08b72e2` therefore carries the anchors: 2,705
+rows, `sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14` on every one, 45,394 checked +
+143 unchecked, 2,574 `match` / 73 `partial` / 58 `assembler-gap`.
+
+On a full clone, the comparison is two commands:
+
+```
+$ git diff --name-only 08b72e2 a56b3bb -- 'ec/decompiled/**/*.asm'
+$ # no output
+$ git log --name-only --format= 08b72e2..a56b3bb -- ec/decompiled
+ec/decompiled/bank0/0EA2.c
+```
+
+**The empty output is a measurement, not a pathspec that quietly matches
+nothing**, and that is worth showing rather than asserting: the same pathspec
+returns all 2,705 listings over `8c7985e..08b72e2`, the window in which they
+were last written, and two other spellings of it return zero here too. The one
+`ec/decompiled` change the window does contain is `bank0/0EA2.c` in `cd3c7b0`, a
+decompiled C export; the digest is over the parsed `.asm` instruction stream
+(`digest_of()`), so a `.c` re-export cannot move one.
+
+So the committed digests are of the listings the last full `--report` measured.
+**What this does not establish is anything about those listings being right.**
+The digests were still taken without a re-encode, so they attest to the measured
+text and not to its correctness, and the paragraph in §14e above — a digest that
+agrees means the text has not moved, not that the text is right — is unchanged
+by any of this. What is closed is one instance of a question a future migration
+still has to answer for itself, because the guard stops a second run and not the
+first. The caveat in `ec/ghidra/README.md` is narrowed to that; it is not
+deleted, and neither is this section's answer mistaken for the re-encode.
 
 ## 15. The EC and BIOS indexes get the same structural guards (2026-09-23, issue #142)
 
