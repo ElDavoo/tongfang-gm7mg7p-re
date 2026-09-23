@@ -49,19 +49,40 @@ only covers what's specific to *this* copy.
   single command that checks everything, and the cheap tier's closing note
   names that command on every run.
   Two things to carry across if this file is ever re-copied from the template:
-  1. **The deep tier needs a schedule, and it does not have one.** Nothing in
-     `.github/workflows/` calls it, because the pipeline token has no
-     `workflow` scope. Until a human adds one, per-commit CI checks less than
-     it did before this split: the EC listing is no longer re-encoded from
-     bytes on every run. The intended schedule is a nightly or weekly
-     `schedule:` job that runs
-     `AGENT_GATES_DEEP=1 .github/scripts/agent-gates.sh`; the reason it is
-     opt-in rather than dropped is in `docs/findings.md`.
+  1. **The deep tier needs a schedule, and it does not have one.** What runs
+     where, as of 2026-09-23 (issue #139): per commit, on `push` to `main` and
+     on every pull request, `ci.yml` runs the cheap tier bare, and the deep
+     tier runs on **nothing** — no workflow in `.github/workflows/` calls it,
+     because the pipeline token has no `workflow` scope. The workflow is
+     prepared instead, at `docs/ci/agent-gates-deep-schedule.yml`: a nightly
+     `schedule:` plus `workflow_dispatch`, and a human lands it with
+     `cp docs/ci/agent-gates-deep-schedule.yml .github/workflows/agent-gates-deep.yml`.
+     It runs the deep tier through its documented entry point and nothing
+     else:
+     `AGENT_GATES_DEEP=1 .github/scripts/agent-gates.sh`.
+     Until it is landed, the re-encode is opt-in, and the reason it is opt-in
+     rather than dropped is in `docs/findings.md` §14e — which also records
+     what per-commit coverage is still missing, and it is not nothing: since
+     #139 the cheap tier carries a `listing_digest` per row of
+     `ec/ghidra/reassembly.csv`, so a mnemonic or operand edited in a
+     committed `.asm` fails per commit with no assembler. That *detects* the
+     edit; verifying it is still the re-encode's job, and the re-encode is
+     still unscheduled. Per-commit coverage is therefore less than before the
+     split, and more than the split left it.
   2. **The cheap tier's checks were strengthened, not moved.** The Windows
      tool gained duplicate-key, strict-CSV, coverage and controlled-vocabulary
      checks; nothing that catches a stale or silently-failed export was
      deferred. The deep tier adds an independent re-derivation, it does not
-     substitute for anything.
+     substitute for anything. `verify_reassembly.py --check` gained a third
+     assertion for the same reason: it was added to the cheap tier, not
+     promoted out of it. Worth knowing when reading that file, though: its
+     case for `verify_reassembly.py` runs `--check` and **not** `--self-test`,
+     so the digest's known-answer assertions run wherever a human or the deep
+     tier runs them and not on every commit. The per-commit protection is the
+     `--check` comparison itself, which covers all 2,705 rows; the assertions
+     guard the tool rather than the tree. Adding `--self-test` to that case is
+     a one-line change to a template-copied file, and needs the re-copy note
+     above — which is why it is named here rather than done in passing.
 - **`.github/workflows/agent-plan.yml`**'s `CUSTOMISE` section — added the
   hardware/Windows-access constraint from `CLAUDE.md`, so the plan stage
   scopes issues needing the physical laptop or a Windows box down to

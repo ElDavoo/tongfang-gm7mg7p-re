@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Re-assemble the committed disassembly and compare it to the firmware bytes.
 
-Two checks, and the difference between them is the point.
+Two tiers of checks, and the difference between them is the point.
 
-**`--check`, no assembler needed.** Every byte of every committed listing is
-compared against the firmware image, and the committed report is confirmed to
-still describe those listings. This covers 100% of the instructions, including
-the 2.2% the assembler below cannot express, and it runs anywhere.
+**`--check`, no assembler needed.** Three assertions. Every byte of every
+committed listing is compared against the firmware image. The committed report
+is confirmed to still describe those listings. And every row's `listing_digest`
+is recomputed from the listing it names and compared. The first covers 100% of
+the instructions, including the 2.2% the assembler below cannot express, and
+all three run anywhere.
 
 **The full run, `sdas8051` needed.** The committed listing is re-encoded with
 `sdas8051` (SDCC's assembler, which never saw this firmware) and the result is
@@ -20,6 +22,17 @@ not have. The re-encode asks "does an independent assembler agree these bytes
 mean this instruction" -- it catches a decode that is self-consistent and
 wrong. A listing whose bytes are right and whose mnemonic is wrong passes the
 first and fails the second.
+
+**`listing_digest` closes the per-commit half of that gap, as change detection
+and nothing more.** It is a hash of the parsed instruction stream, so a
+mnemonic or operand edited in a committed `.asm` fails the cheap gate with no
+assembler, which it did not do before. A digest that agrees says the listing
+text has not moved since the report was measured; it does not say the text is
+right. A wrong mnemonic committed together with a re-reported digest is caught
+by nothing automated here, because the only thing that would catch it is the
+re-encode, and that still has no schedule (`docs/findings.md` §14e). Detecting
+a change is not verifying it, and the column's name invites the second reading
+more than the first.
 
 Three decoders are in play and they are worth keeping distinct:
 
@@ -51,9 +64,11 @@ Usage:
     python3 ec/tools/verify_reassembly.py --work /tmp/ec --limit 40 # a sample
     python3 ec/tools/verify_reassembly.py --check                   # no assembler
     python3 ec/tools/verify_reassembly.py --self-test               # known answers
+    python3 ec/tools/verify_reassembly.py --add-digest-column       # one-shot
 """
 import argparse
 import csv
+import hashlib
 import os
 import re
 import shutil
@@ -252,6 +267,41 @@ def parse_listing(path):
     return out
 
 
+def canonical(ops):
+    """An operand list with the formatting decisions taken out.
+
+    Case and internal whitespace -- including the space after a comma, which
+    Ghidra and a hand-edit disagree about -- are folded, and nothing else is.
+    A comment or a re-wrap is not a change to the disassembly, and a digest
+    that moved for one would mean a cosmetic fix needed the assembler to
+    resolve before the cheap gate could be green again.
+    """
+    return re.sub(r"\s*,\s*", ",", re.sub(r"\s+", " ", ops).strip()).lower()
+
+
+def digest_of(insns):
+    """-> 16 hex chars identifying the parsed instruction stream.
+
+    One instruction canonicalises to `ADDR:hexbytes:mnemonic:operands`; the
+    joined text, prefixed with the instruction count, is hashed. 64 bits over
+    2,705 rows is a birthday bound of about 2e-13, which is a change detector
+    on files this repository controls rather than a collision-resistant
+    commitment, and a wider digest would imply a guarantee the check does not
+    make.
+
+    The input is the parsed stream, not the file's bytes, so a comment-only or
+    whitespace-only edit is deliberately outside it. What the digest answers is
+    "has the instruction stream changed", which is the question `--check` needs;
+    it does not answer "is the instruction stream right" -- see the module
+    docstring.
+    """
+    lines = ["%04X:%s:%s:%s" % (addr, hexbytes.lower(), mnem.lower(),
+                               canonical(ops))
+             for addr, hexbytes, mnem, ops in insns]
+    blob = "%d\n%s" % (len(insns), "\n".join(lines))
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()[:16]
+
+
 # Branch mnemonics whose operand is a *relative offset*, not an address. 8051
 # has no relative-addressing mode -- every branch encodes a signed byte -- so
 # these are the instructions where a listing's absolute target has to be turned
@@ -389,16 +439,21 @@ def check_one(row, image, work, sdas):
     checked. That is why the outcome is a pair (outcome, detail) plus counts:
     a function is only `match` when every instruction in it re-encoded.
 
-    Returns (outcome, detail, n_checked, n_skipped)."""
+    Returns (outcome, detail, n_checked, n_skipped, digest). The digest is
+    computed here, off the listing this call has already parsed, rather than by
+    a second parse in write_report: #138 made this parse-once, and reading it
+    twice to add a column would give the saving back. It is empty for the two
+    outcomes that never reach a listing, because there is nothing to digest."""
     rel = row["out_file"]
     if not rel or rel.startswith("("):
-        return "skipped", rel, 0, 0
+        return "skipped", rel, 0, 0, ""
     path = os.path.join(DECOMPILED, rel)
     if not os.path.isfile(path):
-        return "missing-listing", rel, 0, 0
+        return "missing-listing", rel, 0, 0, ""
     insns = parse_listing(path)
+    digest = digest_of(insns)
     if not insns:
-        return "empty-listing", rel, 0, 0
+        return "empty-listing", rel, 0, 0, digest
 
     lines = ["\t.area CODE (ABS)", "\t.org 0x%04x" % insns[0][0]]
     prev_end = None
@@ -438,7 +493,7 @@ def check_one(row, image, work, sdas):
             # optional here.
             pass
     if not checked:
-        return "assembler-gap", (skipped[0][2] if skipped else ""), 0, len(skipped)
+        return "assembler-gap", (skipped[0][2] if skipped else ""), 0, len(skipped), digest
 
     start = insns[0][0]
     end = insns[-1][0] + len(insns[-1][1]) // 2
@@ -449,7 +504,7 @@ def check_one(row, image, work, sdas):
     r = subprocess.run([sdas, "-lxosgff", src], capture_output=True, text=True)
     if r.returncode != 0:
         tail = (r.stdout + r.stderr).strip().splitlines()
-        return "assembler-error", (tail[-1] if tail else "failed"), len(checked), len(skipped)
+        return "assembler-error", (tail[-1] if tail else "failed"), len(checked), len(skipped), digest
     mem = read_lst(stem + ".lst")
     for addr, nbytes, _why in skipped:
         for i in range(max(1, nbytes)):
@@ -463,13 +518,13 @@ def check_one(row, image, work, sdas):
             want = image[a] if a < len(image) else None
             got = mem.get(a)
             if got is None:
-                return "assembler-gap", "no bytes emitted at %04X" % a, len(checked), len(skipped)
+                return "assembler-gap", "no bytes emitted at %04X" % a, len(checked), len(skipped), digest
             if got != want:
-                return "mismatch", "%04X: assembled %02X, firmware %02X" % (a, got, want), len(checked), len(skipped)
+                return "mismatch", "%04X: assembled %02X, firmware %02X" % (a, got, want), len(checked), len(skipped), digest
     if skipped:
         return "partial", "%d of %d instruction(s) unchecked, first: %s" % (
-            len(skipped), len(checked) + len(skipped), skipped[0][2]), len(checked), len(skipped)
-    return "match", "", len(checked), 0
+            len(skipped), len(checked) + len(skipped), skipped[0][2]), len(checked), len(skipped), digest
+    return "match", "", len(checked), 0, digest
 
 
 def verify(limit=None, jobs=8, work=None, sdas=None, quiet=False):
@@ -499,14 +554,14 @@ def verify(limit=None, jobs=8, work=None, sdas=None, quiet=False):
                 row, loaded.get(row["program"]) or loaded["bank0"],
                 dirs[idx % jobs], sdas)
         except Exception as exc:                       # a crash is a result
-            return row, "error", "%s: %s" % (type(exc).__name__, exc), 0, 0
+            return row, "error", "%s: %s" % (type(exc).__name__, exc), 0, 0, ""
 
     with ThreadPoolExecutor(max_workers=jobs) as pool:
         for result in pool.map(job_threaded, list(enumerate(rows))):
             results.append(tuple(result))
 
     tally = {}
-    for _row, outcome, _detail, _c, _s in results:
+    for _row, outcome, _detail, _c, _s, _d in results:
         tally[outcome] = tally.get(outcome, 0) + 1
     checked = sum(r[3] for r in results)
     skipped = sum(r[4] for r in results)
@@ -550,11 +605,12 @@ def write_report(results, sdas, path=REPORT):
     version = assembler_version(sdas)
     with open(path, "w", newline="") as f:
         w = csv.writer(f, lineterminator="\n")
-        w.writerow(["program", "addr", "name", "outcome", "instructions_checked",
-                    "instructions_unchecked", "detail", "assembler"])
-        for row, outcome, detail, checked, skipped in results:
+        w.writerow(["program", "addr", "name", "outcome", "listing_digest",
+                    "instructions_checked", "instructions_unchecked", "detail",
+                    "assembler"])
+        for row, outcome, detail, checked, skipped, digest in results:
             w.writerow([row["program"], row["addr"], row["name"], outcome,
-                        checked, skipped, detail,
+                        digest, checked, skipped, detail,
                         "sdas8051 %s" % version])
     return path
 
@@ -574,7 +630,12 @@ def check_listing_bytes():
     reports a length the image does not have. Neither implies the other: the
     bytes can be right and the mnemonic wrong, and 1:1 needs both.
 
-    Returns (checked, bad) where bad is a list of (program, addr, detail)."""
+    It also returns the per-listing digest, keyed the way the report keys its
+    rows, computed from the `insns` this loop has already parsed. That is
+    deliberate rather than incidental: #138 made the cheap path parse each
+    listing once, and a second pass here to collect a hash would give it back.
+
+    Returns (ok, checked, bad, digests), digests being {addr|program: digest}."""
     ok = True
     images = {}
     for prog in ("bank0", "bank1", "pd"):
@@ -589,6 +650,7 @@ def check_listing_bytes():
         build_images(IMAGE_DIR)
     loaded = {p: open(path, "rb").read() for p, path in images.items()}
     bad = []
+    digests = {}
     checked = 0
     for row in csv.DictReader(open(LISTING_INDEX, newline="")):
         rel = row["out_file"]
@@ -616,7 +678,11 @@ def check_listing_bytes():
                         "%d instruction line(s) but %d parsed -- the listing "
                         "format and this parser disagree; re-export the "
                         "listings" % (address_lines, len(insns))))
+            # No digest: a stream this parse is known to have mis-read is not
+            # one to hand a column that reads as a check. check() reports the
+            # row against the absent digest rather than skipping it.
             continue
+        digests[row["addr"] + "|" + prog] = digest_of(insns)
         for addr, hexbytes, _mnem, _ops in insns:
             want = bytes.fromhex(hexbytes) if hexbytes.isalnum() else b""
             if not want:
@@ -634,21 +700,71 @@ def check_listing_bytes():
     if len(bad) > 20:
         print("  ... and %d more" % (len(bad) - 20))
     ok = not bad
-    return ok, checked, len(bad)
+    return ok, checked, len(bad), digests
+
+
+def compare_digests(report, digests, live):
+    """Every report row's committed digest against the one recomputed from the
+    listing it names. -> (compared, bad).
+
+    This is the check, and the hash is not the check. A row whose digest
+    disagrees has had its disassembly edited since the report was measured; a
+    row with no digest at all is a report from before the column existed. Both
+    fail, neither is skipped: a row quietly treated as "nothing to compare"
+    would be a checker that stops checking, which is the failure mode this
+    repository keeps finding the other way round.
+
+    `report` is {addr|program: row}, `digests` is {addr|program: digest} and
+    `live` is {addr|program: out_file}. Returned rows are
+    (key, program, addr, name, out_file, why)."""
+    compared, bad = 0, []
+    for key, r in sorted(report.items()):
+        got = r.get("listing_digest")
+        rel = live.get(key, "(not in the listing index)")
+        where = (r.get("program", "?"), r.get("addr", "?"),
+                 r.get("name", "?"), rel)
+        if not got:
+            bad.append((key,) + where +
+                       ("no listing_digest: the report predates the column",))
+            continue
+        want = digests.get(key)
+        if want is None:
+            bad.append((key,) + where +
+                       ("no digest to compare against: %s was not parsed" % rel,))
+            continue
+        compared += 1
+        if got != want:
+            bad.append((key,) + where +
+                       ("report says %s, %s now digests to %s -- the listing "
+                        "text changed after the report measured it"
+                        % (got, rel, want),))
+    return compared, bad
+
+
+# The one command that resolves a digest disagreement: a changed listing has to
+# be re-reported, and re-reporting is the re-encode. Named once so the failure
+# message and --add-digest-column cannot drift into pointing at different things.
+REPORT_COMMAND = (
+    "SDAS8051=$(nix build nixpkgs#sdcc && echo $out/bin/sdas8051) "
+    "python3 ec/tools/verify_reassembly.py --work /tmp/ec --report")
 
 
 def check():
     """No assembler required.
 
-    Two things. First, every byte of every listing against the firmware image,
-    which covers the 2.2% of instructions the assembler cannot express and runs
-    anywhere. Second, that the committed reassembly report still describes the
-    committed listings: same functions, same outcomes. A report that has drifted
-    from the listings it was measured against is the failure that catches --
-    it cannot tell you the bytes match, only that the claim on file is the one
-    the current export supports."""
+    Three things. First, every byte of every listing against the firmware
+    image, which covers the 2.2% of instructions the assembler cannot express
+    and runs anywhere. Second, that the committed reassembly report still
+    describes the committed listings: same functions, same outcomes. Third,
+    that no listing's text has moved since the report measured it, which is
+    what a mnemonic or operand edit leaves the byte column unable to see.
+
+    The first two are about the claim on file agreeing with the export; the
+    third is about the export not having changed underneath it. What none of
+    them can do is verify the disassembly, and this function does not say it
+    does: verifying is the re-encode, and that is the deep tier."""
     ok = True
-    bytes_ok, n_insns, n_bad = check_listing_bytes()
+    bytes_ok, n_insns, n_bad, digests = check_listing_bytes()
     ok = ok and bytes_ok
     if not os.path.isfile(REPORT):
         print("  FAIL no reassembly report at %s; run verify_reassembly.py"
@@ -682,8 +798,93 @@ def check():
               "firmware holds. That is the 1:1 claim failing; see the detail "
               "column." % mism)
         ok = False
+    # The listing text, against the digest the report carries for it. A text
+    # edit with a correct byte column gets past both assertions above and
+    # fails here, which is the whole reason the column exists.
+    compared, dig_bad = compare_digests(report, digests, live)
+    print("  listing digests: %d compared against the committed report, "
+          "%d disagreement(s)" % (compared, len(dig_bad)))
+    for _key, prog, addr, name, rel, why in dig_bad[:20]:
+        print("  FAIL %s %s %s (%s): %s" % (prog, addr, name, rel, why))
+    if len(dig_bad) > 20:
+        print("  ... and %d more" % (len(dig_bad) - 20))
+    if dig_bad:
+        print("       A changed listing has to be re-reported, which needs the "
+              "assembler the report was made with:\n"
+              "         %s\n"
+              "       Re-reporting is what verifies the new text. Copying the "
+              "new digest into the CSV by\n"
+              "       hand re-arms this check and verifies nothing, which is "
+              "why --check reports a\n"
+              "       disagreement here rather than a diff the reader has to "
+              "interpret." % REPORT_COMMAND)
+        ok = False
     print("  all checks passed" if ok else "  FAILURES ABOVE")
     return 0 if ok else 1
+
+
+def add_digest_column(path=REPORT):
+    """One-shot: add `listing_digest` to an existing report, no re-encode.
+
+    It exists for one migration and refuses to run twice, because after the
+    column is in place the only writer of a digest must be the full --report
+    run. That is what keeps the column from turning into a bypass for the check
+    it provides: refreshing a digest by hand re-arms the detector without
+    anyone checking the new text, and a one-shot flag that said so on the
+    command line is a weaker version of the same problem.
+
+    What it asserts, and it is worth being exact about this because the command
+    looks like a measurement: the digests are those of the listings on disk
+    right now, and the report's outcomes are whatever they were. It cannot
+    prove that these are the listings the report measured -- proving that needs
+    the same assembler the report was made with, which is the thing this path
+    deliberately does not run, because the one available here is a different
+    and older ASxxxx and a full report against it would rewrite every
+    `assembler` cell and could move the gap tallies. See
+    `ec/ghidra/README.md`."""
+    with open(path, newline="") as f:
+        reader = csv.DictReader(f)
+        fieldnames = list(reader.fieldnames or [])
+        rows = list(reader)
+    if "listing_digest" in fieldnames:
+        print("  %s already has a listing_digest column; refusing to run.\n"
+              "     A digest is written by the full --report run and by this "
+              "one migration, and by\n     nothing else." % os.path.relpath(path, REPO))
+        return 1
+    ok, _checked, bad, digests = check_listing_bytes()
+    if not ok or bad:
+        print("  refusing to add a column to a report whose listings do not "
+              "match the\n  firmware (%d disagreement(s) above). Fix those "
+              "first: a digest computed\n  now would pin a listing the byte "
+              "check has just rejected." % bad)
+        return 1
+    missing = [r for r in rows
+               if r.get("addr") + "|" + r.get("program") not in digests]
+    if missing:
+        print("  refusing to add the column: %d report row(s) name a listing "
+              "this run could\n  not digest (first: %s %s). An empty digest is "
+              "not a weaker check, it is a\n  check that has stopped running."
+              % (len(missing), missing[0].get("program"),
+                 missing[0].get("addr")))
+        return 1
+    at = fieldnames.index("outcome") + 1
+    fieldnames.insert(at, "listing_digest")
+    for r in rows:
+        r["listing_digest"] = digests[r["addr"] + "|" + r["program"]]
+    with open(path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=fieldnames, lineterminator="\n",
+                           restval="")
+        w.writeheader()
+        w.writerows(rows)
+    print("  added listing_digest to %d row(s) of %s.\n"
+          "  Asserting: these listings are the ones the report describes, and "
+          "their text is now\n  pinned per row. Not asserting: that the text is "
+          "correct -- a digest detects change, it does\n  not verify the "
+          "disassembly. Refreshing one after a deliberate edit means running\n"
+          "  %s\n"
+          "  which re-encodes with the assembler, rather than editing the CSV."
+          % (len(rows), os.path.relpath(path, REPO), REPORT_COMMAND))
+    return 0
 
 
 def self_test():
@@ -806,6 +1007,76 @@ def self_test():
                 and "0x00000ce0" in wide[1][3],
                 "its operands are not mistaken for bytes")
 
+    # The digest, which is what makes a text-only edit fail the cheap gate. The
+    # expected value is a known answer, not a recorded one: if the canonical
+    # form is changed deliberately, changing this string is the visible act that
+    # goes with it, and every row of reassembly.csv has to be re-reported after
+    # it.
+    listed = ("0040  74 12 -     mov   a,#0x12\n"
+              "0042  02 00 45    ljmp  0x0045\n"
+              "0045  22  -  -    ret\n")
+    listed_digest = digest_of(parse_listing_str(listed))
+    assert_that(listed_digest == "b926d09ec5434581",
+                "a fixed three-instruction listing digests to %s"
+                % listed_digest)
+    # The failure the column exists for: byte column identical, one character of
+    # mnemonic different. Both assertions above pass on this listing, which is
+    # why the re-encode could not be dropped for a cheaper check.
+    assert_that(digest_of(parse_listing_str(listed.replace("mov   a", "movx  a")))
+                != listed_digest,
+                "a changed mnemonic with an unchanged byte column changes the "
+                "digest")
+    assert_that(digest_of(parse_listing_str(listed.replace("ret", "nop")))
+                != listed_digest,
+                "a changed mnemonic in the last instruction changes the digest "
+                "too, so the count prefix is not doing the work alone")
+    # Deliberate non-coverage, asserted so it reads as a decision: case and
+    # internal whitespace do not change the claim a listing makes, and folding
+    # them in would mean a re-wrap needed the assembler to resolve.
+    assert_that(digest_of([(0x0040, "7412", "MOV", "a, #0x12"),
+                           (0x0042, "020045", "ljmp", " 0x0045 "),
+                           (0x0045, "22", "RET", "  ")]) == listed_digest,
+                "case, padding and the space after a comma are folded away")
+    assert_that(digest_of([(0x0040, "7413", "mov", "a,#0x12"),
+                           (0x0042, "020045", "ljmp", "0x0045"),
+                           (0x0045, "22", "ret", "")]) != listed_digest,
+                "a changed byte column changes the digest, which is what keeps "
+                "this independent of the byte check rather than a copy of it")
+
+    # The comparison, not the hash: a check that cannot fail is not a check.
+    # Written to a temporary report and read back through the same DictReader
+    # check() uses, so a misspelled column name shows up here rather than as a
+    # digest that quietly compares nothing.
+    fd, rpath = tempfile.mkstemp(prefix="digest-selftest-", suffix=".csv")
+    with os.fdopen(fd, "w", newline="") as f:
+        w = csv.writer(f, lineterminator="\n")
+        w.writerow(["program", "addr", "name", "outcome", "listing_digest"])
+        w.writerow(["bank0", "0040", "agrees", "match", listed_digest])
+        w.writerow(["bank0", "0042", "edited", "match", "0123456789abcdef"])
+        w.writerow(["bank0", "0045", "predates", "match", ""])
+    try:
+        probe = {r["addr"] + "|" + r["program"]: r
+                 for r in csv.DictReader(open(rpath, newline=""))}
+        live = {k: "bank0/%s.asm" % k.split("|")[0] for k in probe}
+        compared, bad = compare_digests(
+            probe, {k: listed_digest for k in probe}, live)
+        assert_that(compared == 2 and len(bad) == 2,
+                    "one agreeing row passes, one edited row and one "
+                    "undigested row fail (compared %d, failed %d)"
+                    % (compared, len(bad)))
+        assert_that([r[3] for r in bad] == ["edited", "predates"],
+                    "the edited row and the row from before the column are "
+                    "both named")
+        assert_that(listed_digest in bad[0][5] and "0123456789abcdef" in bad[0][5]
+                    and "0042.asm" in bad[0][5],
+                    "a disagreement names both digests and the listing they "
+                    "were computed from")
+        assert_that("predates" in bad[1][5],
+                    "a row with no digest fails as predating the column rather "
+                    "than being skipped")
+    finally:
+        os.remove(rpath)
+
     # The comparison itself, against a byte string we control. A check that
     # cannot fail on a wrong byte is not a check.
     sdas = find_assembler()
@@ -830,13 +1101,20 @@ def self_test():
                 "0045  22  -  -    ret\n"
                 "0046  00  -  -    nop\n")
     try:
-        outcome, detail, nchk, nskip = check_one(row, bytes(img), work, sdas)
+        outcome, detail, nchk, nskip, digest = check_one(row, bytes(img), work, sdas)
         assert_that(outcome == "match",
                     "a correct listing re-encodes to the image bytes (%s %s)"
                     % (outcome, detail))
+        assert_that(digest == digest_of(parse_listing_str(
+                        "0040  74 12 -     mov   a,#0x12\n"
+                        "0042  02 00 45    ljmp  0x0045\n"
+                        "0045  22  -  -    ret\n"
+                        "0046  00  -  -    nop\n")),
+                    "check_one returns the digest of the listing it parsed, so "
+                    "the report is written without a second parse")
         # Corrupt one byte of the image: the check must notice.
         img[0x41] = 0x13
-        outcome, _, _, _ = check_one(row, bytes(img), work, sdas)
+        outcome = check_one(row, bytes(img), work, sdas)[0]
         assert_that(outcome == "mismatch",
                     "a wrong image byte is reported as a mismatch, not a pass")
     finally:
@@ -868,10 +1146,15 @@ def main():
                     help="write ec/ghidra/reassembly.csv")
     ap.add_argument("--check", action="store_true",
                     help="CI: the report still describes the listings (no assembler)")
+    ap.add_argument("--add-digest-column", action="store_true",
+                    help="one-shot: add listing_digest to the existing report, "
+                         "without re-encoding (refuses to run twice)")
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args()
     if args.self_test:
         return self_test()
+    if args.add_digest_column:
+        return add_digest_column()
     if args.check:
         return check()
     results, tally, sdas = verify(limit=args.limit, jobs=args.jobs,

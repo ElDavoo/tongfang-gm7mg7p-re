@@ -1821,10 +1821,33 @@ not free.** The `sdas8051` re-encode is the strongest check the EC has — an
 independent assembler encoding the committed listing back to bytes, which is
 the difference between checking the bytes and checking the claim about them.
 It no longer runs per commit, and **nothing in `.github/workflows/` runs it on
-any schedule**, because the pipeline token has no `workflow` scope. Until a
-human adds a nightly or weekly job, that coverage is opt-in and off.
-`docs/agent-pipeline.md` records the intended schedule so a re-copy of the
-template, or whoever wires it, picks it up.
+any schedule**, because the pipeline token has no `workflow` scope. The
+schedule is prepared instead: `docs/ci/agent-gates-deep-schedule.yml` is the
+workflow, ready to be copied into `.github/workflows/` by a human, and
+`docs/agent-pipeline.md` records the intent so a re-copy of the template, or
+whoever wires it, picks it up. Until that happens the coverage is opt-in and
+off.
+
+**What the split did open, and what closes it (2026-09-23, issue #139).** The
+hole #138 left was that the two per-commit checks — the byte check and the
+report/index check — are content-blind to a listing's *text*. A mnemonic or
+operand edited in a `.asm` with a correct byte column passed both, because a
+mnemonic is not a byte and nothing re-derived the report. The fix is a
+`listing_digest` column in `ec/ghidra/reassembly.csv`, a 64-bit hash of each
+listing's parsed instruction stream, compared by `verify_reassembly.py --check`
+on every commit. Any of the 2,705 rows' text could be edited that way before
+the change and every per-commit check would still have passed; now one of them
+edited that way fails the cheap tier, with no assembler anywhere in the run.
+
+So per-commit coverage **detects** listing-text drift where it previously
+detected nothing. It still does not **verify** it: a digest that agrees means
+the text has not moved since the report was measured, not that the text is
+right, and a wrong mnemonic committed together with a re-reported digest is
+caught by nothing automated here. Detecting a change is not verifying it, so
+until the schedule lands **per-commit coverage remains less than before the
+split** — smaller in scope, but not the re-encode. The cheap tier now catches
+the edit a byte column cannot see; the tier that would say whether the edit was
+an improvement still has to be asked for.
 
 What was **not** deferred, deliberately: every check that opens a `.c` or an
 `.asm`, the `DECOMPILER UNAVAILABLE` walks, the BIOS listing parse, the EC byte

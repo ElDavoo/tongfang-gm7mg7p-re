@@ -9,9 +9,12 @@
 #   * the sdas8051 re-encode, an independent assembler encoding the committed
 #     listing back to bytes. That is the difference between checking the bytes
 #     and checking the claim about them, and it is the strongest check the EC
-#     has. It needs sdcc, it is about 90 s, and its result changes only when a
-#     listing or the firmware changes -- so paying for it on every commit buys
-#     nothing the byte-level --check does not already buy.
+#     has. It needs sdcc, and it is 4 s with --jobs 4 (docs/findings.md §14e;
+#     #137's ~90 s was a different measurement). It is still not per commit,
+#     and the reason is no longer cost: --check now carries a listing_digest
+#     per row and so catches an edit to a listing's text, but catching an edit
+#     is not verifying it. Whether the new text means what it says is the
+#     question this leg answers and the cheap tier cannot.
 #   * the cross-decoder comparison, Ghidra's 8051 C against
 #     ec/tools/disasm8051.py. It is advisory by its own docstring and its
 #     result cannot fail the run either way; measured here at 0.13 s, so
@@ -23,8 +26,11 @@
 #     AGENT_GATES_DEEP=1 .github/scripts/agent-gates.sh
 #
 # is the single command that checks everything, which is what a scheduled
-# workflow should call. Until a human adds that schedule this is opt-in, and
-# the cheap tier says so on every run.
+# workflow should call. That workflow is prepared at
+# docs/ci/agent-gates-deep-schedule.yml and not landed, because the pipeline
+# token has no `workflow` scope; docs/agent-pipeline.md has the one-line copy
+# that lands it. Until a human does, this is opt-in, and the cheap tier says
+# so on every run.
 
 set -uo pipefail
 
