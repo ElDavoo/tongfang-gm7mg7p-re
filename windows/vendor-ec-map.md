@@ -263,6 +263,18 @@ capture. The stored defaults (`UserFanTables\DefaultFanTable_*.json`, dated
 2025-06-23) are presumably its output, but nobody has compared them against
 what the EC returns today.
 
+**The EC side of that handshake is decoded** (issue #99,
+`../ec/annotations/manual-fan-ctrl-0751.md` §6). The handler at bank0
+`0x888D` checks exactly the magic above, accepts `0x0F5F` only in 1-3, and
+copies two 48-byte tables out of CODE into `0x0F00` and `0x0F30`. Its
+selector 3 branch is the one that consults `0x0782` bit 2, the Office
+fan-table type — so the EC agrees with step 2's numbering, derived here from
+firmware rather than from the service's constants. Worth noting against
+steps 1 and 5: the EC's PL1/PL2/PL4 clear at `0xA833` fires when `0x0741`
+bit 0 is *clear*, which is the state the service deliberately parks the EC
+in for this handshake. Whether the two ever overlap depends on when that
+routine runs, which is unresolved.
+
 ### What this means for a Linux platform profile
 
 - **A power mode is not one register on this board.** The vendor writes
@@ -270,7 +282,14 @@ what the EC returns today.
   switch. **Open:** does the EC derive any of these from `0x0751` alone? For
   example, does it load its own table or PLs when `0x0751` changes? The
   capture can't tell, because the service always wrote everything. That
-  decides whether a driver needs to write more than `0x0751`.
+  decides whether a driver needs to write more than `0x0751`. **Static half
+  answered** (issue #99, `../ec/annotations/manual-fan-ctrl-0751.md`): none
+  of the 29 EC sites for `0x0751` touches another byte, the per-mode default
+  blocks are never read by the EC, and the EC's own PL writer is gated on
+  `AP_OEM` (`0x0741`) bit 0 rather than on the mode. So the expected answer
+  is "a driver must write the bundle" — still unconfirmed live, and
+  `../docs/hardware-tests/manual-fan-ctrl-0751-isolation.md` is the unrun
+  test that would confirm it.
 - A natural mapping is low-power = Office, balanced = Gaming (the EC's
   default mode), performance = Turbo, offered only when `0x049F` bit 1 is
   set. The values a driver would write can all be read back from the EC's

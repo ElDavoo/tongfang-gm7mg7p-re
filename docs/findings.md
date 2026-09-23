@@ -1093,3 +1093,47 @@ needs its own live test.
   the vendor use it as the CPU TCC offset. Upstream also treats `0x0742`
   bit 4 as "Turbo supported"; that bit is clear here, yet the vendor offers
   Turbo from `0x049F` bit 1.
+
+### 7a. What the EC's own code does with `0x0751` (2026-09-23, issue #99)
+
+§7 left the question that sizes a Linux `platform_profile`: the service
+always writes the whole bundle, so what does the EC do with the mode byte
+*alone*? The static half is now answered as far as a site scan can answer
+it, in `../ec/annotations/manual-fan-ctrl-0751.md`, with the per-site table
+in `../ec/annotations/manual-fan-ctrl-0751-sites.csv`.
+
+All 29 direct reference sites are in the main EC image, and every one of
+them touches `0x0751` and no other XDATA byte — nineteen reads that mask or
+branch on the four bits upstream names (`TURBO` 4, `HIGH` 5, `BOOST` 6,
+`USER` 7), seven read-modify-writes of those same bits, one blind write, two
+whose `mov dptr` is staged before an unrelated test. Two results fall out:
+
+- **Nothing carries a per-mode default into a PL register.** The twelve
+  default bytes (`0x0730-0x0737`, `0x07A7-0x07AA`) have no read site
+  anywhere in the image; every site found is the EC *writing* them, for the
+  host to fetch — which is how the vendor uses them. The EC's only found
+  writer of `0x0783-0x0785` is at `0xA833-0xA83B`, it writes zero, and it is
+  gated on `AP_OEM` (`0x0741`) bit 0 — the host-present flag — not on the
+  mode. That gate is the more interesting half for a driver, and *when* the
+  routine runs is not established.
+- **The EC agrees with the service on the encoding.** Its own Turbo path
+  (`0xABE8`/`0xC741`, behind `0x049F` bit 1) produces `0x10`, and it sets a
+  boot default off `BIOS_OEM_2` (`0x0782`) bit 4 — Gaming `0x00`, or `USER`
+  set and `TURBO` cleared for Office. That is an independent confirmation of
+  the values §7 took from the vendor's constants; it says nothing about
+  whether the EC acts on a value the *host* wrote.
+
+**§7's "the EC side of the `0x0F5D-0x0F5F` mailbox is unread" is now partly
+read.** The handler at `0x888D` wants `0xFD`/`0xC9` as a magic in
+`0x0F5D`/`0x0F5E` and a selector of 1-3 in `0x0F5F`, and copies two 48-byte
+default fan tables out of CODE into `0x0F00` and `0x0F30`. Selector 3 is
+Office and picks between two tables on `0x0782` bit 2, the "Office fan-table
+type" bit whose vendor getter is never called. Comparing those built-in
+tables against the vendor's announced ones is still nobody's work.
+
+**None of this is a live test**, and the method is blind to indirect access
+— the same scan reports zero direct sites for `0x0F00-0x0F5C`, a page the EC
+provably writes through a computed `DPH`, which is §4d's blind spot showing
+up on a second address. `MANUAL_FAN_CTRL` therefore stays `present-untested`.
+`hardware-tests/manual-fan-ctrl-0751-isolation.md` is the procedure that
+would settle it, written for a human with the machine and **not run**.
