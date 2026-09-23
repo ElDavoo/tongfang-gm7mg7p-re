@@ -86,8 +86,18 @@ jobs:
         # it here alone would make this the only stage running different code from the rest
         # of the pipeline; a version bump belongs in a change that moves every pin together.
         uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
+        env:
+          ANTHROPIC_BASE_URL: https://openrouter.ai/api
+          ANTHROPIC_AUTH_TOKEN: ${{ secrets.OPENROUTER_API_KEY }}
+          # Keep plugin/subagent aliases on the same provider and model.
+          ANTHROPIC_DEFAULT_OPUS_MODEL: stealth/space-bunny-alpha
+          ANTHROPIC_DEFAULT_SONNET_MODEL: stealth/space-bunny-alpha
+          ANTHROPIC_DEFAULT_HAIKU_MODEL: stealth/space-bunny-alpha
+          CLAUDE_CODE_SUBAGENT_MODEL: stealth/space-bunny-alpha
+          CLAUDE_CODE_EFFORT_LEVEL: max
+          CLAUDE_CODE_MAX_CONTEXT_TOKENS: 950000
         with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.OPENROUTER_API_KEY }}
 
           # This is an optional setting that allows Claude to read CI results on PRs
           additional_permissions: |
@@ -96,8 +106,8 @@ jobs:
           # Optional: Give a custom prompt to Claude. If this is not specified, Claude will perform the instructions specified in the comment that tagged it.
           # prompt: 'Update the pull request description to include a summary of changes.'
 
-          # Optional: Add claude_args to customize behavior and configuration
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://code.claude.com/docs/en/cli-reference for available options
-          # claude_args: '--allowed-tools Bash(gh pr *)'
+          claude_args: >-
+            --model stealth/space-bunny-alpha
+            --effort max
+            --dangerously-skip-permissions
 

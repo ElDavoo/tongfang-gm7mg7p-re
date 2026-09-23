@@ -43,9 +43,52 @@ only covers what's specific to *this* copy.
   comment for what it does and why it uses `AGENT_PUSH_TOKEN` rather than
   the default `GITHUB_TOKEN` to open issues.
 
-Everything else under `.github/workflows/agent-*.yml` is an unmodified
-copy of the `agent-pipeline` template. If it fixes a bug in one of those
+Apart from the provider override below, everything else under
+`.github/workflows/agent-*.yml` is an unmodified copy of the `agent-pipeline`
+template. If it fixes a bug in one of those
 files, re-copy it rather than patching around it here.
+
+## Model provider (local override, 2026-09-17; re-applied with a new model 2026-09-23)
+
+All eight `claude-code-action` steps use OpenRouter's Anthropic-compatible
+endpoint (`https://openrouter.ai/api`), `--model stealth/space-bunny-alpha`,
+and `--effort max`. Each step passes `secrets.OPENROUTER_API_KEY` as both the
+`anthropic_api_key` input and `ANTHROPIC_AUTH_TOKEN`; the OAuth input is no
+longer used. Both callers of the reusable `agent-fix.yml` forward the new
+secret, and that workflow requires it.
+
+The Opus/Sonnet/Haiku default-model environment variables and
+`CLAUDE_CODE_SUBAGENT_MODEL` also select `stealth/space-bunny-alpha`, so the
+review plugin's model aliases do not select other models.
+`CLAUDE_CODE_EFFORT_LEVEL` is set to `max` for inherited configuration as well
+as the explicit CLI flag, and `CLAUDE_CODE_MAX_CONTEXT_TOKENS` is set to
+`950000`. These are requested settings; provider-side reasoning behaviour and
+the actual context-window size are not verified by the local YAML checks — if
+the endpoint advertises a smaller window than 950000 tokens, the larger value
+is what the CLI is told to assume.
+
+The model was `stealth/union-alpha` when this override was first committed on
+2026-09-17, and `0bf971c` was reverted in full by `4bec8e4` on 2026-09-18
+without replacing it. The 2026-09-23 re-application is the same change with
+`stealth/space-bunny-alpha` in place of `stealth/union-alpha` and the context
+token setting added; the revert's reasoning is not recorded, so if the
+re-application fails the same way again, the revert is the place to look.
+
+All eight steps also pass `--dangerously-skip-permissions`, as explicitly
+requested for unattended CI. This bypasses Claude Code permission prompts;
+`--allowedTools` is no longer a default-deny boundary. The existing explicit
+`--disallowedTools` lists remain, but are not a sandbox or a guarantee that
+shell commands cannot perform equivalent operations. Earlier workflow
+comments describing the allowlist as the safety boundary predate this
+override and no longer describe the effective configuration.
+
+These are human-requested provider and CLI-permission overrides. GitHub
+job permissions, approval gates, triggers, prompts and action pins are
+unchanged. Preserve the overrides when re-copying the template. The
+repository Actions secret `OPENROUTER_API_KEY` is set (added 2026-09-17);
+the old `CLAUDE_CODE_OAUTH_TOKEN` is still present but is not a fallback.
+No live OpenRouter workflow run was performed for this change to validate
+the credentials or the model's availability on the endpoint.
 
 ## `claude.yml` — not from agent-pipeline, from `/install-github-app`
 
@@ -53,8 +96,8 @@ Anthropic's own Claude Code CLI has an `/install-github-app` setup command
 that, independently of `agent-pipeline`, installs its standard quickstart
 templates: an `@claude`-mention assistant (`claude.yml`) and an
 automatic PR reviewer (`claude-code-review.yml`, since removed — see
-`claude.yml`'s own header comment for why). Both use the same
-`CLAUDE_CODE_OAUTH_TOKEN` secret `agent-pipeline` needs anyway, so running
+`claude.yml`'s own header comment for why). Both originally used the same
+`CLAUDE_CODE_OAUTH_TOKEN` secret that `agent-pipeline` needed, so running
 that command was a reasonable way to get the secret set — but as shipped,
 neither template knows `agent-pipeline` exists: `claude-code-review.yml`
 duplicated `agent-review.yml`'s job outright, and `claude.yml` shared no
