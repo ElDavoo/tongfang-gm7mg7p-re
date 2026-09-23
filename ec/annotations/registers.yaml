@@ -524,9 +524,16 @@ registers:
       capacity alike. The pack's CV plateau (EC 0x0438) sits at 16466 mV under
       every profile, in every trace in evidence/battery-traces/. Whether the
       charger physically tracks this byte (vs 0x030E) is the open causation
-      question -- not reachable by host override, would need a charger SMBus
-      read. mech-forza-control uses the same address and name on a newer
-      Uniwill EC (docs/related-projects.md).
+      question -- not reachable by host override, and (issue #98, 2026-09-23)
+      not reachable by a host SMBus read either: the DSDT's host SMBus
+      controller SBUS (0x001F0004) has no battery/charger child, and
+      BAT0._BST reads the pack through EC fields (EC0.XST0-3), so the charger
+      sits on the EC's private SMBus. The host's only window is this byte.
+      So the charger-follows-0x0522 question stays correlational; live on
+      2026-09-23 the pack sat at 16466 mV (0x0438) = this 16400 target, 934
+      mV under the 17400 request (0x030E). docs/findings.md 4n.
+      mech-forza-control uses the same address and name on a newer Uniwill EC
+      (docs/related-projects.md).
 
   - name: SBS_CHARGING_VOLTAGE (pack-requested charge voltage)
     addr: [0x030E, 0x030F]
