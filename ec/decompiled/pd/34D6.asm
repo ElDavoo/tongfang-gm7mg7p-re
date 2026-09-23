@@ -4,4 +4,4 @@
 ; This is the machine code. The decompiled C for this address is 34D6.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-34D6     90 07 d6   mov      DPTR, #0x7d6
+34D6     90 07 d6 mov      DPTR, #0x7d6

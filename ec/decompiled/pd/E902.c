@@ -10,12 +10,13 @@ char FUN_CODE_e902(void)
   byte bVar1;
   char cVar2;
   
-  FUN_CODE_9850();
+  load_dptr_d9ef_tail_jump_10f1();
   FUN_CODE_0c13(1,0x24);
-  bVar1 = FUN_CODE_0bc4(0x21);
+  bVar1 = read_byte_at_dptr_plus_r1r2_by_tag(0x21);
   if (bVar1 < 6) {
-    FUN_CODE_10f1(CONCAT11(-0x26 - (((0xcd < bVar1 * '\x03') << 7) >> 7),bVar1 * '\x03' + 0x32));
-    cVar2 = FUN_CODE_1229();
+    read3_code_to_r3r1(CONCAT11(-0x26 - (((0xcd < bVar1 * '\x03') << 7) >> 7),bVar1 * '\x03' + 0x32)
+                      );
+    cVar2 = load_dptr_then_indirect_jump();
     return cVar2;
   }
   return bVar1 - 6;

@@ -6,18 +6,18 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-0408     13         rrc      A
-0409     a2 02      mov      CY, 0x02
-040B     13         rrc      A
-040C     a8 02      mov      R0, 0x02
-040E     13         rrc      A
-040F     ae 02      mov      R6, 0x02
-0411     13         rrc      A
-0412     b4 02 13   cjne     A, #0x2, 0x0428
-0415     ba 02 13   cjne     R2, #0x2, 0x042b
-0418     c0 02      push     0x02
-041A     13         rrc      A
-041B     c6         xch      A, @R0
-041C     02 13 cc   ljmp     0x13cc
-0428     02 13 e4   ljmp     0x13e4
-042B     02 13 ea   ljmp     0x13ea
+0408     13 - -   rrc      A
+0409     a2 02 -  mov      CY, 0x02
+040B     13 - -   rrc      A
+040C     a8 02 -  mov      R0, 0x02
+040E     13 - -   rrc      A
+040F     ae 02 -  mov      R6, 0x02
+0411     13 - -   rrc      A
+0412     b4 02 13 cjne     A, #0x2, 0x0428
+0415     ba 02 13 cjne     R2, #0x2, 0x042b
+0418     c0 02 -  push     0x02
+041A     13 - -   rrc      A
+041B     c6 - -   xch      A, @R0
+041C     02 13 cc ljmp     0x13cc
+0428     02 13 e4 ljmp     0x13e4
+042B     02 13 ea ljmp     0x13ea

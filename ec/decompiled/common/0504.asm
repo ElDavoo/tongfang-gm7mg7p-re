@@ -6,6 +6,6 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-0504     12 90 00   lcall    0x9000
-0507     f5 74      mov      0x74, A
-0509     01 f0      ajmp     0x00f0
+0504     12 90 00 lcall    0x9000
+0507     f5 74 -  mov      0x74, A
+0509     01 f0 -  ajmp     0x00f0

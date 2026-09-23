@@ -4,21 +4,21 @@
 ; This is the machine code. The decompiled C for this address is 1064.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-1064     e4         clr      A
-1065     93         movc     A, @A+DPTR
-1066     a3         inc      DPTR
-1067     c5 83      xch      A, DPH
-1069     c5 f0      xch      A, B
-106B     c5 83      xch      A, DPH
-106D     c8         xch      A, R0
-106E     c5 82      xch      A, DPL
-1070     c8         xch      A, R0
-1071     f0         movx     @DPTR, A
-1072     a3         inc      DPTR
-1073     c5 83      xch      A, DPH
-1075     c5 f0      xch      A, B
-1077     c5 83      xch      A, DPH
-1079     c8         xch      A, R0
-107A     c5 82      xch      A, DPL
-107C     c8         xch      A, R0
-107D     22         ret      
+1064     e4 - -   clr      A
+1065     93 - -   movc     A, @A+DPTR
+1066     a3 - -   inc      DPTR
+1067     c5 83 -  xch      A, DPH
+1069     c5 f0 -  xch      A, B
+106B     c5 83 -  xch      A, DPH
+106D     c8 - -   xch      A, R0
+106E     c5 82 -  xch      A, DPL
+1070     c8 - -   xch      A, R0
+1071     f0 - -   movx     @DPTR, A
+1072     a3 - -   inc      DPTR
+1073     c5 83 -  xch      A, DPH
+1075     c5 f0 -  xch      A, B
+1077     c5 83 -  xch      A, DPH
+1079     c8 - -   xch      A, R0
+107A     c5 82 -  xch      A, DPL
+107C     c8 - -   xch      A, R0
+107D     22 - -   ret      

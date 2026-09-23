@@ -4,4 +4,4 @@
 ; This is the machine code. The decompiled C for this address is 9E0E.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-9E0E     02 9e 37   ljmp     0x9e37
+9E0E     02 9e 37 ljmp     0x9e37

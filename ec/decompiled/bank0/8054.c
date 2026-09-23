@@ -21,14 +21,14 @@ void index_case_00(undefined1 param_1,undefined1 param_2)
   undefined1 *puVar2;
   
   if (DAT_EXTMEM_1904 < '\0') {
-    FUN_CODE_b9df();
+    copy_x1918_to_x0a57();
     DAT_EXTMEM_0a59 = DAT_EXTMEM_0600;
     DAT_EXTMEM_08d0 = param_1;
     DAT_EXTMEM_08d1 = param_2;
-    DAT_EXTMEM_0601 = FUN_CODE_b965(0x601);
+    DAT_EXTMEM_0601 = add_r6_r7_to_0a58_pair_then_halve(0x601);
     DAT_EXTMEM_0600 = DAT_EXTMEM_0a59;
-    FUN_CODE_ba3d(DAT_EXTMEM_0610 | 1);
-    FUN_CODE_be7e();
+    store_a_to_dptr_ba3d(DAT_EXTMEM_0610 | 1);
+    write_9f_to_x1904();
     index_case_epilogue(0x81);
     return;
   }
@@ -36,12 +36,12 @@ void index_case_00(undefined1 param_1,undefined1 param_2)
     DAT_EXTMEM_08e1 = DAT_EXTMEM_08e1 + -1;
     return;
   }
-  FUN_CODE_ba3e();
+  clear_bit0_1901();
   puVar2 = &DAT_EXTMEM_1904;
-  uVar1 = FUN_CODE_bb99(0x80);
+  uVar1 = store_a_then_1906_init(0x80);
   *puVar2 = uVar1;
-  FUN_CODE_bafd(0x190c);
-  FUN_CODE_bcb1();
+  store_a_then_set_bits_1_and_0_of_1900(0x190c);
+  load_dptr_08e1_and_a_06_then_nothing();
   return;
 }
 

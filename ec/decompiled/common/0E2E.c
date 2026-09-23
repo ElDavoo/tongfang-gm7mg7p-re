@@ -9,7 +9,7 @@
 void FUN_CODE_0e2e(void)
 
 {
-  FUN_CODE_383a();
+  set_direct_bit_0c_3();
   FUN_CODE_1534();
   return;
 }

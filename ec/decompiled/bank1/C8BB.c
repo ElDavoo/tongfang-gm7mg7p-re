@@ -7,7 +7,7 @@
 void switchD_CODE:c8e2::caseD_0(void)
 
 {
-  FUN_CODE_c8e3();
+  call_cc2d_then_d0c4();
   return;
 }
 

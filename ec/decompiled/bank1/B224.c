@@ -11,30 +11,31 @@ void FUN_CODE_b224(byte param_1,char param_2)
   char in_PSW;
   
   DAT_EXTMEM_043c = 5;
-  FUN_CODE_b214();
+  set_carry_if_0404_0405_is_0201();
   if (in_PSW < '\0') {
     if ((DAT_EXTMEM_04a0 >> 5 & 1) != 1) {
-      FUN_CODE_8892(0x404);
-      FUN_CODE_8886(0x518);
-      FUN_CODE_885b();
+      read_xdata_pair_to_r3r4(0x404);
+      read_xdata_pair_to_r1r2(0x518);
+      sub_r1r2_from_r3r4();
       cVar1 = param_2;
       if (param_2 == '\0') {
         in_PSW = (param_1 < 0x28) << 7;
         cVar1 = param_1 - 0x28;
         if (param_1 < 0x28) goto LAB_CODE_b25b;
       }
-      FUN_CODE_888c(cVar1,0x436);
+      write_r1r2_to_xdata_pair(cVar1,0x436);
     }
   }
   else {
-    FUN_CODE_b2a0();
+    cmp_0404_vs_0518_then_store_0436();
   }
 LAB_CODE_b25b:
-  FUN_CODE_b214();
+  set_carry_if_0404_0405_is_0201();
   if ((((-1 < in_PSW) && (DAT_EXTMEM_0492 == '\0')) && (DAT_EXTMEM_0494 == '\0')) &&
      ((((DAT_EXTMEM_0497 & 1) == 1 || (DAT_EXTMEM_04ab == 100)) ||
       ((DAT_EXTMEM_04ab < 0x5a ||
-       (FUN_CODE_8892(DAT_EXTMEM_04ab + 0xa6,0x522), param_2 != '\0' || param_1 != 0)))))) {
+       (read_xdata_pair_to_r3r4(DAT_EXTMEM_04ab + 0xa6,0x522), param_2 != '\0' || param_1 != 0))))))
+  {
     DAT_EXTMEM_0432 = 2;
     return;
   }

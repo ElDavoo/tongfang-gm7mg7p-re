@@ -6,43 +6,43 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-4725     78 af      mov      R0, #0xaf
-4727     e6         mov      A, @R0
-4728     6f         xrl      A, R7
-4729     f6         mov      @R0, A
-472A     e6         mov      A, @R0
-472B     ff         mov      R7, A
-472C     20 e7 07   jb       0xe7, 0x4736
-472F     25 e0      add      A, A
-4731     ff         mov      R7, A
-4732     66         xrl      A, @R0
-4733     f6         mov      @R0, A
-4734     80 0d      sjmp     0x4743
-4736     ef         mov      A, R7
-4737     25 e0      add      A, A
-4739     ff         mov      R7, A
-473A     78 af      mov      R0, #0xaf
-473C     e6         mov      A, @R0
-473D     64 09      xrl      A, #0x9
-473F     f6         mov      @R0, A
-4740     e6         mov      A, @R0
-4741     6f         xrl      A, R7
-4742     f6         mov      @R0, A
-4743     ef         mov      A, R7
-4744     20 e7 07   jb       0xe7, 0x474e
-4747     25 e0      add      A, A
-4749     78 af      mov      R0, #0xaf
-474B     66         xrl      A, @R0
-474C     f6         mov      @R0, A
-474D     22         ret      
-474E     ef         mov      A, R7
-474F     25 e0      add      A, A
-4751     ff         mov      R7, A
-4752     78 af      mov      R0, #0xaf
-4754     e6         mov      A, @R0
-4755     64 07      xrl      A, #0x7
-4757     f6         mov      @R0, A
-4758     e6         mov      A, @R0
-4759     6f         xrl      A, R7
-475A     f6         mov      @R0, A
-475B     22         ret      
+4725     78 af -  mov      R0, #0xaf
+4727     e6 - -   mov      A, @R0
+4728     6f - -   xrl      A, R7
+4729     f6 - -   mov      @R0, A
+472A     e6 - -   mov      A, @R0
+472B     ff - -   mov      R7, A
+472C     20 e7 07 jb       0xe7, 0x4736
+472F     25 e0 -  add      A, A
+4731     ff - -   mov      R7, A
+4732     66 - -   xrl      A, @R0
+4733     f6 - -   mov      @R0, A
+4734     80 0d -  sjmp     0x4743
+4736     ef - -   mov      A, R7
+4737     25 e0 -  add      A, A
+4739     ff - -   mov      R7, A
+473A     78 af -  mov      R0, #0xaf
+473C     e6 - -   mov      A, @R0
+473D     64 09 -  xrl      A, #0x9
+473F     f6 - -   mov      @R0, A
+4740     e6 - -   mov      A, @R0
+4741     6f - -   xrl      A, R7
+4742     f6 - -   mov      @R0, A
+4743     ef - -   mov      A, R7
+4744     20 e7 07 jb       0xe7, 0x474e
+4747     25 e0 -  add      A, A
+4749     78 af -  mov      R0, #0xaf
+474B     66 - -   xrl      A, @R0
+474C     f6 - -   mov      @R0, A
+474D     22 - -   ret      
+474E     ef - -   mov      A, R7
+474F     25 e0 -  add      A, A
+4751     ff - -   mov      R7, A
+4752     78 af -  mov      R0, #0xaf
+4754     e6 - -   mov      A, @R0
+4755     64 07 -  xrl      A, #0x7
+4757     f6 - -   mov      @R0, A
+4758     e6 - -   mov      A, @R0
+4759     6f - -   xrl      A, R7
+475A     f6 - -   mov      @R0, A
+475B     22 - -   ret      

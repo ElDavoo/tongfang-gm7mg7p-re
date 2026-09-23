@@ -10,18 +10,18 @@ void FUN_CODE_e6c0(byte *param_1,char param_2,undefined1 param_3)
   byte bVar1;
   char cVar2;
   
-  FUN_CODE_706b(param_3);
+  dptr_08e9_plus_5e_times_a(param_3);
   bVar1 = *param_1;
   if (((bVar1 >> 2 & 1) != 0) != (bool)param_2) {
     if (param_2 == '\x01') {
-      FUN_CODE_706b(param_3);
+      dptr_08e9_plus_5e_times_a(param_3);
       *param_1 = bVar1 | 4;
     }
     else {
-      FUN_CODE_706b(param_3);
+      dptr_08e9_plus_5e_times_a(param_3);
       *param_1 = *param_1 & 0xfb;
     }
-    cVar2 = FUN_CODE_6faf(param_3);
+    cVar2 = scaled_lookup_from_a_times_5e_plus_f8(param_3);
     if (cVar2 == '\0') {
       FUN_CODE_f1b0();
     }

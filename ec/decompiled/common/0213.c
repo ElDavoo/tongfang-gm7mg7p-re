@@ -54,7 +54,7 @@ void FUN_CODE_0213(byte param_1,byte *param_2)
     nop();
     nop();
     nop();
-    FUN_CODE_3a60();
+    cascade_gate_170a_1709_1708();
     if (cVar1 == '\0') {
       thunk_FUN_CODE_3459();
     }

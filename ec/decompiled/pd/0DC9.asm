@@ -4,67 +4,67 @@
 ; This is the machine code. The decompiled C for this address is 0DC9.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-0DC9     e8         mov      A, R0
-0DCA     8f f0      mov      B, R7
-0DCC     a4         mul      AB
-0DCD     cc         xch      A, R4
-0DCE     8b f0      mov      B, R3
-0DD0     a4         mul      AB
-0DD1     2c         add      A, R4
-0DD2     fc         mov      R4, A
-0DD3     e9         mov      A, R1
-0DD4     8e f0      mov      B, R6
-0DD6     a4         mul      AB
-0DD7     2c         add      A, R4
-0DD8     fc         mov      R4, A
-0DD9     8a f0      mov      B, R2
-0DDB     ed         mov      A, R5
-0DDC     a4         mul      AB
-0DDD     2c         add      A, R4
-0DDE     fc         mov      R4, A
-0DDF     ea         mov      A, R2
-0DE0     8e f0      mov      B, R6
-0DE2     a4         mul      AB
-0DE3     cd         xch      A, R5
-0DE4     a8 f0      mov      R0, B
-0DE6     8b f0      mov      B, R3
-0DE8     a4         mul      AB
-0DE9     2d         add      A, R5
-0DEA     cc         xch      A, R4
-0DEB     38         addc     A, R0
-0DEC     25 f0      add      A, B
-0DEE     fd         mov      R5, A
-0DEF     e9         mov      A, R1
-0DF0     8f f0      mov      B, R7
-0DF2     a4         mul      AB
-0DF3     2c         add      A, R4
-0DF4     cd         xch      A, R5
-0DF5     35 f0      addc     A, B
-0DF7     fc         mov      R4, A
-0DF8     eb         mov      A, R3
-0DF9     8e f0      mov      B, R6
-0DFB     a4         mul      AB
-0DFC     fe         mov      R6, A
-0DFD     a9 f0      mov      R1, B
-0DFF     eb         mov      A, R3
-0E00     8f f0      mov      B, R7
-0E02     a4         mul      AB
-0E03     cf         xch      A, R7
-0E04     c5 f0      xch      A, B
-0E06     2e         add      A, R6
-0E07     cd         xch      A, R5
-0E08     39         addc     A, R1
-0E09     fe         mov      R6, A
-0E0A     e4         clr      A
-0E0B     3c         addc     A, R4
-0E0C     fc         mov      R4, A
-0E0D     ea         mov      A, R2
-0E0E     a4         mul      AB
-0E0F     2d         add      A, R5
-0E10     ce         xch      A, R6
-0E11     35 f0      addc     A, B
-0E13     fd         mov      R5, A
-0E14     e4         clr      A
-0E15     3c         addc     A, R4
-0E16     fc         mov      R4, A
-0E17     22         ret      
+0DC9     e8 - -   mov      A, R0
+0DCA     8f f0 -  mov      B, R7
+0DCC     a4 - -   mul      AB
+0DCD     cc - -   xch      A, R4
+0DCE     8b f0 -  mov      B, R3
+0DD0     a4 - -   mul      AB
+0DD1     2c - -   add      A, R4
+0DD2     fc - -   mov      R4, A
+0DD3     e9 - -   mov      A, R1
+0DD4     8e f0 -  mov      B, R6
+0DD6     a4 - -   mul      AB
+0DD7     2c - -   add      A, R4
+0DD8     fc - -   mov      R4, A
+0DD9     8a f0 -  mov      B, R2
+0DDB     ed - -   mov      A, R5
+0DDC     a4 - -   mul      AB
+0DDD     2c - -   add      A, R4
+0DDE     fc - -   mov      R4, A
+0DDF     ea - -   mov      A, R2
+0DE0     8e f0 -  mov      B, R6
+0DE2     a4 - -   mul      AB
+0DE3     cd - -   xch      A, R5
+0DE4     a8 f0 -  mov      R0, B
+0DE6     8b f0 -  mov      B, R3
+0DE8     a4 - -   mul      AB
+0DE9     2d - -   add      A, R5
+0DEA     cc - -   xch      A, R4
+0DEB     38 - -   addc     A, R0
+0DEC     25 f0 -  add      A, B
+0DEE     fd - -   mov      R5, A
+0DEF     e9 - -   mov      A, R1
+0DF0     8f f0 -  mov      B, R7
+0DF2     a4 - -   mul      AB
+0DF3     2c - -   add      A, R4
+0DF4     cd - -   xch      A, R5
+0DF5     35 f0 -  addc     A, B
+0DF7     fc - -   mov      R4, A
+0DF8     eb - -   mov      A, R3
+0DF9     8e f0 -  mov      B, R6
+0DFB     a4 - -   mul      AB
+0DFC     fe - -   mov      R6, A
+0DFD     a9 f0 -  mov      R1, B
+0DFF     eb - -   mov      A, R3
+0E00     8f f0 -  mov      B, R7
+0E02     a4 - -   mul      AB
+0E03     cf - -   xch      A, R7
+0E04     c5 f0 -  xch      A, B
+0E06     2e - -   add      A, R6
+0E07     cd - -   xch      A, R5
+0E08     39 - -   addc     A, R1
+0E09     fe - -   mov      R6, A
+0E0A     e4 - -   clr      A
+0E0B     3c - -   addc     A, R4
+0E0C     fc - -   mov      R4, A
+0E0D     ea - -   mov      A, R2
+0E0E     a4 - -   mul      AB
+0E0F     2d - -   add      A, R5
+0E10     ce - -   xch      A, R6
+0E11     35 f0 -  addc     A, B
+0E13     fd - -   mov      R5, A
+0E14     e4 - -   clr      A
+0E15     3c - -   addc     A, R4
+0E16     fc - -   mov      R4, A
+0E17     22 - -   ret      

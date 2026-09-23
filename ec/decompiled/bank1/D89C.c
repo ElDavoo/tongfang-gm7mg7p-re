@@ -9,10 +9,10 @@
 void FUN_CODE_d89c(void)
 
 {
-  FUN_CODE_888c(0x50a,0,0);
-  FUN_CODE_888c(0x50c);
-  FUN_CODE_888c(0x50e);
-  FUN_CODE_888c(0x510);
+  write_r1r2_to_xdata_pair(0x50a,0,0);
+  write_r1r2_to_xdata_pair(0x50c);
+  write_r1r2_to_xdata_pair(0x50e);
+  write_r1r2_to_xdata_pair(0x510);
   return;
 }
 

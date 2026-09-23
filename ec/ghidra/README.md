@@ -188,19 +188,19 @@ result against `../firmware/GMxMGxx_11.800`:
 $ SDAS8051=$(nix build nixpkgs#sdcc && echo $out/bin/sdas8051) \
     python3 ../tools/verify_reassembly.py --work /tmp/ec --report
 
-  reassembly, by function (2703 total):
-    match            2581
-    partial           77
-    assembler-gap     45
+  reassembly, by function (2705 total):
+    match            2574
+    partial           73
+    assembler-gap     58
 
   reassembly, by instruction:
-    re-encode to the firmware bytes : 45392 of 45535 (99.69%)
+    re-encode to the firmware bytes : 45394 of 45537 (99.69%)
     unchecked (sdas8051 cannot express the form): 143
 ```
 
-**45,392 of 45,535 instructions re-encode to the exact bytes in the firmware,
-and no function disagrees.** 2,581 of 2,703 have every instruction verified; a
-further 77 have all but 143 between them.
+**45,394 of 45,537 instructions re-encode to the exact bytes in the firmware,
+and no function disagrees.** 2,574 of 2,705 have every instruction verified; a
+further 73 have all but 143 between them.
 
 The 143 are `MOV bit,C`, `CPL bit`, `CLR bit`, `CJNE` on a direct address,
 `DJNZ A` and the carry-with-immediate forms. `CLR bit` is the only one the

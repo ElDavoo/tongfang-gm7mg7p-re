@@ -24,7 +24,7 @@ void seed_fan_table_base(undefined1 *param_1,char *param_2,undefined1 param_3)
   uVar2 = 0xf2;
   DAT_EXTMEM_08e6 = 0x60;
   DAT_EXTMEM_08e7 = 0xf2;
-  FUN_CODE_ba36();
+  read_low_nibble_074c();
   switch_case_dispatch();
   SP = *param_1;
   nop();
@@ -44,13 +44,13 @@ void seed_fan_table_base(undefined1 *param_1,char *param_2,undefined1 param_3)
   pcVar4 = (code *)0x8e6;
   DAT_EXTMEM_08e6 = uVar1;
   DAT_EXTMEM_08e7 = uVar2;
-  FUN_CODE_b987(param_2 + '\x01');
-  FUN_CODE_bc0e(DAT_EXTMEM_0a50);
+  read_dptr_byte_into_r6(param_2 + '\x01');
+  dptr_add_4x_a(DAT_EXTMEM_0a50);
   DAT_EXTMEM_0739 = **(undefined1 **)pcVar4;
   cVar3 = '\0';
   do {
     uStack_1 = (undefined2 *)CONCAT11(DAT_EXTMEM_08e6,DAT_EXTMEM_08e7);
-    FUN_CODE_bc0e(DAT_EXTMEM_0a50);
+    dptr_add_4x_a(DAT_EXTMEM_0a50);
     DAT_EXTMEM_073a = FUN_CODE_bb60(*uStack_1);
     if (100 < DAT_EXTMEM_073a) {
       DAT_EXTMEM_073a = DAT_EXTMEM_0a51;

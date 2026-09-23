@@ -14,15 +14,15 @@ void FUN_CODE_d4d3(void)
   
   if ((DAT_EXTMEM_0610 & 0x10) != 0) {
     DAT_EXTMEM_0610 = DAT_EXTMEM_0610 & 0xef;
-    FUN_CODE_8886(0x608);
+    read_xdata_pair_to_r1r2(0x608);
     BANK0_R2 = BANK0_R2 & 3;
     uVar1 = 3;
     if (0x8f < (DAT_EXTMEM_03bc & 6)) {
       uVar1 = 4;
     }
     uStack_1 = CONCAT11(BANK0_R4,BANK0_R5);
-    FUN_CODE_9182(uVar1,(DAT_EXTMEM_03bc & 6) + 0x70);
-    FUN_CODE_9193(uStack_1);
+    add_two_xdata_bytes_to_r1r2_and_halve(uVar1,(DAT_EXTMEM_03bc & 6) + 0x70);
+    store_r1_r2_to_xdata_at_dptr(uStack_1);
     DAT_EXTMEM_03bc = DAT_EXTMEM_03bc + 2;
     if ((char)DAT_EXTMEM_03bc < '\0') {
       DAT_EXTMEM_03bc = '\0';

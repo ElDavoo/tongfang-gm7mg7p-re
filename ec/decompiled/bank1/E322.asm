@@ -4,10 +4,10 @@
 ; This is the machine code. The decompiled C for this address is E322.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-E322     42 02      orl      0x02, A
-E324     e4         clr      A
-E325     90 74 03   mov      DPTR, #0x7403
-E328     90 03 6c   mov      DPTR, #0x36c
-E32B     f0         movx     @DPTR, A
-E32C     90 e4 4e   mov      DPTR, #0xe44e
-E32F     02 e4 90   ljmp     0xe490
+E322     42 02 -  orl      0x02, A
+E324     e4 - -   clr      A
+E325     90 74 03 mov      DPTR, #0x7403
+E328     90 03 6c mov      DPTR, #0x36c
+E32B     f0 - -   movx     @DPTR, A
+E32C     90 e4 4e mov      DPTR, #0xe44e
+E32F     02 e4 90 ljmp     0xe490

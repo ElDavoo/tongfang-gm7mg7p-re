@@ -16,7 +16,7 @@ void store_first_handoff_helper(undefined1 param_1,undefined1 *param_2)
 {
   *param_2 = param_1;
                     /* WARNING: Subroutine does not return */
-  FUN_CODE_122f(0xfffc);
+  add_dptr_to_word_0d0e_ea_guard(0xfffc);
 }
 
 

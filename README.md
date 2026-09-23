@@ -40,7 +40,7 @@ bigger ([`docs/MISSION.md`](docs/MISSION.md) is the canonical copy):
   reconstruction is under way: `ec/ghidra/README.md` has the committed
   Ghidra project, 2,703 decompiled functions each beside the machine code it
   was read from, and the annotation layer that improves them (issue #20). The
-  committed disassembly re-encodes to the firmware bytes — 45,392 of 45,535
+  committed disassembly re-encodes to the firmware bytes — 45,394 of 45,537
   instructions, checked by `ec/tools/verify_reassembly.py`.
 
 No single change finishes it. Progress is one more register's behaviour

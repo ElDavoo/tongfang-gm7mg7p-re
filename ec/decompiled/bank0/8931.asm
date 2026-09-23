@@ -6,243 +6,243 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-8931     90 08 eb   mov      DPTR, #0x8eb
-8934     e0         movx     A, @DPTR
-8935     54 48      anl      A, #0x48
-8937     60 09      jz       0x8942
-8942     90 07 51   mov      DPTR, #0x751
-8945     e0         movx     A, @DPTR
-8946     30 e6 4f   jnb      0xe6, 0x8998
-8949     90 08 5f   mov      DPTR, #0x85f
-894C     e0         movx     A, @DPTR
-894D     c3         clr      CY
-894E     94 3c      subb     A, #0x3c
-8950     40 4b      jc       0x899d
-8952     e4         clr      A
-8953     f0         movx     @DPTR, A
-8954     90 04 90   mov      DPTR, #0x490
-8957     e0         movx     A, @DPTR
-8958     30 e0 0c   jnb      0xe0, 0x8967
-895B     12 e3 89   lcall    0xe389
-895E     12 be a3   lcall    0xbea3
-8961     90 08 6c   mov      DPTR, #0x86c
-8964     f0         movx     @DPTR, A
-8965     80 08      sjmp     0x896f
-8967     12 e3 89   lcall    0xe389
-896A     90 08 6c   mov      DPTR, #0x86c
-896D     ef         mov      A, R7
-896E     f0         movx     @DPTR, A
-896F     90 08 6c   mov      DPTR, #0x86c
-8972     e0         movx     A, @DPTR
-8973     c3         clr      CY
-8974     94 50      subb     A, #0x50
-8976     50 25      jnc      0x899d
-8978     90 04 3e   mov      DPTR, #0x43e
-897B     e0         movx     A, @DPTR
-897C     c3         clr      CY
-897D     94 46      subb     A, #0x46
-897F     50 1c      jnc      0x899d
-8981     90 04 4f   mov      DPTR, #0x44f
-8984     e0         movx     A, @DPTR
-8985     c3         clr      CY
-8986     94 46      subb     A, #0x46
-8988     50 13      jnc      0x899d
-898A     90 07 51   mov      DPTR, #0x751
-898D     e0         movx     A, @DPTR
-898E     54 bf      anl      A, #0xbf
-8990     f0         movx     @DPTR, A
-8991     7f ac      mov      R7, #0xac
-8993     12 a7 3f   lcall    0xa73f
-8996     80 05      sjmp     0x899d
-8998     e4         clr      A
-8999     90 08 5f   mov      DPTR, #0x85f
-899C     f0         movx     @DPTR, A
-899D     90 07 51   mov      DPTR, #0x751
-89A0     e0         movx     A, @DPTR
-89A1     30 e6 1e   jnb      0xe6, 0x89c2
-89A4     90 07 68   mov      DPTR, #0x768
-89A7     e0         movx     A, @DPTR
-89A8     30 e2 03   jnb      0xe2, 0x89ae
-89AB     02 8f 0e   ljmp     0x8f0e
-89AE     e0         movx     A, @DPTR
-89AF     44 04      orl      A, #0x4
-89B1     f0         movx     @DPTR, A
-89B2     12 bb 22   lcall    0xbb22
-89B5     74 c8      mov      A, #0xc8
-89B7     12 8f 0f   lcall    0x8f0f
-89BA     90 08 24   mov      DPTR, #0x824
-89BD     e0         movx     A, @DPTR
-89BE     54 7f      anl      A, #0x7f
-89C0     f0         movx     @DPTR, A
-89C1     22         ret      
-89C2     90 07 68   mov      DPTR, #0x768
-89C5     e0         movx     A, @DPTR
-89C6     30 e2 25   jnb      0xe2, 0x89ee
-89C9     e0         movx     A, @DPTR
-89CA     54 fb      anl      A, #0xfb
-89CC     f0         movx     @DPTR, A
-89CD     12 bb e6   lcall    0xbbe6
-89D0     40 02      jc       0x89d4
-89D2     80 03      sjmp     0x89d7
-89D4     90 04 69   mov      DPTR, #0x469
-89D7     e0         movx     A, @DPTR
-89D8     90 18 04   mov      DPTR, #0x1804
-89DB     f0         movx     @DPTR, A
-89DC     90 18 04   mov      DPTR, #0x1804
-89DF     e0         movx     A, @DPTR
-89E0     90 07 5b   mov      DPTR, #0x75b
-89E3     f0         movx     @DPTR, A
-89E4     90 18 04   mov      DPTR, #0x1804
-89E7     e0         movx     A, @DPTR
-89E8     90 18 09   mov      DPTR, #0x1809
-89EB     12 8f 0f   lcall    0x8f0f
-89EE     90 07 51   mov      DPTR, #0x751
-89F1     e0         movx     A, @DPTR
-89F2     30 e7 14   jnb      0xe7, 0x8a09
-89F5     90 07 82   mov      DPTR, #0x782
-89F8     e0         movx     A, @DPTR
-89F9     90 08 e7   mov      DPTR, #0x8e7
-89FC     20 e2 05   jb       0xe2, 0x8a04
-89FF     e0         movx     A, @DPTR
-8A00     24 04      add      A, #0x4
-8A02     80 19      sjmp     0x8a1d
-8A04     e0         movx     A, @DPTR
-8A05     24 08      add      A, #0x8
-8A07     80 14      sjmp     0x8a1d
-8A09     90 04 9f   mov      DPTR, #0x49f
-8A0C     e0         movx     A, @DPTR
-8A0D     30 e1 12   jnb      0xe1, 0x8a22
-8A10     12 bb 40   lcall    0xbb40
-8A13     ff         mov      R7, A
-8A14     bf 10 0b   cjne     R7, #0x10, 0x8a22
-8A17     90 08 e7   mov      DPTR, #0x8e7
-8A1A     e0         movx     A, @DPTR
-8A1B     24 0c      add      A, #0xc
-8A1D     12 bc cb   lcall    0xbccb
-8A20     80 03      sjmp     0x8a25
-8A22     12 bc 4f   lcall    0xbc4f
-8A25     90 07 41   mov      DPTR, #0x741
-8A28     e0         movx     A, @DPTR
-8A29     20 e0 03   jb       0xe0, 0x8a2f
-8A2C     02 8b 14   ljmp     0x8b14
-8A2F     90 07 c6   mov      DPTR, #0x7c6
-8A32     e0         movx     A, @DPTR
-8A33     20 e2 03   jb       0xe2, 0x8a39
-8A36     02 8b 14   ljmp     0x8b14
-8A39     90 04 60   mov      DPTR, #0x460
-8A3C     e0         movx     A, @DPTR
-8A3D     d3         setb     CY
-8A3E     94 03      subb     A, #0x3
-8A40     50 56      jnc      0x8a98
-8A42     12 bd e6   lcall    0xbde6
-8A45     d3         setb     CY
-8A46     12 ba d4   lcall    0xbad4
-8A49     40 19      jc       0x8a64
-8A4B     12 bc 5f   lcall    0xbc5f
-8A4E     20 e7 03   jb       0xe7, 0x8a54
-8A51     74 80      mov      A, #0x80
-8A53     f0         movx     @DPTR, A
-8A54     90 04 60   mov      DPTR, #0x460
-8A57     e0         movx     A, @DPTR
-8A58     64 03      xrl      A, #0x3
-8A5A     70 21      jnz      0x8a7d
-8A5C     90 09 e4   mov      DPTR, #0x9e4
-8A5F     74 ff      mov      A, #0xff
-8A61     f0         movx     @DPTR, A
-8A62     80 19      sjmp     0x8a7d
-8A64     12 bc da   lcall    0xbcda
-8A67     12 ba d3   lcall    0xbad3
-8A6A     50 0a      jnc      0x8a76
-8A6C     12 bc 5f   lcall    0xbc5f
-8A6F     30 e7 0b   jnb      0xe7, 0x8a7d
-8A72     e4         clr      A
-8A73     f0         movx     @DPTR, A
-8A74     80 07      sjmp     0x8a7d
-8A76     90 09 e4   mov      DPTR, #0x9e4
-8A79     e0         movx     A, @DPTR
-8A7A     54 80      anl      A, #0x80
-8A7C     f0         movx     @DPTR, A
-8A7D     12 be aa   lcall    0xbeaa
-8A80     40 3b      jc       0x8abd
-8A82     e0         movx     A, @DPTR
-8A83     90 04 60   mov      DPTR, #0x460
-8A86     30 e7 05   jnb      0xe7, 0x8a8e
-8A89     e0         movx     A, @DPTR
-8A8A     04         inc      A
-8A8B     f0         movx     @DPTR, A
-8A8C     80 03      sjmp     0x8a91
-8A8E     e0         movx     A, @DPTR
-8A8F     14         dec      A
-8A90     f0         movx     @DPTR, A
-8A91     e4         clr      A
-8A92     90 09 e4   mov      DPTR, #0x9e4
-8A95     f0         movx     @DPTR, A
-8A96     80 25      sjmp     0x8abd
-8A98     90 04 60   mov      DPTR, #0x460
-8A9B     12 bd e6   lcall    0xbde6
-8A9E     ff         mov      R7, A
-8A9F     90 04 3e   mov      DPTR, #0x43e
-8AA2     e0         movx     A, @DPTR
-8AA3     d3         setb     CY
-8AA4     9f         subb     A, R7
-8AA5     40 08      jc       0x8aaf
-8AA7     90 04 60   mov      DPTR, #0x460
-8AAA     e0         movx     A, @DPTR
-8AAB     04         inc      A
-8AAC     f0         movx     @DPTR, A
-8AAD     80 0e      sjmp     0x8abd
-8AAF     12 bc da   lcall    0xbcda
-8AB2     12 ba d3   lcall    0xbad3
-8AB5     50 06      jnc      0x8abd
-8AB7     90 04 60   mov      DPTR, #0x460
-8ABA     e0         movx     A, @DPTR
-8ABB     14         dec      A
-8ABC     f0         movx     @DPTR, A
-8ABD     90 04 60   mov      DPTR, #0x460
-8AC0     e0         movx     A, @DPTR
-8AC1     24 20      add      A, #0x20
-8AC3     f5 82      mov      DPL, A
-8AC5     e4         clr      A
-8AC6     34 0f      addc     A, #0xf
-8AC8     f5 83      mov      DPH, A
-8ACA     e0         movx     A, @DPTR
-8ACB     90 04 61   mov      DPTR, #0x461
-8ACE     f0         movx     @DPTR, A
-8ACF     90 04 68   mov      DPTR, #0x468
-8AD2     e0         movx     A, @DPTR
-8AD3     24 30      add      A, #0x30
-8AD5     f5 82      mov      DPL, A
-8AD7     e4         clr      A
-8AD8     34 0f      addc     A, #0xf
-8ADA     f5 83      mov      DPH, A
-8ADC     d3         setb     CY
-8ADD     12 bd f2   lcall    0xbdf2
-8AE0     40 08      jc       0x8aea
-8AE2     90 04 68   mov      DPTR, #0x468
-8AE5     e0         movx     A, @DPTR
-8AE6     04         inc      A
-8AE7     f0         movx     @DPTR, A
-8AE8     80 19      sjmp     0x8b03
-8AEA     90 04 68   mov      DPTR, #0x468
-8AED     e0         movx     A, @DPTR
-8AEE     24 40      add      A, #0x40
-8AF0     f5 82      mov      DPL, A
-8AF2     e4         clr      A
-8AF3     34 0f      addc     A, #0xf
-8AF5     f5 83      mov      DPH, A
-8AF7     c3         clr      CY
-8AF8     12 bd f2   lcall    0xbdf2
-8AFB     50 06      jnc      0x8b03
-8AFD     90 04 68   mov      DPTR, #0x468
-8B00     e0         movx     A, @DPTR
-8B01     14         dec      A
-8B02     f0         movx     @DPTR, A
-8B03     90 04 68   mov      DPTR, #0x468
-8B06     e0         movx     A, @DPTR
-8B07     24 50      add      A, #0x50
-8B09     f5 82      mov      DPL, A
-8B0B     e4         clr      A
-8B0C     34 0f      addc     A, #0xf
-8B0E     f5 83      mov      DPH, A
-8B10     e0         movx     A, @DPTR
-8B11     02 8c 46   ljmp     0x8c46
+8931     90 08 eb mov      DPTR, #0x8eb
+8934     e0 - -   movx     A, @DPTR
+8935     54 48 -  anl      A, #0x48
+8937     60 09 -  jz       0x8942
+8942     90 07 51 mov      DPTR, #0x751
+8945     e0 - -   movx     A, @DPTR
+8946     30 e6 4f jnb      0xe6, 0x8998
+8949     90 08 5f mov      DPTR, #0x85f
+894C     e0 - -   movx     A, @DPTR
+894D     c3 - -   clr      CY
+894E     94 3c -  subb     A, #0x3c
+8950     40 4b -  jc       0x899d
+8952     e4 - -   clr      A
+8953     f0 - -   movx     @DPTR, A
+8954     90 04 90 mov      DPTR, #0x490
+8957     e0 - -   movx     A, @DPTR
+8958     30 e0 0c jnb      0xe0, 0x8967
+895B     12 e3 89 lcall    0xe389
+895E     12 be a3 lcall    0xbea3
+8961     90 08 6c mov      DPTR, #0x86c
+8964     f0 - -   movx     @DPTR, A
+8965     80 08 -  sjmp     0x896f
+8967     12 e3 89 lcall    0xe389
+896A     90 08 6c mov      DPTR, #0x86c
+896D     ef - -   mov      A, R7
+896E     f0 - -   movx     @DPTR, A
+896F     90 08 6c mov      DPTR, #0x86c
+8972     e0 - -   movx     A, @DPTR
+8973     c3 - -   clr      CY
+8974     94 50 -  subb     A, #0x50
+8976     50 25 -  jnc      0x899d
+8978     90 04 3e mov      DPTR, #0x43e
+897B     e0 - -   movx     A, @DPTR
+897C     c3 - -   clr      CY
+897D     94 46 -  subb     A, #0x46
+897F     50 1c -  jnc      0x899d
+8981     90 04 4f mov      DPTR, #0x44f
+8984     e0 - -   movx     A, @DPTR
+8985     c3 - -   clr      CY
+8986     94 46 -  subb     A, #0x46
+8988     50 13 -  jnc      0x899d
+898A     90 07 51 mov      DPTR, #0x751
+898D     e0 - -   movx     A, @DPTR
+898E     54 bf -  anl      A, #0xbf
+8990     f0 - -   movx     @DPTR, A
+8991     7f ac -  mov      R7, #0xac
+8993     12 a7 3f lcall    0xa73f
+8996     80 05 -  sjmp     0x899d
+8998     e4 - -   clr      A
+8999     90 08 5f mov      DPTR, #0x85f
+899C     f0 - -   movx     @DPTR, A
+899D     90 07 51 mov      DPTR, #0x751
+89A0     e0 - -   movx     A, @DPTR
+89A1     30 e6 1e jnb      0xe6, 0x89c2
+89A4     90 07 68 mov      DPTR, #0x768
+89A7     e0 - -   movx     A, @DPTR
+89A8     30 e2 03 jnb      0xe2, 0x89ae
+89AB     02 8f 0e ljmp     0x8f0e
+89AE     e0 - -   movx     A, @DPTR
+89AF     44 04 -  orl      A, #0x4
+89B1     f0 - -   movx     @DPTR, A
+89B2     12 bb 22 lcall    0xbb22
+89B5     74 c8 -  mov      A, #0xc8
+89B7     12 8f 0f lcall    0x8f0f
+89BA     90 08 24 mov      DPTR, #0x824
+89BD     e0 - -   movx     A, @DPTR
+89BE     54 7f -  anl      A, #0x7f
+89C0     f0 - -   movx     @DPTR, A
+89C1     22 - -   ret      
+89C2     90 07 68 mov      DPTR, #0x768
+89C5     e0 - -   movx     A, @DPTR
+89C6     30 e2 25 jnb      0xe2, 0x89ee
+89C9     e0 - -   movx     A, @DPTR
+89CA     54 fb -  anl      A, #0xfb
+89CC     f0 - -   movx     @DPTR, A
+89CD     12 bb e6 lcall    0xbbe6
+89D0     40 02 -  jc       0x89d4
+89D2     80 03 -  sjmp     0x89d7
+89D4     90 04 69 mov      DPTR, #0x469
+89D7     e0 - -   movx     A, @DPTR
+89D8     90 18 04 mov      DPTR, #0x1804
+89DB     f0 - -   movx     @DPTR, A
+89DC     90 18 04 mov      DPTR, #0x1804
+89DF     e0 - -   movx     A, @DPTR
+89E0     90 07 5b mov      DPTR, #0x75b
+89E3     f0 - -   movx     @DPTR, A
+89E4     90 18 04 mov      DPTR, #0x1804
+89E7     e0 - -   movx     A, @DPTR
+89E8     90 18 09 mov      DPTR, #0x1809
+89EB     12 8f 0f lcall    0x8f0f
+89EE     90 07 51 mov      DPTR, #0x751
+89F1     e0 - -   movx     A, @DPTR
+89F2     30 e7 14 jnb      0xe7, 0x8a09
+89F5     90 07 82 mov      DPTR, #0x782
+89F8     e0 - -   movx     A, @DPTR
+89F9     90 08 e7 mov      DPTR, #0x8e7
+89FC     20 e2 05 jb       0xe2, 0x8a04
+89FF     e0 - -   movx     A, @DPTR
+8A00     24 04 -  add      A, #0x4
+8A02     80 19 -  sjmp     0x8a1d
+8A04     e0 - -   movx     A, @DPTR
+8A05     24 08 -  add      A, #0x8
+8A07     80 14 -  sjmp     0x8a1d
+8A09     90 04 9f mov      DPTR, #0x49f
+8A0C     e0 - -   movx     A, @DPTR
+8A0D     30 e1 12 jnb      0xe1, 0x8a22
+8A10     12 bb 40 lcall    0xbb40
+8A13     ff - -   mov      R7, A
+8A14     bf 10 0b cjne     R7, #0x10, 0x8a22
+8A17     90 08 e7 mov      DPTR, #0x8e7
+8A1A     e0 - -   movx     A, @DPTR
+8A1B     24 0c -  add      A, #0xc
+8A1D     12 bc cb lcall    0xbccb
+8A20     80 03 -  sjmp     0x8a25
+8A22     12 bc 4f lcall    0xbc4f
+8A25     90 07 41 mov      DPTR, #0x741
+8A28     e0 - -   movx     A, @DPTR
+8A29     20 e0 03 jb       0xe0, 0x8a2f
+8A2C     02 8b 14 ljmp     0x8b14
+8A2F     90 07 c6 mov      DPTR, #0x7c6
+8A32     e0 - -   movx     A, @DPTR
+8A33     20 e2 03 jb       0xe2, 0x8a39
+8A36     02 8b 14 ljmp     0x8b14
+8A39     90 04 60 mov      DPTR, #0x460
+8A3C     e0 - -   movx     A, @DPTR
+8A3D     d3 - -   setb     CY
+8A3E     94 03 -  subb     A, #0x3
+8A40     50 56 -  jnc      0x8a98
+8A42     12 bd e6 lcall    0xbde6
+8A45     d3 - -   setb     CY
+8A46     12 ba d4 lcall    0xbad4
+8A49     40 19 -  jc       0x8a64
+8A4B     12 bc 5f lcall    0xbc5f
+8A4E     20 e7 03 jb       0xe7, 0x8a54
+8A51     74 80 -  mov      A, #0x80
+8A53     f0 - -   movx     @DPTR, A
+8A54     90 04 60 mov      DPTR, #0x460
+8A57     e0 - -   movx     A, @DPTR
+8A58     64 03 -  xrl      A, #0x3
+8A5A     70 21 -  jnz      0x8a7d
+8A5C     90 09 e4 mov      DPTR, #0x9e4
+8A5F     74 ff -  mov      A, #0xff
+8A61     f0 - -   movx     @DPTR, A
+8A62     80 19 -  sjmp     0x8a7d
+8A64     12 bc da lcall    0xbcda
+8A67     12 ba d3 lcall    0xbad3
+8A6A     50 0a -  jnc      0x8a76
+8A6C     12 bc 5f lcall    0xbc5f
+8A6F     30 e7 0b jnb      0xe7, 0x8a7d
+8A72     e4 - -   clr      A
+8A73     f0 - -   movx     @DPTR, A
+8A74     80 07 -  sjmp     0x8a7d
+8A76     90 09 e4 mov      DPTR, #0x9e4
+8A79     e0 - -   movx     A, @DPTR
+8A7A     54 80 -  anl      A, #0x80
+8A7C     f0 - -   movx     @DPTR, A
+8A7D     12 be aa lcall    0xbeaa
+8A80     40 3b -  jc       0x8abd
+8A82     e0 - -   movx     A, @DPTR
+8A83     90 04 60 mov      DPTR, #0x460
+8A86     30 e7 05 jnb      0xe7, 0x8a8e
+8A89     e0 - -   movx     A, @DPTR
+8A8A     04 - -   inc      A
+8A8B     f0 - -   movx     @DPTR, A
+8A8C     80 03 -  sjmp     0x8a91
+8A8E     e0 - -   movx     A, @DPTR
+8A8F     14 - -   dec      A
+8A90     f0 - -   movx     @DPTR, A
+8A91     e4 - -   clr      A
+8A92     90 09 e4 mov      DPTR, #0x9e4
+8A95     f0 - -   movx     @DPTR, A
+8A96     80 25 -  sjmp     0x8abd
+8A98     90 04 60 mov      DPTR, #0x460
+8A9B     12 bd e6 lcall    0xbde6
+8A9E     ff - -   mov      R7, A
+8A9F     90 04 3e mov      DPTR, #0x43e
+8AA2     e0 - -   movx     A, @DPTR
+8AA3     d3 - -   setb     CY
+8AA4     9f - -   subb     A, R7
+8AA5     40 08 -  jc       0x8aaf
+8AA7     90 04 60 mov      DPTR, #0x460
+8AAA     e0 - -   movx     A, @DPTR
+8AAB     04 - -   inc      A
+8AAC     f0 - -   movx     @DPTR, A
+8AAD     80 0e -  sjmp     0x8abd
+8AAF     12 bc da lcall    0xbcda
+8AB2     12 ba d3 lcall    0xbad3
+8AB5     50 06 -  jnc      0x8abd
+8AB7     90 04 60 mov      DPTR, #0x460
+8ABA     e0 - -   movx     A, @DPTR
+8ABB     14 - -   dec      A
+8ABC     f0 - -   movx     @DPTR, A
+8ABD     90 04 60 mov      DPTR, #0x460
+8AC0     e0 - -   movx     A, @DPTR
+8AC1     24 20 -  add      A, #0x20
+8AC3     f5 82 -  mov      DPL, A
+8AC5     e4 - -   clr      A
+8AC6     34 0f -  addc     A, #0xf
+8AC8     f5 83 -  mov      DPH, A
+8ACA     e0 - -   movx     A, @DPTR
+8ACB     90 04 61 mov      DPTR, #0x461
+8ACE     f0 - -   movx     @DPTR, A
+8ACF     90 04 68 mov      DPTR, #0x468
+8AD2     e0 - -   movx     A, @DPTR
+8AD3     24 30 -  add      A, #0x30
+8AD5     f5 82 -  mov      DPL, A
+8AD7     e4 - -   clr      A
+8AD8     34 0f -  addc     A, #0xf
+8ADA     f5 83 -  mov      DPH, A
+8ADC     d3 - -   setb     CY
+8ADD     12 bd f2 lcall    0xbdf2
+8AE0     40 08 -  jc       0x8aea
+8AE2     90 04 68 mov      DPTR, #0x468
+8AE5     e0 - -   movx     A, @DPTR
+8AE6     04 - -   inc      A
+8AE7     f0 - -   movx     @DPTR, A
+8AE8     80 19 -  sjmp     0x8b03
+8AEA     90 04 68 mov      DPTR, #0x468
+8AED     e0 - -   movx     A, @DPTR
+8AEE     24 40 -  add      A, #0x40
+8AF0     f5 82 -  mov      DPL, A
+8AF2     e4 - -   clr      A
+8AF3     34 0f -  addc     A, #0xf
+8AF5     f5 83 -  mov      DPH, A
+8AF7     c3 - -   clr      CY
+8AF8     12 bd f2 lcall    0xbdf2
+8AFB     50 06 -  jnc      0x8b03
+8AFD     90 04 68 mov      DPTR, #0x468
+8B00     e0 - -   movx     A, @DPTR
+8B01     14 - -   dec      A
+8B02     f0 - -   movx     @DPTR, A
+8B03     90 04 68 mov      DPTR, #0x468
+8B06     e0 - -   movx     A, @DPTR
+8B07     24 50 -  add      A, #0x50
+8B09     f5 82 -  mov      DPL, A
+8B0B     e4 - -   clr      A
+8B0C     34 0f -  addc     A, #0xf
+8B0E     f5 83 -  mov      DPH, A
+8B10     e0 - -   movx     A, @DPTR
+8B11     02 8c 46 ljmp     0x8c46

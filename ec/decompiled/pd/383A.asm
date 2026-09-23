@@ -4,6 +4,6 @@
 ; This is the machine code. The decompiled C for this address is 383A.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-383A     12 0f cb   lcall    0x0fcb
-383D     c3         clr      CY
-383E     02 0f 0e   ljmp     0x0f0e
+383A     12 0f cb lcall    0x0fcb
+383D     c3 - -   clr      CY
+383E     02 0f 0e ljmp     0x0f0e

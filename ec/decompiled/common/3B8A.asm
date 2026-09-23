@@ -6,27 +6,27 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-3B8A     e0         movx     A, @DPTR
-3B8B     fe         mov      R6, A
-3B8C     ef         mov      A, R7
-3B8D     75 f0 0d   mov      B, #0xd
-3B90     a4         mul      AB
-3B91     24 f6      add      A, #0xf6
-3B93     f5 82      mov      DPL, A
-3B95     e4         clr      A
-3B96     34 3a      addc     A, #0x3a
-3B98     f5 83      mov      DPH, A
-3B9A     e4         clr      A
-3B9B     93         movc     A, @A+DPTR
-3B9C     fa         mov      R2, A
-3B9D     74 01      mov      A, #0x1
-3B9F     93         movc     A, @A+DPTR
-3BA0     f5 82      mov      DPL, A
-3BA2     8a 83      mov      DPH, R2
-3BA4     ee         mov      A, R6
-3BA5     f0         movx     @DPTR, A
-3BA6     8d 82      mov      DPL, R5
-3BA8     8c 83      mov      DPH, R4
-3BAA     74 1c      mov      A, #0x1c
-3BAC     f0         movx     @DPTR, A
-3BAD     22         ret      
+3B8A     e0 - -   movx     A, @DPTR
+3B8B     fe - -   mov      R6, A
+3B8C     ef - -   mov      A, R7
+3B8D     75 f0 0d mov      B, #0xd
+3B90     a4 - -   mul      AB
+3B91     24 f6 -  add      A, #0xf6
+3B93     f5 82 -  mov      DPL, A
+3B95     e4 - -   clr      A
+3B96     34 3a -  addc     A, #0x3a
+3B98     f5 83 -  mov      DPH, A
+3B9A     e4 - -   clr      A
+3B9B     93 - -   movc     A, @A+DPTR
+3B9C     fa - -   mov      R2, A
+3B9D     74 01 -  mov      A, #0x1
+3B9F     93 - -   movc     A, @A+DPTR
+3BA0     f5 82 -  mov      DPL, A
+3BA2     8a 83 -  mov      DPH, R2
+3BA4     ee - -   mov      A, R6
+3BA5     f0 - -   movx     @DPTR, A
+3BA6     8d 82 -  mov      DPL, R5
+3BA8     8c 83 -  mov      DPH, R4
+3BAA     74 1c -  mov      A, #0x1c
+3BAC     f0 - -   movx     @DPTR, A
+3BAD     22 - -   ret      

@@ -4,11 +4,11 @@
 ; This is the machine code. The decompiled C for this address is B2D3.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-B2D3     75 f0 38   mov      B, #0x38
-B2D6     a4         mul      AB
-B2D7     24 76      add      A, #0x76
-B2D9     f5 82      mov      DPL, A
-B2DB     e4         clr      A
-B2DC     34 09      addc     A, #0x9
-B2DE     f5 83      mov      DPH, A
-B2E0     22         ret      
+B2D3     75 f0 38 mov      B, #0x38
+B2D6     a4 - -   mul      AB
+B2D7     24 76 -  add      A, #0x76
+B2D9     f5 82 -  mov      DPL, A
+B2DB     e4 - -   clr      A
+B2DC     34 09 -  addc     A, #0x9
+B2DE     f5 83 -  mov      DPH, A
+B2E0     22 - -   ret      

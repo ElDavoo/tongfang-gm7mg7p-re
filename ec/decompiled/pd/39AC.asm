@@ -4,8 +4,8 @@
 ; This is the machine code. The decompiled C for this address is 39AC.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-39AC     e0         movx     A, @DPTR
-39AD     ff         mov      R7, A
-39AE     7b 01      mov      R3, #0x1
-39B0     7a 07      mov      R2, #0x7
-39B2     22         ret      
+39AC     e0 - -   movx     A, @DPTR
+39AD     ff - -   mov      R7, A
+39AE     7b 01 -  mov      R3, #0x1
+39B0     7a 07 -  mov      R2, #0x7
+39B2     22 - -   ret      

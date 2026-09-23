@@ -36,7 +36,7 @@ void FUN_CODE_2e02(char param_1,byte *param_2,char param_3)
   FUN_CODE_3acc(0);
   FUN_CODE_3ad1();
   if (*(char *)(DAT_EXTMEM_0a47 + -0x78) < '\0') {
-    FUN_CODE_2bd5();
+    event_id_latch_and_bit_merge();
     return;
   }
   FUN_CODE_30b5(DAT_EXTMEM_0a47);

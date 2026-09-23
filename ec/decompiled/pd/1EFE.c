@@ -12,13 +12,13 @@ void FUN_CODE_1efe(byte param_1,char param_2)
   char *pcVar3;
   
   pcVar3 = &DAT_EXTMEM_0803;
-  bVar1 = FUN_CODE_393d();
+  bVar1 = write_r7_r5_r3_to_consecutive_xdata();
   if ((4 < bVar1) && (*pcVar3 != '\x0f')) {
     param_2 = DAT_EXTMEM_0803;
-    FUN_CODE_f4ee();
+    return_1_if_dptr_byte_ge_02();
     if (param_2 == '\0') {
-      FUN_CODE_36c2();
-      cVar2 = FUN_CODE_2726(0x10);
+      read_0803_0804_to_r7_r5();
+      cVar2 = invert_r7_after_f407(0x10);
       if (cVar2 != '\0') {
         return;
       }
@@ -26,7 +26,7 @@ void FUN_CODE_1efe(byte param_1,char param_2)
     }
   }
   bVar1 = dispatch_code_table(DAT_EXTMEM_0805);
-  FUN_CODE_1820(bVar1 | param_1,param_2 + -1);
+  store_r7_12_clear_bit_4d_tailcall(bVar1 | param_1,param_2 + -1);
   return;
 }
 

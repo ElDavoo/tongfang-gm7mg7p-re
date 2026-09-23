@@ -4,8 +4,8 @@
 ; This is the machine code. The decompiled C for this address is 65BC.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-65BC     18         dec      R0
-65BD     16         dec      @R0
-65BE     48         orl      A, R0
-65BF     80 16      sjmp     0x65d7
-65D7     01 16      ajmp     0x6016
+65BC     18 - -   dec      R0
+65BD     16 - -   dec      @R0
+65BE     48 - -   orl      A, R0
+65BF     80 16 -  sjmp     0x65d7
+65D7     01 16 -  ajmp     0x6016

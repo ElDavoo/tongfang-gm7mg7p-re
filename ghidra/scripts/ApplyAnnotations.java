@@ -77,12 +77,12 @@ public class ApplyAnnotations extends GhidraScript {
                     if (!appliesTo(row[5], programName)) {
                         continue;
                     }
-                    int addr = hex(row[0]);
+                    long addr = hex(row[0]);
                     String name = row[1];
                     Address a = xdata.getAddress(addr);
                     if (a == null) {
                         labelsSkipped++;
-                        problems.add("EXTMEM address out of range: 0x" + Integer.toHexString(addr));
+                        problems.add("EXTMEM address out of range: 0x" + Long.toHexString(addr));
                         continue;
                     }
                     Symbol s = st.getPrimarySymbol(a);
@@ -124,7 +124,7 @@ public class ApplyAnnotations extends GhidraScript {
             if (!mine) {
                 continue;
             }
-            int addr = hex(row[1]);
+            long addr = hex(row[1]);
             String name = row[2];
             String signature = row[3];
             String type = row[4];
@@ -223,8 +223,12 @@ public class ApplyAnnotations extends GhidraScript {
         return dot > 0 ? name.substring(0, dot) : name;
     }
 
-    private static int hex(String s) {
-        return Integer.parseInt(s.trim().replace("0x", ""), 16);
+    private static long hex(String s) {
+        // long, not int, for the same reason as SeedFunctions: a TE image is
+        // loaded at 0xFFF8xxxx on this platform and does not fit a signed
+        // 32-bit int, so an annotation for one of those modules would have
+        // parsed to a negative address and named the wrong function.
+        return Long.parseLong(s.trim().replace("0x", ""), 16);
     }
 
     /**

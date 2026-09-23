@@ -6,35 +6,35 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-27AB     30 1f 25   jnb      0x1f, 0x27d3
-27AE     90 1d 00   mov      DPTR, #0x1d00
-27B1     74 ff      mov      A, #0xff
-27B3     f0         movx     @DPTR, A
-27B4     90 1d 01   mov      DPTR, #0x1d01
-27B7     f0         movx     @DPTR, A
-27B8     e4         clr      A
-27B9     90 1b 02   mov      DPTR, #0x1b02
-27BC     f0         movx     @DPTR, A
-27BD     90 1b 06   mov      DPTR, #0x1b06
-27C0     74 ff      mov      A, #0xff
-27C2     f0         movx     @DPTR, A
-27C3     90 1b 0a   mov      DPTR, #0x1b0a
-27C6     f0         movx     @DPTR, A
-27C7     90 11 05   mov      DPTR, #0x1105
-27CA     e0         movx     A, @DPTR
-27CB     44 20      orl      A, #0x20
-27CD     f0         movx     @DPTR, A
-27CE     e0         movx     A, @DPTR
-27CF     54 f7      anl      A, #0xf7
-27D1     f0         movx     @DPTR, A
-27D2     22         ret      
-27D3     12 2a 99   lcall    0x2a99
-27D6     f0         movx     @DPTR, A
-27D7     90 11 05   mov      DPTR, #0x1105
-27DA     e0         movx     A, @DPTR
-27DB     44 08      orl      A, #0x8
-27DD     f0         movx     @DPTR, A
-27DE     e0         movx     A, @DPTR
-27DF     54 df      anl      A, #0xdf
-27E1     f0         movx     @DPTR, A
-27E2     22         ret      
+27AB     30 1f 25 jnb      0x1f, 0x27d3
+27AE     90 1d 00 mov      DPTR, #0x1d00
+27B1     74 ff -  mov      A, #0xff
+27B3     f0 - -   movx     @DPTR, A
+27B4     90 1d 01 mov      DPTR, #0x1d01
+27B7     f0 - -   movx     @DPTR, A
+27B8     e4 - -   clr      A
+27B9     90 1b 02 mov      DPTR, #0x1b02
+27BC     f0 - -   movx     @DPTR, A
+27BD     90 1b 06 mov      DPTR, #0x1b06
+27C0     74 ff -  mov      A, #0xff
+27C2     f0 - -   movx     @DPTR, A
+27C3     90 1b 0a mov      DPTR, #0x1b0a
+27C6     f0 - -   movx     @DPTR, A
+27C7     90 11 05 mov      DPTR, #0x1105
+27CA     e0 - -   movx     A, @DPTR
+27CB     44 20 -  orl      A, #0x20
+27CD     f0 - -   movx     @DPTR, A
+27CE     e0 - -   movx     A, @DPTR
+27CF     54 f7 -  anl      A, #0xf7
+27D1     f0 - -   movx     @DPTR, A
+27D2     22 - -   ret      
+27D3     12 2a 99 lcall    0x2a99
+27D6     f0 - -   movx     @DPTR, A
+27D7     90 11 05 mov      DPTR, #0x1105
+27DA     e0 - -   movx     A, @DPTR
+27DB     44 08 -  orl      A, #0x8
+27DD     f0 - -   movx     @DPTR, A
+27DE     e0 - -   movx     A, @DPTR
+27DF     54 df -  anl      A, #0xdf
+27E1     f0 - -   movx     @DPTR, A
+27E2     22 - -   ret      

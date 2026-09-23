@@ -6,31 +6,31 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-4825     12 4a fb   lcall    0x4afb
-4828     eb         mov      A, R3
-4829     70 06      jnz      0x4831
-482B     12 49 40   lcall    0x4940
-482E     02 49 2d   ljmp     0x492d
-4831     90 0a 58   mov      DPTR, #0xa58
-4834     e0         movx     A, @DPTR
-4835     ff         mov      R7, A
-4836     60 30      jz       0x4868
-4838     12 4a 76   lcall    0x4a76
-483B     12 4a 69   lcall    0x4a69
-483E     e0         movx     A, @DPTR
-483F     44 0c      orl      A, #0xc
-4841     f0         movx     @DPTR, A
-4842     e9         mov      A, R1
-4843     12 4a d3   lcall    0x4ad3
-4846     12 4a 69   lcall    0x4a69
-4849     e0         movx     A, @DPTR
-484A     44 80      orl      A, #0x80
-484C     f0         movx     @DPTR, A
-484D     ef         mov      A, R7
-484E     b4 01 0a   cjne     A, #0x1, 0x485b
-4851     12 4a c4   lcall    0x4ac4
-4854     12 4a 4d   lcall    0x4a4d
-485B     12 4a 76   lcall    0x4a76
-485E     12 4a 4d   lcall    0x4a4d
-4868     12 4a 76   lcall    0x4a76
-486B     12 4a 4d   lcall    0x4a4d
+4825     12 4a fb lcall    0x4afb
+4828     eb - -   mov      A, R3
+4829     70 06 -  jnz      0x4831
+482B     12 49 40 lcall    0x4940
+482E     02 49 2d ljmp     0x492d
+4831     90 0a 58 mov      DPTR, #0xa58
+4834     e0 - -   movx     A, @DPTR
+4835     ff - -   mov      R7, A
+4836     60 30 -  jz       0x4868
+4838     12 4a 76 lcall    0x4a76
+483B     12 4a 69 lcall    0x4a69
+483E     e0 - -   movx     A, @DPTR
+483F     44 0c -  orl      A, #0xc
+4841     f0 - -   movx     @DPTR, A
+4842     e9 - -   mov      A, R1
+4843     12 4a d3 lcall    0x4ad3
+4846     12 4a 69 lcall    0x4a69
+4849     e0 - -   movx     A, @DPTR
+484A     44 80 -  orl      A, #0x80
+484C     f0 - -   movx     @DPTR, A
+484D     ef - -   mov      A, R7
+484E     b4 01 0a cjne     A, #0x1, 0x485b
+4851     12 4a c4 lcall    0x4ac4
+4854     12 4a 4d lcall    0x4a4d
+485B     12 4a 76 lcall    0x4a76
+485E     12 4a 4d lcall    0x4a4d
+4868     12 4a 76 lcall    0x4a76
+486B     12 4a 4d lcall    0x4a4d

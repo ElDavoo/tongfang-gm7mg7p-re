@@ -4,15 +4,15 @@
 ; This is the machine code. The decompiled C for this address is 1041.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-1041     ec         mov      A, R4
-1042     f0         movx     @DPTR, A
-1043     a3         inc      DPTR
-1044     ed         mov      A, R5
-1045     f0         movx     @DPTR, A
-1046     a3         inc      DPTR
-1047     ee         mov      A, R6
-1048     f0         movx     @DPTR, A
-1049     a3         inc      DPTR
-104A     ef         mov      A, R7
-104B     f0         movx     @DPTR, A
-104C     22         ret      
+1041     ec - -   mov      A, R4
+1042     f0 - -   movx     @DPTR, A
+1043     a3 - -   inc      DPTR
+1044     ed - -   mov      A, R5
+1045     f0 - -   movx     @DPTR, A
+1046     a3 - -   inc      DPTR
+1047     ee - -   mov      A, R6
+1048     f0 - -   movx     @DPTR, A
+1049     a3 - -   inc      DPTR
+104A     ef - -   mov      A, R7
+104B     f0 - -   movx     @DPTR, A
+104C     22 - -   ret      

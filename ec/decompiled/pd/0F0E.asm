@@ -4,16 +4,16 @@
 ; This is the machine code. The decompiled C for this address is 0F0E.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-0F0E     eb         mov      A, R3
-0F0F     9f         subb     A, R7
-0F10     f5 f0      mov      B, A
-0F12     ea         mov      A, R2
-0F13     9e         subb     A, R6
-0F14     42 f0      orl      B, A
-0F16     e9         mov      A, R1
-0F17     9d         subb     A, R5
-0F18     42 f0      orl      B, A
-0F1A     e8         mov      A, R0
-0F1B     9c         subb     A, R4
-0F1C     45 f0      orl      A, B
-0F1E     22         ret      
+0F0E     eb - -   mov      A, R3
+0F0F     9f - -   subb     A, R7
+0F10     f5 f0 -  mov      B, A
+0F12     ea - -   mov      A, R2
+0F13     9e - -   subb     A, R6
+0F14     42 f0 -  orl      B, A
+0F16     e9 - -   mov      A, R1
+0F17     9d - -   subb     A, R5
+0F18     42 f0 -  orl      B, A
+0F1A     e8 - -   mov      A, R0
+0F1B     9c - -   subb     A, R4
+0F1C     45 f0 -  orl      A, B
+0F1E     22 - -   ret      

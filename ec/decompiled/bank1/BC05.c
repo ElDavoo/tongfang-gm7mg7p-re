@@ -17,35 +17,35 @@ void FUN_CODE_bc05(char param_1)
   uVar2 = 1;
   uVar1 = 0x80;
   if ((DAT_EXTMEM_0497 & 1) != 0) {
-    FUN_CODE_bf3a();
+    guard_then_store_pair_0834();
     return;
   }
-  cVar3 = FUN_CODE_8898(0x834,0x80,1);
+  cVar3 = read_xdata_pair_to_b_and_a(0x834,0x80,1);
   if (cVar3 == '\0' && param_1 == '\0') {
     if ((DAT_EXTMEM_0497 & 1) != 0) {
-      FUN_CODE_8892(0x522,0x38,0x31);
+      read_xdata_pair_to_r3r4(0x522,0x38,0x31);
     }
-    FUN_CODE_889e(0x836);
+    write_r3r4_to_xdata_pair(0x836);
     DAT_EXTMEM_0832 = DAT_EXTMEM_0832 | 2;
-    FUN_CODE_889e(0x834,uVar1,uVar2);
+    write_r3r4_to_xdata_pair(0x834,uVar1,uVar2);
     DAT_EXTMEM_0832 = DAT_EXTMEM_0832 | 1;
     return;
   }
-  FUN_CODE_8892(0x834,uVar1,uVar2);
+  read_xdata_pair_to_r3r4(0x834,uVar1,uVar2);
   bVar4 = FUN_CODE_8863();
   if ((bVar4 & 1) != 0) {
-    thunk_FUN_CODE_bd20();
+    forward_to_bd20_bf93();
     return;
   }
-  FUN_CODE_8892(0x836);
+  read_xdata_pair_to_r3r4(0x836);
   if ((DAT_EXTMEM_0497 & 1) != 0) {
-    FUN_CODE_8886(0x522,0x38,0x31);
+    read_xdata_pair_to_r1r2(0x522,0x38,0x31);
   }
   bVar4 = FUN_CODE_8863();
   if ((bVar4 & 1) == 0) {
     return;
   }
-  thunk_FUN_CODE_bd20();
+  forward_to_bd20_bf93();
   return;
 }
 

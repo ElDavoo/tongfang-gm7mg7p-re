@@ -13,11 +13,11 @@ void FUN_CODE_8d62(char param_1)
   
   FUN_CODE_159a();
   if (param_1 == '\0') {
-    FUN_CODE_19f0();
+    load_dptr_c4e6_tail_jump_1100();
     if (in_PSW < '\0') {
       if (DAT_EXTMEM_06c2 != '\0') {
 LAB_CODE_8db9:
-        FUN_CODE_8b31();
+        return_with_carry_cleared();
         return;
       }
       if (((DAT_EXTMEM_06e1 & 0x80) == 0) && ((DAT_EXTMEM_0459 & 2) == 0)) {
@@ -26,9 +26,9 @@ LAB_CODE_8db9:
           DAT_EXTMEM_0678 = '\x14';
           DAT_EXTMEM_0679 = DAT_EXTMEM_0679 + -1;
           if (DAT_EXTMEM_0679 == '\0') {
-            FUN_CODE_8d74();
+            write_30_to_0679_and_14_to_0678();
             DAT_EXTMEM_06e1 = DAT_EXTMEM_06e1 & 0xbf;
-            FUN_CODE_8b33();
+            return_with_carry_set();
             return;
           }
         }
@@ -41,7 +41,7 @@ LAB_CODE_8db9:
 code_c0x8d74:
   DAT_EXTMEM_0679 = 0x30;
   DAT_EXTMEM_0678 = 0x14;
-  FUN_CODE_8b31();
+  return_with_carry_cleared();
   return;
 }
 

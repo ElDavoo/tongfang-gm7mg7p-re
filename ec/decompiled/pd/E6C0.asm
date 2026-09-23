@@ -4,32 +4,32 @@
 ; This is the machine code. The decompiled C for this address is E6C0.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-E6C0     ef         mov      A, R7
-E6C1     12 70 6b   lcall    0x706b
-E6C4     e0         movx     A, @DPTR
-E6C5     fe         mov      R6, A
-E6C6     30 e2 04   jnb      0xe2, 0xe6cd
-E6C9     7c 01      mov      R4, #0x1
-E6CB     80 02      sjmp     0xe6cf
-E6CD     7c 00      mov      R4, #0x0
-E6CF     ec         mov      A, R4
-E6D0     6d         xrl      A, R5
-E6D1     60 1f      jz       0xe6f2
-E6D3     ed         mov      A, R5
-E6D4     b4 01 0a   cjne     A, #0x1, 0xe6e1
-E6D7     ef         mov      A, R7
-E6D8     12 70 6b   lcall    0x706b
-E6DB     ee         mov      A, R6
-E6DC     44 04      orl      A, #0x4
-E6DE     f0         movx     @DPTR, A
-E6DF     80 08      sjmp     0xe6e9
-E6E1     ef         mov      A, R7
-E6E2     12 70 6b   lcall    0x706b
-E6E5     e0         movx     A, @DPTR
-E6E6     54 fb      anl      A, #0xfb
-E6E8     f0         movx     @DPTR, A
-E6E9     ef         mov      A, R7
-E6EA     12 6f af   lcall    0x6faf
-E6ED     70 03      jnz      0xe6f2
-E6EF     12 f1 b0   lcall    0xf1b0
-E6F2     22         ret      
+E6C0     ef - -   mov      A, R7
+E6C1     12 70 6b lcall    0x706b
+E6C4     e0 - -   movx     A, @DPTR
+E6C5     fe - -   mov      R6, A
+E6C6     30 e2 04 jnb      0xe2, 0xe6cd
+E6C9     7c 01 -  mov      R4, #0x1
+E6CB     80 02 -  sjmp     0xe6cf
+E6CD     7c 00 -  mov      R4, #0x0
+E6CF     ec - -   mov      A, R4
+E6D0     6d - -   xrl      A, R5
+E6D1     60 1f -  jz       0xe6f2
+E6D3     ed - -   mov      A, R5
+E6D4     b4 01 0a cjne     A, #0x1, 0xe6e1
+E6D7     ef - -   mov      A, R7
+E6D8     12 70 6b lcall    0x706b
+E6DB     ee - -   mov      A, R6
+E6DC     44 04 -  orl      A, #0x4
+E6DE     f0 - -   movx     @DPTR, A
+E6DF     80 08 -  sjmp     0xe6e9
+E6E1     ef - -   mov      A, R7
+E6E2     12 70 6b lcall    0x706b
+E6E5     e0 - -   movx     A, @DPTR
+E6E6     54 fb -  anl      A, #0xfb
+E6E8     f0 - -   movx     @DPTR, A
+E6E9     ef - -   mov      A, R7
+E6EA     12 6f af lcall    0x6faf
+E6ED     70 03 -  jnz      0xe6f2
+E6EF     12 f1 b0 lcall    0xf1b0
+E6F2     22 - -   ret      

@@ -6,116 +6,116 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-1E7F     f0         movx     @DPTR, A
-1E80     90 0a 57   mov      DPTR, #0xa57
-1E83     e0         movx     A, @DPTR
-1E84     64 01      xrl      A, #0x1
-1E86     60 6e      jz       0x1ef6
-1E88     a3         inc      DPTR
-1E89     e0         movx     A, @DPTR
-1E8A     64 01      xrl      A, #0x1
-1E8C     70 26      jnz      0x1eb4
-1E8E     30 48 0a   jnb      0x48, 0x1e9b
-1E91     20 49 62   jb       0x49, 0x1ef6
-1E94     20 4a 5f   jb       0x4a, 0x1ef6
-1E97     7f e0      mov      R7, #0xe0
-1E99     80 42      sjmp     0x1edd
-1E9B     30 49 05   jnb      0x49, 0x1ea3
-1E9E     30 4a 02   jnb      0x4a, 0x1ea3
-1EA1     80 1f      sjmp     0x1ec2
-1EA3     30 49 09   jnb      0x49, 0x1eaf
-1EA6     7f e0      mov      R7, #0xe0
-1EA8     12 29 90   lcall    0x2990
-1EAB     7f f0      mov      R7, #0xf0
-1EAD     80 2e      sjmp     0x1edd
-1EAF     30 4a 44   jnb      0x4a, 0x1ef6
-1EB2     80 33      sjmp     0x1ee7
-1EB4     90 0a 58   mov      DPTR, #0xa58
-1EB7     e0         movx     A, @DPTR
-1EB8     64 02      xrl      A, #0x2
-1EBA     70 3a      jnz      0x1ef6
-1EBC     30 49 14   jnb      0x49, 0x1ed3
-1EBF     30 4a 11   jnb      0x4a, 0x1ed3
-1EC2     7f e0      mov      R7, #0xe0
-1EC4     12 29 90   lcall    0x2990
-1EC7     7f f0      mov      R7, #0xf0
-1EC9     12 29 90   lcall    0x2990
-1ECC     7f 12      mov      R7, #0x12
-1ECE     12 29 90   lcall    0x2990
-1ED1     80 14      sjmp     0x1ee7
-1ED3     30 49 0e   jnb      0x49, 0x1ee4
-1ED6     7f e0      mov      R7, #0xe0
-1ED8     12 29 90   lcall    0x2990
-1EDB     7f f0      mov      R7, #0xf0
-1EDD     12 29 90   lcall    0x2990
-1EE0     7f 12      mov      R7, #0x12
-1EE2     80 0f      sjmp     0x1ef3
-1EE4     30 4a 0f   jnb      0x4a, 0x1ef6
-1EE7     7f e0      mov      R7, #0xe0
-1EE9     12 29 90   lcall    0x2990
-1EEC     7f f0      mov      R7, #0xf0
-1EEE     12 29 90   lcall    0x2990
-1EF1     7f 59      mov      R7, #0x59
-1EF3     12 29 90   lcall    0x2990
-1EF6     7f e0      mov      R7, #0xe0
-1EF8     12 29 90   lcall    0x2990
-1EFB     90 0a 57   mov      DPTR, #0xa57
-1EFE     e0         movx     A, @DPTR
-1EFF     b4 01 05   cjne     A, #0x1, 0x1f07
-1F02     7f f0      mov      R7, #0xf0
-1F04     12 29 90   lcall    0x2990
-1F07     90 0a 56   mov      DPTR, #0xa56
-1F0A     e0         movx     A, @DPTR
-1F0B     ff         mov      R7, A
-1F0C     12 29 90   lcall    0x2990
-1F0F     90 0a 57   mov      DPTR, #0xa57
-1F12     e0         movx     A, @DPTR
-1F13     64 01      xrl      A, #0x1
-1F15     70 6d      jnz      0x1f84
-1F17     a3         inc      DPTR
-1F18     e0         movx     A, @DPTR
-1F19     64 01      xrl      A, #0x1
-1F1B     70 32      jnz      0x1f4f
-1F1D     30 48 0f   jnb      0x48, 0x1f2f
-1F20     20 49 61   jb       0x49, 0x1f84
-1F23     20 4a 5e   jb       0x4a, 0x1f84
-1F26     7f e0      mov      R7, #0xe0
-1F28     12 29 90   lcall    0x2990
-1F2B     7f f0      mov      R7, #0xf0
-1F2D     80 41      sjmp     0x1f70
-1F2F     30 49 11   jnb      0x49, 0x1f43
-1F32     30 4a 0e   jnb      0x4a, 0x1f43
-1F35     7f e0      mov      R7, #0xe0
-1F37     12 29 90   lcall    0x2990
-1F3A     7f 59      mov      R7, #0x59
-1F3C     12 29 90   lcall    0x2990
-1F3F     7f e0      mov      R7, #0xe0
-1F41     80 2d      sjmp     0x1f70
-1F43     30 49 04   jnb      0x49, 0x1f4a
-1F46     7f e0      mov      R7, #0xe0
-1F48     80 26      sjmp     0x1f70
-1F4A     30 4a 37   jnb      0x4a, 0x1f84
-1F4D     80 2b      sjmp     0x1f7a
-1F4F     90 0a 58   mov      DPTR, #0xa58
-1F52     e0         movx     A, @DPTR
-1F53     64 02      xrl      A, #0x2
-1F55     70 2d      jnz      0x1f84
-1F57     30 49 11   jnb      0x49, 0x1f6b
-1F5A     30 4a 0e   jnb      0x4a, 0x1f6b
-1F5D     7f e0      mov      R7, #0xe0
-1F5F     12 29 90   lcall    0x2990
-1F62     7f 59      mov      R7, #0x59
-1F64     12 29 90   lcall    0x2990
-1F67     7f e0      mov      R7, #0xe0
-1F69     80 05      sjmp     0x1f70
-1F6B     30 49 09   jnb      0x49, 0x1f77
-1F6E     7f e0      mov      R7, #0xe0
-1F70     12 29 90   lcall    0x2990
-1F73     7f 12      mov      R7, #0x12
-1F75     80 0a      sjmp     0x1f81
-1F77     30 4a 0a   jnb      0x4a, 0x1f84
-1F7A     7f e0      mov      R7, #0xe0
-1F7C     12 29 90   lcall    0x2990
-1F7F     7f 59      mov      R7, #0x59
-1F81     12 29 90   lcall    0x2990
-1F84     22         ret      
+1E7F     f0 - -   movx     @DPTR, A
+1E80     90 0a 57 mov      DPTR, #0xa57
+1E83     e0 - -   movx     A, @DPTR
+1E84     64 01 -  xrl      A, #0x1
+1E86     60 6e -  jz       0x1ef6
+1E88     a3 - -   inc      DPTR
+1E89     e0 - -   movx     A, @DPTR
+1E8A     64 01 -  xrl      A, #0x1
+1E8C     70 26 -  jnz      0x1eb4
+1E8E     30 48 0a jnb      0x48, 0x1e9b
+1E91     20 49 62 jb       0x49, 0x1ef6
+1E94     20 4a 5f jb       0x4a, 0x1ef6
+1E97     7f e0 -  mov      R7, #0xe0
+1E99     80 42 -  sjmp     0x1edd
+1E9B     30 49 05 jnb      0x49, 0x1ea3
+1E9E     30 4a 02 jnb      0x4a, 0x1ea3
+1EA1     80 1f -  sjmp     0x1ec2
+1EA3     30 49 09 jnb      0x49, 0x1eaf
+1EA6     7f e0 -  mov      R7, #0xe0
+1EA8     12 29 90 lcall    0x2990
+1EAB     7f f0 -  mov      R7, #0xf0
+1EAD     80 2e -  sjmp     0x1edd
+1EAF     30 4a 44 jnb      0x4a, 0x1ef6
+1EB2     80 33 -  sjmp     0x1ee7
+1EB4     90 0a 58 mov      DPTR, #0xa58
+1EB7     e0 - -   movx     A, @DPTR
+1EB8     64 02 -  xrl      A, #0x2
+1EBA     70 3a -  jnz      0x1ef6
+1EBC     30 49 14 jnb      0x49, 0x1ed3
+1EBF     30 4a 11 jnb      0x4a, 0x1ed3
+1EC2     7f e0 -  mov      R7, #0xe0
+1EC4     12 29 90 lcall    0x2990
+1EC7     7f f0 -  mov      R7, #0xf0
+1EC9     12 29 90 lcall    0x2990
+1ECC     7f 12 -  mov      R7, #0x12
+1ECE     12 29 90 lcall    0x2990
+1ED1     80 14 -  sjmp     0x1ee7
+1ED3     30 49 0e jnb      0x49, 0x1ee4
+1ED6     7f e0 -  mov      R7, #0xe0
+1ED8     12 29 90 lcall    0x2990
+1EDB     7f f0 -  mov      R7, #0xf0
+1EDD     12 29 90 lcall    0x2990
+1EE0     7f 12 -  mov      R7, #0x12
+1EE2     80 0f -  sjmp     0x1ef3
+1EE4     30 4a 0f jnb      0x4a, 0x1ef6
+1EE7     7f e0 -  mov      R7, #0xe0
+1EE9     12 29 90 lcall    0x2990
+1EEC     7f f0 -  mov      R7, #0xf0
+1EEE     12 29 90 lcall    0x2990
+1EF1     7f 59 -  mov      R7, #0x59
+1EF3     12 29 90 lcall    0x2990
+1EF6     7f e0 -  mov      R7, #0xe0
+1EF8     12 29 90 lcall    0x2990
+1EFB     90 0a 57 mov      DPTR, #0xa57
+1EFE     e0 - -   movx     A, @DPTR
+1EFF     b4 01 05 cjne     A, #0x1, 0x1f07
+1F02     7f f0 -  mov      R7, #0xf0
+1F04     12 29 90 lcall    0x2990
+1F07     90 0a 56 mov      DPTR, #0xa56
+1F0A     e0 - -   movx     A, @DPTR
+1F0B     ff - -   mov      R7, A
+1F0C     12 29 90 lcall    0x2990
+1F0F     90 0a 57 mov      DPTR, #0xa57
+1F12     e0 - -   movx     A, @DPTR
+1F13     64 01 -  xrl      A, #0x1
+1F15     70 6d -  jnz      0x1f84
+1F17     a3 - -   inc      DPTR
+1F18     e0 - -   movx     A, @DPTR
+1F19     64 01 -  xrl      A, #0x1
+1F1B     70 32 -  jnz      0x1f4f
+1F1D     30 48 0f jnb      0x48, 0x1f2f
+1F20     20 49 61 jb       0x49, 0x1f84
+1F23     20 4a 5e jb       0x4a, 0x1f84
+1F26     7f e0 -  mov      R7, #0xe0
+1F28     12 29 90 lcall    0x2990
+1F2B     7f f0 -  mov      R7, #0xf0
+1F2D     80 41 -  sjmp     0x1f70
+1F2F     30 49 11 jnb      0x49, 0x1f43
+1F32     30 4a 0e jnb      0x4a, 0x1f43
+1F35     7f e0 -  mov      R7, #0xe0
+1F37     12 29 90 lcall    0x2990
+1F3A     7f 59 -  mov      R7, #0x59
+1F3C     12 29 90 lcall    0x2990
+1F3F     7f e0 -  mov      R7, #0xe0
+1F41     80 2d -  sjmp     0x1f70
+1F43     30 49 04 jnb      0x49, 0x1f4a
+1F46     7f e0 -  mov      R7, #0xe0
+1F48     80 26 -  sjmp     0x1f70
+1F4A     30 4a 37 jnb      0x4a, 0x1f84
+1F4D     80 2b -  sjmp     0x1f7a
+1F4F     90 0a 58 mov      DPTR, #0xa58
+1F52     e0 - -   movx     A, @DPTR
+1F53     64 02 -  xrl      A, #0x2
+1F55     70 2d -  jnz      0x1f84
+1F57     30 49 11 jnb      0x49, 0x1f6b
+1F5A     30 4a 0e jnb      0x4a, 0x1f6b
+1F5D     7f e0 -  mov      R7, #0xe0
+1F5F     12 29 90 lcall    0x2990
+1F62     7f 59 -  mov      R7, #0x59
+1F64     12 29 90 lcall    0x2990
+1F67     7f e0 -  mov      R7, #0xe0
+1F69     80 05 -  sjmp     0x1f70
+1F6B     30 49 09 jnb      0x49, 0x1f77
+1F6E     7f e0 -  mov      R7, #0xe0
+1F70     12 29 90 lcall    0x2990
+1F73     7f 12 -  mov      R7, #0x12
+1F75     80 0a -  sjmp     0x1f81
+1F77     30 4a 0a jnb      0x4a, 0x1f84
+1F7A     7f e0 -  mov      R7, #0xe0
+1F7C     12 29 90 lcall    0x2990
+1F7F     7f 59 -  mov      R7, #0x59
+1F81     12 29 90 lcall    0x2990
+1F84     22 - -   ret      

@@ -14,9 +14,9 @@ void FUN_CODE_d927(void)
   
   cVar1 = '\0';
   do {
-    cVar2 = FUN_CODE_db57('m' - (((0x6fU < (byte)(cVar1 * '\x03')) << 7) >> 7),cVar1 * '\x03' + 0x90
-                         );
-    cVar2 = FUN_CODE_db8a(cVar2 + -0x6e);
+    cVar2 = stash_code_pair_to_0b7_0b8
+                      ('m' - (((0x6fU < (byte)(cVar1 * '\x03')) << 7) >> 7),cVar1 * '\x03' + 0x90);
+    cVar2 = copy_code_byte_to_r4_r5(cVar2 + -0x6e);
   } while (cVar2 != '0');
   return;
 }

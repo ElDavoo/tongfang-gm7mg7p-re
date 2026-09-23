@@ -11,18 +11,18 @@ void FUN_CODE_e757(char param_1,char param_2)
   
   pbVar1 = &DAT_EXTMEM_0832;
   DAT_EXTMEM_0832 = param_2;
-  FUN_CODE_b172();
+  read_dptr_byte_to_r7_then_add_b0();
   *pbVar1 = *pbVar1 | 1;
   if (param_1 != '\0') {
     pbVar1 = &DAT_EXTMEM_0832;
-    FUN_CODE_b172();
-    FUN_CODE_b17d(*pbVar1 | 4);
+    read_dptr_byte_to_r7_then_add_b0();
+    write_dptr_byte_set_00bd_bit0_clear_ff62_bit3(*pbVar1 | 4);
   }
   else {
-    FUN_CODE_b176(param_2 + -0x50);
-    FUN_CODE_b17d(*pbVar1 & 0xfb);
+    make_dptr_from_a_low_byte(param_2 + -0x50);
+    write_dptr_byte_set_00bd_bit0_clear_ff62_bit3(*pbVar1 & 0xfb);
   }
-  FUN_CODE_0180(param_1 != '\0');
+  dispatch_r5_write_083b_0300(param_1 != '\0');
   return;
 }
 

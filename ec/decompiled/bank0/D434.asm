@@ -6,46 +6,46 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-D41C     ff         mov      R7, A
-D41D     a3         inc      DPTR
-D41E     e0         movx     A, @DPTR
-D41F     78 b7      mov      R0, #0xb7
-D421     cf         xch      A, R7
-D422     f6         mov      @R0, A
-D423     08         inc      R0
-D424     ef         mov      A, R7
-D425     f6         mov      @R0, A
-D426     18         dec      R0
-D427     e6         mov      A, @R0
-D428     fe         mov      R6, A
-D429     08         inc      R0
-D42A     e6         mov      A, @R0
-D42B     f5 82      mov      DPL, A
-D42D     8e 83      mov      DPH, R6
-D42F     e5 37      mov      A, 0x37
-D431     f0         movx     @DPTR, A
-D432     22         ret      
-D434     ef         mov      A, R7
-D435     12 71 51   lcall    0x7151
-D438     d4         da       A
-D439     84         div      AB
-D43A     90 d4 87   mov      DPTR, #0xd487
-D43D     91 d4      acall    0xd4d4
-D43F     8f 93      mov      0x93, R7
-D441     d4         da       A
-D442     96         subb     A, @R0
-D443     94 d4      subb     A, #0xd4
-D445     b9 95 d4   cjne     R1, #0x95, 0xd41c
-D448     bc 96 d4   cjne     R4, #0x96, 0xd41f
-D44B     bf 9c d4   cjne     R7, #0x9c, 0xd422
-D44E     c2 9d      clr      0x9d
-D450     d4         da       A
-D451     c5 9e      xch      A, 0x9e
-D453     d4         da       A
-D454     c8         xch      A, R0
-D455     9f         subb     A, R7
-D456     d4         da       A
-D457     cb         xch      A, R3
-D458     a0 d4      orl      CY, /0xd4
-D45A     ce         xch      A, R6
-D45B     a1 d4      ajmp     0xd5d4
+D41C     ff - -   mov      R7, A
+D41D     a3 - -   inc      DPTR
+D41E     e0 - -   movx     A, @DPTR
+D41F     78 b7 -  mov      R0, #0xb7
+D421     cf - -   xch      A, R7
+D422     f6 - -   mov      @R0, A
+D423     08 - -   inc      R0
+D424     ef - -   mov      A, R7
+D425     f6 - -   mov      @R0, A
+D426     18 - -   dec      R0
+D427     e6 - -   mov      A, @R0
+D428     fe - -   mov      R6, A
+D429     08 - -   inc      R0
+D42A     e6 - -   mov      A, @R0
+D42B     f5 82 -  mov      DPL, A
+D42D     8e 83 -  mov      DPH, R6
+D42F     e5 37 -  mov      A, 0x37
+D431     f0 - -   movx     @DPTR, A
+D432     22 - -   ret      
+D434     ef - -   mov      A, R7
+D435     12 71 51 lcall    0x7151
+D438     d4 - -   da       A
+D439     84 - -   div      AB
+D43A     90 d4 87 mov      DPTR, #0xd487
+D43D     91 d4 -  acall    0xd4d4
+D43F     8f 93 -  mov      0x93, R7
+D441     d4 - -   da       A
+D442     96 - -   subb     A, @R0
+D443     94 d4 -  subb     A, #0xd4
+D445     b9 95 d4 cjne     R1, #0x95, 0xd41c
+D448     bc 96 d4 cjne     R4, #0x96, 0xd41f
+D44B     bf 9c d4 cjne     R7, #0x9c, 0xd422
+D44E     c2 9d -  clr      0x9d
+D450     d4 - -   da       A
+D451     c5 9e -  xch      A, 0x9e
+D453     d4 - -   da       A
+D454     c8 - -   xch      A, R0
+D455     9f - -   subb     A, R7
+D456     d4 - -   da       A
+D457     cb - -   xch      A, R3
+D458     a0 d4 -  orl      CY, /0xd4
+D45A     ce - -   xch      A, R6
+D45B     a1 d4 -  ajmp     0xd5d4

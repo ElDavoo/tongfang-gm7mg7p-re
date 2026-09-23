@@ -4,7 +4,7 @@
 ; This is the machine code. The decompiled C for this address is BB40.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-BB40     90 07 51   mov      DPTR, #0x751
-BB43     e0         movx     A, @DPTR
-BB44     54 90      anl      A, #0x90
-BB46     22         ret      
+BB40     90 07 51 mov      DPTR, #0x751
+BB43     e0 - -   movx     A, @DPTR
+BB44     54 90 -  anl      A, #0x90
+BB46     22 - -   ret      

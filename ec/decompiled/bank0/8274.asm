@@ -4,19 +4,19 @@
 ; This is the machine code. The decompiled C for this address is 8274.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-8274     90 08 e1   mov      DPTR, #0x8e1
-8277     e0         movx     A, @DPTR
-8278     60 04      jz       0x827e
-827A     e0         movx     A, @DPTR
-827B     14         dec      A
-827C     f0         movx     @DPTR, A
-827D     22         ret      
-827E     12 ba 3e   lcall    0xba3e
-8281     90 19 04   mov      DPTR, #0x1904
-8284     74 80      mov      A, #0x80
-8286     12 bb 99   lcall    0xbb99
-8289     f0         movx     @DPTR, A
-828A     90 19 0c   mov      DPTR, #0x190c
-828D     12 ba fd   lcall    0xbafd
-8290     12 bc b1   lcall    0xbcb1
-8293     22         ret      
+8274     90 08 e1 mov      DPTR, #0x8e1
+8277     e0 - -   movx     A, @DPTR
+8278     60 04 -  jz       0x827e
+827A     e0 - -   movx     A, @DPTR
+827B     14 - -   dec      A
+827C     f0 - -   movx     @DPTR, A
+827D     22 - -   ret      
+827E     12 ba 3e lcall    0xba3e
+8281     90 19 04 mov      DPTR, #0x1904
+8284     74 80 -  mov      A, #0x80
+8286     12 bb 99 lcall    0xbb99
+8289     f0 - -   movx     @DPTR, A
+828A     90 19 0c mov      DPTR, #0x190c
+828D     12 ba fd lcall    0xbafd
+8290     12 bc b1 lcall    0xbcb1
+8293     22 - -   ret      

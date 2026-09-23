@@ -6,51 +6,51 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-DFA0     cc         xch      A, R4
-DFA1     ef         mov      A, R7
-DFA2     cc         xch      A, R4
-DFA3     ec         mov      A, R4
-DFA4     70 03      jnz      0xdfa9
-DFA6     ed         mov      A, R5
-DFA7     60 32      jz       0xdfdb
-DFA9     ec         mov      A, R4
-DFAA     fe         mov      R6, A
-DFAB     ed         mov      A, R5
-DFAC     7a 00      mov      R2, #0x0
-DFAE     24 00      add      A, #0x0
-DFB0     ff         mov      R7, A
-DFB1     ea         mov      A, R2
-DFB2     3e         addc     A, R6
-DFB3     fe         mov      R6, A
-DFB4     c3         clr      CY
-DFB5     ef         mov      A, R7
-DFB6     94 58      subb     A, #0x58
-DFB8     ee         mov      A, R6
-DFB9     94 1b      subb     A, #0x1b
-DFBB     50 19      jnc      0xdfd6
-DFBD     ec         mov      A, R4
-DFBE     fe         mov      R6, A
-DFBF     7c 00      mov      R4, #0x0
-DFC1     e4         clr      A
-DFC2     2d         add      A, R5
-DFC3     ff         mov      R7, A
-DFC4     ec         mov      A, R4
-DFC5     3e         addc     A, R6
-DFC6     cb         xch      A, R3
-DFC7     ef         mov      A, R7
-DFC8     cb         xch      A, R3
-DFC9     fa         mov      R2, A
-DFCA     e4         clr      A
-DFCB     f9         mov      R1, A
-DFCC     f8         mov      R0, A
-DFCD     7f da      mov      R7, #0xda
-DFCF     7e e6      mov      R6, #0xe6
-DFD1     7d 20      mov      R5, #0x20
-DFD3     02 72 4b   ljmp     0x724b
-DFD6     7e 1b      mov      R6, #0x1b
-DFD8     7f 58      mov      R7, #0x58
-DFDA     22         ret      
-DFDB     e4         clr      A
-DFDC     fe         mov      R6, A
-DFDD     ff         mov      R7, A
-DFDE     22         ret      
+DFA0     cc - -   xch      A, R4
+DFA1     ef - -   mov      A, R7
+DFA2     cc - -   xch      A, R4
+DFA3     ec - -   mov      A, R4
+DFA4     70 03 -  jnz      0xdfa9
+DFA6     ed - -   mov      A, R5
+DFA7     60 32 -  jz       0xdfdb
+DFA9     ec - -   mov      A, R4
+DFAA     fe - -   mov      R6, A
+DFAB     ed - -   mov      A, R5
+DFAC     7a 00 -  mov      R2, #0x0
+DFAE     24 00 -  add      A, #0x0
+DFB0     ff - -   mov      R7, A
+DFB1     ea - -   mov      A, R2
+DFB2     3e - -   addc     A, R6
+DFB3     fe - -   mov      R6, A
+DFB4     c3 - -   clr      CY
+DFB5     ef - -   mov      A, R7
+DFB6     94 58 -  subb     A, #0x58
+DFB8     ee - -   mov      A, R6
+DFB9     94 1b -  subb     A, #0x1b
+DFBB     50 19 -  jnc      0xdfd6
+DFBD     ec - -   mov      A, R4
+DFBE     fe - -   mov      R6, A
+DFBF     7c 00 -  mov      R4, #0x0
+DFC1     e4 - -   clr      A
+DFC2     2d - -   add      A, R5
+DFC3     ff - -   mov      R7, A
+DFC4     ec - -   mov      A, R4
+DFC5     3e - -   addc     A, R6
+DFC6     cb - -   xch      A, R3
+DFC7     ef - -   mov      A, R7
+DFC8     cb - -   xch      A, R3
+DFC9     fa - -   mov      R2, A
+DFCA     e4 - -   clr      A
+DFCB     f9 - -   mov      R1, A
+DFCC     f8 - -   mov      R0, A
+DFCD     7f da -  mov      R7, #0xda
+DFCF     7e e6 -  mov      R6, #0xe6
+DFD1     7d 20 -  mov      R5, #0x20
+DFD3     02 72 4b ljmp     0x724b
+DFD6     7e 1b -  mov      R6, #0x1b
+DFD8     7f 58 -  mov      R7, #0x58
+DFDA     22 - -   ret      
+DFDB     e4 - -   clr      A
+DFDC     fe - -   mov      R6, A
+DFDD     ff - -   mov      R7, A
+DFDE     22 - -   ret      

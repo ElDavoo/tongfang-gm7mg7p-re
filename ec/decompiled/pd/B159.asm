@@ -4,6 +4,6 @@
 ; This is the machine code. The decompiled C for this address is B159.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-B159     f0         movx     @DPTR, A
-B15A     90 ff fc   mov      DPTR, #0xfffc
-B15D     02 12 2f   ljmp     0x122f
+B159     f0 - -   movx     @DPTR, A
+B15A     90 ff fc mov      DPTR, #0xfffc
+B15D     02 12 2f ljmp     0x122f

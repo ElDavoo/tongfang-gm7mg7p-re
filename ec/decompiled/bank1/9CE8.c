@@ -25,7 +25,7 @@ void FUN_CODE_9ce8(void)
     return;
   }
   if (((DAT_EXTMEM_1c11 >> 1 & 1) != 0) && (bVar2 = in_PSW & 0xdd, (DAT_EXTMEM_1c11 & 0x7c) == 0)) {
-    uVar1 = FUN_CODE_9cd8(0x615,DAT_EXTMEM_1c15);
+    uVar1 = halve_be16_after_add_r1(0x615,DAT_EXTMEM_1c15);
     if (-1 < (char)bVar2) {
       DAT_EXTMEM_043f = uVar1;
     }

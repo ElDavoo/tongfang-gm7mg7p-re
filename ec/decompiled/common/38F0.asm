@@ -4,44 +4,44 @@
 ; This is the machine code. The decompiled C for this address is 38F0.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-38F0     ef         mov      A, R7
-38F1     12 3c 38   lcall    0x3c38
-38F4     70 15      jnz      0x390b
-38F6     12 3c 3f   lcall    0x3c3f
-38F9     70 10      jnz      0x390b
-38FB     90 16 38   mov      DPTR, #0x1638
-38FE     74 42      mov      A, #0x42
-3900     f0         movx     @DPTR, A
-3901     90 16 39   mov      DPTR, #0x1639
-3904     f0         movx     @DPTR, A
-3905     78 8d      mov      R0, #0x8d
-3907     e6         mov      A, @R0
-3908     44 80      orl      A, #0x80
-390A     f6         mov      @R0, A
-390B     12 3c 46   lcall    0x3c46
-390E     70 15      jnz      0x3925
-3910     12 3c 4d   lcall    0x3c4d
-3913     70 10      jnz      0x3925
-3915     90 16 3a   mov      DPTR, #0x163a
-3918     74 42      mov      A, #0x42
-391A     f0         movx     @DPTR, A
-391B     90 16 3b   mov      DPTR, #0x163b
-391E     f0         movx     @DPTR, A
-391F     78 8e      mov      R0, #0x8e
-3921     e6         mov      A, @R0
-3922     44 80      orl      A, #0x80
-3924     f6         mov      @R0, A
-3925     12 3c 54   lcall    0x3c54
-3928     70 15      jnz      0x393f
-392A     12 3c 5b   lcall    0x3c5b
-392D     70 10      jnz      0x393f
-392F     90 16 3c   mov      DPTR, #0x163c
-3932     74 42      mov      A, #0x42
-3934     f0         movx     @DPTR, A
-3935     90 16 3d   mov      DPTR, #0x163d
-3938     f0         movx     @DPTR, A
-3939     78 8f      mov      R0, #0x8f
-393B     e6         mov      A, @R0
-393C     44 80      orl      A, #0x80
-393E     f6         mov      @R0, A
-393F     22         ret      
+38F0     ef - -   mov      A, R7
+38F1     12 3c 38 lcall    0x3c38
+38F4     70 15 -  jnz      0x390b
+38F6     12 3c 3f lcall    0x3c3f
+38F9     70 10 -  jnz      0x390b
+38FB     90 16 38 mov      DPTR, #0x1638
+38FE     74 42 -  mov      A, #0x42
+3900     f0 - -   movx     @DPTR, A
+3901     90 16 39 mov      DPTR, #0x1639
+3904     f0 - -   movx     @DPTR, A
+3905     78 8d -  mov      R0, #0x8d
+3907     e6 - -   mov      A, @R0
+3908     44 80 -  orl      A, #0x80
+390A     f6 - -   mov      @R0, A
+390B     12 3c 46 lcall    0x3c46
+390E     70 15 -  jnz      0x3925
+3910     12 3c 4d lcall    0x3c4d
+3913     70 10 -  jnz      0x3925
+3915     90 16 3a mov      DPTR, #0x163a
+3918     74 42 -  mov      A, #0x42
+391A     f0 - -   movx     @DPTR, A
+391B     90 16 3b mov      DPTR, #0x163b
+391E     f0 - -   movx     @DPTR, A
+391F     78 8e -  mov      R0, #0x8e
+3921     e6 - -   mov      A, @R0
+3922     44 80 -  orl      A, #0x80
+3924     f6 - -   mov      @R0, A
+3925     12 3c 54 lcall    0x3c54
+3928     70 15 -  jnz      0x393f
+392A     12 3c 5b lcall    0x3c5b
+392D     70 10 -  jnz      0x393f
+392F     90 16 3c mov      DPTR, #0x163c
+3932     74 42 -  mov      A, #0x42
+3934     f0 - -   movx     @DPTR, A
+3935     90 16 3d mov      DPTR, #0x163d
+3938     f0 - -   movx     @DPTR, A
+3939     78 8f -  mov      R0, #0x8f
+393B     e6 - -   mov      A, @R0
+393C     44 80 -  orl      A, #0x80
+393E     f6 - -   mov      @R0, A
+393F     22 - -   ret      

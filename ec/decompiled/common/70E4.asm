@@ -4,19 +4,19 @@
 ; This is the machine code. The decompiled C for this address is 70E4.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-70E4     c5 f0      xch      A, B
-70E6     f8         mov      R0, A
-70E7     a3         inc      DPTR
-70E8     e0         movx     A, @DPTR
-70E9     28         add      A, R0
-70EA     f0         movx     @DPTR, A
-70EB     c5 f0      xch      A, B
-70ED     f8         mov      R0, A
-70EE     e5 82      mov      A, DPL
-70F0     15 82      dec      DPL
-70F2     70 02      jnz      0x70f6
-70F4     15 83      dec      DPH
-70F6     e0         movx     A, @DPTR
-70F7     38         addc     A, R0
-70F8     f0         movx     @DPTR, A
-70F9     22         ret      
+70E4     c5 f0 -  xch      A, B
+70E6     f8 - -   mov      R0, A
+70E7     a3 - -   inc      DPTR
+70E8     e0 - -   movx     A, @DPTR
+70E9     28 - -   add      A, R0
+70EA     f0 - -   movx     @DPTR, A
+70EB     c5 f0 -  xch      A, B
+70ED     f8 - -   mov      R0, A
+70EE     e5 82 -  mov      A, DPL
+70F0     15 82 -  dec      DPL
+70F2     70 02 -  jnz      0x70f6
+70F4     15 83 -  dec      DPH
+70F6     e0 - -   movx     A, @DPTR
+70F7     38 - -   addc     A, R0
+70F8     f0 - -   movx     @DPTR, A
+70F9     22 - -   ret      

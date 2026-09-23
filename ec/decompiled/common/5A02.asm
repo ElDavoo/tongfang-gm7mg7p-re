@@ -6,45 +6,45 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-5A02     35 39      addc     A, 0x39
-5A04     3b         addc     A, R3
-5A05     3d         addc     A, R5
-5A06     3f         addc     A, R7
-5A07     43 45 47   orl      0x45, #0x47
-5A0A     ff         mov      R7, A
-5A0B     ff         mov      R7, A
-5A0C     ff         mov      R7, A
-5A0D     ff         mov      R7, A
-5A0E     ff         mov      R7, A
-5A0F     ff         mov      R7, A
-5A10     ff         mov      R7, A
-5A11     ff         mov      R7, A
-5A12     00         nop      
-5A13     30 32 3a   jnb      0x32, 0x5a50
-5A16     3c         addc     A, R4
-5A17     3e         addc     A, R6
-5A18     42 44      orl      0x44, A
-5A1A     46         orl      A, @R0
-5A1B     ff         mov      R7, A
-5A1C     ff         mov      R7, A
-5A1D     ff         mov      R7, A
-5A1E     ff         mov      R7, A
-5A1F     ff         mov      R7, A
-5A20     ff         mov      R7, A
-5A21     ff         mov      R7, A
-5A22     00         nop      
-5A23     3c         addc     A, R4
-5A24     3c         addc     A, R4
-5A25     46         orl      A, @R0
-5A26     5a         anl      A, R2
-5A27     60 64      jz       0x5a8d
-5A29     6e         xrl      A, R6
-5A2A     6e         xrl      A, R6
-5A2B     6e         xrl      A, R6
-5A2C     6e         xrl      A, R6
-5A2D     6e         xrl      A, R6
-5A2E     6e         xrl      A, R6
-5A2F     6e         xrl      A, R6
-5A30     6e         xrl      A, R6
-5A31     6e         xrl      A, R6
-5A32     32         reti     
+5A02     35 39 -  addc     A, 0x39
+5A04     3b - -   addc     A, R3
+5A05     3d - -   addc     A, R5
+5A06     3f - -   addc     A, R7
+5A07     43 45 47 orl      0x45, #0x47
+5A0A     ff - -   mov      R7, A
+5A0B     ff - -   mov      R7, A
+5A0C     ff - -   mov      R7, A
+5A0D     ff - -   mov      R7, A
+5A0E     ff - -   mov      R7, A
+5A0F     ff - -   mov      R7, A
+5A10     ff - -   mov      R7, A
+5A11     ff - -   mov      R7, A
+5A12     00 - -   nop      
+5A13     30 32 3a jnb      0x32, 0x5a50
+5A16     3c - -   addc     A, R4
+5A17     3e - -   addc     A, R6
+5A18     42 44 -  orl      0x44, A
+5A1A     46 - -   orl      A, @R0
+5A1B     ff - -   mov      R7, A
+5A1C     ff - -   mov      R7, A
+5A1D     ff - -   mov      R7, A
+5A1E     ff - -   mov      R7, A
+5A1F     ff - -   mov      R7, A
+5A20     ff - -   mov      R7, A
+5A21     ff - -   mov      R7, A
+5A22     00 - -   nop      
+5A23     3c - -   addc     A, R4
+5A24     3c - -   addc     A, R4
+5A25     46 - -   orl      A, @R0
+5A26     5a - -   anl      A, R2
+5A27     60 64 -  jz       0x5a8d
+5A29     6e - -   xrl      A, R6
+5A2A     6e - -   xrl      A, R6
+5A2B     6e - -   xrl      A, R6
+5A2C     6e - -   xrl      A, R6
+5A2D     6e - -   xrl      A, R6
+5A2E     6e - -   xrl      A, R6
+5A2F     6e - -   xrl      A, R6
+5A30     6e - -   xrl      A, R6
+5A31     6e - -   xrl      A, R6
+5A32     32 - -   reti     

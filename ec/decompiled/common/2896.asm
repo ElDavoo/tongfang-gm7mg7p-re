@@ -6,28 +6,28 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-2896     7f 13      mov      R7, #0x13
-2898     78 6d      mov      R0, #0x6d
-289A     e4         clr      A
-289B     f6         mov      @R0, A
-289C     08         inc      R0
-289D     df fc      djnz     R7, 0x289b
-289F     7f fd      mov      R7, #0xfd
-28A1     90 0b 00   mov      DPTR, #0xb00
-28A4     e4         clr      A
-28A5     f0         movx     @DPTR, A
-28A6     a3         inc      DPTR
-28A7     df fc      djnz     R7, 0x28a5
-28A9     e4         clr      A
-28AA     90 0b fd   mov      DPTR, #0xbfd
-28AD     f0         movx     @DPTR, A
-28AE     90 0b fe   mov      DPTR, #0xbfe
-28B1     f0         movx     @DPTR, A
-28B2     f5 4e      mov      0x4e, A
-28B4     12 2a 6c   lcall    0x2a6c
-28B7     54 f0      anl      A, #0xf0
-28B9     f5 4c      mov      0x4c, A
-28BB     e4         clr      A
-28BC     f5 4d      mov      0x4d, A
-28BE     f5 49      mov      0x49, A
-28C0     22         ret      
+2896     7f 13 -  mov      R7, #0x13
+2898     78 6d -  mov      R0, #0x6d
+289A     e4 - -   clr      A
+289B     f6 - -   mov      @R0, A
+289C     08 - -   inc      R0
+289D     df fc -  djnz     R7, 0x289b
+289F     7f fd -  mov      R7, #0xfd
+28A1     90 0b 00 mov      DPTR, #0xb00
+28A4     e4 - -   clr      A
+28A5     f0 - -   movx     @DPTR, A
+28A6     a3 - -   inc      DPTR
+28A7     df fc -  djnz     R7, 0x28a5
+28A9     e4 - -   clr      A
+28AA     90 0b fd mov      DPTR, #0xbfd
+28AD     f0 - -   movx     @DPTR, A
+28AE     90 0b fe mov      DPTR, #0xbfe
+28B1     f0 - -   movx     @DPTR, A
+28B2     f5 4e -  mov      0x4e, A
+28B4     12 2a 6c lcall    0x2a6c
+28B7     54 f0 -  anl      A, #0xf0
+28B9     f5 4c -  mov      0x4c, A
+28BB     e4 - -   clr      A
+28BC     f5 4d -  mov      0x4d, A
+28BE     f5 49 -  mov      0x49, A
+28C0     22 - -   ret      

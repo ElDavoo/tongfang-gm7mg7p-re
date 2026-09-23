@@ -54,6 +54,9 @@ HEADER = ["scope", "addr", "name", "signature", "type", "comment", "evidence", "
 # self-test needs a real one because the rows it writes have to resolve against
 # a real index; a synthetic base would test a different thing.
 EXISTING_DEFAULT = os.path.join(REPO, "ec", "annotations", "ghidra-functions.csv")
+# The self-test's base: a file with the header and nothing else, because the
+# live one accumulates exactly the rows the test cases use.
+_SELF_TEST_BASE = "empty"
 
 # The controlled vocabulary: the union of the EC's and the BIOS's, because both
 # sweep briefs have one and the merge reads both components' shards. Kept here
@@ -262,6 +265,15 @@ def self_test():
     d = _tf.mkdtemp()
     _counter = itertools.count()
     ok = True
+    # An empty annotations file as the base, not the live one. The base
+    # contributes its rows to `seen`, so once the sweep annotated the
+    # addresses these cases use, every one of them was refused as a duplicate
+    # before reaching the check it exists to test -- and a self-test that goes
+    # quietly vacuous as the corpus grows is worse than none. The *index* is
+    # still the real one, so the rows still have to resolve to real functions.
+    empty_base = os.path.join(d, "empty.csv")
+    with open(empty_base, "w", newline="") as f:
+        f.write(",".join(HEADER) + "\n")
 
     def check(label, cond):
         nonlocal ok
@@ -289,7 +301,7 @@ def self_test():
         import io
         import contextlib
         buf = io.StringIO()
-        argv = [EXISTING_DEFAULT, case, out, "--report"]
+        argv = [empty_base, case, out, "--report"]
         if appr:
             argv += ["--approved", appr]
         with contextlib.redirect_stdout(buf):
@@ -346,7 +358,9 @@ def self_test():
                         approved=[row()])
     check("a row the verifier did not approve is rejected",
           "did not approve" in out)
-    check("an approved row still gets in", len(acc) >= 2)
+    # Exactly the approved row: the base is empty, so anything else in `acc`
+    # would mean the whitelist is not being applied.
+    check("an approved row still gets in, and only that one", len(acc) == 1)
     _, acc, out = merge([
         row(comment="Writes the charge target to XDATA 0x0777 and sets the "
                     "fan enable bit.")])

@@ -4,15 +4,15 @@
 ; This is the machine code. The decompiled C for this address is 0FCB.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-0FCB     e0         movx     A, @DPTR
-0FCC     f8         mov      R0, A
-0FCD     a3         inc      DPTR
-0FCE     e0         movx     A, @DPTR
-0FCF     f9         mov      R1, A
-0FD0     a3         inc      DPTR
-0FD1     e0         movx     A, @DPTR
-0FD2     fa         mov      R2, A
-0FD3     a3         inc      DPTR
-0FD4     e0         movx     A, @DPTR
-0FD5     fb         mov      R3, A
-0FD6     22         ret      
+0FCB     e0 - -   movx     A, @DPTR
+0FCC     f8 - -   mov      R0, A
+0FCD     a3 - -   inc      DPTR
+0FCE     e0 - -   movx     A, @DPTR
+0FCF     f9 - -   mov      R1, A
+0FD0     a3 - -   inc      DPTR
+0FD1     e0 - -   movx     A, @DPTR
+0FD2     fa - -   mov      R2, A
+0FD3     a3 - -   inc      DPTR
+0FD4     e0 - -   movx     A, @DPTR
+0FD5     fb - -   mov      R3, A
+0FD6     22 - -   ret      

@@ -4,5 +4,5 @@
 ; This is the machine code. The decompiled C for this address is B2AE.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-B2AE     75 f0 38   mov      B, #0x38
-B2B1     a4         mul      AB
+B2AE     75 f0 38 mov      B, #0x38
+B2B1     a4 - -   mul      AB

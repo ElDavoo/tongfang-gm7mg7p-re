@@ -4,30 +4,30 @@
 ; This is the machine code. The decompiled C for this address is 119C.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-119C     d0 83      pop      DPH
-119E     d0 82      pop      DPL
-11A0     f8         mov      R0, A
-11A1     e4         clr      A
-11A2     93         movc     A, @A+DPTR
-11A3     70 12      jnz      0x11b7
-11A5     74 01      mov      A, #0x1
-11A7     93         movc     A, @A+DPTR
-11A8     70 0d      jnz      0x11b7
-11AA     a3         inc      DPTR
-11AB     a3         inc      DPTR
-11AC     93         movc     A, @A+DPTR
-11AD     f8         mov      R0, A
-11AE     74 01      mov      A, #0x1
-11B0     93         movc     A, @A+DPTR
-11B1     f5 82      mov      DPL, A
-11B3     88 83      mov      DPH, R0
-11B5     e4         clr      A
-11B6     73         jmp      @A+DPTR
-11B7     74 02      mov      A, #0x2
-11B9     93         movc     A, @A+DPTR
-11BA     68         xrl      A, R0
-11BB     60 ef      jz       0x11ac
-11BD     a3         inc      DPTR
-11BE     a3         inc      DPTR
-11BF     a3         inc      DPTR
-11C0     80 df      sjmp     0x11a1
+119C     d0 83 -  pop      DPH
+119E     d0 82 -  pop      DPL
+11A0     f8 - -   mov      R0, A
+11A1     e4 - -   clr      A
+11A2     93 - -   movc     A, @A+DPTR
+11A3     70 12 -  jnz      0x11b7
+11A5     74 01 -  mov      A, #0x1
+11A7     93 - -   movc     A, @A+DPTR
+11A8     70 0d -  jnz      0x11b7
+11AA     a3 - -   inc      DPTR
+11AB     a3 - -   inc      DPTR
+11AC     93 - -   movc     A, @A+DPTR
+11AD     f8 - -   mov      R0, A
+11AE     74 01 -  mov      A, #0x1
+11B0     93 - -   movc     A, @A+DPTR
+11B1     f5 82 -  mov      DPL, A
+11B3     88 83 -  mov      DPH, R0
+11B5     e4 - -   clr      A
+11B6     73 - -   jmp      @A+DPTR
+11B7     74 02 -  mov      A, #0x2
+11B9     93 - -   movc     A, @A+DPTR
+11BA     68 - -   xrl      A, R0
+11BB     60 ef -  jz       0x11ac
+11BD     a3 - -   inc      DPTR
+11BE     a3 - -   inc      DPTR
+11BF     a3 - -   inc      DPTR
+11C0     80 df -  sjmp     0x11a1

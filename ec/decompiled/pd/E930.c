@@ -15,15 +15,15 @@ void FUN_CODE_e930(char *param_1)
   
   cVar3 = '\0';
   uVar2 = BANK0_R7;
-  FUN_CODE_f3eb(0xd,BANK0_R7);
+  dptr_high_r6_low_r3(0xd,BANK0_R7);
   cVar1 = *param_1;
-  FUN_CODE_f3e2(cVar3 + '\x11');
+  dptr_high_r6_low_a(cVar3 + '\x11');
   DAT_EXTMEM_07ca = *param_1;
   pcVar5 = &DAT_EXTMEM_07ca;
   uVar4 = 0;
-  FUN_CODE_f3eb(0x14,uVar2);
+  dptr_high_r6_low_r3(0x14,uVar2);
   if (*pcVar5 < '\0') {
-    FUN_CODE_f3e0(uVar4);
+    unresolved_0xF3E0(uVar4);
     *pcVar5 = cVar1;
   }
   return;

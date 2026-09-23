@@ -4,31 +4,31 @@
 ; This is the machine code. The decompiled C for this address is 0B85.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-0B51     ec         mov      A, R4
-0B52     fa         mov      R2, A
-0B53     a9 f0      mov      R1, B
-0B55     ed         mov      A, R5
-0B56     fb         mov      R3, A
-0B57     22         ret      
-0B85     88 f0      mov      B, R0
-0B87     ef         mov      A, R7
-0B88     60 01      jz       0x0b8b
-0B8A     0e         inc      R6
-0B8B     4e         orl      A, R6
-0B8C     60 c3      jz       0x0b51
-0B8E     88 f0      mov      B, R0
-0B90     ed         mov      A, R5
-0B91     24 02      add      A, #0x2
-0B93     b4 04 00   cjne     A, #0x4, 0x0b96
-0B96     50 b9      jnc      0x0b51
-0B98     f5 82      mov      DPL, A
-0B9A     eb         mov      A, R3
-0B9B     24 02      add      A, #0x2
-0B9D     b4 04 00   cjne     A, #0x4, 0x0ba0
-0BA0     50 af      jnc      0x0b51
-0BA2     23         rl       A
-0BA3     23         rl       A
-0BA4     45 82      orl      A, DPL
-0BA6     23         rl       A
-0BA7     90 0b 05   mov      DPTR, #0xb05
-0BAA     73         jmp      @A+DPTR
+0B51     ec - -   mov      A, R4
+0B52     fa - -   mov      R2, A
+0B53     a9 f0 -  mov      R1, B
+0B55     ed - -   mov      A, R5
+0B56     fb - -   mov      R3, A
+0B57     22 - -   ret      
+0B85     88 f0 -  mov      B, R0
+0B87     ef - -   mov      A, R7
+0B88     60 01 -  jz       0x0b8b
+0B8A     0e - -   inc      R6
+0B8B     4e - -   orl      A, R6
+0B8C     60 c3 -  jz       0x0b51
+0B8E     88 f0 -  mov      B, R0
+0B90     ed - -   mov      A, R5
+0B91     24 02 -  add      A, #0x2
+0B93     b4 04 00 cjne     A, #0x4, 0x0b96
+0B96     50 b9 -  jnc      0x0b51
+0B98     f5 82 -  mov      DPL, A
+0B9A     eb - -   mov      A, R3
+0B9B     24 02 -  add      A, #0x2
+0B9D     b4 04 00 cjne     A, #0x4, 0x0ba0
+0BA0     50 af -  jnc      0x0b51
+0BA2     23 - -   rl       A
+0BA3     23 - -   rl       A
+0BA4     45 82 -  orl      A, DPL
+0BA6     23 - -   rl       A
+0BA7     90 0b 05 mov      DPTR, #0xb05
+0BAA     73 - -   jmp      @A+DPTR

@@ -6,51 +6,51 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-D8BC     e0         movx     A, @DPTR
-D8BD     f9         mov      R1, A
-D8BE     a3         inc      DPTR
-D8BF     e0         movx     A, @DPTR
-D8C0     fa         mov      R2, A
-D8C1     a3         inc      DPTR
-D8C2     e0         movx     A, @DPTR
-D8C3     fb         mov      R3, A
-D8C4     a3         inc      DPTR
-D8C5     e0         movx     A, @DPTR
-D8C6     fc         mov      R4, A
-D8C7     12 88 54   lcall    0x8854
-D8CA     a3         inc      DPTR
-D8CB     e0         movx     A, @DPTR
-D8CC     f9         mov      R1, A
-D8CD     a3         inc      DPTR
-D8CE     e0         movx     A, @DPTR
-D8CF     fa         mov      R2, A
-D8D0     12 88 54   lcall    0x8854
-D8D3     a3         inc      DPTR
-D8D4     e0         movx     A, @DPTR
-D8D5     f9         mov      R1, A
-D8D6     a3         inc      DPTR
-D8D7     e0         movx     A, @DPTR
-D8D8     fa         mov      R2, A
-D8D9     12 88 54   lcall    0x8854
-D8DC     ec         mov      A, R4
-D8DD     c3         clr      CY
-D8DE     13         rrc      A
-D8DF     92 f0      mov      0xf0, CY
-D8E1     c3         clr      CY
-D8E2     13         rrc      A
-D8E3     92 f1      mov      0xf1, CY
-D8E5     fa         mov      R2, A
-D8E6     eb         mov      A, R3
-D8E7     a2 f0      mov      CY, 0xf0
-D8E9     13         rrc      A
-D8EA     a2 f1      mov      CY, 0xf1
-D8EC     13         rrc      A
-D8ED     f9         mov      R1, A
-D8EE     40 01      jc       0xd8f1
-D8F0     22         ret      
-D8F1     24 01      add      A, #0x1
-D8F3     f9         mov      R1, A
-D8F4     ea         mov      A, R2
-D8F5     34 00      addc     A, #0x0
-D8F7     fa         mov      R2, A
-D8F8     22         ret      
+D8BC     e0 - -   movx     A, @DPTR
+D8BD     f9 - -   mov      R1, A
+D8BE     a3 - -   inc      DPTR
+D8BF     e0 - -   movx     A, @DPTR
+D8C0     fa - -   mov      R2, A
+D8C1     a3 - -   inc      DPTR
+D8C2     e0 - -   movx     A, @DPTR
+D8C3     fb - -   mov      R3, A
+D8C4     a3 - -   inc      DPTR
+D8C5     e0 - -   movx     A, @DPTR
+D8C6     fc - -   mov      R4, A
+D8C7     12 88 54 lcall    0x8854
+D8CA     a3 - -   inc      DPTR
+D8CB     e0 - -   movx     A, @DPTR
+D8CC     f9 - -   mov      R1, A
+D8CD     a3 - -   inc      DPTR
+D8CE     e0 - -   movx     A, @DPTR
+D8CF     fa - -   mov      R2, A
+D8D0     12 88 54 lcall    0x8854
+D8D3     a3 - -   inc      DPTR
+D8D4     e0 - -   movx     A, @DPTR
+D8D5     f9 - -   mov      R1, A
+D8D6     a3 - -   inc      DPTR
+D8D7     e0 - -   movx     A, @DPTR
+D8D8     fa - -   mov      R2, A
+D8D9     12 88 54 lcall    0x8854
+D8DC     ec - -   mov      A, R4
+D8DD     c3 - -   clr      CY
+D8DE     13 - -   rrc      A
+D8DF     92 f0 -  mov      0xf0, CY
+D8E1     c3 - -   clr      CY
+D8E2     13 - -   rrc      A
+D8E3     92 f1 -  mov      0xf1, CY
+D8E5     fa - -   mov      R2, A
+D8E6     eb - -   mov      A, R3
+D8E7     a2 f0 -  mov      CY, 0xf0
+D8E9     13 - -   rrc      A
+D8EA     a2 f1 -  mov      CY, 0xf1
+D8EC     13 - -   rrc      A
+D8ED     f9 - -   mov      R1, A
+D8EE     40 01 -  jc       0xd8f1
+D8F0     22 - -   ret      
+D8F1     24 01 -  add      A, #0x1
+D8F3     f9 - -   mov      R1, A
+D8F4     ea - -   mov      A, R2
+D8F5     34 00 -  addc     A, #0x0
+D8F7     fa - -   mov      R2, A
+D8F8     22 - -   ret      

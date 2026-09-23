@@ -4,4 +4,4 @@
 ; This is the machine code. The decompiled C for this address is D20D.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-D20D     02 d2 2e   ljmp     0xd22e
+D20D     02 d2 2e ljmp     0xd22e

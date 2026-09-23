@@ -51,12 +51,12 @@ code_c0xd5db:
           DAT_EXTMEM_07fe = 0x55;
           DAT_EXTMEM_07ff = 0xaa;
           puVar1 = &DAT_EXTMEM_07fd;
-          FUN_CODE_d6ea(0x5a);
+          write_a_to_dptr_set_1f06(0x5a);
           *puVar1 = 3;
-          FUN_CODE_0ea2(0xfa);
-          FUN_CODE_c44d();
-          FUN_CODE_d6c9();
-          FUN_CODE_d6c9();
+          timer1_counted_delay_using_0a56(0xfa);
+          clear_1609_bit0_and_write_04_to_2006();
+          call_0ea2_twice_with_fa();
+          call_0ea2_twice_with_fa();
           do {
                     /* WARNING: Do nothing block with infinite loop */
           } while( true );

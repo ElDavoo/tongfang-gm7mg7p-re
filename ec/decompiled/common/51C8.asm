@@ -6,32 +6,32 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-51C8     90 00 9f   mov      DPTR, #0x9f
-51CB     e0         movx     A, @DPTR
-51CC     90 10 3e   mov      DPTR, #0x103e
-51CF     f0         movx     @DPTR, A
-51D0     90 10 3d   mov      DPTR, #0x103d
-51D3     74 ff      mov      A, #0xff
-51D5     f0         movx     @DPTR, A
-51D6     e4         clr      A
-51D7     90 10 3b   mov      DPTR, #0x103b
-51DA     f0         movx     @DPTR, A
-51DB     90 10 3c   mov      DPTR, #0x103c
-51DE     74 fe      mov      A, #0xfe
-51E0     f0         movx     @DPTR, A
-51E1     90 10 3f   mov      DPTR, #0x103f
-51E4     04         inc      A
-51E5     f0         movx     @DPTR, A
-51E6     90 10 3c   mov      DPTR, #0x103c
-51E9     74 fd      mov      A, #0xfd
-51EB     f0         movx     @DPTR, A
-51EC     90 10 3f   mov      DPTR, #0x103f
-51EF     74 05      mov      A, #0x5
-51F1     f0         movx     @DPTR, A
-51F2     90 10 3f   mov      DPTR, #0x103f
-51F5     e0         movx     A, @DPTR
-51F6     20 e0 f9   jb       0xe0, 0x51f2
-51F9     90 10 3c   mov      DPTR, #0x103c
-51FC     74 fe      mov      A, #0xfe
-51FE     f0         movx     @DPTR, A
-51FF     90 10 3f   mov      DPTR, #0x103f
+51C8     90 00 9f mov      DPTR, #0x9f
+51CB     e0 - -   movx     A, @DPTR
+51CC     90 10 3e mov      DPTR, #0x103e
+51CF     f0 - -   movx     @DPTR, A
+51D0     90 10 3d mov      DPTR, #0x103d
+51D3     74 ff -  mov      A, #0xff
+51D5     f0 - -   movx     @DPTR, A
+51D6     e4 - -   clr      A
+51D7     90 10 3b mov      DPTR, #0x103b
+51DA     f0 - -   movx     @DPTR, A
+51DB     90 10 3c mov      DPTR, #0x103c
+51DE     74 fe -  mov      A, #0xfe
+51E0     f0 - -   movx     @DPTR, A
+51E1     90 10 3f mov      DPTR, #0x103f
+51E4     04 - -   inc      A
+51E5     f0 - -   movx     @DPTR, A
+51E6     90 10 3c mov      DPTR, #0x103c
+51E9     74 fd -  mov      A, #0xfd
+51EB     f0 - -   movx     @DPTR, A
+51EC     90 10 3f mov      DPTR, #0x103f
+51EF     74 05 -  mov      A, #0x5
+51F1     f0 - -   movx     @DPTR, A
+51F2     90 10 3f mov      DPTR, #0x103f
+51F5     e0 - -   movx     A, @DPTR
+51F6     20 e0 f9 jb       0xe0, 0x51f2
+51F9     90 10 3c mov      DPTR, #0x103c
+51FC     74 fe -  mov      A, #0xfe
+51FE     f0 - -   movx     @DPTR, A
+51FF     90 10 3f mov      DPTR, #0x103f

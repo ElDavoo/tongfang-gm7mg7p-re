@@ -6,40 +6,40 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-0806     90 15 00   mov      DPTR, #0x1500
-0809     e0         movx     A, @DPTR
-080A     30 e3 15   jnb      0xe3, 0x0822
-080D     90 15 04   mov      DPTR, #0x1504
-0810     e0         movx     A, @DPTR
-0811     f5 35      mov      0x35, A
-0813     e4         clr      A
-0814     f5 36      mov      0x36, A
-0816     af 35      mov      R7, 0x35
-0818     12 09 79   lcall    0x0979
-081B     af 35      mov      R7, 0x35
-081D     12 14 d4   lcall    0x14d4
-0820     80 16      sjmp     0x0838
-0822     90 15 04   mov      DPTR, #0x1504
-0825     e0         movx     A, @DPTR
-0826     f5 37      mov      0x37, A
-0828     e5 36      mov      A, 0x36
-082A     60 0c      jz       0x0838
-082C     af 35      mov      R7, 0x35
-082E     12 09 50   lcall    0x0950
-0831     af 35      mov      R7, 0x35
-0833     12 14 da   lcall    0x14da
-0836     15 36      dec      0x36
-0838     90 15 00   mov      DPTR, #0x1500
-083B     e0         movx     A, @DPTR
-083C     20 e4 03   jb       0xe4, 0x0842
-083F     30 6d 08   jnb      0x6d, 0x084a
-0842     12 09 02   lcall    0x0902
-0845     ef         mov      A, R7
-0846     64 01      xrl      A, #0x1
-0848     60 bc      jz       0x0806
-084A     c2 8e      clr      0x8e
-084C     c2 8f      clr      0x8f
-084E     d2 ab      setb     0xab
-0850     12 05 ef   lcall    0x05ef
-0853     12 05 fa   lcall    0x05fa
-0856     02 14 e0   ljmp     0x14e0
+0806     90 15 00 mov      DPTR, #0x1500
+0809     e0 - -   movx     A, @DPTR
+080A     30 e3 15 jnb      0xe3, 0x0822
+080D     90 15 04 mov      DPTR, #0x1504
+0810     e0 - -   movx     A, @DPTR
+0811     f5 35 -  mov      0x35, A
+0813     e4 - -   clr      A
+0814     f5 36 -  mov      0x36, A
+0816     af 35 -  mov      R7, 0x35
+0818     12 09 79 lcall    0x0979
+081B     af 35 -  mov      R7, 0x35
+081D     12 14 d4 lcall    0x14d4
+0820     80 16 -  sjmp     0x0838
+0822     90 15 04 mov      DPTR, #0x1504
+0825     e0 - -   movx     A, @DPTR
+0826     f5 37 -  mov      0x37, A
+0828     e5 36 -  mov      A, 0x36
+082A     60 0c -  jz       0x0838
+082C     af 35 -  mov      R7, 0x35
+082E     12 09 50 lcall    0x0950
+0831     af 35 -  mov      R7, 0x35
+0833     12 14 da lcall    0x14da
+0836     15 36 -  dec      0x36
+0838     90 15 00 mov      DPTR, #0x1500
+083B     e0 - -   movx     A, @DPTR
+083C     20 e4 03 jb       0xe4, 0x0842
+083F     30 6d 08 jnb      0x6d, 0x084a
+0842     12 09 02 lcall    0x0902
+0845     ef - -   mov      A, R7
+0846     64 01 -  xrl      A, #0x1
+0848     60 bc -  jz       0x0806
+084A     c2 8e -  clr      0x8e
+084C     c2 8f -  clr      0x8f
+084E     d2 ab -  setb     0xab
+0850     12 05 ef lcall    0x05ef
+0853     12 05 fa lcall    0x05fa
+0856     02 14 e0 ljmp     0x14e0

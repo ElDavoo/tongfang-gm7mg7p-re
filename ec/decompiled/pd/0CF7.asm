@@ -4,19 +4,19 @@
 ; This is the machine code. The decompiled C for this address is 0CF7.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-0CF7     a3         inc      DPTR
-0CF8     f8         mov      R0, A
-0CF9     e0         movx     A, @DPTR
-0CFA     c5 f0      xch      A, B
-0CFC     25 f0      add      A, B
-0CFE     f0         movx     @DPTR, A
-0CFF     e5 82      mov      A, DPL
-0D01     15 82      dec      DPL
-0D03     70 02      jnz      0x0d07
-0D05     15 83      dec      DPH
-0D07     e0         movx     A, @DPTR
-0D08     c8         xch      A, R0
-0D09     38         addc     A, R0
-0D0A     f0         movx     @DPTR, A
-0D0B     e8         mov      A, R0
-0D0C     22         ret      
+0CF7     a3 - -   inc      DPTR
+0CF8     f8 - -   mov      R0, A
+0CF9     e0 - -   movx     A, @DPTR
+0CFA     c5 f0 -  xch      A, B
+0CFC     25 f0 -  add      A, B
+0CFE     f0 - -   movx     @DPTR, A
+0CFF     e5 82 -  mov      A, DPL
+0D01     15 82 -  dec      DPL
+0D03     70 02 -  jnz      0x0d07
+0D05     15 83 -  dec      DPH
+0D07     e0 - -   movx     A, @DPTR
+0D08     c8 - -   xch      A, R0
+0D09     38 - -   addc     A, R0
+0D0A     f0 - -   movx     @DPTR, A
+0D0B     e8 - -   mov      A, R0
+0D0C     22 - -   ret      

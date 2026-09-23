@@ -4,126 +4,126 @@
 ; This is the machine code. The decompiled C for this address is A000.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-A000     f0         movx     @DPTR, A
-A001     77 a4      mov      @R1, #0xa4
-A003     24 e2      add      A, #0xe2
-A005     f5 82      mov      DPL, A
-A007     e4         clr      A
-A008     34 08      addc     A, #0x8
-A00A     f5 83      mov      DPH, A
-A00C     e0         movx     A, @DPTR
-A00D     b4 04 04   cjne     A, #0x4, 0xa014
-A010     7f 01      mov      R7, #0x1
-A012     80 02      sjmp     0xa016
-A014     7f 00      mov      R7, #0x0
-A016     90 07 df   mov      DPTR, #0x7df
-A019     12 b2 a6   lcall    0xb2a6
-A01C     78 07      mov      R0, #0x7
-A01E     12 0f 1f   lcall    0x0f1f
-A021     ef         mov      A, R7
-A022     54 0f      anl      A, #0xf
-A024     ff         mov      R7, A
-A025     e4         clr      A
-A026     fe         mov      R6, A
-A027     fd         mov      R5, A
-A028     fc         mov      R4, A
-A029     7b 0f      mov      R3, #0xf
-A02B     12 b2 4d   lcall    0xb24d
-A02E     70 04      jnz      0xa034
-A030     7f 01      mov      R7, #0x1
-A032     80 02      sjmp     0xa036
-A034     7f 00      mov      R7, #0x0
-A036     90 07 e0   mov      DPTR, #0x7e0
-A039     12 b2 a6   lcall    0xb2a6
-A03C     78 12      mov      R0, #0x12
-A03E     12 0f 1f   lcall    0x0f1f
-A041     ef         mov      A, R7
-A042     54 03      anl      A, #0x3
-A044     ff         mov      R7, A
-A045     90 07 e1   mov      DPTR, #0x7e1
-A048     ef         mov      A, R7
-A049     f0         movx     @DPTR, A
-A04A     e4         clr      A
-A04B     a3         inc      DPTR
-A04C     12 b2 a7   lcall    0xb2a7
-A04F     78 0d      mov      R0, #0xd
-A051     12 0f 1f   lcall    0x0f1f
-A054     ef         mov      A, R7
-A055     54 0f      anl      A, #0xf
-A057     ff         mov      R7, A
-A058     90 07 dc   mov      DPTR, #0x7dc
-A05B     e0         movx     A, @DPTR
-A05C     fe         mov      R6, A
-A05D     70 09      jnz      0xa068
-A05F     12 b2 cd   lcall    0xb2cd
-A062     e4         clr      A
-A063     75 f0 02   mov      B, #0x2
-A066     80 18      sjmp     0xa080
-A068     ee         mov      A, R6
-A069     64 01      xrl      A, #0x1
-A06B     60 04      jz       0xa071
-A06D     ee         mov      A, R6
-A06E     b4 02 09   cjne     A, #0x2, 0xa07a
-A071     12 b2 cd   lcall    0xb2cd
-A074     e4         clr      A
-A075     75 f0 03   mov      B, #0x3
-A078     80 06      sjmp     0xa080
-A07A     12 b2 cd   lcall    0xb2cd
-A07D     e4         clr      A
-A07E     f5 f0      mov      B, A
-A080     12 0d 70   lcall    0x0d70
-A083     90 07 dd   mov      DPTR, #0x7dd
-A086     e0         movx     A, @DPTR
-A087     fe         mov      R6, A
-A088     b4 01 0a   cjne     A, #0x1, 0xa095
-A08B     12 b2 cd   lcall    0xb2cd
-A08E     90 00 02   mov      DPTR, #0x2
-A091     74 3c      mov      A, #0x3c
-A093     80 12      sjmp     0xa0a7
-A095     ee         mov      A, R6
-A096     90 07 d5   mov      DPTR, #0x7d5
-A099     b4 02 07   cjne     A, #0x2, 0xa0a3
-A09C     12 b2 f7   lcall    0xb2f7
-A09F     74 64      mov      A, #0x64
-A0A1     80 04      sjmp     0xa0a7
-A0A3     12 b2 f7   lcall    0xb2f7
-A0A6     e4         clr      A
-A0A7     12 0c 58   lcall    0x0c58
-A0AA     90 07 df   mov      DPTR, #0x7df
-A0AD     e0         movx     A, @DPTR
-A0AE     25 e0      add      A, A
-A0B0     fe         mov      R6, A
-A0B1     90 07 de   mov      DPTR, #0x7de
-A0B4     e0         movx     A, @DPTR
-A0B5     4e         orl      A, R6
-A0B6     fe         mov      R6, A
-A0B7     90 07 e0   mov      DPTR, #0x7e0
-A0BA     e0         movx     A, @DPTR
-A0BB     25 e0      add      A, A
-A0BD     25 e0      add      A, A
-A0BF     4e         orl      A, R6
-A0C0     fe         mov      R6, A
-A0C1     a3         inc      DPTR
-A0C2     e0         movx     A, @DPTR
-A0C3     33         rlc      A
-A0C4     33         rlc      A
-A0C5     33         rlc      A
-A0C6     54 f8      anl      A, #0xf8
-A0C8     4e         orl      A, R6
-A0C9     fe         mov      R6, A
-A0CA     a3         inc      DPTR
-A0CB     e0         movx     A, @DPTR
-A0CC     c4         swap     A
-A0CD     33         rlc      A
-A0CE     54 e0      anl      A, #0xe0
-A0D0     4e         orl      A, R6
-A0D1     fe         mov      R6, A
-A0D2     12 b2 cd   lcall    0xb2cd
-A0D5     90 00 03   mov      DPTR, #0x3
-A0D8     ee         mov      A, R6
-A0D9     12 0c 58   lcall    0x0c58
-A0DC     90 00 04   mov      DPTR, #0x4
-A0DF     ef         mov      A, R7
-A0E0     12 0c 58   lcall    0x0c58
-A0E3     7f 00      mov      R7, #0x0
-A0E5     22         ret      
+A000     f0 - -   movx     @DPTR, A
+A001     77 a4 -  mov      @R1, #0xa4
+A003     24 e2 -  add      A, #0xe2
+A005     f5 82 -  mov      DPL, A
+A007     e4 - -   clr      A
+A008     34 08 -  addc     A, #0x8
+A00A     f5 83 -  mov      DPH, A
+A00C     e0 - -   movx     A, @DPTR
+A00D     b4 04 04 cjne     A, #0x4, 0xa014
+A010     7f 01 -  mov      R7, #0x1
+A012     80 02 -  sjmp     0xa016
+A014     7f 00 -  mov      R7, #0x0
+A016     90 07 df mov      DPTR, #0x7df
+A019     12 b2 a6 lcall    0xb2a6
+A01C     78 07 -  mov      R0, #0x7
+A01E     12 0f 1f lcall    0x0f1f
+A021     ef - -   mov      A, R7
+A022     54 0f -  anl      A, #0xf
+A024     ff - -   mov      R7, A
+A025     e4 - -   clr      A
+A026     fe - -   mov      R6, A
+A027     fd - -   mov      R5, A
+A028     fc - -   mov      R4, A
+A029     7b 0f -  mov      R3, #0xf
+A02B     12 b2 4d lcall    0xb24d
+A02E     70 04 -  jnz      0xa034
+A030     7f 01 -  mov      R7, #0x1
+A032     80 02 -  sjmp     0xa036
+A034     7f 00 -  mov      R7, #0x0
+A036     90 07 e0 mov      DPTR, #0x7e0
+A039     12 b2 a6 lcall    0xb2a6
+A03C     78 12 -  mov      R0, #0x12
+A03E     12 0f 1f lcall    0x0f1f
+A041     ef - -   mov      A, R7
+A042     54 03 -  anl      A, #0x3
+A044     ff - -   mov      R7, A
+A045     90 07 e1 mov      DPTR, #0x7e1
+A048     ef - -   mov      A, R7
+A049     f0 - -   movx     @DPTR, A
+A04A     e4 - -   clr      A
+A04B     a3 - -   inc      DPTR
+A04C     12 b2 a7 lcall    0xb2a7
+A04F     78 0d -  mov      R0, #0xd
+A051     12 0f 1f lcall    0x0f1f
+A054     ef - -   mov      A, R7
+A055     54 0f -  anl      A, #0xf
+A057     ff - -   mov      R7, A
+A058     90 07 dc mov      DPTR, #0x7dc
+A05B     e0 - -   movx     A, @DPTR
+A05C     fe - -   mov      R6, A
+A05D     70 09 -  jnz      0xa068
+A05F     12 b2 cd lcall    0xb2cd
+A062     e4 - -   clr      A
+A063     75 f0 02 mov      B, #0x2
+A066     80 18 -  sjmp     0xa080
+A068     ee - -   mov      A, R6
+A069     64 01 -  xrl      A, #0x1
+A06B     60 04 -  jz       0xa071
+A06D     ee - -   mov      A, R6
+A06E     b4 02 09 cjne     A, #0x2, 0xa07a
+A071     12 b2 cd lcall    0xb2cd
+A074     e4 - -   clr      A
+A075     75 f0 03 mov      B, #0x3
+A078     80 06 -  sjmp     0xa080
+A07A     12 b2 cd lcall    0xb2cd
+A07D     e4 - -   clr      A
+A07E     f5 f0 -  mov      B, A
+A080     12 0d 70 lcall    0x0d70
+A083     90 07 dd mov      DPTR, #0x7dd
+A086     e0 - -   movx     A, @DPTR
+A087     fe - -   mov      R6, A
+A088     b4 01 0a cjne     A, #0x1, 0xa095
+A08B     12 b2 cd lcall    0xb2cd
+A08E     90 00 02 mov      DPTR, #0x2
+A091     74 3c -  mov      A, #0x3c
+A093     80 12 -  sjmp     0xa0a7
+A095     ee - -   mov      A, R6
+A096     90 07 d5 mov      DPTR, #0x7d5
+A099     b4 02 07 cjne     A, #0x2, 0xa0a3
+A09C     12 b2 f7 lcall    0xb2f7
+A09F     74 64 -  mov      A, #0x64
+A0A1     80 04 -  sjmp     0xa0a7
+A0A3     12 b2 f7 lcall    0xb2f7
+A0A6     e4 - -   clr      A
+A0A7     12 0c 58 lcall    0x0c58
+A0AA     90 07 df mov      DPTR, #0x7df
+A0AD     e0 - -   movx     A, @DPTR
+A0AE     25 e0 -  add      A, A
+A0B0     fe - -   mov      R6, A
+A0B1     90 07 de mov      DPTR, #0x7de
+A0B4     e0 - -   movx     A, @DPTR
+A0B5     4e - -   orl      A, R6
+A0B6     fe - -   mov      R6, A
+A0B7     90 07 e0 mov      DPTR, #0x7e0
+A0BA     e0 - -   movx     A, @DPTR
+A0BB     25 e0 -  add      A, A
+A0BD     25 e0 -  add      A, A
+A0BF     4e - -   orl      A, R6
+A0C0     fe - -   mov      R6, A
+A0C1     a3 - -   inc      DPTR
+A0C2     e0 - -   movx     A, @DPTR
+A0C3     33 - -   rlc      A
+A0C4     33 - -   rlc      A
+A0C5     33 - -   rlc      A
+A0C6     54 f8 -  anl      A, #0xf8
+A0C8     4e - -   orl      A, R6
+A0C9     fe - -   mov      R6, A
+A0CA     a3 - -   inc      DPTR
+A0CB     e0 - -   movx     A, @DPTR
+A0CC     c4 - -   swap     A
+A0CD     33 - -   rlc      A
+A0CE     54 e0 -  anl      A, #0xe0
+A0D0     4e - -   orl      A, R6
+A0D1     fe - -   mov      R6, A
+A0D2     12 b2 cd lcall    0xb2cd
+A0D5     90 00 03 mov      DPTR, #0x3
+A0D8     ee - -   mov      A, R6
+A0D9     12 0c 58 lcall    0x0c58
+A0DC     90 00 04 mov      DPTR, #0x4
+A0DF     ef - -   mov      A, R7
+A0E0     12 0c 58 lcall    0x0c58
+A0E3     7f 00 -  mov      R7, #0x0
+A0E5     22 - -   ret      

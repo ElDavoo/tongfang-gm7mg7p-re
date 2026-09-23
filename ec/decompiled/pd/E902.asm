@@ -4,25 +4,25 @@
 ; This is the machine code. The decompiled C for this address is E902.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-E902     12 98 50   lcall    0x9850
-E905     90 00 24   mov      DPTR, #0x24
-E908     74 01      mov      A, #0x1
-E90A     12 0c 13   lcall    0x0c13
-E90D     90 00 21   mov      DPTR, #0x21
-E910     12 0b c4   lcall    0x0bc4
-E913     ff         mov      R7, A
-E914     c3         clr      CY
-E915     94 06      subb     A, #0x6
-E917     50 14      jnc      0xe92d
-E919     ef         mov      A, R7
-E91A     75 f0 03   mov      B, #0x3
-E91D     a4         mul      AB
-E91E     24 32      add      A, #0x32
-E920     f5 82      mov      DPL, A
-E922     e4         clr      A
-E923     34 da      addc     A, #0xda
-E925     f5 83      mov      DPH, A
-E927     12 10 f1   lcall    0x10f1
-E92A     02 12 29   ljmp     0x1229
-E92D     7f 00      mov      R7, #0x0
-E92F     22         ret      
+E902     12 98 50 lcall    0x9850
+E905     90 00 24 mov      DPTR, #0x24
+E908     74 01 -  mov      A, #0x1
+E90A     12 0c 13 lcall    0x0c13
+E90D     90 00 21 mov      DPTR, #0x21
+E910     12 0b c4 lcall    0x0bc4
+E913     ff - -   mov      R7, A
+E914     c3 - -   clr      CY
+E915     94 06 -  subb     A, #0x6
+E917     50 14 -  jnc      0xe92d
+E919     ef - -   mov      A, R7
+E91A     75 f0 03 mov      B, #0x3
+E91D     a4 - -   mul      AB
+E91E     24 32 -  add      A, #0x32
+E920     f5 82 -  mov      DPL, A
+E922     e4 - -   clr      A
+E923     34 da -  addc     A, #0xda
+E925     f5 83 -  mov      DPH, A
+E927     12 10 f1 lcall    0x10f1
+E92A     02 12 29 ljmp     0x1229
+E92D     7f 00 -  mov      R7, #0x0
+E92F     22 - -   ret      

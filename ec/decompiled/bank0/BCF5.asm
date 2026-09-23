@@ -4,15 +4,15 @@
 ; This is the machine code. The decompiled C for this address is BCF5.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-BCF5     e0         movx     A, @DPTR
-BCF6     fe         mov      R6, A
-BCF7     a3         inc      DPTR
-BCF8     e0         movx     A, @DPTR
-BCF9     ff         mov      R7, A
-BCFA     e4         clr      A
-BCFB     fc         mov      R4, A
-BCFC     fd         mov      R5, A
-BCFD     f9         mov      R1, A
-BCFE     f8         mov      R0, A
-BCFF     d3         setb     CY
-BD00     02 70 fa   ljmp     0x70fa
+BCF5     e0 - -   movx     A, @DPTR
+BCF6     fe - -   mov      R6, A
+BCF7     a3 - -   inc      DPTR
+BCF8     e0 - -   movx     A, @DPTR
+BCF9     ff - -   mov      R7, A
+BCFA     e4 - -   clr      A
+BCFB     fc - -   mov      R4, A
+BCFC     fd - -   mov      R5, A
+BCFD     f9 - -   mov      R1, A
+BCFE     f8 - -   mov      R0, A
+BCFF     d3 - -   setb     CY
+BD00     02 70 fa ljmp     0x70fa

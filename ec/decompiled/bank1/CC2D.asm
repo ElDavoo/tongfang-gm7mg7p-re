@@ -6,46 +6,46 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-CC2D     7f 00      mov      R7, #0x0
-CC2F     7e 00      mov      R6, #0x0
-CC31     7d 00      mov      R5, #0x0
-CC33     12 19 8a   lcall    0x198a
-CC36     ef         mov      A, R7
-CC37     60 02      jz       0xcc3b
-CC39     7f 04      mov      R7, #0x4
-CC3B     90 08 34   mov      DPTR, #0x834
-CC3E     12 88 98   lcall    0x8898
-CC41     45 f0      orl      A, B
-CC43     60 02      jz       0xcc47
-CC45     7e 02      mov      R6, #0x2
-CC47     90 03 0e   mov      DPTR, #0x30e
-CC4A     12 88 92   lcall    0x8892
-CC4D     90 36 b0   mov      DPTR, #0x36b0
-CC50     a9 82      mov      R1, DPL
-CC52     aa 83      mov      R2, DPH
-CC54     12 88 5b   lcall    0x885b
-CC57     40 02      jc       0xcc5b
-CC59     7d 01      mov      R5, #0x1
-CC5B     ed         mov      A, R5
-CC5C     2e         add      A, R6
-CC5D     2f         add      A, R7
-CC5E     90 03 95   mov      DPTR, #0x395
-CC61     f0         movx     @DPTR, A
-CC62     90 08 34   mov      DPTR, #0x834
-CC65     12 88 86   lcall    0x8886
-CC68     7c 00      mov      R4, #0x0
-CC6A     7b 15      mov      R3, #0x15
-CC6C     12 a5 e6   lcall    0xa5e6
-CC6F     ea         mov      A, R2
-CC70     60 02      jz       0xcc74
-CC72     79 ff      mov      R1, #0xff
-CC74     e9         mov      A, R1
-CC75     90 03 96   mov      DPTR, #0x396
-CC78     f0         movx     @DPTR, A
-CC79     c4         swap     A
-CC7A     54 0f      anl      A, #0xf
-CC7C     90 cc 85   mov      DPTR, #0xcc85
-CC7F     93         movc     A, @A+DPTR
-CC80     90 03 9a   mov      DPTR, #0x39a
-CC83     f0         movx     @DPTR, A
-CC84     22         ret      
+CC2D     7f 00 -  mov      R7, #0x0
+CC2F     7e 00 -  mov      R6, #0x0
+CC31     7d 00 -  mov      R5, #0x0
+CC33     12 19 8a lcall    0x198a
+CC36     ef - -   mov      A, R7
+CC37     60 02 -  jz       0xcc3b
+CC39     7f 04 -  mov      R7, #0x4
+CC3B     90 08 34 mov      DPTR, #0x834
+CC3E     12 88 98 lcall    0x8898
+CC41     45 f0 -  orl      A, B
+CC43     60 02 -  jz       0xcc47
+CC45     7e 02 -  mov      R6, #0x2
+CC47     90 03 0e mov      DPTR, #0x30e
+CC4A     12 88 92 lcall    0x8892
+CC4D     90 36 b0 mov      DPTR, #0x36b0
+CC50     a9 82 -  mov      R1, DPL
+CC52     aa 83 -  mov      R2, DPH
+CC54     12 88 5b lcall    0x885b
+CC57     40 02 -  jc       0xcc5b
+CC59     7d 01 -  mov      R5, #0x1
+CC5B     ed - -   mov      A, R5
+CC5C     2e - -   add      A, R6
+CC5D     2f - -   add      A, R7
+CC5E     90 03 95 mov      DPTR, #0x395
+CC61     f0 - -   movx     @DPTR, A
+CC62     90 08 34 mov      DPTR, #0x834
+CC65     12 88 86 lcall    0x8886
+CC68     7c 00 -  mov      R4, #0x0
+CC6A     7b 15 -  mov      R3, #0x15
+CC6C     12 a5 e6 lcall    0xa5e6
+CC6F     ea - -   mov      A, R2
+CC70     60 02 -  jz       0xcc74
+CC72     79 ff -  mov      R1, #0xff
+CC74     e9 - -   mov      A, R1
+CC75     90 03 96 mov      DPTR, #0x396
+CC78     f0 - -   movx     @DPTR, A
+CC79     c4 - -   swap     A
+CC7A     54 0f -  anl      A, #0xf
+CC7C     90 cc 85 mov      DPTR, #0xcc85
+CC7F     93 - -   movc     A, @A+DPTR
+CC80     90 03 9a mov      DPTR, #0x39a
+CC83     f0 - -   movx     @DPTR, A
+CC84     22 - -   ret      

@@ -6,101 +6,101 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-43A5     ce         xch      A, R6
-43A6     ef         mov      A, R7
-43A7     ce         xch      A, R6
-43A8     ee         mov      A, R6
-43A9     64 02      xrl      A, #0x2
-43AB     70 03      jnz      0x43b0
-43AD     02 44 5d   ljmp     0x445d
-43B0     ee         mov      A, R6
-43B1     75 f0 0f   mov      B, #0xf
-43B4     a4         mul      AB
-43B5     24 cc      add      A, #0xcc
-43B7     f5 82      mov      DPL, A
-43B9     e4         clr      A
-43BA     34 49      addc     A, #0x49
-43BC     f5 83      mov      DPH, A
-43BE     e4         clr      A
-43BF     93         movc     A, @A+DPTR
-43C0     fc         mov      R4, A
-43C1     74 01      mov      A, #0x1
-43C3     93         movc     A, @A+DPTR
-43C4     fd         mov      R5, A
-43C5     f5 82      mov      DPL, A
-43C7     8c 83      mov      DPH, R4
-43C9     e0         movx     A, @DPTR
-43CA     f5 65      mov      0x65, A
-43CC     12 4a 83   lcall    0x4a83
-43CF     e0         movx     A, @DPTR
-43D0     44 02      orl      A, #0x2
-43D2     f0         movx     @DPTR, A
-43D3     12 4a 83   lcall    0x4a83
-43D6     e0         movx     A, @DPTR
-43D7     54 fd      anl      A, #0xfd
-43D9     f0         movx     @DPTR, A
-43DA     8d 82      mov      DPL, R5
-43DC     8c 83      mov      DPH, R4
-43DE     74 fe      mov      A, #0xfe
-43E0     f0         movx     @DPTR, A
-43E1     12 4b 37   lcall    0x4b37
-43E4     12 4a 69   lcall    0x4a69
-43E7     74 40      mov      A, #0x40
-43E9     12 4b 29   lcall    0x4b29
-43EC     12 4a 69   lcall    0x4a69
-43EF     74 40      mov      A, #0x40
-43F1     f0         movx     @DPTR, A
-43F2     12 43 97   lcall    0x4397
-43F5     ee         mov      A, R6
-43F6     75 f0 0f   mov      B, #0xf
-43F9     a4         mul      AB
-43FA     24 d6      add      A, #0xd6
-43FC     f5 82      mov      DPL, A
-43FE     e4         clr      A
-43FF     34 49      addc     A, #0x49
-4401     12 4a 69   lcall    0x4a69
-4404     c0 83      push     DPH
-4406     c0 82      push     DPL
-4408     e0         movx     A, @DPTR
-4409     ff         mov      R7, A
-440A     ee         mov      A, R6
-440B     75 f0 0f   mov      B, #0xf
-440E     a4         mul      AB
-440F     24 d8      add      A, #0xd8
-4411     f5 82      mov      DPL, A
-4413     e4         clr      A
-4414     34 49      addc     A, #0x49
-4416     f5 83      mov      DPH, A
-4418     e4         clr      A
-4419     93         movc     A, @A+DPTR
-441A     fd         mov      R5, A
-441B     ef         mov      A, R7
-441C     4d         orl      A, R5
-441D     d0 82      pop      DPL
-441F     d0 83      pop      DPH
-4421     f0         movx     @DPTR, A
-4422     12 43 97   lcall    0x4397
-4425     12 4b 37   lcall    0x4b37
-4428     12 4a 69   lcall    0x4a69
-442B     e4         clr      A
-442C     12 4b 29   lcall    0x4b29
-442F     12 4a 69   lcall    0x4a69
-4432     e4         clr      A
-4433     f0         movx     @DPTR, A
-4434     ee         mov      A, R6
-4435     12 4a 77   lcall    0x4a77
-4438     12 4a 69   lcall    0x4a69
-443B     74 02      mov      A, #0x2
-443D     f0         movx     @DPTR, A
-443E     12 4b 02   lcall    0x4b02
-4441     12 4a 69   lcall    0x4a69
-4444     74 03      mov      A, #0x3
-4446     f0         movx     @DPTR, A
-4447     12 43 97   lcall    0x4397
-444A     12 4b 02   lcall    0x4b02
-444D     12 4a 69   lcall    0x4a69
-4450     74 07      mov      A, #0x7
-4452     f0         movx     @DPTR, A
-4453     ee         mov      A, R6
-4454     12 4a 77   lcall    0x4a77
-4457     12 4a 4d   lcall    0x4a4d
+43A5     ce - -   xch      A, R6
+43A6     ef - -   mov      A, R7
+43A7     ce - -   xch      A, R6
+43A8     ee - -   mov      A, R6
+43A9     64 02 -  xrl      A, #0x2
+43AB     70 03 -  jnz      0x43b0
+43AD     02 44 5d ljmp     0x445d
+43B0     ee - -   mov      A, R6
+43B1     75 f0 0f mov      B, #0xf
+43B4     a4 - -   mul      AB
+43B5     24 cc -  add      A, #0xcc
+43B7     f5 82 -  mov      DPL, A
+43B9     e4 - -   clr      A
+43BA     34 49 -  addc     A, #0x49
+43BC     f5 83 -  mov      DPH, A
+43BE     e4 - -   clr      A
+43BF     93 - -   movc     A, @A+DPTR
+43C0     fc - -   mov      R4, A
+43C1     74 01 -  mov      A, #0x1
+43C3     93 - -   movc     A, @A+DPTR
+43C4     fd - -   mov      R5, A
+43C5     f5 82 -  mov      DPL, A
+43C7     8c 83 -  mov      DPH, R4
+43C9     e0 - -   movx     A, @DPTR
+43CA     f5 65 -  mov      0x65, A
+43CC     12 4a 83 lcall    0x4a83
+43CF     e0 - -   movx     A, @DPTR
+43D0     44 02 -  orl      A, #0x2
+43D2     f0 - -   movx     @DPTR, A
+43D3     12 4a 83 lcall    0x4a83
+43D6     e0 - -   movx     A, @DPTR
+43D7     54 fd -  anl      A, #0xfd
+43D9     f0 - -   movx     @DPTR, A
+43DA     8d 82 -  mov      DPL, R5
+43DC     8c 83 -  mov      DPH, R4
+43DE     74 fe -  mov      A, #0xfe
+43E0     f0 - -   movx     @DPTR, A
+43E1     12 4b 37 lcall    0x4b37
+43E4     12 4a 69 lcall    0x4a69
+43E7     74 40 -  mov      A, #0x40
+43E9     12 4b 29 lcall    0x4b29
+43EC     12 4a 69 lcall    0x4a69
+43EF     74 40 -  mov      A, #0x40
+43F1     f0 - -   movx     @DPTR, A
+43F2     12 43 97 lcall    0x4397
+43F5     ee - -   mov      A, R6
+43F6     75 f0 0f mov      B, #0xf
+43F9     a4 - -   mul      AB
+43FA     24 d6 -  add      A, #0xd6
+43FC     f5 82 -  mov      DPL, A
+43FE     e4 - -   clr      A
+43FF     34 49 -  addc     A, #0x49
+4401     12 4a 69 lcall    0x4a69
+4404     c0 83 -  push     DPH
+4406     c0 82 -  push     DPL
+4408     e0 - -   movx     A, @DPTR
+4409     ff - -   mov      R7, A
+440A     ee - -   mov      A, R6
+440B     75 f0 0f mov      B, #0xf
+440E     a4 - -   mul      AB
+440F     24 d8 -  add      A, #0xd8
+4411     f5 82 -  mov      DPL, A
+4413     e4 - -   clr      A
+4414     34 49 -  addc     A, #0x49
+4416     f5 83 -  mov      DPH, A
+4418     e4 - -   clr      A
+4419     93 - -   movc     A, @A+DPTR
+441A     fd - -   mov      R5, A
+441B     ef - -   mov      A, R7
+441C     4d - -   orl      A, R5
+441D     d0 82 -  pop      DPL
+441F     d0 83 -  pop      DPH
+4421     f0 - -   movx     @DPTR, A
+4422     12 43 97 lcall    0x4397
+4425     12 4b 37 lcall    0x4b37
+4428     12 4a 69 lcall    0x4a69
+442B     e4 - -   clr      A
+442C     12 4b 29 lcall    0x4b29
+442F     12 4a 69 lcall    0x4a69
+4432     e4 - -   clr      A
+4433     f0 - -   movx     @DPTR, A
+4434     ee - -   mov      A, R6
+4435     12 4a 77 lcall    0x4a77
+4438     12 4a 69 lcall    0x4a69
+443B     74 02 -  mov      A, #0x2
+443D     f0 - -   movx     @DPTR, A
+443E     12 4b 02 lcall    0x4b02
+4441     12 4a 69 lcall    0x4a69
+4444     74 03 -  mov      A, #0x3
+4446     f0 - -   movx     @DPTR, A
+4447     12 43 97 lcall    0x4397
+444A     12 4b 02 lcall    0x4b02
+444D     12 4a 69 lcall    0x4a69
+4450     74 07 -  mov      A, #0x7
+4452     f0 - -   movx     @DPTR, A
+4453     ee - -   mov      A, R6
+4454     12 4a 77 lcall    0x4a77
+4457     12 4a 4d lcall    0x4a4d

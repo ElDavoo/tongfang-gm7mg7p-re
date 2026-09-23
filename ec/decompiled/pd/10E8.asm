@@ -4,12 +4,12 @@
 ; This is the machine code. The decompiled C for this address is 10E8.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-10E8     eb         mov      A, R3
-10E9     f0         movx     @DPTR, A
-10EA     a3         inc      DPTR
-10EB     ea         mov      A, R2
-10EC     f0         movx     @DPTR, A
-10ED     a3         inc      DPTR
-10EE     e9         mov      A, R1
-10EF     f0         movx     @DPTR, A
-10F0     22         ret      
+10E8     eb - -   mov      A, R3
+10E9     f0 - -   movx     @DPTR, A
+10EA     a3 - -   inc      DPTR
+10EB     ea - -   mov      A, R2
+10EC     f0 - -   movx     @DPTR, A
+10ED     a3 - -   inc      DPTR
+10EE     e9 - -   mov      A, R1
+10EF     f0 - -   movx     @DPTR, A
+10F0     22 - -   ret      

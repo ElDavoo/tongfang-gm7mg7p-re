@@ -9,7 +9,7 @@
 void FUN_CODE_14e6(void)
 
 {
-  bl51_bank_select_0(FUN_CODE_d57b);
+  bl51_bank_select_0(read_xdata_0400_plus_r7);
   return;
 }
 

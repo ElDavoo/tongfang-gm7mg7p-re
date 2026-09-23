@@ -9,7 +9,7 @@
 void FUN_CODE_dea5(void)
 
 {
-  FUN_CODE_ac6d();
+  set_0681_bit7();
   DAT_EXTMEM_0680 = 4;
   DAT_EXTMEM_0561 = 0;
   if ((DAT_EXTMEM_054c + 1 >> 2 & 1) != 1) {

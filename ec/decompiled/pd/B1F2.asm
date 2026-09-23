@@ -4,6 +4,6 @@
 ; This is the machine code. The decompiled C for this address is B1F2.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-B1F2     12 10 c8   lcall    0x10c8
-B1F5     74 01      mov      A, #0x1
-B1F7     02 0c 46   ljmp     0x0c46
+B1F2     12 10 c8 lcall    0x10c8
+B1F5     74 01 -  mov      A, #0x1
+B1F7     02 0c 46 ljmp     0x0c46

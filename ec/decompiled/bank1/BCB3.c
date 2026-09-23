@@ -26,11 +26,11 @@ void FUN_CODE_bcb3(void)
         cVar1 = DAT_EXTMEM_0567 - 0x13;
         DAT_EXTMEM_0567 = bVar2;
         if (bVar2 < 0x14) {
-          FUN_CODE_bd20(cVar1);
+          clear_0834_word_when_nonzero(cVar1);
           return;
         }
         DAT_EXTMEM_0494 = DAT_EXTMEM_0494 | 0x10;
-        FUN_CODE_bd10();
+        mask_0491_with_c0();
         return;
       }
     }
@@ -46,7 +46,7 @@ void FUN_CODE_bcb3(void)
       DAT_EXTMEM_0567 = bVar2;
     }
   }
-  FUN_CODE_bd20(bVar2);
+  clear_0834_word_when_nonzero(bVar2);
   return;
 }
 

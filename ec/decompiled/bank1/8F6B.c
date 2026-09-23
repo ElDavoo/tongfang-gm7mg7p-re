@@ -13,7 +13,7 @@ void FUN_CODE_8f6b(char param_1)
   
   if (DAT_EXTMEM_06c2 == '\0') {
     if ((DAT_EXTMEM_0801 & 0x40) != 0) {
-      FUN_CODE_1984();
+      trampoline_to_c10c();
       if ((param_1 == '\0') || ((DAT_EXTMEM_0472 & 0x20) != 0)) goto LAB_CODE_8fbe;
       FUN_CODE_159a();
       bVar1 = DAT_EXTMEM_06e1;
@@ -24,9 +24,9 @@ void FUN_CODE_8f6b(char param_1)
           if (((DAT_EXTMEM_06e6 == '\x03') || ((DAT_EXTMEM_0472 & 2) != 0)) ||
              ((DAT_EXTMEM_0472 & 8) != 0)) {
             if ((bVar1 & 4) != 0) {
-              FUN_CODE_1768();
-              FUN_CODE_a57e(9);
-              FUN_CODE_1762();
+              trampoline_to_c209();
+              write_0_to_200b_r5_times_330(9);
+              trampoline_to_c201();
               DAT_EXTMEM_06e1 = DAT_EXTMEM_06e1 & 0xfb;
             }
           }
@@ -35,11 +35,11 @@ void FUN_CODE_8f6b(char param_1)
             DAT_EXTMEM_06ce = 100;
             if ((bVar1 & 0x10) == 0) {
               if (DAT_EXTMEM_0440 == '\0') {
-                FUN_CODE_19f6();
+                load_dptr_c478_tail_jump_1100();
               }
               else {
                 DAT_EXTMEM_06e1 = DAT_EXTMEM_06e1 | 0x10;
-                FUN_CODE_88f0(0x16);
+                push_r5_into_070f_ring_when_gates_pass(0x16);
                 DAT_EXTMEM_06e1 = DAT_EXTMEM_06e1 & 0xfb;
               }
             }
@@ -49,7 +49,7 @@ void FUN_CODE_8f6b(char param_1)
         DAT_EXTMEM_06cf = DAT_EXTMEM_06cf + -1;
         return;
       }
-      FUN_CODE_19a8();
+      trampoline_to_c118();
       bVar1 = DAT_EXTMEM_06e1;
       if (((param_1 == '\0') || ((DAT_EXTMEM_0472 & 2) != 0)) || ((DAT_EXTMEM_0472 & 8) != 0)) {
         DAT_EXTMEM_06e1 = DAT_EXTMEM_06e1 | 4;
@@ -66,7 +66,7 @@ void FUN_CODE_8f6b(char param_1)
       if (((bVar1 & 8) == 0) && (DAT_EXTMEM_0440 != '\0')) {
         DAT_EXTMEM_06e1 = DAT_EXTMEM_06e1 | 8;
         if ((DAT_EXTMEM_07a4 & 1) == 0) {
-          FUN_CODE_88f0(0x19);
+          push_r5_into_070f_ring_when_gates_pass(0x19);
         }
         DAT_EXTMEM_06e1 = DAT_EXTMEM_06e1 | 4;
       }

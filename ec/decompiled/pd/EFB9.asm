@@ -4,22 +4,22 @@
 ; This is the machine code. The decompiled C for this address is EFB9.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-EFB9     90 ff d3   mov      DPTR, #0xffd3
-EFBC     e0         movx     A, @DPTR
-EFBD     54 ef      anl      A, #0xef
-EFBF     f0         movx     @DPTR, A
-EFC0     90 ff d0   mov      DPTR, #0xffd0
-EFC3     74 2e      mov      A, #0x2e
-EFC5     f0         movx     @DPTR, A
-EFC6     a3         inc      DPTR
-EFC7     e4         clr      A
-EFC8     f0         movx     @DPTR, A
-EFC9     90 ff 88   mov      DPTR, #0xff88
-EFCC     e0         movx     A, @DPTR
-EFCD     54 7f      anl      A, #0x7f
-EFCF     f0         movx     @DPTR, A
-EFD0     90 ff e1   mov      DPTR, #0xffe1
-EFD3     e0         movx     A, @DPTR
-EFD4     54 f7      anl      A, #0xf7
-EFD6     f0         movx     @DPTR, A
-EFD7     22         ret      
+EFB9     90 ff d3 mov      DPTR, #0xffd3
+EFBC     e0 - -   movx     A, @DPTR
+EFBD     54 ef -  anl      A, #0xef
+EFBF     f0 - -   movx     @DPTR, A
+EFC0     90 ff d0 mov      DPTR, #0xffd0
+EFC3     74 2e -  mov      A, #0x2e
+EFC5     f0 - -   movx     @DPTR, A
+EFC6     a3 - -   inc      DPTR
+EFC7     e4 - -   clr      A
+EFC8     f0 - -   movx     @DPTR, A
+EFC9     90 ff 88 mov      DPTR, #0xff88
+EFCC     e0 - -   movx     A, @DPTR
+EFCD     54 7f -  anl      A, #0x7f
+EFCF     f0 - -   movx     @DPTR, A
+EFD0     90 ff e1 mov      DPTR, #0xffe1
+EFD3     e0 - -   movx     A, @DPTR
+EFD4     54 f7 -  anl      A, #0xf7
+EFD6     f0 - -   movx     @DPTR, A
+EFD7     22 - -   ret      

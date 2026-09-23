@@ -4,29 +4,29 @@
 ; This is the machine code. The decompiled C for this address is E757.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-E757     90 08 32   mov      DPTR, #0x832
-E75A     ef         mov      A, R7
-E75B     f0         movx     @DPTR, A
-E75C     12 b1 72   lcall    0xb172
-E75F     e0         movx     A, @DPTR
-E760     44 01      orl      A, #0x1
-E762     f0         movx     @DPTR, A
-E763     ed         mov      A, R5
-E764     70 10      jnz      0xe776
-E766     74 b0      mov      A, #0xb0
-E768     2f         add      A, R7
-E769     12 b1 76   lcall    0xb176
-E76C     e0         movx     A, @DPTR
-E76D     54 fb      anl      A, #0xfb
-E76F     12 b1 7d   lcall    0xb17d
-E772     e4         clr      A
-E773     fd         mov      R5, A
-E774     80 0e      sjmp     0xe784
-E776     90 08 32   mov      DPTR, #0x832
-E779     12 b1 72   lcall    0xb172
-E77C     e0         movx     A, @DPTR
-E77D     44 04      orl      A, #0x4
-E77F     12 b1 7d   lcall    0xb17d
-E782     7d 01      mov      R5, #0x1
-E784     12 01 80   lcall    0x0180
-E787     22         ret      
+E757     90 08 32 mov      DPTR, #0x832
+E75A     ef - -   mov      A, R7
+E75B     f0 - -   movx     @DPTR, A
+E75C     12 b1 72 lcall    0xb172
+E75F     e0 - -   movx     A, @DPTR
+E760     44 01 -  orl      A, #0x1
+E762     f0 - -   movx     @DPTR, A
+E763     ed - -   mov      A, R5
+E764     70 10 -  jnz      0xe776
+E766     74 b0 -  mov      A, #0xb0
+E768     2f - -   add      A, R7
+E769     12 b1 76 lcall    0xb176
+E76C     e0 - -   movx     A, @DPTR
+E76D     54 fb -  anl      A, #0xfb
+E76F     12 b1 7d lcall    0xb17d
+E772     e4 - -   clr      A
+E773     fd - -   mov      R5, A
+E774     80 0e -  sjmp     0xe784
+E776     90 08 32 mov      DPTR, #0x832
+E779     12 b1 72 lcall    0xb172
+E77C     e0 - -   movx     A, @DPTR
+E77D     44 04 -  orl      A, #0x4
+E77F     12 b1 7d lcall    0xb17d
+E782     7d 01 -  mov      R5, #0x1
+E784     12 01 80 lcall    0x0180
+E787     22 - -   ret      

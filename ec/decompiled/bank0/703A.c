@@ -22,23 +22,24 @@ void thunk_FUN_CODE_e722(char param_1)
     if (cVar1 == '\0') {
       puVar3 = (undefined1 *)0xa51;
       if (DAT_EXTMEM_0a51 == 0x40) {
-        FUN_CODE_e64a();
+        gate_05_09_then_0f80_bit1_clear();
         if (param_1 != '\0') {
-          FUN_CODE_e624();
+          gate_04_09_then_0f80_bit1_set();
           if (param_1 != '\0') {
-            cVar1 = FUN_CODE_f17e();
-            FUN_CODE_e51e(cVar1 + '\x10');
+            cVar1 = read_0a51_with_r7_from_0a4e();
+            write_ff_fa_r5_r7_to_0f60_63(cVar1 + '\x10');
             if (param_1 != '\0') {
               cVar1 = '\x16';
-              FUN_CODE_e4fe();
+              write_fe_r7_to_0f61_62();
               if (cVar1 != '\0') {
-                uVar2 = FUN_CODE_f189();
+                uVar2 = write_00_to_0f60();
                 *puVar3 = uVar2;
-                FUN_CODE_e453(0,0x10,'\x02' - (((0xef < DAT_EXTMEM_0a51) << 7) >> 7),
-                              DAT_EXTMEM_0a51 + 0x10,0xf,0x62);
-                FUN_CODE_f08b(DAT_EXTMEM_0fa0);
+                copy_bytes_between_two_16bit_bases
+                          (0,0x10,'\x02' - (((0xef < DAT_EXTMEM_0a51) << 7) >> 7),
+                           DAT_EXTMEM_0a51 + 0x10,0xf,0x62);
+                set_0a56_to_0f_60_00_00_00(DAT_EXTMEM_0fa0);
                 cVar1 = '\x01';
-                FUN_CODE_4777(0x12);
+                stage_0a54_0a55_then_dispatch(0x12);
                 if (cVar1 != '\0') {
                   DAT_EXTMEM_0a51 = DAT_EXTMEM_0a51 + 0x20;
                 }

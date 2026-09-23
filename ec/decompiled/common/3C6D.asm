@@ -6,51 +6,51 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-3C6D     90 13 04   mov      DPTR, #0x1304
-3C70     e0         movx     A, @DPTR
-3C71     30 e1 64   jnb      0xe1, 0x3cd8
-3C74     90 13 04   mov      DPTR, #0x1304
-3C77     e0         movx     A, @DPTR
-3C78     30 e3 1a   jnb      0xe3, 0x3c95
-3C7B     e4         clr      A
-3C7C     f5 31      mov      0x31, A
-3C7E     c2 68      clr      0x68
-3C80     90 13 0a   mov      DPTR, #0x130a
-3C83     e0         movx     A, @DPTR
-3C84     f5 30      mov      0x30, A
-3C86     af 30      mov      R7, 0x30
-3C88     12 42 4a   lcall    0x424a
-3C8B     af 30      mov      R7, 0x30
-3C8D     12 15 dc   lcall    0x15dc
-3C90     30 68 42   jnb      0x68, 0x3cd5
-3C93     80 2d      sjmp     0x3cc2
-3C95     12 43 89   lcall    0x4389
-3C98     30 6b 14   jnb      0x6b, 0x3caf
-3C9B     e5 32      mov      A, 0x32
-3C9D     30 e1 05   jnb      0xe1, 0x3ca5
-3CA0     12 15 e2   lcall    0x15e2
-3CA3     80 03      sjmp     0x3ca8
-3CA5     12 15 e8   lcall    0x15e8
-3CA8     c2 6b      clr      0x6b
-3CAA     e4         clr      A
-3CAB     f5 31      mov      0x31, A
-3CAD     80 26      sjmp     0x3cd5
-3CAF     e5 31      mov      A, 0x31
-3CB1     60 1a      jz       0x3ccd
-3CB3     af 30      mov      R7, 0x30
-3CB5     12 41 ed   lcall    0x41ed
-3CB8     af 30      mov      R7, 0x30
-3CBA     12 15 ee   lcall    0x15ee
-3CBD     15 31      dec      0x31
-3CBF     30 68 13   jnb      0x68, 0x3cd5
-3CC2     c2 68      clr      0x68
-3CC4     78 bb      mov      R0, #0xbb
-3CC6     e6         mov      A, @R0
-3CC7     ff         mov      R7, A
-3CC8     12 0a 39   lcall    0x0a39
-3CCB     80 08      sjmp     0x3cd5
-3CCD     12 3d a8   lcall    0x3da8
-3CD0     af 32      mov      R7, 0x32
-3CD2     12 3f a7   lcall    0x3fa7
-3CD5     12 05 f2   lcall    0x05f2
-3CD8     22         ret      
+3C6D     90 13 04 mov      DPTR, #0x1304
+3C70     e0 - -   movx     A, @DPTR
+3C71     30 e1 64 jnb      0xe1, 0x3cd8
+3C74     90 13 04 mov      DPTR, #0x1304
+3C77     e0 - -   movx     A, @DPTR
+3C78     30 e3 1a jnb      0xe3, 0x3c95
+3C7B     e4 - -   clr      A
+3C7C     f5 31 -  mov      0x31, A
+3C7E     c2 68 -  clr      0x68
+3C80     90 13 0a mov      DPTR, #0x130a
+3C83     e0 - -   movx     A, @DPTR
+3C84     f5 30 -  mov      0x30, A
+3C86     af 30 -  mov      R7, 0x30
+3C88     12 42 4a lcall    0x424a
+3C8B     af 30 -  mov      R7, 0x30
+3C8D     12 15 dc lcall    0x15dc
+3C90     30 68 42 jnb      0x68, 0x3cd5
+3C93     80 2d -  sjmp     0x3cc2
+3C95     12 43 89 lcall    0x4389
+3C98     30 6b 14 jnb      0x6b, 0x3caf
+3C9B     e5 32 -  mov      A, 0x32
+3C9D     30 e1 05 jnb      0xe1, 0x3ca5
+3CA0     12 15 e2 lcall    0x15e2
+3CA3     80 03 -  sjmp     0x3ca8
+3CA5     12 15 e8 lcall    0x15e8
+3CA8     c2 6b -  clr      0x6b
+3CAA     e4 - -   clr      A
+3CAB     f5 31 -  mov      0x31, A
+3CAD     80 26 -  sjmp     0x3cd5
+3CAF     e5 31 -  mov      A, 0x31
+3CB1     60 1a -  jz       0x3ccd
+3CB3     af 30 -  mov      R7, 0x30
+3CB5     12 41 ed lcall    0x41ed
+3CB8     af 30 -  mov      R7, 0x30
+3CBA     12 15 ee lcall    0x15ee
+3CBD     15 31 -  dec      0x31
+3CBF     30 68 13 jnb      0x68, 0x3cd5
+3CC2     c2 68 -  clr      0x68
+3CC4     78 bb -  mov      R0, #0xbb
+3CC6     e6 - -   mov      A, @R0
+3CC7     ff - -   mov      R7, A
+3CC8     12 0a 39 lcall    0x0a39
+3CCB     80 08 -  sjmp     0x3cd5
+3CCD     12 3d a8 lcall    0x3da8
+3CD0     af 32 -  mov      R7, 0x32
+3CD2     12 3f a7 lcall    0x3fa7
+3CD5     12 05 f2 lcall    0x05f2
+3CD8     22 - -   ret      

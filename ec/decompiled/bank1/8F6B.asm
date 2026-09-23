@@ -6,82 +6,82 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-8F6B     90 06 c2   mov      DPTR, #0x6c2
-8F6E     e0         movx     A, @DPTR
-8F6F     70 4d      jnz      0x8fbe
-8F71     90 08 01   mov      DPTR, #0x801
-8F74     e0         movx     A, @DPTR
-8F75     54 40      anl      A, #0x40
-8F77     70 02      jnz      0x8f7b
-8F79     80 7e      sjmp     0x8ff9
-8F7B     12 19 84   lcall    0x1984
-8F7E     ef         mov      A, R7
-8F7F     60 3d      jz       0x8fbe
-8F81     90 04 72   mov      DPTR, #0x472
-8F84     e0         movx     A, @DPTR
-8F85     54 20      anl      A, #0x20
-8F87     70 35      jnz      0x8fbe
-8F89     12 15 9a   lcall    0x159a
-8F8C     ef         mov      A, R7
-8F8D     60 73      jz       0x9002
-8F8F     12 19 a8   lcall    0x19a8
-8F92     ef         mov      A, R7
-8F93     60 65      jz       0x8ffa
-8F95     90 04 72   mov      DPTR, #0x472
-8F98     e0         movx     A, @DPTR
-8F99     54 02      anl      A, #0x2
-8F9B     70 5d      jnz      0x8ffa
-8F9D     90 04 72   mov      DPTR, #0x472
-8FA0     e0         movx     A, @DPTR
-8FA1     54 08      anl      A, #0x8
-8FA3     70 55      jnz      0x8ffa
-8FA5     74 05      mov      A, #0x5
-8FA7     90 06 cf   mov      DPTR, #0x6cf
-8FAA     f0         movx     @DPTR, A
-8FAB     90 06 e1   mov      DPTR, #0x6e1
-8FAE     e0         movx     A, @DPTR
-8FAF     54 ef      anl      A, #0xef
-8FB1     f0         movx     @DPTR, A
-8FB2     90 06 ce   mov      DPTR, #0x6ce
-8FB5     e0         movx     A, @DPTR
-8FB6     60 0e      jz       0x8fc6
-8FB8     14         dec      A
-8FB9     90 06 ce   mov      DPTR, #0x6ce
-8FBC     f0         movx     @DPTR, A
-8FBD     22         ret      
-8FBE     90 06 e1   mov      DPTR, #0x6e1
-8FC1     e0         movx     A, @DPTR
-8FC2     54 fb      anl      A, #0xfb
-8FC4     f0         movx     @DPTR, A
-8FC5     22         ret      
-8FC6     74 64      mov      A, #0x64
-8FC8     90 06 cf   mov      DPTR, #0x6cf
-8FCB     f0         movx     @DPTR, A
-8FCC     90 06 ce   mov      DPTR, #0x6ce
-8FCF     f0         movx     @DPTR, A
-8FD0     90 06 e1   mov      DPTR, #0x6e1
-8FD3     e0         movx     A, @DPTR
-8FD4     54 08      anl      A, #0x8
-8FD6     70 21      jnz      0x8ff9
-8FD8     90 04 40   mov      DPTR, #0x440
-8FDB     e0         movx     A, @DPTR
-8FDC     60 1b      jz       0x8ff9
-8FDE     90 06 e1   mov      DPTR, #0x6e1
-8FE1     e0         movx     A, @DPTR
-8FE2     44 08      orl      A, #0x8
-8FE4     f0         movx     @DPTR, A
-8FE5     90 07 a4   mov      DPTR, #0x7a4
-8FE8     e0         movx     A, @DPTR
-8FE9     54 01      anl      A, #0x1
-8FEB     70 05      jnz      0x8ff2
-8FED     7d 19      mov      R5, #0x19
-8FEF     12 88 f0   lcall    0x88f0
-8FF2     90 06 e1   mov      DPTR, #0x6e1
-8FF5     e0         movx     A, @DPTR
-8FF6     44 04      orl      A, #0x4
-8FF8     f0         movx     @DPTR, A
-8FF9     22         ret      
-8FFA     90 06 e1   mov      DPTR, #0x6e1
-8FFD     e0         movx     A, @DPTR
-8FFE     44 04      orl      A, #0x4
-9002     74 05      mov      A, #0x5
+8F6B     90 06 c2 mov      DPTR, #0x6c2
+8F6E     e0 - -   movx     A, @DPTR
+8F6F     70 4d -  jnz      0x8fbe
+8F71     90 08 01 mov      DPTR, #0x801
+8F74     e0 - -   movx     A, @DPTR
+8F75     54 40 -  anl      A, #0x40
+8F77     70 02 -  jnz      0x8f7b
+8F79     80 7e -  sjmp     0x8ff9
+8F7B     12 19 84 lcall    0x1984
+8F7E     ef - -   mov      A, R7
+8F7F     60 3d -  jz       0x8fbe
+8F81     90 04 72 mov      DPTR, #0x472
+8F84     e0 - -   movx     A, @DPTR
+8F85     54 20 -  anl      A, #0x20
+8F87     70 35 -  jnz      0x8fbe
+8F89     12 15 9a lcall    0x159a
+8F8C     ef - -   mov      A, R7
+8F8D     60 73 -  jz       0x9002
+8F8F     12 19 a8 lcall    0x19a8
+8F92     ef - -   mov      A, R7
+8F93     60 65 -  jz       0x8ffa
+8F95     90 04 72 mov      DPTR, #0x472
+8F98     e0 - -   movx     A, @DPTR
+8F99     54 02 -  anl      A, #0x2
+8F9B     70 5d -  jnz      0x8ffa
+8F9D     90 04 72 mov      DPTR, #0x472
+8FA0     e0 - -   movx     A, @DPTR
+8FA1     54 08 -  anl      A, #0x8
+8FA3     70 55 -  jnz      0x8ffa
+8FA5     74 05 -  mov      A, #0x5
+8FA7     90 06 cf mov      DPTR, #0x6cf
+8FAA     f0 - -   movx     @DPTR, A
+8FAB     90 06 e1 mov      DPTR, #0x6e1
+8FAE     e0 - -   movx     A, @DPTR
+8FAF     54 ef -  anl      A, #0xef
+8FB1     f0 - -   movx     @DPTR, A
+8FB2     90 06 ce mov      DPTR, #0x6ce
+8FB5     e0 - -   movx     A, @DPTR
+8FB6     60 0e -  jz       0x8fc6
+8FB8     14 - -   dec      A
+8FB9     90 06 ce mov      DPTR, #0x6ce
+8FBC     f0 - -   movx     @DPTR, A
+8FBD     22 - -   ret      
+8FBE     90 06 e1 mov      DPTR, #0x6e1
+8FC1     e0 - -   movx     A, @DPTR
+8FC2     54 fb -  anl      A, #0xfb
+8FC4     f0 - -   movx     @DPTR, A
+8FC5     22 - -   ret      
+8FC6     74 64 -  mov      A, #0x64
+8FC8     90 06 cf mov      DPTR, #0x6cf
+8FCB     f0 - -   movx     @DPTR, A
+8FCC     90 06 ce mov      DPTR, #0x6ce
+8FCF     f0 - -   movx     @DPTR, A
+8FD0     90 06 e1 mov      DPTR, #0x6e1
+8FD3     e0 - -   movx     A, @DPTR
+8FD4     54 08 -  anl      A, #0x8
+8FD6     70 21 -  jnz      0x8ff9
+8FD8     90 04 40 mov      DPTR, #0x440
+8FDB     e0 - -   movx     A, @DPTR
+8FDC     60 1b -  jz       0x8ff9
+8FDE     90 06 e1 mov      DPTR, #0x6e1
+8FE1     e0 - -   movx     A, @DPTR
+8FE2     44 08 -  orl      A, #0x8
+8FE4     f0 - -   movx     @DPTR, A
+8FE5     90 07 a4 mov      DPTR, #0x7a4
+8FE8     e0 - -   movx     A, @DPTR
+8FE9     54 01 -  anl      A, #0x1
+8FEB     70 05 -  jnz      0x8ff2
+8FED     7d 19 -  mov      R5, #0x19
+8FEF     12 88 f0 lcall    0x88f0
+8FF2     90 06 e1 mov      DPTR, #0x6e1
+8FF5     e0 - -   movx     A, @DPTR
+8FF6     44 04 -  orl      A, #0x4
+8FF8     f0 - -   movx     @DPTR, A
+8FF9     22 - -   ret      
+8FFA     90 06 e1 mov      DPTR, #0x6e1
+8FFD     e0 - -   movx     A, @DPTR
+8FFE     44 04 -  orl      A, #0x4
+9002     74 05 -  mov      A, #0x5

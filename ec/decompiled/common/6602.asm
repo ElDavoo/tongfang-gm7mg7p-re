@@ -6,15 +6,15 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-6602     16         dec      @R0
-6603     5d         anl      A, R5
-6604     40 16      jc       0x661c
-6606     5e         anl      A, R6
-6607     40 16      jc       0x661f
-6609     5f         anl      A, R7
-660A     80 9a      sjmp     0x65a6
-661C     ff         mov      R7, A
-661D     ff         mov      R7, A
-661E     ff         mov      R7, A
-661F     1a         dec      R2
-6620     32         reti     
+6602     16 - -   dec      @R0
+6603     5d - -   anl      A, R5
+6604     40 16 -  jc       0x661c
+6606     5e - -   anl      A, R6
+6607     40 16 -  jc       0x661f
+6609     5f - -   anl      A, R7
+660A     80 9a -  sjmp     0x65a6
+661C     ff - -   mov      R7, A
+661D     ff - -   mov      R7, A
+661E     ff - -   mov      R7, A
+661F     1a - -   dec      R2
+6620     32 - -   reti     

@@ -6,30 +6,30 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-3F68     e5 32      mov      A, 0x32
-3F6A     b4 ff 05   cjne     A, #0xff, 0x3f72
-3F6D     7f 01      mov      R7, #0x1
-3F6F     12 30 fb   lcall    0x30fb
-3F72     78 9b      mov      R0, #0x9b
-3F74     e6         mov      A, @R0
-3F75     60 17      jz       0x3f8e
-3F77     e6         mov      A, @R0
-3F78     24 87      add      A, #0x87
-3F7A     f8         mov      R0, A
-3F7B     74 fd      mov      A, #0xfd
-3F7D     56         anl      A, @R0
-3F7E     f6         mov      @R0, A
-3F7F     78 9b      mov      R0, #0x9b
-3F81     12 43 58   lcall    0x4358
-3F84     78 9b      mov      R0, #0x9b
-3F86     e6         mov      A, @R0
-3F87     14         dec      A
-3F88     ff         mov      R7, A
-3F89     12 2f 85   lcall    0x2f85
-3F8C     80 0a      sjmp     0x3f98
-3F8E     7f 14      mov      R7, #0x14
-3F90     12 0e cc   lcall    0x0ecc
-3F93     7f fc      mov      R7, #0xfc
-3F95     12 2b 6c   lcall    0x2b6c
-3F98     af 32      mov      R7, 0x32
-3F9A     02 16 0c   ljmp     0x160c
+3F68     e5 32 -  mov      A, 0x32
+3F6A     b4 ff 05 cjne     A, #0xff, 0x3f72
+3F6D     7f 01 -  mov      R7, #0x1
+3F6F     12 30 fb lcall    0x30fb
+3F72     78 9b -  mov      R0, #0x9b
+3F74     e6 - -   mov      A, @R0
+3F75     60 17 -  jz       0x3f8e
+3F77     e6 - -   mov      A, @R0
+3F78     24 87 -  add      A, #0x87
+3F7A     f8 - -   mov      R0, A
+3F7B     74 fd -  mov      A, #0xfd
+3F7D     56 - -   anl      A, @R0
+3F7E     f6 - -   mov      @R0, A
+3F7F     78 9b -  mov      R0, #0x9b
+3F81     12 43 58 lcall    0x4358
+3F84     78 9b -  mov      R0, #0x9b
+3F86     e6 - -   mov      A, @R0
+3F87     14 - -   dec      A
+3F88     ff - -   mov      R7, A
+3F89     12 2f 85 lcall    0x2f85
+3F8C     80 0a -  sjmp     0x3f98
+3F8E     7f 14 -  mov      R7, #0x14
+3F90     12 0e cc lcall    0x0ecc
+3F93     7f fc -  mov      R7, #0xfc
+3F95     12 2b 6c lcall    0x2b6c
+3F98     af 32 -  mov      R7, 0x32
+3F9A     02 16 0c ljmp     0x160c

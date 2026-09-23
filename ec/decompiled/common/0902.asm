@@ -6,20 +6,20 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-0902     90 15 00   mov      DPTR, #0x1500
-0905     e0         movx     A, @DPTR
-0906     20 e1 15   jb       0xe1, 0x091e
-0909     30 8f f6   jnb      0x8f, 0x0902
-090C     c2 8e      clr      0x8e
-090E     c2 8f      clr      0x8f
-0910     e0         movx     A, @DPTR
-0911     54 ef      anl      A, #0xef
-0913     f0         movx     @DPTR, A
-0914     e4         clr      A
-0915     ff         mov      R7, A
-0916     12 09 37   lcall    0x0937
-0919     c2 6d      clr      0x6d
-091B     7f 00      mov      R7, #0x0
-091D     22         ret      
-091E     7f 01      mov      R7, #0x1
-0920     22         ret      
+0902     90 15 00 mov      DPTR, #0x1500
+0905     e0 - -   movx     A, @DPTR
+0906     20 e1 15 jb       0xe1, 0x091e
+0909     30 8f f6 jnb      0x8f, 0x0902
+090C     c2 8e -  clr      0x8e
+090E     c2 8f -  clr      0x8f
+0910     e0 - -   movx     A, @DPTR
+0911     54 ef -  anl      A, #0xef
+0913     f0 - -   movx     @DPTR, A
+0914     e4 - -   clr      A
+0915     ff - -   mov      R7, A
+0916     12 09 37 lcall    0x0937
+0919     c2 6d -  clr      0x6d
+091B     7f 00 -  mov      R7, #0x0
+091D     22 - -   ret      
+091E     7f 01 -  mov      R7, #0x1
+0920     22 - -   ret      

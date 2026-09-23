@@ -6,38 +6,38 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-24D1     90 0a 4c   mov      DPTR, #0xa4c
-24D4     ef         mov      A, R7
-24D5     f0         movx     @DPTR, A
-24D6     a3         inc      DPTR
-24D7     ed         mov      A, R5
-24D8     f0         movx     @DPTR, A
-24D9     e0         movx     A, @DPTR
-24DA     fd         mov      R5, A
-24DB     24 6d      add      A, #0x6d
-24DD     f8         mov      R0, A
-24DE     e6         mov      A, @R0
-24DF     fb         mov      R3, A
-24E0     7a 00      mov      R2, #0x0
-24E2     90 0a 4c   mov      DPTR, #0xa4c
-24E5     e0         movx     A, @DPTR
-24E6     fc         mov      R4, A
-24E7     74 01      mov      A, #0x1
-24E9     7e 00      mov      R6, #0x0
-24EB     c8         xch      A, R0
-24EC     ec         mov      A, R4
-24ED     c8         xch      A, R0
-24EE     08         inc      R0
-24EF     80 05      sjmp     0x24f6
-24F1     c3         clr      CY
-24F2     33         rlc      A
-24F3     ce         xch      A, R6
-24F4     33         rlc      A
-24F5     ce         xch      A, R6
-24F6     d8 f9      djnz     R0, 0x24f1
-24F8     ff         mov      R7, A
-24F9     ee         mov      A, R6
-24FA     5a         anl      A, R2
-24FB     fe         mov      R6, A
-24FC     ef         mov      A, R7
-24FD     5b         anl      A, R3
+24D1     90 0a 4c mov      DPTR, #0xa4c
+24D4     ef - -   mov      A, R7
+24D5     f0 - -   movx     @DPTR, A
+24D6     a3 - -   inc      DPTR
+24D7     ed - -   mov      A, R5
+24D8     f0 - -   movx     @DPTR, A
+24D9     e0 - -   movx     A, @DPTR
+24DA     fd - -   mov      R5, A
+24DB     24 6d -  add      A, #0x6d
+24DD     f8 - -   mov      R0, A
+24DE     e6 - -   mov      A, @R0
+24DF     fb - -   mov      R3, A
+24E0     7a 00 -  mov      R2, #0x0
+24E2     90 0a 4c mov      DPTR, #0xa4c
+24E5     e0 - -   movx     A, @DPTR
+24E6     fc - -   mov      R4, A
+24E7     74 01 -  mov      A, #0x1
+24E9     7e 00 -  mov      R6, #0x0
+24EB     c8 - -   xch      A, R0
+24EC     ec - -   mov      A, R4
+24ED     c8 - -   xch      A, R0
+24EE     08 - -   inc      R0
+24EF     80 05 -  sjmp     0x24f6
+24F1     c3 - -   clr      CY
+24F2     33 - -   rlc      A
+24F3     ce - -   xch      A, R6
+24F4     33 - -   rlc      A
+24F5     ce - -   xch      A, R6
+24F6     d8 f9 -  djnz     R0, 0x24f1
+24F8     ff - -   mov      R7, A
+24F9     ee - -   mov      A, R6
+24FA     5a - -   anl      A, R2
+24FB     fe - -   mov      R6, A
+24FC     ef - -   mov      A, R7
+24FD     5b - -   anl      A, R3

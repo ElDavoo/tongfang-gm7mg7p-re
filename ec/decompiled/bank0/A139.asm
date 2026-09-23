@@ -6,53 +6,53 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-A139     12 bc 71   lcall    0xbc71
-A13C     90 0a 4a   mov      DPTR, #0xa4a
-A13F     12 ba f4   lcall    0xbaf4
-A142     90 09 83   mov      DPTR, #0x983
-A145     e0         movx     A, @DPTR
-A146     30 e1 2e   jnb      0xe1, 0xa177
-A149     90 08 a7   mov      DPTR, #0x8a7
-A14C     e0         movx     A, @DPTR
-A14D     70 79      jnz      0xa1c8
-A14F     c3         clr      CY
-A150     90 0a 4b   mov      DPTR, #0xa4b
-A153     e0         movx     A, @DPTR
-A154     94 a0      subb     A, #0xa0
-A156     90 0a 4a   mov      DPTR, #0xa4a
-A159     e0         movx     A, @DPTR
-A15A     94 0f      subb     A, #0xf
-A15C     50 14      jnc      0xa172
-A15E     90 08 a9   mov      DPTR, #0x8a9
-A161     12 ba de   lcall    0xbade
-A164     12 bd 46   lcall    0xbd46
-A167     40 5f      jc       0xa1c8
-A177     12 bc 85   lcall    0xbc85
-A17A     12 bc 8d   lcall    0xbc8d
-A17D     90 0a 4c   mov      DPTR, #0xa4c
-A180     bf c0 09   cjne     R7, #0xc0, 0xa18c
-A183     74 13      mov      A, #0x13
-A185     f0         movx     @DPTR, A
-A186     a3         inc      DPTR
-A187     74 88      mov      A, #0x88
-A189     f0         movx     @DPTR, A
-A18A     80 07      sjmp     0xa193
-A18C     74 2a      mov      A, #0x2a
-A18E     f0         movx     @DPTR, A
-A18F     a3         inc      DPTR
-A190     74 f8      mov      A, #0xf8
-A192     f0         movx     @DPTR, A
-A193     90 0a 4c   mov      DPTR, #0xa4c
-A196     e0         movx     A, @DPTR
-A197     fe         mov      R6, A
-A198     a3         inc      DPTR
-A199     e0         movx     A, @DPTR
-A19A     ff         mov      R7, A
-A19B     d3         setb     CY
-A19C     90 0a 4b   mov      DPTR, #0xa4b
-A19F     e0         movx     A, @DPTR
-A1A0     9f         subb     A, R7
-A1A1     90 0a 4a   mov      DPTR, #0xa4a
-A1A4     e0         movx     A, @DPTR
-A1A5     9e         subb     A, R6
-A1A6     40 20      jc       0xa1c8
+A139     12 bc 71 lcall    0xbc71
+A13C     90 0a 4a mov      DPTR, #0xa4a
+A13F     12 ba f4 lcall    0xbaf4
+A142     90 09 83 mov      DPTR, #0x983
+A145     e0 - -   movx     A, @DPTR
+A146     30 e1 2e jnb      0xe1, 0xa177
+A149     90 08 a7 mov      DPTR, #0x8a7
+A14C     e0 - -   movx     A, @DPTR
+A14D     70 79 -  jnz      0xa1c8
+A14F     c3 - -   clr      CY
+A150     90 0a 4b mov      DPTR, #0xa4b
+A153     e0 - -   movx     A, @DPTR
+A154     94 a0 -  subb     A, #0xa0
+A156     90 0a 4a mov      DPTR, #0xa4a
+A159     e0 - -   movx     A, @DPTR
+A15A     94 0f -  subb     A, #0xf
+A15C     50 14 -  jnc      0xa172
+A15E     90 08 a9 mov      DPTR, #0x8a9
+A161     12 ba de lcall    0xbade
+A164     12 bd 46 lcall    0xbd46
+A167     40 5f -  jc       0xa1c8
+A177     12 bc 85 lcall    0xbc85
+A17A     12 bc 8d lcall    0xbc8d
+A17D     90 0a 4c mov      DPTR, #0xa4c
+A180     bf c0 09 cjne     R7, #0xc0, 0xa18c
+A183     74 13 -  mov      A, #0x13
+A185     f0 - -   movx     @DPTR, A
+A186     a3 - -   inc      DPTR
+A187     74 88 -  mov      A, #0x88
+A189     f0 - -   movx     @DPTR, A
+A18A     80 07 -  sjmp     0xa193
+A18C     74 2a -  mov      A, #0x2a
+A18E     f0 - -   movx     @DPTR, A
+A18F     a3 - -   inc      DPTR
+A190     74 f8 -  mov      A, #0xf8
+A192     f0 - -   movx     @DPTR, A
+A193     90 0a 4c mov      DPTR, #0xa4c
+A196     e0 - -   movx     A, @DPTR
+A197     fe - -   mov      R6, A
+A198     a3 - -   inc      DPTR
+A199     e0 - -   movx     A, @DPTR
+A19A     ff - -   mov      R7, A
+A19B     d3 - -   setb     CY
+A19C     90 0a 4b mov      DPTR, #0xa4b
+A19F     e0 - -   movx     A, @DPTR
+A1A0     9f - -   subb     A, R7
+A1A1     90 0a 4a mov      DPTR, #0xa4a
+A1A4     e0 - -   movx     A, @DPTR
+A1A5     9e - -   subb     A, R6
+A1A6     40 20 -  jc       0xa1c8

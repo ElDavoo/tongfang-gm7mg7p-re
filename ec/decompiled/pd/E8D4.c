@@ -11,10 +11,11 @@ void FUN_CODE_e8d4(byte param_1)
   
   bVar1 = (byte)((ushort)param_1 * 0x17);
   DAT_EXTMEM_07d0 = param_1;
-  FUN_CODE_128d(bVar1 + 0x13,
-                ((char)((ushort)param_1 * 0x17 >> 8) - (((0xec < bVar1) << 7) >> 7)) + '\n',1,0,0,
-                0x17);
-  FUN_CODE_f604(DAT_EXTMEM_07d0);
+  fill_bytes_by_ptr_kind
+            (bVar1 + 0x13,
+             ((char)((ushort)param_1 * 0x17 >> 8) - (((0xec < bVar1) << 7) >> 7)) + '\n',1,0,0,0x17)
+  ;
+  call_e458_then_r4r5r6r7_03120100(DAT_EXTMEM_07d0);
   return;
 }
 

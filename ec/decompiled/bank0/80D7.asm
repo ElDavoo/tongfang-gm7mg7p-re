@@ -6,34 +6,34 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-80D7     90 19 09   mov      DPTR, #0x1909
-80DA     e0         movx     A, @DPTR
-80DB     20 e7 03   jb       0xe7, 0x80e1
-80DE     02 82 74   ljmp     0x8274
-80E1     12 bd ba   lcall    0xbdba
-80E4     12 b9 ea   lcall    0xb9ea
-80E7     90 08 d4   mov      DPTR, #0x8d4
-80EA     ee         mov      A, R6
-80EB     f0         movx     @DPTR, A
-80EC     a3         inc      DPTR
-80ED     ef         mov      A, R7
-80EE     f0         movx     @DPTR, A
-80EF     90 06 04   mov      DPTR, #0x604
-80F2     e0         movx     A, @DPTR
-80F3     90 0a 59   mov      DPTR, #0xa59
-80F6     f0         movx     @DPTR, A
-80F7     90 06 05   mov      DPTR, #0x605
-80FA     12 b9 65   lcall    0xb965
-80FD     90 06 05   mov      DPTR, #0x605
-8100     f0         movx     @DPTR, A
-8101     90 0a 59   mov      DPTR, #0xa59
-8104     e0         movx     A, @DPTR
-8105     90 06 04   mov      DPTR, #0x604
-8108     f0         movx     @DPTR, A
-8109     90 06 10   mov      DPTR, #0x610
-810C     e0         movx     A, @DPTR
-810D     44 04      orl      A, #0x4
-810F     12 ba 3d   lcall    0xba3d
-8112     12 be 88   lcall    0xbe88
-8115     74 83      mov      A, #0x83
-8117     02 82 1f   ljmp     0x821f
+80D7     90 19 09 mov      DPTR, #0x1909
+80DA     e0 - -   movx     A, @DPTR
+80DB     20 e7 03 jb       0xe7, 0x80e1
+80DE     02 82 74 ljmp     0x8274
+80E1     12 bd ba lcall    0xbdba
+80E4     12 b9 ea lcall    0xb9ea
+80E7     90 08 d4 mov      DPTR, #0x8d4
+80EA     ee - -   mov      A, R6
+80EB     f0 - -   movx     @DPTR, A
+80EC     a3 - -   inc      DPTR
+80ED     ef - -   mov      A, R7
+80EE     f0 - -   movx     @DPTR, A
+80EF     90 06 04 mov      DPTR, #0x604
+80F2     e0 - -   movx     A, @DPTR
+80F3     90 0a 59 mov      DPTR, #0xa59
+80F6     f0 - -   movx     @DPTR, A
+80F7     90 06 05 mov      DPTR, #0x605
+80FA     12 b9 65 lcall    0xb965
+80FD     90 06 05 mov      DPTR, #0x605
+8100     f0 - -   movx     @DPTR, A
+8101     90 0a 59 mov      DPTR, #0xa59
+8104     e0 - -   movx     A, @DPTR
+8105     90 06 04 mov      DPTR, #0x604
+8108     f0 - -   movx     @DPTR, A
+8109     90 06 10 mov      DPTR, #0x610
+810C     e0 - -   movx     A, @DPTR
+810D     44 04 -  orl      A, #0x4
+810F     12 ba 3d lcall    0xba3d
+8112     12 be 88 lcall    0xbe88
+8115     74 83 -  mov      A, #0x83
+8117     02 82 1f ljmp     0x821f

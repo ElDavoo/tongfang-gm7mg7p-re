@@ -14,7 +14,7 @@ void FUN_CODE_bfbb(char param_1,byte param_2)
   byte bVar3;
   
   FUN_CODE_c032();
-  cVar2 = FUN_CODE_8898(0x834);
+  cVar2 = read_xdata_pair_to_b_and_a(0x834);
   if (cVar2 == '\0' && param_1 == '\0') {
     return;
   }
@@ -38,9 +38,9 @@ void FUN_CODE_bfbb(char param_1,byte param_2)
     if (!CARRY1(DAT_EXTMEM_04af,bVar1)) {
       DAT_EXTMEM_04af = bVar3;
     }
-    cVar2 = FUN_CODE_8898(0x834,DAT_EXTMEM_04ae,bVar3);
+    cVar2 = read_xdata_pair_to_b_and_a(0x834,DAT_EXTMEM_04ae,bVar3);
     if (cVar2 != '\0' || param_1 != '\0') {
-      FUN_CODE_8886(0x4ae);
+      read_xdata_pair_to_r1r2(0x4ae);
       param_2 = 4;
       bVar3 = DAT_EXTMEM_057b;
       if ((DAT_EXTMEM_0472 & 0x20) != 0) {
@@ -55,7 +55,7 @@ void FUN_CODE_bfbb(char param_1,byte param_2)
       }
     }
     if (((DAT_EXTMEM_0493 >> 6 & 1) == 1) || ((DAT_EXTMEM_0705 & 0x80) != 0)) {
-      FUN_CODE_8886(0x4ae);
+      read_xdata_pair_to_r1r2(0x4ae);
       param_1 = (char)((ushort)DAT_EXTMEM_057d * 0x3c >> 8);
       cVar2 = '\0';
       FUN_CODE_8863((char)((ushort)DAT_EXTMEM_057d * 0x3c),param_1);
@@ -64,7 +64,7 @@ void FUN_CODE_bfbb(char param_1,byte param_2)
         return;
       }
     }
-    cVar2 = FUN_CODE_8898(0x834);
+    cVar2 = read_xdata_pair_to_b_and_a(0x834);
     if (cVar2 != '\0' || param_1 != '\0') {
       DAT_EXTMEM_0494 = DAT_EXTMEM_0494 & 0xf3 | param_2;
     }
@@ -77,8 +77,8 @@ void FUN_CODE_bfbb(char param_1,byte param_2)
   if ((DAT_EXTMEM_0490 & 1) == 1) {
     return;
   }
-  FUN_CODE_888c(0x4ae,0,0);
-  FUN_CODE_888c(0x4be);
+  write_r1r2_to_xdata_pair(0x4ae,0,0);
+  write_r1r2_to_xdata_pair(0x4be);
   return;
 }
 

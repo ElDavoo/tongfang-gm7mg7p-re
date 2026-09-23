@@ -6,152 +6,152 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-717D     75 f0 08   mov      B, #0x8
-7180     75 82 00   mov      DPL, #0x0
-7183     ef         mov      A, R7
-7184     2f         add      A, R7
-7185     ff         mov      R7, A
-7186     ee         mov      A, R6
-7187     33         rlc      A
-7188     fe         mov      R6, A
-7189     cd         xch      A, R5
-718A     33         rlc      A
-718B     cd         xch      A, R5
-718C     cc         xch      A, R4
-718D     33         rlc      A
-718E     cc         xch      A, R4
-718F     c5 82      xch      A, DPL
-7191     33         rlc      A
-7192     c5 82      xch      A, DPL
-7194     9b         subb     A, R3
-7195     ed         mov      A, R5
-7196     9a         subb     A, R2
-7197     ec         mov      A, R4
-7198     99         subb     A, R1
-7199     e5 82      mov      A, DPL
-719B     98         subb     A, R0
-719C     40 0c      jc       0x71aa
-719E     f5 82      mov      DPL, A
-71A0     ee         mov      A, R6
-71A1     9b         subb     A, R3
-71A2     fe         mov      R6, A
-71A3     ed         mov      A, R5
-71A4     9a         subb     A, R2
-71A5     fd         mov      R5, A
-71A6     ec         mov      A, R4
-71A7     99         subb     A, R1
-71A8     fc         mov      R4, A
-71A9     0f         inc      R7
-71AA     d5 f0 d6   djnz     B, 0x7183
-71AD     e4         clr      A
-71AE     ce         xch      A, R6
-71AF     fb         mov      R3, A
-71B0     e4         clr      A
-71B1     cd         xch      A, R5
-71B2     fa         mov      R2, A
-71B3     e4         clr      A
-71B4     cc         xch      A, R4
-71B5     f9         mov      R1, A
-71B6     a8 82      mov      R0, DPL
-71B8     22         ret      
-71B9     b8 00 c1   cjne     R0, #0x0, 0x717d
-71BC     b9 00 59   cjne     R1, #0x0, 0x7218
-71BF     ba 00 2d   cjne     R2, #0x0, 0x71ef
-71C2     ec         mov      A, R4
-71C3     8b f0      mov      B, R3
-71C5     84         div      AB
-71C6     cf         xch      A, R7
-71C7     ce         xch      A, R6
-71C8     cd         xch      A, R5
-71C9     fc         mov      R4, A
-71CA     e5 f0      mov      A, B
-71CC     cb         xch      A, R3
-71CD     f9         mov      R1, A
-71CE     78 18      mov      R0, #0x18
-71D0     ef         mov      A, R7
-71D1     2f         add      A, R7
-71D2     ff         mov      R7, A
-71D3     ee         mov      A, R6
-71D4     33         rlc      A
-71D5     fe         mov      R6, A
-71D6     ed         mov      A, R5
-71D7     33         rlc      A
-71D8     fd         mov      R5, A
-71D9     ec         mov      A, R4
-71DA     33         rlc      A
-71DB     fc         mov      R4, A
-71DC     eb         mov      A, R3
-71DD     33         rlc      A
-71DE     fb         mov      R3, A
-71DF     10 d7 03   jbc      0xd7, 0x71e5
-71E2     99         subb     A, R1
-71E3     40 04      jc       0x71e9
-71E5     eb         mov      A, R3
-71E6     99         subb     A, R1
-71E7     fb         mov      R3, A
-71E8     0f         inc      R7
-71E9     d8 e5      djnz     R0, 0x71d0
-71EB     e4         clr      A
-71EC     f9         mov      R1, A
-71ED     fa         mov      R2, A
-71EE     22         ret      
-71EF     78 18      mov      R0, #0x18
-71F1     ef         mov      A, R7
-71F2     2f         add      A, R7
-71F3     ff         mov      R7, A
-71F4     ee         mov      A, R6
-71F5     33         rlc      A
-71F6     fe         mov      R6, A
-71F7     ed         mov      A, R5
-71F8     33         rlc      A
-71F9     fd         mov      R5, A
-71FA     ec         mov      A, R4
-71FB     33         rlc      A
-71FC     fc         mov      R4, A
-71FD     c9         xch      A, R1
-71FE     33         rlc      A
-71FF     c9         xch      A, R1
-7218     75 f0 10   mov      B, #0x10
-721B     ef         mov      A, R7
-721C     2f         add      A, R7
-721D     ff         mov      R7, A
-721E     ee         mov      A, R6
-721F     33         rlc      A
-7220     fe         mov      R6, A
-7221     ed         mov      A, R5
-7222     33         rlc      A
-7223     fd         mov      R5, A
-7224     cc         xch      A, R4
-7225     33         rlc      A
-7226     cc         xch      A, R4
-7227     c8         xch      A, R0
-7228     33         rlc      A
-7229     c8         xch      A, R0
-722A     10 d7 07   jbc      0xd7, 0x7234
-722D     9b         subb     A, R3
-722E     ec         mov      A, R4
-722F     9a         subb     A, R2
-7230     e8         mov      A, R0
-7231     99         subb     A, R1
-7232     40 0a      jc       0x723e
-7234     ed         mov      A, R5
-7235     9b         subb     A, R3
-7236     fd         mov      R5, A
-7237     ec         mov      A, R4
-7238     9a         subb     A, R2
-7239     fc         mov      R4, A
-723A     e8         mov      A, R0
-723B     99         subb     A, R1
-723C     f8         mov      R0, A
-723D     0f         inc      R7
-723E     d5 f0 da   djnz     B, 0x721b
-7241     e4         clr      A
-7242     cd         xch      A, R5
-7243     fb         mov      R3, A
-7244     e4         clr      A
-7245     cc         xch      A, R4
-7246     fa         mov      R2, A
-7247     e4         clr      A
-7248     c8         xch      A, R0
-7249     f9         mov      R1, A
-724A     22         ret      
+717D     75 f0 08 mov      B, #0x8
+7180     75 82 00 mov      DPL, #0x0
+7183     ef - -   mov      A, R7
+7184     2f - -   add      A, R7
+7185     ff - -   mov      R7, A
+7186     ee - -   mov      A, R6
+7187     33 - -   rlc      A
+7188     fe - -   mov      R6, A
+7189     cd - -   xch      A, R5
+718A     33 - -   rlc      A
+718B     cd - -   xch      A, R5
+718C     cc - -   xch      A, R4
+718D     33 - -   rlc      A
+718E     cc - -   xch      A, R4
+718F     c5 82 -  xch      A, DPL
+7191     33 - -   rlc      A
+7192     c5 82 -  xch      A, DPL
+7194     9b - -   subb     A, R3
+7195     ed - -   mov      A, R5
+7196     9a - -   subb     A, R2
+7197     ec - -   mov      A, R4
+7198     99 - -   subb     A, R1
+7199     e5 82 -  mov      A, DPL
+719B     98 - -   subb     A, R0
+719C     40 0c -  jc       0x71aa
+719E     f5 82 -  mov      DPL, A
+71A0     ee - -   mov      A, R6
+71A1     9b - -   subb     A, R3
+71A2     fe - -   mov      R6, A
+71A3     ed - -   mov      A, R5
+71A4     9a - -   subb     A, R2
+71A5     fd - -   mov      R5, A
+71A6     ec - -   mov      A, R4
+71A7     99 - -   subb     A, R1
+71A8     fc - -   mov      R4, A
+71A9     0f - -   inc      R7
+71AA     d5 f0 d6 djnz     B, 0x7183
+71AD     e4 - -   clr      A
+71AE     ce - -   xch      A, R6
+71AF     fb - -   mov      R3, A
+71B0     e4 - -   clr      A
+71B1     cd - -   xch      A, R5
+71B2     fa - -   mov      R2, A
+71B3     e4 - -   clr      A
+71B4     cc - -   xch      A, R4
+71B5     f9 - -   mov      R1, A
+71B6     a8 82 -  mov      R0, DPL
+71B8     22 - -   ret      
+71B9     b8 00 c1 cjne     R0, #0x0, 0x717d
+71BC     b9 00 59 cjne     R1, #0x0, 0x7218
+71BF     ba 00 2d cjne     R2, #0x0, 0x71ef
+71C2     ec - -   mov      A, R4
+71C3     8b f0 -  mov      B, R3
+71C5     84 - -   div      AB
+71C6     cf - -   xch      A, R7
+71C7     ce - -   xch      A, R6
+71C8     cd - -   xch      A, R5
+71C9     fc - -   mov      R4, A
+71CA     e5 f0 -  mov      A, B
+71CC     cb - -   xch      A, R3
+71CD     f9 - -   mov      R1, A
+71CE     78 18 -  mov      R0, #0x18
+71D0     ef - -   mov      A, R7
+71D1     2f - -   add      A, R7
+71D2     ff - -   mov      R7, A
+71D3     ee - -   mov      A, R6
+71D4     33 - -   rlc      A
+71D5     fe - -   mov      R6, A
+71D6     ed - -   mov      A, R5
+71D7     33 - -   rlc      A
+71D8     fd - -   mov      R5, A
+71D9     ec - -   mov      A, R4
+71DA     33 - -   rlc      A
+71DB     fc - -   mov      R4, A
+71DC     eb - -   mov      A, R3
+71DD     33 - -   rlc      A
+71DE     fb - -   mov      R3, A
+71DF     10 d7 03 jbc      0xd7, 0x71e5
+71E2     99 - -   subb     A, R1
+71E3     40 04 -  jc       0x71e9
+71E5     eb - -   mov      A, R3
+71E6     99 - -   subb     A, R1
+71E7     fb - -   mov      R3, A
+71E8     0f - -   inc      R7
+71E9     d8 e5 -  djnz     R0, 0x71d0
+71EB     e4 - -   clr      A
+71EC     f9 - -   mov      R1, A
+71ED     fa - -   mov      R2, A
+71EE     22 - -   ret      
+71EF     78 18 -  mov      R0, #0x18
+71F1     ef - -   mov      A, R7
+71F2     2f - -   add      A, R7
+71F3     ff - -   mov      R7, A
+71F4     ee - -   mov      A, R6
+71F5     33 - -   rlc      A
+71F6     fe - -   mov      R6, A
+71F7     ed - -   mov      A, R5
+71F8     33 - -   rlc      A
+71F9     fd - -   mov      R5, A
+71FA     ec - -   mov      A, R4
+71FB     33 - -   rlc      A
+71FC     fc - -   mov      R4, A
+71FD     c9 - -   xch      A, R1
+71FE     33 - -   rlc      A
+71FF     c9 - -   xch      A, R1
+7218     75 f0 10 mov      B, #0x10
+721B     ef - -   mov      A, R7
+721C     2f - -   add      A, R7
+721D     ff - -   mov      R7, A
+721E     ee - -   mov      A, R6
+721F     33 - -   rlc      A
+7220     fe - -   mov      R6, A
+7221     ed - -   mov      A, R5
+7222     33 - -   rlc      A
+7223     fd - -   mov      R5, A
+7224     cc - -   xch      A, R4
+7225     33 - -   rlc      A
+7226     cc - -   xch      A, R4
+7227     c8 - -   xch      A, R0
+7228     33 - -   rlc      A
+7229     c8 - -   xch      A, R0
+722A     10 d7 07 jbc      0xd7, 0x7234
+722D     9b - -   subb     A, R3
+722E     ec - -   mov      A, R4
+722F     9a - -   subb     A, R2
+7230     e8 - -   mov      A, R0
+7231     99 - -   subb     A, R1
+7232     40 0a -  jc       0x723e
+7234     ed - -   mov      A, R5
+7235     9b - -   subb     A, R3
+7236     fd - -   mov      R5, A
+7237     ec - -   mov      A, R4
+7238     9a - -   subb     A, R2
+7239     fc - -   mov      R4, A
+723A     e8 - -   mov      A, R0
+723B     99 - -   subb     A, R1
+723C     f8 - -   mov      R0, A
+723D     0f - -   inc      R7
+723E     d5 f0 da djnz     B, 0x721b
+7241     e4 - -   clr      A
+7242     cd - -   xch      A, R5
+7243     fb - -   mov      R3, A
+7244     e4 - -   clr      A
+7245     cc - -   xch      A, R4
+7246     fa - -   mov      R2, A
+7247     e4 - -   clr      A
+7248     c8 - -   xch      A, R0
+7249     f9 - -   mov      R1, A
+724A     22 - -   ret      

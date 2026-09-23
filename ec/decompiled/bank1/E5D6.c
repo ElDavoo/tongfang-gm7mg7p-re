@@ -12,12 +12,12 @@ void FUN_CODE_e5d6(byte param_1,char param_2)
   byte bVar1;
   
   bVar1 = DAT_EXTMEM_031f;
-  FUN_CODE_8886(0x343);
+  read_xdata_pair_to_r1r2(0x343);
   if ((param_2 == '\0') && (((param_1 & 0xe0) == 0 || ((bVar1 & 0xe0) == 0)))) {
     param_1 = 0;
   }
   else {
-    FUN_CODE_a5e6(0);
+    mul_16_round_shift_subtract(0);
   }
   if (DAT_EXTMEM_031d < param_1) {
     DAT_EXTMEM_03aa = 0;

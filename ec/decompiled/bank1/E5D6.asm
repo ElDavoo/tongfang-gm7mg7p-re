@@ -6,69 +6,69 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-E5D6     90 03 1f   mov      DPTR, #0x31f
-E5D9     e0         movx     A, @DPTR
-E5DA     fb         mov      R3, A
-E5DB     90 03 43   mov      DPTR, #0x343
-E5DE     12 88 86   lcall    0x8886
-E5E1     ea         mov      A, R2
-E5E2     70 12      jnz      0xe5f6
-E5E4     e9         mov      A, R1
-E5E5     54 e0      anl      A, #0xe0
-E5E7     60 09      jz       0xe5f2
-E5E9     90 03 1f   mov      DPTR, #0x31f
-E5EC     e0         movx     A, @DPTR
-E5ED     eb         mov      A, R3
-E5EE     54 e0      anl      A, #0xe0
-E5F0     70 04      jnz      0xe5f6
-E5F2     79 00      mov      R1, #0x0
-E5F4     80 05      sjmp     0xe5fb
-E5F6     7c 00      mov      R4, #0x0
-E5F8     12 a5 e6   lcall    0xa5e6
-E5FB     90 03 ba   mov      DPTR, #0x3ba
-E5FE     e0         movx     A, @DPTR
-E5FF     fa         mov      R2, A
-E600     90 03 1d   mov      DPTR, #0x31d
-E603     e0         movx     A, @DPTR
-E604     c3         clr      CY
-E605     99         subb     A, R1
-E606     50 03      jnc      0xe60b
-E608     e4         clr      A
-E609     80 05      sjmp     0xe610
-E60B     c3         clr      CY
-E60C     9a         subb     A, R2
-E60D     50 01      jnc      0xe610
-E60F     e4         clr      A
-E610     90 03 aa   mov      DPTR, #0x3aa
-E613     f0         movx     @DPTR, A
-E614     f5 f0      mov      B, A
-E616     90 04 91   mov      DPTR, #0x491
-E619     e0         movx     A, @DPTR
-E61A     54 c0      anl      A, #0xc0
-E61C     b4 c0 02   cjne     A, #0xc0, 0xe621
-E61F     80 1b      sjmp     0xe63c
-E621     b4 80 02   cjne     A, #0x80, 0xe626
-E624     80 0b      sjmp     0xe631
-E626     90 e9 32   mov      DPTR, #0xe932
-E629     30 f3 19   jnb      0xf3, 0xe645
-E62C     90 e9 b2   mov      DPTR, #0xe9b2
-E62F     80 14      sjmp     0xe645
-E631     90 ea 32   mov      DPTR, #0xea32
-E634     30 f3 0e   jnb      0xf3, 0xe645
-E637     90 ea b2   mov      DPTR, #0xeab2
-E63A     80 09      sjmp     0xe645
-E63C     90 eb 32   mov      DPTR, #0xeb32
-E63F     30 f3 03   jnb      0xf3, 0xe645
-E642     90 eb b2   mov      DPTR, #0xebb2
-E645     ac 83      mov      R4, DPH
-E647     ab 82      mov      R3, DPL
-E649     e5 f0      mov      A, B
-E64B     23         rl       A
-E64C     54 0e      anl      A, #0xe
-E64E     2b         add      A, R3
-E64F     50 03      jnc      0xe654
-E651     fb         mov      R3, A
-E652     0c         inc      R4
-E653     22         ret      
-E654     fb         mov      R3, A
-E655     22         ret      
+E5D6     90 03 1f mov      DPTR, #0x31f
+E5D9     e0 - -   movx     A, @DPTR
+E5DA     fb - -   mov      R3, A
+E5DB     90 03 43 mov      DPTR, #0x343
+E5DE     12 88 86 lcall    0x8886
+E5E1     ea - -   mov      A, R2
+E5E2     70 12 -  jnz      0xe5f6
+E5E4     e9 - -   mov      A, R1
+E5E5     54 e0 -  anl      A, #0xe0
+E5E7     60 09 -  jz       0xe5f2
+E5E9     90 03 1f mov      DPTR, #0x31f
+E5EC     e0 - -   movx     A, @DPTR
+E5ED     eb - -   mov      A, R3
+E5EE     54 e0 -  anl      A, #0xe0
+E5F0     70 04 -  jnz      0xe5f6
+E5F2     79 00 -  mov      R1, #0x0
+E5F4     80 05 -  sjmp     0xe5fb
+E5F6     7c 00 -  mov      R4, #0x0
+E5F8     12 a5 e6 lcall    0xa5e6
+E5FB     90 03 ba mov      DPTR, #0x3ba
+E5FE     e0 - -   movx     A, @DPTR
+E5FF     fa - -   mov      R2, A
+E600     90 03 1d mov      DPTR, #0x31d
+E603     e0 - -   movx     A, @DPTR
+E604     c3 - -   clr      CY
+E605     99 - -   subb     A, R1
+E606     50 03 -  jnc      0xe60b
+E608     e4 - -   clr      A
+E609     80 05 -  sjmp     0xe610
+E60B     c3 - -   clr      CY
+E60C     9a - -   subb     A, R2
+E60D     50 01 -  jnc      0xe610
+E60F     e4 - -   clr      A
+E610     90 03 aa mov      DPTR, #0x3aa
+E613     f0 - -   movx     @DPTR, A
+E614     f5 f0 -  mov      B, A
+E616     90 04 91 mov      DPTR, #0x491
+E619     e0 - -   movx     A, @DPTR
+E61A     54 c0 -  anl      A, #0xc0
+E61C     b4 c0 02 cjne     A, #0xc0, 0xe621
+E61F     80 1b -  sjmp     0xe63c
+E621     b4 80 02 cjne     A, #0x80, 0xe626
+E624     80 0b -  sjmp     0xe631
+E626     90 e9 32 mov      DPTR, #0xe932
+E629     30 f3 19 jnb      0xf3, 0xe645
+E62C     90 e9 b2 mov      DPTR, #0xe9b2
+E62F     80 14 -  sjmp     0xe645
+E631     90 ea 32 mov      DPTR, #0xea32
+E634     30 f3 0e jnb      0xf3, 0xe645
+E637     90 ea b2 mov      DPTR, #0xeab2
+E63A     80 09 -  sjmp     0xe645
+E63C     90 eb 32 mov      DPTR, #0xeb32
+E63F     30 f3 03 jnb      0xf3, 0xe645
+E642     90 eb b2 mov      DPTR, #0xebb2
+E645     ac 83 -  mov      R4, DPH
+E647     ab 82 -  mov      R3, DPL
+E649     e5 f0 -  mov      A, B
+E64B     23 - -   rl       A
+E64C     54 0e -  anl      A, #0xe
+E64E     2b - -   add      A, R3
+E64F     50 03 -  jnc      0xe654
+E651     fb - -   mov      R3, A
+E652     0c - -   inc      R4
+E653     22 - -   ret      
+E654     fb - -   mov      R3, A
+E655     22 - -   ret      

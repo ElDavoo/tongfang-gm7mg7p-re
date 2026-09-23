@@ -50,7 +50,7 @@ char FUN_CODE_2275(undefined1 param_1,undefined1 *param_2,char param_3)
     if (-1 < cVar3) break;
     param_3 = DAT_INTMEM_67;
     FUN_CODE_23f4();
-    FUN_CODE_10f1();
+    zero_xdata_200b();
     uVar9 = 4;
     DAT_INTMEM_66 = ~DAT_EXTMEM_1d04;
     bVar2 = FUN_CODE_2a7b();

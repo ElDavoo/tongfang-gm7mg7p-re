@@ -6,40 +6,40 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-1E30     ef         mov      A, R7
-1E31     64 70      xrl      A, #0x70
-1E33     60 2c      jz       0x1e61
-1E35     ef         mov      A, R7
-1E36     64 71      xrl      A, #0x71
-1E38     60 27      jz       0x1e61
-1E3A     ef         mov      A, R7
-1E3B     64 6b      xrl      A, #0x6b
-1E3D     60 22      jz       0x1e61
-1E3F     ef         mov      A, R7
-1E40     64 6c      xrl      A, #0x6c
-1E42     60 1d      jz       0x1e61
-1E44     ef         mov      A, R7
-1E45     64 69      xrl      A, #0x69
-1E47     60 18      jz       0x1e61
-1E49     ef         mov      A, R7
-1E4A     64 75      xrl      A, #0x75
-1E4C     60 13      jz       0x1e61
-1E4E     ef         mov      A, R7
-1E4F     64 72      xrl      A, #0x72
-1E51     60 0e      jz       0x1e61
-1E53     ef         mov      A, R7
-1E54     64 7d      xrl      A, #0x7d
-1E56     60 09      jz       0x1e61
-1E58     ef         mov      A, R7
-1E59     64 7a      xrl      A, #0x7a
-1E5B     60 04      jz       0x1e61
-1E5D     ef         mov      A, R7
-1E5E     b4 74 03   cjne     A, #0x74, 0x1e64
-1E61     7f 01      mov      R7, #0x1
-1E63     22         ret      
-1E64     ef         mov      A, R7
-1E65     b4 4a 03   cjne     A, #0x4a, 0x1e6b
-1E68     7f 02      mov      R7, #0x2
-1E6A     22         ret      
-1E6B     7f 00      mov      R7, #0x0
-1E6D     22         ret      
+1E30     ef - -   mov      A, R7
+1E31     64 70 -  xrl      A, #0x70
+1E33     60 2c -  jz       0x1e61
+1E35     ef - -   mov      A, R7
+1E36     64 71 -  xrl      A, #0x71
+1E38     60 27 -  jz       0x1e61
+1E3A     ef - -   mov      A, R7
+1E3B     64 6b -  xrl      A, #0x6b
+1E3D     60 22 -  jz       0x1e61
+1E3F     ef - -   mov      A, R7
+1E40     64 6c -  xrl      A, #0x6c
+1E42     60 1d -  jz       0x1e61
+1E44     ef - -   mov      A, R7
+1E45     64 69 -  xrl      A, #0x69
+1E47     60 18 -  jz       0x1e61
+1E49     ef - -   mov      A, R7
+1E4A     64 75 -  xrl      A, #0x75
+1E4C     60 13 -  jz       0x1e61
+1E4E     ef - -   mov      A, R7
+1E4F     64 72 -  xrl      A, #0x72
+1E51     60 0e -  jz       0x1e61
+1E53     ef - -   mov      A, R7
+1E54     64 7d -  xrl      A, #0x7d
+1E56     60 09 -  jz       0x1e61
+1E58     ef - -   mov      A, R7
+1E59     64 7a -  xrl      A, #0x7a
+1E5B     60 04 -  jz       0x1e61
+1E5D     ef - -   mov      A, R7
+1E5E     b4 74 03 cjne     A, #0x74, 0x1e64
+1E61     7f 01 -  mov      R7, #0x1
+1E63     22 - -   ret      
+1E64     ef - -   mov      A, R7
+1E65     b4 4a 03 cjne     A, #0x4a, 0x1e6b
+1E68     7f 02 -  mov      R7, #0x2
+1E6A     22 - -   ret      
+1E6B     7f 00 -  mov      R7, #0x0
+1E6D     22 - -   ret      

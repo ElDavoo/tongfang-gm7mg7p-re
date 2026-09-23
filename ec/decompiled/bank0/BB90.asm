@@ -4,12 +4,12 @@
 ; This is the machine code. The decompiled C for this address is BB90.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-BB90     ff         mov      R7, A
-BB91     ec         mov      A, R4
-BB92     fe         mov      R6, A
-BB93     ee         mov      A, R6
-BB94     f0         movx     @DPTR, A
-BB95     a3         inc      DPTR
-BB96     ef         mov      A, R7
-BB97     f0         movx     @DPTR, A
-BB98     22         ret      
+BB90     ff - -   mov      R7, A
+BB91     ec - -   mov      A, R4
+BB92     fe - -   mov      R6, A
+BB93     ee - -   mov      A, R6
+BB94     f0 - -   movx     @DPTR, A
+BB95     a3 - -   inc      DPTR
+BB96     ef - -   mov      A, R7
+BB97     f0 - -   movx     @DPTR, A
+BB98     22 - -   ret      

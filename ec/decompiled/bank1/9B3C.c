@@ -15,15 +15,15 @@ void FUN_CODE_9b3c(void)
   
   bVar3 = in_PSW & 0xdd;
   if ((DAT_EXTMEM_0466 & 0x10) != 0) {
-    FUN_CODE_9bf8();
+    reset_1c11_1c15_1c16_set_68b_4();
     return;
   }
   DAT_EXTMEM_16f1 = 0x10;
   DAT_EXTMEM_163e = 0;
   FUN_CODE_9c53();
-  FUN_CODE_9c0e();
+  match_0820_against_0458_mode();
   if ((char)bVar3 < '\0') {
-    FUN_CODE_9be6();
+    inc_694_by_2_set_68c_80();
     return;
   }
   DAT_EXTMEM_3003 = 0x30;
@@ -44,7 +44,7 @@ void FUN_CODE_9b3c(void)
         if (!CARRY1(CPU_TEMP,bVar4)) {
           CPU_TEMP = CPU_TEMP + bVar4 >> 1 | CARRY1(CPU_TEMP,bVar4) << 7;
           DAT_EXTMEM_0694 = 0;
-          FUN_CODE_9bf8();
+          reset_1c11_1c15_1c16_set_68b_4();
           return;
         }
       }

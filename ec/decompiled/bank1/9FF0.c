@@ -13,23 +13,23 @@ void FUN_CODE_9ff0(void)
   char in_PSW;
   
   if (-1 < (char)DAT_EXTMEM_0724) {
-    FUN_CODE_9fca();
+    exit_ret();
     return;
   }
   DAT_EXTMEM_067d = DAT_EXTMEM_067d + -1;
   if (DAT_EXTMEM_067d == '\0') {
     bVar1 = 8 - (in_PSW >> 7);
     if (bVar1 <= DAT_EXTMEM_06c5) {
-      FUN_CODE_9fca(DAT_EXTMEM_06c5 - bVar1);
+      exit_ret(DAT_EXTMEM_06c5 - bVar1);
       return;
     }
     if (DAT_EXTMEM_06c2 == '\0') {
       DAT_EXTMEM_0724 = DAT_EXTMEM_0724 & 0x7f;
       if (DAT_EXTMEM_047b < '\0') {
-        FUN_CODE_1a4a();
+        load_dptr_c2ba_tail_jump_1100();
         return;
       }
-      FUN_CODE_1a50();
+      load_dptr_c2b2_tail_jump_1100();
       return;
     }
   }

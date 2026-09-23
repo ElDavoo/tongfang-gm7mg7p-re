@@ -4,12 +4,12 @@
 ; This is the machine code. The decompiled C for this address is BD54.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-BD54     ff         mov      R7, A
-BD55     ec         mov      A, R4
-BD56     fe         mov      R6, A
-BD57     ee         mov      A, R6
-BD58     f0         movx     @DPTR, A
-BD59     a3         inc      DPTR
-BD5A     ef         mov      A, R7
-BD5B     f0         movx     @DPTR, A
-BD5C     22         ret      
+BD54     ff - -   mov      R7, A
+BD55     ec - -   mov      A, R4
+BD56     fe - -   mov      R6, A
+BD57     ee - -   mov      A, R6
+BD58     f0 - -   movx     @DPTR, A
+BD59     a3 - -   inc      DPTR
+BD5A     ef - -   mov      A, R7
+BD5B     f0 - -   movx     @DPTR, A
+BD5C     22 - -   ret      

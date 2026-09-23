@@ -6,43 +6,43 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-3353     12 3a d1   lcall    0x3ad1
-3356     e4         clr      A
-3357     ff         mov      R7, A
-3358     12 3a cc   lcall    0x3acc
-335B     78 9e      mov      R0, #0x9e
-335D     e6         mov      A, @R0
-335E     24 88      add      A, #0x88
-3360     12 3b 80   lcall    0x3b80
-3363     e4         clr      A
-3364     f6         mov      @R0, A
-3365     78 ae      mov      R0, #0xae
-3367     f6         mov      @R0, A
-3368     c2 60      clr      0x60
-336A     c2 61      clr      0x61
-336C     78 9e      mov      R0, #0x9e
-336E     e6         mov      A, @R0
-336F     24 01      add      A, #0x1
-3371     ff         mov      R7, A
-3372     e4         clr      A
-3373     33         rlc      A
-3374     fe         mov      R6, A
-3375     78 9b      mov      R0, #0x9b
-3377     e6         mov      A, @R0
-3378     6f         xrl      A, R7
-3379     70 01      jnz      0x337c
-337B     ee         mov      A, R6
-337C     70 13      jnz      0x3391
-337E     f6         mov      @R0, A
-337F     ff         mov      R7, A
-3380     74 88      mov      A, #0x88
-3382     2f         add      A, R7
-3383     f8         mov      R0, A
-3384     e6         mov      A, @R0
-3385     30 e7 04   jnb      0xe7, 0x338c
-3388     12 3c 21   lcall    0x3c21
-338B     22         ret      
-338C     0f         inc      R7
-338D     ef         mov      A, R7
-338E     b4 03 ef   cjne     A, #0x3, 0x3380
-3391     22         ret      
+3353     12 3a d1 lcall    0x3ad1
+3356     e4 - -   clr      A
+3357     ff - -   mov      R7, A
+3358     12 3a cc lcall    0x3acc
+335B     78 9e -  mov      R0, #0x9e
+335D     e6 - -   mov      A, @R0
+335E     24 88 -  add      A, #0x88
+3360     12 3b 80 lcall    0x3b80
+3363     e4 - -   clr      A
+3364     f6 - -   mov      @R0, A
+3365     78 ae -  mov      R0, #0xae
+3367     f6 - -   mov      @R0, A
+3368     c2 60 -  clr      0x60
+336A     c2 61 -  clr      0x61
+336C     78 9e -  mov      R0, #0x9e
+336E     e6 - -   mov      A, @R0
+336F     24 01 -  add      A, #0x1
+3371     ff - -   mov      R7, A
+3372     e4 - -   clr      A
+3373     33 - -   rlc      A
+3374     fe - -   mov      R6, A
+3375     78 9b -  mov      R0, #0x9b
+3377     e6 - -   mov      A, @R0
+3378     6f - -   xrl      A, R7
+3379     70 01 -  jnz      0x337c
+337B     ee - -   mov      A, R6
+337C     70 13 -  jnz      0x3391
+337E     f6 - -   mov      @R0, A
+337F     ff - -   mov      R7, A
+3380     74 88 -  mov      A, #0x88
+3382     2f - -   add      A, R7
+3383     f8 - -   mov      R0, A
+3384     e6 - -   mov      A, @R0
+3385     30 e7 04 jnb      0xe7, 0x338c
+3388     12 3c 21 lcall    0x3c21
+338B     22 - -   ret      
+338C     0f - -   inc      R7
+338D     ef - -   mov      A, R7
+338E     b4 03 ef cjne     A, #0x3, 0x3380
+3391     22 - -   ret      

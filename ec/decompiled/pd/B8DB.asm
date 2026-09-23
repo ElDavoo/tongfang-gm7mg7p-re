@@ -4,119 +4,119 @@
 ; This is the machine code. The decompiled C for this address is B8DB.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-B8DB     90 07 d8   mov      DPTR, #0x7d8
-B8DE     ef         mov      A, R7
-B8DF     f0         movx     @DPTR, A
-B8E0     e0         movx     A, @DPTR
-B8E1     fd         mov      R5, A
-B8E2     fe         mov      R6, A
-B8E3     e4         clr      A
-B8E4     24 00      add      A, #0x0
-B8E6     12 90 28   lcall    0x9028
-B8E9     e0         movx     A, @DPTR
-B8EA     44 80      orl      A, #0x80
-B8EC     f0         movx     @DPTR, A
-B8ED     af 05      mov      R7, 0x05
-B8EF     e4         clr      A
-B8F0     fd         mov      R5, A
-B8F1     12 ec 36   lcall    0xec36
-B8F4     90 07 d8   mov      DPTR, #0x7d8
-B8F7     e0         movx     A, @DPTR
-B8F8     ff         mov      R7, A
-B8F9     e4         clr      A
-B8FA     fd         mov      R5, A
-B8FB     12 ec 5e   lcall    0xec5e
-B8FE     90 07 d8   mov      DPTR, #0x7d8
-B901     e0         movx     A, @DPTR
-B902     f9         mov      R1, A
-B903     fd         mov      R5, A
-B904     7f 00      mov      R7, #0x0
-B906     fe         mov      R6, A
-B907     e4         clr      A
-B908     2f         add      A, R7
-B909     12 90 6d   lcall    0x906d
-B90C     e0         movx     A, @DPTR
-B90D     44 10      orl      A, #0x10
-B90F     f0         movx     @DPTR, A
-B910     ef         mov      A, R7
-B911     24 0d      add      A, #0xd
-B913     12 90 28   lcall    0x9028
-B916     74 ff      mov      A, #0xff
-B918     f0         movx     @DPTR, A
-B919     ed         mov      A, R5
-B91A     7f 00      mov      R7, #0x0
-B91C     fe         mov      R6, A
-B91D     ef         mov      A, R7
-B91E     24 10      add      A, #0x10
-B920     12 90 7e   lcall    0x907e
-B923     74 ff      mov      A, #0xff
-B925     f0         movx     @DPTR, A
-B926     ef         mov      A, R7
-B927     24 11      add      A, #0x11
-B929     12 90 28   lcall    0x9028
-B92C     74 ff      mov      A, #0xff
-B92E     f0         movx     @DPTR, A
-B92F     e9         mov      A, R1
-B930     12 90 66   lcall    0x9066
-B933     74 ff      mov      A, #0xff
-B935     f0         movx     @DPTR, A
-B936     ef         mov      A, R7
-B937     24 13      add      A, #0x13
-B939     12 90 28   lcall    0x9028
-B93C     74 ff      mov      A, #0xff
-B93E     f0         movx     @DPTR, A
-B93F     ed         mov      A, R5
-B940     12 90 78   lcall    0x9078
-B943     74 ff      mov      A, #0xff
-B945     f0         movx     @DPTR, A
-B946     ef         mov      A, R7
-B947     24 19      add      A, #0x19
-B949     12 90 28   lcall    0x9028
-B94C     e0         movx     A, @DPTR
-B94D     54 df      anl      A, #0xdf
-B94F     f0         movx     @DPTR, A
-B950     af 01      mov      R7, 0x01
-B952     c0 07      push     0x07
-B954     e9         mov      A, R1
-B955     12 90 24   lcall    0x9024
-B958     e0         movx     A, @DPTR
-B959     54 01      anl      A, #0x1
-B95B     fb         mov      R3, A
-B95C     d0 07      pop      0x07
-B95E     e4         clr      A
-B95F     fd         mov      R5, A
-B960     12 f6 10   lcall    0xf610
-B963     90 07 d8   mov      DPTR, #0x7d8
-B966     e0         movx     A, @DPTR
-B967     ff         mov      R7, A
-B968     12 90 d6   lcall    0x90d6
-B96B     40 04      jc       0xb971
-B96D     7d 02      mov      R5, #0x2
-B96F     80 07      sjmp     0xb978
-B971     90 07 d8   mov      DPTR, #0x7d8
-B974     e0         movx     A, @DPTR
-B975     ff         mov      R7, A
-B976     7d 03      mov      R5, #0x3
-B978     12 f5 0e   lcall    0xf50e
-B97B     90 07 d8   mov      DPTR, #0x7d8
-B97E     12 91 15   lcall    0x9115
-B981     24 0a      add      A, #0xa
-B983     12 90 6d   lcall    0x906d
-B986     e0         movx     A, @DPTR
-B987     54 fe      anl      A, #0xfe
-B989     f0         movx     @DPTR, A
-B98A     ef         mov      A, R7
-B98B     24 02      add      A, #0x2
-B98D     12 90 28   lcall    0x9028
-B990     e0         movx     A, @DPTR
-B991     54 f7      anl      A, #0xf7
-B993     f0         movx     @DPTR, A
-B994     ed         mov      A, R5
-B995     fe         mov      R6, A
-B996     e4         clr      A
-B997     24 67      add      A, #0x67
-B999     12 90 28   lcall    0x9028
-B99C     e0         movx     A, @DPTR
-B99D     44 04      orl      A, #0x4
-B99F     f0         movx     @DPTR, A
-B9A0     22         ret      
+B8DB     90 07 d8 mov      DPTR, #0x7d8
+B8DE     ef - -   mov      A, R7
+B8DF     f0 - -   movx     @DPTR, A
+B8E0     e0 - -   movx     A, @DPTR
+B8E1     fd - -   mov      R5, A
+B8E2     fe - -   mov      R6, A
+B8E3     e4 - -   clr      A
+B8E4     24 00 -  add      A, #0x0
+B8E6     12 90 28 lcall    0x9028
+B8E9     e0 - -   movx     A, @DPTR
+B8EA     44 80 -  orl      A, #0x80
+B8EC     f0 - -   movx     @DPTR, A
+B8ED     af 05 -  mov      R7, 0x05
+B8EF     e4 - -   clr      A
+B8F0     fd - -   mov      R5, A
+B8F1     12 ec 36 lcall    0xec36
+B8F4     90 07 d8 mov      DPTR, #0x7d8
+B8F7     e0 - -   movx     A, @DPTR
+B8F8     ff - -   mov      R7, A
+B8F9     e4 - -   clr      A
+B8FA     fd - -   mov      R5, A
+B8FB     12 ec 5e lcall    0xec5e
+B8FE     90 07 d8 mov      DPTR, #0x7d8
+B901     e0 - -   movx     A, @DPTR
+B902     f9 - -   mov      R1, A
+B903     fd - -   mov      R5, A
+B904     7f 00 -  mov      R7, #0x0
+B906     fe - -   mov      R6, A
+B907     e4 - -   clr      A
+B908     2f - -   add      A, R7
+B909     12 90 6d lcall    0x906d
+B90C     e0 - -   movx     A, @DPTR
+B90D     44 10 -  orl      A, #0x10
+B90F     f0 - -   movx     @DPTR, A
+B910     ef - -   mov      A, R7
+B911     24 0d -  add      A, #0xd
+B913     12 90 28 lcall    0x9028
+B916     74 ff -  mov      A, #0xff
+B918     f0 - -   movx     @DPTR, A
+B919     ed - -   mov      A, R5
+B91A     7f 00 -  mov      R7, #0x0
+B91C     fe - -   mov      R6, A
+B91D     ef - -   mov      A, R7
+B91E     24 10 -  add      A, #0x10
+B920     12 90 7e lcall    0x907e
+B923     74 ff -  mov      A, #0xff
+B925     f0 - -   movx     @DPTR, A
+B926     ef - -   mov      A, R7
+B927     24 11 -  add      A, #0x11
+B929     12 90 28 lcall    0x9028
+B92C     74 ff -  mov      A, #0xff
+B92E     f0 - -   movx     @DPTR, A
+B92F     e9 - -   mov      A, R1
+B930     12 90 66 lcall    0x9066
+B933     74 ff -  mov      A, #0xff
+B935     f0 - -   movx     @DPTR, A
+B936     ef - -   mov      A, R7
+B937     24 13 -  add      A, #0x13
+B939     12 90 28 lcall    0x9028
+B93C     74 ff -  mov      A, #0xff
+B93E     f0 - -   movx     @DPTR, A
+B93F     ed - -   mov      A, R5
+B940     12 90 78 lcall    0x9078
+B943     74 ff -  mov      A, #0xff
+B945     f0 - -   movx     @DPTR, A
+B946     ef - -   mov      A, R7
+B947     24 19 -  add      A, #0x19
+B949     12 90 28 lcall    0x9028
+B94C     e0 - -   movx     A, @DPTR
+B94D     54 df -  anl      A, #0xdf
+B94F     f0 - -   movx     @DPTR, A
+B950     af 01 -  mov      R7, 0x01
+B952     c0 07 -  push     0x07
+B954     e9 - -   mov      A, R1
+B955     12 90 24 lcall    0x9024
+B958     e0 - -   movx     A, @DPTR
+B959     54 01 -  anl      A, #0x1
+B95B     fb - -   mov      R3, A
+B95C     d0 07 -  pop      0x07
+B95E     e4 - -   clr      A
+B95F     fd - -   mov      R5, A
+B960     12 f6 10 lcall    0xf610
+B963     90 07 d8 mov      DPTR, #0x7d8
+B966     e0 - -   movx     A, @DPTR
+B967     ff - -   mov      R7, A
+B968     12 90 d6 lcall    0x90d6
+B96B     40 04 -  jc       0xb971
+B96D     7d 02 -  mov      R5, #0x2
+B96F     80 07 -  sjmp     0xb978
+B971     90 07 d8 mov      DPTR, #0x7d8
+B974     e0 - -   movx     A, @DPTR
+B975     ff - -   mov      R7, A
+B976     7d 03 -  mov      R5, #0x3
+B978     12 f5 0e lcall    0xf50e
+B97B     90 07 d8 mov      DPTR, #0x7d8
+B97E     12 91 15 lcall    0x9115
+B981     24 0a -  add      A, #0xa
+B983     12 90 6d lcall    0x906d
+B986     e0 - -   movx     A, @DPTR
+B987     54 fe -  anl      A, #0xfe
+B989     f0 - -   movx     @DPTR, A
+B98A     ef - -   mov      A, R7
+B98B     24 02 -  add      A, #0x2
+B98D     12 90 28 lcall    0x9028
+B990     e0 - -   movx     A, @DPTR
+B991     54 f7 -  anl      A, #0xf7
+B993     f0 - -   movx     @DPTR, A
+B994     ed - -   mov      A, R5
+B995     fe - -   mov      R6, A
+B996     e4 - -   clr      A
+B997     24 67 -  add      A, #0x67
+B999     12 90 28 lcall    0x9028
+B99C     e0 - -   movx     A, @DPTR
+B99D     44 04 -  orl      A, #0x4
+B99F     f0 - -   movx     @DPTR, A
+B9A0     22 - -   ret      

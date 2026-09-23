@@ -9,7 +9,7 @@
 void FUN_CODE_af32(void)
 
 {
-  FUN_CODE_888c(0x4a2,0x72,0xb);
+  write_r1r2_to_xdata_pair(0x4a2,0x72,0xb);
   DAT_EXTMEM_056b = 4;
   DAT_EXTMEM_0493 = 0;
   return;

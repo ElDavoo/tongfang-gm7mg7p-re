@@ -6,33 +6,33 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-CBAB     12 cc 95   lcall    0xcc95
-CBAE     90 05 14   mov      DPTR, #0x514
-CBB1     e0         movx     A, @DPTR
-CBB2     b4 64 02   cjne     A, #0x64, 0xcbb7
-CBB5     80 25      sjmp     0xcbdc
-CBB7     b4 63 00   cjne     A, #0x63, 0xcbba
-CBBA     90 03 b6   mov      DPTR, #0x3b6
-CBBD     e0         movx     A, @DPTR
-CBBE     f9         mov      R1, A
-CBBF     90 03 97   mov      DPTR, #0x397
-CBC2     e0         movx     A, @DPTR
-CBC3     c3         clr      CY
-CBC4     99         subb     A, R1
-CBC5     60 03      jz       0xcbca
-CBC7     40 01      jc       0xcbca
-CBC9     22         ret      
-CBCA     e4         clr      A
-CBCB     90 03 b6   mov      DPTR, #0x3b6
-CBCE     f0         movx     @DPTR, A
-CBCF     90 05 14   mov      DPTR, #0x514
-CBD2     e0         movx     A, @DPTR
-CBD3     04         inc      A
-CBD4     f0         movx     @DPTR, A
-CBD5     12 cb f3   lcall    0xcbf3
-CBD8     12 cb e8   lcall    0xcbe8
-CBDB     22         ret      
-CBDC     e4         clr      A
-CBDD     90 03 b6   mov      DPTR, #0x3b6
-CBE0     f0         movx     @DPTR, A
-CBE1     22         ret      
+CBAB     12 cc 95 lcall    0xcc95
+CBAE     90 05 14 mov      DPTR, #0x514
+CBB1     e0 - -   movx     A, @DPTR
+CBB2     b4 64 02 cjne     A, #0x64, 0xcbb7
+CBB5     80 25 -  sjmp     0xcbdc
+CBB7     b4 63 00 cjne     A, #0x63, 0xcbba
+CBBA     90 03 b6 mov      DPTR, #0x3b6
+CBBD     e0 - -   movx     A, @DPTR
+CBBE     f9 - -   mov      R1, A
+CBBF     90 03 97 mov      DPTR, #0x397
+CBC2     e0 - -   movx     A, @DPTR
+CBC3     c3 - -   clr      CY
+CBC4     99 - -   subb     A, R1
+CBC5     60 03 -  jz       0xcbca
+CBC7     40 01 -  jc       0xcbca
+CBC9     22 - -   ret      
+CBCA     e4 - -   clr      A
+CBCB     90 03 b6 mov      DPTR, #0x3b6
+CBCE     f0 - -   movx     @DPTR, A
+CBCF     90 05 14 mov      DPTR, #0x514
+CBD2     e0 - -   movx     A, @DPTR
+CBD3     04 - -   inc      A
+CBD4     f0 - -   movx     @DPTR, A
+CBD5     12 cb f3 lcall    0xcbf3
+CBD8     12 cb e8 lcall    0xcbe8
+CBDB     22 - -   ret      
+CBDC     e4 - -   clr      A
+CBDD     90 03 b6 mov      DPTR, #0x3b6
+CBE0     f0 - -   movx     @DPTR, A
+CBE1     22 - -   ret      

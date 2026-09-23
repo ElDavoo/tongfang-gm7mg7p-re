@@ -9,14 +9,15 @@
 void FUN_CODE_cab8(byte param_1)
 
 {
-  FUN_CODE_8886(0x388);
-  FUN_CODE_a5e6(100,0);
+  read_xdata_pair_to_r1r2(0x388);
+  mul_16_round_shift_subtract(100,0);
   DAT_EXTMEM_0342 = DAT_EXTMEM_039b;
   if ((param_1 <= DAT_EXTMEM_039b) && (DAT_EXTMEM_0342 = param_1, param_1 < DAT_EXTMEM_039c)) {
     DAT_EXTMEM_0342 = DAT_EXTMEM_039c;
   }
-  FUN_CODE_888c(0x340,(char)((ushort)DAT_EXTMEM_0342 * 100),
-                (char)((ushort)DAT_EXTMEM_0342 * 100 >> 8));
+  write_r1r2_to_xdata_pair
+            (0x340,(char)((ushort)DAT_EXTMEM_0342 * 100),(char)((ushort)DAT_EXTMEM_0342 * 100 >> 8))
+  ;
   DAT_EXTMEM_03a1 = DAT_EXTMEM_03a1 | 2;
   DAT_EXTMEM_03c4 = 0;
   DAT_EXTMEM_03a3 = 6;

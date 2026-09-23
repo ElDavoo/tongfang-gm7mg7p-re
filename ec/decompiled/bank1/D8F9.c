@@ -28,11 +28,11 @@ void FUN_CODE_d8f9(void)
       uVar1 = 0x4e;
     }
   }
-  FUN_CODE_888c(0x378,uVar1,uVar2);
-  FUN_CODE_888c(0x37a);
-  FUN_CODE_888c(0x37c);
-  FUN_CODE_888c(0x37e);
-  FUN_CODE_19de();
+  write_r1r2_to_xdata_pair(0x378,uVar1,uVar2);
+  write_r1r2_to_xdata_pair(0x37a);
+  write_r1r2_to_xdata_pair(0x37c);
+  write_r1r2_to_xdata_pair(0x37e);
+  trampoline_to_c174();
   return;
 }
 

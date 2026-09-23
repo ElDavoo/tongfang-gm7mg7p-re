@@ -4,6 +4,6 @@
 ; This is the machine code. The decompiled C for this address is F739.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-F739     90 02 00   mov      DPTR, #0x200
-F73C     12 0f af   lcall    0x0faf
-F73F     22         ret      
+F739     90 02 00 mov      DPTR, #0x200
+F73C     12 0f af lcall    0x0faf
+F73F     22 - -   ret      

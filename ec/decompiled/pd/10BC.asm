@@ -4,10 +4,10 @@
 ; This is the machine code. The decompiled C for this address is 10BC.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-10BC     a4         mul      AB
-10BD     25 82      add      A, DPL
-10BF     f5 82      mov      DPL, A
-10C1     e5 f0      mov      A, B
-10C3     35 83      addc     A, DPH
-10C5     f5 83      mov      DPH, A
-10C7     22         ret      
+10BC     a4 - -   mul      AB
+10BD     25 82 -  add      A, DPL
+10BF     f5 82 -  mov      DPL, A
+10C1     e5 f0 -  mov      A, B
+10C3     35 83 -  addc     A, DPH
+10C5     f5 83 -  mov      DPH, A
+10C7     22 - -   ret      

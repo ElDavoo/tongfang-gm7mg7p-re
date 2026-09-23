@@ -6,60 +6,60 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-5E02     00         nop      
-5E03     30 32 3a   jnb      0x32, 0x5e40
-5E06     3f         addc     A, R7
-5E07     41 46      ajmp     0x5a46
-5E40     ff         mov      R7, A
-5E41     ff         mov      R7, A
-5E42     00         nop      
-5E43     3c         addc     A, R4
-5E44     3c         addc     A, R4
-5E45     46         orl      A, @R0
-5E46     5a         anl      A, R2
-5E47     60 64      jz       0x5ead
-5E49     6e         xrl      A, R6
-5E4A     8c a0      mov      0xa0, R4
-5E4C     b4 b4 b4   cjne     A, #0xb4, 0x5e03
-5E4F     b4 b4 b4   cjne     A, #0xb4, 0x5e06
-5E52     35 39      addc     A, 0x39
-5E54     3b         addc     A, R3
-5E55     3d         addc     A, R5
-5E56     3f         addc     A, R7
-5E57     43 45 47   orl      0x45, #0x47
-5E5A     ff         mov      R7, A
-5E5B     ff         mov      R7, A
-5E5C     ff         mov      R7, A
-5E5D     ff         mov      R7, A
-5E5E     ff         mov      R7, A
-5E5F     ff         mov      R7, A
-5E60     ff         mov      R7, A
-5E61     ff         mov      R7, A
-5E62     00         nop      
-5E63     30 32 3a   jnb      0x32, 0x5ea0
-5E66     3c         addc     A, R4
-5E67     3e         addc     A, R6
-5E68     42 44      orl      0x44, A
-5E6A     46         orl      A, @R0
-5E6B     ff         mov      R7, A
-5E6C     ff         mov      R7, A
-5E6D     ff         mov      R7, A
-5E6E     ff         mov      R7, A
-5E6F     ff         mov      R7, A
-5E70     ff         mov      R7, A
-5E71     ff         mov      R7, A
-5E72     00         nop      
-5E73     3c         addc     A, R4
-5E74     3c         addc     A, R4
-5E75     46         orl      A, @R0
-5E76     5a         anl      A, R2
-5E77     60 64      jz       0x5edd
-5E79     6e         xrl      A, R6
-5E7A     6e         xrl      A, R6
-5E7B     6e         xrl      A, R6
-5E7C     6e         xrl      A, R6
-5E7D     6e         xrl      A, R6
-5E7E     6e         xrl      A, R6
-5E7F     6e         xrl      A, R6
-5E80     6e         xrl      A, R6
-5E81     6e         xrl      A, R6
+5E02     00 - -   nop      
+5E03     30 32 3a jnb      0x32, 0x5e40
+5E06     3f - -   addc     A, R7
+5E07     41 46 -  ajmp     0x5a46
+5E40     ff - -   mov      R7, A
+5E41     ff - -   mov      R7, A
+5E42     00 - -   nop      
+5E43     3c - -   addc     A, R4
+5E44     3c - -   addc     A, R4
+5E45     46 - -   orl      A, @R0
+5E46     5a - -   anl      A, R2
+5E47     60 64 -  jz       0x5ead
+5E49     6e - -   xrl      A, R6
+5E4A     8c a0 -  mov      0xa0, R4
+5E4C     b4 b4 b4 cjne     A, #0xb4, 0x5e03
+5E4F     b4 b4 b4 cjne     A, #0xb4, 0x5e06
+5E52     35 39 -  addc     A, 0x39
+5E54     3b - -   addc     A, R3
+5E55     3d - -   addc     A, R5
+5E56     3f - -   addc     A, R7
+5E57     43 45 47 orl      0x45, #0x47
+5E5A     ff - -   mov      R7, A
+5E5B     ff - -   mov      R7, A
+5E5C     ff - -   mov      R7, A
+5E5D     ff - -   mov      R7, A
+5E5E     ff - -   mov      R7, A
+5E5F     ff - -   mov      R7, A
+5E60     ff - -   mov      R7, A
+5E61     ff - -   mov      R7, A
+5E62     00 - -   nop      
+5E63     30 32 3a jnb      0x32, 0x5ea0
+5E66     3c - -   addc     A, R4
+5E67     3e - -   addc     A, R6
+5E68     42 44 -  orl      0x44, A
+5E6A     46 - -   orl      A, @R0
+5E6B     ff - -   mov      R7, A
+5E6C     ff - -   mov      R7, A
+5E6D     ff - -   mov      R7, A
+5E6E     ff - -   mov      R7, A
+5E6F     ff - -   mov      R7, A
+5E70     ff - -   mov      R7, A
+5E71     ff - -   mov      R7, A
+5E72     00 - -   nop      
+5E73     3c - -   addc     A, R4
+5E74     3c - -   addc     A, R4
+5E75     46 - -   orl      A, @R0
+5E76     5a - -   anl      A, R2
+5E77     60 64 -  jz       0x5edd
+5E79     6e - -   xrl      A, R6
+5E7A     6e - -   xrl      A, R6
+5E7B     6e - -   xrl      A, R6
+5E7C     6e - -   xrl      A, R6
+5E7D     6e - -   xrl      A, R6
+5E7E     6e - -   xrl      A, R6
+5E7F     6e - -   xrl      A, R6
+5E80     6e - -   xrl      A, R6
+5E81     6e - -   xrl      A, R6

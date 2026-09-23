@@ -6,40 +6,40 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-2990     90 0a 59   mov      DPTR, #0xa59
-2993     74 01      mov      A, #0x1
-2995     f0         movx     @DPTR, A
-2996     90 0b fe   mov      DPTR, #0xbfe
-2999     12 2a 84   lcall    0x2a84
-299C     ef         mov      A, R7
-299D     f0         movx     @DPTR, A
-299E     90 0b fe   mov      DPTR, #0xbfe
-29A1     e0         movx     A, @DPTR
-29A2     04         inc      A
-29A3     f0         movx     @DPTR, A
-29A4     e0         movx     A, @DPTR
-29A5     c3         clr      CY
-29A6     94 fd      subb     A, #0xfd
-29A8     40 02      jc       0x29ac
-29AA     e4         clr      A
-29AB     f0         movx     @DPTR, A
-29AC     90 0b fd   mov      DPTR, #0xbfd
-29AF     e0         movx     A, @DPTR
-29B0     ff         mov      R7, A
-29B1     90 0b fe   mov      DPTR, #0xbfe
-29B4     e0         movx     A, @DPTR
-29B5     6f         xrl      A, R7
-29B6     70 11      jnz      0x29c9
-29B8     90 0b ff   mov      DPTR, #0xbff
-29BB     e0         movx     A, @DPTR
-29BC     90 0b fe   mov      DPTR, #0xbfe
-29BF     f0         movx     @DPTR, A
-29C0     12 2a 84   lcall    0x2a84
-29C3     e4         clr      A
-29C4     f0         movx     @DPTR, A
-29C5     90 0a 59   mov      DPTR, #0xa59
-29C8     f0         movx     @DPTR, A
-29C9     90 0a 59   mov      DPTR, #0xa59
-29CC     e0         movx     A, @DPTR
-29CD     ff         mov      R7, A
-29CE     22         ret      
+2990     90 0a 59 mov      DPTR, #0xa59
+2993     74 01 -  mov      A, #0x1
+2995     f0 - -   movx     @DPTR, A
+2996     90 0b fe mov      DPTR, #0xbfe
+2999     12 2a 84 lcall    0x2a84
+299C     ef - -   mov      A, R7
+299D     f0 - -   movx     @DPTR, A
+299E     90 0b fe mov      DPTR, #0xbfe
+29A1     e0 - -   movx     A, @DPTR
+29A2     04 - -   inc      A
+29A3     f0 - -   movx     @DPTR, A
+29A4     e0 - -   movx     A, @DPTR
+29A5     c3 - -   clr      CY
+29A6     94 fd -  subb     A, #0xfd
+29A8     40 02 -  jc       0x29ac
+29AA     e4 - -   clr      A
+29AB     f0 - -   movx     @DPTR, A
+29AC     90 0b fd mov      DPTR, #0xbfd
+29AF     e0 - -   movx     A, @DPTR
+29B0     ff - -   mov      R7, A
+29B1     90 0b fe mov      DPTR, #0xbfe
+29B4     e0 - -   movx     A, @DPTR
+29B5     6f - -   xrl      A, R7
+29B6     70 11 -  jnz      0x29c9
+29B8     90 0b ff mov      DPTR, #0xbff
+29BB     e0 - -   movx     A, @DPTR
+29BC     90 0b fe mov      DPTR, #0xbfe
+29BF     f0 - -   movx     @DPTR, A
+29C0     12 2a 84 lcall    0x2a84
+29C3     e4 - -   clr      A
+29C4     f0 - -   movx     @DPTR, A
+29C5     90 0a 59 mov      DPTR, #0xa59
+29C8     f0 - -   movx     @DPTR, A
+29C9     90 0a 59 mov      DPTR, #0xa59
+29CC     e0 - -   movx     A, @DPTR
+29CD     ff - -   mov      R7, A
+29CE     22 - -   ret      

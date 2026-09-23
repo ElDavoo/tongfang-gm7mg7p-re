@@ -104,7 +104,7 @@ void c_startup_idata_clear(void)
       } while (bVar3 != 0);
     }
   }
-  FUN_CODE_da44();
+  poll_0208_0209_then_spin();
   return;
 }
 

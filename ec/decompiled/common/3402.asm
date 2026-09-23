@@ -6,37 +6,37 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-3402     78 9e      mov      R0, #0x9e
-3404     e6         mov      A, @R0
-3405     ff         mov      R7, A
-3406     12 37 5e   lcall    0x375e
-3409     78 91      mov      R0, #0x91
-340B     e6         mov      A, @R0
-340C     6f         xrl      A, R7
-340D     70 0e      jnz      0x341d
-340F     78 9e      mov      R0, #0x9e
-3411     e6         mov      A, @R0
-3412     ff         mov      R7, A
-3413     12 37 70   lcall    0x3770
-3416     ef         mov      A, R7
-3417     78 9e      mov      R0, #0x9e
-3419     60 0f      jz       0x342a
-341B     80 2c      sjmp     0x3449
-341D     12 3b c9   lcall    0x3bc9
-3420     74 04      mov      A, #0x4
-3422     46         orl      A, @R0
-3423     f6         mov      @R0, A
-3424     78 9e      mov      R0, #0x9e
-3426     80 21      sjmp     0x3449
-342A     e6         mov      A, @R0
-342B     24 88      add      A, #0x88
-342D     f8         mov      R0, A
-342E     e4         clr      A
-342F     f6         mov      @R0, A
-3430     80 1f      sjmp     0x3451
-3449     e6         mov      A, @R0
-344A     24 88      add      A, #0x88
-344C     f8         mov      R0, A
-344D     74 f7      mov      A, #0xf7
-344F     56         anl      A, @R0
-3450     f6         mov      @R0, A
+3402     78 9e -  mov      R0, #0x9e
+3404     e6 - -   mov      A, @R0
+3405     ff - -   mov      R7, A
+3406     12 37 5e lcall    0x375e
+3409     78 91 -  mov      R0, #0x91
+340B     e6 - -   mov      A, @R0
+340C     6f - -   xrl      A, R7
+340D     70 0e -  jnz      0x341d
+340F     78 9e -  mov      R0, #0x9e
+3411     e6 - -   mov      A, @R0
+3412     ff - -   mov      R7, A
+3413     12 37 70 lcall    0x3770
+3416     ef - -   mov      A, R7
+3417     78 9e -  mov      R0, #0x9e
+3419     60 0f -  jz       0x342a
+341B     80 2c -  sjmp     0x3449
+341D     12 3b c9 lcall    0x3bc9
+3420     74 04 -  mov      A, #0x4
+3422     46 - -   orl      A, @R0
+3423     f6 - -   mov      @R0, A
+3424     78 9e -  mov      R0, #0x9e
+3426     80 21 -  sjmp     0x3449
+342A     e6 - -   mov      A, @R0
+342B     24 88 -  add      A, #0x88
+342D     f8 - -   mov      R0, A
+342E     e4 - -   clr      A
+342F     f6 - -   mov      @R0, A
+3430     80 1f -  sjmp     0x3451
+3449     e6 - -   mov      A, @R0
+344A     24 88 -  add      A, #0x88
+344C     f8 - -   mov      R0, A
+344D     74 f7 -  mov      A, #0xf7
+344F     56 - -   anl      A, @R0
+3450     f6 - -   mov      @R0, A

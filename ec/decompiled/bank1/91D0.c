@@ -7,7 +7,7 @@
 void switchD_CODE:91f9::caseD_0(void)
 
 {
-  FUN_CODE_91fa();
+  clear_062e_and_jump_94a8();
   return;
 }
 

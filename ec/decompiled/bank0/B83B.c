@@ -12,12 +12,12 @@ byte FUN_CODE_b83b(byte param_1)
   byte bVar1;
   byte bVar2;
   
-  bVar2 = FUN_CODE_b9d8();
+  bVar2 = read_06e6_xor_01();
   if ((bVar2 == 0) && (bVar2 = DAT_EXTMEM_08e2, (DAT_EXTMEM_08e2 >> 3 & 1) != 0)) {
-    bVar2 = FUN_CODE_bc71();
+    bVar2 = read_0434_keep_0435_in_r4();
     DAT_EXTMEM_0a47 = param_1;
     DAT_EXTMEM_0a48 = bVar2;
-    FUN_CODE_b9c6();
+    add_0318_0319_into_r7_r6();
     if ((param_1 == 0x2e) && (bVar2 == 0xe0)) {
       bVar1 = 0x18 - (((DAT_EXTMEM_0a48 < 0x89) << 7) >> 7);
     }
@@ -27,7 +27,7 @@ byte FUN_CODE_b83b(byte param_1)
     bVar2 = DAT_EXTMEM_0a47 - bVar1;
     if (DAT_EXTMEM_0a47 < bVar1) {
       DAT_EXTMEM_08e2 = DAT_EXTMEM_08e2 & 0xf7;
-      bVar2 = FUN_CODE_c389();
+      bVar2 = clear_1607_bit2();
     }
   }
   return bVar2;

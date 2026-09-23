@@ -11,18 +11,18 @@ void FUN_CODE_8abb(void)
 {
   DAT_EXTMEM_06f9 = DAT_EXTMEM_06f9 ^ 0x10;
   if ((DAT_EXTMEM_06f9 >> 4 & 1) != 1) {
-    FUN_CODE_abff();
+    call_a1f6_94fa_a3f7_aa39();
     return;
   }
   DAT_EXTMEM_06fa = DAT_EXTMEM_06fa + 1;
   if (DAT_EXTMEM_06fa != 0x3d) {
     if (DAT_EXTMEM_06fa % 10 == 0) {
-      FUN_CODE_ac0c();
+      ret_only_ac0c();
     }
     return;
   }
   DAT_EXTMEM_06fa = 1;
-  FUN_CODE_ac0d();
+  forward_d5e1();
   return;
 }
 

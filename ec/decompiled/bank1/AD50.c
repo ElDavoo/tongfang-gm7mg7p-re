@@ -7,7 +7,7 @@
 void switchD_CODE:ad76::caseD_0(void)
 
 {
-  thunk_FUN_CODE_b56c();
+  forwarder_to_b56c();
   return;
 }
 

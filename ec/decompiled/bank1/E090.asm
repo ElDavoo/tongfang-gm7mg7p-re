@@ -6,33 +6,33 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-E090     90 05 5f   mov      DPTR, #0x55f
-E093     f0         movx     @DPTR, A
-E094     90 03 a0   mov      DPTR, #0x3a0
-E097     e0         movx     A, @DPTR
-E098     44 02      orl      A, #0x2
-E09A     f0         movx     @DPTR, A
-E09B     12 d6 c6   lcall    0xd6c6
-E09E     12 b5 0e   lcall    0xb50e
-E0A1     90 05 14   mov      DPTR, #0x514
-E0A4     e0         movx     A, @DPTR
-E0A5     b4 64 06   cjne     A, #0x64, 0xe0ae
-E0A8     74 01      mov      A, #0x1
-E0AA     90 04 92   mov      DPTR, #0x492
-E0AD     f0         movx     @DPTR, A
-E0AE     90 04 97   mov      DPTR, #0x497
-E0B1     e0         movx     A, @DPTR
-E0B2     44 04      orl      A, #0x4
-E0B4     f0         movx     @DPTR, A
-E0B5     90 04 90   mov      DPTR, #0x490
-E0B8     e0         movx     A, @DPTR
-E0B9     44 04      orl      A, #0x4
-E0BB     f0         movx     @DPTR, A
-E0BC     12 aa b9   lcall    0xaab9
-E0BF     90 03 94   mov      DPTR, #0x394
-E0C2     74 00      mov      A, #0x0
-E0C4     f0         movx     @DPTR, A
-E0C5     90 06 80   mov      DPTR, #0x680
-E0C8     74 04      mov      A, #0x4
-E0CA     f0         movx     @DPTR, A
-E0CB     02 de 9e   ljmp     0xde9e
+E090     90 05 5f mov      DPTR, #0x55f
+E093     f0 - -   movx     @DPTR, A
+E094     90 03 a0 mov      DPTR, #0x3a0
+E097     e0 - -   movx     A, @DPTR
+E098     44 02 -  orl      A, #0x2
+E09A     f0 - -   movx     @DPTR, A
+E09B     12 d6 c6 lcall    0xd6c6
+E09E     12 b5 0e lcall    0xb50e
+E0A1     90 05 14 mov      DPTR, #0x514
+E0A4     e0 - -   movx     A, @DPTR
+E0A5     b4 64 06 cjne     A, #0x64, 0xe0ae
+E0A8     74 01 -  mov      A, #0x1
+E0AA     90 04 92 mov      DPTR, #0x492
+E0AD     f0 - -   movx     @DPTR, A
+E0AE     90 04 97 mov      DPTR, #0x497
+E0B1     e0 - -   movx     A, @DPTR
+E0B2     44 04 -  orl      A, #0x4
+E0B4     f0 - -   movx     @DPTR, A
+E0B5     90 04 90 mov      DPTR, #0x490
+E0B8     e0 - -   movx     A, @DPTR
+E0B9     44 04 -  orl      A, #0x4
+E0BB     f0 - -   movx     @DPTR, A
+E0BC     12 aa b9 lcall    0xaab9
+E0BF     90 03 94 mov      DPTR, #0x394
+E0C2     74 00 -  mov      A, #0x0
+E0C4     f0 - -   movx     @DPTR, A
+E0C5     90 06 80 mov      DPTR, #0x680
+E0C8     74 04 -  mov      A, #0x4
+E0CA     f0 - -   movx     @DPTR, A
+E0CB     02 de 9e ljmp     0xde9e

@@ -6,79 +6,79 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-BD45     90 04 91   mov      DPTR, #0x491
-BD48     e0         movx     A, @DPTR
-BD49     54 c0      anl      A, #0xc0
-BD4B     44 21      orl      A, #0x21
-BD4D     f0         movx     @DPTR, A
-BD4E     90 03 0d   mov      DPTR, #0x30d
-BD51     e0         movx     A, @DPTR
-BD52     b4 0f 02   cjne     A, #0xf, 0xbd57
-BD55     80 0c      sjmp     0xbd63
-BD57     b4 10 02   cjne     A, #0x10, 0xbd5c
-BD5A     80 07      sjmp     0xbd63
-BD5C     b4 11 02   cjne     A, #0x11, 0xbd61
-BD5F     80 02      sjmp     0xbd63
-BD61     80 62      sjmp     0xbdc5
-BD63     90 08 98   mov      DPTR, #0x898
-BD66     e0         movx     A, @DPTR
-BD67     70 32      jnz      0xbd9b
-BD69     90 04 38   mov      DPTR, #0x438
-BD6C     12 88 92   lcall    0x8892
-BD6F     90 04 91   mov      DPTR, #0x491
-BD72     e0         movx     A, @DPTR
-BD73     54 c0      anl      A, #0xc0
-BD75     b4 80 02   cjne     A, #0x80, 0xbd7a
-BD78     80 0a      sjmp     0xbd84
-BD7A     b4 40 02   cjne     A, #0x40, 0xbd7f
-BD7D     80 0a      sjmp     0xbd89
-BD7F     90 40 10   mov      DPTR, #0x4010
-BD82     80 08      sjmp     0xbd8c
-BD84     90 30 0c   mov      DPTR, #0x300c
-BD87     80 03      sjmp     0xbd8c
-BD89     90 20 08   mov      DPTR, #0x2008
-BD8C     aa 83      mov      R2, DPH
-BD8E     a9 82      mov      R1, DPL
-BD90     12 88 5b   lcall    0x885b
-BD93     50 30      jnc      0xbdc5
-BD95     90 08 98   mov      DPTR, #0x898
-BD98     74 0f      mov      A, #0xf
-BD9A     f0         movx     @DPTR, A
-BD9B     90 03 00   mov      DPTR, #0x300
-BD9E     ad 82      mov      R5, DPL
-BDA0     ae 83      mov      R6, DPH
-BDA2     90 04 97   mov      DPTR, #0x497
-BDA5     e0         movx     A, @DPTR
-BDA6     20 e0 0b   jb       0xe0, 0xbdb4
-BDA9     90 04 03   mov      DPTR, #0x403
-BDAC     e0         movx     A, @DPTR
-BDAD     c3         clr      CY
-BDAE     94 14      subb     A, #0x14
-BDB0     50 10      jnc      0xbdc2
-BDB2     80 07      sjmp     0xbdbb
-BDB4     90 05 39   mov      DPTR, #0x539
-BDB7     e0         movx     A, @DPTR
-BDB8     b4 01 07   cjne     A, #0x1, 0xbdc2
-BDBB     90 03 00   mov      DPTR, #0x300
-BDBE     ad 82      mov      R5, DPL
-BDC0     ae 83      mov      R6, DPH
-BDC2     02 bf 3a   ljmp     0xbf3a
-BDC5     90 01 80   mov      DPTR, #0x180
-BDC8     ad 82      mov      R5, DPL
-BDCA     ae 83      mov      R6, DPH
-BDCC     90 04 97   mov      DPTR, #0x497
-BDCF     e0         movx     A, @DPTR
-BDD0     20 e0 0b   jb       0xe0, 0xbdde
-BDD3     90 04 03   mov      DPTR, #0x403
-BDD6     e0         movx     A, @DPTR
-BDD7     c3         clr      CY
-BDD8     94 14      subb     A, #0x14
-BDDA     50 10      jnc      0xbdec
-BDDC     80 07      sjmp     0xbde5
-BDDE     90 05 39   mov      DPTR, #0x539
-BDE1     e0         movx     A, @DPTR
-BDE2     b4 01 07   cjne     A, #0x1, 0xbdec
-BDE5     90 01 80   mov      DPTR, #0x180
-BDE8     ad 82      mov      R5, DPL
-BDEA     ae 83      mov      R6, DPH
-BDEC     02 bf 3a   ljmp     0xbf3a
+BD45     90 04 91 mov      DPTR, #0x491
+BD48     e0 - -   movx     A, @DPTR
+BD49     54 c0 -  anl      A, #0xc0
+BD4B     44 21 -  orl      A, #0x21
+BD4D     f0 - -   movx     @DPTR, A
+BD4E     90 03 0d mov      DPTR, #0x30d
+BD51     e0 - -   movx     A, @DPTR
+BD52     b4 0f 02 cjne     A, #0xf, 0xbd57
+BD55     80 0c -  sjmp     0xbd63
+BD57     b4 10 02 cjne     A, #0x10, 0xbd5c
+BD5A     80 07 -  sjmp     0xbd63
+BD5C     b4 11 02 cjne     A, #0x11, 0xbd61
+BD5F     80 02 -  sjmp     0xbd63
+BD61     80 62 -  sjmp     0xbdc5
+BD63     90 08 98 mov      DPTR, #0x898
+BD66     e0 - -   movx     A, @DPTR
+BD67     70 32 -  jnz      0xbd9b
+BD69     90 04 38 mov      DPTR, #0x438
+BD6C     12 88 92 lcall    0x8892
+BD6F     90 04 91 mov      DPTR, #0x491
+BD72     e0 - -   movx     A, @DPTR
+BD73     54 c0 -  anl      A, #0xc0
+BD75     b4 80 02 cjne     A, #0x80, 0xbd7a
+BD78     80 0a -  sjmp     0xbd84
+BD7A     b4 40 02 cjne     A, #0x40, 0xbd7f
+BD7D     80 0a -  sjmp     0xbd89
+BD7F     90 40 10 mov      DPTR, #0x4010
+BD82     80 08 -  sjmp     0xbd8c
+BD84     90 30 0c mov      DPTR, #0x300c
+BD87     80 03 -  sjmp     0xbd8c
+BD89     90 20 08 mov      DPTR, #0x2008
+BD8C     aa 83 -  mov      R2, DPH
+BD8E     a9 82 -  mov      R1, DPL
+BD90     12 88 5b lcall    0x885b
+BD93     50 30 -  jnc      0xbdc5
+BD95     90 08 98 mov      DPTR, #0x898
+BD98     74 0f -  mov      A, #0xf
+BD9A     f0 - -   movx     @DPTR, A
+BD9B     90 03 00 mov      DPTR, #0x300
+BD9E     ad 82 -  mov      R5, DPL
+BDA0     ae 83 -  mov      R6, DPH
+BDA2     90 04 97 mov      DPTR, #0x497
+BDA5     e0 - -   movx     A, @DPTR
+BDA6     20 e0 0b jb       0xe0, 0xbdb4
+BDA9     90 04 03 mov      DPTR, #0x403
+BDAC     e0 - -   movx     A, @DPTR
+BDAD     c3 - -   clr      CY
+BDAE     94 14 -  subb     A, #0x14
+BDB0     50 10 -  jnc      0xbdc2
+BDB2     80 07 -  sjmp     0xbdbb
+BDB4     90 05 39 mov      DPTR, #0x539
+BDB7     e0 - -   movx     A, @DPTR
+BDB8     b4 01 07 cjne     A, #0x1, 0xbdc2
+BDBB     90 03 00 mov      DPTR, #0x300
+BDBE     ad 82 -  mov      R5, DPL
+BDC0     ae 83 -  mov      R6, DPH
+BDC2     02 bf 3a ljmp     0xbf3a
+BDC5     90 01 80 mov      DPTR, #0x180
+BDC8     ad 82 -  mov      R5, DPL
+BDCA     ae 83 -  mov      R6, DPH
+BDCC     90 04 97 mov      DPTR, #0x497
+BDCF     e0 - -   movx     A, @DPTR
+BDD0     20 e0 0b jb       0xe0, 0xbdde
+BDD3     90 04 03 mov      DPTR, #0x403
+BDD6     e0 - -   movx     A, @DPTR
+BDD7     c3 - -   clr      CY
+BDD8     94 14 -  subb     A, #0x14
+BDDA     50 10 -  jnc      0xbdec
+BDDC     80 07 -  sjmp     0xbde5
+BDDE     90 05 39 mov      DPTR, #0x539
+BDE1     e0 - -   movx     A, @DPTR
+BDE2     b4 01 07 cjne     A, #0x1, 0xbdec
+BDE5     90 01 80 mov      DPTR, #0x180
+BDE8     ad 82 -  mov      R5, DPL
+BDEA     ae 83 -  mov      R6, DPH
+BDEC     02 bf 3a ljmp     0xbf3a

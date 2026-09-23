@@ -6,47 +6,47 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-23F4     ef         mov      A, R7
-23F5     c3         clr      CY
-23F6     94 08      subb     A, #0x8
-23F8     50 24      jnc      0x241e
-23FA     30 1f 10   jnb      0x1f, 0x240d
-23FD     12 2a 54   lcall    0x2a54
-2400     80 02      sjmp     0x2404
-2402     c3         clr      CY
-2403     33         rlc      A
-2404     d8 fc      djnz     R0, 0x2402
-2406     90 1d 00   mov      DPTR, #0x1d00
-2409     f0         movx     @DPTR, A
-240A     e4         clr      A
-240B     80 32      sjmp     0x243f
-240D     12 2a 54   lcall    0x2a54
-2410     80 02      sjmp     0x2414
-2412     c3         clr      CY
-2413     33         rlc      A
-2414     d8 fc      djnz     R0, 0x2412
-2416     f4         cpl      A
-2417     12 2a 9a   lcall    0x2a9a
-241A     74 ff      mov      A, #0xff
-241C     f0         movx     @DPTR, A
-241D     22         ret      
-241E     30 1f 0f   jnb      0x1f, 0x2430
-2421     e4         clr      A
-2422     90 1d 00   mov      DPTR, #0x1d00
-2425     12 2a 4f   lcall    0x2a4f
-2428     80 02      sjmp     0x242c
-242A     c3         clr      CY
-242B     33         rlc      A
-242C     d8 fc      djnz     R0, 0x242a
-242E     80 0f      sjmp     0x243f
-2430     90 1d 00   mov      DPTR, #0x1d00
-2433     74 ff      mov      A, #0xff
-2435     12 2a 4f   lcall    0x2a4f
-2438     80 02      sjmp     0x243c
-243A     c3         clr      CY
-243B     33         rlc      A
-243C     d8 fc      djnz     R0, 0x243a
-243E     f4         cpl      A
-243F     90 1d 01   mov      DPTR, #0x1d01
-2442     f0         movx     @DPTR, A
-2443     22         ret      
+23F4     ef - -   mov      A, R7
+23F5     c3 - -   clr      CY
+23F6     94 08 -  subb     A, #0x8
+23F8     50 24 -  jnc      0x241e
+23FA     30 1f 10 jnb      0x1f, 0x240d
+23FD     12 2a 54 lcall    0x2a54
+2400     80 02 -  sjmp     0x2404
+2402     c3 - -   clr      CY
+2403     33 - -   rlc      A
+2404     d8 fc -  djnz     R0, 0x2402
+2406     90 1d 00 mov      DPTR, #0x1d00
+2409     f0 - -   movx     @DPTR, A
+240A     e4 - -   clr      A
+240B     80 32 -  sjmp     0x243f
+240D     12 2a 54 lcall    0x2a54
+2410     80 02 -  sjmp     0x2414
+2412     c3 - -   clr      CY
+2413     33 - -   rlc      A
+2414     d8 fc -  djnz     R0, 0x2412
+2416     f4 - -   cpl      A
+2417     12 2a 9a lcall    0x2a9a
+241A     74 ff -  mov      A, #0xff
+241C     f0 - -   movx     @DPTR, A
+241D     22 - -   ret      
+241E     30 1f 0f jnb      0x1f, 0x2430
+2421     e4 - -   clr      A
+2422     90 1d 00 mov      DPTR, #0x1d00
+2425     12 2a 4f lcall    0x2a4f
+2428     80 02 -  sjmp     0x242c
+242A     c3 - -   clr      CY
+242B     33 - -   rlc      A
+242C     d8 fc -  djnz     R0, 0x242a
+242E     80 0f -  sjmp     0x243f
+2430     90 1d 00 mov      DPTR, #0x1d00
+2433     74 ff -  mov      A, #0xff
+2435     12 2a 4f lcall    0x2a4f
+2438     80 02 -  sjmp     0x243c
+243A     c3 - -   clr      CY
+243B     33 - -   rlc      A
+243C     d8 fc -  djnz     R0, 0x243a
+243E     f4 - -   cpl      A
+243F     90 1d 01 mov      DPTR, #0x1d01
+2442     f0 - -   movx     @DPTR, A
+2443     22 - -   ret      

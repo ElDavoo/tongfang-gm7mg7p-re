@@ -4,8 +4,8 @@
 ; This is the machine code. The decompiled C for this address is D6D7.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-D6D7     74 40      mov      A, #0x40
-D6D9     90 03 99   mov      DPTR, #0x399
-D6DC     f0         movx     @DPTR, A
-D6DD     90 03 48   mov      DPTR, #0x348
-D6E0     f0         movx     @DPTR, A
+D6D7     74 40 -  mov      A, #0x40
+D6D9     90 03 99 mov      DPTR, #0x399
+D6DC     f0 - -   movx     @DPTR, A
+D6DD     90 03 48 mov      DPTR, #0x348
+D6E0     f0 - -   movx     @DPTR, A

@@ -32,7 +32,7 @@ undefined1 FUN_CODE_06ea(byte param_1,byte param_2,byte param_3,byte param_4)
       cVar6 = F0;
       uVar5 = 0;
       if (cVar6 != '\0') {
-        uVar5 = FUN_CODE_0f00(bVar3);
+        uVar5 = negate_32bit_r4r7(bVar3);
         return uVar5;
       }
     }

@@ -6,81 +6,81 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-1059     12 15 9a   lcall    0x159a
-105C     ef         mov      A, R7
-105D     60 03      jz       0x1062
-105F     02 28 96   ljmp     0x2896
-1062     90 00 ff   mov      DPTR, #0xff
-1065     e0         movx     A, @DPTR
-1066     30 e6 26   jnb      0xe6, 0x108f
-1069     90 00 fc   mov      DPTR, #0xfc
-106C     e0         movx     A, @DPTR
-106D     f4         cpl      A
-106E     70 74      jnz      0x10e4
-1070     90 0a 4a   mov      DPTR, #0xa4a
-1073     e0         movx     A, @DPTR
-1074     70 6e      jnz      0x10e4
-1076     12 22 1f   lcall    0x221f
-1079     90 00 fa   mov      DPTR, #0xfa
-107C     f0         movx     @DPTR, A
-107D     90 0a 49   mov      DPTR, #0xa49
-1080     e0         movx     A, @DPTR
-1081     c4         swap     A
-1082     54 0f      anl      A, #0xf
-1084     90 00 fb   mov      DPTR, #0xfb
-1087     f0         movx     @DPTR, A
-1088     90 00 fc   mov      DPTR, #0xfc
-108B     74 33      mov      A, #0x33
-108D     f0         movx     @DPTR, A
-108E     22         ret      
-108F     12 22 1f   lcall    0x221f
-1092     c4         swap     A
-1093     54 f0      anl      A, #0xf0
-1095     ff         mov      R7, A
-1096     e0         movx     A, @DPTR
-1097     fe         mov      R6, A
-1098     c4         swap     A
-1099     54 0f      anl      A, #0xf
-109B     4f         orl      A, R7
-109C     f5 68      mov      0x68, A
-109E     af 68      mov      R7, 0x68
-10A0     90 00 27   mov      DPTR, #0x27
-10A3     e0         movx     A, @DPTR
-10A4     fc         mov      R4, A
-10A5     a3         inc      DPTR
-10A6     e0         movx     A, @DPTR
-10A7     2f         add      A, R7
-10A8     f5 82      mov      DPL, A
-10AA     e4         clr      A
-10AB     3c         addc     A, R4
-10AC     f5 83      mov      DPH, A
-10AE     e4         clr      A
-10AF     93         movc     A, @A+DPTR
-10B0     f5 67      mov      0x67, A
-10B2     12 15 a0   lcall    0x15a0
-10B5     12 22 1f   lcall    0x221f
-10B8     90 09 8d   mov      DPTR, #0x98d
-10BB     f0         movx     @DPTR, A
-10BC     90 0a 49   mov      DPTR, #0xa49
-10BF     e0         movx     A, @DPTR
-10C0     c4         swap     A
-10C1     54 0f      anl      A, #0xf
-10C3     90 09 8e   mov      DPTR, #0x98e
-10C6     f0         movx     @DPTR, A
-10C7     90 09 8f   mov      DPTR, #0x98f
-10CA     e5 67      mov      A, 0x67
-10CC     f0         movx     @DPTR, A
-10CD     12 22 1f   lcall    0x221f
-10D0     ff         mov      R7, A
-10D1     e0         movx     A, @DPTR
-10D2     fe         mov      R6, A
-10D3     c4         swap     A
-10D4     54 0f      anl      A, #0xf
-10D6     fd         mov      R5, A
-10D7     12 15 a6   lcall    0x15a6
-10DA     90 0a 4a   mov      DPTR, #0xa4a
-10DD     e0         movx     A, @DPTR
-10DE     fd         mov      R5, A
-10DF     af 67      mov      R7, 0x67
-10E1     12 1b f3   lcall    0x1bf3
-10E4     22         ret      
+1059     12 15 9a lcall    0x159a
+105C     ef - -   mov      A, R7
+105D     60 03 -  jz       0x1062
+105F     02 28 96 ljmp     0x2896
+1062     90 00 ff mov      DPTR, #0xff
+1065     e0 - -   movx     A, @DPTR
+1066     30 e6 26 jnb      0xe6, 0x108f
+1069     90 00 fc mov      DPTR, #0xfc
+106C     e0 - -   movx     A, @DPTR
+106D     f4 - -   cpl      A
+106E     70 74 -  jnz      0x10e4
+1070     90 0a 4a mov      DPTR, #0xa4a
+1073     e0 - -   movx     A, @DPTR
+1074     70 6e -  jnz      0x10e4
+1076     12 22 1f lcall    0x221f
+1079     90 00 fa mov      DPTR, #0xfa
+107C     f0 - -   movx     @DPTR, A
+107D     90 0a 49 mov      DPTR, #0xa49
+1080     e0 - -   movx     A, @DPTR
+1081     c4 - -   swap     A
+1082     54 0f -  anl      A, #0xf
+1084     90 00 fb mov      DPTR, #0xfb
+1087     f0 - -   movx     @DPTR, A
+1088     90 00 fc mov      DPTR, #0xfc
+108B     74 33 -  mov      A, #0x33
+108D     f0 - -   movx     @DPTR, A
+108E     22 - -   ret      
+108F     12 22 1f lcall    0x221f
+1092     c4 - -   swap     A
+1093     54 f0 -  anl      A, #0xf0
+1095     ff - -   mov      R7, A
+1096     e0 - -   movx     A, @DPTR
+1097     fe - -   mov      R6, A
+1098     c4 - -   swap     A
+1099     54 0f -  anl      A, #0xf
+109B     4f - -   orl      A, R7
+109C     f5 68 -  mov      0x68, A
+109E     af 68 -  mov      R7, 0x68
+10A0     90 00 27 mov      DPTR, #0x27
+10A3     e0 - -   movx     A, @DPTR
+10A4     fc - -   mov      R4, A
+10A5     a3 - -   inc      DPTR
+10A6     e0 - -   movx     A, @DPTR
+10A7     2f - -   add      A, R7
+10A8     f5 82 -  mov      DPL, A
+10AA     e4 - -   clr      A
+10AB     3c - -   addc     A, R4
+10AC     f5 83 -  mov      DPH, A
+10AE     e4 - -   clr      A
+10AF     93 - -   movc     A, @A+DPTR
+10B0     f5 67 -  mov      0x67, A
+10B2     12 15 a0 lcall    0x15a0
+10B5     12 22 1f lcall    0x221f
+10B8     90 09 8d mov      DPTR, #0x98d
+10BB     f0 - -   movx     @DPTR, A
+10BC     90 0a 49 mov      DPTR, #0xa49
+10BF     e0 - -   movx     A, @DPTR
+10C0     c4 - -   swap     A
+10C1     54 0f -  anl      A, #0xf
+10C3     90 09 8e mov      DPTR, #0x98e
+10C6     f0 - -   movx     @DPTR, A
+10C7     90 09 8f mov      DPTR, #0x98f
+10CA     e5 67 -  mov      A, 0x67
+10CC     f0 - -   movx     @DPTR, A
+10CD     12 22 1f lcall    0x221f
+10D0     ff - -   mov      R7, A
+10D1     e0 - -   movx     A, @DPTR
+10D2     fe - -   mov      R6, A
+10D3     c4 - -   swap     A
+10D4     54 0f -  anl      A, #0xf
+10D6     fd - -   mov      R5, A
+10D7     12 15 a6 lcall    0x15a6
+10DA     90 0a 4a mov      DPTR, #0xa4a
+10DD     e0 - -   movx     A, @DPTR
+10DE     fd - -   mov      R5, A
+10DF     af 67 -  mov      R7, 0x67
+10E1     12 1b f3 lcall    0x1bf3
+10E4     22 - -   ret      

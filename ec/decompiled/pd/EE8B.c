@@ -9,9 +9,9 @@ char FUN_CODE_ee8b(char *param_1,undefined1 param_2)
 {
   char cVar1;
   
-  cVar1 = FUN_CODE_6faf(param_2,0);
+  cVar1 = scaled_lookup_from_a_times_5e_plus_f8(param_2,0);
   if (cVar1 == '\0') {
-    FUN_CODE_70a4(param_2);
+    dptr_08ed_plus_5e_times_a(param_2);
     cVar1 = *param_1 + (((param_1[1] == '\0') << 7) >> 7);
   }
   return cVar1;

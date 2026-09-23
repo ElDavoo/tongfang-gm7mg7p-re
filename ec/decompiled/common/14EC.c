@@ -9,7 +9,7 @@
 void FUN_CODE_14ec(void)
 
 {
-  bl51_bank_select_0(FUN_CODE_d58e);
+  bl51_bank_select_0(write_r5_to_0400_plus_r7);
   return;
 }
 

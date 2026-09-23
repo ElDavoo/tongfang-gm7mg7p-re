@@ -4,8 +4,8 @@
 ; This is the machine code. The decompiled C for this address is BC8D.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-BC8D     90 04 91   mov      DPTR, #0x491
-BC90     e0         movx     A, @DPTR
-BC91     54 c0      anl      A, #0xc0
-BC93     ff         mov      R7, A
-BC94     22         ret      
+BC8D     90 04 91 mov      DPTR, #0x491
+BC90     e0 - -   movx     A, @DPTR
+BC91     54 c0 -  anl      A, #0xc0
+BC93     ff - -   mov      R7, A
+BC94     22 - -   ret      

@@ -7,7 +7,7 @@
 void switchD_CODE:d22d::caseD_0(void)
 
 {
-  FUN_CODE_d22e();
+  call_cdcb_then_d0a6();
   return;
 }
 

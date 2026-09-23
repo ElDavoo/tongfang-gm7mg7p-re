@@ -16,14 +16,15 @@ void FUN_CODE_def1(byte param_1)
   DAT_EXTMEM_0539 = DAT_EXTMEM_032b;
   FUN_CODE_e0ce(DAT_EXTMEM_030b);
   if ((DAT_EXTMEM_0342 == '\0') || (DAT_EXTMEM_03c0 != BANK0_R1)) goto LAB_CODE_df67;
-  FUN_CODE_888c(0x404,(char)((ushort)DAT_EXTMEM_03c0 * 100),
-                (char)((ushort)DAT_EXTMEM_03c0 * 100 >> 8));
-  FUN_CODE_888c(0x51c);
-  FUN_CODE_888c(0x51e);
+  write_r1r2_to_xdata_pair
+            (0x404,(char)((ushort)DAT_EXTMEM_03c0 * 100),(char)((ushort)DAT_EXTMEM_03c0 * 100 >> 8))
+  ;
+  write_r1r2_to_xdata_pair(0x51c);
+  write_r1r2_to_xdata_pair(0x51e);
   if (DAT_EXTMEM_0347 != BANK0_R1) goto LAB_CODE_df67;
   DAT_EXTMEM_03c1 = DAT_EXTMEM_0347;
-  FUN_CODE_cbf3(DAT_EXTMEM_0514);
-  FUN_CODE_888c(0x436);
+  publish_0514_and_0342_product(DAT_EXTMEM_0514);
+  write_r1r2_to_xdata_pair(0x436);
   if ((DAT_EXTMEM_03a1 >> 2 & 1) == 0) {
 LAB_CODE_df60:
     DAT_EXTMEM_082f = '\0';
@@ -33,39 +34,39 @@ LAB_CODE_df60:
     DAT_EXTMEM_0348 = DAT_EXTMEM_082f;
     goto LAB_CODE_df60;
   }
-  FUN_CODE_8892(0x312);
-  FUN_CODE_8886(0x332);
+  read_xdata_pair_to_r3r4(0x312);
+  read_xdata_pair_to_r1r2(0x332);
   bVar1 = FUN_CODE_8863();
   if ((bVar1 & 1) != 1) {
-    FUN_CODE_888c(FUN_CODE_0402);
-    FUN_CODE_888c(0x52a);
-    FUN_CODE_8892(0x316);
-    FUN_CODE_8886(0x336);
+    write_r1r2_to_xdata_pair(FUN_CODE_0402);
+    write_r1r2_to_xdata_pair(0x52a);
+    read_xdata_pair_to_r3r4(0x316);
+    read_xdata_pair_to_r1r2(0x336);
     bVar1 = FUN_CODE_8863();
     if ((bVar1 & 1) != 1) {
-      FUN_CODE_888c(0x52e);
-      FUN_CODE_888c(FUN_CODE_0408);
-      FUN_CODE_888c(0x438);
-      FUN_CODE_888c(0x506);
-      FUN_CODE_888c(0x508);
-      FUN_CODE_8886(0x314);
-      FUN_CODE_888c(0x534);
-      FUN_CODE_888c(0x4a8);
-      FUN_CODE_8886(0x343);
-      FUN_CODE_888c(0x4a6);
-      FUN_CODE_888c(0x528);
-      FUN_CODE_8886(0x308);
-      FUN_CODE_888c(0x536);
-      FUN_CODE_8886(0x318);
-      FUN_CODE_885b(0x80,0x3e);
-      FUN_CODE_888c(0x532);
-      FUN_CODE_8886(0x31a);
-      FUN_CODE_888c(0x520);
-      FUN_CODE_8886(0x30e);
-      FUN_CODE_888c(0x522);
-      FUN_CODE_8886(0x310);
-      FUN_CODE_888c(0x540);
-      FUN_CODE_888c(0x53e);
+      write_r1r2_to_xdata_pair(0x52e);
+      write_r1r2_to_xdata_pair(FUN_CODE_0408);
+      write_r1r2_to_xdata_pair(0x438);
+      write_r1r2_to_xdata_pair(0x506);
+      write_r1r2_to_xdata_pair(0x508);
+      read_xdata_pair_to_r1r2(0x314);
+      write_r1r2_to_xdata_pair(0x534);
+      write_r1r2_to_xdata_pair(0x4a8);
+      read_xdata_pair_to_r1r2(0x343);
+      write_r1r2_to_xdata_pair(0x4a6);
+      write_r1r2_to_xdata_pair(0x528);
+      read_xdata_pair_to_r1r2(0x308);
+      write_r1r2_to_xdata_pair(0x536);
+      read_xdata_pair_to_r1r2(0x318);
+      sub_r1r2_from_r3r4(0x80,0x3e);
+      write_r1r2_to_xdata_pair(0x532);
+      read_xdata_pair_to_r1r2(0x31a);
+      write_r1r2_to_xdata_pair(0x520);
+      read_xdata_pair_to_r1r2(0x30e);
+      write_r1r2_to_xdata_pair(0x522);
+      read_xdata_pair_to_r1r2(0x310);
+      write_r1r2_to_xdata_pair(0x540);
+      write_r1r2_to_xdata_pair(0x53e);
       if ((DAT_EXTMEM_030a & 7) == 4) {
         DAT_EXTMEM_0491 = DAT_EXTMEM_0491 & 0x3f | 0xc0;
       }
@@ -75,25 +76,25 @@ LAB_CODE_df60:
       else {
         DAT_EXTMEM_0491 = DAT_EXTMEM_0491 & 0x3f | 0x40;
       }
-      FUN_CODE_8886(0x310);
+      read_xdata_pair_to_r1r2(0x310);
       if ((DAT_EXTMEM_0491 & 0xc0) == 0xc0) {
-        FUN_CODE_888c(0x53a);
+        write_r1r2_to_xdata_pair(0x53a);
       }
       else if ((DAT_EXTMEM_0491 & 0xc0) == 0x80) {
-        FUN_CODE_888c(0x53c);
+        write_r1r2_to_xdata_pair(0x53c);
       }
       DAT_EXTMEM_04aa = 10;
       DAT_EXTMEM_0512 = 10;
       DAT_EXTMEM_055f = 0x14;
       DAT_EXTMEM_03a0 = DAT_EXTMEM_03a0 | 2;
       FUN_CODE_d6c6();
-      FUN_CODE_b50e();
+      derive_scaled_values_from_0404();
       if (DAT_EXTMEM_0514 == 'd') {
         DAT_EXTMEM_0492 = 1;
       }
       DAT_EXTMEM_0497 = DAT_EXTMEM_0497 | 4;
       DAT_EXTMEM_0490 = DAT_EXTMEM_0490 | 4;
-      FUN_CODE_aab9();
+      write_083c_083d_and_0832_bit6();
       DAT_EXTMEM_0394 = 0;
       DAT_EXTMEM_0680 = 4;
       FUN_CODE_de9e();

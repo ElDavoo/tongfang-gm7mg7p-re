@@ -4,31 +4,31 @@
 ; This is the machine code. The decompiled C for this address is 1EFE.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-1EFE     90 08 03   mov      DPTR, #0x803
-1F01     12 39 3d   lcall    0x393d
-1F04     d3         setb     CY
-1F05     94 04      subb     A, #0x4
-1F07     40 20      jc       0x1f29
-1F09     e0         movx     A, @DPTR
-1F0A     64 0f      xrl      A, #0xf
-1F0C     60 1b      jz       0x1f29
-1F0E     90 08 03   mov      DPTR, #0x803
-1F11     e0         movx     A, @DPTR
-1F12     ff         mov      R7, A
-1F13     12 f4 ee   lcall    0xf4ee
-1F16     ef         mov      A, R7
-1F17     70 10      jnz      0x1f29
-1F19     12 36 c2   lcall    0x36c2
-1F1C     7b 10      mov      R3, #0x10
-1F1E     12 27 26   lcall    0x2726
-1F21     60 03      jz       0x1f26
-1F23     7f 01      mov      R7, #0x1
-1F25     22         ret      
-1F26     7f 02      mov      R7, #0x2
-1F28     22         ret      
-1F29     90 08 05   mov      DPTR, #0x805
-1F2C     e0         movx     A, @DPTR
-1F2D     12 11 9c   lcall    0x119c
-1F30     1f         dec      R7
-1F31     4c         orl      A, R4
-1F32     01 20      ajmp     0x1820
+1EFE     90 08 03 mov      DPTR, #0x803
+1F01     12 39 3d lcall    0x393d
+1F04     d3 - -   setb     CY
+1F05     94 04 -  subb     A, #0x4
+1F07     40 20 -  jc       0x1f29
+1F09     e0 - -   movx     A, @DPTR
+1F0A     64 0f -  xrl      A, #0xf
+1F0C     60 1b -  jz       0x1f29
+1F0E     90 08 03 mov      DPTR, #0x803
+1F11     e0 - -   movx     A, @DPTR
+1F12     ff - -   mov      R7, A
+1F13     12 f4 ee lcall    0xf4ee
+1F16     ef - -   mov      A, R7
+1F17     70 10 -  jnz      0x1f29
+1F19     12 36 c2 lcall    0x36c2
+1F1C     7b 10 -  mov      R3, #0x10
+1F1E     12 27 26 lcall    0x2726
+1F21     60 03 -  jz       0x1f26
+1F23     7f 01 -  mov      R7, #0x1
+1F25     22 - -   ret      
+1F26     7f 02 -  mov      R7, #0x2
+1F28     22 - -   ret      
+1F29     90 08 05 mov      DPTR, #0x805
+1F2C     e0 - -   movx     A, @DPTR
+1F2D     12 11 9c lcall    0x119c
+1F30     1f - -   dec      R7
+1F31     4c - -   orl      A, R4
+1F32     01 20 -  ajmp     0x1820

@@ -37,7 +37,7 @@ void dispatch_case_06(char param_1,char *param_2,undefined1 param_3,undefined1 p
   }
   pcVar7 = (char *)0x832;
   bVar1 = DAT_EXTMEM_0832;
-  FUN_CODE_f75c();
+  read_dptr_byte_via_716c();
   puVar5 = (undefined1 *)0x0;
   if (bVar1 == 0) {
                     /* WARNING: Subroutine does not return */
@@ -49,10 +49,10 @@ LAB_CODE_4dee:
     uVar9 = SUB21(pcVar7,0);
     puVar4['\x01'] = 0xf1;
     puVar4['\x02'] = 0x4d;
-    FUN_CODE_b2fe();
+    read_0832_and_multiply_by_38();
     puVar4['\x01'] = 0xf4;
     puVar4['\x02'] = 0x4d;
-    uVar3 = FUN_CODE_b2e1();
+    uVar3 = dptr_from_097c_plus_carry();
     pcVar7 = (char *)CONCAT11(uVar3,uVar9);
     if (*pcVar7 == '\0') break;
     puVar4['\x01'] = BANK0_R7;
@@ -117,11 +117,11 @@ code_c0x4dd2:
   }
   puVar4['\x01'] = 0x1f;
   puVar4['\x02'] = 0x4e;
-  FUN_CODE_b2fe();
+  read_0832_and_multiply_by_38();
   uVar9 = SUB21(pcVar7,0);
   puVar4['\x01'] = 0x22;
   puVar4['\x02'] = 0x4e;
-  uVar3 = FUN_CODE_b2e9();
+  uVar3 = dptr_from_097d_plus_carry();
   if (*(char *)CONCAT11(uVar3,uVar9) == '\0') {
     pcVar7 = (char *)0x83d;
     puVar4['\x01'] = 0x52;
@@ -160,23 +160,23 @@ code_c0x4dd2:
       nop();
       puVar4['\x02'] = 0xd2;
       puVar4['\x03'] = 0x4d;
-      FUN_CODE_d8ee(DAT_EXTMEM_0832);
+      copy_0841_to_0984_when_083c_matches_097f(DAT_EXTMEM_0832);
       goto code_c0x4dd2;
     }
   }
   puVar5['\x01'] = 0x15;
   puVar5['\x02'] = 0x4b;
-  FUN_CODE_37a7(param_1 + '\x01');
+  load_r7_then_tail_10bc(param_1 + '\x01');
   puVar5['\x01'] = 0x19;
   puVar5['\x02'] = 0x4b;
-  FUN_CODE_349b(bVar1);
+  dph_plus_double_a_349b(bVar1);
   if (*pcVar7 != '\x03') {
     puVar5['\x01'] = 0x31;
     puVar5['\x02'] = 0x4b;
-    FUN_CODE_3565(2000);
+    dptr_0418_plus_60a(2000);
     puVar5['\x01'] = 0x35;
     puVar5['\x02'] = 0x4b;
-    FUN_CODE_349b(bVar1);
+    dph_plus_double_a_349b(bVar1);
     puVar5['\x01'] = 0x38;
     puVar5['\x02'] = 0x4b;
     write4_inline_args();
@@ -191,7 +191,7 @@ code_c0x4dd2:
       read_byte_to_r7_base_0420();
       puVar5['\x01'] = 0x4b;
       puVar5['\x02'] = 0x4b;
-      FUN_CODE_349b();
+      dph_plus_double_a_349b();
       puVar5['\x01'] = (char)((ushort)uVar6 >> 8);
       puVar5['\x02'] = (char)uVar6;
       puVar5['\x03'] = 0x52;
@@ -205,7 +205,7 @@ code_c0x4dd2:
       read_byte_to_r7_base_0420();
       puVar5['\x01'] = 0x5d;
       puVar5['\x02'] = 0x4b;
-      FUN_CODE_349b();
+      dph_plus_double_a_349b();
       puVar5['\x01'] = (char)((ushort)uVar6 >> 8);
       puVar5['\x02'] = (char)uVar6;
       puVar5['\x03'] = 100;
@@ -219,10 +219,10 @@ code_c0x4dd2:
     write4xdata_from_r4_r7(param_4,uVar6,bVar1);
     puVar5['\x01'] = 0x76;
     puVar5['\x02'] = 0x4b;
-    FUN_CODE_35e8(2000);
+    dptr_0400_plus_60a(2000);
     puVar5['\x01'] = 0x7a;
     puVar5['\x02'] = 0x4b;
-    FUN_CODE_349b(bVar1);
+    dph_plus_double_a_349b(bVar1);
     puVar5['\x01'] = 0x7d;
     puVar5['\x02'] = 0x4b;
     write4_inline_args();
@@ -230,10 +230,10 @@ code_c0x4dd2:
   }
   puVar5['\x01'] = 0x20;
   puVar5['\x02'] = 0x4b;
-  FUN_CODE_4c20();
+  call_f739_then_return_dptr_07d0();
   puVar5['\x01'] = 0x23;
   puVar5['\x02'] = 0x4b;
-  FUN_CODE_38ca();
+  read_xdata_to_r3_set_dptr_0418();
                     /* WARNING: Subroutine does not return */
   puVar5['\x01'] = 0x26;
   puVar5['\x02'] = 0x4b;

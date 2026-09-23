@@ -4,8 +4,8 @@
 ; This is the machine code. The decompiled C for this address is B28A.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-B28A     90 08 32   mov      DPTR, #0x832
-B28D     e0         movx     A, @DPTR
-B28E     75 f0 38   mov      B, #0x38
-B291     a4         mul      AB
-B292     22         ret      
+B28A     90 08 32 mov      DPTR, #0x832
+B28D     e0 - -   movx     A, @DPTR
+B28E     75 f0 38 mov      B, #0x38
+B291     a4 - -   mul      AB
+B292     22 - -   ret      

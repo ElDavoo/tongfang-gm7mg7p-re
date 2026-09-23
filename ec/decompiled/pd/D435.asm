@@ -4,37 +4,37 @@
 ; This is the machine code. The decompiled C for this address is D435.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-D435     90 08 25   mov      DPTR, #0x825
-D438     ef         mov      A, R7
-D439     f0         movx     @DPTR, A
-D43A     ed         mov      A, R5
-D43B     70 02      jnz      0xd43f
-D43D     e0         movx     A, @DPTR
-D43E     22         ret      
-D43F     12 c2 0c   lcall    0xc20c
-D442     50 1d      jnc      0xd461
-D444     90 ff fc   mov      DPTR, #0xfffc
-D447     12 12 2f   lcall    0x122f
-D461     12 c2 0c   lcall    0xc20c
-D464     70 24      jnz      0xd48a
-D466     90 08 25   mov      DPTR, #0x825
-D469     e0         movx     A, @DPTR
-D46A     fb         mov      R3, A
-D46B     70 0b      jnz      0xd478
-D46D     90 ff d4   mov      DPTR, #0xffd4
-D470     e0         movx     A, @DPTR
-D471     54 df      anl      A, #0xdf
-D473     f0         movx     @DPTR, A
-D474     e0         movx     A, @DPTR
-D475     54 fe      anl      A, #0xfe
-D477     f0         movx     @DPTR, A
-D478     90 ff fc   mov      DPTR, #0xfffc
-D47B     12 12 2f   lcall    0x122f
-D48A     90 08 25   mov      DPTR, #0x825
-D48D     e0         movx     A, @DPTR
-D48E     70 07      jnz      0xd497
-D490     90 ff d4   mov      DPTR, #0xffd4
-D493     e0         movx     A, @DPTR
-D494     44 01      orl      A, #0x1
-D496     f0         movx     @DPTR, A
-D497     22         ret      
+D435     90 08 25 mov      DPTR, #0x825
+D438     ef - -   mov      A, R7
+D439     f0 - -   movx     @DPTR, A
+D43A     ed - -   mov      A, R5
+D43B     70 02 -  jnz      0xd43f
+D43D     e0 - -   movx     A, @DPTR
+D43E     22 - -   ret      
+D43F     12 c2 0c lcall    0xc20c
+D442     50 1d -  jnc      0xd461
+D444     90 ff fc mov      DPTR, #0xfffc
+D447     12 12 2f lcall    0x122f
+D461     12 c2 0c lcall    0xc20c
+D464     70 24 -  jnz      0xd48a
+D466     90 08 25 mov      DPTR, #0x825
+D469     e0 - -   movx     A, @DPTR
+D46A     fb - -   mov      R3, A
+D46B     70 0b -  jnz      0xd478
+D46D     90 ff d4 mov      DPTR, #0xffd4
+D470     e0 - -   movx     A, @DPTR
+D471     54 df -  anl      A, #0xdf
+D473     f0 - -   movx     @DPTR, A
+D474     e0 - -   movx     A, @DPTR
+D475     54 fe -  anl      A, #0xfe
+D477     f0 - -   movx     @DPTR, A
+D478     90 ff fc mov      DPTR, #0xfffc
+D47B     12 12 2f lcall    0x122f
+D48A     90 08 25 mov      DPTR, #0x825
+D48D     e0 - -   movx     A, @DPTR
+D48E     70 07 -  jnz      0xd497
+D490     90 ff d4 mov      DPTR, #0xffd4
+D493     e0 - -   movx     A, @DPTR
+D494     44 01 -  orl      A, #0x1
+D496     f0 - -   movx     @DPTR, A
+D497     22 - -   ret      

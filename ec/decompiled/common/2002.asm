@@ -6,35 +6,35 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-2002     f0         movx     @DPTR, A
-2003     a3         inc      DPTR
-2004     ed         mov      A, R5
-2005     f0         movx     @DPTR, A
-2006     bd 01 1a   cjne     R5, #0x1, 0x2023
-2009     7b ff      mov      R3, #0xff
-200B     7a 21      mov      R2, #0x21
-200D     79 b4      mov      R1, #0xb4
-200F     12 29 cf   lcall    0x29cf
-2012     90 0a 54   mov      DPTR, #0xa54
-2015     e0         movx     A, @DPTR
-2016     ff         mov      R7, A
-2017     12 29 90   lcall    0x2990
-201A     7b ff      mov      R3, #0xff
-201C     7a 21      mov      R2, #0x21
-201E     79 c9      mov      R1, #0xc9
-2020     02 29 cf   ljmp     0x29cf
-2023     90 0a 55   mov      DPTR, #0xa55
-2026     e0         movx     A, @DPTR
-2027     70 0b      jnz      0x2034
-2029     7b ff      mov      R3, #0xff
-202B     7a 21      mov      R2, #0x21
-202D     79 c5      mov      R1, #0xc5
-202F     12 29 cf   lcall    0x29cf
-2032     80 05      sjmp     0x2039
-2034     7f e0      mov      R7, #0xe0
-2036     12 29 90   lcall    0x2990
-2039     90 0a 54   mov      DPTR, #0xa54
-203C     e0         movx     A, @DPTR
-203D     ff         mov      R7, A
-203E     12 29 90   lcall    0x2990
-2041     22         ret      
+2002     f0 - -   movx     @DPTR, A
+2003     a3 - -   inc      DPTR
+2004     ed - -   mov      A, R5
+2005     f0 - -   movx     @DPTR, A
+2006     bd 01 1a cjne     R5, #0x1, 0x2023
+2009     7b ff -  mov      R3, #0xff
+200B     7a 21 -  mov      R2, #0x21
+200D     79 b4 -  mov      R1, #0xb4
+200F     12 29 cf lcall    0x29cf
+2012     90 0a 54 mov      DPTR, #0xa54
+2015     e0 - -   movx     A, @DPTR
+2016     ff - -   mov      R7, A
+2017     12 29 90 lcall    0x2990
+201A     7b ff -  mov      R3, #0xff
+201C     7a 21 -  mov      R2, #0x21
+201E     79 c9 -  mov      R1, #0xc9
+2020     02 29 cf ljmp     0x29cf
+2023     90 0a 55 mov      DPTR, #0xa55
+2026     e0 - -   movx     A, @DPTR
+2027     70 0b -  jnz      0x2034
+2029     7b ff -  mov      R3, #0xff
+202B     7a 21 -  mov      R2, #0x21
+202D     79 c5 -  mov      R1, #0xc5
+202F     12 29 cf lcall    0x29cf
+2032     80 05 -  sjmp     0x2039
+2034     7f e0 -  mov      R7, #0xe0
+2036     12 29 90 lcall    0x2990
+2039     90 0a 54 mov      DPTR, #0xa54
+203C     e0 - -   movx     A, @DPTR
+203D     ff - -   mov      R7, A
+203E     12 29 90 lcall    0x2990
+2041     22 - -   ret      

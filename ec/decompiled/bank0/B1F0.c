@@ -27,7 +27,7 @@ void charge_stress_update(char param_1)
   cVar7 = (DAT_EXTMEM_0a4e < bVar6) << 7;
   if (DAT_EXTMEM_0a4e < bVar6) {
     puVar8 = &DAT_EXTMEM_0a4f;
-    FUN_CODE_bf08(DAT_EXTMEM_0a4e - bVar6);
+    sub_0a4e_against_4d_with_borrow(DAT_EXTMEM_0a4e - bVar6);
     if (-1 < cVar7) {
       tier_200_eligible();
       if (cVar7 < '\0') {
@@ -68,20 +68,20 @@ void charge_stress_update(char param_1)
             }
           }
           be16_add(0,0x9c9,uVar4);
-          FUN_CODE_1672();
+          load_dptr_e56f_tail_jump_1114();
         }
       }
     }
   }
   if ((DAT_EXTMEM_0490 & 1) != 1) {
-    FUN_CODE_b38d();
+    unresolved_b38d();
     return;
   }
   bVar2 = 0;
   store_be16_b(SBS_CHARGING_VOLTAGE_0,0xa50,SBS_CHARGING_VOLTAGE_1);
   bVar6 = 1 - (((DAT_EXTMEM_0a51 < 0xf4) << 7) >> 7);
   if (DAT_EXTMEM_0a50 < bVar6) {
-    FUN_CODE_b35e();
+    charge_target_minus_r3_times_0a47();
     return;
   }
   cVar7 = -0x80;
@@ -93,7 +93,7 @@ void charge_stress_update(char param_1)
     if ((-1 < cVar7) ||
        ((bVar5 = 1 - (((DAT_EXTMEM_0a4d < 0xc2) << 7) >> 7), bVar6 = DAT_EXTMEM_0a4c - bVar5,
         bVar5 <= DAT_EXTMEM_0a4c || (bVar6 = OEM_4_CHARGING_PROFILE & 0x30, bVar6 == 0x20)))) {
-      FUN_CODE_b35e(bVar6,200);
+      charge_target_minus_r3_times_0a47(bVar6,200);
       return;
     }
     bVar6 = 0x2c - (((DAT_EXTMEM_09ca < 0xb9) << 7) >> 7);
@@ -119,13 +119,13 @@ void charge_stress_update(char param_1)
         CHARGE_TARGET_MV_0 = DAT_EXTMEM_0a51 - bVar2 * cVar7;
         return;
       }
-      FUN_CODE_b35e(bVar5,100);
+      charge_target_minus_r3_times_0a47(bVar5,100);
       return;
     }
-    FUN_CODE_b35e(cVar7,0x96);
+    charge_target_minus_r3_times_0a47(cVar7,0x96);
     return;
   }
-  FUN_CODE_b35e(0xfa);
+  charge_target_minus_r3_times_0a47(0xfa);
   return;
 }
 

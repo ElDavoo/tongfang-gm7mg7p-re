@@ -4,8 +4,8 @@
 ; This is the machine code. The decompiled C for this address is 6C70.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-6C70     17         dec      @R1
-6C71     ec         mov      A, R4
-6C72     00         nop      
-6C73     00         nop      
-6C74     01 17      ajmp     0x6817
+6C70     17 - -   dec      @R1
+6C71     ec - -   mov      A, R4
+6C72     00 - -   nop      
+6C73     00 - -   nop      
+6C74     01 17 -  ajmp     0x6817

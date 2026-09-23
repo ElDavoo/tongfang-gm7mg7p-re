@@ -19,25 +19,25 @@ void FUN_CODE_cc2d(char param_1)
   cVar4 = '\0';
   cVar3 = '\0';
   cVar2 = '\0';
-  FUN_CODE_198a();
+  trampoline_to_c1e7();
   cVar5 = '\0';
   if (cVar4 != '\0') {
     cVar5 = '\x04';
   }
-  cVar4 = FUN_CODE_8898(0x834);
+  cVar4 = read_xdata_pair_to_b_and_a(0x834);
   if (cVar4 != '\0' || param_1 != '\0') {
     cVar3 = '\x02';
   }
-  FUN_CODE_8892(0x30e);
+  read_xdata_pair_to_r3r4(0x30e);
   bVar1 = 0xb0;
   cVar4 = '6';
-  FUN_CODE_885b();
+  sub_r1r2_from_r3r4();
   if (-1 < in_PSW) {
     cVar2 = '\x01';
   }
   DAT_EXTMEM_0395 = cVar2 + cVar3 + cVar5;
-  FUN_CODE_8886(0x834);
-  FUN_CODE_a5e6(0x15,0);
+  read_xdata_pair_to_r1r2(0x834);
+  mul_16_round_shift_subtract(0x15,0);
   if (cVar4 != '\0') {
     bVar1 = 0xff;
   }

@@ -28,7 +28,7 @@ void dispatch_entry(undefined1 param_1,undefined1 param_2,byte param_3,byte para
   write4_inline_args(((bVar1 | param_3) & param_4 | param_3 | param_3) -
                      (param_5 - ((char)in_PSW >> 7)),0x83d);
   nop();
-  FUN_CODE_4800();
+  increment_dptr_byte_and_jump_back_to_4408();
   return;
 }
 

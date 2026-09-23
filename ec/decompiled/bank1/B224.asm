@@ -4,62 +4,62 @@
 ; This is the machine code. The decompiled C for this address is B224.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-B224     74 05      mov      A, #0x5
-B226     90 04 3c   mov      DPTR, #0x43c
-B229     f0         movx     @DPTR, A
-B22A     12 b2 14   lcall    0xb214
-B22D     40 05      jc       0xb234
-B22F     12 b2 a0   lcall    0xb2a0
-B232     80 27      sjmp     0xb25b
-B234     90 04 a0   mov      DPTR, #0x4a0
-B237     e0         movx     A, @DPTR
-B238     20 e5 20   jb       0xe5, 0xb25b
-B23B     90 04 04   mov      DPTR, #0x404
-B23E     12 88 92   lcall    0x8892
-B241     90 05 18   mov      DPTR, #0x518
-B244     12 88 86   lcall    0x8886
-B247     12 88 5b   lcall    0x885b
-B24A     ec         mov      A, R4
-B24B     70 08      jnz      0xb255
-B24D     eb         mov      A, R3
-B24E     c3         clr      CY
-B24F     94 28      subb     A, #0x28
-B251     50 02      jnc      0xb255
-B253     80 06      sjmp     0xb25b
-B255     90 04 36   mov      DPTR, #0x436
-B258     12 88 8c   lcall    0x888c
-B25B     12 b2 14   lcall    0xb214
-B25E     40 3a      jc       0xb29a
-B260     90 04 92   mov      DPTR, #0x492
-B263     e0         movx     A, @DPTR
-B264     70 34      jnz      0xb29a
-B266     90 04 94   mov      DPTR, #0x494
-B269     e0         movx     A, @DPTR
-B26A     70 2e      jnz      0xb29a
-B26C     90 04 97   mov      DPTR, #0x497
-B26F     e0         movx     A, @DPTR
-B270     20 e0 20   jb       0xe0, 0xb293
-B273     90 04 92   mov      DPTR, #0x492
-B276     e0         movx     A, @DPTR
-B277     70 1a      jnz      0xb293
-B279     90 04 ab   mov      DPTR, #0x4ab
-B27C     e0         movx     A, @DPTR
-B27D     b4 64 02   cjne     A, #0x64, 0xb282
-B280     80 11      sjmp     0xb293
-B282     c3         clr      CY
-B283     94 5a      subb     A, #0x5a
-B285     40 0c      jc       0xb293
-B287     90 05 22   mov      DPTR, #0x522
-B28A     12 88 92   lcall    0x8892
-B28D     ec         mov      A, R4
-B28E     4b         orl      A, R3
-B28F     70 02      jnz      0xb293
-B291     80 07      sjmp     0xb29a
-B293     74 02      mov      A, #0x2
-B295     90 04 32   mov      DPTR, #0x432
-B298     f0         movx     @DPTR, A
-B299     22         ret      
-B29A     e4         clr      A
-B29B     90 04 32   mov      DPTR, #0x432
-B29E     f0         movx     @DPTR, A
-B29F     22         ret      
+B224     74 05 -  mov      A, #0x5
+B226     90 04 3c mov      DPTR, #0x43c
+B229     f0 - -   movx     @DPTR, A
+B22A     12 b2 14 lcall    0xb214
+B22D     40 05 -  jc       0xb234
+B22F     12 b2 a0 lcall    0xb2a0
+B232     80 27 -  sjmp     0xb25b
+B234     90 04 a0 mov      DPTR, #0x4a0
+B237     e0 - -   movx     A, @DPTR
+B238     20 e5 20 jb       0xe5, 0xb25b
+B23B     90 04 04 mov      DPTR, #0x404
+B23E     12 88 92 lcall    0x8892
+B241     90 05 18 mov      DPTR, #0x518
+B244     12 88 86 lcall    0x8886
+B247     12 88 5b lcall    0x885b
+B24A     ec - -   mov      A, R4
+B24B     70 08 -  jnz      0xb255
+B24D     eb - -   mov      A, R3
+B24E     c3 - -   clr      CY
+B24F     94 28 -  subb     A, #0x28
+B251     50 02 -  jnc      0xb255
+B253     80 06 -  sjmp     0xb25b
+B255     90 04 36 mov      DPTR, #0x436
+B258     12 88 8c lcall    0x888c
+B25B     12 b2 14 lcall    0xb214
+B25E     40 3a -  jc       0xb29a
+B260     90 04 92 mov      DPTR, #0x492
+B263     e0 - -   movx     A, @DPTR
+B264     70 34 -  jnz      0xb29a
+B266     90 04 94 mov      DPTR, #0x494
+B269     e0 - -   movx     A, @DPTR
+B26A     70 2e -  jnz      0xb29a
+B26C     90 04 97 mov      DPTR, #0x497
+B26F     e0 - -   movx     A, @DPTR
+B270     20 e0 20 jb       0xe0, 0xb293
+B273     90 04 92 mov      DPTR, #0x492
+B276     e0 - -   movx     A, @DPTR
+B277     70 1a -  jnz      0xb293
+B279     90 04 ab mov      DPTR, #0x4ab
+B27C     e0 - -   movx     A, @DPTR
+B27D     b4 64 02 cjne     A, #0x64, 0xb282
+B280     80 11 -  sjmp     0xb293
+B282     c3 - -   clr      CY
+B283     94 5a -  subb     A, #0x5a
+B285     40 0c -  jc       0xb293
+B287     90 05 22 mov      DPTR, #0x522
+B28A     12 88 92 lcall    0x8892
+B28D     ec - -   mov      A, R4
+B28E     4b - -   orl      A, R3
+B28F     70 02 -  jnz      0xb293
+B291     80 07 -  sjmp     0xb29a
+B293     74 02 -  mov      A, #0x2
+B295     90 04 32 mov      DPTR, #0x432
+B298     f0 - -   movx     @DPTR, A
+B299     22 - -   ret      
+B29A     e4 - -   clr      A
+B29B     90 04 32 mov      DPTR, #0x432
+B29E     f0 - -   movx     @DPTR, A
+B29F     22 - -   ret      

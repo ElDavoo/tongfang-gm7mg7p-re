@@ -4,4 +4,4 @@
 ; This is the machine code. The decompiled C for this address is 0000.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-0000     02 05 00   ljmp     0x0500
+0000     02 05 00 ljmp     0x0500

@@ -4,4 +4,4 @@
 ; This is the machine code. The decompiled C for this address is B263.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-B263     12 10 bc   lcall    0x10bc
+B263     12 10 bc lcall    0x10bc

@@ -528,7 +528,7 @@ LAB_CODE_694c:
       *param_4 = (byte)pbVar8;
       *param_4 = *param_4 - 1;
       *pbVar4 = *pbVar4 - 1;
-      bVar5 = FUN_CODE_ff17(pbVar8,pbVar8);
+      bVar5 = ff_filler_not_a_function_ff17(pbVar8,pbVar8);
       return bVar5;
     }
   }

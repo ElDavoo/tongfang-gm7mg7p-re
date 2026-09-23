@@ -12,12 +12,12 @@ void FUN_CODE_d9fe(void)
   char cVar1;
   
   DAT_EXTMEM_073c = DAT_EXTMEM_073c & 6 | 1;
-  FUN_CODE_c266();
-  FUN_CODE_0ea2(200);
+  set_1605_bit1();
+  timer1_counted_delay_using_0a56(200);
   DAT_EXTMEM_1646 = 0x40;
-  FUN_CODE_c39e();
-  FUN_CODE_c191();
-  FUN_CODE_0ea2(5);
+  set_1607_bit6();
+  set_1603_bit4();
+  timer1_counted_delay_using_0a56(5);
   if ((DAT_EXTMEM_1666 >> 2 & 1) == 0) {
     if ((DAT_EXTMEM_166a >> 4 & 1) == 0) {
       DAT_EXTMEM_07d3 = 0x70;
@@ -45,18 +45,18 @@ void FUN_CODE_d9fe(void)
   DAT_EXTMEM_0832 = DAT_EXTMEM_0832 | 8;
   DAT_EXTMEM_0456 = DAT_EXTMEM_0456 | 0xc0;
   BIOS_OEM_2 = BIOS_OEM_2 & 0xfd;
-  FUN_CODE_ada3(0);
-  FUN_CODE_ada3(0x30);
+  write_0a47_from_r7(0);
+  write_0a47_from_r7(0x30);
   cVar1 = ' ';
-  FUN_CODE_ada3();
+  write_0a47_from_r7();
   FUN_CODE_c3a6();
-  FUN_CODE_c199();
-  FUN_CODE_c25e();
-  FUN_CODE_b053();
+  clear_1603_bit4();
+  clear_1605_bit1();
+  clear_16f1_bit5_then_store_0x80_pair();
   PROJECT_ID = 0xf;
   DAT_EXTMEM_0d15 = 0xf;
-  FUN_CODE_dc17();
-  FUN_CODE_b91b();
+  write_1201_seq_07_05_30();
+  test_0770_equals_0e();
   if (cVar1 != '\0') {
     BIOS_OEM = BIOS_OEM | 0x10;
   }

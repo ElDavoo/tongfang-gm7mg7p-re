@@ -6,38 +6,38 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-3799     7e 01      mov      R6, #0x1
-379B     e5 32      mov      A, 0x32
-379D     b4 f0 09   cjne     A, #0xf0, 0x37a9
-37A0     d2 11      setb     0x11
-37A2     c2 12      clr      0x12
-37A4     1e         dec      R6
-37A5     7f f0      mov      R7, #0xf0
-37A7     80 30      sjmp     0x37d9
-37A9     e5 32      mov      A, 0x32
-37AB     b4 56 0d   cjne     A, #0x56, 0x37bb
-37AE     30 11 28   jnb      0x11, 0x37d9
-37B1     c2 11      clr      0x11
-37B3     d2 12      setb     0x12
-37B5     e4         clr      A
-37B6     fe         mov      R6, A
-37B7     7f 56      mov      R7, #0x56
-37B9     80 1e      sjmp     0x37d9
-37BB     e5 32      mov      A, 0x32
-37BD     b4 a4 09   cjne     A, #0xa4, 0x37c9
-37C0     30 12 16   jnb      0x12, 0x37d9
-37C3     d2 13      setb     0x13
-37C5     7f 11      mov      R7, #0x11
-37C7     80 10      sjmp     0x37d9
-37C9     e5 32      mov      A, 0x32
-37CB     b4 a5 09   cjne     A, #0xa5, 0x37d7
-37CE     30 12 08   jnb      0x12, 0x37d9
-37D1     c2 13      clr      0x13
-37D3     7f 11      mov      R7, #0x11
-37D5     80 02      sjmp     0x37d9
-37D7     af 32      mov      R7, 0x32
-37D9     ee         mov      A, R6
-37DA     60 04      jz       0x37e0
-37DC     c2 11      clr      0x11
-37DE     c2 12      clr      0x12
-37E0     22         ret      
+3799     7e 01 -  mov      R6, #0x1
+379B     e5 32 -  mov      A, 0x32
+379D     b4 f0 09 cjne     A, #0xf0, 0x37a9
+37A0     d2 11 -  setb     0x11
+37A2     c2 12 -  clr      0x12
+37A4     1e - -   dec      R6
+37A5     7f f0 -  mov      R7, #0xf0
+37A7     80 30 -  sjmp     0x37d9
+37A9     e5 32 -  mov      A, 0x32
+37AB     b4 56 0d cjne     A, #0x56, 0x37bb
+37AE     30 11 28 jnb      0x11, 0x37d9
+37B1     c2 11 -  clr      0x11
+37B3     d2 12 -  setb     0x12
+37B5     e4 - -   clr      A
+37B6     fe - -   mov      R6, A
+37B7     7f 56 -  mov      R7, #0x56
+37B9     80 1e -  sjmp     0x37d9
+37BB     e5 32 -  mov      A, 0x32
+37BD     b4 a4 09 cjne     A, #0xa4, 0x37c9
+37C0     30 12 16 jnb      0x12, 0x37d9
+37C3     d2 13 -  setb     0x13
+37C5     7f 11 -  mov      R7, #0x11
+37C7     80 10 -  sjmp     0x37d9
+37C9     e5 32 -  mov      A, 0x32
+37CB     b4 a5 09 cjne     A, #0xa5, 0x37d7
+37CE     30 12 08 jnb      0x12, 0x37d9
+37D1     c2 13 -  clr      0x13
+37D3     7f 11 -  mov      R7, #0x11
+37D5     80 02 -  sjmp     0x37d9
+37D7     af 32 -  mov      R7, 0x32
+37D9     ee - -   mov      A, R6
+37DA     60 04 -  jz       0x37e0
+37DC     c2 11 -  clr      0x11
+37DE     c2 12 -  clr      0x12
+37E0     22 - -   ret      

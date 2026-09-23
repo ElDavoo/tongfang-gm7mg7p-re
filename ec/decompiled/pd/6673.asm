@@ -4,305 +4,305 @@
 ; This is the machine code. The decompiled C for this address is 6673.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-6673     90 07 d2   mov      DPTR, #0x7d2
-6676     ef         mov      A, R7
-6677     f0         movx     @DPTR, A
-6678     90 07 f3   mov      DPTR, #0x7f3
-667B     12 35 44   lcall    0x3544
-667E     12 35 4f   lcall    0x354f
-6681     f0         movx     @DPTR, A
-6682     fe         mov      R6, A
-6683     7f 20      mov      R7, #0x20
-6685     12 39 e6   lcall    0x39e6
-6688     12 12 8d   lcall    0x128d
-668B     12 36 f2   lcall    0x36f2
-668E     7a 07      mov      R2, #0x7
-6690     79 fb      mov      R1, #0xfb
-6692     12 b8 0e   lcall    0xb80e
-6695     90 07 fa   mov      DPTR, #0x7fa
-6698     ef         mov      A, R7
-6699     12 68 ce   lcall    0x68ce
-669C     70 02      jnz      0x66a0
-669E     80 39      sjmp     0x66d9
-66A0     90 07 d2   mov      DPTR, #0x7d2
-66A3     e0         movx     A, @DPTR
-66A4     ff         mov      R7, A
-66A5     12 f2 2e   lcall    0xf22e
-66A8     ef         mov      A, R7
-66A9     70 47      jnz      0x66f2
-66AB     90 07 f5   mov      DPTR, #0x7f5
-66AE     e0         movx     A, @DPTR
-66AF     64 0f      xrl      A, #0xf
-66B1     70 3f      jnz      0x66f2
-66B3     90 08 02   mov      DPTR, #0x802
-66B6     e0         movx     A, @DPTR
-66B7     64 0f      xrl      A, #0xf
-66B9     70 37      jnz      0x66f2
-66BB     90 07 fa   mov      DPTR, #0x7fa
-66BE     e0         movx     A, @DPTR
-66BF     fe         mov      R6, A
-66C0     c0 06      push     0x06
-66C2     12 36 f2   lcall    0x36f2
-66C5     7a 07      mov      R2, #0x7
-66C7     79 fb      mov      R1, #0xfb
-66C9     12 b8 0e   lcall    0xb80e
-66CC     d0 e0      pop      A
-66CE     5f         anl      A, R7
-66CF     90 07 fa   mov      DPTR, #0x7fa
-66D2     12 68 ce   lcall    0x68ce
-66D5     60 02      jz       0x66d9
-66D7     80 19      sjmp     0x66f2
-66D9     90 07 d2   mov      DPTR, #0x7d2
-66DC     e0         movx     A, @DPTR
-66DD     ff         mov      R7, A
-66DE     7b 01      mov      R3, #0x1
-66E0     7a 08      mov      R2, #0x8
-66E2     79 00      mov      R1, #0x0
-66E4     12 e9 e3   lcall    0xe9e3
-66E7     90 08 00   mov      DPTR, #0x800
-66EA     a3         inc      DPTR
-66EB     e0         movx     A, @DPTR
-66EC     54 1f      anl      A, #0x1f
-66EE     a3         inc      DPTR
-66EF     f0         movx     @DPTR, A
-66F0     80 ae      sjmp     0x66a0
-66F2     90 07 fa   mov      DPTR, #0x7fa
-66F5     e0         movx     A, @DPTR
-66F6     70 02      jnz      0x66fa
-66F8     ff         mov      R7, A
-66F9     22         ret      
-66FA     90 07 f3   mov      DPTR, #0x7f3
-66FD     e0         movx     A, @DPTR
-66FE     fc         mov      R4, A
-66FF     ec         mov      A, R4
-6700     c3         clr      CY
-6701     13         rrc      A
-6702     54 07      anl      A, #0x7
-6704     90 07 f6   mov      DPTR, #0x7f6
-6707     f0         movx     @DPTR, A
-6708     ec         mov      A, R4
-6709     c4         swap     A
-670A     54 07      anl      A, #0x7
-670C     a3         inc      DPTR
-670D     f0         movx     @DPTR, A
-670E     90 07 f3   mov      DPTR, #0x7f3
-6711     a3         inc      DPTR
-6712     e0         movx     A, @DPTR
-6713     fd         mov      R5, A
-6714     ec         mov      A, R4
-6715     c4         swap     A
-6716     13         rrc      A
-6717     13         rrc      A
-6718     13         rrc      A
-6719     54 01      anl      A, #0x1
-671B     ff         mov      R7, A
-671C     90 07 f8   mov      DPTR, #0x7f8
-671F     f0         movx     @DPTR, A
-6720     fb         mov      R3, A
-6721     ed         mov      A, R5
-6722     ae 04      mov      R6, 0x04
-6724     78 06      mov      R0, #0x6
-6726     ce         xch      A, R6
-6727     c3         clr      CY
-6728     13         rrc      A
-6729     ce         xch      A, R6
-672A     13         rrc      A
-672B     d8 f9      djnz     R0, 0x6726
-672D     54 03      anl      A, #0x3
-672F     90 07 f9   mov      DPTR, #0x7f9
-6732     f0         movx     @DPTR, A
-6733     bb 01 16   cjne     R3, #0x1, 0x674c
-6736     90 07 d3   mov      DPTR, #0x7d3
-6739     12 0f af   lcall    0x0faf
-673C     90 07 fc   mov      DPTR, #0x7fc
-673F     ee         mov      A, R6
-6740     f0         movx     @DPTR, A
-6741     a3         inc      DPTR
-6742     ef         mov      A, R7
-6743     f0         movx     @DPTR, A
-6744     ee         mov      A, R6
-6745     54 01      anl      A, #0x1
-6747     a3         inc      DPTR
-6748     f0         movx     @DPTR, A
-6749     a3         inc      DPTR
-674A     ef         mov      A, R7
-674B     f0         movx     @DPTR, A
-674C     90 07 fb   mov      DPTR, #0x7fb
-674F     e0         movx     A, @DPTR
-6750     ff         mov      R7, A
-6751     60 18      jz       0x676b
-6753     90 07 f9   mov      DPTR, #0x7f9
-6756     e0         movx     A, @DPTR
-6757     90 07 d2   mov      DPTR, #0x7d2
-675A     b4 02 08   cjne     A, #0x2, 0x6765
-675D     12 37 de   lcall    0x37de
-6760     74 02      mov      A, #0x2
-6762     f0         movx     @DPTR, A
-6763     80 06      sjmp     0x676b
-6765     12 37 de   lcall    0x37de
-6768     74 01      mov      A, #0x1
-676A     f0         movx     @DPTR, A
-676B     90 07 f5   mov      DPTR, #0x7f5
-676E     e0         movx     A, @DPTR
-676F     b4 0d 21   cjne     A, #0xd, 0x6793
-6772     90 07 f7   mov      DPTR, #0x7f7
-6775     e0         movx     A, @DPTR
-6776     70 1b      jnz      0x6793
-6778     90 07 f6   mov      DPTR, #0x7f6
-677B     12 39 77   lcall    0x3977
-677E     fd         mov      R5, A
-677F     90 04 2c   mov      DPTR, #0x42c
-6782     12 34 f2   lcall    0x34f2
-6785     ed         mov      A, R5
-6786     12 34 9b   lcall    0x349b
-6789     e5 82      mov      A, DPL
-678B     2f         add      A, R7
-678C     12 36 2a   lcall    0x362a
-678F     ee         mov      A, R6
-6790     f0         movx     @DPTR, A
-6791     80 48      sjmp     0x67db
-6793     12 39 74   lcall    0x3974
-6796     ff         mov      R7, A
-6797     90 04 2c   mov      DPTR, #0x42c
-679A     12 35 00   lcall    0x3500
-679D     ef         mov      A, R7
-679E     12 34 9b   lcall    0x349b
-67A1     12 36 27   lcall    0x3627
-67A4     e0         movx     A, @DPTR
-67A5     fe         mov      R6, A
-67A6     90 07 f6   mov      DPTR, #0x7f6
-67A9     e0         movx     A, @DPTR
-67AA     fd         mov      R5, A
-67AB     ee         mov      A, R6
-67AC     b5 05 14   cjne     A, 0x05, 0x67c3
-67AF     7b ff      mov      R3, #0xff
-67B1     7a a7      mov      R2, #0xa7
-67B3     79 99      mov      R1, #0x99
-67B5     12 35 2c   lcall    0x352c
-67B8     74 11      mov      A, #0x11
-67BA     12 36 6e   lcall    0x366e
-67BD     12 f4 ab   lcall    0xf4ab
-67C0     7f 00      mov      R7, #0x0
-67C2     22         ret      
-67C3     90 07 f6   mov      DPTR, #0x7f6
-67C6     e0         movx     A, @DPTR
-67C7     ff         mov      R7, A
-67C8     12 39 74   lcall    0x3974
-67CB     fd         mov      R5, A
-67CC     90 04 2c   mov      DPTR, #0x42c
-67CF     12 35 3e   lcall    0x353e
-67D2     ed         mov      A, R5
-67D3     12 34 9b   lcall    0x349b
-67D6     12 36 27   lcall    0x3627
-67D9     ef         mov      A, R7
-67DA     f0         movx     @DPTR, A
-67DB     90 07 d2   mov      DPTR, #0x7d2
-67DE     e0         movx     A, @DPTR
-67DF     fe         mov      R6, A
-67E0     12 34 ef   lcall    0x34ef
-67E3     ee         mov      A, R6
-67E4     12 34 9b   lcall    0x349b
-67E7     e0         movx     A, @DPTR
-67E8     fc         mov      R4, A
-67E9     a3         inc      DPTR
-67EA     e0         movx     A, @DPTR
-67EB     64 01      xrl      A, #0x1
-67ED     4c         orl      A, R4
-67EE     70 02      jnz      0x67f2
-67F0     ff         mov      R7, A
-67F1     22         ret      
-67F2     af 06      mov      R7, 0x06
-67F4     90 07 fb   mov      DPTR, #0x7fb
-67F7     e0         movx     A, @DPTR
-67F8     fd         mov      R5, A
-67F9     90 07 f5   mov      DPTR, #0x7f5
-67FC     e0         movx     A, @DPTR
-67FD     fb         mov      R3, A
-67FE     12 cb 2a   lcall    0xcb2a
-6801     bf 01 03   cjne     R7, #0x1, 0x6807
-6804     7f 00      mov      R7, #0x0
-6806     22         ret      
-6807     d3         setb     CY
-6808     90 07 ff   mov      DPTR, #0x7ff
-680B     e0         movx     A, @DPTR
-680C     94 1a      subb     A, #0x1a
-680E     90 07 fe   mov      DPTR, #0x7fe
-6811     e0         movx     A, @DPTR
-6812     94 00      subb     A, #0x0
-6814     50 31      jnc      0x6847
-6816     90 07 d2   mov      DPTR, #0x7d2
-6819     12 35 09   lcall    0x3509
-681C     e0         movx     A, @DPTR
-681D     d3         setb     CY
-681E     94 01      subb     A, #0x1
-6820     40 25      jc       0x6847
-6822     90 07 f8   mov      DPTR, #0x7f8
-6825     e0         movx     A, @DPTR
-6826     b4 01 1e   cjne     A, #0x1, 0x6847
-6829     7b 01      mov      R3, #0x1
-682B     90 08 06   mov      DPTR, #0x806
-682E     12 37 06   lcall    0x3706
-6831     90 07 fe   mov      DPTR, #0x7fe
-6834     a3         inc      DPTR
-6835     e0         movx     A, @DPTR
-6836     90 08 09   mov      DPTR, #0x809
-6839     f0         movx     @DPTR, A
-683A     90 07 f5   mov      DPTR, #0x7f5
-683D     e0         movx     A, @DPTR
-683E     fb         mov      R3, A
-683F     e4         clr      A
-6840     fd         mov      R5, A
-6841     12 ad ab   lcall    0xadab
-6844     02 68 cb   ljmp     0x68cb
-6847     90 07 d2   mov      DPTR, #0x7d2
-684A     e0         movx     A, @DPTR
-684B     12 35 0b   lcall    0x350b
-684E     e0         movx     A, @DPTR
-684F     d3         setb     CY
-6850     94 01      subb     A, #0x1
-6852     40 35      jc       0x6889
-6854     90 07 f8   mov      DPTR, #0x7f8
-6857     e0         movx     A, @DPTR
-6858     b4 01 2e   cjne     A, #0x1, 0x6889
-685B     90 07 d2   mov      DPTR, #0x7d2
-685E     e0         movx     A, @DPTR
-685F     fb         mov      R3, A
-6860     90 04 00   mov      DPTR, #0x400
-6863     12 34 94   lcall    0x3494
-6866     12 10 4d   lcall    0x104d
-6869     00         nop      
-686A     00         nop      
-686B     00         nop      
-686C     01 af      ajmp     0x68af
-6889     90 07 f7   mov      DPTR, #0x7f7
-688C     e0         movx     A, @DPTR
-688D     fe         mov      R6, A
-688E     d3         setb     CY
-688F     94 00      subb     A, #0x0
-6891     90 07 d2   mov      DPTR, #0x7d2
-6894     e0         movx     A, @DPTR
-6895     ff         mov      R7, A
-6896     90 07 fb   mov      DPTR, #0x7fb
-6899     e0         movx     A, @DPTR
-689A     fd         mov      R5, A
-689B     40 20      jc       0x68bd
-689D     12 39 e7   lcall    0x39e7
-68A0     90 08 06   mov      DPTR, #0x806
-68A3     12 10 e8   lcall    0x10e8
-68AF     90 08 0a   mov      DPTR, #0x80a
-68B2     f0         movx     @DPTR, A
-68B3     90 07 f5   mov      DPTR, #0x7f5
-68B6     e0         movx     A, @DPTR
-68B7     fb         mov      R3, A
-68B8     12 1e fe   lcall    0x1efe
-68BB     80 0e      sjmp     0x68cb
-68BD     90 07 f5   mov      DPTR, #0x7f5
-68C0     e0         movx     A, @DPTR
-68C1     fb         mov      R3, A
-68C2     a3         inc      DPTR
-68C3     e0         movx     A, @DPTR
-68C4     90 08 06   mov      DPTR, #0x806
-68C7     f0         movx     @DPTR, A
-68C8     12 13 3f   lcall    0x133f
-68CB     7f 01      mov      R7, #0x1
-68CD     22         ret      
+6673     90 07 d2 mov      DPTR, #0x7d2
+6676     ef - -   mov      A, R7
+6677     f0 - -   movx     @DPTR, A
+6678     90 07 f3 mov      DPTR, #0x7f3
+667B     12 35 44 lcall    0x3544
+667E     12 35 4f lcall    0x354f
+6681     f0 - -   movx     @DPTR, A
+6682     fe - -   mov      R6, A
+6683     7f 20 -  mov      R7, #0x20
+6685     12 39 e6 lcall    0x39e6
+6688     12 12 8d lcall    0x128d
+668B     12 36 f2 lcall    0x36f2
+668E     7a 07 -  mov      R2, #0x7
+6690     79 fb -  mov      R1, #0xfb
+6692     12 b8 0e lcall    0xb80e
+6695     90 07 fa mov      DPTR, #0x7fa
+6698     ef - -   mov      A, R7
+6699     12 68 ce lcall    0x68ce
+669C     70 02 -  jnz      0x66a0
+669E     80 39 -  sjmp     0x66d9
+66A0     90 07 d2 mov      DPTR, #0x7d2
+66A3     e0 - -   movx     A, @DPTR
+66A4     ff - -   mov      R7, A
+66A5     12 f2 2e lcall    0xf22e
+66A8     ef - -   mov      A, R7
+66A9     70 47 -  jnz      0x66f2
+66AB     90 07 f5 mov      DPTR, #0x7f5
+66AE     e0 - -   movx     A, @DPTR
+66AF     64 0f -  xrl      A, #0xf
+66B1     70 3f -  jnz      0x66f2
+66B3     90 08 02 mov      DPTR, #0x802
+66B6     e0 - -   movx     A, @DPTR
+66B7     64 0f -  xrl      A, #0xf
+66B9     70 37 -  jnz      0x66f2
+66BB     90 07 fa mov      DPTR, #0x7fa
+66BE     e0 - -   movx     A, @DPTR
+66BF     fe - -   mov      R6, A
+66C0     c0 06 -  push     0x06
+66C2     12 36 f2 lcall    0x36f2
+66C5     7a 07 -  mov      R2, #0x7
+66C7     79 fb -  mov      R1, #0xfb
+66C9     12 b8 0e lcall    0xb80e
+66CC     d0 e0 -  pop      A
+66CE     5f - -   anl      A, R7
+66CF     90 07 fa mov      DPTR, #0x7fa
+66D2     12 68 ce lcall    0x68ce
+66D5     60 02 -  jz       0x66d9
+66D7     80 19 -  sjmp     0x66f2
+66D9     90 07 d2 mov      DPTR, #0x7d2
+66DC     e0 - -   movx     A, @DPTR
+66DD     ff - -   mov      R7, A
+66DE     7b 01 -  mov      R3, #0x1
+66E0     7a 08 -  mov      R2, #0x8
+66E2     79 00 -  mov      R1, #0x0
+66E4     12 e9 e3 lcall    0xe9e3
+66E7     90 08 00 mov      DPTR, #0x800
+66EA     a3 - -   inc      DPTR
+66EB     e0 - -   movx     A, @DPTR
+66EC     54 1f -  anl      A, #0x1f
+66EE     a3 - -   inc      DPTR
+66EF     f0 - -   movx     @DPTR, A
+66F0     80 ae -  sjmp     0x66a0
+66F2     90 07 fa mov      DPTR, #0x7fa
+66F5     e0 - -   movx     A, @DPTR
+66F6     70 02 -  jnz      0x66fa
+66F8     ff - -   mov      R7, A
+66F9     22 - -   ret      
+66FA     90 07 f3 mov      DPTR, #0x7f3
+66FD     e0 - -   movx     A, @DPTR
+66FE     fc - -   mov      R4, A
+66FF     ec - -   mov      A, R4
+6700     c3 - -   clr      CY
+6701     13 - -   rrc      A
+6702     54 07 -  anl      A, #0x7
+6704     90 07 f6 mov      DPTR, #0x7f6
+6707     f0 - -   movx     @DPTR, A
+6708     ec - -   mov      A, R4
+6709     c4 - -   swap     A
+670A     54 07 -  anl      A, #0x7
+670C     a3 - -   inc      DPTR
+670D     f0 - -   movx     @DPTR, A
+670E     90 07 f3 mov      DPTR, #0x7f3
+6711     a3 - -   inc      DPTR
+6712     e0 - -   movx     A, @DPTR
+6713     fd - -   mov      R5, A
+6714     ec - -   mov      A, R4
+6715     c4 - -   swap     A
+6716     13 - -   rrc      A
+6717     13 - -   rrc      A
+6718     13 - -   rrc      A
+6719     54 01 -  anl      A, #0x1
+671B     ff - -   mov      R7, A
+671C     90 07 f8 mov      DPTR, #0x7f8
+671F     f0 - -   movx     @DPTR, A
+6720     fb - -   mov      R3, A
+6721     ed - -   mov      A, R5
+6722     ae 04 -  mov      R6, 0x04
+6724     78 06 -  mov      R0, #0x6
+6726     ce - -   xch      A, R6
+6727     c3 - -   clr      CY
+6728     13 - -   rrc      A
+6729     ce - -   xch      A, R6
+672A     13 - -   rrc      A
+672B     d8 f9 -  djnz     R0, 0x6726
+672D     54 03 -  anl      A, #0x3
+672F     90 07 f9 mov      DPTR, #0x7f9
+6732     f0 - -   movx     @DPTR, A
+6733     bb 01 16 cjne     R3, #0x1, 0x674c
+6736     90 07 d3 mov      DPTR, #0x7d3
+6739     12 0f af lcall    0x0faf
+673C     90 07 fc mov      DPTR, #0x7fc
+673F     ee - -   mov      A, R6
+6740     f0 - -   movx     @DPTR, A
+6741     a3 - -   inc      DPTR
+6742     ef - -   mov      A, R7
+6743     f0 - -   movx     @DPTR, A
+6744     ee - -   mov      A, R6
+6745     54 01 -  anl      A, #0x1
+6747     a3 - -   inc      DPTR
+6748     f0 - -   movx     @DPTR, A
+6749     a3 - -   inc      DPTR
+674A     ef - -   mov      A, R7
+674B     f0 - -   movx     @DPTR, A
+674C     90 07 fb mov      DPTR, #0x7fb
+674F     e0 - -   movx     A, @DPTR
+6750     ff - -   mov      R7, A
+6751     60 18 -  jz       0x676b
+6753     90 07 f9 mov      DPTR, #0x7f9
+6756     e0 - -   movx     A, @DPTR
+6757     90 07 d2 mov      DPTR, #0x7d2
+675A     b4 02 08 cjne     A, #0x2, 0x6765
+675D     12 37 de lcall    0x37de
+6760     74 02 -  mov      A, #0x2
+6762     f0 - -   movx     @DPTR, A
+6763     80 06 -  sjmp     0x676b
+6765     12 37 de lcall    0x37de
+6768     74 01 -  mov      A, #0x1
+676A     f0 - -   movx     @DPTR, A
+676B     90 07 f5 mov      DPTR, #0x7f5
+676E     e0 - -   movx     A, @DPTR
+676F     b4 0d 21 cjne     A, #0xd, 0x6793
+6772     90 07 f7 mov      DPTR, #0x7f7
+6775     e0 - -   movx     A, @DPTR
+6776     70 1b -  jnz      0x6793
+6778     90 07 f6 mov      DPTR, #0x7f6
+677B     12 39 77 lcall    0x3977
+677E     fd - -   mov      R5, A
+677F     90 04 2c mov      DPTR, #0x42c
+6782     12 34 f2 lcall    0x34f2
+6785     ed - -   mov      A, R5
+6786     12 34 9b lcall    0x349b
+6789     e5 82 -  mov      A, DPL
+678B     2f - -   add      A, R7
+678C     12 36 2a lcall    0x362a
+678F     ee - -   mov      A, R6
+6790     f0 - -   movx     @DPTR, A
+6791     80 48 -  sjmp     0x67db
+6793     12 39 74 lcall    0x3974
+6796     ff - -   mov      R7, A
+6797     90 04 2c mov      DPTR, #0x42c
+679A     12 35 00 lcall    0x3500
+679D     ef - -   mov      A, R7
+679E     12 34 9b lcall    0x349b
+67A1     12 36 27 lcall    0x3627
+67A4     e0 - -   movx     A, @DPTR
+67A5     fe - -   mov      R6, A
+67A6     90 07 f6 mov      DPTR, #0x7f6
+67A9     e0 - -   movx     A, @DPTR
+67AA     fd - -   mov      R5, A
+67AB     ee - -   mov      A, R6
+67AC     b5 05 14 cjne     A, 0x05, 0x67c3
+67AF     7b ff -  mov      R3, #0xff
+67B1     7a a7 -  mov      R2, #0xa7
+67B3     79 99 -  mov      R1, #0x99
+67B5     12 35 2c lcall    0x352c
+67B8     74 11 -  mov      A, #0x11
+67BA     12 36 6e lcall    0x366e
+67BD     12 f4 ab lcall    0xf4ab
+67C0     7f 00 -  mov      R7, #0x0
+67C2     22 - -   ret      
+67C3     90 07 f6 mov      DPTR, #0x7f6
+67C6     e0 - -   movx     A, @DPTR
+67C7     ff - -   mov      R7, A
+67C8     12 39 74 lcall    0x3974
+67CB     fd - -   mov      R5, A
+67CC     90 04 2c mov      DPTR, #0x42c
+67CF     12 35 3e lcall    0x353e
+67D2     ed - -   mov      A, R5
+67D3     12 34 9b lcall    0x349b
+67D6     12 36 27 lcall    0x3627
+67D9     ef - -   mov      A, R7
+67DA     f0 - -   movx     @DPTR, A
+67DB     90 07 d2 mov      DPTR, #0x7d2
+67DE     e0 - -   movx     A, @DPTR
+67DF     fe - -   mov      R6, A
+67E0     12 34 ef lcall    0x34ef
+67E3     ee - -   mov      A, R6
+67E4     12 34 9b lcall    0x349b
+67E7     e0 - -   movx     A, @DPTR
+67E8     fc - -   mov      R4, A
+67E9     a3 - -   inc      DPTR
+67EA     e0 - -   movx     A, @DPTR
+67EB     64 01 -  xrl      A, #0x1
+67ED     4c - -   orl      A, R4
+67EE     70 02 -  jnz      0x67f2
+67F0     ff - -   mov      R7, A
+67F1     22 - -   ret      
+67F2     af 06 -  mov      R7, 0x06
+67F4     90 07 fb mov      DPTR, #0x7fb
+67F7     e0 - -   movx     A, @DPTR
+67F8     fd - -   mov      R5, A
+67F9     90 07 f5 mov      DPTR, #0x7f5
+67FC     e0 - -   movx     A, @DPTR
+67FD     fb - -   mov      R3, A
+67FE     12 cb 2a lcall    0xcb2a
+6801     bf 01 03 cjne     R7, #0x1, 0x6807
+6804     7f 00 -  mov      R7, #0x0
+6806     22 - -   ret      
+6807     d3 - -   setb     CY
+6808     90 07 ff mov      DPTR, #0x7ff
+680B     e0 - -   movx     A, @DPTR
+680C     94 1a -  subb     A, #0x1a
+680E     90 07 fe mov      DPTR, #0x7fe
+6811     e0 - -   movx     A, @DPTR
+6812     94 00 -  subb     A, #0x0
+6814     50 31 -  jnc      0x6847
+6816     90 07 d2 mov      DPTR, #0x7d2
+6819     12 35 09 lcall    0x3509
+681C     e0 - -   movx     A, @DPTR
+681D     d3 - -   setb     CY
+681E     94 01 -  subb     A, #0x1
+6820     40 25 -  jc       0x6847
+6822     90 07 f8 mov      DPTR, #0x7f8
+6825     e0 - -   movx     A, @DPTR
+6826     b4 01 1e cjne     A, #0x1, 0x6847
+6829     7b 01 -  mov      R3, #0x1
+682B     90 08 06 mov      DPTR, #0x806
+682E     12 37 06 lcall    0x3706
+6831     90 07 fe mov      DPTR, #0x7fe
+6834     a3 - -   inc      DPTR
+6835     e0 - -   movx     A, @DPTR
+6836     90 08 09 mov      DPTR, #0x809
+6839     f0 - -   movx     @DPTR, A
+683A     90 07 f5 mov      DPTR, #0x7f5
+683D     e0 - -   movx     A, @DPTR
+683E     fb - -   mov      R3, A
+683F     e4 - -   clr      A
+6840     fd - -   mov      R5, A
+6841     12 ad ab lcall    0xadab
+6844     02 68 cb ljmp     0x68cb
+6847     90 07 d2 mov      DPTR, #0x7d2
+684A     e0 - -   movx     A, @DPTR
+684B     12 35 0b lcall    0x350b
+684E     e0 - -   movx     A, @DPTR
+684F     d3 - -   setb     CY
+6850     94 01 -  subb     A, #0x1
+6852     40 35 -  jc       0x6889
+6854     90 07 f8 mov      DPTR, #0x7f8
+6857     e0 - -   movx     A, @DPTR
+6858     b4 01 2e cjne     A, #0x1, 0x6889
+685B     90 07 d2 mov      DPTR, #0x7d2
+685E     e0 - -   movx     A, @DPTR
+685F     fb - -   mov      R3, A
+6860     90 04 00 mov      DPTR, #0x400
+6863     12 34 94 lcall    0x3494
+6866     12 10 4d lcall    0x104d
+6869     00 - -   nop      
+686A     00 - -   nop      
+686B     00 - -   nop      
+686C     01 af -  ajmp     0x68af
+6889     90 07 f7 mov      DPTR, #0x7f7
+688C     e0 - -   movx     A, @DPTR
+688D     fe - -   mov      R6, A
+688E     d3 - -   setb     CY
+688F     94 00 -  subb     A, #0x0
+6891     90 07 d2 mov      DPTR, #0x7d2
+6894     e0 - -   movx     A, @DPTR
+6895     ff - -   mov      R7, A
+6896     90 07 fb mov      DPTR, #0x7fb
+6899     e0 - -   movx     A, @DPTR
+689A     fd - -   mov      R5, A
+689B     40 20 -  jc       0x68bd
+689D     12 39 e7 lcall    0x39e7
+68A0     90 08 06 mov      DPTR, #0x806
+68A3     12 10 e8 lcall    0x10e8
+68AF     90 08 0a mov      DPTR, #0x80a
+68B2     f0 - -   movx     @DPTR, A
+68B3     90 07 f5 mov      DPTR, #0x7f5
+68B6     e0 - -   movx     A, @DPTR
+68B7     fb - -   mov      R3, A
+68B8     12 1e fe lcall    0x1efe
+68BB     80 0e -  sjmp     0x68cb
+68BD     90 07 f5 mov      DPTR, #0x7f5
+68C0     e0 - -   movx     A, @DPTR
+68C1     fb - -   mov      R3, A
+68C2     a3 - -   inc      DPTR
+68C3     e0 - -   movx     A, @DPTR
+68C4     90 08 06 mov      DPTR, #0x806
+68C7     f0 - -   movx     @DPTR, A
+68C8     12 13 3f lcall    0x133f
+68CB     7f 01 -  mov      R7, #0x1
+68CD     22 - -   ret      

@@ -18,10 +18,10 @@ byte FUN_CODE_d8b9(void)
   sVar4 = 0x373;
   bVar1 = DAT_EXTMEM_0372;
   bVar2 = DAT_EXTMEM_0373;
-  FUN_CODE_8854(DAT_EXTMEM_0370,DAT_EXTMEM_0371);
+  add_r1r2_to_r3r4(DAT_EXTMEM_0370,DAT_EXTMEM_0371);
   puVar5 = (undefined1 *)(sVar4 + 2);
-  FUN_CODE_8854(*(undefined1 *)(sVar4 + 1),*puVar5);
-  FUN_CODE_8854(puVar5[1],puVar5[2]);
+  add_r1r2_to_r3r4(*(undefined1 *)(sVar4 + 1),*puVar5);
+  add_r1r2_to_r3r4(puVar5[1],puVar5[2]);
   bVar3 = (bVar1 >> 1 | bVar2 << 7) >> 1 | (bVar2 >> 1) << 7;
   if (-1 < (char)((bVar1 >> 1) << 7)) {
     return bVar3;

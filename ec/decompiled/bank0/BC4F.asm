@@ -4,15 +4,15 @@
 ; This is the machine code. The decompiled C for this address is BC4F.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-BC4F     90 08 e6   mov      DPTR, #0x8e6
-BC52     e0         movx     A, @DPTR
-BC53     ff         mov      R7, A
-BC54     a3         inc      DPTR
-BC55     e0         movx     A, @DPTR
-BC56     90 0a 47   mov      DPTR, #0xa47
-BC59     cf         xch      A, R7
-BC5A     f0         movx     @DPTR, A
-BC5B     a3         inc      DPTR
-BC5C     ef         mov      A, R7
-BC5D     f0         movx     @DPTR, A
-BC5E     22         ret      
+BC4F     90 08 e6 mov      DPTR, #0x8e6
+BC52     e0 - -   movx     A, @DPTR
+BC53     ff - -   mov      R7, A
+BC54     a3 - -   inc      DPTR
+BC55     e0 - -   movx     A, @DPTR
+BC56     90 0a 47 mov      DPTR, #0xa47
+BC59     cf - -   xch      A, R7
+BC5A     f0 - -   movx     @DPTR, A
+BC5B     a3 - -   inc      DPTR
+BC5C     ef - -   mov      A, R7
+BC5D     f0 - -   movx     @DPTR, A
+BC5E     22 - -   ret      

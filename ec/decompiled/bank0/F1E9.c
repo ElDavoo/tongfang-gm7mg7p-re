@@ -14,15 +14,15 @@ void FUN_CODE_f1e9(void)
   
   sVar2 = 0xe03;
   DAT_EXTMEM_0e03 = '\0';
-  FUN_CODE_f495(0x80);
+  set_dptr_0f60_then_store_a(0x80);
   *(undefined1 *)(sVar2 + 1) = 2;
   *(undefined1 *)(sVar2 + 2) = 0xe;
   *(undefined1 *)(sVar2 + 3) = 0xa0;
   cVar1 = '\x01';
-  FUN_CODE_4777(1,0x80,0xe);
+  stage_0a54_0a55_then_dispatch(1,0x80,0xe);
   DAT_EXTMEM_0e02 = cVar1;
   if (cVar1 == '\0') {
-    FUN_CODE_f4a4();
+    inc_0e03();
   }
   if (DAT_EXTMEM_0e03 == '\0') {
     DAT_EXTMEM_0e04 = 1;

@@ -9,7 +9,7 @@
 void FUN_CODE_1618(void)
 
 {
-  bl51_bank_select_0(FUN_CODE_c3ae);
+  bl51_bank_select_0(route_074c_nibble_to_160a_and_1608);
   return;
 }
 

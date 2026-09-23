@@ -26,7 +26,7 @@ void FUN_CODE_1017(byte param_1,char param_2,char param_3,char param_4,byte para
   bVar2 = (param_1 | param_5) - 1;
   nop();
   if (_0_6 != '\x01') {
-    thunk_FUN_CODE_0556(bVar2 >> 1 | in_PSW & 0x80,param_3,param_4 + '\x01');
+    int1_vector_forwarder_to_0556(bVar2 >> 1 | in_PSW & 0x80,param_3,param_4 + '\x01');
     return;
   }
   bVar2 = bVar2 >> 1 | bVar2 * -0x80;

@@ -24,7 +24,7 @@ undefined1 FUN_CODE_0012(undefined1 param_1)
   uVar3 = BANK0_R2;
   uVar2 = BANK0_R1;
   uVar1 = BANK0_R0;
-  FUN_CODE_0050(0x157,param_1);
+  call_10f1_then_jmp_1229(0x157,param_1);
   BANK0_R7 = uVar8;
   BANK0_R6 = uVar7;
   BANK0_R5 = uVar6;

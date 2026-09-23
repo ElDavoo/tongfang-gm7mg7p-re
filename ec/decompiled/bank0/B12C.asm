@@ -4,27 +4,27 @@
 ; This is the machine code. The decompiled C for this address is B12C.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-B12C     90 07 8e   mov      DPTR, #0x78e
-B12F     e0         movx     A, @DPTR
-B130     44 08      orl      A, #0x8
-B132     f0         movx     @DPTR, A
-B133     90 07 41   mov      DPTR, #0x741
-B136     e0         movx     A, @DPTR
-B137     20 e0 07   jb       0xe0, 0xb141
-B13A     90 07 a6   mov      DPTR, #0x7a6
-B13D     e0         movx     A, @DPTR
-B13E     54 cf      anl      A, #0xcf
-B140     f0         movx     @DPTR, A
-B141     90 04 90   mov      DPTR, #0x490
-B144     e0         movx     A, @DPTR
-B145     20 e1 10   jb       0xe1, 0xb158
-B148     e4         clr      A
-B149     90 09 c7   mov      DPTR, #0x9c7
-B14C     f0         movx     @DPTR, A
-B14D     90 09 c8   mov      DPTR, #0x9c8
-B150     f0         movx     @DPTR, A
-B151     90 09 c9   mov      DPTR, #0x9c9
-B154     f0         movx     @DPTR, A
-B155     a3         inc      DPTR
-B156     f0         movx     @DPTR, A
-B157     22         ret      
+B12C     90 07 8e mov      DPTR, #0x78e
+B12F     e0 - -   movx     A, @DPTR
+B130     44 08 -  orl      A, #0x8
+B132     f0 - -   movx     @DPTR, A
+B133     90 07 41 mov      DPTR, #0x741
+B136     e0 - -   movx     A, @DPTR
+B137     20 e0 07 jb       0xe0, 0xb141
+B13A     90 07 a6 mov      DPTR, #0x7a6
+B13D     e0 - -   movx     A, @DPTR
+B13E     54 cf -  anl      A, #0xcf
+B140     f0 - -   movx     @DPTR, A
+B141     90 04 90 mov      DPTR, #0x490
+B144     e0 - -   movx     A, @DPTR
+B145     20 e1 10 jb       0xe1, 0xb158
+B148     e4 - -   clr      A
+B149     90 09 c7 mov      DPTR, #0x9c7
+B14C     f0 - -   movx     @DPTR, A
+B14D     90 09 c8 mov      DPTR, #0x9c8
+B150     f0 - -   movx     @DPTR, A
+B151     90 09 c9 mov      DPTR, #0x9c9
+B154     f0 - -   movx     @DPTR, A
+B155     a3 - -   inc      DPTR
+B156     f0 - -   movx     @DPTR, A
+B157     22 - -   ret      

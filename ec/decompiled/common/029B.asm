@@ -6,55 +6,55 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-029B     90 17 08   mov      DPTR, #0x1708
-029E     e0         movx     A, @DPTR
-029F     30 e3 47   jnb      0xe3, 0x02e9
-02A2     90 11 06   mov      DPTR, #0x1106
-02A5     e0         movx     A, @DPTR
-02A6     54 ef      anl      A, #0xef
-02A8     f0         movx     @DPTR, A
-02A9     90 11 02   mov      DPTR, #0x1102
-02AC     74 10      mov      A, #0x10
-02AE     f0         movx     @DPTR, A
-02AF     30 60 19   jnb      0x60, 0x02cb
-02B2     e4         clr      A
-02B3     90 00 43   mov      DPTR, #0x43
-02B6     f0         movx     @DPTR, A
-02B7     90 17 08   mov      DPTR, #0x1708
-02BA     e0         movx     A, @DPTR
-02BB     20 e0 18   jb       0xe0, 0x02d6
-02BE     e4         clr      A
-02BF     90 20 0b   mov      DPTR, #0x200b
-02C2     f0         movx     @DPTR, A
-02C3     12 07 f0   lcall    0x07f0
-02C6     b4 05 ee   cjne     A, #0x5, 0x02b7
-02C9     80 0b      sjmp     0x02d6
-02CB     e4         clr      A
-02CC     90 20 0b   mov      DPTR, #0x200b
-02CF     f0         movx     @DPTR, A
-02D0     f0         movx     @DPTR, A
-02D1     f0         movx     @DPTR, A
-02D2     f0         movx     @DPTR, A
-02D3     f0         movx     @DPTR, A
-02D4     f0         movx     @DPTR, A
-02D5     f0         movx     @DPTR, A
-02D6     12 07 c1   lcall    0x07c1
-02D9     e4         clr      A
-02DA     78 84      mov      R0, #0x84
-02DC     f6         mov      @R0, A
-02DD     12 07 e7   lcall    0x07e7
-02E0     90 17 0c   mov      DPTR, #0x170c
-02E3     e0         movx     A, @DPTR
-02E4     78 97      mov      R0, #0x97
-02E6     f6         mov      @R0, A
-02E7     80 11      sjmp     0x02fa
-02E9     90 17 01   mov      DPTR, #0x1701
-02EC     12 07 d0   lcall    0x07d0
-02EF     e4         clr      A
-02F0     78 aa      mov      R0, #0xaa
-02F2     f6         mov      @R0, A
-02F3     90 11 06   mov      DPTR, #0x1106
-02F6     e0         movx     A, @DPTR
-02F7     44 10      orl      A, #0x10
-02F9     f0         movx     @DPTR, A
-02FA     02 11 c2   ljmp     0x11c2
+029B     90 17 08 mov      DPTR, #0x1708
+029E     e0 - -   movx     A, @DPTR
+029F     30 e3 47 jnb      0xe3, 0x02e9
+02A2     90 11 06 mov      DPTR, #0x1106
+02A5     e0 - -   movx     A, @DPTR
+02A6     54 ef -  anl      A, #0xef
+02A8     f0 - -   movx     @DPTR, A
+02A9     90 11 02 mov      DPTR, #0x1102
+02AC     74 10 -  mov      A, #0x10
+02AE     f0 - -   movx     @DPTR, A
+02AF     30 60 19 jnb      0x60, 0x02cb
+02B2     e4 - -   clr      A
+02B3     90 00 43 mov      DPTR, #0x43
+02B6     f0 - -   movx     @DPTR, A
+02B7     90 17 08 mov      DPTR, #0x1708
+02BA     e0 - -   movx     A, @DPTR
+02BB     20 e0 18 jb       0xe0, 0x02d6
+02BE     e4 - -   clr      A
+02BF     90 20 0b mov      DPTR, #0x200b
+02C2     f0 - -   movx     @DPTR, A
+02C3     12 07 f0 lcall    0x07f0
+02C6     b4 05 ee cjne     A, #0x5, 0x02b7
+02C9     80 0b -  sjmp     0x02d6
+02CB     e4 - -   clr      A
+02CC     90 20 0b mov      DPTR, #0x200b
+02CF     f0 - -   movx     @DPTR, A
+02D0     f0 - -   movx     @DPTR, A
+02D1     f0 - -   movx     @DPTR, A
+02D2     f0 - -   movx     @DPTR, A
+02D3     f0 - -   movx     @DPTR, A
+02D4     f0 - -   movx     @DPTR, A
+02D5     f0 - -   movx     @DPTR, A
+02D6     12 07 c1 lcall    0x07c1
+02D9     e4 - -   clr      A
+02DA     78 84 -  mov      R0, #0x84
+02DC     f6 - -   mov      @R0, A
+02DD     12 07 e7 lcall    0x07e7
+02E0     90 17 0c mov      DPTR, #0x170c
+02E3     e0 - -   movx     A, @DPTR
+02E4     78 97 -  mov      R0, #0x97
+02E6     f6 - -   mov      @R0, A
+02E7     80 11 -  sjmp     0x02fa
+02E9     90 17 01 mov      DPTR, #0x1701
+02EC     12 07 d0 lcall    0x07d0
+02EF     e4 - -   clr      A
+02F0     78 aa -  mov      R0, #0xaa
+02F2     f6 - -   mov      @R0, A
+02F3     90 11 06 mov      DPTR, #0x1106
+02F6     e0 - -   movx     A, @DPTR
+02F7     44 10 -  orl      A, #0x10
+02F9     f0 - -   movx     @DPTR, A
+02FA     02 11 c2 ljmp     0x11c2

@@ -12,10 +12,10 @@ void FUN_CODE_cdb7(char *param_1,char param_2)
   char cVar3;
   
   cVar1 = BANK0_R5;
-  cVar3 = FUN_CODE_9799();
-  FUN_CODE_971c();
+  cVar3 = load_a_from_r7_9799();
+  dptr_0a15_plus_17_times_r7();
   cVar2 = *param_1;
-  FUN_CODE_97a9();
+  dptr_from_a_mul_17_add_2c();
   if (param_2 != '\x01') {
     if ((((*param_1 != '\0') || (cVar3 != '\0')) && ((*param_1 != '\x01' || (cVar2 != '\0')))) &&
        ((cVar3 != '\0' || (cVar2 != '\0')))) {
@@ -35,7 +35,7 @@ void FUN_CODE_cdb7(char *param_1,char param_2)
         return;
       }
 LAB_CODE_ce15:
-      FUN_CODE_97a9();
+      dptr_from_a_mul_17_add_2c();
       *param_1 = '\x01';
       return;
     }
@@ -49,7 +49,7 @@ LAB_CODE_ce15:
     }
     goto LAB_CODE_ce15;
   }
-  FUN_CODE_97a9();
+  dptr_from_a_mul_17_add_2c();
   *param_1 = '\0';
   return;
 }

@@ -6,23 +6,23 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-0979     ef         mov      A, R7
-097A     24 7f      add      A, #0x7f
-097C     60 14      jz       0x0992
-097E     14         dec      A
-097F     60 14      jz       0x0995
-0981     14         dec      A
-0982     60 14      jz       0x0998
-0984     14         dec      A
-0985     60 14      jz       0x099b
-0987     24 f2      add      A, #0xf2
-0989     60 13      jz       0x099e
-098B     24 12      add      A, #0x12
-098D     70 12      jnz      0x09a1
-098F     02 08 59   ljmp     0x0859
-0992     02 08 62   ljmp     0x0862
-0995     02 08 6b   ljmp     0x086b
-0998     02 08 77   ljmp     0x0877
-099B     02 08 83   ljmp     0x0883
-099E     12 08 84   lcall    0x0884
-09A1     22         ret      
+0979     ef - -   mov      A, R7
+097A     24 7f -  add      A, #0x7f
+097C     60 14 -  jz       0x0992
+097E     14 - -   dec      A
+097F     60 14 -  jz       0x0995
+0981     14 - -   dec      A
+0982     60 14 -  jz       0x0998
+0984     14 - -   dec      A
+0985     60 14 -  jz       0x099b
+0987     24 f2 -  add      A, #0xf2
+0989     60 13 -  jz       0x099e
+098B     24 12 -  add      A, #0x12
+098D     70 12 -  jnz      0x09a1
+098F     02 08 59 ljmp     0x0859
+0992     02 08 62 ljmp     0x0862
+0995     02 08 6b ljmp     0x086b
+0998     02 08 77 ljmp     0x0877
+099B     02 08 83 ljmp     0x0883
+099E     12 08 84 lcall    0x0884
+09A1     22 - -   ret      

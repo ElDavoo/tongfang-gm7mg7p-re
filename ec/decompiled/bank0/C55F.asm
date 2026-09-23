@@ -6,52 +6,52 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-C55F     ef         mov      A, R7
-C560     70 49      jnz      0xc5ab
-C562     90 07 3c   mov      DPTR, #0x73c
-C565     e0         movx     A, @DPTR
-C566     30 e0 09   jnb      0xe0, 0xc572
-C569     e0         movx     A, @DPTR
-C56A     20 e1 05   jb       0xe1, 0xc572
-C56D     e0         movx     A, @DPTR
-C56E     54 f8      anl      A, #0xf8
-C570     60 20      jz       0xc592
-C572     90 07 41   mov      DPTR, #0x741
-C575     e0         movx     A, @DPTR
-C576     30 e0 04   jnb      0xe0, 0xc57d
-C579     7f b1      mov      R7, #0xb1
-C57B     80 28      sjmp     0xc5a5
-C57D     90 08 26   mov      DPTR, #0x826
-C580     e0         movx     A, @DPTR
-C581     d3         setb     CY
-C582     94 00      subb     A, #0x0
-C584     40 22      jc       0xc5a8
-C586     e0         movx     A, @DPTR
-C587     14         dec      A
-C588     f0         movx     @DPTR, A
-C589     90 08 6f   mov      DPTR, #0x86f
-C58C     e0         movx     A, @DPTR
-C58D     44 04      orl      A, #0x4
-C58F     f0         movx     @DPTR, A
-C590     80 16      sjmp     0xc5a8
-C592     12 ca 2d   lcall    0xca2d
-C595     d3         setb     CY
-C596     94 00      subb     A, #0x0
-C598     40 08      jc       0xc5a2
-C59A     e0         movx     A, @DPTR
-C59B     14         dec      A
-C59C     12 ca 1d   lcall    0xca1d
-C59F     12 a7 47   lcall    0xa747
-C5A2     12 c9 ff   lcall    0xc9ff
-C5A5     12 a7 3f   lcall    0xa73f
-C5A8     12 ca 1e   lcall    0xca1e
-C5AB     12 ca 44   lcall    0xca44
-C5AE     30 e0 06   jnb      0xe0, 0xc5b7
-C5B1     e0         movx     A, @DPTR
-C5B2     90 08 25   mov      DPTR, #0x825
-C5B5     f0         movx     @DPTR, A
-C5B6     22         ret      
-C5B7     e0         movx     A, @DPTR
-C5B8     90 08 27   mov      DPTR, #0x827
-C5BB     f0         movx     @DPTR, A
-C5BC     22         ret      
+C55F     ef - -   mov      A, R7
+C560     70 49 -  jnz      0xc5ab
+C562     90 07 3c mov      DPTR, #0x73c
+C565     e0 - -   movx     A, @DPTR
+C566     30 e0 09 jnb      0xe0, 0xc572
+C569     e0 - -   movx     A, @DPTR
+C56A     20 e1 05 jb       0xe1, 0xc572
+C56D     e0 - -   movx     A, @DPTR
+C56E     54 f8 -  anl      A, #0xf8
+C570     60 20 -  jz       0xc592
+C572     90 07 41 mov      DPTR, #0x741
+C575     e0 - -   movx     A, @DPTR
+C576     30 e0 04 jnb      0xe0, 0xc57d
+C579     7f b1 -  mov      R7, #0xb1
+C57B     80 28 -  sjmp     0xc5a5
+C57D     90 08 26 mov      DPTR, #0x826
+C580     e0 - -   movx     A, @DPTR
+C581     d3 - -   setb     CY
+C582     94 00 -  subb     A, #0x0
+C584     40 22 -  jc       0xc5a8
+C586     e0 - -   movx     A, @DPTR
+C587     14 - -   dec      A
+C588     f0 - -   movx     @DPTR, A
+C589     90 08 6f mov      DPTR, #0x86f
+C58C     e0 - -   movx     A, @DPTR
+C58D     44 04 -  orl      A, #0x4
+C58F     f0 - -   movx     @DPTR, A
+C590     80 16 -  sjmp     0xc5a8
+C592     12 ca 2d lcall    0xca2d
+C595     d3 - -   setb     CY
+C596     94 00 -  subb     A, #0x0
+C598     40 08 -  jc       0xc5a2
+C59A     e0 - -   movx     A, @DPTR
+C59B     14 - -   dec      A
+C59C     12 ca 1d lcall    0xca1d
+C59F     12 a7 47 lcall    0xa747
+C5A2     12 c9 ff lcall    0xc9ff
+C5A5     12 a7 3f lcall    0xa73f
+C5A8     12 ca 1e lcall    0xca1e
+C5AB     12 ca 44 lcall    0xca44
+C5AE     30 e0 06 jnb      0xe0, 0xc5b7
+C5B1     e0 - -   movx     A, @DPTR
+C5B2     90 08 25 mov      DPTR, #0x825
+C5B5     f0 - -   movx     @DPTR, A
+C5B6     22 - -   ret      
+C5B7     e0 - -   movx     A, @DPTR
+C5B8     90 08 27 mov      DPTR, #0x827
+C5BB     f0 - -   movx     @DPTR, A
+C5BC     22 - -   ret      

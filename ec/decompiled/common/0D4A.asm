@@ -6,27 +6,27 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-0D4A     90 00 4b   mov      DPTR, #0x4b
-0D4D     e0         movx     A, @DPTR
-0D4E     ff         mov      R7, A
-0D4F     90 00 4c   mov      DPTR, #0x4c
-0D52     e0         movx     A, @DPTR
-0D53     6f         xrl      A, R7
-0D54     70 0c      jnz      0x0d62
-0D56     90 0b fe   mov      DPTR, #0xbfe
-0D59     e0         movx     A, @DPTR
-0D5A     ff         mov      R7, A
-0D5B     90 0b fd   mov      DPTR, #0xbfd
-0D5E     e0         movx     A, @DPTR
-0D5F     6f         xrl      A, R7
-0D60     60 03      jz       0x0d65
-0D62     12 0a 74   lcall    0x0a74
-0D65     90 13 04   mov      DPTR, #0x1304
-0D68     e0         movx     A, @DPTR
-0D69     30 e1 02   jnb      0xe1, 0x0d6e
-0D6C     d2 30      setb     0x30
-0D6E     90 15 00   mov      DPTR, #0x1500
-0D71     e0         movx     A, @DPTR
-0D72     30 e1 02   jnb      0xe1, 0x0d77
-0D75     d2 36      setb     0x36
-0D77     22         ret      
+0D4A     90 00 4b mov      DPTR, #0x4b
+0D4D     e0 - -   movx     A, @DPTR
+0D4E     ff - -   mov      R7, A
+0D4F     90 00 4c mov      DPTR, #0x4c
+0D52     e0 - -   movx     A, @DPTR
+0D53     6f - -   xrl      A, R7
+0D54     70 0c -  jnz      0x0d62
+0D56     90 0b fe mov      DPTR, #0xbfe
+0D59     e0 - -   movx     A, @DPTR
+0D5A     ff - -   mov      R7, A
+0D5B     90 0b fd mov      DPTR, #0xbfd
+0D5E     e0 - -   movx     A, @DPTR
+0D5F     6f - -   xrl      A, R7
+0D60     60 03 -  jz       0x0d65
+0D62     12 0a 74 lcall    0x0a74
+0D65     90 13 04 mov      DPTR, #0x1304
+0D68     e0 - -   movx     A, @DPTR
+0D69     30 e1 02 jnb      0xe1, 0x0d6e
+0D6C     d2 30 -  setb     0x30
+0D6E     90 15 00 mov      DPTR, #0x1500
+0D71     e0 - -   movx     A, @DPTR
+0D72     30 e1 02 jnb      0xe1, 0x0d77
+0D75     d2 36 -  setb     0x36
+0D77     22 - -   ret      

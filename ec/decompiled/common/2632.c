@@ -23,7 +23,7 @@ void FUN_CODE_2632(void)
   }
   DAT_INTMEM_66 = bVar3 & DAT_INTMEM_65;
   FUN_CODE_23f4(bVar1);
-  FUN_CODE_10f1();
+  zero_xdata_200b();
   if (_3_7 == '\0') {
     DAT_INTMEM_65 = DAT_EXTMEM_1d04 ^ 0xff;
   }

@@ -4,34 +4,34 @@
 ; This is the machine code. The decompiled C for this address is 811A.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-811A     90 19 0c   mov      DPTR, #0x190c
-811D     e0         movx     A, @DPTR
-811E     20 e7 03   jb       0xe7, 0x8124
-8121     02 82 74   ljmp     0x8274
-8124     12 bd c6   lcall    0xbdc6
-8127     12 b9 ea   lcall    0xb9ea
-812A     90 08 d6   mov      DPTR, #0x8d6
-812D     ee         mov      A, R6
-812E     f0         movx     @DPTR, A
-812F     a3         inc      DPTR
-8130     ef         mov      A, R7
-8131     f0         movx     @DPTR, A
-8132     90 06 06   mov      DPTR, #0x606
-8135     e0         movx     A, @DPTR
-8136     90 0a 59   mov      DPTR, #0xa59
-8139     f0         movx     @DPTR, A
-813A     90 06 07   mov      DPTR, #0x607
-813D     12 b9 65   lcall    0xb965
-8140     90 06 07   mov      DPTR, #0x607
-8143     f0         movx     @DPTR, A
-8144     90 0a 59   mov      DPTR, #0xa59
-8147     e0         movx     A, @DPTR
-8148     90 06 06   mov      DPTR, #0x606
-814B     f0         movx     @DPTR, A
-814C     90 06 10   mov      DPTR, #0x610
-814F     e0         movx     A, @DPTR
-8150     44 08      orl      A, #0x8
-8152     12 ba 3d   lcall    0xba3d
-8155     12 be 92   lcall    0xbe92
-8158     74 84      mov      A, #0x84
-815A     02 82 1f   ljmp     0x821f
+811A     90 19 0c mov      DPTR, #0x190c
+811D     e0 - -   movx     A, @DPTR
+811E     20 e7 03 jb       0xe7, 0x8124
+8121     02 82 74 ljmp     0x8274
+8124     12 bd c6 lcall    0xbdc6
+8127     12 b9 ea lcall    0xb9ea
+812A     90 08 d6 mov      DPTR, #0x8d6
+812D     ee - -   mov      A, R6
+812E     f0 - -   movx     @DPTR, A
+812F     a3 - -   inc      DPTR
+8130     ef - -   mov      A, R7
+8131     f0 - -   movx     @DPTR, A
+8132     90 06 06 mov      DPTR, #0x606
+8135     e0 - -   movx     A, @DPTR
+8136     90 0a 59 mov      DPTR, #0xa59
+8139     f0 - -   movx     @DPTR, A
+813A     90 06 07 mov      DPTR, #0x607
+813D     12 b9 65 lcall    0xb965
+8140     90 06 07 mov      DPTR, #0x607
+8143     f0 - -   movx     @DPTR, A
+8144     90 0a 59 mov      DPTR, #0xa59
+8147     e0 - -   movx     A, @DPTR
+8148     90 06 06 mov      DPTR, #0x606
+814B     f0 - -   movx     @DPTR, A
+814C     90 06 10 mov      DPTR, #0x610
+814F     e0 - -   movx     A, @DPTR
+8150     44 08 -  orl      A, #0x8
+8152     12 ba 3d lcall    0xba3d
+8155     12 be 92 lcall    0xbe92
+8158     74 84 -  mov      A, #0x84
+815A     02 82 1f ljmp     0x821f

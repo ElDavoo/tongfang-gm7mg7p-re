@@ -9,7 +9,7 @@
 void FUN_CODE_15ac(void)
 
 {
-  bl51_bank_select_0(FUN_CODE_b8f4);
+  bl51_bank_select_0(test_0770_equals_0c);
   return;
 }
 

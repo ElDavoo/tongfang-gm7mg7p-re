@@ -6,30 +6,30 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-DACC     90 03 65   mov      DPTR, #0x365
-DACF     e0         movx     A, @DPTR
-DAD0     70 0a      jnz      0xdadc
-DAD2     7a 00      mov      R2, #0x0
-DAD4     79 00      mov      R1, #0x0
-DAD6     90 03 63   mov      DPTR, #0x363
-DAD9     12 88 8c   lcall    0x888c
-DADC     90 04 90   mov      DPTR, #0x490
-DADF     e0         movx     A, @DPTR
-DAE0     30 e0 27   jnb      0xe0, 0xdb0a
-DAE3     90 08 34   mov      DPTR, #0x834
-DAE6     12 88 98   lcall    0x8898
-DAE9     45 f0      orl      A, B
-DAEB     70 1d      jnz      0xdb0a
-DAED     90 06 0e   mov      DPTR, #0x60e
-DAF0     12 88 86   lcall    0x8886
-DAF3     a8 01      mov      R0, 0x01
-DAF5     a9 02      mov      R1, 0x02
-DAF7     7b 17      mov      R3, #0x17
-DAF9     7a 75      mov      R2, #0x75
-DAFB     12 a5 a7   lcall    0xa5a7
-DAFE     90 03 63   mov      DPTR, #0x363
-DB01     12 88 8c   lcall    0x888c
-DB04     90 03 65   mov      DPTR, #0x365
-DB07     74 fa      mov      A, #0xfa
-DB09     f0         movx     @DPTR, A
-DB0A     22         ret      
+DACC     90 03 65 mov      DPTR, #0x365
+DACF     e0 - -   movx     A, @DPTR
+DAD0     70 0a -  jnz      0xdadc
+DAD2     7a 00 -  mov      R2, #0x0
+DAD4     79 00 -  mov      R1, #0x0
+DAD6     90 03 63 mov      DPTR, #0x363
+DAD9     12 88 8c lcall    0x888c
+DADC     90 04 90 mov      DPTR, #0x490
+DADF     e0 - -   movx     A, @DPTR
+DAE0     30 e0 27 jnb      0xe0, 0xdb0a
+DAE3     90 08 34 mov      DPTR, #0x834
+DAE6     12 88 98 lcall    0x8898
+DAE9     45 f0 -  orl      A, B
+DAEB     70 1d -  jnz      0xdb0a
+DAED     90 06 0e mov      DPTR, #0x60e
+DAF0     12 88 86 lcall    0x8886
+DAF3     a8 01 -  mov      R0, 0x01
+DAF5     a9 02 -  mov      R1, 0x02
+DAF7     7b 17 -  mov      R3, #0x17
+DAF9     7a 75 -  mov      R2, #0x75
+DAFB     12 a5 a7 lcall    0xa5a7
+DAFE     90 03 63 mov      DPTR, #0x363
+DB01     12 88 8c lcall    0x888c
+DB04     90 03 65 mov      DPTR, #0x365
+DB07     74 fa -  mov      A, #0xfa
+DB09     f0 - -   movx     @DPTR, A
+DB0A     22 - -   ret      

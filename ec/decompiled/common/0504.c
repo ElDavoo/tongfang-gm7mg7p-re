@@ -18,7 +18,7 @@ void FUN_CODE_0504(byte *param_1,char param_2,byte param_3,byte param_4)
   byte *pbVar4;
   undefined1 uStackX_0;
   
-  bVar3 = thunk_FUN_CODE_703d();
+  bVar3 = ljmp_703d();
   DAT_INTMEM_74 = bVar3;
   if (param_2 != -0x1c) {
     DAT_EXTMEM_0004 = DAT_EXTMEM_2006;

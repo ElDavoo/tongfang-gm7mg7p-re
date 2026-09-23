@@ -123,7 +123,7 @@ LAB_CODE_ea7e:
       bVar8 = cVar7 - ((CARRY1(bVar11,bVar8) << 7) >> 7);
       if (_6_2 == '\0') {
         pbVar9 = BANK3_R3;
-        bVar8 = FUN_CODE_ed3a();
+        bVar8 = data_run_2e_3e();
         DAT_INTMEM_37 = pbVar6 + (char)(pbVar9 + (bVar8 - ((CARRY1(bVar8,(byte)pbVar6) << 7) >> 7)))
         ;
                     /* WARNING: Could not recover jumptable at 0xebe5. Too many branches */
@@ -159,7 +159,7 @@ LAB_CODE_ea7e:
       bVar8 = DAT_INTMEM_28 & 0xf;
       DAT_INTMEM_28 = DAT_INTMEM_28 & 0xf0 | (byte)pbVar5 & 0xf;
       DAT_INTMEM_29 = BANK3_R3 + -1;
-      pbVar9 = (byte *)FUN_CODE_ef26(BANK3_R3 + ((byte)pbVar5 & 0xf0 | bVar8) + 0x25,0x29);
+      pbVar9 = (byte *)data_run_33_34(BANK3_R3 + ((byte)pbVar5 & 0xf0 | bVar8) + 0x25,0x29);
     }
     pbVar5 = DAT_INTMEM_26;
     cVar7 = cVar7 + -1;
@@ -181,7 +181,8 @@ LAB_CODE_e91e_1:
     bVar4 = bVar11 + bVar8;
     bVar8 = *pbVar3 - ((CARRY1(bVar11,bVar8) << 7) >> 7);
     bVar8 = bVar4 + bVar8 + (*pbVar3 - ((CARRY1(bVar4,bVar8) << 7) >> 7));
-    bVar8 = FUN_CODE_e931(bVar8 >> 1 | bVar8 * -0x80,*pbVar5,pbVar3 + '\x01',param_5,cVar7 + -1);
+    bVar8 = shared_return_point(bVar8 >> 1 | bVar8 * -0x80,*pbVar5,pbVar3 + '\x01',param_5,
+                                cVar7 + -1);
     return bVar8;
   }
   bVar8 = DAT_EXTMEM_0028 + DAT_INTMEM_28;

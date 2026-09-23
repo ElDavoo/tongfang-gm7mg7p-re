@@ -4,4 +4,4 @@
 ; This is the machine code. The decompiled C for this address is 9AD2.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-9AD2     02 c6 db   ljmp     0xc6db
+9AD2     02 c6 db ljmp     0xc6db

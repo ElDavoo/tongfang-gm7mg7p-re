@@ -6,39 +6,39 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-00E4     a3         inc      DPTR
-00E5     60 01      jz       0x00e8
-00E7     0e         inc      R6
-00E8     cf         xch      A, R7
-00E9     54 c0      anl      A, #0xc0
-00EB     25 e0      add      A, A
-00ED     60 a8      jz       0x0097
-00EF     40 b8      jc       0x00a9
-00F1     e4         clr      A
-00F2     93         movc     A, @A+DPTR
-00F3     a3         inc      DPTR
-00F4     fa         mov      R2, A
-00F5     e4         clr      A
-00F6     93         movc     A, @A+DPTR
-00F7     a3         inc      DPTR
-00F8     f8         mov      R0, A
-00F9     e4         clr      A
-00FA     93         movc     A, @A+DPTR
-00FB     a3         inc      DPTR
-00FC     c8         xch      A, R0
-00FD     c5 82      xch      A, DPL
-00FF     c8         xch      A, R0
-0100     ca         xch      A, R2
-0101     c5 83      xch      A, DPH
-0103     ca         xch      A, R2
-0104     f0         movx     @DPTR, A
-0105     a3         inc      DPTR
-0106     c8         xch      A, R0
-0107     c5 82      xch      A, DPL
-0109     c8         xch      A, R0
-010A     ca         xch      A, R2
-010B     c5 83      xch      A, DPH
-010D     ca         xch      A, R2
-010E     df e9      djnz     R7, 0x00f9
-0110     de e7      djnz     R6, 0x00f9
-0112     80 be      sjmp     0x00d2
+00E4     a3 - -   inc      DPTR
+00E5     60 01 -  jz       0x00e8
+00E7     0e - -   inc      R6
+00E8     cf - -   xch      A, R7
+00E9     54 c0 -  anl      A, #0xc0
+00EB     25 e0 -  add      A, A
+00ED     60 a8 -  jz       0x0097
+00EF     40 b8 -  jc       0x00a9
+00F1     e4 - -   clr      A
+00F2     93 - -   movc     A, @A+DPTR
+00F3     a3 - -   inc      DPTR
+00F4     fa - -   mov      R2, A
+00F5     e4 - -   clr      A
+00F6     93 - -   movc     A, @A+DPTR
+00F7     a3 - -   inc      DPTR
+00F8     f8 - -   mov      R0, A
+00F9     e4 - -   clr      A
+00FA     93 - -   movc     A, @A+DPTR
+00FB     a3 - -   inc      DPTR
+00FC     c8 - -   xch      A, R0
+00FD     c5 82 -  xch      A, DPL
+00FF     c8 - -   xch      A, R0
+0100     ca - -   xch      A, R2
+0101     c5 83 -  xch      A, DPH
+0103     ca - -   xch      A, R2
+0104     f0 - -   movx     @DPTR, A
+0105     a3 - -   inc      DPTR
+0106     c8 - -   xch      A, R0
+0107     c5 82 -  xch      A, DPL
+0109     c8 - -   xch      A, R0
+010A     ca - -   xch      A, R2
+010B     c5 83 -  xch      A, DPH
+010D     ca - -   xch      A, R2
+010E     df e9 -  djnz     R7, 0x00f9
+0110     de e7 -  djnz     R6, 0x00f9
+0112     80 be -  sjmp     0x00d2

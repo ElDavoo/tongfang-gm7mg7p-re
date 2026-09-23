@@ -10,8 +10,8 @@ void FUN_CODE_eac6(void)
 
 {
   FUN_CODE_5597(1);
-  FUN_CODE_197e();
-  FUN_CODE_8648();
+  trampoline_bank1_a6f7();
+  clear_200b();
   return;
 }
 

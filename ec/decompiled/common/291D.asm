@@ -6,37 +6,37 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-291D     af 40      mov      R7, 0x40
-291F     ef         mov      A, R7
-2920     c4         swap     A
-2921     54 0f      anl      A, #0xf
-2923     20 e0 07   jb       0xe0, 0x292d
-2926     af 40      mov      R7, 0x40
-2928     ef         mov      A, R7
-2929     44 10      orl      A, #0x10
-292B     f5 40      mov      0x40, A
-292D     12 22 3f   lcall    0x223f
-2930     ef         mov      A, R7
-2931     60 0a      jz       0x293d
-2933     12 15 9a   lcall    0x159a
-2936     ef         mov      A, R7
-2937     70 13      jnz      0x294c
-2939     d2 24      setb     0x24
-293B     80 0f      sjmp     0x294c
-293D     af 40      mov      R7, 0x40
-293F     ef         mov      A, R7
-2940     54 ef      anl      A, #0xef
-2942     f5 40      mov      0x40, A
-2944     c2 37      clr      0x37
-2946     12 2a ac   lcall    0x2aac
-2949     12 10 e5   lcall    0x10e5
-294C     af 41      mov      R7, 0x41
-294E     ef         mov      A, R7
-294F     c4         swap     A
-2950     54 0f      anl      A, #0xf
-2952     20 e0 09   jb       0xe0, 0x295e
-2955     12 27 e3   lcall    0x27e3
-2958     ef         mov      A, R7
-2959     60 03      jz       0x295e
-295B     12 10 fa   lcall    0x10fa
-295E     22         ret      
+291D     af 40 -  mov      R7, 0x40
+291F     ef - -   mov      A, R7
+2920     c4 - -   swap     A
+2921     54 0f -  anl      A, #0xf
+2923     20 e0 07 jb       0xe0, 0x292d
+2926     af 40 -  mov      R7, 0x40
+2928     ef - -   mov      A, R7
+2929     44 10 -  orl      A, #0x10
+292B     f5 40 -  mov      0x40, A
+292D     12 22 3f lcall    0x223f
+2930     ef - -   mov      A, R7
+2931     60 0a -  jz       0x293d
+2933     12 15 9a lcall    0x159a
+2936     ef - -   mov      A, R7
+2937     70 13 -  jnz      0x294c
+2939     d2 24 -  setb     0x24
+293B     80 0f -  sjmp     0x294c
+293D     af 40 -  mov      R7, 0x40
+293F     ef - -   mov      A, R7
+2940     54 ef -  anl      A, #0xef
+2942     f5 40 -  mov      0x40, A
+2944     c2 37 -  clr      0x37
+2946     12 2a ac lcall    0x2aac
+2949     12 10 e5 lcall    0x10e5
+294C     af 41 -  mov      R7, 0x41
+294E     ef - -   mov      A, R7
+294F     c4 - -   swap     A
+2950     54 0f -  anl      A, #0xf
+2952     20 e0 09 jb       0xe0, 0x295e
+2955     12 27 e3 lcall    0x27e3
+2958     ef - -   mov      A, R7
+2959     60 03 -  jz       0x295e
+295B     12 10 fa lcall    0x10fa
+295E     22 - -   ret      

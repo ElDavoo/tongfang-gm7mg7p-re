@@ -35,7 +35,7 @@ void FUN_CODE_029b(void)
     FUN_CODE_07e7();
     DAT_INTMEM_97 = DAT_EXTMEM_170c;
   }
-  FUN_CODE_11c2();
+  load_dptr_bf57_tail_jump_1100();
   return;
 }
 

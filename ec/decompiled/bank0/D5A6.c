@@ -14,10 +14,10 @@ void FUN_CODE_d5a6(void)
   DAT_EXTMEM_1a04 = 0xc2;
   DAT_EXTMEM_1804 = 200;
   puVar1 = &DAT_EXTMEM_1809;
-  FUN_CODE_d6ea();
+  write_a_to_dptr_set_1f06();
   *puVar1 = 0xfa;
   FUN_CODE_05e8();
-  FUN_CODE_d991(0xd5,0xd4,1);
+  store_r4_r5_into_record_6e65(0xd5,0xd4,1);
   EA = 0;
   nop();
   nop();
@@ -27,7 +27,7 @@ void FUN_CODE_d5a6(void)
   nop();
   nop();
   nop();
-  FUN_CODE_d5d4();
+  write_33_to_1501_join_loop_d5db();
   return;
 }
 

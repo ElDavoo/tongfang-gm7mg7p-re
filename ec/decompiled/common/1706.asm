@@ -6,6 +6,6 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-1706     11 00      acall    0x1000
-1708     90 c7 17   mov      DPTR, #0xc717
-170B     02 11 00   ljmp     0x1100
+1706     11 00 -  acall    0x1000
+1708     90 c7 17 mov      DPTR, #0xc717
+170B     02 11 00 ljmp     0x1100

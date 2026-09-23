@@ -6,32 +6,32 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-CD80     90 03 b5   mov      DPTR, #0x3b5
-CD83     e0         movx     A, @DPTR
-CD84     f9         mov      R1, A
-CD85     90 03 97   mov      DPTR, #0x397
-CD88     e0         movx     A, @DPTR
-CD89     fa         mov      R2, A
-CD8A     54 fc      anl      A, #0xfc
-CD8C     70 02      jnz      0xcd90
-CD8E     7a 03      mov      R2, #0x3
-CD90     ea         mov      A, R2
-CD91     c3         clr      CY
-CD92     99         subb     A, R1
-CD93     60 03      jz       0xcd98
-CD95     40 01      jc       0xcd98
-CD97     22         ret      
-CD98     e4         clr      A
-CD99     90 03 b5   mov      DPTR, #0x3b5
-CD9C     f0         movx     @DPTR, A
-CD9D     90 03 ff   mov      DPTR, #0x3ff
-CDA0     e0         movx     A, @DPTR
-CDA1     20 e2 0e   jb       0xe2, 0xcdb2
-CDA4     90 05 14   mov      DPTR, #0x514
-CDA7     e0         movx     A, @DPTR
-CDA8     60 08      jz       0xcdb2
-CDAA     14         dec      A
-CDAB     f0         movx     @DPTR, A
-CDAC     12 cb f3   lcall    0xcbf3
-CDAF     12 cb e8   lcall    0xcbe8
-CDB2     22         ret      
+CD80     90 03 b5 mov      DPTR, #0x3b5
+CD83     e0 - -   movx     A, @DPTR
+CD84     f9 - -   mov      R1, A
+CD85     90 03 97 mov      DPTR, #0x397
+CD88     e0 - -   movx     A, @DPTR
+CD89     fa - -   mov      R2, A
+CD8A     54 fc -  anl      A, #0xfc
+CD8C     70 02 -  jnz      0xcd90
+CD8E     7a 03 -  mov      R2, #0x3
+CD90     ea - -   mov      A, R2
+CD91     c3 - -   clr      CY
+CD92     99 - -   subb     A, R1
+CD93     60 03 -  jz       0xcd98
+CD95     40 01 -  jc       0xcd98
+CD97     22 - -   ret      
+CD98     e4 - -   clr      A
+CD99     90 03 b5 mov      DPTR, #0x3b5
+CD9C     f0 - -   movx     @DPTR, A
+CD9D     90 03 ff mov      DPTR, #0x3ff
+CDA0     e0 - -   movx     A, @DPTR
+CDA1     20 e2 0e jb       0xe2, 0xcdb2
+CDA4     90 05 14 mov      DPTR, #0x514
+CDA7     e0 - -   movx     A, @DPTR
+CDA8     60 08 -  jz       0xcdb2
+CDAA     14 - -   dec      A
+CDAB     f0 - -   movx     @DPTR, A
+CDAC     12 cb f3 lcall    0xcbf3
+CDAF     12 cb e8 lcall    0xcbe8
+CDB2     22 - -   ret      

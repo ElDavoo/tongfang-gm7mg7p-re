@@ -4,8 +4,8 @@
 ; This is the machine code. The decompiled C for this address is 1100.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-1100     c0 08      push     0x08
-1102     74 11      mov      A, #0x11
-1104     c0 e0      push     A
-1106     c0 82      push     DPL
-1108     c0 83      push     DPH
+1100     c0 08 -  push     0x08
+1102     74 11 -  mov      A, #0x11
+1104     c0 e0 -  push     A
+1106     c0 82 -  push     DPL
+1108     c0 83 -  push     DPH

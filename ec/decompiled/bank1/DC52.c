@@ -13,23 +13,23 @@ void FUN_CODE_dc52(undefined1 param_1)
   
   DAT_EXTMEM_0975 = 0xa1;
   DAT_EXTMEM_0976 = 0x1c;
-  FUN_CODE_c4f0();
+  poll_1c00_status_up_to_100_cycles();
   if (-1 < in_PSW) {
     DAT_EXTMEM_0975 = 0xa1;
     DAT_EXTMEM_0976 = 0x1e;
     DAT_EXTMEM_031c = param_1;
-    FUN_CODE_c4f0();
+    poll_1c00_status_up_to_100_cycles();
     if (-1 < in_PSW) {
       DAT_EXTMEM_0975 = 0xa1;
       DAT_EXTMEM_0976 = 0x43;
       DAT_EXTMEM_031e = param_1;
-      FUN_CODE_c4d2();
+      setup_1c00_block_with_arg_4c();
       if (-1 < in_PSW) {
-        FUN_CODE_889e(0x343);
+        write_r3r4_to_xdata_pair(0x343);
         FUN_CODE_e656();
-        FUN_CODE_8886(0x3d2);
-        FUN_CODE_8892(0x363);
-        FUN_CODE_885b();
+        read_xdata_pair_to_r1r2(0x3d2);
+        read_xdata_pair_to_r3r4(0x363);
+        sub_r1r2_from_r3r4();
         if (-1 < in_PSW) {
           DAT_EXTMEM_097b = DAT_EXTMEM_097b | 1;
           return;

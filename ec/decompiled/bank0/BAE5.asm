@@ -4,4 +4,4 @@
 ; This is the machine code. The decompiled C for this address is BAE5.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-BAE5     7c 00      mov      R4, #0x0
+BAE5     7c 00 -  mov      R4, #0x0

@@ -6,27 +6,27 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-3E38     e5 30      mov      A, 0x30
-3E3A     20 e0 23   jb       0xe0, 0x3e60
-3E3D     90 13 04   mov      DPTR, #0x1304
-3E40     e0         movx     A, @DPTR
-3E41     54 fb      anl      A, #0xfb
-3E43     f0         movx     @DPTR, A
-3E44     12 15 e2   lcall    0x15e2
-3E47     90 32 06   mov      DPTR, #0x3206
-3E4A     e0         movx     A, @DPTR
-3E4B     44 40      orl      A, #0x40
-3E4D     f0         movx     @DPTR, A
-3E4E     e0         movx     A, @DPTR
-3E4F     54 fb      anl      A, #0xfb
-3E51     f0         movx     @DPTR, A
-3E52     e4         clr      A
-3E53     90 20 0b   mov      DPTR, #0x200b
-3E56     f0         movx     @DPTR, A
-3E57     f0         movx     @DPTR, A
-3E58     f0         movx     @DPTR, A
-3E59     90 32 06   mov      DPTR, #0x3206
-3E5C     e0         movx     A, @DPTR
-3E5D     44 04      orl      A, #0x4
-3E5F     f0         movx     @DPTR, A
-3E60     22         ret      
+3E38     e5 30 -  mov      A, 0x30
+3E3A     20 e0 23 jb       0xe0, 0x3e60
+3E3D     90 13 04 mov      DPTR, #0x1304
+3E40     e0 - -   movx     A, @DPTR
+3E41     54 fb -  anl      A, #0xfb
+3E43     f0 - -   movx     @DPTR, A
+3E44     12 15 e2 lcall    0x15e2
+3E47     90 32 06 mov      DPTR, #0x3206
+3E4A     e0 - -   movx     A, @DPTR
+3E4B     44 40 -  orl      A, #0x40
+3E4D     f0 - -   movx     @DPTR, A
+3E4E     e0 - -   movx     A, @DPTR
+3E4F     54 fb -  anl      A, #0xfb
+3E51     f0 - -   movx     @DPTR, A
+3E52     e4 - -   clr      A
+3E53     90 20 0b mov      DPTR, #0x200b
+3E56     f0 - -   movx     @DPTR, A
+3E57     f0 - -   movx     @DPTR, A
+3E58     f0 - -   movx     @DPTR, A
+3E59     90 32 06 mov      DPTR, #0x3206
+3E5C     e0 - -   movx     A, @DPTR
+3E5D     44 04 -  orl      A, #0x4
+3E5F     f0 - -   movx     @DPTR, A
+3E60     22 - -   ret      

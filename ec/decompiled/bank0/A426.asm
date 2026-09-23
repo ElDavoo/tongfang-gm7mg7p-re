@@ -6,89 +6,89 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-A426     90 08 55   mov      DPTR, #0x855
-A429     7b 60      mov      R3, #0x60
-A42B     7a ea      mov      R2, #0xea
-A42D     12 bc f5   lcall    0xbcf5
-A430     50 03      jnc      0xa435
-A432     12 bb 78   lcall    0xbb78
-A435     12 bb 11   lcall    0xbb11
-A438     4c         orl      A, R4
-A439     70 04      jnz      0xa43f
-A43B     90 08 52   mov      DPTR, #0x852
-A43E     f0         movx     @DPTR, A
-A43F     12 bb 11   lcall    0xbb11
-A442     64 19      xrl      A, #0x19
-A444     4c         orl      A, R4
-A445     70 04      jnz      0xa44b
-A447     90 08 53   mov      DPTR, #0x853
-A44A     f0         movx     @DPTR, A
-A44B     12 bb 11   lcall    0xbb11
-A44E     64 32      xrl      A, #0x32
-A450     4c         orl      A, R4
-A451     70 04      jnz      0xa457
-A453     90 08 54   mov      DPTR, #0x854
-A456     f0         movx     @DPTR, A
-A457     90 08 55   mov      DPTR, #0x855
-A45A     12 ba de   lcall    0xbade
-A45D     90 08 52   mov      DPTR, #0x852
-A460     e0         movx     A, @DPTR
-A461     c3         clr      CY
-A462     94 64      subb     A, #0x64
-A464     50 1f      jnc      0xa485
-A466     90 09 ce   mov      DPTR, #0x9ce
-A469     e0         movx     A, @DPTR
-A46A     90 08 52   mov      DPTR, #0x852
-A46D     60 05      jz       0xa474
-A46F     12 bc 95   lcall    0xbc95
-A472     80 07      sjmp     0xa47b
-A474     e0         movx     A, @DPTR
-A475     90 63 2d   mov      DPTR, #0x632d
-A478     12 ba 2a   lcall    0xba2a
-A47B     90 18 03   mov      DPTR, #0x1803
-A47E     f0         movx     @DPTR, A
-A47F     90 08 52   mov      DPTR, #0x852
-A482     e0         movx     A, @DPTR
-A483     04         inc      A
-A484     f0         movx     @DPTR, A
-A485     90 08 53   mov      DPTR, #0x853
-A488     e0         movx     A, @DPTR
-A489     c3         clr      CY
-A48A     94 64      subb     A, #0x64
-A48C     50 1f      jnc      0xa4ad
-A48E     90 09 ce   mov      DPTR, #0x9ce
-A491     e0         movx     A, @DPTR
-A492     90 08 53   mov      DPTR, #0x853
-A495     60 05      jz       0xa49c
-A497     12 bc 95   lcall    0xbc95
-A49A     80 07      sjmp     0xa4a3
-A49C     e0         movx     A, @DPTR
-A49D     90 63 2d   mov      DPTR, #0x632d
-A4A0     12 ba 2a   lcall    0xba2a
-A4A3     90 18 05   mov      DPTR, #0x1805
-A4A6     f0         movx     @DPTR, A
-A4A7     90 08 53   mov      DPTR, #0x853
-A4AA     e0         movx     A, @DPTR
-A4AB     04         inc      A
-A4AC     f0         movx     @DPTR, A
-A4AD     90 08 54   mov      DPTR, #0x854
-A4B0     e0         movx     A, @DPTR
-A4B1     c3         clr      CY
-A4B2     94 64      subb     A, #0x64
-A4B4     50 1f      jnc      0xa4d5
-A4B6     90 09 ce   mov      DPTR, #0x9ce
-A4B9     e0         movx     A, @DPTR
-A4BA     90 08 54   mov      DPTR, #0x854
-A4BD     60 05      jz       0xa4c4
-A4BF     12 bc 95   lcall    0xbc95
-A4C2     80 07      sjmp     0xa4cb
-A4C4     e0         movx     A, @DPTR
-A4C5     90 63 2d   mov      DPTR, #0x632d
-A4C8     12 ba 2a   lcall    0xba2a
-A4CB     90 18 08   mov      DPTR, #0x1808
-A4CE     f0         movx     @DPTR, A
-A4CF     90 08 54   mov      DPTR, #0x854
-A4D2     e0         movx     A, @DPTR
-A4D3     04         inc      A
-A4D4     f0         movx     @DPTR, A
-A4D5     22         ret      
+A426     90 08 55 mov      DPTR, #0x855
+A429     7b 60 -  mov      R3, #0x60
+A42B     7a ea -  mov      R2, #0xea
+A42D     12 bc f5 lcall    0xbcf5
+A430     50 03 -  jnc      0xa435
+A432     12 bb 78 lcall    0xbb78
+A435     12 bb 11 lcall    0xbb11
+A438     4c - -   orl      A, R4
+A439     70 04 -  jnz      0xa43f
+A43B     90 08 52 mov      DPTR, #0x852
+A43E     f0 - -   movx     @DPTR, A
+A43F     12 bb 11 lcall    0xbb11
+A442     64 19 -  xrl      A, #0x19
+A444     4c - -   orl      A, R4
+A445     70 04 -  jnz      0xa44b
+A447     90 08 53 mov      DPTR, #0x853
+A44A     f0 - -   movx     @DPTR, A
+A44B     12 bb 11 lcall    0xbb11
+A44E     64 32 -  xrl      A, #0x32
+A450     4c - -   orl      A, R4
+A451     70 04 -  jnz      0xa457
+A453     90 08 54 mov      DPTR, #0x854
+A456     f0 - -   movx     @DPTR, A
+A457     90 08 55 mov      DPTR, #0x855
+A45A     12 ba de lcall    0xbade
+A45D     90 08 52 mov      DPTR, #0x852
+A460     e0 - -   movx     A, @DPTR
+A461     c3 - -   clr      CY
+A462     94 64 -  subb     A, #0x64
+A464     50 1f -  jnc      0xa485
+A466     90 09 ce mov      DPTR, #0x9ce
+A469     e0 - -   movx     A, @DPTR
+A46A     90 08 52 mov      DPTR, #0x852
+A46D     60 05 -  jz       0xa474
+A46F     12 bc 95 lcall    0xbc95
+A472     80 07 -  sjmp     0xa47b
+A474     e0 - -   movx     A, @DPTR
+A475     90 63 2d mov      DPTR, #0x632d
+A478     12 ba 2a lcall    0xba2a
+A47B     90 18 03 mov      DPTR, #0x1803
+A47E     f0 - -   movx     @DPTR, A
+A47F     90 08 52 mov      DPTR, #0x852
+A482     e0 - -   movx     A, @DPTR
+A483     04 - -   inc      A
+A484     f0 - -   movx     @DPTR, A
+A485     90 08 53 mov      DPTR, #0x853
+A488     e0 - -   movx     A, @DPTR
+A489     c3 - -   clr      CY
+A48A     94 64 -  subb     A, #0x64
+A48C     50 1f -  jnc      0xa4ad
+A48E     90 09 ce mov      DPTR, #0x9ce
+A491     e0 - -   movx     A, @DPTR
+A492     90 08 53 mov      DPTR, #0x853
+A495     60 05 -  jz       0xa49c
+A497     12 bc 95 lcall    0xbc95
+A49A     80 07 -  sjmp     0xa4a3
+A49C     e0 - -   movx     A, @DPTR
+A49D     90 63 2d mov      DPTR, #0x632d
+A4A0     12 ba 2a lcall    0xba2a
+A4A3     90 18 05 mov      DPTR, #0x1805
+A4A6     f0 - -   movx     @DPTR, A
+A4A7     90 08 53 mov      DPTR, #0x853
+A4AA     e0 - -   movx     A, @DPTR
+A4AB     04 - -   inc      A
+A4AC     f0 - -   movx     @DPTR, A
+A4AD     90 08 54 mov      DPTR, #0x854
+A4B0     e0 - -   movx     A, @DPTR
+A4B1     c3 - -   clr      CY
+A4B2     94 64 -  subb     A, #0x64
+A4B4     50 1f -  jnc      0xa4d5
+A4B6     90 09 ce mov      DPTR, #0x9ce
+A4B9     e0 - -   movx     A, @DPTR
+A4BA     90 08 54 mov      DPTR, #0x854
+A4BD     60 05 -  jz       0xa4c4
+A4BF     12 bc 95 lcall    0xbc95
+A4C2     80 07 -  sjmp     0xa4cb
+A4C4     e0 - -   movx     A, @DPTR
+A4C5     90 63 2d mov      DPTR, #0x632d
+A4C8     12 ba 2a lcall    0xba2a
+A4CB     90 18 08 mov      DPTR, #0x1808
+A4CE     f0 - -   movx     @DPTR, A
+A4CF     90 08 54 mov      DPTR, #0x854
+A4D2     e0 - -   movx     A, @DPTR
+A4D3     04 - -   inc      A
+A4D4     f0 - -   movx     @DPTR, A
+A4D5     22 - -   ret      

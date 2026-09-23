@@ -6,103 +6,103 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-6A02     5c         anl      A, R4
-6A03     30 69 60   jnb      0x69, 0x6a66
-6A06     30 69 64   jnb      0x69, 0x6a6d
-6A09     30 69 68   jnb      0x69, 0x6a74
-6A0C     30 69 6c   jnb      0x69, 0x6a7b
-6A0F     30 69 70   jnb      0x69, 0x6a82
-6A12     30 69 74   jnb      0x69, 0x6a89
-6A15     30 69 78   jnb      0x69, 0x6a90
-6A18     30 69 7c   jnb      0x69, 0x6a97
-6A1B     30 69 80   jnb      0x69, 0x699e
-6A1E     30 69 84   jnb      0x69, 0x69a5
-6A21     30 69 88   jnb      0x69, 0x69ac
-6A24     30 69 8c   jnb      0x69, 0x69b3
-6A27     30 69 90   jnb      0x69, 0x69ba
-6A2A     30 69 94   jnb      0x69, 0x69c1
-6A2D     30 69 98   jnb      0x69, 0x69c8
-6A30     20 69 9c   jb       0x69, 0x69cf
-6A33     20 69 9e   jb       0x69, 0x69d4
-6A36     20 69 a0   jb       0x69, 0x69d9
-6A39     20 69 a2   jb       0x69, 0x69de
-6A3C     20 69 a4   jb       0x69, 0x69e3
-6A3F     20 69 a6   jb       0x69, 0x69e8
-6A42     20 69 a8   jb       0x69, 0x69ed
-6A45     20 69 aa   jb       0x69, 0x69f2
-6A48     20 69 ac   jb       0x69, 0x69f7
-6A4B     20 69 ae   jb       0x69, 0x69fc
-6A4E     20 69 b0   jb       0x69, 0x6a01
-6A51     20 69 b2   jb       0x69, 0x6a06
-6A54     20 69 b4   jb       0x69, 0x6a0b
-6A57     10 69 b6   jbc      0x69, 0x6a10
-6A5A     10 69 b8   jbc      0x69, 0x6a15
-6A5D     10 69 ba   jbc      0x69, 0x6a1a
-6A60     10 69 bc   jbc      0x69, 0x6a1f
-6A63     10 69 be   jbc      0x69, 0x6a24
-6A66     10 69 c0   jbc      0x69, 0x6a29
-6A69     10 69 c2   jbc      0x69, 0x6a2e
-6A6C     10 69 c4   jbc      0x69, 0x6a33
-6A6F     10 69 c6   jbc      0x69, 0x6a38
-6A72     10 69 c8   jbc      0x69, 0x6a3d
-6A75     10 69 ca   jbc      0x69, 0x6a42
-6A78     20 69 cc   jb       0x69, 0x6a47
-6A7B     20 69 ce   jb       0x69, 0x6a4c
-6A7E     20 69 d0   jb       0x69, 0x6a51
-6A81     20 69 d2   jb       0x69, 0x6a56
-6A84     20 69 d4   jb       0x69, 0x6a5b
-6A87     20 69 d6   jb       0x69, 0x6a60
-6A8A     20 69 d8   jb       0x69, 0x6a65
-6A8D     20 69 da   jb       0x69, 0x6a6a
-6A90     20 69 dc   jb       0x69, 0x6a6f
-6A93     20 69 de   jb       0x69, 0x6a74
-6A96     20 69 e0   jb       0x69, 0x6a79
-6A99     20 69 e2   jb       0x69, 0x6a7e
-6A9C     20 69 e4   jb       0x69, 0x6a83
-6A9F     20 69 e6   jb       0x69, 0x6a88
-6AA2     20 69 e8   jb       0x69, 0x6a8d
-6AA5     20 69 ea   jb       0x69, 0x6a92
-6AA8     20 69 ec   jb       0x69, 0x6a97
-6AAB     20 69 ee   jb       0x69, 0x6a9c
-6AAE     20 69 f0   jb       0x69, 0x6aa1
-6AB1     20 69 f2   jb       0x69, 0x6aa6
-6AB4     20 69 f4   jb       0x69, 0x6aab
-6AB7     20 69 f6   jb       0x69, 0x6ab0
-6ABA     20 69 f8   jb       0x69, 0x6ab5
-6ABD     20 69 fa   jb       0x69, 0x6aba
-6AC0     20 69 fc   jb       0x69, 0x6abf
-6AC3     20 69 fe   jb       0x69, 0x6ac4
-6AC6     c6         xch      A, @R0
-6AC7     c2 c0      clr      0xc0
-6AC9     77 c0      mov      @R1, #0xc0
-6ACB     c0 c2      push     0xc2
-6ACD     7e 98      mov      R6, #0x98
-6ACF     96         subb     A, @R0
-6AD0     99         subb     A, R1
-6AD1     97         subb     A, @R1
-6AD2     9a         subb     A, R2
-6AD3     94 9b      subb     A, #0x9b
-6AD5     95 91      subb     A, 0x91
-6AD7     92 96      mov      0x96, CY
-6AD9     91 97      acall    0x6c97
-6ADB     92 95      mov      0x95, CY
-6ADD     95 76      subb     A, 0x76
-6ADF     dc c6      djnz     R4, 0x6aa7
-6AE1     7e c4      mov      R6, #0xc4
-6AE3     c4         swap     A
-6AE4     c5 c5      xch      A, 0xc5
-6AE6     0e         inc      R6
-6AE7     90 07 c6   mov      DPTR, #0x7c6
-6AEA     c0 7e      push     0x7e
-6AEC     c2 c2      clr      0xc2
-6AEE     c0 c2      push     0xc2
-6AF0     83         movc     A, @A+PC
-6AF1     00         nop      
-6AF2     5a         anl      A, R2
-6AF3     01 1f      ajmp     0x681f
-6F56     e3         movx     A, @R1
-6F57     09         inc      R1
-6F58     f6         mov      @R0, A
-6F59     08         inc      R0
-6F5A     df fa      djnz     R7, 0x6f56
-6F5C     80 78      sjmp     0x6fd6
+6A02     5c - -   anl      A, R4
+6A03     30 69 60 jnb      0x69, 0x6a66
+6A06     30 69 64 jnb      0x69, 0x6a6d
+6A09     30 69 68 jnb      0x69, 0x6a74
+6A0C     30 69 6c jnb      0x69, 0x6a7b
+6A0F     30 69 70 jnb      0x69, 0x6a82
+6A12     30 69 74 jnb      0x69, 0x6a89
+6A15     30 69 78 jnb      0x69, 0x6a90
+6A18     30 69 7c jnb      0x69, 0x6a97
+6A1B     30 69 80 jnb      0x69, 0x699e
+6A1E     30 69 84 jnb      0x69, 0x69a5
+6A21     30 69 88 jnb      0x69, 0x69ac
+6A24     30 69 8c jnb      0x69, 0x69b3
+6A27     30 69 90 jnb      0x69, 0x69ba
+6A2A     30 69 94 jnb      0x69, 0x69c1
+6A2D     30 69 98 jnb      0x69, 0x69c8
+6A30     20 69 9c jb       0x69, 0x69cf
+6A33     20 69 9e jb       0x69, 0x69d4
+6A36     20 69 a0 jb       0x69, 0x69d9
+6A39     20 69 a2 jb       0x69, 0x69de
+6A3C     20 69 a4 jb       0x69, 0x69e3
+6A3F     20 69 a6 jb       0x69, 0x69e8
+6A42     20 69 a8 jb       0x69, 0x69ed
+6A45     20 69 aa jb       0x69, 0x69f2
+6A48     20 69 ac jb       0x69, 0x69f7
+6A4B     20 69 ae jb       0x69, 0x69fc
+6A4E     20 69 b0 jb       0x69, 0x6a01
+6A51     20 69 b2 jb       0x69, 0x6a06
+6A54     20 69 b4 jb       0x69, 0x6a0b
+6A57     10 69 b6 jbc      0x69, 0x6a10
+6A5A     10 69 b8 jbc      0x69, 0x6a15
+6A5D     10 69 ba jbc      0x69, 0x6a1a
+6A60     10 69 bc jbc      0x69, 0x6a1f
+6A63     10 69 be jbc      0x69, 0x6a24
+6A66     10 69 c0 jbc      0x69, 0x6a29
+6A69     10 69 c2 jbc      0x69, 0x6a2e
+6A6C     10 69 c4 jbc      0x69, 0x6a33
+6A6F     10 69 c6 jbc      0x69, 0x6a38
+6A72     10 69 c8 jbc      0x69, 0x6a3d
+6A75     10 69 ca jbc      0x69, 0x6a42
+6A78     20 69 cc jb       0x69, 0x6a47
+6A7B     20 69 ce jb       0x69, 0x6a4c
+6A7E     20 69 d0 jb       0x69, 0x6a51
+6A81     20 69 d2 jb       0x69, 0x6a56
+6A84     20 69 d4 jb       0x69, 0x6a5b
+6A87     20 69 d6 jb       0x69, 0x6a60
+6A8A     20 69 d8 jb       0x69, 0x6a65
+6A8D     20 69 da jb       0x69, 0x6a6a
+6A90     20 69 dc jb       0x69, 0x6a6f
+6A93     20 69 de jb       0x69, 0x6a74
+6A96     20 69 e0 jb       0x69, 0x6a79
+6A99     20 69 e2 jb       0x69, 0x6a7e
+6A9C     20 69 e4 jb       0x69, 0x6a83
+6A9F     20 69 e6 jb       0x69, 0x6a88
+6AA2     20 69 e8 jb       0x69, 0x6a8d
+6AA5     20 69 ea jb       0x69, 0x6a92
+6AA8     20 69 ec jb       0x69, 0x6a97
+6AAB     20 69 ee jb       0x69, 0x6a9c
+6AAE     20 69 f0 jb       0x69, 0x6aa1
+6AB1     20 69 f2 jb       0x69, 0x6aa6
+6AB4     20 69 f4 jb       0x69, 0x6aab
+6AB7     20 69 f6 jb       0x69, 0x6ab0
+6ABA     20 69 f8 jb       0x69, 0x6ab5
+6ABD     20 69 fa jb       0x69, 0x6aba
+6AC0     20 69 fc jb       0x69, 0x6abf
+6AC3     20 69 fe jb       0x69, 0x6ac4
+6AC6     c6 - -   xch      A, @R0
+6AC7     c2 c0 -  clr      0xc0
+6AC9     77 c0 -  mov      @R1, #0xc0
+6ACB     c0 c2 -  push     0xc2
+6ACD     7e 98 -  mov      R6, #0x98
+6ACF     96 - -   subb     A, @R0
+6AD0     99 - -   subb     A, R1
+6AD1     97 - -   subb     A, @R1
+6AD2     9a - -   subb     A, R2
+6AD3     94 9b -  subb     A, #0x9b
+6AD5     95 91 -  subb     A, 0x91
+6AD7     92 96 -  mov      0x96, CY
+6AD9     91 97 -  acall    0x6c97
+6ADB     92 95 -  mov      0x95, CY
+6ADD     95 76 -  subb     A, 0x76
+6ADF     dc c6 -  djnz     R4, 0x6aa7
+6AE1     7e c4 -  mov      R6, #0xc4
+6AE3     c4 - -   swap     A
+6AE4     c5 c5 -  xch      A, 0xc5
+6AE6     0e - -   inc      R6
+6AE7     90 07 c6 mov      DPTR, #0x7c6
+6AEA     c0 7e -  push     0x7e
+6AEC     c2 c2 -  clr      0xc2
+6AEE     c0 c2 -  push     0xc2
+6AF0     83 - -   movc     A, @A+PC
+6AF1     00 - -   nop      
+6AF2     5a - -   anl      A, R2
+6AF3     01 1f -  ajmp     0x681f
+6F56     e3 - -   movx     A, @R1
+6F57     09 - -   inc      R1
+6F58     f6 - -   mov      @R0, A
+6F59     08 - -   inc      R0
+6F5A     df fa -  djnz     R7, 0x6f56
+6F5C     80 78 -  sjmp     0x6fd6

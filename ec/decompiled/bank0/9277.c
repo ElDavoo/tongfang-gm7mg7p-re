@@ -42,7 +42,7 @@ void FUN_CODE_9277(byte param_1)
   } while (cVar2 == '\0');
   nop();
   nop();
-  FUN_CODE_be73(0x10);
+  write_a_then_zero_at_0a47_0a48(0x10);
   *pbVar5 = 0x23;
   DAT_EXTMEM_08b9 = 0x25;
   DAT_EXTMEM_08e2 = DAT_EXTMEM_08e2 | 0x20;

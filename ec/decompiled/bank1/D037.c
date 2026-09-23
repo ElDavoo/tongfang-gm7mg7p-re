@@ -13,7 +13,7 @@ void switchD_CODE:d036::default(byte param_1)
     DAT_EXTMEM_0397 = DAT_EXTMEM_0342;
     return;
   }
-  FUN_CODE_d09f(param_1 - 9);
+  store_ff_to_0397(param_1 - 9);
   return;
 }
 

@@ -6,21 +6,21 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-30FB     90 0a 4c   mov      DPTR, #0xa4c
-30FE     ef         mov      A, R7
-30FF     f0         movx     @DPTR, A
-3100     bf 01 06   cjne     R7, #0x1, 0x3109
-3103     78 9b      mov      R0, #0x9b
-3105     e6         mov      A, @R0
-3106     60 10      jz       0x3118
-3108     22         ret      
-3109     90 0a 4c   mov      DPTR, #0xa4c
-310C     e0         movx     A, @DPTR
-310D     b4 02 08   cjne     A, #0x2, 0x3118
-3110     78 9c      mov      R0, #0x9c
-3112     e6         mov      A, @R0
-3113     60 03      jz       0x3118
-3115     02 32 54   ljmp     0x3254
-3118     e4         clr      A
-3119     90 0a 4d   mov      DPTR, #0xa4d
-311C     f0         movx     @DPTR, A
+30FB     90 0a 4c mov      DPTR, #0xa4c
+30FE     ef - -   mov      A, R7
+30FF     f0 - -   movx     @DPTR, A
+3100     bf 01 06 cjne     R7, #0x1, 0x3109
+3103     78 9b -  mov      R0, #0x9b
+3105     e6 - -   mov      A, @R0
+3106     60 10 -  jz       0x3118
+3108     22 - -   ret      
+3109     90 0a 4c mov      DPTR, #0xa4c
+310C     e0 - -   movx     A, @DPTR
+310D     b4 02 08 cjne     A, #0x2, 0x3118
+3110     78 9c -  mov      R0, #0x9c
+3112     e6 - -   mov      A, @R0
+3113     60 03 -  jz       0x3118
+3115     02 32 54 ljmp     0x3254
+3118     e4 - -   clr      A
+3119     90 0a 4d mov      DPTR, #0xa4d
+311C     f0 - -   movx     @DPTR, A

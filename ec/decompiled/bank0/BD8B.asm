@@ -4,10 +4,10 @@
 ; This is the machine code. The decompiled C for this address is BD8B.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-BD8B     90 09 ca   mov      DPTR, #0x9ca
-BD8E     e0         movx     A, @DPTR
-BD8F     94 e0      subb     A, #0xe0
-BD91     90 09 c9   mov      DPTR, #0x9c9
-BD94     e0         movx     A, @DPTR
-BD95     94 46      subb     A, #0x46
-BD97     22         ret      
+BD8B     90 09 ca mov      DPTR, #0x9ca
+BD8E     e0 - -   movx     A, @DPTR
+BD8F     94 e0 -  subb     A, #0xe0
+BD91     90 09 c9 mov      DPTR, #0x9c9
+BD94     e0 - -   movx     A, @DPTR
+BD95     94 46 -  subb     A, #0x46
+BD97     22 - -   ret      

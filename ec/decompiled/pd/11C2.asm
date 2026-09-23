@@ -3,37 +3,35 @@
 ; Source: ec/firmware/GMxMGxx_11.800, the ITE8850-PD image at file 0x20000 -- a separate program with its own address space, not a third bank, SHA-256 158d1c6416426939a814146b766a44e2ff0e9286b0abd237e70e51a0c03399c4
 ; This is the machine code. The decompiled C for this address is 11C2.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
-; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
-; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-11C2     d0 83      pop      DPH
-11C4     d0 82      pop      DPL
-11C6     f8         mov      R0, A
-11C7     e4         clr      A
-11C8     93         movc     A, @A+DPTR
-11C9     70 12      jnz      0x11dd
-11CB     74 01      mov      A, #0x1
-11CD     93         movc     A, @A+DPTR
-11CE     70 0d      jnz      0x11dd
-11D0     a3         inc      DPTR
-11D1     a3         inc      DPTR
-11D2     93         movc     A, @A+DPTR
-11D3     f8         mov      R0, A
-11D4     74 01      mov      A, #0x1
-11D6     93         movc     A, @A+DPTR
-11D7     f5 82      mov      DPL, A
-11D9     88 83      mov      DPH, R0
-11DB     e4         clr      A
-11DC     73         jmp      @A+DPTR
-11DD     74 02      mov      A, #0x2
-11DF     93         movc     A, @A+DPTR
-11E0     b5 f0 06   cjne     A, B, 0x11e9
-11E3     74 03      mov      A, #0x3
-11E5     93         movc     A, @A+DPTR
-11E6     68         xrl      A, R0
-11E7     60 e9      jz       0x11d2
-11E9     a3         inc      DPTR
-11EA     a3         inc      DPTR
-11EB     a3         inc      DPTR
-11EC     a3         inc      DPTR
-11ED     80 d8      sjmp     0x11c7
+11C2     d0 83 -  pop      DPH
+11C4     d0 82 -  pop      DPL
+11C6     f8 - -   mov      R0, A
+11C7     e4 - -   clr      A
+11C8     93 - -   movc     A, @A+DPTR
+11C9     70 12 -  jnz      0x11dd
+11CB     74 01 -  mov      A, #0x1
+11CD     93 - -   movc     A, @A+DPTR
+11CE     70 0d -  jnz      0x11dd
+11D0     a3 - -   inc      DPTR
+11D1     a3 - -   inc      DPTR
+11D2     93 - -   movc     A, @A+DPTR
+11D3     f8 - -   mov      R0, A
+11D4     74 01 -  mov      A, #0x1
+11D6     93 - -   movc     A, @A+DPTR
+11D7     f5 82 -  mov      DPL, A
+11D9     88 83 -  mov      DPH, R0
+11DB     e4 - -   clr      A
+11DC     73 - -   jmp      @A+DPTR
+11DD     74 02 -  mov      A, #0x2
+11DF     93 - -   movc     A, @A+DPTR
+11E0     b5 f0 06 cjne     A, B, 0x11e9
+11E3     74 03 -  mov      A, #0x3
+11E5     93 - -   movc     A, @A+DPTR
+11E6     68 - -   xrl      A, R0
+11E7     60 e9 -  jz       0x11d2
+11E9     a3 - -   inc      DPTR
+11EA     a3 - -   inc      DPTR
+11EB     a3 - -   inc      DPTR
+11EC     a3 - -   inc      DPTR
+11ED     80 d8 -  sjmp     0x11c7

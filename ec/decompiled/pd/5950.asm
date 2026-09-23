@@ -4,9 +4,9 @@
 ; This is the machine code. The decompiled C for this address is 5950.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-5950     24 70      add      A, #0x70
-5952     f5 82      mov      DPL, A
-5954     e4         clr      A
-5955     34 08      addc     A, #0x8
-5957     f5 83      mov      DPH, A
-5959     22         ret      
+5950     24 70 -  add      A, #0x70
+5952     f5 82 -  mov      DPL, A
+5954     e4 - -   clr      A
+5955     34 08 -  addc     A, #0x8
+5957     f5 83 -  mov      DPH, A
+5959     22 - -   ret      

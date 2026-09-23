@@ -6,8 +6,8 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-3C62     75 8d a6   mov      0x8d, #0xa6
-3C65     75 8b 29   mov      0x8b, #0x29
-3C68     c2 8f      clr      0x8f
-3C6A     d2 8e      setb     0x8e
-3C6C     22         ret      
+3C62     75 8d a6 mov      0x8d, #0xa6
+3C65     75 8b 29 mov      0x8b, #0x29
+3C68     c2 8f -  clr      0x8f
+3C6A     d2 8e -  setb     0x8e
+3C6C     22 - -   ret      

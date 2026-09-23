@@ -11,7 +11,7 @@ void FUN_CODE_0a5a(byte *param_1,undefined1 param_2)
 {
   byte bVar1;
   
-  bVar1 = FUN_CODE_0c7a();
+  bVar1 = clear_low_nibble_of_1304();
   *param_1 = bVar1 | 0x20;
   DAT_EXTMEM_1300 = DAT_EXTMEM_1300 & 0xfc;
   if (_0_1 != '\0') {

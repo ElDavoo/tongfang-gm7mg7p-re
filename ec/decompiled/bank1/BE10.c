@@ -14,11 +14,11 @@ void FUN_CODE_be10(char param_1)
     return;
   }
   if ((DAT_EXTMEM_04ff >> 5 & 1) != 0) {
-    FUN_CODE_be91();
+    pick_0f80_0800_0bb0_1800_1f00();
     return;
   }
   if (DAT_EXTMEM_0490 < '\0') {
-    FUN_CODE_bf0e();
+    pick_0800_or_0bb0_by_05b9();
     return;
   }
   if ((DAT_EXTMEM_0493 >> 6 & 1) != 0) {
@@ -34,38 +34,38 @@ void FUN_CODE_be10(char param_1)
 code_c0xbe91:
     if ((DAT_EXTMEM_06e6 == '\x05') || (DAT_EXTMEM_06e6 == '\x03')) {
       if ((DAT_EXTMEM_0318 == -0x20) && (DAT_EXTMEM_0319 == '.')) {
-        FUN_CODE_bf3a(0,0x1f);
+        guard_then_store_pair_0834(0,0x1f);
         return;
       }
-      FUN_CODE_bf3a(0,0x18);
+      guard_then_store_pair_0834(0,0x18);
       return;
     }
-    FUN_CODE_1ab0();
+    trampoline_bank0_c26e();
     if (param_1 != '\x01') {
       if ((DAT_EXTMEM_0318 == -0x20) && (DAT_EXTMEM_0319 == '.')) {
-        FUN_CODE_bf3a(0,0x1f);
+        guard_then_store_pair_0834(0,0x1f);
         return;
       }
-      FUN_CODE_bf3a(0,0x18);
+      guard_then_store_pair_0834(0,0x18);
       return;
     }
     if ((DAT_EXTMEM_0318 == -0x20) && (DAT_EXTMEM_0319 == '.')) {
-      FUN_CODE_bf3a(0x80,0xf);
+      guard_then_store_pair_0834(0x80,0xf);
       return;
     }
-    FUN_CODE_bf3a(0xb0,0xb);
+    guard_then_store_pair_0834(0xb0,0xb);
     return;
   }
   if ((DAT_EXTMEM_06e6 != '\x05') && (DAT_EXTMEM_06e6 != '\x03')) {
-    FUN_CODE_1ab0();
+    trampoline_bank0_c26e();
     if (param_1 != '\x01') {
-      FUN_CODE_bf3a(0x80,0xf);
+      guard_then_store_pair_0834(0x80,0xf);
       return;
     }
-    FUN_CODE_bf3a(0,8);
+    guard_then_store_pair_0834(0,8);
     return;
   }
-  FUN_CODE_bf3a(0x80,0xf);
+  guard_then_store_pair_0834(0x80,0xf);
   return;
 }
 

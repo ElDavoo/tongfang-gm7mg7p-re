@@ -21,7 +21,7 @@ char FUN_CODE_223f(void)
   byte *pbVar8;
   
   DAT_EXTMEM_0a47 = 0;
-  FUN_CODE_2a6c();
+  clear_4c_bits_4_5_7();
   FUN_CODE_1510();
   if (DAT_EXTMEM_0db0 == '\0') {
     DAT_EXTMEM_0db1 = DAT_EXTMEM_0db0;
@@ -29,7 +29,7 @@ char FUN_CODE_223f(void)
     do {
       cVar3 = DAT_INTMEM_67;
       FUN_CODE_23f4();
-      FUN_CODE_10f1();
+      zero_xdata_200b();
       uVar9 = 4;
       DAT_INTMEM_66 = ~DAT_EXTMEM_1d04;
       bVar1 = FUN_CODE_2a7b();
@@ -73,7 +73,7 @@ char FUN_CODE_223f(void)
     DAT_INTMEM_67 = '\0';
     do {
       FUN_CODE_23f4(DAT_INTMEM_67);
-      FUN_CODE_10f1();
+      zero_xdata_200b();
       pbVar8 = &DAT_EXTMEM_1d04;
       FUN_CODE_2a8f(~DAT_EXTMEM_1d04);
       FUN_CODE_2a24();

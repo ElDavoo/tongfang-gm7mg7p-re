@@ -4,4 +4,4 @@
 ; This is the machine code. The decompiled C for this address is AD50.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-AD50     02 ad 77   ljmp     0xad77
+AD50     02 ad 77 ljmp     0xad77

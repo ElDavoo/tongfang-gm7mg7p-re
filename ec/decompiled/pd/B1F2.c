@@ -14,8 +14,8 @@
 void unresolved_0xB1F2(void)
 
 {
-  FUN_CODE_10c8();
-  FUN_CODE_0c46(1);
+  read3_xdata_to_r3r1_10c8();
+  write_byte_by_tag_r3(1);
   return;
 }
 

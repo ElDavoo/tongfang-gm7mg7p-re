@@ -9,7 +9,7 @@
 void switchD_CODE:d036::caseD_1(void)
 
 {
-  FUN_CODE_d068(0xe);
+  scale_store_to_0397(0xe);
   return;
 }
 

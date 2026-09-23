@@ -22,12 +22,12 @@ void index_table_default(void)
     DAT_EXTMEM_08e1 = DAT_EXTMEM_08e1 + -1;
     return;
   }
-  FUN_CODE_ba3e();
+  clear_bit0_1901();
   puVar2 = &DAT_EXTMEM_1904;
-  uVar1 = FUN_CODE_bb99(0x80);
+  uVar1 = store_a_then_1906_init(0x80);
   *puVar2 = uVar1;
-  FUN_CODE_bafd(0x190c);
-  FUN_CODE_bcb1();
+  store_a_then_set_bits_1_and_0_of_1900(0x190c);
+  load_dptr_08e1_and_a_06_then_nothing();
   return;
 }
 

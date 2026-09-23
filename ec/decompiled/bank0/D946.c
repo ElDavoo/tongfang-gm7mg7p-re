@@ -14,9 +14,9 @@ void FUN_CODE_d946(void)
   
   cVar1 = '\0';
   do {
-    cVar2 = FUN_CODE_db57('n' - (((0xdfU < (byte)(cVar1 * '\x03')) << 7) >> 7),cVar1 * '\x03' + 0x20
-                         );
-    cVar2 = FUN_CODE_db8a(cVar2 + '\"');
+    cVar2 = stash_code_pair_to_0b7_0b8
+                      ('n' - (((0xdfU < (byte)(cVar1 * '\x03')) << 7) >> 7),cVar1 * '\x03' + 0x20);
+    cVar2 = copy_code_byte_to_r4_r5(cVar2 + '\"');
   } while (cVar2 != '\x17');
   DAT_EXTMEM_16f1 = DAT_EXTMEM_16f1 | 0x20;
   return;

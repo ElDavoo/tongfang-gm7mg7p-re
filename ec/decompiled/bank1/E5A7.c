@@ -15,8 +15,9 @@ void FUN_CODE_e5a7(byte param_1,char param_2)
   FUN_CODE_e5d6();
   bVar2 = 0xe;
   do {
-    FUN_CODE_888c(CONCAT11(3,bVar2 - 0x20),((undefined1 *)CONCAT11(param_2,param_1))[1],
-                  *(undefined1 *)CONCAT11(param_2,param_1));
+    write_r1r2_to_xdata_pair
+              (CONCAT11(3,bVar2 - 0x20),((undefined1 *)CONCAT11(param_2,param_1))[1],
+               *(undefined1 *)CONCAT11(param_2,param_1));
     bVar1 = 0xef < param_1;
     param_1 = param_1 + 0x10;
     if (bVar1) {

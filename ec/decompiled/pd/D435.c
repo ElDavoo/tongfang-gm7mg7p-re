@@ -15,18 +15,18 @@ byte FUN_CODE_d435(char param_1,byte param_2)
   if (param_1 == '\0') {
     return param_2;
   }
-  FUN_CODE_c20c();
+  cmp32be_0827_against_00001388();
   if (in_PSW < '\0') {
                     /* WARNING: Subroutine does not return */
-    FUN_CODE_122f(0xfffc);
+    add_dptr_to_word_0d0e_ea_guard(0xfffc);
   }
-  cVar1 = FUN_CODE_c20c();
+  cVar1 = cmp32be_0827_against_00001388();
   if (cVar1 == '\0') {
     if (DAT_EXTMEM_0825 == 0) {
       DAT_EXTMEM_ffd4 = DAT_EXTMEM_ffd4 & 0xde;
     }
                     /* WARNING: Subroutine does not return */
-    FUN_CODE_122f(0xfffc,DAT_EXTMEM_0825);
+    add_dptr_to_word_0d0e_ea_guard(0xfffc,DAT_EXTMEM_0825);
   }
   bVar2 = DAT_EXTMEM_0825;
   if (DAT_EXTMEM_0825 == 0) {

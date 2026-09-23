@@ -9,7 +9,7 @@
 void FUN_CODE_15d6(void)
 
 {
-  bl51_bank_select_0(FUN_CODE_c8c5);
+  bl51_bank_select_0(select_0027_0028_from_five_probes);
   return;
 }
 

@@ -6,17 +6,17 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-7281     e4         clr      A
-7282     c3         clr      CY
-7283     9f         subb     A, R7
-7284     ff         mov      R7, A
-7285     e4         clr      A
-7286     9e         subb     A, R6
-7287     fe         mov      R6, A
-7288     e4         clr      A
-7289     9d         subb     A, R5
-728A     fd         mov      R5, A
-728B     e4         clr      A
-728C     9c         subb     A, R4
-728D     fc         mov      R4, A
-728E     22         ret      
+7281     e4 - -   clr      A
+7282     c3 - -   clr      CY
+7283     9f - -   subb     A, R7
+7284     ff - -   mov      R7, A
+7285     e4 - -   clr      A
+7286     9e - -   subb     A, R6
+7287     fe - -   mov      R6, A
+7288     e4 - -   clr      A
+7289     9d - -   subb     A, R5
+728A     fd - -   mov      R5, A
+728B     e4 - -   clr      A
+728C     9c - -   subb     A, R4
+728D     fc - -   mov      R4, A
+728E     22 - -   ret      

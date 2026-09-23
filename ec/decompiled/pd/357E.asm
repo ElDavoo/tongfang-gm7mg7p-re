@@ -4,8 +4,8 @@
 ; This is the machine code. The decompiled C for this address is 357E.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-357E     e0         movx     A, @DPTR
-357F     fb         mov      R3, A
-3580     75 f0 60   mov      B, #0x60
-3583     90 04 08   mov      DPTR, #0x408
-3586     22         ret      
+357E     e0 - -   movx     A, @DPTR
+357F     fb - -   mov      R3, A
+3580     75 f0 60 mov      B, #0x60
+3583     90 04 08 mov      DPTR, #0x408
+3586     22 - -   ret      

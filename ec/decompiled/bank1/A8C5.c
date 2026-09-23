@@ -10,9 +10,9 @@ void FUN_CODE_a8c5(byte param_1,byte *param_2)
 
 {
   *param_2 = param_1 & 0xf7;
-  FUN_CODE_1a80(0x5a,2,0x88,0,0);
-  FUN_CODE_85ae();
-  FUN_CODE_a8e9();
+  load_dptr_85de_tail_jump_1100(0x5a,2,0x88,0,0);
+  clear_1c15_1c16_set_1c11_ff();
+  write_5_to_068b();
   return;
 }
 

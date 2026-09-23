@@ -4,5 +4,5 @@
 ; This is the machine code. The decompiled C for this address is 6811.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-6811     1d         dec      R5
-6812     81 70      ajmp     0x6c70
+6811     1d - -   dec      R5
+6812     81 70 -  ajmp     0x6c70

@@ -4,4 +4,4 @@
 ; This is the machine code. The decompiled C for this address is 998B.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-998B     12 10 bc   lcall    0x10bc
+998B     12 10 bc lcall    0x10bc

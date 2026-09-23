@@ -4,28 +4,28 @@
 ; This is the machine code. The decompiled C for this address is E8D4.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-E8D4     90 07 d0   mov      DPTR, #0x7d0
-E8D7     ef         mov      A, R7
-E8D8     f0         movx     @DPTR, A
-E8D9     7e 00      mov      R6, #0x0
-E8DB     7f 17      mov      R7, #0x17
-E8DD     c0 06      push     0x06
-E8DF     c0 07      push     0x07
-E8E1     7d 00      mov      R5, #0x0
-E8E3     e0         movx     A, @DPTR
-E8E4     75 f0 17   mov      B, #0x17
-E8E7     a4         mul      AB
-E8E8     24 13      add      A, #0x13
-E8EA     f9         mov      R1, A
-E8EB     74 0a      mov      A, #0xa
-E8ED     35 f0      addc     A, B
-E8EF     fa         mov      R2, A
-E8F0     7b 01      mov      R3, #0x1
-E8F2     d0 07      pop      0x07
-E8F4     d0 06      pop      0x06
-E8F6     12 12 8d   lcall    0x128d
-E8F9     90 07 d0   mov      DPTR, #0x7d0
-E8FC     e0         movx     A, @DPTR
-E8FD     ff         mov      R7, A
-E8FE     12 f6 04   lcall    0xf604
-E901     22         ret      
+E8D4     90 07 d0 mov      DPTR, #0x7d0
+E8D7     ef - -   mov      A, R7
+E8D8     f0 - -   movx     @DPTR, A
+E8D9     7e 00 -  mov      R6, #0x0
+E8DB     7f 17 -  mov      R7, #0x17
+E8DD     c0 06 -  push     0x06
+E8DF     c0 07 -  push     0x07
+E8E1     7d 00 -  mov      R5, #0x0
+E8E3     e0 - -   movx     A, @DPTR
+E8E4     75 f0 17 mov      B, #0x17
+E8E7     a4 - -   mul      AB
+E8E8     24 13 -  add      A, #0x13
+E8EA     f9 - -   mov      R1, A
+E8EB     74 0a -  mov      A, #0xa
+E8ED     35 f0 -  addc     A, B
+E8EF     fa - -   mov      R2, A
+E8F0     7b 01 -  mov      R3, #0x1
+E8F2     d0 07 -  pop      0x07
+E8F4     d0 06 -  pop      0x06
+E8F6     12 12 8d lcall    0x128d
+E8F9     90 07 d0 mov      DPTR, #0x7d0
+E8FC     e0 - -   movx     A, @DPTR
+E8FD     ff - -   mov      R7, A
+E8FE     12 f6 04 lcall    0xf604
+E901     22 - -   ret      

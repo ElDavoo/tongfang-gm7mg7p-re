@@ -6,87 +6,87 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-34C6     90 0a 47   mov      DPTR, #0xa47
-34C9     e0         movx     A, @DPTR
-34CA     ff         mov      R7, A
-34CB     c3         clr      CY
-34CC     94 03      subb     A, #0x3
-34CE     40 03      jc       0x34d3
-34D0     02 35 5e   ljmp     0x355e
-34D3     74 88      mov      A, #0x88
-34D5     2f         add      A, R7
-34D6     f8         mov      R0, A
-34D7     e6         mov      A, @R0
-34D8     30 e0 7a   jnb      0xe0, 0x3555
-34DB     e0         movx     A, @DPTR
-34DC     24 8d      add      A, #0x8d
-34DE     f8         mov      R0, A
-34DF     e6         mov      A, @R0
-34E0     30 e0 24   jnb      0xe0, 0x3507
-34E3     7b 01      mov      R3, #0x1
-34E5     7d f5      mov      R5, #0xf5
-34E7     12 2f 1d   lcall    0x2f1d
-34EA     ef         mov      A, R7
-34EB     70 68      jnz      0x3555
-34ED     12 3c 2f   lcall    0x3c2f
-34F0     74 fe      mov      A, #0xfe
-34F2     56         anl      A, @R0
-34F3     f6         mov      @R0, A
-34F4     74 8d      mov      A, #0x8d
-34F6     2f         add      A, R7
-34F7     f8         mov      R0, A
-34F8     74 df      mov      A, #0xdf
-34FA     56         anl      A, @R0
-34FB     f6         mov      @R0, A
-34FC     e0         movx     A, @DPTR
-34FD     24 8d      add      A, #0x8d
-34FF     f8         mov      R0, A
-3500     74 02      mov      A, #0x2
-3502     46         orl      A, @R0
-3503     f6         mov      @R0, A
-3504     02 35 55   ljmp     0x3555
-3507     12 3c 2f   lcall    0x3c2f
-350A     e6         mov      A, @R0
-350B     30 e4 47   jnb      0xe4, 0x3555
-350E     7b 01      mov      R3, #0x1
-3510     7d f4      mov      R5, #0xf4
-3512     12 2f 1d   lcall    0x2f1d
-3515     ef         mov      A, R7
-3516     70 3d      jnz      0x3555
-3518     12 3c 2f   lcall    0x3c2f
-351B     74 ef      mov      A, #0xef
-351D     56         anl      A, @R0
-351E     f6         mov      @R0, A
-351F     74 8d      mov      A, #0x8d
-3521     2f         add      A, R7
-3522     f8         mov      R0, A
-3523     74 fd      mov      A, #0xfd
-3525     56         anl      A, @R0
-3526     f6         mov      @R0, A
-3527     e0         movx     A, @DPTR
-3528     ff         mov      R7, A
-3529     24 8d      add      A, #0x8d
-352B     f8         mov      R0, A
-352C     74 20      mov      A, #0x20
-352E     46         orl      A, @R0
-352F     f6         mov      @R0, A
-3530     ef         mov      A, R7
-3531     12 3b 22   lcall    0x3b22
-3534     12 3b ae   lcall    0x3bae
-3537     74 17      mov      A, #0x17
-3539     f0         movx     @DPTR, A
-353A     90 0a 47   mov      DPTR, #0xa47
-353D     e0         movx     A, @DPTR
-353E     ff         mov      R7, A
-353F     12 3b 3e   lcall    0x3b3e
-3542     12 3b 70   lcall    0x3b70
-3545     c0 83      push     DPH
-3547     c0 82      push     DPL
-3549     12 3b 4e   lcall    0x3b4e
-354C     93         movc     A, @A+DPTR
-354D     ff         mov      R7, A
-354E     ee         mov      A, R6
-354F     4f         orl      A, R7
-3550     d0 82      pop      DPL
-3552     d0 83      pop      DPH
-3554     f0         movx     @DPTR, A
+34C6     90 0a 47 mov      DPTR, #0xa47
+34C9     e0 - -   movx     A, @DPTR
+34CA     ff - -   mov      R7, A
+34CB     c3 - -   clr      CY
+34CC     94 03 -  subb     A, #0x3
+34CE     40 03 -  jc       0x34d3
+34D0     02 35 5e ljmp     0x355e
+34D3     74 88 -  mov      A, #0x88
+34D5     2f - -   add      A, R7
+34D6     f8 - -   mov      R0, A
+34D7     e6 - -   mov      A, @R0
+34D8     30 e0 7a jnb      0xe0, 0x3555
+34DB     e0 - -   movx     A, @DPTR
+34DC     24 8d -  add      A, #0x8d
+34DE     f8 - -   mov      R0, A
+34DF     e6 - -   mov      A, @R0
+34E0     30 e0 24 jnb      0xe0, 0x3507
+34E3     7b 01 -  mov      R3, #0x1
+34E5     7d f5 -  mov      R5, #0xf5
+34E7     12 2f 1d lcall    0x2f1d
+34EA     ef - -   mov      A, R7
+34EB     70 68 -  jnz      0x3555
+34ED     12 3c 2f lcall    0x3c2f
+34F0     74 fe -  mov      A, #0xfe
+34F2     56 - -   anl      A, @R0
+34F3     f6 - -   mov      @R0, A
+34F4     74 8d -  mov      A, #0x8d
+34F6     2f - -   add      A, R7
+34F7     f8 - -   mov      R0, A
+34F8     74 df -  mov      A, #0xdf
+34FA     56 - -   anl      A, @R0
+34FB     f6 - -   mov      @R0, A
+34FC     e0 - -   movx     A, @DPTR
+34FD     24 8d -  add      A, #0x8d
+34FF     f8 - -   mov      R0, A
+3500     74 02 -  mov      A, #0x2
+3502     46 - -   orl      A, @R0
+3503     f6 - -   mov      @R0, A
+3504     02 35 55 ljmp     0x3555
+3507     12 3c 2f lcall    0x3c2f
+350A     e6 - -   mov      A, @R0
+350B     30 e4 47 jnb      0xe4, 0x3555
+350E     7b 01 -  mov      R3, #0x1
+3510     7d f4 -  mov      R5, #0xf4
+3512     12 2f 1d lcall    0x2f1d
+3515     ef - -   mov      A, R7
+3516     70 3d -  jnz      0x3555
+3518     12 3c 2f lcall    0x3c2f
+351B     74 ef -  mov      A, #0xef
+351D     56 - -   anl      A, @R0
+351E     f6 - -   mov      @R0, A
+351F     74 8d -  mov      A, #0x8d
+3521     2f - -   add      A, R7
+3522     f8 - -   mov      R0, A
+3523     74 fd -  mov      A, #0xfd
+3525     56 - -   anl      A, @R0
+3526     f6 - -   mov      @R0, A
+3527     e0 - -   movx     A, @DPTR
+3528     ff - -   mov      R7, A
+3529     24 8d -  add      A, #0x8d
+352B     f8 - -   mov      R0, A
+352C     74 20 -  mov      A, #0x20
+352E     46 - -   orl      A, @R0
+352F     f6 - -   mov      @R0, A
+3530     ef - -   mov      A, R7
+3531     12 3b 22 lcall    0x3b22
+3534     12 3b ae lcall    0x3bae
+3537     74 17 -  mov      A, #0x17
+3539     f0 - -   movx     @DPTR, A
+353A     90 0a 47 mov      DPTR, #0xa47
+353D     e0 - -   movx     A, @DPTR
+353E     ff - -   mov      R7, A
+353F     12 3b 3e lcall    0x3b3e
+3542     12 3b 70 lcall    0x3b70
+3545     c0 83 -  push     DPH
+3547     c0 82 -  push     DPL
+3549     12 3b 4e lcall    0x3b4e
+354C     93 - -   movc     A, @A+DPTR
+354D     ff - -   mov      R7, A
+354E     ee - -   mov      A, R6
+354F     4f - -   orl      A, R7
+3550     d0 82 -  pop      DPL
+3552     d0 83 -  pop      DPH
+3554     f0 - -   movx     @DPTR, A

@@ -6,7 +6,7 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-2A9A     90 1d 00   mov      DPTR, #0x1d00
-2A9D     f0         movx     @DPTR, A
-2A9E     90 1d 01   mov      DPTR, #0x1d01
-2AA1     22         ret      
+2A9A     90 1d 00 mov      DPTR, #0x1d00
+2A9D     f0 - -   movx     @DPTR, A
+2A9E     90 1d 01 mov      DPTR, #0x1d01
+2AA1     22 - -   ret      

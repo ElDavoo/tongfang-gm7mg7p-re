@@ -6,33 +6,33 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-E5A7     12 e5 d6   lcall    0xe5d6
-E5AA     74 0e      mov      A, #0xe
-E5AC     ff         mov      R7, A
-E5AD     8c 83      mov      DPH, R4
-E5AF     8b 82      mov      DPL, R3
-E5B1     e4         clr      A
-E5B2     93         movc     A, @A+DPTR
-E5B3     fa         mov      R2, A
-E5B4     a3         inc      DPTR
-E5B5     e4         clr      A
-E5B6     93         movc     A, @A+DPTR
-E5B7     f9         mov      R1, A
-E5B8     90 03 e0   mov      DPTR, #0x3e0
-E5BB     e5 82      mov      A, DPL
-E5BD     2f         add      A, R7
-E5BE     f5 82      mov      DPL, A
-E5C0     12 88 8c   lcall    0x888c
-E5C3     eb         mov      A, R3
-E5C4     24 10      add      A, #0x10
-E5C6     50 04      jnc      0xe5cc
-E5C8     fb         mov      R3, A
-E5C9     0c         inc      R4
-E5CA     80 01      sjmp     0xe5cd
-E5CC     fb         mov      R3, A
-E5CD     c3         clr      CY
-E5CE     ef         mov      A, R7
-E5CF     94 02      subb     A, #0x2
-E5D1     40 02      jc       0xe5d5
-E5D3     80 d7      sjmp     0xe5ac
-E5D5     22         ret      
+E5A7     12 e5 d6 lcall    0xe5d6
+E5AA     74 0e -  mov      A, #0xe
+E5AC     ff - -   mov      R7, A
+E5AD     8c 83 -  mov      DPH, R4
+E5AF     8b 82 -  mov      DPL, R3
+E5B1     e4 - -   clr      A
+E5B2     93 - -   movc     A, @A+DPTR
+E5B3     fa - -   mov      R2, A
+E5B4     a3 - -   inc      DPTR
+E5B5     e4 - -   clr      A
+E5B6     93 - -   movc     A, @A+DPTR
+E5B7     f9 - -   mov      R1, A
+E5B8     90 03 e0 mov      DPTR, #0x3e0
+E5BB     e5 82 -  mov      A, DPL
+E5BD     2f - -   add      A, R7
+E5BE     f5 82 -  mov      DPL, A
+E5C0     12 88 8c lcall    0x888c
+E5C3     eb - -   mov      A, R3
+E5C4     24 10 -  add      A, #0x10
+E5C6     50 04 -  jnc      0xe5cc
+E5C8     fb - -   mov      R3, A
+E5C9     0c - -   inc      R4
+E5CA     80 01 -  sjmp     0xe5cd
+E5CC     fb - -   mov      R3, A
+E5CD     c3 - -   clr      CY
+E5CE     ef - -   mov      A, R7
+E5CF     94 02 -  subb     A, #0x2
+E5D1     40 02 -  jc       0xe5d5
+E5D3     80 d7 -  sjmp     0xe5ac
+E5D5     22 - -   ret      

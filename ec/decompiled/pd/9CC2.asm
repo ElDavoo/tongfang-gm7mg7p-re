@@ -4,8 +4,8 @@
 ; This is the machine code. The decompiled C for this address is 9CC2.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-9CC2     ff         mov      R7, A
-9CC3     e0         movx     A, @DPTR
-9CC4     fe         mov      R6, A
-9CC5     75 f0 67   mov      B, #0x67
-9CC8     22         ret      
+9CC2     ff - -   mov      R7, A
+9CC3     e0 - -   movx     A, @DPTR
+9CC4     fe - -   mov      R6, A
+9CC5     75 f0 67 mov      B, #0x67
+9CC8     22 - -   ret      

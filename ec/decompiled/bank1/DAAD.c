@@ -12,15 +12,15 @@ void FUN_CODE_daad(char param_1,char param_2)
   char cVar1;
   
   if ((DAT_EXTMEM_0497 & 1) != 0) {
-    FUN_CODE_1ab6();
+    trampoline_bank0_c184();
     if (param_2 == '\0') {
-      FUN_CODE_198a();
+      trampoline_to_c1e7();
       if (param_2 == '\0') {
-        cVar1 = FUN_CODE_8898(0x834);
+        cVar1 = read_xdata_pair_to_b_and_a(0x834);
         if (cVar1 == '\0' && param_1 == '\0') {
-          FUN_CODE_8886(0x60e);
-          FUN_CODE_a5a7(BANK0_R1,BANK0_R2,0x75,0x17);
-          FUN_CODE_888c(0x363);
+          read_xdata_pair_to_r1r2(0x60e);
+          mul_partial_products_r0_r1_r2_r3(BANK0_R1,BANK0_R2,0x75,0x17);
+          write_r1r2_to_xdata_pair(0x363);
           DAT_EXTMEM_0365 = 0xfa;
         }
       }

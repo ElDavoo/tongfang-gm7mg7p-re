@@ -21,16 +21,16 @@ void index_case_06(undefined1 param_1,undefined1 param_2)
     index_table_default();
     return;
   }
-  FUN_CODE_bdba();
-  FUN_CODE_b9ea();
+  copy_x190a_to_x0a57();
+  read_1919_byte_set_dptr_0a56();
   DAT_EXTMEM_0a59 = DAT_EXTMEM_060c;
   DAT_EXTMEM_08dc = param_1;
   DAT_EXTMEM_08dd = param_2;
-  DAT_EXTMEM_060d = FUN_CODE_b965(0x60d);
+  DAT_EXTMEM_060d = add_r6_r7_to_0a58_pair_then_halve(0x60d);
   DAT_EXTMEM_060c = DAT_EXTMEM_0a59;
-  FUN_CODE_ba3d(DAT_EXTMEM_0610 | 0x40);
-  FUN_CODE_be88();
-  FUN_CODE_bb08(0x87);
+  store_a_to_dptr_ba3d(DAT_EXTMEM_0610 | 0x40);
+  write_9f_to_x1909();
+  store_a_then_set_bit0_1901(0x87);
   DAT_EXTMEM_08e1 = 6;
   DAT_EXTMEM_08e0 = DAT_EXTMEM_08e0 + '\x01';
   index_table_default();

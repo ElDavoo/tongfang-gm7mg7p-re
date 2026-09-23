@@ -9,7 +9,7 @@
 void FUN_CODE_1636(void)
 
 {
-  bl51_bank_select_0(FUN_CODE_d991);
+  bl51_bank_select_0(store_r4_r5_into_record_6e65);
   return;
 }
 

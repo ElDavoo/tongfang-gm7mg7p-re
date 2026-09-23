@@ -6,42 +6,42 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-3042     90 0a 47   mov      DPTR, #0xa47
-3045     ef         mov      A, R7
-3046     f0         movx     @DPTR, A
-3047     e4         clr      A
-3048     ff         mov      R7, A
-3049     12 39 83   lcall    0x3983
-304C     12 38 94   lcall    0x3894
-304F     30 1b 11   jnb      0x1b, 0x3063
-3052     7f 01      mov      R7, #0x1
-3054     12 39 83   lcall    0x3983
-3057     90 0a 47   mov      DPTR, #0xa47
-305A     12 3c 03   lcall    0x3c03
-305D     12 2e 9c   lcall    0x2e9c
-3060     c2 1b      clr      0x1b
-3062     22         ret      
-3063     e5 32      mov      A, 0x32
-3065     24 0d      add      A, #0xd
-3067     60 04      jz       0x306d
-3069     24 0b      add      A, #0xb
-306B     70 02      jnz      0x306f
-306D     d2 1b      setb     0x1b
-306F     e5 32      mov      A, 0x32
-3071     b4 ff 04   cjne     A, #0xff, 0x3078
-3074     7f 03      mov      R7, #0x3
-3076     80 14      sjmp     0x308c
-3078     e5 32      mov      A, 0x32
-307A     b4 f2 04   cjne     A, #0xf2, 0x3081
-307D     7f 02      mov      R7, #0x2
-307F     80 0b      sjmp     0x308c
-3081     e5 32      mov      A, 0x32
-3083     b4 e9 04   cjne     A, #0xe9, 0x308a
-3086     7f 04      mov      R7, #0x4
-3088     80 02      sjmp     0x308c
-308A     7f 01      mov      R7, #0x1
-308C     12 39 83   lcall    0x3983
-308F     90 0a 47   mov      DPTR, #0xa47
-3092     12 3c 03   lcall    0x3c03
-3095     12 2e 9c   lcall    0x2e9c
-3098     22         ret      
+3042     90 0a 47 mov      DPTR, #0xa47
+3045     ef - -   mov      A, R7
+3046     f0 - -   movx     @DPTR, A
+3047     e4 - -   clr      A
+3048     ff - -   mov      R7, A
+3049     12 39 83 lcall    0x3983
+304C     12 38 94 lcall    0x3894
+304F     30 1b 11 jnb      0x1b, 0x3063
+3052     7f 01 -  mov      R7, #0x1
+3054     12 39 83 lcall    0x3983
+3057     90 0a 47 mov      DPTR, #0xa47
+305A     12 3c 03 lcall    0x3c03
+305D     12 2e 9c lcall    0x2e9c
+3060     c2 1b -  clr      0x1b
+3062     22 - -   ret      
+3063     e5 32 -  mov      A, 0x32
+3065     24 0d -  add      A, #0xd
+3067     60 04 -  jz       0x306d
+3069     24 0b -  add      A, #0xb
+306B     70 02 -  jnz      0x306f
+306D     d2 1b -  setb     0x1b
+306F     e5 32 -  mov      A, 0x32
+3071     b4 ff 04 cjne     A, #0xff, 0x3078
+3074     7f 03 -  mov      R7, #0x3
+3076     80 14 -  sjmp     0x308c
+3078     e5 32 -  mov      A, 0x32
+307A     b4 f2 04 cjne     A, #0xf2, 0x3081
+307D     7f 02 -  mov      R7, #0x2
+307F     80 0b -  sjmp     0x308c
+3081     e5 32 -  mov      A, 0x32
+3083     b4 e9 04 cjne     A, #0xe9, 0x308a
+3086     7f 04 -  mov      R7, #0x4
+3088     80 02 -  sjmp     0x308c
+308A     7f 01 -  mov      R7, #0x1
+308C     12 39 83 lcall    0x3983
+308F     90 0a 47 mov      DPTR, #0xa47
+3092     12 3c 03 lcall    0x3c03
+3095     12 2e 9c lcall    0x2e9c
+3098     22 - -   ret      

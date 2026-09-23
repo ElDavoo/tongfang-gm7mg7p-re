@@ -16,7 +16,7 @@ void FUN_CODE_e822(undefined1 param_1,undefined1 *param_2)
     param_2[1] = 0xf;
     param_2[2] = 0x80;
     cVar1 = '\x01';
-    FUN_CODE_4777(0xf);
+    stage_0a54_0a55_then_dispatch(0xf);
     if (cVar1 == '\0') {
       return;
     }
@@ -44,9 +44,9 @@ LAB_CODE_e84c:
       return;
     }
     DAT_EXTMEM_0f60 = 0;
-    FUN_CODE_f107();
+    store_a_at_dptr_plus1();
     sVar3 = 0xa50;
-    FUN_CODE_f0f3(DAT_EXTMEM_0a50);
+    set_0a56_to_0f_60(DAT_EXTMEM_0a50);
     param_2 = (undefined1 *)(sVar3 + 1);
     param_1 = 0x10;
   } while( true );

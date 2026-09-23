@@ -12,13 +12,13 @@ void FUN_CODE_e090(undefined1 param_1)
   DAT_EXTMEM_03a0 = DAT_EXTMEM_03a0 | 2;
   DAT_EXTMEM_055f = param_1;
   FUN_CODE_d6c6();
-  FUN_CODE_b50e();
+  derive_scaled_values_from_0404();
   if (DAT_EXTMEM_0514 == 'd') {
     DAT_EXTMEM_0492 = 1;
   }
   DAT_EXTMEM_0497 = DAT_EXTMEM_0497 | 4;
   DAT_EXTMEM_0490 = DAT_EXTMEM_0490 | 4;
-  FUN_CODE_aab9();
+  write_083c_083d_and_0832_bit6();
   DAT_EXTMEM_0394 = 0;
   DAT_EXTMEM_0680 = 4;
   FUN_CODE_de9e();

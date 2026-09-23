@@ -4,30 +4,30 @@
 ; This is the machine code. The decompiled C for this address is 7151.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-7151     d0 83      pop      DPH
-7153     d0 82      pop      DPL
-7155     f8         mov      R0, A
-7156     e4         clr      A
-7157     93         movc     A, @A+DPTR
-7158     70 12      jnz      0x716c
-715A     74 01      mov      A, #0x1
-715C     93         movc     A, @A+DPTR
-715D     70 0d      jnz      0x716c
-715F     a3         inc      DPTR
-7160     a3         inc      DPTR
-7161     93         movc     A, @A+DPTR
-7162     f8         mov      R0, A
-7163     74 01      mov      A, #0x1
-7165     93         movc     A, @A+DPTR
-7166     f5 82      mov      DPL, A
-7168     88 83      mov      DPH, R0
-716A     e4         clr      A
-716B     73         jmp      @A+DPTR
-716C     74 02      mov      A, #0x2
-716E     93         movc     A, @A+DPTR
-716F     68         xrl      A, R0
-7170     60 ef      jz       0x7161
-7172     a3         inc      DPTR
-7173     a3         inc      DPTR
-7174     a3         inc      DPTR
-7175     80 df      sjmp     0x7156
+7151     d0 83 -  pop      DPH
+7153     d0 82 -  pop      DPL
+7155     f8 - -   mov      R0, A
+7156     e4 - -   clr      A
+7157     93 - -   movc     A, @A+DPTR
+7158     70 12 -  jnz      0x716c
+715A     74 01 -  mov      A, #0x1
+715C     93 - -   movc     A, @A+DPTR
+715D     70 0d -  jnz      0x716c
+715F     a3 - -   inc      DPTR
+7160     a3 - -   inc      DPTR
+7161     93 - -   movc     A, @A+DPTR
+7162     f8 - -   mov      R0, A
+7163     74 01 -  mov      A, #0x1
+7165     93 - -   movc     A, @A+DPTR
+7166     f5 82 -  mov      DPL, A
+7168     88 83 -  mov      DPH, R0
+716A     e4 - -   clr      A
+716B     73 - -   jmp      @A+DPTR
+716C     74 02 -  mov      A, #0x2
+716E     93 - -   movc     A, @A+DPTR
+716F     68 - -   xrl      A, R0
+7170     60 ef -  jz       0x7161
+7172     a3 - -   inc      DPTR
+7173     a3 - -   inc      DPTR
+7174     a3 - -   inc      DPTR
+7175     80 df -  sjmp     0x7156

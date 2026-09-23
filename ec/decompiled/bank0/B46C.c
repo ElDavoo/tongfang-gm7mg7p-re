@@ -11,7 +11,7 @@ void FUN_CODE_b46c(void)
 {
   char cVar1;
   
-  cVar1 = FUN_CODE_b9d8();
+  cVar1 = read_06e6_xor_01();
   if (cVar1 != '\0') {
     DAT_EXTMEM_09cf = 0;
     DAT_EXTMEM_08eb = DAT_EXTMEM_08eb & 0x7f;
@@ -26,7 +26,7 @@ void FUN_CODE_b46c(void)
     _4_4 = '\0';
     if ((DAT_EXTMEM_09cf == '\0') && ((char)DAT_EXTMEM_08eb < '\0')) {
       DAT_EXTMEM_08eb = DAT_EXTMEM_08eb & 0x7f;
-      FUN_CODE_c478();
+      set_160a_bit0_unless_b8f4_and_08eb();
       return;
     }
   }

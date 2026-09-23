@@ -21,15 +21,15 @@ void index_case_03(undefined1 param_1,undefined1 param_2)
     index_table_default();
     return;
   }
-  FUN_CODE_bdc6();
-  FUN_CODE_b9ea();
+  copy_x190d_to_x0a57();
+  read_1919_byte_set_dptr_0a56();
   DAT_EXTMEM_0a59 = DAT_EXTMEM_0606;
   DAT_EXTMEM_08d6 = param_1;
   DAT_EXTMEM_08d7 = param_2;
-  DAT_EXTMEM_0607 = FUN_CODE_b965(0x607);
+  DAT_EXTMEM_0607 = add_r6_r7_to_0a58_pair_then_halve(0x607);
   DAT_EXTMEM_0606 = DAT_EXTMEM_0a59;
-  FUN_CODE_ba3d(DAT_EXTMEM_0610 | 8);
-  FUN_CODE_be92();
+  store_a_to_dptr_ba3d(DAT_EXTMEM_0610 | 8);
+  write_9f_to_x190c();
   index_case_epilogue(0x84);
   return;
 }

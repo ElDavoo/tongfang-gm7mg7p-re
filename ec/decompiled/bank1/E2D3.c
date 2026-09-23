@@ -23,7 +23,7 @@ void FUN_CODE_e2d3(void)
     if (bVar1 == 2) goto LAB_CODE_e31a;
     if (bVar1 == 3) goto LAB_CODE_e325_1;
     if (bVar1 == 4) {
-      FUN_CODE_e332();
+      set_036c_to_4_jump_e490();
       return;
     }
   }
@@ -40,8 +40,8 @@ LAB_CODE_e31a:
         DAT_EXTMEM_1c01 = 0x48;
         DAT_EXTMEM_1c02 = *(char *)((ushort)DAT_EXTMEM_03c4 + 0xe444);
         DAT_EXTMEM_1c05 = DAT_EXTMEM_1c04;
-        FUN_CODE_8886(0x36e);
-        FUN_CODE_8854(1,0);
+        read_xdata_pair_to_r1r2(0x36e);
+        add_r1r2_to_r3r4(1,0);
         DAT_EXTMEM_03c4 = DAT_EXTMEM_03c4 + 3;
         if (DAT_EXTMEM_03c4 == 'x') {
           DAT_EXTMEM_03c4 = '\0';
@@ -52,7 +52,7 @@ LAB_CODE_e31a:
       DAT_EXTMEM_03af = 0;
       DAT_EXTMEM_03a1 = DAT_EXTMEM_03a1 & 0xfd;
       DAT_EXTMEM_036c = 0;
-      FUN_CODE_e2c3();
+      set_1c00_ff_clear_1c04_1c05();
       DAT_EXTMEM_0680 = 4;
       return;
     }
@@ -67,7 +67,7 @@ LAB_CODE_e31a:
       bVar1 = DAT_EXTMEM_03af;
     }
     DAT_EXTMEM_03af = bVar1;
-    FUN_CODE_e2c3();
+    set_1c00_ff_clear_1c04_1c05();
     DAT_EXTMEM_0680 = 4;
     DAT_EXTMEM_0681 = 1;
     return;
@@ -76,12 +76,12 @@ LAB_CODE_e31a:
     if ((DAT_EXTMEM_03a1 >> 2 & 1) != 1) {
       if ((DAT_EXTMEM_03a1 >> 3 & 1) == 1) {
         DAT_EXTMEM_036c = 4;
-        FUN_CODE_e490(0xe454);
+        stage_1c00_block_from_code_table_indexed_03c4(0xe454);
         return;
       }
       if ((DAT_EXTMEM_03a1 >> 4 & 1) == 1) {
         if ((DAT_EXTMEM_045f != -0x25) || (DAT_EXTMEM_03c4 == 0x40)) {
-          FUN_CODE_e501();
+          reset_03c4_03af_and_clear_03a1_bit();
           return;
         }
       }
@@ -91,12 +91,12 @@ LAB_CODE_e31a:
             DAT_EXTMEM_03a1 = 0;
             return;
           }
-          FUN_CODE_e3b5();
+          copy_03cd_03ce_03cf_to_1c02_1c04_1c05();
           return;
         }
         if ((DAT_EXTMEM_045f != -0x25) ||
            (DAT_EXTMEM_03c4 = DAT_EXTMEM_03c4 | 0x40, DAT_EXTMEM_03c4 == 0x50)) {
-          FUN_CODE_e501();
+          reset_03c4_03af_and_clear_03a1_bit();
           return;
         }
       }
@@ -114,17 +114,17 @@ LAB_CODE_e31a:
         DAT_EXTMEM_0680 = 4;
         return;
       }
-      FUN_CODE_e54f();
+      increment_03af_clear_03a1_on_wrap();
       return;
     }
 LAB_CODE_e325_1:
     DAT_EXTMEM_036c = 3;
-    FUN_CODE_e490(0xe44e);
+    stage_1c00_block_from_code_table_indexed_03c4(0xe44e);
     return;
   }
 LAB_CODE_e30e:
   DAT_EXTMEM_036c = 1;
-  FUN_CODE_e490(0xe42d);
+  stage_1c00_block_from_code_table_indexed_03c4(0xe42d);
   return;
 }
 

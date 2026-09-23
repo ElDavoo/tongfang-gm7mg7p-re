@@ -22,27 +22,27 @@ void FUN_CODE_7392(undefined1 param_1,char param_2)
   DAT_EXTMEM_07ca = param_2;
   while( true ) {
     pbVar5 = &DAT_EXTMEM_07cb;
-    FUN_CODE_911c(cVar1);
-    FUN_CODE_9028();
+    read_xdata_07ca_into_r6(cVar1);
+    make_dptr_r6_minus_3_9028();
     if ((*pbVar5 >> 4 & 1) == 0) {
       return;
     }
     puVar4 = &DAT_EXTMEM_07ca;
     cVar1 = DAT_EXTMEM_07ca;
-    FUN_CODE_9177();
-    FUN_CODE_90cf(cVar1);
+    set_b60_dptr_04a3_tail_10bc();
+    dph_plus_double_a_90cf(cVar1);
     DAT_EXTMEM_07cd = *puVar4;
-    FUN_CODE_edb5();
+    setup_04a3_r3_7_then_call_10bc();
     if (cVar1 == '\0') break;
     uVar6 = 0xca;
     cVar1 = DAT_EXTMEM_07ca;
-    FUN_CODE_9147(DAT_EXTMEM_07ca);
-    FUN_CODE_9087();
-    uVar2 = FUN_CODE_9147(cVar1);
+    dpl_0929_plus_5e_times_a(DAT_EXTMEM_07ca);
+    read_and_increment_32bit();
+    uVar2 = dpl_0929_plus_5e_times_a(cVar1);
     puVar4 = (undefined1 *)CONCAT11(uVar2,uVar6);
     write4xdata_from_r4_r7();
-    FUN_CODE_911c();
-    FUN_CODE_9028();
+    read_xdata_07ca_into_r6();
+    make_dptr_r6_minus_3_9028();
     *puVar4 = 1;
     bVar3 = DAT_EXTMEM_07cb + 1;
     cVar1 = DAT_EXTMEM_07cb - 2;
@@ -52,8 +52,8 @@ void FUN_CODE_7392(undefined1 param_1,char param_2)
     }
   }
   pbVar5 = &DAT_EXTMEM_07ca;
-  cVar1 = FUN_CODE_9115();
-  FUN_CODE_906d(cVar1 + '\x1c');
+  cVar1 = read_dptr_to_r5_r6_zero_r7();
+  make_dptr_r6_minus_3_col_r3(cVar1 + '\x1c');
                     /* WARNING: Subroutine does not return */
   add_full_product_to_dptr(param_1,0x4a5,0x60,*pbVar5 >> 4 & 3);
 }

@@ -6,36 +6,36 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-0F75     7f 20      mov      R7, #0x20
-0F77     90 00 00   mov      DPTR, #0x0
-0F7A     ac 83      mov      R4, DPH
-0F7C     c3         clr      CY
-0F7D     ec         mov      A, R4
-0F7E     94 01      subb     A, #0x1
-0F80     50 05      jnc      0x0f87
-0F82     e4         clr      A
-0F83     f0         movx     @DPTR, A
-0F84     a3         inc      DPTR
-0F85     80 f3      sjmp     0x0f7a
-0F87     ef         mov      A, R7
-0F88     c3         clr      CY
-0F89     94 c0      subb     A, #0xc0
-0F8B     50 08      jnc      0x0f95
-0F8D     c8         xch      A, R0
-0F8E     ef         mov      A, R7
-0F8F     c8         xch      A, R0
-0F90     e4         clr      A
-0F91     f6         mov      @R0, A
-0F92     0f         inc      R7
-0F93     80 f2      sjmp     0x0f87
-0F95     90 90 00   mov      DPTR, #0x9000
-0F98     ae 83      mov      R6, DPH
-0F9A     c3         clr      CY
-0F9B     ee         mov      A, R6
-0F9C     94 98      subb     A, #0x98
-0F9E     50 05      jnc      0x0fa5
-0FA0     e4         clr      A
-0FA1     f0         movx     @DPTR, A
-0FA2     a3         inc      DPTR
-0FA3     80 f3      sjmp     0x0f98
-0FA5     22         ret      
+0F75     7f 20 -  mov      R7, #0x20
+0F77     90 00 00 mov      DPTR, #0x0
+0F7A     ac 83 -  mov      R4, DPH
+0F7C     c3 - -   clr      CY
+0F7D     ec - -   mov      A, R4
+0F7E     94 01 -  subb     A, #0x1
+0F80     50 05 -  jnc      0x0f87
+0F82     e4 - -   clr      A
+0F83     f0 - -   movx     @DPTR, A
+0F84     a3 - -   inc      DPTR
+0F85     80 f3 -  sjmp     0x0f7a
+0F87     ef - -   mov      A, R7
+0F88     c3 - -   clr      CY
+0F89     94 c0 -  subb     A, #0xc0
+0F8B     50 08 -  jnc      0x0f95
+0F8D     c8 - -   xch      A, R0
+0F8E     ef - -   mov      A, R7
+0F8F     c8 - -   xch      A, R0
+0F90     e4 - -   clr      A
+0F91     f6 - -   mov      @R0, A
+0F92     0f - -   inc      R7
+0F93     80 f2 -  sjmp     0x0f87
+0F95     90 90 00 mov      DPTR, #0x9000
+0F98     ae 83 -  mov      R6, DPH
+0F9A     c3 - -   clr      CY
+0F9B     ee - -   mov      A, R6
+0F9C     94 98 -  subb     A, #0x98
+0F9E     50 05 -  jnc      0x0fa5
+0FA0     e4 - -   clr      A
+0FA1     f0 - -   movx     @DPTR, A
+0FA2     a3 - -   inc      DPTR
+0FA3     80 f3 -  sjmp     0x0f98
+0FA5     22 - -   ret      

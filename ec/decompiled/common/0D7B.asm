@@ -6,59 +6,59 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-0D7B     12 38 6f   lcall    0x386f
-0D7E     12 0e 1e   lcall    0x0e1e
-0D81     05 44      inc      0x44
-0D83     e5 44      mov      A, 0x44
-0D85     30 e0 03   jnb      0xe0, 0x0d8b
-0D88     02 0e 2e   ljmp     0x0e2e
-0D8B     12 0e 34   lcall    0x0e34
-0D8E     e5 44      mov      A, 0x44
-0D90     24 fc      add      A, #0xfc
-0D92     60 11      jz       0x0da5
-0D94     24 fe      add      A, #0xfe
-0D96     60 12      jz       0x0daa
-0D98     24 fe      add      A, #0xfe
-0D9A     60 13      jz       0x0daf
-0D9C     24 06      add      A, #0x6
-0D9E     70 20      jnz      0x0dc0
-0DA0     12 0e 37   lcall    0x0e37
-0DA3     80 1e      sjmp     0x0dc3
-0DA5     12 0e 3a   lcall    0x0e3a
-0DA8     80 19      sjmp     0x0dc3
-0DAA     12 0e 3d   lcall    0x0e3d
-0DAD     80 14      sjmp     0x0dc3
-0DAF     05 46      inc      0x46
-0DB1     e5 46      mov      A, 0x46
-0DB3     30 e0 05   jnb      0xe0, 0x0dbb
-0DB6     12 0e 40   lcall    0x0e40
-0DB9     80 08      sjmp     0x0dc3
-0DBB     12 0e 43   lcall    0x0e43
-0DBE     80 03      sjmp     0x0dc3
-0DC0     e4         clr      A
-0DC1     f5 44      mov      0x44, A
-0DC3     e5 44      mov      A, 0x44
-0DC5     70 56      jnz      0x0e1d
-0DC7     05 45      inc      0x45
-0DC9     e5 45      mov      A, 0x45
-0DCB     30 e0 03   jnb      0xe0, 0x0dd1
-0DCE     02 0e 46   ljmp     0x0e46
-0DD1     e5 45      mov      A, 0x45
-0DD3     12 71 51   lcall    0x7151
-0DD6     0d         inc      R5
-0DD7     f5 02      mov      0x02, A
-0DD9     0d         inc      R5
-0DDA     f7         mov      @R1, A
-0DDB     04         inc      A
-0DDC     0d         inc      R5
-0DDD     f9         mov      R1, A
-0DDE     06         inc      @R0
-0DDF     0d         inc      R5
-0DE0     fb         mov      R3, A
-0DE1     08         inc      R0
-0DE2     0d         inc      R5
-0DE3     fe         mov      R6, A
-0DE4     0a         inc      R2
-0DE5     0e         inc      R6
-0DE6     01 0c      ajmp     0x080c
-0E1D     22         ret      
+0D7B     12 38 6f lcall    0x386f
+0D7E     12 0e 1e lcall    0x0e1e
+0D81     05 44 -  inc      0x44
+0D83     e5 44 -  mov      A, 0x44
+0D85     30 e0 03 jnb      0xe0, 0x0d8b
+0D88     02 0e 2e ljmp     0x0e2e
+0D8B     12 0e 34 lcall    0x0e34
+0D8E     e5 44 -  mov      A, 0x44
+0D90     24 fc -  add      A, #0xfc
+0D92     60 11 -  jz       0x0da5
+0D94     24 fe -  add      A, #0xfe
+0D96     60 12 -  jz       0x0daa
+0D98     24 fe -  add      A, #0xfe
+0D9A     60 13 -  jz       0x0daf
+0D9C     24 06 -  add      A, #0x6
+0D9E     70 20 -  jnz      0x0dc0
+0DA0     12 0e 37 lcall    0x0e37
+0DA3     80 1e -  sjmp     0x0dc3
+0DA5     12 0e 3a lcall    0x0e3a
+0DA8     80 19 -  sjmp     0x0dc3
+0DAA     12 0e 3d lcall    0x0e3d
+0DAD     80 14 -  sjmp     0x0dc3
+0DAF     05 46 -  inc      0x46
+0DB1     e5 46 -  mov      A, 0x46
+0DB3     30 e0 05 jnb      0xe0, 0x0dbb
+0DB6     12 0e 40 lcall    0x0e40
+0DB9     80 08 -  sjmp     0x0dc3
+0DBB     12 0e 43 lcall    0x0e43
+0DBE     80 03 -  sjmp     0x0dc3
+0DC0     e4 - -   clr      A
+0DC1     f5 44 -  mov      0x44, A
+0DC3     e5 44 -  mov      A, 0x44
+0DC5     70 56 -  jnz      0x0e1d
+0DC7     05 45 -  inc      0x45
+0DC9     e5 45 -  mov      A, 0x45
+0DCB     30 e0 03 jnb      0xe0, 0x0dd1
+0DCE     02 0e 46 ljmp     0x0e46
+0DD1     e5 45 -  mov      A, 0x45
+0DD3     12 71 51 lcall    0x7151
+0DD6     0d - -   inc      R5
+0DD7     f5 02 -  mov      0x02, A
+0DD9     0d - -   inc      R5
+0DDA     f7 - -   mov      @R1, A
+0DDB     04 - -   inc      A
+0DDC     0d - -   inc      R5
+0DDD     f9 - -   mov      R1, A
+0DDE     06 - -   inc      @R0
+0DDF     0d - -   inc      R5
+0DE0     fb - -   mov      R3, A
+0DE1     08 - -   inc      R0
+0DE2     0d - -   inc      R5
+0DE3     fe - -   mov      R6, A
+0DE4     0a - -   inc      R2
+0DE5     0e - -   inc      R6
+0DE6     01 0c -  ajmp     0x080c
+0E1D     22 - -   ret      

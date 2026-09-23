@@ -6,29 +6,29 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-2820     e4         clr      A
-2821     90 00 81   mov      DPTR, #0x81
-2824     f0         movx     @DPTR, A
-2825     90 16 23   mov      DPTR, #0x1623
-2828     e0         movx     A, @DPTR
-2829     54 fb      anl      A, #0xfb
-282B     70 06      jnz      0x2833
-282D     90 00 81   mov      DPTR, #0x81
-2830     e0         movx     A, @DPTR
-2831     04         inc      A
-2832     f0         movx     @DPTR, A
-2833     90 16 25   mov      DPTR, #0x1625
-2836     e0         movx     A, @DPTR
-2837     54 fb      anl      A, #0xfb
-2839     70 06      jnz      0x2841
-283B     90 00 81   mov      DPTR, #0x81
-283E     e0         movx     A, @DPTR
-283F     04         inc      A
-2840     f0         movx     @DPTR, A
-2841     90 00 81   mov      DPTR, #0x81
-2844     e0         movx     A, @DPTR
-2845     60 03      jz       0x284a
-2847     d2 69      setb     0x69
-2849     22         ret      
-284A     c2 69      clr      0x69
-284C     22         ret      
+2820     e4 - -   clr      A
+2821     90 00 81 mov      DPTR, #0x81
+2824     f0 - -   movx     @DPTR, A
+2825     90 16 23 mov      DPTR, #0x1623
+2828     e0 - -   movx     A, @DPTR
+2829     54 fb -  anl      A, #0xfb
+282B     70 06 -  jnz      0x2833
+282D     90 00 81 mov      DPTR, #0x81
+2830     e0 - -   movx     A, @DPTR
+2831     04 - -   inc      A
+2832     f0 - -   movx     @DPTR, A
+2833     90 16 25 mov      DPTR, #0x1625
+2836     e0 - -   movx     A, @DPTR
+2837     54 fb -  anl      A, #0xfb
+2839     70 06 -  jnz      0x2841
+283B     90 00 81 mov      DPTR, #0x81
+283E     e0 - -   movx     A, @DPTR
+283F     04 - -   inc      A
+2840     f0 - -   movx     @DPTR, A
+2841     90 00 81 mov      DPTR, #0x81
+2844     e0 - -   movx     A, @DPTR
+2845     60 03 -  jz       0x284a
+2847     d2 69 -  setb     0x69
+2849     22 - -   ret      
+284A     c2 69 -  clr      0x69
+284C     22 - -   ret      

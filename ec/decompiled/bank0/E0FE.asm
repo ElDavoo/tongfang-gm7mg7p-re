@@ -6,41 +6,41 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-E0FE     e0         movx     A, @DPTR
-E0FF     30 e1 46   jnb      0xe1, 0xe148
-E102     90 15 10   mov      DPTR, #0x1510
-E105     e0         movx     A, @DPTR
-E106     30 e3 1f   jnb      0xe3, 0xe128
-E109     90 15 14   mov      DPTR, #0x1514
-E10C     e0         movx     A, @DPTR
-E10D     f5 3a      mov      0x3a, A
-E10F     e4         clr      A
-E110     f5 3b      mov      0x3b, A
-E112     f5 3e      mov      0x3e, A
-E114     e5 3a      mov      A, 0x3a
-E116     c4         swap     A
-E117     54 0f      anl      A, #0xf
-E119     25 e0      add      A, A
-E11B     24 f9      add      A, #0xf9
-E11D     f5 82      mov      DPL, A
-E11F     e4         clr      A
-E120     34 6e      addc     A, #0x6e
-E122     12 e1 61   lcall    0xe161
-E125     02 71 77   ljmp     0x7177
-E128     90 15 14   mov      DPTR, #0x1514
-E12B     e0         movx     A, @DPTR
-E12C     f5 3c      mov      0x3c, A
-E12E     e5 3b      mov      A, 0x3b
-E130     60 16      jz       0xe148
-E132     e5 3a      mov      A, 0x3a
-E134     c4         swap     A
-E135     54 0f      anl      A, #0xf
-E137     25 e0      add      A, A
-E139     24 19      add      A, #0x19
-E13B     f5 82      mov      DPL, A
-E13D     e4         clr      A
-E13E     34 6f      addc     A, #0x6f
-E140     12 e1 61   lcall    0xe161
-E143     12 71 77   lcall    0x7177
-E146     15 3b      dec      0x3b
-E148     22         ret      
+E0FE     e0 - -   movx     A, @DPTR
+E0FF     30 e1 46 jnb      0xe1, 0xe148
+E102     90 15 10 mov      DPTR, #0x1510
+E105     e0 - -   movx     A, @DPTR
+E106     30 e3 1f jnb      0xe3, 0xe128
+E109     90 15 14 mov      DPTR, #0x1514
+E10C     e0 - -   movx     A, @DPTR
+E10D     f5 3a -  mov      0x3a, A
+E10F     e4 - -   clr      A
+E110     f5 3b -  mov      0x3b, A
+E112     f5 3e -  mov      0x3e, A
+E114     e5 3a -  mov      A, 0x3a
+E116     c4 - -   swap     A
+E117     54 0f -  anl      A, #0xf
+E119     25 e0 -  add      A, A
+E11B     24 f9 -  add      A, #0xf9
+E11D     f5 82 -  mov      DPL, A
+E11F     e4 - -   clr      A
+E120     34 6e -  addc     A, #0x6e
+E122     12 e1 61 lcall    0xe161
+E125     02 71 77 ljmp     0x7177
+E128     90 15 14 mov      DPTR, #0x1514
+E12B     e0 - -   movx     A, @DPTR
+E12C     f5 3c -  mov      0x3c, A
+E12E     e5 3b -  mov      A, 0x3b
+E130     60 16 -  jz       0xe148
+E132     e5 3a -  mov      A, 0x3a
+E134     c4 - -   swap     A
+E135     54 0f -  anl      A, #0xf
+E137     25 e0 -  add      A, A
+E139     24 19 -  add      A, #0x19
+E13B     f5 82 -  mov      DPL, A
+E13D     e4 - -   clr      A
+E13E     34 6f -  addc     A, #0x6f
+E140     12 e1 61 lcall    0xe161
+E143     12 71 77 lcall    0x7177
+E146     15 3b -  dec      0x3b
+E148     22 - -   ret      

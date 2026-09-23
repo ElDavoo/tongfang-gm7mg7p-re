@@ -4,16 +4,16 @@
 ; This is the machine code. The decompiled C for this address is 65A6.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-60ED     6e         xrl      A, R6
-60EE     6e         xrl      A, R6
-60EF     6e         xrl      A, R6
-60F0     6e         xrl      A, R6
-60F1     6e         xrl      A, R6
-60F2     56         anl      A, @R0
-60F3     a2 57      mov      CY, 0x57
-60F5     62 56      xrl      0x56, A
-60F7     d2 57      setb     0x57
-60F9     92 57      mov      0x57, CY
-60FB     02 57 c2   ljmp     0x57c2
-65A6     3e         addc     A, R6
-65A7     80 16      sjmp     0x65bf
+60ED     6e - -   xrl      A, R6
+60EE     6e - -   xrl      A, R6
+60EF     6e - -   xrl      A, R6
+60F0     6e - -   xrl      A, R6
+60F1     6e - -   xrl      A, R6
+60F2     56 - -   anl      A, @R0
+60F3     a2 57 -  mov      CY, 0x57
+60F5     62 56 -  xrl      0x56, A
+60F7     d2 57 -  setb     0x57
+60F9     92 57 -  mov      0x57, CY
+60FB     02 57 c2 ljmp     0x57c2
+65A6     3e - -   addc     A, R6
+65A7     80 16 -  sjmp     0x65bf

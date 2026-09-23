@@ -6,86 +6,86 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-4C5D     90 00 9f   mov      DPTR, #0x9f
-4C60     e0         movx     A, @DPTR
-4C61     90 10 3e   mov      DPTR, #0x103e
-4C64     f0         movx     @DPTR, A
-4C65     90 10 3d   mov      DPTR, #0x103d
-4C68     74 ff      mov      A, #0xff
-4C6A     f0         movx     @DPTR, A
-4C6B     e4         clr      A
-4C6C     90 10 3b   mov      DPTR, #0x103b
-4C6F     f0         movx     @DPTR, A
-4C70     90 10 3c   mov      DPTR, #0x103c
-4C73     74 fe      mov      A, #0xfe
-4C75     f0         movx     @DPTR, A
-4C76     90 10 3f   mov      DPTR, #0x103f
-4C79     04         inc      A
-4C7A     f0         movx     @DPTR, A
-4C7B     90 10 3c   mov      DPTR, #0x103c
-4C7E     74 fd      mov      A, #0xfd
-4C80     f0         movx     @DPTR, A
-4C81     90 10 3f   mov      DPTR, #0x103f
-4C84     74 05      mov      A, #0x5
-4C86     f0         movx     @DPTR, A
-4C87     90 10 3f   mov      DPTR, #0x103f
-4C8A     e0         movx     A, @DPTR
-4C8B     20 e0 f9   jb       0xe0, 0x4c87
-4C8E     90 10 3c   mov      DPTR, #0x103c
-4C91     74 fe      mov      A, #0xfe
-4C93     f0         movx     @DPTR, A
-4C94     90 10 3f   mov      DPTR, #0x103f
-4C97     04         inc      A
-4C98     f0         movx     @DPTR, A
-4C99     90 10 3c   mov      DPTR, #0x103c
-4C9C     74 fd      mov      A, #0xfd
-4C9E     f0         movx     @DPTR, A
-4C9F     90 10 3f   mov      DPTR, #0x103f
-4CA2     74 9f      mov      A, #0x9f
-4CA4     f0         movx     @DPTR, A
-4CA5     e4         clr      A
-4CA6     90 00 80   mov      DPTR, #0x80
-4CA9     f0         movx     @DPTR, A
-4CAA     90 10 3f   mov      DPTR, #0x103f
-4CAD     e0         movx     A, @DPTR
-4CAE     ff         mov      R7, A
-4CAF     90 00 80   mov      DPTR, #0x80
-4CB2     e0         movx     A, @DPTR
-4CB3     24 90      add      A, #0x90
-4CB5     f5 82      mov      DPL, A
-4CB7     e4         clr      A
-4CB8     34 00      addc     A, #0x0
-4CBA     f5 83      mov      DPH, A
-4CBC     ef         mov      A, R7
-4CBD     f0         movx     @DPTR, A
-4CBE     90 00 80   mov      DPTR, #0x80
-4CC1     e0         movx     A, @DPTR
-4CC2     04         inc      A
-4CC3     f0         movx     @DPTR, A
-4CC4     e0         movx     A, @DPTR
-4CC5     b4 04 e2   cjne     A, #0x4, 0x4caa
-4CC8     90 00 90   mov      DPTR, #0x90
-4CCB     e0         movx     A, @DPTR
-4CCC     90 00 9d   mov      DPTR, #0x9d
-4CCF     f0         movx     @DPTR, A
-4CD0     90 10 3c   mov      DPTR, #0x103c
-4CD3     74 fe      mov      A, #0xfe
-4CD5     f0         movx     @DPTR, A
-4CD6     90 10 3f   mov      DPTR, #0x103f
-4CD9     04         inc      A
-4CDA     f0         movx     @DPTR, A
-4CDB     90 10 3c   mov      DPTR, #0x103c
-4CDE     74 fd      mov      A, #0xfd
-4CE0     f0         movx     @DPTR, A
-4CE1     90 10 3f   mov      DPTR, #0x103f
-4CE4     74 05      mov      A, #0x5
-4CE6     f0         movx     @DPTR, A
-4CE7     90 10 3f   mov      DPTR, #0x103f
-4CEA     e0         movx     A, @DPTR
-4CEB     20 e0 f9   jb       0xe0, 0x4ce7
-4CEE     e4         clr      A
-4CEF     90 10 3e   mov      DPTR, #0x103e
-4CF2     f0         movx     @DPTR, A
-4CF3     90 10 3d   mov      DPTR, #0x103d
-4CF6     f0         movx     @DPTR, A
-4CF7     22         ret      
+4C5D     90 00 9f mov      DPTR, #0x9f
+4C60     e0 - -   movx     A, @DPTR
+4C61     90 10 3e mov      DPTR, #0x103e
+4C64     f0 - -   movx     @DPTR, A
+4C65     90 10 3d mov      DPTR, #0x103d
+4C68     74 ff -  mov      A, #0xff
+4C6A     f0 - -   movx     @DPTR, A
+4C6B     e4 - -   clr      A
+4C6C     90 10 3b mov      DPTR, #0x103b
+4C6F     f0 - -   movx     @DPTR, A
+4C70     90 10 3c mov      DPTR, #0x103c
+4C73     74 fe -  mov      A, #0xfe
+4C75     f0 - -   movx     @DPTR, A
+4C76     90 10 3f mov      DPTR, #0x103f
+4C79     04 - -   inc      A
+4C7A     f0 - -   movx     @DPTR, A
+4C7B     90 10 3c mov      DPTR, #0x103c
+4C7E     74 fd -  mov      A, #0xfd
+4C80     f0 - -   movx     @DPTR, A
+4C81     90 10 3f mov      DPTR, #0x103f
+4C84     74 05 -  mov      A, #0x5
+4C86     f0 - -   movx     @DPTR, A
+4C87     90 10 3f mov      DPTR, #0x103f
+4C8A     e0 - -   movx     A, @DPTR
+4C8B     20 e0 f9 jb       0xe0, 0x4c87
+4C8E     90 10 3c mov      DPTR, #0x103c
+4C91     74 fe -  mov      A, #0xfe
+4C93     f0 - -   movx     @DPTR, A
+4C94     90 10 3f mov      DPTR, #0x103f
+4C97     04 - -   inc      A
+4C98     f0 - -   movx     @DPTR, A
+4C99     90 10 3c mov      DPTR, #0x103c
+4C9C     74 fd -  mov      A, #0xfd
+4C9E     f0 - -   movx     @DPTR, A
+4C9F     90 10 3f mov      DPTR, #0x103f
+4CA2     74 9f -  mov      A, #0x9f
+4CA4     f0 - -   movx     @DPTR, A
+4CA5     e4 - -   clr      A
+4CA6     90 00 80 mov      DPTR, #0x80
+4CA9     f0 - -   movx     @DPTR, A
+4CAA     90 10 3f mov      DPTR, #0x103f
+4CAD     e0 - -   movx     A, @DPTR
+4CAE     ff - -   mov      R7, A
+4CAF     90 00 80 mov      DPTR, #0x80
+4CB2     e0 - -   movx     A, @DPTR
+4CB3     24 90 -  add      A, #0x90
+4CB5     f5 82 -  mov      DPL, A
+4CB7     e4 - -   clr      A
+4CB8     34 00 -  addc     A, #0x0
+4CBA     f5 83 -  mov      DPH, A
+4CBC     ef - -   mov      A, R7
+4CBD     f0 - -   movx     @DPTR, A
+4CBE     90 00 80 mov      DPTR, #0x80
+4CC1     e0 - -   movx     A, @DPTR
+4CC2     04 - -   inc      A
+4CC3     f0 - -   movx     @DPTR, A
+4CC4     e0 - -   movx     A, @DPTR
+4CC5     b4 04 e2 cjne     A, #0x4, 0x4caa
+4CC8     90 00 90 mov      DPTR, #0x90
+4CCB     e0 - -   movx     A, @DPTR
+4CCC     90 00 9d mov      DPTR, #0x9d
+4CCF     f0 - -   movx     @DPTR, A
+4CD0     90 10 3c mov      DPTR, #0x103c
+4CD3     74 fe -  mov      A, #0xfe
+4CD5     f0 - -   movx     @DPTR, A
+4CD6     90 10 3f mov      DPTR, #0x103f
+4CD9     04 - -   inc      A
+4CDA     f0 - -   movx     @DPTR, A
+4CDB     90 10 3c mov      DPTR, #0x103c
+4CDE     74 fd -  mov      A, #0xfd
+4CE0     f0 - -   movx     @DPTR, A
+4CE1     90 10 3f mov      DPTR, #0x103f
+4CE4     74 05 -  mov      A, #0x5
+4CE6     f0 - -   movx     @DPTR, A
+4CE7     90 10 3f mov      DPTR, #0x103f
+4CEA     e0 - -   movx     A, @DPTR
+4CEB     20 e0 f9 jb       0xe0, 0x4ce7
+4CEE     e4 - -   clr      A
+4CEF     90 10 3e mov      DPTR, #0x103e
+4CF2     f0 - -   movx     @DPTR, A
+4CF3     90 10 3d mov      DPTR, #0x103d
+4CF6     f0 - -   movx     @DPTR, A
+4CF7     22 - -   ret      

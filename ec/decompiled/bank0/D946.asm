@@ -6,24 +6,24 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-D946     e4         clr      A
-D947     ff         mov      R7, A
-D948     ef         mov      A, R7
-D949     75 f0 03   mov      B, #0x3
-D94C     a4         mul      AB
-D94D     24 20      add      A, #0x20
-D94F     f5 82      mov      DPL, A
-D951     e4         clr      A
-D952     34 6e      addc     A, #0x6e
-D954     12 db 57   lcall    0xdb57
-D957     24 22      add      A, #0x22
-D959     f5 82      mov      DPL, A
-D95B     e4         clr      A
-D95C     34 6e      addc     A, #0x6e
-D95E     12 db 8a   lcall    0xdb8a
-D961     b4 17 e4   cjne     A, #0x17, 0xd948
-D964     90 16 f1   mov      DPTR, #0x16f1
-D967     e0         movx     A, @DPTR
-D968     44 20      orl      A, #0x20
-D96A     f0         movx     @DPTR, A
-D96B     22         ret      
+D946     e4 - -   clr      A
+D947     ff - -   mov      R7, A
+D948     ef - -   mov      A, R7
+D949     75 f0 03 mov      B, #0x3
+D94C     a4 - -   mul      AB
+D94D     24 20 -  add      A, #0x20
+D94F     f5 82 -  mov      DPL, A
+D951     e4 - -   clr      A
+D952     34 6e -  addc     A, #0x6e
+D954     12 db 57 lcall    0xdb57
+D957     24 22 -  add      A, #0x22
+D959     f5 82 -  mov      DPL, A
+D95B     e4 - -   clr      A
+D95C     34 6e -  addc     A, #0x6e
+D95E     12 db 8a lcall    0xdb8a
+D961     b4 17 e4 cjne     A, #0x17, 0xd948
+D964     90 16 f1 mov      DPTR, #0x16f1
+D967     e0 - -   movx     A, @DPTR
+D968     44 20 -  orl      A, #0x20
+D96A     f0 - -   movx     @DPTR, A
+D96B     22 - -   ret      

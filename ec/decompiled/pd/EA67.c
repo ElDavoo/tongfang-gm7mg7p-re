@@ -11,7 +11,7 @@ void FUN_CODE_ea67(void)
   DAT_EXTMEM_07ca = 0;
   DAT_EXTMEM_07cb = 1;
   if (DAT_EXTMEM_0945 != '\0') {
-    FUN_CODE_f63f(0,0);
+    store_r7_to_07cc_r5_to_0945(0,0);
   }
   DAT_EXTMEM_00d4 = 0;
   DAT_EXTMEM_00d5 = 0x2e;

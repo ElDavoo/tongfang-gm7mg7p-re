@@ -6,23 +6,23 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-21EB     90 0a 57   mov      DPTR, #0xa57
-21EE     e0         movx     A, @DPTR
-21EF     24 e0      add      A, #0xe0
-21F1     f5 82      mov      DPL, A
-21F3     e4         clr      A
-21F4     34 00      addc     A, #0x0
-21F6     f5 83      mov      DPH, A
-21F8     e0         movx     A, @DPTR
-21F9     fd         mov      R5, A
-21FA     7c 00      mov      R4, #0x0
-21FC     90 0a 58   mov      DPTR, #0xa58
-21FF     e0         movx     A, @DPTR
-2200     ff         mov      R7, A
-2201     74 01      mov      A, #0x1
-2203     7e 00      mov      R6, #0x0
-2205     c8         xch      A, R0
-2206     ef         mov      A, R7
-2207     c8         xch      A, R0
-2208     08         inc      R0
-2209     22         ret      
+21EB     90 0a 57 mov      DPTR, #0xa57
+21EE     e0 - -   movx     A, @DPTR
+21EF     24 e0 -  add      A, #0xe0
+21F1     f5 82 -  mov      DPL, A
+21F3     e4 - -   clr      A
+21F4     34 00 -  addc     A, #0x0
+21F6     f5 83 -  mov      DPH, A
+21F8     e0 - -   movx     A, @DPTR
+21F9     fd - -   mov      R5, A
+21FA     7c 00 -  mov      R4, #0x0
+21FC     90 0a 58 mov      DPTR, #0xa58
+21FF     e0 - -   movx     A, @DPTR
+2200     ff - -   mov      R7, A
+2201     74 01 -  mov      A, #0x1
+2203     7e 00 -  mov      R6, #0x0
+2205     c8 - -   xch      A, R0
+2206     ef - -   mov      A, R7
+2207     c8 - -   xch      A, R0
+2208     08 - -   inc      R0
+2209     22 - -   ret      

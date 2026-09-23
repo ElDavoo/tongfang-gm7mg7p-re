@@ -59,18 +59,18 @@ void manual_ctrl_profile_gate(char param_1)
   DAT_EXTMEM_0a4b = bVar7;
   check_0xB112();
   if (bVar7 == 0) {
-    FUN_CODE_b38d();
+    unresolved_b38d();
     return;
   }
   if ((DAT_EXTMEM_0490 >> 2 & 1) != 1) {
-    FUN_CODE_b38d();
+    unresolved_b38d();
     return;
   }
   cVar3 = DAT_EXTMEM_0315;
   store_be16_b(DAT_EXTMEM_0314,0xa4e);
   cVar8 = -0x80;
   puVar9 = &DAT_EXTMEM_0a4f;
-  FUN_CODE_bf08();
+  sub_0a4e_against_4d_with_borrow();
   if (cVar8 < '\0') {
     puVar10 = &DAT_EXTMEM_0a4e;
     cVar4 = (((byte)puVar9[1] < 0x20U - (cVar8 >> 7)) << 7) >> 7;
@@ -89,7 +89,7 @@ void manual_ctrl_profile_gate(char param_1)
   cVar8 = (DAT_EXTMEM_0a4e < bVar7) << 7;
   if (DAT_EXTMEM_0a4e < bVar7) {
     puVar9 = &DAT_EXTMEM_0a4f;
-    FUN_CODE_bf08(DAT_EXTMEM_0a4e - bVar7);
+    sub_0a4e_against_4d_with_borrow(DAT_EXTMEM_0a4e - bVar7);
     if (-1 < cVar8) {
       tier_200_eligible();
       if (cVar8 < '\0') {
@@ -131,20 +131,20 @@ LAB_CODE_b211:
             }
           }
           be16_add(0,0x9c9,uVar5);
-          FUN_CODE_1672();
+          load_dptr_e56f_tail_jump_1114();
         }
       }
     }
   }
   if ((DAT_EXTMEM_0490 & 1) != 1) {
-    FUN_CODE_b38d();
+    unresolved_b38d();
     return;
   }
   bVar2 = 0;
   store_be16_b(SBS_CHARGING_VOLTAGE_0,0xa50,SBS_CHARGING_VOLTAGE_1);
   bVar7 = 1 - (((DAT_EXTMEM_0a51 < 0xf4) << 7) >> 7);
   if (DAT_EXTMEM_0a50 < bVar7) {
-    FUN_CODE_b35e();
+    charge_target_minus_r3_times_0a47();
     return;
   }
   cVar3 = -0x80;
@@ -156,7 +156,7 @@ LAB_CODE_b211:
     if ((-1 < cVar3) ||
        ((bVar6 = 1 - (((DAT_EXTMEM_0a4d < 0xc2) << 7) >> 7), bVar7 = DAT_EXTMEM_0a4c - bVar6,
         bVar6 <= DAT_EXTMEM_0a4c || (bVar7 = OEM_4_CHARGING_PROFILE & 0x30, bVar7 == 0x20)))) {
-      FUN_CODE_b35e(bVar7,200);
+      charge_target_minus_r3_times_0a47(bVar7,200);
       return;
     }
     bVar7 = 0x2c - (((DAT_EXTMEM_09ca < 0xb9) << 7) >> 7);
@@ -182,13 +182,13 @@ LAB_CODE_b211:
         CHARGE_TARGET_MV_0 = DAT_EXTMEM_0a51 - bVar2 * bVar7;
         return;
       }
-      FUN_CODE_b35e(bVar6,100);
+      charge_target_minus_r3_times_0a47(bVar6,100);
       return;
     }
-    FUN_CODE_b35e(cVar3,0x96);
+    charge_target_minus_r3_times_0a47(cVar3,0x96);
     return;
   }
-  FUN_CODE_b35e(0xfa);
+  charge_target_minus_r3_times_0a47(0xfa);
   return;
 }
 

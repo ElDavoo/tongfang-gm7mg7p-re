@@ -6,22 +6,22 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-CDC3     16         dec      @R0
-CDC4     58         anl      A, R0
-CDC5     f0         movx     @DPTR, A
-CDC6     90 16 59   mov      DPTR, #0x1659
-CDC9     f0         movx     @DPTR, A
-CDCA     90 16 5c   mov      DPTR, #0x165c
-CDCD     f0         movx     @DPTR, A
-CDCE     90 16 2c   mov      DPTR, #0x162c
-CDD1     f0         movx     @DPTR, A
-CDD2     e4         clr      A
-CDD3     90 16 2a   mov      DPTR, #0x162a
-CDD6     f0         movx     @DPTR, A
-CDD7     90 16 11   mov      DPTR, #0x1611
-CDDA     f0         movx     @DPTR, A
-CDDB     90 16 13   mov      DPTR, #0x1613
-CDDE     f0         movx     @DPTR, A
-CDDF     90 16 16   mov      DPTR, #0x1616
-CDE2     f0         movx     @DPTR, A
-CDE3     22         ret      
+CDC3     16 - -   dec      @R0
+CDC4     58 - -   anl      A, R0
+CDC5     f0 - -   movx     @DPTR, A
+CDC6     90 16 59 mov      DPTR, #0x1659
+CDC9     f0 - -   movx     @DPTR, A
+CDCA     90 16 5c mov      DPTR, #0x165c
+CDCD     f0 - -   movx     @DPTR, A
+CDCE     90 16 2c mov      DPTR, #0x162c
+CDD1     f0 - -   movx     @DPTR, A
+CDD2     e4 - -   clr      A
+CDD3     90 16 2a mov      DPTR, #0x162a
+CDD6     f0 - -   movx     @DPTR, A
+CDD7     90 16 11 mov      DPTR, #0x1611
+CDDA     f0 - -   movx     @DPTR, A
+CDDB     90 16 13 mov      DPTR, #0x1613
+CDDE     f0 - -   movx     @DPTR, A
+CDDF     90 16 16 mov      DPTR, #0x1616
+CDE2     f0 - -   movx     @DPTR, A
+CDE3     22 - -   ret      

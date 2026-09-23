@@ -13,7 +13,7 @@ void FUN_CODE_dec4(void)
     return;
   }
   DAT_EXTMEM_0367 = DAT_EXTMEM_0367 + 0x40;
-  FUN_CODE_1abc();
+  trampoline_bank0_c17c();
   DAT_EXTMEM_0681 = DAT_EXTMEM_0681 | 0x80;
   DAT_EXTMEM_054c = 0;
   return;

@@ -19,14 +19,14 @@ void FUN_CODE_8294(byte param_1,byte param_2)
   
   DAT_EXTMEM_0a56 = param_2;
   if (7 < param_2) {
-    FUN_CODE_8398();
+    return_trampoline_8294();
     return;
   }
-  FUN_CODE_ba3e(param_2 - 8);
+  clear_bit0_1901(param_2 - 8);
   puVar5 = &DAT_EXTMEM_1904;
-  DAT_EXTMEM_190c = FUN_CODE_bb99();
+  DAT_EXTMEM_190c = store_a_then_1906_init();
   *puVar5 = DAT_EXTMEM_190c;
-  FUN_CODE_bafd(0xff,0x1944);
+  store_a_then_set_bits_1_and_0_of_1900(0xff,0x1944);
   DAT_EXTMEM_0a59 = 0;
   DAT_EXTMEM_0a5a = 0;
   DAT_EXTMEM_0a00 = '\n';
@@ -36,7 +36,7 @@ void FUN_CODE_8294(byte param_1,byte param_2)
       if ((char)DAT_EXTMEM_1904 < '\0') {
         DAT_EXTMEM_0a58 = DAT_EXTMEM_1918;
         sVar6 = 0xa57;
-        FUN_CODE_b9ee(DAT_EXTMEM_1919,0xa57);
+        store_a_then_read_be16(DAT_EXTMEM_1919,0xa57);
         be16_add(param_1,sVar6 + 1,param_2);
         bVar1 = bVar4 + 1;
         cVar2 = bVar4 - 7;
@@ -47,12 +47,12 @@ void FUN_CODE_8294(byte param_1,byte param_2)
       bVar4 = bVar1;
     }
   }
-  FUN_CODE_ba3e(cVar2);
+  clear_bit0_1901(cVar2);
   DAT_EXTMEM_1944 = 0xff;
   pbVar7 = &DAT_EXTMEM_08e1;
   DAT_EXTMEM_08e1 = 0;
   if (bVar1 == 8) {
-    bVar1 = FUN_CODE_bdd2();
+    bVar1 = read_x0a59_and_x0a5a();
     cVar2 = '\x03';
     bVar4 = param_1;
     do {
@@ -69,20 +69,20 @@ void FUN_CODE_8294(byte param_1,byte param_2)
       DAT_EXTMEM_1944 = 0xff;
       return;
     }
-    uVar3 = FUN_CODE_bdd2(bVar1 - 1);
+    uVar3 = read_x0a59_and_x0a5a(bVar1 - 1);
     FUN_CODE_708f(0);
     DAT_EXTMEM_0a5a = uVar3;
   }
   DAT_EXTMEM_0a59 = param_1;
-  bVar4 = FUN_CODE_bdd2();
+  bVar4 = read_x0a59_and_x0a5a();
   bVar1 = DAT_EXTMEM_0a56;
   pbVar7 = (byte *)CONCAT11('\b' - (((0x2f < DAT_EXTMEM_0a56 * '\x02') << 7) >> 7),
                             DAT_EXTMEM_0a56 * '\x02' - 0x30);
   *pbVar7 = param_1;
   pbVar7[1] = bVar4;
   cVar2 = '\x01';
-  FUN_CODE_bcbd(1,6,1,DAT_EXTMEM_0a59);
-  FUN_CODE_bcbd(cVar2 + -1,6,DAT_EXTMEM_0a5a);
+  dptr_r5_times_2_tail_call_705b(1,6,1,DAT_EXTMEM_0a59);
+  dptr_r5_times_2_tail_call_705b(cVar2 + -1,6,DAT_EXTMEM_0a5a);
   bVar4 = 1;
   cVar2 = bVar1 + 1;
   while (cVar2 = cVar2 + -1, cVar2 != '\0') {

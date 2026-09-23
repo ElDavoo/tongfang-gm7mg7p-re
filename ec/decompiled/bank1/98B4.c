@@ -7,7 +7,7 @@
 void switchD_CODE:98e4::caseD_0(void)
 
 {
-  thunk_FUN_CODE_98fe();
+  forward_to_98fe_98e5();
   return;
 }
 

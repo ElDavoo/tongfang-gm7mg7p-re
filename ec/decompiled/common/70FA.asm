@@ -4,19 +4,19 @@
 ; This is the machine code. The decompiled C for this address is 70FA.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-70FA     eb         mov      A, R3
-70FB     9f         subb     A, R7
-70FC     f5 f0      mov      B, A
-70FE     ea         mov      A, R2
-70FF     9e         subb     A, R6
-7100     42 f0      orl      B, A
-7102     e9         mov      A, R1
-7103     9d         subb     A, R5
-7104     42 f0      orl      B, A
-7106     ec         mov      A, R4
-7107     64 80      xrl      A, #0x80
-7109     c8         xch      A, R0
-710A     64 80      xrl      A, #0x80
-710C     98         subb     A, R0
-710D     45 f0      orl      A, B
-710F     22         ret      
+70FA     eb - -   mov      A, R3
+70FB     9f - -   subb     A, R7
+70FC     f5 f0 -  mov      B, A
+70FE     ea - -   mov      A, R2
+70FF     9e - -   subb     A, R6
+7100     42 f0 -  orl      B, A
+7102     e9 - -   mov      A, R1
+7103     9d - -   subb     A, R5
+7104     42 f0 -  orl      B, A
+7106     ec - -   mov      A, R4
+7107     64 80 -  xrl      A, #0x80
+7109     c8 - -   xch      A, R0
+710A     64 80 -  xrl      A, #0x80
+710C     98 - -   subb     A, R0
+710D     45 f0 -  orl      A, B
+710F     22 - -   ret      

@@ -6,37 +6,37 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-24FE     4e         orl      A, R6
-24FF     60 16      jz       0x2517
-2501     af 4c      mov      R7, 0x4c
-2503     ef         mov      A, R7
-2504     c4         swap     A
-2505     13         rrc      A
-2506     54 07      anl      A, #0x7
-2508     20 e0 27   jb       0xe0, 0x2532
-250B     ef         mov      A, R7
-250C     44 20      orl      A, #0x20
-250E     f5 4c      mov      0x4c, A
-2510     cf         xch      A, R7
-2511     ec         mov      A, R4
-2512     cf         xch      A, R7
-2513     7b 01      mov      R3, #0x1
-2515     80 18      sjmp     0x252f
-2517     af 4c      mov      R7, 0x4c
-2519     ef         mov      A, R7
-251A     c4         swap     A
-251B     54 0f      anl      A, #0xf
-251D     20 e0 12   jb       0xe0, 0x2532
-2520     ef         mov      A, R7
-2521     44 10      orl      A, #0x10
-2523     f5 4c      mov      0x4c, A
-2525     90 0a 4c   mov      DPTR, #0xa4c
-2528     e0         movx     A, @DPTR
-2529     ff         mov      R7, A
-252A     a3         inc      DPTR
-252B     e0         movx     A, @DPTR
-252C     fd         mov      R5, A
-252D     e4         clr      A
-252E     fb         mov      R3, A
-252F     12 25 33   lcall    0x2533
-2532     22         ret      
+24FE     4e - -   orl      A, R6
+24FF     60 16 -  jz       0x2517
+2501     af 4c -  mov      R7, 0x4c
+2503     ef - -   mov      A, R7
+2504     c4 - -   swap     A
+2505     13 - -   rrc      A
+2506     54 07 -  anl      A, #0x7
+2508     20 e0 27 jb       0xe0, 0x2532
+250B     ef - -   mov      A, R7
+250C     44 20 -  orl      A, #0x20
+250E     f5 4c -  mov      0x4c, A
+2510     cf - -   xch      A, R7
+2511     ec - -   mov      A, R4
+2512     cf - -   xch      A, R7
+2513     7b 01 -  mov      R3, #0x1
+2515     80 18 -  sjmp     0x252f
+2517     af 4c -  mov      R7, 0x4c
+2519     ef - -   mov      A, R7
+251A     c4 - -   swap     A
+251B     54 0f -  anl      A, #0xf
+251D     20 e0 12 jb       0xe0, 0x2532
+2520     ef - -   mov      A, R7
+2521     44 10 -  orl      A, #0x10
+2523     f5 4c -  mov      0x4c, A
+2525     90 0a 4c mov      DPTR, #0xa4c
+2528     e0 - -   movx     A, @DPTR
+2529     ff - -   mov      R7, A
+252A     a3 - -   inc      DPTR
+252B     e0 - -   movx     A, @DPTR
+252C     fd - -   mov      R5, A
+252D     e4 - -   clr      A
+252E     fb - -   mov      R3, A
+252F     12 25 33 lcall    0x2533
+2532     22 - -   ret      

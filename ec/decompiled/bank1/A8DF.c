@@ -10,7 +10,7 @@ void FUN_CODE_a8df(byte param_1,byte *param_2)
 
 {
   *param_2 = param_1 & 0xdf;
-  FUN_CODE_a8e9();
+  write_5_to_068b();
   return;
 }
 

@@ -6,55 +6,55 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-BCB3     90 04 91   mov      DPTR, #0x491
-BCB6     e0         movx     A, @DPTR
-BCB7     54 c0      anl      A, #0xc0
-BCB9     44 11      orl      A, #0x11
-BCBB     f0         movx     @DPTR, A
-BCBC     90 04 92   mov      DPTR, #0x492
-BCBF     e0         movx     A, @DPTR
-BCC0     70 1d      jnz      0xbcdf
-BCC2     90 05 67   mov      DPTR, #0x567
-BCC5     e0         movx     A, @DPTR
-BCC6     20 e0 1b   jb       0xe0, 0xbce4
-BCC9     90 05 68   mov      DPTR, #0x568
-BCCC     e0         movx     A, @DPTR
-BCCD     04         inc      A
-BCCE     f0         movx     @DPTR, A
-BCCF     c3         clr      CY
-BCD0     94 0a      subb     A, #0xa
-BCD2     40 0d      jc       0xbce1
-BCD4     e4         clr      A
-BCD5     90 05 68   mov      DPTR, #0x568
-BCD8     f0         movx     @DPTR, A
-BCD9     90 05 67   mov      DPTR, #0x567
-BCDC     e0         movx     A, @DPTR
-BCDD     04         inc      A
-BCDE     f0         movx     @DPTR, A
-BCDF     80 3f      sjmp     0xbd20
-BCE1     02 bc 05   ljmp     0xbc05
-BCE4     90 05 68   mov      DPTR, #0x568
-BCE7     e0         movx     A, @DPTR
-BCE8     04         inc      A
-BCE9     90 05 68   mov      DPTR, #0x568
-BCEC     f0         movx     @DPTR, A
-BCED     c3         clr      CY
-BCEE     94 1e      subb     A, #0x1e
-BCF0     40 ed      jc       0xbcdf
-BCF2     e4         clr      A
-BCF3     90 05 68   mov      DPTR, #0x568
-BCF6     f0         movx     @DPTR, A
-BCF7     90 05 67   mov      DPTR, #0x567
-BCFA     e0         movx     A, @DPTR
-BCFB     04         inc      A
-BCFC     90 05 67   mov      DPTR, #0x567
-BCFF     f0         movx     @DPTR, A
-BD00     c3         clr      CY
-BD01     94 14      subb     A, #0x14
-BD03     50 02      jnc      0xbd07
-BD05     80 19      sjmp     0xbd20
-BD07     90 04 94   mov      DPTR, #0x494
-BD0A     e0         movx     A, @DPTR
-BD0B     44 10      orl      A, #0x10
-BD0D     f0         movx     @DPTR, A
-BD0E     80 00      sjmp     0xbd10
+BCB3     90 04 91 mov      DPTR, #0x491
+BCB6     e0 - -   movx     A, @DPTR
+BCB7     54 c0 -  anl      A, #0xc0
+BCB9     44 11 -  orl      A, #0x11
+BCBB     f0 - -   movx     @DPTR, A
+BCBC     90 04 92 mov      DPTR, #0x492
+BCBF     e0 - -   movx     A, @DPTR
+BCC0     70 1d -  jnz      0xbcdf
+BCC2     90 05 67 mov      DPTR, #0x567
+BCC5     e0 - -   movx     A, @DPTR
+BCC6     20 e0 1b jb       0xe0, 0xbce4
+BCC9     90 05 68 mov      DPTR, #0x568
+BCCC     e0 - -   movx     A, @DPTR
+BCCD     04 - -   inc      A
+BCCE     f0 - -   movx     @DPTR, A
+BCCF     c3 - -   clr      CY
+BCD0     94 0a -  subb     A, #0xa
+BCD2     40 0d -  jc       0xbce1
+BCD4     e4 - -   clr      A
+BCD5     90 05 68 mov      DPTR, #0x568
+BCD8     f0 - -   movx     @DPTR, A
+BCD9     90 05 67 mov      DPTR, #0x567
+BCDC     e0 - -   movx     A, @DPTR
+BCDD     04 - -   inc      A
+BCDE     f0 - -   movx     @DPTR, A
+BCDF     80 3f -  sjmp     0xbd20
+BCE1     02 bc 05 ljmp     0xbc05
+BCE4     90 05 68 mov      DPTR, #0x568
+BCE7     e0 - -   movx     A, @DPTR
+BCE8     04 - -   inc      A
+BCE9     90 05 68 mov      DPTR, #0x568
+BCEC     f0 - -   movx     @DPTR, A
+BCED     c3 - -   clr      CY
+BCEE     94 1e -  subb     A, #0x1e
+BCF0     40 ed -  jc       0xbcdf
+BCF2     e4 - -   clr      A
+BCF3     90 05 68 mov      DPTR, #0x568
+BCF6     f0 - -   movx     @DPTR, A
+BCF7     90 05 67 mov      DPTR, #0x567
+BCFA     e0 - -   movx     A, @DPTR
+BCFB     04 - -   inc      A
+BCFC     90 05 67 mov      DPTR, #0x567
+BCFF     f0 - -   movx     @DPTR, A
+BD00     c3 - -   clr      CY
+BD01     94 14 -  subb     A, #0x14
+BD03     50 02 -  jnc      0xbd07
+BD05     80 19 -  sjmp     0xbd20
+BD07     90 04 94 mov      DPTR, #0x494
+BD0A     e0 - -   movx     A, @DPTR
+BD0B     44 10 -  orl      A, #0x10
+BD0D     f0 - -   movx     @DPTR, A
+BD0E     80 00 -  sjmp     0xbd10

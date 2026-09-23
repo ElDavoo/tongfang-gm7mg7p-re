@@ -12,7 +12,7 @@ byte FUN_CODE_c931(char param_1,char param_2,char param_3)
   char cVar1;
   byte bVar2;
   
-  cVar1 = FUN_CODE_8898(0x834);
+  cVar1 = read_xdata_pair_to_b_and_a(0x834);
   if (cVar1 == '\0' && param_1 == '\0') {
     return 0;
   }
@@ -20,14 +20,14 @@ byte FUN_CODE_c931(char param_1,char param_2,char param_3)
   cVar1 = (DAT_EXTMEM_0514 < 0xd) << 7;
   bVar2 = DAT_EXTMEM_0514 - 0xd;
   if ((DAT_EXTMEM_0514 < 0xd) && (bVar2 = DAT_EXTMEM_03a2, (DAT_EXTMEM_03a2 >> 1 & 1) != 0)) {
-    FUN_CODE_8892(0x3d2);
-    FUN_CODE_8886(0x363);
+    read_xdata_pair_to_r3r4(0x3d2);
+    read_xdata_pair_to_r1r2(0x363);
     if (param_2 == '\0' && param_3 == '\0') {
-      FUN_CODE_8886(900);
+      read_xdata_pair_to_r1r2(900);
     }
     bVar2 = FUN_CODE_8863();
     if (-1 < cVar1) {
-      FUN_CODE_cb1f();
+      set_039b_039c_from_0404_div_100();
       bVar2 = 1;
       DAT_EXTMEM_03a3 = 1;
     }

@@ -4,24 +4,24 @@
 ; This is the machine code. The decompiled C for this address is 4643.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-4643     12 4a ec   lcall    0x4aec
-4646     12 4a 8f   lcall    0x4a8f
-4649     ef         mov      A, R7
-464A     f0         movx     @DPTR, A
-464B     ee         mov      A, R6
-464C     12 4a 42   lcall    0x4a42
-464F     74 fe      mov      A, #0xfe
-4651     f0         movx     @DPTR, A
-4652     ed         mov      A, R5
-4653     44 40      orl      A, #0x40
-4655     ff         mov      R7, A
-4656     12 4a 5a   lcall    0x4a5a
-4659     ef         mov      A, R7
-465A     f0         movx     @DPTR, A
-465B     c2 8e      clr      0x8e
-465D     c2 ab      clr      0xab
-465F     00         nop      
-4660     00         nop      
-4661     00         nop      
-4662     00         nop      
-4663     12 4b 4c   lcall    0x4b4c
+4643     12 4a ec lcall    0x4aec
+4646     12 4a 8f lcall    0x4a8f
+4649     ef - -   mov      A, R7
+464A     f0 - -   movx     @DPTR, A
+464B     ee - -   mov      A, R6
+464C     12 4a 42 lcall    0x4a42
+464F     74 fe -  mov      A, #0xfe
+4651     f0 - -   movx     @DPTR, A
+4652     ed - -   mov      A, R5
+4653     44 40 -  orl      A, #0x40
+4655     ff - -   mov      R7, A
+4656     12 4a 5a lcall    0x4a5a
+4659     ef - -   mov      A, R7
+465A     f0 - -   movx     @DPTR, A
+465B     c2 8e -  clr      0x8e
+465D     c2 ab -  clr      0xab
+465F     00 - -   nop      
+4660     00 - -   nop      
+4661     00 - -   nop      
+4662     00 - -   nop      
+4663     12 4b 4c lcall    0x4b4c

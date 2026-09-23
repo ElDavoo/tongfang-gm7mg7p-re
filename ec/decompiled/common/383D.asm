@@ -6,29 +6,29 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-383D     ed         mov      A, R5
-383E     f4         cpl      A
-383F     60 04      jz       0x3845
-3841     78 87      mov      R0, #0x87
-3843     ed         mov      A, R5
-3844     f6         mov      @R0, A
-3845     12 2b 6c   lcall    0x2b6c
-3848     c2 8e      clr      0x8e
-384A     c2 ab      clr      0xab
-384C     00         nop      
-384D     00         nop      
-384E     00         nop      
-384F     00         nop      
-3850     75 8d b2   mov      0x8d, #0xb2
-3853     75 8b 19   mov      0x8b, #0x19
-3856     c2 8f      clr      0x8f
-3858     d2 8e      setb     0x8e
-385A     20 8f 0e   jb       0x8f, 0x386b
-385D     90 13 04   mov      DPTR, #0x1304
-3860     e0         movx     A, @DPTR
-3861     30 e0 07   jnb      0xe0, 0x386b
-3864     90 13 04   mov      DPTR, #0x1304
-3867     e0         movx     A, @DPTR
-3868     30 e1 ef   jnb      0xe1, 0x385a
-386B     12 3b dd   lcall    0x3bdd
-386E     22         ret      
+383D     ed - -   mov      A, R5
+383E     f4 - -   cpl      A
+383F     60 04 -  jz       0x3845
+3841     78 87 -  mov      R0, #0x87
+3843     ed - -   mov      A, R5
+3844     f6 - -   mov      @R0, A
+3845     12 2b 6c lcall    0x2b6c
+3848     c2 8e -  clr      0x8e
+384A     c2 ab -  clr      0xab
+384C     00 - -   nop      
+384D     00 - -   nop      
+384E     00 - -   nop      
+384F     00 - -   nop      
+3850     75 8d b2 mov      0x8d, #0xb2
+3853     75 8b 19 mov      0x8b, #0x19
+3856     c2 8f -  clr      0x8f
+3858     d2 8e -  setb     0x8e
+385A     20 8f 0e jb       0x8f, 0x386b
+385D     90 13 04 mov      DPTR, #0x1304
+3860     e0 - -   movx     A, @DPTR
+3861     30 e0 07 jnb      0xe0, 0x386b
+3864     90 13 04 mov      DPTR, #0x1304
+3867     e0 - -   movx     A, @DPTR
+3868     30 e1 ef jnb      0xe1, 0x385a
+386B     12 3b dd lcall    0x3bdd
+386E     22 - -   ret      

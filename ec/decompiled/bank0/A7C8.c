@@ -13,19 +13,19 @@ byte FUN_CODE_a7c8(void)
   byte bVar2;
   byte *pbVar3;
   
-  cVar1 = FUN_CODE_be9c();
+  cVar1 = read_x0780_xor_a2();
   bVar2 = 0;
   if (cVar1 != '\0') {
     DAT_EXTMEM_0742 = DAT_EXTMEM_0742 | 2;
     BIOS_OEM_2 = BIOS_OEM_2 | 8;
     pbVar3 = &DAT_EXTMEM_078e;
     DAT_EXTMEM_078e = DAT_EXTMEM_078e | 100;
-    cVar1 = FUN_CODE_b9d8();
+    cVar1 = read_06e6_xor_01();
     if (cVar1 != '\0') {
       return *pbVar3 ^ 5;
     }
     if (DAT_EXTMEM_06c2 != '\0') {
-      FUN_CODE_94d0(0);
+      copy_code_table_into_0730_07a7(0);
     }
     if (((BIOS_OEM_2 & 1) != 0) && ((BIOS_OEM_2 >> 5 & 1) != 0)) {
       BIOS_OEM_2 = BIOS_OEM_2 & 0xdf;
@@ -35,7 +35,7 @@ byte FUN_CODE_a7c8(void)
       else {
         MANUAL_FAN_CTRL = 0;
       }
-      FUN_CODE_94d0(0);
+      copy_code_table_into_0730_07a7(0);
       seed_fan_table_base();
     }
     bVar2 = AP_OEM;

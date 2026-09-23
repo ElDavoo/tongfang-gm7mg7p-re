@@ -4,12 +4,12 @@
 ; This is the machine code. The decompiled C for this address is 6817.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-6817     0e         inc      R6
-6818     5d         anl      A, R5
-6819     ff         mov      R7, A
-681A     84         div      AB
-681B     8e ff      mov      0xff, R6
-681D     ff         mov      R7, A
-681E     ff         mov      R7, A
-681F     1a         dec      R2
-6820     32         reti     
+6817     0e - -   inc      R6
+6818     5d - -   anl      A, R5
+6819     ff - -   mov      R7, A
+681A     84 - -   div      AB
+681B     8e ff -  mov      0xff, R6
+681D     ff - -   mov      R7, A
+681E     ff - -   mov      R7, A
+681F     1a - -   dec      R2
+6820     32 - -   reti     

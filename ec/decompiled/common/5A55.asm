@@ -4,7 +4,7 @@
 ; This is the machine code. The decompiled C for this address is 5A55.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-5A55     46         orl      A, @R0
-5A56     5a         anl      A, R2
-5A57     60 64      jz       0x5abd
-5A59     6e         xrl      A, R6
+5A55     46 - -   orl      A, @R0
+5A56     5a - -   anl      A, R2
+5A57     60 64 -  jz       0x5abd
+5A59     6e - -   xrl      A, R6

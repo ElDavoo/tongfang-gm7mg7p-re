@@ -4,17 +4,17 @@
 ; This is the machine code. The decompiled C for this address is 707D.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-707D     ef         mov      A, R7
-707E     8d f0      mov      B, R5
-7080     a4         mul      AB
-7081     a8 f0      mov      R0, B
-7083     cf         xch      A, R7
-7084     8c f0      mov      B, R4
-7086     a4         mul      AB
-7087     28         add      A, R0
-7088     ce         xch      A, R6
-7089     8d f0      mov      B, R5
-708B     a4         mul      AB
-708C     2e         add      A, R6
-708D     fe         mov      R6, A
-708E     22         ret      
+707D     ef - -   mov      A, R7
+707E     8d f0 -  mov      B, R5
+7080     a4 - -   mul      AB
+7081     a8 f0 -  mov      R0, B
+7083     cf - -   xch      A, R7
+7084     8c f0 -  mov      B, R4
+7086     a4 - -   mul      AB
+7087     28 - -   add      A, R0
+7088     ce - -   xch      A, R6
+7089     8d f0 -  mov      B, R5
+708B     a4 - -   mul      AB
+708C     2e - -   add      A, R6
+708D     fe - -   mov      R6, A
+708E     22 - -   ret      

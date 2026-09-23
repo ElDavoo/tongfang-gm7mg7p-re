@@ -18,10 +18,10 @@ byte FUN_CODE_d8bc(undefined1 *param_1)
   bVar1 = param_1[2];
   pbVar4 = param_1 + 3;
   bVar2 = *pbVar4;
-  FUN_CODE_8854(*param_1,param_1[1]);
+  add_r1r2_to_r3r4(*param_1,param_1[1]);
   pbVar5 = pbVar4 + 2;
-  FUN_CODE_8854(pbVar4[1],*pbVar5);
-  FUN_CODE_8854(pbVar5[1],pbVar5[2]);
+  add_r1r2_to_r3r4(pbVar4[1],*pbVar5);
+  add_r1r2_to_r3r4(pbVar5[1],pbVar5[2]);
   bVar3 = (bVar1 >> 1 | bVar2 << 7) >> 1 | (bVar2 >> 1) << 7;
   if (-1 < (char)((bVar1 >> 1) << 7)) {
     return bVar3;

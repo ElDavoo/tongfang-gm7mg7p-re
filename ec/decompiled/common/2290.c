@@ -99,7 +99,7 @@ char FUN_CODE_2290(char *param_1)
       }
       cVar1 = DAT_INTMEM_67;
       FUN_CODE_23f4();
-      FUN_CODE_10f1();
+      zero_xdata_200b();
       uVar9 = 4;
       DAT_INTMEM_66 = ~DAT_EXTMEM_1d04;
       bVar2 = FUN_CODE_2a7b();

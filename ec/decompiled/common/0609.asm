@@ -6,28 +6,28 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-0609     90 11 00   mov      DPTR, #0x1100
-060C     74 ff      mov      A, #0xff
-060E     f0         movx     @DPTR, A
-060F     90 11 01   mov      DPTR, #0x1101
-0612     f0         movx     @DPTR, A
-0613     90 11 02   mov      DPTR, #0x1102
-0616     f0         movx     @DPTR, A
-0617     90 11 03   mov      DPTR, #0x1103
-061A     f0         movx     @DPTR, A
-061B     90 11 14   mov      DPTR, #0x1114
-061E     f0         movx     @DPTR, A
-061F     90 11 18   mov      DPTR, #0x1118
-0622     f0         movx     @DPTR, A
-0623     90 11 1c   mov      DPTR, #0x111c
-0626     f0         movx     @DPTR, A
-0627     90 11 20   mov      DPTR, #0x1120
-062A     f0         movx     @DPTR, A
-062B     90 11 24   mov      DPTR, #0x1124
-062E     f0         movx     @DPTR, A
-062F     90 11 28   mov      DPTR, #0x1128
-0632     f0         movx     @DPTR, A
-0633     90 11 50   mov      DPTR, #0x1150
-0636     f0         movx     @DPTR, A
-0637     d2 aa      setb     0xaa
-0639     02 05 ef   ljmp     0x05ef
+0609     90 11 00 mov      DPTR, #0x1100
+060C     74 ff -  mov      A, #0xff
+060E     f0 - -   movx     @DPTR, A
+060F     90 11 01 mov      DPTR, #0x1101
+0612     f0 - -   movx     @DPTR, A
+0613     90 11 02 mov      DPTR, #0x1102
+0616     f0 - -   movx     @DPTR, A
+0617     90 11 03 mov      DPTR, #0x1103
+061A     f0 - -   movx     @DPTR, A
+061B     90 11 14 mov      DPTR, #0x1114
+061E     f0 - -   movx     @DPTR, A
+061F     90 11 18 mov      DPTR, #0x1118
+0622     f0 - -   movx     @DPTR, A
+0623     90 11 1c mov      DPTR, #0x111c
+0626     f0 - -   movx     @DPTR, A
+0627     90 11 20 mov      DPTR, #0x1120
+062A     f0 - -   movx     @DPTR, A
+062B     90 11 24 mov      DPTR, #0x1124
+062E     f0 - -   movx     @DPTR, A
+062F     90 11 28 mov      DPTR, #0x1128
+0632     f0 - -   movx     @DPTR, A
+0633     90 11 50 mov      DPTR, #0x1150
+0636     f0 - -   movx     @DPTR, A
+0637     d2 aa -  setb     0xaa
+0639     02 05 ef ljmp     0x05ef

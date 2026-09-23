@@ -4,9 +4,9 @@
 ; This is the machine code. The decompiled C for this address is 37AE.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-37AE     ef         mov      A, R7
-37AF     f0         movx     @DPTR, A
-37B0     ae 04      mov      R6, 0x04
-37B2     ed         mov      A, R5
-37B3     8e f0      mov      B, R6
-37B5     22         ret      
+37AE     ef - -   mov      A, R7
+37AF     f0 - -   movx     @DPTR, A
+37B0     ae 04 -  mov      R6, 0x04
+37B2     ed - -   mov      A, R5
+37B3     8e f0 -  mov      B, R6
+37B5     22 - -   ret      

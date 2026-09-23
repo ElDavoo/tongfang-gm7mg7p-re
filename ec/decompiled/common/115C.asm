@@ -4,5 +4,5 @@
 ; This is the machine code. The decompiled C for this address is 115C.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-115C     90 bf 1e   mov      DPTR, #0xbf1e
-115F     02 11 00   ljmp     0x1100
+115C     90 bf 1e mov      DPTR, #0xbf1e
+115F     02 11 00 ljmp     0x1100

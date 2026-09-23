@@ -6,71 +6,71 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-271A     e4         clr      A
-271B     f5 66      mov      0x66, A
-271D     90 0a 48   mov      DPTR, #0xa48
-2720     e0         movx     A, @DPTR
-2721     12 2a 38   lcall    0x2a38
-2724     80 02      sjmp     0x2728
-2726     c3         clr      CY
-2727     33         rlc      A
-2728     d8 fc      djnz     R0, 0x2726
-272A     f5 65      mov      0x65, A
-272C     90 0a 48   mov      DPTR, #0xa48
-272F     e0         movx     A, @DPTR
-2730     12 2a a5   lcall    0x2aa5
-2733     e6         mov      A, @R0
-2734     52 65      anl      0x65, A
-2736     e5 65      mov      A, 0x65
-2738     70 05      jnz      0x273f
-273A     f5 4e      mov      0x4e, A
-273C     75 66 01   mov      0x66, #0x1
-273F     e5 66      mov      A, 0x66
-2741     70 1d      jnz      0x2760
-2743     af 4b      mov      R7, 0x4b
-2745     ef         mov      A, R7
-2746     c4         swap     A
-2747     54 0f      anl      A, #0xf
-2749     fe         mov      R6, A
-274A     ef         mov      A, R7
-274B     54 0f      anl      A, #0xf
-274D     ff         mov      R7, A
-274E     ee         mov      A, R6
-274F     14         dec      A
-2750     54 0f      anl      A, #0xf
-2752     c4         swap     A
-2753     54 f0      anl      A, #0xf0
-2755     4f         orl      A, R7
-2756     f5 4b      mov      0x4b, A
-2758     c4         swap     A
-2759     54 0f      anl      A, #0xf
-275B     60 03      jz       0x2760
-275D     75 66 01   mov      0x66, #0x1
-2760     e5 66      mov      A, 0x66
-2762     70 14      jnz      0x2778
-2764     e5 4b      mov      A, 0x4b
-2766     54 0f      anl      A, #0xf
-2768     44 20      orl      A, #0x20
-276A     f5 4b      mov      0x4b, A
-276C     90 00 25   mov      DPTR, #0x25
-276F     e0         movx     A, @DPTR
-2770     14         dec      A
-2771     f0         movx     @DPTR, A
-2772     e0         movx     A, @DPTR
-2773     60 03      jz       0x2778
-2775     75 66 01   mov      0x66, #0x1
-2778     e5 66      mov      A, 0x66
-277A     70 1a      jnz      0x2796
-277C     90 00 23   mov      DPTR, #0x23
-277F     e0         movx     A, @DPTR
-2780     90 00 25   mov      DPTR, #0x25
-2783     f0         movx     @DPTR, A
-2784     7b 01      mov      R3, #0x1
-2786     7a 0a      mov      R2, #0xa
-2788     79 48      mov      R1, #0x48
-278A     12 2a 42   lcall    0x2a42
-278D     90 0a 4a   mov      DPTR, #0xa4a
-2790     74 02      mov      A, #0x2
-2792     f0         movx     @DPTR, A
-2793     12 10 59   lcall    0x1059
-2796     22         ret      
+271A     e4 - -   clr      A
+271B     f5 66 -  mov      0x66, A
+271D     90 0a 48 mov      DPTR, #0xa48
+2720     e0 - -   movx     A, @DPTR
+2721     12 2a 38 lcall    0x2a38
+2724     80 02 -  sjmp     0x2728
+2726     c3 - -   clr      CY
+2727     33 - -   rlc      A
+2728     d8 fc -  djnz     R0, 0x2726
+272A     f5 65 -  mov      0x65, A
+272C     90 0a 48 mov      DPTR, #0xa48
+272F     e0 - -   movx     A, @DPTR
+2730     12 2a a5 lcall    0x2aa5
+2733     e6 - -   mov      A, @R0
+2734     52 65 -  anl      0x65, A
+2736     e5 65 -  mov      A, 0x65
+2738     70 05 -  jnz      0x273f
+273A     f5 4e -  mov      0x4e, A
+273C     75 66 01 mov      0x66, #0x1
+273F     e5 66 -  mov      A, 0x66
+2741     70 1d -  jnz      0x2760
+2743     af 4b -  mov      R7, 0x4b
+2745     ef - -   mov      A, R7
+2746     c4 - -   swap     A
+2747     54 0f -  anl      A, #0xf
+2749     fe - -   mov      R6, A
+274A     ef - -   mov      A, R7
+274B     54 0f -  anl      A, #0xf
+274D     ff - -   mov      R7, A
+274E     ee - -   mov      A, R6
+274F     14 - -   dec      A
+2750     54 0f -  anl      A, #0xf
+2752     c4 - -   swap     A
+2753     54 f0 -  anl      A, #0xf0
+2755     4f - -   orl      A, R7
+2756     f5 4b -  mov      0x4b, A
+2758     c4 - -   swap     A
+2759     54 0f -  anl      A, #0xf
+275B     60 03 -  jz       0x2760
+275D     75 66 01 mov      0x66, #0x1
+2760     e5 66 -  mov      A, 0x66
+2762     70 14 -  jnz      0x2778
+2764     e5 4b -  mov      A, 0x4b
+2766     54 0f -  anl      A, #0xf
+2768     44 20 -  orl      A, #0x20
+276A     f5 4b -  mov      0x4b, A
+276C     90 00 25 mov      DPTR, #0x25
+276F     e0 - -   movx     A, @DPTR
+2770     14 - -   dec      A
+2771     f0 - -   movx     @DPTR, A
+2772     e0 - -   movx     A, @DPTR
+2773     60 03 -  jz       0x2778
+2775     75 66 01 mov      0x66, #0x1
+2778     e5 66 -  mov      A, 0x66
+277A     70 1a -  jnz      0x2796
+277C     90 00 23 mov      DPTR, #0x23
+277F     e0 - -   movx     A, @DPTR
+2780     90 00 25 mov      DPTR, #0x25
+2783     f0 - -   movx     @DPTR, A
+2784     7b 01 -  mov      R3, #0x1
+2786     7a 0a -  mov      R2, #0xa
+2788     79 48 -  mov      R1, #0x48
+278A     12 2a 42 lcall    0x2a42
+278D     90 0a 4a mov      DPTR, #0xa4a
+2790     74 02 -  mov      A, #0x2
+2792     f0 - -   movx     @DPTR, A
+2793     12 10 59 lcall    0x1059
+2796     22 - -   ret      

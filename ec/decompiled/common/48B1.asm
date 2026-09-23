@@ -6,22 +6,22 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-48B1     20 8f 68   jb       0x8f, 0x491c
-48B4     12 4a 41   lcall    0x4a41
-48B7     12 4b 62   lcall    0x4b62
-48BA     60 f5      jz       0x48b1
-48BC     ef         mov      A, R7
-48BD     54 7c      anl      A, #0x7c
-48BF     60 0d      jz       0x48ce
-48C1     e0         movx     A, @DPTR
-48C2     54 18      anl      A, #0x18
-48C4     60 03      jz       0x48c9
-48C6     12 49 47   lcall    0x4947
-48C9     e4         clr      A
-48CA     fb         mov      R3, A
-48CB     02 49 21   ljmp     0x4921
-48CE     12 4a a6   lcall    0x4aa6
-48D1     12 4a 4d   lcall    0x4a4d
-491C     12 49 47   lcall    0x4947
-491F     e4         clr      A
-4920     fb         mov      R3, A
+48B1     20 8f 68 jb       0x8f, 0x491c
+48B4     12 4a 41 lcall    0x4a41
+48B7     12 4b 62 lcall    0x4b62
+48BA     60 f5 -  jz       0x48b1
+48BC     ef - -   mov      A, R7
+48BD     54 7c -  anl      A, #0x7c
+48BF     60 0d -  jz       0x48ce
+48C1     e0 - -   movx     A, @DPTR
+48C2     54 18 -  anl      A, #0x18
+48C4     60 03 -  jz       0x48c9
+48C6     12 49 47 lcall    0x4947
+48C9     e4 - -   clr      A
+48CA     fb - -   mov      R3, A
+48CB     02 49 21 ljmp     0x4921
+48CE     12 4a a6 lcall    0x4aa6
+48D1     12 4a 4d lcall    0x4a4d
+491C     12 49 47 lcall    0x4947
+491F     e4 - -   clr      A
+4920     fb - -   mov      R3, A

@@ -9,7 +9,7 @@
 void switchD_CODE:a308::caseD_6(void)
 
 {
-  FUN_CODE_1a68(6,0x20,0);
+  load_dptr_85fb_tail_jump_1100(6,0x20,0);
   DAT_EXTMEM_0974 = 1;
   return;
 }

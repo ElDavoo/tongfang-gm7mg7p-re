@@ -6,21 +6,21 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-7125     f8         mov      R0, A
-7126     e0         movx     A, @DPTR
-7127     fb         mov      R3, A
-7128     a3         inc      DPTR
-7129     a3         inc      DPTR
-712A     e0         movx     A, @DPTR
-712B     f9         mov      R1, A
-712C     25 f0      add      A, B
-712E     f0         movx     @DPTR, A
-712F     e5 82      mov      A, DPL
-7131     15 82      dec      DPL
-7133     70 02      jnz      0x7137
-7135     15 83      dec      DPH
-7137     e0         movx     A, @DPTR
-7138     fa         mov      R2, A
-7139     38         addc     A, R0
-713A     f0         movx     @DPTR, A
-713B     22         ret      
+7125     f8 - -   mov      R0, A
+7126     e0 - -   movx     A, @DPTR
+7127     fb - -   mov      R3, A
+7128     a3 - -   inc      DPTR
+7129     a3 - -   inc      DPTR
+712A     e0 - -   movx     A, @DPTR
+712B     f9 - -   mov      R1, A
+712C     25 f0 -  add      A, B
+712E     f0 - -   movx     @DPTR, A
+712F     e5 82 -  mov      A, DPL
+7131     15 82 -  dec      DPL
+7133     70 02 -  jnz      0x7137
+7135     15 83 -  dec      DPH
+7137     e0 - -   movx     A, @DPTR
+7138     fa - -   mov      R2, A
+7139     38 - -   addc     A, R0
+713A     f0 - -   movx     @DPTR, A
+713B     22 - -   ret      

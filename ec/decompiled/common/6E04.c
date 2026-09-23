@@ -10,7 +10,7 @@ void FUN_CODE_6e04(byte param_1)
   char in_PSW;
   
   if (-1 < in_PSW) {
-    FUN_CODE_1803(param_1 << 1 | param_1 >> 7);
+    nop_load_dptr_c48f_tail_jump_1100(param_1 << 1 | param_1 >> 7);
     return;
   }
   nop();

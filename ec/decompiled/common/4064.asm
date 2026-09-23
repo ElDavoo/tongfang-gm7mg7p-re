@@ -6,37 +6,37 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-4064     12 71 51   lcall    0x7151
-4067     40 a2      jc       0x400b
-4069     ec         mov      A, R4
-406A     40 98      jc       0x4004
-406C     ed         mov      A, R5
-406D     40 a4      jc       0x4013
-406F     ee         mov      A, R6
-4070     40 ad      jc       0x401f
-4072     f0         movx     @DPTR, A
-4073     40 b7      jc       0x402c
-4075     f2         movx     @R0, A
-4076     40 cf      jc       0x4047
-4078     f3         movx     @R1, A
-4079     40 d8      jc       0x4053
-407B     f4         cpl      A
-407C     40 df      jc       0x405d
-407E     f5 40      mov      0x40, A
-4080     e6         mov      A, @R0
-4081     f6         mov      @R0, A
-4082     40 a2      jc       0x4026
-4084     f7         mov      @R1, A
-4085     40 a2      jc       0x4029
-4087     f8         mov      R0, A
-4088     40 a2      jc       0x402c
-408A     f9         mov      R1, A
-408B     40 a2      jc       0x402f
-408D     fa         mov      R2, A
-408E     40 a2      jc       0x4032
-4090     fb         mov      R3, A
-4091     40 f0      jc       0x4083
-4093     ff         mov      R7, A
-4094     00         nop      
-4095     00         nop      
-4096     41 28      ajmp     0x4228
+4064     12 71 51 lcall    0x7151
+4067     40 a2 -  jc       0x400b
+4069     ec - -   mov      A, R4
+406A     40 98 -  jc       0x4004
+406C     ed - -   mov      A, R5
+406D     40 a4 -  jc       0x4013
+406F     ee - -   mov      A, R6
+4070     40 ad -  jc       0x401f
+4072     f0 - -   movx     @DPTR, A
+4073     40 b7 -  jc       0x402c
+4075     f2 - -   movx     @R0, A
+4076     40 cf -  jc       0x4047
+4078     f3 - -   movx     @R1, A
+4079     40 d8 -  jc       0x4053
+407B     f4 - -   cpl      A
+407C     40 df -  jc       0x405d
+407E     f5 40 -  mov      0x40, A
+4080     e6 - -   mov      A, @R0
+4081     f6 - -   mov      @R0, A
+4082     40 a2 -  jc       0x4026
+4084     f7 - -   mov      @R1, A
+4085     40 a2 -  jc       0x4029
+4087     f8 - -   mov      R0, A
+4088     40 a2 -  jc       0x402c
+408A     f9 - -   mov      R1, A
+408B     40 a2 -  jc       0x402f
+408D     fa - -   mov      R2, A
+408E     40 a2 -  jc       0x4032
+4090     fb - -   mov      R3, A
+4091     40 f0 -  jc       0x4083
+4093     ff - -   mov      R7, A
+4094     00 - -   nop      
+4095     00 - -   nop      
+4096     41 28 -  ajmp     0x4228

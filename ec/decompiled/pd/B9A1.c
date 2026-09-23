@@ -16,52 +16,53 @@ void FUN_CODE_b9a1(byte param_1)
   
   DAT_EXTMEM_07d5 = 0;
   DAT_EXTMEM_07d4 = param_1;
-  FUN_CODE_e323(0,0x74);
+  dptr_fffe_then_122f_at_e323(0,0x74);
   bVar2 = (byte)((ushort)DAT_EXTMEM_07d4 * 0x5e);
   uVar1 = 1;
-  FUN_CODE_128d(bVar2 - 0xf,
-                ((char)((ushort)DAT_EXTMEM_07d4 * 0x5e >> 8) - (((0xe < bVar2) << 7) >> 7)) + '\b',1
-                ,0,0,7);
+  fill_bytes_by_ptr_kind
+            (bVar2 - 0xf,
+             ((char)((ushort)DAT_EXTMEM_07d4 * 0x5e >> 8) - (((0xe < bVar2) << 7) >> 7)) + '\b',1,0,
+             0,7);
   pcVar4 = (char *)CONCAT11('\b' - (((4 < DAT_EXTMEM_07d4 * '^') << 7) >> 7),
                             DAT_EXTMEM_07d4 * '^' - 5);
   bVar2 = DAT_EXTMEM_07d4;
   if (*pcVar4 == '\x01') {
-    FUN_CODE_7095(DAT_EXTMEM_07d4);
+    dptr_08ea_plus_5e_times_a(DAT_EXTMEM_07d4);
     *pcVar4 = '\x05';
   }
   else {
-    FUN_CODE_7091();
+    read_07d4_into_a();
     *pcVar4 = '\n';
   }
   pbVar5 = (byte *)0x7d4;
-  FUN_CODE_70d7();
+  read_dptr_to_r3_then_dptr_08fc();
   read4xdata_to_r4_r7();
   if ((bVar2 & 0x20) == 0) {
-    FUN_CODE_7091(0,0,0);
+    read_07d4_into_a(0,0,0);
     *pbVar5 = *pbVar5 & 0xbf;
   }
   else {
-    FUN_CODE_7095(uVar1);
+    dptr_08ea_plus_5e_times_a(uVar1);
     *pbVar5 = *pbVar5 | 0x40;
   }
   puVar6 = &DAT_EXTMEM_07d4;
-  FUN_CODE_7069();
+  read_07d4_into_r7();
   *puVar6 = 0x30;
-  FUN_CODE_88be();
-  FUN_CODE_f247(DAT_EXTMEM_07d4);
-  FUN_CODE_f4cd(DAT_EXTMEM_07d4);
-  FUN_CODE_b3ed(DAT_EXTMEM_07d4);
-  cVar3 = FUN_CODE_6fad(0x7d4);
+  update_07d6_table_entries();
+  write_07d6_then_table_entry_then_0_3(DAT_EXTMEM_07d4);
+  call_70c7_with_0_then_5c_tail_f55c(DAT_EXTMEM_07d4);
+  write_r7_at_0d0d_then_load_0d0b(DAT_EXTMEM_07d4);
+  cVar3 = read_dptr_byte_into_r7(0x7d4);
   if (cVar3 == '\0') {
-    FUN_CODE_f440();
+    write_07d6_then_set_1();
   }
   write4_inline_args(0x815);
   nop();
   nop();
   nop();
   nop();
-  FUN_CODE_e1e0(0x33,DAT_EXTMEM_07d4);
-  FUN_CODE_f035(DAT_EXTMEM_07d4);
+  copy_0815_to_081b_then_call_c873(0x33,DAT_EXTMEM_07d4);
+  stage_07d6_chain_tail_f351(DAT_EXTMEM_07d4);
   return;
 }
 

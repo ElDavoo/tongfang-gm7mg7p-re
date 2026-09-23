@@ -7,7 +7,7 @@
 void switchD_CODE:9e36::caseD_0(void)
 
 {
-  FUN_CODE_9e37();
+  set_1c12_2_and_68c_81();
   return;
 }
 

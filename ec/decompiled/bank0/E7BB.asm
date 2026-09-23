@@ -4,9 +4,9 @@
 ; This is the machine code. The decompiled C for this address is E7BB.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-E7BB     90 0a 50   mov      DPTR, #0xa50
-E7BE     e0         movx     A, @DPTR
-E7BF     70 03      jnz      0xe7c4
-E7C1     02 e6 f4   ljmp     0xe6f4
-E7C4     7f 01      mov      R7, #0x1
-E7C6     22         ret      
+E7BB     90 0a 50 mov      DPTR, #0xa50
+E7BE     e0 - -   movx     A, @DPTR
+E7BF     70 03 -  jnz      0xe7c4
+E7C1     02 e6 f4 ljmp     0xe6f4
+E7C4     7f 01 -  mov      R7, #0x1
+E7C6     22 - -   ret      

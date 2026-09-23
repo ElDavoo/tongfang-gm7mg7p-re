@@ -6,31 +6,31 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-9FF0     90 07 24   mov      DPTR, #0x724
-9FF3     e0         movx     A, @DPTR
-9FF4     20 e7 03   jb       0xe7, 0x9ffa
-9FF7     02 9f ca   ljmp     0x9fca
-9FFA     90 06 7d   mov      DPTR, #0x67d
-9FFD     e0         movx     A, @DPTR
-9FFE     14         dec      A
-9FFF     f0         movx     @DPTR, A
-A000     70 c8      jnz      0x9fca
-A002     90 06 c5   mov      DPTR, #0x6c5
-A005     e0         movx     A, @DPTR
-A006     94 08      subb     A, #0x8
-A008     40 03      jc       0xa00d
-A00A     02 9f ca   ljmp     0x9fca
-A00D     90 06 c2   mov      DPTR, #0x6c2
-A010     e0         movx     A, @DPTR
-A011     70 b7      jnz      0x9fca
-A013     90 07 24   mov      DPTR, #0x724
-A016     e0         movx     A, @DPTR
-A017     54 7f      anl      A, #0x7f
-A019     f0         movx     @DPTR, A
-A01A     90 04 7b   mov      DPTR, #0x47b
-A01D     e0         movx     A, @DPTR
-A01E     30 e7 04   jnb      0xe7, 0xa025
-A021     12 1a 4a   lcall    0x1a4a
-A024     22         ret      
-A025     12 1a 50   lcall    0x1a50
-A028     22         ret      
+9FF0     90 07 24 mov      DPTR, #0x724
+9FF3     e0 - -   movx     A, @DPTR
+9FF4     20 e7 03 jb       0xe7, 0x9ffa
+9FF7     02 9f ca ljmp     0x9fca
+9FFA     90 06 7d mov      DPTR, #0x67d
+9FFD     e0 - -   movx     A, @DPTR
+9FFE     14 - -   dec      A
+9FFF     f0 - -   movx     @DPTR, A
+A000     70 c8 -  jnz      0x9fca
+A002     90 06 c5 mov      DPTR, #0x6c5
+A005     e0 - -   movx     A, @DPTR
+A006     94 08 -  subb     A, #0x8
+A008     40 03 -  jc       0xa00d
+A00A     02 9f ca ljmp     0x9fca
+A00D     90 06 c2 mov      DPTR, #0x6c2
+A010     e0 - -   movx     A, @DPTR
+A011     70 b7 -  jnz      0x9fca
+A013     90 07 24 mov      DPTR, #0x724
+A016     e0 - -   movx     A, @DPTR
+A017     54 7f -  anl      A, #0x7f
+A019     f0 - -   movx     @DPTR, A
+A01A     90 04 7b mov      DPTR, #0x47b
+A01D     e0 - -   movx     A, @DPTR
+A01E     30 e7 04 jnb      0xe7, 0xa025
+A021     12 1a 4a lcall    0x1a4a
+A024     22 - -   ret      
+A025     12 1a 50 lcall    0x1a50
+A028     22 - -   ret      

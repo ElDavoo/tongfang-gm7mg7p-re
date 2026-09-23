@@ -4,11 +4,11 @@
 ; This is the machine code. The decompiled C for this address is 35DA.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-35DA     ee         mov      A, R6
-35DB     f0         movx     @DPTR, A
-35DC     a3         inc      DPTR
-35DD     ef         mov      A, R7
-35DE     f0         movx     @DPTR, A
-35DF     90 07 d8   mov      DPTR, #0x7d8
-35E2     12 10 c8   lcall    0x10c8
-35E5     02 0f 45   ljmp     0x0f45
+35DA     ee - -   mov      A, R6
+35DB     f0 - -   movx     @DPTR, A
+35DC     a3 - -   inc      DPTR
+35DD     ef - -   mov      A, R7
+35DE     f0 - -   movx     @DPTR, A
+35DF     90 07 d8 mov      DPTR, #0x7d8
+35E2     12 10 c8 lcall    0x10c8
+35E5     02 0f 45 ljmp     0x0f45

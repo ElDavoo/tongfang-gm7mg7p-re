@@ -21,7 +21,7 @@ void FUN_CODE_9d53(void)
     return;
   }
   DAT_EXTMEM_068d = 2;
-  FUN_CODE_9cc0();
+  gate_04fe_06e6_call_19a8();
   if (-1 < (char)bVar1) {
     if ((DAT_EXTMEM_045b & 8) != 0) {
       DAT_EXTMEM_068b = 6;

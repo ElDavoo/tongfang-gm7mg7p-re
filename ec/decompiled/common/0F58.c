@@ -9,7 +9,7 @@
 void FUN_CODE_0f58(void)
 
 {
-  FUN_CODE_0ef3();
+  write_internal_ram_init_constants();
   FUN_CODE_0f4a();
   FUN_CODE_0e84();
   FUN_CODE_0fa6();

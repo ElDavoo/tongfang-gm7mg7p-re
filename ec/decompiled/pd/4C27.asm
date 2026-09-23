@@ -4,26 +4,26 @@
 ; This is the machine code. The decompiled C for this address is 4C27.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-4C27     90 08 32   mov      DPTR, #0x832
-4C2A     ef         mov      A, R7
-4C2B     f0         movx     @DPTR, A
-4C2C     90 08 34   mov      DPTR, #0x834
-4C2F     ea         mov      A, R2
-4C30     f0         movx     @DPTR, A
-4C31     a3         inc      DPTR
-4C32     eb         mov      A, R3
-4C33     f0         movx     @DPTR, A
-4C34     ed         mov      A, R5
-4C35     12 11 9c   lcall    0x119c
-4C38     4c         orl      A, R4
-4C39     5d         anl      A, R5
-4C3A     00         nop      
-4C3B     4c         orl      A, R4
-4C3C     92 01      mov      0x01, CY
-4C3E     4c         orl      A, R4
-4C3F     9e         subb     A, R6
-4C40     02 4d 15   ljmp     0x4d15
-4D15     90 08 3d   mov      DPTR, #0x83d
-4D18     12 10 4d   lcall    0x104d
-4D1B     00         nop      
-4D1C     01 00      ajmp     0x4800
+4C27     90 08 32 mov      DPTR, #0x832
+4C2A     ef - -   mov      A, R7
+4C2B     f0 - -   movx     @DPTR, A
+4C2C     90 08 34 mov      DPTR, #0x834
+4C2F     ea - -   mov      A, R2
+4C30     f0 - -   movx     @DPTR, A
+4C31     a3 - -   inc      DPTR
+4C32     eb - -   mov      A, R3
+4C33     f0 - -   movx     @DPTR, A
+4C34     ed - -   mov      A, R5
+4C35     12 11 9c lcall    0x119c
+4C38     4c - -   orl      A, R4
+4C39     5d - -   anl      A, R5
+4C3A     00 - -   nop      
+4C3B     4c - -   orl      A, R4
+4C3C     92 01 -  mov      0x01, CY
+4C3E     4c - -   orl      A, R4
+4C3F     9e - -   subb     A, R6
+4C40     02 4d 15 ljmp     0x4d15
+4D15     90 08 3d mov      DPTR, #0x83d
+4D18     12 10 4d lcall    0x104d
+4D1B     00 - -   nop      
+4D1C     01 00 -  ajmp     0x4800

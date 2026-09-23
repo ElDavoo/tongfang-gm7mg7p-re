@@ -6,20 +6,20 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-6402     00         nop      
-6403     00         nop      
-6404     00         nop      
-6405     00         nop      
-6406     00         nop      
-6407     00         nop      
-6408     00         nop      
-6409     00         nop      
-640A     00         nop      
-640B     00         nop      
-640C     00         nop      
-640D     00         nop      
-640E     00         nop      
-640F     00         nop      
-6410     00         nop      
-6411     00         nop      
-6412     00         nop      
+6402     00 - -   nop      
+6403     00 - -   nop      
+6404     00 - -   nop      
+6405     00 - -   nop      
+6406     00 - -   nop      
+6407     00 - -   nop      
+6408     00 - -   nop      
+6409     00 - -   nop      
+640A     00 - -   nop      
+640B     00 - -   nop      
+640C     00 - -   nop      
+640D     00 - -   nop      
+640E     00 - -   nop      
+640F     00 - -   nop      
+6410     00 - -   nop      
+6411     00 - -   nop      
+6412     00 - -   nop      

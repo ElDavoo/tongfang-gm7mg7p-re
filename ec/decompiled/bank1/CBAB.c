@@ -9,7 +9,7 @@
 void FUN_CODE_cbab(void)
 
 {
-  FUN_CODE_cc95();
+  set_0397_from_0342_by_0514_band();
   if (DAT_EXTMEM_0514 == 'd') {
     DAT_EXTMEM_03b6 = 0;
     return;
@@ -19,8 +19,8 @@ void FUN_CODE_cbab(void)
   }
   DAT_EXTMEM_03b6 = 0;
   DAT_EXTMEM_0514 = DAT_EXTMEM_0514 + '\x01';
-  FUN_CODE_cbf3();
-  FUN_CODE_cbe8();
+  publish_0514_and_0342_product();
+  increment_0349_saturating();
   return;
 }
 

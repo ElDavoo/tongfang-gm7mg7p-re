@@ -17,11 +17,11 @@ void FUN_CODE_d72e(byte param_1,undefined1 param_2)
   
   puVar4 = &DAT_EXTMEM_07d1;
   DAT_EXTMEM_07d1 = param_2;
-  FUN_CODE_ad58(0x35,0xf4);
+  set_r3_ff_dptr_0a86_call_10e8(0x35,0xf4);
   *puVar4 = 10;
-  FUN_CODE_f4ab(0,0,2);
+  store_4bytes_to_0a82(0,0,2);
   puVar4 = &DAT_EXTMEM_07d1;
-  FUN_CODE_acd1();
+  read_xdata_to_a_r7();
   uVar3 = BANK0_R7;
   write4_inline_args(0xa6d,0,*puVar4);
   nop();
@@ -29,7 +29,7 @@ void FUN_CODE_d72e(byte param_1,undefined1 param_2)
   nop();
   nop();
   BANK0_R7 = uVar3;
-  FUN_CODE_a339(1);
+  stash_args_dispatch_code_table(1);
   bVar2 = write4_inline_args(0x80f);
   nop();
   nop();
@@ -38,12 +38,12 @@ void FUN_CODE_d72e(byte param_1,undefined1 param_2)
   if (cVar1 == '\x01') {
     bVar2 = bVar2 | param_1;
   }
-  uVar3 = FUN_CODE_d6e0(bVar2);
-  FUN_CODE_c24e(1,uVar3);
+  uVar3 = inc_r0_then_reti(bVar2);
+  write_080d_then_branch_on_70e7(1,uVar3);
   DAT_EXTMEM_ffd4 = DAT_EXTMEM_ffd4 | 0x20;
   puVar4 = &DAT_EXTMEM_07d1;
-  FUN_CODE_ad67(DAT_EXTMEM_07d1);
-  FUN_CODE_c755(*puVar4);
+  dptr_08fb_plus_5e_times_a(DAT_EXTMEM_07d1);
+  latch_07d2_07d3_then_zero_23_bytes(*puVar4);
   return;
 }
 

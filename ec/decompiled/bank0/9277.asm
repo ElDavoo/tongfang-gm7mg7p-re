@@ -6,57 +6,57 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-9277     90 08 e2   mov      DPTR, #0x8e2
-927A     e0         movx     A, @DPTR
-927B     54 df      anl      A, #0xdf
-927D     f0         movx     @DPTR, A
-927E     90 04 9f   mov      DPTR, #0x49f
-9281     e0         movx     A, @DPTR
-9282     54 38      anl      A, #0x38
-9284     12 71 51   lcall    0x7151
-9287     92 a0      mov      0xa0, CY
-9289     08         inc      R0
-928A     92 a9      mov      0xa9, CY
-928C     10 92 b9   jbc      0x92, 0x9248
-928F     18         dec      R0
-9290     92 d1      mov      0xd1, CY
-9292     20 92 e0   jb       0x92, 0x9275
-9295     28         add      A, R0
-9296     92 e9      mov      0xe9, CY
-9298     30 92 f7   jnb      0x92, 0x9292
-929B     38         addc     A, R0
-929C     00         nop      
-929D     00         nop      
-929E     93         movc     A, @A+DPTR
-929F     03         rr       A
-92A0     74 10      mov      A, #0x10
-92A2     12 be 73   lcall    0xbe73
-92A5     74 23      mov      A, #0x23
-92A7     80 07      sjmp     0x92b0
-92B0     f0         movx     @DPTR, A
-92B1     90 08 b9   mov      DPTR, #0x8b9
-92B4     74 25      mov      A, #0x25
-92B6     f0         movx     @DPTR, A
-92B7     80 53      sjmp     0x930c
-930C     90 08 e2   mov      DPTR, #0x8e2
-930F     e0         movx     A, @DPTR
-9310     44 20      orl      A, #0x20
-9312     f0         movx     @DPTR, A
-9313     90 09 83   mov      DPTR, #0x983
-9316     e0         movx     A, @DPTR
-9317     20 e4 19   jb       0xe4, 0x9333
-931A     90 0a 47   mov      DPTR, #0xa47
-931D     e0         movx     A, @DPTR
-931E     90 08 3b   mov      DPTR, #0x83b
-9321     f0         movx     @DPTR, A
-9322     90 0a 47   mov      DPTR, #0xa47
-9325     e0         movx     A, @DPTR
-9326     a3         inc      DPTR
-9327     e0         movx     A, @DPTR
-9328     90 08 3a   mov      DPTR, #0x83a
-932B     f0         movx     @DPTR, A
-932C     90 08 32   mov      DPTR, #0x832
-932F     e0         movx     A, @DPTR
-9330     44 08      orl      A, #0x8
-9332     f0         movx     @DPTR, A
-9333     22         ret      
+9277     90 08 e2 mov      DPTR, #0x8e2
+927A     e0 - -   movx     A, @DPTR
+927B     54 df -  anl      A, #0xdf
+927D     f0 - -   movx     @DPTR, A
+927E     90 04 9f mov      DPTR, #0x49f
+9281     e0 - -   movx     A, @DPTR
+9282     54 38 -  anl      A, #0x38
+9284     12 71 51 lcall    0x7151
+9287     92 a0 -  mov      0xa0, CY
+9289     08 - -   inc      R0
+928A     92 a9 -  mov      0xa9, CY
+928C     10 92 b9 jbc      0x92, 0x9248
+928F     18 - -   dec      R0
+9290     92 d1 -  mov      0xd1, CY
+9292     20 92 e0 jb       0x92, 0x9275
+9295     28 - -   add      A, R0
+9296     92 e9 -  mov      0xe9, CY
+9298     30 92 f7 jnb      0x92, 0x9292
+929B     38 - -   addc     A, R0
+929C     00 - -   nop      
+929D     00 - -   nop      
+929E     93 - -   movc     A, @A+DPTR
+929F     03 - -   rr       A
+92A0     74 10 -  mov      A, #0x10
+92A2     12 be 73 lcall    0xbe73
+92A5     74 23 -  mov      A, #0x23
+92A7     80 07 -  sjmp     0x92b0
+92B0     f0 - -   movx     @DPTR, A
+92B1     90 08 b9 mov      DPTR, #0x8b9
+92B4     74 25 -  mov      A, #0x25
+92B6     f0 - -   movx     @DPTR, A
+92B7     80 53 -  sjmp     0x930c
+930C     90 08 e2 mov      DPTR, #0x8e2
+930F     e0 - -   movx     A, @DPTR
+9310     44 20 -  orl      A, #0x20
+9312     f0 - -   movx     @DPTR, A
+9313     90 09 83 mov      DPTR, #0x983
+9316     e0 - -   movx     A, @DPTR
+9317     20 e4 19 jb       0xe4, 0x9333
+931A     90 0a 47 mov      DPTR, #0xa47
+931D     e0 - -   movx     A, @DPTR
+931E     90 08 3b mov      DPTR, #0x83b
+9321     f0 - -   movx     @DPTR, A
+9322     90 0a 47 mov      DPTR, #0xa47
+9325     e0 - -   movx     A, @DPTR
+9326     a3 - -   inc      DPTR
+9327     e0 - -   movx     A, @DPTR
+9328     90 08 3a mov      DPTR, #0x83a
+932B     f0 - -   movx     @DPTR, A
+932C     90 08 32 mov      DPTR, #0x832
+932F     e0 - -   movx     A, @DPTR
+9330     44 08 -  orl      A, #0x8
+9332     f0 - -   movx     @DPTR, A
+9333     22 - -   ret      

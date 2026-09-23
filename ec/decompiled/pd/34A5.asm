@@ -4,8 +4,8 @@
 ; This is the machine code. The decompiled C for this address is 34A5.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-34A5     e0         movx     A, @DPTR
-34A6     90 04 20   mov      DPTR, #0x420
-34A9     ff         mov      R7, A
-34AA     75 f0 60   mov      B, #0x60
-34AD     12 10 bc   lcall    0x10bc
+34A5     e0 - -   movx     A, @DPTR
+34A6     90 04 20 mov      DPTR, #0x420
+34A9     ff - -   mov      R7, A
+34AA     75 f0 60 mov      B, #0x60
+34AD     12 10 bc lcall    0x10bc

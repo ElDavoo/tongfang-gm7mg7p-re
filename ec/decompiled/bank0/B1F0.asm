@@ -4,201 +4,201 @@
 ; This is the machine code. The decompiled C for this address is B1F0.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-B1F0     d3         setb     CY
-B1F1     90 0a 4f   mov      DPTR, #0xa4f
-B1F4     e0         movx     A, @DPTR
-B1F5     94 e1      subb     A, #0xe1
-B1F7     90 0a 4e   mov      DPTR, #0xa4e
-B1FA     e0         movx     A, @DPTR
-B1FB     94 50      subb     A, #0x50
-B1FD     50 12      jnc      0xb211
-B1FF     a3         inc      DPTR
-B200     12 bf 08   lcall    0xbf08
-B203     40 0c      jc       0xb211
-B205     12 bd 98   lcall    0xbd98
-B208     50 07      jnc      0xb211
-B20A     74 39      mov      A, #0x39
-B20C     f0         movx     @DPTR, A
-B20D     a3         inc      DPTR
-B20E     74 d9      mov      A, #0xd9
-B210     f0         movx     @DPTR, A
-B211     90 09 c7   mov      DPTR, #0x9c7
-B214     e0         movx     A, @DPTR
-B215     04         inc      A
-B216     f0         movx     @DPTR, A
-B217     e0         movx     A, @DPTR
-B218     c3         clr      CY
-B219     94 3c      subb     A, #0x3c
-B21B     40 69      jc       0xb286
-B21D     e4         clr      A
-B21E     f0         movx     @DPTR, A
-B21F     90 0a 4a   mov      DPTR, #0xa4a
-B222     e0         movx     A, @DPTR
-B223     fe         mov      R6, A
-B224     a3         inc      DPTR
-B225     e0         movx     A, @DPTR
-B226     ff         mov      R7, A
-B227     d3         setb     CY
-B228     90 0a 49   mov      DPTR, #0xa49
-B22B     e0         movx     A, @DPTR
-B22C     9f         subb     A, R7
-B22D     90 0a 48   mov      DPTR, #0xa48
-B230     e0         movx     A, @DPTR
-B231     9e         subb     A, R6
-B232     40 52      jc       0xb286
-B234     90 09 c8   mov      DPTR, #0x9c8
-B237     e0         movx     A, @DPTR
-B238     04         inc      A
-B239     f0         movx     @DPTR, A
-B23A     e0         movx     A, @DPTR
-B23B     94 3c      subb     A, #0x3c
-B23D     40 47      jc       0xb286
-B23F     e4         clr      A
-B240     f0         movx     @DPTR, A
-B241     90 09 c9   mov      DPTR, #0x9c9
-B244     7b e8      mov      R3, #0xe8
-B246     7a fd      mov      R2, #0xfd
-B248     12 bc f5   lcall    0xbcf5
-B24B     40 39      jc       0xb286
-B24D     12 ba e5   lcall    0xbae5
-B250     ec         mov      A, R4
-B251     3e         addc     A, R6
-B252     fe         mov      R6, A
-B253     c3         clr      CY
-B254     ef         mov      A, R7
-B255     94 d6      subb     A, #0xd6
-B257     ee         mov      A, R6
-B258     94 0b      subb     A, #0xb
-B25A     50 09      jnc      0xb265
-B25C     90 09 c9   mov      DPTR, #0x9c9
-B25F     e4         clr      A
-B260     75 f0 01   mov      B, #0x1
-B263     80 1b      sjmp     0xb280
-B265     12 ba e5   lcall    0xbae5
-B268     ec         mov      A, R4
-B269     3e         addc     A, R6
-B26A     fe         mov      R6, A
-B26B     d3         setb     CY
-B26C     ef         mov      A, R7
-B26D     94 3a      subb     A, #0x3a
-B26F     ee         mov      A, R6
-B270     94 0c      subb     A, #0xc
-B272     90 09 c9   mov      DPTR, #0x9c9
-B275     e4         clr      A
-B276     50 05      jnc      0xb27d
-B278     75 f0 03   mov      B, #0x3
-B27B     80 03      sjmp     0xb280
-B27D     75 f0 07   mov      B, #0x7
-B280     12 70 e4   lcall    0x70e4
-B283     12 16 72   lcall    0x1672
-B286     90 04 90   mov      DPTR, #0x490
-B289     e0         movx     A, @DPTR
-B28A     20 e0 03   jb       0xe0, 0xb290
-B28D     02 b3 8d   ljmp     0xb38d
-B290     e4         clr      A
-B291     fb         mov      R3, A
-B292     90 03 0f   mov      DPTR, #0x30f
-B295     e0         movx     A, @DPTR
-B296     fc         mov      R4, A
-B297     90 03 0e   mov      DPTR, #0x30e
-B29A     e0         movx     A, @DPTR
-B29B     90 0a 50   mov      DPTR, #0xa50
-B29E     12 bd 54   lcall    0xbd54
-B2A1     c3         clr      CY
-B2A2     90 0a 51   mov      DPTR, #0xa51
-B2A5     e0         movx     A, @DPTR
-B2A6     94 f4      subb     A, #0xf4
-B2A8     90 0a 50   mov      DPTR, #0xa50
-B2AB     e0         movx     A, @DPTR
-B2AC     94 01      subb     A, #0x1
-B2AE     50 03      jnc      0xb2b3
-B2B0     02 b3 5e   ljmp     0xb35e
-B2B3     d3         setb     CY
-B2B4     12 bd 8b   lcall    0xbd8b
-B2B7     50 0f      jnc      0xb2c8
-B2B9     c3         clr      CY
-B2BA     90 0a 4d   mov      DPTR, #0xa4d
-B2BD     e0         movx     A, @DPTR
-B2BE     94 26      subb     A, #0x26
-B2C0     90 0a 4c   mov      DPTR, #0xa4c
-B2C3     e0         movx     A, @DPTR
-B2C4     94 02      subb     A, #0x2
-B2C6     40 05      jc       0xb2cd
-B2C8     7b fa      mov      R3, #0xfa
-B2CA     02 b3 5e   ljmp     0xb35e
-B2CD     d3         setb     CY
-B2CE     12 bd 98   lcall    0xbd98
-B2D1     50 19      jnc      0xb2ec
-B2D3     c3         clr      CY
-B2D4     90 0a 4d   mov      DPTR, #0xa4d
-B2D7     e0         movx     A, @DPTR
-B2D8     94 c2      subb     A, #0xc2
-B2DA     90 0a 4c   mov      DPTR, #0xa4c
-B2DD     e0         movx     A, @DPTR
-B2DE     94 01      subb     A, #0x1
-B2E0     50 0a      jnc      0xb2ec
-B2E2     90 07 a6   mov      DPTR, #0x7a6
-B2E5     e0         movx     A, @DPTR
-B2E6     54 30      anl      A, #0x30
-B2E8     ff         mov      R7, A
-B2E9     bf 20 04   cjne     R7, #0x20, 0xb2f0
-B2EC     7b c8      mov      R3, #0xc8
-B2EE     80 6e      sjmp     0xb35e
-B2F0     d3         setb     CY
-B2F1     90 09 ca   mov      DPTR, #0x9ca
-B2F4     e0         movx     A, @DPTR
-B2F5     94 b8      subb     A, #0xb8
-B2F7     90 09 c9   mov      DPTR, #0x9c9
-B2FA     e0         movx     A, @DPTR
-B2FB     94 2c      subb     A, #0x2c
-B2FD     50 0f      jnc      0xb30e
-B2FF     c3         clr      CY
-B300     90 0a 4d   mov      DPTR, #0xa4d
-B303     e0         movx     A, @DPTR
-B304     94 5e      subb     A, #0x5e
-B306     90 0a 4c   mov      DPTR, #0xa4c
-B309     e0         movx     A, @DPTR
-B30A     94 01      subb     A, #0x1
-B30C     40 04      jc       0xb312
-B30E     7b 96      mov      R3, #0x96
-B310     80 4c      sjmp     0xb35e
-B312     d3         setb     CY
-B313     90 09 ca   mov      DPTR, #0x9ca
-B316     e0         movx     A, @DPTR
-B317     94 c8      subb     A, #0xc8
-B319     90 09 c9   mov      DPTR, #0x9c9
-B31C     e0         movx     A, @DPTR
-B31D     94 1f      subb     A, #0x1f
-B31F     50 19      jnc      0xb33a
-B321     c3         clr      CY
-B322     90 0a 4d   mov      DPTR, #0xa4d
-B325     e0         movx     A, @DPTR
-B326     94 fa      subb     A, #0xfa
-B328     90 0a 4c   mov      DPTR, #0xa4c
-B32B     e0         movx     A, @DPTR
-B32C     94 00      subb     A, #0x0
-B32E     50 0a      jnc      0xb33a
-B330     90 07 a6   mov      DPTR, #0x7a6
-B333     e0         movx     A, @DPTR
-B334     54 30      anl      A, #0x30
-B336     ff         mov      R7, A
-B337     bf 10 04   cjne     R7, #0x10, 0xb33e
-B33A     7b 64      mov      R3, #0x64
-B33C     80 20      sjmp     0xb35e
-B33E     d3         setb     CY
-B33F     90 09 ca   mov      DPTR, #0x9ca
-B342     e0         movx     A, @DPTR
-B343     94 c0      subb     A, #0xc0
-B345     90 09 c9   mov      DPTR, #0x9c9
-B348     e0         movx     A, @DPTR
-B349     94 12      subb     A, #0x12
-B34B     50 0f      jnc      0xb35c
-B34D     c3         clr      CY
-B34E     90 0a 4d   mov      DPTR, #0xa4d
-B351     e0         movx     A, @DPTR
-B352     94 96      subb     A, #0x96
-B354     90 0a 4c   mov      DPTR, #0xa4c
-B357     e0         movx     A, @DPTR
-B358     94 00      subb     A, #0x0
-B35A     40 02      jc       0xb35e
-B35C     7b 32      mov      R3, #0x32
+B1F0     d3 - -   setb     CY
+B1F1     90 0a 4f mov      DPTR, #0xa4f
+B1F4     e0 - -   movx     A, @DPTR
+B1F5     94 e1 -  subb     A, #0xe1
+B1F7     90 0a 4e mov      DPTR, #0xa4e
+B1FA     e0 - -   movx     A, @DPTR
+B1FB     94 50 -  subb     A, #0x50
+B1FD     50 12 -  jnc      0xb211
+B1FF     a3 - -   inc      DPTR
+B200     12 bf 08 lcall    0xbf08
+B203     40 0c -  jc       0xb211
+B205     12 bd 98 lcall    0xbd98
+B208     50 07 -  jnc      0xb211
+B20A     74 39 -  mov      A, #0x39
+B20C     f0 - -   movx     @DPTR, A
+B20D     a3 - -   inc      DPTR
+B20E     74 d9 -  mov      A, #0xd9
+B210     f0 - -   movx     @DPTR, A
+B211     90 09 c7 mov      DPTR, #0x9c7
+B214     e0 - -   movx     A, @DPTR
+B215     04 - -   inc      A
+B216     f0 - -   movx     @DPTR, A
+B217     e0 - -   movx     A, @DPTR
+B218     c3 - -   clr      CY
+B219     94 3c -  subb     A, #0x3c
+B21B     40 69 -  jc       0xb286
+B21D     e4 - -   clr      A
+B21E     f0 - -   movx     @DPTR, A
+B21F     90 0a 4a mov      DPTR, #0xa4a
+B222     e0 - -   movx     A, @DPTR
+B223     fe - -   mov      R6, A
+B224     a3 - -   inc      DPTR
+B225     e0 - -   movx     A, @DPTR
+B226     ff - -   mov      R7, A
+B227     d3 - -   setb     CY
+B228     90 0a 49 mov      DPTR, #0xa49
+B22B     e0 - -   movx     A, @DPTR
+B22C     9f - -   subb     A, R7
+B22D     90 0a 48 mov      DPTR, #0xa48
+B230     e0 - -   movx     A, @DPTR
+B231     9e - -   subb     A, R6
+B232     40 52 -  jc       0xb286
+B234     90 09 c8 mov      DPTR, #0x9c8
+B237     e0 - -   movx     A, @DPTR
+B238     04 - -   inc      A
+B239     f0 - -   movx     @DPTR, A
+B23A     e0 - -   movx     A, @DPTR
+B23B     94 3c -  subb     A, #0x3c
+B23D     40 47 -  jc       0xb286
+B23F     e4 - -   clr      A
+B240     f0 - -   movx     @DPTR, A
+B241     90 09 c9 mov      DPTR, #0x9c9
+B244     7b e8 -  mov      R3, #0xe8
+B246     7a fd -  mov      R2, #0xfd
+B248     12 bc f5 lcall    0xbcf5
+B24B     40 39 -  jc       0xb286
+B24D     12 ba e5 lcall    0xbae5
+B250     ec - -   mov      A, R4
+B251     3e - -   addc     A, R6
+B252     fe - -   mov      R6, A
+B253     c3 - -   clr      CY
+B254     ef - -   mov      A, R7
+B255     94 d6 -  subb     A, #0xd6
+B257     ee - -   mov      A, R6
+B258     94 0b -  subb     A, #0xb
+B25A     50 09 -  jnc      0xb265
+B25C     90 09 c9 mov      DPTR, #0x9c9
+B25F     e4 - -   clr      A
+B260     75 f0 01 mov      B, #0x1
+B263     80 1b -  sjmp     0xb280
+B265     12 ba e5 lcall    0xbae5
+B268     ec - -   mov      A, R4
+B269     3e - -   addc     A, R6
+B26A     fe - -   mov      R6, A
+B26B     d3 - -   setb     CY
+B26C     ef - -   mov      A, R7
+B26D     94 3a -  subb     A, #0x3a
+B26F     ee - -   mov      A, R6
+B270     94 0c -  subb     A, #0xc
+B272     90 09 c9 mov      DPTR, #0x9c9
+B275     e4 - -   clr      A
+B276     50 05 -  jnc      0xb27d
+B278     75 f0 03 mov      B, #0x3
+B27B     80 03 -  sjmp     0xb280
+B27D     75 f0 07 mov      B, #0x7
+B280     12 70 e4 lcall    0x70e4
+B283     12 16 72 lcall    0x1672
+B286     90 04 90 mov      DPTR, #0x490
+B289     e0 - -   movx     A, @DPTR
+B28A     20 e0 03 jb       0xe0, 0xb290
+B28D     02 b3 8d ljmp     0xb38d
+B290     e4 - -   clr      A
+B291     fb - -   mov      R3, A
+B292     90 03 0f mov      DPTR, #0x30f
+B295     e0 - -   movx     A, @DPTR
+B296     fc - -   mov      R4, A
+B297     90 03 0e mov      DPTR, #0x30e
+B29A     e0 - -   movx     A, @DPTR
+B29B     90 0a 50 mov      DPTR, #0xa50
+B29E     12 bd 54 lcall    0xbd54
+B2A1     c3 - -   clr      CY
+B2A2     90 0a 51 mov      DPTR, #0xa51
+B2A5     e0 - -   movx     A, @DPTR
+B2A6     94 f4 -  subb     A, #0xf4
+B2A8     90 0a 50 mov      DPTR, #0xa50
+B2AB     e0 - -   movx     A, @DPTR
+B2AC     94 01 -  subb     A, #0x1
+B2AE     50 03 -  jnc      0xb2b3
+B2B0     02 b3 5e ljmp     0xb35e
+B2B3     d3 - -   setb     CY
+B2B4     12 bd 8b lcall    0xbd8b
+B2B7     50 0f -  jnc      0xb2c8
+B2B9     c3 - -   clr      CY
+B2BA     90 0a 4d mov      DPTR, #0xa4d
+B2BD     e0 - -   movx     A, @DPTR
+B2BE     94 26 -  subb     A, #0x26
+B2C0     90 0a 4c mov      DPTR, #0xa4c
+B2C3     e0 - -   movx     A, @DPTR
+B2C4     94 02 -  subb     A, #0x2
+B2C6     40 05 -  jc       0xb2cd
+B2C8     7b fa -  mov      R3, #0xfa
+B2CA     02 b3 5e ljmp     0xb35e
+B2CD     d3 - -   setb     CY
+B2CE     12 bd 98 lcall    0xbd98
+B2D1     50 19 -  jnc      0xb2ec
+B2D3     c3 - -   clr      CY
+B2D4     90 0a 4d mov      DPTR, #0xa4d
+B2D7     e0 - -   movx     A, @DPTR
+B2D8     94 c2 -  subb     A, #0xc2
+B2DA     90 0a 4c mov      DPTR, #0xa4c
+B2DD     e0 - -   movx     A, @DPTR
+B2DE     94 01 -  subb     A, #0x1
+B2E0     50 0a -  jnc      0xb2ec
+B2E2     90 07 a6 mov      DPTR, #0x7a6
+B2E5     e0 - -   movx     A, @DPTR
+B2E6     54 30 -  anl      A, #0x30
+B2E8     ff - -   mov      R7, A
+B2E9     bf 20 04 cjne     R7, #0x20, 0xb2f0
+B2EC     7b c8 -  mov      R3, #0xc8
+B2EE     80 6e -  sjmp     0xb35e
+B2F0     d3 - -   setb     CY
+B2F1     90 09 ca mov      DPTR, #0x9ca
+B2F4     e0 - -   movx     A, @DPTR
+B2F5     94 b8 -  subb     A, #0xb8
+B2F7     90 09 c9 mov      DPTR, #0x9c9
+B2FA     e0 - -   movx     A, @DPTR
+B2FB     94 2c -  subb     A, #0x2c
+B2FD     50 0f -  jnc      0xb30e
+B2FF     c3 - -   clr      CY
+B300     90 0a 4d mov      DPTR, #0xa4d
+B303     e0 - -   movx     A, @DPTR
+B304     94 5e -  subb     A, #0x5e
+B306     90 0a 4c mov      DPTR, #0xa4c
+B309     e0 - -   movx     A, @DPTR
+B30A     94 01 -  subb     A, #0x1
+B30C     40 04 -  jc       0xb312
+B30E     7b 96 -  mov      R3, #0x96
+B310     80 4c -  sjmp     0xb35e
+B312     d3 - -   setb     CY
+B313     90 09 ca mov      DPTR, #0x9ca
+B316     e0 - -   movx     A, @DPTR
+B317     94 c8 -  subb     A, #0xc8
+B319     90 09 c9 mov      DPTR, #0x9c9
+B31C     e0 - -   movx     A, @DPTR
+B31D     94 1f -  subb     A, #0x1f
+B31F     50 19 -  jnc      0xb33a
+B321     c3 - -   clr      CY
+B322     90 0a 4d mov      DPTR, #0xa4d
+B325     e0 - -   movx     A, @DPTR
+B326     94 fa -  subb     A, #0xfa
+B328     90 0a 4c mov      DPTR, #0xa4c
+B32B     e0 - -   movx     A, @DPTR
+B32C     94 00 -  subb     A, #0x0
+B32E     50 0a -  jnc      0xb33a
+B330     90 07 a6 mov      DPTR, #0x7a6
+B333     e0 - -   movx     A, @DPTR
+B334     54 30 -  anl      A, #0x30
+B336     ff - -   mov      R7, A
+B337     bf 10 04 cjne     R7, #0x10, 0xb33e
+B33A     7b 64 -  mov      R3, #0x64
+B33C     80 20 -  sjmp     0xb35e
+B33E     d3 - -   setb     CY
+B33F     90 09 ca mov      DPTR, #0x9ca
+B342     e0 - -   movx     A, @DPTR
+B343     94 c0 -  subb     A, #0xc0
+B345     90 09 c9 mov      DPTR, #0x9c9
+B348     e0 - -   movx     A, @DPTR
+B349     94 12 -  subb     A, #0x12
+B34B     50 0f -  jnc      0xb35c
+B34D     c3 - -   clr      CY
+B34E     90 0a 4d mov      DPTR, #0xa4d
+B351     e0 - -   movx     A, @DPTR
+B352     94 96 -  subb     A, #0x96
+B354     90 0a 4c mov      DPTR, #0xa4c
+B357     e0 - -   movx     A, @DPTR
+B358     94 00 -  subb     A, #0x0
+B35A     40 02 -  jc       0xb35e
+B35C     7b 32 -  mov      R3, #0x32

@@ -16,8 +16,8 @@ void store_2byte_r6r7_then_0x10c8(undefined1 *param_1,undefined1 param_2,undefin
 {
   *param_1 = param_2;
   param_1[1] = param_3;
-  FUN_CODE_10c8(0x7d8);
-  FUN_CODE_0f45();
+  read3_xdata_to_r3r1_10c8(0x7d8);
+  read4_ptr_kind_dispatch();
   return;
 }
 

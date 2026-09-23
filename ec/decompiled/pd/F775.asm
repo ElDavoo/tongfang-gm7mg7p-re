@@ -4,7 +4,7 @@
 ; This is the machine code. The decompiled C for this address is F775.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-F775     90 07 d9   mov      DPTR, #0x7d9
-F778     ef         mov      A, R7
-F779     f0         movx     @DPTR, A
-F77A     22         ret      
+F775     90 07 d9 mov      DPTR, #0x7d9
+F778     ef - -   mov      A, R7
+F779     f0 - -   movx     @DPTR, A
+F77A     22 - -   ret      

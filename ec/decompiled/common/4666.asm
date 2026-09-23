@@ -6,72 +6,72 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-4666     30 8f 03   jnb      0x8f, 0x466c
-4669     02 46 f9   ljmp     0x46f9
-466C     90 0a 17   mov      DPTR, #0xa17
-466F     12 4a d1   lcall    0x4ad1
-4672     12 4a 69   lcall    0x4a69
-4675     e0         movx     A, @DPTR
-4676     fe         mov      R6, A
-4677     54 fc      anl      A, #0xfc
-4679     60 eb      jz       0x4666
-467B     ee         mov      A, R6
-467C     54 7c      anl      A, #0x7c
-467E     60 13      jz       0x4693
-4680     ee         mov      A, R6
-4681     54 18      anl      A, #0x18
-4683     60 03      jz       0x4688
-4685     12 43 a5   lcall    0x43a5
-4688     12 4a fb   lcall    0x4afb
-468B     e4         clr      A
-468C     90 0a 1d   mov      DPTR, #0xa1d
-468F     f0         movx     @DPTR, A
-4690     02 46 f9   ljmp     0x46f9
-4693     90 0a 17   mov      DPTR, #0xa17
-4696     e0         movx     A, @DPTR
-4697     ff         mov      R7, A
-4698     12 4a a7   lcall    0x4aa7
-469B     12 4a 69   lcall    0x4a69
-469E     e0         movx     A, @DPTR
-469F     fe         mov      R6, A
-46A0     90 0a 1b   mov      DPTR, #0xa1b
-46A3     e0         movx     A, @DPTR
-46A4     fc         mov      R4, A
-46A5     a3         inc      DPTR
-46A6     e0         movx     A, @DPTR
-46A7     f5 82      mov      DPL, A
-46A9     8c 83      mov      DPH, R4
-46AB     ee         mov      A, R6
-46AC     f0         movx     @DPTR, A
-46AD     90 0a 1e   mov      DPTR, #0xa1e
-46B0     e0         movx     A, @DPTR
-46B1     70 10      jnz      0x46c3
-46B3     12 4a df   lcall    0x4adf
-46B6     12 4a 4d   lcall    0x4a4d
-46C3     90 0a 1e   mov      DPTR, #0xa1e
-46C6     e0         movx     A, @DPTR
-46C7     14         dec      A
-46C8     f0         movx     @DPTR, A
-46C9     90 0a 1b   mov      DPTR, #0xa1b
-46CC     12 4b 22   lcall    0x4b22
-46CF     90 0a 1e   mov      DPTR, #0xa1e
-46D2     e0         movx     A, @DPTR
-46D3     ff         mov      R7, A
-46D4     b4 01 07   cjne     A, #0x1, 0x46de
-46D7     12 4a 5a   lcall    0x4a5a
-46DA     e0         movx     A, @DPTR
-46DB     44 20      orl      A, #0x20
-46DD     f0         movx     @DPTR, A
-46DE     90 0a 17   mov      DPTR, #0xa17
-46E1     e0         movx     A, @DPTR
-46E2     12 4a d3   lcall    0x4ad3
-46E5     12 4a 69   lcall    0x4a69
-46E8     74 fe      mov      A, #0xfe
-46EA     f0         movx     @DPTR, A
-46EB     ef         mov      A, R7
-46EC     60 03      jz       0x46f1
-46EE     02 46 66   ljmp     0x4666
-46F1     12 4a fb   lcall    0x4afb
-46F4     90 0a 1d   mov      DPTR, #0xa1d
-46F7     04         inc      A
-46F8     f0         movx     @DPTR, A
+4666     30 8f 03 jnb      0x8f, 0x466c
+4669     02 46 f9 ljmp     0x46f9
+466C     90 0a 17 mov      DPTR, #0xa17
+466F     12 4a d1 lcall    0x4ad1
+4672     12 4a 69 lcall    0x4a69
+4675     e0 - -   movx     A, @DPTR
+4676     fe - -   mov      R6, A
+4677     54 fc -  anl      A, #0xfc
+4679     60 eb -  jz       0x4666
+467B     ee - -   mov      A, R6
+467C     54 7c -  anl      A, #0x7c
+467E     60 13 -  jz       0x4693
+4680     ee - -   mov      A, R6
+4681     54 18 -  anl      A, #0x18
+4683     60 03 -  jz       0x4688
+4685     12 43 a5 lcall    0x43a5
+4688     12 4a fb lcall    0x4afb
+468B     e4 - -   clr      A
+468C     90 0a 1d mov      DPTR, #0xa1d
+468F     f0 - -   movx     @DPTR, A
+4690     02 46 f9 ljmp     0x46f9
+4693     90 0a 17 mov      DPTR, #0xa17
+4696     e0 - -   movx     A, @DPTR
+4697     ff - -   mov      R7, A
+4698     12 4a a7 lcall    0x4aa7
+469B     12 4a 69 lcall    0x4a69
+469E     e0 - -   movx     A, @DPTR
+469F     fe - -   mov      R6, A
+46A0     90 0a 1b mov      DPTR, #0xa1b
+46A3     e0 - -   movx     A, @DPTR
+46A4     fc - -   mov      R4, A
+46A5     a3 - -   inc      DPTR
+46A6     e0 - -   movx     A, @DPTR
+46A7     f5 82 -  mov      DPL, A
+46A9     8c 83 -  mov      DPH, R4
+46AB     ee - -   mov      A, R6
+46AC     f0 - -   movx     @DPTR, A
+46AD     90 0a 1e mov      DPTR, #0xa1e
+46B0     e0 - -   movx     A, @DPTR
+46B1     70 10 -  jnz      0x46c3
+46B3     12 4a df lcall    0x4adf
+46B6     12 4a 4d lcall    0x4a4d
+46C3     90 0a 1e mov      DPTR, #0xa1e
+46C6     e0 - -   movx     A, @DPTR
+46C7     14 - -   dec      A
+46C8     f0 - -   movx     @DPTR, A
+46C9     90 0a 1b mov      DPTR, #0xa1b
+46CC     12 4b 22 lcall    0x4b22
+46CF     90 0a 1e mov      DPTR, #0xa1e
+46D2     e0 - -   movx     A, @DPTR
+46D3     ff - -   mov      R7, A
+46D4     b4 01 07 cjne     A, #0x1, 0x46de
+46D7     12 4a 5a lcall    0x4a5a
+46DA     e0 - -   movx     A, @DPTR
+46DB     44 20 -  orl      A, #0x20
+46DD     f0 - -   movx     @DPTR, A
+46DE     90 0a 17 mov      DPTR, #0xa17
+46E1     e0 - -   movx     A, @DPTR
+46E2     12 4a d3 lcall    0x4ad3
+46E5     12 4a 69 lcall    0x4a69
+46E8     74 fe -  mov      A, #0xfe
+46EA     f0 - -   movx     @DPTR, A
+46EB     ef - -   mov      A, R7
+46EC     60 03 -  jz       0x46f1
+46EE     02 46 66 ljmp     0x4666
+46F1     12 4a fb lcall    0x4afb
+46F4     90 0a 1d mov      DPTR, #0xa1d
+46F7     04 - -   inc      A
+46F8     f0 - -   movx     @DPTR, A

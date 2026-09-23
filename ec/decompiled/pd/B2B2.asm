@@ -4,9 +4,9 @@
 ; This is the machine code. The decompiled C for this address is B2B2.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-B2B2     24 46      add      A, #0x46
-B2B4     f5 82      mov      DPL, A
-B2B6     e4         clr      A
-B2B7     34 09      addc     A, #0x9
-B2B9     f5 83      mov      DPH, A
-B2BB     22         ret      
+B2B2     24 46 -  add      A, #0x46
+B2B4     f5 82 -  mov      DPL, A
+B2B6     e4 - -   clr      A
+B2B7     34 09 -  addc     A, #0x9
+B2B9     f5 83 -  mov      DPH, A
+B2BB     22 - -   ret      

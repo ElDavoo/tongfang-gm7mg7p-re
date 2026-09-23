@@ -6,25 +6,25 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-3DCE     c2 8e      clr      0x8e
-3DD0     c2 ab      clr      0xab
-3DD2     00         nop      
-3DD3     00         nop      
-3DD4     00         nop      
-3DD5     00         nop      
-3DD6     12 43 7e   lcall    0x437e
-3DD9     20 8f 17   jb       0x8f, 0x3df3
-3DDC     90 13 04   mov      DPTR, #0x1304
-3DDF     e0         movx     A, @DPTR
-3DE0     30 e1 f6   jnb      0xe1, 0x3dd9
-3DE3     e0         movx     A, @DPTR
-3DE4     20 e3 08   jb       0xe3, 0x3def
-3DE7     12 43 89   lcall    0x4389
-3DEA     af 32      mov      R7, 0x32
-3DEC     12 09 a2   lcall    0x09a2
-3DEF     12 43 68   lcall    0x4368
-3DF2     22         ret      
-3DF3     12 43 68   lcall    0x4368
-3DF6     7f 01      mov      R7, #0x1
-3DF8     12 3f a4   lcall    0x3fa4
-3DFB     22         ret      
+3DCE     c2 8e -  clr      0x8e
+3DD0     c2 ab -  clr      0xab
+3DD2     00 - -   nop      
+3DD3     00 - -   nop      
+3DD4     00 - -   nop      
+3DD5     00 - -   nop      
+3DD6     12 43 7e lcall    0x437e
+3DD9     20 8f 17 jb       0x8f, 0x3df3
+3DDC     90 13 04 mov      DPTR, #0x1304
+3DDF     e0 - -   movx     A, @DPTR
+3DE0     30 e1 f6 jnb      0xe1, 0x3dd9
+3DE3     e0 - -   movx     A, @DPTR
+3DE4     20 e3 08 jb       0xe3, 0x3def
+3DE7     12 43 89 lcall    0x4389
+3DEA     af 32 -  mov      R7, 0x32
+3DEC     12 09 a2 lcall    0x09a2
+3DEF     12 43 68 lcall    0x4368
+3DF2     22 - -   ret      
+3DF3     12 43 68 lcall    0x4368
+3DF6     7f 01 -  mov      R7, #0x1
+3DF8     12 3f a4 lcall    0x3fa4
+3DFB     22 - -   ret      

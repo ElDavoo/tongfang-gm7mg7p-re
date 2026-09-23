@@ -13,14 +13,14 @@ void FUN_CODE_eada(undefined1 param_1,undefined1 param_2,undefined1 param_3)
   char cVar2;
   
   DAT_EXTMEM_0a47 = param_2;
-  FUN_CODE_f095(param_3);
+  store_a_then_three_zeros(param_3);
   FUN_CODE_eac6();
   DAT_EXTMEM_0a53 = 1;
   DAT_EXTMEM_0a54 = 0;
   DAT_EXTMEM_0a55 = 4;
   DAT_EXTMEM_0a56 = 2;
   DAT_EXTMEM_0a57 = 0;
-  FUN_CODE_e3d0(0x4c,0,2,2);
+  write_103f_through_0a56_pointer(0x4c,0,2,2);
   DAT_EXTMEM_2272 = DAT_EXTMEM_0200 + -0x30;
   DAT_EXTMEM_2273 = DAT_EXTMEM_0203 + -0x30 + DAT_EXTMEM_0202 * '\x10';
   DAT_EXTMEM_00c0 = '\0';
@@ -31,13 +31,13 @@ void FUN_CODE_eada(undefined1 param_1,undefined1 param_2,undefined1 param_3)
   DAT_EXTMEM_0a5c = 0;
   cVar2 = '\x01';
   cVar1 = DAT_EXTMEM_0a48;
-  FUN_CODE_445e(DAT_EXTMEM_0a48,0xc,0);
+  stage_and_commit_0a56_block(DAT_EXTMEM_0a48,0xc,0);
   if (cVar2 == '\0') {
-    cVar2 = FUN_CODE_ed74();
+    cVar2 = write_0a59_block_then_445e();
     if (cVar2 == '\0') {
-      cVar2 = FUN_CODE_ed74();
+      cVar2 = write_0a59_block_then_445e();
       if (cVar2 == '\0') {
-        FUN_CODE_ed6e();
+        forward_to_ead1_return_0();
         return;
       }
     }
@@ -49,34 +49,34 @@ void FUN_CODE_eada(undefined1 param_1,undefined1 param_2,undefined1 param_3)
   cVar2 = DAT_EXTMEM_2272;
   if ((DAT_EXTMEM_00c0 == DAT_EXTMEM_2272) &&
      (cVar2 = DAT_EXTMEM_2273, DAT_EXTMEM_00c1 == DAT_EXTMEM_2273)) {
-    FUN_CODE_ead1();
+    forward_to_8648_after_1978_c43f();
     return;
   }
   DAT_EXTMEM_0fa0 = DAT_EXTMEM_0a48;
-  FUN_CODE_ed9b();
-  FUN_CODE_ed9b();
-  FUN_CODE_e9de();
-  FUN_CODE_e570();
+  call_0ea2_with_0xfa();
+  call_0ea2_with_0xfa();
+  rmw_1603_and_wait_tf1_2500_times();
+  probe_c0_c1_expect_88_51_or_53();
   if (cVar2 == '\0') {
-    FUN_CODE_ed52();
+    write_1c41_12_copy_0a49_0a4a_clear_1601_bit4();
     return;
   }
-  FUN_CODE_ea94();
-  FUN_CODE_ea94();
-  FUN_CODE_ea94();
-  FUN_CODE_eaad();
-  FUN_CODE_eaad();
-  FUN_CODE_eaad();
+  three_calls_then_4777_r3_04();
+  three_calls_then_4777_r3_04();
+  three_calls_then_4777_r3_04();
+  set_dptr_0f60_then_4777_r3_03();
+  set_dptr_0f60_then_4777_r3_03();
+  set_dptr_0f60_then_4777_r3_03();
   DAT_EXTMEM_1601 = DAT_EXTMEM_1601 | 0x10;
-  FUN_CODE_e5be();
+  write_ff_f8_a5_5a_and_retry();
   if (cVar2 == '\0') {
-    FUN_CODE_ed52();
+    write_1c41_12_copy_0a49_0a4a_clear_1601_bit4();
     return;
   }
   FUN_CODE_1510();
   switch_case_dispatch(DAT_EXTMEM_0a4b);
   nop();
-  FUN_CODE_e8ec(param_1,cVar1 + -1);
+  mask_1603_and_wait_tf1(param_1,cVar1 + -1);
   return;
 }
 

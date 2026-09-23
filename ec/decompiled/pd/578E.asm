@@ -4,11 +4,11 @@
 ; This is the machine code. The decompiled C for this address is 578E.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-578E     e0         movx     A, @DPTR
-578F     75 f0 77   mov      B, #0x77
-5792     a4         mul      AB
-5793     24 9b      add      A, #0x9b
-5795     f9         mov      R1, A
-5796     74 08      mov      A, #0x8
-5798     35 f0      addc     A, B
-579A     22         ret      
+578E     e0 - -   movx     A, @DPTR
+578F     75 f0 77 mov      B, #0x77
+5792     a4 - -   mul      AB
+5793     24 9b -  add      A, #0x9b
+5795     f9 - -   mov      R1, A
+5796     74 08 -  mov      A, #0x8
+5798     35 f0 -  addc     A, B
+579A     22 - -   ret      

@@ -6,68 +6,68 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-C0A8     90 04 bd   mov      DPTR, #0x4bd
-C0AB     e0         movx     A, @DPTR
-C0AC     24 01      add      A, #0x1
-C0AE     b4 3c 04   cjne     A, #0x3c, 0xc0b5
-C0B1     e4         clr      A
-C0B2     f0         movx     @DPTR, A
-C0B3     80 04      sjmp     0xc0b9
-C0B5     50 fa      jnc      0xc0b1
-C0B7     f0         movx     @DPTR, A
-C0B8     22         ret      
-C0B9     90 04 99   mov      DPTR, #0x499
-C0BC     e0         movx     A, @DPTR
-C0BD     20 e2 05   jb       0xe2, 0xc0c5
-C0C0     20 e1 0d   jb       0xe1, 0xc0d0
-C0C3     80 14      sjmp     0xc0d9
-C0C5     90 05 7a   mov      DPTR, #0x57a
-C0C8     e0         movx     A, @DPTR
-C0C9     24 01      add      A, #0x1
-C0CB     40 0c      jc       0xc0d9
-C0CD     f0         movx     @DPTR, A
-C0CE     80 09      sjmp     0xc0d9
-C0D0     90 05 79   mov      DPTR, #0x579
-C0D3     e0         movx     A, @DPTR
-C0D4     24 01      add      A, #0x1
-C0D6     40 01      jc       0xc0d9
-C0D8     f0         movx     @DPTR, A
-C0D9     90 04 be   mov      DPTR, #0x4be
-C0DC     e0         movx     A, @DPTR
-C0DD     7a 00      mov      R2, #0x0
-C0DF     24 01      add      A, #0x1
-C0E1     50 02      jnc      0xc0e5
-C0E3     7a 01      mov      R2, #0x1
-C0E5     f0         movx     @DPTR, A
-C0E6     f9         mov      R1, A
-C0E7     90 04 bf   mov      DPTR, #0x4bf
-C0EA     e0         movx     A, @DPTR
-C0EB     2a         add      A, R2
-C0EC     40 01      jc       0xc0ef
-C0EE     f0         movx     @DPTR, A
-C0EF     fa         mov      R2, A
-C0F0     7d 04      mov      R5, #0x4
-C0F2     90 05 7b   mov      DPTR, #0x57b
-C0F5     e0         movx     A, @DPTR
-C0F6     fe         mov      R6, A
-C0F7     90 04 72   mov      DPTR, #0x472
-C0FA     e0         movx     A, @DPTR
-C0FB     54 20      anl      A, #0x20
-C0FD     60 07      jz       0xc106
-C0FF     7d 08      mov      R5, #0x8
-C101     90 05 7c   mov      DPTR, #0x57c
-C104     e0         movx     A, @DPTR
-C105     fe         mov      R6, A
-C106     ee         mov      A, R6
-C107     75 f0 3c   mov      B, #0x3c
-C10A     a4         mul      AB
-C10B     ac f0      mov      R4, B
-C10D     fb         mov      R3, A
-C10E     12 88 63   lcall    0x8863
-C111     50 08      jnc      0xc11b
-C113     90 04 9c   mov      DPTR, #0x49c
-C116     e0         movx     A, @DPTR
-C117     54 f3      anl      A, #0xf3
-C119     4d         orl      A, R5
-C11A     f0         movx     @DPTR, A
-C11B     22         ret      
+C0A8     90 04 bd mov      DPTR, #0x4bd
+C0AB     e0 - -   movx     A, @DPTR
+C0AC     24 01 -  add      A, #0x1
+C0AE     b4 3c 04 cjne     A, #0x3c, 0xc0b5
+C0B1     e4 - -   clr      A
+C0B2     f0 - -   movx     @DPTR, A
+C0B3     80 04 -  sjmp     0xc0b9
+C0B5     50 fa -  jnc      0xc0b1
+C0B7     f0 - -   movx     @DPTR, A
+C0B8     22 - -   ret      
+C0B9     90 04 99 mov      DPTR, #0x499
+C0BC     e0 - -   movx     A, @DPTR
+C0BD     20 e2 05 jb       0xe2, 0xc0c5
+C0C0     20 e1 0d jb       0xe1, 0xc0d0
+C0C3     80 14 -  sjmp     0xc0d9
+C0C5     90 05 7a mov      DPTR, #0x57a
+C0C8     e0 - -   movx     A, @DPTR
+C0C9     24 01 -  add      A, #0x1
+C0CB     40 0c -  jc       0xc0d9
+C0CD     f0 - -   movx     @DPTR, A
+C0CE     80 09 -  sjmp     0xc0d9
+C0D0     90 05 79 mov      DPTR, #0x579
+C0D3     e0 - -   movx     A, @DPTR
+C0D4     24 01 -  add      A, #0x1
+C0D6     40 01 -  jc       0xc0d9
+C0D8     f0 - -   movx     @DPTR, A
+C0D9     90 04 be mov      DPTR, #0x4be
+C0DC     e0 - -   movx     A, @DPTR
+C0DD     7a 00 -  mov      R2, #0x0
+C0DF     24 01 -  add      A, #0x1
+C0E1     50 02 -  jnc      0xc0e5
+C0E3     7a 01 -  mov      R2, #0x1
+C0E5     f0 - -   movx     @DPTR, A
+C0E6     f9 - -   mov      R1, A
+C0E7     90 04 bf mov      DPTR, #0x4bf
+C0EA     e0 - -   movx     A, @DPTR
+C0EB     2a - -   add      A, R2
+C0EC     40 01 -  jc       0xc0ef
+C0EE     f0 - -   movx     @DPTR, A
+C0EF     fa - -   mov      R2, A
+C0F0     7d 04 -  mov      R5, #0x4
+C0F2     90 05 7b mov      DPTR, #0x57b
+C0F5     e0 - -   movx     A, @DPTR
+C0F6     fe - -   mov      R6, A
+C0F7     90 04 72 mov      DPTR, #0x472
+C0FA     e0 - -   movx     A, @DPTR
+C0FB     54 20 -  anl      A, #0x20
+C0FD     60 07 -  jz       0xc106
+C0FF     7d 08 -  mov      R5, #0x8
+C101     90 05 7c mov      DPTR, #0x57c
+C104     e0 - -   movx     A, @DPTR
+C105     fe - -   mov      R6, A
+C106     ee - -   mov      A, R6
+C107     75 f0 3c mov      B, #0x3c
+C10A     a4 - -   mul      AB
+C10B     ac f0 -  mov      R4, B
+C10D     fb - -   mov      R3, A
+C10E     12 88 63 lcall    0x8863
+C111     50 08 -  jnc      0xc11b
+C113     90 04 9c mov      DPTR, #0x49c
+C116     e0 - -   movx     A, @DPTR
+C117     54 f3 -  anl      A, #0xf3
+C119     4d - -   orl      A, R5
+C11A     f0 - -   movx     @DPTR, A
+C11B     22 - -   ret      

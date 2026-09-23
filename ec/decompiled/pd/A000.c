@@ -15,49 +15,49 @@ void FUN_CODE_a000(byte param_1,byte *param_2,undefined1 *param_3)
   *param_2 = param_1;
   *param_3 = 0xa4;
   bVar3 = *(char *)CONCAT11('\b' - (((0x1d < param_1) << 7) >> 7),param_1 - 0x1e) == '\x04';
-  FUN_CODE_b2a6(0x7df,bVar3);
-  FUN_CODE_0f1f(7);
-  cVar2 = FUN_CODE_b24d(0xf,0,0,0,bVar3 & 0xf);
+  mov_a_from_r7(0x7df,bVar3);
+  shr_32bit_r4r7_by_r0(7);
+  cVar2 = broadcast_a_to_r0_r2_then_sub_r4_r7(0xf,0,0,0,bVar3 & 0xf);
   bVar3 = cVar2 == '\0';
-  FUN_CODE_b2a6(0x7e0);
-  FUN_CODE_0f1f(0x12);
+  mov_a_from_r7(0x7e0);
+  shr_32bit_r4r7_by_r0(0x12);
   bVar3 = bVar3 & 3;
   DAT_EXTMEM_07e1 = bVar3;
-  FUN_CODE_b2a7(0,0x7e2);
-  FUN_CODE_0f1f(0xd);
+  write_a_to_dptr_then_read4_from_07d8(0,0x7e2);
+  shr_32bit_r4r7_by_r0(0xd);
   bVar3 = bVar3 & 0xf;
   if (DAT_EXTMEM_07dc == '\0') {
-    FUN_CODE_b2cd(bVar3);
+    read3_from_07d5_into_r3_r1(bVar3);
     uVar1 = 2;
   }
   else if ((DAT_EXTMEM_07dc == '\x01') || (DAT_EXTMEM_07dc == '\x02')) {
-    FUN_CODE_b2cd(bVar3);
+    read3_from_07d5_into_r3_r1(bVar3);
     uVar1 = 3;
   }
   else {
-    FUN_CODE_b2cd(bVar3);
+    read3_from_07d5_into_r3_r1(bVar3);
     uVar1 = 0;
   }
-  FUN_CODE_0d70(0,uVar1);
+  write_two_bytes_by_ptr_kind(0,uVar1);
   if (DAT_EXTMEM_07dd == '\x01') {
-    FUN_CODE_b2cd();
+    read3_from_07d5_into_r3_r1();
     uVar1 = 0x3c;
   }
   else if (DAT_EXTMEM_07dd == '\x02') {
-    FUN_CODE_b2f7(0x7d5);
+    read3_from_dptr_then_set_dptr_0002(0x7d5);
     uVar1 = 100;
   }
   else {
-    FUN_CODE_b2f7(0x7d5);
+    read3_from_dptr_then_set_dptr_0002(0x7d5);
     uVar1 = 0;
   }
-  FUN_CODE_0c58(uVar1);
+  write_byte_at_dptr_plus_r1r2_by_tag(uVar1);
   bVar4 = DAT_EXTMEM_07e2 << 5 |
           DAT_EXTMEM_07e1 << 3 |
           DAT_EXTMEM_07e0 * '\x04' | DAT_EXTMEM_07de | DAT_EXTMEM_07df * '\x02';
-  FUN_CODE_b2cd(bVar4);
-  FUN_CODE_0c58(bVar4,3);
-  FUN_CODE_0c58(bVar3,4);
+  read3_from_07d5_into_r3_r1(bVar4);
+  write_byte_at_dptr_plus_r1r2_by_tag(bVar4,3);
+  write_byte_at_dptr_plus_r1r2_by_tag(bVar3,4);
   return;
 }
 

@@ -17,37 +17,37 @@ void FUN_CODE_d7f4(char param_1,undefined1 param_2,undefined1 param_3,byte param
   
   FUN_CODE_d6c6();
   FUN_CODE_d8b9();
-  FUN_CODE_198a();
+  trampoline_to_c1e7();
   if (param_6 == '\0') {
-    FUN_CODE_1984();
+    trampoline_to_c10c();
     if (param_6 != '\0') {
-      FUN_CODE_19a8();
+      trampoline_to_c118();
       if (param_6 == '\0') {
         in_PSW = (DAT_EXTMEM_0399 < 6) << 7;
-        FUN_CODE_885b(DAT_EXTMEM_0399 - 6,2);
+        sub_r1r2_from_r3r4(DAT_EXTMEM_0399 - 6,2);
         if (in_PSW < '\0') goto LAB_CODE_d87f;
       }
 LAB_CODE_d864:
       bVar2 = 2;
       bVar1 = DAT_EXTMEM_0399;
-      FUN_CODE_885b();
+      sub_r1r2_from_r3r4();
       if (in_PSW < '\0') {
         bVar1 = 0;
         bVar2 = 0;
       }
       BANK0_R0 = bVar1;
       BANK0_R1 = bVar2;
-      FUN_CODE_a5a7(0,0x22);
+      mul_partial_products_r0_r1_r2_r3(0,0x22);
     }
 LAB_CODE_d87f:
-    FUN_CODE_888c(0x382);
+    write_r1r2_to_xdata_pair(0x382);
     BANK0_R2 = BANK0_R2 ^ 0xff;
     BANK0_R1 = BANK0_R1 ^ 0xff;
   }
   else {
     BANK0_R3 = param_2;
     BANK0_R4 = param_3;
-    FUN_CODE_885b(DAT_EXTMEM_0399,2);
+    sub_r1r2_from_r3r4(DAT_EXTMEM_0399,2);
     if (in_PSW < '\0') {
       FUN_CODE_d8b9();
       if ((DAT_EXTMEM_0367 >> 2 & 1) == 1) goto LAB_CODE_d864;
@@ -56,9 +56,9 @@ LAB_CODE_d87f:
     }
     BANK0_R0 = param_4;
     BANK0_R1 = param_5;
-    FUN_CODE_a5a7(0,0x22);
-    FUN_CODE_888c(0x382);
-    cVar3 = FUN_CODE_8898(0x834);
+    mul_partial_products_r0_r1_r2_r3(0,0x22);
+    write_r1r2_to_xdata_pair(0x382);
+    cVar3 = read_xdata_pair_to_b_and_a(0x834);
     if (cVar3 == '\0' && param_1 == '\0') goto LAB_CODE_d894;
   }
   if (DAT_EXTMEM_03bb != -1) {
@@ -66,10 +66,10 @@ LAB_CODE_d87f:
   }
 LAB_CODE_d894:
   if ((DAT_EXTMEM_0497 & 1) == 1) {
-    FUN_CODE_888c(0x50a);
-    FUN_CODE_888c(0x50c);
-    FUN_CODE_888c(0x50e);
-    FUN_CODE_888c(0x510);
+    write_r1r2_to_xdata_pair(0x50a);
+    write_r1r2_to_xdata_pair(0x50c);
+    write_r1r2_to_xdata_pair(0x50e);
+    write_r1r2_to_xdata_pair(0x510);
     return;
   }
   return;

@@ -18,12 +18,12 @@ void FUN_CODE_b73f(undefined1 param_1)
   DAT_EXTMEM_07d7 = 0;
   cVar4 = '\0';
   DAT_EXTMEM_07d6 = param_1;
-  FUN_CODE_0c7a(2,0x60,0);
+  mul_r7_r5_r4_into_r6r7(2,0x60,0);
   BANK0_R5 = uVar3;
   BANK0_R7 = bVar2;
   BANK0_R6 = cVar1;
-  FUN_CODE_128d(param_1,cVar4 + '\x04',1);
-  FUN_CODE_36cb();
+  fill_bytes_by_ptr_kind(param_1,cVar4 + '\x04',1);
+  read_07d6_tail_0c7a();
                     /* WARNING: Subroutine does not return */
   store_3byte_r3r2r1(0x7dc,BANK0_R7 + 0x32,(BANK0_R6 - (((0xcd < BANK0_R7) << 7) >> 7)) + '\x04',1);
 }

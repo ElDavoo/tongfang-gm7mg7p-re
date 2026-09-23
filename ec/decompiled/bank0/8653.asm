@@ -4,101 +4,101 @@
 ; This is the machine code. The decompiled C for this address is 8653.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-8653     7e 60      mov      R6, #0x60
-8655     7f f2      mov      R7, #0xf2
-8657     90 08 e6   mov      DPTR, #0x8e6
-865A     ee         mov      A, R6
-865B     f0         movx     @DPTR, A
-865C     a3         inc      DPTR
-865D     ef         mov      A, R7
-865E     f0         movx     @DPTR, A
-865F     12 ba 36   lcall    0xba36
-8662     12 71 51   lcall    0x7151
-8665     86 81      mov      0x81, @R0
-8667     00         nop      
-8668     86 ab      mov      0xab, @R0
-866A     03         rr       A
-866B     86 8b      mov      0x8b, @R0
-866D     04         inc      A
-866E     86 81      mov      0x81, @R0
-8670     05 86      inc      0x86
-8672     8d 06      mov      0x06, R5
-8674     86 b7      mov      0xb7, @R0
-8676     07         inc      @R1
-8677     86 9f      mov      0x9f, @R0
-8679     08         inc      R0
-867A     86 9f      mov      0x9f, @R0
-867C     09         inc      R1
-867D     00         nop      
-867E     00         nop      
-867F     86 8b      mov      0x8b, @R0
-8681     90 08 e6   mov      DPTR, #0x8e6
-8684     ee         mov      A, R6
-8685     f0         movx     @DPTR, A
-8686     a3         inc      DPTR
-8687     ef         mov      A, R7
-8688     f0         movx     @DPTR, A
-8689     80 51      sjmp     0x86dc
-86DC     90 08 e6   mov      DPTR, #0x8e6
-86DF     12 b9 87   lcall    0xb987
-86E2     c0 83      push     DPH
-86E4     c0 82      push     DPL
-86E6     90 0a 50   mov      DPTR, #0xa50
-86E9     e0         movx     A, @DPTR
-86EA     d0 82      pop      DPL
-86EC     d0 83      pop      DPH
-86EE     12 bc 0e   lcall    0xbc0e
-86F1     e4         clr      A
-86F2     93         movc     A, @A+DPTR
-86F3     fe         mov      R6, A
-86F4     74 01      mov      A, #0x1
-86F6     93         movc     A, @A+DPTR
-86F7     f5 82      mov      DPL, A
-86F9     8e 83      mov      DPH, R6
-86FB     e4         clr      A
-86FC     93         movc     A, @A+DPTR
-86FD     90 07 39   mov      DPTR, #0x739
-8700     f0         movx     @DPTR, A
-8701     e4         clr      A
-8702     ff         mov      R7, A
-8703     90 08 e6   mov      DPTR, #0x8e6
-8706     e0         movx     A, @DPTR
-8707     fc         mov      R4, A
-8708     a3         inc      DPTR
-8709     e0         movx     A, @DPTR
-870A     f5 82      mov      DPL, A
-870C     8c 83      mov      DPH, R4
-870E     c0 83      push     DPH
-8710     c0 82      push     DPL
-8712     90 0a 50   mov      DPTR, #0xa50
-8715     e0         movx     A, @DPTR
-8716     d0 82      pop      DPL
-8718     d0 83      pop      DPH
-871A     12 bc 0e   lcall    0xbc0e
-871D     e4         clr      A
-871E     93         movc     A, @A+DPTR
-871F     fc         mov      R4, A
-8720     74 01      mov      A, #0x1
-8722     93         movc     A, @A+DPTR
-8723     f5 82      mov      DPL, A
-8725     8c 83      mov      DPH, R4
-8727     2f         add      A, R7
-8728     12 bb 60   lcall    0xbb60
-872B     fe         mov      R6, A
-872C     d3         setb     CY
-872D     94 64      subb     A, #0x64
-872F     40 09      jc       0x873a
-8731     90 0a 51   mov      DPTR, #0xa51
-8734     e0         movx     A, @DPTR
-8735     90 07 3a   mov      DPTR, #0x73a
-8738     f0         movx     @DPTR, A
-8739     22         ret      
-873A     90 0a 51   mov      DPTR, #0xa51
-873D     ee         mov      A, R6
-873E     f0         movx     @DPTR, A
-873F     90 07 3a   mov      DPTR, #0x73a
-8742     f0         movx     @DPTR, A
-8743     0f         inc      R7
-8744     ef         mov      A, R7
-8745     b4 10 bb   cjne     A, #0x10, 0x8703
-8748     22         ret      
+8653     7e 60 -  mov      R6, #0x60
+8655     7f f2 -  mov      R7, #0xf2
+8657     90 08 e6 mov      DPTR, #0x8e6
+865A     ee - -   mov      A, R6
+865B     f0 - -   movx     @DPTR, A
+865C     a3 - -   inc      DPTR
+865D     ef - -   mov      A, R7
+865E     f0 - -   movx     @DPTR, A
+865F     12 ba 36 lcall    0xba36
+8662     12 71 51 lcall    0x7151
+8665     86 81 -  mov      0x81, @R0
+8667     00 - -   nop      
+8668     86 ab -  mov      0xab, @R0
+866A     03 - -   rr       A
+866B     86 8b -  mov      0x8b, @R0
+866D     04 - -   inc      A
+866E     86 81 -  mov      0x81, @R0
+8670     05 86 -  inc      0x86
+8672     8d 06 -  mov      0x06, R5
+8674     86 b7 -  mov      0xb7, @R0
+8676     07 - -   inc      @R1
+8677     86 9f -  mov      0x9f, @R0
+8679     08 - -   inc      R0
+867A     86 9f -  mov      0x9f, @R0
+867C     09 - -   inc      R1
+867D     00 - -   nop      
+867E     00 - -   nop      
+867F     86 8b -  mov      0x8b, @R0
+8681     90 08 e6 mov      DPTR, #0x8e6
+8684     ee - -   mov      A, R6
+8685     f0 - -   movx     @DPTR, A
+8686     a3 - -   inc      DPTR
+8687     ef - -   mov      A, R7
+8688     f0 - -   movx     @DPTR, A
+8689     80 51 -  sjmp     0x86dc
+86DC     90 08 e6 mov      DPTR, #0x8e6
+86DF     12 b9 87 lcall    0xb987
+86E2     c0 83 -  push     DPH
+86E4     c0 82 -  push     DPL
+86E6     90 0a 50 mov      DPTR, #0xa50
+86E9     e0 - -   movx     A, @DPTR
+86EA     d0 82 -  pop      DPL
+86EC     d0 83 -  pop      DPH
+86EE     12 bc 0e lcall    0xbc0e
+86F1     e4 - -   clr      A
+86F2     93 - -   movc     A, @A+DPTR
+86F3     fe - -   mov      R6, A
+86F4     74 01 -  mov      A, #0x1
+86F6     93 - -   movc     A, @A+DPTR
+86F7     f5 82 -  mov      DPL, A
+86F9     8e 83 -  mov      DPH, R6
+86FB     e4 - -   clr      A
+86FC     93 - -   movc     A, @A+DPTR
+86FD     90 07 39 mov      DPTR, #0x739
+8700     f0 - -   movx     @DPTR, A
+8701     e4 - -   clr      A
+8702     ff - -   mov      R7, A
+8703     90 08 e6 mov      DPTR, #0x8e6
+8706     e0 - -   movx     A, @DPTR
+8707     fc - -   mov      R4, A
+8708     a3 - -   inc      DPTR
+8709     e0 - -   movx     A, @DPTR
+870A     f5 82 -  mov      DPL, A
+870C     8c 83 -  mov      DPH, R4
+870E     c0 83 -  push     DPH
+8710     c0 82 -  push     DPL
+8712     90 0a 50 mov      DPTR, #0xa50
+8715     e0 - -   movx     A, @DPTR
+8716     d0 82 -  pop      DPL
+8718     d0 83 -  pop      DPH
+871A     12 bc 0e lcall    0xbc0e
+871D     e4 - -   clr      A
+871E     93 - -   movc     A, @A+DPTR
+871F     fc - -   mov      R4, A
+8720     74 01 -  mov      A, #0x1
+8722     93 - -   movc     A, @A+DPTR
+8723     f5 82 -  mov      DPL, A
+8725     8c 83 -  mov      DPH, R4
+8727     2f - -   add      A, R7
+8728     12 bb 60 lcall    0xbb60
+872B     fe - -   mov      R6, A
+872C     d3 - -   setb     CY
+872D     94 64 -  subb     A, #0x64
+872F     40 09 -  jc       0x873a
+8731     90 0a 51 mov      DPTR, #0xa51
+8734     e0 - -   movx     A, @DPTR
+8735     90 07 3a mov      DPTR, #0x73a
+8738     f0 - -   movx     @DPTR, A
+8739     22 - -   ret      
+873A     90 0a 51 mov      DPTR, #0xa51
+873D     ee - -   mov      A, R6
+873E     f0 - -   movx     @DPTR, A
+873F     90 07 3a mov      DPTR, #0x73a
+8742     f0 - -   movx     @DPTR, A
+8743     0f - -   inc      R7
+8744     ef - -   mov      A, R7
+8745     b4 10 bb cjne     A, #0x10, 0x8703
+8748     22 - -   ret      

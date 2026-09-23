@@ -4,10 +4,10 @@
 ; This is the machine code. The decompiled C for this address is 9965.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-9965     75 f0 0c   mov      B, #0xc
-9968     a4         mul      AB
-9969     29         add      A, R1
-996A     f9         mov      R1, A
-996B     ea         mov      A, R2
-996C     35 f0      addc     A, B
-996E     22         ret      
+9965     75 f0 0c mov      B, #0xc
+9968     a4 - -   mul      AB
+9969     29 - -   add      A, R1
+996A     f9 - -   mov      R1, A
+996B     ea - -   mov      A, R2
+996C     35 f0 -  addc     A, B
+996E     22 - -   ret      

@@ -92,7 +92,7 @@ char FUN_CODE_22ef(undefined1 *param_1)
         return cVar2;
       }
       FUN_CODE_23f4(DAT_INTMEM_67);
-      FUN_CODE_10f1();
+      zero_xdata_200b();
       pbVar5 = &DAT_EXTMEM_1d04;
       FUN_CODE_2a8f(~DAT_EXTMEM_1d04);
       FUN_CODE_2a24();

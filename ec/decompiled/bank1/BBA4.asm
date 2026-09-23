@@ -6,48 +6,48 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-BBA4     90 04 91   mov      DPTR, #0x491
-BBA7     e0         movx     A, @DPTR
-BBA8     54 07      anl      A, #0x7
-BBAA     b4 01 03   cjne     A, #0x1, 0xbbb0
-BBAD     02 ba 43   ljmp     0xba43
-BBB0     90 04 94   mov      DPTR, #0x494
-BBB3     e0         movx     A, @DPTR
-BBB4     54 7f      anl      A, #0x7f
-BBB6     f0         movx     @DPTR, A
-BBB7     90 04 93   mov      DPTR, #0x493
-BBBA     e0         movx     A, @DPTR
-BBBB     30 e7 03   jnb      0xe7, 0xbbc1
-BBBE     02 bc aa   ljmp     0xbcaa
-BBC1     30 e5 03   jnb      0xe5, 0xbbc7
-BBC4     02 bc aa   ljmp     0xbcaa
-BBC7     90 05 78   mov      DPTR, #0x578
-BBCA     e0         movx     A, @DPTR
-BBCB     c3         clr      CY
-BBCC     94 1e      subb     A, #0x1e
-BBCE     40 03      jc       0xbbd3
-BBD0     02 bc aa   ljmp     0xbcaa
-BBD3     90 04 91   mov      DPTR, #0x491
-BBD6     e0         movx     A, @DPTR
-BBD7     54 c0      anl      A, #0xc0
-BBD9     44 05      orl      A, #0x5
-BBDB     f0         movx     @DPTR, A
-BBDC     90 01 80   mov      DPTR, #0x180
-BBDF     ad 82      mov      R5, DPL
-BBE1     ae 83      mov      R6, DPH
-BBE3     90 04 97   mov      DPTR, #0x497
-BBE6     e0         movx     A, @DPTR
-BBE7     20 e0 0b   jb       0xe0, 0xbbf5
-BBEA     90 04 03   mov      DPTR, #0x403
-BBED     e0         movx     A, @DPTR
-BBEE     c3         clr      CY
-BBEF     94 14      subb     A, #0x14
-BBF1     50 10      jnc      0xbc03
-BBF3     80 07      sjmp     0xbbfc
-BBF5     90 05 39   mov      DPTR, #0x539
-BBF8     e0         movx     A, @DPTR
-BBF9     b4 01 07   cjne     A, #0x1, 0xbc03
-BBFC     90 01 80   mov      DPTR, #0x180
-BBFF     ad 82      mov      R5, DPL
-BC01     ae 83      mov      R6, DPH
-BC03     80 27      sjmp     0xbc2c
+BBA4     90 04 91 mov      DPTR, #0x491
+BBA7     e0 - -   movx     A, @DPTR
+BBA8     54 07 -  anl      A, #0x7
+BBAA     b4 01 03 cjne     A, #0x1, 0xbbb0
+BBAD     02 ba 43 ljmp     0xba43
+BBB0     90 04 94 mov      DPTR, #0x494
+BBB3     e0 - -   movx     A, @DPTR
+BBB4     54 7f -  anl      A, #0x7f
+BBB6     f0 - -   movx     @DPTR, A
+BBB7     90 04 93 mov      DPTR, #0x493
+BBBA     e0 - -   movx     A, @DPTR
+BBBB     30 e7 03 jnb      0xe7, 0xbbc1
+BBBE     02 bc aa ljmp     0xbcaa
+BBC1     30 e5 03 jnb      0xe5, 0xbbc7
+BBC4     02 bc aa ljmp     0xbcaa
+BBC7     90 05 78 mov      DPTR, #0x578
+BBCA     e0 - -   movx     A, @DPTR
+BBCB     c3 - -   clr      CY
+BBCC     94 1e -  subb     A, #0x1e
+BBCE     40 03 -  jc       0xbbd3
+BBD0     02 bc aa ljmp     0xbcaa
+BBD3     90 04 91 mov      DPTR, #0x491
+BBD6     e0 - -   movx     A, @DPTR
+BBD7     54 c0 -  anl      A, #0xc0
+BBD9     44 05 -  orl      A, #0x5
+BBDB     f0 - -   movx     @DPTR, A
+BBDC     90 01 80 mov      DPTR, #0x180
+BBDF     ad 82 -  mov      R5, DPL
+BBE1     ae 83 -  mov      R6, DPH
+BBE3     90 04 97 mov      DPTR, #0x497
+BBE6     e0 - -   movx     A, @DPTR
+BBE7     20 e0 0b jb       0xe0, 0xbbf5
+BBEA     90 04 03 mov      DPTR, #0x403
+BBED     e0 - -   movx     A, @DPTR
+BBEE     c3 - -   clr      CY
+BBEF     94 14 -  subb     A, #0x14
+BBF1     50 10 -  jnc      0xbc03
+BBF3     80 07 -  sjmp     0xbbfc
+BBF5     90 05 39 mov      DPTR, #0x539
+BBF8     e0 - -   movx     A, @DPTR
+BBF9     b4 01 07 cjne     A, #0x1, 0xbc03
+BBFC     90 01 80 mov      DPTR, #0x180
+BBFF     ad 82 -  mov      R5, DPL
+BC01     ae 83 -  mov      R6, DPH
+BC03     80 27 -  sjmp     0xbc2c

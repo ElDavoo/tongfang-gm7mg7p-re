@@ -4,17 +4,17 @@
 ; This is the machine code. The decompiled C for this address is 5A43.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-5A43     30 30 33   jnb      0x30, 0x5a79
-5A46     35 37      addc     A, 0x37
-5A48     39         addc     A, R1
-5A49     3b         addc     A, R3
-5A4A     3e         addc     A, R6
-5A4B     45 48      orl      A, 0x48
-5A4D     ff         mov      R7, A
-5A4E     ff         mov      R7, A
-5A4F     ff         mov      R7, A
-5A50     ff         mov      R7, A
-5A51     ff         mov      R7, A
-5A52     00         nop      
-5A53     3c         addc     A, R4
-5A54     3c         addc     A, R4
+5A43     30 30 33 jnb      0x30, 0x5a79
+5A46     35 37 -  addc     A, 0x37
+5A48     39 - -   addc     A, R1
+5A49     3b - -   addc     A, R3
+5A4A     3e - -   addc     A, R6
+5A4B     45 48 -  orl      A, 0x48
+5A4D     ff - -   mov      R7, A
+5A4E     ff - -   mov      R7, A
+5A4F     ff - -   mov      R7, A
+5A50     ff - -   mov      R7, A
+5A51     ff - -   mov      R7, A
+5A52     00 - -   nop      
+5A53     3c - -   addc     A, R4
+5A54     3c - -   addc     A, R4

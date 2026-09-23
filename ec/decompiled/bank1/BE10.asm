@@ -6,59 +6,59 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-BE10     90 04 ff   mov      DPTR, #0x4ff
-BE13     e0         movx     A, @DPTR
-BE14     30 e4 03   jnb      0xe4, 0xbe1a
-BE17     02 bd 45   ljmp     0xbd45
-BE1A     30 e5 03   jnb      0xe5, 0xbe20
-BE1D     02 be 91   ljmp     0xbe91
-BE20     90 04 90   mov      DPTR, #0x490
-BE23     e0         movx     A, @DPTR
-BE24     30 e7 03   jnb      0xe7, 0xbe2a
-BE27     02 bf 0e   ljmp     0xbf0e
-BE2A     90 04 93   mov      DPTR, #0x493
-BE2D     e0         movx     A, @DPTR
-BE2E     30 e6 03   jnb      0xe6, 0xbe34
-BE31     02 bd 45   ljmp     0xbd45
-BE34     90 08 98   mov      DPTR, #0x898
-BE37     74 00      mov      A, #0x0
-BE39     f0         movx     @DPTR, A
-BE3A     90 04 91   mov      DPTR, #0x491
-BE3D     e0         movx     A, @DPTR
-BE3E     54 c0      anl      A, #0xc0
-BE40     44 01      orl      A, #0x1
-BE42     f0         movx     @DPTR, A
-BE43     90 04 97   mov      DPTR, #0x497
-BE46     e0         movx     A, @DPTR
-BE47     20 e0 0b   jb       0xe0, 0xbe55
-BE4A     90 04 03   mov      DPTR, #0x403
-BE4D     e0         movx     A, @DPTR
-BE4E     c3         clr      CY
-BE4F     94 14      subb     A, #0x14
-BE51     50 3e      jnc      0xbe91
-BE53     80 07      sjmp     0xbe5c
-BE55     90 05 39   mov      DPTR, #0x539
-BE58     e0         movx     A, @DPTR
-BE59     b4 01 35   cjne     A, #0x1, 0xbe91
-BE5C     90 06 e6   mov      DPTR, #0x6e6
-BE5F     e0         movx     A, @DPTR
-BE60     b4 05 02   cjne     A, #0x5, 0xbe65
-BE63     80 22      sjmp     0xbe87
-BE65     b4 03 02   cjne     A, #0x3, 0xbe6a
-BE68     80 1d      sjmp     0xbe87
-BE6A     12 1a b0   lcall    0x1ab0
-BE6D     ef         mov      A, R7
-BE6E     b4 01 02   cjne     A, #0x1, 0xbe73
-BE71     80 0a      sjmp     0xbe7d
-BE73     90 0f 80   mov      DPTR, #0xf80
-BE76     ad 82      mov      R5, DPL
-BE78     ae 83      mov      R6, DPH
-BE7A     02 bf 3a   ljmp     0xbf3a
-BE7D     90 08 00   mov      DPTR, #0x800
-BE80     ad 82      mov      R5, DPL
-BE82     ae 83      mov      R6, DPH
-BE84     02 bf 3a   ljmp     0xbf3a
-BE87     90 0f 80   mov      DPTR, #0xf80
-BE8A     ad 82      mov      R5, DPL
-BE8C     ae 83      mov      R6, DPH
-BE8E     02 bf 3a   ljmp     0xbf3a
+BE10     90 04 ff mov      DPTR, #0x4ff
+BE13     e0 - -   movx     A, @DPTR
+BE14     30 e4 03 jnb      0xe4, 0xbe1a
+BE17     02 bd 45 ljmp     0xbd45
+BE1A     30 e5 03 jnb      0xe5, 0xbe20
+BE1D     02 be 91 ljmp     0xbe91
+BE20     90 04 90 mov      DPTR, #0x490
+BE23     e0 - -   movx     A, @DPTR
+BE24     30 e7 03 jnb      0xe7, 0xbe2a
+BE27     02 bf 0e ljmp     0xbf0e
+BE2A     90 04 93 mov      DPTR, #0x493
+BE2D     e0 - -   movx     A, @DPTR
+BE2E     30 e6 03 jnb      0xe6, 0xbe34
+BE31     02 bd 45 ljmp     0xbd45
+BE34     90 08 98 mov      DPTR, #0x898
+BE37     74 00 -  mov      A, #0x0
+BE39     f0 - -   movx     @DPTR, A
+BE3A     90 04 91 mov      DPTR, #0x491
+BE3D     e0 - -   movx     A, @DPTR
+BE3E     54 c0 -  anl      A, #0xc0
+BE40     44 01 -  orl      A, #0x1
+BE42     f0 - -   movx     @DPTR, A
+BE43     90 04 97 mov      DPTR, #0x497
+BE46     e0 - -   movx     A, @DPTR
+BE47     20 e0 0b jb       0xe0, 0xbe55
+BE4A     90 04 03 mov      DPTR, #0x403
+BE4D     e0 - -   movx     A, @DPTR
+BE4E     c3 - -   clr      CY
+BE4F     94 14 -  subb     A, #0x14
+BE51     50 3e -  jnc      0xbe91
+BE53     80 07 -  sjmp     0xbe5c
+BE55     90 05 39 mov      DPTR, #0x539
+BE58     e0 - -   movx     A, @DPTR
+BE59     b4 01 35 cjne     A, #0x1, 0xbe91
+BE5C     90 06 e6 mov      DPTR, #0x6e6
+BE5F     e0 - -   movx     A, @DPTR
+BE60     b4 05 02 cjne     A, #0x5, 0xbe65
+BE63     80 22 -  sjmp     0xbe87
+BE65     b4 03 02 cjne     A, #0x3, 0xbe6a
+BE68     80 1d -  sjmp     0xbe87
+BE6A     12 1a b0 lcall    0x1ab0
+BE6D     ef - -   mov      A, R7
+BE6E     b4 01 02 cjne     A, #0x1, 0xbe73
+BE71     80 0a -  sjmp     0xbe7d
+BE73     90 0f 80 mov      DPTR, #0xf80
+BE76     ad 82 -  mov      R5, DPL
+BE78     ae 83 -  mov      R6, DPH
+BE7A     02 bf 3a ljmp     0xbf3a
+BE7D     90 08 00 mov      DPTR, #0x800
+BE80     ad 82 -  mov      R5, DPL
+BE82     ae 83 -  mov      R6, DPH
+BE84     02 bf 3a ljmp     0xbf3a
+BE87     90 0f 80 mov      DPTR, #0xf80
+BE8A     ad 82 -  mov      R5, DPL
+BE8C     ae 83 -  mov      R6, DPH
+BE8E     02 bf 3a ljmp     0xbf3a

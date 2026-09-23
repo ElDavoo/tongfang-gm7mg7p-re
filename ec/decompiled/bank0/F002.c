@@ -37,7 +37,7 @@ void FUN_CODE_f002(char param_1,byte *param_2,char param_3)
     return;
   }
   if (param_1 == '\0') {
-    FUN_CODE_f077(param_3 + '\x01');
+    ret_immediately(param_3 + '\x01');
     return;
   }
   DAT_EXTMEM_0fc0 = DAT_EXTMEM_0fc0 ^ 0x10;

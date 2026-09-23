@@ -4,7 +4,7 @@
 ; This is the machine code. The decompiled C for this address is 987F.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-987F     f9         mov      R1, A
-9880     e4         clr      A
-9881     3a         addc     A, R2
-9882     fa         mov      R2, A
+987F     f9 - -   mov      R1, A
+9880     e4 - -   clr      A
+9881     3a - -   addc     A, R2
+9882     fa - -   mov      R2, A

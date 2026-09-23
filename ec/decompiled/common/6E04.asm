@@ -4,10 +4,10 @@
 ; This is the machine code. The decompiled C for this address is 6E04.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-6E04     40 18      jc       0x6e1e
-6E06     23         rl       A
-6E07     02 18 03   ljmp     0x1803
-6E1E     09         inc      R1
-6E1F     00         nop      
-6E20     1c         dec      R4
-6E21     22         ret      
+6E04     40 18 -  jc       0x6e1e
+6E06     23 - -   rl       A
+6E07     02 18 03 ljmp     0x1803
+6E1E     09 - -   inc      R1
+6E1F     00 - -   nop      
+6E20     1c - -   dec      R4
+6E21     22 - -   ret      

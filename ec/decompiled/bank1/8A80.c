@@ -7,7 +7,7 @@
 void switchD_CODE:8aa6::caseD_0(void)
 
 {
-  FUN_CODE_8aa7();
+  clear_06f9_bits_0_3_then_call_abee();
   return;
 }
 

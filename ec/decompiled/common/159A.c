@@ -9,7 +9,7 @@
 void FUN_CODE_159a(void)
 
 {
-  bl51_bank_select_0(FUN_CODE_c251);
+  bl51_bank_select_0(test_1665_bit0_inverted);
   return;
 }
 

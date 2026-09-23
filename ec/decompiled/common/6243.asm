@@ -4,26 +4,26 @@
 ; This is the machine code. The decompiled C for this address is 6243.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-6243     90 9b a6   mov      DPTR, #0x9ba6
-6246     b1 bc      acall    0x65bc
-6248     c8         xch      A, R0
-6249     00         nop      
-624A     05 05      inc      0x05
-624C     05 0b      inc      0x0b
-624E     0b         inc      R3
-624F     0b         inc      R3
-6250     10 10 10   jbc      0x10, 0x6263
-6253     16         dec      @R0
-6254     16         dec      @R0
-6255     16         dec      @R0
-6256     1b         dec      R3
-6257     1b         dec      R3
-6258     1b         dec      R3
-6259     21 21      ajmp     0x6121
-6263     9b         subb     A, R3
-6264     90 85 7a   mov      DPTR, #0x857a
-6267     74 6f      mov      A, #0x6f
-6269     63 58 4d   xrl      0x58, #0x4d
-626C     42 37      orl      0x37, A
-626E     2c         add      A, R4
-626F     21 16      ajmp     0x6116
+6243     90 9b a6 mov      DPTR, #0x9ba6
+6246     b1 bc -  acall    0x65bc
+6248     c8 - -   xch      A, R0
+6249     00 - -   nop      
+624A     05 05 -  inc      0x05
+624C     05 0b -  inc      0x0b
+624E     0b - -   inc      R3
+624F     0b - -   inc      R3
+6250     10 10 10 jbc      0x10, 0x6263
+6253     16 - -   dec      @R0
+6254     16 - -   dec      @R0
+6255     16 - -   dec      @R0
+6256     1b - -   dec      R3
+6257     1b - -   dec      R3
+6258     1b - -   dec      R3
+6259     21 21 -  ajmp     0x6121
+6263     9b - -   subb     A, R3
+6264     90 85 7a mov      DPTR, #0x857a
+6267     74 6f -  mov      A, #0x6f
+6269     63 58 4d xrl      0x58, #0x4d
+626C     42 37 -  orl      0x37, A
+626E     2c - -   add      A, R4
+626F     21 16 -  ajmp     0x6116

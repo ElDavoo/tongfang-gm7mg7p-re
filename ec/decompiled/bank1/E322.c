@@ -9,7 +9,7 @@ void FUN_CODE_e322(byte param_1)
 {
   BANK0_R2 = BANK0_R2 | param_1;
   DAT_EXTMEM_036c = 0;
-  FUN_CODE_e490(0xe44e);
+  stage_1c00_block_from_code_table_indexed_03c4(0xe44e);
   return;
 }
 

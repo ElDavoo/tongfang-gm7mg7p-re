@@ -4,23 +4,23 @@
 ; This is the machine code. The decompiled C for this address is 0530.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-0530     c0 e0      push     A
-0532     c0 f0      push     B
-0534     c0 83      push     DPH
-0536     c0 82      push     DPL
-0538     c0 d0      push     PSW
-053A     75 d0 10   mov      PSW, #0x10
-053D     12 0e 5e   lcall    0x0e5e
-0540     d2 35      setb     0x35
-0542     90 0a 00   mov      DPTR, #0xa00
-0545     e0         movx     A, @DPTR
-0546     60 03      jz       0x054b
-0548     e0         movx     A, @DPTR
-0549     14         dec      A
-054A     f0         movx     @DPTR, A
-054B     d0 d0      pop      PSW
-054D     d0 82      pop      DPL
-054F     d0 83      pop      DPH
-0551     d0 f0      pop      B
-0553     d0 e0      pop      A
-0555     32         reti     
+0530     c0 e0 -  push     A
+0532     c0 f0 -  push     B
+0534     c0 83 -  push     DPH
+0536     c0 82 -  push     DPL
+0538     c0 d0 -  push     PSW
+053A     75 d0 10 mov      PSW, #0x10
+053D     12 0e 5e lcall    0x0e5e
+0540     d2 35 -  setb     0x35
+0542     90 0a 00 mov      DPTR, #0xa00
+0545     e0 - -   movx     A, @DPTR
+0546     60 03 -  jz       0x054b
+0548     e0 - -   movx     A, @DPTR
+0549     14 - -   dec      A
+054A     f0 - -   movx     @DPTR, A
+054B     d0 d0 -  pop      PSW
+054D     d0 82 -  pop      DPL
+054F     d0 83 -  pop      DPH
+0551     d0 f0 -  pop      B
+0553     d0 e0 -  pop      A
+0555     32 - -   reti     

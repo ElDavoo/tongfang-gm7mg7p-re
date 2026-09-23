@@ -4,13 +4,13 @@
 ; This is the machine code. The decompiled C for this address is 1114.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-1114     c0 08      push     0x08
-1116     74 11      mov      A, #0x11
-1118     c0 e0      push     A
-111A     c0 82      push     DPL
-111C     c0 83      push     DPH
-111E     75 08 1e   mov      0x08, #0x1e
-1121     d2 90      setb     0x90
-1123     c2 91      clr      0x91
-1125     c2 92      clr      0x92
-1127     22         ret      
+1114     c0 08 -  push     0x08
+1116     74 11 -  mov      A, #0x11
+1118     c0 e0 -  push     A
+111A     c0 82 -  push     DPL
+111C     c0 83 -  push     DPH
+111E     75 08 1e mov      0x08, #0x1e
+1121     d2 90 -  setb     0x90
+1123     c2 91 -  clr      0x91
+1125     c2 92 -  clr      0x92
+1127     22 - -   ret      

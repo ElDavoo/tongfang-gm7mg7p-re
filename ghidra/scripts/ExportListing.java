@@ -91,9 +91,13 @@ public class ExportListing extends GhidraScript {
             }
             byEntry.computeIfAbsent(owner.getEntryPoint().getOffset(),
                 k -> new java.util.ArrayList<>()).add(ins);
-            int mb = ins.getMaxBytes();
-            if (mb > maxBytes) {
-                maxBytes = mb;
+            // The instruction's own length, not a prototype's maximum: the
+            // column has to be as wide as the widest instruction this program
+            // actually contains, and `getMaxBytes()` is on InstructionPrototype,
+            // not on Instruction, in Ghidra 12.
+            int len = ins.getLength();
+            if (len > maxBytes) {
+                maxBytes = len;
             }
         }
         if (maxBytes > 15) {

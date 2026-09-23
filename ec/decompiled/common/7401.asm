@@ -6,6 +6,6 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-7401     ff         mov      R7, A
-7402     ff         mov      R7, A
-7403     ff         mov      R7, A
+7401     ff - -   mov      R7, A
+7402     ff - -   mov      R7, A
+7403     ff - -   mov      R7, A

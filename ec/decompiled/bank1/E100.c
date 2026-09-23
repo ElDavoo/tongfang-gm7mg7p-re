@@ -23,7 +23,7 @@ void FUN_CODE_e100(void)
   }
   if ((DAT_EXTMEM_03a0 >> 3 & 1) == 0) {
     DAT_EXTMEM_03a0 = DAT_EXTMEM_03a0 | 8;
-    FUN_CODE_e2a0();
+    setup_0975_0976_0978_0979_call_c54c();
     return;
   }
   if ((DAT_EXTMEM_03a0 & 0x80) == 0) {
@@ -37,7 +37,7 @@ void FUN_CODE_e100(void)
     return;
   }
   if ((bVar2 & 1) != 1) {
-    FUN_CODE_e237();
+    gate_1c00_init_defaults();
     return;
   }
   if (DAT_EXTMEM_1c00 == 0) {
@@ -48,7 +48,7 @@ void FUN_CODE_e100(void)
   }
   if (((DAT_EXTMEM_1c00 >> 1 & 1) != 0) && ((DAT_EXTMEM_1c00 & 0x7c) == 0)) {
     bVar2 = DAT_EXTMEM_0391;
-    bVar1 = FUN_CODE_9ea1(0x3c5,DAT_EXTMEM_1c04,DAT_EXTMEM_0390,0x90,3);
+    bVar1 = shift_pair_then_sum_and_divide_by_four(0x3c5,DAT_EXTMEM_1c04,DAT_EXTMEM_0390,0x90,3);
     if (bVar2 <= bVar1) {
       BANK0_R0 = BANK0_R1;
     }
@@ -57,14 +57,15 @@ void FUN_CODE_e100(void)
       bVar1 = (byte)((ushort)bVar2 * 10);
       DAT_EXTMEM_0386 = bVar2;
       if ((DAT_EXTMEM_0367 & 2) == 0) {
-        FUN_CODE_888c(0x502,bVar1 + 0xaa,
-                      (char)((ushort)bVar2 * 10 >> 8) + ('\n' - (((0x55 < bVar1) << 7) >> 7)));
-        FUN_CODE_888c(FUN_CODE_0504);
+        write_r1r2_to_xdata_pair
+                  (0x502,bVar1 + 0xaa,
+                   (char)((ushort)bVar2 * 10 >> 8) + ('\n' - (((0x55 < bVar1) << 7) >> 7)));
+        write_r1r2_to_xdata_pair(FUN_CODE_0504);
       }
       DAT_EXTMEM_03ae = 0;
       DAT_EXTMEM_0494 = DAT_EXTMEM_0494 & 0xef;
     }
-    FUN_CODE_e27d();
+    reset_1c00_group_and_toggle_03a0();
     return;
   }
   bVar2 = DAT_EXTMEM_03ae + 1;
@@ -81,15 +82,15 @@ void FUN_CODE_e100(void)
   if (((0xfd < DAT_EXTMEM_0560) << 7 < '\0') &&
      (bVar2 = DAT_EXTMEM_0560, (DAT_EXTMEM_0367 & 0x30) != 0x30)) {
     DAT_EXTMEM_0367 = DAT_EXTMEM_0367 + 0x10;
-    FUN_CODE_1abc();
+    trampoline_bank0_c17c();
     DAT_EXTMEM_0560 = 0;
     DAT_EXTMEM_03ae = 0;
     DAT_EXTMEM_0494 = DAT_EXTMEM_0494 & 0xef;
     bVar2 = DAT_EXTMEM_0560;
   }
   DAT_EXTMEM_0560 = bVar2;
-  FUN_CODE_e2c3();
-  FUN_CODE_e27d();
+  set_1c00_ff_clear_1c04_1c05();
+  reset_1c00_group_and_toggle_03a0();
   return;
 }
 

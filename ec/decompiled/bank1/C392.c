@@ -12,7 +12,7 @@ void FUN_CODE_c392(void)
   char in_PSW;
   
   if (((DAT_EXTMEM_0495 >> 4 & 1) != 1) && ((DAT_EXTMEM_049d >> 4 & 1) != 1)) {
-    FUN_CODE_8892(0x4a2,0xee,0xc);
+    read_xdata_pair_to_r3r4(0x4a2,0xee,0xc);
     FUN_CODE_8863();
     if ((in_PSW < '\0') && (DAT_EXTMEM_0622 != '\0')) {
       DAT_EXTMEM_0805 = 4;

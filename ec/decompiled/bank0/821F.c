@@ -15,7 +15,7 @@
 void index_case_epilogue(void)
 
 {
-  FUN_CODE_bb08();
+  store_a_then_set_bit0_1901();
   DAT_EXTMEM_08e1 = 6;
   DAT_EXTMEM_08e0 = DAT_EXTMEM_08e0 + '\x01';
   index_table_default();

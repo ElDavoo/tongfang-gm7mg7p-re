@@ -4,39 +4,39 @@
 ; This is the machine code. The decompiled C for this address is 0C13.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-0C13     bb 01 0f   cjne     R3, #0x1, 0x0c25
-0C16     f8         mov      R0, A
-0C17     e5 82      mov      A, DPL
-0C19     29         add      A, R1
-0C1A     f5 82      mov      DPL, A
-0C1C     e5 83      mov      A, DPH
-0C1E     3a         addc     A, R2
-0C1F     f5 83      mov      DPH, A
-0C21     e0         movx     A, @DPTR
-0C22     28         add      A, R0
-0C23     f0         movx     @DPTR, A
-0C24     22         ret      
-0C25     50 09      jnc      0x0c30
-0C27     c5 82      xch      A, DPL
-0C29     29         add      A, R1
-0C2A     f8         mov      R0, A
-0C2B     e5 82      mov      A, DPL
-0C2D     26         add      A, @R0
-0C2E     f6         mov      @R0, A
-0C2F     22         ret      
-0C30     bb fe 09   cjne     R3, #0xfe, 0x0c3c
-0C33     c5 82      xch      A, DPL
-0C35     29         add      A, R1
-0C36     f8         mov      R0, A
-0C37     e2         movx     A, @R0
-0C38     25 82      add      A, DPL
-0C3A     f2         movx     @R0, A
-0C3B     22         ret      
-0C3C     f8         mov      R0, A
-0C3D     ea         mov      A, R2
-0C3E     25 83      add      A, DPH
-0C40     f5 83      mov      DPH, A
-0C42     e9         mov      A, R1
-0C43     93         movc     A, @A+DPTR
-0C44     28         add      A, R0
-0C45     22         ret      
+0C13     bb 01 0f cjne     R3, #0x1, 0x0c25
+0C16     f8 - -   mov      R0, A
+0C17     e5 82 -  mov      A, DPL
+0C19     29 - -   add      A, R1
+0C1A     f5 82 -  mov      DPL, A
+0C1C     e5 83 -  mov      A, DPH
+0C1E     3a - -   addc     A, R2
+0C1F     f5 83 -  mov      DPH, A
+0C21     e0 - -   movx     A, @DPTR
+0C22     28 - -   add      A, R0
+0C23     f0 - -   movx     @DPTR, A
+0C24     22 - -   ret      
+0C25     50 09 -  jnc      0x0c30
+0C27     c5 82 -  xch      A, DPL
+0C29     29 - -   add      A, R1
+0C2A     f8 - -   mov      R0, A
+0C2B     e5 82 -  mov      A, DPL
+0C2D     26 - -   add      A, @R0
+0C2E     f6 - -   mov      @R0, A
+0C2F     22 - -   ret      
+0C30     bb fe 09 cjne     R3, #0xfe, 0x0c3c
+0C33     c5 82 -  xch      A, DPL
+0C35     29 - -   add      A, R1
+0C36     f8 - -   mov      R0, A
+0C37     e2 - -   movx     A, @R0
+0C38     25 82 -  add      A, DPL
+0C3A     f2 - -   movx     @R0, A
+0C3B     22 - -   ret      
+0C3C     f8 - -   mov      R0, A
+0C3D     ea - -   mov      A, R2
+0C3E     25 83 -  add      A, DPH
+0C40     f5 83 -  mov      DPH, A
+0C42     e9 - -   mov      A, R1
+0C43     93 - -   movc     A, @A+DPTR
+0C44     28 - -   add      A, R0
+0C45     22 - -   ret      

@@ -4,19 +4,19 @@
 ; This is the machine code. The decompiled C for this address is F1B0.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-F1B0     ed         mov      A, R5
-F1B1     b4 01 0b   cjne     A, #0x1, 0xf1bf
-F1B4     ef         mov      A, R7
-F1B5     70 12      jnz      0xf1c9
-F1B7     90 ff d4   mov      DPTR, #0xffd4
-F1BA     e0         movx     A, @DPTR
-F1BB     44 20      orl      A, #0x20
-F1BD     f0         movx     @DPTR, A
-F1BE     22         ret      
-F1BF     ef         mov      A, R7
-F1C0     70 07      jnz      0xf1c9
-F1C2     90 ff d4   mov      DPTR, #0xffd4
-F1C5     e0         movx     A, @DPTR
-F1C6     54 df      anl      A, #0xdf
-F1C8     f0         movx     @DPTR, A
-F1C9     22         ret      
+F1B0     ed - -   mov      A, R5
+F1B1     b4 01 0b cjne     A, #0x1, 0xf1bf
+F1B4     ef - -   mov      A, R7
+F1B5     70 12 -  jnz      0xf1c9
+F1B7     90 ff d4 mov      DPTR, #0xffd4
+F1BA     e0 - -   movx     A, @DPTR
+F1BB     44 20 -  orl      A, #0x20
+F1BD     f0 - -   movx     @DPTR, A
+F1BE     22 - -   ret      
+F1BF     ef - -   mov      A, R7
+F1C0     70 07 -  jnz      0xf1c9
+F1C2     90 ff d4 mov      DPTR, #0xffd4
+F1C5     e0 - -   movx     A, @DPTR
+F1C6     54 df -  anl      A, #0xdf
+F1C8     f0 - -   movx     @DPTR, A
+F1C9     22 - -   ret      

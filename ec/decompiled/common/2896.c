@@ -31,7 +31,7 @@ void FUN_CODE_2896(void)
   DAT_EXTMEM_0bfd = 0;
   DAT_EXTMEM_0bfe = 0;
   DAT_INTMEM_4e = 0;
-  bVar3 = FUN_CODE_2a6c();
+  bVar3 = clear_4c_bits_4_5_7();
   DAT_INTMEM_4c = bVar3 & 0xf0;
   DAT_INTMEM_4d = 0;
   DAT_INTMEM_49 = 0;

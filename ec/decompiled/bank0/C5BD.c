@@ -28,19 +28,19 @@ void FUN_CODE_c5bd(code *param_1,char param_2)
     }
   }
   else {
-    bVar2 = FUN_CODE_ca2d();
+    bVar2 = clear_kbd_status_bit1_return_0826();
     cVar1 = bVar2 - 4;
     if (bVar2 < 4) {
       FUN_CODE_ca1d((char)*param_1 + '\x01');
-      cVar1 = FUN_CODE_a747();
+      cVar1 = stage_0769_076e_convert_to_1803();
     }
-    FUN_CODE_c9ff(cVar1);
+    kbd_status_from_0826_low_bits(cVar1);
 LAB_CODE_c603:
-    bVar2 = FUN_CODE_a73f();
+    bVar2 = store_r7_at_6a_then_jump_1666();
   }
-  FUN_CODE_ca1e(bVar2);
+  set_support2_bit5_and_bios_oem2_bit6(bVar2);
 LAB_CODE_c609:
-  bVar2 = FUN_CODE_ca44();
+  bVar2 = read_0490_and_leave_dptr_0826();
   if ((bVar2 & 1) == 0) {
     DAT_EXTMEM_0827 = *param_1;
     return;

@@ -4,45 +4,45 @@
 ; This is the machine code. The decompiled C for this address is 06EA.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-06EA     ed         mov      A, R5
-06EB     d2 e7      setb     0xe7
-06ED     cd         xch      A, R5
-06EE     33         rlc      A
-06EF     ec         mov      A, R4
-06F0     33         rlc      A
-06F1     92 d5      mov      0xd5, CY
-06F3     24 81      add      A, #0x81
-06F5     40 06      jc       0x06fd
-06F7     e4         clr      A
-06F8     ff         mov      R7, A
-06F9     fe         mov      R6, A
-06FA     fd         mov      R5, A
-06FB     fc         mov      R4, A
-06FC     22         ret      
-06FD     fc         mov      R4, A
-06FE     e4         clr      A
-06FF     cf         xch      A, R7
-0700     ce         xch      A, R6
-0701     cd         xch      A, R5
-0702     cc         xch      A, R4
-0703     24 e0      add      A, #0xe0
-0705     50 11      jnc      0x0718
-0707     74 ff      mov      A, #0xff
-0709     80 ed      sjmp     0x06f8
-070B     c3         clr      CY
-070C     cc         xch      A, R4
-070D     13         rrc      A
-070E     cc         xch      A, R4
-070F     cd         xch      A, R5
-0710     13         rrc      A
-0711     cd         xch      A, R5
-0712     ce         xch      A, R6
-0713     13         rrc      A
-0714     ce         xch      A, R6
-0715     cf         xch      A, R7
-0716     13         rrc      A
-0717     cf         xch      A, R7
-0718     04         inc      A
-0719     70 f0      jnz      0x070b
-071B     30 d5 de   jnb      0xd5, 0x06fc
-071E     02 0f 00   ljmp     0x0f00
+06EA     ed - -   mov      A, R5
+06EB     d2 e7 -  setb     0xe7
+06ED     cd - -   xch      A, R5
+06EE     33 - -   rlc      A
+06EF     ec - -   mov      A, R4
+06F0     33 - -   rlc      A
+06F1     92 d5 -  mov      0xd5, CY
+06F3     24 81 -  add      A, #0x81
+06F5     40 06 -  jc       0x06fd
+06F7     e4 - -   clr      A
+06F8     ff - -   mov      R7, A
+06F9     fe - -   mov      R6, A
+06FA     fd - -   mov      R5, A
+06FB     fc - -   mov      R4, A
+06FC     22 - -   ret      
+06FD     fc - -   mov      R4, A
+06FE     e4 - -   clr      A
+06FF     cf - -   xch      A, R7
+0700     ce - -   xch      A, R6
+0701     cd - -   xch      A, R5
+0702     cc - -   xch      A, R4
+0703     24 e0 -  add      A, #0xe0
+0705     50 11 -  jnc      0x0718
+0707     74 ff -  mov      A, #0xff
+0709     80 ed -  sjmp     0x06f8
+070B     c3 - -   clr      CY
+070C     cc - -   xch      A, R4
+070D     13 - -   rrc      A
+070E     cc - -   xch      A, R4
+070F     cd - -   xch      A, R5
+0710     13 - -   rrc      A
+0711     cd - -   xch      A, R5
+0712     ce - -   xch      A, R6
+0713     13 - -   rrc      A
+0714     ce - -   xch      A, R6
+0715     cf - -   xch      A, R7
+0716     13 - -   rrc      A
+0717     cf - -   xch      A, R7
+0718     04 - -   inc      A
+0719     70 f0 -  jnz      0x070b
+071B     30 d5 de jnb      0xd5, 0x06fc
+071E     02 0f 00 ljmp     0x0f00

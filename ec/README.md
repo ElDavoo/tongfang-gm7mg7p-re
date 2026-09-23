@@ -230,7 +230,7 @@ needs:
    *register write* alone required a 30s power-button EC reset to recover.
 
 Treat this as the honest state: the Ghidra project now exists
-(`ghidra/project/`, with 2,703 decompiled functions under `decompiled/`), so
+(`ghidra/project/`, with 2,708 decompiled functions under `decompiled/`), so
 items 1 and 2 above have a real starting point rather than a plan — but a
 *correct, complete* reassembly is still a project, not a script, and nothing
 here has been reassembled or reflashed. `ghidra/README.md` has the method, the
@@ -243,7 +243,7 @@ and `decompiled/listing-index.csv` points at the listings. A function named
 rather than called `FUN_CODE_…` carries a plate comment saying what it does and
 where the reading came from — those names come from
 `annotations/ghidra-functions.csv`, which is the editable surface. And the
-committed disassembly re-encodes to the firmware bytes: 45,392 of 45,535
+committed disassembly re-encodes to the firmware bytes: 45,394 of 45,537
 instructions, measured by `tools/verify_reassembly.py` and recorded in
 `ghidra/reassembly.csv`. That is a claim about the machine code, not about the
 C, and `ghidra/README.md` says at length what it is not. See the repo's GitHub issues for the

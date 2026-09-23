@@ -15,39 +15,39 @@ void FUN_CODE_b8db(char param_1)
   
   pbVar5 = &DAT_EXTMEM_07d8;
   DAT_EXTMEM_07d8 = param_1;
-  FUN_CODE_9028(param_1,param_1);
+  make_dptr_r6_minus_3_9028(param_1,param_1);
   *pbVar5 = *pbVar5 | 0x80;
-  FUN_CODE_ec36(0,BANK0_R5);
-  FUN_CODE_ec5e(0,DAT_EXTMEM_07d8);
+  set_or_clear_bits_0_5_via_9028(0,BANK0_R5);
+  set_or_clear_bits_1_2_6_via_9028(0,DAT_EXTMEM_07d8);
   pbVar5 = &DAT_EXTMEM_07d8;
   cVar1 = DAT_EXTMEM_07d8;
   cVar4 = DAT_EXTMEM_07d8;
-  FUN_CODE_906d(DAT_EXTMEM_07d8,DAT_EXTMEM_07d8,DAT_EXTMEM_07d8);
+  make_dptr_r6_minus_3_col_r3(DAT_EXTMEM_07d8,DAT_EXTMEM_07d8,DAT_EXTMEM_07d8);
   *pbVar5 = *pbVar5 | 0x10;
-  FUN_CODE_9028();
+  make_dptr_r6_minus_3_9028();
   *pbVar5 = 0xff;
   bVar3 = 0;
-  FUN_CODE_907e(cVar4);
+  make_dptr_r6_minus_3_col_r5(cVar4);
   *pbVar5 = 0xff;
-  FUN_CODE_9028();
+  make_dptr_r6_minus_3_9028();
   *pbVar5 = 0xff;
-  FUN_CODE_9066(cVar1);
+  make_dptr_a_minus_3_col_12(cVar1);
   *pbVar5 = 0xff;
-  FUN_CODE_9028();
+  make_dptr_r6_minus_3_9028();
   *pbVar5 = 0xff;
-  FUN_CODE_9078(cVar4);
+  make_dptr_a_minus_3_col_14(cVar4);
   *pbVar5 = 0xff;
   bVar3 = (0xe6 < bVar3) << 7;
-  FUN_CODE_9028();
+  make_dptr_r6_minus_3_9028();
   uVar2 = BANK0_R7;
   bVar3 = bVar3 & 0xdd;
   *pbVar5 = *pbVar5 & 0xdf;
-  FUN_CODE_9024(cVar1,BANK0_R1);
+  make_dptr_a_minus_3(cVar1,BANK0_R1);
   bVar3 = bVar3 & 0xdd;
   BANK0_R7 = uVar2;
-  FUN_CODE_f610(*pbVar5 & 1,0);
+  store_r7r5r3_to_080d(*pbVar5 & 1,0);
   cVar1 = DAT_EXTMEM_07d8;
-  cVar4 = FUN_CODE_90d6(DAT_EXTMEM_07d8);
+  cVar4 = read_table_08f4_step_5e_minus_1(DAT_EXTMEM_07d8);
   if ((char)bVar3 < '\0') {
     uVar2 = 3;
     cVar1 = DAT_EXTMEM_07d8;
@@ -56,14 +56,14 @@ void FUN_CODE_b8db(char param_1)
   else {
     uVar2 = 2;
   }
-  FUN_CODE_f50e(cVar4,uVar2);
+  set_bits_6_7_from_r5(cVar4,uVar2);
   pbVar5 = &DAT_EXTMEM_07d8;
-  cVar4 = FUN_CODE_9115();
-  FUN_CODE_906d(cVar4 + '\n');
+  cVar4 = read_dptr_to_r5_r6_zero_r7();
+  make_dptr_r6_minus_3_col_r3(cVar4 + '\n');
   *pbVar5 = *pbVar5 & 0xfe;
-  FUN_CODE_9028(cVar1 + '\x02');
+  make_dptr_r6_minus_3_9028(cVar1 + '\x02');
   *pbVar5 = *pbVar5 & 0xf7;
-  FUN_CODE_9028(0x67,uVar2);
+  make_dptr_r6_minus_3_9028(0x67,uVar2);
   *pbVar5 = *pbVar5 | 4;
   return;
 }

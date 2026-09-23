@@ -4,14 +4,14 @@
 ; This is the machine code. The decompiled C for this address is 8054.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-8054     90 19 04   mov      DPTR, #0x1904
-8057     e0         movx     A, @DPTR
-8058     20 e7 03   jb       0xe7, 0x805e
-805E     12 b9 df   lcall    0xb9df
-8061     90 08 d0   mov      DPTR, #0x8d0
-8064     ee         mov      A, R6
-8065     f0         movx     @DPTR, A
-8066     a3         inc      DPTR
-8067     ef         mov      A, R7
-8068     f0         movx     @DPTR, A
-8069     90 06 00   mov      DPTR, #0x600
+8054     90 19 04 mov      DPTR, #0x1904
+8057     e0 - -   movx     A, @DPTR
+8058     20 e7 03 jb       0xe7, 0x805e
+805E     12 b9 df lcall    0xb9df
+8061     90 08 d0 mov      DPTR, #0x8d0
+8064     ee - -   mov      A, R6
+8065     f0 - -   movx     @DPTR, A
+8066     a3 - -   inc      DPTR
+8067     ef - -   mov      A, R7
+8068     f0 - -   movx     @DPTR, A
+8069     90 06 00 mov      DPTR, #0x600

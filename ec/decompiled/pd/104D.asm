@@ -4,13 +4,13 @@
 ; This is the machine code. The decompiled C for this address is 104D.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-104D     a8 82      mov      R0, DPL
-104F     85 83 f0   mov      B, DPH
-1052     d0 83      pop      DPH
-1054     d0 82      pop      DPL
-1056     12 10 64   lcall    0x1064
-1059     12 10 64   lcall    0x1064
-105C     12 10 64   lcall    0x1064
-105F     12 10 64   lcall    0x1064
-1062     e4         clr      A
-1063     73         jmp      @A+DPTR
+104D     a8 82 -  mov      R0, DPL
+104F     85 83 f0 mov      B, DPH
+1052     d0 83 -  pop      DPH
+1054     d0 82 -  pop      DPL
+1056     12 10 64 lcall    0x1064
+1059     12 10 64 lcall    0x1064
+105C     12 10 64 lcall    0x1064
+105F     12 10 64 lcall    0x1064
+1062     e4 - -   clr      A
+1063     73 - -   jmp      @A+DPTR

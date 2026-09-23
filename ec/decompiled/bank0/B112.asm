@@ -4,10 +4,10 @@
 ; This is the machine code. The decompiled C for this address is B112.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-B112     90 04 97   mov      DPTR, #0x497
-B115     e0         movx     A, @DPTR
-B116     30 e0 03   jnb      0xe0, 0xb11c
-B119     7f 01      mov      R7, #0x1
-B11B     22         ret      
-B11C     7f 00      mov      R7, #0x0
-B11E     22         ret      
+B112     90 04 97 mov      DPTR, #0x497
+B115     e0 - -   movx     A, @DPTR
+B116     30 e0 03 jnb      0xe0, 0xb11c
+B119     7f 01 -  mov      R7, #0x1
+B11B     22 - -   ret      
+B11C     7f 00 -  mov      R7, #0x0
+B11E     22 - -   ret      

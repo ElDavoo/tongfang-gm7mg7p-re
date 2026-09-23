@@ -6,55 +6,55 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-BFBB     12 c0 32   lcall    0xc032
-BFBE     90 08 34   mov      DPTR, #0x834
-BFC1     12 88 98   lcall    0x8898
-BFC4     45 f0      orl      A, B
-BFC6     70 01      jnz      0xbfc9
-BFC8     22         ret      
-BFC9     90 04 90   mov      DPTR, #0x490
-BFCC     e0         movx     A, @DPTR
-BFCD     20 e3 1a   jb       0xe3, 0xbfea
-BFD0     30 e7 03   jnb      0xe7, 0xbfd6
-BFD3     02 c0 a8   ljmp     0xc0a8
-BFD6     20 e0 ef   jb       0xe0, 0xbfc8
-BFEA     90 04 ad   mov      DPTR, #0x4ad
-BFED     e0         movx     A, @DPTR
-BFEE     24 01      add      A, #0x1
-BFF0     b4 3c 04   cjne     A, #0x3c, 0xbff7
-BFF3     e4         clr      A
-BFF4     f0         movx     @DPTR, A
-BFF5     80 04      sjmp     0xbffb
-BFF7     50 fa      jnc      0xbff3
-BFF9     f0         movx     @DPTR, A
-BFFA     22         ret      
-BFFB     90 04 91   mov      DPTR, #0x491
-BFFE     e0         movx     A, @DPTR
-BFFF     20 e2 05   jb       0xe2, 0xc007
-C002     20 e1 0d   jb       0xe1, 0xc012
-C005     80 14      sjmp     0xc01b
-C007     90 05 78   mov      DPTR, #0x578
-C00A     e0         movx     A, @DPTR
-C00B     24 01      add      A, #0x1
-C00D     40 0c      jc       0xc01b
-C00F     f0         movx     @DPTR, A
-C010     80 09      sjmp     0xc01b
-C012     90 05 77   mov      DPTR, #0x577
-C015     e0         movx     A, @DPTR
-C016     24 01      add      A, #0x1
-C018     40 01      jc       0xc01b
-C01A     f0         movx     @DPTR, A
-C01B     90 04 ae   mov      DPTR, #0x4ae
-C01E     e0         movx     A, @DPTR
-C01F     7a 00      mov      R2, #0x0
-C021     24 01      add      A, #0x1
-C023     50 02      jnc      0xc027
-C025     7a 01      mov      R2, #0x1
-C027     f0         movx     @DPTR, A
-C028     f9         mov      R1, A
-C029     90 04 af   mov      DPTR, #0x4af
-C02C     e0         movx     A, @DPTR
-C02D     2a         add      A, R2
-C02E     40 01      jc       0xc031
-C030     f0         movx     @DPTR, A
-C031     fa         mov      R2, A
+BFBB     12 c0 32 lcall    0xc032
+BFBE     90 08 34 mov      DPTR, #0x834
+BFC1     12 88 98 lcall    0x8898
+BFC4     45 f0 -  orl      A, B
+BFC6     70 01 -  jnz      0xbfc9
+BFC8     22 - -   ret      
+BFC9     90 04 90 mov      DPTR, #0x490
+BFCC     e0 - -   movx     A, @DPTR
+BFCD     20 e3 1a jb       0xe3, 0xbfea
+BFD0     30 e7 03 jnb      0xe7, 0xbfd6
+BFD3     02 c0 a8 ljmp     0xc0a8
+BFD6     20 e0 ef jb       0xe0, 0xbfc8
+BFEA     90 04 ad mov      DPTR, #0x4ad
+BFED     e0 - -   movx     A, @DPTR
+BFEE     24 01 -  add      A, #0x1
+BFF0     b4 3c 04 cjne     A, #0x3c, 0xbff7
+BFF3     e4 - -   clr      A
+BFF4     f0 - -   movx     @DPTR, A
+BFF5     80 04 -  sjmp     0xbffb
+BFF7     50 fa -  jnc      0xbff3
+BFF9     f0 - -   movx     @DPTR, A
+BFFA     22 - -   ret      
+BFFB     90 04 91 mov      DPTR, #0x491
+BFFE     e0 - -   movx     A, @DPTR
+BFFF     20 e2 05 jb       0xe2, 0xc007
+C002     20 e1 0d jb       0xe1, 0xc012
+C005     80 14 -  sjmp     0xc01b
+C007     90 05 78 mov      DPTR, #0x578
+C00A     e0 - -   movx     A, @DPTR
+C00B     24 01 -  add      A, #0x1
+C00D     40 0c -  jc       0xc01b
+C00F     f0 - -   movx     @DPTR, A
+C010     80 09 -  sjmp     0xc01b
+C012     90 05 77 mov      DPTR, #0x577
+C015     e0 - -   movx     A, @DPTR
+C016     24 01 -  add      A, #0x1
+C018     40 01 -  jc       0xc01b
+C01A     f0 - -   movx     @DPTR, A
+C01B     90 04 ae mov      DPTR, #0x4ae
+C01E     e0 - -   movx     A, @DPTR
+C01F     7a 00 -  mov      R2, #0x0
+C021     24 01 -  add      A, #0x1
+C023     50 02 -  jnc      0xc027
+C025     7a 01 -  mov      R2, #0x1
+C027     f0 - -   movx     @DPTR, A
+C028     f9 - -   mov      R1, A
+C029     90 04 af mov      DPTR, #0x4af
+C02C     e0 - -   movx     A, @DPTR
+C02D     2a - -   add      A, R2
+C02E     40 01 -  jc       0xc031
+C030     f0 - -   movx     @DPTR, A
+C031     fa - -   mov      R2, A

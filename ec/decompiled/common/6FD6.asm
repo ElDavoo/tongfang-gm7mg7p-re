@@ -4,9 +4,9 @@
 ; This is the machine code. The decompiled C for this address is 6FD6.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-6FD6     ec         mov      A, R4
-6FD7     fa         mov      R2, A
-6FD8     a9 f0      mov      R1, B
-6FDA     ed         mov      A, R5
-6FDB     fb         mov      R3, A
-6FDC     22         ret      
+6FD6     ec - -   mov      A, R4
+6FD7     fa - -   mov      R2, A
+6FD8     a9 f0 -  mov      R1, B
+6FDA     ed - -   mov      A, R5
+6FDB     fb - -   mov      R3, A
+6FDC     22 - -   ret      

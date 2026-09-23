@@ -9,14 +9,14 @@
 void FUN_CODE_e0ce(undefined1 param_1)
 
 {
-  FUN_CODE_8886(0x340);
-  FUN_CODE_a5e6(100,0);
+  read_xdata_pair_to_r1r2(0x340);
+  mul_16_round_shift_subtract(100,0);
   if (DAT_EXTMEM_0342 == BANK0_R1) {
     return;
   }
-  FUN_CODE_8886(0x312);
-  FUN_CODE_888c(0x340);
-  FUN_CODE_a5e6(100,0);
+  read_xdata_pair_to_r1r2(0x312);
+  write_r1r2_to_xdata_pair(0x340);
+  mul_16_round_shift_subtract(100,0);
   DAT_EXTMEM_0342 = param_1;
   DAT_EXTMEM_03c0 = param_1;
   return;

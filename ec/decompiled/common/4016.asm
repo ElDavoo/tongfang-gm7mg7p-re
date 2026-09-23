@@ -6,39 +6,39 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-4016     f0         movx     @DPTR, A
-4017     90 0a 4b   mov      DPTR, #0xa4b
-401A     e0         movx     A, @DPTR
-401B     ff         mov      R7, A
-401C     64 f3      xrl      A, #0xf3
-401E     60 04      jz       0x4024
-4020     ef         mov      A, R7
-4021     b4 ed 02   cjne     A, #0xed, 0x4026
-4024     d2 1a      setb     0x1a
-4026     78 9c      mov      R0, #0x9c
-4028     e6         mov      A, @R0
-4029     70 0c      jnz      0x4037
-402B     90 0a 48   mov      DPTR, #0xa48
-402E     e0         movx     A, @DPTR
-402F     ff         mov      R7, A
-4030     60 26      jz       0x4058
-4032     12 0a 39   lcall    0x0a39
-4035     80 21      sjmp     0x4058
-4037     12 43 4c   lcall    0x434c
-403A     7f 01      mov      R7, #0x1
-403C     12 38 35   lcall    0x3835
-403F     90 0a 4b   mov      DPTR, #0xa4b
-4042     e0         movx     A, @DPTR
-4043     78 9c      mov      R0, #0x9c
-4045     b4 ed 07   cjne     A, #0xed, 0x404f
-4048     12 43 76   lcall    0x4376
-404B     54 07      anl      A, #0x7
-404D     80 03      sjmp     0x4052
-404F     12 43 76   lcall    0x4376
-4052     fd         mov      R5, A
-4053     7b 01      mov      R3, #0x1
-4055     12 2e 9c   lcall    0x2e9c
-4058     90 0a 47   mov      DPTR, #0xa47
-405B     e0         movx     A, @DPTR
-405C     ff         mov      R7, A
-405D     02 16 1e   ljmp     0x161e
+4016     f0 - -   movx     @DPTR, A
+4017     90 0a 4b mov      DPTR, #0xa4b
+401A     e0 - -   movx     A, @DPTR
+401B     ff - -   mov      R7, A
+401C     64 f3 -  xrl      A, #0xf3
+401E     60 04 -  jz       0x4024
+4020     ef - -   mov      A, R7
+4021     b4 ed 02 cjne     A, #0xed, 0x4026
+4024     d2 1a -  setb     0x1a
+4026     78 9c -  mov      R0, #0x9c
+4028     e6 - -   mov      A, @R0
+4029     70 0c -  jnz      0x4037
+402B     90 0a 48 mov      DPTR, #0xa48
+402E     e0 - -   movx     A, @DPTR
+402F     ff - -   mov      R7, A
+4030     60 26 -  jz       0x4058
+4032     12 0a 39 lcall    0x0a39
+4035     80 21 -  sjmp     0x4058
+4037     12 43 4c lcall    0x434c
+403A     7f 01 -  mov      R7, #0x1
+403C     12 38 35 lcall    0x3835
+403F     90 0a 4b mov      DPTR, #0xa4b
+4042     e0 - -   movx     A, @DPTR
+4043     78 9c -  mov      R0, #0x9c
+4045     b4 ed 07 cjne     A, #0xed, 0x404f
+4048     12 43 76 lcall    0x4376
+404B     54 07 -  anl      A, #0x7
+404D     80 03 -  sjmp     0x4052
+404F     12 43 76 lcall    0x4376
+4052     fd - -   mov      R5, A
+4053     7b 01 -  mov      R3, #0x1
+4055     12 2e 9c lcall    0x2e9c
+4058     90 0a 47 mov      DPTR, #0xa47
+405B     e0 - -   movx     A, @DPTR
+405C     ff - -   mov      R7, A
+405D     02 16 1e ljmp     0x161e

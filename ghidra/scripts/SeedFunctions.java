@@ -70,9 +70,13 @@ public class SeedFunctions extends GhidraScript {
                     otherProgram++;
                     continue;
                 }
-                int addr;
+                // long, not int: a UEFI TE image is loaded at a high base
+                // (0xFFF8xxxx here), which is past Integer.MAX_VALUE and
+                // would parse to a negative address. Five of the BIOS's
+                // annotated modules are TE, so this is not hypothetical.
+                long addr;
                 try {
-                    addr = Integer.parseInt(f[1].trim().replace("0x", ""), 16);
+                    addr = Long.parseLong(f[1].trim().replace("0x", ""), 16);
                 } catch (NumberFormatException e) {
                     throw new IllegalArgumentException("bad address in seed row: " + line);
                 }

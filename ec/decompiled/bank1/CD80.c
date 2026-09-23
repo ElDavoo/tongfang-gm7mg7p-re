@@ -21,8 +21,8 @@ void FUN_CODE_cd80(void)
   DAT_EXTMEM_03b5 = 0;
   if (((DAT_EXTMEM_03ff >> 2 & 1) != 1) && (DAT_EXTMEM_0514 != '\0')) {
     DAT_EXTMEM_0514 = DAT_EXTMEM_0514 + -1;
-    FUN_CODE_cbf3();
-    FUN_CODE_cbe8();
+    publish_0514_and_0342_product();
+    increment_0349_saturating();
   }
   return;
 }

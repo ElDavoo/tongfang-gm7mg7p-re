@@ -6,20 +6,20 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-86C4     7d ff      mov      R5, #0xff
-86C6     7e 00      mov      R6, #0x0
-86C8     90 15 00   mov      DPTR, #0x1500
-86CB     e0         movx     A, @DPTR
-86CC     f8         mov      R0, A
-86CD     20 e1 07   jb       0xe1, 0x86d7
-86D0     de 03      djnz     R6, 0x86d5
-86D2     dd 01      djnz     R5, 0x86d5
-86D4     22         ret      
-86D5     80 f1      sjmp     0x86c8
-86D7     90 15 04   mov      DPTR, #0x1504
-86DA     e0         movx     A, @DPTR
-86DB     fd         mov      R5, A
-86DC     e8         mov      A, R0
-86DD     54 08      anl      A, #0x8
-86DF     24 ff      add      A, #0xff
-86E1     22         ret      
+86C4     7d ff -  mov      R5, #0xff
+86C6     7e 00 -  mov      R6, #0x0
+86C8     90 15 00 mov      DPTR, #0x1500
+86CB     e0 - -   movx     A, @DPTR
+86CC     f8 - -   mov      R0, A
+86CD     20 e1 07 jb       0xe1, 0x86d7
+86D0     de 03 -  djnz     R6, 0x86d5
+86D2     dd 01 -  djnz     R5, 0x86d5
+86D4     22 - -   ret      
+86D5     80 f1 -  sjmp     0x86c8
+86D7     90 15 04 mov      DPTR, #0x1504
+86DA     e0 - -   movx     A, @DPTR
+86DB     fd - -   mov      R5, A
+86DC     e8 - -   mov      A, R0
+86DD     54 08 -  anl      A, #0x8
+86DF     24 ff -  add      A, #0xff
+86E1     22 - -   ret      

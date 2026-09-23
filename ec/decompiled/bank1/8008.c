@@ -60,9 +60,9 @@ void FUN_CODE_8008(undefined1 param_1,undefined1 *param_2,char param_3)
   if ((DAT_EXTMEM_0440 != '\0') && (DAT_EXTMEM_06d8 != '\0')) {
     DAT_EXTMEM_06d8 = DAT_EXTMEM_06d8 + -1;
   }
-  FUN_CODE_1984();
+  trampoline_to_c10c();
   if (param_3 == '\0') {
-    FUN_CODE_198a();
+    trampoline_to_c1e7();
     if ((param_3 == '\0') && (DAT_EXTMEM_06d9 != '\0')) {
       DAT_EXTMEM_06d9 = DAT_EXTMEM_06d9 + -1;
     }

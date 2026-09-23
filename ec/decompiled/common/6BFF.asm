@@ -4,10 +4,10 @@
 ; This is the machine code. The decompiled C for this address is 6BFF.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-6BFF     00         nop      
-6C00     00         nop      
-6C01     00         nop      
-6C02     17         dec      @R1
-6C03     74 00      mov      A, #0x0
-6C05     00         nop      
-6C06     01 17      ajmp     0x6817
+6BFF     00 - -   nop      
+6C00     00 - -   nop      
+6C01     00 - -   nop      
+6C02     17 - -   dec      @R1
+6C03     74 00 -  mov      A, #0x0
+6C05     00 - -   nop      
+6C06     01 17 -  ajmp     0x6817

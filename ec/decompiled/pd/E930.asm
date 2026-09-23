@@ -4,31 +4,31 @@
 ; This is the machine code. The decompiled C for this address is E930.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-E930     ad 07      mov      R5, 0x07
-E932     ed         mov      A, R5
-E933     7f 00      mov      R7, #0x0
-E935     fe         mov      R6, A
-E936     ef         mov      A, R7
-E937     24 0d      add      A, #0xd
-E939     12 f3 eb   lcall    0xf3eb
-E93C     e0         movx     A, @DPTR
-E93D     fc         mov      R4, A
-E93E     ef         mov      A, R7
-E93F     24 11      add      A, #0x11
-E941     12 f3 e2   lcall    0xf3e2
-E944     e0         movx     A, @DPTR
-E945     90 07 ca   mov      DPTR, #0x7ca
-E948     f0         movx     @DPTR, A
-E949     ed         mov      A, R5
-E94A     7f 00      mov      R7, #0x0
-E94C     fe         mov      R6, A
-E94D     ef         mov      A, R7
-E94E     24 14      add      A, #0x14
-E950     12 f3 eb   lcall    0xf3eb
-E953     e0         movx     A, @DPTR
-E954     30 e7 06   jnb      0xe7, 0xe95d
-E957     ef         mov      A, R7
-E958     12 f3 e0   lcall    0xf3e0
-E95B     ec         mov      A, R4
-E95C     f0         movx     @DPTR, A
-E95D     22         ret      
+E930     ad 07 -  mov      R5, 0x07
+E932     ed - -   mov      A, R5
+E933     7f 00 -  mov      R7, #0x0
+E935     fe - -   mov      R6, A
+E936     ef - -   mov      A, R7
+E937     24 0d -  add      A, #0xd
+E939     12 f3 eb lcall    0xf3eb
+E93C     e0 - -   movx     A, @DPTR
+E93D     fc - -   mov      R4, A
+E93E     ef - -   mov      A, R7
+E93F     24 11 -  add      A, #0x11
+E941     12 f3 e2 lcall    0xf3e2
+E944     e0 - -   movx     A, @DPTR
+E945     90 07 ca mov      DPTR, #0x7ca
+E948     f0 - -   movx     @DPTR, A
+E949     ed - -   mov      A, R5
+E94A     7f 00 -  mov      R7, #0x0
+E94C     fe - -   mov      R6, A
+E94D     ef - -   mov      A, R7
+E94E     24 14 -  add      A, #0x14
+E950     12 f3 eb lcall    0xf3eb
+E953     e0 - -   movx     A, @DPTR
+E954     30 e7 06 jnb      0xe7, 0xe95d
+E957     ef - -   mov      A, R7
+E958     12 f3 e0 lcall    0xf3e0
+E95B     ec - -   mov      A, R4
+E95C     f0 - -   movx     @DPTR, A
+E95D     22 - -   ret      

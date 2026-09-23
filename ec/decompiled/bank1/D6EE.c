@@ -33,7 +33,7 @@ void FUN_CODE_d6ee(char param_1,char param_2)
     DAT_EXTMEM_03b1 = 0;
     bVar3 = 3;
     bVar2 = 0xa4;
-    FUN_CODE_a5a7();
+    mul_partial_products_r0_r1_r2_r3();
     bVar1 = CARRY1(DAT_EXTMEM_03b2,bVar2);
     DAT_EXTMEM_03b2 = DAT_EXTMEM_03b2 + bVar2;
     bVar4 = CARRY1(DAT_EXTMEM_03b3,bVar3);
@@ -48,7 +48,7 @@ void FUN_CODE_d6ee(char param_1,char param_2)
     if (CARRY1(bVar2,bVar4)) {
       bVar6 = bVar6 + 1;
     }
-    if (((DAT_EXTMEM_0367 >> 2 & 1) == 1) || (FUN_CODE_198a(), param_2 == '\0')) {
+    if (((DAT_EXTMEM_0367 >> 2 & 1) == 1) || (trampoline_to_c1e7(), param_2 == '\0')) {
       if (!CARRY1(DAT_EXTMEM_03b5,bVar6)) {
         DAT_EXTMEM_03b5 = DAT_EXTMEM_03b5 + bVar6;
       }
@@ -60,7 +60,7 @@ void FUN_CODE_d6ee(char param_1,char param_2)
       }
     }
     else {
-      cVar7 = FUN_CODE_8898(0x834);
+      cVar7 = read_xdata_pair_to_b_and_a(0x834);
       if (cVar7 == '\0' && param_1 == '\0') {
         return;
       }

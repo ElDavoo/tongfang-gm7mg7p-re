@@ -6,52 +6,52 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-C5BD     ef         mov      A, R7
-C5BE     70 49      jnz      0xc609
-C5C0     90 07 3c   mov      DPTR, #0x73c
-C5C3     e0         movx     A, @DPTR
-C5C4     30 e0 09   jnb      0xe0, 0xc5d0
-C5C7     e0         movx     A, @DPTR
-C5C8     20 e1 05   jb       0xe1, 0xc5d0
-C5CB     e0         movx     A, @DPTR
-C5CC     54 f8      anl      A, #0xf8
-C5CE     60 20      jz       0xc5f0
-C5D0     90 07 41   mov      DPTR, #0x741
-C5D3     e0         movx     A, @DPTR
-C5D4     30 e0 04   jnb      0xe0, 0xc5db
-C5D7     7f b2      mov      R7, #0xb2
-C5D9     80 28      sjmp     0xc603
-C5DB     90 08 26   mov      DPTR, #0x826
-C5DE     e0         movx     A, @DPTR
-C5DF     c3         clr      CY
-C5E0     94 04      subb     A, #0x4
-C5E2     50 22      jnc      0xc606
-C5E4     e0         movx     A, @DPTR
-C5E5     04         inc      A
-C5E6     f0         movx     @DPTR, A
-C5E7     90 08 6f   mov      DPTR, #0x86f
-C5EA     e0         movx     A, @DPTR
-C5EB     44 04      orl      A, #0x4
-C5ED     f0         movx     @DPTR, A
-C5EE     80 16      sjmp     0xc606
-C5F0     12 ca 2d   lcall    0xca2d
-C5F3     c3         clr      CY
-C5F4     94 04      subb     A, #0x4
-C5F6     50 08      jnc      0xc600
-C5F8     e0         movx     A, @DPTR
-C5F9     04         inc      A
-C5FA     12 ca 1d   lcall    0xca1d
-C5FD     12 a7 47   lcall    0xa747
-C600     12 c9 ff   lcall    0xc9ff
-C603     12 a7 3f   lcall    0xa73f
-C606     12 ca 1e   lcall    0xca1e
-C609     12 ca 44   lcall    0xca44
-C60C     30 e0 06   jnb      0xe0, 0xc615
-C60F     e0         movx     A, @DPTR
-C610     90 08 25   mov      DPTR, #0x825
-C613     f0         movx     @DPTR, A
-C614     22         ret      
-C615     e0         movx     A, @DPTR
-C616     90 08 27   mov      DPTR, #0x827
-C619     f0         movx     @DPTR, A
-C61A     22         ret      
+C5BD     ef - -   mov      A, R7
+C5BE     70 49 -  jnz      0xc609
+C5C0     90 07 3c mov      DPTR, #0x73c
+C5C3     e0 - -   movx     A, @DPTR
+C5C4     30 e0 09 jnb      0xe0, 0xc5d0
+C5C7     e0 - -   movx     A, @DPTR
+C5C8     20 e1 05 jb       0xe1, 0xc5d0
+C5CB     e0 - -   movx     A, @DPTR
+C5CC     54 f8 -  anl      A, #0xf8
+C5CE     60 20 -  jz       0xc5f0
+C5D0     90 07 41 mov      DPTR, #0x741
+C5D3     e0 - -   movx     A, @DPTR
+C5D4     30 e0 04 jnb      0xe0, 0xc5db
+C5D7     7f b2 -  mov      R7, #0xb2
+C5D9     80 28 -  sjmp     0xc603
+C5DB     90 08 26 mov      DPTR, #0x826
+C5DE     e0 - -   movx     A, @DPTR
+C5DF     c3 - -   clr      CY
+C5E0     94 04 -  subb     A, #0x4
+C5E2     50 22 -  jnc      0xc606
+C5E4     e0 - -   movx     A, @DPTR
+C5E5     04 - -   inc      A
+C5E6     f0 - -   movx     @DPTR, A
+C5E7     90 08 6f mov      DPTR, #0x86f
+C5EA     e0 - -   movx     A, @DPTR
+C5EB     44 04 -  orl      A, #0x4
+C5ED     f0 - -   movx     @DPTR, A
+C5EE     80 16 -  sjmp     0xc606
+C5F0     12 ca 2d lcall    0xca2d
+C5F3     c3 - -   clr      CY
+C5F4     94 04 -  subb     A, #0x4
+C5F6     50 08 -  jnc      0xc600
+C5F8     e0 - -   movx     A, @DPTR
+C5F9     04 - -   inc      A
+C5FA     12 ca 1d lcall    0xca1d
+C5FD     12 a7 47 lcall    0xa747
+C600     12 c9 ff lcall    0xc9ff
+C603     12 a7 3f lcall    0xa73f
+C606     12 ca 1e lcall    0xca1e
+C609     12 ca 44 lcall    0xca44
+C60C     30 e0 06 jnb      0xe0, 0xc615
+C60F     e0 - -   movx     A, @DPTR
+C610     90 08 25 mov      DPTR, #0x825
+C613     f0 - -   movx     @DPTR, A
+C614     22 - -   ret      
+C615     e0 - -   movx     A, @DPTR
+C616     90 08 27 mov      DPTR, #0x827
+C619     f0 - -   movx     @DPTR, A
+C61A     22 - -   ret      

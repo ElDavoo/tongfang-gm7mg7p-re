@@ -4,4 +4,4 @@
 ; This is the machine code. The decompiled C for this address is C90C.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-C90C     02 c9 31   ljmp     0xc931
+C90C     02 c9 31 ljmp     0xc931

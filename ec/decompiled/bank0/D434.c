@@ -26,7 +26,7 @@ void FUN_CODE_d434(byte param_1,char *param_2,char param_3,undefined1 param_4,ch
     bVar3 = bVar3 / param_1;
   }
   sVar8 = -0x2b79;
-  uVar2 = thunk_FUN_CODE_1906(bVar3);
+  uVar2 = forward_to_1906(bVar3);
   DPX = param_7;
   bVar4 = decimal_adjust(uVar2);
   bVar3 = *param_2 - (cVar5 >> 7);
@@ -43,7 +43,7 @@ void FUN_CODE_d434(byte param_1,char *param_2,char param_3,undefined1 param_4,ch
         uVar6 = decimal_adjust(uVar2);
         uVar7 = decimal_adjust(param_2 + 'd');
         uVar2 = RS1;
-        FUN_CODE_d5d4(param_6,uVar6,uVar7,param_4);
+        write_33_to_1501_join_loop_d5db(param_6,uVar6,uVar7,param_4);
         return;
       }
       goto LAB_CODE_d422;

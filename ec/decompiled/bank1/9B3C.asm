@@ -4,93 +4,93 @@
 ; This is the machine code. The decompiled C for this address is 9B3C.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-9B3C     90 04 66   mov      DPTR, #0x466
-9B3F     e0         movx     A, @DPTR
-9B40     54 10      anl      A, #0x10
-9B42     60 03      jz       0x9b47
-9B44     02 9b f8   ljmp     0x9bf8
-9B47     90 16 f1   mov      DPTR, #0x16f1
-9B4A     74 10      mov      A, #0x10
-9B4C     f0         movx     @DPTR, A
-9B4D     90 16 3e   mov      DPTR, #0x163e
-9B50     74 00      mov      A, #0x0
-9B52     f0         movx     @DPTR, A
-9B53     12 9c 53   lcall    0x9c53
-9B56     12 9c 0e   lcall    0x9c0e
-9B59     50 03      jnc      0x9b5e
-9B5B     02 9b e6   ljmp     0x9be6
-9B5E     90 30 01   mov      DPTR, #0x3001
-9B61     74 3c      mov      A, #0x3c
-9B63     f0         movx     @DPTR, A
-9B64     90 30 03   mov      DPTR, #0x3003
-9B67     74 30      mov      A, #0x30
-9B69     f0         movx     @DPTR, A
-9B6A     90 30 04   mov      DPTR, #0x3004
-9B6D     74 01      mov      A, #0x1
-9B6F     f0         movx     @DPTR, A
-9B70     90 30 05   mov      DPTR, #0x3005
-9B73     74 02      mov      A, #0x2
-9B75     f0         movx     @DPTR, A
-9B76     90 30 02   mov      DPTR, #0x3002
-9B79     74 01      mov      A, #0x1
-9B7B     f0         movx     @DPTR, A
-9B7C     90 30 01   mov      DPTR, #0x3001
-9B7F     74 09      mov      A, #0x9
-9B81     f0         movx     @DPTR, A
-9B82     79 00      mov      R1, #0x0
-9B84     7a 0a      mov      R2, #0xa
-9B86     90 30 00   mov      DPTR, #0x3000
-9B89     e0         movx     A, @DPTR
-9B8A     20 e1 0b   jb       0xe1, 0x9b98
-9B8D     d9 f7      djnz     R1, 0x9b86
-9B8F     da f5      djnz     R2, 0x9b86
-9B91     90 30 00   mov      DPTR, #0x3000
-9B94     74 ff      mov      A, #0xff
-9B96     f0         movx     @DPTR, A
-9B97     22         ret      
-9B98     90 30 07   mov      DPTR, #0x3007
-9B9B     e0         movx     A, @DPTR
-9B9C     90 08 21   mov      DPTR, #0x821
-9B9F     f0         movx     @DPTR, A
-9BA0     90 30 07   mov      DPTR, #0x3007
-9BA3     e0         movx     A, @DPTR
-9BA4     90 08 22   mov      DPTR, #0x822
-9BA7     f0         movx     @DPTR, A
-9BA8     90 30 00   mov      DPTR, #0x3000
-9BAB     74 ff      mov      A, #0xff
-9BAD     f0         movx     @DPTR, A
-9BAE     90 08 22   mov      DPTR, #0x822
-9BB1     e0         movx     A, @DPTR
-9BB2     54 e0      anl      A, #0xe0
-9BB4     b4 e0 2f   cjne     A, #0xe0, 0x9be6
-9BB7     90 08 21   mov      DPTR, #0x821
-9BBA     e0         movx     A, @DPTR
-9BBB     54 c0      anl      A, #0xc0
-9BBD     c4         swap     A
-9BBE     03         rr       A
-9BBF     03         rr       A
-9BC0     f9         mov      R1, A
-9BC1     90 08 22   mov      DPTR, #0x822
-9BC4     e0         movx     A, @DPTR
-9BC5     54 3f      anl      A, #0x3f
-9BC7     23         rl       A
-9BC8     23         rl       A
-9BC9     29         add      A, R1
-9BCA     64 ff      xrl      A, #0xff
-9BCC     f9         mov      R1, A
-9BCD     90 08 20   mov      DPTR, #0x820
-9BD0     e0         movx     A, @DPTR
-9BD1     c3         clr      CY
-9BD2     99         subb     A, R1
-9BD3     40 11      jc       0x9be6
-9BD5     f9         mov      R1, A
-9BD6     90 04 3e   mov      DPTR, #0x43e
-9BD9     e0         movx     A, @DPTR
-9BDA     29         add      A, R1
-9BDB     40 09      jc       0x9be6
-9BDD     13         rrc      A
-9BDE     f0         movx     @DPTR, A
-9BDF     e4         clr      A
-9BE0     90 06 94   mov      DPTR, #0x694
-9BE3     f0         movx     @DPTR, A
-9BE4     80 12      sjmp     0x9bf8
+9B3C     90 04 66 mov      DPTR, #0x466
+9B3F     e0 - -   movx     A, @DPTR
+9B40     54 10 -  anl      A, #0x10
+9B42     60 03 -  jz       0x9b47
+9B44     02 9b f8 ljmp     0x9bf8
+9B47     90 16 f1 mov      DPTR, #0x16f1
+9B4A     74 10 -  mov      A, #0x10
+9B4C     f0 - -   movx     @DPTR, A
+9B4D     90 16 3e mov      DPTR, #0x163e
+9B50     74 00 -  mov      A, #0x0
+9B52     f0 - -   movx     @DPTR, A
+9B53     12 9c 53 lcall    0x9c53
+9B56     12 9c 0e lcall    0x9c0e
+9B59     50 03 -  jnc      0x9b5e
+9B5B     02 9b e6 ljmp     0x9be6
+9B5E     90 30 01 mov      DPTR, #0x3001
+9B61     74 3c -  mov      A, #0x3c
+9B63     f0 - -   movx     @DPTR, A
+9B64     90 30 03 mov      DPTR, #0x3003
+9B67     74 30 -  mov      A, #0x30
+9B69     f0 - -   movx     @DPTR, A
+9B6A     90 30 04 mov      DPTR, #0x3004
+9B6D     74 01 -  mov      A, #0x1
+9B6F     f0 - -   movx     @DPTR, A
+9B70     90 30 05 mov      DPTR, #0x3005
+9B73     74 02 -  mov      A, #0x2
+9B75     f0 - -   movx     @DPTR, A
+9B76     90 30 02 mov      DPTR, #0x3002
+9B79     74 01 -  mov      A, #0x1
+9B7B     f0 - -   movx     @DPTR, A
+9B7C     90 30 01 mov      DPTR, #0x3001
+9B7F     74 09 -  mov      A, #0x9
+9B81     f0 - -   movx     @DPTR, A
+9B82     79 00 -  mov      R1, #0x0
+9B84     7a 0a -  mov      R2, #0xa
+9B86     90 30 00 mov      DPTR, #0x3000
+9B89     e0 - -   movx     A, @DPTR
+9B8A     20 e1 0b jb       0xe1, 0x9b98
+9B8D     d9 f7 -  djnz     R1, 0x9b86
+9B8F     da f5 -  djnz     R2, 0x9b86
+9B91     90 30 00 mov      DPTR, #0x3000
+9B94     74 ff -  mov      A, #0xff
+9B96     f0 - -   movx     @DPTR, A
+9B97     22 - -   ret      
+9B98     90 30 07 mov      DPTR, #0x3007
+9B9B     e0 - -   movx     A, @DPTR
+9B9C     90 08 21 mov      DPTR, #0x821
+9B9F     f0 - -   movx     @DPTR, A
+9BA0     90 30 07 mov      DPTR, #0x3007
+9BA3     e0 - -   movx     A, @DPTR
+9BA4     90 08 22 mov      DPTR, #0x822
+9BA7     f0 - -   movx     @DPTR, A
+9BA8     90 30 00 mov      DPTR, #0x3000
+9BAB     74 ff -  mov      A, #0xff
+9BAD     f0 - -   movx     @DPTR, A
+9BAE     90 08 22 mov      DPTR, #0x822
+9BB1     e0 - -   movx     A, @DPTR
+9BB2     54 e0 -  anl      A, #0xe0
+9BB4     b4 e0 2f cjne     A, #0xe0, 0x9be6
+9BB7     90 08 21 mov      DPTR, #0x821
+9BBA     e0 - -   movx     A, @DPTR
+9BBB     54 c0 -  anl      A, #0xc0
+9BBD     c4 - -   swap     A
+9BBE     03 - -   rr       A
+9BBF     03 - -   rr       A
+9BC0     f9 - -   mov      R1, A
+9BC1     90 08 22 mov      DPTR, #0x822
+9BC4     e0 - -   movx     A, @DPTR
+9BC5     54 3f -  anl      A, #0x3f
+9BC7     23 - -   rl       A
+9BC8     23 - -   rl       A
+9BC9     29 - -   add      A, R1
+9BCA     64 ff -  xrl      A, #0xff
+9BCC     f9 - -   mov      R1, A
+9BCD     90 08 20 mov      DPTR, #0x820
+9BD0     e0 - -   movx     A, @DPTR
+9BD1     c3 - -   clr      CY
+9BD2     99 - -   subb     A, R1
+9BD3     40 11 -  jc       0x9be6
+9BD5     f9 - -   mov      R1, A
+9BD6     90 04 3e mov      DPTR, #0x43e
+9BD9     e0 - -   movx     A, @DPTR
+9BDA     29 - -   add      A, R1
+9BDB     40 09 -  jc       0x9be6
+9BDD     13 - -   rrc      A
+9BDE     f0 - -   movx     @DPTR, A
+9BDF     e4 - -   clr      A
+9BE0     90 06 94 mov      DPTR, #0x694
+9BE3     f0 - -   movx     @DPTR, A
+9BE4     80 12 -  sjmp     0x9bf8

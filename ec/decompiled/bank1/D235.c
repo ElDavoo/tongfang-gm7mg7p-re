@@ -9,9 +9,9 @@
 void FUN_CODE_d235(void)
 
 {
-  FUN_CODE_d018();
-  FUN_CODE_d2a3();
-  FUN_CODE_d274();
+  dispatch_on_03c3_low3();
+  derive_scale_from_034e_and_compute_from_044c();
+  div_23_minus_0386_by_034d_capped_15();
   return;
 }
 

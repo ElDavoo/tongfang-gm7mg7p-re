@@ -6,58 +6,58 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-3FA7     90 0a 47   mov      DPTR, #0xa47
-3FAA     ef         mov      A, R7
-3FAB     f0         movx     @DPTR, A
-3FAC     e4         clr      A
-3FAD     ff         mov      R7, A
-3FAE     12 38 35   lcall    0x3835
-3FB1     e4         clr      A
-3FB2     90 0a 48   mov      DPTR, #0xa48
-3FB5     f0         movx     @DPTR, A
-3FB6     a3         inc      DPTR
-3FB7     f0         movx     @DPTR, A
-3FB8     a3         inc      DPTR
-3FB9     f0         movx     @DPTR, A
-3FBA     78 ac      mov      R0, #0xac
-3FBC     e6         mov      A, @R0
-3FBD     70 03      jnz      0x3fc2
-3FBF     02 40 60   ljmp     0x4060
-3FC2     e6         mov      A, @R0
-3FC3     a3         inc      DPTR
-3FC4     f0         movx     @DPTR, A
-3FC5     e4         clr      A
-3FC6     f6         mov      @R0, A
-3FC7     e0         movx     A, @DPTR
-3FC8     24 10      add      A, #0x10
-3FCA     60 25      jz       0x3ff1
-3FCC     24 fd      add      A, #0xfd
-3FCE     60 2b      jz       0x3ffb
-3FD0     24 06      add      A, #0x6
-3FD2     70 3d      jnz      0x4011
-3FD4     90 0a 47   mov      DPTR, #0xa47
-3FD7     e0         movx     A, @DPTR
-3FD8     f5 28      mov      0x28, A
-3FDA     a3         inc      DPTR
-3FDB     74 fa      mov      A, #0xfa
-3FDD     f0         movx     @DPTR, A
-3FDE     e5 28      mov      A, 0x28
-3FE0     30 e2 05   jnb      0xe2, 0x3fe8
-3FE3     12 16 12   lcall    0x1612
-3FE6     80 03      sjmp     0x3feb
-3FE8     12 16 18   lcall    0x1618
-3FEB     a2 41      mov      CY, 0x41
-3FED     92 48      mov      0x48, CY
-3FEF     80 26      sjmp     0x4017
-3FF1     90 0a 47   mov      DPTR, #0xa47
-3FF4     e0         movx     A, @DPTR
-3FF5     78 93      mov      R0, #0x93
-3FF7     f6         mov      @R0, A
-3FF8     a3         inc      DPTR
-3FF9     80 11      sjmp     0x400c
-3FFB     90 0a 47   mov      DPTR, #0xa47
-3FFE     e0         movx     A, @DPTR
-3FFF     78 94      mov      R0, #0x94
-4001     f6         mov      @R0, A
-4011     90 0a 48   mov      DPTR, #0xa48
-4014     74 fe      mov      A, #0xfe
+3FA7     90 0a 47 mov      DPTR, #0xa47
+3FAA     ef - -   mov      A, R7
+3FAB     f0 - -   movx     @DPTR, A
+3FAC     e4 - -   clr      A
+3FAD     ff - -   mov      R7, A
+3FAE     12 38 35 lcall    0x3835
+3FB1     e4 - -   clr      A
+3FB2     90 0a 48 mov      DPTR, #0xa48
+3FB5     f0 - -   movx     @DPTR, A
+3FB6     a3 - -   inc      DPTR
+3FB7     f0 - -   movx     @DPTR, A
+3FB8     a3 - -   inc      DPTR
+3FB9     f0 - -   movx     @DPTR, A
+3FBA     78 ac -  mov      R0, #0xac
+3FBC     e6 - -   mov      A, @R0
+3FBD     70 03 -  jnz      0x3fc2
+3FBF     02 40 60 ljmp     0x4060
+3FC2     e6 - -   mov      A, @R0
+3FC3     a3 - -   inc      DPTR
+3FC4     f0 - -   movx     @DPTR, A
+3FC5     e4 - -   clr      A
+3FC6     f6 - -   mov      @R0, A
+3FC7     e0 - -   movx     A, @DPTR
+3FC8     24 10 -  add      A, #0x10
+3FCA     60 25 -  jz       0x3ff1
+3FCC     24 fd -  add      A, #0xfd
+3FCE     60 2b -  jz       0x3ffb
+3FD0     24 06 -  add      A, #0x6
+3FD2     70 3d -  jnz      0x4011
+3FD4     90 0a 47 mov      DPTR, #0xa47
+3FD7     e0 - -   movx     A, @DPTR
+3FD8     f5 28 -  mov      0x28, A
+3FDA     a3 - -   inc      DPTR
+3FDB     74 fa -  mov      A, #0xfa
+3FDD     f0 - -   movx     @DPTR, A
+3FDE     e5 28 -  mov      A, 0x28
+3FE0     30 e2 05 jnb      0xe2, 0x3fe8
+3FE3     12 16 12 lcall    0x1612
+3FE6     80 03 -  sjmp     0x3feb
+3FE8     12 16 18 lcall    0x1618
+3FEB     a2 41 -  mov      CY, 0x41
+3FED     92 48 -  mov      0x48, CY
+3FEF     80 26 -  sjmp     0x4017
+3FF1     90 0a 47 mov      DPTR, #0xa47
+3FF4     e0 - -   movx     A, @DPTR
+3FF5     78 93 -  mov      R0, #0x93
+3FF7     f6 - -   mov      @R0, A
+3FF8     a3 - -   inc      DPTR
+3FF9     80 11 -  sjmp     0x400c
+3FFB     90 0a 47 mov      DPTR, #0xa47
+3FFE     e0 - -   movx     A, @DPTR
+3FFF     78 94 -  mov      R0, #0x94
+4001     f6 - -   mov      @R0, A
+4011     90 0a 48 mov      DPTR, #0xa48
+4014     74 fe -  mov      A, #0xfe

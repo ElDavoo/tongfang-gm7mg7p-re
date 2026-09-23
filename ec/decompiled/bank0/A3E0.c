@@ -10,7 +10,7 @@ void FUN_CODE_a3e0(char *param_1)
 
 {
   if (*param_1 == '\x05') {
-    FUN_CODE_c389();
+    clear_1607_bit2();
     DAT_EXTMEM_097f = DAT_EXTMEM_097f | 2;
     TRIGGER = TRIGGER & 0xef;
     return;

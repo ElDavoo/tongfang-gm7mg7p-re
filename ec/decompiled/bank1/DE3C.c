@@ -38,7 +38,7 @@ void FUN_CODE_de3c(undefined1 param_1,undefined1 param_2)
     DAT_EXTMEM_1c00 = 0xff;
     return;
   }
-  FUN_CODE_ac6d();
+  set_0681_bit7();
   DAT_EXTMEM_0680 = 4;
   DAT_EXTMEM_0561 = 0;
   if ((DAT_EXTMEM_054c + 1 >> 2 & 1) != 1) {

@@ -6,36 +6,36 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-D8F9     e4         clr      A
-D8FA     90 03 92   mov      DPTR, #0x392
-D8FD     f0         movx     @DPTR, A
-D8FE     90 03 93   mov      DPTR, #0x393
-D901     f0         movx     @DPTR, A
-D902     90 03 be   mov      DPTR, #0x3be
-D905     f0         movx     @DPTR, A
-D906     90 03 bd   mov      DPTR, #0x3bd
-D909     f0         movx     @DPTR, A
-D90A     7a 02      mov      R2, #0x2
-D90C     79 7e      mov      R1, #0x7e
-D90E     90 04 91   mov      DPTR, #0x491
-D911     e0         movx     A, @DPTR
-D912     54 c0      anl      A, #0xc0
-D914     b4 c0 02   cjne     A, #0xc0, 0xd919
-D917     80 0f      sjmp     0xd928
-D919     b4 80 02   cjne     A, #0x80, 0xd91e
-D91C     80 06      sjmp     0xd924
-D91E     7a 01      mov      R2, #0x1
-D920     79 4e      mov      R1, #0x4e
-D922     80 04      sjmp     0xd928
-D924     7a 01      mov      R2, #0x1
-D926     79 dd      mov      R1, #0xdd
-D928     90 03 78   mov      DPTR, #0x378
-D92B     12 88 8c   lcall    0x888c
-D92E     90 03 7a   mov      DPTR, #0x37a
-D931     12 88 8c   lcall    0x888c
-D934     90 03 7c   mov      DPTR, #0x37c
-D937     12 88 8c   lcall    0x888c
-D93A     90 03 7e   mov      DPTR, #0x37e
-D93D     12 88 8c   lcall    0x888c
-D940     12 19 de   lcall    0x19de
-D943     22         ret      
+D8F9     e4 - -   clr      A
+D8FA     90 03 92 mov      DPTR, #0x392
+D8FD     f0 - -   movx     @DPTR, A
+D8FE     90 03 93 mov      DPTR, #0x393
+D901     f0 - -   movx     @DPTR, A
+D902     90 03 be mov      DPTR, #0x3be
+D905     f0 - -   movx     @DPTR, A
+D906     90 03 bd mov      DPTR, #0x3bd
+D909     f0 - -   movx     @DPTR, A
+D90A     7a 02 -  mov      R2, #0x2
+D90C     79 7e -  mov      R1, #0x7e
+D90E     90 04 91 mov      DPTR, #0x491
+D911     e0 - -   movx     A, @DPTR
+D912     54 c0 -  anl      A, #0xc0
+D914     b4 c0 02 cjne     A, #0xc0, 0xd919
+D917     80 0f -  sjmp     0xd928
+D919     b4 80 02 cjne     A, #0x80, 0xd91e
+D91C     80 06 -  sjmp     0xd924
+D91E     7a 01 -  mov      R2, #0x1
+D920     79 4e -  mov      R1, #0x4e
+D922     80 04 -  sjmp     0xd928
+D924     7a 01 -  mov      R2, #0x1
+D926     79 dd -  mov      R1, #0xdd
+D928     90 03 78 mov      DPTR, #0x378
+D92B     12 88 8c lcall    0x888c
+D92E     90 03 7a mov      DPTR, #0x37a
+D931     12 88 8c lcall    0x888c
+D934     90 03 7c mov      DPTR, #0x37c
+D937     12 88 8c lcall    0x888c
+D93A     90 03 7e mov      DPTR, #0x37e
+D93D     12 88 8c lcall    0x888c
+D940     12 19 de lcall    0x19de
+D943     22 - -   ret      

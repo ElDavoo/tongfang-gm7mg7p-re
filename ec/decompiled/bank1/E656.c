@@ -15,7 +15,7 @@ void FUN_CODE_e656(void)
   byte bVar4;
   undefined2 uVar5;
   
-  FUN_CODE_cb80();
+  div_0343_by_31e_shifted_into_03a9();
   if ((DAT_EXTMEM_0491 & 0xc0) == 0xc0) {
     uVar5 = 0xee32;
     if ((DAT_EXTMEM_031c >> 3 & 1) != 0) {
@@ -42,8 +42,9 @@ void FUN_CODE_e656(void)
   }
   bVar3 = 0xe;
   do {
-    FUN_CODE_888c(CONCAT11(3,bVar3 - 0x30),((undefined1 *)CONCAT11(cVar2,bVar4))[1],
-                  *(undefined1 *)CONCAT11(cVar2,bVar4));
+    write_r1r2_to_xdata_pair
+              (CONCAT11(3,bVar3 - 0x30),((undefined1 *)CONCAT11(cVar2,bVar4))[1],
+               *(undefined1 *)CONCAT11(cVar2,bVar4));
     bVar1 = 0xef < bVar4;
     bVar4 = bVar4 + 0x10;
     if (bVar1) {

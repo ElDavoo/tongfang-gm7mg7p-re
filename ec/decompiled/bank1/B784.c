@@ -28,25 +28,25 @@ void FUN_CODE_b784(void)
     DAT_EXTMEM_080b = 3;
     DAT_EXTMEM_0497 = 0;
     DAT_EXTMEM_0722 = 0;
-    FUN_CODE_8886(0x60a);
+    read_xdata_pair_to_r1r2(0x60a);
     FUN_CODE_8863(0x70,3);
     if (-1 < (char)bVar1) {
-      FUN_CODE_c700();
+      setup_state_and_copy_30_byte_table();
       return;
     }
   }
   else if ((DAT_EXTMEM_0722 >> 2 & 1) != 1) {
     DAT_EXTMEM_0722 = DAT_EXTMEM_0722 + 1;
-    FUN_CODE_8886(0x60a);
+    read_xdata_pair_to_r1r2(0x60a);
     FUN_CODE_8863(0x70,3);
     if ((char)bVar1 < '\0') {
       if ((DAT_EXTMEM_0497 & 1) != 0) {
-        FUN_CODE_b321();
+        set_0575_8_or_write_0404_and_call_88f0();
         return;
       }
     }
     else if ((DAT_EXTMEM_0497 & 1) != 1) {
-      FUN_CODE_b321();
+      set_0575_8_or_write_0404_and_call_88f0();
       return;
     }
   }

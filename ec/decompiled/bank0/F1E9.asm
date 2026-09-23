@@ -6,35 +6,35 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-F1E9     e4         clr      A
-F1EA     90 0e 03   mov      DPTR, #0xe03
-F1ED     f0         movx     @DPTR, A
-F1EE     74 80      mov      A, #0x80
-F1F0     12 f4 95   lcall    0xf495
-F1F3     a3         inc      DPTR
-F1F4     74 02      mov      A, #0x2
-F1F6     f0         movx     @DPTR, A
-F1F7     7e 0e      mov      R6, #0xe
-F1F9     a3         inc      DPTR
-F1FA     74 0e      mov      A, #0xe
-F1FC     f0         movx     @DPTR, A
-F1FD     a3         inc      DPTR
-F1FE     74 a0      mov      A, #0xa0
-F200     f0         movx     @DPTR, A
-F201     7b 01      mov      R3, #0x1
-F203     7d 80      mov      R5, #0x80
-F205     7f 01      mov      R7, #0x1
-F207     12 47 77   lcall    0x4777
-F20A     90 0e 02   mov      DPTR, #0xe02
-F20D     ef         mov      A, R7
-F20E     f0         movx     @DPTR, A
-F20F     e0         movx     A, @DPTR
-F210     70 03      jnz      0xf215
-F212     12 f4 a4   lcall    0xf4a4
-F215     90 0e 03   mov      DPTR, #0xe03
-F218     e0         movx     A, @DPTR
-F219     70 05      jnz      0xf220
-F21B     90 0e 04   mov      DPTR, #0xe04
-F21E     04         inc      A
-F21F     f0         movx     @DPTR, A
-F220     22         ret      
+F1E9     e4 - -   clr      A
+F1EA     90 0e 03 mov      DPTR, #0xe03
+F1ED     f0 - -   movx     @DPTR, A
+F1EE     74 80 -  mov      A, #0x80
+F1F0     12 f4 95 lcall    0xf495
+F1F3     a3 - -   inc      DPTR
+F1F4     74 02 -  mov      A, #0x2
+F1F6     f0 - -   movx     @DPTR, A
+F1F7     7e 0e -  mov      R6, #0xe
+F1F9     a3 - -   inc      DPTR
+F1FA     74 0e -  mov      A, #0xe
+F1FC     f0 - -   movx     @DPTR, A
+F1FD     a3 - -   inc      DPTR
+F1FE     74 a0 -  mov      A, #0xa0
+F200     f0 - -   movx     @DPTR, A
+F201     7b 01 -  mov      R3, #0x1
+F203     7d 80 -  mov      R5, #0x80
+F205     7f 01 -  mov      R7, #0x1
+F207     12 47 77 lcall    0x4777
+F20A     90 0e 02 mov      DPTR, #0xe02
+F20D     ef - -   mov      A, R7
+F20E     f0 - -   movx     @DPTR, A
+F20F     e0 - -   movx     A, @DPTR
+F210     70 03 -  jnz      0xf215
+F212     12 f4 a4 lcall    0xf4a4
+F215     90 0e 03 mov      DPTR, #0xe03
+F218     e0 - -   movx     A, @DPTR
+F219     70 05 -  jnz      0xf220
+F21B     90 0e 04 mov      DPTR, #0xe04
+F21E     04 - -   inc      A
+F21F     f0 - -   movx     @DPTR, A
+F220     22 - -   ret      

@@ -4,12 +4,12 @@
 ; This is the machine code. The decompiled C for this address is 821F.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-821F     12 bb 08   lcall    0xbb08
-8222     90 08 e1   mov      DPTR, #0x8e1
-8225     74 06      mov      A, #0x6
-8227     f0         movx     @DPTR, A
-8228     90 08 e0   mov      DPTR, #0x8e0
-822B     e0         movx     A, @DPTR
-822C     04         inc      A
-822D     f0         movx     @DPTR, A
-822E     02 82 74   ljmp     0x8274
+821F     12 bb 08 lcall    0xbb08
+8222     90 08 e1 mov      DPTR, #0x8e1
+8225     74 06 -  mov      A, #0x6
+8227     f0 - -   movx     @DPTR, A
+8228     90 08 e0 mov      DPTR, #0x8e0
+822B     e0 - -   movx     A, @DPTR
+822C     04 - -   inc      A
+822D     f0 - -   movx     @DPTR, A
+822E     02 82 74 ljmp     0x8274

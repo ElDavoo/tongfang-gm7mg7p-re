@@ -17,7 +17,7 @@ char FUN_CODE_dfa0(byte param_1,byte param_2)
   }
   bVar1 = 0x1b - (((param_1 < 0x58) << 7) >> 7);
   if (param_2 < bVar1) {
-    cVar2 = FUN_CODE_724b(0,0,param_2,param_1,0x20,0xe6,0xda);
+    cVar2 = normalize_sign_pair_4byte(0,0,param_2,param_1,0x20,0xe6,0xda);
     return cVar2;
   }
   return param_2 - bVar1;

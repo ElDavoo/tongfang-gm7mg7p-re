@@ -6,58 +6,58 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-223F     e4         clr      A
-2240     90 0a 47   mov      DPTR, #0xa47
-2243     f0         movx     @DPTR, A
-2244     12 2a 6c   lcall    0x2a6c
-2247     12 15 10   lcall    0x1510
-224A     90 0d b0   mov      DPTR, #0xdb0
-224D     e0         movx     A, @DPTR
-224E     70 65      jnz      0x22b5
-2250     a3         inc      DPTR
-2251     f0         movx     @DPTR, A
-2252     f5 67      mov      0x67, A
-2254     af 67      mov      R7, 0x67
-2256     12 23 f4   lcall    0x23f4
-2259     12 10 f1   lcall    0x10f1
-225C     90 1d 04   mov      DPTR, #0x1d04
-225F     e0         movx     A, @DPTR
-2260     f4         cpl      A
-2261     f5 66      mov      0x66, A
-2263     12 2a 7b   lcall    0x2a7b
-2266     34 0d      addc     A, #0xd
-2268     f5 83      mov      DPH, A
-226A     e5 66      mov      A, 0x66
-226C     f0         movx     @DPTR, A
-226D     12 2a 7b   lcall    0x2a7b
-2270     34 0d      addc     A, #0xd
-2272     f5 83      mov      DPH, A
-2274     e0         movx     A, @DPTR
-22B5     90 0d b0   mov      DPTR, #0xdb0
-22B8     e0         movx     A, @DPTR
-22B9     64 01      xrl      A, #0x1
-22BB     70 3e      jnz      0x22fb
-22BD     f5 67      mov      0x67, A
-22BF     af 67      mov      R7, 0x67
-22C1     12 23 f4   lcall    0x23f4
-22C4     12 10 f1   lcall    0x10f1
-22C7     90 1d 04   mov      DPTR, #0x1d04
-22CA     e0         movx     A, @DPTR
-22CB     f4         cpl      A
-22CC     12 2a 8f   lcall    0x2a8f
-22CF     34 0d      addc     A, #0xd
-22D1     12 2a 24   lcall    0x2a24
-22D4     e0         movx     A, @DPTR
-22D5     d3         setb     CY
-22D6     94 01      subb     A, #0x1
-22D8     40 17      jc       0x22f1
-22DA     74 80      mov      A, #0x80
-22DC     12 2a 7d   lcall    0x2a7d
-22DF     34 0d      addc     A, #0xd
-22E1     f5 83      mov      DPH, A
-22E3     e0         movx     A, @DPTR
-22E4     ff         mov      R7, A
-22E5     74 70      mov      A, #0x70
-22E7     12 2a 92   lcall    0x2a92
-22EA     34 0d      addc     A, #0xd
-22EC     12 2a 24   lcall    0x2a24
+223F     e4 - -   clr      A
+2240     90 0a 47 mov      DPTR, #0xa47
+2243     f0 - -   movx     @DPTR, A
+2244     12 2a 6c lcall    0x2a6c
+2247     12 15 10 lcall    0x1510
+224A     90 0d b0 mov      DPTR, #0xdb0
+224D     e0 - -   movx     A, @DPTR
+224E     70 65 -  jnz      0x22b5
+2250     a3 - -   inc      DPTR
+2251     f0 - -   movx     @DPTR, A
+2252     f5 67 -  mov      0x67, A
+2254     af 67 -  mov      R7, 0x67
+2256     12 23 f4 lcall    0x23f4
+2259     12 10 f1 lcall    0x10f1
+225C     90 1d 04 mov      DPTR, #0x1d04
+225F     e0 - -   movx     A, @DPTR
+2260     f4 - -   cpl      A
+2261     f5 66 -  mov      0x66, A
+2263     12 2a 7b lcall    0x2a7b
+2266     34 0d -  addc     A, #0xd
+2268     f5 83 -  mov      DPH, A
+226A     e5 66 -  mov      A, 0x66
+226C     f0 - -   movx     @DPTR, A
+226D     12 2a 7b lcall    0x2a7b
+2270     34 0d -  addc     A, #0xd
+2272     f5 83 -  mov      DPH, A
+2274     e0 - -   movx     A, @DPTR
+22B5     90 0d b0 mov      DPTR, #0xdb0
+22B8     e0 - -   movx     A, @DPTR
+22B9     64 01 -  xrl      A, #0x1
+22BB     70 3e -  jnz      0x22fb
+22BD     f5 67 -  mov      0x67, A
+22BF     af 67 -  mov      R7, 0x67
+22C1     12 23 f4 lcall    0x23f4
+22C4     12 10 f1 lcall    0x10f1
+22C7     90 1d 04 mov      DPTR, #0x1d04
+22CA     e0 - -   movx     A, @DPTR
+22CB     f4 - -   cpl      A
+22CC     12 2a 8f lcall    0x2a8f
+22CF     34 0d -  addc     A, #0xd
+22D1     12 2a 24 lcall    0x2a24
+22D4     e0 - -   movx     A, @DPTR
+22D5     d3 - -   setb     CY
+22D6     94 01 -  subb     A, #0x1
+22D8     40 17 -  jc       0x22f1
+22DA     74 80 -  mov      A, #0x80
+22DC     12 2a 7d lcall    0x2a7d
+22DF     34 0d -  addc     A, #0xd
+22E1     f5 83 -  mov      DPH, A
+22E3     e0 - -   movx     A, @DPTR
+22E4     ff - -   mov      R7, A
+22E5     74 70 -  mov      A, #0x70
+22E7     12 2a 92 lcall    0x2a92
+22EA     34 0d -  addc     A, #0xd
+22EC     12 2a 24 lcall    0x2a24

@@ -4,32 +4,32 @@
 ; This is the machine code. The decompiled C for this address is EA67.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-EA67     e4         clr      A
-EA68     90 07 c9   mov      DPTR, #0x7c9
-EA6B     f0         movx     @DPTR, A
-EA6C     a3         inc      DPTR
-EA6D     f0         movx     @DPTR, A
-EA6E     a3         inc      DPTR
-EA6F     f0         movx     @DPTR, A
-EA70     04         inc      A
-EA71     f0         movx     @DPTR, A
-EA72     90 09 45   mov      DPTR, #0x945
-EA75     e0         movx     A, @DPTR
-EA76     60 0b      jz       0xea83
-EA78     90 07 c9   mov      DPTR, #0x7c9
-EA7B     a3         inc      DPTR
-EA7C     e0         movx     A, @DPTR
-EA7D     ff         mov      R7, A
-EA7E     e4         clr      A
-EA7F     fd         mov      R5, A
-EA80     12 f6 3f   lcall    0xf63f
-EA83     90 00 d4   mov      DPTR, #0xd4
-EA86     e4         clr      A
-EA87     f0         movx     @DPTR, A
-EA88     a3         inc      DPTR
-EA89     74 2e      mov      A, #0x2e
-EA8B     f0         movx     @DPTR, A
-EA8C     90 00 d3   mov      DPTR, #0xd3
-EA8F     74 01      mov      A, #0x1
-EA91     f0         movx     @DPTR, A
-EA92     22         ret      
+EA67     e4 - -   clr      A
+EA68     90 07 c9 mov      DPTR, #0x7c9
+EA6B     f0 - -   movx     @DPTR, A
+EA6C     a3 - -   inc      DPTR
+EA6D     f0 - -   movx     @DPTR, A
+EA6E     a3 - -   inc      DPTR
+EA6F     f0 - -   movx     @DPTR, A
+EA70     04 - -   inc      A
+EA71     f0 - -   movx     @DPTR, A
+EA72     90 09 45 mov      DPTR, #0x945
+EA75     e0 - -   movx     A, @DPTR
+EA76     60 0b -  jz       0xea83
+EA78     90 07 c9 mov      DPTR, #0x7c9
+EA7B     a3 - -   inc      DPTR
+EA7C     e0 - -   movx     A, @DPTR
+EA7D     ff - -   mov      R7, A
+EA7E     e4 - -   clr      A
+EA7F     fd - -   mov      R5, A
+EA80     12 f6 3f lcall    0xf63f
+EA83     90 00 d4 mov      DPTR, #0xd4
+EA86     e4 - -   clr      A
+EA87     f0 - -   movx     @DPTR, A
+EA88     a3 - -   inc      DPTR
+EA89     74 2e -  mov      A, #0x2e
+EA8B     f0 - -   movx     @DPTR, A
+EA8C     90 00 d3 mov      DPTR, #0xd3
+EA8F     74 01 -  mov      A, #0x1
+EA91     f0 - -   movx     @DPTR, A
+EA92     22 - -   ret      

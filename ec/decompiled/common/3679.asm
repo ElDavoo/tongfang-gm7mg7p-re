@@ -6,35 +6,35 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-3679     90 0a 07   mov      DPTR, #0xa07
-367C     ed         mov      A, R5
-367D     f0         movx     @DPTR, A
-367E     90 0a 06   mov      DPTR, #0xa06
-3681     ef         mov      A, R7
-3682     f0         movx     @DPTR, A
-3683     7b 01      mov      R3, #0x1
-3685     7d e8      mov      R5, #0xe8
-3687     12 2f 1d   lcall    0x2f1d
-368A     ef         mov      A, R7
-368B     70 17      jnz      0x36a4
-368D     90 0a 06   mov      DPTR, #0xa06
-3690     e0         movx     A, @DPTR
-3691     ff         mov      R7, A
-3692     a3         inc      DPTR
-3693     e0         movx     A, @DPTR
-3694     fd         mov      R5, A
-3695     7b 01      mov      R3, #0x1
-3697     12 2f 1d   lcall    0x2f1d
-369A     ef         mov      A, R7
-369B     70 07      jnz      0x36a4
-369D     90 0a 08   mov      DPTR, #0xa08
-36A0     04         inc      A
-36A1     f0         movx     @DPTR, A
-36A2     80 05      sjmp     0x36a9
-36A4     e4         clr      A
-36A5     90 0a 08   mov      DPTR, #0xa08
-36A8     f0         movx     @DPTR, A
-36A9     90 0a 08   mov      DPTR, #0xa08
-36AC     e0         movx     A, @DPTR
-36AD     ff         mov      R7, A
-36AE     22         ret      
+3679     90 0a 07 mov      DPTR, #0xa07
+367C     ed - -   mov      A, R5
+367D     f0 - -   movx     @DPTR, A
+367E     90 0a 06 mov      DPTR, #0xa06
+3681     ef - -   mov      A, R7
+3682     f0 - -   movx     @DPTR, A
+3683     7b 01 -  mov      R3, #0x1
+3685     7d e8 -  mov      R5, #0xe8
+3687     12 2f 1d lcall    0x2f1d
+368A     ef - -   mov      A, R7
+368B     70 17 -  jnz      0x36a4
+368D     90 0a 06 mov      DPTR, #0xa06
+3690     e0 - -   movx     A, @DPTR
+3691     ff - -   mov      R7, A
+3692     a3 - -   inc      DPTR
+3693     e0 - -   movx     A, @DPTR
+3694     fd - -   mov      R5, A
+3695     7b 01 -  mov      R3, #0x1
+3697     12 2f 1d lcall    0x2f1d
+369A     ef - -   mov      A, R7
+369B     70 07 -  jnz      0x36a4
+369D     90 0a 08 mov      DPTR, #0xa08
+36A0     04 - -   inc      A
+36A1     f0 - -   movx     @DPTR, A
+36A2     80 05 -  sjmp     0x36a9
+36A4     e4 - -   clr      A
+36A5     90 0a 08 mov      DPTR, #0xa08
+36A8     f0 - -   movx     @DPTR, A
+36A9     90 0a 08 mov      DPTR, #0xa08
+36AC     e0 - -   movx     A, @DPTR
+36AD     ff - -   mov      R7, A
+36AE     22 - -   ret      

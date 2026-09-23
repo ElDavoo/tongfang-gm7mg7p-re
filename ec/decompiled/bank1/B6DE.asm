@@ -6,31 +6,31 @@
 ; function boundary from a call-target byte scan; that census is an upper bound (ec/annotations/bank-call-audit.md §1),
 ; so this boundary is a hypothesis and the instructions below may not be the whole function.
 
-B6DE     90 05 63   mov      DPTR, #0x563
-B6E1     e0         movx     A, @DPTR
-B6E2     f9         mov      R1, A
-B6E3     90 05 64   mov      DPTR, #0x564
-B6E6     e0         movx     A, @DPTR
-B6E7     60 3d      jz       0xb726
-B6E9     fa         mov      R2, A
-B6EA     b4 03 02   cjne     A, #0x3, 0xb6ef
-B6ED     c3         clr      CY
-B6EE     22         ret      
-B6EF     c3         clr      CY
-B6F0     94 04      subb     A, #0x4
-B6F2     40 32      jc       0xb726
-B6F4     80 16      sjmp     0xb70c
-B70C     e9         mov      A, R1
-B70D     54 f0      anl      A, #0xf0
-B70F     ba 04 12   cjne     R2, #0x4, 0xb724
-B712     b4 a0 02   cjne     A, #0xa0, 0xb717
-B715     80 0d      sjmp     0xb724
-B717     b4 b0 02   cjne     A, #0xb0, 0xb71c
-B71A     80 08      sjmp     0xb724
-B71C     b4 20 02   cjne     A, #0x20, 0xb721
-B71F     80 03      sjmp     0xb724
-B721     b4 30 02   cjne     A, #0x30, 0xb726
-B724     c3         clr      CY
-B725     22         ret      
-B726     d3         setb     CY
-B727     22         ret      
+B6DE     90 05 63 mov      DPTR, #0x563
+B6E1     e0 - -   movx     A, @DPTR
+B6E2     f9 - -   mov      R1, A
+B6E3     90 05 64 mov      DPTR, #0x564
+B6E6     e0 - -   movx     A, @DPTR
+B6E7     60 3d -  jz       0xb726
+B6E9     fa - -   mov      R2, A
+B6EA     b4 03 02 cjne     A, #0x3, 0xb6ef
+B6ED     c3 - -   clr      CY
+B6EE     22 - -   ret      
+B6EF     c3 - -   clr      CY
+B6F0     94 04 -  subb     A, #0x4
+B6F2     40 32 -  jc       0xb726
+B6F4     80 16 -  sjmp     0xb70c
+B70C     e9 - -   mov      A, R1
+B70D     54 f0 -  anl      A, #0xf0
+B70F     ba 04 12 cjne     R2, #0x4, 0xb724
+B712     b4 a0 02 cjne     A, #0xa0, 0xb717
+B715     80 0d -  sjmp     0xb724
+B717     b4 b0 02 cjne     A, #0xb0, 0xb71c
+B71A     80 08 -  sjmp     0xb724
+B71C     b4 20 02 cjne     A, #0x20, 0xb721
+B71F     80 03 -  sjmp     0xb724
+B721     b4 30 02 cjne     A, #0x30, 0xb726
+B724     c3 - -   clr      CY
+B725     22 - -   ret      
+B726     d3 - -   setb     CY
+B727     22 - -   ret      

@@ -4,4 +4,4 @@
 ; This is the machine code. The decompiled C for this address is 001A.c in the same tree;
 ; where the two disagree, this file is right and the C is a reading of it.
 
-001A     22         ret      
+001A     22 - -   ret      
