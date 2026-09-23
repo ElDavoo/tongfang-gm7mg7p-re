@@ -1,0 +1,68 @@
+# The deep gate, on a schedule. Prepared here rather than landed, because
+# `.github/workflows/` is template-copied and the pipeline's push token has no
+# `workflow` scope, so a branch that adds a file there fails at the end of the
+# PR rather than at the start of it. `docs/agent-pipeline.md` says the same
+# thing about every other leg of this that a human has to land.
+#
+# To land it:
+#
+#   cp docs/ci/agent-gates-deep-schedule.yml .github/workflows/agent-gates-deep.yml
+#
+# and that is the whole change. Everything it runs is already committed; it
+# calls the deep tier's documented entry point and nothing else.
+#
+# Why it is written to pass the `workflows:` job in ci.yml (actionlint and
+# zizmor) before it lands: that job audits every file in this directory, so
+# getting the action pin and the permissions right now is cheaper than getting
+# them reviewed after a human has copied the file.
+
+name: Deep gates
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 04:23, not 04:00. GitHub starts scheduled workflows from a shared pool
+    # around the top of the hour and queues the rest, so an off-minute slot is
+    # measurably likelier to start on time.
+    #
+    # GitHub also delays and sometimes drops scheduled runs under load, without
+    # telling anyone, which is the reason this must not become a required
+    # check: a check that silently does not run is the failure this repository
+    # keeps finding in other shapes. It is a report, not a gate on the PR.
+    - cron: '23 4 * * *'
+
+# One at a time, and the second waits rather than cancelling the first. A
+# cancelled re-encode leaves no result to read, and the whole value of a
+# nightly run is the result.
+concurrency:
+  group: agent-gates-deep
+  cancel-in-progress: false
+
+# The deep gate reads the repository and runs an assembler. It needs nothing
+# else, so it asks for nothing else.
+permissions:
+  contents: read
+
+jobs:
+  deep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      # For sdas8051. The cheap tier does not need it, which is why the deep
+      # script fails rather than skipping when it is missing.
+      - name: Set up the toolchain
+        uses: ./.github/actions/project-setup
+
+      # The same command ci.yml runs, with the deep tier switched on: the cheap
+      # tier first, then the sdas8051 re-encode and the advisory cross-decoder
+      # comparison. It is one command because agent-gates.sh hands off to
+      # agent-gates-deep.sh, and agent-gates-deep.sh re-runs the cheap tier
+      # first -- so this is a superset, not a second gate that can disagree
+      # with the first.
+      - name: Deep gates
+        run: AGENT_GATES_DEEP=1 .github/scripts/agent-gates.sh

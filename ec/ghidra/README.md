@@ -51,7 +51,7 @@ repository's annotations CSV once per seed row, not the cross-decoder.
 | `../decompiled/{common,bank0,bank1,pd}/<ADDR>.asm` | **the machine code, beside it.** Same address, same index row; see "The disassembly, and the 1:1 property" below |
 | `../decompiled/index.csv` | every function: program, address, name, size, how it was seeded, what is annotated, and the evidence for it |
 | `../decompiled/listing-index.csv` | the same rows again, `out_file` pointing at the `.asm`. Separate because the two files answer different questions and merging them would invite a reader to take a decompiled line for an instruction |
-| `reassembly.csv` | per function, whether re-encoding the committed listing reproduces the firmware bytes, and where it does not |
+| `reassembly.csv` | per function, whether re-encoding the committed listing reproduces the firmware bytes, where it does not, and a `listing_digest` of the listing text so `--check` can see a text edit |
 | `manifest.csv` | per program: function/decompile/fail counts, bytes disassembled, seed counts, Ghidra version, input SHA-256. The `common` row is an **export grouping**, not a fourth Ghidra program: those functions live in both bank programs and are emitted once |
 | `xdata-symbols.csv` | generated XDATA names, from `../annotations/registers.yaml`. Never hand-edited |
 | `xdata-overrides.csv` | the hand-maintained escape hatch for addresses the generator cannot name |
@@ -247,6 +247,62 @@ wrong one:
 What the check found on the way is in `../../docs/findings.md` §11; the four
 translation bugs it took to get to a clean result are the argument for having
 it at all.
+
+## What `listing_digest` is, and what it does not prove
+
+The re-encode above is the strongest check the EC has, and it was also the only
+one that read the listing's *text* — the byte check passes a wrong mnemonic
+outright, because a mnemonic is not a byte. So `reassembly.csv` now carries a
+`listing_digest` per row, a 64-bit hash of the parsed instruction stream, and
+`../tools/verify_reassembly.py --check` recomputes it for every committed
+listing on every run. A mnemonic or operand edited in a `.asm`, with the byte
+column left correct, now fails the cheap tier with no assembler:
+
+```
+$ # in ec/decompiled/bank0/031C.asm: `ljmp 0xd236` -> `sjmp 0xd236`, byte column untouched
+$ python3 ../tools/verify_reassembly.py --check
+  listing bytes: 45537 instruction(s) checked against the firmware, 0 disagreement(s)
+  listing digests: 2705 compared against the committed report, 1 disagreement(s)
+  FAIL bank0 031C poll_d6c2_then_branch (bank0/031C.asm): report says 38b4854aff7d69ca, bank0/031C.asm now digests to 180ddaa4dd467c12 -- the listing text changed after the report measured it
+```
+
+**A digest detects change; it does not verify the disassembly.** A digest that
+agrees says the text has not moved since the report was measured. It does not
+say the text is right, and nothing here can: a wrong mnemonic committed
+together with a re-reported digest is caught by no automated check in this
+repository, because the thing that would catch it is the re-encode, and the
+re-encode still has no schedule. The column's name invites the second reading
+more than the first, which is why this paragraph exists.
+
+What it deliberately does not cover, and why: the digest is over the *parsed
+instruction stream*, not the file's bytes. Case, internal whitespace and the
+space after a comma are folded, so a re-wrap or a comment edit is not a change
+to any claim and does not need an assembler run to resolve. Four *pairs* of rows
+share a digest — the same function at the same address in both bank windows, at
+`0x031C`, `0x3A60`, `0x703A` and `0xFF17`, whose instruction streams really are
+identical. That is what the column means, not a collision: it identifies a
+stream, and two rows can name the same one.
+
+The column is written by `../tools/verify_reassembly.py` and by nothing else.
+Never hand-edited, and never added by hand either — copying a new digest into
+the CSV re-arms the detector without anyone checking the new text. Refreshing a
+digest after a deliberate listing change means re-reporting, which needs the
+pinned assembler from the command above:
+
+```
+$ SDAS8051=$(nix build nixpkgs#sdcc && echo $out/bin/sdas8051) \
+    python3 ../tools/verify_reassembly.py --work /tmp/ec --report
+```
+
+`--add-digest-column` exists for the one migration that added the column to the
+committed report, and refuses to run a second time. It is the honest way to do
+that migration and also a trap worth naming: it adds digests from the listings
+on disk **without re-encoding**, so it cannot prove those are the listings the
+report measured — proving that needs the same assembler, and the one on a
+GitHub-hosted runner is a different and older ASxxxx, against which a full
+report would rewrite every `assembler` cell and could move the gap tallies
+above. That is why it is one-shot and why the tallies here are still the
+nix-pinned measurement.
 
 ## The annotation layer
 
