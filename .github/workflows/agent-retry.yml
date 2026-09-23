@@ -1,5 +1,13 @@
 name: Agent · retry
 
+# LOCAL CHANGE (2026-09-24, not in the agent-pipeline template): hourly rather than every five
+# hours, and the queue sweeps fill every free slot up to MAX_PARALLEL_AGENTS instead of starting
+# one thing when the pipeline is idle -- the `agent-pipeline` group is now one per issue (see
+# agent-plan.yml). Because runs now overlap, each queue sweep skips anything with a run already in
+# flight (the busy list the "free slots" step writes). The stall sweep keeps the five-hour cadence
+# on schedule, for the usage-window reason below. Comments further down that say "one per sweep"
+# or "only when idle" describe the original design.
+#
 # Picks up work the pipeline dropped, in two sweeps: stages that stopped before they finished,
 # and stages whose turn in the queue never came.
 #
@@ -33,7 +41,7 @@ name: Agent · retry
 
 on:
   schedule:
-    - cron: '0 */5 * * *'
+    - cron: '0 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -62,6 +70,12 @@ jobs:
           MAX_RETRIES: '3'
         run: |
           set -euo pipefail
+
+          # Hourly cron, five-hourly stall retries: a usage window takes about five hours to reset.
+          if [ "$GITHUB_EVENT_NAME" = schedule ] && [ $(( 10#$(date -u +%H) % 5 )) -ne 0 ]; then
+            echo "not a five-hour mark — leaving stalled runs for the next one"
+            exit 0
+          fi
 
           stalled=$(gh issue list --state open --label 'agent:stalled' --json number --jq '.[].number')
           if [ -z "$stalled" ]; then
@@ -202,18 +216,43 @@ jobs:
           # sweep recovers, so neither is in the stall-authorship switch a few dozen lines up --
           # only in this "is anything in the group running" check, so the sweep does not
           # mis-dispatch a recovery run on top of either.
-          busy=$(gh run list --limit 200 --json workflowName,status --jq '
+          gh run list --limit 200 --json workflowName,status,displayTitle,headBranch --jq '
             [ .[] | select(.status != "completed")
                   | select(.workflowName as $w
                            | ["Agent · plan","Agent · implement","Agent · review",
                               "Agent · fix CI","Agent · followups","Claude · mention"]
-                           | index($w)) ] | length')
-          if [ "$busy" -ge "$MAX_PARALLEL_AGENTS" ]; then
-            echo "$busy pipeline run(s) in flight, at the $MAX_PARALLEL_AGENTS-slot cap — leaving it"
-            echo "idle=false" >> "$GITHUB_OUTPUT"
-          else
+                           | index($w)) ]' > "$RUNNER_TEMP/busy.json"
+          busy=$(jq length "$RUNNER_TEMP/busy.json")
+          free=$(( MAX_PARALLEL_AGENTS - busy ))
+          [ "$free" -lt 0 ] && free=0
+          echo "$busy pipeline run(s) in flight, $free of $MAX_PARALLEL_AGENTS slot(s) free"
+          echo "FREE_SLOTS=$free" >> "$GITHUB_ENV"
+          if [ "$free" -gt 0 ]; then
             echo "idle=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "idle=false" >> "$GITHUB_OUTPUT"
           fi
+
+          # Sourced by the sweeps below. `busy_issue N [title]`: a run in flight on the issue's
+          # branch, or whose title names it ("Plan issue #N", "Implement issue #N") or equals the
+          # issue's own title (an event-triggered plan). `busy_pr N branch`: the same for a PR.
+          # `take_slot`: spend one free slot, persisted for the later steps.
+          cat > "$RUNNER_TEMP/slots.sh" <<'EOF'
+          busy_issue() {
+            jq -e --arg n "$1" --arg t "${2:-}" 'any(.[];
+                .headBranch == ("agent/issue-" + $n)
+                or (.displayTitle | test("issue #" + $n + "$"))
+                or ($t != "" and .displayTitle == $t))' "$RUNNER_TEMP/busy.json" >/dev/null
+          }
+          busy_pr() {
+            jq -e --arg n "$1" --arg b "$2" 'any(.[];
+                .headBranch == $b or (.displayTitle | test("PR #" + $n + "$")))' "$RUNNER_TEMP/busy.json" >/dev/null
+          }
+          take_slot() {
+            FREE_SLOTS=$(( FREE_SLOTS - 1 ))
+            echo "FREE_SLOTS=$FREE_SLOTS" >> "$GITHUB_ENV"
+          }
+          EOF
 
       # A review displaced out of the group. agent-review.yml declares the group at workflow level
       # (it calls the reusable fix stage, see README.md), so a cancelled review leaves no job and no
@@ -231,7 +270,7 @@ jobs:
       # need more than three restarts across its commits, but three on the same commit is a
       # review that fails before recording anything, every time.
       - name: Review the next pull request whose review never came
-        if: steps.idle.outputs.idle == 'true' && env.PIPELINE_STARTED != 'true'
+        if: steps.idle.outputs.idle == 'true' && env.FREE_SLOTS != '0'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
@@ -252,7 +291,12 @@ jobs:
             exit 0
           fi
 
+          . "$RUNNER_TEMP/slots.sh"
           while read -r pr sha <&3; do
+            [ "$FREE_SLOTS" -gt 0 ] || break
+            if busy_issue "$(gh pr view "$pr" --json headRefName --jq '.headRefName | ltrimstr("agent/issue-")')"; then
+              continue
+            fi
             # Bot-authored only, for the same reason as the markers above: anyone can review a
             # public pull request, and a stranger's review must not make this one look done.
             reviewed=$(gh api --paginate --slurp "repos/${GITHUB_REPOSITORY}/pulls/${pr}/reviews" \
@@ -276,16 +320,15 @@ jobs:
             fi
 
             echo "pipeline idle — restarting the review of PR #$pr at ${sha:0:7}"
-            gh pr comment "$pr" --body "Restarting the review — the pipeline runs one agent at a time and this pull request's review never got its turn. <!-- agent-review-queued sha=${sha} -->"
+            gh pr comment "$pr" --body "Restarting the review — this pull request's review never got its turn. <!-- agent-review-queued sha=${sha} -->"
             GH_TOKEN="$DISPATCH_TOKEN" gh pr close "$pr"
             GH_TOKEN="$DISPATCH_TOKEN" gh pr reopen "$pr"
             GH_TOKEN="$DISPATCH_TOKEN" gh pr merge --auto --squash "$pr" \
               || echo "::warning::could not re-arm auto-merge on PR #$pr"
-            echo "PIPELINE_STARTED=true" >> "$GITHUB_ENV"
-            exit 0
+            take_slot
           done 3<<<"$prs"
 
-          echo "every agent pull request has a review of its head commit"
+          echo "review sweep done, $FREE_SLOTS slot(s) left"
 
       # The queue draining. An issue displaced out of the concurrency group leaves no marker, so
       # this looks for its signature instead: the implement stage swaps `agent:planned` for
@@ -302,7 +345,7 @@ jobs:
       # thing this exists to serve, and the same five-hour cadence that suits a usage window
       # suits a queue whose items take the better part of an hour.
       - name: Start the next issue whose turn never came
-        if: steps.idle.outputs.idle == 'true' && env.PIPELINE_STARTED != 'true'
+        if: steps.idle.outputs.idle == 'true' && env.FREE_SLOTS != '0'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
@@ -320,16 +363,24 @@ jobs:
           # Oldest first, so a displaced issue is not overtaken by every issue filed after it.
           # The label filters are the same kill switches every other stage honours, plus
           # agent:stalled, which belongs to the sweep above rather than to this one.
-          waiting=$(gh issue list --state open --label 'agent:planned' --limit 100 \
+          candidates=$(gh issue list --state open --label 'agent:planned' --limit 100 \
                       --json number,labels --jq '
                       [ .[] | select([.labels[].name]
                                      | any(IN("agent:stop","no-agent","agent:stuck",
                                               "agent:stalled","agent:working"))
                                      | not)
-                            | .number ] | sort | first // empty')
-          if [ -z "$waiting" ]; then
+                            | .number ] | sort | .[]')
+          if [ -z "$candidates" ]; then
             echo "nothing waiting"
             exit 0
+          fi
+
+          . "$RUNNER_TEMP/slots.sh"
+          for waiting in $candidates; do
+          [ "$FREE_SLOTS" -gt 0 ] || break
+          if busy_issue "$waiting"; then
+            echo "issue $waiting has a run in flight — leaving it"
+            continue
           fi
 
           # Belt and braces on the label. A pull request already open for the branch means the
@@ -338,7 +389,7 @@ jobs:
           pr=$(gh pr list --head "agent/issue-${waiting}" --state open --json number --jq '.[0].number // empty')
           if [ -n "$pr" ]; then
             echo "issue $waiting already has PR #$pr — stale label, leaving alone"
-            exit 0
+            continue
           fi
 
           # Bounded, for the same reason the stall loop above is. `agent:planned` with no pull
@@ -356,7 +407,7 @@ jobs:
             echo "started $started times from the queue already — giving up"
             gh issue comment "$waiting" --body "This issue has been started $started times from the queue and has never reached a pull request, so it is being handed over rather than started again. Remove the \`agent:stuck\` label to let the pipeline pick it up."
             gh issue edit "$waiting" --add-label 'agent:stuck'
-            exit 0
+            continue
           fi
 
           author=$(gh issue view "$waiting" --json author --jq .author.login)
@@ -366,10 +417,11 @@ jobs:
           # run that then fails to record anything is the case this is counting; recording it
           # afterwards would miss exactly that, and a `gh workflow run` that fails is visible in
           # this job's own log anyway.
-          gh issue comment "$waiting" --body "Starting this now — the pipeline runs one agent at a time and this one's turn had not come. <!-- agent-queued -->"
+          gh issue comment "$waiting" --body "Starting this now — this one's turn had not come. <!-- agent-queued -->"
           GH_TOKEN="$DISPATCH_TOKEN" gh workflow run agent-implement.yml \
             -f issue="$waiting" -f author="$author"
-          echo "PIPELINE_STARTED=true" >> "$GITHUB_ENV"
+          take_slot
+          done
 
       # Not in the upstream template: agent-followups.yml is this repository's own stage, and
       # it can be displaced like any other. Its trace is a recent merge with neither a finished
@@ -383,7 +435,7 @@ jobs:
       # Bounded at three starts per pull request; past that it logs and moves on rather than
       # labelling anything, since nothing downstream waits on this stage.
       - name: Propose follow-ups for the next merge whose turn never came
-        if: steps.idle.outputs.idle == 'true' && env.PIPELINE_STARTED != 'true'
+        if: steps.idle.outputs.idle == 'true' && env.FREE_SLOTS != '0'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
@@ -401,9 +453,9 @@ jobs:
           fi
 
           since=$(date -u -d "-${LOOKBACK_DAYS} days" +%Y-%m-%dT%H:%M:%SZ)
-          merged=$(gh pr list --state merged --limit 50 --json number,headRefOid,mergedAt \
+          merged=$(gh pr list --state merged --limit 50 --json number,headRefOid,headRefName,mergedAt \
                      | jq -r --arg since "$since" '[ .[] | select(.mergedAt >= $since) ]
-                                                   | sort_by(.mergedAt) | .[] | "\(.number) \(.headRefOid)"')
+                                                   | sort_by(.mergedAt) | .[] | "\(.number) \(.headRefOid) \(.headRefName)"')
           if [ -z "$merged" ]; then
             echo "no merge in the last $LOOKBACK_DAYS days"
             exit 0
@@ -412,7 +464,12 @@ jobs:
           done_shas=$(gh run list --workflow agent-followups.yml --event pull_request --limit 200 \
                         --json headSha,conclusion --jq '.[] | select(.conclusion == "success") | .headSha')
 
-          while read -r pr sha <&3; do
+          . "$RUNNER_TEMP/slots.sh"
+          while read -r pr sha branch <&3; do
+            [ "$FREE_SLOTS" -gt 0 ] || break
+            if busy_pr "$pr" "$branch"; then
+              continue
+            fi
             bodies=$(gh api --paginate --slurp "repos/${GITHUB_REPOSITORY}/issues/${pr}/comments" \
                        | jq -c '[.[] | .[] | select(.user.login == "github-actions[bot]" and .user.type == "Bot") | .body]')
             # The last of the two markers decides, when there is one: `done` last means the latest
@@ -435,8 +492,7 @@ jobs:
             # start is counted once whether this sweep or a human dispatched it.
             echo "pipeline idle — proposing follow-ups for PR #$pr"
             GH_TOKEN="$DISPATCH_TOKEN" gh workflow run agent-followups.yml -f pr="$pr"
-            echo "PIPELINE_STARTED=true" >> "$GITHUB_ENV"
-            exit 0
+            take_slot
           done 3<<<"$merged"
 
           echo "every recent merge has had its follow-up pass"
@@ -450,7 +506,7 @@ jobs:
       # triage re-reads the issue and refuses one that is closed or already past planning, so a
       # dispatch that races a plan finishing is a skipped run rather than a plan of the plan.
       - name: Plan the next issue whose turn never came
-        if: steps.idle.outputs.idle == 'true' && env.PIPELINE_STARTED != 'true'
+        if: steps.idle.outputs.idle == 'true' && env.FREE_SLOTS != '0'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
@@ -471,16 +527,25 @@ jobs:
             exit 0
           fi
 
-          waiting=$(gh issue list --state open --label 'agent:queued' --limit 100 \
-                      --json number,labels --jq '
+          candidates=$(gh issue list --state open --label 'agent:queued' --limit 100 \
+                      --json number,title,labels --jq '
                       [ .[] | select([.labels[].name]
                                      | any(IN("agent:stop","no-agent","agent:stuck","agent:stalled",
                                               "agent:planned","agent:working"))
                                      | not)
-                            | .number ] | sort | first // empty')
-          if [ -z "$waiting" ]; then
+                            | "\(.number)\t\(.title)" ] | sort_by(split("\t")[0] | tonumber) | .[]')
+          if [ -z "$candidates" ]; then
             echo "no plan waiting"
             exit 0
+          fi
+
+          . "$RUNNER_TEMP/slots.sh"
+          while IFS=$'\t' read -r waiting title <&3; do
+          [ "$FREE_SLOTS" -gt 0 ] || break
+          [ "$(( open ))" -lt "$MAX_OPEN_AGENT_PRS" ] || { echo "at the open-PR cap — stopping"; break; }
+          if busy_issue "$waiting" "$title"; then
+            echo "issue $waiting has a run in flight — leaving it"
+            continue
           fi
 
           # Bounded like the step above, with its own marker so the two counts stay independent.
@@ -494,10 +559,13 @@ jobs:
             echo "planning started $started times from the queue already — giving up"
             gh issue comment "$waiting" --body "Planning this issue has been started $started times from the queue and it has never come out planned, so it is being handed over rather than started again. Remove the \`agent:stuck\` label to let the pipeline pick it up."
             gh issue edit "$waiting" --add-label 'agent:stuck'
-            exit 0
+            continue
           fi
 
           echo "pipeline idle — planning issue $waiting"
-          gh issue comment "$waiting" --body "Planning this now — the pipeline runs one agent at a time and this one's plan never got its turn. <!-- agent-plan-queued -->"
+          gh issue comment "$waiting" --body "Planning this now — this one's plan never got its turn. <!-- agent-plan-queued -->"
           GH_TOKEN="$DISPATCH_TOKEN" gh workflow run agent-plan.yml -f issue="$waiting"
-          echo "PIPELINE_STARTED=true" >> "$GITHUB_ENV"
+          take_slot
+          # A plan hands straight on to an implement that opens a PR, so count it against the cap.
+          open=$(( open + 1 ))
+          done 3<<<"$candidates"

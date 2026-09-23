@@ -32,6 +32,9 @@ on:
         required: false
         type: string
 
+# Carries the issue number so agent-retry.yml can tell which issues already have a run in flight.
+run-name: Implement issue #${{ inputs.issue }}
+
 # Granted per job rather than here: a workflow-level block hands the same token to the gate
 # as to the stage that runs the agent, and the gate exists precisely to decide whether the
 # agent should run at all.

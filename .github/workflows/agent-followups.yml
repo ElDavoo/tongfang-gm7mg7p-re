@@ -47,6 +47,13 @@ on:
         required: true
         type: number
 
+# Carries the PR number on a dispatched run so agent-retry.yml can tell it is in flight; an event
+# run is recognised by its head branch instead.
+run-name: >-
+  ${{ github.event_name == 'workflow_dispatch'
+      && format('Follow-ups for PR #{0}', inputs.pr)
+      || github.event.pull_request.title }}
+
 permissions: {}
 
 jobs:
