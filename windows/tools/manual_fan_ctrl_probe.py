@@ -95,9 +95,13 @@ def hold_and_observe(ec, hold, interval, base, label):
 
     `first` is the value at the arm's opening snapshot, not the value before
     the last change, so the number is the arm's net -- the same
-    first/last/count arithmetic the grader prints as a `window delta`, and the
-    only form two arms can be compared in. A drifting byte reports its net, not
-    the last step.
+    first/last/count arithmetic the grader prints as a `window delta`, where
+    it is one of three movement figures. A drifting byte reports its net, not
+    the last step. §4.4 keys the control-vs-write comparison on *total*
+    movement, which this tool does not print: its per-arm change rows are
+    printed as they happen, so a reader can sum them, but nothing here does
+    the summing. A §3 three-capture run gets the figure printed for it by
+    `ec/tools/grade_0751_isolation.py`.
 
     `base` is the caller's, not a fresh one: the write arm's baseline has to
     be the state the control arm settled into, or the control's own motion

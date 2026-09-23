@@ -254,9 +254,12 @@ class ProbeTests(unittest.TestCase):
         self.assertNotIn("confirmed-inert", out)
 
     # A drifting byte reports the arm's net, first to last, with the count --
-    # the arithmetic the grader prints as a `window delta`. Reporting the last
-    # step instead would understate a slow drift by the movement between the
-    # first and second change, which is the part §4.4 compares.
+    # one of the three movement figures the grader prints as a `window delta`,
+    # and the one that reads best on a clean monotonic step. Reporting the
+    # last step instead would understate a slow drift by the movement between
+    # the first and second change. §4.4 keys its control-vs-write comparison
+    # on *total* movement rather than on this net, which the grader prints and
+    # this tool leaves to the reader to sum from the change rows.
     def test_a_drifting_byte_reports_its_net_not_its_last_step(self):
         _, out = self.run_probe()
         control = out[out.index("control arm --"):out.index("write under test --")]

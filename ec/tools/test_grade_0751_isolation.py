@@ -85,9 +85,49 @@ class GradeTests(unittest.TestCase):
         self.assertIn('None of the §4.1-§4.3 bytes moved', out)
         # The sensor-looking addresses are context, not a graded result.
         self.assertIn('0x0796 0x079A', out)
-        # No PWM or temperature byte moves here, so there is no section for it.
-        self.assertNotIn('candidate PWM / temperature bytes', out)
-        self.assertNotIn('window delta', out)
+        # No PWM or temperature byte moves here either, but the section is
+        # printed anyway; the zero lines it carries are the subject of
+        # test_a_byte_that_held_still_is_a_zero_and_not_a_missing_line below.
+
+    # The blind spot #168 is about. A context byte that did not move used to
+    # get no line at all, so "the no-op arm moved 0x075B and the write arm
+    # shows nothing" read as missing data rather than as the strongest negative
+    # result the procedure can produce -- and "no line" is the shape a correct
+    # `confirmed-inert` answer takes, so the absence was self-cancelling.
+    def test_a_byte_that_held_still_is_a_zero_and_not_a_missing_line(self):
+        rc, out, _ = run(QUIET)
+        self.assertEqual(rc, 0)
+        # Both windows, both groups, all four bytes.
+        self.assertEqual(out.count('candidate PWM / temperature bytes'), 2)
+        self.assertEqual(out.count('window delta'), 8)
+        # No context byte appears anywhere in this capture, so its level is
+        # genuinely not in evidence and the line has to say so rather than fill
+        # something in. The zero figures are still correct: a change-row
+        # capture records transitions, so a byte that never appears did not
+        # move, and that is the claim being made about it.
+        for addr in ('0x075B', '0x075C', '0x043E', '0x044F'):
+            self.assertIn(f'window delta  {addr}  ???? -> ????  net +0  '
+                          'total 0  max 0  '
+                          '(0 changes, level not in these captures)', out)
+
+    def test_a_byte_that_held_still_carries_its_level_forward(self):
+        _, out, _ = run(*MULTI_MOVE)
+        # CPU_TEMP climbs three times in the write window and holds in the
+        # restore window after it. The level the restore window opened on is
+        # the one the write window left it at, which build_windows knows only
+        # because it tracks the last value through the windows rather than
+        # re-deriving each one from its own change rows -- and from the
+        # settling change the captures carry before the first mark, which
+        # belong to no window but still establish the byte's level.
+        self.assertIn('window delta  0x043E  0x37 -> 0x37  net +0  '
+                      'total 0  max 0  (0 changes)', out)
+        self.assertNotIn('window delta  0x043E  ????', out)
+        # 0x044F never appears in either capture, so the same window cannot
+        # claim to know its level: known-to-be-still and level-in-evidence
+        # are two separate facts and the line keeps them apart.
+        self.assertIn('window delta  0x044F  ???? -> ????  net +0  '
+                      'total 0  max 0  '
+                      '(0 changes, level not in these captures)', out)
 
     def test_active_capture_names_the_byte_and_its_offset(self):
         rc, out, _ = run(ACTIVE)
@@ -113,6 +153,12 @@ class GradeTests(unittest.TestCase):
         self.assertIn('candidate PWM / temperature bytes (§4.4/§4.5)', out)
         self.assertIn('candidate fan PWM 0x075B/0x075C -- unconfirmed', out)
         self.assertIn('CPU_TEMP 0x043E / GPU_TEMP 0x044F -- confirmed', out)
+        # Every byte in every window, not only the ones that moved: three
+        # windows x two groups x two addresses. A section that went missing
+        # where a byte held still is the ambiguity #168 is about, and it is
+        # the shape a correct `confirmed-inert` answer takes, so it has to
+        # fail here rather than read as a result.
+        self.assertEqual(out.count('window delta'), 12)
         # Both arms, so the no-op control and the write under test are
         # comparable line for line: 0x075B +2 in the control, +3 under the
         # write, and CPU_TEMP still climbing across both.
@@ -128,29 +174,37 @@ class GradeTests(unittest.TestCase):
 
     def test_window_delta_tells_the_control_arm_from_the_write(self):
         _, out, _ = run(*FIXED_LOAD)
-        # §4.4's deciding number, one per arm: under the no-op the candidate
-        # PWM netted 2, under the write it netted 3. Read off the change rows
-        # that is subtraction across two terminal windows; here it is two
-        # lines. The sign is there too, on the temperature that comes back
-        # down in the restore window.
-        self.assertIn('window delta  0x075B  0x64 -> 0x66  net +2  (1 change)',
-                      out)
-        self.assertIn('window delta  0x075B  0x66 -> 0x69  net +3  (1 change)',
-                      out)
-        self.assertIn('window delta  0x043E  0x36 -> 0x35  net -1  (1 change)',
-                      out)
+        # One line per arm, so the comparison is two lines rather than two
+        # terminals of subtraction. On this fixture 0x075B takes a single
+        # monotonic step in each arm, so net, total and max are the same
+        # number and the choice between them changes nothing here -- which is
+        # the point: the step-response figure is not the deciding one, it just
+        # happens to agree with the others when the response is a clean step.
+        # The sign is there too, on the temperature that comes back down in
+        # the restore window, where the three figures part company: net -1,
+        # total 1, max 1.
+        self.assertIn('window delta  0x075B  0x64 -> 0x66  net +2  total 2  '
+                      'max 2  (1 change)', out)
+        self.assertIn('window delta  0x075B  0x66 -> 0x69  net +3  total 3  '
+                      'max 3  (1 change)', out)
+        self.assertIn('window delta  0x043E  0x36 -> 0x35  net -1  total 1  '
+                      'max 1  (1 change)', out)
 
     def test_window_delta_counts_a_byte_that_moves_repeatedly(self):
         _, out, _ = run(*MULTI_MOVE)
-        # In the control window CPU_TEMP goes up twice and back down, so its
-        # net (+1 over 3 changes) does not stand for how much it moved; in
-        # the write window it climbs three times for +3. Both are printed
-        # because a reader comparing the two arms needs the count as well as
-        # the endpoints.
-        self.assertIn('window delta  0x043E  0x33 -> 0x34  net +1  (3 changes)',
-                      out)
-        self.assertIn('window delta  0x043E  0x34 -> 0x37  net +3  (3 changes)',
-                      out)
+        # The fixture the statistic is argued from, on the byte whose two
+        # statistics disagree: in the control window CPU_TEMP goes up twice
+        # and back down, so its net (+1) is a third of the movement behind it
+        # (total 3), while in the write window it climbs three times and all
+        # three figures are 3. Read as nets, the two arms look like the write
+        # moved three times as far as the control. Read as total movement --
+        # which is what §4.4 keys the control-vs-write comparison on -- they
+        # moved identically, and the threefold net is an artefact of where the
+        # byte happened to end up.
+        self.assertIn('window delta  0x043E  0x33 -> 0x34  net +1  total 3  '
+                      'max 2  (3 changes)', out)
+        self.assertIn('window delta  0x043E  0x34 -> 0x37  net +3  total 3  '
+                      'max 3  (3 changes)', out)
 
     def test_context_addresses_leave_the_other_addresses_bucket(self):
         _, out, _ = run(*FIXED_LOAD)
@@ -230,15 +284,20 @@ class GradeTests(unittest.TestCase):
         # watchers seconds apart, which is what the merge is for.
         self.assertIn('=== 3 window(s), one per mark ===', out)
         self.assertEqual(out.count('no watched byte moved in this window'), 3)
-        # §4.4's deciding pair, and it reads ambiguous: the candidate PWM
-        # netted 3 under the no-op and 2 under the write, so the write's
-        # movement is inside the control's spread. CPU_TEMP is up across both.
-        self.assertIn('window delta  0x075B  0x64 -> 0x67  net +3  (2 changes)',
-                      out)
-        self.assertIn('window delta  0x075B  0x67 -> 0x69  net +2  (1 change)',
-                      out)
-        self.assertIn('window delta  0x043E  0x33 -> 0x35  net +2  (1 change)',
-                      out)
+        # §4.4's comparison, and it reads ambiguous: the candidate PWM moved
+        # 3 under the no-op and 2 under the write, so the write's movement is
+        # inside the control's spread. Both figures agree here -- the no-op
+        # 0x075B climbs monotonically over two changes, so net, total and max
+        # are all 3, against the write arm's all-2 over one -- so the
+        # statistic §4.4 now keys on does not change what this capture says.
+        # CPU_TEMP is up across both, which is why the drift reads as
+        # thermal.
+        self.assertIn('window delta  0x075B  0x64 -> 0x67  net +3  total 3  '
+                      'max 3  (2 changes)', out)
+        self.assertIn('window delta  0x075B  0x67 -> 0x69  net +2  total 2  '
+                      'max 2  (1 change)', out)
+        self.assertIn('window delta  0x043E  0x33 -> 0x35  net +2  total 2  '
+                      'max 2  (1 change)', out)
         # §4.1-§4.3, the half the script does apply, and the half the dumps
         # then confirm: nothing the prediction named moved in any window.
         self.assertIn('None of the §4.1-§4.3 bytes moved', out)
