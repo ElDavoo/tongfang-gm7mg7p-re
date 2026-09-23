@@ -237,13 +237,26 @@ it at all.
 (`ec/README.md`): `scope,addr,name,signature,type,comment,evidence,basis`.
 
 - **`scope`** — `bank0`, `bank1`, `pd`, or `common` for a function in
-  `0x0000-0x7FFF` that is the same in both bank programs.
+  `0x0000-0x7FFF` that is the same in both bank programs. A common-area
+  function is exported once, so its address appears in no bank row: a
+  `bank0`-scoped row for one is a scope rename, not a typo, and
+  `../tools/merge_annotation_shards.py` does the rename rather than dropping
+  the row.
+- **`type`** — a controlled vocabulary, because an unchecked one becomes an
+  unchecked claim: `entry init dispatch forwarder gate reader writer copy math
+  logic serial sbi ec-io state delay bank-switch unresolved`, plus the
+  module-specific `charge-target` the hand-written rows use. **`unresolved` is
+  a result, not a failure**: a function whose role cannot be determined is
+  correctly described as far as the bytes go and no further, and filling the
+  gap with a plausible name is the one thing an annotation must never do.
 - **`evidence`** — mandatory and non-empty. A repo path. An annotation without
   one is a claim, not a finding, and the build rejects it.
-- **`basis`** — `hand-decoded` (a person read the disassembly and the cited
-  file records it), `inferred` (a reading; the export says so next to it, the
-  marker `bios/decompiled/OemOcDxe.annotated.c` already uses), or `ghidra`
-  (the name is what the bytes say).
+- **`basis`** — `hand-decoded` (the disassembly was read and the 8051
+  operations reasoned about), `restatement` (what the decompiler's C says, no
+  more), or `inferred` (a reading; the export says so next to it, the marker
+  `bios/decompiled/OemOcDxe.annotated.c` already uses). The distinction
+  matters because a decompilation is one reading of the bytes: reporting it as
+  `restatement` is honest, and reporting it as `hand-decoded` is not.
 - **`signature`** — recorded in the plate comment, **not applied** to the
   function's type system. Ghidra has no Keil C51 calling-convention model, so
   an applied prototype on 8051 code would be a guess sitting where a fact
