@@ -1,0 +1,14 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# byte below was written by hand. See ../README.md.
+# Shape: `ecrw.py dump 0x0F00 0x0060` as §3's step 6 takes it, after the a0
+# block. Byte for byte the before dump, which is §4.2's prediction in the only
+# form it can be recorded without a machine: the fan table did not reload.
+# The marks that would show that are in the three CSVs, not in here -- a
+# whole-range read carries nothing saying which write it brackets, which is
+# why §6 makes the dumps per block. Not a prediction that the table stays put.
+0f00: 2a 2e 32 36 3a 3e 42 46 4a 4e 52 56 5a 5e 62 66
+0f10: 00 24 28 2c 30 34 38 3c 40 44 48 4c ff ff ff ff
+0f20: 00 30 30 40 4c 58 64 70 7c 88 94 a0 ac b8 c4 d0
+0f30: 24 24 26 28 2a 2c 2e 30 32 34 36 38 ff ff ff ff
+0f40: 00 26 26 2c 32 38 3e 44 4a 50 5c 62 68 6e 74 7a
+0f50: 00 30 30 40 4c 58 64 70 7c 88 94 a0 ac b8 c4 d0

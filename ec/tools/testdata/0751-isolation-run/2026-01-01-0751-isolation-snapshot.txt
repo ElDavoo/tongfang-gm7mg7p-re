@@ -1,0 +1,24 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read and nothing was written to
+# make this file. Every value below was written by hand. See ../README.md.
+# Shape: §6's snapshot for a single `a0` block, in the header-comment shape
+# of evidence/ec-watch/2026-09-23-power-mode-snapshot-dc.txt, and carrying
+# every item §6 says the snapshot has to say -- the rest of the file set says
+# none of them. A real one would record what was on screen and in the vendor
+# UI; this records what a fixture needs to be legible.
+#
+# Date:            2026-01-01 (the placeholder testdata/ uses throughout)
+# Power:           AC for the whole block
+# Mode started in: Turbo (0x0751 = 0x10), per the vendor UI
+# Service:         Control Center Service 3.1.39.0 running
+# Load held:       a fixed CPU load across both arms, since before the first
+#                  sweep and until after the last
+# Written:         control arm 0x0751=0x10 (the value already there), then
+#                  0x0751=0xA0, then restored to 0x10
+# Block start:     one block, value a0, started from Turbo (0x0751 = 0x10)
+#
+# The temperature capture in this set has CPU_TEMP and GPU_TEMP climbing
+# through both arms, which is the reading that makes the candidate PWM drift
+# beside them look like the die rather than the byte. Package power is in no
+# EC sweep (§4.5) and so is in none of these files: on a real run it is
+# noted here by hand from HWiNFO, and it is deliberately absent here because
+# this file was not taken from a machine.
