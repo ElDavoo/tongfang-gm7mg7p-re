@@ -55,17 +55,29 @@ HEADER = ["scope", "addr", "name", "signature", "type", "comment", "evidence", "
 # a real index; a synthetic base would test a different thing.
 EXISTING_DEFAULT = os.path.join(REPO, "ec", "annotations", "ghidra-functions.csv")
 
-# The controlled vocabulary. Kept here rather than only in the brief so the
-# merge is the thing that enforces it: an agent that invents `charge-path` gets
-# the row rejected, not a new column value in a file nobody checks.
-TYPES = {"entry", "init", "dispatch", "forwarder", "gate", "reader", "writer",
-         "copy", "math", "logic", "serial", "sbi", "ec-io", "state", "delay",
-         "bank-switch", "unresolved",
-         # already in use in the hand-written rows
-         "charge-target", "module-entry", "gpio-pad", "nvram-write", "sbi",
-         "pcr-read", "pch-select", "writer", "reader", "helper", "math",
-         "gate", "dispatch", "init", "forwarder", "unresolved", "state",
-         "ec-io"}
+# The controlled vocabulary: the union of the EC's and the BIOS's, because both
+# sweep briefs have one and the merge reads both components' shards. Kept here
+# rather than only in the brief so the merge is the thing that enforces it: an
+# agent that invents `charge-path` gets the row rejected, not a new column
+# value in a file nobody checks.
+#
+# It is a union rather than two lists because a per-component list means the
+# wrong one silently rejects every row of the other component -- which is what
+# happened the first time this ran on BIOS shards, rejecting 115 of 137 for
+# naming a perfectly good `protocol`.
+TYPES = {
+    # shared
+    "entry", "init", "dispatch", "forwarder", "gate", "reader", "writer",
+    "copy", "math", "logic", "serial", "state", "unresolved", "helper",
+    "module-entry",
+    # EC
+    "sbi", "ec-io", "delay", "bank-switch", "charge-target",
+    # BIOS
+    "smi", "nvram", "setup-var", "protocol", "acpi", "graphics", "usb",
+    "overclock", "thermal", "power", "debug",
+    # already in use in the hand-written rows, both components
+    "gpio-pad", "nvram-write", "pcr-read", "pch-select",
+}
 
 BASES = {"hand-decoded", "restatement", "inferred"}
 
@@ -99,14 +111,31 @@ def load_existing(path):
 
 
 def function_sources(index_path):
-    """(scope, addr) -> the index row, with `listing_file` filled in.
+    """(scope, addr) -> the index row, keyed both ways.
 
     The .asm is the ground truth and the .c is the decompiler's reading; a
-    comment may cite either, so both are what a claim gets checked against."""
+    comment may cite either, so both are what a claim gets checked against.
+
+    Two keys per row, because the two components pad differently: the EC index
+    writes `0B158` and the BIOS one writes `00000260`, while a shard writing
+    `0x260` matches neither as a string. Addresses are numbers, so the second
+    key is the integer value."""
     out = {}
     for row in csv.DictReader(open(index_path, newline="")):
         out[(row["program"], row["addr"])] = row
+        out[(row["program"], "#%d" % int(row["addr"], 16))] = row
     return out
+
+
+def resolve(index, scope, addr):
+    """The index row for (scope, addr), whichever way each side padded it."""
+    row = index.get((scope, addr))
+    if row is None:
+        try:
+            row = index.get((scope, "#%d" % int(addr, 16)))
+        except ValueError:
+            row = None
+    return row
 
 
 # A call target the comment names: "calls 0xC030, which writes XDATA 0x1601".
@@ -122,11 +151,15 @@ def callee_text(index, comment, scope):
     prog = scope
     texts = []
     for m in CALLEE_REF.finditer(comment):
-        want = m.group(1).upper().lstrip("0") or "0"
-        for (p, a), row in index.items():
-            if p != prog:
+        want = m.group(1).lower().lstrip("0") or "0"
+        for key in index:
+            p, a = key
+            if p != prog or a.startswith("#"):
                 continue
-            if (a.lstrip("0") or "0") != want:
+            try:
+                if int(a, 16) != int(want, 16):
+                    continue
+            except ValueError:
                 continue
             t = read_function_text(index, p, a)
             if t:
@@ -146,10 +179,11 @@ def neighbour_text(index, scope, addr, span=3):
     rejects it -- which is a rule that punishes the careful answer and rewards
     the vague one."""
     prog, key = scope, addr_key(addr)
-    sibs = sorted((a for p, a in index if p == prog), key=lambda a: int(a, 16))
+    sibs = sorted((a for p, a in index if p == prog and not a.startswith("#")),
+                  key=lambda a: int(a, 16))
     try:
-        i = sibs.index(key)
-    except ValueError:
+        i = next(j for j, a in enumerate(sibs) if int(a, 16) == int(key, 16))
+    except (StopIteration, ValueError):
         return ""
     texts = []
     for j in range(max(0, i - span), min(len(sibs), i + span + 1)):
@@ -184,7 +218,7 @@ def read_function_text(index, scope, addr):
     The BIOS has no per-function .c -- its decompile is one file per module --
     so the module's file is read too, on the grounds that a comment about a
     BIOS function is entitled to the context its module provides."""
-    row = index.get((scope, addr))
+    row = resolve(index, scope, addr)
     if not row:
         return None
     parts = []
@@ -395,12 +429,13 @@ def main():
             # the annotation check, so the row has to carry the scope the
             # index actually uses.
             eff_scope = scope
-            if (scope, addr) not in index and ("common", addr) in index:
+            if resolve(index, scope, addr) is None \
+                    and resolve(index, "common", addr) is not None:
                 eff_scope = "common"
             if (eff_scope, addr) in seen:
                 bad("duplicate (scope, addr); an earlier row already claims it")
                 continue
-            if (eff_scope, addr) not in index:
+            if resolve(index, eff_scope, addr) is None:
                 bad("resolves to no exported function")
                 continue
             # A flag rather than for/else: a `break` out of the field loop
