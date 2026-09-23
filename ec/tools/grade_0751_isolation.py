@@ -18,6 +18,13 @@ and, reported but not graded, the candidate fan-PWM bytes `0x075B`/`0x075C`
 and `CPU_TEMP` `0x043E` / `GPU_TEMP` `0x044F` (§4.4/§4.5), plus whether
 `0x0751` still holds the written value in the after-dump (§4.6).
 
+Each context byte that moved in a window is also summarised as a
+`window delta` -- first value, last value, net, and how many times it moved
+inside the window. That is arithmetic on rows already in the capture, not a
+new judgement: §4.4's deciding comparison is how far the PWM bytes drifted
+between one mark and the next, and reading that off the change rows means
+doing the subtraction by eye across two terminal windows.
+
 **This is not the §7 call and cannot be.** §7 moves `MANUAL_FAN_CTRL` off
 `present-untested` on fan PWM or package power moving under a fixed load.
 Those bytes are captured and printed here, but printing them is not grading
@@ -66,8 +73,9 @@ WATCHED = (
 # section because they are what §7's call is made on, and a reader should not
 # have to find them in the generic "other addresses" list to notice them --
 # but they are printed per window precisely so the no-op control arm and the
-# write under test can be compared by eye. The PWM pair is where issue #99 says
-# to look and is in no entry of registers.yaml; the two temperatures are
+# write under test can be compared by eye, change row by change row and then
+# as the net the rows add up to. The PWM pair is where issue #99 says to look
+# and is in no entry of registers.yaml; the two temperatures are
 # confirmed-working, and are here as the record of whether the load was flat.
 CONTEXT = (
     ("candidate fan PWM 0x075B/0x075C -- unconfirmed (§4.4)",
@@ -202,8 +210,16 @@ def report_window(w, n, total):
     if groups:
         print("    candidate PWM / temperature bytes (§4.4/§4.5) -- context, "
               "not graded here:")
+        print("    net is the raw byte difference across the whole window, "
+              "not a duty percentage:")
         for name, hits in groups:
             print(f"      {name}:")
+            for a in sorted({c.addr for c in hits}):
+                seq = [c for c in hits if c.addr == a]
+                print(f"        window delta  0x{a:04X}  "
+                      f"0x{seq[0].old:02X} -> 0x{seq[-1].new:02X}  "
+                      f"net {seq[-1].new - seq[0].old:+d}  "
+                      f"({len(seq)} change{'' if len(seq) == 1 else 's'})")
             for c in hits:
                 dt = (c.ts - w.ts).total_seconds()
                 print(f"        0x{c.addr:04X}  0x{c.old:02X} -> 0x{c.new:02X}"

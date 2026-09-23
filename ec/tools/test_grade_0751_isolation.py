@@ -24,6 +24,13 @@ FIXED_LOAD = (str(HERE / 'testdata'
                   / '0751-isolation-example-fixed-load-0700-07ff.csv'),
               str(HERE / 'testdata'
                   / '0751-isolation-example-fixed-load-0400-045f.csv'))
+# The same PWM capture against a temperature capture whose CPU_TEMP moves more
+# than once inside a window, so the window summary's first->last and its change
+# count disagree. Marked to pair with the file above.
+MULTI_MOVE = (str(HERE / 'testdata'
+                  / '0751-isolation-example-fixed-load-0700-07ff.csv'),
+              str(HERE / 'testdata'
+                  / '0751-isolation-example-multi-move-0400-045f.csv'))
 
 
 def run(*argv):
@@ -43,6 +50,7 @@ class GradeTests(unittest.TestCase):
         self.assertIn('0x0796 0x079A', out)
         # No PWM or temperature byte moves here, so there is no section for it.
         self.assertNotIn('candidate PWM / temperature bytes', out)
+        self.assertNotIn('window delta', out)
 
     def test_active_capture_names_the_byte_and_its_offset(self):
         rc, out, _ = run(ACTIVE)
@@ -80,6 +88,32 @@ class GradeTests(unittest.TestCase):
         # Every window moves PWM and a temperature, none moves §4.1-§4.3.
         self.assertIn('None of the §4.1-§4.3 bytes moved', out)
         self.assertNotIn('At least one of the §4.1-§4.3 bytes moved', out)
+
+    def test_window_delta_tells_the_control_arm_from_the_write(self):
+        _, out, _ = run(*FIXED_LOAD)
+        # §4.4's deciding number, one per arm: under the no-op the candidate
+        # PWM netted 2, under the write it netted 3. Read off the change rows
+        # that is subtraction across two terminal windows; here it is two
+        # lines. The sign is there too, on the temperature that comes back
+        # down in the restore window.
+        self.assertIn('window delta  0x075B  0x64 -> 0x66  net +2  (1 change)',
+                      out)
+        self.assertIn('window delta  0x075B  0x66 -> 0x69  net +3  (1 change)',
+                      out)
+        self.assertIn('window delta  0x043E  0x36 -> 0x35  net -1  (1 change)',
+                      out)
+
+    def test_window_delta_counts_a_byte_that_moves_repeatedly(self):
+        _, out, _ = run(*MULTI_MOVE)
+        # In the control window CPU_TEMP goes up twice and back down, so its
+        # net (+1 over 3 changes) does not stand for how much it moved; in
+        # the write window it climbs three times for +3. Both are printed
+        # because a reader comparing the two arms needs the count as well as
+        # the endpoints.
+        self.assertIn('window delta  0x043E  0x33 -> 0x34  net +1  (3 changes)',
+                      out)
+        self.assertIn('window delta  0x043E  0x34 -> 0x37  net +3  (3 changes)',
+                      out)
 
     def test_context_addresses_leave_the_other_addresses_bucket(self):
         _, out, _ = run(*FIXED_LOAD)

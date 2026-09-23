@@ -51,7 +51,9 @@ watched.
 - A fixed CPU load you can hold for the entire observation window — the
   point is that the fan and package power have a constant thermal input, so
   any movement is the EC's doing and not the workload's. Start it before the
-  first sweep and stop it after the last.
+  first sweep and stop it after the last. It is also why §3 paces the
+  watchers: this is the run with the most `ECRR` traffic of any so far, and it
+  is the only one held under load.
 - A way to read CPU package power (HWiNFO, or `windows/tools/` equivalents).
   Note it by hand at the times you mark; it is not in the EC sweep.
   Temperature is — §3's third watcher covers `0x043E`/`0x044F`, both
@@ -79,17 +81,29 @@ restore, stop. The control arm is not the restore step, and it is not
 optional — §4.4 says what it is for.
 
 ```console
+rem  <date> is that run's YYYY-MM-DD, and <value> is the value under test in
+rem  this block, lower case and without 0x -- a0, 00 or 10. §6 names the
+rem  finished files the same way, so following this list produces the §6 set
+rem  with no rename step. The three CSVs are one file for all three blocks,
+rem  because ec_watch.py appends to a --csv file that already exists and the
+rem  marks say which write each row follows; the dumps are not, so they carry
+rem  <value> and block 2 cannot overwrite block 1's.
+
 rem  --- 0. snapshot, read-only ---
-python windows\tools\ecrw.py dump 0x0700 0x0100  > before-0700.txt
-python windows\tools\ecrw.py dump 0x0F00 0x0060  > before-0f00.txt
+python windows\tools\ecrw.py dump 0x0700 0x0100 ^
+        > <date>-0751-isolation-<value>-before-0700.txt
+python windows\tools\ecrw.py dump 0x0F00 0x0060 ^
+        > <date>-0751-isolation-<value>-before-0f00.txt
 
 rem  --- 1. start all three watchers (three consoles), with the load running ---
-python windows\tools\ec_watch.py --start 0x0700 --len 0x0100 --seconds 150 ^
-       --mark --csv 0751-isolation-office-0700-07ff.csv
-python windows\tools\ec_watch.py --start 0x0F00 --len 0x0060 --seconds 150 ^
-       --mark --csv 0751-isolation-office-0f00-0f5f.csv
-python windows\tools\ec_watch.py --start 0x0400 --len 0x0060 --seconds 150 ^
-       --mark --csv 0751-isolation-office-0400-045f.csv
+rem  ---    --interval 0.5 is a starting point, not a validated-safe value;
+rem  ---    see the pacing note below before leaving it there ---
+python windows\tools\ec_watch.py --start 0x0700 --len 0x0100 --seconds 240 --interval 0.5 ^
+       --mark --csv <date>-0751-isolation-0700-07ff.csv
+python windows\tools\ec_watch.py --start 0x0F00 --len 0x0060 --seconds 240 --interval 0.5 ^
+       --mark --csv <date>-0751-isolation-0f00-0f5f.csv
+python windows\tools\ec_watch.py --start 0x0400 --len 0x0060 --seconds 240 --interval 0.5 ^
+       --mark --csv <date>-0751-isolation-0400-045f.csv
 
 rem  --- 2. control arm: let all three settle ~10 s, mark each, then write
 rem  ---    the value already there back to itself and mark that as a no-op ---
@@ -104,9 +118,23 @@ rem  --- 5. restore, and mark once more ---
 python windows\tools\ecrw.py write 0x0751=<original> --i-mean-it
 
 rem  --- 6. after all three watchers exit ---
-python windows\tools\ecrw.py dump 0x0700 0x0100  > after-0700.txt
-python windows\tools\ecrw.py dump 0x0F00 0x0060  > after-0f00.txt
+python windows\tools\ecrw.py dump 0x0700 0x0100 ^
+        > <date>-0751-isolation-<value>-after-0700.txt
+python windows\tools\ecrw.py dump 0x0F00 0x0060 ^
+        > <date>-0751-isolation-<value>-after-0f00.txt
 ```
+
+`--seconds 240` leaves room for what this section actually mandates — ~10 s
+settle + ~30 s hold + ~60 s watch ≈ 100 s — plus three `ecrw.py write`
+invocations and six mark rounds typed by hand across three consoles, which is
+eighteen presses between the watchers starting and stopping. The old 150 s
+left so little that a block run as written could run its last mark past the
+end of a capture, and **a mark after the watcher has exited is written
+nowhere.** A block whose final mark lands late is void; redo it. The check is
+mechanical, not a matter of remembering: `ec_watch.py` prints
+`=== N sweeps over Ms` and then every mark it recorded when it stops
+(`../../windows/tools/ec_watch.py:176`), so the last label in that list is the
+last mark the capture has. If it is not the restore, the block is short one.
 
 The `0x0400-0x045F` watcher is the EC's own temperature reading: `0x043E` is
 `CPU_TEMP` and `0x044F` is `GPU_TEMP`, both `confirmed-working` in
@@ -115,6 +143,29 @@ fan-tachometer bytes (`0x0460-0x046F`, issue #94) start right after, and
 reading those through `ECRR` stalled the fans on a sibling board
 (`../../docs/related-projects.md`). Every other byte in the range is context;
 §4.5 says what to do with it.
+
+**Three concurrent watchers put more `ECRR` traffic on the bus than any run
+before this one, and this is the only one held under a fixed load.** The
+arithmetic is worth having in front of you: `ecrw.Ec.read`
+(`../../windows/tools/ecrw.py:115`) is one `ECRR` `DeviceIoControl` per byte
+with nothing between calls, and `ec_watch.py` reads every address in its range
+once per sweep (`addrs`, `../../windows/tools/ec_watch.py:123`) with
+`--interval` slept between sweeps (`ec_watch.py:149`), not between bytes. So
+one sweep of each of the three watchers is `0x100 + 0x60 + 0x60 = 448` ECRR
+reads, all three running at once, for as long as the block runs.
+`../../docs/related-projects.md` records the same mechanism stalling the fans
+on a sibling board, where the OEM software sleeps 6 ms after every EC access,
+and says to avoid bulk sweeps under load — which is the condition this run
+creates on purpose. Stopping at `0x045F` means this is not that stall, but it
+does not make the traffic small.
+
+**There is no safe interval to hand you from here.** How long one IOCTL takes
+is not measurable without the driver and the machine, issue #94 is the open
+work to make these tools safe by default, and nothing in this repo measures
+it. So the `--interval 0.5` in the commands above is a starting point and
+nothing more. If the fans audibly change during a block, raise it and redo the
+block: this procedure measures fan behaviour, and a block that moved the fans
+itself is worth less than no block.
 
 `--mark` is what makes the CSV readable afterwards: without a timestamp for
 "I wrote it now", a byte that moves 400 ms later and one that moves 40 s
@@ -189,10 +240,13 @@ For each run, from the three CSVs plus the by-hand power readings:
    **Then compare the control arm's capture window against the write's.**
    How far did `0x075B`/`0x075C` drift between the no-op's mark and the next
    one? On 2026-09-23 that number is the whole reason the fan half stayed
-   `present-untested`. If the write window's movement is inside the control
-   arm's run-to-run spread, that is the answer to record and the status does
-   not move — per `../../CLAUDE.md`, an ambiguous result is a result, not a
-   reason to pick the confident-sounding phrasing.
+   `present-untested`. The grader prints it for you as a `window delta` line
+   per window (§6) so the two arms are two numbers rather than two terminals
+   of subtraction, but it does not compare them and does not say which is
+   bigger — the call is yours. If the write window's movement is inside the
+   control arm's run-to-run spread, that is the answer to record and the
+   status does not move — per `../../CLAUDE.md`, an ambiguous result is a
+   result, not a reason to pick the confident-sounding phrasing.
 5. **CPU package power** under the same fixed load, by hand at each mark. If
    the PLs did not move but the power ceiling did, something other than
    `0x0783-0x0785` is enforcing it, and that is a new question, not a
@@ -204,7 +258,8 @@ For each run, from the three CSVs plus the by-hand power readings:
    not the byte. The rest of that page is sensors: read it for context, and
    do not read a power number out of it.
 6. **Does `0x0751` still hold your value at the end of the window**, or did
-   something put it back? Compare `before-*` and `after-*`.
+   something put it back? Compare the block's `*-before-0700.txt` and
+   `*-after-0700.txt` dumps (§6).
 
 A run where *nothing* moves is a real result and should be recorded as one:
 it would mean a Linux driver has to write the whole bundle, which is the
@@ -230,14 +285,24 @@ Name the files the way the existing capture does, so a reader can pair them:
 evidence/ec-watch/<YYYY-MM-DD>-0751-isolation-0700-07ff.csv
 evidence/ec-watch/<YYYY-MM-DD>-0751-isolation-0f00-0f5f.csv
 evidence/ec-watch/<YYYY-MM-DD>-0751-isolation-0400-045f.csv
+evidence/ec-watch/<YYYY-MM-DD>-0751-isolation-<value>-before-0700.txt
+evidence/ec-watch/<YYYY-MM-DD>-0751-isolation-<value>-before-0f00.txt
+evidence/ec-watch/<YYYY-MM-DD>-0751-isolation-<value>-after-0700.txt
+evidence/ec-watch/<YYYY-MM-DD>-0751-isolation-<value>-after-0f00.txt
 evidence/ec-watch/<YYYY-MM-DD>-0751-isolation-snapshot.txt
 ```
 
-One set per value, or one set of CSVs covering all three with the marks
-distinguishing them — either is fine as long as the snapshot says which. The
-marks in all three CSVs of a set must carry the same labels, and they must
-tell the control arm from the write under test: `no-op wrote 0x0751=0xA0`,
-`wrote 0x0751=0x10`, `restored 0x0751=0xA0`.
+`<value>` is the value written in that block, lower case and without `0x`
+(`a0`, `00`, `10`) — the same `<date>` and `<value>` §3's commands take. The
+three CSVs are one set for the whole run: `ec_watch.py` appends to a `--csv`
+file that already exists, and the marks say which write each row follows. The
+dumps are per block and have to be, because they are whole-range reads with
+no marks in them — nothing inside one says which write it brackets, so §3's
+`>` would otherwise leave block 1 with block 2's bytes. The snapshot has to
+say which mode each block started from and what was written, since nothing
+else in the set says it. The marks in all three CSVs must carry the same
+labels, and they must tell the control arm from the write under test:
+`no-op wrote 0x0751=0xA0`, `wrote 0x0751=0x10`, `restored 0x0751=0xA0`.
 
 Add a header comment to the snapshot in the style of
 `evidence/ec-watch/2026-09-23-power-mode-snapshot-dc.txt`: date, AC/battery,
@@ -246,24 +311,30 @@ which mode each block started from. Then add the files to `evidence/README.md`,
 which is the index every findings claim cites through.
 
 `../../ec/tools/grade_0751_isolation.py` reads those CSVs (and the
-`before-*`/`after-*` dumps) and applies §4.1-§4.3 and §4.6 to them
-mechanically, which is a cheaper first pass than doing it by eye:
+`*-before-0700.txt` / `*-after-0700.txt` dumps) and applies §4.1-§4.3 and
+§4.6 to them mechanically, which is a cheaper first pass than doing it by
+eye. Pass one block's dumps, with the `after` one last — the §4.6 readback
+check is taken from the final `--dump`:
 
 ```console
 python ec\tools\grade_0751_isolation.py ^
         <date>-0751-isolation-0700-07ff.csv <date>-0751-isolation-0f00-0f5f.csv ^
         <date>-0751-isolation-0400-045f.csv ^
-        --dump before-0700.txt --dump after-0700.txt --wrote 0xA0
+        --dump <date>-0751-isolation-<value>-before-0700.txt ^
+        --dump <date>-0751-isolation-<value>-after-0700.txt --wrote 0xA0
 ```
 
 It is a first pass and not the answer. It prints §4.4's candidate PWM bytes
 and §4.5's temperature bytes per window so the control arm and the write can
-be compared line for line, but it does not grade them and does not claim to:
-an unconfirmed PWM address drifting on a warming die moves whether or not
-anything wrote `0x0751`, and telling those apart is what the no-op arm in
-§3 measures and what a script cannot. Package power is in no capture and is
-still yours to note by hand. The script says so in its own output and does
-not emit a status.
+be compared line for line, and it sums each of them into a `window delta`
+line — first value, last value, net, and how many times the byte moved inside
+the window — so §4.4's deciding comparison is two numbers instead of two
+terminals. It still does not grade them and does not claim to: an unconfirmed
+PWM address drifting on a warming die moves whether or not anything wrote
+`0x0751`, and telling those apart is what the no-op arm in §3 measures and
+what a script cannot. Package power is in no capture and is still yours to
+note by hand. The script says so in its own output and does not emit a
+status.
 
 ## 7. What a result has to say
 
