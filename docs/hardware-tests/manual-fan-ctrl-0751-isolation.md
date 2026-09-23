@@ -15,7 +15,9 @@ along the unchanged curve — was **not** settled (the run was near-idle); the
 fixed-load comparison below is still worth doing. Issue #122 tightened that
 re-run: §3 now opens with an explicit no-op control arm and sweeps
 `0x0400-0x045F` for the EC's own temperature bytes, so the PWM reading is
-taken against a measured die rather than an assumed one. The re-run itself is
+taken against a measured die rather than an assumed one.
+`windows/tools/manual_fan_ctrl_probe.py` implements both, so the single-tool
+form runs the tightened procedure in one console. The re-run itself is
 still **not** done — it needs the physical machine. The rest of this file is
 the original procedure, kept for that re-run and for anyone reproducing the
 test.
