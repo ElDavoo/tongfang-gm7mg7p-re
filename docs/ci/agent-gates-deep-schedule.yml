@@ -58,6 +58,58 @@ jobs:
       - name: Set up the toolchain
         uses: ./.github/actions/project-setup
 
+      # Which assembler this run is about to use, and which one the committed
+      # report was measured with. The re-encode's outcome columns are a
+      # property of the assembler as much as of the listings -- 52 of 2,705
+      # rows differ between the committed nix build and the one project-setup
+      # installs (docs/findings.md §14g) -- so a nightly log that does not say
+      # which one produced its numbers is a log whose numbers cannot be read.
+      #
+      # The committed string is read from the report rather than written here,
+      # so this stays true as ubuntu-latest drifts instead of going stale the
+      # first time apt moves. It prints what it observed and asserts no
+      # relationship in either direction: a run that agrees with the committed
+      # report is information, and a run that does not is information too.
+      - name: Name the assembler
+        run: |
+          set -uo pipefail
+          echo "=== sdas8051 this run will use ==="
+          sdcc --version || echo "sdcc --version: unavailable"
+          if command -v sdas8051 >/dev/null 2>&1; then
+            echo "path:   $(command -v sdas8051)"
+            echo "real:   $(readlink -f "$(command -v sdas8051)")"
+            # The banner, not the exit code: with no arguments sdas8051
+            # prints usage and exits 1, so the || is load-bearing.
+            sdas8051 2>&1 | head -2 || true
+          else
+            echo "path:   NOT ON PATH -- the deep tier below will fail on this"
+          fi
+          echo
+          echo "=== the assembler ec/ghidra/reassembly.csv was measured with ==="
+          # Parsed, not cut. 73 of the rows carry a comma inside `detail`, so
+          # a `cut -d,` on the ninth field lands mid-detail on those and
+          # reports a list of mnemonics instead of a version string.
+          #
+          # `or ""` rather than .get's default: DictReader presents a short
+          # row's missing trailing field as None, and sorting a set containing
+          # None raises. This step's job is to describe the report, and it has
+          # to survive the report being in a state it is meant to be reporting
+          # on.
+          committed=$(python3 - <<'PY'
+          import csv
+          try:
+              with open("ec/ghidra/reassembly.csv", newline="") as f:
+                  cells = {r.get("assembler") or "" for r in csv.DictReader(f)}
+          except OSError as exc:
+              cells = {"<unreadable: %s>" % exc}
+          print(" ".join(sorted(cells)))
+          PY
+          )
+          echo "committed: ${committed:-<none: every row has no assembler cell>}"
+          echo
+          echo "If those differ, this run is not a re-measurement of the"
+          echo "committed report. See docs/findings.md §14g."
+
       # The same command ci.yml runs, with the deep tier switched on: the cheap
       # tier first, then the sdas8051 re-encode and the advisory cross-decoder
       # comparison. It is one command because agent-gates.sh hands off to

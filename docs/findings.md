@@ -2142,7 +2142,7 @@ the mnemonic cannot run into it.
 
 It was found by a check that had not existed until this work: comparing every
 byte of every committed listing against the firmware image, which needs no
-assembler and therefore covers the 2.2% of instructions sdas8051 cannot
+assembler and therefore covers the 0.31% of instructions sdas8051 cannot
 express. The first version of that check reported *zero* disagreements while
 parsing 30% of each file, because the listings were the old format and the
 parser the new one — so it now counts the lines beginning with an address and
@@ -2159,6 +2159,23 @@ the 8051 manual (at PC `0x8044` the firmware and both decoders agree `81 5D` is
 `ajmp 0x845D`; sdas emits `84 5D`). Every one of these is named in the source
 rather than filtered silently, because a filter that quietly drops 2% of the
 instruction stream turns a measured number into a flattering one.
+
+**Correction, 2026-09-23 (issue #157).** The 1,004 and the 2.2% in the
+paragraph above are the retracted first-pass figures, left visible because the
+paragraph above retracts them and a reader should be able to see what was
+withdrawn. The settled numbers are **143 instructions, 0.31%**, and they are the
+ones `reassembly.csv` carries. The form list in that paragraph is stale in the
+same way and for the same reason: `SETB bit`, `MOVC A,bit` and `CLR bit` are
+three of the four entries the parenthetical at the top of this section records
+as having been misread — 0xC0 is PUSH direct, 0x93 is MOVC A,@A+PC, and 0xC3
+is CLR C, so the `CLR bit` and `MOVC A,bit` there were never gaps at all.
+(`MOV C,bit` and `MOV bit,C` are a different pair: 0xA2 assembles fine, while
+0x92 is a real gap, and the paragraph above does not distinguish them.) What
+`sdas8051` cannot express is `MOV bit,C`, `CPL bit`, `CLR bit`, `CJNE` on a
+direct address, `DJNZ A` and the carry-with-immediate forms, plus
+`AJMP`/`ACALL` for the separate reason given. The 143 is unaffected by which
+SDCC build is on PATH — §14g measures it against a second one and finds the
+same 143 on all 2,705 rows.
 
 **The claim this does not make.** That the C recompiles. Keil C51 generated
 these bytes; SDCC does not emit Keil's code generation, and no amount of
@@ -2518,6 +2535,140 @@ by any of this. What is closed is one instance of a question a future migration
 still has to answer for itself, because the guard stops a second run and not the
 first. The caveat in `ec/ghidra/README.md` is narrowed to that; it is not
 deleted, and neither is this section's answer mistaken for the re-encode.
+
+### 14g. The re-encode under the assembler's a nightly actually has: 52 rows move, the 143 do not (2026-09-23, issue #157)
+
+**The two tallies are not the same, and the 52 rows that differ are not all
+attributable to the assembler.** Three `--jobs 4` runs of one command over the
+same 2,705 rows gave three different answers, and `--jobs 1` gave a fourth. That
+is a race in `verify()`'s dispatch, and finding it was the point of the
+exercise: the second measurement could not be taken until it was fixed. The fix
+is in this PR, the per-row numbers below are all from the post-fix run, and the
+durable record is `evidence/ec-reencode/2026-09-23-sdas8051-versions.md` with
+the differing rows in `evidence/ec-reencode/2026-09-23-sdas8051-rowdiff.csv`.
+
+**The race.** `verify()` allocated one scratch directory per worker and then
+indexed that list by *row* (`dirs[idx % jobs]`), which is not the same thing.
+`ThreadPoolExecutor.map` hands the next row to whichever worker frees up first,
+so rows 0 and 4 can be in flight together and both took `dirs[0]` — each
+overwriting the other's `f.s51` before reading back a `f.lst` that was not its
+own. The comment above the line read "one scratch dir per thread", so the
+intent was right and the implementation was not, which is the shape this section
+keeps finding. A row that reads back another row's listing reports `no bytes
+emitted` for an address the assembler did place, and `assembler-error` when the
+`.s51` it did not write is the one that failed. The fix is a
+`threading.local()` directory allocated on each worker's first row; the
+self-test forces the pickup order that provokes the collision rather than
+waiting for it to happen by luck, and fails against the old code. After it,
+three `--jobs 4` runs produced three byte-identical CSVs, equal to `--jobs 1`.
+
+**Which means the committed report may carry the same artefact.** `08b72e2`,
+the commit that wrote `reassembly.csv`, records no `--jobs` value, so there is
+no way to tell from history whether that run was serialised. Its 58
+`assembler-gap` rows sit inside the range the race produced here — 37 to 65
+across five `--jobs 4` runs of the same command. That is a reason to distrust
+the *committed outcome columns*, not a demonstration that they are wrong: the
+instruction columns, which the race cannot touch, are 45,394 and 143 on every
+run of it. Settling it needs the nix assembler, which project-setup does not
+install — the follow-up, below.
+
+### The two measurements
+
+Both are single-assembler, and each is labelled with the string that assembler
+reports for itself.
+
+| | committed `reassembly.csv` | this run |
+|---|---|---|
+| assembler | `sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14` | `sdas8051 02.00` |
+| via | nix SDCC 4.6.0 | `.github/actions/project-setup`, SDCC 4.2.0 #13081, `/usr/bin/sdas8051` |
+| `match` | 2,574 | 2,621 |
+| `partial` | 73 | 78 |
+| `assembler-gap` | 58 | 6 |
+| `mismatch` / `assembler-error` | 0 / 0 | 0 / 0 |
+| re-encoded | 45,394 of 45,537 (99.69%) | 45,394 of 45,537 (99.69%) |
+| unchecked | 143 | 143 |
+
+Six years apart in SDCC, and not the same ASxxxx: `02.00` is not a prefix of
+`05.50.4`. The version string is not the whole identity in either direction —
+§14e's reason for stamping it is unchanged — so the record carries
+`sdcc --version`, the resolved real path and the raw banner beside the
+comparison rather than the banner alone.
+
+### Whether the set of unencodable instructions moves: it does not
+
+**As this tool records it, per row, on all 2,705 rows: 0 rows differ in
+`instructions_checked` or `instructions_unchecked`, and both sides total 45,394
+and 143.** That is the answer to the question #151's 143 belongs to, and it is
+the robust half of this section, because those two columns are computed by
+`to_sdas()` in pure Python before the assembler is invoked at all. They are a
+property of the committed listings and this tool's gap rules, not of which
+ASxxxx is on PATH, and the race above cannot reach them either — 45,394 and
+143 on every run of it, racy or not.
+
+The limit is the tool's row model, not the comparison: a row records a count
+and the *first* skipped address, not the full set of them. So the claim is
+about the set as recorded per row, and not an address-level set identity that
+was not computed. Producing that would mean threading the whole `skipped` list
+through `check_one()`, which is a larger change than this issue earns.
+
+### What did move: 52 rows, all one way
+
+Every one of the committed report's 58 `assembler-gap` rows is accounted for:
+47 re-encode completely under the apt build, 5 re-encode with the same 143
+unchecked instructions between them, 6 stay gaps. None regressed. The 6 that
+stay are the `ajmp` rows, which `GAP_MNEMONICS` excludes before the assembler
+is consulted, so they are gaps by construction on both sides.
+
+Those 52 rows carry `no bytes emitted at NNNN` in the committed report, and the
+instruction at each named address is an ordinary one — `mov` (28), `lcall` (7),
+`movx` (4), `clr` (3), `ret` (2), `ljmp` (2), and six singletons. An assembler
+declining to place a `movx @DPTR,A` at the first instruction of a function is
+not a statement about the form, which is the observation that made the race
+worth chasing before the assembler difference was worth writing up.
+
+**Two candidate causes, and this environment separates neither:** SDCC 4.2.0 may
+accept forms 05.50.4 declines, and the committed rows may carry the race. Both
+predict 52 gap rows. Re-running the nix assembler settles it and nix is out of
+scope here, so the follow-up is to re-measure `reassembly.csv` with the pinned
+nix build on a runner that has it, at the dispatch as it now stands. Until then
+the honest statement is that 52 rows differ and this run cannot say why.
+
+The 47 rows that become `match` are **not** new evidence for the 1:1 claim.
+The committed report already asserts those bytes are what the firmware holds,
+and `--check` compares all 45,537 instructions' bytes with no assembler at all.
+What has moved is how much of the corpus an independent assembler gets to
+confirm, not whether the bytes are right.
+
+### The nightly
+
+Both branches of the issue's either/or are settled by constraint, and the
+measurement only sizes the note. Pinning the nix assembler means editing
+`.github/actions/project-setup/action.yml`, which is under `.github/` and out
+of scope. So the second branch applies, and
+`docs/ci/agent-gates-deep-schedule.yml` gains one step before the deep-gates
+step that resolves `sdas8051`, prints its path, its `sdcc --version` and its
+banner, and prints the string the committed `reassembly.csv` names — read from
+the file at run time, not hardcoded, so the note stays true as `ubuntu-latest`
+drifts. It prints what it observed and asserts no fixed relationship; that
+§14g's numbers are the comparison, and a future run that disagrees with them is
+information rather than a failure of the note.
+
+The re-encode itself now prints the resolved assembler path and its version on
+every full run, so the nightly's log is self-labelling without a step at all.
+`--emit-csv` exists so a nightly run can be compared row by row against the
+committed report without writing to it; it refuses
+`ec/ghidra/reassembly.csv` outright, and the refusal is what the self-test
+asserts.
+
+Two things the nightly is *not* told to do. It does not become a required
+check, for §14e's reason. And its exit code is not the result: `main()` returns
+non-zero only on `mismatch`, so a nightly that runs the apt assembler and gets
+zero mismatches exits 0 whether or not its outcome columns agree with the
+committed report's — which is why the numbers are read from the tallies and
+not from `$?`.
+
+Landing the schedule is still a human's one-line copy, and §14e still holds
+that the re-encode is not per-commit.
 
 ## 15. The EC and BIOS indexes get the same structural guards (2026-09-23, issue #142)
 

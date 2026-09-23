@@ -222,11 +222,12 @@ written from memory rather than measured.
 Measured with `sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14` (SDCC 4.6.0), and
 reproduced unchanged on 4.5.0. The version is in every row of
 `reassembly.csv`, because the *gap* count is a property of the assembler and
-the match count should not be: the firmware bytes are the arbiter either way. The remaining 1,004 (2.2%) are
-instruction forms `sdas8051` cannot express — the bit-addressed `CLR bit`,
-`SETB bit`, `CPL bit`, `MOV C,bit`, `MOV bit,C`, `MOVC A,bit`, `CJNE` on a
-direct address, `DJNZ A`, and the carry-with-immediate forms — and every one of
-them is named in the source rather than silently dropped.
+the match count should not be: the firmware bytes are the arbiter either way.
+The remaining 143 (0.31%) are the instruction forms listed above, and every one
+of them is named in the source rather than silently dropped.
+`../../docs/findings.md` §11 records the retraction of an earlier 1,004 (2.2%)
+here and why; §14g re-measures those 143 against a second SDCC build and finds
+the same 143 on all 2,705 rows, while 52 rows change `outcome`.
 
 Three things this does **not** mean, stated because the number invites the
 wrong one:
@@ -299,10 +300,31 @@ committed report, and refuses to run a second time. It is the honest way to do
 that migration and also a trap worth naming: it adds digests from the listings
 on disk **without re-encoding**, so the command itself cannot prove those are
 the listings the report measured — proving that needs the same assembler, and
-the one on a GitHub-hosted runner is a different and older ASxxxx, against
-which a full report would rewrite every `assembler` cell and could move the gap
-tallies above. That is why it is one-shot and why the tallies here are still the
-nix-pinned measurement.
+the one on a GitHub-hosted runner is a different and older ASxxxx. That is why
+it is one-shot and why the tallies here are still the nix-pinned measurement.
+
+**That warning has since been measured rather than predicted**
+(`../../docs/findings.md` §14g, issue #157). The runner's `sdas8051` was
+`05.50.4`'s contemporary — SDCC 4.2.0, `sdas8051 02.00`, six years older — and
+a full report against it would indeed have rewritten every `assembler` cell. The
+measured part is sharper than "could move the gap tallies above": of the
+2,705 rows, **the 143 and the 45,394 are unchanged** — 0 rows differ in
+`instructions_checked` or `instructions_unchecked`, because those two columns
+come from `to_sdas()` in pure Python and not from the assembler — while **52
+rows change `outcome`**, all of them `assembler-gap` becoming `match` or
+`partial`. Those 52 are in `../../evidence/ec-reencode/2026-09-23-sdas8051-rowdiff.csv`.
+So re-reporting against a different build moves *coverage*, not the byte
+arithmetic, which is the distinction the `assembler` column exists to let a
+reader make.
+
+One caveat belongs here too, because this file is where a reader looks for the
+tallies. §14g also found a race in `verify()`'s dispatch that made repeated
+`--jobs 4` runs disagree, and the commit that wrote this report
+(`08b72e2`) records no `--jobs` value, so whether the 58 `assembler-gap` rows
+below carry that artefact is not settled from history. The 45,394 and the 143
+cannot be affected — they are computed before the assembler runs — but the
+outcome columns should be re-measured with the pinned nix build before they are
+treated as settled.
 
 **For the committed column the history supplies the proof the command could
 not** (2026-09-23, issue #150). `a56b3bb` changed nothing in this file but the
