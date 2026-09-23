@@ -315,10 +315,11 @@ registers:
       has no direct reference to 0x087F, and its only 0x0742 write sets
       bit 1, so that mechanism was not found here.
 
-  - name: BATTERY_CHARGE_LIMIT_DOWN (Windows-only address, no uniwill-laptop equivalent)
+  - name: DBD1 (DSDT name; ECSpec calls the same byte BATTERY_CHARGE_LIMIT_DOWN)
     addr: 0x07D0
-    sources: [ecspec-3.1.6.0(BATTERY_CHARGE_LIMIT_DOWN),
-              acpidriver-3.9.18.0(ECRR/ECRW)]
+    bits: "0-7 value; T1WR stores Arg1 * 8 into it"
+    sources: [ecspec-3.1.6.0(BATTERY_CHARGE_LIMIT_DOWN), dsdt,
+              acpidriver-3.9.18.0(ECRR/ECRW), live]
     static_refs: 254
     static_refs_main_ec: 0
     static_refs_pd_image: 254
@@ -365,6 +366,82 @@ registers:
       \_SB.NPCF.AMAT/AMIT -- a GPU power value in 1/8 W, not a battery
       threshold. Whether the EC firmware, the vendor service, or neither
       reads it as a charge limit is not established.
+      RE-GRADED 2026-09-23 (docs/findings.md 4o, issue #131), which is
+      where the entry's name changed. The question 4f left open -- which
+      program, if any, treats this as a charge threshold -- is answered
+      for the committed inputs, and the answer is none of them. The only
+      committed writer of 0x07D0 in any committed input is the DSDT:
+      T1WR's Arg0 == 0x1173 branch (dsdt.dsl:50680-50691). Every other
+      T1WR branch, and the T1WR Arg0 == 0x73 branch and its _Q84 twin
+      (dsdt.dsl:52793-52805), work on a different byte of the same
+      0x07C4-0x07D7 block (CPUA 0x07D4, DBAP 0x07D5) for the same GPU
+      purpose, which is what makes that block a GPU dynamic-boost control
+      block rather than battery state.
+      On the Windows side, windows/tools/t1wr_callers.py censuses every
+      committed input for TempWrite1, T1WR, the 0x9C40A4DC IOCTL and the
+      0x1173 Arg0: not found by this method, in the fully decrypted
+      3.1.39.0 tree, in both partial trees, in every committed vendor
+      binary's string table (ASCII and UTF-16LE), in the UWP front end's
+      .msixbundle and in its .appxsym PDB name table. Two of those are
+      closed rather than open -- GCUService 3.1.39.0's only
+      ACPIDriverDll.dll P/Invoke is SMAPCTable (AcpiCtrl.cs:127), and the
+      front end reaches the service over MQTT. The unreadable inputs are
+      named in that section, not glossed: the 3.1.6.0/3.9.18.0 encrypted
+      bodies, the two Inno installer payloads, and any firmware component.
+      ADDR_BATTERY_CHARGE_LIMIT_DOWN is a vendor constant with exactly one
+      committed writer, BatteryProtection2.SetBatteryChargingLimit_Down
+      (windows/decompiled/v3.1.39.0/GCUService/GCUService.MySystem/
+      BatteryProtection2.cs:347), which is private and has no caller in
+      this build. So for the service on this machine the vendor name has
+      no writer behind it.
+      Status is unchanged. That is a decoded path, not an observed effect,
+      and a constant with no caller is not a name proved stale: the EC
+      image could still act on the byte for either reason, which is #34
+      and #25, not this entry. What the re-grade changes is the reading
+      order -- "resume charging below X%" is now the less supported of the
+      two, and "a GPU power byte the BIOS writes" is the only committed
+      writer's own account of itself.
+      CLOBBER HAZARD, recorded and not fixed: the vendor charge-limit
+      write (ECRW, docs/findings.md 4e) and the GPU TGP write (T1WR 0x1173)
+      land on the same physical byte and disagree about scale -- ECRW
+      writes it raw, so a 55% limit lands as 0x37, while T1WR 0x1173
+      stores Arg1 * 8, so its largest possible value lands as 0xF8. Two
+      writers, one byte, two meanings, and nothing in the committed inputs
+      says which a given value carries. That is arithmetic on two decoded
+      paths, not an observed failure -- no hardware was involved in
+      establishing it, and the live writes in docs/findings.md 4f are still
+      the only hands-on test of this byte -- so DO-NOT-WRITE-BLIND stands.
+
+  - name: DBD2 (DSDT name; no vendor constant, no committed Windows writer)
+    addr: 0x07D1
+    bits: "0-7 value; T1WR stores Arg2 * 8 into it"
+    sources: [dsdt]
+    static_refs: 76
+    static_refs_main_ec: 0
+    static_refs_pd_image: 76
+    status: unknown-not-absent-DO-NOT-WRITE-BLIND
+    note: >
+      The second half of the 0x07D0/0x07D1 pair: T1WR's Arg0 == 0x1173
+      branch stores Arg2 * 8 into DBD2 and mirrors it to
+      \_SB.NPCF.AMIT (dsdt.dsl:50688, 50690). DBD1/DBD2 are the DSDT ECMG
+      field-list names (dsdt.dsl:52248-52250), and this byte has exactly
+      one writer in the whole DSDT -- the same GPU branch that writes
+      0x07D0, with the same block evidence behind it (docs/findings.md 4o).
+      Arg2 is bounded by 31: the destination is 8 bits and the store is
+      Arg2 * 8. That is arithmetic on the ASL, not a claim about what the
+      argument means.
+      Unlike 0x07D0 it has no ECSpec constant -- it is absent from
+      windows/decompiled/v3.1.6.0/ECSpec.cs -- and the service's
+      ec-callsites.csv has no row for it, so no committed Windows input
+      writes this byte at all. 76 direct MOV DPTR sites, all of them in the
+      ITE8850-PD image, none in the EC firmware, by the same method and
+      through the same image split that ec-0x07d0-sites.md worked through
+      for 0x07D0. Status is unknown-not-absent rather than present-untested
+      for the reason the LIGHTBAR_BAT_* entries are: "present" would have
+      rested on references that are not in the EC image. The
+      DO-NOT-WRITE-BLIND suffix matches 0x07D0 because a blind write here
+      lands on the same GPU power pair with the same unknowns. No live
+      test has touched this byte.
 
   - name: LIGHTBAR_AC_CTRL / RED / GREEN / BLUE
     addr: [0x0748, 0x0749, 0x074A, 0x074B]

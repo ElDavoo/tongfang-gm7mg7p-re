@@ -538,6 +538,26 @@ service reuses the byte, or if the vendor constant is stale for this
 board; which of those holds is not established. Either way, "resume
 charging below X%" is now the *less* supported reading of the byte.
 
+**Addendum 2026-09-23 (§4o, issue #131).** The question this paragraph
+ends on — which of those holds — is now answered for the committed inputs,
+and the three candidates come out differently. That the **EC image**
+reuses the byte is *not* established either way: the census that §4o
+describes covers Windows and ACPI, not the 8051 program, and that side is
+#34 and #25. That the **service** reuses it is nearly answered: its one
+committed writer, `BatteryProtection2.SetBatteryChargingLimit_Down`, is
+`private` with no caller in the decrypted 3.1.39.0 tree, and no committed
+Windows input calls `T1WR` at all — a search for a `T1WR 0x1173` caller
+across the decompiled trees, every vendor binary's string table and the UWP
+front end's PDB name table comes back empty, which is "not found by this
+method", with the method, the search table and the list of inputs it could
+not reach in **§4o**. That the **vendor constant is stale** is *not*
+established by the same evidence: a constant whose only writer is never
+called is not a name proved wrong, only one with nothing behind it here.
+The reading of the byte is unchanged and now has the neighbouring branches
+behind it. A line reference above is also off: the `Arg0 == 0x1173` branch
+is `evidence/acpi/dsdt.dsl:50680-50691`, not `:50676` (`:50675` is the
+`0x1172` branch).
+
 ### 4g. Watching the vendor stack instead of guessing at it (2026-09-18)
 
 §4f ends by saying the values Windows actually writes are unknown, and §5
@@ -1080,6 +1100,365 @@ the tie can't be broken by overriding `0x0522` from the host. So #98 closes
 as *unreachable*; the causation question is answered only as far as the
 matching plateau allows.
 
+### 4o. Who calls `T1WR 0x1173` — not found by this method — and what `0x07D0` is on GM7MG7P (2026-09-23, issue #131)
+
+§4f found a second writer for `0x07D0` and stopped one short of an answer:
+"whether the EC image or the service reuses the byte, or if the vendor
+constant is stale for this board … which of those holds is not
+established." This takes both halves from committed inputs. The headline
+is a negative, so it is written in the form the calibration rule
+requires: **no caller of `T1WR` with `Arg0 = 0x1173` was found by this
+method**, and the section says what the method was and what it could not
+reach.
+
+**The method.** `windows/tools/t1wr_callers.py`, in the spirit of
+`windows/tools/ec_callsites.py`: it walks a fixed term list — `TempWrite*`,
+`T1WR`/`T2WR`/`T3WR`, the six TMPREAD/TMPWRITE IOCTL codes `0x9C40A4D0` to
+`0x9C40A4E4` in hex *and* in the decimal a C# `const uint` carries, the
+`Arg0` values `0x1171`/`0x1172`/`0x1173`/`0x2273` in hex and decimal, the
+`NPCF` objects `AMAT`/`AMIT`/`ATPP`/`CTGP`/`UOCT`/`DBAC`, and the field
+names `DBD1`/`DBD2` — across every committed Windows input: the decompiled
+trees as text, the vendor binaries by string table in ASCII **and**
+UTF-16LE, and the `.appxsym` PDB's name table. A binary hit is counted only
+inside a run of printable characters, so a hit means the name is spelled in
+that file rather than that four bytes turned up somewhere. `--self-check`
+asserts the table against the committed tree and exits non-zero on drift,
+so the counts below are regenerable rather than remembered, and the
+archives are expanded in memory — `vendor/` is committed input and nothing
+is ever written under it. Note what the term list is *not* run against:
+this repository's own prose. A hand `grep -rn 'TempWrite1\|0x1173\|AMAT'
+windows/` hits the export table in `native/ACPIDriverDll.dll.analysis.md`
+and, since this section, the files that describe this search — which is
+why the census is scoped to inputs and why a raw grep is not the
+instrument.
+
+```console
+$ python3 windows/tools/t1wr_callers.py --self-check
+t1wr_callers: census matches the committed tree -- 7 text inputs, 8 binary inputs, 2 body censuses, and the service's only ACPIDriverDll P/Invoke is SMAPCTable
+```
+
+The same run, in full:
+
+```console
+T1WR(Arg0=0x1173) caller census. Every number is a hit count, not
+an estimate. A zero means 'not found by this method'.
+
+== text inputs: input | term | hits ==
+decompiled/v3.1.39.0 (whole service, decrypted)                            2621482192   1
+decompiled/v3.1.39.0 (whole service, decrypted)                            2621482196   1
+decompiled/v3.1.39.0 (whole service, decrypted)                            2621482200   1
+decompiled/v3.1.39.0 (whole service, decrypted)                            2621482204   1
+decompiled/v3.1.39.0 (whole service, decrypted)                            2621482208   1
+decompiled/v3.1.39.0 (whole service, decrypted)                            2621482212   1
+decompiled/v3.1.6.0 (partial, anti-tamper)                                 (no term hit anywhere in this input)
+decompiled/v3.9.18.0 (partial, anti-tamper)                                (no term hit anywhere in this input)
+decompiled/native ACPIDriver.sys + ACPIDriverDll.dll (exports TempWrite1)  0x9C40A4D0   4
+decompiled/native ACPIDriver.sys + ACPIDriverDll.dll (exports TempWrite1)  0x9C40A4D4   4
+decompiled/native ACPIDriver.sys + ACPIDriverDll.dll (exports TempWrite1)  0x9C40A4D8   4
+decompiled/native ACPIDriver.sys + ACPIDriverDll.dll (exports TempWrite1)  0x9C40A4DC   4
+decompiled/native ACPIDriver.sys + ACPIDriverDll.dll (exports TempWrite1)  0x9C40A4E0   4
+decompiled/native ACPIDriver.sys + ACPIDriverDll.dll (exports TempWrite1)  0x9C40A4E4   4
+decompiled/native ACPIDriver.sys + ACPIDriverDll.dll (exports TempWrite1)  TempWrite*   12
+decompiled/native GamingCenter3_Cross + GC3_launcher (the UWP component)   (no term hit anywhere in this input)
+decompiled/native UEFI_Firmware + clrcompression                           (no term hit anywhere in this input)
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      0x1171       1
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      0x1172       1
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      0x1173       1
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      0x2273       1
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      AMAT         5
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      AMIT         2
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      ATPP         4
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      CTGP         2
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      DBAC         7
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      DBD1         2
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      DBD2         2
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      NPCF         54
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      T[123]WR     3
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      UOCT         4
+
+== binary inputs: string table, ASCII and UTF-16LE ==
+vendor 3.1.39.0 GCUService.exe (shipped, bodies encrypted)  (no term hit in any string)
+decompiled GCUService.dumped.exe (bodies decrypted)   (no term hit in any string)
+vendor 3.1.6.0 UniwillService_3.1.6.0_STD.exe (installer)  (no term hit in any string)
+vendor 3.9.18.0 setup.exe (installer)                 (no term hit in any string)
+vendor 3.9.18.0 ACPIDriver.sys                        (no term hit in any string)
+vendor 3.9.18.0 ACPIDriverDll.dll                     TempWrite*   3
+vendor 3.9.18.0 GamingCenter3_Cross .msixbundle (UWP front end)  (no term hit in any string)
+vendor 3.9.18.0 GamingCenter3_Cross .appxsym (PDB name table)  (no term hit in any string)
+
+== readability probes on the binary inputs (not caller terms) ==
+A name these inputs are known to carry -- a .NET method name from the
+GPU feature area, or the driver device name for the native PEs. They
+are counted so that a zero in the caller table above reads as 'the
+name is not in there' rather than 'the scan did not reach the source'.
+The text inputs need no such check: the DSDT control above is the
+proof that the text scanner reaches a source that has the term.
+vendor 3.1.39.0 GCUService.exe (shipped, bodies encrypted)  ACPIDriver x4, GpuConfigurableTGPTarget x1, GpuDynamicBoost x1
+decompiled GCUService.dumped.exe (bodies decrypted)   ACPIDriver x4, GpuConfigurableTGPTarget x1, GpuDynamicBoost x1
+vendor 3.1.6.0 UniwillService_3.1.6.0_STD.exe (installer)  (no probe hit -- source may be unread)
+vendor 3.9.18.0 setup.exe (installer)                 (no probe hit -- source may be unread)
+vendor 3.9.18.0 ACPIDriver.sys                        ACPIDriver x34
+vendor 3.9.18.0 ACPIDriverDll.dll                     ACPIDriver x1
+vendor 3.9.18.0 GamingCenter3_Cross .msixbundle (UWP front end)  FanViewModel x2, GpuConfigurableTGPTarget x5, GpuDynamicBoost x6, OverClock_SettingsView x5, UWP_Refactor x14
+vendor 3.9.18.0 GamingCenter3_Cross .appxsym (PDB name table)  FanViewModel x2230, GpuConfigurableTGPTarget x12, GpuDynamicBoost x12, OverClock_SettingsView x624, UWP_Refactor x324
+
+== readability census: .NET method-body headers ==
+vendor 3.1.39.0 GCUService.exe (shipped)              tiny 1191  fat 1  invalid 3759  abstract/extern 349
+decompiled GCUService.dumped.exe                      tiny 2630  fat 2321  invalid 0  abstract/extern 349
+
+== readability census: ILSpy error markers in the .cs trees ==
+decompiled/v3.1.39.0 (whole service, decrypted): 0 marker(s) in 0 of the .cs files
+decompiled/v3.1.6.0 (partial, anti-tamper): 27 marker(s) in 1 of the .cs files
+decompiled/v3.9.18.0 (partial, anti-tamper): 326 marker(s) in 15 of the .cs files
+
+== [DllImport] surface of the decrypted service ==
+  ACPIDriverDll.dll!SMAPCTable   GCUService/MyECIO/AcpiCtrl.cs:127
+
+== unreadable by this method ==
+The negative above is only as good as this list. Everything named
+here is a place the search could not reach, not a place it looked
+and found nothing.
+  decompiled/v3.1.6.0 (partial, anti-tamper): 27 ILSpy error marker(s) across 1 .cs file(s), so every method body under them
+    is unsearched. windows/antitamper/README.md; issue #3.
+  decompiled/v3.9.18.0 (partial, anti-tamper): 326 ILSpy error marker(s) across 15 .cs file(s), so every method body under them
+    is unsearched. windows/antitamper/README.md; issue #3.
+  vendor 3.1.6.0 UniwillService_3.1.6.0_STD.exe (installer): no probe hit, because the payload is
+    Inno-compressed inside the wrapper. What that payload
+    contributes is already committed as the decompiled
+    trees and the native decompiles; nothing else from the
+    installer was read. windows/tools/extract.sh.
+  vendor 3.9.18.0 setup.exe (installer): no probe hit, because the payload is
+    Inno-compressed inside the wrapper. What that payload
+    contributes is already committed as the decompiled
+    trees and the native decompiles; nothing else from the
+    installer was read. windows/tools/extract.sh.
+  vendor 3.9.18.0 ACPIDriver.sys: its string table has none of the
+    21 ACPI method names, because MSVC emits each one as a 4-byte
+    immediate rather than a terminated string. The Ghidra decompile
+    of the same file is a separate text input above and is where
+    its IOCTL constants are covered.
+  Not in this repository at all, and therefore not searched by
+    anything above: firmware, including any ACPI component that
+    defines \_SB.NPCF, which the DSDT only declares External
+    (evidence/acpi/dsdt.dsl:54-65). A caller there would be
+    invisible to every input in this table.
+```
+
+**The result.** Every `T1WR`-side term is zero in every Windows input.
+`TempWrite*` appears in exactly one binary and one decompile across the
+whole census — `ACPIDriverDll.dll`'s export directory, three hits for the
+three exports, and the Ghidra decompile of the same file — which is the
+definition, not a call. `0x9C40A4DC` appears only in the decompiles of the
+driver and its wrapper, where it is the handler table. `0x1173`, its
+decimal `4467`, and `AMAT`/`AMIT` occur nowhere in the census but the DSDT
+control row, and that row is the proof the term set works: `T1WR` and
+`AMAT` are *defined* in that file, and the scan finds them.
+
+Two of the inputs are closed rather than merely searched:
+
+- **`GCUService` 3.1.39.0 does not bind `TempWrite1`.** The whole service
+  is committed with every method body decrypted, and its only
+  `ACPIDriverDll.dll` P/Invoke in the entire tree is `SMAPCTable`
+  (`windows/decompiled/v3.1.39.0/GCUService/MyECIO/AcpiCtrl.cs:127`) — the
+  tool prints that row from a parse of the `[DllImport]` attributes, and
+  `--self-check` fails if that ever changes. `IOCTL_GPD_ACPI_TMPWRITE1 =
+  2621482204u` *is* declared at `AcpiCtrl.cs:93`, and the census finds that
+  decimal spelled exactly once in the whole tree — at its own declaration.
+  The private `WriteACPI(uint, int, int)` helper at `:373` is the only thing
+  that sends one of these codes, and its one call site in the tree passes
+  `2621482124u` (`IOCTL_GPD_ACPI_ECWRITE`, `:212`). "Declared and unused" is
+  a different claim from "not searched", and this is the first. A .NET
+  P/Invoke, including a late-bound `GetProcAddress`, has to carry the
+  target name as a string, so the exclusion covers that too.
+- **The UWP front end is not the caller either.** Its `.appxsym` PDB is a
+  name source that survives method-body encryption, and its name table was
+  read — the same scan finds `FanViewModel` 2230 times and
+  `GpuDynamicBoost` 12 — with zero occurrences of `TempWrite1`, `T1WR`,
+  `AMAT`, `AMIT`, `0x1173` or `0x9C40A4DC`. Its `.msixbundle` says the same
+  (14 `UWP_Refactor`, 6 `GpuDynamicBoost`, no caller term), and so does the
+  Ghidra decompile of its native component. Structurally that is what the
+  architecture predicts: `windows/mqtt-protocol.md` records that the UI and
+  the service do not touch the EC across the app boundary at all — they
+  exchange JSON over a local MQTT broker and `GCUService` is the only party
+  that reaches hardware — and `windows/README.md` has the UI as a sandboxed
+  UWP app, which is what puts `\\.\\ACPIDriver` out of its reach. A
+  behavioural prediction that the byte census independently matches, which
+  is why it is worth more than either alone.
+
+**What stayed unreadable**, in the tool's own words, and repeated here
+because a negative is only as good as this list: the anti-tamper-encrypted
+bodies in `v3.1.6.0` (27 ILSpy error markers, all in
+`BatteryProtection2.cs`) and `v3.9.18.0` (326 markers across 15 files) —
+issue #3. That is the sharp edge of the negative: the `v3.1.6.0` tree is
+two files, and the one carrying the markers is the class whose
+`SetBatteryChargingLimit_Down` is the service's only `0x07D0` writer, so
+the miss there is a miss in exactly the class the question is about. The
+two Inno installers' compressed payloads beyond what is already committed
+(`windows/tools/extract.sh`); `ACPIDriver.sys`'s string table, which
+carries none of the 21 ACPI method names because MSVC emits each as a
+4-byte immediate rather than a terminated string — its Ghidra decompile is
+a separate input in the table above and is where its IOCTL constants are
+covered; and, outside the reach of any committed input, **firmware** —
+including whatever defines `\_SB.NPCF`, which this DSDT only declares
+`External` (`evidence/acpi/dsdt.dsl:54-65`). An ACPI component in firmware
+is a perfectly ordinary place for a `T1WR` caller to live, and nothing in
+this repository can see one.
+
+**The other door, closed by the same search.** `ACPIDriver.sys` hardcodes
+the method name per IOCTL (`movl $0x52524345,0x54(%rsp) ; MethodName =
+'ECRR'`, `windows/native/ACPIDriver.sys.analysis.md:177`), so
+`TempWrite1` is not the only way to reach `T1WR` — Windows' own
+`IOCTL_ACPI_EVAL_METHOD` takes the name in the caller's buffer, which is
+what the driver forwards to. A caller that took that route would still have
+to carry `T1WR` and the value `0x1173`, and both are in the term list, so
+that route is inside the same negative rather than outside it.
+
+**The neighbouring branches, so GPU power is told apart from battery
+code.** This is the part of the method §4f did not have, because it read
+the `0x1173` branch in isolation. Every `Arg0` in the block, and what it
+does:
+
+| `Arg0` | `dsdt.dsl` | EC byte it writes | `NPCF` object it sets | gated on |
+|---|---|---|---|---|
+| `0x1171` | 50658-50665 | `CTWA` = `Arg1` (`0x0788`) | `CTGP` = 1, `UOCT` = `CTWA * 8` | — |
+| `0x71` | 50667-50673 | — | `UOCT` = `CTWA * 8` (re-publish) | — |
+| `0x1172` | 50675-50678 | — | `DBAC` = `Arg1` | — |
+| **`0x1173`** | **50680-50691** | **`DBD1` = `Arg1 * 8` (`0x07D0`), `DBD2` = `Arg2 * 8` (`0x07D1`)** | `DBAC` = 0, `AMAT` = `DBD1`, `AMIT` = `DBD2` | — |
+| `0x2273` | 50693-50698 | — | `ATPP` = `Arg1 * 8` | — |
+| `0x73` | 50700-50717 | — | `DBAC` = 0, `ATPP` = `CPUA * 8` (`0x07D4`), `AMAT` = `DBAP * 8` (`0x07D5`) | `DBEN` (`0x07C4` bit 0) |
+| `_Q84` | 52793-52811 | — | same as `0x73`'s then-branch | `DBEN`; raised by the EC, not by an ACPI client |
+| `0x1176` | 50730-50733 | `CGCT` = `Arg1` (`0x07D7`) | Notify `PEGP` | — |
+
+No branch in the table touches a battery or charge register. The
+`0x1171`/`0x1172`/`0x1173`/`0x2273` selector family and the `0x73`/`_Q84`
+query pair both end at the same `NPCF` objects, and the `0x73`/`_Q84` pair
+reaches them from `CPUA`/`DBAP` at `0x07D4`/`0x07D5` rather than from
+`0x07D0`. That is the strongest structural evidence available here that
+`0x07C4`-`0x07D7` is a GPU dynamic-boost control block and not battery
+state, and it is new relative to §4f.
+
+Two things in the ASL are worth writing down because they are the kind of
+detail a re-derivation would otherwise trip over. The `0x73`/`_Q84` path
+gates on `DBEN` at `0x07C4` bit 0 and, when it is clear, sets `DBAC = 1`
+instead — so the same method is both the publisher and the "not available"
+signal. And `T1WR` has two `ElseIf ((Arg0 == 0x71))` branches: the first
+(`:50657`) has an empty body and the second (`:50667`) has the work, so on
+a first-match ASL chain the second is unreachable. The same holds for the
+empty `0x83`/`0x86`/`0x87`/`0x74` slots: reserved selectors with no
+implementation, which is what a generated ASL template looks like.
+
+**The arithmetic bound.** `DBD1` is one byte and the branch stores
+`Arg1 * 8` into it, so `Arg1` cannot exceed 31; likewise `Arg2` for
+`DBD2`. That is arithmetic on the committed ASL and nothing more. It does
+*not* say what the argument means — only that whatever it is, it is small
+enough that the EC byte can hold eight times it.
+
+**§4f's question, answered as far as the inputs allow.** The short form:
+in every committed input, the only writer of `0x07D0` writes it as a GPU
+power value, and `ADDR_BATTERY_CHARGE_LIMIT_DOWN` is a vendor constant with
+no committed writer behind it on this machine. The long form, with the
+citations:
+
+- The DSDT writes `0x07D0` as a GPU power value, and the block it writes it
+  into is GPU on the evidence of the neighbouring branches above.
+- `ADDR_BATTERY_CHARGE_LIMIT_DOWN = 2000`
+  (`windows/decompiled/v3.1.6.0/ECSpec.cs:387`) has exactly one writer in
+  the decrypted service: `BatteryProtection2.SetBatteryChargingLimit_Down`
+  (`windows/decompiled/v3.1.39.0/GCUService/GCUService.MySystem/BatteryProtection2.cs:347`,
+  writing at `:356`, the only `0x07D0` write row in
+  `windows/decompiled/v3.1.39.0/ec-callsites.csv`). That method is
+  `private` and has no caller anywhere in the 3.1.39.0 tree — the same
+  situation `registers.yaml` already records for its `0x07B9` sibling, and
+  for the same reason: `private` plus no caller in a decrypted build is
+  checkable, unlike a grep miss in an encrypted one. Note also *which* door
+  it goes through: `EcCtrl.Write` → `AcpiCtrl.Write` →
+  `WriteACPI(IOCTL_GPD_ACPI_ECWRITE)` → `ACPIDriverDll!WriteEC` → `ECRW`,
+  the §4e path that writes the byte raw. It never touches `T1WR`, so the
+  two writers of `0x07D0` found here are not two views of one mechanism.
+- The service's *own* GPU dynamic-boost path does not go through `0x07D0`
+  either. `GpuFeatures` writes `0x0743`/`0x0744`/`0x0745`/`0x0746` —
+  enable bits, cTGP target, DB total-processing-power target, DB maximum TGP
+  (`windows/vendor-ec-map.md:84-87`, and the `0x0743`-`0x0746` rows of
+  `windows/decompiled/v3.1.39.0/ec-callsites-summary.csv`). The DSDT names
+  that second block too, at `Offset (0x743)`: `GNEN`/`ECDC`, then `CTVA`,
+  `DBCT`, `MXDB`, `MIDB` (`evidence/acpi/dsdt.dsl:52204-52212`). So there
+  are two GPU-related blocks, one at `0x0743`-`0x0746` that the host writes
+  and one at `0x07C4`-`0x07D7` that ACPI reads out to the NVIDIA device,
+  and which way `0x07D0`/`0x07D1` sits relative to the second is not
+  something the committed inputs settle. That is a follow-up, named below.
+
+**What this does not establish.** It does not establish that `0x07D0` is
+*not* also a charge threshold in the EC firmware. The census covers
+Windows and ACPI, not the 8051 program; whether the main EC image acts on
+`0x07D0` at all is the indirect-XDATA blind spot, #34, and the 254
+`0x07D0` sites are the PD image's own variables, #25. A vendor constant
+with no caller is not a name proved stale: the byte could still be a
+threshold to firmware this repo cannot read. `registers.yaml` keeps the
+status at `unknown-not-absent-DO-NOT-WRITE-BLIND` for that reason, and
+`--self-check` in the tool asserts the census so a later dump that *does*
+bind `TempWrite1` cannot pass unnoticed.
+
+**The clobber hazard, recorded and not fixed.** Two decoded paths write
+the same physical byte, `0xFE4107D0`: the vendor charge-limit write
+(`ECRW`, §4e) and the GPU TGP write (`T1WR 0x1173`). They disagree about
+scale as well: `ECRW` writes the byte raw, so a charge limit of 55% lands
+as `0x37`, while `T1WR 0x1173` stores `Arg1 * 8`, so the largest value
+that branch can produce (`Arg1` = 31) lands as `0xF8`. The byte's value
+therefore carries a different meaning depending on which door wrote it, and
+a reader of the byte cannot tell which. That is arithmetic on two decoded
+paths, not an observed failure: no hardware was involved in establishing
+any of it, and the live writes in §4f remain the only hands-on test this
+byte has had — nothing here, and nothing there, observed a clash. One limit
+on the hazard is worth stating rather than letting a reader assume
+otherwise: **whether the GPU ever reads `0x07D0` is not established.**
+`T1WR 0x1173` sets `AMAT` from its own argument in the same breath as it
+writes the byte, so an `ECRW` write is not by itself a way to reach the
+NVIDIA device through this ASL. The hazard is that two writers fight over
+one byte whose meaning is not the same for both, and that the byte is not
+safe to write blind — which is why `DO-NOT-WRITE-BLIND` stands.
+
+There is a second, narrower version of the same hazard that needs no
+assumption about firmware at all, because it is entirely inside the
+committed ASL: **`AMAT` and `ATPP` each have two writers in the DSDT.**
+`AMAT` is set from `DBD1` (`0x07D0`) by `T1WR 0x1173` and from `DBAP`
+(`0x07D5`) by `T1WR 0x73` and by `_Q84`; `ATPP` is set from `Arg1` by
+`0x2273` and from `CPUA` (`0x07D4`) by the same `0x73`/`_Q84` pair. Each
+writer ends in the same `Notify (NPCF, 0xC0)`, so the value the NVIDIA
+platform controller reads is whichever method ran most recently. This is a
+statement about the ASL, checked against a committed file, not an
+observation of a fault.
+
+**Follow-ups this opens,** which is the point of writing the negative down
+rather than closing on it:
+
+- A Windows-side capture issue naming exactly what a human with the machine
+  should observe: the loaded-module list at the moment `0x07D0` moves under
+  a TGP or Dynamic Boost change, and an EC trace across the same change.
+  That is the only route left to the caller if it is not in the committed
+  inputs, and it is the step no cloud agent can take.
+- A register census for `0x07C4`-`0x07D7` (`DBEN`/`DBST`, `DBD1`/`DBD2`,
+  `GFID`, `CPUA`/`DBAP`/`DBSP`/`CGCT`) in the shape this section gives
+  `0x07D0`: which of the two GPU blocks the host writes, which ACPI reads
+  out, and what `0x07D0`/`0x07D1` are doing in the middle. `0x07D1` now has
+  a `registers.yaml` row and a reference split (76 sites, all PD image, none
+  in the EC firmware — `ec/annotations/static-refs-audit.md` §6) but no
+  per-site decode, and that is a real gap rather than a formality.
+- A `uniwill-laptop`-side question feeding #96: if the charge-limit write
+  path is revisited, should it read `0x07D0` before writing it? The answer
+  depends on what a human observes, and the upstream correction in #96
+  should not be written as though the byte has one meaning.
+
+Cross-references, so this does not re-open what others own: #34 and #25 for
+the EC firmware side, #3 for the still-encrypted 3.1.6.0/3.9.18.0 bodies,
+#96 for the upstream correction this re-grade feeds, and #10 for the rule
+that no stage opens a pull request against another repository.
+
+`ec/annotations/registers.yaml` is updated in the same change: the `0x07D0`
+entry is renamed to the DSDT's `DBD1` with the vendor constant kept in the
+parenthetical, its note carries the result above, and `0x07D1` gets its own
+row. Both keep `unknown-not-absent-DO-NOT-WRITE-BLIND`. §4f above is left
+as written, with this section as the answer to the question it ends on.
+
 ## 5. Net status going into the issue tracker
 
 *(**2026-09-19 update, read before the bullets below.** §4j–§4l change the
@@ -1087,6 +1466,15 @@ charge-limit bullet. The cap exists on the current firmware as a
 charge-voltage target of 16.4 V (§4l), and the service-side question is
 closed by the decrypted source (§4k). The bullets below are kept as
 written.)*
+
+*(**2026-09-23 update.** §4o narrows the first bullet further: the "one
+place a numeric threshold could still hide" — `GCUService`/
+`BatteryProtection2` — has been read in the *decrypted* 3.1.39.0 tree, and
+`SetBatteryChargingLimit_Up/Down` are `private` with no caller, so on this
+version there is no threshold there to find. Issue #3 still matters, for
+the two older builds whose bodies are still ciphertext; and `0x07D0`'s
+only committed writer turns out to be the ACPI DSDT's GPU branch, not the
+service at all.)*
 
 
 - Charging-cap-on-Linux is still an **open problem**, but much narrower.

@@ -71,6 +71,29 @@ reproduces the extraction from those into plain PE/.NET assemblies.
 - **`decompiled/v3.9.18.0/Define/{BatteryLifeExtension,BIOS_PROJECT_ID,ECSpec}.cs`**
   — small supporting constant classes, all clean.
 
+## Searching the whole Windows stack at once
+
+The per-file decompiles above are the place to read *what the service
+does*. To ask "does anything here call this, anywhere" — a P/Invoke, an
+IOCTL constant, an ACPI selector, across all three trees, every vendor
+binary's string table and the UWP front end's PDB name table, with a
+readability census so the negative can be trusted — use
+`tools/t1wr_callers.py`:
+
+```console
+python3 windows/tools/t1wr_callers.py             # the census
+python3 windows/tools/t1wr_callers.py --verbose   # ...per file and per archive member
+python3 windows/tools/t1wr_callers.py --self-check  # assert the numbers the docs quote
+```
+
+`decompiled/v3.1.39.0/` is the tree to search for behaviour: it is the
+whole service with every method body decrypted. `v3.1.6.0/` and
+`v3.9.18.0/` are partial — their signatures and constants are sound, their
+method bodies are anti-tamper ciphertext (`antitamper/README.md`) — so a
+hit in them is a hit and a miss in them is not a miss. The tool prints
+that split as a readability census rather than leaving it to be assumed,
+and `docs/findings.md` §4o is a worked negative from it.
+
 ## Native driver
 
 `vendor/control-center-3.9.18.0/ACPIDriver/{ACPIDriver.sys,ACPIDriver.inf,acpidriver.cat}`

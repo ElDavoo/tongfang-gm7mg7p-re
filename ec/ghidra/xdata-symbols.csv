@@ -13,7 +13,8 @@ addr,name,from_register,register_status,derivation,programs
 0x0726,OEM_9,OEM_9 (AC_AUTO_BOOT_ENABLE),absent,scalar-name,bank0;bank1
 0x07A6,OEM_4_CHARGING_PROFILE,OEM_4 (CHARGING_PROFILE_MASK),confirmed-working-partially,override,bank0;bank1
 0x07B9,CHARGE_CTRL,CHARGE_CTRL (numeric threshold),unknown-not-absent,scalar-name,bank0;bank1
-0x07D0,BATTERY_CHARGE_LIMIT_DOWN,"BATTERY_CHARGE_LIMIT_DOWN (Windows-only address, no uniwill-laptop equivalent)",unknown-not-absent-DO-NOT-WRITE-BLIND,scalar-name,bank0;bank1
+0x07D0,DBD1,DBD1 (DSDT name; ECSpec calls the same byte BATTERY_CHARGE_LIMIT_DOWN),unknown-not-absent-DO-NOT-WRITE-BLIND,scalar-name,bank0;bank1
+0x07D1,DBD2,"DBD2 (DSDT name; no vendor constant, no committed Windows writer)",unknown-not-absent-DO-NOT-WRITE-BLIND,scalar-name,bank0;bank1
 0x0748,LIGHTBAR_AC_CTRL,LIGHTBAR_AC_CTRL / RED / GREEN / BLUE,confirmed-not-this-mechanism,name-split,bank0;bank1
 0x0749,LIGHTBAR_AC_CTRL_RED,LIGHTBAR_AC_CTRL / RED / GREEN / BLUE,confirmed-not-this-mechanism,name-split,bank0;bank1
 0x074A,LIGHTBAR_AC_CTRL_GREEN,LIGHTBAR_AC_CTRL / RED / GREEN / BLUE,confirmed-not-this-mechanism,name-split,bank0;bank1

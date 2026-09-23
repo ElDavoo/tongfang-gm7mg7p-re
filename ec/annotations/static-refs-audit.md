@@ -435,3 +435,55 @@ it as "this site does not access the register" would be exactly the
 **No `status:` value changed here, and no `static_refs*` number moved** —
 `check_register_counts.py` re-verifies all three counts per address and is the
 guard on that. Issue #32 owns the grading question this table feeds.
+
+## 6. `0x07D1` added to `registers.yaml` (2026-09-23, issue #131)
+
+`0x07D1` (`DBD2`) joined the file when the `0x07D0` entry was re-graded —
+it is the other half of the pair the DSDT's `T1WR` `Arg0 == 0x1173` branch
+writes, and the half the vendor stack has no name for at all. Two
+consequences for this file, both stated here rather than by editing the
+sections above:
+
+- **§2 and §5 are a 29-address snapshot, taken when this file was written.**
+  `registers.yaml` has held more addresses since, and holds 57 now. The
+  tables were not extended address by address as that happened — they
+  record one pass over one set — and they are not extended here either.
+  The guard for every address in the file, present and later, is
+  `../tools/check_register_counts.py`, which recomputes all three counts per
+  address from the committed image and is in the agent gate. The rule this
+  file states in its own header is that an entry without the split keys has
+  not been audited, and `0x07D1` carries them.
+- **The `0x07D0` rows above show the name that entry had then**,
+  `BATTERY_CHARGE_LIMIT_DOWN`. The re-grade renamed it `DBD1` in
+  `registers.yaml` — the DSDT's own name, with the vendor constant kept in
+  the parenthetical — and `ec/ghidra/xdata-symbols.csv` follows it, because
+  that file is generated from `registers.yaml` and is never hand-edited. No
+  count, no image split and no `status:` value moved with the rename. The
+  reasoning is in `../../docs/findings.md` §4o and in the entry's note.
+
+The new row's own numbers, from the two tools above and reproducible from
+the committed image (as in §1, the blank line `trace_xdata_refs.py` prints
+between addresses is stripped here):
+
+```console
+$ python3 ec/tools/trace_xdata_refs.py ec/firmware/GMxMGxx_11.800 --counts-only 0x07D0 0x07D1
+0x07D0: 254 direct MOV DPTR site(s)  pd-image=254
+0x07D1: 76 direct MOV DPTR site(s)  pd-image=76
+
+$ python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --markdown \
+  | grep -E '0x07D0|0x07D1'
+| `0x07D0` | `DBD1` | 254 | 0 | 254 | 157 | 8 | 2 | 0 | 0 | 79 | 8 |
+| `0x07D1` | `DBD2` | 76 | 0 | 76 | 46 | 13 | 0 | 0 | 0 | 17 | 0 |
+
+$ python3 ec/tools/check_register_counts.py ec/firmware/GMxMGxx_11.800
+30 entries / 57 addresses: every static_refs, static_refs_main_ec and static_refs_pd_image reproduced from ec/firmware/GMxMGxx_11.800
+```
+
+`0x07D1` is the same shape as `0x07D0`: every site in the PD image, none in
+the EC firmware, no CODE pointer, and 17 handoffs that the table leaves
+unresolved for the reason §5.2 gives. Unlike `0x07D0`, none of its sites has
+been walked site by site in a file of its own — `ec-0x07d0-sites.md` covers
+`0x07D0` only, and a walk of `0x07D1` is not done here. That is a real gap
+in the PD-image question and it is left open rather than papered over; the
+`0`-means-"not found by this method" caveat at the top of this file applies
+to the EC-side column in the same way it does to `0x07D0`'s.
