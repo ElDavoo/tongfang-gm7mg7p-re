@@ -198,6 +198,75 @@ the two-programs-in-one-dump problem in §3a:
   why `disasm8051.py --converge` reports evidence about instruction framing
   rather than a verdict on it.
 
+### 3c. The register corpus and the firmware's are nearly disjoint, and one reason for that was a grep (2026-09-23, issue #132)
+
+Issue #132 counted the decompiled firmware's XDATA usage by grepping
+`DAT_EXTMEM_` out of `ec/decompiled/*/*.c`: **1,134 distinct addresses in
+14,399 references, six of them named**. The first number is right, the second
+is an artefact, and the reading built on it — "99.5% of the registers the
+firmware actually uses are `DAT_EXTMEM_0a56` and friends" — was not. It is
+replaced here, and the replacement is smaller than it looks but not small.
+
+`build_ec_decompile.py` applies `../ec/ghidra/xdata-symbols.csv` to the Ghidra
+project *before* it exports the C. An address the symbol table can name is
+therefore **not written as a `DAT_EXTMEM_` token anywhere in the export**:
+`ec/decompiled/bank0/8749.c` line 97 reads
+`if ((CPU_TEMP < 0x51) && (GPU_TEMP < 0x51))`, and there are 54 mentions of
+`CPU_TEMP` across the EC programs and none of them under a `DAT_EXTMEM_043e`.
+Reading both spellings — `../ec/tools/xdata_register_map.py` — gives
+
+| | main EC | PD image | total |
+|---|---:|---:|---:|
+| distinct addresses | 1,063 | 157 | 1,172 |
+| references | 13,937 | 864 | 14,801 |
+| of which named from `registers.yaml` | 41 | 0 | 41 |
+
+So the corrected claim is that **41 of the 1,063 XDATA addresses the main EC
+touches carry a name, and 1,022 do not**. The blocking problem the issue
+described is real and 96% of the register file is still `DAT_EXTMEM_xxxx`; what
+was wrong was the size of the named minority, and with it any argument that the
+firmware and `registers.yaml` are looking at the same bytes. They are nearly
+disjoint corpora: 44 of `registers.yaml`'s 56 addresses appear in the
+decompiled tree at all, 41 of them in the EC and 3 only in the PD image.
+
+Two smaller corrections travel with it, both pinned by the tool's `--self-test`
+so neither can drift unnoticed:
+
+- **Nine of the issue's 14,399 references are this repository's own annotation
+  text** quoting the decompile back at itself, in eight files —
+  `ec/decompiled/bank0/B9DF.c` line 9 writes ``the decompiled C's
+  `DAT_EXTMEM_0a56 = DAT_EXTMEM_1919` `` to make a point about that code. A
+  comment is not the firmware touching an address, so the count is **14,390**.
+- **`0x07D8`/`0x07D9`/`0x07DA` are not blind spots, and the grep was why they
+  looked like them.** They are the worked example issue #132 proposed for this
+  file, on the strength of `registers.yaml`'s `static_refs_main_ec: 1` against
+  a `DAT_EXTMEM_`-only census showing none. Run both methods
+  (`xdata_register_map.py --reconcile ec/firmware/GMxMGxx_11.800`) and all
+  three agree exactly: 1 main-EC site each, plus the PD-image sites §3a
+  already accounted for. The reference is there, spelled
+  `MODE_TCC_OFFSET_DEFAULTS_GAMING_0` and its two siblings, because that is
+  what `registers.yaml` had already named the address. The same removes the
+  apparent gap at `0x07A6` (7 byte sites, 15 C-level references, all under the
+  symbol) and at `0x04A6` (3 and 3).
+
+The census is still a lower bound, and the two addresses it genuinely misses
+are worth naming because they fail differently, both inside
+`bank0:0x94D0=copy_code_table_into_0730_07a7`. `0x0733`
+(`MODE_PL_DEFAULTS_GAMING_DSTATE_3`) is spelled `&DAT_CODE_0733` — Ghidra
+typed the value as a code pointer, and `xdata_register_map.py` deliberately
+does not read `DAT_CODE_` tokens, because the same spelling covers common-area
+*code* and importing it would claim an XDATA address on a token that says code.
+`0x0735` (`MODE_PL_DEFAULTS_OFFICE_PL2_5`) is never spelled at all: it is
+reached as `*(char *)(sVar5 + bVar2)` off a raw `sVar5 = 0x735` base with a
+runtime index, which is the §4c indirect-addressing blind spot. Both are
+"not found by this method" and neither is absent.
+
+**What did not change:** no entry in `../ec/annotations/registers.yaml` moved
+status, nothing was read on hardware, and no register is named or given a
+purpose by any of this. A cluster in `../ec/annotations/xdata-clusters.csv` is
+a co-occurrence in static code, not a meaning — that file's §6 is the
+boundary, and reading a cluster is the follow-up issue's work.
+
 ## 4. The charge limit: two retractions, in order
 
 This is the part of the investigation that went wrong twice, in opposite
