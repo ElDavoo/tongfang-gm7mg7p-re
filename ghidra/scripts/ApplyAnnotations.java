@@ -271,13 +271,28 @@ public class ApplyAnnotations extends GhidraScript {
     private static List<String[]> readCsv(String path) throws Exception {
         List<String[]> rows = new ArrayList<>();
         try (BufferedReader r = new BufferedReader(new FileReader(path))) {
-            String line = r.readLine();
-            if (line == null) {
+            String header = r.readLine();
+            if (header == null) {
                 throw new IllegalArgumentException("empty CSV: " + path);
             }
+            String line;
             while ((line = r.readLine()) != null) {
                 if (line.trim().isEmpty()) {
                     continue;
+                }
+                // A quoted field may contain a newline -- an annotation comment
+                // that runs to a second paragraph is the readable case, and the
+                // retraction pattern this repository uses puts one there on
+                // purpose. Reading line by line split such a row in two, and
+                // the tail parsed as a fresh record: the first row lost its
+                // evidence and was refused as uncited, with nothing pointing at
+                // the real cause. Join lines until the quotes balance.
+                while (TongFang.unbalancedQuotes(line)) {
+                    String more = r.readLine();
+                    if (more == null) {
+                        break;
+                    }
+                    line = line + "\n" + more;
                 }
                 String[] f = splitCsvLine(line);
                 if (f.length < 2) {

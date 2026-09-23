@@ -4,12 +4,17 @@
 // Machine output carrying this repository's symbols. Not the vendor's source.
 
 
-/* Stores R7 into XDATA 0x0A56 as a loop counter, clears bit 0 of SFR 0x8E and of SFR 0xAB, and
-   calls 0x05E8. Per counter value it calls 0x0EE8, then spins on bit 7 of SFR 0x8F (jnb 0x8F
-   branches back to itself), clears bit 0 of 0x8E and bit 7 of 0x8F, decrements 0x0A56 and repeats;
-   on reaching zero it calls 0x05EF and sets bit 3 of 0xAB. Ghidra's C calls 0x8E/0x8F/0xAB
-   TR1/TF1/ET1, but a stock 8051 places TC1 at 0x8E and TF1 at 0x8F, so the bit operations are
-   reported here as raw SFR addresses and the count's time units are not decoded.
+/* Stores R7 into XDATA 0x0A56 as a loop counter, clears bit 0 of 0x8E and of 0xAB, and calls
+   0x05E8. Per counter value it calls 0x0EE8, then spins until bit 7 of 0x8F is set (jnb 0x8F
+   branches back on itself), clears bit 0 of 0x8E and bit 7 of 0x8F, decrements 0x0A56 and repeats;
+   on reaching zero it calls 0x05EF and sets bit 3 of 0xAB. 0x8E/0x8F/0xAB are TCON.6/TF1, TCON.7
+   and IE.3, i.e. TR1/TF1/ET1, so this is a counted wait on Timer 1 overflow. The count's time units
+   are not decoded.
+   
+   (An earlier reading of this comment said "a stock 8051 places TC1 at 0x8E and TF1 at 0x8F". That
+   is wrong and is left here because the function's own name already contradicted it: TCON is at
+   0x88, so 0x8E is TCON.6 = TR1 and 0x8F is TCON.7 = TF1, exactly as Ghidra's C has it, and
+   ec/tools/disasm8051.py's bit_name() says the same. TC1 is not an 8051 register at all.)
    type: delay
    evidence: ec/decompiled/bank0/0EA2.asm; ec/decompiled/bank0/0EA2.c
    basis: hand-decoded */

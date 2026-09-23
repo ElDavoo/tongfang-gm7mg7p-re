@@ -148,6 +148,26 @@ public final class TongFang {
      * the comment, type and evidence columns by one -- which is a silent
      * mis-citation, the failure this repository's rules care about most.
      */
+    /**
+     * True when a line ends inside a quoted field, i.e. the record continues
+     * on the next line. Counts quotes the way RFC4180 does: a doubled quote
+     * inside a quoted field is an escaped quote, not a terminator.
+     */
+    public static boolean unbalancedQuotes(String line) {
+        boolean inQuotes = false;
+        for (int i = 0; i < line.length(); i++) {
+            if (line.charAt(i) != '"') {
+                continue;
+            }
+            if (inQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                i++;
+            } else {
+                inQuotes = !inQuotes;
+            }
+        }
+        return inQuotes;
+    }
+
     public static String[] splitCsvLine(String line) {
         List<String> out = new ArrayList<>();
         StringBuilder cur = new StringBuilder();
