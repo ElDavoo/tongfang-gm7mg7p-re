@@ -239,6 +239,35 @@ For each run, from the three CSVs plus the by-hand power readings:
    treat them as where to look first and read the whole `0x0700-0x07FF`
    sweep rather than only those two. The audible fan is evidence too —
    write down whether it changed, and when.
+
+   **Where the static arms say to look first.**
+   `../../ec/annotations/manual-fan-ctrl-0751.md` §9 walked both arms of all
+   17 mode-bit branches and found that the EC stores to *both* candidate
+   bytes on a path one of those bits selects: `0x075B` at the `0x89E0` and
+   `0xBB29` write sites, on the Fan Boost **not set** side of the
+   `0x8942`/`0x899D` arms, and `0x075C` at `0x8F0A` and `0x8F11`, on **both**
+   arms of `0x8E8B` (USER). So the two arms of this procedure are not
+   symmetric: the `0x00`
+   and `0x10` blocks differ from the `0xA0` block in the USER bit, and the
+   `0x8E8B` arm fires for USER either way. That is a prediction *for* this
+   run — no hardware was involved in finding it — and what it changes is
+   which comparison to make, not what counts as a result.
+
+   The same §9 also found the Fan Boost arms gating on temperature rather
+   than on a duty copy: the `0x8942` BOOST-**set** arm compares `CPU_TEMP`
+   `0x043E` and `GPU_TEMP` `0x044F` against 70 °C and clears `BOOST` in
+   `0x0751` itself if both are under it. **So a mode byte written by the
+   host may not still hold the value you wrote at the next mark** — if
+   `0x0751` has moved back, that is a finding, not a failed write, and it
+   belongs next to the readback check in step 6.
+
+   One thing deliberately *not* done: `0x0460`/`0x0468`, the fan-tachometer
+   bytes these arms also read, are **not** added to any watcher. §3 stops
+   that range at `0x045F` on purpose — reading the tach bytes through `ECRR`
+   stalled the fans on a sibling board (`../related-projects.md`, issue
+   #94). The static picture is therefore incomplete on that axis, and the
+   cost of keeping it that way is lower than the cost of the alternative.
+
    **Then compare the control arm's capture window against the write's.**
    How far did `0x075B`/`0x075C` drift between the no-op's mark and the next
    one? On 2026-09-23 that number is the whole reason the fan half stayed
