@@ -75,14 +75,19 @@ only covers what's specific to *this* copy.
      deferred. The deep tier adds an independent re-derivation, it does not
      substitute for anything. `verify_reassembly.py --check` gained a third
      assertion for the same reason: it was added to the cheap tier, not
-     promoted out of it. Worth knowing when reading that file, though: its
-     case for `verify_reassembly.py` runs `--check` and **not** `--self-test`,
-     so the digest's known-answer assertions run wherever a human or the deep
-     tier runs them and not on every commit. The per-commit protection is the
-     `--check` comparison itself, which covers all 2,705 rows; the assertions
-     guard the tool rather than the tree. Adding `--self-test` to that case is
-     a one-line change to a template-copied file, and needs the re-copy note
-     above — which is why it is named here rather than done in passing.
+     promoted out of it, and its `--self-test` joined it there
+     (2026-09-23, issue #149): the `*verify_reassembly.py)` case now runs
+     `--check && --self-test`, the same shape as the `*decompile_native.py)`
+     case, so the digest's known-answer assertions — the canonical form, the
+     `compare_digests()` failure paths, `GAP_FORMS`, `BIT_UNSUPPORTED` — run
+     per commit rather than only where a human asks for them. They sit
+     before the self-test's no-assembler early exit, so that is true on a
+     runner without `sdas8051` as well. The `--check` comparison still covers
+     all 2,705 rows and the assertions still guard the tool rather than the
+     tree. **A re-copy of `agent-gates.sh` from the template restores the
+     `--check`-only case, so this has to be re-applied with it.** The
+     re-encode of the committed listing is still the deep tier's, and is
+     still unscheduled.
 - **`.github/workflows/agent-plan.yml`**'s `CUSTOMISE` section — added the
   hardware/Windows-access constraint from `CLAUDE.md`, so the plan stage
   scopes issues needing the physical laptop or a Windows box down to
