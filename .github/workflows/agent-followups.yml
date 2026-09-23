@@ -80,7 +80,7 @@ jobs:
     # are not merges, and a workflow-level group claims its slot before this `if:` runs. Same
     # bug, same fix, as claude.yml -- see that file's comment for the confirmed evidence.
     concurrency:
-      group: agent-pipeline
+      group: agent-pipeline/followups-${{ github.event.pull_request.number || inputs.pr }}
       cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 20

@@ -33,7 +33,7 @@ permissions: {}
 # group holds one pending run, so a burst of pushes to the same branch displaces the older
 # waiting reviews and leaves the newest, which is the one worth running anyway.
 concurrency:
-  group: agent-pipeline
+  group: agent-pipeline/${{ github.head_ref || github.ref }}
   cancel-in-progress: false
 
 jobs:

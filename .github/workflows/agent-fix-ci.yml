@@ -41,7 +41,7 @@ permissions: {}
 # ask for the same group again. Holding it from the `context` job onwards costs a minute of queue
 # on a log-gathering step and keeps the reservation in one place.
 concurrency:
-  group: agent-pipeline
+  group: agent-pipeline/${{ github.event.workflow_run.head_branch }}
   cancel-in-progress: false
 
 jobs:

@@ -41,7 +41,7 @@ permissions: {}
 # to a run displaced out of the queue -- for this stage that is the `agent:planned` issue with no
 # pull request that agent-retry.yml's second sweep restarts.
 concurrency:
-  group: agent-pipeline
+  group: agent-pipeline/agent/issue-${{ inputs.issue }}
   cancel-in-progress: false
 
 jobs:

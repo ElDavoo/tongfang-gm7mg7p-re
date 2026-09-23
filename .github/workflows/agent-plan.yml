@@ -40,6 +40,12 @@ run-name: >-
 # agent should run at all.
 permissions: {}
 
+# LOCAL CHANGE (2026-09-24, not yet in the agent-pipeline template): the group is now
+# `agent-pipeline/agent/issue-N`, one per issue, so stages for *different* issues run in parallel
+# and only stages for the *same* issue serialise. What bounds parallelism now is
+# MAX_OPEN_AGENT_PRS below (10) and agent-retry.yml's MAX_PARALLEL_AGENTS (10). The paragraphs
+# below describe the original single-group design and are kept for its reasoning.
+#
 # One group for the whole pipeline rather than one per issue, and never cancelling. Every stage
 # that runs Claude names this same group, so at most one of them is ever in flight -- plan,
 # implement, review and the fix stage queue behind each other across issues as much as within
@@ -68,7 +74,7 @@ permissions: {}
 
 env:
   # A cap on work in flight, not on work queued -- see the capacity step below.
-  MAX_OPEN_AGENT_PRS: '3'
+  MAX_OPEN_AGENT_PRS: '10'
 
 jobs:
   # Who filed it decides whether this runs unattended, and the question asked is "could this
@@ -207,7 +213,7 @@ jobs:
     # outside issue waiting on approval should not hold the pipeline's one pending slot while it
     # waits. See the canonical comment at the top of this file.
     concurrency:
-      group: agent-pipeline
+      group: agent-pipeline/agent/issue-${{ github.event.issue.number || inputs.issue }}
       cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 20
