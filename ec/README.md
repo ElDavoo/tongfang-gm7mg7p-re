@@ -65,6 +65,20 @@ into `r2 -a 8051` with no stitching needed.
   if either fails. The classification inherits the 8-instruction linear walk's
   limits — `annotations/static-refs-audit.md` §5 is the table it produced and
   the caveats that go with it.
+- **`tools/xdata_register_map.py`** — every XDATA address the decompiled
+  firmware touches, attributed to the functions that touch it and grouped into
+  clusters: the per-address census in
+  `annotations/xdata-registers.csv` and the worklist in
+  `annotations/xdata-clusters.csv`, both regenerable, with `--check` and
+  `--self-test` running on committed text alone (no image, no Ghidra, no
+  network). Reach for it when the question is "which addresses exist, which
+  routines share them, and is this number a read or a write" — the whole
+  `registers.yaml` list is 56 addresses, and this census is 1,172. Two limits
+  it earns the right to state: it splits the main EC from the separate
+  `ITE8850-PD` program rather than mixing them, and a cluster is a
+  co-occurrence in static code, not a purpose —
+  `annotations/xdata-register-map.md` §6 is the boundary, and §7 reconciles
+  its counts against `register_ref_table.py`'s.
 - **`tools/disasm8051.py`** — the opcode tables `trace_xdata_refs.py` decodes
   with, plus a CLI for reading a window of instructions at a file offset
   (`--at`) and for measuring how many nearby anchors a linear walk syncs onto
@@ -126,7 +140,9 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
 - **`annotations/registers.yaml`** — every EC register the `uniwill-laptop`
   driver or the Windows service touches, cross-referenced against static-scan
   results and live-hardware behaviour. This is the primary research output;
-  start here.
+  start here. It is 56 addresses, and `annotations/xdata-register-map.md`
+  covers 1,172 — the two corpora are nearly disjoint, and which of the two a
+  question is about decides where the answer lives.
 - **`annotations/static-refs-audit.md`** — the per-image reference count for
   every address in `registers.yaml`, the command that produced it, and the
   subset of it that backs the static-scan validation in `docs/findings.md`
@@ -201,6 +217,25 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   rather than `DAT_EXTMEM_0740`. It reads `registers.yaml` and never writes
   it. Addresses it cannot name are reported, not dropped; the escape hatch is
   `ghidra/xdata-overrides.csv`.
+- **`annotations/xdata-registers.csv`** — one row per XDATA address the
+  decompiled firmware touches: which program touches it, whether the export
+  spelled it as a `DAT_EXTMEM_` token or as its symbol, the five direction
+  buckets, how many distinct functions read and write it, its cluster, its
+  `span_group`, and every touching function with the name and type
+  `ghidra-functions.csv` gives it. Produced by
+  `tools/xdata_register_map.py`, which also writes
+  `annotations/xdata-clusters.csv` and checks both; `spelled_as` and `name`
+  are separate columns because the PD image is written with `DAT_EXTMEM_`
+  tokens for addresses the symbol table names for the EC, and reading those
+  rows as the PD firmware using the EC's vocabulary is
+  `pd-xdata-overlap.md`'s mistake in a new place.
+- **`annotations/xdata-clusters.csv`** — one row per cluster: the addresses,
+  the functions that touch two or more of them, the routines most of those
+  functions call, and the already-named addresses inside. The worklist, in
+  `annotations/xdata-register-map.md` §5's order; the clustering method, its
+  threshold and the sensitivity sweep behind it are §4 of that file, and the
+  gap this census cannot close (two addresses, both inside
+  `bank0:0x94D0`) is §7.
 - **`annotations/index-table-spans.csv`** — one row per candidate call site:
   the table's span, its case range, and the site's own `frame_onto`/
   `frame_over`. It is the census, not a filtered view of it, so a site whose
