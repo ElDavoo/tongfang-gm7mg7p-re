@@ -302,6 +302,12 @@ def main():
     existing = load_existing(args.existing)
     seen = {(r["scope"], addr_key(r["addr"])) for r in existing}
     merged = list(existing)
+    # The hand-written rows are not this tool's to rename. A swept row that
+    # collides with one of them takes a suffix; a hand-written row never does,
+    # because a person's name in `annotations/` is the thing everything else is
+    # supposed to defer to.
+    hand_named = {(r["scope"], r["name"]) for r in existing if r.get("name")}
+    hand_scopes = [r["scope"] for r in existing]
     rejected = []
     accepted = 0
     unresolved = 0
@@ -444,11 +450,43 @@ def main():
                     cross_referenced += len(unsupported)
                 row["scope"] = eff_scope
                 row["addr"] = row["addr"].strip()
+                row["_swept"] = True
                 merged.append(row)
                 seen.add((eff_scope, addr))
                 accepted += 1
                 if row["type"].strip() == "unresolved":
                     unresolved += 1
+
+    # Two agents naming two different functions the same thing is usually
+    # correct rather than wrong -- several one-instruction `ret` stubs really
+    # are the same routine, and several runs of erased flash really are the same
+    # filler. The problem is only that the name then does not identify a
+    # function: Ghidra disambiguates with a counter, so the tree grows
+    # `ret_only`, `ret_only_1`, `ret_only_2` and a reader has to look up which
+    # is which. Suffixing with the low 16 bits of the address instead makes the
+    # name self-locating and groups the identical ones together, which is the
+    # fact worth seeing.
+    by_name = {}
+    for row in merged:
+        if row.get("name"):
+            by_name.setdefault((row["scope"], row["name"]), []).append(row)
+    disambiguated = 0
+    for (_scope, _name), group in by_name.items():
+        if len(group) < 2:
+            continue
+        for row in group:
+            # Only swept rows are renamed. A name a person wrote in
+            # `annotations/` is the thing everything else defers to, and
+            # suffixing it because two agents happened to agree would be this
+            # tool editing a human's reading.
+            if not row.get("_swept"):
+                continue
+            suffix = addr_key(row["addr"])[-4:].lower()
+            if not row["name"].endswith("_" + suffix):
+                row["name"] = "%s_%s" % (row["name"], suffix)
+                disambiguated += 1
+    for row in merged:
+        row.pop("_swept", None)
 
     order = {p: i for i, p in enumerate(
         ["bank0", "bank1", "common", "pd"])}
@@ -463,6 +501,8 @@ def main():
     print("\n  merged %d shard file(s): %d row(s) accepted, %d rejected, "
           "%d of the accepted are type=unresolved"
           % (len(shards), accepted, len(rejected), unresolved))
+    print("  %d name(s) disambiguated by address where two functions in one "
+          "program were given the same name" % disambiguated)
     print("  %d address reference(s) in accepted comments are established by a "
           "neighbouring function or by a callee the comment names, rather than "
           "by this one" % cross_referenced)
