@@ -35,6 +35,14 @@ assumed one. It stops at 0x045F because the fan-tach bytes (0x0460-0x046F) start
 right after, and reading those through ECRR stalled the fans on a sibling board
 (#94, docs/related-projects.md).
 
+The other rows this range prints are not all sensors: 0x0434/0x0435 is battery
+current in mA, 0x0438/0x0439 is terminal voltage in mV, and 0x0448/0x0449 are
+those two divided by 100. ec/annotations/xdata-0400-045f.md maps all 96 bytes --
+44 of them with a registers.yaml entry, the other 50 named there as
+deliberately not entered -- so a row that moves here is either nameable or
+accounted for. Treat the electrical ones as context: they move with the pack,
+not with 0x0751.
+
 **That wider watch set is 206 ECRR reads per sweep, up from 110 -- an 87%
 increase, and `ecrw.Ec.read` (ecrw.py:115) is one ECRR DeviceIoControl per byte
 with nothing between calls.** This run is the one

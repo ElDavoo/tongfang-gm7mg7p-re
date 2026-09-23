@@ -153,7 +153,11 @@ The `0x0400-0x045F` watcher is the EC's own temperature reading: `0x043E` is
 fan-tachometer bytes (`0x0460-0x046F`, issue #94) start right after, and
 reading those through `ECRR` stalled the fans on a sibling board
 (`../../docs/related-projects.md`). Every other byte in the range is context;
-§4.5 says what to do with it.
+§4.5 says what to do with it, and
+`../../ec/annotations/xdata-0400-045f.md` says what each of them *is* — 44 of
+the 96 bytes have an entry in `../../ec/annotations/registers.yaml` and the
+other 50 are named there as deliberately not entered, so a row this run prints
+is either nameable or accounted for.
 
 **Three concurrent watchers put more `ECRR` traffic on the bus than any run
 before this one, and this is the only one held under a fixed load.** The
@@ -306,6 +310,23 @@ For each run, from the three CSVs plus the by-hand power readings:
    across both; if it climbed through the pair, the difference is the die and
    not the byte. The rest of that page is sensors: read it for context, and
    do not read a power number out of it.
+
+   **CORRECTION**, added after the page was swept
+   (`../../ec/annotations/xdata-0400-045f.md`): *the rest of that page is
+   sensors* is wrong, and the sentence above is left in place rather than
+   edited out. Four bytes in `0x0400-0x045F` are electrical, and this
+   watcher's own CSV prints them: `0x0434`/`0x0435` is battery current in mA
+   and `0x0438`/`0x0439` is terminal voltage in mV, each established three
+   independent ways (`../../ec/annotations/registers.yaml`,
+   `../../docs/findings.md` §4g). `0x0448` and `0x0449` are those two divided
+   by 100, computed by the firmware at bank1 `0xF416` and `0xF3D7`. The
+   instruction above still stands for what this step is for — the page is
+   context, and the deciding number in §4.5 is the die temperature, not a
+   battery figure — but it is worth being precise about why you would not
+   quote a power number from the pair even though you now could multiply
+   those two bytes into watts: a figure the EC computes for itself is not a
+   quantity a `0x0751` write is supposed to move, and §4.5's question is
+   whether it does.
 6. **Does `0x0751` still hold your value at the end of the window**, or did
    something put it back? Compare the block's `*-before-0700.txt` and
    `*-after-0700.txt` dumps (§6).

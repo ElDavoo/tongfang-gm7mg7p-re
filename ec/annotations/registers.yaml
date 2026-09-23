@@ -17,6 +17,14 @@
 #                    sites in both images, was decoded both ways in
 #                    ec/annotations/pd-xdata-overlap.md; it held there, on
 #                    static evidence, which is not the same as proven.)
+#   xdata-refs      : ec/tools/trace_xdata_refs.py -- the per-site form of the
+#                    same scan: which image each site is in, its runtime
+#                    address, and whether it reads, writes, or hands DPTR to a
+#                    subroutine. Site table and the page it covers:
+#                    ec/annotations/xdata-0400-045f.md. It is still a static
+#                    scan and is NOT `live`: a zero is "not found by this
+#                    method", never "absent", and a read-modify-write is
+#                    evidence the EC touches a byte, not that it acts on it.
 #
 # reference-count keys (all three are direct MOV DPTR,#addr site counts,
 # and all three inherit the blind spot in the "absent" note below):
@@ -467,6 +475,596 @@ registers:
     static_refs_pd_image: 0
     status: confirmed-working
     note: "cross-checked against nvidia-smi (48 vs 49C)"
+
+  - name: BAT_POWER_UNIT
+    addr: [0x0400, 0x0401]
+    sources: [uniwill-laptop, xdata-refs]
+    static_refs: [8, 1]
+    static_refs_main_ec: [4, 1]
+    static_refs_pd_image: [4, 0]
+    status: present-untested
+    note: >
+      0x0400 has 4 EC-side sites -- one write, one handoff to 0x8863, and two
+      that resolve no further in the decoded window -- and 0x0401 has a single
+      write; 4 further sites sit in the PD image, which has its own XDATA.
+      Both writes are the zero-clear at bank1 0xB895/0xB89B that also zeroes
+      0x0436-0x0439, in a routine whose boundary this repo has not confirmed
+      (FUN_CODE_b88c). Upstream names the pair EC_ADDR_BAT_POWER_UNIT_1/_2
+      (uniwill-acpi.c:54,56) and nothing here corroborates that on this board.
+      Per-address table: ec/annotations/xdata-0400-045f.md.
+
+  - name: BAT_DESIGN_CAPACITY
+    addr: [0x0402, 0x0403]
+    sources: [uniwill-laptop, xdata-refs]
+    static_refs: [3, 11]
+    static_refs_main_ec: [3, 11]
+    static_refs_pd_image: [0, 0]
+    status: present-untested
+    note: >
+      16-bit value. 0x0402's 3 EC-side sites all hand DPTR to the pair helpers
+      0x8892/0x889E/0x888C, two of which store, so the pair is written as well
+      as read; 0x0403's 11 sites are all direct reads, and 10 of them subtract
+      0x14 from the byte -- a threshold comparison against a 16-bit capacity.
+      That is consistent with upstream's EC_ADDR_BAT_DESIGN_CAPACITY_1/_2
+      (uniwill-acpi.c:58,60), uncorroborated on this board. Per-address table:
+      ec/annotations/xdata-0400-045f.md.
+
+  - name: BAT_FULL_CAPACITY_1
+    addr: 0x0404
+    sources: [uniwill-laptop, xdata-refs]
+    static_refs: 14
+    static_refs_main_ec: 11
+    static_refs_pd_image: 3
+    status: present-untested
+    note: >
+      Low half of upstream's 16-bit EC_ADDR_BAT_FULL_CAPACITY
+      (uniwill-acpi.c:62); the high half is 0x0405, which has no site in any
+      image and is therefore not entered. 11 EC-side sites (10 bank1, 1
+      bank0), 1 read and 10 handoffs, plus 3 in the PD image. No site is
+      itself a store. Per-address table: ec/annotations/xdata-0400-045f.md.
+
+  - name: BAT_DESIGN_VOLTAGE_1
+    addr: 0x0408
+    sources: [uniwill-laptop, xdata-refs]
+    static_refs: 9
+    static_refs_main_ec: 2
+    static_refs_pd_image: 7
+    status: present-untested
+    note: >
+      Low half of upstream's 16-bit EC_ADDR_BAT_DESIGN_VOLTAGE
+      (uniwill-acpi.c:66); the high half is 0x0409, which has no site in any
+      image and is not entered. 2 EC-side sites, both handoffs to the 16-bit
+      reader, and 7 in the PD image -- so most of the file-wide count is not
+      an EC reference. No writer, no name from this repo's own evidence.
+      Per-address table: ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_040A
+    addr: 0x040A
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      3 EC-side sites, all in bank1, all handing DPTR to a pair helper: two to
+      the reader 0x8886 and one to the writer 0x888C. No site is itself a read
+      or a store, no PD site, no upstream name. Not named here because nothing
+      in this repo has read the byte: XDATA_<addr> is this file's placeholder
+      for "EC-side site found, meaning not established". Per-address table:
+      ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_040C
+    addr: 0x040C
+    sources: [xdata-refs]
+    static_refs: 4
+    static_refs_main_ec: 2
+    static_refs_pd_image: 2
+    status: present-untested
+    note: >
+      2 EC-side sites, handing DPTR to the reader 0x8886 and the writer
+      0x888C, plus 2 further sites in the PD image. No site is itself a read
+      or a store, no upstream name. Per-address table:
+      ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_040E
+    addr: 0x040E
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      2 EC-side sites, handing DPTR to the writer 0x888C and the reader
+      0x8886; no PD site, no upstream name. What is written, and by whom, is
+      not established. Per-address table: ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_0410
+    addr: 0x0410
+    sources: [xdata-refs]
+    static_refs: 6
+    static_refs_main_ec: 1
+    static_refs_pd_image: 5
+    status: present-untested
+    note: >
+      1 EC-side site, a handoff, against 5 in the PD image -- the file-wide
+      count is mostly the other program. No site is itself a read or a store,
+      no upstream name. Per-address table: ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_0420
+    addr: 0x0420
+    sources: [xdata-refs]
+    static_refs: 12
+    static_refs_main_ec: 1
+    static_refs_pd_image: 11
+    status: present-untested
+    note: >
+      1 EC-side site against 11 in the PD image, so this is the page's other
+      PD-heavy address -- and the single EC site, at bank1 0xE779, is the
+      blind spot in its plainest form on this page: the routine copies DPTR
+      into R1:R2 and returns, handing the byte's address to a caller that
+      accesses it somewhere this scan cannot see. The site is neither a read
+      nor a store, and whether the byte is touched at all is not established.
+      No upstream name. Per-address table: ec/annotations/xdata-0400-045f.md.
+
+  - name: BAT_STATUS_1
+    addr: 0x0432
+    sources: [uniwill-laptop, xdata-refs]
+    static_refs: 14
+    static_refs_main_ec: 12
+    static_refs_pd_image: 2
+    status: present-untested
+    note: >
+      Low half of upstream's 16-bit EC_ADDR_BAT_STATUS, whose bit 0 upstream
+      reads as BAT_DISCHARGING (uniwill-acpi.c:70-71); the high half is
+      0x0433, which has no site in any image and is not entered. Busiest byte
+      in the first half of the page: 12 EC-side sites (11 bank1, 1 bank0), 5
+      reads and 7 writes, plus 2 in the PD image. The 7 writes are spread over
+      five routines named in ec/annotations/xdata-0400-045f.md; which bit
+      means discharging is not established here.
+
+  - name: BAT_CURRENT_MA
+    addr: [0x0434, 0x0435]
+    sources: [uniwill-laptop, xdata-refs, live]
+    static_refs: [16, 2]
+    static_refs_main_ec: [10, 2]
+    static_refs_pd_image: [6, 0]
+    status: present-untested
+    note: >
+      Little-endian mA, and established live rather than by this page's scan:
+      while charging, 0x0434/0x0435 read 2040 mA against 0x0438's 16021 mV --
+      32.68 W, against the ACPI driver's independently reported 32.683 W
+      (docs/findings.md 4g; windows/tools/ec_validate.py). Upstream agrees
+      (EC_ADDR_BAT_CURRENT_1/_2, uniwill-acpi.c:75,77), so the little-endian
+      order rests on three sources and not on any one of them alone. 10
+      EC-side sites for 0x0434 (8 bank1, 2 bank0) and 2 for 0x0435; 9 of the
+      12 hand DPTR to the pair helpers, 4 of them to the 16-bit *writer*
+      0x888C, and one to set_r6_from_a_r7_from_dptr (0xE3C4). No site is
+      itself a store. Per-address table: ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_0436_PAIR
+    addr: [0x0436, 0x0437]
+    sources: [xdata-refs]
+    static_refs: [17, 6]
+    static_refs_main_ec: [17, 1]
+    static_refs_pd_image: [0, 5]
+    status: present-untested
+    note: >
+      16-bit value: 17 EC-side sites for 0x0436 and 1 for 0x0437, 15 of the 18
+      handing DPTR to the pair helpers, so the EC reads it as a unit. The only
+      writer is in the zero-clear at bank1 0xB8BF-0xB8D4, which stores 0 into
+      all four bytes 0x0436-0x0439 -- 0x0436/0x0437 only when XDATA 0x0575
+      reads 0, 0x0438/0x0439 unconditionally, as the jnz at 0xB8BD shows. NOT
+      NAMED, deliberately. Upstream calls this pair
+      EC_ADDR_BAT_REMAIN_CAPACITY (uniwill-acpi.c:79,81) and that is the only
+      name anyone has for the address -- but the one committed observation of
+      0x0436 on this board does not read like a capacity field: in
+      evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv it steps 0x70
+      -> 0x84 -> 0x98 -> 0xAC -> 0xC0, exactly +0x14 every ~35 s, with 0x0437
+      never moving. A perfectly periodic ramp is a counter, not a charge
+      reading, and naming it a capacity on that basis would be the "reads as"
+      overclaim CLAUDE.md warns about. docs/findings.md 4g groups 0x0436 with
+      0x0438 as "voltage"; the capture is what says otherwise, and the
+      correction is recorded there. Until a live read puts the value beside a
+      WMI RemainingCapacity the name stays a placeholder. Per-address table:
+      ec/annotations/xdata-0400-045f.md.
+
+  - name: BAT_VOLTAGE_MV
+    addr: [0x0438, 0x0439]
+    sources: [uniwill-laptop, xdata-refs, live]
+    static_refs: [14, 3]
+    static_refs_main_ec: [14, 3]
+    static_refs_pd_image: [0, 0]
+    status: present-untested
+    note: >
+      Little-endian mV, the pack's terminal voltage. Three independent
+      committed sources, cited separately so no one of them carries the claim:
+      ec/decompiled/bank0/B158.c (charge_target_update reads 0x0439 into R4
+      then 0x0438 into A and copies the pair to 0x0A48 with store_be16_a),
+      ec/decompiled/bank1/8886.c (the pair reader, "low byte first"), and
+      windows/tools/ec_validate.py with the 10/10 WMI exact-copy match in
+      docs/findings.md 4g. Upstream agrees (EC_ADDR_BAT_VOLTAGE_1/_2,
+      uniwill-acpi.c:83,85), a fourth. 14 EC-side sites for 0x0438 and 3 for
+      0x0439; 12 of the 17 hand DPTR to the pair helpers. The only writer is
+      the shared zero-clear with 0x0436/0x0437. The symbol is
+      BAT_VOLTAGE_MV_0/_1 and not _LO/_HI: gen_xdata_symbols.py's docstring is
+      right that an endianness suffix baked into a symbol outlives the note
+      that would correct it. Per-address table:
+      ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_043A
+    addr: 0x043A
+    sources: [xdata-refs]
+    static_refs: 6
+    static_refs_main_ec: 3
+    static_refs_pd_image: 3
+    status: present-untested
+    note: >
+      3 EC-side sites, all handing DPTR to a pair helper, no site itself a
+      read or a store; 3 further sites in the PD image. No upstream name.
+      Per-address table: ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_043C
+    addr: 0x043C
+    sources: [xdata-refs]
+    static_refs: 10
+    static_refs_main_ec: 10
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      10 EC-side sites in bank1, half of them writes, and no PD site. The 5
+      writers (0xB1DB, 0xB206, 0xB226, 0xC29E, 0xC2AB) sit in the same four
+      routines as 0x0432's, so the two bytes are handled together; what they
+      are is not established. No upstream name. Per-address table:
+      ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_043D
+    addr: 0x043D
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      1 EC-side site, a direct read in bank0; no writer, no PD site, no
+      upstream name. Per-address table: ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_043F
+    addr: 0x043F
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      3 EC-side sites (2 bank1, 1 bank0): 1 read, 1 write and 1 that resolves
+      no further; no PD site. The writer is bank1 0x9D2A inside FUN_CODE_9ce8,
+      an unnamed routine. No upstream name. Per-address table:
+      ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_0440
+    addr: 0x0440
+    sources: [xdata-refs]
+    static_refs: 43
+    static_refs_main_ec: 43
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Busiest byte on the page: 43 EC-side sites (27 bank1, 13 bank0, 3
+      common) and every one of them a direct read. No writer, no PD site, no
+      upstream name, and the value is not established -- only that 43 places
+      in the firmware consult it. clear_and_set_xdata_flag_bits (bank1 0x8300)
+      tests it against 0x07, which is as much as any decoded routine does with
+      it. Per-address table: ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_0442
+    addr: 0x0442
+    sources: [xdata-refs]
+    static_refs: 11
+    static_refs_main_ec: 11
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      11 EC-side sites, 6 direct reads and 5 read-modify-writes, no PD site.
+      The writes cluster in the two flag-bit routines
+      clear_and_set_xdata_flag_bits (bank1 0x8300) and
+      zero_1510_and_clear_xdata_flag_bits (bank1 0x8418), which set and clear
+      individual bits rather than storing a value -- flag-byte shape, which is
+      not a name. No upstream name. Per-address table:
+      ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_0443
+    addr: 0x0443
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      2 EC-side sites, both direct reads in bank1; no writer, no PD site, no
+      upstream name. They bracket inc_0443_low3_unless_0440_5_6_7 and its
+      decrement twin, which move 0x0443 only while 0x0440 is not 5, 6 or 7.
+      Per-address table: ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_0448
+    addr: 0x0448
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Derived from 0x0438/0x0439, not a sensor: scale_0438_into_0448 (bank1
+      0xF416) reads the battery voltage pair and divides by 100, writing the
+      quotient here (0xBE when its selector is nonzero). 3 EC-side sites, 1
+      read and 2 writes, no PD site, no upstream name. Per-address table:
+      ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_0449
+    addr: 0x0449
+    sources: [xdata-refs]
+    static_refs: 4
+    static_refs_main_ec: 4
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Derived from 0x0434/0x0435: store_scaled_quotient_0449 (bank1 0xF3D7)
+      reads the battery current pair and divides by 100 into this byte. 4
+      EC-side sites, 2 reads and 2 writes. Moved 238 times in
+      evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv, the
+      second-busiest byte on the page after 0x044C. No upstream name.
+      Per-address table: ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_044B
+    addr: 0x044B
+    sources: [xdata-refs]
+    static_refs: 6
+    static_refs_main_ec: 6
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      6 EC-side sites, all in bank0: 3 reads and 3 writes. Two of the writers
+      store a constant (2 in call_ba15_then_write_02_to_044b, 4 in
+      write_04_to_044b_and_set_08e2_bit7) and the third stores the caller's
+      accumulator, so the value is selected rather than measured. No PD site,
+      no upstream name. Per-address table: ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_044C
+    addr: 0x044C
+    sources: [xdata-refs]
+    static_refs: 7
+    static_refs_main_ec: 7
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      7 EC-side sites (5 bank1, 2 bank0): 4 reads, 2 writes and 1
+      read-modify-write, no PD site. halve_sum_into_044c says what one writer
+      does -- it halves a sum into this byte. Busiest byte in the committed
+      capture at 247 changes. No upstream name. Per-address table:
+      ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_0450
+    addr: 0x0450
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      2 EC-side sites in bank1, 1 read and 1 write.
+      copy_2000_2002_to_0450_0452 (bank1 0x881B) copies 0x2000 -> 0x0451,
+      0x2001 -> 0x0450, 0x2002 -> 0x0452 -- note the middle byte lands lower
+      than its neighbours, so it is not a block copy. No PD site, no upstream
+      name. Per-address table: ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_0451
+    addr: 0x0451
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      1 EC-side site: the write in copy_2000_2002_to_0450_0452 that stores
+      0x2000. No read, no PD site, no upstream name. Per-address table:
+      ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_0452
+    addr: 0x0452
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      1 EC-side site: the write in copy_2000_2002_to_0450_0452 that stores
+      0x2002. No read, no PD site, no upstream name. Per-address table:
+      ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_0454
+    addr: 0x0454
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      2 EC-side sites, 1 read and 1 write, and the write is the tail of
+      copy_code_a691_a693_to_xdata (bank1 0x87E2) -- CODE bytes copied onto
+      this page, which is a read of the program's own table and not a sensor.
+      No PD site, no upstream name. Per-address table:
+      ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_0455
+    addr: 0x0455
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      2 EC-side sites, 1 read and 1 write, in the same
+      copy_code_a691_a693_to_xdata routine as 0x0454 (bank1 0x87EB). No PD
+      site, no upstream name. Per-address table:
+      ec/annotations/xdata-0400-045f.md.
+
+  - name: SYSTEM_ID
+    addr: 0x0456
+    sources: [uniwill-laptop, xdata-refs]
+    static_refs: 12
+    static_refs_main_ec: 12
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Upstream's EC_ADDR_SYSTEM_ID, read at uniwill-acpi.c:2820 to test
+      HAS_GPU (BIT(7), uniwill-acpi.c:92) before exposing GPU_TEMP and
+      NVIDIA_CTGP_CONTROL. That is the only name anyone has for the byte, and
+      it is cited here rather than supplied from memory. The EC image agrees
+      with the shape of it: of 12 EC-side sites, 9 are direct reads and 3
+      store, and nine of the reads are bit tests -- on bit 7 (bank0 0x8C69,
+      0x93F4, 0xC26E), bit 6 (bank1 0xF3C9) and bit 5 (bank0 0xB38E, and anl
+      a,#0xe0 at bank1 0x83E5). The writers are a capability byte being
+      assembled: bank0 0xAD65 clears bits 4-5 (anl a,#0xcf) and bank0 0xDA81
+      sets bit 6 then bit 7 (orl a,#0x40, orl a,#0x80), both confirmed against
+      r2. So bits 4-7 are known to be touched, bit 7 is a plausible HAS_GPU,
+      and "plausible" is the whole of it -- bits 0-3 are never touched by any
+      site found here. The bit-6 read is load-bearing elsewhere: 0xF3C9 picks
+      its divisor 0x22 or 0x44 from it before scaling 0x060C/0x060D into
+      0x0449 (bank1 0xF3D7), so setting bit 6 changes how that derived byte is
+      computed. None of this is exercised live, and ec/tools/ecmem.py's record
+      that 0x456 reads were cross-checked against the regmap debugfs dump is
+      two software paths agreeing on a read, not a behavioural test, so it is
+      not recorded here as live evidence. Per-address table:
+      ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_0457
+    addr: 0x0457
+    sources: [xdata-refs]
+    static_refs: 5
+    static_refs_main_ec: 4
+    static_refs_pd_image: 1
+    status: present-untested
+    note: >
+      4 EC-side sites, all in bank1 and all read-modify-writes, and none of
+      them in an exported function: they are at 0x8190, 0x81D1, 0x8246 and
+      0x826A, in the gaps between bank1 0x80EF, 0x8202, 0x820F and 0x8300.
+      That is a gap in this repo's coverage, not a finding about the byte --
+      seeding the routine would need --mode rebuild-project and a database
+      change this token cannot merge. 1 PD site, no direct read, no upstream
+      name. Per-address table: ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_0458
+    addr: 0x0458
+    sources: [xdata-refs]
+    static_refs: 5
+    static_refs_main_ec: 4
+    static_refs_pd_image: 1
+    status: present-untested
+    note: >
+      4 EC-side sites (3 bank1, 1 bank0): 3 reads and 1 write, plus 1 PD site.
+      The writer is store_32_to_0458_then_tailcall_1954 (bank0 0xDD5C), which
+      stores the constant 0x32 and then tail-calls away. No upstream name.
+      Per-address table: ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_0459
+    addr: 0x0459
+    sources: [xdata-refs]
+    static_refs: 6
+    static_refs_main_ec: 6
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      6 EC-side sites: 3 reads, 2 writes and 1 read-modify-write, no PD site.
+      One writer is at bank1 0x83C0, which is in no exported function. The
+      other two are clear_0480_bit4_set_0459_01_06e1_a0 and
+      set_0480_50_zero_048f_0459_02_06e1_a0, which set bits 1 and 2 while
+      clearing bits elsewhere -- flag-byte shape again, which is not a name.
+      No upstream name. Per-address table: ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_045A
+    addr: 0x045A
+    sources: [xdata-refs]
+    static_refs: 22
+    static_refs_main_ec: 22
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Second-busiest byte on the page: 22 EC-side sites (20 bank1, 2 bank0) --
+      19 reads, 1 write and 2 read-modify-writes, no PD site. Six of the reads
+      are single-bit tests and two routines are named for the byte's bits
+      (gate_value_against_045a_bits, dispatch_045a_bits_to_1a44_1a5c_1a50), so
+      it is a packed flag byte by shape -- which is not a name. No upstream
+      name. Per-address table: ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_045B
+    addr: 0x045B
+    sources: [xdata-refs]
+    static_refs: 12
+    static_refs_main_ec: 12
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      12 EC-side sites (9 bank1, 3 bank0): 7 reads and 5 read-modify-writes,
+      no PD site. All 5 of the read-modify-writes touch bit 0 and nothing else
+      -- two routines are named for exactly that (set_bit0_045b,
+      clear_bit0_045b) and two more set or toggle it alongside a neighbouring
+      byte (toggle_045b_b0_and_0758_b3, toggle_045b_bit0_set_0709_bit0) -- so
+      bit 0 is a flag with a known owner and the rest of the byte is not
+      established. No upstream name. Per-address table:
+      ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_045C
+    addr: 0x045C
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      2 EC-side sites, 1 read and 1 write, no PD site. The write is
+      lookup_94a0_table_by_0620_low3 storing a value chosen from a CODE table
+      at bank1 0x94E4. No upstream name. Per-address table:
+      ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_045D
+    addr: 0x045D
+    sources: [xdata-refs]
+    static_refs: 5
+    static_refs_main_ec: 5
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      5 EC-side sites (4 bank1, 1 bank0): 2 reads and 3 writes, no PD site.
+      One writer is store_0d32_to_045d_0704, which stores a constant and
+      copies the byte to 0x0704; the other two are at bank0 0xDD3D and bank1
+      0x8B41, and 0x8B41 is in no exported function, so what they step is not
+      established. No upstream name. Per-address table:
+      ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_045E
+    addr: 0x045E
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      2 EC-side sites in bank1, 1 read and 1 write, the write inside
+      magic_55aa_and_0704_countdown. No PD site, no upstream name. Per-address
+      table: ec/annotations/xdata-0400-045f.md.
+
+  - name: XDATA_045F
+    addr: 0x045F
+    sources: [xdata-refs]
+    static_refs: 10
+    static_refs_main_ec: 10
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      10 EC-side sites, all in bank1: 7 reads and 3 writes, no PD site. Two of
+      the writers are at 0x8609 and 0x8617, in no exported function; the third
+      is in magic_55aa_and_0704_countdown. No upstream name. This is the last
+      byte before the fan-tach page the isolation run stops short of (0x0460,
+      issue #94). Per-address table: ec/annotations/xdata-0400-045f.md.
 
   - name: BAT_CYCLE_COUNT
     addr: [0x04A6, 0x04A7]
