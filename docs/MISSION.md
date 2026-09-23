@@ -22,8 +22,10 @@ the EC firmware function for function** — decompiled from
 cited back to its bank and address. The vendor's original source is not
 available; this is its reconstruction, and annotated disassembly is a step
 towards it, not a substitute. Ghidra's 8051 decompiler is the starting point
-(issue #20, `ec/ghidra/README.md`); `.github/actions/project-setup` installs
-it for every agent run.
+(issue #20, `ec/ghidra/README.md`), and that project now exists: the EC's
+three programs are imported, seeded and exported to `ec/decompiled/`, with
+`ec/annotations/ghidra-functions.csv` as the layer that keeps improving it.
+`.github/actions/project-setup` installs the toolchain for every agent run.
 
 ## What "done" looks like, incrementally
 

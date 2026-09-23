@@ -138,6 +138,60 @@ trusting one of theirs: every row says whether it was verified against
   why in the PR description — don't close the issue as unfulfillable. See
   issue-tracker conventions in `docs/MISSION.md`.
 
+## The Ghidra projects
+
+There is a committed Ghidra project per component — `ec/ghidra/project/`,
+`bios/ghidra/project/`, `windows/ghidra/project/` — and decompiled C under
+`ec/decompiled/`, `bios/decompiled/` and `windows/decompiled/native/`.
+`analyzeHeadless` is on `PATH` in the implement stage (see
+`.github/actions/project-setup`).
+
+**The editable surface is a CSV, not the project.** Where a component has
+one, a function annotation is a row in
+`<component>/annotations/ghidra-functions.csv`: a scope, an address, a
+name, a comment, and an `evidence` path that is mandatory and non-empty.
+The EC and BIOS have one; the Windows project does not yet. An agent or a
+human improves a decompilation by adding that row and re-running the build.
+Never hand-edit a `.gpr`, a `.rep`, or a generated `.c`: none of them
+review in a diff, and the next export overwrites them.
+
+The one hand-edited decompile is `*.annotated.c`, by long-standing
+convention (`bios/README.md`): it is the readable restatement, where
+`CpuSetup.OverclockingSupport = 0` replaces the pointer chase the raw
+decompile spells out. It is transcribed *into* the annotations CSV, and a
+check keeps the two from drifting — so edit the prose by hand and the
+machine-readable layer with the CSV, not one instead of the other.
+
+- An annotation row also **seeds a function entry**, which is how a routine
+  reached by a branch or a function-pointer table — no `lcall`/`ljmp` names
+  it — gets into the project at all. `0xB158` `charge_target_update` is the
+  worked example.
+- An annotation whose address has no function is reported and **fails** the
+  build. That is either a typo or a sign the project needs
+  `--mode rebuild-project`; say which, don't let it pass silently.
+- `ec/ghidra/xdata-symbols.csv` is **generated** from
+  `ec/annotations/registers.yaml` and must never be hand-edited. The
+  generator reads `registers.yaml` and never writes it: a symbol rename must
+  not be able to imply a `status:` change.
+- The default build mode re-exports from the committed project by copying it
+  to scratch, so an annotation change does not churn the database — 7 MB for
+  the EC, 49 MB for the BIOS. Only `--mode rebuild-project` writes the
+  project, and two branches that both rebuild one cannot merge: the
+  `.gitattributes` entry makes git refuse rather than text-merge a database.
+
+**Three failure modes to check before believing any decompile claim here.**
+Ghidra's native decompiler can fail *silently* — `openProgram()` returns
+false with an empty message — which is indistinguishable in the output from
+"this function will not decompile". The exporters raise it as a loud
+failure; if you see `DECOMPILER UNAVAILABLE`, the toolchain is broken, not
+the code. A repeated `-scriptPath` flag *replaces* the first rather than
+accumulating, so a second directory silently drops the shared scripts and
+the post-scripts come back "not found" — join the directories with `;` in
+one flag. And Ghidra cannot usefully decompile **.NET**: it reports success
+and emits `halt_baddata()`. `ilspycmd` is the tool for managed code
+(`windows/README.md`). `ghidra/README.md` has all three in full.
+
+
 ## Test that will prove it works
 
 There's no build in the traditional sense. "The test" for a change here is

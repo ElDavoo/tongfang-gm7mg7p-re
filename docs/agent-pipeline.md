@@ -25,7 +25,9 @@ only covers what's specific to *this* copy.
   `ec/annotations/registers.yaml` parses and every entry has the required
   keys; every `ec/tools/*.py` at least imports cleanly and
   `scan_refs.py` reproduces one known reference count against the real
-  firmware image (a smoke test, not just a syntax check); every `*.sh`
+  firmware image (a smoke test, not just a syntax check); every decompiler
+  tool's `--check` and `--self-test` pass, which is what stops the committed
+  Ghidra exports going stale without a Ghidra run in the gate; every `*.sh`
   passes `shellcheck`; every relative link between this repo's `.md` files
   resolves.
 - **`.github/workflows/agent-plan.yml`**'s `CUSTOMISE` section — added the
@@ -36,7 +38,15 @@ only covers what's specific to *this* copy.
   ships example invariants from another project; this copy blocks on
   `CLAUDE.md`'s rules instead (overclaiming, implied live tests,
   silent retractions, `registers.yaml` conventions, anything opened outside
-  this repository, `vendor/` changes).
+  this repository, `vendor/` changes). Extended for the decompilation work
+  with: a hand-edit to generated decompile output or a committed Ghidra
+  project where the change belongs in an annotations CSV (with
+  `bios/decompiled/*.annotated.c` named as the hand-restated exception, whose
+  machine-readable counterpart is `bios/annotations/ghidra-functions.csv`);
+  an annotation row with no `evidence`; a decompile failure read as a
+  statement about the firmware when Ghidra's decompiler can fail silently
+  instead; and `ec/decompiled/` and `bios/decompiled/` added to the
+  citable-evidence list, which `docs/findings.md` already cited.
 - **`.github/workflows/agent-followups.yml`** — its prompt reads
   `docs/MISSION.md`, and its label set is this repository's. Added here specifically so the issue queue doesn't dry up
   while `docs/MISSION.md`'s goal is nowhere near done; see its own header

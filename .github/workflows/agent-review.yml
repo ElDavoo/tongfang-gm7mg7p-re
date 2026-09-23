@@ -113,8 +113,9 @@ jobs:
             - an overclaim -- the rule CLAUDE.md puts above every other. That means: a zero-hit
               static scan written up as "absent" rather than "not found by this method"; an
               accepted write or matching readback written up as "works"; a claim that cites no
-              file in `evidence/`, `windows/decompiled/`, `ec/firmware/` or a tool run in this
-              diff; or a confident phrasing where the evidence only supports a hedged one;
+              file in `evidence/`, `windows/decompiled/`, `bios/decompiled/`, `ec/decompiled/`,
+              `ec/firmware/` or a tool run in this diff; or a confident phrasing where the
+              evidence only supports a hedged one;
             - anything stating or implying a live test happened -- a register read back, a
               behaviour observed, a program run on Windows or on the laptop -- unless it is cited
               from a file already in `evidence/`. This pipeline has no hardware and no Windows
@@ -129,6 +130,21 @@ jobs:
             - `ec/annotations/registers.yaml` breaking its conventions: a `status:` value outside
               the existing vocabulary, or a register whose status the PR's own evidence changes
               left un-updated in the same PR;
+            - a hand-edit to generated decompile output, a committed Ghidra `.gpr`/`.rep`, or a
+              Ghidra XDATA symbol table, where the change belongs in that component's
+              `annotations/ghidra-functions.csv` (the EC and BIOS have one; the Windows project
+              does not yet) or in `registers.yaml`, and is then re-exported. Also a
+              `.gpr`/`.rep` change with no matching change to an annotations file or a
+              seed, and a `*.lock` file committed beside a project. The exception is
+              `bios/decompiled/*.annotated.c`, which is the hand restatement by convention and is
+              edited by hand -- but its machine-readable counterpart is
+              `bios/annotations/ghidra-functions.csv`, and a change to one with no matching
+              change to the other is a divergence, not a style choice;
+            - an annotation row with an empty `evidence` cell, or a decompile failure read as a
+              statement about the firmware. Ghidra's native decompiler can fail *silently* --
+              `openProgram()` false with an empty message -- which looks exactly like "this code
+              will not decompile"; if the toolchain is broken that is the finding, not the code
+              (CLAUDE.md, "The Ghidra projects");
             - an issue or pull request opened, or prepared to be opened automatically, against
               any repository other than this one -- upstream work ships as a patch and
               description committed here, for a human to submit;

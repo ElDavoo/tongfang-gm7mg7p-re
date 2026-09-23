@@ -36,8 +36,10 @@ bigger ([`docs/MISSION.md`](docs/MISSION.md) is the canonical copy):
   firmware. For the EC, the end state is a C codebase that mirrors the
   firmware function for function: decompiled, symbolized from
   `registers.yaml`, and cited back to bank and address. It's a
-  reconstruction, since the vendor's source isn't available. Ghidra is the
-  starting point (issue #20, `ec/ghidra/README.md`).
+  reconstruction, since the vendor's source isn't available. That
+  reconstruction is under way: `ec/ghidra/README.md` has the committed
+  Ghidra project, 2,676 decompiled functions, and the annotation layer that
+  improves them (issue #20).
 
 No single change finishes it. Progress is one more register's behaviour
 confirmed, one more Windows class decrypted, one more BIOS menu entry
