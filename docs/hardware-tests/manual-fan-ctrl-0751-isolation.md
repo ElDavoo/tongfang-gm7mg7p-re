@@ -1,13 +1,19 @@
 # Isolating `0x0751`: does the EC act on the power-mode byte alone?
 
-**Status: not run.** This is a procedure for a human sitting at the physical
-GM7MG7P. Nothing in this file is a result, and no byte described here has
-been written. The agent pipeline that wrote it runs on GitHub-hosted runners
-with no path to the machine (`../../CLAUDE.md`, "Cloud agents cannot reach the
-hardware"). When someone runs it, the captures land in `evidence/` under the
-names in §6 and the answer goes into `ec/annotations/registers.yaml` — see
-§7 for what a result would have to say to move `MANUAL_FAN_CTRL` off
-`present-untested`.
+**Status: run 2026-09-23 (issue #99); the prediction held.** This procedure
+was written by the pipeline for a human at the physical GM7MG7P, and then run
+in an interactive session on that machine. Writing `0x0751` alone to each of
+`0xA0`/`0x00`/`0x10` moved nothing else — not the PLs, not the fan table, not
+`0x07C6`, not the GPU bytes — confirming the static prediction that the EC
+does not derive the bundle from the mode byte. The run used the equivalent
+single-tool form `windows/tools/manual_fan_ctrl_probe.py` (which watches the
+same addresses and self-restores) rather than the two-`ec_watch` form in §5;
+the raw log is `evidence/ec-watch/2026-09-23-0751-isolation.txt`, and the
+result is folded into `MANUAL_FAN_CTRL` in `ec/annotations/registers.yaml`.
+The one part §7 leaves open — whether the fan-mode bits scale fan behaviour
+along the unchanged curve — was **not** settled (the run was near-idle); the
+fixed-load comparison below is still worth doing. The rest of this file is the
+original procedure, kept for that re-run and for anyone reproducing the test.
 
 ## 1. The question
 

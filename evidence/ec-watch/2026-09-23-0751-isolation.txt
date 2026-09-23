@@ -1,0 +1,25 @@
+# Issue #99 -- write 0x0751 alone, service running, AC, from Turbo (0x10)
+# 2026-09-23T16:31:01Z, Control Center 3.1.39.0 running, GCUService+GCUBridge up
+# watch set: 0x0751 0x0783-0x0787 0x07C5 0x07C6 0x075B/5C(PWM) 0x0743-0x0746 + fan table 0x0F00-0x0F5F
+
+=== write 0x0751=0xA0 (hold 20s) ===
+0x0751 currently 0x10; writing 0xA0, holding 20s
+    + 0.0s  0x0751: 0x10 -> 0xA0
+restored 0x0751 -> 0x10
+SUMMARY: addresses that moved while only 0x0751 was written:
+  0x0751: 0x10 -> ... (last 0xA0)
+
+=== write 0x0751=0x00 (hold 20s) ===
+0x0751 currently 0x10; writing 0x00, holding 20s
+    + 0.0s  0x0751: 0x10 -> 0x00
+restored 0x0751 -> 0x10
+SUMMARY: addresses that moved while only 0x0751 was written:
+  0x0751: 0x10 -> ... (last 0x00)
+
+=== write 0x0751=0x10 (hold 20s) ===
+0x0751 currently 0x10; writing 0x10, holding 20s
+restored 0x0751 -> 0x10
+SUMMARY: addresses that moved while only 0x0751 was written:
+
+# 0x075B/0x075C (fan PWM) changes omitted above; a no-op control write (0x10->0x10)
+# showed the same monotonic PWM drift, so PWM motion is thermal, not a 0x0751 reaction.

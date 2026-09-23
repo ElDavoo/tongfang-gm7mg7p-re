@@ -587,25 +587,39 @@ registers:
       (evidence/ec-watch/2026-09-23-power-mode-cycle-0700-07ff.csv; trace
       in windows/vendor-ec-map.md "Power modes", issue #92). The vendor
       writes the PLs, a fan table and the GPU bytes in the same breath, so
-      the capture cannot say what the EC does with this byte alone. That
-      is the open question for a Linux platform profile, and the reason
-      this is still present-untested. Upstream defines the address but
-      never touches it.
-      2026-09-23 (issue #99): all 29 sites classified statically in
-      ec/annotations/manual-fan-ctrl-0751.md. Every one touches 0x0751 and
-      no other XDATA byte -- bit tests on 4/5/6/7 and read-modify-writes of
-      the same four bits. No site found by that method copies the per-mode
-      PL defaults (0x0730-0x0737, 0x07A7-0x07AA) anywhere, and those twelve
-      bytes have no read site at all in the image; the EC's only found
-      writer of 0x0783-0x0785 is gated on AP_OEM (0x0741) bit 0, not on the
-      mode, and writes zero. The EC does set this byte itself once at
-      0xA812/0xA818, off BIOS_OEM_2 (0x0782) bit 4, and its Turbo path at
-      0xABE8/0xC741 produces the vendor's 0x10 -- so the EC agrees with the
-      service on the encoding. None of that is a behavioural test, and the
-      method is blind to indirect access (see 6 of that file, where it
-      reports 0 for a page the EC provably writes), so this stays
-      present-untested. The unrun live procedure that would settle it is
-      docs/hardware-tests/manual-fan-ctrl-0751-isolation.md.
+      that capture could not say what the EC does with this byte alone.
+
+      2026-09-23 (issue #99), static half, ec/annotations/manual-fan-ctrl-0751.md:
+      all 29 sites classified. Every one touches 0x0751 and no other XDATA
+      byte -- bit tests on 4/5/6/7 and read-modify-writes of the same four
+      bits. No site found by that method copies the per-mode PL defaults
+      (0x0730-0x0737, 0x07A7-0x07AA) anywhere, and those twelve bytes have
+      no read site at all in the image; the EC's only found writer of
+      0x0783-0x0785 is gated on AP_OEM (0x0741) bit 0, not on the mode, and
+      writes zero. The EC does set this byte itself once at 0xA812/0xA818,
+      off BIOS_OEM_2 (0x0782) bit 4, and its Turbo path at 0xABE8/0xC741
+      produces the vendor's 0x10 -- so the EC agrees with the service on the
+      encoding. That method is blind to indirect access (see 6 of that file).
+
+      2026-09-23 (issue #99), live half, and it confirms the static one: the
+      byte was written alone. On AC, from Turbo, service running, 0x0751 was
+      set to each of 0xA0/0x00/0x10 and held 20 s while 0x0783-0x0787,
+      0x07C5, 0x07C6, 0x0743-0x0746 and the fan table 0x0F00-0x0F5F were
+      watched (evidence/ec-watch/2026-09-23-0751-isolation.txt,
+      windows/tools/manual_fan_ctrl_probe.py, the run of
+      docs/hardware-tests/manual-fan-ctrl-0751-isolation.md). Nothing else
+      moved: the EC does NOT copy the PL defaults into 0x0783-0x0785, nor
+      load a fan table, when the mode byte changes. A silent write persisted
+      (the service, not event-triggered, did not revert it). So a Linux
+      platform profile has to write the PLs and the fan table itself, from
+      the EC default blocks; 0x0751 alone will not.
+
+      Stays present-untested for one narrow reason: whether the fan-mode
+      bits (4-7) change how the EC drives the fans along the (unchanged)
+      curve was not isolated -- the live run was near-idle with roughly
+      steady temperature, and fan PWM 0x075B/0x075C moved the same amount
+      under a no-op control write, i.e. thermally. That needs a fixed-load
+      comparison. Upstream defines the address but never touches it.
 
   - name: BIOS_OEM_2 (DEFAULT_MODE / FAN_QKEY / FAN_TABLE_OFFICE_MODE)
     addr: 0x0782
