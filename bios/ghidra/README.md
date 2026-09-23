@@ -29,7 +29,11 @@ python3 ../tools/bios_extract.py --work /tmp/bios --self-test
 ```
 
 `--check` and `--self-test` read only committed files, so they are cheap
-enough for a gate. Neither opens the project.
+enough for a gate — 0.33 s and 0.07 s respectively on a GitHub-hosted runner
+(2026-09-23), all 50,887 instructions across the 955 listings included, so the
+listing parse is not a reason to defer them. Neither opens the project. Both
+run in the cheap tier of `.github/scripts/agent-gates.sh`; nothing here is
+deferred to `AGENT_GATES_DEEP=1`.
 
 ## What is here
 

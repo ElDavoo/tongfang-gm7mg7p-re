@@ -189,10 +189,13 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   exports one C file per function to `decompiled/`. Two modes: the default
   re-exports from the committed project without touching it, and
   `--mode rebuild-project` rewrites the project. `--check` and `--self-test`
-  run with no Ghidra and no network and are what CI calls.
-  `--self-test --oracle` additionally rebuilds and checks the output against
-  the hand reading in `annotations/charge-target-derating.md`. Method,
-  measured coverage and limits: `ghidra/README.md`.
+  run with no Ghidra and no network and are what CI calls — 0.24 s and 0.15 s.
+  `--self-test --cross-decoder` adds the advisory comparison against
+  `disasm8051.py`; it is 0.13 s, it prints rather than fails, and the deep gate
+  tier is what passes the flag. `--self-test --oracle` additionally rebuilds
+  and checks the output against the hand reading in
+  `annotations/charge-target-derating.md`. Method, measured coverage and
+  limits: `ghidra/README.md`.
 - **`tools/gen_xdata_symbols.py`** — turns `annotations/registers.yaml` into
   the XDATA symbol table Ghidra applies, so the decompile reads `PROJECT_ID`
   rather than `DAT_EXTMEM_0740`. It reads `registers.yaml` and never writes
