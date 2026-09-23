@@ -230,11 +230,23 @@ needs:
    *register write* alone required a 30s power-button EC reset to recover.
 
 Treat this as the honest state: the Ghidra project now exists
-(`ghidra/project/`, with 2,676 decompiled functions under `decompiled/`), so
+(`ghidra/project/`, with 2,703 decompiled functions under `decompiled/`), so
 items 1 and 2 above have a real starting point rather than a plan — but a
 *correct, complete* reassembly is still a project, not a script, and nothing
 here has been reassembled or reflashed. `ghidra/README.md` has the method, the
-measured coverage, and the limits. See the repo's GitHub issues for the
+measured coverage, and the limits.
+
+**Where to start reading it.** `decompiled/<program>/<ADDR>.c` is the
+decompilation and `decompiled/<program>/<ADDR>.asm` is the machine code it was
+read from, at the same address; `decompiled/index.csv` has one row per function
+and `decompiled/listing-index.csv` points at the listings. A function named
+rather than called `FUN_CODE_…` carries a plate comment saying what it does and
+where the reading came from — those names come from
+`annotations/ghidra-functions.csv`, which is the editable surface. And the
+committed disassembly re-encodes to the firmware bytes: 45,531 of 45,535
+instructions, measured by `tools/verify_reassembly.py` and recorded in
+`ghidra/reassembly.csv`. That is a claim about the machine code, not about the
+C, and `ghidra/README.md` says at length what it is not. See the repo's GitHub issues for the
 concrete next steps, several of which are independently useful (e.g. the 254
 call sites referencing `0x07D0`, which `trace_xdata_refs.py` places in the PD
 image rather than the EC and `annotations/ec-0x07d0-sites.md` now maps one by
