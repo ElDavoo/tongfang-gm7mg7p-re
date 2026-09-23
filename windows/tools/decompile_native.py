@@ -58,6 +58,27 @@ REPO = os.path.dirname(WINDOWS_DIR)
 
 TARGETS_CSV = os.path.join(WINDOWS_DIR, "ghidra", "native-binaries.csv")
 MANIFEST_CSV = os.path.join(WINDOWS_DIR, "ghidra", "manifest.csv")
+
+# Binaries deliberately NOT in the committed project, and why. The project is
+# committed so an annotation change does not need a 30-minute re-analysis, and
+# that only works while the project fits in a repository.
+#
+# Ghidra's analysis database for a 64 KB program runs to tens of megabytes --
+# roughly 14x the image. GamingCenter3_Cross.dll is a 27 MB native image, and
+# its buffer file alone is 337,182,720 bytes. GitHub rejects any file over
+# 100 MB, so the push fails on it, and there is no way to commit it short of
+# Git LFS, which this repository does not use and which a reviewer cloning it
+# would then need.
+#
+# So the five that fit are committed and this one is not, and the manifest says
+# so in a row of its own rather than leaving the export looking complete. The
+# decompiled C for it is committed -- 56 MB of text, which does fit -- so the
+# analysis is not lost, only the ability to re-derive it without an import.
+PROJECT_EXCLUDED = {
+    "GamingCenter3_Cross.dll":
+        "analysis database is 337 MB (one Ghidra buffer file), over GitHub's "
+        "100 MB per-file limit; re-import to re-export this one",
+}
 INDEX_CSV = os.path.join(WINDOWS_DIR, "ghidra", "index.csv")
 PROJECT_DIR = os.path.join(WINDOWS_DIR, "ghidra", "project")
 PROJECT_NAME = "uniwill_native"
@@ -117,7 +138,7 @@ MANIFEST_HEADER = [
     "program", "source", "sha256", "pdb_staged", "loader", "ghidra_version",
     "functions", "decompiled", "failed", "instruction_bytes", "body_bytes",
     "seeds_applied", "seeds_rejected", "annotations_applied",
-    "annotations_unmatched", "mode",
+    "annotations_unmatched", "mode", "notes",
 ]
 # The raw index the shared exporter appends to: 10 tab-separated fields.
 INDEX_HEADER = ["program", "addr", "name", "size", "seed_basis", "annotated",
@@ -489,12 +510,32 @@ def build_manifest_rows(resolved, index_rows, work, version, mode, sha_by_binary
     return rows
 
 
-def write_manifest(rows, path=MANIFEST_CSV):
+def write_manifest(rows, path=MANIFEST_CSV, excluded=()):
+    """`rows` plus one row per deliberately-excluded binary.
+
+    The excluded row carries no function count, because there is none: the
+    program is not in the committed project. It is here so the manifest is a
+    complete account of the target list rather than a list of whatever
+    happened to fit, and `mode: not-in-project` with the reason in `notes` is
+    what a reader sees instead of a gap."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
+    have = {r["program"] for r in rows}
+    extra = []
+    for name, why in sorted(excluded.items()):
+        if name in have:
+            continue
+        row = {h: "" for h in MANIFEST_HEADER}
+        row.update({"program": name, "source": "(not imported)", "sha256": "",
+                    "pdb_staged": "no", "loader": "", "ghidra_version": "",
+                    "functions": "0", "decompiled": "0", "failed": "0",
+                    "instruction_bytes": "0", "body_bytes": "0",
+                    "mode": "not-in-project", "notes": why})
+        extra.append(row)
     with open(path, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=MANIFEST_HEADER, lineterminator="\n")
+        w = csv.DictWriter(f, fieldnames=MANIFEST_HEADER, lineterminator="\n",
+                           extrasaction="ignore")
         w.writeheader()
-        for r in rows:
+        for r in rows + extra:
             w.writerow(r)
 
 
@@ -588,14 +629,33 @@ def do_check():
         check(f"{t['binary']} committed source sha256 matches",
               sha256_file(p) == t["sha256"])
 
+    # Every target is either in the manifest with functions, or named in
+    # PROJECT_EXCLUDED with a reason. A binary that is in neither is a target
+    # that silently stopped being covered, which is the shape of failure this
+    # manifest exists to make visible.
+    _have = set()
+    if os.path.exists(MANIFEST_CSV):
+        _have = {r["program"] for r in csv.DictReader(open(MANIFEST_CSV, newline=""))}
+    _targets = {os.path.basename(t["binary"]) for t in load_targets()}
+    check("every target is in the manifest or in PROJECT_EXCLUDED, with a reason",
+          all(n in _have or (n in PROJECT_EXCLUDED and PROJECT_EXCLUDED[n].strip())
+              for n in _targets),
+          ", ".join(sorted(n for n in _targets
+                           if n not in _have and n not in PROJECT_EXCLUDED)))
+    for _n, _why in sorted(PROJECT_EXCLUDED.items()):
+        check(f"{_n} is recorded in the manifest as not-in-project",
+              _n in _have, "absent from the manifest, so the export looks complete")
+
     if os.path.exists(MANIFEST_CSV):
         mrows = list(csv.DictReader(open(MANIFEST_CSV, newline="")))
         for r in mrows:
             fn, dec, fail = int(r["functions"]), int(r["decompiled"]), int(r["failed"])
             check(f"manifest {r['program']}: functions == decompiled + failed",
                   fn == dec + fail, f"{fn} != {dec} + {fail}")
-            check(f"manifest {r['program']}: mode is rebuild-project|export-only",
-                  r["mode"] in ("rebuild-project", "export-only"), r["mode"])
+            check(f"manifest {r['program']}: mode is "
+                  f"rebuild-project|export-only|not-in-project",
+                  r["mode"] in ("rebuild-project", "export-only", "not-in-project"),
+                  r["mode"])
     else:
         print("  --    manifest.csv not present yet (run the tool to generate it)")
 
@@ -711,6 +771,14 @@ def do_rebuild(args):
         if not targets:
             raise SystemExit(f"error: no target matches {args.only!r}")
         log(f"--only {args.only!r}: {len(targets)} target(s)")
+    excluded = [t for t in targets
+                if os.path.basename(t["binary"]) in PROJECT_EXCLUDED
+                and args.mode == "rebuild-project"]
+    if excluded:
+        targets = [t for t in targets if t not in excluded]
+        for t in excluded:
+            log("not importing %s: %s"
+                % (t["binary"], PROJECT_EXCLUDED[os.path.basename(t["binary"])]))
 
     project_dir = args.project_dir or PROJECT_DIR
     manifest_path = args.manifest or MANIFEST_CSV
@@ -864,14 +932,15 @@ def do_rebuild(args):
 
         rows = build_manifest_rows(resolved, index_rows, scratch, version,
                                    args.mode, sha_by_binary, pdb_labels)
-        write_manifest(rows, manifest_path)
+        write_manifest(rows, manifest_path, excluded=PROJECT_EXCLUDED)
         # The committed index, rewritten as CSV from the exporter's TSV.
         with open(index_path, "w", newline="") as f:
             w = csv.DictWriter(f, fieldnames=INDEX_HEADER, lineterminator="\n")
             w.writeheader()
             for r in index_rows:
                 w.writerow(r)
-        log(f"wrote {manifest_path}: {len(rows)} program(s)")
+        log(f"wrote {manifest_path}: {len(rows)} program(s) in the project, "
+            "%d recorded as not-in-project" % len(PROJECT_EXCLUDED))
         for r in rows:
             log(f"  {r['program']}: {r['decompiled']}/{r['functions']} decompiled, "
                 f"{r['failed']} failed, {r['instruction_bytes']} instruction bytes, "

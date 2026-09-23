@@ -114,3 +114,36 @@ identical to "this code will not decompile" and is not. The tool's postScript
 distinguishes the two — an empty-message open failure is tagged
 `DECOMPILER_UNAVAILABLE` and aborts the run; a genuine per-function failure is
 just counted into that program's `failed` column.
+
+## What is in the committed project, and what is not
+
+Five of the six binaries are in `../../ghidra/project/`. `GamingCenter3_Cross.dll`
+is not, and the manifest says so in a row of its own with `mode:
+not-in-project`.
+
+The reason is a hard limit, not a choice. Ghidra's analysis database runs to
+roughly fourteen times the size of the image it holds — a 4 MB DLL is a 59 MB
+buffer file. `GamingCenter3_Cross.dll` is 27 MB, and its buffer file alone is
+**337,182,720 bytes**. GitHub rejects any file over 100 MB, so the push fails
+on it, and the alternatives are Git LFS, which this repository does not use and
+which a reviewer cloning it would then need, or not committing the project at
+all and re-analysing 30 minutes of x86-64 on every annotation change.
+
+The decompiled C for it *is* committed — 56 MB of text, which fits. So the
+analysis is not lost; what is lost is the ability to re-derive it without an
+import, and the tool says which import to run.
+
+Measured, on this machine, with two annotation sweeps also running:
+
+| binary | functions | decompiled | failed | project buffer |
+|---|---|---|---|---|
+| `ACPIDriver.sys` | 55 | 55 | 0 | 1.8 MB |
+| `ACPIDriverDll.dll` | 10,141 | 10,141 | 0 | 59 MB |
+| `clrcompression.dll` | 60 | 60 | 0 | 2.0 MB |
+| `UEFI_Firmware.dll` | 407 | 407 | 0 | 1.3 MB |
+| `GamingCenter3_Cross.exe` | 1 | 1 | 0 | 3.9 MB |
+| `GamingCenter3_Cross.dll` | 64,591 | 64,588 | **3** | 337 MB — **not committed** |
+
+The three failures are in the manifest and the index, not rounded away. The
+PDB leg is opt-in behind `--pdb`; the manifest records `pdb_staged` per program
+so "decompiled without symbols" can never be read as "decompiled".
