@@ -98,10 +98,20 @@ prove commands were sent. The module was not built/loaded in this session.
 
 ## Offline tests
 
+This suite is one of four, and the one command that runs all of them is
+[`tools/run-tests.sh`](../../tools/README.md):
+
+```sh
+bash tools/run-tests.sh
+```
+
+This directory on its own:
+
 ```sh
 python3 -m unittest discover -s linux/lightbar -p 'test_*.py'
 ```
 
 These mock device discovery, file opening and ioctls. They verify dry-run
 behaviour, exact buffer framing, and an off attempt after a simulated transfer
-failure. They are not hardware evidence.
+failure. They are not hardware evidence, and no gate or workflow runs them yet
+— `tools/README.md` says why.

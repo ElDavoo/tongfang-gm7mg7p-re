@@ -83,6 +83,44 @@ only covers what's specific to *this* copy.
      guard the tool rather than the tree. Adding `--self-test` to that case is
      a one-line change to a template-copied file, and needs the re-copy note
      above — which is why it is named here rather than done in passing.
+- **`tools/run-tests.sh`, and the gate line that would call it**
+  (2026-09-23, issue #162) — the four offline `unittest` suites
+  (`ec/tools/test_grade_0751_isolation.py`, `windows/tools/test_ec_watch.py`,
+  `windows/tools/test_manual_fan_ctrl_probe.py`, `linux/lightbar/test_probe_6005.py`)
+  are 40 tests in all and **no gate and no workflow runs any of them**. Until
+  #162, a green pipeline proved those files compile — the cheap tier's
+  `check_python_syntax` `py_compile`s three of the four — and nothing more.
+  #162 lands the runner (`tools/README.md` has it) and the documentation, and
+  **deliberately not the gate call**, because this script is copied from the
+  template: the wiring is an upstream `agent-pipeline` change and a re-copy, and
+  the pipeline token's lack of `workflow` scope bars the workflow side
+  independently. The runner prints its own scope on every run, the way the cheap
+  tier prints the deep tier's deferral, so the gap is visible in the output and
+  not only here.
+
+  The call is one function and one `gate` line, and this is the whole of it:
+
+  ```bash
+  check_unittest_suites() {
+    bash tools/run-tests.sh
+  }
+  ...
+  gate 'unittest suites'  check_unittest_suites
+  ```
+
+  The argument for landing it is cost: the runner is **0.77 s** here
+  (0.76–0.77 s over five runs) against a cheap tier the table above records at
+  **5.9 s** on a GitHub-hosted runner. Those are two different machines and the
+  ratio, not either absolute number, is the point — sub-second against
+  single-digit seconds is a one-line change, not a negotiation. Two things to
+  carry across with it. The cheap tier's printed "what this tier does not run"
+  note needs **no edit**: it names only the `sdas8051` re-encode and the
+  advisory cross-decoder comparison, and adding the suites is a coverage
+  increase rather than a deferral, so nothing it lists stops being true. And
+  the wiring should not acquire a coverage floor of its own — the runner prints
+  what ran and asserts no test count, for the reason §14e gives for the
+  printed-not-asserted elapsed line, and a floor added here is the one that
+  gets deleted after a bad afternoon.
 - **`.github/workflows/agent-plan.yml`**'s `CUSTOMISE` section — added the
   hardware/Windows-access constraint from `CLAUDE.md`, so the plan stage
   scopes issues needing the physical laptop or a Windows box down to
