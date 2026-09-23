@@ -5,6 +5,7 @@ import contextlib
 import importlib.util
 import io
 from pathlib import Path
+import re
 import tempfile
 import unittest
 
@@ -16,6 +17,13 @@ spec.loader.exec_module(grade)
 
 QUIET = str(HERE / 'testdata' / '0751-isolation-example-quiet.csv')
 ACTIVE = str(HERE / 'testdata' / '0751-isolation-example-active.csv')
+# The two captures of one fixed-load run, as §3 now takes them: the PWM bytes
+# arrive in the 0x0700-0x07FF one, the temperatures in the 0x0400-0x045F one,
+# and both record a mark for every action.
+FIXED_LOAD = (str(HERE / 'testdata'
+                  / '0751-isolation-example-fixed-load-0700-07ff.csv'),
+              str(HERE / 'testdata'
+                  / '0751-isolation-example-fixed-load-0400-045f.csv'))
 
 
 def run(*argv):
@@ -33,6 +41,8 @@ class GradeTests(unittest.TestCase):
         self.assertIn('None of the §4.1-§4.3 bytes moved', out)
         # The sensor-looking addresses are context, not a graded result.
         self.assertIn('0x0796 0x079A', out)
+        # No PWM or temperature byte moves here, so there is no section for it.
+        self.assertNotIn('candidate PWM / temperature bytes', out)
 
     def test_active_capture_names_the_byte_and_its_offset(self):
         rc, out, _ = run(ACTIVE)
@@ -42,13 +52,51 @@ class GradeTests(unittest.TestCase):
         self.assertIn('At least one of the §4.1-§4.3 bytes moved', out)
         self.assertNotIn('no watched byte moved', out)
 
-    def test_neither_branch_claims_a_status(self):
-        for path in (QUIET, ACTIVE):
-            _, out, _ = run(path)
+    def test_one_action_marked_in_every_watcher_is_one_window(self):
+        rc, out, _ = run(*FIXED_LOAD)
+        self.assertEqual(rc, 0)
+        # Six MARK rows across the two captures, but three actions: the marks
+        # of one action are seconds apart and open a single window.
+        self.assertIn('=== 3 window(s), one per mark ===', out)
+        self.assertEqual(out.count('no watched byte moved in this window'), 3)
+        # The window starts at the earliest mark, so the PWM change that
+        # follows the last press is still timed from the first one.
+        self.assertIn('0x075B  0x64 -> 0x66   (+2.4s)', out)
+
+    def test_context_section_names_pwm_and_temperature_bytes(self):
+        _, out, _ = run(*FIXED_LOAD)
+        self.assertIn('candidate PWM / temperature bytes (§4.4/§4.5)', out)
+        self.assertIn('candidate fan PWM 0x075B/0x075C -- unconfirmed', out)
+        self.assertIn('CPU_TEMP 0x043E / GPU_TEMP 0x044F -- confirmed', out)
+        # Both arms, so the no-op control and the write under test are
+        # comparable line for line: 0x075B +2 in the control, +3 under the
+        # write, and CPU_TEMP still climbing across both.
+        self.assertIn('0x075B  0x66 -> 0x69   (+2.8s)', out)
+        self.assertIn('0x043E  0x33 -> 0x35   (+9.0s)', out)
+        self.assertIn('0x044F  0x30 -> 0x31   (+4.0s)', out)
+
+    def test_pwm_and_temperature_movement_is_not_a_graded_result(self):
+        _, out, _ = run(*FIXED_LOAD)
+        # Every window moves PWM and a temperature, none moves §4.1-§4.3.
+        self.assertIn('None of the §4.1-§4.3 bytes moved', out)
+        self.assertNotIn('At least one of the §4.1-§4.3 bytes moved', out)
+
+    def test_context_addresses_leave_the_other_addresses_bucket(self):
+        _, out, _ = run(*FIXED_LOAD)
+        lines = out.splitlines()
+        i = next(i for i, l in enumerate(lines)
+                 if l.lstrip().startswith('other addresses that moved'))
+        # 0x0402 is in the temperature capture but is neither of the two
+        # confirmed bytes; 0x075B/0x043E have their own section above.
+        self.assertEqual(re.findall(r'0x[0-9A-F]{4}', lines[i + 1]), ['0x0402'])
+
+    def test_no_capture_claims_a_status(self):
+        for argv in ([QUIET], [ACTIVE], list(FIXED_LOAD)):
+            _, out, _ = run(*argv)
             # §7's verdicts may only be quoted as what this output is *not*.
             self.assertIn('not the call itself', out)
-            self.assertIn('Fan PWM (§4.4) and CPU package power (§4.5) are '
-                          'NOT in this data', out)
+            self.assertIn('context, not a result', out)
+            self.assertIn('CPU package power (§4.5) is in no EC sweep', out)
 
     def test_changes_before_the_first_mark_belong_to_no_window(self):
         _, out, _ = run(QUIET)
