@@ -338,10 +338,21 @@ the answer.
 - **The `MmMapIoSpace` mapping being unused is a negative from a search.**
   I did not find a dereference of `ext+0x00`; a reader who finds one
   should correct this file in place rather than delete the claim.
-- **Which userspace process sends these IOCTLs is not established here.**
-  `GCUService.exe` is not committed (`../tools/extract.sh` produces it),
-  so the `GCUService.exe` → `ACPIDriverDll.dll` link stays unconfirmed, as
-  `../README.md` already says.
+- **Which userspace process sends these IOCTLs is still open in general, but
+  two rows now have a committed answer.** The table above is the driver's
+  *surface*, not a record of traffic. Since 2026-09-23 (issue #131)
+  `../tools/t1wr_callers.py` searched every committed Windows input for
+  `TempWrite1`, `T1WR` and the `0x9C40A4DC` code, and found the name only
+  in `ACPIDriverDll.dll`'s export directory and in the Ghidra decompiles
+  of these two files. `GCUService` 3.1.39.0, committed fully decrypted,
+  binds only `SMAPCTable` from this DLL
+  (`../../decompiled/v3.1.39.0/GCUService/MyECIO/AcpiCtrl.cs:127`). So the
+  `T1WR` row has no committed caller, while the `ECRW` row has one: the
+  same service, through `AcpiCtrl.Write` →
+  `WriteACPI(IOCTL_GPD_ACPI_ECWRITE)` (`AcpiCtrl.cs:212`) → `WriteEC`. Both
+  statements are bounded by the same list of unreadable inputs, which
+  `../../docs/findings.md` §4o carries. A caller in firmware, or in a
+  version of the service that is not committed, remains possible.
 - **The DSDT is this machine's, not this BIOS image's.**
   `evidence/acpi/dsdt.dsl` is a live dump; `vendor/bios-1.09/BIOS_1.09.zip`
   has not been unpacked or compared against it.
