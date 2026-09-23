@@ -1,45 +1,55 @@
 #!/usr/bin/env python3
 """Re-assemble the committed disassembly and compare it to the firmware bytes.
 
-What this establishes, precisely: for every function the Ghidra project decoded,
-the *disassembly we commit* re-encodes to the exact bytes that are in
-`ec/firmware/GMxMGxx_11.800`. That is the 1:1 property, and it is a property of
-the disassembly rather than of the C -- the decompiler's C is a reading, and a
-reading is not something a compiler can be asked to reproduce byte for byte.
-Ghidra decoding it and an independent assembler encoding it, with the firmware
-as the only arbiter, is a check that can actually fail.
+Two checks, and the difference between them is the point.
 
-Three decoders are in play and it is worth keeping them distinct:
+**`--check`, no assembler needed.** Every byte of every committed listing is
+compared against the firmware image, and the committed report is confirmed to
+still describe those listings. This covers 100% of the instructions, including
+the 2.2% the assembler below cannot express, and it runs anywhere.
+
+**The full run, `sdas8051` needed.** The committed listing is re-encoded with
+`sdas8051` (SDCC's assembler, which never saw this firmware) and the result is
+compared to `ec/firmware/GMxMGxx_11.800`. Ghidra's SLEIGH decodes, an
+assembler that did not see the image encodes, and the firmware arbitrates.
+
+Neither implies the other, and 1:1 needs both. The byte check asks "are these
+the bytes in the image" -- it catches a stale listing, an export whose listing
+belongs to a different firmware, a decoder reporting a length the image does
+not have. The re-encode asks "does an independent assembler agree these bytes
+mean this instruction" -- it catches a decode that is self-consistent and
+wrong. A listing whose bytes are right and whose mnemonic is wrong passes the
+first and fails the second.
+
+Three decoders are in play and they are worth keeping distinct:
 
   Ghidra's SLEIGH      writes the .asm this script reads
   sdas8051 (SDCC)      encodes the .asm back to bytes   <- independent
   disasm8051.py        this repository's own decoder    <- used to arbitrate
 
-Nothing here trusts the decompiler. The decompiler is not in the loop at all:
-it is not read, not consulted, not compared. A C can be wrong and this check
-still passes, which is correct -- it is a claim about the machine code, and
-`ec/decompiled/*.c` is a claim about what the machine code means.
+The decompiler is not in the loop at all. It is not read, not compared. A C can
+be wrong and this check still passes, which is correct: a decompilation is a
+claim about what the machine code means, and the listing is the claim about the
+machine code. Nor is this a claim that the C recompiles -- Keil C51 generated
+these bytes and SDCC does not emit Keil's code generation. See
+`ghidra/README.md` for what the 1:1 property does and does not mean here.
 
-Three outcomes per function, kept apart because they mean different things:
+Outcomes per function, kept apart because they mean different things:
 
-  match           the re-encoded bytes equal the firmware bytes. The 1:1 claim
-                  holds for this function.
-  assembler-gap   sdas8051 cannot express this mnemonic/operand form at all --
-                  a limitation of the assembler, NOT a disagreement about the
-                  code. Listed explicitly in GAP_FORMS so it stays a known,
-                  bounded hole rather than a silent one.
-  mismatch        sdas8051 assembled something and it is not what the firmware
-                  holds. This is the only outcome that threatens the claim, and
-                  it means either the translation here is wrong or Ghidra's
-                  decode is; disasm8051.py is the tie-breaker.
+  match       every instruction re-encodes to the firmware bytes
+  partial     some do; the rest use a form sdas8051 cannot express
+  gap         none of them do
+  mismatch    sdas assembled something and it is not what the firmware holds.
+              The only outcome that threatens the claim, and disasm8051.py is
+              the tie-breaker.
 
-Requires `sdas8051` (SDCC). Without it the tool says so and checks only that
-the committed report still describes the committed listings; see --check.
+Requires `sdas8051` (SDCC) for the full run. Without it the tool says so and
+`--check` still runs.
 
 Usage:
     python3 ec/tools/verify_reassembly.py --work /tmp/ec            # full run
     python3 ec/tools/verify_reassembly.py --work /tmp/ec --limit 40 # a sample
-    python3 ec/tools/verify_reassembly.py --check                   # CI, no assembler
+    python3 ec/tools/verify_reassembly.py --check                   # no assembler
     python3 ec/tools/verify_reassembly.py --self-test               # known answers
 """
 import argparse
