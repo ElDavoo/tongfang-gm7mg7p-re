@@ -1,0 +1,16 @@
+# Issue #8 -- cTGP/DynamicBoost live test, 2026-09-23T16:39:20Z
+# GM7MG7P on AC, RTX 3070 Laptop, Control Center 3.1.39.0 running.
+# EC 0x0743-0x0746 read-modify-restore; GPU limits from nvidia-smi (W).
+# default_limit 115, max_limit 140 throughout.
+
+state                         0x0743 0x0744 0x0745 0x0746   enforced.power.limit
+baseline (cTGP off, DB on)      03     0A     FF     05        120
+0x0746 (DB max) = 0             03     0A     FF     00        120   (no change: DB is runtime, not a static cap)
+restore DB                      03     0A     FF     05        120
+cTGP enable (0x0743 |= 0x04)    07     0A     FF     05        130   (+10 = the 0x0744 offset; within max 140)
+final restore                   03     0A     FF     05        120
+
+# Conclusion: enabling cTGP (0x0743 bit2) with offset 0x0744 raises the
+# dGPU enforced power limit by the offset, live, within ~1s. Reversible.
+# enforced = default(115) + DynamicBoost(5, from 0x0743 bit1) + cTGP(10 when bit2 set).
+# This is exactly uniwill-laptop's ctgp_offset path (writes 0x0744, enables 0x0743).
