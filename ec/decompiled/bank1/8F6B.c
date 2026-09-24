@@ -34,7 +34,7 @@ void FUN_CODE_8f6b(char param_1)
             DAT_EXTMEM_06cf = 'd';
             DAT_EXTMEM_06ce = 100;
             if ((bVar1 & 0x10) == 0) {
-              if (DAT_EXTMEM_0440 == '\0') {
+              if (XDATA_0440 == '\0') {
                 load_dptr_c478_tail_jump_1100();
               }
               else {
@@ -63,7 +63,7 @@ void FUN_CODE_8f6b(char param_1)
       }
       DAT_EXTMEM_06cf = 'd';
       DAT_EXTMEM_06ce = 'd';
-      if (((bVar1 & 8) == 0) && (DAT_EXTMEM_0440 != '\0')) {
+      if (((bVar1 & 8) == 0) && (XDATA_0440 != '\0')) {
         DAT_EXTMEM_06e1 = DAT_EXTMEM_06e1 | 8;
         if ((DAT_EXTMEM_07a4 & 1) == 0) {
           push_r5_into_070f_ring_when_gates_pass(0x19);

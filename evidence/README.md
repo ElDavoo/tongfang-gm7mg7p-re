@@ -74,3 +74,13 @@ independently checkable rather than taken on faith:
 - **`uefi/2026-09-23-memory-menu-observation.md`**: the owner's report
   that the BIOS setup's "Memory" (Memory Overclocking Menu) entry appeared
   after that write and a reboot. Source for findings.md §8's live result.
+- **`ec-reencode/2026-09-23-sdas8051-versions.md`**: the EC listing
+  re-encode run with the `sdas8051` that `.github/actions/project-setup`
+  installs (SDCC 4.2.0, `sdas8051 02.00`) against the committed
+  `ec/ghidra/reassembly.csv` (nix SDCC 4.6.0, `sdas8051
+  05.50.4+NoICE+SDCCmods-WIP-R14`): the environment, both tallies, the
+  row-by-row diff, and the reproduce commands. The 143-instruction
+  unencodable set is identical on both sides and 52 of 2,705 rows change
+  outcome, all from `assembler-gap` to better.
+  **`ec-reencode/2026-09-23-sdas8051-rowdiff.csv`** holds those 52 rows, the
+  only rows that differ. Source for findings.md §14h.

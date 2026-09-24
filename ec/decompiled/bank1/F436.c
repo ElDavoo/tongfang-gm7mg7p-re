@@ -21,15 +21,14 @@ void halve_sum_into_044c(void)
   byte bVar1;
   short sVar2;
   
-  sVar2 = (ushort)DAT_EXTMEM_0448 * (ushort)DAT_EXTMEM_0449;
+  sVar2 = (ushort)XDATA_0448 * (ushort)XDATA_0449;
   mul_16_round_shift_subtract(100,0);
   bVar1 = (byte)sVar2;
   if ((char)((ushort)sVar2 >> 8) != '\0') {
     bVar1 = 0xff;
   }
-  DAT_EXTMEM_044c =
-       (DAT_EXTMEM_044c + bVar1 >> 1 | CARRY1(DAT_EXTMEM_044c,bVar1) << 7) -
-       ((char)((DAT_EXTMEM_044c + bVar1) * -0x80) >> 7);
+  XDATA_044C = (XDATA_044C + bVar1 >> 1 | CARRY1(XDATA_044C,bVar1) << 7) -
+               ((char)((XDATA_044C + bVar1) * -0x80) >> 7);
   return;
 }
 

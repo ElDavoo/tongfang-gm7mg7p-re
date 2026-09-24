@@ -20,12 +20,12 @@ void step_1802_toward_bf12_limited_by_09cd(void)
 {
   byte bVar1;
   
-  if ((DAT_EXTMEM_0456 >> 5 & 1) == 0) {
+  if ((SYSTEM_ID >> 5 & 1) == 0) {
     call_c470_then_clear_0984_bit0();
     set_1610_40_and_clear_1601_bit0();
   }
   else {
-    if (DAT_EXTMEM_0440 == '\0') {
+    if (XDATA_0440 == '\0') {
       call_c470_then_clear_0984_bit0();
       return;
     }

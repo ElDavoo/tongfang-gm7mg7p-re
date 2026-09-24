@@ -117,8 +117,8 @@ void FUN_CODE_8b14(undefined1 param_1,char param_2,byte param_3)
      (bVar1 = (DAT_EXTMEM_0787 & 0x7f) == 0, cVar3 = bVar1 << 7, !bVar1)) {
     bVar5 = DAT_EXTMEM_0787 & 0x7f;
   }
-  pbVar12 = &DAT_EXTMEM_0456;
-  if (DAT_EXTMEM_0456 < '\0') {
+  pbVar12 = &SYSTEM_ID;
+  if (SYSTEM_ID < '\0') {
     load_dptr_0469(bVar5);
     if (cVar3 < '\0') {
       pbVar12 = &DAT_EXTMEM_0469;
@@ -133,7 +133,7 @@ void FUN_CODE_8b14(undefined1 param_1,char param_2,byte param_3)
   bVar1 = (byte)(cVar2 + (cVar4 - (cVar3 >> 7))) < 0xcU - (((param_3 < 0xe4) << 7) >> 7);
   cVar4 = bVar1 << 7;
   if (((!bVar1) && (bVar1 = DAT_EXTMEM_0670 < 0xa0U - (cVar4 >> 7), cVar4 = bVar1 << 7, bVar1)) &&
-     (DAT_EXTMEM_0440 == '\0')) {
+     (XDATA_0440 == '\0')) {
     DAT_EXTMEM_0670 = 0xa0;
   }
   if (-1 < DAT_EXTMEM_07c5) {
