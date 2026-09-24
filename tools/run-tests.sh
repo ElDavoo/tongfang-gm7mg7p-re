@@ -42,11 +42,12 @@ failed=0
 # the other died on
 #   ImportError: cannot import name 'EcError' from 'ecrw' (unknown location)
 #
-# test_manual_fan_ctrl_probe.py and test_ec_watch.py install
-# windows/tools/ecrw_fake.py now, one shape by assignment. test_ec_validate.py,
-# test_system_id_probe.py and test_charge_target_test.py still setdefault
-# their own fakes, so a single discovery run is still order-dependent for
-# them. Do not collapse this into one discovery run until they are moved over.
+# test_manual_fan_ctrl_probe.py, test_ec_watch.py, test_gpu_block_watch.py and
+# test_ctgp_dben_probe.py install windows/tools/ecrw_fake.py now, one shape by
+# assignment. test_ec_validate.py, test_system_id_probe.py and
+# test_charge_target_test.py still setdefault their own fakes, so a single
+# discovery run is still order-dependent for them. Do not collapse this into
+# one discovery run until they are moved over.
 # Per-directory isolation would not help: they all share one directory.
 #
 # Process substitution rather than a pipe, because a pipe would run the loop in
