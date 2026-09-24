@@ -45,7 +45,9 @@ into `r2 -a 8051` with no stitching needed.
   `lcall`) and 0x00CF (1 `ljmp`) entirely. Default mode prints the census and
   writes `annotations/call-graph-callees.csv`, `--check` recomputes that table
   and fails on any diff, and `--self-test` runs the tool against the fixture
-  in `tools/testdata/call-graph/`. Read `annotations/call-graph.md` for the
+  in `tools/testdata/call-graph/`. Both are run by
+  `.github/scripts/agent-gates.sh`, so the table cannot drift from the
+  listings with the gate green. Read `annotations/call-graph.md` for the
   numbers, the ordering, and what the counts do not say.
 - **`tools/scan_refs.py`** — counts direct `MOV DPTR,#addr` references to a
   given XDATA address. Fast way to check "does this EC firmware build

@@ -277,14 +277,19 @@ table still matches the listings, and the build confirms every new
 `(scope, addr)` resolves to an exported function with a non-empty `evidence`
 cell.
 
-**Not done here, and it is a one-line follow-through for a human:**
-`call_graph.py --check` is not wired into
-`.github/scripts/agent-gates.sh`'s `check_ghidra_tooling` list. This change
-touches nothing under `.github/`, because the pipeline's push token has no
-`workflow` scope and a branch that does fails at the end rather than the start.
-Adding it means adding `ec/tools/call_graph.py` to that tool loop with its own
-`case` branch, like `gen_xdata_symbols.py`'s: the tool takes no `--work` and
-has no scratch directory, so it does not fit the loop's default branch, which
-passes `--work "$scratch" --check && --work "$scratch" --self-test`. Both modes
-need no Ghidra and no network, which is what would let the check live in the
-cheap gate at all.
+**Correction (2026-09-24, issue #454): "not wired" was wrong — the check
+runs per commit now.** This paragraph previously said `call_graph.py --check`
+was not in `agent-gates.sh` and was a one-line follow-through for a human,
+on the reasoning that the pipeline's push token has no `workflow` scope. That
+reasoning holds for `.github/workflows/` and did not reach this file; both
+`--check` and `--self-test` now run per commit from `check_ghidra_tooling` in
+`.github/scripts/agent-gates.sh`. The two constraints the old text named are
+still why the arm is separate: the tool takes no `--work` and has no scratch
+directory, so it does not fit the loop's default branch, which passes
+`--work "$scratch" --check && --work "$scratch" --self-test`; and both modes
+need no Ghidra and no network, which is what lets the check live in the cheap
+gate at all. The self-test's own fixture assertions are what prove the check
+still rejects — a table with one cell altered and one with its last row
+dropped both come back rejected, over the same comparison `--check` runs. A
+template re-copy of `agent-gates.sh` drops the tool and its arm again;
+`docs/agent-pipeline.md` item 6 carries both for re-applying.

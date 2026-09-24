@@ -122,6 +122,7 @@ check_ghidra_tooling() {
               ec/tools/merge_annotation_shards.py \
               ec/tools/grade_name_basis.py \
               ec/tools/group_functions.py \
+              ec/tools/call_graph.py \
               bios/tools/bios_extract.py \
               windows/tools/decompile_native.py; do
     [ -f "$tool" ] || continue
@@ -173,6 +174,17 @@ check_ghidra_tooling() {
       # matters: a check that has quietly started accepting everything looks
       # exactly like a check that is working.
       *grade_name_basis.py|*group_functions.py)
+        python3 "$tool" --check && python3 "$tool" --self-test || rc=1
+        ;;
+      # The call graph's own table. Like the symbol generator above, it takes
+      # no --work and has no scratch dir, so it does not fit the *) default
+      # below; both modes need only python3 and the committed .asm listings,
+      # no Ghidra and no network, which is what lets the check live in this
+      # cheap tier. What it holds is the 1,841-row call-graph-callees.csv
+      # against the listings it was derived from, and its self-test's fixture
+      # rejections are the half that matters: a check that has quietly started
+      # accepting everything looks exactly like a check that is working.
+      *call_graph.py)
         python3 "$tool" --check && python3 "$tool" --self-test || rc=1
         ;;
       *)
