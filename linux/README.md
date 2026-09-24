@@ -15,6 +15,11 @@
   `0x07B9`/`0x07D0` experiment (`../docs/findings.md` §4f); it writes
   through `../ec/tools/ecmem.py`, i.e. the physical `ECMG` window rather
   than the driver.
+  `battery-trace/remain-capacity-probe` is the read-only 2026-09-23
+  `0x0436`/`0x0437` question (`../docs/hardware-tests/remain-capacity-0436.md`):
+  the same window, but it writes nothing and so has no restore arm. **It has
+  not been run** — the pipeline has no machine — so `XDATA_0436_PAIR` is still
+  a placeholder in `../ec/annotations/registers.yaml`.
 - **`lightbar/`** — the narrowly targeted `048d:6005` raw-HID probe and
   offline tests. The 2026-09-17 live run produced red → off with no keyboard
   change; [notes and remaining driver work](lightbar/README.md). Static
