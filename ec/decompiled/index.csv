@@ -1181,6 +1181,7 @@ bank1,BFD9,zero_04ae_and_04be,17,annotation,no,yes,writer,hand-decoded,ec/decomp
 bank1,C032,FUN_CODE_c032,118,call-target,no,no,,,,,bank1/C032.c
 bank1,C0A8,FUN_CODE_c0a8,116,call-target,no,no,,,,,bank1/C0A8.c
 bank1,C11C,latch_0490_bit3_or_bit7,190,annotation,no,yes,state,hand-decoded,ec/decompiled/bank1/C11C.asm; ec/decompiled/bank1/C11C.c,,bank1/C11C.c
+bank1,C1E7,latch_0498_bit1_or_bit3,51,annotation,no,yes,state,hand-decoded,ec/decompiled/bank1/C1E7.asm; ec/decompiled/bank1/C1E7.c,,bank1/C1E7.c
 bank1,C245,dispatch_0490_bits_1_5_6,34,annotation,no,yes,dispatch,hand-decoded,ec/decompiled/bank1/C245.asm; ec/decompiled/bank1/C245.c,,bank1/C245.c
 bank1,C267,reset_0432_and_04f2,16,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank1/C267.asm; ec/decompiled/bank1/C267.c,,bank1/C267.c
 bank1,C277,set_0432_from_0494,57,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank1/C277.asm; ec/decompiled/bank1/C277.c,,bank1/C277.c

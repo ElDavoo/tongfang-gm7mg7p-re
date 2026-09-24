@@ -6,7 +6,9 @@
 
 /* Loads DPTR with 0xC1E7 and ljmp 0x1100, the stub this repository's decompiled output names
    bl51_bank_select_0; no instruction here reads or writes any XDATA address itself. 198A.c is the
-   decompiler rendering that as a call to the stub with 0xC1E7 as the argument.
+   decompiler rendering that as a call to the stub, and it now passes `latch_0498_bit1_or_bit3`
+   where it passed the bare address 0xC1E7 before that routine was annotated; the listing's `mov
+   DPTR,#0xc1e7` is the same address either way and is the right reading of it.
    type: forwarder
    evidence: ec/decompiled/bank1/198A.asm; ec/decompiled/bank1/198A.c
    basis: hand-decoded */
@@ -14,7 +16,7 @@
 void trampoline_to_c1e7(void)
 
 {
-  bl51_bank_select_0(0xc1e7);
+  bl51_bank_select_0(latch_0498_bit1_or_bit3);
   return;
 }
 

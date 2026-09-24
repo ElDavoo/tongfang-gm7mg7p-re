@@ -6,7 +6,31 @@
 
 /* Loads DPTR with 0xC118 and ljmp 0x1100, the stub this repository's decompiled output names
    bl51_bank_select_0; no instruction here reads or writes any XDATA address itself. 19A8.c is the
-   decompiler rendering that as a call to the stub with 0xC118 as the argument.
+   decompiler rendering that as a call to the stub with 0xC118 as the argument. 0xC118 is not an
+   instruction boundary: it is the immediate byte of `anl A,#0xf3` at 0xC117, the second-to-last
+   instruction of FUN_CODE_c0a8 (ec/decompiled/bank1/C0A8.asm, 116 bytes, 0xC0A8-0xC11B), so an
+   annotation row seeding a function there resolves to nothing and the build reports `0xC118 in
+   bank1.bin: no function at this address`. Decoded from this address the four bytes are `movx
+   @R1,A` (0xF3), `orl A,R5` (0x4D), `movx @DPTR,A` (0xF0) and `ret` (0x22), the last three being
+   the same tail 0xC119-0xC11B that FUN_CODE_c0a8 reaches from its own mask, and none of the four
+   writes R7. It is not the only target in that position. Of the 48 bank1 forwarders in this file
+   whose listing is the BL51 stub -- `mov DPTR,#imm16` then `ljmp 0x1100`, read off the bytes rather
+   than the comment -- 19 name an instruction start, 7 are not covered by any committed bank1
+   listing at all, and 22 name an operand byte: byte 1 of a two-byte instruction or byte 2 of a
+   three-byte one, and never an opcode byte. Two of the 22 are in this very listing, so 0xC118 is a
+   case of a family rather than the exception to it -- 0xC10C, named by the forwarder at 0x1984, is
+   byte 1 of the `mov R4, B` at 0xC10B, and 0xC0AD, named by the forwarder at 0x1A08, is byte 1 of
+   the `add A, #0x1` at 0xC0AC. The other side of the count is real too: 0xC201 and 0xC209 land on
+   instruction starts inside latch_0498_bit1_or_bit3, and 0xC174 inside latch_0490_bit3_or_bit7, so
+   the split runs both ways. The census counts where the targets fall in the committed listings and
+   is reproducible from them: take the `imm16` of each bank1 `mov DPTR,#imm16` + `ljmp 0x1100`
+   listing and test it against the instruction-start addresses of the committed .asm files. What the
+   22 mean is not settled here. Those listings are byte-exact against the image
+   (`ec/tools/verify_reassembly.py --check`), so the imm16 values are not in question; whether these
+   are entries the linear listing frames differently from the code the linker placed, or targets
+   that are not entries at all, is a question the listings cannot answer. Issue #255 asks it of
+   bank1's 0xC10C, and on this count it is 22 addresses wide, not one. Where A, R5 and R1 come from
+   at this entry is not shown by these four instructions and is not established here.
    type: forwarder
    evidence: ec/decompiled/bank1/19A8.asm; ec/decompiled/bank1/19A8.c
    basis: hand-decoded */

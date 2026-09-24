@@ -890,7 +890,7 @@ def coverage_mismatches(manifest_rows, count_for_program):
     `program` column and the index's are the same four strings (`bank0`,
     `bank1`, `common`, `pd`), so a `common` row is compared like any other
     rather than skipped as an export grouping. It is a grouping, and it is also
-    753 of the index's 2,709 rows, which is more than a grouping may cost
+    753 of the index's 2,710 rows, which is more than a grouping may cost
     quietly."""
     out = []
     for r in manifest_rows:
@@ -1437,12 +1437,17 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # The known answers, on the committed files. These are docs/findings.md §15
     # as assertions: a re-export that moves a total fails here loudly and gets a
     # conscious update to the table in the same change, which is the point.
-    check("EC: index.csv is 2,709 rows, and the manifest records 2,709 "
+    # 2,708 -> 2,709 with issue #285's one seeded bank0 routine, 0xCC64, then
+    # 2,709 -> 2,710 with issue #262's one seeded bank1 routine, 0xC1E7. Its
+    # sibling 0xC118 could not be seeded -- it is the immediate byte of an
+    # instruction inside FUN_CODE_c0a8, not an entry -- so that issue moves the
+    # total by one, not two.
+    check("EC: index.csv is 2,710 rows, and the manifest records 2,710 "
           "functions across 4 programs",
-          len(_ir) == 2709 and len(_mr) == 4
-          and sum(int(r["functions"]) for r in _mr) == 2709,
+          len(_ir) == 2710 and len(_mr) == 4
+          and sum(int(r["functions"]) for r in _mr) == 2710,
           "%d row(s), %d manifest row(s)" % (len(_ir), len(_mr)))
-    check("EC: listing-index.csv is the same 2,709 rows", len(_lr) == 2709,
+    check("EC: listing-index.csv is the same 2,710 rows", len(_lr) == 2710,
           "%d row(s)" % len(_lr))
     check("EC: the manifest's program set is the index's, with no label mapping "
           "in between",
@@ -1456,7 +1461,7 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("EC: addresses are uniformly 4 bare hex digits in both indexes, so "
           "string and int (program, addr) keys agree",
           all(len({(r["program"], r["addr"]) for r in rows})
-              == len({(r["program"], int(r["addr"], 16)) for r in rows}) == 2709
+              == len({(r["program"], int(r["addr"], 16)) for r in rows}) == 2710
               for rows in (_ir, _lr)))
     # The annotation layer's two committed CSVs, the same way. 1,769 records
     # and not the 1,771 the follow-up issue quoted: the file is 1,772 physical
@@ -1467,10 +1472,10 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # 1,769 -> 1,772 with issue #181's three pd rows (0x7392, 0xEA67, 0xEFB9),
     # 1,772 -> 1,775 with issue #179's three, 1,775 -> 1,779 with issue #180's four,
     # 1,779 -> 1,781 with issue #183's two, 1,781 -> 1,782 with issue #285's one
-    # (bank0 0xCC64).
-    check("EC: annotations/ghidra-functions.csv is 1,782 records, no short row "
+    # (bank0 0xCC64), 1,782 -> 1,783 with issue #262's one bank1 0xC1E7.
+    check("EC: annotations/ghidra-functions.csv is 1,783 records, no short row "
           "and no duplicate (scope, addr)",
-          len(_ann) == 1782 and not structure_problems("ghidra-functions.csv", _ann,
+          len(_ann) == 1783 and not structure_problems("ghidra-functions.csv", _ann,
                                                        annotation_key, "(scope, addr)"),
           "%d record(s)" % len(_ann))
     check("EC: bank-call-targets.csv is 5,998 records, no short row and no "
@@ -1486,7 +1491,7 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("EC: a raw and a normalised key count the same on both annotation "
           "CSVs, so normalising cannot merge two distinct keys",
           len({(r["scope"], r["addr"]) for r in _ann})
-          == len({annotation_key(r) for r in _ann}) == 1782
+          == len({annotation_key(r) for r in _ann}) == 1783
           and len({(r["file_offset"], r["target"]) for r in _ct})
           == len({call_target_key(r) for r in _ct}) == 5998)
 
@@ -1970,7 +1975,7 @@ def check(work):
     # file-existence check below still passed: a row that is gone cannot point
     # at a file that is gone. The manifest is what breaks that, because it
     # carries the count the exporter measured before anything was de-duplicated.
-    # It is a grouping, and it is also 753 of the index's 2,709 rows.
+    # It is a grouping, and it is also 753 of the index's 2,710 rows.
     for _name, _irows in (("index.csv", rows), ("listing-index.csv", listing_rows)):
         _counts = {}
         for r in _irows:

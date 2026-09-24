@@ -2347,11 +2347,20 @@ a cached byte, and "reads like" is not "is".)*
 `ec/tools/verify_reassembly.py` re-encodes the committed EC listing with
 `sdas8051` and compares the result to `ec/firmware/GMxMGxx_11.800`. Ghidra's
 SLEIGH decodes; an assembler that never saw the firmware encodes; the firmware
-arbitrates. **45,394 of 45,537 instructions re-encode to the exact bytes in
-the image (99.69%), with no function in disagreement.** 2,574 of the 2,705
+arbitrates. **45,481 of 45,624 instructions re-encode to the exact bytes in
+the image (99.69%), with no function in disagreement.** 2,576 of the 2,707
 functions have every instruction verified; a further 73 have all but 143
 between them. Reproduced unchanged on two SDCC versions (4.5.0 and 4.6.0,
 `sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14`).
+
+*(2,705 to 2,707 rows of the reassembly report, and 2,708 to 2,710 listings in
+the index, with two seeded routines: issue #285's bank0 0xCC64, 58 instructions,
+and issue #262's bank1 0xC1E7, 29 instructions, all re-encoded and 0 unchecked.
+That is where 45,537 becomes 45,624 and 2,574 becomes 2,576. Both new rows in
+`ec/ghidra/reassembly.csv` were measured with the runner's `sdas8051 02.00` and
+the `assembler` column says so, because `05.50.4` is not reachable on a
+GitHub-hosted runner; `ec/ghidra/README.md` says what a report holding two
+assembler versions does and does not do.)*
 
 *(A first pass reported 97.80% and 1,004 unchecked instructions. Four of the
 seven opcodes in the "sdas8051 cannot express this" list were wrong: 0xC0 is
@@ -2479,13 +2488,13 @@ The re-encode above has one hole, and it is the hole the `partial` and
 `assembler-gap` outcomes name on their face: 143 instructions in five forms
 `sdas8051` cannot express are excluded from it, and were read by no check at
 all. `verify_reassembly.check_listing_bytes()` reaches them — it covers all
-45,537 and needs no assembler — but a byte is not a mnemonic. A listing whose
+45,624 and needs no assembler — but a byte is not a mnemonic. A listing whose
 bytes are right and whose text is wrong passes the byte check and fails the
 re-encode, and for these 143 there was no re-encode to fail.
 
 `ec/tools/verify_gap_text.py` closes it by asking a second decoder.
 `ec/tools/disasm8051.py` shares no code with Ghidra's SLEIGH, which is the
-same property that makes the 45,394 meaningful. For every instruction
+same property that makes the 45,481 meaningful. For every instruction
 `verify_reassembly.to_sdas()` declines, it decodes the instruction from the
 firmware image at that instruction's own runtime address and compares the
 result to the listing's text. **All 143 agree**, recorded individually in
@@ -2498,8 +2507,8 @@ firmware arbitrates. This is comparative: two decoders, no code in common,
 read the same byte column. The bytes were already settled by the byte check;
 what is agreed here is the *text*. So a `disagree` would be a text error with a
 known-correct answer, and an `agree` is two decoders having said the same
-thing about bytes that are not in question. **The claim stays 45,394 of 45,537
-(99.69%).** What changes is coverage: all 45,537 instructions are now read by
+thing about bytes that are not in question. **The claim stays 45,481 of 45,624
+(99.69%).** What changes is coverage: all 45,624 instructions are now read by
 an independent check, and adding the two into a single 100% would assert
 something neither establishes.
 
@@ -2557,13 +2566,13 @@ are holes rather than confirmations:
   instruction, 180 times. Found by the oracle entry that keeps `0xC1` and
   `0xC2` apart, which is the only reason the two are distinguishable at all.
   None of the 180 is in the 143 (`0xC2` is a form `sdas8051` expresses, so they
-  are inside the 45,394), which is exactly why nothing had noticed.
+  are inside the 45,481), which is exactly why nothing had noticed.
 - **`0xA0`/`0xB0` are unresolved and this repository cannot resolve them.**
   Ghidra's SLEIGH, r2 and `sdas8051` all put `ORL C,/bit` at `0xA0` and `ANL
   C,/bit` at `0xB0`; the MCS-51 manual as reproduced in common references has
   them the other way round. Three tools agreeing is why `disasm8051.py` follows
   them, and none of them arbitrating the other two is why that is recorded
-  rather than settled. All 12 occurrences are inside the 45,394, and the
+  rather than settled. All 12 occurrences are inside the 45,481, and the
   re-encode passes on them **because the decoder and the assembler agree, not
   because either is right** — the one shape of hole this tool structurally
   cannot see.
@@ -2681,15 +2690,15 @@ The set is **five forms, not the seven the prose here used to name**: `ajmp`
 of this set; `CLR bit`, `CJNE` on a direct address and the carry-with-immediate
 forms are in none of it.
 
-**The 1:1 claim is still 45,394 of 45,537 (99.69%), and this work does not
+**The 1:1 claim is still 45,481 of 45,624 (99.69%), and this work does not
 make it 100%.** `sdas8051` still cannot express those five forms and no tool
 has changed that. What changed is coverage: every instruction in the committed
 listing is now read by an independent check, the 143 by decoder agreement and
-the 45,394 by re-encode. Those are not the same kind of evidence — the
+the 45,481 by re-encode. Those are not the same kind of evidence — the
 re-encode is constructive, with the firmware arbitrating, while the cross-decode
 is two decoders agreeing about text over bytes the byte check has already
 settled — and adding them into one percentage would say something neither
-establishes. The 1:1 claim would need a single check covering all 45,537, and
+establishes. The 1:1 claim would need a single check covering all 45,624, and
 the honest way to get one is an encoder whose oracle is r2 or the firmware
 bytes, not `sdas8051` agreeing with an agent's own table. Writing such an
 encoder is still not started; §11 is the record of what happens when a gap list
@@ -3285,7 +3294,7 @@ the honest statement is that 52 rows differ and this run cannot say why.
 
 The 47 rows that become `match` are **not** new evidence for the 1:1 claim.
 The committed report already asserts those bytes are what the firmware holds,
-and `--check` compares all 45,537 instructions' bytes with no assembler at all.
+and `--check` compares all 45,624 instructions' bytes with no assembler at all.
 What has moved is how much of the corpus an independent assembler gets to
 confirm, not whether the bytes are right.
 
@@ -3337,7 +3346,7 @@ against drift rather than a bug hunt:
 
 | | `index.csv` | `listing-index.csv` | manifest |
 |---|---|---|---|
-| EC (`ec/decompiled/`, `ec/ghidra/manifest.csv`) | 2,709 rows, 2,709 distinct `(program, addr)`, 0 dups, 0 short rows | 2,709 / 2,709, same | 4 rows, `functions` agrees with both indexes on every row and sums to 2,709; all `mode` = `export-only` |
+| EC (`ec/decompiled/`, `ec/ghidra/manifest.csv`) | 2,710 rows, 2,710 distinct `(program, addr)`, 0 dups, 0 short rows | 2,710 / 2,710, same | 4 rows, `functions` agrees with both indexes on every row and sums to 2,710; all `mode` = `export-only` |
 | BIOS (`bios/ghidra/`) | 955 rows, 955 distinct keys, 0 dups, 0 short rows | 955 / 955, same | 38 rows, `functions` agrees with both indexes on every row and sums to 955; all `mode` = `export-only` |
 
 Reproduce it, one command per component, with no Ghidra and no network:
@@ -3349,7 +3358,7 @@ python3 bios/tools/bios_extract.py   --work /tmp/x --check
 python3 bios/tools/bios_extract.py   --work /tmp/x --self-test
 ```
 
-Both `--check`s now print the counts they compared (`2709 index row(s), 2709
+Both `--check`s now print the counts they compared (`2710 index row(s), 2710
 listing-index row(s), 4 manifest program(s)`, and the same shape for 955/955/38),
 and both `--self-test`s assert the totals, so the table above is a fact the
 repository re-checks rather than a paragraph somebody wrote once.
@@ -3421,7 +3430,7 @@ coverage: `build_ec_decompile.py` already compared the manifest's `functions`
 against `index.csv`'s row counts — but skipped `common` as "an export grouping,
 not a program". The EC work was therefore to *extend and rehouse* that partial
 check (add `listing-index.csv`, cover `common` too) rather than to write a
-second one beside it. `common` is a grouping, and it is also 753 of the 2,709
+second one beside it. `common` is a grouping, and it is also 753 of the 2,710
 rows in the index, which is more than a grouping may cost quietly. The BIOS
 genuinely had none and got the whole set.
 
