@@ -14,8 +14,54 @@ The two committed captures are not a run of this either, and are named here so
 nobody mistakes them for one: `evidence/ec-watch/2026-09-18-ac-plugin-sweep-summary.csv`
 (§4g) and `evidence/ec-watch/2026-09-23-power-mode-cycle-0700-07ff.csv` (§7)
 swept this block across an AC plug-in and an Fn mode cycle. `0x07C0`-`0x07D7`
-was quiet in both except `0x07C4` twice at the plug-in. A GPU-only TGP change
-is the one UI action neither bundle contains.
+was quiet in both except `0x07C4` twice at the plug-in.
+
+**CORRECTION** (issue #276, 2026-09-24), leaving the sentence above as it was
+written. *"`0x07C0`-`0x07D7` was quiet in both except `0x07C4` twice at the
+plug-in"* is wrong in both files, and the byte that makes it wrong is inside
+the range the sentence itself names: `0x07C6`. Re-derived over the whole
+24-address range rather than the two the sentence named:
+
+- **`2026-09-18-ac-plugin-sweep-summary.csv`** carries exactly two rows in the
+  block, `0x07C4,2,0x08,0x38` and `0x07C6,2,0x04,0x04` — adjacent lines in the
+  summary. `0x07C6` is a **move**, not a byte that "held `0x04`": its
+  `first_old` equals its `last_new` because it changed away and came back
+  inside the window, which is the same endpoint-net blind spot §6 warns about.
+  What the summary supports is a per-address change count and those two
+  endpoints. It does **not** support the intermediate value, either timestamp,
+  or the order — the 32,499-row log it summarizes is not committed, and its own
+  header says so. "Quiet" is precisely the inference it cannot carry.
+- **`2026-09-23-power-mode-cycle-0700-07ff.csv`** carries 20 rows in the block
+  across its 2 m 48 s window (`17:57:41.307` → `18:00:29.856`): `0x07C4` twice,
+  `0x07C6` **18 times** — the busiest byte in the block — running
+  `17:57:51.162` → `18:00:06.264`. Its rows are the 1.1-2.0 s `0x04 -> 0x00`
+  dips, and the `0x00 -> 0x03` / `0x03 -> 0x07` pair recurs at
+  `17:59:01.681`/`17:59:02.144` and `17:59:52.049`/`17:59:52.740`. The `0 -> 3`
+  bits-0-1 Office reading is `../../ec/annotations/registers.yaml` `AP_OEM_6`
+  and `../../docs/findings.md` §7a's, recorded there; it is not re-derived here
+  and is not this file's to support.
+- **"at the plug-in" does not survive either.** `0x07C4`'s two rows sit at
+  `17:57:51.161` and `17:57:51.597` — within a millisecond of the first
+  `0x07C6` dip, and ~10 s *after* the `0x0743`/`0x0745`/`0x0746` bundle rows at
+  `17:57:41.307`. The file is `ts,addr,old,new` from line 1 and carries no
+  `MARK` rows (the watcher only writes those under `--mark`), so from this file
+  the two rows cannot be placed at a plug-in at all, nor told apart from a mode
+  switch.
+- **The other 22 addresses in `0x07C0`-`0x07D7` get no row in either file.**
+  That is "not found to move in these two windows" and nothing more: not
+  "never written", not "the rest of the block is dead", and not evidence that
+  the EC ignores them.
+
+`0x07C6` is `AP_OEM_6` (`WMS0` b0-1; bit 2 upstream
+`ENABLE_UNIVERSAL_FAN_CTRL`) and it keeps `present-untested` — a passive
+capture showing a byte move is not a live test of it, which is that note's own
+standing caveat. But it is the block's known mode-switch chatter, and §5's
+"window delta" column and §6's three-way reading both turn on telling a
+GPU-only change apart from the Fn bundle. The operator needs its per-capture
+counts as the baseline that does that: `0x07C6` moving is the expected noise,
+not the result, and a capture containing it should not be discarded for it.
+
+A GPU-only TGP change is the one UI action neither bundle contains.
 
 ## 1. The question
 
