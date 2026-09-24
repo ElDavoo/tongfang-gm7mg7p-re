@@ -35,7 +35,7 @@ void derive_scale_from_034e_and_compute_from_044c(byte param_1,byte param_2,byte
   }
   uVar2 = BANK0_R3;
   uVar1 = BANK0_R2;
-  bVar4 = DAT_EXTMEM_044c;
+  bVar4 = XDATA_044C;
   if ((DAT_EXTMEM_0367 >> 2 & 1) != 0) {
     read_xdata_pair_to_r1r2(0x438,100,0);
     mul_16_round_shift_subtract();

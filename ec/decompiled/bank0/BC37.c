@@ -17,7 +17,7 @@ char code_byte_sub_from_044c(byte param_1,short param_2)
 {
   char in_PSW;
   
-  return DAT_EXTMEM_044c - (*(char *)(param_2 + (ushort)param_1) - (in_PSW >> 7));
+  return XDATA_044C - (*(char *)(param_2 + (ushort)param_1) - (in_PSW >> 7));
 }
 
 

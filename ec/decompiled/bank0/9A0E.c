@@ -34,10 +34,10 @@ char mul_div_08ea_then_sub_044b_selected(void)
   sub_dptr_byte_from_0a4a(0x8ca);
   if (((-1 < in_PSW) && (sub_dptr_byte_from_0a4a(0x8cb), -1 < in_PSW)) &&
      (sub_dptr_byte_from_0a4a(0x8c2), -1 < in_PSW)) {
-    if (DAT_EXTMEM_044b == '\x04') {
+    if (XDATA_044B == '\x04') {
       pcVar3 = &DAT_EXTMEM_08cb;
     }
-    else if (DAT_EXTMEM_044b == '\x02') {
+    else if (XDATA_044B == '\x02') {
       pcVar3 = &DAT_EXTMEM_08c2;
     }
     else {

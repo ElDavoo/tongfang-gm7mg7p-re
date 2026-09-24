@@ -24,7 +24,7 @@ void clamp_078b_level_into_0804(void)
     return_stub();
     return;
   }
-  if (DAT_EXTMEM_0440 == '\0') {
+  if (XDATA_0440 == '\0') {
     return_stub();
     return;
   }
@@ -32,7 +32,7 @@ void clamp_078b_level_into_0804(void)
     return_stub();
     return;
   }
-  if ((DAT_EXTMEM_0442 & 0x10) == 0) {
+  if ((XDATA_0442 & 0x10) == 0) {
     bVar1 = DAT_EXTMEM_078b - 1;
     if (5U - (in_PSW >> 7) <= bVar1) {
       bVar1 = 0;
@@ -54,7 +54,7 @@ void clamp_078b_level_into_0804(void)
       return;
     }
     DAT_EXTMEM_0804 = bVar1;
-    if ((DAT_EXTMEM_0456 & 0x80) != 0) {
+    if ((SYSTEM_ID & 0x80) != 0) {
       push_r5_into_070f_ring_when_gates_pass(bVar1 - 0x2f);
     }
   }

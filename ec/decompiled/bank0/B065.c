@@ -21,7 +21,7 @@ byte ten_count_gate_then_set_1300_and_200f(void)
 {
   byte bVar1;
   
-  if ((((DAT_EXTMEM_0440 != '\0') && (DAT_EXTMEM_06db != 0)) && (DAT_EXTMEM_06e6 == '\x01')) &&
+  if ((((XDATA_0440 != '\0') && (DAT_EXTMEM_06db != 0)) && (DAT_EXTMEM_06e6 == '\x01')) &&
      (DAT_EXTMEM_047e == -0x14)) {
     if (DAT_EXTMEM_06db >= 6) {
       return DAT_EXTMEM_06db - 6;

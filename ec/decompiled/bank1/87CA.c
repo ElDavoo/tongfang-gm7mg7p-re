@@ -13,7 +13,7 @@
 void set_1033_bits_if_0450_is_28(void)
 
 {
-  if (DAT_EXTMEM_0450 == '(') {
+  if (XDATA_0450 == '(') {
     DAT_EXTMEM_1033 = DAT_EXTMEM_1033 | 3;
   }
   return;

@@ -73,12 +73,15 @@ into `r2 -a 8051` with no stitching needed.
   `--self-test` running on committed text alone (no image, no Ghidra, no
   network). Reach for it when the question is "which addresses exist, which
   routines share them, and is this number a read or a write" — the whole
-  `registers.yaml` list is 56 addresses, and this census is 1,172. Two limits
+  `registers.yaml` list is 144 addresses, and this census is 1,172. Two limits
   it earns the right to state: it splits the main EC from the separate
   `ITE8850-PD` program rather than mixing them, and a cluster is a
   co-occurrence in static code, not a purpose —
   `annotations/xdata-register-map.md` §6 is the boundary, and §7 reconciles
-  its counts against `register_ref_table.py`'s.
+  its counts against `register_ref_table.py`'s. Its per-address columns are
+  also an upper bound on *distinct* references wherever one routine is exported
+  as several overlapping functions; `annotations/xdata-06c2-06db-timers.md`
+  §2a measures that at 42× on the one cluster measured so far.
 - **`tools/disasm8051.py`** — the opcode tables `trace_xdata_refs.py` decodes
   with, plus a CLI for reading a window of instructions at a file offset
   (`--at`) and for measuring how many nearby anchors a linear walk syncs onto
@@ -148,7 +151,7 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
 - **`annotations/registers.yaml`** — every EC register the `uniwill-laptop`
   driver or the Windows service touches, cross-referenced against static-scan
   results and live-hardware behaviour. This is the primary research output;
-  start here. It is 56 addresses, and `annotations/xdata-register-map.md`
+  start here. It is 144 addresses, and `annotations/xdata-register-map.md`
   covers 1,172 — the two corpora are nearly disjoint, and which of the two a
   question is about decides where the answer lives.
 - **`annotations/static-refs-audit.md`** — the per-image reference count for
@@ -175,6 +178,14 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   evidence that those sites belong to the PD image rather than the EC, and the
   live probe still needed to say what (if anything) the EC does with those
   bytes.
+- **`annotations/xdata-06c2-06db-timers.md`** — the `main-ec-002` cluster read
+  as the block the issue asked about: 37 of its 43 addresses are countdowns one
+  393-byte routine walks over, and the other 6 are what four of them do at zero.
+  It also measures why the cluster's headline census numbers are inflated 42×,
+  what gates the block (`0x0440`, and two predicate calls of which one target
+  has no exported function), and what the reload search did and did not find.
+  The read-only procedure for settling `0x06D6`'s period on real hardware is
+  §7, written down and not run.
 - **`annotations/bank-call-audit.md`** — the call-target census behind every
   EC-side handoff this repo resolves: how many direct calls stay in the common
   area, how many assume the caller's own bank, how many are unresolvable, and

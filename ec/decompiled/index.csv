@@ -816,15 +816,15 @@ bank1,8001,decrement_nonzero_xdata_counters,3,annotation,no,yes,writer,hand-deco
 bank1,8004,read_06c6,1,annotation,no,yes,reader,hand-decoded,ec/decompiled/bank1/8004.asm; ec/decompiled/bank1/8004.c,,bank1/8004.c
 bank1,8005,skip_06c6_decrement,2,annotation,no,yes,logic,hand-decoded,ec/decompiled/bank1/8005.asm; ec/decompiled/bank1/8005.c,,bank1/8005.c
 bank1,8007,dec_06c6_value,1,annotation,no,yes,math,hand-decoded,ec/decompiled/bank1/8007.asm; ec/decompiled/bank1/8007.c,,bank1/8007.c
-bank1,8008,FUN_CODE_8008,1,call-target,no,no,,,,,bank1/8008.c
+bank1,8008,store_06c6_decrement,1,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank1/8008.asm; ec/decompiled/bank1/8008.c,,bank1/8008.c
 bank1,8009,select_06cd,3,annotation,no,yes,logic,hand-decoded,ec/decompiled/bank1/8009.asm; ec/decompiled/bank1/8009.c,,bank1/8009.c
 bank1,800C,read_06cd,1,annotation,no,yes,reader,hand-decoded,ec/decompiled/bank1/800C.asm; ec/decompiled/bank1/800C.c,,bank1/800C.c
 bank1,800D,skip_06cd_decrement,2,annotation,no,yes,logic,hand-decoded,ec/decompiled/bank1/800D.asm; ec/decompiled/bank1/800D.c,,bank1/800D.c
 bank1,800F,dec_06cd_value,1,annotation,no,yes,math,hand-decoded,ec/decompiled/bank1/800F.asm; ec/decompiled/bank1/800F.c,,bank1/800F.c
-bank1,8010,FUN_CODE_8010,1,call-target,no,no,,,,,bank1/8010.c
+bank1,8010,store_06cd_decrement,1,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank1/8010.asm; ec/decompiled/bank1/8010.c,,bank1/8010.c
 bank1,8011,select_06d1,3,annotation,no,yes,logic,hand-decoded,ec/decompiled/bank1/8011.asm; ec/decompiled/bank1/8011.c,,bank1/8011.c
 bank1,8014,read_06d1_and_test_zero,3,annotation,no,yes,reader,hand-decoded,ec/decompiled/bank1/8014.asm; ec/decompiled/bank1/8014.c,,bank1/8014.c
-bank1,8017,FUN_CODE_8017,1,call-target,no,no,,,,,bank1/8017.c
+bank1,8017,dec_06d1_value,1,annotation,no,yes,math,hand-decoded,ec/decompiled/bank1/8017.asm; ec/decompiled/bank1/8017.c,,bank1/8017.c
 bank1,8018,store_acc_to_xdata_dptr_8018,1,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank1/8018.asm; ec/decompiled/bank1/8018.c,,bank1/8018.c
 bank1,8019,load_dptr_06d2,3,annotation,no,yes,reader,hand-decoded,ec/decompiled/bank1/8019.asm; ec/decompiled/bank1/8019.c,,bank1/8019.c
 bank1,801C,read_xdata_dptr_801c,1,annotation,no,yes,reader,hand-decoded,ec/decompiled/bank1/801C.asm; ec/decompiled/bank1/801C.c,,bank1/801C.c

@@ -14,7 +14,7 @@
 undefined1 store_044b_then_read_08e2(undefined1 param_1)
 
 {
-  DAT_EXTMEM_044b = param_1;
+  XDATA_044B = param_1;
   return DAT_EXTMEM_08e2;
 }
 

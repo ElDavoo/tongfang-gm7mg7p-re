@@ -14,7 +14,7 @@
 undefined1 read_0434_keep_0435_in_r4(void)
 
 {
-  return DAT_EXTMEM_0434;
+  return BAT_CURRENT_MA_0;
 }
 
 

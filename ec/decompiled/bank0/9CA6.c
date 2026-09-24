@@ -28,7 +28,7 @@ void gate_06e6_442_then_sync_046a_from_086b(void)
   char *pcVar3;
   undefined1 *puVar4;
   
-  if ((DAT_EXTMEM_06e6 != '\x01') || ((DAT_EXTMEM_0442 >> 4 & 1) != 0)) {
+  if ((DAT_EXTMEM_06e6 != '\x01') || ((XDATA_0442 >> 4 & 1) != 0)) {
     DAT_EXTMEM_080f = 0;
     return;
   }
@@ -55,7 +55,7 @@ void gate_06e6_442_then_sync_046a_from_086b(void)
       DAT_EXTMEM_080f = DAT_EXTMEM_080f + -1;
       return;
     }
-    if (DAT_EXTMEM_0440 == '\0') {
+    if (XDATA_0440 == '\0') {
       shared_return_stub_9d9a();
       return;
     }

@@ -94,8 +94,8 @@ void state_0817_dispatch(char param_1)
   }
   DAT_EXTMEM_081e = '\0';
   DAT_EXTMEM_081f = 10;
-  if (DAT_EXTMEM_0440 == '\0') {
-    DAT_EXTMEM_081e = DAT_EXTMEM_0440;
+  if (XDATA_0440 == '\0') {
+    DAT_EXTMEM_081e = XDATA_0440;
     DAT_EXTMEM_081f = 0x28;
   }
   DAT_EXTMEM_0817 = 1;
