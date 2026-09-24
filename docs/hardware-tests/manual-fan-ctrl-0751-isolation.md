@@ -210,7 +210,8 @@ capture windows comparable: the only thing separating the control's from the
 write's is the write. Label it `no-op wrote ...` and not `wrote ...`; the
 grader windows on marks, and a control arm that reads like the write under
 test is indistinguishable from it. This is the arm the 2026-09-23 run already
-had in a weaker form, where `0x075B`/`0x075C` moved as much under the no-op as
+had in a weaker form, where the fan duty at `0x075B`/`0x075C` (issue #123:
+`MAIN_FAN_L_DUTY`/`MAIN_FAN_R_DUTY`) moved as much under the no-op as
 under a real mode change — thermally, which is why the fan half of the
 question is still open.
 
@@ -304,13 +305,29 @@ For each run, from the three CSVs plus the by-hand power readings:
    `windows/tools/fan_table_replay.py` against it.
 3. **`0x07C6`** — the byte the vendor brackets its fan-table write with.
    Does it move by itself?
-4. **Fan PWM** under the fixed load. This is the one that decides whether
+4. **Fan duty** under the fixed load. This is the one that decides whether
    `0x0751` alone is a usable control at all: if the fan curve changes with
-   nothing else written, the EC acts on the byte. Issue #99 names
-   `0x075B`/`0x075C` for it; neither address is in
-   `ec/annotations/registers.yaml` and this repo has not confirmed them, so
-   treat them as where to look first and read the whole `0x0700-0x07FF`
-   sweep rather than only those two. The audible fan is evidence too —
+   nothing else written, the EC acts on the byte. Issue #99 named
+   `0x075B`/`0x075C` for it as unconfirmed PWM, and that is now settled
+   (issue #123): they are the vendor's `ADDR_EC_MAIN_FAN_L_DUTY_BYTE` and
+   `ADDR_EC_MAIN_FAN_R_DUTY_BYTE`, read and halved for display by
+   `FanInfo.GetEcCpuFanDuty`/`GetEcGpuFanDuty`, and they have entries of
+   their own in `ec/annotations/registers.yaml` as `MAIN_FAN_L_DUTY` and
+   `MAIN_FAN_R_DUTY`. **That makes them the right two bytes to compare, and
+   still the wrong two to write** — the vendor only ever reads them. Duty is
+   what the EC publishes, not a control the host drives; the bytes the
+   vendor calls PWM are a different block (`ADDR_MYFAN2_L*_PWM` at
+   `0x0743`-`0x0747`, `ADDR_L*_PWM_DEFAULT_MYFAN3`/`_MYFAN2` at
+   `0x0786`-`0x078D`), and the curve itself is the `0x0F00-0x0F5F` table.
+   Do not write `0x075B` expecting the fan to turn.
+
+   Keep reading the whole `0x0700-0x07FF` sweep rather than only those two.
+   That instruction used to be there because the two addresses were
+   unidentified; it stays because the neighbourhood is still the least
+   mapped part of the page and `0x0786` in it is a live naming conflict —
+   `EC_ADDR_FAN_DEFAULT` upstream, APTC/APTN in the DSDT and in 3.1.39.0,
+   `ADDR_L1_PWM_DEFAULT_MYFAN3` in ECSpec, three names and no agreement
+   (recorded in that register's own entry). The audible fan is evidence too —
    write down whether it changed, and when.
 
    **Where the static arms say to look first.**
@@ -325,6 +342,26 @@ For each run, from the three CSVs plus the by-hand power readings:
    `0x8E8B` arm fires for USER either way. That is a prediction *for* this
    run — no hardware was involved in finding it — and what it changes is
    which comparison to make, not what counts as a result.
+
+   **CORRECTION** (issue #123, 2026-09-24), leaving the paragraph above as
+   it was written. The two addresses in it are identified now — they are the
+   duty bytes, above — but the pairing by proximity does not survive. All
+   three sites per address are now walked in `../../ec/annotations/registers.yaml`
+   and `../../ec/annotations/static-refs-audit.md` §7. `0x89E0` and `0x8F11`
+   do turn out to be a pair, because the `lcall` at `0x89EB` enters the
+   `0x8F0F` routine that writes `0x075C`. `0x8F0A` is *not* the other half of
+   that pair: it is the last write before the `ret` that ends the separate
+   `0x8EE0` routine, which an `acall` from bank1 reaches at `0x10F0D` and
+   `0x10F44`. Two further sites, not in the paragraph above, are the ones
+   that zero both bytes — `0x87C5` and `0x87D5`, inside the clear run at
+   `0x87B8`. None of this is the fan table: `0x0F00` and `0x0F20` have zero
+   direct `MOV DPTR` sites, so the table is reached indirectly and
+   `../../ec/annotations/manual-fan-ctrl-0751.md` §6 stays open.
+
+   What does not change is what the run is for. These bytes move because the
+   fan is doing its job, on a die whose temperature is the variable under
+   test; §4.5's temperature pair is what tells the two apart, and nothing
+   here makes a duty difference evidence that the EC acted on `0x0751`.
 
    The same §9 also found the Fan Boost arms gating on temperature rather
    than on a duty copy: the `0x8942` BOOST-**set** arm compares `CPU_TEMP`
@@ -356,7 +393,7 @@ For each run, from the three CSVs plus the by-hand power readings:
    `0x0783-0x0785` is enforcing it, and that is a new question, not a
    result. Temperature no longer needs an external tool: read it from the
    `0x0400-0x045F` CSV, and use it for the job §4.4 needs — showing the load
-   was flat in both capture windows. A PWM difference between the control arm
+   was flat in both capture windows. A duty difference between the control arm
    and the write under test means something only if `0x043E` held steady
    across both; if it climbed through the pair, the difference is the die and
    not the byte. The rest of that page is sensors: read it for context, and
@@ -485,7 +522,7 @@ Each pair covers one range, so each reports the groups it does not cover as
 *not covered by this pair* — the fan table is in neither the `0x0700` nor the
 `0x0400` dump, the PLs and the `0x07C6` bracket byte in neither the `0x0F00`
 nor the `0x0400` one, the temperatures in neither the `0x0700` nor the
-`0x0F00` one, and the candidate PWM in neither the `0x0F00` nor the `0x0400`
+`0x0F00` one, and the fan duty in neither the `0x0F00` nor the `0x0400`
 one. That names the §4.4/§4.5 context groups as well as the §4.1-§4.3 ones,
 and for the same reason each time: "never read" is a different answer from
 "read and did not move", and a group that went unprinted under a heading that
@@ -496,21 +533,24 @@ Each read has a gap the other does not close. An address one dump covers and
 the other does not is a coverage gap, never a change, and the section emits
 no status of its own.
 
-It is a first pass and not the answer. It prints §4.4's candidate PWM bytes
+It is a first pass and not the answer. It prints §4.4's fan duty bytes
 and §4.5's temperature bytes per window so the control arm and the write can
 be compared line for line, and it sums each of them into a `window delta`
 line — first value, last value, net, and how many times the byte moved inside
 the window — so §4.4's deciding comparison is two numbers instead of two
-terminals. The whole-block section prints the same PWM pair the same way,
+terminals. The whole-block section prints the same duty pair the same way,
 under the same *not graded here* heading — and, because the `0x0400` pair is
 one of the three, it also prints §4.5's two temperature bytes there. That is
 the whole-block answer to what §4.4 and §4.5 ask: whether the die held
 across the control arm and the write, read at the block's two ends rather
-than inside one window. Whether the two arms' PWM numbers mean anything is
+than inside one window. Whether the two arms' duty numbers mean anything is
 still a human's call, in either read. It still does not grade them and does
-not claim to: an unconfirmed PWM address drifting on a warming die moves
-whether or not anything wrote `0x0751`, and telling those apart is what the
-no-op arm in §3 measures and what a script cannot. Package power is in no
+not claim to. The reason is not that the addresses are unidentified any more
+— issue #123 identified them, and that is why §4 item 4 dropped the
+"unconfirmed" wording. It is that a fan duty byte drifts on a warming die
+whether or not anything wrote `0x0751`, so grading it would report "moved" on
+every window including the no-op control, and telling those apart is what the
+control arm in §3 measures and what a script cannot. Package power is in no
 capture and is still yours to note by hand. The script says so in its own
 output and does not emit a status.
 
@@ -521,7 +561,7 @@ observation, not on the write being accepted — `../../CLAUDE.md`, "a register
 write being accepted (readback matches) is not evidence the EC acts on it".
 Concretely:
 
-- fan PWM or package power moves under a fixed load, with nothing but
+- fan duty or package power moves under a fixed load, with nothing but
   `0x0751` written → `confirmed-working`, with the capture cited and the
   *scope* of the claim written out (the byte does X; it does not imply the
   PLs follow).

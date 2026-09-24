@@ -33,8 +33,10 @@ control-flow instruction, and for 17 of the 29 sites that instruction *is* a
 conditional branch on a mode bit — so both arms were unexamined when the two
 paragraphs above were written. §9 walks all 34 with a different method. It
 does not overturn §4 or §5: no arm found by this method writes a PL register
-either. What it adds is that both candidate fan-PWM bytes, `0x075B` and
-`0x075C`, are written on a path a `0x0751` bit selects, and that the Fan
+either. What it adds is that both fan duty bytes, `0x075B` and
+`0x075C` (`MAIN_FAN_L/R_DUTY`, issue #123 -- named that below, and "fan
+duty" rather than the "candidate fan-PWM" this file used when they had no
+entry), are written on a path a `0x0751` bit selects, and that the Fan
 Boost arms gate on `CPU_TEMP`/`GPU_TEMP`. That is a **prediction for** the
 isolation run, not a result from it.
 
@@ -871,7 +873,7 @@ rather than one that sets them. Read and write are different claims and the
 distinction is the whole of what §5 concluded, so this is a refinement of it
 rather than a correction of it.
 
-**Both candidate fan-PWM bytes are written by arms of a mode-bit branch.**
+**Both fan duty bytes are written by arms of a mode-bit branch.**
 This is the result the issue was for, and it is a prediction *for* the
 isolation run, not a result from it — no laptop is reachable from here and
 nothing in this file has been observed on hardware. Addresses below are the
@@ -902,6 +904,30 @@ is the question §4 of
 `docs/hardware-tests/manual-fan-ctrl-0751-isolation.md` exists to answer, and
 it is now a better-posed question than it was, because the run has two named
 bytes to watch and a named bit to flip.
+
+**Correction (issue #123, 2026-09-24), leaving the paragraph above as it was
+written.** Both halves of its first sentence are now false. `0x075B` and
+`0x075C` are in `registers.yaml` as `MAIN_FAN_L_DUTY` and `MAIN_FAN_R_DUTY`,
+and they are identified: they are the vendor's
+`ADDR_EC_MAIN_FAN_L/R_DUTY_BYTE`, read and halved by `FanInfo` and never
+written by it. They are the EC's published fan *duty*, kept in `0x1804` and
+`0x1809` and published through the `0xBB22`/`0xBB28` helper, with `0xC8` as
+the 100 % cap in the same doubled convention the fan table uses. The vendor's
+PWM-named bytes are a different block (`0x0743`-`0x0747`, `0x0786`-`0x078D`),
+so this is not the fan-PWM identification issue #99 guessed at, and writing
+these two is not a way to drive a fan.
+
+The paragraph's remaining claim is untouched and still what the isolation run
+can act on: the EC stores to both, on a path selected by a bit of `0x0751`.
+Two details here are now firmer than "narrower". The `0x87C5` this section
+could not reach from the 34 arms is a **zero-clear** — it sits in the
+`0x87B8` run that zeroes `0x1804`, `0x1809`, `0x0460`, `0x0461`, `0x0468`,
+`0x0469`, `0x085F` and `0x0787`, and its own `0x8749` annotation lists
+`0x075B` in the same set — so the arm walk did not miss it, it is simply not a
+fan-curve path. And the `0x8F0A`/`0x8F11` pair is not one routine's two
+stores: `0x8F0A` ends the `0x8EE0` routine and `0x8F11` is inside the `0x8F0F`
+routine that `0x89EB` calls. Whether that makes `0x0751` a usable control is
+still §4's question, and still needs the fixed-load run.
 
 **The mode bits gate a thermal test, not a duty copy.** `0x8942`'s
 Fan-Boost-**set** arm — its fall-through, since `jnb acc.6` falls through when

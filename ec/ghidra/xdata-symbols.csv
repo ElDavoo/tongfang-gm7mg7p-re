@@ -81,6 +81,8 @@ addr,name,from_register,register_status,derivation,programs
 0x0784,CPU_PL1_PL2,CPU_PL1 / PL2 / PL4 (APL1/APL2/APL4),present-untested,name-split,bank0;bank1
 0x0785,CPU_PL1_PL4,CPU_PL1 / PL2 / PL4 (APL1/APL2/APL4),present-untested,name-split,bank0;bank1
 0x0751,MANUAL_FAN_CTRL,MANUAL_FAN_CTRL (power mode / fan mode),present-untested,scalar-name,bank0;bank1
+0x075B,MAIN_FAN_L_DUTY,"MAIN_FAN_L_DUTY (fan duty, published to the Control Center)",present-untested,scalar-name,bank0;bank1
+0x075C,MAIN_FAN_R_DUTY,"MAIN_FAN_R_DUTY (fan duty, published to the Control Center)",present-untested,scalar-name,bank0;bank1
 0x0782,BIOS_OEM_2,BIOS_OEM_2 (DEFAULT_MODE / FAN_QKEY / FAN_TABLE_OFFICE_MODE),present-untested,scalar-name,bank0;bank1
 0x049F,BIOS_INFO_3,BIOS_INFO_3 (Turbo mode supported),present-untested,scalar-name,bank0;bank1
 0x0730,MODE_PL_DEFAULTS_GAMING_PL1_0,MODE_PL_DEFAULTS (per-mode PL1/PL2/PL4/D-state defaults),present-untested,override,bank0;bank1
