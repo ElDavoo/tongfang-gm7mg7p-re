@@ -60,6 +60,13 @@ only covers what's specific to *this* copy.
      It runs the deep tier through its documented entry point and nothing
      else:
      `AGENT_GATES_DEEP=1 .github/scripts/agent-gates.sh`.
+     It tees that run to a log and uploads it as an artifact with
+     `if: always()` (issue #158), because the same file's own comment says
+     GitHub delays and sometimes drops scheduled runs without telling anyone: a
+     run that happened leaves an artifact behind and a run that did not leaves
+     none, so "the nightly did not run" stays distinguishable from "the nightly
+     found nothing". Absence is observable, not failing — making a vanished run
+     fail something needs a checker that runs when the scheduled one did not.
      Until it is landed, the re-encode is opt-in, and the reason it is opt-in
      rather than dropped is in `docs/findings.md` §14e — which also records
      what per-commit coverage is still missing, and it is not nothing: since

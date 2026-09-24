@@ -22,7 +22,7 @@ byte dispatch_0974_low_nibble(undefined1 param_1,undefined1 param_2,undefined1 p
   byte bVar1;
   undefined1 *puVar2;
   
-  if (DAT_EXTMEM_0440 != '\0') {
+  if (XDATA_0440 != '\0') {
     bVar1 = clear_0725();
     return bVar1;
   }

@@ -18,7 +18,7 @@ void match_0820_against_0458_mode(void)
 {
   byte bVar1;
   
-  bVar1 = DAT_EXTMEM_0458 & 0x70;
+  bVar1 = XDATA_0458 & 0x70;
   if (bVar1 == 0) {
     if (DAT_EXTMEM_0820 != 'd') {
       return;

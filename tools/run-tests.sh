@@ -32,18 +32,22 @@ suites=0
 failed=0
 
 # One interpreter per FILE -- not per directory, and not one for the lot.
-# The reason is a live landmine and not a preference. Both windows/tools
-# suites install a fake ecrw into sys.modules with setdefault, and the two
-# fakes are not the same shape: test_manual_fan_ctrl_probe.py exports only
-# Ec, test_ec_watch.py exports Ec and EcError, and ec_watch.py does
-# `from ecrw import Ec, EcError`. In one shared interpreter, whichever suite
-# imports first wins that setdefault, and the other dies on
+# The reason is a live landmine rather than a preference, and it is only
+# partly defused -- read docs/findings.md §16 before changing this loop.
+#
+# The windows/tools suites used to install a fake ecrw into sys.modules with
+# setdefault, and the fakes were not the same shape; ec_validate's exported
+# only Ec, while ec_watch.py does `from ecrw import Ec, EcError`. In one
+# shared interpreter, whichever suite imported first won that setdefault, and
+# the other died on
 #   ImportError: cannot import name 'EcError' from 'ecrw' (unknown location)
-# It passes today only because discovery happens to sort test_ec_watch before
-# test_manual_fan_ctrl_probe. That is an ordering accident nothing asserts, so
-# do not "simplify" this into a single discovery run -- that is the landmine.
-# Per-directory isolation does not help either: both suites share one
-# directory. docs/findings.md §16 has the reproduction.
+#
+# test_manual_fan_ctrl_probe.py and test_ec_watch.py install
+# windows/tools/ecrw_fake.py now, one shape by assignment. test_ec_validate.py,
+# test_system_id_probe.py and test_charge_target_test.py still setdefault
+# their own fakes, so a single discovery run is still order-dependent for
+# them. Do not collapse this into one discovery run until they are moved over.
+# Per-directory isolation would not help: they all share one directory.
 #
 # Process substitution rather than a pipe, because a pipe would run the loop in
 # a subshell and the tally below would not survive back out. `sort -z` because
