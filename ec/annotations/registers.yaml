@@ -2740,25 +2740,26 @@ registers:
       work (moves 838 occurrences across 211 addresses); the reading is
       complete without it." Both describe a tool already fixed and a census
       already regenerated. The == exclusion is present: xdata_register_map.py's
-      store_target() is at :493, ASSIGN at :165, the rejection at :512-513,
-      the reason for it in the function's own comment at :503 and the 838
-      tree-wide count at :511; the module docstring states the rule in the
+      store_target() is at :505, ASSIGN at :165, the rejection at :524-525,
+      the reason for it in the function's own comment at :515-516 and the 838
+      tree-wide count at :523; the module docstring states the rule in the
       past tense at :64-75 and credits issue #178, which merged before PR
-      #225. The committed row at ec/annotations/xdata-registers.csv:663 is 14
+      #225. The committed row at ec/annotations/xdata-registers.csv:662 is 14
       read, 2 write, 0 read+write, 1 passed-to-call -- the inverse of those
       figures, not a refinement of them. The two stores are
       bank0/D281.c:18 and bank0/D289.c:17, and the passed-to-call is the
       switch_case_dispatch(XDATA_0860) call in bank0/D091.c, which is that
-      bucket rather than a read. HAND_CHECKED["0x0860"] at :347 pins those
+      bucket rather than a read. HAND_CHECKED["0x0860"] at :359 pins those
       buckets and the self-test's "hand-checked direction oracle" at
-      :1465-1477 fails if a generated row parts company with it; --check and
+      :1490-1496 fails if a generated row parts company with it; --check and
       --self-test both exit 0 on main, and the committed ORACLE comment at
-      :246-247 records named_in_tree moving 131 -> 146 with issue #180's
-      entries, which are the ones this block is about. The 7 EC-side
-      static_refs above are register_ref_table.py's opcode-site count and the
-      17 is the census's C-level occurrence count: different units, and
-      neither moves for this correction. No status moves. NOT NAMED: a
-      selector and a busy mark are shape, not units. Per-address table:
+      :258-259 records named_in_tree moving 131 -> 146 with issue #180's
+      entries, which are the ones this block is about, and 146 -> 150 with
+      issue #183's four since. The 7 EC-side static_refs above are
+      register_ref_table.py's opcode-site count and the 17 is the census's
+      C-level occurrence count: different units, and neither moves for this
+      correction. No status moves. NOT NAMED: a selector and a busy mark are
+      shape, not units. Per-address table:
       ec/annotations/xdata-086x-dispatch.md.
 
   - name: XDATA_0862

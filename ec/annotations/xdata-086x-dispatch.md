@@ -58,7 +58,7 @@ they have different denominators. The sweep counts **opcode sites**, a
 direct `MOV DPTR,#imm16` and the `movx` after it, which for `0x0860` is the
 7 EC-side sites of §8 and the `read 4 / write 2` among them. The census
 counts **C-level occurrences** of the address in the decompiled text, which
-is the `refs: 17` of `ec/annotations/xdata-registers.csv:663`. The
+is the `refs: 17` of `ec/annotations/xdata-registers.csv:662`. The
 14/2/0/1 below is the bucketing of those 17, not a rival count of the 7. The
 sweep is the right source for a **structural** claim — which routine holds a
 read or a write, and what the instruction there does — and the census is the
@@ -85,18 +85,19 @@ one carrying **per-address direction** here.
 > the same direction twice over: it describes a classifier that had already
 > been fixed, and a census that had already been regenerated.** `==` is
 > excluded. `ASSIGN` is at `ec/tools/xdata_register_map.py:165` and
-> `store_target()` at `:493`; the rejection is at `:512-513`, the reason for
-> it in the function's own comment at `:503`, and the tree-wide count of 838
-> at `:511`. The module docstring states the rule in the past tense at
+> `store_target()` at `:505`; the rejection is at `:524-525`, the reason for
+> it in the function's own comment at `:515-516`, and the tree-wide count of
+> 838 at `:523`. The module docstring states the rule in the past tense at
 > `:64-75` and credits **issue #178**, which merged before PR #225 did. Both
-> CSVs are current: the committed `ORACLE` comment at `:246-247` records
+> CSVs are current: the committed `ORACLE` comment at `:258-259` records
 > `named_in_tree` moving `131 -> 146` with issue #180's 15
-> `0x086x`/`0x1Cxx`/`0x1Fxx` entries — this very cluster's — and `--check`
-> and `--self-test` both exit 0 on `main`. `0x0400` has carried
+> `0x086x`/`0x1Cxx`/`0x1Fxx` entries — this very cluster's — and `146 -> 150`
+> with issue #183's four since. `--check` and `--self-test` both exit 0 on
+> `main`. `0x0400` has carried
 > `BAT_POWER_UNIT_0` in the census since `ec/ghidra/xdata-overrides.csv:4`
 > put it there. And the "60 ... not yet spelled" figure was already wrong
-> when it was written: `xdata-symbols.csv` holds 168 rows against
-> `named_in_tree` 146, a gap of **22**.
+> when it was written: `xdata-symbols.csv` holds 172 rows against
+> `named_in_tree` 150, a gap of **22**.
 
 **What the census says, and what pins it.** `0x0860` is **14 read, 2 write,
 0 read+write, 1 passed-to-call**. The two stores are `bank0/D281.c:18`
@@ -105,8 +106,8 @@ one carrying **per-address direction** here.
 `dispatch_on_0860` — an address handed to a call is that bucket and not a
 read, which is why the census's 14 reads are all comparisons. The row is not
 the tool's own sum: `HAND_CHECKED["0x0860"]` at
-`ec/tools/xdata_register_map.py:347` pins exactly those buckets, and the
-self-test's "hand-checked direction oracle" assertion at `:1465-1477` fails
+`ec/tools/xdata_register_map.py:359` pins exactly those buckets, and the
+self-test's "hand-checked direction oracle" assertion at `:1490-1496` fails
 loudly if a generated row ever parts company with it. It is one of five
 addresses in that oracle, and `0x0860` is the one that shows how far the
 pre-fix classifier got: the row then read 0 read / 13 `write` / 3
