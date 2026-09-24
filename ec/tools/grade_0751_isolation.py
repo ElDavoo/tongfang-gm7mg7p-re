@@ -35,6 +35,14 @@ entirely between two of `ec_watch.py`'s sweeps is in no change row at all.
 Each read has a gap the other does not close. An address one dump covers and
 the other does not is a coverage gap, never a change.
 
+Neither flag is taken on trust. A `--dump-pair` given the same file twice is
+not a bracket and is not graded: a read diffed against itself holds every
+byte equal by construction. And §4.6 is a coverage statement before it is a
+comparison -- when the last `--dump` does not cover `0x0751` the section says
+the readback was not taken, and names a `--dump-pair` that does cover it,
+whose after file is what §6 says to pass last. Neither check is a claim about
+the machine; both are claims about which files were handed in.
+
 **This is not the §7 call and cannot be.** §7 moves `MANUAL_FAN_CTRL` off
 `present-untested` on fan PWM or package power moving under a fixed load.
 Those bytes are captured and printed here, but printing them is not grading
@@ -62,6 +70,7 @@ Usage:
 import argparse
 import csv
 import datetime
+import os
 import sys
 
 MANUAL_FAN_CTRL = 0x0751
@@ -256,7 +265,20 @@ def report_window(w, n, total):
     return moved
 
 
-def report_dumps(dumps, wrote):
+def report_dumps(dumps, wrote, pairs):
+    """0x0751 in each --dump, and what the last of them says about §4.6.
+
+    Coverage is stated before anything is compared. A run may hand in dumps
+    that do not reach the address at all, and `--wrote` is optional, so "the
+    readback was not taken" has to be a line of its own: without it a run
+    whose last dump stops short of `0x0751` ends the section looking exactly
+    like a run where the check was taken and the answer held.
+
+    A pair is named only when both of its files cover the address -- the same
+    intersection `report_dump_pairs` compares under. A pair whose before-dump
+    alone reaches `0x0751` cannot become a readback, and pointing at one
+    would send the operator after a byte that is not there.
+    """
     print("\n=== 0x0751 across the dumps (§4.6) ===")
     if not dumps:
         print("  no dump given (--dump); §4.6 not checked")
@@ -267,6 +289,18 @@ def report_dumps(dumps, wrote):
             print(f"  {path}: 0x{MANUAL_FAN_CTRL:04X} not covered by this dump")
         else:
             print(f"  {path}: 0x{MANUAL_FAN_CTRL:04X} = 0x{v:02X}")
+    if dumps[-1][1].get(MANUAL_FAN_CTRL) is None:
+        print(f"  the last --dump does not cover 0x{MANUAL_FAN_CTRL:04X}, so "
+              "the §4.6 readback was not taken -- nothing here says what the "
+              "byte held after the write")
+        for before_path, after_path, before, after in pairs:
+            if MANUAL_FAN_CTRL in set(before) & set(after):
+                print(f"    a --dump-pair does cover it: {before_path} -> "
+                      f"{after_path}; both files reach "
+                      f"0x{MANUAL_FAN_CTRL:04X}")
+                print(f"      pass the after file as the last --dump to take "
+                      f"the readback: {after_path}")
+                break
     if wrote is None:
         return
     last = dumps[-1][1].get(MANUAL_FAN_CTRL)
@@ -301,13 +335,32 @@ def report_dump_pairs(pairs):
     the §4.4/§4.5 context bytes printed and not graded, then everything else
     named for the human. No third category -- a byte's membership in one
     bucket is the same question here as it is per window.
+
+    Returns how many pairs were actually compared, so the closing summary
+    cannot report a whole-block read for a run that took none.
     """
     print("\n=== whole-block dump pairs (§4.1-§4.3) ===")
     if not pairs:
         print("  no dump pair given (--dump-pair); the whole-block read is not "
               "checked")
-        return
+        return 0
+    graded = 0
     for before_path, after_path, before, after in pairs:
+        if os.path.realpath(before_path) == os.path.realpath(after_path):
+            # Path identity, not the before-/after- naming: a pair is whatever
+            # the operator says it is, and the same file twice is the one
+            # input error this flag cannot see on its own. Grading it would
+            # print "unchanged" for every address, which is a true statement
+            # about nothing -- the file agrees with itself by construction.
+            # Flagged and skipped rather than fatal, so the window report and
+            # the §4.6 readback the operator also needs still get printed.
+            print(f"\n  {before_path} -> {after_path}")
+            print("    both sides are the same file, so this pair is not "
+                  "graded: a read compared with itself proves nothing. Pass "
+                  "the before and after dumps of one range as two different "
+                  "files.")
+            continue
+        graded += 1
         common = sorted(set(before) & set(after))
         moved = [a for a in common if before[a] != after[a]]
         print(f"\n  {before_path} -> {after_path}, {len(common)} address(es) "
@@ -368,6 +421,7 @@ def report_dump_pairs(pairs):
           "captures recorded the move, and a byte that moves entirely "
           "between two of ec_watch.py's sweeps is in no change row at all. "
           "Neither gap is closed by the other read.")
+    return graded
 
 
 def main(argv=None):
@@ -380,9 +434,11 @@ def main(argv=None):
     ap.add_argument("--dump-pair", action="append", nargs=2, default=[],
                     metavar=("BEFORE", "AFTER"),
                     help="one range's ecrw.py dump before/after pair, as §3's "
-                         "steps 0 and 6 take it; repeat per range. Read for "
-                         "the whole-block report and independent of --dump, "
-                         "whose §4.6 readback still comes from the last one")
+                         "steps 0 and 6 take it; repeat per range, and never "
+                         "the same file twice -- a pair read against itself "
+                         "proves nothing and is not graded. Read for the "
+                         "whole-block report and independent of --dump, whose "
+                         "§4.6 readback still comes from the last one")
     ap.add_argument("--wrote", help="the value written to 0x0751 (e.g. 0xA0)")
     args = ap.parse_args(argv)
 
@@ -408,15 +464,16 @@ def main(argv=None):
     for i, w in enumerate(windows, 1):
         any_moved |= report_window(w, i, len(windows))
 
+    # Both file lists are read before either is printed, so §4.6 can name a
+    # --dump-pair that covers 0x0751 while it is saying the readback was not
+    # taken. The print order is unchanged and is the one §6 documents: the
+    # per-window read, then 0x0751 across the dumps, then the whole-block
+    # bracket on the same §4.1-§4.3 bytes.
     dumps = [(p, read_dump(p)) for p in args.dump]
-    report_dumps(dumps, wrote)
-
-    # After the §4.6 readback, so the section order stays the one §6
-    # documents: the per-window read, then 0x0751 across the dumps, then the
-    # whole-block bracket on the same §4.1-§4.3 bytes.
     pairs = [(b, a, read_dump(b), read_dump(a))
              for b, a in args.dump_pair]
-    report_dump_pairs(pairs)
+    report_dumps(dumps, wrote, pairs)
+    graded_pairs = report_dump_pairs(pairs)
 
     print("\n=== what this does and does not settle ===")
     if any_moved:
@@ -430,7 +487,7 @@ def main(argv=None):
               "with the static prediction, for this capture's window only "
               "(§5: a byte that does not move inside the window may still "
               "move at the next suspend, AC transition or EC reset).")
-    if pairs:
+    if graded_pairs:
         print("  The whole-block dump pairs above were read as a second, "
               "wider bracket on the same §4.1-§4.3 bytes. That is two "
               "brackets, not two results: each has a gap the other does not "

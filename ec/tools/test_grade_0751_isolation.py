@@ -428,6 +428,100 @@ class GradeTests(unittest.TestCase):
         self.assertIn('The whole-block dump pairs above were read as a '
                       'second, wider bracket', out)
 
+    # The one input error --dump-pair cannot detect on its own: both paths the
+    # same file. Every address is then equal by construction, so "unchanged
+    # across the block" is a true statement about nothing -- a bracket that is
+    # not a bracket. Flagged loudly, and the pair contributes no whole-block
+    # read at all.
+    def test_a_dump_pair_of_one_file_with_itself_is_not_a_whole_block(self):
+        rc, out, _ = run(*RUN_CAPTURES,
+                         '--dump-pair', RUN_BEFORE, RUN_BEFORE)
+        self.assertEqual(rc, 0)
+        section = out.split('=== whole-block dump pairs (§4.1-§4.3) ===')[1]
+        section = section.split('=== what this does and does not settle')[0]
+        # Named and flagged, so the operator can see which pair was dropped
+        # rather than finding a missing bucket and guessing.
+        self.assertIn(f'{RUN_BEFORE} -> {RUN_BEFORE}', section)
+        self.assertIn('both sides are the same file', section)
+        # No per-bucket output for that pair: not a compared count, and not
+        # one "unchanged" line a reader could take for §4.1 or §4.3.
+        self.assertNotIn('address(es) compared', section)
+        self.assertNotIn('unchanged across the block', section)
+        self.assertNotIn('not covered by this pair', section)
+        # And the closing summary does not report a read that was not taken.
+        self.assertNotIn('The whole-block dump pairs above were read', out)
+
+        # Per pair, not a refusal: the real 0F00 pair in the same run is
+        # graded exactly as before. Checked in its own run, because a
+        # notIn over this one would trip on the genuine pair.
+        rc, out, _ = run(*RUN_CAPTURES,
+                         '--dump-pair', RUN_BEFORE, RUN_BEFORE,
+                         '--dump-pair', RUN_BEFORE_0F00, RUN_AFTER_0F00)
+        self.assertEqual(rc, 0)
+        self.assertIn('both sides are the same file', out)
+        self.assertIn('96 address(es) compared', out)
+        self.assertIn('fan table (§4.2): unchanged across the block', out)
+        self.assertIn('The whole-block dump pairs above were read', out)
+
+    # §6's own `rem` says the 0x0700 after-dump has to stay the last --dump,
+    # and says why: the 0x0F00 range does not cover 0x0751. Putting those two
+    # files there instead is a tidy mistake, and the section used to end after
+    # two "not covered by this dump" lines -- indistinguishable in shape from a
+    # run where the readback was taken and the answer held.
+    def test_readback_is_not_taken_when_the_last_dump_covers_no_0751(self):
+        rc, out, _ = run(*RUN_CAPTURES,
+                         '--dump', RUN_BEFORE_0F00, '--dump', RUN_AFTER_0F00,
+                         '--dump-pair', RUN_BEFORE, RUN_AFTER,
+                         '--dump-pair', RUN_BEFORE_0F00, RUN_AFTER_0F00,
+                         '--wrote', '0xA0')
+        self.assertEqual(rc, 0)
+        section = out.split('=== 0x0751 across the dumps (§4.6) ===')[1]
+        section = section.split('=== whole-block dump pairs')[0]
+        self.assertIn('§4.6 readback was not taken', section)
+        # The tool is already holding a pair that covers the address, and says
+        # which file of it to pass -- §6's ordering rule, now enforced rather
+        # than only written down in a comment the operator has to read right.
+        self.assertIn(f'{RUN_BEFORE} -> {RUN_AFTER}', section)
+        self.assertIn(f'pass the after file as the last --dump', section)
+        self.assertIn(RUN_AFTER, section)
+        # No answer is reported for a readback that never happened.
+        self.assertNotIn('the last dump still holds the written 0xA0', section)
+        self.assertNotIn('the last dump holds', section)
+
+    # The branch past the ordering mistake: nothing in the run covers 0x0751,
+    # so there is no pair to name. The notice is a coverage fact and fires on
+    # the dumps alone -- no --wrote, no --dump-pair, same line.
+    def test_readback_not_taken_when_nothing_here_covers_0751(self):
+        rc, out, _ = run(*RUN_CAPTURES,
+                         '--dump', RUN_BEFORE_0F00, '--dump', RUN_AFTER_0F00)
+        self.assertEqual(rc, 0)
+        section = out.split('=== 0x0751 across the dumps (§4.6) ===')[1]
+        section = section.split('=== whole-block dump pairs')[0]
+        self.assertIn('§4.6 readback was not taken', section)
+        self.assertNotIn('a --dump-pair does cover it', section)
+
+    # A pair whose before-dump alone reaches 0x0751 is not named. The readback
+    # is taken from a --dump and the after file is the one that can become
+    # one, so naming that pair would point at a byte the operator's last
+    # --dump cannot hold. Same intersection report_dump_pairs compares under,
+    # on a shape no §6 pair has: each of those is one range, both dumps the
+    # same length.
+    def test_a_pair_whose_before_alone_covers_0751_is_not_named(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            before = Path(tmp) / 'before-0700.txt'
+            before.write_text('0750: 00 a0 02 03 04 05 06 07\n')
+            after = Path(tmp) / 'after-0f00.txt'
+            after.write_text('0f00: 00 01 02 03\n')
+            rc, out, _ = run(QUIET, '--dump', str(after),
+                             '--dump-pair', str(before), str(after))
+        self.assertEqual(rc, 0)
+        section = out.split('=== 0x0751 across the dumps (§4.6) ===')[1]
+        section = section.split('=== whole-block dump pairs')[0]
+        # The readback is still reported as not taken; only the "here is the
+        # pair to use" clause is withheld, because no pair here can be one.
+        self.assertIn('§4.6 readback was not taken', section)
+        self.assertNotIn('a --dump-pair does cover it', section)
+
     # §6's list and the fixture set are the same set. Equality, not existence:
     # a name changed on one side and not the other, and a stray file, both have
     # to fail rather than quietly pass on a subset.
