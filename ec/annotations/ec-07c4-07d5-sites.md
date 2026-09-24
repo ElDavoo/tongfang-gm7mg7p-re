@@ -514,4 +514,12 @@ issue asks for the walk, not for a new test.
   own them. The service writes `0x07C5` bit 4, not bit 5, and this file
   does not answer that.
 - **`0x07D6` (`DBSP`) and `0x07D7` (`CGCT`).** Left to the census pass;
-  this walk turned up nothing concrete about either.
+  this walk turned up nothing concrete about either. **Superseded 2026-09-24
+  (issue #282):** [`ec-07d6-07d7-sites.md`](ec-07d6-07d7-sites.md) walks both,
+  along with the companion `0x07C7`/`0x07C8`. "Nothing concrete" was right
+  about this walk, which is a *main-EC* one: all 213 of their direct `MOV
+  DPTR` sites are in the ITE8850-PD image and none is in the EC firmware. The
+  concrete part is on the other side of the boundary — `0x07D7` has a decoded
+  ASL writer (`T1WR`'s `Arg0 == 0x1176`, `dsdt.dsl:50730-50733`) and `0x07D6`
+  has no ASL site at all, which is why all four are graded
+  `unknown-not-absent` rather than `present-untested`.
