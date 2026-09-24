@@ -11,10 +11,9 @@ bash tools/run-tests.sh
 
 Every `test_*.py` under the repository, found by `find` — not a hardcoded list,
 so a suite in a directory that does not exist yet is picked up by having its
-file committed. There are sixteen today, 394 tests in all — main's 355, then
-`test_xdata_cluster_names.py`'s 27 and twelve more in
-`test_check_cluster_citations.py` — and each is a `unittest` suite standing in
-for a tool's own behaviour:
+file committed. There are seventeen today, 432 tests in all — the count is
+what the runner below prints, one line per suite — and each is a `unittest`
+suite standing in for a tool's own behaviour:
 
 | suite | what it stands in for |
 |---|---|
@@ -26,8 +25,9 @@ for a tool's own behaviour:
 | `ec/tools/test_grade_timer_sweep.py` | `ec/tools/grade_timer_sweep.py`, the grader of the `0x8001` counter-sweep capture: its before/after-return lists re-read from the firmware image, the `0x06D6` period and the 10x rate ratio on a constructed clean capture, a flat capture reported as held rather than absent, a second writer flagged, an unresolved step warned, and a suspend gap left out of the figures and counted mod 10 |
 | `ec/tools/test_walk_branch_arms.py` | `ec/tools/walk_branch_arms.py`'s direction classification, bounds, refusals, and negative-result wording |
 | `ec/tools/test_xdata_cluster_names.py` | `ec/tools/xdata_register_map.py`'s cluster identity: the `cluster_key` content hash, the `cluster_name` carry across a regeneration, `--map`, and the settling test that a cited cluster still resolves to the membership the prose describes |
-| `windows/tools/test_manual_fan_ctrl_probe.py` | the fan-mode probe's two-arm byte script, its read-safety guard under `--level-block`, the mark rows its `--csv` capture lands, and that capture read back through the real `ec/tools/grade_0751_isolation.py` reader |
-| `windows/tools/test_ec_watch.py` | the mark-CSV sweep and the mark landing between two change rows |
+| `windows/tools/test_manual_fan_ctrl_probe.py` | the fan-mode probe's two-arm byte script, its read-safety guard under `--level-block`, the mark rows its `--csv` capture lands, that capture read back through the real `ec/tools/grade_0751_isolation.py` reader, and `--block`: the seven runs the watch set decomposes into, that the block path reports exactly what the byte path does, that only the mode byte is left to a point read, and the 56/61 figures the banner and the self-test quote |
+| `windows/tools/test_ec_watch.py` | the mark-CSV sweep and the mark landing between two change rows, plus `--block`: that it sweeps through `readmany`, that the flag is off by default, that the banner says the path is unverified, and that a range covering the fan-tach page is warned about rather than refused |
+| `windows/tools/test_ecrw.py` | the real `ecrw.py`, on a fake `ctypes.WinDLL` standing in for kernel32: the `MMRD` IOCTL's little-endian physical address, the aligned-block decomposition of a range, the probe watch set's 56-IOCTL cost against the 52 a `206/4` suggests, the window's last in-window dword, an unaligned start's discarded lead, `dump --block` printing what the byte path prints, and the per-byte path's buffer byte for byte as it always was |
 | `windows/tools/test_ec_validate.py` | the `ec_validate.py` `0x0436` capacity arm's exact-copy scoring, full-capacity bound, CSV, and `0x0400-0x045F` page assertion |
 | `windows/tools/test_system_id_probe.py` | the `0x0456` probe's `store_scaled_quotient_0449` arithmetic, its branch labels, its address guard, and that it has no write path |
 | `windows/tools/test_charge_target_test.py` | the charge-target tool's three refusals, the restore in its `finally`, and its CSV column set |
@@ -39,7 +39,10 @@ for a tool's own behaviour:
 the offline stand-in for the `ecrw` module, installed by
 `test_manual_fan_ctrl_probe.py`, `test_ec_watch.py`, `test_gpu_block_watch.py`
 and `test_ctgp_dben_probe.py`, and the `test_*.py` pattern above does not pick
-it up, so it costs no suite count.
+it up, so it costs no suite count. `windows/tools/test_ecrw.py` is the odd one
+out and installs nothing: it puts a fake `ctypes.WinDLL` in front of the real
+`ecrw.py`, because a suite that only ever exercises the fake is not testing
+the file whose arithmetic #147 is about.
 
 Named directories run alone, which is what to reach for when editing one tool:
 

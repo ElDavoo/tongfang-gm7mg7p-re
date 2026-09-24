@@ -109,7 +109,7 @@ a `--start` that walks into the next page is stopped by the tool rather than
 by this paragraph. That is why the guard is in the tool: a range flag is not
 prose.
 
-**Six ECRR reads per sweep.** `ecrw.Ec.read` (`../../windows/tools/ecrw.py:115`)
+**Six ECRR reads per sweep.** `ecrw.Ec.read` (`../../windows/tools/ecrw.py:135`)
 is one `ECRR` `DeviceIoControl` per byte with nothing between calls, and
 `../related-projects.md` records the same mechanism stalling the fans on a
 sibling board, where the OEM software and `uniwill-laptop` sleep 6 ms after

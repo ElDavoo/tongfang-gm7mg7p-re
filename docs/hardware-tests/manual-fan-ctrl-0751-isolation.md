@@ -148,7 +148,7 @@ end of a capture, and **a mark after the watcher has exited is written
 nowhere.** A block whose final mark lands late is void; redo it. The check is
 mechanical, not a matter of remembering: `ec_watch.py` prints
 `=== N sweeps over Ms` and then every mark it recorded when it stops
-(`../../windows/tools/ec_watch.py:176`), so the last label in that list is the
+(`../../windows/tools/ec_watch.py:221`), so the last label in that list is the
 last mark the capture has. If it is not the restore, the block is short one.
 
 The `0x0400-0x045F` watcher is the EC's own temperature reading: `0x043E` is
@@ -169,12 +169,23 @@ nameable or accounted for.
 **Three concurrent watchers put more `ECRR` traffic on the bus than any run
 before this one, and this is the only one held under a fixed load.** The
 arithmetic is worth having in front of you: `ecrw.Ec.read`
-(`../../windows/tools/ecrw.py:115`) is one `ECRR` `DeviceIoControl` per byte
+(`../../windows/tools/ecrw.py:135`) is one `ECRR` `DeviceIoControl` per byte
 with nothing between calls, and `ec_watch.py` reads every address in its range
-once per sweep (`addrs`, `../../windows/tools/ec_watch.py:123`) with
-`--interval` slept between sweeps (`ec_watch.py:149`), not between bytes. So
+once per sweep (`addrs`, `../../windows/tools/ec_watch.py:147`) with
+`--interval` slept between sweeps (`ec_watch.py:193`), not between bytes. So
 one sweep of each of the three watchers is `0x100 + 0x60 + 0x60 = 448` ECRR
 reads, all three running at once, for as long as the block runs.
+**448 is what this section's commands above do today, and it is what the
+numbers quoted in the tool's own docstring mean.** The commands have no
+`--block`, and the flag is off by default: issue #147 added a four-bytes-per-
+IOCTL path to `ec_watch.py` and `ecrw.py` and left the per-byte read as what
+these watchers do. If a run is taken with `--block` instead, the same three
+ranges are `0x100/4 + 0x60/4 + 0x60/4 = 112` IOCTLs — all three ranges are
+whole numbers of aligned 4-byte blocks — and that is a *call count*, not a
+statement that the traffic is safe: the path has never been run against the
+driver, and the one comparison a human can make is written out in
+`../../windows/tools/manual_fan_ctrl_probe.py`'s docstring. Quote 448 for the
+run as written, 112 only for a `--block` run, and neither as a safety claim.
 `../../docs/related-projects.md` records the same mechanism stalling the fans
 on a sibling board, where the OEM software sleeps 6 ms after every EC access,
 and says to avoid bulk sweeps under load — which is the condition this run

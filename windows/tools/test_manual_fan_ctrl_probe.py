@@ -80,19 +80,34 @@ class FakeEc:
 
     `addrs` is the set the run was asked for, because --level-block makes the
     watch set a runtime choice and this closes its sweeps on whichever address
-    that choice ends at.
+    that choice ends at. `block` moves that boundary: --block reads the set as
+    ascending runs, so the address the sweep closes on is the set's highest
+    rather than the last of the list, and a fake that kept the list order would
+    advance the script one address early and fail as wrong values.
+
+    `readmany` is the --block path's, and it is a whole run rather than four
+    bytes: the per-address path underneath is the byte path's, with the bytes
+    a block covered but the set did not ask for skipped, so both paths see the
+    same values and the same sweep boundaries.
     """
 
-    def __init__(self, orig=ORIG, boom_at=None, addrs=None):
+    def __init__(self, orig=ORIG, boom_at=None, addrs=None, block=False):
         self.mode = orig
         self.writes = []        # (addr, value) in order, restore last
         self.writes_at = []     # bytes already read when each write landed
         self.reads = 0
         self.boom_at = boom_at
+        self.blocks = []        # (start, length) per readmany call
+        self.point_reads = []   # addresses that came through read() alone
+        self._addrs = set(addrs if addrs is not None else probe.ALL)
         self._sweep = 0         # within the current arm
-        self._last = (addrs if addrs is not None else probe.ALL)[-1]
+        self._last = max(self._addrs) if block else probe.ALL[-1]
 
     def read(self, addr):
+        self.point_reads.append(addr)
+        return self._read(addr)
+
+    def _read(self, addr):
         if self.boom_at is not None and self.reads == self.boom_at:
             raise RuntimeError("observation failed mid-run")
         if addr == self._last:
@@ -105,6 +120,11 @@ class FakeEc:
             return 0x00
         arm = values[0] if len(self.writes) < 2 else values[1]
         return arm[min(self._sweep, len(arm) - 1)]
+
+    def readmany(self, start, length):
+        self.blocks.append((start, length))
+        return {a: self._read(a) for a in range(start, start + length)
+                if a in self._addrs}
 
     def write(self, addr, val):
         self.writes.append((addr, val))
@@ -154,7 +174,8 @@ class ProbeTests(unittest.TestCase):
     def run_probe(self, argv=('0xA0', '30'), ec=None, clock=None, **kw):
         argv = list(argv)
         ec = ec if ec is not None else FakeEc(
-            addrs=probe.watch_set('--level-block' in argv), **kw)
+            addrs=probe.watch_set('--level-block' in argv),
+            block='--block' in argv, **kw)
         clock = clock if clock is not None else Clock()
         out = io.StringIO()
         with patch.object(probe, 'Ec', lambda: ec), \
@@ -511,6 +532,92 @@ class ProbeTests(unittest.TestCase):
         code, out = self.run_self_test()
         self.assertEqual(code, 0)
         self.assertNotIn("not in the vendor set", out)
+
+    # 12. --block (#147). Opt-in, and the default run is the one the committed
+    #     #99/#122 captures were taken with, so "the flag is off" is the first
+    #     thing to hold.
+    def test_the_block_path_is_opt_in(self):
+        ec, _ = self.run_probe()
+        self.assertEqual(ec.blocks, [])
+
+    def test_block_sweeps_through_readmany(self):
+        ec, _ = self.run_probe(argv=('0xA0', '--block'))
+        # The seven runs the default set decomposes into, 0x0400's temperature
+        # range first. Written out rather than recomputed with the function
+        # under test, so a drift in the decomposition fails here.
+        self.assertEqual(ec.blocks[:7], [
+            (0x0400, 0x60), (0x0743, 4), (0x0751, 1), (0x075B, 2),
+            (0x0783, 5), (0x07C5, 2), (0x0F00, 0x60)])
+        # Every sweep is those seven again, so the count has to divide by them
+        # -- and one of those sweeps is 56 blocks, which is the figure the
+        # banner quotes.
+        self.assertGreater(len(ec.blocks), 7)
+        self.assertEqual(len(ec.blocks) % 7, 0)
+        self.assertEqual(probe.block_ioctls(probe.watch_set()), 56)
+
+    def test_block_reports_the_same_movement_as_the_byte_path(self):
+        # The two paths have to produce the same report or a capture reads
+        # differently depending on a flag, which is the one thing a default-off
+        # optimisation is not allowed to do. Compared whole, from the control
+        # arm's label on: everything before that is the banner, and the banner
+        # is where the two runs are *meant* to differ.
+        def report(out):
+            return out[out.index("no-op wrote"):]
+
+        _, plain = self.run_probe()
+        _, blocked = self.run_probe(argv=('0xA0', '--block'))
+        self.assertEqual(report(blocked), report(plain))
+        self.assertIn("0x075B: 0x10 -> 0x30 (2 changes)", report(blocked))
+
+    def test_block_still_restores_and_still_brackets_the_write(self):
+        ec, out = self.run_probe(argv=('0xA0', '--block'))
+        self.assertEqual(ec.writes,
+                         [(0x0751, ORIG), (0x0751, TARGET), (0x0751, ORIG)])
+        self.assertIn("no-op wrote 0x0751=0x10", out)
+        self.assertIn("wrote 0x0751=0xA0", out)
+
+    def test_block_leaves_the_mode_byte_to_the_point_read(self):
+        # `read` is not gone with --block: the original and the restore
+        # readback are point reads of one byte, and they are the only reads
+        # left outside the sweeps. A flag that swept the mode byte through a
+        # block would change what the EC sees around the write for no gain.
+        ec, _ = self.run_probe(argv=('0xA0', '--block'))
+        self.assertEqual(ec.point_reads, [probe.MODE, probe.MODE])
+
+    def test_without_block_every_swept_byte_is_a_point_read(self):
+        ec, _ = self.run_probe()
+        self.assertEqual(set(ec.point_reads), set(probe.ALL) | {probe.MODE})
+
+    def test_the_block_banner_names_both_figures_and_the_unverified_path(self):
+        _, out = self.run_probe(argv=('0xA0', '--block'))
+        # 56 against 206, and the honest part: the path has never met the
+        # driver, and the flag is not the thing that makes a run safe (#94 is).
+        self.assertIn("56 MMRD IOCTLs per sweep instead of 206 ECRR reads",
+                      out)
+        self.assertIn("never been run against the driver", out)
+
+    def test_no_block_banner_without_the_flag(self):
+        _, out = self.run_probe()
+        self.assertNotIn("MMRD IOCTLs per sweep", out)
+
+    def test_block_widens_with_the_level_block_to_61(self):
+        ec, out = self.run_probe(argv=('0xA0', '--level-block', '--block'))
+        self.assertIn("61 MMRD IOCTLs per sweep instead of 222 ECRR reads", out)
+        self.assertIn((0x0860, 15), ec.blocks)
+        self.assertIn((0x06E6, 1), ec.blocks)
+
+    def test_the_self_test_checks_the_block_arithmetic(self):
+        # 56 and 61 are figures the docstring quotes, so the self-test a human
+        # can run without a driver is where they are pinned; the run passing
+        # means both held.
+        code, out = self.run_self_test()
+        self.assertEqual(code, 0)
+        self.assertIn("not the 52 a contiguous 206 would give", out)
+
+    def test_the_self_test_checks_no_block_reaches_the_fan_tach_page(self):
+        code, out = self.run_self_test()
+        self.assertEqual(code, 0)
+        self.assertIn("no block of either set covers a fan-tach byte", out)
 
 
 if __name__ == '__main__':
