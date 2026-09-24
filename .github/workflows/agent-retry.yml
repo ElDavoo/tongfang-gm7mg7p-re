@@ -48,7 +48,12 @@ name: Agent · retry
 # environment, and every later one checks it. That is an env var rather than chained step ids so
 # a repository can add a queue step of its own without threading its id through all the others.
 
-on:
+# workflow_run is a wake-up here, not an input. The job reads one field of the run that woke it
+# -- whether it was skipped -- and checks out no code, downloads no artifact and interpolates no
+# event field into a script: it re-reads the repository through the API exactly as the hourly
+# tick does. A run that a fork's pull request set off therefore buys an extra sweep and nothing
+# else, and the `agent-retry` group below folds a burst of them into one pending run.
+on:  # zizmor: ignore[dangerous-triggers]
   schedule:
     - cron: '0 * * * *'
   push:
