@@ -109,9 +109,29 @@ including `ECRR`/`ECRW`, an EC register read/write pair addressed by
 `0xFE410000 + addr`. `tools/pe_triage.py` and `tools/disasm.sh` regenerate
 every number in those write-ups.
 
+## Talking to the EC from Windows
+
+`tools/ecrw.py` is the raw door: `read`, `dump` and a guarded `write` over the
+vendor driver's own `ECRR`/`ECRW` IOCTLs, one byte per call. `tools/ec_watch.py`
+sweeps a range of it and reports what moved while you do something else in the
+vendor UI, with `--mark` rows so the capture says when you acted. Both need the
+physical machine, an elevated shell and the vendor driver present — nothing
+below has been run from the pipeline that wrote it.
+
+`tools/gpu_block_watch.py` is a third, and it is the narrow one: it watches
+`0x07C4`-`0x07D7` and `0x0743`-`0x0746` — the two GPU blocks `docs/findings.md`
+§4o leaves in a clobber hazard — **in one sweep, one CSV and one clock**, because
+the question is which of the two moves first and two files with two start times
+cannot answer it. It has no write path at all, and it prints its per-address
+citation table (DSDT field name, current `registers.yaml` `status:`) before it
+opens anything, so a capture records what it watched. Its procedure is
+`../docs/hardware-tests/gpu-tgp-07c4-07d7-door.md`; that procedure is **written
+and not run** — the attribution half of it, which process opened which door, is
+the step no cloud agent can take.
+
 ## Offline tests
 
-Five of the tools carry offline `unittest` suites, and all of them run from
+Six of the tools carry offline `unittest` suites, and all of them run from
 Linux with no Windows box, no EC and no vendor code:
 
 ```sh
@@ -127,12 +147,16 @@ one-directional exact-copy scoring, its full-capacity bound, its CSV, and the
 `tools/test_charge_target_test.py` runs the charge-target tool's three
 refusals, the restore in its `finally`, and its CSV columns — the branches
 `docs/findings.md` §4m's committed artifacts never exercise, since all three
-live runs took the write path. (`tools/test_system_id_probe.py` covers the
-`0x0456` probe; `../tools/README.md` lists it.) All of them work by faking
+live runs took the write path. `tools/test_gpu_block_watch.py` checks the
+watcher's citation table against the DSDT and `ec/annotations/registers.yaml`
+— so a field rename or a status change there turns the suite red rather than
+letting the table rot — and pins that a mark reaches the CSV in the same
+schema. (`tools/test_system_id_probe.py` covers the `0x0456` probe;
+`../tools/README.md` lists it.) All of them work by faking
 `ecrw` — the module binds kernel32 at import time and only loads on Windows —
 which is also what makes the arms scriptable; the charge-target suite fakes the
-`powershell` call behind its WMI line as well. The probe and `ec_watch` suites
-use the shared `tools/ecrw_fake.py`; the other three still carry fakes of their
+`powershell` call behind its WMI line as well. The probe, `ec_watch` and GPU-block
+suites use the shared `tools/ecrw_fake.py`; the other three still carry fakes of their
 own. `../tools/README.md` is the canonical home for the command, and records
 why the runner gives each suite its own interpreter: until those three are
 moved onto the shared fake, a single discovery over this directory is

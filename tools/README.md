@@ -11,7 +11,7 @@ bash tools/run-tests.sh
 
 Every `test_*.py` under the repository, found by `find` — not a hardcoded list,
 so a suite in a directory that does not exist yet is picked up by having its
-file committed. There are eight today, 138 tests in all, and each is a `unittest`
+file committed. There are nine today, 159 tests in all, and each is a `unittest`
 suite standing in for a tool's own behaviour:
 
 | suite | what it stands in for |
@@ -23,12 +23,14 @@ suite standing in for a tool's own behaviour:
 | `windows/tools/test_ec_validate.py` | the `ec_validate.py` `0x0436` capacity arm's exact-copy scoring, full-capacity bound, CSV, and `0x0400-0x045F` page assertion |
 | `windows/tools/test_system_id_probe.py` | the `0x0456` probe's `store_scaled_quotient_0449` arithmetic, its branch labels, its address guard, and that it has no write path |
 | `windows/tools/test_charge_target_test.py` | the charge-target tool's three refusals, the restore in its `finally`, and its CSV column set |
+| `windows/tools/test_gpu_block_watch.py` | the GPU-block watcher's citation table against `evidence/acpi/dsdt.dsl` and `ec/annotations/registers.yaml`, its watch set, and its mark reaching the CSV |
 | `linux/lightbar/test_probe_6005.py` | the lightbar probe's ioctl encoding, dry run, and off-after-failure |
 
 `windows/tools/ecrw_fake.py` is a shared fixture rather than a suite — it is
 the offline stand-in for the `ecrw` module, installed by
-`test_manual_fan_ctrl_probe.py` and `test_ec_watch.py`, and the `test_*.py` pattern above does not pick it up, so it costs no suite
-count.
+`test_manual_fan_ctrl_probe.py`, `test_ec_watch.py` and
+`test_gpu_block_watch.py`, and the `test_*.py` pattern above does not pick it
+up, so it costs no suite count.
 
 Named directories run alone, which is what to reach for when editing one tool:
 
@@ -55,8 +57,8 @@ the winner lacks died with `ImportError: cannot import name 'EcError' from
 
 **Issue #186 reconciled the two fakes that existed when it was written:**
 `windows/tools/ecrw_fake.py` carries `Ec` and `EcError` over the real module's
-whole surface, and `test_manual_fan_ctrl_probe.py` and `test_ec_watch.py`
-`install()` it (by assignment, not `setdefault`). Three suites that landed in
+whole surface, and `test_manual_fan_ctrl_probe.py`, `test_ec_watch.py` and
+(since its merge) `test_gpu_block_watch.py` `install()` it (by assignment, not `setdefault`). Three suites that landed in
 parallel with it — `test_ec_validate.py` (`Ec` only), `test_system_id_probe.py`
 and `test_charge_target_test.py` (`Ec` and their own `EcError`) — still install
 their own fakes with `setdefault`, so a single discovery run over
@@ -74,7 +76,7 @@ load-bearing, not only insurance.
   deferral.
 - **No hardware, and no evidence of any.** Every suite is offline by
   construction: device discovery, file opening and ioctls are mocked against
-  hand-built fixtures, and the three `windows/tools` suites fake `ecrw` — and,
+  hand-built fixtures, and the `windows/tools` suites fake `ecrw` — and,
   for the charge-target tool, the `powershell` call behind its WMI line —
   precisely so no Windows box is needed. No EC is opened, no register is read
   back, and no HID node is touched. `linux/lightbar/README.md` and each suite's

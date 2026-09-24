@@ -1508,6 +1508,21 @@ rather than closing on it:
   a TGP or Dynamic Boost change, and an EC trace across the same change.
   That is the only route left to the caller if it is not in the committed
   inputs, and it is the step no cloud agent can take.
+  *(2026-09-24, issue #184. That issue is open and the procedure it asked
+  for is committed at
+  `docs/hardware-tests/gpu-tgp-07c4-07d7-door.md`, beside
+  `manual-fan-ctrl-0751-isolation.md`: an observe-only one-clock watcher of
+  `0x07C4`-`0x07D7` together with `0x0743`-`0x0746`
+  (`windows/tools/gpu_block_watch.py`), a written ProcMon/`\\.\ACPIDriver`
+  `IOCTL`-code attribution half keyed on the two door codes the committed
+  inputs already name — `0x9C40A4DC` (`T1WR`), which is in this section's
+  own term list, and `0x9C40A48C` (`ECRW`), which is what
+  `windows/tools/ecrw.py` opens every byte through — a blank result table,
+  and a per-address citation list checked against the DSDT and
+  `registers.yaml` by `windows/tools/test_gpu_block_watch.py`. **The
+  observation is still not made** — it needs the physical machine, which no
+  cloud agent has. The issue stays open for that reason and not because the
+  preparation is missing.)*
 - A register census for `0x07C4`-`0x07D7` (`DBEN`/`DBST`, `DBD1`/`DBD2`,
   `GFID`, `CPUA`/`DBAP`/`DBSP`/`CGCT`) in the shape this section gives
   `0x07D0`: which of the two GPU blocks the host writes, which ACPI reads
