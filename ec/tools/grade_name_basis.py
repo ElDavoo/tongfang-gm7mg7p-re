@@ -458,11 +458,25 @@ def check_register_map(row):
     The name, not the comment: a comment may *discuss* a decoded bit while
     the name itself is shape-only, and grading the row on the comment would
     make a register-map grade unfalsifiable -- the comment is prose and
-    almost always mentions one somewhere."""
+    almost always mentions one somewhere.
+
+    **The cited value has to be 8-bit, and that restriction is the rule
+    rather than a detail.** `bit_name()` masks with `& 0xF8` before it looks
+    the block up, so a 16-bit CODE address is decoded on the strength of its
+    low byte alone: `0x0EA2 & 0xF8 == 0xA0` is `BIT_SFR['p2']`, and
+    `call_0ea2` -- which names no SFR and no bit -- satisfied this rule on
+    the mask. `0x88F0` is the same, via `0xF0` = `b`, and `0x0480` via
+    `0x80` = `p0`. A bit address on this part is 0x80-0xFF and a CODE
+    address is 16-bit, so the citation is compared against 0xFF before it is
+    looked up; that is also the asymmetry `name_addresses()` already exists
+    to make explicit between "0x8E is a bit address" and "0x0A is a small
+    immediate". `listing_facts()` gets the same discipline for free from its
+    two-hex-digit regex with a negative lookahead -- this rule reads the
+    *name*, which is the one place a 4-digit citation turns up."""
     if (row.get("name_basis") or "").strip() != "register-map":
         return []
     for value in name_addresses(row.get("name") or ""):
-        if bit_name(value) and BIT_SFR.get(value & 0xF8):
+        if value <= 0xFF and bit_name(value) and BIT_SFR.get(value & 0xF8):
             return []
     # An SFR named as a word: `clear_tcon_bits` names TCON, `set_tcon_6`
     # names TCON bit 6, `timer1_counted_delay_using_0a56` names TCON.6.
@@ -643,6 +657,26 @@ def self_test():
         row(name="set_tcon_6", name_basis="register-map")))
     check("register-map refuses an undecodable address", bool(check_register_map(
         row(name="clear_00_then_set_01", name_basis="register-map"))))
+    # The 4-digit half of the same hole, and the half that was live: because
+    # `bit_name()` masks with `& 0xF8`, a 16-bit address is decoded on its low
+    # byte alone, so `0x0EA2 & 0xF8 == 0xA0` reads as `p2` and `call_0ea2`
+    # -- naming no SFR and no bit -- satisfied rule 4. A 2-digit fixture
+    # cannot catch that, which is why the 2-digit one above is not enough;
+    # these two are what keeps the mask from coming back. The second is a
+    # committed name citing one XDATA address and one CODE branch target, so
+    # it covers the other reading too: neither kind of 16-bit citation is a
+    # bit address, and the rule has to refuse both.
+    check("register-map refuses a 4-digit CODE address that masks into a "
+          "BIT_SFR block", bool(check_register_map(
+              row(name="call_0ea2", name_basis="register-map"))),
+          "(0x0EA2 is CODE; bit_name() returns 'p2.2' only because the mask "
+          "keeps the low byte)")
+    check("register-map refuses a load/jump name citing an XDATA address and "
+          "a CODE target", bool(check_register_map(
+              row(name="load_dptr_88f0_tail_jump_1114",
+                  name_basis="register-map"))),
+          "(0x88F0 masks into 0xF0 = 'b' and 0x1114 into 0x10, which is not "
+          "a BIT_SFR block at all; neither is a bit citation)")
     check("register-map refuses a comment-only citation", bool(check_register_map(
         row(name="spin_until_flag", comment="the listing shows 0x8E = TR1",
             name_basis="register-map"))),
