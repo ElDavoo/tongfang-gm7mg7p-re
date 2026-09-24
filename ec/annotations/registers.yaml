@@ -2379,12 +2379,36 @@ registers:
       rather than on a value. The sweep calls the two banked forwarders 0x1984
       (trampoline_to_c10c) and 0x198A (trampoline_to_c1e7) at 0x8096 and 0x809C
       and decrements 0x06D9 only when both left R7 zero. 0xC1E7 is bank0
-      test_1664_bit0, which is already annotated; 0xC10C has no exported
-      function in any program, so the first of the two gates is the one thing
-      here that is not decoded at all. 3 EC-side sites, 1 direct read and 2
+      test_1664_bit0, already annotated, and returns 1 when bit 0 of 0x1664 is
+      set. 0xC10C has no exported listing of its own, but it is seven
+      instructions in twelve bytes with no MOV DPTR among them: it lcalls
+      0xC0C9 -- already annotated as return_1_if_3202_bits_1_and_2 -- and
+      restates that callee's answer in R7, adding nothing to it. What the first
+      gate tests is therefore bits 1 and 2 of 0x3202, read one call deeper, and
+      not 0x06D9 or any other byte in this block. 0x06D9 counts down only while
+      0x1664 bit 0 is clear and bits 1 and 2 of 0x3202 are not both set (at
+      least one of them clear). 3 EC-side sites, 1 direct read and 2
       direct writes. Its only writers outside the sweep that this method found
       are bank1 0x86E2, bank1 0x982E. No upstream name. Per-address table:
       ec/annotations/xdata-06c2-06db-timers.md.
+      *** CORRECTION 2026-09-24 (issue #255, correcting text this entry
+      carried before the change above), see docs/findings.md 4a and
+      ec/annotations/xdata-06c2-06db-timers.md section 4 ***
+      The withdrawn sentence read: "0xC10C has no exported function in any
+      program, so the first of the two gates is the one thing here that is not
+      decoded at all." Both halves of it were wrong, and neither for the reason
+      it gave. The export half was a census artefact: 0xC10C was unseeded
+      rather than undecodable, and the twelve bytes at file 0x0C10C decode by
+      hand to the seven instructions quoted above. The conclusion it drew does
+      not survive either -- this countdown's first gate is state-dependent and
+      reads 0x3202 -- so "not decoded at all" is withdrawn on the merits and
+      not merely because an export landed. The export is still outstanding and
+      is not claimed here: adding a listing needs a --report run on the pinned
+      assembler, which a runner does not have, so 0xC10C has no listing under
+      ec/decompiled/ and its reading rests on those twelve bytes and on
+      0xC0C9's own annotation. The companion claim in the same sentence, that
+      0x1664 had no registers.yaml row, is superseded by the XDATA_1664 entry
+      in this file. No status and no count moves here. ***
 
   - name: XDATA_06DA
     addr: 0x06DA
@@ -3055,6 +3079,37 @@ registers:
       three MANUAL_FAN_CTRL comparisons, which is a shape and not a reason to
       name it. UNITS NOT DETERMINED. Per-address table:
       ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_1664
+    addr: 0x1664
+    bits: [0]
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Read as a gate, not as data. All three sites are in bank0 and all three
+      read bit 0 and return a 1/0 in R7 without any other XDATA access:
+      0xC1E7 (test_1664_bit0) and 0xC1DA, which is byte-identical to it, test
+      the bit set and 0xC1F4 tests it clear, the jb-inverted variant. The
+      0xC10C thunk in the same block is the predicate for the other gate on
+      that countdown and reads 0x3202 instead. 0xC1E7 is reached from the
+      counter sweep through the forwarder 0x198A (trampoline_to_c1e7), which
+      bank1 0x8096 calls alongside 0x1984: 0x06D9 is decremented only when
+      both return zero, so 0x1664 bit 0 set freezes that one countdown.
+      0xC1DA and 0xC1F4 sit in unexported gaps -- 0xC1CB ends at 0xC1D7 and
+      0xC1E7 ends at 0xC1F3, the next export being 0xC201 -- so the
+      decompiled-C token census behind ec/annotations/xdata-registers.csv sees
+      only the one at 0xC1E7 and its ref count understates this address
+      three-to-one; ec/tools/check_register_counts.py recomputes from the
+      image and is the authority for the 3 above. No writer for it was found
+      by this method, which is a gap in the search and not evidence that none
+      exists: a store through a computed DPTR would not appear. With no
+      writer, the value space is unestablished, so what the bit selects is not
+      stated here. The decompiled C drops the R7 return at every site, so the
+      .asm listings are the only statement of it. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
 
   - name: XDATA_1C39
     addr: 0x1C39

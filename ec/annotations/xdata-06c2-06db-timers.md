@@ -370,18 +370,89 @@ non-zero; at `0x809C` it does the same with `0x198A`. Only when **both** left
 R7 zero does it reach `0x06D9` at all. This is the one countdown in the block
 whose progress depends on something other than its own value.
 
-Both forwarders are already annotated, and the reading is in their targets:
+Both forwarders are already annotated, and the reading is in their targets.
+**Both `imm16` operands are bank-0 addresses, not bank-1 ones, and that is worth
+saying before the targets are read.** Each forwarder is `mov DPTR,#imm16` then
+`ljmp 0x1100`, and `0x1100` is the common-area stub this tree names
+`bl51_bank_select_0`; [`bank-call-audit.md`](bank-call-audit.md) §2 counts the
+trampolines that route through it — 350 to bank 0, against 53 to bank 1 through
+the stub at `0x1114` — so the address is resolved *after* the bank switch, in
+the bank the stub selects and not the bank the forwarder sits in. The same
+audit's `bank-call-targets.csv` records both of these sites independently, at
+lines 2976 and 2977, as bank0 `lcall` entries rather than as anything inside a
+bank-1 body.
 
 | call | row | target | what the target is |
 |---|---|---|---|
-| `0x1984` | `trampoline_to_c10c` | `0xC10C` | **no exported function in any program** |
-| `0x198A` | `trampoline_to_c1e7` | `0xC1E7` | bank0 `test_1664_bit0` — returns 1 in R7 if bit 0 of `0x1664` is set |
+| `0x1984` | `trampoline_to_c10c` | bank0 `0xC10C` | unexported, but it decodes to a thunk on `0xC0C9` — returns 1 in R7 if bits 1 and 2 of `0x3202` are both set |
+| `0x198A` | `trampoline_to_c1e7` | bank0 `0xC1E7` | `test_1664_bit0` — returns 1 in R7 if bit 0 of `0x1664` is set |
 
-**So one of the block's two gates is a test of bit 0 of `0x1664`, and the other
-is a routine this repository has not exported at all.** That is the finding, and
-it is why `0x06D9` matters more than its 3 sites suggest: a countdown whose
-rate is set by a predicate, one arm of which is unread. `0x1664` has no row in
-`registers.yaml` and is a follow-up of its own.
+Reading either `imm16` against a bank-1 listing gives the wrong answer, and did:
+eight rows in [`ghidra-variables.csv`](ghidra-variables.csv) and one in
+`ghidra-functions.csv` (`bank1,19A8`) read a forwarder target in bank 1. Seven
+of them carried `0xC10C` and `0xC118` as operand bytes inside bank-1's
+`FUN_CODE_c0a8` and called the questions open; the eighth (`bank1,0xA389`)
+carried `0xC1E7` as bank-1's `latch_0498_bit1_or_bit3`, which writes no R7, and
+so concluded the R7 it tested came from somewhere else. The bytes they read are
+at the same offset in the wrong bank, and the two banks hold unrelated code
+there: in bank 0, `0xC10B` and `0xC117` are the closing `ret` of the twelve-byte
+thunk that precedes each, `0xC10C` and `0xC118` are `lcall` instructions, and
+`0xC1E7` is `test_1664_bit0` — which does write R7, so that row's conclusion
+about its own R7 was wrong too. All nine rows now carry the bank-0 reading with
+the withdrawn version quoted beside it, per `docs/findings.md` §4a. What the
+`19A8` row's 48-forwarder census measures is left as it is: it is a count
+against **bank-1** listings, it is not re-measured here against bank 0, and no
+replacement count is claimed.
+
+**Both arms of the gate are now readable, and neither of them tests anything in
+this block.** That is the finding, and it is why `0x06D9` matters more than its
+3 sites suggest: a countdown whose rate is set by a predicate, and both arms of
+that predicate read bytes from elsewhere in the map.
+
+> **Superseded.** This section previously read: *"So one of the block's two gates
+> is a test of bit 0 of `0x1664`, and the other is a routine this repository has
+> not exported at all … one arm of which is unread. `0x1664` has no row in
+> `registers.yaml` and is a follow-up of its own."* What was wrong is the
+> inference, not the census: an absent export was read as an absent decoding,
+> and `0xC10C` is unseeded rather than undecodable (issue #255) — the twelve
+> bytes decode by hand to a thunk on `0xC0C9`, §4 below. It still has no
+> committed listing, and that gap is real; what it never implied is that the
+> bytes are unread. `0x1664` now carries a row. The wrong version is left here
+> rather than edited away, per `docs/findings.md` §4a.
+
+**`0xC10C` is a state-dependent predicate, and the state it reads is in its
+callee.** The body is seven instructions in twelve bytes, with no `MOV DPTR`
+among them:
+
+```
+C10C  12 c0 c9   lcall  0xC0C9
+C10F  ef         mov    A, R7
+C110  60 03      jz     0xC115
+C112  7f 01      mov    R7, #0x01
+C114  22         ret
+C115  7f 00      mov    R7, #0x00
+C117  22         ret
+```
+
+It `lcall`s `0xC0C9` — already annotated as `return_1_if_3202_bits_1_and_2` —
+and restates that callee's answer in R7 as a 1 or a 0, adding nothing to it. So
+**the first gate is not a plain test of `0x06D9`, nor of any byte in this
+block**: what it tests is bits 1 and 2 of `0x3202`, read one call deeper, and
+because `0xC0C9` returns 1 only when *both* of those bits are set, `0xC10C`
+leaves R7 zero unless both are set.
+
+No `C10C.asm` or `C10C.c` is committed — the export is deferred to a
+pinned-toolchain run, §8.1 — so the twelve bytes above, read at file offset
+`0x0C10C`, are the statement of the result. For whoever runs that export: the
+R7 return is the thing to check, because the decompiler drops it in the sibling
+rows that already say so in their own comments, `0xC0C9` and `0xC0E7` both
+decompiling to a bare `return;` with no assignment to R7 anywhere.
+
+`0x3202` has **no row in `registers.yaml`**. Four annotations read it
+(`0xC0B8`, `0xC0C9`, `0xC0DA`, `0xC0E7`), and the first three say in their own
+comments that it has no row — `0xC0E7` records what it reads and says nothing
+about the map. Giving it a row means correcting those three, which is why it is
+a follow-up of its own and not a rider here — see §8.1.
 
 **The third thing is a return, not a test.** `0x06D6` is the only reload in the
 block: at `0x806C` a non-zero value is decremented and the routine returns at
@@ -442,9 +513,15 @@ the decrement.
 
 **This is "not found by this method", and the blind spot is named rather than
 assumed away.** Neither method can see a write reached through a computed DPTR,
-a register-indirect access, or a table — and `0xC10C`, the one routine in the
-block that is not exported, is banked code no spelling search over the
-decompiled tree can reach at all. It is the prime suspect for the seventeen.
+a register-indirect access, or a table. `0xC10C` was named here as the prime
+suspect for the seventeen on the grounds that it was the one routine in the block
+that is not exported, and a spelling search over the decompiled tree therefore
+could not reach it at all. **That reason is now wrong**: `0xC10C` decodes to a
+thunk on `0xC0C9` and so reads `0x3202` (§4), one of seventeen bytes rather
+than one of the eight the sweep walks. It still has no committed listing, so
+the export gap is real, but it was never what made `0xC10C` a suspect: the
+suspect was the wrong inference from the census, and the blind spot itself is
+unchanged and is the real reason this search cannot close.
 
 **One correction to the record, because the plan this work follows got it
 wrong.** The reading above was first taken to be: no writer outside the sweep
@@ -654,8 +731,8 @@ $ for i in $(seq 1 300); do
 $ python3 windows/tools/ec_watch.py --start 0x06c0 --len 0x20 \
       --interval 0.2 --seconds 60 --csv timers.csv
 
-# 3. The predicate gate against the countdown it guards.
-$ python3 ec/tools/ecmem.py read 0x1664 0x06d9
+# 3. Both predicate gates against the countdown they guard, and 0x06D9 itself.
+$ python3 ec/tools/ecmem.py read 0x1664 0x3202 0x06d9
 ```
 
 Read them in this order, because each one distinguishes a pair of readings:
@@ -674,11 +751,16 @@ Read them in this order, because each one distinguishes a pair of readings:
    byte that never moves is a countdown no current code path reaches, which is
    a different statement from a byte that is not a countdown — and it is the
    boundary between the two claims this file is careful about.
-3. **`0x1664` bit 0 against `0x06D9`.** §4 says `0x06D9` only counts down while
-   both forwarders return zero, and one of them is `test_1664_bit0`. If
-   `0x06D9` holds still whenever bit 0 of `0x1664` is set, the `0xC1E7` gate is
-   confirmed behaviourally. If `0x06D9` counts down regardless, that gate means
-   something other than what its name says, and the annotation is wrong.
+3. **Both gate bytes against `0x06D9`.** §4 says `0x06D9` only counts down while
+   both forwarders return zero, which now names two bytes and three bits between
+   them: bit 0 of `0x1664`, and bits 1 and 2 of `0x3202`. Sample all three
+   together — `read 0x1664 0x3202 0x06d9` — so the two gates are not separated in
+   the record. If `0x06D9` holds still whenever `0x1664` bit 0 is set, the
+   `0xC1E7` gate is confirmed behaviourally; the same for either `0x3202` bit and
+   the `0xC10C` gate. If `0x06D9` counts down with all three set, both gate
+   annotations mean something other than what they say and are wrong. The
+   reading is static: nothing here has watched a single countdown step, and no
+   hardware was involved in producing this list.
 
 Run 2 with the vendor Control Center started and stopped, as `ec_watch.py`'s
 own docstring asks: a byte that only moves while the service runs is the vendor
@@ -686,31 +768,68 @@ touching it, not the EC's sweep.
 
 ## 8. The open questions
 
-1. **`0xC10C` has no exported function in any program**, and `0x06D9`'s
+1. ~~**`0xC10C` has no exported function in any program**, and `0x06D9`'s
    countdown hangs off it. This is the highest-value item on the block and it
    needs a function seed — which needs `--mode rebuild-project`, so it wants a
-   branch of its own.
-2. **The reload path for the seventeen in §5.** The blind spot is named rather
+   branch of its own.~~ **Half closed by #255, and the half that is left is the
+   export, not the reading.** §4 has the body, decoded by hand from the twelve
+   bytes at file `0x0C10C`: seven instructions, a thunk on `0xC0C9`. That was
+   the highest-value part — what it reads is `0x3202`, not a byte in this block,
+   and that opens the next item. What is *not* done is the listing. Seeding it
+   needs no `--mode rebuild-project` (the default export-only mode seeds into
+   its copy of the project, a one-line CSV diff rather than a 7 MB database
+   one), but committing the export needs a row in `ec/ghidra/reassembly.csv`,
+   and that report is single-writer: adding one row without rewriting the other
+   2,707 requires the pinned assembler `ec/ghidra/README.md` names, which a
+   runner does not have. So the seed row and the export are deliberately *not*
+   on this branch — a red `verify_reassembly.py --check` is not a way to land
+   them. What the runner *did* establish is the weaker half, and it is worth
+   being exact about which half that is: the twelve bytes at file `0x0C10C` are
+   `12 c0 c9 ef 60 03 7f 01 22 7f 00 22` in the image, and they disassemble as
+   the seven instructions quoted in §4. That is the firmware side of the claim
+   and it is reproducible from the committed image. **The independent
+   re-encode has not been run** — `verify_reassembly` refuses outright when
+   `sdas8051` is absent rather than reporting a partial result, so the earlier
+   wording of this item (`match`, 7 of 7 instructions re-encoded) described a
+   run that did not happen, and it is withdrawn here. Whoever runs the pinned
+   `--report` is the first to have that number.
+2. **`0x3202` has no `registers.yaml` row**, and it is the register the `0x06D9`
+   gate actually reads. Four existing annotations read it (`0xC0B8`, `0xC0C9`,
+   `0xC0DA`, `0xC0E7`), and the first three say in their own comments that it has
+   none, so the row is three comment corrections as well — and
+   `build_ec_decompile.py:stale_no_entry_claims` fails the build the moment the
+   row lands and they do not. Deliberately not a rider on #255. With four read
+   sites and no writer found by this method, its value space is unestablished, so
+   a row would claim nothing beyond the address.
+3. **The reload path for the seventeen in §5.** The blind spot is named rather
    than bounded: a computed DPTR, a register-indirect access and a table are
-   all invisible to both methods here, and `0xC10C` is banked code a spelling
-   search cannot reach.
-3. **The direction-classifier fix** at `ec/tools/xdata_register_map.py:277`,
+   all invisible to both methods here. `0xC10C` used to be named here as a
+   suspect on the separate grounds that it was unexported. It still is (item 1
+   is that export), but its twelve bytes, decoded by hand in §4, are a thunk on
+   `0xC0C9` that reads `0x3202`, so that reason is gone (§5).
+4. **The direction-classifier fix** at `ec/tools/xdata_register_map.py:277`,
    measured in §6a: 833 references out of `write`, 210 addresses, and
    `main-ec-002` (this block) itself reshaped. It wants its own diff with its own
    before/after census, and it should be read together with the de-duplication
    question below or the new numbers will be wrong in the other direction.
-4. **The census's 42-fold double count** (§2a). Nothing in
+5. **The census's 42-fold double count** (§2a). Nothing in
    `xdata_register_map.py` knows that 42 exports are one routine, and until
    something does, every reference count for a byte this sweep touches is
    inflated by roughly 42× — which is most of what made this cluster look
    like the firmware's busiest.
-5. **`0x1664` is read as a gate by the block and has no `registers.yaml` row.**
-   One site, one bit, one caller — but the caller is the only countdown in the
-   block whose rate is not its own value.
-6. **The 42 wrong function boundaries**, if anyone wants them fixed rather than
+6. ~~**`0x1664` is read as a gate by the block and has no `registers.yaml`
+   row.** One site, one bit, one caller — but the caller is the only countdown
+   in the block whose rate is not its own value.~~ **Closed by #255**, in the
+   other direction from what the item expected: it is **three** sites, not one.
+   `0xC1DA` and `0xC1F4` sit in unexported gaps, so the decompiled-C token
+   census saw only `0xC1E7` and understated the address three-to-one. The row
+   carries 3/3/0 and `check_register_counts.py` holds it there. If that is
+   systematic, the `read`/`refs` columns understate any address whose readers
+   sit in unexported gaps — a census question distinct from §2a, and open.
+7. **The 42 wrong function boundaries**, if anyone wants them fixed rather than
    documented. `build_ec_decompile.py --mode rebuild-project` writes the 7 MB
    database, and two branches that both rebuild one cannot merge.
-7. **`0x0440`'s value.** 43 read sites, no direct `MOV DPTR` writer, and this
+8. **`0x0440`'s value.** 43 read sites, no direct `MOV DPTR` writer, and this
    block reads it three times. What 43 places in the firmware consult it for is
    still open (`xdata-0400-045f.md` §11 carries the same question from the
    other side of the page).

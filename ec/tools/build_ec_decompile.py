@@ -1464,6 +1464,26 @@ def xdata_symbol_names(path=XDATA):
             if (r.get("name") or "").strip()}
 
 
+def xdata_address_names(path=XDATA):
+    """{address: name} for the rows whose name spells the address itself.
+
+    The subset of xdata-symbols.csv that the cross-decoder's vocabulary has to
+    be able to read: `XDATA_1664` carries 0x1664 in its own text, `PROJECT_ID`
+    does not. Computed from the committed CSV rather than listed here, so a row
+    added to registers.yaml joins this set without anyone remembering to edit
+    a regex beside it -- the failure mode this exists to stop.
+    """
+    if not os.path.isfile(path):
+        return {}
+    out = {}
+    for r in csv.DictReader(open(path, newline="")):
+        name = (r.get("name") or "").strip()
+        m = re.search(r"(?:EXTMEM|XDATA)_([0-9a-fA-F]{4})\b", name)
+        if m and (r.get("addr") or "").strip().lower() == "0x" + m.group(1).lower():
+            out[m.group(1).upper()] = name
+    return out
+
+
 def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     ok = True
     # One read of the annotations CSV, split by scope. The PD set used to be
@@ -1473,6 +1493,7 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # the PD one had not, and the two now read the file once between them.
     _ann = annotation_rows()
     _ct = call_target_rows()
+    _XDATA_NAME_ADDR = xdata_address_names()
     ec_annotation_addrs = {int(r["addr"], 16) for r in _ann
                            if r["scope"] in ("bank0", "bank1", "common")}
     pd_annotation_addrs = {int(r["addr"], 16) for r in _ann if r["scope"] == "pd"}
@@ -2148,6 +2169,21 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
               str({c: _row[c] for c in ("outcome", "insns", "linear", "in_c",
                                         "missing")} if _row else "not sampled"))
 
+    # The vocabulary, against the names the export actually carries. Every
+    # address in xdata-symbols.csv that is exported under a name spelling its
+    # own address has to be readable by _EXTMEM, or the comparison reports
+    # `disagree` for a C that names the address in so many words -- which is
+    # what the XDATA_1664 row did to 0xC1E7, silently, and what
+    # `build_ec_decompile.py --check` then recomputed and blessed. A name that
+    # is a register's real name (PROJECT_ID) carries no address and is
+    # deliberately out of the vocabulary; the assertion is about the two
+    # spellings that do.
+    _vocab_missed = sorted(addr for addr, name in _XDATA_NAME_ADDR.items()
+                           if not _EXTMEM.search(name))
+    check("every address xdata-symbols.csv exports under an address-carrying "
+          "name is in the comparison's vocabulary (%d name(s))"
+          % len(_XDATA_NAME_ADDR), not _vocab_missed, str(_vocab_missed[:4]))
+
     # The ratchet, exercised. A check that has never been seen to fail is an
     # absent one, which is §14b's own sentence and the reason these cases are
     # here at all: the report that matches first, then a verdict flipped, a row
@@ -2379,10 +2415,26 @@ CROSS_DECODER_FIXTURES = [("bank0", 0xB1F0), ("bank0", 0xB158),
 # the rest are a grep away in a file whose path is already on screen.
 CROSS_DECODER_CAP = 20
 # The XDATA addresses a decompiled C names. The comparison's whole vocabulary:
-# an address registers.yaml does not name cannot appear as an EXTMEM_ symbol,
-# so it is reported `disagree` whether or not the C mentions it. Measured
-# rather than argued in docs/findings.md §14i.
-_EXTMEM = re.compile(r"EXTMEM_([0-9a-f]{4})")
+# an address registers.yaml does not name cannot appear as a symbol carrying
+# its address, so it is reported `disagree` whether or not the C mentions it.
+# Measured rather than argued in docs/findings.md §14i.
+#
+# Two spellings carry an address, and a row added to registers.yaml picks
+# between them without saying so: Ghidra's own default is `DAT_EXTMEM_0a4e`
+# (this matches the `EXTMEM_` inside it), while a register whose name is the
+# address -- the `XDATA_1664` row issue #255 added -- is exported under that
+# name by gen_xdata_symbols.py. Matching only the first emptied `in_c` for
+# every such listing and reported `disagree` against a C that names the
+# address in so many words, so both are in the vocabulary and self_test()
+# pins that against the names xdata-symbols.csv actually carries.
+#
+# The class spans both cases because the two spellings do not agree on one:
+# SLEIGH writes the hex lowercase and gen_xdata_symbols.py writes it
+# uppercase, so a lowercase-only class matched every `EXTMEM_` and none of the
+# `XDATA_` names carrying an A-F. compare_function() upper-cases `in_c` either
+# way, so widening the class here changes no comparison -- it stops the
+# uppercase names being invisible to it in the first place.
+_EXTMEM = re.compile(r"(?:EXTMEM|XDATA)_([0-9a-fA-F]{4})")
 # An address column in a committed .asm, and one slot of its byte column. Used
 # only to prove the per-program file-offset map against the listings themselves,
 # so both are anchored: a line whose shape is not the one the exporter writes is
