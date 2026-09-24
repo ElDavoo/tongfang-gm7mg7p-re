@@ -279,6 +279,10 @@ jobs:
               the code does.
             - Match the surrounding code: its naming, its idiom, its comment density. A change
               that reads as though someone else wrote it is a change that will be reverted.
+            - Keep edits to shared files small. Another agent PR is probably open against the
+              same tree: a new write-up goes in its own file (e.g. `docs/findings/<topic>.md`)
+              with only a short summary and link in `docs/findings.md`, and a new tool goes in
+              a new file rather than growing an existing one.
 
             Before you finish, run this repository's own checks, read the failures and fix them.
             They are the same gates CI will apply and they are far cheaper here:

@@ -43,8 +43,13 @@ permissions: {}
 # LOCAL CHANGE (2026-09-24, not yet in the agent-pipeline template): the group is now
 # `agent-pipeline/agent/issue-N`, one per issue, so stages for *different* issues run in parallel
 # and only stages for the *same* issue serialise. What bounds parallelism now is
-# MAX_OPEN_AGENT_PRS below (5) and agent-retry.yml's MAX_PARALLEL_AGENTS (5). The paragraphs
+# MAX_OPEN_AGENT_PRS below and agent-retry.yml's MAX_PARALLEL_AGENTS (5). The paragraphs
 # below describe the original single-group design and are kept for its reasoning.
+#
+# LOCAL CHANGE (2026-09-24): MAX_OPEN_AGENT_PRS lowered 5 -> 2. At 5, nearly every merge left
+# the other open PRs conflicting -- most PRs here touch docs/findings.md and registers.yaml, and
+# a branch cut before a merge conflicts with it no matter how the stages are scheduled. The
+# number of PRs open at once is what sets the conflict rate, so that is the knob turned.
 #
 # One group for the whole pipeline rather than one per issue, and never cancelling. Every stage
 # that runs Claude names this same group, so at most one of them is ever in flight -- plan,
@@ -74,7 +79,7 @@ permissions: {}
 
 env:
   # A cap on work in flight, not on work queued -- see the capacity step below.
-  MAX_OPEN_AGENT_PRS: '5'
+  MAX_OPEN_AGENT_PRS: '2'
 
 jobs:
   # Who filed it decides whether this runs unattended, and the question asked is "could this
@@ -319,6 +324,14 @@ jobs:
             --- BEGIN ISSUE-TEXT ---
             ${{ steps.issue.outputs.body }}
             --- END ISSUE-TEXT ---
+
+            Plan the change to be modular, because other agent PRs are open against the same
+            tree and every edit to a shared file is a merge conflict waiting to happen. Put a
+            new investigation's write-up in its own file (e.g. `docs/findings/<topic>.md`, or a
+            doc beside the tool it describes) and add at most a short summary and link to
+            `docs/findings.md`, `ec/README.md` or other long shared docs. New tools go in new
+            files rather than growing an existing one. Name in the plan every shared file the
+            change must still touch, and why.
 
             Write the plan. There is no longer a "refuse this one" answer: every issue that
             reaches you is planned and handed to the implement stage. Where a request is vague,

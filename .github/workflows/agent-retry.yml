@@ -586,7 +586,7 @@ jobs:
           # CUSTOMISE: keep equal to MAX_OPEN_AGENT_PRS in agent-plan.yml. Checked here too so a
           # sweep does not spend one of an issue's three starts on a plan run that would only
           # decline at the cap.
-          MAX_OPEN_AGENT_PRS: '5'
+          MAX_OPEN_AGENT_PRS: '2'
         run: |
           set -euo pipefail
 
