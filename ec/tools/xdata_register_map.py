@@ -218,15 +218,16 @@ TOP_CALLEES = 3
 # MAIN_FAN_R_DUTY entries were exported (0x075B/0x075C, 17 references that had
 # been `DAT_EXTMEM_075b`/`_075c`); the full census does not move. 84 -> 127
 # (932 -> 5897) with issue #179's 43 entries, the same way, and 127 -> 142
-# (5897 -> 6016) with issue #180's 15.
+# (5897 -> 6016) with issue #180's 15, and 142 -> 146 (6016 -> 6060) with
+# issue #183's four.
 ORACLE = {
     # DAT_EXTMEM_ only, i.e. what issue #132 counted, comments excluded.
-    "extmem_distinct": 1093, "extmem_refs": 13886,
-    "extmem_raw": 8794, "extmem_commented": 9,
-    "extmem_main_distinct": 921, "extmem_main_refs": 7921,
+    "extmem_distinct": 1037, "extmem_refs": 8741,
+    "extmem_raw": 8750, "extmem_commented": 9,
+    "extmem_main_distinct": 917, "extmem_main_refs": 7877,
     "extmem_pd_distinct": 157, "extmem_pd_refs": 864,
     # What the decompiler named, which the issue's grep could not see.
-    "symbol_main_distinct": 142, "symbol_main_refs": 6016,
+    "symbol_main_distinct": 146, "symbol_main_refs": 6060,
     "symbol_pd_distinct": 0, "symbol_pd_refs": 0,
     # The full census this tool publishes.
     "distinct": 1172, "refs": 14801,
@@ -245,7 +246,8 @@ ORACLE = {
     # 88 -> 131 with issue #179's 43 XDATA_* timer/counter entries, merged
     # after the ones above; the full census below does not move.
     # 131 -> 146 with issue #180's 15 0x086x/0x1Cxx/0x1Fxx entries.
-    "named_in_tree": 146,
+    # 146 -> 150 with issue #183's 0x07C4/0x07D3/0x07D4/0x07D5.
+    "named_in_tree": 150,
 }
 ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
 # The two symbol-table addresses register_ref_table.py finds main-EC sites for
@@ -1299,9 +1301,16 @@ def self_test(args) -> int:
           f"{ORACLE['extmem_pd_distinct']}/{ORACLE['extmem_pd_refs']}, which is "
           f"{ORACLE['extmem_distinct']} distinct addresses in all after the "
           f"{extmem_both} both spell there (got {extmem['main-ec']} and "
-          f"{extmem['pd']})",
+          f"{extmem['pd']}, "
+          f"{len(set(of('main-ec', 'DAT_EXTMEM')) | set(of('pd', 'DAT_EXTMEM')))} distinct / "
+          f"{extmem['main-ec'][1] + extmem['pd'][1]} refs in all)",
           (extmem["main-ec"][0], extmem["main-ec"][1]) ==
           (ORACLE["extmem_main_distinct"], ORACLE["extmem_main_refs"]) and
+          # Asserted since 2026-09-24: these two were display-only, and went
+          # stale through several re-pins of the per-program figures above.
+          len(set(of("main-ec", "DAT_EXTMEM")) | set(of("pd", "DAT_EXTMEM")))
+          == ORACLE["extmem_distinct"] and
+          extmem["main-ec"][1] + extmem["pd"][1] == ORACLE["extmem_refs"] and
           (extmem["pd"][0], extmem["pd"][1]) ==
           (ORACLE["extmem_pd_distinct"], ORACLE["extmem_pd_refs"]))
     check(f"oracle: the {ORACLE['symbol_main_distinct']} main-EC addresses the "

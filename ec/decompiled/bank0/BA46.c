@@ -14,8 +14,8 @@
 byte clear_low_nibble_07d3(void)
 
 {
-  DAT_EXTMEM_07d3 = DAT_EXTMEM_07d3 & 0xf0;
-  return DAT_EXTMEM_07d3;
+  GFID = GFID & 0xf0;
+  return GFID;
 }
 
 

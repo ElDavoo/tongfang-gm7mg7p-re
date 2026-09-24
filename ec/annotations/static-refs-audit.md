@@ -580,3 +580,75 @@ sweeping `0x0700`-`0x07FF` rather than trust any one name, and it is why
 §4 of `docs/hardware-tests/manual-fan-ctrl-0751-isolation.md` keeps its sweep
 instruction after the "unconfirmed" wording came out.
 
+## 8. `0x07C4`, `0x07D3`, `0x07D4` and `0x07D5` added to `registers.yaml` (2026-09-24, issue #183)
+
+Four addresses from the `0x07C4`-`0x07D7` block `docs/findings.md` §4o reads
+as a GPU dynamic-boost control block joined the file, and their 15 main-EC
+sites were walked site by site in `ec-07c4-07d5-sites.md`. Consequences for
+this file, stated here rather than by editing the sections above, in §6's
+shape:
+
+- **§2 and §5 are a 29-address snapshot, taken when this file was written,
+  and §6's is a 57-address one.** Neither is extended here. The guard for
+  every address in the file, present and later, remains
+  `../tools/check_register_counts.py`, which recomputes all three counts per
+  address from the committed image and is in the agent gate; all four
+  entries carry the three `static_refs*` keys, so they are audited by the
+  same rule the rest of the file is.
+- **The wrong `DBEN` bit is corrected here rather than in a section above,
+  because this file never recorded one.** The bit-0 reading was in
+  `docs/findings.md` §4o and nowhere else: before this section was written,
+  grepping this file for
+  `0x07C4|0x07C5|0x07C6|0x07D3|0x07D4|0x07D5|0x07D6|0x07D7` returned zero
+  matches, so there is no wrong line above to put a correction beside.
+  **`DBEN` is bit 3 of `0x07C4`, and `DBST` bit 5** — the DSDT ECMG field
+  list at `../../evidence/acpi/dsdt.dsl:52238-52242` is three unnamed bits,
+  `DBEN`, one unnamed, `DBST`, so counting without the unnamed bits gives
+  bit 0. `docs/findings.md` §4o's table row and prose are left standing with
+  the correction beside them, and this section is where a reader of *this*
+  file gets it. The walk's §3 is the other place: the EC firmware writes
+  bit 3 from bit 4, which is consistent with the corrected reading and is
+  recorded there as an inference from the bytes.
+
+The new rows' own numbers, from the three tools above and reproducible from
+the committed image (as in §1 and §6, the blank line `trace_xdata_refs.py`
+prints between addresses is stripped here):
+
+```console
+$ python3 ec/tools/trace_xdata_refs.py ec/firmware/GMxMGxx_11.800 --counts-only \
+    0x07C4 0x07D3 0x07D4 0x07D5 | grep -v '^$'
+0x07C4: 8 direct MOV DPTR site(s)  bank0=5  pd-image=3
+0x07D3: 11 direct MOV DPTR site(s)  bank0=4  pd-image=7
+0x07D4: 70 direct MOV DPTR site(s)  bank0=2  pd-image=68
+0x07D5: 28 direct MOV DPTR site(s)  bank0=4  pd-image=24
+
+$ python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --markdown \
+  | grep -E '0x07C4|0x07D3|0x07D4|0x07D5'
+| `0x07C4` | `GPU_DYNAMIC_BOOST_STATUS` | 8 | 5 | 3 | 3 | 0 | 1 | 0 | 0 | 3 | 1 |
+| `0x07D3` | `GFID` | 11 | 4 | 7 | 4 | 1 | 1 | 0 | 0 | 3 | 2 |
+| `0x07D4` | `CPUA` | 70 | 2 | 68 | 44 | 8 | 2 | 0 | 0 | 14 | 2 |
+| `0x07D5` | `DBAP` | 28 | 4 | 24 | 16 | 7 | 0 | 0 | 0 | 4 | 1 |
+
+$ python3 ec/tools/check_register_counts.py ec/firmware/GMxMGxx_11.800
+73 entries / 105 addresses: every static_refs, static_refs_main_ec and static_refs_pd_image reproduced from ec/firmware/GMxMGxx_11.800
+```
+
+**Same shape as §6, in both directions.** The `movc` and `jmp` columns are
+zero for all four, as they are for all 29 of §2 and for the pair §6 added, so
+none of these counts is inflated by a CODE pointer by this method. And the
+`0`-means-"not found by this method" caveat at the top of this file applies to
+these four exactly as it does to the rest: `0x07C4` has 5 EC-side sites and 3
+PD-image ones, and §6 of the walk is a byte-pattern hunt for the `0x0F00`
+computed-`DPH` idiom retargeted at this page which returns **zero** — a
+null, on a page where the `0x0F00` control finds eight. An indirect
+`movx @Ri` and a `DPH` built from a register are equally invisible to both
+that grep and the site scan (#110), so the 15 is a floor and not a total.
+
+The open gap this adds: `ec-07c4-07d5-sites.md` §9 names it. `0x09EA` and
+`0x09EB` — the bytes `CPUA` and `DBAP` are copied from — and `0x166A`, which
+selects between four `GFID` values, have no entry in `registers.yaml`, and
+the routine that wrote `0x07C4` on 2026-09-23 is not identified because
+`0x83FF`'s only caller sits in the unresolved three-byte stub run at
+`0x851B`. `0x07C5` and `0x07C6` are not touched here: #106 and #101 own them.
+`0x07D6` and `0x07D7` stay with the census pass, and the 102 PD-image sites
+are a different program's variables, as §1 of `ec-0x07d0-sites.md` sets out.

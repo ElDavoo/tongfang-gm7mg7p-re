@@ -169,7 +169,7 @@ bank0,AB6E,set_06e2_bit0_from_c412,48,annotation,no,yes,state,hand-decoded,ec/de
 bank0,AB9E,set_0751_and_07a6_bits,106,annotation,no,yes,state,hand-decoded,ec/decompiled/bank0/AB9E.asm; ec/decompiled/bank0/AB9E.c; ec/annotations/registers.yaml,,bank0/AB9E.c
 bank0,AC08,dispatch_on_0751_bits,66,annotation,no,yes,dispatch,hand-decoded,ec/decompiled/bank0/AC08.asm; ec/decompiled/bank0/AC08.c; ec/annotations/registers.yaml,,bank0/AC08.c
 bank0,AC4A,toggle_08e2_bit4,63,annotation,no,yes,state,hand-decoded,ec/decompiled/bank0/AC4A.asm; ec/decompiled/bank0/AC4A.c; ec/annotations/registers.yaml,,bank0/AC4A.c
-bank0,ACB4,FUN_CODE_acb4,238,call-target,no,no,,,,,bank0/ACB4.c
+bank0,ACB4,reset_xdata_flags_and_07d5_to_ff,238,annotation,no,yes,init,hand-decoded,ec/decompiled/bank0/ACB4.asm; ec/decompiled/bank0/ACB4.c; ec/annotations/ec-07c4-07d5-sites.md; ec/annotations/registers.yaml,,bank0/ACB4.c
 bank0,ADA3,write_0a47_from_r7,11,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/ADA3.asm; ec/decompiled/bank0/ADA3.c,,bank0/ADA3.c
 bank0,ADAE,dispatch_on_0a47,191,annotation,no,yes,dispatch,hand-decoded,ec/decompiled/bank0/ADAE.asm; ec/decompiled/bank0/ADAE.c,,bank0/ADAE.c
 bank0,AE6D,set_08ec_bit0_clear_bit4,12,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/AE6D.asm; ec/decompiled/bank0/AE6D.c,,bank0/AE6D.c
@@ -554,7 +554,7 @@ bank0,D991,store_r4_r5_into_record_6e65,65,annotation,no,yes,writer,hand-decoded
 bank0,D9D2,nop_stub_d9d2,9,annotation,no,yes,unresolved,hand-decoded,ec/decompiled/bank0/D9D2.asm; ec/decompiled/bank0/D9D2.c,,bank0/D9D2.c
 bank0,D9DB,ret_stub,1,annotation,no,yes,unresolved,hand-decoded,ec/decompiled/bank0/D9DB.asm; ec/decompiled/bank0/D9DB.c,,bank0/D9DB.c
 bank0,D9DC,select_0825_or_0827_into_0826,31,annotation,no,yes,logic,hand-decoded,ec/decompiled/bank0/D9DC.asm; ec/decompiled/bank0/D9DC.c,,bank0/D9DC.c
-bank0,D9FE,FUN_CODE_d9fe,203,call-target,no,no,,,,,bank0/D9FE.c
+bank0,D9FE,seed_07d3_gfid_and_08xx_defaults,203,annotation,no,yes,init,hand-decoded,ec/decompiled/bank0/D9FE.asm; ec/decompiled/bank0/D9FE.c; ec/annotations/ec-07c4-07d5-sites.md; ec/annotations/registers.yaml,,bank0/D9FE.c
 bank0,DB3E,rec_ptr_from_index_6e65,25,annotation,no,yes,reader,hand-decoded,ec/decompiled/bank0/DB3E.asm; ec/decompiled/bank0/DB3E.c,,bank0/DB3E.c
 bank0,DB57,stash_code_pair_to_0b7_0b8,22,annotation,no,yes,copy,hand-decoded,ec/decompiled/bank0/DB57.asm; ec/decompiled/bank0/DB57.c,,bank0/DB57.c
 bank0,DB6D,store_r7_to_table_addr,15,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/DB6D.asm; ec/decompiled/bank0/DB6D.c,,bank0/DB6D.c

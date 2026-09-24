@@ -1516,9 +1516,31 @@ does:
 | `0x1172` | 50675-50678 | — | `DBAC` = `Arg1` | — |
 | **`0x1173`** | **50680-50691** | **`DBD1` = `Arg1 * 8` (`0x07D0`), `DBD2` = `Arg2 * 8` (`0x07D1`)** | `DBAC` = 0, `AMAT` = `DBD1`, `AMIT` = `DBD2` | — |
 | `0x2273` | 50693-50698 | — | `ATPP` = `Arg1 * 8` | — |
-| `0x73` | 50700-50717 | — | `DBAC` = 0, `ATPP` = `CPUA * 8` (`0x07D4`), `AMAT` = `DBAP * 8` (`0x07D5`) | `DBEN` (`0x07C4` bit 0) |
+| `0x73` | 50700-50717 | — | `DBAC` = 0, `ATPP` = `CPUA * 8` (`0x07D4`), `AMAT` = `DBAP * 8` (`0x07D5`) | `DBEN` (`0x07C4` bit 0 — **corrected, bit 3**) |
 | `_Q84` | 52793-52811 | — | same as `0x73`'s then-branch | `DBEN`; raised by the EC, not by an ACPI client |
 | `0x1176` | 50730-50733 | `CGCT` = `Arg1` (`0x07D7`) | Notify `PEGP` | — |
+
+**CORRECTION to the `0x07C4` bit in the `0x73` row, added 2026-09-24
+(issue #183). `DBEN` is bit 3, not bit 0.** The bit-0 reading above came
+from counting the field list as if its unnamed bits were not there. The
+DSDT ECMG field list at `evidence/acpi/dsdt.dsl:52238-52242` is
+
+```
+Offset (0x7C4),
+    ,   3,
+DBEN,   1,
+    ,   1,
+DBST,   1,
+```
+
+— three unnamed bits, then `DBEN`, then one unnamed, then `DBST`. So
+`DBEN` is bit 3 and `DBST` is bit 5, and both ASL sites test the named
+1-bit field (`If ((DBEN == One))`, at `dsdt.dsl:50702` and `:52796`)
+rather than bit 0. The gate itself is unchanged: it is `DBEN` either way.
+§4a's body and its table are left as written; this is the correction beside
+them, not a rewrite. The `0x07C4` entry in `ec/annotations/registers.yaml`
+and the walk in `ec/annotations/ec-07c4-07d5-sites.md` carry the corrected
+bit, and §7c carries what the capture adds.
 
 No branch in the table touches a battery or charge register. The
 `0x1171`/`0x1172`/`0x1173`/`0x2273` selector family and the `0x73`/`_Q84`
@@ -1530,7 +1552,8 @@ state, and it is new relative to §4f.
 
 Two things in the ASL are worth writing down because they are the kind of
 detail a re-derivation would otherwise trip over. The `0x73`/`_Q84` path
-gates on `DBEN` at `0x07C4` bit 0 and, when it is clear, sets `DBAC = 1`
+gates on `DBEN` at `0x07C4` bit 0 (bit 3 — corrected above and in the
+sentence that follows) and, when it is clear, sets `DBAC = 1`
 instead — so the same method is both the publisher and the "not available"
 signal. And `T1WR` has two `ElseIf ((Arg0 == 0x71))` branches: the first
 (`:50657`) has an empty body and the second (`:50667`) has the work, so on
@@ -1942,6 +1965,95 @@ observed; there is no laptop on this runner. `MANUAL_FAN_CTRL` stays
 cannot move them, and the status vocabulary reserves `confirmed-inert` for a
 live three-value, both-service-states run that §7 of the isolation procedure
 specifies.
+
+### 7c. `0x07C4` moved on 2026-09-23, and the 15 EC-side sites of `0x07C4`-`0x07D5` (2026-09-24, issue #183)
+
+**The observation, already in the tree and written down nowhere.** §7 cites
+`evidence/ec-watch/2026-09-23-power-mode-cycle-0700-07ff.csv` for "every
+predicted byte landed". That file has two rows for an address §7 does not
+list, and §4o — which reads `0x07C4`-`0x07D7` as a GPU dynamic-boost control
+block from the ASL alone — never mentions:
+
+```
+2026-09-23T17:57:51.161+02:00,0x07C4,0x08,0x28
+2026-09-23T17:57:51.597+02:00,0x07C4,0x28,0x38
+```
+
+Two writes, 0.44 s apart, at the AC plug-in in the same capture where
+`0x0743`, `0x0745` and `0x0746` land. The first sets bits 3 and 5; the
+second sets bit 4.
+
+**Scope, stated because it is easy to over-read.** This is one capture, one AC
+plug-in and six Fn-key mode switches, watched passively. It is not an
+observation of *who* wrote the byte: no committed input writes `0x07C4` at
+all (`ec-callsites-summary.csv` has no `0x07C4` row, and `1988` is absent
+from `windows/decompiled/v3.1.6.0/ECSpec.cs`, whose `ADDR_AP_OEM` constants
+step straight from 1987 to `ADDR_AP_OEM_BYTE5 = 1989`), so the writer is the
+EC firmware or firmware outside the committed inputs. And bit 3 — the bit
+`DBEN` names, after the correction above — was **already set** in the `0x08`
+baseline, so the first write is not evidence of the ASL's gate being opened
+and the second is not evidence of it closing. Those are two writes with a
+question attached, not a confirmation. No register was written or read back
+to establish any of this; the file is quoted as a committed capture.
+
+The same file's distinct-address set is `0x070A 0x070F 0x0714-0x0719
+0x071A-0x071C 0x0743 0x0745 0x0746 0x0751 0x075B 0x075C 0x0783 0x0784
+0x0785 0x07A6 0x07C4 0x07C6` — so **`0x07D0` and `0x07D1` did not move** at
+all, across the plug-in and the six mode switches. That is new information
+about the pair §4o re-graded, and it is recorded in both of their
+`registers.yaml` entries. It is scoped to those events over that window, not
+to "never written".
+
+**The 15 EC-side sites, and what they are set from.** §4o closed with a
+census as the next step and named the sharper one. The four addresses have
+117 direct `MOV DPTR` sites between them, of which **15 are in the main EC
+image** and 102 in the `ITE8850-PD` program with its own XDATA map — against
+**zero** for `0x07D0`/`0x07D1`. That asymmetry is the point, and it is
+opposite to the two §7a walked: `0x07C4` is 5 of its 8 sites in the EC
+image, `0x07D4` 2 of 70.
+
+`ec/annotations/ec-07c4-07d5-sites.md` walks all fifteen, with the site
+table in `ec-07c4-07d5-sites.csv` beside it. The load-bearing results:
+
+- **Eight of the fifteen are one routine**, entered at `0x83FF`, already
+  named `sync_0788_and_07d4_from_09e9` and exported as
+  `ec/decompiled/bank0/83FF.c`. It copies `0x09EA`→`CPUA` (`0x07D4`) and
+  `0x09EB`→`DBAP` (`0x07D5`) when they differ, gated on `CTGP_DB_CTRL`
+  (`0x0743`) bit 0 — and then sets bit 3 of `0x07C4` to follow bit 4 of the
+  same byte (`orl a,#0x08` / `anl a,#0xf7`). **So `0x07D4`/`0x07D5` are set
+  from `0x09EA`/`0x09EB`**, on the path this method finds. That the bit-3
+  write is the ASL's `DBEN` gate is an inference from the bytes, recorded as
+  one.
+- **A second `0x07C4` writer sets bit 4**, at `0x94C0`
+  (`set_07c4_bit4_from_r7`, `ec/decompiled/bank0/94C0.c`), and its one
+  direct caller passes it bit 1 of `0x0743`. Neither writer is the one that
+  ran on 2026-09-23: `0x83FF`'s only caller is `0x8551`, inside the
+  unresolved three-byte `lcall`/`ljmp` run at `0x851B` that §7a hit and
+  deferred, so neither can be lined up against a capture timestamp.
+- **`0x07D3`'s `GFID` field is written outright** with the values 3, 4, 5
+  and 7 (`0x30`/`0x40`/`0x50`/`0x70`) by two sites in the routine entered at
+  `0xD9FE`, selected by bits of `0x1666` and `0x166A`. The routine is named
+  `seed_07d3_gfid_and_08xx_defaults` as of this change.
+- **`0x07D5`'s other two EC-side writers store the immediate `0xFF`**, each in
+  a reset-shaped run; neither run's entry point is determined by the methods
+  used.
+
+**Calibration, and the one negative worth its shape.** A byte-pattern hunt
+for the `0x0F00` computed-`DPH` idiom retargeted at this page —
+`addc a,#0x07 ; mov DPH,a` — finds **zero** hits in the EC image, while the
+`0x0F00` control reproduces its eight exactly. That is a null, and §7a is the
+reason to distrust one: a computed `DPH` and an indirect `movx @Ri` are
+invisible to both that grep and the site scan, so the 15 is a floor, not a
+total. All four entries are `present-untested` for the same reason §7a's
+`0x0751` is — a static walk supplies real references and no live exercise,
+and a passive capture showing a byte move is further from a live test than a
+live run with a mechanism isolated would be.
+
+**What this opens.** `0x09EA`/`0x09EB` (the source of `CPUA`/`DBAP`),
+`0x166A` and `0x0743` bit 1 (the source of `0x07C4` bit 4) have no
+`registers.yaml` entries, and the `0x851B` stub run is the gate on dating the
+capture. All three are named as follow-ups in the walk's §9 rather than
+answered here, and none of them is another repository's issue to answer.
 
 ## 8. The Memory Overclocking Menu is behind one `UniWillVariable` byte (2026-09-23)
 

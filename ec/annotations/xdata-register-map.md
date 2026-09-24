@@ -112,9 +112,9 @@ xdata_register_map.py --self-test
   ok    classify('switch_case_dispatch(DAT_EXTMEM_0440);') is 'passed-to-call'
   ok    classify('if (CPU_TEMP == 0) {') is 'read'
   ok    classify('CPU_TEMP = 0;') is 'write'
-  ok    the issue's 8794 file-wide DAT_EXTMEM_ occurrences and the 9 of them that are this repository's own annotation text quoting the decompile are still where they were (raw: {'DAT_EXTMEM': 8794, 'symbol': 6127})
-  ok    oracle: DAT_EXTMEM_ only, what issue #132 counted -- main EC 921 distinct / 7921 refs, PD 157/864, which is 1093 distinct addresses in all after the -15 both spell there (got (921, 7921) and (157, 864))
-  ok    oracle: the 142 main-EC addresses the decompiler named, 6016 references, and 0/0 of them in the PD image (got (142, 6016) and (0, 0))
+  ok    the issue's 8750 file-wide DAT_EXTMEM_ occurrences and the 9 of them that are this repository's own annotation text quoting the decompile are still where they were (raw: {'DAT_EXTMEM': 8750, 'symbol': 6176})
+  ok    oracle: DAT_EXTMEM_ only, what issue #132 counted -- main EC 917 distinct / 7877 refs, PD 157/864, which is 1037 distinct addresses in all after the 37 both spell there (got (917, 7877) and (157, 864), 1037 distinct / 8741 refs in all)
+  ok    oracle: the 146 main-EC addresses the decompiler named, 6060 references, and 0/0 of them in the PD image (got (146, 6060) and (0, 0))
   ok    within each program the two spellings are disjoint address for address, so a named address is never also a DAT_EXTMEM_ token
   ok    the PD image is spelled entirely in DAT_EXTMEM_ tokens, which is gen_xdata_symbols.py's own refusal to name it
   ok    oracle: the full census, both spellings -- 1172 distinct / 14801 references, main EC 1063/13937 (got 1172/14801, (1063, 13937))
@@ -122,7 +122,7 @@ xdata_register_map.py --self-test
   ok    main + PD equals the file-wide total on both axes
   ok    oracle: the top two main-EC addresses by reference count are 0x0440=181, 0x08A8=170 (got 0x0440=181, 0x08A8=170)
   ok    the 0x07D8 correction: its main-EC reference is spelled MODE_TCC_OFFSET_DEFAULTS_GAMING_0, and the PD image spells the same address DAT_EXTMEM_07d8 because it is not named there
-  ok    of the 168 named addresses, 146 appear in the decompiled tree at all (got 146: 0x030E, 0x030F, 0x0400, 0x0401, 0x0403, 0x0432, 0x0434, 0x0435, 0x0436, 0x0437, 0x0438, 0x0439, 0x043C, 0x043D, 0x043E, 0x043F, 0x0440, 0x0442, 0x0443, 0x0448, 0x0449, 0x044B, 0x044C, 0x044F, 0x0450, 0x0451, 0x0452, 0x0454, 0x0455, 0x0456, 0x0458, 0x0459, 0x045A, 0x045B, 0x045C, 0x045D, 0x045E, 0x045F, 0x0460, 0x0468, 0x049F, 0x04A6, 0x04A7, 0x0522, 0x0523, 0x055F, 0x0621, 0x0635, 0x0636, 0x0637, 0x0638, 0x0639, 0x063A, 0x06C2, 0x06C3, 0x06C5, 0x06D1, 0x06D2, 0x06D6, 0x06D8, 0x06D9, 0x06DA, 0x06DB, 0x06F3, 0x0706, 0x070B, 0x070D, 0x0723, 0x0730, 0x0731, 0x0732, 0x0734, 0x0736, 0x0737, 0x0740, 0x0741, 0x0743, 0x0744, 0x0745, 0x0746, 0x074E, 0x0751, 0x075B, 0x075C, 0x0766, 0x0767, 0x0768, 0x0782, 0x0783, 0x0784, 0x0785, 0x0786, 0x078C, 0x07A6, 0x07A7, 0x07A8, 0x07A9, 0x07AA, 0x07C6, 0x07CC, 0x07D0, 0x07D1, 0x07D8, 0x07D9, 0x07DA, 0x07E2, 0x07F3, 0x07F6, 0x0809, 0x080C, 0x080D, 0x0811, 0x0843, 0x0844, 0x085B, 0x0860, 0x0862, 0x0865, 0x0866, 0x0867, 0x0868, 0x0869, 0x086A, 0x086B, 0x086D, 0x086E, 0x0890, 0x089E, 0x089F, 0x08A0, 0x08A2, 0x08A7, 0x08A8, 0x08E4, 0x08EB, 0x0981, 0x0982, 0x0985, 0x0986, 0x09CE, 0x09E6, 0x09E7, 0x1C39, 0x1C3A, 0x1F01, 0x1F07)
+  ok    of the 172 named addresses, 150 appear in the decompiled tree at all (got 150: 0x030E, 0x030F, 0x0400, 0x0401, 0x0403, 0x0432, 0x0434, 0x0435, 0x0436, 0x0437, 0x0438, 0x0439, 0x043C, 0x043D, 0x043E, 0x043F, 0x0440, 0x0442, 0x0443, 0x0448, 0x0449, 0x044B, 0x044C, 0x044F, 0x0450, 0x0451, 0x0452, 0x0454, 0x0455, 0x0456, 0x0458, 0x0459, 0x045A, 0x045B, 0x045C, 0x045D, 0x045E, 0x045F, 0x0460, 0x0468, 0x049F, 0x04A6, 0x04A7, 0x0522, 0x0523, 0x055F, 0x0621, 0x0635, 0x0636, 0x0637, 0x0638, 0x0639, 0x063A, 0x06C2, 0x06C3, 0x06C5, 0x06D1, 0x06D2, 0x06D6, 0x06D8, 0x06D9, 0x06DA, 0x06DB, 0x06F3, 0x0706, 0x070B, 0x070D, 0x0723, 0x0730, 0x0731, 0x0732, 0x0734, 0x0736, 0x0737, 0x0740, 0x0741, 0x0743, 0x0744, 0x0745, 0x0746, 0x074E, 0x0751, 0x075B, 0x075C, 0x0766, 0x0767, 0x0768, 0x0782, 0x0783, 0x0784, 0x0785, 0x0786, 0x078C, 0x07A6, 0x07A7, 0x07A8, 0x07A9, 0x07AA, 0x07C4, 0x07C6, 0x07CC, 0x07D0, 0x07D1, 0x07D3, 0x07D4, 0x07D5, 0x07D8, 0x07D9, 0x07DA, 0x07E2, 0x07F3, 0x07F6, 0x0809, 0x080C, 0x080D, 0x0811, 0x0843, 0x0844, 0x085B, 0x0860, 0x0862, 0x0865, 0x0866, 0x0867, 0x0868, 0x0869, 0x086A, 0x086B, 0x086D, 0x086E, 0x0890, 0x089E, 0x089F, 0x08A0, 0x08A2, 0x08A7, 0x08A8, 0x08E4, 0x08EB, 0x0981, 0x0982, 0x0985, 0x0986, 0x09CE, 0x09E6, 0x09E7, 0x1C39, 0x1C3A, 0x1F01, 0x1F07)
   ok    every address the tree spells by symbol is in the generated symbol table, so the name column can never be empty for one
   ok    the two blind-spot addresses are 0x0733, 0x0735; of them the one that is spelled at all is 0x0733, behind a CODE pointer (got 0x0733), and 0x0735 is not findable by any spelling
   ok    issue #181: all 10 of pd-001's 0xFFxx addresses are carried by a `mov DPTR,#imm16` in the committed .asm, each to a `movx` -- and no 8051 direct-addressing opcode takes a 16-bit operand, so none of them can be a direct address whatever the decompiler spelled it (not found by this method: none)
@@ -180,9 +180,9 @@ one in this table is the authority.
 not copied from either branch. `named_in_tree` is 88 now, not 79 or 86: the two
 extra are `0x075B`/`0x075C`, which #237 entered in `registers.yaml` as
 `MAIN_FAN_L_DUTY`/`MAIN_FAN_R_DUTY` and which were exported by name once the
-decompile was regenerated. (It is 146 in the transcript above, after issue
-#179's 43 `XDATA_*` timer/counter entries and issue #180's 15 were merged and
-exported the same way; the `DAT_EXTMEM_`-only figures fall accordingly and the full census does
+decompile was regenerated. (It is 150 in the transcript above, after issue
+#179's 43 `XDATA_*` timer/counter entries, issue #180's 15 and issue #183's 4
+were merged and exported the same way; the `DAT_EXTMEM_`-only figures fall accordingly and the full census does
 not move.) The same regeneration moved 17 references from the
 `DAT_EXTMEM_` spelling to those names, so the `DAT_EXTMEM_`-only oracle reads
 13,878 raw and 979/13,005 for the main EC; the full census is unchanged. In §5
