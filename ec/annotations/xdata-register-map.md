@@ -484,7 +484,7 @@ read-modify-writes at `bank1/F11C.c:21`, `F11F.c:23`, `F2CA.c:23` and
 direction assertion in it was internal — "bucket counts sum to the reference
 count for every address", "each writer function has a write or read+write
 reference of its own" — and a misclassified comparison satisfies all of them,
-because the misclassification is itself internally consistent. Two new
+because the misclassification is itself internally consistent. Three
 assertions fix that, and they are deliberately different in kind:
 
 - a **classifier-shape table**, literal Ghidra-shaped lines run through
@@ -497,6 +497,35 @@ assertions fix that, and they are deliberately different in kind:
   `0x0440` and `0x0860` and passes on `0x0443`, `0x04FE` and `0x04FF` — which
   is the point: it catches the mistake and does not fire on the cases the fix
   was not supposed to touch.
+- a **corpus-wide direction invariant** (issue #280), which asks the same
+  question of the whole tree instead of five addresses: every occurrence the
+  census buckets `write` or `read+write` must have an assignment — not `==` —
+  after the address. It is measured by `direction_invariant()`, a second walk
+  of the same text whose predicate is only "an `=` that is not `==` follows",
+  so it never consults the `store_target()` being tested. Today that is
+  **5,662 occurrences across 1,008 distinct addresses** of the census's 1,171,
+  and it holds with no exemptions. The failure message names every offending
+  occurrence as `file!line address`, so a failure is a worklist rather than a
+  number to re-derive by hand.
+
+**What the invariant adds, and what it does not.** It is *not* a second pair
+of eyes: same files, same regex, same `strip_comments()`, and the buckets it
+is measured against are the ones this tool just produced. What makes it worth
+asserting is that it is not a re-implementation either — the `==` rejection
+lives in `store_target()`, and re-running the rule under test would agree with
+itself by construction. Re-introducing the pre-fix guard in a scratch copy
+fails it on **837 occurrences across 210 distinct addresses**, naming
+`0x0440` (15) and `0x0860` (14) and leaving `0x0443`, `0x04FE` and `0x04FF` at
+zero — so the 210 of §6a, measured before issue #133's re-export, is
+reproducible from the committed tree after all. The 837 and the 838 of the
+preceding paragraph are different figures and both are right: 838 is the
+count of `==` occurrences in the tree, 837 the count that changed bucket (the
+eighth-hundred-and-thirty-eighth is the `&&` site filed as `address-taken`
+both before and after). What the invariant cannot reach is a store the
+decompiler mis-spelled, a write through a pointer, and a per-address *count*
+that is wrong while every occurrence is assignment-shaped — which is the
+hand check's remaining job, and the reason five addresses are still kept
+rather than folded into the wider net.
 
 **Two things this correction did not do.** `DEFAULT_THRESHOLD` is untouched:
 the sweep moved around 0.50, and re-tuning it to recover a prettier plateau
@@ -750,6 +779,20 @@ is a human's, and the issue says so too.
   address at or above `0xF000` at all. What reads that table, and whether its
   values are XDATA addresses or code offsets, is **not established here** and
   is not claimed.
+- **The corpus-wide direction invariant is a second code path over the same
+  text, not an independent reading of it.** §4.3's third assertion covers 5,662
+  occurrences across 1,008 addresses and catches the `==`-as-store mistake on
+  any of them, which is far wider than the five hand-checked rows. What it
+  establishes is a *shape*: that an assignment, rather than a comparison,
+  follows the address. It is measured over the same files, by the same regex,
+  with the same `strip_comments()`, against the buckets this tool itself
+  produced, so a store the decompiler spelled wrongly, a write through a
+  pointer, or a per-address count that is wrong while every occurrence looks
+  like an assignment all pass it. It raises the floor under the classifier; it
+  does not certify the decompiler's spelling, and it is not a second opinion
+  from outside this tool the way the five hand-read addresses are. The narrow
+  net is kept for exactly that reason, and `HAND_CHECKED`'s comment says what
+  the five are for and which shape they leave uncovered.
 - **The `callees` column over-counts depth.** A name in a call position
   anywhere in a function's body counts as its callee, so a callee of a callee
   is credited to the outer function. It is a name-frequency column for picking
@@ -972,6 +1015,18 @@ still in the `.asm`, and the census row still absent.
 - A cluster that turns out to be a record table should say so in
   `pd-index-geometry.md`'s terms (base and stride, then the field layout), not
   here.
+- **The day §4.3's corpus-wide invariant names rows, the work is to hand-read
+  those rows, not to widen the check.** It currently holds across all 1,008
+  addresses with a write or read+write reference and no exemptions, so this is
+  the path, not a live task. If a future export or a future `classify()`
+  change makes it fail, its message names every offender as `file!line
+  address`: take each one and read the decompiled C at that line. A row the
+  reading confirms and the tool gets wrong becomes a `HAND_CHECKED` entry, and
+  if any prose here quotes the wrong figure a `*** CORRECTION ***` goes beside
+  it in the form of the block above. A row where the *second pass* is the thing
+  that is wrong is a bug in `assign_after()` and is fixed there — an exemption
+  list inside the invariant is the five-address problem at larger scale, and an
+  unrecorded one is worse than not checking.
 - **`classify()`'s `&` test should learn to tell `&&` from address-of.** It
   files a boolean `&&` under `address-taken`, which is the one occurrence at
   `bank0/A747.c:24` that §4.3's 838 could not correct (§6's bullet, and the

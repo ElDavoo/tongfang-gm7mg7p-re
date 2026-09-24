@@ -87,6 +87,32 @@ decompile is not in the tree at all, so this is a lower bound on the image, and
 pointer/indirect XDATA access never names an address at all, exactly as
 `scan_refs.py`'s blind spot does.
 
+**The direction split is now checked corpus-wide, and that is a wider net than
+it looks and a shallower one than `HAND_CHECKED`.** Every occurrence the census
+buckets `write` or `read+write` is asserted to have an assignment -- not `==`
+-- after the address, measured over the whole tree rather than over five
+hand-picked rows. Today that is **5,662 occurrences across 1,008 distinct
+addresses** of the census's 1,171, and it holds with no exemptions: the second
+pass accepts 5,664, and the two it accepts and the census does not are 0x048A's
+`*`-dereference stores, which `store_target()` excludes for cause and a
+necessary condition does not need to exclude.
+
+**It is a second code path over the same text, not a second pair of eyes.**
+Same files, same regex, same `strip_comments()`, and the buckets it is measured
+against are the ones this tool just produced. What it is *not* is a
+re-implementation, and that is what makes it worth asserting: the `==`
+rejection lives in `store_target()`, and the second pass's predicate is only
+"an `=` that is not `==` follows", so it never consults the thing under test.
+Re-introduce the pre-fix classifier and the two disagree on 837 occurrences,
+across 210 distinct addresses -- the 837, not the 838 above, because the one
+`==` site that was already `address-taken` rather than `write` (`&&` at
+bank0/A747.c:24) is not an offender either way.
+What it cannot reach is everything a shape test over C text cannot reach -- a
+store the decompiler mis-spelled, a write through a pointer, and a per-address
+*count* that is wrong while every occurrence is assignment-shaped. Only
+`HAND_CHECKED` measures per-address counts, and it is five addresses wide
+because those five are a shape catalogue rather than a sample.
+
 **The decompiled C spells an XDATA address two ways, and a census that reads
 only one of them is wrong by 41 addresses.** `build_ec_decompile.py` applies the
 generated symbol table before exporting, so the 101 addresses
@@ -290,6 +316,163 @@ ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
 # the self-test and the report's blind-spot section.
 BLIND_SPOT = (0x0733, 0x0735)
 
+# The addresses the generated symbol table names and the census does not reach:
+# `set(symbols) - everywhere`. Issue #280 pins this as a *set* rather than as
+# the `named_in_tree` count alone, so "which addresses" is re-derivable here
+# instead of only from a failure message, and so the count at
+# ORACLE["named_in_tree"] becomes arithmetic over this dict rather than a
+# number to be taken on trust.
+#
+# **The vocabulary has three entries and no word for absence.** A scan that
+# finds no reference has found no reference; it cannot say the address is not
+# there, which is `../../docs/findings.md` §4c and the whole content of 0x07B9's
+# retraction below. The self-test asserts every reason begins with one of the
+# three, and that no reason contains a word that would claim the byte is gone.
+#
+# The first reason is the only one that is re-derivable from the committed tree
+# on its own, and it is the only one this file claims that for: it says the
+# address is *there* in a form the token pattern cannot match, and that is
+# checkable with a grep. Where the evidence lives in the image instead -- the
+# 0x07E3-0x07E5 lightbar bytes, whose sites only `trace_xdata_refs.py` finds --
+# the reason says so and uses the third entry. A line claiming the first reason
+# with nothing behind it in the tree would be the overclaim this block exists
+# to prevent, and the one that is easiest to make by accident.
+NOT_IN_TREE_REASONS = ("reached through a form the scan cannot see",
+                       "in a routine no export covers",
+                       "not found by this method")
+# The words that would turn a reason into an absence claim, which is the
+# overclaim this block exists to make impossible. Asserted, not just intended.
+NOT_IN_TREE_FORBIDDEN = ("absent", "does not exist", "no such", "unused",
+                         "never touched", "dead")
+# Every line cites the grep or the site that re-derives it, because a reason
+# that cannot be re-derived is the thing this block is for.
+NOT_IN_TREE = {
+    # bank1/E100.asm:E176 carries `mov DPTR,#0x390` to a `movx`, and the
+    # committed export writes neither the token nor the name: the callee at
+    # bank1 0x9EA1 renders the address as CONCAT11(r4_value,r3_value) over
+    # register names. The .asm is never rewritten by an annotation, so the byte
+    # has a site in the machine code whatever the C spells.
+    0x0390: "reached through a form the scan cannot see: the export spells it "
+            "over register names (CONCAT11) where the .asm has a literal "
+            "`mov DPTR,#0x390` at bank1/E100.asm:E176",
+    # The decompiler read `mov DPTR,#0x402; lcall 0x889e` as a call to a
+    # routine at 0x402, named the made-up routine `FUN_CODE_0402`, and exported
+    # two files for it (ec/decompiled/common/0402.c, common/0408.c). Ten
+    # bank1 sites call that name where the seed is. So the address is in the
+    # tree, spelled as a function -- which is neither `DAT_EXTMEM_` nor a
+    # generated symbol name, and so matches neither half of the occurrence
+    # regex. Re-derive with `grep -rn FUN_CODE_0402 ec/decompiled/`.
+    0x0402: "reached through a form the scan cannot see: the export spells the "
+            "address as a function name, `FUN_CODE_0402`, and the census's "
+            "regex matches no function name",
+    # 16 occurrences, all the same shape: the 16-bit-pair helpers take the
+    # address as a bare hex literal. `read_xdata_pair_to_r1r2(0x404)` at
+    # bank1/B214.c:19 is the first; the `mov DPTR,#0x404; lcall 0x8892` pair
+    # behind it is in bank1/B214.asm:B214.
+    0x0404: "reached through a form the scan cannot see: passed to a 16-bit "
+            "pair helper as a bare hex literal, `read_xdata_pair_to_r3r4"
+            "(0x404)` at bank1/B214.c:19",
+    # The second half of the same decompiler mistake as 0x0402, at its second
+    # site: `FUN_CODE_0408`, from `common/0408.c`.
+    0x0408: "reached through a form the scan cannot see: the export spells the "
+            "address as a function name, `FUN_CODE_0408`, and the census's "
+            "regex matches no function name",
+    0x040A: "reached through a form the scan cannot see: passed to a 16-bit "
+            "pair helper as a bare hex literal, `read_xdata_pair_to_r1r2"
+            "(0x40a)` at bank1/AE2B.c:20",
+    0x040C: "reached through a form the scan cannot see: passed to a 16-bit "
+            "pair helper as a bare hex literal, `read_xdata_pair_to_r1r2"
+            "(0x40c)` at bank1/AE92.c:18",
+    0x040E: "reached through a form the scan cannot see: passed to a 16-bit "
+            "pair helper as a bare hex literal, `write_r1r2_to_xdata_pair"
+            "(0x40e)` at bank1/B50E.c:29",
+    0x0410: "reached through a form the scan cannot see: passed to a 16-bit "
+            "pair helper as a bare hex literal, `write_r3r4_to_xdata_pair"
+            "(0x410)` at bank1/B50E.c:36",
+    0x0420: "reached through a form the scan cannot see: passed to a record "
+            "helper as a bare hex literal, `add_full_product_to_dptr"
+            "(0x420,0x60,...)` at pd/34A5.c:18",
+    0x043A: "reached through a form the scan cannot see: passed to a 16-bit "
+            "pair helper as a bare hex literal, `read_xdata_pair_to_r3r4"
+            "(0x43a)` at bank1/AD77.c:22",
+    # registers.yaml records four EC-side sites, all read-modify-writes, at
+    # bank1 0x8190, 0x81D1, 0x8246 and 0x826A -- in the gaps between the
+    # exported functions 0x80EF, 0x8202, 0x820F and 0x8300. Seeding that
+    # routine needs `--mode rebuild-project`, which this change does not do.
+    # That is a gap in coverage, not a statement about the byte.
+    0x0457: "in a routine no export covers: four bank1 read-modify-writes at "
+            "0x8190/0x81D1/0x8246/0x826A, between the exported functions "
+            "0x80EF, 0x8202, 0x820F and 0x8300",
+    # No token, no name, no hex literal in any decompiled body and no "
+    # `mov DPTR,#0x726` in any committed .asm. The registers.yaml note is the
+    # record of what was tried: a driver write was accepted and the bit moved,
+    # and no read of the address has ever been found by any method.
+    0x0726: "not found by this method: no token, no name, no literal and no "
+            "`mov DPTR` seed in any committed .asm; registers.yaml's OEM_9 row "
+            "records an accepted write with no read found by any method",
+    # BLIND_SPOT's first entry, and the one of the pair that is findable: it
+    # is reached as a code pointer, `&DAT_CODE_0733` at bank0/94D0.c:55, inside
+    # bank0:0x94D0=copy_code_table_into_0730_07a7.
+    0x0733: "reached through a form the scan cannot see: behind a CODE "
+            "pointer, `&DAT_CODE_0733` at bank0/94D0.c:55 -- BLIND_SPOT's "
+            "findable half",
+    # BLIND_SPOT's second entry, and the one no spelling reaches:
+    # `sVar5 = 0x735; ... *(char *)(sVar5 + bVar2)` at bank0/94D0.c:66 and
+    # :74, a base literal plus a runtime index.
+    0x0735: "reached through a form the scan cannot see: a base literal plus a "
+            "runtime index, `sVar5 = 0x735; *(char *)(sVar5 + bVar2)` at "
+            "bank0/94D0.c:66 -- BLIND_SPOT's unspellable half",
+    # The four AC-side lightbar bytes, one entry in registers.yaml split four
+    # ways by gen_xdata_symbols.py's name-split. Nothing in the tree names or
+    # seeds any of them, and the registers.yaml note records why that is not
+    # this method's blind spot: a live write to each had no observable
+    # effect, the vendor log names an ITE HID lightbar, and the board exposes
+    # a second HID device the EC does not drive.
+    0x0748: "not found by this method: no token, no name, no literal and no "
+            "`mov DPTR` seed; registers.yaml records a live write with no "
+            "observable effect, a vendor HID lightbar log line, and a second "
+            "HID device the EC does not drive",
+    0x0749: "not found by this method: as 0x0748 -- same registers.yaml "
+            "name-split entry, same live null result",
+    0x074A: "not found by this method: as 0x0748 -- same registers.yaml "
+            "name-split entry, same live null result",
+    0x074B: "not found by this method: as 0x0748 -- same registers.yaml "
+            "name-split entry, same live null result",
+    # A capability byte the driver reads. registers.yaml's note is that this
+    # firmware build does not reference it; nothing in the tree or any
+    # committed .asm names it.
+    0x0765: "not found by this method: no token, no name, no literal and no "
+            "`mov DPTR` seed; registers.yaml records that this firmware build "
+            "does not reference it",
+    # The repository's own canonical retraction, and the reason this block's
+    # vocabulary has no word for absence. Four independent zero readings were
+    # once called "definitively gone" and were all insufficient: the Windows
+    # service writes exactly this address, and Windows genuinely caps charging.
+    # Zero direct `mov DPTR` sites proves only that this scan cannot see how.
+    0x07B9: "not found by this method: zero direct `mov DPTR` sites, which is "
+            "the signal findings.md retracted for this very address -- the "
+            "Windows service writes it as part of BatteryProtection2",
+    # The three battery-side lightbar bytes. **Not found by this method**: no
+    # token, no name, no hex literal and no `mov DPTR` seed for any of them in
+    # any committed .c or .asm -- so the whole of the evidence is in the image,
+    # reached by a different method over different bytes, and it is recorded as
+    # such rather than claimed as a form this tool can point at. The
+    # registers.yaml 9/4/10 counts are file-wide and all of them are in the PD
+    # image; `lightbar-bat-flow.md` tables them per site from
+    # `trace_xdata_refs.py`, e.g. `0x07E3` at image 0x25F03 handing DPTR to
+    # `lcall 0x10E8`, which writes 0x07E3-0x07E5. Re-derive with that sweep
+    # over `ec/firmware/GMxMGxx_11.800`, not with this tool.
+    0x07E3: "not found by this method: no token, no name, no literal and no "
+            "`mov DPTR` seed in the committed tree; lightbar-bat-flow.md's "
+            "trace_xdata_refs.py sweep puts a DPTR handoff to a writer at "
+            "image 0x25F03, a different method over the image",
+    0x07E4: "not found by this method: as 0x07E3, written by the same handoff "
+            "as the middle byte of a 0x07E3-0x07E5 store",
+    0x07E5: "not found by this method: as 0x07E3, plus the 0x6610 handoff to "
+            "the PD writer at pd/1041.c, which stores four bytes from an entry "
+            "pointer rather than naming one",
+}
+
 # Issue #181: the ten pd-001 addresses in 0xFF00-0xFFFF, and the instruction
 # form that carries each, read off the committed `ec/decompiled/pd/*.asm`. The
 # census counts them because Ghidra wrote `DAT_EXTMEM_ff80`; what settles the
@@ -349,6 +532,35 @@ XSPACE_WINDOW = 32
 BUCKET_TOTALS = {"read": 8317, "write": 3186, "read+write": 2476,
                  "passed-to-call": 543, "address-taken": 270}
 
+# Issue #280's corpus-wide direction invariant: the numbers
+# `direction_invariant()` returns against the committed tree today, pinned the
+# way BUCKET_TOTALS is so a re-export that moves either is visible in a diff.
+#
+# INTERNAL, like BUCKET_TOTALS and for the same reason -- these are this
+# tool's own reading summed back to itself. What makes this one worth pinning
+# anyway is the assertion it carries rather than the arithmetic: `write` and
+# `read+write` imply an assignment follows, measured by a predicate that never
+# consults the classifier that produced the bucket. The pre-fix `store_target()`
+# fails it on 838 occurrences, which is what makes the width below a
+# measurement and not a decoration.
+DIRECTION_INVARIANT = {
+    # Occurrences the census buckets `write` or `read+write`, and the distinct
+    # addresses carrying at least one. The width, against HAND_CHECKED's five.
+    "write_like": 5662, "write_like_addrs": 1008,
+    # What the second pass accepts. Two more than `write_like`, and the two
+    # are not slop: they are 0x048A's `*`-dereference stores, which
+    # `store_target()` excludes for cause and a necessary condition does not
+    # have to exclude. The self-test asserts that is the *only* difference,
+    # which is the exemption rule: a per-address allowlist inside the
+    # invariant would be the five-address problem at larger scale, and this
+    # instead pins the surplus, its size, and its shape.
+    "assign_shaped": 5664, "deref_surplus": 2,
+    # The tree-wide `==` count, quoted in the module docstring and in
+    # xdata-register-map.md §4.3. Asserted so the prose and the code cannot
+    # drift apart silently.
+    "eq_after": 838,
+}
+
 # Direction, per address, derived by reading the decompiled C and re-derivable
 # with the greps cited in each entry -- not by running this tool. That is the
 # whole point: an internal consistency check passes on a misclassified
@@ -358,6 +570,26 @@ BUCKET_TOTALS = {"read": 8317, "write": 3186, "read+write": 2476,
 # number of distinct functions holding a write or read+write reference of their
 # own. An entry here that the census disagrees with is a disagreement between a
 # reading and a tool, and both are printed.
+#
+# **What this is for, now that DIRECTION_INVARIANT covers the whole tree.** The
+# invariant says an assignment *follows*; this says the per-bucket *counts* are
+# right, including `writers`, which is a distinct function and not a direction
+# at all. A row can have every occurrence assignment-shaped and still count its
+# writers wrongly, and nothing in the invariant would notice. That is the gap
+# the five fill, and it is why the hand check is not redundant with the wider
+# net.
+#
+# **Why five.** They are a shape catalogue, not a sample, and a sixth address
+# that repeats one of the five shapes buys nothing: 0x0440 is all-read with no
+# writer, 0x0860 is the misread dispatch byte, 0x0443 is the read-modify-write
+# the `==` fix must *not* move, and 0x04FE/0x04FF are the 16-bit-half pair held
+# together by a shared writer. What that leaves uncovered is named rather than
+# glossed: an address whose *counts* are wrong while its shape is ordinary --
+# a 0x0440-shaped read that a function is wrongly credited with writing, or a
+# `writers` count built from a reader. A shape the five do not cover cannot be
+# caught here, and widening the list without naming a new shape is how a
+# hand check turns back into the five-address problem the invariant was added
+# to replace.
 HAND_CHECKED = {
     # No `DAT_EXTMEM_0440 =` anywhere in ec/decompiled/. Of 181 references: 15
     # `==` (bank0/8749.c:91, 8B14.c:136, 8C46.c:53, 8F20.c:97, 9334.c:30,
@@ -546,6 +778,26 @@ def store_target(text: str, start: int, end: int) -> bool:
         return False
     left = text[:start].rstrip()
     return not (left and left[-1] == "*")
+
+
+def assign_after(text: str, end: int) -> bool:
+    """Does an assignment follow this occurrence? Issue #280's second pass.
+
+    Deliberately not `store_target()` and not a call into it. The predicate is
+    only "the text after the token begins with `=`, and does not begin with
+    `==`", which is a *necessary condition* that `store_target()`'s first test
+    already implies. Asserting a consequence of the classifier is a different
+    act from re-running it: a re-run would agree with itself by construction,
+    and would still have passed on the pre-fix classifier that `HAND_CHECKED`
+    exists to catch.
+
+    The `*`-dereference exclusion is deliberately absent, and leaving it out is
+    what keeps this a necessary condition rather than a restatement. It is a
+    second, independent conjunct in `store_target()`, and a store through a
+    dereference still has an `=` after the address, so requiring it here would
+    add nothing except a second copy of the thing under test."""
+    nxt = text[end:].lstrip()
+    return nxt.startswith("=") and not nxt.startswith("==")
 
 
 def read_asm(program: str) -> dict:
@@ -905,6 +1157,65 @@ def scan(by_file, names, func_names, symbols):
         for addr, entry in per_addr.items():
             absorb(census[row["program"]].setdefault(addr, blank_entry()), entry)
     return census, calls, raw
+
+
+def direction_invariant(by_file, symbols, func_names):
+    """(shaped, offenders, surplus, eq_after, eq_in_write) for issue #280.
+
+    A second walk of the same committed text as `scan()`, asking a different
+    question. `scan()` decides a bucket per occurrence; this one records, per
+    occurrence, only what follows the token.
+
+    **It is not a second pair of eyes.** Same files, same regex, same
+    `strip_comments()`, and the bucket each occurrence is measured against is
+    the one `scan()` just produced. What it is *not* is a re-implementation of
+    the rule under test, and that is the whole of its value: the `==`
+    rejection that issue #178 added lives inside `store_target()`, while
+    `assign_after()` is a primitive that never consults it. Re-introduce the
+    old classifier and the two disagree on 838 occurrences.
+
+    The offender lists are why the return value is this shape. A count says a
+    number moved; `file!line address` says where to look, so a failure here is
+    a worklist rather than a diff to re-derive by hand.
+
+    `surplus` is the exemption rule made measurable. `assign_after()` accepts
+    strictly more than `store_target()` does, because it drops the `*` test.
+    Every occurrence in `surplus` is therefore expected to be a dereference
+    store, and the caller asserts exactly that -- so a new shape slipping
+    through shows up as a named site instead of quietly widening a tolerance.
+    """
+    pattern = occurrence_re(symbols)
+    by_name = {name: addr for addr, name in symbols.items()}
+    shaped = collections.Counter()
+    offenders, surplus = [], []
+    eq_after = eq_in_write = 0
+    for out_file in sorted(by_file):
+        with open(os.path.join(DECOMPILED, out_file)) as f:
+            text = strip_comments(f.read())
+        for m in pattern.finditer(text):
+            addr = (int(m.group(1), 16) if m.group(1) is not None
+                    else by_name[m.group(2)])
+            bucket = classify(text, m.start(), m.end(), m.group(0), func_names)
+            nxt = text[m.end():].lstrip()
+            store_shape = assign_after(text, m.end())
+            site = (f"{out_file}!{text.count(chr(10), 0, m.start()) + 1} "
+                    f"{hexaddr(addr)}")
+            if store_shape:
+                shaped[addr] += 1
+            if nxt.startswith("=="):
+                eq_after += 1
+                if bucket in ("write", "read+write"):
+                    eq_in_write += 1
+            if bucket in ("write", "read+write") and not store_shape:
+                offenders.append(f"{site} ({bucket})")
+            elif store_shape and bucket not in ("write", "read+write"):
+                # Accepted here and not counted by the census: the only shape
+                # that can happen is a store through a `*` dereference, because
+                # every other conjunct of `store_target()` is a *restriction*.
+                left = text[:m.start()].rstrip()
+                if not (left and left[-1] == "*"):
+                    surplus.append(f"{site} ({bucket})")
+    return shaped, offenders, surplus, eq_after, eq_in_write
 
 
 def merge_group(census, programs):
@@ -1393,10 +1704,44 @@ def self_test(args) -> int:
           0x07D8 in of("pd", "DAT_EXTMEM"))
     everywhere = set(groups["main-ec"]) | set(groups["pd"])
     named = sorted(a for a in everywhere if a in symbols)
+    # The count, and then the set behind it. Asserting the count alone left
+    # "which 150" discoverable only from this message; asserting the set makes
+    # the count arithmetic over NOT_IN_TREE, so an address that appears or
+    # disappears is a named entry rather than a shifted total.
+    not_in_tree = set(symbols) - everywhere
     check(f"of the {len(symbols)} named addresses, {ORACLE['named_in_tree']} "
           f"appear in the decompiled tree at all (got {len(named)}: "
           f"{', '.join(hexaddr(a) for a in named)})",
           len(named) == ORACLE["named_in_tree"])
+    # Issue #280. Both directions, so neither a missed address nor a stale
+    # entry passes, and the diff is printed address by address either way.
+    only_blocked = sorted(set(NOT_IN_TREE) - not_in_tree)
+    only_found = sorted(not_in_tree - set(NOT_IN_TREE))
+    check(f"issue #280: the {len(NOT_IN_TREE)} addresses xdata-symbols.csv names "
+          f"and the census does not reach are the NOT_IN_TREE set, address for "
+          f"address, so the {ORACLE['named_in_tree']} at named_in_tree is "
+          f"{len(symbols)} - {len(NOT_IN_TREE)} rather than a number to be "
+          f"taken on trust (in NOT_IN_TREE but now in the census: "
+          f"{', '.join(hexaddr(a) for a in only_blocked) or 'none'}; in the "
+          f"census gap but with no reason recorded: "
+          f"{', '.join(hexaddr(a) for a in only_found) or 'none'})",
+          not only_blocked and not only_found)
+    # The vocabulary is the assertion, not a promise in a comment: a reason
+    # that drifts into claiming the byte is gone would make every row below it
+    # unfalsifiable, which is the overclaim CLAUDE.md rules out.
+    vocab = {r.partition(":")[0].strip() for r in NOT_IN_TREE.values()}
+    check(f"every NOT_IN_TREE reason begins with one of the three recorded "
+          f"reasons {list(NOT_IN_TREE_REASONS)} (got "
+          f"{', '.join(sorted(vocab - set(NOT_IN_TREE_REASONS))) or 'all of them'})",
+          vocab <= set(NOT_IN_TREE_REASONS))
+    claimed = [f"{hexaddr(a)} says {w!r}"
+               for a, r in NOT_IN_TREE.items()
+               for w in NOT_IN_TREE_FORBIDDEN if w in r.lower()]
+    check(f"and none of them contains a word that would claim the byte is gone "
+          f"{list(NOT_IN_TREE_FORBIDDEN)} -- a scan that finds no reference has "
+          f"found no reference (offending lines: "
+          f"{', '.join(claimed) or 'none'})",
+          not claimed)
     check("every address the tree spells by symbol is in the generated symbol "
           "table, so the name column can never be empty for one",
           all(a in symbols for g in GROUPS for a, e in groups[g].items()
@@ -1549,6 +1894,50 @@ def self_test(args) -> int:
           + (f" -- disagreed on {', '.join(f'{a} (expected {e}, got {g})' for a, (e, g) in sorted(wrong.items()))}"
              if wrong else ""),
           not wrong)
+    # Issue #280: the same question, asked of the whole tree instead of five
+    # addresses. `direction_invariant()` is a second code path over the same
+    # text, not a re-implementation of store_target() -- assign_after() is a
+    # primitive that never consults the rule under test -- so this fails on a
+    # classifier that sums correctly while getting the direction wrong, which
+    # is exactly what the oracle above cannot be widened into on its own.
+    shaped, offenders, surplus, eq_after, eq_in_write = direction_invariant(
+        by_file, symbols, func_names)
+    check(f"the corpus-wide direction invariant: every one of the "
+          f"{DIRECTION_INVARIANT['write_like']} occurrences across "
+          f"{DIRECTION_INVARIANT['write_like_addrs']} distinct addresses that "
+          f"the census buckets `write` or `read+write` has an assignment -- not "
+          f"`==` -- after the address, measured by a second pass that does not "
+          f"re-implement the classifier"
+          + (f"; offenders, as `file!line address`: "
+             f"{', '.join(offenders)}" if offenders else ""),
+          not offenders)
+    # The per-address form of the same necessary condition, so a failure here
+    # says which address stopped balancing rather than only which occurrence.
+    over = [hexaddr(a) for a in everywhere
+            if sum(groups[g][a]["buckets"]["write"]
+                   + groups[g][a]["buckets"]["read+write"]
+                   for g in GROUPS if a in groups[g]) > shaped.get(a, 0)]
+    check(f"and no single address is counted as more stores than the second "
+          f"pass accepts, so the agreement is per address and not only in "
+          f"aggregate (over-counted: {', '.join(over) or 'none'})",
+          not over)
+    # The exemption rule, stated as a measurement rather than as a tolerance.
+    # `assign_after()` drops the `*` test that `store_target()` applies, so it
+    # accepts strictly more; every extra is a dereference store, and the two
+    # below are the whole of the difference. A new shape arriving here is a
+    # named site, not a quietly widened exemption count.
+    check(f"the only occurrences the second pass accepts and the census does "
+          f"not are the {DIRECTION_INVARIANT['deref_surplus']} `*`-dereference "
+          f"stores, the one exclusion a necessary condition does not need "
+          f"(anything else: {', '.join(surplus) or 'none'})",
+          not surplus and sum(shaped.values()) == DIRECTION_INVARIANT["assign_shaped"])
+    # The mirror direction on the same pass, and the tree-wide `==` figure the
+    # docstring and xdata-register-map.md §4.3 both quote. Asserted together so
+    # the count cannot drift away from the prose that cites it.
+    check(f"and none of the {DIRECTION_INVARIANT['eq_after']} `==` occurrences in "
+          f"the tree is bucketed as a store (in a write bucket: "
+          f"{eq_in_write or 'none'})",
+          eq_in_write == 0 and eq_after == DIRECTION_INVARIANT["eq_after"])
     # Internal by construction, and labelled so: the report's §4.1 table read
     # off these, so a drift in any of them means the table and the CSVs have
     # parted. It cannot vouch for the direction -- only HAND_CHECKED can.
