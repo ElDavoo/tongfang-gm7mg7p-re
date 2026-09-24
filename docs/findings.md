@@ -2837,6 +2837,14 @@ three slow things were a loop over the wrong collection, and profiling found
 them in a minute where reading the issue did not.** The cost was in the shape
 of the code, not in the amount of work it was supposed to do.
 
+**The comparison itself was moved, widened and recorded after this was
+written.** Its 0.13 s was four hand-typed functions out of 2,710, two of which
+compared nothing at all; the sample is now 1,901 functions derived from the
+committed annotations, it prints its denominator, and its outcome is committed
+to `ec/ghidra/cross-decoder.csv` and ratcheted by `--check` on every commit.
+**§14i has the measured figures, the correction to the "40 straight-line
+instruction(s)" this comparison used to print, and what the sample found.**
+
 ### 14e. What the split is, and what it costs while the deep tier is opt-in
 
 The gate is now two scripts and one environment variable.
@@ -2856,6 +2864,19 @@ every run whether it passed or failed.
 | `verify_reassembly.py --check` | 0.45 s | 0.45 s (unchanged) |
 | `bios_extract.py --check` | 0.33 s | 0.33 s (unchanged) |
 | `sdas8051` re-encode alone | issue #137's figure: ~90 s | **4 s** here, `--jobs 4` |
+
+**A later pair, and why the two differ (2026-09-24, issue #140).** The table
+above was measured on 2026-09-23 and this change adds the cross-decoder
+recomputation to both per-commit runs, so the "after" column there no longer
+holds. Rather than overwrite a dated measurement, both halves were re-taken on
+one runner, warm page cache, three runs each, against the pre-change file: the
+table's own figures are from a different day's runner, and the pair below is
+the before-and-after this change can be judged on. `--self-test` 0.42 s →
+**0.59 s**, `--check` 0.22 s → **0.34 s**, `--self-test --cross-decoder` 0.55 s
+→ **0.70 s**, whole cheap tier **10 s**. The ~0.15 s is the cross-decoder
+comparison over 1,901 sampled functions, which §14i measures in full — and
+which is a *cheaper* comparison than the four-function one it replaced, because
+the per-function subprocess and the per-function full-index re-read are gone.
 
 The deep tier is cheap **on this runner**; the 90 s is the issue reporter's
 figure and the two are not the same measurement. What is deferred does not
@@ -3328,6 +3349,148 @@ not from `$?`.
 
 Landing the schedule is still a human's one-line copy, and §14e still holds
 that the re-encode is not per-commit.
+
+### 14i. The cross-decoder comparison has a sample, a denominator and a record (2026-09-24, issue #140)
+
+§14d closes with two claims about the cross-decoder comparison. One still
+holds: it is cheap, and it sits behind `--cross-decoder` because of where
+output belongs. The other one — the *reason* it was cheap — did not survive a
+wider sample. **0.13 s is what four functions cost**, and the four were a
+hardcoded list of addresses out of the 2,710 the export carries. Two of those
+four compared nothing at all, which is §14b's failure one level up and is the
+half of the problem that was not a speed question.
+
+**The denominator (2026-09-24, this runner, warm page cache).** The sample is
+now derived from committed data — every annotated function the listing index
+carries (1,783), plus every eighth of the remaining 927, plus each program's
+first non-annotated row — so all four programs are represented by construction
+and the same inputs always give the same rows. Over that sample:
+
+```
+compared 994 of 1901 functions, 907 vacuous; 604 agreed, 390 disagreed, 0 no-export
+```
+
+| program | sampled | compared | vacuous | disagree |
+|---|---|---|---|---|
+| bank0 | 693 | 437 | 256 | 134 |
+| bank1 | 594 | 337 | 257 | 152 |
+| common | 112 | 47 | 65 | 30 |
+| pd | 502 | 173 | 329 | 74 |
+
+**This is §14b's failure one level up, and it is why the line above is printed
+on every run.** §14b is the Windows parser whose regex matched zero of 502,652
+lines and reported a pass over 358 GB of scanning: *a parser that reads a
+fraction of a file and finds nothing wrong in it reports a pass.* The
+four-function sample was the same shape — **two of its four functions compared
+nothing at all**, because their straight-line openings name no XDATA address,
+and the run said so in the same form as a pass. 907 vacuous out of 1,901 is
+the same property at a larger scale, and the denominator is what makes it
+visible to whoever is reading.
+
+**A correction to the "40 straight-line instruction(s)" the old output printed.**
+The window was supposed to end at the first branch, by a list of branch
+mnemonics matched against the line `disasm8051.py` prints — whose first column
+is the address, so the match never fired on any line. Every sample therefore
+decoded all 40 instructions, branches included, which is the desync this
+comparison exists to avoid: past the first branch the `0x90` bytes it found
+were operands of instructions the walk had lost track of. The terminator is now
+`disasm8051.FLOW_OPCODES`, and the four known answers moved with it:
+
+| | old (40 instructions, never stopped) | now (stops at the first flow instruction) |
+|---|---|---|
+| bank0 `0xB1F0` | 6 addresses, all named — `agree` | **7 instructions, 2 addresses** (`0x0A4E`, `0x0A4F`), `agree` |
+| bank0 `0xB158` | 8 addresses, 4 named — `0x0438`, `0x0439`, `0x04A6`, `0x04A7` missing | **6 instructions, 3 addresses**, `0x0438`/`0x0439` missing |
+| bank0 `0xBAE5` | 1 instruction, vacuous | unchanged, vacuous |
+| common `0x707D` | 14 instructions, vacuous | 13 instructions, vacuous |
+
+The fold the old output reported at `0x04A6`/`0x04A7` is real and still is —
+those two bytes are read and handed to the big-endian store helper — but it is
+past the first branch, so a straight-line window does not reach it.
+`0xB158` still `disagree`s, on the first byte pair its opening does reach. The
+old figures are left in the table because they are the evidence that the
+terminator never fired; they are not what the tool prints now.
+
+**The file offset was bank 0's, applied to everything.**
+`file_off = 0x08000 + (start - COMMON_END)` is correct for `bank0` and,
+because the common area is byte-identical in both banks, coincidentally correct
+for `common`. It is wrong by a 32 KiB window for `bank1` and wrong by a whole
+program for `pd`, and it would have kept reporting a clean result over the
+wrong bytes. It is now `file_offset(program, addr)`, a lookup over the three
+windows, with one known-answer anchor per program in `--self-test` — the first
+`n` bytes of the committed `.asm` at that address must equal the firmware at
+the offset the function returns — plus the negative half, that no other
+program's offset returns the same bytes. The negative half is what makes the
+four mean anything: without it an anchor that passes by coincidence is
+indistinguishable from one that passes because the map is right.
+
+**And the 1,901-row comparison is faster than the four-function one was.** The
+old path spawned a `disasm8051.py` subprocess per function *and* re-read all
+2,710 listing-index rows per function inside `function_size()`; the new one
+imports the decoder, reads the listing index once, and reads the annotations
+once. Measured the same way as the table above, each on this runner with a warm
+page cache, three runs each:
+
+| | 2026-09-23 | before this change | after |
+|---|---|---|---|
+| `--self-test` | 0.15 s | 0.42 s | 0.59 s |
+| `--check` | 0.19 s | 0.22 s | 0.34 s |
+| `--self-test --cross-decoder` | 0.27 s | 0.55 s | 0.70 s |
+| the comparison alone | 0.13 s (4 functions) | — | **0.10 s (1,901 functions)** |
+| `--report` | n/a | n/a | 0.16 s |
+
+So a 475× larger sample costs slightly less than the four-function one did, and
+the ~0.15 s the comparison adds to each per-commit run is the price of reading
+1,901 `.c` files the check already walks. The `--report` output is
+byte-identical run to run (verified), which is what the ratchet needs.
+
+**What a `disagree` is not.** 390 rows disagree and the bucket is not a defect
+list, so the count is worth reading with its composition. **104** are the
+`mov dptr,#imm; ljmp <BL51 stub>` bank-switch trampoline, whose C calls
+`bl51_bank_select_1(0x88f0)` — the address is in the output as a literal
+argument, but not as an `EXTMEM_` symbol, and `EXTMEM_` is the whole
+vocabulary of this comparison. Of the rest, 218 distinct addresses are involved
+and **125 of them have no entry in `ec/annotations/registers.yaml`**, so they
+cannot appear as `EXTMEM_` in any C at all: a `disagree` there measures the
+register map's coverage and says nothing about the decompiler. Splitting the
+bucket needs the byte-pair-folding case *enumerated* rather than described, and
+guessing which of a function's C reads is a fold would manufacture the very
+distinction the comparison is meant to measure. So the ratchet fires on
+**change**, not on presence — which is issue #140's option A, and leaves its
+option B to whoever does that enumeration.
+
+**The 0x07D0 re-test, and one correction to the plan's version of it.** The
+widened sample re-tests both blind-spot addresses. It finds 0x07D0 in seven
+sampled PD functions' openings — `0x8576`, `0x8716`, `0x98A1`, `0xA571`,
+`0xA678`, `0xAD3C`, `0xC2FA` — all of them `agree`: the linear decoder names
+0x07D0 and so does the C. **All seven are in the PD image, and that is the half
+of the question that was already answered.** §4 and `ec-0x07d0-sites.md` own
+the PD's 254 sites (issue #25); the half still open is whether the *main EC
+image* acts on 0x07D0 at all, which is the indirect-XDATA blind spot (#34) and
+which this comparison cannot reach, because the EC image references 0x07D0 zero
+times by this method. So the re-test confirms the widened comparison sees
+0x07D0 where it is, and settles nothing about the byte the Windows stack writes.
+
+The plan this came from named `pd 0x3478` as the opening to look at, and
+**there is no function at `pd 0x3478`** — no listing row, no `.c` — so the
+anchor is `pd 0xA678`, which is in the sample and does open `90 07 d0`.
+0x04A6/0x04A7 is the other half, and the correction table above is its answer
+under a window that stops at the first branch.
+
+**The outcome is committed and ratcheted.** `ec/ghidra/cross-decoder.csv`,
+1,901 rows, generated by `--report` and by nothing else, beside `manifest.csv`
+and `reassembly.csv`. `--check` recomputes every row and fails on a row it does
+not carry, a row it carries that the sample no longer has, or any cell that
+moved; and it fails on a wholly vacuous or wholly unexported sample, which is
+the §14b failure above encoded as an assertion rather than as a number to be
+read. So the second half of what issue #140 reports — "the result is printed
+and nothing else" — is closed, and the cost is the ~0.15 s in the table.
+
+**One stale sentence, left visible.** `.github/scripts/agent-gates.sh` still
+prints that this tier "does not run … the advisory cross-decoder comparison".
+It no longer *prints* the run; it recomputes and ratchets on every row. Both
+`.github/` files are template-copied and this change cannot land them (the
+token has no `workflow` scope), so the wording is corrected in
+`ec/ghidra/README.md` and here instead.
 
 ## 15. The EC and BIOS indexes get the same structural guards (2026-09-23, issue #142)
 
@@ -3913,11 +4076,14 @@ the whole time between.)*
 
    **On the function count.** The three figures that disagreed here are 22
    (`ec/ghidra/README.md`), 32 (the paragraph above), and 39 by `grep`. The
-   measured value is now **41** — `grep -c '^def ' ec/tools/build_ec_decompile.py`
+   measured value is now **52** — `grep -c '^def ' ec/tools/build_ec_decompile.py`
    — quoted in both files with the command beside it, so it is re-derivable
-   rather than a transcription that drifts again. The two older numbers are left
-   above because they are part of the record of the defect; neither was ever a
-   measurement.*
+   rather than a transcription that drifts again. It was **41** when this
+   paragraph was written and moved to 52 with §14i, which is `41 - 2 + 13`:
+   `function_size()` and `check_cross_decoder_agreement()` gone, and the
+   thirteen that `file_offset()` through `degenerate_sample_problems()`
+   replaced them with. The two older numbers are left above because they are
+   part of the record of the defect; neither was ever a measurement.*
 2. **The export was stale before this change.** 203 committed `.c` files still
    said `DAT_EXTMEM_0440` although `xdata-symbols.csv` has named that byte
    `XDATA_0440` since `8a90bc0` (#160) — that commit regenerated

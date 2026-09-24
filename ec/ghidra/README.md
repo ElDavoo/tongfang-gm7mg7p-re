@@ -25,7 +25,8 @@ python3 ../tools/build_ec_decompile.py --work /tmp/ec --mode rebuild-project
 # what CI checks, with no Ghidra and no network
 python3 ../tools/build_ec_decompile.py --work /tmp/ec --check
 python3 ../tools/build_ec_decompile.py --work /tmp/ec --self-test
-python3 ../tools/build_ec_decompile.py --work /tmp/ec --self-test --cross-decoder  # advisory
+python3 ../tools/build_ec_decompile.py --work /tmp/ec --self-test --cross-decoder  # prints the run
+python3 ../tools/build_ec_decompile.py --work /tmp/ec --report   # + writes cross-decoder.csv
 python3 ../tools/build_ec_decompile.py --work /tmp/ec --self-test --oracle   # also runs Ghidra
 ```
 
@@ -36,16 +37,21 @@ hand. That is Ghidra's output compared against a human reading, made
 mechanical. **What it asserts, what it runs against, and what invokes it are
 spelled out below** — it is the one thing on this page that nothing in CI runs.
 
-`--check` and `--self-test` are what the cheap gate tier runs, at 0.19 s and
-0.13 s. The second figure is 0.03 s more since the annotation-side CSVs
-(`../annotations/ghidra-functions.csv`, `../annotations/bank-call-targets.csv`)
-gained strict structural guards — measured five runs each on one runner, before
-and after; `docs/findings.md` §15c has the pairs. `--cross-decoder` adds the
-advisory comparison against `disasm8051.py`; it is 0.13 s, it prints rather
-than fails, and `.github/scripts/agent-gates-deep.sh` is what passes the flag,
-so `AGENT_GATES_DEEP=1` gets it. See `docs/findings.md` §14 — the self-test
-used to take 18.8 s, and the cost was a set comprehension that re-read this
-repository's annotations CSV once per seed row, not the cross-decoder.
+`--check` and `--self-test` are what the cheap gate tier runs, at 0.34 s and
+0.59 s on this repository's runner on 2026-09-24, warm page cache, each
+measured against the pre-change file on the same machine the same day (0.22 s
+and 0.42 s). Both figures include the cross-decoder comparison described
+below: `--check` recomputes all 1,901 of its rows and `--self-test` asserts
+its known answers, which is why they are no longer the 0.19 s and 0.13 s
+`docs/findings.md` §14e recorded on 2026-09-23. The comparison itself is
+0.10 s (`--report` measures 0.16 s end to end) — the price of 1,901 short
+decodes and 1,901 reads of a `.c`, with no subprocess per function, where the
+four-function version it replaces spawned one and re-scanned the whole
+2,710-row listing index for each of them.
+
+`--cross-decoder` prints the run; `--report` records it; `--check` ratchets
+on the record. So the comparison's result is no longer read by nobody, which
+is what §14d calls out as the second half of the problem it reports.
 
 **`--self-test --oracle` is a procedure, not a gate, and that is the whole of
 what invokes it.** It re-exports from the committed project into the `--work`
@@ -89,11 +95,11 @@ is the test for it.
 
 **Not wired into CI, and why.** By cost and by kind it belongs in the deep tier,
 not the cheap one: a full Ghidra export is minutes, and `agent-gates.sh` runs
-the cheap mechanical half with no Ghidra and no network (0.13 s, and it says so).
-But that script and `agent-gates-deep.sh` are both template-copied `.github/`
-files this pipeline's token cannot land, so the block goes here for a human to
-drop into `agent-gates-deep.sh` next to the cross-decoder one. It is a direct
-invocation rather than a `case` arm, because that is the shape that file uses:
+the cheap mechanical half with no Ghidra and no network. But that script and
+`agent-gates-deep.sh` are both template-copied `.github/` files this pipeline's
+token cannot land, so the block goes here for a human to drop into
+`agent-gates-deep.sh` next to the cross-decoder one. It is a direct invocation
+rather than a `case` arm, because that is the shape that file uses:
 
 ```sh
 printf '\n=== Ghidra oracle (EC, bank0 0xB1F0) ===\n'
@@ -107,11 +113,15 @@ Until then it runs when asked, and a green commit says nothing about whether it
 would still pass. The same shape `../tools/verify_gap_text.py` is already in
 below and `../../docs/findings.md` §14e records for the deep tier.
 
-**One number, measured.** This module defines **41** functions —
+**One number, measured.** This module defines **52** functions —
 `grep -c '^def ' ec/tools/build_ec_decompile.py`. Three files used to give three
 different counts of it (22 here, 32 in `../../docs/findings.md` §18, 39 by the
 `grep`); the `grep` is the only one of the three that is mechanically checkable,
-so it is the one quoted.
+so it is the one quoted. It moves with the work, and the number it quotes is
+`grep`'s: 41 before the cross-decoder comparison was given a sample and a
+report, 52 after, which is `41 - 2 + 13` — `function_size()` and
+`check_cross_decoder_agreement()` gone, and the thirteen that
+`file_offset()` through `degenerate_sample_problems()` replaced them with.
 
 ## The two annotation layers
 
@@ -147,6 +157,7 @@ there.
 | `../decompiled/index.csv` | every function: program, address, name, size, how it was seeded, what is annotated, and the evidence for it |
 | `../decompiled/listing-index.csv` | the same rows again, `out_file` pointing at the `.asm`. Separate because the two files answer different questions and merging them would invite a reader to take a decompiled line for an instruction |
 | `reassembly.csv` | per function, whether re-encoding the committed listing reproduces the firmware bytes, where it does not, and a `listing_digest` of the listing text so `--check` can see a text edit |
+| `cross-decoder.csv` | per sampled function, whether Ghidra's C names the XDATA addresses `disasm8051.py` finds in its opening straight-line instructions, and which it does not. Generated by `--report`; `--check` recomputes every row. See "The C, cross-decoded" below |
 | `gap-text-check.csv` | per *instruction*: the 143 the re-encode cannot reach, each cross-decoded against `disasm8051.py` with its verdict. See "The 143, cross-decoded" below |
 | `manifest.csv` | per program: function/decompile/fail counts, bytes disassembled, seed counts, Ghidra version, input SHA-256. The `common` row is an **export grouping**, not a fourth Ghidra program: those functions live in both bank programs and are emitted once |
 | `xdata-symbols.csv` | generated XDATA names, from `../annotations/registers.yaml`. Never hand-edited |
@@ -537,6 +548,123 @@ plus `ec/tools/verify_gap_text.py` in the tool list above it. Until a human
 lands that, this check runs when asked and the committed verdicts can go stale
 in a commit that is otherwise green. That is the same shape
 `../../docs/findings.md` §14e records for the deep tier.
+
+## The C, cross-decoded
+
+The 143 above ask a second decoder whether a *listing* is right. This asks
+whether the *decompile* is: `disasm8051.py`, which shares no code with Ghidra's
+SLEIGH, walks each sampled function's opening straight-line instructions and
+collects every XDATA address it names, and the comparison asks whether the
+committed `.c` names the same ones. Two decoders that share nothing agreeing
+on the operands is worth more than either alone.
+
+```
+$ python3 ../tools/build_ec_decompile.py --work /tmp/ec --self-test --cross-decoder
+  cross-decoder agreement (Ghidra's C vs disasm8051.py, each sampled function's opening straight-line instructions):
+    bank0    693 sampled,  437 compared,  256 vacuous,  134 disagree, 0 no-export
+    bank1    594 sampled,  337 compared,  257 vacuous,  152 disagree, 0 no-export
+    common   112 sampled,   47 compared,   65 vacuous,   30 disagree, 0 no-export
+    pd       502 sampled,  173 compared,  329 vacuous,   74 disagree, 0 no-export
+    compared 994 of 1901 functions, 907 vacuous; 604 agreed, 390 disagreed, 0 no-export
+```
+
+**The denominator is the point, and it is printed on every run.** The version
+this replaces sampled four hand-typed addresses out of the 2,710 the export
+carries, and two of the four compared nothing at all — their openings name no
+XDATA address — which the old output said in the same shape as a pass. That is
+`../../docs/findings.md` §14b's own sentence ("a parser that reads a fraction
+of a file and finds nothing wrong in it reports a pass") one level up, in a
+check that had been moved rather than fixed. 907 of 1,901 is a large vacuous
+share and it is now the first number on the screen rather than nothing at all.
+
+### What the sample is
+
+Two committed CSVs and nothing else, so the same inputs always give the same
+rows — which is what lets `--check` compare the committed report against it and
+call a difference a stale report rather than a sample that moved.
+
+- **Backbone** — every `(scope, addr)` in `../annotations/ghidra-functions.csv`
+  that the listing index carries: 1,783 functions, the ones a person or an
+  agent has read and cited. All four programs are represented in it, so
+  per-program coverage holds by construction; `--self-test` asserts that rather
+  than assuming it.
+- **Stride** — every eighth of the remaining 927, in sorted
+  `(program, addr)` order, plus each program's first non-annotated row so
+  coverage survives a program whose remainder is tiny.
+
+The four functions the comparison was introduced on are all annotated, so the
+backbone already carries them; they are kept as named regression fixtures and
+asserted in `--self-test` rather than special-cased. **Two of the four are still
+vacuous** (`0xBAE5` over 1 instruction, `common 0x707D` over 13), and that is
+why the denominator is printed rather than implied.
+
+### The window, and why it is shorter than it was
+
+The window ends at the first flow instruction, taken from
+`disasm8051.FLOW_OPCODES`. It used to end at a list of branch *mnemonics*
+matched against the rendered line — whose first column is the address, so the
+match never fired, and every sample decoded all 40 instructions with branches
+in them. That is the desync this comparison is built to avoid, and it is why
+the recorded output said "40 straight-line instruction(s)" for a function whose
+straight-line opening is seven. `0xB1F0` now reads 7 instructions naming
+`0x0A4E`/`0x0A4F` and agrees; `0xB158` reads 6 and disagrees on `0x0438`/
+`0x0439`, the byte pair its C folds into one wide read through `0xBB90` — the
+same phenomenon the old 40-instruction window reported at `0x04A6`/`0x04A7`
+further in, and now out of the window entirely. The fold at `0x04A6`/`0x04A7`
+is still what the bytes do; the straight-line window just does not reach it.
+
+### Reading a `disagree`
+
+`disagree` is one bucket and it is **not** a defect list. Measured over the 390
+rows the committed report records:
+
+- **104** are the `mov dptr,#imm; ljmp <BL51 stub>` bank-switch trampoline.
+  Their C calls `bl51_bank_select_1(0x88f0)`, so the address is right there as
+  a literal argument; it is not an `EXTMEM_` symbol, and the comparison's
+  vocabulary is `EXTMEM_`. The run prints this count for exactly that reason —
+  otherwise the first twenty rows of the list read as twenty defects.
+- Of the rest, 218 distinct addresses are involved and **125 of them have no
+  entry in `../annotations/registers.yaml`**, so they cannot appear as an
+  `EXTMEM_` symbol in any C. A `disagree` there measures the register map's
+  coverage, not the decompiler.
+
+Splitting the bucket needs the byte-pair-folding case enumerated rather than
+described, which it is not, and guessing which of a function's C reads is a
+fold would manufacture the very distinction the comparison is meant to
+measure. So `--check` ratchets on **change**, not on presence: a `disagree` or
+a `vacuous` row is recorded and passes.
+
+**The two blind-spot addresses.** The report names 0x07D0 in seven PD
+functions' `linear` column, all `agree` — which is the PD image's own 0x07D0,
+the half `../../docs/findings.md` §4 and `../annotations/ec-0x07d0-sites.md`
+already own, and says nothing about whether the *main EC image* acts on
+0x07D0 at all (`registers.yaml` keeps that at
+`unknown-not-absent-DO-NOT-WRITE-BLIND`; the EC image references 0x07D0 zero
+times by this method). 0x04A6/0x04A7 appears nowhere in the report: the fold at
+0xB158 is real but sits past that function's first branch, which is the window
+this comparison stops at.
+
+### What `--check` does with it
+
+`--check` recomputes all 1,901 rows and fails on a row the report does not
+carry, a row the report carries that the sample no longer does, or **any
+cell** that moved — not just `outcome`, so a drifted name or instruction count
+is caught too. It fails on a wholly vacuous or wholly unexported sample, which
+is the failure encoded as an assertion rather than as a number to be read.
+
+`--report` regenerates `cross-decoder.csv` from the committed inputs alone —
+firmware, listings, C, `disasm8051.py`, the annotations — so refreshing it
+needs `python3` and no Ghidra run, and the output is byte-identical run to run
+(verified). The report carries no SHA-256 of the firmware: `manifest.csv` is
+the committed record of that, `--check` has already compared it against the
+image, and a second place recording the same value is a second thing to keep
+in step.
+
+**One stale sentence in the gate output.** `.github/scripts/agent-gates.sh`
+prints that this tier "does not run … the advisory cross-decoder comparison".
+It no longer prints the run, but it does recompute and ratchet on every row.
+Both files are template-copied and out of this change's reach (no `workflow`
+scope), so the wording is corrected here instead.
 
 ## What `listing_digest` is, and what it does not prove
 
