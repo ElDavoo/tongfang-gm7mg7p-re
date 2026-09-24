@@ -2,19 +2,19 @@
 """Offline checks; no EC is opened and the vendor driver is never called.
 
 ec_watch.py imports ecrw, which binds kernel32 at import time and so only
-loads on Windows -- the fake below stands in for the whole module, which is
-also what lets the sweep be scripted byte by byte.
+loads on Windows -- ecrw_fake.py stands in for the whole module, and the
+FakeEc below scripts the sweep byte by byte on top of it.
 """
 import contextlib
 import importlib.util
 import io
 from pathlib import Path
-import sys
 import tempfile
 import threading
-import types
 import unittest
 from unittest.mock import patch
+
+import ecrw_fake
 
 ADDRS = [0x0700, 0x0701, 0x0702, 0x0703]
 
@@ -25,10 +25,6 @@ SWEEPS = [
     {0x0700: 0x00, 0x0701: 0x11, 0x0702: 0x00, 0x0703: 0x00},
     {0x0700: 0x00, 0x0701: 0x11, 0x0702: 0x22, 0x0703: 0x00},
 ]
-
-
-class FakeEcError(RuntimeError):
-    pass
 
 
 class FakeEc:
@@ -83,10 +79,7 @@ class FakeStdin:
         return ""
 
 
-fake_ecrw = types.ModuleType('ecrw')
-fake_ecrw.Ec = FakeEc
-fake_ecrw.EcError = FakeEcError
-sys.modules.setdefault('ecrw', fake_ecrw)
+ecrw_fake.install()
 
 spec = importlib.util.spec_from_file_location(
     'ec_watch', Path(__file__).with_name('ec_watch.py'))

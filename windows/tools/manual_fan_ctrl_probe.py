@@ -17,20 +17,21 @@ single-tool form does *not* do is §3b of that file: the service-stopped second
 pass, the by-hand package-power notes, the before/after range dumps §4.6 reads,
 and §6's eight-file set. This tool produces neither a MARK-CSV nor a dump.
 
-Two arms, because 0x075B/0x075C (the candidate fan-PWM bytes) move with the die
+Two arms, because 0x075B/0x075C (the fan duty bytes -- the vendor's
+ADDR_EC_MAIN_FAN_L/R_DUTY_BYTE, issue #123) move with the die
 whether or not anything wrote 0x0751. The control arm writes 0x0751 back the
-value it already holds and holds for the same time, so its PWM movement is the
+value it already holds and holds for the same time, so its duty movement is the
 baseline the write under test has to beat -- what
 docs/hardware-tests/manual-fan-ctrl-0751-isolation.md §4.4 asks a human to
 compare. The tool prints both arms' numbers and does not grade them: telling
-PWM drift from thermal drift is the reader's call (§4.4).
+duty drift from thermal drift is the reader's call (§4.4).
 
 The two arms are labelled `no-op wrote 0x0751=0xNN` and `wrote 0x0751=0xNN` --
 the labels §3 requires and ec/tools/grade_0751_isolation.py windows on. A
 control arm that reads like the write under test is indistinguishable from it.
 
 0x0400-0x045F is the EC's own temperature reading (0x043E CPU_TEMP, 0x044F
-GPU_TEMP), so the PWM reading is taken against a measured die rather than an
+GPU_TEMP), so the duty reading is taken against a measured die rather than an
 assumed one. It stops at 0x045F because the fan-tach bytes (0x0460-0x046F) start
 right after, and reading those through ECRR stalled the fans on a sibling board
 (#94, docs/related-projects.md).
@@ -38,7 +39,9 @@ right after, and reading those through ECRR stalled the fans on a sibling board
 The other rows this range prints are not all sensors: 0x0434/0x0435 is battery
 current in mA, 0x0438/0x0439 is terminal voltage in mV, and 0x0448/0x0449 are
 those two divided by 100. ec/annotations/xdata-0400-045f.md maps all 96 bytes --
-44 of them with a registers.yaml entry, the other 50 named there as
+46 of them with a registers.yaml entry, which is 44 entered by the sweep plus
+the two that were already there (0x043E, 0x044F) and is carried as 41 entries
+because five are entered as 16-bit pairs, the other 50 named there as
 deliberately not entered -- so a row that moves here is either nameable or
 accounted for. Treat the electrical ones as context: they move with the pack,
 not with 0x0751.
@@ -78,7 +81,7 @@ FANTBL = list(range(0x0F00, 0x0F60))
 TEMP = list(range(0x0400, 0x0460))
 ALL = WATCH + FANTBL + TEMP
 ALLOWED = {0x00, 0x10, 0xA0}
-PWM = (0x075B, 0x075C)
+DUTY = (0x075B, 0x075C)
 TEMPS = (0x043E, 0x044F)
 
 
@@ -136,9 +139,9 @@ def report(name, moved, heading):
     if not moved:
         print("  nothing moved on its own")
     for a, (o, n, c) in sorted(moved.items()):
-        # Neither arm's PWM number means anything on its own; §4.4 is the
+        # Neither arm's duty number means anything on its own; §4.4 is the
         # comparison between them.
-        tag = " (candidate fan PWM, unconfirmed -- §4.4)" if a in PWM else ""
+        tag = " (fan duty, MAIN_FAN_L/R_DUTY -- §4.4)" if a in DUTY else ""
         print(f"  0x{a:04X}: 0x{o:02X} -> 0x{n:02X} "
               f"({c} change{'' if c == 1 else 's'}){tag}")
 
@@ -171,7 +174,7 @@ def main(argv=None):
     try:
         # The control arm writes the byte back the value it already holds. It
         # is not the restore step and not optional: without it there is no
-        # baseline to read the write's PWM movement against (§4.4). The label
+        # baseline to read the write's duty movement against (§4.4). The label
         # is printed before the write so it timestamps the action, and `base`
         # is the caller's so the byte's own movement stays in the record.
         no_op = f"no-op wrote 0x0751=0x{orig:02X}"
@@ -196,13 +199,13 @@ def main(argv=None):
            "no-op write -- the baseline the write under test has to beat")
     report("write under test", written, f"0x0751 = 0x{target:02X}")
 
-    # §4.5's precondition for reading anything into the two PWM numbers: the
+    # §4.5's precondition for reading anything into the two duty numbers: the
     # load has to have been flat across both. Printed, not judged.
     for a in TEMPS:
         name = "CPU_TEMP" if a == 0x043E else "GPU_TEMP"
         print(f"\n{name} 0x{a:04X}: control {fmt(control.get(a))}, "
               f"write {fmt(written.get(a))}")
-        print("  a PWM difference means something only if this held steady "
+        print("  a duty difference means something only if this held steady "
               "across both arms (§4.5)")
 
 

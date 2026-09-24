@@ -1,0 +1,17 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# byte below was written by hand. See README.md.
+# Shape: the same `ecrw.py dump 0x0F00 0x0060` as §3's step 6 takes it, and the
+# only three addresses that differ from the before dump are 0x0F5D-0x0F5F.
+# They hold the magic and selector ec/annotations/manual-fan-ctrl-0751.md §6
+# decodes at 0x888D -- 0xFD, 0xC9, and 2 -- because that is the write this
+# pair exists to hold up: with the vendor service up, §3's main arm, this is
+# what a difference there looks like, and under §4.2's heading it would read
+# as the EC reloading its own table. §4.2's own bytes are unchanged here.
+# Every value here is invented; not a prediction that the service poked the
+# mailbox, or when.
+0f00: 2a 2e 32 36 3a 3e 42 46 4a 4e 52 56 5a 5e 62 66
+0f10: 00 24 28 2c 30 34 38 3c 40 44 48 4c ff ff ff ff
+0f20: 00 30 30 40 4c 58 64 70 7c 88 94 a0 ac b8 c4 d0
+0f30: 24 24 26 28 2a 2c 2e 30 32 34 36 38 ff ff ff ff
+0f40: 00 26 26 2c 32 38 3e 44 4a 50 5c 62 68 6e 74 7a
+0f50: 00 30 30 40 4c 58 64 70 7c 88 94 a0 ac fd c9 02

@@ -5,17 +5,18 @@
 
 
 /* Copies the byte at XDATA 0x043D to XDATA 0x09CD, then reads 0x09CD back into A and returns it.
-   The asm returns the destination, not the source as the decompiled C says. Neither address has an
-   entry in ec/annotations/registers.yaml.
+   The asm returns the destination, not the source as the decompiled C says. 0x043D is XDATA_043D in
+   ec/annotations/registers.yaml, an EC-side site found with its meaning not established; 0x09CD has
+   no entry there.
    type: copy
-   evidence: ec/decompiled/bank0/BF12.asm; ec/decompiled/bank0/BF12.c
+   evidence: ec/decompiled/bank0/BF12.asm; ec/decompiled/bank0/BF12.c; ec/annotations/registers.yaml
    basis: hand-decoded */
 
 undefined1 copy_043d_to_09cd_and_return_09cd(void)
 
 {
-  DAT_EXTMEM_09cd = DAT_EXTMEM_043d;
-  return DAT_EXTMEM_043d;
+  DAT_EXTMEM_09cd = XDATA_043D;
+  return XDATA_043D;
 }
 
 

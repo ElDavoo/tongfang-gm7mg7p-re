@@ -13,7 +13,7 @@
 void store_32_to_0458_then_tailcall_1954(void)
 
 {
-  DAT_EXTMEM_0458 = DAT_INTMEM_32;
+  XDATA_0458 = DAT_INTMEM_32;
   load_dptr_92f7_tail_jump_1114();
   return;
 }

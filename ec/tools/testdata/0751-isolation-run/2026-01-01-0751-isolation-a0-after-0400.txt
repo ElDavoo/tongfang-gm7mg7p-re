@@ -1,0 +1,14 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# byte below was written by hand. See ../README.md.
+# Shape: `ecrw.py dump 0x0400 0x0060` as §3's step 6 takes it, for the a0
+# block's after dump. It differs from the before dump at the three addresses the
+# 0x0400-0x045F capture records moving -- 0x0402, 0x043E and 0x044F -- and at
+# no other, so the whole-block read over this pair is exactly the set that
+# capture shows. Every value is invented. Not a prediction that a die warms
+# like this, or that it does not.
+0400: 00 00 12 00 00 00 00 00 00 00 00 00 00 00 00 00
+0410: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0420: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0430: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 37 00
+0440: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 32
+0450: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00

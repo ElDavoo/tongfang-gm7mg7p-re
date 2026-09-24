@@ -18,31 +18,31 @@ char gate_value_against_045a_bits(char param_1)
 
 {
   if (param_1 == '\x01') {
-    if ((DAT_EXTMEM_045a & 0x60) == 0) {
+    if ((XDATA_045A & 0x60) == 0) {
       return '\0';
     }
   }
   else if (param_1 == '\x05') {
-    if (-1 < (char)DAT_EXTMEM_045a) {
+    if (-1 < (char)XDATA_045A) {
       return '\0';
     }
   }
   else if (param_1 == '\b') {
-    if ((DAT_EXTMEM_045a >> 4 & 1) != 1) {
+    if ((XDATA_045A >> 4 & 1) != 1) {
       return '\0';
     }
   }
   else if (param_1 == '\x0e') {
-    if ((DAT_EXTMEM_045a >> 5 & 1) != 1) {
+    if ((XDATA_045A >> 5 & 1) != 1) {
       return '\0';
     }
   }
   else if (param_1 == '\x0f') {
-    if ((DAT_EXTMEM_045a >> 6 & 1) != 1) {
+    if ((XDATA_045A >> 6 & 1) != 1) {
       return '\0';
     }
   }
-  else if ((param_1 == '\x15') && ((DAT_EXTMEM_045a & 0xe0) == 0)) {
+  else if ((param_1 == '\x15') && ((XDATA_045A & 0xe0) == 0)) {
     return '\0';
   }
   return param_1;

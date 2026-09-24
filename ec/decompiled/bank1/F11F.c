@@ -16,11 +16,11 @@ void thunk_to_f2f3(void)
 {
   DAT_EXTMEM_06c6 = 2;
   push_r5_into_070f_ring_when_gates_pass(0x15);
-  if (((DAT_EXTMEM_0440 != '\x05') && (DAT_EXTMEM_0440 != '\x06')) && (DAT_EXTMEM_0440 != '\a')) {
-    if ((DAT_EXTMEM_0443 & 7) == 7) {
+  if (((XDATA_0440 != '\x05') && (XDATA_0440 != '\x06')) && (XDATA_0440 != '\a')) {
+    if ((XDATA_0443 & 7) == 7) {
       return;
     }
-    DAT_EXTMEM_0443 = (DAT_EXTMEM_0443 & 7) + 1;
+    XDATA_0443 = (XDATA_0443 & 7) + 1;
   }
   return;
 }

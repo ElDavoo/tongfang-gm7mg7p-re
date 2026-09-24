@@ -71,8 +71,8 @@ LAB_CODE_88e7:
     *pcVar5 = param_1;
     bVar2 = bVar2 + 1;
   } while (bVar2 != 0x30);
-  puVar6 = &DAT_EXTMEM_08eb;
-  if ((DAT_EXTMEM_08eb & 0x48) != 0) {
+  puVar6 = &XDATA_08EB;
+  if ((XDATA_08EB & 0x48) != 0) {
     mov_a_c8();
     *puVar6 = 200;
     copy_dptr_byte_to_075c();

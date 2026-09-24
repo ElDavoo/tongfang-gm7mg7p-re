@@ -11,7 +11,7 @@ void FUN_CODE_f1f8(void)
 {
   byte bVar1;
   
-  bVar1 = DAT_EXTMEM_045a & 0xe0;
+  bVar1 = XDATA_045A & 0xe0;
   if (((DAT_EXTMEM_047b & 0xe0) != bVar1) && ((~(DAT_EXTMEM_047b & 0xe0) & bVar1) != bVar1)) {
     DAT_EXTMEM_047b = DAT_EXTMEM_047b & 0x1f | bVar1;
     return;

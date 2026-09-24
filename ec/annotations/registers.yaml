@@ -442,6 +442,33 @@ registers:
       DO-NOT-WRITE-BLIND suffix matches 0x07D0 because a blind write here
       lands on the same GPU power pair with the same unknowns. No live
       test has touched this byte.
+      WALKED 2026-09-24 (issue #185): all 76 sites are now enumerated in
+      ec/annotations/ec-0x07d1-sites.md (site table:
+      ec-0x07d1-sites.csv), by the same method and reconciliation
+      ec-0x07d0-sites.md used. 76 distinct sites, not one function called
+      repeatedly: 60 read, 16 write, none incremented in place, none
+      unresolved by this method. 17 of the 17 handoffs resolve one level
+      deeper -- 14 read, 3 write -- across 8 callees, which
+      register_ref_table.py --callee-depth 1 confirms independently. Read
+      sites multiply it against strides 0x5E and 0x17 to index arrays
+      (bases 0x08E8/0x08E9/0x08F4/0x08F6/0x08FC/0x0904 and
+      0x0A13/0x0A2C/0x0A2D/0x0A35/0x0A39), which is the shape of an index
+      or state variable of the PD firmware and says nothing about the EC's
+      own 0x07D1. Five of the 76 walk past their own byte through inc
+      dptr, four of them treating 0x07D1+0x07D2 as one 16-bit
+      little-endian quantity; 0x3E7D shifts [0x07D0]->0x07D1 and
+      [0x07D1]->0x07D2 in one routine, and 0x07D0's own site 0xDACF reads
+      [0x07D0]+[0x07D1] as a word. So the PD firmware holds this byte and
+      0x07D0 as adjacent halves of overlapping 16-bit windows, while the
+      DSDT field list (dsdt.dsl:52248-52250) declares them two independent
+      8-bit fields and leaves 0x07D2 unnamed. Where the two differ: this
+      byte is written at 21% of its sites against 6% for 0x07D0, is
+      incremented in place nowhere, and its handoffs reach 8 callees
+      rather than 25. Status is unchanged: that is a decode of one
+      program, not an observed effect, and
+      unknown-not-absent-DO-NOT-WRITE-BLIND stands. What the field is, and
+      whether the two readings of the same bytes ever collide, are #26/#67
+      and a live test respectively; neither is reachable from here.
 
   - name: LIGHTBAR_AC_CTRL / RED / GREEN / BLUE
     addr: [0x0748, 0x0749, 0x074A, 0x074B]
@@ -742,7 +769,34 @@ registers:
       overclaim CLAUDE.md warns about. docs/findings.md 4g groups 0x0436 with
       0x0438 as "voltage"; the capture is what says otherwise, and the
       correction is recorded there. Until a live read puts the value beside a
-      WMI RemainingCapacity the name stays a placeholder. Per-address table:
+      WMI RemainingCapacity the name stays a placeholder, and nothing has been
+      run to produce one.
+      The 0x0403 cross-reference, corrected: it is 10 of 0x0403's 11 direct
+      reads that subtract 0x14 from the byte, not 11. The 11th, bank1 0xA269, is
+      movx a,@dptr ; jz +0x6b, and both trace_xdata_refs.py and the r2
+      cross-check in ec/annotations/xdata-0400-045f.md 10a agree on that split.
+      BAT_DESIGN_CAPACITY's own note already said 10; the issue text did not,
+      and the difference matters because the 0x14 is the same constant as this
+      pair's step in the capture above. That is a coincidence-or-link question
+      and is recorded as one -- it is not a connection, and it is not a unit
+      for 0x0402/0x0403, which nothing here establishes.
+      What is written and waiting for a human: the 0x0436 arm of
+      windows/tools/ec_validate.py (WMI RemainingCapacity, the 4g exact-copy
+      rule, the 0x0404 bound), linux/battery-trace/remain-capacity-probe
+      (charge_now and capacity beside the pair, read-only), and the procedure
+      both are written into, docs/hardware-tests/remain-capacity-0436.md. A run
+      would produce three facts and settle none of them alone: the fraction of
+      WMI RemainingCapacity readings that are exact copies of a pair value the
+      EC had already held; whether the pair ever exceeded 0x0404, which is
+      one-directional since a small counter passes that bound too and so
+      staying under it settles nothing; and the pair's scale against
+      0x0402/0x0403. Name, status, static_refs and sources are unchanged here
+      on purpose -- a live run against the same firmware cannot move a static
+      site count, and sources gains live only when a capture is committed. If a
+      later run does justify the name, that change regenerates
+      ec/ghidra/xdata-symbols.csv with ec/tools/gen_xdata_symbols.py and adds
+      the two-address split to ec/ghidra/xdata-overrides.csv; neither belongs
+      in a change that has no run behind it. Per-address table:
       ec/annotations/xdata-0400-045f.md.
 
   - name: BAT_VOLTAGE_MV
@@ -820,18 +874,51 @@ registers:
 
   - name: XDATA_0440
     addr: 0x0440
-    sources: [xdata-refs]
+    sources: [xdata-refs, "dsdt(ECRW: uncalled)"]
     static_refs: 43
     static_refs_main_ec: 43
     static_refs_pd_image: 0
     status: present-untested
     note: >
       Busiest byte on the page: 43 EC-side sites (27 bank1, 13 bank0, 3
-      common) and every one of them a direct read. No writer, no PD site, no
-      upstream name, and the value is not established -- only that 43 places
-      in the firmware consult it. clear_and_set_xdata_flag_bits (bank1 0x8300)
-      tests it against 0x07, which is as much as any decoded routine does with
-      it. Per-address table: ec/annotations/xdata-0400-045f.md.
+      common) and every one of them a direct read, so no direct MOV DPTR site
+      writes it. A writer does exist and is not one of those 43:
+      code_table_scatter_to_xdata (bank1 0xA530) stores each 3-byte CODE record
+      -- BE16 destination, then value -- and three records across two of its
+      seven call sites (bank1 0x83B7 records 0 and 2 of the table at CODE
+      0x8453, bank1 0x841D record 9 of the table at 0x851C) store 0x00 to
+      0x0440. That is a static reading of a table, not a readback, and when
+      those tables are walked is not established; 0x8354 and 0x86EE are not
+      recorded call targets. Grouping the 43 readers by constant AND by what
+      each branch does: 39 are a zero test, and at 32 of them the zero arm is
+      inert (a ret, a sjmp past the body, or a forward call), so at those the
+      shape is an enable flag; at the other 7 the zero arm does work of its own
+      -- seeding, clearing, dispatching or toggling -- so zero is not one state
+      either and the byte reads as a selector between behaviours. The 4 cjne
+      sites test 0x07 (bank1 0x8328), 0x08 (bank1 0xA12D) and 0x05 (bank1
+      0xF2D5, 0xF2FE), the last two chaining on to 0x06 and 0x07, so the
+      compared set is {0, 5, 6, 7, 8} -- not a closed enumeration, since the 39
+      zero tests accept any non-zero byte. 16 of the 43 are co-gated on 0x06E6
+      == 0x01; the other 27 branch on 0x0440 whatever 0x06E6 holds, so the byte
+      is read inside that mode and outside it. The co-gated 16 are the
+      profile-shaped ones -- the fan toggle, the thermal-ceiling seed, the ring
+      producer -- and all four cjne sites are among the ungated 27, so the
+      scoping is an observation about those 16 and does not account for the rest.
+      0x06E6 is the same family 0x0440 is hypothesised to join (written 5 at
+      power-on by bank0 0xCCFC, dispatched on 0x81-0x84 at bank0 0xCF48).
+      HYPOTHESIS, not a decode: a host-written
+      platform-profile or mode index, zero at power-on and host-set thereafter.
+      What would falsify it is a live read outside {0, 5, 6, 7, 8}, or a
+      non-zero writer in code these methods do not reach. Per-site table and the
+      method-by-method writer hunt, including the 15 unresolved call sites that
+      are the largest remaining hole: ec/annotations/xdata-0440-readers.md.
+      Per-address table: ec/annotations/xdata-0400-045f.md. The DSDT's ECMG
+      field list steps from CPTM at offset 0x43E straight to VGAT at 0x44F, so
+      there is no field at 0x440 and the dsdt source tag carries ECRW rather
+      than a field name -- the parenthetical form this file already uses for a
+      DSDT reference that is not a plain field-list mention. ECRW
+      (evidence/acpi/dsdt.dsl:50504) is a general 0xFE410000 + 16-bit-arg write
+      that could reach 0x440 and has no call site in the committed DSDT.
 
   - name: XDATA_0442
     addr: 0x0442
@@ -1312,9 +1399,240 @@ registers:
       Stays present-untested for one narrow reason: whether the fan-mode
       bits (4-7) change how the EC drives the fans along the (unchanged)
       curve was not isolated -- the live run was near-idle with roughly
-      steady temperature, and fan PWM 0x075B/0x075C moved the same amount
-      under a no-op control write, i.e. thermally. That needs a fixed-load
-      comparison. Upstream defines the address but never touches it.
+      steady temperature, and the fan duty at 0x075B/0x075C moved the
+      same amount under a no-op control write, i.e. thermally. That needs
+      a fixed-load comparison. Upstream defines the address but never
+      touches it. (2026-09-24, issue #123: those two bytes are the
+      vendor's ADDR_EC_MAIN_FAN_L/R_DUTY_BYTE and have entries of their own
+      below, MAIN_FAN_L_DUTY and MAIN_FAN_R_DUTY. The observation above
+      stands; only the word "PWM" was wrong -- they are duty, published
+      by the EC and read by the vendor, not a control. See there before
+      writing them.)
+
+      2026-09-23 (issue #129), the branch arms the window above stops short
+      of, ec/annotations/manual-fan-ctrl-0751.md 9: all 34 arms of the 17
+      mode-bit branches walked with a new tool
+      (ec/tools/walk_branch_arms.py, committed table
+      manual-fan-ctrl-0751-arms.csv). This is a prediction for the
+      fixed-load run, not a result from it -- no hardware was reachable.
+      Three things the arms add, none of which moves the status:
+
+      (1) The two candidate fan-PWM bytes are written on a path a bit of
+      this byte selects. 0x075B at the 0x89E0 and 0xBB29 write sites, on
+      the Fan Boost *not set* side of 0x8942/0x899D; 0x075C at 0x8F0A and
+      0x8F11, on both arms of 0x8E8B. Neither address is in this file and neither
+      has been confirmed, so what is established is that the EC stores to
+      both there -- not that they are fan PWM, and not that anything
+      reacts to a value written here.
+
+      (2) The Fan Boost arms gate on temperature, not on a duty copy:
+      0x8942's BOOST-set arm compares CPU_TEMP (0x043E) and GPU_TEMP
+      (0x044F) against 0x46 (70 degC) and, if both are under it, clears
+      FAN BOOST in this byte at 0x8990. So the EC writes 0x0751 on at
+      least three paths, and a host write need not persist.
+
+      (3) The no-arm-writes-a-PL conclusion survives: none of the 34 arms,
+      nor any of the 137 callee rows at --callee-depth 1, stores to
+      0x0783-0x0785. The arms do *read* 0x0784 and 0x0785 and branch on
+      them, which is a different claim and does not change 9 of that file.
+      Every arm reports status: complete at the tool's default bounds, so
+      the negative is "no arm found by this method", not "the walk gave
+      up" -- and it is still not evidence the EC does not.
+
+      Correction (issue #123, 2026-09-24), leaving the paragraphs above as
+      they were written. Item (1) is wrong on two counts and the entries
+      below replace it. 0x075B and 0x075C are in this file now, as
+      MAIN_FAN_L_DUTY and MAIN_FAN_R_DUTY, and they are the vendor's
+      ADDR_EC_MAIN_FAN_L/R_DUTY_BYTE -- so "not that they are fan PWM" was
+      half right for the wrong reason: they are fan *duty*, published by
+      the EC to be read, and the vendor only ever reads them. What still
+      stands from (1) is the second half unchanged: nothing here shows
+      that anything reacts to a host write to them, and the vendor's
+      callsites table records 0 writes for each.
+
+      The four sites in (1) are also now understood, and the pairing by
+      proximity in that paragraph does not survive. 0x87C5 -- not listed
+      in (1) -- is a zero-clear inside the run at 0x87B8, and 0x87D5 is
+      the same run reached through lcall 0xBC3F, whose first instruction
+      is the store, so 0x075C is cleared there too. 0x89E0 and 0x8F11 do
+      turn out to be a pair, as 0x89EB calls the 0x8F0F routine that
+      writes 0x075C; 0x8F0A is not the other half of that pair but the
+      last write before the ret ending the separate 0x8EE0 routine. The
+      EC keeps the computed duty in 0x1804/0x1809 and publishes it to
+      0x075B/0x075C through the shared helper at 0xBB22/0xBB28, which is
+      entered with the literal 0xC8 -- 100 % under the vendor's x2 duty
+      convention -- forced first when the fan is being run flat out. None
+      of these is a fan-table routine: 0x0F00 and 0x0F20 have zero direct
+      MOV DPTR sites, so the table is reached indirectly and 6 of
+      manual-fan-ctrl-0751.md stays open. None of this bears on the
+      fixed-load comparison the status still waits for, and the status
+      stays present-untested.
+
+  - name: MAIN_FAN_L_DUTY (fan duty, published to the Control Center)
+    addr: 0x075B
+    sources: [ecspec-3.1.6.0(ADDR_EC_MAIN_FAN_L_DUTY_BYTE),
+              vendor-3.1.39.0(FanInfo.GetEcCpuFanDuty), xdata-refs, live]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      The EC's own published fan duty for its first fan -- not a control.
+      ECSpec names 1883 ADDR_EC_MAIN_FAN_L_DUTY_BYTE, byte-identical at
+      windows/decompiled/v3.1.6.0/ECSpec.cs:237,
+      v3.1.39.0/GCUService/Define/ECSpec.cs:237 and
+      v3.9.18.0/Define/ECSpec.cs:237, so the name is stable across three
+      service versions rather than one build. FanInfo.GetEcCpuFanDuty reads
+      it and returns Data / 2 (FanInfo.cs:10-14). The vendor's only EC call
+      on the address is a read:
+      windows/decompiled/v3.1.39.0/ec-callsites.csv:62 is op=read
+      addr_kind=literal ref Data, and ec-callsites-summary.csv:42 gives
+      1 read and 0 writes. So do not write this expecting the fan to turn
+      -- the next paragraph is the one that says why not. Its pair is
+      0x075C, and its tachometer is not here: FanInfo.GetEcCpuFanRpm
+      reads 1124/1125 (0x0464/0x0465) as a 16-bit pair and
+      GetEcGpuFanRpm 1132/1131 (0x046C/0x046B), ECSpec.cs:221-229.
+
+      Duty is not PWM, and the vendor keeps three different blocks apart.
+      What it writes is the fan *table*, 0x0F00-0x0F5F
+      (windows/vendor-ec-map.md 222); what it calls PWM by name is
+      ADDR_MYFAN2_L1_PWM..L5_PWM, 1859-1863 = 0x0743-0x0747, and
+      ADDR_L1..L5_PWM_DEFAULT_MYFAN3/_MYFAN2, 1926-1933 = 0x0786-0x078D
+      (ECSpec.cs:253-261, 271-279, 307-315). None of those is 0x075B. Note
+      that 0x0786-0x078D is a live naming conflict, not a settled map --
+      see CPU_TCC_OFFSET below.
+
+      The /2 is the same convention the fan table stores duty in, and the
+      EC firmware corroborates it from its own side rather than taking the
+      vendor's word. The table's duty column is Duty x 2 with 0xC8 as 100 %
+      (windows/vendor-ec-map.md:226), and 0xC8 is the ceiling this byte is
+      held to inside the EC: the already hand-decoded routines 0x8C46 and
+      0x8DE0 in ec/annotations/ghidra-functions.csv step 0x1804 one count at
+      a time toward its target with 0xC8 as the cap, and the 0xBB22 entry
+      stores the literal 0xC8 into 0x1804 and then into 0x075B. 200 is 100 %
+      under exactly that convention. This is a static read of a constant and
+      a cap, not an observation of the fan at 100 %. Those targets are
+      0x0461 and 0x0670, which this repo does not characterise; note that
+      the page 0x0460-0x046F is called the fan-tachometer bytes in
+      windows/tools/manual_fan_ctrl_probe.py and
+      docs/hardware-tests/manual-fan-ctrl-0751-isolation.md, while ECSpec
+      puts the RPM pair at 0x0464/0x0465 and 0x046C/0x046B inside that same
+      page and these two behave as ramp targets. One label cannot cover all
+      of that; what the page is, is open and not settled here.
+
+      The three EC-side sites, all bank0, and what each does
+      (trace_xdata_refs.py, confirmed in r2 -a 8051 over the bank0 image
+      from make_bank_image.py):
+      0x87C5 stores a cleared accumulator, i.e. zero, inside the clear run
+      at 0x87B8 that also zeroes 0x1804, 0x1809, 0x0460, 0x0461, 0x0468,
+      0x0469, 0x085F and 0x0787 -- the 0x075B half of the 0x8749 entry's
+      own list, and the answer to 9 of manual-fan-ctrl-0751.md, which
+      recorded 0x87C5 as not reachable from any of the 34 arms: it is a
+      clearing path, not a fan-curve one. 0x89E0 copies 0x1804 into 0x075B
+      and then calls the 0x8F0F routine that publishes 0x075C; 9 of that
+      file already has where the staged value comes from, 0x0768 or 0x0469
+      on the carry out of 0xBBE6, which this confirms at the instruction
+      level. 0xBB29 is inside the 0xBB22 routine, which has two byte-aligned
+      entries (0xBB22 writes the 0xC8 first, 0xBB28 skips straight to the
+      store) so 0xBB29 is reachable as a publish on its own. 0x1804 and
+      0x1809 are the EC's own fan-duty scratch bytes and 0x075B/0x075C its
+      two published outputs; they have no entry of their own here yet,
+      which is a gap, not a finding.
+
+      Live, both bytes move with the fan, and they are two separately
+      driven channels rather than one value doubled. 0x8C46 ramps 0x1804 and
+      0x1809 toward 0x0461 and 0x0469 respectively, so the two can differ,
+      and 0x8DE0 writes 0x1809 as either 0 or 0x1804 - 0x14. Across the two
+      committed captures the difference 0x075B - 0x075C takes exactly two
+      values and no others: 0x14 in 102 of 449 paired samples of
+      evidence/ec-watch/2026-09-18-profile-switch-0700-07ff.csv and 0x00 in
+      the other 347, and 0x00 in all 297 paired samples of
+      evidence/ec-watch/2026-09-23-power-mode-cycle-0700-07ff.csv. The 0x14
+      is the offset the 0x8DE0 branch above produces, so the captures and
+      that hand-decode agree; what decides the branch is a four-way
+      comparison of 0x0460 and 0x0468 against 0x04 with 0x07 or 0x08 on bit 7
+      of 0x0751, which is not decoded here, and the 0x00 samples are the two
+      channels at the same value rather than a third offset. Individually
+      the bytes span 0x075B 0x3C-0xC7 and 0x075C 0x32-0xC7 across the two
+      captures. Halved that is 25-99.5 %, a duty span; the peak is 0xC7, one
+      step below the 0xC8 the table calls 100 %. A span that reaches 200 in
+      the byte and 0x32 at the low end is not a 0-100 register.
+
+      The name is not settled, and the disagreement is left visible
+      rather than resolved. ECSpec calls the pair L and R (left/right);
+      FanInfo reads the same two bytes as CPU and GPU. One vendor
+      codebase, two readings of one hardware pair, and nothing here
+      decides between them. docs/related-projects.md was checked first per
+      CLAUDE.md and no sibling board names either byte.
+
+      Not confirmed-working, and the reason is narrow: nothing has
+      exercised these as a control, and the vendor's /2 readback is the
+      vendor's readback, not this repo's. Not absent and not
+      unknown-not-absent either -- both of those turn on a zero or a
+      PD-only count and neither applies. The completeness caveat the
+      header gives applies: 3 is a direct MOV DPTR site count, not a
+      count of register accesses, and indirect or pointer access is
+      invisible to it (0x07B9 is the standing counter-example).
+
+      uniwill-laptop is absent from the sources above on purpose rather
+      than by omission: this stage had no network and no vendored copy of
+      uniwill-acpi.c, so whether upstream defines 0x075B at all is open.
+      Grepping its EC_ADDR_* defines settles it. The 0x0751 note above
+      is what pointed at the two bytes, and its own "fan PWM" wording for
+      them is corrected there.
+
+  - name: MAIN_FAN_R_DUTY (fan duty, published to the Control Center)
+    addr: 0x075C
+    sources: [ecspec-3.1.6.0(ADDR_EC_MAIN_FAN_R_DUTY_BYTE),
+              vendor-3.1.39.0(FanInfo.GetEcGpuFanDuty), xdata-refs, live]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      The second channel of the pair above, and everything said there
+      holds here. ECSpec names 1884 ADDR_EC_MAIN_FAN_R_DUTY_BYTE
+      (ECSpec.cs:239 in all three versions), FanInfo.GetEcGpuFanDuty
+      reads it and returns Data / 2 (FanInfo.cs:17-21), and
+      ec-callsites.csv:63 / ec-callsites-summary.csv:43 record it the same
+      way -- 1 read, 0 writes. Read-only to the vendor, like its pair, and
+      not a control.
+
+      The three sites differ from 0x075B's in a way worth recording,
+      because the pairing by address distance is misleading. 0x87D5 hands
+      DPTR to lcall 0xBC3F rather than storing directly, which
+      register_ref_table.py reports as a handoff with the direction
+      unresolved. It is resolved: 0xBC3F is a routine whose first
+      instruction is movx @dptr,a (it then clears bit 7 of 0x0824 and
+      bit 2 of 0x0768 and returns), so this is a write, and in the 0x87B8
+      clear run the accumulator is already cleared, so it writes zero
+      like its pair. The other two, 0x8F0A and 0x8F11, are 7 apart but
+      are not one routine's two stores: 0x8F0A is the last write before
+      the ret that ends the 0x8EE0 routine (an acall target from bank1 at
+      0x10F0D and 0x10F44), and 0x8F11 sits in the separate routine entered
+      at 0x8F0F by the lcall at 0x89EB. Between them 0x8EE0 computes a
+      value from 0x1804 -- optionally biased by 0xEC, gated on a compare
+      against 7 of a caller's byte and of 0x0460 -- publishes it to 0x1809,
+      calls 0xBB28 to publish 0x1804 into 0x075B, then stores the 0x1809
+      value here. So 0xBB28 is the helper both channels share and 0xBB22
+      is the same helper entered with the 0xC8 forced first.
+
+      This byte also gets the 0xC8, by the other channel's route rather than
+      the 0xBB28 one, and that route is already hand-decoded: the 0x8939
+      entry in ec/annotations/ghidra-functions.csv calls 0xBB22, loads A
+      with 200, falls through to 0x893E to store it through the caller's
+      DPTR, and ljmps to 0x8F09, which copies that byte here. So both
+      channels are driven to 200 on the fan-flat-out path, from two
+      different entry points, which is the same /2 convention the entry
+      above establishes for 0x075B and is the reason the two bytes' writer
+      sets are not mirror images of each other.
+
+      Those are the EC's fan-duty routines, and they are not the fan
+      table's. 0x0F00 and 0x0F20 have zero direct MOV DPTR sites anywhere
+      in the image, so no writer routine for the table exists to be the
+      same as these; the table is reached indirectly, which is the
+      long-standing question of ec/annotations/manual-fan-ctrl-0751.md 6
+      and is not settled by this.
 
   - name: BIOS_OEM_2 (DEFAULT_MODE / FAN_QKEY / FAN_TABLE_OFFICE_MODE)
     addr: 0x0782
@@ -1417,3 +1735,171 @@ registers:
       name, so the writer is unidentified. Upstream also names bit 3
       BATTERY_CHARGE_FULL_OVER_24H and bit 4 BATTERY_ERM_STATUS_REACHED.
       Live 0x04 at rest.
+
+  # The next seven are the bytes the two routines the 0x0751 USER branches
+  # tail-jump to. The reading is ec/annotations/manual-fan-ctrl-0751.md 8a
+  # and the listings beside it; the names stay XDATA_* on purpose. "the USER
+  # bit zeroes it" is a fact about three code paths, not about what the
+  # register is, and nothing here says what consumes any of the seven.
+
+  - name: XDATA_08A0
+    addr: 0x08A0
+    bits: "0-7 value; 0xB7E8 increments it and 0xB7F0 tests it against 0x0A, carry-in included"
+    sources: [static-scan, xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Two main-EC sites, both inside the 0x0751 USER block, and no PD-image
+      site. They are the two arms of the same choice: 0xB7E8, on the USER-
+      set arm reached from 0xB73C, reads the byte, increments it, stores it
+      back and compares the result against 0x0A; because 0xB7EF sets the
+      carry first, the subb at 0xB7F0 really computes A - 0x0A - 1, so
+      0xB7F2 retires at 0x0A or below and bit 6 of 0x08EB is set from 0x0B
+      up rather than at 0x0A. 0xB836, in the routine the other arm
+      tail-jumps to, stores 0 into it after clearing bit 6 of 0x08EB -- so
+      the byte is a count that runs to 0x0A and latches, and the "clear" path
+      resets both the count and the latch. Zero against a count, not present
+      against absent: the write is not skipped either way.
+      Both sites are named here, so "two writers" is what this method finds
+      for this address and not a claim that no other exists -- a store
+      through a DPTR built at run time is invisible to it, which is the
+      0x07B0-0x07BE blind spot the header names. Nothing is read back, so
+      present-untested: the stores are instructions, not behaviour. What
+      reads the count, and what the attempts are attempts of, is not
+      established here.
+
+  - name: XDATA_08A2
+    addr: 0x08A2
+    bits: "0-7 value; stored 0x04 at 0xB6A1 or 0x00 at 0xB72C"
+    sources: [static-scan, xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Three sites, all in the EC -- two in bank0 and one in bank1 -- and
+      none in the PD image. The two bank0 writers are the same pair of arms
+      as 0x08A0: 0xB6A1 stores 0x04 on the USER-set path, and 0xB72C stores
+      0 in the routine the USER-clear path tail-jumps to (0xB716). Unlike
+      0x08A0 this byte is not a counter -- it is written the same two values
+      on the same two paths. So the USER bit chooses between 0x04 and 0x00, a
+      computed value against a forced zero. The third site, bank1 0xA987,
+      reads it (`movx a,@dptr ; mov r0,a ; lcall 0x88a4`), so the byte is not
+      write-only; that reader was not decoded for this entry and what it
+      does with the value is not established. Nothing is read back, and
+      nothing here says the two values mean "off" and "on".
+
+  - name: XDATA_08EB
+    addr: 0x08EB
+    bits: [2, 3, 4, 5, 6, 7]
+    sources: [static-scan, xdata-refs]
+    static_refs: 21
+    static_refs_main_ec: 21
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      21 sites, all of them in the EC -- 20 in bank0 and one in bank1 -- and
+      none in the PD image. It is the most-referenced byte in this group.
+      Bits 3 and 6 are the pair the two USER branches'
+      tail-jump targets write, and each is a set/clear pair rather than a
+      one-way flag: bit 3 is set at 0xB690 and cleared at 0xB716, bit 6 is
+      set at 0xB7F4 and cleared at 0xB82E
+      (ec/annotations/manual-fan-ctrl-0751.md 8a). Both set sites are
+      themselves conditional -- 0xB65F and 0xB7BF test the bit and skip the
+      counting block when it is already set, and 0xB7F2 retires once 0x08A0
+      has reached 0x0A, which latches bit 6 from 0x0B up -- so bit 6 looks
+      like a latch the counter trips.
+      0x8931 masks 0x48, which is exactly bits 3 and 6, and branches on the
+      result: the one site this method finds that reads the two together.
+      What it decides is not decoded here.
+      Bits 2, 4, 5 and 7 are also read-modify-written, at 0xD487 and 0xD6A8
+      (bit 2), 0xB476 and 0xC86A (bit 7), 0xCCB7 (bit 4, a set/clear pair
+      whose selector is bit 1 of 0x0490, tested by the jb acc.1 at 0xCCBA)
+      and 0xB53E and 0xB5B2 (bit 5); bits 2, 3, 4, 5, 6 and 7 are branched
+      on at other sites besides, including bank1 0xA916, which reads bit 4
+      and branches on it at 0xA91C without storing the byte back. Nothing
+      is read back. Every bit above is "the EC touches this bit", which is
+      not the same claim as "the EC acts on it".
+
+  - name: XDATA_089E
+    addr: 0x089E
+    sources: [static-scan, xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Three sites, all in the EC, and they read as a 16-bit pair with 0x089F
+      rather than as one byte. 0xB730 stores the accumulator here and then
+      `inc dptr`s to store it again at 0x089F, and the two of them are the
+      whole of that routine. Both entries into it carry A = 0: the fall-
+      through tail of 0xB716, where the `clr a` at 0xB72B is one instruction
+      earlier, and the `ljmp 0xb730` at 0xB6A5 on the USER-set path, where
+      the `clr a` at 0xB6A4 is one instruction earlier as well. A byte scan
+      for direct `ljmp 0xB730` finds that one caller and nothing else.
+      The other two sites are both on the USER-set path and both read the
+      pair big-endian: 0xB6BC reads this byte into a `subb` against B, and
+      0xB6E8 hands DPTR to 0xBADE with the direction unresolved by this
+      method. The pair is compared at 0xB6B7-0xB6C2 against a bound computed
+      from a CODE table at 0xB6A8-0xB6B5, so the stored value looks like an
+      elapsed count against a limit -- but "looks like" is the whole of it,
+      and what 0xB6C2 decides on the comparison is not established. Nothing
+      is read back, so a store of zero is not evidence the EC acts on the
+      byte.
+
+  - name: XDATA_089F
+    addr: 0x089F
+    sources: [static-scan, xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      One `mov dptr,#0x089f` site this method finds, 0xB6B7, and it is a
+      read: the high byte of the big-endian pair compared against R7 at
+      0xB6B7-0xB6C2. The byte is also written, but by the `inc dptr` at
+      0xB734 inside 0xB730, one byte past 0x089E. So the count of 1 here is
+      a count of direct `mov dptr` sites and it does not mean "written once"
+      or "written from one place" -- the write that reaches this byte is
+      invisible to that count, which is also why 0xB716's own arms row
+      carries one `unattributed` store. See XDATA_089E for the two entries
+      and the A = 0 they both carry. Nothing is read back.
+
+  - name: XDATA_09E6
+    addr: 0x09E6
+    bits: [0, 1]
+    sources: [static-scan, xdata-refs]
+    static_refs: 6
+    static_refs_main_ec: 6
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Six sites, all in the EC -- five in bank0 and one in bank1 (0x9872, a
+      write) -- and none in the PD image. Bit 1 is
+      the half the 0x0751 USER block writes: set at 0xB697 on the USER-set
+      path and cleared at 0xB71D in the routine its sibling path tail-jumps
+      to (0xB716). Bit 0 has the same shape one routine earlier, set at
+      0xB545 and cleared at 0xB5B9 in 0xB5B2 -- the bit 5 / bit 0 twin of
+      0xB716, and not read for this entry. The only site that reads the byte
+      without writing it back is 0x914A, and it tests the whole byte against
+      zero rather than branching on either bit, so no site this method finds
+      branches on bit 0 or bit 1. Nothing is read back.
+
+  - name: XDATA_09E7
+    addr: 0x09E7
+    bits: [0, 1]
+    sources: [static-scan, xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Three sites, all in the EC and none in the PD image. Bit 1 is cleared
+      at 0xB724 in 0xB716, the routine the 0x0751 USER-clear arm tail-jumps
+      to; bit 0 is cleared at 0xB5C0 in its 0xB5B2 twin. The third site,
+      0x90F1, reads the byte and tests it against zero, and nothing here
+      establishes what either bit selects or what that test decides. No site
+      this method finds sets either bit -- a limit of the scan, since a set
+      through a run-time DPTR would not appear -- and nothing is read back.
