@@ -37,6 +37,14 @@ What this reports and what it does not:
   * A decrement interval is only measured between two consecutive `-1` steps
     of one byte; a byte that stepped once has no interval.
   * No register status comes out of this. A rate is a fact about the capture.
+  * A `MARK` row whose label contains "resumed" (what `ec_timer_capture.py
+    --auto-mark` writes after a suspend) splits the capture. The mark is
+    stamped by a poller, so it can land after the first sample taken on
+    resume; the gap is therefore the longest silence in the row stream in the
+    second before the mark, not the interval the mark falls in. No step,
+    period or decrement interval is measured across a gap. For each such gap the report
+    instead says how many 0x06D6 passes the gap holds modulo 10 -- all a
+    ten-step counter can say -- against what the awake step would give.
 
 Usage:
   grade_timer_sweep.py capture.csv [capture2.csv ...]
@@ -70,9 +78,30 @@ def _ts(s):
     return datetime.datetime.fromisoformat(s).timestamp()
 
 
+RESUMES = []   # timestamps of "resumed" MARK rows, filled by load()
+GAPS = []      # (last sample before, first sample after), one per resume
+
+
+def spans_resume(a, b):
+    """True for an interval across a gap, or starting at the first sample after
+    one: a change first seen there happened somewhere inside the gap, so its
+    timestamp is a bound and not a time."""
+    return any((a <= ga and b >= gb) or a == gb for ga, gb in GAPS)
+
+
+def find_gaps(rows):
+    GAPS.clear()
+    ts = sorted({r[0] for r in rows})
+    for r in RESUMES:
+        pairs = [(a, b) for a, b in zip(ts, ts[1:]) if a < r and b <= r + 1.0]
+        if pairs:
+            GAPS.append(max(pairs, key=lambda ab: ab[1] - ab[0]))
+
+
 def load(paths):
     """Return (watched addrs or None, baseline {addr: v}, rows, span, interval)."""
     watched, baseline, rows = None, {}, []
+    RESUMES.clear()
     first = last = None
     interval = None
     for p in paths:
@@ -100,10 +129,15 @@ def load(paths):
                     continue
                 body.append(line)
         for r in csv.reader(body):
-            if not r or r[0] == "ts" or r[1] == "MARK":
+            if not r or r[0] == "ts":
+                continue
+            if r[1] == "MARK":
+                if "resumed" in r[3]:
+                    RESUMES.append(_ts(r[0]))
                 continue
             rows.append((_ts(r[0]), int(r[1], 16), int(r[2], 16), int(r[3], 16)))
     rows.sort()
+    find_gaps(rows)
     if rows:
         first = rows[0][0] if first is None else min(first, rows[0][0])
         last = rows[-1][0] if last is None else max(last, rows[-1][0])
@@ -156,9 +190,11 @@ def grade(paths, out=None):
         for _, _, o, n in ev:
             k = classify(RELOAD, o, n)
             kinds[k] = kinds.get(k, 0) + 1
-        steps = [b[0] - a[0] for a, b in zip(ev, ev[1:])]
+        steps = [b[0] - a[0] for a, b in zip(ev, ev[1:])
+                 if not spans_resume(a[0], b[0])]
         reloads = [e[0] for e in ev if classify(RELOAD, e[2], e[3]) == "reload"]
-        per = [b - a for a, b in zip(reloads, reloads[1:])]
+        per = [b - a for a, b in zip(reloads, reloads[1:])
+               if not spans_resume(a, b)]
         p(f"  {len(ev)} changes: " + ", ".join(f"{k} {v}" for k, v in sorted(kinds.items())))
         clean = set(kinds) <= {"dec", "reload"}
         p("  every change is a -1 step or the 0 -> 9 reload: "
@@ -166,13 +202,32 @@ def grade(paths, out=None):
              else "NO -- another writer, or a missed sample; see rows above"))
         if steps:
             step = statistics.median(steps)
-            mean = (ev[-1][0] - ev[0][0]) / (len(ev) - 1)
+            mean = statistics.mean(steps)
             p(f"  step interval (= one pass of 0x8001): median {step * 1000:.1f} ms, "
               f"mean {mean * 1000:.2f} ms, min {min(steps) * 1000:.1f}, "
               f"max {max(steps) * 1000:.1f}")
             if interval is not None and step < 3 * interval:
                 p(f"  WARNING: median step is under 3 sample intervals "
                   f"({interval * 1000:.1f} ms); the step is not resolved")
+        for ga, gb in GAPS:
+            before = [e for e in ev if e[0] <= ga]
+            after = [e for e in ev if e[0] >= gb]
+            if not (before and after and step):
+                continue
+            a, b = before[-1], after[0]
+            pos = lambda v: (RELOAD_VALUE - v) % 10
+            seen = (pos(b[3]) - pos(a[3])) % 10
+            gap = b[0] - a[0]
+            awake = gap / (mean if steps else step)
+            p(f"  across the suspend gap ending {datetime.datetime.fromtimestamp(gb).time()}: "
+              f"{gap:.3f}s between samples, 0x{a[3]:02X} before and 0x{b[3]:02X} "
+              f"after, so the gap held {seen} (mod 10) passes; the awake "
+              f"step would give about {awake:.0f} ({round(awake) % 10} mod 10)"
+              + (" -- the same residue, which cannot rule out an uninterrupted "
+                 "sweep" if seen == round(awake) % 10 else
+                 " -- a different residue: the sweep did not keep its awake "
+                 "rate through the whole gap"))
+            p("  intervals spanning that gap are excluded from the figures above")
         if per:
             p(f"  reload period over {len(per)} complete cycles: median "
               f"{fmt_s(statistics.median(per))}, mean {fmt_s(statistics.mean(per))}, "
@@ -208,7 +263,8 @@ def grade(paths, out=None):
                 k = classify(a, o, n)
                 kinds[k] = kinds.get(k, 0) + 1
             dec_iv = [b[0] - x[0] for x, b in zip(ev, ev[1:])
-                      if classify(a, x[2], x[3]) == "dec"
+                      if not spans_resume(x[0], b[0])
+                      and classify(a, x[2], x[3]) == "dec"
                       and classify(a, b[2], b[3]) == "dec"]
             line = (f"  0x{a:04X}  {s0} -> 0x{ev[-1][3]:02X}  {len(ev)} changes ("
                     + ", ".join(f"{k} {v}" for k, v in sorted(kinds.items())) + ")")

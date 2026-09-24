@@ -4127,10 +4127,10 @@ the only exported jump into `0x9817` (from `0x976E`) needs `lcall 0x198A`, the
 these captures were taken in. The hardware-test doc's §4 states what it
 assumes, and the perturbation arm below narrows it on battery.
 
-**Status moved: `XDATA_06D6`**, and after the perturbation arm below,
-`XDATA_06D8` and `XDATA_070B`, all to `confirmed-working`. For `0x06D6` it
+**Status moved: `XDATA_06D6`**, and after the perturbation and suspend arms
+below, `XDATA_06D8`, `XDATA_070B` and `XDATA_06C5`, all to `confirmed-working`. For `0x06D6` it
 means the code's model of the byte (decrement, reload with 9, one step per
-pass) is what the live byte does. It does not name what the one-second cycle times. The other 40
+pass) is what the live byte does. It does not name what the one-second cycle times. The other 39
 stay `present-untested`. A byte that held still in a capture is not evidence
 about what the EC does with it.
 
@@ -4161,8 +4161,23 @@ from `0x9817` being live on AC, and on battery that premise fails. Which of the
 two gates was closed on battery is not established
 (`docs/hardware-tests/xdata-06c2-06db-sweep.md` §4a).
 
-**What this opens.** A run that loads a pre-return countdown; suspend and resume
-is the untried action. A read path to `0x1664` and `0x3202`, if the EC has one
+**Suspend to S3 and resume loaded a third one, `0x06C5`, from `0x00` to
+`0x05`** (`evidence/ec-watch/2026-09-24-06c2-06db-suspend-linux.csv`). It then
+stepped at the same once-per-cycle rate, all 5 decrements in the same 10 ms
+sample as a `0x06D6` reload. `0x06C5` is one of the seventeen addresses the
+annotation's §5 lists as having *no writer outside the sweep found by either
+static method*. So this is one live instance of the blind spot that list was
+always qualified by, and a note now sits beside the row. Across the suspend,
+`0x06D6`'s residue was 1 (mod 10) where the awake rate predicts 3, so the sweep
+did not run at its awake rate through the gap. How much it ran, a ten-step
+counter cannot say. Nothing else watched moved, and still no pre-return
+countdown was loaded. `XDATA_06C5` joins the three above at
+`confirmed-working` on the same narrow scope, with the same "every pass"
+correction.
+
+**What this opens.** A run that loads a pre-return countdown. Idle, AC, the Fn
+key, the lid and S3 did not, and the pre-return bytes with known writers are
+listed in the hardware-test doc's §6. What wrote `0x06C5` across the suspend. A read path to `0x1664` and `0x3202`, if the EC has one
 other than ECMG. `0x0490` bit 3, set at AC plug-in by something neither
 annotation covers. Handling `KEY_F14` in the driver if the mode key is to do
 anything on Linux. And a pass over `registers.yaml` for every row the host

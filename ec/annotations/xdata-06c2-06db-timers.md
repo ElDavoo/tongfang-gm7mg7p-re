@@ -34,8 +34,9 @@ no entry in this file or in `registers.yaml` claims a zero is an absence.
 > file was written and is left as it was. Since then the Linux half of §7 has
 > been run on the machine, read only. `0x06D6` cycles as §4 reads it, with a
 > 0.997 s period. An AC unplug loaded `0x06D8` and `0x070B`, and both stepped
-> once per `0x06D6` cycle, as bytes below the return should. Those three are
-> now `confirmed-working`, and the other 40 are unchanged.
+> once per `0x06D6` cycle, as bytes below the return should, and a suspend and
+> resume loaded `0x06C5`, which does the same. Those four are now
+> `confirmed-working`, and the other 39 are unchanged.
 > The host window cannot reach 16 of the block's bytes or either `0x06D9` gate
 > byte. The result is `../../docs/hardware-tests/xdata-06c2-06db-sweep.md`.
 
@@ -409,6 +410,14 @@ Taking the union of the two, for the 43 addresses:
 | a writer outside the run was found | 26 | the other 26 |
 | **no writer outside the run found by either method** | **17** | `0x0621` `0x0635` `0x0638` `0x0639` `0x063A` `0x06C2` `0x06C3` `0x06C5` `0x06D6` `0x06DB` `0x06F3` `0x0706` `0x0843` `0x0844` `0x085B` `0x0981` `0x0982` |
 
+> **Live counterexample, 2026-09-24 (issue #257).** `0x06C5` is in this row, and
+> a suspend to S3 and resume loaded it with `0x05`. It was `0x00` before and
+> `0x05` at the first sample after, and then counted down through the sweep
+> (`../../evidence/ec-watch/2026-09-24-06c2-06db-suspend-linux.csv`). So it has
+> a writer neither method found. That is the blind spot the next paragraphs
+> name, now with one live instance. The row is left as the search measured it,
+> because it records what the search can see.
+
 16 of those 17 are countdowns (`0x0621` is a side-effect target), and for
 several of them the sweep is the *only* thing in the firmware that touches the
 byte at all: `0x0635`, `0x0638`, `0x0639`, `0x063A`, `0x06D6`, `0x06F3`,
@@ -587,7 +596,7 @@ from the `.c`, the `.asm` and the image.
 > service), with a faster sampler than the loop below:
 > `../tools/ec_timer_capture.py`. Step 3 cannot run as written because `0x1664`
 > and `0x3202` are outside the ECMG host window. A perturbation arm (AC, the Fn
-> key, the lid) was also run. The Windows arm was not.
+> key, the lid, a suspend and resume) was also run. The Windows arm was not.
 > Commands, captures and result: `../../docs/hardware-tests/xdata-06c2-06db-sweep.md`.
 > The sentence below is the procedure as first written, left as it was.
 

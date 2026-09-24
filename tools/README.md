@@ -11,9 +11,9 @@ bash tools/run-tests.sh
 
 Every `test_*.py` under the repository, found by `find` — not a hardcoded list,
 so a suite in a directory that does not exist yet is picked up by having its
-file committed. There are fourteen today, 305 tests in all — main's 242, then
+file committed. There are fourteen today, 306 tests in all — main's 242, then
 `test_grade_gpu_door.py`'s 15 with the four grader-agreement cases beside them,
-then `test_ctgp_dben_probe.py`'s 38, then `test_grade_timer_sweep.py`'s 6 — and
+then `test_ctgp_dben_probe.py`'s 38, then `test_grade_timer_sweep.py`'s 7 — and
 each is a `unittest` suite standing in for a tool's own behaviour:
 
 | suite | what it stands in for |
@@ -22,7 +22,7 @@ each is a `unittest` suite standing in for a tool's own behaviour:
 | `ec/tools/test_check_cluster_citations.py` | `ec/tools/check_cluster_citations.py`'s `main-ec-NNN` cluster citations against `ec/annotations/xdata-clusters.csv` — the membership rule and the census counts, pinned apart as well as together — and the line between what it checks and what it deliberately skips, so that a denial is skipped rather than checked and each rule that makes it conservative gets a case saying so, because a pointer-checker's failure mode is silence, plus that the tree's committed prose still agrees with the census beside it |
 | `ec/tools/test_grade_0751_isolation.py` | `ec/tools/grade_0751_isolation.py`, the §4 grader of the `0x0751` capture procedure, against the committed `testdata/` fixtures |
 | `ec/tools/test_grade_gpu_door.py` | `ec/tools/grade_gpu_door.py`, the §5 grader of the `0x07D0` door capture: the ordering and its ms delta, both one-block shapes, a quiet capture, a byte that moved and came back, marks left unmerged, and the ten-column mapping |
-| `ec/tools/test_grade_timer_sweep.py` | `ec/tools/grade_timer_sweep.py`, the grader of the `0x8001` counter-sweep capture: its before/after-return lists re-read from the firmware image, the `0x06D6` period and the 10x rate ratio on a constructed clean capture, a flat capture reported as held rather than absent, a second writer flagged, and an unresolved step warned |
+| `ec/tools/test_grade_timer_sweep.py` | `ec/tools/grade_timer_sweep.py`, the grader of the `0x8001` counter-sweep capture: its before/after-return lists re-read from the firmware image, the `0x06D6` period and the 10x rate ratio on a constructed clean capture, a flat capture reported as held rather than absent, a second writer flagged, an unresolved step warned, and a suspend gap left out of the figures and counted mod 10 |
 | `ec/tools/test_walk_branch_arms.py` | `ec/tools/walk_branch_arms.py`'s direction classification, bounds, refusals, and negative-result wording |
 | `windows/tools/test_manual_fan_ctrl_probe.py` | the fan-mode probe's two-arm byte script, its read-safety guard under `--level-block`, the mark rows its `--csv` capture lands, and that capture read back through the real `ec/tools/grade_0751_isolation.py` reader |
 | `windows/tools/test_ec_watch.py` | the mark-CSV sweep and the mark landing between two change rows |

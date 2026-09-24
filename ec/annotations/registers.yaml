@@ -2237,11 +2237,11 @@ registers:
 
   - name: XDATA_06C5
     addr: 0x06C5
-    sources: [xdata-refs]
+    sources: [xdata-refs, live]
     static_refs: 4
     static_refs_main_ec: 4
     static_refs_pd_image: 0
-    status: present-untested
+    status: confirmed-working
     note: >
       Decremented by one on every pass of the counter sweep at bank1
       0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
@@ -2249,6 +2249,24 @@ registers:
       writer for it outside the sweep was found by this method, which is a gap
       in the search and not evidence that none exists. No upstream name.
       Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+      *** CORRECTION 2026-09-24 (issue #257) *** "Decremented by one on every
+      pass" above is wrong for this byte. It sits below the ret at 0x8074, so
+      it is reached only on the pass that found 0x06D6 zero, one pass in ten,
+      and the live capture below shows exactly that. The sentence is left as
+      written. LIVE, 2026-09-24:
+      evidence/ec-watch/2026-09-24-06c2-06db-suspend-linux.csv (issue #257,
+      read only, ECMG window, Linux, 10 ms sampling, across a systemctl
+      suspend to S3 and a wake by the owner). This byte was 0x00 before the
+      suspend and 0x05 at the first sample after resume. It then stepped down
+      once per 1000 ms (median) to 0, and each of its 5 decrements landed in
+      the same 10 ms sample as a 0x06D6 0 -> 9 reload. So a writer the static
+      search did not find does exist, as the sentence above allowed. When in
+      the suspend/resume it wrote, and what it is, are not established.
+      Nothing loaded it at idle, AC out/in, the Fn mode key or the lid
+      (evidence/ec-watch/2026-09-24-06c2-06db-perturb-linux.csv).
+      confirmed-working here means the code's model of this byte -- a
+      post-return countdown -- is what the live byte does. It does not say what
+      the countdown times. docs/hardware-tests/xdata-06c2-06db-sweep.md 4b.
 
   - name: XDATA_06D1
     addr: 0x06D1

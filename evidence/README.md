@@ -88,6 +88,11 @@ independently checkable rather than taken on faith:
   boottime/monotonic gap; there was no suspend) and by
   `--mark-input /dev/input/event7`, so a mark is when Linux saw the action.
   Source for the `XDATA_06D8`/`XDATA_070B` statuses and that document's §4a.
+  **`ec-watch/2026-09-24-06c2-06db-suspend-linux.csv`** watches the same 35
+  bytes across a `systemctl suspend` to S3 (`mem_sleep=deep`) and a wake by the
+  owner. A stdin `MARK` records the suspend command and `--auto-mark` the
+  resume, with about 7.2 s in S3. The rows have a 12.3 s hole for the freeze,
+  S3 and the thaw. Source for the `XDATA_06C5` status and that document's §4b.
 - **`uefi/2026-09-19-UniWillVariable.{bin,txt}`, `uefi/2026-09-19-variable-list.txt`**:
   the vendor's shared settings variable after a BIOS load-defaults, and
   every OS-visible UEFI variable. Source for findings.md §6.

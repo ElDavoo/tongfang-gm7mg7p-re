@@ -229,14 +229,19 @@ into `r2 -a 8051` with no stitching needed.
   that records the conditions and a `# baseline` line. It refuses the fan page
   `0x0460`-`0x046F` (issue #94) and anything outside the host window, because an
   unmapped byte reads `0xFF` and looks like a countdown that never moved.
+  `--auto-mark` and `--mark-input` stamp `MARK` rows from AC, lid and
+  suspend/resume changes and from an evdev hotkey node, for runs where the
+  operator's hands are on the machine.
   `--census` prints which pages the window maps
   (`../evidence/ec-watch/2026-09-24-host-window-page-census.txt`). Root and
   `CONFIG_DEVMEM`.
 - **`tools/grade_timer_sweep.py`** — grades a capture of the `bank1:0x8001`
   counter sweep: `0x06D6`'s step and reload period, every other watched byte in
   code order, and the rate ratio between the countdowns before and after the
-  `0x8074` return when one on each side moved. It never emits a status, and a
-  byte that held still gets a line saying so. Its suite,
+  `0x8074` return when one on each side moved. A suspend gap (a "resumed"
+  mark) is left out of every interval and reported as a mod-10 pass count
+  instead. It never emits a status, and a byte that held still gets a line
+  saying so. Its suite,
   `tools/test_grade_timer_sweep.py`, re-reads the before/after lists from the
   firmware image. `../docs/hardware-tests/xdata-06c2-06db-sweep.md` is the run.
 

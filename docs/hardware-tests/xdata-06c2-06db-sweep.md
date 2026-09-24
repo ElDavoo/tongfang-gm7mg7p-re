@@ -3,13 +3,12 @@
 **Status: the Linux arms were run on 2026-09-24, on the GM7MG7P itself, read
 only.** They were run from a local session on the laptop at the owner's request,
 not by the hosted pipeline (which cannot reach the hardware, `CLAUDE.md`).
-Nothing was written to the EC. There were three idle captures (§4) and one
-perturbation capture with the owner at the machine: AC out, AC in, the Fn
-power-mode key, and the lid (§4a). Still **not** done, and listed in §6: the
-Windows arm with the Control Center started and stopped, a suspend and resume
-(the lid did not suspend, §4a), anything that loads a countdown from before the
-return, and §7's third step as written, which cannot be run through this read
-path (§3).
+Nothing was written to the EC. There were three idle captures (§4) and two
+captures with the owner at the machine: AC out, AC in, the Fn power-mode key and
+the lid (§4a), then a `systemctl suspend` to S3 and a wake by the owner (§4b).
+Still **not** done, and listed in §6: the Windows arm with the Control Center
+started and stopped, anything that loads a countdown from before the return, and
+§7's third step as written, which cannot be run through this read path (§3).
 
 Issue #257. The static reading this grades against is
 `ec/annotations/xdata-06c2-06db-timers.md`; the summary is `docs/findings.md`
@@ -79,6 +78,13 @@ $ sudo python3 ec_timer_capture.py --interval 0.0005 --seconds 60 \
 $ sudo python3 ec_timer_capture.py --interval 0.01 --seconds 600 \
       --addrs <arm 2's 28>,0x04FE,0x0480,0x05F1,0x05F0,0x0490,0x0498,0x0751 \
       --auto-mark --mark-input /dev/input/event7 --csv 06c2-06db-perturb-linux.csv
+# 5. Suspend: the same 35, a 20 s baseline, then a stdin MARK and an S3 suspend
+#    (mem_sleep=deep); the owner woke the machine. --seconds is CLOCK_MONOTONIC,
+#    which stops in suspend, so it counts awake time.
+$ { sleep 20; echo "operator: systemctl suspend issued (mem_sleep=deep)"; \
+    sleep 0.5; systemctl suspend; } | sudo python3 ec_timer_capture.py --mark \
+      --auto-mark --mark-input /dev/input/event7 --interval 0.01 --seconds 150 \
+      --addrs <the same 35> --csv 06c2-06db-suspend-linux.csv
 # Grading, offline, over any of them:
 $ python3 grade_timer_sweep.py <capture.csv>
 ```
@@ -87,8 +93,9 @@ The committed files are
 `evidence/ec-watch/2026-09-24-host-window-page-census.txt`,
 `evidence/ec-watch/2026-09-24-06d6-reload-linux.csv`,
 `evidence/ec-watch/2026-09-24-06c2-06db-sweep-linux.csv`,
-`evidence/ec-watch/2026-09-24-06d9-hold-linux.csv` and
-`evidence/ec-watch/2026-09-24-06c2-06db-perturb-linux.csv`.
+`evidence/ec-watch/2026-09-24-06d9-hold-linux.csv`,
+`evidence/ec-watch/2026-09-24-06c2-06db-perturb-linux.csv` and
+`evidence/ec-watch/2026-09-24-06c2-06db-suspend-linux.csv`.
 
 ## 3. The host window does not map 16 of the sweep's bytes, or either gate byte
 
@@ -255,6 +262,41 @@ the owner's own observation that the key does nothing once the kernel driver
 has it. A Linux driver that wants the key to cycle `platform_profile` has to do
 the cycling itself.
 
+### 4b. The suspend arm: S3 loads `0x06C5`, a byte with no writer the static search found
+
+A 20 s baseline, then a stdin mark at 21:34:05.762 and `systemctl suspend`
+(`/sys/power/mem_sleep` is `deep`, so ACPI S3). The kernel logged
+`PM: suspend entry (deep)` at 21:34:06.8 and `PM: suspend exit` at 21:34:19.0,
+and `--auto-mark` put about 7.2 s in S3 by the CLOCK_BOOTTIME/CLOCK_MONOTONIC
+gap. AC was connected and the battery at 100%. The capture has no samples
+between 21:34:06.756 and 21:34:19.065: 12.3 s covering the freeze, S3 and the
+thaw. The capture is `evidence/ec-watch/2026-09-24-06c2-06db-suspend-linux.csv`,
+the same 35 addresses as §4a, 150 s awake.
+
+**`0x06C5` went into the suspend at `0x00` and came out at `0x05`**, first seen
+at 21:34:19.065. It then stepped down to 0 at a median 1000 ms interval, and
+**all 5 decrements landed in the same 10 ms sample as a `0x06D6` `0 -> 9`
+reload**: the post-return rate again, on a third byte. `0x06C5` is one of §5's
+seventeen in `xdata-06c2-06db-timers.md`, the addresses with *no writer outside
+the sweep found by either static method*. That list was always "not found by
+this method". This is a live instance of a writer the search cannot see, and
+the annotation now says so beside the row. When the write happened within the
+suspend/resume, and what wrote it, the capture cannot say: the byte was
+unobserved for 12.3 s.
+
+**Nothing else in the watched set moved across the suspend.** No pre-return
+countdown was loaded, `0x06D9` held `0x03`, `0x0440` held `0x07`, `0x0751` held
+`0x10`, and the `0x976E`/`0x9817` state bytes were unchanged.
+
+**The sweep did not keep its awake rate through the gap.** `0x06D6` read
+`0x04` in the last sample before the freeze and `0x03` in the first after the
+thaw. A ten-step counter can only say that the gap held 1, 11, 21 … passes.
+At the awake step, 12.3 s is about 123 passes, which leaves 3 (mod 10), not 1,
+so the routine was not running at its awake rate for the whole gap. How many
+passes it did make, and whether the EC slowed the tick in S3 or stopped it, is
+not determined by a mod-10 counter. `grade_timer_sweep.py` prints this check
+for every resume mark and leaves the gap out of its step and period figures.
+
 ## 5. What this settles and what it does not
 
 Settled, from the captures:
@@ -275,11 +317,17 @@ Settled, from the captures:
   annotations say (§4a).
 - The Fn power-mode key is `KEY_F14`/scan `0xb0` on Linux, and nothing in the EC
   bytes watched here reacts to it.
+- A suspend and resume loads `0x06C5`, which then steps at the post-return
+  rate, so it has a writer that neither static method found (§4b).
+- The sweep does not run at its awake rate through suspend: `0x06D6`'s residue
+  across the gap is 1 (mod 10) where the awake rate gives 3.
 
 Not settled:
 
 - **The pre-return half of the ratio.** No pre-return countdown was loaded by
-  idle, AC, the Fn key or the lid, so none has been seen stepping at 100 ms.
+  idle, AC, the Fn key, the lid or S3, so none has been seen stepping at
+  100 ms.
+- **What wrote `0x06C5`, and when in the suspend/resume.**
 - **Which of `0x06D9`'s two gates is closed.** On battery (§4a) a rewrite by a
   known writer is excluded and a gate was closed. On AC, §4's inference points
   at `0x1664` bit 0. Neither `0x1664` nor `0x3202` can be read through this
@@ -292,11 +340,14 @@ Not settled:
 
 ## 6. What is left, for a human with the machine
 
-1. **Load a pre-return countdown.** AC, the Fn key and the lid did not (§4a).
-   Suspend and resume is the untried action; with an external display
-   attached, the lid does not suspend this machine, so use `systemctl suspend`
-   or undock first. The writers of the 12 in-window pre-return bytes, in
-   `xdata-06c2-06db-timers.md` §3, say what else might load them.
+1. **Load a pre-return countdown.** Idle, AC, the Fn key, the lid and S3 did
+   not (§4a, §4b). The writers of the 12 in-window pre-return bytes, in
+   `xdata-06c2-06db-timers.md` §3, say what else might load them. The ones
+   with a known writer are where to read next: `0x06C6` and `0x06CD` (reloaded
+   with 2 by `dec_0443_low3_unless_0440_5_6_7`, `inc_0443_low3_unless_0440_5_6_7`
+   and `if_06cd_zero_set_02_set_06ff_20`, §5 of the annotation), `0x06D1`,
+   `0x06D2`, `0x0636`, `0x0637` and `0x07F6`. Whatever calls those routines is
+   the event to trigger.
    `grade_timer_sweep.py` prints the full ratio as soon as one byte on each
    side of the return makes two consecutive `-1` steps.
 2. **The Windows arm** from §7 of the annotation: `ec_watch.py` over

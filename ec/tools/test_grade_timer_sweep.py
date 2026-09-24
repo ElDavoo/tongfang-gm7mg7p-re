@@ -160,6 +160,30 @@ class Grading(unittest.TestCase):
         self.assertIn("NO -- another writer, or a missed sample", out)
         self.assertIn("up 1", out)
 
+    def test_suspend_gap_is_excluded_and_counted_mod_ten(self):
+        # Awake at 100 ms, then 12.3 s with no samples, then awake again, with
+        # 0x06D6 having moved one step (mod 10) across the gap, and the resume
+        # mark stamped 50 ms after the first sample, as a poller stamps it.
+        p = self.dir / 'suspend.csv'
+        rows = reload_cycle(0.05, 0.1, 5.0)
+        last = rows[-1][3]
+        after = 9 if last == 0 else last - 1
+        rows.append((17.3, gts.RELOAD, last, after))
+        rows += reload_cycle(17.31, 0.1, 22.0, start=after)
+        write_capture(p, 0.01, [gts.RELOAD], {gts.RELOAD: 9}, rows, 22.1)
+        with open(p) as f:
+            body = f.read().replace(
+                "# ended", f"{ts(17.35)},MARK,,\"auto: resumed, ~7.2 s suspended\"\n# ended")
+        with open(p, 'w') as f:
+            f.write(body)
+        rc, out = run(str(p))
+        self.assertEqual(rc, 0)
+        self.assertIn("so the gap held 1 (mod 10) passes", out)
+        self.assertIn("a different residue", out)
+        # The 12.3 s gap, and the 10 ms from the first post-gap sample to the
+        # next real step, are both out of the step figures.
+        self.assertIn("min 100.0, max 100.0", out)
+
     def test_unresolved_step_warns(self):
         p = self.dir / 'slow.csv'
         rows = reload_cycle(0.05, 0.1, 3.0)
