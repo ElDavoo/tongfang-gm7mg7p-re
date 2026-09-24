@@ -1185,10 +1185,10 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # self-test both read it with csv.DictReader, which returns the record.
     # A pin, so it moves with every annotation row a change adds on purpose:
     # 1,769 -> 1,772 with issue #181's three pd rows (0x7392, 0xEA67, 0xEFB9),
-    # 1,772 -> 1,775 with issue #179's three.
-    check("EC: annotations/ghidra-functions.csv is 1,775 records, no short row "
+    # 1,772 -> 1,775 with issue #179's three, 1,775 -> 1,779 with issue #180's four.
+    check("EC: annotations/ghidra-functions.csv is 1,779 records, no short row "
           "and no duplicate (scope, addr)",
-          len(_ann) == 1775 and not structure_problems("ghidra-functions.csv", _ann,
+          len(_ann) == 1779 and not structure_problems("ghidra-functions.csv", _ann,
                                                        annotation_key, "(scope, addr)"),
           "%d record(s)" % len(_ann))
     check("EC: bank-call-targets.csv is 5,998 records, no short row and no "
@@ -1204,7 +1204,7 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("EC: a raw and a normalised key count the same on both annotation "
           "CSVs, so normalising cannot merge two distinct keys",
           len({(r["scope"], r["addr"]) for r in _ann})
-          == len({annotation_key(r) for r in _ann}) == 1775
+          == len({annotation_key(r) for r in _ann}) == 1779
           and len({(r["file_offset"], r["target"]) for r in _ct})
           == len({call_target_key(r) for r in _ct}) == 5998)
 

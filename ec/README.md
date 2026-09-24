@@ -186,6 +186,15 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   battery/temperature block does, and deliberately stops at naming: the 32
   bytes with no cited name are `XDATA_04XX` in the symbol table, and §9 of
   that file says where each name that *is* used came from.
+- **`annotations/xdata-086x-dispatch.md`** — the `0x0860`-`0x086E` run: the
+  two instructions that set `0x0860` and the early-outs that gate it, the
+  twelve-entry case table at `0xD14B` and the correction it forces on the
+  `0xD091` row, the three-block level computation at `0x9D9B`, and why the
+  `0x1C39`/`0x1C3A` copy is neither a mirror nor a second buffer.
+  `xdata-086x-dispatch-sites.csv` is the per-site table behind it. Every
+  direction number there names the method that produced it, because the
+  census's own `read`/`write` split is wrong for this block — §3 gives the
+  mechanism. The units of the block are not fixed, so nothing is named.
 - **`annotations/lightbar-bat-flow.md`** — the `0x07E2`-`0x07E5` site map, the
   evidence that those sites belong to the PD image rather than the EC, and the
   live probe still needed to say what (if anything) the EC does with those

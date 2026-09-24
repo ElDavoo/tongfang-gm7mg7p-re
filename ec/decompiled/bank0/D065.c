@@ -13,9 +13,9 @@
 void init_1f01_1f06_1f07(void)
 
 {
-  DAT_EXTMEM_1f01 = 0x20;
+  XDATA_1F01 = 0x20;
   DAT_EXTMEM_1f06 = 1;
-  DAT_EXTMEM_1f07 = 0x5a;
+  XDATA_1F07 = 0x5a;
   return;
 }
 

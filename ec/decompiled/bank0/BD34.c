@@ -5,8 +5,8 @@
 
 
 /* Copies the byte at the caller's XDATA DPTR into R7, reads XDATA 0x0867, clears the carry and
-   returns that byte minus R7 in A with the borrow in CY. 0x0867 has no entry in
-   ec/annotations/registers.yaml.
+   returns that byte minus R7 in A with the borrow in CY. 0x0867 is recorded in
+   ec/annotations/registers.yaml as XDATA_0867, units not determined.
    type: math
    evidence: ec/decompiled/bank0/BD34.asm; ec/decompiled/bank0/BD34.c
    basis: hand-decoded */
@@ -14,7 +14,7 @@
 char sub_dptr_byte_from_0867(char *param_1)
 
 {
-  return DAT_EXTMEM_0867 - *param_1;
+  return XDATA_0867 - *param_1;
 }
 
 

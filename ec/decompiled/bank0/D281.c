@@ -15,7 +15,7 @@
 void set_0860_ff_then_d284(void)
 
 {
-  DAT_EXTMEM_0860 = 0xff;
+  XDATA_0860 = 0xff;
   copy_0866_86b_to_1c04_1c3a();
   return;
 }

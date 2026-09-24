@@ -13,7 +13,7 @@ void poll_d6c2_then_branch(undefined1 param_1)
   undefined1 *puVar2;
   
   _a_4 = 1;
-  FUN_CODE_d304(param_1);
+  stage_0862_0865_into_1c36_1c38(param_1);
   do {
     puVar2 = &DAT_EXTMEM_1c35;
     cVar1 = copy_dp_to_086c_return_masked_7e();
