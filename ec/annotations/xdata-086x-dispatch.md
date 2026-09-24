@@ -1,7 +1,7 @@
 # `0x0860`-`0x086E`: the EC's own level block, and what it dispatches on
 
 Issue #180 asked to read the `0x0860`-`0x086E` run in main-EC cluster
-`main-ec-003` and settle four questions: what sets `0x0860`, what the sibling
+`main-ec-002` and settle four questions: what sets `0x0860`, what the sibling
 bytes hold, what consumes the `0x1C39`/`0x1C3A` copy, and whether the
 `0x044C`-`0x05F1` group is the same mechanism. This is the answer. The
 machine-readable table behind every number here is
@@ -13,6 +13,18 @@ Nothing in this file is a live observation, and no entry it supports is above
 `present-untested`. The block is real, its arithmetic is legible, and **what
 the EC does with the numbers is not** — §7 writes that down as a step for a
 human with the machine.
+
+> **Correction, 2026-09-24 (issue #253).** This page used to scope its subject
+> to `main-ec-003`, which is the inverse of the drift issue #253 is about — a
+> real cluster named where a different real cluster belongs. All 15 addresses
+> §1 sweeps are `main-ec-002` members in `xdata-clusters.csv` (row 3: 44
+> addresses, 248 references) and carry `cluster_id=main-ec-002` in
+> `xdata-registers.csv`. `main-ec-003` (row 4) is the 43-address counter block
+> of `xdata-06c2-06db-timers.md` and shares no address with this one. The id
+> moved for the same reason as every other id in issue #253, which is issue
+> #4.3's census regeneration (#133 / #238), and
+> `../tools/check_cluster_citations.py` is what holds the rest of the tree to
+> the census.
 
 ## 1. How to reproduce it
 

@@ -57,6 +57,29 @@ into `r2 -a 8051` with no stitching needed.
   `annotations/registers.yaml` from the image and exits non-zero on a mismatch
   or on an entry missing the split. Run by `.github/scripts/agent-gates.sh`;
   the numbers it guards are tabulated in `annotations/static-refs-audit.md`.
+- **`tools/check_cluster_citations.py`** — holds every `main-ec-NNN` in the
+  committed prose to the membership it names in
+  `annotations/xdata-clusters.csv`. A cluster id in a sentence is a pointer,
+  and pointers go stale: the ids are numbered by size, then references, then
+  lowest address (`xdata_register_map.py:1027`), which holds them steady across
+  a re-run and promises nothing once the classifier itself changes. Issue #253
+  is four sentences whose pointer had drifted exactly that way. It walks the
+  markdown under `ec/`, `docs/` and `evidence/`, and where a sentence names
+  both a cluster and an XDATA address, the address has to be a member of one of
+  the clusters that sentence names — reporting file, line, id and address, and
+  exiting non-zero. Committed files only: no image, no Ghidra, no network. The
+  limits it earns the right to state: a sentence that *denies* membership is
+  skipped rather than checked, one that names a cluster without claiming
+  membership is skipped (which is what keeps
+  `annotations/xdata-register-map.md` §5's census table out of the results),
+  and one naming two clusters is satisfied if the address is in either — so it
+  catches a wrong id, not a wrong pairing. Passing means the checked sentences
+  agree with the CSVs beside them; it says nothing about whether the prose is
+  right about the firmware. `tools/test_check_cluster_citations.py` pins each
+  of those skips and asserts the committed tree currently agrees. Not run by
+  `.github/scripts/agent-gates.sh` — that file is not one this repo edits
+  casually (`../../CLAUDE.md`), so the tool stands as something a human can
+  wire up.
 - **`tools/register_ref_table.py`** — the whole `annotations/registers.yaml`
   table in one pass: per-image count split *and* what each site behind it does
   (`read`/`write`/`movc` CODE pointer/handed to a subroutine/…), as a markdown
@@ -207,7 +230,7 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   evidence that those sites belong to the PD image rather than the EC, and the
   live probe still needed to say what (if anything) the EC does with those
   bytes.
-- **`annotations/xdata-06c2-06db-timers.md`** — the `main-ec-002` cluster read
+- **`annotations/xdata-06c2-06db-timers.md`** — the `main-ec-003` cluster read
   as the block the issue asked about: 37 of its 43 addresses are countdowns one
   393-byte routine walks over, and the other 6 are what four of them do at zero.
   It also measures why the cluster's headline census numbers are inflated 42×,
