@@ -874,18 +874,51 @@ registers:
 
   - name: XDATA_0440
     addr: 0x0440
-    sources: [xdata-refs]
+    sources: [xdata-refs, "dsdt(ECRW: uncalled)"]
     static_refs: 43
     static_refs_main_ec: 43
     static_refs_pd_image: 0
     status: present-untested
     note: >
       Busiest byte on the page: 43 EC-side sites (27 bank1, 13 bank0, 3
-      common) and every one of them a direct read. No writer, no PD site, no
-      upstream name, and the value is not established -- only that 43 places
-      in the firmware consult it. clear_and_set_xdata_flag_bits (bank1 0x8300)
-      tests it against 0x07, which is as much as any decoded routine does with
-      it. Per-address table: ec/annotations/xdata-0400-045f.md.
+      common) and every one of them a direct read, so no direct MOV DPTR site
+      writes it. A writer does exist and is not one of those 43:
+      code_table_scatter_to_xdata (bank1 0xA530) stores each 3-byte CODE record
+      -- BE16 destination, then value -- and three records across two of its
+      seven call sites (bank1 0x83B7 records 0 and 2 of the table at CODE
+      0x8453, bank1 0x841D record 9 of the table at 0x851C) store 0x00 to
+      0x0440. That is a static reading of a table, not a readback, and when
+      those tables are walked is not established; 0x8354 and 0x86EE are not
+      recorded call targets. Grouping the 43 readers by constant AND by what
+      each branch does: 39 are a zero test, and at 32 of them the zero arm is
+      inert (a ret, a sjmp past the body, or a forward call), so at those the
+      shape is an enable flag; at the other 7 the zero arm does work of its own
+      -- seeding, clearing, dispatching or toggling -- so zero is not one state
+      either and the byte reads as a selector between behaviours. The 4 cjne
+      sites test 0x07 (bank1 0x8328), 0x08 (bank1 0xA12D) and 0x05 (bank1
+      0xF2D5, 0xF2FE), the last two chaining on to 0x06 and 0x07, so the
+      compared set is {0, 5, 6, 7, 8} -- not a closed enumeration, since the 39
+      zero tests accept any non-zero byte. 16 of the 43 are co-gated on 0x06E6
+      == 0x01; the other 27 branch on 0x0440 whatever 0x06E6 holds, so the byte
+      is read inside that mode and outside it. The co-gated 16 are the
+      profile-shaped ones -- the fan toggle, the thermal-ceiling seed, the ring
+      producer -- and all four cjne sites are among the ungated 27, so the
+      scoping is an observation about those 16 and does not account for the rest.
+      0x06E6 is the same family 0x0440 is hypothesised to join (written 5 at
+      power-on by bank0 0xCCFC, dispatched on 0x81-0x84 at bank0 0xCF48).
+      HYPOTHESIS, not a decode: a host-written
+      platform-profile or mode index, zero at power-on and host-set thereafter.
+      What would falsify it is a live read outside {0, 5, 6, 7, 8}, or a
+      non-zero writer in code these methods do not reach. Per-site table and the
+      method-by-method writer hunt, including the 15 unresolved call sites that
+      are the largest remaining hole: ec/annotations/xdata-0440-readers.md.
+      Per-address table: ec/annotations/xdata-0400-045f.md. The DSDT's ECMG
+      field list steps from CPTM at offset 0x43E straight to VGAT at 0x44F, so
+      there is no field at 0x440 and the dsdt source tag carries ECRW rather
+      than a field name -- the parenthetical form this file already uses for a
+      DSDT reference that is not a plain field-list mention. ECRW
+      (evidence/acpi/dsdt.dsl:50504) is a general 0xFE410000 + 16-bit-arg write
+      that could reach 0x440 and has no call site in the committed DSDT.
 
   - name: XDATA_0442
     addr: 0x0442
