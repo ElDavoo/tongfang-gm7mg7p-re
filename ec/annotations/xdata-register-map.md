@@ -89,22 +89,27 @@ $ python3 ec/tools/xdata_register_map.py --check
 *(Correction, 2026-09-24. The two `--check` lines above are what that command
 printed when this transcript was written; **it no longer does.** Re-run on the
 merged tree it exits 1 and reports `differs from a fresh generation` for both
-CSVs — 135 of 1,172 lines in `xdata-registers.csv`, 123 of 428 in
-`xdata-clusters.csv`. This is pre-existing rather than this change's doing: the
-identical failure is on `origin/main`, and `--self-test` fails 9 assertions on
-both, the `ok the committed CSVs match a fresh generation` line in the
-transcript below among them. (Nine, not ten: the run's tenth line reading `FAIL`
-is the `FAILURES ABOVE` summary, not an assertion.) The cause is #310's
-`bank0/CC64` (`init_06e6_1_clear_0743_07c5_and_07d5_ff`), whose annotation adds
-an address the committed census still had to itself in a one-address cluster at
-1/4: a fresh generation moves it into the largest main-EC cluster at 109/1,149
-against the committed 108/1,136, and the ids of the clusters it displaces move
-with it. **§5's four corrected rows are held to the committed CSV**, which is
-the authority this file's own rule makes them, and not to a fresh generation
-that would move the top row again. Re-deriving the census to close the gap
-belongs to #254/#256/#326, and #326 already records the census as a lower bound
-for the same reason: it is what the committed tree spells, not a claim about
-every address the firmware touches.)*
+CSVs: `1172 on disk vs 1172 generated` for `xdata-registers.csv`, `428 on disk
+vs 431 generated` for `xdata-clusters.csv`. Those two counts are the whole of
+what the command prints — `diff()` names the first differing line and stops, so
+it reports no total of differing lines and none is attributed to it here. How
+much of each file actually differs, counted instead by generating to scratch
+with `--out-registers`/`--out-clusters` and diffing: 857 of the 1,172 register
+lines, 374 of the 428 cluster lines. This is pre-existing rather than this
+change's doing: the identical failure is on `origin/main`, and `--self-test`
+fails 9 assertions on both, the `ok the committed CSVs match a fresh generation`
+line in the transcript below among them. (Nine, not ten: the run's tenth line
+reading `FAIL` is the `FAILURES ABOVE` summary, not an assertion.) The cause is
+#310's `bank0/CC64` (`init_06e6_1_clear_0743_07c5_and_07d5_ff`), whose
+annotation adds an address the committed census still had to itself in a
+one-address cluster at 1/4: a fresh generation moves it into the largest
+main-EC cluster at 109/1,149 against the committed 108/1,136, and the ids of
+the clusters it displaces move with it. **§5's four corrected rows are held to
+the committed CSV**, which is the authority this file's own rule makes them,
+and not to a fresh generation that would move the top row again. Re-deriving
+the census to close the gap belongs to #254/#256/#326, and #326 already records
+the census as a lower bound for the same reason: it is what the committed tree
+spells, not a claim about every address the firmware touches.)*
 
 The census is the same 1,172 addresses in the same 14,801 references as before
 — §4.3 changed which *direction* each reference is, and not one address or
