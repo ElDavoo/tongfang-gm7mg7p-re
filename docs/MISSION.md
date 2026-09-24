@@ -39,11 +39,12 @@ file, which won't be kept in lockstep with either.
 ## Standing constraints this implies for automated work
 
 - **Cloud agents cannot touch the physical laptop or a Windows machine.**
-  Issues labelled `needs-hardware-test` or `windows` still get planned and
-  implemented, but the deliverable is the *preparation* — a script, a
-  documented procedure, a static analysis — never a claimed test result.
-  Running it and recording what happened is a human step, every time. See
-  `CLAUDE.md`.
+  An issue labelled `needs-hardware-test` is a live run for a human, and the
+  agent pipeline never plans or implements it (the label works like
+  `no-agent`). Preparing a run (a script, a documented procedure, a static
+  analysis) is a separate issue without that label, and its deliverable is
+  never a claimed test result. `windows` issues still get planned and
+  implemented, with the same rule. See `CLAUDE.md`.
 - **Static analysis is not proof.** `docs/findings.md` §4 records two cases
   where confident conclusions from static evidence alone (a resting
   voltage, a zero-reference static scan) were wrong. Anything written here

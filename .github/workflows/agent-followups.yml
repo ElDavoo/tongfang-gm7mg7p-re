@@ -225,6 +225,16 @@ jobs:
               Never propose agent:*, no-agent, or any label outside this list -- those are
               reserved for the pipeline itself.
 
+            `needs-hardware-test` takes an issue out of the automated pipeline entirely: it
+            means "a human at the laptop (or on Windows) runs something and records what
+            happened", and no agent will ever plan or implement it. Use it for exactly that and
+            nothing else. If the run still needs preparation first (a probe script, a capture
+            mode, a grader, a procedure), propose that preparation as its own issue *without*
+            `needs-hardware-test`, and make the run a second issue that says it depends on the
+            first. A single issue that mixes the two either gets done by an agent that cannot
+            run anything, or never gets its preparation done. Before proposing a new run issue,
+            check open-issues.json for one that already covers that run.
+
             Do not write or edit any file, and do not call `gh` yourself. Return the structured
             output only; a separate step creates the issues from it.
           claude_args: >-

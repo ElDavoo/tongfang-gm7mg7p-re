@@ -54,9 +54,10 @@ work queue.
 Issues here run through [`agent-pipeline`](https://github.com/ElDavoo/agent-pipeline):
 file an issue, get a planned, implemented, reviewed, CI-passing pull
 request without clicking anything in between. Agents run on GitHub-hosted
-runners with no access to the laptop or to Windows, so hardware and Windows
-issues come back as prepared scripts and procedures for a human to run,
-never as claimed results. `docs/agent-pipeline.md` covers what's specific
+runners with no access to the laptop or to Windows. An issue labelled
+`needs-hardware-test` is a live run and the pipeline skips it; everything
+else that touches the hardware or Windows comes back as prepared scripts and
+procedures for a human to run, never as claimed results. `docs/agent-pipeline.md` covers what's specific
 to this copy. Issue and pull request creation is limited to collaborators,
 and anything filed by someone without write access waits for the owner's
 approval before an agent reads it.

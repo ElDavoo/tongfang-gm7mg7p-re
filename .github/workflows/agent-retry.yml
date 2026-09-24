@@ -112,8 +112,8 @@ jobs:
 
             labels=$(gh issue view "$issue" --json labels --jq '[.labels[].name] | join(",")')
             case ",$labels," in
-              *,agent:stop,*|*,agent:stuck,*)
-                echo "stopped or already given up on — leaving alone"
+              *,agent:stop,*|*,agent:stuck,*|*,needs-hardware-test,*)
+                echo "stopped, given up on, or a human's live run — leaving alone"
                 echo "::endgroup::" ; continue ;;
             esac
 
@@ -511,7 +511,8 @@ jobs:
                       --json number,labels --jq '
                       [ .[] | select([.labels[].name]
                                      | any(IN("agent:stop","no-agent","agent:stuck",
-                                              "agent:stalled","agent:working"))
+                                              "agent:stalled","agent:working",
+                                              "needs-hardware-test"))
                                      | not)
                             | .number ] | sort | .[]')
           if [ -z "$candidates" ]; then
@@ -601,7 +602,8 @@ jobs:
                       --json number,title,labels --jq '
                       [ .[] | select([.labels[].name]
                                      | any(IN("agent:stop","no-agent","agent:stuck","agent:stalled",
-                                              "agent:planned","agent:working"))
+                                              "agent:planned","agent:working",
+                                              "needs-hardware-test"))
                                      | not)
                             | "\(.number)\t\(.title)" ] | sort_by(split("\t")[0] | tonumber) | .[]')
           if [ -z "$candidates" ]; then

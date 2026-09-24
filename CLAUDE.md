@@ -95,7 +95,13 @@ This pipeline runs on GitHub-hosted runners. There is no physical laptop
 and no Windows machine reachable from here — full stop, not a permissions
 question.
 
-For an issue labelled `needs-hardware-test` or `windows`:
+An issue labelled `needs-hardware-test` is a live run, and the pipeline does
+not pick it up at all: plan, implement and the retry sweeps skip it the way
+they skip `no-agent`. A human at the machine (or a local session on it) does
+that one. Preparing a run is its own issue without the label.
+
+For any other issue whose work turns out to need the hardware or Windows
+(often one labelled `windows`):
 - The deliverable is preparation, not results: a test script, a documented
   step-by-step procedure, a static disassembly, a decrypted source file.
 - Never write a sentence implying a live test ran, a register was read

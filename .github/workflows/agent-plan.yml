@@ -93,9 +93,14 @@ jobs:
     permissions:
       contents: read
       issues: write
+    # LOCAL CHANGE (2026-09-25): `needs-hardware-test` is an opt-out like `no-agent`. Such an
+    # issue is a live run on the laptop or on Windows, which no runner can do; planning it
+    # anyway produced PRs that re-prepared finished preparation or described runs that never
+    # happened. Preparation for a run is its own issue without the label (agent-followups.yml).
     if: >-
       !contains(github.event.issue.labels.*.name, 'no-agent')
       && !contains(github.event.issue.labels.*.name, 'agent:stop')
+      && !contains(github.event.issue.labels.*.name, 'needs-hardware-test')
     runs-on: ubuntu-latest
     outputs:
       proceed: ${{ steps.who.outputs.proceed }}
@@ -129,7 +134,7 @@ jobs:
             view=$(gh issue view "$issue" --json state,author,labels)
             author=$(jq -r .author.login <<<"$view")
             state=$(jq -r .state <<<"$view")
-            taken=$(jq -r '[.labels[].name] | map(select(IN("no-agent","agent:stop","agent:planned",
+            taken=$(jq -r '[.labels[].name] | map(select(IN("no-agent","agent:stop","needs-hardware-test","agent:planned",
                              "agent:working","agent:stalled","agent:stuck"))) | join(",")' <<<"$view")
             if [ "$state" != OPEN ] || [ -n "$taken" ]; then
               echo "::notice::not planning issue $issue: state=$state labels=${taken:-none}"
@@ -356,10 +361,14 @@ jobs:
             This repository is reverse-engineering a physical laptop's EC/BIOS and its Windows
             vendor driver. You are running on a GitHub-hosted runner: there is no physical
             laptop and no Windows machine reachable from here, ever, regardless of what the
-            issue asks for. For an issue labelled `needs-hardware-test` or `windows`, plan the
+            issue asks for. Issues labelled `needs-hardware-test` never reach this stage: they
+            are live runs, and only a human at the machine does them. If the issue in front of
+            you (often one labelled `windows`) turns out to need a live run anyway, plan the
             preparation only — a test script, a documented procedure, a static disassembly, a
             decrypted source file — and put "run it on the real hardware/on Windows and record
-            what happened" under out of scope, for a human to do. Never plan toward a PR that
+            what happened" under out of scope, for a human to do. If there is no preparation
+            left to do, because everything the run needs is already committed, plan no diff and
+            say so: re-preparing finished preparation is not progress. Never plan toward a PR that
             would state or imply a live test happened; CLAUDE.md's "calibrate, don't overclaim"
             section is the standing rule behind this and applies to everything you write here,
             not only this paragraph.

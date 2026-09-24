@@ -248,6 +248,15 @@ only covers what's specific to *this* copy.
   `Refs #N` for an issue with that label. Such a pull request is the
   preparation and the issue is the live run. Closing it on merge is how #184
   and #283 were closed with their runs never done.
+- **`needs-hardware-test` opts an issue out of the pipeline** (2026-09-25, not
+  in the template). `agent-plan.yml`'s triage refuses it, `agent-implement.yml`'s
+  kill switch stops on it, and `agent-retry.yml`'s stall, implement and plan
+  sweeps skip it. Before this, such issues were planned and implemented
+  like any other, and since the run itself cannot happen on a runner, the PRs
+  re-prepared finished preparation or described runs nobody did.
+  `agent-followups.yml` now files the preparation for a run as a separate
+  issue without the label. The `Refs`-not-`Closes` logic below is still in
+  place, for an issue labelled after its PR was opened.
 - **`MAX_OPEN_AGENT_PRS` is 2** (2026-09-24), in `agent-plan.yml` and
   `agent-retry.yml`, down from 5 in the entry below. With 5 open, most merges
   left the other agent PRs conflicting, since nearly all of them edit
