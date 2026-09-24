@@ -53,6 +53,9 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+          # The cheap tier this runs first includes --verify-provenance, which
+          # reads committed history.
+          fetch-depth: 0
 
       # For sdas8051. The cheap tier does not need it, which is why the deep
       # script fails rather than skipping when it is missing.

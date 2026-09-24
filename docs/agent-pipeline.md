@@ -112,6 +112,18 @@ only covers what's specific to *this* copy.
      question. It is not made here: `.github/` is template-copied and the
      pipeline token has no `workflow` scope, the same reason item 1's schedule
      is prepared rather than landed.
+     **Decided 2026-09-24 (issue #407): it is in the per-commit gate.** A
+     maintainer landed `fetch-depth: 0` on `ci.yml`'s `gates` checkout; the
+     `workflows` job only lints YAML and stays shallow. `agent-gates.sh` runs
+     `--verify-provenance --base 08b72e2 --migration a56b3bb --listings-from
+     8c7985e` after `verify_reassembly.py`'s `--check` and `--self-test`, and
+     `docs/ci/agent-gates-deep-schedule.yml`'s checkout is full-depth too, since
+     the deep tier runs the cheap one first. The cost is a full clone per CI
+     run (a 224 MiB pack over 202 commits at the time); the mode itself took
+     1.7 s locally. The revision pair is fixed, so this re-audits the one
+     committed migration on every run; it does not audit the next one. A
+     future migration needs its own `--base`/`--migration` pair added here.
+     A shallow local clone now fails this gate, as the mode intends.
   4. **`verify_gap_text.py --check` is not in the cheap tier yet, and should
      be.** Issue #151 (2026-09-23) added
      `ec/tools/verify_gap_text.py`, which cross-decodes the 143 instructions

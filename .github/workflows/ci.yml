@@ -30,10 +30,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      # Full history, like the agent stages' checkouts: verify_reassembly.py --verify-provenance
+      # audits a digest migration against committed revisions, which a shallow clone lacks.
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+          fetch-depth: 0
 
       - name: Set up the toolchain
         uses: ./.github/actions/project-setup

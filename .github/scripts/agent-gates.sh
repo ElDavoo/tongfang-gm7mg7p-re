@@ -149,8 +149,13 @@ check_ghidra_tooling() {
       # committed listing back to bytes, the stronger claim, and the deep
       # tier's. The self-test's own tail does invoke the assembler over a
       # four-instruction fixture when it is present; that is not the re-encode.
+      # --verify-provenance audits the listing_digest migration against the
+      # history (docs/findings.md §14f), so it needs a full clone: ci.yml's gates
+      # checkout and the agent stages' all use fetch-depth: 0 for it.
       *verify_reassembly.py)
-        python3 "$tool" --check && python3 "$tool" --self-test || rc=1
+        python3 "$tool" --check && python3 "$tool" --self-test && \
+        python3 "$tool" --verify-provenance \
+          --base 08b72e2 --migration a56b3bb --listings-from 8c7985e || rc=1
         ;;
       *)
         # build_ec_decompile.py and bios_extract.py both take --work.
