@@ -755,8 +755,9 @@ name `counter-sweep` still resolves to a cluster containing all 43 addresses
 that `main-ec-001` and `main-ec-002` are carried by **overlap and not by key**;
 and that no name is lost. What it measures is sharper than "nothing moved": the
 counter-sweep cluster keeps its key *and* its exact 43-address membership here,
-and only its **rank** changes, `main-ec-003` → `main-ec-002`, because a
-44-address cluster sorts ahead of a 43-address one once the `==` guard is gone.
+and only its **rank** changes, `main-ec-003` → `main-ec-002`: the 44-address
+cluster ahead of it in the committed census, `level-block-086x`, is 28
+addresses once the `==` guard is gone — it lost 16, and 28 sorts behind 43.
 A name and a key both survive that; the rank is the only one of the three that
 does not, and `main-ec-002` in the guard-off census is a different cluster from
 `main-ec-002` in the committed one.
