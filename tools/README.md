@@ -11,15 +11,17 @@ bash tools/run-tests.sh
 
 Every `test_*.py` under the repository, found by `find` — not a hardcoded list,
 so a suite in a directory that does not exist yet is picked up by having its
-file committed. There are five today, 60 tests in all, and each is a `unittest`
+file committed. There are seven today, 128 tests in all, and each is a `unittest`
 suite standing in for a tool's own behaviour:
 
 | suite | what it stands in for |
 |---|---|
 | `ec/tools/test_grade_0751_isolation.py` | `ec/tools/grade_0751_isolation.py`, the §4 grader of the `0x0751` capture procedure, against the committed `testdata/` fixtures |
+| `ec/tools/test_walk_branch_arms.py` | `ec/tools/walk_branch_arms.py`'s direction classification, bounds, refusals, and negative-result wording |
 | `windows/tools/test_manual_fan_ctrl_probe.py` | the fan-mode probe's two-arm byte script |
 | `windows/tools/test_ec_watch.py` | the mark-CSV sweep and the mark landing between two change rows |
 | `windows/tools/test_ec_validate.py` | the `ec_validate.py` `0x0436` capacity arm's exact-copy scoring, full-capacity bound, CSV, and `0x0400-0x045F` page assertion |
+| `windows/tools/test_system_id_probe.py` | the `0x0456` probe's `store_scaled_quotient_0449` arithmetic, its branch labels, its address guard, and that it has no write path |
 | `linux/lightbar/test_probe_6005.py` | the lightbar probe's ioctl encoding, dry run, and off-after-failure |
 
 Named directories run alone, which is what to reach for when editing one tool:
@@ -39,9 +41,10 @@ the vacuous check is the same defect the gate's listing parse had in
 
 The `windows/tools` suites install a fake `ecrw` into `sys.modules` with
 `setdefault`, and the fakes are not all the same shape: two export `Ec` only
-(`test_manual_fan_ctrl_probe.py`, `test_ec_validate.py`), one exports `Ec` and
-`EcError`, and `ec_watch.py` imports both. In one shared interpreter, whichever
-suite imports first wins, and a narrow one dies with
+(`test_manual_fan_ctrl_probe.py`, `test_ec_validate.py`), two export `Ec` and
+`EcError` (`test_ec_watch.py`, `test_system_id_probe.py`), and `ec_watch.py`
+imports both. In one shared interpreter, whichever suite imports first wins,
+and a narrow one dies with
 `ImportError: cannot import name 'EcError' from 'ecrw'`. It passes today only
 because discovery happens to sort `test_ec_watch` first — an accident nothing
 assertes. `docs/findings.md` §16 has the reproduction. The runner's per-file
