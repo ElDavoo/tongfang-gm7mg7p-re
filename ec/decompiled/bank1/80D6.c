@@ -8,9 +8,10 @@
    otherwise the byte is decremented and written back, and when that decrement reached zero the same
    accumulator value -- zero -- is also stored to 0x0460 and then to 0x0468. The listing then reads
    XDATA 0x06C5, skips it if zero and otherwise decrements and writes it back, and ends by loading
-   DPTR with 0x0440. What any of these bytes means is not shown here, and none has an entry in
-   ec/annotations/registers.yaml. All fourteen instructions sit inside the body running 0x8018 to
-   the `ret` at 0x8189, so this boundary is the call-target byte scan's hypothesis and the
+   DPTR with 0x0440. What any of these bytes means is not shown here; ec/annotations/registers.yaml
+   now carries 0x0440 as XDATA_0440, an EC-side site found with its meaning not established; 0x0460,
+   0x0468 and 0x06C5 have no entry there. All fourteen instructions sit inside the body running
+   0x8018 to the `ret` at 0x8189, so this boundary is the call-target byte scan's hypothesis and the
    function-level role here is not determined.
    type: writer
    evidence: ec/decompiled/bank1/80D6.asm; ec/decompiled/bank1/80D6.c; ec/annotations/registers.yaml
@@ -29,7 +30,7 @@ void clear_0460_0468_when_0706_reaches_zero(char param_1,char *param_2)
   if (DAT_EXTMEM_06c5 != '\0') {
     DAT_EXTMEM_06c5 = DAT_EXTMEM_06c5 + -1;
   }
-  if ((DAT_EXTMEM_0440 != '\0') && (DAT_EXTMEM_085b != '\0')) {
+  if ((XDATA_0440 != '\0') && (DAT_EXTMEM_085b != '\0')) {
     DAT_EXTMEM_085b = DAT_EXTMEM_085b + -1;
   }
   if (DAT_EXTMEM_0986 != '\0') {
@@ -61,7 +62,7 @@ void clear_0460_0468_when_0706_reaches_zero(char param_1,char *param_2)
      ) {
     DAT_EXTMEM_0621 = 0;
   }
-  if ((DAT_EXTMEM_0440 != '\0') && (DAT_EXTMEM_06db != '\0')) {
+  if ((XDATA_0440 != '\0') && (DAT_EXTMEM_06db != '\0')) {
     DAT_EXTMEM_06db = DAT_EXTMEM_06db + -1;
   }
   if (DAT_EXTMEM_080d != '\0') {

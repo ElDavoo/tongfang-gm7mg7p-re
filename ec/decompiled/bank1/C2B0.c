@@ -17,7 +17,7 @@ void clear_04f2_04f4_04f8_set_04f6_ffff(void)
 {
   dispatch_0490_low3();
   return_immediately();
-  DAT_EXTMEM_04fc = DAT_EXTMEM_043c & 1;
+  DAT_EXTMEM_04fc = XDATA_043C & 1;
   write_r1r2_to_xdata_pair(0x4f2,0,0);
   write_r1r2_to_xdata_pair(0x4f4);
   write_r1r2_to_xdata_pair(0x4f8);

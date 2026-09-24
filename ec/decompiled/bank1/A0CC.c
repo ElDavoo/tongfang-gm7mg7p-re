@@ -17,7 +17,7 @@
 void set_0724_bit5_when_gates_pass(char param_1)
 
 {
-  if ((DAT_EXTMEM_045a & 1) == 0) {
+  if ((XDATA_045A & 1) == 0) {
     nop_ret_stub_a12c();
     return;
   }
@@ -33,7 +33,7 @@ void set_0724_bit5_when_gates_pass(char param_1)
       nop_ret_stub_a12c();
       return;
     }
-    if ((DAT_EXTMEM_045a >> 5 & 1) == 0) {
+    if ((XDATA_045A >> 5 & 1) == 0) {
       return;
     }
   }

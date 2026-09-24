@@ -33,9 +33,9 @@ void ramp_1804_1809_toward_0461_0469(byte param_1,char param_2,byte param_3)
      (bVar1 = (DAT_EXTMEM_0787 & 0x7f) == 0, in_PSW = bVar1 << 7, !bVar1)) {
     bVar3 = DAT_EXTMEM_0787 & 0x7f;
   }
-  pbVar5 = &DAT_EXTMEM_0456;
+  pbVar5 = &SYSTEM_ID;
   DAT_EXTMEM_0469 = param_1;
-  if (DAT_EXTMEM_0456 < '\0') {
+  if (SYSTEM_ID < '\0') {
     load_dptr_0469(bVar3);
     if (in_PSW < '\0') {
       pbVar5 = &DAT_EXTMEM_0469;
@@ -50,7 +50,7 @@ void ramp_1804_1809_toward_0461_0469(byte param_1,char param_2,byte param_3)
   bVar1 = (byte)(cVar2 + (param_2 - (in_PSW >> 7))) < 0xcU - (((param_3 < 0xe4) << 7) >> 7);
   cVar2 = bVar1 << 7;
   if (((!bVar1) && (bVar1 = DAT_EXTMEM_0670 < 0xa0U - (cVar2 >> 7), cVar2 = bVar1 << 7, bVar1)) &&
-     (DAT_EXTMEM_0440 == '\0')) {
+     (XDATA_0440 == '\0')) {
     DAT_EXTMEM_0670 = 0xa0;
   }
   if (-1 < DAT_EXTMEM_07c5) {

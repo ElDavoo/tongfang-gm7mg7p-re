@@ -22,7 +22,7 @@ void select_r4_from_cpu_temp_and_0620_0626(void)
   char cVar2;
   
   uVar1 = 0xcf;
-  if ((DAT_EXTMEM_0458 & 0x70) == 0x10) {
+  if ((XDATA_0458 & 0x70) == 0x10) {
     cVar2 = CPU_TEMP + 0xa9;
     if (0x56 < CPU_TEMP) goto LAB_CODE_8ef8;
   }

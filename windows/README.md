@@ -111,28 +111,32 @@ every number in those write-ups.
 
 ## Offline tests
 
-Two of the tools carry offline `unittest` suites, and both run from Linux with
-no Windows box, no EC and no vendor code:
+Five of the tools carry offline `unittest` suites, and all of them run from
+Linux with no Windows box, no EC and no vendor code:
 
 ```sh
-bash tools/run-tests.sh            # from the repository root: these two, and the other two
+bash tools/run-tests.sh            # from the repository root: every suite in the tree
 bash tools/run-tests.sh windows/tools
 ```
 
-`tools/test_manual_fan_ctrl_probe.py` scripts the probe's two arms byte by byte
-and `tools/test_ec_watch.py` checks the mark lands in the CSV between the two
-change rows. Both work through `tools/ecrw_fake.py` — the shared offline
-stand-in for `ecrw`, which binds kernel32 at import time and so only loads on
-Windows — and that is also what makes the arms scriptable. `../tools/README.md`
-is the canonical home for the command.
-
-The runner still gives each suite its own interpreter, and that is now
-belt-and-braces rather than load-bearing. The two suites used to install
-differently-shaped fakes for the same module, so a single discovery run over
-this directory broke on whichever one imported second; both install the one
-`ecrw_fake.py` now, and a single run passes in any filename order
-(`docs/findings.md` §16, which keeps the reproduction and the original
-failure).
+`tools/test_manual_fan_ctrl_probe.py` scripts the probe's two arms byte by byte,
+`tools/test_ec_watch.py` checks the mark lands in the CSV between the two
+change rows, `tools/test_ec_validate.py` checks the `0x0436` capacity arm's
+one-directional exact-copy scoring, its full-capacity bound, its CSV, and the
+`0x0400-0x045F` page assertion that keeps it off the fan-tach block, and
+`tools/test_charge_target_test.py` runs the charge-target tool's three
+refusals, the restore in its `finally`, and its CSV columns — the branches
+`docs/findings.md` §4m's committed artifacts never exercise, since all three
+live runs took the write path. (`tools/test_system_id_probe.py` covers the
+`0x0456` probe; `../tools/README.md` lists it.) All of them work by faking
+`ecrw` — the module binds kernel32 at import time and only loads on Windows —
+which is also what makes the arms scriptable; the charge-target suite fakes the
+`powershell` call behind its WMI line as well. The probe and `ec_watch` suites
+use the shared `tools/ecrw_fake.py`; the other three still carry fakes of their
+own. `../tools/README.md` is the canonical home for the command, and records
+why the runner gives each suite its own interpreter: until those three are
+moved onto the shared fake, a single discovery over this directory is
+order-dependent (`docs/findings.md` §16).
 
 ## What's proven vs. what needs a Windows box
 

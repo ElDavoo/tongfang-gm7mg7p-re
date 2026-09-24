@@ -32,27 +32,22 @@ suites=0
 failed=0
 
 # One interpreter per FILE -- not per directory, and not one for the lot.
-# The reason was a live landmine rather than a preference, and the landmine is
-# now defused, so read what follows as insurance and not as load-bearing.
+# The reason is a live landmine rather than a preference, and it is only
+# partly defused -- read docs/findings.md §16 before changing this loop.
 #
-# Both windows/tools suites used to install a fake ecrw into sys.modules with
-# setdefault, and the two fakes were not the same shape:
-# test_manual_fan_ctrl_probe.py exported only Ec, test_ec_watch.py exported Ec
-# and EcError, and ec_watch.py does `from ecrw import Ec, EcError`. In one
+# The windows/tools suites used to install a fake ecrw into sys.modules with
+# setdefault, and the fakes were not the same shape; ec_validate's exported
+# only Ec, while ec_watch.py does `from ecrw import Ec, EcError`. In one
 # shared interpreter, whichever suite imported first won that setdefault, and
 # the other died on
 #   ImportError: cannot import name 'EcError' from 'ecrw' (unknown location)
-# It passed only because discovery happened to sort test_ec_watch before
-# test_manual_fan_ctrl_probe -- an ordering accident nothing asserted, and a
-# rename turned it into a red build. docs/findings.md §16 has the history and
-# the reproduction, and it is worth reading before changing this loop.
 #
-# Both suites install windows/tools/ecrw_fake.py now, one shape through one
-# install(), so a single discovery run over windows/tools passes in any
-# filename order. What is left to this loop is the cheap half: the next suite
-# that reaches for a fake of its own gets an interpreter to itself without
-# anyone having to notice the collision first. Per-directory isolation would
-# not have helped either way, since both suites share one directory.
+# test_manual_fan_ctrl_probe.py and test_ec_watch.py install
+# windows/tools/ecrw_fake.py now, one shape by assignment. test_ec_validate.py,
+# test_system_id_probe.py and test_charge_target_test.py still setdefault
+# their own fakes, so a single discovery run is still order-dependent for
+# them. Do not collapse this into one discovery run until they are moved over.
+# Per-directory isolation would not help: they all share one directory.
 #
 # Process substitution rather than a pipe, because a pipe would run the loop in
 # a subshell and the tally below would not survive back out. `sort -z` because

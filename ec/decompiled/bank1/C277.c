@@ -19,17 +19,17 @@ void set_0432_from_0494(void)
   if (((DAT_EXTMEM_0490 & 1) != 0) && ((DAT_EXTMEM_054c & 0xf0) != 0)) {
     write_r1r2_to_xdata_pair(0x436,0,0);
     if (DAT_EXTMEM_0494 != '\0') {
-      DAT_EXTMEM_0432 = 0;
-      DAT_EXTMEM_043c = 5;
+      BAT_STATUS_1 = 0;
+      XDATA_043C = 5;
       return;
     }
-    DAT_EXTMEM_0432 = 2;
-    DAT_EXTMEM_043c = 5;
+    BAT_STATUS_1 = 2;
+    XDATA_043C = 5;
     return;
   }
   dispatch_0490_low3();
   return_immediately();
-  DAT_EXTMEM_0432 = 0;
+  BAT_STATUS_1 = 0;
   DAT_EXTMEM_04f2 = 0;
   return;
 }

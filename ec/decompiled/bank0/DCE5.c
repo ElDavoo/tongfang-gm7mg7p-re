@@ -13,7 +13,7 @@
 void clear_bit0_045b(void)
 
 {
-  DAT_EXTMEM_045b = DAT_EXTMEM_045b & 0xfe;
+  XDATA_045B = XDATA_045B & 0xfe;
   return;
 }
 

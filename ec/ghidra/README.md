@@ -197,36 +197,85 @@ result against `../firmware/GMxMGxx_11.800`:
 $ SDAS8051=$(nix build nixpkgs#sdcc && echo $out/bin/sdas8051) \
     python3 ../tools/verify_reassembly.py --work /tmp/ec --report
 
+  assembler: sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14  (/nix/store/…-sdcc-4.6.0/bin/sdas8051, this run)
+  committed: sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14  (ec/ghidra/reassembly.csv, 2705 rows)
+    the committed report and this run used the same assembler
+
   reassembly, by function (2705 total):
     match            2574
-    partial           73
-    assembler-gap     58
+    partial          73
+    assembler-gap    58
 
   reassembly, by instruction:
     re-encode to the firmware bytes : 45394 of 45537 (99.69%)
     unchecked (sdas8051 cannot express the form): 143
+
+  2574 function(s) have every instruction re-encode byte-exactly; 73 more have all but 143 instruction(s) verified.
+
+  compared against the committed report (ec/ghidra/reassembly.csv):
+    outcome               this run  committed
+    match                     2574       2574
+    partial                     73         73
+    assembler-gap               58         58
+    mismatch                     0          0
+    rows                      2705       2705
+    instructions checked     45394      45394
+    instructions unchecked       143        143
+
+  moved since the committed report: nothing
+
+  wrote ec/ghidra/reassembly.csv
 ```
+
+**The transcript is illustrative, and its numbers are the committed report's
+own.** It was not re-run while this file was written: `project-setup` installs
+Ubuntu's `sdcc` and does not install nix, so the pinned `sdas8051` is not
+reachable on a GitHub-hosted runner, and the nix store path above is elided
+because it is not reproducible here either. The two `assembler` lines and the
+comparison table show the *shape* — what the tool prints when the run's numbers
+and its assembler are the ones the report was measured with. A run on a
+runner's own assembler prints a disagreement in place of that agreement, and the
+paragraph below has what it says.
 
 **45,394 of 45,537 instructions re-encode to the exact bytes in the firmware,
 and no function disagrees.** 2,574 of 2,705 have every instruction verified; a
 further 73 have all but 143 between them.
 
-The 143 are `MOV bit,C`, `CPL bit`, `CLR bit`, `CJNE` on a direct address,
-`DJNZ A` and the carry-with-immediate forms. `CLR bit` is the only one the
-assembler gets *silently* wrong rather than refusing -- it emits `CLR direct`,
-a different instruction of the same length, with no error -- and the rest of
-the list is safe because a refusal is a refusal. `docs/findings.md` §11 records
-the first pass, which reported 97.80% because four opcodes in that list were
+The 143 are 74 `AJMP`, 36 `ACALL`, 19 `MOV bit,C`, 13 `CPL bit` and one
+`DJNZ A`. `AJMP` and `ACALL` are gaps because `sdas8051` encodes them
+differently from the 8051 manual, and they are 110 of the 143 between them;
+the other three it refuses outright. `CLR bit` is the one form the assembler
+gets *silently* wrong rather than refusing -- it emits `CLR direct`, a
+different instruction of the same length, with no error -- and that form is not
+among the 143, because this firmware contains no `CLR bit`. Naming a refused
+form is not the same as counting one: the tool refuses `CJNE` on a direct
+address and the carry-with-immediate forms too, and this image has neither.
+`docs/findings.md` §11 records the composition, the correction that produced it,
+and the first pass, which reported 97.80% because four opcodes in its list were
 written from memory rather than measured.
 
 Measured with `sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14` (SDCC 4.6.0), and
 reproduced unchanged on 4.5.0. The version is in every row of
-`reassembly.csv`, because the *gap* count is a property of the assembler and
-the match count should not be: the firmware bytes are the arbiter either way. The remaining 1,004 (2.2%) are
-instruction forms `sdas8051` cannot express — the bit-addressed `CLR bit`,
-`SETB bit`, `CPL bit`, `MOV C,bit`, `MOV bit,C`, `MOVC A,bit`, `CJNE` on a
-direct address, `DJNZ A`, and the carry-with-immediate forms — and every one of
-them is named in the source rather than silently dropped.
+`reassembly.csv`, and the run now prints it against the committed one, because
+the split between `match` and `assembler-gap` is a property of what the
+assembler can express rather than of the firmware. Every form it cannot express
+is named in the source rather than silently dropped, and the 143 above are what
+that costs.
+
+**A GitHub-hosted runner's `sdas8051` is a different and older ASxxxx**, so the
+same command on a nightly run prints a disagreement where the transcript above
+prints an agreement: this run's version string, the committed one, a `NOTE`
+naming both, and a category-by-category comparison with the rows that moved
+named individually. **That `NOTE` is expected, not a regression** — it is the
+warning the version comparison exists to raise, and the run's exit status is
+`mismatch == 0` and nothing else. Measured on this repository's runner, whose
+`sdas8051` reports `02.00`: `match` 2,621 against 2,574 committed, `partial` 78
+against 73, `assembler-gap` 6 against 58, 52 rows moved, `instructions_checked`
+45,394 in both, and `mismatch` 0 in both. The version difference and the moved
+categories are reported and neither is adjudicated: a branch that has re-reported
+its listings and not yet committed the CSV moves the tally legitimately, and
+this tool cannot tell that from a regression. `docs/findings.md` §14g has the
+calibration, and the question it leaves open.
 
 Three things this does **not** mean, stated because the number invites the
 wrong one:
