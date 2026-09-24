@@ -3448,8 +3448,8 @@ list, so the count is worth reading with its composition. **104** are the
 `mov dptr,#imm; ljmp <BL51 stub>` bank-switch trampoline, whose C calls
 `bl51_bank_select_1(0x88f0)` — the address is in the output as a literal
 argument, but not as an `EXTMEM_` symbol, and `EXTMEM_` is the whole
-vocabulary of this comparison. Of the rest, 218 distinct addresses are involved
-and **125 of them have no entry in `ec/annotations/registers.yaml`**, so they
+vocabulary of this comparison. Of the rest, 217 distinct addresses are involved
+and **124 of them have no entry in `ec/annotations/registers.yaml`**, so they
 cannot appear as `EXTMEM_` in any C at all: a `disagree` there measures the
 register map's coverage and says nothing about the decompiler. Splitting the
 bucket needs the byte-pair-folding case *enumerated* rather than described, and

@@ -623,7 +623,7 @@ rows the committed report records:
   a literal argument; it is not an `EXTMEM_` symbol, and the comparison's
   vocabulary is `EXTMEM_`. The run prints this count for exactly that reason —
   otherwise the first twenty rows of the list read as twenty defects.
-- Of the rest, 218 distinct addresses are involved and **125 of them have no
+- Of the rest, 217 distinct addresses are involved and **124 of them have no
   entry in `../annotations/registers.yaml`**, so they cannot appear as an
   `EXTMEM_` symbol in any C. A `disagree` there measures the register map's
   coverage, not the decompiler.
