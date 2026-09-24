@@ -13,7 +13,7 @@
 void ljmp_f18a(void)
 
 {
-  if (DAT_EXTMEM_0440 != '\0') {
+  if (XDATA_0440 != '\0') {
     push_r5_into_070f_ring_when_gates_pass(0xc);
   }
   return;

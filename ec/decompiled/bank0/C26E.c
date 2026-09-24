@@ -9,7 +9,7 @@
 void FUN_CODE_c26e(void)
 
 {
-  if (-1 < DAT_EXTMEM_0456) {
+  if (-1 < SYSTEM_ID) {
     return;
   }
   if ((DAT_EXTMEM_1665 >> 2 & 1) != 0) {

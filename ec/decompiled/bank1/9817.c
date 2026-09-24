@@ -36,7 +36,7 @@ void enter_state_0480_05f1_06d9(void)
     DAT_EXTMEM_081d = 0;
     DAT_EXTMEM_080c = 0;
     DAT_EXTMEM_0723 = 0;
-    DAT_EXTMEM_09e6 = 0;
+    XDATA_09E6 = 0;
     DAT_EXTMEM_06f2 = 0;
     write_0830_0831_and_0832_bit5();
     write_083c_083d_and_0832_bit6();
@@ -45,7 +45,7 @@ void enter_state_0480_05f1_06d9(void)
       DAT_EXTMEM_086f = DAT_EXTMEM_086f | 4;
       trampoline_to_a747();
     }
-    DAT_EXTMEM_044c = 0x14;
+    XDATA_044C = 0x14;
     write_r1r2_to_xdata_pair(0x434,0,0);
     return;
   }

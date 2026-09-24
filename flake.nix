@@ -55,6 +55,7 @@
             echo "  sdas8051     $(command -v sdas8051 || echo 'not on PATH')"
             echo
             echo "  gates        bash .github/scripts/agent-gates.sh"
+            echo "  tests        bash tools/run-tests.sh"
             echo "  1:1 check    python3 ec/tools/verify_reassembly.py --work /tmp/ec --report"
             echo "  EC rebuild   python3 ec/tools/build_ec_decompile.py --work /tmp/ec"
             echo

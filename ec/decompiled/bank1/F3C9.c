@@ -14,7 +14,7 @@
 void set_r3_22_or_44_from_0456_bit6(void)
 
 {
-  if ((DAT_EXTMEM_0456 & 0x40) != 0) {
+  if ((SYSTEM_ID & 0x40) != 0) {
     return;
   }
   return;

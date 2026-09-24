@@ -10,18 +10,18 @@ void FUN_CODE_b88c(void)
 
 {
   zero_xdata_bytes_r2r1_through_r2r3(0,5,0x6f);
-  DAT_EXTMEM_0400 = 0;
-  DAT_EXTMEM_0401 = 0;
+  BAT_POWER_UNIT_0 = 0;
+  BAT_POWER_UNIT_1 = 0;
   if (DAT_EXTMEM_0575 == '\0') {
     zero_xdata_bytes_r2r1_through_r2r3(2,4,5);
   }
   zero_xdata_bytes_r2r1_through_r2r3(6,4,0x35);
   if (DAT_EXTMEM_0575 == '\0') {
-    DAT_EXTMEM_0436 = 0;
-    DAT_EXTMEM_0437 = 0;
+    XDATA_0436_0 = 0;
+    XDATA_0436_1 = 0;
   }
-  DAT_EXTMEM_0438 = 0;
-  DAT_EXTMEM_0439 = 0;
+  BAT_VOLTAGE_MV_0 = 0;
+  BAT_VOLTAGE_MV_1 = 0;
   zero_xdata_bytes_r2r1_through_r2r3(0xa0,4,0xaf);
   return;
 }

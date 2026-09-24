@@ -198,6 +198,122 @@ the two-programs-in-one-dump problem in §3a:
   why `disasm8051.py --converge` reports evidence about instruction framing
   rather than a verdict on it.
 
+### 3c. The register corpus and the firmware's are nearly disjoint, and one reason for that was a grep (2026-09-23, issue #132)
+
+Issue #132 counted the decompiled firmware's XDATA usage by grepping
+`DAT_EXTMEM_` out of `ec/decompiled/*/*.c`: **1,134 distinct addresses in
+14,399 references, six of them named**. The first number is right, the second
+is an artefact, and the reading built on it — "99.5% of the registers the
+firmware actually uses are `DAT_EXTMEM_0a56` and friends" — was not. It is
+replaced here, and the replacement is smaller than it looks but not small.
+
+`build_ec_decompile.py` applies `../ec/ghidra/xdata-symbols.csv` to the Ghidra
+project *before* it exports the C. An address the symbol table can name is
+therefore **not written as a `DAT_EXTMEM_` token anywhere in the export**:
+`ec/decompiled/bank0/8749.c` line 97 reads
+`if ((CPU_TEMP < 0x51) && (GPU_TEMP < 0x51))`, and there are 54 mentions of
+`CPU_TEMP` across the EC programs and none of them under a `DAT_EXTMEM_043e`.
+Reading both spellings — `../ec/tools/xdata_register_map.py` — gives
+
+| | main EC | PD image | total |
+|---|---:|---:|---:|
+| distinct addresses | 1,063 | 157 | 1,172 |
+| references | 13,937 | 864 | 14,801 |
+| of which named from `registers.yaml` | 41 | 0 | 41 |
+
+So the corrected claim is that **41 of the 1,063 XDATA addresses the main EC
+touches carry a name, and 1,022 do not**. The blocking problem the issue
+described is real and 96% of the register file is still `DAT_EXTMEM_xxxx`; what
+was wrong was the size of the named minority, and with it any argument that the
+firmware and `registers.yaml` are looking at the same bytes. They are nearly
+disjoint corpora: 44 of `registers.yaml`'s 56 addresses appear in the
+decompiled tree at all, 41 of them in the EC and 3 only in the PD image.
+
+Two smaller corrections travel with it, both pinned by the tool's `--self-test`
+so neither can drift unnoticed:
+
+- **Nine of the issue's 14,399 references are this repository's own annotation
+  text** quoting the decompile back at itself, in eight files —
+  `ec/decompiled/bank0/B9DF.c` line 9 writes ``the decompiled C's
+  `DAT_EXTMEM_0a56 = DAT_EXTMEM_1919` `` to make a point about that code. A
+  comment is not the firmware touching an address, so the count is **14,390**.
+- **`0x07D8`/`0x07D9`/`0x07DA` are not blind spots, and the grep was why they
+  looked like them.** They are the worked example issue #132 proposed for this
+  file, on the strength of `registers.yaml`'s `static_refs_main_ec: 1` against
+  a `DAT_EXTMEM_`-only census showing none. Run both methods
+  (`xdata_register_map.py --reconcile ec/firmware/GMxMGxx_11.800`) and all
+  three agree exactly: 1 main-EC site each, plus the PD-image sites §3a
+  already accounted for. The reference is there, spelled
+  `MODE_TCC_OFFSET_DEFAULTS_GAMING_0` and its two siblings, because that is
+  what `registers.yaml` had already named the address. The same removes the
+  apparent gap at `0x07A6` (7 byte sites, 15 C-level references, all under the
+  symbol) and at `0x04A6` (3 and 3).
+
+The census is still a lower bound, and the two addresses it genuinely misses
+are worth naming because they fail differently, both inside
+`bank0:0x94D0=copy_code_table_into_0730_07a7`. `0x0733`
+(`MODE_PL_DEFAULTS_GAMING_DSTATE_3`) is spelled `&DAT_CODE_0733` — Ghidra
+typed the value as a code pointer, and `xdata_register_map.py` deliberately
+does not read `DAT_CODE_` tokens, because the same spelling covers common-area
+*code* and importing it would claim an XDATA address on a token that says code.
+`0x0735` (`MODE_PL_DEFAULTS_OFFICE_PL2_5`) is never spelled at all: it is
+reached as `*(char *)(sVar5 + bVar2)` off a raw `sVar5 = 0x735` base with a
+runtime index, which is the §4c indirect-addressing blind spot. Both are
+"not found by this method" and neither is absent.
+
+**What did not change:** no entry in `../ec/annotations/registers.yaml` moved
+status, nothing was read on hardware, and no register is named or given a
+purpose by any of this. A cluster in `../ec/annotations/xdata-clusters.csv` is
+a co-occurrence in static code, not a meaning — that file's §6 is the
+boundary, and reading a cluster is the follow-up issue's work.
+
+### 3d. The 76 `0x07D1` sites, and what `DBD2` is next to `DBD1` (2026-09-24, issue #185)
+
+§3b walked `0x07D0` and named the gap it left: `static-refs-audit.md` §6
+closed by saying that `0x07D1`, the other half of the DSDT's `DBD1`/`DBD2`
+pair, had never been walked site by site. That is done:
+`../ec/annotations/ec-0x07d1-sites.md`, site table beside it as
+`ec-0x07d1-sites.csv`. The gap sentence is retracted in place in that file,
+§4a-4d style, and this is the finding the retraction is about.
+
+The count reconciles the same way §3b's did — 76 rows, all `pd-image`, zero in
+the EC firmware — and the two site sets turn out to be **completely
+disjoint**, 0 shared file offsets of 76 and 254. That is a set question and
+only a set operation answers it; no pair of counts could have.
+
+The two bytes are the *same kind* of PD variable, and the evidence for that is
+stronger than the issue expected. Both are read-mostly indices multiplied
+against structure strides to address arrays. They share a stride (`0x5E`) and
+an array base (`0x08FC`, indexed by `0x07D0` through its helper `0x34D9` and by
+`0x07D1` at four of its own sites). And the walk turned up a shape that
+bears on the pair directly: five of the 76 reach past their own byte through
+`inc dptr`, four of them treating `0x07D1`+`0x07D2` as **one 16-bit
+little-endian quantity** — `0xAD83` and `0xB38E` load the word into `R7`/`R5`,
+and `0x3E91` stores the literal `0x9411`. The `0x07D0` half has the mirror
+image of the same idiom at its own site `0xDACF`, which reads
+`[0x07D0]`+`[0x07D1]` as a word — its CSV already scores it as a two-byte
+walk, so nothing there needed correcting, only interpreting. So the PD
+firmware holds the two bytes as adjacent halves of overlapping little-endian
+windows.
+
+**The divergence that is worth recording** is with the DSDT, not inside the
+PD image. The field list declares `Offset (0x7D0), DBD1, 8, DBD2, 8, Offset
+(0x7D3), , 4` (`dsdt.dsl:52248-52252`) — two independent 8-bit fields, with
+`0x07D2` unnamed — while the PD firmware's 16-bit quantities straddle that
+field boundary in both directions. **The DSDT's `DBD1`/`DBD2` pair is a pair
+of the DSDT's own making, not a 16-bit quantity the PD firmware agrees with.**
+Whether the two readings of the same physical bytes ever collide in practice
+is not determined, and the answer is not reachable from a static walk.
+
+**What did not change:** `0x07D1` keeps
+`unknown-not-absent-DO-NOT-WRITE-BLIND`, and no `static_refs*` count moved — a
+PD-image walk cannot move an EC-side grading, which is §3a's point restated.
+Nothing was read on hardware, no register is named, and 76 is what
+`trace_xdata_refs.py` found, which is a lower bound for §4c's reason: the
+computed-`DPTR` blind spot means a byte reached through a register-held
+address is not in that number, and would have read as "not found by this
+method" rather than "absent" had there been none.
+
 ## 4. The charge limit: two retractions, in order
 
 This is the part of the investigation that went wrong twice, in opposite
@@ -469,6 +585,26 @@ service reuses the byte, or if the vendor constant is stale for this
 board; which of those holds is not established. Either way, "resume
 charging below X%" is now the *less* supported reading of the byte.
 
+**Addendum 2026-09-23 (§4o, issue #131).** The question this paragraph
+ends on — which of those holds — is now answered for the committed inputs,
+and the three candidates come out differently. That the **EC image**
+reuses the byte is *not* established either way: the census that §4o
+describes covers Windows and ACPI, not the 8051 program, and that side is
+#34 and #25. That the **service** reuses it is nearly answered: its one
+committed writer, `BatteryProtection2.SetBatteryChargingLimit_Down`, is
+`private` with no caller in the decrypted 3.1.39.0 tree, and no committed
+Windows input calls `T1WR` at all — a search for a `T1WR 0x1173` caller
+across the decompiled trees, every vendor binary's string table and the UWP
+front end's PDB name table comes back empty, which is "not found by this
+method", with the method, the search table and the list of inputs it could
+not reach in **§4o**. That the **vendor constant is stale** is *not*
+established by the same evidence: a constant whose only writer is never
+called is not a name proved wrong, only one with nothing behind it here.
+The reading of the byte is unchanged and now has the neighbouring branches
+behind it. A line reference above is also off: the `Arg0 == 0x1173` branch
+is `evidence/acpi/dsdt.dsl:50680-50691`, not `:50676` (`:50675` is the
+`0x1172` branch).
+
 ### 4g. Watching the vendor stack instead of guessing at it (2026-09-18)
 
 §4f ends by saying the values Windows actually writes are unknown, and §5
@@ -552,6 +688,34 @@ narrow a window: it had not — `0x07A6` is again the only settings-shaped
 change, everything else that moved being slow sensor drift (voltage at
 `0x0436`/`0x0438`, GPU temp at `0x044F`, the cycle counter at `0x04A6`
 ticking 449 → 450 during the charge).
+
+**CORRECTION to the `0x0436`/`0x0438` pairing in that sentence, added after
+the page was swept (`ec/annotations/xdata-0400-045f.md` §8).** Calling
+`0x0436` a voltage does not survive the capture it is citing.
+`evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv` has `0x0436` moving
+4 times — `0x70 → 0x84 → 0x98 → 0xAC → 0xC0`, exactly `+0x14` every ~35 s with
+no scatter and `0x0437` never moving — and `0x0438` moving exactly **once**,
+`0x97 → 0xAE` at 23:03:49. So the low byte stepping by a constant every 35
+seconds is a periodic update, not a charge reading, and `0x0438` is the voltage
+one, separately established three ways (§4g). `0x0436` is left unnamed pending
+a live read beside WMI `RemainingCapacity`; `0x0438` is
+`BAT_VOLTAGE_MV`.
+
+*(**Addendum, 2026-09-23, issue #172.** The live read that correction is waiting
+on is now instrumented, and still unrun. `windows/tools/ec_validate.py` carries
+a `0x0436`/`0x0437` arm sampling the pair at 1 s beside the same WMI
+`RemainingCapacity` the voltage arm already uses, under the same §4g rule and
+the same one-directional guard; `linux/battery-trace/remain-capacity-probe` is
+the read-only Linux equivalent, pairing the pair with `charge_now` and `capacity`
+through the same `/dev/mem` window; and
+`docs/hardware-tests/remain-capacity-0436.md` is the step-by-step, written for a
+human at the machine. A run would produce three things: the exact-copy fraction,
+whether the pair ever exceeded `0x0404`, and its scale against `0x0402`/`0x0403`.
+Both probes check their address list against `0x0400-0x045F` in code rather than
+in prose, so neither can reach the `0x0460-0x046F` fan-tach block (issue #94),
+and both report without adjudicating — a counter fails the exact-copy test the
+same way, and the comparison assumes both sides are mWh. **No run has happened,
+so the question is exactly as open as it was: `0x0436`/`0x0437` is unnamed.)*
 
 Second, to test a reading of `charge-profile-flow.md` §2 against the
 running machine. That section traced the EC's profile handler statically:
@@ -897,6 +1061,15 @@ run elevated through the vendor driver, owner present). The tool only ever
 *lowers* the target — a CV ceiling below the pack voltage can reduce charging
 but never overcharge — and restores the original on exit.
 
+**Which of the tool's branches are covered offline.** The three refusals, and
+the restore in its `finally` that runs on a clean exit, on a read error and on
+Ctrl-C, are pinned by `windows/tools/test_charge_target_test.py` against a fake
+`ecrw` and a fake WMI line: no EC is opened, no register is read back, and no
+`powershell` is spawned. Those are the branches no committed artifact
+exercises, because all three live runs below took the write path. The suite is
+coverage of the tool's control flow, and adds nothing to what this section
+measured on the machine.
+
 **A host write to `0x0522` does not persist, in any state tested.**
 
 | run | state | writes that held |
@@ -999,6 +1172,365 @@ the tie can't be broken by overriding `0x0522` from the host. So #98 closes
 as *unreachable*; the causation question is answered only as far as the
 matching plateau allows.
 
+### 4o. Who calls `T1WR 0x1173` — not found by this method — and what `0x07D0` is on GM7MG7P (2026-09-23, issue #131)
+
+§4f found a second writer for `0x07D0` and stopped one short of an answer:
+"whether the EC image or the service reuses the byte, or if the vendor
+constant is stale for this board … which of those holds is not
+established." This takes both halves from committed inputs. The headline
+is a negative, so it is written in the form the calibration rule
+requires: **no caller of `T1WR` with `Arg0 = 0x1173` was found by this
+method**, and the section says what the method was and what it could not
+reach.
+
+**The method.** `windows/tools/t1wr_callers.py`, in the spirit of
+`windows/tools/ec_callsites.py`: it walks a fixed term list — `TempWrite*`,
+`T1WR`/`T2WR`/`T3WR`, the six TMPREAD/TMPWRITE IOCTL codes `0x9C40A4D0` to
+`0x9C40A4E4` in hex *and* in the decimal a C# `const uint` carries, the
+`Arg0` values `0x1171`/`0x1172`/`0x1173`/`0x2273` in hex and decimal, the
+`NPCF` objects `AMAT`/`AMIT`/`ATPP`/`CTGP`/`UOCT`/`DBAC`, and the field
+names `DBD1`/`DBD2` — across every committed Windows input: the decompiled
+trees as text, the vendor binaries by string table in ASCII **and**
+UTF-16LE, and the `.appxsym` PDB's name table. A binary hit is counted only
+inside a run of printable characters, so a hit means the name is spelled in
+that file rather than that four bytes turned up somewhere. `--self-check`
+asserts the table against the committed tree and exits non-zero on drift,
+so the counts below are regenerable rather than remembered, and the
+archives are expanded in memory — `vendor/` is committed input and nothing
+is ever written under it. Note what the term list is *not* run against:
+this repository's own prose. A hand `grep -rn 'TempWrite1\|0x1173\|AMAT'
+windows/` hits the export table in `native/ACPIDriverDll.dll.analysis.md`
+and, since this section, the files that describe this search — which is
+why the census is scoped to inputs and why a raw grep is not the
+instrument.
+
+```console
+$ python3 windows/tools/t1wr_callers.py --self-check
+t1wr_callers: census matches the committed tree -- 7 text inputs, 8 binary inputs, 2 body censuses, and the service's only ACPIDriverDll P/Invoke is SMAPCTable
+```
+
+The same run, in full:
+
+```console
+T1WR(Arg0=0x1173) caller census. Every number is a hit count, not
+an estimate. A zero means 'not found by this method'.
+
+== text inputs: input | term | hits ==
+decompiled/v3.1.39.0 (whole service, decrypted)                            2621482192   1
+decompiled/v3.1.39.0 (whole service, decrypted)                            2621482196   1
+decompiled/v3.1.39.0 (whole service, decrypted)                            2621482200   1
+decompiled/v3.1.39.0 (whole service, decrypted)                            2621482204   1
+decompiled/v3.1.39.0 (whole service, decrypted)                            2621482208   1
+decompiled/v3.1.39.0 (whole service, decrypted)                            2621482212   1
+decompiled/v3.1.6.0 (partial, anti-tamper)                                 (no term hit anywhere in this input)
+decompiled/v3.9.18.0 (partial, anti-tamper)                                (no term hit anywhere in this input)
+decompiled/native ACPIDriver.sys + ACPIDriverDll.dll (exports TempWrite1)  0x9C40A4D0   4
+decompiled/native ACPIDriver.sys + ACPIDriverDll.dll (exports TempWrite1)  0x9C40A4D4   4
+decompiled/native ACPIDriver.sys + ACPIDriverDll.dll (exports TempWrite1)  0x9C40A4D8   4
+decompiled/native ACPIDriver.sys + ACPIDriverDll.dll (exports TempWrite1)  0x9C40A4DC   4
+decompiled/native ACPIDriver.sys + ACPIDriverDll.dll (exports TempWrite1)  0x9C40A4E0   4
+decompiled/native ACPIDriver.sys + ACPIDriverDll.dll (exports TempWrite1)  0x9C40A4E4   4
+decompiled/native ACPIDriver.sys + ACPIDriverDll.dll (exports TempWrite1)  TempWrite*   12
+decompiled/native GamingCenter3_Cross + GC3_launcher (the UWP component)   (no term hit anywhere in this input)
+decompiled/native UEFI_Firmware + clrcompression                           (no term hit anywhere in this input)
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      0x1171       1
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      0x1172       1
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      0x1173       1
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      0x2273       1
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      AMAT         5
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      AMIT         2
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      ATPP         4
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      CTGP         2
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      DBAC         7
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      DBD1         2
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      DBD2         2
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      NPCF         54
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      T[123]WR     3
+CONTROL evidence/acpi/dsdt.dsl (T1WR is defined here)                      UOCT         4
+
+== binary inputs: string table, ASCII and UTF-16LE ==
+vendor 3.1.39.0 GCUService.exe (shipped, bodies encrypted)  (no term hit in any string)
+decompiled GCUService.dumped.exe (bodies decrypted)   (no term hit in any string)
+vendor 3.1.6.0 UniwillService_3.1.6.0_STD.exe (installer)  (no term hit in any string)
+vendor 3.9.18.0 setup.exe (installer)                 (no term hit in any string)
+vendor 3.9.18.0 ACPIDriver.sys                        (no term hit in any string)
+vendor 3.9.18.0 ACPIDriverDll.dll                     TempWrite*   3
+vendor 3.9.18.0 GamingCenter3_Cross .msixbundle (UWP front end)  (no term hit in any string)
+vendor 3.9.18.0 GamingCenter3_Cross .appxsym (PDB name table)  (no term hit in any string)
+
+== readability probes on the binary inputs (not caller terms) ==
+A name these inputs are known to carry -- a .NET method name from the
+GPU feature area, or the driver device name for the native PEs. They
+are counted so that a zero in the caller table above reads as 'the
+name is not in there' rather than 'the scan did not reach the source'.
+The text inputs need no such check: the DSDT control above is the
+proof that the text scanner reaches a source that has the term.
+vendor 3.1.39.0 GCUService.exe (shipped, bodies encrypted)  ACPIDriver x4, GpuConfigurableTGPTarget x1, GpuDynamicBoost x1
+decompiled GCUService.dumped.exe (bodies decrypted)   ACPIDriver x4, GpuConfigurableTGPTarget x1, GpuDynamicBoost x1
+vendor 3.1.6.0 UniwillService_3.1.6.0_STD.exe (installer)  (no probe hit -- source may be unread)
+vendor 3.9.18.0 setup.exe (installer)                 (no probe hit -- source may be unread)
+vendor 3.9.18.0 ACPIDriver.sys                        ACPIDriver x34
+vendor 3.9.18.0 ACPIDriverDll.dll                     ACPIDriver x1
+vendor 3.9.18.0 GamingCenter3_Cross .msixbundle (UWP front end)  FanViewModel x2, GpuConfigurableTGPTarget x5, GpuDynamicBoost x6, OverClock_SettingsView x5, UWP_Refactor x14
+vendor 3.9.18.0 GamingCenter3_Cross .appxsym (PDB name table)  FanViewModel x2230, GpuConfigurableTGPTarget x12, GpuDynamicBoost x12, OverClock_SettingsView x624, UWP_Refactor x324
+
+== readability census: .NET method-body headers ==
+vendor 3.1.39.0 GCUService.exe (shipped)              tiny 1191  fat 1  invalid 3759  abstract/extern 349
+decompiled GCUService.dumped.exe                      tiny 2630  fat 2321  invalid 0  abstract/extern 349
+
+== readability census: ILSpy error markers in the .cs trees ==
+decompiled/v3.1.39.0 (whole service, decrypted): 0 marker(s) in 0 of the .cs files
+decompiled/v3.1.6.0 (partial, anti-tamper): 27 marker(s) in 1 of the .cs files
+decompiled/v3.9.18.0 (partial, anti-tamper): 326 marker(s) in 15 of the .cs files
+
+== [DllImport] surface of the decrypted service ==
+  ACPIDriverDll.dll!SMAPCTable   GCUService/MyECIO/AcpiCtrl.cs:127
+
+== unreadable by this method ==
+The negative above is only as good as this list. Everything named
+here is a place the search could not reach, not a place it looked
+and found nothing.
+  decompiled/v3.1.6.0 (partial, anti-tamper): 27 ILSpy error marker(s) across 1 .cs file(s), so every method body under them
+    is unsearched. windows/antitamper/README.md; issue #3.
+  decompiled/v3.9.18.0 (partial, anti-tamper): 326 ILSpy error marker(s) across 15 .cs file(s), so every method body under them
+    is unsearched. windows/antitamper/README.md; issue #3.
+  vendor 3.1.6.0 UniwillService_3.1.6.0_STD.exe (installer): no probe hit, because the payload is
+    Inno-compressed inside the wrapper. What that payload
+    contributes is already committed as the decompiled
+    trees and the native decompiles; nothing else from the
+    installer was read. windows/tools/extract.sh.
+  vendor 3.9.18.0 setup.exe (installer): no probe hit, because the payload is
+    Inno-compressed inside the wrapper. What that payload
+    contributes is already committed as the decompiled
+    trees and the native decompiles; nothing else from the
+    installer was read. windows/tools/extract.sh.
+  vendor 3.9.18.0 ACPIDriver.sys: its string table has none of the
+    21 ACPI method names, because MSVC emits each one as a 4-byte
+    immediate rather than a terminated string. The Ghidra decompile
+    of the same file is a separate text input above and is where
+    its IOCTL constants are covered.
+  Not in this repository at all, and therefore not searched by
+    anything above: firmware, including any ACPI component that
+    defines \_SB.NPCF, which the DSDT only declares External
+    (evidence/acpi/dsdt.dsl:54-65). A caller there would be
+    invisible to every input in this table.
+```
+
+**The result.** Every `T1WR`-side term is zero in every Windows input.
+`TempWrite*` appears in exactly one binary and one decompile across the
+whole census — `ACPIDriverDll.dll`'s export directory, three hits for the
+three exports, and the Ghidra decompile of the same file — which is the
+definition, not a call. `0x9C40A4DC` appears only in the decompiles of the
+driver and its wrapper, where it is the handler table. `0x1173`, its
+decimal `4467`, and `AMAT`/`AMIT` occur nowhere in the census but the DSDT
+control row, and that row is the proof the term set works: `T1WR` and
+`AMAT` are *defined* in that file, and the scan finds them.
+
+Two of the inputs are closed rather than merely searched:
+
+- **`GCUService` 3.1.39.0 does not bind `TempWrite1`.** The whole service
+  is committed with every method body decrypted, and its only
+  `ACPIDriverDll.dll` P/Invoke in the entire tree is `SMAPCTable`
+  (`windows/decompiled/v3.1.39.0/GCUService/MyECIO/AcpiCtrl.cs:127`) — the
+  tool prints that row from a parse of the `[DllImport]` attributes, and
+  `--self-check` fails if that ever changes. `IOCTL_GPD_ACPI_TMPWRITE1 =
+  2621482204u` *is* declared at `AcpiCtrl.cs:93`, and the census finds that
+  decimal spelled exactly once in the whole tree — at its own declaration.
+  The private `WriteACPI(uint, int, int)` helper at `:373` is the only thing
+  that sends one of these codes, and its one call site in the tree passes
+  `2621482124u` (`IOCTL_GPD_ACPI_ECWRITE`, `:212`). "Declared and unused" is
+  a different claim from "not searched", and this is the first. A .NET
+  P/Invoke, including a late-bound `GetProcAddress`, has to carry the
+  target name as a string, so the exclusion covers that too.
+- **The UWP front end is not the caller either.** Its `.appxsym` PDB is a
+  name source that survives method-body encryption, and its name table was
+  read — the same scan finds `FanViewModel` 2230 times and
+  `GpuDynamicBoost` 12 — with zero occurrences of `TempWrite1`, `T1WR`,
+  `AMAT`, `AMIT`, `0x1173` or `0x9C40A4DC`. Its `.msixbundle` says the same
+  (14 `UWP_Refactor`, 6 `GpuDynamicBoost`, no caller term), and so does the
+  Ghidra decompile of its native component. Structurally that is what the
+  architecture predicts: `windows/mqtt-protocol.md` records that the UI and
+  the service do not touch the EC across the app boundary at all — they
+  exchange JSON over a local MQTT broker and `GCUService` is the only party
+  that reaches hardware — and `windows/README.md` has the UI as a sandboxed
+  UWP app, which is what puts `\\.\\ACPIDriver` out of its reach. A
+  behavioural prediction that the byte census independently matches, which
+  is why it is worth more than either alone.
+
+**What stayed unreadable**, in the tool's own words, and repeated here
+because a negative is only as good as this list: the anti-tamper-encrypted
+bodies in `v3.1.6.0` (27 ILSpy error markers, all in
+`BatteryProtection2.cs`) and `v3.9.18.0` (326 markers across 15 files) —
+issue #3. That is the sharp edge of the negative: the `v3.1.6.0` tree is
+two files, and the one carrying the markers is the class whose
+`SetBatteryChargingLimit_Down` is the service's only `0x07D0` writer, so
+the miss there is a miss in exactly the class the question is about. The
+two Inno installers' compressed payloads beyond what is already committed
+(`windows/tools/extract.sh`); `ACPIDriver.sys`'s string table, which
+carries none of the 21 ACPI method names because MSVC emits each as a
+4-byte immediate rather than a terminated string — its Ghidra decompile is
+a separate input in the table above and is where its IOCTL constants are
+covered; and, outside the reach of any committed input, **firmware** —
+including whatever defines `\_SB.NPCF`, which this DSDT only declares
+`External` (`evidence/acpi/dsdt.dsl:54-65`). An ACPI component in firmware
+is a perfectly ordinary place for a `T1WR` caller to live, and nothing in
+this repository can see one.
+
+**The other door, closed by the same search.** `ACPIDriver.sys` hardcodes
+the method name per IOCTL (`movl $0x52524345,0x54(%rsp) ; MethodName =
+'ECRR'`, `windows/native/ACPIDriver.sys.analysis.md:177`), so
+`TempWrite1` is not the only way to reach `T1WR` — Windows' own
+`IOCTL_ACPI_EVAL_METHOD` takes the name in the caller's buffer, which is
+what the driver forwards to. A caller that took that route would still have
+to carry `T1WR` and the value `0x1173`, and both are in the term list, so
+that route is inside the same negative rather than outside it.
+
+**The neighbouring branches, so GPU power is told apart from battery
+code.** This is the part of the method §4f did not have, because it read
+the `0x1173` branch in isolation. Every `Arg0` in the block, and what it
+does:
+
+| `Arg0` | `dsdt.dsl` | EC byte it writes | `NPCF` object it sets | gated on |
+|---|---|---|---|---|
+| `0x1171` | 50658-50665 | `CTWA` = `Arg1` (`0x0788`) | `CTGP` = 1, `UOCT` = `CTWA * 8` | — |
+| `0x71` | 50667-50673 | — | `UOCT` = `CTWA * 8` (re-publish) | — |
+| `0x1172` | 50675-50678 | — | `DBAC` = `Arg1` | — |
+| **`0x1173`** | **50680-50691** | **`DBD1` = `Arg1 * 8` (`0x07D0`), `DBD2` = `Arg2 * 8` (`0x07D1`)** | `DBAC` = 0, `AMAT` = `DBD1`, `AMIT` = `DBD2` | — |
+| `0x2273` | 50693-50698 | — | `ATPP` = `Arg1 * 8` | — |
+| `0x73` | 50700-50717 | — | `DBAC` = 0, `ATPP` = `CPUA * 8` (`0x07D4`), `AMAT` = `DBAP * 8` (`0x07D5`) | `DBEN` (`0x07C4` bit 0) |
+| `_Q84` | 52793-52811 | — | same as `0x73`'s then-branch | `DBEN`; raised by the EC, not by an ACPI client |
+| `0x1176` | 50730-50733 | `CGCT` = `Arg1` (`0x07D7`) | Notify `PEGP` | — |
+
+No branch in the table touches a battery or charge register. The
+`0x1171`/`0x1172`/`0x1173`/`0x2273` selector family and the `0x73`/`_Q84`
+query pair both end at the same `NPCF` objects, and the `0x73`/`_Q84` pair
+reaches them from `CPUA`/`DBAP` at `0x07D4`/`0x07D5` rather than from
+`0x07D0`. That is the strongest structural evidence available here that
+`0x07C4`-`0x07D7` is a GPU dynamic-boost control block and not battery
+state, and it is new relative to §4f.
+
+Two things in the ASL are worth writing down because they are the kind of
+detail a re-derivation would otherwise trip over. The `0x73`/`_Q84` path
+gates on `DBEN` at `0x07C4` bit 0 and, when it is clear, sets `DBAC = 1`
+instead — so the same method is both the publisher and the "not available"
+signal. And `T1WR` has two `ElseIf ((Arg0 == 0x71))` branches: the first
+(`:50657`) has an empty body and the second (`:50667`) has the work, so on
+a first-match ASL chain the second is unreachable. The same holds for the
+empty `0x83`/`0x86`/`0x87`/`0x74` slots: reserved selectors with no
+implementation, which is what a generated ASL template looks like.
+
+**The arithmetic bound.** `DBD1` is one byte and the branch stores
+`Arg1 * 8` into it, so `Arg1` cannot exceed 31; likewise `Arg2` for
+`DBD2`. That is arithmetic on the committed ASL and nothing more. It does
+*not* say what the argument means — only that whatever it is, it is small
+enough that the EC byte can hold eight times it.
+
+**§4f's question, answered as far as the inputs allow.** The short form:
+in every committed input, the only writer of `0x07D0` writes it as a GPU
+power value, and `ADDR_BATTERY_CHARGE_LIMIT_DOWN` is a vendor constant with
+no committed writer behind it on this machine. The long form, with the
+citations:
+
+- The DSDT writes `0x07D0` as a GPU power value, and the block it writes it
+  into is GPU on the evidence of the neighbouring branches above.
+- `ADDR_BATTERY_CHARGE_LIMIT_DOWN = 2000`
+  (`windows/decompiled/v3.1.6.0/ECSpec.cs:387`) has exactly one writer in
+  the decrypted service: `BatteryProtection2.SetBatteryChargingLimit_Down`
+  (`windows/decompiled/v3.1.39.0/GCUService/GCUService.MySystem/BatteryProtection2.cs:347`,
+  writing at `:356`, the only `0x07D0` write row in
+  `windows/decompiled/v3.1.39.0/ec-callsites.csv`). That method is
+  `private` and has no caller anywhere in the 3.1.39.0 tree — the same
+  situation `registers.yaml` already records for its `0x07B9` sibling, and
+  for the same reason: `private` plus no caller in a decrypted build is
+  checkable, unlike a grep miss in an encrypted one. Note also *which* door
+  it goes through: `EcCtrl.Write` → `AcpiCtrl.Write` →
+  `WriteACPI(IOCTL_GPD_ACPI_ECWRITE)` → `ACPIDriverDll!WriteEC` → `ECRW`,
+  the §4e path that writes the byte raw. It never touches `T1WR`, so the
+  two writers of `0x07D0` found here are not two views of one mechanism.
+- The service's *own* GPU dynamic-boost path does not go through `0x07D0`
+  either. `GpuFeatures` writes `0x0743`/`0x0744`/`0x0745`/`0x0746` —
+  enable bits, cTGP target, DB total-processing-power target, DB maximum TGP
+  (`windows/vendor-ec-map.md:84-87`, and the `0x0743`-`0x0746` rows of
+  `windows/decompiled/v3.1.39.0/ec-callsites-summary.csv`). The DSDT names
+  that second block too, at `Offset (0x743)`: `GNEN`/`ECDC`, then `CTVA`,
+  `DBCT`, `MXDB`, `MIDB` (`evidence/acpi/dsdt.dsl:52204-52212`). So there
+  are two GPU-related blocks, one at `0x0743`-`0x0746` that the host writes
+  and one at `0x07C4`-`0x07D7` that ACPI reads out to the NVIDIA device,
+  and which way `0x07D0`/`0x07D1` sits relative to the second is not
+  something the committed inputs settle. That is a follow-up, named below.
+
+**What this does not establish.** It does not establish that `0x07D0` is
+*not* also a charge threshold in the EC firmware. The census covers
+Windows and ACPI, not the 8051 program; whether the main EC image acts on
+`0x07D0` at all is the indirect-XDATA blind spot, #34, and the 254
+`0x07D0` sites are the PD image's own variables, #25. A vendor constant
+with no caller is not a name proved stale: the byte could still be a
+threshold to firmware this repo cannot read. `registers.yaml` keeps the
+status at `unknown-not-absent-DO-NOT-WRITE-BLIND` for that reason, and
+`--self-check` in the tool asserts the census so a later dump that *does*
+bind `TempWrite1` cannot pass unnoticed.
+
+**The clobber hazard, recorded and not fixed.** Two decoded paths write
+the same physical byte, `0xFE4107D0`: the vendor charge-limit write
+(`ECRW`, §4e) and the GPU TGP write (`T1WR 0x1173`). They disagree about
+scale as well: `ECRW` writes the byte raw, so a charge limit of 55% lands
+as `0x37`, while `T1WR 0x1173` stores `Arg1 * 8`, so the largest value
+that branch can produce (`Arg1` = 31) lands as `0xF8`. The byte's value
+therefore carries a different meaning depending on which door wrote it, and
+a reader of the byte cannot tell which. That is arithmetic on two decoded
+paths, not an observed failure: no hardware was involved in establishing
+any of it, and the live writes in §4f remain the only hands-on test this
+byte has had — nothing here, and nothing there, observed a clash. One limit
+on the hazard is worth stating rather than letting a reader assume
+otherwise: **whether the GPU ever reads `0x07D0` is not established.**
+`T1WR 0x1173` sets `AMAT` from its own argument in the same breath as it
+writes the byte, so an `ECRW` write is not by itself a way to reach the
+NVIDIA device through this ASL. The hazard is that two writers fight over
+one byte whose meaning is not the same for both, and that the byte is not
+safe to write blind — which is why `DO-NOT-WRITE-BLIND` stands.
+
+There is a second, narrower version of the same hazard that needs no
+assumption about firmware at all, because it is entirely inside the
+committed ASL: **`AMAT` and `ATPP` each have two writers in the DSDT.**
+`AMAT` is set from `DBD1` (`0x07D0`) by `T1WR 0x1173` and from `DBAP`
+(`0x07D5`) by `T1WR 0x73` and by `_Q84`; `ATPP` is set from `Arg1` by
+`0x2273` and from `CPUA` (`0x07D4`) by the same `0x73`/`_Q84` pair. Each
+writer ends in the same `Notify (NPCF, 0xC0)`, so the value the NVIDIA
+platform controller reads is whichever method ran most recently. This is a
+statement about the ASL, checked against a committed file, not an
+observation of a fault.
+
+**Follow-ups this opens,** which is the point of writing the negative down
+rather than closing on it:
+
+- A Windows-side capture issue naming exactly what a human with the machine
+  should observe: the loaded-module list at the moment `0x07D0` moves under
+  a TGP or Dynamic Boost change, and an EC trace across the same change.
+  That is the only route left to the caller if it is not in the committed
+  inputs, and it is the step no cloud agent can take.
+- A register census for `0x07C4`-`0x07D7` (`DBEN`/`DBST`, `DBD1`/`DBD2`,
+  `GFID`, `CPUA`/`DBAP`/`DBSP`/`CGCT`) in the shape this section gives
+  `0x07D0`: which of the two GPU blocks the host writes, which ACPI reads
+  out, and what `0x07D0`/`0x07D1` are doing in the middle. `0x07D1` now has
+  a `registers.yaml` row and a reference split (76 sites, all PD image, none
+  in the EC firmware — `ec/annotations/static-refs-audit.md` §6) but no
+  per-site decode, and that is a real gap rather than a formality.
+- A `uniwill-laptop`-side question feeding #96: if the charge-limit write
+  path is revisited, should it read `0x07D0` before writing it? The answer
+  depends on what a human observes, and the upstream correction in #96
+  should not be written as though the byte has one meaning.
+
+Cross-references, so this does not re-open what others own: #34 and #25 for
+the EC firmware side, #3 for the still-encrypted 3.1.6.0/3.9.18.0 bodies,
+#96 for the upstream correction this re-grade feeds, and #10 for the rule
+that no stage opens a pull request against another repository.
+
+`ec/annotations/registers.yaml` is updated in the same change: the `0x07D0`
+entry is renamed to the DSDT's `DBD1` with the vendor constant kept in the
+parenthetical, its note carries the result above, and `0x07D1` gets its own
+row. Both keep `unknown-not-absent-DO-NOT-WRITE-BLIND`. §4f above is left
+as written, with this section as the answer to the question it ends on.
+
 ## 5. Net status going into the issue tracker
 
 *(**2026-09-19 update, read before the bullets below.** §4j–§4l change the
@@ -1006,6 +1538,15 @@ charge-limit bullet. The cap exists on the current firmware as a
 charge-voltage target of 16.4 V (§4l), and the service-side question is
 closed by the decrypted source (§4k). The bullets below are kept as
 written.)*
+
+*(**2026-09-23 update.** §4o narrows the first bullet further: the "one
+place a numeric threshold could still hide" — `GCUService`/
+`BatteryProtection2` — has been read in the *decrypted* 3.1.39.0 tree, and
+`SetBatteryChargingLimit_Up/Down` are `private` with no caller, so on this
+version there is no threshold there to find. Issue #3 still matters, for
+the two older builds whose bodies are still ciphertext; and `0x07D0`'s
+only committed writer turns out to be the ACPI DSDT's GPU branch, not the
+service at all.)*
 
 
 - Charging-cap-on-Linux is still an **open problem**, but much narrower.
@@ -1185,6 +1726,88 @@ provably writes through a computed `DPH`, which is §4d's blind spot showing
 up on a second address. `MANUAL_FAN_CTRL` therefore stays `present-untested`.
 `hardware-tests/manual-fan-ctrl-0751-isolation.md` is the procedure that
 would settle it, written for a human with the machine and **not run**.
+
+### 7b. The window stops at the branch: both arms of all 17 mode-bit branches (2026-09-23, issue #129)
+
+§7a is a statement about an 8-instruction window around each of the 29 sites,
+and the window ends at the first control-flow instruction. For 17 of them that
+instruction *is* a conditional branch on a mode bit, so both arms were
+unexamined when §7a was written — and the arms are where the code is. All 34
+are now walked, with `ec/tools/walk_branch_arms.py` and the committed table
+`../ec/annotations/manual-fan-ctrl-0751-arms.csv`; the per-site reading is §9
+of `../ec/annotations/manual-fan-ctrl-0751.md`.
+
+Three results, and the first is the one §7a was reaching for.
+
+- **Both fan duty bytes are written on a path a `0x0751` bit
+  selects.** `0x075B` at the `0x89E0` and `0xBB29` write sites, on the Fan
+  Boost *not set* side of the `0x8942`/`0x899D` arms; `0x075C` at `0x8F0A`
+  and `0x8F11`, on *both* arms of `0x8E8B` (USER). A byte scan puts these two
+  bytes' write sites at five addresses in the main EC and the arms reach four
+  of them; the fifth, `0x87C5`, is not reachable from any of the 34, which is
+  the limit of the claim rather than a fact about the EC — issue #123 later
+  found it to be a zero-clear rather than a fan-curve path, so the walk did
+  not miss it. Neither address is
+  in `registers.yaml` and
+  neither has ever been confirmed, so this is **not** "the fan PWM bytes are
+  the mode byte's effect" — it is that the EC stores to both bytes there, on a
+  path chosen by one bit. That is the static prediction
+  `hardware-tests/manual-fan-ctrl-0751-isolation.md` §4.4 was asking for: two
+  named bytes to watch and a named bit to flip, instead of a pointer at
+  `0x075B`/`0x075C` with no prior.
+
+  **Correction (issue #123, 2026-09-24), leaving the bullet above as it was
+  written.** Both addresses are now in `registers.yaml`, as `MAIN_FAN_L_DUTY`
+  and `MAIN_FAN_R_DUTY`, and both are confirmed as to what they are: the
+  vendor's `ADDR_EC_MAIN_FAN_L/R_DUTY_BYTE`, read and halved by `FanInfo` and
+  never written by it. So "fan PWM bytes" is the wrong name for them twice
+  over — they are duty, and the vendor's PWM-named bytes are a different
+  block (`0x0743`-`0x0747`, `0x0786`-`0x078D`). The EC keeps the value in
+  `0x1804`/`0x1809` and publishes it through the `0xBB22`/`0xBB28` helper,
+  with `0xC8` as the 100 % cap in the same doubled convention the fan table
+  uses — the `/2` the vendor applies is the EC's own, not a display artefact.
+  What the bullet actually claims still stands and is still only a static
+  prediction: the EC stores to both, on a path one bit of `0x0751` selects.
+  Whether the mode byte is a usable control is still the fixed-load
+  experiment §4.4 asks for, and `0x0751` stays `present-untested`.
+- **The Fan Boost arms gate on temperature, and the EC writes `0x0751` back.**
+  `0x8942`'s BOOST-set arm reads `0x085F` against `0x3C` (60), `0x086C` against
+  `0x50` (80), then `CPU_TEMP` `0x043E` and `GPU_TEMP` `0x044F` against `0x46`
+  (70 °C) — and if both are under the limit, clears `BOOST` in the mode byte at
+  `0x8990`. So there are now three paths on which the EC writes `0x0751`
+  (§7a's two boot defaults, and this), and a host write need not persist. For
+  a driver that is a first-order fact, and it is not in §7a.
+- **§7a's no-PL-write conclusion survives the arms.** None of the 34 arms, nor
+  any of the 137 callee rows at `--callee-depth 1`, stores to `0x0783-0x0785`.
+  The arms do *read* `0x0784` and `0x0785` and branch on them, so the mode
+  bits gate code that consults the power limits rather than setting them. Read
+  and write are different claims and §7a's was about the write, so this
+  refines it rather than correcting it — no retraction is warranted.
+
+**Calibration, because the negatives are the deliverable.** Every arm reports
+`status: complete` at the tool's default bounds, so "no arm found by this
+method writes a PL" is not "the walk gave up first". The method's blind spots
+are still named per row in the CSV — indirect `movx @Ri`, a `DPTR` built at run
+time, a callee not followed — and one of them bit here in a way worth
+recording: the bank1 `0x9432` arms hand `0x93B6`/`0x93E6` to `r2`/`r1` and
+rebuild `DPTR` from them, so a tool tracking only `mov 0x82,a` would report
+`0x93E6` as an XDATA register. It is a **CODE** pointer — the same blind spot
+as §7a's computed `DPH`, on the other side of the same argument.
+
+There is a method finding inside the tool worth its own line, because it is
+the kind that silently corrupts a table: writing the PC-relative branches as
+the range `0xB4-0xDF` treats `clr c` (`0xC3`) and `setb c` (`0xD3`) as
+branches, and the walk then decoded the rest of a routine as `dec r0` /
+`db 0x06`. The correct set is `disasm8051.REL_OPCODES`, which the tool imports
+rather than restating, and `walk_branch_arms.py --self-test` now carries a
+fixture that fails if the range comes back.
+
+**None of this is a live test.** No register was read back and no hardware was
+observed; there is no laptop on this runner. `MANUAL_FAN_CTRL` stays
+`present-untested` and its `static_refs*` counts stay 29/29/0 — a static walk
+cannot move them, and the status vocabulary reserves `confirmed-inert` for a
+live three-value, both-service-states run that §7 of the isolation procedure
+specifies.
 
 ## 8. The Memory Overclocking Menu is behind one `UniWillVariable` byte (2026-09-23)
 
@@ -1545,23 +2168,49 @@ the mnemonic cannot run into it.
 
 It was found by a check that had not existed until this work: comparing every
 byte of every committed listing against the firmware image, which needs no
-assembler and therefore covers the 2.2% of instructions sdas8051 cannot
-express. The first version of that check reported *zero* disagreements while
+assembler and therefore covers the instructions sdas8051 cannot express. The
+first version of that check reported *zero* disagreements while
 parsing 30% of each file, because the listings were the old format and the
 parser the new one — so it now counts the lines beginning with an address and
 fails if the parser does not get all of them. A parser that reads a third of a
 file and finds nothing wrong in it is worse than one that reads none, because
 it reports a pass.
 
-**What sdas8051 cannot express, counted rather than skipped.** 1,004
-instructions (2.2%) use forms it rejects: the bit-addressed `CLR bit`, `SETB
-bit`, `CPL bit`, `MOV C,bit`, `MOV bit,C`, `MOVC A,bit`; `CJNE` on a direct
-address; `DJNZ A`; and the carry-with-immediate forms. `AJMP` and `ACALL` are
-in the same list for a different reason — sdas encodes them differently from
-the 8051 manual (at PC `0x8044` the firmware and both decoders agree `81 5D` is
-`ajmp 0x845D`; sdas emits `84 5D`). Every one of these is named in the source
-rather than filtered silently, because a filter that quietly drops 2% of the
-instruction stream turns a measured number into a flattering one.
+**What sdas8051 cannot express, counted rather than skipped.** 143
+instructions use forms it rejects, and the count means little on its own: 74
+`AJMP`, 36 `ACALL`, 19 `MOV bit,C`, 13 `CPL bit` and one `DJNZ A`. `AJMP` and
+`ACALL` are gaps for a different reason than the other three — sdas encodes
+them differently from the 8051 manual (at PC `0x8044` the firmware and both
+decoders agree `81 5D` is `ajmp 0x845D`; sdas emits `84 5D`) — and they are 110
+of the 143 between them. Every one of these is named in the source rather than
+filtered silently, because a filter that quietly drops a fraction of a percent
+of the instruction stream turns a measured number into a flattering one. *(`SETB
+bit` and `MOVC A,bit` were in this list on the first pass and are not gaps; the
+correction and its numbers are in the italic paragraph above, and §14g records
+the removal of that list from this file's forward text. Three further forms the
+tool refuses are not in the 143 at all — `CLR bit`, `CJNE` on a direct address,
+and the carry-with-immediate forms — because `BIT_UNSUPPORTED`, `GAP_FORMS` and
+the `CJNE` rule in `to_sdas()` are the assembler's vocabulary rather than this
+firmware's, and this image contains none of the three. §14g records the
+correction, and how the composition was measured.)*
+
+**Correction, 2026-09-23 (issue #157).** The 1,004 and the 2.2% in the
+paragraph above are the retracted first-pass figures, left visible because the
+paragraph above retracts them and a reader should be able to see what was
+withdrawn. The settled numbers are **143 instructions, 0.31%**, and they are the
+ones `reassembly.csv` carries. The form list in that paragraph is stale in the
+same way and for the same reason: `SETB bit`, `MOVC A,bit` and `CLR bit` are
+three of the four entries the parenthetical at the top of this section records
+as having been misread — 0xC0 is PUSH direct, 0x93 is MOVC A,@A+PC, and 0xC3
+is CLR C, so the `CLR bit` and `MOVC A,bit` there were never gaps at all.
+(`MOV C,bit` and `MOV bit,C` are a different pair: 0xA2 assembles fine, while
+0x92 is a real gap, and the paragraph above does not distinguish them.) The 143
+are `MOV bit,C`, `CPL bit` and `DJNZ A`, plus `AJMP`/`ACALL` for the separate
+reason given. `verify_reassembly.py` refuses three further forms that this
+firmware happens not to contain — 0xC1 `CLR bit`, `CJNE` on a direct address
+and the carry-with-immediate forms — so those are rules with no instance rather
+than part of the 143. The 143 is unaffected by which SDCC build is on PATH —
+§14g measures it against a second one and finds the same 143 on all 2,705 rows.
 
 **The claim this does not make.** That the C recompiles. Keil C51 generated
 these bytes; SDCC does not emit Keil's code generation, and no amount of
@@ -1652,12 +2301,13 @@ Windows nor the service running. The 3.9.18.0 dump is committed because a
 machine with Windows produced it; producing the 3.1.6.0 one is the deliverable
 for whoever has the hardware, and the command is the tool's `--help`.
 
-**The 143 EC instructions sdas8051 cannot encode** — `MOV bit,C`, `CPL bit`,
-`CLR bit`, `CJNE` on a direct address, `DJNZ A`, the carry-with-immediate
-forms. 0.31% of the instruction stream. Closing them means writing an 8051
-encoder here and cross-validating it against sdas8051 on the 45,394
-instructions sdas8051 does encode, which is a defensible way to take the 1:1
-claim to 100% but is a day's work for 143 instructions, so it is not started.
+**The 143 EC instructions sdas8051 cannot reproduce** — `MOV bit,C` (19),
+`CPL bit` (13) and `DJNZ A` (1) it refuses outright, plus the `AJMP` (74) and
+`ACALL` (36) it encodes differently from the manual. 0.31% of the instruction
+stream. Closing them means writing an 8051 encoder here and cross-validating it
+against sdas8051 on the 45,394 instructions sdas8051 does encode, which is a
+defensible way to take the 1:1 claim to 100% but is a day's work for 143
+instructions, so it is not started.
 
 **Everything about the hardware.** No live test has been run in any of this.
 
@@ -1849,6 +2499,34 @@ split** — smaller in scope, but not the re-encode. The cheap tier now catches
 the edit a byte column cannot see; the tier that would say whether the edit was
 an improvement still has to be asked for.
 
+**What per-commit coverage gained, and what it still has not (2026-09-23, issue
+#149).** The `listing_digest` column shipped with known answers.
+`verify_reassembly.py --self-test` asserts the digest's canonical form, the
+`compare_digests()` failure paths, `GAP_FORMS` and `BIT_UNSUPPORTED` —
+including what the column exists to catch, a changed mnemonic under an
+unchanged byte column, and a changed byte column — and until this change they
+had no automated path at all. The cheap tier's case ran `--check` alone, and
+the deep tier, the only other thing that runs the tool, invokes it as
+`--work … --jobs 4` with no `--self-test`. So this was never a tier holding
+them back pending the schedule: the deep tier did not cover them either,
+scheduled or not, and there was no schedule to wait for. The case now runs
+`--check && --self-test`, and they are per commit, at **0.04 s** over five runs
+with a warm page cache here (0.22 s on the first run of a session, before
+anything is cached) against the 5.9 s baseline in the table above.
+
+The assertions are written before the self-test's no-assembler early exit, so
+a runner without `sdas8051` reaches them and a failure there is still a red
+gate. A runner *with* one assembles a four-instruction fixture of the
+self-test's own after them — part of that 0.04 s, not the re-encode, and not
+something the verdict turns on.
+
+The scope is worth keeping straight, because it is easy to read this as
+closing more than it does. These guard the **tool**, not the tree: that the
+digest means what the column says it means, and that the comparison rejects
+what it should. Detecting a listing-text edit is still the digest's job, still
+per commit, and still not verification. Verifying the text is still the
+re-encode's; it still does not run per commit and it still has no schedule.
+
 One premise of the paragraph above was itself unestablished when it was
 written, and is settled in §14f. The digests were taken without a re-encoding,
 so whether they were of the listings the last full `--report` measured was an
@@ -1921,6 +2599,340 @@ by any of this. What is closed is one instance of a question a future migration
 still has to answer for itself, because the guard stops a second run and not the
 first. The caveat in `ec/ghidra/README.md` is narrowed to that; it is not
 deleted, and neither is this section's answer mistaken for the re-encode.
+
+**The method is now a command** (2026-09-23, issue #159). The three commands
+and the `csv.DictReader` comparison above were hand-run, and the next migration
+will have to answer the same question; `ec/tools/verify_reassembly.py
+--verify-provenance` takes the two revisions and runs all of it — the empty
+`.asm` diff, the comparison with `listing_digest` dropped, and the positive
+control over the window that last wrote the listings, so the empty can never
+again be read as a pathspec matching nothing:
+
+```
+$ python3 ec/tools/verify_reassembly.py --verify-provenance \
+      --base 08b72e2 --migration a56b3bb --listings-from 8c7985e
+  revisions: listings written 8c7985e..08b72e2, migration 08b72e2..a56b3bb
+  listing text: 0 of them changed over 08b72e2..a56b3bb; the same pathspec returns 2705 file(s)
+  over 8c7985e..08b72e2, the window that last wrote them, so the first number is a measurement
+  report: 2705 of 2705 row(s) identical once listing_digest is dropped (present in the
+  base: no; in the migration: yes)
+  the window touched 1 path(s) under ec/decompiled:
+    ec/decompiled/bank0/0EA2.c
+  PASS  the migration changed the column and nothing beneath it, and no listing text
+  moved while it did.
+```
+
+The numbers are this section's: the 2,705 control, the empty diff, the
+2,705/2,705. `--listings-from` is passed rather than defaulted, because
+`8c7985e` is not `08b72e2`'s direct parent and the printed count should not
+depend on it being one. It reads the two revisions out of the repository's
+history, so it needs a full clone — the agent stages have one
+(`fetch-depth: 0`) and `ci.yml`'s two checkouts do not; the mode says so in the
+failure message and `docs/agent-pipeline.md` records it. What it prints is the
+claim above and nothing more: the digests are of the text the last full
+`--report` measured, and they attest to that text rather than verifying it.
+
+That the mode can fail is from the same history rather than a fixture: pointed
+at the window that *wrote* the listings (`--base 8c7985e --migration 08b72e2`)
+it reports 2,705 changed listings and exits non-zero, and a revision this clone
+does not have reproduces the history requirement. The drop-the-column
+comparison behind it carries its own known answers in `--self-test` — an
+agreeing pair, a pair differing beneath the column, a changed row count, a
+renamed column, an empty side — because a comparison that compares nothing looks
+exactly like a working one on a pair that agrees, and the pair above agrees.
+
+### 14g. The nightly re-encode says which assembler answered and what moved (2026-09-23, issue #158)
+
+§14e put the correctness question entirely onto the re-encode and §14f anchored
+its digest column, and both left the re-encode itself unlanded. What was
+missing was not accuracy but *legibility*: a bare `verify_reassembly.py` printed
+two tallies and its exit status, so a nightly's entire output was a number with
+no tool named against it and nothing to compare it to. Three things about that
+run were unreadable, and all three were in the tool rather than in the schedule.
+
+**1. The run never said which assembler produced it.** `assembler_version()` was
+called from `write_report()` and nowhere else, so the bare verify path — the one
+`agent-gates-deep.sh:61` runs — never mentioned the tool that answered.
+`verify()` now calls it, prints both version strings, and compares them against
+the `assembler` column of the committed report. **It warns rather than fails**,
+because a version difference is the expected case: `project-setup` installs
+Ubuntu's `sdcc` and does not install the nix shell the report was measured in.
+
+**2. The run never compared itself to the committed report.** The bare run's
+exit status is `mismatch == 0` and the committed report holds zero `mismatch`
+rows, so the two agreed on the only value that gates the run and nothing
+compared the rest. The run now prints its tally beside the committed one, with a
+signed delta per category, and names each row whose `outcome` differs —
+capped at 20 with an "and N more", the same shape `compare_digests()` already
+used. The row key is `addr|program`, not `addr`: 54 addresses carry a row in
+each of the two bank windows, so a key of `addr` alone would leave one row of
+each of those 108 with nothing to compare against, and each would be printed as
+a category that had moved. Four of the 54 — `0x031C`, `0x3A60`, `0x703A`,
+`0xFF17` — are the ones whose instruction streams are identical as well, and
+those four are what `ec/ghidra/README.md`'s "`listing_digest` is" section
+records. This paragraph credited §14f with them and with being the reason the
+key is compound; §14f names none of the four, and the count that makes the key
+necessary is 54 rather than 4.
+
+**3. `check()`'s summary line did not add up to its own total.** It counted
+`match`, `assembler-gap` and `mismatch` and then printed "(of 2705)": 2,574 +
+58 = 2,632. The 73 `partial` rows were in none of the three, and `partial` is
+this file's own outcome. It now counts all four in a fixed order —
+`2574 match, 73 partial, 58 assembler-gap, 0 mismatch (of 2705)` — and names,
+without folding in, any row whose outcome is outside those four, so the line
+describes the report it is summarizing. The four the committed report actually
+holds; `check_one()` can also return `assembler-error`, `error`,
+`missing-listing` or `empty-listing`, and a summary that dropped those would
+reintroduce the same arithmetic error one row over.
+
+**The evidence, transcribed from the run on this repository's runner.** Its
+`sdas8051` is `/usr/bin/sdas8051`, reporting `02.00 + NoICE + SDCC mods`, against
+the report's `05.50.4+NoICE+SDCCmods-WIP-R14`; the `NOTE` fires by design. The
+tallies:
+
+| | this run | committed |
+|---|---|---|
+| `match` | 2621 | 2574 |
+| `partial` | 78 | 73 |
+| `assembler-gap` | 6 | 58 |
+| `mismatch` | 0 | 0 |
+| `instructions_checked` | 45394 | 45394 |
+| `instructions_unchecked` | 143 | 143 |
+
+52 rows moved, all of them `assembler-gap` in the committed report and either
+`match` (47) or `partial` (5) here. **Nothing about that says which assembler is
+right**, and the run does not say so either: a moved category is a measurement,
+"the assembler got better" is not, and nothing in this repository can support
+the second — two ASxxxx builds are two different things being measured, and
+which of them is right is a question about the disassembly.
+
+**It also corrects a claim this file's tool made about itself.**
+`assembler_version()`'s docstring said the match count "is not expected to move
+with the version -- the firmware bytes are the arbiter". It moved, by 47. What
+the firmware arbitrates is `mismatch`, which was 0 in both runs; which of
+`match` and `assembler-gap` a row gets is decided by what the assembler can
+express. The docstring now says that, with these numbers, rather than the
+prediction that was wrong. `instructions_checked` did not move at all, which is
+not guaranteed either — the forms this tool declines to translate are declined
+before the assembler sees them, so most of that count is the tool's own
+decision, and the remainder is the assembler's.
+
+**And the composition of the 143, which §11 and `ec/ghidra/README.md` both had
+wrong.** Each named six forms for the count, and three of them — `CLR bit`,
+`CJNE` on a direct address, and the carry-with-immediate forms — account for
+none of it, while the 110 `AJMP`/`ACALL` the same paragraphs demoted to a
+clause "for a different reason" are three quarters of it. All three of the
+unused forms are in `to_sdas()`'s refusal vocabulary; the vocabulary is the
+assembler's, not this firmware's, and a list of refused forms without what each
+contributes to the number is the shape of claim §4 is about. Replaying that
+decision order over the 2,705 rows of `ec/decompiled/listing-index.csv` — the
+parse `check_one()` does, naming the rule that returned `None` — gives 74
+`ajmp`, 36 `acall`, 19 `mov 0x??, CY` (0x92), 13 `cpl 0x??` (0xB2) and one
+`djnz A, 0xa581` at `0xa599`, which is 143. Both forward texts now carry that
+composition. What is *not* claimed for it: no committed check recomputes it.
+`--check` prints the 143 and not what is in it, so this is a measurement made
+while writing the correction, and this section's closing question is where it
+would become one.
+
+**A fourth thing, found by running it: `--jobs 4` was not reproducible.** The
+same committed inputs, on the same runner, gave `match` 2,579, 2,588, 2,590 and
+2,591 across four runs, against 2,621 on every `--jobs 1` run, with `mismatch` 0
+throughout. The scratch directories were handed out by `index % jobs`, which is
+one per index *slot* and not one per thread: a pool holds whichever indices are
+in flight, that set drifts as soon as one worker finishes early, and two
+concurrent functions then assemble into one directory and overwrite each other's
+`f.s51` and `f.lst`. The run reports `assembler-error` and "no bytes emitted at
+..." for functions that were never wrong. Each function now gets its own
+directory — 2,705 `mkdir`s, and the question is gone. This was not in the issue;
+it was found by running the issue's own test, and it is fixed here because the
+per-row comparison would otherwise have named the raced rows as rows that moved.
+
+**The exit status is unchanged, on purpose, and that is a calibration rather than
+an omission.** A version difference warns. A moved category is reported. Neither
+fails: a branch that has re-reported its listings and not yet committed its CSV
+moves the tally legitimately, and this tool cannot tell that from a regression,
+so a scheduled run that failed on a difference nobody could action unattended
+would be buying noise rather than a gate. `--limit` runs print the committed
+tally as a labelled reference and compare nothing, because 40 rows are not a
+disagreement with 2,705.
+
+**The schedule keeps a record.** `docs/ci/agent-gates-deep-schedule.yml` now
+tees its own output to `$RUNNER_TEMP/deep-gates.log` and uploads it with
+`actions/upload-artifact` and `if: always()`, so a run that happened leaves an
+artifact and a run that did not leaves none — which is the file's own comment
+about GitHub dropping scheduled runs, guarded against. `set -o pipefail` is set
+*before* the pipe, since the default `bash -e` does not set it and without it a
+failing gate exits as `tee`'s zero. **Absence is observable, not failing**:
+making a vanished run fail something needs a checker that runs when the
+scheduled one did not, and the scheduler is the thing that drops runs. The
+re-encode is still unscheduled, and nothing here should be read as closing that.
+
+**The retracted first-pass numbers are no longer restated forward.** §11's
+italic paragraph above is the record of that correction and is untouched. What
+was removed is the *forward* restatement of the retracted figure
+— in `ec/ghidra/README.md`, in three docstrings in `verify_reassembly.py`, and
+in §11's own "what sdas8051 cannot express" paragraph, whose opcode list still
+carried `SETB bit` and `MOVC A,bit`, the two forms §11 measured as assembling
+correctly. A file that contradicts itself four lines from its own correction is
+the problem §4 records, not the correction.
+
+**What this opens.** A nightly that consistently moves `partial` /
+`assembler-gap` against the committed report is telling you that the committed
+numbers describe one ASxxxx and the runner has another, and the durable answer
+may be for the report to record more than a version string — the assembler's
+own gap behaviour, or a per-row check that says which form was refused and by
+which build. That is not this change, and a version string plus a per-row diff
+is the most a log-reading human can be given tonight.
+
+**And one this raises without answering.** A committed report row whose outcome
+is outside the four — `error`, `assembler-error` — is now named by the residual
+rather than silently missing from the summary, and `check()` still passes it. A
+report saying `error` probably should fail and does not. The new line makes the
+question visible; it does not settle it.
+
+### 14h. The re-encode under the assembler's a nightly actually has: 52 rows move, the 143 do not (2026-09-23, issue #157)
+
+*(Merge note, 2026-09-24. This section was written in parallel with §14g
+(issue #158) and was also numbered §14g on its branch; references to "§14g"
+from issue #157's text — in `ec/ghidra/README.md`, in this section, and in
+`evidence/ec-reencode/` — mean this section. The two measured the same runner
+assembler independently and agree on the tallies. Both also found and fixed
+the same `--jobs` race in `verify()`; the merged code keeps §14g's fix, one
+scratch directory per function, run through this section's `run_rows()` so its
+forced-race self-test still covers the dispatch.)*
+
+**The two tallies are not the same, and the 52 rows that differ are not all
+attributable to the assembler.** Three `--jobs 4` runs of one command over the
+same 2,705 rows gave three different answers, and `--jobs 1` gave a fourth. That
+is a race in `verify()`'s dispatch, and finding it was the point of the
+exercise: the second measurement could not be taken until it was fixed. The fix
+is in this PR, the per-row numbers below are all from the post-fix run, and the
+durable record is `evidence/ec-reencode/2026-09-23-sdas8051-versions.md` with
+the differing rows in `evidence/ec-reencode/2026-09-23-sdas8051-rowdiff.csv`.
+
+**The race.** `verify()` allocated one scratch directory per worker and then
+indexed that list by *row* (`dirs[idx % jobs]`), which is not the same thing.
+`ThreadPoolExecutor.map` hands the next row to whichever worker frees up first,
+so rows 0 and 4 can be in flight together and both took `dirs[0]` — each
+overwriting the other's `f.s51` before reading back a `f.lst` that was not its
+own. The comment above the line read "one scratch dir per thread", so the
+intent was right and the implementation was not, which is the shape this section
+keeps finding. A row that reads back another row's listing reports `no bytes
+emitted` for an address the assembler did place, and `assembler-error` when the
+`.s51` it did not write is the one that failed. The fix on this branch was a
+`threading.local()` directory allocated on each worker's first row (merged as
+§14g's per-function directory instead — see the note above); the
+self-test forces the pickup order that provokes the collision rather than
+waiting for it to happen by luck, and fails against the old code. After it,
+three `--jobs 4` runs produced three byte-identical CSVs, equal to `--jobs 1`.
+
+**Which means the committed report may carry the same artefact.** `08b72e2`,
+the commit that wrote `reassembly.csv`, records no `--jobs` value, so there is
+no way to tell from history whether that run was serialised. Its 58
+`assembler-gap` rows sit inside the range the race produced here — 37 to 65
+across five `--jobs 4` runs of the same command. That is a reason to distrust
+the *committed outcome columns*, not a demonstration that they are wrong: the
+instruction columns, which the race cannot touch, are 45,394 and 143 on every
+run of it. Settling it needs the nix assembler, which project-setup does not
+install — the follow-up, below.
+
+### The two measurements
+
+Both are single-assembler, and each is labelled with the string that assembler
+reports for itself.
+
+| | committed `reassembly.csv` | this run |
+|---|---|---|
+| assembler | `sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14` | `sdas8051 02.00` |
+| via | nix SDCC 4.6.0 | `.github/actions/project-setup`, SDCC 4.2.0 #13081, `/usr/bin/sdas8051` |
+| `match` | 2,574 | 2,621 |
+| `partial` | 73 | 78 |
+| `assembler-gap` | 58 | 6 |
+| `mismatch` / `assembler-error` | 0 / 0 | 0 / 0 |
+| re-encoded | 45,394 of 45,537 (99.69%) | 45,394 of 45,537 (99.69%) |
+| unchecked | 143 | 143 |
+
+Six years apart in SDCC, and not the same ASxxxx: `02.00` is not a prefix of
+`05.50.4`. The version string is not the whole identity in either direction —
+§14e's reason for stamping it is unchanged — so the record carries
+`sdcc --version`, the resolved real path and the raw banner beside the
+comparison rather than the banner alone.
+
+### Whether the set of unencodable instructions moves: it does not
+
+**As this tool records it, per row, on all 2,705 rows: 0 rows differ in
+`instructions_checked` or `instructions_unchecked`, and both sides total 45,394
+and 143.** That is the answer to the question #151's 143 belongs to, and it is
+the robust half of this section, because those two columns are computed by
+`to_sdas()` in pure Python before the assembler is invoked at all. They are a
+property of the committed listings and this tool's gap rules, not of which
+ASxxxx is on PATH, and the race above cannot reach them either — 45,394 and
+143 on every run of it, racy or not.
+
+The limit is the tool's row model, not the comparison: a row records a count
+and the *first* skipped address, not the full set of them. So the claim is
+about the set as recorded per row, and not an address-level set identity that
+was not computed. Producing that would mean threading the whole `skipped` list
+through `check_one()`, which is a larger change than this issue earns.
+
+### What did move: 52 rows, all one way
+
+Every one of the committed report's 58 `assembler-gap` rows is accounted for:
+47 re-encode completely under the apt build, 5 re-encode with the same 143
+unchecked instructions between them, 6 stay gaps. None regressed. The 6 that
+stay are the `ajmp` rows, which `GAP_MNEMONICS` excludes before the assembler
+is consulted, so they are gaps by construction on both sides.
+
+Those 52 rows carry `no bytes emitted at NNNN` in the committed report, and the
+instruction at each named address is an ordinary one — `mov` (28), `lcall` (7),
+`movx` (4), `clr` (3), `ret` (2), `ljmp` (2), and six singletons. An assembler
+declining to place a `movx @DPTR,A` at the first instruction of a function is
+not a statement about the form, which is the observation that made the race
+worth chasing before the assembler difference was worth writing up.
+
+**Two candidate causes, and this environment separates neither:** SDCC 4.2.0 may
+accept forms 05.50.4 declines, and the committed rows may carry the race. Both
+predict 52 gap rows. Re-running the nix assembler settles it and nix is out of
+scope here, so the follow-up is to re-measure `reassembly.csv` with the pinned
+nix build on a runner that has it, at the dispatch as it now stands. Until then
+the honest statement is that 52 rows differ and this run cannot say why.
+
+The 47 rows that become `match` are **not** new evidence for the 1:1 claim.
+The committed report already asserts those bytes are what the firmware holds,
+and `--check` compares all 45,537 instructions' bytes with no assembler at all.
+What has moved is how much of the corpus an independent assembler gets to
+confirm, not whether the bytes are right.
+
+### The nightly
+
+Both branches of the issue's either/or are settled by constraint, and the
+measurement only sizes the note. Pinning the nix assembler means editing
+`.github/actions/project-setup/action.yml`, which is under `.github/` and out
+of scope. So the second branch applies, and
+`docs/ci/agent-gates-deep-schedule.yml` gains one step before the deep-gates
+step that resolves `sdas8051`, prints its path, its `sdcc --version` and its
+banner, and prints the string the committed `reassembly.csv` names — read from
+the file at run time, not hardcoded, so the note stays true as `ubuntu-latest`
+drifts. It prints what it observed and asserts no fixed relationship; that
+§14g's numbers are the comparison, and a future run that disagrees with them is
+information rather than a failure of the note.
+
+The re-encode itself now prints the resolved assembler path and its version on
+every full run, so the nightly's log is self-labelling without a step at all.
+`--emit-csv` exists so a nightly run can be compared row by row against the
+committed report without writing to it; it refuses
+`ec/ghidra/reassembly.csv` outright, and the refusal is what the self-test
+asserts.
+
+Two things the nightly is *not* told to do. It does not become a required
+check, for §14e's reason. And its exit code is not the result: `main()` returns
+non-zero only on `mismatch`, so a nightly that runs the apt assembler and gets
+zero mismatches exits 0 whether or not its outcome columns agree with the
+committed report's — which is why the numbers are read from the tallies and
+not from `$?`.
+
+Landing the schedule is still a human's one-line copy, and §14e still holds
+that the re-encode is not per-commit.
 
 ## 15. The EC and BIOS indexes get the same structural guards (2026-09-23, issue #142)
 
@@ -2093,3 +3105,107 @@ rules to impose on a pre-script all three components share.
 rewritten from a fan-out, already refuses a duplicate `(scope, addr)` and
 asserts that it does in its own self-test. The gap there is the short row, and
 closing it is a separate call on a tool this change did not otherwise touch.
+
+## 16. The four offline suites are one command, and one of them was an ordering accident (2026-09-23, issue #162)
+
+The repository's offline `unittest` suites were four files that no gate and no
+workflow ran: `ec/tools/test_grade_0751_isolation.py` (16 tests),
+`windows/tools/test_manual_fan_ctrl_probe.py` (17), `windows/tools/test_ec_watch.py`
+(3) and `linux/lightbar/test_probe_6005.py` (4) — **40 tests, none of them
+executed by CI**. A green pipeline proved three of the four compile, because the
+cheap tier's `check_python_syntax` `py_compile`s the `windows/tools/*.py` and
+`ec/tools/*.py` globs, and it ran none of them. `tools/run-tests.sh` is the one
+command now: `bash tools/run-tests.sh` discovers every `test_*.py` under the
+repository, runs each in a fresh interpreter, and exits non-zero on any failure.
+`tools/README.md` is its documentation.
+
+**The finding is what the runner had to be built around, and it is a real one
+rather than a style choice.** Both `windows/tools` suites install a fake `ecrw`
+into `sys.modules` with `setdefault`, and the two fakes are not the same shape:
+
+- `test_manual_fan_ctrl_probe.py:38-40` — exports `Ec` only, which is all
+  `manual_fan_ctrl_probe.py:63` imports.
+- `test_ec_watch.py:86-89` — exports `Ec` and `EcError`, because
+  `ec_watch.py:42` does `from ecrw import Ec, EcError`.
+
+In one shared interpreter, whichever suite imports first wins that
+`setdefault`, and the second one dies. Measured, on a scratch copy of
+`windows/tools/` with the probe's suite renamed `test_aaa_probe_first.py` so it
+sorts first:
+
+```
+$ python3 -m unittest discover -s "$scratch" -p 'test_*.py'
+    from ecrw import Ec, EcError
+ImportError: cannot import name 'EcError' from 'ecrw' (unknown location)
+----------------------------------------------------------------------
+Ran 18 tests in 0.383s
+FAILED (errors=1)
+```
+
+18 rather than 20 because unittest synthesises a single `_FailedTest` for the
+module that failed to import, so the `ec_watch` suite's three tests never
+collected. The same copy under `bash tools/run-tests.sh "$scratch"` passes all
+20, one interpreter per file.
+
+**So both suites pass today only because `unittest` discovery sorts
+`test_ec_watch` before `test_manual_fan_ctrl_probe`**, and the fuller fake wins.
+That is an ordering accident, nothing asserts it, and a rename that reorders
+them turns it into a red build the moment a runner exists to run it. It was
+latent precisely because nothing ran them.
+
+*(**Correction, 2026-09-24, issue #186.** The account above is what was measured
+and it stands as history; the accident it describes is now defused. There is one
+`windows/tools/ecrw_fake.py` carrying `Ec` and `EcError` over the real
+`ecrw.py`'s whole surface, both suites `install()` it, and each still supplies
+its own behaviour on top — `test_ec_watch.py`'s `EcError` *is* the shared one,
+its `FakeEc` is its own, and the probe suite still patches `probe.Ec`. The
+reproduction above re-run unchanged, on a scratch copy with the probe's suite
+renamed `test_aaa_probe_first.py` so it still sorts first, now prints **Ran 20
+tests / OK**; the mirror-image rename, `test_ec_watch.py` sorted last, also
+prints **Ran 20 tests / OK**; and the shipped order does too. Two renames are
+the honest bound of what a scratch copy can demonstrate, and the structural
+argument is the one file both suites import. `ecrw.py` itself is unchanged — the
+fake mirrors its surface, it does not replace it.*
+
+*(**Scope note, 2026-09-24, added at merge.** The correction above holds for the
+two suites that existed when #186 was written. Three suites merged in parallel
+with it — `test_ec_validate.py`, `test_system_id_probe.py`,
+`test_charge_target_test.py` — still install their own `ecrw` fakes with
+`setdefault`, so the ordering hazard is not retired for them, and the
+"insurance rather than load-bearing" reading of the per-file loop below does not
+yet hold. Moving those three onto `ecrw_fake.install()` is an open follow-up.)*
+
+Two consequences, and the second is the one to carry forward:
+
+1. **The runner isolates per *file*.** Per-directory isolation would not have
+   helped — both suites live in one directory — and neither would leaving it to
+   discovery order. That reason is written into the script at the loop. With the
+   correction above it is insurance rather than the thing keeping a red build
+   away: the loop is what the *next* suite to reach for a fake of its own gets
+   for free, and the comment at the loop now says so rather than only saying
+   "do not simplify".
+2. **The durable fix is to reconcile the two fakes**, and it is deliberately not
+   done here: it edits two currently-passing suites this issue did not ask
+   about. It is a follow-up, and the isolation is what keeps it from biting
+   meanwhile. **Where that deferral ended:** issue #186 is that follow-up, and
+   the reconciliation is `windows/tools/ecrw_fake.py`. The isolation stayed, as
+   belt-and-braces.
+
+**What this does and does not buy.** The suites are now one command a human or a
+future gate can call, and the runner is shellchecked for free by the existing
+`check_shellcheck` (which is why it is a shell script — `check_python_syntax`
+globs only the four component `tools/` directories and would not have covered a
+root `tools/*.py`). **It is not CI: no gate and no workflow calls it**, because
+`agent-gates.sh` is copied from `ElDavoo/agent-pipeline` and the pipeline token
+has no `workflow` scope. `docs/agent-pipeline.md` carries the one function and
+one `gate` line that wire it in, and the runner prints its own scope on every
+run so the deferral is visible in the output. The runner is **0.77 s** here
+(0.76–0.77 s over five runs) against a cheap tier §14e records at 5.9 s on a
+GitHub-hosted runner — two different machines, and the ratio rather than either
+absolute is the argument that the wiring is cheap.
+
+None of the 40 tests is hardware evidence. They mock device discovery, file
+opening and ioctls against hand-built fixtures, and the two `windows/tools`
+suites fake `ecrw` precisely so no Windows box is needed: no EC is opened, no
+register is read back, and no HID node is touched. What they establish is that
+the tools behave as specified on those fixtures, and nothing about the machine.

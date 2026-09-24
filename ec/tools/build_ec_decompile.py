@@ -38,6 +38,7 @@ import argparse
 import csv
 import hashlib
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -56,6 +57,7 @@ LISTING_INDEX = os.path.join(OUTDIR, "listing-index.csv")
 MANIFEST = os.path.join(REPO, "ec", "ghidra", "manifest.csv")
 XDATA = os.path.join(REPO, "ec", "ghidra", "xdata-symbols.csv")
 ANNOTATIONS = os.path.join(REPO, "ec", "annotations", "ghidra-functions.csv")
+REGISTERS = os.path.join(REPO, "ec", "annotations", "registers.yaml")
 CALL_TARGETS = os.path.join(REPO, "ec", "annotations", "bank-call-targets.csv")
 GHIDRA_VERSION = "12.1.3"
 
@@ -839,6 +841,135 @@ def manifest_mode_problems(manifest_rows):
             for r in manifest_rows if r.get("mode") not in MANIFEST_MODES]
 
 
+# "X has no entry in ec/annotations/registers.yaml" is a house idiom: a plate
+# comment saying what a byte is *not* yet. It goes stale the moment the byte is
+# entered, and a stale one is worse than a missing one -- it is a confident,
+# checkable, wrong sentence sitting in the file a reader opens to find out what
+# is known. The 0x0400-0x045F sweep left fifteen of them (issue #176).
+#
+# The check is address-scoped because most of those sentences also name addresses
+# the YAML genuinely does not hold, and those claims are findings: "0x060C has
+# no entry" is true, and dropping it to tidy a sentence would trade one
+# overclaim for another.
+
+# A 4-hex-digit address literal. Two of these in a row separated by a dash is
+# the range notation ("0x0F60-0x0F63") and yields both ends, which is the
+# claim's own reading of itself.
+_XDATA_LITERAL = re.compile(r"0x([0-9A-Fa-f]{4})\b")
+# Any address-shaped token, wildcards included. A subject written in this
+# notation has named its targets in a form the scan below cannot enumerate.
+_XDATA_SHAPED = re.compile(r"\b0x[0-9A-Fa-fxX*]*", re.I)
+# Sentence boundaries *and* semicolons. The split is what clears the false
+# positives: the sentences that need it are the ones that say both things in one
+# breath -- "registers.yaml documents 0x044F as GPU_TEMP; 0x0A49, 0x0A4A and
+# 0x098C have no entry there" -- and read as a single unit the first half looks
+# like a claim about 0x044F, so the check would demand an edit that is not
+# warranted. A guard that fires on correct prose is a guard that gets deleted.
+#
+# The period rule is `(?<!yaml)\.(?=\s)`: a period ends a sentence unless it is
+# the dot in `registers.yaml`, the one dotted token these comments carry. A
+# period after a hex literal does end one, and has to -- one comment's "these
+# bytes" reaches back across exactly that boundary.
+_CLAUSE_SPLIT = re.compile(r";|(?<!yaml)\.(?=\s)|(?<=[!?])\s")
+# <verb> <no|an> entry, the determiner captured so a positive claim can be told
+# from a negative one.
+_ENTRY_IDIOM = re.compile(r"\b(?:has|have|is|are|was|were)\s+(no|an?)\s+entry\b",
+                          re.I)
+# The quantifiers that turn `has an entry` into a negative claim. `not` is
+# deliberately not among them: "it is not an entry" in this tree is about a
+# function entry point, and reading that as a claim about the YAML would police
+# a sentence which says nothing of the kind.
+_NEGATIVE_QUANT = re.compile(r"\b(?:none|neither|either)\b", re.I)
+
+
+def comment_clauses(text):
+    """The clauses of a plate comment -- the unit a 'has no entry' claim governs."""
+    return [c for c in _CLAUSE_SPLIT.split(text) if c.strip()]
+
+
+def registered_addresses(path=REGISTERS):
+    """Every XDATA address ec/annotations/registers.yaml carries an entry for.
+
+    Read from the YAML rather than from the generated `xdata-symbols.csv`
+    because the claim being policed is a claim *about the YAML*: the two can
+    disagree, and it is the YAML a reader opens. A file that will not parse
+    raises rather than returning an empty set -- a check that could not run must
+    not be indistinguishable from one that found nothing.
+    """
+    import yaml
+    with open(path) as f:
+        data = yaml.safe_load(f)
+    out = set()
+    for entry in (data or {}).get("registers") or []:
+        addrs = entry.get("addr")
+        for a in (addrs if isinstance(addrs, list) else [addrs]):
+            if a is not None:
+                out.add(int(a))
+    return out
+
+
+def stale_no_entry_claims(ann_rows, entered):
+    """Annotation comments claiming registers.yaml holds no entry for an address
+    it does hold. One message per (row, address), naming the address.
+
+    The address is in the message on purpose: without it a false positive and a
+    real finding look the same, and the reader's only recourse is to re-derive
+    the whole scan by hand. With it, the claim that fired can be checked against
+    the row in front of them.
+
+    The five forms the idiom takes in this tree all resolve in three steps:
+
+      1. find the idiom, and work within the clause that carries it;
+      2. the claim's subject is the text between the clause start and the verb
+         -- or, where a quantifier introduces it ("none of 0x0434 or 0x060C has
+         an entry"), the text after the quantifier;
+      3. a subject naming no address is a pronoun ("neither address", "none of
+         these bytes"), and the addresses it refers to are the ones named in the
+         text before the clause.
+
+    Step 3 is what the two quantified forms need and why they need nothing else:
+    their addresses are two or three sentences back, and the clause-local view
+    would see a bare pronoun and stop there.
+    """
+    out = []
+    for row in ann_rows:
+        text = row.get("comment") or ""
+        clauses = comment_clauses(text)
+        for i, clause in enumerate(clauses):
+            for m in _ENTRY_IDIOM.finditer(clause):
+                # "0x06EB has an entry" is a positive claim and is not this
+                # check's business. Only `no entry`, or a quantifier in front of
+                # the verb, is the idiom.
+                if m.group(1).lower() != "no" \
+                        and not _NEGATIVE_QUANT.search(clause[:m.start()]):
+                    continue
+                subject = clause[:m.start()]
+                quant = list(_NEGATIVE_QUANT.finditer(subject))
+                if quant:
+                    subject = subject[quant[-1].end():]
+                if _XDATA_SHAPED.search(subject) \
+                        and not _XDATA_LITERAL.search(subject):
+                    # "none of the 0x08xx or 0x09xx destinations has an entry":
+                    # the targets are named in a notation this scan cannot
+                    # enumerate. Left alone rather than widened to a guess --
+                    # a check that guesses here demands edits nobody can check.
+                    continue
+                if _XDATA_LITERAL.search(subject):
+                    governed = {int(h, 16) for h in _XDATA_LITERAL.findall(subject)}
+                else:
+                    governed = set()
+                    for prior in clauses[:i]:
+                        governed |= {int(h, 16)
+                                     for h in _XDATA_LITERAL.findall(prior)}
+                for addr in sorted(governed & entered):
+                    out.append("%s %s (%s) says an address has no entry in "
+                               "ec/annotations/registers.yaml, but 0x%04X is in "
+                               "it -- reword the clause, or correct the claim"
+                               % (row["scope"], row["addr"],
+                                  row.get("name", ""), addr))
+    return out
+
+
 def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     ok = True
     # One read of the annotations CSV, split by scope. The PD set used to be
@@ -975,6 +1106,53 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("a mode outside the documented set is rejected", len(_p) == 1, str(_p))
     check("the committed manifest uses only documented modes",
           not manifest_mode_problems(_mr), str(manifest_mode_problems(_mr)))
+
+    # The "X has no entry in registers.yaml" idiom, which goes stale the moment
+    # the byte it names is entered. Scoped to the addresses each clause governs,
+    # so a sentence that also names addresses the YAML genuinely does not hold
+    # keeps saying so.
+    _claims = []
+    try:
+        _claims = stale_no_entry_claims(_ann, registered_addresses())
+    except (OSError, TypeError, ValueError) as e:
+        _claims = ["registers.yaml could not be read for the scan: %s" % e]
+    check("no annotation comment claims registers.yaml has no entry for an "
+          "address it holds (%d row(s) scanned)" % len(_ann),
+          not _claims,
+          "; ".join(_claims[:3])
+          + (" (+%d more)" % (len(_claims) - 3) if len(_claims) > 3 else ""))
+    # The guard itself, on synthetic comments. The known-good row comes first on
+    # purpose, for the reason the structural checks above give: a guard
+    # exercised only on known-bad input cannot tell "clean" from "never ran".
+    _p = stale_no_entry_claims(
+        [{"scope": "bank0", "addr": "0x93FF", "name": "positive_then_negative",
+          "comment": "registers.yaml documents 0x044F as GPU_TEMP; 0x0A49, "
+                     "0x0A4A and 0x098C have no entry there."}],
+        {0x044F})
+    check("a true 'no entry' claim about other addresses is not reported",
+          not _p, str(_p))
+    _p = stale_no_entry_claims(
+        [{"scope": "bank1", "addr": "0xF3D7", "name": "stale_in_a_list",
+          "comment": "reads 0x060C, and none of 0x0434 or 0x060C has an "
+                     "entry"}],
+        {0x0434, 0x0456})
+    check("a stale claim is reported, naming the address and not the true ones "
+          "beside it", len(_p) == 1 and "0x0434" in _p[0] and "0x060C" not in _p[0],
+          str(_p))
+    _p = stale_no_entry_claims(
+        [{"scope": "bank0", "addr": "0xBE15", "name": "back_referenced",
+          "comment": "Reads XDATA 0x08EA and XDATA 0x0449. Neither address has "
+                     "an entry in ec/annotations/registers.yaml."}],
+        {0x0449})
+    check("a claim whose subject is a pronoun resolves to the addresses named "
+          "before the clause", len(_p) == 1 and "0x0449" in _p[0], str(_p))
+    _p = stale_no_entry_claims(
+        [{"scope": "bank0", "addr": "0x96AD", "name": "wildcard_subject",
+          "comment": "documents 0x0741; none of the 0x08xx or 0x09xx "
+                     "destinations has an entry there."}],
+        {0x0741})
+    check("a claim about addresses named as a wildcard is left alone rather "
+          "than widened to a guess", not _p, str(_p))
 
     # The known answers, on the committed files. These are docs/findings.md §15
     # as assertions: a re-export that moves a total fails here loudly and gets a

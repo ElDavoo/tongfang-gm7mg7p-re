@@ -65,6 +65,20 @@ into `r2 -a 8051` with no stitching needed.
   if either fails. The classification inherits the 8-instruction linear walk's
   limits — `annotations/static-refs-audit.md` §5 is the table it produced and
   the caveats that go with it.
+- **`tools/xdata_register_map.py`** — every XDATA address the decompiled
+  firmware touches, attributed to the functions that touch it and grouped into
+  clusters: the per-address census in
+  `annotations/xdata-registers.csv` and the worklist in
+  `annotations/xdata-clusters.csv`, both regenerable, with `--check` and
+  `--self-test` running on committed text alone (no image, no Ghidra, no
+  network). Reach for it when the question is "which addresses exist, which
+  routines share them, and is this number a read or a write" — the whole
+  `registers.yaml` list is 56 addresses, and this census is 1,172. Two limits
+  it earns the right to state: it splits the main EC from the separate
+  `ITE8850-PD` program rather than mixing them, and a cluster is a
+  co-occurrence in static code, not a purpose —
+  `annotations/xdata-register-map.md` §6 is the boundary, and §7 reconciles
+  its counts against `register_ref_table.py`'s.
 - **`tools/disasm8051.py`** — the opcode tables `trace_xdata_refs.py` decodes
   with, plus a CLI for reading a window of instructions at a file offset
   (`--at`) and for measuring how many nearby anchors a linear walk syncs onto
@@ -115,6 +129,14 @@ into `r2 -a 8051` with no stitching needed.
 - **`tools/make_bank_image.py`** — stitches common area + one bank into a
   flat 64 KiB image loadable by `r2 -a 8051` (or any other 8051 disassembler
   expecting linear addressing).
+- **`tools/grade_0751_isolation.py`** — applies §4 of
+  `../docs/hardware-tests/manual-fan-ctrl-0751-isolation.md` to a `0x0751`
+  capture mechanically, so the sweep half of that procedure is read the same way
+  twice; §4.4's PWM comparison is left as a number for a human. Its offline
+  suite is `tools/test_grade_0751_isolation.py`, and `bash tools/run-tests.sh`
+  from the repo root runs it with every other `test_*.py` in the repository
+  (`../tools/README.md`). It runs against the committed `tools/testdata/`
+  captures and is not evidence about the machine.
 
 ```console
 $ python3 tools/make_bank_image.py firmware/GMxMGxx_11.800 0 0x08000 /tmp/bank0.bin
@@ -126,7 +148,9 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
 - **`annotations/registers.yaml`** — every EC register the `uniwill-laptop`
   driver or the Windows service touches, cross-referenced against static-scan
   results and live-hardware behaviour. This is the primary research output;
-  start here.
+  start here. It is 56 addresses, and `annotations/xdata-register-map.md`
+  covers 1,172 — the two corpora are nearly disjoint, and which of the two a
+  question is about decides where the answer lives.
 - **`annotations/static-refs-audit.md`** — the per-image reference count for
   every address in `registers.yaml`, the command that produced it, and the
   subset of it that backs the static-scan validation in `docs/findings.md`
@@ -138,6 +162,15 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   enumerated and classified, with `annotations/ec-0x07d0-sites.csv` as the
   machine-readable table behind it. Answers what the sites *are*; deliberately
   does not answer what the EC does with the address of the same number.
+- **`annotations/xdata-0400-045f.md`** — the `0x0400-0x045F` page the fan
+  isolation run sweeps, site by site: which of its 96 bytes the EC firmware
+  references at all, in which image, reading or writing or handing DPTR to one
+  of six pair helpers, and from which routine. `xdata-0400-045f-sites.csv` is
+  the per-site table behind it and reproduces every count in
+  `annotations/registers.yaml` for the page. Answers what the EC side of the
+  battery/temperature block does, and deliberately stops at naming: the 32
+  bytes with no cited name are `XDATA_04XX` in the symbol table, and §9 of
+  that file says where each name that *is* used came from.
 - **`annotations/lightbar-bat-flow.md`** — the `0x07E2`-`0x07E5` site map, the
   evidence that those sites belong to the PD image rather than the EC, and the
   live probe still needed to say what (if anything) the EC does with those
@@ -201,6 +234,25 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   rather than `DAT_EXTMEM_0740`. It reads `registers.yaml` and never writes
   it. Addresses it cannot name are reported, not dropped; the escape hatch is
   `ghidra/xdata-overrides.csv`.
+- **`annotations/xdata-registers.csv`** — one row per XDATA address the
+  decompiled firmware touches: which program touches it, whether the export
+  spelled it as a `DAT_EXTMEM_` token or as its symbol, the five direction
+  buckets, how many distinct functions read and write it, its cluster, its
+  `span_group`, and every touching function with the name and type
+  `ghidra-functions.csv` gives it. Produced by
+  `tools/xdata_register_map.py`, which also writes
+  `annotations/xdata-clusters.csv` and checks both; `spelled_as` and `name`
+  are separate columns because the PD image is written with `DAT_EXTMEM_`
+  tokens for addresses the symbol table names for the EC, and reading those
+  rows as the PD firmware using the EC's vocabulary is
+  `pd-xdata-overlap.md`'s mistake in a new place.
+- **`annotations/xdata-clusters.csv`** — one row per cluster: the addresses,
+  the functions that touch two or more of them, the routines most of those
+  functions call, and the already-named addresses inside. The worklist, in
+  `annotations/xdata-register-map.md` §5's order; the clustering method, its
+  threshold and the sensitivity sweep behind it are §4 of that file, and the
+  gap this census cannot close (two addresses, both inside
+  `bank0:0x94D0`) is §7.
 - **`annotations/index-table-spans.csv`** — one row per candidate call site:
   the table's span, its case range, and the site's own `frame_onto`/
   `frame_over`. It is the census, not a filtered view of it, so a site whose

@@ -1,0 +1,53 @@
+program,addr,name,committed_outcome,committed_detail,committed_instructions_checked,committed_instructions_unchecked,sdcc-4.2.0_sdas8051-02.00_outcome,sdcc-4.2.0_sdas8051-02.00_detail,sdcc-4.2.0_sdas8051-02.00_instructions_checked,sdcc-4.2.0_sdas8051-02.00_instructions_unchecked
+bank0,801F,store_1901,assembler-gap,no bytes emitted at 801F,1,0,match,,1,0
+bank0,A3E0,FUN_CODE_a3e0,assembler-gap,no bytes emitted at A3E0,13,0,match,,13,0
+bank0,AB6D,shared_noop_ret,assembler-gap,no bytes emitted at AB6D,1,0,match,,1,0
+bank0,AF72,set_08ec_bit5_clear_bit1,assembler-gap,no bytes emitted at AF72,7,0,match,,7,0
+bank0,AF7D,decrement_0a4a_then_redispatch,assembler-gap,no bytes emitted at AF7D,8,0,match,,8,0
+bank0,B9DF,copy_x1918_to_x0a57,assembler-gap,no bytes emitted at B9DF,5,0,match,,5,0
+bank0,BA1C,store_a_to_08ce_08cf,assembler-gap,no bytes emitted at BA1C,5,0,match,,5,0
+bank0,BB39,sub_low_byte_0a49,assembler-gap,no bytes emitted at BB39,4,0,match,,4,0
+bank0,BB5E,FUN_CODE_bb5e,assembler-gap,no bytes emitted at BB5E,1,0,match,,1,0
+bank0,BD20,store_044b_then_read_08e2,assembler-gap,no bytes emitted at BD20,5,0,match,,5,0
+bank0,BE21,write_a_to_x1805_and_x1808,assembler-gap,no bytes emitted at BE21,5,0,match,,5,0
+bank0,BEC8,load_code_byte_to_0734,assembler-gap,no bytes emitted at BEC8,6,0,match,,6,0
+bank0,C478,set_160a_bit0_unless_b8f4_and_08eb,assembler-gap,no bytes emitted at C478,12,0,match,,12,0
+bank0,C4A7,set_160a_bit2,assembler-gap,no bytes emitted at C4A7,5,0,match,,5,0
+bank0,D091,dispatch_on_0860,assembler-gap,no bytes emitted at D169,129,8,partial,"8 of 137 instruction(s) unchecked, first: acall 0xd673",129,8
+bank0,D894,set_dptr_0200_plus_r7,assembler-gap,no bytes emitted at D894,7,0,match,,7,0
+bank0,DB57,stash_code_pair_to_0b7_0b8,assembler-gap,no bytes emitted at DB57,17,0,match,,17,0
+bank0,E37B,store_a_to_dptr_then_164c_164e,assembler-gap,no bytes emitted at E37B,8,0,match,,8,0
+bank0,E9DE,rmw_1603_and_wait_tf1_2500_times,assembler-gap,no bytes emitted at E9DE,35,2,partial,"2 of 37 instruction(s) unchecked, first: cpl 0xe2",35,2
+bank0,F081,store_a_five_times,assembler-gap,no bytes emitted at F081,2,0,match,,2,0
+bank1,881B,copy_2000_2002_to_0450_0452,assembler-gap,no bytes emitted at 881B,13,0,match,,13,0
+bank1,95B7,load_0704_from_045d_then_branch,assembler-gap,no bytes emitted at 95B7,21,0,match,,21,0
+bank1,9A1B,set_161b_161c_4_and_0681_86,assembler-gap,no bytes emitted at 9A1B,10,0,match,,10,0
+bank1,ABA8,call_f3b8_9081_9199_ad68_d524,assembler-gap,no bytes emitted at ABA8,6,0,match,,6,0
+bank1,AC11,write_0680_03_or_04_from_04fe_0490,assembler-gap,no bytes emitted at AC11,15,0,match,,15,0
+bank1,AD68,round_robin_dispatch_on_0566,assembler-gap,no bytes emitted at AD68,10,0,match,,10,0
+bank1,BB3D,forward_to_bd20_bb3d,assembler-gap,no bytes emitted at BB3D,1,0,match,,1,0
+bank1,CB08,set_0575_08_when_03a1_low2_clear,assembler-gap,no bytes emitted at CB08,12,0,match,,12,0
+bank1,CDDA,clamp_r1r2_against_const_from_0491,assembler-gap,no bytes emitted at CDDA,38,0,match,,38,0
+bank1,CF3C,store_slot_for_index_5,assembler-gap,no bytes emitted at CF3C,18,0,match,,18,0
+bank1,D946,FUN_CODE_d946,assembler-gap,no bytes emitted at DA6E,176,0,match,,176,0
+bank1,ED3A,data_run_2e_3e,assembler-gap,no bytes emitted at EDA7,245,3,partial,"3 of 248 instruction(s) unchecked, first: cpl 0x2b",245,3
+common,0003,int0_vector_forwarder_to_052f,assembler-gap,no bytes emitted at 0003,1,0,match,,1,0
+common,0022,FUN_CODE_0022,assembler-gap,no bytes emitted at 0022,1,0,match,,1,0
+common,0FA6,FUN_CODE_0fa6,assembler-gap,no bytes emitted at 0FA6,43,0,match,,43,0
+common,13A8,FUN_CODE_13a8,assembler-gap,no bytes emitted at 13A8,2,0,match,,2,0
+common,140E,FUN_CODE_140e,assembler-gap,no bytes emitted at 140E,2,0,match,,2,0
+common,1480,FUN_CODE_1480,assembler-gap,no bytes emitted at 1480,2,0,match,,2,0
+common,15E8,FUN_CODE_15e8,assembler-gap,no bytes emitted at 15E8,2,0,match,,2,0
+common,1C3E,FUN_CODE_1c3e,assembler-gap,no bytes emitted at 1C3E,32,0,match,,32,0
+common,2812,FUN_CODE_2812,assembler-gap,no bytes emitted at 2812,5,0,match,,5,0
+common,3770,FUN_CODE_3770,assembler-gap,no bytes emitted at 3770,25,0,match,,25,0
+common,3C5B,FUN_CODE_3c5b,assembler-gap,no bytes emitted at 3C5B,4,0,match,,4,0
+common,6D46,FUN_CODE_6d46,assembler-gap,no bytes emitted at 67EC,77,6,partial,"6 of 83 instruction(s) unchecked, first: cpl 0xb4",77,6
+common,7125,FUN_CODE_7125,assembler-gap,no bytes emitted at 7125,18,0,match,,18,0
+pd,00B2,vector_wrapper_dp_0157,assembler-gap,no bytes emitted at 00B2,30,0,match,,30,0
+pd,122D,jmp_code_at_dptr,assembler-gap,no bytes emitted at 122D,2,0,match,,2,0
+pd,4D6F,dispatch_case_06,assembler-gap,no bytes emitted at 4B12,119,3,partial,"3 of 122 instruction(s) unchecked, first: ajmp 0x4b12",119,3
+pd,96ED,dptr_0a13_plus_17_times_a,assembler-gap,no bytes emitted at 96ED,8,0,match,,8,0
+pd,CBB0,FUN_CODE_cbb0,assembler-gap,no bytes emitted at CBB0,88,0,match,,88,0
+pd,DFB2,store_0x14_at_0810_and_write_0000,assembler-gap,no bytes emitted at DFB2,40,0,match,,40,0
+pd,EA67,FUN_CODE_ea67,assembler-gap,no bytes emitted at EA67,29,0,match,,29,0

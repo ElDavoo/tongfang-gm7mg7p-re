@@ -12,7 +12,7 @@ void FUN_CODE_9d53(void)
   byte in_PSW;
   byte bVar1;
   
-  if (((DAT_EXTMEM_0456 & 0x80) == 0) || (bVar1 = in_PSW & 0xdd, (DAT_EXTMEM_0466 & 0x10) != 0)) {
+  if (((SYSTEM_ID & 0x80) == 0) || (bVar1 = in_PSW & 0xdd, (DAT_EXTMEM_0466 & 0x10) != 0)) {
     DAT_EXTMEM_068b = 6;
     return;
   }
@@ -23,7 +23,7 @@ void FUN_CODE_9d53(void)
   DAT_EXTMEM_068d = 2;
   gate_04fe_06e6_call_19a8();
   if (-1 < (char)bVar1) {
-    if ((DAT_EXTMEM_045b & 8) != 0) {
+    if ((XDATA_045B & 8) != 0) {
       DAT_EXTMEM_068b = 6;
       return;
     }

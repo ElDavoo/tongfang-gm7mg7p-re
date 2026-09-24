@@ -13,8 +13,8 @@
 void ljmp_f246(void)
 
 {
-  if ((DAT_EXTMEM_06e6 == '\x01') && (DAT_EXTMEM_0440 != '\0')) {
-    if ((DAT_EXTMEM_045a >> 4 & 1) == 0) {
+  if ((DAT_EXTMEM_06e6 == '\x01') && (XDATA_0440 != '\0')) {
+    if ((XDATA_045A >> 4 & 1) == 0) {
       bare_ret_f153();
       return;
     }
