@@ -82,6 +82,35 @@ into `r2 -a 8051` with no stitching needed.
   `.github/scripts/agent-gates.sh` — that file is not one this repo edits
   casually (`../../CLAUDE.md`), so the tool stands as something a human can
   wire up.
+- **`tools/check_capture_claims.py`** — the capture-file sibling of that one:
+  it holds the prose's claims about `evidence/ec-watch/*.csv` to the capture
+  they name. `check_register_counts.py` recomputes `registers.yaml`'s numeric
+  keys from the image and never opens a `note:`, so a note can attribute a
+  movement to a committed capture and state a row count for it with nothing to
+  disagree — which has been wrong twice in that file's history (issue #265, and
+  the `0x07D4` clause issue #270 had to retract in place), both times caught by
+  a re-reading rather than a check. An address a sentence attributes to a
+  capture has to have a row in it, and a stated count has to equal the real one;
+  a capture is a fixed committed artifact, so a disagreement is decidable rather
+  than a race. It imports `check_cluster_citations.units` rather than writing a
+  second sentence splitter, so a fix to the splitting logic (issue #273) lands
+  once and both checkers get it. Committed files only: no image, no Ghidra, no
+  network — `.csv` captures only, as the four `.txt` files in that directory are
+  `ecrw.py dump` output with no row-per-change shape. The limits it earns the
+  right to state are in its own docstring, in the sibling's style, and the two
+  that matter most: a sentence that *denies* movement is skipped, which is what
+  keeps #270's correction green and is exactly why a stale denial is not caught;
+  and a table row is its own unit, so `annotations/xdata-0400-045f.md` §8's
+  `changes` column — six true counts — is not read, because the capture is named
+  in the paragraph above the table. The run prints how many claims it checked
+  rather than only whether they agreed, because a run that checked nothing and a
+  run that found nothing look the same from the exit code alone.
+  `tools/test_check_capture_claims.py` pins each skip, reproduces the pre-#270
+  `0x07D4` sentence as a negative fixture, and asserts the committed tree agrees.
+  Also not run by the gate, for the same reason as its sibling — the arm is
+  prepared at `docs/ci/agent-gates-capture-claims.patch` for a human to
+  `git apply`, by cost and kind it belongs in the cheap tier, and
+  `../../docs/agent-pipeline.md` carries it across a template re-copy.
 - **`tools/register_ref_table.py`** — the whole `annotations/registers.yaml`
   table in one pass: per-image count split *and* what each site behind it does
   (`read`/`write`/`movc` CODE pointer/handed to a subroutine/…), as a markdown

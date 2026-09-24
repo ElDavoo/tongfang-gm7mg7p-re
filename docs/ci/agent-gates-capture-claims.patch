@@ -1,0 +1,56 @@
+# ec/tools/check_capture_claims.py, wired into the cheap gate. Prepared here
+# rather than landed, because `.github/scripts/agent-gates.sh` is copied from
+# the agent-pipeline template and the pipeline's push token has no `workflow`
+# scope, so a branch editing it fails at the end of the PR rather than at the
+# start of it. `docs/agent-pipeline.md` says the same thing about every other
+# leg of this that a human has to land, and carries this one across too.
+#
+# To land it:
+#
+#   git apply docs/ci/agent-gates-capture-claims.patch
+#
+# and that is the whole change.
+#
+# Why the cheap tier and not agent-gates-deep.sh: what it reads is the
+# committed CSVs under `evidence/ec-watch/` and the standard library's `csv`
+# module. No firmware image, no Ghidra, no network, no assembler -- so by the
+# split `docs/agent-pipeline.md` records, it belongs beside
+# `check_register_counts`, not in the deep tier. It runs in well under a
+# second against a cheap tier measured at 5.9 s.
+#
+# The comment it adds at the call site says the same thing where the next
+# reader of the gate will see it, rather than only here.
+
+diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
+index 5e2fdf2..2ea2a7e 100755
+--- a/.github/scripts/agent-gates.sh
++++ b/.github/scripts/agent-gates.sh
+@@ -84,6 +84,20 @@ check_register_counts() {
+   python3 ec/tools/check_register_counts.py ec/firmware/GMxMGxx_11.800
+ }
+ 
++# A note in registers.yaml can attribute a movement to a committed capture and
++# state a row count for it, and nothing else in this script opens a note or a
++# capture. That has been wrong twice in registers.yaml's history (#265, and
++# the 0x07D4 clause #270 retracted in place), both caught by a re-reading.
++# This holds those sentences to the file they name. Cheap tier because of what
++# it reads: the committed CSVs under evidence/ec-watch/ and the standard
++# library's csv module -- no firmware image, no Ghidra, no network, so not
++# agent-gates-deep.sh. It prints how many claims it actually checked, because a
++# run that checked nothing and a run that found nothing look the same from the
++# exit code alone.
++check_capture_claims() {
++  python3 ec/tools/check_capture_claims.py --check
++}
++
+ check_python_syntax() {
+   local f rc=0
+   for f in ec/tools/*.py bios/tools/*.py windows/tools/*.py ghidra/tools/*.py; do
+@@ -188,6 +202,7 @@ check_doc_links() {
+ gate 'registers.yaml'  check_registers_yaml
+ gate 'scan_refs.py smoke test' check_scan_refs_smoke_test
+ gate 'register counts'  check_register_counts
++gate 'capture claims'   check_capture_claims
+ gate 'ghidra tooling'  check_ghidra_tooling
+ gate 'python syntax'   check_python_syntax
+ gate 'shellcheck'      check_shellcheck

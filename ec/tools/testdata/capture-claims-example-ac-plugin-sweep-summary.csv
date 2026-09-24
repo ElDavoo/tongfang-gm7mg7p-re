@@ -1,0 +1,20 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# byte and count below was written by hand. See ../README.md.
+# Shape: a per-address summary in the committed
+# 2026-09-18-ac-plugin-sweep-summary.csv's own schema, one row per address
+# with the change total in a `change_count` column rather than a row per
+# change. The `#` comment lines above are also the parse: the committed file
+# opens with three of them, and a reader that does not drop them before the
+# header takes a comment as the fieldnames. It is not a prediction that a
+# sweep changes any address this many times.
+addr,change_count,first_old,last_new
+0x00C0,2,0x00,0x00
+0x00C1,2,0x00,0x08
+0x0743,1,0x02,0x03
+0x0745,1,0x00,0xFF
+0x0751,7,0xA0,0x00
+0x07A6,3,0x29,0x19
+0x07C0,0,0x00,0x00
+0x07C4,2,0x08,0x38
+0x07C6,18,0x00,0x03
+0x07D7,0,0x00,0x00
