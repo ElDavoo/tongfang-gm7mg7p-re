@@ -440,6 +440,16 @@ recomputes all three count keys for every entry and fails on a mismatch.
 This is written down to be run later. **It has not been run**, and no result
 from it is claimed anywhere in this file.
 
+**The runnable form is
+[`docs/hardware-tests/level-block-0860-086e.md`](../../docs/hardware-tests/level-block-0860-086e.md)**,
+and it is the one a run is taken from: the five steps below are the question,
+that file is the procedure, and the instrument is
+`windows/tools/manual_fan_ctrl_probe.py --level-block --csv`. They are kept
+separate so they cannot drift into two shapes the way §3 of
+`manual-fan-ctrl-0751-isolation.md` and its probe did (issue #146) — a
+procedure that is never run still has to be quotable, and quoting a number off
+a tool instead of off the procedure is how that happened last time.
+
 The question is narrow: are `0x086B`/`0x086C`/`0x086E` a fan-speed or a
 power-level, and do they track the mode the selector `0x0860` chose?
 
