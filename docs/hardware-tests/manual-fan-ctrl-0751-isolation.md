@@ -105,6 +105,8 @@ python windows\tools\ecrw.py dump 0x0700 0x0100 ^
         > <date>-0751-isolation-<value>-before-0700.txt
 python windows\tools\ecrw.py dump 0x0F00 0x0060 ^
         > <date>-0751-isolation-<value>-before-0f00.txt
+python windows\tools\ecrw.py dump 0x0400 0x0060 ^
+        > <date>-0751-isolation-<value>-before-0400.txt
 
 rem  --- 1. start all three watchers (three consoles), with the load running ---
 rem  ---    --interval 0.5 is a starting point, not a validated-safe value;
@@ -133,6 +135,8 @@ python windows\tools\ecrw.py dump 0x0700 0x0100 ^
         > <date>-0751-isolation-<value>-after-0700.txt
 python windows\tools\ecrw.py dump 0x0F00 0x0060 ^
         > <date>-0751-isolation-<value>-after-0f00.txt
+python windows\tools\ecrw.py dump 0x0400 0x0060 ^
+        > <date>-0751-isolation-<value>-after-0400.txt
 ```
 
 `--seconds 240` leaves room for what this section actually mandates — ~10 s
@@ -246,16 +250,18 @@ does §3" is not read as "the probe does all of this file".
   temperature bytes because those *are* in the sweep; it does not substitute
   for the power reading, and §7 keys `confirmed-working` on either.
 - **The dump pairs.** The probe writes no dump at all, so a probe run has
-  neither of the pairs §3's steps 0 and 6 take. §4.6 has nothing to read
+  none of the pairs §3's steps 0 and 6 take. §4.6 has nothing to read
   without the `*-before-0700.txt` / `*-after-0700.txt` pair — the question
   "does `0x0751` still hold your value at the end of the window" needs
   those two range dumps, and `--dump` in
   `../../ec/tools/grade_0751_isolation.py` is what reads them. The
-  whole-block read of §4.1-§4.3 needs both pairs, the `0x0700` one and the
-  `0x0F00` one, given as `--dump-pair`; take the two `0x0F00` dumps as well
-  or that half of the read is simply not there. A probe run answers §4.4's
-  PWM comparison and nothing else in §4.
-- **§6's eight files.** A probe run produces none of them — no MARK-CSV, no
+  whole-block read needs all three pairs, the `0x0700` one, the `0x0F00` one
+  and the `0x0400` one, given as `--dump-pair`; take the two `0x0F00` dumps
+  and the two `0x0400` dumps as well, or those halves of the read are simply
+  not there — §4.5's temperatures are in the `0x0400` pair and in neither of
+  the others. A probe run answers §4.4's PWM comparison and nothing else in
+  §4.
+- **§6's ten files.** A probe run produces none of them — no MARK-CSV, no
   dumps, no snapshot — so there is nothing to index in `evidence/README.md` and
   nothing for the grader to apply §4.1-§4.3 and §4.6 to. If the day is taken
   with the probe, the run stays a log the way 2026-09-23's did, and §7 has no
@@ -399,8 +405,10 @@ evidence/ec-watch/<date>-0751-isolation-0f00-0f5f.csv
 evidence/ec-watch/<date>-0751-isolation-0400-045f.csv
 evidence/ec-watch/<date>-0751-isolation-<value>-before-0700.txt
 evidence/ec-watch/<date>-0751-isolation-<value>-before-0f00.txt
+evidence/ec-watch/<date>-0751-isolation-<value>-before-0400.txt
 evidence/ec-watch/<date>-0751-isolation-<value>-after-0700.txt
 evidence/ec-watch/<date>-0751-isolation-<value>-after-0f00.txt
+evidence/ec-watch/<date>-0751-isolation-<value>-after-0400.txt
 evidence/ec-watch/<date>-0751-isolation-snapshot.txt
 ```
 
@@ -424,16 +432,16 @@ mode, service running or stopped, what load was held, what was written, and
 which mode each block started from. Then add the files to `evidence/README.md`,
 which is the index every findings claim cites through.
 
-`../../ec/tools/grade_0751_isolation.py` reads seven of the eight and
+`../../ec/tools/grade_0751_isolation.py` reads nine of the ten and
 applies §4.1-§4.3 and §4.6 to them mechanically, which is a cheaper first
-pass than doing it by eye. Which seven is worth stating outright, because a
+pass than doing it by eye. Which nine is worth stating outright, because a
 file in this list that nothing consumes is a file an operator is being asked
 to take for no reason:
 
-- **The three CSVs and all four dumps are read by the tool.** The CSVs are
-  the windowed read, one per mark; each range's two dumps are the
-  whole-block read, given as one `--dump-pair`; and the `0x0700` pair is
-  given a second time as the two `--dump`s §4.6's readback is taken from.
+- **The three CSVs and all six dumps are read by the tool.** The CSVs are
+  the windowed read, one per mark; the two dumps of each of the three ranges
+  are the whole-block read, given as one `--dump-pair`; and the `0x0700` pair
+  is given a second time as the two `--dump`s §4.6's readback is taken from.
 - **The snapshot is the human's.** Nothing in the tool reads it, because it
   is `#`-comment header text and `read_dump` skips comment lines rather than
   parsing them. It is in the set because §3's step 0 writes it and because
@@ -461,6 +469,8 @@ python ec\tools\grade_0751_isolation.py ^
                      <date>-0751-isolation-<value>-after-0700.txt ^
         --dump-pair <date>-0751-isolation-<value>-before-0f00.txt ^
                      <date>-0751-isolation-<value>-after-0f00.txt ^
+        --dump-pair <date>-0751-isolation-<value>-before-0400.txt ^
+                     <date>-0751-isolation-<value>-after-0400.txt ^
         --wrote 0xA0
 ```
 
@@ -468,15 +478,20 @@ The `--dump-pair` report is a second, wider bracket on the same §4.1-§4.3
 bytes, and it is worth having for what the windows cannot show: a byte that
 moves after the final mark and before the after-dump, or that moves entirely
 between two of `ec_watch.py`'s sweeps, is in the pair and in no change row.
-Each pair covers one range, so each reports the watched bytes it does not
-cover as *not covered by this pair* — the fan table is in no `0x0700` dump
-and the PLs in no `0x0F00` one, and "never read" is a different answer from
-"read and did not move". It is a different bracket, not a stronger one: a
-byte that moved and was back where it started by the after-dump reads
-unchanged here whether or not the captures recorded it. Each read has a gap
-the other does not close. An address one dump covers and the other does not
-is a coverage gap, never a change, and the section emits no status of its
-own.
+Each pair covers one range, so each reports the groups it does not cover as
+*not covered by this pair* — the fan table is in neither the `0x0700` nor the
+`0x0400` dump, the PLs and the `0x07C6` bracket byte in neither the `0x0F00`
+nor the `0x0400` one, the temperatures in neither the `0x0700` nor the
+`0x0F00` one, and the candidate PWM in neither the `0x0F00` nor the `0x0400`
+one. That names the §4.4/§4.5 context groups as well as the §4.1-§4.3 ones,
+and for the same reason each time: "never read" is a different answer from
+"read and did not move", and a group that went unprinted under a heading that
+promises it would read as the second. It is a different bracket, not a
+stronger one: a byte that moved and was back where it started by the
+after-dump reads unchanged here whether or not the captures recorded it.
+Each read has a gap the other does not close. An address one dump covers and
+the other does not is a coverage gap, never a change, and the section emits
+no status of its own.
 
 It is a first pass and not the answer. It prints §4.4's candidate PWM bytes
 and §4.5's temperature bytes per window so the control arm and the write can
@@ -484,13 +499,17 @@ be compared line for line, and it sums each of them into a `window delta`
 line — first value, last value, net, and how many times the byte moved inside
 the window — so §4.4's deciding comparison is two numbers instead of two
 terminals. The whole-block section prints the same PWM pair the same way,
-under the same *not graded here* heading: §4.4's and §4.5's comparison is a
-human's call, in either read. It still does not grade them and does not
-claim to: an unconfirmed PWM address drifting on a warming die moves whether
-or not anything wrote `0x0751`, and telling those apart is what the no-op arm
-in §3 measures and what a script cannot. Package power is in no capture and
-is still yours to note by hand. The script says so in its own output and
-does not emit a status.
+under the same *not graded here* heading — and, because the `0x0400` pair is
+one of the three, it also prints §4.5's two temperature bytes there. That is
+the whole-block answer to what §4.4 and §4.5 ask: whether the die held
+across the control arm and the write, read at the block's two ends rather
+than inside one window. Whether the two arms' PWM numbers mean anything is
+still a human's call, in either read. It still does not grade them and does
+not claim to: an unconfirmed PWM address drifting on a warming die moves
+whether or not anything wrote `0x0751`, and telling those apart is what the
+no-op arm in §3 measures and what a script cannot. Package power is in no
+capture and is still yours to note by hand. The script says so in its own
+output and does not emit a status.
 
 ## 7. What a result has to say
 
