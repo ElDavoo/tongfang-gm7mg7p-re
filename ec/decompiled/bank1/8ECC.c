@@ -37,7 +37,7 @@ void select_r4_from_cpu_temp_and_0620_0626(void)
       write_r4_to_047f_then_047e_fc(0x1c);
       return;
     }
-    if ((DAT_EXTMEM_06d1 == '\0') && (DAT_EXTMEM_0620 == -0x3f)) {
+    if ((XDATA_06D1 == '\0') && (DAT_EXTMEM_0620 == -0x3f)) {
       write_047f_and_arm_06d1_fa(0xc1,5);
       return;
     }

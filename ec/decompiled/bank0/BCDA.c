@@ -15,8 +15,7 @@
 undefined1 x0f10_table_indexed_by_0460(void)
 
 {
-  return *(undefined1 *)
-          CONCAT11('\x0f' - (((0xef < DAT_EXTMEM_0460) << 7) >> 7),DAT_EXTMEM_0460 + 0x10);
+  return *(undefined1 *)CONCAT11('\x0f' - (((0xef < XDATA_0460) << 7) >> 7),XDATA_0460 + 0x10);
 }
 
 

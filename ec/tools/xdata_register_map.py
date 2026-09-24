@@ -216,15 +216,16 @@ TOP_CALLEES = 3
 #
 # 82 -> 84 (915 -> 932) for the same reason when #237's MAIN_FAN_L_DUTY and
 # MAIN_FAN_R_DUTY entries were exported (0x075B/0x075C, 17 references that had
-# been `DAT_EXTMEM_075b`/`_075c`); the full census does not move.
+# been `DAT_EXTMEM_075b`/`_075c`); the full census does not move. 84 -> 127
+# (932 -> 5897) with issue #179's 43 entries, the same way.
 ORACLE = {
     # DAT_EXTMEM_ only, i.e. what issue #132 counted, comments excluded.
     "extmem_distinct": 1093, "extmem_refs": 13886,
-    "extmem_raw": 13878, "extmem_commented": 9,
-    "extmem_main_distinct": 979, "extmem_main_refs": 13005,
+    "extmem_raw": 8913, "extmem_commented": 9,
+    "extmem_main_distinct": 936, "extmem_main_refs": 8040,
     "extmem_pd_distinct": 157, "extmem_pd_refs": 864,
     # What the decompiler named, which the issue's grep could not see.
-    "symbol_main_distinct": 84, "symbol_main_refs": 932,
+    "symbol_main_distinct": 127, "symbol_main_refs": 5897,
     "symbol_pd_distinct": 0, "symbol_pd_refs": 0,
     # The full census this tool publishes.
     "distinct": 1172, "refs": 14801,
@@ -240,7 +241,9 @@ ORACLE = {
     # 0x08A0/0x08A2/0x08EB/0x089E/0x089F/0x09E6/0x09E7
     # (ec/annotations/manual-fan-ctrl-0751.md 8a). 86 -> 88 when #237's
     # MAIN_FAN_L_DUTY/MAIN_FAN_R_DUTY (0x075B/0x075C) were exported by name.
-    "named_in_tree": 88,
+    # 88 -> 131 with issue #179's 43 XDATA_* timer/counter entries, merged
+    # after the ones above; the full census below does not move.
+    "named_in_tree": 131,
 }
 ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
 # The two symbol-table addresses register_ref_table.py finds main-EC sites for

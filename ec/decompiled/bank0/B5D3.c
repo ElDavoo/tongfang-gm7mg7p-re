@@ -80,10 +80,10 @@ LAB_CODE_b65b:
     }
     else {
       set_cy_fallthrough_to_bda6(0xb,CONCAT11(param_1,param_2));
-      if ((-1 < cVar4) && (DAT_EXTMEM_06d1 == '\0')) {
+      if ((-1 < cVar4) && (XDATA_06D1 == '\0')) {
         DAT_EXTMEM_047f = 0x33;
         load_dptr_88f0_tail_jump_1114(0x27);
-        DAT_EXTMEM_06d1 = 0xfa;
+        XDATA_06D1 = 0xfa;
         return;
       }
     }

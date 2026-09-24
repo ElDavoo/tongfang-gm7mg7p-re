@@ -19,7 +19,7 @@ void gate_then_copy_2200_to_075f(char param_1)
   byte in_PSW;
   byte bVar1;
   
-  if (DAT_EXTMEM_06c2 == '\0') {
+  if (XDATA_06C2 == '\0') {
     bVar1 = in_PSW & 0xdd;
     if (((((DAT_EXTMEM_06e1 & 0x80) == 0) &&
          (combine_0490_0495_049d_flags_into_carry(), -1 < (char)bVar1)) &&

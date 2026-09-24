@@ -24,7 +24,7 @@ byte FUN_CODE_a7c8(void)
     if (cVar1 != '\0') {
       return *pbVar3 ^ 5;
     }
-    if (DAT_EXTMEM_06c2 != '\0') {
+    if (XDATA_06C2 != '\0') {
       copy_code_table_into_0730_07a7(0);
     }
     if (((BIOS_OEM_2 & 1) != 0) && ((BIOS_OEM_2 >> 5 & 1) != 0)) {

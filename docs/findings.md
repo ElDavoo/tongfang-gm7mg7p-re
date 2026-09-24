@@ -3483,3 +3483,118 @@ opening and ioctls against hand-built fixtures, and the two `windows/tools`
 suites fake `ecrw` precisely so no Windows box is needed: no EC is opened, no
 register is read back, and no HID node is touched. What they establish is that
 the tools behave as specified on those fixtures, and nothing about the machine.
+
+## 17. The `main-ec-002` cluster is one 393-byte routine, counted 42 times over (2026-09-23, issue #179)
+
+Issue #179 asked what the `main-ec-002` cluster is: 43 addresses, 4,965
+references, 126 touching functions, nine of the ten busiest addresses in the
+firmware, and an empty `named_addrs` column. **Three of the issue's framings did
+not survive the tree, a fourth number in it is a misreading of a column, and
+the corrections are the substance of the answer rather than a footnote to it.**
+The full reading is `ec/annotations/xdata-06c2-06db-timers.md`; this is the
+summary and the corrections.
+
+**1. The block is one routine, and the cluster's numbers are the artefact, not
+the finding.** `bank1:0x8001`-`0x8189` is 393 bytes ending in a `ret` at
+`0x8189`, and `ec/decompiled/index.csv` splits it into 42 exports whose sizes
+sum to exactly 393. The boundaries tile the run with no gap and no overlap, 16
+of the 42 listings hold exactly one instruction, and **all 42 `.c` files
+decompile the whole body** — every one of them carries the final `0x08A8` block,
+which starts at `0x8171`, 361 bytes past the smallest listing's own boundary at
+`0x8008`. `8001.c` and `8018.c` differ in 12 lines out of 135 once the plate
+comments come off.
+
+`xdata_register_map.py` counts references by searching the decompiled C for
+address tokens, and has no way to know 42 of those files are the same 393
+bytes. Measured, per address: **4,784 of the 5,202 census tokens for the
+sweep's 46 byte addresses come from those 42 overlapping exports — 92%**, and
+4,642 of the 4,988 the 43 cluster rows sum to, **93%**. Per address the gap is
+starker than the total:
+
+| | census `refs` | direct `MOV DPTR,#addr` sites in the image |
+|---|---:|---:|
+| `0x0843` | 168 | **1** |
+| `0x0844` | 168 | **1** |
+| `0x06D6` | 148 | **1** |
+| `0x0706` | 160 | **1** |
+| `0x08A8` | 170 | **2** |
+| all 43 | 4,988 | **345** |
+
+**So "nine of the ten busiest addresses in the firmware" is a statement about
+the export, not about the bytes.** None of those five is among the ten busiest
+once the 42-fold count comes out. The largest of the 43 by direct sites is
+`0x080D` at 78, and 74 of those are in the PD image.
+
+**2. Seventeen of the issue's twenty "unnamed" functions already had rows, and
+the three that did not were the only ones that had not.** `8008`, `8010` and
+`8017` are the work; all three were `seed_basis=call-target`, `size=1`,
+`annotated=no`, and each is now a row whose comment says in its own words that
+the one-instruction boundary is the call-target scan's hypothesis — the wording
+`8001`-`800F` already used. The 42 rows describe slices of one routine and that
+is not fixed here: correcting the boundaries needs `--mode rebuild-project`,
+which writes the 7 MB database and cannot merge alongside anything else.
+
+**3. `bank1:0x1984` and `0x198A` are annotated bank-switch forwarders, and
+their 45/126 and 41/126 figures are the `callees` name-frequency column**,
+which `xdata-register-map.md` §6 already documents as over-counting depth. The
+place worth reading was their targets, and that is where the finding is:
+**`0xC1E7` is `bank0:test_1664_bit0`, already annotated, and `0xC10C` has no
+exported function in any program.** `0x06D9` is the one countdown in the block
+whose progress hangs off those two calls, and one of the two is a routine this
+repository has not exported. That is the highest-value follow-up the block
+hands back, and it needs a function seed.
+
+**The reading itself.** 37 of the 43 are countdowns the same twenty
+instructions walk over, 6 are what four of them do at zero, and the two the
+clustering cut into `main-ec-118` and `main-ec-198` (`0x06C6`, `0x06CD`) are
+countdowns the same routine decrements. The block is gated twice — on
+`0x0440` (43 read sites, no direct `MOV DPTR` writer, value not established —
+its one writer is the CODE-table scatter at bank1 `0xA530` that stores `0x00`
+to it, `ec/annotations/xdata-0440-readers.md` §5) and on the two
+predicate returns — with a third gate that is a `ret` rather than a test:
+`0x06D6` is the only reload, loading 9 at zero and returning early otherwise,
+so it is the rate control for the lower two-thirds of the sweep and the only
+byte in the run whose period is legible from the code. 43 new rows in
+`registers.yaml`, all `present-untested`, all named `XDATA_<addr>`.
+
+**A correction to the record, in both directions.** The reload search was first
+taken to find no writer outside the sweep for `0x06C2 0x06C3 0x06C5 0x06D6
+0x0706 0x06D8 0x06DB 0x085B`. **`0x06D8` does have one** — `bank1:0x9800`, the
+`mov A,#0x0A` / `movx @DPTR,A` in the body at `0x976E` that also loads `0x070B`
+and `0x044C` — **and ten more addresses belong in the list**: `0x0621 0x0635
+0x0638 0x0639 0x063A 0x06F3 0x0843 0x0844 0x0981 0x0982`. Taking the union of the two
+methods that can find a writer at all, 17 of the 43 have none outside the sweep.
+The wrong version is left in the annotation file rather than deleted.
+
+**And the direction-classifier defect turns out to reshape the unit this issue
+was scoped to**, which is why it is a follow-up and not this diff.
+`ec/tools/xdata_register_map.py:277` accepts a comparison as an assignment
+because `ASSIGN` at line 138 contains `"="` and `"== 0x12".startswith("=")`.
+Regenerating the census with a one-line guard that rejects a bare `=` followed
+by a second `=`: **833 references leave the `write` column across 210 of 1,172
+addresses**, `0x08A8` goes from 84 reads / 44 writes to **126 / 2**, `0x0843`
+from 84 / 42 to **126 / 0**, and **`main-ec-002` goes from 43 addresses /
+4,965 references to 44 / 248**. Neither figure is right yet — both still carry
+the 42-fold count above — but an issue scoped to "read `main-ec-002`" would be
+scoped to a membership its own prerequisite changes. The issue's own "42 of its
+comparisons are `==`" is a second, independent misreading:
+`xdata-register-map.md` §4.1 defines `read+write` as "an `=` target whose
+right-hand side names the same address", so those 42 are 42 read-modify-writes,
+and per §1 all 42 come from the overlapping exports.
+
+**What a clean result means, precisely.** The committed files carry no
+structural fault, and every count in the new annotation is reproducible from
+the committed image — `check_register_counts.py` recomputes all 129
+`static_refs` keys the 43 rows add and fails on a mismatch, and
+`gen_xdata_symbols.py --check` confirms the regenerated 144-row symbol table.
+What that establishes is arithmetic about the decompiled text, not behaviour:
+**no register was read, written or read back, no live test ran, and nothing
+here is a `confirmed-*`.** A countdown the code decrements is not yet a
+counter the EC keeps.
+
+Deliberately **not** widened to: the direction-classifier fix, the census's
+42-fold double count, the 42 wrong function boundaries, a name or a purpose for
+the block or for any of the 43 bytes, or a live write to `0x0440` or any byte
+in the sweep. Each is named in `ec/annotations/xdata-06c2-06db-timers.md` §6
+and §8 with what it would take; the read-only procedure for a human with the
+machine is that file's §7, and it is written down rather than run.

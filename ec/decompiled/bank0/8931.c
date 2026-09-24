@@ -73,8 +73,8 @@ void FUN_CODE_8931(byte param_1)
         return;
       }
       pcVar5 = &DAT_CODE_0460;
-      if (DAT_EXTMEM_0460 < 4) {
-        FUN_CODE_bde6(DAT_EXTMEM_0460 - 4);
+      if (XDATA_0460 < 4) {
+        FUN_CODE_bde6(XDATA_0460 - 4);
         bVar3 = 0x80;
         sub_input_from_cpu_temp_043e();
         if ((char)bVar3 < '\0') {
@@ -97,8 +97,8 @@ void FUN_CODE_8931(byte param_1)
           if (-1 < cVar1) {
             *pcVar5 = -0x80;
           }
-          pcVar5 = &DAT_EXTMEM_0460;
-          if (DAT_EXTMEM_0460 == 3) {
+          pcVar5 = &XDATA_0460;
+          if (XDATA_0460 == 3) {
             pcVar5 = &DAT_EXTMEM_09e4;
             DAT_EXTMEM_09e4 = 0xff;
           }
@@ -106,49 +106,47 @@ void FUN_CODE_8931(byte param_1)
         sub_33_from_09e4_low7();
         if (-1 < (char)bVar3) {
           if (*pcVar5 < '\0') {
-            DAT_EXTMEM_0460 = DAT_EXTMEM_0460 + 1;
+            XDATA_0460 = XDATA_0460 + 1;
           }
           else {
-            DAT_EXTMEM_0460 = DAT_EXTMEM_0460 - 1;
+            XDATA_0460 = XDATA_0460 - 1;
           }
           DAT_EXTMEM_09e4 = 0;
         }
       }
       else {
-        cVar2 = FUN_CODE_bde6(DAT_EXTMEM_0460 - 4,&DAT_CODE_0460);
+        cVar2 = FUN_CODE_bde6(XDATA_0460 - 4,&DAT_CODE_0460);
         cVar1 = (CPU_TEMP < cVar2 + 1U) << 7;
         if (cVar1 < '\0') {
           x0f10_table_indexed_by_0460(CPU_TEMP - (cVar2 + 1U));
           clr_cy();
           if (cVar1 < '\0') {
-            DAT_EXTMEM_0460 = DAT_EXTMEM_0460 - 1;
+            XDATA_0460 = XDATA_0460 - 1;
           }
         }
         else {
-          DAT_EXTMEM_0460 = DAT_EXTMEM_0460 + 1;
+          XDATA_0460 = XDATA_0460 + 1;
         }
       }
       DAT_EXTMEM_0461 =
-           *(undefined1 *)
-            CONCAT11('\x0f' - (((0xdf < DAT_EXTMEM_0460) << 7) >> 7),DAT_EXTMEM_0460 + 0x20);
+           *(undefined1 *)CONCAT11('\x0f' - (((0xdf < XDATA_0460) << 7) >> 7),XDATA_0460 + 0x20);
       cVar1 = -0x80;
       gpu_temp_minus_xdata_byte
-                (CONCAT11('\x0f' - (((0xcf < DAT_EXTMEM_0468) << 7) >> 7),DAT_EXTMEM_0468 + 0x30));
+                (CONCAT11('\x0f' - (((0xcf < XDATA_0468) << 7) >> 7),XDATA_0468 + 0x30));
       if (cVar1 < '\0') {
         cVar1 = '\0';
         gpu_temp_minus_xdata_byte
-                  (CONCAT11('\x0f' - (((0xbf < DAT_EXTMEM_0468) << 7) >> 7),DAT_EXTMEM_0468 + 0x40))
-        ;
+                  (CONCAT11('\x0f' - (((0xbf < XDATA_0468) << 7) >> 7),XDATA_0468 + 0x40));
         if (cVar1 < '\0') {
-          DAT_EXTMEM_0468 = DAT_EXTMEM_0468 - 1;
+          XDATA_0468 = XDATA_0468 - 1;
         }
       }
       else {
-        DAT_EXTMEM_0468 = DAT_EXTMEM_0468 + 1;
+        XDATA_0468 = XDATA_0468 + 1;
       }
       ramp_1804_1809_toward_0461_0469
                 (*(undefined1 *)
-                  CONCAT11('\x0f' - (((0xaf < DAT_EXTMEM_0468) << 7) >> 7),DAT_EXTMEM_0468 + 0x50));
+                  CONCAT11('\x0f' - (((0xaf < XDATA_0468) << 7) >> 7),XDATA_0468 + 0x50));
       return;
     }
     FUN_CODE_8b14();

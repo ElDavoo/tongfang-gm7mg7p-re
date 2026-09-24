@@ -20,11 +20,16 @@
 #   xdata-refs      : ec/tools/trace_xdata_refs.py -- the per-site form of the
 #                    same scan: which image each site is in, its runtime
 #                    address, and whether it reads, writes, or hands DPTR to a
-#                    subroutine. Site table and the page it covers:
-#                    ec/annotations/xdata-0400-045f.md. It is still a static
-#                    scan and is NOT `live`: a zero is "not found by this
-#                    method", never "absent", and a read-modify-write is
+#                    subroutine. Site table and the pages it covers:
+#                    ec/annotations/xdata-0400-045f.md and
+#                    ec/annotations/xdata-06c2-06db-timers.md. It is still a
+#                    static scan and is NOT `live`: a zero is "not found by
+#                    this method", never "absent", and a read-modify-write is
 #                    evidence the EC touches a byte, not that it acts on it.
+#                    The access column is a linear walk that stops at the first
+#                    control-flow instruction, so a store a branch jumps over is
+#                    invisible to it -- the timer block's one reload is exactly
+#                    such a store (xdata-06c2-06db-timers.md 5).
 #
 # reference-count keys (all three are direct MOV DPTR,#addr site counts,
 # and all three inherit the blind spot in the "absent" note below):
@@ -1965,3 +1970,722 @@ registers:
       establishes what either bit selects or what that test decides. No site
       this method finds sets either bit -- a limit of the scan, since a set
       through a run-time DPTR would not appear -- and nothing is read back.
+
+  - name: XDATA_0460
+    addr: 0x0460
+    sources: [xdata-refs]
+    static_refs: 24
+    static_refs_main_ec: 24
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Not decremented by the sweep. It is one of six bytes the sweep writes as a
+      side effect: stored a zero at 0x80DC when 0x0706 reaches zero, and nothing
+      else. Its other writers are in bank0 and have nothing to do with the sweep
+      -- 0x87C1 stores a value, and 0x8AA7, 0x8AB7, 0x8BA9 and 0x8BB6 are
+      read-modify-writes in the 0x88xx fan-table handlers. 24 EC-side sites, 14
+      direct reads, 2 direct writes, 4 read-modify-writes, 2 DPTR handoffs and 2
+      sites with no movx in the decoded window. Its only writers outside the
+      sweep that this method found are bank0 0x87C1, bank0 0x8AA7, bank0 0x8AB7,
+      bank0 0x8BA9, bank0 0x8BB6. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0468
+    addr: 0x0468
+    sources: [xdata-refs]
+    static_refs: 17
+    static_refs_main_ec: 17
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Not decremented by the sweep. It is one of six bytes the sweep writes as a
+      side effect: stored a zero at 0x80E0 when 0x0706 reaches zero, and nothing
+      else. Its other writers are in bank0 and have nothing to do with the sweep
+      -- 0x87CD stores a value, and 0x8AE2, 0x8AFD, 0x8BFD and 0x8C22 are
+      read-modify-writes in the same 0x88xx fan-table handlers. 17 EC-side
+      sites, 10 direct reads, 2 direct writes, 4 read-modify-writes and 1 DPTR
+      handoff. Its only writers outside the sweep that this method found are
+      bank0 0x87CD, bank0 0x8AE2, bank0 0x8AFD, bank0 0x8BFD, bank0 0x8C22. No
+      upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_055F
+    addr: 0x055F
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 3 EC-side sites, 1 direct read and 2
+      direct writes. Its only writers outside the sweep that this method found
+      are bank1 0xDB88, bank1 0xE090. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0621
+    addr: 0x0621
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Not decremented by the sweep. It is one of six bytes the sweep writes as a
+      side effect: cleared to 0 at 0x814F when 0x0844 reaches zero, and nothing
+      else. No other writer was found by this method, which is a gap in the
+      search and not evidence that the sweep is its only writer. 2 EC-side
+      sites, 1 direct read and 1 direct write. No writer for it outside the
+      sweep was found by this method, which is a gap in the search and not
+      evidence that none exists. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0635
+    addr: 0x0635
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 1 EC-side site, 1 direct read. No
+      writer for it outside the sweep was found by this method, which is a gap
+      in the search and not evidence that none exists. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0636
+    addr: 0x0636
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 3 EC-side sites, 2 direct reads and 1
+      DPTR handoff. No writer for it outside the sweep was found by this method,
+      which is a gap in the search and not evidence that none exists. No
+      upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0637
+    addr: 0x0637
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 2 EC-side sites, 2 direct reads. No
+      writer for it outside the sweep was found by this method, which is a gap
+      in the search and not evidence that none exists. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0638
+    addr: 0x0638
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 1 EC-side site, 1 direct read. No
+      writer for it outside the sweep was found by this method, which is a gap
+      in the search and not evidence that none exists. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0639
+    addr: 0x0639
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 1 EC-side site, 1 direct read. No
+      writer for it outside the sweep was found by this method, which is a gap
+      in the search and not evidence that none exists. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_063A
+    addr: 0x063A
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, but not like its neighbours: the code tests the sign bit as
+      well as zero (jb 0xe7 at 0x8055, after the read at 0x8054), so a value of
+      0x80 or above is left alone and only 0x01-0x7F counts down. A sign guard
+      on a counter, not a purpose. 1 EC-side site, 1 direct read. No writer for
+      it outside the sweep was found by this method, which is a gap in the
+      search and not evidence that none exists. No upstream name. Per-address
+      table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_06C2
+    addr: 0x06C2
+    sources: [xdata-refs]
+    static_refs: 15
+    static_refs_main_ec: 15
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 15 EC-side sites, 15 direct reads. No
+      writer for it outside the sweep was found by this method, which is a gap
+      in the search and not evidence that none exists. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_06C3
+    addr: 0x06C3
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 2 EC-side sites, 2 direct reads. No
+      writer for it outside the sweep was found by this method, which is a gap
+      in the search and not evidence that none exists. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_06C5
+    addr: 0x06C5
+    sources: [xdata-refs]
+    static_refs: 4
+    static_refs_main_ec: 4
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 4 EC-side sites, 4 direct reads. No
+      writer for it outside the sweep was found by this method, which is a gap
+      in the search and not evidence that none exists. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_06D1
+    addr: 0x06D1
+    sources: [xdata-refs]
+    static_refs: 8
+    static_refs_main_ec: 8
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 8 EC-side sites, 5 direct reads and 3
+      direct writes. Its only writers outside the sweep that this method found
+      are bank0 0xB58F, bank0 0xB6E1, bank1 0x8F4F. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_06D2
+    addr: 0x06D2
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 3 EC-side sites, 2 direct reads and 1
+      direct write. Its only writers outside the sweep that this method found
+      are bank1 0x8F66. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_06D6
+    addr: 0x06D6
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      The one set-point in the block, and the only byte whose period is legible
+      from the code. A non-zero value is decremented and the routine returns at
+      0x8074 straight away, skipping everything below; a zero value is
+      overwritten with 9 and the sweep carries on. It is therefore both the
+      reload and the gate on how often the lower half of the sweep runs, and the
+      9 is a set-point the code states rather than one a reader supplies. 1
+      EC-side site, 1 direct read. No writer for it outside the sweep was found
+      by this method, which is a gap in the search and not evidence that none
+      exists. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_06D8
+    addr: 0x06D8
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189 only while XDATA 0x0440 is non-zero -- the block's first
+      test of that byte, at 0x807E. A zero at 0x0440 branches past this byte
+      untouched. 0x0440 has 43 read sites, every one a direct read, so no
+      direct MOV DPTR site writes it; a writer does exist and is not one of
+      those 43: code_table_scatter_to_xdata (bank1 0xA530) stores 0x00 to it
+      (ec/annotations/xdata-0440-readers.md section 5). Its value is not
+      established, so what this gate selects is not known either. 2 EC-side
+      sites, 1 direct read and 1 direct write. Its only writers outside the
+      sweep that this method found are bank1 0x9800. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_06D9
+    addr: 0x06D9
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      The only byte in the block whose countdown is conditional on a predicate
+      rather than on a value. The sweep calls the two banked forwarders 0x1984
+      (trampoline_to_c10c) and 0x198A (trampoline_to_c1e7) at 0x8096 and 0x809C
+      and decrements 0x06D9 only when both left R7 zero. 0xC1E7 is bank0
+      test_1664_bit0, which is already annotated; 0xC10C has no exported
+      function in any program, so the first of the two gates is the one thing
+      here that is not decoded at all. 3 EC-side sites, 1 direct read and 2
+      direct writes. Its only writers outside the sweep that this method found
+      are bank1 0x86E2, bank1 0x982E. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_06DA
+    addr: 0x06DA
+    sources: [xdata-refs]
+    static_refs: 5
+    static_refs_main_ec: 5
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 5 EC-side sites, 2 direct reads and 3
+      direct writes. Its only writers outside the sweep that this method found
+      are bank1 0x97A9, bank1 0xB7E2, bank1 0xB83A. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_06DB
+    addr: 0x06DB
+    sources: [xdata-refs]
+    static_refs: 4
+    static_refs_main_ec: 4
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189 only while XDATA 0x0440 is non-zero -- the block's third
+      and last test of that byte, at 0x8153. A zero at 0x0440 branches past
+      this byte untouched. 0x0440 has 43 read sites, every one a direct read,
+      so no direct MOV DPTR site writes it; a writer does exist and is not one
+      of those 43: code_table_scatter_to_xdata (bank1 0xA530) stores 0x00 to
+      it (ec/annotations/xdata-0440-readers.md section 5). Its value is not
+      established, so what this gate selects is not known either. 4 EC-side
+      sites, 4 direct reads. No writer for it outside the sweep was found by
+      this method, which is a gap in the search and not evidence that none
+      exists. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_06F3
+    addr: 0x06F3
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 1 EC-side site, 1 direct read. No
+      writer for it outside the sweep was found by this method, which is a gap
+      in the search and not evidence that none exists. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0706
+    addr: 0x0706
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189 like the plain timers, with one extra action: when the
+      decrement lands on zero the accumulator is also stored to 0x0460 and then
+      to 0x0468 (0x80DC and 0x80E0), so those two bytes are cleared by this byte
+      reaching zero rather than on their own schedule. 1 EC-side site, 1 direct
+      read. No writer for it outside the sweep was found by this method, which
+      is a gap in the search and not evidence that none exists. No upstream
+      name. Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_070B
+    addr: 0x070B
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 2 EC-side sites, 1 direct read and 1
+      direct write. Its only writers outside the sweep that this method found
+      are bank1 0x9806. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_070D
+    addr: 0x070D
+    sources: [xdata-refs]
+    static_refs: 4
+    static_refs_main_ec: 4
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 4 EC-side sites, 3 direct reads and 1
+      direct write. Its only writers outside the sweep that this method found
+      are bank1 0xC6B0. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0723
+    addr: 0x0723
+    sources: [xdata-refs]
+    static_refs: 16
+    static_refs_main_ec: 16
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Not decremented by the sweep. It is one of six bytes the sweep writes as a
+      side effect, and one of fourteen read-modify-writes: the one at 0x8182 is
+      the only one that clears bit 4 rather than setting it (anl A,#0xef), run
+      when 0x08A8 reaches zero. The other thirteen set or clear bits 0, 1, 2, 3,
+      4, 5 and 6 across bank0 and bank1; bit 4 is the one bit touched twice
+      (set at bank0 0xA1BB, cleared at bank1 0x8182), and bit 7 is touched by
+      none of them. A flag byte is a shape, not a name. 16 EC-side sites, 1
+      direct read, 1 direct write and 14 read-modify-writes.
+      Its only writers outside the sweep that this method found are bank0
+      0x910E, bank0 0x9117, bank0 0x912B, bank0 0x9134, bank0 0x97F9, bank0
+      0xA00E, bank0 0xA1BB, bank0 0xA2B5, bank0 0xBE0D, bank1 0x92C8, bank1
+      0x986E, bank1 0xC447, bank1 0xC6C7, bank1 0xC6D0. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_07F3
+    addr: 0x07F3
+    sources: [xdata-refs]
+    static_refs: 9
+    static_refs_main_ec: 4
+    static_refs_pd_image: 5
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 4 EC-side sites, 2 direct reads and 2
+      direct writes, and 5 in the PD image, which is another program's XDATA and
+      says nothing about the EC's use of this address. Its only writers outside
+      the sweep that this method found are bank1 0x9F61, bank1 0xA241. No
+      upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_07F6
+    addr: 0x07F6
+    sources: [xdata-refs]
+    static_refs: 9
+    static_refs_main_ec: 5
+    static_refs_pd_image: 4
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 5 EC-side sites, 3 direct reads and 2
+      direct writes, and 4 in the PD image, which is another program's XDATA and
+      says nothing about the EC's use of this address. Its only writers outside
+      the sweep that this method found are bank1 0xA1B1, bank1 0xA1B8. No
+      upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0809
+    addr: 0x0809
+    sources: [xdata-refs]
+    static_refs: 39
+    static_refs_main_ec: 2
+    static_refs_pd_image: 37
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 2 EC-side sites, 1 direct read and 1
+      direct write, and 37 in the PD image, which is another program's XDATA and
+      says nothing about the EC's use of this address. Its only writers outside
+      the sweep that this method found are bank1 0x9F6D. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_080C
+    addr: 0x080C
+    sources: [xdata-refs]
+    static_refs: 29
+    static_refs_main_ec: 7
+    static_refs_pd_image: 22
+    status: present-untested
+    note: >
+      Not decremented by the sweep. It is one of six bytes the sweep writes as a
+      side effect: set to 1 at 0x813E when 0x0843 reaches zero, and nothing
+      else. Four other writers were found, all in the 0xA0xx state-table code --
+      bank0 0xA03A and 0xA06A store 0, 0xA295 stores 3, and bank1 0x986A stores
+      0. 7 EC-side sites, 2 direct reads and 5 direct writes, and 22 in the PD
+      image, which is another program's XDATA and says nothing about the EC's
+      use of this address. Its only writers outside the sweep that this method
+      found are bank0 0xA03A, bank0 0xA06A, bank0 0xA295, bank1 0x986A. No
+      upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_080D
+    addr: 0x080D
+    sources: [xdata-refs]
+    static_refs: 78
+    static_refs_main_ec: 4
+    static_refs_pd_image: 74
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 4 EC-side sites, 2 direct reads and 2
+      direct writes, and 74 in the PD image, which is another program's XDATA
+      and says nothing about the EC's use of this address. Its only writers
+      outside the sweep that this method found are bank1 0x9F46, bank1 0xAB3F.
+      No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0811
+    addr: 0x0811
+    sources: [xdata-refs]
+    static_refs: 7
+    static_refs_main_ec: 2
+    static_refs_pd_image: 5
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 2 EC-side sites, 1 direct read and 1
+      direct write, and 5 in the PD image, which is another program's XDATA and
+      says nothing about the EC's use of this address. Its only writers outside
+      the sweep that this method found are bank1 0x9FBA. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0843
+    addr: 0x0843
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189 like the plain timers, with one extra action: when the
+      decrement lands on zero the code loads 1 into the accumulator and stores
+      it to 0x080C at 0x813E, so 0x080C is set by this byte reaching zero. 1
+      EC-side site, 1 direct read. No writer for it outside the sweep was found
+      by this method, which is a gap in the search and not evidence that none
+      exists. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0844
+    addr: 0x0844
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189 like the plain timers, with one extra action: when the
+      decrement lands on zero the code clears the accumulator and stores it to
+      0x0621 at 0x814F, so 0x0621 is cleared by this byte reaching zero. 1
+      EC-side site, 1 direct read. No writer for it outside the sweep was found
+      by this method, which is a gap in the search and not evidence that none
+      exists. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_085B
+    addr: 0x085B
+    sources: [xdata-refs]
+    static_refs: 6
+    static_refs_main_ec: 2
+    static_refs_pd_image: 4
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189 only while XDATA 0x0440 is non-zero -- the block's second
+      test of that byte, at 0x80EC. A zero at 0x0440 branches past this byte
+      untouched. 0x0440 has 43 read sites, every one a direct read, so no
+      direct MOV DPTR site writes it; a writer does exist and is not one of
+      those 43: code_table_scatter_to_xdata (bank1 0xA530) stores 0x00 to it
+      (ec/annotations/xdata-0440-readers.md section 5). Its value is not
+      established, so what this gate selects is not known either. 2 EC-side
+      sites, 2 direct reads, and 4 in the PD image, which is another program's
+      XDATA and says nothing about the EC's use of this address. No writer for
+      it outside the sweep was found by this method, which is a gap in the
+      search and not evidence that none exists. No upstream name. Per-address
+      table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0890
+    addr: 0x0890
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 3 EC-side sites, 2 direct reads and 1
+      direct write. Its only writers outside the sweep that this method found
+      are bank0 0xA380. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_08A7
+    addr: 0x08A7
+    sources: [xdata-refs]
+    static_refs: 4
+    static_refs_main_ec: 4
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 4 EC-side sites, 3 direct reads and 1
+      direct write. Its only writers outside the sweep that this method found
+      are bank0 0xA1B0. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_08A8
+    addr: 0x08A8
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189 like the plain timers, with two extra actions when the
+      decrement lands on zero: bit 2 of 0x0985 is cleared (anl A,#0xfb at
+      0x817F) and then bit 4 of 0x0723 (anl A,#0xef at 0x8186), each a separate
+      read-modify-write. 2 EC-side sites, 1 direct read and 1 direct write. Its
+      only writers outside the sweep that this method found are bank0 0xA1C2. No
+      upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_08E4
+    addr: 0x08E4
+    sources: [xdata-refs]
+    static_refs: 4
+    static_refs_main_ec: 4
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 4 EC-side sites, 2 direct reads and 2
+      direct writes. Its only writers outside the sweep that this method found
+      are bank1 0x8716, bank1 0xBD2C. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0981
+    addr: 0x0981
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 2 EC-side sites, 2 direct reads. No
+      writer for it outside the sweep was found by this method, which is a gap
+      in the search and not evidence that none exists. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0982
+    addr: 0x0982
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 2 EC-side sites, 2 direct reads. No
+      writer for it outside the sweep was found by this method, which is a gap
+      in the search and not evidence that none exists. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0985
+    addr: 0x0985
+    sources: [xdata-refs]
+    static_refs: 11
+    static_refs_main_ec: 11
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Not decremented by the sweep. It is one of six bytes the sweep writes as a
+      side effect, and one of ten read-modify-writes: the one at 0x817B is the
+      only one that clears bit 2 rather than setting it (anl A,#0xfb), run when
+      0x08A8 reaches zero. The other nine are in bank0 (0x90B2, 0x90BB, 0x90D2,
+      0x90DB, 0x9800, 0x98FB, 0xA015, 0xA1B4, 0xA2C0) and set or clear bits 0,
+      1, 2, 3 and 4; bit 2 is set at 0xA1B4 and cleared by the sweep's own 0x817B,
+      and no site touches bit 7. A flag byte is a shape, not a name. 11 EC-side
+      sites, 1 direct read and 10 read-modify-writes. Its only writers outside
+      the sweep that
+      this method found are bank0 0x90B2, bank0 0x90BB, bank0 0x90D2, bank0
+      0x90DB, bank0 0x9800, bank0 0x98FB, bank0 0xA015, bank0 0xA1B4, bank0
+      0xA2C0. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0986
+    addr: 0x0986
+    sources: [xdata-refs]
+    static_refs: 5
+    static_refs_main_ec: 5
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 5 EC-side sites, 3 direct reads and 2
+      direct writes. Its only writers outside the sweep that this method found
+      are bank0 0x8D16, bank0 0x8E29. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_09CE
+    addr: 0x09CE
+    sources: [xdata-refs]
+    static_refs: 7
+    static_refs_main_ec: 7
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 7 EC-side sites, 6 direct reads and 1
+      direct write. Its only writers outside the sweep that this method found
+      are bank0 0xCCAD. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+

@@ -31,8 +31,8 @@ void threshold_dispatch_0438_by_0491(void)
     return;
   }
   countdown_0896_and_gate_on_04ab_equals_64();
-  if (((DAT_EXTMEM_06c2 != '\0') || (reload_083e_when_0834_is_zero(), (DAT_EXTMEM_0490 & 1) == 0))
-     || ((DAT_EXTMEM_0490 >> 3 & 1) != 1)) {
+  if (((XDATA_06C2 != '\0') || (reload_083e_when_0834_is_zero(), (DAT_EXTMEM_0490 & 1) == 0)) ||
+     ((DAT_EXTMEM_0490 >> 3 & 1) != 1)) {
     DAT_EXTMEM_0499 = DAT_EXTMEM_0499 & 0xc0;
     mask_0491_with_c0();
     return;

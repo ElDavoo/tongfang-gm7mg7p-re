@@ -24,7 +24,7 @@ void arm_05f5_countdown_0490_bit5(void)
     }
     DAT_EXTMEM_0490 = DAT_EXTMEM_0490 & 0xbf | 0x20;
     DAT_EXTMEM_05e1 = 0;
-    DAT_EXTMEM_06da = 10;
+    XDATA_06DA = 10;
   }
   return;
 }

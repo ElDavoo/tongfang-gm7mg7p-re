@@ -13,10 +13,12 @@
    stored to XDATA 0x0872, 0x087A, 0x088A and 0x080C, and entry byte 5 sets bit 3 of XDATA 0x0723
    when its bit 7 is set and bit 1 of XDATA 0x0985 when its bit 6 is set. If XDATA 0x08AF is
    non-zero it decrements that byte, raises XDATA 0x080C to a minimum of 3, and calls 0x164E, which
-   loads DPTR with 0xA916 and jumps to 0x1114. None of these addresses has an entry in
-   ec/annotations/registers.yaml, and what the entry bytes represent is not determined here.
+   loads DPTR with 0xA916 and jumps to 0x1114. ec/annotations/registers.yaml now carries 0x080C,
+   0x0723 and 0x0985 as XDATA_080C, XDATA_0723 and XDATA_0985, EC-side sites found with their
+   meanings not established, and names none of the other addresses above; what the entry bytes
+   represent is not determined here.
    type: dispatch
-   evidence: ec/decompiled/bank0/A1C8.asm; ec/decompiled/bank0/A1C8.c
+   evidence: ec/decompiled/bank0/A1C8.asm; ec/decompiled/bank0/A1C8.c; ec/annotations/registers.yaml
    basis: hand-decoded */
 
 void select_code_table_entry_and_store_0872_087a_088a(char param_1,char param_2)
@@ -75,22 +77,22 @@ void select_code_table_entry_and_store_0872_087a_088a(char param_1,char param_2)
   tail_call_7110_with_b6(DAT_EXTMEM_0a49);
   sVar5 = 0x88a;
   store_a_then_tail_call_7110_b6(*(undefined1 *)(sVar4 + 3));
-  DAT_EXTMEM_080c = *(byte *)(sVar5 + 4);
+  XDATA_080C = *(byte *)(sVar5 + 4);
   sVar4 = 0xa47;
   read_dptr_byte_into_r6();
   tail_call_7110_with_b6(DAT_EXTMEM_0a49);
   if ((char)*(byte *)(sVar4 + 5) < '\0') {
-    DAT_EXTMEM_0723 = DAT_EXTMEM_0723 | 8;
+    XDATA_0723 = XDATA_0723 | 8;
   }
   if ((*(byte *)(sVar4 + 5) >> 6 & 1) != 0) {
-    DAT_EXTMEM_0985 = DAT_EXTMEM_0985 | 2;
+    XDATA_0985 = XDATA_0985 | 2;
   }
   if (DAT_EXTMEM_08af != '\0') {
     DAT_EXTMEM_08af = DAT_EXTMEM_08af + -1;
-    cVar2 = DAT_EXTMEM_080c - 3;
-    if (DAT_EXTMEM_080c < 3) {
+    cVar2 = XDATA_080C - 3;
+    if (XDATA_080C < 3) {
       cVar2 = '\x03';
-      DAT_EXTMEM_080c = 3;
+      XDATA_080C = 3;
     }
     load_dptr_a916_tail_jump_1114(cVar2);
   }

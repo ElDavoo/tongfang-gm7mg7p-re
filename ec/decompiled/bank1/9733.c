@@ -17,7 +17,7 @@ void sync_085a_from_iram28_and_call_896a(void)
 {
   byte bVar1;
   
-  if (DAT_EXTMEM_06db == '\0') {
+  if (XDATA_06DB == '\0') {
     if ((DAT_EXTMEM_085a & 7) == (DAT_INTMEM_28 & 7)) {
       return;
     }

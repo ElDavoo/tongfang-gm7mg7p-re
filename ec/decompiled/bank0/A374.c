@@ -6,22 +6,23 @@
 
 /* Reads XDATA 0x0890 and leaves through the bare ret at 0xA425 if it is non-zero. Otherwise it
    calls 0x1654, which loads DPTR with the constant 0xF381 and jumps to 0x1114, and then writes 0x0A
-   to XDATA 0x0890. 0x0890 has no entry in ec/annotations/registers.yaml, and what 0x1114 does with
-   DPTR is not shown in this listing. The decompiled C for A312 reports a scaled call into 0x1654,
-   but 0x1654 ignores the accumulator, so the argument the C passes there is not a parameter.
+   to XDATA 0x0890. ec/annotations/registers.yaml now carries 0x0890 as XDATA_0890, an EC-side site
+   found with its meaning not established, and what 0x1114 does with DPTR is not shown in this
+   listing. The decompiled C for A312 reports a scaled call into 0x1654, but 0x1654 ignores the
+   accumulator, so the argument the C passes there is not a parameter.
    type: writer
-   evidence: ec/decompiled/bank0/A374.asm; ec/decompiled/bank0/A374.c
+   evidence: ec/decompiled/bank0/A374.asm; ec/decompiled/bank0/A374.c; ec/annotations/registers.yaml
    basis: hand-decoded */
 
 void send_f381_then_set_0890_to_0a(void)
 
 {
-  if (DAT_EXTMEM_0890 != '\0') {
+  if (XDATA_0890 != '\0') {
     shared_return_stub_a425();
     return;
   }
   load_dptr_f381_tail_jump_1114();
-  DAT_EXTMEM_0890 = 10;
+  XDATA_0890 = 10;
   return;
 }
 

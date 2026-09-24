@@ -26,11 +26,11 @@ void dispatch_on_0490_0495_0496_0498(char param_1)
       (trampoline_to_c10c(), param_1 == '\0')) || (DAT_EXTMEM_06e6 == -0x7c)) {
     return;
   }
-  if (DAT_EXTMEM_06c3 != '\0') {
+  if (XDATA_06C3 != '\0') {
     select_r4_from_cpu_temp_and_0620_0626();
     return;
   }
-  if (((DAT_EXTMEM_0490 & 1) == 1) || (DAT_EXTMEM_06da != '\0')) {
+  if (((DAT_EXTMEM_0490 & 1) == 1) || (XDATA_06DA != '\0')) {
 LAB_CODE_8e38:
     select_r4_from_cpu_temp_and_0620_0626();
     return;
@@ -94,7 +94,7 @@ LAB_CODE_8e6d:
       write_r4_to_047f_then_047e_fc(0x1c);
       return;
     }
-    if ((DAT_EXTMEM_06d1 == '\0') && (DAT_EXTMEM_0620 == -0x3f)) {
+    if ((XDATA_06D1 == '\0') && (DAT_EXTMEM_0620 == -0x3f)) {
       write_047f_and_arm_06d1_fa(0xc1,5);
       return;
     }

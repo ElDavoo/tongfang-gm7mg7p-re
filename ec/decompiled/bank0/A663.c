@@ -46,7 +46,7 @@ byte gate_0767_06e6_0741_then_dispatch_076f
     }
     tailcall_70e4_add_0100_at_dptr(0x855);
     if (DAT_EXTMEM_0852 < 100) {
-      if (DAT_EXTMEM_09ce == '\0') {
+      if (XDATA_09CE == '\0') {
         DAT_EXTMEM_1803 = mul_code_byte_by_xdata_0826(DAT_EXTMEM_0852,&DAT_CODE_632d);
       }
       else {
@@ -55,7 +55,7 @@ byte gate_0767_06e6_0741_then_dispatch_076f
       DAT_EXTMEM_0852 = DAT_EXTMEM_0852 + 1;
     }
     if (DAT_EXTMEM_0853 < 100) {
-      if (DAT_EXTMEM_09ce == '\0') {
+      if (XDATA_09CE == '\0') {
         DAT_EXTMEM_1805 = mul_code_byte_by_xdata_0826(DAT_EXTMEM_0853,&DAT_CODE_632d);
       }
       else {
@@ -65,7 +65,7 @@ byte gate_0767_06e6_0741_then_dispatch_076f
     }
     bVar4 = DAT_EXTMEM_0854 + 0x9c;
     if (DAT_EXTMEM_0854 < 100) {
-      if (DAT_EXTMEM_09ce == '\0') {
+      if (XDATA_09CE == '\0') {
         DAT_EXTMEM_1808 = mul_code_byte_by_xdata_0826(DAT_EXTMEM_0854,&DAT_CODE_632d);
       }
       else {
@@ -110,7 +110,7 @@ LAB_CODE_a136:
     bVar4 = set_state_bytes_then_0xa1c8(cVar3);
     return bVar4;
   }
-  if (DAT_EXTMEM_08a7 != '\0') {
+  if (XDATA_08A7 != '\0') {
     bVar4 = select_code_table_entry_and_store_0872_087a_088a();
     return bVar4;
   }

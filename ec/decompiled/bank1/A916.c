@@ -28,7 +28,7 @@ void clamp_078b_level_into_0804(void)
     return_stub();
     return;
   }
-  if (DAT_EXTMEM_080d != '\0') {
+  if (XDATA_080D != '\0') {
     return_stub();
     return;
   }
@@ -38,7 +38,7 @@ void clamp_078b_level_into_0804(void)
       bVar1 = 0;
     }
     sub_r0_from_r1_stash_r0_on_borrow(DAT_EXTMEM_080e);
-    sub_r0_from_r1_stash_r0_on_borrow(DAT_EXTMEM_080c);
+    sub_r0_from_r1_stash_r0_on_borrow(XDATA_080C);
     sub_r0_from_r1_stash_r0_on_borrow(DAT_EXTMEM_0808);
     sub_r0_from_r1_stash_r0_on_borrow(DAT_EXTMEM_0805);
     sub_r0_from_r1_stash_r0_on_borrow(DAT_EXTMEM_0626);
