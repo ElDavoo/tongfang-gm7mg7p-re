@@ -193,19 +193,26 @@ commit that added it. Re-derivable without this tool: 79 of the 1,172 rows in
 were both staleness rather than method.** The committed `xdata-registers.csv`
 had an empty `name` column for every row and the committed
 `xdata-clusters.csv` an empty `named_addrs` column for all 25 clusters that
-have named addresses, while the tool fills both and its own self-test asserts
-`name` is populated exactly for the addresses the symbol table names. So
-`--check` and `--self-test` both failed on the tree this file describes —
+have named addresses (25 then; 47 rows of the census name one now, 36
+`main-ec` and 11 `pd`), while the tool fills both and its own self-test
+asserts `name` is populated exactly for the addresses the symbol table names.
+So `--check` and `--self-test` both failed on the tree this file describes —
 nothing in `.github/scripts/agent-gates.sh` runs either mode, which is why it
 went unnoticed. `ORACLE['named_in_tree']` had the same problem: it read 44
 from when the 0x0400-0x045F page entries were added to `registers.yaml`
 without the constant being re-derived, against 79 in the tree. Both are
 corrected here, and §5's "named inside" column is a reading of the corrected
-CSV — which is why four of its rows moved here too (`main-ec-001` 20 to 28,
-`main-ec-003` and `main-ec-007` from `none`, and `main-ec-012` from `none` to
-6). Only the `main-ec-012` row is this change's doing; the other three are the
-drift above catching up, and the count in the CSV rather than the hand-typed
-one in this table is the authority.
+CSV. That work was also said to move four of §5's rows — `main-ec-001` 20 to
+28, `main-ec-003` and `main-ec-007` from `none`, and `main-ec-012` from
+`none` to 6 — and it did not: the table kept reading `none` for three of
+them, and `main-ec-001` at 29 rather than the 28 named here. **Issue #272
+settled that against the census**, which reads `main-ec-001` 33,
+`main-ec-002` 19, `main-ec-003` 43 (every member of the cluster), and
+`main-ec-004` at the census's 26/278 rather than the 30/312 the row carried.
+The `6` was never `main-ec-012`'s: the census names no address in
+`main-ec-012`, and 6 is `main-ec-011`'s, the row above, which does read 6.
+The count in the CSV rather than the hand-typed one in this table is the
+authority, and `tools/check_cluster_citations.py` now holds the table to it.
 
 *(Merge note, 2026-09-24. The transcript above is re-run on the merged tree,
 not copied from either branch. `named_in_tree` is 88 now, not 79 or 86: the two
@@ -217,7 +224,9 @@ were merged and exported the same way; the `DAT_EXTMEM_`-only figures fall accor
 not move.) The same regeneration moved 17 references from the
 `DAT_EXTMEM_` spelling to those names, so the `DAT_EXTMEM_`-only oracle reads
 13,878 raw and 979/13,005 for the main EC; the full census is unchanged. In §5
-below, `main-ec-001`'s "named inside" is 29 for the same reason.)*
+below, `main-ec-001`'s "named inside" is 33 for the same reason — 29 was the
+figure in the table this note was written against, and issue #272 settled the
+row at the census's 33.)*
 
 ## 2. The two spellings, and what the issue's "six" actually counted
 
@@ -583,15 +592,17 @@ on direction, so removing 837 phantom writers moved the clusters, and the
 ranking is by size — which reorders everything below the top. A second,
 independent movement comes from the `named inside` column alone: that column
 counts addresses `ec/ghidra/xdata-symbols.csv` names, and the table grew from
-56 names to 101 without these CSVs being regenerated. Sizes, reference counts
-and ranges are §4.3; `named inside` is mostly the symbol table.
+56 names to 101 without these CSVs being regenerated. (101 is this
+paragraph's figure; `xdata-symbols.csv` holds 172 names in the tree now, and it
+is that table §5's "named inside" column counts.) Sizes, reference counts and
+ranges are §4.3; `named inside` is mostly the symbol table.
 
 | cluster | size | refs | range | named inside | the functions the cluster's addresses share |
 |---|---:|---:|---|---|---|
-| `main-ec-001` | 108 | 1,136 | `0x030E`-`0x1809` | 29 | `fill_08xx_from_code_table`, `apply_oem_overrides_then_fill_08xx`, `mode_tick_084c_07a5_09ee`, `charge_target_update` — the mode/OEM initialisation set |
-| `main-ec-002` | 44 | 248 | `0x044C`-`0x1F07` | 4 | `gate_06e6_442_then_sync_046a_from_086b`, `dispatch_on_0860`, `FUN_CODE_9d9b` — the `0x06E6`/`0x0860` gate block |
-| `main-ec-003` | 43 | 4,965 | `0x0460`-`0x09CE` | none | `decrement_nonzero_xdata_counters`, `read_06c6`, `skip_06c6_decrement` — one loop walking a block of counters |
-| `main-ec-004` | 30 | 312 | `0x030A`-`0x082F` | `0x0403` | three unnamed `bank1` routines (`0xDEE8`, `0xDEF1`, `0xDB0B`) — unnamed here, so this one needs reading before it can be titled |
+| `main-ec-001` | 108 | 1,136 | `0x030E`-`0x1809` | 33 | `fill_08xx_from_code_table`, `apply_oem_overrides_then_fill_08xx`, `mode_tick_084c_07a5_09ee`, `charge_target_update` — the mode/OEM initialisation set |
+| `main-ec-002` | 44 | 248 | `0x044C`-`0x1F07` | 19 | `gate_06e6_442_then_sync_046a_from_086b`, `dispatch_on_0860`, `FUN_CODE_9d9b` — the `0x06E6`/`0x0860` gate block |
+| `main-ec-003` | 43 | 4,965 | `0x0460`-`0x09CE` | 43 | `decrement_nonzero_xdata_counters`, `read_06c6`, `skip_06c6_decrement` — one loop walking a block of counters |
+| `main-ec-004` | 26 | 278 | `0x030A`-`0x082F` | `0x0403` | three unnamed `bank1` routines (`0xDEE8`, `0xDEF1`, `0xDB0B`) — unnamed here, so this one needs reading before it can be titled |
 | `main-ec-005` | 17 | 70 | `0x0382`-`0x03C9` | none | `mul_0342_0514_into_0388_when_03d0_lt_0384`, `FUN_CODE_d6ee`, `FUN_CODE_d946` |
 | `main-ec-006` | 16 | 94 | `0x043E`-`0x300E` | `0x043E` | `FUN_CODE_9b3c`, `FUN_CODE_9c53`, `FUN_CODE_de83` |
 | `main-ec-007` | 12 | 280 | `0x0045`-`0x1504` | none | three `ff_filler_not_a_function_*`, the fill stub block |
@@ -602,7 +613,7 @@ and ranges are §4.3; `named inside` is mostly the symbol table.
 | `main-ec-012` | 9 | 36 | `0x0300`-`0x03FE` | none | `zero_0300_03ff_then_set_3fe_3a8_3fb`, `scan_table_03de_down_stride2` — the `0x0300` page |
 
 `main-ec-001` is the one that matters most and the one most likely to be
-misread. It is where 28 named registers land, so it looks like "the named
+misread. It is where 33 named registers land, so it looks like "the named
 registers, discovered again", but what the clustering actually found is that
 the *initialisation* routines touch them all: a cluster is a co-occurrence, and
 108 addresses reached by one mode tick and one OEM override pass is a statement
