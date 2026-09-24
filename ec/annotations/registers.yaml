@@ -1565,15 +1565,18 @@ registers:
       member of ASSIGN, and ASSIGN's first member is "=", which the "==" of a
       Ghidra comparison also starts -- so every comparison is counted as a
       store. Running the committed classifier over ec/decompiled/bank0/D091.c
-      returns write for all fourteen "==" sites and read for the one genuine
-      read. The numbers in this entry come from trace_xdata_refs.py, which
-      decodes opcodes rather than C, and the census is left stale rather than
-      regenerated because regenerating it now would re-freeze the
-      miscounted direction columns into the committed files. Fixing the
-      classifier and re-censusing is separate work (moves 838 occurrences
-      across 211 addresses); the reading is complete without it. NOT NAMED:
-      a selector and a busy mark are shape, not units. Per-address table:
-      ec/annotations/xdata-086x-dispatch.md.
+      returns write for eleven of its fourteen "==" sites and read+write for
+      the other three (the chained "||" forms put the address on the
+      right-hand side of the "==" as well), while the one genuine read, the
+      switch_case_dispatch site, is bucketed passed-to-call -- so read is
+      empty in that file. The numbers in this entry come from
+      trace_xdata_refs.py, which decodes opcodes rather than C, and the
+      census is left stale rather than regenerated because regenerating it
+      now would re-freeze the miscounted direction columns into the
+      committed files. Fixing the classifier and re-censusing is separate
+      work (moves 838 occurrences across 211 addresses); the reading is
+      complete without it. NOT NAMED: a selector and a busy mark are shape,
+      not units. Per-address table: ec/annotations/xdata-086x-dispatch.md.
 
   - name: XDATA_0862
     addr: 0x0862
@@ -1668,11 +1671,14 @@ registers:
     status: present-untested
     note: >
       8 EC-side sites in bank0, 5 writes and 3 reads, no PD site. Fourth
-      byte of the three-block working set FUN_CODE_9d9b computes, and in all
-      three blocks it is the cap: at 0x9E22-0x9E2E, 0x9F0B-0x9F17 and
-      0x9FE4 onward the accumulated result is compared against it and the cap
-      is substituted when the result is the larger. UNITS NOT DETERMINED.
-      Per-address table: ec/annotations/xdata-086x-dispatch.md.
+      byte of the three-block working set FUN_CODE_9d9b computes, and the cap
+      in the first two blocks only: at 0x9E22-0x9E2E and 0x9F0B-0x9F17 the
+      accumulated result is compared against it and the cap is substituted
+      when the result is the larger. The third block, 0x9FA3-0xA00D, never
+      reaches it -- the last 0x0869 seed in FUN_CODE_9d9b is 0x9F0B, and the
+      0x9FE4-0xA00D tail stores 0x086E with no cap at all. UNITS NOT
+      DETERMINED. Per-address table:
+      ec/annotations/xdata-086x-dispatch.md.
 
   - name: XDATA_086A
     addr: 0x086A

@@ -65,10 +65,13 @@ and `store_target()` at line 277 decides "is this the assignment target" by
 testing whether the text following the occurrence starts with any member of
 `ASSIGN`. A Ghidra comparison spells `==`, which also starts with `=`, so
 **every comparison is counted as a store**. Running the committed
-`classify()` over `ec/decompiled/bank0/D091.c` returns `write` for all
-fourteen `==` sites on `0x0860` and `read` for the one genuine read — which
-is exactly the "14 of 17 references are `==`" figure the issue quotes, now
-accounted for.
+`classify()` over `ec/decompiled/bank0/D091.c` returns `write` for eleven of
+its fourteen `==` sites on `0x0860` and `read+write` for the other three,
+because the chained `||` forms put the address on the right-hand side of the
+`==` as well; the one genuine read, the `switch_case_dispatch(XDATA_0860)`
+site, is bucketed `passed-to-call`. So no occurrence in that file is
+classified `read` at all. The "14 of 17 references are `==`" figure the issue
+quotes is unaffected by that split, and now accounted for.
 
 The census row for `0x0860` therefore reads 13 `write`, 3 `read+write`, 1
 `passed-to-call`, **0 `read`**. The truth by the other method is **4 reads
@@ -166,8 +169,9 @@ blocks**, and `0x086B`, `0x086C` and `0x086E` are the three results:
 Each block calls `sub_0866_from_0865` (`0x0865` minus `0x0866`), then
 `sub_dptr_byte_from_0867` and `sub_dptr_byte_from_0868`, each of which reads
 the running result through the caller's DPTR and returns a difference with
-the borrow in `CY`, keeping the smaller; then it caps the result at `0x0869`
-and applies its clamps. Each clamp is guarded by bit 7 of `0x0751`
+the borrow in `CY`, keeping the smaller; then the first two cap the result at
+`0x0869` and apply their three clamps, and the third clamps nothing at all.
+Each clamp is guarded by bit 7 of `0x0751`
 (`MANUAL_FAN_CTRL`) together with a different pairing of bits 1 and 0 of
 `0x07C6` (`AP_OEM_6`). The middle block's third clamp works through
 `0x0A47`, which is then compared against `0x09EF` and, on a change, passed
@@ -187,13 +191,13 @@ three results are what the rest of the block stages out. A wrong unit baked
 into a symbol outlives the note that would have to correct it, so the entries
 stay `XDATA_086x`.
 
-`bank0:0xA00E` (now `seed_0872_087a_then_select_level`) is part of the same
-mechanism and says so: it seeds the override sources in one run — `0x08C0`
-into `0x0872`, `0x08C1` into `0x087A`, `0x08C3` into `0x088A` — which is
-what the overrides in the table above read. Several of its arms tail-call
-`select_code_table_entry_and_store_0872_087a_088a`, the code table that
-actually fills those three bytes; that routine's body is not in this listing,
-so the arm is recorded as a call and not decoded further.
+`bank0:0xA00E` (now `seed_0872_087a_088a_then_select_level`) is part of
+the same mechanism and says so: it seeds the override sources in one run —
+`0x08C0` into `0x0872`, `0x08C1` into `0x087A`, `0x08C3` into `0x088A` —
+which is what the overrides in the table above read. Several of its arms
+tail-call `select_code_table_entry_and_store_0872_087a_088a`, the code table
+that actually fills those three bytes; that routine's body is not in this
+listing, so the arm is recorded as a call and not decoded further.
 
 ## 6. The copy is not a mirror, and the pair is not a second buffer
 
@@ -219,7 +223,7 @@ five direct sites, all bank 0 and all between `0xD0DF` and `0xD2B5`: two
 reads and three writes. The reads are `0xD0DF`/`0xD0E7` (in
 `dispatch_on_0860`, copying in from the pair) and `0xD26F`/`0xD277`; the
 writes are `0xD225`/`0xD22D`, `0xD24F`/`0xD253`, and `0xD2B2`/`0xD2BA` in
-the copy. Reading those windows against the case table of §4, three of them
+the copy. Reading those windows against the case table of §4, six of them
 sit in the **case-`0x36`/`0x37`/`0x38`/`0x39` handlers** at `0xD221` and
 `0xD24E`:
 
