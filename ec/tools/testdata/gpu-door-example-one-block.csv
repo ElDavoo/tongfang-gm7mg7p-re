@@ -1,0 +1,14 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# byte and timestamp below was written by hand so ec/tools/grade_gpu_door.py
+# can be run over a capture in the shape §3 of
+# docs/hardware-tests/gpu-tgp-07c4-07d7-door.md takes. See ../README.md.
+# Shape: only the ACPI half moves, in both windows, so there is no ordering to
+# report and a report that printed one anyway would be inventing a comparison.
+# It is not a prediction that the host half will hold still under a GPU-only
+# change -- §1 notes the service writes it, and this file is not evidence that
+# it did not.
+ts,addr,old,new
+2026-01-01T12:00:10.000+01:00,MARK,,gpu tgp 115W->130W
+2026-01-01T12:00:10.400+01:00,0x07C4,0x08,0x28
+2026-01-01T12:00:40.000+01:00,MARK,,ac unplug
+2026-01-01T12:00:40.600+01:00,0x07C6,0x01,0x00

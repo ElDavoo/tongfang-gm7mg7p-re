@@ -23,8 +23,8 @@ service wrote it, the EC wrote it, or nothing did, and it is not evidence the
 EC acts on it.
 
 A row is also an *endpoint net*, not a trace: a byte that moves and comes back
-between two sweeps reads as quiet here, so read a zero through issue #168
-before believing it.
+between two sweeps reads as quiet here, so read a zero through
+ec/tools/grade_gpu_door.py before believing it.
 
 The `WATCH` table in this file is the citation list the procedure's §7 is
 graded against, printed once at startup so a capture states on its face what it
@@ -38,7 +38,8 @@ address.
 
 The CSV schema is `ts,addr,old,new` with a mark as `ts,MARK,,label` -- the
 schema `ec_watch.py` and ec/tools/grade_0751_isolation.py already read, kept
-byte-identical so issue #168's grading needs no parser for this file.
+byte-identical so the offline grader of this procedure's capture,
+`ec/tools/grade_gpu_door.py` (issue #283), needs no parser for this file.
 
 The `--interval` default is ec_watch.py's 0.25 s and is a starting point, not a
 safe one: `ecrw.Ec.read` is one ECRR DeviceIoControl per byte with nothing
@@ -57,10 +58,10 @@ import time
 from ecrw import Ec, EcError
 from ec_watch import CsvSink, Marker, now
 
-# The 10 addresses here have no row in registers.yaml. That is a claim about
+# The 8 addresses here have no row in registers.yaml. That is a claim about
 # the file, not about the address: docs/findings.md §4c retracted a "does not
 # exist" reading of a zero-reference scan, and a table that says "no row"
-# ten times is the sentence most likely to be misread back into one.
+# eight times is the sentence most likely to be misread back into one.
 NO_ROW = "no row in ec/annotations/registers.yaml"
 
 # (addr, DSDT field list name and bit, registers.yaml status, citation)
@@ -243,9 +244,9 @@ def main(argv=None):
 
     # Which window moved first, as a number. What the number means -- and
     # whether it settles anything -- is a human's reading, not this tool's: a
-    # zero is "not moved by this method under this action", and #168 owns the
-    # grading of a capture. Printed so the reading has both halves in one
-    # place rather than two files.
+    # zero is "not moved by this method under this action", and
+    # ec/tools/grade_gpu_door.py is what grades the capture. Printed so the
+    # reading has both halves in one place rather than two files.
     if len(earliest) == len(WINDOWS):
         first, second = sorted(earliest, key=lambda k: earliest[k][1])
         print(f"\nfirst change in {first} ({earliest[first][0]}) led "
@@ -254,6 +255,8 @@ def main(argv=None):
         print("a timing report, not a verdict: a byte that wanders back "
               "between two sweeps reads as quiet, and a mark is the only "
               "record of what the operator did when.")
+        print("grade_gpu_door.py reports the same ordering per mark, from the "
+              "CSV rather than from this console.")
     return 0
 
 
