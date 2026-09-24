@@ -276,9 +276,15 @@ And one difference in shape, which the numbers do not show. A §3 block is
 marks at both ends of each of those three stages. A probe block is one hold
 per arm, ~30 s each by default: no separate settle and no separate post-write
 watch, because the tool snapshots once before each arm and sweeps until the
-hold is up. The two forms produce the same *kind* of number — net movement per
-arm, which is §4.4's comparison — but a probe block is a shorter block, and a
-run that used only the probe is not a §3 run that was quicker.
+hold is up. A probe block is also a shorter block, and a run that used only
+the probe is not a §3 run that was quicker. What it reports is narrower than
+§4.4's comparison, not the same number in a worse place: the probe prints
+each arm's first value, last value and change count — the net, which is one
+of the three figures on the grader's `window delta` line — where §4.4 keys
+the control-vs-write comparison on total movement. A probe run's per-arm
+change rows are printed as they happen, so a reader can sum them, but
+nothing in the probe's own output does that summing; the §3 three-capture
+form gets it printed for it by the grader.
 
 What §3b lists is what the tool half is *specified* to do, and the tool half's
 behaviour is checked offline: `windows/tools/test_manual_fan_ctrl_probe.py`
@@ -379,15 +385,45 @@ For each run, from the three CSVs plus the by-hand power readings:
    cost of keeping it that way is lower than the cost of the alternative.
 
    **Then compare the control arm's capture window against the write's.**
-   How far did `0x075B`/`0x075C` drift between the no-op's mark and the next
-   one? On 2026-09-23 that number is the whole reason the fan half stayed
-   `present-untested`. The grader prints it for you as a `window delta` line
-   per window (§6) so the two arms are two numbers rather than two terminals
-   of subtraction, but it does not compare them and does not say which is
-   bigger — the call is yours. If the write window's movement is inside the
-   control arm's run-to-run spread, that is the answer to record and the
-   status does not move — per `../../CLAUDE.md`, an ambiguous result is a
-   result, not a reason to pick the confident-sounding phrasing.
+   How far did `0x075B`/`0x075C` move between the no-op's mark and the next
+   one? The grader prints it for you as a `window delta` line per window (§6)
+   so the two arms are two numbers rather than two terminals of subtraction,
+   but it does not compare them and does not say which is bigger — the call
+   is yours.
+
+   **The comparison keys on *total movement*, not on the net.** The line
+   carries three figures and they are not interchangeable. *Net* is the
+   difference between where the byte opened the window and where it closed
+   it — the cleanest summary of a clean monotonic step, and blind to any
+   movement that came back. *Total movement* is the sum of the absolute steps
+   the byte took inside the window, so it counts the whole path. *Max
+   excursion* is the furthest it got from the value it opened at, and is
+   the read for a write arm whose response is a ramp to a new duty
+   *followed by wander*. The argument is the shape of the thing being
+   measured, not arithmetic convenience: a fan's duty under a fixed load
+   wanders with the die, and it wanders in **both** arms. The wander is
+   common to both, so it cannot separate them, while a net swallows it
+   entirely — a duty that climbs to a new curve and then wanders back down
+   ends near where it started and nets to nearly nothing, which is exactly
+   what a *ramping response* to the write looks like. What can separate the
+   two arms is how far the byte actually travelled. A byte that held still
+   prints as `net +0 … (0 changes)` rather than going missing, so a byte
+   that was watched and stayed put is not read as a byte nobody watched.
+   The net stays on the line because where a response really is a clean
+   step, that is the figure to read, and because where the statistics
+   disagree it is total that carries the answer.
+
+   On 2026-09-23 that comparison is the whole reason the fan half stayed
+   `present-untested`, and it is not re-litigated by this choice of figure:
+   that capture recorded the PWM drift as monotonic
+   (`../../evidence/ec-watch/2026-09-23-0751-isolation.txt`, "the same
+   monotonic PWM drift"), and for a monotonic drift net, total and max are
+   the same number. It was a probe run, not a §3 fixed-load block, so it
+   has no capture windows to re-grade — see §3b. If the write window's
+   movement is inside the control arm's run-to-run spread, that is the
+   answer to record and the status does not move — per `../../CLAUDE.md`,
+   an ambiguous result is a result, not a reason to pick the
+   confident-sounding phrasing.
 5. **CPU package power** under the same fixed load, by hand at each mark. If
    the PLs did not move but the power ceiling did, something other than
    `0x0783-0x0785` is enforcing it, and that is a new question, not a
@@ -545,23 +581,25 @@ does have a change, the section names its own next step,
 It is a first pass and not the answer. It prints §4.4's fan duty bytes
 and §4.5's temperature bytes per window so the control arm and the write can
 be compared line for line, and it sums each of them into a `window delta`
-line — first value, last value, net, and how many times the byte moved inside
-the window — so §4.4's deciding comparison is two numbers instead of two
-terminals. The whole-block section prints the same duty pair the same way,
-under the same *not graded here* heading — and, because the `0x0400` pair is
-one of the three, it also prints §4.5's two temperature bytes there. That is
-the whole-block answer to what §4.4 and §4.5 ask: whether the die held
-across the control arm and the write, read at the block's two ends rather
-than inside one window. Whether the two arms' duty numbers mean anything is
-still a human's call, in either read. It still does not grade them and does
-not claim to. The reason is not that the addresses are unidentified any more
-— issue #123 identified them, and that is why §4 item 4 dropped the
-"unconfirmed" wording. It is that a fan duty byte drifts on a warming die
-whether or not anything wrote `0x0751`, so grading it would report "moved" on
-every window including the no-op control, and telling those apart is what the
-control arm in §3 measures and what a script cannot. Package power is in no
-capture and is still yours to note by hand. The script says so in its own
-output and does not emit a status.
+line — first value, last value, the endpoint net, the total movement, the
+max excursion, and how many times the byte moved inside the window. Every
+context byte gets a line in every window, whether or not it moved, so a
+byte that held still reads as a zero rather than as a missing line. §4.4
+names which of the three figures the control-vs-write comparison keys on
+and argues it from what a thermal wander looks like; the short form is that
+they disagree exactly when a byte wanders, and a fan duty under a fixed load
+wanders in both arms. The whole-block section prints the same duty pair, and —
+because the `0x0400` pair is one of the three — §4.5's two temperature bytes
+too, under the same *not graded here* heading: whether the die held across
+the control arm and the write, read at the block's two ends rather than
+inside one window. It still does not grade them and does not claim to. The
+reason is not that the addresses are unidentified any more — issue #123
+identified them. It is that a fan duty byte drifts on a warming die whether
+or not anything wrote `0x0751`, so grading it would report "moved" on every
+window including the no-op control, and telling those apart is what the
+control arm in §3 measures and what a script cannot. Package power is in no capture and is
+still yours to note by hand. The script says so in its own output and does
+not emit a status.
 
 ## 7. What a result has to say
 

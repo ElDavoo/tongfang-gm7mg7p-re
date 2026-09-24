@@ -21,12 +21,27 @@ and, reported but not graded, the fan duty bytes `0x075B`/`0x075C`
 and `CPU_TEMP` `0x043E` / `GPU_TEMP` `0x044F` (§4.4/§4.5), plus whether
 `0x0751` still holds the written value in the after-dump (§4.6).
 
-Each context byte that moved in a window is also summarised as a
-`window delta` -- first value, last value, net, and how many times it moved
-inside the window. That is arithmetic on rows already in the capture, not a
-new judgement: §4.4's deciding comparison is how far the duty bytes drifted
-between one mark and the next, and reading that off the change rows means
-doing the subtraction by eye across two terminal windows.
+Every context byte gets a `window delta` line in every window, whether or not
+it moved: first value, last value, the endpoint net, the total movement (the
+sum of the absolute steps it took inside the window), the max excursion (the
+furthest it got from the value it opened the window at), and how many times it
+moved. That is arithmetic on rows already in the capture, not a new judgement:
+§4.4's comparison is how far the duty bytes moved between one mark and the next,
+and reading that off the change rows means doing the subtraction by eye across
+two terminal windows -- or, for a byte that went somewhere and came back, the
+counting and adding by eye that the figures do instead.
+
+The three movement figures are all on the line because they are not
+interchangeable. Net is an endpoint statistic, so it is the right summary of a
+clean monotonic step and blind to movement that came back; §4.4 keys the
+control-vs-write comparison on total, because a fan duty under a fixed load
+wanders in both arms and the wander cannot separate them, while how far the
+byte actually travelled can. Max excursion is the read for a write arm whose
+response is a ramp to a new duty followed by wander.
+
+A byte that held still is a line of zeros, not a missing line: absence would
+read as missing data rather than as the strongest negative result the
+procedure can produce.
 
 `--dump-pair` reads the same §4.1-§4.3 bytes a second, wider way, from a
 before/after dump pair per range -- the range dumps §3's steps 0 and 6 take,
@@ -144,15 +159,16 @@ FAN_TABLE_NEXT_STEP = (
 # The bytes §4.4/§4.5 name but this script does not grade. They get their own
 # section because they are what §7's call is made on, and a reader should not
 # have to find them in the generic "other addresses" list to notice them --
-# but they are printed per window precisely so the no-op control arm and the
-# write under test can be compared by eye, change row by change row and then
-# as the net the rows add up to. The duty pair is identified -- issue #123
-# gave them the vendor's ADDR_EC_MAIN_FAN_L/R_DUTY_BYTE names and entries in
-# registers.yaml -- and it stays out of WATCHED anyway, because a duty byte
-# drifts on a warming die whether or not anything wrote 0x0751: grading it
-# would report "moved" on every window, the no-op control arm included, and
-# leave nothing to compare. The two temperatures are confirmed-working, and
-# are here as the record of whether the load was flat.
+# and they get a line in every window, holding still or not, so that the no-op
+# control arm and the write under test can be compared by eye: change row by
+# change row, and then as the total movement the rows add up to, which is the
+# figure §4.4 keys on. The duty pair is identified -- issue #123 gave them the
+# vendor's ADDR_EC_MAIN_FAN_L/R_DUTY_BYTE names and entries in registers.yaml
+# -- and it stays out of WATCHED anyway, because a duty byte drifts on a
+# warming die whether or not anything wrote 0x0751: grading it would report
+# "moved" on every window, the no-op control arm included, and leave nothing
+# to compare. The two temperatures are confirmed-working, and are here as the
+# record of whether the load was flat.
 CONTEXT = (
     ("fan duty 0x075B/0x075C -- MAIN_FAN_L/R_DUTY (§4.4)",
      range(0x075B, 0x075D)),
@@ -178,6 +194,7 @@ class Window:
         self.label = label
         self.source = source
         self.changes = []
+        self.levels = {}
 
 
 def parse_ts(s):
@@ -254,18 +271,67 @@ def coalesce_marks(marks):
 
 
 def build_windows(marks, changes):
-    """Assign every change to the last mark at or before it.
+    """Assign every change to the last mark at or before it, and record the
+    level each byte held where its window opened.
 
     Changes before the first mark belong to no window: the procedure has the
     operator let the sweep settle for ~10 s before marking, so they are the
-    settling noise, not a reaction to anything.
+    settling noise, not a reaction to anything. They still set the level the
+    mark opened on, though, and that is worth more than their being dropped:
+    without them a byte that moved while the sweep settled and then held still
+    would print as level-unknown, when the captures in hand do say what it
+    settled to. One time-ordered pass does both.
     """
     windows = coalesce_marks(marks)
-    for c in sorted(changes, key=lambda c: c.ts):
-        prior = [w for w in windows if w.ts <= c.ts]
-        if prior:
-            prior[-1].changes.append(c)
+    ordered = sorted(changes, key=lambda c: c.ts)
+    last, i = {}, 0
+    while i < len(ordered) and ordered[i].ts < windows[0].ts:
+        last[ordered[i].addr] = ordered[i].new
+        i += 1
+    for n, w in enumerate(windows):
+        w.levels = dict(last)
+        end = windows[n + 1].ts if n + 1 < len(windows) else None
+        while i < len(ordered) and (end is None or ordered[i].ts < end):
+            w.changes.append(ordered[i])
+            last[ordered[i].addr] = ordered[i].new
+            i += 1
     return windows
+
+
+def window_delta(w, addr):
+    """One context byte's movement inside one window, as a printed line.
+
+    `net` is the endpoint difference, `total` the sum of the absolute steps the
+    byte took inside the window, `max` the furthest it got from the value it
+    opened the window at. They are all here because §4.4's comparison is not
+    answered by any one of them on its own: a byte that steps and settles says
+    the same thing in all three, a byte that steps and wanders back does not.
+
+    With no in-window change the byte did not move, so all three figures are
+    zero and that is what the line says -- the line existing at all is the
+    point, since no line reads as missing data rather than as a held byte. The
+    level comes from `w.levels`: a change-row capture records transitions, not
+    values, so a byte that has never appeared is known not to have moved while
+    its level is not in evidence, and the line says that rather than filling
+    something in.
+    """
+    seq = [c for c in w.changes if c.addr == addr]
+    first = seq[0].old if seq else w.levels.get(addr)
+    if first is None:
+        level = "???? -> ????"
+    else:
+        level = f"0x{first:02X} -> 0x{seq[-1].new if seq else first:02X}"
+    net = seq[-1].new - first if seq else 0
+    total = sum(abs(c.new - c.old) for c in seq)
+    peak = max((abs(c.new - first) for c in seq), default=0)
+    if seq:
+        count = f"({len(seq)} change{'' if len(seq) == 1 else 's'})"
+    elif first is None:
+        count = "(0 changes, level not in these captures)"
+    else:
+        count = "(0 changes)"
+    return (f"window delta  0x{addr:04X}  {level}  net {net:+d}  "
+            f"total {total}  max {peak}  {count}")
 
 
 def note_lines(text):
@@ -315,26 +381,29 @@ def report_window(w, n, total):
     if not moved:
         print("    no watched byte moved in this window")
 
-    groups = [(name, [c for c in w.changes if c.addr in addrs])
-              for name, addrs in CONTEXT]
-    groups = [(name, hits) for name, hits in groups if hits]
-    if groups:
-        print("    fan duty / temperature bytes (§4.4/§4.5) -- context, "
-              "not graded here:")
-        print("    net is the raw byte difference across the whole window, "
-              "not a duty percentage:")
-        for name, hits in groups:
-            print(f"      {name}:")
-            for a in sorted({c.addr for c in hits}):
-                seq = [c for c in hits if c.addr == a]
-                print(f"        window delta  0x{a:04X}  "
-                      f"0x{seq[0].old:02X} -> 0x{seq[-1].new:02X}  "
-                      f"net {seq[-1].new - seq[0].old:+d}  "
-                      f"({len(seq)} change{'' if len(seq) == 1 else 's'})")
-            for c in hits:
-                dt = (c.ts - w.ts).total_seconds()
-                print(f"        0x{c.addr:04X}  0x{c.old:02X} -> 0x{c.new:02X}"
-                      f"   (+{dt:.1f}s)")
+    print("    fan duty / temperature bytes (§4.4/§4.5) -- context, "
+          "not graded here:")
+    print("    net is the raw byte difference across the whole window, not a "
+          "duty")
+    print("    percentage; total is the sum of the absolute steps the byte "
+          "took inside it,")
+    print("    and max is the furthest it got from the value it opened the "
+          "window at. §4.4")
+    print("    keys the control-vs-write comparison on total. Every context "
+          "byte gets a")
+    print("    line in every window, so a byte that held still is a zero here "
+          "and not a")
+    print("    missing line.")
+    for name, addrs in CONTEXT:
+        print(f"      {name}:")
+        for a in addrs:
+            print(f"        {window_delta(w, a)}")
+        for c in w.changes:
+            if c.addr not in addrs:
+                continue
+            dt = (c.ts - w.ts).total_seconds()
+            print(f"        0x{c.addr:04X}  0x{c.old:02X} -> 0x{c.new:02X}"
+                  f"   (+{dt:.1f}s)")
 
     others = sorted({c.addr for c in w.changes
                      if not any(c.addr in a for _, a in WATCHED)
