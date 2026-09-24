@@ -215,7 +215,10 @@ node had been holding apart, and they are one of 303 now.
 size. That is *not found by this method*, never "these have no subsystem", and
 `ungrouped` is in the vocabulary so saying so costs nothing. (576 when this was
 written: issue #134's 44 rows took 26 out and the proxy correction took 94
-more.)
+more.) **16 of the 456 were found by the method and cut by the proxy rule**,
+which is a different reason and says so in their comments and in `--report`'s
+split line — see
+[`docs/findings/group-proxy-populations.md`](../../docs/findings/group-proxy-populations.md).
 
 **No group is a behavioural claim.** A group says which routines are connected
 in the call graph, not what the EC does with them. No hardware is reachable

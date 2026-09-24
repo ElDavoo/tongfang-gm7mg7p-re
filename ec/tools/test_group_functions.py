@@ -104,8 +104,8 @@ class CrossBankEdge(unittest.TestCase):
         rows = [row('bank0', '8000', 'caller', self.caller),
                 row('bank0', '8100', 'callee', self.callee),
                 row('bank1', '8100', 'other_bank_callee', self.other)]
-        _grouped, cross = gf.group_rows(rows, repo=gf.REPO, min_size=2)
-        self.assertEqual(cross, 1)
+        _grouped, stats = gf.group_rows(rows, repo=gf.REPO, min_size=2)
+        self.assertEqual(stats.cross_region, 1)
 
     def test_a_same_region_edge_still_clusters(self):
         # The refusal must not be a refusal to cluster at all. With no bank1
@@ -136,8 +136,8 @@ class CrossBankEdge(unittest.TestCase):
         paged = listing(self.tmp.name, 'paged.asm', AJMP)
         rows = [row('bank0', '8000', 'caller', paged),
                 row('bank1', '8030', 'elsewhere', paged)]
-        grouped, cross = gf.group_rows(rows, repo=gf.REPO, min_size=2)
-        self.assertEqual(cross, 0)
+        grouped, stats = gf.group_rows(rows, repo=gf.REPO, min_size=2)
+        self.assertEqual(stats.cross_region, 0)
         self.assertEqual(grouped[('bank1', '8030')][0], 'ungrouped')
 
 
