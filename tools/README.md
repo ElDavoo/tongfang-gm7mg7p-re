@@ -21,6 +21,11 @@ suite standing in for a tool's own behaviour:
 | `windows/tools/test_ec_watch.py` | the mark-CSV sweep and the mark landing between two change rows |
 | `linux/lightbar/test_probe_6005.py` | the lightbar probe's ioctl encoding, dry run, and off-after-failure |
 
+`windows/tools/ecrw_fake.py` is a shared fixture rather than a suite — it is
+the offline stand-in for the `ecrw` module both `windows/tools` suites import,
+and the `test_*.py` pattern above does not pick it up, so it costs no suite
+count.
+
 Named directories run alone, which is what to reach for when editing one tool:
 
 ```sh
@@ -36,16 +41,27 @@ the vacuous check is the same defect the gate's listing parse had in
 
 ## One interpreter per file, and why that is not a preference
 
-Both `windows/tools` suites install a fake `ecrw` into `sys.modules` with
-`setdefault`, and the two fakes are not the same shape: one exports `Ec` only,
-the other exports `Ec` and `EcError`, and `ec_watch.py` imports both. In one
-shared interpreter, whichever suite imports first wins, and the other dies with
-`ImportError: cannot import name 'EcError' from 'ecrw'`. It passes today only
-because discovery sorts the two in a lucky order — an accident nothing asserts.
-`docs/findings.md` §16 has the reproduction. The runner's per-file isolation is
-what keeps a rename from turning that accident into a red build; the fix that
-would retire the whole question is to reconcile the two fakes, which is a
-follow-up rather than part of this.
+Both `windows/tools` suites used to install a fake `ecrw` into `sys.modules`
+with `setdefault`, and the two fakes were not the same shape: one exported `Ec`
+only, the other exported `Ec` and `EcError`, and `ec_watch.py` imports both. In
+one shared interpreter, whichever suite imported first won, and the other died
+with `ImportError: cannot import name 'EcError' from 'ecrw'`. It passed only
+because discovery sorted the two in a lucky order — an accident nothing
+asserted. `docs/findings.md` §16 has the reproduction.
+
+**Issue #186 reconciled the two fakes**, and the landmine is defused: there is
+now one `windows/tools/ecrw_fake.py`, carrying `Ec` and `EcError` over the
+real module's whole surface, and both suites `install()` it. Each still supplies
+its own behaviour on top — a suite that needs bytes still writes its own class.
+A single discovery run over `windows/tools` passes all 20 in any filename order
+now, in both the shipped order and the two renames §16's reproduction uses.
+
+The per-file loop therefore stays as belt-and-braces rather than as the thing
+holding a red build away. That is a decision and not an oversight: the next
+suite to reach for a fake of its own gets an interpreter to itself without
+anyone having to notice the collision first, and the loop costs a fraction of a
+second. Collapsing it into one discovery run is no longer dangerous here, but
+it is also no longer a saving worth having.
 
 ## What it does not run
 

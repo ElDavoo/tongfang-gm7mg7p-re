@@ -2607,17 +2607,35 @@ That is an ordering accident, nothing asserts it, and a rename that reorders
 them turns it into a red build the moment a runner exists to run it. It was
 latent precisely because nothing ran them.
 
+*(**Correction, 2026-09-24, issue #186.** The account above is what was measured
+and it stands as history; the accident it describes is now defused. There is one
+`windows/tools/ecrw_fake.py` carrying `Ec` and `EcError` over the real
+`ecrw.py`'s whole surface, both suites `install()` it, and each still supplies
+its own behaviour on top — `test_ec_watch.py`'s `EcError` *is* the shared one,
+its `FakeEc` is its own, and the probe suite still patches `probe.Ec`. The
+reproduction above re-run unchanged, on a scratch copy with the probe's suite
+renamed `test_aaa_probe_first.py` so it still sorts first, now prints **Ran 20
+tests / OK**; the mirror-image rename, `test_ec_watch.py` sorted last, also
+prints **Ran 20 tests / OK**; and the shipped order does too. Two renames are
+the honest bound of what a scratch copy can demonstrate, and the structural
+argument is the one file both suites import. `ecrw.py` itself is unchanged — the
+fake mirrors its surface, it does not replace it.*
+
 Two consequences, and the second is the one to carry forward:
 
 1. **The runner isolates per *file*.** Per-directory isolation would not have
    helped — both suites live in one directory — and neither would leaving it to
-   discovery order. The reason is written into the script at the loop, because
-   the next reader will otherwise helpfully collapse it into a single discovery
-   run and land the landmine.
+   discovery order. That reason is written into the script at the loop. With the
+   correction above it is insurance rather than the thing keeping a red build
+   away: the loop is what the *next* suite to reach for a fake of its own gets
+   for free, and the comment at the loop now says so rather than only saying
+   "do not simplify".
 2. **The durable fix is to reconcile the two fakes**, and it is deliberately not
    done here: it edits two currently-passing suites this issue did not ask
    about. It is a follow-up, and the isolation is what keeps it from biting
-   meanwhile.
+   meanwhile. **Where that deferral ended:** issue #186 is that follow-up, and
+   the reconciliation is `windows/tools/ecrw_fake.py`. The isolation stayed, as
+   belt-and-braces.
 
 **What this does and does not buy.** The suites are now one command a human or a
 future gate can call, and the runner is shellchecked for free by the existing

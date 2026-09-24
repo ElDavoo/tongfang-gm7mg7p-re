@@ -121,12 +121,18 @@ bash tools/run-tests.sh windows/tools
 
 `tools/test_manual_fan_ctrl_probe.py` scripts the probe's two arms byte by byte
 and `tools/test_ec_watch.py` checks the mark lands in the CSV between the two
-change rows. Both work by faking `ecrw` — the module binds kernel32 at import
-time and only loads on Windows — which is also what makes the arms scriptable.
-`../tools/README.md` is the canonical home for the command, and records why the
-runner gives each suite its own interpreter: the two `ecrw` fakes are not the
-same shape, and a single shared discovery over this directory breaks on
-whichever one imports second (`docs/findings.md` §16).
+change rows. Both work through `tools/ecrw_fake.py` — the shared offline
+stand-in for `ecrw`, which binds kernel32 at import time and so only loads on
+Windows — and that is also what makes the arms scriptable. `../tools/README.md`
+is the canonical home for the command.
+
+The runner still gives each suite its own interpreter, and that is now
+belt-and-braces rather than load-bearing. The two suites used to install
+differently-shaped fakes for the same module, so a single discovery run over
+this directory broke on whichever one imported second; both install the one
+`ecrw_fake.py` now, and a single run passes in any filename order
+(`docs/findings.md` §16, which keeps the reproduction and the original
+failure).
 
 ## What's proven vs. what needs a Windows box
 
