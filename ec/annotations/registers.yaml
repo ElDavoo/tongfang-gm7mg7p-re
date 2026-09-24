@@ -874,7 +874,7 @@ registers:
 
   - name: XDATA_0440
     addr: 0x0440
-    sources: [xdata-refs, dsdt(ECRW: uncalled)]
+    sources: [xdata-refs, "dsdt(ECRW: uncalled)"]
     static_refs: 43
     static_refs_main_ec: 43
     static_refs_pd_image: 0
@@ -890,15 +890,23 @@ registers:
       0x0440. That is a static reading of a table, not a readback, and when
       those tables are walked is not established; 0x8354 and 0x86EE are not
       recorded call targets. Grouping the 43 readers by constant AND by what
-      each branch does: 39 are a zero test, and the non-zero arm is the working
-      one in each, so non-zero reads as a mode rather than a flag being set. The
-      4 cjne sites test 0x07 (bank1 0x8328), 0x08 (bank1 0xA12D) and 0x05
-      (bank1 0xF2D5, 0xF2FE), the last two chaining on to 0x06 and 0x07, so the
+      each branch does: 39 are a zero test, and at 32 of them the zero arm is
+      inert (a ret, a sjmp past the body, or a forward call), so at those the
+      shape is an enable flag; at the other 7 the zero arm does work of its own
+      -- seeding, clearing, dispatching or toggling -- so zero is not one state
+      either and the byte reads as a selector between behaviours. The 4 cjne
+      sites test 0x07 (bank1 0x8328), 0x08 (bank1 0xA12D) and 0x05 (bank1
+      0xF2D5, 0xF2FE), the last two chaining on to 0x06 and 0x07, so the
       compared set is {0, 5, 6, 7, 8} -- not a closed enumeration, since the 39
       zero tests accept any non-zero byte. 16 of the 43 are co-gated on 0x06E6
-      == 0x01, so the byte is only ever read inside that mode, the same family
-      0x06E6 belongs to (written 5 at power-on by bank0 0xCCFC, dispatched on
-      0x81-0x84 at bank0 0xCF48). HYPOTHESIS, not a decode: a host-written
+      == 0x01; the other 27 branch on 0x0440 whatever 0x06E6 holds, so the byte
+      is read inside that mode and outside it. The co-gated 16 are the
+      profile-shaped ones -- the fan toggle, the thermal-ceiling seed, the ring
+      producer -- and all four cjne sites are among the ungated 27, so the
+      scoping is an observation about those 16 and does not account for the rest.
+      0x06E6 is the same family 0x0440 is hypothesised to join (written 5 at
+      power-on by bank0 0xCCFC, dispatched on 0x81-0x84 at bank0 0xCF48).
+      HYPOTHESIS, not a decode: a host-written
       platform-profile or mode index, zero at power-on and host-set thereafter.
       What would falsify it is a live read outside {0, 5, 6, 7, 8}, or a
       non-zero writer in code these methods do not reach. Per-site table and the

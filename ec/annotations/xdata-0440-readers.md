@@ -137,12 +137,20 @@ same routines that gate on `0x0440`. `0xB9D8` is a three-instruction routine tha
 returns `0x06E6 ^ 1`, so `lcall 0xB9D8 / jnz` is the house idiom for "and
 `0x06E6 == 1`".
 
-This is the load-bearing half of the reading, and it is load-bearing for a
-specific reason: **the byte is only ever consulted inside the mode in which
-`0x06E6` is 1.** It is not a global mode selector that happens to be checked
-near a mode index; it is a second selector that only has meaning in one of them.
+The 16 are the profile-shaped sites — the fan toggle, the thermal-ceiling seed,
+the ring producer — and those are mode-scoped. **The other 27 are not:** they
+branch on `0x0440` whatever `0x06E6` holds, 21 of them with no `0x06E6` test
+anywhere in the routine and 6 with a qualified reason recorded in the CSV column
+(§4's own `co_gate_06e6`). `0x8088` (`807E.c`) and `0x8153` (`80EF.c`) contain no
+`0x06E6` token at all, and all four `cjne` sites that compare the byte's value
+are in the ungated 27. So the byte is read inside the `0x06E6 == 1` mode and
+outside it, and the scoping is an observation about 16 of the 43 rather than a
+property of the byte. What that leaves is a real but narrower claim: the
+subsystems that would carry a host profile are the mode-scoped ones. The ungated
+27 — mostly always-running tick and countdown sites — are equally consistent with
+a global enable, so the scoping does not account for them.
 
-The other three supporting facts are consistent, not decisive:
+Three further facts are consistent with the reading, not decisive:
 
 - the `0x0751` FanBoost toggle (§2) says a host profile reaches the fan;
 - `0x9334` seeds `MODE_TCC_OFFSET_DEFAULTS` only when `0x0440` is non-zero, so a
@@ -150,10 +158,10 @@ The other three supporting facts are consistent, not decisive:
 - the ring at `0x070F`-`0x071F` is filled only when the byte is non-zero and
   `0x06E6` is 1, and `0x88F0` hands off to `0x19EA`.
 
-None of the three names the value. A byte that gates three unrelated subsystems
-*inside one mode* is consistent with a platform profile; it is equally consistent
-with a vendor-internal state byte that happens to be initialised externally. §6
-is what separates the two.
+None of the three names the value. A byte that gates three unrelated subsystems,
+two of them only inside one mode, is consistent with a platform profile; it is
+equally consistent with a vendor-internal state byte that happens to be
+initialised externally. §6 is what separates the two.
 
 ## 5. The writer: found, and it writes zero
 
@@ -259,8 +267,11 @@ value selects which. The EC initialises it to zero and never changes it.**
 
 What supports it, in descending order of weight:
 
-1. **§4 — it is only read inside `0x06E6 == 1`.** A second selector scoped to one
-   mode is what a profile looks like; a global flag would not need scoping.
+1. **§4 — 16 of the 43 are scoped to `0x06E6 == 1`, and they are the
+   profile-shaped ones.** A second selector scoped to one mode is what a profile
+   looks like; a global flag would not need scoping. The other 27 are not
+   scoped, so this is weaker than it looks: 16 of 43 with the ungated remainder
+   unexplained by the scoping, and all four value-comparing sites among it.
 2. **§5 — every writer found writes zero, in code that reads as init.** A byte
    the firmware puts to zero and never sets is a byte the host owns.
 3. **§2/§3 — the byte selects between behaviours rather than switching one on.**
@@ -274,6 +285,12 @@ found in an unexported routine that stores a non-zero; or `0x06E6` turning out t
 be a state variable that happens to be 1 whenever this byte is interesting, which
 would leave `0x0440` as an EC-internal state byte written by a code path §8 does
 not reach.
+
+One counterexample to support 1 is already in hand rather than pending, and it
+cuts against the hypothesis: 27 of the 43 readers reach `0x0440` while
+`0x06E6 != 1` (§4), so the byte is demonstrably not scoped to that mode. The
+scoping survives only as a property of the 16, and the hypothesis has to stand on
+supports 2 and 3 without it.
 
 The experiment that would settle it is a human with the machine, and it is
 **not** run here: a read of `0x0440` (with `0x06E6` beside it) across a Control
