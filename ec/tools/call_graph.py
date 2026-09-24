@@ -338,8 +338,12 @@ class _Sink:
 
 
 def diff_table(have, want):
-    """The lines `--check` prints when the committed table `have` differs
-    from the recomputed `want`; empty when they are byte-identical.
+    """The lines describing a *row-level* difference between the committed
+    table `have` and the recomputed `want`.
+
+    Empty when every row parses equal, which is **not** the same as identical:
+    the byte comparison is the pass condition and it lives in `check_table()`.
+    This function renders a difference and never decides one.
 
     A function rather than an inline block in `main()` so `self_test()` can
     drive the *same* comparison the gate runs per commit. Asserting against a
@@ -348,8 +352,6 @@ def diff_table(have, want):
     rejects a table that has drifted, and a check that has quietly started
     accepting everything looks exactly like a check that is working.
     """
-    if have == want:
-        return []
     have_rows = list(csv.DictReader(have.splitlines()))
     want_rows = list(csv.DictReader(want.splitlines()))
     lines = []
@@ -369,6 +371,36 @@ def diff_table(have, want):
         lines.append("  row count: committed %d, recomputed %d"
                      % (len(have_rows), len(want_rows)))
     return lines
+
+
+def check_table(have, want):
+    """`(exit_code, lines)`: what `--check` returns, and the lines it prints
+    on the way there. Byte equality is the pass condition, and it is the only
+    one.
+
+    It has to be the bytes rather than the parsed rows. A table whose rows
+    read the same while its bytes do not is a table this tool did not write --
+    CRLF line endings from a `core.autocrlf` checkout, a trailing blank line,
+    reordered columns, redundant quoting -- and `.gitattributes` marks the
+    decompiled `.c` trees `-text` for exactly that hazard but does not cover
+    `ec/annotations/*.csv`, so the CRLF case is reachable rather than
+    hypothetical. Gating the verdict on the rows would call such a table clean
+    with the gate green, which is the exact quiet drift this check exists to
+    close.
+
+    `lines` is never empty when the code is 1, so a failure always says
+    something: where every row parses equal, the line names the byte
+    difference instead of leaving the reader with no output and an exit code
+    to interpret.
+    """
+    if have == want:
+        return 0, []
+    lines = diff_table(have, want)
+    if not lines:
+        lines = ["  bytes differ and every row parses equal: line endings, a "
+                 "trailing blank line, column order or quoting differ from "
+                 "what this tool writes"]
+    return 1, lines
 
 
 def report(index, rows, edges, unresolved, orphan_callers, total):
@@ -513,9 +545,17 @@ def self_test() -> int:
     check("the rendered table is a csv.DictReader fixed point, which is what "
           "--check relies on",
           render(list(csv.DictReader(rendered.splitlines()))) == rendered)
-    check("the rendered table against itself is no diff, which is --check's "
+    check("the rendered table against itself passes, which is --check's "
           "passing case",
-          diff_table(rendered, rendered) == [])
+          check_table(rendered, rendered) == (0, []))
+    crlf = rendered.replace("\n", "\r\n")
+    crlf_rc, crlf_lines = check_table(crlf, rendered)
+    check("a CRLF table is rejected on its bytes although every row parses "
+          "equal -- the row diff alone finds nothing there, which is why "
+          "the pass condition is the comparison -- and the report is not "
+          "empty",
+          crlf_rc == 1 and crlf_lines
+          and diff_table(crlf, rendered) == [])
     edited = [dict(r) for r in rows]
     edited[0]["inbound"] = str(int(edited[0]["inbound"]) + 1)
     edited_lines = diff_table(render(edited), rendered)
@@ -562,8 +602,8 @@ def main() -> int:
             return 1
         with open(CALLEES, newline="") as f:
             have = f.read()
-        lines = diff_table(have, text)
-        if not lines:
+        rc, lines = check_table(have, text)
+        if rc == 0:
             print("call-graph-callees.csv: %d rows, no diff"
                   % len(rows))
             return 0

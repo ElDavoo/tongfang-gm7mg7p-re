@@ -168,8 +168,8 @@ only covers what's specific to *this* copy.
      suite (`ec/tools/test_check_capture_claims.py`) needs no wiring to be
      run at all: `tools/run-tests.sh` discovers every `test_*.py` in the
      repository, so it is already collected by the runner above.
-  6. **`call_graph.py --check` and `--self-test` are the ninth tool in
-     `check_ghidra_tooling`, and a re-copy drops both** (2026-09-24, issue
+  6. **`call_graph.py --check` and `--self-test` are added to the tool list
+     in `check_ghidra_tooling`, and a re-copy drops both** (2026-09-24, issue
      #454). They hold the 1,841-row `ec/annotations/call-graph-callees.csv`
      against the committed `.asm` listings it is derived from: nothing
      re-derived that table before, so a hand-edited cell or a re-exported
