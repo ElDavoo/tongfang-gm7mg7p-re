@@ -2170,12 +2170,13 @@ three of the four entries the parenthetical at the top of this section records
 as having been misread — 0xC0 is PUSH direct, 0x93 is MOVC A,@A+PC, and 0xC3
 is CLR C, so the `CLR bit` and `MOVC A,bit` there were never gaps at all.
 (`MOV C,bit` and `MOV bit,C` are a different pair: 0xA2 assembles fine, while
-0x92 is a real gap, and the paragraph above does not distinguish them.) What
-`sdas8051` cannot express is `MOV bit,C`, `CPL bit`, `CLR bit`, `CJNE` on a
-direct address, `DJNZ A` and the carry-with-immediate forms, plus
-`AJMP`/`ACALL` for the separate reason given. The 143 is unaffected by which
-SDCC build is on PATH — §14g measures it against a second one and finds the
-same 143 on all 2,705 rows.
+0x92 is a real gap, and the paragraph above does not distinguish them.) The 143
+are `MOV bit,C`, `CPL bit` and `DJNZ A`, plus `AJMP`/`ACALL` for the separate
+reason given. `verify_reassembly.py` refuses three further forms that this
+firmware happens not to contain — 0xC1 `CLR bit`, `CJNE` on a direct address
+and the carry-with-immediate forms — so those are rules with no instance rather
+than part of the 143. The 143 is unaffected by which SDCC build is on PATH —
+§14g measures it against a second one and finds the same 143 on all 2,705 rows.
 
 **The claim this does not make.** That the C recompiles. Keil C51 generated
 these bytes; SDCC does not emit Keil's code generation, and no amount of
