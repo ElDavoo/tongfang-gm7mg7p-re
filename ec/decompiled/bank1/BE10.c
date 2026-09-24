@@ -10,7 +10,7 @@ void FUN_CODE_be10(char param_1)
 
 {
   if ((DAT_EXTMEM_04ff >> 4 & 1) != 0) {
-    FUN_CODE_bd45();
+    mask_0491_c0_then_route_to_300x_40xx();
     return;
   }
   if ((DAT_EXTMEM_04ff >> 5 & 1) != 0) {
@@ -22,7 +22,7 @@ void FUN_CODE_be10(char param_1)
     return;
   }
   if ((DAT_EXTMEM_0493 >> 6 & 1) != 0) {
-    FUN_CODE_bd45();
+    mask_0491_c0_then_route_to_300x_40xx();
     return;
   }
   DAT_EXTMEM_0898 = 0;

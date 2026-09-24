@@ -21,7 +21,7 @@ void FUN_CODE_0609(void)
   DAT_EXTMEM_1128 = 0xff;
   DAT_EXTMEM_1150 = 0xff;
   EX1 = 1;
-  FUN_CODE_05ef();
+  critical_section_exit_05ef();
   return;
 }
 

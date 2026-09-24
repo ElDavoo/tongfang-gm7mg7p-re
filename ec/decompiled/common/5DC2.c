@@ -58,7 +58,8 @@ byte FUN_CODE_5dc2(byte param_1,byte *param_2,byte *param_3,byte param_4,char pa
     do {
       if (_6_7 != '\0') {
         param_7 = param_7 - (cVar8 >> 7);
-        bVar2 = FUN_CODE_5a43(bVar3 + param_7 + (bVar2 - ((CARRY1(bVar3,param_7) << 7) >> 7)));
+        bVar2 = addc_chain_into_r7_5a43
+                          (bVar3 + param_7 + (bVar2 - ((CARRY1(bVar3,param_7) << 7) >> 7)));
         return bVar2;
       }
 LAB_CODE_5e11:
@@ -111,7 +112,8 @@ LAB_CODE_5a46:
         param_4 = param_4 - ((CARRY1(bVar4,bVar2) << 7) >> 7);
         bVar2 = bVar5 + param_4;
         param_6 = param_6 - ((CARRY1(bVar5,param_4) << 7) >> 7);
-        bVar2 = FUN_CODE_5a43(bVar2 + param_6 + (bVar3 - ((CARRY1(bVar2,param_6) << 7) >> 7)));
+        bVar2 = addc_chain_into_r7_5a43
+                          (bVar2 + param_6 + (bVar3 - ((CARRY1(bVar2,param_6) << 7) >> 7)));
         return bVar2;
       }
       goto LAB_CODE_5e70;
@@ -176,9 +178,10 @@ LAB_CODE_5f0d_2:
           pbVar7 = param_2 + -0x17;
           param_4 = param_4 - (((&BANK2_R6 < param_2) << 7) >> 7);
           param_6 = param_6 - ((CARRY1((byte)pbVar7,param_4) << 7) >> 7);
-          bVar2 = FUN_CODE_5a43(pbVar7 + param_4 +
-                                (bVar3 - ((CARRY1((byte)(pbVar7 + param_4),param_6) << 7) >> 7)) +
-                                param_6);
+          bVar2 = addc_chain_into_r7_5a43
+                            (pbVar7 + param_4 +
+                             (bVar3 - ((CARRY1((byte)(pbVar7 + param_4),param_6) << 7) >> 7)) +
+                             param_6);
           return bVar2;
         }
 code_c0x5ec6:
@@ -211,7 +214,7 @@ code_c0x5f3f:
   param_4 = param_4 - ((CARRY1(bVar5,bVar2) << 7) >> 7);
   bVar2 = bVar4 + param_4;
   param_6 = param_6 - ((CARRY1(bVar4,param_4) << 7) >> 7);
-  bVar2 = FUN_CODE_5a43(bVar2 + param_6 + (bVar3 - ((CARRY1(bVar2,param_6) << 7) >> 7)));
+  bVar2 = addc_chain_into_r7_5a43(bVar2 + param_6 + (bVar3 - ((CARRY1(bVar2,param_6) << 7) >> 7)));
   return bVar2;
 LAB_CODE_5efd:
   bVar3 = bVar4;

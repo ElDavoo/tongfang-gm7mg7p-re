@@ -9,7 +9,7 @@
 void FUN_CODE_322c(void)
 
 {
-  FUN_CODE_3b22(DAT_EXTMEM_0a4d);
+  mul13_table_lookup_3b22(DAT_EXTMEM_0a4d);
   FUN_CODE_3bae();
   FUN_CODE_3bbf();
   DAT_EXTMEM_0a4d = DAT_EXTMEM_0a4d + '\x01';

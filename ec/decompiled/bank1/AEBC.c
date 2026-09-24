@@ -22,7 +22,7 @@ char cmp_0436_0437_against_1_or_test_0514(void)
     return DAT_EXTMEM_0514 + -1;
   }
   read_xdata_pair_to_r3r4(0x436);
-  cVar1 = FUN_CODE_8863(1,0);
+  cVar1 = cmp_r3r4_against_r1r2_16bit(1,0);
   return cVar1;
 }
 

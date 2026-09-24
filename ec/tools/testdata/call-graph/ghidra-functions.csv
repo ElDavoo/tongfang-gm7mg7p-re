@@ -1,0 +1,3 @@
+scope,addr,name,signature,type,comment,evidence,basis
+bank0,0EA2,delay_calls_0ee8,,delay,"Writes the byte 0x64 to XDATA 0x0A56 as a loop counter, calls 0x0EE8 to load and start Timer 1, waits for its overflow, and calls 0x0EE8 again on the next pass. The counter is written once and read back per pass, so the wait is counted rather than fixed. 0x64 is the data value written, not an address.",ec/decompiled/bank0/0EA2.asm; ec/decompiled/bank0/0EA2.c,hand-decoded
+bank0,0EA3,mentions_absent_target,,unresolved,"Calls 0xBEEF, which is named here to pin that a comment naming an address the listings do not carry produces no citation: the tool must refuse the row rather than invent a callee for it.",ec/decompiled/bank0/0EA3.asm,hand-decoded

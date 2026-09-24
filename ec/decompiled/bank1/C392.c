@@ -13,7 +13,7 @@ void FUN_CODE_c392(void)
   
   if (((DAT_EXTMEM_0495 >> 4 & 1) != 1) && ((DAT_EXTMEM_049d >> 4 & 1) != 1)) {
     read_xdata_pair_to_r3r4(0x4a2,0xee,0xc);
-    FUN_CODE_8863();
+    cmp_r3r4_against_r1r2_16bit();
     if ((in_PSW < '\0') && (DAT_EXTMEM_0622 != '\0')) {
       DAT_EXTMEM_0805 = 4;
       DAT_EXTMEM_0622 = DAT_EXTMEM_0622 + -1;

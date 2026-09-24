@@ -36,6 +36,17 @@ into `r2 -a 8051` with no stitching needed.
 
 ## Tools
 
+- **`tools/call_graph.py`** — the EC call graph, read out of the committed
+  `.asm` listings rather than the `.c` export, and the ranked work list of
+  anonymous callees that an already-written comment depends on. The `.asm` is
+  the only framing that survives the annotation pass: a `.c` names its callees,
+  so a name-based inbound count is zeroed by the very act of naming. Parses all
+  four transfer forms, because a `lcall`-only scan misses 0x5A43 (11 `ajmp`, 0
+  `lcall`) and 0x00CF (1 `ljmp`) entirely. Default mode prints the census and
+  writes `annotations/call-graph-callees.csv`, `--check` recomputes that table
+  and fails on any diff, and `--self-test` runs the tool against the fixture
+  in `tools/testdata/call-graph/`. Read `annotations/call-graph.md` for the
+  numbers, the ordering, and what the counts do not say.
 - **`tools/scan_refs.py`** — counts direct `MOV DPTR,#addr` references to a
   given XDATA address. Fast way to check "does this EC firmware build
   implement register X". Every count comes out split `ec=`/`pd=` across the
@@ -327,6 +338,12 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   start here. It is 144 addresses, and `annotations/xdata-register-map.md`
   covers 1,172 — the two corpora are nearly disjoint, and which of the two a
   question is about decides where the answer lives.
+- **`annotations/call-graph.md`** — the second pass over the edges rather than
+  the leaves: what `tools/call_graph.py` measures, how the anonymous callees
+  are ranked, and what the counts do not establish. The first tranche it drove
+  named 44 of them, including 0x0EE8 — the address whose name is what closes
+  `bank0,0x0EA2`'s comment. Read this before quoting a call count, and before
+  deciding which anonymous function to name next.
 - **`annotations/static-refs-audit.md`** — the per-image reference count for
   every address in `registers.yaml`, the command that produced it, and the
   subset of it that backs the static-scan validation in `docs/findings.md`
@@ -336,7 +353,7 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   fan/thermal cluster, power modes, the lightbar, the index/data path, and the
   XDATA naming, each with the named functions that establish it. Fronted by a
   **measured** coverage census rather than a claim of completeness — 2710
-  exported functions against 1804 annotation rows, 94% of the common area
+  exported functions against 1848 annotation rows, 90% of the common area
   unannotated — because a subsystem map that read as a partition of the
   firmware would be a claim the export does not support.
   `build_ec_decompile.py --check` resolves every citation in it against

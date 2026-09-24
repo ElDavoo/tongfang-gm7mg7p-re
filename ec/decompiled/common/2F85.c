@@ -15,7 +15,7 @@ void FUN_CODE_2f85(undefined1 param_1)
   
   DAT_EXTMEM_0a47 = param_1;
   FUN_CODE_3d6c();
-  FUN_CODE_3894();
+  set_iram_ad_88_clear_33();
   FUN_CODE_3983(0);
   DAT_INTMEM_90 = 0;
   if (_3_3 != '\0') {

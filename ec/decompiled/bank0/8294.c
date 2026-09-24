@@ -70,7 +70,7 @@ void FUN_CODE_8294(byte param_1,byte param_2)
       return;
     }
     uVar3 = read_x0a59_and_x0a5a(bVar1 - 1);
-    FUN_CODE_708f(0);
+    div_r6r4_by_r5_16bit(0);
     DAT_EXTMEM_0a5a = uVar3;
   }
   DAT_EXTMEM_0a59 = param_1;

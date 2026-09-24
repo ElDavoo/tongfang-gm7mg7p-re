@@ -24,7 +24,7 @@ char FUN_CODE_4666(void)
       }
       pbVar4 = &DAT_EXTMEM_0a17;
       FUN_CODE_4ad1();
-      FUN_CODE_4a69();
+      code_word_to_dptr_4a69();
       bVar1 = *pbVar4;
     } while ((bVar1 & 0xfc) == 0);
     if ((bVar1 & 0x7c) != 0) {
@@ -38,12 +38,12 @@ char FUN_CODE_4666(void)
     }
     puVar5 = &DAT_EXTMEM_0a17;
     FUN_CODE_4aa7(DAT_EXTMEM_0a17);
-    FUN_CODE_4a69();
+    code_word_to_dptr_4a69();
     *(undefined1 *)CONCAT11(DAT_EXTMEM_0a1b,DAT_EXTMEM_0a1c) = *puVar5;
     if (DAT_EXTMEM_0a1e == '\0') {
       FUN_CODE_4adf();
                     /* WARNING: Subroutine does not return */
-      FUN_CODE_4a4d();
+      code_word_to_dptr_4a4d();
     }
     DAT_EXTMEM_0a1e = DAT_EXTMEM_0a1e + -1;
     FUN_CODE_4b22(0xa1b);
@@ -55,7 +55,7 @@ char FUN_CODE_4666(void)
     }
     puVar5 = &DAT_EXTMEM_0a17;
     FUN_CODE_4ad3(DAT_EXTMEM_0a17);
-    FUN_CODE_4a69();
+    code_word_to_dptr_4a69();
     *puVar5 = 0xfe;
   } while (cVar3 != '\0');
   cVar3 = FUN_CODE_4afb();

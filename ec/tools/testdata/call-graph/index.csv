@@ -1,0 +1,10 @@
+program,addr,name,size,seed_basis,common,annotated,type,basis,evidence,also_in,out_file
+bank0,0EA2,delay_calls_0ee8,42,annotation,yes,yes,delay,hand-decoded,ec/decompiled/bank0/0EA2.asm,,bank0/0EA2.c
+common,05E8,FUN_CODE_05e8,6,call-target,yes,no,,,,bank1,common/05E8.c
+common,0EE8,FUN_CODE_0ee8,8,call-target,yes,no,,,,bank1,common/0EE8.c
+common,5A43,FUN_CODE_5a43,3,call-target,yes,no,,,,bank1,common/5A43.c
+common,00CF,table_walker_00cf,5,call-target,yes,yes,copy,hand-decoded,ec/decompiled/common/00CF.asm,,common/00CF.c
+common,0064,FUN_CODE_0064,5,call-target,yes,no,,,,bank1,common/0064.c
+common,0ECC,FUN_CODE_0ecc,6,call-target,yes,no,,,,bank1,common/0ECC.c
+bank0,1F00,FUN_CODE_1f00,6,call-target,yes,no,,,,,bank0/1F00.c
+common,DEAD,FUN_CODE_dead,3,call-target,yes,no,,,,bank1,common/DEAD.c

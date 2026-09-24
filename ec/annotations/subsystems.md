@@ -55,26 +55,26 @@ Measured over the committed export, by `index.csv` for the functions and
 `ghidra-functions.csv` for the names:
 
 - `exported functions` — 2710
-- `annotated function rows` — 1804
-- `rows the index marks annotated` — 1822
-- `unresolved rows` — 140
+- `annotated function rows` — 1848
+- `rows the index marks annotated` — 1866
+- `unresolved rows` — 152
 
 By program, as exported minus annotated minus the rest:
 
 | program | exported | annotated | unannotated |
 |---|---|---|---|
-| `bank0` | 746 | 687 | 59 (8%) |
-| `bank1` | 676 | 591 | 85 (13%) |
+| `bank0` | 746 | 693 | 53 (7%) |
+| `bank1` | 676 | 596 | 80 (12%) |
 | `pd` | 535 | 501 | 34 (6%) |
-| `common` | 753 | 43 | 710 (94%) |
+| `common` | 753 | 76 | 677 (90%) |
 
 **The common area is the finding.** It is 28% of the export by row count and
-94% of it is unannotated, and it is where the interrupt vectors, the BL51 stubs
+90% of it is unannotated, and it is where the interrupt vectors, the BL51 stubs
 and most of the runtime helpers live. It is also the area this document had to
 extend to say anything about interrupt entry, which is what §3 is.
 
 **The three counts disagree, and the difference is measured rather than
-smoothed.** `index.csv` marks 1822 rows `annotated=yes` and the CSV holds 1804
+smoothed.** `index.csv` marks 1866 rows `annotated=yes` and the CSV holds 1848
 rows: a gap of 18. Both sides are enumerated. 25 index rows are marked
 `annotated=yes` with no CSV row at all, and 7 CSV rows are recorded by the index
 as `annotated=no`; 25 − 7 = 18.
@@ -100,10 +100,10 @@ The 7 the index records as `annotated=no` are `bank1` `0xF113`, `0xF116`,
 by the annotation layer, so the index's `annotated` column is recording the seed
 basis rather than the presence of a name.
 
-**140 of the 1804 rows are `type: unresolved`, and 267 carry a name that
-describes a shape rather than a job** — `call_` (86), `load_` (113),
-`trampoline_` (29), `ret_only_` (19), `nop_` (9), `thunk_` (7), `seed_` (4).
-Each is counted on the whole prefix, not a narrower one: 76 of the `load_` rows
+**152 of the 1848 rows are `type: unresolved`, and 271 carry a name that
+describes a shape rather than a job** — `call_` (86), `load_` (115),
+`trampoline_` (29), `ret_only_` (21), `nop_` (9), `thunk_` (7), `seed_` (4).
+Each is counted on the whole prefix, not a narrower one: 78 of the `load_` rows
 are `load_dptr_` and the other 37 are the register and table loads beside them.
 `sub_input_from_cpu_temp_043e` is a subtraction step; `trampoline_to_c0a2` is a
 jump. Neither is a mechanism, and a map built only from the names would be a map
@@ -441,13 +441,13 @@ own. `--check` compares both occurrences against the same recount, so they
 cannot drift apart silently:
 
 - `exported functions` — 2710
-- `annotated function rows` — 1804
-- `rows the index marks annotated` — 1822
-- `unresolved rows` — 140
+- `annotated function rows` — 1848
+- `rows the index marks annotated` — 1866
+- `unresolved rows` — 152
 
-**710 of the 753 common-area functions are unannotated, and that is the largest
+**677 of the 753 common-area functions are unannotated, and that is the largest
 single block of undecoded firmware in this repository** — larger than the whole
-`pd` program. It is the natural next issue, and §2 is what sizes it. The 140
+`pd` program. It is the natural next issue, and §2 is what sizes it. The 152
 `unresolved` rows are a second, separate queue: functions that were looked at
 and are correctly described as far as the bytes go.
 
@@ -456,7 +456,7 @@ and are correctly described as far as the bytes go.
 Stated as a list, because the limit is the point of the document:
 
 1. **It is not a partition of the firmware.** §2's counts are the evidence, and
-   710 common-area functions and 140 `unresolved` rows are not in any group
+   677 common-area functions and 152 `unresolved` rows are not in any group
    here.
 2. **Nothing was observed on hardware.** No register behaviour, no interrupt
    delivery, no fan response, no charge current. Every claim above traces to a

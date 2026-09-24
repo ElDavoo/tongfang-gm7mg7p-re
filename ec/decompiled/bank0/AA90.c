@@ -16,16 +16,16 @@
 void call_2990_1e1a_fixed_sequence(void)
 
 {
-  FUN_CODE_2990(0xe0);
-  FUN_CODE_2990(0x1f);
-  FUN_CODE_2990(0x14);
+  advance_bfe_counter_publish_at_bfd(0xe0);
+  advance_bfe_counter_publish_at_bfd(0x1f);
+  advance_bfe_counter_publish_at_bfd(0x14);
   FUN_CODE_1e1a(0,0x5f);
   FUN_CODE_1e1a(1,0x5f);
-  FUN_CODE_2990(0xf0);
-  FUN_CODE_2990(0x14);
-  FUN_CODE_2990(0xe0);
-  FUN_CODE_2990(0xf0);
-  FUN_CODE_2990(0x1f);
+  advance_bfe_counter_publish_at_bfd(0xf0);
+  advance_bfe_counter_publish_at_bfd(0x14);
+  advance_bfe_counter_publish_at_bfd(0xe0);
+  advance_bfe_counter_publish_at_bfd(0xf0);
+  advance_bfe_counter_publish_at_bfd(0x1f);
   return;
 }
 

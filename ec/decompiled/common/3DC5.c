@@ -10,7 +10,7 @@ void FUN_CODE_3dc5(void)
 
 {
   FUN_CODE_41ea();
-  FUN_CODE_3f9d();
+  store_r7_to_iram_bb_then_set_68_0();
   return;
 }
 

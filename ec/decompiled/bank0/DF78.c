@@ -23,7 +23,7 @@ void scale_r7_by_8_then_set_09c1_09c3(char param_1)
   DAT_EXTMEM_09c1 = DAT_EXTMEM_0a47 | 0x80;
   DAT_EXTMEM_09c2 = 0;
   DAT_EXTMEM_09c3 = 0;
-  FUN_CODE_de83(0,0,0x3c,0);
+  stage_0a49_pair_then_30xx_block(0,0,0x3c,0);
   if (cVar1 < '\0') {
     return;
   }

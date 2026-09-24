@@ -24,14 +24,14 @@ void step_state_from_0490_low3(void)
     return;
   }
   if (bVar1 == 6) {
-    FUN_CODE_e656();
-    FUN_CODE_e5a7();
+    select_dptr_by_0491_7c0_then_dispatch();
+    copy_code_pair_to_3e0_plus_r7();
     DAT_EXTMEM_0394 = 4;
     return;
   }
   if (bVar1 == 7) {
-    FUN_CODE_e656();
-    FUN_CODE_e5a7();
+    select_dptr_by_0491_7c0_then_dispatch();
+    copy_code_pair_to_3e0_plus_r7();
     DAT_EXTMEM_0394 = 2;
     return;
   }

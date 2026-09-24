@@ -26,7 +26,7 @@ void cmp_0404_vs_0518_then_store_0436(void)
   if (DAT_EXTMEM_051b == BANK0_R1) {
     read_xdata_pair_to_r3r4(0x404,DAT_EXTMEM_0519);
     read_xdata_pair_to_r1r2(0x518);
-    FUN_CODE_8863();
+    cmp_r3r4_against_r1r2_16bit();
     write_r3r4_to_xdata_pair(0x436);
   }
   return;

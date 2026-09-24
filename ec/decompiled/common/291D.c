@@ -23,7 +23,7 @@ void FUN_CODE_291d(void)
     FUN_CODE_10e5();
   }
   else {
-    FUN_CODE_159a();
+    load_dptr_c251_tail_jump_1100();
     if (bVar1 == 0) {
       _4_4 = 1;
     }

@@ -17,8 +17,8 @@ void stage_009a_dispatch_to_4bb0(undefined1 param_1)
 
 {
   DAT_EXTMEM_009a = param_1;
-  FUN_CODE_05e8();
-  FUN_CODE_1636(0x4b,0xb0,0);
+  critical_section_enter_05e8();
+  load_dptr_d991_tail_jump_1100(0x4b,0xb0,0);
   nop();
   nop();
   nop();
@@ -28,7 +28,7 @@ void stage_009a_dispatch_to_4bb0(undefined1 param_1)
   nop();
   nop();
   FUN_CODE_4bb0();
-  FUN_CODE_05ef();
+  critical_section_exit_05ef();
   return;
 }
 

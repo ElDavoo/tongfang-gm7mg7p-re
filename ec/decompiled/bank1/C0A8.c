@@ -41,8 +41,8 @@ void FUN_CODE_c0a8(void)
     bVar3 = DAT_EXTMEM_057c;
   }
   cVar5 = '\0';
-  FUN_CODE_8863(DAT_EXTMEM_04be,bVar4,(char)((ushort)bVar3 * 0x3c),(char)((ushort)bVar3 * 0x3c >> 8)
-               );
+  cmp_r3r4_against_r1r2_16bit
+            (DAT_EXTMEM_04be,bVar4,(char)((ushort)bVar3 * 0x3c),(char)((ushort)bVar3 * 0x3c >> 8));
   if (cVar5 < '\0') {
     DAT_EXTMEM_049c = DAT_EXTMEM_049c & 0xf3 | bVar2;
   }

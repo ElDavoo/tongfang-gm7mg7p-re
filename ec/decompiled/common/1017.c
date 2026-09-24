@@ -16,7 +16,7 @@ void FUN_CODE_1017(byte param_1,char param_2,char param_3,char param_4,byte para
   
   bVar1 = param_6 - 1;
   if (_1_5 == '\x01') {
-    FUN_CODE_2896(param_1 >> 1 | param_1 << 7);
+    clear_iram_6d_7f_then_xdata_b00_bfe(param_1 >> 1 | param_1 << 7);
     return;
   }
   if (_1_2 != '\x01') {

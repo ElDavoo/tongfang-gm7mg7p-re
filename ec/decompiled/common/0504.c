@@ -22,7 +22,7 @@ void FUN_CODE_0504(byte *param_1,char param_2,byte param_3,byte param_4)
   DAT_INTMEM_74 = bVar3;
   if (param_2 != -0x1c) {
     DAT_EXTMEM_0004 = DAT_EXTMEM_2006;
-    FUN_CODE_00cf(uStackX_0);
+    walk_code_table_6f39(uStackX_0);
     return;
   }
   do {
@@ -43,7 +43,7 @@ void FUN_CODE_0504(byte *param_1,char param_2,byte param_3,byte param_4)
         param_3 = 1;
         bVar3 = *param_1;
         if (bVar3 == 0) {
-          FUN_CODE_0200();
+          post_05e8_init_1042_16e7();
           return;
         }
         param_4 = bVar3 & 0x3f;

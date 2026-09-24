@@ -11,9 +11,9 @@ void FUN_CODE_1e1a(char param_1,undefined1 param_2)
 {
   DAT_EXTMEM_0a56 = param_2;
   if (param_1 == '\x01') {
-    FUN_CODE_2990(0xf0);
+    advance_bfe_counter_publish_at_bfd(0xf0);
   }
-  FUN_CODE_2990(DAT_EXTMEM_0a56);
+  advance_bfe_counter_publish_at_bfd(DAT_EXTMEM_0a56);
   return;
 }
 

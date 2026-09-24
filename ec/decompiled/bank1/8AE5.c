@@ -20,7 +20,7 @@ void probe_159a_19f0_0983_then_dispatch(char param_1)
 {
   byte in_PSW;
   
-  FUN_CODE_159a();
+  load_dptr_c251_tail_jump_1100();
   if (param_1 != '\0') {
     return;
   }

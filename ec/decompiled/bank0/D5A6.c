@@ -16,7 +16,7 @@ void FUN_CODE_d5a6(void)
   puVar1 = &DAT_EXTMEM_1809;
   write_a_to_dptr_set_1f06();
   *puVar1 = 0xfa;
-  FUN_CODE_05e8();
+  critical_section_enter_05e8();
   store_r4_r5_into_record_6e65(0xd5,0xd4,1);
   EA = 0;
   nop();

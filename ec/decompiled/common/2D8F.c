@@ -23,7 +23,7 @@ void FUN_CODE_2d8f(char param_1)
     FUN_CODE_3bae();
     bVar1 = *pbVar3;
     sVar4 = 0xa47;
-    bVar2 = FUN_CODE_3b51(DAT_EXTMEM_0a47);
+    bVar2 = dptr_3a00_plus_13x_3b51(DAT_EXTMEM_0a47);
     *pbVar3 = bVar1 | *(byte *)(sVar4 + (ushort)bVar2);
     FUN_CODE_3ad1();
     return;

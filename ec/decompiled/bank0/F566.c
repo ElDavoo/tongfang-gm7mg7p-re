@@ -56,7 +56,7 @@ LAB_CODE_fe87:
     else {
       if (DAT_EXTMEM_1504 == -4) {
         DAT_EXTMEM_0045 = 0x33;
-        FUN_CODE_0200(param_1);
+        post_05e8_init_1042_16e7(param_1);
         return;
       }
       if (DAT_EXTMEM_1504 == -2) {

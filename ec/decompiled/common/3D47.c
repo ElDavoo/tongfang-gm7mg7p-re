@@ -20,7 +20,7 @@ void FUN_CODE_3d47(void)
     DAT_INTMEM_b2 = DAT_INTMEM_b2 & 0xfe;
     uVar1 = DAT_EXTMEM_0019;
   }
-  FUN_CODE_3f9d(uVar1);
+  store_r7_to_iram_bb_then_set_68_0(uVar1);
   return;
 }
 

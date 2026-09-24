@@ -19,7 +19,7 @@ void cmp32_hi16_lt_lo16_at_dptr(undefined1 *param_1)
 {
   byte bVar1;
   
-  bVar1 = FUN_CODE_8863(param_1[2],param_1[3],*param_1,param_1[1]);
+  bVar1 = cmp_r3r4_against_r1r2_16bit(param_1[2],param_1[3],*param_1,param_1[1]);
   if ((bVar1 & 1) != 1) {
     return;
   }

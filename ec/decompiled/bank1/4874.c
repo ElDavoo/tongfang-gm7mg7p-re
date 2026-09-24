@@ -29,16 +29,16 @@ void inc_0a54_then_0a58_sequence(undefined1 param_1)
   pcVar3 = &DAT_EXTMEM_0a58;
   cVar1 = DAT_EXTMEM_0a58;
   FUN_CODE_4ae0(param_1);
-  FUN_CODE_4a69();
+  code_word_to_dptr_4a69();
   *pcVar3 = cVar1;
   if (cVar1 == '\x01') {
     FUN_CODE_4ac4();
                     /* WARNING: Subroutine does not return */
-    FUN_CODE_4a4d();
+    code_word_to_dptr_4a4d();
   }
   FUN_CODE_4ac4();
                     /* WARNING: Subroutine does not return */
-  FUN_CODE_4a4d();
+  code_word_to_dptr_4a4d();
 }
 
 

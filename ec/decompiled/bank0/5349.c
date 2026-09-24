@@ -16,8 +16,8 @@
 void dispatch_to_4c5d(void)
 
 {
-  FUN_CODE_05e8();
-  FUN_CODE_1636(0x4c,0x5d,0);
+  critical_section_enter_05e8();
+  load_dptr_d991_tail_jump_1100(0x4c,0x5d,0);
   nop();
   nop();
   nop();
@@ -27,7 +27,7 @@ void dispatch_to_4c5d(void)
   nop();
   nop();
   FUN_CODE_4c5d();
-  FUN_CODE_05ef();
+  critical_section_exit_05ef();
   return;
 }
 

@@ -15,7 +15,7 @@ void FUN_CODE_0f58(void)
   FUN_CODE_0fa6();
   DAT_EXTMEM_31a1 = 0x80;
   DAT_EXTMEM_31a2 = 0x10;
-  FUN_CODE_5597(1);
+  write_009f_4f_or_0f_by_r7(1);
   return;
 }
 

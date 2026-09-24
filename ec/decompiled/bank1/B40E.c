@@ -26,7 +26,7 @@ void cmp_dptr_to_r2r1(undefined2 param_1,char param_2)
   
   bVar4 = (byte)((ushort)param_1 >> 8);
   bVar3 = (byte)param_1;
-  FUN_CODE_8863();
+  cmp_r3r4_against_r1r2_16bit();
   if ((char)in_PSW < '\0') {
     DAT_EXTMEM_0495 = DAT_EXTMEM_0495 & 0xbf;
     in_PSW = in_PSW & 0xdd;
@@ -85,7 +85,7 @@ LAB_CODE_b4de:
   }
   bVar1 = 1 - (((0xb < bVar3) << 7) >> 7);
   cVar2 = CARRY1(bVar4,bVar1) << 7;
-  FUN_CODE_8863(bVar3 - 0xc,bVar4 + bVar1);
+  cmp_r3r4_against_r1r2_16bit(bVar3 - 0xc,bVar4 + bVar1);
   if (cVar2 < '\0') {
     DAT_EXTMEM_0494 = DAT_EXTMEM_0494 | 0x20;
   }

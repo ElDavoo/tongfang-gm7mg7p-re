@@ -593,11 +593,11 @@ rows — which is what lets `--check` compare the committed report against it an
 call a difference a stale report rather than a sample that moved.
 
 - **Backbone** — every `(scope, addr)` in `../annotations/ghidra-functions.csv`
-  that the listing index carries: 1,804 functions, the ones a person or an
+  that the listing index carries: 1,848 functions, the ones a person or an
   agent has read and cited. All four programs are represented in it, so
   per-program coverage holds by construction; `--self-test` asserts that rather
   than assuming it.
-- **Stride** — every eighth of the remaining 906, in sorted
+- **Stride** — every eighth of the remaining 862, in sorted
   `(program, addr)` order, plus each program's first non-annotated row so
   coverage survives a program whose remainder is tiny.
 

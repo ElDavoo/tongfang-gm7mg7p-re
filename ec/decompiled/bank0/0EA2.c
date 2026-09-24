@@ -4,12 +4,15 @@
 // Machine output carrying this repository's symbols. Not the vendor's source.
 
 
-/* Stores R7 into XDATA 0x0A56 as a loop counter, clears bit 0 of 0x8E and of 0xAB, and calls
-   0x05E8. Per counter value it calls 0x0EE8, then spins until bit 7 of 0x8F is set (jnb 0x8F
+/* Stores R7 into XDATA 0x0A56 as a loop counter, clears bit 0 of 0x8E and of 0xAB, and calls 0x05E8
+   (critical_section_enter_05e8). Per counter value it calls 0x0EE8
+   (timer1_load_th1_fd_tl0_clear_tf1_start), then spins until bit 7 of 0x8F is set (jnb 0x8F
    branches back on itself), clears bit 0 of 0x8E and bit 7 of 0x8F, decrements 0x0A56 and repeats;
-   on reaching zero it calls 0x05EF and sets bit 3 of 0xAB. 0x8E/0x8F/0xAB are TCON.6/TF1, TCON.7
-   and IE.3, i.e. TR1/TF1/ET1, so this is a counted wait on Timer 1 overflow. The count's time units
-   are not decoded.
+   on reaching zero it calls 0x05EF (critical_section_exit_05ef) and sets bit 3 of 0xAB.
+   0x8E/0x8F/0xAB are TCON.6/TF1, TCON.7 and IE.3, i.e. TR1/TF1/ET1, so this is a counted wait on
+   Timer 1 overflow. The count's time units are not decoded. The three callees are named as of issue
+   #134: naming 0x0EE8 is what closes this comment, because until it had a name the wait's length
+   had to be left as an open question between a fixed period and a sensor wait.
    
    (An earlier reading of this comment said "a stock 8051 places TC1 at 0x8E and TF1 at 0x8F". That
    is wrong and is left here because the function's own name already contradicted it: TCON is at
@@ -28,16 +31,16 @@ void timer1_counted_delay_using_0a56(char ticks)
   TR1 = 0;
   ET1 = 0;
   DAT_EXTMEM_0a56 = ticks;
-  FUN_CODE_05e8();
+  critical_section_enter_05e8();
   for (; DAT_EXTMEM_0a56 != '\0'; DAT_EXTMEM_0a56 = DAT_EXTMEM_0a56 + -1) {
-    FUN_CODE_0ee8();
+    timer1_load_th1_fd_tl0_clear_tf1_start();
     do {
       cVar1 = TF1;
     } while (cVar1 == '\0');
     TR1 = 0;
     TF1 = 0;
   }
-  FUN_CODE_05ef();
+  critical_section_exit_05ef();
   ET1 = 1;
   return;
 }

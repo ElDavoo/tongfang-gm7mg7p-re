@@ -19,7 +19,7 @@ void FUN_CODE_2e9c(undefined1 param_1,char param_2,undefined1 param_3)
   DAT_EXTMEM_0a4c = param_3;
   DAT_EXTMEM_0a4d = param_2;
   DAT_EXTMEM_0a4e = param_1;
-  FUN_CODE_2de3();
+  mask_1106_then_clear_18_34();
   if (DAT_EXTMEM_0a4d == -1) {
     cVar3 = 'x';
   }
@@ -34,7 +34,7 @@ void FUN_CODE_2e9c(undefined1 param_1,char param_2,undefined1 param_3)
       cVar3 = DAT_EXTMEM_0a4f;
     }
   }
-  FUN_CODE_2bc1(cVar3);
+  clamp_iram_80_up_to_r7(cVar3);
   FUN_CODE_3acc(0);
   _c_1 = 0;
   _c_0 = 1;
@@ -43,12 +43,12 @@ void FUN_CODE_2e9c(undefined1 param_1,char param_2,undefined1 param_3)
   FUN_CODE_3b8a(0xa4d);
   pbVar5 = (byte *)0xa4c;
   FUN_CODE_3b20();
-  FUN_CODE_3b70();
+  dph_from_a_dpl_from_code_3b70();
   FUN_CODE_3b3c(0x1e);
   FUN_CODE_3bae();
   bVar2 = *pbVar5;
   sVar6 = 0xa4c;
-  bVar4 = FUN_CODE_3b51(DAT_EXTMEM_0a4c);
+  bVar4 = dptr_3a00_plus_13x_3b51(DAT_EXTMEM_0a4c);
   *pbVar5 = bVar2 | *(byte *)(sVar6 + (ushort)bVar4);
   FUN_CODE_3a0d();
   return;

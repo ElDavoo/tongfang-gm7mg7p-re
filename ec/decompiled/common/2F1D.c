@@ -16,7 +16,7 @@ void FUN_CODE_2f1d(byte param_1,undefined1 param_2,char param_3)
   DAT_EXTMEM_0a4f = param_3;
   DAT_EXTMEM_0a50 = param_2;
   DAT_EXTMEM_0a51 = param_1;
-  FUN_CODE_2de3();
+  mask_1106_then_clear_18_34();
   _c_1 = 0;
   _c_0 = 0;
   FUN_CODE_3b1d();
@@ -24,7 +24,7 @@ void FUN_CODE_2f1d(byte param_1,undefined1 param_2,char param_3)
   puVar2 = (undefined1 *)0xa50;
   FUN_CODE_3b8a();
   FUN_CODE_3b1d();
-  FUN_CODE_3b70();
+  dph_from_a_dpl_from_code_3b70();
   *puVar2 = 0x1e;
   FUN_CODE_3609();
   if (param_3 == '\0') {
@@ -34,15 +34,15 @@ void FUN_CODE_2f1d(byte param_1,undefined1 param_2,char param_3)
       puVar2 = &DAT_EXTMEM_0a52;
       if (DAT_EXTMEM_0a51 <= DAT_EXTMEM_0a52) break;
       FUN_CODE_3b1d(DAT_EXTMEM_0a52 - DAT_EXTMEM_0a51);
-      FUN_CODE_3b70();
+      dph_from_a_dpl_from_code_3b70();
       *puVar2 = 0x17;
       FUN_CODE_3609();
       if (cVar1 != '\0') break;
       DAT_EXTMEM_0a52 = DAT_EXTMEM_0a52 + 1;
     }
   }
-  FUN_CODE_3b22(DAT_EXTMEM_0a4f);
-  FUN_CODE_3b70();
+  mul13_table_lookup_3b22(DAT_EXTMEM_0a4f);
+  dph_from_a_dpl_from_code_3b70();
   FUN_CODE_3bbf();
   FUN_CODE_2ac1();
   return;

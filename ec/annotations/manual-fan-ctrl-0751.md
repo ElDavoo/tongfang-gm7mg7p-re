@@ -689,18 +689,22 @@ the byte, and no value of any of the seven has ever been observed. A zero from
 a scan is "not found by this method", never absent, so "no site sets bit 1 of
 `0x09E7`" and "no site branches on bit 0 of `0x08EB`" are both statements about
 the scan. The one reader found for `0x08A2` (bank1 `0xA987`) was not decoded,
-and the remaining four members of the `main-ec-011` cluster are still unnamed.
+and the remaining four members of the `main-ec-012` cluster are still unnamed.
 
-> **Correction, 2026-09-24 (issue #253).** The cluster those four are members
-> of is `main-ec-011`, not the `main-ec-012` this section used to name.
-> `main-ec-011` is the 10-address, 91-reference cluster of `0x0875 0x089C
-> 0x089D 0x089E 0x089F 0x08A1 0x08A2 0x08EB 0x09E6 0x09E7`
-> (`xdata-clusters.csv` row 12), six of which are the seven bytes above, so the
+> **Correction, 2026-09-24 (issue #253; ids again on 2026-09-24, when the census
+> was re-derived on the merged tree).** The cluster those four are members of is
+> `main-ec-012`, not the `main-ec-011` this section used to name after #253's
+> first correction, and not the `main-ec-012` it named before that.
+> `main-ec-012` is the 9-address, 52-reference cluster of `0x0875 0x089C
+> 0x089D 0x089E 0x089F 0x08A1 0x08A2 0x09E6 0x09E7`
+> (`xdata-clusters.csv` row 13), five of which are the seven bytes above, so the
 > four left are `0x0875 0x089C 0x089D 0x08A1` — the count of four is what
-> identifies the intended cluster, and the addresses confirm it. `main-ec-012`
-> is the `0x0300`-`0x03FE` cluster (row 13) and holds none of them. The seventh
-> byte, `0x08A0`, is a size-1 cluster of its own (`main-ec-275`, row 276),
-> which is why seven bytes here are six members of one cluster and not seven.
+> identifies the intended cluster, and the addresses confirm it. The
+> `0x0300`-`0x03FE` cluster is `main-ec-013` (row 14) and holds none of them.
+> The seventh byte, `0x08A0`, is a size-1 cluster of its own (`main-ec-279`),
+> and `0x08EB` has left the block entirely — it is a size-1 cluster of its own
+> now, `main-ec-193` — which is why seven bytes here are five members of one
+> cluster and not seven.
 
 One thing §9.1 already had and this section makes precise: the `0xB5F1` row
 lists `0x08A2 write` and `0x09E7 r+w` even though the USER-**set** arm does not

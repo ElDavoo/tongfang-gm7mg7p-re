@@ -73,7 +73,7 @@ void FUN_CODE_00e1(byte param_1,byte *param_2,byte param_3)
       param_1 = 1;
       param_3 = *param_2;
       if (param_3 == 0) {
-        FUN_CODE_0200();
+        post_05e8_init_1042_16e7();
         return;
       }
       param_2 = param_2 + 1;

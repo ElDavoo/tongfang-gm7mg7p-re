@@ -11,7 +11,7 @@ void FUN_CODE_8d62(char param_1)
 {
   char in_PSW;
   
-  FUN_CODE_159a();
+  load_dptr_c251_tail_jump_1100();
   if (param_1 == '\0') {
     load_dptr_c4e6_tail_jump_1100();
     if (in_PSW < '\0') {

@@ -24,7 +24,7 @@ void clear_0610_bit5_and_dispatch(void)
   }
   DAT_EXTMEM_0610 = DAT_EXTMEM_0610 & 0xdf;
   read_xdata_pair_to_r1r2(0x60a);
-  FUN_CODE_8863(0xe8,3);
+  cmp_r3r4_against_r1r2_16bit(0xe8,3);
   if ((-1 < in_PSW) && (DAT_EXTMEM_0575 == '\0')) {
     FUN_CODE_b784();
     arm_05f4_countdown_0576_clears_0490();

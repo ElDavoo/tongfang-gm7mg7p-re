@@ -90,8 +90,9 @@ LAB_CODE_584c:
       bVar6 = param_4 - ((CARRY1(bVar3,bVar6) << 7) >> 7);
       bVar3 = bVar4 + bVar6;
       bVar6 = param_6 - ((CARRY1(bVar4,bVar6) << 7) >> 7);
-      pbVar5 = (byte *)FUN_CODE_5a43(bVar3 + bVar6 + (bVar2 - ((CARRY1(bVar3,bVar6) << 7) >> 7)),
-                                     param_2);
+      pbVar5 = (byte *)addc_chain_into_r7_5a43
+                                 (bVar3 + bVar6 + (bVar2 - ((CARRY1(bVar3,bVar6) << 7) >> 7)),
+                                  param_2);
       return pbVar5;
     }
 LAB_CODE_587d:
@@ -123,7 +124,8 @@ LAB_CODE_587d:
       param_3 = param_3 - ((CARRY1(bVar3,bVar2) << 7) >> 7);
       bVar3 = bVar4 + param_3;
       bVar2 = param_5 - ((CARRY1(bVar4,param_3) << 7) >> 7);
-      pbVar5 = (byte *)FUN_CODE_5a43(bVar3 + bVar2 + (bVar6 - ((CARRY1(bVar3,bVar2) << 7) >> 7)));
+      pbVar5 = (byte *)addc_chain_into_r7_5a43
+                                 (bVar3 + bVar2 + (bVar6 - ((CARRY1(bVar3,bVar2) << 7) >> 7)));
       return pbVar5;
     }
     bVar2 = param_7 - cVar7;
@@ -144,7 +146,8 @@ LAB_CODE_587d:
     bVar2 = DAT_INTMEM_38 - ((CARRY1(bVar4,bVar6) << 7) >> 7);
     bVar6 = bVar2 + DAT_INTMEM_34;
     bVar2 = param_5 - ((CARRY1(bVar2,DAT_INTMEM_34) << 7) >> 7);
-    pbVar5 = (byte *)FUN_CODE_5a43(bVar6 + bVar2 + (bVar3 - ((CARRY1(bVar6,bVar2) << 7) >> 7)));
+    pbVar5 = (byte *)addc_chain_into_r7_5a43
+                               (bVar6 + bVar2 + (bVar3 - ((CARRY1(bVar6,bVar2) << 7) >> 7)));
     return pbVar5;
   }
 LAB_CODE_58ad:

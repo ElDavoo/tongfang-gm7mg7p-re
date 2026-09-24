@@ -124,6 +124,13 @@ VECTOR = re.compile(r"^(?:reset|int\d|timer\d|serial\d)_vector_")
 BANK_BASE = 0x8000
 BANKS = ("bank0", "bank1")
 
+# The scope token a bank caller's endpoint in the common area is filed under.
+# Not a scope any row carries, and not in `region_of`'s vocabulary: it names a
+# per-bank stand-in for one common-area function, so that a bank0 caller and a
+# bank1 caller of the same helper stay in their own bank's component. See
+# `cluster()`, which is the only thing that builds one.
+PROXY_SCOPE = "%s#common"
+
 # `<addr> <bytes> <mnemonic> <operands>`; the same shape
 # grade_name_basis.py reads, kept local so this tool has no import cycle.
 LISTING = re.compile(r"^\s*([0-9A-Fa-f]{4,8})\s+"
@@ -256,7 +263,19 @@ def cluster(rows, repo=REPO, min_size=4):
     than a filter applied afterwards: the union simply never sees a
     cross-region edge, so there is no cluster to reject and the invariant
     cannot be violated by a bug in a later pass. The edges that cross a
-    region are counted and reported, never merged."""
+    region are counted and reported, never merged.
+
+    "Never sees a cross-region edge" is about the union, and an edge to a
+    common-area function is where that promise was being broken without
+    `--check` noticing: a `common`-scoped row is one function both images
+    carry, so a bank0 caller and a bank1 caller that both reach it were two
+    halves of one node, and that node joined the two banks. With the EC's
+    common area 43 annotated there was nothing dense enough to bridge them
+    and the committed groups happened to pass; issue #134's 33 more made the
+    bridge and `cross_bank_groups` refused the result. The endpoint is a
+    per-bank proxy node now (`PROXY_SCOPE`), which is still a node the union
+    never joins across regions -- it is how the invariant was made true
+    rather than lucky."""
     parent = {}
 
     def find(x):
@@ -275,9 +294,11 @@ def cluster(rows, repo=REPO, min_size=4):
     # annotated functions and an edge to something unannotated is simply not
     # there to join on.
     by_addr = collections.defaultdict(dict)
+    real = set()
     for row in rows:
         key = (row["scope"], norm_addr(row["addr"]))
         find(key)
+        real.add(key)
         by_addr[row["scope"]][norm_addr(row["addr"])] = row
 
     cross_region = 0
@@ -294,16 +315,30 @@ def cluster(rows, repo=REPO, min_size=4):
             # a call there from either bank is an edge WITHIN that bank's own
             # graph, keyed to the common row.
             if target < BANK_BASE:
-                if (scope, "%04X" % target) in by_addr.get(scope, {}):
-                    union(caller, (scope, "%04X" % target))
-                elif any(("%04X" % target) in by_addr.get(s, {})
-                         for s in BANKS + ("common",)):
-                    # A common-area row is its own scope, and both banks
-                    # carry it. Join through the scope the annotation says.
-                    for s in ("common", scope):
-                        if ("%04X" % target) in by_addr.get(s, {}):
-                            union(caller, (s, "%04X" % target))
-                            break
+                taddr = "%04X" % target
+                if taddr in by_addr.get(scope, {}):
+                    union(caller, (scope, taddr))
+                elif taddr in by_addr.get("common", {}):
+                    # A common-area row is one function that both bank images
+                    # carry, so a bank0 caller and a bank1 caller that both
+                    # reach it are two halves of ONE node -- and joining them
+                    # to it is how bank0 and bank1 end up in one component,
+                    # which is the join this tool exists to refuse. The
+                    # annotation says `common`, which is exactly as
+                    # unattributable as having no row at all: nothing here
+                    # records which bank ran the call. So a bank caller's
+                    # endpoint is a PROXY, one per bank, which keeps the
+                    # relation this edge really does carry (the bank0
+                    # functions that share this helper are connected) and
+                    # drops the one it does not (that they are connected to
+                    # the bank1 ones through it).
+                    #
+                    # A `common`-scoped caller never reaches this branch: its
+                    # own scope is "common", so the line above unions it to
+                    # the real common row, which is right -- both banks
+                    # carrying a function is not the same function being
+                    # called by both.
+                    union(caller, (PROXY_SCOPE % scope, taddr))
                 continue
             # At or above the bank base. The target is in the caller's own
             # bank by assumption -- the assumption audit_call_targets.py
@@ -325,6 +360,11 @@ def cluster(rows, repo=REPO, min_size=4):
                 union(caller, (scope, taddr))
     clusters = collections.defaultdict(list)
     for key in list(parent):
+        # The proxy endpoints above are not rows. They hold a component
+        # together and are dropped from it, so a group's members, its name
+        # and its reported size all stay counts of annotated functions.
+        if key not in real:
+            continue
         clusters[find(key)].append(key)
     return clusters, cross_region
 
@@ -596,6 +636,51 @@ def self_test():
     grouped2, _ = group_rows(two, repo=REPO, min_size=2)
     check("a same-region edge still clusters",
           grouped2[("bank0", "8000")][0] == grouped2[("bank0", "8100")][0])
+
+    # The same caveat one level down, and the case `cross_bank_groups`
+    # actually refused once issue #134 annotated 33 more of the common area:
+    # a bank0 caller and a bank1 caller that BOTH reach one annotated
+    # `common` function. That function is one function both images carry, so
+    # a single node for it is how the two banks' graphs became one component.
+    # Two callers a side, so each bank's component clears min_size=2 and the
+    # assertion is about the grouping rather than about falling through to
+    # `ungrouped`.
+    def bridge_row(scope, addr, name, fname):
+        return {"scope": scope, "addr": addr, "name": name, "type": "logic",
+                "evidence": os.path.relpath(
+                    asm(fname, ["%s     12 05 e8 lcall    0x05E8" % addr, RET]),
+                    REPO)}
+
+    bridge = [
+        bridge_row("bank0", "8000", "b0_caller_a", "bridge_b0a.asm"),
+        bridge_row("bank0", "8100", "b0_caller_b", "bridge_b0b.asm"),
+        bridge_row("bank1", "8000", "b1_caller_a", "bridge_b1a.asm"),
+        bridge_row("bank1", "8100", "b1_caller_b", "bridge_b1b.asm"),
+        {"scope": "common", "addr": "05E8", "name": "critical_section_enter",
+         "type": "gate", "evidence": os.path.relpath(
+             asm("bridge_common.asm", [RET]), REPO)},
+    ]
+    grouped3, _ = group_rows(bridge, repo=REPO, min_size=2)
+    check("one annotated common function reached from both banks is not a "
+          "bridge between them",
+          grouped3[("bank0", "8000")][0] != grouped3[("bank1", "8000")][0],
+          "(both banks' 0x8000 call 0x05E8; nothing in either listing says "
+          "which image ran it, so the two must not share a group)")
+    # ... and the relation the edge really does carry survives: the callers
+    # that share a common helper, within one bank, are connected through the
+    # proxy rather than the edge being dropped.
+    check("two bank0 callers of the same common helper still cluster",
+          grouped3[("bank0", "8000")][0] == grouped3[("bank0", "8100")][0],
+          "(the per-bank proxy is a node, not a dropped edge)")
+    check("two bank1 callers of the same common helper still cluster",
+          grouped3[("bank1", "8000")][0] == grouped3[("bank1", "8100")][0])
+    # The proxy is not a row, so it cannot reach a group file and inflate a
+    # group's size or name.
+    check("the proxy endpoint is not itself a grouped row",
+          set(grouped3) == {("bank0", "8000"), ("bank0", "8100"),
+                            ("bank1", "8000"), ("bank1", "8100"),
+                            ("common", "05E8")},
+          "(got %r)" % (sorted(grouped3),))
 
     # Seeds.
     seeded = group_rows([{"scope": "common", "addr": "0000",

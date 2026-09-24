@@ -22,18 +22,18 @@ undefined1 int1_target_six_calls_14c8_012f_018c_029b_7110_7177(undefined1 param_
   
   if (_d_6 == '\0') {
     if (DAT_EXTMEM_1110 == '\"') {
-      FUN_CODE_012f();
+      chan_init_170a_then_jmp_11b6();
     }
     else if (DAT_EXTMEM_1110 == '#') {
-      FUN_CODE_018c();
+      chan_init_1709_then_jmp_11bc();
     }
     else if (DAT_EXTMEM_1110 == '$') {
-      FUN_CODE_029b();
+      chan_init_1708_then_jmp_11c2();
     }
     else {
       puVar1 = (undefined1 *)0x636;
-      FUN_CODE_7110(DAT_EXTMEM_1110,2);
-      FUN_CODE_7177(puVar1[1],*puVar1);
+      dptr_plus_a_times_b_16bit(DAT_EXTMEM_1110,2);
+      mov_dph_r2_dpl_r1_7177(puVar1[1],*puVar1);
     }
   }
   else {

@@ -1,10 +1,21 @@
 # `0x0860`-`0x086E`: the EC's own level block, and what it dispatches on
 
 Issue #180 asked to read the `0x0860`-`0x086E` run in main-EC cluster
-`main-ec-002` and settle four questions: what sets `0x0860`, what the sibling
+`main-ec-003` and settle four questions: what sets `0x0860`, what the sibling
 bytes hold, what consumes the `0x1C39`/`0x1C3A` copy, and whether the
-`0x044C`-`0x05F1` group is the same mechanism. This is the answer. The
-machine-readable table behind every number here is
+`0x044C`-`0x05F1` group — `main-ec-049`, a different cluster — is the same
+mechanism. This is the answer.
+
+> **Correction, 2026-09-24.** Issue #180 wrote that cluster as `main-ec-002`.
+> It is `main-ec-003` in the census as re-derived on the merged tree, and
+> `main-ec-002` is now the counter block over `0x0460`-`0x09CE`, which shares
+> not one address with this run. The `0x044C`-`0x05F1` group is `main-ec-049`.
+> This supersedes the issue #253 correction further down for the same reason and
+> leaves it standing: that one is right about the census it was written against
+> and wrong about this one. `xdata-register-map.md` §5 carries the re-derivation
+> and `../tools/check_cluster_citations.py` holds this file to it.
+
+The machine-readable table behind every number here is
 **`xdata-086x-dispatch-sites.csv`**, the `--csv` output of
 `ec/tools/trace_xdata_refs.py` over the 15 addresses this page is about; §8
 carries the check that reproduces it byte for byte.

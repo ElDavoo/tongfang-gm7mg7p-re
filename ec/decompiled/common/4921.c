@@ -13,9 +13,9 @@ void FUN_CODE_4921(undefined1 param_1,char param_2)
   if (param_2 == '\0') {
     FUN_CODE_43a5(0,param_1);
   }
-  FUN_CODE_4a76();
+  mov_a_from_r1_4a76();
                     /* WARNING: Subroutine does not return */
-  FUN_CODE_4a4d();
+  code_word_to_dptr_4a4d();
 }
 
 

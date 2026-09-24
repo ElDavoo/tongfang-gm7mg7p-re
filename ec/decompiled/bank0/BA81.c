@@ -27,7 +27,7 @@ char copy_code_pair_63f0_to_xdata_at_2r7_offset(char param_1)
   uVar1 = *puVar3;
   uVar2 = puVar3[1];
   puVar3 = (undefined1 *)CONCAT11(DAT_EXTMEM_0a56,DAT_EXTMEM_0a57);
-  FUN_CODE_7110(param_1,2);
+  dptr_plus_a_times_b_16bit(param_1,2);
   *puVar3 = uVar1;
   puVar3[1] = uVar2;
   return param_1 + '\x01';

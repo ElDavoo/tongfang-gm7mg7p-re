@@ -20,9 +20,9 @@ void FUN_CODE_48b1(byte *param_1,undefined1 param_2,byte param_3)
       if (cVar1 == '\0') {
         FUN_CODE_43a5(0,param_2);
       }
-      FUN_CODE_4a76();
+      mov_a_from_r1_4a76();
                     /* WARNING: Subroutine does not return */
-      FUN_CODE_4a4d();
+      code_word_to_dptr_4a4d();
     }
     FUN_CODE_4a41();
     cVar1 = FUN_CODE_4b62();
@@ -36,7 +36,7 @@ void FUN_CODE_48b1(byte *param_1,undefined1 param_2,byte param_3)
   }
   FUN_CODE_4aa6();
                     /* WARNING: Subroutine does not return */
-  FUN_CODE_4a4d();
+  code_word_to_dptr_4a4d();
 }
 
 

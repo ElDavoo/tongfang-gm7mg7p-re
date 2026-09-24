@@ -55,11 +55,11 @@ void step_index_056b_update_0495_0493(void)
              puVar3[(ushort)bVar1 + 2]);
   write_r1r2_to_xdata_pair(0x56c);
   read_xdata_pair_to_r3r4(0x4a2);
-  FUN_CODE_8863();
+  cmp_r3r4_against_r1r2_16bit();
   if (cVar2 < '\0') {
     read_xdata_pair_to_r1r2(0x56e);
     read_xdata_pair_to_r3r4(0x4a2);
-    FUN_CODE_8863();
+    cmp_r3r4_against_r1r2_16bit();
     if ((cVar2 < '\0') && (DAT_EXTMEM_056b != 0)) {
       DAT_EXTMEM_056b = DAT_EXTMEM_056b - 1;
     }

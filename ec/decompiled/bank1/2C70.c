@@ -34,11 +34,11 @@ void match_0a49_loop_tail(byte *param_1,byte param_2,char param_3)
     pbVar4 = (byte *)(param_3 + -0x77);
     param_3 = cVar3;
     if ((*pbVar4 >> 6 & 1) != 0) {
-      FUN_CODE_3b22(cVar3);
+      mul13_table_lookup_3b22(cVar3);
       FUN_CODE_3b32();
-      FUN_CODE_3b70();
+      dph_from_a_dpl_from_code_3b70();
       pbVar8 = param_1;
-      bVar5 = FUN_CODE_3b4e();
+      bVar5 = read_dptr_into_r6_then_r7_3b4e();
       *param_1 = param_2 | pbVar8[bVar5];
       param_3 = cVar3;
     }
@@ -49,19 +49,19 @@ void match_0a49_loop_tail(byte *param_1,byte param_2,char param_3)
     if (DAT_EXTMEM_0a49 == cVar3) {
       cVar1 = DAT_EXTMEM_0a49;
       cVar2 = DAT_EXTMEM_0a49;
-      uVar6 = FUN_CODE_3b22(DAT_EXTMEM_0a49,DAT_EXTMEM_0a49);
+      uVar6 = mul13_table_lookup_3b22(DAT_EXTMEM_0a49,DAT_EXTMEM_0a49);
       pbVar10 = (byte *)CONCAT11(uVar6,*(undefined1 *)(sVar9 + 1));
       *pbVar10 = 0x17;
-      FUN_CODE_3b3e(cVar1);
-      FUN_CODE_3b70();
+      mul13_table_lookup_3b3e(cVar1);
+      dph_from_a_dpl_from_code_3b70();
       bVar5 = *pbVar10;
       pbVar8 = pbVar10;
-      bVar7 = FUN_CODE_3b51(cVar2);
+      bVar7 = dptr_3a00_plus_13x_3b51(cVar2);
       *pbVar10 = bVar5 | pbVar8[bVar7];
     }
     cVar3 = cVar3 + '\x01';
   } while (cVar3 != '\x03');
-  FUN_CODE_2bc1(6);
+  clamp_iram_80_up_to_r7(6);
   return;
 }
 

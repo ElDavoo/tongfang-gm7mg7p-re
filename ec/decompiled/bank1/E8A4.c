@@ -43,7 +43,7 @@ void compute_097e_times_10_write_0386_0387(void)
       if (bVar1 == 0) goto LAB_CODE_e8e0;
       read_xdata_pair_to_r3r4(0x60a);
       read_code_pair_at_r5_index(0xe7b1);
-      cVar2 = FUN_CODE_8863();
+      cVar2 = cmp_r3r4_against_r1r2_16bit();
       if (cVar2 == '\0') goto LAB_CODE_e8e0;
       if (in_PSW < '\0') break;
       bVar1 = bVar1 - 1;
@@ -51,7 +51,7 @@ void compute_097e_times_10_write_0386_0387(void)
     read_xdata_pair_to_r3r4(0x60a);
     bVar1 = bVar1 + 1;
     read_code_pair_at_r5_index(0xe7b1);
-    FUN_CODE_8863();
+    cmp_r3r4_against_r1r2_16bit();
   } while (in_PSW < '\0');
   bVar1 = bVar1 - 1;
 LAB_CODE_e8e0:

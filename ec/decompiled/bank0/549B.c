@@ -20,8 +20,8 @@ void default_009d_bf_dispatch_4e2c(void)
   if (DAT_EXTMEM_009f == '\0') {
     DAT_EXTMEM_009d = 0xbf;
   }
-  FUN_CODE_05e8();
-  FUN_CODE_1636(0x4e,0x2c,0);
+  critical_section_enter_05e8();
+  load_dptr_d991_tail_jump_1100(0x4e,0x2c,0);
   nop();
   nop();
   nop();
@@ -31,7 +31,7 @@ void default_009d_bf_dispatch_4e2c(void)
   nop();
   nop();
   FUN_CODE_4e2c();
-  FUN_CODE_05ef();
+  critical_section_exit_05ef();
   return;
 }
 

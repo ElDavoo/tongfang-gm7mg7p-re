@@ -24,19 +24,20 @@ void compare_0434_04f4_against_0646(char param_1,char param_2)
   
   read_xdata_pair_to_r1r2(0x434);
   read_xdata_pair_to_r3r4(0x646);
-  if ((param_2 == '\0' && param_1 == '\0') || (FUN_CODE_8863(), -1 < (char)in_PSW)) {
+  if ((param_2 == '\0' && param_1 == '\0') || (cmp_r3r4_against_r1r2_16bit(), -1 < (char)in_PSW)) {
     read_xdata_pair_to_r1r2(0x4f4);
     read_xdata_pair_to_r3r4(0x646);
-    if ((param_2 == '\0' && param_1 == '\0') || (FUN_CODE_8863(), -1 < (char)in_PSW)) {
+    if ((param_2 == '\0' && param_1 == '\0') || (cmp_r3r4_against_r1r2_16bit(), -1 < (char)in_PSW))
+    {
       in_PSW = in_PSW & 0xdd;
       if ((DAT_EXTMEM_08e2 & 8) == 0) {
         subtract_shifted_reads_of_0646(param_1,param_2);
         read_xdata_pair_to_r1r2(0x434);
-        FUN_CODE_8863();
+        cmp_r3r4_against_r1r2_16bit();
         if (-1 < (char)in_PSW) {
           subtract_shifted_reads_of_0646(param_1,param_2);
           read_xdata_pair_to_r1r2(0x4f4);
-          FUN_CODE_8863();
+          cmp_r3r4_against_r1r2_16bit();
           if (-1 < (char)in_PSW) {
             gate_on_06d4_mod10();
             return;

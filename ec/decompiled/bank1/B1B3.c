@@ -26,7 +26,7 @@ void dispatch_0490_low3(void)
   cVar2 = (bVar1 < 6) << 7;
   if (bVar1 == 6) {
     read_xdata_pair_to_r3r4(0x436);
-    FUN_CODE_8863(0xff,0xff);
+    cmp_r3r4_against_r1r2_16bit(0xff,0xff);
     if (cVar2 < '\0') {
       XDATA_043C = 4;
       cmp_0404_vs_0518_then_store_0436();

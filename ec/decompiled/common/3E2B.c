@@ -9,7 +9,7 @@
 void FUN_CODE_3e2b(void)
 
 {
-  FUN_CODE_3fa4(1);
+  store_r7_to_iram_31(1);
   _2_3 = 0;
   return;
 }

@@ -9,7 +9,7 @@
 void FUN_CODE_2b68(void)
 
 {
-  FUN_CODE_3894();
+  set_iram_ad_88_clear_33();
   return;
 }
 

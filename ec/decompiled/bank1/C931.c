@@ -25,7 +25,7 @@ byte FUN_CODE_c931(char param_1,char param_2,char param_3)
     if (param_2 == '\0' && param_3 == '\0') {
       read_xdata_pair_to_r1r2(900);
     }
-    bVar2 = FUN_CODE_8863();
+    bVar2 = cmp_r3r4_against_r1r2_16bit();
     if (-1 < cVar1) {
       set_039b_039c_from_0404_div_100();
       bVar2 = 1;

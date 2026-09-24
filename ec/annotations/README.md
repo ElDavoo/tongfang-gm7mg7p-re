@@ -173,8 +173,20 @@ are counted and reported (27 at the time of writing), never merged, and every
 run prints the A/B/C populations so a small group count cannot read as a
 topology.
 
+**"Never sees a cross-region edge" needed a node as well as an edge, and the
+node is a per-region proxy.** A `common`-scoped row is one function both bank
+images carry, so a bank0 caller and a bank1 caller that both reach it are two
+halves of *one* node, and joining them is a cross-region join however sound each
+edge is. `PROXY_SCOPE` in `group_functions.py` gives each region its own
+endpoint for a common-area target, so the callers that share a helper stay
+connected inside their own bank and the banks are not. This is a correction, not
+a design change: `--check` refused a 673-row component spanning both banks once
+issue #134's tranche annotated 33 more of the common area, and the refusal was
+right. `cluster()` carries the argument and `--self-test` carries a fixture for
+it.
+
 **A `callgraph` group is a connected component, not a subsystem.** The largest
-holds 323 of the 1,804 rows. That is a real structural fact and a poor
+holds 327 of the 1,848 rows. That is a real structural fact and a poor
 subsystem boundary, so the groups are named `callgraph_<scope>_<addr>`, their
 size is in each row's comment, and `--report` names any component of 50 or more.
 The seeds — the `type` column, the interrupt table, and on the BIOS the module
@@ -192,9 +204,18 @@ which is the same conflation the `pd` grade rule above exists to prevent,
 reintroduced through the naming layer. `--check` now refuses a `callgraph`
 name whose scope token is not the dominant scope among the rows carrying it.
 
-576 rows are `ungrouped`: no seed and no component at or above the minimum
+The three components of 50 or more on the committed tree are
+`callgraph_bank0_0EA2` (327, all `bank0`), `callgraph_bank1_1738` (321, all
+`bank1`) and `callgraph_pd_0003` (303, all `pd`). Every one being a single
+scope is the visible consequence of the proxy correction: the separate
+ITE8850-PD program's 187 clustered rows were two pieces that the shared common
+node had been holding apart, and they are one of 303 now.
+
+456 rows are `ungrouped`: no seed and no component at or above the minimum
 size. That is *not found by this method*, never "these have no subsystem", and
-`ungrouped` is in the vocabulary so saying so costs nothing.
+`ungrouped` is in the vocabulary so saying so costs nothing. (576 when this was
+written: issue #134's 44 rows took 26 out and the proxy correction took 94
+more.)
 
 **No group is a behavioural claim.** A group says which routines are connected
 in the call graph, not what the EC does with them. No hardware is reachable
@@ -412,6 +433,63 @@ of them, so a local that mirrors an unnamed register cannot honestly be named
 before the register is. (Measured over the committed export; a regeneration
 that renames a symbol moves the mention counts, which is why the declaration
 counts are the ones quoted here.)
+
+## The second pass: edges, not leaves
+
+The sweep above works from `index.csv` minus everything already annotated, so
+it names functions in address order and a comment ends up citing a callee by
+bare address. Issue #134 asked for the other direction: start from the
+addresses a comment already depends on, because a named function whose comment
+says "calls 0x0EE8" is not explaining itself until 0x0EE8 has a name.
+
+**The work list is `call-graph-callees.csv`**, and the tool that builds it is
+`../tools/call_graph.py`. One row per callee in the graph: inbound count, the
+breakdown by transfer form, how many of the callers are themselves named, and
+which comments cite the address. The `annotated` column is the queue — the
+`annotated=no` rows are what is left, and the `cited_by` ones are the subset a
+sentence is actually blocked on.
+
+**The ordering is citation-first, then inbound count**, and that is a
+correction to the issue rather than a restatement of it. Issue #134 says the
+natural order is by inbound reference count. Inbound is a good ranking and the
+table keeps it as the tie-break inside a citation band — but the issue's own
+claim that its worked example, 0x0EE8, comes out first on citations does not
+reproduce: 0x0EE8 is cited by exactly one comment, the *lowest* positive count
+in the set. `call-graph.md` has the positions. The short version for whoever
+picks up the next tranche: **no metric would have selected 0x0EE8. It is named
+because the issue asked for it**, and that is worth knowing before treating any
+count on this list as a recommendation about what a function does.
+
+**The shard / annotate / verify / merge path is the same one the first sweep
+used**, unchanged, and the same mechanical rules apply. Two of them bite harder
+here:
+
+- **`unresolved` is the common outcome, not an exception.** A callee reached by
+  many callers is not thereby a small callee: the first tranche's 44 rows
+  include four that are 155-474 bytes and three more that are one to three
+  instructions with no `ret` and no jump out, because Ghidra's function boundary on this
+  firmware cuts through straight-line code. A row that says what the entry
+  does and what is not decoded is a finished row.
+- **A `common` callee's `scope` is `common`**, never the bank that reaches it
+  most. Which bank executed a given common call site is not in the listing, so
+  the graph reports `also_in` and never guesses.
+
+**Naming a function removes its row from the work list, not from the table.**
+`call-graph-callees.csv` keeps named callees with `annotated=yes` and their
+inbound count intact, so `--check` still passes on the very pull request that
+consumes a tranche. A table that listed only anonymous callees would lose the
+row the annotation had just completed, and the check would fail on the change
+it was written for.
+
+**Comments keep their bare addresses.** 1,300 comments already cite an
+already-named function by address, so substituting names into the tranche's
+citing comments would leave the export inconsistent for no gain. Where a
+sentence's point is *what* the callee is rather than where it lives, the name
+is added alongside the address — `bank0,0x0EA2` reads "calls 0x0EE8
+(timer1_load_th1_fd_tl0_clear_tf1_start)". The exception that matters: a
+comment that writes an address while *rejecting* the decompile's claim about it
+must keep the address, because naming the callee there would assert the call the
+comment denies.
 
 ## Adding a row by hand
 

@@ -20,7 +20,7 @@ void FUN_CODE_a24e(void)
   }
   if ((DAT_EXTMEM_0497 & 1) == 0) {
     read_xdata_pair_to_r1r2(0x434,0x34,0x21);
-    FUN_CODE_8863();
+    cmp_r3r4_against_r1r2_16bit();
   }
   else {
     if (BAT_DESIGN_CAPACITY_1 == 0) {
@@ -42,7 +42,7 @@ LAB_CODE_a290:
       add_r1r2_to_r3r4(DAT_EXTMEM_0399,2,2,1);
     }
     read_xdata_pair_to_r1r2(0x608);
-    FUN_CODE_8863();
+    cmp_r3r4_against_r1r2_16bit();
   }
   if (-1 < (char)bVar1) {
     DAT_EXTMEM_070e = 0;

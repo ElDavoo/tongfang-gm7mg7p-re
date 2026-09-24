@@ -20,7 +20,7 @@ void dec_0622_when_04a2_below_0cee(void)
   char in_PSW;
   
   read_xdata_pair_to_r3r4(0x4a2,0xee,0xc);
-  FUN_CODE_8863();
+  cmp_r3r4_against_r1r2_16bit();
   if ((in_PSW < '\0') && (DAT_EXTMEM_0622 != '\0')) {
     DAT_EXTMEM_0805 = 4;
     DAT_EXTMEM_0622 = DAT_EXTMEM_0622 + -1;

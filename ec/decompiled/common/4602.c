@@ -14,7 +14,7 @@ undefined1 FUN_CODE_4602(char param_1)
   if (param_1 == '\f') {
     FUN_CODE_4b0f();
                     /* WARNING: Subroutine does not return */
-    FUN_CODE_4a4d();
+    code_word_to_dptr_4a4d();
   }
   DAT_EXTMEM_0a60 = 1;
   puVar1 = &DAT_EXTMEM_0a56;

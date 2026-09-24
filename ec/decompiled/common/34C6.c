@@ -33,14 +33,14 @@ void FUN_CODE_34c6(byte param_1)
           *(byte *)(bVar2 + 0x8d) = *(byte *)(bVar2 + 0x8d) & 0xfd;
           pbVar1 = (byte *)(*pcVar3 + -0x73);
           *pbVar1 = *pbVar1 | 0x20;
-          FUN_CODE_3b22(*pcVar3);
+          mul13_table_lookup_3b22(*pcVar3);
           FUN_CODE_3bae();
           *pcVar3 = '\x17';
           pbVar4 = &DAT_EXTMEM_0a47;
-          FUN_CODE_3b3e(DAT_EXTMEM_0a47);
-          FUN_CODE_3b70();
+          mul13_table_lookup_3b3e(DAT_EXTMEM_0a47);
+          dph_from_a_dpl_from_code_3b70();
           pbVar5 = pbVar4;
-          bVar2 = FUN_CODE_3b4e();
+          bVar2 = read_dptr_into_r6_then_r7_3b4e();
           *pbVar4 = param_1 | pbVar5[bVar2];
         }
       }

@@ -17,7 +17,7 @@ void FUN_CODE_1e7f(undefined1 param_1,undefined1 *param_2)
       if (_9_0 == '\0') {
         if ((_9_1 == '\0') || (_9_2 == '\0')) {
           if (_9_1 != '\0') {
-            FUN_CODE_2990(0xe0);
+            advance_bfe_counter_publish_at_bfd(0xe0);
             uVar1 = 0xf0;
             goto LAB_CODE_1edd;
           }
@@ -25,28 +25,28 @@ void FUN_CODE_1e7f(undefined1 param_1,undefined1 *param_2)
         }
         else {
 LAB_CODE_1ec2:
-          FUN_CODE_2990(0xe0);
-          FUN_CODE_2990(0xf0);
-          FUN_CODE_2990(0x12);
+          advance_bfe_counter_publish_at_bfd(0xe0);
+          advance_bfe_counter_publish_at_bfd(0xf0);
+          advance_bfe_counter_publish_at_bfd(0x12);
         }
 LAB_CODE_1ee7:
-        FUN_CODE_2990(0xe0);
-        FUN_CODE_2990(0xf0);
+        advance_bfe_counter_publish_at_bfd(0xe0);
+        advance_bfe_counter_publish_at_bfd(0xf0);
         uVar1 = 0x59;
       }
       else {
         if ((_9_1 == '\x01') || (_9_2 == '\x01')) goto LAB_CODE_1ef6;
         uVar1 = 0xe0;
 LAB_CODE_1edd:
-        FUN_CODE_2990(uVar1);
+        advance_bfe_counter_publish_at_bfd(uVar1);
         uVar1 = 0x12;
       }
-      FUN_CODE_2990(uVar1);
+      advance_bfe_counter_publish_at_bfd(uVar1);
     }
     else if (DAT_EXTMEM_0a58 == '\x02') {
       if ((_9_1 != '\0') && (_9_2 != '\0')) goto LAB_CODE_1ec2;
       if (_9_1 != '\0') {
-        FUN_CODE_2990(0xe0);
+        advance_bfe_counter_publish_at_bfd(0xe0);
         uVar1 = 0xf0;
         goto LAB_CODE_1edd;
       }
@@ -54,11 +54,11 @@ LAB_CODE_1edd:
     }
   }
 LAB_CODE_1ef6:
-  FUN_CODE_2990(0xe0);
+  advance_bfe_counter_publish_at_bfd(0xe0);
   if (DAT_EXTMEM_0a57 == '\x01') {
-    FUN_CODE_2990(0xf0);
+    advance_bfe_counter_publish_at_bfd(0xf0);
   }
-  FUN_CODE_2990(DAT_EXTMEM_0a56);
+  advance_bfe_counter_publish_at_bfd(DAT_EXTMEM_0a56);
   if (DAT_EXTMEM_0a57 != '\x01') {
     return;
   }
@@ -69,8 +69,8 @@ LAB_CODE_1ef6:
         uVar1 = 0xe0;
       }
       else {
-        FUN_CODE_2990(0xe0);
-        FUN_CODE_2990(0x59);
+        advance_bfe_counter_publish_at_bfd(0xe0);
+        advance_bfe_counter_publish_at_bfd(0x59);
         uVar1 = 0xe0;
       }
     }
@@ -81,7 +81,7 @@ LAB_CODE_1ef6:
       if (_9_2 == '\x01') {
         return;
       }
-      FUN_CODE_2990(0xe0);
+      advance_bfe_counter_publish_at_bfd(0xe0);
       uVar1 = 0xf0;
     }
   }
@@ -95,22 +95,22 @@ joined_c0x1f77:
         if (_9_2 == '\0') {
           return;
         }
-        FUN_CODE_2990(0xe0);
+        advance_bfe_counter_publish_at_bfd(0xe0);
         uVar1 = 0x59;
         goto LAB_CODE_1f81;
       }
       uVar1 = 0xe0;
     }
     else {
-      FUN_CODE_2990(0xe0);
-      FUN_CODE_2990(0x59);
+      advance_bfe_counter_publish_at_bfd(0xe0);
+      advance_bfe_counter_publish_at_bfd(0x59);
       uVar1 = 0xe0;
     }
   }
-  FUN_CODE_2990(uVar1);
+  advance_bfe_counter_publish_at_bfd(uVar1);
   uVar1 = 0x12;
 LAB_CODE_1f81:
-  FUN_CODE_2990(uVar1);
+  advance_bfe_counter_publish_at_bfd(uVar1);
   return;
 }
 

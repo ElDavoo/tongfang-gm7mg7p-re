@@ -286,6 +286,16 @@ class TheGuardOffRegeneration(unittest.TestCase):
     measured. 427 clusters become 439, 48 of the ranks survive intact and 379
     keep their number and change what the number names, which is the whole
     reason a rank is not an identity.
+
+    Those three figures are issue #274's, measured against the census as it
+    stood then, and they are kept as the record they are. The committed census
+    has since been re-derived (`xdata-register-map.md` §1, second correction),
+    so the same regeneration over the census in the tree now gives 430 → 439
+    with 64 ranks intact and 366 changed — the same direction and a little
+    less of it, because the re-derivation had already moved several of the ids
+    #274 counted as moved. Nothing below depends on which of the two is
+    current; what depends on it is the prose, and that is where the two sets of
+    figures are recorded.
     """
 
     @classmethod
@@ -314,17 +324,34 @@ class TheGuardOffRegeneration(unittest.TestCase):
                         f"missing {sorted(SWEPT_43 - set(row['addrs'].split()))}")
 
     def test_and_the_tool_says_what_moved_about_it(self):
-        # Not "nothing moved": under this regeneration the counter block keeps
+        # Not "nothing moved": under this regeneration a named cluster keeps
         # its membership and its key and only its *rank* changes, which is the
         # sharpest possible statement of why the rank is not the identity. The
         # assertion is that the two identities and the rank each moved the way
-        # the map says they did.
-        old = next(r for r in self.committed.values()
-                   if r["cluster_name"] == "counter-sweep")
-        new = self.off_named["counter-sweep"]
-        self.assertEqual(new["cluster_key"], old["cluster_key"])
-        self.assertEqual(set(new["addrs"].split()), set(old["addrs"].split()))
-        self.assertNotEqual(new["cluster_id"], old["cluster_id"])
+        # the map says they did — over the named clusters rather than over one
+        # of them, because *which* name demonstrates it is a property of the
+        # ranking and not of the design. `counter-sweep` was the exhibit when
+        # this was written (it was `main-ec-003` in the census then, and moved);
+        # the 2026-09-24 re-derivation had already put it at `main-ec-002`,
+        # which is where the guard-off census leaves it, so it no longer moves
+        # and is a weaker exhibit rather than a wrong one. If a future
+        # regeneration leaves every named rank standing, this fails, which is
+        # the same guard `test_the_regeneration_really_moves_the_ranks` puts on
+        # the whole census.
+        old_by_name = {r["cluster_name"]: r for r in self.committed.values()
+                       if r["cluster_name"]}
+        movers = sorted(
+            name for name, new in self.off_named.items()
+            if name in old_by_name
+            and new["cluster_key"] == old_by_name[name]["cluster_key"]
+            and set(new["addrs"].split()) == set(old_by_name[name]["addrs"].split())
+            and new["cluster_id"] != old_by_name[name]["cluster_id"])
+        self.assertTrue(
+            movers,
+            "no named cluster kept its membership and its key while its rank "
+            "moved, so nothing here shows that a rank is not an identity: "
+            f"committed names {sorted(old_by_name)}, guard-off names "
+            f"{sorted(self.off_named)}")
 
     def test_the_two_largest_cited_clusters_are_carried_by_overlap_not_by_key(self):
         # The case that rules a key-only design out. `main-ec-001` and
@@ -485,7 +512,11 @@ class TheGeneratorsAreUnchanged(unittest.TestCase):
                         "--out-registers", registers],
                        capture_output=True, text=True, check=True)
         for fresh, committed, extra, stale in (
-                (clusters, CLUSTERS, {"cluster_key", "cluster_name"}, (430, 427)),
+                # 430, not the 427 of the census #274 was written against: the
+                # 2026-09-24 re-derivation committed the fresh generation, so
+                # both censuses are 430 rows now and this pair is the net for
+                # a further movement rather than a record of the old one.
+                (clusters, CLUSTERS, {"cluster_key", "cluster_name"}, (430, 430)),
                 (registers, REGISTERS, {"cluster_key"}, (1171, 1171))):
             with open(fresh, newline="") as f:
                 rows = list(csv.DictReader(f))
@@ -498,17 +529,16 @@ class TheGeneratorsAreUnchanged(unittest.TestCase):
             if body(rows) == body(theirs):
                 continue
             # Not reproducible, and not this change's doing. The committed
-            # census is main's #310 one: `bank0/CC64`'s annotation adds an
-            # address it still had to itself, so a fresh generation is not the
-            # committed file. `xdata-register-map.md` §1 records the divergence
-            # and defers the re-derivation to #254/#256/#326, and
-            # `xdata_register_map.py --check` exits 1 on `origin/main` for the
-            # same reason — so the equality below is a claim about a tree this
-            # one is not yet. Pin the figures the documented gap has instead:
-            # a *second* movement of the census fails here rather than passing
-            # unnoticed behind the branch that skips the equality. When
-            # #254/#256/#326 re-derives the census this becomes the original
-            # assertion again, with nothing to change here.
+            # census used to be main's #310 one: `bank0/CC64`'s annotation adds
+            # an address it still had to itself, so a fresh generation was not
+            # the committed file, and the equality above was a claim about a
+            # tree this one was not yet. The 2026-09-24 re-derivation
+            # (#254/#256/#326, landed with issue #134's merge) closed that gap,
+            # so the equality is the assertion again and this fallback is the
+            # net for a *further* movement: the figures are now the two
+            # censuses' current lengths, and a second movement fails here
+            # rather than passing unnoticed behind the branch that skips the
+            # equality. `xdata-register-map.md` §1 carries both gaps.
             self.assertEqual((len(rows), len(theirs)), stale)
 
     def test_the_cluster_id_column_is_untouched(self):

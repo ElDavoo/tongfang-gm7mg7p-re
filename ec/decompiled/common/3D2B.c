@@ -17,7 +17,7 @@ void FUN_CODE_3d2b(void)
   else {
     uVar1 = 0xfa;
   }
-  FUN_CODE_3f9d(uVar1);
+  store_r7_to_iram_bb_then_set_68_0(uVar1);
   return;
 }
 

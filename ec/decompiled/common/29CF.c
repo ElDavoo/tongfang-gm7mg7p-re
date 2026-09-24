@@ -22,7 +22,7 @@ char FUN_CODE_29cf(void)
     if ((cVar2 == '\0') || (cVar3 = cVar1, cVar1 != '\0')) break;
     FUN_CODE_7125(0xa56,1);
     cVar3 = FUN_CODE_7030();
-    FUN_CODE_2990();
+    advance_bfe_counter_publish_at_bfd();
     if (cVar3 == '\0') {
       cVar1 = -0x80;
     }

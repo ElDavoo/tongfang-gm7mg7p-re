@@ -31,7 +31,7 @@ void forwarder_to_ad8b(void)
   if (((DAT_EXTMEM_04a0 >> 5 & 1) != 1) && (DAT_EXTMEM_0494 == '\0')) {
     read_xdata_pair_to_r3r4(0x518);
     read_xdata_pair_to_r1r2(0x546);
-    FUN_CODE_8863();
+    cmp_r3r4_against_r1r2_16bit();
     if (cVar1 < '\0') {
       DAT_EXTMEM_0497 = DAT_EXTMEM_0497 & 0x7f;
       clear_0492_0496_0577_0578_0542();

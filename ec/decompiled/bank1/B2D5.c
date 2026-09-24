@@ -38,7 +38,7 @@ void copy_0514_0516_to_04ab_04ac_then_probe(void)
       if (-1 < cVar2) {
         read_xdata_pair_to_r3r4(0x404);
         read_xdata_pair_to_r1r2(0x51c);
-        bVar1 = FUN_CODE_8863();
+        bVar1 = cmp_r3r4_against_r1r2_16bit();
         if ((bVar1 & 1) == 1) {
           if ((DAT_EXTMEM_0497 & 1) != 0) {
             DAT_EXTMEM_0575 = 8;

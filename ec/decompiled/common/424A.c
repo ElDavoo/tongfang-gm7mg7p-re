@@ -63,7 +63,7 @@ void FUN_CODE_424a(short param_1,char *param_2,byte *param_3,char param_4,byte p
     FUN_CODE_3cee(cVar5);
     return;
   }
-  FUN_CODE_3f9d(DAT_EXTMEM_001a);
+  store_r7_to_iram_bb_then_set_68_0(DAT_EXTMEM_001a);
   return;
 }
 

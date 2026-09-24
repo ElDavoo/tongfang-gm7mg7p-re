@@ -16,7 +16,7 @@ void call_d57b_with_0d32_tail_3f9d(void)
 
 {
   read_xdata_0400_plus_r7(DAT_INTMEM_32);
-  FUN_CODE_3f9d();
+  store_r7_to_iram_bb_then_set_68_0();
   return;
 }
 

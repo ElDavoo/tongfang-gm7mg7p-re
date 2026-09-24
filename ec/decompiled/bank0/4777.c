@@ -22,9 +22,9 @@ void stage_0a54_0a55_then_dispatch(undefined1 param_1,undefined1 param_2,char pa
   if (param_3 == -1) {
     return;
   }
-  FUN_CODE_4a76(0);
+  mov_a_from_r1_4a76(0);
                     /* WARNING: Subroutine does not return */
-  FUN_CODE_4a4d();
+  code_word_to_dptr_4a4d();
 }
 
 

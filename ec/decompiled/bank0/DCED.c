@@ -15,7 +15,7 @@
 void read_0459_tail_3f9d(void)
 
 {
-  FUN_CODE_3f9d(XDATA_0459);
+  store_r7_to_iram_bb_then_set_68_0(XDATA_0459);
   return;
 }
 

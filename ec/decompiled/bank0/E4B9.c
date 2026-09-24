@@ -24,7 +24,7 @@ void init_0a4d_block_and_count(char param_1,undefined1 param_2)
   }
   DAT_EXTMEM_0a4d = param_1;
   DAT_EXTMEM_0a4e = param_2;
-  FUN_CODE_5597(1);
+  write_009f_4f_or_0f_by_r7(1);
   DAT_EXTMEM_0a53 = 1;
   DAT_EXTMEM_0a54 = 1;
   DAT_EXTMEM_0a55 = 0;
