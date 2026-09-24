@@ -215,10 +215,16 @@ only covers what's specific to *this* copy.
   not in the template). The `agent-pipeline` concurrency group is one per issue
   (`agent-pipeline/agent/issue-N`) instead of one for the whole pipeline, so up
   to `MAX_PARALLEL_AGENTS` (5, in `agent-retry.yml`) stages run at once and
-  `MAX_OPEN_AGENT_PRS` is 5; `agent-retry.yml` runs hourly and fills free slots.
-  Parallel branches conflict with each other as they merge, so
-  `agent-conflicts.yml` runs on every push to main (and hourly): it finds open
-  agent PRs GitHub reports as `CONFLICTING`, squash-merges each branch onto
+  `MAX_OPEN_AGENT_PRS` is 5. `agent-retry.yml` fills free slots and is the only
+  thing that hands them out. It runs hourly, on every push to main, and whenever
+  an agent stage finishes, because GitHub dropped most of the hourly cron events.
+  Its sweeps go in priority order: stalled runs, conflicting PRs, missing
+  reviews, missing follow-up passes, and then the implement and plan queues.
+  Follow-ups come before issues because a merge left without one for
+  `LOOKBACK_DAYS` never gets one. Parallel branches conflict with each other as
+  they merge. For each open agent PR that GitHub reports as `CONFLICTING`, the
+  sweep dispatches `agent-conflicts.yml` with that PR, one run each, so that the
+  run takes up exactly one slot. That run squash-merges the branch onto
   current main, has Claude resolve the conflicted tree (regenerating the EC's
   generated files rather than hand-merging them), and force-pushes one linear
   commit, bounded at three attempts per PR head before `agent:stuck`. A re-copy

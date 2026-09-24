@@ -16,18 +16,28 @@ name: Agent · conflicts
 # Bounded: at most three attempts per PR head commit, recorded as markers on the PR. After that
 # the PR is labelled agent:stuck and left for a human.
 
+#
+# Dispatched by agent-retry.yml, one PR per run (`pr` input), which is what makes a resolution
+# count as one of MAX_PARALLEL_AGENTS there. It used to run on every push to main and hourly and
+# size its own batch from the free slots; a five-PR batch then counted as one busy run, and it
+# raced the retry sweep for the same slots. Dispatched by hand without `pr`, it still sweeps every
+# conflicting agent PR up to the free slots.
+
 on:
-  push:
-    branches: [main]
-  schedule:
-    - cron: '30 * * * *'
   workflow_dispatch:
+    inputs:
+      pr:
+        description: 'Pull request to resolve (empty: every conflicting agent PR, up to the free slots)'
+        required: false
+        default: ''
+
+run-name: "${{ inputs.pr && format('Resolve conflicts on PR #{0}', inputs.pr) || 'Agent · conflicts' }}"
 
 permissions: {}
 
-# One sweep at a time; the per-PR resolution below takes the issue's own pipeline group.
+# One run per PR; the resolution below also takes the issue's own pipeline group.
 concurrency:
-  group: agent-conflicts-sweep
+  group: agent-conflicts-${{ inputs.pr || 'sweep' }}
   cancel-in-progress: false
 
 jobs:
@@ -49,25 +59,32 @@ jobs:
           # Keep equal to MAX_PARALLEL_AGENTS in agent-retry.yml.
           MAX_PARALLEL_AGENTS: '5'
           MAX_ATTEMPTS: '3'
+          PR: ${{ inputs.pr }}
         run: |
           set -euo pipefail
+          if [ -n "$PR" ]; then
+            # The retry sweep already counted this run as the PR's slot.
+            candidates=$PR
+            free=1
+          else
           # shellcheck disable=SC2016  # $w is a jq variable and has to reach jq unexpanded.
           busy=$(gh run list --limit 200 --json workflowName,status --jq '
             [ .[] | select(.status != "completed")
                   | select(.workflowName as $w
                            | ["Agent · plan","Agent · implement","Agent · review",
-                              "Agent · fix CI","Agent · followups","Claude · mention"]
+                              "Agent · fix CI","Agent · followups","Claude · mention","Agent · conflicts"]
                            | index($w)) ] | length')
           free=$(( MAX_PARALLEL_AGENTS - busy ))
           echo "$busy agent run(s) in flight, $free slot(s) free"
+          candidates=$(gh pr list --state open --limit 100 --json number,headRefName,isDraft,labels --jq '
+            [ .[] | select(.headRefName | startswith("agent/issue-"))
+                  | select(.isDraft | not)
+                  | select([.labels[].name] | any(IN("agent:stop","agent:stuck","no-agent")) | not)
+                  | .number ] | sort | .[]')
+          fi
 
           found='[]'
           if [ "$free" -gt 0 ]; then
-            candidates=$(gh pr list --state open --limit 100 --json number,headRefName,isDraft,labels --jq '
-              [ .[] | select(.headRefName | startswith("agent/issue-"))
-                    | select(.isDraft | not)
-                    | select([.labels[].name] | any(IN("agent:stop","agent:stuck","no-agent")) | not)
-                    | .number ] | sort | .[]')
             for pr in $candidates; do
               [ "$(jq length <<<"$found")" -lt "$free" ] || break
               # GitHub computes mergeability lazily: the first read after main moves is UNKNOWN.

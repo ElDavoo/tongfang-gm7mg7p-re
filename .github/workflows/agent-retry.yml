@@ -8,6 +8,15 @@ name: Agent · retry
 # on schedule, for the usage-window reason below. Comments further down that say "one per sweep"
 # or "only when idle" describe the original design.
 #
+# LOCAL CHANGE (2026-09-24, later the same day): GitHub drops most `0 * * * *` events for this
+# repository -- the hourly cron fired three times in sixteen hours -- so the sweep also runs when
+# an agent run finishes (the moment a slot frees) and when main moves (the moment other PRs can
+# start conflicting). It is also now the only thing that hands out slots: agent-conflicts.yml no
+# longer schedules itself, the sweep below dispatches it one PR per run, so a resolution counts as
+# one busy slot like every other stage. And the follow-up sweep runs before the issue sweeps: a
+# merge's follow-up pass is lost for good after LOOKBACK_DAYS, while a queued issue waits
+# indefinitely, so issues taking every slot left fourteen merges without one.
+#
 # Picks up work the pipeline dropped, in two sweeps: stages that stopped before they finished,
 # and stages whose turn in the queue never came.
 #
@@ -42,6 +51,13 @@ name: Agent · retry
 on:
   schedule:
     - cron: '0 * * * *'
+  push:
+    branches: [main]
+  # Any stage finishing frees a slot. Kept equal to the busy list in "Is the pipeline idle".
+  workflow_run:
+    workflows: ["Agent · plan", "Agent · implement", "Agent · review", "Agent · fix CI",
+                "Agent · followups", "Claude · mention", "Agent · conflicts"]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -56,8 +72,10 @@ concurrency:
 
 jobs:
   retry:
+    # A skipped run held no slot, so it frees none; `Agent · fix CI` alone skips on every CI run.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion != 'skipped'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
 
     steps:
       - name: Re-run what stalled
@@ -72,7 +90,8 @@ jobs:
           set -euo pipefail
 
           # Hourly cron, five-hourly stall retries: a usage window takes about five hours to reset.
-          if [ "$GITHUB_EVENT_NAME" = schedule ] && [ $(( 10#$(date -u +%H) % 5 )) -ne 0 ]; then
+          # Only a hand dispatch retries off the mark; the event-driven runs are as frequent as runs.
+          if [ "$GITHUB_EVENT_NAME" != workflow_dispatch ] && [ $(( 10#$(date -u +%H) % 5 )) -ne 0 ]; then
             echo "not a five-hour mark — leaving stalled runs for the next one"
             exit 0
           fi
@@ -255,6 +274,48 @@ jobs:
           }
           EOF
 
+      # LOCAL (see the header): a pull request that conflicts with main gets no CI, no review and
+      # no auto-merge, so it is nearest-to-merge work that nothing else will unblock. Dispatched
+      # one PR per agent-conflicts.yml run so the run counts as one slot; that workflow keeps the
+      # per-head-commit attempt bound and the agent:stuck hand-off. Every conflicting PR is also
+      # written to conflicting.txt, dispatched or not, so the review sweep below does not restart
+      # a review that cannot run.
+      - name: Resolve the next pull request that conflicts with main
+        if: steps.idle.outputs.idle == 'true' && env.FREE_SLOTS != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          DISPATCH_TOKEN: ${{ secrets.AGENT_PUSH_TOKEN }}
+        run: |
+          set -euo pipefail
+          : > "$RUNNER_TEMP/conflicting.txt"
+          prs=$(gh pr list --state open --limit 100 --json number,headRefName,isDraft,labels --jq '
+                  [ .[] | select(.headRefName | startswith("agent/issue-"))
+                        | select(.isDraft | not)
+                        | select([.labels[].name] | any(IN("agent:stop","agent:stuck","no-agent")) | not) ]
+                  | sort_by(.number) | .[] | "\(.number) \(.headRefName)"')
+          . "$RUNNER_TEMP/slots.sh"
+          while read -r pr branch <&3; do
+            [ -n "$pr" ] || continue
+            # GitHub computes mergeability lazily: the first read after main moves is UNKNOWN.
+            state=UNKNOWN
+            for _ in 1 2 3 4; do
+              state=$(gh pr view "$pr" --json mergeable --jq .mergeable)
+              [ "$state" != UNKNOWN ] && break
+              sleep 5
+            done
+            [ "$state" = CONFLICTING ] || continue
+            echo "$pr" >> "$RUNNER_TEMP/conflicting.txt"
+            [ "$FREE_SLOTS" -gt 0 ] || continue
+            if busy_pr "$pr" "$branch"; then
+              continue
+            fi
+            echo "PR #$pr conflicts with main — dispatching the conflicts stage"
+            GH_TOKEN="$DISPATCH_TOKEN" gh workflow run agent-conflicts.yml -f pr="$pr"
+            take_slot
+          done 3<<<"$prs"
+          echo "conflict sweep done, $FREE_SLOTS slot(s) left"
+
       # A review displaced out of the group. agent-review.yml declares the group at workflow level
       # (it calls the reusable fix stage, see README.md), so a cancelled review leaves no job and no
       # marker -- only an open agent pull request with no review by the bot on its head commit.
@@ -295,6 +356,10 @@ jobs:
           . "$RUNNER_TEMP/slots.sh"
           while read -r pr sha <&3; do
             [ "$FREE_SLOTS" -gt 0 ] || break
+            # No CI and no review can run on a conflicting head; the conflict sweep owns it.
+            if grep -qxF "$pr" "$RUNNER_TEMP/conflicting.txt"; then
+              continue
+            fi
             if busy_issue "$(gh pr view "$pr" --json headRefName --jq '.headRefName | ltrimstr("agent/issue-")')"; then
               continue
             fi
@@ -330,6 +395,79 @@ jobs:
           done 3<<<"$prs"
 
           echo "review sweep done, $FREE_SLOTS slot(s) left"
+
+      # Not in the upstream template: agent-followups.yml is this repository's own stage, and
+      # it can be displaced like any other. Its trace is a recent merge with neither a finished
+      # event run of that workflow on the pull request's head commit nor a finished dispatched one
+      # (recognised by its markers -- see the top of agent-followups.yml). LOCAL: placed before implement and plan (see the header):
+      # a follow-up pass that misses the week-long window is never made, a queued issue just waits.
+      #
+      # A week back and no further. Older merges are not worth a run each, and a bound in time is
+      # what stops a change to this signature from re-proposing follow-ups for the whole history.
+      # Bounded at three starts per pull request; past that it logs and moves on rather than
+      # labelling anything, since nothing downstream waits on this stage.
+      - name: Propose follow-ups for the next merge whose turn never came
+        if: steps.idle.outputs.idle == 'true' && env.FREE_SLOTS != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          DISPATCH_TOKEN: ${{ secrets.AGENT_PUSH_TOKEN }}
+          MAX_RETRIES: '3'
+          LOOKBACK_DAYS: '7'
+        run: |
+          set -euo pipefail
+
+          # The stage is optional -- see the top of agent-followups.yml -- so a copy without it
+          # skips this sweep rather than failing on a workflow that is not there.
+          if ! gh workflow view agent-followups.yml >/dev/null 2>&1; then
+            echo "no follow-up stage in this repository"
+            exit 0
+          fi
+
+          since=$(date -u -d "-${LOOKBACK_DAYS} days" +%Y-%m-%dT%H:%M:%SZ)
+          merged=$(gh pr list --state merged --limit 50 --json number,headRefOid,headRefName,mergedAt \
+                     | jq -r --arg since "$since" '[ .[] | select(.mergedAt >= $since) ]
+                                                   | sort_by(.mergedAt) | .[] | "\(.number) \(.headRefOid) \(.headRefName)"')
+          if [ -z "$merged" ]; then
+            echo "no merge in the last $LOOKBACK_DAYS days"
+            exit 0
+          fi
+
+          done_shas=$(gh run list --workflow agent-followups.yml --event pull_request --limit 200 \
+                        --json headSha,conclusion --jq '.[] | select(.conclusion == "success") | .headSha')
+
+          . "$RUNNER_TEMP/slots.sh"
+          while read -r pr sha branch <&3; do
+            [ "$FREE_SLOTS" -gt 0 ] || break
+            if busy_pr "$pr" "$branch"; then
+              continue
+            fi
+            bodies=$(gh api --paginate --slurp "repos/${GITHUB_REPOSITORY}/issues/${pr}/comments" \
+                       | jq -c '[.[] | .[] | select(.user.login == "github-actions[bot]" and .user.type == "Bot") | .body]')
+            # The last of the two markers decides, when there is one: `done` last means the latest
+            # pass finished, `queued` last means a dispatched pass never did. With neither, no pass
+            # was ever dispatched, and run history on the head commit is the only record.
+            last=$(jq -r '[.[] | (if contains("<!-- agent-followups-done -->") then "done"
+                                  elif contains("<!-- agent-followups-queued -->") then "queued"
+                                  else empty end)] | last // "none"' <<<"$bodies")
+            case "$last" in
+              done) continue ;;
+              none) if grep -qxF "$sha" <<<"$done_shas"; then continue; fi ;;
+            esac
+            started=$(jq '[.[] | select(contains("<!-- agent-followups-queued -->"))] | length' <<<"$bodies")
+            if [ "$started" -ge "$MAX_RETRIES" ]; then
+              echo "PR #$pr: follow-ups started $started times already — skipping it"
+              continue
+            fi
+
+            # No comment here: the dispatched run's own `queue` job posts the queued marker, so a
+            # start is counted once whether this sweep or a human dispatched it.
+            echo "pipeline idle — proposing follow-ups for PR #$pr"
+            GH_TOKEN="$DISPATCH_TOKEN" gh workflow run agent-followups.yml -f pr="$pr"
+            take_slot
+          done 3<<<"$merged"
+
+          echo "every recent merge has had its follow-up pass"
 
       # The queue draining. An issue displaced out of the concurrency group leaves no marker, so
       # this looks for its signature instead: the implement stage swaps `agent:planned` for
@@ -423,80 +561,6 @@ jobs:
             -f issue="$waiting" -f author="$author"
           take_slot
           done
-
-      # Not in the upstream template: agent-followups.yml is this repository's own stage, and
-      # it can be displaced like any other. Its trace is a recent merge with neither a finished
-      # event run of that workflow on the pull request's head commit nor a finished dispatched one
-      # (recognised by its markers -- see the top of agent-followups.yml). Placed after implement and before plan: it only proposes
-      # new issues, so it matters less than finishing the work already in flight, but a plan
-      # would draw from the issues it opens.
-      #
-      # A week back and no further. Older merges are not worth a run each, and a bound in time is
-      # what stops a change to this signature from re-proposing follow-ups for the whole history.
-      # Bounded at three starts per pull request; past that it logs and moves on rather than
-      # labelling anything, since nothing downstream waits on this stage.
-      - name: Propose follow-ups for the next merge whose turn never came
-        if: steps.idle.outputs.idle == 'true' && env.FREE_SLOTS != '0'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
-          DISPATCH_TOKEN: ${{ secrets.AGENT_PUSH_TOKEN }}
-          MAX_RETRIES: '3'
-          LOOKBACK_DAYS: '7'
-        run: |
-          set -euo pipefail
-
-          # The stage is optional -- see the top of agent-followups.yml -- so a copy without it
-          # skips this sweep rather than failing on a workflow that is not there.
-          if ! gh workflow view agent-followups.yml >/dev/null 2>&1; then
-            echo "no follow-up stage in this repository"
-            exit 0
-          fi
-
-          since=$(date -u -d "-${LOOKBACK_DAYS} days" +%Y-%m-%dT%H:%M:%SZ)
-          merged=$(gh pr list --state merged --limit 50 --json number,headRefOid,headRefName,mergedAt \
-                     | jq -r --arg since "$since" '[ .[] | select(.mergedAt >= $since) ]
-                                                   | sort_by(.mergedAt) | .[] | "\(.number) \(.headRefOid) \(.headRefName)"')
-          if [ -z "$merged" ]; then
-            echo "no merge in the last $LOOKBACK_DAYS days"
-            exit 0
-          fi
-
-          done_shas=$(gh run list --workflow agent-followups.yml --event pull_request --limit 200 \
-                        --json headSha,conclusion --jq '.[] | select(.conclusion == "success") | .headSha')
-
-          . "$RUNNER_TEMP/slots.sh"
-          while read -r pr sha branch <&3; do
-            [ "$FREE_SLOTS" -gt 0 ] || break
-            if busy_pr "$pr" "$branch"; then
-              continue
-            fi
-            bodies=$(gh api --paginate --slurp "repos/${GITHUB_REPOSITORY}/issues/${pr}/comments" \
-                       | jq -c '[.[] | .[] | select(.user.login == "github-actions[bot]" and .user.type == "Bot") | .body]')
-            # The last of the two markers decides, when there is one: `done` last means the latest
-            # pass finished, `queued` last means a dispatched pass never did. With neither, no pass
-            # was ever dispatched, and run history on the head commit is the only record.
-            last=$(jq -r '[.[] | (if contains("<!-- agent-followups-done -->") then "done"
-                                  elif contains("<!-- agent-followups-queued -->") then "queued"
-                                  else empty end)] | last // "none"' <<<"$bodies")
-            case "$last" in
-              done) continue ;;
-              none) if grep -qxF "$sha" <<<"$done_shas"; then continue; fi ;;
-            esac
-            started=$(jq '[.[] | select(contains("<!-- agent-followups-queued -->"))] | length' <<<"$bodies")
-            if [ "$started" -ge "$MAX_RETRIES" ]; then
-              echo "PR #$pr: follow-ups started $started times already — skipping it"
-              continue
-            fi
-
-            # No comment here: the dispatched run's own `queue` job posts the queued marker, so a
-            # start is counted once whether this sweep or a human dispatched it.
-            echo "pipeline idle — proposing follow-ups for PR #$pr"
-            GH_TOKEN="$DISPATCH_TOKEN" gh workflow run agent-followups.yml -f pr="$pr"
-            take_slot
-          done 3<<<"$merged"
-
-          echo "every recent merge has had its follow-up pass"
 
       # The same drain for the plan stage. Its signature is `agent:queued` -- put there by
       # agent-plan.yml's triage, for an issue it cleared to run -- with none of the labels a plan
