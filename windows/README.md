@@ -111,27 +111,31 @@ every number in those write-ups.
 
 ## Offline tests
 
-Three of the tools carry offline `unittest` suites, and all three run from Linux
-with no Windows box, no EC and no vendor code:
+Five of the tools carry offline `unittest` suites, and all of them run from
+Linux with no Windows box, no EC and no vendor code:
 
 ```sh
-bash tools/run-tests.sh            # from the repository root: these three, and the other three
+bash tools/run-tests.sh            # from the repository root: every suite in the tree
 bash tools/run-tests.sh windows/tools
 ```
 
 `tools/test_manual_fan_ctrl_probe.py` scripts the probe's two arms byte by byte,
-`tools/test_ec_watch.py` checks the mark lands in the CSV between the two change
-rows, and `tools/test_charge_target_test.py` runs the charge-target tool's three
+`tools/test_ec_watch.py` checks the mark lands in the CSV between the two
+change rows, `tools/test_ec_validate.py` checks the `0x0436` capacity arm's
+one-directional exact-copy scoring, its full-capacity bound, its CSV, and the
+`0x0400-0x045F` page assertion that keeps it off the fan-tach block, and
+`tools/test_charge_target_test.py` runs the charge-target tool's three
 refusals, the restore in its `finally`, and its CSV columns — the branches
 `docs/findings.md` §4m's committed artifacts never exercise, since all three
-live runs took the write path. All three work by faking `ecrw` — the module
-binds kernel32 at import time and only loads on Windows — which is also what
-makes the arms scriptable; the charge-target suite fakes the `powershell` call
-behind its WMI line as well. `../tools/README.md` is the canonical home for the
-command, and records why the runner gives each suite its own interpreter: the
-three `ecrw` fakes are not the same shape, and a single shared discovery over
-this directory survives only because the fullest of the three happens to sort
-first (`docs/findings.md` §16).
+live runs took the write path. (`tools/test_system_id_probe.py` covers the
+`0x0456` probe; `../tools/README.md` lists it.) All of them work by faking
+`ecrw` — the module binds kernel32 at import time and only loads on Windows —
+which is also what makes the arms scriptable; the charge-target suite fakes the
+`powershell` call behind its WMI line as well. `../tools/README.md` is the
+canonical home for the command, and records why the runner gives each suite its
+own interpreter: the `ecrw` fakes are not all the same shape, and a single
+shared discovery over this directory survives only by sort-order accident
+(`docs/findings.md` §16).
 
 ## What's proven vs. what needs a Windows box
 

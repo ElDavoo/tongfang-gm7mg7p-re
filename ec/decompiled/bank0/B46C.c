@@ -14,18 +14,18 @@ void FUN_CODE_b46c(void)
   cVar1 = read_06e6_xor_01();
   if (cVar1 != '\0') {
     DAT_EXTMEM_09cf = 0;
-    DAT_EXTMEM_08eb = DAT_EXTMEM_08eb & 0x7f;
+    XDATA_08EB = XDATA_08EB & 0x7f;
     return;
   }
   if (_4_4 == '\0') {
-    if (((char)DAT_EXTMEM_08eb < '\0') && (DAT_EXTMEM_09cf != '\0')) {
+    if (((char)XDATA_08EB < '\0') && (DAT_EXTMEM_09cf != '\0')) {
       DAT_EXTMEM_09cf = DAT_EXTMEM_09cf + -1;
     }
   }
   else {
     _4_4 = '\0';
-    if ((DAT_EXTMEM_09cf == '\0') && ((char)DAT_EXTMEM_08eb < '\0')) {
-      DAT_EXTMEM_08eb = DAT_EXTMEM_08eb & 0x7f;
+    if ((DAT_EXTMEM_09cf == '\0') && ((char)XDATA_08EB < '\0')) {
+      XDATA_08EB = XDATA_08EB & 0x7f;
       set_160a_bit0_unless_b8f4_and_08eb();
       return;
     }

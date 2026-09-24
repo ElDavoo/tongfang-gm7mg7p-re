@@ -16,7 +16,7 @@ void gate_0571_0573_eq_1(void)
 {
   undefined1 uVar1;
   
-  uVar1 = DAT_EXTMEM_0432;
+  uVar1 = BAT_STATUS_1;
   if ((DAT_EXTMEM_0571 == BANK0_R1) && (uVar1 = DAT_EXTMEM_04f2, DAT_EXTMEM_0573 == BANK0_R1)) {
     snapshot_0432_043c_04f2_04fc();
     return;

@@ -57,38 +57,56 @@ making this file quietly wrong:
 ```console
 $ python3 ec/tools/xdata_register_map.py --self-test
 xdata_register_map.py --self-test
-  ok    index.csv and the committed .c files still describe each other
-  ok    the annotation CSV and index.csv agree on every address they share
-  ok    no generated symbol name is also a function, parameter or local in the decompiled tree
-  ok    every reference is in one of the five buckets ['read', 'write', 'read+write', 'passed-to-call', 'address-taken']
-  ok    bucket counts sum to the reference count for every address
-  ok    passed-to-call and address-taken both fire, so the two unresolved-direction buckets are not dead vocabulary
-  ok    the issue's 14399 file-wide DAT_EXTMEM_ occurrences and the 9 of them that are this repository's own annotation text quoting the decompile are still where they were (raw: {'DAT_EXTMEM': 14399, 'symbol': 471})
-  ok    oracle: DAT_EXTMEM_ only, what issue #132 counted -- main EC 1022 distinct / 13526 refs, PD 157/864, which is 1134 distinct addresses in all after the 48 both programs touch (got (1022, 13526) and (157, 864))
-  ok    oracle: the 41 main-EC addresses the decompiler named, 411 references, and 0/0 of them in the PD image (got (41, 411) and (0, 0))
-  ok    within each program the two spellings are disjoint address for address, so a named address is never also a DAT_EXTMEM_ token
-  ok    the PD image is spelled entirely in DAT_EXTMEM_ tokens, which is gen_xdata_symbols.py's own refusal to name it
-  ok    oracle: the full census, both spellings -- 1172 distinct / 14801 references, main EC 1063/13937 (got 1172/14801, (1063, 13937))
-  ok    oracle: 109 PD-only, 48 touched by both (got 109 / 48)
-  ok    main + PD equals the file-wide total on both axes
-  ok    oracle: the top two main-EC addresses by reference count are 0x0440=181, 0x08A8=170 (got 0x0440=181, 0x08A8=170)
-  ok    the 0x07D8 correction: its main-EC reference is spelled MODE_TCC_OFFSET_DEFAULTS_GAMING_0, and the PD image spells the same address DAT_EXTMEM_07d8 because it is not named there
-  ok    of the 56 named addresses, 44 appear in the decompiled tree at all (got 44: 0x030E, 0x030F, 0x043E, 0x044F, 0x049F, 0x04A6, 0x04A7, 0x0522, 0x0523, 0x0730, 0x0731, 0x0732, 0x0734, 0x0736, 0x0737, 0x0740, 0x0741, 0x0743, 0x0744, 0x0745, 0x0746, 0x074E, 0x0751, 0x0766, 0x0767, 0x0768, 0x0782, 0x0783, 0x0784, 0x0785, 0x0786, 0x078C, 0x07A6, 0x07A7, 0x07A8, 0x07A9, 0x07AA, 0x07C6, 0x07CC, 0x07D0, 0x07D8, 0x07D9, 0x07DA, 0x07E2)
-  ok    every address the tree spells by symbol is in the generated symbol table, so the name column can never be empty for one
-  ok    the two blind-spot addresses are 0x0733, 0x0735; of them the one that is spelled at all is 0x0733, behind a CODE pointer (got 0x0733), and 0x0735 is not findable by any spelling
-  ok    the `name` column is populated exactly for the addresses the symbol table names, independently of how the tree spells them
-  ok    every address is in exactly one cluster
-  ok    cluster sizes sum to the address count of each program
-  ok    every shared function a cluster names resolves to a row in index.csv
-  ok    the two unresolved-direction buckets survive into the CSV as their own columns
-  ok    each reader function has a read or read+write reference of its own, and each writer a write or read+write one
-  ok    readers and writers are subsets of the functions that touch the address, and neither exceeds it
-  ok    the rank the report's worklist uses is total: no two clusters tie on size, references and lowest address
-  ok    the clusters CSV is a projection of the registers CSV, not a separate count
-  ok    the committed CSVs match a fresh generation (run without --check after changing anything the census reads)
-  435 clusters at threshold 0.5; 1063 main-EC and 157 PD addresses
-  all assertions passed
+ok    index.csv and the committed .c files still describe each other
+ok    the annotation CSV and index.csv agree on every address they share
+ok    no generated symbol name is also a function, parameter or local in the decompiled tree
+ok    every reference is in one of the five buckets ['read', 'write', 'read+write', 'passed-to-call', 'address-taken']
+ok    bucket counts sum to the reference count for every address
+ok    passed-to-call and address-taken both fire, so the two unresolved-direction buckets are not dead vocabulary
+ok    the issue's 14399 file-wide DAT_EXTMEM_ occurrences and the 9 of them that are this repository's own annotation text quoting the decompile are still where they were (raw: {'DAT_EXTMEM': 14399, 'symbol': 473})
+ok    oracle: DAT_EXTMEM_ only, what issue #132 counted -- main EC 1022 distinct / 13526 refs, PD 157/864, which is 1134 distinct addresses in all after the 48 both programs touch (got (1022, 13526) and (157, 864))
+ok    oracle: the 41 main-EC addresses the decompiler named, 411 references, and 0/0 of them in the PD image (got (41, 411) and (0, 0))
+ok    within each program the two spellings are disjoint address for address, so a named address is never also a DAT_EXTMEM_ token
+ok    the PD image is spelled entirely in DAT_EXTMEM_ tokens, which is gen_xdata_symbols.py's own refusal to name it
+ok    oracle: the full census, both spellings -- 1172 distinct / 14801 references, main EC 1063/13937 (got 1172/14801, (1063, 13937))
+ok    oracle: 109 PD-only, 48 touched by both (got 109 / 48)
+ok    main + PD equals the file-wide total on both axes
+ok    oracle: the top two main-EC addresses by reference count are 0x0440=181, 0x08A8=170 (got 0x0440=181, 0x08A8=170)
+ok    the 0x07D8 correction: its main-EC reference is spelled MODE_TCC_OFFSET_DEFAULTS_GAMING_0, and the PD image spells the same address DAT_EXTMEM_07d8 because it is not named there
+ok    of the 108 named addresses, 86 appear in the decompiled tree at all (got 86: 0x030E, 0x030F, 0x0400, 0x0401, 0x0403, 0x0432, 0x0434, 0x0435, 0x0436, 0x0437, 0x0438, 0x0439, 0x043C, 0x043D, 0x043E, 0x043F, 0x0440, 0x0442, 0x0443, 0x0448, 0x0449, 0x044B, 0x044C, 0x044F, 0x0450, 0x0451, 0x0452, 0x0454, 0x0455, 0x0456, 0x0458, 0x0459, 0x045A, 0x045B, 0x045C, 0x045D, 0x045E, 0x045F, 0x049F, 0x04A6, 0x04A7, 0x0522, 0x0523, 0x0730, 0x0731, 0x0732, 0x0734, 0x0736, 0x0737, 0x0740, 0x0741, 0x0743, 0x0744, 0x0745, 0x0746, 0x074E, 0x0751, 0x0766, 0x0767, 0x0768, 0x0782, 0x0783, 0x0784, 0x0785, 0x0786, 0x078C, 0x07A6, 0x07A7, 0x07A8, 0x07A9, 0x07AA, 0x07C6, 0x07CC, 0x07D0, 0x07D1, 0x07D8, 0x07D9, 0x07DA, 0x07E2, 0x089E, 0x089F, 0x08A0, 0x08A2, 0x08EB, 0x09E6, 0x09E7)
+ok    every address the tree spells by symbol is in the generated symbol table, so the name column can never be empty for one
+ok    the two blind-spot addresses are 0x0733, 0x0735; of them the one that is spelled at all is 0x0733, behind a CODE pointer (got 0x0733), and 0x0735 is not findable by any spelling
+ok    the `name` column is populated exactly for the addresses the symbol table names, independently of how the tree spells them
+ok    every address is in exactly one cluster
+ok    cluster sizes sum to the address count of each program
+ok    every shared function a cluster names resolves to a row in index.csv
+ok    the two unresolved-direction buckets survive into the CSV as their own columns
+ok    each reader function has a read or read+write reference of its own, and each writer a write or read+write one
+ok    readers and writers are subsets of the functions that touch the address, and neither exceeds it
+ok    the rank the report's worklist uses is total: no two clusters tie on size, references and lowest address
+ok    the clusters CSV is a projection of the registers CSV, not a separate count
+ok    the committed CSVs match a fresh generation (run without --check after changing anything the census reads)
+435 clusters at threshold 0.5; 1063 main-EC and 157 PD addresses
+all assertions passed
 ```
+
+**That block did not pass when it was first written, and the two failures
+were both staleness rather than method.** The committed `xdata-registers.csv`
+had an empty `name` column for every row and the committed
+`xdata-clusters.csv` an empty `named_addrs` column for all 25 clusters that
+have named addresses, while the tool fills both and its own self-test asserts
+`name` is populated exactly for the addresses the symbol table names. So
+`--check` and `--self-test` both failed on the tree this file describes —
+nothing in `.github/scripts/agent-gates.sh` runs either mode, which is why it
+went unnoticed. `ORACLE['named_in_tree']` had the same problem: it read 44
+from when the 0x0400-0x045F page entries were added to `registers.yaml`
+without the constant being re-derived, against 79 in the tree. Both are
+corrected here, and §5's "named inside" column is a reading of the corrected
+CSV — which is why four of its rows moved here too (`main-ec-001` 20 to 28,
+`main-ec-003` and `main-ec-007` from `none`, and `main-ec-012` from `none` to
+6). Only the `main-ec-012` row is this change's doing; the other three are the
+drift above catching up, and the count in the CSV rather than the hand-typed
+one in this table is the authority.
 
 ## 2. The two spellings, and what the issue's "six" actually counted
 
@@ -281,21 +299,21 @@ point of §6 below.
 
 | cluster | size | refs | range | named inside | the functions the cluster's addresses share |
 |---|---:|---:|---|---|---|
-| `main-ec-001` | 109 | 1,097 | `0x030E`-`0x1809` | 20 | `fill_08xx_from_code_table`, `apply_oem_overrides_then_fill_08xx`, `mode_tick_084c_07a5_09ee`, `charge_target_update` — the mode/OEM initialisation set |
+| `main-ec-001` | 109 | 1,097 | `0x030E`-`0x1809` | 28 | `fill_08xx_from_code_table`, `apply_oem_overrides_then_fill_08xx`, `mode_tick_084c_07a5_09ee`, `charge_target_update` — the mode/OEM initialisation set |
 | `main-ec-002` | 43 | 4,965 | `0x0460`-`0x09CE` | none | `decrement_nonzero_xdata_counters`, `read_06c6`, `dec_06c6_value` — one loop walking a block of counters |
-| `main-ec-003` | 43 | 239 | `0x044C`-`0x1F07` | none | `gate_06e6_442_then_sync_046a_from_086b`, `dispatch_on_0860`, `clear_0860`, `copy_0866_86b_to_1c04_1c3a` |
+| `main-ec-003` | 43 | 239 | `0x044C`-`0x1F07` | 3 | `gate_06e6_442_then_sync_046a_from_086b`, `dispatch_on_0860`, `clear_0860`, `copy_0866_86b_to_1c04_1c3a` |
 | `main-ec-004` | 17 | 80 | `0x030A`-`0x082F` | none | `gate_1c00_init_defaults`, `gate_030a_030b_then_8892_887a` — init-time |
 | `main-ec-005` | 17 | 70 | `0x0382`-`0x03C9` | none | `mul_0342_0514_into_0388_when_03d0_lt_0384` and one other |
 | `main-ec-006` | 16 | 94 | `0x043E`-`0x300E` | `0x043E` | `init_163e_16f1_300e_3008` |
-| `main-ec-007` | 13 | 184 | `0x0318`-`0x097C` | none | `bump_counter_054d`, `store_054d_set_bit_on_10` |
+| `main-ec-007` | 13 | 184 | `0x0318`-`0x097C` | 2 | `bump_counter_054d`, `store_054d_set_bit_on_10` |
 | `main-ec-008` | 12 | 280 | `0x0045`-`0x1504` | none | `poll_1304_1500_dispatch_0083`, three `ff_filler_not_a_function_*` |
 | `main-ec-009` | 12 | 107 | `0x0A43`-`0x0FC3` | none | `store_16bit_sum_to_0a43_0a44`, `rotate_16bit_pair_and_range_check_0fc3` |
 | `main-ec-010` | 12 | 40 | `0x049A`-`0x05B9` | none | `clear_049a_049e_0579_057a_05c2`, `combine_0490_0495_049d_flags_into_carry` |
 | `main-ec-011` | 12 | 35 | `0x00C0`-`0x2275` | none | `copy_direct_65_66_to_x00c0`, `copy_x00c0_pair_to_iram_67_68` |
-| `main-ec-012` | 10 | 91 | `0x0875`-`0x09E7` | none | `clamp_078b_level_into_0804`, two bit-clearing writers |
+| `main-ec-012` | 10 | 91 | `0x0875`-`0x09E7` | 6 | `clamp_078b_level_into_0804`, two bit-clearing writers |
 
 `main-ec-001` is the one that matters most and the one most likely to be
-misread. It is where 20 named registers land, so it looks like "the named
+misread. It is where 28 named registers land, so it looks like "the named
 registers, discovered again", but what the clustering actually found is that
 the *initialisation* routines touch them all: a cluster is a co-occurrence, and
 109 addresses reached by one mode tick and one OEM override pass is a statement
