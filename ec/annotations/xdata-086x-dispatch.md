@@ -31,14 +31,19 @@ human with the machine.
 ```console
 $ python3 ec/tools/trace_xdata_refs.py ec/firmware/GMxMGxx_11.800 \
       0x0860 0x0862 0x0865 0x0866 0x0867 0x0868 0x0869 0x086A 0x086B \
-      0x086D 0x086E 0x1C39 0x1C3A 0x1F01 0x1F07 --csv \
+      0x086D 0x086E 0x1C39 0x1C3A 0x1F01 0x1F07 --csv --census-column \
   | diff - ec/annotations/xdata-086x-dispatch-sites.csv
 ```
 
-That is the whole sweep, it is read-only, and it needs no hardware. The
-`0x044C`-`0x05F1` group of §6 is swept the same way, and the case table of §4
-is re-derived by `ec/tools/decode_index_table.py ec/firmware/GMxMGxx_11.800
---at 0xD148`.
+That is the whole sweep, it is read-only, and it needs no hardware. Adding
+`--check` to the same command turns the diff into an exit code, which is how
+§3's per-site correspondence and this page's table are held to the image.
+`--census-column` appends the ninth column of §3; it reads
+`xdata-0860-census-sites.csv` and is **not** derived from the image, and the
+sites it covers no mapping say so on stderr and in the cell rather than
+leaving it blank. The `0x044C`-`0x05F1` group of §6 is swept the same way, and
+the case table of §4 is re-derived by
+`ec/tools/decode_index_table.py ec/firmware/GMxMGxx_11.800 --at 0xD148`.
 
 ## 2. The blind spot, which travels with every number
 
@@ -62,19 +67,35 @@ nobody supplies.
 
 ## 3. The `0x0860` direction counts, and a correction to this section
 
-**Every direction claim in this file comes from `trace_xdata_refs.py` or
-from a `.asm` listing, never from the `read`/`write` columns of
-`xdata-registers.csv`.** That is deliberate, and the reason is worth
-recording, because on this address the two methods are not in conflict —
-they have different denominators. The sweep counts **opcode sites**, a
-direct `MOV DPTR,#imm16` and the `movx` after it, which for `0x0860` is the
-7 EC-side sites of §8 and the `read 4 / write 2` among them. The census
-counts **C-level occurrences** of the address in the decompiled text, which
-is the `refs: 17` of `ec/annotations/xdata-registers.csv:662`. The
-14/2/0/1 below is the bucketing of those 17, not a rival count of the 7. The
-sweep is the right source for a **structural** claim — which routine holds a
-read or a write, and what the instruction there does — and the census is the
-one carrying **per-address direction** here.
+**One sentence per method, because they are not interchangeable.** The
+opcode sweep — `trace_xdata_refs.py` and the `.asm` listings it walks —
+carries the **structural** claims: which routine holds a read or a write, and
+what the instruction there does. The C-level census behind
+`xdata-registers.csv` carries the **per-address direction**: how the
+decompiled C's occurrences of the address bucket out. Neither is derived from
+the other's columns, and on this address they are not in conflict, because
+they have different denominators. The sweep counts **opcode sites**, a direct
+`MOV DPTR,#imm16` and the `movx` after it, which for `0x0860` is the 7
+EC-side sites of §8 and the `read 4 / write 2` among them. The census counts
+**C-level occurrences** of the address in the decompiled text, which is the
+`refs: 17` of `ec/annotations/xdata-registers.csv:662`. The 14/2/0/1 below
+is the bucketing of those 17, not a rival count of the 7.
+
+> **CORRECTION (2026-09-24, issue #281) to this section's opening sentence,
+> which read:**
+>
+> "**Every direction claim in this file comes from `trace_xdata_refs.py` or
+> from a `.asm` listing, never from the `read`/`write` columns of
+> `xdata-registers.csv`.**"
+>
+> The blanket "never" is wrong, and the section's own next sentence said so:
+> the `14/2/0/1` row it introduced is the `read`/`write` columns of
+> `xdata-registers.csv`. The convention the sentence was reaching for is the
+> two sentences above — structural from the sweep, per-address direction from
+> the census — and issue #281 left the old sentence in the file with the two
+> contradicting, so a reader could not tell which source was authoritative for
+> a given claim. The wrong version stays visible here for the same reason the
+> two below do.
 
 > **CORRECTION (2026-09-24, issue #249, correcting text added by PR #225)
 > to this section as first merged, which read:**
@@ -96,12 +117,12 @@ one carrying **per-address direction** here.
 > **Every clause of that is false against the committed tree, and false in
 > the same direction twice over: it describes a classifier that had already
 > been fixed, and a census that had already been regenerated.** `==` is
-> excluded. `ASSIGN` is at `ec/tools/xdata_register_map.py:188` and
-> `store_target()` at `:740`; the rejection is at `:759-760`, the reason for
-> it in the function's own comment at `:750-751`, and the tree-wide count of
-> 838 at `:758`. The module docstring states the rule in the past tense at
+> excluded. `ASSIGN` is at `ec/tools/xdata_register_map.py:191` and
+> `store_target()` at `:769`; the rejection is at `:788-789`, the reason for
+> it in the function's own comment at `:785-787`, and the tree-wide count of
+> 838 at `:561`. The module docstring states the rule in the past tense at
 > `:64-75` and credits **issue #178**, which merged before PR #225 did. Both
-> CSVs are current: the committed `ORACLE` comment at `:301-303` records
+> CSVs are current: the committed `ORACLE` comment at `:305-306` records
 > `named_in_tree` moving `131 -> 146` with issue #180's 15
 > `0x086x`/`0x1Cxx`/`0x1Fxx` entries — this very cluster's — and `146 -> 150`
 > with issue #183's four since. `--check` and `--self-test` both exit 0 on
@@ -145,8 +166,8 @@ one carrying **per-address direction** here.
 `dispatch_on_0860` — an address handed to a call is that bucket and not a
 read, which is why the census's 14 reads are all comparisons. The row is not
 the tool's own sum: `HAND_CHECKED["0x0860"]` at
-`ec/tools/xdata_register_map.py:575` pins exactly those buckets, and the
-self-test's "hand-checked direction oracle" assertion at `:1872-1878` fails
+`ec/tools/xdata_register_map.py:593` pins exactly those buckets, and the
+self-test's "hand-checked direction oracle" assertion at `:1901-1907` fails
 loudly if a generated row ever parts company with it. It is one of five
 addresses in that oracle — and since issue #280 it is **not** the only net:
 the self-test now also asserts, over the whole tree rather than over these
@@ -163,6 +184,12 @@ then read 0 read / 13 `write` / 3 `read+write`, a pure write-side dispatch
 byte, for a byte whose four opcode reads of §8 are this same routine's
 early-out, two of the case tests, and the dispatch itself.
 
+> **CORRECTION (2026-09-24, issue #281).** The same sentence named the oracle
+> assertion at `:1872-1878`, which on `main` is the tail of the `0x0390`
+> census-absence check (`not census_has_0390`), not the oracle. The live
+> pointer is now `:1901-1907`. The bucket totals it pins were never affected;
+> only the pointer to the assertion that holds them was wrong.
+
 **The comparison count is high and the writer count is low because `0x0860`
 is a dispatch selector, and that is structural rather than an artefact of any
 classifier.** Fourteen of the 17 occurrences are `==` tests inside
@@ -172,6 +199,54 @@ chains naming the address up to three times on a line. A byte the firmware
 gates and dispatches on internally gets compared far more often than it gets
 stored, and that one fact is what makes both this section's 14-read row and
 §8's `read 4` sensible.
+
+### The two methods, site by site
+
+**`2 + 6 + 6 = 14` reads, `2` writes and `1` passed-to-call, and the
+`census` column of `xdata-086x-dispatch-sites.csv` is where they are recorded
+rather than reconciled in prose.** The correspondence is committed as
+**`xdata-0860-census-sites.csv`**, one row per site keyed on the sweep's own
+`file_offset`, and **`ec/tools/check_site_census.py`** joins the two against
+the census and exits non-zero on any disagreement. The comparison constants
+are in the table below so a reader can check them against
+`ec/decompiled/bank0/D091.asm` by eye; the sweep reads the `.asm` and the
+census reads `D091.c`, and neither number is inferred.
+
+| site | sweep `access` | `census` | C occurrence(s) | why the two are not the same shape |
+|---|---|---|---|---|
+| `0x0D091` | `read x1` | `read x2` | `D091.c:43` (`== 0x00`), `:47` (`== -1`) | `0xD094 movx` (`jnz`) and `0xD09A movx` (`cpl`) — two early-outs behind one DPTR load |
+| `0x0D0EF` | `read x1` | `read x6` | `D091.c:69,70` | the `0x48` chain: six `movx` re-reads at `0xD0F2`–`0xD10B` testing `0x06 0x16 0x36 0x07 0x17 0x37`, no DPTR reload between them |
+| `0x0D117` | `read x1` | `read x6` | `D091.c:73,74,75` | the `0x4C` chain: six re-reads at `0xD11A`–`0xD133` testing `0x08 0x18 0x38 0x09 0x19 0x39` |
+| `0x0D144` | `read x1` | `passed-to-call x1` | `D091.c:81` | `movx a,@dptr ; lcall 0x7151` — **the same instruction, two vocabularies** |
+| `0x0D281` | `write x1` | `write x1` | `D281.c:18` | `XDATA_0860 = 0xff` |
+| `0x0D28A` | `write x1` | `write x1` | `D289.c:17` | `XDATA_0860 = 0` — `clear_0860`'s decompile entry is `0xD289`, one byte before the site, so the file and the offset do not match |
+| `0x0D31C` | `no movx found in the decoded window` | `no census occurrence` | — | `mask_dp_byte_7c_reset_dptr_0860` reloads DPTR and returns; `D319.c`'s body is `return *param_1 & 0x7c;` and never names the address |
+| `0x25CE4`, `0x25CFC` | `read x1, walks 2 consecutive…`, `read x1` | `other program` | — | the PD image, which has its own XDATA map; `xdata-registers.csv:662`'s `0x0860` row is `main-ec` |
+
+**The sums close on the committed data, which is the point of recording
+them per site:** `2+6+6 = 14` read, `2` write, `1` passed-to-call and `refs:
+17` here, against `read 4 / write 2 / no-movx 1` over §8's seven bank-0
+sites. `check_site_census.py` asserts both — the direction at every site and
+the per-bucket totals against `xdata-registers.csv:662` — so a hand-typed
+number that drifts fails instead of reading as agreement.
+
+**Three residues, named rather than left for a reader to infer.** The
+`2/6/6` **collapse**: all 14 `==` occurrences do have a byte site, and they
+land on three of them, because the sweep records one row per `MOV DPTR` and
+the `||` chains re-read A without reloading DPTR. The counts are not
+comparable per site, and the checker compares directions per site and counts
+per bucket. `0x0D144`'s **two vocabularies**: the sweep reports the `movx` it
+decoded, the census reports the call the value went into, and the census's
+`passed-to-call` bucket exists *because* a value loaded for a call is not a
+use. And `0x0D31C` plus the two PD sites, where one of the methods is
+structurally blind and the answer is a token, not a zero — §9 says what that
+costs.
+
+**The 14 addresses other than `0x0860` carry `not recorded` and nothing
+else.** That is "not done by this method", never "there is nothing there", and
+a blank cell would have read as agreement — the skip-that-is-not-deliberate
+failure `../tools/check_cluster_citations.py` is built to catch, in a table no
+tool could see.
 
 ## 4. `0x0860`: two writers, and a gate that is its own early-outs
 
@@ -392,7 +467,11 @@ EC/PD split and the `b0` column are site counts; the access columns classify
 the EC-side sites only, and the last column names the routines holding them.
 Every cell is re-derivable from `xdata-086x-dispatch-sites.csv`; the two
 `handoff` cells are resolved in §5 and the starred rows below count them as
-reads.
+reads. **That table's ninth column, `census`, is the other method's answer for
+the same site** — §3's per-site table is where `0x0860`'s nine rows are read
+out of it, and `../tools/check_site_census.py` is what holds the two to each
+other. The other 14 addresses carry `not recorded` there, which is §9's first
+concession.
 
 | addr | EC | PD | b0 | read | write | handoff | no-`movx` | routines holding EC sites |
 |---|---:|---:|---:|---:|---:|---:|---:|---|
@@ -431,6 +510,15 @@ recomputes all three count keys for every entry and fails on a mismatch.
   both rebuild the 7 MB project cannot merge), so the addresses are named in
   this file rather than in `ghidra-functions.csv`. **That is a gap in
   coverage, not a finding about the bytes.**
+- **The census's answer for the 14 addresses other than `0x0860`.** They carry
+  `not recorded` in the `census` column, which says this work did not join the
+  two methods for them and nothing about their direction. Recording the other
+  fourteen is the same job in the same format.
+- **That a `no census occurrence` cell means the byte is unused.** It means
+  the decompile names no address at that site, and `0x0D31C` is the reason to
+  be careful: a `MOV DPTR,#0x0860` the decompiler folded away is invisible to
+  the census by construction, so every address reached that way is undercounted
+  by the census alone. §11's last bullet.
 - **Anything about the two programs' address spaces.** The 2 PD-image sites
   for `0x0860` are a separate program with its own XDATA map;
   `pd-xdata-overlap.md` is not reopened.
@@ -486,6 +574,25 @@ entries stay `present-untested`, and the names stay placeholders.
   them by `gen_xdata_symbols.py` — never by hand.
 - **`xdata-086x-dispatch-sites.csv` added**, the machine-readable table
   behind every number here.
+- **Issue #281 joins the two direction methods instead of reconciling them in
+  prose.** A ninth `census` column on that table, the per-site correspondence
+  committed as **`xdata-0860-census-sites.csv`**, a
+  **`ec/tools/check_site_census.py`** that holds the sweep, the correspondence
+  and the census to each other and exits non-zero on any disagreement, its
+  `test_check_site_census.py`, and `trace_xdata_refs.py --census-column` /
+  `--check` so §1's reproduction is an assertion. The column is read from the
+  correspondence file and is **not** derived from the image; §3 carries the
+  sentence that says so and the four tokens that keep "not established" from
+  reading as "checked and empty". `xdata-0860-census-sites.csv` covers
+  `0x0860` only, and the other 14 addresses carry `not recorded`.
+- **CORRECTION (2026-09-24, issue #281) to §3's opening sentence**, left
+  visible in a dated blockquote there rather than only in the history, and
+  **the stale `bank0/D091.c` line numbers in
+  `HAND_CHECKED["0x0860"]`'s comment** corrected the same way: they were low
+  (the seven `==` lines by 13, the dispatch argument by 12), every bucket total
+  in that entry was right throughout, and
+  `check_site_census.py` now re-checks them per site because a line number is
+  not a number the census sums.
 - **CORRECTION (2026-09-24, issue #249) to the bullet this section first
   carried**, which read: "**The census CSVs are read, not regenerated** (§3).
   Regenerating today would re-freeze the miscounted direction columns into
@@ -503,4 +610,11 @@ entries stay `present-untested`, and the names stay placeholders.
   3. `0x0862` and `0x086D` have no writer this method can see (§2, §8). A
      computed-DPTR search, or a live read to see whether they ever move,
      would settle whether they are inputs or dead.
-  4. The live step of §10, which needs the physical machine.
+  4. **The decompiler-lost `MOV DPTR` at `0x0D31C`**, which the census cannot
+     see because the decompile folded it away and `D319.c`'s body never names
+     the address. That is a per-address undercount **by construction** for
+     every address reached the same way, which is a wider question than this
+     one site: how many other `no census occurrence` cells across the tree are
+     the same shape rather than an absence. Worth its own issue; §9 says what
+     the cell does and does not mean.
+  5. The live step of §10, which needs the physical machine.

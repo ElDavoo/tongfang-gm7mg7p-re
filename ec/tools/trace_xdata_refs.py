@@ -21,6 +21,19 @@ before it means anything:
      hands DPTR to a subroutine (`lcall`/`acall`, or the `ljmp`/`ajmp`
      tail-call forms) instead, that is reported as exactly that --
      unresolved -- not guessed at.
+  3. *What does the C-level census say about the same site?* `--census-column`
+     appends a `census` column to the `--csv` table carrying
+     `../annotations/xdata-0860-census-sites.csv`'s per-site correspondence:
+     the bucket and occurrence count of the decompiled C's references at that
+     site, or the token saying the correspondence was not recorded. **That
+     column is not derived from the image, and this tool never derives it.**
+     It is a hand-typed reading of the decompile, kept as data beside the
+     sweep that has to agree with it, and `../tools/check_site_census.py` is
+     what holds the two to each other -- the two methods' vocabularies and
+     every way they differ are that tool's docstring. A blank cell would read
+     as "the two agree", so there are none: `not recorded` is the explicit
+     "not done by this method" token, and the 14 addresses of the 0x086x page
+     other than `0x0860` carry it.
 
 The decode is a linear best-effort walk, not a disassembler: it stops at
 the first control-flow instruction and cannot follow branches (disasm8051.py
@@ -35,10 +48,15 @@ Usage:
     python3 trace_xdata_refs.py ../firmware/GMxMGxx_11.800 0x07D0 --counts-only
     python3 trace_xdata_refs.py ../firmware/GMxMGxx_11.800 0x07E2 --r2-commands
     python3 trace_xdata_refs.py ../firmware/GMxMGxx_11.800 0x07D0 --csv > sites.csv
+    python3 trace_xdata_refs.py ../firmware/GMxMGxx_11.800 0x0860 --csv --census-column
+    python3 trace_xdata_refs.py ../firmware/GMxMGxx_11.800 0x0860 --csv --census-column --check
 """
 import argparse
 import collections
 import csv
+import difflib
+import io
+import os
 import sys
 
 from disasm8051 import (FLOW_OPCODES, OPCODE_LEN, converges_from, mnemonic,
@@ -70,6 +88,56 @@ R2_IMAGE = {"common": "bank0.bin", "bank0": "bank0.bin",
             "bank1": "bank1.bin", "pd-image": "pd.bin"}
 
 MOV_DPTR = 0x90
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.join(HERE, os.pardir, os.pardir)
+ANNOT = os.path.join(HERE, os.pardir, "annotations")
+# The hand-typed cross-method correspondence --see the module docstring's
+# third point. Read only by --census-column.
+CENSUS_MAP = os.path.join(ANNOT, "xdata-0860-census-sites.csv")
+# What --check compares against when it is given no path: the 0x086x page's
+# own table, the one ../annotations/xdata-086x-dispatch.md §1 names. The other
+# three committed tables this tool emits are named on their own pages, so
+# those callers pass the path.
+SITES_CSV = os.path.join(ANNOT, "xdata-086x-dispatch-sites.csv")
+
+# The value each of the two non-mapped states renders as, in the vocabulary
+# check_site_census.py's docstring states. A third cell value, "not recorded",
+# belongs to the renderer rather than to this file: a site the map has no row
+# for is not the same claim as a row that says the census is blind there.
+CENSUS_TOKENS = {"no-occurrence": "no census occurrence",
+                 "other-program": "other program"}
+
+
+def repo_path(path: str) -> str:
+    """`path` relative to the repository root, for the messages below."""
+    return os.path.relpath(path, REPO)
+
+
+def load_census_map(path: str = CENSUS_MAP) -> dict:
+    """file_offset (spelled as the map's CSV spells it) -> the cell to print.
+
+    One `census` cell per site, rendered from the map's `census_state` and
+    `census_count`, and nothing else: the token for "the decompile names no
+    address here" and the token for "a different program, with its own XDATA
+    map" are the map's to say, and this function only says which one. A state
+    the map does not define is a ValueError rather than a default cell,
+    because a default here is a cell that reads as agreement.
+    """
+    with open(path, newline="") as f:
+        rows = list(csv.DictReader(f))
+    out = {}
+    for row in rows:
+        offset, state = row["file_offset"], row["census_state"]
+        if state == "mapped":
+            out[offset] = f"{row['census_bucket']} x{row['census_count']}"
+        elif state in CENSUS_TOKENS:
+            out[offset] = CENSUS_TOKENS[state]
+        else:
+            raise ValueError(f"{repo_path(path)}: {offset} has census_state "
+                             f"{state!r}, which is not one of 'mapped', "
+                             f"{', '.join(repr(s) for s in CENSUS_TOKENS)}")
+    return out
 
 
 def region_of(off: int, pd_verified: bool):
@@ -228,14 +296,26 @@ def sites_for(d: bytes, addr: int):
             if d[i] == MOV_DPTR and d[i + 1] == hi and d[i + 2] == lo]
 
 
-def write_csv(d: bytes, addrs, pd_verified: bool) -> None:
-    """One row per site, for a reader who wants to re-derive a table without
-    re-running anything. `frame_onto`/`frame_over` are disasm8051's anchor
-    sweep -- see converges_from() for why neither number settles framing on
-    its own."""
-    w = csv.writer(sys.stdout)
-    w.writerow(["addr", "file_offset", "region", "runtime", "frame_onto",
-                "frame_over", "access", "window"])
+def csv_table(d: bytes, addrs, pd_verified: bool, census=None):
+    """(the `--csv` table, per-address counts of the sites the map does not
+    cover), for a reader who wants to re-derive a table without re-running
+    anything. `frame_onto`/`frame_over` are disasm8051's anchor sweep -- see
+    converges_from() for why neither number settles framing on its own.
+
+    A string rather than a write to stdout, because `--check` diffs the same
+    bytes this prints. `census` is load_census_map()'s dict, appended as a
+    ninth column; None leaves it out, and that is what keeps the other three
+    committed tables this tool emits (`xdata-0400-045f-sites.csv`,
+    `ec-07c4-07d5-sites.csv` and the `0x07D0` one) reproducing byte for byte
+    from the plain command."""
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    columns = ["addr", "file_offset", "region", "runtime", "frame_onto",
+               "frame_over", "access", "window"]
+    if census is not None:
+        columns.append("census")
+    w.writerow(columns)
+    unmapped = collections.Counter()
     for text in addrs:
         addr = int(text, 16)
         for o in sites_for(d, addr):
@@ -243,13 +323,48 @@ def write_csv(d: bytes, addrs, pd_verified: bool) -> None:
             rt = runtime_addr(o, pd_verified)
             onto, over = converges_from(d, o)
             insns = walk(d, o)
-            w.writerow([f"0x{addr:04X}", f"0x{o:05X}", name,
-                        f"0x{rt:04X}" if rt is not None else "",
-                        onto, over, classify(insns),
-                        " ; ".join(" ".join(mn.split()) for _, _, mn in insns[1:])])
+            row = [f"0x{addr:04X}", f"0x{o:05X}", name,
+                   f"0x{rt:04X}" if rt is not None else "",
+                   onto, over, classify(insns),
+                   " ; ".join(" ".join(mn.split()) for _, _, mn in insns[1:])]
+            if census is not None:
+                cell = census.get(row[1])
+                if cell is None:
+                    cell = "not recorded"
+                    unmapped[f"0x{addr:04X}"] += 1
+                row.append(cell)
+            w.writerow(row)
+    return buf.getvalue(), unmapped
 
 
-def main() -> None:
+def check_table(generated: str, path: str) -> int:
+    """Exit code for `--check`: 0 when this run reproduces `path` exactly.
+
+    Read with `newline=""` so the comparison is the bytes on disk. The
+    committed tables carry the csv module's own CRLF terminator, and
+    universal-newline translation would rewrite every one of them to LF and
+    report a difference on every run -- a check that is red on the committed
+    data is a check nobody trusts, which is worse than no check."""
+    try:
+        with open(path, newline="") as f:
+            on_disk = f.read()
+    except OSError as e:
+        print(f"note: {e}", file=sys.stderr)
+        return 1
+    if generated == on_disk:
+        print(f"{repo_path(path)}: this run reproduces it byte for byte "
+              f"({generated.count(chr(10))} lines)")
+        return 0
+    print(f"note: {repo_path(path)} differs from what this run produced; "
+          "the file is the product of the command on the page that names it, "
+          "so regenerate rather than edit", file=sys.stderr)
+    for line in difflib.unified_diff(on_disk.splitlines(), generated.splitlines(),
+                                     "committed", "generated", lineterm="", n=0):
+        print(line, file=sys.stderr)
+    return 1
+
+
+def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("firmware", help="raw EC firmware image (e.g. ec/firmware/GMxMGxx_11.800)")
@@ -260,7 +375,17 @@ def main() -> None:
                     help="also print ready-to-paste `r2 -a 8051` seek/pd commands per site")
     ap.add_argument("--csv", action="store_true",
                     help="write the site table as CSV on stdout instead of the decode")
+    ap.add_argument("--census-column", action="store_true",
+                    help="with --csv, append the `census` column rendered from "
+                         f"{repo_path(CENSUS_MAP)} -- read from that file, not "
+                         "derived from the image")
+    ap.add_argument("--check", nargs="?", const=SITES_CSV, metavar="PATH",
+                    help="with --csv, diff this run against a committed table and "
+                         "exit non-zero on any difference (default: the 0x086x page's)")
     args = ap.parse_args()
+
+    if (args.census_column or args.check is not None) and not args.csv:
+        ap.error("--census-column and --check are about the --csv table; they need --csv")
 
     d = open(args.firmware, "rb").read()
     off, magic = PD_MARKER
@@ -272,7 +397,23 @@ def main() -> None:
               file=sys.stderr)
 
     if args.csv:
-        return write_csv(d, args.addrs, pd_verified)
+        census = None
+        if args.census_column or args.check is not None:
+            try:
+                census = load_census_map()
+            except (OSError, ValueError) as e:
+                print(f"note: {e}", file=sys.stderr)
+                return 1
+        table, unmapped = csv_table(d, args.addrs, pd_verified, census)
+        if unmapped:
+            by_addr = ", ".join(f"{a} x{n}" for a, n in sorted(unmapped.items()))
+            print(f"note: {sum(unmapped.values())} site(s) have no row in "
+                  f"{repo_path(CENSUS_MAP)} and read 'not recorded': {by_addr}\n",
+                  file=sys.stderr)
+        if args.check is not None:
+            return check_table(table, args.check)
+        sys.stdout.write(table)
+        return 0
 
     for text in args.addrs:
         addr = int(text, 16)
@@ -298,6 +439,7 @@ def main() -> None:
                 img = R2_IMAGE.get(name, "image.bin")
                 print(f"      $ r2 -a 8051 -e scr.color=0 -q -c 's 0x{rt:04x}; pd 10' {img}")
         print()
+    return 0
 
 
 if __name__ == "__main__":

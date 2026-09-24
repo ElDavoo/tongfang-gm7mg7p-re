@@ -601,14 +601,27 @@ HAND_CHECKED = {
     # prose registers.yaml already carried.
     "0x0440": {"read": 181, "write": 0, "read+write": 0, "passed-to-call": 0,
                "address-taken": 0, "writers": 0},
-    # 17 references: 14 `==` inside bank0/D091.c's dispatch test (lines 30, 34,
-    # 56, 57, 60, 61 and 62 -- the later ones are multi-line boolean chains,
+    # 17 references: 14 `==` inside bank0/D091.c's dispatch test (lines 43, 47,
+    # 69, 70, 73, 74 and 75 -- the later ones are multi-line boolean chains,
     # three occurrences to a line), the dispatch argument itself at
-    # bank0/D091.c:69, a `= 0xff` at bank0/D281.c:18 and a `= 0` at
+    # bank0/D091.c:81, a `= 0xff` at bank0/D281.c:18 and a `= 0` at
     # bank0/D289.c:17. Two stores in two functions, and the dispatch argument
     # is `passed-to-call` rather than a read. The worst-looking row the phantom
     # writers produced: it read as 0 read / 13 write / 3 read+write, a pure
     # write-side dispatch byte.
+    #
+    # CORRECTION (2026-09-24, issue #281): the line numbers above were 30, 34, 56,
+    # 57, 60, 61 and 62, with the dispatch argument at :69 -- the seven `==` lines
+    # 13 lower than the committed file and the dispatch argument 12. They were
+    # right when this entry was written (#206) and still right at 40744da^; they
+    # went stale in #225, which rewrote D091.c and grew its correction header by
+    # 13 lines -- the `==` shift exactly, and the dispatch argument one less
+    # because that rewrite also reflowed a closing paren onto the line above it.
+    # Issue #281 quotes them verbatim, so the wrong ones stay visible here rather
+    # than only in the history. A bucket total could never have caught it: every
+    # number in this entry is still right, and a line number is not a number the
+    # census sums. check_site_census.py re-checks them per site against
+    # classify()'s own output and fails if they drift again.
     "0x0860": {"read": 14, "write": 2, "read+write": 0, "passed-to-call": 1,
                "address-taken": 0, "writers": 2},
     # 12 references and zero `==` adjacent to the address. Four are genuine

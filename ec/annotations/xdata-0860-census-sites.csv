@@ -1,0 +1,10 @@
+region,file_offset,census_state,census_bucket,census_count,census_refs
+bank0,0x0D091,mapped,read,2,"bank0/D091.c:43,47"
+bank0,0x0D0EF,mapped,read,6,"bank0/D091.c:69,70"
+bank0,0x0D117,mapped,read,6,"bank0/D091.c:73,74,75"
+bank0,0x0D144,mapped,passed-to-call,1,bank0/D091.c:81
+bank0,0x0D281,mapped,write,1,bank0/D281.c:18
+bank0,0x0D28A,mapped,write,1,bank0/D289.c:17
+bank0,0x0D31C,no-occurrence,none,0,none
+pd-image,0x25CE4,other-program,none,na,none
+pd-image,0x25CFC,other-program,none,na,none

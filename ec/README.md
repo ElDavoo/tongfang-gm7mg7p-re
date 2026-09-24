@@ -52,6 +52,11 @@ into `r2 -a 8051` with no stitching needed.
   mnemonics are a linear best-effort walk, not a disassembler —
   `--r2-commands` prints the seek lines to confirm anything load-bearing, and
   the indirect-addressing blind spot above applies here unchanged.
+  `--census-column` adds a ninth `census` column to `--csv`, rendered from
+  `annotations/xdata-0860-census-sites.csv` and **not** derived from the image;
+  sites with no row there read `not recorded` rather than blank, and stderr
+  names them. `--check` turns the diff against a committed table into an exit
+  code, so a page's "reproduce this byte for byte" is an assertion.
 - **`tools/check_register_counts.py`** — recomputes every `static_refs`,
   `static_refs_main_ec` and `static_refs_pd_image` in
   `annotations/registers.yaml` from the image and exits non-zero on a mismatch
@@ -127,6 +132,25 @@ into `r2 -a 8051` with no stitching needed.
   prepared at `docs/ci/agent-gates-capture-claims.patch` for a human to
   `git apply`, by cost and kind it belongs in the cheap tier, and
   `../../docs/agent-pipeline.md` carries it across a template re-copy.
+- **`tools/check_site_census.py`** — joins the two direction vocabularies for
+  `0x0860` and exits non-zero where they disagree: the opcode sweep's `access`
+  cell out of `annotations/xdata-086x-dispatch-sites.csv`, the census bucket
+  out of `annotations/xdata-0860-census-sites.csv`, and the occurrences out of
+  `xdata_register_map.py`'s own `classify()` rather than a re-grep, so the
+  line numbers it checks are the reader's. The two methods have different
+  denominators, so it compares *direction* per site and *counts* per bucket
+  against the generated `xdata-registers.csv` row — `2/6/6` reads behind three
+  `read x1` sites is the many-to-one collapse the sweep's one-row-per-`MOV
+  DPTR` produces, not a conflict. `0xD144` is the one pair allowed to be
+  spelled differently (a `movx` whose value the census calls a call
+  argument), and a `handoff` site may claim no bucket because the decompile
+  names no address there. Committed files only. Its docstring carries the
+  whole vocabulary table and what it does not check: the 14 addresses that
+  read `not recorded`, the two PD-image sites (`other program`), the prose,
+  and the sweep's indirect-access blind spot.
+  `tools/test_check_site_census.py` rejects each of those rows' disagreement
+  and asserts the committed tree currently agrees. Not run by
+  `.github/scripts/agent-gates.sh`, for the same reason as the two above.
 - **`tools/register_ref_table.py`** — the whole `annotations/registers.yaml`
   table in one pass: per-image count split *and* what each site behind it does
   (`read`/`write`/`movc` CODE pointer/handed to a subroutine/…), as a markdown
@@ -302,11 +326,17 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   twelve-entry case table at `0xD14B` and the correction it forces on the
   `0xD091` row, the three-block level computation at `0x9D9B`, and why the
   `0x1C39`/`0x1C3A` copy is neither a mirror nor a second buffer.
-  `xdata-086x-dispatch-sites.csv` is the per-site table behind it. Every
-  direction number there names the method that produced it, because the two
-  methods have different denominators — the opcode sweep behind §8 and the
-  C-level census behind §3 — and §3 is the one that says which is which for
-  `0x0860`. The units of the block are not fixed, so nothing is named.
+  `xdata-086x-dispatch-sites.csv` is the per-site table behind it. Its
+  `census` column records the other method's answer for the same site, and
+  `tools/check_site_census.py` is what holds the two to each other, so the
+  page's direction claims are joined rather than reconciled in prose: the
+  opcode sweep carries the structural claims (which routine holds a read or a
+  write, what the instruction there does) and the C-level census carries
+  per-address direction. The two have different denominators, so the totals
+  are never comparable; the per-site direction is, and that is the join. The
+  correspondence is recorded for `0x0860` only — the other 14 addresses read
+  `not recorded`, which is "not done by this method", never an absence. The
+  units of the block are not fixed, so nothing is named.
 - **`annotations/lightbar-bat-flow.md`** — the `0x07E2`-`0x07E5` site map, the
   evidence that those sites belong to the PD image rather than the EC, and the
   live probe still needed to say what (if anything) the EC does with those

@@ -11,15 +11,17 @@ bash tools/run-tests.sh
 
 Every `test_*.py` under the repository, found by `find` — not a hardcoded list,
 so a suite in a directory that does not exist yet is picked up by having its
-file committed. There are fourteen today, 306 tests in all — main's 242, then
-`test_grade_gpu_door.py`'s 15 with the four grader-agreement cases beside them,
-then `test_ctgp_dben_probe.py`'s 38, then `test_grade_timer_sweep.py`'s 7 — and
+file committed. There are fifteen today, 351 tests in all — the 242 from before
+the door grader landed, plus `test_grade_gpu_door.py`'s 15 and the four
+grader-agreement cases beside them, then `test_ctgp_dben_probe.py`'s 38, then
+`test_grade_timer_sweep.py`'s 7, and `test_check_site_census.py`'s 45 — and
 each is a `unittest` suite standing in for a tool's own behaviour:
 
 | suite | what it stands in for |
 |---|---|
 | `ec/tools/test_check_capture_claims.py` | `ec/tools/check_capture_claims.py`'s address-presence and row-count rules against the committed `evidence/ec-watch/*.csv` captures, and the line between what it checks and what it deliberately skips |
-| `ec/tools/test_check_cluster_citations.py` | `ec/tools/check_cluster_citations.py`'s `main-ec-NNN` cluster citations against `ec/annotations/xdata-clusters.csv` — the membership rule and the census counts, pinned apart as well as together — and the line between what it checks and what it deliberately skips, so that a denial is skipped rather than checked and each rule that makes it conservative gets a case saying so, because a pointer-checker's failure mode is silence, plus that the tree's committed prose still agrees with the census beside it |
+| `ec/tools/test_check_cluster_citations.py` | `ec/tools/check_cluster_citations.py`'s `main-ec-NNN` cluster citations against `ec/annotations/xdata-clusters.csv` — the membership rule and the census counts, pinned apart as well as together — and the line between what it checks and what it deliberately skips, so that a denial, singleton wording, a mention without a membership claim and a code address are each skipped rather than checked and each rule that makes it conservative gets a case saying so, because a pointer-checker's failure mode is silence, plus that the tree's committed prose currently agrees with the committed census beside it |
+| `ec/tools/test_check_site_census.py` | `ec/tools/check_site_census.py`'s vocabulary table, one case per row asserting the checker *rejects* that row's disagreement, plus the unsupported-claim, stale-citation, unjoined-pair and totals-drift clauses, `--check`'s exit code, and that the committed sweep, correspondence and census currently agree |
 | `ec/tools/test_grade_0751_isolation.py` | `ec/tools/grade_0751_isolation.py`, the §4 grader of the `0x0751` capture procedure, against the committed `testdata/` fixtures |
 | `ec/tools/test_grade_gpu_door.py` | `ec/tools/grade_gpu_door.py`, the §5 grader of the `0x07D0` door capture: the ordering and its ms delta, both one-block shapes, a quiet capture, a byte that moved and came back, marks left unmerged, and the ten-column mapping |
 | `ec/tools/test_grade_timer_sweep.py` | `ec/tools/grade_timer_sweep.py`, the grader of the `0x8001` counter-sweep capture: its before/after-return lists re-read from the firmware image, the `0x06D6` period and the 10x rate ratio on a constructed clean capture, a flat capture reported as held rather than absent, a second writer flagged, an unresolved step warned, and a suspend gap left out of the figures and counted mod 10 |
