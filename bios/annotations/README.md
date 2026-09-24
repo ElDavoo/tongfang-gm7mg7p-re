@@ -73,8 +73,9 @@ other way would under-claim, which is its own inaccuracy. The rule is stated
 rather than left in the tool so a later reader can re-derive any row and get
 the same answer; `--report` prints the distribution over both files.
 
-Measured over the 788 rows here: 729 `code-shape`, 43 `abi-symbol`, 9
-`register-map`, 6 `unresolved`, 1 `mixed`.
+Measured over the 788 rows here: 772 `code-shape`, 10 `register-map`, 6
+`unresolved`, and no `abi-symbol` and no `mixed`. Reproduce with
+`python3 ec/tools/grade_name_basis.py --report`.
 
 ## Groups: [`function-groups.csv`](function-groups.csv)
 

@@ -3294,7 +3294,7 @@ def check(work):
     # from a decoded register map, registers.yaml, an ABI symbol or the
     # instruction shape is a claim a reader cannot audit. Four cross-field
     # rules, imported from the grader so the two cannot drift; the one that
-    # matters most here is the `pd` refusal, which keeps 494 rows of the
+    # matters most here is the `pd` refusal, which keeps 497 rows of the
     # separate PD image off the EC's XDATA map.
     _basis = grade_name_basis.register_addresses()
     _bp = []
