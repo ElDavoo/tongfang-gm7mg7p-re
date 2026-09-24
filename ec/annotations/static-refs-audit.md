@@ -515,3 +515,68 @@ byte through `inc dptr`, four of them treating `0x07D1`+`0x07D2` as one
 vocabulary scores as one access. The last point is why the `read`/`write`
 columns here are counts of *instructions storing or loading at the site*, not
 of bytes reached.
+
+## 7. `0x075B`/`0x075C` added to `registers.yaml` (2026-09-24, issue #123)
+
+`MAIN_FAN_L_DUTY` (`0x075B`) and `MAIN_FAN_R_DUTY` (`0x075C`) joined the file
+as the EC's published fan-duty bytes — the vendor's
+`ADDR_EC_MAIN_FAN_L/R_DUTY_BYTE`, read and halved by `FanInfo` and never
+written by it. They had been carried as a bare "fan PWM 0x075B/0x075C" aside
+inside the `0x0751` note, with no entry, no `status:` and no count. The
+naming, the status reasoning and the duty-versus-PWM distinction are in those
+entries; what belongs here is the three counts, the site classes, and why the
+tables above are not extended.
+
+Three consequences for this file, on the same terms §6 set out:
+
+- **§2 and §5 stay a 29-address snapshot.** Not extended here either. The
+  guard for these two, as for `0x07D1`, is `../tools/check_register_counts.py`,
+  which walks every entry, requires all three split keys, recomputes each
+  count from the committed image and fails on a mismatch. Both new entries
+  carry the split.
+- **§5.2 does not get a row, and the reason is the tool's, not the bar's.**
+  `0x075C` does have a non-`movx` site — one of three is a DPTR handoff, which
+  is 1 of 3 against §5.2's smallest listed share of 2 of 10 — so the
+  arithmetic alone would have put it in that table. But every row in §5.2 is
+  an *unresolved* handoff, and this one resolves: `--callee-depth 1` reads
+  `0xBC3F`'s own entry point, whose first instruction is `movx @dptr,a`, and
+  buckets it `handoff->write`. With that resolved, both addresses are 3 of 3
+  `movx` writes with no `none` cell and nothing left over, so they have no
+  non-`movx` share to name. A row here would have said the opposite of the
+  table's own thesis.
+- **These are not the fan table's routines.** The issue asked whether the
+  writer sites are the same routines as the fan-table readers, and the answer
+  is that no such routine exists to be the same as: `0x0F00` and `0x0F20` have
+  zero direct `MOV DPTR` sites anywhere in the image, so the table is reached
+  indirectly. `0x075B`/`0x075C` are published from the EC's own scratch bytes
+  `0x1804`/`0x1809` instead, through the helper at `0xBB22`/`0xBB28`. That
+  leaves §6 of `manual-fan-ctrl-0751.md` exactly as open as it was.
+
+The rows' own numbers, from the tools above and reproducible from the committed
+image (as in §1, the blank line `trace_xdata_refs.py` prints between addresses
+is stripped here):
+
+```console
+$ python3 ec/tools/trace_xdata_refs.py ec/firmware/GMxMGxx_11.800 --counts-only 0x075B 0x075C
+0x075B: 3 direct MOV DPTR site(s)  bank0=3
+0x075C: 3 direct MOV DPTR site(s)  bank0=3
+
+$ python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-depth 1 --markdown \
+  | grep -E '0x075B|0x075C'
+| `0x075B` | `MAIN_FAN_L_DUTY` | 3 | 3 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `0x075C` | `MAIN_FAN_R_DUTY` | 3 | 3 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 |
+
+$ python3 ec/tools/check_register_counts.py ec/firmware/GMxMGxx_11.800
+71 entries / 103 addresses: every static_refs, static_refs_main_ec and static_refs_pd_image reproduced from ec/firmware/GMxMGxx_11.800
+```
+
+The `0` means at the top of this file still applies to the positive counts: 3
+is a direct `MOV DPTR` site count, not a count of register accesses, and the
+`0x07B9` blind spot is unchanged. `0x0786`, in the same `0x0700` neighbourhood,
+remains the live naming conflict its own entry records — `EC_ADDR_FAN_DEFAULT`
+upstream against APTC/APTN in the DSDT and 3.1.39.0, and
+`ADDR_L1_PWM_DEFAULT_MYFAN3` in ECSpec. That conflict is a reason to keep
+sweeping `0x0700`-`0x07FF` rather than trust any one name, and it is why
+§4 of `docs/hardware-tests/manual-fan-ctrl-0751-isolation.md` keeps its sweep
+instruction after the "unconfirmed" wording came out.
+

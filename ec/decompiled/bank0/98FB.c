@@ -6,10 +6,10 @@
 
 /* Four instructions: reads XDATA 0x0985, ORs 0x10 into it and writes it back, with no ret, so
    execution falls straight into 0x9902. The larger dispatch on XDATA 0x0A50 that 98FB.c shows
-   belongs to code beyond this listing and is not decoded here. 0x0985 has no entry in
-   ec/annotations/registers.yaml.
+   belongs to code beyond this listing and is not decoded here. ec/annotations/registers.yaml now
+   carries 0x0985 as XDATA_0985, an EC-side site found with its meaning not established.
    type: writer
-   evidence: ec/decompiled/bank0/98FB.asm; ec/decompiled/bank0/98FB.c
+   evidence: ec/decompiled/bank0/98FB.asm; ec/decompiled/bank0/98FB.c; ec/annotations/registers.yaml
    basis: hand-decoded */
 
 void set_0985_bit4(void)
@@ -17,7 +17,7 @@ void set_0985_bit4(void)
 {
   byte bVar1;
   
-  DAT_EXTMEM_0985 = DAT_EXTMEM_0985 | 0x10;
+  XDATA_0985 = XDATA_0985 | 0x10;
   if (DAT_EXTMEM_08ac < DAT_EXTMEM_08bb) {
     DAT_EXTMEM_08ac = DAT_EXTMEM_08bb;
   }

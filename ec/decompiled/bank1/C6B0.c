@@ -13,7 +13,7 @@
 void set_070d_to_5_then_jump_to_c638(void)
 
 {
-  DAT_EXTMEM_070d = 5;
+  XDATA_070D = 5;
   clear_bit0_of_0755_and_0709();
   return;
 }

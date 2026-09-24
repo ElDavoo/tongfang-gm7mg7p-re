@@ -32,15 +32,15 @@ void dispatch_on_dpl_5b_7b_40(char param_1)
     if (((DAT_EXTMEM_0398 != -0x5b) || ((DAT_EXTMEM_0476 & 0x20) == 0)) && ((XDATA_0442 & 8) == 0))
     {
       DAT_EXTMEM_080f = 0x28;
-      DAT_EXTMEM_080d = 0x23;
+      XDATA_080D = 0x23;
       DAT_EXTMEM_0806 = 100;
     }
     bVar1 = DAT_EXTMEM_0983;
     if ((DAT_EXTMEM_072c & 8) == 0) {
       DAT_EXTMEM_072c = DAT_EXTMEM_072c | 8;
-      DAT_EXTMEM_07f3 = 0x28;
+      XDATA_07F3 = 0x28;
       DAT_EXTMEM_070c = 3;
-      DAT_EXTMEM_0809 = 0x1e;
+      XDATA_0809 = 0x1e;
       DAT_EXTMEM_0471 = DAT_EXTMEM_0471 & 0x7f;
       bVar1 = DAT_EXTMEM_0983 | 0x20;
       if ((SUPPORT_2 & 0x10) == 0) {
@@ -54,7 +54,7 @@ void dispatch_on_dpl_5b_7b_40(char param_1)
     DAT_EXTMEM_097a = 0xf2;
     DAT_EXTMEM_0720 = 0xf2;
     if (DAT_EXTMEM_0760 == '\x05') {
-      DAT_EXTMEM_0811 = 0x1e;
+      XDATA_0811 = 0x1e;
     }
   }
   return;

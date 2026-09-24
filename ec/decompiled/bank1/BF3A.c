@@ -50,7 +50,7 @@ void guard_then_store_pair_0834(char param_1,undefined1 param_2,undefined1 param
     }
     cVar1 = read_xdata_pair_to_b_and_a(0x834);
     if (cVar1 != '\0' || param_1 != '\0') {
-      DAT_EXTMEM_08e4 = 2;
+      XDATA_08E4 = 2;
       write_r3r4_to_xdata_pair(0x834,0,0);
       DAT_EXTMEM_0832 = DAT_EXTMEM_0832 | 1;
     }

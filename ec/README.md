@@ -73,20 +73,35 @@ into `r2 -a 8051` with no stitching needed.
   `--self-test` running on committed text alone (no image, no Ghidra, no
   network). Reach for it when the question is "which addresses exist, which
   routines share them, and is this number a read or a write" — the whole
-  `registers.yaml` list is 56 addresses, and this census is 1,172. Two limits
+  `registers.yaml` list is 153 addresses, and this census is 1,172. Two limits
   it earns the right to state: it splits the main EC from the separate
   `ITE8850-PD` program rather than mixing them, and a cluster is a
   co-occurrence in static code, not a purpose —
   `annotations/xdata-register-map.md` §6 is the boundary, and §7 reconciles
-  its counts against `register_ref_table.py`'s.
+  its counts against `register_ref_table.py`'s. Its per-address columns are
+  also an upper bound on *distinct* references wherever one routine is exported
+  as several overlapping functions; `annotations/xdata-06c2-06db-timers.md`
+  §2a measures that at 42× on the one cluster measured so far.
 - **`tools/disasm8051.py`** — the opcode tables `trace_xdata_refs.py` decodes
   with, plus a CLI for reading a window of instructions at a file offset
   (`--at`) and for measuring how many nearby anchors a linear walk syncs onto
   it from (`--converge`). Not a disassembler: linear only, no branch
   following, no code/data separation. `python3 tools/disasm8051.py --self-test`
   re-decodes the two windows `annotations/charge-profile-flow.md` transcribed
-  from `r2` by hand and diffs against them — run it after touching either
-  table.
+  from `r2` by hand and diffs against them, resolves the four
+  `bank-call-audit.md` §8 branch sites, and checks the bit-addressed carry
+  forms against `BIT_SITES` — 11 sites transcribed from `r2 -a 8051` against the
+  image, plus the `0xC1`/`0xC2` pair stated from the manual — run it after
+  touching either table.
+- **`tools/verify_gap_text.py`** — cross-decodes the 143 instructions
+  `verify_reassembly.py` cannot re-encode, so none of the committed listing is
+  read by no check. It recomputes the set from `to_sdas()` rather than carrying
+  a list, decodes each instruction from the firmware image with
+  `disasm8051.py`, and records both texts, both canonical forms, the reason it
+  was excluded and the verdict in `ghidra/gap-text-check.csv` — 143 rows, all
+  agreeing. `--check` and `--report` need no assembler; `--report` writes the
+  CSV and nothing else does. `ghidra/README.md` has the method, what it folds
+  and what it deliberately does not, and its blind spots.
 - **`tools/find_banks.py`** — locates the bank-switch stubs and scores which
   file offset each bank maps to. Re-run this against any other firmware dump
   before trusting the offsets in the table above.
@@ -148,7 +163,7 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
 - **`annotations/registers.yaml`** — every EC register the `uniwill-laptop`
   driver or the Windows service touches, cross-referenced against static-scan
   results and live-hardware behaviour. This is the primary research output;
-  start here. It is 56 addresses, and `annotations/xdata-register-map.md`
+  start here. It is 144 addresses, and `annotations/xdata-register-map.md`
   covers 1,172 — the two corpora are nearly disjoint, and which of the two a
   question is about decides where the answer lives.
 - **`annotations/static-refs-audit.md`** — the per-image reference count for
@@ -184,6 +199,14 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   evidence that those sites belong to the PD image rather than the EC, and the
   live probe still needed to say what (if anything) the EC does with those
   bytes.
+- **`annotations/xdata-06c2-06db-timers.md`** — the `main-ec-002` cluster read
+  as the block the issue asked about: 37 of its 43 addresses are countdowns one
+  393-byte routine walks over, and the other 6 are what four of them do at zero.
+  It also measures why the cluster's headline census numbers are inflated 42×,
+  what gates the block (`0x0440`, and two predicate calls of which one target
+  has no exported function), and what the reload search did and did not find.
+  The read-only procedure for settling `0x06D6`'s period on real hardware is
+  §7, written down and not run.
 - **`annotations/bank-call-audit.md`** — the call-target census behind every
   EC-side handoff this repo resolves: how many direct calls stay in the common
   area, how many assume the caller's own bank, how many are unresolvable, and
@@ -309,8 +332,14 @@ where the reading came from — those names come from
 `annotations/ghidra-functions.csv`, which is the editable surface. And the
 committed disassembly re-encodes to the firmware bytes: 45,394 of 45,537
 instructions, measured by `tools/verify_reassembly.py` and recorded in
-`ghidra/reassembly.csv`. That is a claim about the machine code, not about the
-C, and `ghidra/README.md` says at length what it is not. See the repo's GitHub issues for the
+`ghidra/reassembly.csv`. The other 143 use five forms `sdas8051` cannot
+express, so no assembler reaches them; they are covered instead by
+`tools/verify_gap_text.py`, which cross-decodes each one with
+`tools/disasm8051.py` and records the verdict per instruction in
+`ghidra/gap-text-check.csv` — all 143 agreeing. That does **not** make the
+claim 100%: the re-encode figure stays 45,394 of 45,537, and the two are
+different kinds of evidence. Both are claims about the machine code, not about
+the C, and `ghidra/README.md` says at length what it is not. See the repo's GitHub issues for the
 concrete next steps, several of which are independently useful (e.g. the 254
 call sites referencing `0x07D0`, which `trace_xdata_refs.py` places in the PD
 image rather than the EC and `annotations/ec-0x07d0-sites.md` now maps one by

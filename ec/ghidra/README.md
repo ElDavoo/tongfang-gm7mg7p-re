@@ -35,11 +35,14 @@ out calling `FUN_CODE_bf08` and touching `EXTMEM 0x09c7`, the two facts
 output compared against a human reading, made mechanical.
 
 `--check` and `--self-test` are what the cheap gate tier runs, at 0.19 s and
-0.13 s. `--cross-decoder` adds the advisory comparison against
-`disasm8051.py`; it is 0.13 s, it prints rather than fails, and
-`.github/scripts/agent-gates-deep.sh` is what passes the flag, so
-`AGENT_GATES_DEEP=1` gets it. See `docs/findings.md` §14 — the self-test used
-to take 18.8 s, and the cost was a set comprehension that re-read this
+0.13 s. The second figure is 0.03 s more since the annotation-side CSVs
+(`../annotations/ghidra-functions.csv`, `../annotations/bank-call-targets.csv`)
+gained strict structural guards — measured five runs each on one runner, before
+and after; `docs/findings.md` §15c has the pairs. `--cross-decoder` adds the
+advisory comparison against `disasm8051.py`; it is 0.13 s, it prints rather
+than fails, and `.github/scripts/agent-gates-deep.sh` is what passes the flag,
+so `AGENT_GATES_DEEP=1` gets it. See `docs/findings.md` §14 — the self-test
+used to take 18.8 s, and the cost was a set comprehension that re-read this
 repository's annotations CSV once per seed row, not the cross-decoder.
 
 ## What is here
@@ -52,6 +55,7 @@ repository's annotations CSV once per seed row, not the cross-decoder.
 | `../decompiled/index.csv` | every function: program, address, name, size, how it was seeded, what is annotated, and the evidence for it |
 | `../decompiled/listing-index.csv` | the same rows again, `out_file` pointing at the `.asm`. Separate because the two files answer different questions and merging them would invite a reader to take a decompiled line for an instruction |
 | `reassembly.csv` | per function, whether re-encoding the committed listing reproduces the firmware bytes, where it does not, and a `listing_digest` of the listing text so `--check` can see a text edit |
+| `gap-text-check.csv` | per *instruction*: the 143 the re-encode cannot reach, each cross-decoded against `disasm8051.py` with its verdict. See "The 143, cross-decoded" below |
 | `manifest.csv` | per program: function/decompile/fail counts, bytes disassembled, seed counts, Ghidra version, input SHA-256. The `common` row is an **export grouping**, not a fourth Ghidra program: those functions live in both bank programs and are emitted once |
 | `xdata-symbols.csv` | generated XDATA names, from `../annotations/registers.yaml`. Never hand-edited |
 | `xdata-overrides.csv` | the hand-maintained escape hatch for addresses the generator cannot name |
@@ -254,6 +258,11 @@ address and the carry-with-immediate forms too, and this image has neither.
 and the first pass, which reported 97.80% because four opcodes in its list were
 written from memory rather than measured.
 
+`ec/tools/verify_gap_text.py` recomputes that set from `to_sdas()` rather
+than carrying a list, cross-decodes each of the 143 with `disasm8051.py` (all
+143 agree; the verdict per instruction is in `gap-text-check.csv`), and its
+`--check` fails if a gap reason appears that has no cross-decode handler.
+
 Measured with `sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14` (SDCC 4.6.0), and
 reproduced unchanged on 4.5.0. The version is in every row of
 `reassembly.csv`, and the run now prints it against the committed one, because
@@ -296,6 +305,130 @@ wrong one:
 What the check found on the way is in `../../docs/findings.md` §11; the four
 translation bugs it took to get to a clean result are the argument for having
 it at all.
+
+## The 143, cross-decoded
+
+The re-encode is the strongest check the EC has and it has one hole: 143
+instructions in five forms `sdas8051` cannot express are excluded from it, and
+so were read by *no* check. The byte check reaches them — it covers all 45,537
+and needs no assembler — but a byte is not a mnemonic, and a listing whose
+bytes are right and whose text is wrong passes it.
+
+`../tools/verify_gap_text.py` closes that by asking a second decoder.
+`disasm8051.py` shares no code with Ghidra's SLEIGH, which is the same
+property that makes the 45,394 meaningful. For every instruction
+`verify_reassembly.to_sdas()` declines, it decodes the instruction **from the
+firmware image** at that instruction's own runtime address and compares that
+reading to the listing's text:
+
+```
+$ python3 ../tools/verify_gap_text.py --report
+  gap text: 143 instruction(s) in 84 row(s) across 5 form(s); 45394 checked by re-encode
+    BIT_UNSUPPORTED 0x92         19
+    BIT_UNSUPPORTED 0xB2         13
+    GAP_FORMS "djnz a,"          1
+    GAP_MNEMONICS acall          36
+    GAP_MNEMONICS ajmp           74
+  verdicts: 143 agree
+```
+
+**All 143 agree.** `gap-text-check.csv` records each one individually — the
+two texts, both canonical forms, why `to_sdas()` declined it, and the verdict —
+so no instruction is folded into a total.
+
+**This does not make the 1:1 claim 100%, and the number stays 45,394 of
+45,537 (99.69%).** `sdas8051` still cannot express those five forms; nothing
+about this work changes that. What changes is *coverage*: every instruction in
+the committed listing is now read by an independent check — 45,394 by
+re-encode, the 143 by decoder agreement. The two are not the same kind of
+evidence and should not be added together into a single percentage. For the
+45,394 an independent assembler encodes the listing back and the firmware bytes
+arbitrate, constructively. For the 143 the bytes are already settled by the
+byte check, and what is agreed is the *text*, between two decoders reading the
+same byte column. It is a weaker form of the same claim, and it inherits the
+byte check's premise rather than escaping it.
+
+### How the two renderings are compared
+
+Two decoders rarely spell an instruction the same way, so both sides are
+reduced to `mnemonic op0|op1|...` first. Folded: case, whitespace, a bit
+operand's rendering (`psw.5` ≡ `0xd5` ≡ `acc.4`) and a direct operand's
+(`A` ≡ `0xe0`). Those are spelling. **Not** folded: the mnemonic, the bit
+number, the direct byte, the immediate, a register, and a branch's absolute
+target — those are the instruction. The operand's *class* comes from the
+opcode, never from the operand text, because `clr 0x8e` is both CLR direct and
+CLR bit depending on the byte in front of it. `--self-test` asserts that
+`cpl 0xd5` against `cpl 0xe4` is a **disagreement**: a canonicaliser that
+folded the mnemonic would report the whole set as agreeing and mean nothing.
+
+A `db` on either side is `undecodable`, never `agree`. `disasm8051.py`'s
+mnemonic table is partial by design, so a comparison against one could only
+match vacuously. This was not hypothetical: `mnemonic()` had no case for
+opcode `0x92`, so all 19 `mov <bit>,CY` decoded as `db 0x92` and would have
+been "in agreement" with a hole.
+
+### What it does not cover
+
+- **It is comparative, not constructive.** Two decoders reading the same bytes
+  can share a misreading. The re-encode cannot, because the firmware
+  adjudicates; the byte check cannot, because the bytes are the question. A
+  form both decoders get the same wrong way is invisible here, and the re-encode
+  is blind to that too when the decoder and the assembler agree with each other
+  — which is a real case, see `0xA0`/`0xB0` below.
+- **The set is only what `to_sdas()` declines.** It is recomputed from that
+  predicate on every run, so it cannot drift from the
+  `instructions_unchecked` column of `reassembly.csv` — but it is also exactly
+  that set, and an instruction `to_sdas()` expresses is not checked here. The
+  re-encode has already read those.
+- **`0xA0`/`0xB0` are unresolved.** Ghidra's SLEIGH, r2 and `sdas8051` all put
+  `ORL C,/bit` at `0xA0` and `ANL C,/bit` at `0xB0`; the MCS-51 manual as
+  reproduced in common references has them the other way round. Three tools
+  agreeing is why `disasm8051.py` follows them, and none of them arbitrating
+  the other two is why that is recorded rather than settled. No committed
+  instruction is affected either way — all 12 occurrences are inside the 45,394,
+  because those are two of the bit forms `sdas8051` *does* express. But it is
+  the shape of hole this tool cannot see: the re-encode passes on them because
+  the decoder and the assembler agree, not because either is right.
+- **`0xC1` (`CLR bit`) has no committed instance**, so there is nothing in the
+  image to cross-decode. It is in `verify_reassembly.BIT_UNSUPPORTED` and
+  matches none of the 143, and it is the one form `sdas8051` gets *silently*
+  wrong — it assembles `CLR direct`, the same length, with no error. A future
+  export containing one would be excluded from the re-encode and read by
+  nothing; `disasm8051.py` can now decode it, and closing the loop needs its
+  own check.
+
+### Running it
+
+`--check` and `--report` need only `python3` and the committed firmware — no
+assembler, unlike the `--report` next door — and take well under a second:
+
+```
+$ python3 ../tools/verify_gap_text.py --check
+$ python3 ../tools/verify_gap_text.py --self-test
+```
+
+`gap-text-check.csv` is written by `--report` and by nothing else, exactly like
+`reassembly.csv`'s columns. One honest difference: regenerating it *is* a
+verification, not a re-arming. `--report` re-derives every `disasm_text` from
+the current bytes and the current `disasm8051.py` tables, so a listing edit or a
+decoder-table edit cross-checks the new text rather than pinning whatever it
+now says.
+
+**Nothing runs this per commit.** By cost and by kind it belongs in the cheap
+tier, but `.github/scripts/agent-gates.sh` is a template-copied file and the
+pipeline token has no `workflow` scope. The change is one `case` arm in
+`check_ghidra_tooling()`, mirroring the `*verify_reassembly.py` one:
+
+```sh
+      *verify_gap_text.py)
+        python3 "$tool" --check || rc=1
+        ;;
+```
+
+plus `ec/tools/verify_gap_text.py` in the tool list above it. Until a human
+lands that, this check runs when asked and the committed verdicts can go stale
+in a commit that is otherwise green. That is the same shape
+`../../docs/findings.md` §14e records for the deep tier.
 
 ## What `listing_digest` is, and what it does not prove
 
@@ -351,7 +484,35 @@ the listings the report measured — proving that needs the same assembler, and
 the one on a GitHub-hosted runner is a different and older ASxxxx, against
 which a full report would rewrite every `assembler` cell and could move the gap
 tallies above. That is why it is one-shot and why the tallies here are still the
-nix-pinned measurement.
+nix-pinned measurement. Auditing what it wrote is a separate command,
+`--verify-provenance` below, and it needs the full git history the two
+revisions it names live in: `git clone` without `--depth`. The agent stages
+check out with `fetch-depth: 0` and can run it; both of `ci.yml`'s checkouts
+are default-depth and cannot resolve `08b72e2` at all, which is why it is a
+full-clone command and not part of the per-commit gate.
+
+**That warning has since been measured rather than predicted**
+(`../../docs/findings.md` §14h, issue #157). The runner's `sdas8051` was
+`05.50.4`'s contemporary — SDCC 4.2.0, `sdas8051 02.00`, six years older — and
+a full report against it would indeed have rewritten every `assembler` cell. The
+measured part is sharper than "could move the gap tallies above": of the
+2,705 rows, **the 143 and the 45,394 are unchanged** — 0 rows differ in
+`instructions_checked` or `instructions_unchecked`, because those two columns
+come from `to_sdas()` in pure Python and not from the assembler — while **52
+rows change `outcome`**, all of them `assembler-gap` becoming `match` or
+`partial`. Those 52 are in `../../evidence/ec-reencode/2026-09-23-sdas8051-rowdiff.csv`.
+So re-reporting against a different build moves *coverage*, not the byte
+arithmetic, which is the distinction the `assembler` column exists to let a
+reader make.
+
+One caveat belongs here too, because this file is where a reader looks for the
+tallies. §14h also found a race in `verify()`'s dispatch that made repeated
+`--jobs 4` runs disagree, and the commit that wrote this report
+(`08b72e2`) records no `--jobs` value, so whether the 58 `assembler-gap` rows
+below carry that artefact is not settled from history. The 45,394 and the 143
+cannot be affected — they are computed before the assembler runs — but the
+outcome columns should be re-measured with the pinned nix build before they are
+treated as settled.
 
 **For the committed column the history supplies the proof the command could
 not** (2026-09-23, issue #150). `a56b3bb` changed nothing in this file but the
@@ -373,7 +534,25 @@ the one thing the one-shot could not assert about itself. What stays open is
 what it never could: they were taken without a re-encode, so they attest to the
 measured text and not to its correctness — the paragraph above — and the guard
 stops a second run, not the first. A future migration still answers this from
-its own history. `docs/findings.md` §14f has the method.
+its own history. `docs/findings.md` §14f has the method, and this runs it:
+
+```
+$ python3 ../tools/verify_reassembly.py --verify-provenance \
+      --base 08b72e2 --migration a56b3bb --listings-from 8c7985e
+  listing text: 0 of them changed over 08b72e2..a56b3bb; the same pathspec returns 2705 file(s)
+  over 8c7985e..08b72e2, the window that last wrote them, so the first number is a measurement
+  report: 2705 of 2705 row(s) identical once listing_digest is dropped (present in the
+  base: no; in the migration: yes)
+  PASS  the migration changed the column and nothing beneath it, and no listing text
+  moved while it did.
+```
+
+`--listings-from` names the revision *before* the window that last wrote the
+listings, and the count it prints is the positive control: the 2,705 above is
+the same pathspec matching 2,705 files, which is what makes the zero next to it
+a measurement rather than a pathspec matching nothing. A migration that moved a
+listing, or touched any other cell of the report, fails with the file or the
+cell named.
 
 ## The annotation layer
 

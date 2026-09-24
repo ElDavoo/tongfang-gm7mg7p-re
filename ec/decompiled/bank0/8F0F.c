@@ -6,8 +6,10 @@
 
 /* Writes the incoming A through the caller's DPTR, reads that byte straight back, copies it into
    XDATA 0x075C, then calls 0xA73F with R7=0xA7 and again with R7=0x43 before returning. What the
-   two 0xA73F command codes select is not decoded here, and neither 0x075C nor 0xA73F has an entry
-   in ec/annotations/registers.yaml.
+   two 0xA73F command codes select is not decoded here. 0x075C is entered in
+   ec/annotations/registers.yaml as MAIN_FAN_R_DUTY (issue #123), which also carries the
+   0x1804/0x1809 scratch bytes this routine copies between; 0xA73F has no entry there and is still
+   open.
    type: writer
    evidence: ec/decompiled/bank0/8F0F.asm; ec/decompiled/bank0/8F0F.c
    basis: hand-decoded */
@@ -16,7 +18,7 @@ void store_a_to_dptr_then_075c_and_notify(undefined1 param_1,undefined1 *param_2
 
 {
   *param_2 = param_1;
-  DAT_EXTMEM_075c = *param_2;
+  MAIN_FAN_R_DUTY = *param_2;
   store_r7_at_6a_then_jump_1666(0xa7);
   store_r7_at_6a_then_jump_1666(0x43);
   return;
