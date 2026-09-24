@@ -20,7 +20,7 @@ LAB_CODE_8db9:
         return_with_carry_cleared();
         return;
       }
-      if (((DAT_EXTMEM_06e1 & 0x80) == 0) && ((DAT_EXTMEM_0459 & 2) == 0)) {
+      if (((DAT_EXTMEM_06e1 & 0x80) == 0) && ((XDATA_0459 & 2) == 0)) {
         DAT_EXTMEM_0678 = DAT_EXTMEM_0678 + -1;
         if (DAT_EXTMEM_0678 == '\0') {
           DAT_EXTMEM_0678 = '\x14';

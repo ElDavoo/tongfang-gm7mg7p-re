@@ -37,7 +37,7 @@ void manual_ctrl_profile_gate(char param_1)
     DAT_EXTMEM_09ca = 0;
     return;
   }
-  store_be16_a(DAT_EXTMEM_0438,0xa48,DAT_EXTMEM_0439);
+  store_be16_a(BAT_VOLTAGE_MV_0,0xa48,BAT_VOLTAGE_MV_1);
   store_be16_a(BAT_CYCLE_COUNT_0,0xa4c,BAT_CYCLE_COUNT_1);
   cfg_cell_count_selector();
   if (param_1 == -0x40) {

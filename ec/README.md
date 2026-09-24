@@ -129,6 +129,14 @@ into `r2 -a 8051` with no stitching needed.
 - **`tools/make_bank_image.py`** — stitches common area + one bank into a
   flat 64 KiB image loadable by `r2 -a 8051` (or any other 8051 disassembler
   expecting linear addressing).
+- **`tools/grade_0751_isolation.py`** — applies §4 of
+  `../docs/hardware-tests/manual-fan-ctrl-0751-isolation.md` to a `0x0751`
+  capture mechanically, so the sweep half of that procedure is read the same way
+  twice; §4.4's PWM comparison is left as a number for a human. Its offline
+  suite is `tools/test_grade_0751_isolation.py`, and `bash tools/run-tests.sh`
+  from the repo root runs it with every other `test_*.py` in the repository
+  (`../tools/README.md`). It runs against the committed `tools/testdata/`
+  captures and is not evidence about the machine.
 
 ```console
 $ python3 tools/make_bank_image.py firmware/GMxMGxx_11.800 0 0x08000 /tmp/bank0.bin

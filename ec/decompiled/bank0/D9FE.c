@@ -43,7 +43,7 @@ void FUN_CODE_d9fe(void)
   DAT_EXTMEM_08b8 = 0x23;
   DAT_EXTMEM_08b9 = 0x25;
   DAT_EXTMEM_0832 = DAT_EXTMEM_0832 | 8;
-  DAT_EXTMEM_0456 = DAT_EXTMEM_0456 | 0xc0;
+  SYSTEM_ID = SYSTEM_ID | 0xc0;
   BIOS_OEM_2 = BIOS_OEM_2 & 0xfd;
   write_0a47_from_r7(0);
   write_0a47_from_r7(0x30);

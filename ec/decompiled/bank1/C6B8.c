@@ -16,10 +16,10 @@
 void gate_0458b7_set_0723b2_from_045c(void)
 
 {
-  if (DAT_EXTMEM_0458 < '\0') {
+  if (XDATA_0458 < '\0') {
     return;
   }
-  if ((DAT_EXTMEM_045c & 7) == 0) {
+  if ((XDATA_045C & 7) == 0) {
     DAT_EXTMEM_0723 = DAT_EXTMEM_0723 & 0xfb;
     return;
   }

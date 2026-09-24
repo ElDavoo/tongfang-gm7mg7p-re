@@ -14,7 +14,7 @@
 void if_0440_nonzero_call_88f0_0c(void)
 
 {
-  if (DAT_EXTMEM_0440 != '\0') {
+  if (XDATA_0440 != '\0') {
     push_r5_into_070f_ring_when_gates_pass(0xc);
   }
   return;

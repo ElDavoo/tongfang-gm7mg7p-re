@@ -13,7 +13,8 @@ addr,name,from_register,register_status,derivation,programs
 0x0726,OEM_9,OEM_9 (AC_AUTO_BOOT_ENABLE),absent,scalar-name,bank0;bank1
 0x07A6,OEM_4_CHARGING_PROFILE,OEM_4 (CHARGING_PROFILE_MASK),confirmed-working-partially,override,bank0;bank1
 0x07B9,CHARGE_CTRL,CHARGE_CTRL (numeric threshold),unknown-not-absent,scalar-name,bank0;bank1
-0x07D0,BATTERY_CHARGE_LIMIT_DOWN,"BATTERY_CHARGE_LIMIT_DOWN (Windows-only address, no uniwill-laptop equivalent)",unknown-not-absent-DO-NOT-WRITE-BLIND,scalar-name,bank0;bank1
+0x07D0,DBD1,DBD1 (DSDT name; ECSpec calls the same byte BATTERY_CHARGE_LIMIT_DOWN),unknown-not-absent-DO-NOT-WRITE-BLIND,scalar-name,bank0;bank1
+0x07D1,DBD2,"DBD2 (DSDT name; no vendor constant, no committed Windows writer)",unknown-not-absent-DO-NOT-WRITE-BLIND,scalar-name,bank0;bank1
 0x0748,LIGHTBAR_AC_CTRL,LIGHTBAR_AC_CTRL / RED / GREEN / BLUE,confirmed-not-this-mechanism,name-split,bank0;bank1
 0x0749,LIGHTBAR_AC_CTRL_RED,LIGHTBAR_AC_CTRL / RED / GREEN / BLUE,confirmed-not-this-mechanism,name-split,bank0;bank1
 0x074A,LIGHTBAR_AC_CTRL_GREEN,LIGHTBAR_AC_CTRL / RED / GREEN / BLUE,confirmed-not-this-mechanism,name-split,bank0;bank1
@@ -80,6 +81,8 @@ addr,name,from_register,register_status,derivation,programs
 0x0784,CPU_PL1_PL2,CPU_PL1 / PL2 / PL4 (APL1/APL2/APL4),present-untested,name-split,bank0;bank1
 0x0785,CPU_PL1_PL4,CPU_PL1 / PL2 / PL4 (APL1/APL2/APL4),present-untested,name-split,bank0;bank1
 0x0751,MANUAL_FAN_CTRL,MANUAL_FAN_CTRL (power mode / fan mode),present-untested,scalar-name,bank0;bank1
+0x075B,MAIN_FAN_L_DUTY,"MAIN_FAN_L_DUTY (fan duty, published to the Control Center)",present-untested,scalar-name,bank0;bank1
+0x075C,MAIN_FAN_R_DUTY,"MAIN_FAN_R_DUTY (fan duty, published to the Control Center)",present-untested,scalar-name,bank0;bank1
 0x0782,BIOS_OEM_2,BIOS_OEM_2 (DEFAULT_MODE / FAN_QKEY / FAN_TABLE_OFFICE_MODE),present-untested,scalar-name,bank0;bank1
 0x049F,BIOS_INFO_3,BIOS_INFO_3 (Turbo mode supported),present-untested,scalar-name,bank0;bank1
 0x0730,MODE_PL_DEFAULTS_GAMING_PL1_0,MODE_PL_DEFAULTS (per-mode PL1/PL2/PL4/D-state defaults),present-untested,override,bank0;bank1
@@ -99,3 +102,10 @@ addr,name,from_register,register_status,derivation,programs
 0x07DA,MODE_TCC_OFFSET_DEFAULTS_TURBO_2,MODE_TCC_OFFSET_DEFAULTS,present-untested,override,bank0;bank1
 0x0786,CPU_TCC_OFFSET,CPU_TCC_OFFSET (APTC/APTN),present-untested,scalar-name,bank0;bank1
 0x07C6,AP_OEM_6,AP_OEM_6 (whisper status / universal fan control),present-untested,scalar-name,bank0;bank1
+0x08A0,XDATA_08A0,XDATA_08A0,present-untested,scalar-name,bank0;bank1
+0x08A2,XDATA_08A2,XDATA_08A2,present-untested,scalar-name,bank0;bank1
+0x08EB,XDATA_08EB,XDATA_08EB,present-untested,scalar-name,bank0;bank1
+0x089E,XDATA_089E,XDATA_089E,present-untested,scalar-name,bank0;bank1
+0x089F,XDATA_089F,XDATA_089F,present-untested,scalar-name,bank0;bank1
+0x09E6,XDATA_09E6,XDATA_09E6,present-untested,scalar-name,bank0;bank1
+0x09E7,XDATA_09E7,XDATA_09E7,present-untested,scalar-name,bank0;bank1

@@ -6,7 +6,18 @@
 
 /* Clears bit 6 of XDATA 0x08EB (read-modify-write with mask 0xBF) and writes 0 to XDATA 0x08A0. It
    is the destination of the ljmp at 0xB758 in 0xB737, and the RET at 0xB83A is the shared exit that
-   0xB737's own listing also falls into, so both entries return through the same byte.
+   0xB737's own listing also falls into, so both entries return through the same byte. Four branches
+   reach 0xB758 and only one of them is the USER bit: 0xB73A when the call to 0xB9D8 at 0xB737
+   returns non-zero, which is before 0x0751 is read at all, 0xB740 the USER-clear arm, and 0xB747
+   and 0xB74E two early exits inside the USER-set arm (XDATA 0x0490 bit 0 clear, XDATA 0x04AB not
+   0x64). A fifth gate, 0xB755 on XDATA 0x07C5 bit 4, is a jnb acc.4 whose target is the lcall
+   0xba36 at 0xB75B, so it reaches 0xB758 by fall-through when the bit is set rather than by a
+   branch. The byte it zeroes is a count rather than a flag: 0xB7E8 on the USER-set path increments
+   XDATA 0x08A0 and compares it against 0x0A with the carry-in set by the setb c at 0xB7EF, so
+   0xB7F2 retires at 0x0A or below and the block past it runs from 0x0B, setting bit 6 of 0x08EB at
+   0xB7F8, so clearing the bit and zeroing the count are one reset. 0xB7D8 and 0xB7FC reach 0xB835,
+   these same three instructions, without passing this entry point at all. Read in
+   ec/annotations/manual-fan-ctrl-0751.md 8a; nothing is read back.
    type: writer
    evidence: ec/decompiled/bank0/B82E.asm; ec/decompiled/bank0/B82E.c
    basis: hand-decoded */
@@ -14,8 +25,8 @@
 void clear_08eb_bit6_and_zero_08a0(void)
 
 {
-  DAT_EXTMEM_08eb = DAT_EXTMEM_08eb & 0xbf;
-  DAT_EXTMEM_08a0 = 0;
+  XDATA_08EB = XDATA_08EB & 0xbf;
+  XDATA_08A0 = 0;
   return;
 }
 
