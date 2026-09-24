@@ -53,6 +53,43 @@ class, still visible on disk and reliable across both app versions:
   `HID_Set_Color_14H(byte Index, byte R, byte G, byte B)`) survive the same
   way BatteryProtection2's do — readable, with an empty/garbled body.
 
+## What the `.appxsym` PDB adds (2026-09-23, issue #131)
+
+The section above is all about `GCUService.exe`. The UWP front end is a
+different problem with the same shape, and there is a committed input
+that partly answers it **offline, with no Windows machine**:
+`vendor/control-center-3.9.18.0/GamingCenter3_Cross.UWP_3.9.18.0_x64.appxsym`
+is a zip holding a 150 MB `GamingCenter3_Cross.pdb`.
+
+A PDB carries **names**, and names are exactly what anti-tamper leaves
+alone — the same reason the bullet above says field, method and parameter
+names survive on disk. The front end's bodies are not readable here, but
+its name table is. It is a compressed name heap, so what is in it is
+types, methods, local variables and binding paths, not a list of dotted
+display names, and the entries worth quoting are exactly what they look
+like: `UWP_Refactor.ViewModels.FanViewModel+<ChangeLanguage>d__1197`,
+`GpuDynamicBoostSwitch_Checked`, `<GpuDynamicBoostSwitch>i__Field`,
+`GpuConfigurableTGPSwitch_UnChecked`, `OverClock_SettingsView_obj1_Bindings`.
+`../tools/t1wr_callers.py` counts `FanViewModel` 2230 times,
+`OverClock_SettingsView` 624, `UWP_Refactor` 324, `GpuDynamicBoost` 12 and
+`GpuConfigurableTGPTarget` 12 — the GPU dynamic-boost feature area,
+spelled out, in a module whose bodies this repo cannot read.
+
+The tool counts those names as a **control** rather than as findings: the
+same pass that hunts the caller terms prints them in their own section, and
+`--self-check` fails outright if they ever all come back zero for this
+input, because a zero caller-term result from a name table that was never
+reached is worth nothing. A name-level census of an encrypted module still
+cannot see a call, only a name that might belong to one. Here the control
+is non-zero and the same PDB has no `ACPIDriverDll`, `TempWrite1`, `T1WR`,
+`AMAT`, `AMIT` or `0x9C40A4DC` in it at all.
+
+The method that reads it is `../tools/t1wr_callers.py`'s: the archive is
+expanded **in memory**, never unpacked under `vendor/`, which is committed
+input. If you want the name list itself, `strings` on the extracted PDB is
+the one-liner; the tool exists so the *census* is re-runnable rather than
+a paste from a terminal nobody can check.
+
 ## What's not done
 
 Actually decrypting a method body requires either:

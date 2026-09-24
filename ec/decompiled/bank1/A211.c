@@ -26,7 +26,7 @@ void call_88f0_then_clear_07f3_and_070c(void)
   if ((DAT_EXTMEM_070c & 1) != 0) {
     gate_0458b7_set_0723b2_from_045c();
     if (-1 < (char)bVar1) {
-      if ((DAT_EXTMEM_045b & 1) == 0) {
+      if ((XDATA_045B & 1) == 0) {
         if ((DAT_EXTMEM_070c & 2) == 0) {
           push_r5_into_070f_ring_when_gates_pass(0x2f);
         }

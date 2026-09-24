@@ -71,6 +71,29 @@ reproduces the extraction from those into plain PE/.NET assemblies.
 - **`decompiled/v3.9.18.0/Define/{BatteryLifeExtension,BIOS_PROJECT_ID,ECSpec}.cs`**
   — small supporting constant classes, all clean.
 
+## Searching the whole Windows stack at once
+
+The per-file decompiles above are the place to read *what the service
+does*. To ask "does anything here call this, anywhere" — a P/Invoke, an
+IOCTL constant, an ACPI selector, across all three trees, every vendor
+binary's string table and the UWP front end's PDB name table, with a
+readability census so the negative can be trusted — use
+`tools/t1wr_callers.py`:
+
+```console
+python3 windows/tools/t1wr_callers.py             # the census
+python3 windows/tools/t1wr_callers.py --verbose   # ...per file and per archive member
+python3 windows/tools/t1wr_callers.py --self-check  # assert the numbers the docs quote
+```
+
+`decompiled/v3.1.39.0/` is the tree to search for behaviour: it is the
+whole service with every method body decrypted. `v3.1.6.0/` and
+`v3.9.18.0/` are partial — their signatures and constants are sound, their
+method bodies are anti-tamper ciphertext (`antitamper/README.md`) — so a
+hit in them is a hit and a miss in them is not a miss. The tool prints
+that split as a readability census rather than leaving it to be assumed,
+and `docs/findings.md` §4o is a worked negative from it.
+
 ## Native driver
 
 `vendor/control-center-3.9.18.0/ACPIDriver/{ACPIDriver.sys,ACPIDriver.inf,acpidriver.cat}`
@@ -85,6 +108,35 @@ including `ECRR`/`ECRW`, an EC register read/write pair addressed by
 16-bit address, which the DSDT implements as a byte access at physical
 `0xFE410000 + addr`. `tools/pe_triage.py` and `tools/disasm.sh` regenerate
 every number in those write-ups.
+
+## Offline tests
+
+Five of the tools carry offline `unittest` suites, and all of them run from
+Linux with no Windows box, no EC and no vendor code:
+
+```sh
+bash tools/run-tests.sh            # from the repository root: every suite in the tree
+bash tools/run-tests.sh windows/tools
+```
+
+`tools/test_manual_fan_ctrl_probe.py` scripts the probe's two arms byte by byte,
+`tools/test_ec_watch.py` checks the mark lands in the CSV between the two
+change rows, `tools/test_ec_validate.py` checks the `0x0436` capacity arm's
+one-directional exact-copy scoring, its full-capacity bound, its CSV, and the
+`0x0400-0x045F` page assertion that keeps it off the fan-tach block, and
+`tools/test_charge_target_test.py` runs the charge-target tool's three
+refusals, the restore in its `finally`, and its CSV columns — the branches
+`docs/findings.md` §4m's committed artifacts never exercise, since all three
+live runs took the write path. (`tools/test_system_id_probe.py` covers the
+`0x0456` probe; `../tools/README.md` lists it.) All of them work by faking
+`ecrw` — the module binds kernel32 at import time and only loads on Windows —
+which is also what makes the arms scriptable; the charge-target suite fakes the
+`powershell` call behind its WMI line as well. The probe and `ec_watch` suites
+use the shared `tools/ecrw_fake.py`; the other three still carry fakes of their
+own. `../tools/README.md` is the canonical home for the command, and records
+why the runner gives each suite its own interpreter: until those three are
+moved onto the shared fake, a single discovery over this directory is
+order-dependent (`docs/findings.md` §16).
 
 ## What's proven vs. what needs a Windows box
 

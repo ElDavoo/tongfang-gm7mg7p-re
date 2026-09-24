@@ -5,16 +5,17 @@
 
 
 /* Reads XDATA 0x08EA into R7 and XDATA 0x0449 into A, sets the carry so the following subb
-   subtracts one extra, and returns 0x0449 - 0x08EA - 1. Neither address has an entry in
-   ec/annotations/registers.yaml.
+   subtracts one extra, and returns 0x0449 - 0x08EA - 1. 0x0449 is XDATA_0449 in
+   ec/annotations/registers.yaml, an EC-side site found with its meaning not established; 0x08EA has
+   no entry there.
    type: math
-   evidence: ec/decompiled/bank0/BE15.asm; ec/decompiled/bank0/BE15.c
+   evidence: ec/decompiled/bank0/BE15.asm; ec/decompiled/bank0/BE15.c; ec/annotations/registers.yaml
    basis: hand-decoded */
 
 char x0449_minus_x08ea_minus_1(void)
 
 {
-  return DAT_EXTMEM_0449 - (DAT_EXTMEM_08ea + '\x01');
+  return XDATA_0449 - (DAT_EXTMEM_08ea + '\x01');
 }
 
 

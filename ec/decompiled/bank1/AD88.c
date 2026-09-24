@@ -39,7 +39,7 @@ void forwarder_to_c245(void)
   }
   dispatch_0490_low3();
   return_immediately();
-  DAT_EXTMEM_0432 = 0;
+  BAT_STATUS_1 = 0;
   DAT_EXTMEM_04f2 = 0;
   return;
 }

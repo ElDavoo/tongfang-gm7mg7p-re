@@ -61,8 +61,8 @@ void update_0524_0526_4a0_and_0497_flags(char param_1,char param_2)
     if (DAT_EXTMEM_0539 != '\x01') goto LAB_CODE_d136;
   }
   else {
-    cVar2 = DAT_EXTMEM_0403 - 0x14;
-    if (0x13 < DAT_EXTMEM_0403) goto LAB_CODE_d136;
+    cVar2 = BAT_DESIGN_CAPACITY_1 - 0x14;
+    if (0x13 < BAT_DESIGN_CAPACITY_1) goto LAB_CODE_d136;
     bVar1 = true;
   }
   cVar3 = bVar1 << 7;

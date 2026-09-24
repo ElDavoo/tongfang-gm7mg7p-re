@@ -30,7 +30,7 @@ void FUN_CODE_be10(char param_1)
   if ((DAT_EXTMEM_0497 & 1) == 1) {
     if (DAT_EXTMEM_0539 != '\x01') goto code_c0xbe91;
   }
-  else if (0x13 < DAT_EXTMEM_0403) {
+  else if (0x13 < BAT_DESIGN_CAPACITY_1) {
 code_c0xbe91:
     if ((DAT_EXTMEM_06e6 == '\x05') || (DAT_EXTMEM_06e6 == '\x03')) {
       if ((DAT_EXTMEM_0318 == -0x20) && (DAT_EXTMEM_0319 == '.')) {

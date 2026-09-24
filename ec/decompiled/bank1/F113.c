@@ -15,7 +15,7 @@
 void thunk_to_f275(void)
 
 {
-  if (DAT_EXTMEM_0440 != '\0') {
+  if (XDATA_0440 != '\0') {
     DAT_EXTMEM_06ff = DAT_EXTMEM_06ff | 0x80;
     gate_06e6_0440_then_call_89b5(0x35);
     return;

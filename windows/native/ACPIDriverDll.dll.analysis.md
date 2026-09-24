@@ -80,6 +80,22 @@ The driver implements two more codes, `0x9C40A494` (`MMRD`) and
 `0x9C40A49C` (`MMWD`), that nothing here exports — the dword-wide siblings
 of `ReadMEMB`/`WriteMEMB`.
 
+**Who calls `TempWrite1` (2026-09-23, issue #131).** Not found by the
+census in `../tools/t1wr_callers.py`, which is worth reading as part of
+this table: the table above is the export directory, and an export is not a
+use. Across every committed Windows input — the decompiled trees, every
+vendor binary's string table in ASCII and UTF-16LE, the UWP front end's
+`.msixbundle` and its `.appxsym` PDB name table — `TempWrite1` appears
+only in this file's own export directory and in the Ghidra decompile of
+it. The two closed results are worth naming: `GCUService` 3.1.39.0 is
+committed fully decrypted and its only `ACPIDriverDll.dll` P/Invoke is
+`SMAPCTable` (`../../decompiled/v3.1.39.0/GCUService/MyECIO/AcpiCtrl.cs:127`),
+and the UWP front end reaches the service over MQTT rather than the EC.
+What stayed unreadable — the still-encrypted 3.1.6.0/3.9.18.0 bodies, the
+installer payloads, and anything in firmware — is listed in that tool's
+output and in `../../docs/findings.md` §4o. A caller outside every
+committed input is not excluded; a caller inside one is.
+
 ## `ReadEC` / `WriteEC` in full
 
 `ReadEC` (`0x180003410`) takes the register address in `ecx` and returns

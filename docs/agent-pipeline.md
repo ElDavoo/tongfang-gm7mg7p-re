@@ -48,7 +48,7 @@ only covers what's specific to *this* copy.
   comparison — so `AGENT_GATES_DEEP=1 .github/scripts/agent-gates.sh` is the
   single command that checks everything, and the cheap tier's closing note
   names that command on every run.
-  Two things to carry across if this file is ever re-copied from the template:
+  Three things to carry across if this file is ever re-copied from the template:
   1. **The deep tier needs a schedule, and it does not have one.** What runs
      where, as of 2026-09-23 (issue #139): per commit, on `push` to `main` and
      on every pull request, `ci.yml` runs the cheap tier bare, and the deep
@@ -60,6 +60,13 @@ only covers what's specific to *this* copy.
      It runs the deep tier through its documented entry point and nothing
      else:
      `AGENT_GATES_DEEP=1 .github/scripts/agent-gates.sh`.
+     It tees that run to a log and uploads it as an artifact with
+     `if: always()` (issue #158), because the same file's own comment says
+     GitHub delays and sometimes drops scheduled runs without telling anyone: a
+     run that happened leaves an artifact behind and a run that did not leaves
+     none, so "the nightly did not run" stays distinguishable from "the nightly
+     found nothing". Absence is observable, not failing — making a vanished run
+     fail something needs a checker that runs when the scheduled one did not.
      Until it is landed, the re-encode is opt-in, and the reason it is opt-in
      rather than dropped is in `docs/findings.md` §14e — which also records
      what per-commit coverage is still missing, and it is not nothing: since
@@ -75,15 +82,37 @@ only covers what's specific to *this* copy.
      deferred. The deep tier adds an independent re-derivation, it does not
      substitute for anything. `verify_reassembly.py --check` gained a third
      assertion for the same reason: it was added to the cheap tier, not
-     promoted out of it. Worth knowing when reading that file, though: its
-     case for `verify_reassembly.py` runs `--check` and **not** `--self-test`,
-     so the digest's known-answer assertions run wherever a human or the deep
-     tier runs them and not on every commit. The per-commit protection is the
-     `--check` comparison itself, which covers all 2,705 rows; the assertions
-     guard the tool rather than the tree. Adding `--self-test` to that case is
-     a one-line change to a template-copied file, and needs the re-copy note
-     above — which is why it is named here rather than done in passing.
-  3. **`verify_gap_text.py --check` is not in the cheap tier yet, and should
+     promoted out of it, and its `--self-test` joined it there
+     (2026-09-23, issue #149): the `*verify_reassembly.py)` case now runs
+     `--check && --self-test`, the same shape as the `*decompile_native.py)`
+     case, so the digest's known-answer assertions — the canonical form, the
+     `compare_digests()` failure paths, `GAP_FORMS`, `BIT_UNSUPPORTED` — run
+     per commit rather than only where a human asks for them. They sit
+     before the self-test's no-assembler early exit, so that is true on a
+     runner without `sdas8051` as well. The `--check` comparison still covers
+     all 2,705 rows and the assertions still guard the tool rather than the
+     tree. **A re-copy of `agent-gates.sh` from the template restores the
+     `--check`-only case, so this has to be re-applied with it.** The
+     re-encode of the committed listing is still the deep tier's, and is
+     still unscheduled.
+  3. **`--verify-provenance` needs a full git history, and `ci.yml` does not
+     have one** (2026-09-23, issue #159). The mode audits a `listing_digest`
+     migration against two committed revisions (`docs/findings.md` §14f), so
+     how deep the clone is is part of its contract the way the assembler is part
+     of `--report`'s: the agent stages check out with `fetch-depth: 0`
+     (`agent-implement.yml:118`, `agent-fix.yml:116`, `agent-review.yml:64`)
+     and can run it, while both of `ci.yml`'s checkouts (`:34`, `:64`) are
+     default-depth, and `08b72e2` and `a56b3bb` do not resolve from one. It
+     therefore fails there with its history requirement rather than auditing
+     whatever happened to be checked out, and it is not in the gate for that
+     reason. Putting it in the per-commit gate is a one-line
+     `fetch-depth: 0` on those two checkouts that a human lands, and whether
+     that is worth growing every checkout for — or whether the mode stays a
+     full-clone command like `--add-digest-column` and `--report` — is the open
+     question. It is not made here: `.github/` is template-copied and the
+     pipeline token has no `workflow` scope, the same reason item 1's schedule
+     is prepared rather than landed.
+  4. **`verify_gap_text.py --check` is not in the cheap tier yet, and should
      be.** Issue #151 (2026-09-23) added
      `ec/tools/verify_gap_text.py`, which cross-decodes the 143 instructions
      `sdas8051` cannot re-encode — the ones no assembler reaches, which were
@@ -106,6 +135,44 @@ only covers what's specific to *this* copy.
      `ec/ghidra/gap-text-check.csv` can go stale in an otherwise-green commit
      — the same shape as item 1, and for the same reason. The command is named
      here so a template re-copy carries it.
+- **`tools/run-tests.sh`, and the gate line that would call it**
+  (2026-09-23, issue #162) — the four offline `unittest` suites
+  (`ec/tools/test_grade_0751_isolation.py`, `windows/tools/test_ec_watch.py`,
+  `windows/tools/test_manual_fan_ctrl_probe.py`, `linux/lightbar/test_probe_6005.py`)
+  are 40 tests in all and **no gate and no workflow runs any of them**. Until
+  #162, a green pipeline proved those files compile — the cheap tier's
+  `check_python_syntax` `py_compile`s three of the four — and nothing more.
+  #162 lands the runner (`tools/README.md` has it) and the documentation, and
+  **deliberately not the gate call**, because this script is copied from the
+  template: the wiring is an upstream `agent-pipeline` change and a re-copy, and
+  the pipeline token's lack of `workflow` scope bars the workflow side
+  independently. The runner prints its own scope on every run, the way the cheap
+  tier prints the deep tier's deferral, so the gap is visible in the output and
+  not only here.
+
+  The call is one function and one `gate` line, and this is the whole of it:
+
+  ```bash
+  check_unittest_suites() {
+    bash tools/run-tests.sh
+  }
+  ...
+  gate 'unittest suites'  check_unittest_suites
+  ```
+
+  The argument for landing it is cost: the runner is **0.77 s** here
+  (0.76–0.77 s over five runs) against a cheap tier the table above records at
+  **5.9 s** on a GitHub-hosted runner. Those are two different machines and the
+  ratio, not either absolute number, is the point — sub-second against
+  single-digit seconds is a one-line change, not a negotiation. Two things to
+  carry across with it. The cheap tier's printed "what this tier does not run"
+  note needs **no edit**: it names only the `sdas8051` re-encode and the
+  advisory cross-decoder comparison, and adding the suites is a coverage
+  increase rather than a deferral, so nothing it lists stops being true. And
+  the wiring should not acquire a coverage floor of its own — the runner prints
+  what ran and asserts no test count, for the reason §14e gives for the
+  printed-not-asserted elapsed line, and a floor added here is the one that
+  gets deleted after a bad afternoon.
 - **`.github/workflows/agent-plan.yml`**'s `CUSTOMISE` section — added the
   hardware/Windows-access constraint from `CLAUDE.md`, so the plan stage
   scopes issues needing the physical laptop or a Windows box down to

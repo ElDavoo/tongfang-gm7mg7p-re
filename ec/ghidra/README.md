@@ -35,11 +35,14 @@ out calling `FUN_CODE_bf08` and touching `EXTMEM 0x09c7`, the two facts
 output compared against a human reading, made mechanical.
 
 `--check` and `--self-test` are what the cheap gate tier runs, at 0.19 s and
-0.13 s. `--cross-decoder` adds the advisory comparison against
-`disasm8051.py`; it is 0.13 s, it prints rather than fails, and
-`.github/scripts/agent-gates-deep.sh` is what passes the flag, so
-`AGENT_GATES_DEEP=1` gets it. See `docs/findings.md` §14 — the self-test used
-to take 18.8 s, and the cost was a set comprehension that re-read this
+0.13 s. The second figure is 0.03 s more since the annotation-side CSVs
+(`../annotations/ghidra-functions.csv`, `../annotations/bank-call-targets.csv`)
+gained strict structural guards — measured five runs each on one runner, before
+and after; `docs/findings.md` §15c has the pairs. `--cross-decoder` adds the
+advisory comparison against `disasm8051.py`; it is 0.13 s, it prints rather
+than fails, and `.github/scripts/agent-gates-deep.sh` is what passes the flag,
+so `AGENT_GATES_DEEP=1` gets it. See `docs/findings.md` §14 — the self-test
+used to take 18.8 s, and the cost was a set comprehension that re-read this
 repository's annotations CSV once per seed row, not the cross-decoder.
 
 ## What is here
@@ -198,57 +201,90 @@ result against `../firmware/GMxMGxx_11.800`:
 $ SDAS8051=$(nix build nixpkgs#sdcc && echo $out/bin/sdas8051) \
     python3 ../tools/verify_reassembly.py --work /tmp/ec --report
 
+  assembler: sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14  (/nix/store/…-sdcc-4.6.0/bin/sdas8051, this run)
+  committed: sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14  (ec/ghidra/reassembly.csv, 2705 rows)
+    the committed report and this run used the same assembler
+
   reassembly, by function (2705 total):
     match            2574
-    partial           73
-    assembler-gap     58
+    partial          73
+    assembler-gap    58
 
   reassembly, by instruction:
     re-encode to the firmware bytes : 45394 of 45537 (99.69%)
     unchecked (sdas8051 cannot express the form): 143
+
+  2574 function(s) have every instruction re-encode byte-exactly; 73 more have all but 143 instruction(s) verified.
+
+  compared against the committed report (ec/ghidra/reassembly.csv):
+    outcome               this run  committed
+    match                     2574       2574
+    partial                     73         73
+    assembler-gap               58         58
+    mismatch                     0          0
+    rows                      2705       2705
+    instructions checked     45394      45394
+    instructions unchecked       143        143
+
+  moved since the committed report: nothing
+
+  wrote ec/ghidra/reassembly.csv
 ```
+
+**The transcript is illustrative, and its numbers are the committed report's
+own.** It was not re-run while this file was written: `project-setup` installs
+Ubuntu's `sdcc` and does not install nix, so the pinned `sdas8051` is not
+reachable on a GitHub-hosted runner, and the nix store path above is elided
+because it is not reproducible here either. The two `assembler` lines and the
+comparison table show the *shape* — what the tool prints when the run's numbers
+and its assembler are the ones the report was measured with. A run on a
+runner's own assembler prints a disagreement in place of that agreement, and the
+paragraph below has what it says.
 
 **45,394 of 45,537 instructions re-encode to the exact bytes in the firmware,
 and no function disagrees.** 2,574 of 2,705 have every instruction verified; a
 further 73 have all but 143 between them.
 
-> **The 143 are `MOV bit,C`, `CPL bit`, `CLR bit`, `CJNE` on a direct
-> address, `DJNZ A` and the carry-with-immediate forms.** *(Retracted. This
-> list was wrong, and leaving it visible is the point — see the correction
-> immediately below.)* `CLR bit` is the only one the
-> assembler gets *silently* wrong rather than refusing -- it emits `CLR direct`,
-> a different instruction of the same length, with no error -- and the rest of
-> the list is safe because a refusal is a refusal. `docs/findings.md` §11 records
-> the first pass, which reported 97.80% because four opcodes in that list were
-> written from memory rather than measured.
+The 143 are 74 `AJMP`, 36 `ACALL`, 19 `MOV bit,C`, 13 `CPL bit` and one
+`DJNZ A`. `AJMP` and `ACALL` are gaps because `sdas8051` encodes them
+differently from the 8051 manual, and they are 110 of the 143 between them;
+the other three it refuses outright. `CLR bit` is the one form the assembler
+gets *silently* wrong rather than refusing -- it emits `CLR direct`, a
+different instruction of the same length, with no error -- and that form is not
+among the 143, because this firmware contains no `CLR bit`. Naming a refused
+form is not the same as counting one: the tool refuses `CJNE` on a direct
+address and the carry-with-immediate forms too, and this image has neither.
+`docs/findings.md` §11 records the composition, the correction that produced it,
+and the first pass, which reported 97.80% because four opcodes in its list were
+written from memory rather than measured.
 
-**Correction, measured 2026-09-23: the 143 are `ajmp` (74), `acall` (36),
-`mov <bit>,CY` (19), `cpl <bit>` (13) and one `djnz A` (0xD5).** The list
-above was wrong in both directions. It omits `ajmp`/`acall`, which are 110 of
-the 143, and names four forms that are not in the set at all: `CLR bit`,
-`CJNE` on a direct address and the carry-with-immediate forms are not there,
-and `MOV bit,C` is `mov <bit>,CY` in Ghidra's spelling. Those four were
-residue of the retracted first pass in §11, copied forward when the number was
-corrected and the prose was not. The set had never been written down correctly
-anywhere — which is why `verify_gap_text.py` **recomputes** it from
-`to_sdas()` rather than carrying a list, and why `--check` fails if a reason
-appears that has no cross-decode handler. Five forms, and the reason each one is
-a gap is recorded per instruction in `gap-text-check.csv`.
+`ec/tools/verify_gap_text.py` recomputes that set from `to_sdas()` rather
+than carrying a list, cross-decodes each of the 143 with `disasm8051.py` (all
+143 agree; the verdict per instruction is in `gap-text-check.csv`), and its
+`--check` fails if a gap reason appears that has no cross-decode handler.
 
 Measured with `sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14` (SDCC 4.6.0), and
 reproduced unchanged on 4.5.0. The version is in every row of
-`reassembly.csv`, because the *gap* count is a property of the assembler and
-the match count should not be: the firmware bytes are the arbiter either way.
-> The remaining 1,004 (2.2%) are instruction forms `sdas8051` cannot express —
-> the bit-addressed `CLR bit`, `SETB bit`, `CPL bit`, `MOV C,bit`,
-> `MOV bit,C`, `MOVC A,bit`, `CJNE` on a direct address, `DJNZ A`, and the
-> carry-with-immediate forms — and every one of them is named in the source
-> rather than silently dropped. *(Retracted. 1,004 was the first pass's number
-> and 712 of it was never a gap; see `docs/findings.md` §11. The current
-> figure is 143, and the sentence above is the one the first pass's
-> enumeration produced — kept here because §11's lesson is that this number
-> went wrong twice and the only reason either time was caught is that the
-> composition of the set was printed and read.)*
+`reassembly.csv`, and the run now prints it against the committed one, because
+the split between `match` and `assembler-gap` is a property of what the
+assembler can express rather than of the firmware. Every form it cannot express
+is named in the source rather than silently dropped, and the 143 above are what
+that costs.
+
+**A GitHub-hosted runner's `sdas8051` is a different and older ASxxxx**, so the
+same command on a nightly run prints a disagreement where the transcript above
+prints an agreement: this run's version string, the committed one, a `NOTE`
+naming both, and a category-by-category comparison with the rows that moved
+named individually. **That `NOTE` is expected, not a regression** — it is the
+warning the version comparison exists to raise, and the run's exit status is
+`mismatch == 0` and nothing else. Measured on this repository's runner, whose
+`sdas8051` reports `02.00`: `match` 2,621 against 2,574 committed, `partial` 78
+against 73, `assembler-gap` 6 against 58, 52 rows moved, `instructions_checked`
+45,394 in both, and `mismatch` 0 in both. The version difference and the moved
+categories are reported and neither is adjudicated: a branch that has re-reported
+its listings and not yet committed the CSV moves the tally legitimately, and
+this tool cannot tell that from a regression. `docs/findings.md` §14g has the
+calibration, and the question it leaves open.
 
 Three things this does **not** mean, stated because the number invites the
 wrong one:
@@ -448,7 +484,35 @@ the listings the report measured — proving that needs the same assembler, and
 the one on a GitHub-hosted runner is a different and older ASxxxx, against
 which a full report would rewrite every `assembler` cell and could move the gap
 tallies above. That is why it is one-shot and why the tallies here are still the
-nix-pinned measurement.
+nix-pinned measurement. Auditing what it wrote is a separate command,
+`--verify-provenance` below, and it needs the full git history the two
+revisions it names live in: `git clone` without `--depth`. The agent stages
+check out with `fetch-depth: 0` and can run it; both of `ci.yml`'s checkouts
+are default-depth and cannot resolve `08b72e2` at all, which is why it is a
+full-clone command and not part of the per-commit gate.
+
+**That warning has since been measured rather than predicted**
+(`../../docs/findings.md` §14h, issue #157). The runner's `sdas8051` was
+`05.50.4`'s contemporary — SDCC 4.2.0, `sdas8051 02.00`, six years older — and
+a full report against it would indeed have rewritten every `assembler` cell. The
+measured part is sharper than "could move the gap tallies above": of the
+2,705 rows, **the 143 and the 45,394 are unchanged** — 0 rows differ in
+`instructions_checked` or `instructions_unchecked`, because those two columns
+come from `to_sdas()` in pure Python and not from the assembler — while **52
+rows change `outcome`**, all of them `assembler-gap` becoming `match` or
+`partial`. Those 52 are in `../../evidence/ec-reencode/2026-09-23-sdas8051-rowdiff.csv`.
+So re-reporting against a different build moves *coverage*, not the byte
+arithmetic, which is the distinction the `assembler` column exists to let a
+reader make.
+
+One caveat belongs here too, because this file is where a reader looks for the
+tallies. §14h also found a race in `verify()`'s dispatch that made repeated
+`--jobs 4` runs disagree, and the commit that wrote this report
+(`08b72e2`) records no `--jobs` value, so whether the 58 `assembler-gap` rows
+below carry that artefact is not settled from history. The 45,394 and the 143
+cannot be affected — they are computed before the assembler runs — but the
+outcome columns should be re-measured with the pinned nix build before they are
+treated as settled.
 
 **For the committed column the history supplies the proof the command could
 not** (2026-09-23, issue #150). `a56b3bb` changed nothing in this file but the
@@ -470,7 +534,25 @@ the one thing the one-shot could not assert about itself. What stays open is
 what it never could: they were taken without a re-encode, so they attest to the
 measured text and not to its correctness — the paragraph above — and the guard
 stops a second run, not the first. A future migration still answers this from
-its own history. `docs/findings.md` §14f has the method.
+its own history. `docs/findings.md` §14f has the method, and this runs it:
+
+```
+$ python3 ../tools/verify_reassembly.py --verify-provenance \
+      --base 08b72e2 --migration a56b3bb --listings-from 8c7985e
+  listing text: 0 of them changed over 08b72e2..a56b3bb; the same pathspec returns 2705 file(s)
+  over 8c7985e..08b72e2, the window that last wrote them, so the first number is a measurement
+  report: 2705 of 2705 row(s) identical once listing_digest is dropped (present in the
+  base: no; in the migration: yes)
+  PASS  the migration changed the column and nothing beneath it, and no listing text
+  moved while it did.
+```
+
+`--listings-from` names the revision *before* the window that last wrote the
+listings, and the count it prints is the positive control: the 2,705 above is
+the same pathspec matching 2,705 files, which is what makes the zero next to it
+a measurement rather than a pathspec matching nothing. A migration that moved a
+listing, or touched any other cell of the report, fails with the file or the
+cell named.
 
 ## The annotation layer
 
