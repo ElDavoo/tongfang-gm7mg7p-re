@@ -48,7 +48,7 @@ only covers what's specific to *this* copy.
   comparison — so `AGENT_GATES_DEEP=1 .github/scripts/agent-gates.sh` is the
   single command that checks everything, and the cheap tier's closing note
   names that command on every run.
-  Five things to carry across if this file is ever re-copied from the template:
+  Six things to carry across if this file is ever re-copied from the template:
   1. **The deep tier needs a schedule, and it does not have one.** What runs
      where, as of 2026-09-23 (issue #139): per commit, on `push` to `main` and
      on every pull request, `ci.yml` runs the cheap tier bare, and the deep
@@ -168,6 +168,37 @@ only covers what's specific to *this* copy.
      suite (`ec/tools/test_check_capture_claims.py`) needs no wiring to be
      run at all: `tools/run-tests.sh` discovers every `test_*.py` in the
      repository, so it is already collected by the runner above.
+  6. **`call_graph.py --check` and `--self-test` are added to the tool list
+     in `check_ghidra_tooling`, and a re-copy drops both** (2026-09-24, issue
+     #454). They hold the 1,841-row `ec/annotations/call-graph-callees.csv`
+     against the committed `.asm` listings it is derived from: nothing
+     re-derived that table before, so a hand-edited cell or a re-exported
+     listing left 1,841 rows wrong with the gate green — the same quiet-drift
+     shape the table is committed to prevent. The tool takes no `--work` and
+     has no scratch dir, so it needs its own `case` arm, like
+     `gen_xdata_symbols.py`'s, plus the path in the tool list above the loop:
+
+     ```sh
+           *call_graph.py)
+             python3 "$tool" --check && python3 "$tool" --self-test || rc=1
+             ;;
+     ```
+
+     Cheap tier for item 4's reason: both modes need only `python3` and the
+     committed listings — no Ghidra, no network, no assembler — and together
+     they measure **0.17 s** (0.16–0.17 s over three runs) here, against a
+     cheap tier the paragraph above records at 5.9 s. It is in the cheap tier
+     rather than the deep one for item 1's reason: the deep tier runs on
+     nothing, so a check that must run per commit has to live where `ci.yml`
+     already runs. The self-test's fixture assertions are the half that
+     matters — a table with one cell altered and a table with its last row
+     dropped both have to come back rejected, over the same `diff_table()`
+     `--check` uses — because a check that has quietly started accepting
+     everything looks exactly like a check that is working. That is why this
+     one is `--self-test` in the arm rather than `--check` alone, unlike
+     item 4's. **A re-copy of `agent-gates.sh` from the template restores the
+     eight-tool list, so the path and the arm have to be re-applied with
+     it.**
 - **`tools/run-tests.sh`, and the gate line that would call it**
   (2026-09-23, issue #162) — the four offline `unittest` suites
   (`ec/tools/test_grade_0751_isolation.py`, `windows/tools/test_ec_watch.py`,

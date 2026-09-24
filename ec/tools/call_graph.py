@@ -337,6 +337,72 @@ class _Sink:
         self._sink.append(text)
 
 
+def diff_table(have, want):
+    """The lines describing a *row-level* difference between the committed
+    table `have` and the recomputed `want`.
+
+    Empty when every row parses equal, which is **not** the same as identical:
+    the byte comparison is the pass condition and it lives in `check_table()`.
+    This function renders a difference and never decides one.
+
+    A function rather than an inline block in `main()` so `self_test()` can
+    drive the *same* comparison the gate runs per commit. Asserting against a
+    re-implementation of the diff would prove that the re-implementation
+    works, which is not the question: the question is whether `--check` still
+    rejects a table that has drifted, and a check that has quietly started
+    accepting everything looks exactly like a check that is working.
+    """
+    have_rows = list(csv.DictReader(have.splitlines()))
+    want_rows = list(csv.DictReader(want.splitlines()))
+    lines = []
+    shown = 0
+    for a, b in zip(have_rows, want_rows):
+        if a != b:
+            lines.append("  %s/%s:" % (a["scope"], a["addr"]))
+            for k in COLUMNS:
+                if a.get(k) != b.get(k):
+                    lines.append("    %-14s committed %r, recomputed %r"
+                                 % (k, a.get(k), b.get(k)))
+            shown += 1
+            if shown >= 20:
+                lines.append("  ... more")
+                break
+    if len(have_rows) != len(want_rows):
+        lines.append("  row count: committed %d, recomputed %d"
+                     % (len(have_rows), len(want_rows)))
+    return lines
+
+
+def check_table(have, want):
+    """`(exit_code, lines)`: what `--check` returns, and the lines it prints
+    on the way there. Byte equality is the pass condition, and it is the only
+    one.
+
+    It has to be the bytes rather than the parsed rows. A table whose rows
+    read the same while its bytes do not is a table this tool did not write --
+    CRLF line endings from a `core.autocrlf` checkout, a trailing blank line,
+    reordered columns, redundant quoting -- and `.gitattributes` marks the
+    decompiled `.c` trees `-text` for exactly that hazard but does not cover
+    `ec/annotations/*.csv`, so the CRLF case is reachable rather than
+    hypothetical. Gating the verdict on the rows would call such a table clean
+    with the gate green, which is the exact quiet drift this check exists to
+    close.
+
+    `lines` is never empty when the code is 1, so a failure always says
+    something: where every row parses equal, the line names the byte
+    difference instead of leaving the reader with no output and an exit code
+    to interpret.
+    """
+    if have == want:
+        return 0, []
+    lines = diff_table(have, want)
+    if not lines:
+        lines = ["  bytes differ and every row parses equal: line endings, a "
+                 "trailing blank line, column order or quoting differ from "
+                 "what this tool writes"]
+    return 1, lines
+
+
 def report(index, rows, edges, unresolved, orphan_callers, total):
     """Print the census, every figure twice-framed where a second framing
     exists, and the method's stated limits. These are the numbers
@@ -475,9 +541,36 @@ def self_test() -> int:
           and by_key[("common", "5A43")]["named_callers"] == 1)
     check("every emitted row carries a non-empty scope and a 4-digit addr",
           all(r["scope"] and ADDRCOL.fullmatch(r["addr"]) for r in rows))
+    rendered = render(rows)
     check("the rendered table is a csv.DictReader fixed point, which is what "
           "--check relies on",
-          render(list(csv.DictReader(render(rows).splitlines()))) == render(rows))
+          render(list(csv.DictReader(rendered.splitlines()))) == rendered)
+    check("the rendered table against itself passes, which is --check's "
+          "passing case",
+          check_table(rendered, rendered) == (0, []))
+    crlf = rendered.replace("\n", "\r\n")
+    crlf_rc, crlf_lines = check_table(crlf, rendered)
+    check("a CRLF table is rejected on its bytes although every row parses "
+          "equal -- the row diff alone finds nothing there, which is why "
+          "the pass condition is the comparison -- and the report is not "
+          "empty",
+          crlf_rc == 1 and crlf_lines
+          and diff_table(crlf, rendered) == [])
+    edited = [dict(r) for r in rows]
+    edited[0]["inbound"] = str(int(edited[0]["inbound"]) + 1)
+    edited_lines = diff_table(render(edited), rendered)
+    check("a table with one cell altered is rejected, naming that row and "
+          "that column: %s/%s inbound"
+          % (rows[0]["scope"], rows[0]["addr"]),
+          any(line == "  %s/%s:" % (rows[0]["scope"], rows[0]["addr"])
+              for line in edited_lines)
+          and any("inbound" in line and "recomputed" in line
+                  for line in edited_lines))
+    check("a table with its last row dropped is rejected on the row count, "
+          "a drift no cell-by-cell comparison can see",
+          diff_table(render(rows[:-1]), rendered)
+          == ["  row count: committed %d, recomputed %d"
+              % (len(rows) - 1, len(rows))])
     check("no fixture listing is an orphan, so callers == named_callers is "
           "only false where a real anonymous caller makes it false",
           orphans == 0)
@@ -509,27 +602,13 @@ def main() -> int:
             return 1
         with open(CALLEES, newline="") as f:
             have = f.read()
-        if have == text:
+        rc, lines = check_table(have, text)
+        if rc == 0:
             print("call-graph-callees.csv: %d rows, no diff"
                   % len(rows))
             return 0
-        want = list(csv.DictReader(text.splitlines()))
-        have_rows = list(csv.DictReader(have.splitlines()))
-        shown = 0
-        for a, b in zip(have_rows, want):
-            if a != b:
-                print("  %s/%s:" % (a["scope"], a["addr"]))
-                for k in COLUMNS:
-                    if a.get(k) != b.get(k):
-                        print("    %-14s committed %r, recomputed %r"
-                              % (k, a.get(k), b.get(k)))
-                shown += 1
-                if shown >= 20:
-                    print("  ... more")
-                    break
-        if len(have_rows) != len(want):
-            print("  row count: committed %d, recomputed %d"
-                  % (len(have_rows), len(want)))
+        for line in lines:
+            print(line)
         print("call-graph-callees.csv differs from the committed listings; "
               "re-run without --check", file=sys.stderr)
         return 1
