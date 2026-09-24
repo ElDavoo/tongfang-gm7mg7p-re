@@ -6,10 +6,10 @@
 
 /* The timer0 overflow handler, 38 bytes, with the full save and restore of A, B, DPH, DPL and PSW
    around it and `mov PSW,#0x10` after the pushes. It calls 0x0E5E, sets bit 5 of internal RAM byte
-   0x28, then reads XDATA 0x0A00 and, if the byte is non-zero, decrements it and writes it back; a
-   zero is left alone. It restores the saved registers and returns with `reti` at 0x0555. What
-   0x0E5E does, what the bit in 0x28 is for, and what the 0x0A00 counter counts are not decoded
-   here.
+   0x06 -- the bit address 0x35, which is the byte the .c prints as `_6_5` -- then reads XDATA
+   0x0A00 and, if the byte is non-zero, decrements it and writes it back; a zero is left alone. It
+   restores the saved registers and returns with `reti` at 0x0555. What 0x0E5E does, what the bit in
+   0x06 is for, and what the 0x0A00 counter counts are not decoded here.
    type: state
    evidence: ec/decompiled/common/0530.asm; ec/decompiled/common/0530.c
    basis: hand-decoded */

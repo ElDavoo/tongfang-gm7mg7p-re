@@ -100,9 +100,11 @@ The 7 the index records as `annotated=no` are `bank1` `0xF113`, `0xF116`,
 by the annotation layer, so the index's `annotated` column is recording the seed
 basis rather than the presence of a name.
 
-**140 of the 1804 rows are `type: unresolved`, and 230 carry a name that
-describes a shape rather than a job** — `call_` (86), `load_` (76),
+**140 of the 1804 rows are `type: unresolved`, and 267 carry a name that
+describes a shape rather than a job** — `call_` (86), `load_` (113),
 `trampoline_` (29), `ret_only_` (19), `nop_` (9), `thunk_` (7), `seed_` (4).
+Each is counted on the whole prefix, not a narrower one: 76 of the `load_` rows
+are `load_dptr_` and the other 37 are the register and table loads beside them.
 `sub_input_from_cpu_temp_043e` is a subtraction step; `trampoline_to_c0a2` is a
 jump. Neither is a mechanism, and a map built only from the names would be a map
 of the disassembler's vocabulary.

@@ -6,11 +6,11 @@
 
 /* The timer 1 overflow handler, 48 bytes, with the same full save and restore of A, B, DPH, DPL and
    PSW. It calls 0x0E7D, copies internal RAM byte 0x41 into R7, swaps A, masks the low nibble and
-   branches on ACC.0; if that bit is set it sets bit 2 of internal RAM 0x24, copies 0x41 into R7
-   again, clears bit 4 of 0x41, writes it back and calls 0x0E72. The byte at 0x05E5 is this
-   function's own `reti`, which is what settles the framing of the two lone `reti` bytes after it:
-   0x05E6 and 0x05E7 are not its tail. 0x41 and 0x24 are not named in ec/annotations/registers.yaml
-   and are not identified here.
+   branches on ACC.0; if that bit is set it sets bit 2 of internal RAM byte 0x06 -- the bit address
+   0x32, which is the byte the .c prints as `_6_2` -- copies 0x41 into R7 again, clears bit 4 of
+   0x41, writes it back and calls 0x0E72. The byte at 0x05E5 is this function's own `reti`, which is
+   what settles the framing of the two lone `reti` bytes after it: 0x05E6 and 0x05E7 are not its
+   tail. 0x41 and 0x06 are not named in ec/annotations/registers.yaml and are not identified here.
    type: state
    evidence: ec/decompiled/common/05B6.asm; ec/decompiled/common/05B6.c
    basis: hand-decoded */

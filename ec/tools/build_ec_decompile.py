@@ -2237,7 +2237,8 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
           and "ev/gone.asm" in _p[0], str(_p))
     _stated = subsystems_stated_counts(_census_doc)
     check("subsystems: the four census counts are read back out of the prose",
-          _stated == _measured, str(_stated))
+          {k: [v for _, v in vs] for k, vs in _stated.items()}
+          == {k: [v] for k, v in _measured.items()}, str(_stated))
     # The document is the side that is wrong here: a number edited in the prose
     # without re-deriving it. The recount is the committed files, so the message
     # reads from the stated value to the measured one.
@@ -2245,6 +2246,28 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
                                  "`exported functions` — 11") + _good_doc, _measured)
     check("subsystems: a census count that disagrees with the recount is reported",
           len(_p) == 1 and "states 11 exported functions" in _p[0], str(_p))
+    # The document states each count more than once -- the census and the
+    # measured remainder -- and every occurrence is compared, so a wrong number
+    # in the *earlier* of the two is reported rather than overwritten by the
+    # later one that agrees with the recount.
+    _twice = (_census_doc.replace("`exported functions` — 10",
+                                  "`exported functions` — 11")
+              + _census_doc + _good_doc)
+    _p = _sp(_twice, _measured)
+    check("subsystems: a census count wrong in the earlier of two occurrences "
+          "is reported",
+          len(_p) == 1 and "line 1: the census states 11 exported functions" in _p[0],
+          str(_p))
+    _p = _sp(_census_doc + _census_doc.replace("`unresolved rows` — 1",
+                                               "`unresolved rows` — 2")
+             + _good_doc, _measured)
+    check("subsystems: a census count wrong in the later of two occurrences "
+          "is reported",
+          len(_p) == 1 and "line 8: the census states 2 unresolved rows" in _p[0],
+          str(_p))
+    _p = _sp(_census_doc + _census_doc + _good_doc, _measured)
+    check("subsystems: a count stated twice and right twice passes",
+          not _p, "; ".join(_p))
     _p = _sp(_census_doc.replace("- `unresolved rows` — 1\n", "") + _good_doc,
              _measured)
     check("subsystems: a census count that is missing is reported",
@@ -2883,7 +2906,10 @@ SUBSYSTEM_CITE = re.compile(
     r"^(?P<bullet>- )?`(?P<scope>[a-z0-9]+)` `(?P<addr>0[xX][0-9A-Fa-f]+)` "
     r"`(?P<name>[A-Za-z0-9_]+)`(?P<flag> \[unresolved\])?(?P<rest> .*)?$")
 # The census's counts, as the document states them: one bullet each, in the
-# house list format, keyed on the label so the order is free.
+# house list format, keyed on the label so the order is free. The document
+# states the four twice -- once in the census and once in the measured
+# remainder -- so every occurrence is collected, not just the last, and a
+# wrong number in the first of the two is as wrong as one in the second.
 #
 #     - `exported functions` — 2710
 #
@@ -2979,17 +3005,31 @@ def subsystems_problems(text, ann_rows, repo=REPO, stated=None, measured=None):
                                 % (label, ", ".join("`%s`" % c for c in SUBSYSTEM_COUNTS)))
             elif label not in measured:
                 problems.append("nothing to recount `%s` against" % label)
-            elif stated[label] != measured[label]:
-                problems.append("the census states %d %s and the committed files "
-                                "hold %d" % (stated[label], label, measured[label]))
+            else:
+                # Every occurrence, not just the last: the document states each
+                # count twice and a wrong number in the first copy drifts from
+                # the recount just as silently as one in the second.
+                for lineno, value in stated[label]:
+                    if value != measured[label]:
+                        problems.append(
+                            "line %d: the census states %d %s and the committed "
+                            "files hold %d" % (lineno, value, label, measured[label]))
     return problems
 
 
 def subsystems_stated_counts(text):
-    """The census counts the document publishes, read back out of its prose."""
+    """The census counts the document publishes, read back out of its prose.
+
+    Every occurrence of a label, as a list of (line, value), because the
+    document states each count more than once and the gate has to compare all
+    of them against the recount: keying on the label alone would leave the
+    earlier copy unchecked, which is exactly the drift the check exists to
+    catch.
+    """
     out = {}
     for m in SUBSYSTEM_COUNT.finditer(text):
-        out[m.group("label")] = int(m.group("value"))
+        out.setdefault(m.group("label"), []).append(
+            (text.count("\n", 0, m.start()) + 1, int(m.group("value"))))
     return out
 
 
