@@ -1,0 +1,8 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; the
+# bytes below were written by hand. See ../README.md.
+# Shape: the same short dump taken at block 2's step 0, and so the byte for
+# byte the after-dump of block 1: 0x0751 reads 0xA0, the mode block 1 left
+# behind. Two blocks on one day and the same address holding two different
+# values in two dumps is what makes the <value> in the name load-bearing
+# rather than cosmetic.
+0750: 00 a0 00 00 00 00 00 00 00 00 00 00 00 00 00 00

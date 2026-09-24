@@ -1,0 +1,7 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; the
+# bytes below were written by hand. See ../README.md.
+# Shape: the same short dump after block 2's write. 0x0751 holds the written
+# 0x10. The 0xA0 pair's verdict and this one say the same sentence about
+# different bytes, and the whole point of the <value> in the name is that a
+# reader can tell which is which without opening the files.
+0750: 00 10 00 00 00 00 00 00 00 00 00 00 00 00 00 00

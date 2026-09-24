@@ -64,13 +64,54 @@ the machine; both are claims about which files were handed in.
 One thing is read that is not a byte at all: §3's per-block integrity check.
 §3 calls that check mechanical and then leaves the operator to eyeball it
 against the mark list `ec_watch.py` prints at stop. Here the marks are grouped
-into blocks -- one per no-op control arm, §3's step 2, closed by the step-5
-restore -- and each block's last mark has to be that restore. A block whose
-last mark is not the restore is void: the capture cannot show the byte being
-put back, so its last window never closes. It is printed as void, by name and
-with the label it did end on, and the exit code is not zero. The windows are
-still graded either way: they are what the capture did hold, and a void block
-is a hole in the record rather than a reason to throw the record away.
+into blocks -- one per write under test, opened by the step-2 no-op control
+arm and closed by the step-5 restore -- and each block's last mark has to be
+that restore. A block whose last mark is not the restore is void: the capture
+cannot show the byte being put back, so its last window never closes. It is
+printed as void, by name and with the label it did end on, and the exit code
+is not zero. Its windows are withheld like any other block that fails a mark
+check: each prints a `not graded` line naming the capture that ends the block
+where, and the block's own line reads `-- NOT GRADED, its windows are not
+printed`.
+
+**The mark set is a precondition of the windows, and is checked as one.**
+A window is arithmetic over rows: every change after a mark belongs to that
+mark's window, and which mark that is comes from the timestamps alone. So a
+mark one console missed, or that two consoles spelled differently, raises
+nothing. That console's rows are still filed under whichever window their
+timestamps fall in, and the other two consoles' marks usually cover for it --
+which is exactly what makes the failure invisible rather than what prevents
+it. Nothing in the result ties those rows to the arm whose mark went missing,
+so a no-op arm can read as thermally quiet for want of a mark rather than
+because nothing moved, and the whole run reports that in the same confident
+format as a result.
+
+So §6's "the marks in all three CSVs must carry the same labels" is checked
+rather than written down, before any window is printed: every action recorded
+in every capture, every capture spelling it the same way, every block's last
+mark its restore *in each capture*, and every label one of the three forms
+§3 fixes. A block that fails any of those is summarised where its windows
+would be and the windows are not printed -- they are correct as arithmetic and
+wrong as evidence about a labelled action, and printing them in the usual
+format is the defect. The census that carries the diagnosis is printed whole
+either way, and names which capture is short, which two disagree, and what the
+consequence is.
+
+The census also names each block by the value its `write` mark carries, so a
+window list, a `--dump` pair and a §4.6 verdict can all say which block they
+are about. §6 stamps every dump with the `<value>` of the block it belongs to,
+and a per-block invocation is meant to be attached per block, so `--block`
+takes that value rather than a position in the mark stream: `0xA0`, `A0` and
+`a0` are the same block. A value that is in no block is an error rather than
+a run that grades everything, and a `--block` and a `--wrote` that name
+different values are an error too -- both name the value under test.
+
+The cross-console checks engage at two or more captures, which is §6's form.
+With one there is no other console for a mark to be missing from and no
+second spelling to disagree with it, so "the consoles agree" has nothing to be
+true of; the census says so in as many words rather than letting the single
+capture pass a check it never ran. The void rule and the label parse run
+either way.
 
 This is the check over the committed CSVs, not the by-eye one at the machine,
 and the two are not the same reading. `ec_watch.py` appends a mark to its own
@@ -80,11 +121,13 @@ so the last label a human reads off the terminal can be one the capture never
 received -- the case §3 wants caught. The committed CSV is what the fold-in
 reads, so the CSV is where the check belongs.
 
-`--block N` grades one block of a multi-block capture and reports that
+`--block VALUE` grades one block of a multi-block capture and reports that
 block's windows alone, which is what makes the output something a fold-in can
 attach per block: §6's three CSVs are one set for the whole run, so without it
 every invocation prints every block's windows and the three attachments differ
-only in the `--dump`/`--dump-pair` section.
+only in the `--dump`/`--dump-pair` section. Every window carries a `block:`
+line naming the block its marks fall in, so an unscoped run's output says the
+same thing the scoped one does.
 
 None of this is a register behaviour. A void block says the capture is short a
 mark; it says nothing about `0x0751`, and no line of any block verdict is a
@@ -113,7 +156,7 @@ Usage:
         [capture-0f00-0f5f.csv] [capture-0400-045f.csv] \
         [--dump before-0700.txt] [--dump after-0700.txt]
     python3 ec/tools/grade_0751_isolation.py capture.csv --wrote 0xA0
-    python3 ec/tools/grade_0751_isolation.py capture.csv --block 2
+    python3 ec/tools/grade_0751_isolation.py capture.csv --block 0xa0
     python3 ec/tools/grade_0751_isolation.py capture.csv \
         --dump-pair before-0700.txt after-0700.txt \
         --dump-pair before-0f00.txt after-0f00.txt
@@ -122,6 +165,7 @@ import argparse
 import csv
 import datetime
 import os
+import re
 import sys
 import textwrap
 
@@ -208,6 +252,50 @@ VOID_BLOCK_NOTE = (
     "this reads the CSVs and not that list. Redo the void block per §3; the "
     "exit code is 1 while any block is void.")
 
+# The same, for a mark set that cannot support the windows taken over it. A
+# void block is short a mark at the end; this is an action that is missing
+# from a capture, or spelled differently by two of them, somewhere in the
+# middle. The windows are arithmetic either way, so the only thing that
+# separates the two cases is whether the mark that opened them is one the
+# operator meant -- which is the whole of what is checked.
+MARK_SET_NOTE = (
+    "A block whose mark set does not hold has no windows worth printing. A "
+    "window is every change after a mark up to the next one, and which mark "
+    "that is comes from the timestamps alone, so a mark one console missed, or "
+    "that two consoles spelled differently, does not fail anything: that "
+    "console's rows are filed under whichever window they fall in, and the "
+    "other two usually cover for it, so nothing in the result ties them to "
+    "the arm whose mark went missing. Its windows are left out rather than "
+    "printed in the usual format and quoted, the census above names which "
+    "capture is short and what the consequence is, and the exit code is 1 "
+    "until the marks do.")
+
+# §6's three label forms, spelled as §6 spells them, for the message that
+# quotes them back at a mark the parse could not read. The operator cannot fix
+# an unplaceable mark from a description of the problem; the three forms are
+# the whole of what has to change.
+REQUIRED_LABEL_FORMS = ("no-op wrote 0x0751=0xA0", "wrote 0x0751=0x10",
+                        "restored 0x0751=0xA0")
+
+# The leading word of each form, and the role it makes the mark. Ordered so
+# that `no-op wrote ...` reads as the control arm rather than as the write
+# under test: §3 spells the control arm out that way precisely so the two
+# cannot be confused, and the grader reading it the other way round would
+# undo the point of the prefix.
+MARK_FORMS = (("control", "no-op"), ("restore", "restored"), ("write", "wrote"))
+
+# §6's `<value>` inside a dump's own file name -- the shape §3's step 0 and
+# step 6 redirects write. It is how a dump says which block it belongs to,
+# which is the only thing in a dump that says so: a dump is a whole-range
+# read with no marks in it.
+DUMP_VALUE = re.compile(r"-0751-isolation-([0-9a-f]{1,2})-(?:before|after)-",
+                        re.I)
+
+# The value inside a mark label, `0x0751=0xA0`. The address is spelled as §3
+# and the probe spell it; `0x0*751` also takes `0x751`, which is the same
+# address to the operator and would otherwise read as an unplaceable mark.
+MARK_VALUE = re.compile(r"0x0*751\s*=\s*(?:0x)?([0-9a-f]{1,2})\b", re.I)
+
 # The passing case, in as many words, because the block section is the one
 # place in this report that carries no address and would otherwise be the one
 # place a reader could mistake for a result.
@@ -256,6 +344,55 @@ class Window:
         self.source = source
         self.changes = []
         self.levels = {}
+        # The raw per-capture marks this window was merged from, and the
+        # block it fell in. Both are set by `coalesce_marks` and
+        # `assign_blocks` rather than at construction: a mark read out of a
+        # CSV has no block until the whole mark stream has been walked, and
+        # `coalesce_marks` is the only place that knows which raw rows one
+        # action was recorded as.
+        self.marks = []
+        self.block = None
+
+
+class Block:
+    """One §3 block: a control arm, a write under test, and its restore.
+
+    `value` is what the block's `write` mark carried, and is what `--block`
+    and the `block:` line take: the value under test is the one thing a
+    window, a dump and a §4.6 verdict can all be named by.
+    """
+
+    def __init__(self, value, windows):
+        self.value = value
+        self.windows = windows
+        # 1-based, the position in the mark stream rather than anything the
+        # operator names: two blocks on one day are the same value written
+        # twice, and the number is the only thing that tells those apart.
+        self.index = 0
+        # (kind, window, text) per problem `check_block_marks` found. Kept on
+        # the block rather than returned beside it so the window report, the
+        # block verdict and the exit code are all reading one list and cannot
+        # disagree about which blocks were graded.
+        self.problems = []
+
+    @property
+    def name(self):
+        return f"0x{self.value:02X}" if self.value is not None else "unnamed"
+
+    @property
+    def roles(self):
+        """The block's marks as `assign_blocks` read them, in order.
+
+        Read on demand rather than at construction: a block is opened by its
+        write and closed by a restore that has not been seen yet, so the
+        role of its last mark is not knowable when the block is made.
+        """
+        return [parse_mark(w.label)[0] or "unreadable" for w in self.windows]
+
+    def marks_in(self, path):
+        """Every raw mark of this block that one capture recorded, in order."""
+        here = [m for w in self.windows for m in w.marks if m.source == path]
+        return sorted(here, key=lambda m: m.ts)
 
 
 def parse_ts(s):
@@ -316,6 +453,10 @@ def coalesce_marks(marks):
     things. A group starts at its *earliest* mark -- the window has to open
     before the first press, or the reaction is attributed to the wrong action
     -- and carries every label and source in it.
+
+    The raw rows ride along on the window in `marks` rather than only their
+    joined label. A joined label cannot say which console recorded which
+    spelling of an action, and the mark-set checks are per capture.
     """
     groups = []
     for m in sorted(marks, key=lambda w: w.ts):
@@ -325,10 +466,13 @@ def coalesce_marks(marks):
             groups[-1].append(m)
         else:
             groups.append([m])
-    return [Window(g[0].ts,
-                   " / ".join(dict.fromkeys(m.label for m in g)),
-                   ", ".join(dict.fromkeys(m.source for m in g)))
-            for g in groups]
+    windows = [Window(g[0].ts,
+                      " / ".join(dict.fromkeys(m.label for m in g)),
+                      ", ".join(dict.fromkeys(m.source for m in g)))
+               for g in groups]
+    for w, g in zip(windows, groups):
+        w.marks = g
+    return windows
 
 
 def build_windows(marks, changes):
@@ -359,63 +503,197 @@ def build_windows(marks, changes):
     return windows
 
 
-def mark_word(label, word):
-    """Whether a mark label opens with `word`.
+def parse_value(text):
+    """The byte a `--block` or `--wrote` names, or None if it is not one.
 
-    §3 fixes the labels the operator types and `ec_watch.py` writes them into
-    the CSV verbatim, so the leading word is the only handle on it. Only that
-    word is read, case-insensitively: the byte and the value after it are the
-    operator's to spell, and both checks below are about the action rather
-    than the punctuation.
-
-    `coalesce_marks` joins the three consoles' labels for one action with
-    ' / ', so each is read on its own -- one console recording the mark is
-    what makes it that mark, since the three are already one action the merge
-    agreed on.
+    Hex with or without the `0x`, in either case, because §6 spells the value
+    `a0` in a file name and `0xA0` in a mark label and the operator is not
+    going to remember which flag wants which. The two flags name the same
+    thing, so they read the same way; a `--block` and a `--wrote` that name
+    different values is caught in main rather than reconciled here.
     """
-    return any(part.strip().lower().startswith(word)
-               for part in label.split(" / "))
+    try:
+        return int(text.strip().lower().removeprefix("0x"), 16)
+    except (AttributeError, ValueError):
+        return None
 
 
-def is_restore(label):
-    """§3's step-5 restore, on the label the operator types."""
-    return mark_word(label, "restore")
+def parse_mark(label):
+    """(role, value) for one mark label, or (None, None) if it carries neither.
 
+    §3 fixes the three labels the operator types and `ec_watch.py` writes them
+    into the CSV verbatim, so the leading word is the only handle on it. Only
+    that word and the value are read, case-insensitively: everything after the
+    value is the operator's, and what is checked here is which action the
+    mark names and which value it names -- not how it was punctuated.
 
-def is_noop(label):
-    """§3's step-2 control arm, on the label the operator types."""
-    return mark_word(label, "no-op")
+    `no-op wrote ...` is the control arm and `wrote ...` is the write under
+    test, which is the whole reason §3 spells the prefix out: read the other
+    way round, the two are the same sentence with a prefix and the control arm
+    becomes indistinguishable from what it is a control for.
 
+    The value is `int`, not the text, because it is compared against another
+    block's and against `--block`, and `0xA0` / `A0` / `a0` are one value
+    rather than three spellings of a name.
 
-def split_blocks(windows):
-    """The windows grouped into §3's blocks.
-
-    A block opens at the mark typed as §3's step 2 -- the no-op control arm
-    -- and closes at its own step-5 restore. Those are the two marks the
-    procedure's own sequence fixes, and they are what a capture can be read
-    by: a label says a run was one block or the next, where a gap in the
-    timestamps says only how long the operator took.
-
-    The restore cuts as well as the no-op, so a block that lost the *next*
-    one's control arm does not run the two together. A trailing group with no
-    restore is a block too -- that is the void one, and dropping it for want
-    of a closer would leave a mark stream graded as though it ended where the
-    operator intended.
-
-    A capture whose first mark is not a no-op opens a block there instead: a
-    run that started mid-block, or whose operator skipped the control arm, is
-    framed as well as the marks allow rather than refused. Whether the block
-    closes on a restore is then what `report_blocks` checks.
+    `coalesce_marks` joins the consoles' labels for one action with ' / ', so
+    the first spelling decides and the disagreement is reported beside it --
+    one console recording the mark is what makes it that mark, and the other
+    consoles' wording is exactly what the disagreement check is about.
     """
-    blocks, current = [], []
+    for part in label.split(" / "):
+        part = part.strip().lower()
+        for role, word in MARK_FORMS:
+            if not part.startswith(word + " "):
+                continue
+            m = MARK_VALUE.search(part)
+            return (role, int(m.group(1), 16)) if m else (None, None)
+    return None, None
+
+
+def assign_blocks(windows):
+    """The windows grouped into §3's blocks, and the ones in no block.
+
+    A block is opened by a `write` mark and named by the value that mark
+    carries -- the value under test is the one thing a window, a `--dump`
+    pair and a §4.6 verdict can all be named by, and §6 stamps the dumps with
+    it. The no-op control arm in front of the write joins that block, because
+    §4.4's comparison is between the two and a control arm in a block of its
+    own would be an arm with nothing to compare against. A `restore` closes
+    the block it is in, so a block that never gets one is left open and comes
+    back void rather than running into the next one.
+
+    The labels are the only thing that says a run was one block or the next.
+    A gap in the timestamps says only how long the operator took, and a mark
+    stream read on timestamps alone grades whatever it is handed under
+    whatever heading it happens to fall in.
+
+    What is left over is returned rather than folded into a neighbour: a
+    control arm whose write never came, a restore with no block open, and a
+    label this cannot read are three different things and are reported as
+    three. They are graded as the windows the capture did hold -- their rows
+    are real and there is no other arm to mis-file them under -- with `block:
+    unplaced` on their header, and the unreadable ones refused as well
+    because a label this cannot read is a label it cannot say what a window
+    is a window of.
+    """
+    blocks, unplaced, pending, current = [], [], [], None
     for w in windows:
-        if current and (is_noop(w.label) or is_restore(current[-1].label)):
+        role, value = parse_mark(w.label)
+        if role == "control":
+            # Held for the write that follows rather than added where it
+            # stands: a control arm after a block's write and before its
+            # restore belongs to the next block, which is what a restore that
+            # never arrived would otherwise swallow.
+            pending.append(w)
+        elif role == "write":
+            current = Block(value, pending + [w])
+            pending = []
             blocks.append(current)
-            current = []
-        current.append(w)
-    if current:
-        blocks.append(current)
-    return blocks
+        elif role == "restore":
+            if current is None:
+                unplaced.append(w)
+            else:
+                current.windows.append(w)
+                current = None
+        else:
+            unplaced.append(w)
+    unplaced = sorted(pending + unplaced, key=lambda w: w.ts)
+    for i, block in enumerate(blocks, 1):
+        block.index = i
+    for block in blocks:
+        for w in block.windows:
+            w.block = block
+            for m in w.marks:
+                m.block = block
+    for w in unplaced:
+        for m in w.marks:
+            m.block = None
+    return blocks, unplaced
+
+
+def unplaceable_marks(unplaced):
+    """The marks the label parse could not read, per unplaceable window.
+
+    Fatal for the whole run rather than for one block, which is the
+    conservative direction and the reason for it: block attribution rests
+    entirely on the labels, so a mark this cannot read leaves every block's
+    completeness uncertifiable -- not only the one it would have landed in.
+    `--block` scoping narrows what is graded, not what is known.
+    """
+    out = {}
+    for w in unplaced:
+        if parse_mark(w.label)[0] is not None:
+            continue
+        out[w] = [
+            f"{os.path.basename(m.source)} at {m.ts.isoformat(sep=' ')}: "
+            f"{m.label!r} is not one of the three forms §6 fixes ("
+            + ", ".join(repr(f) for f in REQUIRED_LABEL_FORMS)
+            + "), and a mark this cannot read is a mark no block can be "
+              "attributed to"
+            for m in w.marks]
+    return out
+
+
+def check_block_marks(block, captures):
+    """The problems in one block's mark set, each against the window it is on.
+
+    Three, and all three are comparisons over rows already read rather than
+    new heuristics:
+
+      * an action some capture did not record. `coalesce_marks` groups the
+        marks by time, so that capture's rows are filed under whichever
+        window their timestamps fall in rather than under the arm whose mark
+        it missed -- and the other two consoles' marks usually cover for it,
+        which is what makes the failure invisible rather than what prevents
+        it. A control arm whose marks went missing can read as quiet for
+        want of a mark rather than because nothing moved.
+      * an action the captures spelled differently. Same failure, found one
+        step earlier: `coalesce_marks` joins the labels with ' / ', so the
+        window opens on a label no console typed.
+      * a block whose last recorded mark in some capture is not the restore.
+        Per block *and* per capture, not the file's global last mark: a
+        capture that recorded only one block would otherwise look complete
+        for every block in the day.
+
+    The agreement checks need a second capture to have anything to disagree
+    with, so they engage at two or more and the census says so below that
+    rather than letting one capture pass a check it never ran.
+    """
+    names = [path for path, _ in captures]
+    known = set(names)
+    problems = []
+    for w in block.windows:
+        by_source = {}
+        for m in w.marks:
+            by_source.setdefault(m.source, []).append(m.label)
+        spellings = {label for labels in by_source.values()
+                     for label in labels}
+        if len(spellings) > 1:
+            said = "; ".join(
+                f"{os.path.basename(p)}: {by_source[p][0]!r}"
+                for p in names if p in by_source)
+            problems.append(("labels", w, (
+                f"the captures spell this action differently -- {said} -- so "
+                "the window it opens is not the action any of them recorded")))
+        if len(captures) > 1 and set(by_source) != known:
+            absent = ", ".join(os.path.basename(p)
+                               for p in names if p not in by_source)
+            problems.append(("missing", w, (
+                f"recorded in {len(by_source)} of {len(names)} capture(s), "
+                f"absent from {absent}. The capture(s) that missed it have "
+                "their rows for this arm filed under whichever window their "
+                "timestamps fall in, and nothing in the result ties them to "
+                "the arm whose mark is gone -- so this arm can read quiet for "
+                "want of a mark rather than because nothing moved")))
+    for path, _ in captures:
+        here = block.marks_in(path)
+        if here and parse_mark(here[-1].label)[0] != "restore":
+            problems.append(("void", block.windows[-1], (
+                f"{os.path.basename(path)} ends this block on "
+                f"{here[-1].label!r}, not the restore, so its last window "
+                "never closes in that capture")))
+    return problems
 
 
 def window_delta(w, addr):
@@ -475,17 +753,142 @@ def group_note(name):
     return note_lines(note) if note else []
 
 
-def report_window(w, n, total, end=None):
+def wrap_note(text, indent=2):
+    """One paragraph at a given indent, as `report_blocks` prints its own.
+
+    A note that belongs to a section rather than to a group under one is set
+    at the two spaces every section-level paragraph in this report is set at;
+    one that belongs to a window is set at the four its body is. The wrap
+    width is the file's 72 either way, because the two indents and the same
+    measure are what make a note read as part of the thing it is under.
+    """
+    pad = " " * indent
+    return "\n".join(textwrap.wrap(text, width=72, initial_indent=pad,
+                                   subsequent_indent=pad))
+
+
+def report_census(captures, windows, blocks, unplaced, unreads, selected):
+    """What the marks say, before anything is read over them.
+
+    Two listings, because they answer two questions. Per capture: the labels
+    that capture recorded, in order, each with the role the parse gave it and
+    the block it fell in -- which is the only place a mark that went missing,
+    or a label two consoles spelled differently, is visible as such. Per
+    action: how many of the N captures recorded it and whether they agree,
+    which is the comparison §6 asks for in a sentence rather than in prose.
+
+    Printed whole even under `--block`, because a run that scoped itself and
+    said so is the point: the blocks it did not grade are named here as not
+    selected, so a reader can see that the scoping is there and not that the
+    other blocks are missing.
+
+    Nothing here is a result. It is a statement about which labels the
+    captures hold, and the windows below are only as good as it is.
+    """
+    names = [path for path, _ in captures]
+    total = sum(len(m) for _, m in captures)
+    print("\n=== mark census (§3/§6) ===")
+    print(f"  {len(names)} capture(s), {total} mark row(s), "
+          f"{len(windows)} action(s) after the merge")
+    if len(names) < 2:
+        print("  one capture: the cross-console checks did not run -- a mark "
+              "cannot be missing from another console that is not there, and "
+              "a label has nothing to disagree with it. The void check and "
+              "the label parse did run.")
+    if unreads:
+        for lines in unreads.values():
+            for line in lines:
+                print(wrap_note(line))
+
+    for path, marks in captures:
+        print(f"  {os.path.basename(path)} ({len(marks)} mark(s)):")
+        for m in marks:
+            role, _ = parse_mark(m.label)
+            where = m.block.name if m.block else "unplaced"
+            print(f"    {m.ts.isoformat(sep=' ')}  {role or 'UNREADABLE':10}  "
+                  f"{where:9}  {m.label!r}")
+
+    for i, w in enumerate(windows, 1):
+        said = {}
+        for m in w.marks:
+            said.setdefault(m.source, m.label)
+        where = f"block {w.block.name}" if w.block else "unplaced"
+        head = (f"  action {i} at {w.ts.isoformat(sep=' ')}  {where}: "
+                f"{w.label!r} in {len(said)} of {len(names)} capture(s)")
+        if len(said) == len(names) and len(set(said.values())) == 1:
+            print(head + ", one label each")
+            continue
+        print(head + ":")
+        for path in names:
+            got = said.get(path)
+            print(f"    {os.path.basename(path):44} "
+                  + (repr(got) if got else "-- did not record it"))
+
+    for i, b in enumerate(blocks, 1):
+        line = (f"  block {i} of {len(blocks)}: value under test {b.name}, "
+                f"roles {', '.join(b.roles)}")
+        if selected is not None and b is not selected:
+            line += " -- not selected in this run"
+        elif b.problems:
+            # The kinds, not just the count: a reader of a fold-in wants to
+            # know whether a block is short a mark or a capture is short one,
+            # and the two send the operator to different terminals.
+            kinds = ", ".join(sorted({k for k, _, _ in b.problems}))
+            line += (f" -- NOT GRADED, {len(b.problems)} mark-set "
+                     f"problem(s): {kinds}")
+        print(line)
+    if unplaced:
+        for w in unplaced:
+            role, _ = parse_mark(w.label)
+            if role is not None:
+                print(f"  unplaced: {w.ts.isoformat(sep=' ')}  {w.label!r} -- "
+                      "in no block, so no §3 integrity check covers it and "
+                      "`--block` cannot select it")
+
+
+def report_withheld_window(w, n, total, where, problems):
+    """One window the mark set will not support, and why, in its place.
+
+    The header and the block line are the same as a graded window's, so the
+    mark is still locatable and the numbering still matches the whole-capture
+    run. The body is not printed: these windows are correct as arithmetic and
+    wrong as evidence about a labelled action, and printing them in the usual
+    format is the defect these checks exist for. What replaces it is the one
+    thing the operator needs to fix the input.
+
+    `where` is the `block:` line's tail -- a block's name and position, or
+    `unplaced` for a mark no block could take -- and `problems` this window's
+    own, so a block whose problem is on another mark says so here too rather
+    than leaving a bare refusal with no diagnosis on it.
+    """
+    print(f"\n--- mark {n}/{total}: {w.ts.isoformat()}  {w.label!r} "
+          f"({w.source})")
+    print(f"    block: {where} -- NOT GRADED")
+    for text in problems:
+        print(wrap_note(f"not graded -- {text}.", indent=4))
+
+
+def report_window(w, n, total, block, total_blocks, end=None):
     """One window: the watched bytes that moved, and the context bytes.
 
     `end` overrides what the last window of a `--block` read runs to. It
     stops the read there, but it does not end the capture, and the default's
     "the end of the capture" would be the one false sentence in a report
     whose whole job is not to claim more than the capture holds.
+
+    The `block:` line goes under the header and above everything else, so
+    every window says which block it belongs to without a reader having to
+    count marks back to the one that opened it. A window in no block says
+    `unplaced` rather than nothing: there is no §3 shape to check it against,
+    and a bare absence of the line would read as an older report rather than
+    as a mark the walk could not place.
     """
     end = end or ("the next mark" if n < total else "the end of the capture")
     print(f"\n--- mark {n}/{total}: {w.ts.isoformat()}  {w.label!r} "
           f"({w.source})")
+    where = "unplaced" if block is None else \
+        f"{block.name} (block {block.index} of {total_blocks})"
+    print(f"    block: {where}")
     print(f"    window runs to {end}")
 
     # The group names that had hits, in WATCHED order, so main can say which
@@ -544,58 +947,88 @@ def report_window(w, n, total, end=None):
 
 def report_blocks(blocks, selected=None):
     """§3's per-block integrity check, one verdict per block, and the count
-    of the ones that came back void.
+    of the ones that cannot be read as a finished block.
 
     Whether the capture is complete enough to read at all, which is a
     different question from what it says. A block whose last mark is not the
-    restore is missing the mark that says the byte was put back; its windows
-    are real, but the last of them runs on to the end of the capture instead
-    of closing, so §4 has an arm it cannot read. The verdict names the label
-    the block did end on, because "void" on its own sends the operator back
-    to the terminals to find out which block and which mark.
+    restore is missing the mark that says the byte was put back; the last of
+    its windows runs on to the end of the capture instead of closing, so §4
+    has an arm it cannot read. The verdict names the label the block did end
+    on, because "void" on its own sends the operator back to the terminals to
+    find out which block and which mark.
 
     `intact` prints as well, so a reader of a fold-in can see that the check
     ran and held rather than inferring it from the absence of a complaint --
     silence about a missing restore is the failure mode this exists to stop,
     and the absence of the passing case is the same shape.
 
-    `selected` grades one block of a multi-block capture (`--block N`) and
-    says the rest were not looked at, so the exit code this returns is about
+    A block whose mark set does not hold is intact here and not graded
+    anyway, which is two different facts and are printed as two: the restore
+    is there, and an action before it is missing from a capture. Only the
+    second one withholds the windows.
+
+    `selected` grades one block of a multi-block capture (`--block VALUE`)
+    and says the rest were not looked at, so the count this returns is about
     the block that was asked for and about nothing else.
     """
     total = len(blocks)
     if selected is None:
         print(f"\n=== {total} block(s), one per no-op control arm (§3) ===")
-        shown = range(1, total + 1)
+        shown = list(blocks)
     else:
-        print(f"\n=== block {selected} of {total}, its integrity check ===")
+        print(f"\n=== block {selected.index} of {total}, its integrity check "
+              f"===  (value under test {selected.name})")
         print(f"    the other {total - 1} block(s) were not checked in this "
               "run; run it without --block to check them all")
         shown = [selected]
     void = 0
-    for i in shown:
-        last = blocks[i - 1][-1]
-        if is_restore(last.label):
+    for block in shown:
+        i = block.index
+        last = block.windows[-1]
+        if parse_mark(last.label)[0] == "restore":
             print(f"  block {i}/{total}: intact -- last mark {last.label!r} is "
                   "the restore")
-            continue
-        void += 1
-        print(f"  block {i}/{total}: VOID -- last mark is {last.label!r}, not "
-              "the restore")
+        else:
+            void += 1
+            print(f"  block {i}/{total}: VOID -- last mark is {last.label!r}, "
+                  "not the restore")
+        tail = (f"value under test {block.name}; roles "
+                f"{', '.join(block.roles)}")
+        if block.problems:
+            tail += " -- NOT GRADED, its windows are not printed"
+        print(f"    {tail}")
     if void:
         note = VOID_BLOCK_NOTE
+    elif any(b.problems for b in shown):
+        note = MARK_SET_NOTE
     elif selected is None:
         note = INTACT_BLOCK_NOTE
     else:
         return void
     print()
-    for line in textwrap.wrap(note, width=72, initial_indent="  ",
-                             subsequent_indent="  "):
-        print(line)
+    print(wrap_note(note))
     return void
 
 
-def report_dumps(dumps, wrote, pairs):
+def dump_block(path, fallback):
+    """(value, how) for a --dump: which block it is, and what says so.
+
+    §6 stamps every dump with the `<value>` of the block it belongs to, and
+    that name is the only thing in a dump that says so -- a dump is a
+    whole-range read with no marks in it. Where the name carries none, the
+    value the operator gave on the command line is the only other thing that
+    can, and the report prints which of the two it used so a reader is never
+    left guessing which.
+    """
+    m = DUMP_VALUE.search(os.path.basename(path))
+    if m:
+        return int(m.group(1), 16), "name"
+    if fallback is not None:
+        return fallback, "flag"
+    return None, "none"
+
+
+def report_dumps(dumps, wrote, pairs, block_value=None):
     """0x0751 in each --dump, and what the last of them says about §4.6.
 
     Coverage is stated before anything is compared. A run may hand in dumps
@@ -608,18 +1041,79 @@ def report_dumps(dumps, wrote, pairs):
     intersection `report_dump_pairs` compares under. A pair whose before-dump
     alone reaches `0x0751` cannot become a readback, and pointing at one
     would send the operator after a byte that is not there.
+
+    Dumps are grouped by the block they name, and the readback is taken from
+    the last dump *of the block being graded* rather than the last dump
+    given. A three-value day hands in six dumps and the `0xA0` verdict under
+    the `0x10` block's windows is the shape this fixes: one number, a name
+    that does not go with it, and nothing in the output to catch it.
+
+    The heading line is unchanged whatever the grouping does. It is what both
+    §4.6 readers in the test suite cut the section on, and a heading that
+    grows a value in it breaks both of them for no gain -- the block is
+    named on the first line under it instead.
     """
     print("\n=== 0x0751 across the dumps (§4.6) ===")
     if not dumps:
         print("  no dump given (--dump); §4.6 not checked")
         return
+    fallback = block_value if block_value is not None else wrote
+    groups = []
     for path, values in dumps:
-        v = values.get(MANUAL_FAN_CTRL)
-        if v is None:
-            print(f"  {path}: 0x{MANUAL_FAN_CTRL:04X} not covered by this dump")
+        value, how = dump_block(path, fallback)
+        for value_, how_, here in groups:
+            if value_ == value:
+                here.append((path, values))
+                break
         else:
-            print(f"  {path}: 0x{MANUAL_FAN_CTRL:04X} = 0x{v:02X}")
-    if dumps[-1][1].get(MANUAL_FAN_CTRL) is None:
+            groups.append([value, how, [(path, values)]])
+
+    for value, how, here in groups:
+        if value is None:
+            print("  no block named: these files carry no §6 <value> and "
+                  "neither --block nor --wrote was given")
+        elif how == "name":
+            print(f"  block 0x{value:02X}, from the <value> in these files' "
+                  "§6 names")
+        else:
+            print(f"  block 0x{value:02X}, from --block/--wrote; these files "
+                  "carry no <value> of their own")
+        if block_value is not None and value != block_value:
+            for path, _ in here:
+                print(f"    {path}: belongs to block 0x{value:02X}, not the "
+                      f"block under test (0x{block_value:02X}) -- not read "
+                      "for §4.6 here")
+            continue
+        for path, values in here:
+            v = values.get(MANUAL_FAN_CTRL)
+            if v is None:
+                print(f"  {path}: 0x{MANUAL_FAN_CTRL:04X} not covered by this "
+                      "dump")
+            else:
+                print(f"  {path}: 0x{MANUAL_FAN_CTRL:04X} = 0x{v:02X}")
+        report_readback(here, wrote, pairs, value)
+    if block_value is not None and not any(v == block_value
+                                          for v, _, _ in groups):
+        print(f"  no dump was given for block 0x{block_value:02X}, so §4.6's "
+              "readback for it was not taken; the dumps named above are "
+              "another block's")
+
+
+def report_readback(here, wrote, pairs, value):
+    """What the last dump of one block says about §4.6, and whether at all.
+
+    Split out of `report_dumps` because the grouping above means this is now
+    a question about one block's dumps rather than about the run's last file,
+    and because the value the readback is compared against is the block's own
+    rather than one number for the run. A three-value day graded in one
+    invocation hands in six dumps and writes three values, and a single
+    `--wrote` against all of them would call the 0x10 block's byte "not the
+    written 0xA0" -- the exact mis-attribution the grouping exists to stop,
+    one level down. Where the file name names a block and `--wrote` names
+    another, the name is the more specific of the two statements and the
+    disagreement is printed rather than resolved silently.
+    """
+    if here[-1][1].get(MANUAL_FAN_CTRL) is None:
         print(f"  the last --dump does not cover 0x{MANUAL_FAN_CTRL:04X}, so "
               "the §4.6 readback was not taken -- nothing here says what the "
               "byte held after the write")
@@ -631,17 +1125,22 @@ def report_dumps(dumps, wrote, pairs):
                 print(f"      pass the after file as the last --dump to take "
                       f"the readback: {after_path}")
                 break
-    if wrote is None:
+    written = value if value is not None else wrote
+    if written is None:
         return
-    last = dumps[-1][1].get(MANUAL_FAN_CTRL)
+    if wrote is not None and value is not None and wrote != value:
+        print(f"  these dumps are named for block 0x{value:02X} but --wrote "
+              f"says 0x{wrote:02X}; the readback below is against the "
+              "block's own write")
+    last = here[-1][1].get(MANUAL_FAN_CTRL)
     if last is None:
         return
-    if last == wrote:
-        print(f"  the last dump still holds the written 0x{wrote:02X}. Per "
+    if last == written:
+        print(f"  the last dump still holds the written 0x{written:02X}. Per "
               "CLAUDE.md that is a readback, not evidence the EC acted on it.")
     else:
         print(f"  the last dump holds 0x{last:02X}, not the written "
-              f"0x{wrote:02X} -- something put it back; §3a's service-stopped "
+              f"0x{written:02X} -- something put it back; §3a's service-stopped "
               "run is what separates the vendor service from the EC.")
 
 
@@ -821,21 +1320,34 @@ def main(argv=None):
                          "the same file twice -- a pair read against itself "
                          "proves nothing and is not graded. Read for the "
                          "whole-block report and independent of --dump, whose "
-                         "§4.6 readback still comes from the last one")
-    ap.add_argument("--wrote", help="the value written to 0x0751 (e.g. 0xA0)")
-    ap.add_argument("--block", type=int, metavar="N",
-                    help="grade one block of a multi-block capture -- the "
-                         "windows from that block's no-op control arm through "
-                         "its restore -- and report that block's §3 verdict "
-                         "alone, so the output can be attached per block; "
-                         "default is every block")
+                         "§4.6 readback still comes from the last of that "
+                         "block's --dump flags")
+    ap.add_argument("--wrote", metavar="VALUE",
+                    help="the value written to 0x0751, spelled as --block "
+                         "takes it (0xA0, A0 or a0); must agree with --block "
+                         "when both are given, since both name the value "
+                         "under test")
+    ap.add_argument("--block", metavar="VALUE",
+                    help="grade one block of a multi-block capture by the "
+                         "value its write mark carried -- 0xA0, A0 and a0 are "
+                         "the same block -- taking the windows from that "
+                         "block's no-op control arm through its restore, and "
+                         "report that block's §3 verdict alone, so the output "
+                         "can be attached per block; default is every block")
     args = ap.parse_args(argv)
 
-    wrote = int(args.wrote, 0) if args.wrote else None
+    wrote = parse_value(args.wrote) if args.wrote else None
+    if args.wrote and wrote is None:
+        print(f"\n--wrote {args.wrote!r} is not a value: the value written to "
+              "0x0751 is hex, with or without the 0x (0xA0, A0, a0).",
+              file=sys.stderr)
+        return 1
 
+    captures = []
     marks, changes = [], []
     for path in args.csv:
         m, c = read_capture(path)
+        captures.append((path, m))
         marks += m
         changes += c
         print(f"{path}: {len(m)} mark(s), {len(c)} change row(s)")
@@ -848,39 +1360,91 @@ def main(argv=None):
         return 1
 
     windows = build_windows(marks, changes)
-    blocks = split_blocks(windows)
-    if args.block is None:
+    blocks, unplaced = assign_blocks(windows)
+    unreads = unplaceable_marks(unplaced)
+    for block in blocks:
+        block.problems = check_block_marks(block, captures)
+
+    selected = None
+    if args.block is not None:
+        wanted = parse_value(args.block)
+        if wanted is None:
+            print(f"\n--block {args.block!r} is not a value: the value under "
+                  "test is hex, with or without the 0x (0xA0, A0, a0).",
+                  file=sys.stderr)
+            return 1
+        if wrote is not None and wrote != wanted:
+            print(f"\n--block 0x{wanted:02X} and --wrote 0x{wrote:02X} name "
+                  "different values. Both are the value under test for this "
+                  "run, so one of them is a wrong command line; pass the same "
+                  "one twice or neither.", file=sys.stderr)
+            return 1
+        selected = next((b for b in blocks if b.value == wanted), None)
+
+    report_census(captures, windows, blocks, unplaced, unreads, selected)
+
+    if args.block is not None and selected is None:
+        found = ", ".join(b.name for b in blocks) or "none"
+        print(f"\n--block {args.block!r} is not a block in these captures: "
+              f"the values under test are {found}. A value that is not one of "
+              "them is not graded as an empty one -- a mistyped --block would "
+              "otherwise print a clean report over the wrong block's marks.",
+              file=sys.stderr)
+        return 1
+
+    if selected is None:
         shown = list(range(len(windows)))
         end = None
         print(f"\n=== {len(windows)} window(s), one per mark ===")
     else:
-        if not 1 <= args.block <= len(blocks):
-            print(f"\n--block {args.block} is out of range: this capture has "
-                  f"{len(blocks)} block(s), one per no-op control arm, "
-                  f"numbered 1 to {len(blocks)}. A block that is not in it is "
-                  "not graded as an empty one.", file=sys.stderr)
-            return 1
-        first = sum(len(b) for b in blocks[:args.block - 1])
-        shown = list(range(first, first + len(blocks[args.block - 1])))
+        # Selected by which block each window belongs to, not by counting the
+        # blocks before this one: `assign_blocks` leaves the windows it could
+        # not place in the same list, so a range of that length runs short by
+        # however many of them come first, and prints a window in no block in
+        # place of this block's own restore -- the census says of such a
+        # window that `--block` cannot select it, and printing it anyway
+        # would be the mis-attribution this tool exists to stop.
+        shown = [i for i, w in enumerate(windows) if w.block is selected]
         # The windows keep their place in the whole mark stream rather than
         # being renumbered from one, so a `--block` run is a subset of the
         # whole-capture run and the two attachments can be read side by side.
-        end = (f"the end of block {args.block} of {len(blocks)}, which is "
+        end = (f"the end of block {selected.index} of {len(blocks)}, which is "
                "where this read stops")
-        print(f"\n=== block {args.block} of {len(blocks)}, "
-              f"{len(shown)} window(s) in it ===")
+        print(f"\n=== block {selected.index} of {len(blocks)}, value under "
+              f"test {selected.name}, {len(shown)} window(s) in it ===")
+
     # The union over the windows, in WATCHED order: which watched groups saw a
     # change row at all. The closing paragraph has to name them, because a
     # mailbox poke and a fan-table move are different answers and "at least
     # one of §4.1-§4.3 moved" reads the same for both.
     moved_groups = []
+    withheld = 0
     for i in shown:
-        for name in report_window(windows[i], i + 1, len(windows),
+        w = windows[i]
+        if w in unreads:
+            # A label this cannot read is a window it cannot say what it is a
+            # window of. An unplaced mark whose label *is* readable -- a stray
+            # restore, a control arm whose write never came -- is graded
+            # below, with `unplaced` on its header: its rows are real and
+            # there is no other arm to mis-file them under.
+            withheld += 1
+            report_withheld_window(w, i + 1, len(windows), "unplaced",
+                                   unreads[w])
+            continue
+        if w.block is not None and w.block.problems:
+            withheld += 1
+            report_withheld_window(
+                w, i + 1, len(windows),
+                f"{w.block.name} (block {w.block.index} of {len(blocks)})",
+                [text for _, on, text in w.block.problems if on is w])
+            continue
+        for name in report_window(w, i + 1, len(windows), w.block,
+                                  len(blocks),
                                   end if i == shown[-1] else None):
             if name not in moved_groups:
                 moved_groups.append(name)
 
-    void = report_blocks(blocks, args.block)
+    void = report_blocks(blocks, selected)
 
     # Both file lists are read before either is printed, so §4.6 can name a
     # --dump-pair that covers 0x0751 while it is saying the readback was not
@@ -890,10 +1454,17 @@ def main(argv=None):
     dumps = [(p, read_dump(p)) for p in args.dump]
     pairs = [(b, a, read_dump(b), read_dump(a))
              for b, a in args.dump_pair]
-    report_dumps(dumps, wrote, pairs)
+    report_dumps(dumps, wrote, pairs,
+                 selected.value if selected is not None else None)
     graded_pairs = report_dump_pairs(pairs)
 
     print("\n=== what this does and does not settle ===")
+    if withheld:
+        print(f"  {withheld} of the {len(shown)} window(s) above were not "
+              "graded: the mark set of the block they fall in does not hold, "
+              "or no block could be attributed to them at all. What they "
+              "would have shown is not reported here and is not to be quoted "
+              "from this run.")
     if moved_groups:
         print(f"  At least one of the §4.1-§4.3 bytes moved after a mark: "
               f"{', '.join(moved_groups)}.")
@@ -915,6 +1486,10 @@ def main(argv=None):
                   "ec/annotations/manual-fan-ctrl-0751.md §5 if it is the "
                   "PLs, or §4.2 if it is the fan table -- capture it in "
                   "full, it is the more interesting outcome.")
+    elif withheld == len(shown):
+        print("  No window in this run was graded, so this output says nothing "
+              "about §4.1-§4.3 for it -- which is the honest answer here, and "
+              "not a quiet one.")
     else:
         print("  None of the §4.1-§4.3 bytes moved in any window: consistent "
               "with the static prediction, for this capture's window only "
@@ -938,7 +1513,11 @@ def main(argv=None):
           "not the call itself. `confirmed-inert` as a standalone control "
           "additionally needs all three values, with and without the vendor "
           "service (§3a).")
-    return 1 if void else 0
+    # Four ways a run can be refused rather than graded, and they are four
+    # facts about the input rather than four verdicts about the machine: a
+    # block short its restore, a mark set that cannot support its windows, a
+    # label the block walk could not place, and a --block that named no block.
+    return 1 if (void or unreads or withheld) else 0
 
 
 if __name__ == "__main__":
