@@ -265,6 +265,8 @@ jobs:
           ISSUE: ${{ matrix.item.issue }}
           HEAD_SHA: ${{ matrix.item.head }}
           PR: ${{ matrix.item.pr }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
           git add -A
@@ -274,7 +276,10 @@ jobs:
           if git diff --cached --quiet; then
             echo "::error::the resolution is empty -- the branch's change would vanish; not pushing"; exit 1
           fi
-          git commit -q -m "PR #${PR} rebuilt on main with the merge conflict resolved"
+          # The PR's own title as the subject: a one-commit PR's squash merge takes its title from
+          # this commit, and "PR #N rebuilt ..." is what landed on main for #268, #290 and #303.
+          title=$(gh pr view "$PR" --json title --jq .title)
+          git commit -q -m "$title" -m "Rebuilt on main by agent-conflicts.yml with the merge conflict resolved."
           # Lease on the head the sweep saw, so a fix push that landed meanwhile is not overwritten.
           git push --force-with-lease="agent/issue-${ISSUE}:${HEAD_SHA}" origin "HEAD:agent/issue-${ISSUE}"
 
