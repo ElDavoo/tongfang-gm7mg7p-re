@@ -414,6 +414,37 @@ its listings and not yet committed the CSV moves the tally legitimately, and
 this tool cannot tell that from a regression. `docs/findings.md` §14g has the
 calibration, and the question it leaves open.
 
+**Adding a listing therefore cannot be finished on a runner, and the gap is
+narrower than it looks.** `verify_reassembly.py:check` fails any listing in
+`../decompiled/listing-index.csv` that has no row in `reassembly.csv`, so a
+commit that exports a new function is red until the report is regenerated — and
+regenerating it here rewrites all 2,707 rows' `assembler` string and moves 52
+outcomes, because the runner's assembler is not the one the report was measured
+with. The two are not separable from the tool's single-writer guard
+(`refuses_committed_report`): there is no path that adds one row and leaves the
+rest of the file measured with the pinned assembler. **A new export wants a
+machine with the nix toolchain**, where `--report` adds the row and the other
+2,707 come back identical. What a runner *can* establish is narrower than
+either of those, and the difference is worth stating exactly because the tool
+refuses rather than degrades: with no `sdas8051` on PATH, `verify_reassembly`
+prints that the check did not run and exits 2 without writing anything, so
+nothing was re-encoded. What a runner can establish about a new listing is that
+**its bytes are the firmware's** — `check_listing_bytes()` compares every
+committed listing byte against the image and needs no assembler at all, so the
+143 instructions `sdas8051` cannot express are covered too. That is a different
+check from the re-encode rather than a weaker one: the re-encode asks whether
+the assembler's encoding agrees with what the image holds, the byte tier asks
+whether the listing transcribes the image, and only the first needs the
+toolchain. Issue #255 read the twelve bytes at file `0x0C10C`
+(`12 c0 c9 ef 60 03 7f 01 22 7f 00 22`) as seven instructions from the image
+alone and, rather than land the export with `verify_reassembly.py --check` red,
+left the seed row and the listing off its branch for a pinned-toolchain run to
+add both. **The independent re-encode of that listing has not been run**, on
+this branch or in the pipeline that produced it; whoever runs the pinned
+`--report` is the first to have that result, and it is theirs to record. That
+is the shape of the split: the reading lands on the runner, the export and its
+re-encode wait for the toolchain.
+
 Three things this does **not** mean, stated because the number invites the
 wrong one:
 
@@ -570,11 +601,11 @@ on the operands is worth more than either alone.
 ```
 $ python3 ../tools/build_ec_decompile.py --work /tmp/ec --self-test --cross-decoder
   cross-decoder agreement (Ghidra's C vs disasm8051.py, each sampled function's opening straight-line instructions):
-    bank0    693 sampled,  437 compared,  256 vacuous,  134 disagree, 0 no-export
-    bank1    594 sampled,  337 compared,  257 vacuous,  152 disagree, 0 no-export
-    common   130 sampled,   57 compared,   73 vacuous,   37 disagree, 0 no-export
-    pd       503 sampled,  172 compared,  331 vacuous,   74 disagree, 0 no-export
-    compared 1003 of 1920 functions, 917 vacuous; 606 agreed, 397 disagreed, 0 no-export
+    bank0    698 sampled,  440 compared,  258 vacuous,   96 disagree, 0 no-export
+    bank1    599 sampled,  341 compared,  257 vacuous,  107 disagree, 1 no-export
+    common   158 sampled,   62 compared,   96 vacuous,   38 disagree, 0 no-export
+    pd       502 sampled,  173 compared,  329 vacuous,   74 disagree, 0 no-export
+    compared 1016 of 1957 functions, 940 vacuous; 701 agreed, 315 disagreed, 1 no-export
 ```
 
 **The denominator is the point, and it is printed on every run.** The version
@@ -583,7 +614,7 @@ carries, and two of the four compared nothing at all — their openings name no
 XDATA address — which the old output said in the same shape as a pass. That is
 `../../docs/findings.md` §14b's own sentence ("a parser that reads a fraction
 of a file and finds nothing wrong in it reports a pass") one level up, in a
-check that had been moved rather than fixed. 917 of 1,920 is a large vacuous
+check that had been moved rather than fixed. 940 of 1,957 is a large vacuous
 share and it is now the first number on the screen rather than nothing at all.
 
 ### What the sample is
@@ -624,18 +655,32 @@ is still what the bytes do; the straight-line window just does not reach it.
 
 ### Reading a `disagree`
 
-`disagree` is one bucket and it is **not** a defect list. Measured over the 397
+`disagree` is one bucket and it is **not** a defect list. Measured over the 315
 rows the committed report records:
 
-- **109** are the `mov dptr,#imm; ljmp <BL51 stub>` bank-switch trampoline.
+- **110** are the `mov dptr,#imm; ljmp <BL51 stub>` bank-switch trampoline.
   Their C calls `bl51_bank_select_1(0x88f0)`, so the address is right there as
-  a literal argument; it is not an `EXTMEM_` symbol, and the comparison's
-  vocabulary is `EXTMEM_`. The run prints this count for exactly that reason —
-  otherwise the first twenty rows of the list read as twenty defects.
-- Of the rest, 220 distinct addresses are involved and **127 of them have no
-  entry in `../annotations/registers.yaml`**, so they cannot appear as an
-  `EXTMEM_` symbol in any C. A `disagree` there measures the register map's
-  coverage, not the decompiler.
+  a literal argument; it is not a symbol carrying its address, and the
+  comparison's vocabulary is the two spellings that do
+  (`DAT_EXTMEM_####` and `XDATA_####`). The run prints this count for exactly
+  that reason — otherwise the first twenty rows of the list read as twenty
+  defects.
+- Of the rest, 167 distinct addresses are involved and **129 of them have no
+  entry in `../annotations/registers.yaml`**, so they cannot appear as either
+  spelling in any C. A `disagree` there measures the register map's coverage,
+  not the decompiler.
+
+The 82 rows that left this bucket when issue #255 widened the vocabulary left
+it because the C named the address all along, for two reasons in the same
+regex. `build_ec_decompile.py` matched only `EXTMEM_`, so every listing
+exported under a `XDATA_####` name read as a `disagree` against a C that says
+the address in so many words; and its character class was lowercase-only,
+while the two spellings disagree on case — SLEIGH writes `EXTMEM_0a4e` and
+`gen_xdata_symbols.py` writes `XDATA_06C2` — so the uppercase names were
+invisible to it even once the prefix matched. `0xC1E7` is the row the branch
+that fixed this was written for; the self-test now pins the vocabulary against
+the names `xdata-symbols.csv` actually carries, so a later row cannot put the
+two out of step again.
 
 Splitting the bucket needs the byte-pair-folding case enumerated rather than
 described, which it is not, and guessing which of a function's C reads is a

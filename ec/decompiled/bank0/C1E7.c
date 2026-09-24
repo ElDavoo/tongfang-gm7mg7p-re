@@ -9,12 +9,12 @@
    type: reader
    evidence: ec/decompiled/bank0/C1E7.asm; ec/decompiled/bank0/C1E7.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void test_1664_bit0(void)
 
 {
-  if ((DAT_EXTMEM_1664 & 1) != 0) {
+  if ((XDATA_1664 & 1) != 0) {
     return;
   }
   return;

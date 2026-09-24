@@ -7,12 +7,20 @@
 /* Eleven instructions: it lcalls 0x1984, copies the result from R7 into the accumulator and
    branches to 0x80AA if it is non-zero, then does the same with a call to 0x198A. Only when both
    calls came back zero does it load DPTR with 0x06D9, read that byte, and decrement and write it
-   back if non-zero. Neither callee is decoded here -- they are named by address only, and what they
-   compute is not visible in this listing. All eleven instructions sit inside the body running
-   0x8018 to the `ret` at 0x8189, so this boundary is the call-target byte scan's hypothesis and the
-   function-level role here is not determined.
+   back if non-zero. Neither callee is decoded in this listing, but both are annotated forwarders:
+   0x198A reaches bank0 0xC1E7 (test_1664_bit0), which returns 1 in R7 when bit 0 of XDATA 0x1664 is
+   set, and 0x1984 reaches bank0 0xC10C, which has no exported listing of its own but is seven
+   instructions in twelve bytes with no MOV DPTR among them -- it lcalls the annotated
+   return_1_if_3202_bits_1_and_2 at 0xC0C9 and restates that answer in R7, so what it tests is bits
+   1 and 2 of XDATA 0x3202, read one call deeper. 0x06D9 therefore counts down only while 0x1664 bit
+   0 is clear and bits 1 and 2 of 0x3202 are not both set (at least one of them clear), and both
+   gates read bytes from elsewhere in the map rather than anything in this block. All eleven
+   instructions sit inside the body running 0x8018 to the `ret` at 0x8189, so this boundary is the
+   call-target byte scan's hypothesis and the function-level role here is not determined.
    type: writer
-   evidence: ec/decompiled/bank1/8096.asm; ec/decompiled/bank1/8096.c
+   evidence: ec/decompiled/bank1/8096.asm; ec/decompiled/bank1/8096.c; ec/decompiled/bank1/1984.asm;
+   ec/decompiled/bank1/198A.asm; ec/decompiled/bank0/C0C9.asm;
+   ec/annotations/xdata-06c2-06db-timers.md
    basis: hand-decoded
    name_basis: ec-register */
 

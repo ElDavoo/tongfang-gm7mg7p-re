@@ -71,8 +71,8 @@ EC, 1,848 rows:
 
 | grade | rows | |
 |---|---:|---|
-| `code-shape` | 1,563 | the default, and the largest class by design |
-| `ec-register` | 135 | |
+| `code-shape` | 1,562 | the default, and the largest class by design |
+| `ec-register` | 136 | |
 | `register-map` | 90 | |
 | `unresolved` | 52 | |
 | `abi-symbol` | 4 | |
@@ -80,12 +80,20 @@ EC, 1,848 rows:
 
 (1,530 / 134 / 83 / 49 were the figures when this was written; issue #134's
 call-graph tranche added 44 rows, grading 33 `code-shape`, 7 `register-map`, 3
-`unresolved` and 1 `ec-register`. `grade_name_basis.py --report` prints the
-tree's own numbers.)
+`unresolved` and 1 `ec-register`, and issue #255 moves one cell from
+`code-shape` to `ec-register` as the next paragraph describes.
+`grade_name_basis.py --report` prints the tree's own numbers.)
 
 BIOS, 788 rows: 772 `code-shape`, 10 `register-map`, 6 `unresolved`, no
 `abi-symbol` and no `mixed`. Reproduce either with
 `python3 ec/tools/grade_name_basis.py --report`.
+
+One EC cell moved after this table was first measured, and the rule is why:
+`bank0 0xC1E7` `test_1664_bit0` was `code-shape` because `ec-register` needs
+the address its *name* cites to be in `registers.yaml` as well as in the row's
+own `.asm`, and `0x1664` had no row. Issue #255 adds `XDATA_1664`, so the cell
+is `ec-register` and these two counts are 1,562 and 136 rather than the 1,563
+and 135 the table carries without it. `--check` is what caught it.
 
 **`abi-symbol` is nearly empty here, and that is the rule working rather than
 the vocabulary failing.** An earlier version of the grader also matched the

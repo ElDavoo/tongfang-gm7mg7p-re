@@ -1027,7 +1027,7 @@ addr,program,spelled_as,span_group,cluster_id,refs,read,write,read+write,passed-
 0x1659,main-ec,DAT_EXTMEM,0x1659-0x1659,main-ec-024,4,3,1,0,0,0,1,1,1,yes,,bank0:0xCDC3=FUN_CODE_cdc3,kb069a96ca8db
 0x165C,main-ec,DAT_EXTMEM,0x165C-0x165C,main-ec-024,1,0,1,0,0,0,0,1,1,yes,,bank0:0xCDC3=FUN_CODE_cdc3,kb069a96ca8db
 0x1663,main-ec,DAT_EXTMEM,0x1663-0x1668,main-ec-338,2,2,0,0,0,0,2,0,2,no,,bank0:0xC1B1=test_1663_bit6 [reader]; bank0:0xC1BE=test_1663_bit6_inverted [reader],k752b15f2993a
-0x1664,main-ec,DAT_EXTMEM,0x1663-0x1668,main-ec-369,1,1,0,0,0,0,1,0,1,yes,,bank0:0xC1E7=test_1664_bit0 [reader],k3bf86239c060
+0x1664,main-ec,symbol,0x1663-0x1668,main-ec-369,1,1,0,0,0,0,1,0,1,yes,XDATA_1664,bank0:0xC1E7=test_1664_bit0 [reader],k3bf86239c060
 0x1665,main-ec,DAT_EXTMEM,0x1663-0x1668,main-ec-305,4,4,0,0,0,0,4,0,4,no,,bank0:0xC251=test_1665_bit0_inverted [reader]; bank0:0xC26E=FUN_CODE_c26e; bank0:0xC295=test_1665_bit4_inverted [reader]; bank0:0xD9FE=seed_07d3_gfid_and_08xx_defaults [init],k438e62889264
 0x1666,main-ec,DAT_EXTMEM,0x1663-0x1668,main-ec-001,1,1,0,0,0,0,1,0,1,yes,,bank0:0xD9FE=seed_07d3_gfid_and_08xx_defaults [init],k7497cf885614
 0x1667,main-ec,DAT_EXTMEM,0x1663-0x1668,main-ec-339,2,2,0,0,0,0,2,0,2,no,,bank0:0xC349=test_1667_bit0 [logic]; bank0:0xC356=test_1667_bit0_inverted [logic],k2f6325b88c6a

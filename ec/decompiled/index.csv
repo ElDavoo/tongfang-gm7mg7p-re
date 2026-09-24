@@ -851,7 +851,7 @@ bank1,8060,branch_if_acc_zero_to_8064,2,annotation,no,yes,gate,hand-decoded,ec/d
 bank1,8062,dec_store_then_test_and_dec_07f6,10,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank1/8062.asm; ec/decompiled/bank1/8062.c,,bank1/8062.c
 bank1,806C,reload_06d6_with_9_or_return_early,18,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank1/806C.asm; ec/decompiled/bank1/806C.c,,bank1/806C.c
 bank1,807E,dec_06c3_and_dec_06d8_gated_on_0440,24,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank1/807E.asm; ec/decompiled/bank1/807E.c,,bank1/807E.c
-bank1,8096,dec_06d9_only_if_both_calls_return_zero,20,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank1/8096.asm; ec/decompiled/bank1/8096.c,,bank1/8096.c
+bank1,8096,dec_06d9_only_if_both_calls_return_zero,20,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank1/8096.asm; ec/decompiled/bank1/8096.c; ec/decompiled/bank1/1984.asm; ec/decompiled/bank1/198A.asm; ec/decompiled/bank0/C0C9.asm; ec/annotations/xdata-06c2-06db-timers.md,,bank1/8096.c
 bank1,80AA,dec_timers_06da_08e4_055f_09ce_070b,44,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank1/80AA.asm; ec/decompiled/bank1/80AA.c; ec/annotations/registers.yaml,,bank1/80AA.c
 bank1,80D6,clear_0460_0468_when_0706_reaches_zero,25,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank1/80D6.asm; ec/decompiled/bank1/80D6.c; ec/annotations/registers.yaml,,bank1/80D6.c
 bank1,80EF,dec_timers_and_set_expiry_flags,155,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank1/80EF.asm; ec/decompiled/bank1/80EF.c; ec/annotations/registers.yaml,,bank1/80EF.c
