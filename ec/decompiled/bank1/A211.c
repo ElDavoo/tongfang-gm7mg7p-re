@@ -19,7 +19,7 @@ void call_88f0_then_clear_07f3_and_070c(void)
   byte in_PSW;
   byte bVar1;
   
-  if (DAT_EXTMEM_07f3 != '\0') {
+  if (XDATA_07F3 != '\0') {
     return;
   }
   bVar1 = in_PSW & 0xdd;
@@ -36,7 +36,7 @@ void call_88f0_then_clear_07f3_and_070c(void)
       }
     }
   }
-  DAT_EXTMEM_07f3 = 0;
+  XDATA_07F3 = 0;
   DAT_EXTMEM_070c = 0;
   return;
 }

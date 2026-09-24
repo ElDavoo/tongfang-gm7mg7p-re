@@ -53,7 +53,7 @@ void FUN_CODE_db0b(byte param_1,undefined1 param_2)
       if (cVar4 < '\0') {
         return;
       }
-      DAT_EXTMEM_055f = 0x14;
+      XDATA_055F = 0x14;
       DAT_EXTMEM_0399 = param_2;
       DAT_EXTMEM_04ab = param_1;
       DAT_EXTMEM_04ac = param_1;

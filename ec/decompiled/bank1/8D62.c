@@ -15,7 +15,7 @@ void FUN_CODE_8d62(char param_1)
   if (param_1 == '\0') {
     load_dptr_c4e6_tail_jump_1100();
     if (in_PSW < '\0') {
-      if (DAT_EXTMEM_06c2 != '\0') {
+      if (XDATA_06C2 != '\0') {
 LAB_CODE_8db9:
         return_with_carry_cleared();
         return;

@@ -10,7 +10,7 @@ void FUN_CODE_e090(undefined1 param_1)
 
 {
   DAT_EXTMEM_03a0 = DAT_EXTMEM_03a0 | 2;
-  DAT_EXTMEM_055f = param_1;
+  XDATA_055F = param_1;
   FUN_CODE_d6c6();
   derive_scaled_values_from_0404();
   if (DAT_EXTMEM_0514 == 'd') {

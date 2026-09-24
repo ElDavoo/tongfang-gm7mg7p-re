@@ -14,7 +14,7 @@
 void gate_a747_on_06c2_0766(void)
 
 {
-  if ((DAT_EXTMEM_06c2 != '\0') && (((SUPPORT_2 >> 4 & 1) == 1 || ((SUPPORT_2 >> 5 & 1) != 0)))) {
+  if ((XDATA_06C2 != '\0') && (((SUPPORT_2 >> 4 & 1) == 1 || ((SUPPORT_2 >> 5 & 1) != 0)))) {
     stage_0769_076e_convert_to_1803();
   }
   return;

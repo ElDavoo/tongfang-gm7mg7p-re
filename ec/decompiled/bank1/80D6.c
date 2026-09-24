@@ -8,10 +8,11 @@
    otherwise the byte is decremented and written back, and when that decrement reached zero the same
    accumulator value -- zero -- is also stored to 0x0460 and then to 0x0468. The listing then reads
    XDATA 0x06C5, skips it if zero and otherwise decrements and writes it back, and ends by loading
-   DPTR with 0x0440. What any of these bytes means is not shown here, and none has an entry in
-   ec/annotations/registers.yaml. All fourteen instructions sit inside the body running 0x8018 to
-   the `ret` at 0x8189, so this boundary is the call-target byte scan's hypothesis and the
-   function-level role here is not determined.
+   DPTR with 0x0440. What any of these bytes means is not shown here; ec/annotations/registers.yaml
+   now carries 0x0440, 0x0460, 0x0468 and 0x06C5 as XDATA_0440, XDATA_0460, XDATA_0468 and
+   XDATA_06C5, EC-side sites found with their meanings not established. All fourteen instructions
+   sit inside the body running 0x8018 to the `ret` at 0x8189, so this boundary is the call-target
+   byte scan's hypothesis and the function-level role here is not determined.
    type: writer
    evidence: ec/decompiled/bank1/80D6.asm; ec/decompiled/bank1/80D6.c; ec/annotations/registers.yaml
    basis: hand-decoded */
@@ -22,58 +23,55 @@ void clear_0460_0468_when_0706_reaches_zero(char param_1,char *param_2)
   if (param_1 != '\0') {
     *param_2 = param_1 + -1;
     if (param_1 + -1 == '\0') {
-      DAT_EXTMEM_0460 = 0;
-      DAT_EXTMEM_0468 = 0;
+      XDATA_0460 = 0;
+      XDATA_0468 = 0;
     }
   }
-  if (DAT_EXTMEM_06c5 != '\0') {
-    DAT_EXTMEM_06c5 = DAT_EXTMEM_06c5 + -1;
+  if (XDATA_06C5 != '\0') {
+    XDATA_06C5 = XDATA_06C5 + -1;
   }
-  if ((XDATA_0440 != '\0') && (DAT_EXTMEM_085b != '\0')) {
-    DAT_EXTMEM_085b = DAT_EXTMEM_085b + -1;
+  if ((XDATA_0440 != '\0') && (XDATA_085B != '\0')) {
+    XDATA_085B = XDATA_085B + -1;
   }
-  if (DAT_EXTMEM_0986 != '\0') {
-    DAT_EXTMEM_0986 = DAT_EXTMEM_0986 + -1;
+  if (XDATA_0986 != '\0') {
+    XDATA_0986 = XDATA_0986 + -1;
   }
-  if (DAT_EXTMEM_070d != '\0') {
-    DAT_EXTMEM_070d = DAT_EXTMEM_070d + -1;
+  if (XDATA_070D != '\0') {
+    XDATA_070D = XDATA_070D + -1;
   }
-  if (DAT_EXTMEM_07f3 != '\0') {
-    DAT_EXTMEM_07f3 = DAT_EXTMEM_07f3 + -1;
+  if (XDATA_07F3 != '\0') {
+    XDATA_07F3 = XDATA_07F3 + -1;
   }
-  if (DAT_EXTMEM_0981 != '\0') {
-    DAT_EXTMEM_0981 = DAT_EXTMEM_0981 + -1;
+  if (XDATA_0981 != '\0') {
+    XDATA_0981 = XDATA_0981 + -1;
   }
-  if (DAT_EXTMEM_0982 != '\0') {
-    DAT_EXTMEM_0982 = DAT_EXTMEM_0982 + -1;
+  if (XDATA_0982 != '\0') {
+    XDATA_0982 = XDATA_0982 + -1;
   }
-  if (DAT_EXTMEM_0811 != '\0') {
-    DAT_EXTMEM_0811 = DAT_EXTMEM_0811 + -1;
+  if (XDATA_0811 != '\0') {
+    XDATA_0811 = XDATA_0811 + -1;
   }
-  if (DAT_EXTMEM_0809 != '\0') {
-    DAT_EXTMEM_0809 = DAT_EXTMEM_0809 + -1;
+  if (XDATA_0809 != '\0') {
+    XDATA_0809 = XDATA_0809 + -1;
   }
-  if ((DAT_EXTMEM_0843 != '\0') && (DAT_EXTMEM_0843 = DAT_EXTMEM_0843 + -1, DAT_EXTMEM_0843 == '\0')
-     ) {
-    DAT_EXTMEM_080c = 1;
+  if ((XDATA_0843 != '\0') && (XDATA_0843 = XDATA_0843 + -1, XDATA_0843 == '\0')) {
+    XDATA_080C = 1;
   }
-  if ((DAT_EXTMEM_0844 != '\0') && (DAT_EXTMEM_0844 = DAT_EXTMEM_0844 + -1, DAT_EXTMEM_0844 == '\0')
-     ) {
-    DAT_EXTMEM_0621 = 0;
+  if ((XDATA_0844 != '\0') && (XDATA_0844 = XDATA_0844 + -1, XDATA_0844 == '\0')) {
+    XDATA_0621 = 0;
   }
-  if ((XDATA_0440 != '\0') && (DAT_EXTMEM_06db != '\0')) {
-    DAT_EXTMEM_06db = DAT_EXTMEM_06db + -1;
+  if ((XDATA_0440 != '\0') && (XDATA_06DB != '\0')) {
+    XDATA_06DB = XDATA_06DB + -1;
   }
-  if (DAT_EXTMEM_080d != '\0') {
-    DAT_EXTMEM_080d = DAT_EXTMEM_080d + -1;
+  if (XDATA_080D != '\0') {
+    XDATA_080D = XDATA_080D + -1;
   }
-  if (DAT_EXTMEM_08a7 != '\0') {
-    DAT_EXTMEM_08a7 = DAT_EXTMEM_08a7 + -1;
+  if (XDATA_08A7 != '\0') {
+    XDATA_08A7 = XDATA_08A7 + -1;
   }
-  if ((DAT_EXTMEM_08a8 != '\0') && (DAT_EXTMEM_08a8 = DAT_EXTMEM_08a8 + -1, DAT_EXTMEM_08a8 == '\0')
-     ) {
-    DAT_EXTMEM_0985 = DAT_EXTMEM_0985 & 0xfb;
-    DAT_EXTMEM_0723 = DAT_EXTMEM_0723 & 0xef;
+  if ((XDATA_08A8 != '\0') && (XDATA_08A8 = XDATA_08A8 + -1, XDATA_08A8 == '\0')) {
+    XDATA_0985 = XDATA_0985 & 0xfb;
+    XDATA_0723 = XDATA_0723 & 0xef;
   }
   return;
 }

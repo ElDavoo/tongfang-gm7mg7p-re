@@ -85,7 +85,7 @@ LAB_CODE_df60:
       }
       DAT_EXTMEM_04aa = 10;
       DAT_EXTMEM_0512 = 10;
-      DAT_EXTMEM_055f = 0x14;
+      XDATA_055F = 0x14;
       DAT_EXTMEM_03a0 = DAT_EXTMEM_03a0 | 2;
       FUN_CODE_d6c6();
       derive_scaled_values_from_0404();

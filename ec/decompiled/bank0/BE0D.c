@@ -4,17 +4,17 @@
 // Machine output carrying this repository's symbols. Not the vendor's source.
 
 
-/* Reads XDATA 0x0723, ORs bit 6 (0x40) into it and writes the byte back unchanged otherwise. 0x0723
-   has no entry in ec/annotations/registers.yaml, so what that bit gates is not determined from
-   these instructions.
+/* Reads XDATA 0x0723, ORs bit 6 (0x40) into it and writes the byte back unchanged otherwise.
+   ec/annotations/registers.yaml now carries 0x0723 as XDATA_0723, an EC-side site found with its
+   meaning not established, so what that bit gates is not determined from these instructions.
    type: writer
-   evidence: ec/decompiled/bank0/BE0D.asm; ec/decompiled/bank0/BE0D.c
+   evidence: ec/decompiled/bank0/BE0D.asm; ec/decompiled/bank0/BE0D.c; ec/annotations/registers.yaml
    basis: hand-decoded */
 
 void set_bit6_in_x0723(void)
 
 {
-  DAT_EXTMEM_0723 = DAT_EXTMEM_0723 | 0x40;
+  XDATA_0723 = XDATA_0723 | 0x40;
   return;
 }
 

@@ -16,7 +16,7 @@
 void dispatch_on_06d4_mod_10(void)
 
 {
-  if ((DAT_EXTMEM_06c2 == '\0') && ((DAT_EXTMEM_0490 & 1) != 1)) {
+  if ((XDATA_06C2 == '\0') && ((DAT_EXTMEM_0490 & 1) != 1)) {
     compare_0434_04f4_against_0646();
     DAT_EXTMEM_06d4 = DAT_EXTMEM_06d4 + 1;
     if (DAT_EXTMEM_06d4 == 0xfa) {

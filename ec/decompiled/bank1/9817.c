@@ -21,7 +21,7 @@ void enter_state_0480_05f1_06d9(void)
 {
   DAT_EXTMEM_0480 = DAT_EXTMEM_0480 | 1;
   DAT_EXTMEM_05f1 = 1;
-  DAT_EXTMEM_06d9 = 3;
+  XDATA_06D9 = 3;
   if ((DAT_EXTMEM_0490 & 1) != 0) {
     ret_only_stub_98b3();
     return;
@@ -34,9 +34,9 @@ void enter_state_0480_05f1_06d9(void)
     clear_049a_049e_0579_057a_05c2();
     copy_48_bytes_via_a530_from_c7bd();
     DAT_EXTMEM_081d = 0;
-    DAT_EXTMEM_080c = 0;
-    DAT_EXTMEM_0723 = 0;
-    DAT_EXTMEM_09e6 = 0;
+    XDATA_080C = 0;
+    XDATA_0723 = 0;
+    XDATA_09E6 = 0;
     DAT_EXTMEM_06f2 = 0;
     write_0830_0831_and_0832_bit5();
     write_083c_083d_and_0832_bit6();

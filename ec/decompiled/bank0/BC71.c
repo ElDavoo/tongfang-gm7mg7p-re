@@ -5,10 +5,11 @@
 
 
 /* Reads XDATA 0x0435 into R4, then returns the byte at XDATA 0x0434 in A. The 0x0435 read has no
-   other effect in this listing beyond the R4 hand-off; neither address has an entry in
-   ec/annotations/registers.yaml.
+   other effect in this listing beyond the R4 hand-off; both addresses are the BAT_CURRENT_MA pair
+   in ec/annotations/registers.yaml, little-endian mA there, with the byte order resting on three
+   independent sources.
    type: reader
-   evidence: ec/decompiled/bank0/BC71.asm; ec/decompiled/bank0/BC71.c
+   evidence: ec/decompiled/bank0/BC71.asm; ec/decompiled/bank0/BC71.c; ec/annotations/registers.yaml
    basis: hand-decoded */
 
 undefined1 read_0434_keep_0435_in_r4(void)

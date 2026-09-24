@@ -19,11 +19,11 @@ void FUN_CODE_9ff0(void)
   DAT_EXTMEM_067d = DAT_EXTMEM_067d + -1;
   if (DAT_EXTMEM_067d == '\0') {
     bVar1 = 8 - (in_PSW >> 7);
-    if (bVar1 <= DAT_EXTMEM_06c5) {
-      exit_ret(DAT_EXTMEM_06c5 - bVar1);
+    if (bVar1 <= XDATA_06C5) {
+      exit_ret(XDATA_06C5 - bVar1);
       return;
     }
-    if (DAT_EXTMEM_06c2 == '\0') {
+    if (XDATA_06C2 == '\0') {
       DAT_EXTMEM_0724 = DAT_EXTMEM_0724 & 0x7f;
       if (DAT_EXTMEM_047b < '\0') {
         load_dptr_c2ba_tail_jump_1100();

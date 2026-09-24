@@ -19,7 +19,7 @@ void gate_on_06d4_mod10(void)
   if (DAT_EXTMEM_06d4 % 10 != 0) {
     return;
   }
-  DAT_EXTMEM_0723 = DAT_EXTMEM_0723 & 0xfe;
+  XDATA_0723 = XDATA_0723 & 0xfe;
   if (DAT_EXTMEM_0623 != '\0') {
     DAT_EXTMEM_0623 = DAT_EXTMEM_0623 + -1;
   }

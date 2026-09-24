@@ -5,9 +5,10 @@
 
 
 /* Reads XDATA 0x044C, clears the carry so no extra borrow is taken, and returns 0x044C minus the
-   caller's R7. 0x044C has no entry in ec/annotations/registers.yaml.
+   caller's R7. ec/annotations/registers.yaml now carries 0x044C as XDATA_044C, an EC-side site
+   found with its meaning not established.
    type: math
-   evidence: ec/decompiled/bank0/BEA3.asm; ec/decompiled/bank0/BEA3.c
+   evidence: ec/decompiled/bank0/BEA3.asm; ec/decompiled/bank0/BEA3.c; ec/annotations/registers.yaml
    basis: hand-decoded */
 
 char x044c_minus_r7(char param_1)

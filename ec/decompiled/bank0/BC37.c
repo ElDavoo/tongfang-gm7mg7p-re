@@ -6,10 +6,10 @@
 
 /* Reads the CODE byte at (caller's DPTR + caller's A) into R7, reads XDATA 0x044C, and returns
    0x044C minus that CODE byte in A. The SUBB also subtracts the carry inherited on entry, so the
-   decompiled C's added PSW term has the wrong sign; 0x044C has no entry in
-   ec/annotations/registers.yaml.
+   decompiled C's added PSW term has the wrong sign; ec/annotations/registers.yaml now carries
+   0x044C as XDATA_044C, an EC-side site found with its meaning not established.
    type: math
-   evidence: ec/decompiled/bank0/BC37.asm; ec/decompiled/bank0/BC37.c
+   evidence: ec/decompiled/bank0/BC37.asm; ec/decompiled/bank0/BC37.c; ec/annotations/registers.yaml
    basis: hand-decoded */
 
 char code_byte_sub_from_044c(byte param_1,short param_2)

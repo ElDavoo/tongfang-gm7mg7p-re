@@ -16,7 +16,7 @@
 void count_down_0678_0679_pair(void)
 
 {
-  if (DAT_EXTMEM_06c2 == '\0') {
+  if (XDATA_06C2 == '\0') {
     if (((DAT_EXTMEM_06e1 & 0x80) != 0) || ((XDATA_0459 & 2) != 0)) {
       DAT_EXTMEM_0679 = 0x30;
       DAT_EXTMEM_0678 = 0x14;
