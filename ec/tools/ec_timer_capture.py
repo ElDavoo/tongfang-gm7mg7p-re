@@ -38,7 +38,19 @@ Usage (root, CONFIG_DEVMEM):
   ec_timer_capture.py --addrs 0x06c2-0x06db,0x0440 --interval 0.01 --seconds 120 \\
       --csv out.csv --note "idle, AC"
   ec_timer_capture.py ... --mark     # each line on stdin stamps ts,MARK,,label
+  ec_timer_capture.py ... --auto-mark --mark-input /dev/input/event7
+                                     # MARK rows stamped from the machine itself
   ec_timer_capture.py --census       # which 256-byte pages hold anything but 0xFF
+
+`--auto-mark` is for a run where the operator's hands are on the machine and
+not on a keyboard feeding stdin: it polls every Mains supply's `online`, every
+ACPI lid's `state`, and the gap between CLOCK_BOOTTIME and CLOCK_MONOTONIC
+(which grows only while the system is suspended), and writes a
+`ts,MARK,,auto: ...` row when one changes. `--mark-input DEV` reads an evdev
+node passively -- no EVIOCGRAB, so every other reader still gets every event
+-- and marks each key press and MSC_SCAN code, which is how a hotkey that no
+sysfs file reflects gets a timestamp. A mark is when Linux saw the action, not
+when the EC did.
 
 `--census` is the measurement HOST_WINDOW below is taken from: one read-only
 pass over the 64 KiB mapping, skipping the fan page, printing how many bytes
@@ -49,7 +61,9 @@ import argparse
 import csv
 import datetime
 import os
+import glob
 import platform
+import struct
 import sys
 import threading
 import time
@@ -151,6 +165,69 @@ def mark_loop(sink):
         print(f"--- {ts}  MARK: {label} ---", flush=True)
 
 
+def _read(path):
+    try:
+        with open(path) as f:
+            return f.read().strip()
+    except OSError:
+        return None
+
+
+def machine_state():
+    st = {}
+    for d in sorted(glob.glob("/sys/class/power_supply/*")):
+        if _read(os.path.join(d, "type")) == "Mains":
+            st[f"{os.path.basename(d)}.online"] = _read(os.path.join(d, "online"))
+    for f in sorted(glob.glob("/proc/acpi/button/lid/*/state")):
+        v = _read(f)
+        st[f"lid {f.split('/')[-2]}"] = v.split()[-1] if v else None
+    return st
+
+
+def suspend_gap():
+    return (time.clock_gettime(time.CLOCK_BOOTTIME)
+            - time.clock_gettime(time.CLOCK_MONOTONIC))
+
+
+def auto_mark_loop(sink, period=0.05):
+    prev, gap = machine_state(), suspend_gap()
+    while True:
+        time.sleep(period)
+        cur, g = machine_state(), suspend_gap()
+        if g - gap > 0.5:
+            label = f"auto: resumed, ~{g - gap:.1f} s suspended"
+            sink.row([now(), "MARK", "", label])
+            print(f"--- MARK: {label} ---", flush=True)
+        gap = g
+        for k in cur:
+            if cur[k] != prev.get(k):
+                label = f"auto: {k} {prev.get(k)} -> {cur[k]}"
+                sink.row([now(), "MARK", "", label])
+                print(f"--- MARK: {label} ---", flush=True)
+        prev = cur
+
+
+EVENT = struct.Struct("llHHi")      # struct input_event, 64-bit time
+EV_KEY, EV_MSC, MSC_SCAN = 1, 4, 4
+
+
+def input_mark_loop(sink, dev):
+    with open(dev, "rb", buffering=0) as f:
+        while True:
+            buf = f.read(EVENT.size)
+            if len(buf) < EVENT.size:
+                return
+            _, _, typ, code, value = EVENT.unpack(buf)
+            if typ == EV_KEY and value == 1:
+                label = f"auto: {os.path.basename(dev)} key {code} pressed"
+            elif typ == EV_MSC and code == MSC_SCAN:
+                label = f"auto: {os.path.basename(dev)} scan {value & 0xFFFFFFFF:#x}"
+            else:
+                continue
+            sink.row([now(), "MARK", "", label])
+            print(f"--- MARK: {label} ---", flush=True)
+
+
 def census():
     m = ecmem._map()          # read-only mapping
     print(f"# host-window page census, ec/tools/ec_timer_capture.py --census, "
@@ -192,6 +269,10 @@ def main(argv=None):
     ap.add_argument("--note", action="append", default=[],
                     help="free-text conditions line for the header; repeatable")
     ap.add_argument("--mark", action="store_true")
+    ap.add_argument("--auto-mark", action="store_true",
+                    help="mark AC, lid and suspend/resume changes from sysfs")
+    ap.add_argument("--mark-input", action="append", default=[],
+                    help="evdev node whose key presses become marks; repeatable")
     ap.add_argument("--outside-window", action="store_true")
     args = ap.parse_args(argv)
     if args.census:
@@ -222,6 +303,13 @@ def main(argv=None):
     sink.row(["ts", "addr", "old", "new"])
     if args.mark:
         threading.Thread(target=mark_loop, args=(sink,), daemon=True).start()
+    if args.auto_mark:
+        sink.comment("auto-mark state at start: " + " ".join(
+            f"{k}={v}" for k, v in machine_state().items()))
+        threading.Thread(target=auto_mark_loop, args=(sink,), daemon=True).start()
+    for dev in args.mark_input:
+        threading.Thread(target=input_mark_loop, args=(sink, dev),
+                         daemon=True).start()
 
     passes = 0
     changes = {a: 0 for a in addrs}

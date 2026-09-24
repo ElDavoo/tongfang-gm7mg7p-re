@@ -80,6 +80,14 @@ independently checkable rather than taken on faith:
   `0x0C00`-`0x0FFF` hold data. Source for the `XDATA_06D6` status,
   `docs/hardware-tests/xdata-06c2-06db-sweep.md`, and findings.md §17a. Graded
   with `ec/tools/grade_timer_sweep.py`.
+  **`ec-watch/2026-09-24-06c2-06db-perturb-linux.csv`** is the same run's
+  perturbation arm. It watches arm 2's 28 bytes, the `0x976E`/`0x9817` state
+  bytes and `0x0751` at 10 ms while the owner unplugged and replugged AC,
+  pressed the Fn power-mode key and closed and opened the lid. Its `MARK` rows
+  were stamped by `--auto-mark` (AC and lid via sysfs, suspend via the
+  boottime/monotonic gap; there was no suspend) and by
+  `--mark-input /dev/input/event7`, so a mark is when Linux saw the action.
+  Source for the `XDATA_06D8`/`XDATA_070B` statuses and that document's §4a.
 - **`uefi/2026-09-19-UniWillVariable.{bin,txt}`, `uefi/2026-09-19-variable-list.txt`**:
   the vendor's shared settings variable after a BIOS load-defaults, and
   every OS-visible UEFI variable. Source for findings.md §6.

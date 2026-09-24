@@ -4107,8 +4107,8 @@ block 16 bytes: `0x0890`, 13 of the 25 post-return countdowns, `0x080C` and
 Every `registers.yaml` row in those ranges is in the same position, and §4e
 says the vendor's `ECRW` path uses this window too.
 
-**None of the 24 in-window countdowns other than `0x06D9` held anything but
-zero, so the pre/post rate ratio could not be measured.** They sat at `0x00`
+**In the idle captures, none of the 24 in-window countdowns other than
+`0x06D9` held anything but zero, so no rate could be measured from them.** They sat at `0x00`
 for 300 s on idle Linux. The committed `2026-09-18` AC plug-in summary and the
 Windows profile-switch capture show `0x06D6` moving and no other sweep byte.
 That is "not reached on the paths watched", not "not a countdown" and not
@@ -4123,20 +4123,51 @@ the only exported jump into `0x9817` (from `0x976E`) needs `lcall 0x198A`, the
 `0x1664` bit 0 test, to return non-zero. That is the same call that closes
 `0x06D9`'s gate in the sweep. `0x0480` bit 0 set and `0x05F1 = 1` are what
 `0x9817` leaves behind. So both readings point at `0x1664` bit 0 being set.
-**That is inferred, not read**, and the hardware-test doc's §4 states what it
-assumes.
+**That is inferred, not read**, and it holds only for the AC steady state
+these captures were taken in. The hardware-test doc's §4 states what it
+assumes, and the perturbation arm below narrows it on battery.
 
-**Status moved: `XDATA_06D6` only**, to `confirmed-working`, meaning the code's
-model of the byte (decrement, reload with 9, one step per pass) is what the
-live byte does. It does not name what the one-second cycle times. The other 42
+**Status moved: `XDATA_06D6`**, and after the perturbation arm below,
+`XDATA_06D8` and `XDATA_070B`, all to `confirmed-working`. For `0x06D6` it
+means the code's model of the byte (decrement, reload with 9, one step per
+pass) is what the live byte does. It does not name what the one-second cycle times. The other 40
 stay `present-untested`. A byte that held still in a capture is not evidence
 about what the EC does with it.
 
-**What this opens.** A run that loads the countdowns (AC, power mode, lid,
-suspend, with `--mark`) so the ratio can be measured. A read path to `0x1664`
-and `0x3202`, if the EC has one other than ECMG. And a pass over
-`registers.yaml` for every row the host window cannot reach, since a live read
-of any of them through this path returns `0xFF` whatever the EC holds.
+**The perturbation arm loaded two post-return countdowns and measured their
+rate.** The owner did four actions at the machine: AC out, AC in, the Fn
+power-mode key, and the lid. Marks were stamped from sysfs and the hotkey
+device (`evidence/ec-watch/2026-09-24-06c2-06db-perturb-linux.csv`). **The AC
+unplug loaded `0x06D8` and `0x070B` with `0x0A`**, 0.38 s before Linux saw the
+AC go. Both then stepped down once per 1000 ms (median), 10.00 times the
+`0x06D6` step, and all 24 decrements landed in the same 10 ms sample as a
+`0x06D6` reload. That is the early return's prediction for a post-return byte,
+measured. The in-window bytes of `0x976E` and `0x9817` changed the way their
+`ghidra-functions.csv` annotations say, down to `0x0490` becoming
+`(old OR 1) AND 0x77`. No pre-return countdown was loaded by anything, so the
+100 ms half of the ratio is still unseen. The Fn key arrives as `KEY_F14`
+(scan `0xb0`) and moved nothing the capture watched: `0x0751` held `0x10`. The
+lid did not suspend the machine, because logind treats it as docked.
+`XDATA_06D8` and `XDATA_070B` move to `confirmed-working` on the same narrow
+scope as `0x06D6`. Both notes said "decremented on every pass", which is wrong
+for a post-return byte, and each now carries a correction beside the original.
+
+**It also reopens which gate holds `0x06D9`.** For 66.5 s on battery,
+`0x05F0` and `0x0480` show `0x9817` was not entered, so its store of 3 did not
+run. The only other writer found stores 5. `0x06D9` still stayed at 3 through
+66 passes that reached its gate. So a gate was closed, and a rewrite by a known
+writer is excluded for that window. But the pointer at `0x1664` bit 0 above came
+from `0x9817` being live on AC, and on battery that premise fails. Which of the
+two gates was closed on battery is not established
+(`docs/hardware-tests/xdata-06c2-06db-sweep.md` §4a).
+
+**What this opens.** A run that loads a pre-return countdown; suspend and resume
+is the untried action. A read path to `0x1664` and `0x3202`, if the EC has one
+other than ECMG. `0x0490` bit 3, set at AC plug-in by something neither
+annotation covers. Handling `KEY_F14` in the driver if the mode key is to do
+anything on Linux. And a pass over `registers.yaml` for every row the host
+window cannot reach, since a live read of any of them through this path returns
+`0xFF` whatever the EC holds.
 
 ## 18. The decompiler's variables, measured: most `param_N` are not parameters (2026-09-24, issue #133)
 

@@ -2313,11 +2313,11 @@ registers:
 
   - name: XDATA_06D8
     addr: 0x06D8
-    sources: [xdata-refs]
+    sources: [xdata-refs, live]
     static_refs: 2
     static_refs_main_ec: 2
     static_refs_pd_image: 0
-    status: present-untested
+    status: confirmed-working
     note: >
       Decremented by one on every pass of the counter sweep at bank1
       0x8001-0x8189 only while XDATA 0x0440 is non-zero -- the block's first
@@ -2330,6 +2330,24 @@ registers:
       sites, 1 direct read and 1 direct write. Its only writers outside the
       sweep that this method found are bank1 0x9800. No upstream name.
       Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+      *** CORRECTION 2026-09-24 (issue #257) *** "Decremented by one on every
+      pass" above is wrong for this byte. It sits below the ret at 0x8074, so
+      it is reached only on the pass that found 0x06D6 zero, one pass in ten,
+      and the live capture below shows exactly that. The sentence is left as
+      written. LIVE, 2026-09-24: 0x0440 read 0x07 throughout, so the gate was
+      open and was not exercised.
+      evidence/ec-watch/2026-09-24-06c2-06db-perturb-linux.csv (issue #257,
+      read only, ECMG window, Linux, 10 ms sampling). At the AC unplug this
+      byte was loaded with 0x0A in the same sample as 0x06D8/0x070B and the
+      0x0490/0x0480/0x05F0 changes the 0x976E annotation predicts, and it then
+      stepped down once per 1000 ms (median) to 0. Each of its 12 decrements
+      in that capture landed in the same 10 ms sample as a 0x06D6 0 -> 9
+      reload, which is where the code puts it, below the 0x8074 return. It
+      was loaded again 1.2 s after the first load. Nothing reloaded it at the
+      AC plug-in, the Fn mode key or the lid. confirmed-working here means the
+      code's model of this byte -- a post-return countdown, loaded with 0x0A by
+      0x976E -- is what the live byte does. It does not say what the countdown
+      times. docs/hardware-tests/xdata-06c2-06db-sweep.md 4.
 
   - name: XDATA_06D9
     addr: 0x06D9
@@ -2420,11 +2438,11 @@ registers:
 
   - name: XDATA_070B
     addr: 0x070B
-    sources: [xdata-refs]
+    sources: [xdata-refs, live]
     static_refs: 2
     static_refs_main_ec: 2
     static_refs_pd_image: 0
-    status: present-untested
+    status: confirmed-working
     note: >
       Decremented by one on every pass of the counter sweep at bank1
       0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
@@ -2432,6 +2450,23 @@ registers:
       direct write. Its only writers outside the sweep that this method found
       are bank1 0x9806. No upstream name. Per-address table:
       ec/annotations/xdata-06c2-06db-timers.md.
+      *** CORRECTION 2026-09-24 (issue #257) *** "Decremented by one on every
+      pass" above is wrong for this byte. It sits below the ret at 0x8074, so
+      it is reached only on the pass that found 0x06D6 zero, one pass in ten,
+      and the live capture below shows exactly that. The sentence is left as
+      written. LIVE, 2026-09-24:
+      evidence/ec-watch/2026-09-24-06c2-06db-perturb-linux.csv (issue #257,
+      read only, ECMG window, Linux, 10 ms sampling). At the AC unplug this
+      byte was loaded with 0x0A in the same sample as 0x06D8/0x070B and the
+      0x0490/0x0480/0x05F0 changes the 0x976E annotation predicts, and it then
+      stepped down once per 1000 ms (median) to 0. Each of its 12 decrements
+      in that capture landed in the same 10 ms sample as a 0x06D6 0 -> 9
+      reload, which is where the code puts it, below the 0x8074 return. It
+      was loaded again 1.2 s after the first load. Nothing reloaded it at the
+      AC plug-in, the Fn mode key or the lid. confirmed-working here means the
+      code's model of this byte -- a post-return countdown, loaded with 0x0A by
+      0x976E -- is what the live byte does. It does not say what the countdown
+      times. docs/hardware-tests/xdata-06c2-06db-sweep.md 4.
 
   - name: XDATA_070D
     addr: 0x070D

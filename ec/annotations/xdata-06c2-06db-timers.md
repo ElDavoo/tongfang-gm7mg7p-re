@@ -33,7 +33,9 @@ no entry in this file or in `registers.yaml` claims a zero is an absence.
 > **Update, 2026-09-24 (issue #257).** The paragraph above was true when this
 > file was written and is left as it was. Since then the Linux half of §7 has
 > been run on the machine, read only. `0x06D6` cycles as §4 reads it, with a
-> 0.997 s period, and is now `confirmed-working`. The other 42 are unchanged.
+> 0.997 s period. An AC unplug loaded `0x06D8` and `0x070B`, and both stepped
+> once per `0x06D6` cycle, as bytes below the return should. Those three are
+> now `confirmed-working`, and the other 40 are unchanged.
 > The host window cannot reach 16 of the block's bytes or either `0x06D9` gate
 > byte. The result is `../../docs/hardware-tests/xdata-06c2-06db-sweep.md`.
 
@@ -584,7 +586,8 @@ from the `.c`, the `.asm` and the image.
 > **Run in part, 2026-09-24.** Steps 1 and 2 were run on Linux (no vendor
 > service), with a faster sampler than the loop below:
 > `../tools/ec_timer_capture.py`. Step 3 cannot run as written because `0x1664`
-> and `0x3202` are outside the ECMG host window. The Windows arm was not run.
+> and `0x3202` are outside the ECMG host window. A perturbation arm (AC, the Fn
+> key, the lid) was also run. The Windows arm was not.
 > Commands, captures and result: `../../docs/hardware-tests/xdata-06c2-06db-sweep.md`.
 > The sentence below is the procedure as first written, left as it was.
 
