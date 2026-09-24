@@ -1,0 +1,45 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# byte and timestamp below was written by hand so the grader's per-block
+# integrity check and its --block form can be run offline. See ../README.md.
+# Shape: the 0x0700-0x07FF third of a §3 three-value day, all three blocks in
+# one file the way §3 takes them -- ec_watch.py appends to a --csv that
+# already exists, so the marks are what separate the blocks. Eight marks, three
+# blocks: a0, 00, 10.
+# BLOCK 2 IS VOID, and that is the point of the set. Its write mark is three
+# minutes after its no-op, near the end of §3's --seconds 240, so the restore
+# mark of §3's step 5 was typed after that watcher had exited: printed in its
+# `marks:` list, written to no CSV, and absent here along with the 0x0751
+# change row it would have carried. Blocks 1 and 3 are intact. The duty byte
+# drifts throughout and nothing §4.1-§4.3 names moves at all, as in
+# ../../0751-isolation-run/; block 3's control arm writes back the 0x00 block 2
+# left behind, which is what the run would have done to re-establish a known
+# starting point, so these three files read as one day without a row invented
+# for a restore no watcher saw. Not a prediction that a re-run produces this,
+# nor that a block will come out void.
+ts,addr,old,new
+2026-01-01T12:00:04.000+01:00,0x0796,0x2F,0x30
+2026-01-01T12:00:10.000+01:00,MARK,,no-op wrote 0x0751=0x10
+2026-01-01T12:00:12.400+01:00,0x075B,0x64,0x66
+2026-01-01T12:00:25.000+01:00,0x075B,0x66,0x67
+2026-01-01T12:00:40.000+01:00,MARK,,wrote 0x0751=0xA0
+2026-01-01T12:00:40.600+01:00,0x0751,0x10,0xA0
+2026-01-01T12:00:42.750+01:00,0x075B,0x67,0x69
+2026-01-01T12:00:55.000+01:00,0x075C,0x50,0x51
+2026-01-01T12:01:10.000+01:00,MARK,,restored 0x0751=0x10
+2026-01-01T12:01:10.500+01:00,0x0751,0xA0,0x10
+2026-01-01T12:01:12.000+01:00,0x075B,0x69,0x6A
+2026-01-01T12:05:10.000+01:00,MARK,,no-op wrote 0x0751=0xA0
+2026-01-01T12:05:14.000+01:00,0x075B,0x6A,0x6C
+2026-01-01T12:08:25.000+01:00,0x075B,0x6C,0x6D
+2026-01-01T12:08:30.000+01:00,MARK,,wrote 0x0751=0x00
+2026-01-01T12:08:30.600+01:00,0x0751,0xA0,0x00
+2026-01-01T12:08:35.000+01:00,0x075B,0x6D,0x6E
+2026-01-01T12:08:50.000+01:00,0x075C,0x51,0x52
+2026-01-01T12:15:10.000+01:00,MARK,,no-op wrote 0x0751=0x00
+2026-01-01T12:15:13.000+01:00,0x075B,0x6E,0x70
+2026-01-01T12:15:40.000+01:00,MARK,,wrote 0x0751=0x10
+2026-01-01T12:15:40.500+01:00,0x0751,0x00,0x10
+2026-01-01T12:15:45.000+01:00,0x075B,0x70,0x72
+2026-01-01T12:16:10.000+01:00,MARK,,restored 0x0751=0x00
+2026-01-01T12:16:10.400+01:00,0x0751,0x10,0x00
+2026-01-01T12:16:14.000+01:00,0x075B,0x72,0x73
