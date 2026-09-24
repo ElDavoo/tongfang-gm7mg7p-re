@@ -178,17 +178,20 @@ jobs:
             subject, body explaining the reasoning and the evidence, not restating the diff. If
             the approach changed while the branch was being fixed, describe what actually
             landed, not what was originally planned.
-          # Bash(git:*) rather than four enumerated git prefixes, and the read-only gh verbs, for
-          # the reasons set out on the inline pass below: this is the merge gate, a denial costs
-          # it a turn, and an enumeration is a list of what someone thought of. Task is here
-          # because a judgement this consequential should be able to farm out a question it wants
-          # a second read on, the way the plugin does.
+          # Bash(git:*) rather than four enumerated git prefixes, and the read-only gh verbs:
+          # this is the merge gate, a denial costs it a turn, and an enumeration is a list of
+          # what someone thought of. Task is here because a judgement this consequential should
+          # be able to farm out a question it wants a second read on.
           #
-          # gh pr comment is denied here though the inline pass is allowed it. The two are not the
-          # same job: that one is the reviewer and talks to the author, this one is the gate and
-          # its whole output is the verdict object. A gate that can also write prose onto the
-          # pull request has a second channel nothing reads, and can say something the verdict
-          # does not.
+          # What keeps this safe is the allowlist being default-deny: a gh verb absent from it is
+          # refused without anyone having had to predict it. The denies below are redundant on
+          # paper, and are here anyway because the cost of being wrong is the gate approving
+          # itself or rewriting what judges it.
+          #
+          # gh pr comment and gh pr review are denied: this stage's whole output is the verdict
+          # object, which the steps below post. A gate that can also write prose onto the pull
+          # request has a second channel nothing reads, and can say something the verdict does
+          # not.
           claude_args: >-
             --model stealth/space-bunny-alpha
             --effort max

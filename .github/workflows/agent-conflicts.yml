@@ -74,6 +74,8 @@ jobs:
                            | ["Agent · plan","Agent · implement","Agent · review",
                               "Agent · fix CI","Agent · followups","Claude · mention","Agent · conflicts"]
                            | index($w)) ] | length')
+          # This run is in that list too, and holds no agent slot while it looks.
+          busy=$(( busy - 1 ))
           free=$(( MAX_PARALLEL_AGENTS - busy ))
           echo "$busy agent run(s) in flight, $free slot(s) free"
           candidates=$(gh pr list --state open --limit 100 --json number,headRefName,isDraft,labels --jq '
