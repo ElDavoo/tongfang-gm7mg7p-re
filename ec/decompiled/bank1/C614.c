@@ -13,18 +13,18 @@
    evidence: ec/decompiled/bank1/C614.asm; ec/decompiled/bank1/C614.c
    basis: hand-decoded */
 
-void gate_0755_and_0440_dispatch(char param_1)
+void gate_0755_and_0440_dispatch(char r7_from_a_callee)
 
 {
   trampoline_to_c118();
-  if (param_1 != '\0') {
+  if (r7_from_a_callee != '\0') {
     trampoline_to_c10c();
-    if (param_1 != '\0') {
+    if (r7_from_a_callee != '\0') {
       if ((DAT_EXTMEM_0755 & 1) != 0) {
         toggle_045b_b0_and_0758_b3();
         return;
       }
-      if ((DAT_EXTMEM_0440 != '\0') && (DAT_EXTMEM_070d == '\0')) {
+      if ((XDATA_0440 != '\0') && (DAT_EXTMEM_070d == '\0')) {
         gate_0709b0_into_045b_branch();
         return;
       }

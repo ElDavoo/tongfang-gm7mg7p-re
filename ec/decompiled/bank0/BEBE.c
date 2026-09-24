@@ -13,14 +13,14 @@
    evidence: ec/decompiled/bank0/BEBE.asm; ec/decompiled/bank0/BEBE.c
    basis: hand-decoded */
 
-byte mod_070a_by_r5(byte param_1)
+byte mod_070a_by_r5(byte divisor_r5)
 
 {
   byte bVar1;
   
   bVar1 = 0;
-  if (param_1 != 0) {
-    bVar1 = DAT_EXTMEM_070a % param_1;
+  if (divisor_r5 != 0) {
+    bVar1 = DAT_EXTMEM_070a % divisor_r5;
   }
   return bVar1;
 }

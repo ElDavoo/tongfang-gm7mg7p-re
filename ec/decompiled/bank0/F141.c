@@ -11,12 +11,12 @@
    evidence: ec/decompiled/bank0/F141.asm; ec/decompiled/bank0/F141.c
    basis: hand-decoded */
 
-void store_r1_r5_r3_to_103d_103c_103b(undefined1 param_1,undefined1 param_2,undefined1 param_3)
+void store_r1_r5_r3_to_103d_103c_103b(undefined1 r1_value,undefined1 r3_value,undefined1 r5_value)
 
 {
-  DAT_EXTMEM_103d = param_1;
-  DAT_EXTMEM_103c = param_3;
-  DAT_EXTMEM_103b = param_2;
+  DAT_EXTMEM_103d = r1_value;
+  DAT_EXTMEM_103c = r5_value;
+  DAT_EXTMEM_103b = r3_value;
   return;
 }
 

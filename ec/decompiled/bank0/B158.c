@@ -25,7 +25,7 @@ void charge_target_update(char param_1)
   undefined1 *puVar9;
   undefined1 *puVar10;
   
-  store_be16_a(DAT_EXTMEM_0438,0xa48,DAT_EXTMEM_0439);
+  store_be16_a(BAT_VOLTAGE_MV_0,0xa48,BAT_VOLTAGE_MV_1);
   store_be16_a(BAT_CYCLE_COUNT_0,0xa4c,BAT_CYCLE_COUNT_1);
   cfg_cell_count_selector();
   if (param_1 == -0x40) {

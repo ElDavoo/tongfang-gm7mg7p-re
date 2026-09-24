@@ -10,10 +10,11 @@
    and 0x01 to 0x0A4A - if the first or second call sets carry or the third clears it; what 0xBB31's
    carry signifies is not established by this listing. Otherwise XDATA 0x044B selects which of
    0x08CB, 0x08C2 or 0x08CA is subtracted from 0x0A4A, the difference is passed to 0xBB39 and
-   written wherever 0xBB39 leaves DPTR, and the low byte at 0x0A4A is returned in R7. 0x044B,
-   0x08EA, 0x08CA, 0x08CB, 0x08C2, 0x0A49 and 0x0A4A have no entry in ec/annotations/registers.yaml.
+   written wherever 0xBB39 leaves DPTR, and the low byte at 0x0A4A is returned in R7.
+   ec/annotations/registers.yaml now carries 0x044B as XDATA_044B, an EC-side site found with its
+   meaning not established; 0x08EA, 0x08CA, 0x08CB, 0x08C2, 0x0A49 and 0x0A4A have no entry there.
    type: math
-   evidence: ec/decompiled/bank0/9A0E.asm; ec/decompiled/bank0/9A0E.c
+   evidence: ec/decompiled/bank0/9A0E.asm; ec/decompiled/bank0/9A0E.c; ec/annotations/registers.yaml
    basis: hand-decoded */
 
 char mul_div_08ea_then_sub_044b_selected(void)
@@ -34,10 +35,10 @@ char mul_div_08ea_then_sub_044b_selected(void)
   sub_dptr_byte_from_0a4a(0x8ca);
   if (((-1 < in_PSW) && (sub_dptr_byte_from_0a4a(0x8cb), -1 < in_PSW)) &&
      (sub_dptr_byte_from_0a4a(0x8c2), -1 < in_PSW)) {
-    if (DAT_EXTMEM_044b == '\x04') {
+    if (XDATA_044B == '\x04') {
       pcVar3 = &DAT_EXTMEM_08cb;
     }
-    else if (DAT_EXTMEM_044b == '\x02') {
+    else if (XDATA_044B == '\x02') {
       pcVar3 = &DAT_EXTMEM_08c2;
     }
     else {

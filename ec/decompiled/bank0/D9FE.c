@@ -13,11 +13,11 @@ void FUN_CODE_d9fe(void)
   
   DAT_EXTMEM_073c = DAT_EXTMEM_073c & 6 | 1;
   set_1605_bit1();
-  timer1_counted_delay_using_0a56(200);
+  timer1_counted_delay_using_0a56(-0x38);
   DAT_EXTMEM_1646 = 0x40;
   set_1607_bit6();
   set_1603_bit4();
-  timer1_counted_delay_using_0a56(5);
+  timer1_counted_delay_using_0a56('\x05');
   if ((DAT_EXTMEM_1666 >> 2 & 1) == 0) {
     if ((DAT_EXTMEM_166a >> 4 & 1) == 0) {
       DAT_EXTMEM_07d3 = 0x70;
@@ -43,7 +43,7 @@ void FUN_CODE_d9fe(void)
   DAT_EXTMEM_08b8 = 0x23;
   DAT_EXTMEM_08b9 = 0x25;
   DAT_EXTMEM_0832 = DAT_EXTMEM_0832 | 8;
-  DAT_EXTMEM_0456 = DAT_EXTMEM_0456 | 0xc0;
+  SYSTEM_ID = SYSTEM_ID | 0xc0;
   BIOS_OEM_2 = BIOS_OEM_2 & 0xfd;
   write_0a47_from_r7(0);
   write_0a47_from_r7(0x30);

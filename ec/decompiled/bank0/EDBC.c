@@ -11,15 +11,15 @@
    evidence: ec/decompiled/bank0/EDBC.asm; ec/decompiled/bank0/EDBC.c
    basis: hand-decoded */
 
-void four_calls_then_4777_flag(char param_1)
+void four_calls_then_4777_flag(short param_1,char param_2)
 
 {
   write_98_to_0f60();
-  store_a_and_zero_next_dptr_bytes(4);
+  store_a_and_zero_next_dptr_bytes(4,param_1);
   store_a_then_five_zeros(3);
   set_r3_09_r5_80_r7_01();
   stage_0a54_0a55_then_dispatch();
-  if (param_1 != '\0') {
+  if (param_2 != '\0') {
     return;
   }
   return;

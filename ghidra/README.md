@@ -10,9 +10,9 @@ that can drift.
 
 | Script | Role |
 |---|---|
-| `scripts/TongFang.java` | not a script: the context-file contract, the export-identity rules, the RFC4180 CSV split and Ghidra's placeholder-name list, shared so they cannot drift |
+| `scripts/TongFang.java` | not a script: the context-file contract, the export-identity rules, the RFC4180 CSV split, Ghidra's function- and variable-placeholder lists, and the decompiler-availability guard, shared so they cannot drift |
 | `scripts/SeedFunctions.java` | pre-script: disassemble and create functions at the seed addresses a spec file names, each with a `basis` saying why |
-| `scripts/ApplyAnnotations.java` | post-script: apply function names, types, comments and XDATA labels from the annotation CSVs |
+| `scripts/ApplyAnnotations.java` | post-script: apply function names, types, comments, XDATA labels and variable names from the annotation CSVs |
 | `scripts/ExportDecompile.java` | post-script: decompile and write the C, the index rows, and the per-program counts |
 | `scripts/ExportListing.java` | post-script: write the **disassembly** beside the decompile, and its own index rows |
 
@@ -33,11 +33,32 @@ they are given.
   `vector-target`, `stub`, `call-target`, `annotation`; it survives into the
   index, because a function boundary that came from a byte-scan census is a
   hypothesis and a reader is entitled to know which boundaries are.
-- `ApplyAnnotations.java <functions.csv|-> <xdata.csv|-> <report-dir>` —
-  the report goes to `<report-dir>/apply-<program>.tsv`, one per program,
-  because a batched run executes the script once per program and a single
-  filename would leave only the last one's report. Pass `-` for a file that
-  does not apply or does not exist yet.
+- `ApplyAnnotations.java <functions.csv|-> <xdata.csv|-> <report-dir>
+  [<variables.csv|->]` — the report goes to
+  `<report-dir>/apply-<program>.tsv`, one per program, because a batched run
+  executes the script once per program and a single filename would leave only
+  the last one's report. Pass `-` for a file that does not apply or does not
+  exist yet. The **fourth** argument is the variable layer, columns
+  `scope,addr,key,name,kind,comment,evidence,basis`, where `key` is the
+  decompiler placeholder being replaced; the EC driver passes
+  `ec/annotations/ghidra-variables.csv` and the other two pass `-`, because a
+  row in it is a reading of an 8051 decompiler's placeholder. The report gains
+  `variables_functions` (how many functions a row decompiled — the cost),
+  `variables_applied` and `variables_unmatched`.
+
+  Three arguments is still accepted, so a driver that has not been updated
+  keeps working; the variable layer is simply absent. Both the EC and BIOS
+  drivers pass four.
+
+  A variable row that matches nothing is **reported and counted, not fatal** —
+  the opposite of a function row, and deliberately so. A function row is keyed
+  on an address, stable forever. A variable row is keyed on a decompiler
+  placeholder, which `--mode rebuild-project` **consumes**: once the name is
+  persisted into the project, `param_1` no longer exists there, so rebuilding
+  from the same CSV finds nothing to rename. Making that an error would mean a
+  documented, routine operation breaks the build. A typo is caught instead, and
+  more strongly, by the EC driver's `--check`, which measures the committed
+  `.c` rather than the script's own say-so.
 - `ExportDecompile.java <outdir> <index.csv> per-function|per-program
   <context.txt> <seed-basis.csv|->` — appends tab-separated index rows and,
   per program, writes `<index.csv>.<program>.counts`. `<context.txt>` is
@@ -112,10 +133,17 @@ unpacked by something that dropped the exec bit on
 **empty string**. From the output alone that is indistinguishable from
 "this function will not decompile" — the same failure shape as the
 ConfuserEx anti-tamper trap in `windows/antitamper/README.md`.
-`ExportDecompile.java` raises it as a loud, specific failure naming the
+`TongFang.openDecompiler()` raises it as a loud, specific failure naming the
 files to check, and the drivers preflight the exec bit before starting a
 JVM. If you read a decompile failure anywhere in this repository, rule this
 out before concluding anything about the firmware.
+
+The guard lives in `TongFang.java` and not in the script that needs it,
+which is the point of that file. It used to sit in `ExportDecompile.java`
+alone — the file that exists so the check cannot drift did not have the
+check, and `ApplyAnnotations.java` now opens a decompiler of its own and
+would have carried a second copy. Any script that opens one calls
+`TongFang.openDecompiler()`.
 
 **Ghidra does not usefully decompile .NET.** It reports success and emits
 `halt_baddata()`. It does read .NET method names from the metadata, so a

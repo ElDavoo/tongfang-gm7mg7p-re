@@ -50,6 +50,23 @@ REPO = os.path.dirname(os.path.dirname(HERE))
 
 HEADER = ["scope", "addr", "name", "signature", "type", "comment", "evidence", "basis"]
 
+# The variable layer's header and its one controlled vocabulary. A separate pair
+# rather than a shared one because a function's row IS a function -- the build's
+# annotation_seeds() reads every row's addr as a seed and join_index() keys one
+# row per (scope, addr) -- and a function with eight named parameters cannot be
+# eight rows in that file. A variable row is keyed on a decompiler placeholder
+# instead, so several can share one (scope, addr).
+VARIABLE_HEADER = ["scope", "addr", "key", "name", "kind", "comment", "evidence", "basis"]
+
+# `kind` is to a variable row what `type` is to a function row: a closed
+# vocabulary, because an unchecked vocabulary becomes an unchecked claim. Most
+# `param_N` in this export are not parameters at all -- the decompiler renders a
+# callee's R7, a scratch register and an uninitialised DPTR as parameters
+# alike -- so `artifact` and `return` are not edge cases, they are most of the
+# batch. `unresolved` is a result, not a failure: the listing does not say, and
+# the placeholder stays.
+VARIABLE_KINDS = {"param", "local", "return", "artifact", "unresolved"}
+
 # The hand-written annotations file, used as the base a merge starts from. The
 # self-test needs a real one because the rows it writes have to resolve against
 # a real index; a synthetic base would test a different thing.
@@ -280,15 +297,16 @@ def self_test():
         print("  %s %s" % ("ok  " if cond else "FAIL", label))
         ok = ok and cond
 
-    def merge(rows, approved=None):
+    def merge(rows, approved=None, kind="functions"):
         # A fresh directory per case. The shard directory is globbed for *.csv,
         # so writing the output beside the input makes the previous case's
         # output the next case's input -- which is how six of these assertions
         # were failing for reasons that had nothing to do with what they test.
+        head = VARIABLE_HEADER if kind == "variables" else HEADER
         case = os.path.join(d, "case%d" % next(_counter))
         os.makedirs(case, exist_ok=True)
         with open(os.path.join(case, "t.csv"), "w", newline="") as f:
-            f.write(",".join(HEADER) + "\n")
+            f.write(",".join(head) + "\n")
             for r in rows:
                 f.write(r + "\n")
         out = os.path.join(d, "out%d.csv" % next(_counter))
@@ -301,7 +319,7 @@ def self_test():
         import io
         import contextlib
         buf = io.StringIO()
-        argv = [empty_base, case, out, "--report"]
+        argv = [empty_base, case, out, "--report", "--csv-kind", kind]
         if appr:
             argv += ["--approved", appr]
         with contextlib.redirect_stdout(buf):
@@ -366,6 +384,68 @@ def self_test():
                     "fan enable bit.")])
     check("a comment naming a register the function does not touch is rejected",
           "nor a function it names" in out)
+
+    # --- the variable layer -------------------------------------------------
+    # The same refusals, against the other file. A guard exercised only on the
+    # function layer is a guard that has never been shown to work on the
+    # variable one, and the two files take different paths through this tool:
+    # a different header, a different vocabulary, and a duplicate key that
+    # includes the placeholder.
+    def vrow(**kw):
+        base = dict(scope="bank0", addr="0x0EA2", key="param_1", name="ticks",
+                    kind="param", comment="The R7 the caller left, counted down "
+                                          "to zero at XDATA 0x0A56.",
+                    evidence="ec/decompiled/bank0/0EA2.asm", basis="hand-decoded")
+        base.update(kw)
+        return ",".join(
+            '"%s"' % base[h] if "," in base[h] else base[h] for h in VARIABLE_HEADER)
+
+    def vmerge(rows, approved=None):
+        return merge(rows, approved=approved, kind="variables")
+
+    _, acc, out = vmerge([vrow()])
+    check("a well-formed variable row is accepted", len(acc) >= 1)
+    _, acc, out = vmerge([vrow(kind="parameter")])
+    check("a variable kind outside the vocabulary is rejected",
+          "outside the controlled vocabulary" in out and "kind" in out)
+    _, acc, out = vmerge([vrow(evidence="")])
+    check("a variable row with empty evidence is rejected and not merged",
+          "empty evidence" in out and "no_evidence" not in out)
+    _, acc, out = vmerge([vrow(name="")])
+    check("a named variable row with an empty name is rejected",
+          "empty name" in out)
+    _, acc, out = vmerge([vrow(key="")])
+    check("a variable row with no key is rejected -- a row has to name the "
+          "placeholder it replaces", "empty key" in out)
+    _, acc, out = vmerge([vrow()])
+    check("an unresolved variable row needs no name, and is accepted for what "
+          "it says", "empty name" not in out)
+    _, acc, out = vmerge([vrow(kind="unresolved", name="ticks")])
+    check("an unresolved variable row that also carries a name is rejected",
+          "the placeholder stays in place" in out)
+    _, acc, out = vmerge([vrow(addr="0xABCD")])
+    check("a variable row at an address no function resolves to is rejected",
+          "resolves to no exported function" in out)
+    _, acc, out = vmerge([vrow(), vrow()])
+    check("a duplicate (scope, addr, key) is rejected -- the same placeholder "
+          "twice", "duplicate (scope, addr, key)" in out)
+    _, acc, out = vmerge([vrow(), vrow(key="param_2", name="other")])
+    check("two DIFFERENT placeholders in one function are both accepted, which "
+          "is the whole reason the key is part of the identity",
+          len(acc) == 2 and "duplicate" not in out)
+    _, acc, out = vmerge([
+        vrow(comment="Writes the charge target to XDATA 0x0777 and sets the "
+                     "fan enable bit.")])
+    check("a variable comment naming a register the function does not touch is "
+          "rejected too", "neither this function" in out)
+    _, acc, out = vmerge([vrow(), vrow(key="param_2", name="other")],
+                         approved=[vrow()])
+    check("a variable row the verifier did not approve is rejected",
+          "did not approve" in out)
+    _, acc, out = vmerge([vrow()], approved=[vrow()])
+    check("an approved variable row still gets in, and only that one",
+          len(acc) == 1)
+
     shutil.rmtree(d, ignore_errors=True)
     return 0 if ok else 1
 
@@ -385,7 +465,25 @@ def main():
                     "is kept only if its exact line is in this file")
     ap.add_argument("--report", action="store_true",
                     help="print every rejected row with its reason")
+    ap.add_argument("--csv-kind", choices=("functions", "variables"),
+                    default="functions",
+                    help="which annotation layer the shards are for. `functions` "
+                         "is ghidra-functions.csv, keyed on (scope, addr). "
+                         "`variables` is ghidra-variables.csv, keyed on "
+                         "(scope, addr, key) so one function may carry several "
+                         "rows, and its controlled vocabulary is `kind`")
     args = ap.parse_args()
+
+    # Which file this invocation is merging, and the two things that differ
+    # with it: the header a shard must carry, and the vocabulary its controlled
+    # column is checked against. Everything else -- the resolution rule, the
+    # evidence rule, the register rule, the verifier whitelist -- is the same
+    # machinery, which is the point: the calibration guard is not worth
+    # reimplementing for a second file.
+    variables = args.csv_kind == "variables"
+    header = VARIABLE_HEADER if variables else HEADER
+    vocab = VARIABLE_KINDS if variables else TYPES
+    vocab_column = "kind" if variables else "type"
 
     index = function_sources(args.index)
     # The listing index is the one that knows about .asm files.
@@ -397,7 +495,14 @@ def main():
                 prev["listing_file"] = row["out_file"]
 
     existing = load_existing(args.existing)
-    seen = {(r["scope"], addr_key(r["addr"])) for r in existing}
+    # A function row is identified by where it is; a variable row is
+    # identified by where it is AND which placeholder it replaces, because one
+    # function routinely has several. Keying variables on (scope, addr) alone
+    # would make every variable after the first a duplicate of the first.
+    def identity(r):
+        base = (r["scope"], addr_key(r["addr"]))
+        return base + (r.get("key", ""),) if variables else base
+    seen = {identity(r) for r in existing}
     merged = list(existing)
     # The hand-written rows are not this tool's to rename. A swept row that
     # collides with one of them takes a suffix; a hand-written row never does,
@@ -451,14 +556,14 @@ def main():
             # file with no data in it is not a finding.
             continue
         head, body = table[0], table[1:]
-        if head != HEADER:
+        if head != header:
             rejected.append((shard, "-", "header is %r, not the agreed %r"
-                             % (head, HEADER)))
+                             % (head, header)))
             continue
         for fields in body:
             if not fields:
                 continue
-            row = dict(zip(HEADER, (fields + [""] * len(HEADER))[:len(HEADER)]))
+            row = dict(zip(header, (fields + [""] * len(header))[:len(header)]))
             scope = (row.get("scope") or "").strip()
             addr = addr_key((row.get("addr") or "").strip())
             def bad(reason):
@@ -474,8 +579,26 @@ def main():
             if resolve(index, scope, addr) is None \
                     and resolve(index, "common", addr) is not None:
                 eff_scope = "common"
-            if (eff_scope, addr) in seen:
-                bad("duplicate (scope, addr); an earlier row already claims it")
+            key = (row.get("key") or "").strip() if variables else ""
+            # `name` is required of a function row and OPTIONAL of a variable
+            # one, because `kind=unresolved` is a row whose whole content is
+            # its comment: the listing does not say what the placeholder is, and
+            # the placeholder stays. Requiring a name there would force the
+            # precise thing this vocabulary exists to avoid.
+            if variables:
+                required = ["key", "comment", vocab_column, "evidence"]
+                if row.get("kind", "").strip() != "unresolved":
+                    required.append("name")
+            else:
+                required = ["name", "comment", vocab_column, "evidence"]
+            if variables and not key:
+                bad("empty key; a row has to name the placeholder it replaces")
+                continue
+            row_id = ((eff_scope, addr, key) if variables
+                      else (eff_scope, addr))
+            if row_id in seen:
+                bad("duplicate (scope, addr%s); an earlier row already claims it"
+                    % (", key" if variables else ""))
                 continue
             if resolve(index, eff_scope, addr) is None:
                 bad("resolves to no exported function")
@@ -492,15 +615,20 @@ def main():
                     % (len(row["comment"]), MAX_COMMENT_CHARS))
                 continue
             complete = True
-            for field in ("name", "comment", "type", "evidence"):
+            for field in required:
                 if not (row.get(field) or "").strip():
                     bad("empty %s" % field)
                     complete = False
                     break
             if complete:
-                if row["type"].strip() not in TYPES:
-                    bad("type %r is outside the controlled vocabulary"
-                        % row["type"].strip())
+                if row[vocab_column].strip() not in vocab:
+                    bad("%s %r is outside the controlled vocabulary"
+                        % (vocab_column, row[vocab_column].strip()))
+                    continue
+                if variables and row["kind"].strip() == "unresolved" \
+                        and (row.get("name") or "").strip():
+                    bad("kind=unresolved carries the name %s; unresolved means "
+                        "the placeholder stays in place" % row["name"].strip())
                     continue
                 if row["basis"].strip() not in BASES:
                     bad("basis %r is not one of %s"
@@ -562,9 +690,9 @@ def main():
                 row["addr"] = row["addr"].strip()
                 row["_swept"] = True
                 merged.append(row)
-                seen.add((eff_scope, addr))
+                seen.add(row_id)
                 accepted += 1
-                if row["type"].strip() == "unresolved":
+                if row[vocab_column].strip() == "unresolved":
                     unresolved += 1
 
     # Two agents naming two different functions the same thing is usually
@@ -576,10 +704,17 @@ def main():
     # is which. Suffixing with the low 16 bits of the address instead makes the
     # name self-locating and groups the identical ones together, which is the
     # fact worth seeing.
+    #
+    # A VARIABLE row is not disambiguated, and must not be. Two functions
+    # naming their own DPTR `entry_dptr` is two correct readings, not a
+    # collision -- the name is scoped to the function, exactly as a C local is.
+    # Suffixing them would make every variable in the tree unique for no reader's
+    # benefit and would break the `--check` that expects the name in the export.
     by_name = {}
-    for row in merged:
-        if row.get("name"):
-            by_name.setdefault((row["scope"], row["name"]), []).append(row)
+    if not variables:
+        for row in merged:
+            if row.get("name"):
+                by_name.setdefault((row["scope"], row["name"]), []).append(row)
     disambiguated = 0
     for (_scope, _name), group in by_name.items():
         if len(group) < 2:
@@ -600,17 +735,21 @@ def main():
 
     order = {p: i for i, p in enumerate(
         ["bank0", "bank1", "common", "pd"])}
-    merged.sort(key=lambda r: (order.get(r["scope"], 9), int(addr_key(r["addr"]), 16)))
+    # Variables sort by placeholder within a function, so the file groups the way
+    # a reader reads a function: bank, address, then param_1, param_2, ...
+    merged.sort(key=lambda r: (order.get(r["scope"], 9),
+                               int(addr_key(r["addr"]), 16),
+                               int(re.sub(r"\D", "", r.get("key") or "") or 0)))
     with open(args.out, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=HEADER, extrasaction="ignore",
+        w = csv.DictWriter(f, fieldnames=header, extrasaction="ignore",
                            lineterminator="\n")
         w.writeheader()
         for row in merged:
             w.writerow(row)
 
     print("\n  merged %d shard file(s): %d row(s) accepted, %d rejected, "
-          "%d of the accepted are type=unresolved"
-          % (len(shards), accepted, len(rejected), unresolved))
+          "%d of the accepted are %s=unresolved"
+          % (len(shards), accepted, len(rejected), unresolved, vocab_column))
     print("  %d name(s) disambiguated by address where two functions in one "
           "program were given the same name" % disambiguated)
     # Comment length, reported rather than capped. A median around 300

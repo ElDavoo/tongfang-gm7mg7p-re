@@ -46,7 +46,7 @@ void copy_code_table_into_0730_07a7(undefined1 param_1,char param_2)
   DAT_EXTMEM_0a51 = 0x61;
   if (DAT_EXTMEM_0a50 == '\0') {
     puVar3 = (undefined1 *)0xa51;
-    load_dptr_be16_from_xdata();
+    load_dptr_be16_from_xdata(0xa51);
     MODE_PL_DEFAULTS_GAMING_PL1_0 = *puVar3;
     sVar4 = 0x731;
     store_a_to_dptr_b939(*(undefined1 *)(CONCAT11(param_1,param_2) + 1));
@@ -60,7 +60,7 @@ void copy_code_table_into_0730_07a7(undefined1 param_1,char param_2)
     MODE_PL_DEFAULTS_TURBO_DSTATE_11 = *(char *)(CONCAT11(param_1,param_2) + 0xf) + '\x01';
     sVar4 = 0xa51;
     if ((BIOS_OEM_2 >> 2 & 1) == 0) {
-      load_dptr_be16_from_xdata();
+      load_dptr_be16_from_xdata(0xa51);
       load_code_byte_to_0734(4);
       sVar5 = 0x735;
       store_a_to_dptr_b939(*(undefined1 *)(sVar4 + 5));
@@ -68,7 +68,7 @@ void copy_code_table_into_0730_07a7(undefined1 param_1,char param_2)
       bVar2 = 7;
     }
     else {
-      load_dptr_be16_from_xdata();
+      load_dptr_be16_from_xdata(0xa51);
       load_code_byte_to_0734(8);
       sVar5 = 0x735;
       store_a_to_dptr_b939(*(undefined1 *)(sVar4 + 9));

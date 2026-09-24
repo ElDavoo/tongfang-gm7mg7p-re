@@ -19,7 +19,7 @@
    basis: hand-decoded */
 
 void shift_pair_then_sum_and_divide_by_four
-               (byte *param_1,byte param_2,undefined1 param_3,undefined1 param_4)
+               (byte *entry_dptr,byte r1_value,undefined1 r3_value,undefined1 r4_value)
 
 {
   bool bVar1;
@@ -28,25 +28,25 @@ void shift_pair_then_sum_and_divide_by_four
   byte bVar4;
   byte bVar5;
   
-  bVar4 = *param_1;
-  *param_1 = param_2;
-  bVar5 = param_1[1];
-  param_1[1] = bVar4;
-  bVar3 = *(byte *)CONCAT11(param_4,param_3);
+  bVar4 = *entry_dptr;
+  *entry_dptr = r1_value;
+  bVar5 = entry_dptr[1];
+  entry_dptr[1] = bVar4;
+  bVar3 = *(byte *)CONCAT11(r4_value,r3_value);
   cVar2 = CARRY1(bVar3,bVar4);
   bVar3 = bVar3 + bVar4;
   bVar4 = bVar3 + bVar5;
   if (CARRY1(bVar3,bVar5)) {
     cVar2 = cVar2 + '\x01';
   }
-  bVar5 = bVar4 + param_2;
-  if (CARRY1(bVar4,param_2)) {
+  bVar5 = bVar4 + r1_value;
+  if (CARRY1(bVar4,r1_value)) {
     cVar2 = cVar2 + '\x01';
   }
   if (((bVar5 >> 1 & 1) != 0) && (bVar1 = 0xfb < bVar5, bVar5 = bVar5 + 4, bVar1)) {
     cVar2 = cVar2 + '\x01';
   }
-  *(byte *)CONCAT11(param_4,param_3) = cVar2 << 6 | bVar5 >> 2;
+  *(byte *)CONCAT11(r4_value,r3_value) = cVar2 << 6 | bVar5 >> 2;
   return;
 }
 

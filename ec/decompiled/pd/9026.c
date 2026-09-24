@@ -14,10 +14,10 @@
    evidence: ec/decompiled/pd/9026.asm; ec/decompiled/pd/9026.c
    basis: hand-decoded */
 
-char make_dptr_r6_minus_3_9026(byte param_1,char param_2)
+char make_dptr_r6_minus_3_9026(byte param_1,char r6_value)
 
 {
-  return param_2 + (-3 - (((0xfe < param_1) << 7) >> 7));
+  return r6_value + (-3 - (((0xfe < param_1) << 7) >> 7));
 }
 
 

@@ -17,13 +17,13 @@
 void count_down_06e4_and_toggle_06e3(char param_1)
 
 {
-  if ((DAT_EXTMEM_045f == -0x25) && ((DAT_EXTMEM_04ff >> 5 & 1) != 0)) {
+  if ((XDATA_045F == -0x25) && ((DAT_EXTMEM_04ff >> 5 & 1) != 0)) {
     call_1738_1a0e_1a1a();
     return;
   }
   if (DAT_EXTMEM_06e4 != '\0') {
     DAT_EXTMEM_06e4 = DAT_EXTMEM_06e4 + -1;
-    step_counter_084e_dispatch();
+    step_counter_084e_dispatch(param_1);
     return;
   }
   DAT_EXTMEM_06e3 = DAT_EXTMEM_06e3 ^ 1;

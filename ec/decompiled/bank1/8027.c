@@ -50,7 +50,7 @@ void dec_acc_8027(char param_1,char *param_2,char param_3)
   if (DAT_EXTMEM_06c3 != '\0') {
     DAT_EXTMEM_06c3 = DAT_EXTMEM_06c3 + -1;
   }
-  if ((DAT_EXTMEM_0440 != '\0') && (DAT_EXTMEM_06d8 != '\0')) {
+  if ((XDATA_0440 != '\0') && (DAT_EXTMEM_06d8 != '\0')) {
     DAT_EXTMEM_06d8 = DAT_EXTMEM_06d8 + -1;
   }
   trampoline_to_c10c();
@@ -85,7 +85,7 @@ void dec_acc_8027(char param_1,char *param_2,char param_3)
   if (DAT_EXTMEM_06c5 != '\0') {
     DAT_EXTMEM_06c5 = DAT_EXTMEM_06c5 + -1;
   }
-  if ((DAT_EXTMEM_0440 != '\0') && (DAT_EXTMEM_085b != '\0')) {
+  if ((XDATA_0440 != '\0') && (DAT_EXTMEM_085b != '\0')) {
     DAT_EXTMEM_085b = DAT_EXTMEM_085b + -1;
   }
   if (DAT_EXTMEM_0986 != '\0') {
@@ -117,7 +117,7 @@ void dec_acc_8027(char param_1,char *param_2,char param_3)
      ) {
     DAT_EXTMEM_0621 = 0;
   }
-  if ((DAT_EXTMEM_0440 != '\0') && (DAT_EXTMEM_06db != '\0')) {
+  if ((XDATA_0440 != '\0') && (DAT_EXTMEM_06db != '\0')) {
     DAT_EXTMEM_06db = DAT_EXTMEM_06db + -1;
   }
   if (DAT_EXTMEM_080d != '\0') {

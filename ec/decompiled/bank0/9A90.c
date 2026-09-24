@@ -13,14 +13,14 @@
    evidence: ec/decompiled/bank0/9A90.asm; ec/decompiled/bank0/9A90.c
    basis: hand-decoded */
 
-void call_bd20_with_03_then_or_80_into_dptr(byte *param_1)
+void call_bd20_with_03_then_or_80_into_dptr(byte *dptr_from_bd20)
 
 {
   byte bVar1;
   
   clr_a();
   bVar1 = store_044b_then_read_08e2(3);
-  *param_1 = bVar1 | 0x80;
+  *dptr_from_bd20 = bVar1 | 0x80;
   return;
 }
 

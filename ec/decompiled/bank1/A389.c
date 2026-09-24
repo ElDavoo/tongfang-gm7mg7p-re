@@ -12,7 +12,7 @@
    evidence: ec/decompiled/bank1/A389.asm; ec/decompiled/bank1/A389.c
    basis: hand-decoded */
 
-void decrement_0980_then_run_19b4_198a(char param_1)
+void decrement_0980_then_run_19b4_198a(char r7_from_198a)
 
 {
   if ((DAT_EXTMEM_097f & 1) != 0) {
@@ -22,7 +22,7 @@ void decrement_0980_then_run_19b4_198a(char param_1)
       trampoline_to_c389();
       DAT_EXTMEM_0983 = DAT_EXTMEM_0983 & 0xfe;
       trampoline_to_c1e7();
-      if (param_1 == '\0') {
+      if (r7_from_198a == '\0') {
         load_dptr_c4c9_tail_jump_1100();
       }
     }

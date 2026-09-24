@@ -2857,3 +2857,155 @@ opening and ioctls against hand-built fixtures, and the two `windows/tools`
 suites fake `ecrw` precisely so no Windows box is needed: no EC is opened, no
 register is read back, and no HID node is touched. What they establish is that
 the tools behave as specified on those fixtures, and nothing about the machine.
+
+## 17. The decompiler's variables, measured: most `param_N` are not parameters (2026-09-24, issue #133)
+
+The function names say what the code does. The variable names still say what
+the decompiler called them, and issue #133 wanted that swept. Before writing a
+row, the counts were measured over the committed 2,708 `.c` files — and the
+issue's headline figures are wrong for two of the three families it names.
+
+| family | mentions | distinct names | **declarations** |
+|---|---|---|---|
+| `param_N` | 8,605 | 11 | **2,232** |
+| `cVarN` | 3,436 | 11 | 391 |
+| `bVarN` | 8,707 | 14 | 372 |
+| `uVarN` | 1,451 | 11 | 218 |
+| `sVarN` | 340 | — | 70 |
+| `DAT_EXTMEM_NNNN` | 13,967 | 1,099 addresses | n/a (globals) |
+
+**Two corrections to the issue, in place.** It reports "3,410 `param_N`" — 3,410
+is the `cVarN` figure; `param_N` is the largest family at 8,605 mentions. And
+its "~600 `uVarN`" is 1,451. Its `DAT_EXTMEM` figure of 14,399 is close as a
+mention count but is 1,099 **distinct addresses**, which is the number that
+matters: naming an address is one piece of work however often it is read.
+
+**The number that sizes the job is declarations, not mentions.** 3,957 distinct
+(file, variable) pairs — 2,232 parameters and 1,725 locals — across the 1,950
+of 2,708 files that have any placeholder at all; 758 files (28.0%) have
+nothing to rename. So this is roughly 2x the existing 1,769-row function sweep,
+not "roughly an order of magnitude" as the issue estimates. That is the
+difference between a plausible single PR and a fan-out, and it is why the first
+batch below is bounded on a predicate rather than a round number.
+
+These counts move when the export is regenerated — a symbol rename changes a
+mention count without changing a single declaration — so the declaration column
+is the one to quote and re-measure, and the method is a structural parse of each
+function's signature and locals block rather than a regex.
+
+### Most of them are not parameters, and the repository already said so
+
+45 rows in `ghidra-functions.csv` discuss a `param_N` by name, all of them
+`hand-decoded` and all citing their `.asm`, and in most the prose concludes the
+placeholder is a decompiler artifact:
+
+- `bank0,0x901C` — "*param_1 is a pointer the decompiler invented, not a 8051
+  calling convention*"
+- `bank1,0x8DBC` — "*The decompiler's param_1 is the R7 result of 0x1984, not
+  an argument passed in*"
+- `pd,0x3A0E` — "*the C's return param_1 & 1 makes it look like a test on a
+  parameter and is not what the instructions do*"
+- `bank0,0xF141` — "*param_1/param_3/param_2 names do not correspond to the
+  registers the instructions use*"
+
+A sweep that gave every `param_N` a confident semantic name would manufacture
+false precision on exactly the rows this repository has already flagged as
+misleading. That is the `CLAUDE.md` §4 failure in a new place, and it is why
+`ec/annotations/ghidra-variables.csv` carries a **`kind`** column rather than
+only a `name`: `param`, `local`, `return` (the decompiler rendering a callee's
+R7), `artifact` (it invented one), and `unresolved` — the listing does not say,
+so the placeholder stays. The first batch is 39 `artifact`, 11 `return`, 5
+`param` and 4 `unresolved` out of 60 rows across 46 functions, and that
+distribution is the finding: **83% of these placeholders are not incoming
+arguments at all** — 39 the decompiler invented, 11 a callee's R7 — and only 5
+are a value arriving in A.
+
+### The 4 `unresolved` rows, and why leaving a placeholder is an answer
+
+`bank1,0xBD20`'s `param_1` corresponds to nothing in the instructions. The
+listing calls 0x8898 and then tests the two returned bytes with a single
+`orl A,B` at 0xBD26; the decompiler split that one test into
+`cVar1 != 0 || param_1 != 0`, and which of A or B the second identifier is has
+not been established. `bank1,0xC4AF` is the same shape with `orl A,B` at
+0xC4B5, and its existing annotation already says "the decompiled C's param_1
+does not appear anywhere in these instructions". Naming either would be a
+confident sentence about a register the code does not touch, so both rows carry
+`kind=unresolved` and **no name**, and the export still shows `param_1`.
+
+That is a real result, not an unfinished row, and it is why `unresolved` is in
+the vocabulary: a mechanism that costs nothing to say, and a check that refuses
+an `unresolved` row carrying a name anyway.
+
+### The mechanism, proved before 45 rows were written
+
+Ghidra persists decompiler variable names in the program's database, so
+`HighFunctionDBUtil.updateDBVariable()` on a `HighFunction` from a decompile
+makes the *next* decompile emit the name. Proved end to end on the issue's own
+worked example before anything else was written: `bank0,0x0EA2` was renamed
+`param_1` → `ticks`, the real export-only build was run, and
+`ec/decompiled/bank0/0EA2.c` came back with `ticks` in the signature and the
+body and with no `param_1` anywhere in the code. The rename survives the
+round-trip through the database into a *second* decompile, so the design holds
+and the fallback in the plan — renaming on the `HighFunction` inside
+`ExportDecompile.java` instead — is not needed.
+
+`ApplyAnnotations.java` opens its `DecompInterface` **lazily**, only when the
+program has at least one matching row, because a JVM start is ~15 s and the
+BIOS and Windows builds have no variable layer at all.
+
+### Unmatched variable rows are counted, not fatal — and the reason is the build itself
+
+The opposite of function rows, and deliberately so. A function row is keyed on
+an address, stable forever. A variable row is keyed on a decompiler
+placeholder, which `--mode rebuild-project` **consumes**: once the name is
+persisted, `param_1` no longer exists in the project, and rebuilding from the
+same CSV would find nothing to rename. Making that an error would mean a
+documented, routine operation breaks the build.
+
+The concern behind the fatal rule — a stale annotation outliving the thing it
+named — is still enforced, by a check that is stronger rather than weaker:
+`--check` requires the committed `.c` at that `(scope, addr)` to contain the
+row's `name` **and** to no longer contain its `key`. Bidirectional, so a typo'd
+name and a consumed key are both caught, and it measures the output rather than
+the script's own report.
+
+One subtlety that made the check wrong on its first draft: the scan is over the
+**code**, not the whole file. A function's own plate comment is allowed to name
+the placeholder it is explaining — `0x901C`'s says "param_1 is a pointer the
+decompiler invented" — and a whole-file check would refuse the very rows whose
+comments say what the placeholder was.
+
+### The variable layer is not a back door for `registers.yaml`
+
+A variable row names a decompiler variable, never an XDATA address. Naming
+addresses stays with `gen_xdata_symbols.py` and `registers.yaml`, and the
+`status:` discipline behind them. Two locks: `--check` refuses any `name` that
+appears in `xdata-symbols.csv`, and `ApplyAnnotations.java` refuses a `pd`-scoped
+row whose name is an EC register name — the PD image has its own XDATA map
+(`ec/annotations/lightbar-bat-flow.md` §2), so an EC register name there is a
+first-class overclaim whatever else the row says.
+
+### Two defects this surfaced, neither fixed here
+
+1. **`--self-test --oracle` raises `NameError`.** It is documented in
+   `ec/ghidra/README.md` as the acceptance check for the whole EC pipeline, and
+   `self_test()` calls `opt_in_ghidra_oracle(args, work)`, which does not exist
+   in the module — 32 functions are defined and it is not one of them, with a
+   single repository-wide hit at the call site. The flag passes every other
+   assertion and then dies. Nothing in CI invokes it, which is how it has been
+   broken without announcing itself. Reported, not fixed: deciding what the
+   oracle should assert about a whole export is its own piece of work, and
+   bolting a plausible check onto a broken flag would make it look covered.
+2. **The export was stale before this change.** 203 committed `.c` files still
+   said `DAT_EXTMEM_0440` although `xdata-symbols.csv` has named that byte
+   `XDATA_0440` since `8a90bc0` (#160) — that commit regenerated
+   `xdata-symbols.csv` and not `ec/decompiled/`. Re-running the build here
+   catches it up, which is why the diff touches 200-odd files for 60 variable
+   names. Reconciling the function layer's own 25-row drift
+   (`manifest.csv` `annotations_applied` totals 1,787 against 1,769 rows, with
+   `annotations_unmatched` a hardcoded `0`) is separate work; the variable
+   counters are read back from `apply-<program>.tsv` from the start so they do
+   not start that way.
+
+**No hardware or Windows test is claimed here.** This change is static: the
+proof is the regenerated export, and nothing in it observes the machine.

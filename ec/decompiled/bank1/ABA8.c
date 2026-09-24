@@ -12,12 +12,12 @@
    evidence: ec/decompiled/bank1/ABA8.asm; ec/decompiled/bank1/ABA8.c
    basis: hand-decoded */
 
-void call_f3b8_9081_9199_ad68_d524(void)
+void call_f3b8_9081_9199_ad68_d524(char param_1)
 
 {
   if_04fe_bit7_clear_call_f3d7_f416_f436();
   count_down_06e4_and_toggle_06e3();
-  gate_1984_19a8_then_count_06cc();
+  gate_1984_19a8_then_count_06cc(param_1);
   round_robin_dispatch_on_0566();
   FUN_CODE_d524();
   return;

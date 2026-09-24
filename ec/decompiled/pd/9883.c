@@ -11,10 +11,10 @@
    evidence: ec/decompiled/pd/9883.asm; ec/decompiled/pd/9883.c
    basis: hand-decoded */
 
-char read_xdata_byte_to_r7(char *param_1)
+char read_xdata_byte_to_r7(char *entry_dptr)
 
 {
-  return *param_1 * '\x02';
+  return *entry_dptr * '\x02';
 }
 
 

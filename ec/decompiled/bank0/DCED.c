@@ -14,7 +14,7 @@
 void read_0459_tail_3f9d(void)
 
 {
-  FUN_CODE_3f9d(DAT_EXTMEM_0459);
+  FUN_CODE_3f9d(XDATA_0459);
   return;
 }
 

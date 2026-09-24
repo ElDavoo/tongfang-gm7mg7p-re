@@ -12,10 +12,10 @@
    evidence: ec/decompiled/bank0/901C.asm; ec/decompiled/bank0/901C.c
    basis: hand-decoded */
 
-void write_1_to_dptr(undefined1 *param_1)
+void write_1_to_dptr(undefined1 *entry_dptr)
 
 {
-  *param_1 = 1;
+  *entry_dptr = 1;
   return;
 }
 

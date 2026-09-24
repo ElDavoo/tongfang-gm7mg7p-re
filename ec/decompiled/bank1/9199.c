@@ -12,13 +12,14 @@
    evidence: ec/decompiled/bank1/9199.asm; ec/decompiled/bank1/9199.c
    basis: hand-decoded */
 
-void gate_1984_19a8_then_count_06cc(char param_1)
+void gate_1984_19a8_then_count_06cc(char r7_from_a_callee)
 
 {
   trampoline_to_c10c();
-  if (param_1 != '\0') {
+  if (r7_from_a_callee != '\0') {
     trampoline_to_c118();
-    if (((param_1 != '\0') && ((DAT_EXTMEM_0801 & 0x20) == 0)) && ((DAT_EXTMEM_0471 & 0x80) == 0)) {
+    if (((r7_from_a_callee != '\0') && ((DAT_EXTMEM_0801 & 0x20) == 0)) &&
+       ((DAT_EXTMEM_0471 & 0x80) == 0)) {
       if (DAT_EXTMEM_06cc == '\0') {
         load_dptr_c2d7_tail_jump_1100();
         return;

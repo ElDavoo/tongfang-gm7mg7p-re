@@ -16,7 +16,7 @@ void forward_to_9a86(void)
 
 {
   clr_a();
-  DAT_EXTMEM_044b = 2;
+  XDATA_044B = 2;
   return;
 }
 

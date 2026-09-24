@@ -22,7 +22,7 @@ void FUN_CODE_d673(void)
   puVar1 = &DAT_EXTMEM_07fd;
   write_a_to_dptr_set_1f06(0x5a);
   *puVar1 = 3;
-  timer1_counted_delay_using_0a56(0xfa);
+  timer1_counted_delay_using_0a56(-6);
   clear_1609_bit0_and_write_04_to_2006();
   call_0ea2_twice_with_fa();
   call_0ea2_twice_with_fa();

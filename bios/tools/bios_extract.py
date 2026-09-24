@@ -530,6 +530,12 @@ def post_scripts(ghidra, project_dir, out_c, out_src, out_fn, raw_index,
            "-postScript", "ApplyAnnotations.java",
            ANNOTATIONS if os.path.isfile(ANNOTATIONS) else "", "",
            os.path.join(work, "reports"),
+           # No variable layer: the fourth argument is the EC's
+           # ghidra-variables.csv, and a row in it is a reading of an 8051
+           # decompiler's placeholder. "-" rather than omitting it, because the
+           # script takes the arguments positionally and a missing fourth would
+           # be read as absent rather than as "none here".
+           "-",
            "-postScript", "ExportDecompile.java", out_src, raw_index,
            "per-program", context, basis,
            # The disassembly, one .asm per module beside its .c. Same reason as

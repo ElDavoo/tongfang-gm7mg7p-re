@@ -12,30 +12,29 @@ byte FUN_CODE_b737(undefined1 param_1,byte param_2)
   char cVar1;
   byte bVar2;
   char cVar3;
-  byte bVar4;
-  byte *pbVar5;
-  short sVar6;
+  byte *pbVar4;
+  short sVar5;
   
   cVar1 = read_06e6_xor_01();
   if ((((cVar1 != '\0') || (-1 < MANUAL_FAN_CTRL)) || ((DAT_EXTMEM_0490 & 1) == 0)) ||
      ((cVar1 = (DAT_EXTMEM_04ab < 100) << 7, DAT_EXTMEM_04ab != 100 ||
-      (pbVar5 = &DAT_EXTMEM_07c5, (DAT_EXTMEM_07c5 >> 4 & 1) != 0)))) {
+      (pbVar4 = &DAT_EXTMEM_07c5, (DAT_EXTMEM_07c5 >> 4 & 1) != 0)))) {
     bVar2 = clear_08eb_bit6_and_zero_08a0();
     return bVar2;
   }
   cVar3 = read_low_nibble_074c();
   if (cVar3 != '\0') {
-    param_2 = *pbVar5 & 0xf;
+    param_2 = *pbVar4 & 0xf;
     cVar1 = (param_2 < 5) << 7;
     if (param_2 != 5) {
       cVar3 = read_low_nibble_074c();
       if (cVar3 != '\b') {
-        param_2 = *pbVar5 & 0xf;
+        param_2 = *pbVar4 & 0xf;
         cVar1 = (param_2 < 9) << 7;
         if (param_2 != 9) {
           cVar3 = read_low_nibble_074c();
           if (cVar3 != '\x03') {
-            param_2 = *pbVar5 & 0xf;
+            param_2 = *pbVar4 & 0xf;
             cVar1 = (param_2 < 7) << 7;
             if (param_2 != 7) {
               test_0770_equals_04();
@@ -66,17 +65,16 @@ byte FUN_CODE_b737(undefined1 param_1,byte param_2)
   write_64_91_pair(0xa47);
 LAB_CODE_b7bb:
   if ((DAT_EXTMEM_08eb >> 6 & 1) == 1) {
-    sVar6 = 0xa47;
-    load_dptr_be16_from_xdata();
-    if (*(byte *)(sVar6 + 0xf) <= CPU_TEMP) {
-      return CPU_TEMP - *(byte *)(sVar6 + 0xf);
+    sVar5 = 0xa47;
+    load_dptr_be16_from_xdata(0xa47);
+    if (*(byte *)(sVar5 + 0xf) <= CPU_TEMP) {
+      return CPU_TEMP - *(byte *)(sVar5 + 0xf);
     }
     bVar2 = *(byte *)(CONCAT11(param_1,param_2) + 0x10);
-    bVar4 = GPU_TEMP - bVar2;
     if (bVar2 <= GPU_TEMP) {
-      return bVar4;
+      return GPU_TEMP - bVar2;
     }
-    finish_dptr_be16_load(bVar4,0xa47);
+    finish_dptr_be16_load(0xa47);
     cVar1 = '\0';
     bVar2 = code_byte_sub_from_044c(0x11);
     if (-1 < cVar1) {

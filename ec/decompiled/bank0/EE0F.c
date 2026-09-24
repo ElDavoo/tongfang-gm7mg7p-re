@@ -23,7 +23,7 @@ void send_0x12_via_f078_then_chain(char param_1)
   stage_0a54_0a55_then_dispatch();
   if (param_1 != '\0') {
     cVar1 = '\x14';
-    timer1_counted_delay_using_0a56();
+    timer1_counted_delay_using_0a56('\x14');
     set_0f60_84_and_0a56_block();
     stage_0a54_0a55_then_dispatch();
     if ((cVar1 != '\0') && (DAT_EXTMEM_0f81 != '\0')) {

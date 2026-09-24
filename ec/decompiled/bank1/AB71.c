@@ -10,10 +10,10 @@
    evidence: ec/decompiled/bank1/AB71.asm; ec/decompiled/bank1/AB71.c
    basis: hand-decoded */
 
-void forward_a4cf(void)
+void forward_a4cf(char param_1)
 
 {
-  send_ea_to_9ed4_when_06e6_eq_05();
+  send_ea_to_9ed4_when_06e6_eq_05(param_1);
   return;
 }
 

@@ -37,18 +37,17 @@ void magic_55aa_and_0704_countdown(char param_1)
     DAT_EXTMEM_06f7 = 0x80;
     DAT_EXTMEM_06f2 = 1;
   }
-  if (DAT_EXTMEM_045f != -0x25) {
-    if ((DAT_EXTMEM_045f == -0x56) && (DAT_EXTMEM_06d0 = DAT_EXTMEM_06d0 + 1, 1 < DAT_EXTMEM_06d0))
-    {
-      push_r5_into_070f_ring_when_gates_pass(DAT_EXTMEM_045e);
+  if (XDATA_045F != -0x25) {
+    if ((XDATA_045F == -0x56) && (DAT_EXTMEM_06d0 = DAT_EXTMEM_06d0 + 1, 1 < DAT_EXTMEM_06d0)) {
+      push_r5_into_070f_ring_when_gates_pass(XDATA_045E);
       DAT_EXTMEM_06d0 = 0;
-      DAT_EXTMEM_045f = '\0';
-      DAT_EXTMEM_045e = 0;
+      XDATA_045F = '\0';
+      XDATA_045E = 0;
     }
     DAT_EXTMEM_04fe = 0;
     DAT_EXTMEM_04ff = 0;
   }
-  if ((DAT_EXTMEM_045d == '\0') ||
+  if ((XDATA_045D == '\0') ||
      (((trampoline_to_c10c(), param_1 != '\0' && (trampoline_to_c118(), param_1 != '\0')) &&
       ((DAT_EXTMEM_0801 & 0x20) == 0)))) {
     return;

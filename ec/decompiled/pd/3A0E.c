@@ -11,11 +11,11 @@
    evidence: ec/decompiled/pd/3A0E.asm; ec/decompiled/pd/3A0E.c
    basis: hand-decoded */
 
-byte read4xdata_and_return_r7_bit0(byte param_1)
+byte read4xdata_and_return_r7_bit0(byte r7_from_0faf)
 
 {
   read4xdata_to_r4_r7();
-  return param_1 & 1;
+  return r7_from_0faf & 1;
 }
 
 

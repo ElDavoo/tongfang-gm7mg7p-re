@@ -25,7 +25,7 @@ void gate_then_copy_2200_to_075f(char param_1)
          (combine_0490_0495_049d_flags_into_carry(), -1 < (char)bVar1)) &&
         (FUN_CODE_159a(), param_1 == '\0')) && (load_dptr_c4e6_tail_jump_1100(), (char)bVar1 < '\0')
        ) {
-      DAT_EXTMEM_045d = 0;
+      XDATA_045D = 0;
       DAT_EXTMEM_0704 = 0;
       DAT_EXTMEM_075f = DAT_EXTMEM_2200;
       trampoline_to_c209();

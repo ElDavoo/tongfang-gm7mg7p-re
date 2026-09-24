@@ -14,12 +14,12 @@
    evidence: ec/decompiled/bank1/A064.asm; ec/decompiled/bank1/A064.c
    basis: hand-decoded */
 
-void gate_045a_bit0_set_0724_bit4(char param_1)
+void gate_045a_bit0_set_0724_bit4(char r7_from_19a8)
 
 {
-  if ((DAT_EXTMEM_045a & 1) != 0) {
+  if ((XDATA_045A & 1) != 0) {
     trampoline_to_c118();
-    if (param_1 == '\0') {
+    if (r7_from_19a8 == '\0') {
       load_dptr_c1d8_tail_jump_1100();
     }
     else {
@@ -29,7 +29,7 @@ void gate_045a_bit0_set_0724_bit4(char param_1)
       if ((DAT_EXTMEM_097a >> 4 & 1) == 0) {
         return;
       }
-      if ((DAT_EXTMEM_045a >> 4 & 1) == 0) {
+      if ((XDATA_045A >> 4 & 1) == 0) {
         return;
       }
       if ((DAT_EXTMEM_047b >> 4 & 1) == 0) {

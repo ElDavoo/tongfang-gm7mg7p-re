@@ -28,15 +28,15 @@ void load_r7_into_a(char param_1)
     return;
   }
   pbVar2 = (byte *)0xa47;
-  load_dptr_be16_from_xdata();
+  load_dptr_be16_from_xdata(0xa47);
   dptr_add_4x_a(DAT_EXTMEM_0a49);
   if (*pbVar2 <= GPU_TEMP) {
-    tail_call_7110_with_b4();
+    tail_call_7110_with_b4(GPU_TEMP - *pbVar2);
     code_byte_to_0a4a_then_push_r7(2);
     return;
   }
   sVar3 = 0xa47;
-  load_dptr_be16_from_xdata(GPU_TEMP - *pbVar2);
+  load_dptr_be16_from_xdata(0xa47);
   dptr_add_4x_a(DAT_EXTMEM_0a49);
   bVar1 = *(char *)(sVar3 + 1) + 1;
   if (GPU_TEMP < bVar1) {

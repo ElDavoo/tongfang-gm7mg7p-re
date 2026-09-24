@@ -4,7 +4,7 @@
 // Machine output carrying this repository's symbols. Not the vendor's source.
 
 
-void FUN_CODE_cbb0(byte *param_1,undefined1 param_2,byte param_3)
+void FUN_CODE_cbb0(byte *param_1,char param_2,byte param_3)
 
 {
   byte bVar1;
@@ -12,7 +12,7 @@ void FUN_CODE_cbb0(byte *param_1,undefined1 param_2,byte param_3)
   
   stub_set_r4_07();
   bVar1 = param_3 & 3 | *param_1 & 0xfc;
-  make_dptr_r4_minus_3();
+  make_dptr_r4_minus_3(param_2);
   *param_1 = bVar1;
   pbVar2 = (byte *)0xffc2;
   if (DAT_EXTMEM_ffc2 == -0x7e) {
@@ -23,18 +23,18 @@ void FUN_CODE_cbb0(byte *param_1,undefined1 param_2,byte param_3)
   *pbVar2 = *pbVar2 | 0x40;
   make_dptr_r6_minus_3_9028(param_2);
   bVar1 = param_3 << 7 | (param_3 & 1) * '\x02' | *pbVar2 & 0x7d;
-  make_dptr_r6_minus_3_9028(4,param_2);
+  make_dptr_r6_minus_3_9028(param_2);
   *pbVar2 = bVar1;
   if (param_3 == 1) {
     bVar1 = read_xdata_00b0_plus_r4();
     *pbVar2 = bVar1 | 0x10;
-    make_dptr_r6_minus_3_9028(0x60,param_2);
+    make_dptr_r6_minus_3_9028(param_2);
     *pbVar2 = *pbVar2 & 0xcf | 0x20;
     return;
   }
   bVar1 = read_xdata_00b0_plus_r4();
   *pbVar2 = bVar1 & 0xef;
-  make_dptr_r6_minus_3_9028(0x60,param_2);
+  make_dptr_r6_minus_3_9028(param_2);
   *pbVar2 = *pbVar2 & 0xcf | 0x10;
   return;
 }

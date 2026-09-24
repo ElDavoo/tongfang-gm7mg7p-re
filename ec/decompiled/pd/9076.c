@@ -13,10 +13,10 @@
    evidence: ec/decompiled/pd/9076.asm; ec/decompiled/pd/9076.c
    basis: hand-decoded */
 
-char read_byte_at_dptr_to_r1(char *param_1)
+char read_byte_at_dptr_to_r1(char *entry_dptr)
 
 {
-  return *param_1 + -3;
+  return *entry_dptr + -3;
 }
 
 

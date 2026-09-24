@@ -12,13 +12,13 @@
    evidence: ec/decompiled/bank1/8DBC.asm; ec/decompiled/bank1/8DBC.c
    basis: hand-decoded */
 
-void write_05_to_06c4_after_1984_check(char param_1)
+void write_05_to_06c4_after_1984_check(char r7_from_1984)
 
 {
   if ((DAT_EXTMEM_0800 & 0x80) == 0) {
     if (((DAT_EXTMEM_0801 & 0x40) != 0) && (DAT_EXTMEM_0630 == '\0')) {
       trampoline_to_c10c();
-      if (param_1 == '\0') {
+      if (r7_from_1984 == '\0') {
         return_with_carry_set();
         return;
       }

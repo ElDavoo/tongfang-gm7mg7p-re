@@ -27,7 +27,7 @@ void seed_tcc_defaults_from_ba36(undefined1 param_1,byte param_2)
   short sVar4;
   undefined2 uVar5;
   
-  if ((DAT_EXTMEM_06e6 != '\x01') || (DAT_EXTMEM_0440 == '\0')) {
+  if ((DAT_EXTMEM_06e6 != '\x01') || (XDATA_0440 == '\0')) {
     DAT_EXTMEM_098c = 0;
     return;
   }
@@ -54,7 +54,7 @@ void seed_tcc_defaults_from_ba36(undefined1 param_1,byte param_2)
   }
   DAT_EXTMEM_0a47 = 0x61;
   sVar4 = 0xa47;
-  load_dptr_be16_from_xdata();
+  load_dptr_be16_from_xdata(0xa47);
   MODE_TCC_OFFSET_DEFAULTS_GAMING_0 = *(undefined1 *)(sVar4 + 7);
   MODE_TCC_OFFSET_DEFAULTS_OFFICE_1 = *(undefined1 *)(CONCAT11(param_1,param_2) + 0xb);
   sVar4 = 0xa47;
@@ -74,7 +74,7 @@ void seed_tcc_defaults_from_ba36(undefined1 param_1,byte param_2)
     DAT_EXTMEM_0a49 = 1;
   }
 LAB_CODE_93f4:
-  if (DAT_EXTMEM_0456 < '\0') {
+  if (SYSTEM_ID < '\0') {
     FUN_CODE_c26e();
     if (param_2 == 0) {
       uVar5 = 0xa47;
@@ -84,15 +84,15 @@ LAB_CODE_93f4:
       return;
     }
     pbVar3 = (byte *)0xa47;
-    load_dptr_be16_from_xdata();
+    load_dptr_be16_from_xdata(0xa47);
     dptr_add_4x_a(DAT_EXTMEM_0a49);
     if (*pbVar3 <= GPU_TEMP) {
-      tail_call_7110_with_b4();
+      tail_call_7110_with_b4(GPU_TEMP - *pbVar3);
       code_byte_to_0a4a_then_push_r7(2);
       return;
     }
     sVar4 = 0xa47;
-    load_dptr_be16_from_xdata(GPU_TEMP - *pbVar3);
+    load_dptr_be16_from_xdata(0xa47);
     dptr_add_4x_a(DAT_EXTMEM_0a49);
     bVar1 = *(char *)(sVar4 + 1) + 1;
     if (GPU_TEMP < bVar1) {

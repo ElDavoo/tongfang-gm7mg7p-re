@@ -16,7 +16,7 @@
    evidence: ec/decompiled/bank0/E3D0.asm; ec/decompiled/bank0/E3D0.c
    basis: hand-decoded */
 
-void write_103f_through_0a56_pointer(undefined1 param_1)
+void write_103f_through_0a56_pointer(char param_1,char param_2,char param_3)
 
 {
   char cVar1;
@@ -31,15 +31,19 @@ void write_103f_through_0a56_pointer(undefined1 param_1)
       DAT_EXTMEM_103e = 0;
       DAT_EXTMEM_1063 = DAT_EXTMEM_1063 & 0xfe;
     }
-    store_r1_r5_r3_to_103d_103c_103b(param_1);
+    store_r1_r5_r3_to_103d_103c_103b(param_3,param_1,param_2);
     while( true ) {
       cVar1 = DAT_EXTMEM_0a54;
       if (DAT_EXTMEM_0a54 == '\0') {
         cVar1 = DAT_EXTMEM_0a55;
       }
       if (cVar1 == '\0') break;
-      store_r1_r5_r3_to_103d_103c_103b();
+      store_r1_r5_r3_to_103d_103c_103b(param_3,param_1,param_2);
       *(undefined1 *)CONCAT11(DAT_EXTMEM_0a56,DAT_EXTMEM_0a57) = DAT_EXTMEM_103f;
+      param_1 = param_1 + '\x01';
+      if ((param_1 == '\0') && (param_2 = param_2 + '\x01', param_2 == '\0')) {
+        param_3 = param_3 + '\x01';
+      }
       be16_add_0_1(0xa56);
       be16_add(0xa54,0xff);
     }

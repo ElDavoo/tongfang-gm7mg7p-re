@@ -12,11 +12,11 @@
    evidence: ec/decompiled/bank0/F177.asm; ec/decompiled/bank0/F177.c
    basis: hand-decoded */
 
-void store_a_and_zero_next_dptr_bytes(undefined1 param_1,short param_2)
+void store_a_and_zero_next_dptr_bytes(undefined1 value_a,short entry_dptr)
 
 {
-  *(undefined1 *)(param_2 + 1) = param_1;
-  *(undefined1 *)(param_2 + 2) = 0;
+  *(undefined1 *)(entry_dptr + 1) = value_a;
+  *(undefined1 *)(entry_dptr + 2) = 0;
   return;
 }
 

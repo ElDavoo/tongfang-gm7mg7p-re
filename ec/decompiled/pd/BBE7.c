@@ -22,48 +22,51 @@ void branch_on_ram_r5_then_set_indirect_bits(byte *param_1)
 
 {
   char cVar1;
-  undefined1 uVar2;
+  char cVar2;
   char cVar3;
   byte bVar4;
   
   cVar1 = BANK0_R5;
   if (BANK0_R5 == '\x01') {
-    uVar2 = BANK0_R7;
+    cVar2 = BANK0_R7;
     cVar3 = read_xdata_0a2c_step_17(BANK0_R7);
     if (cVar3 == '\0') {
-      make_dptr_r6_minus_3_9028(5,uVar2);
-      make_dptr_r6_minus_3_9028(5,0xf0,uVar2);
+      make_dptr_r6_minus_3_9028(cVar2);
+      cVar3 = cVar2;
+      make_dptr_r6_minus_3_9028(cVar2);
       load_r5_then_write_via_915f();
-      make_dptr_r6_minus_3_9028();
+      make_dptr_r6_minus_3_9028(cVar3);
       bVar4 = *param_1 & 0xdf | 2;
     }
     else {
-      make_dptr_r6_minus_3_9028(5,uVar2);
-      make_dptr_r6_minus_3_9028(5,0xf,uVar2);
+      make_dptr_r6_minus_3_9028(cVar2);
+      cVar3 = cVar2;
+      make_dptr_r6_minus_3_9028(cVar2);
       load_r5_then_write_via_915f();
-      make_dptr_r6_minus_3_9028();
+      make_dptr_r6_minus_3_9028(cVar3);
       bVar4 = *param_1 & 0xfd | 0x20;
     }
-    make_dptr_r6_minus_3_9028(6,uVar2);
+    make_dptr_r6_minus_3_9028(cVar2);
     *param_1 = bVar4;
-    make_dptr_r6_minus_3_9028(7,uVar2);
+    make_dptr_r6_minus_3_9028(cVar2);
     *param_1 = 3;
   }
   else {
-    uVar2 = BANK0_R7;
-    make_dptr_r6_minus_3_9028(5,BANK0_R7);
+    cVar2 = BANK0_R7;
+    cVar3 = BANK0_R7;
+    make_dptr_r6_minus_3_9028(BANK0_R7);
     write_a_to_dptr_set_r6_r4_ret6(0);
-    make_dptr_r6_minus_3_9028();
+    make_dptr_r6_minus_3_9028(cVar3);
     *param_1 = *param_1 | 0x22;
-    make_dptr_r6_minus_3_9028(7,uVar2);
+    make_dptr_r6_minus_3_9028(cVar2);
     bVar4 = *param_1 & 0xfe | 2;
-    make_dptr_r6_minus_3_9028(7,uVar2);
+    make_dptr_r6_minus_3_9028(cVar2);
     *param_1 = bVar4;
   }
-  uVar2 = BANK0_R7;
+  cVar2 = BANK0_R7;
   cVar3 = read_xdata_0a2c_step_17(BANK0_R4);
   write4xdata_from_r4_r7(0x7da,0,0,0,cVar3 == '\0');
-  BANK0_R7 = uVar2;
+  BANK0_R7 = cVar2;
   DAT_EXTMEM_07de = cVar1;
   FUN_CODE_f775();
   return;

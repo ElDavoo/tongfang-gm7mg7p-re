@@ -11,10 +11,12 @@
    according to bit 6 of XDATA 0x0456, reads XDATA 0x060C/0x060D, masks R2 (the high byte) with
    0x03, multiplies the 16-bit value by 10, divides by that divisor, and again writes R1 to XDATA
    0x0449. R7 is set nowhere in this listing or in 0x198A, so the origin of the selector is not
-   established, and none of 0x0434, 0x060C, 0x0456 or 0x0449 has an entry in
-   ec/annotations/registers.yaml.
+   established. ec/annotations/registers.yaml now carries 0x0434 as BAT_CURRENT_MA (the
+   little-endian mA pair this routine reads and divides by 100), 0x0456 as SYSTEM_ID -- the byte
+   whose bit 6 the 0xF3C9 call above already uses to pick its 0x22/0x44 divisor -- and 0x0449 as
+   XDATA_0449, an EC-side site found with its meaning not established; 0x060C has no entry there.
    type: math
-   evidence: ec/decompiled/bank1/F3D7.asm; ec/decompiled/bank1/F3D7.c
+   evidence: ec/decompiled/bank1/F3D7.asm; ec/decompiled/bank1/F3D7.c; ec/annotations/registers.yaml
    basis: hand-decoded */
 
 void store_scaled_quotient_0449(byte param_1,byte param_2,char param_3)
@@ -26,7 +28,7 @@ void store_scaled_quotient_0449(byte param_1,byte param_2,char param_3)
   if (param_3 == '\0') {
     read_xdata_pair_to_r1r2(0x434,100,0);
     mul_16_round_shift_subtract();
-    DAT_EXTMEM_0449 = param_1;
+    XDATA_0449 = param_1;
     return;
   }
   set_r3_22_or_44_from_0456_bit6();
@@ -36,7 +38,7 @@ void store_scaled_quotient_0449(byte param_1,byte param_2,char param_3)
   mul_16_round_shift_subtract
             ((char)((ushort)param_2 * 10 >> 8),
              (char)((ushort)param_2 * 10) + (char)((ushort)param_1 * 10 >> 8));
-  DAT_EXTMEM_0449 = uVar1;
+  XDATA_0449 = uVar1;
   return;
 }
 

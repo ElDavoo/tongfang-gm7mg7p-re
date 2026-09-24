@@ -14,12 +14,12 @@
    evidence: ec/decompiled/bank1/C45C.asm; ec/decompiled/bank1/C45C.c
    basis: hand-decoded */
 
-void subtract_shifted_reads_of_0646(undefined1 param_1,undefined1 param_2)
+void subtract_shifted_reads_of_0646(undefined1 r1_value,undefined1 r2_value)
 
 {
   read_xdata_pair_to_r3r4(0x646);
-  BANK0_R1 = param_1;
-  BANK0_R2 = param_2;
+  BANK0_R1 = r1_value;
+  BANK0_R2 = r2_value;
   ror16_r1r2_by_r7(4);
   sub_r1r2_from_r3r4();
   read_xdata_pair_to_r1r2(0x646);

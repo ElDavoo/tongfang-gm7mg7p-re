@@ -14,12 +14,12 @@
    evidence: ec/decompiled/bank0/9C1D.asm; ec/decompiled/bank0/9C1D.c
    basis: hand-decoded */
 
-void clear_two_bytes_at_dptr_then_9a90(undefined1 *param_1)
+void clear_two_bytes_at_dptr_then_9a90(undefined1 *entry_dptr)
 
 {
-  *param_1 = 0;
-  param_1[1] = 0;
-  call_bd20_with_03_then_or_80_into_dptr();
+  *entry_dptr = 0;
+  entry_dptr[1] = 0;
+  call_bd20_with_03_then_or_80_into_dptr(entry_dptr + 1);
   return;
 }
 
