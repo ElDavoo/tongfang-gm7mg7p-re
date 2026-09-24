@@ -2480,6 +2480,34 @@ split** — smaller in scope, but not the re-encode. The cheap tier now catches
 the edit a byte column cannot see; the tier that would say whether the edit was
 an improvement still has to be asked for.
 
+**What per-commit coverage gained, and what it still has not (2026-09-23, issue
+#149).** The `listing_digest` column shipped with known answers.
+`verify_reassembly.py --self-test` asserts the digest's canonical form, the
+`compare_digests()` failure paths, `GAP_FORMS` and `BIT_UNSUPPORTED` —
+including what the column exists to catch, a changed mnemonic under an
+unchanged byte column, and a changed byte column — and until this change they
+had no automated path at all. The cheap tier's case ran `--check` alone, and
+the deep tier, the only other thing that runs the tool, invokes it as
+`--work … --jobs 4` with no `--self-test`. So this was never a tier holding
+them back pending the schedule: the deep tier did not cover them either,
+scheduled or not, and there was no schedule to wait for. The case now runs
+`--check && --self-test`, and they are per commit, at **0.04 s** over five runs
+with a warm page cache here (0.22 s on the first run of a session, before
+anything is cached) against the 5.9 s baseline in the table above.
+
+The assertions are written before the self-test's no-assembler early exit, so
+a runner without `sdas8051` reaches them and a failure there is still a red
+gate. A runner *with* one assembles a four-instruction fixture of the
+self-test's own after them — part of that 0.04 s, not the re-encode, and not
+something the verdict turns on.
+
+The scope is worth keeping straight, because it is easy to read this as
+closing more than it does. These guard the **tool**, not the tree: that the
+digest means what the column says it means, and that the comparison rejects
+what it should. Detecting a listing-text edit is still the digest's job, still
+per commit, and still not verification. Verifying the text is still the
+re-encode's; it still does not run per commit and it still has no schedule.
+
 One premise of the paragraph above was itself unestablished when it was
 written, and is settled in §14f. The digests were taken without a re-encoding,
 so whether they were of the listings the last full `--report` measured was an
