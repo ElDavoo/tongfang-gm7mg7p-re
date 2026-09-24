@@ -7,7 +7,7 @@ cited back to its bank and address. The vendor's source isn't available, so
 this is its reconstruction. Tracked as issue #20.
 
 **Status: built.** `project/` holds a Ghidra 12.1.3 project with the three
-programs this firmware dump contains, `../decompiled/` holds 2,708
+programs this firmware dump contains, `../decompiled/` holds 2,709
 decompiled C files, and `annotations/ghidra-functions.csv` and
 `annotations/ghidra-variables.csv` are the editable layers that improve
 both. The five steps below are what it implements; the sections after them

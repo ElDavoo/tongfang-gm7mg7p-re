@@ -351,7 +351,7 @@ needs:
    *register write* alone required a 30s power-button EC reset to recover.
 
 Treat this as the honest state: the Ghidra project now exists
-(`ghidra/project/`, with 2,708 decompiled functions under `decompiled/`), so
+(`ghidra/project/`, with 2,709 decompiled functions under `decompiled/`), so
 items 1 and 2 above have a real starting point rather than a plan — but a
 *correct, complete* reassembly is still a project, not a script, and nothing
 here has been reassembled or reflashed. `ghidra/README.md` has the method, the
