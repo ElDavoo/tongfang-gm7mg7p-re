@@ -241,8 +241,9 @@ Two caveats belong next to the table rather than in a footnote.
 Static, hand-checked into the tool's watch table and pinned there by
 `../../windows/tools/test_gpu_block_watch.py`, which fails if any cell below
 stops matching `../../evidence/acpi/dsdt.dsl` or
-`../../ec/annotations/registers.yaml`. The DSDT names and bits come from the
-`ECMG` field list at `../../evidence/acpi/dsdt.dsl:52204-52212` and
+`../../ec/annotations/registers.yaml` — and if this table's own status column
+stops agreeing with the tool's. The DSDT names and bits come
+from the `ECMG` field list at `../../evidence/acpi/dsdt.dsl:52204-52212` and
 `:52238-52258`.
 
 | addr | DSDT field (bit) | `registers.yaml` `status:` | EC-side cross-reference |
@@ -251,7 +252,7 @@ stops matching `../../evidence/acpi/dsdt.dsl` or
 | `0x0744` | `CTVA` (`dsdt.dsl:52207`) | `confirmed-working` — `CTGP_DB_CTRL` | `xdata-registers.csv`: `main-ec`, `main-ec-001`, no `[writer]`-tagged site in the row |
 | `0x0745` | `DBCT` (`dsdt.dsl:52207`) | `confirmed-working` — `CTGP_DB_CTRL` | `xdata-registers.csv`: `main-ec`, `main-ec-001`, no `[writer]`-tagged site in the row |
 | `0x0746` | `MXDB` (`dsdt.dsl:52207`) | `confirmed-working` — `CTGP_DB_CTRL` | `xdata-registers.csv`: `main-ec`, `main-ec-001`, no `[writer]`-tagged site in the row |
-| `0x07C4` | `DBEN` b3, `DBST` b5 (`dsdt.dsl:52238`) | **no row** — see `../../ec/annotations/registers.yaml` | `xdata-registers.csv`: `main-ec`, `main-ec-001`, writer `bank0:0x94C0=set_07c4_bit4_from_r7` |
+| `0x07C4` | `DBEN` b3, `DBST` b5 (`dsdt.dsl:52238`) | `present-untested` — `GPU_DYNAMIC_BOOST_STATUS` | `xdata-registers.csv`: `main-ec`, `main-ec-001`, writer `bank0:0x94C0=set_07c4_bit4_from_r7`; that is the one site the row's own tag names, not the only one in the image — `../../ec/annotations/ec-07c4-07d5-sites.md` §2-§4.1 is the full EC-image census: four sites in `bank0:0x83FF=sync_0788_and_07d4_from_09e9` (`bank0:0x843D` read, `bank0:0x844A` read, `bank0:0x8483` and `bank0:0x8490` read-modify-write of bit 3) and `bank0:0x94C1`, a read-modify-write of bit 4 inside `0x94C0=set_07c4_bit4_from_r7`, fed from bit 1 of `CTGP_DB_CTRL` by its one caller at `bank0:0x9711` |
 | `0x07C5` | `WHMS` b5 (`dsdt.dsl:52243`) | **no row** — see `../../ec/annotations/registers.yaml` | `xdata-registers.csv`: `main-ec`, `main-ec-001`, writer `bank0:0xBB80=store_a_then_read_07c5` |
 | `0x07C6` | `WMS0` b0-1 (`dsdt.dsl:52246`) | `present-untested` — `AP_OEM_6` | `xdata-registers.csv`: `main-ec`, `main-ec-001`, no `[writer]`-tagged site in the row |
 | `0x07C7` | none declared | **no row** — see `../../ec/annotations/registers.yaml` | no row in `../../ec/annotations/xdata-registers.csv` |
@@ -266,9 +267,9 @@ stops matching `../../evidence/acpi/dsdt.dsl` or
 | `0x07D0` | `DBD1` (`dsdt.dsl:52248`) | `unknown-not-absent-DO-NOT-WRITE-BLIND` — `DBD1` | `xdata-registers.csv`: `pd`, `pd-027`, no `[writer]`-tagged site in the row (the row's own function tags are not a writer census; `../../ec/annotations/ec-0x07d0-sites.md` enumerates all 254) |
 | `0x07D1` | `DBD2` (`dsdt.dsl:52248`) | `unknown-not-absent-DO-NOT-WRITE-BLIND` — `DBD2` | `xdata-registers.csv`: `pd`, `pd-026`, no `[writer]`-tagged site in the row |
 | `0x07D2` | none declared | **no row** — see `../../ec/annotations/registers.yaml` | `xdata-registers.csv`: `pd`, `pd-016`, writers `pd:0x36F2`, `pd:0x68CE`, `pd:0xC755` |
-| `0x07D3` | `GFID` b4-6 (`dsdt.dsl:52251`) | **no row** — see `../../ec/annotations/registers.yaml` | `xdata-registers.csv`: `both`, `main-ec-001`, writers `bank0:0xBA46`, `pd:0xC755` |
-| `0x07D4` | `CPUA` (`dsdt.dsl:52254`) | **no row** — see `../../ec/annotations/registers.yaml` | `xdata-registers.csv`: `both`, `main-ec-001`, writers `pd:0xD013`, `pd:0xEE68` |
-| `0x07D5` | `DBAP` (`dsdt.dsl:52254`) | **no row** — see `../../ec/annotations/registers.yaml` | `xdata-registers.csv`: `both`, `main-ec-001`, writers `pd:0xD013`, `pd:0xEE68` |
+| `0x07D3` | `GFID` b4-6 (`dsdt.dsl:52251`) | `present-untested` — `GFID` | `xdata-registers.csv`: `both`, `main-ec-001`, writers `bank0:0xBA46`, `pd:0xC755`; `../../ec/annotations/ec-07c4-07d5-sites.md` §2, §4.2 is the full EC-image census: `bank0:0x94D5` read (tests `GFID == 3`), `bank0:0xBA46=clear_low_nibble_07d3` a read-modify-write of the low nibble, and `bank0:0xDA2D` and `bank0:0xDA41` outright writes of `0x30`/`0x40`/`0x50`/`0x70` — `GFID` 3, 4, 5 and 7, branching on bit 4 of `0x166A` |
+| `0x07D4` | `CPUA` (`dsdt.dsl:52254`) | `present-untested` — `CPUA` | `xdata-registers.csv`: `both`, `main-ec-001`, writers `pd:0xD013`, `pd:0xEE68`; `../../ec/annotations/ec-07c4-07d5-sites.md` §2, §3 adds the two bank0 sites `xdata-registers.csv` does not name: `bank0:0x8460` read and `bank0:0x8477` write, both in `bank0:0x83FF=sync_0788_and_07d4_from_09e9` and both under the `CTGP_DB_CTRL` (`0x0743`) bit-0 guard, copying `[0x09EA]` in |
+| `0x07D5` | `DBAP` (`dsdt.dsl:52254`) | `present-untested` — `DBAP` | `xdata-registers.csv`: `both`, `main-ec-001`, writers `pd:0xD013`, `pd:0xEE68`; `../../ec/annotations/ec-07c4-07d5-sites.md` §2, §3, §4.3 adds the four bank0 sites `xdata-registers.csv` does not name: `bank0:0x846C` read and `bank0:0x847F` write, both in `bank0:0x83FF=sync_0788_and_07d4_from_09e9`, copying `[0x09EB]` in; and `bank0:0xAD99` and `bank0:0xCC78`, both storing `0xFF`, the first inside `reset_xdata_flags_and_07d5_to_ff` and the second in a run of the same three instructions whose entry point is not determined |
 | `0x07D6` | `DBSP` (`dsdt.dsl:52254`) | **no row** — see `../../ec/annotations/registers.yaml` | `xdata-registers.csv`: `pd`, `pd-028`, writers `pd:0xBECB`, `pd:0xF247`, `pd:0xF440` |
 | `0x07D7` | `CGCT` (`dsdt.dsl:52254`) | **no row** — see `../../ec/annotations/registers.yaml` | `xdata-registers.csv`: `pd`, `pd-029`, writers `pd:0xABBF`, `pd:0xBECB` |
 
@@ -276,12 +277,14 @@ Four notes on reading the table, each of which is a place a table like this
 gets misread:
 
 - **"No row" is a statement about `registers.yaml`, not about the address.** It
-  is sixteen of the twenty-four, and it is the §4c retraction in table form
+  is 12 of the 24, and it is the §4c retraction in table form
   (`../../docs/findings.md` §4c retracted a "does not exist" claim built on a
-  zero-reference scan). Sixteen cells saying "no row" is the sentence most
-  likely to be read back as sixteen claims of absence; they are not, and the
-  per-site EC-side census of `0x07C4`'s own writers is the companion issue's
-  job rather than this table's.
+  zero-reference scan). 12 cells saying "no row" is the sentence most
+  likely to be read back as 12 claims of absence; they are not. The per-site
+  EC-side census of the four rows that do have one is
+  `../../ec/annotations/ec-07c4-07d5-sites.md`, which walks the fifteen
+  main-EC sites of `0x07C4`/`0x07D3`/`0x07D4`/`0x07D5` — a write *class* in
+  the instruction stream, not evidence the EC acts on the byte.
 - **`0x07C4`'s `DBEN` is bit 3, not bit 0.** §4o writes the gate as "`DBEN`
   (`0x07C4` bit 0)"; the field list at `dsdt.dsl:52238-52242` allocates three
   unnamed bits before it, so `DBEN` is bit 3 and `DBST` bit 5. The bit column
@@ -318,9 +321,10 @@ gets misread:
   `../../windows/tools/t1wr_callers.py --self-check` is what must still pass for
   its negative to mean what §4o says it means.
 - **#94** owns `ECRR` pacing and is why `--interval` is a starting point here.
-- **The companion issue** owns the per-site EC-side census of `0x07C4`'s own
-  writers. The `0x07C4` row above carries the one writer site that file already
-  commits; the census behind it is not this PR's.
+- **`../../ec/annotations/ec-07c4-07d5-sites.md`** is the per-site EC-side
+  census of the `0x07C4`/`0x07D3`/`0x07D4`/`0x07D5` rows above, all fifteen of
+  their main-EC sites. It supersedes the single-site credit this table gave
+  `0x07C4` before, and it reads a write class, not an effect.
 
 ---
 

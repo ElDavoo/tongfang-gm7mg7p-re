@@ -57,10 +57,10 @@ import time
 from ecrw import Ec, EcError
 from ec_watch import CsvSink, Marker, now
 
-# The 16 addresses here have no row in registers.yaml. That is a claim about
+# The 12 addresses here have no row in registers.yaml. That is a claim about
 # the file, not about the address: docs/findings.md §4c retracted a "does not
 # exist" reading of a zero-reference scan, and a table that says "no row"
-# sixteen times is the sentence most likely to be misread back into one.
+# twelve times is the sentence most likely to be misread back into one.
 NO_ROW = "no row in ec/annotations/registers.yaml"
 
 # (addr, DSDT field list name and bit, registers.yaml status, citation)
@@ -73,7 +73,8 @@ WATCH = [
      "dsdt.dsl:52207, registers.yaml CTGP_DB_CTRL"),
     (0x0746, "MXDB", "confirmed-working",
      "dsdt.dsl:52207, registers.yaml CTGP_DB_CTRL"),
-    (0x07C4, "DBEN b3, DBST b5", NO_ROW, "dsdt.dsl:52238"),
+    (0x07C4, "DBEN b3, DBST b5", "present-untested",
+     "dsdt.dsl:52238, registers.yaml GPU_DYNAMIC_BOOST_STATUS"),
     (0x07C5, "WHMS b5", NO_ROW, "dsdt.dsl:52243"),
     (0x07C6, "WMS0 b0-1", "present-untested",
      "dsdt.dsl:52246, registers.yaml AP_OEM_6"),
@@ -92,9 +93,12 @@ WATCH = [
     (0x07D1, "DBD2", "unknown-not-absent-DO-NOT-WRITE-BLIND",
      "dsdt.dsl:52248, registers.yaml DBD2"),
     (0x07D2, "(no DSDT field)", NO_ROW, "dsdt.dsl:52194"),
-    (0x07D3, "GFID b4-6", NO_ROW, "dsdt.dsl:52251"),
-    (0x07D4, "CPUA", NO_ROW, "dsdt.dsl:52254"),
-    (0x07D5, "DBAP", NO_ROW, "dsdt.dsl:52254"),
+    (0x07D3, "GFID b4-6", "present-untested",
+     "dsdt.dsl:52251, registers.yaml GFID"),
+    (0x07D4, "CPUA", "present-untested",
+     "dsdt.dsl:52254, registers.yaml CPUA"),
+    (0x07D5, "DBAP", "present-untested",
+     "dsdt.dsl:52254, registers.yaml DBAP"),
     (0x07D6, "DBSP", NO_ROW, "dsdt.dsl:52254"),
     (0x07D7, "CGCT", NO_ROW, "dsdt.dsl:52254"),
 ]
