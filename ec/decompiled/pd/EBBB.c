@@ -23,7 +23,7 @@ void init_sequence_with_ea_cleared(void)
   DAT_EXTMEM_ff4a = DAT_EXTMEM_ff4a | 1;
   set_ffc6_bit2();
   clear_ffc6_bit5();
-  FUN_CODE_efb9();
+  clear_0ffd3_ff88_ffe1_bits_then_ffd0_2e();
   clear_sfr_88_set_sfr_a8();
   init_sequence_then_ljmp_128d();
   write_00b8_pattern_then_copy_ffc0_to_00d5();
