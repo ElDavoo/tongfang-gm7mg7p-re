@@ -1,18 +1,34 @@
 # The XDATA register map: 1,172 addresses, attributed and clustered
 
-> **Census update, 2026-09-24 (merge of issue #133, PR #238).** The figures
-> below say 1,172 addresses / 14,801 references; the committed tree is now
-> **1,171 / 14,792** (main EC 1,062 / 13,931, PD references 864 -> 861), and the
-> self-test transcript further down is the current one. Nothing in the firmware
-> or the `.asm` changed. Applying `ghidra-variables.csv` fixes some functions'
-> signatures in Ghidra, and at bank1 `0x9EA1` that dropped an argument at the
-> call site: `bank1/E100.c` no longer passes `DAT_EXTMEM_0390`, which was this
-> census's only reference to `0x0390`. Nine C-level references moved: `0x0390`
-> -1 (and so leaves the census), `0x0391` -1, `0x04AB` -3, `0x07D8` -3, `0x08AD`
-> -1, and in the PD image `0x07D0` -1, `0x07C9` +1. The census is a lower bound
-> on the machine code and this is the annotation layer lowering it. Whether a
-> variable annotation should be allowed to change a caller's arity at all is an
-> open question, not settled here (`../../docs/findings.md` §18).
+> **Census update, 2026-09-24 (merge of issue #133, PR #238; settled by issue
+> #259).** The figures below say 1,172 addresses / 14,801 references; the
+> committed tree is now **1,171 / 14,792** (main EC 1,062 / 13,931, PD
+> references 864 -> 861), and the self-test transcript further down is the
+> current one. Nothing in the firmware or the `.asm` changed. Applying
+> `ghidra-variables.csv` fixes some functions' signatures in Ghidra, and at
+> bank1 `0x9EA1` that dropped an argument at the call site: `bank1/E100.c` no
+> longer passes `DAT_EXTMEM_0390`, which was this census's only reference to
+> `0x0390`. Nine C-level references moved: `0x0390` -1 (and so leaves the
+> census), `0x0391` -1, `0x04AB` -3, `0x07D8` -3, `0x08AD` -1, and in the PD
+> image `0x07D0` -1, `0x07C9` +1.
+>
+> **None of the nine is a reference genuinely gone from the machine code**, and
+> **§7.1 accounts for all seven addresses** — with one exception worth reading
+> before anything else here: `0x0390` still has its `mov DPTR,#0x390` site at
+> `bank1/E100.asm:70`, is read at `9EA1.asm:19` and written at `9EA1.asm:43`,
+> and a `0x0390` row with no census reference to go with it is what a present
+> byte whose *spelling* fell out of one method looks like. The census is a
+> lower bound on the machine code; a zero in it is "not found by this method",
+> never absent.
+>
+> What the nine settled, for the next annotation author: a variable row **may**
+> change a caller's arity, and that is a correction rather than a loss — the
+> committed four-argument signature is the one that matches the listing. A pin
+> moves only with a measured reason recorded in the same change. Issue #259
+> took that measurement and the pins did not move: naming the byte changed no
+> exported `.c` and no `manifest.csv` row. The rule is carried in
+> `ghidra/scripts/ApplyAnnotations.java`, `ec/annotations/README.md` and
+> `../../docs/findings.md` §18.
 
 Issue #132 asks for a register map, on the argument that the decompiled EC
 touches 1,134 XDATA addresses and that "**six** of those 1,134 are named" — so
@@ -100,7 +116,6 @@ the two direction oracles are §4.3's; everything above and below them is the
 census, and the census did not move.
 
 ```console
-$ python3 ec/tools/xdata_register_map.py --self-test
 xdata_register_map.py --self-test
   ok    index.csv and the committed .c files still describe each other
   ok    the annotation CSV and index.csv agree on every address they share
@@ -136,7 +151,7 @@ xdata_register_map.py --self-test
   ok    main + PD equals the file-wide total on both axes
   ok    oracle: the top two main-EC addresses by reference count are 0x0440=181, 0x08A8=170 (got 0x0440=181, 0x08A8=170)
   ok    the 0x07D8 correction: its main-EC reference is spelled MODE_TCC_OFFSET_DEFAULTS_GAMING_0, and the PD image spells the same address DAT_EXTMEM_07d8 because it is not named there
-  ok    of the 172 named addresses, 150 appear in the decompiled tree at all (got 150: 0x030E, 0x030F, 0x0400, 0x0401, 0x0403, 0x0432, 0x0434, 0x0435, 0x0436, 0x0437, 0x0438, 0x0439, 0x043C, 0x043D, 0x043E, 0x043F, 0x0440, 0x0442, 0x0443, 0x0448, 0x0449, 0x044B, 0x044C, 0x044F, 0x0450, 0x0451, 0x0452, 0x0454, 0x0455, 0x0456, 0x0458, 0x0459, 0x045A, 0x045B, 0x045C, 0x045D, 0x045E, 0x045F, 0x0460, 0x0468, 0x049F, 0x04A6, 0x04A7, 0x0522, 0x0523, 0x055F, 0x0621, 0x0635, 0x0636, 0x0637, 0x0638, 0x0639, 0x063A, 0x06C2, 0x06C3, 0x06C5, 0x06D1, 0x06D2, 0x06D6, 0x06D8, 0x06D9, 0x06DA, 0x06DB, 0x06F3, 0x0706, 0x070B, 0x070D, 0x0723, 0x0730, 0x0731, 0x0732, 0x0734, 0x0736, 0x0737, 0x0740, 0x0741, 0x0743, 0x0744, 0x0745, 0x0746, 0x074E, 0x0751, 0x075B, 0x075C, 0x0766, 0x0767, 0x0768, 0x0782, 0x0783, 0x0784, 0x0785, 0x0786, 0x078C, 0x07A6, 0x07A7, 0x07A8, 0x07A9, 0x07AA, 0x07C4, 0x07C6, 0x07CC, 0x07D0, 0x07D1, 0x07D3, 0x07D4, 0x07D5, 0x07D8, 0x07D9, 0x07DA, 0x07E2, 0x07F3, 0x07F6, 0x0809, 0x080C, 0x080D, 0x0811, 0x0843, 0x0844, 0x085B, 0x0860, 0x0862, 0x0865, 0x0866, 0x0867, 0x0868, 0x0869, 0x086A, 0x086B, 0x086D, 0x086E, 0x0890, 0x089E, 0x089F, 0x08A0, 0x08A2, 0x08A7, 0x08A8, 0x08E4, 0x08EB, 0x0981, 0x0982, 0x0985, 0x0986, 0x09CE, 0x09E6, 0x09E7, 0x1C39, 0x1C3A, 0x1F01, 0x1F07)
+  ok    of the 173 named addresses, 150 appear in the decompiled tree at all (got 150: 0x030E, 0x030F, 0x0400, 0x0401, 0x0403, 0x0432, 0x0434, 0x0435, 0x0436, 0x0437, 0x0438, 0x0439, 0x043C, 0x043D, 0x043E, 0x043F, 0x0440, 0x0442, 0x0443, 0x0448, 0x0449, 0x044B, 0x044C, 0x044F, 0x0450, 0x0451, 0x0452, 0x0454, 0x0455, 0x0456, 0x0458, 0x0459, 0x045A, 0x045B, 0x045C, 0x045D, 0x045E, 0x045F, 0x0460, 0x0468, 0x049F, 0x04A6, 0x04A7, 0x0522, 0x0523, 0x055F, 0x0621, 0x0635, 0x0636, 0x0637, 0x0638, 0x0639, 0x063A, 0x06C2, 0x06C3, 0x06C5, 0x06D1, 0x06D2, 0x06D6, 0x06D8, 0x06D9, 0x06DA, 0x06DB, 0x06F3, 0x0706, 0x070B, 0x070D, 0x0723, 0x0730, 0x0731, 0x0732, 0x0734, 0x0736, 0x0737, 0x0740, 0x0741, 0x0743, 0x0744, 0x0745, 0x0746, 0x074E, 0x0751, 0x075B, 0x075C, 0x0766, 0x0767, 0x0768, 0x0782, 0x0783, 0x0784, 0x0785, 0x0786, 0x078C, 0x07A6, 0x07A7, 0x07A8, 0x07A9, 0x07AA, 0x07C4, 0x07C6, 0x07CC, 0x07D0, 0x07D1, 0x07D3, 0x07D4, 0x07D5, 0x07D8, 0x07D9, 0x07DA, 0x07E2, 0x07F3, 0x07F6, 0x0809, 0x080C, 0x080D, 0x0811, 0x0843, 0x0844, 0x085B, 0x0860, 0x0862, 0x0865, 0x0866, 0x0867, 0x0868, 0x0869, 0x086A, 0x086B, 0x086D, 0x086E, 0x0890, 0x089E, 0x089F, 0x08A0, 0x08A2, 0x08A7, 0x08A8, 0x08E4, 0x08EB, 0x0981, 0x0982, 0x0985, 0x0986, 0x09CE, 0x09E6, 0x09E7, 0x1C39, 0x1C3A, 0x1F01, 0x1F07)
   ok    every address the tree spells by symbol is in the generated symbol table, so the name column can never be empty for one
   ok    the two blind-spot addresses are 0x0733, 0x0735; of them the one that is spelled at all is 0x0733, behind a CODE pointer (got 0x0733), and 0x0735 is not findable by any spelling
   ok    issue #181: all 10 of pd-001's 0xFFxx addresses are carried by a `mov DPTR,#imm16` in the committed .asm, each to a `movx` -- and no 8051 direct-addressing opcode takes a 16-bit operand, so none of them can be a direct address whatever the decompiler spelled it (not found by this method: none)
@@ -146,6 +161,8 @@ xdata_register_map.py --self-test
   ok    every one of those 23 is backed by an encoding in the .asm, so the region is XDATA by opcode and not only by the decompiler's spelling (not found by this method: none)
   ok    exactly 3 of them -- 0xFFC1, 0xFFD1, 0xFFDB -- are reached by `inc DPTR` from the address below and never by a `mov DPTR` of their own, which is why a `90 hi lo` byte scan finds 20 of the 23 and misses these 3 (got 0xFFC1, 0xFFD1, 0xFFDB)
   ok    and no main-EC census address reaches 0xF000 either, the main EC's highest being 0x9000 (got 0 at or above 0xF000 and a ceiling of 0x9000), so the 0xF000-0xFFFF run is the PD image's own in the census -- which is a claim about a census, and a census is a lower bound
+  ok    issue #259: 0x0390 is carried by a `mov DPTR,#imm16` in the committed bank1 .asm, reached at bank1/E100.asm:E176 -- an .asm is never rewritten by an annotation, so the byte has a site in the machine code whatever the C spells
+  ok    and it still has no row in the census, because the callee at bank1 0x9EA1 renders the address as CONCAT11(r4_value,r3_value) over register names and the call site passes only the constants 0x90 and 3, which this token pattern cannot reach (census row present: False)
   ok    the hand-checked direction oracle: 5 addresses, 0x0440, 0x0443, 0x04FE, 0x04FF, 0x0860, each read off the decompiled C by hand rather than by this tool
   ok    the §4.1 bucket totals, read 8317 write 3186 read+write 2476 passed-to-call 543 address-taken 270 (got read 8317 write 3186 read+write 2476 passed-to-call 543 address-taken 270)
   ok    the `name` column is populated exactly for the addresses the symbol table names, independently of how the tree spells them
@@ -838,6 +855,100 @@ within those the two this file has always named:
   as likely to be common-area code as XDATA, and importing them would claim an
   XDATA address on a token that says *code*. The self-test pins the one
   address this hides, and §6 is where the other limit lives.
+
+### 7.1 The nine references the annotation layer moved, address by address
+
+PR #238 lowered the census by nine C-level references and the first thing a
+reader owes them is whether that is a loss. **It is not: none of the seven
+addresses is gone from the machine code.** All of them still carry their
+`mov DPTR,#addr` site or sites in `ec/firmware/GMxMGxx_11.800`, counted with
+`trace_xdata_refs.sites_for()` and split per image exactly as
+`check_register_counts.py` splits it.
+
+What moved is the *spelling*. This census is a token pattern —
+`occurrence_re()` in `xdata_register_map.py` matches `DAT_EXTMEM_([0-9a-fA-F]{4})`
+plus the names in `xdata-symbols.csv`, and nothing else — so it cannot see an
+address the decompiler spells as arithmetic or as a register name. The `.asm`
+sites are the ground truth and the C is a reading of them, which is the same
+order this file takes everywhere else.
+
+| address | `.asm` sites | main EC | PD | census `refs` after |
+|---|---:|---:|---:|---:|
+| `0x0390` | 1 | 1 (`bank1`) | 0 | row gone |
+| `0x0391` | 3 | 3 (`bank1`) | 0 | 2 |
+| `0x04AB` | 16 | 16 | 0 | 30 |
+| `0x07D8` | 34 | 1 | 33 | 28 |
+| `0x08AD` | 7 | 7 (`bank0`) | 0 | 10 |
+| `0x07D0` | 254 | 0 | 254 | 41 |
+| `0x07C9` | 15 | 0 | 15 | 23 |
+
+- **`0x0390` — reference moved, and the R2 store beside it is a dead load.**
+  `bank1/E100.asm:70` is the site's `mov DPTR, #0x390`. `E100.asm:72` moves the
+  byte into R2, and *that* R2 is dead: `9EA1` reads R1, R3, R4, R5, R6 and R7
+  and never names R2, and `E100.asm:100` overwrites R2 with no intervening
+  read. But the same site hands the **address** to the callee as R3:R4
+  (`E100.asm:73-74`), and `0x9EA1` dereferences that pair — reading it at
+  `9EA1.asm:19` and writing it at `9EA1.asm:43`. So the dead store is a sibling
+  of a live reference, not the whole of it, and the byte has both a reader and
+  a writer. The C spells neither: the callee renders the pair
+  `CONCAT11(r4_value,r3_value)` (`9EA1.c:35`, `:49`) and the call site passes
+  only the constants `0x90, 3` (`E100.c:51`). `0x0390` now has a
+  `registers.yaml` row (`XDATA_0390`, `present-untested`) and a `.asm` witness
+  in `--self-test`.
+- **`0x0391` — reference moved**, by the same mechanism one byte up, and it has
+  three sites: `E237.asm:33`, `E100.asm:67`, `DB0B.asm:101`. The census's two
+  surviving references are the `E100` read and the `DB0B` write. The one that
+  left is the `E237` call site's R2 argument, whose value that same site hands
+  the callee as R3:R4 (`E237.asm:36-37`) — alive exactly as `0x0390` is, and
+  `E237.asm` likewise writes R2 once at line 35 and never reads it. The census
+  row understates the byte.
+- **`0x04AB` (-3) and `0x08AD` (-1) — reference moved**, the same class, and
+  not new: 16 and 7 `.asm` sites against 30 and 10 C references. Both have been
+  partly out of the token pattern's reach for some time, in places the
+  decompiler spells arithmetically.
+- **`0x07D8` (-3) — reference moved, and the symbol layer is involved.** It is
+  `MODE_TCC_OFFSET_DEFAULTS_GAMING_0` at `xdata-symbols.csv:100`, so part of
+  the movement is `DAT_EXTMEM_`-to-symbol renaming and part is the arity change.
+  1 main-EC and 33 PD `.asm` sites against 28 C references.
+- **`0x07D0` (-1, PD) — reference moved.** 254 PD `.asm` sites against 41 C
+  references. `gen_xdata_symbols.py` refuses to name the PD image, so this one
+  stays `DAT_EXTMEM_`-spelled and its movement is not a symbol effect.
+- **`0x07C9` (+1, PD) — not an annotation effect, and not unexplained either.**
+  This is the one that gained, so it is worth being exact about. Across the
+  #238 merge the only one of the two files the census names for this address
+  that moved is `ec/decompiled/pd/7B14.c`, 21 -> 22 `DAT_EXTMEM_07c9` tokens;
+  `EA67.c` and `7B14.asm` are byte-identical across the merge, and `0x7B14` has
+  no row in `ghidra-functions.csv` or `ghidra-variables.csv`, so no annotation
+  touched it. The added token is the statement `cVar2 = DAT_EXTMEM_07c9;`, and
+  the old call's first argument, the constant `0x1c`, is gone from the C —
+  while `7B14.asm:233-234` still shows `clr A` / `add A, #0x1c` building it. By
+  this tree's own rule that makes the new C a *worse* reading at that argument.
+  So the census gained a C-level token that does not correspond to a new
+  machine access, and dropped a constant it had been printing correctly. What
+  made Ghidra re-render the file is not recorded in the committed tree — there
+  is no annotation on `0x7B14` to point at — and that is the honest limit of
+  this account.
+
+**The policy these seven lines settle.** A variable row may change a caller's
+arity, and that is a correction rather than a loss: the committed four-argument
+signature is the one that matches the listing, and the fifth argument the
+decompiler used to promote was an unconsumed scratch register. The census
+counts C-level references and is therefore a lower bound on the machine code; a
+pin moves only with a measured reason recorded in the same change; and an
+address that leaves the census is "not found by this method" until an `.asm`
+witness says otherwise. The same rule is written where an annotation author
+meets it — `ghidra/scripts/ApplyAnnotations.java`, `ec/annotations/README.md`,
+and `../../docs/findings.md` §18.
+
+**The measurement, which is the part that was actually open.** Issue #259 added
+the `XDATA_0390` row, so `xdata-symbols.csv` names the byte and
+`ApplyAnnotations.java`'s `createData` defines it. Re-running the export in the
+default export-only mode moved no `.c` and no `manifest.csv` row: the export is
+byte-identical to the committed tree, the decompiler still renders the pair as
+`CONCAT11`, and the census does not rise. `ORACLE` and `BUCKET_TOTALS`
+therefore stand as committed, and the transcript in §1 carries a `0x0390`
+witness that fails if *either* half of the fact stops being true — the site
+still in the `.asm`, and the census row still absent.
 
 ## 8. What follows
 

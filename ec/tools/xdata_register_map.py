@@ -229,7 +229,28 @@ TOP_CALLEES = 3
 # references moved in all (0x0390 -1, 0x0391 -1, 0x04AB -3, 0x07D8 -3, 0x08AD -1;
 # PD 0x07D0 -1, 0x07C9 +1). The census was always a lower bound on the machine
 # code; this is the annotation layer lowering it, recorded in
-# xdata-register-map.md and docs/findings.md 18 as an open question.
+# xdata-register-map.md and docs/findings.md 18.
+# *** 2026-09-24, issue #259: the pins below do NOT move, and that is the
+# measurement rather than an absence of one. Defining the byte -- registers.yaml
+# gained XDATA_0390 and the regenerated xdata-symbols.csv named it, so
+# ApplyAnnotations.java's createData now makes a definition where there was only
+# an undeclared byte -- and re-running the export in default export-only mode
+# moved no .c and no manifest.csv row: the export is byte-identical to the
+# committed tree. The decompiler still renders the pair at bank1 0x9EA1 as
+# CONCAT11(r4_value,r3_value), so naming the byte does not put it back in the
+# token pattern's reach, and 0x0390 still has no row in the census.
+# The other outcome the issue allowed for -- the census RISING, because the
+# decompiler started spelling XDATA_0390 at 0x9EA1's two movxes -- did not
+# happen. distinct/refs/main_distinct/main_refs and BUCKET_TOTALS therefore stand
+# as 1171/14792 and 543/270 as committed, and the .asm witness in --self-test
+# is what now keeps 0x0390 from reading as absent.
+#
+# The policy this measurement is the first test of, written where an annotation
+# author will meet it: a variable row may change a caller's arity, and that is a
+# correction rather than a loss; the census counts C-level references and is
+# therefore a lower bound on the machine code; and a pin moves only with a
+# measured reason recorded in the same change. ghidra/scripts/ApplyAnnotations.java,
+# ec/annotations/README.md and docs/findings.md 18 carry the same rule.
 ORACLE = {
     # DAT_EXTMEM_ only, i.e. what issue #132 counted, comments excluded.
     "extmem_distinct": 1036, "extmem_refs": 8732,
@@ -1472,6 +1493,40 @@ def self_test(args) -> int:
           f"0xF000-0xFFFF run is the PD image's own in the census -- which is "
           f"a claim about a census, and a census is a lower bound",
           not main_high and main_ceiling == MAIN_EC_CEILING)
+
+    # Issue #259. The two halves of one fact, asserted together because either
+    # alone is misleading and only the pair is the point: the committed .asm
+    # still carries 0x0390's `mov DPTR` site, AND the census still has no row
+    # for it. That pairing is what stops a zero reading as absence. A reader who
+    # finds the first is not looking at a dead byte, and a reader who finds the
+    # second is not looking at an unreferenced one.
+    #
+    # The census half is expected to be False by construction here, so this
+    # cannot be re-derived from the tree the way the oracle above is -- it is a
+    # pin on a *disagreement* between two methods, and it is the assertion that
+    # will fail first if a future export makes the decompiler spell the address
+    # again. Both facts together are the policy: the census counts C-level
+    # references and is a lower bound on the machine code, and an address that
+    # leaves it is "not found by this method" until an .asm witness says
+    # otherwise. docs/findings.md 4 is the rule this phrasing comes from.
+    bank1_asm = read_asm("bank1")
+    witness = xdata_space(bank1_asm, 0x0390)
+    census_has_0390 = any(0x0390 in groups[g] for g in GROUPS)
+    # Built before the f-string, because a witness that is gone is the case this
+    # has to report cleanly -- indexing `witness` inline would raise instead.
+    site = ("not found by this method" if witness is None
+            else f"bank1/{witness[1]}.asm:{witness[2]}")
+    check(f"issue #259: 0x0390 is carried by a `mov DPTR,#imm16` in the "
+          f"committed bank1 .asm, reached at {site} -- an .asm is never "
+          f"rewritten by an annotation, so the byte has a site in the machine "
+          f"code whatever the C spells",
+          witness is not None)
+    check(f"and it still has no row in the census, because the callee at "
+          f"bank1 0x9EA1 renders the address as CONCAT11(r4_value,r3_value) "
+          f"over register names and the call site passes only the constants "
+          f"0x90 and 3, which this token pattern cannot reach (census row "
+          f"present: {census_has_0390})",
+          not census_has_0390)
 
     register_rows, cluster_rows, _ = build(funcs, names, symbols, census, calls,
                                            args.threshold)

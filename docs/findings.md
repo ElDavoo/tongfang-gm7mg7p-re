@@ -3897,3 +3897,86 @@ census. So the open question is whether a variable row may change a caller's
 arity, or whether ApplyAnnotations should rename without committing the
 signature. The pins moved to the measured values, and nothing here settles
 that question.
+
+**Settled, 2026-09-24 (issue #259).** The question above is now decided, and
+the answer is that a variable row **may** change a caller's arity. The note
+above is left standing as written; this is the correction beside it, per §4's
+pattern.
+
+**What the nine actually are.** None of the seven addresses is gone from the
+machine code. All of them still carry their `mov DPTR,#addr` site or sites in
+`ec/firmware/GMxMGxx_11.800`, counted with `trace_xdata_refs.sites_for()` and
+split per image exactly as `check_register_counts.py` splits it. What moved is
+the *spelling*, because the census is a token pattern
+(`xdata_register_map.py`'s `occurrence_re`: `DAT_EXTMEM_([0-9a-fA-F]{4})` plus
+the names in `xdata-symbols.csv`) and cannot see an address the decompiler
+spells as arithmetic or over register names. Per-address account, with the
+`.asm` site counts and the citations:
+`ec/annotations/xdata-register-map.md` §7.1.
+
+**The dropped argument was not a parameter.** `0x9EA1` reads R1, R3, R4, R5, R6
+and R7 and never names R2. The call site loaded `0x0390` into R2 —
+`E100.asm:72`, a dead store, since `E100.asm:100` overwrites R2 with no
+intervening read — and then handed the **address** on as R3:R4
+(`E100.asm:73-74`), which `0x9EA1` reads at `9EA1.asm:19` and writes at
+`:43`. The fifth argument the decompiler used to promote was an unconsumed
+scratch register, so the committed four-argument signature is the one that
+matches the listing and the row **corrected** the decompile. `0x0391` is alive
+the same way at all three of its sites (`E237.asm:33`, `E100.asm:67`,
+`DB0B.asm:101`).
+
+**`0x0390` is a present byte, and it is not absent.** It has a
+`registers.yaml` row (`XDATA_0390`, `present-untested`, one EC-side site, no
+PD site). `present-untested` is the ceiling and not one step further: **no live
+test was run**, and this is static analysis of committed text. `absent` and
+`unknown-not-absent` are both wrong for it — the byte is read and written in the
+machine code, and its `.asm` site is counted and pinned — because it is a
+present byte whose *C-level reference* fell out of one method, which is a
+third thing. `xdata_register_map.py --self-test` now asserts the site and the
+absent census row together, so a zero cannot read as absence.
+
+**The measurement, which is the part that was open.** The `XDATA_0390` row
+makes `gen_xdata_symbols.py` name the byte, so `ApplyAnnotations.java`'s
+`createData` now defines it. Re-running the export in the **default
+export-only** mode moved no `.c` and no `manifest.csv` row: the export is
+byte-identical to the committed tree, the decompiler still renders the pair as
+`CONCAT11(r4_value,r3_value)`, and the census does **not** rise. So `ORACLE`
+stays at 1,171 / 14,792 and `BUCKET_TOTALS` at `passed-to-call` 543 /
+`address-taken` 270, and the census note and transcript in
+`xdata-register-map.md` stand as committed. The other outcome the issue allowed
+— the decompiler starting to spell `XDATA_0390` at the callee's two `movx`es —
+did not happen.
+
+**The rule, in one sentence: a variable row may change a caller's arity, and
+that is a correction rather than a loss; the census counts C-level references
+and is therefore a lower bound on the machine code; a pin moves only with a
+measured reason recorded in the same change; and an address that leaves the
+census is "not found by this method" until an `.asm` witness says otherwise.**
+It is written in `ghidra/scripts/ApplyAnnotations.java` (comment only — no
+behaviour changed), `ec/annotations/README.md`'s Variables section beside "The
+rebuild asymmetry", and here.
+
+**The `0x07C9` +1, which is the one that gained.** It is **not** an annotation
+effect. Across the #238 merge the only one of the two files the census names for
+this address that moved is `ec/decompiled/pd/7B14.c` (21 → 22
+`DAT_EXTMEM_07c9` tokens); `EA67.c` and `7B14.asm` are byte-identical, and
+`0x7B14` has no row in `ghidra-functions.csv` or `ghidra-variables.csv`, so no
+annotation touched it. The added token is `cVar2 = DAT_EXTMEM_07c9;`, and the
+old call's first argument, the constant `0x1c`, is gone from the C while
+`7B14.asm:233-234` still shows `clr A` / `add A, #0x1c` building it — so by this
+repository's own rule (`.asm` right, `.c` a reading) the new C is a *worse*
+reading at that argument. The census gained a C-level token that does not
+correspond to a new machine access. **What made Ghidra re-render the file is
+not recorded in the committed tree** — there is no annotation on `0x7B14` to
+point at — and that is the honest limit of the account rather than a mechanism
+invented to close it.
+
+**Two pre-existing defects, reported and not fixed here.** `build_ec_decompile
+.py --self-test --oracle` raises `NameError` (`opt_in_ghidra_oracle` is called
+at line 1583 and defined nowhere in the repository), so the oracle arm cannot be
+run. And the committed Ghidra project is owned by `dave`
+(`ec/ghidra/project/ec.rep/project.prp`), so `build_ec_decompile.py` fails for
+any other user with `NotOwnerException` before it analyses anything; the
+export-only run for this issue was made with the owner corrected in the scratch
+copy only, and the committed file is byte-identical afterwards. Both want their
+own issues.
