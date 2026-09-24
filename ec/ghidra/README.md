@@ -30,10 +30,11 @@ python3 ../tools/build_ec_decompile.py --work /tmp/ec --self-test --oracle   # a
 ```
 
 `--self-test --oracle` is the acceptance check this file has always asked
-for: it rebuilds and then asserts that the bank-0 routine at `0xB1F0` comes
-out calling `FUN_CODE_bf08` and touching `EXTMEM 0x09c7`, the two facts
-`../annotations/charge-target-derating.md` established by hand. That is Ghidra's
-output compared against a human reading, made mechanical.
+for: it re-exports and then asserts two facts about the bank-0 routine at
+`0xB1F0`, the two `../annotations/charge-target-derating.md` established by
+hand. That is Ghidra's output compared against a human reading, made
+mechanical. **What it asserts, what it runs against, and what invokes it are
+spelled out below** — it is the one thing on this page that nothing in CI runs.
 
 `--check` and `--self-test` are what the cheap gate tier runs, at 0.19 s and
 0.13 s. The second figure is 0.03 s more since the annotation-side CSVs
@@ -46,15 +47,71 @@ so `AGENT_GATES_DEEP=1` gets it. See `docs/findings.md` §14 — the self-test
 used to take 18.8 s, and the cost was a set comprehension that re-read this
 repository's annotations CSV once per seed row, not the cross-decoder.
 
-**`--self-test --oracle` is broken and is not fixed here.** It is the
-acceptance check this file has always asked for, and it raises `NameError`:
-`self_test()` calls `opt_in_ghidra_oracle(args, work)` and that function does
-not exist in the module — 22 functions are defined and it is not one of them,
-with a single repository-wide hit at the call site. The flag gets as far as
-the other assertions and then dies, and nothing in CI invokes it, so it has
-been broken without announcing itself. Reported rather than fixed: deciding
-what the oracle should assert about the whole export is its own piece of work,
-and bolting a plausible check onto a broken flag would make it look covered.
+**`--self-test --oracle` is a procedure, not a gate, and that is the whole of
+what invokes it.** It re-exports from the committed project into the `--work`
+directory and then asserts two facts about bank-0 `0xB1F0`, the two
+`../annotations/charge-target-derating.md` established by hand:
+
+- the listing carries an `lcall 0xbf08` at `0xB200`; and
+- the C carries `DAT_EXTMEM_09c7 = DAT_EXTMEM_09c7 + 1;` immediately followed by
+  `if (0x3b < DAT_EXTMEM_09c7)` — the seconds counter and its 60-second
+  threshold.
+
+Both are matched on the address rather than on Ghidra's name for the callee.
+`FUN_CODE_bf08` is what `0xbf08` is called before an annotation renames it, and
+the committed export calls that same routine
+`sub_0a4e_against_4d_with_borrow`; a check written against the name would fail
+on the rename rather than on anything about the code. The increment and the
+compare are one pattern rather than two, because either half alone is satisfied
+by an unrelated line.
+
+The run then feeds the same helper a copy of its own export with each fact
+removed and requires it to report that one and not the other. A check that has
+never been seen to fail is not a check, and this is the discipline
+`variable_csv_problems()` is already exercised under in `--self-test`.
+
+**What passing does and does not say.** It says Ghidra's output at one address
+agrees with a human reading of the same bytes, made mechanical. It is not a
+claim about the rest of the 2,708 files, and nothing in it is a claim the
+decompiler is working — a missing or empty `B1F0.c`/`.asm` is a **failure**,
+not a skip, because a silently empty export is one of the two states the check
+exists to catch. `TongFang.openDecompiler()` throwing `DECOMPILER UNAVAILABLE`
+is already loud from the Java side and needs no second guard here.
+
+**What it runs against.** The export goes to `<work>/out/`, never to
+`../decompiled/`: `opt_in_ghidra_oracle()` deliberately does not call
+`write_outputs()`, which opens with `shutil.rmtree(OUTDIR)` and would delete and
+regenerate the committed tree an acceptance check is checking. The mode is
+pinned to `export-only` for the same reason one clause further out — the
+committed `.gpr`/`.rep` is copied to `<work>/project-copy` and never opened for
+writing, whichever way `--mode` was passed. `git status` being empty after a run
+is the test for it.
+
+**Not wired into CI, and why.** By cost and by kind it belongs in the deep tier,
+not the cheap one: a full Ghidra export is minutes, and `agent-gates.sh` runs
+the cheap mechanical half with no Ghidra and no network (0.13 s, and it says so).
+But that script and `agent-gates-deep.sh` are both template-copied `.github/`
+files this pipeline's token cannot land, so the block goes here for a human to
+drop into `agent-gates-deep.sh` next to the cross-decoder one. It is a direct
+invocation rather than a `case` arm, because that is the shape that file uses:
+
+```sh
+printf '\n=== Ghidra oracle (EC, bank0 0xB1F0) ===\n'
+# Minutes, not seconds: a full export, which is why this is the deep tier and
+# not agent-gates.sh's tool loop. See ec/ghidra/README.md for what it asserts.
+python3 ec/tools/build_ec_decompile.py --work "$scratch" --self-test \
+  --oracle || failed=1
+```
+
+Until then it runs when asked, and a green commit says nothing about whether it
+would still pass. The same shape `../tools/verify_gap_text.py` is already in
+below and `../../docs/findings.md` §14e records for the deep tier.
+
+**One number, measured.** This module defines **41** functions —
+`grep -c '^def ' ec/tools/build_ec_decompile.py`. Three files used to give three
+different counts of it (22 here, 32 in `../../docs/findings.md` §18, 39 by the
+`grep`); the `grep` is the only one of the three that is mechanically checkable,
+so it is the one quoted.
 
 ## The two annotation layers
 
