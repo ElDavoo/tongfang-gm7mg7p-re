@@ -47,17 +47,12 @@ name: Agent · retry
 # most one of them starts anything per sweep: each records PIPELINE_STARTED in the job
 # environment, and every later one checks it. That is an env var rather than chained step ids so
 # a repository can add a queue step of its own without threading its id through all the others.
-#
-# The `workflow_run` trigger below is zizmor's `dangerous-triggers` finding, suppressed on the
-# `on:` line the way agent-fix-ci.yml suppresses its own, and for the reasons that file gives. The
-# trigger names this pipeline's own workflows, so nothing else in the repository can start this
-# one. The job reads `workflow_run.conclusion` and nothing else from the payload -- no head branch,
-# no head SHA, nothing interpolated into a checkout or a `run:` -- and this workflow checks nothing
-# out at all, so a run on untrusted code has no way to steer it. The file that executes is the one
-# on main, not the branch the triggering run used. And the trigger adds no privilege the hourly
-# cron has not already had: the same job, the same `permissions`, the same `AGENT_PUSH_TOKEN`, so
-# what the sweep does the moment a stage finishes is what it already does on the hour.
 
+# workflow_run is a wake-up here, not an input. The job reads one field of the run that woke it
+# -- whether it was skipped -- and checks out no code, downloads no artifact and interpolates no
+# event field into a script: it re-reads the repository through the API exactly as the hourly
+# tick does. A run that a fork's pull request set off therefore buys an extra sweep and nothing
+# else, and the `agent-retry` group below folds a burst of them into one pending run.
 on:  # zizmor: ignore[dangerous-triggers]
   schedule:
     - cron: '0 * * * *'
