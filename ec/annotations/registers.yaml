@@ -514,6 +514,25 @@ registers:
       mode switches, not a measurement of how often the byte changes. (This
       note was written before the per-site walk above, issue #185, merged; it
       called that walk still open.) No count or status moved.
+      *** CORRECTION 2026-09-24 (issue #265), leaving the paragraph above as
+      it was written: its 0x07D4 half is withdrawn. The capture that paragraph
+      cites, evidence/ec-watch/2026-09-23-power-mode-cycle-0700-07ff.csv, has
+      no 0x07D4 row and no 0x07D5 row -- grep -c 0x07D4 on that file returns 0,
+      as it does for 0x07D5 -- and its 22 distinct addresses (0x070A 0x070F
+      0x0714 0x0715 0x0716 0x0717 0x0719 0x071A 0x071B 0x071C 0x0743 0x0745
+      0x0746 0x0751 0x075B 0x075C 0x0783 0x0784 0x0785 0x07A6 0x07C4 0x07C6)
+      omit the byte. Neither address has a row in any committed capture under
+      evidence/ec-watch/. docs/findings.md 7c printed that same set in the
+      merge this paragraph came from and read it correctly; the register file
+      is the one that was wrong, and that is where the correction lives. ***
+      The rest of the paragraph stands: 0x07C4 has the two rows its own entry
+      quotes and 0x07C6 has 18, both in that window, and 0x0743/0x0745/0x0746
+      land at the same plug-in -- most likely what the withdrawn clause was
+      meant to name. So 0x07D4 comes off the "did move" list, and 0x07D0 and
+      0x07D1 still did not move. The scope caveat above governs this
+      correction as much as the sentence it corrects: no rows is "not found to
+      move in this window", not "never written" and not "absent". 0x07D4's own
+      entry keeps present-untested, and no status or count moves here.
 
   - name: LIGHTBAR_AC_CTRL / RED / GREEN / BLUE
     addr: [0x0748, 0x0749, 0x074A, 0x074B]
