@@ -1665,6 +1665,20 @@ rather than closing on it:
   observation is still not made** — it needs the physical machine, which no
   cloud agent has. The issue stays open for that reason and not because the
   preparation is missing.)*
+  *** CORRECTION 2026-09-24 (issue #283), leaving the paragraph above as it
+  was written: it says "#184. That issue is open", and #184 is closed.** It
+  was the issue that asked for the procedure, and the procedure it asked for is
+  committed; what is still open is the *run*, which #184's closure does not
+  own and which is now issue #283's. The second stale pointer goes with it:
+  that same paragraph credits the preparation as complete, and the grading half
+  of it was not — #283 adds `ec/tools/grade_gpu_door.py`, the offline grader
+  that applies the five capture-derived columns of that procedure's §5 table
+  to a §3 capture and names the other five as not its own, plus
+  `ec/tools/test_grade_gpu_door.py` over constructed fixtures. Both are
+  exercised only against files written by hand; **no capture of this procedure
+  has been taken and none has been graded.** No status moves on the strength of
+  a grader that has never read a real capture, and nothing under `evidence/`
+  comes from it.
 - A register census for `0x07C4`-`0x07D7` (`DBEN`/`DBST`, `DBD1`/`DBD2`,
   `GFID`, `CPUA`/`DBAP`/`DBSP`/`CGCT`) in the shape this section gives
   `0x07D0`: which of the two GPU blocks the host writes, which ACPI reads

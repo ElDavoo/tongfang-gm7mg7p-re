@@ -1,0 +1,13 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# timestamp below was written by hand so ec/tools/grade_gpu_door.py can be run
+# over a capture in the shape §3 of
+# docs/hardware-tests/gpu-tgp-07c4-07d7-door.md takes. See ../README.md.
+# Shape: §6's third bullet -- no movement at all, under all three actions --
+# with nothing but the three marks. Every one of the 24 watched addresses
+# therefore has a `???? -> ????  net +0  total 0  max 0` line in every window,
+# and the closing paragraph has to read that as a result rather than as a
+# missing capture. It is not a prediction that a run will be quiet.
+ts,addr,old,new
+2026-01-01T12:00:05.000+01:00,MARK,,gpu tgp 115W->130W
+2026-01-01T12:00:35.000+01:00,MARK,,fn mode balanced->performance
+2026-01-01T12:01:05.000+01:00,MARK,,ac unplug

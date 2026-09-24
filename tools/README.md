@@ -11,21 +11,23 @@ bash tools/run-tests.sh
 
 Every `test_*.py` under the repository, found by `find` — not a hardcoded list,
 so a suite in a directory that does not exist yet is picked up by having its
-file committed. There are eleven today, 227 tests in all, and each is a
-`unittest` suite standing in for a tool's own behaviour:
+file committed. There are twelve today, 261 tests in all — main's 242 plus
+`test_grade_gpu_door.py`'s 15 and the four grader-agreement cases beside them
+— and each is a `unittest` suite standing in for a tool's own behaviour:
 
 | suite | what it stands in for |
 |---|---|
 | `ec/tools/test_check_capture_claims.py` | `ec/tools/check_capture_claims.py`'s address-presence and row-count rules against the committed `evidence/ec-watch/*.csv` captures, and the line between what it checks and what it deliberately skips |
-| `ec/tools/test_check_cluster_citations.py` | `ec/tools/check_cluster_citations.py`'s `main-ec-NNN` cluster citations against `ec/annotations/xdata-clusters.csv`, including that a denial is skipped rather than checked |
+| `ec/tools/test_check_cluster_citations.py` | `ec/tools/check_cluster_citations.py`'s `main-ec-NNN` cluster citations — membership and census counts held apart — against `ec/annotations/xdata-clusters.csv`, including that a denial is skipped rather than checked, and that the tree's committed prose still agrees with the census beside it |
 | `ec/tools/test_grade_0751_isolation.py` | `ec/tools/grade_0751_isolation.py`, the §4 grader of the `0x0751` capture procedure, against the committed `testdata/` fixtures |
+| `ec/tools/test_grade_gpu_door.py` | `ec/tools/grade_gpu_door.py`, the §5 grader of the `0x07D0` door capture: the ordering and its ms delta, both one-block shapes, a quiet capture, a byte that moved and came back, marks left unmerged, and the ten-column mapping |
 | `ec/tools/test_walk_branch_arms.py` | `ec/tools/walk_branch_arms.py`'s direction classification, bounds, refusals, and negative-result wording |
 | `windows/tools/test_manual_fan_ctrl_probe.py` | the fan-mode probe's two-arm byte script, its read-safety guard under `--level-block`, the mark rows its `--csv` capture lands, and that capture read back through the real `ec/tools/grade_0751_isolation.py` reader |
 | `windows/tools/test_ec_watch.py` | the mark-CSV sweep and the mark landing between two change rows |
 | `windows/tools/test_ec_validate.py` | the `ec_validate.py` `0x0436` capacity arm's exact-copy scoring, full-capacity bound, CSV, and `0x0400-0x045F` page assertion |
 | `windows/tools/test_system_id_probe.py` | the `0x0456` probe's `store_scaled_quotient_0449` arithmetic, its branch labels, its address guard, and that it has no write path |
 | `windows/tools/test_charge_target_test.py` | the charge-target tool's three refusals, the restore in its `finally`, and its CSV column set |
-| `windows/tools/test_gpu_block_watch.py` | the GPU-block watcher's citation table against `evidence/acpi/dsdt.dsl` and `ec/annotations/registers.yaml`, the door procedure's own copy of that table against the tool, that copy's cross-reference column for the four census-covered rows against `ec/annotations/ec-07c4-07d5-sites.csv` and its `.md`, its watch set, and its mark reaching the CSV |
+| `windows/tools/test_gpu_block_watch.py` | the GPU-block watcher's citation table against `evidence/acpi/dsdt.dsl` and `ec/annotations/registers.yaml`, the door procedure's own copy of that table against the tool, that copy's cross-reference column for the four census-covered rows against `ec/annotations/ec-07c4-07d5-sites.csv` and its `.md`, the door grader's third copy of the window bounds and DSDT names against the tool, its watch set, and its mark reaching the CSV |
 | `linux/lightbar/test_probe_6005.py` | the lightbar probe's ioctl encoding, dry run, and off-after-failure |
 
 `windows/tools/ecrw_fake.py` is a shared fixture rather than a suite — it is

@@ -18,6 +18,12 @@ placeholder `2026-01-01` timestamp so the two can never be confused.
 | `0751-isolation-example-moved-mailbox-before-0f00.txt` + `...-after-0f00.txt` | `../grade_0751_isolation.py --dump-pair` | The same page again, this time differing at `0x0F5D-0x0F5F` **only**, and holding the magic and a selector the `manual-fan-ctrl-0751.md` §6 handler at `0x888D` requires. This is the false-positive shape: with the vendor service up, §3's main arm, a poke there must not read as the EC reloading its own table, and §4.2's own bytes are unchanged here. It is *not* a prediction that the service poked the mailbox. |
 | `capture-claims-example-power-mode-cycle-0700-07ff.csv` | `../check_capture_claims.py`, via `../test_check_capture_claims.py` | A `0x0700-0x07FF` power-mode-cycle log in the committed `2026-09-23` file's shape — the two `0x07C4` writes, a `0x07C6` run, the `0x0743`/`0x0745`/`0x0746` plug-in sweep — and **no row at all for `0x07D4` or `0x07D5`**. That absence is the point: it is the shape issue #270's correction describes, and the sentence that used to contradict it is the one the test asserts fails. The prose is inline in the test rather than stored beside this file, because a `.md` under `ec/` naming a capture and claiming a movement is exactly what the tool flags, so committing one would make the tool's own committed-tree case red by construction. It is *not* a prediction that a byte which did not move once will not move again. |
 | `capture-claims-example-ac-plugin-sweep-summary.csv` | `../check_capture_claims.py`, via `../test_check_capture_claims.py` | A per-address summary in the committed sweep summary's own schema — one row per address, the change total in a `change_count` column rather than a row per change — so the reader's derived branch is exercised and not just the row tally. Its `#` comment lines are also the parse: the committed file opens with three, and a reader that does not drop them before the header takes a comment as the fieldnames and finds no `addr` column. It is *not* a prediction that a sweep changes any address this many times. |
+| `gpu-door-example-acpi-first.csv` | `../grade_gpu_door.py` | The ACPI half (`0x07C4`-`0x07D7`) leading the host half in both of two mark windows, by 800 ms and 1300 ms, so the ordering figure and its ms delta can be read off a file. One address moves eight seconds *before* the first mark, so it belongs to no window but still sets the level both windows opened on. It is *not* a prediction that the ACPI half leads. |
+| `gpu-door-example-host-first.csv` | `../grade_gpu_door.py` | The same question the other way round, by 650 ms and 950 ms, with `0x07D0` among the hits so the report's DSDT-name column carries a `DO-NOT-WRITE-BLIND` byte. It is *not* a prediction that the host half leads, or that `0x07D0` moves at all. |
+| `gpu-door-example-one-block.csv` | `../grade_gpu_door.py` | Only the ACPI half moves, in both windows, so there is no ordering to report and a report that printed one would be inventing a comparison — and whose closing paragraph must not reach for §6's "no movement at all" reading over a capture in which it moved twice. It is *not* a prediction that the host half will hold still; §1 of the procedure notes the service writes it. |
+| `gpu-door-example-quiet.csv` | `../grade_gpu_door.py` | §6's third bullet: three marks, thirty seconds apart, and not one change row. Every one of the 24 watched addresses therefore has a `???? -> ????  net +0  total 0  max 0` line in every window, which is the fixture that makes "a zero is a stated line, not a missing one" testable rather than asserted. It is *not* a prediction that a run will be quiet. |
+| `gpu-door-example-moved-and-back.csv` | `../grade_gpu_door.py` | `0x07D0` steps up twice and returns to where it started inside one window, so its endpoint line reads `0x00 -> 0x00` — held — while `total 112` and `max 56` say it moved 112 and got 56 away. The block summary counts one address over three rows, and the block still counts as moved, so the ordering is unaffected. It is *not* a prediction that `0x07D0` moves and returns, or by how much. |
+| `gpu-door-example-close-marks.csv` | `../grade_gpu_door.py` | Two marks 1.0 s apart, inside `grade_0751_isolation.py`'s `MARK_MERGE_SECONDS`. That grader fuses them on purpose and this one must not, so the first — a one-second window with nothing in it — survives as a window of its own and the distance is printed. It is *not* a prediction that a run will be paced like this; §3 asks for ~30 s between actions. |
 
 The `0751-isolation-*` `.csv` files are in `ec_watch.py --mark --csv`
 format, `MARK` rows included; the two `capture-claims-example-*` ones are
@@ -30,6 +36,15 @@ own is a half of a pair, not a capture. The dump examples sit outside
 `docs/hardware-tests/manual-fan-ctrl-0751-isolation.md` names, and
 `../test_grade_0751_isolation.py` holds the two equal, so a dump no operator
 of a hardware day would take has no business in that list.
+
+The `gpu-door-example-*.csv` files are `gpu_block_watch.py --csv --mark`
+output in the same schema — the two tools read one schema on purpose — and
+they sit outside any `gpu-door-run/` directory because no such directory
+exists: `docs/hardware-tests/gpu-tgp-07c4-07d7-door.md` §5 does not name a
+file set, and the run those fixtures stand in for is issue #283's and nobody
+has made it. `../test_grade_gpu_door.py` holds the `gpu-door-example-*.csv`
+on disk and the fixtures it runs equal, so a fixture nobody grades fails
+rather than sitting there looking covered.
 
 `0751-isolation-run/` is the set §6 of
 `docs/hardware-tests/manual-fan-ctrl-0751-isolation.md` names, all ten

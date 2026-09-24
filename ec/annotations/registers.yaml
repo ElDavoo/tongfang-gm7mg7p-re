@@ -444,7 +444,13 @@ registers:
       windows/tools/test_gpu_block_watch.py. The capture has not been
       taken: no Windows machine is reachable from the pipeline that wrote
       it, and nothing in this entry's status rests on a run that did not
-      happen.
+      happen. The grading half of that procedure is committed too (issue
+      #283): ec/tools/grade_gpu_door.py applies the five capture-derived
+      columns of that procedure's result table to a capture file offline
+      and opens no EC, and is exercised only against constructed fixtures
+      in ec/tools/testdata/. A grader that has never read a real capture
+      changes no status here, and the row's addr, name and status are
+      untouched.
 
   - name: DBD2 (DSDT name; no vendor constant, no committed Windows writer)
     addr: 0x07D1
@@ -507,7 +513,10 @@ registers:
       procedure as 0x07D0's, at
       docs/hardware-tests/gpu-tgp-07c4-07d7-door.md, covers this byte in
       the same one-clock capture of 0x07C4-0x07D7 and 0x0743-0x0746. The
-      capture has not been taken.
+      capture has not been taken. It would be graded by
+      ec/tools/grade_gpu_door.py (issue #283), which prints this byte's
+      ECMG field-list name beside any movement it records; no capture has
+      been graded, because none has been taken.
       2026-09-24, issue #183: neither this byte nor 0x07D0 moved at all in
       the 2026-09-23 capture -- 0x07D4, 0x07C4 and 0x07C6 did, in the same
       window. That is an observation scoped to one AC plug-in and six Fn-key

@@ -27,11 +27,18 @@ copy's EC-side cross-reference column for the four rows the per-site census
 covers, against ec/annotations/ec-07c4-07d5-sites.csv and its `.md`: the doc
 was free to credit `0x07C4` with one cross-reference where the walk had found
 five, and a re-walk that finds a sixth would move the census the same way
-without the doc moving with it.
+without the doc moving with it. The fifth is the same hold one copy further
+out, and the reason it exists at all: `ec/tools/grade_gpu_door.py` grades this
+tool's captures and cannot import it -- the `ecrw` import below binds
+kernel32 -- so it states its own two window bounds and its own 24 DSDT names.
+A grader reading a capture against different bounds than the one that wrote it
+would be grading one tool's watch set with another's, and would say so
+nowhere.
 """
 import csv
 import contextlib
 import importlib
+import importlib.util
 import io
 from pathlib import Path
 import re
@@ -64,6 +71,20 @@ import ecrw_fake  # noqa: E402  (needs the sys.path entry above)
 ecrw_fake.install()
 
 watch = importlib.import_module('gpu_block_watch')
+
+# The offline grader of this procedure's §3 capture. Loaded by path, and its
+# own directory put on sys.path first, because the grader does `import
+# grade_0751_isolation` for the CSV vocabulary and the two `ec/tools` files are
+# otherwise outside every import root this runner sets. It cannot be imported
+# the other way round: this module does `from ecrw import Ec, EcError`, and
+# `ecrw` binds kernel32 at import time, so a grader that imported it would load
+# only on Windows.
+EC_TOOLS = REPO / "ec" / "tools"
+sys.path.insert(0, str(EC_TOOLS))
+_grader_spec = importlib.util.spec_from_file_location(
+    'grade_gpu_door', EC_TOOLS / 'grade_gpu_door.py')
+grader = importlib.util.module_from_spec(_grader_spec)
+_grader_spec.loader.exec_module(grader)
 
 # The watch set the change rows are keyed against, in the order a sweep reads
 # them. Sweep 0 is the baseline the tool takes before its loop; 1 moves a byte
@@ -496,6 +517,58 @@ class SiteCensusTests(unittest.TestCase):
                     f"({len(cited)} cited, {len(sites)} in the census)")
 
 
+class GraderAgreementTests(unittest.TestCase):
+    """The door grader's copy of the watch table, held against this one.
+
+    `ec/tools/grade_gpu_door.py` grades the capture this tool writes and
+    answers §5's ordering column from it. It cannot import this module -- the
+    `ecrw` import above binds kernel32 -- so it states its own two window
+    bounds and its own 24 ECMG field-list names, and this class is the hold.
+
+    The same shape as DoorTableTests above, and for the same reason: #266 let
+    a second copy of this table drift through a whole merge cycle. A grader
+    that read a capture against different bounds than the one that wrote it
+    would be grading one tool's watch set with another's, and would say so
+    nowhere.
+    """
+
+    def test_the_grader_stated_a_table_at_all(self):
+        # The vacuity guard, for the same reason the two parsers above have
+        # one: a loader that found nothing would make every check below pass
+        # on a grader that grades no addresses at all.
+        self.assertTrue(grader.DS_NAMES, "the grader states no DSDT names")
+        self.assertTrue(grader.WINDOWS, "the grader states no windows")
+        self.assertEqual(len(grader.DS_NAMES), len(ADDRS))
+
+    def test_the_window_bounds_are_the_watchers(self):
+        # Equality on the tuples, labels included: §5's columns are headed with
+        # the two ranges, so a label that disagreed would be visible in a
+        # filled table and in this grader's own output.
+        self.assertEqual(list(grader.WINDOWS), list(watch.WINDOWS))
+
+    def test_the_dsdt_names_are_the_watchers(self):
+        # Same order and same spelling, so a movement the grader prints under
+        # §5's "DSDT name" column carries the name the watcher printed in the
+        # capture's own header. CitationTableTests holds `watch.WATCH` against
+        # evidence/acpi/dsdt.dsl, so the chain from the ASL to the grader's
+        # column is checked at both ends rather than trusted in the middle.
+        self.assertEqual(list(grader.DS_NAMES),
+                         [(addr, name) for addr, name, _, _ in watch.WATCH])
+
+    def test_the_two_bounds_cover_exactly_the_watch_set(self):
+        # No watched address outside the grader's bounds, and none inside them
+        # the watcher does not sweep. The second half matters because
+        # `name_of` raises on an address with no name: a capture carrying a row
+        # the grader bounds cover but its name table does not would fail its
+        # own report rather than reading it.
+        covered = {a for _, lo, hi in grader.WINDOWS for a in range(lo, hi + 1)}
+        self.assertEqual(covered, set(ADDRS))
+        self.assertEqual({addr for addr, _ in grader.DS_NAMES}, set(ADDRS))
+        for addr in ADDRS:
+            self.assertEqual(grader.window_of(addr), watch.window_of(addr),
+                             f"0x{addr:04X}")
+
+
 class NamesOnlyTests(unittest.TestCase):
     def test_names_only_prints_the_table_and_opens_no_ec(self):
         out = io.StringIO()
@@ -545,7 +618,8 @@ class MarkCsvTests(unittest.TestCase):
         rc, rows = self.run_watch('--mark')
         self.assertEqual(rc, 0)
         # ec_watch.py's schema exactly: a downstream reader of a mark-delimited
-        # capture (issue #168) must not need a parser written for this file.
+        # capture (ec/tools/grade_gpu_door.py, issue #283) must not need a
+        # parser written for this file.
         self.assertEqual(rows[0], 'ts,addr,old,new')
         self.assertEqual([r.split(',', 1)[1] for r in rows[1:]],
                          [f'0x{ACPI:04X},0x00,0x37',
@@ -570,7 +644,8 @@ class MarkCsvTests(unittest.TestCase):
         # The startup table prints the status column, so the grading words are
         # checked against the summary -- what the run concluded, not what it
         # was told to look at. A zero in a capture is "not moved by this
-        # method under this action"; #168 owns the reading.
+        # method under this action"; ec/tools/grade_gpu_door.py owns the
+        # reading, and names itself in the summary below this one.
         summary = out.getvalue()[out.getvalue().index("=== "):]
         self.assertIn("window 0x07C4-0x07D7", summary)
         self.assertIn("window 0x0743-0x0746", summary)

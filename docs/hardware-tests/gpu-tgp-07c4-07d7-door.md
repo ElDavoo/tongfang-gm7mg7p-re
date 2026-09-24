@@ -1,10 +1,12 @@
 # The `0x07D0` door: what moves first under a GPU TGP change, and who opens it
 
 **Status: not run.** This procedure was written by the pipeline for a human at
-the physical GM7MG7P (issue #184). The watcher and its offline suite are
-committed; the observation is not. Nothing in this file reports a result, and
-nothing under `evidence/` comes from it — the first capture of this kind will be
-a human's, taken on that machine. The `0x07D0` live-write record in
+the physical GM7MG7P (issue #184), and **issue #283 owns the run** — the
+capture, the ProcMon half and the observation. The watcher, the offline grader
+(`../../ec/tools/grade_gpu_door.py`) and both offline suites are committed; the
+observation is not. Nothing in this file reports a result, and nothing under
+`evidence/` comes from it — the first capture of this kind will be a human's,
+taken on that machine. The `0x07D0` live-write record in
 `../../docs/findings.md` §4f (2026-09-17) is **not** a run of this procedure and
 does not cover this block: it wrote `0x07D0` directly and watched what that
 write did, which is the opposite question from which process moves the byte
@@ -93,7 +95,7 @@ Control Center GPU action — which MQTT `*/Control` command reaches which EC
 register — belongs to issue #87. This procedure performs the UI action and
 records marks; it does not map the command, and it does not pair the action with
 `mqtt_sniff` output beyond what §3 asks for. The grading of the capture, once
-there is one, belongs to issue #168.
+there is one, is `../../ec/tools/grade_gpu_door.py` — §5.
 
 ## 2. Before you start
 
@@ -248,8 +250,35 @@ that mistake is cheap.
 
 "Which block first" is the ordering the console summary prints, and the number
 to put in the cell is that number read off the CSV rather than off the terminal
-scrollback. "Verdict" is the human's call against §6, not the tool's: the tool
-prints a timing report and says so, and issue #168 owns grading a capture.
+scrollback — which is what the grader's `which block moved first` line is, per
+mark, where the console summary computes it once over the whole run. Its ms
+figure is good to about one `--interval` (0.25 s by default), not to the
+millisecond it is printed in: both timestamps are the sweeps that saw the
+change, not the instant the byte moved. "Verdict" is the human's call against
+§6, not the tool's: the grader prints a timing report and says so.
+
+**Grade the capture before filling the table.** The offline grader for §3's
+capture is `../../ec/tools/grade_gpu_door.py` (issue #283):
+
+```console
+python ec\tools\grade_gpu_door.py <date>-gpu-door-07c4-07d7.csv
+```
+
+It reads the file §3 writes as it stands — the same `ts,addr,old,new` rows and
+`ts,MARK,,label` marks, one mark per window and none merged — and prints, per
+mark, what moved in each block with its DSDT field-list name, which block moved
+first and by how many ms, and a `net`/`total`/`max` line for all 24 watched
+addresses whether or not they moved. It opens no EC, so it runs on any machine
+with the repository checked out, including before the capture leaves the
+Windows box.
+
+**It fills five of this table's ten columns and names the five it does not.**
+Columns 1-5 come out of the capture. Columns 6-9 — the ProcMon PID, the process
+image, the IOCTL code on the `\.\ACPIDriver` handle and the loaded-module list
+— are §4a's, read off a Windows `.PML` that no tool in this repository can
+open, and column 10 is the human's call against §6. The grader prints that
+split itself, so a table carrying only the first five cannot be mistaken for a
+finished one.
 
 ## 6. What a result would settle, and what it would not
 
@@ -271,12 +300,26 @@ the table's verdict column a judgement rather than a summary.
   arithmetically possible rather than reachable by any service the committed
   inputs can see.
 
+The grader's per-window output is what these three are read against, and its
+closing section says which of them a given capture can carry. It fills the
+ordering half of the first — which block moved first, and by how many ms — and
+has nothing to say about the `ECRW` half, which is §4a's. It names a capture in
+which only one block moved as matching none of the three as written, rather
+than picking the nearest one: a GPU-only change that moves the ACPI half alone
+is not the second bullet either, and the verdict column is the human's. The
+third is the quiet capture — three marks, thirty seconds apart, not one change
+row — and the grader prints that as 24 zero lines per window rather than as
+silence, because "nothing moved" and "nothing was recorded" have to be
+different answers.
+
 Two caveats belong next to the table rather than in a footnote.
 
 - **The window delta is an endpoint net.** A byte that moves and comes back
   between two of the watcher's sweeps reads as quiet. A zero here is "not moved
   by this method under this action" — never "the GPU does not read it" — and
-  read any zero through issue #168 first.
+  read any zero through `../../ec/tools/grade_gpu_door.py` first: it prints
+  `net`, `total` and `max` side by side for every address, and `total` is the
+  figure that shows a move-and-return, which `net` cannot.
 - **A readback is not an effect.** Nothing in this procedure checks whether the
   EC acted on a byte, and the table deliberately has no "readback OK ⇒
   confirmed" column. Do not add one. `../../CLAUDE.md`: a register write being
@@ -360,9 +403,16 @@ gets misread:
 
 - **#87** owns mapping each MQTT `*/Control` command to its EC-register effect.
   The register-effect half of a Control Center GPU action is not repeated here.
-- **#168** owns grading a capture. This procedure emits a CSV in the schema
-  `ec_watch.py` and `../../ec/tools/grade_0751_isolation.py` already read, and
-  the grading is that issue's.
+- **`../../ec/tools/grade_gpu_door.py`** grades a §3 capture (issue #283), and
+  fills §5's columns 1-5 while naming columns 6-10 as not its own. It emits a
+  CSV in the schema `ec_watch.py`, `../../ec/tools/grade_0751_isolation.py`
+  and it already read, so grading needs no parser written for this file. It
+  states its own copy of the two window bounds and the 24 DSDT names because
+  it cannot import `gpu_block_watch.py` — that module imports `ecrw`, which
+  binds `kernel32` at import time, and an offline grader that imported it would
+  load only on Windows. `../../windows/tools/test_gpu_block_watch.py` holds the
+  two copies together, the same shape of hold as the one that caught this
+  procedure's four stale cells in #266.
 - **#96** and **#1** are what the answer feeds: the upstream correction must not
   be written as though `0x07D0` has one meaning, and the paired `0x07B9`/
   `0x07D0` write is still the experiment that would settle whether the byte is a

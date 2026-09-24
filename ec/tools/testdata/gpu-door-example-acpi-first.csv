@@ -1,0 +1,17 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# byte and timestamp below was written by hand so ec/tools/grade_gpu_door.py
+# can be run over a capture in the shape §3 of
+# docs/hardware-tests/gpu-tgp-07c4-07d7-door.md takes. See ../README.md.
+# Shape: the ACPI half (0x07C4-0x07D7) leads the host half in both windows, by
+# 800 ms and by 1300 ms, and one address moves before the first mark so the
+# level a window opens on is not always `????`. It is not a prediction that
+# the ACPI half will lead.
+ts,addr,old,new
+2026-01-01T12:00:02.000+01:00,0x07CC,0x04,0x05
+2026-01-01T12:00:10.000+01:00,MARK,,gpu tgp 115W->130W
+2026-01-01T12:00:10.400+01:00,0x07C4,0x08,0x28
+2026-01-01T12:00:10.700+01:00,0x07C6,0x00,0x01
+2026-01-01T12:00:11.200+01:00,0x0745,0x00,0x0A
+2026-01-01T12:00:40.000+01:00,MARK,,ac plug
+2026-01-01T12:01:10.300+01:00,0x07D3,0x40,0x50
+2026-01-01T12:01:11.600+01:00,0x0746,0x08,0x0C
