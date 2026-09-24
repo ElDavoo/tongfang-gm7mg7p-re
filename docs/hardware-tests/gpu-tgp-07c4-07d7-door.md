@@ -445,11 +445,12 @@ battery.
 
 No parser is needed to read the capture. The schema is `ts,addr,old,new` with
 a mark as `ts,MARK,,label` — `ec_watch.py`'s own, and the one
-`../../ec/tools/grade_0751_isolation.py` already reads, which is what issue
-#168's grading can take this file as it stands. `gpu_block_watch.py` prints a
+`../../ec/tools/grade_gpu_door.py` and
+`../../ec/tools/grade_0751_isolation.py` already read, which is what lets
+§5's grader take this file as it stands. `gpu_block_watch.py` prints a
 windowed summary at the end, and that summary is a timing report rather than a
-grade: §5's ordering cell is read off the CSV, and issue #168 owns the
-reading.
+grade: §5's ordering cell is read off the CSV, and
+`../../ec/tools/grade_gpu_door.py` (issue #283) owns the reading.
 
 ## 9. What a result has to say
 
@@ -491,11 +492,13 @@ So, concretely:
   of them contains is the evidence that changes what they say. A note citing a
   file that is not in the same commit is a claim no reader can check, which is
   the same defect `evidence/README.md` being an index exists to prevent.
-- **The grading is issue #168's, not this section's and not the tool's.** The
-  summary `gpu_block_watch.py` prints is a timing report and says so; §5's
-  verdict column is the operator's call against §6; and §6's three-way reading
-  is what that call is read against. Nothing in this section is a fourth
-  reading to be applied instead.
+- **The grading is `../../ec/tools/grade_gpu_door.py`'s, not this section's.**
+  That grader is committed (issue #283) and already fills §5's columns 1-5, so
+  a returned capture is graded by a tool this repository already holds rather
+  than by anything written for it here. The summary `gpu_block_watch.py` prints
+  is a timing report and says so; §5's verdict column is the operator's call
+  against §6; and §6's three-way reading is what that call is read against.
+  Nothing in this section is a fourth reading to be applied instead.
 - **Mixed, ambiguous, or empty is a result.** A run in which nothing moved
   leaves §4o where it is and says so; a run in which the two windows moved on
   different marks is a result the capture goes into `evidence/` with. Either
