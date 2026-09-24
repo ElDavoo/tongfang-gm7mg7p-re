@@ -356,6 +356,15 @@ registers:
       DSDT ECMG field list, as DBD1 (with DBD2 at 0x07D1) -- what DBD1 is
       for is not established, and reading the vendor's name as "the resume
       threshold" would be a guess.
+      SCOPE NOTE 2026-09-23 (issue #178), because the census makes the trap
+      concrete: xdata-registers.csv's `0x07D0` row is `program=pd`, 4 write
+      and 2 read+write, every function in it `pd:`. Those are the PD image's
+      own 0x07D0, which is a different byte from the EC's 0x07D0 -- the
+      0x0400-page rule of docs/findings.md 3a. So "the only committed writer
+      of 0x07D0 in any committed input is the DSDT" above is about the EC
+      byte and the charge-threshold role, and the "15 write" PD sites named
+      in the 229/15/2 split are the same program the entry has already said
+      they are. No status moves; this only fixes the reading.
       WRITTEN LIVE 2026-09-17 (docs/findings.md 4f): 55 and 90, paired
       with 0x07B9, via the physical window; accepted, stable, no effect
       on charging within the sampled windows. DO-NOT-WRITE-BLIND is
@@ -585,6 +594,14 @@ registers:
       That is consistent with upstream's EC_ADDR_BAT_DESIGN_CAPACITY_1/_2
       (uniwill-acpi.c:58,60), uncorroborated on this board. Per-address table:
       ec/annotations/xdata-0400-045f.md.
+      *** CORRECTION 2026-09-23 (issue #178) ***  "all direct reads" is what
+      xdata-registers.csv now says too, and did not before. That file counted
+      0x0403 as having one writer; the single site was
+      `if (DAT_EXTMEM_0403 == 0)` at bank1/A24E.c:26, a comparison the
+      classifier read as a store. The corrected census is 18 C-level
+      references over 13 functions, all of them `read`, and not one `write` or
+      `read+write`. Second address where the corrected census agrees with a
+      note already in this file; 0x0440 is the first.
 
   - name: BAT_FULL_CAPACITY_1
     addr: 0x0404
@@ -859,6 +876,22 @@ registers:
       in the firmware consult it. clear_and_set_xdata_flag_bits (bank1 0x8300)
       tests it against 0x07, which is as much as any decoded routine does with
       it. Per-address table: ec/annotations/xdata-0400-045f.md.
+      *** CORRECTION 2026-09-23 (issue #178), see
+      ec/annotations/xdata-register-map.md 4.3 ***
+      The paragraph above is right, and a generated file contradicted it.
+      ec/annotations/xdata-registers.csv as first merged (PR #163) credited
+      this address with 15 writers. All 15 were `if (DAT_EXTMEM_0440 == ...)`
+      tests: xdata_register_map.py's store_target() accepted any operator in
+      ASSIGN, ASSIGN begins with '=', and a Ghidra comparison satisfies that
+      test. There is no `DAT_EXTMEM_0440 =` anywhere in ec/decompiled/. The
+      corrected C-level census is 181 references spread over 91 functions and
+      not one store; the classifier is fixed, both CSVs are regenerated, and
+      the self-test now pins this address against a hand-checked grep rather
+      than against the tool's own sum. No status moves -- a miscounted
+      comparison bucket is not new evidence about the firmware. The 43
+      static_refs above are register_ref_table.py's site count over the image,
+      a different unit from the 181 C-level references, and they do not move
+      either.
 
   - name: XDATA_0442
     addr: 0x0442
@@ -888,6 +921,19 @@ registers:
       upstream name. They bracket inc_0443_low3_unless_0440_5_6_7 and its
       decrement twin, which move 0x0443 only while 0x0440 is not 5, 6 or 7.
       Per-address table: ec/annotations/xdata-0400-045f.md.
+      *** DISAGREEMENT recorded 2026-09-23 (issue #178), not adjudicated ***
+      "no writer" above is register_ref_table.py's reading: 2 sites, both
+      reads, from a bounded 8-instruction decode window. The decompiled C
+      holds four self-referencing stores -- bank1/F2CA.c:23 and F2F3.c:25,
+      reached through the F11C/F11F thunks, spelled
+      `DAT_EXTMEM_0443 = (DAT_EXTMEM_0443 & 7) ± 1` -- so
+      xdata_register_map.py counts 4 read+write references and 4 writer
+      functions. The paragraph above already contradicts itself: the routines
+      it names "move 0x0443". Two methods over two units (image sites vs
+      C-level references); what would settle it is a wider decode window, or
+      a hand disassembly of bank1 0xF2CA and 0xF2F3. Status unchanged and
+      static_refs unchanged -- this records a disagreement, it does not pick
+      a side.
 
   - name: XDATA_0448
     addr: 0x0448
