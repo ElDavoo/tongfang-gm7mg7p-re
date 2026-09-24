@@ -3858,6 +3858,11 @@ first-class overclaim whatever else the row says.
 
 ### Two defects this surfaced, neither fixed here
 
+*(Correction, 2026-09-24, issue #260: defect 1 is now fixed, below. The heading
+is left as it was written — it describes the state at the end of the change this
+section documents, and rewriting it would hide that the oracle was broken for
+the whole time between.)*
+
 1. **`--self-test --oracle` raises `NameError`.** It is documented in
    `ec/ghidra/README.md` as the acceptance check for the whole EC pipeline, and
    `self_test()` calls `opt_in_ghidra_oracle(args, work)`, which does not exist
@@ -3867,6 +3872,43 @@ first-class overclaim whatever else the row says.
    broken without announcing itself. Reported, not fixed: deciding what the
    oracle should assert about a whole export is its own piece of work, and
    bolting a plausible check onto a broken flag would make it look covered.
+
+   *(Fixed, 2026-09-24, issue #260. `opt_in_ghidra_oracle()` exists and runs to
+   completion; the paragraph above is left as it was written, because the
+   decision it declined to take — what an oracle asserts about a whole export —
+   is still the one not taken. What it asserts now is the two facts
+   `ec/annotations/charge-target-derating.md` established by hand at bank-0
+   `0xB1F0`, measured on a fresh export into the work directory: the listing
+   carries an `lcall 0xbf08` at `0xB200`, and the C carries
+   `DAT_EXTMEM_09c7 = DAT_EXTMEM_09c7 + 1;` immediately followed by
+   `if (0x3b < DAT_EXTMEM_09c7)`. Both are matched on the address rather than on
+   Ghidra's name for the callee — `FUN_CODE_bf08` is what `0xbf08` is called
+   before an annotation renames it, and the committed export calls that routine
+   `sub_0a4e_against_4d_with_borrow` — so a rename cannot fail the check and
+   only a change in the code can. The same run then feeds the helper a copy of
+   its own export with each fact removed and requires it to report that one and
+   not the other, because a check nobody has seen fail is not a check.
+
+   The "nothing in CI invokes it" is still true, and deliberately. A full export
+   is minutes and the cheap tier is budgeted at 0.13 s with no Ghidra and no
+   network, so the oracle is a **procedure** with a ready-to-paste block in
+   `ec/ghidra/README.md` rather than a gate — the same treatment
+   `verify_gap_text.py` got. A green commit therefore still says nothing about
+   whether the oracle would pass.
+
+   It reads `<work>/out/` and never `ec/decompiled/`, and pins `export-only`, so
+   it cannot mutate the tree it is checking: `opt_in_ghidra_oracle()` does not
+   call `write_outputs()`, which opens with `shutil.rmtree(OUTDIR)`. A missing
+   or empty `B1F0.c`/`.asm` is a failure rather than a skip, since a silently
+   empty export is one of the two states the check exists to catch.
+
+   **On the function count.** The three figures that disagreed here are 22
+   (`ec/ghidra/README.md`), 32 (the paragraph above), and 39 by `grep`. The
+   measured value is now **41** — `grep -c '^def ' ec/tools/build_ec_decompile.py`
+   — quoted in both files with the command beside it, so it is re-derivable
+   rather than a transcription that drifts again. The two older numbers are left
+   above because they are part of the record of the defect; neither was ever a
+   measurement.*
 2. **The export was stale before this change.** 203 committed `.c` files still
    said `DAT_EXTMEM_0440` although `xdata-symbols.csv` has named that byte
    `XDATA_0440` since `8a90bc0` (#160) — that commit regenerated

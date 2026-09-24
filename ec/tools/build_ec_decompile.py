@@ -1702,6 +1702,154 @@ def check_cross_decoder_agreement():
                    "the decompiler's business, not a disagreement)"))
 
 
+# The oracle's two facts, as (label, which export file, pattern), and the whole
+# of what `--self-test --oracle` asserts. The label is what a reader sees in the
+# report and what a negative case names, so it is a table field rather than a
+# string assembled twice.
+#
+# The call is matched on the ADDRESS and the target, never on Ghidra's name for
+# the callee. `FUN_CODE_bf08` is what 0xbf08 is called before an annotation
+# renames it, and the committed export calls the same routine
+# `sub_0a4e_against_4d_with_borrow` -- the machine fact is the address, and a
+# check written against the name would fail on the rename rather than on
+# anything about the code. Anchored to 0xB200 as well, so an `lcall 0xbf08` from
+# somewhere else in the function is not what satisfies it.
+ORACLE_FACTS = [
+    ("an lcall to 0xbf08 at 0xB200", "asm",
+     re.compile(r"^B200\b.*\blcall\s+0xbf08\b", re.M | re.I)),
+    # The increment and the compare have to be adjacent, because that is what
+    # the instructions at 0xB211..0xB283 are: read 0x09c7, inc it, store it,
+    # read it back, subb #0x3c, branch. Either half alone would be satisfied by
+    # an unrelated line, which is the failure a two-fact oracle cannot afford --
+    # it would be a check that never fires.
+    ("the DAT_EXTMEM 0x09c7 increment followed by its 0x3b compare", "c",
+     re.compile(r"DAT_EXTMEM_09c7\s*=\s*DAT_EXTMEM_09c7\s*\+\s*1\s*;\s*"
+                r"if\s*\(\s*0x3b\s*<\s*DAT_EXTMEM_09c7\s*\)", re.I)),
+]
+
+
+def charge_target_facts_problems(asm_text, c_text, only=None):
+    """The two facts ec/annotations/charge-target-derating.md established by hand
+    at bank0 0xB1F0, measured on an export's own .asm and .c.
+
+    Returns a list of problem strings, empty when every fact holds -- the shape
+    structure_problems() and variable_csv_problems() already use in this file.
+    `only` narrows it to one label, so the oracle can report per fact without a
+    second copy of the table.
+
+    Pure, and deliberately so: it reads the two texts and nothing else, so
+    opt_in_ghidra_oracle() can hand it a deliberately broken copy of this run's
+    export and watch it object. An assertion nobody has ever seen fail is not an
+    assertion, which is the same discipline variable_csv_problems() is exercised
+    under in self_test().
+
+    This is the whole of the oracle, and it is scoped to one address on purpose.
+    What an acceptance check should assert about a whole export is a separate
+    question that docs/findings.md §18 and ec/ghidra/README.md both leave open;
+    a broader invariant invented here would look like coverage and be a guess.
+    """
+    out = []
+    for label, which, pattern in ORACLE_FACTS:
+        if only is not None and label != only:
+            continue
+        if not pattern.search(asm_text if which == "asm" else c_text):
+            out.append("bank0 0xB1F0: the export does not contain %s" % label)
+    return out
+
+
+def opt_in_ghidra_oracle(args, work):
+    """Run the export into scratch and assert charge-target-derating.md's two
+    facts against it: Ghidra's output compared against a human reading, made
+    mechanical.
+
+    Everything the export touches is under `work`. It is deliberately NOT the
+    main() path: write_outputs() opens with shutil.rmtree(OUTDIR) and would
+    delete and regenerate all of ec/decompiled/ -- an acceptance check must not
+    mutate the committed tree it is checking, and `git status` being empty after
+    a run is the test for that. The mode is pinned to export-only for the same
+    reason one clause further out: the committed .gpr/.rep is copied to scratch
+    and never opened for writing, whichever way --mode was passed.
+
+    Its own inputs are derived rather than passed in, because self_test() has
+    already derived them from the same firmware and re-deriving is cheaper than
+    widening the signature it is called through.
+
+    A DECOMPILER UNAVAILABLE is loud already: TongFang.openDecompiler() throws in
+    ExportDecompile.java, which fails the headless run, which run() surfaces
+    through check=True. The oracle inherits that rather than adding a second
+    Java-side guard, so what it adds is the guard the other side cannot have --
+    a missing or empty export is a failure here, not a skip.
+    """
+    ok = True
+
+    def check(label, cond, detail=""):
+        nonlocal ok
+        print("  %s  %s" % ("ok  " if cond else "FAIL", label)
+              + ("  (%s)" % detail if detail and not cond else ""))
+        if not cond:
+            ok = False
+
+    print("build_ec_decompile.py --self-test --oracle")
+    if not args.ghidra:
+        print("  FAIL  the oracle needs Ghidra, and --ghidra '' was passed. A "
+              "check that skips itself and reports success is worse than no "
+              "check.")
+        print("  FAILURES ABOVE")
+        return 1
+
+    fw = open(FIRMWARE, "rb").read()
+    pd = fw[0x20000:0x30000]
+    census = call_target_rows()
+    rows, _b0, _b1, _pdseeds = seed_rows(fw, pd, census)
+    digest = sha256(FIRMWARE)
+    ghidra_preflight(args.ghidra)
+    imgs = build_images(work)
+    spec, basis, annot_spec = write_specs(work, rows)
+    context = write_context(work, imgs, digest)
+    # Whatever an earlier run into this same work directory left in out/ would
+    # otherwise be read as this run's export -- so a function that stopped being
+    # exported entirely would still pass, which is one of the two states this
+    # check exists to catch.
+    stale = os.path.join(work, "out")
+    if os.path.isdir(stale):
+        shutil.rmtree(stale)
+    analyze(args.ghidra, PROJECT, work, imgs, spec, basis, context, digest,
+            "export-only", ["bank0.bin", "bank1.bin", "pd.bin"], annot_spec)
+
+    srcs = {}
+    for ext in ("c", "asm"):
+        path = os.path.join(work, "out", "bank0", "B1F0." + ext)
+        srcs[ext] = (open(path, errors="replace").read()
+                     if os.path.isfile(path) else "")
+        check("the export produced a non-empty bank0/B1F0.%s" % ext,
+              srcs[ext].strip() != "")
+    if not ok:
+        print("  FAILURES ABOVE")
+        return 1
+
+    for label, _which, _pattern in ORACLE_FACTS:
+        p = charge_target_facts_problems(srcs["asm"], srcs["c"], only=label)
+        check("bank0 0xB1F0: the export contains %s" % label, not p,
+              "; ".join(p))
+
+    # Each fact, taken out of this run's own export, has to be reported -- and
+    # the other one must not be, or the two are not being measured separately
+    # and a passing oracle would only be evidence that it read the files.
+    for label, which, pattern in ORACLE_FACTS:
+        hits = len(pattern.findall(srcs[which]))
+        check("the export contains %s exactly once, so taking it out is a "
+              "deliberate break and not a no-op" % label, hits == 1,
+              "%d match(es)" % hits)
+        broken = dict(srcs)
+        broken[which] = pattern.sub("", srcs[which], 1)
+        p = charge_target_facts_problems(broken["asm"], broken["c"])
+        check("taking it out of the %s is reported, and the other fact is not"
+              % which, len(p) == 1 and label in p[0], str(p))
+
+    print("  all assertions passed" if ok else "  FAILURES ABOVE")
+    return 0 if ok else 1
+
+
 def check(work):
     ok = True
 
