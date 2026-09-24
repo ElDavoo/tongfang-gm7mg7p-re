@@ -442,6 +442,33 @@ registers:
       DO-NOT-WRITE-BLIND suffix matches 0x07D0 because a blind write here
       lands on the same GPU power pair with the same unknowns. No live
       test has touched this byte.
+      WALKED 2026-09-24 (issue #185): all 76 sites are now enumerated in
+      ec/annotations/ec-0x07d1-sites.md (site table:
+      ec-0x07d1-sites.csv), by the same method and reconciliation
+      ec-0x07d0-sites.md used. 76 distinct sites, not one function called
+      repeatedly: 60 read, 16 write, none incremented in place, none
+      unresolved by this method. 17 of the 17 handoffs resolve one level
+      deeper -- 14 read, 3 write -- across 8 callees, which
+      register_ref_table.py --callee-depth 1 confirms independently. Read
+      sites multiply it against strides 0x5E and 0x17 to index arrays
+      (bases 0x08E8/0x08E9/0x08F4/0x08F6/0x08FC/0x0904 and
+      0x0A13/0x0A2C/0x0A2D/0x0A35/0x0A39), which is the shape of an index
+      or state variable of the PD firmware and says nothing about the EC's
+      own 0x07D1. Five of the 76 walk past their own byte through inc
+      dptr, four of them treating 0x07D1+0x07D2 as one 16-bit
+      little-endian quantity; 0x3E7D shifts [0x07D0]->0x07D1 and
+      [0x07D1]->0x07D2 in one routine, and 0x07D0's own site 0xDACF reads
+      [0x07D0]+[0x07D1] as a word. So the PD firmware holds this byte and
+      0x07D0 as adjacent halves of overlapping 16-bit windows, while the
+      DSDT field list (dsdt.dsl:52248-52250) declares them two independent
+      8-bit fields and leaves 0x07D2 unnamed. Where the two differ: this
+      byte is written at 21% of its sites against 6% for 0x07D0, is
+      incremented in place nowhere, and its handoffs reach 8 callees
+      rather than 25. Status is unchanged: that is a decode of one
+      program, not an observed effect, and
+      unknown-not-absent-DO-NOT-WRITE-BLIND stands. What the field is, and
+      whether the two readings of the same bytes ever collide, are #26/#67
+      and a live test respectively; neither is reachable from here.
 
   - name: LIGHTBAR_AC_CTRL / RED / GREEN / BLUE
     addr: [0x0748, 0x0749, 0x074A, 0x074B]
