@@ -30,6 +30,13 @@ and nothing ran on the machine (`../../CLAUDE.md`, "Cloud agents cannot reach
 the hardware"). All 43 addresses are `present-untested`, and none is `absent`:
 no entry in this file or in `registers.yaml` claims a zero is an absence.
 
+> **Update, 2026-09-24 (issue #257).** The paragraph above was true when this
+> file was written and is left as it was. Since then the Linux half of §7 has
+> been run on the machine, read only. `0x06D6` cycles as §4 reads it, with a
+> 0.997 s period, and is now `confirmed-working`. The other 42 are unchanged.
+> The host window cannot reach 16 of the block's bytes or either `0x06D9` gate
+> byte. The result is `../../docs/hardware-tests/xdata-06c2-06db-sweep.md`.
+
 **Two things are settled, and one of them is a correction to the issue.**
 
 - **The block is one 393-byte routine, not 43 related registers.** 37 of the 43
@@ -573,6 +580,13 @@ silently dropped.
 from the `.c`, the `.asm` and the image.
 
 ## 7. The read-only step, for a human with the machine
+
+> **Run in part, 2026-09-24.** Steps 1 and 2 were run on Linux (no vendor
+> service), with a faster sampler than the loop below:
+> `../tools/ec_timer_capture.py`. Step 3 cannot run as written because `0x1664`
+> and `0x3202` are outside the ECMG host window. The Windows arm was not run.
+> Commands, captures and result: `../../docs/hardware-tests/xdata-06c2-06db-sweep.md`.
+> The sentence below is the procedure as first written, left as it was.
 
 **Nothing below was run.** This is the procedure, written down, for someone
 holding the laptop. It is read-only on purpose: `0x0440`'s value space is not

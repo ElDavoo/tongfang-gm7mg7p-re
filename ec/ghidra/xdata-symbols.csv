@@ -125,7 +125,7 @@ addr,name,from_register,register_status,derivation,programs
 0x06C5,XDATA_06C5,XDATA_06C5,present-untested,scalar-name,bank0;bank1
 0x06D1,XDATA_06D1,XDATA_06D1,present-untested,scalar-name,bank0;bank1
 0x06D2,XDATA_06D2,XDATA_06D2,present-untested,scalar-name,bank0;bank1
-0x06D6,XDATA_06D6,XDATA_06D6,present-untested,scalar-name,bank0;bank1
+0x06D6,XDATA_06D6,XDATA_06D6,confirmed-working,scalar-name,bank0;bank1
 0x06D8,XDATA_06D8,XDATA_06D8,present-untested,scalar-name,bank0;bank1
 0x06D9,XDATA_06D9,XDATA_06D9,present-untested,scalar-name,bank0;bank1
 0x06DA,XDATA_06DA,XDATA_06DA,present-untested,scalar-name,bank0;bank1

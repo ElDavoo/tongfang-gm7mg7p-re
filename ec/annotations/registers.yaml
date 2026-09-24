@@ -2282,11 +2282,11 @@ registers:
 
   - name: XDATA_06D6
     addr: 0x06D6
-    sources: [xdata-refs]
+    sources: [xdata-refs, live]
     static_refs: 1
     static_refs_main_ec: 1
     static_refs_pd_image: 0
-    status: present-untested
+    status: confirmed-working
     note: >
       The one set-point in the block, and the only byte whose period is legible
       from the code. A non-zero value is decremented and the routine returns at
@@ -2298,6 +2298,18 @@ registers:
       by this method, which is a gap in the search and not evidence that none
       exists. No upstream name. Per-address table:
       ec/annotations/xdata-06c2-06db-timers.md.
+      LIVE, 2026-09-24 (issue #257), read only through the ECMG window on Linux:
+      in three captures, evidence/ec-watch/2026-09-24-06d6-reload-linux.csv,
+      evidence/ec-watch/2026-09-24-06c2-06db-sweep-linux.csv and
+      evidence/ec-watch/2026-09-24-06d9-hold-linux.csv, every change was a -1
+      step or the 0 -> 9 reload, with no other transition. The step is 100 ms
+      by median (98-102 ms at 2 ms sampling, mean 99.7 ms), and the cycle is
+      0.997 s by mean. So the sweep at 0x8001 runs every ~99.7 ms and the part
+      below the return once a second. confirmed-working here means the code's
+      model of this byte (decrement, reload with 9, one step per pass) is what
+      the live byte does. It does not say what the one-second cycle times, and
+      nothing names the byte. docs/hardware-tests/xdata-06c2-06db-sweep.md;
+      docs/findings.md 17a.
 
   - name: XDATA_06D8
     addr: 0x06D8

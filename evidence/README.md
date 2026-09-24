@@ -64,6 +64,22 @@ independently checkable rather than taken on faith:
   is not done, and needs the physical machine. That file's §6 names the
   re-run's captures `<YYYY-MM-DD>-0751-isolation-…`, and they go in this index
   next to this one.
+- **`ec-watch/2026-09-24-06d6-reload-linux.csv`**,
+  **`ec-watch/2026-09-24-06c2-06db-sweep-linux.csv`**,
+  **`ec-watch/2026-09-24-06d9-hold-linux.csv`**: the issue #257 run. It is a
+  read-only Linux capture of the `bank1:0x8001` counter sweep through the ECMG
+  window (`ec/tools/ec_timer_capture.py`). The three files are `0x06D6` alone
+  at 2 ms for 120 s; the 28 sweep bytes inside the host window at 10 ms for
+  300 s; and `0x06D9` with the in-window state bytes of the `0x9817` routine
+  at 0.5 ms for 60 s. AC connected, no vendor service, run from a local
+  session on the laptop. Each file's `#` header carries its conditions and a
+  `# baseline` line with the value of every watched byte. The data rows are
+  one per change, as `ec_watch.py` writes them. **`ec-watch/2026-09-24-host-window-page-census.txt`**
+  is the per-page count of non-`0xFF` bytes over the 64 KiB mapping
+  (`ec_timer_capture.py --census`). Only `0x0000`-`0x07FF` and
+  `0x0C00`-`0x0FFF` hold data. Source for the `XDATA_06D6` status,
+  `docs/hardware-tests/xdata-06c2-06db-sweep.md`, and findings.md §17a. Graded
+  with `ec/tools/grade_timer_sweep.py`.
 - **`uefi/2026-09-19-UniWillVariable.{bin,txt}`, `uefi/2026-09-19-variable-list.txt`**:
   the vendor's shared settings variable after a BIOS load-defaults, and
   every OS-visible UEFI variable. Source for findings.md §6.

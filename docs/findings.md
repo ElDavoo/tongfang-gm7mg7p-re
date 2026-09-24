@@ -4071,6 +4071,73 @@ in the sweep. Each is named in `ec/annotations/xdata-06c2-06db-timers.md` §6
 and §8 with what it would take; the read-only procedure for a human with the
 machine is that file's §7, and it is written down rather than run.
 
+*(**Update, 2026-09-24, §17a.** The Linux half of that procedure has now been
+run on the machine, read only. "Written down rather than run" held when this
+section was written and is left as it was.)*
+
+### 17a. The sweep, sampled live: `0x06D6` cycles once a second, and the host window cannot see a third of the block (2026-09-24, issue #257)
+
+Run on the GM7MG7P from a local session at the owner's request, read only,
+through the ECMG window with `ec/tools/ec_timer_capture.py`. The procedure,
+the commands and the full result are in
+`docs/hardware-tests/xdata-06c2-06db-sweep.md`. The four captures are
+`evidence/ec-watch/2026-09-24-*`. Linux, no vendor service, AC, idle as far as
+the EC is concerned. What the operator was doing on the machine was not recorded.
+
+**`0x06D6` is a live ten-step countdown with a 0.997 s cycle, and the sweep at
+`bank1:0x8001` runs every ~99.7 ms.** Across three captures (2 ms, 10 ms and
+0.5 ms sampling; 120 s, 300 s and 60 s), every one of 4815 changes to
+`0x06D6` is either a `-1` step or the `0 -> 9` reload the listing puts at
+`0x8075`, with no other transition. The step is 100 ms by median (98-102 ms at
+2 ms sampling), and the reload recurs every 0.997 s by mean. The code says each
+pass changes `0x06D6` exactly once, so the step is the routine's own period, and
+the part of the sweep below the `ret` at `0x8074` runs once per cycle. That is
+the 10x relation the listing predicts, measured at 9.98. These are the two
+numbers §7 of the annotation said no static read could supply.
+
+**The host window maps `0x0000`-`0x07FF` and `0x0C00`-`0x0FFF` only.** A
+read-only census of the 64 KiB mapping
+(`evidence/ec-watch/2026-09-24-host-window-page-census.txt`) finds every byte of
+`0x0800`-`0x0BFF` and of `0x1000` upward reading `0xFF`. That extends the
+`0x0A40`-`0x0A5F` observation in §4g to whole pages, and it is consistent with
+those pages being unmapped, not a claim about their contents. It costs this
+block 16 bytes: `0x0890`, 13 of the 25 post-return countdowns, `0x080C` and
+`0x0985`. It also costs **both of `0x06D9`'s gate bytes, `0x1664` and
+`0x3202`, so the annotation's §7 step 3 cannot be run through ECMG as written.**
+Every `registers.yaml` row in those ranges is in the same position, and §4e
+says the vendor's `ECRW` path uses this window too.
+
+**None of the 24 in-window countdowns other than `0x06D9` held anything but
+zero, so the pre/post rate ratio could not be measured.** They sat at `0x00`
+for 300 s on idle Linux. The committed `2026-09-18` AC plug-in summary and the
+Windows profile-switch capture show `0x06D6` moving and no other sweep byte.
+That is "not reached on the paths watched", not "not a countdown" and not
+absent. `0x0440` held at `0x07`, so its gate was open.
+
+**`0x06D9` held at `0x03` for the whole of both captures that watched it**,
+while the pass that reaches its gate ran 301 and 60 times. No decrement is
+visible even at 0.5 ms. Either a gate stayed closed, or bank1 `0x982E` (which
+stores exactly 3) undid each decrement within 0.5 ms. The in-window state bytes
+favour the gate without proving it. `0x04FE` held at `0x00`, and on that value
+the only exported jump into `0x9817` (from `0x976E`) needs `lcall 0x198A`, the
+`0x1664` bit 0 test, to return non-zero. That is the same call that closes
+`0x06D9`'s gate in the sweep. `0x0480` bit 0 set and `0x05F1 = 1` are what
+`0x9817` leaves behind. So both readings point at `0x1664` bit 0 being set.
+**That is inferred, not read**, and the hardware-test doc's §4 states what it
+assumes.
+
+**Status moved: `XDATA_06D6` only**, to `confirmed-working`, meaning the code's
+model of the byte (decrement, reload with 9, one step per pass) is what the
+live byte does. It does not name what the one-second cycle times. The other 42
+stay `present-untested`. A byte that held still in a capture is not evidence
+about what the EC does with it.
+
+**What this opens.** A run that loads the countdowns (AC, power mode, lid,
+suspend, with `--mark`) so the ratio can be measured. A read path to `0x1664`
+and `0x3202`, if the EC has one other than ECMG. And a pass over
+`registers.yaml` for every row the host window cannot reach, since a live read
+of any of them through this path returns `0xFF` whatever the EC holds.
+
 ## 18. The decompiler's variables, measured: most `param_N` are not parameters (2026-09-24, issue #133)
 
 The function names say what the code does. The variable names still say what
