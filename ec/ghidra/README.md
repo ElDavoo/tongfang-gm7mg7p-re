@@ -203,8 +203,8 @@ $ SDAS8051=$(nix build nixpkgs#sdcc && echo $out/bin/sdas8051) \
 
   reassembly, by function (2705 total):
     match            2574
-    partial           73
-    assembler-gap     58
+    partial          73
+    assembler-gap    58
 
   reassembly, by instruction:
     re-encode to the firmware bytes : 45394 of 45537 (99.69%)
@@ -216,11 +216,11 @@ $ SDAS8051=$(nix build nixpkgs#sdcc && echo $out/bin/sdas8051) \
     outcome               this run  committed
     match                     2574       2574
     partial                     73         73
-    assembler-gap              58         58
+    assembler-gap               58         58
     mismatch                     0          0
     rows                      2705       2705
     instructions checked     45394      45394
-    instructions unchecked      143        143
+    instructions unchecked       143        143
 
   moved since the committed report: nothing
 
@@ -241,12 +241,17 @@ paragraph below has what it says.
 and no function disagrees.** 2,574 of 2,705 have every instruction verified; a
 further 73 have all but 143 between them.
 
-The 143 are `MOV bit,C`, `CPL bit`, `CLR bit`, `CJNE` on a direct address,
-`DJNZ A` and the carry-with-immediate forms. `CLR bit` is the only one the
-assembler gets *silently* wrong rather than refusing -- it emits `CLR direct`,
-a different instruction of the same length, with no error -- and the rest of
-the list is safe because a refusal is a refusal. `docs/findings.md` §11 records
-the first pass, which reported 97.80% because four opcodes in that list were
+The 143 are 74 `AJMP`, 36 `ACALL`, 19 `MOV bit,C`, 13 `CPL bit` and one
+`DJNZ A`. `AJMP` and `ACALL` are gaps because `sdas8051` encodes them
+differently from the 8051 manual, and they are 110 of the 143 between them;
+the other three it refuses outright. `CLR bit` is the one form the assembler
+gets *silently* wrong rather than refusing -- it emits `CLR direct`, a
+different instruction of the same length, with no error -- and that form is not
+among the 143, because this firmware contains no `CLR bit`. Naming a refused
+form is not the same as counting one: the tool refuses `CJNE` on a direct
+address and the carry-with-immediate forms too, and this image has neither.
+`docs/findings.md` §11 records the composition, the correction that produced it,
+and the first pass, which reported 97.80% because four opcodes in its list were
 written from memory rather than measured.
 
 Measured with `sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14` (SDCC 4.6.0), and

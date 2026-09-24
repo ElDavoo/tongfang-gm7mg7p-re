@@ -846,10 +846,12 @@ def committed_report(path=REPORT):
     Read once because the assembler comparison, the category comparison and the
     per-row comparison all read it, and three reads are three chances to compare
     against something that moved underneath the comparison. `by_key` is keyed
-    `addr|program` and not `addr` alone: §14f records four addresses (0x031C,
-    0x3A60, 0x703A, 0xFF17) that are genuinely distinct functions in the two
-    bank windows, so a key of `addr` would compare each of them against the
-    wrong row and print the result as a category that had moved."""
+    `addr|program` and not `addr` alone: 54 addresses carry a row in each of the
+    two bank windows, so a key of `addr` would leave one row of each of those
+    108 with nothing to compare against and print the result as a category that
+    had moved. Four of the 54 (0x031C, 0x3A60, 0x703A, 0xFF17) also share a
+    listing_digest, which is what ec/ghidra/README.md's `listing_digest`
+    section records; the count that makes the key necessary is 54, not four."""
     if not os.path.isfile(path):
         return None
     with open(path, newline="") as f:
@@ -1536,11 +1538,12 @@ def self_test():
                 "a version that could not be read is never reported as "
                 "agreement: it established nothing")
 
-    # §14f's four addresses are two distinct functions in two bank windows, so
-    # the key has to be the pair. The two rows are given *different* committed
-    # outcomes on purpose: with identical ones a key of addr alone collapses
-    # them and still happens to give the right answer for this run, which is
-    # the case a weaker version of this assertion would have passed.
+    # An address in two bank windows is two rows, so the key has to be the
+    # pair. 54 addresses in the committed report are like this; the two rows
+    # here are given *different* committed outcomes on purpose: with identical
+    # ones a key of addr alone collapses them and still happens to give the
+    # right answer for this run, which is the case a weaker version of this
+    # assertion would have passed.
     shared = synth([row(10, 0, prog="bank0", name="in_bank0"),
                     row(10, 0, prog="bank1", name="in_bank1",
                         outcome="partial")])

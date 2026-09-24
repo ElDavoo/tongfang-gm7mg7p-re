@@ -2104,17 +2104,22 @@ file and finds nothing wrong in it is worse than one that reads none, because
 it reports a pass.
 
 **What sdas8051 cannot express, counted rather than skipped.** 143
-instructions use forms it rejects: the bit-addressed `CLR bit`, `CPL bit`,
-`MOV bit,C`; `CJNE` on a direct address; `DJNZ A`; and the carry-with-immediate
-forms. `AJMP` and `ACALL` are in the same list for a different reason — sdas
-encodes them differently from the 8051 manual (at PC `0x8044` the firmware and
-both decoders agree `81 5D` is `ajmp 0x845D`; sdas emits `84 5D`). Every one of
-these is named in the source rather than filtered silently, because a filter
-that quietly drops a fraction of a percent of the instruction stream turns a
-measured number into a flattering one. *(`SETB bit` and `MOVC A,bit` were in
-this list on the first pass and are not gaps; the correction and its numbers are
-in the italic paragraph above, and §14g records the removal of that list from
-this file's forward text.)*
+instructions use forms it rejects, and the count means little on its own: 74
+`AJMP`, 36 `ACALL`, 19 `MOV bit,C`, 13 `CPL bit` and one `DJNZ A`. `AJMP` and
+`ACALL` are gaps for a different reason than the other three — sdas encodes
+them differently from the 8051 manual (at PC `0x8044` the firmware and both
+decoders agree `81 5D` is `ajmp 0x845D`; sdas emits `84 5D`) — and they are 110
+of the 143 between them. Every one of these is named in the source rather than
+filtered silently, because a filter that quietly drops a fraction of a percent
+of the instruction stream turns a measured number into a flattering one. *(`SETB
+bit` and `MOVC A,bit` were in this list on the first pass and are not gaps; the
+correction and its numbers are in the italic paragraph above, and §14g records
+the removal of that list from this file's forward text. Three further forms the
+tool refuses are not in the 143 at all — `CLR bit`, `CJNE` on a direct address,
+and the carry-with-immediate forms — because `BIT_UNSUPPORTED`, `GAP_FORMS` and
+the `CJNE` rule in `to_sdas()` are the assembler's vocabulary rather than this
+firmware's, and this image contains none of the three. §14g records the
+correction, and how the composition was measured.)*
 
 **The claim this does not make.** That the C recompiles. Keil C51 generated
 these bytes; SDCC does not emit Keil's code generation, and no amount of
@@ -2498,10 +2503,15 @@ rows, so the two agreed on the only value that gates the run and nothing
 compared the rest. The run now prints its tally beside the committed one, with a
 signed delta per category, and names each row whose `outcome` differs —
 capped at 20 with an "and N more", the same shape `compare_digests()` already
-used. The row key is `addr|program`, not `addr`: §14f's four addresses
-(`0x031C`, `0x3A60`, `0x703A`, `0xFF17`) are genuinely distinct rows in the two
-bank windows, and a collapsed key would compare each against the wrong one and
-print the result as a category that had moved.
+used. The row key is `addr|program`, not `addr`: 54 addresses carry a row in
+each of the two bank windows, so a key of `addr` alone would leave one row of
+each of those 108 with nothing to compare against, and each would be printed as
+a category that had moved. Four of the 54 — `0x031C`, `0x3A60`, `0x703A`,
+`0xFF17` — are the ones whose instruction streams are identical as well, and
+those four are what `ec/ghidra/README.md`'s "`listing_digest` is" section
+records. This paragraph credited §14f with them and with being the reason the
+key is compound; §14f names none of the four, and the count that makes the key
+necessary is 54 rather than 4.
 
 **3. `check()`'s summary line did not add up to its own total.** It counted
 `match`, `assembler-gap` and `mismatch` and then printed "(of 2705)": 2,574 +
@@ -2545,6 +2555,23 @@ prediction that was wrong. `instructions_checked` did not move at all, which is
 not guaranteed either — the forms this tool declines to translate are declined
 before the assembler sees them, so most of that count is the tool's own
 decision, and the remainder is the assembler's.
+
+**And the composition of the 143, which §11 and `ec/ghidra/README.md` both had
+wrong.** Each named six forms for the count, and three of them — `CLR bit`,
+`CJNE` on a direct address, and the carry-with-immediate forms — account for
+none of it, while the 110 `AJMP`/`ACALL` the same paragraphs demoted to a
+clause "for a different reason" are three quarters of it. All three of the
+unused forms are in `to_sdas()`'s refusal vocabulary; the vocabulary is the
+assembler's, not this firmware's, and a list of refused forms without what each
+contributes to the number is the shape of claim §4 is about. Replaying that
+decision order over the 2,705 rows of `ec/decompiled/listing-index.csv` — the
+parse `check_one()` does, naming the rule that returned `None` — gives 74
+`ajmp`, 36 `acall`, 19 `mov 0x??, CY` (0x92), 13 `cpl 0x??` (0xB2) and one
+`djnz A, 0xa581` at `0xa599`, which is 143. Both forward texts now carry that
+composition. What is *not* claimed for it: no committed check recomputes it.
+`--check` prints the 143 and not what is in it, so this is a measurement made
+while writing the correction, and this section's closing question is where it
+would become one.
 
 **A fourth thing, found by running it: `--jobs 4` was not reproducible.** The
 same committed inputs, on the same runner, gave `match` 2,579, 2,588, 2,590 and
