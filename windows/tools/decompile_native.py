@@ -36,6 +36,7 @@ committed or extracted files: no vendor code is executed.
 Usage:
     python3 decompile_native.py --self-test
     python3 decompile_native.py --check
+    python3 decompile_native.py --write-digests
     python3 decompile_native.py                 # rebuild project + manifest
     python3 decompile_native.py --mode export-only
     python3 decompile_native.py --only ACPIDriver.sys --project-dir /tmp/p
@@ -86,6 +87,14 @@ DECOMPILED_DIR = os.path.join(WINDOWS_DIR, "decompiled", "native")
 # The disassembly index, one row per function, out_file pointing at the .asm
 # that sits beside each .c.
 LISTING_INDEX = os.path.join(WINDOWS_DIR, "ghidra", "listing-index.csv")
+# A committed SHA-256 of every .c under DECOMPILED_DIR, so a truncated,
+# half-overwritten or hand-edited decompile is a red --check rather than a file
+# that passes on its name. A SEPARATE file from the manifest on purpose:
+# write_manifest() is only reached from a Ghidra run, and this one is the layer
+# the per-function index structurally cannot reach -- GamingCenter3_Cross.c is
+# named in no index at all, so a check built on index rows says nothing about
+# the largest artefact in the Windows stack no matter how thorough it is.
+C_DIGESTS = os.path.join(WINDOWS_DIR, "ghidra", "c-digests.csv")
 
 # A disassembly line: an address, then the byte column, then the mnemonic. The
 # byte column ends at the first `-` and is padded to the program's widest
@@ -103,6 +112,12 @@ LISTING_INDEX = os.path.join(WINDOWS_DIR, "ghidra", "listing-index.csv")
 # number picked to fit today's five files.
 _ADDRESS_LINE = re.compile(r"^[0-9A-Fa-f]{4,16}\s+\S")
 _BYTE_SLOT = re.compile(r"^(?:[0-9A-Fa-f]{2}|-)$")
+# The separator the shared exporter writes between two functions in a per-program
+# export, and the only per-function marker a Windows .c carries:
+# "// ==== <name> @ <addr>". `[ \t]*$` rather than `\s*$` because \s eats the
+# newline, and a pattern that has to backtrack to find its own line end is a
+# pattern whose matching is not worth reading.
+_C_SEPARATOR = re.compile(r"^// ==== (\S+) @ ([0-9A-Fa-f]+)[ \t]*$", re.M)
 
 
 def _parse_listing_lines(lines):
@@ -186,6 +201,11 @@ INDEX_HEADER = ["program", "addr", "name", "size", "seed_basis", "annotated",
 # controlled vocabulary and a vocabulary is only enforced if something reads it
 # from one place: the three modes the driver can produce, and nothing else.
 MANIFEST_MODES = ("rebuild-project", "export-only", "not-in-project")
+# c-digests.csv, beside the manifest rather than inside it. `path` is relative
+# to the repo root so the file reads the same way a citation does, and `bytes`
+# is carried alongside the hash so a truncation is named as one rather than
+# having to be inferred from a hash that no longer matches.
+C_DIGEST_COLUMNS = ["path", "sha256", "bytes"]
 
 
 def log(msg):
@@ -198,6 +218,259 @@ def sha256_file(path):
         for chunk in iter(lambda: f.read(1 << 20), b""):
             h.update(chunk)
     return h.hexdigest()
+
+
+def committed_c_files(decompiled_dir=DECOMPILED_DIR):
+    """Every committed .c under `decompiled_dir`, as (abs, repo-relative) sorted
+    by the relative path.
+
+    Sorted because the digest file is a committed artefact and two runs over the
+    same tree have to produce the same bytes; the order a directory walk happens
+    to return is not that. This walk has no exclusion, and that is the point for
+    Windows: GamingCenter3_Cross.c is named in no index and the per-function
+    check below structurally cannot reach it, so this is the one place it is
+    covered -- and it is covered by being checked, not exempted."""
+    out = []
+    for dp, _dns, fns in os.walk(decompiled_dir):
+        for fn in fns:
+            if not fn.endswith(".c"):
+                continue
+            abs_path = os.path.join(dp, fn)
+            # posixpath, not os.path: the `path` column is a committed CSV read
+            # by every platform's git, so a Windows contributor's --write-digests
+            # must not rewrite 2,710 rows as "ec\decompiled\..." and leave the
+            # Linux gate reporting every one of them as a missing file.
+            rel = os.path.relpath(abs_path, REPO).replace(os.sep, "/")
+            out.append((abs_path, rel))
+    return sorted(out, key=lambda p: p[1])
+
+
+def write_c_digests(path=C_DIGESTS, decompiled_dir=DECOMPILED_DIR):
+    """(Re)write the committed .c digest file from what is on disk now.
+
+    Needs no Ghidra and no network, which is the whole point: regenerating it is
+    a sub-second command an agent or a contributor runs after a re-export, and
+    it never touches a Ghidra project. It covers EVERY .c, GamingCenter3_Cross.c
+    included, because that is the only mechanism here that can.
+
+    Refuses to bless a zero-length .c, or one that is a symlink. A digest is a
+    claim that a file is the export, and a truncated write's zero-length file is
+    exactly the fault the file exists to catch; writing its hash would turn the
+    check into a rubber stamp on the corruption. A symlink is the one
+    substitution a hash cannot see at all, because hashing follows the link and
+    records the TARGET's bytes -- so the repository could hold no decompile at
+    that address and pass. Both are refused here rather than asserted later,
+    because this is the only place a wrong file can be recorded.
+    """
+    rows, empty, links = [], [], []
+    for abs_path, rel in committed_c_files(decompiled_dir):
+        if os.path.islink(abs_path):
+            links.append(rel)
+            continue
+        size = os.path.getsize(abs_path)
+        if size == 0:
+            empty.append(rel)
+        rows.append({"path": rel, "sha256": sha256_file(abs_path), "bytes": str(size)})
+    if links:
+        raise SystemExit("error: refusing to write %s: %d .c under %s is a "
+                         "symlink, e.g. %s. A digest follows the link and would "
+                         "bless the TARGET's bytes, so the repository could hold "
+                         "no decompile at that address and still pass -- the one "
+                         "substitution a hash cannot see. Commit the file itself."
+                         % (os.path.relpath(path, REPO), len(links),
+                            os.path.relpath(decompiled_dir, REPO), links[0]))
+    if empty:
+        raise SystemExit("error: refusing to write %s: %d zero-length .c, e.g. %s. "
+                         "A truncated export is what the digest exists to catch, so "
+                         "it is not something to record a hash of -- re-run the "
+                         "export first."
+                         % (os.path.relpath(path, REPO), len(empty), empty[0]))
+    with open(path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=C_DIGEST_COLUMNS, lineterminator="\n")
+        w.writeheader()
+        w.writerows(rows)
+    return len(rows)
+
+
+def verify_c_digests(path=C_DIGESTS, decompiled_dir=DECOMPILED_DIR):
+    """Every committed .c against the digest row that claims it.
+
+    Four things are asserted, and the fourth is what makes the first three mean
+    something: the row count has to equal the file count found, so a partial or
+    filtered digest cannot pass by never being compared. A digest file covering
+    two files when three are on disk is a check that has quietly stopped
+    checking, which is the failure mode this repository keeps meeting the other
+    way round.
+
+    The calibration matters as much as the assertion. This catches accidental
+    corruption, and it forces any accepted change to a decompile to be a visible
+    committed diff. It is NOT an anti-tamper control and NOT proof that a
+    decompile is a faithful reading of the binary: --write-digests will happily
+    re-bless a mangled file, and no hash says the C means what it claims. It is
+    also not what verify_reassembly.py does -- that tool re-derives listing bytes
+    from the firmware, a trusted input. The decompiled C has no such input to be
+    re-derived from, which is why a committed digest is genuinely new here. For
+    GamingCenter3_Cross.c it is also not a substitute for the machine code this
+    repository cannot hold: it says the file is unchanged since it was
+    committed, not that it is right.
+    """
+    if not os.path.isfile(path):
+        return [f"no {os.path.relpath(path, REPO)}: every committed .c needs a "
+                f"digest, or a truncated or hand-edited export -- including "
+                f"GamingCenter3_Cross.c, which no index row reaches -- is a file "
+                f"that passes on its name alone. Run with --write-digests."]
+    with open(path, newline="") as f:
+        reader = csv.reader(f)
+        try:
+            header = next(reader)
+        except StopIteration:
+            header = None
+        if header != C_DIGEST_COLUMNS:
+            return [f"{os.path.relpath(path, REPO)}: header is {header!r}, not this "
+                    f"tool's {len(C_DIGEST_COLUMNS)}-column "
+                    f"{','.join(C_DIGEST_COLUMNS)}"]
+        rows = list(csv.DictReader(f, fieldnames=C_DIGEST_COLUMNS))
+
+    on_disk = dict((rel, abs_path) for abs_path, rel in committed_c_files(decompiled_dir))
+    if not on_disk:
+        # The floor under every comparison below. Without it, a header-only
+        # digest against a tree that is empty or absent produces zero problems
+        # and zero comparisons -- a check that has read nothing and reports
+        # nothing wrong, which is the shape §14b describes and the reason this
+        # line exists rather than a comment saying it cannot happen.
+        return ["no committed .c under %s: there is nothing for this digest to "
+                "cover, so every assertion below would pass without comparing "
+                "anything" % os.path.relpath(decompiled_dir, REPO)]
+    seen, bad = set(), []
+    for r in rows:
+        rel = (r.get("path") or "").strip()
+        if rel in seen:
+            bad.append(f"{rel}: two digest rows for one file")
+        seen.add(rel)
+        abs_path = on_disk.get(rel)
+        if abs_path is None:
+            bad.append(f"{rel}: a digest row names a file that is not there")
+            continue
+        try:
+            want_bytes = int(r["bytes"])
+        except (TypeError, ValueError):
+            bad.append(f"{rel}: bytes is {r.get('bytes')!r}, not a number")
+            continue
+        got_bytes = os.path.getsize(abs_path)
+        if got_bytes != want_bytes:
+            bad.append(f"{rel}: {want_bytes} byte(s) committed, {got_bytes} on "
+                       f"disk. If this came from a re-export, re-run "
+                       f"--write-digests; if it did not, the file was truncated, "
+                       f"overwritten or hand-edited.")
+            continue
+        got = sha256_file(abs_path)
+        if got != r["sha256"]:
+            bad.append(f"{rel}: committed digest {r['sha256']}, on disk {got}. If "
+                       f"this came from a re-export, re-run --write-digests; if it "
+                       f"did not, the file was truncated, overwritten or "
+                       f"hand-edited.")
+    for rel in sorted(set(on_disk) - seen):
+        bad.append(f"{rel}: a committed .c with no digest row")
+    if len(rows) != len(on_disk):
+        bad.append(f"{len(rows)} digest row(s) for {len(on_disk)} committed .c: a "
+                   f"digest covering some of the tree is a check that is not "
+                   f"checking the rest")
+    return bad
+
+
+def _c_markers(path):
+    """The `// ==== <name> @ <addr>` separators one `.c` declares, as
+    {ADDRESS_UPPER: {names}}, or None if it is missing, unreadable, or declares
+    none.
+
+    A function in its own right, not an inline block, because the SHAPE of the
+    return value is a property `--self-test` asserts: it is what makes each
+    index row a dict lookup rather than a scan of every function the file
+    declares, and a scan is invisible in the output (the distinct-file count
+    says 5 either way) and cost 5.4 s of a 7.5 s run when it was there once.
+
+    A set of names per address rather than one name, because the row has to
+    match ONE of the names declared at its address. Two addresses in a
+    per-program export cannot collide -- they are distinct entries -- so this is
+    a set of one in practice, and a set because the alternative silently
+    discards a duplicate separator instead of noticing it.
+    """
+    try:
+        with open(path, errors="replace") as f:
+            text = f.read()
+    except OSError:
+        return None
+    by_addr = {}
+    for name, addr in _C_SEPARATOR.findall(text):
+        by_addr.setdefault(addr.upper(), set()).add(name)
+    return by_addr or None
+
+
+def c_presence_problems(index_rows, decompiled_dir=DECOMPILED_DIR):
+    """Every index row's `.c` exists, is non-empty, and declares the address and
+    the name the index gives it.
+
+    Nothing here paired a row to the function its `.c` actually contains.
+    `do_check()` proved each program's `.c` was on disk and accounted for; this
+    proves the file holds the functions the index claims for it, which is the
+    property a truncated or half-overwritten export breaks without breaking. A
+    zero-length file passes `os.path.isfile`, so non-empty is asserted rather
+    than inferred from the stat.
+
+    Each distinct `.c` is read ONCE and the markers it declares remembered as
+    {address: {names}}, then each row is a dict lookup. Both halves matter and
+    they are §14a at two different addresses. In per-program export mode
+    `out_file` is empty on all 10,664 rows and the `.c` is `program + ".c"`, so
+    a per-row READ re-reads the 10.6 MB ACPIDriverDll.c 10,141 times. And
+    building the marker set keyed on address rather than as a flat list of
+    (name, addr) pairs is what keeps the comparison off a linear scan: the first
+    version of this did `any(a == addr for _n, a in markers)`, which is 10,141
+    rows times 10,141 markers, and it cost 5.4 s of the 7.5 s run. The count of
+    files read is returned so the caller can print it and `--self-test` can pin
+    it, on the same lines that already pin it for listings.
+
+    NOTE what this cannot reach: a program in PROJECT_EXCLUDED has no index rows
+    at all, so its retained `.c` is not in scope here. That is what the digest
+    above is for, and it is why the digest checks the retained file rather than
+    exempting it.
+
+    Pure: no globals, no I/O beyond the fixture directory it is handed.
+
+    Returns (problems, n_files_read, n_rows_paired)."""
+    out, declared, n_rows = [], {}, 0
+    for r in index_rows:
+        program = (r.get("program") or "").strip()
+        if (r.get("out_file") or "").strip() == "(failed)":
+            continue
+        # program + ".c" rather than out_file: the per-program exporter leaves
+        # out_file empty on every Windows row, so this is the same derivation
+        # do_check()'s own `expected` set below already uses to find the file.
+        rel = f"{program}.c" if program else ""
+        if not rel:
+            continue
+        # Counted here, not as len(index_rows) at the call site: a `(failed)`
+        # row is a legitimate state the manifest permits (functions ==
+        # decompiled + failed), and a check that prints the input length has
+        # claimed to pair rows it stepped over.
+        n_rows += 1
+        if rel not in declared:
+            declared[rel] = _c_markers(os.path.join(decompiled_dir, rel))
+        got = declared[rel]
+        addr = (r.get("addr") or "").strip().upper()
+        name = (r.get("name") or "").strip()
+        if got is None:
+            out.append(f"index row {program} {r.get('addr', '?')}: {rel} is "
+                       f"missing, empty, or carries no `// ==== <name> @ <addr>` "
+                       f"separator")
+        elif addr not in got:
+            out.append(f"index row {program} {addr} {name}: {rel} declares no "
+                       f"function at that address -- a wrong-function export, or a "
+                       f"stale index")
+        elif name not in got[addr]:
+            out.append(f"index row {program} {addr} {name}: {rel} declares "
+                       f"{sorted(got[addr])} at that address instead -- a "
+                       f"wrong-function export, or a stale index")
+    return out, len(declared), n_rows
 
 
 def find_ghidra():
@@ -888,6 +1161,47 @@ def do_check():
                   f"regenerates", n not in expected,
                   "the index claims to produce it, so a default build would "
                   "overwrite it")
+        # Existence is not content. The checks above proved each program's .c
+        # is on disk and accounted for; this pairs every index row to the
+        # function its .c actually declares, which is the property a truncated
+        # or half-overwritten export breaks while leaving every file present.
+        # The distinct-file count is printed beside the row count because a
+        # per-row read would look identical in the output and cost 100 GB.
+        _pres, _c_read, _c_rows = c_presence_problems(irows, DECOMPILED_DIR)
+        check("every index row's .c declares the address and name the row gives it",
+              not _pres, "; ".join(_pres[:3]))
+        print(f"  presence: {_c_rows} index row(s) paired to the function their "
+              f".c declares, across {_c_read} distinct file(s)")
+
+    # The digest, which is the half the pairing above structurally cannot do:
+    # GamingCenter3_Cross.c is named in no index row, so no check built on
+    # index rows reaches it however thorough it is. Here it is CHECKED, and
+    # every other committed .c with it.
+    _cd = verify_c_digests()
+    check("every committed .c matches its digest row", not _cd,
+          "; ".join(_cd[:3]) + ("; ... and %d more" % (len(_cd) - 3)
+                                if len(_cd) > 3 else ""))
+    _cdfiles = committed_c_files(DECOMPILED_DIR)
+    _cdrows = list(csv.DictReader(open(C_DIGESTS, newline=""))) \
+        if os.path.isfile(C_DIGESTS) else []
+    _bytes = sum(os.path.getsize(a) for a, _ in _cdfiles)
+    print(f"  digests: {len(_cdrows)} row(s) for {len(_cdfiles)} committed .c "
+          f"({_bytes} bytes)")
+    # Not behind `if _cdfiles:` -- an absent or empty tree made that guard skip
+    # this assertion silently, with no print and no failure, which is a check
+    # that cannot fire. verify_c_digests() above now fails that case on its own
+    # ("nothing for this digest to cover"), so reaching here with no files is
+    # already red; the row is still checked so the retained file is named even
+    # when the rest has gone.
+    # The carve-out is not a carve-out here. The retained decompile keeps the
+    # printed gap in the listing check above -- it genuinely has no machine code
+    # beside it and nothing in this repository can change that -- and it gets a
+    # digest here rather than being exempted, because a carve-out that prints
+    # nothing and checks nothing is how a check stops meaning anything.
+    check("the retained decompile is digested, not exempted",
+          any(r["path"].endswith("GamingCenter3_Cross.c") for r in _cdrows),
+          "the largest artefact in the Windows stack is in no index, so this row "
+          "is the only thing that says anything about it")
 
     print("  all checks passed" if ok else "  FAILURES ABOVE")
     return 0 if ok else 1
@@ -1070,6 +1384,238 @@ def do_self_test():
     for _f in sorted(_ret):
         check("the retained decompile %s is actually on disk" % _f,
               os.path.isfile(os.path.join(DECOMPILED_DIR, _f)))
+
+    # The decompile/index pairing, on a fixture. Existence was checked and the
+    # content was not: os.path.isfile() passes on a zero-length file, and a file
+    # holding a different function entirely passes on having the right name on
+    # disk. The known-good case is first, for the reason the structural faults
+    # above are: a guard exercised only on known-bad input cannot tell "clean"
+    # from "never ran".
+    _d = tempfile.mkdtemp(prefix="decompile_native_presence_")
+    try:
+        _rows = [{"program": "ACPIDriver", "addr": "140001000",
+                  "name": "FUN_140001000", "out_file": ""}]
+        _c = os.path.join(_d, "ACPIDriver.c")
+        with open(_c, "w") as f:
+            f.write("// ACPIDriver: Ghidra 12.1.3 decompile\n"
+                    "// ==== FUN_140001000 @ 140001000\n\n"
+                    "longlong FUN_140001000(longlong p) { return p; }\n")
+        _p, _r, _rn = c_presence_problems(_rows, _d)
+        check("a .c that declares the address and name its index row gives it passes",
+              not _p and _r == 1, str(_p))
+        # A truncated write leaves a zero-length file, and isfile() passes on one.
+        with open(_c, "w"):
+            pass
+        _p, _r, _rn = c_presence_problems(_rows, _d)
+        check("a .c truncated to zero length is caught, and the file is named",
+              len(_p) == 1 and "ACPIDriver.c" in _p[0], str(_p))
+        # The wrong function, in a file with the right name: the half-overwritten
+        # export. An existence check cannot see this one.
+        with open(_c, "w") as f:
+            f.write("// ACPIDriver: Ghidra 12.1.3 decompile\n"
+                    "// ==== FUN_140001000 @ 140001000\n\n"
+                    "longlong FUN_140001000(longlong p) { return p; }\n")
+        _p, _r, _rn = c_presence_problems(_rows, _d)
+        check("a .c declaring the function passes again once it is restored",
+              not _p, str(_p))
+        with open(_c, "w") as f:
+            f.write("// ACPIDriver: Ghidra 12.1.3 decompile\n"
+                    "// ==== FUN_140009000 @ 140009000\n\n"
+                    "longlong FUN_140009000(longlong p) { return p; }\n")
+        _p, _r, _rn = c_presence_problems(_rows, _d)
+        check("a .c carrying a different function's address is caught",
+              len(_p) == 1 and "ACPIDriver.c" in _p[0], str(_p))
+        with open(_c, "w") as f:
+            f.write("// ACPIDriver: Ghidra 12.1.3 decompile\n"
+                    "// ==== FUN_140009000 @ 140001000\n\n"
+                    "longlong FUN_140009000(longlong p) { return p; }\n")
+        _p, _r, _rn = c_presence_problems(_rows, _d)
+        check("a .c carrying a different function's name at the right address is "
+              "caught too, so the name is checked and not only the address",
+              len(_p) == 1 and "FUN_140009000" in _p[0], str(_p))
+        os.remove(_c)
+        _p, _r, _rn = c_presence_problems(_rows, _d)
+        check("a .c removed is caught", len(_p) == 1 and "ACPIDriver.c" in _p[0],
+              str(_p))
+        # Ten thousand index rows naming one file must read it once. This is the
+        # §14a regression guard for the C layer, mirroring the one the listing
+        # parse above already carries: out_file is empty on every Windows row, so
+        # a per-row read of the 10.6 MB ACPIDriverDll.c is 100 GB.
+        with open(_c, "w") as f:
+            f.write("// ACPIDriver: Ghidra 12.1.3 decompile\n"
+                    "// ==== FUN_140001000 @ 140001000\n\n"
+                    "longlong FUN_140001000(longlong p) { return p; }\n")
+        _p, _r, _rn = c_presence_problems(_rows * 10000, _d)
+        check("a repeated program is read once, so 10,000 index rows cost one "
+              "file read", not _p and _r == 1, "%d read(s), %s" % (_r, _p[:1]))
+        # The other half of the same shape, which the fixture above cannot see
+        # because its file holds one marker. A per-row linear scan of a large
+        # marker set is 10,141 rows against 10,141 markers on the real tree,
+        # and it cost 5.4 s of the 7.5 s run before the markers were keyed on
+        # address.
+        #
+        # Pinned STRUCTURALLY, not by wall clock, and that distinction is the
+        # point. A timing bound was tried first and is not a guard in either
+        # direction: the quadratic form takes 0.18 s on this fixture, which sits
+        # far inside any bound loose enough not to be flaky, while the real
+        # regression was 5.4 s at 26x the work. What distinguishes the two is
+        # the CONTAINER -- {address: {names}} against a flat list of pairs -- so
+        # that is what is asserted, by reading it back out of the module rather
+        # than inferring it from a stopwatch. An implementation that scanned
+        # would fail here even on a fast machine.
+        _probe = "".join(f"// ==== FUN_{140001000 + 8 * i:09X} @ "
+                         f"{140001000 + 8 * i:09X}\n" for i in range(2000))
+        with open(_c, "w") as f:
+            f.write(_probe)
+        _rows_n = [{"program": "ACPIDriver", "addr": f"{140001000 + 8 * i:09X}",
+                    "name": f"FUN_{140001000 + 8 * i:09X}", "out_file": ""}
+                   for i in range(2000)]
+        # Uppercase throughout, because that is what the committed .c carry
+        # (ACPIDriver.c writes "// ==== FUN_140001000 @ 140001000"); a lowercase
+        # fixture would fail the old code on a case difference instead of on the
+        # scan, and pass for a reason that has nothing to do with this check.
+        _p, _r, _rn = c_presence_problems(_rows_n, _d)
+        check("2,000 rows against 2,000 declared functions all pair", not _p
+              and _r == 1 and _rn == 2000,
+              "%d paired, %d read(s), %s" % (_rn, _r, _p[:1]))
+        _markers = _c_markers(os.path.join(_d, "ACPIDriver.c"))
+        check("the per-file marker container is a dict keyed on address, so a row "
+              "is a lookup and not a scan of every declared function",
+              isinstance(_markers, dict) and len(_markers) == 2000
+              and all(isinstance(v, set) for v in _markers.values()),
+              "type %s, %d key(s)" % (type(_markers).__name__,
+                                      len(_markers) if hasattr(_markers, "__len__") else -1))
+        # And a row whose address is in the file but whose name is not, which is
+        # the case a set-of-names keyed on address has to get right.
+        _p, _r, _rn = c_presence_problems(
+            [dict(_rows_n[0], name="FUN_deadbeef")], _d)
+        check("a name that is not the one declared at that address is caught, "
+              "and the declaration is named", len(_p) == 1
+              and "FUN_deadbeef" in _p[0], str(_p))
+
+        # The committed tree, so the coverage figure --check reports is measured
+        # here and not only in its output.
+        if os.path.isfile(INDEX_CSV):
+            _irows = read_index(INDEX_CSV)
+            _p, _r, _rn = c_presence_problems(_irows, DECOMPILED_DIR)
+            check(f"every one of the {len(_irows)} index rows' .c declares the "
+                  f"address and name the row gives it", not _p, "; ".join(_p[:3]))
+            check(f"that pairing cost {_r} file read(s) for {len(_irows)} row(s)",
+                  _r == 5, "%d read(s)" % _r)
+            # The retained .c is deliberately NOT reachable from here, and this
+            # is what makes the digest below necessary rather than redundant.
+            _p, _r, _rn = c_presence_problems(_irows, DECOMPILED_DIR)
+            check("the retained decompile is in no index row, so this pairing "
+                  "cannot reach it -- which is the gap the digest fills",
+                  not any("GamingCenter3_Cross" in x for x in _p) and _r == 5,
+                  "%d file(s) read" % _r)
+    finally:
+        shutil.rmtree(_d, ignore_errors=True)
+
+    # The committed .c digests. The known-good case is the committed tree; the
+    # known-bad ones are a fixture, because corrupting the committed .c to prove
+    # the check works is not a thing this self-test may do.
+    _cdfiles = committed_c_files(DECOMPILED_DIR)
+    if os.path.isfile(C_DIGESTS):
+        _p = verify_c_digests()
+        check("every committed .c matches its digest row", not _p, "; ".join(_p[:3]))
+        with open(C_DIGESTS, newline="") as _f:
+            _cdrows = list(csv.DictReader(_f))
+        check("c-digests.csv carries this tool's own %d-column header"
+              % len(C_DIGEST_COLUMNS),
+              next(csv.reader(open(C_DIGESTS, newline="")), None) == C_DIGEST_COLUMNS)
+        check("one digest row per committed .c, so a partial digest cannot pass "
+              "by never being compared", len(_cdrows) == len(_cdfiles),
+              "%d row(s), %d file(s)" % (len(_cdrows), len(_cdfiles)))
+        check("the retained decompile has a digest row, and it is checked rather "
+              "than exempted",
+              any(r["path"].endswith("GamingCenter3_Cross.c") for r in _cdrows)
+              and all(r.get("sha256") for r in _cdrows))
+    else:
+        check("c-digests.csv is committed", False, "not present")
+    _d = tempfile.mkdtemp(prefix="decompile_native_digest_")
+    try:
+        _c = os.path.join(_d, "ACPIDriver.c")
+        with open(_c, "w") as f:
+            f.write("// ==== FUN_140001000 @ 140001000\n")
+        _dg = os.path.join(_d, "c-digests.csv")
+        n = write_c_digests(_dg, _d)
+        check("--write-digests records one row for the one .c", n == 1, str(n))
+        check("a freshly written digest verifies", not verify_c_digests(_dg, _d))
+        # The row key is what write_c_digests wrote, not a hand-typed path: the
+        # `path` column is repo-relative, so a fixture under /tmp is keyed by a
+        # ../.. chain, and a hand-written "ACPIDriver.c" would test the wrong
+        # thing and pass for the wrong reason.
+        _key = committed_c_files(_d)[0][1]
+        # A digest that disagrees with the file it names.
+        with open(_c, "a") as f:
+            f.write("// a hand-mangled body\n")
+        _p = verify_c_digests(_dg, _d)
+        check("a .c that changed under its digest is caught, and the file is named",
+              len(_p) == 1 and _key in _p[0], str(_p))
+        # A row for a file that is not there.
+        with open(_dg, "w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=C_DIGEST_COLUMNS, lineterminator="\n")
+            w.writeheader()
+            w.writerow({"path": "Nope.c", "sha256": "0" * 64, "bytes": "1"})
+        _p = verify_c_digests(_dg, _d)
+        check("a digest row for a file that is not there is caught, on both "
+              "halves -- the absent file and the undigested one",
+              len(_p) == 2 and any("Nope.c" in x for x in _p)
+              and any("no digest row" in x for x in _p), str(_p))
+        # A digest missing a file that is on disk.
+        with open(_dg, "w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=C_DIGEST_COLUMNS, lineterminator="\n")
+            w.writeheader()
+            w.writerow({"path": _key, "sha256": sha256_file(_c),
+                        "bytes": str(os.path.getsize(_c))})
+        with open(os.path.join(_d, "ACPIDriverDll.c"), "w") as f:
+            f.write("// ==== FUN_140010000 @ 140010000\n")
+        _p = verify_c_digests(_dg, _d)
+        check("a .c on disk with no digest row is caught, so a digest covering "
+              "some of the tree cannot pass by never being compared",
+              len(_p) == 2 and any("no digest row" in x for x in _p)
+              and any("digest row(s) for" in x for x in _p), str(_p))
+        # And the floor: a digest with nothing on disk to cover is a check that
+        # has compared nothing, not a check that has passed. This one matters
+        # more here than in the other two components, because the digest is the
+        # WHOLE of the coverage for GamingCenter3_Cross.c -- no index row
+        # reaches it -- so a vacuous pass here is a vacuous pass on the largest
+        # artefact in the Windows stack.
+        _p = verify_c_digests(_dg, os.path.join(_d, "gone"))
+        check("a digest against a tree with no .c at all is caught, rather than "
+              "passing with nothing compared", len(_p) == 1
+              and "nothing for this digest to cover" in _p[0], str(_p))
+        # And the bootstrap's own refusal: --write-digests must not enshrine
+        # the zero-length file it exists to catch.
+        open(os.path.join(_d, "ACPIDriver.c"), "w").close()
+        try:
+            write_c_digests(_dg, _d)
+            _refused = False
+        except SystemExit as e:
+            _refused = "zero-length" in str(e)
+        check("--write-digests refuses to bless a zero-length .c", _refused)
+        # A symlink is the substitution a hash cannot see at all: hashing
+        # follows the link, so the digest would record the TARGET's bytes and
+        # the repository could hold no decompile at that address and pass. On
+        # this component that is the retained GamingCenter3_Cross.c case with
+        # the roles reversed -- the one file no index row can reach would be the
+        # one file a link could quietly replace.
+        open(os.path.join(_d, "ACPIDriver.c"), "w").write(
+            "// ==== FUN_140001000 @ 140001000\n")
+        _outside = os.path.join(_d, "outside.c")
+        open(_outside, "w").write("// ==== FUN_elsewhere @ 140099999\n")
+        os.remove(os.path.join(_d, "ACPIDriver.c"))
+        os.symlink(_outside, os.path.join(_d, "ACPIDriver.c"))
+        try:
+            write_c_digests(_dg, _d)
+            _refused = False
+        except SystemExit as e:
+            _refused = "symlink" in str(e)
+        check("--write-digests refuses to bless a .c that is a symlink, which is "
+              "the one substitution a hash cannot see", _refused)
+    finally:
+        shutil.rmtree(_d, ignore_errors=True)
 
     print("  all assertions passed" if ok else "  FAILURES ABOVE")
     return 0 if ok else 1
@@ -1303,7 +1849,29 @@ def main():
                         "needs more than the default on a cold page cache"
                         % FAST_TIMEOUT_S)
     p.add_argument("--keep-scratch", action="store_true", help="do not delete the scratch dir")
+    p.add_argument("--write-digests", action="store_true",
+                   help=f"regenerate {os.path.relpath(C_DIGESTS, REPO)} from the "
+                        f"committed .c files; no Ghidra, no network, sub-second")
     args = p.parse_args()
+    # --write-digests first of all, because it is the one mode that writes a
+    # committed file and needs nothing else: no Ghidra, no project touched, and
+    # no import -- which is what lets it cover GamingCenter3_Cross.c, the one
+    # .c no default build can produce.
+    if args.write_digests:
+        if args.check or args.self_test:
+            # Refused rather than resolved in either direction. --write-digests
+            # re-blesses the tree from what is on disk and returns 0, so a CI
+            # invocation that ever grew the flag would overwrite the digests it
+            # was meant to compare against and exit green -- which is the one
+            # thing a digest must never be able to do.
+            raise SystemExit(f"error: --write-digests regenerates "
+                             f"{os.path.relpath(C_DIGESTS, REPO)} from the "
+                             f"current tree; it cannot be combined with --check "
+                             f"or --self-test, which compare against it. Run them "
+                             f"separately.")
+        n = write_c_digests()
+        log(f"wrote {os.path.relpath(C_DIGESTS, REPO)}: {n} .c file(s)")
+        return 0
     if args.check:
         return do_check()
     if args.self_test:

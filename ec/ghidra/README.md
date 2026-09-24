@@ -28,6 +28,10 @@ python3 ../tools/build_ec_decompile.py --work /tmp/ec --self-test
 python3 ../tools/build_ec_decompile.py --work /tmp/ec --self-test --cross-decoder  # prints the run
 python3 ../tools/build_ec_decompile.py --work /tmp/ec --report   # + writes cross-decoder.csv
 python3 ../tools/build_ec_decompile.py --work /tmp/ec --self-test --oracle   # also runs Ghidra
+
+# after a re-export that legitimately changed a .c: refresh c-digests.csv
+# (no Ghidra; refuses to record a hash for a zero-length .c)
+python3 ../tools/build_ec_decompile.py --work /tmp/ec --write-digests
 ```
 
 `--self-test --oracle` is the acceptance check this file has always asked
@@ -113,7 +117,7 @@ Until then it runs when asked, and a green commit says nothing about whether it
 would still pass. The same shape `../tools/verify_gap_text.py` is already in
 below and `../../docs/findings.md` §14e records for the deep tier.
 
-**One number, measured.** This module defines **52** functions —
+**One number, measured.** This module defines **56** functions —
 `grep -c '^def ' ec/tools/build_ec_decompile.py`. Three files used to give three
 different counts of it (22 here, 32 in `../../docs/findings.md` §18, 39 by the
 `grep`); the `grep` is the only one of the three that is mechanically checkable,
@@ -121,7 +125,11 @@ so it is the one quoted. It moves with the work, and the number it quotes is
 `grep`'s: 41 before the cross-decoder comparison was given a sample and a
 report, 52 after, which is `41 - 2 + 13` — `function_size()` and
 `check_cross_decoder_agreement()` gone, and the thirteen that
-`file_offset()` through `degenerate_sample_problems()` replaced them with.
+`file_offset()` through `degenerate_sample_problems()` replaced them with. It is
+**56** in the merged tree of §14i and §14j, which are additive: the four digest
+and index-pairing functions §14j adds (`committed_c_files()`,
+`write_c_digests()`, `verify_c_digests()`, `c_presence_problems()`) share no
+name with the thirteen, so `52 + 4`.
 
 ## The two annotation layers
 
@@ -162,6 +170,7 @@ there.
 | `manifest.csv` | per program: function/decompile/fail counts, bytes disassembled, seed counts, Ghidra version, input SHA-256. The `common` row is an **export grouping**, not a fourth Ghidra program: those functions live in both bank programs and are emitted once |
 | `xdata-symbols.csv` | generated XDATA names, from `../annotations/registers.yaml`. Never hand-edited |
 | `xdata-overrides.csv` | the hand-maintained escape hatch for addresses the generator cannot name |
+| `c-digests.csv` | a committed SHA-256 and byte count for every `.c` above, so a truncated, half-overwritten or hand-edited decompile is a red `--check`. Regenerate with `build_ec_decompile.py --write-digests` (no Ghidra). It catches corruption, and it makes any accepted change to a decompile a changed digest row naming the file that moved; the `.c` itself stays ordinary text and diffs normally, so the change is reviewable in both. It does **not** prove a decompile is a faithful reading |
 | `../annotations/ghidra-functions.csv` | **the editable layer.** Function names, types, comments, evidence |
 | `../../ghidra/scripts/*.java` | the headless scripts, shared with the BIOS and Windows projects |
 

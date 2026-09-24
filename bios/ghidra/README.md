@@ -26,6 +26,10 @@ python3 ../tools/bios_extract.py --work /tmp/bios --extract --uefiextract ...
 # what the gates check, with no Ghidra, no network and no UEFIExtract
 python3 ../tools/bios_extract.py --work /tmp/bios --check
 python3 ../tools/bios_extract.py --work /tmp/bios --self-test
+
+# after a re-export, or after hand-editing ../decompiled/OemOcDxe.annotated.c:
+# refresh c-digests.csv (no Ghidra; refuses to record a hash for a zero-length .c)
+python3 ../tools/bios_extract.py --work /tmp/bios --write-digests
 ```
 
 `--check` and `--self-test` read only committed files, so they are cheap
@@ -44,6 +48,7 @@ deferred to `AGENT_GATES_DEEP=1`.
 | `load-map.csv` | per module: kind, image size, image SHA-256, and the address it is loaded at |
 | `index.csv` | every function: module, address, name, size, how it was seeded, what is annotated, and the evidence for it |
 | `manifest.csv` | per module: function/decompile/fail counts, bytes disassembled, body bytes, Ghidra version, input SHA-256 |
+| `c-digests.csv` | a committed SHA-256 and byte count for every `.c` in `../decompiled/`, including the hand-edited `OemOcDxe.annotated.c`, so a truncated, half-overwritten or hand-edited decompile is a red `--check`. Regenerate with `bios_extract.py --write-digests` (no Ghidra). It catches corruption, and it makes any accepted change to a decompile a changed digest row naming the file that moved; the `.c` itself stays ordinary text and diffs normally, so the change is reviewable in both. It does **not** prove a decompile is a faithful reading |
 | `DecompAll.java`, `TeEntry.java` | the two scripts only this project needs |
 | `../../ghidra/scripts/*.java` | the shared headless scripts, the same ones the EC and Windows projects use |
 | `../annotations/ghidra-functions.csv` | **the editable layer.** Names, types, comments, evidence |
