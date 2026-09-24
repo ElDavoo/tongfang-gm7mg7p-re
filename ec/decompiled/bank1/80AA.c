@@ -8,8 +8,10 @@
    to XDATA 0x06DA, 0x08E4, 0x055F, 0x09CE and 0x070B, each selected by its own `mov DPTR, #imm` in
    the listing. The listing ends after loading DPTR with 0x0706 and reading it; the zero test and
    decrement of 0x0706 are in the listing at 0x80D6. None of these addresses is decoded further by
-   these bytes, and none has an entry in ec/annotations/registers.yaml. Inside the body running
-   0x8018 to the `ret` at 0x8189, so this boundary is the call-target byte scan's hypothesis.
+   these bytes. ec/annotations/registers.yaml now carries 0x06DA, 0x08E4, 0x055F, 0x09CE, 0x070B and
+   0x0706 as XDATA_06DA, XDATA_08E4, XDATA_055F, XDATA_09CE, XDATA_070B and XDATA_0706, EC-side
+   sites found with their meanings not established. Inside the body running 0x8018 to the `ret` at
+   0x8189, so this boundary is the call-target byte scan's hypothesis.
    type: writer
    evidence: ec/decompiled/bank1/80AA.asm; ec/decompiled/bank1/80AA.c; ec/annotations/registers.yaml
    basis: hand-decoded */
@@ -17,76 +19,73 @@
 void dec_timers_06da_08e4_055f_09ce_070b(void)
 
 {
-  if (DAT_EXTMEM_06da != '\0') {
-    DAT_EXTMEM_06da = DAT_EXTMEM_06da + -1;
+  if (XDATA_06DA != '\0') {
+    XDATA_06DA = XDATA_06DA + -1;
   }
-  if (DAT_EXTMEM_08e4 != '\0') {
-    DAT_EXTMEM_08e4 = DAT_EXTMEM_08e4 + -1;
+  if (XDATA_08E4 != '\0') {
+    XDATA_08E4 = XDATA_08E4 + -1;
   }
-  if (DAT_EXTMEM_055f != '\0') {
-    DAT_EXTMEM_055f = DAT_EXTMEM_055f + -1;
+  if (XDATA_055F != '\0') {
+    XDATA_055F = XDATA_055F + -1;
   }
-  if (DAT_EXTMEM_09ce != '\0') {
-    DAT_EXTMEM_09ce = DAT_EXTMEM_09ce + -1;
+  if (XDATA_09CE != '\0') {
+    XDATA_09CE = XDATA_09CE + -1;
   }
-  if (DAT_EXTMEM_070b != '\0') {
-    DAT_EXTMEM_070b = DAT_EXTMEM_070b + -1;
+  if (XDATA_070B != '\0') {
+    XDATA_070B = XDATA_070B + -1;
   }
-  if (DAT_EXTMEM_0706 != '\0') {
-    DAT_EXTMEM_0706 = DAT_EXTMEM_0706 + -1;
-    if (DAT_EXTMEM_0706 == '\0') {
-      DAT_EXTMEM_0460 = 0;
-      DAT_EXTMEM_0468 = 0;
+  if (XDATA_0706 != '\0') {
+    XDATA_0706 = XDATA_0706 + -1;
+    if (XDATA_0706 == '\0') {
+      XDATA_0460 = 0;
+      XDATA_0468 = 0;
     }
   }
-  if (DAT_EXTMEM_06c5 != '\0') {
-    DAT_EXTMEM_06c5 = DAT_EXTMEM_06c5 + -1;
+  if (XDATA_06C5 != '\0') {
+    XDATA_06C5 = XDATA_06C5 + -1;
   }
-  if ((XDATA_0440 != '\0') && (DAT_EXTMEM_085b != '\0')) {
-    DAT_EXTMEM_085b = DAT_EXTMEM_085b + -1;
+  if ((XDATA_0440 != '\0') && (XDATA_085B != '\0')) {
+    XDATA_085B = XDATA_085B + -1;
   }
-  if (DAT_EXTMEM_0986 != '\0') {
-    DAT_EXTMEM_0986 = DAT_EXTMEM_0986 + -1;
+  if (XDATA_0986 != '\0') {
+    XDATA_0986 = XDATA_0986 + -1;
   }
-  if (DAT_EXTMEM_070d != '\0') {
-    DAT_EXTMEM_070d = DAT_EXTMEM_070d + -1;
+  if (XDATA_070D != '\0') {
+    XDATA_070D = XDATA_070D + -1;
   }
-  if (DAT_EXTMEM_07f3 != '\0') {
-    DAT_EXTMEM_07f3 = DAT_EXTMEM_07f3 + -1;
+  if (XDATA_07F3 != '\0') {
+    XDATA_07F3 = XDATA_07F3 + -1;
   }
-  if (DAT_EXTMEM_0981 != '\0') {
-    DAT_EXTMEM_0981 = DAT_EXTMEM_0981 + -1;
+  if (XDATA_0981 != '\0') {
+    XDATA_0981 = XDATA_0981 + -1;
   }
-  if (DAT_EXTMEM_0982 != '\0') {
-    DAT_EXTMEM_0982 = DAT_EXTMEM_0982 + -1;
+  if (XDATA_0982 != '\0') {
+    XDATA_0982 = XDATA_0982 + -1;
   }
-  if (DAT_EXTMEM_0811 != '\0') {
-    DAT_EXTMEM_0811 = DAT_EXTMEM_0811 + -1;
+  if (XDATA_0811 != '\0') {
+    XDATA_0811 = XDATA_0811 + -1;
   }
-  if (DAT_EXTMEM_0809 != '\0') {
-    DAT_EXTMEM_0809 = DAT_EXTMEM_0809 + -1;
+  if (XDATA_0809 != '\0') {
+    XDATA_0809 = XDATA_0809 + -1;
   }
-  if ((DAT_EXTMEM_0843 != '\0') && (DAT_EXTMEM_0843 = DAT_EXTMEM_0843 + -1, DAT_EXTMEM_0843 == '\0')
-     ) {
-    DAT_EXTMEM_080c = 1;
+  if ((XDATA_0843 != '\0') && (XDATA_0843 = XDATA_0843 + -1, XDATA_0843 == '\0')) {
+    XDATA_080C = 1;
   }
-  if ((DAT_EXTMEM_0844 != '\0') && (DAT_EXTMEM_0844 = DAT_EXTMEM_0844 + -1, DAT_EXTMEM_0844 == '\0')
-     ) {
-    DAT_EXTMEM_0621 = 0;
+  if ((XDATA_0844 != '\0') && (XDATA_0844 = XDATA_0844 + -1, XDATA_0844 == '\0')) {
+    XDATA_0621 = 0;
   }
-  if ((XDATA_0440 != '\0') && (DAT_EXTMEM_06db != '\0')) {
-    DAT_EXTMEM_06db = DAT_EXTMEM_06db + -1;
+  if ((XDATA_0440 != '\0') && (XDATA_06DB != '\0')) {
+    XDATA_06DB = XDATA_06DB + -1;
   }
-  if (DAT_EXTMEM_080d != '\0') {
-    DAT_EXTMEM_080d = DAT_EXTMEM_080d + -1;
+  if (XDATA_080D != '\0') {
+    XDATA_080D = XDATA_080D + -1;
   }
-  if (DAT_EXTMEM_08a7 != '\0') {
-    DAT_EXTMEM_08a7 = DAT_EXTMEM_08a7 + -1;
+  if (XDATA_08A7 != '\0') {
+    XDATA_08A7 = XDATA_08A7 + -1;
   }
-  if ((DAT_EXTMEM_08a8 != '\0') && (DAT_EXTMEM_08a8 = DAT_EXTMEM_08a8 + -1, DAT_EXTMEM_08a8 == '\0')
-     ) {
-    DAT_EXTMEM_0985 = DAT_EXTMEM_0985 & 0xfb;
-    DAT_EXTMEM_0723 = DAT_EXTMEM_0723 & 0xef;
+  if ((XDATA_08A8 != '\0') && (XDATA_08A8 = XDATA_08A8 + -1, XDATA_08A8 == '\0')) {
+    XDATA_0985 = XDATA_0985 & 0xfb;
+    XDATA_0723 = XDATA_0723 & 0xef;
   }
   return;
 }

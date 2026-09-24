@@ -170,6 +170,18 @@ MANIFEST_COLUMNS = ["program", "kind", "source", "sha256", "ghidra_version",
                     "mode"]
 LOAD_MAP_COLUMNS = ["program", "kind", "image_bytes", "image_sha256",
                     "load_addr", "entry"]
+# The annotation layer's own header, transcribed from the table in
+# bios/annotations/README.md. Asserted rather than assumed: this is the file a
+# person or an agent edits to improve a decompile, and the tool reads its rows
+# by column name, so a column that moves is a change in what every row means
+# and nothing else here would say so.
+#
+# The EC tool has an identical tuple, deliberately (§15c: three copies, on
+# purpose) -- a shared module is not a direction a BIOS build script should
+# import an EC one from, and the two are free to diverge if their annotation
+# layers ever do.
+ANNOTATION_COLUMNS = ["scope", "addr", "name", "signature", "type", "comment",
+                      "evidence", "basis"]
 # What the manifest's `mode` column may say. Kept as data because it is a
 # controlled vocabulary and a vocabulary is only enforced if something reads it
 # from one place: here the two modes the driver can produce, and --mode reads
@@ -360,12 +372,32 @@ def write_load_map(path, found):
 
 def read_load_map(path=LOAD_MAP):
     """The committed load map. export-only reads it instead of re-deriving it,
-    which is what lets the default build skip UEFIExtract entirely."""
+    which is what lets the default build skip UEFIExtract entirely.
+
+    Read strictly, and checked before the dict below is built. A duplicate
+    `program` is the fault worth stopping for: this is a dict assignment, so a
+    second row for one module overwrote the first without a word, and every
+    check built on it -- MODULES is the 38-module set, a TE image's load/entry
+    pair inside its own body -- went on passing against whichever row happened
+    to be written last. `set(MODULES) == set(lm)` cannot see it either, because
+    the second row leaves the same key behind.
+    """
     if not os.path.isfile(path):
         raise SystemExit("error: no load map at %s; run --mode rebuild-project"
                          % os.path.relpath(path, REPO))
+    rows = read_index(path)
+    with open(path, newline="") as f:
+        header = next(csv.reader(f, strict=True), None)
+    name = os.path.relpath(path, REPO)
+    problems = structure_problems(name, rows, load_map_key, "program")
+    if header != LOAD_MAP_COLUMNS:
+        # First, because a changed header is what makes the rows look short.
+        problems.insert(0, "%s: header is %s, not this tool's own %d columns"
+                        % (name, ",".join(header or []), len(LOAD_MAP_COLUMNS)))
+    if problems:
+        raise SystemExit("error: " + "; ".join(problems[:3]))
     out = {}
-    for row in csv.DictReader(open(path, newline="")):
+    for row in rows:
         out[row["program"]] = {
             "path": None, "kind": row["kind"],
             "size": int(row["image_bytes"]), "sha256": row["image_sha256"],
@@ -380,9 +412,23 @@ def read_load_map(path=LOAD_MAP):
 # --------------------------------------------------------------------------
 
 def annotation_rows():
+    """The committed annotations, read strictly and structurally validated, or
+    [] when the file is not there.
+
+    The empty case is the tool's long-standing one, so the file being absent is
+    not an error while a file that is present and unsound is. join_index()
+    already refused a duplicate `(scope, addr)`; the read is where that now
+    happens, so the fault names the file and the line rather than only the key.
+    """
     if not os.path.isfile(ANNOTATIONS):
         return []
-    return list(csv.DictReader(open(ANNOTATIONS, newline="")))
+    rows = read_index(ANNOTATIONS)
+    problems = structure_problems("ghidra-functions.csv", rows, annotation_key,
+                                  "(scope, addr)")
+    if problems:
+        raise SystemExit("error: ghidra-functions.csv is not sound: "
+                         + "; ".join(problems[:3]))
+    return rows
 
 
 def seed_rows(found):
@@ -619,10 +665,11 @@ def join_index(raw_index):
     """
     raw = list(csv.DictReader(open(raw_index, newline=""), delimiter="\t"))
     annot = {}
+    # The duplicate (scope, addr) this loop used to catch itself is caught by
+    # the read in annotation_rows() now, which names the file and the line; the
+    # dict below can only be filled from rows that passed it.
     for row in annotation_rows():
         key = (row["scope"].strip(), int(row["addr"], 16))
-        if key in annot:
-            raise SystemExit("error: two annotation rows for %s 0x%X" % key)
         annot[key] = row
     for row in raw:
         a = annot.get((row["program"], int(row["addr"], 16)))
@@ -805,9 +852,9 @@ def annotated_addresses(path):
     return out
 
 
-def check_annotated_layers(fail):
-    """Both directions of the drift guard, from `--check`."""
-    ann = annotation_rows()
+def check_annotated_layers(fail, ann):
+    """Both directions of the drift guard, from `--check`, over the rows the
+    caller has already read and structurally checked."""
     for fn in sorted(f for f in os.listdir(DECOMPILED)
                      if f.endswith(".annotated.c")):
         path = os.path.join(DECOMPILED, fn)
@@ -1068,16 +1115,69 @@ def main(argv=None):
 # --------------------------------------------------------------------------
 
 def read_index(path):
-    """Rows of a committed CSV -- an index or the manifest -- read strictly.
+    """Rows of a committed CSV, read strictly.
 
     `strict=True` is the point. csv's default reader is forgiving about quoting
     in the one way that hides an error rather than raising it: a bad quote ends
     the row early, the row comes back with a missing field, and every count
     taken from it is then quietly smaller than the file. A quoting mistake in a
-    committed index is exactly the kind of thing that should be loud, and it
+    committed CSV is exactly the kind of thing that should be loud, and it
     costs nothing to make it so."""
     with open(path, newline="") as f:
         return list(csv.DictReader(f, strict=True))
+
+
+def norm_addr(addr):
+    """An address as a key: uppercase, `0x` prefix stripped.
+
+    Both spellings are in the committed file and both are in use -- 210
+    annotation rows carry a bare address and 578 a `0x`-prefixed one -- so a
+    plain string key would call the two forms of one address two different
+    functions and miss the duplicate that is the whole point of looking.
+    --self-test asserts that the raw and the normalised key count agree over the
+    committed file, which is what makes the normalisation a fact about the data
+    rather than an assumption about it."""
+    return addr.upper().replace("0X", "")
+
+
+def index_key(row):
+    return (row["program"], row["addr"])
+
+
+def annotation_key(row):
+    # The scope is stripped because that is the key join_index() builds, so a
+    # padded scope is one function on both sides of that join rather than one
+    # function and one row nothing can reach.
+    return (row["scope"].strip(), norm_addr(row["addr"]))
+
+
+def load_map_key(row):
+    return row["program"]
+
+
+def structure_problems(name, rows, key_of, key_label="key"):
+    """Rows that did not come out whole, and a key that appears twice.
+
+    The one copy of the rule, called once per committed file with that file's
+    own `key_of`. It is header-agnostic, so this is the same check the other two
+    components run over their own column sets.
+
+    A short row is a missing field and a surplus one is DictReader's `None`
+    restkey; either leaves a dict without a value that a later check reads, so
+    the row is reported and stepped over rather than keyed on. A duplicate key
+    is a file appended to twice or a de-dup that missed one, and it stops the
+    row count meaning what the counts around it are for."""
+    out = []
+    seen = set()
+    for i, r in enumerate(rows, start=2):
+        if None in r or any(v is None for v in r.values()):
+            out.append(f"{name}: line {i} has fewer or more fields than the header")
+            continue
+        key = key_of(r)
+        if key in seen:
+            out.append(f"{name}: duplicate {key_label} {key}")
+        seen.add(key)
+    return out
 
 
 def index_structure_problems(index_rows, listing_rows):
@@ -1086,22 +1186,11 @@ def index_structure_problems(index_rows, listing_rows):
 
     A duplicate key is an export appended to twice, or a de-dup that missed one;
     either way the row count no longer means "number of functions", which is
-    the only thing the counts around it are for. The bodies below are
-    header-agnostic, so this is the same check the other two components run over
-    their own column sets."""
-    out = []
-    for name, rows in (("index.csv", index_rows),
-                       ("listing-index.csv", listing_rows)):
-        seen = set()
-        for i, r in enumerate(rows, start=2):
-            if None in r or any(v is None for v in r.values()):
-                out.append(f"{name}: line {i} has fewer or more fields than the header")
-                continue
-            key = (r.get("program"), r.get("addr"))
-            if key in seen:
-                out.append(f"{name}: duplicate (program, addr) {key}")
-            seen.add(key)
-    return out
+    the only thing the counts around it are for. Two calls into the one keyed
+    rule rather than a second copy of it."""
+    return (structure_problems("index.csv", index_rows, index_key, "(program, addr)")
+            + structure_problems("listing-index.csv", listing_rows, index_key,
+                                 "(program, addr)"))
 
 
 def coverage_mismatches(manifest_rows, count_for_program):
@@ -1153,13 +1242,20 @@ def self_test():
             ok = False
 
     print("bios_extract.py --self-test")
-    # The committed index pair and the manifest, read through the same strict
-    # reader --check uses, so the known answers below are measured on the files
-    # the gate runs against rather than on a copy of them.
+    # The committed index pair, the manifest, the annotations and the load map,
+    # read through the same strict, validating readers --check and the build
+    # use, so the known answers below are measured on the files the gate runs
+    # against rather than on a copy of them. One that is present and unsound
+    # raises SystemExit naming the file, the line and the fault before any
+    # assertion below runs, which is the answer a clean assertion would not be.
     _ir, _lr, _mr = (read_index(p) if os.path.isfile(p) else []
                      for p in (INDEX, LISTING_INDEX, MANIFEST))
+    ann = annotation_rows()
+    lm = read_load_map() if os.path.isfile(LOAD_MAP) else {}
     for _p, _cols in ((INDEX, INDEX_COLUMNS), (LISTING_INDEX, INDEX_COLUMNS),
-                      (MANIFEST, MANIFEST_COLUMNS)):
+                      (MANIFEST, MANIFEST_COLUMNS),
+                      (ANNOTATIONS, ANNOTATION_COLUMNS),
+                      (LOAD_MAP, LOAD_MAP_COLUMNS)):
         check("%s carries this tool's own %d-column header"
               % (os.path.relpath(_p, REPO), len(_cols)),
               os.path.isfile(_p)
@@ -1192,6 +1288,56 @@ def self_test():
     _p = index_structure_problems(_good, [])
     check("two different addresses in one module are not a duplicate",
           not _p, str(_p))
+
+    # The same four cases over the two other committed CSVs, which have their
+    # own keys: (scope, addr) for the annotations, `program` for the load map.
+    # Same order, same reason -- clean first, because a guard exercised only on
+    # known-bad input cannot tell "clean" from "never ran".
+    _agood = [{"scope": "OemOcDxe", "addr": "00001000", "name": "a"},
+              {"scope": "OemOcPei", "addr": "0xFFF823B9", "name": "b"}]
+    check("a clean pair of annotation rows has no structural problem",
+          not structure_problems("ghidra-functions.csv", _agood, annotation_key,
+                                 "(scope, addr)"))
+    _p = structure_problems("ghidra-functions.csv", [_agood[0]] * 2, annotation_key,
+                            "(scope, addr)")
+    check("a duplicated (scope, addr) key is reported", len(_p) == 1, str(_p))
+    _p = structure_problems("ghidra-functions.csv",
+                            [{"scope": "OemOcDxe", "addr": "00001000", "name": None}],
+                            annotation_key, "(scope, addr)")
+    check("an annotation row with fewer fields than the header is reported",
+          len(_p) == 1, str(_p))
+    # DictReader collects a row with too many fields under the None restkey.
+    _p = structure_problems("ghidra-functions.csv",
+                            [{"scope": "OemOcDxe", "addr": "00001000", "name": "a",
+                              None: ["surplus"]}], annotation_key, "(scope, addr)")
+    check("an annotation row with more fields than the header is reported",
+          len(_p) == 1, str(_p))
+    # The one case the index cases have no analogue for: the file spells an
+    # address both ways, so the duplicate key has to be the normalised address.
+    # With the raw string key these two rows are two different functions and the
+    # check reports nothing at all.
+    _p = structure_problems("ghidra-functions.csv",
+                            [{"scope": "OemOcDxe", "addr": "0x1000"},
+                             {"scope": "OemOcDxe", "addr": "1000"}],
+                            annotation_key, "(scope, addr)")
+    check("a 0x-prefixed and a bare address for one function are one key",
+          len(_p) == 1, str(_p))
+    _mgood = [{"program": "EcPs2Kbd", "load_addr": "", "entry": "0x260"},
+              {"program": "OemOcPei", "load_addr": "0xFFF823B9", "entry": "0xFFF823C1"}]
+    check("a clean pair of load-map rows has no structural problem",
+          not structure_problems("load-map.csv", _mgood, load_map_key, "program"))
+    _p = structure_problems("load-map.csv", [_mgood[0]] * 2, load_map_key, "program")
+    check("a duplicated program is reported", len(_p) == 1, str(_p))
+    _p = structure_problems("load-map.csv",
+                            [{"program": "EcPs2Kbd", "load_addr": None}],
+                            load_map_key, "program")
+    check("a load-map row with fewer fields than the header is reported",
+          len(_p) == 1, str(_p))
+    _p = structure_problems("load-map.csv",
+                            [{"program": "EcPs2Kbd", "kind": "PE32",
+                              None: ["surplus"]}], load_map_key, "program")
+    check("a load-map row with more fields than the header is reported",
+          len(_p) == 1, str(_p))
 
     # Coverage, on a manifest that agrees with its index and one that does not.
     check("coverage: a manifest that agrees with the index passes",
@@ -1239,6 +1385,23 @@ def self_test():
           all(len({(r["program"], r["addr"]) for r in rows})
               == len({(r["program"], int(r["addr"], 16)) for r in rows}) == 955
               for rows in (_ir, _lr)))
+    # The annotation layer's committed CSV, the same way. 788 records, measured
+    # with the strict reader and not with a line count: every row here is one
+    # physical line, because ApplyAnnotations.java reads the file a line at a
+    # time (bios/annotations/README.md).
+    check("BIOS: annotations/ghidra-functions.csv is 788 records, no short row "
+          "and no duplicate (scope, addr)",
+          len(ann) == 788 and not structure_problems("ghidra-functions.csv", ann,
+                                                     annotation_key, "(scope, addr)"),
+          "%d record(s)" % len(ann))
+    # The file spells its addresses both ways, so the duplicate key is the
+    # normalised one. This equality is what makes that sound over the real file
+    # rather than over the synthetic pair above: it is the claim a file that
+    # started mixing the two forms, or gaining a near-miss, would break.
+    check("BIOS: a raw and a normalised (scope, addr) key count the same, so "
+          "normalising cannot merge two distinct keys",
+          len({(r["scope"].strip(), r["addr"]) for r in ann})
+          == len({annotation_key(r) for r in ann}) == 788)
 
     te_path = os.path.join(TE_MODULES_DIR, "OemOcPei.efi")
     present = os.path.isfile(te_path)
@@ -1254,10 +1417,16 @@ def self_test():
     check("te_layout() puts the entry inside the stripped body",
           struct.unpack_from("<I", header, 8)[0]
           >= struct.unpack_from("<H", header, 6)[0])
-    lm = read_load_map() if os.path.isfile(LOAD_MAP) else {}
     check("the load map's OemOcPei row is what te_layout() just computed",
           lm.get("OemOcPei", {}).get("load") == load
           and lm.get("OemOcPei", {}).get("entry") == entry)
+    # 38 here is partly redundant with "MODULES is the 38-module set" below, and
+    # both stay. That one cannot see a duplicate -- a second row for a module
+    # leaves the same key behind -- and this one cannot see a module the map has
+    # dropped, since 37 of 38 is still a sound set of rows. read_load_map() has
+    # already refused a short or duplicated row to get this far.
+    check("BIOS: load-map.csv is 38 rows, one per module", len(lm) == 38,
+          "%d row(s)" % len(lm))
     check("every module in MODULES is in the load map, and no others",
           set(MODULES) == set(lm))
     check("MODULES has no duplicates", len(MODULES) == len(set(MODULES)))
@@ -1283,7 +1452,6 @@ def self_test():
     check("every PE32 module is loaded at its own default base, not relocated",
           all(lm[m]["load"] is None for m in MODULES
               if m in lm and lm[m]["kind"] == "PE32"))
-    ann = annotation_rows()
     check("every annotation row cites at least one repo file",
           all(a["evidence"].strip() for a in ann))
     check("every annotation row names a module in MODULES",
@@ -1340,12 +1508,19 @@ def check():
             fail("no %s at %s" % (what, os.path.relpath(path, REPO)))
     if not ok:
         return 1
-    # The two committed indexes and the manifest, read strictly once each and
-    # then used by every check below. A read error is reported as a failed check
-    # rather than a traceback, so a broken index reads as a broken index.
+    # The two committed indexes, the manifest, the annotations and the load map,
+    # read strictly once each and then used by every check below. A read error
+    # is reported as a failed check rather than a traceback, so a broken CSV
+    # reads as a broken CSV. The annotations are the one file here the build can
+    # do without, so theirs is read only if it is there; the other four have
+    # already reported their own absence above.
     _read = {}
     for _name, _path in (("index.csv", INDEX), ("listing-index.csv", LISTING_INDEX),
-                         ("manifest.csv", MANIFEST)):
+                         ("manifest.csv", MANIFEST),
+                         ("ghidra-functions.csv", ANNOTATIONS),
+                         ("load-map.csv", LOAD_MAP)):
+        if not os.path.isfile(_path):
+            continue
         try:
             _read[_name] = read_index(_path)
         except (OSError, csv.Error) as e:
@@ -1356,9 +1531,17 @@ def check():
     # out whole has no `out_file` to open and no address to key on, so every
     # per-row check below would be reading past the end of it -- and the counts
     # those checks compare are exactly the ones a short row has quietly made
-    # smaller. Reported and stopped, not carried on from.
-    _struct = index_structure_problems(_read["index.csv"],
-                                       _read["listing-index.csv"])
+    # smaller. Reported and stopped, not carried on from. The annotations and the
+    # load map get the same treatment, each on its own key: until now they had
+    # content guards only, or none at all, and neither of those notices a short
+    # row or a key that is written twice.
+    _struct = (index_structure_problems(_read["index.csv"],
+                                        _read["listing-index.csv"])
+               + structure_problems("ghidra-functions.csv",
+                                    _read.get("ghidra-functions.csv", []),
+                                    annotation_key, "(scope, addr)")
+               + structure_problems("load-map.csv", _read["load-map.csv"],
+                                    load_map_key, "program"))
     if _struct:
         fail("; ".join(_struct[:3]))
         return 1
@@ -1483,7 +1666,7 @@ def check():
         if len(per_program.get(name, [])) != n:
             fail("%s: %d functions in the index, %d in the .c"
                  % (name, len(per_program.get(name, [])), n))
-    for a in annotation_rows():
+    for a in _read.get("ghidra-functions.csv", []):
         key = (a["scope"].strip(), int(a["addr"], 16))
         if key not in seen:
             fail("annotation %s %s resolves to no exported function -- either a "
@@ -1505,7 +1688,7 @@ def check():
                      % os.path.join(dp, fn))
     # The hand restatement and the machine-readable layer are two copies of one
     # reading, kept side by side on purpose. This is what stops them drifting.
-    check_annotated_layers(fail)
+    check_annotated_layers(fail, _read.get("ghidra-functions.csv", []))
     print("  all checks passed" if ok else "  FAILURES ABOVE")
     return 0 if ok else 1
 

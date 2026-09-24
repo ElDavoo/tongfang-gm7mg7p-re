@@ -23,7 +23,7 @@ void gate_045a_bit0_set_0724_bit4(char r7_from_19a8)
       load_dptr_c1d8_tail_jump_1100();
     }
     else {
-      if (DAT_EXTMEM_0982 != '\0') {
+      if (XDATA_0982 != '\0') {
         return;
       }
       if ((DAT_EXTMEM_097a >> 4 & 1) == 0) {

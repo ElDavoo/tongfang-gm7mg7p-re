@@ -16,7 +16,7 @@ void ljmp_f196(void)
 {
   byte bVar1;
   
-  if ((XDATA_0440 != '\0') && (DAT_EXTMEM_07f6 == '\0')) {
+  if ((XDATA_0440 != '\0') && (XDATA_07F6 == '\0')) {
     bVar1 = XDATA_045A & 0xe0;
     if (bVar1 == 0) {
       bare_ret_f153();

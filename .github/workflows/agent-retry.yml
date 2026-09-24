@@ -193,7 +193,7 @@ jobs:
           # Local change (not from the template): the `agent-pipeline` group is now one group per
           # issue/branch, so up to this many agent runs share the token budget at once. "Idle"
           # below means "has a free slot", not "nothing running".
-          MAX_PARALLEL_AGENTS: '10'
+          MAX_PARALLEL_AGENTS: '5'
         run: |
           set -euo pipefail
 
@@ -220,7 +220,8 @@ jobs:
             [ .[] | select(.status != "completed")
                   | select(.workflowName as $w
                            | ["Agent · plan","Agent · implement","Agent · review",
-                              "Agent · fix CI","Agent · followups","Claude · mention"]
+                              "Agent · fix CI","Agent · followups","Claude · mention",
+                              "Agent · conflicts"]
                            | index($w)) ]' > "$RUNNER_TEMP/busy.json"
           busy=$(jq length "$RUNNER_TEMP/busy.json")
           free=$(( MAX_PARALLEL_AGENTS - busy ))
@@ -516,7 +517,7 @@ jobs:
           # CUSTOMISE: keep equal to MAX_OPEN_AGENT_PRS in agent-plan.yml. Checked here too so a
           # sweep does not spend one of an issue's three starts on a plan run that would only
           # decline at the cap.
-          MAX_OPEN_AGENT_PRS: '10'
+          MAX_OPEN_AGENT_PRS: '5'
         run: |
           set -euo pipefail
 

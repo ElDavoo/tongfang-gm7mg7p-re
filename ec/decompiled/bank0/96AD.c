@@ -107,8 +107,8 @@ void apply_oem_overrides_then_fill_08xx(undefined1 param_1,char param_2)
       DAT_EXTMEM_08c6 = CPU_PL1_PL4;
     }
   }
-  DAT_EXTMEM_0723 = DAT_EXTMEM_0723 & 0xbf;
-  DAT_EXTMEM_0985 = DAT_EXTMEM_0985 & 0xef;
+  XDATA_0723 = XDATA_0723 & 0xbf;
+  XDATA_0985 = XDATA_0985 & 0xef;
   DAT_EXTMEM_08ac = DAT_EXTMEM_08bb;
   sVar6 = 0x490;
   if ((DAT_EXTMEM_0490 & 1) != 1) {
@@ -184,7 +184,7 @@ void apply_oem_overrides_then_fill_08xx(undefined1 param_1,char param_2)
         set_bit6_in_x0723();
       }
       if ((bVar3 >> 6 & 1) != 0) {
-        DAT_EXTMEM_0985 = DAT_EXTMEM_0985 | 0x10;
+        XDATA_0985 = XDATA_0985 | 0x10;
       }
     }
   }

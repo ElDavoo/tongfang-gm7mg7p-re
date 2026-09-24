@@ -27,7 +27,7 @@ void set_0476_bit1_then_branch_on_r7(char param_1)
   else {
     DAT_EXTMEM_0476 = DAT_EXTMEM_0476 | 2;
   }
-  if (DAT_EXTMEM_06c2 != '\0') {
+  if (XDATA_06C2 != '\0') {
     return;
   }
   trampoline_to_c10c();

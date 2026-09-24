@@ -6,7 +6,7 @@
 
 /* Loads DPTR with 0x07D3, reads the byte, clears its low nibble with ANL A,#0xF0, writes it back,
    then re-reads it so the masked value is returned in A. Only the low nibble is affected; the high
-   nibble is preserved in memory. 0x07D3 has no entry in ec/annotations/registers.yaml.
+   nibble is preserved in memory. 0x07D3 is in ec/annotations/registers.yaml as GFID (issue #183).
    type: writer
    evidence: ec/decompiled/bank0/BA46.asm; ec/decompiled/bank0/BA46.c
    basis: hand-decoded */
@@ -14,8 +14,8 @@
 byte clear_low_nibble_07d3(void)
 
 {
-  DAT_EXTMEM_07d3 = DAT_EXTMEM_07d3 & 0xf0;
-  return DAT_EXTMEM_07d3;
+  GFID = GFID & 0xf0;
+  return GFID;
 }
 
 

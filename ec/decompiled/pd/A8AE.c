@@ -4,19 +4,19 @@
 // Machine output carrying this repository's symbols. Not the vendor's source.
 
 
-/* Clears PSW.EA (direct address 0xAF) on entry and sets it again just before returning, the pattern
-   of an interrupt routine, and dispatches on bits of the event byte at XDATA 0xFF80. Bit 7 of
-   0xFF80 together with bit 3 of XDATA 0xFFE0 writes 8 to 0xFFE0, copies four bytes from XDATA
-   0x0200 through 0x0FCB/0x0DBC/0x1041, adds the byte at XDATA 0x00D3 to both 0x0208 and 0x0209,
-   calls 0xEA67, and writes XDATA 0x00D5 to 0xFFD0 and 0x00D4 to 0xFFD1; bit 2 of 0xFFE0 with bit 2
-   of XDATA 0xFFE1 clear calls 0xF5D1, sets bit 2 of 0xFFE1 and writes 4 to 0xFFE0. Bits 5, 0 and 1
-   of 0xFF80 independently write 0x40 to 0xFFE0, call 0xF786 and call 0xF7B4, and bit 3 gates a
-   five-way test of the byte at XDATA 0xFFE2: 0x98, 0x84, 0x88 or 0xA0 writes 0x5A to XDATA 0x020A,
-   0xBC clears XDATA 0x00BD with the complement of XDATA 0x00BC and calls 0xF5D1 if the result is
-   zero, 0xBE with XDATA 0x00BE equal to 0x55 writes 1 to XDATA 0x0AE8, and 0xE2 calls 0xF477;
-   0xFFE0 is then set to 0x10. None of these XDATA addresses (0xFF80, 0xFFE0..0xFFE2,
-   0x0200..0x020A, 0x00D3..0x00D5, 0x00BC..0x00BE, 0x0AE8) has a row in
-   ec/annotations/registers.yaml, so no name beyond the addresses is claimed.
+/* Clears IE.7, the global interrupt enable, at bit address 0xAF, on entry and sets it again at
+   0xA9BE, so the body runs with interrupts masked, and dispatches on bits of 0xFF80. Bit 7 of
+   0xFF80 with bit 3 of 0xFFE0 writes 8 to 0xFFE0, adds 0x00D3 to 0x0208 and 0x0209, calls 0xEA67
+   and writes 0x00D5 to 0xFFD0 and 0x00D4 to 0xFFD1; bit 2 of 0xFFE0 with bit 2 of 0xFFE1 clear
+   calls 0xF5D1, sets bit 2 of 0xFFE1 and writes 4 to 0xFFE0. Bits 5, 0 and 1 of 0xFF80 write 0x40
+   to 0xFFE0 or call 0xF786 or 0xF7B4, and bit 3 gates a five-way test of 0xFFE2: 0x98, 0x84, 0x88
+   or 0xA0 writes 0x5A to 0x020A; 0xBC clears 0x00BD from 0x00BC and calls 0xF5D1 if zero; 0xBE with
+   0x00BE == 0x55 writes 1 to 0x0AE8; 0xE2 calls 0xF477. 0xFFE0 ends at 0x10. Every 0xFFxx address
+   here is XDATA by encoding and not by spelling (#181); none is in registers.yaml. [Corrected in
+   place, issue #181, the wrong version left visible: it read "PSW.EA (direct address 0xAF)" and
+   "the pattern of an interrupt routine". 0xAF is a bit address and the bit is IE.7 (`CLR bit` /
+   `SETB bit`), and the last instruction is `ret` (0x22) not `reti` (0x32), so this masks interrupts
+   rather than being a vector. pd-xdata-overlap.md 5.3.1.]
    type: dispatch
    evidence: ec/decompiled/pd/A8AE.asm; ec/decompiled/pd/A8AE.c
    basis: hand-decoded */
@@ -33,7 +33,7 @@ void event_dispatch_ff80_ffe0(void)
       write4xdata_from_r4_r7(0x200);
       DAT_EXTMEM_0208 = DAT_EXTMEM_0208 + DAT_EXTMEM_00d3;
       DAT_EXTMEM_0209 = DAT_EXTMEM_0209 + DAT_EXTMEM_00d3;
-      FUN_CODE_ea67();
+      reset_07c9_block_then_flag_00d3_1();
       DAT_EXTMEM_ffd0 = DAT_EXTMEM_00d5;
       DAT_EXTMEM_ffd1 = DAT_EXTMEM_00d4;
     }

@@ -52,7 +52,7 @@ void gate_0709b0_into_045b_branch(void)
       return;
     }
   }
-  DAT_EXTMEM_070d = 5;
+  XDATA_070D = 5;
   clear_bit0_of_0755_and_0709();
   return;
 }

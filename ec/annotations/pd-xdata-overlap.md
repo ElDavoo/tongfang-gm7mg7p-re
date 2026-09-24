@@ -483,8 +483,168 @@ So `0x04A1`-`0x04A6` reads as a set of field offsets into one strided
 structure, of which `0x04A6` is simply the last — a coherent object in the PD
 image's own allocation that happens to end on the EC's counter byte.
 
-### 5.3 The argument that would have to hold if the map *were* shared
+### 5.3 The PD image's `0xF000`-`0xFFFF` run, one page higher
 
+The block structure in §5.2 is over `0x0400`-`0x07FF`. The PD image's usage does
+not stop at `0x07FF`: a `90 hi lo` byte scan of the whole dump finds **46
+distinct `0xFFxx` `MOV DPTR` targets in all, 45 of them in the PD image and one
+in `common`, and none in `bank0` or `bank1`.** Inside the PD image they are
+170 sites. For comparison the main EC's highest census address is `0x9000` and
+it has none at or above `0xF000` at all.
+
+So the region is a region rather than ten scattered addresses, and the census
+sees about half of it: the PD image has **23 census addresses at or above
+`0xF000`** against 45 `MOV DPTR` targets in the image. Two of the gaps are
+mechanical — three of the 23, `0xFFC1`, `0xFFD1` and `0xFFDB`, are reached only
+by an `inc DPTR` from the address below and are not `MOV DPTR` operands at all,
+so a byte scan cannot find them (see `xdata-register-map.md` §5.1) — and the
+rest are the ordinary lower bound: a function that did not decompile carries its
+sites nowhere. The byte-scan count is a supporting measurement here, **not a
+second census**, and reconciling 45 against 23 is its own issue if the
+follow-up pass wants one.
+
+### 5.3.1 The ten `pd-001` addresses, and what settles their address space
+
+Ten of `xdata-clusters.csv`'s `pd-001` sit in this region: `0xFF80`, `0xFF84`,
+`0xFFC0`-`0xFFC2`, `0xFFD0`, `0xFFD1` and `0xFFE0`-`0xFFE2`. The census counts
+them because Ghidra wrote `DAT_EXTMEM_ff80`, and a decompiler's spelling is not
+an address-space fact. **They are XDATA, and the encoding says so** —
+`xdata-register-map.md` §5.1 has the full argument and the `disasm8051.py`
+tables behind it. The two listings that carry the correction are these, from
+`pd:0xA8AE=event_dispatch_ff80_ffe0`, whose own annotation is what the issue
+quoted as its premise:
+
+```console
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0xa8ae; pd 3' /tmp/pd.bin
+            0x0000a8ae      c2af           clr ie.7                    ; [0x100001a8:1]=0
+            0x0000a8b0      90ff80         mov dptr, #0xff80           ; [0x2000ff80:1]=0
+            0x0000a8b3      e0             movx a, @dptr
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0xa9be; pd 2' /tmp/pd.bin
+            0x0000a9be      d2af           setb ie.7                   ; [0x100001a8:1]=0
+            0x0000a9c0      22             ret
+$ python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0x2A8AE --runtime 0xA8AE -n 3
+0xa8ae  c2af     clr  ie.7
+0xa8b0  90ff80   mov  dptr,#0xff80
+0xa8b3  e0       movx a,@dptr
+```
+
+**Two things in that window were wrong in the annotation this issue quoted, and
+both are corrected in place in `../annotations/ghidra-functions.csv`.** `0xC2 AF`
+is `CLR bit` and `0xD2 AF` is `SETB bit`, so `0xAF` is a **bit** address, and the
+bit it names is `IE.7` — `IE` is SFR `0xA8` and a bit address `0xA8+n` is `IE.n`
+— which is the global interrupt enable. It is not `PSW.EA`: `PSW` is SFR
+`0xD0`, and `EA` is not a `PSW` bit. `disasm8051.py`'s own `BIT_SFR` table and
+r2 agree independently, and the repository's `pd,0xEBBB` row already described
+`0xAF` this way. And the routine's last instruction is `ret` (`0x22`), **not
+`reti` (`0x32`)**, so the clear-and-restore is the masking idiom of a critical
+section — which a routine that happens to be called from an interrupt path also
+uses — and not evidence that `0xA8AE` is itself a vector. The annotation's
+"the pattern of an interrupt routine" is narrowed to what the two opcodes
+carry.
+
+Note also r2's trailing memory-hint column, which places `0xFF80` in its `xram`
+map at `0x2000FF80` and `0xAF` in the SFR bit space at `0x100001A8`. That is
+r2's own `8051` plugin's address-space model, **not a measurement of the part**,
+and it is quoted here as a second opinion that agrees with the opcode reading —
+nothing more.
+
+**The one `common` hit is not a shared object, and must not be read as one.** Its
+`90 ff 16` at file `0x6919` is not a decoded instruction: it is a byte pair
+inside a run of 26 three-byte groups at file `0x690A`-`0x695A` whose 16-bit
+big-endian values step by six through `0xFF00`-`0xFFFF` (`0xFF74`, `0xFF7A`,
+`0xFF80`, …, `0xFFFE`, `0xFF02`, `0xFF08`, `0xFF0E`). That is a data table, and
+the addresses it happens to contain — several of them the same numbers the PD
+image touches, `0xFF80` and `0xFFC2` and `0xFFD4` and `0xFFDA` and `0xFFE0` among
+them — are a collision in the numbering and nothing more. No decompiled main-EC
+function covers that range (`common:0x6817` and `common:0x6A02` bracket it),
+which is the mechanical reason the census shows no main-EC address at or above
+`0xF000`.
+
+```console
+$ xxd -s 0x6900 -l 96 ec/firmware/GMxMGxx_11.800
+00006900: 71bc d1d2 d4d6 d8da dce3 74ff 1678 ff16  q.........t..x..
+00006910: 7eff 1684 ff16 8aff 1690 ff16 96ff 169c  ~...............
+00006920: ff16 a2ff 16a8 ff16 aeff 16b4 ff16 baff  ................
+00006930: 16c0 ff16 c6ff 16cc ff16 d2ff 16d8 ff16  ................
+00006940: deff 16e4 ff16 eaff 16f0 ff16 f6ff 16fc  ................
+00006950: ff17 02ff 1708 ff17 0eff 1714 3db0 b0b0  ............=...
+```
+
+**What reads that table, and whether its values are XDATA addresses or code
+offsets, is not established here and is not claimed.** The values land in
+`0xFF00`-`0xFFFF`, which on a classic 8051 is not implemented external RAM and on
+a vendor part is typically a memory-mapped peripheral window — but the
+`0xFFxx` window's *topology* is exactly the question §6 declines to answer, and
+answering it from a table's contents would be the same overclaim. This is a new
+lead and a follow-up issue, not a result.
+
+### 5.3.2 The two lower blocks of the same cluster, read against this file
+
+`xdata-clusters.csv`'s `pd-001` is one cluster of 34 addresses, and §5.3 and
+§5.3.1 are about the ten in `0xF00`-`0xFFFF`. The rest of the cluster is
+`0x00B6`-`0x00BE`, `0x00D3`-`0x00D7`, `0x0208`-`0x020A`, `0x07C9`-`0x07CE`,
+`0x0945` and `0x0AE8`. Issue #181 asks for exactly two of those blocks to be
+read against §5 and §6 and for the reading to be recorded, with no naming and
+no purpose. Here it is.
+
+**`0x00B6`-`0x00BE` — five carriers, and the one that matters is `C62B`.**
+`0x00B6`/`0x00B7` get a computed 32-bit value from `0x128D`/`0xA75D`/`0x0EF3`
+and `0x00B8`-`0x00BB` get the constants `0x88`, `0x51`, `0x04`, `0x8D` as a
+`mov DPTR,#0xb8` + three `inc DPTR` run. Then, in the same routine, it reads
+`0xFFC0` and `0xFFC1` and writes them to `0x00D6` and `0x00D7`, and reads
+`0xFFC2` and writes it to `0x00D5`. `0x00BC`, `0x00BD` and `0x00BE` are
+`A8AE`'s: it clears `0x00BD` with the complement of `0x00BC` and calls `0xF5D1`
+if the result is zero, and on `0xFFE2` == `0xBE` with `0x00BE` == `0x55` writes
+`1` to `0x0AE8`. **So there is a data-flow edge from the `0xFFxx` region into
+this low block, inside one PD routine** — and that cuts *for* the separation
+this file argues, not against it: it is a coupling between two objects in the
+PD image's own allocation, which is what a coherent PD-side structure looks
+like, and nothing about it involves the EC's address space.
+
+**`0x07C9`-`0x07CE` — five carriers, and it sits where §7 says the expensive
+case is.** `0x07C9` is loaded by `7B14` and handed to `0x7392` in `R7`.
+`0x7392` stores that byte at `0x07CA`, zeroes `0x07CB`-`0x07CE` as a
+`mov DPTR,#0x7ca` + four `inc DPTR` run, and then uses `0x07CB` as a loop
+counter that runs 0, 1, 2 and stops. `0xEA67` zeroes `0x07C9` and `0x07CA`,
+writes `1` to `0x07CB`, and on `0x0945` non-zero calls `0xF63F`, which stores
+`R7` to `0x07CC` and `R5` to `0x0945`. `0x07CD` is `0x7392`'s output and
+`0x07CE` the last byte of its run. The block therefore sits **inside
+`0x07C0`-`0x07FF`, the block §5.1 records as the PD image's densest (1091 of
+its 1324 sites in the span) and §7 names as where a shared region would be the
+expensive case.** Its own reading gives no reason to expect one: an entry byte,
+a selector, a bounded counter, and two outputs is a self-contained loop, not the
+base-plus-stride shape §5.2 describes for `0x04A1`-`0x04A6`.
+
+**The one check that bears on the boundary, and its result.** §5's whole
+argument is about DPTR values that are *bases* — handed to one of the index
+helpers (`0x10BC`, `0x998B`, `0x90CB`, …) so the `movx` lands somewhere else
+entirely. Walking every `.asm` in `ec/decompiled/pd/` with DPTR tracked, **no
+address in either block is ever handed to an index helper**; every one of them
+is dereferenced in place. So neither block is a base from which a pointer walk
+could reach `0x04A6` or `0x07E2`, and neither is the second writer of an EC
+register. The addresses above `0x0400` are outside §5.1's span survey, so
+"this block's neighbours look like X" is not a claim this file makes.
+
+**Where this stops, deliberately.** `0x07CC` has a `registers.yaml` row and a
+`present-untested` status, and what its bytes mean is issue **#32**'s. The
+stride families the index helpers build are **#75**'s, the `0x1253` pointer-add
+convention **#69**'s, the unnamed DPTR-recipient entries **#67**'s, the
+`0x0832`/`0x083A` index writers **#80**'s, and the `0x07D8` lightbar operand
+**#45**'s. Each is cited and stopped at. **No address here is named, no purpose
+is assigned, and no `status:` in `registers.yaml` changed** — a static decode
+cannot move one.
+
+**One limit of the instrument, recorded because it produced three
+"not found by this method" readings.** `xdata_register_map.py --self-test`'s
+`xdata_space()` accepts a window containing **exactly one** `inc DPTR`, which is
+all §5.3.1's three continuations need and is the shape the issue's ten take.
+The two runs above need three and four, so `0x00BA`, `0x00BB` and `0x07CE`
+report as not found by that method. The bytes in the `.asm` carry them
+(`pd/C62B.asm` and `pd/7392.asm`, quoted above), which is the point: a bounded
+window check is not a dataflow, and where it stops is stated rather than
+smoothed over.
+
+### 5.4 The argument that would have to hold if the map *were* shared
 Take `ec-0x07d0-sites.md` §4's reading of the `0x0408`-based array of
 `0x60`-byte records at face value. Record 0 then spans `0x0408`-`0x0467`,
 which contains `0x043E` (`CPU_TEMP`) and `0x044F` (`GPU_TEMP`) — two EC
@@ -495,7 +655,7 @@ against sharing, and it is worth exactly as much as the reading it rests on:
 the `0x0408` base and `0x60` stride are themselves static inferences, and
 nothing here proves the PD image in this dump is the one that executes.
 
-### 5.4 CODE pointers
+### 5.5 CODE pointers
 
 `MOV DPTR,#imm16` builds CODE pointers as well as XDATA ones — the caveat
 `ec-0x07d0-sites.md` §5 raised after finding CODE `0x07D0` inside a string
@@ -528,6 +688,25 @@ $ xxd -s 0x20490 -l 32 ec/firmware/GMxMGxx_11.800
   to a `90 hi lo` scan. Note that this cuts *against* the verdict as much as
   for it — the PD image could reach `0x04A7` indirectly and this file would
   not see it.
+- **The `0xFF00`-`0xFFFF` run's address space is settled; its topology is not,
+  and the two are different claims.** §5.3.1 settles the first by encoding:
+  those ten addresses are reached with `movx`, which names the external space,
+  and no 8051 direct-addressing opcode takes a 16-bit operand, so no
+  `0xFFxx` value can be a direct address whatever a decompiler called it. That
+  is as far as the bytes go. **`movx` does not distinguish RAM from a
+  memory-mapped peripheral window**, and nothing in this file, in
+  `xdata-register-map.md` §5.1, or in the `0x90 hi lo` scan can: a
+  memory-mapped register file and a RAM cell are both "the byte at external
+  address N" to the instruction set. So:
+  - **"It is XDATA" is established. "It is storage" is not.** Neither is "it
+    is a register file" in the sense the word carries elsewhere in this
+    repository. A `write` count in `xdata-registers.csv` is still not evidence
+    the EC acts on the value, and the ten addresses have no `registers.yaml`
+    row, so nothing here gives one a name.
+  - The same limit applies with more force to the `common`-area table in §5.3,
+    which is data rather than code and whose consumer is not found.
+  - §7 is where the live step for it is, and it is a step for a human with the
+    machine. **Nothing in this file states or implies that it ran.**
 - **No control-flow recovery.** `disasm8051.py` stops at the first branch and
   r2 was used for listings, not analysis. What calls the four PD routines,
   what the index registers hold when they are called, and what the records
@@ -556,6 +735,36 @@ separate, PD activity cannot move it; if it moves, they overlap and this
 file's verdict is wrong. A second, cheaper variant for whoever has the
 machine: check whether the value at `0x04A6` ever changes other than by +1
 at long intervals.
+
+**A second runtime step, for the `0xFF00`-`0xFFFF` window (§5.3), and it is a
+different question from the one above.** The ten `pd-001` addresses are XDATA
+by encoding; what is unknown is whether that window is storage or a
+memory-mapped peripheral window, and only a read settles it. The procedure,
+for a human at the machine:
+
+1. With the PD controller idle and again with a USB-C PD source attached and
+   negotiated, read the `0xFF00`-`0xFFFF` window through whatever interface
+   gives XDATA access, in more than one state, and diff the two. A RAM window
+   holds whatever the last writer left; a peripheral window's readable bytes
+   track the peripheral's state.
+2. Watch for a **volatile** byte — one that changes on its own, with no
+   firmware store to account for it, and that keeps changing while the
+   firmware is idle. A bit that flips with a timer, a status bit that reads
+   back as one value idle and another under load, or a counter that advances
+   without a matching store: that is a register file, and `xdata-registers.csv`
+   should say so.
+3. Conversely, a window where every byte is stable across states and only ever
+   changes immediately after one of the stores this repository has decoded
+   (`0xFFD0`/`0xFFD1` written by `pd:0xA8AE` and `pd:0xEFB9`, `0xFFE0`-`0xFFE2`
+   written by `0xA8AE`) reads as storage, and the census's "a register file"
+   framing in the CSV's header is the thing to drop.
+4. Do the same for the `common`-area table at file `0x690A` (§5.3), which is a
+   separate program and a separate question.
+
+None of this has been run. There is no laptop and no Windows machine reachable
+from this pipeline, ever, so the four steps are a procedure on paper and a
+follow-up issue is where they belong. **Nothing in this file or in
+`xdata-register-map.md` §5.1 states or implies any of it was observed.**
 
 Until then, what this file supports for the audit that depends on the
 premise:

@@ -71,15 +71,15 @@ void ramp_1804_1809_toward_0461_0469(byte param_1,char param_2,byte param_3)
     }
     if (DAT_EXTMEM_0672 == '\0') {
       if (DAT_EXTMEM_0461 == 0) {
-        if (DAT_EXTMEM_0986 == 0) {
-          DAT_EXTMEM_1804 = DAT_EXTMEM_0986;
+        if (XDATA_0986 == 0) {
+          DAT_EXTMEM_1804 = XDATA_0986;
         }
         else {
           DAT_EXTMEM_0461 = 0x3c;
         }
       }
       else {
-        DAT_EXTMEM_0986 = 0xb4;
+        XDATA_0986 = 0xb4;
       }
       if ((DAT_EXTMEM_1804 != DAT_EXTMEM_0461) &&
          (cVar3 = mod_070a_by_r5(divisor_r5), cVar3 == '\0')) {

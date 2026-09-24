@@ -16,7 +16,7 @@ void set_160a_bit0_unless_b8f4_and_08eb(char param_1)
 
 {
   test_0770_equals_0c();
-  if ((param_1 == '\0') || (-1 < DAT_EXTMEM_08eb)) {
+  if ((param_1 == '\0') || (-1 < XDATA_08EB)) {
     DAT_EXTMEM_160a = DAT_EXTMEM_160a | 1;
   }
   return;

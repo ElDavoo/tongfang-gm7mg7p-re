@@ -53,7 +53,7 @@ void FUN_CODE_b4a8(byte *param_1,undefined1 param_2,byte param_3)
   }
   write_64_91_pair(0xa47);
 LAB_CODE_b501:
-  if ((DAT_EXTMEM_08eb >> 5 & 1) != 1) {
+  if ((XDATA_08EB >> 5 & 1) != 1) {
     load_dptr_be16_from_xdata(0xa47);
     set_cy_before_043e_sub(0);
     if ((in_PSW < '\0') &&
@@ -72,8 +72,8 @@ LAB_CODE_b501:
         return;
       }
     }
-    DAT_EXTMEM_08eb = DAT_EXTMEM_08eb | 0x20;
-    DAT_EXTMEM_09e6 = DAT_EXTMEM_09e6 | 1;
+    XDATA_08EB = XDATA_08EB | 0x20;
+    XDATA_09E6 = XDATA_09E6 | 1;
     DAT_EXTMEM_08a1 = 4;
     store_a_to_089c_and_089d(0);
     return;
@@ -87,10 +87,10 @@ LAB_CODE_b501:
     load_dptr_be16_from_xdata(0xa47);
     set_cy_before_043e_sub(2);
     if (((-1 < cVar2) && (set_cy_before_044f_sub(3,CONCAT11(param_2,param_3)), -1 < cVar2)) &&
-       (DAT_EXTMEM_06d1 == '\0')) {
+       (XDATA_06D1 == '\0')) {
       DAT_EXTMEM_047f = 0x32;
       load_dptr_88f0_tail_jump_1114(0x27);
-      DAT_EXTMEM_06d1 = 0xfa;
+      XDATA_06D1 = 0xfa;
       return;
     }
   }
@@ -100,9 +100,9 @@ LAB_CODE_b501:
   if ((DAT_EXTMEM_1809 != '\0') && (be16_046c_046d_minus_100(), cVar2 < '\0')) {
     return;
   }
-  DAT_EXTMEM_09e7 = DAT_EXTMEM_09e7 & 0xfe;
-  DAT_EXTMEM_09e6 = DAT_EXTMEM_09e6 & 0xfe;
-  DAT_EXTMEM_08eb = DAT_EXTMEM_08eb & 0xdf;
+  XDATA_09E7 = XDATA_09E7 & 0xfe;
+  XDATA_09E6 = XDATA_09E6 & 0xfe;
+  XDATA_08EB = XDATA_08EB & 0xdf;
   DAT_EXTMEM_08a1 = 0;
   DAT_EXTMEM_089d = 0;
   DAT_EXTMEM_089c = 0;

@@ -24,7 +24,7 @@ void FUN_CODE_b784(void)
     bVar1 = in_PSW & 0xdd;
     DAT_EXTMEM_0561 = 0;
     DAT_EXTMEM_054c = 0;
-    DAT_EXTMEM_06da = 10;
+    XDATA_06DA = 10;
     DAT_EXTMEM_080b = 3;
     DAT_EXTMEM_0497 = 0;
     DAT_EXTMEM_0722 = 0;

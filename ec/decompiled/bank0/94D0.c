@@ -14,7 +14,8 @@
    value 0xB8C0 leaves behind then selects between jumping to 0x9A0D and writing the fixed bytes
    0x64, 0x64, 0x2D, 0x3C and 0x01 to 0x07A7, 0x07A8, 0x0730, 0x0731 and 0x0737.
    ec/annotations/registers.yaml documents 0x0730-0x0737 and 0x07A7-0x07AA as the per-mode
-   PL1/PL2/PL4/D-state defaults; 0x0A50, 0x0A51, 0x0A52 and 0x07D3 have no entry there.
+   PL1/PL2/PL4/D-state defaults; 0x0A50, 0x0A51 and 0x0A52 have no entry there, and 0x07D3 is there
+   as GFID (issue #183).
    type: copy
    evidence: ec/decompiled/bank0/94D0.asm; ec/decompiled/bank0/94D0.c; ec/annotations/registers.yaml
    basis: hand-decoded */
@@ -29,7 +30,7 @@ void copy_code_table_into_0730_07a7(undefined1 param_1,char param_2)
   short sVar5;
   
   DAT_EXTMEM_0a50 = param_2;
-  if ((DAT_EXTMEM_07d3 & 0xf0) == 0x30) {
+  if ((GFID & 0xf0) == 0x30) {
     cVar1 = read_low_nibble_074c();
     if ((cVar1 == '\0') || (param_2 = read_low_nibble_074c(), param_2 == '\x03')) {
       DAT_EXTMEM_0a52 = 0xfe;

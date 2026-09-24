@@ -16,7 +16,7 @@ void store_a_to_1804(undefined1 param_1)
 
 {
   DAT_EXTMEM_1804 = param_1;
-  DAT_EXTMEM_075b = param_1;
+  MAIN_FAN_L_DUTY = param_1;
   return;
 }
 

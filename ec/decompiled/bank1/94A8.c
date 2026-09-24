@@ -19,9 +19,9 @@ void lookup_94a0_table_by_0620_low3(void)
 {
   byte bVar1;
   
-  if (((-1 < DAT_EXTMEM_04ff) && ((DAT_EXTMEM_08e2 & 8) == 0)) && (DAT_EXTMEM_085b == '\0')) {
+  if (((-1 < DAT_EXTMEM_04ff) && ((DAT_EXTMEM_08e2 & 8) == 0)) && (XDATA_085B == '\0')) {
     bVar1 = DAT_EXTMEM_0620;
-    sub_r0_from_r1_stash_r0_on_borrow(DAT_EXTMEM_0621);
+    sub_r0_from_r1_stash_r0_on_borrow(XDATA_0621);
     sub_r0_from_r1_stash_r0_on_borrow(DAT_EXTMEM_0622);
     sub_r0_from_r1_stash_r0_on_borrow(DAT_EXTMEM_0623);
     sub_r0_from_r1_stash_r0_on_borrow(DAT_EXTMEM_081d);

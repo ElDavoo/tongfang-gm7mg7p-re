@@ -14,8 +14,8 @@ void stage_1c03_1c02_1c01(undefined1 param_1)
 
 {
   DAT_EXTMEM_1c03 = param_1;
-  DAT_EXTMEM_1c02 = DAT_EXTMEM_0862;
-  DAT_EXTMEM_1c01 = DAT_EXTMEM_0865;
+  DAT_EXTMEM_1c02 = XDATA_0862;
+  DAT_EXTMEM_1c01 = XDATA_0865;
   return;
 }
 

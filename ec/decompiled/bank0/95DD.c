@@ -166,8 +166,8 @@ void fill_08xx_from_code_table(short param_1,undefined1 param_2,char param_3)
       DAT_EXTMEM_08c6 = CPU_PL1_PL4;
     }
   }
-  DAT_EXTMEM_0723 = DAT_EXTMEM_0723 & 0xbf;
-  DAT_EXTMEM_0985 = DAT_EXTMEM_0985 & 0xef;
+  XDATA_0723 = XDATA_0723 & 0xbf;
+  XDATA_0985 = XDATA_0985 & 0xef;
   DAT_EXTMEM_08ac = DAT_EXTMEM_08bb;
   sVar5 = 0x490;
   if ((DAT_EXTMEM_0490 & 1) != 1) {
@@ -243,7 +243,7 @@ void fill_08xx_from_code_table(short param_1,undefined1 param_2,char param_3)
         set_bit6_in_x0723();
       }
       if ((bVar2 >> 6 & 1) != 0) {
-        DAT_EXTMEM_0985 = DAT_EXTMEM_0985 | 0x10;
+        XDATA_0985 = XDATA_0985 | 0x10;
       }
     }
   }

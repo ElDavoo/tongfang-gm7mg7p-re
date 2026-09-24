@@ -6,8 +6,8 @@
 
 /* A read-modify-write of XDATA 0x07C4 driven by R7: a non-zero R7 ORs 0x10 into the byte, a zero R7
    ANDs it with 0xEF. The other seven bits keep their values, and the routine returns without
-   touching DPTR's successor or any other XDATA address. 0x07C4 has no entry in
-   ec/annotations/registers.yaml.
+   touching DPTR's successor or any other XDATA address. 0x07C4 is in ec/annotations/registers.yaml
+   as GPU_DYNAMIC_BOOST_STATUS (issue #183).
    type: writer
    evidence: ec/decompiled/bank0/94C0.asm; ec/decompiled/bank0/94C0.c
    basis: hand-decoded */
@@ -16,10 +16,10 @@ void set_07c4_bit4_from_r7(char param_1)
 
 {
   if (param_1 != '\0') {
-    DAT_EXTMEM_07c4 = DAT_EXTMEM_07c4 | 0x10;
+    GPU_DYNAMIC_BOOST_STATUS = GPU_DYNAMIC_BOOST_STATUS | 0x10;
     return;
   }
-  DAT_EXTMEM_07c4 = DAT_EXTMEM_07c4 & 0xef;
+  GPU_DYNAMIC_BOOST_STATUS = GPU_DYNAMIC_BOOST_STATUS & 0xef;
   return;
 }
 

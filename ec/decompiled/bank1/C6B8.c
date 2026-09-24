@@ -20,10 +20,10 @@ void gate_0458b7_set_0723b2_from_045c(void)
     return;
   }
   if ((XDATA_045C & 7) == 0) {
-    DAT_EXTMEM_0723 = DAT_EXTMEM_0723 & 0xfb;
+    XDATA_0723 = XDATA_0723 & 0xfb;
     return;
   }
-  DAT_EXTMEM_0723 = DAT_EXTMEM_0723 | 4;
+  XDATA_0723 = XDATA_0723 | 4;
   return;
 }
 

@@ -29,7 +29,7 @@ void countdown_068d_then_branch_on_r7(char param_1)
     trampoline_to_c10c();
     if (param_1 != '\0') {
       trampoline_to_c118();
-      if (((param_1 != '\0') && (DAT_EXTMEM_06e6 == '\x01')) && (DAT_EXTMEM_06c2 == '\0')) {
+      if (((param_1 != '\0') && (DAT_EXTMEM_06e6 == '\x01')) && (XDATA_06C2 == '\0')) {
         FUN_CODE_9b3c();
         return;
       }

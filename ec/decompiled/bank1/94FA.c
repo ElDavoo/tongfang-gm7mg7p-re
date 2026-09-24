@@ -29,7 +29,7 @@ void magic_55aa_and_0704_countdown(char param_1)
     }
     DAT_EXTMEM_0045 = 0;
     DAT_EXTMEM_07fd = '\0';
-    DAT_EXTMEM_1f07 = 0;
+    XDATA_1F07 = 0;
   }
   if (DAT_EXTMEM_0470 != '\0') {
     DAT_EXTMEM_06f1 = DAT_EXTMEM_0470;

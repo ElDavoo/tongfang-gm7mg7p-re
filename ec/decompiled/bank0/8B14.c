@@ -22,11 +22,11 @@ void FUN_CODE_8b14(undefined1 param_1,char param_2,byte param_3)
   short *psVar11;
   byte *pbVar12;
   
-  if (DAT_EXTMEM_0460 < 4) {
+  if (XDATA_0460 < 4) {
     uVar8 = 0xa47;
-    read_dptr_byte_into_r6(DAT_EXTMEM_0460 - 4);
+    read_dptr_byte_into_r6(XDATA_0460 - 4);
     read_first_code_byte_pair_frag();
-    cVar3 = FUN_CODE_bb5e(DAT_EXTMEM_0460,uVar8);
+    cVar3 = FUN_CODE_bb5e(XDATA_0460,uVar8);
     pcVar9 = (char *)0x43e;
     bVar5 = (CPU_TEMP < cVar3 + 1U) << 7;
     if ((char)bVar5 < '\0') {
@@ -48,8 +48,8 @@ void FUN_CODE_8b14(undefined1 param_1,char param_2,byte param_3)
       if (-1 < cVar4) {
         *pcVar9 = -0x80;
       }
-      pcVar9 = &DAT_EXTMEM_0460;
-      if (DAT_EXTMEM_0460 == 3) {
+      pcVar9 = &XDATA_0460;
+      if (XDATA_0460 == 3) {
         pcVar9 = &DAT_EXTMEM_09e4;
         DAT_EXTMEM_09e4 = 0xff;
       }
@@ -57,28 +57,28 @@ void FUN_CODE_8b14(undefined1 param_1,char param_2,byte param_3)
     sub_33_from_09e4_low7();
     if (-1 < (char)bVar5) {
       if (*pcVar9 < '\0') {
-        DAT_EXTMEM_0460 = DAT_EXTMEM_0460 + 1;
+        XDATA_0460 = XDATA_0460 + 1;
       }
       else {
-        DAT_EXTMEM_0460 = DAT_EXTMEM_0460 - 1;
+        XDATA_0460 = XDATA_0460 - 1;
       }
       DAT_EXTMEM_09e4 = 0;
     }
   }
   else {
     uVar8 = 0xa47;
-    read_dptr_byte_into_r6(DAT_EXTMEM_0460 - 4);
+    read_dptr_byte_into_r6(XDATA_0460 - 4);
     read_first_code_byte_pair_frag();
-    cVar3 = FUN_CODE_bb5e(DAT_EXTMEM_0460,uVar8);
+    cVar3 = FUN_CODE_bb5e(XDATA_0460,uVar8);
     cVar4 = (CPU_TEMP < cVar3 + 1U) << 7;
     if (cVar4 < '\0') {
       read_code_byte_at_r6r7_plus_0460_10(CPU_TEMP - (cVar3 + 1U));
       if (cVar4 < '\0') {
-        DAT_EXTMEM_0460 = DAT_EXTMEM_0460 - 1;
+        XDATA_0460 = XDATA_0460 - 1;
       }
     }
     else {
-      DAT_EXTMEM_0460 = DAT_EXTMEM_0460 + 1;
+      XDATA_0460 = XDATA_0460 + 1;
     }
   }
   pcVar9 = &DAT_CODE_0460;
@@ -90,22 +90,22 @@ void FUN_CODE_8b14(undefined1 param_1,char param_2,byte param_3)
   sVar10 = CONCAT11(param_1,cVar3);
   cVar4 = *(char *)(sVar10 + 2);
   dptr_from_code_be16(3);
-  cVar3 = FUN_CODE_bb5e(DAT_EXTMEM_0468,sVar10);
+  cVar3 = FUN_CODE_bb5e(XDATA_0468,sVar10);
   if ((GPU_TEMP < cVar3 + 1U) << 7 < '\0') {
-    param_3 = *(byte *)CONCAT11(cVar4 + ((0xef < DAT_EXTMEM_0468) -
-                                        ((CARRY1(param_3,DAT_EXTMEM_0468 + 0x10) << 7) >> 7)),
-                                param_3 + DAT_EXTMEM_0468 + 0x10);
+    param_3 = *(byte *)CONCAT11(cVar4 + ((0xef < XDATA_0468) -
+                                        ((CARRY1(param_3,XDATA_0468 + 0x10) << 7) >> 7)),
+                                param_3 + XDATA_0468 + 0x10);
     bVar5 = GPU_TEMP - param_3;
     if (GPU_TEMP < param_3) {
-      bVar5 = DAT_EXTMEM_0468 - 1;
-      DAT_EXTMEM_0468 = bVar5;
+      bVar5 = XDATA_0468 - 1;
+      XDATA_0468 = bVar5;
     }
   }
   else {
-    bVar5 = DAT_EXTMEM_0468 + 1;
-    DAT_EXTMEM_0468 = bVar5;
+    bVar5 = XDATA_0468 + 1;
+    XDATA_0468 = bVar5;
   }
-  psVar11 = (short *)&DAT_EXTMEM_0468;
+  psVar11 = (short *)&XDATA_0468;
   add_20_carry_to_r6_r7(bVar5);
   bVar6 = *(byte *)(*psVar11 + 2);
   bVar7 = *(byte *)(*psVar11 + 3);
@@ -154,15 +154,15 @@ void FUN_CODE_8b14(undefined1 param_1,char param_2,byte param_3)
     }
     if (DAT_EXTMEM_0672 == '\0') {
       if (DAT_EXTMEM_0461 == 0) {
-        if (DAT_EXTMEM_0986 == 0) {
-          DAT_EXTMEM_1804 = DAT_EXTMEM_0986;
+        if (XDATA_0986 == 0) {
+          DAT_EXTMEM_1804 = XDATA_0986;
         }
         else {
           DAT_EXTMEM_0461 = 0x3c;
         }
       }
       else {
-        DAT_EXTMEM_0986 = 0xb4;
+        XDATA_0986 = 0xb4;
       }
       if ((DAT_EXTMEM_1804 != DAT_EXTMEM_0461) && (cVar3 = mod_070a_by_r5(bVar5), cVar3 == '\0')) {
         set_cy_before_0461_sub(0x1804);

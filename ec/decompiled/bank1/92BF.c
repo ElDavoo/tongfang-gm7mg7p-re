@@ -17,7 +17,7 @@ char clamp_a_to_7_and_set_0723_08e2(byte param_1)
   if (param_1 < 7) {
     return param_1 + 1;
   }
-  DAT_EXTMEM_0723 = DAT_EXTMEM_0723 | 1;
+  XDATA_0723 = XDATA_0723 | 1;
   DAT_EXTMEM_08e2 = DAT_EXTMEM_08e2 | 8;
   trampoline_to_c381();
   return '\a';

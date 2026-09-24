@@ -10,8 +10,9 @@
    cleared, it writes 0x18 to 0x1063, calls 0xD065, writes 0x55/0xAA/0x5A to 0x07FE/0x07FF/0x07FD,
    and then spins forever on an sjmp to itself. If instead 0x077E reads 0xA5 and 0x077F reads 0x78,
    it zeroes both, calls 0xD73D, 0x5597 with R7=0, 0xD6F4, 0x0EA2 with R7=0x0A and 0xD065, and also
-   spins forever; with neither condition it returns. 0x07C5, 0x1106, 0x08E2, 0x08EB, 0x1063,
-   0x077E/0x077F and the 0x07FE-0x07FF triple have no entry in ec/annotations/registers.yaml.
+   spins forever; with neither condition it returns. 0x07C5, 0x1106, 0x08E2, 0x1063, 0x077E/0x077F
+   and the 0x07FE-0x07FF triple have no entry in ec/annotations/registers.yaml; 0x08EB is now
+   carried there as XDATA_08EB.
    type: init
    evidence: ec/decompiled/bank0/CCFC.asm; ec/decompiled/bank0/CCFC.c; ec/annotations/registers.yaml
    basis: hand-decoded */
@@ -30,8 +31,8 @@ void power_on_init_and_two_hang_paths(void)
   AP_OEM_6 = AP_OEM_6 & 0xfb;
   DAT_EXTMEM_1106 = DAT_EXTMEM_1106 & 0xfd;
   DAT_EXTMEM_08e2 = DAT_EXTMEM_08e2 & 0xf7;
-  if ((DAT_EXTMEM_08eb >> 2 & 1) != 0) {
-    DAT_EXTMEM_08eb = DAT_EXTMEM_08eb & 0xfb;
+  if ((XDATA_08EB >> 2 & 1) != 0) {
+    XDATA_08EB = XDATA_08EB & 0xfb;
     DAT_EXTMEM_1063 = 0x18;
     init_1f01_1f06_1f07();
     do {

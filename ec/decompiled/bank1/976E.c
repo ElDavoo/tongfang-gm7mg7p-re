@@ -48,15 +48,15 @@ void clear_0480_bit0_then_step_05f1_countdown(char param_1)
     copy_6_bytes_via_a530_and_clear_0497b7();
     write_0830_0831_and_0832_bit5();
     if (XDATA_0440 != '\0') {
-      DAT_EXTMEM_06d8 = 10;
-      DAT_EXTMEM_070b = 10;
+      XDATA_06D8 = 10;
+      XDATA_070B = 10;
       XDATA_044C = 0x14;
       DAT_EXTMEM_0841 = 0;
     }
     return;
   }
   DAT_EXTMEM_05f1 = DAT_EXTMEM_05f1 + -1;
-  DAT_EXTMEM_06da = 10;
+  XDATA_06DA = 10;
   return;
 }
 

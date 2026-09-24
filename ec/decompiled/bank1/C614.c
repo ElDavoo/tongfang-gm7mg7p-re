@@ -24,7 +24,7 @@ void gate_0755_and_0440_dispatch(char r7_from_a_callee)
         toggle_045b_b0_and_0758_b3();
         return;
       }
-      if ((XDATA_0440 != '\0') && (DAT_EXTMEM_070d == '\0')) {
+      if ((XDATA_0440 != '\0') && (XDATA_070D == '\0')) {
         gate_0709b0_into_045b_branch();
         return;
       }

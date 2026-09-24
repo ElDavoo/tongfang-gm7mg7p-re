@@ -20,7 +20,7 @@ void clamp_078b_level_into_0804(void)
   byte bVar1;
   char in_PSW;
   
-  if ((DAT_EXTMEM_08eb & 0x10) != 0) {
+  if ((XDATA_08EB & 0x10) != 0) {
     return_stub();
     return;
   }
@@ -28,7 +28,7 @@ void clamp_078b_level_into_0804(void)
     return_stub();
     return;
   }
-  if (DAT_EXTMEM_080d != '\0') {
+  if (XDATA_080D != '\0') {
     return_stub();
     return;
   }
@@ -38,14 +38,14 @@ void clamp_078b_level_into_0804(void)
       bVar1 = 0;
     }
     sub_r0_from_r1_stash_r0_on_borrow(DAT_EXTMEM_080e);
-    sub_r0_from_r1_stash_r0_on_borrow(DAT_EXTMEM_080c);
+    sub_r0_from_r1_stash_r0_on_borrow(XDATA_080C);
     sub_r0_from_r1_stash_r0_on_borrow(DAT_EXTMEM_0808);
     sub_r0_from_r1_stash_r0_on_borrow(DAT_EXTMEM_0805);
     sub_r0_from_r1_stash_r0_on_borrow(DAT_EXTMEM_0626);
     sub_r0_from_r1_stash_r0_on_borrow(DAT_EXTMEM_08ac);
     sub_r0_from_r1_stash_r0_on_borrow(DAT_EXTMEM_08ba);
     sub_r0_from_r1_stash_r0_on_borrow(DAT_EXTMEM_08a1);
-    sub_r0_from_r1_stash_r0_on_borrow(DAT_EXTMEM_08a2);
+    sub_r0_from_r1_stash_r0_on_borrow(XDATA_08A2);
     if (4 < bVar1) {
       bVar1 = 4;
     }
