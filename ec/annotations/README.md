@@ -56,6 +56,17 @@ repository's rules are about.
   files it named were deleted together, so every file-existence check still
   held.
 
+It also passes over [`subsystems.md`](subsystems.md), the map from mechanism to
+function, and refuses a citation there that resolves to no row of this file, one
+whose `name` disagrees with the row's current name, a `type: unresolved` row
+cited without the `[unresolved]` marker, a cited `evidence` path that is not on
+disk, and a census count that disagrees with a recount. That last one is the
+check that was missing and caught eleven rows of this file at once: all eleven
+are `common` scope and all eleven cite `ec/decompiled/bank0/` for a function the
+common-area de-dup had already moved to `ec/decompiled/common/`. The paths were
+stale and no existing gate could see it, because the check above only asks
+whether a path is *named*, not whether it exists.
+
 ## How the bulk rows were produced
 
 The first 67 rows were written by hand. The rest came from a fan-out, and the

@@ -9,7 +9,7 @@
    four and the asm is the ground truth. Whether the repetition is a wider store that failed to
    advance DPTR or four deliberate writes is not determinable from these instructions.
    type: writer
-   evidence: ec/decompiled/bank0/10F1.asm; ec/decompiled/bank0/10F1.c
+   evidence: ec/decompiled/common/10F1.asm; ec/decompiled/common/10F1.c
    basis: hand-decoded */
 
 void zero_xdata_200b(void)

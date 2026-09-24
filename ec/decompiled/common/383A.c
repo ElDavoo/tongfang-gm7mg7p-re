@@ -7,7 +7,7 @@
 /* Sets bit 3 of the direct internal byte 0x0C -- the bit address 0x63 -- and returns. Nothing else
    is touched, and nothing in these two bytes says what that bit means.
    type: state
-   evidence: ec/decompiled/bank0/383A.asm; ec/decompiled/bank0/383A.c
+   evidence: ec/decompiled/common/383A.asm; ec/decompiled/common/383A.c
    basis: hand-decoded */
 
 void set_direct_bit_0c_3(void)

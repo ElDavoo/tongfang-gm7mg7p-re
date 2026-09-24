@@ -9,7 +9,7 @@
    default path and then sets a flag bit in internal RAM 0x04; that body is absent from the
    one-instruction listing and is reported, not decoded, from the .c.
    type: forwarder
-   evidence: ec/decompiled/bank0/0013.asm; ec/decompiled/bank0/0013.c
+   evidence: ec/decompiled/common/0013.asm; ec/decompiled/common/0013.c
    basis: hand-decoded */
 
 undefined1 int1_vector_forwarder_to_0556(undefined1 param_1)

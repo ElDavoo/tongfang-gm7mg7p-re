@@ -2853,7 +2853,7 @@ of the code, not in the amount of work it was supposed to do.
 
 **The comparison itself was moved, widened and recorded after this was
 written.** Its 0.13 s was four hand-typed functions out of 2,710, two of which
-compared nothing at all; the sample is now 1,901 functions derived from the
+compared nothing at all; the sample is now 1,920 functions derived from the
 committed annotations, it prints its denominator, and its outcome is committed
 to `ec/ghidra/cross-decoder.csv` and ratcheted by `--check` on every commit.
 **§14i has the measured figures, the correction to the "40 straight-line
@@ -2887,8 +2887,8 @@ one runner, warm page cache, three runs each, against the pre-change file: the
 table's own figures are from a different day's runner, and the pair below is
 the before-and-after this change can be judged on. `--self-test` 0.42 s →
 **0.59 s**, `--check` 0.22 s → **0.34 s**, `--self-test --cross-decoder` 0.55 s
-→ **0.70 s**, whole cheap tier **10 s**. The ~0.15 s is the cross-decoder
-comparison over 1,901 sampled functions, which §14i measures in full — and
+→ **0.72 s**, whole cheap tier **9.6 s**. The ~0.13 s is the cross-decoder
+comparison over 1,920 sampled functions, which §14i measures in full — and
 which is a *cheaper* comparison than the four-function one it replaced, because
 the per-function subprocess and the per-function full-index re-read are gone.
 
@@ -3376,20 +3376,25 @@ half of the problem that was not a speed question.
 
 **The denominator (2026-09-24, this runner, warm page cache).** The sample is
 now derived from committed data — every annotated function the listing index
-carries (1,783), plus every eighth of the remaining 927, plus each program's
+carries (1,804), plus every eighth of the remaining 906, plus each program's
 first non-annotated row — so all four programs are represented by construction
 and the same inputs always give the same rows. Over that sample:
 
 ```
-compared 994 of 1901 functions, 907 vacuous; 604 agreed, 390 disagreed, 0 no-export
+compared 1003 of 1920 functions, 917 vacuous; 606 agreed, 397 disagreed, 0 no-export
 ```
+
+The annotated half is 1,804 rather than the 1,783 this section was first
+measured over: issue #136 added 21 `common` interrupt-entry rows, and an
+annotated row is a backbone sample row, so they all join. `ec/ghidra/cross-decoder.csv`
+is regenerated with `--report` for the same reason.
 
 | program | sampled | compared | vacuous | disagree |
 |---|---|---|---|---|
 | bank0 | 693 | 437 | 256 | 134 |
 | bank1 | 594 | 337 | 257 | 152 |
-| common | 112 | 47 | 65 | 30 |
-| pd | 502 | 173 | 329 | 74 |
+| common | 130 | 57 | 73 | 37 |
+| pd | 503 | 172 | 331 | 74 |
 
 **This is §14b's failure one level up, and it is why the line above is printed
 on every run.** §14b is the Windows parser whose regex matched zero of 502,652
@@ -3397,7 +3402,7 @@ lines and reported a pass over 358 GB of scanning: *a parser that reads a
 fraction of a file and finds nothing wrong in it reports a pass.* The
 four-function sample was the same shape — **two of its four functions compared
 nothing at all**, because their straight-line openings name no XDATA address,
-and the run said so in the same form as a pass. 907 vacuous out of 1,901 is
+and the run said so in the same form as a pass. 917 vacuous out of 1,920 is
 the same property at a larger scale, and the denominator is what makes it
 visible to whoever is reading.
 
@@ -3437,33 +3442,33 @@ program's offset returns the same bytes. The negative half is what makes the
 four mean anything: without it an anchor that passes by coincidence is
 indistinguishable from one that passes because the map is right.
 
-**And the 1,901-row comparison is faster than the four-function one was.** The
+**And the 1,920-row comparison is faster than the four-function one was.** The
 old path spawned a `disasm8051.py` subprocess per function *and* re-read all
 2,710 listing-index rows per function inside `function_size()`; the new one
 imports the decoder, reads the listing index once, and reads the annotations
 once. Measured the same way as the table above, each on this runner with a warm
-page cache, three runs each:
+page cache, three runs each, on the tree carrying issue #136's rows:
 
 | | 2026-09-23 | before this change | after |
 |---|---|---|---|
 | `--self-test` | 0.15 s | 0.42 s | 0.59 s |
 | `--check` | 0.19 s | 0.22 s | 0.34 s |
-| `--self-test --cross-decoder` | 0.27 s | 0.55 s | 0.70 s |
-| the comparison alone | 0.13 s (4 functions) | — | **0.10 s (1,901 functions)** |
-| `--report` | n/a | n/a | 0.16 s |
+| `--self-test --cross-decoder` | 0.27 s | 0.55 s | 0.72 s |
+| the comparison alone | 0.13 s (4 functions) | — | **0.10 s (1,920 functions)** |
+| `--report` | n/a | n/a | 0.17 s |
 
-So a 475× larger sample costs slightly less than the four-function one did, and
-the ~0.15 s the comparison adds to each per-commit run is the price of reading
-1,901 `.c` files the check already walks. The `--report` output is
+So a 480× larger sample costs slightly less than the four-function one did, and
+the ~0.13 s the comparison adds to each per-commit run is the price of reading
+1,920 `.c` files the check already walks. The `--report` output is
 byte-identical run to run (verified), which is what the ratchet needs.
 
-**What a `disagree` is not.** 390 rows disagree and the bucket is not a defect
-list, so the count is worth reading with its composition. **104** are the
+**What a `disagree` is not.** 397 rows disagree and the bucket is not a defect
+list, so the count is worth reading with its composition. **109** are the
 `mov dptr,#imm; ljmp <BL51 stub>` bank-switch trampoline, whose C calls
 `bl51_bank_select_1(0x88f0)` — the address is in the output as a literal
 argument, but not as an `EXTMEM_` symbol, and `EXTMEM_` is the whole
-vocabulary of this comparison. Of the rest, 217 distinct addresses are involved
-and **124 of them have no entry in `ec/annotations/registers.yaml`**, so they
+vocabulary of this comparison. Of the rest, 220 distinct addresses are involved
+and **127 of them have no entry in `ec/annotations/registers.yaml`**, so they
 cannot appear as `EXTMEM_` in any C at all: a `disagree` there measures the
 register map's coverage and says nothing about the decompiler. Splitting the
 bucket needs the byte-pair-folding case *enumerated* rather than described, and
@@ -3491,13 +3496,13 @@ anchor is `pd 0xA678`, which is in the sample and does open `90 07 d0`.
 under a window that stops at the first branch.
 
 **The outcome is committed and ratcheted.** `ec/ghidra/cross-decoder.csv`,
-1,901 rows, generated by `--report` and by nothing else, beside `manifest.csv`
+1,920 rows, generated by `--report` and by nothing else, beside `manifest.csv`
 and `reassembly.csv`. `--check` recomputes every row and fails on a row it does
 not carry, a row it carries that the sample no longer has, or any cell that
 moved; and it fails on a wholly vacuous or wholly unexported sample, which is
 the §14b failure above encoded as an assertion rather than as a number to be
 read. So the second half of what issue #140 reports — "the result is printed
-and nothing else" — is closed, and the cost is the ~0.15 s in the table.
+and nothing else" — is closed, and the cost is the ~0.13 s in the table.
 
 **One stale sentence, left visible.** `.github/scripts/agent-gates.sh` still
 prints that this tier "does not run … the advisory cross-decoder comparison".
@@ -4486,3 +4491,104 @@ any other user with `NotOwnerException` before it analyses anything; the
 export-only run for this issue was made with the owner corrected in the scratch
 copy only, and the committed file is byte-identical afterwards. Both want their
 own issues.
+
+## 19. The map from mechanism to function, and the eleven citations it found stale (2026-09-24, issue #136)
+
+`../ec/annotations/subsystems.md` now exists, and the issue it closes asked for
+it by that name. The interesting part is not the map.
+
+**The plan's numbers were stale, so the census is measured rather than
+transcribed.** Every count in §2 of that document was re-derived against the
+committed tree, and five of the figures the plan carried did not survive:
+`index.csv` exports 2710 functions and not 2708, `ghidra-functions.csv` holds
+1804 rows and not 1769, the common area carries 43 annotated rows and not 22,
+`ec/ghidra/xdata-symbols.csv` holds 177 names and not 61, and `registers.yaml`
+holds 145 registers and not 29. The plan also said the 18-row gap between the
+index's `annotated=yes` count and the CSV's row count was 1787 − 1769; measured,
+it is 1822 − 1804, and **18 is unchanged**, because the tree moved on both sides
+at once. Had the plan's numbers been copied in, the document's own check would
+have failed on the first run.
+
+**The plan's row count was wrong too, in the direction that matters.** It
+promised 19 annotation rows and listed 21 addresses: six vector targets, six
+table entries, "six banked-target thunks" over a list of five, and four lone
+`ret`s. All 21 are exported, unannotated functions, so 21 rows went in. The
+arithmetic is worth recording because the plan's own summary used the wrong
+number three times; the tree is what settles it.
+
+**The claim that all six table entries reach the `0x1150`-`0x1168` group is
+false for one of them.** `0x002B` tail-jumps to `0x05E7`, a lone `reti` one byte
+past `0x05E6`, and not into that group at all. The table is 12 `ljmp` entries
+interleaved with 4 lone `ret` bytes over `0x0000`-`0x002F`; the six already-named
+forwarders hold the eight-byte-stride slots and the other six sit at an offset
+those do not use.
+
+**The three one-byte `reti` targets are not split epilogues, and that took bytes
+to establish.** `0x052F`, `0x05E6` and `0x05E7` are each a single `reti`. Ghidra's
+boundaries cut through straight-line code on this firmware, so the one-byte shape
+is exactly what a split epilogue looks like, and three separate facts rule it
+out: `0x0528`-`0x052E` is a run of `ret`s after a function ending in a `ret` at
+`0x0527`; the byte before `0x05E6`, at `0x05E5`, is the timer1 handler's **own**
+`reti`, since `0x05B6`'s body is 48 bytes and ends there; and `0x05E7`'s
+predecessor is `0x05E6`. `ec/ghidra/reassembly.csv` records all three as `match`
+and `verify_reassembly.py --check` reports 0 disagreements over 45,624
+instructions, so this is a fact about the bytes. **The rows are still
+`type: unresolved`**, and the map cites them with an `[unresolved]` marker,
+because "the vector target is one `reti`" is not "int0 and serial 0 are
+unimplemented" — whether the EC services those sources is a question about the
+interrupt-enable registers, which none of those addresses reads.
+
+**The citation check found eleven rows of `ghidra-functions.csv` citing files
+that do not exist.** All eleven are `common` scope and all eleven cite
+`ec/decompiled/bank0/` for a function the common-area de-dup (§12) had already
+moved to `ec/decompiled/common/` — 22 dead paths, invisible until now, because
+every existing gate asks whether an `evidence` cell is *named* and none asked
+whether the path resolves. They are fixed here. This is the delete-the-row-and-
+the-file hole the annotations README describes, reached from the other side: not
+a row deleted with its file, but a file moved out from under a row that stayed.
+
+**Two smaller reconciliations, so the next reader does not have to redo them.**
+`common` `0x1207` is a bare `ljmp 0x1100` and `common` `0x0512` is a two-byte
+`ajmp 0x0003`; both are second instances of a name that already has a row
+elsewhere. `0x1204`-`0x1207` is one six-byte `mov DPTR,#0xBF62` + `ljmp 0x1100`
+thunk split in two by a call-target frame, with the second half inheriting the
+first's name. `0x0512`'s name is right about where it goes — it really is a
+second path to the int0 forwarder — but it exists because the byte scan found
+`01 03` there, not because the vector table does. Whether either is a genuine
+second copy is not established by the bytes alone.
+
+**Also measured while writing it, and left alone here.** `pd-index-callers.csv`
+has five rows of which **four** are `status: unresolved`, not all five; the fifth
+found literal index loads. `ec/annotations/bank-call-audit.md`'s own note that
+the BL51 stub at `0x1100` is reached by "350 of the 403 trampolines in
+`0x1150`-`0x1ABC`" is a range-restricted count from the exporter and is not the
+same measurement as the map's: over the whole export, by shape, 290 functions
+are a `mov DPTR,#imm16` + `ljmp` pair and 282 of those name a BL51 stub (261 to
+`0x1100`, 21 to `0x1114`), of which **82 are annotated**. Both numbers are
+right about different sets; the map publishes the one it can recompute.
+
+**The export-only build for this issue was made with the Ghidra owner supplied
+on the command line** (`JAVA_TOOL_OPTIONS=-Duser.name=dave`), the same workaround
+§18 describes and for the same reason: the committed project is owned by `dave`
+(`ec/ghidra/project/ec.rep/project.prp`), so `build_ec_decompile.py` fails for
+any other user with `NotOwnerException` before it analyses anything. No project
+file was edited and the committed one is byte-identical afterwards. The gate that
+would have caught this at the time is still not written.
+
+**One row of `index.csv` changed for the wrong reason, and the reason is a
+pre-existing defect.** 22 rows move `seed_basis` to `annotation`, and 21 of them
+are correct: those are exactly the 21 new `common` rows, and `seed_rows()`'s
+`STRENGTH` table puts `annotation` (0) ahead of `vector` and `vector-target`
+(1), so a hand-written row is meant to take over as the recorded basis. The 22nd
+is `pd` `0x0012`, and it should not have moved. The PD image's own vector table
+is the six standard slots — `discover_vector_table()` over the PD bytes returns
+offsets 0, 3, 11, 19, 27 and 35 and **no `0x12`** — so `seed_rows()` builds no PD
+seed at that address at all. The value it records is borrowed, because
+`ghidra/scripts/ExportDecompile.java`'s `readBasis()` keys the basis map on the
+address string alone and never on the program, so a function at `0x0012` in the
+PD image reads whichever program's row was written for `0x0012` — here the EC
+common area's. The old value (`vector`) was borrowed the same way; this change
+only swapped which program's answer it borrowed. It is the same class of
+address-space confusion as §12, one row wide. **The fix is to key `readBasis()`
+on `(program, addr)`**, and it is not made here because it would restate the
+basis column across the whole index and wants its own verification.

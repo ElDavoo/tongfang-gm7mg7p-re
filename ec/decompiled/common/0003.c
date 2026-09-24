@@ -9,7 +9,7 @@
    bare ljmp here. The .c body for this address is empty, so nothing about the handler at 0x052F is
    available from this file pair.
    type: forwarder
-   evidence: ec/decompiled/bank0/0003.asm; ec/decompiled/bank0/0003.c
+   evidence: ec/decompiled/common/0003.asm; ec/decompiled/common/0003.c
    basis: hand-decoded */
 
 void int0_vector_forwarder_to_052f(void)

@@ -10,7 +10,7 @@
    header flags this function boundary as a hypothesis, so the instructions shown may not be the
    whole function.
    type: logic
-   evidence: ec/decompiled/bank0/0C7A.asm; ec/decompiled/bank0/0C7A.c
+   evidence: ec/decompiled/common/0C7A.asm; ec/decompiled/common/0C7A.c
    basis: hand-decoded */
 
 byte clear_low_nibble_of_1304(void)

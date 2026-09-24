@@ -45,11 +45,11 @@ spelled out below** — it is the one thing on this page that nothing in CI runs
 0.59 s on this repository's runner on 2026-09-24, warm page cache, each
 measured against the pre-change file on the same machine the same day (0.22 s
 and 0.42 s). Both figures include the cross-decoder comparison described
-below: `--check` recomputes all 1,901 of its rows and `--self-test` asserts
+below: `--check` recomputes all 1,920 of its rows and `--self-test` asserts
 its known answers, which is why they are no longer the 0.19 s and 0.13 s
 `docs/findings.md` §14e recorded on 2026-09-23. The comparison itself is
-0.10 s (`--report` measures 0.16 s end to end) — the price of 1,901 short
-decodes and 1,901 reads of a `.c`, with no subprocess per function, where the
+0.10 s (`--report` measures 0.17 s end to end) — the price of 1,920 short
+decodes and 1,920 reads of a `.c`, with no subprocess per function, where the
 four-function version it replaces spawned one and re-scanned the whole
 2,710-row listing index for each of them.
 
@@ -572,9 +572,9 @@ $ python3 ../tools/build_ec_decompile.py --work /tmp/ec --self-test --cross-deco
   cross-decoder agreement (Ghidra's C vs disasm8051.py, each sampled function's opening straight-line instructions):
     bank0    693 sampled,  437 compared,  256 vacuous,  134 disagree, 0 no-export
     bank1    594 sampled,  337 compared,  257 vacuous,  152 disagree, 0 no-export
-    common   112 sampled,   47 compared,   65 vacuous,   30 disagree, 0 no-export
-    pd       502 sampled,  173 compared,  329 vacuous,   74 disagree, 0 no-export
-    compared 994 of 1901 functions, 907 vacuous; 604 agreed, 390 disagreed, 0 no-export
+    common   130 sampled,   57 compared,   73 vacuous,   37 disagree, 0 no-export
+    pd       503 sampled,  172 compared,  331 vacuous,   74 disagree, 0 no-export
+    compared 1003 of 1920 functions, 917 vacuous; 606 agreed, 397 disagreed, 0 no-export
 ```
 
 **The denominator is the point, and it is printed on every run.** The version
@@ -583,7 +583,7 @@ carries, and two of the four compared nothing at all — their openings name no
 XDATA address — which the old output said in the same shape as a pass. That is
 `../../docs/findings.md` §14b's own sentence ("a parser that reads a fraction
 of a file and finds nothing wrong in it reports a pass") one level up, in a
-check that had been moved rather than fixed. 907 of 1,901 is a large vacuous
+check that had been moved rather than fixed. 917 of 1,920 is a large vacuous
 share and it is now the first number on the screen rather than nothing at all.
 
 ### What the sample is
@@ -593,11 +593,11 @@ rows — which is what lets `--check` compare the committed report against it an
 call a difference a stale report rather than a sample that moved.
 
 - **Backbone** — every `(scope, addr)` in `../annotations/ghidra-functions.csv`
-  that the listing index carries: 1,783 functions, the ones a person or an
+  that the listing index carries: 1,804 functions, the ones a person or an
   agent has read and cited. All four programs are represented in it, so
   per-program coverage holds by construction; `--self-test` asserts that rather
   than assuming it.
-- **Stride** — every eighth of the remaining 927, in sorted
+- **Stride** — every eighth of the remaining 906, in sorted
   `(program, addr)` order, plus each program's first non-annotated row so
   coverage survives a program whose remainder is tiny.
 
@@ -624,15 +624,15 @@ is still what the bytes do; the straight-line window just does not reach it.
 
 ### Reading a `disagree`
 
-`disagree` is one bucket and it is **not** a defect list. Measured over the 390
+`disagree` is one bucket and it is **not** a defect list. Measured over the 397
 rows the committed report records:
 
-- **104** are the `mov dptr,#imm; ljmp <BL51 stub>` bank-switch trampoline.
+- **109** are the `mov dptr,#imm; ljmp <BL51 stub>` bank-switch trampoline.
   Their C calls `bl51_bank_select_1(0x88f0)`, so the address is right there as
   a literal argument; it is not an `EXTMEM_` symbol, and the comparison's
   vocabulary is `EXTMEM_`. The run prints this count for exactly that reason —
   otherwise the first twenty rows of the list read as twenty defects.
-- Of the rest, 217 distinct addresses are involved and **124 of them have no
+- Of the rest, 220 distinct addresses are involved and **127 of them have no
   entry in `../annotations/registers.yaml`**, so they cannot appear as an
   `EXTMEM_` symbol in any C. A `disagree` there measures the register map's
   coverage, not the decompiler.
@@ -655,7 +655,7 @@ this comparison stops at.
 
 ### What `--check` does with it
 
-`--check` recomputes all 1,901 rows and fails on a row the report does not
+`--check` recomputes all 1,920 rows and fails on a row the report does not
 carry, a row the report carries that the sample no longer does, or **any
 cell** that moved — not just `outcome`, so a drifted name or instruction count
 is caught too. It fails on a wholly vacuous or wholly unexported sample, which

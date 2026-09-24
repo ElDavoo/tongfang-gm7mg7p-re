@@ -89,6 +89,7 @@ CALL_TARGETS = os.path.join(REPO, "ec", "annotations", "bank-call-targets.csv")
 # both do (.gitattributes -merge). A digest column there would make adding one
 # require the merge-hostile operation this check exists to avoid needing.
 C_DIGESTS = os.path.join(REPO, "ec", "ghidra", "c-digests.csv")
+SUBSYSTEMS = os.path.join(REPO, "ec", "annotations", "subsystems.md")
 GHIDRA_VERSION = "12.1.3"
 
 # The Keil BL51 bank-switch stubs, from ec/tools/find_banks.py and ec/README.md.
@@ -1773,10 +1774,11 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # 1,769 -> 1,772 with issue #181's three pd rows (0x7392, 0xEA67, 0xEFB9),
     # 1,772 -> 1,775 with issue #179's three, 1,775 -> 1,779 with issue #180's four,
     # 1,779 -> 1,781 with issue #183's two, 1,781 -> 1,782 with issue #285's one
-    # (bank0 0xCC64), 1,782 -> 1,783 with issue #262's one bank1 0xC1E7.
-    check("EC: annotations/ghidra-functions.csv is 1,783 records, no short row "
+    # (bank0 0xCC64), 1,782 -> 1,783 with issue #262's one bank1 0xC1E7,
+    # 1,783 -> 1,804 with issue #136's 21 common-area interrupt-entry rows.
+    check("EC: annotations/ghidra-functions.csv is 1,804 records, no short row "
           "and no duplicate (scope, addr)",
-          len(_ann) == 1783 and not structure_problems("ghidra-functions.csv", _ann,
+          len(_ann) == 1804 and not structure_problems("ghidra-functions.csv", _ann,
                                                        annotation_key, "(scope, addr)"),
           "%d record(s)" % len(_ann))
     check("EC: bank-call-targets.csv is 5,998 records, no short row and no "
@@ -1792,7 +1794,7 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("EC: a raw and a normalised key count the same on both annotation "
           "CSVs, so normalising cannot merge two distinct keys",
           len({(r["scope"], r["addr"]) for r in _ann})
-          == len({annotation_key(r) for r in _ann}) == 1783
+          == len({annotation_key(r) for r in _ann}) == 1804
           and len({(r["file_offset"], r["target"]) for r in _ct})
           == len({call_target_key(r) for r in _ct}) == 5998)
 
@@ -2175,6 +2177,88 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     _p = degenerate_sample_problems({"agree": 3, "disagree": 1, "vacuous": 2,
                                      "no-export": 0})
     check("a sample with rows in it is not a degenerate sample", not _p, str(_p))
+
+    # The subsystems.md citation check, on synthetic fixtures. The known-good
+    # case is first on purpose, for the reason the structural cases above are:
+    # a guard exercised only on known-bad input cannot tell "clean" from
+    # "never ran". Each bad case is then the good document with exactly one
+    # thing wrong, so a failure names the guard that stopped rejecting.
+    _sd = os.path.join(work, "subsystems-self-test")
+    os.makedirs(_sd, exist_ok=True)
+    _srows = [
+        {"scope": "bank0", "addr": "0xB158", "name": "charge_target_update",
+         "type": "charge-target", "evidence": "ev/ok.asm"},
+        {"scope": "common", "addr": "0x052F", "name": "int0_target_is_one_byte_reti",
+         "type": "unresolved", "evidence": "ev/ok.asm"},
+    ]
+    os.makedirs(os.path.join(_sd, "ev"), exist_ok=True)
+    open(os.path.join(_sd, "ev", "ok.asm"), "w").write("; fixture\n")
+    _good_doc = (
+        "## 3. charge\n"
+        "- `bank0` `0xB158` `charge_target_update` -- recomputes the target\n"
+        "## 4. vectors\n"
+        "- `common` `0x052F` `int0_target_is_one_byte_reti` [unresolved] -- one reti\n")
+    _measured = {"exported functions": 10, "annotated function rows": 2,
+                 "rows the index marks annotated": 3, "unresolved rows": 1}
+    _census_doc = ("- `exported functions` — 10\n"
+                   "- `annotated function rows` — 2\n"
+                   "- `rows the index marks annotated` — 3\n"
+                   "- `unresolved rows` — 1\n")
+
+    def _sp(doc, measured=None):
+        """The problems in `doc`, with its own census read out of its prose."""
+        return subsystems_problems(doc, _srows, repo=_sd,
+                                   stated=subsystems_stated_counts(doc),
+                                   measured=measured)
+
+    check("subsystems: a document whose citations all resolve passes",
+          not _sp(_good_doc), "; ".join(_sp(_good_doc)))
+    check("subsystems: the citation format is three backticked fields, and the "
+          "known-good case really is read as two citations",
+          len(subsystems_citations(_good_doc)) == 2)
+    _p = _sp(_good_doc.replace("`bank0` `0xB158`", "`bank0` `0xB159`"))
+    check("subsystems: a citation that resolves to no row is reported",
+          len(_p) == 1 and "is not a row" in _p[0], str(_p))
+    _p = _sp(_good_doc.replace("charge_target_update`", "charge_target_updateXX`"))
+    check("subsystems: a cited name that disagrees with the CSV is reported",
+          len(_p) == 1 and "is named charge_target_update in" in _p[0], str(_p))
+    _p = _sp(_good_doc.replace(" [unresolved]", ""))
+    check("subsystems: an unresolved row cited without the marker is reported",
+          len(_p) == 1 and "without the [unresolved] marker" in _p[0], str(_p))
+    _p = _sp(_good_doc.replace("`charge_target_update` --",
+                               "`charge_target_update` [unresolved] --"))
+    check("subsystems: the marker on a row that is not unresolved is reported",
+          len(_p) == 1 and "is cited with the [unresolved] marker" in _p[0], str(_p))
+    _bad_ev = [dict(_srows[0]), dict(_srows[1])]
+    _bad_ev[0]["evidence"] = "ev/gone.asm; ev/ok.asm"
+    _p = subsystems_problems(_good_doc, _bad_ev, repo=_sd)
+    check("subsystems: an evidence path that is not on disk is reported",
+          len(_p) == 1 and "does not exist on disk" in _p[0]
+          and "ev/gone.asm" in _p[0], str(_p))
+    _stated = subsystems_stated_counts(_census_doc)
+    check("subsystems: the four census counts are read back out of the prose",
+          _stated == _measured, str(_stated))
+    # The document is the side that is wrong here: a number edited in the prose
+    # without re-deriving it. The recount is the committed files, so the message
+    # reads from the stated value to the measured one.
+    _p = _sp(_census_doc.replace("`exported functions` — 10",
+                                 "`exported functions` — 11") + _good_doc, _measured)
+    check("subsystems: a census count that disagrees with the recount is reported",
+          len(_p) == 1 and "states 11 exported functions" in _p[0], str(_p))
+    _p = _sp(_census_doc.replace("- `unresolved rows` — 1\n", "") + _good_doc,
+             _measured)
+    check("subsystems: a census count that is missing is reported",
+          len(_p) == 1 and "states no `unresolved rows` count" in _p[0], str(_p))
+    _p = _sp("## 3. a section that cites nothing at all\n")
+    check("subsystems: a document that cites no function is reported",
+          len(_p) == 1 and "cites no functions" in _p[0], str(_p))
+    # And the committed document, read the way the gate reads it.
+    if os.path.isfile(SUBSYSTEMS):
+        _real, _n = check_subsystems(_ann, _ir)
+        check("subsystems: the committed %s passes its own check"
+              % os.path.relpath(SUBSYSTEMS, REPO), not _real, "; ".join(_real[:3]))
+        check("subsystems: the committed map cites functions", _n > 0, "%d" % _n)
+
     print("  all assertions passed" if ok else "  FAILURES ABOVE")
     if not ok:
         return 1
@@ -2778,6 +2862,163 @@ def opt_in_ghidra_oracle(args, work):
     return 0 if ok else 1
 
 
+# --------------------------------------------------------------------------
+# ec/annotations/subsystems.md -- the map over ghidra-functions.csv
+# --------------------------------------------------------------------------
+
+# One line per cited function, in the only shape the document uses:
+#
+#     - `bank0` `0xB158` `charge_target_update` -- prose
+#
+# Three backticked fields, then prose. Deterministic to parse and greppable by
+# hand, which matters because a map nobody can grep is a map that goes stale
+# quietly. An `unresolved` citation is the same line with a fourth field:
+#
+#     - `common` `0x052F` `int0_target_is_one_byte_reti` [unresolved] -- prose
+#
+# The marker is required, not advisory. ghidra-functions.csv puts 134 rows at
+# `type: unresolved`, and a map that cites one of them in the same tone as a
+# decoded one is how "unresolved" stops meaning anything downstream.
+SUBSYSTEM_CITE = re.compile(
+    r"^(?P<bullet>- )?`(?P<scope>[a-z0-9]+)` `(?P<addr>0[xX][0-9A-Fa-f]+)` "
+    r"`(?P<name>[A-Za-z0-9_]+)`(?P<flag> \[unresolved\])?(?P<rest> .*)?$")
+# The census's counts, as the document states them: one bullet each, in the
+# house list format, keyed on the label so the order is free.
+#
+#     - `exported functions` — 2710
+#
+# The value is compared against a recount, so editing a number in the prose
+# without re-deriving it is a failed check rather than a claim nobody notices.
+SUBSYSTEM_COUNT = re.compile(r"^- `(?P<label>[a-z][a-z0-9 ]+)`\s*[-—]\s*"
+                            r"(?P<value>\d+)\s*$", re.M)
+SUBSYSTEM_COUNTS = ("exported functions", "annotated function rows",
+                    "rows the index marks annotated", "unresolved rows")
+
+
+def subsystems_citations(text):
+    """The citation lines of a subsystems.md, as dicts.
+
+    A line is a citation when it opens with a list bullet and its first three
+    backticked fields are a scope, an address and a name. Anything else on a
+    bullet line is prose the document wrote, and a section that cites nothing
+    is caught by the count the caller compares against.
+    """
+    out = []
+    for lineno, line in enumerate(text.splitlines(), 1):
+        if not line.startswith("- "):
+            continue
+        m = SUBSYSTEM_CITE.match(line)
+        if m:
+            d = m.groupdict()
+            d["lineno"] = lineno
+            d["line"] = line
+            d["unresolved"] = bool(d["flag"])
+            d["prose"] = (d["rest"] or "").lstrip(" -")
+            out.append(d)
+    return out
+
+
+def subsystems_problems(text, ann_rows, repo=REPO, stated=None, measured=None):
+    """What is wrong with a subsystems.md, given the CSV it is a view of.
+
+    Four faults, all of them the kind a prose document accumulates silently:
+
+    - a cited `(scope, addr)` that is not a row at all. A rename in
+      ghidra-functions.csv would otherwise leave the map quoting a function
+      that no longer exists, and the map is the thing a new reader trusts to
+      find their way in.
+    - a cited `name` that disagrees with the CSV's current name for that
+      address. This is the one that actually bites, and it is why the check
+      lives in the tool that owns the CSV.
+    - a `type: unresolved` row cited without the `[unresolved]` marker.
+    - a cited `evidence` path that does not exist on disk. This closes, for
+      this document, the delete-the-row-and-the-file hole
+      ec/annotations/README.md §"The checks" describes: a row that is gone
+      cannot point at a file that is gone, so every other existence check
+      still holds.
+    """
+    problems = []
+    by_key = {(r["scope"], norm_addr(r["addr"])): r for r in ann_rows}
+    cites = subsystems_citations(text)
+    if not cites:
+        return ["the document cites no functions: the citation format is three "
+                "backticked fields, a scope, an address and a name"]
+    for c in cites:
+        key = (c["scope"], norm_addr(c["addr"]))
+        row = by_key.get(key)
+        if row is None:
+            problems.append("line %d: %s %s is not a row in %s -- a rename or a "
+                            "typo; the map quotes a function that is not there"
+                            % (c["lineno"], c["scope"], c["addr"],
+                               os.path.relpath(ANNOTATIONS, repo)))
+            continue
+        if row["name"] != c["name"]:
+            problems.append("line %d: %s %s is named %s in %s, not %s"
+                            % (c["lineno"], c["scope"], c["addr"], row["name"],
+                               os.path.relpath(ANNOTATIONS, repo), c["name"]))
+        unresolved = row.get("type") == "unresolved"
+        if unresolved and not c["unresolved"]:
+            problems.append("line %d: %s %s is type=unresolved in %s and is cited "
+                            "without the [unresolved] marker"
+                            % (c["lineno"], c["scope"], c["addr"],
+                               os.path.relpath(ANNOTATIONS, repo)))
+        if not unresolved and c["unresolved"]:
+            problems.append("line %d: %s %s is type=%s, not unresolved, and is cited "
+                            "with the [unresolved] marker"
+                            % (c["lineno"], c["scope"], c["addr"], row.get("type", "")))
+        for path in (p.strip() for p in row.get("evidence", "").split(";")):
+            if path and not os.path.exists(os.path.join(repo, path)):
+                problems.append("line %d: the evidence %s cited for %s %s does not "
+                                "exist on disk" % (c["lineno"], path, c["scope"],
+                                                   c["addr"]))
+    if stated and measured:
+        for label in SUBSYSTEM_COUNTS:
+            if label not in stated:
+                problems.append("the census states no `%s` count; it is one of "
+                                "%s and the recount cannot be compared"
+                                % (label, ", ".join("`%s`" % c for c in SUBSYSTEM_COUNTS)))
+            elif label not in measured:
+                problems.append("nothing to recount `%s` against" % label)
+            elif stated[label] != measured[label]:
+                problems.append("the census states %d %s and the committed files "
+                                "hold %d" % (stated[label], label, measured[label]))
+    return problems
+
+
+def subsystems_stated_counts(text):
+    """The census counts the document publishes, read back out of its prose."""
+    out = {}
+    for m in SUBSYSTEM_COUNT.finditer(text):
+        out[m.group("label")] = int(m.group("value"))
+    return out
+
+
+def check_subsystems(ann_rows, index_rows, repo=REPO, doc=SUBSYSTEMS):
+    """The subsystems.md pass, over committed files only.
+
+    Returns (problems, n_citations). Two of the four counts are properties of
+    ec/decompiled/index.csv and two of ghidra-functions.csv, so both files are
+    read and the recount is the union -- a count the document cannot derive
+    from the two committed CSVs is not a count this check can hold it to.
+    """
+    if not os.path.isfile(doc):
+        return ["no %s: the map from mechanism to function is the entry point "
+                "this repository does not have"
+                % os.path.relpath(doc, repo)], 0
+    text = open(doc, errors="replace").read()
+    counts = {
+        "exported functions": len(index_rows),
+        "annotated function rows": len(ann_rows),
+        "rows the index marks annotated":
+            sum(1 for r in index_rows if r.get("annotated") == "yes"),
+        "unresolved rows": sum(1 for r in ann_rows if r.get("type") == "unresolved"),
+    }
+    return (subsystems_problems(text, ann_rows, repo=repo,
+                                stated=subsystems_stated_counts(text),
+                                measured=counts),
+            len(subsystems_citations(text)))
+
+
 def check(work):
     ok = True
 
@@ -2968,6 +3209,20 @@ def check(work):
             fail("annotation %s %s resolves to no exported function -- either a "
                  "typo or the project needs a rebuild"
                  % (a["scope"], a["addr"]))
+    # The map from mechanism to function, and the same discipline from the
+    # reading side. Every citation in ec/annotations/subsystems.md is a
+    # (scope, addr, name) triple this file owns, so a rename here has to reach
+    # the map or the build fails -- which is the whole reason the check lives
+    # in the tool that wrote the CSV rather than in a tool of its own.
+    sp, ncites = check_subsystems(_read.get("ghidra-functions.csv", []), rows)
+    for problem in sp[:5]:
+        fail("subsystems.md: %s" % problem)
+    if len(sp) > 5:
+        fail("subsystems.md: ... and %d more problem(s)" % (len(sp) - 5))
+    if not sp:
+        print("  subsystems: %d citation(s) in %s, every one resolving against "
+              "the committed CSV and the census recounted"
+              % (ncites, os.path.relpath(SUBSYSTEMS, REPO)))
     # The variable layer, and the same discipline one level down. Its rows are
     # keyed on a decompiler placeholder rather than an address, so ApplyAnnotations
     # reports an unmatched one instead of failing the build -- the build itself

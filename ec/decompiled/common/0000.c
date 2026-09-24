@@ -9,7 +9,7 @@
    one-instruction listing does not contain, so that init sequence is reported from the .c and is
    not decoded here.
    type: entry
-   evidence: ec/decompiled/bank0/0000.asm; ec/decompiled/bank0/0000.c
+   evidence: ec/decompiled/common/0000.asm; ec/decompiled/common/0000.c
    basis: hand-decoded */
 
 void reset_vector_forwarder_to_0070(void)

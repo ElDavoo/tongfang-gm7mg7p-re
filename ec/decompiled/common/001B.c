@@ -9,7 +9,7 @@
    that bit of 0x41 and calls 0x0E72; that body is absent from the one-instruction listing and is
    reported, not decoded, from the .c.
    type: forwarder
-   evidence: ec/decompiled/bank0/001B.asm; ec/decompiled/bank0/001B.c
+   evidence: ec/decompiled/common/001B.asm; ec/decompiled/common/001B.c
    basis: hand-decoded */
 
 undefined1 timer1_vector_forwarder_to_05b6(undefined1 param_1)

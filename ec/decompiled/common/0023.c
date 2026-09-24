@@ -8,7 +8,7 @@
    body for this address is empty, so nothing about the handler at 0x05E6 is available from this
    file pair.
    type: forwarder
-   evidence: ec/decompiled/bank0/0023.asm; ec/decompiled/bank0/0023.c
+   evidence: ec/decompiled/common/0023.asm; ec/decompiled/common/0023.c
    basis: hand-decoded */
 
 void serial0_vector_forwarder_to_05e6(void)
