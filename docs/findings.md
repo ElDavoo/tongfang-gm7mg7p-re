@@ -3506,6 +3506,162 @@ It no longer *prints* the run; it recomputes and ratchets on every row. Both
 token has no `workflow` scope), so the wording is corrected in
 `ec/ghidra/README.md` and here instead.
 
+### 14j. The 56 MB `.c` is now read, and digested (2026-09-24, issue #141)
+
+**Correction to the first bullet of §14.** It reads "**The 56 MB `.c` was never
+read.** The old `--check` touched `windows/decompiled/native/*.c` only through
+`os.listdir` and `os.path.isfile` — names, not contents." That was true of
+#137's audit and of the tree it ran against. It is **no longer true of this
+tree**, and the sentence is left above rather than edited out, because the
+finding it records — a check that reads names instead of contents — is the
+finding this work exists to act on.
+
+`GamingCenter3_Cross.c` (56,693,822 bytes) is now read and SHA-256'd on every
+`--check`, and so is every other committed `.c` in all three components.
+Measured here, warm page cache, each step on its own:
+
+| | committed `.c` | bytes | sha256, all of them |
+|---|---|---|---|
+| `ec/decompiled/` | 2,710 | 3,330,716 | 0.040 s |
+| `bios/decompiled/` | 39 | 1,021,920 | 0.001 s |
+| `windows/decompiled/native/` | 6 | 68,212,335 | 0.050 s |
+| **total** | **2,755** | **72,564,971** | **0.091 s** |
+
+So the open question #141 asked — is hashing the 68 MB of Windows C the slow
+part — is measured and the answer is **no**. Dropping the check for being slow
+is the exact mistake §14 exists to record, so the number goes here whether or
+not it flatters the change.
+
+`decompile_native.py --check` is **1.90 s** here (1.89 / 1.91 / 1.90 over three
+runs), and the EC and BIOS checks are **0.37 s** and **0.34 s**. The whole
+cheap-tier gate is **10.1 s** against a **9.33 s** baseline measured on this
+same runner with the change stashed (9.33 / 9.28 / 9.40 over three runs), so
+everything here costs about **0.8 s**. §14e's 5.9 s figure is a different
+machine and is not comparable to either number; the delta is.
+
+**Those figures, re-measured on the merged tree.** The two sections are
+additive, so the EC's `--check` now does this section's digest and pairing work
+*and* §14i's cross-decoder ratchet over 1,901 functions, and 0.37 s is no
+longer what it costs. Re-taken here, warm page cache, three runs each, on the
+tree carrying both:
+
+| | what §14j recorded | merged tree |
+|---|---|---|
+| `build_ec_decompile.py --check` | 0.37 s | **0.48 s** (0.48 / 0.49 / 0.48) |
+| `build_ec_decompile.py --self-test` | not measured here; §14i recorded 0.59 s | **0.77 s** (0.84 / 0.77 / 0.77) |
+| `decompile_native.py --check` | 1.90 s | 1.88 s (1.88 / 1.87 / 1.92) — unchanged, this section does not touch it |
+| `bios_extract.py --check` | 0.34 s | 0.34 s (0.34 / 0.37 / 0.34) — unchanged, likewise |
+| whole cheap tier | 10.1 s | **11.1 s** (11.29 / 11.11 / 11.17) |
+
+The Windows and BIOS rows are the control: this change is EC-side and index-
+side, and the two components it does not touch did not move, which is what
+makes the EC's 0.11 s readable as the sum of the two sections rather than as
+runner drift. §14e's 5.9 s and §14i's 0.34 s are both still correct *of the
+trees they measured*; neither is what the merged `--check` costs. The claim
+this section rests on — that the cost is small and the direction is the point —
+survives, and the whole tier is still ~11 s.
+
+**And the first version of the Windows presence check cost 5.4 s, which is §14a
+happening again.** It built each file's markers as a flat set of `(name, addr)`
+pairs and then asked `any(a == addr for _n, a in markers)` once per row: 10,141
+rows against 10,141 markers, 7.5 s for the whole check. The markers are keyed on
+address now and each row is a dict lookup. The defect was invisible in the
+output — the distinct-file count the check prints says 5 either way — so
+`--self-test` pins the **shape** of the per-file container, reading it back out
+of the module and asserting it is a dict keyed on address.
+
+A wall-clock assertion was tried first and **would not have caught it**: the
+quadratic form takes 0.18 s on that self-test's 2,000-row fixture, far inside
+any bound loose enough not to be flaky on a loaded runner, while the real
+regression was 5.4 s at 26× the work. A timing assertion loose enough to be
+stable is loose enough to pass the thing it was written to catch; the structural
+one fails on any machine, in milliseconds. **§14a is not only "do not read a file
+once per row"; it is also "do not scan a collection once per row", and the fix
+is keyed on whatever the join key is.**
+
+**Two mechanisms, and they are not the same check.** Each tool's `check()` now
+also pairs every index row to the function its `.c` declares — exists,
+non-empty, and carrying the address (and, on EC and Windows, the name) the row
+gives it. Coverage on the committed tree, all four measured, not assumed:
+
+| | index rows | how a row finds its `.c` | address declared | name declared |
+|---|---|---|---|---|
+| EC | 2,710 | `out_file`, one `.c` per function | 2,710 | 2,710 |
+| Windows | 10,664 | `out_file` is empty on every row; `program + ".c"` | 10,664 | 10,664 |
+| BIOS | 955 | `out_file` names the module `.c` | 955 | 171 |
+
+The BIOS name figure is **not a defect and is not asserted**. `bios/decompiled/
+*.c` is the unedited `DecompAll` export, and `DecompAll` runs *before*
+`ApplyAnnotations` (`bios_extract.py`, `post_scripts`), so by construction it
+cannot carry annotation names. It is printed on every run so the number stays
+auditable, and the 955 rows **classified** rather than sampled — naming a few
+rows as though they were a special set is how a figure stops being checkable:
+
+| | rows |
+|---|---|
+| name carried verbatim | 171 |
+| unedited export still says `FUN_<addr>` | 754 |
+| unedited export says `entry`, index has a specific name | 29 |
+| unedited export says `thunk_FUN_00001130` | 1 |
+
+The last group is one row, `OverClockSmiHandler 00005788 forward_to_00001130`.
+The 29 are two of several, not a set of their own: `OemGlobalNvsDxe 00000370`
+(`entry_dispatch`) and `PeiOverClock FFCFBB49` (`entry_clamp_status`) are two of
+them. An earlier draft of this section named those two plus `Setup 0001DAC4
+_wcsupr` as "the three rows that break the correlation"; `Setup 0001DAC4` does
+**not** break it — the index says `_wcsupr` and the `.c` says `_wcsupr` — so
+that list was wrong, and it was wrong in the direction this file's own rule is
+about. The classification above replaces it.
+
+**That pairing cannot reach `GamingCenter3_Cross.c` at all**, which is why the
+digest is not the optional half of this issue. The file is the retained
+decompile of a program in `PROJECT_EXCLUDED`; it appears in no index, and the
+manifest row for it records `functions=0, mode=not-in-project`. So a check built
+on index rows says nothing about it however thorough it is. A committed digest
+does, which is why the artefact the issue singles out is now covered by
+`windows/ghidra/c-digests.csv` and the other two components have the same file:
+2,755 rows, `path,sha256,bytes`, one per committed `.c`, regenerable without
+Ghidra by `--write-digests`.
+
+Three calibration points, stated because the scope of this is easy to read as
+larger than it is:
+
+- **It catches accidental corruption, and it makes any accepted change to a
+  decompile a changed digest row naming the file that moved.** That is
+  *detectable and attributable*, and it is what forces the change through
+  review; it is not the same as a readable diff of the `.c` itself. On the EC
+  and BIOS those files stay ordinary text and do diff normally, so there it is
+  both. The Windows tree is `-diff` (see below), so there the digest row is the
+  whole of what a reviewer sees. It is **not** an anti-tamper control —
+  `--write-digests` will re-bless a mangled file — and it is **not** proof that a
+  decompile is a faithful reading of the firmware. §14e says the same about
+  `listing_digest` and it is the same sentence.
+- **It is not `verify_reassembly.py`'s mechanism.** That tool re-derives listing
+  bytes from the firmware, a trusted input. The decompiled C has no such input to
+  be re-derived from, so a committed digest is new here rather than a copy of an
+  existing precedent.
+- **The retained decompile keeps its printed carve-out in the listing check** —
+  it genuinely has no machine code beside it, and nothing in this repository can
+  change that — and is *digested* here rather than exempted. A carve-out that
+  prints nothing and checks nothing is how a check stops meaning anything.
+
+**One of the issue's premises was wrong, and saying so is part of the change.**
+#141 reported that `build_ec_decompile.py:check()` and `bios_extract.py` open no
+`.c` either. Both do, and have: the EC walks `ec/decompiled` for
+`DECOMPILER UNAVAILABLE`, the BIOS does the same over `bios/decompiled` and
+additionally opens each `LEGACY_MODULES` file to assert its `DecompAll` header
+and its function count. Only `decompile_native.py` genuinely reached the Windows
+C through `os.listdir`/`os.path.isfile` alone. That does not shrink the work, it
+re-aims it: the EC and BIOS additions are about pairing an index row to the
+function its `.c` declares, which nothing anywhere did, rather than about opening
+a `.c` for the first time.
+
+**Still not established: that any of it is right.** A digest that agrees means
+the file has not moved since it was committed, not that the decompile means what
+it says. The checks above are a floor against corruption, not a verification of
+the C, and the tier that would say more is the same re-encode §14e discusses,
+which is not per-commit.
+
 ## 15. The EC and BIOS indexes get the same structural guards (2026-09-23, issue #142)
 
 §14e ended with the always-on tier having *gained* structural checks — but for
@@ -4090,14 +4246,18 @@ the whole time between.)*
 
    **On the function count.** The three figures that disagreed here are 22
    (`ec/ghidra/README.md`), 32 (the paragraph above), and 39 by `grep`. The
-   measured value is now **52** — `grep -c '^def ' ec/tools/build_ec_decompile.py`
+   measured value was **52** — `grep -c '^def ' ec/tools/build_ec_decompile.py`
    — quoted in both files with the command beside it, so it is re-derivable
    rather than a transcription that drifts again. It was **41** when this
    paragraph was written and moved to 52 with §14i, which is `41 - 2 + 13`:
    `function_size()` and `check_cross_decoder_agreement()` gone, and the
    thirteen that `file_offset()` through `degenerate_sample_problems()`
-   replaced them with. The two older numbers are left above because they are
-   part of the record of the defect; neither was ever a measurement.*
+   replaced them with. In the tree carrying both §14i and §14j it is **56**,
+   which is `52 + 4`: §14j's digest and index-pairing functions
+   (`committed_c_files()`, `write_c_digests()`, `verify_c_digests()`,
+   `c_presence_problems()`), none of which shares a name with the thirteen. The
+   two older numbers are left above because they are part of the record of the
+   defect; neither was ever a measurement.*
 2. **The export was stale before this change.** 203 committed `.c` files still
    said `DAT_EXTMEM_0440` although `xdata-symbols.csv` has named that byte
    `XDATA_0440` since `8a90bc0` (#160) — that commit regenerated

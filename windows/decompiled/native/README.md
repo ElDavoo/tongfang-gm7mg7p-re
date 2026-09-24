@@ -35,7 +35,22 @@ python3 windows/tools/decompile_native.py                    # rebuild project +
 python3 windows/tools/decompile_native.py --mode export-only # re-export from the project
 python3 windows/tools/decompile_native.py --check            # no Ghidra, no network
 python3 windows/tools/decompile_native.py --self-test
+python3 windows/tools/decompile_native.py --write-digests    # after a re-export
 ```
+
+`--write-digests` regenerates `../../ghidra/c-digests.csv` from the `.c` files
+on disk. It needs no Ghidra and no project, and it **refuses** to write a digest
+for a zero-length `.c` — a truncated export is the fault the file exists to
+catch, so it is not something to record a hash of — or for one that is a
+symlink, since hashing follows the link and would record the target's bytes.
+
+Run it after any re-export that legitimately changes a `.c`. **What a reviewer
+then sees is the digest row, not a diff of the `.c`**: `GamingCenter3_Cross.c`
+is 56 MB and carries `-diff` in `.gitattributes`, so git renders a change to it
+as `Binary files differ` with no content. The digest row is what makes the
+change attributable to a named file, and that is the property this buys; it is
+not the same as a readable diff, and a change here should be reviewed by opening
+the file, not by reading a diff of it.
 
 Needs Ghidra 12.1.3 and a JDK 21 (`~/.local/opt/ghidra`, `~/.local/opt/jdk`,
 or `GHIDRA_INSTALL_DIR` / `analyzeHeadless` on `PATH`). The two committed PEs
@@ -59,16 +74,61 @@ one the index does not cover, is caught rather than read as a complete export.
 indexes' row counts for the same export label, checks both indexes for
 duplicate `(program, addr)` keys and rows that did not come out with the full
 header, and enforces the `mode:` vocabulary. Those are the cheap structural
-checks: committed text only, no `.c` and no `.asm` opened. The whole `--check`
-is 1.72 s, of which about 0.3 s is parsing all 502,652 disassembly lines across
-the five listings once each — see `docs/findings.md` §14 for why it used to
-read one of those files 10,141 times, and what it was parsing while it did.
+checks, over committed text only.
+
+It then opens the `.c` files, which it previously did not do at all (the
+per-function checks are §14j in `docs/findings.md`, and they correct a sentence
+in §14 that said otherwise). Two of them:
+
+- **Every index row is paired to the function its `.c` declares** — the file
+  exists, is non-empty, and carries the `// ==== <name> @ <addr>` separator for
+  the address and name the row gives it. Each distinct `.c` is read once, not
+  once per row: `out_file` is empty on all 10,664 Windows rows, so a per-row read
+  would re-read `ACPIDriverDll.c` 10,141 times. The run prints both counts
+  (`10,664 index row(s) … across 5 distinct file(s)`) so the number in the output
+  says what was read.
+- **Every committed `.c` is checked against `../../ghidra/c-digests.csv`**, a
+  committed SHA-256 and byte count per file. This is the half the pairing
+  structurally cannot do: `GamingCenter3_Cross.c` is in no index row, so a check
+  built on index rows says nothing about it however thorough it is. Regenerate
+  with `--write-digests` (below) after a re-export.
+
+The digest is a **corruption check, not a proof of correctness**: it catches a
+truncated, half-overwritten or hand-edited decompile, and it forces any accepted
+change to be a visible committed diff. It is not an anti-tamper control —
+`--write-digests` will re-bless a mangled file — and a digest that agrees does
+not mean the decompile is a faithful reading of the binary. That would need
+machine code to check it against, which is the next paragraph.
+
+The whole `--check` is **1.90 s** here (1.89 / 1.91 / 1.90 over three runs)
+against the 1.72 s §14e recorded, so the two new C checks cost about 0.18 s
+between them — parsing all 502,652 disassembly lines across the five listings
+once each is about 0.3 s of it, and hashing all 68 MB of Windows C is **0.05 s**.
+See `docs/findings.md` §14 for why it used to read one of those files 10,141
+times, and what it was parsing while it did.
+
+The first version of the presence check cost **5.4 s** here, and the reason is
+worth recording because it is §14a's shape at a second address: it built the
+markers as a flat set of `(name, addr)` pairs and then asked
+`any(a == addr for _n, a in markers)` per row — 10,141 rows against 10,141
+markers. The markers are keyed on address now, so each row is a dict lookup.
+
+`--self-test` pins that **structurally**, by reading the per-file container back
+out of the module and asserting it is a dict keyed on address — not by wall
+clock, which was tried first and is not a guard in either direction. The
+quadratic form takes 0.18 s on this file's 2,000-row fixture, so it sits far
+inside any bound loose enough not to be flaky on a loaded runner, while the real
+regression was 5.4 s at 26× the work; a timing assertion here would have passed
+the regression it was written to catch. Asserting the container catches it on any
+machine, in milliseconds.
 
 One `.c` is deliberately without a listing beside it:
 `GamingCenter3_Cross.c`, the 56 MB retained decompile of the program in
 `PROJECT_EXCLUDED`. It is named on every `--check` run rather than folded into
 a pass — the `.asm` cannot be re-exported, because the Ghidra database that
-would produce it is 337 MB and does not fit in git.
+would produce it is 337 MB and does not fit in git. It **is** digested, though:
+it keeps the printed carve-out for the listing gap it genuinely cannot close,
+and is checked rather than exempted for the thing that can be.
 
 ## The PDB, and its cost
 

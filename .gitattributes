@@ -12,3 +12,33 @@
 *.gpr            binary -diff -merge
 *.gbf            binary -diff -merge
 **/*.rep/**      binary -diff -merge
+
+# The decompiled C is machine output, and it is digested.
+#
+# -text, on all three trees: every component's committed .c is LF-only today
+# (measured: zero CR bytes across all 2,755 of them), and c-digests.csv records
+# a SHA-256 of those exact bytes. Git's default core.autocrlf=true on a Windows
+# checkout would convert them to CRLF on the way out, and every digest in the
+# repository would then fail for a contributor who did nothing wrong. -text
+# makes the digest bytes checkout-stable, which is the whole reason a committed
+# digest is affordable here at all.
+#
+# -diff, on the Windows tree ONLY. The argument is the 56 MB
+# GamingCenter3_Cross.c: a one-line change to it would otherwise render as a
+# whole-file diff in review, the same reason the Ghidra databases above carry
+# -diff. That argument does not reach the other two components -- the EC's 2,710
+# .c files are 3.3 MB in total, about 1.2 KB each, and the BIOS's 39 are 1 MB --
+# and -diff on a 1.2 KB file is not a large diff, it is NO diff: git prints
+# "Binary files differ" and a reviewer sees nothing at all. Applying it to all
+# three would have made a decompile change undetectable *in review* rather than
+# merely unreviewable, which is the opposite of what the digest is for. So the
+# EC and BIOS .c files stay ordinary text and the digest row is what a reviewer
+# reads there; the Windows ones are -diff because at 56 MB that is the only
+# thing git can render at all.
+#
+# Note this is `-text` and NOT `binary` anywhere: the files are text, and
+# marking them binary would disable the CRLF normalisation git applies to text
+# on the way IN, which is a second way for the same digests to stop matching.
+ec/decompiled/**/*.c       -text
+bios/decompiled/**/*.c     -text
+windows/decompiled/**/*.c  -text -diff

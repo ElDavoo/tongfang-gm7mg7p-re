@@ -54,6 +54,7 @@ Usage:
     python3 bios/tools/bios_extract.py --work /tmp/bios --mode rebuild-project
     python3 bios/tools/bios_extract.py --work /tmp/bios --check
     python3 bios/tools/bios_extract.py --work /tmp/bios --self-test
+    python3 bios/tools/bios_extract.py --work /tmp/bios --write-digests
 
 The IFR and the decompiles in bios/ were produced this way with UEFIExtract NE
 A75, ifrextractor 1.6.1 and Ghidra 12.1.3.
@@ -67,6 +68,7 @@ import shutil
 import struct
 import subprocess
 import sys
+import tempfile
 import time
 import zipfile
 
@@ -153,6 +155,14 @@ LISTING_INDEX = os.path.join(REPO, "bios", "ghidra", "listing-index.csv")
 # up into.
 LISTINGS = os.path.join(REPO, "bios", "ghidra", "listings")
 MANIFEST = os.path.join(REPO, "bios", "ghidra", "manifest.csv")
+# A committed SHA-256 of every .c this component's export produces, so a
+# truncated, half-overwritten or hand-edited decompile is a red --check rather
+# than a file that passes on its name. A SEPARATE file from the manifest on
+# purpose: write_manifest() is only reached from a Ghidra run, and the BIOS
+# manifest is written during --mode rebuild-project, which two branches cannot
+# both do (.gitattributes -merge). A digest column there would make adding one
+# require the merge-hostile operation this check exists to avoid needing.
+C_DIGESTS = os.path.join(REPO, "bios", "ghidra", "c-digests.csv")
 # The five TE images, committed so `--check` and `--self-test` need neither
 # Ghidra nor a UEFIExtract run. bios/ghidra/README.md says why.
 TE_MODULES_DIR = os.path.join(REPO, "bios", "ghidra", "modules")
@@ -170,6 +180,11 @@ MANIFEST_COLUMNS = ["program", "kind", "source", "sha256", "ghidra_version",
                     "mode"]
 LOAD_MAP_COLUMNS = ["program", "kind", "image_bytes", "image_sha256",
                     "load_addr", "entry"]
+# c-digests.csv, beside the manifest rather than inside it. `path` is relative
+# to the repo root so the file reads the same way a citation does, and `bytes`
+# is carried alongside the hash so a truncation is named as one rather than
+# having to be inferred from a hash that no longer matches.
+C_DIGEST_COLUMNS = ["path", "sha256", "bytes"]
 # The annotation layer's own header, transcribed from the table in
 # bios/annotations/README.md. Asserted rather than assumed: this is the file a
 # person or an agent edits to improve a decompile, and the tool reads its rows
@@ -195,6 +210,161 @@ def sha256(path):
         for chunk in iter(lambda: f.read(1 << 20), b""):
             h.update(chunk)
     return h.hexdigest()
+
+
+def committed_c_files(decompiled_dir):
+    """Every committed .c under `decompiled_dir`, as (abs, repo-relative) sorted
+    by the relative path.
+
+    Sorted because the digest file is a committed artefact and two runs over the
+    same tree have to produce the same bytes; the order a directory walk happens
+    to return is not that. This walk has no exclusion, and that is the point for
+    the BIOS: `OemOcDxe.annotated.c` is the one hand-edited decompile in the
+    repository and it gets a digest like every other file, so editing the prose
+    is a visible committed diff rather than an edit the gate cannot see."""
+    out = []
+    for dp, _dns, fns in os.walk(decompiled_dir):
+        for fn in fns:
+            if not fn.endswith(".c"):
+                continue
+            abs_path = os.path.join(dp, fn)
+            # posixpath, not os.path: the `path` column is a committed CSV read
+            # by every platform's git, so a Windows contributor's --write-digests
+            # must not rewrite 2,710 rows as "ec\decompiled\..." and leave the
+            # Linux gate reporting every one of them as a missing file.
+            rel = os.path.relpath(abs_path, REPO).replace(os.sep, "/")
+            out.append((abs_path, rel))
+    return sorted(out, key=lambda p: p[1])
+
+
+def write_c_digests(path=C_DIGESTS, decompiled_dir=DECOMPILED):
+    """(Re)write the committed .c digest file from what is on disk now.
+
+    Needs no Ghidra and no network, which is the whole point: regenerating it is
+    a sub-second command an agent or a contributor runs after a re-export, and
+    it never touches a Ghidra project -- so it cannot collide with another
+    branch's --mode rebuild-project.
+
+    Refuses to bless a zero-length .c, or one that is a symlink. A digest is a
+    claim that a file is the export, and a truncated write's zero-length file is
+    exactly the fault the file exists to catch; writing its hash would turn the
+    check into a rubber stamp on the corruption. A symlink is the one
+    substitution a hash cannot see at all, because hashing follows the link and
+    records the TARGET's bytes -- so the repository could hold no decompile at
+    that address and pass. Both are refused here rather than asserted later,
+    because this is the only place a wrong file can be recorded.
+    """
+    rows, empty, links = [], [], []
+    for abs_path, rel in committed_c_files(decompiled_dir):
+        if os.path.islink(abs_path):
+            links.append(rel)
+            continue
+        size = os.path.getsize(abs_path)
+        if size == 0:
+            empty.append(rel)
+        rows.append({"path": rel, "sha256": sha256(abs_path), "bytes": str(size)})
+    if links:
+        raise SystemExit("error: refusing to write %s: %d .c under %s is a "
+                         "symlink, e.g. %s. A digest follows the link and would "
+                         "bless the TARGET's bytes, so the repository could hold "
+                         "no decompile at that address and still pass -- the one "
+                         "substitution a hash cannot see. Commit the file itself."
+                         % (os.path.relpath(path, REPO), len(links),
+                            os.path.relpath(decompiled_dir, REPO), links[0]))
+    if empty:
+        raise SystemExit("error: refusing to write %s: %d zero-length .c, e.g. %s. "
+                         "A truncated export is what the digest exists to catch, so "
+                         "it is not something to record a hash of -- re-run the "
+                         "export first."
+                         % (os.path.relpath(path, REPO), len(empty), empty[0]))
+    with open(path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=C_DIGEST_COLUMNS, lineterminator="\n")
+        w.writeheader()
+        w.writerows(rows)
+    return len(rows)
+
+
+def verify_c_digests(path=C_DIGESTS, decompiled_dir=DECOMPILED):
+    """Every committed .c against the digest row that claims it.
+
+    Four things are asserted, and the fourth is what makes the first three mean
+    something: the row count has to equal the file count found, so a partial or
+    filtered digest cannot pass by never being compared. A digest file covering
+    two files when three are on disk is a check that has quietly stopped
+    checking, which is the failure mode this repository keeps meeting the other
+    way round.
+
+    The calibration matters as much as the assertion. This catches accidental
+    corruption, and it forces any accepted change to a decompile -- including the
+    hand-edited `*.annotated.c` -- to be a visible committed diff. It is NOT an
+    anti-tamper control and NOT proof that a decompile is a faithful reading of
+    the firmware: --write-digests will happily re-bless a mangled file, and no
+    hash says the C means what it claims. It is also not what
+    verify_reassembly.py does -- that tool re-derives listing bytes from the
+    ROM, a trusted input. The decompiled C has no such input to be re-derived
+    from, which is why a committed digest is genuinely new here.
+    """
+    if not os.path.isfile(path):
+        return ["no %s: every committed .c needs a digest, or a truncated or "
+                "hand-edited export is a file that passes on its name alone. Run "
+                "with --write-digests." % os.path.relpath(path, REPO)]
+    with open(path, newline="") as f:
+        reader = csv.reader(f)
+        try:
+            header = next(reader)
+        except StopIteration:
+            header = None
+        if header != C_DIGEST_COLUMNS:
+            return ["%s: header is %r, not this tool's %d-column %s"
+                    % (os.path.relpath(path, REPO), header, len(C_DIGEST_COLUMNS),
+                       ",".join(C_DIGEST_COLUMNS))]
+        rows = list(csv.DictReader(f, fieldnames=C_DIGEST_COLUMNS))
+
+    on_disk = dict((rel, abs_path) for abs_path, rel in committed_c_files(decompiled_dir))
+    if not on_disk:
+        # The floor under every comparison below. Without it, a header-only
+        # digest against a tree that is empty or absent produces zero problems
+        # and zero comparisons -- a check that has read nothing and reports
+        # nothing wrong, which is the shape §14b describes and the reason this
+        # line exists rather than a comment saying it cannot happen.
+        return ["no committed .c under %s: there is nothing for this digest to "
+                "cover, so every assertion below would pass without comparing "
+                "anything" % os.path.relpath(decompiled_dir, REPO)]
+    seen, bad = set(), []
+    for r in rows:
+        rel = (r.get("path") or "").strip()
+        if rel in seen:
+            bad.append("%s: two digest rows for one file" % rel)
+        seen.add(rel)
+        abs_path = on_disk.get(rel)
+        if abs_path is None:
+            bad.append("%s: a digest row names a file that is not there" % rel)
+            continue
+        try:
+            want_bytes = int(r["bytes"])
+        except (TypeError, ValueError):
+            bad.append("%s: bytes is %r, not a number" % (rel, r.get("bytes")))
+            continue
+        got_bytes = os.path.getsize(abs_path)
+        if got_bytes != want_bytes:
+            bad.append("%s: %d byte(s) committed, %d on disk. If this came from a "
+                       "re-export, re-run --write-digests; if it did not, the file "
+                       "was truncated, overwritten or hand-edited."
+                       % (rel, want_bytes, got_bytes))
+            continue
+        got = sha256(abs_path)
+        if got != r["sha256"]:
+            bad.append("%s: committed digest %s, on disk %s. If this came from a "
+                       "re-export, re-run --write-digests; if it did not, the file "
+                       "was truncated, overwritten or hand-edited."
+                       % (rel, r["sha256"], got))
+    for rel in sorted(set(on_disk) - seen):
+        bad.append("%s: a committed .c with no digest row" % rel)
+    if len(rows) != len(on_disk):
+        bad.append("%d digest row(s) for %d committed .c: a digest covering some "
+                   "of the tree is a check that is not checking the rest"
+                   % (len(rows), len(on_disk)))
+    return bad
 
 
 def rom_digest():
@@ -1095,9 +1265,30 @@ def main(argv=None):
                     help="verify the committed outputs without Ghidra")
     ap.add_argument("--self-test", action="store_true",
                     help="known-answer assertions against the committed inputs")
+    ap.add_argument("--write-digests", action="store_true",
+                    help="regenerate bios/ghidra/c-digests.csv from the committed "
+                         ".c files; no Ghidra, no network, sub-second")
     args = ap.parse_args(argv)
     work = os.path.abspath(args.work)
     os.makedirs(work, exist_ok=True)
+    # --write-digests first of all, because it is the one mode that writes a
+    # committed file and needs nothing else: no ROM read, no UEFIExtract, no
+    # Ghidra, and no project touched.
+    if args.write_digests:
+        if args.check or args.self_test:
+            # Refused rather than resolved in either direction. --write-digests
+            # re-blesses the tree from what is on disk and returns 0, so a CI
+            # invocation that ever grew the flag would overwrite the digests it
+            # was meant to compare against and exit green -- which is the one
+            # thing a digest must never be able to do.
+            raise SystemExit("error: --write-digests regenerates %s from the "
+                             "current tree; it cannot be combined with --check or "
+                             "--self-test, which compare against it. Run them "
+                             "separately."
+                             % os.path.relpath(C_DIGESTS, REPO))
+        n = write_c_digests()
+        print("wrote %s: %d .c file(s)" % (os.path.relpath(C_DIGESTS, REPO), n))
+        return 0
     if args.check:
         return check()
     if args.self_test:
@@ -1191,6 +1382,91 @@ def index_structure_problems(index_rows, listing_rows):
     return (structure_problems("index.csv", index_rows, index_key, "(program, addr)")
             + structure_problems("listing-index.csv", listing_rows, index_key,
                                  "(program, addr)"))
+
+
+# The separator the shared exporter writes between two functions in a whole-module
+# DecompAll export, and the only per-function marker a BIOS .c carries:
+# "// ==== <name> @ <addr>". `[ \t]*$` rather than `\s*$` because \s eats the
+# newline, and a pattern that has to backtrack to find its own line end is a
+# pattern whose matching is not worth reading.
+BIOS_C_SEPARATOR = re.compile(r"^// ==== (\S+) @ ([0-9A-Fa-f]+)[ \t]*$", re.M)
+
+
+def c_presence_problems(index_rows, decompiled_dir):
+    """Every index row's `.c` exists, is non-empty, and declares the address the
+    index gives it.
+
+    The presence half of what the EC and Windows copies of this assert, and it is
+    the whole of what can be asserted here. The ADDRESS is asserted; the NAME is
+    measured and returned but not asserted, because bios/decompiled/*.c is the
+    UNEDITED DecompAll export, and DecompAll runs before ApplyAnnotations
+    (post_scripts, bios_extract.py:544) so by construction it cannot carry
+    annotation names. Asserting names would fail this gate on a correct build.
+    Measured on the committed tree, all 955 rows classified rather than sampled:
+    955 of 955 addresses are declared, and the 955 names fall into four groups --
+    171 carried verbatim, 754 where the unedited export still says
+    `FUN_<addr>`, 29 where it says `entry` and the index has a specific name
+    (`OemGlobalNvsDxe 00000370 entry_dispatch` and `PeiOverClock FFCFBB49
+    entry_clamp_status` are two of those 29, not a set of their own), and one
+    where the export says `thunk_FUN_00001130` and the index says
+    `forward_to_00001130` (`OverClockSmiHandler 00005788`). None of the 784 is a
+    defect in the export; they are what an unannotated export looks like, and the
+    figure is printed on every run rather than buried so it stays auditable.
+
+    Each distinct `out_file` is read ONCE and the set of addresses it declares
+    remembered, then rows are compared against that. Not an optimisation: a
+    per-row containment test against DxeOverClock.c re-reads one file 600-odd
+    times, which is §14a's defect at the next address. The count of files read is
+    returned so the caller can print it and `--self-test` can pin it.
+
+    Pure: no globals, no I/O beyond the fixture directory it is handed.
+
+    Returns (problems, n_files_read, n_rows, n_name_matches)."""
+    out, read, declared = [], set(), {}
+    n_rows = n_name = 0
+    for row in index_rows:
+        rel = (row.get("out_file") or "").strip()
+        if not rel or rel.startswith("("):
+            continue
+        n_rows += 1
+        if rel not in declared:
+            path = os.path.join(decompiled_dir, rel)
+            read.add(rel)
+            try:
+                with open(path, errors="replace") as f:
+                    text = f.read()
+            except OSError:
+                declared[rel] = None
+            else:
+                # findall yields (name, addr) pairs, in the separator's own
+                # order. Stored as two sets because they are compared against
+                # two different columns of the row, and both are keyed lookups
+                # rather than scans -- the 293-function module is the reason
+                # (setup_module's rows against a linear `in` would be quadratic
+                # in the size of the module).
+                found = BIOS_C_SEPARATOR.findall(text)
+                # An explicit `is None` test, not `or None`: a 2-tuple is always
+                # truthy, so `x or None` never fired and a .c that exists,
+                # carries no separator at all and is not empty was reported as
+                # "declares no function at <addr>" -- a wrong-function export,
+                # which is a different and wrong accusation than "no separator".
+                declared[rel] = None if not found else (
+                    {a.upper() for _n, a in found}, {n for n, _a in found})
+        got = declared[rel]
+        where = "index row %s %s" % (row.get("program", "?"), row.get("addr", "?"))
+        if got is None:
+            out.append("%s: %s is missing, empty, or carries no `// ==== <name> @ "
+                       "<addr>` separator" % (where, rel))
+            continue
+        addrs, names = got
+        addr = (row.get("addr") or "").strip().upper()
+        if addr not in addrs:
+            out.append("%s: %s declares no function at %s -- a wrong-function "
+                       "export, or a stale index" % (where, rel, addr))
+            continue
+        if (row.get("name") or "").strip() in names:
+            n_name += 1
+    return out, len(read), n_rows, n_name
 
 
 def coverage_mismatches(manifest_rows, count_for_program):
@@ -1488,6 +1764,186 @@ def self_test():
     check("TE annotation addresses are above Integer.MAX_VALUE, so the shared "
           "scripts must parse longs", True,
           "%d TE row(s); the scripts read Long.parseLong" % len(te_rows))
+
+    # The decompile/index pairing, on a fixture. Presence was checked and the
+    # content was not: `os.path.isfile` passes on a zero-length file, and a file
+    # holding a different function entirely passes on having the right name on
+    # disk. The known-good case is first, for the reason the structural faults
+    # above are: a guard exercised only on known-bad input cannot tell "clean"
+    # from "never ran".
+    _d = tempfile.mkdtemp()
+    try:
+        _rows = [{"program": "DxeOverClock", "addr": "00000260",
+                  "name": "FUN_00000260", "out_file": "DxeOverClock.c"}]
+        _c = os.path.join(_d, "DxeOverClock.c")
+        with open(_c, "w") as f:
+            f.write("// DxeOverClock.efi: Ghidra x86:LE:64:default decompile, "
+                    "unedited\n// ==== FUN_00000260 @ 00000260\n\n"
+                    "undefined1 * FUN_00000260(undefined1 *p) { return p; }\n")
+        _p, _r, _n, _nm = c_presence_problems(_rows, _d)
+        check("a .c that declares the address its index row gives it passes",
+              not _p and _r == 1, str(_p))
+        # A truncated write leaves a zero-length file, and isfile() passes on one.
+        with open(_c, "w"):
+            pass
+        _p, _r, _n, _nm = c_presence_problems(_rows, _d)
+        check("a .c truncated to zero length is caught, and the file is named",
+              len(_p) == 1 and "DxeOverClock.c" in _p[0], str(_p))
+        # The wrong function, in a file with the right name: the half-overwritten
+        # export. An existence check cannot see this one.
+        with open(_c, "w") as f:
+            f.write("// DxeOverClock.efi: Ghidra decompile, unedited\n"
+                    "// ==== FUN_00000260 @ 00000260\n\n"
+                    "undefined1 * FUN_00000260(undefined1 *p) { return p; }\n")
+        _p, _r, _n, _nm = c_presence_problems(_rows, _d)
+        check("a .c declaring the function passes again once it is restored",
+              not _p, str(_p))
+        with open(_c, "w") as f:
+            f.write("// DxeOverClock.efi: Ghidra decompile, unedited\n"
+                    "// ==== poll_d6c2 @ 00000ea2\n\nvoid poll_d6c2(void) {}\n")
+        _p, _r, _n, _nm = c_presence_problems(_rows, _d)
+        check("a .c carrying a different function's address is caught",
+              len(_p) == 1 and "DxeOverClock.c" in _p[0], str(_p))
+        os.remove(_c)
+        _p, _r, _n, _nm = c_presence_problems(_rows, _d)
+        check("a .c removed is caught", len(_p) == 1 and "DxeOverClock.c" in _p[0],
+              str(_p))
+        # The name is measured, not asserted: an unedited DecompAll export
+        # cannot carry annotation names, so a row naming one is a clean pass.
+        with open(_c, "w") as f:
+            f.write("// DxeOverClock.efi: Ghidra decompile, unedited\n"
+                    "// ==== FUN_00000260 @ 00000260\n"
+                    "// ==== other_fn @ 000002c0\n\n"
+                    "undefined1 * FUN_00000260(undefined1 *p) { return p; }\n")
+        _p, _r, _n, _nm = c_presence_problems([dict(_rows[0], name="memcpy_bytes")], _d)
+        check("a row whose name the unedited export does not carry is measured, "
+              "not failed -- DecompAll runs before ApplyAnnotations",
+              not _p and _nm == 0 and _n == 1, "%s, %d name(s)" % (_p, _nm))
+        # One file, many rows, one read -- the shape §14a records, pinned here
+        # too so the BIOS's copy of it cannot regress the same way.
+        _p, _r, _n, _nm = c_presence_problems(_rows * 1000, _d)
+        check("1,000 index rows naming one .c read it once, not 1,000 times",
+              not _p and _r == 1, "%d read(s), %s" % (_r, _p[:1]))
+
+        # The committed tree, so the coverage figures --check reports are
+        # measured here and not only in its output.
+        _p, _r, _n, _nm = c_presence_problems(_ir, DECOMPILED)
+        check("BIOS: every one of the %d index rows' .c declares the address the "
+              "row gives it" % len(_ir), not _p, "; ".join(_p[:3]))
+        # 38 reads for 955 rows, not 955. The 39th committed .c is
+        # OemOcDxe.annotated.c, the hand-edited restatement, which the index
+        # never names -- so the count is the index's own out_file set and not
+        # the file count, and this asserts that rather than leaving it implied.
+        check("BIOS: that pairing cost %d file read(s) for %d row(s) -- the "
+              "index's own out_file set, which excludes the hand-edited "
+              "OemOcDxe.annotated.c" % (_r, _n),
+              _r == 38 and _n == 955, "%d read(s) for %d row(s)" % (_r, _n))
+        # The name figure, pinned so it moves only when the export's shape does.
+        check("BIOS: %d of %d row(s) also carry the name the index gives them, "
+              "which is the unedited export's ceiling and not a fault" % (_nm, _n),
+              _nm == 171 and _n == 955, "%d of %d" % (_nm, _n))
+    finally:
+        shutil.rmtree(_d, ignore_errors=True)
+
+    # The committed .c digests, including the one hand-edited decompile.
+    if os.path.isfile(C_DIGESTS):
+        _p = verify_c_digests()
+        check("BIOS: every committed .c matches its digest row", not _p,
+              "; ".join(_p[:3]))
+        check("BIOS: c-digests.csv carries this tool's own %d-column header"
+              % len(C_DIGEST_COLUMNS),
+              next(csv.reader(open(C_DIGESTS, newline="")), None) == C_DIGEST_COLUMNS)
+        with open(C_DIGESTS, newline="") as _f:
+            _drows = list(csv.DictReader(_f))
+        _files = committed_c_files(DECOMPILED)
+        check("BIOS: one digest row per committed .c", len(_drows) == len(_files),
+              "%d row(s), %d file(s)" % (len(_drows), len(_files)))
+        check("BIOS: the hand-edited restatement is digested like every other .c",
+              any(r["path"].endswith("OemOcDxe.annotated.c") for r in _drows))
+    else:
+        check("BIOS: c-digests.csv is committed", False, "not present")
+    _d = tempfile.mkdtemp()
+    try:
+        _c = os.path.join(_d, "DxeOverClock.c")
+        with open(_c, "w") as f:
+            f.write("// ==== FUN_00000260 @ 00000260\n")
+        _dg = os.path.join(_d, "c-digests.csv")
+        n = write_c_digests(_dg, _d)
+        check("BIOS: --write-digests records one row for the one .c", n == 1, str(n))
+        check("BIOS: a freshly written digest verifies", not verify_c_digests(_dg, _d))
+        # The row key is what write_c_digests wrote, not a hand-typed path: the
+        # `path` column is repo-relative, so a fixture under /tmp is keyed by a
+        # ../.. chain, and a hand-written "DxeOverClock.c" would test the wrong
+        # thing and pass for the wrong reason.
+        _key = committed_c_files(_d)[0][1]
+        # A digest that disagrees with the file it names.
+        with open(_c, "a") as f:
+            f.write("// a hand-mangled body\n")
+        _p = verify_c_digests(_dg, _d)
+        check("BIOS: a .c that changed under its digest is caught, and the file is "
+              "named", len(_p) == 1 and _key in _p[0], str(_p))
+        # A row for a file that is not there.
+        with open(_dg, "w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=C_DIGEST_COLUMNS, lineterminator="\n")
+            w.writeheader()
+            w.writerow({"path": "Nope.c", "sha256": "0" * 64, "bytes": "1"})
+        _p = verify_c_digests(_dg, _d)
+        check("BIOS: a digest row for a file that is not there is caught, on both "
+              "halves -- the absent file and the undigested one",
+              len(_p) == 2 and any("Nope.c" in x for x in _p)
+              and any("no digest row" in x for x in _p), str(_p))
+        # A digest covering a strict subset of the tree: the vacuity guard.
+        with open(_dg, "w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=C_DIGEST_COLUMNS, lineterminator="\n")
+            w.writeheader()
+            w.writerow({"path": _key, "sha256": sha256(_c),
+                        "bytes": str(os.path.getsize(_c))})
+        # The digested file STAYS on disk and a second is added. Removing the
+        # digested one instead -- which is what this first read like -- leaves
+        # 1 row and 1 file, so the "N row(s) for M committed .c" guard never
+        # fires and deleting it from the tool leaves every assertion here
+        # passing. The guard is the one that stops a partial digest passing by
+        # never being compared, so the fixture has to be the shape that trips it.
+        with open(os.path.join(_d, "EcPs2Kbd.c"), "w") as f:
+            f.write("// ==== FUN_00000280 @ 00000280\n")
+        _p = verify_c_digests(_dg, _d)
+        check("BIOS: a digest covering some of the tree is caught by BOTH halves "
+              "-- the undigested file and the row/file count",
+              len(_p) == 2 and any("no digest row" in x for x in _p)
+              and any("digest row(s) for" in x for x in _p), str(_p))
+        # And the floor: a digest with nothing on disk to cover is a check that
+        # has compared nothing, not a check that has passed.
+        _p = verify_c_digests(_dg, os.path.join(_d, "gone"))
+        check("BIOS: a digest against a tree with no .c at all is caught, rather "
+              "than passing with nothing compared", len(_p) == 1
+              and "nothing for this digest to cover" in _p[0], str(_p))
+        # And the bootstrap's own refusal: --write-digests must not enshrine
+        # the zero-length file it exists to catch.
+        open(os.path.join(_d, "DxeOverClock.c"), "w").close()
+        try:
+            write_c_digests(_dg, _d)
+            _refused = False
+        except SystemExit as e:
+            _refused = "zero-length" in str(e)
+        check("BIOS: --write-digests refuses to bless a zero-length .c", _refused)
+        # A symlink is the substitution a hash cannot see at all: hashing
+        # follows the link, so the digest would record the TARGET's bytes and
+        # the repository could hold no decompile at that address and pass.
+        open(os.path.join(_d, "DxeOverClock.c"), "w").write(
+            "// ==== FUN_00000260 @ 00000260\n")
+        _outside = os.path.join(_d, "outside.c")
+        open(_outside, "w").write("// ==== FUN_elsewhere @ 00009999\n")
+        os.remove(os.path.join(_d, "DxeOverClock.c"))
+        os.symlink(_outside, os.path.join(_d, "DxeOverClock.c"))
+        try:
+            write_c_digests(_dg, _d)
+            _refused = False
+        except SystemExit as e:
+            _refused = "symlink" in str(e)
+        check("BIOS: --write-digests refuses to bless a .c that is a symlink, "
+              "which is the one substitution a hash cannot see", _refused)
+    finally:
+        shutil.rmtree(_d, ignore_errors=True)
     print("  all assertions passed" if ok else "  FAILURES ABOVE")
     return 0 if ok else 1
 
@@ -1645,6 +2101,37 @@ def check():
             fail("%s: %s" % (_name, "; ".join(_mm[:3])))
     print("  coverage: %d index row(s), %d listing-index row(s), %d manifest "
           "module(s)" % (len(_rows), len(_lrows), len(_read["manifest.csv"])))
+    # Existence is not content. The loops above proved each .c is a file and that
+    # the twelve legacy ones carry their DecompAll header and function count;
+    # this pairs every index row to the function its .c actually declares, which
+    # is the property a truncated or half-overwritten export breaks while leaving
+    # every file present. The distinct-file count is printed because a per-row
+    # read would look identical in the output and cost the same file many times.
+    _pres, _c_read, _c_rows, _c_named = c_presence_problems(_rows, DECOMPILED)
+    for problem in _pres[:5]:
+        fail(problem)
+    if len(_pres) > 5:
+        fail("... and %d more decompile(s) that do not declare the function their "
+             "index row names" % (len(_pres) - 5))
+    print("  presence: %d index row(s) paired to the address their .c declares, "
+          "across %d distinct file(s)" % (_c_rows, _c_read))
+    # The name half is a measurement, not a rule, and saying so is the point:
+    # bios/decompiled/*.c is the UNEDITED DecompAll export, which runs before
+    # ApplyAnnotations and so cannot carry annotation names. It is printed on
+    # every run so the figure stays auditable rather than hardening into a fact.
+    print("  names: %d of %d row(s) also carry the name the index gives them; the "
+          "unedited export cannot, so this is a measurement and not a fault"
+          % (_c_named, _c_rows))
+    _cd = verify_c_digests()
+    for problem in _cd[:5]:
+        fail(problem)
+    if len(_cd) > 5:
+        # The count, not a silent cut. Someone who re-exported and forgot
+        # --write-digests gets 2,710 problems here, and "5 shown" with no total
+        # is the shape §14 warns about: a reader cannot tell a filtered
+        # summary from a nearly-clean run.
+        fail("... and %d more committed .c whose digest does not match (re-run "
+             "--write-digests if this came from a re-export)" % (len(_cd) - 5))
     for name in LEGACY_MODULES:
         c = os.path.join(DECOMPILED, name + ".c")
         if not os.path.isfile(c):
