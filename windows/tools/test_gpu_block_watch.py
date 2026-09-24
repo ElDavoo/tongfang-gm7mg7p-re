@@ -8,16 +8,21 @@ module, installed by assignment, so this suite is not a party to the
 the sweep scriptable byte by byte.
 
 Unlike most of the `windows/tools` suites this one reads committed inputs,
-`evidence/acpi/dsdt.dsl` and `ec/annotations/registers.yaml`, resolved relative
-to this file. It therefore has to run from inside the repository, which
-`tools/run-tests.sh` guarantees (it cds to the repo root), and a suite copied
-to a scratch directory outside the tree will fail to find them.
+`evidence/acpi/dsdt.dsl`, `ec/annotations/registers.yaml` and this
+procedure's own table in `docs/hardware-tests/gpu-tgp-07c4-07d7-door.md`,
+resolved relative to this file. It therefore has to run from inside the
+repository, which `tools/run-tests.sh` guarantees (it cds to the repo root),
+and a suite copied to a scratch directory outside the tree will fail to find
+them.
 
 The first two classes are the ones that matter: the tool's watch table is the
 citation list docs/hardware-tests/gpu-tgp-07c4-07d7-door.md §7 is graded
 against, so it is checked here against the two committed inputs it transcribes
 -- the DSDT ECMG field list and ec/annotations/registers.yaml -- rather than
-being a hand-typed table nothing holds still.
+being a hand-typed table nothing holds still. That procedure prints a second
+copy of the same table as prose, which is what drifted in #266 while the
+tool's copy was held, so the third class checks the doc's copy against the
+tool's rather than leaving the two to agree by hand.
 """
 import contextlib
 import importlib
@@ -36,6 +41,7 @@ TOOLS = Path(__file__).parent
 REPO = TOOLS.parent.parent
 DSDT = REPO / "evidence" / "acpi" / "dsdt.dsl"
 REGISTERS = REPO / "ec" / "annotations" / "registers.yaml"
+DOOR = REPO / "docs" / "hardware-tests" / "gpu-tgp-07c4-07d7-door.md"
 
 # The tool's own `from ec_watch import ...` has to resolve, and the directory
 # is the import root whether or not the runner was started from here.
@@ -118,6 +124,67 @@ def field_list_text(fields):
     return ", ".join(parts)
 
 
+def read_registers():
+    """`registers.yaml` as ({addr: status}, {addr: name}), keyed by address.
+
+    A row's `addr:` is a list when it covers a block, and not everything
+    under one is an int, so both are handled once here rather than in each
+    class that wants the mapping. `name` is the label behind the row: both
+    copies of the table cite its leading token rather than the whole
+    parenthesised label, so the doc-table check below matches on that.
+    """
+    statuses, names = {}, {}
+    for r in yaml.safe_load(REGISTERS.read_text())["registers"]:
+        addrs = r["addr"] if isinstance(r["addr"], list) else [r["addr"]]
+        for a in addrs:
+            if isinstance(a, int):
+                statuses.setdefault(a, r["status"])
+                names.setdefault(a, r["name"])
+    return statuses, names
+
+
+def door_section(text):
+    """The procedure's §7, the section the tool's watch table is graded against.
+
+    Everything from the `## 7.` heading up to the next one, so both the table
+    reader below and the note-count check read the same span. A missing
+    heading raises rather than returning an empty section: an empty span
+    makes every check that uses it pass vacuously.
+    """
+    lines = text.splitlines()
+    start = next(i for i, l in enumerate(lines)
+                 if l.startswith("## 7. The citation list"))
+    body = lines[start + 1:]
+    for i, l in enumerate(body):
+        if l.startswith("## "):
+            return "\n".join(body[:i])
+    return "\n".join(body)
+
+
+def parse_door_table(section):
+    """The procedure's §7 table as {addr: {column heading: cell}}.
+
+    Hand-rolled in this file's idiom rather than taken from a markdown
+    library, because `project-setup` installs none and one table does not
+    need one. A row is keyed by its `0xNNNN` address cell and its cells are
+    filed under the header row's headings, so a column added above the one
+    being compared cannot silently shift what is read. Rows whose first cell
+    is not an address literal are skipped, which drops the header and its
+    `|---|` separator.
+    """
+    cols, out = None, {}
+    for line in section.splitlines():
+        if cols is None:
+            if line.startswith("| addr |"):
+                cols = [c.strip() for c in line.strip().strip("|").split("|")]
+            continue
+        m = re.match(r"\|\s*`(0x[0-9A-Fa-f]{4})`\s*\|", line)
+        if m:
+            cells = [c.strip() for c in line.strip().strip("|").split("|")]
+            out[int(m.group(1), 16)] = dict(zip(cols, cells))
+    return out
+
+
 class FakeEc:
     """Returns SWEEPS[n] for sweep n, and stops the run after the last one.
 
@@ -183,12 +250,7 @@ class CitationTableTests(unittest.TestCase):
     def setUpClass(cls):
         cls.fields = parse_ecmg_fields(DSDT.read_text(encoding="utf-8",
                                                       errors="replace"))
-        cls.statuses = {}
-        for r in yaml.safe_load(REGISTERS.read_text())["registers"]:
-            addrs = r["addr"] if isinstance(r["addr"], list) else [r["addr"]]
-            for a in addrs:
-                if isinstance(a, int):
-                    cls.statuses.setdefault(a, r["status"])
+        cls.statuses, cls.names = read_registers()
 
     def test_the_dsdt_field_list_the_table_is_checked_against_was_parsed(self):
         # A parser that found nothing would make the check below vacuous, and
@@ -213,9 +275,9 @@ class CitationTableTests(unittest.TestCase):
     def test_no_row_is_never_spelled_as_absence(self):
         # docs/findings.md §4c retracted a "does not exist" reading of a
         # zero-reference scan, and the watch table is where that phrasing
-        # would come back from: sixteen cells saying "no row" is sixteen
-        # chances to be read back as sixteen claims of absence. Each one
-        # here is checked to mean what it says, both ways.
+        # would come back from: every cell saying "no row" is a chance to be
+        # read back as a claim of absence. Each one here is checked to mean
+        # what it says, both ways.
         rows = {addr for addr, _, status, _ in watch.WATCH
                 if status == watch.NO_ROW}
         self.assertTrue(rows)
@@ -244,6 +306,72 @@ class CitationTableTests(unittest.TestCase):
         for a in ADDRS:
             covering = [label for label, s, e in watch.WINDOWS if s <= a <= e]
             self.assertEqual(covering, [watch.window_of(a)], f"0x{a:04X}")
+
+
+class DoorTableTests(unittest.TestCase):
+    """The procedure prints the watch table a second time, as prose.
+
+    #266 is what that duplication cost: a `registers.yaml` row landed, the
+    tool's copy was held by the class above, and the doc's four stale cells
+    survived a whole merge cycle. This class is the other half of the hold --
+    the doc is checked against the tool rather than against a human's
+    memory, in both directions, so absence phrasing cannot survive in the
+    second copy either.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.statuses, cls.names = read_registers()
+        cls.section = door_section(DOOR.read_text(encoding="utf-8"))
+        cls.door = parse_door_table(cls.section)
+        # Asked for by heading rather than by position, and found from the
+        # rows rather than from a header that may itself have moved.
+        cls.status_col = next((c for c in sorted({c for row in cls.door.values()
+                                                  for c in row})
+                               if "status:" in c), "")
+
+    def test_the_door_table_was_parsed_and_covers_every_watched_address(self):
+        # The same vacuity guard the DSDT parser above gets: a reader that
+        # found nothing would make the two checks below pass on a doc that
+        # says nothing, and a vacuous drift test is the one thing worse than
+        # none. Every watched address present, no unwatched one, and every
+        # row carrying the column the status check reads.
+        self.assertEqual(set(self.door), set(ADDRS))
+        for addr, row in self.door.items():
+            self.assertIn(self.status_col, row, f"0x{addr:04X}")
+        self.assertTrue(self.status_col, "§7 has no `status:` column")
+
+    def test_the_door_table_status_column_matches_the_tool_and_registers_yaml(self):
+        for addr, _, status, _ in watch.WATCH:
+            cell = self.door[addr][self.status_col]
+            if status == watch.NO_ROW:
+                # A "no row" cell that names an entry is the absence claim
+                # §4c retracted, so the check is bidirectional: it has to say
+                # "no row", and it has to name nothing that has a row.
+                self.assertIn("no row", cell, f"0x{addr:04X}")
+                for name in self.names.values():
+                    self.assertNotIn(name.split()[0], cell, f"0x{addr:04X}")
+            else:
+                # Verbatim status, and the entry's leading name token -- the
+                # spelling the tool's own citation column already uses, so a
+                # row that lands in registers.yaml cannot leave the doc
+                # reading "no row" for an address that now has one.
+                token = self.names[addr].split()[0]
+                self.assertIn(status, cell, f"0x{addr:04X}")
+                self.assertIn(token, cell, f"0x{addr:04X}")
+
+    def test_the_door_no_row_note_counts_what_the_table_holds(self):
+        # "sixteen of the twenty-four" outlived its own arithmetic when four
+        # rows landed. The count is recomputed from registers.yaml, so the
+        # sentence is checked against the file it describes rather than
+        # against the tool, which is the copy being corrected.
+        expected = sum(1 for a in ADDRS if a not in self.statuses)
+        found = re.findall(r"\b(\d+) of the (\d+)\b", self.section)
+        self.assertEqual(len(found), 1,
+                         "§7's 'no row' count is gone or spelled more "
+                         "than once")
+        self.assertEqual(int(found[0][0]), expected)
+        self.assertEqual(int(found[0][1]), len(ADDRS))
 
 
 class NamesOnlyTests(unittest.TestCase):
