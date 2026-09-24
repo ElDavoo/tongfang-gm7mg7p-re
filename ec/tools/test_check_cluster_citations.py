@@ -35,11 +35,21 @@ MEMBERS = {
     'main-ec-002': {'0x044C', '0x0860', '0x086E'},
     'main-ec-003': {'0x0460', '0x08A8'},
 }
-KNOWN = {'0x044C', '0x0860', '0x086E', '0x0460', '0x08A8', '0x06C6', '0x09CE'}
+KNOWN = {'0x044C', '0x0860', '0x086E', '0x0460', '0x08A8', '0x06C6', '0x06CD',
+         '0x09CE'}
+
+# The two clusters the `xdata-06c2-06db-timers.md` split sentence names, as
+# the census has them rather than as the small census above: `main-ec-121` is
+# `0x0443 0x06C6` and `main-ec-198` is `0x06CD`, and they share no address, so
+# neither id is "close enough" for the other.
+SPLIT_MEMBERS = {
+    'main-ec-121': {'0x0443', '0x06C6'},
+    'main-ec-198': {'0x06CD'},
+}
 
 
-def cited(text, members=None):
-    """(count, first address) the tool reports for one piece of prose."""
+def reported(text, members=None):
+    """The problem tuples the tool reports for one piece of prose."""
     with tempfile.NamedTemporaryFile('w', suffix='.md', delete=False) as f:
         f.write(text)
         path = f.name
@@ -47,6 +57,12 @@ def cited(text, members=None):
         problems, _ = ccc.check(path, members or MEMBERS, KNOWN, False)
     finally:
         os.unlink(path)
+    return problems
+
+
+def cited(text, members=None):
+    """(count, first address) the tool reports for one piece of prose."""
+    problems = reported(text, members)
     return len(problems), problems[0][3] if problems else None
 
 
@@ -61,8 +77,10 @@ class ReportsRealDrift(unittest.TestCase):
         self.assertEqual(cited('The `0x0860` run is in cluster `main-ec-002`.\n'), (0, None))
 
     def test_address_in_either_named_cluster_passes(self):
-        # The weaker sense the docstring promises: a unit naming two clusters
-        # is satisfied if the address is in one of them.
+        # The shape the any-of rule was written for, still silent -- and
+        # silent now for the stronger reason: each address is a member of the
+        # id its own clause names, so the pairing rule answers it without the
+        # fallback.
         text = ('the clustering put `0x0860` in `main-ec-002` and `0x08A8` in '
                 '`main-ec-003`\n')
         self.assertEqual(cited(text), (0, None))
@@ -94,6 +112,54 @@ class ReportsRealDrift(unittest.TestCase):
         self.assertEqual(problems[0][1], 2)
 
 
+class HoldsThePairing(unittest.TestCase):
+    """The split the `xdata-06c2-06db-timers.md` sentence claims, both ways.
+
+    Issue #253 corrected that sentence from `main-ec-118` to `main-ec-121` by
+    reading the census by hand, because a unit naming two clusters used to be
+    satisfied by either and an exchange in it was invisible. These are the two
+    directions of that sentence the tool now has to tell apart.
+    """
+
+    def test_committed_split_sentence_is_silent(self):
+        text = ('but the clustering put `0x06C6` in `main-ec-121` and `0x06CD` '
+                'in `main-ec-198` — 7 and 26 references on their own rows\n')
+        self.assertEqual(cited(text, SPLIT_MEMBERS), (0, None))
+
+    def test_swapped_ids_in_a_split_fail(self):
+        # Both addresses, each against the id its own clause put it with: the
+        # rule this replaces reported neither, and one that paired only the
+        # first would read as a smaller catch than it is.
+        text = ('but the clustering put `0x06C6` in `main-ec-198` and `0x06CD` '
+                'in `main-ec-121` — 7 and 26 references on their own rows\n')
+        found = reported(text, SPLIT_MEMBERS)
+        self.assertEqual([(p[3], p[4]) for p in found],
+                         [('0x06C6', 'main-ec-198'), ('0x06CD', 'main-ec-121')])
+
+    def test_enumeration_shaped_split_falls_back_to_any_of(self):
+        # `docs/findings.md:3671` claims the same split with the ids first and
+        # the addresses in a trailing list. Nothing pairs, so the any-of rule
+        # answers it — and answers the ids exchanged the same way. That is the
+        # blind spot the docstring's third limit states, and the case is here
+        # so the docstring cannot start claiming more than the tool does.
+        text = ('the two the clustering cut into `main-ec-121` and `main-ec-198` '
+                '(`0x06C6`, `0x06CD`) are countdowns\n')
+        self.assertEqual(cited(text, SPLIT_MEMBERS), (0, None))
+        swapped = ('the two the clustering cut into `main-ec-198` and '
+                   '`main-ec-121` (`0x06C6`, `0x06CD`) are countdowns\n')
+        self.assertEqual(cited(swapped, SPLIT_MEMBERS), (0, None))
+
+    def test_an_unpaired_address_in_a_run_is_still_checked(self):
+        # `manual-fan-ctrl-0751.md:694`'s shape, where "of" joins `main-ec-011`
+        # to the first of a run of ten addresses and pairs only that one. The
+        # fallback is per address on purpose, so a unit that pairs one byte
+        # does not silence the rest of the run: `0x06C6` is in neither cluster
+        # here, and is still reported.
+        text = ('`main-ec-002` is the cluster of `0x044C 0x086E 0x06C6`, and '
+                '`main-ec-003` holds `0x08A8`\n')
+        self.assertEqual(cited(text), (1, '0x06C6'))
+
+
 class SkipsDeliberately(unittest.TestCase):
     """Every rule that makes the tool conservative, as a case saying so."""
 
@@ -106,6 +172,16 @@ class SkipsDeliberately(unittest.TestCase):
         # same sentence names, and does it without a negation word.
         text = ('nine of the ten are in `main-ec-002`, and the tenth, `0x06C6`, '
                 'is a cluster on its own\n')
+        self.assertEqual(cited(text), (0, None))
+
+    def test_singleton_wording_naming_two_clusters_is_still_skipped(self):
+        # The `manual-fan-ctrl-0751.md:701` shape with a second cluster named,
+        # so the pairing rule is one the branches could reach. The preposition
+        # in "rather than part of" would pair `0x06C6` with the cluster the
+        # sentence says it is not part of, and `0x06C6` is in neither, so were
+        # this skip to move behind the pairing it would report a denial.
+        text = ('six of the ten are in `main-ec-002`, and `0x06C6` is a '
+                'size-1 cluster of its own rather than part of `main-ec-003`\n')
         self.assertEqual(cited(text), (0, None))
 
     def test_mention_without_a_membership_claim_is_skipped(self):
