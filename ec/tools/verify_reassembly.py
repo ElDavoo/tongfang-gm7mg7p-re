@@ -7,7 +7,7 @@ Two tiers of checks, and the difference between them is the point.
 committed listing is compared against the firmware image. The committed report
 is confirmed to still describe those listings. And every row's `listing_digest`
 is recomputed from the listing it names and compared. The first covers 100% of
-the instructions, including the 0.31% the assembler below cannot express, and
+the instructions, including the ones the assembler below cannot express, and
 all three run anywhere.
 
 **The full run, `sdas8051` needed.** The committed listing is re-encoded with
@@ -33,6 +33,16 @@ by nothing automated here, because the only thing that would catch it is the
 re-encode, and that still has no schedule (`docs/findings.md` §14e). Detecting
 a change is not verifying it, and the column's name invites the second reading
 more than the first.
+
+**`--verify-provenance` is what anchors that column to the text it covers.**
+`add_digest_column()` digests the listings on disk without re-encoding, so it
+cannot say they are the listings the report measured -- `docs/findings.md` §14f
+answers that from the repository's own history instead: the migration changed
+the column and nothing beneath it, and no listing text moved under it. This
+mode runs §14f's method rather than describing it. What it establishes is that
+the committed digests cover the text the last full `--report` measured; it says
+nothing about whether that text is right, which is the re-encode above, and it
+needs a full git history to resolve the revisions it names.
 
 Three decoders are in play and they are worth keeping distinct:
 
@@ -66,6 +76,10 @@ Usage:
     python3 ec/tools/verify_reassembly.py --emit-csv /tmp/reasm.csv  # per-row
     python3 ec/tools/verify_reassembly.py --self-test               # known answers
     python3 ec/tools/verify_reassembly.py --add-digest-column       # one-shot
+    python3 ec/tools/verify_reassembly.py --verify-provenance \\
+        --base 08b72e2 --migration a56b3bb --listings-from 8c7985e
+        # audit a digest migration against history; needs a full clone,
+        # so ci.yml's default-depth checkouts cannot run it
 """
 import argparse
 import csv
@@ -529,49 +543,55 @@ def check_one(row, image, work, sdas):
     return "match", "", len(checked), 0, digest
 
 
+def scratch_dir(work, index):
+    """One scratch directory per function, created on demand.
+
+    Per *function* rather than per worker, and the difference is not cosmetic.
+    A pool of `jobs` workers pulling from one queue holds whichever row indices
+    happen to be in flight, and that set drifts as soon as one worker finishes
+    early -- so handing out directories by `index % jobs` eventually hands two
+    concurrent functions the same one, and they overwrite each other's `f.s51`
+    and `f.lst`. The run then reports `assembler-error` and "no bytes emitted
+    at ..." for functions that were never wrong. Measured on this repository's
+    runner over the same committed inputs: 2,579, 2,588, 2,590 and 2,591
+    `match` across four `--jobs 4` runs against 2,621 on every `--jobs 1` run,
+    with `mismatch` 0 throughout and the instruction totals identical. That is
+    not a property of the assembler, and a comparison against the committed
+    report would have named the raced rows as rows that moved.
+    """
+    d = os.path.join(work, "f%05d" % index)
+    os.makedirs(d, exist_ok=True)
+    return d
+
+
 def run_rows(rows, work, images, sdas, jobs, check=None):
     """check_one over `rows`, `jobs` at a time. -> results, in the order given.
 
-    One scratch dir per *worker*, allocated on that worker's first row and
-    never shared: sdas8051 writes <stem>.ihx next to its input, and two threads
-    sharing a stem silently overwrite each other's output.
-
-    Keyed on the row instead -- `dirs[idx % jobs]`, which is what this said
-    until it was measured -- looks equivalent and is not. pool.map hands the
-    next row to whichever worker frees up first, so rows 0 and 4 can be in
-    flight together and both took `dirs[0]`, each overwriting the other's
-    `f.s51` before reading back a `f.lst` that was not its own. It cost the
-    outcome tallies their reproducibility: three `--jobs 4` runs of the same
-    command over the same 2,705 rows gave three different sets of numbers,
-    while `--jobs 1` gave the same one twice. A per-thread scratch dir is what
-    the first sentence always meant. See docs/findings.md §14g.
+    Each row gets `scratch_dir(work, index)`, its own directory, so no two rows
+    in flight together can share one -- see scratch_dir() for the race that
+    `dirs[idx % jobs]` produced and what it cost the outcome tallies
+    (docs/findings.md §14g). An earlier fix on a parallel branch gave each
+    *worker thread* its own directory instead; either closes the race, and
+    this keeps the per-function one because it is the one the committed
+    measurement in §14g was taken with.
 
     `check` defaults to check_one; the self-test substitutes a recorder,
     which is the only way to observe the dispatch without running 2,705
     assembles and hoping the race shows up.
     """
     check = check or check_one
-    results = []
-    local = threading.local()
 
-    def scratch_dir():
-        d = getattr(local, "dir", None)
-        if d is None:
-            d = local.dir = tempfile.mkdtemp(prefix="rasm-", dir=work)
-        return d
-
-    def one(row):
+    def one(item):
+        idx, row = item
         try:
             return (row,) + check(
                 row, images.get(row["program"]) or images["bank0"],
-                scratch_dir(), sdas)
+                scratch_dir(work, idx), sdas)
         except Exception as exc:                       # a crash is a result
             return row, "error", "%s: %s" % (type(exc).__name__, exc), 0, 0, ""
 
     with ThreadPoolExecutor(max_workers=jobs) as pool:
-        for result in pool.map(one, rows):
-            results.append(tuple(result))
-    return results
+        return [tuple(r) for r in pool.map(one, list(enumerate(rows)))]
 
 
 def verify(limit=None, jobs=8, work=None, sdas=None, quiet=False):
@@ -580,7 +600,10 @@ def verify(limit=None, jobs=8, work=None, sdas=None, quiet=False):
         print("verify_reassembly: sdas8051 not found.\n"
               "  This check is NOT skipped silently: it simply did not run.\n"
               "  Install SDCC, or set SDAS8051=/path/to/sdas8051, and re-run.")
-        return 2
+        # None rather than an exit status: there is no tally here, and main()
+        # used to unpack this answer as a result tuple and die with a TypeError
+        # on exactly the path the message above tells the reader how to fix.
+        return None
     rows = [r for r in csv.DictReader(open(LISTING_INDEX, newline=""))
             if r["out_file"] and not r["out_file"].startswith("(")]
     if limit:
@@ -597,16 +620,14 @@ def verify(limit=None, jobs=8, work=None, sdas=None, quiet=False):
     checked = sum(r[3] for r in results)
     skipped = sum(r[4] for r in results)
     insn_total = checked + skipped
+    version = assembler_version(sdas)
     if not quiet:
-        # The tool's own identity, on every full run, so a tallied run is never
-        # a bare set of numbers. write_report() stamped the `assembler` cell
-        # and the read-only path did not, which left the one run nobody can
-        # diff against a report unlabelled -- and the gap tally below is a
-        # property of the assembler as much as of the code. The deep gate
-        # invokes this function and nothing else, so printing it here is what
-        # puts it in the nightly's log without touching the gate script.
-        print("\n  assembler: %s" % sdas)
-        print("            sdas8051 %s" % assembler_version(sdas))
+        # Read here, once, and compared here rather than in main(): the report
+        # is about to be overwritten by a --report run's write_report(), and a
+        # comparison made afterwards would be a run against its own output.
+        committed = committed_report()
+        for line in compare_assembler(version, committed, sdas=sdas, path=REPORT)[0]:
+            print(line)
         total = len(results)
         matched = tally.get("match", 0)
         partial = tally.get("partial", 0)
@@ -620,17 +641,32 @@ def verify(limit=None, jobs=8, work=None, sdas=None, quiet=False):
         print("\n  %d function(s) have every instruction re-encode byte-exactly; "
               "%d more have all but %d instruction(s) verified."
               % (matched, partial, skipped))
-    return results, tally, sdas
+        # Last, so what a reader takes away from the bottom of the screen is the
+        # disagreement rather than the reassuring number above it.
+        for line in compare_tally(results, tally, committed,
+                                  limited=bool(limit))[0]:
+            print(line)
+    return results, tally, sdas, version
 
 
 def assembler_version(sdas):
-    """The assembler's own version string, for the report.
+    """The assembler's own version string, for the report and for the run's own
+    output.
 
     The gap set is a property of the assembler as much as of the code, so a
-    report that does not say which one produced it is not a measurement. The
-    match count is not expected to move with the version -- the firmware bytes
-    are the arbiter -- but the number of unchecked instructions is, and a reader
-    comparing two reports needs to know whether they used the same tool."""
+    report that does not say which one produced it is not a measurement, and a
+    reader comparing two reports needs to know whether they used the same tool.
+
+    What moves with the version is the *split* -- which rows read `match` and
+    which read `assembler-gap` -- because which of those two a row gets is
+    decided by what the assembler can express rather than by the firmware. What
+    does not move is `mismatch`: the firmware bytes are the arbiter there, and a
+    different ASxxxx changing that number would be a finding. Measured between
+    the committed report's `05.50.4+NoICE+SDCCmods-WIP-R14` and the Ubuntu
+    `sdas8051 02.00` on this repository's runner: `match` 2,574 -> 2,621,
+    `assembler-gap` 58 -> 6, `mismatch` 0 -> 0, and `instructions_checked`
+    45,394 -> 45,394. The match count is therefore not a fact about the
+    firmware alone, and this file previously said it was."""
     try:
         r = subprocess.run([sdas], capture_output=True, text=True, timeout=20)
         for line in (r.stdout + r.stderr).splitlines():
@@ -641,8 +677,13 @@ def assembler_version(sdas):
     return "unknown"
 
 
-def write_report(results, sdas, path=REPORT):
-    version = assembler_version(sdas)
+def write_report(results, sdas, path=REPORT, version=None):
+    # `version=None` falls back to reading the banner here, so this stays the
+    # report's only writer and the `assembler` cell is still the version that
+    # produced this run. verify() passes the one it already computed, so main()
+    # does not shell out twice and the report and the run's own output cannot
+    # disagree about which assembler answered.
+    version = version if version is not None else assembler_version(sdas)
     with open(path, "w", newline="") as f:
         w = csv.writer(f, lineterminator="\n")
         w.writerow(["program", "addr", "name", "outcome", "listing_digest",
@@ -711,11 +752,10 @@ def emit_csv(results, sdas, path):
 def check_listing_bytes():
     """Every byte in every listing, against the firmware image. No assembler.
 
-    The re-encode above is the stronger claim but the weaker coverage: 0.31% of
-    the instructions use forms sdas8051 cannot express, so 143 of them are
-    unchecked (`docs/findings.md` §11, which also records the retracted first
-    pass that put it at 1,004). This checks all of them and needs nothing but
-    the firmware, so it runs in CI where the assembler does not.
+    The re-encode above is the stronger claim but the weaker coverage: some
+    instructions use forms sdas8051 cannot express, so 143 of them are
+    unchecked in the committed report. This checks all of them and needs nothing
+    but the firmware, so it runs in CI where the assembler does not.
 
     It is a different check rather than a weaker one. Re-encoding asks "does an
     independent assembler agree that these bytes mean this instruction"; this
@@ -835,6 +875,253 @@ def compare_digests(report, digests, live):
     return compared, bad
 
 
+# The outcomes `check()` and the report comparison both count, in this order, so
+# the two lines read alike. A row carrying anything else is a residual, and is
+# named rather than dropped: a summary that counted three of the categories and
+# then printed "(of 2705)" is the arithmetic error the four-way line exists to
+# remove, and quietly leaving a fifth category out would reintroduce it one row
+# over.
+OUTCOMES = ("match", "partial", "assembler-gap", "mismatch")
+
+# The most moved rows the comparison names before it says how many more. The cap
+# compare_digests() uses, for the same reason: a reader acts on the first few,
+# and the rest are a grep away in a file whose path is already on screen.
+MOVED_CAP = 20
+
+
+def split_tally(counts):
+    """-> ([(outcome, n)] in OUTCOMES order, [(outcome, n)] for everything else).
+
+    Two halves because both are needed. The four are this file's vocabulary for
+    a re-encode, and a report that used a fifth is describing a run in terms
+    check_one() can produce: `assembler-error`, `error`, `missing-listing`,
+    `empty-listing`."""
+    ordered = [(o, counts.get(o, 0)) for o in OUTCOMES]
+    residual = sorted((o, n) for o, n in counts.items() if o not in OUTCOMES)
+    return ordered, residual
+
+
+def report_tally(rows):
+    """-> {outcome: n}, the tally of a report read as an iterable of rows."""
+    counts = {}
+    for row in rows:
+        outcome = row.get("outcome") or "(blank)"
+        counts[outcome] = counts.get(outcome, 0) + 1
+    return counts
+
+
+def int_cell(row, column):
+    """A report cell as an int, or None if it does not hold one.
+
+    None rather than 0, deliberately. A cell that does not parse has to be
+    named where it is summed rather than counted as nothing, because summing
+    around one is §14b's shape: a check reporting a clean result over a third of
+    its input, which is worse than one that reads nothing at all."""
+    try:
+        return int((row.get(column) or "").strip())
+    except ValueError:
+        return None
+
+
+def committed_report(path=REPORT):
+    """The committed report, read once, in the shape the comparisons need.
+
+    -> {rows, tally, assemblers, checked, unchecked, by_key}, or None if the
+    file is absent or holds no rows.
+
+    Read once because the assembler comparison, the category comparison and the
+    per-row comparison all read it, and three reads are three chances to compare
+    against something that moved underneath the comparison. `by_key` is keyed
+    `addr|program` and not `addr` alone: 54 addresses carry a row in each of the
+    two bank windows, so a key of `addr` would leave one row of each of those
+    108 with nothing to compare against and print the result as a category that
+    had moved. Four of the 54 (0x031C, 0x3A60, 0x703A, 0xFF17) also share a
+    listing_digest, which is what ec/ghidra/README.md's `listing_digest`
+    section records; the count that makes the key necessary is 54, not four."""
+    if not os.path.isfile(path):
+        return None
+    with open(path, newline="") as f:
+        rows = list(csv.DictReader(f))
+    if not rows:
+        return None
+    assemblers = {}
+    for r in rows:
+        value = (r.get("assembler") or "").strip()
+        assemblers[value] = assemblers.get(value, 0) + 1
+    return {
+        "rows": len(rows),
+        "tally": report_tally(rows),
+        "assemblers": assemblers,
+        "checked": [int_cell(r, "instructions_checked") for r in rows],
+        "unchecked": [int_cell(r, "instructions_unchecked") for r in rows],
+        "by_key": {r["addr"] + "|" + r["program"]: r for r in rows},
+    }
+
+
+def compare_assembler(version, committed, sdas=None, path=REPORT):
+    """The live assembler's version against the committed report's.
+    -> (lines, warned).
+
+    A line that does not identify one side or the other begins `NOTE`, and
+    `warned` is true when there is one. That marker is for the self-test and for
+    the reader, and deliberately not an exit status: a version difference is
+    expected wherever the committed report was not measured, because
+    project-setup installs Ubuntu's sdcc and does not install the nix shell the
+    report was measured in, and a nightly that failed on it would be a nightly
+    failing on the machine it ran on.
+
+    The cases that are easy to get wrong are handled rather than guessed. A
+    report with no assembler column, or with the cells left empty, is a report
+    from before the column existed and agrees with nothing. A report holding more
+    than one distinct value has no single answer to compare against, so all of
+    them are named with their row counts and none is picked. And
+    `version == "unknown"` is what assembler_version() returns when it cannot
+    read the banner at all: a version that was not read has established nothing,
+    and printing it as agreement would be the one answer that is certainly
+    wrong."""
+    where = os.path.relpath(path, REPO)
+    bare = "sdas8051 %s" % version
+    mine = bare + ("  (%s, this run)" % sdas if sdas else "")
+    if committed is None:
+        return ["  assembler: %s" % mine,
+                "    NOTE there is no committed report at %s, so this run's "
+                "assembler has nothing to be compared against." % where], True
+    named = {v: n for v, n in committed["assemblers"].items() if v}
+    plural = "" if committed["rows"] == 1 else "s"
+    if not named:
+        theirs = "(no assembler cell)"
+    elif len(named) == 1:
+        theirs = sorted(named)[0]
+    else:
+        theirs = ", ".join("%s: %d row%s" % (v, n, "" if n == 1 else "s")
+                           for v, n in sorted(named.items()))
+    lines = ["  assembler: %s" % mine,
+             "  committed: %s  (%s, %d row%s)"
+             % (theirs, where, committed["rows"], plural)]
+    if not named:
+        lines.append("    NOTE the committed report carries no assembler value, "
+                     "which is a report from before the column existed. This run "
+                     "used %s, and that agrees with nothing rather than with it."
+                     % bare)
+        return lines, True
+    if len(named) > 1:
+        lines.append("    NOTE the committed report names %d different assemblers, "
+                     "so there is no single answer to compare against and no "
+                     "agreement is established." % len(named))
+        return lines, True
+    empty = committed["assemblers"].get("", 0)
+    if empty:
+        lines.append("    NOTE %d committed row(s) carry an empty assembler cell, so "
+                     "the value above does not describe the whole report." % empty)
+    if version == "unknown":
+        lines.append("    NOTE this run's version could not be read from sdas8051, so "
+                     "the two are NOT known to agree: an unread version has "
+                     "established nothing.")
+        return lines, True
+    theirs = sorted(named)[0]
+    if bare == theirs:
+        lines.append("    the committed report and this run used the same assembler")
+        return lines, False
+    lines.append("    NOTE the two differ: %s against %s." % (bare, theirs))
+    lines.append("      Which forms an assembler can express decides the "
+                 "match/partial/assembler-gap")
+    lines.append("      split, so a different ASxxxx is expected to move it; "
+                 "`mismatch` is the outcome")
+    lines.append("      the firmware arbitrates and the one worth watching. "
+                 "Reported, not failed on:")
+    lines.append("      ec/ghidra/README.md has why.")
+    return lines, True
+
+
+def compare_tally(results, tally, committed, limited=False):
+    """This run's tally beside the committed one. -> (lines, moved, deltas).
+
+    `moved` is [(program, addr, name, this outcome, committed outcome)] and
+    `deltas` is [(outcome, this, committed, signed)], both over every category
+    either side has and neither capped. They come back alongside the lines so
+    `--self-test` can assert on the comparison rather than on the wording a
+    reader happens to be shown -- and the wording is asserted on too, because a
+    line that fails to name the row it is about is the defect this block exists
+    to prevent. `compare_digests()` is the in-repo shape for both halves.
+
+    The lines say what differs and never why. "9 rows went from assembler-gap to
+    match" is a measurement. "the assembler got better" is not, and nothing here
+    can support it: two ASxxxx builds are two different things being measured,
+    which of them is right is a question about the disassembly, and this
+    function has the firmware bytes, two tallies and nothing else.
+
+    `limited` is a `--limit` run. The committed tally is still printed, because
+    it is what the reader came to see, but nothing is compared against it: 40
+    rows are not a disagreement with 2,705, and a comparison that printed
+    deltas for one would be forty lines of noise teaching the reader to skip the
+    block."""
+    if committed is None:
+        return (["  nothing to compare against: there is no committed report at %s"
+                 % os.path.relpath(REPORT, REPO)], [], [])
+    where = os.path.relpath(REPORT, REPO)
+    counts = committed["tally"]
+    mine, mine_residual = split_tally(tally)
+    categories = [o for o, _ in mine + mine_residual]
+    categories += [o for o in sorted(counts) if o not in categories]
+    deltas = [(o, tally.get(o, 0), counts.get(o, 0),
+               tally.get(o, 0) - counts.get(o, 0)) for o in categories]
+
+    if limited:
+        theirs, residual = split_tally(counts)
+        return (["  --limit: this run covered %d of the committed report's %d rows, so"
+                 % (len(results), committed["rows"]),
+                 "  the tally below is a reference and not a comparison, and a "
+                 "difference here would not mean one.",
+                 "    committed report: %s (of %d)"
+                 % (", ".join("%d %s" % (n, o) for o, n in theirs + residual),
+                    committed["rows"])], [], [])
+
+    def cell_line(label, here, cells):
+        there = sum(c for c in cells if c is not None)
+        unreadable = sum(1 for c in cells if c is None)
+        line = "    %-20s %9d %10d" % (label, here, there)
+        if here != there:
+            line += "  %+d" % (here - there)
+        if unreadable:
+            line += ("  (%d of %d committed cell(s) do not hold an integer; that "
+                     "total is over the rest)" % (unreadable, len(cells)))
+        return line
+
+    lines = ["", "  compared against the committed report (%s):" % where,
+             "    %-20s %9s %10s" % ("outcome", "this run", "committed")]
+    for outcome, here, there, delta in deltas:
+        line = "    %-20s %9d %10d" % (outcome, here, there)
+        if delta:
+            line += "  %+d" % delta
+        lines.append(line)
+    lines.append("    %-20s %9d %10d"
+                 % ("rows", len(results), committed["rows"]))
+    lines.append(cell_line("instructions checked",
+                           sum(r[3] for r in results), committed["checked"]))
+    lines.append(cell_line("instructions unchecked",
+                           sum(r[4] for r in results), committed["unchecked"]))
+
+    moved = []
+    for row, outcome, _detail, _c, _s, _d in results:
+        was = committed["by_key"].get(row["addr"] + "|" + row["program"])
+        if was is None:
+            moved.append((row["program"], row["addr"], row["name"], outcome,
+                          "no row in the committed report"))
+        elif was.get("outcome") != outcome:
+            moved.append((row["program"], row["addr"], row["name"], outcome,
+                          was.get("outcome") or "(blank)"))
+    if not moved:
+        lines.append("\n  moved since the committed report: nothing")
+    else:
+        lines.append("\n  moved since the committed report: %d row(s)" % len(moved))
+        for prog, addr, name, here, there in moved[:MOVED_CAP]:
+            lines.append("    %s %s %s: %s here, %s in %s"
+                         % (prog, addr, name, here, there, where))
+        if len(moved) > MOVED_CAP:
+            lines.append("    ... and %d more" % (len(moved) - MOVED_CAP))
+    return lines, moved, deltas
+
+
 # The one command that resolves a digest disagreement: a changed listing has to
 # be re-reported, and re-reporting is the re-encode. Named once so the failure
 # message and --add-digest-column cannot drift into pointing at different things.
@@ -843,15 +1130,31 @@ REPORT_COMMAND = (
     "python3 ec/tools/verify_reassembly.py --work /tmp/ec --report")
 
 
+def run_status(tally):
+    """The full run's exit status: zero unless a function re-encodes to different
+    bytes than the firmware holds.
+
+    Only that, and deliberately. Two things this run now reports are not
+    adjudicated here: a warning that its assembler differs from the one the
+    committed report was measured with, and a category that moved since. Both
+    are measured, neither is actionable by whoever is not watching -- a branch
+    that re-reported the listings and has not committed its CSV yet moves the
+    tally legitimately, and this tool cannot tell that from a regression. A
+    scheduled run that failed on a difference nobody could action would be
+    noise, not a gate. What fails is the one outcome the firmware arbitrates.
+    """
+    return 0 if tally.get("mismatch", 0) == 0 else 1
+
+
 def check():
     """No assembler required.
 
     Three things. First, every byte of every listing against the firmware
-    image, which covers the 0.31% of instructions the assembler cannot express
-    and runs anywhere. Second, that the committed reassembly report still
-    describes the committed listings: same functions, same outcomes. Third,
-    that no listing's text has moved since the report measured it, which is
-    what a mnemonic or operand edit leaves the byte column unable to see.
+    image, which covers the instructions the assembler cannot express and runs
+    anywhere. Second, that the committed reassembly report still describes the
+    committed listings: same functions, same outcomes. Third, that no listing's
+    text has moved since the report measured it, which is what a mnemonic or
+    operand edit leaves the byte column unable to see.
 
     The first two are about the claim on file agreeing with the export; the
     third is about the export not having changed underneath it. What none of
@@ -882,11 +1185,24 @@ def check():
             print("  FAIL %s is in the reassembly report but not in the listing "
                   "index: the report is stale" % key)
             ok = False
-    mism = sum(1 for r in report.values() if r["outcome"] == "mismatch")
-    gaps = sum(1 for r in report.values() if r["outcome"] == "assembler-gap")
-    match = sum(1 for r in report.values() if r["outcome"] == "match")
-    print("  reassembly report: %d match, %d assembler-gap, %d mismatch "
-          "(of %d)" % (match, gaps, mism, len(report)))
+    # All four outcomes, in one order, so the line adds up to the row count it
+    # prints. It said 2,632 of 2,705 until `partial` was counted, which is the
+    # whole defect: `partial` is an outcome this file's own check_one() returns
+    # and §14e and §14f both quote, and a summary that omits it understates the
+    # number of functions that are not fully verified.
+    ordered, residual = split_tally(report_tally(report.values()))
+    print("  reassembly report: %s (of %d)"
+          % (", ".join("%d %s" % (n, o) for o, n in ordered), len(report)))
+    if residual:
+        # Named, not folded in and not failed on. check_one() can return
+        # `assembler-error`, `error`, `missing-listing` or `empty-listing`, and a
+        # committed row saying `error` probably should fail and today does not;
+        # docs/findings.md §14g names that as a question this change raises and
+        # does not settle. What this line does is make the row countable, so the
+        # summary describes the report it is summarizing.
+        print("  and %s, which are not in the four above"
+              % ", ".join("%d %s" % (n, o) for o, n in residual))
+    mism = dict(ordered)["mismatch"]
     if mism:
         print("  FAIL %d function(s) re-encode to different bytes than the "
               "firmware holds. That is the 1:1 claim failing; see the detail "
@@ -930,12 +1246,13 @@ def add_digest_column(path=REPORT):
     What it asserts, and it is worth being exact about this because the command
     looks like a measurement: the digests are those of the listings on disk
     right now, and the report's outcomes are whatever they were. It cannot
-    prove that these are the listings the report measured -- proving that needs
-    the same assembler the report was made with, which is the thing this path
+    prove that these are the listings the report measured -- the re-encode
+    against the report's own assembler would, and that is the thing this path
     deliberately does not run, because the one available here is a different
     and older ASxxxx and a full report against it would rewrite every
-    `assembler` cell and could move the gap tallies. See
-    `ec/ghidra/README.md`."""
+    `assembler` cell and could move the gap tallies. For the committed column
+    that proof comes out of the history instead, and `--verify-provenance` is
+    what runs it. See `ec/ghidra/README.md`."""
     with open(path, newline="") as f:
         reader = csv.DictReader(f)
         fieldnames = list(reader.fieldnames or [])
@@ -978,6 +1295,288 @@ def add_digest_column(path=REPORT):
           "  %s\n"
           "  which re-encodes with the assembler, rather than editing the CSV."
           % (len(rows), os.path.relpath(path, REPO), REPORT_COMMAND))
+    return 0
+
+
+# §14f's pathspec, as the one spelling of it. The negative check and the
+# positive control have to use the same string, or a control that matched
+# something says nothing about a negative that matched nothing.
+LISTING_PATHSPEC = "ec/decompiled/**/*.asm"
+REPORT_REL = "ec/ghidra/reassembly.csv"
+# What identifies a row. --check keys the same rows `addr|program`; a tuple is
+# that same identity without a separator, so nothing inside an address can
+# join two rows into one.
+PROVENANCE_KEY = ("program", "addr")
+
+# The mode reads two revisions out of the repository's own history, so how deep
+# the clone is is part of its contract the way the assembler is part of
+# --report's. The agent stages check out with `fetch-depth: 0` and can run it;
+# both of ci.yml's checkouts are default-depth and cannot resolve the
+# revisions §14f names at all. See docs/agent-pipeline.md.
+HISTORY_REQUIREMENT = (
+    "  This mode answers from the repository's history, so it needs a full\n"
+    "  clone: `git clone` without --depth, or `git fetch --unshallow` in one\n"
+    "  that is shallow. A default-depth checkout -- actions/checkout's default,\n"
+    "  which is what ci.yml uses -- has neither revision, and a mode that\n"
+    "  carried on anyway would be auditing whatever happened to be checked out.")
+
+
+def _git(*args):
+    """git, run against the repository whatever the cwd is."""
+    return subprocess.run(["git", "-C", REPO] + list(args),
+                          capture_output=True, text=True)
+
+
+def git_lines(*args):
+    """-> (lines, None) for git's non-empty output lines, or (None, why).
+
+    None rather than an empty list because an empty answer and a command that
+    did not run are the two things this mode most needs to tell apart: every
+    check it makes is "git said nothing", so a git that failed would read as a
+    pass on all of them.
+    """
+    try:
+        r = _git(*args)
+    except OSError as exc:
+        return None, "git could not be run: %s" % exc
+    if r.returncode != 0:
+        return None, r.stderr.strip() or ("git exited %d" % r.returncode)
+    return [ln for ln in r.stdout.splitlines() if ln.strip()], None
+
+
+def resolve_revision(rev):
+    """-> the commit sha `rev` names in this clone, or None if it has no such
+    commit. `^{commit}` so a tag or a branch name is measured, not a path."""
+    lines, _why = git_lines("rev-parse", "--verify", "--quiet", rev + "^{commit}")
+    return lines[0] if lines else None
+
+
+def compare_provenance(base_text, migration_text):
+    """Two revisions' reports, `listing_digest` dropped from both.
+    -> (rows identical, rows in the base, column (base, migration), problems).
+
+    This is the comparison inside `--verify-provenance` with no git in it, so it
+    is written to be exercised on its own: a comparison that compared nothing,
+    or that dropped one column too many, looks exactly like a working one on any
+    pair that agrees, and the committed pair is a pair that agrees.
+
+    The column is dropped rather than compared because that is the shape of a
+    migration -- the base predates it, so `listing_digest` is absent on that
+    side entirely -- and because the digests are *meant* to be new: comparing
+    them would fail every correct run. What has to hold is that nothing else
+    moved. Rows are keyed by (program, addr) so a re-order is not a change, and
+    anything that is, is named rather than skipped: a column added, renamed or
+    reordered beneath the digest, a row that is missing or extra, a key that
+    appears twice, or one differing cell. A repeated key is refused rather than
+    collapsed, because a dict that keeps one of the two says the two are equal.
+    """
+    import io
+
+    def read(text):
+        reader = csv.DictReader(io.StringIO(text), strict=True)
+        rows = list(reader)
+        fields = [f for f in (reader.fieldnames or [])
+                  if f != "listing_digest"]
+        return fields, rows, "listing_digest" in (reader.fieldnames or [])
+
+    problems = []
+    try:
+        base_fields, base_rows, base_has = read(base_text)
+        mig_fields, mig_rows, mig_has = read(migration_text)
+    except csv.Error as exc:
+        return 0, 0, (False, False), ["a report does not parse as strict CSV: %s"
+                                      % exc]
+    if not base_rows or not mig_rows:
+        problems.append("a report has no rows in it: %d in the base, %d in the "
+                        "migration" % (len(base_rows), len(mig_rows)))
+        return 0, len(base_rows), (base_has, mig_has), problems
+
+    headers_differ = base_fields != mig_fields
+    if headers_differ:
+        only_base = [f for f in base_fields if f not in mig_fields]
+        only_mig = [f for f in mig_fields if f not in base_fields]
+        detail = []
+        if only_base:
+            detail.append("only in the base: %s" % ", ".join(only_base))
+        if only_mig:
+            detail.append("only in the migration: %s" % ", ".join(only_mig))
+        if not detail:
+            detail.append("the same columns in a different order: %s vs %s"
+                          % (",".join(base_fields), ",".join(mig_fields)))
+        problems.append("the two headers differ beyond listing_digest -- %s"
+                        % "; ".join(detail))
+
+    def key_by(rows, which):
+        keyed = {}
+        for row in rows:
+            k = tuple(row.get(f, "") for f in PROVENANCE_KEY)
+            if k in keyed:
+                problems.append("%s %s appears more than once in the %s: a "
+                                "repeated key cannot be compared, and taking one "
+                                "of the two would report them as equal"
+                                % (k[0], k[1], which))
+            keyed[k] = row
+        return keyed
+
+    base_keyed = key_by(base_rows, "base")
+    mig_keyed = key_by(mig_rows, "migration")
+    for k in sorted(set(base_keyed) - set(mig_keyed)):
+        problems.append("%s %s is in the base and not in the migration"
+                        % (k[0], k[1]))
+    for k in sorted(set(mig_keyed) - set(base_keyed)):
+        problems.append("%s %s is in the migration and not in the base"
+                        % (k[0], k[1]))
+
+    # Compared over the columns both sides have. With a header difference that
+    # is only the overlap, and no row counts as identical: it would be saying
+    # a row matched when a column of it was never compared at all.
+    fields = [f for f in base_fields if f in mig_fields]
+    identical = 0
+    for k in sorted(set(base_keyed) & set(mig_keyed)):
+        diffs = [f for f in fields
+                 if base_keyed[k].get(f, "") != mig_keyed[k].get(f, "")]
+        for f in diffs:
+            problems.append("%s %s: %s is %r in the base and %r in the migration"
+                            % (k[0], k[1], f, base_keyed[k].get(f, ""),
+                               mig_keyed[k].get(f, "")))
+        if not diffs and not headers_differ:
+            identical += 1
+    return identical, len(base_rows), (base_has, mig_has), problems
+
+
+def verify_provenance(base, migration, listings_from=None):
+    """Audit a `listing_digest` migration against the history it sits in.
+    -> exit status. 0 means every check below measured what it claims to.
+
+    §14f answered, by hand, that the migration added the column and changed
+    nothing beneath it, and that no listing text moved while it did. This runs
+    that, and refuses to answer anything it cannot measure:
+
+      1. both revisions resolve in this clone, and so does the one the listings
+         were last written in;
+      2. the listings' pathspec matches something over that window, so the empty
+         answer over the migration is a measurement and not a pathspec quietly
+         matching nothing;
+      3. no `.asm` under the two revisions' window changed;
+      4. the two reports, `listing_digest` dropped, differ by nothing;
+      5. what the migration's window did touch, printed as a supporting view.
+
+    (2) is checked before (3) rather than after it, which is the one place this
+    departs from the order §14f presents them in: an empty diff printed as a
+    result and only then contradicted by the control is exactly the reading the
+    control exists to prevent. Both numbers are printed together either way.
+    """
+    base_sha = resolve_revision(base)
+    mig_sha = resolve_revision(migration)
+    for label, rev, sha in (("base", base, base_sha),
+                            ("migration", migration, mig_sha)):
+        if not sha:
+            print("  FAIL cannot resolve the %s revision %r in this clone."
+                  % (label, rev))
+            print(HISTORY_REQUIREMENT)
+            return 1
+    # Defaulted rather than required, but the default is resolved the same way
+    # a named revision is, so a window whose start is missing fails with the
+    # history requirement rather than as a control of zero.
+    from_rev = listings_from or (base + "^")
+    from_sha = resolve_revision(from_rev)
+    if not from_sha:
+        print("  FAIL cannot resolve --listings-from %r in this clone."
+              % from_rev)
+        print(HISTORY_REQUIREMENT)
+        return 1
+    print("  revisions: listings written %s..%s, migration %s..%s"
+          % (from_sha[:7], base_sha[:7], base_sha[:7], mig_sha[:7]))
+
+    control, why = git_lines("diff", "--name-only",
+                             "%s..%s" % (from_sha, base_sha), "--",
+                             LISTING_PATHSPEC)
+    if control is None:
+        print("  FAIL the control diff did not run: %s" % why)
+        return 1
+    moved, why = git_lines("diff", "--name-only",
+                           "%s..%s" % (base_sha, mig_sha), "--",
+                           LISTING_PATHSPEC)
+    if moved is None:
+        print("  FAIL the listing diff did not run: %s" % why)
+        return 1
+    if not control:
+        print("  FAIL the control returned 0 file(s) over %s..%s, so the pathspec"
+              "\n  is matching nothing and the empty answer below is not a "
+              "measurement." % (from_sha[:7], base_sha[:7]))
+        print("  Pass --listings-from the revision before the window that last "
+              "wrote\n  the listings, and check that the window is not empty.")
+        return 1
+    # One line for both, because either answer is only a measurement next to the
+    # control: "none moved" over a pathspec that matches nothing is the failure
+    # this is shaped to prevent, and "2,705 moved" beside a control of 0 would
+    # be a different one.
+    print("  listing text: %d of them changed over %s..%s; the same pathspec "
+          "returns %d file(s)\n  over %s..%s, the window that last wrote them, "
+          "so the first number is a measurement"
+          % (len(moved), base_sha[:7], mig_sha[:7], len(control), from_sha[:7],
+             base_sha[:7]))
+    if moved:
+        print("  FAIL %d listing(s) changed under the migration:" % len(moved))
+        for path in moved[:20]:
+            print("    %s" % path)
+        if len(moved) > 20:
+            print("    ... and %d more" % (len(moved) - 20))
+        print("  The digests were computed from the listings at HEAD, not from "
+              "the ones the\n  report measured. Re-report, or re-run this "
+              "against the migration that did not move\n  a listing.")
+        return 1
+
+    reports = {}
+    for label, sha in (("base", base_sha), ("migration", mig_sha)):
+        lines, why = git_lines("show", "%s:%s" % (sha, REPORT_REL))
+        if lines is None:
+            print("  FAIL cannot read %s at the %s revision: %s"
+                  % (REPORT_REL, label, why))
+            return 1
+        reports[label] = "\n".join(lines) + "\n"
+    identical, n_base, has_digest, problems = compare_provenance(
+        reports["base"], reports["migration"])
+    if problems:
+        print("  FAIL the two reports differ by more than the column "
+              "(%d problem(s)):" % len(problems))
+        for p in problems[:20]:
+            print("    %s" % p)
+        if len(problems) > 20:
+            print("    ... and %d more" % (len(problems) - 20))
+        return 1
+    print("  report: %d of %d row(s) identical once listing_digest is dropped "
+          "(present in the\n  base: %s; in the migration: %s)"
+          % (identical, n_base, "yes" if has_digest[0] else "no",
+             "yes" if has_digest[1] else "no"))
+
+    touched, why = git_lines("log", "--name-only", "--format=",
+                             "%s..%s" % (base_sha, mig_sha), "--",
+                             "ec/decompiled")
+    if touched is None:
+        print("  (the supporting view did not run: %s)" % why)
+    else:
+        # Supporting, not a gate: a `.c` re-export is a normal thing for a
+        # window to contain, and the digest is over the parsed `.asm`
+        # instruction stream, so it cannot move one. Deduped because --log
+        # names a path once per commit that touched it, and a count that moves
+        # with how the window happened to be split is not worth printing.
+        touched = list(dict.fromkeys(touched))
+        print("  the window touched %d path(s) under ec/decompiled:"
+              % len(touched))
+        for path in touched[:10]:
+            print("    %s" % path)
+        if len(touched) > 10:
+            print("    ... and %d more" % (len(touched) - 10))
+
+    print("  PASS  the migration changed the column and nothing beneath it, and "
+          "no listing text\n  moved while it did.")
+    print("  What that establishes: the committed digests are of the listings "
+          "the last full --report\n  measured. What it does not: that those "
+          "listings are right. The digests were taken\n  without a "
+          "re-encode, so they attest to the measured text and not to its\n  "
+          "correctness -- that is the re-encode's job (docs/findings.md §14e), "
+          "and it\n  still has no schedule.")
     return 0
 
 
@@ -1248,6 +1847,286 @@ def self_test():
                 "(%d rows, %d directories, %d shared)"
                 % (len(seen), len(holders), shared))
 
+    # The provenance comparison, which is the part of --verify-provenance with
+    # no git in it and so the part that can quietly start passing everything.
+    # A comparison that compares nothing, or that drops one column too many, is
+    # indistinguishable from a correct one on any pair that agrees -- and the
+    # committed pair is a pair that agrees. No history needed, so these run
+    # wherever the rest of this file runs.
+    def as_csv(rows, fieldnames):
+        import io
+        buf = io.StringIO()
+        w = csv.DictWriter(buf, fieldnames=fieldnames, lineterminator="\n")
+        w.writeheader()
+        w.writerows(rows)
+        return buf.getvalue()
+
+    base_fields = ["program", "addr", "name", "outcome", "instructions_checked"]
+    mig_fields = ["program", "addr", "name", "outcome", "listing_digest",
+                  "instructions_checked"]
+    # The base rows have no listing_digest key at all, not an empty one: a
+    # migration is the column being absent on one side, and a comparison that
+    # had only ever seen an empty cell would not have been tested for that.
+    before = [{"program": "bank0", "addr": "0040", "name": "a",
+               "outcome": "match", "instructions_checked": "2"},
+              {"program": "bank0", "addr": "0042", "name": "b",
+               "outcome": "partial", "instructions_checked": "3"}]
+    # A migration's column: new on every row, and different from row to row, so
+    # comparing it -- or dropping only the first row's -- fails here.
+    after = [dict(before[0], listing_digest="38b4854aff7d69ca"),
+             dict(before[1], listing_digest="180ddaa4dd467c12")]
+    identical, n_base, has_digest, bad = compare_provenance(
+        as_csv(before, base_fields), as_csv(after, mig_fields))
+    assert_that(identical == 2 and n_base == 2 and not bad,
+                "a migration that adds the column and nothing else compares "
+                "equal (%d of %d row(s), %d problem(s))"
+                % (identical, n_base, len(bad)))
+    assert_that(has_digest == (False, True),
+                "the column is reported absent on the base and present on the "
+                "migration, which is the shape a migration has")
+    # The failure the comparison exists to catch: the migration that also
+    # touched a cell under the column. Byte-identical digests would not catch
+    # this; the rows underneath them do.
+    edited = [dict(after[0], instructions_checked="1"), after[1]]
+    identical, _n, _d, bad = compare_provenance(
+        as_csv(before, base_fields), as_csv(edited, mig_fields))
+    assert_that(identical == 1 and len(bad) == 1
+                and "instructions_checked" in bad[0] and "0040" in bad[0],
+                "one cell changed beneath the column fails, naming the row and "
+                "the cell (compared %d of 2, %d problem(s)%s)"
+                % (identical, len(bad), ": " + bad[0] if bad else ""))
+    # A row-count change. A row only one side has is not "nothing to differ".
+    identical, n_base, _d, bad = compare_provenance(
+        as_csv(before, base_fields), as_csv(after[:1], mig_fields))
+    assert_that(identical == 1 and n_base == 2 and len(bad) == 1
+                and "0042" in bad[0],
+                "a row missing from the migration fails and is named, rather "
+                "than compared as two rows that agree")
+    # And a column the migration also renamed, which a comparison that only
+    # walked the rows would never see: the renamed field matches nothing, so
+    # every row looks unchanged unless the header is compared too.
+    renamed = ["program", "addr", "name", "outcome", "listing_digest", "checked"]
+    identical, _n, _d, bad = compare_provenance(
+        as_csv(before, base_fields),
+        as_csv([{f: r["instructions_checked"] if f == "checked" else r[f]
+                 for f in renamed} for r in after], renamed))
+    assert_that(identical == 0 and len(bad) == 1 and "header" in bad[0],
+                "a column the migration also renamed fails as a header "
+                "difference, and no row counts as identical (%d identical%s)"
+                % (identical, ": " + bad[0] if bad else ""))
+    # An empty side is not a pass either. A reader that has compared no rows
+    # has compared nothing.
+    identical, n_base, _d, bad = compare_provenance(
+        as_csv(before, base_fields), "program,addr\n")
+    assert_that(identical == 0 and len(bad) == 1 and "no rows" in bad[0],
+                "an empty report fails rather than comparing zero rows to zero "
+                "and agreeing")
+
+    # What a run says about itself: the assembler it used, and its tally beside
+    # the committed report's. Reported against synthetic reports rather than the
+    # committed one, on the same principle as the digest probe above -- a
+    # comparison that cannot be made to fail is not a comparison -- and through
+    # committed_report()'s own DictReader, so a misspelled column name shows up
+    # here rather than as a comparison that quietly matches nothing.
+    #
+    # Placed before the find_assembler() early return below, because the thing
+    # under test is what a run claims about itself, and a machine with no
+    # assembler is exactly the one whose "nothing to compare" claims matter most.
+    NIX = "sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14"      # the report's
+    NIXVER = "05.50.4+NoICE+SDCCmods-WIP-R14"
+    HERE = "sdas8051 02.00"                              # this runner's
+    COLUMNS = ["program", "addr", "name", "outcome",
+               "instructions_checked", "instructions_unchecked", "assembler"]
+    cmpdir = tempfile.TemporaryDirectory(prefix="compare-selftest-")
+    written = []
+
+    def synth(rows, fieldnames=None):
+        """A report on disk, and committed_report()'s read of it."""
+        path = os.path.join(cmpdir.name, "report%02d.csv" % len(written))
+        written.append(path)
+        with open(path, "w", newline="") as f:
+            # extrasaction so the "no assembler column" case can be written from
+            # the same row dicts as every other case, rather than from a second
+            # copy of them that could drift.
+            w = csv.DictWriter(f, fieldnames=fieldnames or COLUMNS,
+                               lineterminator="\n", restval="",
+                               extrasaction="ignore")
+            w.writeheader()
+            w.writerows(rows)
+        return committed_report(path)
+
+    def run_row(prog, addr, name, outcome, checked=0, unchecked=0):
+        """One result in the shape verify() returns, so compare_tally() is
+        handed the same tuple it gets in a real run."""
+        return ({"program": prog, "addr": addr, "name": name},
+                outcome, "", checked, unchecked, "")
+
+    def note_text(lines):
+        return " ".join(l for l in lines if l.strip().startswith("NOTE"))
+
+    def plain_text(lines):
+        return " ".join(l for l in lines if not l.strip().startswith("NOTE"))
+
+    def row(checked, unchecked, outcome="match", prog="bank0", addr="0040",
+            name="agrees", assembler=NIX):
+        return {"program": prog, "addr": addr, "name": name,
+                "outcome": outcome, "instructions_checked": str(checked),
+                "instructions_unchecked": str(unchecked), "assembler": assembler}
+
+    three = [row(10, 0), row(5, 0, addr="0042", name="also"),
+             row(0, 2, outcome="assembler-gap", addr="0044", name="gappy")]
+    same = [run_row("bank0", "0040", "agrees", "match", 10),
+            run_row("bank0", "0042", "also", "match", 5),
+            run_row("bank0", "0044", "gappy", "assembler-gap", 0, 2)]
+    same_tally = {"match": 2, "assembler-gap": 1}
+    base = synth(three)
+
+    lines, warned = compare_assembler(NIXVER, base)
+    assert_that(not warned and not note_text(lines)
+                and "the same assembler" in plain_text(lines),
+                "an identical assembler cell and tally report agreement, and "
+                "raise no NOTE")
+    lines, moved, deltas = compare_tally(same, same_tally, base)
+    assert_that(moved == [] and all(d == 0 for _o, _a, _b, d in deltas)
+                and any("moved since the committed report: nothing" in l
+                        for l in lines),
+                "a run that agrees with the committed report names nothing that "
+                "moved")
+
+    # One row crossing a category boundary. Both directions matter, so the
+    # assertions are on the moved row and on each category's signed delta rather
+    # than on the text alone.
+    shifted = list(same)
+    shifted[0] = run_row("bank0", "0040", "agrees", "partial", 10)
+    shifted_tally = {"match": 1, "partial": 1, "assembler-gap": 1}
+    lines, moved, deltas = compare_tally(shifted, shifted_tally, base)
+    assert_that(moved == [("bank0", "0040", "agrees", "partial", "match")],
+                "the one row that crossed a boundary is named with both "
+                "outcomes")
+    assert_that({o: d for o, _a, _b, d in deltas}
+                == {"match": -1, "partial": 1, "assembler-gap": 0,
+                    "mismatch": 0},
+                "every category is compared, and only the two that moved carry "
+                "a delta")
+    named = [l for l in lines if "agrees" in l and " here, " in l]
+    assert_that(len(named) == 1 and "partial here, match in " in named[0]
+                and "reassembly.csv" in named[0],
+                "the line names the row, both its outcomes, and the file the "
+                "other outcome came from")
+    assert_that([l for l in lines if l.strip().startswith("rows")][0].split()[-2:]
+                == ["3", "3"],
+                "a category that moved does not change the row count, and the "
+                "line says so")
+
+    # A version difference is the case this whole block was added for, and the
+    # two halves of it are separate claims: the warning names both strings, and
+    # the exit status does not move.
+    lines, warned = compare_assembler("02.00", base)
+    text = note_text(lines)
+    assert_that(warned and text.count(HERE) == 1 and text.count(NIX) == 1,
+                "a different assembler is one NOTE naming both version strings "
+                "in full")
+    assert_that(run_status(shifted_tally) == 0 and run_status({"mismatch": 1}) == 1,
+                "a version difference and a moved category are reported and do "
+                "not change the exit status, which is still mismatch == 0")
+
+    # More than one committed value has no single answer to compare against.
+    mixed = synth([row(10, 0, assembler=HERE), row(5, 0, addr="0042"),
+                   row(0, 2, addr="0044", outcome="assembler-gap")])
+    lines, warned = compare_assembler("02.00", mixed)
+    assert_that(warned and "%s: 1 row" % HERE in plain_text(lines)
+                and "%s: 2 rows" % NIX in plain_text(lines)
+                and "no single answer to compare against" in note_text(lines)
+                and "the same assembler" not in plain_text(lines),
+                "two committed assemblers are both named with their row counts, "
+                "and neither is picked as the one to compare against")
+
+    # A report from before the column existed, in both of the shapes it can take.
+    for label, committed in (
+            ("with no assembler column",
+             synth(three, fieldnames=COLUMNS[:-1])),
+            ("with empty assembler cells",
+             synth([dict(r, assembler="") for r in three]))):
+        lines, warned = compare_assembler(NIXVER, committed)
+        assert_that(warned and "before the column existed" in note_text(lines)
+                    and "the same assembler" not in plain_text(lines),
+                    "a report %s agrees with nothing, rather than being read as "
+                    "agreement" % label)
+
+    lines, warned = compare_assembler("unknown", base)
+    assert_that(warned and "could not be read" in note_text(lines)
+                and "the same assembler" not in plain_text(lines),
+                "a version that could not be read is never reported as "
+                "agreement: it established nothing")
+
+    # An address in two bank windows is two rows, so the key has to be the
+    # pair. 54 addresses in the committed report are like this; the two rows
+    # here are given *different* committed outcomes on purpose: with identical
+    # ones a key of addr alone collapses them and still happens to give the
+    # right answer for this run, which is the case a weaker version of this
+    # assertion would have passed.
+    shared = synth([row(10, 0, prog="bank0", name="in_bank0"),
+                    row(10, 0, prog="bank1", name="in_bank1",
+                        outcome="partial")])
+    _lines, moved, _deltas = compare_tally(
+        [run_row("bank0", "0040", "in_bank0", "match", 10),
+         run_row("bank1", "0040", "in_bank1", "match", 10)],
+        {"match": 2}, shared)
+    assert_that(moved == [("bank1", "0040", "in_bank1", "match", "partial")],
+                "the same address in two programs is two rows, each compared "
+                "against its own: the bank1 row moved, and the bank0 row, whose "
+                "committed outcome differs, did not")
+
+    # An outcome outside the four is counted and named rather than dropped, and
+    # the two halves still add up to the row count. check_one() can return all
+    # four of these, so this is the shape a real race or crash produces.
+    odd = synth([row(10, 0), row(5, 0, addr="0042", outcome="assembler-error"),
+                 row(0, 2, addr="0044", outcome="error")])
+    ordered, residual = split_tally(odd["tally"])
+    assert_that([o for o, _ in ordered] == list(OUTCOMES)
+                and residual == [("assembler-error", 1), ("error", 1)]
+                and sum(n for _o, n in ordered + residual) == 3,
+                "an outcome outside the four is named by the residual, and the "
+                "four plus the residual add up to the report's own row count")
+    assert_that(run_status({"assembler-error": 1, "error": 2}) == 0,
+                "an assembler-error or error row is counted and named, not "
+                "failed on -- docs/findings.md §14g names that as still open")
+
+    # Nothing to compare against is a reading, not a crash.
+    absent = committed_report(os.path.join(cmpdir.name, "not-written.csv"))
+    lines, warned = compare_assembler("02.00", absent)
+    assert_that(absent is None and warned
+                and "nothing to be compared against" in note_text(lines),
+                "a missing report is one line saying there is nothing to "
+                "compare against, not an exception")
+    lines, moved, deltas = compare_tally(same, same_tally, absent)
+    assert_that(moved == [] and deltas == []
+                and any("nothing to compare against" in l for l in lines),
+                "a missing report means the tally comparison returns no "
+                "comparison, rather than an empty one that reads as agreement")
+
+    # --limit: a 40-row run against 2,705 is not a disagreement, and printing
+    # deltas for one would train the reader to skip the block.
+    lines, moved, deltas = compare_tally(same[:1], {"match": 1}, base,
+                                         limited=True)
+    assert_that(moved == [] and deltas == []
+                and any("1 of the committed report's 3 rows" in l for l in lines)
+                and any("committed report: 2 match, 0 partial, 1 "
+                        "assembler-gap, 0 mismatch (of 3)" in l for l in lines),
+                "a --limit run prints the committed tally as a reference and "
+                "compares nothing against it")
+
+    # Two functions in flight at once must not share a scratch directory. 1, 2,
+    # 3, 5 is the set a pool of four workers drifts into once one finishes
+    # early, and it is the set that made four --jobs 4 runs of these same
+    # committed inputs report 2,579, 2,588, 2,590 and 2,591 match.
+    dirs = [scratch_dir(cmpdir.name, i) for i in (1, 2, 3, 5)]
+    assert_that(len(set(dirs)) == 4 and all(os.path.isdir(d) for d in dirs)
+                and scratch_dir(cmpdir.name, 1) == dirs[0],
+                "every function gets its own scratch directory, and it is the "
+                "same one when asked twice")
+    cmpdir.cleanup()
+
     # The comparison itself, against a byte string we control. A check that
     # cannot fail on a wrong byte is not a check.
     sdas = find_assembler()
@@ -1323,6 +2202,15 @@ def main():
     ap.add_argument("--add-digest-column", action="store_true",
                     help="one-shot: add listing_digest to the existing report, "
                          "without re-encoding (refuses to run twice)")
+    ap.add_argument("--verify-provenance", action="store_true",
+                    help="audit a listing_digest migration against the history "
+                         "it sits in; needs --base and --migration, and a full "
+                         "git history")
+    ap.add_argument("--base", help="last full --report revision")
+    ap.add_argument("--migration", help="the revision that added listing_digest")
+    ap.add_argument("--listings-from",
+                    help="revision before the window that last wrote the "
+                         "listings, for the positive control (default: <base>^)")
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args()
     if args.emit_csv and (args.check or args.self_test or args.add_digest_column):
@@ -1337,6 +2225,10 @@ def main():
         return 2
     if args.self_test:
         return self_test()
+    if args.verify_provenance:
+        if not args.base or not args.migration:
+            ap.error("--verify-provenance needs --base and --migration")
+        return verify_provenance(args.base, args.migration, args.listings_from)
     if args.add_digest_column:
         return add_digest_column()
     if args.check:
@@ -1345,23 +2237,25 @@ def main():
     # millisecond rather than the whole 2,705-row re-encode that follows.
     if args.emit_csv and refuses_committed_report(args.emit_csv):
         return 1
-    ran = verify(limit=args.limit, jobs=args.jobs,
-                 work=args.work, sdas=args.assembler)
-    if isinstance(ran, int):
-        # verify()'s "no assembler, so this did not run" return, which is an
-        # exit code and not a result set. It has always been one; unpacking it
-        # as the 3-tuple below turned a clear message into a TypeError.
-        return ran
-    results, tally, sdas = ran
+    verified = verify(limit=args.limit, jobs=args.jobs, work=args.work,
+                      sdas=args.assembler)
+    if verified is None:
+        # verify() has already printed why there is no result; 2 is the status
+        # for "the environment is missing the tool", which is what it has always
+        # meant here and what the run would have exited with if main() had
+        # handled the answer it was given.
+        return 2
+    results, tally, sdas, version = verified
     if args.report:
-        print("\n  wrote %s" % os.path.relpath(write_report(results, sdas), REPO))
+        print("\n  wrote %s" % os.path.relpath(
+            write_report(results, sdas, version=version), REPO))
     emitted = 0
     if args.emit_csv:
         emitted = emit_csv(results, sdas, args.emit_csv)
     # A refused --emit-csv is the user's flag not being honoured, so it is a
     # non-zero run whatever the tallies say; a run that quietly did not write
     # the file it was asked for is how a comparison ends up comparing nothing.
-    return emitted or (0 if tally.get("mismatch", 0) == 0 else 1)
+    return emitted or run_status(tally)
 
 
 if __name__ == "__main__":

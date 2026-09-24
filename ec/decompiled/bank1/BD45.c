@@ -18,7 +18,7 @@ void FUN_CODE_bd45(void)
 LAB_CODE_bdc5:
     cVar2 = DAT_EXTMEM_0539;
     if ((DAT_EXTMEM_0497 & 1) != 1) {
-      cVar2 = DAT_EXTMEM_0403 + -0x14;
+      cVar2 = BAT_DESIGN_CAPACITY_1 + -0x14;
     }
     guard_then_store_pair_0834(cVar2,0x80,1);
     return;
@@ -45,7 +45,7 @@ LAB_CODE_bdc5:
   }
   cVar2 = DAT_EXTMEM_0539;
   if ((DAT_EXTMEM_0497 & 1) != 1) {
-    cVar2 = DAT_EXTMEM_0403 + -0x14;
+    cVar2 = BAT_DESIGN_CAPACITY_1 + -0x14;
   }
   guard_then_store_pair_0834(cVar2,0,3);
   return;

@@ -17,7 +17,7 @@
 void push_r5_into_070f_ring_when_gates_pass(undefined1 param_1)
 
 {
-  if ((DAT_EXTMEM_0440 != '\0') && (DAT_EXTMEM_06e6 == '\x01')) {
+  if ((XDATA_0440 != '\0') && (DAT_EXTMEM_06e6 == '\x01')) {
     DAT_EXTMEM_070f = DAT_EXTMEM_070f + 1 & 0xf;
     *(undefined1 *)CONCAT11(7,DAT_EXTMEM_070f + 0x10) = param_1;
     load_dptr_8588_tail_jump_1100();

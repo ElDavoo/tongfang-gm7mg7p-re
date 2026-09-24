@@ -17,14 +17,14 @@ void latch_0983_b2_from_0442_b3(void)
 
 {
   if ((DAT_EXTMEM_0983 & 4) == 0) {
-    if ((DAT_EXTMEM_0442 & 8) != 0) {
+    if ((XDATA_0442 & 8) != 0) {
       DAT_EXTMEM_080f = 10;
       DAT_EXTMEM_080d = 10;
       DAT_EXTMEM_0806 = 0x20;
       DAT_EXTMEM_0983 = DAT_EXTMEM_0983 | 4;
     }
   }
-  else if ((DAT_EXTMEM_0442 & 8) == 0) {
+  else if ((XDATA_0442 & 8) == 0) {
     DAT_EXTMEM_0983 = DAT_EXTMEM_0983 & 0xfb;
   }
   return;

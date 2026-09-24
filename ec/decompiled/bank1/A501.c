@@ -14,7 +14,7 @@
 void gate_0442_06e6_before_call_1a7a(void)
 
 {
-  if (((DAT_EXTMEM_0442 & 1) == 0) && ((DAT_EXTMEM_06e6 == '\x05' || (DAT_EXTMEM_06e6 == '\0')))) {
+  if (((XDATA_0442 & 1) == 0) && ((DAT_EXTMEM_06e6 == '\x05' || (DAT_EXTMEM_06e6 == '\0')))) {
     load_dptr_c16c_tail_jump_1100();
   }
   return;

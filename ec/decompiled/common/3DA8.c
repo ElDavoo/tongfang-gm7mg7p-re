@@ -9,7 +9,7 @@
 void FUN_CODE_3da8(void)
 
 {
-  if (DAT_EXTMEM_0440 == '\0') {
+  if (XDATA_0440 == '\0') {
     _0_4 = 0;
   }
   else {

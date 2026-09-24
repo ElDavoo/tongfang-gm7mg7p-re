@@ -6,10 +6,14 @@
 
 /* Loads DPTR=0x851C and R2=0x17 and calls 0xA530, writes 0 to XDATA 0x1510, calls 0x95AE, then
    clears bits 4 and 5 of XDATA 0x0480, bit 6 then bit 5 of XDATA 0x0801, sets bits 7 and 5 of XDATA
-   0x06E1, and clears bits 4 and 3 of XDATA 0x0442. What 0xA530 does with the DPTR/R2 pair is not
-   decoded here.
+   0x06E1, and clears bits 4 and 3 of XDATA 0x0442. What 0xA530 does with the DPTR/R2 pair is now
+   decoded: it is a three-byte CODE record -- BE16 destination, then value -- per iteration, so the
+   23 records at CODE 0x851C store 0x00 to XDATA 0x0440 (record 9), 0x05 to 0x0457, 0x00 to 0x0459
+   and 0x00 to 0x0480 among the 0x04xx destinations, and 19 values elsewhere.
+   ec/annotations/xdata-0440-readers.md.
    type: state
-   evidence: ec/decompiled/bank1/8418.asm; ec/decompiled/bank1/8418.c
+   evidence: ec/decompiled/bank1/8418.asm; ec/decompiled/bank1/8418.c;
+   ec/annotations/xdata-0440-readers.md
    basis: hand-decoded */
 
 void zero_1510_and_clear_xdata_flag_bits(void)
@@ -21,7 +25,7 @@ void zero_1510_and_clear_xdata_flag_bits(void)
   DAT_EXTMEM_0480 = DAT_EXTMEM_0480 & 0xcf;
   DAT_EXTMEM_0801 = DAT_EXTMEM_0801 & 0x9f;
   DAT_EXTMEM_06e1 = DAT_EXTMEM_06e1 | 0xa0;
-  DAT_EXTMEM_0442 = DAT_EXTMEM_0442 & 0xe7;
+  XDATA_0442 = XDATA_0442 & 0xe7;
   return;
 }
 

@@ -83,4 +83,4 @@ independently checkable rather than taken on faith:
   unencodable set is identical on both sides and 52 of 2,705 rows change
   outcome, all from `assembler-gap` to better.
   **`ec-reencode/2026-09-23-sdas8051-rowdiff.csv`** holds those 52 rows, the
-  only rows that differ. Source for findings.md §14g.
+  only rows that differ. Source for findings.md §14h.

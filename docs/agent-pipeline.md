@@ -48,7 +48,7 @@ only covers what's specific to *this* copy.
   comparison — so `AGENT_GATES_DEEP=1 .github/scripts/agent-gates.sh` is the
   single command that checks everything, and the cheap tier's closing note
   names that command on every run.
-  Two things to carry across if this file is ever re-copied from the template:
+  Three things to carry across if this file is ever re-copied from the template:
   1. **The deep tier needs a schedule, and it does not have one.** What runs
      where, as of 2026-09-23 (issue #139): per commit, on `push` to `main` and
      on every pull request, `ci.yml` runs the cheap tier bare, and the deep
@@ -60,6 +60,13 @@ only covers what's specific to *this* copy.
      It runs the deep tier through its documented entry point and nothing
      else:
      `AGENT_GATES_DEEP=1 .github/scripts/agent-gates.sh`.
+     It tees that run to a log and uploads it as an artifact with
+     `if: always()` (issue #158), because the same file's own comment says
+     GitHub delays and sometimes drops scheduled runs without telling anyone: a
+     run that happened leaves an artifact behind and a run that did not leaves
+     none, so "the nightly did not run" stays distinguishable from "the nightly
+     found nothing". Absence is observable, not failing — making a vanished run
+     fail something needs a checker that runs when the scheduled one did not.
      Until it is landed, the re-encode is opt-in, and the reason it is opt-in
      rather than dropped is in `docs/findings.md` §14e — which also records
      what per-commit coverage is still missing, and it is not nothing: since
@@ -75,14 +82,36 @@ only covers what's specific to *this* copy.
      deferred. The deep tier adds an independent re-derivation, it does not
      substitute for anything. `verify_reassembly.py --check` gained a third
      assertion for the same reason: it was added to the cheap tier, not
-     promoted out of it. Worth knowing when reading that file, though: its
-     case for `verify_reassembly.py` runs `--check` and **not** `--self-test`,
-     so the digest's known-answer assertions run wherever a human or the deep
-     tier runs them and not on every commit. The per-commit protection is the
-     `--check` comparison itself, which covers all 2,705 rows; the assertions
-     guard the tool rather than the tree. Adding `--self-test` to that case is
-     a one-line change to a template-copied file, and needs the re-copy note
-     above — which is why it is named here rather than done in passing.
+     promoted out of it, and its `--self-test` joined it there
+     (2026-09-23, issue #149): the `*verify_reassembly.py)` case now runs
+     `--check && --self-test`, the same shape as the `*decompile_native.py)`
+     case, so the digest's known-answer assertions — the canonical form, the
+     `compare_digests()` failure paths, `GAP_FORMS`, `BIT_UNSUPPORTED` — run
+     per commit rather than only where a human asks for them. They sit
+     before the self-test's no-assembler early exit, so that is true on a
+     runner without `sdas8051` as well. The `--check` comparison still covers
+     all 2,705 rows and the assertions still guard the tool rather than the
+     tree. **A re-copy of `agent-gates.sh` from the template restores the
+     `--check`-only case, so this has to be re-applied with it.** The
+     re-encode of the committed listing is still the deep tier's, and is
+     still unscheduled.
+  3. **`--verify-provenance` needs a full git history, and `ci.yml` does not
+     have one** (2026-09-23, issue #159). The mode audits a `listing_digest`
+     migration against two committed revisions (`docs/findings.md` §14f), so
+     how deep the clone is is part of its contract the way the assembler is part
+     of `--report`'s: the agent stages check out with `fetch-depth: 0`
+     (`agent-implement.yml:118`, `agent-fix.yml:116`, `agent-review.yml:64`)
+     and can run it, while both of `ci.yml`'s checkouts (`:34`, `:64`) are
+     default-depth, and `08b72e2` and `a56b3bb` do not resolve from one. It
+     therefore fails there with its history requirement rather than auditing
+     whatever happened to be checked out, and it is not in the gate for that
+     reason. Putting it in the per-commit gate is a one-line
+     `fetch-depth: 0` on those two checkouts that a human lands, and whether
+     that is worth growing every checkout for — or whether the mode stays a
+     full-clone command like `--add-digest-column` and `--report` — is the open
+     question. It is not made here: `.github/` is template-copied and the
+     pipeline token has no `workflow` scope, the same reason item 1's schedule
+     is prepared rather than landed.
 - **`tools/run-tests.sh`, and the gate line that would call it**
   (2026-09-23, issue #162) — the four offline `unittest` suites
   (`ec/tools/test_grade_0751_isolation.py`, `windows/tools/test_ec_watch.py`,

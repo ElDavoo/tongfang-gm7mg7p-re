@@ -324,5 +324,70 @@ class FirmwareTests(unittest.TestCase):
         self.assertIn("0x8E8B fall-through", reach[0x075C])
 
 
+class UserClearCalleeTests(unittest.TestCase):
+    """What manual-fan-ctrl-0751.md 8a says about the two routines the USER
+    branches tail-jump to. Section 8 had them "themselves long" and was wrong
+    against its own arms CSV; 8a quotes 20 and 8 and then rests its sharpest
+    claim -- that both entries into the 0x089E/0x089F pair store arrive with
+    the accumulator already zeroed -- on the bytes at three addresses.
+
+    None of that is checked by a gate: no gate compares a document to the arms
+    CSV, and the walk tracks DPTR rather than A, so the accumulator claim is
+    invisible to everything else in this file. The cases are here because the
+    claim is the strongest thing 8a says and the cheapest thing to get wrong.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.d = Path(FIRMWARE).read_bytes()
+        off, magic = wba.PD_MARKER
+        cls.rows = wba.arms_for(cls.d, 0x0751, cls.d[off:off + len(magic)] == magic, 16, 500)
+
+    def at(self, runtime, n):
+        """`n` bytes of bank0 at a runtime address, as the image holds them."""
+        return self.d[wba.offset_for_runtime(runtime, "bank0"):][:n]
+
+    def test_the_two_callees_are_as_short_as_8a_says(self):
+        # 20 and 8, both ending in `ret`. The doc quotes them because the
+        # arms CSV's `insns` column says so, and this is the same number read
+        # off the image rather than off the document.
+        self.assertEqual(wba.callee_row(self.d, "bank0", 0xB716, 16, 500)[0], 20)
+        self.assertEqual(wba.callee_row(self.d, "bank0", 0xB82E, 16, 500)[0], 8)
+
+    def test_the_user_set_arm_reaches_the_pair_store_too(self):
+        # 8a says both entries into 0xB730 carry A = 0, which is only a
+        # statement about two paths if the USER-*set* path is one of them.
+        #
+        # Anchored on the callee, not on 0x089E turning up in the arm's
+        # writes: the `jnc 0xb736` at 0xB714 falls through into the
+        # 0xB716-0xB736 body, so the arm's own linear block already decodes
+        # 0xB730 and 0x089E is in `writes` whether or not the USER-set path
+        # is reachable. 0xB730 in `callees` is the tool recording the
+        # `ljmp 0xb730` at 0xB6A5, and it does flip when those bytes go.
+        # (A tail jump is not followed inline -- it ends the arm and appends
+        # the target to `callees`; see `descend()`.)
+        arm = next(a for off, region, rt, test, arms in self.rows
+                   for a in arms if a.start == 0xB5F1)
+        self.assertIn(0xB730, arm.callees)
+
+    def test_the_accumulator_is_cleared_immediately_before_both_entries(self):
+        # The claim itself, on the bytes. `clr a` at 0xB72B is one instruction
+        # ahead of the store inside 0xB716, and `clr a` at 0xB6A4 is one ahead
+        # of the ljmp that reaches the same store from the USER-set arm -- so
+        # the stored value is zero on both and neither depends on what the
+        # caller happened to leave in A.
+        self.assertEqual(self.at(0xB72B, 1), b"\xe4")            # clr a, inside 0xB716
+        self.assertEqual(self.at(0xB6A4, 4), b"\xe4\x02\xb7\x30")  # clr a ; ljmp 0xb730
+        self.assertEqual(self.at(0xB730, 3), b"\x90\x08\x9e")      # mov dptr,#0x089e
+
+    def test_those_are_the_only_two_entries_into_0xb730(self):
+        # 8a says a byte scan finds one `ljmp 0xb730` and no other, and that
+        # is what lets it say "both" rather than "the two this method finds".
+        # If a second caller ever appears the accumulator claim stops covering
+        # the routine, and the test that should notice is this one.
+        self.assertEqual([f"0x{i:04X}" for i in range(len(self.d) - 2)
+                          if self.d[i:i + 3] == b"\x02\xb7\x30"], ["0xB6A5"])
+
+
 if __name__ == '__main__':
     unittest.main()

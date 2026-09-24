@@ -19,7 +19,7 @@ void dispatch_0394_low3_through_ljmp_table(void)
   if ((DAT_EXTMEM_0497 & 1) == 0) {
     return;
   }
-  if (DAT_EXTMEM_045f != -0x25) {
+  if (XDATA_045F != -0x25) {
     DAT_EXTMEM_03ff = 0;
   }
   switch(DAT_EXTMEM_0394 & 7) {
