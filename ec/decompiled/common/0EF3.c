@@ -11,7 +11,7 @@
    RAM 0x22, none of which the .asm covers, so that tail is reported from the .c and not decoded.
    The .asm header marks the boundary a hypothesis.
    type: init
-   evidence: ec/decompiled/bank0/0EF3.asm; ec/decompiled/bank0/0EF3.c
+   evidence: ec/decompiled/common/0EF3.asm; ec/decompiled/common/0EF3.c
    basis: hand-decoded */
 
 void write_internal_ram_init_constants(void)

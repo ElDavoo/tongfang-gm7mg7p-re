@@ -9,7 +9,7 @@
    is non-zero; that body is absent from the one-instruction listing and is reported, not decoded,
    from the .c.
    type: forwarder
-   evidence: ec/decompiled/bank0/000B.asm; ec/decompiled/bank0/000B.c
+   evidence: ec/decompiled/common/000B.asm; ec/decompiled/common/000B.c
    basis: hand-decoded */
 
 undefined1 timer0_vector_forwarder_to_0530(undefined1 param_1)

@@ -56,6 +56,22 @@ repository's rules are about.
   files it named were deleted together, so every file-existence check still
   held.
 
+It also passes over [`subsystems.md`](subsystems.md), the map from mechanism to
+function, and refuses a citation there that resolves to no row of this file, one
+whose `name` disagrees with the row's current name, a `type: unresolved` row
+cited without the `[unresolved]` marker, and a census count that disagrees with a
+recount.
+
+The same pass refuses an `evidence` path that is not on disk, and it reads
+**every row of this file**, not only the ones the map cites: the citation list
+is the map's selection, and a row it happens not to quote is exactly where a
+stale path can sit unseen. Eleven rows here were citing files that do not exist
+— all `common` scope, all citing `ec/decompiled/bank0/` for a function the
+common-area de-dup had already moved to `ec/decompiled/common/`. Five of the
+eleven are on rows the map does not cite, which is what the wider reach is for;
+the paths were stale and no earlier gate could see them, because the check
+above only asks whether a path is *named*, not whether it exists.
+
 ## How the bulk rows were produced
 
 The first 67 rows were written by hand. The rest came from a fan-out, and the

@@ -262,6 +262,17 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   every address in `registers.yaml`, the command that produced it, and the
   subset of it that backs the static-scan validation in `docs/findings.md`
   §4d. Read it before arguing from any reference count in this repo.
+- **`annotations/subsystems.md`** — the map from mechanism to function: reset
+  and interrupt entry, BL51 bank switching, the charge-voltage target, the
+  fan/thermal cluster, power modes, the lightbar, the index/data path, and the
+  XDATA naming, each with the named functions that establish it. Fronted by a
+  **measured** coverage census rather than a claim of completeness — 2710
+  exported functions against 1804 annotation rows, 94% of the common area
+  unannotated — because a subsystem map that read as a partition of the
+  firmware would be a claim the export does not support.
+  `build_ec_decompile.py --check` resolves every citation in it against
+  `ghidra-functions.csv` and recounts the census, so a rename in the CSV cannot
+  leave the map quoting a function that no longer exists.
 - **`annotations/charge-profile-flow.md`** — full traced control flow for the
   three charge profiles, including the manual-control gate that made the
   systemd per-boot reapply necessary.

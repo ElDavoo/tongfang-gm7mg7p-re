@@ -9,7 +9,7 @@
    CODE window. The body at 0x1100 is not present in this decompiled tree, so the bank-switch
    reading is taken from the decompiler's symbol and is not decoded here.
    type: bank-switch
-   evidence: ec/decompiled/bank0/11C2.asm; ec/decompiled/bank0/11C2.c
+   evidence: ec/decompiled/common/11C2.asm; ec/decompiled/common/11C2.c
    basis: hand-decoded */
 
 void load_dptr_bf57_tail_jump_1100(void)
