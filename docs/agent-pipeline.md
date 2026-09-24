@@ -211,6 +211,14 @@ only covers what's specific to *this* copy.
   statement about the firmware when Ghidra's decompiler can fail silently
   instead; and `ec/decompiled/` and `bios/decompiled/` added to the
   citable-evidence list, which `docs/findings.md` already cited.
+- **One review per run in `agent-review.yml`** (2026-09-24, not in the
+  template). The template's second, inline pass (the `code-review` plugin,
+  posting as `claude[bot]`) is gone. The verdict pass now returns its
+  findings as structured data: file, line, problem, fix, whether each one
+  blocks, and what it re-checked itself. The workflow renders that data as the
+  markdown body of the `github-actions[bot]` review, and the same text is the
+  fix stage's payload. A re-copy of the template brings back the inline pass
+  and the one-paragraph `summary` schema.
 - **Parallel agents, and `.github/workflows/agent-conflicts.yml`** (2026-09-24,
   not in the template). The `agent-pipeline` concurrency group is one per issue
   (`agent-pipeline/agent/issue-N`) instead of one for the whole pipeline, so up
