@@ -1543,7 +1543,7 @@ registers:
 
   - name: XDATA_08A0
     addr: 0x08A0
-    bits: "0-7 value; 0xB7E8 increments it and 0xB7F0 tests it against 0x0A"
+    bits: "0-7 value; 0xB7E8 increments it and 0xB7F0 tests it against 0x0A, carry-in included"
     sources: [static-scan, xdata-refs]
     static_refs: 2
     static_refs_main_ec: 2
@@ -1553,10 +1553,12 @@ registers:
       Two main-EC sites, both inside the 0x0751 USER block, and no PD-image
       site. They are the two arms of the same choice: 0xB7E8, on the USER-
       set arm reached from 0xB73C, reads the byte, increments it, stores it
-      back and compares the result against 0x0A; reaching 0x0A then sets bit
-      6 of 0x08EB and returns. 0xB836, in the routine the other arm
+      back and compares the result against 0x0A; because 0xB7EF sets the
+      carry first, the subb at 0xB7F0 really computes A - 0x0A - 1, so
+      0xB7F2 retires at 0x0A or below and bit 6 of 0x08EB is set from 0x0B
+      up rather than at 0x0A. 0xB836, in the routine the other arm
       tail-jumps to, stores 0 into it after clearing bit 6 of 0x08EB -- so
-      the byte is a count that runs to ten and latches, and the "clear" path
+      the byte is a count that runs to 0x0A and latches, and the "clear" path
       resets both the count and the latch. Zero against a count, not present
       against absent: the write is not skipped either way.
       Both sites are named here, so "two writers" is what this method finds
@@ -1564,7 +1566,7 @@ registers:
       through a DPTR built at run time is invisible to it, which is the
       0x07B0-0x07BE blind spot the header names. Nothing is read back, so
       present-untested: the stores are instructions, not behaviour. What
-      reads the count, and what the ten attempts are attempts of, is not
+      reads the count, and what the attempts are attempts of, is not
       established here.
 
   - name: XDATA_08A2
@@ -1606,15 +1608,19 @@ registers:
       (ec/annotations/manual-fan-ctrl-0751.md 8a). Both set sites are
       themselves conditional -- 0xB65F and 0xB7BF test the bit and skip the
       counting block when it is already set, and 0xB7F2 retires once 0x08A0
-      has reached 0x0A -- so bit 6 looks like a latch the counter trips.
+      has reached 0x0A, which latches bit 6 from 0x0B up -- so bit 6 looks
+      like a latch the counter trips.
       0x8931 masks 0x48, which is exactly bits 3 and 6, and branches on the
       result: the one site this method finds that reads the two together.
       What it decides is not decoded here.
       Bits 2, 4, 5 and 7 are also read-modify-written, at 0xD487 and 0xD6A8
-      (bit 2), 0xB476 and 0xC86A (bit 7), bank1 0xA916 (bit 4) and 0xB53E
-      and 0xB5B2 (bit 5); bits 2, 3, 5, 6 and 7 are branched on at other sites
-      besides. Nothing is read back. Every bit above is "the EC touches this
-      bit", which is not the same claim as "the EC acts on it".
+      (bit 2), 0xB476 and 0xC86A (bit 7), 0xCCB7 (bit 4, a set/clear pair
+      whose selector is bit 1 of 0x0490, tested by the jb acc.1 at 0xCCBA)
+      and 0xB53E and 0xB5B2 (bit 5); bits 2, 3, 4, 5, 6 and 7 are branched
+      on at other sites besides, including bank1 0xA916, which reads bit 4
+      and branches on it at 0xA91C without storing the byte back. Nothing
+      is read back. Every bit above is "the EC touches this bit", which is
+      not the same claim as "the EC acts on it".
 
   - name: XDATA_089E
     addr: 0x089E

@@ -41,7 +41,7 @@ void probe_159a_19f0_0983_then_dispatch(char param_1)
       DAT_EXTMEM_097f = DAT_EXTMEM_097f & 0xfe;
     }
     in_PSW = in_PSW & 0xdd;
-    if ((DAT_EXTMEM_0459 & 8) == 0) {
+    if ((XDATA_0459 & 8) == 0) {
       DAT_EXTMEM_06e1 = DAT_EXTMEM_06e1 & 0x7f;
       trampoline_to_c201();
       DAT_EXTMEM_06c0 = 0x14;
@@ -51,14 +51,14 @@ void probe_159a_19f0_0983_then_dispatch(char param_1)
   }
   trampoline_to_c4b7();
   if ((DAT_EXTMEM_0495 & 0x80) == 0) {
-    DAT_EXTMEM_045d = 0;
+    XDATA_045D = 0;
     DAT_EXTMEM_0704 = 0;
     if ((DAT_EXTMEM_06e1 & 0x80) == 0) {
       in_PSW = in_PSW & 0xdd;
       if ((DAT_EXTMEM_097f & 1) == 0) {
         DAT_EXTMEM_06c0 = DAT_EXTMEM_06c0 + -1;
         if (DAT_EXTMEM_06c0 != '\0') {
-          DAT_EXTMEM_045d = 0;
+          XDATA_045D = 0;
           DAT_EXTMEM_0704 = 0;
           return;
         }

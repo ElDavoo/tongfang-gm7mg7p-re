@@ -65,7 +65,7 @@ byte FUN_CODE_b737(undefined1 param_1,byte param_2)
   }
   write_64_91_pair(0xa47);
 LAB_CODE_b7bb:
-  if ((DAT_EXTMEM_08eb >> 6 & 1) == 1) {
+  if ((XDATA_08EB >> 6 & 1) == 1) {
     sVar6 = 0xa47;
     load_dptr_be16_from_xdata();
     if (*(byte *)(sVar6 + 0xf) <= CPU_TEMP) {
@@ -82,7 +82,7 @@ LAB_CODE_b7bb:
     if (-1 < cVar1) {
       return bVar2;
     }
-    DAT_EXTMEM_08eb = DAT_EXTMEM_08eb & 0xbf;
+    XDATA_08EB = XDATA_08EB & 0xbf;
   }
   else {
     load_dptr_be16_from_xdata(0xa47);
@@ -91,18 +91,18 @@ LAB_CODE_b7bb:
       finish_dptr_be16_load(0xa47);
       cVar3 = -0x80;
       code_byte_sub_from_044c(0xe);
-      cVar1 = DAT_EXTMEM_08a0;
+      cVar1 = XDATA_08A0;
       if (-1 < cVar3) {
-        DAT_EXTMEM_08a0 = DAT_EXTMEM_08a0 + 1;
-        if (DAT_EXTMEM_08a0 < 0xb) {
+        XDATA_08A0 = XDATA_08A0 + 1;
+        if (XDATA_08A0 < 0xb) {
           return cVar1 - 10;
         }
-        DAT_EXTMEM_08eb = DAT_EXTMEM_08eb | 0x40;
-        return DAT_EXTMEM_08eb;
+        XDATA_08EB = XDATA_08EB | 0x40;
+        return XDATA_08EB;
       }
     }
   }
-  DAT_EXTMEM_08a0 = 0;
+  XDATA_08A0 = 0;
   return 0;
 }
 

@@ -13,8 +13,8 @@
 void sjmp_f160(void)
 
 {
-  if (((DAT_EXTMEM_06e6 == '\x01') && (DAT_EXTMEM_0440 != '\0')) && (DAT_EXTMEM_070d == '\0')) {
-    DAT_EXTMEM_045b = DAT_EXTMEM_045b ^ 1;
+  if (((DAT_EXTMEM_06e6 == '\x01') && (XDATA_0440 != '\0')) && (DAT_EXTMEM_070d == '\0')) {
+    XDATA_045B = XDATA_045B ^ 1;
     DAT_EXTMEM_0709 = DAT_EXTMEM_0709 | 1;
   }
   return;

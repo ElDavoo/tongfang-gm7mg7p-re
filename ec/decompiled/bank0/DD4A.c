@@ -14,7 +14,7 @@
 void or_intmem_32_low_nibble_into_045a(void)
 
 {
-  DAT_EXTMEM_045a = DAT_EXTMEM_045a & 0xf0 | DAT_INTMEM_32 & 0xf;
+  XDATA_045A = XDATA_045A & 0xf0 | DAT_INTMEM_32 & 0xf;
   return;
 }
 

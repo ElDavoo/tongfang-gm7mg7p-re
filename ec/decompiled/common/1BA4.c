@@ -32,7 +32,7 @@ byte FUN_CODE_1ba4(char param_1)
       return DAT_EXTMEM_0a56;
     }
   }
-  if (DAT_EXTMEM_0440 != '\0') {
+  if (XDATA_0440 != '\0') {
     DAT_EXTMEM_0a56 = DAT_EXTMEM_0a56 ^ 1;
   }
   return DAT_EXTMEM_0a56;

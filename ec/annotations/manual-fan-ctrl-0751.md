@@ -559,7 +559,7 @@ two of the three are not the USER bit:
 path where USER never entered the decision. And `0xB5F5` is the same gate
 that §9.1's `0xB743` row turns on at `0xB755`: `0x07C5` bit 4 set means the
 USER-**set** arm runs the USER-**clear** routine. `0xB82E` is looser still —
-five branches reach `0xB758`, and only `0xB740` is the USER bit:
+four branches reach `0xB758` directly, and only `0xB740` is the USER bit:
 
 ```
 0xb737  12b9d8   lcall 0xb9d8
@@ -575,9 +575,15 @@ five branches reach `0xB758`, and only `0xB740` is the USER bit:
 0xb74e  b46407   cjne a,#0x64,0xb758     ; 0x04AB != 100, on the USER-set arm
 0xb751  9007c5   mov  dptr,#0x07c5
 0xb754  e0       movx a,@dptr
-0xb755  30e403   jnb  acc.4,0xb758       ; 0x07C5 bit 4 set, on the USER-set arm
+0xb755  30e403   jnb  acc.4,0xb75b       ; 0x07C5 bit 4 SET -> fall into 0xb758
 0xb758  02b82e   ljmp 0xb82e
+0xb75b  12ba36   lcall 0xba36
 ```
+
+`0xB755` is a fifth gate rather than a fifth branch: `jnb acc.4` is *taken*
+when `0x07C5` bit 4 is clear, and its target is the `lcall 0xba36` at
+`0xB75B`, not the `ljmp 0xb82e` at `0xB758` — the same shape as the `0xB5F5`
+line above, which also reaches its tail jump by fall-through.
 
 So neither routine is "the USER-clear arm's routine". Both are the reset half
 of a state machine that USER selects *between*, alongside `0x06E6`, `0x07C5`
@@ -594,20 +600,29 @@ the pair, and it is where `0x08A0`'s real shape shows:
 0xb7ee  e0       movx a,@dptr
 0xb7ef  d3       setb c
 0xb7f0  940a     subb a,#0x0a
-0xb7f2  4046     jc   0xb83a             ; below 0x0A -> just retire
+0xb7f2  4046     jc   0xb83a             ; A - 0x0A - 1 borrows: 0x0A or below -> retire
 0xb7f4  9008eb   mov  dptr,#0x08eb
 0xb7f7  e0       movx a,@dptr
-0xb7f8  4440     orl  a,#0x40            ; at 0x0A -> set bit 6
+0xb7f8  4440     orl  a,#0x40            ; from 0x0B -> set bit 6
 0xb7fa  f0       movx @dptr,a
 0xb7fb  22       ret
 ```
 
-`0x08A0` is therefore a count that runs to ten and then latches bit 6 of
-`0x08EB` — and `0xB82E` clears the bit *and* zeroes the count, so the two
-instructions `0xB82E` performs are one reset of one mechanism rather than two
-unrelated writes. `0x08A2` has no such shape: the USER-set arm stores the
-immediate `0x04` at `0xB6A1` and the USER-clear routine stores `0` at
-`0xB72C`, and nothing else found by this method writes either byte.
+The `setb c` at `0xB7EF` is load-bearing: `subb` carries in, so the `0xB7F2`
+compare is really `A - 0x0A - 1` and it retires at `0x0A` **or below**, not
+below `0x0A`. Bit 6 therefore latches from `0x0B` up, and the count runs one
+further than the operand suggests. The same idiom at `0x9E45` — `setb c`,
+`subb a,#0x23` — clamps a byte to `0x23` the same way, so this is the file's
+established reading of a carry-in compare rather than an inference from this
+one site.
+
+`0x08A0` is therefore a count that runs to `0x0A` and latches bit 6 of
+`0x08EB` on the next increment — and `0xB82E` clears the bit *and* zeroes the
+count, so the two instructions `0xB82E` performs are one reset of one
+mechanism rather than two unrelated writes. `0x08A2` has no such shape: the
+USER-set arm stores the immediate `0x04` at `0xB6A1` and the USER-clear
+routine stores `0` at `0xB72C`, and nothing else found by this method writes
+either byte.
 
 **What the accumulator holds at the `0xB730` store — the open question this
 reading had to settle.** `0xB730` has two entries in the main EC, and the
@@ -676,9 +691,18 @@ and the remaining four members of the `main-ec-012` cluster are still unnamed.
 
 One thing §9.1 already had and this section makes precise: the `0xB5F1` row
 lists `0x08A2 write` and `0x09E7 r+w` even though the USER-**set** arm does not
-run `0xB716`, because `walk_branch_arms.py` follows a tail jump inline and
-charges the instructions past it to the arm. The addresses were visible; what
-was missing was which instruction wrote each one and what value.
+run `0xB716`. The reason is ordinary conditional reachability rather than any
+tail-jump descent: the `jnc 0xb736` at `0xB714` **falls through** into
+`0xB716`, so the arm's own linear block from `0xB6E8` decodes the whole
+`0xB716 … 0xB736 ret` body — including the `mov dptr,#0x08a2` at `0xB72C`,
+the `mov dptr,#0x09e7` at `0xB724`, and the `mov dptr,#0x089e` at `0xB730`
+that puts `0x089E` in the arm's `writes`. `walk_branch_arms.py` does *not*
+follow a tail jump inline: at `walk_branch_arms.py:380-388` it appends the
+target to `arm.callees` and ends the arm, so the callee's own instructions are
+never decoded into it. `0xB716` is in this arm's `callees` too, but for an
+unrelated path — the `ljmp 0xb716` at `0xB5F8` — which is not what puts those
+addresses in the `xdata` column. The addresses were visible; what was missing
+was which instruction wrote each one and what value.
 
 ```console
 $ python3 ec/tools/make_bank_image.py ec/firmware/GMxMGxx_11.800 0 0x08000 /tmp/bank0.bin

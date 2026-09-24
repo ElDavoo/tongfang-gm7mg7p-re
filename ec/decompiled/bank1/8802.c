@@ -16,8 +16,8 @@ void ajmp_8822_not_a_function(undefined1 param_1,undefined1 *param_2)
 
 {
   *param_2 = param_1;
-  DAT_EXTMEM_0450 = DAT_EXTMEM_2001;
-  DAT_EXTMEM_0452 = DAT_EXTMEM_2002;
+  XDATA_0450 = DAT_EXTMEM_2001;
+  XDATA_0452 = DAT_EXTMEM_2002;
   return;
 }
 

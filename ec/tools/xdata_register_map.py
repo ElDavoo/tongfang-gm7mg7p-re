@@ -173,17 +173,27 @@ TOP_CALLEES = 3
 #
 # Second, and much the larger: the issue counted `DAT_EXTMEM_` tokens only, and
 # the addresses Ghidra was given a name for are not written that way. Reading
-# both spellings adds 41 main-EC addresses and 411 references that were always
-# in the committed tree. Every number is pinned below -- the `DAT_EXTMEM_`
-# totals and the full ones -- so a drift in either says which moved.
+# both spellings adds the main-EC addresses the exporter named, which were
+# always in the committed tree. Every number is pinned below -- the
+# `DAT_EXTMEM_` totals and the full ones -- so a drift in either says which
+# moved.
+#
+# The split moved 41 -> 82 named addresses (411 -> 915 references) when
+# ec/decompiled/ was re-exported in issue #194, and the totals with it: 41
+# addresses that had been committed as `DAT_EXTMEM_xxxx` are now written by the
+# name ec/ghidra/xdata-symbols.csv gives them. Nothing was added or lost -- the
+# full census below (1172 distinct / 14801 references, main EC 1063/13937) is
+# unchanged, and no .asm moved -- so this is the exporter catching up with a
+# symbol table that had already grown, which is the same re-derivation the
+# `named_in_tree` comment below records for 44 -> 79 -> 86.
 ORACLE = {
     # DAT_EXTMEM_ only, i.e. what issue #132 counted, comments excluded.
-    "extmem_distinct": 1134, "extmem_refs": 14390,
-    "extmem_raw": 14399, "extmem_commented": 9,
-    "extmem_main_distinct": 1022, "extmem_main_refs": 13526,
+    "extmem_distinct": 1093, "extmem_refs": 13886,
+    "extmem_raw": 13895, "extmem_commented": 9,
+    "extmem_main_distinct": 981, "extmem_main_refs": 13022,
     "extmem_pd_distinct": 157, "extmem_pd_refs": 864,
     # What the decompiler named, which the issue's grep could not see.
-    "symbol_main_distinct": 41, "symbol_main_refs": 411,
+    "symbol_main_distinct": 82, "symbol_main_refs": 915,
     "symbol_pd_distinct": 0, "symbol_pd_refs": 0,
     # The full census this tool publishes.
     "distinct": 1172, "refs": 14801,
@@ -900,6 +910,11 @@ def self_test(args) -> int:
     total_refs = refs["main-ec"] + refs["pd"]
     extmem = {g: tally(g, "DAT_EXTMEM") for g in GROUPS}
     syms = {g: tally(g, "symbol") for g in GROUPS}
+    # The two spellings overlap between programs on a different set of
+    # addresses than the full census's `both`, so it gets its own figure
+    # rather than reusing that one.
+    extmem_both = (ORACLE["extmem_main_distinct"] + ORACLE["extmem_pd_distinct"]
+                   - ORACLE["extmem_distinct"])
 
     check(f"the issue's {ORACLE['extmem_raw']} file-wide DAT_EXTMEM_ occurrences "
           f"and the {ORACLE['extmem_commented']} of them that are this "
@@ -913,7 +928,7 @@ def self_test(args) -> int:
           f"{ORACLE['extmem_main_refs']} refs, PD "
           f"{ORACLE['extmem_pd_distinct']}/{ORACLE['extmem_pd_refs']}, which is "
           f"{ORACLE['extmem_distinct']} distinct addresses in all after the "
-          f"{ORACLE['both']} both programs touch (got {extmem['main-ec']} and "
+          f"{extmem_both} both spell there (got {extmem['main-ec']} and "
           f"{extmem['pd']})",
           (extmem["main-ec"][0], extmem["main-ec"][1]) ==
           (ORACLE["extmem_main_distinct"], ORACLE["extmem_main_refs"]) and

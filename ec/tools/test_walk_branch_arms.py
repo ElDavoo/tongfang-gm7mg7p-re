@@ -356,14 +356,19 @@ class UserClearCalleeTests(unittest.TestCase):
 
     def test_the_user_set_arm_reaches_the_pair_store_too(self):
         # 8a says both entries into 0xB730 carry A = 0, which is only a
-        # statement about two paths if the USER-*set* path is one of them. The
-        # descent charges a tail jump's instructions to the arm that took it,
-        # so 0x089E turning up in the 0xB5F1 arm's writes is the tool saying
-        # the path is reachable -- and it is the USER-set arm, not the
-        # USER-clear one 8a's first listing covers.
+        # statement about two paths if the USER-*set* path is one of them.
+        #
+        # Anchored on the callee, not on 0x089E turning up in the arm's
+        # writes: the `jnc 0xb736` at 0xB714 falls through into the
+        # 0xB716-0xB736 body, so the arm's own linear block already decodes
+        # 0xB730 and 0x089E is in `writes` whether or not the USER-set path
+        # is reachable. 0xB730 in `callees` is the tool recording the
+        # `ljmp 0xb730` at 0xB6A5, and it does flip when those bytes go.
+        # (A tail jump is not followed inline -- it ends the arm and appends
+        # the target to `callees`; see `descend()`.)
         arm = next(a for off, region, rt, test, arms in self.rows
                    for a in arms if a.start == 0xB5F1)
-        self.assertIn(0x089E, arm.writes())
+        self.assertIn(0xB730, arm.callees)
 
     def test_the_accumulator_is_cleared_immediately_before_both_entries(self):
         # The claim itself, on the bytes. `clr a` at 0xB72B is one instruction

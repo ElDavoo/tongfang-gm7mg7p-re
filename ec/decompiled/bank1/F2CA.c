@@ -18,9 +18,9 @@ void dec_0443_low3_unless_0440_5_6_7(void)
 {
   DAT_EXTMEM_06c6 = 2;
   push_r5_into_070f_ring_when_gates_pass(0x14);
-  if ((((DAT_EXTMEM_0440 != '\x05') && (DAT_EXTMEM_0440 != '\x06')) && (DAT_EXTMEM_0440 != '\a')) &&
-     ((DAT_EXTMEM_0443 & 7) != 0)) {
-    DAT_EXTMEM_0443 = (DAT_EXTMEM_0443 & 7) - 1;
+  if ((((XDATA_0440 != '\x05') && (XDATA_0440 != '\x06')) && (XDATA_0440 != '\a')) &&
+     ((XDATA_0443 & 7) != 0)) {
+    XDATA_0443 = (XDATA_0443 & 7) - 1;
   }
   return;
 }

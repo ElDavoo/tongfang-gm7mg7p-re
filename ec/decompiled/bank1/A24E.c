@@ -23,7 +23,7 @@ void FUN_CODE_a24e(void)
     FUN_CODE_8863();
   }
   else {
-    if (DAT_EXTMEM_0403 == 0) {
+    if (BAT_DESIGN_CAPACITY_1 == 0) {
       return;
     }
     if (DAT_EXTMEM_0399 == '\0') {
@@ -36,8 +36,8 @@ LAB_CODE_a2a3:
       add_r1r2_to_r3r4(DAT_EXTMEM_0399,2,0x8d,0);
     }
     else {
-      bVar1 = (DAT_EXTMEM_0403 < 0x14) << 7;
-      if (DAT_EXTMEM_0403 < 0x14) goto LAB_CODE_a2a3;
+      bVar1 = (BAT_DESIGN_CAPACITY_1 < 0x14) << 7;
+      if (BAT_DESIGN_CAPACITY_1 < 0x14) goto LAB_CODE_a2a3;
 LAB_CODE_a290:
       add_r1r2_to_r3r4(DAT_EXTMEM_0399,2,2,1);
     }

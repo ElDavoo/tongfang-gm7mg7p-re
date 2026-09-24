@@ -14,8 +14,8 @@
 void copy_code_a691_a693_to_xdata(void)
 
 {
-  DAT_EXTMEM_0454 = DAT_CODE_a691;
-  DAT_EXTMEM_0455 = DAT_CODE_a692;
+  XDATA_0454 = DAT_CODE_a691;
+  XDATA_0455 = DAT_CODE_a692;
   DAT_EXTMEM_047d = DAT_CODE_a693;
   return;
 }
