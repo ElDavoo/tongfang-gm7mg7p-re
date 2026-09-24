@@ -1,0 +1,29 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# byte and timestamp below was written by hand. See ../README.md.
+# Shape: the 0x0F00-0x0F5F third of the same §3 0xA0 block, WITH THE
+# CONTROL-ARM MARK MISSING. Two marks where the other two captures have three.
+# THIS IS THE POINT OF THE SET, and everything else in it is arranged to make
+# the cost of not noticing legible:
+#
+#   * the 0x0F0A row at 12:00:08.500 is the control arm's own movement, and
+#     it lands before the first mark of the capture set, so with the mark gone
+#     no window can claim it. A window that did not open on that console
+#     cannot be said to have seen what it did, and the control window over the
+#     other two captures reads "no watched byte moved" -- which is the shape
+#     issue #169 is about: an arm quiet for want of a mark rather than because
+#     nothing moved.
+#   * the 0x0F0A row at 12:00:55.000 is the write arm's, and it is present
+#     and inside a window. So the capture is not quiet everywhere, which is
+#     what makes the quiet control window the interesting half rather than a
+#     fixture that is simply still.
+#
+# The mark is missing the way a mark goes missing at the machine: the console
+# pressed nothing, or pressed after its watcher had exited and the CSV sink
+# with it. Both leave the rows and take the mark. It is not a prediction that
+# a run will lose one, and 0x0F0A is not a prediction that a fan-table byte
+# moves.
+ts,addr,old,new
+2026-01-01T12:00:08.500+01:00,0x0F0A,0x52,0x56
+2026-01-01T12:00:41.000+01:00,MARK,,wrote 0x0751=0xA0
+2026-01-01T12:00:55.000+01:00,0x0F0A,0x56,0x57
+2026-01-01T12:01:11.000+01:00,MARK,,restored 0x0751=0x10

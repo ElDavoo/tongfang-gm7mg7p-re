@@ -153,15 +153,34 @@ last mark the capture has. If it is not the restore, the block is short one.
 
 The check over the capture is the one that survives into the record, and
 `../../ec/tools/grade_0751_isolation.py` now makes it: it groups the marks
-into blocks — one per no-op control arm, closed by the restore — prints an
-`intact` or a `VOID` verdict for each, and exits non-zero if any block is
-void. It reads the CSVs rather than the terminal, and that is not a
-preference: `ec_watch.py` appends a mark to its own list and prints it
-whether or not the CSV sink is still open
+into blocks — one per write under test, opened by the no-op control arm and
+closed by the restore — prints an `intact` or a `VOID` verdict for each, and
+exits non-zero if any block is void. It reads the CSVs rather than the
+terminal, and that is not a preference: `ec_watch.py` appends a mark to its
+own list and prints it whether or not the CSV sink is still open
 (`../../windows/tools/ec_watch.py:121-123` against the close at `:221-222`),
 so the last label on the screen can be one the capture never received. The
 by-eye check above is still the fastest one to do at the machine; run the
 tool over the committed CSVs as well, before they are filed.
+
+**And it checks the marks themselves, per block and per capture, before it
+prints a window.** A window is every change after a mark up to the next one,
+and which mark that is comes from the timestamps alone. So a mark one console
+missed — or that two consoles spelled differently — raises nothing: that
+console's rows are still filed under whichever window their timestamps fall
+in, and the other two consoles' marks usually cover for it, which is what
+makes the failure invisible rather than what prevents it. Nothing in the
+result ties those rows to the arm whose mark went missing, so a no-op arm can
+read as quiet for want of a mark rather than because nothing moved, and the
+run reports that in the same format as a result. So §6's "the marks in all
+three CSVs must carry the same labels" is checked rather than written down:
+every action recorded in every capture, every capture spelling it the same
+way, and every block's last mark its restore *in each capture* — per capture,
+because a console that recorded only one block would otherwise make every
+block in the day look complete. A block that fails any of those has its
+windows left out and the exit code is 1, with the census naming which capture
+is short and what it costs. The by-eye check above cannot do this: it is one
+terminal, and the question is about three of them.
 
 The `0x0400-0x045F` watcher is the EC's own temperature reading: `0x043E` is
 `CPU_TEMP` and `0x044F` is `GPU_TEMP`, both `confirmed-working` in
@@ -222,6 +241,20 @@ in separate notes. Mark the same action in all three consoles within a few
 seconds of each other; the grader treats marks less than five seconds apart as
 one action, which is what keeps three consoles from reporting one write as
 three windows.
+
+**Those three forms are now load-bearing rather than illustrative.** The
+grader reads the leading word to tell the control arm from the write under
+test, reads the value after `0x0751=` to name the block the window belongs
+to, and refuses a mark that is none of the three — quoting the three back,
+because a window whose opening mark cannot be placed is a window it cannot
+say what it is a window of. `ec_watch.py` stamps an empty line as `mark N`
+(`../../windows/tools/ec_watch.py:119`), so pressing Enter on a blank line
+rather than typing the action is the one way this happens by accident. A
+mistyped digit in one of the three consoles is the other, and nothing but the
+comparison catches it: the merge joins the three labels into
+`wrote 0x0751=0xA0 / wrote 0x0751=0x10` and the window opens on that, while
+the timestamps are perfectly happy because the write really did happen
+between the two marks.
 
 Values to run, one block each: `0xA0` (Office), `0x00` (Gaming), `0x10`
 (Turbo). Start from a *different* mode each time — writing Turbo's `0x10`
@@ -414,6 +447,16 @@ For each run, from the three CSVs plus the by-hand power readings:
    but it does not compare them and does not say which is bigger — the call
    is yours.
 
+   Read those two windows off the same block, which is why every one of them
+   carries a `block:` line and `--block` takes the value under test rather
+   than a position in the mark stream. It also means both windows are only
+   there if the mark set held: a control arm whose mark is missing from one of
+   the three CSVs has that console's rows filed under whichever window their
+   timestamps fall in, and nothing in the report ties them to the arm — so
+   this comparison could be between an arm and whatever ran before it. The
+   grader refuses that case rather than printing the two numbers side by side,
+   so a report you have is a report whose two arms are the two arms.
+
    **The comparison keys on *total movement*, not on the net.** The line
    carries three figures and they are not interchangeable. *Net* is the
    difference between where the byte opened the window and where it closed
@@ -519,11 +562,15 @@ run: `ec_watch.py` appends to a `--csv`
 file that already exists, and the marks say which write each row follows. The
 dumps are per block and have to be, because they are whole-range reads with
 no marks in them — nothing inside one says which write it brackets, so §3's
-`>` would otherwise leave block 1 with block 2's bytes. The snapshot has to
+`>` would otherwise leave block 1 with block 2's bytes. That naming is also
+what lets the grader say which block a `--dump` belongs to, which is the one
+thing in a dump that says so; see the command below. The snapshot has to
 say which mode each block started from and what was written, since nothing
 else in the set says it. The marks in all three CSVs must carry the same
 labels, and they must tell the control arm from the write under test:
-`no-op wrote 0x0751=0xA0`, `wrote 0x0751=0x10`, `restored 0x0751=0xA0`.
+`no-op wrote 0x0751=0xA0`, `wrote 0x0751=0x10`, `restored 0x0751=0xA0`. All
+three requirements are checked, per block and per capture, before a window is
+printed — see §3, and the census the grader puts above the windows.
 
 Add a header comment to the snapshot in the style of
 `evidence/ec-watch/2026-09-23-power-mode-snapshot-dc.txt`: date, AC/battery,
@@ -559,11 +606,26 @@ rem  The 0x0700 pair is given twice on purpose, and not by accident of
 rem  copy-paste: as the two --dump flags §4.6's readback is taken from, and
 rem  again as one --dump-pair for the whole-block read. The two flags are
 rem  independent -- --dump-pair does not feed §4.6, and the readback still
-rem  comes from the last --dump -- so the 0x0700 after-dump has to stay the
-rem  last of the --dump flags. Putting the 0x0F00 dumps there instead would
-rem  look tidier and quietly stop the readback: that range does not cover
-rem  0x0751. The tool now catches that and says so under §4.6, so this
-rem  comment is the fallback rather than the only safeguard.
+rem  comes from the last --dump of the block being graded -- so the 0x0700
+rem  after-dump has to stay the last of that block's --dump flags. Putting
+rem  the 0x0F00 dumps there instead would look tidier and quietly stop the
+rem  readback: that range does not cover 0x0751. The tool now catches that
+rem  and says so under §4.6, so this comment is the fallback rather than the
+rem  only safeguard.
+rem
+rem  Run this once per value, with --block <value> added, and each run is one
+rem  attachment. --block takes the value under test as hex with or without
+rem  the 0x (0xA0, A0 and a0 are the same block), and a value that is in no
+rem  block is an error rather than a run that quietly grades everything.
+rem  --block and --wrote both name the value under test, so pass the same one
+rem  to both; two different values is refused as the wrong command line it is.
+rem
+rem  The marks are checked before any window is printed: every action in all
+rem  three CSVs, every capture spelling it the same way, and every block's
+rem  last mark its restore in each capture. A block that fails is summarised
+rem  where its windows would be and its windows are not printed, and the exit
+rem  code is 1. A mark set that cannot support its windows is a hole in the
+rem  record, not a quiet result -- see §3.
 python ec\tools\grade_0751_isolation.py ^
         <date>-0751-isolation-0700-07ff.csv <date>-0751-isolation-0f00-0f5f.csv ^
         <date>-0751-isolation-0400-045f.csv ^
@@ -575,19 +637,32 @@ python ec\tools\grade_0751_isolation.py ^
                      <date>-0751-isolation-<value>-after-0f00.txt ^
         --dump-pair <date>-0751-isolation-<value>-before-0400.txt ^
                      <date>-0751-isolation-<value>-after-0400.txt ^
-        --wrote 0xA0
+        --block <value> --wrote <value>
 ```
 
 Three values make three blocks, and the three CSVs are one set for the whole
-run, so a plain invocation over them prints every block's windows. `--block N`
-grades one block and prints that block's windows alone, with its own
-`intact`/`VOID` verdict and the same non-zero exit if that block is void —
+run, so a plain invocation over them prints every block's windows, each
+labelled with the block it falls in. `--block <value>` grades one block and
+prints that block's windows alone, with its own `intact`/`VOID` verdict and
+the same non-zero exit if that block is void or its mark set does not hold —
 which is what makes this output something a fold-in can attach per block, one
 attachment per value. The other blocks are not checked in such a run, and the
-report says so. §3a's service-stopped pass is a second run with its own
-`<date>`, not a fourth block of this one: the Office/Turbo pair is required in
-both arms and §6's names carry no arm, so the two passes' `<value>`-stamped
-dumps would overwrite each other.
+report says so, in the census and in the block section.
+
+The selector is the value rather than a block number because the value is
+what §6 stamps every dump with, and a dump is a whole-range read with no
+marks in it: the `<value>` in the file name is the only thing in it that says
+which block it belongs to. So the grader reads each `--dump`'s block off its
+own name, takes §4.6's readback from the last dump *of the block being
+graded*, and names that block in the section. A `--block 0x10` run handed the
+`a0` dumps says they belong to 0xA0 and takes no readback from them, rather
+than putting 0xA0's byte under 0x10's windows. Where a dump's name carries no
+value, the run falls back to `--block`/`--wrote` and says which it used.
+
+§3a's service-stopped pass is a second run with its own `<date>`, not a fourth
+block of this one: the Office/Turbo pair is required in both arms and §6's
+names carry no arm, so the two passes' `<value>`-stamped dumps would overwrite
+each other.
 
 The `--dump-pair` report is a second, wider bracket on the same §4.1-§4.3
 bytes, and it is worth having for what the windows cannot show: a byte that

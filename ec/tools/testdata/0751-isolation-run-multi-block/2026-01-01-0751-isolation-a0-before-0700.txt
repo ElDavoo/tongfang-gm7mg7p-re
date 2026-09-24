@@ -1,0 +1,10 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; the
+# bytes below were written by hand. See ../README.md.
+# Shape: `ecrw.py dump 0x0750 0x0010` as §3's step 0 takes it -- a short
+# range around 0x0751 rather than the whole 0x0700 page the procedure dumps,
+# because §4.6 is the only question these four files are read for and 0x0751
+# is the only address it is about. 0x0751 reads 0x10 here, the mode block 1
+# starts in. Its <value> in the file name is the only thing in a dump that
+# says which block it belongs to, which is the attribution the grader has to
+# read it by.
+0750: 00 10 00 00 00 00 00 00 00 00 00 00 00 00 00 00

@@ -1,0 +1,32 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# byte and timestamp below was written by hand. See ../README.md.
+# Shape: the 0x0400-0x045F third of the same §3 0xA0 block, marks two seconds
+# after the 0700 capture's as §3 takes them, and all three change rows exactly
+# as in ../../0751-isolation-run/. CPU_TEMP and GPU_TEMP climb throughout,
+# which is what makes the drift beside them thermal rather than a response to
+# the write.
+#
+# THE WRITE MARK HERE SAYS 0x10, where the other two captures say 0xA0. That
+# is the whole point of the set: a mistyped digit in one of three consoles is
+# not an error the grader can see, because coalesce_marks merges the three
+# labels into `wrote 0x0751=0xA0 / wrote 0x0751=0x10` and the window opens on
+# that. Every byte in this file still lands in the right window -- the write
+# really did happen between the two marks -- which is what makes the label
+# the only thing that can catch the mistype, and therefore what has to be
+# checked. §6 asks for the three captures to carry the same labels for
+# exactly this reason.
+#
+# It is not a prediction that an operator will mistype a mark, and 0x10 is
+# not a prediction about what 0x0751 does.
+ts,addr,old,new
+2026-01-01T12:00:04.000+01:00,0x043E,0x32,0x33
+2026-01-01T12:00:12.000+01:00,MARK,,no-op wrote 0x0751=0x10
+2026-01-01T12:00:19.000+01:00,0x043E,0x33,0x35
+2026-01-01T12:00:26.000+01:00,0x0402,0x11,0x12
+2026-01-01T12:00:36.000+01:00,0x044F,0x30,0x31
+2026-01-01T12:00:42.000+01:00,MARK,,wrote 0x0751=0x10
+2026-01-01T12:00:50.000+01:00,0x043E,0x35,0x36
+2026-01-01T12:01:00.000+01:00,0x043E,0x36,0x38
+2026-01-01T12:01:05.000+01:00,0x044F,0x31,0x32
+2026-01-01T12:01:12.000+01:00,MARK,,restored 0x0751=0x10
+2026-01-01T12:01:15.000+01:00,0x043E,0x38,0x37
