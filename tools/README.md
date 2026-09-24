@@ -11,7 +11,7 @@ bash tools/run-tests.sh
 
 Every `test_*.py` under the repository, found by `find` — not a hardcoded list,
 so a suite in a directory that does not exist yet is picked up by having its
-file committed. There are seven today, 128 tests in all, and each is a `unittest`
+file committed. There are eight today, 138 tests in all, and each is a `unittest`
 suite standing in for a tool's own behaviour:
 
 | suite | what it stands in for |
@@ -22,6 +22,7 @@ suite standing in for a tool's own behaviour:
 | `windows/tools/test_ec_watch.py` | the mark-CSV sweep and the mark landing between two change rows |
 | `windows/tools/test_ec_validate.py` | the `ec_validate.py` `0x0436` capacity arm's exact-copy scoring, full-capacity bound, CSV, and `0x0400-0x045F` page assertion |
 | `windows/tools/test_system_id_probe.py` | the `0x0456` probe's `store_scaled_quotient_0449` arithmetic, its branch labels, its address guard, and that it has no write path |
+| `windows/tools/test_charge_target_test.py` | the charge-target tool's three refusals, the restore in its `finally`, and its CSV column set |
 | `linux/lightbar/test_probe_6005.py` | the lightbar probe's ioctl encoding, dry run, and off-after-failure |
 
 Named directories run alone, which is what to reach for when editing one tool:
@@ -41,16 +42,16 @@ the vacuous check is the same defect the gate's listing parse had in
 
 The `windows/tools` suites install a fake `ecrw` into `sys.modules` with
 `setdefault`, and the fakes are not all the same shape: two export `Ec` only
-(`test_manual_fan_ctrl_probe.py`, `test_ec_validate.py`), two export `Ec` and
-`EcError` (`test_ec_watch.py`, `test_system_id_probe.py`), and `ec_watch.py`
-imports both. In one shared interpreter, whichever suite imports first wins,
-and a narrow one dies with
-`ImportError: cannot import name 'EcError' from 'ecrw'`. It passes today only
-because discovery happens to sort `test_ec_watch` first — an accident nothing
-assertes. `docs/findings.md` §16 has the reproduction. The runner's per-file
-isolation is what keeps a rename from turning that accident into a red build;
-the fix that would retire the whole question is to reconcile the fakes, which is
-a follow-up rather than part of this.
+(`test_manual_fan_ctrl_probe.py`, `test_ec_validate.py`), three export `Ec` and
+`EcError` (`test_ec_watch.py`, `test_system_id_probe.py`,
+`test_charge_target_test.py`), and `ec_watch.py` imports both. In one shared
+interpreter, whichever suite imports first wins, and a tool that imports a name
+the winner lacks dies with `ImportError: cannot import name 'EcError' from
+'ecrw'`. A combined discovery survives only by sort-order accident, which
+nothing asserts. `docs/findings.md` §16 has the reproduction. The runner's
+per-file isolation is what keeps a rename from turning that accident into a red
+build; the fix that would retire the question entirely is to reconcile the
+fakes into one shared module, which is a follow-up rather than part of this.
 
 ## What it does not run
 
@@ -62,10 +63,11 @@ a follow-up rather than part of this.
   deferral.
 - **No hardware, and no evidence of any.** Every suite is offline by
   construction: device discovery, file opening and ioctls are mocked against
-  hand-built fixtures, and the two `windows/tools` suites fake `ecrw` precisely
-  so no Windows box is needed. No EC is opened, no register is read back, and
-  no HID node is touched. `linux/lightbar/README.md` and each suite's own
-  docstring say the same thing where the tool is described.
+  hand-built fixtures, and the three `windows/tools` suites fake `ecrw` — and,
+  for the charge-target tool, the `powershell` call behind its WMI line —
+  precisely so no Windows box is needed. No EC is opened, no register is read
+  back, and no HID node is touched. `linux/lightbar/README.md` and each suite's
+  own docstring say the same thing where the tool is described.
 - **Not the decompiler tooling.** Those tools' `--check` and `--self-test` runs
   are the gate's, and they are a different set of files; see
   `docs/agent-pipeline.md`.

@@ -1061,6 +1061,15 @@ run elevated through the vendor driver, owner present). The tool only ever
 *lowers* the target — a CV ceiling below the pack voltage can reduce charging
 but never overcharge — and restores the original on exit.
 
+**Which of the tool's branches are covered offline.** The three refusals, and
+the restore in its `finally` that runs on a clean exit, on a read error and on
+Ctrl-C, are pinned by `windows/tools/test_charge_target_test.py` against a fake
+`ecrw` and a fake WMI line: no EC is opened, no register is read back, and no
+`powershell` is spawned. Those are the branches no committed artifact
+exercises, because all three live runs below took the write path. The suite is
+coverage of the tool's control flow, and adds nothing to what this section
+measured on the machine.
+
 **A host write to `0x0522` does not persist, in any state tested.**
 
 | run | state | writes that held |
