@@ -1806,14 +1806,16 @@ registers:
     status: present-untested
     note: >
       Decremented by one on every pass of the counter sweep at bank1
-      0x8001-0x8189 only while XDATA 0x0440 is non-zero -- the block's third
-      test of that byte, after 0x807E and the 0xF2CA/0xF2F3 pair. A zero at
-      0x0440 branches past this byte untouched. 0x0440 has 43 read sites and no
-      writer and its value is not established, so what this gate selects is not
-      known either. 2 EC-side sites, 1 direct read and 1 direct write. Its only
-      writers outside the sweep that this method found are bank1 0x9800. No
-      upstream name. Per-address table:
-      ec/annotations/xdata-06c2-06db-timers.md.
+      0x8001-0x8189 only while XDATA 0x0440 is non-zero -- the block's first
+      test of that byte, at 0x807E. A zero at 0x0440 branches past this byte
+      untouched. 0x0440 has 43 read sites, every one a direct read, so no
+      direct MOV DPTR site writes it; a writer does exist and is not one of
+      those 43: code_table_scatter_to_xdata (bank1 0xA530) stores 0x00 to it
+      (ec/annotations/xdata-0440-readers.md section 5). Its value is not
+      established, so what this gate selects is not known either. 2 EC-side
+      sites, 1 direct read and 1 direct write. Its only writers outside the
+      sweep that this method found are bank1 0x9800. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
 
   - name: XDATA_06D9
     addr: 0x06D9
@@ -1859,12 +1861,15 @@ registers:
     note: >
       Decremented by one on every pass of the counter sweep at bank1
       0x8001-0x8189 only while XDATA 0x0440 is non-zero -- the block's third
-      test of that byte, after 0x807E and the 0xF2CA/0xF2F3 pair. A zero at
-      0x0440 branches past this byte untouched. 0x0440 has 43 read sites and no
-      writer and its value is not established, so what this gate selects is not
-      known either. 4 EC-side sites, 4 direct reads. No writer for it outside
-      the sweep was found by this method, which is a gap in the search and not
-      evidence that none exists. No upstream name. Per-address table:
+      and last test of that byte, at 0x8153. A zero at 0x0440 branches past
+      this byte untouched. 0x0440 has 43 read sites, every one a direct read,
+      so no direct MOV DPTR site writes it; a writer does exist and is not one
+      of those 43: code_table_scatter_to_xdata (bank1 0xA530) stores 0x00 to
+      it (ec/annotations/xdata-0440-readers.md section 5). Its value is not
+      established, so what this gate selects is not known either. 4 EC-side
+      sites, 4 direct reads. No writer for it outside the sweep was found by
+      this method, which is a gap in the search and not evidence that none
+      exists. No upstream name. Per-address table:
       ec/annotations/xdata-06c2-06db-timers.md.
 
   - name: XDATA_06F3
@@ -1938,11 +1943,13 @@ registers:
     status: present-untested
     note: >
       Not decremented by the sweep. It is one of six bytes the sweep writes as a
-      side effect, and one of fifteen read-modify-writes: the one at 0x8182 is
+      side effect, and one of fourteen read-modify-writes: the one at 0x8182 is
       the only one that clears bit 4 rather than setting it (anl A,#0xef), run
-      when 0x08A8 reaches zero. The other fourteen set or clear bits 0, 1, 2, 3,
-      5, 6 and 7 across bank0 and bank1. A flag byte is a shape, not a name. 16
-      EC-side sites, 1 direct read, 1 direct write and 14 read-modify-writes.
+      when 0x08A8 reaches zero. The other thirteen set or clear bits 0, 1, 2, 3,
+      4, 5 and 6 across bank0 and bank1; bit 4 is the one bit touched twice
+      (set at bank0 0xA1BB, cleared at bank1 0x8182), and bit 7 is touched by
+      none of them. A flag byte is a shape, not a name. 16 EC-side sites, 1
+      direct read, 1 direct write and 14 read-modify-writes.
       Its only writers outside the sweep that this method found are bank0
       0x910E, bank0 0x9117, bank0 0x912B, bank0 0x9134, bank0 0x97F9, bank0
       0xA00E, bank0 0xA1BB, bank0 0xA2B5, bank0 0xBE0D, bank1 0x92C8, bank1
@@ -2094,16 +2101,18 @@ registers:
     status: present-untested
     note: >
       Decremented by one on every pass of the counter sweep at bank1
-      0x8001-0x8189 only while XDATA 0x0440 is non-zero -- the block's third
-      test of that byte, after 0x807E and the 0xF2CA/0xF2F3 pair. A zero at
-      0x0440 branches past this byte untouched. 0x0440 has 43 read sites and no
-      writer and its value is not established, so what this gate selects is not
-      known either. 2 EC-side sites, 2 direct reads, and 4 in the PD image,
-      which is another program's XDATA and says nothing about the EC's use of
-      this address. No writer for it outside the sweep was found by this method,
-      which is a gap in the search and not evidence that none exists. No
-      upstream name. Per-address table:
-      ec/annotations/xdata-06c2-06db-timers.md.
+      0x8001-0x8189 only while XDATA 0x0440 is non-zero -- the block's second
+      test of that byte, at 0x80EC. A zero at 0x0440 branches past this byte
+      untouched. 0x0440 has 43 read sites, every one a direct read, so no
+      direct MOV DPTR site writes it; a writer does exist and is not one of
+      those 43: code_table_scatter_to_xdata (bank1 0xA530) stores 0x00 to it
+      (ec/annotations/xdata-0440-readers.md section 5). Its value is not
+      established, so what this gate selects is not known either. 2 EC-side
+      sites, 2 direct reads, and 4 in the PD image, which is another program's
+      XDATA and says nothing about the EC's use of this address. No writer for
+      it outside the sweep was found by this method, which is a gap in the
+      search and not evidence that none exists. No upstream name. Per-address
+      table: ec/annotations/xdata-06c2-06db-timers.md.
 
   - name: XDATA_0890
     addr: 0x0890
@@ -2210,8 +2219,10 @@ registers:
       only one that clears bit 2 rather than setting it (anl A,#0xfb), run when
       0x08A8 reaches zero. The other nine are in bank0 (0x90B2, 0x90BB, 0x90D2,
       0x90DB, 0x9800, 0x98FB, 0xA015, 0xA1B4, 0xA2C0) and set or clear bits 0,
-      3, 4 and 7. A flag byte is a shape, not a name. 11 EC-side sites, 1 direct
-      read and 10 read-modify-writes. Its only writers outside the sweep that
+      1, 2, 3 and 4; bit 2 is set at 0xA1B4 and cleared by the sweep's own 0x817B,
+      and no site touches bit 7. A flag byte is a shape, not a name. 11 EC-side
+      sites, 1 direct read and 10 read-modify-writes. Its only writers outside
+      the sweep that
       this method found are bank0 0x90B2, bank0 0x90BB, bank0 0x90D2, bank0
       0x90DB, bank0 0x9800, bank0 0x98FB, bank0 0xA015, bank0 0xA1B4, bank0
       0xA2C0. No upstream name. Per-address table:

@@ -106,9 +106,10 @@ points in the register allocation.
 
 **So the run is one routine, and 42 rows in
 `../annotations/ghidra-functions.csv` describe slices of it.** The issue listed
-20 addresses in the run as unnamed; 18 already had rows, and the three that did
-not — `8008`, `8010`, `8017` — are rows this change adds, each saying in its own
-comment that the one-instruction boundary is the call-target scan's hypothesis.
+20 addresses as unnamed — 18 in the run plus `1984`/`198A`; 17 already had rows,
+and the three that did not — `8008`, `8010`, `8017` — are rows this change adds,
+each saying in its own comment that the one-instruction boundary is the
+call-target scan's hypothesis.
 `bank-call-audit.md` §1 is the standing caveat on that census, and it is an
 upper bound, not a partition.
 
@@ -175,7 +176,15 @@ to — 93%** — and the per-address result is starker than the total:
 
 (The 4,988 is the sum of the 43 rows in `xdata-registers.csv`. The
 `main-ec-002` row in `xdata-clusters.csv` records 4,965 for the same membership,
-and the two disagreeing is itself a symptom of both CSVs being stale — §6.)
+and the 23 between them is a definitional split inside the tool, not staleness:
+both numbers reproduce from a fresh generation. Five of the 43 members are
+`program=both` — `0x07F3`, `0x07F6`, `0x0809`, `0x080C`, `0x080D` — and for
+those the register row absorbs both programs and counts an address once per
+program (`xdata_register_map.py:648-655`, `:674`) while the cluster row sums one
+program's own count (`:718`). Two columns both named `refs`, defined
+differently. The whole of the gap is those five addresses' PD references, 4 + 4
++ 5 + 2 + 8 = 23. Only the name and spelling columns of the committed CSVs are
+stale — §6.)
 
 **So the issue's "nine of the ten busiest addresses in the firmware are in it"
 is an artefact of the export, not a statement about the bytes.** `0x0843` and
@@ -275,7 +284,8 @@ Three columns in that table are worth reading rather than skimming:
 
 - **`0x0809` and `0x080D` are 39 and 78 references, of which 37 and 74 are in
   the PD image.** They are two of the cluster's busiest addresses in the census
-  and two of its quietest in the EC firmware, which is one site each. A shared
+  and two of its quietest in the EC firmware, which is 2 and 4 sites
+  (`static_refs_main_ec`, and the `EC` column above). A shared
   address *number* is not a shared byte, and the split is why every row in
   `registers.yaml` carries all three count keys. `0x0811` and `0x085B` are
   small versions of the same shape, and `0x07F3`, `0x07F6` and `0x080C` are
@@ -300,9 +310,11 @@ thing that is not a gate but reads like one.
 `0x80EC` and `0x8153`, the sweep reads `0x0440` and branches past `0x06D8`,
 `0x085B` and `0x06DB` when it is zero. Those three bytes freeze rather than
 count down. `0x0440` is `XDATA_0440` in `registers.yaml`: **43 EC-side sites,
-every one a direct read, and no writer** — the page's busiest byte, with a
-value nothing here establishes. Elsewhere the same byte is tested against `5`,
-`6` and `7` by `dec_0443_low3_unless_0440_5_6_7` and
+every one a direct read, so no direct `MOV DPTR` site writes it** — the page's
+busiest byte, with a value nothing here establishes. A writer does exist and is
+not one of those 43: `code_table_scatter_to_xdata` (bank1 `0xA530`) stores
+`0x00` to it (`xdata-0440-readers.md` §5). Elsewhere the same byte is tested
+against `5`, `6` and `7` by `dec_0443_low3_unless_0440_5_6_7` and
 `inc_0443_low3_unless_0440_5_6_7` (`bank1:0xF2CA` and `0xF2F3`), so the block's
 gate is "not zero" and another routine's is "not 5, 6 or 7". What selects
 between those readings is not in the decompile.
@@ -498,11 +510,16 @@ print("addresses whose 'write' changes:",
 EOF
 ```
 
-**The absolute totals here are measured against the current decompiled tree,
-which is one rebuild ahead of the census committed in this repository, so they
-do not match the 14,801-reference table in `xdata-register-map.md` §4.1.** The
-deltas are the point and they are a property of the classifier, not of the
-tree's vintage.
+**The absolute totals here are the committed census, and they match the
+14,801-reference table in `xdata-register-map.md` §4.1** — the unmodified tool
+run over the current tree sums to 7,483 / 4,019 / 2,480 / 548 / 271, and its own
+full-census oracle passes. What this tree is ahead on is *symbol coverage*: the
+43 new symbols move references from the `DAT_EXTMEM_` spelling to the symbol
+table's, which is why the committed CSVs' `spelled_as` / `name` /
+`named_addrs` / function-name columns are stale and `--self-test` is red on the
+`DAT_EXTMEM_` spelling oracles. A rename does not move a reference from one
+direction bucket to another, so every absolute number above is the report's
+number, and the deltas are a property of the classifier alone.
 
 **The last row is why this is out of scope here, and it is a new question
 rather than a footnote: the cluster this issue is scoped to does not survive
@@ -529,8 +546,9 @@ from the `.c`, the `.asm` and the image.
 
 **Nothing below was run.** This is the procedure, written down, for someone
 holding the laptop. It is read-only on purpose: `0x0440`'s value space is not
-established (43 read sites, no writer), and this block's zero-reach writes drive
-`0x080C`, `0x0621`, `0x0985` and `0x0723`. **A live *write* to any byte here is
+established (43 read sites, no direct `MOV DPTR` writer), and this block's
+zero-reach writes drive `0x080C`, `0x0621`, `0x0985` and `0x0723`. **A live
+*write* to any byte here is
 a human's decision, not something this change ships.**
 
 Both tools already exist and need no new code. `ec/tools/ecmem.py` is the Linux
@@ -608,7 +626,7 @@ touching it, not the EC's sweep.
 6. **The 42 wrong function boundaries**, if anyone wants them fixed rather than
    documented. `build_ec_decompile.py --mode rebuild-project` writes the 7 MB
    database, and two branches that both rebuild one cannot merge.
-7. **`0x0440`'s value.** 43 read sites, no writer, and this block reads it
-   three times. What 43 places in the firmware consult it for is still open
-   (`xdata-0400-045f.md` §11 carries the same question from the other side of
-   the page).
+7. **`0x0440`'s value.** 43 read sites, no direct `MOV DPTR` writer, and this
+   block reads it three times. What 43 places in the firmware consult it for is
+   still open (`xdata-0400-045f.md` §11 carries the same question from the
+   other side of the page).

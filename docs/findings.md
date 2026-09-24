@@ -2899,8 +2899,8 @@ the export, not about the bytes.** None of those five is among the ten busiest
 once the 42-fold count comes out. The largest of the 43 by direct sites is
 `0x080D` at 78, and 74 of those are in the PD image.
 
-**2. Eighteen of the issue's twenty "unnamed" functions already had rows, and
-three of the other two were the only ones that had not.** `8008`, `8010` and
+**2. Seventeen of the issue's twenty "unnamed" functions already had rows, and
+the three that did not were the only ones that had not.** `8008`, `8010` and
 `8017` are the work; all three were `seed_basis=call-target`, `size=1`,
 `annotated=no`, and each is now a row whose comment says in its own words that
 the one-instruction boundary is the call-target scan's hypothesis — the wording
@@ -2922,7 +2922,9 @@ hands back, and it needs a function seed.
 instructions walk over, 6 are what four of them do at zero, and the two the
 clustering cut into `main-ec-118` and `main-ec-198` (`0x06C6`, `0x06CD`) are
 countdowns the same routine decrements. The block is gated twice — on
-`0x0440` (43 read sites, no writer, value not established) and on the two
+`0x0440` (43 read sites, no direct `MOV DPTR` writer, value not established —
+its one writer is the CODE-table scatter at bank1 `0xA530` that stores `0x00`
+to it, `ec/annotations/xdata-0440-readers.md` §5) and on the two
 predicate returns — with a third gate that is a `ret` rather than a test:
 `0x06D6` is the only reload, loading 9 at zero and returning early otherwise,
 so it is the rate control for the lower two-thirds of the sweep and the only
