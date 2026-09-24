@@ -109,24 +109,49 @@ including `ECRR`/`ECRW`, an EC register read/write pair addressed by
 `0xFE410000 + addr`. `tools/pe_triage.py` and `tools/disasm.sh` regenerate
 every number in those write-ups.
 
+## Talking to the EC from Windows
+
+`tools/ecrw.py` is the raw door: `read`, `dump` and a guarded `write` over the
+vendor driver's own `ECRR`/`ECRW` IOCTLs, one byte per call. `tools/ec_watch.py`
+sweeps a range of it and reports what moved while you do something else in the
+vendor UI, with `--mark` rows so the capture says when you acted. Both need the
+physical machine, an elevated shell and the vendor driver present — nothing
+below has been run from the pipeline that wrote it.
+
+`tools/gpu_block_watch.py` is a third, and it is the narrow one: it watches
+`0x07C4`-`0x07D7` and `0x0743`-`0x0746` — the two GPU blocks `docs/findings.md`
+§4o leaves in a clobber hazard — **in one sweep, one CSV and one clock**, because
+the question is which of the two moves first and two files with two start times
+cannot answer it. It has no write path at all, and it prints its per-address
+citation table (DSDT field name, current `registers.yaml` `status:`) before it
+opens anything, so a capture records what it watched. Its procedure is
+`../docs/hardware-tests/gpu-tgp-07c4-07d7-door.md`; that procedure is **written
+and not run** — the attribution half of it, which process opened which door, is
+the step no cloud agent can take.
+
 ## Offline tests
 
-Two of the tools carry offline `unittest` suites, and both run from Linux with
-no Windows box, no EC and no vendor code:
+Three of the tools carry offline `unittest` suites, and all three run from
+Linux with no Windows box, no EC and no vendor code:
 
 ```sh
-bash tools/run-tests.sh            # from the repository root: these two, and the other two
+bash tools/run-tests.sh            # from the repository root: these three, and the other two
 bash tools/run-tests.sh windows/tools
 ```
 
-`tools/test_manual_fan_ctrl_probe.py` scripts the probe's two arms byte by byte
-and `tools/test_ec_watch.py` checks the mark lands in the CSV between the two
-change rows. Both work by faking `ecrw` — the module binds kernel32 at import
-time and only loads on Windows — which is also what makes the arms scriptable.
-`../tools/README.md` is the canonical home for the command, and records why the
-runner gives each suite its own interpreter: the two `ecrw` fakes are not the
-same shape, and a single shared discovery over this directory breaks on
-whichever one imports second (`docs/findings.md` §16).
+`tools/test_manual_fan_ctrl_probe.py` scripts the probe's two arms byte by byte,
+`tools/test_ec_watch.py` checks the mark lands in the CSV between the two change
+rows, and `tools/test_gpu_block_watch.py` checks the watcher's citation table
+against the DSDT and `ec/annotations/registers.yaml` — so a field rename or a
+status change there turns the suite red rather than letting the table rot — and
+pins that a mark reaches the CSV in the same schema. All three work by faking
+`ecrw` — the module binds kernel32 at import time and only loads on Windows —
+which is also what makes the arms scriptable. `../tools/README.md` is the
+canonical home for the command, and records why the runner gives each suite its
+own interpreter: the `ecrw` fakes are not all the same shape, and a single
+shared discovery over this directory breaks on whichever one imports second
+(`docs/findings.md` §16). The newest fake exports `Ec` and `EcError` both, so
+it is not the one that loses.
 
 ## What's proven vs. what needs a Windows box
 

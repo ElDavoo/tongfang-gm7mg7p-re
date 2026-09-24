@@ -11,14 +11,16 @@ bash tools/run-tests.sh
 
 Every `test_*.py` under the repository, found by `find` — not a hardcoded list,
 so a suite in a directory that does not exist yet is picked up by having its
-file committed. There are four today, 40 tests in all, and each is a `unittest`
+file committed. There are six today, 86 tests in all, and each is a `unittest`
 suite standing in for a tool's own behaviour:
 
 | suite | what it stands in for |
 |---|---|
 | `ec/tools/test_grade_0751_isolation.py` | `ec/tools/grade_0751_isolation.py`, the §4 grader of the `0x0751` capture procedure, against the committed `testdata/` fixtures |
+| `ec/tools/test_walk_branch_arms.py` | `ec/tools/walk_branch_arms.py`, the §4.5 walk of the 17 mode-bit branches |
 | `windows/tools/test_manual_fan_ctrl_probe.py` | the fan-mode probe's two-arm byte script |
 | `windows/tools/test_ec_watch.py` | the mark-CSV sweep and the mark landing between two change rows |
+| `windows/tools/test_gpu_block_watch.py` | the GPU-block watcher's citation table against `evidence/acpi/dsdt.dsl` and `ec/annotations/registers.yaml`, its watch set, and its mark reaching the CSV |
 | `linux/lightbar/test_probe_6005.py` | the lightbar probe's ioctl encoding, dry run, and off-after-failure |
 
 Named directories run alone, which is what to reach for when editing one tool:
@@ -36,16 +38,17 @@ the vacuous check is the same defect the gate's listing parse had in
 
 ## One interpreter per file, and why that is not a preference
 
-Both `windows/tools` suites install a fake `ecrw` into `sys.modules` with
-`setdefault`, and the two fakes are not the same shape: one exports `Ec` only,
-the other exports `Ec` and `EcError`, and `ec_watch.py` imports both. In one
-shared interpreter, whichever suite imports first wins, and the other dies with
+The three `windows/tools` suites install a fake `ecrw` into `sys.modules` with
+`setdefault`, and the fakes are not all the same shape: one exports `Ec` only,
+the others export `Ec` and `EcError`, and `ec_watch.py` imports both. In one
+shared interpreter, whichever suite imports first wins, and the others die with
 `ImportError: cannot import name 'EcError' from 'ecrw'`. It passes today only
-because discovery sorts the two in a lucky order — an accident nothing asserts.
+because discovery sorts them in a lucky order — an accident nothing asserts.
 `docs/findings.md` §16 has the reproduction. The runner's per-file isolation is
 what keeps a rename from turning that accident into a red build; the fix that
-would retire the whole question is to reconcile the two fakes, which is a
-follow-up rather than part of this.
+would retire the whole question is to reconcile the fakes, which is a follow-up
+rather than part of this. A new fake in this directory should export both names,
+which is what `test_gpu_block_watch.py` does.
 
 ## What it does not run
 
@@ -57,10 +60,10 @@ follow-up rather than part of this.
   deferral.
 - **No hardware, and no evidence of any.** Every suite is offline by
   construction: device discovery, file opening and ioctls are mocked against
-  hand-built fixtures, and the two `windows/tools` suites fake `ecrw` precisely
-  so no Windows box is needed. No EC is opened, no register is read back, and
-  no HID node is touched. `linux/lightbar/README.md` and each suite's own
-  docstring say the same thing where the tool is described.
+  hand-built fixtures, and the three `windows/tools` suites fake `ecrw`
+  precisely so no Windows box is needed. No EC is opened, no register is read
+  back, and no HID node is touched. `linux/lightbar/README.md` and each
+  suite's own docstring say the same thing where the tool is described.
 - **Not the decompiler tooling.** Those tools' `--check` and `--self-test` runs
   are the gate's, and they are a different set of files; see
   `docs/agent-pipeline.md`.

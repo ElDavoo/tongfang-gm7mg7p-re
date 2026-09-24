@@ -411,6 +411,17 @@ registers:
       paths, not an observed failure -- no hardware was involved in
       establishing it, and the live writes in docs/findings.md 4f are still
       the only hands-on test of this byte -- so DO-NOT-WRITE-BLIND stands.
+      DOOR ATTRIBUTION, prepared and NOT RUN (issue #184): the observation
+      4o names as the only route left to the caller -- which process issues
+      the DeviceIoControl to \.\ACPIDriver at the moment this byte moves
+      under a GPU TGP or Dynamic Boost change -- has a written procedure
+      and an observe-only watcher at
+      docs/hardware-tests/gpu-tgp-07c4-07d7-door.md, with its per-address
+      citation list pinned to the DSDT and to this file by
+      windows/tools/test_gpu_block_watch.py. The capture has not been
+      taken: no Windows machine is reachable from the pipeline that wrote
+      it, and nothing in this entry's status rests on a run that did not
+      happen.
 
   - name: DBD2 (DSDT name; no vendor constant, no committed Windows writer)
     addr: 0x07D1
@@ -442,6 +453,11 @@ registers:
       DO-NOT-WRITE-BLIND suffix matches 0x07D0 because a blind write here
       lands on the same GPU power pair with the same unknowns. No live
       test has touched this byte.
+      DOOR ATTRIBUTION, prepared and NOT RUN (issue #184): the same
+      procedure as 0x07D0's, at
+      docs/hardware-tests/gpu-tgp-07c4-07d7-door.md, covers this byte in
+      the same one-clock capture of 0x07C4-0x07D7 and 0x0743-0x0746. The
+      capture has not been taken.
 
   - name: LIGHTBAR_AC_CTRL / RED / GREEN / BLUE
     addr: [0x0748, 0x0749, 0x074A, 0x074B]
