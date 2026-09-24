@@ -1,0 +1,11 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; the
+# timestamps below were written by hand. See ../README.md.
+# Shape: the 0x0F00-0x0F5F fan-table half of the same three actions, with no
+# change rows at all -- §4.2's prediction, and the branch that keeps the
+# grader from reading a fan-table move into this run. Marks only is what a
+# quiet page looks like from three consoles. Not a prediction that the table
+# stays put.
+ts,addr,old,new
+2026-01-01T12:00:11.000+01:00,MARK,,no-op wrote 0x0751=0x10
+2026-01-01T12:00:41.000+01:00,MARK,,wrote 0x0751=0xA0
+2026-01-01T12:01:11.000+01:00,MARK,,restored 0x0751=0x10

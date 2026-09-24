@@ -18,7 +18,7 @@
 void copy_03cd_03ce_03cf_to_1c02_1c04_1c05(void)
 
 {
-  if ((DAT_EXTMEM_045f == -0x25) && (DAT_EXTMEM_1c00 == 0)) {
+  if ((XDATA_045F == -0x25) && (DAT_EXTMEM_1c00 == 0)) {
     DAT_EXTMEM_1c02 = DAT_EXTMEM_03cd;
     DAT_EXTMEM_03cd = 0;
     if (-1 < DAT_EXTMEM_03a1) {

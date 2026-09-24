@@ -28,21 +28,21 @@ void countdown_06c0_latch_097f_bit0(byte *param_1,char param_2)
     return;
   }
   bVar1 = in_PSW & 0xdd;
-  if ((DAT_EXTMEM_0459 & 8) == 0) {
+  if ((XDATA_0459 & 8) == 0) {
     DAT_EXTMEM_06e1 = DAT_EXTMEM_06e1 & 0x7f;
     trampoline_to_c201();
   }
   else {
     trampoline_to_c4b7();
     if ((DAT_EXTMEM_0495 & 0x80) == 0) {
-      DAT_EXTMEM_045d = 0;
+      XDATA_045D = 0;
       DAT_EXTMEM_0704 = 0;
       if ((DAT_EXTMEM_06e1 & 0x80) == 0) {
         bVar1 = bVar1 & 0xdd;
         if ((DAT_EXTMEM_097f & 1) == 0) {
           DAT_EXTMEM_06c0 = DAT_EXTMEM_06c0 + -1;
           if (DAT_EXTMEM_06c0 != '\0') {
-            DAT_EXTMEM_045d = 0;
+            XDATA_045D = 0;
             DAT_EXTMEM_0704 = 0;
             return;
           }

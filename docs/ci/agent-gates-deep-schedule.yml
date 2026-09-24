@@ -8,8 +8,9 @@
 #
 #   cp docs/ci/agent-gates-deep-schedule.yml .github/workflows/agent-gates-deep.yml
 #
-# and that is the whole change. Everything it runs is already committed; it
-# calls the deep tier's documented entry point and nothing else.
+# and that is the whole change. Everything it checks is already committed; it
+# calls the deep tier's documented entry point and nothing else, and uploads
+# the run's log as an artifact.
 #
 # Why it is written to pass the `workflows:` job in ci.yml (actionlint and
 # zizmor) before it lands: that job audits every file in this directory, so
@@ -64,5 +65,40 @@ jobs:
       # agent-gates-deep.sh, and agent-gates-deep.sh re-runs the cheap tier
       # first -- so this is a superset, not a second gate that can disagree
       # with the first.
+      #
+      # The whole run goes to a file, and the file is the record. The
+      # `schedule:` comment above says GitHub delays and sometimes drops
+      # scheduled runs without telling anyone: a run that happened leaves an
+      # artifact behind and a run that did not leaves none, so the absence is a
+      # signal rather than something to be inferred from silence. The log is
+      # the cheap tier's too, because its failures matter to the same reader.
+      #
+      # pipefail before the pipe, not after. `set -o pipefail` has to be in
+      # effect when the pipeline runs or the status is tee's, which is zero
+      # however the gate ended -- a failing deep tier reading as a passing one,
+      # which is the exact failure this file exists to stop. GitHub's default
+      # shell for `run:` is `bash -e`, and -e does not set pipefail.
       - name: Deep gates
-        run: AGENT_GATES_DEEP=1 .github/scripts/agent-gates.sh
+        run: |
+          set -o pipefail
+          AGENT_GATES_DEEP=1 .github/scripts/agent-gates.sh 2>&1 \
+            | tee "$RUNNER_TEMP/deep-gates.log"
+
+      - name: Upload the deep gates log
+        # if: always(), because the log anyone wants is the one from the run
+        # that failed. A run that fails with no artifact is the same silence
+        # this file is here to remove.
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          # The run id, so a reader can tell this night's artifact from last
+          # night's without cross-referencing the run list.
+          name: deep-gates-${{ github.run_id }}
+          path: ${{ runner.temp }}/deep-gates.log
+          if-no-files-found: warn
+          # 90 is GitHub's default, and saying so explicitly is the point: a
+          # value above a stricter repository or organisation cap fails the
+          # upload step rather than being clamped. The log is a point-in-time
+          # reading of one night; the durable record of a result that *changed*
+          # is a re-report and a docs/findings.md entry, not an artifact.
+          retention-days: 90

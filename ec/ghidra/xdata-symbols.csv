@@ -13,7 +13,8 @@ addr,name,from_register,register_status,derivation,programs
 0x0726,OEM_9,OEM_9 (AC_AUTO_BOOT_ENABLE),absent,scalar-name,bank0;bank1
 0x07A6,OEM_4_CHARGING_PROFILE,OEM_4 (CHARGING_PROFILE_MASK),confirmed-working-partially,override,bank0;bank1
 0x07B9,CHARGE_CTRL,CHARGE_CTRL (numeric threshold),unknown-not-absent,scalar-name,bank0;bank1
-0x07D0,BATTERY_CHARGE_LIMIT_DOWN,"BATTERY_CHARGE_LIMIT_DOWN (Windows-only address, no uniwill-laptop equivalent)",unknown-not-absent-DO-NOT-WRITE-BLIND,scalar-name,bank0;bank1
+0x07D0,DBD1,DBD1 (DSDT name; ECSpec calls the same byte BATTERY_CHARGE_LIMIT_DOWN),unknown-not-absent-DO-NOT-WRITE-BLIND,scalar-name,bank0;bank1
+0x07D1,DBD2,"DBD2 (DSDT name; no vendor constant, no committed Windows writer)",unknown-not-absent-DO-NOT-WRITE-BLIND,scalar-name,bank0;bank1
 0x0748,LIGHTBAR_AC_CTRL,LIGHTBAR_AC_CTRL / RED / GREEN / BLUE,confirmed-not-this-mechanism,name-split,bank0;bank1
 0x0749,LIGHTBAR_AC_CTRL_RED,LIGHTBAR_AC_CTRL / RED / GREEN / BLUE,confirmed-not-this-mechanism,name-split,bank0;bank1
 0x074A,LIGHTBAR_AC_CTRL_GREEN,LIGHTBAR_AC_CTRL / RED / GREEN / BLUE,confirmed-not-this-mechanism,name-split,bank0;bank1
@@ -26,6 +27,50 @@ addr,name,from_register,register_status,derivation,programs
 0x07CC,USB_C_POWER_PRIORITY,USB_C_POWER_PRIORITY,present-untested,scalar-name,bank0;bank1
 0x043E,CPU_TEMP,CPU_TEMP,confirmed-working,scalar-name,bank0;bank1
 0x044F,GPU_TEMP,GPU_TEMP,confirmed-working,scalar-name,bank0;bank1
+0x0400,BAT_POWER_UNIT_0,BAT_POWER_UNIT,present-untested,override,bank0;bank1
+0x0401,BAT_POWER_UNIT_1,BAT_POWER_UNIT,present-untested,override,bank0;bank1
+0x0402,BAT_DESIGN_CAPACITY_0,BAT_DESIGN_CAPACITY,present-untested,override,bank0;bank1
+0x0403,BAT_DESIGN_CAPACITY_1,BAT_DESIGN_CAPACITY,present-untested,override,bank0;bank1
+0x0404,BAT_FULL_CAPACITY_1,BAT_FULL_CAPACITY_1,present-untested,scalar-name,bank0;bank1
+0x0408,BAT_DESIGN_VOLTAGE_1,BAT_DESIGN_VOLTAGE_1,present-untested,scalar-name,bank0;bank1
+0x040A,XDATA_040A,XDATA_040A,present-untested,scalar-name,bank0;bank1
+0x040C,XDATA_040C,XDATA_040C,present-untested,scalar-name,bank0;bank1
+0x040E,XDATA_040E,XDATA_040E,present-untested,scalar-name,bank0;bank1
+0x0410,XDATA_0410,XDATA_0410,present-untested,scalar-name,bank0;bank1
+0x0420,XDATA_0420,XDATA_0420,present-untested,scalar-name,bank0;bank1
+0x0432,BAT_STATUS_1,BAT_STATUS_1,present-untested,scalar-name,bank0;bank1
+0x0434,BAT_CURRENT_MA_0,BAT_CURRENT_MA,present-untested,override,bank0;bank1
+0x0435,BAT_CURRENT_MA_1,BAT_CURRENT_MA,present-untested,override,bank0;bank1
+0x0436,XDATA_0436_0,XDATA_0436_PAIR,present-untested,override,bank0;bank1
+0x0437,XDATA_0436_1,XDATA_0436_PAIR,present-untested,override,bank0;bank1
+0x0438,BAT_VOLTAGE_MV_0,BAT_VOLTAGE_MV,present-untested,override,bank0;bank1
+0x0439,BAT_VOLTAGE_MV_1,BAT_VOLTAGE_MV,present-untested,override,bank0;bank1
+0x043A,XDATA_043A,XDATA_043A,present-untested,scalar-name,bank0;bank1
+0x043C,XDATA_043C,XDATA_043C,present-untested,scalar-name,bank0;bank1
+0x043D,XDATA_043D,XDATA_043D,present-untested,scalar-name,bank0;bank1
+0x043F,XDATA_043F,XDATA_043F,present-untested,scalar-name,bank0;bank1
+0x0440,XDATA_0440,XDATA_0440,present-untested,scalar-name,bank0;bank1
+0x0442,XDATA_0442,XDATA_0442,present-untested,scalar-name,bank0;bank1
+0x0443,XDATA_0443,XDATA_0443,present-untested,scalar-name,bank0;bank1
+0x0448,XDATA_0448,XDATA_0448,present-untested,scalar-name,bank0;bank1
+0x0449,XDATA_0449,XDATA_0449,present-untested,scalar-name,bank0;bank1
+0x044B,XDATA_044B,XDATA_044B,present-untested,scalar-name,bank0;bank1
+0x044C,XDATA_044C,XDATA_044C,present-untested,scalar-name,bank0;bank1
+0x0450,XDATA_0450,XDATA_0450,present-untested,scalar-name,bank0;bank1
+0x0451,XDATA_0451,XDATA_0451,present-untested,scalar-name,bank0;bank1
+0x0452,XDATA_0452,XDATA_0452,present-untested,scalar-name,bank0;bank1
+0x0454,XDATA_0454,XDATA_0454,present-untested,scalar-name,bank0;bank1
+0x0455,XDATA_0455,XDATA_0455,present-untested,scalar-name,bank0;bank1
+0x0456,SYSTEM_ID,SYSTEM_ID,present-untested,scalar-name,bank0;bank1
+0x0457,XDATA_0457,XDATA_0457,present-untested,scalar-name,bank0;bank1
+0x0458,XDATA_0458,XDATA_0458,present-untested,scalar-name,bank0;bank1
+0x0459,XDATA_0459,XDATA_0459,present-untested,scalar-name,bank0;bank1
+0x045A,XDATA_045A,XDATA_045A,present-untested,scalar-name,bank0;bank1
+0x045B,XDATA_045B,XDATA_045B,present-untested,scalar-name,bank0;bank1
+0x045C,XDATA_045C,XDATA_045C,present-untested,scalar-name,bank0;bank1
+0x045D,XDATA_045D,XDATA_045D,present-untested,scalar-name,bank0;bank1
+0x045E,XDATA_045E,XDATA_045E,present-untested,scalar-name,bank0;bank1
+0x045F,XDATA_045F,XDATA_045F,present-untested,scalar-name,bank0;bank1
 0x04A6,BAT_CYCLE_COUNT_0,BAT_CYCLE_COUNT,confirmed-working,override,bank0;bank1
 0x04A7,BAT_CYCLE_COUNT_1,BAT_CYCLE_COUNT,confirmed-working,override,bank0;bank1
 0x0522,CHARGE_TARGET_MV_0,CHARGE_TARGET_MV (charger constant-voltage target),confirmed-working,override,bank0;bank1
@@ -36,6 +81,8 @@ addr,name,from_register,register_status,derivation,programs
 0x0784,CPU_PL1_PL2,CPU_PL1 / PL2 / PL4 (APL1/APL2/APL4),present-untested,name-split,bank0;bank1
 0x0785,CPU_PL1_PL4,CPU_PL1 / PL2 / PL4 (APL1/APL2/APL4),present-untested,name-split,bank0;bank1
 0x0751,MANUAL_FAN_CTRL,MANUAL_FAN_CTRL (power mode / fan mode),present-untested,scalar-name,bank0;bank1
+0x075B,MAIN_FAN_L_DUTY,"MAIN_FAN_L_DUTY (fan duty, published to the Control Center)",present-untested,scalar-name,bank0;bank1
+0x075C,MAIN_FAN_R_DUTY,"MAIN_FAN_R_DUTY (fan duty, published to the Control Center)",present-untested,scalar-name,bank0;bank1
 0x0782,BIOS_OEM_2,BIOS_OEM_2 (DEFAULT_MODE / FAN_QKEY / FAN_TABLE_OFFICE_MODE),present-untested,scalar-name,bank0;bank1
 0x049F,BIOS_INFO_3,BIOS_INFO_3 (Turbo mode supported),present-untested,scalar-name,bank0;bank1
 0x0730,MODE_PL_DEFAULTS_GAMING_PL1_0,MODE_PL_DEFAULTS (per-mode PL1/PL2/PL4/D-state defaults),present-untested,override,bank0;bank1
@@ -55,3 +102,10 @@ addr,name,from_register,register_status,derivation,programs
 0x07DA,MODE_TCC_OFFSET_DEFAULTS_TURBO_2,MODE_TCC_OFFSET_DEFAULTS,present-untested,override,bank0;bank1
 0x0786,CPU_TCC_OFFSET,CPU_TCC_OFFSET (APTC/APTN),present-untested,scalar-name,bank0;bank1
 0x07C6,AP_OEM_6,AP_OEM_6 (whisper status / universal fan control),present-untested,scalar-name,bank0;bank1
+0x08A0,XDATA_08A0,XDATA_08A0,present-untested,scalar-name,bank0;bank1
+0x08A2,XDATA_08A2,XDATA_08A2,present-untested,scalar-name,bank0;bank1
+0x08EB,XDATA_08EB,XDATA_08EB,present-untested,scalar-name,bank0;bank1
+0x089E,XDATA_089E,XDATA_089E,present-untested,scalar-name,bank0;bank1
+0x089F,XDATA_089F,XDATA_089F,present-untested,scalar-name,bank0;bank1
+0x09E6,XDATA_09E6,XDATA_09E6,present-untested,scalar-name,bank0;bank1
+0x09E7,XDATA_09E7,XDATA_09E7,present-untested,scalar-name,bank0;bank1

@@ -28,7 +28,7 @@ void advance_0d14_state(char param_1)
     shared_noop_ret();
     return;
   }
-  if (DAT_EXTMEM_0440 != '\0') {
+  if (XDATA_0440 != '\0') {
     if (((DAT_EXTMEM_0d14 < 0xf0) && (0x17 < DAT_EXTMEM_0d14)) &&
        (test_1606_bit4_inverted(DAT_EXTMEM_0d14 - 0x18), param_1 == '\x01')) {
       DAT_EXTMEM_0d14 = 0xfe;

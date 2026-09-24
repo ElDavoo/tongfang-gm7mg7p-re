@@ -18,9 +18,9 @@ void clear_and_set_xdata_flag_bits(void)
   call_19c0_then_19c6();
   DAT_EXTMEM_0801 = DAT_EXTMEM_0801 & 0xdf;
   DAT_EXTMEM_0803 = 1;
-  DAT_EXTMEM_0442 = DAT_EXTMEM_0442 & 0xe7;
+  XDATA_0442 = XDATA_0442 & 0xe7;
   DAT_EXTMEM_086f = DAT_EXTMEM_086f | 4;
-  if (DAT_EXTMEM_0440 == '\a') {
+  if (XDATA_0440 == '\a') {
     DAT_EXTMEM_097a = DAT_EXTMEM_097a & 0xfd;
     DAT_EXTMEM_0720 = DAT_EXTMEM_0720 & 0xfd;
   }

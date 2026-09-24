@@ -42,7 +42,7 @@ void dec_timers_06da_08e4_055f_09ce_070b(void)
   if (DAT_EXTMEM_06c5 != '\0') {
     DAT_EXTMEM_06c5 = DAT_EXTMEM_06c5 + -1;
   }
-  if ((DAT_EXTMEM_0440 != '\0') && (DAT_EXTMEM_085b != '\0')) {
+  if ((XDATA_0440 != '\0') && (DAT_EXTMEM_085b != '\0')) {
     DAT_EXTMEM_085b = DAT_EXTMEM_085b + -1;
   }
   if (DAT_EXTMEM_0986 != '\0') {
@@ -74,7 +74,7 @@ void dec_timers_06da_08e4_055f_09ce_070b(void)
      ) {
     DAT_EXTMEM_0621 = 0;
   }
-  if ((DAT_EXTMEM_0440 != '\0') && (DAT_EXTMEM_06db != '\0')) {
+  if ((XDATA_0440 != '\0') && (DAT_EXTMEM_06db != '\0')) {
     DAT_EXTMEM_06db = DAT_EXTMEM_06db + -1;
   }
   if (DAT_EXTMEM_080d != '\0') {

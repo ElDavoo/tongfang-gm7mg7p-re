@@ -94,7 +94,7 @@ What each bundle writes is traced, and confirmed live, under
 | | `Write_Support_BYTE` | `0x0766` | |
 | `BatteryProtection2` | `SetHealthProtectionHigh/Middle/Low` | `0x07A6` bits 4-5 | the only live battery path |
 | | `SetTypeCAdaptorSwitch` | `0x07CC` bit 7 | gated on `0x0742` bit 5, clear on this board |
-| | `SetBatteryChargingLimit_Up/Down` | `0x07B9` / `0x07D0` | **never called** |
+| | `SetBatteryChargingLimit_Up/Down` | `0x07B9` / `0x07D0` | **never called**; and `0x07D0` has no other writer anywhere in the committed Windows inputs — the DSDT's `T1WR 0x1173` branch is the only one, and it writes it as a GPU power byte (`docs/findings.md` §4o). The service's own GPU dynamic-boost writes are the `0x0743`-`0x0746` rows above, a different block |
 | `MyEcCtrl` | `Set_APExistToEC` | `0x0741` bit 0 | uniwill-laptop's `ENABLE_MANUAL_CTRL` |
 | `MicMuteControl` | `SetLED` | `0x07A6` | yet another bit of `0x07A6` |
 | `HIDKeyboard` | `AsyncBrignessToEC` | `0x078C` | keyboard backlight level |

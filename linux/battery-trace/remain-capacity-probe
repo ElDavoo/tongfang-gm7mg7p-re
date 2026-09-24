@@ -1,0 +1,191 @@
+#!/usr/bin/env bash
+# Issue #172: is EC 0x0436/0x0437 a remaining-capacity reading, or the periodic
+# counter the one committed capture reads like? Read EC 0x0436/7 beside
+# charge_now/capacity and watch which way the two move across a real discharge.
+#
+# Read-only, which is the whole difference from its sibling limit-pair-test:
+# that one writes 0x07B9/0x07D0 and has to restore them, this one writes
+# nothing and cannot leave the EC altered. So there is no restore phase -- the
+# three are baseline, discharge, recovery.
+#
+#   baseline   AC in, pack charged, idle
+#   discharge  AC out, a fixed load running, charge_now visibly falling
+#   recovery   AC back in, or the load stopped
+#
+# Linux has no WMI, so the §4g exact-copy test is Windows-only
+# (windows/tools/ec_validate.py). The comparators here are charge_now and
+# capacity, and because the EC's unit is unknown the CSV and the closing summary
+# carry three numbers side by side -- charge_mwh, ec_u16, and ec_u16 read *as*
+# uWh -- so the scale question is visible rather than assumed away. The summary
+# reports direction and magnitude for each and names which fell with
+# charge_mwh. It does not conclude: a counter moves on a schedule, and matching
+# a direction is not the same as matching a quantity.
+# docs/hardware-tests/remain-capacity-0436.md is the procedure and does the
+# grading; run as root, AC charged, with a load you can hold for the whole window.
+set -u
+cd "$(dirname "$0")/../.." || exit 1
+B=/sys/class/power_supply/BAT0
+A=/sys/class/power_supply/AC0
+OUT=${1:-evidence/ec-watch/$(date +%F)-0436-capacity.csv}
+ECM="python3 ec/tools/ecmem.py"
+STEP=${STEP:-1}
+BASELINE=${BASELINE:-60}
+DISCHARGE=${DISCHARGE:-600}
+RECOVERY=${RECOVERY:-120}
+
+# Every address this probe may read, as one constant. The bound check below is
+# in code rather than in the procedure prose because a typo here is the only
+# way this script reaches 0x0460-0x046F, the fan-tach block whose ECRR reads
+# stalled the fans on a sibling board (issue #94, docs/related-projects.md).
+# A 16-bit read covers addr and addr+1, so the pair is what has to stay on the
+# page: 0x045F as a low byte would read 0x0460.
+ADDRS=(0x402 0x403 0x404 0x405 0x434 0x435 0x436 0x437)
+PAGE_FIRST=0x400
+PAGE_LAST=0x45F
+for a in "${ADDRS[@]}"; do
+  for byte in "$a" "$((a + 1))"; do
+    if ((byte < PAGE_FIRST || byte > PAGE_LAST)); then
+      printf 'remain-capacity-probe: 0x%04X is outside 0x%04X-0x%04X.\n' \
+        "$byte" "$PAGE_FIRST" "$PAGE_LAST" >&2
+      printf '  0x0460-0x046F is the fan-tach block (issue #94).\n' >&2
+      exit 1
+    fi
+  done
+done
+
+[ "$(id -u)" = 0 ] || { echo "run as root: /dev/mem" >&2; exit 1; }
+[ -r "$B/charge_now" ] || { echo "no $B/charge_now on this machine" >&2; exit 1; }
+
+HEADER="ts,phase,ac,status,capacity,charge_now_uwh,charge_mwh,current_now,voltage_now,ec_0436_0437,ec_u16,ec_u16_as_uwh,ec_0404_full,ec_0402_design,ec_0434_ma"
+# A `#` comment above a real header row, which is the order
+# evidence/battery-traces/2026-09-17-limit-pair.csv uses and the one every CSV
+# reader in this repo expects: the comment says what produced the file, and the
+# row below it is the header. `limit-pair-test` writes the same way.
+echo "# remain-capacity-probe, read-only, 0x0400-0x045F only, ${STEP}s samples" > "$OUT"
+echo "$HEADER" >> "$OUT"
+
+# Per-phase first/last of each series, so the summary is a delta rather than a
+# terminal. Keyed by "phase,series" and only ever written by one process.
+declare -A FIRST LAST
+# The bound is per sample, not over two independent maxima: ec_0436 and
+# ec_0404 are read together, and a window in which the pair once came in above
+# the full capacity has breached it whatever the two maxima work out at.
+BOUND_OK=1
+BOUND_EC=0
+BOUND_FULL=0
+
+sample() {
+  local phase=$1 n=$2 i b design full current ec_u16 charge_now charge_mwh ac
+  for ((i = 0; i < n; i++)); do
+    mapfile -t b < <($ECM read "${ADDRS[@]}" | cut -d= -f2)
+    # ecmem.py prints one "0xNNN=0xNN" line per address; a short answer means
+    # the window was not readable, and indexing past the end of an empty array
+    # under `set -u` is a confusing way to say so.
+    if [ "${#b[@]}" -ne "${#ADDRS[@]}" ]; then
+      echo "remain-capacity-probe: got ${#b[@]} of ${#ADDRS[@]} bytes from $ECM" >&2
+      return 1
+    fi
+    # The low byte first: u16() in ec_validate.py and the pair helpers in the
+    # EC firmware both read these little-endian.
+    design=$((b[0] + (b[1] << 8)))
+    full=$((b[2] + (b[3] << 8)))
+    current=$((b[4] + (b[5] << 8)))
+    ec_u16=$((b[6] + (b[7] << 8)))
+    # Some drivers publish `unknown` here, and `set -u` does not make an
+    # arithmetic operand safe -- an unquoted $(( )) on that text aborts the run
+    # with a syntax error and a half-finished capture.
+    charge_now=$(cat "$B/charge_now" 2>/dev/null)
+    [[ $charge_now =~ ^-?[0-9]+$ ]] || charge_now=""
+    charge_mwh=""
+    [ -z "$charge_now" ] || charge_mwh=$((charge_now / 1000))
+    ac=$(cat "$A/online" 2>/dev/null)
+    printf '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' \
+      "$(date -Is)" "$phase" "$ac" "$(cat "$B/status")" \
+      "$(cat "$B/capacity")" "$charge_now" "$charge_mwh" \
+      "$(cat "$B/current_now")" "$(cat "$B/voltage_now")" \
+      "0x$(printf '%02x%02x' "${b[6]}" "${b[7]}")" "$ec_u16" \
+      "$((ec_u16 * 1000))" "$full" "$design" "$current" | tee -a "$OUT"
+    if [ "$BOUND_OK" = 1 ] && [ "$ec_u16" -gt "$full" ]; then
+      BOUND_OK=0
+      BOUND_EC=$ec_u16
+      BOUND_FULL=$full
+    fi
+    for series in charge_mwh ec_u16 ec_u16_as_uwh; do
+      case $series in
+        charge_mwh) val=$charge_mwh ;;
+        ec_u16) val=$ec_u16 ;;
+        ec_u16_as_uwh) val=$((ec_u16 * 1000)) ;;
+      esac
+      # A sample where sysfs published nothing leaves no first/last for
+      # charge_mwh; the other two are always there.
+      [ -n "$val" ] || continue
+      FIRST["$phase,$series"]="${FIRST["$phase,$series"]-$val}"
+      LAST["$phase,$series"]=$val
+    done
+    sleep "$STEP" || return 1
+  done
+}
+
+echo "# phase baseline begins" >> "$OUT"
+sample baseline "$BASELINE" || exit 1
+echo "baseline done ($BASELINE samples) -- pull AC now and start the load"
+echo "# phase discharge begins" >> "$OUT"
+sample discharge "$DISCHARGE" || exit 1
+echo "discharge done ($DISCHARGE samples) -- AC back in, or stop the load"
+echo "# phase recovery begins" >> "$OUT"
+sample recovery "$RECOVERY" || exit 1
+
+# The report. Three series, each as first -> last and a signed delta, and then
+# the one comparison this can honestly make: which of them fell while
+# charge_mwh fell. Direction, not equality -- nothing here knows the EC's unit,
+# and ec_u16 and ec_u16_as_uwh are the same series at two scales.
+echo
+echo "=== per-phase, first -> last (signed delta) ==="
+fell=()
+for phase in baseline discharge recovery; do
+  echo "$phase"
+  for series in charge_mwh ec_u16 ec_u16_as_uwh; do
+    f=${FIRST["$phase,$series"]}
+    l=${LAST["$phase,$series"]}
+    printf '  %-16s %8d -> %-8d (%+d)\n' "$series" "$f" "$l" "$((l - f))"
+    if [ "$l" -lt "$f" ]; then
+      fell+=("$phase $series")
+    fi
+  done
+done
+
+echo
+if [ "${#fell[@]}" -eq 0 ]; then
+  echo "moved down with charge_mwh: nothing at all, charge_mwh included --"
+  echo "  a window that long with a flat charge_now is not a discharge"
+  exit 0
+fi
+echo "moved down with charge_mwh:"
+any=0
+for entry in "${fell[@]}"; do
+  case $entry in
+    *charge_mwh) continue ;;
+  esac
+  echo "  $entry"
+  any=1
+done
+[ "$any" -eq 1 ] || echo "  (charge_mwh fell; no other series did)"
+
+# The issue's second, free check: a capacity cannot exceed full capacity. The
+# bound is one-directional -- a small counter passes it too -- so it is printed
+# and not scored.
+echo
+if [ "$BOUND_OK" = 1 ]; then
+  echo "ec_0436_0437 <= ec_0404_full on every sample: yes"
+else
+  echo "ec_0436_0437 <= ec_0404_full on every sample: no (saw ec_u16 $BOUND_EC above full $BOUND_FULL)"
+fi
+echo "  (one-directional: a small counter passes this bound too)"
+
+echo
+echo "None of this concludes anything. A counter moves on a schedule and a"
+echo "capacity moves with load, and both can fall across a discharge; what"
+echo "settles 0x0436 is docs/hardware-tests/remain-capacity-0436.md read against"
+echo "this capture. Nothing was written to the EC, and no hardware test has been"
+echo "run by the pipeline that wrote this script."
+echo "capture: $OUT"

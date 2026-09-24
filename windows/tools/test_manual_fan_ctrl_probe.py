@@ -2,8 +2,8 @@
 """Offline checks; no EC is opened and the vendor driver is never called.
 
 manual_fan_ctrl_probe.py imports ecrw, which binds kernel32 at import time and
-so only loads on Windows -- the fake below stands in for the whole module,
-which is also what lets the two arms be scripted byte by byte.
+so only loads on Windows -- ecrw_fake.py stands in for the whole module, and
+the FakeEc below scripts the two arms byte by byte on top of it.
 
 The script is keyed on the arm and the sweep within it, not on a timestamp, so
 what a byte does is an assertion about the run's shape -- the no-op moves PWM,
@@ -14,10 +14,10 @@ import contextlib
 import importlib.util
 import io
 from pathlib import Path
-import sys
-import types
 import unittest
 from unittest.mock import patch
+
+import ecrw_fake
 
 ORIG = 0x10
 TARGET = 0xA0
@@ -35,9 +35,7 @@ SCRIPT = {
     0x044F: ([0x50, 0x52, 0x53], [0x53, 0x55, 0x56]),
 }
 
-fake_ecrw = types.ModuleType('ecrw')
-fake_ecrw.Ec = lambda: None
-sys.modules.setdefault('ecrw', fake_ecrw)
+ecrw_fake.install()
 
 spec = importlib.util.spec_from_file_location(
     'manual_fan_ctrl_probe', Path(__file__).with_name('manual_fan_ctrl_probe.py'))
@@ -87,24 +85,31 @@ class FakeEc:
 
 
 class Clock:
-    """A counter for time.time, so a hold buys a fixed number of sweeps."""
+    """A counter for time.time, so a hold buys a fixed number of sweeps.
+
+    `slept` records what the run asked to sleep for, so the cadence can be
+    asserted without counting sweeps: the sweep interval is a number the
+    operator chose, and the only place it becomes visible is the argument
+    time.sleep gets.
+    """
 
     def __init__(self, step=0.1):
         self.t = 0.0
         self.step = step
+        self.slept = []
 
     def time(self):
         self.t += self.step
         return self.t
 
-    def sleep(self, _s):
-        pass
+    def sleep(self, s):
+        self.slept.append(s)
 
 
 class ProbeTests(unittest.TestCase):
-    def run_probe(self, argv=('0xA0', '30'), ec=None, **kw):
+    def run_probe(self, argv=('0xA0', '30'), ec=None, clock=None, **kw):
         ec = ec if ec is not None else FakeEc(**kw)
-        clock = Clock()
+        clock = clock if clock is not None else Clock()
         out = io.StringIO()
         with patch.object(probe, 'Ec', lambda: ec), \
              patch.object(probe.time, 'time', clock.time), \
@@ -169,11 +174,23 @@ class ProbeTests(unittest.TestCase):
 
     def test_target_outside_the_vendor_set_is_refused_before_opening_the_ec(self):
         opened = []
-        with patch.object(probe, 'Ec', lambda: opened.append(1)), \
-             contextlib.redirect_stderr(io.StringIO()):
-            with self.assertRaises(SystemExit):
+        with patch.object(probe, 'Ec', lambda: opened.append(1)):
+            with self.assertRaises(SystemExit) as cm:
                 probe.main(['0xE0'])
+        # The refusal itself, not any SystemExit: argparse exits 2 on a
+        # mistyped flag, so the bare assertion would pass for a run that never
+        # looked at the value. `sys.exit(msg)` carries the message as the
+        # exception's code, and only prints it if nothing catches it.
+        self.assertEqual(cm.exception.code,
+                         "value 0xE0 not in the vendor set {0x00,0x10,0xA0}")
         self.assertEqual(opened, [])
+
+    def test_a_mistyped_flag_is_a_usage_error_not_a_whitelist_refusal(self):
+        with patch.object(probe, 'Ec', lambda: self.fail("opened an EC")), \
+             contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(SystemExit) as cm:
+                probe.main(['0xA0', '--intervl', '0.5'])
+        self.assertEqual(cm.exception.code, 2)
 
     # 6. The restore is the outermost guard, so it runs even when the control
     #    arm's observation blows up.
@@ -196,6 +213,38 @@ class ProbeTests(unittest.TestCase):
         self.assertNotIn("0x075C", control)
         self.assertIn("0x075C", written)
 
+    # 8. The defaults are the procedure's, and this is what stops the two files
+    #    that each claim to be §3 from carrying different numbers again (#146).
+    def test_the_default_hold_is_the_procedures_thirty_seconds(self):
+        _, out = self.run_probe(argv=('0xA0',))
+        # Read off the banner rather than counted out of 300 fake sweeps: the
+        # default is a number the operator reads before pressing anything, so
+        # that is where it has to be right.
+        self.assertIn("holding 30s each", out)
+
+    def test_the_default_cadence_is_the_procedures_half_second(self):
+        clock = Clock()
+        _, out = self.run_probe(argv=('0xA0',), clock=clock)
+        self.assertIn("sweeping every 0.5s", out)
+        # 0.4 is the restore's settle sleep rather than the sweep cadence, so
+        # it is excluded instead of comparing the whole recorded set.
+        self.assertEqual(set(clock.slept) - {0.4}, {0.5})
+
+    def test_the_interval_flag_reaches_the_sweep(self):
+        clock = Clock()
+        _, out = self.run_probe(argv=('0xA0', '30', '--interval', '1.25'),
+                                clock=clock)
+        self.assertIn("sweeping every 1.25s", out)
+        self.assertEqual(set(clock.slept) - {0.4}, {1.25})
+
+    def test_the_banner_carries_the_unvalidated_interval_caveat(self):
+        _, out = self.run_probe(argv=('0xA0',))
+        # 0.5 s is a starting point and nothing more -- #94 is the open work
+        # that would make these tools safe by default -- so the run has to say
+        # so where the operator is deciding whether to leave it there.
+        self.assertIn("no interval here is validated", out)
+        self.assertIn("fans audibly change, stop", out)
+
     # The tool states a measurement, not a verdict.
     def test_summary_grades_nothing(self):
         _, out = self.run_probe()
@@ -203,9 +252,12 @@ class ProbeTests(unittest.TestCase):
         self.assertNotIn("confirmed-inert", out)
 
     # A drifting byte reports the arm's net, first to last, with the count --
-    # the arithmetic the grader prints as a `window delta`. Reporting the last
-    # step instead would understate a slow drift by the movement between the
-    # first and second change, which is the part §4.4 compares.
+    # one of the three movement figures the grader prints as a `window delta`,
+    # and the one that reads best on a clean monotonic step. Reporting the
+    # last step instead would understate a slow drift by the movement between
+    # the first and second change. §4.4 keys its control-vs-write comparison
+    # on *total* movement rather than on this net, which the grader prints and
+    # this tool leaves to the reader to sum from the change rows.
     def test_a_drifting_byte_reports_its_net_not_its_last_step(self):
         _, out = self.run_probe()
         control = out[out.index("control arm --"):out.index("write under test --")]

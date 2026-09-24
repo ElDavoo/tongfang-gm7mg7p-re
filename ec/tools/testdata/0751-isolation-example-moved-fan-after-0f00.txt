@@ -1,0 +1,18 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# byte below was written by hand. See README.md.
+# Shape: the same `ecrw.py dump 0x0F00 0x0060` as §3's step 6 takes it. Four
+# addresses differ from the before dump: 0x0F0A, a §4.2 duty slot, goes
+# 0x52 -> 0x56, which leaves it holding the same value as the slot after it --
+# the repeated 56 on the 0f00 row is that and not a typo -- and 0x0F5D-0x0F5F
+# all go to 0x6E. The three taking the same value is the shape the 2026-09-23
+# power-mode-cycle capture shows -- those three track 0x0F58-0x0F5C through
+# 0xC8/0x6E/0xAA in
+# evidence/ec-watch/2026-09-23-power-mode-cycle-0f00-0f5f.csv -- so this is the
+# shape to be sure the two halves are reported under different headings. Every
+# value here is invented; not a prediction that a table is written this way.
+0f00: 2a 2e 32 36 3a 3e 42 46 4a 4e 56 56 5a 5e 62 66
+0f10: 00 24 28 2c 30 34 38 3c 40 44 48 4c ff ff ff ff
+0f20: 00 30 30 40 4c 58 64 70 7c 88 94 a0 ac b8 c4 d0
+0f30: 24 24 26 28 2a 2c 2e 30 32 34 36 38 ff ff ff ff
+0f40: 00 26 26 2c 32 38 3e 44 4a 50 5c 62 68 6e 74 7a
+0f50: 00 30 30 40 4c 58 64 70 7c 88 94 a0 ac 6e 6e 6e
