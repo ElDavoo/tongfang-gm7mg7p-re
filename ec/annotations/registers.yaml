@@ -1534,3 +1534,292 @@ registers:
       name, so the writer is unidentified. Upstream also names bit 3
       BATTERY_CHARGE_FULL_OVER_24H and bit 4 BATTERY_ERM_STATUS_REACHED.
       Live 0x04 at rest.
+
+  - name: XDATA_0860
+    addr: 0x0860
+    sources: [xdata-refs]
+    static_refs: 9
+    static_refs_main_ec: 7
+    static_refs_pd_image: 2
+    status: present-untested
+    note: >
+      7 EC-side sites in bank0 -- 4 reads, 2 writes, 1 that loads DPTR and
+      returns with no movx -- and 2 in the PD image, which is a separate
+      program with its own XDATA map and not evidence about this byte. The
+      two writers are 0xD281 (whose store puts 0xFF here) and 0xD28A (whose
+      store puts a cleared A), both inside the 0xD281-0xD2BD block, and 0xD319
+      reloads DPTR to 0x0860 immediately before 0xD284's store. All four
+      reads are in dispatch_on_0860, which early-outs to a bare ret at 0xD2BE
+      when the byte is 0x00 or 0xFF or bit 0 is set in 0x1C00, 0x1C11 or
+      0x1C29, so 0x00 and 0xFF read as the idle and busy marks of a byte the
+      firmware dispatches on internally. That is also why the comparison
+      count is high and the writer count low. This does NOT establish that no
+      other writer or host path exists: a writer reached through a computed
+      DPTR is invisible to trace_xdata_refs.py, so its counts here are "not
+      found by this method" in that sense.
+      The direction split recorded for this address in
+      ec/annotations/xdata-registers.csv (13 write, 3 read+write, 1
+      passed-to-call, 0 read) is an artefact of that tool's C-level
+      classifier and is NOT corrected in place here: xdata_register_map.py's
+      store_target() tests whether the text after an occurrence starts with a
+      member of ASSIGN, and ASSIGN's first member is "=", which the "==" of a
+      Ghidra comparison also starts -- so every comparison is counted as a
+      store. Running the committed classifier over ec/decompiled/bank0/D091.c
+      returns write for all fourteen "==" sites and read for the one genuine
+      read. The numbers in this entry come from trace_xdata_refs.py, which
+      decodes opcodes rather than C, and the census is left stale rather than
+      regenerated because regenerating it now would re-freeze the
+      miscounted direction columns into the committed files. Fixing the
+      classifier and re-censusing is separate work (moves 838 occurrences
+      across 211 addresses); the reading is complete without it. NOT NAMED:
+      a selector and a busy mark are shape, not units. Per-address table:
+      ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_0862
+    addr: 0x0862
+    sources: [xdata-refs]
+    static_refs: 5
+    static_refs_main_ec: 3
+    static_refs_pd_image: 2
+    status: present-untested
+    note: >
+      3 EC-side sites in bank0, all three reads, and 2 in the PD image, a
+      separate program with its own XDATA map. The three readers are the
+      three staging routines, which copy this byte into 0x1C02 (at 0xD2DE,
+      in stage_1c03_1c02_1c01), 0x1C13 (at 0xD2F3, in FUN_CODE_d2ef) and
+      0x1C37 (at 0xD308, in FUN_CODE_d304). This method found no EC-side
+      writer, which is "not found by this method" and not absence: a byte
+      reached through a computed DPTR is invisible to it. What the staged
+      value is, and what sets it, is not determined here. The census's
+      direction split for this address carries the same classifier artefact
+      described on XDATA_0860. Per-address table:
+      ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_0865
+    addr: 0x0865
+    sources: [xdata-refs]
+    static_refs: 10
+    static_refs_main_ec: 10
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      10 EC-side sites, all in bank0: 6 writes and 4 reads. Three of the
+      writers are the seeds at 0x9DA4, 0x9E8D and 0x9FA7 that open each of
+      the three level blocks in FUN_CODE_9d9b, copying in 0x08C0, 0x08C1 and
+      0x08C3 respectively; the other three are the 0x48, 0x4C and 0x00 stores
+      in dispatch_on_0860's comparison chain. The four readers are 0xBBF7
+      (inside sub_0866_from_0865) and the three staging routines. UNITS NOT
+      DETERMINED: the same byte is written from a per-mode seed in one
+      routine and from two constants plus a zero in another, and nothing here
+      fixes what the value counts. Per-address table:
+      ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_0866
+    addr: 0x0866
+    sources: [xdata-refs]
+    static_refs: 12
+    static_refs_main_ec: 12
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      12 EC-side sites in bank0: 7 writes and 5 reads, no PD site. It is the
+      first byte of the three-block working set FUN_CODE_9d9b computes, and
+      one of the six copy_0866_86b_to_1c04_1c3a stages out. It is also the
+      right-hand operand of sub_0866_from_0865, which returns 0x0865 minus
+      0x0866. UNITS NOT DETERMINED. Per-address table:
+      ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_0867
+    addr: 0x0867
+    sources: [xdata-refs]
+    static_refs: 15
+    static_refs_main_ec: 9
+    static_refs_pd_image: 6
+    status: present-untested
+    note: >
+      9 EC-side sites in bank0 (7 writes, 2 reads) and 6 in the PD image,
+      which includes the one handoff to 0x903C this page records. It is the
+      second byte of the working set FUN_CODE_9d9b computes, overridden
+      there from 0x0872, 0x087A or 0x088A when the source is non-zero. The
+      PD count is a different program's XDATA and says nothing about this
+      byte. UNITS NOT DETERMINED. Per-address table:
+      ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_0868
+    addr: 0x0868
+    sources: [xdata-refs]
+    static_refs: 11
+    static_refs_main_ec: 9
+    static_refs_pd_image: 2
+    status: present-untested
+    note: >
+      9 EC-side sites in bank0 (7 writes, 2 reads) and 2 in the PD image,
+      which is where both handoffs to 0x0FAF and 0x1041 sit. Third byte of
+      the working set FUN_CODE_9d9b computes, overridden there from 0x0873,
+      0x087B or 0x088B when non-zero. UNITS NOT DETERMINED. Per-address
+      table: ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_0869
+    addr: 0x0869
+    sources: [xdata-refs]
+    static_refs: 8
+    static_refs_main_ec: 8
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      8 EC-side sites in bank0, 5 writes and 3 reads, no PD site. Fourth
+      byte of the three-block working set FUN_CODE_9d9b computes, and in all
+      three blocks it is the cap: at 0x9E22-0x9E2E, 0x9F0B-0x9F17 and
+      0x9FE4 onward the accumulated result is compared against it and the cap
+      is substituted when the result is the larger. UNITS NOT DETERMINED.
+      Per-address table: ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_086A
+    addr: 0x086A
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      2 EC-side sites in bank0, one write and one read, no PD site. The write
+      is dispatch_on_0860 at 0xD0E3, storing the byte it has just read from
+      0x1C39; the read is copy_0866_86b_to_1c04_1c3a at 0xD2AE, copying it
+      back out to 0x1C39. So the two are the same transfer seen from both
+      ends, and this method found no other site reaching this byte -- which
+      is "not found by this method", not a statement that nothing else does.
+      Per-address table: ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_086B
+    addr: 0x086B
+    sources: [xdata-refs]
+    static_refs: 14
+    static_refs_main_ec: 14
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      14 EC-side sites in bank0, the busiest byte in this block: 5 writes,
+      7 reads and 2 handing DPTR to 0xBD34 and 0xBD3D. Both handoffs resolve
+      to reads one level down: each helper's first instruction is movx A,@DPTR
+      on the caller's pointer, so it reads this byte and then returns
+      0x0867 (or 0x0868) minus that value with the borrow in CY. That is the
+      same direction for all three result bytes -- 0x086B, 0x086C and 0x086E
+      -- and the three call sites are 0x9E03/0x9E10, 0x9EEF/0x9EFC and
+      0x9FF6/0xA003. So 9 reads and 5 writes once the handoffs are counted.
+      0x086B is the first of the three results FUN_CODE_9d9b computes and the
+      byte gate_06e6_442_then_sync_046a_from_086b syncs 0x046A from. UNITS
+      NOT DETERMINED. Per-address table: ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_086D
+    addr: 0x086D
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      2 EC-side sites in bank0, both reads, no PD site. They are the two
+      halves of gate_06e6_442_then_sync_046a_from_086b's 0x086B/0x086C/
+      0x086D/0x086E against 0x046A/0x046B/0x046E/0x046F comparison. This
+      method found no writer, which is "not found by this method" and not
+      absence: a byte reached through a computed DPTR is invisible to it.
+      Per-address table: ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_086E
+    addr: 0x086E
+    sources: [xdata-refs]
+    static_refs: 7
+    static_refs_main_ec: 7
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      7 EC-side sites in bank0: 3 writes, 2 reads, and 2 handing DPTR to
+      0xBD34 and 0xBD3D, which resolve to reads one level down exactly as
+      they do for 0x086B and 0x086C, so 4 reads against 3 writes. It is the
+      third result FUN_CODE_9d9b computes, and unlike the other two its block
+      carries no clamp -- the 0x9FE4-0xA00D tail is the same fold without the
+      three MANUAL_FAN_CTRL comparisons, which is a shape and not a reason to
+      name it. UNITS NOT DETERMINED. Per-address table:
+      ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_1C39
+    addr: 0x1C39
+    sources: [xdata-refs]
+    static_refs: 5
+    static_refs_main_ec: 5
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      5 EC-side sites in bank0 -- 2 reads and 3 writes -- all between 0xD0DF
+      and 0xD2B5, no PD site. It is one of three non-contiguous destination
+      pairs, not a mirror: copy_0866_86b_to_1c04_1c3a writes 0x086A here
+      while 0x1C04 and 0x1C15 hold 0x0866 and 0x0868, so the six source
+      bytes land at three different strides rather than at one offset. Nor
+      is this pair a staging area for the 0x0866-0x086B field alone: the
+      case-0x36/0x37/0x38/0x39 handlers at 0xD221 and 0xD24E write it from
+      0x0863 and clear it respectively, and the 0xD24E handler reads it back
+      into 0x0863 at 0xD26F. So the same two bytes carry a different source
+      pair in those handlers, which is the strongest form of the answer that
+      "a second buffer of the same field layout" is not supported by the
+      bytes. WHAT CONSUMES IT DOWNSTREAM IS NOT ANSWERED by the decompile: no
+      consumer of the pair is identified here, and co-occurrence with a
+      writer is not a consumer. Per-address table:
+      ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_1C3A
+    addr: 0x1C3A
+    sources: [xdata-refs]
+    static_refs: 5
+    static_refs_main_ec: 5
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      5 EC-side sites in bank0 -- 2 reads and 3 writes -- all between 0xD0E7
+      and 0xD2BA, no PD site. Its destination is one of three
+      non-contiguous pairs, and that is the reason "a second buffer of the
+      same field layout as the 0x0866-0x086B source" is not supported by the
+      bytes: 0x1C04, 0x1C15 and 0x1C39 receive 0x0866, 0x0868 and 0x086A,
+      so the six values are written to three separate pairs at three
+      different strides rather than copied to a fixed offset. The case
+      handlers at 0xD221 and 0xD24E also use this byte, writing it from
+      0x0864 and reading it back into 0x0864 at 0xD277, so the pair is not
+      even a staging area for one field. What consumes the pair downstream
+      is not answered by the decompile. Per-address table:
+      ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_1F01
+    addr: 0x1F01
+    sources: [xdata-refs]
+    static_refs: 4
+    static_refs_main_ec: 4
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      4 EC-side sites -- 3 in bank0, 1 in bank1 -- and all four are writes,
+      no PD site. One writer is init_1f01_1f06_1f07 at 0xD065, which stores
+      0x20 here with no read, so that value is not derived from existing
+      state; the other two bank0 sites are at 0xD6B5 and 0xFED4. Recorded as
+      a third thing alongside the 0x0860 block, not merged with it: nothing
+      in the 0x0860-0x086E run touches this byte. A byte only ever written
+      by this method is a candidate for a computed-DPTR writer it cannot
+      see, so this is where a computed access would matter most.
+      Per-address table: ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_1F07
+    addr: 0x1F07
+    sources: [xdata-refs]
+    static_refs: 5
+    static_refs_main_ec: 5
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      5 EC-side sites, 3 in bank0 and 2 in bank1, all writes, no PD site.
+      init_1f01_1f06_1f07 stores 0x5A here at 0xD071 and
+      magic_55aa_and_0704_countdown writes it from bank1 at 0x952C; the
+      other bank0 sites are 0xD6C1 and 0xFEE0. Recorded as a third thing
+      alongside the 0x0860 block and not merged with it: nothing in the
+      0x0860-0x086E run touches this byte. The 0x5A constant and the
+      routine's own name are why this byte is worth a follow-up, not a
+      settled value -- what 0x5A means to the state machine is not
+      determined here. Per-address table:
+      ec/annotations/xdata-086x-dispatch.md.

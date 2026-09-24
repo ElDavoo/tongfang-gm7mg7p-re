@@ -14,7 +14,7 @@
 void gate_0456_80_and_06e6_01(void)
 
 {
-  if (((DAT_EXTMEM_0456 & 0x80) != 0) && (DAT_EXTMEM_06e6 == '\x01')) {
+  if (((SYSTEM_ID & 0x80) != 0) && (DAT_EXTMEM_06e6 == '\x01')) {
     adjust_0627_index_against_gpu_temp();
     return;
   }

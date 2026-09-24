@@ -26,7 +26,7 @@ void store_scaled_quotient_0449(byte param_1,byte param_2,char param_3)
   if (param_3 == '\0') {
     read_xdata_pair_to_r1r2(0x434,100,0);
     mul_16_round_shift_subtract();
-    DAT_EXTMEM_0449 = param_1;
+    XDATA_0449 = param_1;
     return;
   }
   set_r3_22_or_44_from_0456_bit6();
@@ -36,7 +36,7 @@ void store_scaled_quotient_0449(byte param_1,byte param_2,char param_3)
   mul_16_round_shift_subtract
             ((char)((ushort)param_2 * 10 >> 8),
              (char)((ushort)param_2 * 10) + (char)((ushort)param_1 * 10 >> 8));
-  DAT_EXTMEM_0449 = uVar1;
+  XDATA_0449 = uVar1;
   return;
 }
 

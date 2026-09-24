@@ -14,7 +14,7 @@
 char sub_dptr_byte_from_0868(char *param_1)
 
 {
-  return DAT_EXTMEM_0868 - *param_1;
+  return XDATA_0868 - *param_1;
 }
 
 

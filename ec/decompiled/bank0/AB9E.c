@@ -49,7 +49,7 @@ void set_0751_and_07a6_bits(char param_1)
     }
     *pbVar2 = *pbVar2 & 0x6f;
   }
-  else if (((DAT_EXTMEM_0440 != '\0') && (cVar1 = read_06e6_xor_01(), cVar1 == '\0')) &&
+  else if (((XDATA_0440 != '\0') && (cVar1 = read_06e6_xor_01(), cVar1 == '\0')) &&
           (test_1603_bit5(), param_1 == '\x01')) {
     MANUAL_FAN_CTRL = MANUAL_FAN_CTRL ^ 0x40;
     return;

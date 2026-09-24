@@ -100,3 +100,18 @@ addr,name,from_register,register_status,derivation,programs
 0x07DA,MODE_TCC_OFFSET_DEFAULTS_TURBO_2,MODE_TCC_OFFSET_DEFAULTS,present-untested,override,bank0;bank1
 0x0786,CPU_TCC_OFFSET,CPU_TCC_OFFSET (APTC/APTN),present-untested,scalar-name,bank0;bank1
 0x07C6,AP_OEM_6,AP_OEM_6 (whisper status / universal fan control),present-untested,scalar-name,bank0;bank1
+0x0860,XDATA_0860,XDATA_0860,present-untested,scalar-name,bank0;bank1
+0x0862,XDATA_0862,XDATA_0862,present-untested,scalar-name,bank0;bank1
+0x0865,XDATA_0865,XDATA_0865,present-untested,scalar-name,bank0;bank1
+0x0866,XDATA_0866,XDATA_0866,present-untested,scalar-name,bank0;bank1
+0x0867,XDATA_0867,XDATA_0867,present-untested,scalar-name,bank0;bank1
+0x0868,XDATA_0868,XDATA_0868,present-untested,scalar-name,bank0;bank1
+0x0869,XDATA_0869,XDATA_0869,present-untested,scalar-name,bank0;bank1
+0x086A,XDATA_086A,XDATA_086A,present-untested,scalar-name,bank0;bank1
+0x086B,XDATA_086B,XDATA_086B,present-untested,scalar-name,bank0;bank1
+0x086D,XDATA_086D,XDATA_086D,present-untested,scalar-name,bank0;bank1
+0x086E,XDATA_086E,XDATA_086E,present-untested,scalar-name,bank0;bank1
+0x1C39,XDATA_1C39,XDATA_1C39,present-untested,scalar-name,bank0;bank1
+0x1C3A,XDATA_1C3A,XDATA_1C3A,present-untested,scalar-name,bank0;bank1
+0x1F01,XDATA_1F01,XDATA_1F01,present-untested,scalar-name,bank0;bank1
+0x1F07,XDATA_1F07,XDATA_1F07,present-untested,scalar-name,bank0;bank1

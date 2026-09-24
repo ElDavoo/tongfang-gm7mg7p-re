@@ -13,7 +13,7 @@
 void gate_06e6_0440_then_call_89b5(void)
 
 {
-  if ((DAT_EXTMEM_06e6 == '\x01') && (DAT_EXTMEM_0440 != '\0')) {
+  if ((DAT_EXTMEM_06e6 == '\x01') && (XDATA_0440 != '\0')) {
     store_r7_to_09f2_by_09f1_bits_0_2_and_bump();
   }
   return;

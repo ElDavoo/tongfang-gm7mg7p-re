@@ -18,7 +18,7 @@ void pass_0707_to_88f0_when_045f_eq_db(void)
   char cVar1;
   
   cVar1 = DAT_EXTMEM_0707;
-  if ((DAT_EXTMEM_045f == -0x25) && (DAT_EXTMEM_0707 != '\0')) {
+  if ((XDATA_045F == -0x25) && (DAT_EXTMEM_0707 != '\0')) {
     DAT_EXTMEM_0707 = '\0';
     push_r5_into_070f_ring_when_gates_pass(cVar1);
   }

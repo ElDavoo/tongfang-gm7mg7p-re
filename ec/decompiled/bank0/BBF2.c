@@ -14,7 +14,7 @@
 char sub_0866_from_0865(void)
 
 {
-  return DAT_EXTMEM_0865 - DAT_EXTMEM_0866;
+  return XDATA_0865 - XDATA_0866;
 }
 
 

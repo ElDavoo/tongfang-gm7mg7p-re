@@ -51,7 +51,7 @@ void dec_timers_and_set_expiry_flags(char *param_1)
      ) {
     DAT_EXTMEM_0621 = 0;
   }
-  if ((DAT_EXTMEM_0440 != '\0') && (DAT_EXTMEM_06db != '\0')) {
+  if ((XDATA_0440 != '\0') && (DAT_EXTMEM_06db != '\0')) {
     DAT_EXTMEM_06db = DAT_EXTMEM_06db + -1;
   }
   if (DAT_EXTMEM_080d != '\0') {

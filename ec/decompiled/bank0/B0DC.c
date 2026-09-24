@@ -18,7 +18,7 @@ void sync_0983_bit5_against_support_2_bit4(void)
   char cVar1;
   
   cVar1 = read_06e6_xor_01();
-  if (((cVar1 == '\0') && (DAT_EXTMEM_0440 != '\0')) &&
+  if (((cVar1 == '\0') && (XDATA_0440 != '\0')) &&
      (((DAT_EXTMEM_0983 >> 5 & 1) != 0) != ((SUPPORT_2 >> 4 & 1) != 0))) {
     DAT_EXTMEM_0983 = DAT_EXTMEM_0983 ^ 0x20;
     store_r7_at_6a_then_jump_1666(0xb6);

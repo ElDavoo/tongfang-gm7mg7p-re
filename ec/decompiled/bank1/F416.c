@@ -21,10 +21,10 @@ void scale_0438_into_0448(undefined1 param_1,char param_2)
   if (param_2 == '\0') {
     read_xdata_pair_to_r1r2(0x438,100,0);
     mul_16_round_shift_subtract();
-    DAT_EXTMEM_0448 = param_1;
+    XDATA_0448 = param_1;
     return;
   }
-  DAT_EXTMEM_0448 = 0xbe;
+  XDATA_0448 = 0xbe;
   return;
 }
 

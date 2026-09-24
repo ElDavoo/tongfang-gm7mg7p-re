@@ -16,7 +16,7 @@ void write_04_to_044b_and_set_08e2_bit7(void)
 
 {
   clr_a();
-  DAT_EXTMEM_044b = 4;
+  XDATA_044B = 4;
   DAT_EXTMEM_08e2 = DAT_EXTMEM_08e2 | 0x80;
   return;
 }

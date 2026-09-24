@@ -19,7 +19,7 @@ void set_0480_50_zero_048f_0459_02_06e1_a0(void)
 {
   DAT_EXTMEM_0480 = DAT_EXTMEM_0480 | 0x50;
   DAT_EXTMEM_048f = 0;
-  DAT_EXTMEM_0459 = 2;
+  XDATA_0459 = 2;
   DAT_EXTMEM_06e1 = DAT_EXTMEM_06e1 | 0xa0;
   trampoline_to_cfa9();
   return;

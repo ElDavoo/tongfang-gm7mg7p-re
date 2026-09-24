@@ -15,7 +15,7 @@ void call_ba15_then_write_02_to_044b(void)
 
 {
   clr_a();
-  DAT_EXTMEM_044b = 2;
+  XDATA_044B = 2;
   return;
 }
 

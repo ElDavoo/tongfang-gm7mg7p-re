@@ -17,7 +17,7 @@ void clear_0480_bit4_set_0459_01_06e1_a0(void)
 
 {
   DAT_EXTMEM_0480 = DAT_EXTMEM_0480 & 0xef;
-  DAT_EXTMEM_0459 = 1;
+  XDATA_0459 = 1;
   DAT_EXTMEM_097f = DAT_EXTMEM_097f & 0xfe;
   DAT_EXTMEM_06e1 = DAT_EXTMEM_06e1 | 0xa0;
   trampoline_to_cfa9();
