@@ -13,7 +13,8 @@ char FUN_CODE_9aad(void)
   char cVar2;
   byte bVar3;
   byte in_PSW;
-  undefined1 *puVar4;
+  byte *dptr_from_bd20;
+  undefined1 *entry_dptr;
   
   cVar1 = '\b';
   copy_code_table_into_0730_07a7();
@@ -83,7 +84,7 @@ LAB_CODE_9b33:
     return cVar1;
   }
   if (XDATA_044B == '\x02') {
-    puVar4 = &DAT_EXTMEM_08ad;
+    entry_dptr = (undefined1 *)0x8ad;
     if ((DAT_EXTMEM_08ad & 1) != 0) {
       load_dptr_08ce();
       sub_10x_08bd_from_08ce_pair();
@@ -91,7 +92,7 @@ LAB_CODE_9b33:
         cVar1 = FUN_CODE_9c47();
         return cVar1;
       }
-      cVar1 = clear_two_bytes_at_dptr_then_9a90();
+      cVar1 = clear_two_bytes_at_dptr_then_9a90(entry_dptr);
       return cVar1;
     }
     add_be16_08cc_and_compute_08be_x10_diff();
@@ -99,9 +100,9 @@ LAB_CODE_9b33:
       cVar1 = FUN_CODE_9c47();
       return cVar1;
     }
-    cVar1 = '\0';
-    *puVar4 = 0;
-    puVar4[1] = 0;
+    *entry_dptr = 0;
+    dptr_from_bd20 = entry_dptr + 1;
+    *dptr_from_bd20 = 0;
   }
   else {
     if (XDATA_044B == '\x03') {
@@ -153,15 +154,16 @@ LAB_CODE_9b33:
       return cVar1;
     }
     copy_code_table_into_0730_07a7(4);
+    dptr_from_bd20 = (byte *)0x8bf;
     bVar3 = DAT_EXTMEM_08bf + 1;
     cVar1 = DAT_EXTMEM_08bf + 0x39;
     DAT_EXTMEM_08bf = bVar3;
     if (bVar3 < 200) {
-      cVar1 = FUN_CODE_9c47();
+      cVar1 = FUN_CODE_9c47(cVar1);
       return cVar1;
     }
   }
-  cVar1 = store_bd20_result_masked_7f(cVar1);
+  cVar1 = store_bd20_result_masked_7f(dptr_from_bd20);
   return cVar1;
 }
 
