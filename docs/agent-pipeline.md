@@ -112,6 +112,29 @@ only covers what's specific to *this* copy.
      question. It is not made here: `.github/` is template-copied and the
      pipeline token has no `workflow` scope, the same reason item 1's schedule
      is prepared rather than landed.
+  4. **`verify_gap_text.py --check` is not in the cheap tier yet, and should
+     be.** Issue #151 (2026-09-23) added
+     `ec/tools/verify_gap_text.py`, which cross-decodes the 143 instructions
+     `sdas8051` cannot re-encode — the ones no assembler reaches, which were
+     read by no check at all before it. By cost and by kind it belongs in the
+     cheap tier: it needs only `python3` and the committed firmware, no
+     assembler and no Ghidra, and takes well under a second. Adding it is a
+     `case` arm in `check_ghidra_tooling()` mirroring the
+     `*verify_reassembly.py` one, plus the path in the tool list above it:
+
+     ```sh
+           *verify_gap_text.py)
+             python3 "$tool" --check || rc=1
+             ;;
+     ```
+
+     It is not here because this is a template-copied file and the plan
+     stage's push token has no `workflow` scope, so a branch editing it fails
+     at the end of the PR rather than the start. **Until a human lands it,
+     nothing runs `--check` per commit** and the committed verdicts in
+     `ec/ghidra/gap-text-check.csv` can go stale in an otherwise-green commit
+     — the same shape as item 1, and for the same reason. The command is named
+     here so a template re-copy carries it.
 - **`tools/run-tests.sh`, and the gate line that would call it**
   (2026-09-23, issue #162) — the four offline `unittest` suites
   (`ec/tools/test_grade_0751_isolation.py`, `windows/tools/test_ec_watch.py`,

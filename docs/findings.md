@@ -2212,11 +2212,133 @@ and the carry-with-immediate forms — so those are rules with no instance rathe
 than part of the 143. The 143 is unaffected by which SDCC build is on PATH —
 §14g measures it against a second one and finds the same 143 on all 2,705 rows.
 
+*(The 1,004 and the enumeration above are the first pass's, corrected in the
+parenthetical earlier in this section. The current figure is **143** in **five**
+forms, and they are not this list: `ajmp` and `acall` are 110 of the 143,
+whereas `CLR bit`, `SETB bit`, `MOVC A,bit` and the carry-with-immediate forms
+here are in none of it. §11a has the measured composition. Kept as written
+because this paragraph is the shape of the mistake — a plausible list,
+carried forward, wrong in both directions, and caught by nothing except
+printing what is actually in the set.)*
+
 **The claim this does not make.** That the C recompiles. Keil C51 generated
 these bytes; SDCC does not emit Keil's code generation, and no amount of
 annotation changes that. The 1:1 property here is that the committed
 *disassembly* regenerates the binary, and the readable C sits on top of it
 with a checkable correspondence. See `ghidra/README.md`.
+
+### 11a. The 143 the re-encode could not reach, read by a second decoder (2026-09-23, issue #151)
+
+The re-encode above has one hole, and it is the hole the `partial` and
+`assembler-gap` outcomes name on their face: 143 instructions in five forms
+`sdas8051` cannot express are excluded from it, and were read by no check at
+all. `verify_reassembly.check_listing_bytes()` reaches them — it covers all
+45,537 and needs no assembler — but a byte is not a mnemonic. A listing whose
+bytes are right and whose text is wrong passes the byte check and fails the
+re-encode, and for these 143 there was no re-encode to fail.
+
+`ec/tools/verify_gap_text.py` closes it by asking a second decoder.
+`ec/tools/disasm8051.py` shares no code with Ghidra's SLEIGH, which is the
+same property that makes the 45,394 meaningful. For every instruction
+`verify_reassembly.to_sdas()` declines, it decodes the instruction from the
+firmware image at that instruction's own runtime address and compares the
+result to the listing's text. **All 143 agree**, recorded individually in
+`ec/ghidra/gap-text-check.csv` with both texts, both canonical forms, the
+reason, and the verdict.
+
+**The evidence is weaker than the re-encode's, and saying so is the point.**
+The re-encode is constructive: an independent tool produces bytes and the
+firmware arbitrates. This is comparative: two decoders, no code in common,
+read the same byte column. The bytes were already settled by the byte check;
+what is agreed here is the *text*. So a `disagree` would be a text error with a
+known-correct answer, and an `agree` is two decoders having said the same
+thing about bytes that are not in question. **The claim stays 45,394 of 45,537
+(99.69%).** What changes is coverage: all 45,537 instructions are now read by
+an independent check, and adding the two into a single 100% would assert
+something neither establishes.
+
+**Two decoders rarely spell an instruction the same way,** so the comparison
+needs a canonical form, and the interesting part is what it may *not* fold.
+Folded: case, whitespace, a bit operand's rendering (`psw.5` ≡ `0xd5` ≡
+`acc.4`), a direct operand's (`A` ≡ `0xe0`). Not folded: the mnemonic, the bit
+number, the direct byte, the immediate, a register, a branch's absolute target.
+The operand's class is read from the opcode, never from the operand text,
+because `clr 0x8e` is both CLR direct and CLR bit depending on the byte in
+front of it — the same reason `BIT_UNSUPPORTED` is keyed by opcode. One
+assertion carries the weight: `cpl 0xd5` against `cpl 0xe4` must come out a
+**disagreement**, because a canonicaliser that folded the mnemonic would
+report all 143 as agreeing and mean nothing by it.
+
+**A `db` is never an agreement.** `disasm8051.py`'s mnemonic table is partial
+by design, so a comparison against one could only match vacuously — and it did.
+`mnemonic()` had no case for opcode `0x92`, so `mov 0xd5,CY` decoded as
+`db 0x92` and 19 of the 143 would have "agreed" with a hole. The verdict for
+a `db` on either side is `undecodable`, and `--self-test` asserts it.
+
+**The set had never been written down correctly, in either direction.**
+`ec/ghidra/README.md` named the 143 as `MOV bit,C`, `CPL bit`, `CLR bit`,
+`CJNE` on a direct address, `DJNZ A` and the carry-with-immediate forms: it
+omits `ajmp`/`acall`, which are **110 of the 143**, and names four forms that
+are not in the measured set. Those four were residue of §11's retracted first
+pass, copied forward when the number was fixed and the prose was not — the
+same transcription this section describes above, one layer down. The corrected
+figure is `ajmp` 74, `acall` 36, `mov <bit>,CY` 19, `cpl <bit>` 13, `djnz A`
+1: **five forms**. Both the wrong list and the retracted 1,004 are corrected in
+place in `ec/ghidra/README.md` rather than edited out, so they stay findable.
+
+So the tool **recomputes** the set from `to_sdas()` on every run and never
+carries a list — and every declined instruction records *which* predicate
+declined it, with `--check` failing on a reason that has no cross-decode
+handler. A sixth form cannot join the set silently. That is §11's failure
+turned into a check, and it is the general form of the lesson: the first pass's
+four wrong opcodes were found by nothing failing, only by printing the
+composition of the gaps and reading it.
+
+**The 84 rows are not the 73 `partial` ones.** 73 of them are; the other **11
+are `assembler-gap` rows that also carry unchecked instructions**, which the
+outcomes table does not say. Over all 84 the first unchecked instruction is
+`ajmp` 43, `acall` 19, `mov` 13, `cpl` 8, `djnz` 1; over the 73 `partial` rows
+alone it is 36 / 18 / 13 / 5 / 1. By program: `common` 62, `pd` 32, `bank0` 27,
+`bank1` 22.
+
+**Three things came out of the work that are not about the 143**, and all three
+are holes rather than confirmations:
+
+- **`disasm8051.py` mis-rendered all 180 committed `CLR direct` instructions.**
+  `0xC2` was grouped with the bit forms, so its byte operand went through
+  `bit_name()`: `clr 0x7f` printed as `clr 0x2f.7`, which claims to clear bit 7
+  of internal RAM 0x2F rather than all eight bits of 0x7F — a different
+  instruction, 180 times. Found by the oracle entry that keeps `0xC1` and
+  `0xC2` apart, which is the only reason the two are distinguishable at all.
+  None of the 180 is in the 143 (`0xC2` is a form `sdas8051` expresses, so they
+  are inside the 45,394), which is exactly why nothing had noticed.
+- **`0xA0`/`0xB0` are unresolved and this repository cannot resolve them.**
+  Ghidra's SLEIGH, r2 and `sdas8051` all put `ORL C,/bit` at `0xA0` and `ANL
+  C,/bit` at `0xB0`; the MCS-51 manual as reproduced in common references has
+  them the other way round. Three tools agreeing is why `disasm8051.py` follows
+  them, and none of them arbitrating the other two is why that is recorded
+  rather than settled. All 12 occurrences are inside the 45,394, and the
+  re-encode passes on them **because the decoder and the assembler agree, not
+  because either is right** — the one shape of hole this tool structurally
+  cannot see.
+- **`0xC1` (`CLR bit`) is a latent hole, not a live one.** It matches none of
+  the 143 and `disasm8051.py` can now decode it, but `sdas8051` assembles it as
+  `CLR direct` — same length, no error — so a future export containing one would
+  be excluded from the re-encode and read by nothing. It has no committed
+  instance, so its encoding is stated in `--self-test` from the manual rather
+  than transcribed from the image.
+
+**What this does not do, stated so it is not assumed.** No register, no
+`registers.yaml` status, no XDATA symbol, no function name, no Ghidra project
+and no decompiled `.c` is touched: nothing in this issue bears on the
+firmware's *behaviour*, only on whether a committed text says what its bytes
+say. No Ghidra run was needed. And **nothing runs this per commit** — by cost
+and by kind the new `--check` belongs in the cheap tier, but
+`.github/scripts/agent-gates.sh` is a template-copied file and the pipeline
+token has no `workflow` scope. The one-line `case` arm is named in
+`ec/ghidra/README.md`; until a human lands it, the committed verdicts can go
+stale in an otherwise-green commit, the same shape §14e records for the deep
+tier.
 
 ## 12. The common-area de-duplication was deleting a PD function (2026-09-23)
 
@@ -2301,13 +2423,31 @@ Windows nor the service running. The 3.9.18.0 dump is committed because a
 machine with Windows produced it; producing the 3.1.6.0 one is the deliverable
 for whoever has the hardware, and the command is the tool's `--help`.
 
-**The 143 EC instructions sdas8051 cannot reproduce** — `MOV bit,C` (19),
-`CPL bit` (13) and `DJNZ A` (1) it refuses outright, plus the `AJMP` (74) and
-`ACALL` (36) it encodes differently from the manual. 0.31% of the instruction
-stream. Closing them means writing an 8051 encoder here and cross-validating it
-against sdas8051 on the 45,394 instructions sdas8051 does encode, which is a
-defensible way to take the 1:1 claim to 100% but is a day's work for 143
-instructions, so it is not started.
+**The 143 EC instructions sdas8051 cannot encode** — 0.31% of the instruction
+stream. These are now read by a check: `ec/tools/verify_gap_text.py`
+cross-decodes every one of them with `disasm8051.py`, which shares no code
+with Ghidra's SLEIGH, and records the verdict per instruction in
+`ec/ghidra/gap-text-check.csv`. All 143 agree. See §11a.
+
+The set is **five forms, not the seven the prose here used to name**: `ajmp`
+(74), `acall` (36), `mov <bit>,CY` (19), `cpl <bit>` (13) and one `djnz A`.
+`ajmp`/`acall` are 110 of the 143 and were missing from every written account
+of this set; `CLR bit`, `CJNE` on a direct address and the carry-with-immediate
+forms are in none of it.
+
+**The 1:1 claim is still 45,394 of 45,537 (99.69%), and this work does not
+make it 100%.** `sdas8051` still cannot express those five forms and no tool
+has changed that. What changed is coverage: every instruction in the committed
+listing is now read by an independent check, the 143 by decoder agreement and
+the 45,394 by re-encode. Those are not the same kind of evidence — the
+re-encode is constructive, with the firmware arbitrating, while the cross-decode
+is two decoders agreeing about text over bytes the byte check has already
+settled — and adding them into one percentage would say something neither
+establishes. The 1:1 claim would need a single check covering all 45,537, and
+the honest way to get one is an encoder whose oracle is r2 or the firmware
+bytes, not `sdas8051` agreeing with an agent's own table. Writing such an
+encoder is still not started; §11 is the record of what happens when a gap list
+is hand-built instead.
 
 **Everything about the hardware.** No live test has been run in any of this.
 

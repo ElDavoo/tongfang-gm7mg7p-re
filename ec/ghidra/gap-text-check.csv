@@ -1,0 +1,144 @@
+program,row_addr,row_name,insn_addr,bytes,ghidra_text,disasm_text,ghidra_canonical,disasm_canonical,reason,verdict
+bank0,724B,normalize_sign_pair_4byte,7251,b2d5,cpl 0xd5,cpl  psw.5,cpl 0xd5,cpl 0xd5,BIT_UNSUPPORTED 0xB2,agree
+bank0,724B,normalize_sign_pair_4byte,7264,b2d5,cpl 0xd5,cpl  psw.5,cpl 0xd5,cpl 0xd5,BIT_UNSUPPORTED 0xB2,agree
+bank0,8044,ajmp_into_83ff_tail,8044,815d,ajmp 0x845d,ajmp 0x845d,ajmp 0x845d,ajmp 0x845d,GAP_MNEMONICS ajmp,agree
+bank0,9167,gate_on_074c_then_dispatch,918D,91af,acall 0x94af,acall 0x94af,acall 0x94af,acall 0x94af,GAP_MNEMONICS acall,agree
+bank0,9167,gate_on_074c_then_dispatch,9190,91b5,acall 0x94b5,acall 0x94b5,acall 0x94b5,acall 0x94b5,GAP_MNEMONICS acall,agree
+bank0,9167,gate_on_074c_then_dispatch,9192,0191,ajmp 0x9091,ajmp 0x9091,ajmp 0x9091,ajmp 0x9091,GAP_MNEMONICS ajmp,agree
+bank0,9277,FUN_CODE_9277,9287,92a0,"mov 0xa0, CY","mov  p2.0,c",mov 0xa0|c,mov 0xa0|c,BIT_UNSUPPORTED 0x92,agree
+bank0,9277,FUN_CODE_9277,928A,92a9,"mov 0xa9, CY","mov  ie.1,c",mov 0xa9|c,mov 0xa9|c,BIT_UNSUPPORTED 0x92,agree
+bank0,9277,FUN_CODE_9277,9290,92d1,"mov 0xd1, CY","mov  psw.1,c",mov 0xd1|c,mov 0xd1|c,BIT_UNSUPPORTED 0x92,agree
+bank0,9277,FUN_CODE_9277,9296,92e9,"mov 0xe9, CY","mov  0xe8.1,c",mov 0xe9|c,mov 0xe9|c,BIT_UNSUPPORTED 0x92,agree
+bank0,A663,gate_0767_06e6_0741_then_dispatch_076f,A687,01a6,ajmp 0xa0a6,ajmp 0xa0a6,ajmp 0xa0a6,ajmp 0xa0a6,GAP_MNEMONICS ajmp,agree
+bank0,D091,dispatch_on_0860,D14B,d173,acall 0xd673,acall 0xd673,acall 0xd673,acall 0xd673,GAP_MNEMONICS acall,agree
+bank0,D091,dispatch_on_0860,D14E,d198,acall 0xd698,acall 0xd698,acall 0xd698,acall 0xd698,GAP_MNEMONICS acall,agree
+bank0,D091,dispatch_on_0860,D151,d173,acall 0xd673,acall 0xd673,acall 0xd673,acall 0xd673,GAP_MNEMONICS acall,agree
+bank0,D091,dispatch_on_0860,D154,d198,acall 0xd698,acall 0xd698,acall 0xd698,acall 0xd698,GAP_MNEMONICS acall,agree
+bank0,D091,dispatch_on_0860,D157,d1c0,acall 0xd6c0,acall 0xd6c0,acall 0xd6c0,acall 0xd6c0,GAP_MNEMONICS acall,agree
+bank0,D091,dispatch_on_0860,D15A,d1ef,acall 0xd6ef,acall 0xd6ef,acall 0xd6ef,acall 0xd6ef,GAP_MNEMONICS acall,agree
+bank0,D091,dispatch_on_0860,D15D,d1c0,acall 0xd6c0,acall 0xd6c0,acall 0xd6c0,acall 0xd6c0,GAP_MNEMONICS acall,agree
+bank0,D091,dispatch_on_0860,D160,d1ef,acall 0xd6ef,acall 0xd6ef,acall 0xd6ef,acall 0xd6ef,GAP_MNEMONICS acall,agree
+bank0,D434,FUN_CODE_d434,D43D,91d4,acall 0xd4d4,acall 0xd4d4,acall 0xd4d4,acall 0xd4d4,GAP_MNEMONICS acall,agree
+bank0,D434,FUN_CODE_d434,D45B,a1d4,ajmp 0xd5d4,ajmp 0xd5d4,ajmp 0xd5d4,ajmp 0xd5d4,GAP_MNEMONICS ajmp,agree
+bank0,D757,FUN_CODE_d757,D783,92e4,"mov 0xe4, CY","mov  acc.4,c",mov 0xe4|c,mov 0xe4|c,BIT_UNSUPPORTED 0x92,agree
+bank0,E9DE,rmw_1603_and_wait_tf1_2500_times,E9FE,b2e2,cpl 0xe2,cpl  acc.2,cpl 0xe2,cpl 0xe2,BIT_UNSUPPORTED 0xB2,agree
+bank0,E9DE,rmw_1603_and_wait_tf1_2500_times,EA03,b2e1,cpl 0xe1,cpl  acc.1,cpl 0xe1,cpl 0xe1,BIT_UNSUPPORTED 0xB2,agree
+bank0,EBD5,dispatch_on_0a4b_via_7151,EBE4,01ec,ajmp 0xe8ec,ajmp 0xe8ec,ajmp 0xe8ec,ajmp 0xe8ec,GAP_MNEMONICS ajmp,agree
+bank0,EF12,ajmp_0xe822,EF12,0122,ajmp 0xe822,ajmp 0xe822,ajmp 0xe822,ajmp 0xe822,GAP_MNEMONICS ajmp,agree
+bank0,F239,gate_06e6_then_dispatch_0e01,F25C,01f3,ajmp 0xf0f3,ajmp 0xf0f3,ajmp 0xf0f3,ajmp 0xf0f3,GAP_MNEMONICS ajmp,agree
+bank1,84E5,table_bytes_disassembled_as_code_84e5,84EA,6100,ajmp 0x8300,ajmp 0x8300,ajmp 0x8300,ajmp 0x8300,GAP_MNEMONICS ajmp,agree
+bank1,8802,ajmp_8822_not_a_function,8802,0122,ajmp 0x8822,ajmp 0x8822,ajmp 0x8822,ajmp 0x8822,GAP_MNEMONICS ajmp,agree
+bank1,9F04,dispatch_on_dpl_5b_7b_40,9F20,92e3,"mov 0xe3, CY","mov  acc.3,c",mov 0xe3|c,mov 0xe3|c,BIT_UNSUPPORTED 0x92,agree
+bank1,A57E,write_0_to_200b_r5_times_330,A599,d5e0e5,"djnz A, 0xa581","djnz 0xe0,0xa581",djnz 0xe0|0xa581,djnz 0xe0|0xa581,"GAP_FORMS ""djnz a,""",agree
+bank1,D8BC,FUN_CODE_d8bc,D8DF,92f0,"mov 0xf0, CY","mov  b.0,c",mov 0xf0|c,mov 0xf0|c,BIT_UNSUPPORTED 0x92,agree
+bank1,D8BC,FUN_CODE_d8bc,D8E3,92f1,"mov 0xf1, CY","mov  b.1,c",mov 0xf1|c,mov 0xf1|c,BIT_UNSUPPORTED 0x92,agree
+bank1,E954,unresolved_byte_stream_e954,E983,4119,ajmp 0xea19,ajmp 0xea19,ajmp 0xea19,ajmp 0xea19,GAP_MNEMONICS ajmp,agree
+bank1,E9CE,FUN_CODE_e9ce,EA85,4126,ajmp 0xea26,ajmp 0xea26,ajmp 0xea26,ajmp 0xea26,GAP_MNEMONICS ajmp,agree
+bank1,EAC3,unresolved_byte_stream_eac3,EB23,f126,acall 0xef26,acall 0xef26,acall 0xef26,acall 0xef26,GAP_MNEMONICS acall,agree
+bank1,EAC3,unresolved_byte_stream_eac3,EB3D,8136,ajmp 0xec36,ajmp 0xec36,ajmp 0xec36,ajmp 0xec36,GAP_MNEMONICS ajmp,agree
+bank1,EAC3,unresolved_byte_stream_eac3,EBDD,b13a,acall 0xed3a,acall 0xed3a,acall 0xed3a,acall 0xed3a,GAP_MNEMONICS acall,agree
+bank1,EAC3,unresolved_byte_stream_eac3,EC39,211f,ajmp 0xe91f,ajmp 0xe91f,ajmp 0xe91f,ajmp 0xe91f,GAP_MNEMONICS ajmp,agree
+bank1,ED3A,data_run_2e_3e,ED69,b22b,cpl 0x2b,cpl  0x25.3,cpl 0x2b,cpl 0x2b,BIT_UNSUPPORTED 0xB2,agree
+bank1,ED3A,data_run_2e_3e,EE6D,b23a,cpl 0x3a,cpl  0x27.2,cpl 0x3a,cpl 0x3a,BIT_UNSUPPORTED 0xB2,agree
+bank1,ED3A,data_run_2e_3e,EEA2,31ce,acall 0xe9ce,acall 0xe9ce,acall 0xe9ce,acall 0xe9ce,GAP_MNEMONICS acall,agree
+bank1,F030,operand_of_mov_dptr_f02f,F031,a112,ajmp 0xf512,ajmp 0xf512,ajmp 0xf512,ajmp 0xf512,GAP_MNEMONICS ajmp,agree
+bank1,F054,mid_instruction_of_row_f053,F054,f10d,acall 0xf70d,acall 0xf70d,acall 0xf70d,acall 0xf70d,GAP_MNEMONICS acall,agree
+bank1,F090,mid_instruction_of_row_f08f,F090,f127,acall 0xf727,acall 0xf727,acall 0xf727,acall 0xf727,GAP_MNEMONICS acall,agree
+bank1,F0E4,mid_instruction_of_row_f0e3,F0E4,f13e,acall 0xf73e,acall 0xf73e,acall 0xf73e,acall 0xf73e,GAP_MNEMONICS acall,agree
+bank1,F160,toggle_045b_bit0_set_0709_bit0,F177,b2e0,cpl 0xe0,cpl  acc.0,cpl 0xe0,cpl 0xe0,BIT_UNSUPPORTED 0xB2,agree
+bank1,F219,set_0636_0a_toggle_047b_02_set_097a_02,F233,b2e1,cpl 0xe1,cpl  acc.1,cpl 0xe1,cpl 0xe1,BIT_UNSUPPORTED 0xB2,agree
+bank1,F246,if_045a_bit4_set_toggle_047b_10_set_0637_0a,F267,b2e4,cpl 0xe4,cpl  acc.4,cpl 0xe4,cpl 0xe4,BIT_UNSUPPORTED 0xB2,agree
+common,0046,FUN_CODE_0046,0058,3134,acall 0x0134,acall 0x0134,acall 0x0134,acall 0x0134,GAP_MNEMONICS acall,agree
+common,0064,FUN_CODE_0064,0064,1186,acall 0x0086,acall 0x0086,acall 0x0086,acall 0x0086,GAP_MNEMONICS acall,agree
+common,011C,FUN_CODE_011c,011C,1101,acall 0x0001,acall 0x0001,acall 0x0001,acall 0x0001,GAP_MNEMONICS acall,agree
+common,0504,FUN_CODE_0504,0509,01f0,ajmp 0x00f0,ajmp 0x00f0,ajmp 0x00f0,ajmp 0x00f0,GAP_MNEMONICS ajmp,agree
+common,0512,int0_vector_forwarder_to_052f,0512,0103,ajmp 0x0003,ajmp 0x0003,ajmp 0x0003,ajmp 0x0003,GAP_MNEMONICS ajmp,agree
+common,0713,FUN_CODE_0713,071D,0104,ajmp 0x0004,ajmp 0x0004,ajmp 0x0004,ajmp 0x0004,GAP_MNEMONICS ajmp,agree
+common,0D7B,FUN_CODE_0d7b,0DE6,010c,ajmp 0x080c,ajmp 0x080c,ajmp 0x080c,ajmp 0x080c,GAP_MNEMONICS ajmp,agree
+common,156B,FUN_CODE_156b,156E,1100,acall 0x1000,acall 0x1000,acall 0x1000,acall 0x1000,GAP_MNEMONICS acall,agree
+common,1602,FUN_CODE_1602,1602,4102,ajmp 0x1202,ajmp 0x1202,ajmp 0x1202,ajmp 0x1202,GAP_MNEMONICS ajmp,agree
+common,1706,FUN_CODE_1706,1706,1100,acall 0x1000,acall 0x1000,acall 0x1000,acall 0x1000,GAP_MNEMONICS acall,agree
+common,2E02,FUN_CODE_2e02,2E05,0112,ajmp 0x2812,ajmp 0x2812,ajmp 0x2812,ajmp 0x2812,GAP_MNEMONICS ajmp,agree
+common,3A02,thunk_FUN_CODE_38f0,3A02,01f0,ajmp 0x38f0,ajmp 0x38f0,ajmp 0x38f0,ajmp 0x38f0,GAP_MNEMONICS ajmp,agree
+common,3FA7,FUN_CODE_3fa7,3FED,9248,"mov 0x48, CY","mov  0x29.0,c",mov 0x48|c,mov 0x48|c,BIT_UNSUPPORTED 0x92,agree
+common,4064,FUN_CODE_4064,4096,4128,ajmp 0x4228,ajmp 0x4228,ajmp 0x4228,ajmp 0x4228,GAP_MNEMONICS ajmp,agree
+common,4202,FUN_CODE_4202,4205,9142,acall 0x4442,acall 0x4442,acall 0x4442,acall 0x4442,GAP_MNEMONICS acall,agree
+common,424A,FUN_CODE_424a,42A4,d143,acall 0x4643,acall 0x4643,acall 0x4643,acall 0x4643,GAP_MNEMONICS acall,agree
+common,57C2,FUN_CODE_57c2,57D7,4144,ajmp 0x5244,ajmp 0x5244,ajmp 0x5244,ajmp 0x5244,GAP_MNEMONICS ajmp,agree
+common,5802,FUN_CODE_5802,5827,4143,ajmp 0x5a43,ajmp 0x5a43,ajmp 0x5a43,ajmp 0x5a43,GAP_MNEMONICS ajmp,agree
+common,5882,FUN_CODE_5882,5918,4143,ajmp 0x5a43,ajmp 0x5a43,ajmp 0x5a43,ajmp 0x5a43,GAP_MNEMONICS ajmp,agree
+common,5882,FUN_CODE_5882,5948,4143,ajmp 0x5a43,ajmp 0x5a43,ajmp 0x5a43,ajmp 0x5a43,GAP_MNEMONICS ajmp,agree
+common,5A66,FUN_CODE_5a66,5A7B,4143,ajmp 0x5a43,ajmp 0x5a43,ajmp 0x5a43,ajmp 0x5a43,GAP_MNEMONICS ajmp,agree
+common,5A66,FUN_CODE_5a66,5AFA,5155,acall 0x5a55,acall 0x5a55,acall 0x5a55,acall 0x5a55,GAP_MNEMONICS acall,agree
+common,5A66,FUN_CODE_5a66,5B07,4146,ajmp 0x5a46,ajmp 0x5a46,ajmp 0x5a46,ajmp 0x5a46,GAP_MNEMONICS ajmp,agree
+common,5A66,FUN_CODE_5a66,5B2A,5155,acall 0x5a55,acall 0x5a55,acall 0x5a55,acall 0x5a55,GAP_MNEMONICS acall,agree
+common,5A66,FUN_CODE_5a66,5B37,4146,ajmp 0x5a46,ajmp 0x5a46,ajmp 0x5a46,ajmp 0x5a46,GAP_MNEMONICS ajmp,agree
+common,5AC2,FUN_CODE_5ac2,5AC8,4143,ajmp 0x5a43,ajmp 0x5a43,ajmp 0x5a43,ajmp 0x5a43,GAP_MNEMONICS ajmp,agree
+common,5B82,FUN_CODE_5b82,5C18,4143,ajmp 0x5a43,ajmp 0x5a43,ajmp 0x5a43,ajmp 0x5a43,GAP_MNEMONICS ajmp,agree
+common,5B82,FUN_CODE_5b82,5C48,4143,ajmp 0x5a43,ajmp 0x5a43,ajmp 0x5a43,ajmp 0x5a43,GAP_MNEMONICS ajmp,agree
+common,5CFE,FUN_CODE_5cfe,5D49,4144,ajmp 0x5a44,ajmp 0x5a44,ajmp 0x5a44,ajmp 0x5a44,GAP_MNEMONICS ajmp,agree
+common,5CFE,FUN_CODE_5cfe,5D79,4144,ajmp 0x5a44,ajmp 0x5a44,ajmp 0x5a44,ajmp 0x5a44,GAP_MNEMONICS ajmp,agree
+common,5CFE,FUN_CODE_5cfe,5DA8,4143,ajmp 0x5a43,ajmp 0x5a43,ajmp 0x5a43,ajmp 0x5a43,GAP_MNEMONICS ajmp,agree
+common,5DC2,FUN_CODE_5dc2,5DD8,4143,ajmp 0x5a43,ajmp 0x5a43,ajmp 0x5a43,ajmp 0x5a43,GAP_MNEMONICS ajmp,agree
+common,5DC2,FUN_CODE_5dc2,5E2A,5155,acall 0x5a55,acall 0x5a55,acall 0x5a55,acall 0x5a55,GAP_MNEMONICS acall,agree
+common,5DC2,FUN_CODE_5dc2,5E37,4146,ajmp 0x5a46,ajmp 0x5a46,ajmp 0x5a46,ajmp 0x5a46,GAP_MNEMONICS ajmp,agree
+common,5E02,FUN_CODE_5e02,5E07,4146,ajmp 0x5a46,ajmp 0x5a46,ajmp 0x5a46,ajmp 0x5a46,GAP_MNEMONICS ajmp,agree
+common,5E82,FUN_CODE_5e82,5F18,4143,ajmp 0x5a43,ajmp 0x5a43,ajmp 0x5a43,ajmp 0x5a43,GAP_MNEMONICS ajmp,agree
+common,5E82,FUN_CODE_5e82,5F48,4143,ajmp 0x5a43,ajmp 0x5a43,ajmp 0x5a43,ajmp 0x5a43,GAP_MNEMONICS ajmp,agree
+common,5E82,FUN_CODE_5e82,5F7A,5155,acall 0x5a55,acall 0x5a55,acall 0x5a55,acall 0x5a55,GAP_MNEMONICS acall,agree
+common,5E82,FUN_CODE_5e82,5F87,4146,ajmp 0x5a46,ajmp 0x5a46,ajmp 0x5a46,ajmp 0x5a46,GAP_MNEMONICS ajmp,agree
+common,5E82,FUN_CODE_5e82,6098,4143,ajmp 0x6243,ajmp 0x6243,ajmp 0x6243,ajmp 0x6243,GAP_MNEMONICS ajmp,agree
+common,60C2,FUN_CODE_60c2,60C8,4143,ajmp 0x6243,ajmp 0x6243,ajmp 0x6243,ajmp 0x6243,GAP_MNEMONICS ajmp,agree
+common,6116,FUN_CODE_6116,6119,925a,"mov 0x5a, CY","mov  0x2b.2,c",mov 0x5a|c,mov 0x5a|c,BIT_UNSUPPORTED 0x92,agree
+common,6243,FUN_CODE_6243,6246,b1bc,acall 0x65bc,acall 0x65bc,acall 0x65bc,acall 0x65bc,GAP_MNEMONICS acall,agree
+common,6243,FUN_CODE_6243,6259,2121,ajmp 0x6121,ajmp 0x6121,ajmp 0x6121,ajmp 0x6121,GAP_MNEMONICS ajmp,agree
+common,6243,FUN_CODE_6243,626F,2116,ajmp 0x6116,ajmp 0x6116,ajmp 0x6116,ajmp 0x6116,GAP_MNEMONICS ajmp,agree
+common,65A6,FUN_CODE_65a6,60F9,9257,"mov 0x57, CY","mov  0x2a.7,c",mov 0x57|c,mov 0x57|c,BIT_UNSUPPORTED 0x92,agree
+common,65BC,FUN_CODE_65bc,65D7,0116,ajmp 0x6016,ajmp 0x6016,ajmp 0x6016,ajmp 0x6016,GAP_MNEMONICS ajmp,agree
+common,6811,FUN_CODE_6811,6812,8170,ajmp 0x6c70,ajmp 0x6c70,ajmp 0x6c70,ajmp 0x6c70,GAP_MNEMONICS ajmp,agree
+common,6A02,FUN_CODE_6a02,6AD7,9296,"mov 0x96, CY","mov  p1.6,c",mov 0x96|c,mov 0x96|c,BIT_UNSUPPORTED 0x92,agree
+common,6A02,FUN_CODE_6a02,6AD9,9197,acall 0x6c97,acall 0x6c97,acall 0x6c97,acall 0x6c97,GAP_MNEMONICS acall,agree
+common,6A02,FUN_CODE_6a02,6ADB,9295,"mov 0x95, CY","mov  p1.5,c",mov 0x95|c,mov 0x95|c,BIT_UNSUPPORTED 0x92,agree
+common,6A02,FUN_CODE_6a02,6AF3,011f,ajmp 0x681f,ajmp 0x681f,ajmp 0x681f,ajmp 0x681f,GAP_MNEMONICS ajmp,agree
+common,6BFF,FUN_CODE_6bff,6C06,0117,ajmp 0x6817,ajmp 0x6817,ajmp 0x6817,ajmp 0x6817,GAP_MNEMONICS ajmp,agree
+common,6C70,FUN_CODE_6c70,6C74,0117,ajmp 0x6817,ajmp 0x6817,ajmp 0x6817,ajmp 0x6817,GAP_MNEMONICS ajmp,agree
+common,6D46,FUN_CODE_6d46,67F5,b2b4,cpl 0xb4,cpl  p3.4,cpl 0xb4,cpl 0xb4,BIT_UNSUPPORTED 0xB2,agree
+common,6D46,FUN_CODE_6d46,6875,b2b4,cpl 0xb4,cpl  p3.4,cpl 0xb4,cpl 0xb4,BIT_UNSUPPORTED 0xB2,agree
+common,6D46,FUN_CODE_6d46,687B,e18d,ajmp 0x6f8d,ajmp 0x6f8d,ajmp 0x6f8d,ajmp 0x6f8d,GAP_MNEMONICS ajmp,agree
+common,6D46,FUN_CODE_6d46,68F9,71ff,acall 0x6bff,acall 0x6bff,acall 0x6bff,acall 0x6bff,GAP_MNEMONICS acall,agree
+common,6D46,FUN_CODE_6d46,68FB,e18d,ajmp 0x6f8d,ajmp 0x6f8d,ajmp 0x6f8d,ajmp 0x6f8d,GAP_MNEMONICS ajmp,agree
+common,6D46,FUN_CODE_6d46,6D68,0100,ajmp 0x6800,ajmp 0x6800,ajmp 0x6800,ajmp 0x6800,GAP_MNEMONICS ajmp,agree
+common,6DB1,FUN_CODE_6db1,6DB3,1117,acall 0x6817,acall 0x6817,acall 0x6817,acall 0x6817,GAP_MNEMONICS acall,agree
+common,6DB1,FUN_CODE_6db1,6DB5,0111,ajmp 0x6811,ajmp 0x6811,ajmp 0x6811,ajmp 0x6811,GAP_MNEMONICS ajmp,agree
+pd,0180,dispatch_r5_write_083b_0300,01C1,0112,ajmp 0x0012,ajmp 0x0012,ajmp 0x0012,ajmp 0x0012,GAP_MNEMONICS ajmp,agree
+pd,0180,dispatch_r5_write_083b_0300,01FB,0112,ajmp 0x0012,ajmp 0x0012,ajmp 0x0012,ajmp 0x0012,GAP_MNEMONICS ajmp,agree
+pd,0180,dispatch_r5_write_083b_0300,0245,0112,ajmp 0x0012,ajmp 0x0012,ajmp 0x0012,ajmp 0x0012,GAP_MNEMONICS ajmp,agree
+pd,0180,dispatch_r5_write_083b_0300,0282,0112,ajmp 0x0012,ajmp 0x0012,ajmp 0x0012,ajmp 0x0012,GAP_MNEMONICS ajmp,agree
+pd,0180,dispatch_r5_write_083b_0300,02BC,017b,ajmp 0x007b,ajmp 0x007b,ajmp 0x007b,ajmp 0x007b,GAP_MNEMONICS ajmp,agree
+pd,0180,dispatch_r5_write_083b_0300,02DD,0112,ajmp 0x0012,ajmp 0x0012,ajmp 0x0012,ajmp 0x0012,GAP_MNEMONICS ajmp,agree
+pd,06B1,shl32_16_iters,06C0,92d5,"mov 0xd5, CY","mov  psw.5,c",mov 0xd5|c,mov 0xd5|c,BIT_UNSUPPORTED 0x92,agree
+pd,06B1,shl32_16_iters,06E4,92e7,"mov 0xe7, CY","mov  acc.7,c",mov 0xe7|c,mov 0xe7|c,BIT_UNSUPPORTED 0x92,agree
+pd,06EA,FUN_CODE_06ea,06F1,92d5,"mov 0xd5, CY","mov  psw.5,c",mov 0xd5|c,mov 0xd5|c,BIT_UNSUPPORTED 0x92,agree
+pd,0721,shift_right_2x16_sticky_d5,0729,92d5,"mov 0xd5, CY","mov  psw.5,c",mov 0xd5|c,mov 0xd5|c,BIT_UNSUPPORTED 0x92,agree
+pd,0721,shift_right_2x16_sticky_d5,0735,b2d5,cpl 0xd5,cpl  psw.5,cpl 0xd5,cpl 0xd5,BIT_UNSUPPORTED 0xB2,agree
+pd,0738,shift_r3r4_right_1,0752,92e7,"mov 0xe7, CY","mov  acc.7,c",mov 0xe7|c,mov 0xe7|c,BIT_UNSUPPORTED 0x92,agree
+pd,133F,clear_0807_0808_dispatch_0805,1371,0113,ajmp 0x1013,ajmp 0x1013,ajmp 0x1013,ajmp 0x1013,GAP_MNEMONICS ajmp,agree
+pd,1EFE,FUN_CODE_1efe,1F32,0120,ajmp 0x1820,ajmp 0x1820,ajmp 0x1820,ajmp 0x1820,GAP_MNEMONICS ajmp,agree
+pd,4C27,dispatch_entry,4C3C,9201,"mov 0x01, CY","mov  0x20.1,c",mov 0x01|c,mov 0x01|c,BIT_UNSUPPORTED 0x92,agree
+pd,4C27,dispatch_entry,4D1C,0100,ajmp 0x4800,ajmp 0x4800,ajmp 0x4800,ajmp 0x4800,GAP_MNEMONICS ajmp,agree
+pd,4D6F,dispatch_case_06,4A12,6112,ajmp 0x4b12,ajmp 0x4b12,ajmp 0x4b12,ajmp 0x4b12,GAP_MNEMONICS ajmp,agree
+pd,4D6F,dispatch_case_06,4E35,4112,ajmp 0x4a12,ajmp 0x4a12,ajmp 0x4a12,ajmp 0x4a12,GAP_MNEMONICS ajmp,agree
+pd,4D6F,dispatch_case_06,4E58,4112,ajmp 0x4a12,ajmp 0x4a12,ajmp 0x4a12,ajmp 0x4a12,GAP_MNEMONICS ajmp,agree
+pd,6673,FUN_CODE_6673,686C,01af,ajmp 0x68af,ajmp 0x68af,ajmp 0x68af,ajmp 0x68af,GAP_MNEMONICS ajmp,agree
+pd,7580,set_07d2_and_return_r7_zero_or_one,7632,d1e0,acall 0x76e0,acall 0x76e0,acall 0x76e0,acall 0x76e0,GAP_MNEMONICS acall,agree
+pd,A339,stash_args_dispatch_code_table,A362,1100,acall 0xa000,acall 0xa000,acall 0xa000,acall 0xa000,GAP_MNEMONICS acall,agree
+pd,A339,stash_args_dispatch_code_table,A368,b1b3,acall 0xa5b3,acall 0xa5b3,acall 0xa5b3,acall 0xa5b3,GAP_MNEMONICS acall,agree
+pd,ADAB,copy_0809_to_080a_then_dispatch_0805,ADEB,01ae,ajmp 0xa8ae,ajmp 0xa8ae,ajmp 0xa8ae,ajmp 0xa8ae,GAP_MNEMONICS ajmp,agree
+pd,AE9C,write_07d1_then_call_chain,AECA,01d0,ajmp 0xa8d0,ajmp 0xa8d0,ajmp 0xa8d0,ajmp 0xa8d0,GAP_MNEMONICS ajmp,agree
+pd,AE9C,write_07d1_then_call_chain,AEEE,01d0,ajmp 0xa8d0,ajmp 0xa8d0,ajmp 0xa8d0,ajmp 0xa8d0,GAP_MNEMONICS ajmp,agree
+pd,AE9C,write_07d1_then_call_chain,AF00,0190,ajmp 0xa890,ajmp 0xa890,ajmp 0xa890,ajmp 0xa890,GAP_MNEMONICS ajmp,agree
+pd,C755,latch_07d2_07d3_then_zero_23_bytes,C7CF,01af,ajmp 0xc0af,ajmp 0xc0af,ajmp 0xc0af,ajmp 0xc0af,GAP_MNEMONICS ajmp,agree
+pd,C873,compare_55_then_mark_0819,C81C,b208,cpl 0x08,cpl  0x21.0,cpl 0x08,cpl 0x08,BIT_UNSUPPORTED 0xB2,agree
+pd,CB2A,store_0803_0805_then_jump_c808,CB4F,0108,ajmp 0xc808,ajmp 0xc808,ajmp 0xc808,ajmp 0xc808,GAP_MNEMONICS ajmp,agree
+pd,D085,decrement_00e2_and_tail_jump_to_d07b,D0B8,017b,ajmp 0xd07b,ajmp 0xd07b,ajmp 0xd07b,ajmp 0xd07b,GAP_MNEMONICS ajmp,agree
+pd,D72E,FUN_CODE_d72e,D76E,d1e0,acall 0xd6e0,acall 0xd6e0,acall 0xd6e0,acall 0xd6e0,GAP_MNEMONICS acall,agree
