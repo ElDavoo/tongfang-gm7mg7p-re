@@ -6,10 +6,13 @@ only loads on Windows -- windows/tools/ecrw_fake.py stands in for the whole
 module, installed by assignment the way the probe, ec_watch and GPU-block
 suites do, and FakeEc below scripts the two arms on top of it.
 
-The byte-script checks only know what the tool writes. They would pass
-unchanged against a rewrite that drove bit 0 instead of bit 1, because a
-reworded constant still writes a byte. So CitationPinTests is the half that
-matters: it reads `evidence/acpi/dsdt.dsl`,
+The byte-script checks run the tool from a byte with the value bit clear and
+read the two arms back out of its writes, so a probe that opened the gate and
+left bit 1 as found -- §9's original instruction, the one this tool exists to
+correct -- fails on the byte it actually wrote. What they cannot do is tell
+whether the bit they move is the one the EC's own code reads: a tool driving
+some other bit consistently satisfies every one of them. So CitationPinTests is
+the half that matters: it reads `evidence/acpi/dsdt.dsl`,
 `ec/annotations/ghidra-functions.csv` and `ec/annotations/registers.yaml`, the
 committed inputs the arm arithmetic and the watch table transcribe, and
 asserts that the bits this tool sets are the bits those files name -- DBEN at
@@ -53,6 +56,17 @@ import ctgp_dben_probe as probe  # noqa: E402  (needs the fake ecrw above)
 # here. Bit 2 (cTGP enable) is set with it, because "bits 2-7 are preserved"
 # has to have something to preserve for that claim to mean anything.
 ORIG = 0x07
+
+# The same byte with the value bit clear, and the reason there is a second one.
+# 0x07 is the vendor's own value, so it arrives with bit 1 already set: there
+# the `| VALUE_BIT` in arm A is a no-op, and a probe that opened the gate and
+# never moved bit 1 -- §9's instruction, the one this tool exists to correct --
+# wrote a byte identical to the right one, and every check in the suite passed
+# it. One starting value cannot tell "set the bit" from "left it as found"; a
+# second one starting clear can. Bit 0 is still clear and bit 2 still set, so
+# the gate is still forced on in both arms and bits 2-7 are still something to
+# preserve.
+ORIG_VBIT_CLEAR = ORIG & ~probe.VALUE_BIT
 
 # ctgp_dben_probe.py builds this list inside main(), so it cannot be imported
 # and checked against itself. The copy here is the assertion.
@@ -399,6 +413,26 @@ class ByteScriptTests(unittest.TestCase):
         arm_b = (orig | probe.GATE_BIT) & ~probe.VALUE_BIT & 0xFF
         return arm_a, arm_b
 
+    def assert_one_bit_apart(self, orig, arm_a, arm_b):
+        """The two arms drive the value bit and nothing else, from `orig`.
+
+        Named bits and the bit-or-three rather than literal bytes, so the claim
+        is about the two bits each arm drives and has to hold whatever the byte
+        happened to hold. Shared with the case that reads the arms back out of
+        a real run, so a pair the tool actually wrote is held to the same thing
+        as a pair recomputed here.
+        """
+        self.assertEqual(arm_a ^ arm_b, probe.VALUE_BIT, f"0x{orig:02X}")
+        for arm in (arm_a, arm_b):
+            # bit 0 is the gate on the 0x83FF block, and it has to be set
+            # in both arms or the routine under test never runs.
+            self.assertTrue(arm & probe.GATE_BIT, f"0x{orig:02X}")
+            # bits 2-7 are cTGP enable and the rest of the vendor's byte;
+            # neither arm is allowed to move them.
+            self.assertEqual(arm & ~0x03, orig & ~0x03, f"0x{orig:02X}")
+        self.assertTrue(arm_a & probe.VALUE_BIT, f"0x{orig:02X}")
+        self.assertFalse(arm_b & probe.VALUE_BIT, f"0x{orig:02X}")
+
     def test_the_byte_script_is_the_two_arms_and_the_restore(self):
         arm_a, arm_b = self.expected_arms(ORIG)
         rc, ec, clock, _, _ = capture()
@@ -411,18 +445,37 @@ class ByteScriptTests(unittest.TestCase):
         self.assertEqual(clock.slept, [])
 
     def test_the_arms_differ_only_in_the_bit_they_drive(self):
-        for orig in (0x00, 0x01, 0x02, 0x07, 0xFF):
+        for orig in (0x00, 0x01, 0x02, ORIG_VBIT_CLEAR, 0x07, 0xFF):
             arm_a, arm_b = self.expected_arms(orig)
-            self.assertEqual(arm_a ^ arm_b, probe.VALUE_BIT, f"0x{orig:02X}")
-            for arm in (arm_a, arm_b):
-                # bit 0 is the gate on the 0x83FF block, and it has to be set
-                # in both arms or the routine under test never runs.
-                self.assertTrue(arm & probe.GATE_BIT, f"0x{orig:02X}")
-                # bits 2-7 are cTGP enable and the rest of the vendor's byte;
-                # neither arm is allowed to move them.
-                self.assertEqual(arm & ~0x03, orig & ~0x03, f"0x{orig:02X}")
-            self.assertTrue(arm_a & probe.VALUE_BIT, f"0x{orig:02X}")
-            self.assertFalse(arm_b & probe.VALUE_BIT, f"0x{orig:02X}")
+            # The tool's own arm_bytes beside the copy above, so the arms are
+            # checked where they are computed as well as here. ORIG_VBIT_CLEAR
+            # is in this list for the reason the fixture says: at ORIG the
+            # `| VALUE_BIT` is a no-op, so a tool that dropped that term agrees
+            # with this copy on every starting byte but one.
+            self.assertEqual((arm_a, arm_b), probe.arm_bytes(orig),
+                             f"0x{orig:02X}")
+            self.assert_one_bit_apart(orig, arm_a, arm_b)
+
+    def test_a_byte_with_the_value_bit_clear_has_it_set_by_arm_a(self):
+        # The property this whole tool exists to establish, run through the
+        # tool rather than recomputed beside it: arm A turns the value bit on
+        # and arm B turns it off, from a byte that does not already have it
+        # on. ORIG cannot show that -- it is the vendor's own 0x07, with bit 1
+        # set -- so the arms are read back out of a real run's writes here, and
+        # a probe that opened the gate and never moved bit 1 writes 0x05 twice
+        # and fails.
+        orig = ORIG_VBIT_CLEAR
+        self.assertFalse(orig & probe.VALUE_BIT,
+                         "the fixture has to start with the value bit clear, "
+                         "or this case cannot tell a set bit from a kept one")
+        rc, ec, _, _, _ = capture(ec=FakeEc(orig=orig))
+        self.assertEqual(rc, 0)
+        self.assertEqual([addr for addr, _ in ec.writes], [probe.CTRL] * 3,
+                         "the three writes are 0x0743 and nothing else")
+        arm_a, arm_b = (val for _, val in ec.writes[:2])
+        self.assert_one_bit_apart(orig, arm_a, arm_b)
+        # And the restore puts back exactly the byte the run read, bit for bit.
+        self.assertEqual(ec.writes[2], (probe.CTRL, orig))
 
     def test_a_byte_with_bit_zero_clear_has_it_forced_on_in_both_arms(self):
         # The vendor writes 0x0743=0x00 on battery, and forcing the gate on is

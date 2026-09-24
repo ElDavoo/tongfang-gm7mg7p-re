@@ -166,10 +166,12 @@ watcher's citation table against the DSDT and `ec/annotations/registers.yaml`
 — so a field rename or a status change there turns the suite red rather than
 letting the table rot — and pins that a mark reaches the CSV in the same
 schema. `tools/test_ctgp_dben_probe.py` does the same job for the `DBEN`
-probe: its refusals, its byte script, its `finally`, its CSV, and — because
-byte-script tests alone would pass just as happily against a probe that drove
-bit 0 — the bit arithmetic pinned to the DSDT field list and to the three
-`ghidra-functions.csv` rows it is a transcription of.
+probe: its refusals, its byte script — run from a byte with the value bit
+clear, so a probe that drove bit 0 and never moved bit 1 fails on the byte it
+wrote, which on the vendor's own `0x07` is the same byte the right probe
+writes — its `finally`, its CSV, and the bit arithmetic pinned to the DSDT
+field list and to the three `ghidra-functions.csv` rows it is a transcription
+of, which is the half that says those are the bits the EC's own code reads.
 (`tools/test_system_id_probe.py` covers the `0x0456` probe;
 `../tools/README.md` lists it.) All of them work by faking
 `ecrw` — the module binds kernel32 at import time and only loads on Windows —
