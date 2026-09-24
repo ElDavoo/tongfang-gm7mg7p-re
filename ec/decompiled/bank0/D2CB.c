@@ -9,7 +9,8 @@
    behaviour the .c reports for this function.
    type: writer
    evidence: ec/decompiled/bank0/D2CB.asm; ec/decompiled/bank0/D2CB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 store_a_to_1c05_then_d2d2(undefined1 param_1)
 

@@ -8,7 +8,8 @@
    and tail-jumps to 0x1666. Nothing in this listing shows what 0x1666 does with the register value.
    type: forwarder
    evidence: ec/decompiled/bank0/A73F.asm; ec/decompiled/bank0/A73F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_r7_at_6a_then_jump_1666(undefined1 param_1)
 

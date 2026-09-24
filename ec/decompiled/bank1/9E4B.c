@@ -8,7 +8,8 @@
    dispatch at 0x9E26.
    type: writer
    evidence: ec/decompiled/bank1/9E4B.asm; ec/decompiled/bank1/9E4B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void set_1c12_0_and_68c_83(void)
 

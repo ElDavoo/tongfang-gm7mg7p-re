@@ -11,7 +11,8 @@
    this listing.
    type: unresolved
    evidence: ec/decompiled/bank0/C333.asm; ec/decompiled/bank0/C333.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void nop_stub_c333(void)
 

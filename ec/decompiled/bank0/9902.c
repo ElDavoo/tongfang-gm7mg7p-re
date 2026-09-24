@@ -11,7 +11,8 @@
    0x08AC and 0x08BB have no entry in ec/annotations/registers.yaml.
    type: math
    evidence: ec/decompiled/bank0/9902.asm; ec/decompiled/bank0/9902.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clamp_08ac_up_to_08bb(void)
 

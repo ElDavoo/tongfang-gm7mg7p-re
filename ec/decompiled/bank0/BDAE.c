@@ -8,7 +8,8 @@
    Only the single byte 0x1907 is copied; 0x1908 is loaded into DPTR but not read or written here.
    type: copy
    evidence: ec/decompiled/bank0/BDAE.asm; ec/decompiled/bank0/BDAE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void copy_x1907_to_x0a57(void)
 

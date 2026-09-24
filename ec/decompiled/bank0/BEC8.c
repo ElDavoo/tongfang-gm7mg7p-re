@@ -10,7 +10,8 @@
    CODE base and index come from the caller's DPTR and A and are not set here.
    type: copy
    evidence: ec/decompiled/bank0/BEC8.asm; ec/decompiled/bank0/BEC8.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void load_code_byte_to_0734(byte param_1,short param_2)
 

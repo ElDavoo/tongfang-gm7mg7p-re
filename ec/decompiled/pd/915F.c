@@ -9,7 +9,8 @@
    byte written is R5. Nothing in the listing shows what the constant or the R6 = R4 copy is for.
    type: writer
    evidence: ec/decompiled/pd/915F.asm; ec/decompiled/pd/915F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 write_a_to_dptr_set_r6_r4_ret6(undefined1 param_1,undefined1 *param_2)
 

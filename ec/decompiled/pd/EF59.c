@@ -12,7 +12,8 @@
    show.
    type: dispatch
    evidence: ec/decompiled/pd/EF59.asm; ec/decompiled/pd/EF59.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void stage_07d6_call_715e_6faf_tail_e5b3(undefined1 param_1,undefined1 param_2)
 

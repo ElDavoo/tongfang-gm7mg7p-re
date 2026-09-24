@@ -11,7 +11,8 @@
    in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/E896.asm; ec/decompiled/bank0/E896.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_0f60_0f61_then_0x7049(undefined1 param_1,char param_2)
 

@@ -10,7 +10,8 @@
    first three instructions.
    type: math
    evidence: ec/decompiled/pd/97C7.asm; ec/decompiled/pd/97C7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 dptr_page_sel_from_r6_minus_3_first_half(char param_1)
 

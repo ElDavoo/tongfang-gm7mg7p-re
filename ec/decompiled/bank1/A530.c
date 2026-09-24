@@ -19,7 +19,8 @@
    type: copy
    evidence: ec/decompiled/bank1/A530.asm; ec/decompiled/bank1/A530.c;
    ec/annotations/xdata-0440-readers.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void code_table_scatter_to_xdata(undefined2 *param_1,char param_2)
 

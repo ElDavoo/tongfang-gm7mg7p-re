@@ -8,7 +8,8 @@
    call and no return address is pushed here. The decompiler renders it as a thunk of that routine.
    type: forwarder
    evidence: ec/decompiled/bank1/90B0.asm; ec/decompiled/bank1/90B0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void forward_to_90b8(char r7_from_1984)
 

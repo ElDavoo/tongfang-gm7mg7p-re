@@ -9,7 +9,8 @@
    0x7B4 entry in the same listing set; 0x7B14 is not decoded here.
    type: forwarder
    evidence: ec/decompiled/pd/F786.asm; ec/decompiled/pd/F786.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void tailcall_7b14_with_r7_zero(void)
 

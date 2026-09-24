@@ -9,7 +9,8 @@
    DPTR, and the C's bare return 0 shows none of the three register writes.
    type: state
    evidence: ec/decompiled/pd/9115.asm; ec/decompiled/pd/9115.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_dptr_to_r5_r6_zero_r7(void)
 

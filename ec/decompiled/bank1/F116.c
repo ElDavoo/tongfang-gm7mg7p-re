@@ -9,7 +9,8 @@
    with 0x7F) is 0xf290's code. The slot itself reads and writes nothing.
    type: forwarder
    evidence: ec/decompiled/bank1/F116.asm; ec/decompiled/bank1/F116.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void thunk_to_f290(void)
 

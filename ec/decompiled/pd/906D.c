@@ -9,7 +9,8 @@
    The .c's return of param_1-3 does not match these instructions.
    type: math
    evidence: ec/decompiled/pd/906D.asm; ec/decompiled/pd/906D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char make_dptr_r6_minus_3_col_r3(char r6_value)
 

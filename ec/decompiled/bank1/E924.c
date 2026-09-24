@@ -11,7 +11,8 @@
    which the instruction stream does not do.
    type: reader
    evidence: ec/decompiled/bank1/E924.asm; ec/decompiled/bank1/E924.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_code_pair_at_r5_index(short param_1,char param_2)
 

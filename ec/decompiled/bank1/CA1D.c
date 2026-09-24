@@ -10,7 +10,8 @@
    0x3A3.
    type: math
    evidence: ec/decompiled/bank1/CA1D.asm; ec/decompiled/bank1/CA1D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void add_03a6_plus_0388_into_039e(void)
 

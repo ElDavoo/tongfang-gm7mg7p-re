@@ -11,7 +11,8 @@
    conditional subtract.
    type: math
    evidence: ec/decompiled/bank1/A5E6.asm; ec/decompiled/bank1/A5E6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void mul_16_round_shift_subtract(byte param_1,byte param_2,byte param_3,char param_4)
 

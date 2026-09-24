@@ -10,7 +10,8 @@
    nothing in this listing says what the constant compares against.
    type: math
    evidence: ec/decompiled/bank0/BD46.asm; ec/decompiled/bank0/BD46.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char be16_08a9_08aa_minus_0321(void)
 

@@ -11,7 +11,8 @@
    address is formed and the two R3=0 arms swap it back out with XCH A,R0.
    type: writer
    evidence: ec/decompiled/pd/0C58.asm; ec/decompiled/pd/0C58.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_byte_at_dptr_plus_r1r2_by_tag
                (undefined1 param_1,undefined2 param_2,byte param_3,char param_4,char param_5)

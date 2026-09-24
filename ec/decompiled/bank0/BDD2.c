@@ -9,7 +9,8 @@
    establish them as one 16-bit register.
    type: reader
    evidence: ec/decompiled/bank0/BDD2.asm; ec/decompiled/bank0/BDD2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_x0a59_and_x0a5a(void)
 

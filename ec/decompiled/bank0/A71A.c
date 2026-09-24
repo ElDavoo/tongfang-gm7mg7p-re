@@ -8,7 +8,8 @@
    no other XDATA touched.
    type: writer
    evidence: ec/decompiled/bank0/A71A.asm; ec/decompiled/bank0/A71A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_0857_and_076f(void)
 

@@ -12,7 +12,8 @@
    0xC6B0, whose listing writes 0x05 to XDATA 0x070D and tail-jumps onward.
    type: state
    evidence: ec/decompiled/bank1/C659.asm; ec/decompiled/bank1/C659.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void toggle_045b_b0_and_0758_b3(void)
 

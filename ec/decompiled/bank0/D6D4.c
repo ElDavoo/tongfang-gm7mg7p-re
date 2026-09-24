@@ -10,7 +10,8 @@
    ec/annotations/registers.yaml.
    type: math
    evidence: ec/decompiled/bank0/D6D4.asm; ec/decompiled/bank0/D6D4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte xor_00d8_00d9(void)
 

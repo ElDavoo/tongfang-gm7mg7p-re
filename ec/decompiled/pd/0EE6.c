@@ -8,7 +8,8 @@
    memory is touched.
    type: logic
    evidence: ec/decompiled/pd/0EE6.asm; ec/decompiled/pd/0EE6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte and_32bit_r0r3_r4r7(byte param_1,byte param_2)
 

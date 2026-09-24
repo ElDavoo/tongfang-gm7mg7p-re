@@ -10,7 +10,8 @@
    decompiler's param_1 does not correspond to anything passed in.
    type: gate
    evidence: ec/decompiled/bank1/9199.asm; ec/decompiled/bank1/9199.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void gate_1984_19a8_then_count_06cc(char r7_from_a_callee)
 

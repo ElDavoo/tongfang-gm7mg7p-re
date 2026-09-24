@@ -9,7 +9,8 @@
    here, so the entry state comes from the caller or from the preceding fragment at 0xBD29.
    type: math
    evidence: ec/decompiled/bank0/BD2D.asm; ec/decompiled/bank0/BD2D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char sub16_r6r7_minus_r4r5(char param_1,byte param_2,char param_3,byte param_4)
 

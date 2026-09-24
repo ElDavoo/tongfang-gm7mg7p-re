@@ -12,7 +12,8 @@
    R1/R2 is not in the instructions.
    type: math
    evidence: ec/decompiled/bank1/C45C.asm; ec/decompiled/bank1/C45C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void subtract_shifted_reads_of_0646(undefined1 r1_value,undefined1 r2_value)
 

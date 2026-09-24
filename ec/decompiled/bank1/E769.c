@@ -11,7 +11,8 @@
    never produces.
    type: logic
    evidence: ec/decompiled/bank1/E769.asm; ec/decompiled/bank1/E769.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 char clamp_r2r1_to_0420_above_3c0b(byte param_1,byte param_2)
 

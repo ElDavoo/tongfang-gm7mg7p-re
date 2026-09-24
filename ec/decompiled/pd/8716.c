@@ -10,7 +10,8 @@
    0xF22E alters R7.
    type: forwarder
    evidence: ec/decompiled/pd/8716.asm; ec/decompiled/pd/8716.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 call_f22e_with_07d0(void)
 

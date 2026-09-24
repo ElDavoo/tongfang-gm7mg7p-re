@@ -8,7 +8,8 @@
    neither call target is decoded here.
    type: forwarder
    evidence: ec/decompiled/bank1/85E9.asm; ec/decompiled/bank1/85E9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_19c0_then_19c6(void)
 

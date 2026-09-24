@@ -11,7 +11,8 @@
    R3:R4 holding the constant and R1:R2 the caller's original value.
    type: math
    evidence: ec/decompiled/bank1/CDDA.asm; ec/decompiled/bank1/CDDA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clamp_r1r2_against_const_from_0491(void)
 

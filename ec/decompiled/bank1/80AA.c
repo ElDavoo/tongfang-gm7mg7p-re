@@ -14,7 +14,8 @@
    0x8189, so this boundary is the call-target byte scan's hypothesis.
    type: writer
    evidence: ec/decompiled/bank1/80AA.asm; ec/decompiled/bank1/80AA.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void dec_timers_06da_08e4_055f_09ce_070b(void)
 

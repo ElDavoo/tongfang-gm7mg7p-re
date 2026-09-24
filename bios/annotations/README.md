@@ -13,7 +13,7 @@ Same shape as `ec/annotations/ghidra-functions.csv`, header-only so
 
 ## The columns
 
-`scope,addr,name,signature,type,comment,evidence,basis`
+`scope,addr,name,signature,type,comment,evidence,basis,name_basis`
 
 | column | what goes in it |
 |---|---|
@@ -25,6 +25,7 @@ Same shape as `ec/annotations/ghidra-functions.csv`, header-only so
 | `comment` | the reading. One line: `ApplyAnnotations.java` reads the file a line at a time, so an embedded newline would be read as a short row and fail the build |
 | `evidence` | mandatory, non-empty. A repo path, or several separated by `, `. An annotation without one is a claim, not a finding, and the build rejects it |
 | `basis` | where the name came from, from the vocabulary below |
+| `name_basis` | what the **name** asserts rests on — see below |
 
 Two of the columns above count differently on purpose, and the difference is
 not a bug. `index.csv`'s `annotated` says whether a function ended up with a
@@ -45,6 +46,59 @@ applied and 13 renamed.
 `inferred` is not decoration. A name that hardens into a fact is the failure
 CLAUDE.md puts above every other rule, so the marker travels with the row into
 `ApplyAnnotations.java`'s plate comment and into the generated file.
+
+## `name_basis`
+
+`basis` is about the provenance of the **comment**. `name_basis` is about the
+epistemic footing of the **mechanism the name asserts** — a different axis, not
+a rename, and the reason both columns exist. `bios_extract.py --check` holds
+this file to the same closed vocabulary and the same four cross-field rules as
+`ec/annotations/ghidra-functions.csv`, and imports them from
+`ec/tools/grade_name_basis.py` rather than restating them, so the two files
+cannot come to mean different things.
+
+| value | the mechanism rests on |
+|---|---|
+| `register-map` | a decoded architectural register identity — a control register, an MSR, a PCI config port |
+| `ec-register` | an XDATA address in the EC's `registers.yaml` — a BIOS row that names one is making a claim about the EC register map |
+| `abi-symbol` | an EDK II type or protocol symbol rather than the bytes — `EFI_*`, a `g*Guid`, a protocol interface |
+| `code-shape` | only the instruction sequence's shape |
+| `mixed` | the name asserts two things with different footing |
+| `unresolved` | the row is `type: unresolved` and the name is a placeholder claiming nothing |
+
+**The grading rule is deliberately asymmetric: the strongest footing actually
+traceable to a committed input, else `code-shape`.** The default points at the
+weak end on purpose — grading by name-regex would overclaim, and grading the
+other way would under-claim, which is its own inaccuracy. The rule is stated
+rather than left in the tool so a later reader can re-derive any row and get
+the same answer; `--report` prints the distribution over both files.
+
+Measured over the 788 rows here: 772 `code-shape`, 10 `register-map`, 6
+`unresolved`, and no `abi-symbol` and no `mixed`. Reproduce with
+`python3 ec/tools/grade_name_basis.py --report`.
+
+## Groups: [`function-groups.csv`](function-groups.csv)
+
+One row per annotated function — `scope,addr,group,group_basis,comment,
+evidence` — and the layer `ghidra-functions.csv` does not have: which
+functions work together. `group_basis` is closed: `type`, `vector`, `module`,
+`callgraph`, `shared`, `ungrouped`.
+
+**The BIOS is the module-first case, and it is nearly free.** 666 of the 788
+rows are `group_basis=module`: the export is per-module and the module name is
+a real structural layer, which is the better starting point the issue says
+this side has. The remaining 122 come from the `type` column, the same way the
+EC's are seeded. `ec/tools/group_functions.py` builds both files and `--check`
+holds them.
+
+**The no-cross-bank rule is a BIOS no-op, and it is kept anyway.** Nothing in
+an `lcall` names a bank, so the EC side never joins bank0 to bank1; a UEFI
+module's address space has no equivalent ambiguity, but a check that existed
+on only one side of a vocabulary would be a rule meaning two different things.
+
+**No group is a behavioural claim.** A module is where code lives, not what it
+does. No hardware is reachable from a GitHub-hosted runner, so no live test is
+claimed here.
 
 ## `type`
 

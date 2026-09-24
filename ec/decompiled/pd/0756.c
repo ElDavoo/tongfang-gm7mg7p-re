@@ -10,7 +10,8 @@
    elsewhere in the image was not checked.
    type: writer
    evidence: ec/decompiled/pd/0756.asm; ec/decompiled/pd/0756.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 saturate_all_ones(void)
 

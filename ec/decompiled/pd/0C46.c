@@ -10,7 +10,8 @@
    0x0BAB and 0x0BC4 read with MOVC has no store counterpart here.
    type: writer
    evidence: ec/decompiled/pd/0C46.asm; ec/decompiled/pd/0C46.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_byte_by_tag_r3(undefined1 param_1,undefined1 *param_2,undefined1 param_3,char param_4)
 

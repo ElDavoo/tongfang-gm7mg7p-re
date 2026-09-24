@@ -8,7 +8,8 @@
    0x3008 as (old & 0xF8) | 0x01. No branch and no return value.
    type: init
    evidence: ec/decompiled/bank0/DE65.asm; ec/decompiled/bank0/DE65.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void init_163e_16f1_300e_3008(void)
 

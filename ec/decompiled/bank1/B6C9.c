@@ -11,7 +11,8 @@
    DPTR is loaded here; the caller sets it (0xB43B passes 0x050E).
    type: math
    evidence: ec/decompiled/bank1/B6C9.asm; ec/decompiled/bank1/B6C9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void cmp32_hi16_lt_lo16_at_dptr(undefined1 *param_1)
 

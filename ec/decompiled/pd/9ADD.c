@@ -9,7 +9,8 @@
    the decompiled C renders the body as a bare return, which drops both stores.
    type: unresolved
    evidence: ec/decompiled/pd/9ADD.asm; ec/decompiled/pd/9ADD.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_dptr_0d0e_9add(void)
 

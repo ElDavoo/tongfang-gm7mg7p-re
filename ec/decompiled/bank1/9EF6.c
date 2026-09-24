@@ -8,7 +8,8 @@
    touched; what 0x1A38 does, and what 0x0823 gates, is not shown in this listing.
    type: writer
    evidence: ec/decompiled/bank1/9EF6.asm; ec/decompiled/bank1/9EF6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void call_1a38_then_set_0823_80(void)
 

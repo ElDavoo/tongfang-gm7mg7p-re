@@ -10,7 +10,8 @@
    0xB716.
    type: writer
    evidence: ec/decompiled/bank0/B730.asm; ec/decompiled/bank0/B730.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void store_a_to_089e_and_089f(undefined1 param_1)
 

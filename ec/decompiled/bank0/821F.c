@@ -10,7 +10,8 @@
    execution order
    type: state
    evidence: ec/annotations/bank-call-audit.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void index_case_epilogue(void)
 

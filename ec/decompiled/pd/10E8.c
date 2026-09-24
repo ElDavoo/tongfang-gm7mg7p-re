@@ -9,7 +9,8 @@
    0x07Ex block
    type: writer
    evidence: ec/annotations/lightbar-bat-flow.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_3byte_r3r2r1(undefined1 *param_1,undefined1 param_2,undefined1 param_3,undefined1 param_4
                        )

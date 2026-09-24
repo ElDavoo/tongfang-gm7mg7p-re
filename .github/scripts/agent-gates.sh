@@ -120,6 +120,8 @@ check_ghidra_tooling() {
               ec/tools/build_ec_decompile.py \
               ec/tools/verify_reassembly.py \
               ec/tools/merge_annotation_shards.py \
+              ec/tools/grade_name_basis.py \
+              ec/tools/group_functions.py \
               bios/tools/bios_extract.py \
               windows/tools/decompile_native.py; do
     [ -f "$tool" ] || continue
@@ -156,6 +158,22 @@ check_ghidra_tooling() {
         python3 "$tool" --check && python3 "$tool" --self-test && \
         python3 "$tool" --verify-provenance \
           --base 08b72e2 --migration a56b3bb --listings-from 8c7985e || rc=1
+        ;;
+      # The annotation layer's grading and grouping. The four cross-field
+      # rules do reach this gate already, indirectly, because
+      # build_ec_decompile.py and bios_extract.py import row_problems() --
+      # but that path only ever *calls* the rules on rows the grader wrote.
+      # The drift half, which compares each committed name_basis against the
+      # re-computed grade, is what catches a hand-edited cell, and it ran
+      # nowhere; same for the group refusals (a group row spanning two
+      # banks, a misnamed callgraph scope, an evidence path not on disk).
+      # Both need no Ghidra and no network, which is what lets them sit in
+      # this loop, and between them they cost about a second. Their
+      # self-tests are the refusals themselves, which is the half that
+      # matters: a check that has quietly started accepting everything looks
+      # exactly like a check that is working.
+      *grade_name_basis.py|*group_functions.py)
+        python3 "$tool" --check && python3 "$tool" --self-test || rc=1
         ;;
       *)
         # build_ec_decompile.py and bios_extract.py both take --work.

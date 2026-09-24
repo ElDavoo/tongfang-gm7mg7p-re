@@ -8,7 +8,8 @@
    attributes to this address is executed by the target at 0x0094.
    type: forwarder
    evidence: ec/decompiled/pd/000B.asm; ec/decompiled/pd/000B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 ljmp_0094(undefined1 param_1)
 

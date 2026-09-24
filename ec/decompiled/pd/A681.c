@@ -10,7 +10,8 @@
    sites in this image it attributes to a different program's XDATA.
    type: unresolved
    evidence: ec/decompiled/pd/A681.asm; ec/decompiled/pd/A681.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void zero_r7_return(void)
 

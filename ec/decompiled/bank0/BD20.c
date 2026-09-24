@@ -9,7 +9,8 @@
    as XDATA_044B, an EC-side site found with its meaning not established; 0x08E2 has no entry there.
    type: writer
    evidence: ec/decompiled/bank0/BD20.asm; ec/decompiled/bank0/BD20.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 undefined1 store_044b_then_read_08e2(undefined1 param_1)
 

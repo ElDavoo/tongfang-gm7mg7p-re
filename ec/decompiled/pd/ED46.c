@@ -10,7 +10,8 @@
    here.
    type: forwarder
    evidence: ec/decompiled/pd/ED46.asm; ec/decompiled/pd/ED46.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_3byte_r3r2r1_at_0861(void)
 

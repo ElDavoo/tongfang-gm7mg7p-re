@@ -11,7 +11,8 @@
    the caller in R6:R7, and neither address pair has an entry in ec/annotations/registers.yaml.
    type: math
    evidence: ec/decompiled/bank0/CA53.asm; ec/decompiled/bank0/CA53.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char tick_06ea_against_period_in_0a56(char param_1,char param_2)
 

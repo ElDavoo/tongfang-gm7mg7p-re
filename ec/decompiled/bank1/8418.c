@@ -14,7 +14,8 @@
    type: state
    evidence: ec/decompiled/bank1/8418.asm; ec/decompiled/bank1/8418.c;
    ec/annotations/xdata-0440-readers.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void zero_1510_and_clear_xdata_flag_bits(void)
 

@@ -10,7 +10,8 @@
    here.
    type: math
    evidence: ec/decompiled/bank0/BB88.asm; ec/decompiled/bank0/BB88.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char sub_19_from_0857(void)
 

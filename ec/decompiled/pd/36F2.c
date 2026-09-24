@@ -9,7 +9,8 @@
    in this listing; the store itself happens in the callee, and there is no ret here.
    type: writer
    evidence: ec/decompiled/pd/36F2.asm; ec/decompiled/pd/36F2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void setup_3byte_store_r3r2r1_at_0807(void)
 

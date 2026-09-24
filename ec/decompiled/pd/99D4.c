@@ -10,7 +10,8 @@
    prints the increment and the 0,6 pair, plus a 0xFE-carry test that no instruction here contains.
    type: math
    evidence: ec/decompiled/pd/99D4.asm; ec/decompiled/pd/99D4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void read_xdata_inc_r7_carry_r6_tail_0c8c(byte *param_1)
 

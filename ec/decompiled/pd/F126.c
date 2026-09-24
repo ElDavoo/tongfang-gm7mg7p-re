@@ -11,7 +11,8 @@
    caveat that the boundary came from a call-target byte scan and may not cover the whole function.
    type: forwarder
    evidence: ec/decompiled/pd/F126.asm; ec/decompiled/pd/F126.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void gate_on_6f96_then_tail_122f_with_dp_000a(void)
 

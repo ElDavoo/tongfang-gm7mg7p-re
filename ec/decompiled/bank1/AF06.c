@@ -14,7 +14,8 @@
    here.
    type: logic
    evidence: ec/decompiled/bank1/AF06.asm; ec/decompiled/bank1/AF06.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void gate_0490_04ff_0505_then_call_b0d1(undefined1 param_1)
 

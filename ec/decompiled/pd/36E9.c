@@ -8,7 +8,8 @@
    = 0. No memory access. The C returns a constant 0 and shows none of the register writes.
    type: logic
    evidence: ec/decompiled/pd/36E9.asm; ec/decompiled/pd/36E9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 mask_r7_to_bit0_clear_r4_r5_r6(void)
 

@@ -11,7 +11,8 @@
    to 0x8B31.
    type: state
    evidence: ec/decompiled/bank1/8D83.asm; ec/decompiled/bank1/8D83.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void count_down_0678_0679_pair(void)
 

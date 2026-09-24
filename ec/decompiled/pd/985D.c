@@ -11,7 +11,8 @@
    clears.
    type: writer
    evidence: ec/decompiled/pd/985D.asm; ec/decompiled/pd/985D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_0d8f_write_00_04_to_07da_07db(void)
 

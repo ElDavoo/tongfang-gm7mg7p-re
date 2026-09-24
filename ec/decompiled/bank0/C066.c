@@ -8,7 +8,8 @@
    bit as it was. 0x1608 has no entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/C066.asm; ec/decompiled/bank0/C066.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_1608_bit5(void)
 

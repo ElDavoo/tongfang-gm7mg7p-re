@@ -9,7 +9,8 @@
    both bytes.
    type: writer
    evidence: ec/decompiled/bank0/F118.asm; ec/decompiled/bank0/F118.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_to_1621_1622(undefined1 param_1)
 

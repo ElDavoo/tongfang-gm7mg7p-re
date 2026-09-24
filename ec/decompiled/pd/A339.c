@@ -13,7 +13,8 @@
    from 0x0A6A/0x0A69 and tail-jumps to 0x4C27.
    type: dispatch
    evidence: ec/decompiled/pd/A339.asm; ec/decompiled/pd/A339.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void stash_args_dispatch_code_table
                (byte param_1,byte *param_2,byte *param_3,undefined1 param_4,undefined1 param_5,

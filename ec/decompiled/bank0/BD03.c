@@ -9,7 +9,8 @@
    0x08E2 has no entry in that file.
    type: writer
    evidence: ec/decompiled/bank0/BD03.asm; ec/decompiled/bank0/BD03.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void clear_0741_bit0_and_08e2_bit4(void)
 

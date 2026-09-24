@@ -16,7 +16,8 @@
    from R3.
    type: math
    evidence: ec/decompiled/bank1/9EA1.asm; ec/decompiled/bank1/9EA1.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void shift_pair_then_sum_and_divide_by_four
                (byte *entry_dptr,byte r1_value,undefined1 r3_value,undefined1 r4_value)

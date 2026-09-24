@@ -10,7 +10,8 @@
    nothing else. Neither address has an entry in ec/annotations/registers.yaml.
    type: reader
    evidence: ec/decompiled/bank0/BA23.asm; ec/decompiled/bank0/BA23.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char load_09cc_into_a_and_dptr_6391(void)
 

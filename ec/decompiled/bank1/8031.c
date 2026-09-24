@@ -10,7 +10,8 @@
    byte scan's hypothesis and the function-level role here is not determined.
    type: reader
    evidence: ec/decompiled/bank1/8031.asm; ec/decompiled/bank1/8031.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void load_dptr_0636_and_read(char param_1)
 

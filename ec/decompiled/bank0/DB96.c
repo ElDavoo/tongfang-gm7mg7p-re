@@ -13,7 +13,8 @@
    bytes mean is not decoded here.
    type: writer
    evidence: ec/decompiled/bank0/DB96.asm; ec/decompiled/bank0/DB96.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void stream_code_bytes_to_1201(void)
 

@@ -10,7 +10,8 @@
    them.
    type: logic
    evidence: ec/decompiled/pd/97E5.asm; ec/decompiled/pd/97E5.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte test_r7_bit_5(byte param_1)
 

@@ -14,7 +14,8 @@
    only as an index and a result byte; this listing gives them no vendor meaning.
    type: state
    evidence: ec/decompiled/pd/8576.asm; ec/decompiled/pd/8576.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void step_state_07d0_07d1(byte param_1)
 

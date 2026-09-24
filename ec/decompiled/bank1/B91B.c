@@ -10,7 +10,8 @@
    then 0x0400-0x0403. Nothing else is read or written, and R3 is not used by 0x89F4.
    type: writer
    evidence: ec/decompiled/bank1/B91B.asm; ec/decompiled/bank1/B91B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void zero_xdata_04b0_05ff_runs(void)
 

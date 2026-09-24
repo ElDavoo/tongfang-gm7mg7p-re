@@ -9,7 +9,8 @@
    0xf2ca's code. This slot reads and writes nothing of its own.
    type: forwarder
    evidence: ec/decompiled/bank1/F11C.asm; ec/decompiled/bank1/F11C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void thunk_to_f2ca(void)
 

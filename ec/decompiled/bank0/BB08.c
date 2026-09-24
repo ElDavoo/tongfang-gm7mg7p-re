@@ -11,7 +11,8 @@
    decoded further.
    type: writer
    evidence: ec/decompiled/bank0/BB08.asm; ec/decompiled/bank0/BB08.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_then_set_bit0_1901(undefined1 param_1,undefined1 *param_2)
 

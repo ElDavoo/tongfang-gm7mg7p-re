@@ -11,7 +11,8 @@
    listing, and the decompiled C's 'P1' is an assumption.
    type: copy
    evidence: ec/decompiled/bank0/E06F.asm; ec/decompiled/bank0/E06F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void copy_dptr_to_1511_discard_arith(undefined1 *param_1)
 

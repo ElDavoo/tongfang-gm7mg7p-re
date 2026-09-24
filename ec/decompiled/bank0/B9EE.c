@@ -11,7 +11,8 @@
    byte accesses.
    type: reader
    evidence: ec/decompiled/bank0/B9EE.asm; ec/decompiled/bank0/B9EE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 store_a_then_read_be16(undefined1 param_1,undefined1 *param_2)
 

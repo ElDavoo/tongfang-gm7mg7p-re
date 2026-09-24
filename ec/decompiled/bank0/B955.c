@@ -9,7 +9,8 @@
    the routine 0xB958 completes is not determinable from this listing.
    type: unresolved
    evidence: ec/decompiled/bank0/B955.asm; ec/decompiled/bank0/B955.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_dptr_0a59_b955(undefined1 param_1)
 

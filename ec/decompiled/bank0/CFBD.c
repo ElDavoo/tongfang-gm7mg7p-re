@@ -9,7 +9,8 @@
    never returns to its own caller, and nothing is read or written here outside those two transfers.
    type: init
    evidence: ec/decompiled/bank0/CFBD.asm; ec/decompiled/bank0/CFBD.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void init_ccfc_then_bank1_thunk_818a(void)
 

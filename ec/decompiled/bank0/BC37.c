@@ -10,7 +10,8 @@
    0x044C as XDATA_044C, an EC-side site found with its meaning not established.
    type: math
    evidence: ec/decompiled/bank0/BC37.asm; ec/decompiled/bank0/BC37.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 char code_byte_sub_from_044c(byte param_1,short param_2)
 

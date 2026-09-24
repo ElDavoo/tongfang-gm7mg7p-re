@@ -11,7 +11,8 @@
    file offset 0x11E0E to confirm those targets rather than taken from the decompiled switch.
    type: dispatch
    evidence: ec/decompiled/bank1/9E26.asm; ec/decompiled/bank1/9E26.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_068c_low3(void)
 

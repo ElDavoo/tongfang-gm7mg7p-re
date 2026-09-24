@@ -12,7 +12,8 @@
    the carry polarity is the reverse of what the decompiled C shows.
    type: state
    evidence: ec/decompiled/bank1/C54C.asm; ec/decompiled/bank1/C54C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void setup_and_poll_1c00_block_with_arg_48(void)
 

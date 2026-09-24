@@ -17,7 +17,8 @@
    in this listing.
    type: math
    evidence: ec/decompiled/bank1/D2A3.asm; ec/decompiled/bank1/D2A3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void derive_scale_from_034e_and_compute_from_044c(byte param_1,byte param_2,byte param_3)
 

@@ -10,7 +10,8 @@
    with DPH passed in as a second argument.
    type: math
    evidence: ec/decompiled/pd/90CF.asm; ec/decompiled/pd/90CF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dph_plus_double_a_90cf(char param_1,undefined2 param_2)
 

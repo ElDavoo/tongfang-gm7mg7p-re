@@ -9,7 +9,8 @@
    here.
    type: state
    evidence: ec/decompiled/bank1/85AE.asm; ec/decompiled/bank1/85AE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_1c15_1c16_set_1c11_ff(void)
 

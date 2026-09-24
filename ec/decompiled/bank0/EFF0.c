@@ -10,7 +10,8 @@
    in this listing.
    type: copy
    evidence: ec/decompiled/bank0/EFF0.asm; ec/decompiled/bank0/EFF0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_dptr_byte_to_0fb2_copy_0f82(byte *param_1)
 

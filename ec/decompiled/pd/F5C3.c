@@ -9,7 +9,8 @@
    shows only the call, so the boolean this actually returns does not appear in the C at all.
    type: logic
    evidence: ec/decompiled/pd/F5C3.asm; ec/decompiled/pd/F5C3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void return_1_if_56f1_byte_zero(undefined1 param_1)
 

@@ -10,7 +10,8 @@
    entry's callers and wider purpose are not visible from this address alone.
    type: reader
    evidence: ec/decompiled/bank0/E010.asm; ec/decompiled/bank0/E010.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_06e6(undefined1 param_1)
 

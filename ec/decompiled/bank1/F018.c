@@ -10,7 +10,8 @@
    then returns. It reads no XDATA itself, and what the targets do is not visible in this file pair.
    type: dispatch
    evidence: ec/decompiled/bank1/F018.asm; ec/decompiled/bank1/F018.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_via_table_f041(undefined1 param_1)
 

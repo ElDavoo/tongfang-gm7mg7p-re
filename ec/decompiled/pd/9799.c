@@ -10,7 +10,8 @@
    artefact is not determinable here.
    type: unresolved
    evidence: ec/decompiled/pd/9799.asm; ec/decompiled/pd/9799.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 load_a_from_r7_9799(char param_1)
 

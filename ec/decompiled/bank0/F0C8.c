@@ -10,7 +10,8 @@
    the rest is the decompiler's reading.
    type: writer
    evidence: ec/decompiled/bank0/F0C8.asm; ec/decompiled/bank0/F0C8.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_twice_at_dptr(undefined1 param_1,undefined1 *param_2)
 

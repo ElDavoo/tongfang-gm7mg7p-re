@@ -9,7 +9,8 @@
    when the low three bits of XDATA 0x3A3 are 7. What that case was meant to do is not decoded here.
    type: unresolved
    evidence: ec/decompiled/bank1/CB1E.asm; ec/decompiled/bank1/CB1E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void ret_only_cb1e(void)
 

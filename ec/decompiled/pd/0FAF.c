@@ -9,7 +9,8 @@
    values were not followed to any record meaning
    type: reader
    evidence: ec/annotations/pd-0x38-consumers.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read4xdata_to_r4_r7(short param_1)
 

@@ -9,7 +9,8 @@
    hypothesis and the function-level role here is not determined.
    type: gate
    evidence: ec/decompiled/bank1/802D.asm; ec/decompiled/bank1/802D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void branch_if_acc_zero_to_8031(char param_1,char *param_2,char param_3)
 

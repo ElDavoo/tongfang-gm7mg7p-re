@@ -8,7 +8,8 @@
    with 0x01. Only those three instructions are decoded here
    type: reader
    evidence: ec/annotations/ec-0x07d0-sites.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_byte_to_r7_set_r3_1(undefined1 *param_1)
 

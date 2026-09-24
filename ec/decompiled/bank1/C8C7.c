@@ -11,7 +11,8 @@
    the table entry is 0xC8F4, whose own listing is a single jump to 0xC924.
    type: state
    evidence: ec/decompiled/bank1/C8C7.asm; ec/decompiled/bank1/C8C7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void on_198a_result_step_03c2_low2(char param_1)
 

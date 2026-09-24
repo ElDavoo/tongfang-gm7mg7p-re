@@ -9,7 +9,8 @@
    ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/C0A2.asm; ec/decompiled/bank0/C0A2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void init_1615_1807_then_set_1601_bit5(void)
 

@@ -9,7 +9,8 @@
    C shows only the return.
    type: logic
    evidence: ec/decompiled/pd/37ED.asm; ec/decompiled/pd/37ED.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 clear_r7_and_mask_r6_to_bit3(void)
 

@@ -11,7 +11,8 @@
    F0C3 lies outside it. None of 0x0A56-0x0A5A has an entry in ec/annotations/registers.yaml.
    type: gate
    evidence: ec/decompiled/bank0/F0A3.asm; ec/decompiled/bank0/F0A3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void gate_on_a_then_set_0a56_block(char param_1,short param_2)
 

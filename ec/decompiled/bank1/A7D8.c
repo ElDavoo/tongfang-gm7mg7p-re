@@ -11,7 +11,8 @@
    clearing bit 3 of 0x0832.
    type: state
    evidence: ec/decompiled/bank1/A7D8.asm; ec/decompiled/bank1/A7D8.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void flag_0832_bit3_send_12_3f_8c(void)
 

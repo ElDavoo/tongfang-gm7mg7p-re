@@ -11,7 +11,8 @@
    0x080E.
    type: state
    evidence: ec/decompiled/bank1/A8F0.asm; ec/decompiled/bank1/A8F0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clamp_0623_level_into_080e(void)
 

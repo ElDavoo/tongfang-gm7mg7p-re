@@ -9,7 +9,8 @@
    DPTR is not dereferenced; at the ret A holds the DPH value.
    type: math
    evidence: ec/decompiled/pd/9776.asm; ec/decompiled/pd/9776.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_from_a_mul_17_add_1b(char param_1)
 

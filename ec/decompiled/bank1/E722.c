@@ -10,7 +10,8 @@
    reading 0x89 and storing it through a pointer. What 0x8801 does is not in this listing.
    type: forwarder
    evidence: ec/decompiled/bank1/E722.asm; ec/decompiled/bank1/E722.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_r1_to_tmod_and_jump_8801(undefined1 *param_1)
 

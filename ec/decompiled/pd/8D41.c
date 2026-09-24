@@ -15,7 +15,8 @@
    itself establish: the address comes from 0x35FF and only accumulator bits are tested.
    type: state
    evidence: ec/decompiled/pd/8D41.asm; ec/decompiled/pd/8D41.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void advance_07d2_counter_and_dispatch(char param_1)
 

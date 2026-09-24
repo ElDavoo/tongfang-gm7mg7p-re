@@ -11,7 +11,8 @@
    0x0497 has an entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank1/E2A0.asm; ec/decompiled/bank1/E2A0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void setup_0975_0976_0978_0979_call_c54c(void)
 

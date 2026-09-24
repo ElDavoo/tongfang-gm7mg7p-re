@@ -11,7 +11,8 @@
    minus one.
    type: logic
    evidence: ec/decompiled/bank1/C43B.asm; ec/decompiled/bank1/C43B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void gate_on_06d4_mod10(void)
 

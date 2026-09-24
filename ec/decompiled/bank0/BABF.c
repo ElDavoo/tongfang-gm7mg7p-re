@@ -11,7 +11,8 @@
    XDATA_0460, an EC-side site found with its meaning not established.
    type: reader
    evidence: ec/decompiled/bank0/BABF.asm; ec/decompiled/bank0/BABF.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 char read_code_byte_at_r6r7_plus_0460_10(char param_1,byte param_2)
 

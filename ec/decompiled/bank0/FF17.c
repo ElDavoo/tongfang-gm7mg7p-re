@@ -11,7 +11,8 @@
    these bytes.
    type: unresolved
    evidence: ec/decompiled/bank0/FF17.asm; ec/decompiled/bank0/FF17.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void ff_filler_not_a_function_ff17(undefined1 param_1)
 

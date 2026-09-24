@@ -11,7 +11,8 @@
    documented in ec/annotations/registers.yaml, so no meaning is claimed for the bit.
    type: writer
    evidence: ec/decompiled/bank1/BCAA.asm; ec/decompiled/bank1/BCAA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_0494_bit1(void)
 

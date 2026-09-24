@@ -9,7 +9,8 @@
    established here.
    type: forwarder
    evidence: ec/decompiled/bank1/C747.asm; ec/decompiled/bank1/C747.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void tail_call_89f4_with_r1_0_r2_3_r3_ff(void)
 

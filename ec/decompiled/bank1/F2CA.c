@@ -11,7 +11,8 @@
    the decrement.
    type: writer
    evidence: ec/decompiled/bank1/F2CA.asm; ec/decompiled/bank1/F2CA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void dec_0443_low3_unless_0440_5_6_7(void)
 

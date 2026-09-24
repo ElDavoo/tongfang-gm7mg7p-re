@@ -8,7 +8,8 @@
    the other seven bits of 0x1602 keep their values.
    type: writer
    evidence: ec/decompiled/bank0/C124.asm; ec/decompiled/bank0/C124.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_1602_bit2(void)
 

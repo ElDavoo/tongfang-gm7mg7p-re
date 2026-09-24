@@ -8,7 +8,8 @@
    its own.
    type: forwarder
    evidence: ec/decompiled/bank1/F080.asm; ec/decompiled/bank1/F080.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void table_f071_row05_ljmp_f127(void)
 

@@ -8,7 +8,8 @@
    always 0. The return value of each call is discarded. The .c agrees with these five instructions.
    type: forwarder
    evidence: ec/decompiled/pd/982F.asm; ec/decompiled/pd/982F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 call_0faf_0f00_0dbc_return_zero(void)
 

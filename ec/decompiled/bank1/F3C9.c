@@ -9,7 +9,8 @@
    F3C9.c drops both R3 assignments, so its two arms read as returning the same value.
    type: logic
    evidence: ec/decompiled/bank1/F3C9.asm; ec/decompiled/bank1/F3C9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void set_r3_22_or_44_from_0456_bit6(void)
 

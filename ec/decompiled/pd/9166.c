@@ -9,7 +9,8 @@
    here.
    type: reader
    evidence: ec/decompiled/pd/9166.asm; ec/decompiled/pd/9166.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_xdata_07c9_into_r6(void)
 

@@ -8,7 +8,8 @@
    returns. Exactly one XDATA byte is read, from the address the caller left in DPTR.
    type: reader
    evidence: ec/decompiled/pd/70F8.asm; ec/decompiled/pd/70F8.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char read_dptr_to_r7_then_dptr_08f9(char *param_1)
 

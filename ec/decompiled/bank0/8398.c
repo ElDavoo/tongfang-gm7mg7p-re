@@ -9,7 +9,8 @@
    routine in its own right.
    type: forwarder
    evidence: ec/decompiled/bank0/8398.asm; ec/decompiled/bank0/8398.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void return_trampoline_8294(void)
 

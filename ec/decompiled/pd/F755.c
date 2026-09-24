@@ -9,7 +9,8 @@
    0x715E computes, and 0x715E is not decoded here.
    type: reader
    evidence: ec/decompiled/pd/F755.asm; ec/decompiled/pd/F755.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_dptr_byte_via_715e(undefined1 *param_1,undefined1 param_2)
 

@@ -9,7 +9,8 @@
    intended is not determinable from this listing.
    type: math
    evidence: ec/decompiled/pd/70BB.asm; ec/decompiled/pd/70BB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dpl_08f4_plus_5e_times_a_low_only(char param_1)
 

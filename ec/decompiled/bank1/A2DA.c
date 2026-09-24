@@ -8,7 +8,8 @@
    unchanged, so its only observable effect is to return. Four separate exits in 0xA24E land here.
    type: logic
    evidence: ec/decompiled/bank1/A2DA.asm; ec/decompiled/bank1/A2DA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void nop_ret_stub_a2da(void)
 

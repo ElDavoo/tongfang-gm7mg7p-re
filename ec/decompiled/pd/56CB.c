@@ -10,7 +10,8 @@
    pointer return is a misreading of the computed DPTR.
    type: reader
    evidence: ec/decompiled/pd/56CB.asm; ec/decompiled/pd/56CB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 store_a_then_scaled_lookup_from_r7(undefined1 param_1,undefined1 *param_2,char param_3)
 

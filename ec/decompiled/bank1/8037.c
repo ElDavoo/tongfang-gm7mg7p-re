@@ -10,7 +10,8 @@
    scan's hypothesis and the function-level role here is not determined.
    type: writer
    evidence: ec/decompiled/bank1/8037.asm; ec/decompiled/bank1/8037.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void dec_store_and_load_dptr_0637(char param_1,char *param_2,char param_3)
 

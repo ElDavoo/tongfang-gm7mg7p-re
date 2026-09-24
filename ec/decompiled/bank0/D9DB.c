@@ -9,7 +9,8 @@
    to tell what the caller expected the function to do, so the role is not determinable.
    type: unresolved
    evidence: ec/decompiled/bank0/D9DB.asm; ec/decompiled/bank0/D9DB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void ret_stub(void)
 

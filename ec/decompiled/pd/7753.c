@@ -10,7 +10,8 @@
    consistent with the register setup here.
    type: forwarder
    evidence: ec/decompiled/pd/7753.asm; ec/decompiled/pd/7753.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_f75c_with_07d1(void)
 

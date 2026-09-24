@@ -11,7 +11,8 @@
    caller.
    type: writer
    evidence: ec/decompiled/pd/B3ED.asm; ec/decompiled/pd/B3ED.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_r7_at_0d0d_then_load_0d0b(undefined1 *param_1,undefined1 param_2)
 

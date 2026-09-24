@@ -12,7 +12,8 @@
    named parameters do not establish it.
    type: math
    evidence: ec/decompiled/pd/05A6.asm; ec/decompiled/pd/05A6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte mul32_accumulate_r4_r7
                (byte param_1,byte param_2,byte param_3,byte param_4,byte param_5,byte param_6,

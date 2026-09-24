@@ -10,7 +10,8 @@
    pointer expression is the same address arithmetic.
    type: reader
    evidence: ec/decompiled/pd/9106.asm; ec/decompiled/pd/9106.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_xdata_0a2c_step_17(char param_1)
 

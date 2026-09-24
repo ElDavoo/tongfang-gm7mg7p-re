@@ -14,7 +14,8 @@
    an entry in ec/annotations/registers.yaml.
    type: state
    evidence: ec/decompiled/bank0/CEA2.asm; ec/decompiled/bank0/CEA2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char walk_index_06e7_up_to_0d_table_6cdd(byte param_1,char *param_2,char param_3)
 

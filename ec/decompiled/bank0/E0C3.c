@@ -9,7 +9,8 @@
    DPTR+1 and writes the same value back, so the last read/write pair changes nothing.
    type: writer
    evidence: ec/decompiled/bank0/E0C3.asm; ec/decompiled/bank0/E0C3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_or_3c_at_dptr(byte param_1,byte *param_2)
 

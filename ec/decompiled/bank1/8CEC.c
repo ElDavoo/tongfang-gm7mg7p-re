@@ -11,7 +11,8 @@
    calls 0x1768.
    type: gate
    evidence: ec/decompiled/bank1/8CEC.asm; ec/decompiled/bank1/8CEC.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void gate_then_copy_2200_to_075f(char param_1)
 

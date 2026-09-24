@@ -11,7 +11,8 @@
    reads these bytes as a four-byte XDATA read into R4:R7, which they do not do.
    type: math
    evidence: ec/decompiled/pd/AD10.asm; ec/decompiled/pd/AD10.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dptr_0900_plus_5e_times_xdata_byte(char *param_1)
 

@@ -9,7 +9,8 @@
    the product left in DPTR is the only visible result of these instructions.
    type: math
    evidence: ec/decompiled/pd/9888.asm; ec/decompiled/pd/9888.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char mul_ab_into_dptr(char param_1,char param_2)
 

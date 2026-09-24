@@ -11,7 +11,8 @@
    ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/806C.asm; ec/decompiled/bank0/806C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_byte_through_0a59_into_0600(undefined1 *param_1)
 

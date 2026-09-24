@@ -11,7 +11,8 @@
    what the two register loads amount to but is not how the value is produced here.
    type: writer
    evidence: ec/decompiled/pd/EE68.asm; ec/decompiled/pd/EE68.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void stage_07d4_07d5_then_call_ef59(char param_1,undefined1 param_2)
 

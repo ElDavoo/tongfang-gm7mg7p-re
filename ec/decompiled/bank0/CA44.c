@@ -10,7 +10,8 @@
    read through it. Neither 0x0490 nor 0x0826 has an entry in ec/annotations/registers.yaml.
    type: reader
    evidence: ec/decompiled/bank0/CA44.asm; ec/decompiled/bank0/CA44.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_0490_and_leave_dptr_0826(void)
 

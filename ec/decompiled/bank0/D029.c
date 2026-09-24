@@ -12,7 +12,8 @@
    clobbered, and all six callers are inside the XDATA 0x06E7 table walkers in this bank.
    type: dispatch
    evidence: ec/decompiled/bank0/D029.asm; ec/decompiled/bank0/D029.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void code_jump_to_two_bytes_at_dptr(undefined1 param_1,undefined1 param_2)
 

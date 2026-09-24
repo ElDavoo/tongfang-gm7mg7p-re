@@ -10,7 +10,8 @@
    this listing.
    type: unresolved
    evidence: ec/decompiled/bank0/B93A.asm; ec/decompiled/bank0/B93A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 set_dptr_0a51_b93a(void)
 

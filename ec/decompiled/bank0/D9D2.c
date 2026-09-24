@@ -8,7 +8,8 @@
    these bytes indicates what it is for. Its role is not determinable from this listing.
    type: unresolved
    evidence: ec/decompiled/bank0/D9D2.asm; ec/decompiled/bank0/D9D2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void nop_stub_d9d2(void)
 

@@ -9,7 +9,8 @@
    decoded in this shard, and 0x0433 is neither read nor written by these three instructions.
    type: forwarder
    evidence: ec/decompiled/pd/6FD5.asm; ec/decompiled/pd/6FD5.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_10bc_with_b_60_and_dptr_0433(void)
 

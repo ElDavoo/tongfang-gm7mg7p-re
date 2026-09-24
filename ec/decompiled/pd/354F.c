@@ -9,7 +9,8 @@
    address by falling through from 0x3544.
    type: writer
    evidence: ec/decompiled/pd/354F.asm; ec/decompiled/pd/354F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_to_5_xdata_bytes(undefined1 param_1,undefined1 *param_2)
 

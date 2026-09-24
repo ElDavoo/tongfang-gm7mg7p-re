@@ -14,7 +14,8 @@
    not established here.
    type: writer
    evidence: ec/decompiled/pd/EFB9.asm; ec/decompiled/pd/EFB9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_0ffd3_ff88_ffe1_bits_then_ffd0_2e(void)
 

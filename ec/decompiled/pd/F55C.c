@@ -9,7 +9,8 @@
    address written depends on what that routine leaves there.
    type: writer
    evidence: ec/decompiled/pd/F55C.asm; ec/decompiled/pd/F55C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_r5_then_f763_if_6faf_zero(undefined1 *param_1,undefined1 param_2,undefined1 param_3)
 

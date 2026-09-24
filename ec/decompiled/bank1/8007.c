@@ -9,7 +9,8 @@
    result is the movx at 0x8008.
    type: math
    evidence: ec/decompiled/bank1/8007.asm; ec/decompiled/bank1/8007.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dec_06c6_value(char param_1,char *param_2,char param_3)
 

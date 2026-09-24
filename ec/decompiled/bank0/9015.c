@@ -10,7 +10,8 @@
    entries inside the write sequence at 0x900D-0x9018, not a routine of its own.
    type: forwarder
    evidence: ec/decompiled/bank0/9015.asm; ec/decompiled/bank0/9015.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void advance_dptr_to_081f(short param_1)
 

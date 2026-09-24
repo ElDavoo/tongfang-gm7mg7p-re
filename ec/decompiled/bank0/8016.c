@@ -11,7 +11,8 @@
    the decompiled C collapses them into a single write of 0x80. It ends without a ret.
    type: writer
    evidence: ec/decompiled/bank0/8016.asm; ec/decompiled/bank0/8016.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_1900_twice_set_1901(undefined1 param_1,undefined1 *param_2)
 

@@ -8,7 +8,8 @@
    access of its own; the tail target is not decoded in this listing.
    type: forwarder
    evidence: ec/decompiled/bank0/BE02.asm; ec/decompiled/bank0/BE02.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void tail_call_7110_with_b4(undefined1 param_1,undefined1 param_2)
 

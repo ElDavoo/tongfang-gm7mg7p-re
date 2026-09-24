@@ -9,7 +9,8 @@
    listing, so what the loaded multiplier is used for is not determined from these bytes.
    type: math
    evidence: ec/decompiled/pd/9988.asm; ec/decompiled/pd/9988.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_multiplier_60(void)
 

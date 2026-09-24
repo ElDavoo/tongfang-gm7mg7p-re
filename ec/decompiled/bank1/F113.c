@@ -10,7 +10,8 @@
    code, not this slot's.
    type: forwarder
    evidence: ec/decompiled/bank1/F113.asm; ec/decompiled/bank1/F113.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void thunk_to_f275(void)
 

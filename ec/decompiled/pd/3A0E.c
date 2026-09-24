@@ -9,7 +9,8 @@
    makes it look like a test on a parameter and is not what the instructions do.
    type: reader
    evidence: ec/decompiled/pd/3A0E.asm; ec/decompiled/pd/3A0E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte read4xdata_and_return_r7_bit0(byte r7_from_0faf)
 

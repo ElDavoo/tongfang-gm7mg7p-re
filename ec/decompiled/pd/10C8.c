@@ -8,7 +8,8 @@
    incrementing DPTR between each. DPTR is left pointing at the last byte read.
    type: reader
    evidence: ec/decompiled/pd/10C8.asm; ec/decompiled/pd/10C8.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read3_xdata_to_r3r1_10c8(short param_1)
 

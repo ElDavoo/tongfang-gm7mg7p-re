@@ -10,7 +10,8 @@
    from the byte-scan boundary alone.
    type: unresolved
    evidence: ec/decompiled/bank0/BB55.asm; ec/decompiled/bank0/BB55.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char set_cy_before_043e_sub(byte param_1,short param_2)
 

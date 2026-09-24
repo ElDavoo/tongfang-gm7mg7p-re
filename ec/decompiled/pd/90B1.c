@@ -11,7 +11,8 @@
    0x0A89 clear contradicts.
    type: writer
    evidence: ec/decompiled/pd/90B1.asm; ec/decompiled/pd/90B1.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_4bytes_at_0a86(void)
 

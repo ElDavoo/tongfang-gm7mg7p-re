@@ -10,7 +10,8 @@
    this single instruction, so the one-instruction boundary is the scan's hypothesis.
    type: writer
    evidence: ec/decompiled/bank1/8010.asm; ec/decompiled/bank1/8010.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_06cd_decrement(undefined1 param_1,undefined1 *param_2,char param_3)
 

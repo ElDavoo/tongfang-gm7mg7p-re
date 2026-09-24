@@ -9,7 +9,8 @@
    shard, and what 0xC11C does is not decoded here.
    type: forwarder
    evidence: ec/decompiled/bank1/ABE2.asm; ec/decompiled/bank1/ABE2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_c11c_then_ab29(void)
 

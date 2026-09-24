@@ -8,7 +8,8 @@
    and returns the new high byte R4 in A. Pure register arithmetic, no memory access.
    type: math
    evidence: ec/decompiled/bank1/8854.asm; ec/decompiled/bank1/8854.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char add_r1r2_to_r3r4(byte param_1,char param_2,byte param_3,char param_4)
 

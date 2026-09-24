@@ -10,7 +10,8 @@
    bytes do.
    type: reader
    evidence: ec/decompiled/pd/9C45.asm; ec/decompiled/pd/9C45.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void read_xdata_to_r6_set_dptr_069a(undefined1 *param_1)
 

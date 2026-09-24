@@ -25,6 +25,7 @@ Header-only, no comment lines, so `csv.DictReader` reads it — the convention
 | `comment` | what the code does, concretely |
 | `evidence` | mandatory, non-empty, `; `-separated repo paths |
 | `basis` | `hand-decoded`, `restatement`, or `inferred` |
+| `name_basis` | what the **name** asserts rests on — see below |
 
 `type` is a closed list: `entry init dispatch forwarder gate reader writer copy
 math logic serial sbi ec-io state delay bank-switch unresolved`, plus
@@ -40,6 +41,86 @@ and `unresolved` is in the vocabulary so that saying so costs nothing.
 opinion of it. A decompilation is one reading of the bytes; calling it
 `hand-decoded` when the `.c` is all that was read is the overclaim this
 repository's rules are about.
+
+## `name_basis`, and why it is not `basis`
+
+`basis` is about the provenance of the **comment**. `name_basis` is about the
+epistemic footing of the **mechanism the name asserts** — a different axis, not
+a rename, and the reason both columns exist.
+
+A name in this repository makes a claim. `load_dptr_88f0_tail_jump_1114` is a
+true description of two instructions; `timer1_counted_delay_using_0a56` asserts
+that a routine waits on Timer 1 overflow. Before this column nothing recorded
+what the assertion rests on, so a name decoded from a register map read exactly
+like a name guessed from instruction shape. `docs/findings/name-basis-and-groups.md`
+has the account; §20 of `docs/findings.md` is the summary.
+
+| value | the mechanism rests on |
+|---|---|
+| `register-map` | a decoded SFR/bit identity — 0x8E is TCON.6 = TR1. Checkable against `../tools/disasm8051.py`'s `bit_name()` and `BIT_SFR` |
+| `ec-register` | an XDATA address in `registers.yaml` carrying a decoded name/status |
+| `abi-symbol` | a toolchain or ABI symbol rather than the bytes — the BL51 bank-select stubs. The token must be in the **name**; a comment's mention of one is a claim about the comment |
+| `code-shape` | only the instruction sequence's shape |
+| `mixed` | the name asserts two things with different footing |
+| `unresolved` | the row is `type: unresolved` and the name is a placeholder claiming nothing |
+
+### The grading rule, which is deliberately asymmetric
+
+**Strongest footing actually traceable to a committed input, else
+`code-shape`.** The default points at the weak end on purpose. Grading by
+name-regex would overclaim — a name containing `write` is not thereby grounded
+in a register map — and grading the other way would under-claim, which is its
+own inaccuracy.
+
+It is stated here rather than left in the tool so **a later reader can
+re-derive any row and get the same answer**, and
+[`../tools/grade_name_basis.py`](../tools/grade_name_basis.py) implements
+exactly this: it reads the row's own committed `.asm`, not its name, and
+`--check` re-grades the committed column and fails on any disagreement.
+
+Three consequences worth knowing before editing a row:
+
+- **The listing is the discriminator, not the number.** `clr 0x8E` is a bit
+  operand and `mov DPTR,#0x0080` is an XDATA byte, and a name saying `0x80`
+  could be either. Only the committed bytes decide.
+- **A name may assert an SFR in words.** `timer1_counted_delay_using_0a56`
+  never writes `0x8E`, but "timer1" *is* a claim about TCON.6 = TR1. A rule
+  keyed on hex literals alone grades it `code-shape` and loses the decode, so
+  the grader recognises the word and corroborates it against the listing the
+  same way.
+- **A comment cannot supply the footing, for `abi-symbol` any more than for
+  `register-map`.** `load_dptr_88f0_tail_jump_1114` is a true description of
+  two instructions; a comment noting that Ghidra names 0x1114
+  `bl51_bank_select_1` does not turn the name into an ABI citation, and a grade
+  a prose comment can hand out is unfalsifiable in the same way rule 4 is
+  about. The token has to be in the name. Four rows carry it — the
+  `bl51_bank_select_N` stubs — and they are all of the `abi-symbol` population
+  in the EC.
+
+### What the checks refuse
+
+`build_ec_decompile.py --check` runs in CI and adds four cross-field rules
+beside the `evidence` guard, all four imported from `grade_name_basis.py` so
+the tool that writes the column and the tool that checks it cannot disagree:
+
+1. an empty `name_basis`, or one outside the vocabulary;
+2. a row graded `ec-register` citing no address `registers.yaml` carries;
+3. **a `pd`-scoped row graded `ec-register`** — the PD image is a separate
+   8051 program with its own XDATA map, so a `MOV DPTR,#0x07E2` there is not a
+   reference to the EC register at 0x07E2. This is the third lock on that door
+   (`../tools/gen_xdata_symbols.py` never emitting pd rows, and
+   `ghidra/scripts/ApplyAnnotations.java` refusing to apply one, are the
+   first two), and it fires *independently* of rule 2: a pd row naming an
+   address that is in the map would pass rule 2 and still be an overclaim.
+4. a row graded `register-map` naming no address `bit_name()` decodes and no
+   SFR in `BIT_SFR`. Rule 4 reads the **name, not the comment**, deliberately:
+   a comment may discuss a decoded bit anywhere, and grading on it would make
+   the grade unfalsifiable.
+
+`bios_extract.py` holds the BIOS CSV to the same four rules, including the
+`pd` rule, which cannot fire there — the BIOS has no PD image. It is carried
+anyway because a rule that exists on only one side of a vocabulary is a rule
+that means two different things.
 
 ## The checks
 
@@ -61,6 +142,63 @@ function, and refuses a citation there that resolves to no row of this file, one
 whose `name` disagrees with the row's current name, a `type: unresolved` row
 cited without the `[unresolved]` marker, and a census count that disagrees with a
 recount.
+
+## Groups: [`function-groups.csv`](function-groups.csv)
+
+One row per annotated function — `scope,addr,group,group_basis,comment,
+evidence` — and the layer `ghidra-functions.csv` does not have: which
+functions work together. `../tools/group_functions.py` builds it and
+`--check` holds it, refusing a `group_basis` outside the closed list
+(`type`, `vector`, `module`, `callgraph`, `shared`, `ungrouped`), an annotated
+function with no group, an **`evidence` path that is not on disk**, a
+**`callgraph` name whose scope token is not its component's dominant scope**,
+and a **`callgraph` group spanning two banks**.
+
+The `evidence` guard is the one `build_ec_decompile.py` already applies to
+`ghidra-functions.csv`, and it is here for the same reason: the group row
+copies its citation from the annotation row, and this is the layer a reader
+traces a group back through, so a citation that resolves to nothing is a dead
+end in the one place the trace is meant to be followable. The separator is
+load-bearing, which is how fifteen `OemOcDxe` rows read before the check
+existed: a cell written `a.annotated.c, a.c` is one path, and one that is not
+on disk. Nothing caught it, because nothing asked whether a path resolved.
+
+**The banking caveat is the rule that matters here, and it is inherited from
+[`audit_call_targets.py`](../tools/audit_call_targets.py) without
+softening.** Nothing in an `lcall` names a bank — bank0→bank1 and bank0→bank0
+are the same three bytes — so the tool never joins bank0 to bank1. The rule is
+structural rather than a filter applied afterwards: the union never sees a
+cross-region edge, so there is no cluster to reject later. Cross-region edges
+are counted and reported (27 at the time of writing), never merged, and every
+run prints the A/B/C populations so a small group count cannot read as a
+topology.
+
+**A `callgraph` group is a connected component, not a subsystem.** The largest
+holds 323 of the 1,804 rows. That is a real structural fact and a poor
+subsystem boundary, so the groups are named `callgraph_<scope>_<addr>`, their
+size is in each row's comment, and `--report` names any component of 50 or more.
+The seeds — the `type` column, the interrupt table, and on the BIOS the module
+— are the part of the layer that says what a group is *for*.
+
+**The `<scope>` in that name is the component's dominant scope**, which is not
+the same as its first member's: a component can hold rows from more than one
+scope, because the common area is reachable from any bank. Naming it after the
+first member described whichever row the union-find emitted first, and four of
+the nineteen names were wrong that way — a 323-row component that is 316 bank1
+rows read `callgraph_bank0_1803`, and a 145-row component that is 144 `pd` rows
+read `callgraph_common_0EF3`. That second one is the sharp case: it hands a
+reader 144 rows of the separate ITE8850-PD program under the token `common`,
+which is the same conflation the `pd` grade rule above exists to prevent,
+reintroduced through the naming layer. `--check` now refuses a `callgraph`
+name whose scope token is not the dominant scope among the rows carrying it.
+
+576 rows are `ungrouped`: no seed and no component at or above the minimum
+size. That is *not found by this method*, never "these have no subsystem", and
+`ungrouped` is in the vocabulary so saying so costs nothing.
+
+**No group is a behavioural claim.** A group says which routines are connected
+in the call graph, not what the EC does with them. No hardware is reachable
+from a GitHub-hosted runner, so no live test is claimed here.
 
 The same pass refuses an `evidence` path that is not on disk, and it reads
 **every row of this file**, not only the ones the map cites: the citation list

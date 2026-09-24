@@ -9,7 +9,8 @@
    same to 0x07D2. The .c drops the read entirely and returns 0.
    type: reader
    evidence: ec/decompiled/pd/AD9C.asm; ec/decompiled/pd/AD9C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_07d1_into_r7_r5_zero(void)
 

@@ -8,7 +8,8 @@
    routine with behaviour of its own.
    type: forwarder
    evidence: ec/decompiled/bank1/F08C.asm; ec/decompiled/bank1/F08C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void table_f071_row09_ljmp_f127(void)
 

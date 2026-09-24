@@ -8,7 +8,8 @@
    then returns with the new value in A. The carry flag is unaffected by inc A.
    type: writer
    evidence: ec/decompiled/bank0/F4A4.asm; ec/decompiled/bank0/F4A4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void inc_0e03(void)
 

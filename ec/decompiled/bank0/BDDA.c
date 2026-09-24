@@ -9,7 +9,8 @@
    byte is no longer reachable in a register.
    type: copy
    evidence: ec/decompiled/bank0/BDDA.asm; ec/decompiled/bank0/BDDA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 store_code_byte_to_0a49_0a4a(byte param_1,short param_2,undefined1 param_3)
 

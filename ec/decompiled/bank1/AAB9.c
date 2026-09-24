@@ -12,7 +12,8 @@
    immediately before them.
    type: state
    evidence: ec/decompiled/bank1/AAB9.asm; ec/decompiled/bank1/AAB9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_083c_083d_and_0832_bit6(void)
 

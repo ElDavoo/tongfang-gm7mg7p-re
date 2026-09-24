@@ -12,7 +12,8 @@
    address.
    type: math
    evidence: ec/decompiled/pd/C20C.asm; ec/decompiled/pd/C20C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void cmp32be_0827_against_00001388(void)
 

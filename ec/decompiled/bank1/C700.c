@@ -12,7 +12,8 @@
    decoded in this listing.
    type: init
    evidence: ec/decompiled/bank1/C700.asm; ec/decompiled/bank1/C700.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void setup_state_and_copy_30_byte_table(void)
 

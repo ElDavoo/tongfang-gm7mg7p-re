@@ -11,7 +11,8 @@
    by the caller. The jump target 0xE09D is shared with the entries at 0xE064 and 0xE06F.
    type: copy
    evidence: ec/decompiled/bank0/E090.asm; ec/decompiled/bank0/E090.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void copy_dptr_plus_1_to_1511(short param_1)
 

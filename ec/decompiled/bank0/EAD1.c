@@ -8,7 +8,8 @@
    return register is what this entry returns; no XDATA address is named in this listing.
    type: forwarder
    evidence: ec/decompiled/bank0/EAD1.asm; ec/decompiled/bank0/EAD1.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void forward_to_8648_after_1978_c43f(void)
 

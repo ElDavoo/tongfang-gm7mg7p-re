@@ -9,7 +9,8 @@
    ec/annotations/registers.yaml, so no meaning is claimed for it.
    type: writer
    evidence: ec/decompiled/bank1/C41D.asm; ec/decompiled/bank1/C41D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void zero_0623(void)
 

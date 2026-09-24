@@ -9,7 +9,8 @@
    nibble of B is.
    type: dispatch
    evidence: ec/decompiled/bank1/F022.asm; ec/decompiled/bank1/F022.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_via_table_f071(undefined1 param_1)
 

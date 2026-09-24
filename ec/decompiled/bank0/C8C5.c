@@ -12,7 +12,8 @@
    0x0028 nor 0x0770 has an entry in ec/annotations/registers.yaml.
    type: logic
    evidence: ec/decompiled/bank0/C8C5.asm; ec/decompiled/bank0/C8C5.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void select_0027_0028_from_five_probes(char param_1)
 

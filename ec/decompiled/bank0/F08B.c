@@ -10,7 +10,8 @@
    run. None of 0x0A56-0x0A5A has an entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/F08B.asm; ec/decompiled/bank0/F08B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_0a56_to_0f_60_00_00_00(void)
 

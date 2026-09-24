@@ -10,7 +10,8 @@
    carries a warning that the jump table at 0xAE15 was not recovered.
    type: forwarder
    evidence: ec/decompiled/bank1/AD7A.asm; ec/decompiled/bank1/AD7A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void forwarder_to_adfd(void)
 

@@ -11,7 +11,8 @@
    returns.
    type: state
    evidence: ec/decompiled/bank1/A3B2.asm; ec/decompiled/bank1/A3B2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void tick_09e3_countdown(void)
 

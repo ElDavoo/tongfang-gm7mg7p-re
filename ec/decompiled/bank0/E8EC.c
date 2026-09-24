@@ -14,7 +14,8 @@
    0xF118 with A = 0. 0x1603 has no entry in ec/annotations/registers.yaml.
    type: delay
    evidence: ec/decompiled/bank0/E8EC.asm; ec/decompiled/bank0/E8EC.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void mask_1603_and_wait_tf1(byte param_1)
 

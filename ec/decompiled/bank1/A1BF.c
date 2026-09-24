@@ -10,7 +10,8 @@
    produces several calls in that fixed order. It then clears bit 0 of 0x72D and returns.
    type: dispatch
    evidence: ec/decompiled/bank1/A1BF.asm; ec/decompiled/bank1/A1BF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void dispatch_045a_bits_to_1a44_1a5c_1a50(void)
 

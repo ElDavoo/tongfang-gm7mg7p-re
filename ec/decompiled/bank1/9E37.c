@@ -8,7 +8,8 @@
    dispatch at 0x9E26, and it advances the 0x068C state code to 0x81.
    type: writer
    evidence: ec/decompiled/bank1/9E37.asm; ec/decompiled/bank1/9E37.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void set_1c12_2_and_68c_81(void)
 

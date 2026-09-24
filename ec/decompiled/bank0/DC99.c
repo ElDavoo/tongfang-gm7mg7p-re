@@ -9,7 +9,8 @@
    what the argument selects is not decoded.
    type: forwarder
    evidence: ec/decompiled/bank0/DC99.asm; ec/decompiled/bank0/DC99.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_r7_2_tail_3fa4(void)
 

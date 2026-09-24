@@ -11,7 +11,8 @@
    disabled. The roles of the six callees are not resolved here.
    type: init
    evidence: ec/decompiled/pd/EBBB.asm; ec/decompiled/pd/EBBB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void init_sequence_with_ea_cleared(void)
 

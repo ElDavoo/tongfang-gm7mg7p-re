@@ -9,7 +9,8 @@
    on the first call after 0x06D2 has been read as zero.
    type: writer
    evidence: ec/decompiled/bank1/8F54.asm; ec/decompiled/bank1/8F54.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void write_047f_and_arm_06d2_fa(undefined1 param_1)
 

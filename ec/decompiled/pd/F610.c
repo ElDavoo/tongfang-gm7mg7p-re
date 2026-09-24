@@ -9,7 +9,8 @@
    its parameters to these three bytes in a different order than the registers the listing stores.
    type: writer
    evidence: ec/decompiled/pd/F610.asm; ec/decompiled/pd/F610.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_r7r5r3_to_080d(undefined1 param_1,undefined1 param_2,undefined1 param_3)
 

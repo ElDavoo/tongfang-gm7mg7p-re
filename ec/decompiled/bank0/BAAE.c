@@ -11,7 +11,8 @@
    ec/annotations/registers.yaml.
    type: reader
    evidence: ec/decompiled/bank0/BAAE.asm; ec/decompiled/bank0/BAAE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 load_r7_r6_from_0608_and_return_0399(void)
 

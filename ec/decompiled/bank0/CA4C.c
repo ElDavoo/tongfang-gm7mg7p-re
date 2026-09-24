@@ -10,7 +10,8 @@
    live mode switches each wrote it alone, with nothing else in XDATA moving.
    type: reader
    evidence: ec/decompiled/bank0/CA4C.asm; ec/decompiled/bank0/CA4C.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte read_fan_mode_bits_4_and_7(void)
 

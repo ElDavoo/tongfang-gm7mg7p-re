@@ -10,7 +10,8 @@
    this listing.
    type: writer
    evidence: ec/decompiled/bank0/ADA3.asm; ec/decompiled/bank0/ADA3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_0a47_from_r7(char param_1)
 

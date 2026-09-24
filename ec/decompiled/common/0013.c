@@ -10,7 +10,8 @@
    one-instruction listing and is reported, not decoded, from the .c.
    type: forwarder
    evidence: ec/decompiled/common/0013.asm; ec/decompiled/common/0013.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 int1_vector_forwarder_to_0556(undefined1 param_1)
 

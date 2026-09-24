@@ -10,7 +10,8 @@
    instructions.
    type: writer
    evidence: ec/decompiled/bank0/BBAB.asm; ec/decompiled/bank0/BBAB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_084f_bit0(void)
 

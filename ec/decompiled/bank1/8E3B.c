@@ -8,7 +8,8 @@
    returns. The value 0x19A2 returns in R7 is not tested here, and R4 is the only input consumed.
    type: writer
    evidence: ec/decompiled/bank1/8E3B.asm; ec/decompiled/bank1/8E3B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_r4_to_047f_then_047e_fc(undefined1 param_1)
 

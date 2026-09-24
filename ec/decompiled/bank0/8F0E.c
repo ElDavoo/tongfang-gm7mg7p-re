@@ -9,7 +9,8 @@
    do-nothing exit. Nothing is read or written before it.
    type: forwarder
    evidence: ec/decompiled/bank0/8F0E.asm; ec/decompiled/bank0/8F0E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void return_trampoline(void)
 

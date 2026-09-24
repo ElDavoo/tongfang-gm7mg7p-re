@@ -15,7 +15,8 @@
    'the handler at the vector is one reti' is not the same claim as 'serial 0 is unimplemented'.
    type: unresolved
    evidence: ec/decompiled/common/05E6.asm; ec/decompiled/common/05E6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void serial0_target_is_one_byte_reti(void)
 

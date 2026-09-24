@@ -19,7 +19,8 @@
    there.
    type: copy
    evidence: ec/decompiled/bank0/96AD.asm; ec/decompiled/bank0/96AD.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void apply_oem_overrides_then_fill_08xx(undefined1 param_1,char param_2)
 

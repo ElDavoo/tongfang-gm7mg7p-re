@@ -10,7 +10,8 @@
    0x02.
    type: forwarder
    evidence: ec/decompiled/bank0/DC94.asm; ec/decompiled/bank0/DC94.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_r7_1_tail_3fa4_a(void)
 

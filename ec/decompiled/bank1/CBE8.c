@@ -8,7 +8,8 @@
    carries, so the byte saturates at 0xFF.
    type: writer
    evidence: ec/decompiled/bank1/CBE8.asm; ec/decompiled/bank1/CBE8.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void increment_0349_saturating(void)
 

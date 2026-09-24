@@ -10,7 +10,8 @@
    renders the sequence as a comparison and loses the pointer.
    type: math
    evidence: ec/decompiled/pd/AD2E.asm; ec/decompiled/pd/AD2E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_0a39_plus_17_times_a(char param_1)
 

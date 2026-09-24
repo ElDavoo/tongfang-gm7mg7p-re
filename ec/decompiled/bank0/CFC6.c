@@ -12,7 +12,8 @@
    determined from this listing, and 0x0816 has no entry in ec/annotations/registers.yaml.
    type: logic
    evidence: ec/decompiled/bank0/CFC6.asm; ec/decompiled/bank0/CFC6.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void collect_two_flags_into_0816_then_raise_ap_oem_bit7(void)
 

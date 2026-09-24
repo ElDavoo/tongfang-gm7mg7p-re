@@ -12,7 +12,8 @@
    at 0x7151 follow in the bytes but are not part of this listing.
    type: writer
    evidence: ec/decompiled/bank0/8026.asm; ec/decompiled/bank0/8026.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_bcb6_result_to_1906(void)
 

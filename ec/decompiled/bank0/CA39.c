@@ -10,7 +10,8 @@
    returned pointer immediately.
    type: math
    evidence: ec/decompiled/bank0/CA39.asm; ec/decompiled/bank0/CA39.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 char dptr_from_r7_plus_00d0(byte param_1)
 

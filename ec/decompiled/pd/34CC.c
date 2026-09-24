@@ -8,7 +8,8 @@
    here.
    type: unresolved
    evidence: ec/decompiled/pd/34CC.asm; ec/decompiled/pd/34CC.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void copy_a_to_r5_r4(undefined1 param_1)
 

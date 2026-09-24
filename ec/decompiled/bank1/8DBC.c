@@ -10,7 +10,8 @@
    decompiler's param_1 is the R7 result of 0x1984, not an argument passed in.
    type: gate
    evidence: ec/decompiled/bank1/8DBC.asm; ec/decompiled/bank1/8DBC.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_05_to_06c4_after_1984_check(char r7_from_1984)
 

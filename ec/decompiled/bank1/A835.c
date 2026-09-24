@@ -9,7 +9,8 @@
    reads 0x0680 back, so what the value 5 means to the hardware is not decoded here.
    type: writer
    evidence: ec/decompiled/bank1/A835.asm; ec/decompiled/bank1/A835.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_5_to_0680(void)
 

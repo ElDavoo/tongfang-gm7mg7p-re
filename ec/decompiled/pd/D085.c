@@ -13,7 +13,8 @@
    R0) before the MOV DPTR,#0x07D5, the read, LCALL 0xBBE7 and RET tail.
    type: state
    evidence: ec/decompiled/pd/D085.asm; ec/decompiled/pd/D085.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char decrement_00e2_and_tail_jump_to_d07b(char param_1)
 

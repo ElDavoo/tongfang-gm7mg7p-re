@@ -11,7 +11,8 @@
    is not decoded here.
    type: logic
    evidence: ec/decompiled/bank0/B3F0.asm; ec/decompiled/bank0/B3F0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 char rewrite_dptr_byte_ff_at_f0_else_count_0988(byte *param_1,char param_2)
 

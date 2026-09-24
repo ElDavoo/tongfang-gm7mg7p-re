@@ -10,7 +10,8 @@
    this firmware.
    type: reader
    evidence: ec/decompiled/bank0/E161.asm; ec/decompiled/bank0/E161.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_code_pair_at_dptr_into_r2_r1(undefined1 param_1,undefined1 param_2)
 

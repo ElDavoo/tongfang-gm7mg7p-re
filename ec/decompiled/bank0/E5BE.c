@@ -11,7 +11,8 @@
    three passes, then returns R7 = 0. 0x0F60-0x0F63 have no entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/E5BE.asm; ec/decompiled/bank0/E5BE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void write_ff_f8_a5_5a_and_retry(void)
 

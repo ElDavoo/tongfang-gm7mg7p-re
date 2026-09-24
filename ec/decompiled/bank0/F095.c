@@ -9,7 +9,8 @@
    0x0A56-0x0A5A. The .asm covers the whole sequence including the `ret`.
    type: writer
    evidence: ec/decompiled/bank0/F095.asm; ec/decompiled/bank0/F095.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_then_three_zeros(undefined1 param_1,short param_2)
 

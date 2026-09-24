@@ -19,7 +19,8 @@
    #69's.
    type: state
    evidence: ec/decompiled/pd/7392.asm; ec/decompiled/pd/7392.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void count_07cb_up_to_3_over_07ca_records(undefined1 param_1,char param_2,char param_3)
 

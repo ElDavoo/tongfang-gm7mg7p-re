@@ -10,7 +10,8 @@
    read.
    type: math
    evidence: ec/decompiled/bank1/9182.asm; ec/decompiled/bank1/9182.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte add_two_xdata_bytes_to_r1r2_and_halve(byte *param_1,byte param_2,char param_3)
 

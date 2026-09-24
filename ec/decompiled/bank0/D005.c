@@ -11,7 +11,8 @@
    ec/annotations/registers.yaml.
    type: copy
    evidence: ec/decompiled/bank0/D005.asm; ec/decompiled/bank0/D005.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 movc_two_code_bytes_into_06e8_06e9(undefined1 param_1,undefined1 param_2)
 

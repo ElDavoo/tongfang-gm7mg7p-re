@@ -10,7 +10,8 @@
    carries 0x0985 as XDATA_0985, an EC-side site found with its meaning not established.
    type: writer
    evidence: ec/decompiled/bank0/98FB.asm; ec/decompiled/bank0/98FB.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void set_0985_bit4(void)
 

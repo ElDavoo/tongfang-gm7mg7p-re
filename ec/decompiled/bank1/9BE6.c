@@ -10,7 +10,8 @@
    to the fall-through, not to this address range.
    type: writer
    evidence: ec/decompiled/bank1/9BE6.asm; ec/decompiled/bank1/9BE6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void inc_694_by_2_set_68c_80(void)
 

@@ -9,7 +9,8 @@
    returns with A holding the byte read from 0x0EA8.
    type: gate
    evidence: ec/decompiled/bank0/F221.asm; ec/decompiled/bank0/F221.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte gate_on_0x12_update_0xeb8(void)
 

@@ -11,7 +11,8 @@
    the final subtraction does not appear in it.
    type: reader
    evidence: ec/decompiled/pd/90D6.asm; ec/decompiled/pd/90D6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char read_table_08f4_step_5e_minus_1(char param_1)
 

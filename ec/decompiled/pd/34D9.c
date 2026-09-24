@@ -8,7 +8,8 @@
    ret, so what is done with that byte is not decoded here.
    type: reader
    evidence: ec/decompiled/pd/34D9.asm; ec/decompiled/pd/34D9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void read_xdata_at_dptr_34d9(char *param_1)
 

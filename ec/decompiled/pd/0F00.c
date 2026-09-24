@@ -8,7 +8,8 @@
    two's complement back into R4:R7. No memory is touched.
    type: math
    evidence: ec/decompiled/pd/0F00.asm; ec/decompiled/pd/0F00.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char negate_32bit_r4r7(char param_1,char param_2,char param_3,char param_4)
 

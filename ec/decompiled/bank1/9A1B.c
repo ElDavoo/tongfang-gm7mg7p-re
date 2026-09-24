@@ -7,7 +7,8 @@
 /* Writes 4 to XDATA 0x161C and 4 to XDATA 0x161B, then 0x86 to XDATA 0x0681, and returns.
    type: writer
    evidence: ec/decompiled/bank1/9A1B.asm; ec/decompiled/bank1/9A1B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void set_161b_161c_4_and_0681_86(void)
 

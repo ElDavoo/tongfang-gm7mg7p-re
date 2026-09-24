@@ -10,7 +10,8 @@
    established
    type: dispatch
    evidence: ec/annotations/pd-0x38-consumers.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_entry(undefined1 param_1,undefined1 param_2,byte param_3,byte param_4,char param_5,
                    undefined1 param_6)

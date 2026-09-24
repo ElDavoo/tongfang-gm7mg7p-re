@@ -8,7 +8,8 @@
    0xB008 with a different R5 constant.
    type: reader
    evidence: ec/decompiled/bank0/B012.asm; ec/decompiled/bank0/B012.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_0a4b_after_call_445e_08(void)
 

@@ -10,7 +10,8 @@
    ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/BB9A.asm; ec/decompiled/bank0/BB9A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void init_1906_to_9f(void)
 

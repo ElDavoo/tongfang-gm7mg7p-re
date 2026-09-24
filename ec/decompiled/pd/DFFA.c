@@ -12,7 +12,8 @@
    which 0xDA44 calls before entering its poll loop.
    type: init
    evidence: ec/decompiled/pd/DFFA.asm; ec/decompiled/pd/DFFA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void init_sequence_then_ljmp_128d(void)
 

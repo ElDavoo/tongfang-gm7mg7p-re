@@ -11,7 +11,8 @@
    common area; where its 32-bit result goes is not visible in this listing.
    type: math
    evidence: ec/decompiled/bank0/E389.asm; ec/decompiled/bank0/E389.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void load_0434_0438_pairs_mul16_and_tailcall(undefined1 param_1,undefined1 param_2)
 

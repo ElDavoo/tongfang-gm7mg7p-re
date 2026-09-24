@@ -13,7 +13,8 @@
    decoded here.
    type: logic
    evidence: ec/decompiled/bank1/AD8B.asm; ec/decompiled/bank1/AD8B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void update_0492_from_0490_0524(void)
 

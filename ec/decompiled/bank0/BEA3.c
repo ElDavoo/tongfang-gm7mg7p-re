@@ -9,7 +9,8 @@
    found with its meaning not established.
    type: math
    evidence: ec/decompiled/bank0/BEA3.asm; ec/decompiled/bank0/BEA3.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char x044c_minus_r7(char param_1)
 

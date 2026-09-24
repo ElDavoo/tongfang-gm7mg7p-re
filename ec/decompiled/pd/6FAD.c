@@ -9,7 +9,8 @@
    arithmetic involving 0x5E does not match these two instructions.
    type: reader
    evidence: ec/decompiled/pd/6FAD.asm; ec/decompiled/pd/6FAD.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_dptr_byte_into_r7(char *param_1)
 

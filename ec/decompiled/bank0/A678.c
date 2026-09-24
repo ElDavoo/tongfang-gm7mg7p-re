@@ -10,7 +10,8 @@
    0xA426 and is annotated there.
    type: forwarder
    evidence: ec/decompiled/bank0/A678.asm; ec/decompiled/bank0/A678.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte forward_to_a426(char param_1)
 

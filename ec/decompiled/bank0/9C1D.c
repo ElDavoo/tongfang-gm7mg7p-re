@@ -12,7 +12,8 @@
    not a parameter.
    type: writer
    evidence: ec/decompiled/bank0/9C1D.asm; ec/decompiled/bank0/9C1D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_two_bytes_at_dptr_then_9a90(undefined1 *entry_dptr)
 

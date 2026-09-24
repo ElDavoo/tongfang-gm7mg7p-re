@@ -11,7 +11,8 @@
    do not show.
    type: writer
    evidence: ec/decompiled/pd/C808.asm; ec/decompiled/pd/C808.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_at_dptr_and_r7_at_0800_plus_a
                (byte param_1,byte *param_2,undefined1 *param_3,undefined1 param_4,undefined1 param_5

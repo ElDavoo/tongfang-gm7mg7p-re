@@ -13,7 +13,8 @@
    0xBA3E/0xBB99/0xBCB1) is a reading of bytes outside this window, not of these instructions.
    type: unresolved
    evidence: ec/decompiled/bank0/8048.asm; ec/decompiled/bank0/8048.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void unresolved_midstream_bytes(char *param_1,undefined1 param_2,char param_3)
 

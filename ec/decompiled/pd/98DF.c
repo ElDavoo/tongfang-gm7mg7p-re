@@ -9,7 +9,8 @@
    with a carry shift is not in these bytes.
    type: math
    evidence: ec/decompiled/pd/98DF.asm; ec/decompiled/pd/98DF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char store_a_to_r2(char param_1,byte param_2)
 

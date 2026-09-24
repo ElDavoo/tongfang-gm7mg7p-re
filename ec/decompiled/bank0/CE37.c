@@ -14,7 +14,8 @@
    in ec/annotations/registers.yaml.
    type: state
    evidence: ec/decompiled/bank0/CE37.asm; ec/decompiled/bank0/CE37.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char walk_index_06e7_up_to_17_table_6c65(char param_1)
 

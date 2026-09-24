@@ -9,7 +9,8 @@
    cannot seed it; this row is what puts it in the project.
    type: charge-target
    evidence: ec/annotations/charge-target-derating.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void charge_target_update(char param_1)
 

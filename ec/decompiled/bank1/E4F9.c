@@ -12,7 +12,8 @@
    decompiled C reads it as *param_2 = param_1, which has the direction of that move backwards.
    type: writer
    evidence: ec/decompiled/bank1/E4F9.asm; ec/decompiled/bank1/E4F9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_to_dptr_then_set_0680_4(undefined1 value_a,undefined1 *entry_dptr)
 

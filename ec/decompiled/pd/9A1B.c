@@ -11,7 +11,8 @@
    be the whole routine.
    type: math
    evidence: ec/decompiled/pd/9A1B.asm; ec/decompiled/pd/9A1B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void a_r3_b_60_tail_10bc(undefined1 param_1)
 

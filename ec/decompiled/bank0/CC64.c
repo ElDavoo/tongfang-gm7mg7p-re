@@ -21,7 +21,8 @@
    type: init
    evidence: ec/decompiled/bank0/CC64.asm; ec/decompiled/bank0/CC64.c;
    ec/annotations/bank-call-audit.md; ec/annotations/ec-07c4-07d5-sites.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void init_06e6_1_clear_0743_07c5_and_07d5_ff(void)
 

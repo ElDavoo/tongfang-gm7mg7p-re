@@ -16,7 +16,8 @@
    jumping to 0xF775.
    type: writer
    evidence: ec/decompiled/pd/BBE7.asm; ec/decompiled/pd/BBE7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void branch_on_ram_r5_then_set_indirect_bits(byte *param_1)
 

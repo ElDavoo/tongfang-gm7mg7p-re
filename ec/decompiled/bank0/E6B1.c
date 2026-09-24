@@ -12,7 +12,8 @@
    continues the same routine, so this is a fragment of it.
    type: state
    evidence: ec/decompiled/bank0/E6B1.asm; ec/decompiled/bank0/E6B1.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void init_args_then_e51e_e4fe_16(char param_1,char param_2,char param_3)
 

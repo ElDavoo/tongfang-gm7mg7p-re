@@ -11,7 +11,8 @@
    branch.
    type: dispatch
    evidence: ec/decompiled/bank0/541D.asm; ec/decompiled/bank0/541D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void stage_009b_block_dispatch_51c8
                (undefined1 param_1,undefined1 param_2,undefined1 param_3,undefined1 param_4)

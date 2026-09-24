@@ -10,7 +10,8 @@
    success.
    type: logic
    evidence: ec/decompiled/bank0/EE96.asm; ec/decompiled/bank0/EE96.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void send_0x07_via_f078_then_chain(char param_1)
 

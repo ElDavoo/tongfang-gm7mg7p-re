@@ -10,7 +10,8 @@
    ec/annotations/registers.yaml, so what the two counters count is not established by this listing.
    type: state
    evidence: ec/decompiled/bank1/E6CB.asm; ec/decompiled/bank1/E6CB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void decrement_0365_and_0368_if_nonzero(void)
 

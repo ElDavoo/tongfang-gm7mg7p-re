@@ -17,7 +17,8 @@
    ec/tools/disasm8051.py's bit_name() says the same. TC1 is not an 8051 register at all.)
    type: delay
    evidence: ec/decompiled/bank0/0EA2.asm; ec/decompiled/bank0/0EA2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void timer1_counted_delay_using_0a56(char ticks)
 

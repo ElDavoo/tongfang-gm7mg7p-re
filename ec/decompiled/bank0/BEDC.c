@@ -9,7 +9,8 @@
    means is not decoded here.
    type: copy
    evidence: ec/decompiled/bank0/BEDC.asm; ec/decompiled/bank0/BEDC.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_code_byte_to_08c4(byte param_1,short param_2)
 

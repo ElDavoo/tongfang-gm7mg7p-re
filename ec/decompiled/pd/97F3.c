@@ -10,7 +10,8 @@
    is only half-formed. The .c does not show the missing DPH store.
    type: math
    evidence: ec/decompiled/pd/97F3.asm; ec/decompiled/pd/97F3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_low_from_a_add_23_no_dph_store(byte param_1)
 

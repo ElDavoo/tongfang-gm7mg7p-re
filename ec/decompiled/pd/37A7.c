@@ -9,7 +9,8 @@
    holds at that point.
    type: forwarder
    evidence: ec/decompiled/pd/37A7.asm; ec/decompiled/pd/37A7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_r7_then_tail_10bc(undefined1 param_1)
 

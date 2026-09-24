@@ -12,7 +12,8 @@
    decompile's `-1 < DAT_EXTMEM_09f1` is its reading of that bit test, not a signed comparison.
    type: state
    evidence: ec/decompiled/bank1/8915.asm; ec/decompiled/bank1/8915.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void saturating_count_09f0_then_call_88f0(char param_1)
 

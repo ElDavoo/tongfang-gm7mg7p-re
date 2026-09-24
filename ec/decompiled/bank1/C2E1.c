@@ -10,7 +10,8 @@
    0x04F6, 0x04FC, 0x04F2 and 0x049C are not documented in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank1/C2E1.asm; ec/decompiled/bank1/C2E1.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_04f2_from_049c(void)
 

@@ -9,7 +9,8 @@
    (add A,#0x23 through ret), so this entry covers only the first two instructions.
    type: math
    evidence: ec/decompiled/pd/97EF.asm; ec/decompiled/pd/97EF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_from_a_mul_17_add_23_first_half(char param_1)
 

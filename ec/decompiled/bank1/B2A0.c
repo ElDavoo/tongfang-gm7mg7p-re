@@ -11,7 +11,8 @@
    addresses is documented in ec/annotations/registers.yaml.
    type: logic
    evidence: ec/decompiled/bank1/B2A0.asm; ec/decompiled/bank1/B2A0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void cmp_0404_vs_0518_then_store_0436(void)
 

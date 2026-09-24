@@ -10,7 +10,8 @@
    It returns 1 only if every one of those steps reports success and 0 at the first failure.
    type: logic
    evidence: ec/decompiled/bank0/EE0F.asm; ec/decompiled/bank0/EE0F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void send_0x12_via_f078_then_chain(char param_1)
 

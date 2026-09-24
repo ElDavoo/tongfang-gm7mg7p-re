@@ -12,7 +12,8 @@
    own.
    type: dispatch
    evidence: ec/decompiled/pd/C901.asm; ec/decompiled/pd/C901.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_on_r3_then_add_product_to_0699(char param_1,char param_2,undefined1 param_3)
 

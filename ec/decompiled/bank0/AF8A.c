@@ -10,7 +10,8 @@
    decoded further here.
    type: init
    evidence: ec/decompiled/bank0/AF8A.asm; ec/decompiled/bank0/AF8A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void init_0a48_and_0a59_blocks(void)
 

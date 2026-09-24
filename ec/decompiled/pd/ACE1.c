@@ -10,7 +10,8 @@
    different program's XDATA, so that name is not carried over.
    type: unresolved
    evidence: ec/decompiled/pd/ACE1.asm; ec/decompiled/pd/ACE1.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char set_dptr_07d1(void)
 

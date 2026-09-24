@@ -8,7 +8,8 @@
    target arithmetic.
    type: math
    evidence: ec/annotations/charge-target-derating.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char mul16(char param_1,byte param_2,char param_3,byte param_4)
 

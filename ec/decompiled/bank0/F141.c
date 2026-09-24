@@ -9,7 +9,8 @@
    instructions use.
    type: writer
    evidence: ec/decompiled/bank0/F141.asm; ec/decompiled/bank0/F141.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_r1_r5_r3_to_103d_103c_103b(undefined1 r1_value,undefined1 r3_value,undefined1 r5_value)
 

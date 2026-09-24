@@ -9,7 +9,8 @@
    listing may not be the whole routine.
    type: logic
    evidence: ec/decompiled/pd/0EF3.asm; ec/decompiled/pd/0EF3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte or_32bit_r0r3_r4r7(byte param_1,byte param_2)
 

@@ -10,7 +10,8 @@
    for them.
    type: writer
    evidence: ec/decompiled/bank0/BB6A.asm; ec/decompiled/bank0/BB6A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void fill_0852_0854_with_ff(void)
 

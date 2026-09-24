@@ -11,7 +11,8 @@
    unnamed.
    type: reader
    evidence: ec/decompiled/pd/AD2A.asm; ec/decompiled/pd/AD2A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char read_xdata_07d1_into_a(void)
 

@@ -11,7 +11,8 @@
    ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/F0FE.asm; ec/decompiled/bank0/F0FE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 undefined1 write_fe_5a_a5_then_read_0fa0(undefined1 *param_1)
 

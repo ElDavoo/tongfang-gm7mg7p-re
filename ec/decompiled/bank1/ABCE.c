@@ -8,7 +8,8 @@
    access and no branch in this frame; none of the three call targets is decoded here.
    type: forwarder
    evidence: ec/decompiled/bank1/ABCE.asm; ec/decompiled/bank1/ABCE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_b728_c614_8915(char param_1)
 

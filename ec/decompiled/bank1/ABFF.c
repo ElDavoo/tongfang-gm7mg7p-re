@@ -9,7 +9,8 @@
    here.
    type: forwarder
    evidence: ec/decompiled/bank1/ABFF.asm; ec/decompiled/bank1/ABFF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_a1f6_94fa_a3f7_aa39(void)
 

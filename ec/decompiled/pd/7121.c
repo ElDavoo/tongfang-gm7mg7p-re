@@ -9,7 +9,8 @@
    performs the read.
    type: reader
    evidence: ec/decompiled/pd/7121.asm; ec/decompiled/pd/7121.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_08e8_record_byte_from_r7(char param_1)
 

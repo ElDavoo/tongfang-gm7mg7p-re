@@ -11,7 +11,8 @@
    continuation rather than a call at this address.
    type: unresolved
    evidence: ec/decompiled/bank1/F054.asm; ec/decompiled/bank1/F054.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void mid_instruction_of_row_f053(void)
 

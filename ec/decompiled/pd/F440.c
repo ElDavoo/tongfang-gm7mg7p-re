@@ -9,7 +9,8 @@
    handed; nothing here says what either call does with it.
    type: writer
    evidence: ec/decompiled/pd/F440.asm; ec/decompiled/pd/F440.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_07d6_then_set_1(byte param_1)
 

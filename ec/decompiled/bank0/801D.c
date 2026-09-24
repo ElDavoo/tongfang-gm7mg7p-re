@@ -8,7 +8,8 @@
    which is what stores it. On its own it does nothing but set that constant, and it has no ret.
    type: writer
    evidence: ec/decompiled/bank0/801D.asm; ec/decompiled/bank0/801D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void load_a0_fall_into_801f(undefined1 *param_1)
 

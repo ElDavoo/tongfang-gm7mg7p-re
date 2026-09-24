@@ -8,7 +8,8 @@
    to XDATA 0x0680) into this function, but this listing contains no such store.
    type: forwarder
    evidence: ec/decompiled/bank1/98E5.asm; ec/decompiled/bank1/98E5.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void forward_to_98fe_98e5(void)
 

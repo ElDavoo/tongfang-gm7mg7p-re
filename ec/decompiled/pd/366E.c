@@ -10,7 +10,8 @@
    register writes.
    type: writer
    evidence: ec/decompiled/pd/366E.asm; ec/decompiled/pd/366E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 write_xdata_then_set_r5_2(undefined1 param_1,undefined1 *param_2)
 

@@ -11,7 +11,8 @@
    decoded.
    type: unresolved
    evidence: ec/decompiled/bank1/EF26.asm; ec/decompiled/bank1/EF26.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void data_run_33_34(void)
 

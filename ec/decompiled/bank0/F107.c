@@ -10,7 +10,8 @@
    decompiler's reading. 0x0FA0 has no entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/F107.asm; ec/decompiled/bank0/F107.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 store_a_at_dptr_plus1(undefined1 param_1,short param_2)
 

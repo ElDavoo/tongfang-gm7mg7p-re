@@ -10,7 +10,8 @@
    is not decoded here.
    type: forwarder
    evidence: ec/decompiled/pd/010E.asm; ec/decompiled/pd/010E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 vector_wrapper_dp_015d(undefined1 param_1)
 

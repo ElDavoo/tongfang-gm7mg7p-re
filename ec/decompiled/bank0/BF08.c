@@ -11,7 +11,8 @@
    entry in ec/annotations/registers.yaml.
    type: math
    evidence: ec/decompiled/bank0/BF08.asm; ec/decompiled/bank0/BF08.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char sub_0a4e_against_4d_with_borrow(byte *param_1)
 

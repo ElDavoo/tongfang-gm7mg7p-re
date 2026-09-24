@@ -10,7 +10,8 @@
    0x097D holding the increment and returns.
    type: logic
    evidence: ec/decompiled/bank1/EFBD.asm; ec/decompiled/bank1/EFBD.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void tick_097d_call_88f0_at_c8(void)
 

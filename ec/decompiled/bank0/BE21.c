@@ -8,7 +8,8 @@
    three bytes apart; the listing does not present them as one register.
    type: writer
    evidence: ec/decompiled/bank0/BE21.asm; ec/decompiled/bank0/BE21.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_a_to_x1805_and_x1808(undefined1 param_1)
 

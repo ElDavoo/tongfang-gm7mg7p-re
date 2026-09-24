@@ -11,7 +11,8 @@
    decompiler's reading of them: 0x98E5, 0x9967, 0xAC11, 0xAC36, 0xA750, and 0x99B0 three times.
    type: dispatch
    evidence: ec/decompiled/bank1/98CC.asm; ec/decompiled/bank1/98CC.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_0680_low3_via_98b4_table(void)
 

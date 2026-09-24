@@ -8,7 +8,8 @@
    byte is read and no other location is touched.
    type: writer
    evidence: ec/decompiled/bank0/D05D.asm; ec/decompiled/bank0/D05D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_06ec_1(void)
 

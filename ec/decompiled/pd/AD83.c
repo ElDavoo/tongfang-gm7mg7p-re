@@ -9,7 +9,8 @@
    the second byte and drops both register copies.
    type: reader
    evidence: ec/decompiled/pd/AD83.asm; ec/decompiled/pd/AD83.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_07d1_07d2_into_r7_r5(void)
 

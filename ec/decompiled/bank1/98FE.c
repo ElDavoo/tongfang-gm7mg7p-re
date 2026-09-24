@@ -7,7 +7,8 @@
 /* Writes the constant 2 to XDATA 0x0680 and returns.
    type: writer
    evidence: ec/decompiled/bank1/98FE.asm; ec/decompiled/bank1/98FE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_0680_to_2(void)
 

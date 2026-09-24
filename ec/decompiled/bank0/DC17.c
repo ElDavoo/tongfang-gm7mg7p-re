@@ -12,7 +12,8 @@
    into this routine.
    type: writer
    evidence: ec/decompiled/bank0/DC17.asm; ec/decompiled/bank0/DC17.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_1201_seq_07_05_30(void)
 

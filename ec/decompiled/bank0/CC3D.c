@@ -11,7 +11,8 @@
    ec/annotations/registers.yaml.
    type: init
    evidence: ec/decompiled/bank0/CC3D.asm; ec/decompiled/bank0/CC3D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void init_clear_00f5_and_1304_bit2(void)
 

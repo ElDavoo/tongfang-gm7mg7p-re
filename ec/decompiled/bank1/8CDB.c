@@ -10,7 +10,8 @@
    calls nothing.
    type: logic
    evidence: ec/decompiled/bank1/8CDB.asm; ec/decompiled/bank1/8CDB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void return_with_carry_clear(void)
 

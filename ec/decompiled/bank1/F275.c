@@ -9,7 +9,8 @@
    returns. Nothing beyond those two stores and the one call is decoded here.
    type: writer
    evidence: ec/decompiled/bank1/F275.asm; ec/decompiled/bank1/F275.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void set_06ff_80_else_toggle_0471_80(void)
 

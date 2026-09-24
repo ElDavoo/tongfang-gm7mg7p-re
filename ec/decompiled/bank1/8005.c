@@ -10,7 +10,8 @@
    test-and-decrement group at 0x8001-0x8008 conditional.
    type: logic
    evidence: ec/decompiled/bank1/8005.asm; ec/decompiled/bank1/8005.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void skip_06c6_decrement(char param_1,char *param_2,char param_3)
 

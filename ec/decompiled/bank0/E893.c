@@ -8,7 +8,8 @@
    0xE51E or 0xE4FE returns zero, and it is byte-identical to the exits at 0xE7B8 and 0xE7C7.
    type: gate
    evidence: ec/decompiled/bank0/E893.asm; ec/decompiled/bank0/E893.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void r7_zero_ret_3(void)
 

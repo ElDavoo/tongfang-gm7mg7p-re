@@ -11,7 +11,8 @@
    *param_1, which the instructions do not support: nothing in this function takes an address.
    type: writer
    evidence: ec/decompiled/bank0/9A90.asm; ec/decompiled/bank0/9A90.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void call_bd20_with_03_then_or_80_into_dptr(byte *dptr_from_bd20)
 

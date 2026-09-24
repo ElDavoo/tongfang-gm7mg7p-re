@@ -9,7 +9,8 @@
    decompilation of 0xF196 rather than of these three bytes.
    type: forwarder
    evidence: ec/decompiled/bank1/F109.asm; ec/decompiled/bank1/F109.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void ljmp_f196(void)
 

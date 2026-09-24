@@ -12,7 +12,8 @@
    passing that address in R2:R1 to a final 0x888C with DPTR = 0x0646.
    type: logic
    evidence: ec/decompiled/bank1/92F7.asm; ec/decompiled/bank1/92F7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_057b_057c_057d_and_call_888c(void)
 

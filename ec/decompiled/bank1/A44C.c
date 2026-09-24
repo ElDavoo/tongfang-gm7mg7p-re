@@ -7,7 +7,8 @@
 /* Writes 0x00 to XDATA 0x0750 and returns. It reads no other location and calls nothing.
    type: writer
    evidence: ec/decompiled/bank1/A44C.asm; ec/decompiled/bank1/A44C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_0750(void)
 

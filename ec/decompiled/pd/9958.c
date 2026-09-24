@@ -9,7 +9,8 @@
    file pair. The C shows the call and drops the DPTR load.
    type: forwarder
    evidence: ec/decompiled/pd/9958.asm; ec/decompiled/pd/9958.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_10fd_then_dptr_0007(void)
 

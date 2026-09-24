@@ -9,7 +9,8 @@
    byte of that mov dptr immediate and is a scan phantom rather than a paged branch
    type: dispatch
    evidence: ec/annotations/bank-call-audit.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void trampoline_bank0_c881(void)
 

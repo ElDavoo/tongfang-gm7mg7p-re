@@ -9,7 +9,8 @@
    0x045A = (old & 0xF0) | (internal 0x32 & 0x0F).
    type: writer
    evidence: ec/decompiled/bank0/DD4A.asm; ec/decompiled/bank0/DD4A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void or_intmem_32_low_nibble_into_045a(void)
 

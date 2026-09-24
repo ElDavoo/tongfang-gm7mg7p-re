@@ -9,7 +9,8 @@
    decompiler rendering that as a call to the stub with 0xC174 as the argument.
    type: forwarder
    evidence: ec/decompiled/bank1/19DE.asm; ec/decompiled/bank1/19DE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void trampoline_to_c174(void)
 

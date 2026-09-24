@@ -10,7 +10,8 @@
    here.
    type: writer
    evidence: ec/decompiled/pd/F6FB.asm; ec/decompiled/pd/F6FB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_ffc6_bit2(void)
 

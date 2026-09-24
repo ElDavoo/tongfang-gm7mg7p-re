@@ -15,7 +15,8 @@
    0x119C).
    type: dispatch
    evidence: ec/decompiled/pd/ADAB.asm; ec/decompiled/pd/ADAB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void copy_0809_to_080a_then_dispatch_0805(byte param_1,char param_2)
 

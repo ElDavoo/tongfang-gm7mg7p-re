@@ -9,7 +9,8 @@
    in this listing touches a location.
    type: logic
    evidence: ec/decompiled/bank0/EF60.asm; ec/decompiled/bank0/EF60.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void toggle_0fc0_bit1_unless_r6r7_zero(char param_1)
 

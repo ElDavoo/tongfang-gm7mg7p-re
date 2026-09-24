@@ -10,7 +10,8 @@
    slice stops at F07D. None of 0x0A56-0x0A5A has an entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/F079.asm; ec/decompiled/bank0/F079.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_0_1_zeros_at_dptr(undefined1 param_1,undefined1 *param_2)
 

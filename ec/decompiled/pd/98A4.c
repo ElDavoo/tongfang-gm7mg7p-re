@@ -9,7 +9,8 @@
    prints belongs to the next entry.
    type: reader
    evidence: ec/decompiled/pd/98A4.asm; ec/decompiled/pd/98A4.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char read_xdata_byte(char *param_1)
 

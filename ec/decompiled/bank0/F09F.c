@@ -11,7 +11,8 @@
    0x0A56-0x0A5A has an entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/F09F.asm; ec/decompiled/bank0/F09F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void set_0f60_84_and_0a56_block(void)
 

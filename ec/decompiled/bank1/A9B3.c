@@ -10,7 +10,8 @@
    these bytes.
    type: forwarder
    evidence: ec/decompiled/bank1/A9B3.asm; ec/decompiled/bank1/A9B3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void return_stub(void)
 

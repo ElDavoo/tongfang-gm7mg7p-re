@@ -11,7 +11,8 @@
    if all of it succeeds.
    type: writer
    evidence: ec/decompiled/bank0/EE4F.asm; ec/decompiled/bank0/EE4F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_3_bytes_after_f121_then_chain(short param_1,char param_2)
 

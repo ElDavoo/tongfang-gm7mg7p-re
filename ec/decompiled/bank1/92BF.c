@@ -9,7 +9,8 @@
    returns 0x07. The input arrives in the accumulator; no other register is read.
    type: logic
    evidence: ec/decompiled/bank1/92BF.asm; ec/decompiled/bank1/92BF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 char clamp_a_to_7_and_set_0723_08e2(byte param_1)
 

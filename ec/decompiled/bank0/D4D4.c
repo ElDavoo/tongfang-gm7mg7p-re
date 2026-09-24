@@ -10,7 +10,8 @@
    not a call.
    type: forwarder
    evidence: ec/decompiled/bank0/D4D4.asm; ec/decompiled/bank0/D4D4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void forward_to_1906(void)
 

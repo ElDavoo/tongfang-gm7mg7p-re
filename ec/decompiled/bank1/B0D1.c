@@ -18,7 +18,8 @@
    here.
    type: state
    evidence: ec/decompiled/bank1/B0D1.asm; ec/decompiled/bank1/B0D1.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void step_index_056b_update_0495_0493(void)
 

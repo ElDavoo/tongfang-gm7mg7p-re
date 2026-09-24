@@ -11,7 +11,8 @@
    documented in ec/annotations/registers.yaml.
    type: gate
    evidence: ec/decompiled/bank1/B214.asm; ec/decompiled/bank1/B214.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void set_carry_if_0404_0405_is_0201(void)
 

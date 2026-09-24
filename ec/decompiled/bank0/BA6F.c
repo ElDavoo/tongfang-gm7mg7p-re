@@ -10,7 +10,8 @@
    has no entry in ec/annotations/registers.yaml.
    type: copy
    evidence: ec/decompiled/bank0/BA6F.asm; ec/decompiled/bank0/BA6F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 store_code_byte_to_08c5(byte param_1,short param_2)
 

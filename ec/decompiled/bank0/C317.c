@@ -9,7 +9,8 @@
    in ec/annotations/registers.yaml, so what the bit controls is not decoded further.
    type: writer
    evidence: ec/decompiled/bank0/C317.asm; ec/decompiled/bank0/C317.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_1606_bit3(void)
 

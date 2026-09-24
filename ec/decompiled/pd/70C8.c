@@ -8,7 +8,8 @@
    then returns. No XDATA is read or written.
    type: math
    evidence: ec/decompiled/pd/70C8.asm; ec/decompiled/pd/70C8.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_08e7_plus_5e_times_r7(char param_1)
 

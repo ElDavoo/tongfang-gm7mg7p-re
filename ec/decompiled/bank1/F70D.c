@@ -12,7 +12,8 @@
    at this address.
    type: unresolved
    evidence: ec/decompiled/bank1/F70D.asm; ec/decompiled/bank1/F70D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void unimplemented_ff_fill_f70d(undefined1 param_1)
 

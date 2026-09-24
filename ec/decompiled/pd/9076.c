@@ -11,7 +11,8 @@
    two instructions.
    type: reader
    evidence: ec/decompiled/pd/9076.asm; ec/decompiled/pd/9076.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char read_byte_at_dptr_to_r1(char *entry_dptr)
 

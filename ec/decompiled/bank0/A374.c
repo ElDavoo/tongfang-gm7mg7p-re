@@ -12,7 +12,8 @@
    accumulator, so the argument the C passes there is not a parameter.
    type: writer
    evidence: ec/decompiled/bank0/A374.asm; ec/decompiled/bank0/A374.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void send_f381_then_set_0890_to_0a(void)
 

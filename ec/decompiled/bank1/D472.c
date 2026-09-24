@@ -18,7 +18,8 @@
    block is live.
    type: writer
    evidence: ec/decompiled/bank1/D472.asm; ec/decompiled/bank1/D472.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte store_r1_to_0514_03ab_if_gap_ok(void)
 

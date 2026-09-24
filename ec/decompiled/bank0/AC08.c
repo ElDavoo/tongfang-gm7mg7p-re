@@ -11,7 +11,8 @@
    finishes at 0xC2FF when the returned R7 is zero or tail-jumps to 0xC307 when it is not.
    type: dispatch
    evidence: ec/decompiled/bank0/AC08.asm; ec/decompiled/bank0/AC08.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void dispatch_on_0751_bits(char param_1)
 

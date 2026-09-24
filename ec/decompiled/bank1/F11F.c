@@ -9,7 +9,8 @@
    0xf2f3's code. The slot itself touches no XDATA address.
    type: forwarder
    evidence: ec/decompiled/bank1/F11F.asm; ec/decompiled/bank1/F11F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void thunk_to_f2f3(void)
 

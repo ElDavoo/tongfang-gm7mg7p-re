@@ -11,7 +11,8 @@
    up holding.
    type: forwarder
    evidence: ec/decompiled/pd/7E91.asm; ec/decompiled/pd/7E91.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 reload_0a8b_call_f75c(void)
 

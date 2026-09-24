@@ -14,7 +14,8 @@
    on here.
    type: dispatch
    evidence: ec/decompiled/bank0/A663.asm; ec/decompiled/bank0/A663.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 byte gate_0767_06e6_0741_then_dispatch_076f
                (undefined1 *param_1,char param_2,byte param_3,byte param_4)

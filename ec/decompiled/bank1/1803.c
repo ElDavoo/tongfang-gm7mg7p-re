@@ -10,7 +10,8 @@
    from this listing.
    type: unresolved
    evidence: ec/decompiled/bank1/1803.asm; ec/decompiled/bank1/1803.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void nop_no_control_transfer(void)
 

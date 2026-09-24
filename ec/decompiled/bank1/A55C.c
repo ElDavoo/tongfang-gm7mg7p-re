@@ -9,7 +9,8 @@
    address is the only one the listing touches.
    type: delay
    evidence: ec/decompiled/bank1/A55C.asm; ec/decompiled/bank1/A55C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_0_to_200b_7_times(void)
 

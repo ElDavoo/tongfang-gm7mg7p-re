@@ -9,7 +9,8 @@
    for a caller to use.
    type: math
    evidence: ec/decompiled/pd/7140.asm; ec/decompiled/pd/7140.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char pack_0108e8_plus_5e_times_a_into_r1_r3(byte param_1)
 

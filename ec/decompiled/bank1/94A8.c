@@ -12,7 +12,8 @@
    signed comparison; the listing's jb on bit 7 is a plain bit test.
    type: logic
    evidence: ec/decompiled/bank1/94A8.asm; ec/decompiled/bank1/94A8.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void lookup_94a0_table_by_0620_low3(void)
 

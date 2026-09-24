@@ -10,7 +10,8 @@
    XDATA 0x04AE/0x04AF, calls 0xAF32, clears bits 0 and 1 of XDATA 0x0848 and jumps to 0xC751.
    type: state
    evidence: ec/decompiled/bank1/B841.asm; ec/decompiled/bank1/B841.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void arm_05f2_countdown_0575_clears_0490(void)
 

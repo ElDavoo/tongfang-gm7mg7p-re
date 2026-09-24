@@ -10,7 +10,8 @@
    jumps to 0xC808.
    type: forwarder
    evidence: ec/decompiled/pd/CB2A.asm; ec/decompiled/pd/CB2A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_0803_0805_then_jump_c808(byte param_1,byte param_2,undefined1 param_3)
 

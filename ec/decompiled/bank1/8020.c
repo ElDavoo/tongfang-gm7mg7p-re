@@ -10,7 +10,8 @@
    call-target byte scan's hypothesis and the function-level role here is not determined.
    type: writer
    evidence: ec/decompiled/bank1/8020.asm; ec/decompiled/bank1/8020.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_acc_to_xdata_dptr_8020(undefined1 param_1,undefined1 *param_2,char param_3)
 

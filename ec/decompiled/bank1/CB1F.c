@@ -11,7 +11,8 @@
    at zero.
    type: math
    evidence: ec/decompiled/bank1/CB1F.asm; ec/decompiled/bank1/CB1F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void set_039b_039c_from_0404_div_100(byte param_1)
 

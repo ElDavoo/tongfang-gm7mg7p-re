@@ -15,7 +15,8 @@
    and the table contents at 0x920C and 0x923C live outside this file.
    type: logic
    evidence: ec/decompiled/bank1/9202.asm; ec/decompiled/bank1/9202.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void step_0628_nibble_against_92dc_table(undefined1 param_1,undefined1 param_2)
 

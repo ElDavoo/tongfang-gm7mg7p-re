@@ -11,7 +11,8 @@
    0x3A9 and in A.
    type: math
    evidence: ec/decompiled/bank1/CB80.asm; ec/decompiled/bank1/CB80.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void div_0343_by_31e_shifted_into_03a9(byte param_1,char param_2)
 

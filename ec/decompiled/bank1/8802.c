@@ -10,7 +10,8 @@
    hypothesis per the file header; not decoded further.
    type: unresolved
    evidence: ec/decompiled/bank1/8802.asm; ec/decompiled/bank1/8802.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void ajmp_8822_not_a_function(undefined1 param_1,undefined1 *param_2)
 

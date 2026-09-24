@@ -10,7 +10,8 @@
    dispatcher semantics plus table contents, not a raw target match
    type: dispatch
    evidence: ec/annotations/pd-0x38-consumers.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_code_table(char param_1)
 

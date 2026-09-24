@@ -11,7 +11,8 @@
    writes; none of them is in this listing.
    type: init
    evidence: ec/decompiled/bank0/BA15.asm; ec/decompiled/bank0/BA15.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clr_a(void)
 

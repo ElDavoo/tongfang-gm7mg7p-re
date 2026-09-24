@@ -10,7 +10,8 @@
    the split selects is not decoded.
    type: logic
    evidence: ec/decompiled/bank0/DD2C.asm; ec/decompiled/bank0/DD2C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void copy_0d32_or_call_0d58e(void)
 

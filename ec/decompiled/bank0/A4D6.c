@@ -10,7 +10,8 @@
    these six addresses has an entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/A4D6.asm; ec/decompiled/bank0/A4D6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void zero_1803_1805_1808_then_set_0852_0854_to_ff(void)
 

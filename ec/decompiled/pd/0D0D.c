@@ -10,7 +10,8 @@
    and decremented around both indirect paths, so the pointer registers are left as found.
    type: reader
    evidence: ec/decompiled/pd/0D0D.asm; ec/decompiled/pd/0D0D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_two_bytes_by_ptr_kind(char param_1,undefined1 param_2,char param_3)
 

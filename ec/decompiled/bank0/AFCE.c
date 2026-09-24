@@ -9,7 +9,8 @@
    incremented byte in A; nothing in this listing consumes the register values.
    type: copy
    evidence: ec/decompiled/bank0/AFCE.asm; ec/decompiled/bank0/AFCE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char copy_0a4b_0a4c_to_079b_079c(void)
 

@@ -10,7 +10,8 @@
    ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/F0F3.asm; ec/decompiled/bank0/F0F3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_0a56_to_0f_60(void)
 

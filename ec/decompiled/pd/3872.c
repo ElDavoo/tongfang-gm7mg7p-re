@@ -9,7 +9,8 @@
    is an empty body and shows none of the four writes.
    type: state
    evidence: ec/decompiled/pd/3872.asm; ec/decompiled/pd/3872.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_r0_r1_r2_r3_04_05_06_07(void)
 

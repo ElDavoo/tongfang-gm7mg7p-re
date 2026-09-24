@@ -11,7 +11,8 @@
    XDATA 0x070D is zero, it jumps to 0xC647.
    type: gate
    evidence: ec/decompiled/bank1/C614.asm; ec/decompiled/bank1/C614.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void gate_0755_and_0440_dispatch(char r7_from_a_callee)
 

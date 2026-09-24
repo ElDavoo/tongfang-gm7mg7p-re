@@ -10,7 +10,8 @@
    0xD235 is one byte before the 0xD236 listing in this shard.
    type: dispatch
    evidence: ec/decompiled/bank1/D219.asm; ec/decompiled/bank1/D219.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void step_03c2_and_dispatch_four_ways(void)
 

@@ -8,7 +8,8 @@
    returning. Nothing is read from XDATA.
    type: writer
    evidence: ec/decompiled/pd/718D.asm; ec/decompiled/pd/718D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 store_a_to_dptr_and_zero_r2_r3(undefined1 param_1,undefined1 *param_2)
 

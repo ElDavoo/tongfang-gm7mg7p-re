@@ -9,7 +9,8 @@
    address the caller left in DPTR. The .asm covers the whole sequence including the `ret`.
    type: writer
    evidence: ec/decompiled/bank0/F0B3.asm; ec/decompiled/bank0/F0B3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void store_0f_80_and_setup_regs(short param_1)
 

@@ -10,7 +10,8 @@
    ec/annotations/registers.yaml.
    type: gate
    evidence: ec/decompiled/bank0/E624.asm; ec/decompiled/bank0/E624.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void gate_04_09_then_0f80_bit1_set(void)
 

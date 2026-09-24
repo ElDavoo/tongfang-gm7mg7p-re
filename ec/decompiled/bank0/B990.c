@@ -9,7 +9,8 @@
    `uEXTMEM0792 = *param_1` and its return of 0x0A48+1 are not in these two instructions.
    type: unresolved
    evidence: ec/decompiled/bank0/B990.asm; ec/decompiled/bank0/B990.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char read_dptr_byte_then_set_dptr_0792(undefined1 *entry_dptr)
 

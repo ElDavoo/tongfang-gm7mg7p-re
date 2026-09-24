@@ -9,7 +9,8 @@
    discarded, so the address reached is confined to 0x0A00-0x0BFF; A holds 0x0A or 0x0B on return.
    type: math
    evidence: ec/decompiled/pd/97FB.asm; ec/decompiled/pd/97FB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_from_a_mul_17_add_28(char param_1)
 

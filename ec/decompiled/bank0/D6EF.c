@@ -10,7 +10,8 @@
    0x1F06 nor 0x1F09 is documented in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/D6EF.asm; ec/decompiled/bank0/D6EF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_a_to_dptr_set_1f09(undefined1 param_1,undefined1 *param_2)
 

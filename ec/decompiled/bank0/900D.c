@@ -10,7 +10,8 @@
    FUN_CODE_8FDB's listed range (0x8FDB-0x903F), making it a byte-aligned entry within that routine.
    type: writer
    evidence: ec/decompiled/bank0/900D.asm; ec/decompiled/bank0/900D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_081e_after_c2a2(void)
 

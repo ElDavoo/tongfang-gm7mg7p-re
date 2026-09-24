@@ -9,7 +9,8 @@
    address does not appear in these instructions.
    type: reader
    evidence: ec/decompiled/pd/700D.asm; ec/decompiled/pd/700D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void read_xdata_080d_and_set_r3_ff(void)
 

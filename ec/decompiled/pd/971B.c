@@ -11,7 +11,8 @@
    the fall-through nor R7 as the index.
    type: writer
    evidence: ec/decompiled/pd/971B.asm; ec/decompiled/pd/971B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char write_a_to_dptr(undefined1 param_1,undefined1 *param_2,char param_3)
 

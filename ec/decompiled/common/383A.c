@@ -8,7 +8,8 @@
    is touched, and nothing in these two bytes says what that bit means.
    type: state
    evidence: ec/decompiled/common/383A.asm; ec/decompiled/common/383A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_direct_bit_0c_3(void)
 

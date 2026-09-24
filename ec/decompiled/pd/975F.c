@@ -9,7 +9,8 @@
    copy is shown.
    type: reader
    evidence: ec/decompiled/pd/975F.asm; ec/decompiled/pd/975F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char read_xdata_07d4_into_r3(void)
 

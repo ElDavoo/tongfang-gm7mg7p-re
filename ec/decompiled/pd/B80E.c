@@ -10,7 +10,8 @@
    decompiler's does-not-return warning is this fall-through, not a proven non-returning call.
    type: writer
    evidence: ec/decompiled/pd/B80E.asm; ec/decompiled/pd/B80E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_r7_and_r3r2r1_to_0803(undefined1 param_1)
 

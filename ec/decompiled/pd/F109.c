@@ -11,7 +11,8 @@
    call-target byte scan and so this may not be the whole function.
    type: logic
    evidence: ec/decompiled/pd/F109.asm; ec/decompiled/pd/F109.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_or_clear_bit0_via_9028(byte *param_1,char param_2,char param_3)
 

@@ -10,7 +10,8 @@
    Neither 0x0A49 nor 0x0A4A has an entry in ec/annotations/registers.yaml.
    type: math
    evidence: ec/decompiled/bank0/BB39.asm; ec/decompiled/bank0/BB39.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char sub_low_byte_0a49(void)
 

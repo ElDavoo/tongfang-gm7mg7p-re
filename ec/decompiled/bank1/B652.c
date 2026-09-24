@@ -10,7 +10,8 @@
    so it is reported from those two sources rather than from the listing.
    type: state
    evidence: ec/decompiled/bank1/B652.asm; ec/decompiled/bank1/B652.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void arm_05f6_with_88f0_06(void)
 

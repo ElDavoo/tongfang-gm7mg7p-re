@@ -11,7 +11,8 @@
    further here.
    type: dispatch
    evidence: ec/decompiled/bank1/C8F6.asm; ec/decompiled/bank1/C8F6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void e0_bit2_dispatch(void)
 

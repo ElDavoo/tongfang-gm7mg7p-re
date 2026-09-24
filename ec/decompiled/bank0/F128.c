@@ -9,7 +9,8 @@
    this listing shows who consumes the registers, so the role is not determined.
    type: unresolved
    evidence: ec/decompiled/bank0/F128.asm; ec/decompiled/bank0/F128.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void set_r3_09_r5_80_r7_01(void)
 

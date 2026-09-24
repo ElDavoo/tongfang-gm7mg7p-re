@@ -10,7 +10,8 @@
    generated .asm listings.
    type: writer
    evidence: ec/decompiled/bank1/8CE3.asm; ec/decompiled/bank1/8CE3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_0983_bit0_return_carry_set(void)
 

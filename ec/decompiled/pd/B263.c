@@ -8,7 +8,8 @@
    no R7, which is what lets the index loaded at 0x4D8D survive to 0xB2AE
    type: math
    evidence: ec/annotations/pd-0x38-consumers.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void add_ab_then_r7_page(void)
 

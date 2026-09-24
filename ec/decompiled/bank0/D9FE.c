@@ -17,7 +17,8 @@
    type: init
    evidence: ec/decompiled/bank0/D9FE.asm; ec/decompiled/bank0/D9FE.c;
    ec/annotations/ec-07c4-07d5-sites.md; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void seed_07d3_gfid_and_08xx_defaults(void)
 

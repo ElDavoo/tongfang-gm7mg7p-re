@@ -10,7 +10,8 @@
    16-bit value, and neither address is documented in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/B053.asm; ec/decompiled/bank0/B053.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void clear_16f1_bit5_then_store_0x80_pair(void)
 

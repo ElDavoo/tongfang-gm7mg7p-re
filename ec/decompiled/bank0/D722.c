@@ -10,7 +10,8 @@
    in this listing. 0x0A4B is not documented in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/D722.asm; ec/decompiled/bank0/D722.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void zero_0a4b_then_tail_jump_541d(void)
 

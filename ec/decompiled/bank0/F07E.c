@@ -11,7 +11,8 @@
    label is not established here.
    type: unresolved
    evidence: ec/decompiled/bank0/F07E.asm; ec/decompiled/bank0/F07E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_plus1_then_five_zeros(char param_1,char *param_2)
 

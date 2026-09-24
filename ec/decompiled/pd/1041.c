@@ -11,7 +11,8 @@
    this establishes a four-byte copy on one path, not a record width (cited from 2 files)
    type: writer
    evidence: ec/annotations/lightbar-bat-flow.md; ec/annotations/pd-0x38-consumers.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write4xdata_from_r4_r7
                (undefined1 *param_1,undefined1 param_2,undefined1 param_3,undefined1 param_4,

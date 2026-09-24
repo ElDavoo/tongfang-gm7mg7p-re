@@ -9,7 +9,8 @@
    listing, not in this one.
    type: copy
    evidence: ec/decompiled/bank1/C7ED.asm; ec/decompiled/bank1/C7ED.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void copy_48_bytes_via_a530_from_c7bd(void)
 

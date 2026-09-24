@@ -9,7 +9,8 @@
    from 0xE1D7, 0xE501 and 0xE54F in this shard.
    type: writer
    evidence: ec/decompiled/bank1/E2C3.asm; ec/decompiled/bank1/E2C3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_1c00_ff_clear_1c04_1c05(void)
 

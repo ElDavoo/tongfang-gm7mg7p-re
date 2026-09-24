@@ -9,7 +9,8 @@
    routine cut in two.
    type: math
    evidence: ec/decompiled/pd/9885.asm; ec/decompiled/pd/9885.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char set_multiplier_2(char param_1)
 

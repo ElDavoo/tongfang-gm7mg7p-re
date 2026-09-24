@@ -10,7 +10,8 @@
    0x490 is clear, and sets bit 2 of 0x86F.
    type: state
    evidence: ec/decompiled/bank0/AC4A.asm; ec/decompiled/bank0/AC4A.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void toggle_08e2_bit4(void)
 

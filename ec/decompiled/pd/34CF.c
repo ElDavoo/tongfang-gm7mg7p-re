@@ -9,7 +9,8 @@
    the listing.
    type: unresolved
    evidence: ec/decompiled/pd/34CF.asm; ec/decompiled/pd/34CF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void r2_r1_r0_from_a_ljmp_0f0e(undefined1 param_1)
 

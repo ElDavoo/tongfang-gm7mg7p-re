@@ -7,7 +7,8 @@
 /* Writes 0 to XDATA 0x0681 and returns.
    type: writer
    evidence: ec/decompiled/bank1/9A3B.asm; ec/decompiled/bank1/9A3B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_0681(void)
 

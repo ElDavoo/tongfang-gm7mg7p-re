@@ -12,7 +12,8 @@
    determined here.
    type: logic
    evidence: ec/decompiled/bank0/A3C3.asm; ec/decompiled/bank0/A3C3.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void on_0767_bit3_send_f160_then_896a(void)
 

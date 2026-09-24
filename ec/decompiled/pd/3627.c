@@ -9,7 +9,8 @@
    function entry.
    type: math
    evidence: ec/decompiled/pd/3627.asm; ec/decompiled/pd/3627.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char add_r6_to_dpl(undefined2 param_1,byte param_2)
 

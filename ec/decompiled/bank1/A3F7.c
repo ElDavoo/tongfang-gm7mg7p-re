@@ -12,7 +12,8 @@
    calls 0x19A2 with R7 = 0x84 and 0x9ED4 with 0xE9. Unlike 0xA3B2 it has no 0x1C test.
    type: state
    evidence: ec/decompiled/bank1/A3F7.asm; ec/decompiled/bank1/A3F7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void tick_0750_countdown(void)
 

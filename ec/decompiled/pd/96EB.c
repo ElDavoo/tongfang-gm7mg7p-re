@@ -11,7 +11,8 @@
    rendering of that movx read; the DPL and DPH stores do not appear in it.
    type: reader
    evidence: ec/decompiled/pd/96EB.asm; ec/decompiled/pd/96EB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char read_dptr_to_r7_then_scale(char *param_1)
 

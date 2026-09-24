@@ -9,7 +9,8 @@
    0x5E.
    type: math
    evidence: ec/decompiled/pd/7182.asm; ec/decompiled/pd/7182.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char pack_0108e3_plus_r6_r7_into_r1_r3(char param_1,byte param_2)
 

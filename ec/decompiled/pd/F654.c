@@ -9,7 +9,8 @@
    call 0xEC5E, 0xEC36 and 0xF610 from the same position.
    type: gate
    evidence: ec/decompiled/pd/F654.asm; ec/decompiled/pd/F654.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_f109_if_6faf_zero(undefined1 param_1)
 

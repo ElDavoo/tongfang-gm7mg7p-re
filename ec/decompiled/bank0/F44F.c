@@ -10,7 +10,8 @@
    is placed in A.
    type: writer
    evidence: ec/decompiled/bank0/F44F.asm; ec/decompiled/bank0/F44F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void write_01_0f_80_after_dptr_call_4777(short param_1)
 

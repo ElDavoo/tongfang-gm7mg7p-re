@@ -10,7 +10,8 @@
    is bit 2, and 0x0824 has no entry in that file.
    type: writer
    evidence: ec/decompiled/bank0/BC3F.asm; ec/decompiled/bank0/BC3F.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void store_a_then_clear_0824_bit7_and_0768_bit2(undefined1 param_1,undefined1 *param_2)
 

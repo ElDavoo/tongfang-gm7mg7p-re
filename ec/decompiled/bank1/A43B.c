@@ -10,7 +10,8 @@
    returns without touching 0x750. What 0x1C signifies in the 0x0B00 region is not decoded here.
    type: reader
    evidence: ec/decompiled/bank1/A43B.asm; ec/decompiled/bank1/A43B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void scan_0b00_for_byte_1c(void)
 

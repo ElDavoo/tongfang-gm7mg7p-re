@@ -13,7 +13,8 @@
    instructions.
    type: state
    evidence: ec/decompiled/bank1/897B.asm; ec/decompiled/bank1/897B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void index_09f2_by_09f1_bits_7_5_and_bump_09f1(void)
 

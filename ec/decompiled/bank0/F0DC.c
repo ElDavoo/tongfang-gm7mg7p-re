@@ -10,7 +10,8 @@
    and the R6 load; the two constant stores are the decompiler's reading of the run.
    type: writer
    evidence: ec/decompiled/bank0/F0DC.asm; ec/decompiled/bank0/F0DC.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_0f_80_and_r6_0f(undefined1 param_1,short param_2)
 

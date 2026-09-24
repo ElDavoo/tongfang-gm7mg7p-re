@@ -12,7 +12,8 @@
    its carry expression is the decompiler's noise.
    type: writer
    evidence: ec/decompiled/pd/EEAE.asm; ec/decompiled/pd/EEAE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_r7_at_0x0260_plus_0bab_result(undefined1 param_1)
 

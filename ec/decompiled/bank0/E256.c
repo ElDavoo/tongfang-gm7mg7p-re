@@ -18,7 +18,8 @@
    not established by the listing.
    type: dispatch
    evidence: ec/decompiled/bank0/E256.asm; ec/decompiled/bank0/E256.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_on_0046_copy_status_to_0083(void)
 

@@ -10,7 +10,8 @@
    can be read from either file.
    type: unresolved
    evidence: ec/decompiled/bank0/B5D2.asm; ec/decompiled/bank0/B5D2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void unresolved_b5d2(void)
 

@@ -11,7 +11,8 @@
    0x06E8/0x06E9 has an entry in ec/annotations/registers.yaml.
    type: state
    evidence: ec/decompiled/bank0/CF96.asm; ec/decompiled/bank0/CF96.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void arm_index_06e7_for_dispatch_06e6(undefined1 param_1)
 

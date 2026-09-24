@@ -10,7 +10,8 @@
    mean.
    type: state
    evidence: ec/decompiled/bank1/85C1.asm; ec/decompiled/bank1/85C1.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void init_0818_081f_byte_set(void)
 

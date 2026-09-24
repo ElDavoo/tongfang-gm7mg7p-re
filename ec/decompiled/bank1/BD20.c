@@ -12,7 +12,8 @@
    them.
    type: writer
    evidence: ec/decompiled/bank1/BD20.asm; ec/decompiled/bank1/BD20.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_0834_word_when_nonzero(char param_1)
 

@@ -9,7 +9,8 @@
    decompiled C renders it as a bare return.
    type: unresolved
    evidence: ec/decompiled/pd/9D39.asm; ec/decompiled/pd/9D39.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_b_67_dptr_066e(void)
 

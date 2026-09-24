@@ -8,7 +8,8 @@
    read-modify-write passes, and returns.
    type: writer
    evidence: ec/decompiled/bank0/AE6D.asm; ec/decompiled/bank0/AE6D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_08ec_bit0_clear_bit4(void)
 

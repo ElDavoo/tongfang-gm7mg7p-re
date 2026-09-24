@@ -12,7 +12,8 @@
    re-test of that loop; 0x480B is a ret. How 0x4800 itself is reached, if at all, is not shown.
    type: unresolved
    evidence: ec/decompiled/pd/4800.asm; ec/decompiled/pd/4800.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char increment_dptr_byte_and_jump_back_to_4408(char *param_1,char *param_2,char param_3)
 

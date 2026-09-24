@@ -12,7 +12,8 @@
    decoded here, so what this handler decides is not established.
    type: dispatch
    evidence: ec/decompiled/common/0556.asm; ec/decompiled/common/0556.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 int1_target_six_calls_14c8_012f_018c_029b_7110_7177(undefined1 param_1)
 

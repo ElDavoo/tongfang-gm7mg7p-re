@@ -9,7 +9,8 @@
    whoever called 0xF018.
    type: forwarder
    evidence: ec/decompiled/bank1/F101.asm; ec/decompiled/bank1/F101.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void ret_stub_table_f041_row00(void)
 

@@ -8,7 +8,8 @@
    address is touched and no value is returned.
    type: logic
    evidence: ec/decompiled/bank1/87CA.asm; ec/decompiled/bank1/87CA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void set_1033_bits_if_0450_is_28(void)
 

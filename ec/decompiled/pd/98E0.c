@@ -9,7 +9,8 @@
    subtraction, so the listing is what this row follows.
    type: math
    evidence: ec/decompiled/pd/98E0.asm; ec/decompiled/pd/98E0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char add_5_to_r2r1(byte param_1,char param_2)
 

@@ -8,7 +8,8 @@
    at 0x0F61 is written; the inc DPTR only advances the pointer.
    type: writer
    evidence: ec/decompiled/bank0/F189.asm; ec/decompiled/bank0/F189.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_00_to_0f60(void)
 

@@ -9,7 +9,8 @@
    or the return of a routine entered elsewhere is not decoded from this pair of files.
    type: unresolved
    evidence: ec/decompiled/bank1/9001.asm; ec/decompiled/bank1/9001.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void ret_only_fragment(void)
 

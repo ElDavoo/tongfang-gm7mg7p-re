@@ -10,7 +10,8 @@
    read4xdata call and & 1 belong to the following entries.
    type: writer
    evidence: ec/decompiled/pd/ACF4.asm; ec/decompiled/pd/ACF4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte write_r7_to_dptr(byte *param_1,byte param_2)
 

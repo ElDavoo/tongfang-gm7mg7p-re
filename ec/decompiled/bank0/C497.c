@@ -8,7 +8,8 @@
    ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/C497.asm; ec/decompiled/bank0/C497.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_160a_bit1(void)
 

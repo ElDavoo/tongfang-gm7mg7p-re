@@ -10,7 +10,8 @@
    by this one.
    type: forwarder
    evidence: ec/decompiled/bank1/E332.asm; ec/decompiled/bank1/E332.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_036c_to_4_jump_e490(void)
 

@@ -10,7 +10,8 @@
    appears in the generated .asm listings, so how control reaches it is not shown here.
    type: init
    evidence: ec/decompiled/bank1/8955.asm; ec/decompiled/bank1/8955.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void init_09f1_and_zero_09f2_through_09f9(void)
 

@@ -9,7 +9,8 @@
    placed this function boundary is not determinable from the instruction itself.
    type: unresolved
    evidence: ec/decompiled/bank1/C613.asm; ec/decompiled/bank1/C613.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void return_immediately(void)
 

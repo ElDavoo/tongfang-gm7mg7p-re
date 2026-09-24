@@ -10,7 +10,8 @@
    listings are one operation, and its two callers are both inside the walker at 0xCEA2.
    type: dispatch
    evidence: ec/decompiled/bank0/D01A.asm; ec/decompiled/bank0/D01A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void indirect_code_jump_via_stride5_table_6cd9(void)
 

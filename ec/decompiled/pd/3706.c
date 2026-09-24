@@ -9,7 +9,8 @@
    bytes and not the destination.
    type: forwarder
    evidence: ec/decompiled/pd/3706.asm; ec/decompiled/pd/3706.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void set_r2_07_r1_d3_tail_10e8(void)
 

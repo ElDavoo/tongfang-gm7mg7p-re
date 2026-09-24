@@ -8,7 +8,8 @@
    passes, and returns.
    type: writer
    evidence: ec/decompiled/bank0/AF66.asm; ec/decompiled/bank0/AF66.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_08ec_bit1_clear_bit5(void)
 

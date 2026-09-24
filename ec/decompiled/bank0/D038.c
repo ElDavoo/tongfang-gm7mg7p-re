@@ -9,7 +9,8 @@
    nothing else is touched.
    type: math
    evidence: ec/decompiled/bank0/D038.asm; ec/decompiled/bank0/D038.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char mul_06e7_by_5(void)
 

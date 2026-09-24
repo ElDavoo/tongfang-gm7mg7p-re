@@ -13,7 +13,8 @@
    0xE822.
    type: state
    evidence: ec/decompiled/bank0/E7CA.asm; ec/decompiled/bank0/E7CA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void init_0a50_2_then_start_0x13_block(char param_1,char param_2,char param_3)
 

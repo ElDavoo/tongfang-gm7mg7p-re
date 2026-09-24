@@ -10,7 +10,8 @@
    decoded here.
    type: writer
    evidence: ec/decompiled/bank1/F129.asm; ec/decompiled/bank1/F129.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_00_ff_0d_to_0762_0764(void)
 

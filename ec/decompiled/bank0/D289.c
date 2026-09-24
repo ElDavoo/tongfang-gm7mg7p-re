@@ -9,7 +9,8 @@
    .c attributes to this function are the block at 0xD28E, into which this entry falls.
    type: writer
    evidence: ec/decompiled/bank0/D289.asm; ec/decompiled/bank0/D289.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void clear_0860(void)
 

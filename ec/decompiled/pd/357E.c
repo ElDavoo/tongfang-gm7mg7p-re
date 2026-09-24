@@ -9,7 +9,8 @@
    stride-0x60 index. Only those three instructions are decoded here
    type: reader
    evidence: ec/annotations/ec-0x07d0-sites.md
-   basis: inferred  <- reading, not a fact read out of the binary */
+   basis: inferred  <- reading, not a fact read out of the binary
+   name_basis: code-shape */
 
 undefined1 read_byte_to_r3_stride_60(undefined1 *param_1)
 

@@ -11,7 +11,8 @@
    this listing, and 0x04FE's meaning is not decoded here.
    type: dispatch
    evidence: ec/decompiled/bank1/F3B8.asm; ec/decompiled/bank1/F3B8.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void if_04fe_bit7_clear_call_f3d7_f416_f436(void)
 

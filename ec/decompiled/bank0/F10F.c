@@ -10,7 +10,8 @@
    ljmp and is not otherwise touched.
    type: math
    evidence: ec/decompiled/bank0/F10F.asm; ec/decompiled/bank0/F10F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void be16_add_0_1(void)
 

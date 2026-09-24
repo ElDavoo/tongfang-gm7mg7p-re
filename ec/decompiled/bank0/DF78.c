@@ -10,7 +10,8 @@
    that call's carry unchanged.
    type: math
    evidence: ec/decompiled/bank0/DF78.asm; ec/decompiled/bank0/DF78.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void scale_r7_by_8_then_set_09c1_09c3(char param_1)
 

@@ -10,7 +10,8 @@
    in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/BB4D.asm; ec/decompiled/bank0/BB4D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_to_08b9(undefined1 param_1)
 

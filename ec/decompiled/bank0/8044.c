@@ -11,7 +11,8 @@
    0x8473-0x849B and is not at 0x8044.
    type: forwarder
    evidence: ec/decompiled/bank0/8044.asm; ec/decompiled/bank0/8044.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void ajmp_into_83ff_tail(char *param_1)
 

@@ -10,7 +10,8 @@
    not documented in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/D74F.asm; ec/decompiled/bank0/D74F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_33_to_1511_then_loop(byte param_1)
 

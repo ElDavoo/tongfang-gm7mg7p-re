@@ -10,7 +10,8 @@
    0xACF6.
    type: reader
    evidence: ec/decompiled/pd/AD01.asm; ec/decompiled/pd/AD01.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte read4xdata_bit0_to_a(byte param_1)
 

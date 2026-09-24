@@ -15,7 +15,8 @@
    carried there as XDATA_08EB.
    type: init
    evidence: ec/decompiled/bank0/CCFC.asm; ec/decompiled/bank0/CCFC.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void power_on_init_and_two_hang_paths(void)
 

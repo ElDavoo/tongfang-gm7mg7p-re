@@ -16,7 +16,8 @@
    past the dispatch.
    type: dispatch
    evidence: ec/decompiled/pd/E458.asm; ec/decompiled/pd/E458.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_07d8_and_dispatch_07da(char param_1,undefined1 param_2,byte param_3,byte param_4)
 

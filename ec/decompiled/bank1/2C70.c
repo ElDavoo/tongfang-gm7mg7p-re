@@ -13,7 +13,8 @@
    not in this file.
    type: dispatch
    evidence: ec/decompiled/bank1/2C70.asm; ec/decompiled/bank1/2C70.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void match_0a49_loop_tail(byte *param_1,byte param_2,char param_3)
 

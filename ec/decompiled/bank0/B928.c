@@ -9,7 +9,8 @@
    immediately before the differently shaped code at 0xB935.
    type: reader
    evidence: ec/decompiled/bank0/B928.asm; ec/decompiled/bank0/B928.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void test_0770_equals_0a(void)
 

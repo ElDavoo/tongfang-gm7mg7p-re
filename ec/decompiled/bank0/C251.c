@@ -9,7 +9,8 @@
    active-low flag is not determined by this listing.
    type: reader
    evidence: ec/decompiled/bank0/C251.asm; ec/decompiled/bank0/C251.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void test_1665_bit0_inverted(void)
 

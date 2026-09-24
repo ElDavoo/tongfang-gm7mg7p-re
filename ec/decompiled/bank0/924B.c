@@ -9,7 +9,8 @@
    empty stub or a byte-scan artefact of the proposed boundary is not determinable from the listing.
    type: unresolved
    evidence: ec/decompiled/bank0/924B.asm; ec/decompiled/bank0/924B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void bare_ret_924b(void)
 

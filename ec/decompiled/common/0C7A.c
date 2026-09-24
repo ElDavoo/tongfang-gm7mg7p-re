@@ -11,7 +11,8 @@
    whole function.
    type: logic
    evidence: ec/decompiled/common/0C7A.asm; ec/decompiled/common/0C7A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte clear_low_nibble_of_1304(void)
 

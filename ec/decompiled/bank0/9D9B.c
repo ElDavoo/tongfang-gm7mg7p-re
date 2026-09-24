@@ -23,7 +23,8 @@
    MANUAL_FAN_CTRL are named in ec/annotations/registers.yaml.
    type: math
    evidence: ec/decompiled/bank0/9D9B.asm; ec/decompiled/bank0/9D9B.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void compute_level_blocks_086b_086c_086e(void)
 

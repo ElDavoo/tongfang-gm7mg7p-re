@@ -10,7 +10,8 @@
    0xFF and clears 0x1C04 and 0x1C05), and writes 4 to 0x0680.
    type: state
    evidence: ec/decompiled/bank1/E501.asm; ec/decompiled/bank1/E501.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void reset_03c4_03af_and_clear_03a1_bit(void)
 

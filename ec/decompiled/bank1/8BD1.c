@@ -16,7 +16,8 @@
    or carry clear via 0x8CDB.
    type: logic
    evidence: ec/decompiled/bank1/8BD1.asm; ec/decompiled/bank1/8BD1.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void select_probe_address_and_return_carry(char param_1)
 

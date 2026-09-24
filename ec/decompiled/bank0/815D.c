@@ -12,7 +12,8 @@
    handler
    type: writer
    evidence: ec/annotations/bank-call-audit.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void index_case_04(undefined1 param_1,undefined1 param_2)
 

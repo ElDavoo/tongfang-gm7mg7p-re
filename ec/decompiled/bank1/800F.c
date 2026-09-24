@@ -9,7 +9,8 @@
    the movx at 0x8010.
    type: math
    evidence: ec/decompiled/bank1/800F.asm; ec/decompiled/bank1/800F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dec_06cd_value(char param_1,char *param_2,char param_3)
 

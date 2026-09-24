@@ -11,7 +11,8 @@
    not a global index bound
    type: dispatch
    evidence: ec/annotations/pd-0x38-consumers.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_case_09(void)
 

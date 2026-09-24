@@ -12,7 +12,8 @@
    to 0x3A3 if it is clear. When the 0x834 pair is non-zero it clears XDATA 0x361 and returns.
    type: logic
    evidence: ec/decompiled/bank1/CA3E.asm; ec/decompiled/bank1/CA3E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte count_0361_to_40_then_branch_on_0347(char param_1)
 

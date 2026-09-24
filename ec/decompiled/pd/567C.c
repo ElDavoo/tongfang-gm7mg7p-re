@@ -10,7 +10,8 @@
    reduces the result to a single char, which these instructions do not produce.
    type: math
    evidence: ec/decompiled/pd/567C.asm; ec/decompiled/pd/567C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char scale_dptr_from_a_times_77_plus_73(char param_1)
 

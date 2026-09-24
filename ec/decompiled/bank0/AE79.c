@@ -8,7 +8,8 @@
    has no ret of its own.
    type: writer
    evidence: ec/decompiled/bank0/AE79.asm; ec/decompiled/bank0/AE79.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_08ec_bit4_clear_bit0(void)
 

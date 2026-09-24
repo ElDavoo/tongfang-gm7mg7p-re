@@ -9,7 +9,8 @@
    reports only the returned byte and omits the three register clears.
    type: state
    evidence: ec/decompiled/pd/97E8.asm; ec/decompiled/pd/97E8.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 clear_r4_r5_r6_return_a(undefined1 param_1)
 

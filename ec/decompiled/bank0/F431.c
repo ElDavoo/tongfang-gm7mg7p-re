@@ -10,7 +10,8 @@
    wherever the caller's DPTR pointed, not to 0x0E04-0x0E06.
    type: writer
    evidence: ec/decompiled/bank0/F431.asm; ec/decompiled/bank0/F431.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 undefined1 write_10_0e_b0_after_dptr_call_4777(short param_1)
 

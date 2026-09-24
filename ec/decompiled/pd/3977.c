@@ -10,7 +10,8 @@
    R6 load.
    type: reader
    evidence: ec/decompiled/pd/3977.asm; ec/decompiled/pd/3977.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_dptr_byte_then_07d2(void)
 

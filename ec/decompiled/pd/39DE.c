@@ -10,7 +10,8 @@
    shows the call but drops both the DPH store and the R7 overwrite.
    type: writer
    evidence: ec/decompiled/pd/39DE.asm; ec/decompiled/pd/39DE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_dph_call_1041_r7_03(void)
 

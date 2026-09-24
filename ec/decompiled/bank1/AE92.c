@@ -9,7 +9,8 @@
    these addresses is documented in ec/annotations/registers.yaml.
    type: math
    evidence: ec/decompiled/bank1/AE92.asm; ec/decompiled/bank1/AE92.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void cmp_0436_0437_against_040c_040d(void)
 

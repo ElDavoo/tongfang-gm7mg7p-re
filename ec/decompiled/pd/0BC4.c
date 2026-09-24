@@ -11,7 +11,8 @@
    two, and R0 is scratch on the R3=0 and R3=0xFE arms.
    type: reader
    evidence: ec/decompiled/pd/0BC4.asm; ec/decompiled/pd/0BC4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1
 read_byte_at_dptr_plus_r1r2_by_tag(undefined2 param_1,byte param_2,char param_3,char param_4)

@@ -10,7 +10,8 @@
    the previous index's slot.
    type: writer
    evidence: ec/decompiled/bank1/CE78.asm; ec/decompiled/bank1/CE78.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_slot_for_index_1(void)
 

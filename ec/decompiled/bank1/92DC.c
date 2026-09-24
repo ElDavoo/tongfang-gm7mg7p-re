@@ -10,7 +10,8 @@
    themselves are not in this listing.
    type: dispatch
    evidence: ec/decompiled/bank1/92DC.asm; ec/decompiled/bank1/92DC.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void select_table_920c_or_923c_by_074c(void)
 

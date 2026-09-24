@@ -9,7 +9,8 @@
    that the census deliberately preserves
    type: math
    evidence: ec/annotations/pd-0x38-consumers.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char add_a_ptr_0946(byte param_1)
 

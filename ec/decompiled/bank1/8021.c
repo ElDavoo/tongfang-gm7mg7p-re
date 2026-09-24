@@ -10,7 +10,8 @@
    function-level role here is not determined.
    type: reader
    evidence: ec/decompiled/bank1/8021.asm; ec/decompiled/bank1/8021.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void load_dptr_06f3(char param_1)
 

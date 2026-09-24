@@ -9,7 +9,8 @@
    ret. Nothing in this listing reads 0x068B back.
    type: writer
    evidence: ec/decompiled/bank1/A8E9.asm; ec/decompiled/bank1/A8E9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_5_to_068b(void)
 

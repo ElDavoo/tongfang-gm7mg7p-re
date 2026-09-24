@@ -11,7 +11,8 @@
    instructions. Neither address has an entry in ec/annotations/registers.yaml.
    type: math
    evidence: ec/decompiled/bank0/B9C6.asm; ec/decompiled/bank0/B9C6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 add_0318_0319_into_r7_r6(void)
 

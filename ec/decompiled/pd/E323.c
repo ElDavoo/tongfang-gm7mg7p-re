@@ -11,7 +11,8 @@
    two instructions.
    type: forwarder
    evidence: ec/decompiled/pd/E323.asm; ec/decompiled/pd/E323.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dptr_fffe_then_122f_at_e323(void)
 

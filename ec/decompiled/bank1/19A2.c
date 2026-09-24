@@ -9,7 +9,8 @@
    decompiler rendering that as a call to the stub with 0xCF96 as the argument.
    type: forwarder
    evidence: ec/decompiled/bank1/19A2.asm; ec/decompiled/bank1/19A2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void trampoline_to_cf96(void)
 

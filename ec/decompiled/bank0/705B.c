@@ -11,7 +11,8 @@
    and restores it before the XDATA store.
    type: writer
    evidence: ec/decompiled/bank0/705B.asm; ec/decompiled/bank0/705B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_byte_offset_by_tag_r3
                (undefined1 param_1,undefined2 param_2,byte param_3,char param_4,char param_5)

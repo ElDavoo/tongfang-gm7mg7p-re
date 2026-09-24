@@ -8,7 +8,8 @@
    own return is this function's return; the .c reports the two calls but drops the DPTR load.
    type: forwarder
    evidence: ec/decompiled/pd/7108.asm; ec/decompiled/pd/7108.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_dptr_0007_call_1253_tail_jmp_10c8(void)
 

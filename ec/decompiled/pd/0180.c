@@ -14,7 +14,8 @@
    these XDATA addresses is resolved further here.
    type: dispatch
    evidence: ec/decompiled/pd/0180.asm; ec/decompiled/pd/0180.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 dispatch_r5_write_083b_0300(char param_1,undefined1 param_2)
 

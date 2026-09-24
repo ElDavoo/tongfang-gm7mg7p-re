@@ -8,7 +8,8 @@
    does is not decoded here.
    type: forwarder
    evidence: ec/decompiled/bank1/ABFB.asm; ec/decompiled/bank1/ABFB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void forward_b5af(void)
 

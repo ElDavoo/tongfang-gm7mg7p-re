@@ -8,7 +8,8 @@
    one charge-target-derating.md uses for it and nothing more is claimed.
    type: gate
    evidence: ec/annotations/charge-target-derating.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void check_0xB112(void)
 

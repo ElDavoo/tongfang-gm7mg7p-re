@@ -12,7 +12,8 @@
    absorbed.
    type: state
    evidence: ec/decompiled/bank0/9C00.asm; ec/decompiled/bank0/9C00.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void clear_09e9_unless_0743_bit2(void)
 

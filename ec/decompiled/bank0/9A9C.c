@@ -11,7 +11,8 @@
    state byte mean is not determined here.
    type: writer
    evidence: ec/decompiled/bank0/9A9C.asm; ec/decompiled/bank0/9A9C.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void write_04_to_044b_and_set_08e2_bit7(void)
 

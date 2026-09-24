@@ -12,7 +12,8 @@
    it is written back to 0x0548/0x0549; otherwise the function returns without writing.
    type: logic
    evidence: ec/decompiled/bank1/B56C.asm; ec/decompiled/bank1/B56C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void cmp_043a_0436_store_0548(void)
 

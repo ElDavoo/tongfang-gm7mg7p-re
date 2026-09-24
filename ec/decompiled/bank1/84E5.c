@@ -10,7 +10,8 @@
    around them. Not decoded further.
    type: unresolved
    evidence: ec/decompiled/bank1/84E5.asm; ec/decompiled/bank1/84E5.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void table_bytes_disassembled_as_code_84e5(char param_1)
 

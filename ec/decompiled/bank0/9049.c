@@ -13,7 +13,8 @@
    ec/annotations/registers.yaml.
    type: logic
    evidence: ec/decompiled/bank0/9049.asm; ec/decompiled/bank0/9049.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void countdown_0806_and_branch_on_0490(void)
 

@@ -10,7 +10,8 @@
    zero, but what the byte represents is not decoded here.
    type: writer
    evidence: ec/decompiled/bank1/F290.asm; ec/decompiled/bank1/F290.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void if_06cd_zero_set_02_set_06ff_20(void)
 

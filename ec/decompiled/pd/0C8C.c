@@ -14,7 +14,8 @@
    iterations against the 8-bit divisor R5 held in R0.
    type: math
    evidence: ec/decompiled/pd/0C8C.asm; ec/decompiled/pd/0C8C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte div_u16_by_u16_or_u8(char param_1,byte param_2,byte param_3,byte param_4)
 

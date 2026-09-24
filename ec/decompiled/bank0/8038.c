@@ -12,7 +12,8 @@
    XDATA bytes, is not a reading of these bytes. Nothing further is decoded here.
    type: unresolved
    evidence: ec/decompiled/bank0/8038.asm; ec/decompiled/bank0/8038.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void index_table_base(char *param_1)
 

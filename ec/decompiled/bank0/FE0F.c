@@ -18,7 +18,8 @@
    rather than four stores followed by the self-spin.
    type: state
    evidence: ec/decompiled/bank0/FE0F.asm; ec/decompiled/bank0/FE0F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void poll_1304_1500_dispatch_0083(void)
 

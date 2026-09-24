@@ -11,7 +11,8 @@
    flags rather than of anything this routine returns.
    type: writer
    evidence: ec/decompiled/bank0/83D6.asm; ec/decompiled/bank0/83D6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char ring_push_0990(undefined1 param_1)
 

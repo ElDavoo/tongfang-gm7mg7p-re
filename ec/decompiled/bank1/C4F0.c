@@ -12,7 +12,8 @@
    exhausting the 100 iterations it writes 0xFF to 0x1C00, calls 0xC541 and returns with carry set.
    type: state
    evidence: ec/decompiled/bank1/C4F0.asm; ec/decompiled/bank1/C4F0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void poll_1c00_status_up_to_100_cycles(void)
 

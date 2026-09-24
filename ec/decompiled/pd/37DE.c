@@ -9,7 +9,8 @@
    this listing. The C's constant return is not what the instructions produce.
    type: math
    evidence: ec/decompiled/pd/37DE.asm; ec/decompiled/pd/37DE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 char scale_dptr_from_dptr_byte_5e_f5(char *param_1)
 

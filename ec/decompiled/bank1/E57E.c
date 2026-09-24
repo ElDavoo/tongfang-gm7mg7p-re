@@ -14,7 +14,8 @@
    positive. Which entry the routine is actually reached through is not settled by this file pair.
    type: forwarder
    evidence: ec/decompiled/bank1/E57E.asm; ec/decompiled/bank1/E57E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void push_r7_call_e5d6_pop_r7(undefined1 param_1,undefined1 param_2,byte param_3)
 

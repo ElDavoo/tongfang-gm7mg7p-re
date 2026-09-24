@@ -12,7 +12,8 @@
    passed to the target other than the incremented counter left in A.
    type: dispatch
    evidence: ec/decompiled/bank1/8A98.asm; ec/decompiled/bank1/8A98.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void tick_06f9_and_dispatch_table_8a80(void)
 

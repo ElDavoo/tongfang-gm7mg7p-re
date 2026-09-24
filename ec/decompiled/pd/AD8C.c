@@ -9,7 +9,8 @@
    at 0xAD83. The .c drops the read entirely and returns 0.
    type: reader
    evidence: ec/decompiled/pd/AD8C.asm; ec/decompiled/pd/AD8C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_07d2_into_r7_r5_zero(void)
 

@@ -72,6 +72,18 @@ import tempfile
 import time
 import zipfile
 
+# The `name_basis` rules, imported rather than restated, so the BIOS CSV is
+# held to the same vocabulary and the same four cross-field rules as the EC
+# one and neither copy can drift from the other (issue #135). It lives under
+# ec/tools/ because the vocabulary's `ec-register` value means the EC's
+# registers.yaml, and a BIOS row that names one of those addresses is making
+# a claim about the same map. Import-safe: everything the module does hangs
+# off main().
+sys.path.insert(0, os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "ec", "tools"))
+import grade_name_basis
+
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ZIP = os.path.join(REPO, "vendor", "bios-1.09", "BIOS_1.09.zip")
 ROM_MEMBER = "GM7MG7P/GMxMGxxN109A08.ROM"
@@ -196,7 +208,7 @@ C_DIGEST_COLUMNS = ["path", "sha256", "bytes"]
 # import an EC one from, and the two are free to diverge if their annotation
 # layers ever do.
 ANNOTATION_COLUMNS = ["scope", "addr", "name", "signature", "type", "comment",
-                      "evidence", "basis"]
+                      "evidence", "basis", "name_basis"]
 # What the manifest's `mode` column may say. Kept as data because it is a
 # controlled vocabulary and a vocabulary is only enforced if something reads it
 # from one place: here the two modes the driver can produce, and --mode reads
@@ -2162,6 +2174,29 @@ def check():
         if not a["evidence"].strip():
             fail("annotation %s %s has no evidence citation; an annotation "
                  "without one is a claim, not a finding" % (a["scope"], a["addr"]))
+    # What the NAME asserts, and what that assertion rests on (issue #135).
+    # The same four cross-field rules the EC CSV is held to, imported from the
+    # grader rather than restated: a closed vocabulary, an `ec-register` row
+    # citing an address registers.yaml actually carries, no `ec-register` on a
+    # `pd`-scoped row, and a `register-map` row naming an address
+    # `bit_name()` decodes. The `pd` rule cannot fire here -- the BIOS has no
+    # PD image -- and carrying it anyway is the point: one vocabulary, one
+    # meaning, and a rule that only exists on one side of it is a rule that
+    # means two different things.
+    _basis = grade_name_basis.register_addresses()
+    _bp = []
+    for a in _read.get("ghidra-functions.csv", []):
+        for problem in grade_name_basis.row_problems(a, _basis):
+            _bp.append("annotation %s %s (%s) %s"
+                       % (a["scope"], a["addr"], a.get("name", ""), problem))
+    for problem in _bp[:5]:
+        fail("name_basis: %s" % problem)
+    if len(_bp) > 5:
+        fail("name_basis: ... and %d more problem(s)" % (len(_bp) - 5))
+    if not _bp:
+        print("  name_basis: %d row(s), every one graded in the closed "
+              "vocabulary and consistent with registers.yaml"
+              % len(_read["ghidra-functions.csv"]))
     for f in sorted(os.listdir(PROJECT)) if os.path.isdir(PROJECT) else []:
         if f.endswith(".lock") or f.endswith(".lock~"):
             fail("a Ghidra lock file is committed next to the project: %s "

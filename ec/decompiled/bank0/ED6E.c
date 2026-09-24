@@ -8,7 +8,8 @@
    entry at 0xED52 so the boundary between the two is a hypothesis.
    type: forwarder
    evidence: ec/decompiled/bank0/ED6E.asm; ec/decompiled/bank0/ED6E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void forward_to_ead1_return_0(void)
 

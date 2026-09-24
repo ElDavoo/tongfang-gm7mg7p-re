@@ -11,7 +11,8 @@
    does not match these instructions.
    type: math
    evidence: ec/decompiled/pd/9078.asm; ec/decompiled/pd/9078.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char make_dptr_a_minus_3_col_14(char a_value)
 

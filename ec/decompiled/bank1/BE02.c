@@ -10,7 +10,8 @@
    reading of that unknown pointer.
    type: logic
    evidence: ec/decompiled/bank1/BE02.asm; ec/decompiled/bank1/BE02.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void override_src_0180_when_1(char *param_1,undefined1 param_2,undefined1 param_3)
 

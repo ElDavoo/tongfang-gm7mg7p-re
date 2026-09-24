@@ -9,7 +9,8 @@
    decompiled C's return of 0x0A52 is not in this listing.
    type: writer
    evidence: ec/decompiled/bank0/B939.asm; ec/decompiled/bank0/B939.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 store_a_to_dptr_b939(undefined1 param_1,undefined1 *param_2)
 

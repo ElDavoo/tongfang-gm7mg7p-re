@@ -11,7 +11,8 @@
    so this is where that pair is stepped.
    type: writer
    evidence: ec/decompiled/bank1/D34B.asm; ec/decompiled/bank1/D34B.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 char bump_counter_mirror_to_04a6_04a7(void)
 

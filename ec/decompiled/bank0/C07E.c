@@ -8,7 +8,8 @@
    other bit as it was. 0x1601 has no entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/C07E.asm; ec/decompiled/bank0/C07E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_1601_bit4(void)
 

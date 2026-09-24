@@ -9,7 +9,8 @@
    not determined here.
    type: unresolved
    evidence: ec/decompiled/bank0/F430.asm; ec/decompiled/bank0/F430.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void ret_only_f430(void)
 

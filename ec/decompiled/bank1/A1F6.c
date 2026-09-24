@@ -10,7 +10,8 @@
    decoded in this listing.
    type: logic
    evidence: ec/decompiled/bank1/A1F6.asm; ec/decompiled/bank1/A1F6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void pass_0707_to_88f0_when_045f_eq_db(void)
 

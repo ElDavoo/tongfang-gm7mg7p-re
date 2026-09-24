@@ -10,7 +10,8 @@
    returns without touching 0x0756. No other address is referenced.
    type: reader
    evidence: ec/decompiled/bank1/AAA2.asm; ec/decompiled/bank1/AAA2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_0756_when_1c_found_in_b00_fc(void)
 

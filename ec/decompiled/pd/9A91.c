@@ -10,7 +10,8 @@
    own XDATA and has no entry in ec/annotations/registers.yaml.
    type: unresolved
    evidence: ec/decompiled/pd/9A91.asm; ec/decompiled/pd/9A91.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_b_60_dptr_04a4_then_ret(void)
 

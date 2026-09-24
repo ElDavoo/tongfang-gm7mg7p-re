@@ -9,7 +9,8 @@
    from the 0x0F60 pointer and the R3 value; what 0xF0FE does with that pointer is not shown here.
    type: logic
    evidence: ec/decompiled/bank0/EAAD.asm; ec/decompiled/bank0/EAAD.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_dptr_0f60_then_4777_r3_03(void)
 

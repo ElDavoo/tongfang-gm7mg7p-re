@@ -11,7 +11,8 @@
    same store.
    type: writer
    evidence: ec/decompiled/pd/90B3.asm; ec/decompiled/pd/90B3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_3bytes_at_0a86(void)
 

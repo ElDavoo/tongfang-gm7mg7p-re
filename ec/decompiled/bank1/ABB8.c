@@ -9,7 +9,8 @@
    seven call targets is decoded here.
    type: forwarder
    evidence: ec/decompiled/bank1/ABB8.asm; ec/decompiled/bank1/ABB8.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_8001_c613_91e8_a8f0_a916_1aa4_a2f3(void)
 

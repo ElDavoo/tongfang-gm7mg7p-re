@@ -10,7 +10,8 @@
    instructions.
    type: reader
    evidence: ec/decompiled/bank0/B935.asm; ec/decompiled/bank0/B935.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 movc_lookup_set_dptr_08c1(byte param_1,short param_2)
 

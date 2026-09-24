@@ -8,7 +8,8 @@
    new DPH still in A on return. No memory access and no other register touched.
    type: math
    evidence: ec/decompiled/pd/349B.asm; ec/decompiled/pd/349B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dph_plus_double_a_349b(char param_1,undefined2 param_2)
 

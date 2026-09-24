@@ -10,7 +10,8 @@
    reported, not decoded, from the .c.
    type: forwarder
    evidence: ec/decompiled/common/001B.asm; ec/decompiled/common/001B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 timer1_vector_forwarder_to_05b6(undefined1 param_1)
 

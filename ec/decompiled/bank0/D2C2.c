@@ -10,7 +10,8 @@
    DPTR = 0x1C00.
    type: reader
    evidence: ec/decompiled/bank0/D2C2.asm; ec/decompiled/bank0/D2C2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte copy_dp_to_086c_return_masked_7e(byte *param_1)
 

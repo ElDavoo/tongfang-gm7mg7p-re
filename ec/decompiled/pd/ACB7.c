@@ -10,7 +10,8 @@
    Ghidra's reading of the entry at 0xACC0, not of these bytes.
    type: unresolved
    evidence: ec/decompiled/pd/ACB7.asm; ec/decompiled/pd/ACB7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char load_r0_r3_4_5_6_7(char *param_1)
 

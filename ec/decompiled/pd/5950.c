@@ -8,7 +8,8 @@
    high byte of the product is dropped while the low base addition still carries into the high byte
    type: math
    evidence: ec/annotations/ec-0x07d0-sites.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char index_stride_77_r7(byte param_1)
 

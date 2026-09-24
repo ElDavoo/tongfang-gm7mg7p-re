@@ -16,7 +16,8 @@
    to this function.
    type: state
    evidence: ec/decompiled/pd/C873.asm; ec/decompiled/pd/C873.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void compare_55_then_mark_0819
                (byte param_1,byte *param_2,char param_3,char param_4,undefined1 param_5,char param_6

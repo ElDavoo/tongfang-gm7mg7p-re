@@ -11,7 +11,8 @@
    listing shows.
    type: reader
    evidence: ec/decompiled/bank0/D041.asm; ec/decompiled/bank0/D041.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_06e7(void)
 

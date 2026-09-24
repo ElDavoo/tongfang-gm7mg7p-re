@@ -11,7 +11,8 @@
    scan can rule out
    type: dispatch
    evidence: ec/annotations/manual-fan-ctrl-0751.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void fan_table_mailbox_handler(char param_1)
 

@@ -9,7 +9,8 @@
    decoded. Same shape as 0xDCD5 (0x0455) and 0xDCED (0x0459).
    type: forwarder
    evidence: ec/decompiled/bank0/DCB2.asm; ec/decompiled/bank0/DCB2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void read_0454_tail_3f9d(void)
 

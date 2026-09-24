@@ -10,7 +10,8 @@
    the role of this entry is not determinable from the listing.
    type: unresolved
    evidence: ec/decompiled/bank0/EDA4.asm; ec/decompiled/bank0/EDA4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 mov_c_from_bit_0x22(undefined1 param_1)
 

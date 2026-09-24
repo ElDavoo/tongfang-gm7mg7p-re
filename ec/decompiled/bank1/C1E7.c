@@ -18,7 +18,8 @@
    ec/annotations/pd-xdata-overlap.md records.
    type: state
    evidence: ec/decompiled/bank1/C1E7.asm; ec/decompiled/bank1/C1E7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void latch_0498_bit1_or_bit3(void)
 

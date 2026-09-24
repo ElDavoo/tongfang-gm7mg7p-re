@@ -9,7 +9,8 @@
    byte. 0x0826 has no entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/CA2D.asm; ec/decompiled/bank0/CA2D.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 clear_kbd_status_bit1_return_0826(void)
 

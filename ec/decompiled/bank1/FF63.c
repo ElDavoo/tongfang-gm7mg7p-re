@@ -12,7 +12,8 @@
    at this address.
    type: unresolved
    evidence: ec/decompiled/bank1/FF63.asm; ec/decompiled/bank1/FF63.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void unimplemented_ff_fill_ff63(undefined1 param_1)
 

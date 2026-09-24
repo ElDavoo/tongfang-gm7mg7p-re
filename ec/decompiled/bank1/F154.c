@@ -9,7 +9,8 @@
    byte at 0x0440 is, are not decoded here.
    type: gate
    evidence: ec/decompiled/bank1/F154.asm; ec/decompiled/bank1/F154.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void if_0440_nonzero_call_88f0_0a(void)
 

@@ -11,7 +11,8 @@
    ec/annotations/registers.yaml.
    type: dispatch
    evidence: ec/decompiled/bank1/C352.asm; ec/decompiled/bank1/C352.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_on_06d4_mod_10(void)
 

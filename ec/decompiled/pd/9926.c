@@ -9,7 +9,8 @@
    C reports only the 0 returned in A and drops both the B load and the address.
    type: logic
    evidence: ec/decompiled/pd/9926.asm; ec/decompiled/pd/9926.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 dptr_001f_return_a0_b2(void)
 

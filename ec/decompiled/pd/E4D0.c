@@ -10,7 +10,8 @@
    decoded further.
    type: forwarder
    evidence: ec/decompiled/pd/E4D0.asm; ec/decompiled/pd/E4D0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dptr_fffe_then_122f_at_e4d0(void)
 

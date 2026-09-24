@@ -10,7 +10,8 @@
    not determinable from the byte-scan boundary alone.
    type: unresolved
    evidence: ec/decompiled/bank0/BBE9.asm; ec/decompiled/bank0/BBE9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char set_cy_before_0461_sub(char *param_1)
 

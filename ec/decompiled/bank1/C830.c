@@ -10,7 +10,8 @@
    XDATA write.
    type: state
    evidence: ec/decompiled/bank1/C830.asm; ec/decompiled/bank1/C830.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void step_state_from_0490_low3(void)
 

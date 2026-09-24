@@ -10,7 +10,8 @@
    these instructions.
    type: unresolved
    evidence: ec/decompiled/bank1/8000.asm; ec/decompiled/bank1/8000.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void ret_only_8000(void)
 

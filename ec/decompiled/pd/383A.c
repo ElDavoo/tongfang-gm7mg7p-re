@@ -8,7 +8,8 @@
    control flow not traced, for the same reason as 0xB1F2
    type: forwarder
    evidence: ec/annotations/lightbar-bat-flow.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void unresolved_0x383A(void)
 

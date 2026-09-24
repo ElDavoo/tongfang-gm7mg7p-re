@@ -11,7 +11,8 @@
    ec/annotations/registers.yaml.
    type: state
    evidence: ec/decompiled/bank1/AE16.asm; ec/decompiled/bank1/AE16.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_056a_1_on_carry_from_ae2b(void)
 

@@ -11,7 +11,8 @@
    0 when carry is clear. 0x0F60 has no entry in ec/annotations/registers.yaml.
    type: state
    evidence: ec/decompiled/bank0/E567.asm; ec/decompiled/bank0/E567.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_e4fe_2_clear_0f60_retry(byte param_1,undefined2 param_2,char param_3)
 

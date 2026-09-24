@@ -10,7 +10,8 @@
    shard.
    type: forwarder
    evidence: ec/decompiled/bank1/ABA8.asm; ec/decompiled/bank1/ABA8.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_f3b8_9081_9199_ad68_d524(char param_1)
 

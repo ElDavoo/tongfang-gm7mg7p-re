@@ -11,7 +11,8 @@
    entry.
    type: unresolved
    evidence: ec/decompiled/pd/B156.asm; ec/decompiled/pd/B156.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_dptr_083d(undefined1 param_1)
 

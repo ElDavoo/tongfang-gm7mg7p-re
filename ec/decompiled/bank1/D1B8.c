@@ -8,7 +8,8 @@
    0x198A returns zero in R7.
    type: forwarder
    evidence: ec/decompiled/bank1/D1B8.asm; ec/decompiled/bank1/D1B8.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void trampoline_to_d16f(void)
 

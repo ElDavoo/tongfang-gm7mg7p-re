@@ -10,7 +10,8 @@
    and is not decoded in this listing.
    type: bank-switch
    evidence: ec/decompiled/bank0/CFB7.asm; ec/decompiled/bank0/CFB7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void bank1_switch_thunk_to_823a(void)
 

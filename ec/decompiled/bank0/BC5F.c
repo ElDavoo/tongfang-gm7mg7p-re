@@ -8,7 +8,8 @@
    INC sets no carry, so 0xFF wraps to 0x00; 0x09E4 has no entry in ec/annotations/registers.yaml.
    type: math
    evidence: ec/decompiled/bank0/BC5F.asm; ec/decompiled/bank0/BC5F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char inc_09e4_and_return_new(void)
 

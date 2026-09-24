@@ -10,7 +10,8 @@
    same arithmetic as a return value and drops the write to DPH.
    type: math
    evidence: ec/decompiled/pd/998F.asm; ec/decompiled/pd/998F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dbl_a_add_dph_write_dph(char param_1,undefined2 param_2)
 

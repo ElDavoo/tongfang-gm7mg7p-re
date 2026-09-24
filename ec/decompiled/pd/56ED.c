@@ -9,7 +9,8 @@
    correspond to these two instructions.
    type: reader
    evidence: ec/decompiled/pd/56ED.asm; ec/decompiled/pd/56ED.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char read_xdata_0852(void)
 

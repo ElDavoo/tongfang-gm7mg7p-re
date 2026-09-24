@@ -10,7 +10,8 @@
    0x0766, and gives both bytes status present-untested.
    type: writer
    evidence: ec/decompiled/bank0/CA1E.asm; ec/decompiled/bank0/CA1E.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_support2_bit5_and_bios_oem2_bit6(void)
 

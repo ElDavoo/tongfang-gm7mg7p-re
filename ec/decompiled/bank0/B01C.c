@@ -9,7 +9,8 @@
    three.
    type: reader
    evidence: ec/decompiled/bank0/B01C.asm; ec/decompiled/bank0/B01C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_0a4b_after_call_445e_0c_b01c(void)
 

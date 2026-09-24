@@ -10,7 +10,8 @@
    two instructions alone. What this address is for is not determinable here.
    type: unresolved
    evidence: ec/decompiled/pd/9849.asm; ec/decompiled/pd/9849.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_0bc4_keep_result_in_r7(void)
 

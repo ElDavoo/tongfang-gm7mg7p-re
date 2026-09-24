@@ -10,7 +10,8 @@
    no entry in ec/annotations/registers.yaml.
    type: unresolved
    evidence: ec/decompiled/bank0/BB22.asm; ec/decompiled/bank0/BB22.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void mov_a_c8(void)
 

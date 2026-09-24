@@ -9,7 +9,8 @@
    instead; both matches fall through to 0xB6A8 and a second mismatch jumps to 0xB652.
    type: gate
    evidence: ec/decompiled/bank1/B68C.asm; ec/decompiled/bank1/B68C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void gate_0571_0573_eq_1(void)
 

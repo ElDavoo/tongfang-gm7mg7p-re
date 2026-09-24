@@ -10,7 +10,8 @@
    annotation, and the decompiled C reports the multiply without the DPTR it produces.
    type: math
    evidence: ec/decompiled/pd/ACD3.asm; ec/decompiled/pd/ACD3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char index_a_by_23_add_0a2c(char param_1)
 

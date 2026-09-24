@@ -9,7 +9,8 @@
    of the R7 the caller passed in.
    type: logic
    evidence: ec/decompiled/pd/2726.asm; ec/decompiled/pd/2726.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte invert_r7_after_f407(byte param_1)
 

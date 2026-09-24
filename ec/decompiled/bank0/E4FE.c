@@ -11,7 +11,8 @@
    have no entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/E4FE.asm; ec/decompiled/bank0/E4FE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_fe_r7_to_0f61_62(char *param_1,char param_2)
 

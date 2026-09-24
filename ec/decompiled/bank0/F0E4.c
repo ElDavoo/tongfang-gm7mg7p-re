@@ -10,7 +10,8 @@
    hypothesis, so this may be a mid-routine block rather than a callable entry.
    type: writer
    evidence: ec/decompiled/bank0/F0E4.asm; ec/decompiled/bank0/F0E4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void store_80_and_setup_regs(short param_1)
 

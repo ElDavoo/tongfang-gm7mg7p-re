@@ -9,7 +9,8 @@
    instructions do not set it, and the borrow out is left for the caller.
    type: math
    evidence: ec/decompiled/bank0/BDF2.asm; ec/decompiled/bank0/BDF2.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char gpu_temp_minus_xdata_byte(char *param_1)
 

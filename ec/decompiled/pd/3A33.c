@@ -9,7 +9,8 @@
    left in DPTR; no address constant appears in this listing.
    type: writer
    evidence: ec/decompiled/pd/3A33.asm; ec/decompiled/pd/3A33.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char store_a_then_multiply_r7_by_5e(undefined1 param_1,undefined1 *param_2,char param_3)
 

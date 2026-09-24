@@ -9,7 +9,8 @@
    jumps straight to the ret, so the value is returned untouched.
    type: math
    evidence: ec/decompiled/pd/0F1F.asm; ec/decompiled/pd/0F1F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte shr_32bit_r4r7_by_r0(byte param_1,byte param_2,byte param_3,byte param_4,byte param_5)
 

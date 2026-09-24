@@ -11,7 +11,8 @@
    here is the call-target byte scan's hypothesis and the function-level role is not determined.
    type: writer
    evidence: ec/decompiled/bank1/8902.asm; ec/decompiled/bank1/8902.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void mask_and_store_to_070f_ring(byte param_1,undefined1 param_2)
 

@@ -11,7 +11,8 @@
    the start is never consumed by the shared tail.
    type: copy
    evidence: ec/decompiled/bank0/E064.asm; ec/decompiled/bank0/E064.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void copy_043e_to_1511(void)
 

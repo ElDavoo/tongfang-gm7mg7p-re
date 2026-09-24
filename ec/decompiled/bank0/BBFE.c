@@ -10,7 +10,8 @@
    listing. None is named in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/BBFE.asm; ec/decompiled/bank0/BBFE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void init_0a48_to_40(void)
 

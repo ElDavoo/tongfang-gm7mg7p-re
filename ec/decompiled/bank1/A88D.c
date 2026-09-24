@@ -9,7 +9,8 @@
    tail-jumping to 0xA8E9. A is again written back to XDATA 0x086F unchanged.
    type: state
    evidence: ec/decompiled/bank1/A88D.asm; ec/decompiled/bank1/A88D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void flag_086f_bit1_send_5a_01_88_ff(byte param_1,byte *param_2)
 

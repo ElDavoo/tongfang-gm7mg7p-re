@@ -10,7 +10,8 @@
    XDATA or CODE address appears here.
    type: reader
    evidence: ec/decompiled/bank0/BA77.asm; ec/decompiled/bank0/BA77.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 load_dptr_from_be16_at_dptr(short param_1)
 

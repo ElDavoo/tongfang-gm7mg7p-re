@@ -10,7 +10,8 @@
    boundary came from a call-target byte scan, so it may not be the whole routine.
    type: writer
    evidence: ec/decompiled/pd/F4AB.asm; ec/decompiled/pd/F4AB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_4bytes_to_0a82
                (undefined1 param_1,undefined1 param_2,undefined1 param_3,undefined1 param_4)

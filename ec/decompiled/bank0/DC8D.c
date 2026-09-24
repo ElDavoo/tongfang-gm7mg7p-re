@@ -9,7 +9,8 @@
    two-instruction body does not show what the byte is for.
    type: writer
    evidence: ec/decompiled/bank0/DC8D.asm; ec/decompiled/bank0/DC8D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_1_to_1200(void)
 

@@ -11,7 +11,8 @@
    0xBB22 instead loads 200 first, which is that entry's whole difference.
    type: copy
    evidence: ec/decompiled/bank0/BB28.asm; ec/decompiled/bank0/BB28.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void copy_dptr_byte_to_075b_then_set_dptr_1809(undefined1 *param_1)
 

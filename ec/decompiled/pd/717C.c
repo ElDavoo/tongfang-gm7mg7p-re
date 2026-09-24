@@ -8,7 +8,8 @@
    function's return; the .c models it as a call that does not return.
    type: forwarder
    evidence: ec/decompiled/pd/717C.asm; ec/decompiled/pd/717C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_dptr_ffff_tail_jmp_122f(void)
 

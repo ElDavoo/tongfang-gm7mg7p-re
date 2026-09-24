@@ -9,7 +9,8 @@
    in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/BC14.asm; ec/decompiled/bank0/BC14.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 init_0817_081e_081f_read_0815(void)
 

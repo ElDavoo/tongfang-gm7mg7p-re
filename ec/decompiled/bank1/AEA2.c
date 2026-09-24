@@ -11,7 +11,8 @@
    Neither 0x0490 nor 0x056A is documented in ec/annotations/registers.yaml.
    type: state
    evidence: ec/decompiled/bank1/AEA2.asm; ec/decompiled/bank1/AEA2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void chain_probes_update_056a_2_4(void)
 

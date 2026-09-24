@@ -12,7 +12,8 @@
    compare-with-1-and-carry loop does rather than the decompile's sign test.
    type: logic
    evidence: ec/decompiled/pd/DF6A.asm; ec/decompiled/pd/DF6A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void loop_256_passes_over_07cf(void)
 

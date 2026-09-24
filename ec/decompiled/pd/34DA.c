@@ -10,7 +10,8 @@
    routine.
    type: math
    evidence: ec/decompiled/pd/34DA.asm; ec/decompiled/pd/34DA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void index_5e_fc(char param_1)
 

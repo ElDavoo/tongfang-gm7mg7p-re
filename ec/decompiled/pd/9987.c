@@ -10,7 +10,8 @@
    pair.
    type: math
    evidence: ec/decompiled/pd/9987.asm; ec/decompiled/pd/9987.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_a_from_r7_9987(undefined1 param_1)
 

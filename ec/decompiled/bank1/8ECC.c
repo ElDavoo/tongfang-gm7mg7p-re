@@ -13,7 +13,8 @@
    these paths, and the chosen R4 reaches 0x8E3B as an argument the caller cannot see.
    type: dispatch
    evidence: ec/decompiled/bank1/8ECC.asm; ec/decompiled/bank1/8ECC.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void select_r4_from_cpu_temp_and_0620_0626(void)
 

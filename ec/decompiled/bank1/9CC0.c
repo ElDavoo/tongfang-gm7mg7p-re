@@ -11,7 +11,8 @@
    whole return value.
    type: gate
    evidence: ec/decompiled/bank1/9CC0.asm; ec/decompiled/bank1/9CC0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void gate_04fe_06e6_call_19a8(char r7_from_19a8)
 

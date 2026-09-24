@@ -9,7 +9,8 @@
    listing.
    type: forwarder
    evidence: ec/decompiled/bank0/E3C9.asm; ec/decompiled/bank0/E3C9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void tail_jump_708f_r4_0_r5_64(void)
 

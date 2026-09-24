@@ -8,7 +8,8 @@
    the other seven bits of 0x1604 keep their values.
    type: writer
    evidence: ec/decompiled/bank0/C201.asm; ec/decompiled/bank0/C201.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_1604_bit1(void)
 

@@ -10,7 +10,8 @@
    this listing.
    type: bank-switch
    evidence: ec/decompiled/bank0/1978.asm; ec/decompiled/bank0/1978.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void trampoline_bank1_a710(void)
 

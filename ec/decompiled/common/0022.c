@@ -20,7 +20,8 @@
    not decoded here.
    type: unresolved
    evidence: ec/decompiled/common/0022.asm; ec/decompiled/common/0022.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void ret_only_0022(void)
 

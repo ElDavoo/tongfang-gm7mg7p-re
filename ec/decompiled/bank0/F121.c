@@ -8,7 +8,8 @@
    address is read or written.
    type: writer
    evidence: ec/decompiled/bank0/F121.asm; ec/decompiled/bank0/F121.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void write_98_to_0f60(void)
 

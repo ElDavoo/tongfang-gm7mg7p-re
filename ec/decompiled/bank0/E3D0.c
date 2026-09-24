@@ -14,7 +14,8 @@
    entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/E3D0.asm; ec/decompiled/bank0/E3D0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_103f_through_0a56_pointer(char param_1,char param_2,char param_3)
 

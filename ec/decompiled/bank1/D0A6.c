@@ -9,7 +9,8 @@
    writes 0 into 0x03B5 before returning. If 0x03C3 is below 3 it returns without writing anything.
    type: writer
    evidence: ec/decompiled/bank1/D0A6.asm; ec/decompiled/bank1/D0A6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte store_03c3_to_0360_when_ge_3(void)
 

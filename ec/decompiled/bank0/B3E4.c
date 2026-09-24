@@ -9,7 +9,8 @@
    entered both on its own and as a tail.
    type: writer
    evidence: ec/decompiled/bank0/B3E4.asm; ec/decompiled/bank0/B3E4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_c470_then_clear_0984_bit0(void)
 

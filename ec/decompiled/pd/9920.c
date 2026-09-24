@@ -9,7 +9,8 @@
    pair.
    type: forwarder
    evidence: ec/decompiled/pd/9920.asm; ec/decompiled/pd/9920.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dptr_0011_tail_0d8f(void)
 

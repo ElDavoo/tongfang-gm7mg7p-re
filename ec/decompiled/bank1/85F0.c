@@ -8,7 +8,8 @@
    0x19C0 does is not decoded here.
    type: forwarder
    evidence: ec/decompiled/bank1/85F0.asm; ec/decompiled/bank1/85F0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_19c0(void)
 

@@ -10,7 +10,8 @@
    order.
    type: writer
    evidence: ec/decompiled/pd/393D.asm; ec/decompiled/pd/393D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_r7_r5_r3_to_consecutive_xdata
                (undefined1 *param_1,undefined1 param_2,undefined1 param_3,undefined1 param_4)

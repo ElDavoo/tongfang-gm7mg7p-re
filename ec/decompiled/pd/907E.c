@@ -10,7 +10,8 @@
    match these instructions.
    type: math
    evidence: ec/decompiled/pd/907E.asm; ec/decompiled/pd/907E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char make_dptr_r6_minus_3_col_r5(char r6_value)
 

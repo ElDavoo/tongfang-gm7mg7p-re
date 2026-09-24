@@ -9,7 +9,8 @@
    0xE024 does the storing.
    type: forwarder
    evidence: ec/decompiled/bank0/E020.asm; ec/decompiled/bank0/E020.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void move_a_to_r5_and_call_dfa0(undefined1 param_1,undefined1 param_2,undefined1 param_3)
 

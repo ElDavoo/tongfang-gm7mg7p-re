@@ -9,7 +9,8 @@
    work is in the routine at 0x9416, which is not decoded in this listing.
    type: gate
    evidence: ec/decompiled/bank1/9373.asm; ec/decompiled/bank1/9373.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: mixed */
 
 void gate_0456_80_and_06e6_01(void)
 

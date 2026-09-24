@@ -9,7 +9,8 @@
    decoded in this listing.
    type: forwarder
    evidence: ec/decompiled/bank0/BCBD.asm; ec/decompiled/bank0/BCBD.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dptr_r5_times_2_tail_call_705b(byte param_1,undefined1 param_2)
 

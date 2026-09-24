@@ -14,7 +14,8 @@
    when the entry is nonzero 0x0895 is reloaded with 0x14.
    type: state
    evidence: ec/decompiled/bank1/9416.asm; ec/decompiled/bank1/9416.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void adjust_0627_index_against_gpu_temp(void)
 

@@ -9,7 +9,8 @@
    ec/annotations/registers.yaml.
    type: reader
    evidence: ec/decompiled/bank0/BEFE.asm; ec/decompiled/bank0/BEFE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_be16_0a48(void)
 

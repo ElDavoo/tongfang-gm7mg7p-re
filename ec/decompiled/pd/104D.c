@@ -11,7 +11,8 @@
    through the inline constants mistakes the argument bytes for instructions (cited from 2 files)
    type: unresolved
    evidence: ec/annotations/lightbar-bat-flow.md; ec/annotations/pd-0x38-consumers.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write4_inline_args(undefined2 param_1)
 

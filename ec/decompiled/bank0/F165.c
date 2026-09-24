@@ -9,7 +9,8 @@
    so the two entries are one routine.
    type: writer
    evidence: ec/decompiled/bank0/F165.asm; ec/decompiled/bank0/F165.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_0a3e_0a3f(void)
 

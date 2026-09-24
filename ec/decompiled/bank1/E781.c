@@ -12,7 +12,8 @@
    ec/annotations/registers.yaml.
    type: state
    evidence: ec/decompiled/bank1/E781.asm; ec/decompiled/bank1/E781.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void countdown_03a8_gated_by_0490_bit1(void)
 

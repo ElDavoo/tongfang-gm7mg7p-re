@@ -10,7 +10,8 @@
    The .c returns PSW bit 7 instead.
    type: math
    evidence: ec/decompiled/pd/B19F.asm; ec/decompiled/pd/B19F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char set_dptr_0a00_plus_a(void)
 

@@ -9,7 +9,8 @@
    0xE322 and are reported from the .c, not decoded from these bytes.
    type: forwarder
    evidence: ec/decompiled/bank1/703F.asm; ec/decompiled/bank1/703F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void forwarder_to_e322(byte param_1)
 

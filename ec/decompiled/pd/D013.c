@@ -12,7 +12,8 @@
    0x6FAD, and only if that comes back zero read XDATA 0x07D5 into R5 and call 0xBBE7.
    type: writer
    evidence: ec/decompiled/pd/D013.asm; ec/decompiled/pd/D013.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void latch_07d4_07d5_and_call_7014_with_63_or_6c(undefined1 param_1,char param_2,byte param_3)
 

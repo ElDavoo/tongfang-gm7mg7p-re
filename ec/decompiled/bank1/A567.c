@@ -9,7 +9,8 @@
    survive; R5 is left at 0. No other address appears in the listing.
    type: delay
    evidence: ec/decompiled/bank1/A567.asm; ec/decompiled/bank1/A567.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 write_0_to_200b_335_times(undefined1 param_1)
 

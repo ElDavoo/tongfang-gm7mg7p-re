@@ -9,7 +9,8 @@
    own right its role is not determinable.
    type: unresolved
    evidence: ec/decompiled/bank0/BCB1.asm; ec/decompiled/bank0/BCB1.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_dptr_08e1_and_a_06_then_nothing(void)
 

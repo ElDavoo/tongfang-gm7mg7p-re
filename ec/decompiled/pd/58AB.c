@@ -10,7 +10,8 @@
    entry depends on, is not shown here.
    type: writer
    evidence: ec/decompiled/pd/58AB.asm; ec/decompiled/pd/58AB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void arg_89_from_r4r5_then_store_at_0864(char param_1,byte param_2)
 

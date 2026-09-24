@@ -16,7 +16,8 @@
    reachable is not decoded here.
    type: unresolved
    evidence: ec/decompiled/common/001A.asm; ec/decompiled/common/001A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void ret_only_001a(void)
 

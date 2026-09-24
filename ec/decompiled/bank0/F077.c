@@ -9,7 +9,8 @@
    by these bytes, and the file's own header records the function boundary as a hypothesis.
    type: unresolved
    evidence: ec/decompiled/bank0/F077.asm; ec/decompiled/bank0/F077.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void ret_immediately(void)
 

@@ -9,7 +9,8 @@
    whole routine, whose multiply and DPTR write are in the entries at 0x9885 and 0x9888.
    type: reader
    evidence: ec/decompiled/pd/9883.asm; ec/decompiled/pd/9883.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char read_xdata_byte_to_r7(char *entry_dptr)
 

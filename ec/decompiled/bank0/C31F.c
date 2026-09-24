@@ -10,7 +10,8 @@
    ec/annotations/registers.yaml, so the bit is not named.
    type: logic
    evidence: ec/decompiled/bank0/C31F.asm; ec/decompiled/bank0/C31F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void test_1606_bit4_inverted(void)
 

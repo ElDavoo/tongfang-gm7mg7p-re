@@ -11,7 +11,8 @@
    routine of its own.
    type: writer
    evidence: ec/decompiled/bank0/9018.asm; ec/decompiled/bank0/9018.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_14_then_select_0817(undefined1 param_1,undefined1 *param_2)
 

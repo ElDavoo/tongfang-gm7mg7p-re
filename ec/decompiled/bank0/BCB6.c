@@ -9,7 +9,8 @@
    an entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/BCB6.asm; ec/decompiled/bank0/BCB6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_then_clear_08e0(undefined1 param_1,undefined1 *param_2)
 

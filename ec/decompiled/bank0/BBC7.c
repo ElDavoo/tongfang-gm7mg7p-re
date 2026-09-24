@@ -10,7 +10,8 @@
    0x08BD nor the 0x08CE/0x08CF pair has an entry in ec/annotations/registers.yaml.
    type: math
    evidence: ec/decompiled/bank0/BBC7.asm; ec/decompiled/bank0/BBC7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char sub_10x_08bd_from_08ce_pair(void)
 

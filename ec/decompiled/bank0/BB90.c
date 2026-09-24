@@ -9,7 +9,8 @@
    confident names.
    type: writer
    evidence: ec/annotations/charge-target-derating.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_be16_a(undefined1 param_1,undefined1 *param_2,undefined1 param_3)
 

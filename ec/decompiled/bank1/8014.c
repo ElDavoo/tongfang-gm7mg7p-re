@@ -9,7 +9,8 @@
    targets are not in this listing.
    type: reader
    evidence: ec/decompiled/bank1/8014.asm; ec/decompiled/bank1/8014.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void read_06d1_and_test_zero(char *param_1,char param_2)
 

@@ -9,7 +9,8 @@
    own, the role of this entry is not determined. No address at all appears in this listing.
    type: unresolved
    evidence: ec/decompiled/bank0/BAD3.asm; ec/decompiled/bank0/BAD3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char clr_cy(char param_1)
 

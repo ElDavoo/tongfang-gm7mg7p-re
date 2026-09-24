@@ -11,7 +11,8 @@
    cjne/jz/jnz guards it folds into one if are the three tests in the listing.
    type: writer
    evidence: ec/decompiled/bank1/F160.asm; ec/decompiled/bank1/F160.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void toggle_045b_bit0_set_0709_bit0(void)
 

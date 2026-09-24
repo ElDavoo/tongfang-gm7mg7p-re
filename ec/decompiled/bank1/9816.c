@@ -9,7 +9,8 @@
    are for, and why the byte scan made this a function boundary, is not determined by the listing.
    type: unresolved
    evidence: ec/decompiled/bank1/9816.asm; ec/decompiled/bank1/9816.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void ret_only_stub_9816(void)
 

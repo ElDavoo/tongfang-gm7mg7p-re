@@ -10,7 +10,8 @@
    product at 0x388. Both paths then write 2 to XDATA 0x3A3.
    type: math
    evidence: ec/decompiled/bank1/C979.asm; ec/decompiled/bank1/C979.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void mul_0342_0514_into_0388_when_03d0_lt_0384(void)
 

@@ -14,7 +14,8 @@
    otherwise decrements 0x0704.
    type: state
    evidence: ec/decompiled/bank1/94FA.asm; ec/decompiled/bank1/94FA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void magic_55aa_and_0704_countdown(char param_1)
 

@@ -14,7 +14,8 @@
    are not decoded here.
    type: dispatch
    evidence: ec/decompiled/bank1/A2F3.asm; ec/decompiled/bank1/A2F3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte dispatch_0974_low_nibble(undefined1 param_1,undefined1 param_2,undefined1 param_3)
 

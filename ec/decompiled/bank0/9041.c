@@ -9,7 +9,8 @@
    not decoded in this listing, and 0x0850 has no entry in ec/annotations/registers.yaml.
    type: forwarder
    evidence: ec/decompiled/bank0/9041.asm; ec/decompiled/bank0/9041.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_r7_to_0850_then_jump_1648(undefined1 param_1)
 

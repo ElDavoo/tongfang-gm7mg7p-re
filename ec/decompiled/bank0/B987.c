@@ -10,7 +10,8 @@
    listing alone.
    type: reader
    evidence: ec/decompiled/bank0/B987.asm; ec/decompiled/bank0/B987.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_dptr_byte_into_r6(short param_1)
 

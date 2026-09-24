@@ -10,7 +10,8 @@
    design
    type: gate
    evidence: ec/annotations/charge-profile-flow.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void manual_ctrl_profile_gate(char param_1)
 

@@ -12,7 +12,8 @@
    caller left.
    type: logic
    evidence: ec/decompiled/bank1/CA02.asm; ec/decompiled/bank1/CA02.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_then_03a3_3_over_1f(byte param_1,byte *param_2)
 

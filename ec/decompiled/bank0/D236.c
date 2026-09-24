@@ -11,7 +11,8 @@
    the constant 1 that the .c shows as _a_4 is not in the listing.
    type: state
    evidence: ec/decompiled/bank0/D236.asm; ec/decompiled/bank0/D236.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void poll_d6c2_then_branch(undefined1 param_1)
 

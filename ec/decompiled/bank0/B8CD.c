@@ -9,7 +9,8 @@
    against a different constant; 0x0770 has no entry in ec/annotations/registers.yaml.
    type: reader
    evidence: ec/decompiled/bank0/B8CD.asm; ec/decompiled/bank0/B8CD.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void test_0770_equals_08(void)
 

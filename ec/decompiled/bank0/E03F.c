@@ -9,7 +9,8 @@
    Callers set DPTR to 0x0A47 immediately before the call.
    type: writer
    evidence: ec/decompiled/bank0/E03F.asm; ec/decompiled/bank0/E03F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_09c1_09c3_from_dptr(byte *param_1)
 

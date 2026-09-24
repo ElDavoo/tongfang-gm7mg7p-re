@@ -8,7 +8,8 @@
    listing, so execution falls through to 0x704B.
    type: forwarder
    evidence: ec/decompiled/pd/7045.asm; ec/decompiled/pd/7045.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_dptr_fffd_and_call_122f(void)
 

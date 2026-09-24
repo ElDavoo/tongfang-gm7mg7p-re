@@ -11,7 +11,8 @@
    function-level role is not determined.
    type: reader
    evidence: ec/decompiled/bank1/8B01.asm; ec/decompiled/bank1/8B01.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_dptr_097f(char param_1)
 

@@ -12,7 +12,8 @@
    calling 0x9041 with R7=7 if bit 0 of 0x490 is clear.
    type: state
    evidence: ec/decompiled/bank0/A844.asm; ec/decompiled/bank0/A844.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void update_0476_flags(char param_1,char param_2,byte param_3)
 

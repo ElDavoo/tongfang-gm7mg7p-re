@@ -11,7 +11,8 @@
    constants 0xDC and 0x26 being passed and the 0x13 adjustment between the two calls.
    type: math
    evidence: ec/decompiled/pd/C1B3.asm; ec/decompiled/pd/C1B3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_0e54_with_dc_then_reenter_with_26(char param_1,byte param_2,byte param_3,byte param_4)
 

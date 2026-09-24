@@ -8,7 +8,8 @@
    decompilation of the branch target 0xF246, not of these three bytes.
    type: forwarder
    evidence: ec/decompiled/bank1/F110.asm; ec/decompiled/bank1/F110.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void ljmp_f246(void)
 

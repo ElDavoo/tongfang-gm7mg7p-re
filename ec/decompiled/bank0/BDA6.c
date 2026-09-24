@@ -9,7 +9,8 @@
    is why the decompiled C shows the +1 form. 0x0875 has no entry in ec/annotations/registers.yaml.
    type: math
    evidence: ec/decompiled/bank0/BDA6.asm; ec/decompiled/bank0/BDA6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char sub_code_byte_from_x0875(byte param_1,short param_2)
 

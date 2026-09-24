@@ -9,7 +9,8 @@
    artefact of the function split is not determinable from a single byte.
    type: unresolved
    evidence: ec/decompiled/pd/F7B4.asm; ec/decompiled/pd/F7B4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void ret_only_f7b4(void)
 

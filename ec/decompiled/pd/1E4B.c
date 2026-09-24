@@ -9,7 +9,8 @@
    inverted. Neither the 0x804 byte nor the R3 value is read again before the return.
    type: reader
    evidence: ec/decompiled/pd/1E4B.asm; ec/decompiled/pd/1E4B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte read_0803_and_invert(void)
 

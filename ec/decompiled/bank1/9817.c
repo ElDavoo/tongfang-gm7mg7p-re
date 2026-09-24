@@ -14,7 +14,8 @@
    0x0434 and R1 = R2 = 0.
    type: state
    evidence: ec/decompiled/bank1/9817.asm; ec/decompiled/bank1/9817.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void enter_state_0480_05f1_06d9(void)
 

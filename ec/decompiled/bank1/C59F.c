@@ -13,7 +13,8 @@
    0x0514, calls 0xCBF3 and sets XDATA 0x0896 to 0x02.
    type: state
    evidence: ec/decompiled/bank1/C59F.asm; ec/decompiled/bank1/C59F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void countdown_0896_and_gate_on_04ab_equals_64(void)
 

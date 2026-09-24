@@ -12,7 +12,8 @@
    0x995F with A = 0 and 0xEEAE with R7 = 0xA0, returning 0. Both sides finish at 0xEEAE.
    type: logic
    evidence: ec/decompiled/pd/CFA0.asm; ec/decompiled/pd/CFA0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_4_at_07d6_then_branch_on_991a(char param_1,undefined1 param_2)
 

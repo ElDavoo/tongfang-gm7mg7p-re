@@ -13,7 +13,8 @@
    tail. 0x41 and 0x06 are not named in ec/annotations/registers.yaml and are not identified here.
    type: state
    evidence: ec/decompiled/common/05B6.asm; ec/decompiled/common/05B6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 timer1_target_splits_internal_ram_41_on_carry(undefined1 param_1)
 

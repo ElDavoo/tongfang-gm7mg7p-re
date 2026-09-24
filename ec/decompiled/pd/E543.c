@@ -13,7 +13,8 @@
    EC-side name applies to these accesses.
    type: logic
    evidence: ec/decompiled/pd/E543.asm; ec/decompiled/pd/E543.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char count_07cf_and_conditional_call_122d(void)
 

@@ -9,7 +9,8 @@
    DPTR points at the matching 0x5E-byte record.
    type: reader
    evidence: ec/decompiled/pd/70D7.asm; ec/decompiled/pd/70D7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char read_dptr_to_r3_then_dptr_08fc(char *param_1)
 

@@ -9,7 +9,8 @@
    between three targets.
    type: dispatch
    evidence: ec/decompiled/bank1/F02C.asm; ec/decompiled/bank1/F02C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_via_table_f0a1(undefined1 param_1)
 

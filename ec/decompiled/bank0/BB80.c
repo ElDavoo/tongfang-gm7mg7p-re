@@ -10,7 +10,8 @@
    a proven parameter.
    type: writer
    evidence: ec/decompiled/bank0/BB80.asm; ec/decompiled/bank0/BB80.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte store_a_then_read_07c5(undefined1 value_a,undefined1 *entry_dptr)
 

@@ -11,7 +11,8 @@
    the return. No other byte is read or written.
    type: logic
    evidence: ec/decompiled/bank1/9C0E.asm; ec/decompiled/bank1/9C0E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void match_0820_against_0458_mode(void)
 

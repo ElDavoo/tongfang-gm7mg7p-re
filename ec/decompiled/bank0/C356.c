@@ -9,7 +9,8 @@
    same bit of the same byte the other way round. 0x1667 is not in ec/annotations/registers.yaml.
    type: logic
    evidence: ec/decompiled/bank0/C356.asm; ec/decompiled/bank0/C356.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void test_1667_bit0_inverted(void)
 

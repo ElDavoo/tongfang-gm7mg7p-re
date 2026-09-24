@@ -17,7 +17,8 @@
    0xD472 with A = 0.
    type: logic
    evidence: ec/decompiled/bank1/D37F.asm; ec/decompiled/bank1/D37F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte scan_table_03de_down_stride2(byte param_1,char param_2,char param_3,undefined1 param_4)
 

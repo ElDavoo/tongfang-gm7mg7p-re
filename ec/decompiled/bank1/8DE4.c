@@ -14,7 +14,8 @@
    tail is reported from the .c and not decoded here.
    type: dispatch
    evidence: ec/decompiled/bank1/8DE4.asm; ec/decompiled/bank1/8DE4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_on_0490_0495_0496_0498(char param_1)
 

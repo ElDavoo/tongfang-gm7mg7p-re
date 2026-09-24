@@ -8,7 +8,8 @@
    DPTR one past the second byte, and returns the second byte in A. No other address is touched.
    type: reader
    evidence: ec/decompiled/bank1/8886.asm; ec/decompiled/bank1/8886.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_xdata_pair_to_r1r2(short param_1)
 

@@ -10,7 +10,8 @@
    XDATA access; the table base is not documented in ec/annotations/registers.yaml.
    type: reader
    evidence: ec/decompiled/bank0/BCDA.asm; ec/decompiled/bank0/BCDA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 undefined1 x0f10_table_indexed_by_0460(void)
 

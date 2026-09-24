@@ -9,7 +9,8 @@
    instructions but loses the three earlier loads.
    type: reader
    evidence: ec/decompiled/pd/0FBB.asm; ec/decompiled/pd/0FBB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read4_code_to_r4r7(short param_1)
 

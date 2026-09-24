@@ -10,7 +10,8 @@
    from 0xDF35 is the R5 constant (0x1A here, 0x1B there).
    type: forwarder
    evidence: ec/decompiled/bank0/DF1E.asm; ec/decompiled/bank0/DF1E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void stage_0a47_then_call_de83_r5_1a(void)
 

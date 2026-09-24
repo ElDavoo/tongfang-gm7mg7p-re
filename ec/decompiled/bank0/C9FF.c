@@ -10,7 +10,8 @@
    Returns XDATA 0x0826 plus 0x3B in A. 0x0826 has no entry in ec/annotations/registers.yaml.
    type: logic
    evidence: ec/decompiled/bank0/C9FF.asm; ec/decompiled/bank0/C9FF.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char kbd_status_from_0826_low_bits(void)
 

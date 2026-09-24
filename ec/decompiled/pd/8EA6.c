@@ -10,7 +10,8 @@
    in the .asm.
    type: forwarder
    evidence: ec/decompiled/pd/8EA6.asm; ec/decompiled/pd/8EA6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 call_7ce0_with_r5_0b(void)
 

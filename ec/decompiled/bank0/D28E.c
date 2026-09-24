@@ -10,7 +10,8 @@
    follows.
    type: copy
    evidence: ec/decompiled/bank0/D28E.asm; ec/decompiled/bank0/D28E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void copy_0866_86b_to_1c04_1c3a(void)
 

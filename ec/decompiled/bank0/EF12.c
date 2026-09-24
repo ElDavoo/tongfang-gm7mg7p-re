@@ -9,7 +9,8 @@
    address belongs to 0xE822 and not to this entry.
    type: forwarder
    evidence: ec/decompiled/bank0/EF12.asm; ec/decompiled/bank0/EF12.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void ajmp_0xe822(undefined1 param_1,undefined1 *param_2)
 

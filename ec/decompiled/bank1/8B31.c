@@ -9,7 +9,8 @@
    body at 0x8B04, so it acts as a shared exit stub. It writes no XDATA byte and calls nothing.
    type: logic
    evidence: ec/decompiled/bank1/8B31.asm; ec/decompiled/bank1/8B31.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void return_with_carry_cleared(void)
 

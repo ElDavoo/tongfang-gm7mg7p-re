@@ -13,7 +13,8 @@
    0x0491 and jumps to 0xBE10.
    type: gate
    evidence: ec/decompiled/bank1/BA43.asm; ec/decompiled/bank1/BA43.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void gate_chain_to_0491_bit0(undefined1 param_1)
 

@@ -12,7 +12,8 @@
    caller at 0x4879 and is not derived here.
    type: reader
    evidence: ec/decompiled/bank1/4A26.asm; ec/decompiled/bank1/4A26.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 code_table_pointer_from_r1(undefined1 param_1,char param_2)
 

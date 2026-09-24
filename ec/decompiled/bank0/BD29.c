@@ -9,7 +9,8 @@
    and then subtracts R4:R5 from R6:R7. As a function in its own right its role is not determinable.
    type: unresolved
    evidence: ec/decompiled/bank0/BD29.asm; ec/decompiled/bank0/BD29.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char set_r5_and_1_plus_carry_frag(byte param_1,char param_2,byte param_3)
 

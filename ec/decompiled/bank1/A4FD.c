@@ -8,7 +8,8 @@
    0xA501 is not in this listing and was not read, so what it does is not decoded here.
    type: forwarder
    evidence: ec/decompiled/bank1/A4FD.asm; ec/decompiled/bank1/A4FD.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void forward_to_a501(void)
 

@@ -9,7 +9,8 @@
    dereference and drops B and the DPTR load.
    type: reader
    evidence: ec/decompiled/pd/38CA.asm; ec/decompiled/pd/38CA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_xdata_to_r3_set_dptr_0418(undefined1 *param_1)
 

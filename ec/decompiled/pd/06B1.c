@@ -12,7 +12,8 @@
    into R4, R5, R6 and R7; the value that produces is not resolved here.
    type: math
    evidence: ec/decompiled/pd/06B1.asm; ec/decompiled/pd/06B1.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte shl32_16_iters(byte param_1,byte param_2,byte param_3)
 

@@ -10,7 +10,8 @@
    to read4xdata_to_r4_r7 and its second parameter appear nowhere in these instructions.
    type: math
    evidence: ec/decompiled/pd/364A.asm; ec/decompiled/pd/364A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 mul_by_17_add_2d_split_dpl(char param_1,undefined1 param_2)
 

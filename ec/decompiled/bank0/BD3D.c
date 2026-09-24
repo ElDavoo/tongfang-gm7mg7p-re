@@ -10,7 +10,8 @@
    determined.
    type: math
    evidence: ec/decompiled/bank0/BD3D.asm; ec/decompiled/bank0/BD3D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 char sub_dptr_byte_from_0868(char *param_1)
 

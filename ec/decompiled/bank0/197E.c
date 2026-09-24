@@ -9,7 +9,8 @@
    the two banks holds it.
    type: bank-switch
    evidence: ec/decompiled/bank0/197E.asm; ec/decompiled/bank0/197E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void trampoline_bank1_a6f7(void)
 

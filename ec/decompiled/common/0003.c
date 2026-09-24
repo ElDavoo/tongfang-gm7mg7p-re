@@ -10,7 +10,8 @@
    available from this file pair.
    type: forwarder
    evidence: ec/decompiled/common/0003.asm; ec/decompiled/common/0003.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void int0_vector_forwarder_to_052f(void)
 

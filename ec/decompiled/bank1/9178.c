@@ -9,7 +9,8 @@
    this listing.
    type: logic
    evidence: ec/decompiled/bank1/9178.asm; ec/decompiled/bank1/9178.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_1738_1a0e_1a1a(void)
 

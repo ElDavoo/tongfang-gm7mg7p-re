@@ -11,7 +11,8 @@
    decompiler's in_PSW term is the carry test after 0xC6B8, not a saved register.
    type: logic
    evidence: ec/decompiled/bank1/A211.asm; ec/decompiled/bank1/A211.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void call_88f0_then_clear_07f3_and_070c(void)
 

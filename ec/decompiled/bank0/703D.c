@@ -10,7 +10,8 @@
    which is the same access here but hides that the two arms read different address spaces.
    type: reader
    evidence: ec/decompiled/bank0/703D.asm; ec/decompiled/bank0/703D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_byte_by_tag_r3(byte param_1,undefined1 param_2,char param_3)
 

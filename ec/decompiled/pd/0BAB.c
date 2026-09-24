@@ -11,7 +11,8 @@
    and CODE, and no memory outside the tag's own space is touched.
    type: reader
    evidence: ec/decompiled/pd/0BAB.asm; ec/decompiled/pd/0BAB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_byte_by_tag_r3(undefined1 *param_1,undefined1 param_2,char param_3)
 

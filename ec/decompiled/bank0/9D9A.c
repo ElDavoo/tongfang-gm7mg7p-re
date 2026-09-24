@@ -10,7 +10,8 @@
    decoded.
    type: logic
    evidence: ec/decompiled/bank0/9D9A.asm; ec/decompiled/bank0/9D9A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void shared_return_stub_9d9a(void)
 

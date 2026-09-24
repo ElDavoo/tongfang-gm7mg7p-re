@@ -13,7 +13,8 @@
    contain.
    type: gate
    evidence: ec/decompiled/bank1/E237.asm; ec/decompiled/bank1/E237.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void gate_1c00_init_defaults(void)
 

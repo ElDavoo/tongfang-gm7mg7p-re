@@ -10,7 +10,8 @@
    makes exactly two calls to 0xD78A, with R7 = 0 and then 1, and returns with R7 = 1.
    type: logic
    evidence: ec/decompiled/pd/E2E4.asm; ec/decompiled/pd/E2E4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void poll_d78a_for_indices_0_and_1(void)
 

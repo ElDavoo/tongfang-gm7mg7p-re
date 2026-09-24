@@ -9,7 +9,8 @@
    runs 0x0C46 and hands its caller that pointer. What 0x0C46 does is not shown in this listing.
    type: forwarder
    evidence: ec/decompiled/pd/90FC.asm; ec/decompiled/pd/90FC.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_0c46_then_dptr_0d0e(void)
 

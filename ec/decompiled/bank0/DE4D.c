@@ -9,7 +9,8 @@
    does not support).
    type: init
    evidence: ec/decompiled/bank0/DE4D.asm; ec/decompiled/bank0/DE4D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void init_0046_to_64_and_clear_af(void)
 

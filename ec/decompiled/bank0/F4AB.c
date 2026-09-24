@@ -9,7 +9,8 @@
    from the caller — so the three-byte window it clears is not fixed by this listing.
    type: writer
    evidence: ec/decompiled/bank0/F4AB.asm; ec/decompiled/bank0/F4AB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void zero_3_xdata_bytes_at_dptr1(short param_1)
 

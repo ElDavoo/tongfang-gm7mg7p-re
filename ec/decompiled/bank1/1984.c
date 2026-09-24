@@ -9,7 +9,8 @@
    decompiler rendering that as a call to the stub with 0xC10C as the argument.
    type: forwarder
    evidence: ec/decompiled/bank1/1984.asm; ec/decompiled/bank1/1984.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void trampoline_to_c10c(void)
 

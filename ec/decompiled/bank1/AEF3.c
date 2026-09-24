@@ -10,7 +10,8 @@
    documented in ec/annotations/registers.yaml.
    type: state
    evidence: ec/decompiled/bank1/AEF3.asm; ec/decompiled/bank1/AEF3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_056a_3_or_0496_low5_1f(void)
 

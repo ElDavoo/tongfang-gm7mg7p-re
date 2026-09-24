@@ -11,7 +11,8 @@
    determined here.
    type: writer
    evidence: ec/decompiled/bank0/E51E.asm; ec/decompiled/bank0/E51E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_ff_fa_r5_r7_to_0f60_63(undefined1 *param_1,undefined1 param_2,undefined1 param_3)
 

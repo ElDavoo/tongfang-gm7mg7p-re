@@ -10,7 +10,8 @@
    0xF727 then jump to 0xF127 is that continuation rather than a call at this address.
    type: unresolved
    evidence: ec/decompiled/bank1/F090.asm; ec/decompiled/bank1/F090.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void mid_instruction_of_row_f08f(void)
 

@@ -9,7 +9,8 @@
    helpers is decoded in this listing.
    type: logic
    evidence: ec/decompiled/bank0/EA94.asm; ec/decompiled/bank0/EA94.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void three_calls_then_4777_r3_04(void)
 

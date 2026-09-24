@@ -12,7 +12,8 @@
    0x1803.
    type: state
    evidence: ec/decompiled/bank0/A747.asm; ec/decompiled/bank0/A747.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void stage_0769_076e_convert_to_1803(void)
 

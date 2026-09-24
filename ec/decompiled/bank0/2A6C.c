@@ -10,7 +10,8 @@
    address is touched.
    type: writer
    evidence: ec/decompiled/bank0/2A6C.asm; ec/decompiled/bank0/2A6C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_4c_bits_4_5_7(void)
 

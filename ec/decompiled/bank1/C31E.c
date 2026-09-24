@@ -9,7 +9,8 @@
    but that instruction is not in this file. Only the call to 0xB1B3 is certain from the bytes.
    type: unresolved
    evidence: ec/decompiled/bank1/C31E.asm; ec/decompiled/bank1/C31E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_b1b3_listing_cut(void)
 

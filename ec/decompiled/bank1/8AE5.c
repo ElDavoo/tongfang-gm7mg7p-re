@@ -12,7 +12,8 @@
    it, working on XDATA 0x097F, 0x06C0, 0x0980, 0x06E1, 0x0459, 0x0495, 0x045D and 0x0704.
    type: dispatch
    evidence: ec/decompiled/bank1/8AE5.asm; ec/decompiled/bank1/8AE5.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void probe_159a_19f0_0983_then_dispatch(char param_1)
 

@@ -11,7 +11,8 @@
    for these addresses in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/D5D4.asm; ec/decompiled/bank0/D5D4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_33_to_1501_join_loop_d5db(void)
 

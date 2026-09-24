@@ -12,7 +12,8 @@
    number appearing in the opcode's operand byte.
    type: copy
    evidence: ec/decompiled/pd/C398.asm; ec/decompiled/pd/C398.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 set_r7_r5_from_iram_then_read_07d0(void)
 

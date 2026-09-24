@@ -11,7 +11,8 @@
    the whole block through 0xB4B6 and does not match this listing.
    type: math
    evidence: ec/decompiled/bank1/B40E.asm; ec/decompiled/bank1/B40E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void cmp_dptr_to_r2r1(undefined2 param_1,char param_2)
 

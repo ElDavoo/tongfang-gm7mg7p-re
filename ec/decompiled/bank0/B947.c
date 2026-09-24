@@ -11,7 +11,8 @@
    it.
    type: state
    evidence: ec/decompiled/bank0/B947.asm; ec/decompiled/bank0/B947.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_r3_r7_from_0a48_store_a(undefined1 param_1,undefined1 *param_2)
 

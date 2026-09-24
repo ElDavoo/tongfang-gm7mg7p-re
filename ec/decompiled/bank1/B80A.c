@@ -10,7 +10,8 @@
    call instruction and touches no other address.
    type: state
    evidence: ec/decompiled/bank1/B80A.asm; ec/decompiled/bank1/B80A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void arm_05f5_countdown_0490_bit5(void)
 

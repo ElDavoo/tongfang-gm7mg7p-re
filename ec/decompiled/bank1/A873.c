@@ -10,7 +10,8 @@
    unchanged, so on the instruction stream it rewrites the byte; the .c shows it as clearing bit 0.
    type: state
    evidence: ec/decompiled/bank1/A873.asm; ec/decompiled/bank1/A873.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void flag_086f_bit0_send_5a_01_88(byte param_1,byte *param_2)
 

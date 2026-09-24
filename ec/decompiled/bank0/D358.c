@@ -11,7 +11,8 @@
    and 0 otherwise, which is what the .c returns as cVar3.
    type: state
    evidence: ec/decompiled/bank0/D358.asm; ec/decompiled/bank0/D358.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char advance_d9_and_set_1500_20(void)
 

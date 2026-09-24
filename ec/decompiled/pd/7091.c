@@ -8,7 +8,8 @@
    execution continues at 0x7095, which uses A as an index.
    type: reader
    evidence: ec/decompiled/pd/7091.asm; ec/decompiled/pd/7091.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char read_07d4_into_a(void)
 

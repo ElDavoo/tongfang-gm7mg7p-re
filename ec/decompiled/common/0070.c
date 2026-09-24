@@ -14,7 +14,8 @@
    startup, not vendor code. The 0x0097 loops' caller, 0x00CF and 0x0200 are not decoded here.
    type: init
    evidence: ec/decompiled/common/0070.asm; ec/decompiled/common/0070.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void reset_entry_stack_bank0_then_code_init(void)
 

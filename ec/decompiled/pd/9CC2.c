@@ -8,7 +8,8 @@
    is recorded as the instruction's literal, not as a decoded unit
    type: reader
    evidence: ec/annotations/lightbar-bat-flow.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 load_1byte_to_r6(undefined1 *param_1)
 

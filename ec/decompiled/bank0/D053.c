@@ -9,7 +9,8 @@
    written.
    type: writer
    evidence: ec/decompiled/bank0/D053.asm; ec/decompiled/bank0/D053.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void add2_06e7(void)
 

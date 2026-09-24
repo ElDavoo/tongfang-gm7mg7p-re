@@ -10,7 +10,8 @@
    from R7 after the call.
    type: gate
    evidence: ec/decompiled/pd/ADA4.asm; ec/decompiled/pd/ADA4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte call_0faf_then_test_r7_bit2(byte param_1)
 

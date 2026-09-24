@@ -10,7 +10,8 @@
    not decoded here.
    type: entry
    evidence: ec/decompiled/common/0000.asm; ec/decompiled/common/0000.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void reset_vector_forwarder_to_0070(void)
 

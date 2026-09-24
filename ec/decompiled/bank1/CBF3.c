@@ -9,7 +9,8 @@
    not 0x64 it also clears XDATA 0x524.
    type: writer
    evidence: ec/decompiled/bank1/CBF3.asm; ec/decompiled/bank1/CBF3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void publish_0514_and_0342_product(void)
 

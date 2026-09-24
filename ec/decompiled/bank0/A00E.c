@@ -20,7 +20,8 @@
    seeds, but it writes 0x0872/0x087A/0x088A and not the 0x086x results themselves.
    type: state
    evidence: ec/decompiled/bank0/A00E.asm; ec/decompiled/bank0/A00E.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void seed_0872_087a_088a_then_select_level(byte param_1)
 

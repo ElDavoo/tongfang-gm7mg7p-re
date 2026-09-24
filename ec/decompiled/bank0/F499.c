@@ -8,7 +8,8 @@
    returns, leaving DPTR = 0x0A57. Both constants are fixed; neither is derived from A.
    type: writer
    evidence: ec/decompiled/bank0/F499.asm; ec/decompiled/bank0/F499.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_0f_60_to_0a56_0a57(void)
 

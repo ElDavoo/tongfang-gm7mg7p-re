@@ -10,7 +10,8 @@
    not determinable from the byte-scan boundary alone.
    type: unresolved
    evidence: ec/decompiled/bank0/BB47.asm; ec/decompiled/bank0/BB47.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_dptr_08b8(undefined1 param_1)
 

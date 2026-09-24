@@ -8,7 +8,8 @@
    is tested. 0x1610 has no entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/C016.asm; ec/decompiled/bank0/C016.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_1610(void)
 

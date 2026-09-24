@@ -10,7 +10,8 @@
    none is claimed here.
    type: state
    evidence: ec/decompiled/pd/A678.asm; ec/decompiled/pd/A678.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void inc_07d0_reenter_a571(void)
 

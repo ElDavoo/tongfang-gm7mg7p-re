@@ -9,7 +9,8 @@
    ec/annotations/registers.yaml as XDATA_0867, units not determined.
    type: math
    evidence: ec/decompiled/bank0/BD34.asm; ec/decompiled/bank0/BD34.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 char sub_dptr_byte_from_0867(char *param_1)
 

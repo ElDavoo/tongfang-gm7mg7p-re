@@ -9,7 +9,8 @@
    further up, so this is a fixed three-byte scatter rather than a block copy.
    type: copy
    evidence: ec/decompiled/bank1/87DD.asm; ec/decompiled/bank1/87DD.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void copy_code_a691_a693_to_xdata(void)
 

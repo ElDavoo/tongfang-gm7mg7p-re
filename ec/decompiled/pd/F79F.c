@@ -9,7 +9,8 @@
    decoded here.
    type: forwarder
    evidence: ec/decompiled/pd/F79F.asm; ec/decompiled/pd/F79F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void ljmp_4402(void)
 

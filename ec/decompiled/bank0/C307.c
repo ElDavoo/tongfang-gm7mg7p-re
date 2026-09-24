@@ -8,7 +8,8 @@
    significant bit only; the other seven bits keep their values. Pairs with 0xC2FF.
    type: writer
    evidence: ec/decompiled/bank0/C307.asm; ec/decompiled/bank0/C307.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_1606_bit0(void)
 

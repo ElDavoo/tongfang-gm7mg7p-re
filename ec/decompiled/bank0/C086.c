@@ -11,7 +11,8 @@
    not decoded here.
    type: dispatch
    evidence: ec/decompiled/bank0/C086.asm; ec/decompiled/bank0/C086.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_1608_bit5_on_06e3(void)
 

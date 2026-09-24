@@ -9,7 +9,8 @@
    from these bytes.
    type: forwarder
    evidence: ec/decompiled/bank1/AD85.asm; ec/decompiled/bank1/AD85.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void forwarder_to_b33b(char param_1,byte param_2,byte param_3)
 

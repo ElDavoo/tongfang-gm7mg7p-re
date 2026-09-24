@@ -11,7 +11,8 @@
    cross-checked against coretemp); nothing in this listing shows what the difference is used for.
    type: math
    evidence: ec/decompiled/bank0/BAD4.asm; ec/decompiled/bank0/BAD4.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 char sub_input_from_cpu_temp_043e(char param_1)
 

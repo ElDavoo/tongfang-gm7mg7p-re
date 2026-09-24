@@ -10,7 +10,8 @@
    write through a pointer parameter is not supported: MOVX @DPTR takes no pointer argument.
    type: writer
    evidence: ec/decompiled/pd/C1EF.asm; ec/decompiled/pd/C1EF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_a_to_dptr_then_fall_into_c1f0(undefined1 param_1,undefined1 *param_2)
 

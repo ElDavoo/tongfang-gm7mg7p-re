@@ -10,7 +10,8 @@
    0x9FCA does is not decoded in this listing.
    type: logic
    evidence: ec/decompiled/bank1/A029.asm; ec/decompiled/bank1/A029.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void decrement_067c_then_clear_0724_bit5(void)
 

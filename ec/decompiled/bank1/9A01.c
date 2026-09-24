@@ -7,7 +7,8 @@
 /* Writes 0 to XDATA 0x1C10 and 0x84 to XDATA 0x0681, then returns.
    type: writer
    evidence: ec/decompiled/bank1/9A01.asm; ec/decompiled/bank1/9A01.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void set_1c10_0_and_0681_84(void)
 

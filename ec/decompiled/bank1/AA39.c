@@ -14,7 +14,8 @@
    mask on the byte just read, so the two arms do not depend on the high bit of XDATA 0x0756.
    type: state
    evidence: ec/decompiled/bank1/AA39.asm; ec/decompiled/bank1/AA39.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void step_counters_0756_0757(void)
 

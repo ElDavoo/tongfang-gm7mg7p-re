@@ -12,7 +12,8 @@
    0x08CD has an entry in ec/annotations/registers.yaml.
    type: state
    evidence: ec/decompiled/bank0/9C24.asm; ec/decompiled/bank0/9C24.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void reset_08ad_08bf_and_clear_08e2_bit7(byte *param_1)
 

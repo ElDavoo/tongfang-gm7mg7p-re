@@ -11,7 +11,8 @@
    belongs to 0x94AF. 0x0A4A, 0x098C and 0x0463 have no entry in ec/annotations/registers.yaml.
    type: copy
    evidence: ec/decompiled/bank0/948D.asm; ec/decompiled/bank0/948D.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void code_byte_to_0a4a_then_push_r7(byte param_1,short param_2)
 

@@ -10,7 +10,8 @@
    0x0855/0x0856 is taken modulo 100. Neither address has an entry in ec/annotations/registers.yaml.
    type: math
    evidence: ec/decompiled/bank0/BB11.asm; ec/decompiled/bank0/BB11.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 mod_100_of_be16_0855(void)
 

@@ -19,7 +19,8 @@
    established, and names none of the other addresses above.
    type: state
    evidence: ec/decompiled/bank0/9CA6.asm; ec/decompiled/bank0/9CA6.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void gate_06e6_442_then_sync_046a_from_086b(void)
 

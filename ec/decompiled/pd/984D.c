@@ -9,7 +9,8 @@
    describes the chain rather than this one instruction. Neither 0x0BC4 nor 0x0EEAE is decoded here.
    type: unresolved
    evidence: ec/decompiled/pd/984D.asm; ec/decompiled/pd/984D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_0eeae(void)
 

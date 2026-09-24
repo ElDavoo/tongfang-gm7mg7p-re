@@ -9,7 +9,8 @@
    the boundary is a call-target-scan hypothesis, so this may not be the whole routine.
    type: forwarder
    evidence: ec/decompiled/bank0/AFF2.asm; ec/decompiled/bank0/AFF2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 char call_445e_40_88_then_load_0a49(void)
 

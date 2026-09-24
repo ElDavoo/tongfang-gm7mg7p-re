@@ -8,7 +8,8 @@
    byte. Same shape as 0xBE2A, 0xBE32, 0xBE3A and 0xBE4A with a different second constant.
    type: writer
    evidence: ec/decompiled/bank0/BE42.asm; ec/decompiled/bank0/BE42.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void write_64_b5_pair(undefined1 *param_1)
 

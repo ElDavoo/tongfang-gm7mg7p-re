@@ -10,7 +10,8 @@
    shard; the other three targets are outside this listing and are not decoded here.
    type: dispatch
    evidence: ec/decompiled/pd/0F45.asm; ec/decompiled/pd/0F45.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void read4_ptr_kind_dispatch(undefined1 param_1,char param_2)
 

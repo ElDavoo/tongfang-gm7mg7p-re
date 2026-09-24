@@ -11,7 +11,8 @@
    this is a callable entry or a mid-routine label is not established here.
    type: unresolved
    evidence: ec/decompiled/bank0/F0EF.asm; ec/decompiled/bank0/F0EF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_to_0f60_and_set_0a56(undefined1 param_1)
 

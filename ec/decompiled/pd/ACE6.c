@@ -10,7 +10,8 @@
    annotation.
    type: math
    evidence: ec/decompiled/pd/ACE6.asm; ec/decompiled/pd/ACE6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char index_a_by_23_add_0a2d(char param_1)
 

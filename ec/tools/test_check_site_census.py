@@ -418,14 +418,27 @@ class CsvReading(unittest.TestCase):
         self.assertEqual(cells['0x25CE4'], 'other program')
 
     def test_a_committed_row_citing_several_lines_is_one_row(self):
-        # The commas in `bank0/D091.c:43,47` are the CSV's own quoting: read
+        # The commas in `bank0/D091.c:44,48` are the CSV's own quoting: read
         # unquoted, the field shifts and the citation loses its second line --
         # which is how this file was written wrong once already.
+        #
+        # The line numbers are read out of the committed file rather than
+        # written here, because they are a pin into a generated `.c` and every
+        # plate-comment edit moves them: issue #135's `name_basis:` line
+        # shifted this cell by one and the assertion below caught it, which is
+        # the check working. A hardcoded copy would go stale silently the
+        # moment the next annotation landed. What is being tested is the
+        # quoting and the parse, not the addresses.
         with open(csc.MAPPING_CSV, newline="") as f:
             first = list(csv.DictReader(f))[0]
-        self.assertEqual(first['census_refs'], 'bank0/D091.c:43,47')
+        self.assertEqual(len(csc.parse_refs(first['census_refs'])), 2)
+        where, first_line = csc.parse_refs(first['census_refs'])[0]
+        self.assertEqual(first['census_refs'],
+                         '%s:%d,%d' % (where, first_line,
+                                       csc.parse_refs(first['census_refs'])[1][1]))
         self.assertEqual(csc.parse_refs(first['census_refs']),
-                         [('bank0/D091.c', 43), ('bank0/D091.c', 47)])
+                         [(where, first_line),
+                          (where, csc.parse_refs(first['census_refs'])[1][1])])
 
     def test_an_unknown_state_is_an_error_not_a_default_cell(self):
         with tempfile.TemporaryDirectory() as d:

@@ -13,7 +13,8 @@
    result is documented in ec/annotations/registers.yaml.
    type: state
    evidence: ec/decompiled/bank0/B38E.asm; ec/decompiled/bank0/B38E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void step_1802_toward_bf12_limited_by_09cd(void)
 

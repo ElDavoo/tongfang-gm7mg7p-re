@@ -10,7 +10,8 @@
    0x6391 + XDATA[0x09CC]. 0x0826 has no entry in ec/annotations/registers.yaml.
    type: math
    evidence: ec/decompiled/bank0/BA2A.asm; ec/decompiled/bank0/BA2A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char mul_code_byte_by_xdata_0826(byte param_1,short param_2)
 

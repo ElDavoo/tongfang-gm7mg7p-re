@@ -9,7 +9,8 @@
    this routine has no RET of its own and reaches 0x122F with DPTR = 0x0004.
    type: gate
    evidence: ec/decompiled/pd/F351.asm; ec/decompiled/pd/F351.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void gate_6f96_then_ljmp_122f(short param_1)
 

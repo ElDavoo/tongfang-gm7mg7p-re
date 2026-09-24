@@ -13,7 +13,8 @@
    0x0A5B nor 0x0A5C is documented in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/D991.asm; ec/decompiled/bank0/D991.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_r4_r5_into_record_6e65(undefined1 param_1,undefined1 param_2,char param_3)
 

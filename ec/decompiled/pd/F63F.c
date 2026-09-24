@@ -11,7 +11,8 @@
    rather than a bit-7 write; 0x0945 is not documented.
    type: writer
    evidence: ec/decompiled/pd/F63F.asm; ec/decompiled/pd/F63F.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_r7_to_07cc_r5_to_0945(undefined1 param_1,undefined1 param_2)
 

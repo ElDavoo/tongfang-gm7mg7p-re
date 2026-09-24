@@ -10,7 +10,8 @@
    registers the listing stores.
    type: gate
    evidence: ec/decompiled/pd/F61C.asm; ec/decompiled/pd/F61C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_r7r5_0_to_07d2_if_6faf_zero(undefined1 param_1,undefined1 param_2)
 

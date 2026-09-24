@@ -9,7 +9,8 @@
    into A and returns. The address reached is ((R6-3) << 8) | 0x01.
    type: reader
    evidence: ec/decompiled/pd/97CB.asm; ec/decompiled/pd/97CB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_xdata_byte_at_r6_minus_3_page_01(undefined1 param_1,char param_2)
 

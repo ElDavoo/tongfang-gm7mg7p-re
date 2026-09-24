@@ -10,7 +10,8 @@
    routine of its own.
    type: forwarder
    evidence: ec/decompiled/bank0/9016.asm; ec/decompiled/bank0/9016.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_constant_14(undefined1 *param_1)
 

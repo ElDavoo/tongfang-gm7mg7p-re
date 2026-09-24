@@ -10,7 +10,8 @@
    XDATA 0x07D1; what that structure holds is not decoded here.
    type: forwarder
    evidence: ec/decompiled/pd/96E8.asm; ec/decompiled/pd/96E8.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_07d1_then_scale_via_96ed(void)
 

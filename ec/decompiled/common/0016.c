@@ -13,7 +13,8 @@
    trampolines. What 0xBF1E holds is not decoded here.
    type: forwarder
    evidence: ec/decompiled/common/0016.asm; ec/decompiled/common/0016.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void table_entry_to_115c(void)
 

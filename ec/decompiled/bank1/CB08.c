@@ -8,7 +8,8 @@
    writes 0x08 to XDATA 0x575 and 7 to XDATA 0x3A3.
    type: writer
    evidence: ec/decompiled/bank1/CB08.asm; ec/decompiled/bank1/CB08.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_0575_08_when_03a1_low2_clear(void)
 

@@ -9,7 +9,8 @@
    is not decoded further.
    type: writer
    evidence: ec/decompiled/bank0/C363.asm; ec/decompiled/bank0/C363.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_40_to_1641(void)
 

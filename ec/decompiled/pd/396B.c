@@ -10,7 +10,8 @@
    value it reports is not what the instructions produce.
    type: reader
    evidence: ec/decompiled/pd/396B.asm; ec/decompiled/pd/396B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read4xdata_and_clear_r7_bit0(undefined1 param_1)
 

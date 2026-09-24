@@ -10,7 +10,8 @@
    no entry there.
    type: copy
    evidence: ec/decompiled/bank0/BF12.asm; ec/decompiled/bank0/BF12.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 undefined1 copy_043d_to_09cd_and_return_09cd(void)
 

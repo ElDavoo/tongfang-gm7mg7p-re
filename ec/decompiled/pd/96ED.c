@@ -10,7 +10,8 @@
    caller. The C returns the high-byte expression and drops both pointer stores.
    type: math
    evidence: ec/decompiled/pd/96ED.asm; ec/decompiled/pd/96ED.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_0a13_plus_17_times_a(char param_1)
 

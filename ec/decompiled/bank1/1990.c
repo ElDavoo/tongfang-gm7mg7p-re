@@ -9,7 +9,8 @@
    decompiler rendering that as a call to the stub with 0xC391 as the argument.
    type: forwarder
    evidence: ec/decompiled/bank1/1990.asm; ec/decompiled/bank1/1990.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void trampoline_to_c391(void)
 

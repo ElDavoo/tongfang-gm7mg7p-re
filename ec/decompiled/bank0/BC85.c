@@ -8,7 +8,8 @@
    an entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/BC85.asm; ec/decompiled/bank0/BC85.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_08a9_and_08aa(void)
 

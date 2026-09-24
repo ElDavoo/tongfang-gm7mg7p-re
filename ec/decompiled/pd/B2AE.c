@@ -9,7 +9,8 @@
    R0-R7 register
    type: math
    evidence: ec/annotations/pd-0x38-consumers.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char mul38_ptr_0946(char param_1)
 

@@ -7,7 +7,8 @@
 /* Writes the constant 0x01 to XDATA 0x068B and returns.
    type: writer
    evidence: ec/decompiled/bank1/C6DB.asm; ec/decompiled/bank1/C6DB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_068b_to_1(void)
 

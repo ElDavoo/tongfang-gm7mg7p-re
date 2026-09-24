@@ -11,7 +11,8 @@
    expression, which the .asm does not support; what the pointer is used for is not in this body.
    type: reader
    evidence: ec/decompiled/bank0/DB3E.asm; ec/decompiled/bank0/DB3E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 rec_ptr_from_index_6e65(char param_1)
 

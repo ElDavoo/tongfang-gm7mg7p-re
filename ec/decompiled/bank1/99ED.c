@@ -7,7 +7,8 @@
 /* Writes 0x82 to XDATA 0x0681 and returns.
    type: writer
    evidence: ec/decompiled/bank1/99ED.asm; ec/decompiled/bank1/99ED.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void set_0681_to_82(void)
 

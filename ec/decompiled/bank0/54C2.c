@@ -9,7 +9,8 @@
    0x5349 with a different address pair.
    type: dispatch
    evidence: ec/decompiled/bank0/54C2.asm; ec/decompiled/bank0/54C2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_to_4ecd(void)
 

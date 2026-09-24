@@ -10,7 +10,8 @@
    convention is not decoded here and is not asserted.
    type: forwarder
    evidence: ec/decompiled/bank1/D322.asm; ec/decompiled/bank1/D322.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_a5e6_then_888c_on_03b8(void)
 

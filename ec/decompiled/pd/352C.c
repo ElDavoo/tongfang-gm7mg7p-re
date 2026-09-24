@@ -9,7 +9,8 @@
    ret, so it is a fragment, and nothing here shows where R3, R2 and R1 were set.
    type: writer
    evidence: ec/decompiled/pd/352C.asm; ec/decompiled/pd/352C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_3bytes_to_0a86(void)
 

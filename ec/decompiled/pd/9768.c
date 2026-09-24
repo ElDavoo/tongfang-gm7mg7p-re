@@ -9,7 +9,8 @@
    rather than at the mul, and no address is dereferenced before the ret.
    type: math
    evidence: ec/decompiled/pd/9768.asm; ec/decompiled/pd/9768.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_from_a_add_17_second_half(byte param_1)
 

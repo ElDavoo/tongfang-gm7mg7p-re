@@ -10,7 +10,8 @@
    what each index denotes is not determined.
    type: reader
    evidence: ec/decompiled/pd/6FAF.asm; ec/decompiled/pd/6FAF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 scaled_lookup_from_a_times_5e_plus_f8(char param_1)
 

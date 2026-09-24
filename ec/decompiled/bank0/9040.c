@@ -10,7 +10,8 @@
    from the listing.
    type: unresolved
    evidence: ec/decompiled/bank0/9040.asm; ec/decompiled/bank0/9040.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void bare_ret_9040(void)
 

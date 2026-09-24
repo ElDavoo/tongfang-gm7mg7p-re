@@ -10,7 +10,8 @@
    that the 0x9F04 listing does not cover, so it is not decoded further.
    type: unresolved
    evidence: ec/decompiled/bank1/9F00.asm; ec/decompiled/bank1/9F00.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void ret_only_stub_9f00(void)
 

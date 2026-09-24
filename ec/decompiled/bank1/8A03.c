@@ -12,7 +12,8 @@
    would be for.
    type: unresolved
    evidence: ec/decompiled/bank1/8A03.asm; ec/decompiled/bank1/8A03.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void ret_terminating_89f4(void)
 

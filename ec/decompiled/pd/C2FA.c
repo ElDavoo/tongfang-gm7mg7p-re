@@ -15,7 +15,8 @@
    own 0x07D0.
    type: state
    evidence: ec/decompiled/pd/C2FA.asm; ec/decompiled/pd/C2FA.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_07d0_then_run_indexed_state_chain(char param_1,byte param_2)
 

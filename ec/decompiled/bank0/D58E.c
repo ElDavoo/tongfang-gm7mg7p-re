@@ -13,7 +13,8 @@
    register in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/D58E.asm; ec/decompiled/bank0/D58E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_r5_to_0400_plus_r7(undefined1 param_1,undefined1 param_2)
 

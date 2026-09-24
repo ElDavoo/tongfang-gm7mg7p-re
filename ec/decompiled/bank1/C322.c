@@ -11,7 +11,8 @@
    entry is not set by any instruction in this listing.
    type: math
    evidence: ec/decompiled/bank1/C322.asm; ec/decompiled/bank1/C322.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte xch_rrc_at_r0(byte param_1,byte *param_2)
 

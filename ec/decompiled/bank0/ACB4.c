@@ -19,7 +19,8 @@
    type: init
    evidence: ec/decompiled/bank0/ACB4.asm; ec/decompiled/bank0/ACB4.c;
    ec/annotations/ec-07c4-07d5-sites.md; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void reset_xdata_flags_and_07d5_to_ff(void)
 

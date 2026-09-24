@@ -8,7 +8,8 @@
    effects of the two called routines are not shown in this listing.
    type: writer
    evidence: ec/decompiled/bank0/A96B.asm; ec/decompiled/bank0/A96B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_073f_and_0899(void)
 

@@ -12,7 +12,8 @@
    and what 0xB2A0 does is not decoded here.
    type: logic
    evidence: ec/decompiled/bank1/B202.asm; ec/decompiled/bank1/B202.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void carry_set_set_043c_4_call_b2a0(void)
 

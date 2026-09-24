@@ -16,7 +16,8 @@
    addresses is documented in ec/annotations/registers.yaml.
    type: logic
    evidence: ec/decompiled/bank1/AC84.asm; ec/decompiled/bank1/AC84.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void ten_step_check_1aaa_889e(void)
 

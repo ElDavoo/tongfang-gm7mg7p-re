@@ -9,7 +9,8 @@
    in this one.
    type: copy
    evidence: ec/decompiled/bank1/C7A7.asm; ec/decompiled/bank1/C7A7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void copy_6_bytes_via_a530_and_clear_0497b7(void)
 

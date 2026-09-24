@@ -11,7 +11,8 @@
    saved in B and restored on both indirect paths.
    type: writer
    evidence: ec/decompiled/pd/128D.asm; ec/decompiled/pd/128D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void fill_bytes_by_ptr_kind
                (undefined1 *param_1,undefined1 param_2,char param_3,undefined1 param_4,char param_5,

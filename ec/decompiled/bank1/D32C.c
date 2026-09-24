@@ -10,7 +10,8 @@
    0x03C1 write.
    type: writer
    evidence: ec/decompiled/bank1/D32C.asm; ec/decompiled/bank1/D32C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void copy_0514_to_03c1_and_set_03a1_bit0(void)
 

@@ -12,7 +12,8 @@
    shows both calls.
    type: writer
    evidence: ec/decompiled/bank1/8A6C.asm; ec/decompiled/bank1/8A6C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_06f8_bit3_then_call_abce(void)
 

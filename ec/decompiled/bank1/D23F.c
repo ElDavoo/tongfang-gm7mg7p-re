@@ -8,7 +8,8 @@
    passes nothing to either call.
    type: forwarder
    evidence: ec/decompiled/bank1/D23F.asm; ec/decompiled/bank1/D23F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_d34b_then_d32c(void)
 

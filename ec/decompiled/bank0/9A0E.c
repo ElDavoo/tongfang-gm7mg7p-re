@@ -15,7 +15,8 @@
    meaning not established; 0x08EA, 0x08CA, 0x08CB, 0x08C2, 0x0A49 and 0x0A4A have no entry there.
    type: math
    evidence: ec/decompiled/bank0/9A0E.asm; ec/decompiled/bank0/9A0E.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 char mul_div_08ea_then_sub_044b_selected(void)
 

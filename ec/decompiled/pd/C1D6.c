@@ -10,7 +10,8 @@
    subsequently used for.
    type: math
    evidence: ec/decompiled/pd/C1D6.asm; ec/decompiled/pd/C1D6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_dptr_0d0e_c1d6(void)
 

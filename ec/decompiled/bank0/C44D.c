@@ -9,7 +9,8 @@
    ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/C44D.asm; ec/decompiled/bank0/C44D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_1609_bit0_and_write_04_to_2006(void)
 

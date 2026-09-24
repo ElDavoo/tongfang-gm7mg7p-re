@@ -9,7 +9,8 @@
    0xEC5E and 0xF610 from the same position.
    type: gate
    evidence: ec/decompiled/pd/F668.asm; ec/decompiled/pd/F668.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_ec36_if_6faf_zero(undefined1 param_1)
 

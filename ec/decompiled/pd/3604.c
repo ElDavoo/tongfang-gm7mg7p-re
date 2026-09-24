@@ -10,7 +10,8 @@
    touched here.
    type: math
    evidence: ec/decompiled/pd/3604.asm; ec/decompiled/pd/3604.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 char index_5e_f6(char param_1)
 

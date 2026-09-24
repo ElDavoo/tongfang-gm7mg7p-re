@@ -10,7 +10,8 @@
    plus a 0xFE-carry test that no instruction here contains.
    type: math
    evidence: ec/decompiled/pd/98B1.asm; ec/decompiled/pd/98B1.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void inc_r7_carry_to_r6_setup_0005(byte param_1)
 

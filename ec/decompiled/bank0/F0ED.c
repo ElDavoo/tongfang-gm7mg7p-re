@@ -13,7 +13,8 @@
    ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/F0ED.asm; ec/decompiled/bank0/F0ED.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void set_0f60_88_and_0a56_0f_60(void)
 

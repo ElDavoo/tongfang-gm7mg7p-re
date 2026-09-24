@@ -11,7 +11,8 @@
    there.
    type: math
    evidence: ec/decompiled/pd/9087.asm; ec/decompiled/pd/9087.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_and_increment_32bit(undefined1 param_1)
 

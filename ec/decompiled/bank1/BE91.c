@@ -11,7 +11,8 @@
    documented in ec/annotations/registers.yaml, so the 0xE0 0x2E pair is not identified.
    type: dispatch
    evidence: ec/decompiled/bank1/BE91.asm; ec/decompiled/bank1/BE91.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void pick_0f80_0800_0bb0_1800_1f00(char param_1)
 

@@ -12,7 +12,8 @@
    them changes the outcome.
    type: logic
    evidence: ec/decompiled/bank1/A0CC.asm; ec/decompiled/bank1/A0CC.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_0724_bit5_when_gates_pass(char param_1)
 

@@ -8,7 +8,8 @@
    read-modify-write passes, no other effect.
    type: writer
    evidence: ec/decompiled/bank1/C638.asm; ec/decompiled/bank1/C638.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_bit0_of_0755_and_0709(void)
 

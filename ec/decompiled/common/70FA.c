@@ -7,7 +7,8 @@
 /* Called from 0xBCF5 to compute 65000 - stress - 1.
    type: math
    evidence: ec/annotations/charge-target-derating.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte limit_65000_minus_x(byte param_1,byte param_2,byte param_3,byte param_4,byte param_5,
                         char param_6,char param_7,char param_8)

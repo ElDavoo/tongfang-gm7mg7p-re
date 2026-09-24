@@ -10,7 +10,8 @@
    expression against 0x83 rather than as an address.
    type: math
    evidence: ec/decompiled/pd/B2E1.asm; ec/decompiled/pd/B2E1.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_from_097c_plus_carry(byte param_1)
 

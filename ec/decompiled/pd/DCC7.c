@@ -10,7 +10,8 @@
    shown here.
    type: writer
    evidence: ec/decompiled/pd/DCC7.asm; ec/decompiled/pd/DCC7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_then_clear_0817_and_add_r6_times_0x67(undefined1 param_1,undefined1 param_2)
 

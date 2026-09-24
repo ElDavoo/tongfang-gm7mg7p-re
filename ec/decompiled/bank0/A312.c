@@ -15,7 +15,8 @@
    listing.
    type: dispatch
    evidence: ec/decompiled/bank0/A312.asm; ec/decompiled/bank0/A312.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void gate_0494_then_dispatch_0851_and_7(byte param_1,byte *param_2,byte *param_3)
 

@@ -9,7 +9,8 @@
    not determinable here beyond that call order.
    type: unresolved
    evidence: ec/decompiled/bank1/C8E3.asm; ec/decompiled/bank1/C8E3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_cc2d_then_d0c4(void)
 

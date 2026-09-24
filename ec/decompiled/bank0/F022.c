@@ -12,7 +12,8 @@
    it sets bit 0 of XDATA 0x0FC3 and jumps to 0xF072 which zeroes 0x0FC0.
    type: logic
    evidence: ec/decompiled/bank0/F022.asm; ec/decompiled/bank0/F022.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void rotate_16bit_pair_and_range_check_0fc3(byte param_1,char param_2)
 

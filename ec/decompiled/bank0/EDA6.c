@@ -9,7 +9,8 @@
    bytes.
    type: forwarder
    evidence: ec/decompiled/bank0/EDA6.asm; ec/decompiled/bank0/EDA6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 call_e8c4_with_r6_0xff_return_r7(undefined1 param_1)
 

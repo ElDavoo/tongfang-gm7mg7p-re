@@ -9,7 +9,8 @@
    carry flag, so the flag behaviour is read from the .asm.
    type: logic
    evidence: ec/decompiled/bank1/887A.asm; ec/decompiled/bank1/887A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_carry_if_r3r4_is_0102(char param_1,char param_2)
 

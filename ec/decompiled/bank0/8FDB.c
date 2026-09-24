@@ -14,7 +14,8 @@
    0x0817 that are not in this listing.
    type: state
    evidence: ec/decompiled/bank0/8FDB.asm; ec/decompiled/bank0/8FDB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void state_0817_fallthrough(char param_1)
 

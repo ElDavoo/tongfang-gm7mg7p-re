@@ -9,7 +9,8 @@
    Byte-identical to 0xDCBA, 0xDCFA and 0xDD10; the constants' meaning is not decoded here.
    type: forwarder
    evidence: ec/decompiled/bank0/DC9E.asm; ec/decompiled/bank0/DC9E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void de4d_d991_ea0_tail_e256_a(void)
 

@@ -12,7 +12,8 @@
    carry set. Every exit returns 0 or 1 in R7; what the flag stands for is not established here.
    type: gate
    evidence: ec/decompiled/pd/BA67.asm; ec/decompiled/pd/BA67.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_07d4_07d5_then_return_0_or_1(char param_1,char param_2)
 

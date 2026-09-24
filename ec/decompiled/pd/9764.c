@@ -10,7 +10,8 @@
    computation.
    type: math
    evidence: ec/decompiled/pd/9764.asm; ec/decompiled/pd/9764.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_from_a_mul_17_add_17_first_half(char param_1)
 

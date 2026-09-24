@@ -9,7 +9,8 @@
    effects belong to the three callees, none of which is decoded here.
    type: forwarder
    evidence: ec/decompiled/pd/3750.asm; ec/decompiled/pd/3750.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_0faf_0f00_then_jump_0dbc(void)
 

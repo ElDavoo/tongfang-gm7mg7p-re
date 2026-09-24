@@ -12,7 +12,8 @@
    open.
    type: writer
    evidence: ec/decompiled/bank0/8F0F.asm; ec/decompiled/bank0/8F0F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void store_a_to_dptr_then_075c_and_notify(undefined1 param_1,undefined1 *param_2)
 

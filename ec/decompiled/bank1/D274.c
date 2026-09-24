@@ -10,7 +10,8 @@
    iterations in R7, and stops the loop once R7 reaches 0x0F; the count is written to 0x03BA.
    type: math
    evidence: ec/decompiled/bank1/D274.asm; ec/decompiled/bank1/D274.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void div_23_minus_0386_by_034d_capped_15(void)
 

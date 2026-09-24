@@ -9,7 +9,8 @@
    in A; the caller's DPTR is not restored. 0xF22E is not decoded in this shard.
    type: writer
    evidence: ec/decompiled/pd/68CE.asm; ec/decompiled/pd/68CE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 store_a_and_copy_07f4_masked_to_07f5(undefined1 param_1,undefined1 *param_2)
 

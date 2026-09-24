@@ -9,7 +9,8 @@
    and sets bit 6 of 0x0497, calls 0xE5A7 and writes 0x05 to XDATA 0x0394.
    type: logic
    evidence: ec/decompiled/bank1/D1E7.asm; ec/decompiled/bank1/D1E7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_0497_bit6_and_0394_to_5(void)
 

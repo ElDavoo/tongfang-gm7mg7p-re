@@ -12,7 +12,8 @@
    return of param_1-3 does not match these instructions.
    type: math
    evidence: ec/decompiled/pd/9028.asm; ec/decompiled/pd/9028.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char make_dptr_r6_minus_3_9028(char r6_value)
 

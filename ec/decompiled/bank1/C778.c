@@ -9,7 +9,8 @@
    XDATA 0x0497.
    type: logic
    evidence: ec/decompiled/bank1/C778.asm; ec/decompiled/bank1/C778.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_0492_04a0_0524_0526_and_0497b5(void)
 

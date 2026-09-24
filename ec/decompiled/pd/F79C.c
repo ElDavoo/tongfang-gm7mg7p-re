@@ -9,7 +9,8 @@
    0x0AE4) belongs to the target at 0xD085, not to this address.
    type: forwarder
    evidence: ec/decompiled/pd/F79C.asm; ec/decompiled/pd/F79C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char ljmp_d085(char param_1)
 

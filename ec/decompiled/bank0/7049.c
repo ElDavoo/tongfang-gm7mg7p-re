@@ -11,7 +11,8 @@
    so reports a write in the case that falls through here.
    type: writer
    evidence: ec/decompiled/bank0/7049.asm; ec/decompiled/bank0/7049.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_byte_by_tag_r3(undefined1 param_1,undefined1 *param_2,undefined1 param_3,char param_4)
 

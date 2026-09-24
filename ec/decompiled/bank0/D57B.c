@@ -11,7 +11,8 @@
    cannot be tied to any register in ec/annotations/registers.yaml.
    type: reader
    evidence: ec/decompiled/bank0/D57B.asm; ec/decompiled/bank0/D57B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void read_xdata_0400_plus_r7(undefined1 param_1)
 

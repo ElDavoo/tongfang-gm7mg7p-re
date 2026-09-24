@@ -10,7 +10,8 @@
    bytes, so what this entry is for is not determined.
    type: unresolved
    evidence: ec/decompiled/pd/3974.asm; ec/decompiled/pd/3974.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 set_dptr_07fb_then_fall_through(void)
 

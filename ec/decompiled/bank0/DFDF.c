@@ -9,7 +9,8 @@
    returned R6 to XDATA 0x0464 and R7 to XDATA 0x0465 in that order.
    type: math
    evidence: ec/decompiled/bank0/DFDF.asm; ec/decompiled/bank0/DFDF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void gate_06e6_then_store_0464(undefined1 param_1)
 

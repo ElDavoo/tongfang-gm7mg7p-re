@@ -10,7 +10,8 @@
    show.
    type: forwarder
    evidence: ec/decompiled/pd/4C20.asm; ec/decompiled/pd/4C20.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_f739_then_return_dptr_07d0(void)
 

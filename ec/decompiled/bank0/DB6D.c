@@ -10,7 +10,8 @@
    address is not decoded further here.
    type: writer
    evidence: ec/decompiled/bank0/DB6D.asm; ec/decompiled/bank0/DB6D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_r7_to_table_addr(undefined1 param_1,undefined1 param_2,undefined1 param_3)
 

@@ -11,7 +11,8 @@
    0x9D45, 0x9B03, 0x9CE8, 0xA841, 0x9D53, 0x9D4C and 0x9D4C.
    type: dispatch
    evidence: ec/decompiled/bank1/9AEA.asm; ec/decompiled/bank1/9AEA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_068b_low3_via_9ad2_table(void)
 

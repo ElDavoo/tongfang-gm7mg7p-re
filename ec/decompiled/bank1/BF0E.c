@@ -10,7 +10,8 @@
    ec/annotations/registers.yaml.
    type: dispatch
    evidence: ec/decompiled/bank1/BF0E.asm; ec/decompiled/bank1/BF0E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void pick_0800_or_0bb0_by_05b9(void)
 

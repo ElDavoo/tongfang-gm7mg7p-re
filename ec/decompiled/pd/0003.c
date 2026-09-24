@@ -9,7 +9,8 @@
    the target at 0x0056, not to this address.
    type: forwarder
    evidence: ec/decompiled/pd/0003.asm; ec/decompiled/pd/0003.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 ljmp_0056(undefined1 param_1)
 
