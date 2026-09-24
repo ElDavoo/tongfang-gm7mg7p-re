@@ -86,6 +86,25 @@ $ python3 ec/tools/xdata_register_map.py --check
 /home/runner/.../ec/annotations/xdata-clusters.csv: 426 rows match a fresh generation from the committed tree at threshold 0.5
 ```
 
+*(Correction, 2026-09-24. The two `--check` lines above are what that command
+printed when this transcript was written; **it no longer does.** Re-run on the
+merged tree it exits 1 and reports `differs from a fresh generation` for both
+CSVs — 135 of 1,172 lines in `xdata-registers.csv`, 123 of 428 in
+`xdata-clusters.csv`. This is pre-existing rather than this change's doing: the
+identical failure is on `origin/main`, and `--self-test` fails 10 assertions on
+both, the `ok the committed CSVs match a fresh generation` line in the
+transcript below among them. The cause is #310's `bank0/CC64`
+(`init_06e6_1_clear_0743_07c5_and_07d5_ff`), whose annotation adds an address
+the committed census still had to itself in a one-address cluster at 1/4: a
+fresh generation moves it into the largest main-EC cluster at 109/1,149 against
+the committed 108/1,136, and the ids of the clusters it displaces move with it.
+**§5's four corrected rows are held to the committed CSV**, which is the
+authority this file's own rule makes them, and not to a fresh generation that
+would move the top row again. Re-deriving the census to close the gap belongs to
+#254/#256/#326, and #326 already records the census as a lower bound for the
+same reason: it is what the committed tree spells, not a claim about every
+address the firmware touches.)*
+
 The census is the same 1,172 addresses in the same 14,801 references as before
 — §4.3 changed which *direction* each reference is, and not one address or
 reference moved. The cluster count did, because the writer axis is built on
@@ -593,9 +612,11 @@ ranking is by size — which reorders everything below the top. A second,
 independent movement comes from the `named inside` column alone: that column
 counts addresses `ec/ghidra/xdata-symbols.csv` names, and the table grew from
 56 names to 101 without these CSVs being regenerated. (101 is this
-paragraph's figure; `xdata-symbols.csv` holds 172 names in the tree now, and it
-is that table §5's "named inside" column counts.) Sizes, reference counts and
-ranges are §4.3; `named inside` is mostly the symbol table.
+paragraph's figure; `xdata-symbols.csv` holds 177 names in the tree now — 177
+rows, and 177 distinct `addr`/`name` pairs, so the count is the same under
+every reading — and it is that table §5's "named inside" column counts.)
+Sizes, reference counts and ranges are §4.3; `named inside` is mostly the
+symbol table.
 
 | cluster | size | refs | range | named inside | the functions the cluster's addresses share |
 |---|---:|---:|---|---|---|
