@@ -189,7 +189,16 @@ ORACLE = {
     "distinct": 1172, "refs": 14801,
     "main_distinct": 1063, "main_refs": 13937,
     "pd_only": 109, "both": 48,
-    "named_in_tree": 44,
+    # Addresses the symbol table names AND the census reaches. It is not
+    # `len(symbols)`: naming an address in registers.yaml does not put it in
+    # a decompiled function, so the two counts part company whenever a
+    # register is named that no surviving function touches. It moved 44 -> 79
+    # when the 0x0400-0x045F page entries landed in registers.yaml without
+    # this constant being re-derived, and the self-test was failing on `main`
+    # because of it; 86 is the re-derived count, of which 7 are
+    # 0x08A0/0x08A2/0x08EB/0x089E/0x089F/0x09E6/0x09E7
+    # (ec/annotations/manual-fan-ctrl-0751.md 8a).
+    "named_in_tree": 86,
 }
 ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
 # The two symbol-table addresses register_ref_table.py finds main-EC sites for
