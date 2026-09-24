@@ -3337,7 +3337,7 @@ against drift rather than a bug hunt:
 
 | | `index.csv` | `listing-index.csv` | manifest |
 |---|---|---|---|
-| EC (`ec/decompiled/`, `ec/ghidra/manifest.csv`) | 2,708 rows, 2,708 distinct `(program, addr)`, 0 dups, 0 short rows | 2,708 / 2,708, same | 4 rows, `functions` agrees with both indexes on every row and sums to 2,708; all `mode` = `export-only` |
+| EC (`ec/decompiled/`, `ec/ghidra/manifest.csv`) | 2,709 rows, 2,709 distinct `(program, addr)`, 0 dups, 0 short rows | 2,709 / 2,709, same | 4 rows, `functions` agrees with both indexes on every row and sums to 2,709; all `mode` = `export-only` |
 | BIOS (`bios/ghidra/`) | 955 rows, 955 distinct keys, 0 dups, 0 short rows | 955 / 955, same | 38 rows, `functions` agrees with both indexes on every row and sums to 955; all `mode` = `export-only` |
 
 Reproduce it, one command per component, with no Ghidra and no network:
@@ -3349,7 +3349,7 @@ python3 bios/tools/bios_extract.py   --work /tmp/x --check
 python3 bios/tools/bios_extract.py   --work /tmp/x --self-test
 ```
 
-Both `--check`s now print the counts they compared (`2708 index row(s), 2708
+Both `--check`s now print the counts they compared (`2709 index row(s), 2709
 listing-index row(s), 4 manifest program(s)`, and the same shape for 955/955/38),
 and both `--self-test`s assert the totals, so the table above is a fact the
 repository re-checks rather than a paragraph somebody wrote once.
@@ -3421,7 +3421,7 @@ coverage: `build_ec_decompile.py` already compared the manifest's `functions`
 against `index.csv`'s row counts — but skipped `common` as "an export grouping,
 not a program". The EC work was therefore to *extend and rehouse* that partial
 check (add `listing-index.csv`, cover `common` too) rather than to write a
-second one beside it. `common` is a grouping, and it is also 753 of the 2,708
+second one beside it. `common` is a grouping, and it is also 753 of the 2,709
 rows in the index, which is more than a grouping may cost quietly. The BIOS
 genuinely had none and got the whole set.
 

@@ -346,13 +346,56 @@ zeroes 96 bytes at `0x0F00`, clears `CPU_TCC_OFFSET` (`0x0786`) and
 three instructions at a different address, in a run that then sets bits 7,
 6 and 3 of `0x200D` and calls `0x2896`.
 
-**Neither run's entry point is determined by the methods used here.** The
-`0xACB4` boundary is a call-target byte scan — an upper bound
-(`bank-call-audit.md` §1) — and the bytes before `0xCC6B` decode two
-overlapping three-byte `ljmp`s at `0xCC60`/`0xCC61`, which is the §2 shape
-rather than a function head. `0xCC6B` has no `lcall` or `ljmp` to it
-anywhere in the EC image. So: `0xFF` is what these two sites store, and
-"a default" is a reading of their surroundings, not a decode.
+**Both runs' entry points are now established.** `0xAD99` sits inside the
+exported `reset_xdata_flags_and_07d5_to_ff` at `0xACB4`. `0xCC78` sits
+inside `init_06e6_1_clear_0743_07c5_and_07d5_ff` at `bank0:0xCC64`, entered
+through the common-area bank-select trampoline at `0x17DA`, which loads DPTR
+with `0xCC64` and jumps to the bank-0 select stub. The far boundary is
+sharp rather than a guess: `0xCCCE` is a `ret`, `0xCCCF` is a separate
+thunked entry in its own right, and the preceding function tail-jumps at
+`0xCC61`, so nothing falls through into `0xCC64`.
+
+**The earlier "two overlapping `ljmp`s" reading of `0xCC60`/`0xCC61` was
+wrong, and it is wrong in the §4c shape.** The bytes there are `0xCC5F: c2
+02` (`clr 0x02`) followed by `0xCC61: 02 39 7d` (`ljmp 0x397D`) — the tail
+of the annotated `0xCC51`. Read one byte early, `0xCC60 02 39 7d` looks
+like a second `ljmp`: an operand byte of a known instruction reported as a
+call target by a byte scan. `0xCC64` has no *direct* `lcall` or `ljmp` to it
+anywhere in the EC image, which is exactly why the entry had to be settled
+by a different method rather than by scanning harder for calls. So:
+`0xFF` is what these two sites store, and "a default" is a reading of their
+surroundings, not a decode.
+
+Both halves of the entry claim reproduce from the committed image — the
+positive (one DPTR-load trampoline) and the negative (no direct call) —
+with the two tools already in `ec/tools/`:
+
+```console
+$ python3 -c "
+data = open('ec/firmware/GMxMGxx_11.800','rb').read()[:0x20000]
+pat = bytes([0x90, 0xCC, 0x64])          # MOV DPTR,#0xCC64, high byte first
+i = data.find(pat)
+while i != -1:
+    print('0x%04X file-offset -> %s' % (i, data[i+3:i+6].hex(' ')))
+    i = data.find(pat, i+1)
+"
+0x17DA file-offset -> 02 11 00
+
+$ python3 -c "
+data = open('ec/firmware/GMxMGxx_11.800','rb').read()[:0x20000]
+hits = [i for i in range(len(data)-2)
+        if data[i] in (0x12, 0x02) and (data[i+1] << 8 | data[i+2]) == 0xCC64]
+print('direct lcall/ljmp to 0xCC64:', len(hits), hits)
+"
+direct lcall/ljmp to 0xCC64: 0 []
+```
+
+The one DPTR-load site is at file offset `0x17DA`, which is the common area
+— it is the trampoline itself, and the three bytes after it (`02 11 00`,
+`ljmp 0x1100`) are the bank-0 select stub. `ec/annotations/bank-call-audit.md`
+§3 counts 403 such trampolines in the common area `0x1150`-`0x1ABC`; three
+siblings in the same family name entries in this very block
+(`0x1852 → 0xCCFC`, `0x1864 → 0xCCE5`, `0x1882 → 0xCCCF`).
 
 ### 4.4 The `0x07C4` fifth site is the one that needed hand-decoding
 
@@ -445,6 +488,8 @@ $ r2 -a 8051 -e scr.color=0 -q -c 's 0xba46; pd 4'   /tmp/bank0.bin   # the 0xBA
 $ r2 -a 8051 -e scr.color=0 -q -c 's 0xda29; pd 8'   /tmp/bank0.bin   # the 0xDA2D GFID write
 $ r2 -a 8051 -e scr.color=0 -q -c 's 0xad93; pd 6'   /tmp/bank0.bin   # the 0xAD99 0xFF store
 $ r2 -a 8051 -e scr.color=0 -q -c 's 0xcc72; pd 6'   /tmp/bank0.bin   # the 0xCC78 0xFF store
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0xcc64; pd 4'   /tmp/bank0.bin   # 0xCC64's own head, the boundary §4.3 settles
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0x17da; pd 2'    /tmp/bank0.bin   # the common-area trampoline that reaches it
 $ r2 -a 8051 -e scr.color=0 -q -c 's 0x854b; pd 5'   /tmp/bank0.bin   # 0x83FF's one caller, in the stub run
 ```
 
@@ -506,10 +551,14 @@ issue asks for the walk, not for a new test.
   discovery of the ECMG-named address list; this is the EC-firmware-side
   decode of four of them.
 - **A bank0 decompile sweep for the 15 sites' own containing routines.**
-  Four are already named and exported (`0x83FF`, `0x94C0`, `0x94D0`,
-  `0xBA46`); the routine containing `0xAD99` and the run containing
-  `0xCC78` have undetermined entries. Seeding all of them, and re-exporting,
-  is the whole-program work of issue #20 rather than a static walk's.
+  All six are now named and exported (`0x83FF`, `0x94C0`, `0x94D0`,
+  `0xBA46`, `0xACB4` and `0xCC64`), and none is left undetermined: §4.3
+  settles the last two, the second of them positively rather than by
+  elimination. Seeding further bank0 entries, and re-exporting, is the
+  whole-program work of issue #20 rather than a static walk's. Two further
+  thunked entries in the same family as `0xCC64` — `0xCCCF` and `0xCCE5`,
+  reached the same way from the common area — are still unannotated and
+  are the nearest remaining work of this kind.
 - **`0x07C5` (`WHMS`, bit 5) and `0x07C6` (`WMS0`).** Issues #106 and #101
   own them. The service writes `0x07C5` bit 4, not bit 5, and this file
   does not answer that.

@@ -477,6 +477,7 @@ bank0,CA4C,read_fan_mode_bits_4_and_7,match,e5b0b1749fed389e,4,0,,sdas8051 05.50
 bank0,CA53,tick_06ea_against_period_in_0a56,match,db46dc810fae6241,32,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,CC3D,init_clear_00f5_and_1304_bit2,match,70ec14998e01cd89,10,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,CC51,init_set_1304_bit4_and_clear_bit2,match,b424eb6e9eb7a195,10,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank0,CC64,init_06e6_1_clear_0743_07c5_and_07d5_ff,match,5fa31a1ed9c3f629,58,0,,sdas8051 02.00
 bank0,CCFC,power_on_init_and_two_hang_paths,match,e52434c78943a6da,70,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,CDC3,FUN_CODE_cdc3,match,d4827600d97c80f4,19,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,CDE4,walk_index_06e7_up_to_1e_table_6bca,match,122a7aac2fe98f69,47,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
