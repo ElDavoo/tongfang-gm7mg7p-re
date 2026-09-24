@@ -8,12 +8,12 @@ module, installed by assignment, so this suite is not a party to the
 the sweep scriptable byte by byte.
 
 Unlike most of the `windows/tools` suites this one reads committed inputs,
-`evidence/acpi/dsdt.dsl`, `ec/annotations/registers.yaml` and this
-procedure's own table in `docs/hardware-tests/gpu-tgp-07c4-07d7-door.md`,
-resolved relative to this file. It therefore has to run from inside the
-repository, which `tools/run-tests.sh` guarantees (it cds to the repo root),
-and a suite copied to a scratch directory outside the tree will fail to find
-them.
+`evidence/acpi/dsdt.dsl`, `ec/annotations/registers.yaml`,
+`ec/annotations/ec-07c4-07d5-sites.csv`/`.md` and this procedure's own table
+in `docs/hardware-tests/gpu-tgp-07c4-07d7-door.md`, resolved relative to this
+file. It therefore has to run from inside the repository, which
+`tools/run-tests.sh` guarantees (it cds to the repo root), and a suite copied
+to a scratch directory outside the tree will fail to find them.
 
 The first two classes are the ones that matter: the tool's watch table is the
 citation list docs/hardware-tests/gpu-tgp-07c4-07d7-door.md §7 is graded
@@ -22,8 +22,14 @@ against, so it is checked here against the two committed inputs it transcribes
 being a hand-typed table nothing holds still. That procedure prints a second
 copy of the same table as prose, which is what drifted in #266 while the
 tool's copy was held, so the third class checks the doc's copy against the
-tool's rather than leaving the two to agree by hand.
+tool's rather than leaving the two to agree by hand. The fourth grades that
+copy's EC-side cross-reference column for the four rows the per-site census
+covers, against ec/annotations/ec-07c4-07d5-sites.csv and its `.md`: the doc
+was free to credit `0x07C4` with one cross-reference where the walk had found
+five, and a re-walk that finds a sixth would move the census the same way
+without the doc moving with it.
 """
+import csv
 import contextlib
 import importlib
 import io
@@ -41,6 +47,8 @@ TOOLS = Path(__file__).parent
 REPO = TOOLS.parent.parent
 DSDT = REPO / "evidence" / "acpi" / "dsdt.dsl"
 REGISTERS = REPO / "ec" / "annotations" / "registers.yaml"
+SITES = REPO / "ec" / "annotations" / "ec-07c4-07d5-sites.csv"
+SITES_MD = REPO / "ec" / "annotations" / "ec-07c4-07d5-sites.md"
 DOOR = REPO / "docs" / "hardware-tests" / "gpu-tgp-07c4-07d7-door.md"
 
 # The tool's own `from ec_watch import ...` has to resolve, and the directory
@@ -141,6 +149,40 @@ def read_registers():
                 statuses.setdefault(a, r["status"])
                 names.setdefault(a, r["name"])
     return statuses, names
+
+
+def read_site_census():
+    """`ec-07c4-07d5-sites.csv` as {addr: {site address}}, `bank0` rows only.
+
+    The `region` filter is load-bearing, not a tidiness choice: the same
+    file's 102 `pd-image` rows are a *different* 8051 program's variables at
+    its own `0x07C4` (sites `.md` §1), with its own XDATA map, and folding
+    them into a main-EC census would credit the main EC with sites in an
+    image it is not in. Keyed by the row's own `addr` and valued by
+    `runtime`, the site address inside that region -- the two are the same
+    sixteen-bit space for a `bank0` row, and the `pd-image` rows are the
+    ones where the file offset and the runtime address part company.
+    """
+    out = {}
+    for r in csv.DictReader(SITES.read_text(encoding="utf-8").splitlines()):
+        if r["region"] == "bank0":
+            out.setdefault(int(r["addr"], 16), set()).add(
+                int(r["runtime"], 16))
+    return out
+
+
+def bank_addresses(cell):
+    """The `bankN:0xNNNN` addresses one §7 cell cites, as ints.
+
+    The address half only, anchored on the `bankN:` prefix, for two reasons
+    that are not cosmetic. The census keys sites by a bare address, so
+    matching a whole `bank0:0x94C0` token against one fails on every site;
+    and the column's other prefix, `pd:`, is the PD image's own XDATA map
+    (sites `.md` §1), for which this census holds no rows at all. Case is
+    dropped by the parse rather than by a `.lower()` that would then have to
+    be undone on the other side.
+    """
+    return {int(a, 16) for a in re.findall(r"bank\d+:(0x[0-9A-Fa-f]{4})", cell)}
 
 
 def door_section(text):
@@ -372,6 +414,86 @@ class DoorTableTests(unittest.TestCase):
                          "than once")
         self.assertEqual(int(found[0][0]), expected)
         self.assertEqual(int(found[0][1]), len(ADDRS))
+
+
+class SiteCensusTests(unittest.TestCase):
+    """The four census-covered cells are graded against the site census.
+
+    `DoorTableTests` above holds the status column; this holds the other
+    one, for the four rows `ec-07c4-07d5-sites.md` walks. Both directions,
+    because the drift is symmetric: a cell crediting `0x07C4` with one
+    cross-reference where the walk found five is a doc that has not caught
+    up with a census, and a re-walk that finds a sixth is a census the doc
+    has not caught up with. The other twenty cells' `xdata-registers.csv`
+    cluster citations and every `pd:` citation are #272's different census
+    question and are not read here.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.section = door_section(DOOR.read_text(encoding="utf-8"))
+        cls.door = parse_door_table(cls.section)
+        cls.census = read_site_census()
+        cls.sites_md = SITES_MD.read_text(encoding="utf-8")
+        # Asked for by heading and found from the rows, the same way
+        # DoorTableTests finds the status column.
+        cls.xref_col = next((c for c in sorted({c for row in cls.door.values()
+                                                for c in row})
+                             if "cross-reference" in c), "")
+
+    def test_the_census_the_cross_reference_column_is_checked_against_was_read(self):
+        # The same vacuity guard the three parsers above get: a reader that
+        # found nothing would leave both directions below passing on a table
+        # that says nothing. Every census address present and carrying the
+        # column, the split sites `.md` §2 states in prose ("The five
+        # `0x07C4` sites, the two `0x07D4` and four `0x07D5` sites and the
+        # four `0x07D3` sites") rather than constants invented here, and a
+        # `.md` naming all four so direction A's fallback is a real source
+        # and not an empty string everything passes against.
+        self.assertTrue(self.xref_col, "§7 has no cross-reference column")
+        for addr in self.census:
+            self.assertIn(addr, self.door, f"0x{addr:04X}")
+            self.assertIn(self.xref_col, self.door[addr], f"0x{addr:04X}")
+        self.assertEqual({a: len(s) for a, s in self.census.items()},
+                         {0x07C4: 5, 0x07D3: 4, 0x07D4: 2, 0x07D5: 4})
+        self.assertTrue(self.sites_md, f"{SITES_MD.name} is empty")
+        for addr in self.census:
+            self.assertRegex(self.sites_md, rf"0x{addr:04X}", f"0x{addr:04X}")
+
+    def test_every_bank_address_a_cell_cites_is_in_the_census_or_the_walk(self):
+        # Direction A, doc -> census. What a citation carries here is that
+        # the walk named that address, not that the walk was right about
+        # it: `bank0:0x94C0` is a routine entry and `bank0:0x9711` its one
+        # caller (sites `.md` §4.1), so both are named in prose and neither
+        # is a `MOV DPTR` site the CSV has a row for. The `.md` half is a
+        # fallback source, not a weaker census.
+        for addr, sites in self.census.items():
+            cell = self.door[addr][self.xref_col]
+            for site in sorted(bank_addresses(cell)):
+                if site in sites:
+                    continue
+                self.assertTrue(
+                    re.search(rf"0x{site:04X}(?![0-9A-Fa-f])", self.sites_md,
+                              re.I),
+                    f"0x{addr:04X} cites bank0:0x{site:04X}, which neither "
+                    f"{SITES.name} nor {SITES_MD.name} names")
+
+    def test_every_bank0_site_the_census_names_is_in_the_cell(self):
+        # Direction B, census -> doc, and the one that fails first when a
+        # re-walk lands: the census grows and the doc's credit for the row
+        # stays what it was. The two set sizes ride along in the message so
+        # that failure says which side moved and by how much -- the citation
+        # count itself is not pinned, because the two directions already pin
+        # every address between them and a constant would only add an edit
+        # to make on the next legitimate census change.
+        for addr, sites in self.census.items():
+            cited = bank_addresses(self.door[addr][self.xref_col])
+            for site in sorted(sites):
+                self.assertIn(
+                    site, cited,
+                    f"0x{site:04X} is a bank0 site for 0x{addr:04X} in "
+                    f"{SITES.name} and is not in the cell "
+                    f"({len(cited)} cited, {len(sites)} in the census)")
 
 
 class NamesOnlyTests(unittest.TestCase):
