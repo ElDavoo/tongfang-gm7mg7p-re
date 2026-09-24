@@ -21,7 +21,7 @@
    evidence: ec/decompiled/pd/7392.asm; ec/decompiled/pd/7392.c
    basis: hand-decoded */
 
-void count_07cb_up_to_3_over_07ca_records(undefined1 param_1,char param_2)
+void count_07cb_up_to_3_over_07ca_records(undefined1 param_1,char param_2,char param_3)
 
 {
   char cVar1;
@@ -36,11 +36,11 @@ void count_07cb_up_to_3_over_07ca_records(undefined1 param_1,char param_2)
   DAT_EXTMEM_07cd = 0;
   DAT_EXTMEM_07ce = 0;
   DAT_EXTMEM_07cb = 0;
-  DAT_EXTMEM_07ca = param_2;
+  DAT_EXTMEM_07ca = param_3;
   while( true ) {
     pbVar5 = &DAT_EXTMEM_07cb;
     read_xdata_07ca_into_r6(cVar1);
-    make_dptr_r6_minus_3_9028();
+    make_dptr_r6_minus_3_9028(param_2);
     if ((*pbVar5 >> 4 & 1) == 0) {
       return;
     }
@@ -59,7 +59,7 @@ void count_07cb_up_to_3_over_07ca_records(undefined1 param_1,char param_2)
     puVar4 = (undefined1 *)CONCAT11(uVar2,uVar6);
     write4xdata_from_r4_r7();
     read_xdata_07ca_into_r6();
-    make_dptr_r6_minus_3_9028();
+    make_dptr_r6_minus_3_9028(param_2);
     *puVar4 = 1;
     bVar3 = DAT_EXTMEM_07cb + 1;
     cVar1 = DAT_EXTMEM_07cb - 2;
@@ -69,8 +69,8 @@ void count_07cb_up_to_3_over_07ca_records(undefined1 param_1,char param_2)
     }
   }
   pbVar5 = &DAT_EXTMEM_07ca;
-  cVar1 = read_dptr_to_r5_r6_zero_r7();
-  make_dptr_r6_minus_3_col_r3(cVar1 + '\x1c');
+  read_dptr_to_r5_r6_zero_r7();
+  make_dptr_r6_minus_3_col_r3(param_2);
                     /* WARNING: Subroutine does not return */
   add_full_product_to_dptr(param_1,0x4a5,0x60,*pbVar5 >> 4 & 3);
 }

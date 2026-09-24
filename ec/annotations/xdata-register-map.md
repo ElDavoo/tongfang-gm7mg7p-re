@@ -1,5 +1,19 @@
 # The XDATA register map: 1,172 addresses, attributed and clustered
 
+> **Census update, 2026-09-24 (merge of issue #133, PR #238).** The figures
+> below say 1,172 addresses / 14,801 references; the committed tree is now
+> **1,171 / 14,792** (main EC 1,062 / 13,931, PD references 864 -> 861), and the
+> self-test transcript further down is the current one. Nothing in the firmware
+> or the `.asm` changed. Applying `ghidra-variables.csv` fixes some functions'
+> signatures in Ghidra, and at bank1 `0x9EA1` that dropped an argument at the
+> call site: `bank1/E100.c` no longer passes `DAT_EXTMEM_0390`, which was this
+> census's only reference to `0x0390`. Nine C-level references moved: `0x0390`
+> -1 (and so leaves the census), `0x0391` -1, `0x04AB` -3, `0x07D8` -3, `0x08AD`
+> -1, and in the PD image `0x07D0` -1, `0x07C9` +1. The census is a lower bound
+> on the machine code and this is the annotation layer lowering it. Whether a
+> variable annotation should be allowed to change a caller's arity at all is an
+> open question, not settled here (`../../docs/findings.md` §18).
+
 Issue #132 asks for a register map, on the argument that the decompiled EC
 touches 1,134 XDATA addresses and that "**six** of those 1,134 are named" — so
 99.5% read as `DAT_EXTMEM_0a56` and friends, and every comment, variable name
@@ -112,12 +126,12 @@ xdata_register_map.py --self-test
   ok    classify('switch_case_dispatch(DAT_EXTMEM_0440);') is 'passed-to-call'
   ok    classify('if (CPU_TEMP == 0) {') is 'read'
   ok    classify('CPU_TEMP = 0;') is 'write'
-  ok    the issue's 8750 file-wide DAT_EXTMEM_ occurrences and the 9 of them that are this repository's own annotation text quoting the decompile are still where they were (raw: {'DAT_EXTMEM': 8750, 'symbol': 6176})
-  ok    oracle: DAT_EXTMEM_ only, what issue #132 counted -- main EC 917 distinct / 7877 refs, PD 157/864, which is 1037 distinct addresses in all after the 37 both spell there (got (917, 7877) and (157, 864), 1037 distinct / 8741 refs in all)
+  ok    the issue's 8741 file-wide DAT_EXTMEM_ occurrences and the 9 of them that are this repository's own annotation text quoting the decompile are still where they were (raw: {'DAT_EXTMEM': 8741, 'symbol': 6179})
+  ok    oracle: DAT_EXTMEM_ only, what issue #132 counted -- main EC 916 distinct / 7871 refs, PD 157/861, which is 1036 distinct addresses in all after the 37 both spell there (got (916, 7871) and (157, 861), 1036 distinct / 8732 refs in all)
   ok    oracle: the 146 main-EC addresses the decompiler named, 6060 references, and 0/0 of them in the PD image (got (146, 6060) and (0, 0))
   ok    within each program the two spellings are disjoint address for address, so a named address is never also a DAT_EXTMEM_ token
   ok    the PD image is spelled entirely in DAT_EXTMEM_ tokens, which is gen_xdata_symbols.py's own refusal to name it
-  ok    oracle: the full census, both spellings -- 1172 distinct / 14801 references, main EC 1063/13937 (got 1172/14801, (1063, 13937))
+  ok    oracle: the full census, both spellings -- 1171 distinct / 14792 references, main EC 1062/13931 (got 1171/14792, (1062, 13931))
   ok    oracle: 109 PD-only, 48 touched by both (got 109 / 48)
   ok    main + PD equals the file-wide total on both axes
   ok    oracle: the top two main-EC addresses by reference count are 0x0440=181, 0x08A8=170 (got 0x0440=181, 0x08A8=170)
@@ -133,7 +147,7 @@ xdata_register_map.py --self-test
   ok    exactly 3 of them -- 0xFFC1, 0xFFD1, 0xFFDB -- are reached by `inc DPTR` from the address below and never by a `mov DPTR` of their own, which is why a `90 hi lo` byte scan finds 20 of the 23 and misses these 3 (got 0xFFC1, 0xFFD1, 0xFFDB)
   ok    and no main-EC census address reaches 0xF000 either, the main EC's highest being 0x9000 (got 0 at or above 0xF000 and a ceiling of 0x9000), so the 0xF000-0xFFFF run is the PD image's own in the census -- which is a claim about a census, and a census is a lower bound
   ok    the hand-checked direction oracle: 5 addresses, 0x0440, 0x0443, 0x04FE, 0x04FF, 0x0860, each read off the decompiled C by hand rather than by this tool
-  ok    the §4.1 bucket totals, read 8319 write 3186 read+write 2476 passed-to-call 549 address-taken 271 (got read 8319 write 3186 read+write 2476 passed-to-call 549 address-taken 271)
+  ok    the §4.1 bucket totals, read 8317 write 3186 read+write 2476 passed-to-call 543 address-taken 270 (got read 8317 write 3186 read+write 2476 passed-to-call 543 address-taken 270)
   ok    the `name` column is populated exactly for the addresses the symbol table names, independently of how the tree spells them
   ok    every address is in exactly one cluster
   ok    cluster sizes sum to the address count of each program
@@ -144,7 +158,7 @@ xdata_register_map.py --self-test
   ok    the rank the report's worklist uses is total: no two clusters tie on size, references and lowest address
   ok    the clusters CSV is a projection of the registers CSV, not a separate count
   ok    the committed CSVs match a fresh generation (run without --check after changing anything the census reads)
-  426 clusters at threshold 0.5; 1063 main-EC and 157 PD addresses
+  427 clusters at threshold 0.5; 1062 main-EC and 157 PD addresses
   all assertions passed
 ```
 

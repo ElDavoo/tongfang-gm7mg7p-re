@@ -6,7 +6,7 @@
 // (ec/annotations/bank-call-audit.md §1), so this boundary is a hypothesis.
 
 
-void FUN_CODE_9d53(void)
+void FUN_CODE_9d53(char param_1)
 
 {
   byte in_PSW;
@@ -21,7 +21,7 @@ void FUN_CODE_9d53(void)
     return;
   }
   DAT_EXTMEM_068d = 2;
-  gate_04fe_06e6_call_19a8();
+  gate_04fe_06e6_call_19a8(param_1);
   if (-1 < (char)bVar1) {
     if ((XDATA_045B & 8) != 0) {
       DAT_EXTMEM_068b = 6;

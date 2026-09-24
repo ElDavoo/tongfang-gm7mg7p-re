@@ -30,7 +30,7 @@ void clear_09e9_unless_0743_bit2(void)
     if (-1 < in_PSW) {
       *puVar1 = 0;
       puVar1[1] = 0;
-      call_bd20_with_03_then_or_80_into_dptr();
+      call_bd20_with_03_then_or_80_into_dptr(puVar1 + 1);
       return;
     }
   }

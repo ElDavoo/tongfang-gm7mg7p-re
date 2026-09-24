@@ -119,7 +119,7 @@ void FUN_CODE_8b14(undefined1 param_1,char param_2,byte param_3)
   }
   pbVar12 = &SYSTEM_ID;
   if (SYSTEM_ID < '\0') {
-    load_dptr_0469(bVar5);
+    load_dptr_0469();
     if (cVar3 < '\0') {
       pbVar12 = &DAT_EXTMEM_0469;
     }
@@ -164,7 +164,7 @@ void FUN_CODE_8b14(undefined1 param_1,char param_2,byte param_3)
       else {
         XDATA_0986 = 0xb4;
       }
-      if ((DAT_EXTMEM_1804 != DAT_EXTMEM_0461) && (cVar3 = mod_070a_by_r5(), cVar3 == '\0')) {
+      if ((DAT_EXTMEM_1804 != DAT_EXTMEM_0461) && (cVar3 = mod_070a_by_r5(bVar5), cVar3 == '\0')) {
         set_cy_before_0461_sub(0x1804);
         if (cVar4 < '\0') {
           cVar4 = '\0';
@@ -205,7 +205,7 @@ void FUN_CODE_8b14(undefined1 param_1,char param_2,byte param_3)
       call_bb28_on_1804();
       return;
     }
-    cVar4 = mod_070a_by_r5();
+    cVar4 = mod_070a_by_r5(bVar5);
     if (cVar4 != '\0') {
       call_bb28_on_1804();
       return;

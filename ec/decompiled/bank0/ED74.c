@@ -16,7 +16,7 @@ undefined1 write_0a59_block_then_445e(void)
 {
   undefined1 uVar1;
   
-  timer1_counted_delay_using_0a56(0x14);
+  timer1_counted_delay_using_0a56('\x14');
   DAT_EXTMEM_0a59 = 0xb6;
   DAT_EXTMEM_0a5a = 0;
   DAT_EXTMEM_0a5b = 0xc0;

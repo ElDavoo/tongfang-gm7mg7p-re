@@ -12,11 +12,11 @@
    evidence: ec/decompiled/pd/8814.asm; ec/decompiled/pd/8814.c
    basis: hand-decoded */
 
-void store_3bytes_at_dptr_plus_1(short param_1)
+void store_3bytes_at_dptr_plus_1(short entry_dptr)
 
 {
                     /* WARNING: Subroutine does not return */
-  store_3byte_r3r2r1(param_1 + 1);
+  store_3byte_r3r2r1(entry_dptr + 1);
 }
 
 

@@ -14,12 +14,12 @@
    evidence: ec/decompiled/pd/9028.asm; ec/decompiled/pd/9028.c
    basis: hand-decoded */
 
-char make_dptr_r6_minus_3_9028(char param_1)
+char make_dptr_r6_minus_3_9028(char r6_value)
 
 {
   char in_PSW;
   
-  return param_1 + (-3 - (in_PSW >> 7));
+  return r6_value + (-3 - (in_PSW >> 7));
 }
 
 

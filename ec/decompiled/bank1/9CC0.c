@@ -13,12 +13,12 @@
    evidence: ec/decompiled/bank1/9CC0.asm; ec/decompiled/bank1/9CC0.c
    basis: hand-decoded */
 
-void gate_04fe_06e6_call_19a8(char param_1)
+void gate_04fe_06e6_call_19a8(char r7_from_19a8)
 
 {
   if (((DAT_EXTMEM_04fe >> 6 & 1) != 1) && (DAT_EXTMEM_06e6 == '\x01')) {
     trampoline_to_c118();
-    if (param_1 != '\0') {
+    if (r7_from_19a8 != '\0') {
       return;
     }
   }

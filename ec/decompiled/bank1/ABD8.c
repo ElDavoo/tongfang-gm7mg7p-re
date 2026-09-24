@@ -10,12 +10,12 @@
    evidence: ec/decompiled/bank1/ABD8.asm; ec/decompiled/bank1/ABD8.c
    basis: hand-decoded */
 
-void call_95e5_a054_a389(void)
+void call_95e5_a054_a389(char param_1)
 
 {
   set_0476_bit1_then_branch_on_r7();
   call_9fc1_a1bf_a064_a0cc_a12d();
-  decrement_0980_then_run_19b4_198a();
+  decrement_0980_then_run_19b4_198a(param_1);
   return;
 }
 

@@ -12,10 +12,10 @@
    evidence: ec/decompiled/bank0/BB80.asm; ec/decompiled/bank0/BB80.c
    basis: hand-decoded */
 
-byte store_a_then_read_07c5(undefined1 param_1,undefined1 *param_2)
+byte store_a_then_read_07c5(undefined1 value_a,undefined1 *entry_dptr)
 
 {
-  *param_2 = param_1;
+  *entry_dptr = value_a;
   return DAT_EXTMEM_07c5 ^ 1;
 }
 

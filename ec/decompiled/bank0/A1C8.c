@@ -24,11 +24,10 @@
 void select_code_table_entry_and_store_0872_087a_088a(char param_1,char param_2)
 
 {
-  byte bVar1;
-  char cVar2;
-  byte *pbVar3;
+  char cVar1;
+  byte *pbVar2;
+  short sVar3;
   short sVar4;
-  short sVar5;
   
   cfg_cell_count_selector();
   if (param_2 == -0x40) {
@@ -57,44 +56,41 @@ void select_code_table_entry_and_store_0872_087a_088a(char param_1,char param_2)
     DAT_EXTMEM_0a49 = '\x02';
   }
   while( true ) {
-    pbVar3 = (byte *)0xa47;
+    pbVar2 = (byte *)0xa47;
     read_dptr_byte_into_r6();
     tail_call_7110_with_b6(DAT_EXTMEM_0a49);
-    bVar1 = *pbVar3;
-    cVar2 = bVar1 + 0x9c;
-    if ((99 < bVar1) || (cVar2 = DAT_EXTMEM_04ab - bVar1, (DAT_EXTMEM_04ab < bVar1) << 7 < '\0'))
-    break;
+    if ((99 < *pbVar2) || ((DAT_EXTMEM_04ab < *pbVar2) << 7 < '\0')) break;
     DAT_EXTMEM_0a49 = DAT_EXTMEM_0a49 + '\x01';
   }
-  sVar4 = 0xa47;
-  load_dptr_be16_from_xdata(cVar2);
+  sVar3 = 0xa47;
+  load_dptr_be16_from_xdata(0xa47);
   tail_call_7110_with_b6(DAT_EXTMEM_0a49);
-  sVar5 = 0x872;
-  store_a_then_tail_call_7110_b6(*(undefined1 *)(sVar4 + 1));
-  DAT_EXTMEM_087a = *(undefined1 *)(sVar5 + 2);
-  sVar4 = 0xa47;
-  load_dptr_be16_from_xdata();
+  sVar4 = 0x872;
+  store_a_then_tail_call_7110_b6(*(undefined1 *)(sVar3 + 1));
+  DAT_EXTMEM_087a = *(undefined1 *)(sVar4 + 2);
+  sVar3 = 0xa47;
+  load_dptr_be16_from_xdata(0xa47);
   tail_call_7110_with_b6(DAT_EXTMEM_0a49);
-  sVar5 = 0x88a;
-  store_a_then_tail_call_7110_b6(*(undefined1 *)(sVar4 + 3));
-  XDATA_080C = *(byte *)(sVar5 + 4);
-  sVar4 = 0xa47;
+  sVar4 = 0x88a;
+  store_a_then_tail_call_7110_b6(*(undefined1 *)(sVar3 + 3));
+  XDATA_080C = *(byte *)(sVar4 + 4);
+  sVar3 = 0xa47;
   read_dptr_byte_into_r6();
   tail_call_7110_with_b6(DAT_EXTMEM_0a49);
-  if ((char)*(byte *)(sVar4 + 5) < '\0') {
+  if ((char)*(byte *)(sVar3 + 5) < '\0') {
     XDATA_0723 = XDATA_0723 | 8;
   }
-  if ((*(byte *)(sVar4 + 5) >> 6 & 1) != 0) {
+  if ((*(byte *)(sVar3 + 5) >> 6 & 1) != 0) {
     XDATA_0985 = XDATA_0985 | 2;
   }
   if (DAT_EXTMEM_08af != '\0') {
     DAT_EXTMEM_08af = DAT_EXTMEM_08af + -1;
-    cVar2 = XDATA_080C - 3;
+    cVar1 = XDATA_080C - 3;
     if (XDATA_080C < 3) {
-      cVar2 = '\x03';
+      cVar1 = '\x03';
       XDATA_080C = 3;
     }
-    load_dptr_a916_tail_jump_1114(cVar2);
+    load_dptr_a916_tail_jump_1114(cVar1);
   }
   return;
 }

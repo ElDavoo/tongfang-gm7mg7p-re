@@ -23,28 +23,28 @@ void ramp_1804_1809_toward_0461_0469(byte param_1,char param_2,byte param_3)
 {
   bool bVar1;
   char cVar2;
-  byte bVar3;
-  char cVar4;
+  byte divisor_r5;
+  char cVar3;
   char in_PSW;
-  byte *pbVar5;
+  byte *pbVar4;
   
-  bVar3 = 3;
+  divisor_r5 = 3;
   if ((((char)DAT_EXTMEM_0787 < '\0') && ((AP_OEM & 1) != 0)) &&
      (bVar1 = (DAT_EXTMEM_0787 & 0x7f) == 0, in_PSW = bVar1 << 7, !bVar1)) {
-    bVar3 = DAT_EXTMEM_0787 & 0x7f;
+    divisor_r5 = DAT_EXTMEM_0787 & 0x7f;
   }
-  pbVar5 = &SYSTEM_ID;
+  pbVar4 = &SYSTEM_ID;
   DAT_EXTMEM_0469 = param_1;
   if (SYSTEM_ID < '\0') {
-    load_dptr_0469(bVar3);
+    load_dptr_0469();
     if (in_PSW < '\0') {
-      pbVar5 = &DAT_EXTMEM_0469;
+      pbVar4 = &DAT_EXTMEM_0469;
     }
   }
   else {
-    pbVar5 = &DAT_EXTMEM_0461;
+    pbVar4 = &DAT_EXTMEM_0461;
   }
-  DAT_EXTMEM_0670 = *pbVar5;
+  DAT_EXTMEM_0670 = *pbVar4;
   cVar2 = '\0';
   load_r6_r7_from_04a3_04a2();
   bVar1 = (byte)(cVar2 + (param_2 - (in_PSW >> 7))) < 0xcU - (((param_3 < 0xe4) << 7) >> 7);
@@ -81,7 +81,8 @@ void ramp_1804_1809_toward_0461_0469(byte param_1,char param_2,byte param_3)
       else {
         XDATA_0986 = 0xb4;
       }
-      if ((DAT_EXTMEM_1804 != DAT_EXTMEM_0461) && (cVar4 = mod_070a_by_r5(), cVar4 == '\0')) {
+      if ((DAT_EXTMEM_1804 != DAT_EXTMEM_0461) &&
+         (cVar3 = mod_070a_by_r5(divisor_r5), cVar3 == '\0')) {
         set_cy_before_0461_sub(0x1804);
         if (cVar2 < '\0') {
           cVar2 = '\0';
@@ -122,7 +123,7 @@ void ramp_1804_1809_toward_0461_0469(byte param_1,char param_2,byte param_3)
       call_bb28_on_1804();
       return;
     }
-    cVar2 = mod_070a_by_r5();
+    cVar2 = mod_070a_by_r5(divisor_r5);
     if (cVar2 != '\0') {
       call_bb28_on_1804();
       return;

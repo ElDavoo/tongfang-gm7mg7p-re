@@ -11,10 +11,10 @@
    evidence: ec/decompiled/bank0/B990.asm; ec/decompiled/bank0/B990.c
    basis: hand-decoded */
 
-char read_dptr_byte_then_set_dptr_0792(undefined1 *param_1)
+char read_dptr_byte_then_set_dptr_0792(undefined1 *entry_dptr)
 
 {
-  uEXTMEM0792 = *param_1;
+  uEXTMEM0792 = *entry_dptr;
   return DAT_EXTMEM_0a48 + '\x01';
 }
 

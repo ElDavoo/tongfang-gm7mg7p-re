@@ -7,39 +7,39 @@
 /* WARNING: Instruction at (CODE,0xd775) overlaps instruction at (CODE,0xd773)
     */
 
-void FUN_CODE_d72e(byte param_1,undefined1 param_2)
+void FUN_CODE_d72e(char param_1,byte param_2,undefined1 param_3)
 
 {
-  char cVar1;
+  undefined1 uVar1;
   byte bVar2;
-  undefined1 uVar3;
+  char cVar3;
   undefined1 *puVar4;
   
   puVar4 = &DAT_EXTMEM_07d1;
-  DAT_EXTMEM_07d1 = param_2;
+  DAT_EXTMEM_07d1 = param_3;
   set_r3_ff_dptr_0a86_call_10e8(0x35,0xf4);
   *puVar4 = 10;
   store_4bytes_to_0a82(0,0,2);
   puVar4 = &DAT_EXTMEM_07d1;
   read_xdata_to_a_r7();
-  uVar3 = BANK0_R7;
+  uVar1 = BANK0_R7;
   write4_inline_args(0xa6d,0,*puVar4);
   nop();
   nop();
   nop();
   nop();
-  BANK0_R7 = uVar3;
+  BANK0_R7 = uVar1;
   stash_args_dispatch_code_table(1);
   bVar2 = write4_inline_args(0x80f);
   nop();
   nop();
   bVar2 = bVar2 >> 1 | bVar2 << 7;
-  cVar1 = P1_0;
-  if (cVar1 == '\x01') {
-    bVar2 = bVar2 | param_1;
+  cVar3 = P1_0;
+  if (cVar3 == '\x01') {
+    bVar2 = bVar2 | param_2;
   }
-  uVar3 = inc_r0_then_reti(bVar2);
-  write_080d_then_branch_on_70e7(1,uVar3);
+  cVar3 = inc_r0_then_reti(bVar2);
+  write_080d_then_branch_on_70e7(param_1,'\x01',cVar3);
   DAT_EXTMEM_ffd4 = DAT_EXTMEM_ffd4 | 0x20;
   puVar4 = &DAT_EXTMEM_07d1;
   dptr_08fb_plus_5e_times_a(DAT_EXTMEM_07d1);

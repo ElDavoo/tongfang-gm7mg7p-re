@@ -16,7 +16,7 @@
    evidence: ec/decompiled/pd/C24E.asm; ec/decompiled/pd/C24E.c
    basis: hand-decoded */
 
-void write_080d_then_branch_on_70e7(char param_1,char param_2,char param_3)
+void write_080d_then_branch_on_70e7(char param_1,char r5_value,char r7_value)
 
 {
   undefined1 uVar1;
@@ -24,8 +24,8 @@ void write_080d_then_branch_on_70e7(char param_1,char param_2,char param_3)
   char in_PSW;
   undefined1 *puVar3;
   
-  DAT_EXTMEM_080d = param_3;
-  if (param_2 == '\0') {
+  DAT_EXTMEM_080d = r7_value;
+  if (r5_value == '\0') {
     write4_inline_args(0x815);
     nop();
     nop();

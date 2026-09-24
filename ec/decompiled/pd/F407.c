@@ -18,7 +18,7 @@ void zero_084c_call_8814_821b(void)
   
   uVar1 = BANK0_R3;
   DAT_EXTMEM_084c = 0;
-  store_3bytes_at_dptr_plus_1(0,0,0);
+  store_3bytes_at_dptr_plus_1(0x84c);
   BANK0_R3 = uVar1;
   fill_0849_0857_block();
   return;

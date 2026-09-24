@@ -13,15 +13,15 @@
    evidence: ec/decompiled/pd/F109.asm; ec/decompiled/pd/F109.c
    basis: hand-decoded */
 
-void set_or_clear_bit0_via_9028(byte *param_1,char param_2,undefined1 param_3)
+void set_or_clear_bit0_via_9028(byte *param_1,char param_2,char param_3)
 
 {
   if (param_2 == '\0') {
-    make_dptr_r6_minus_3_9028(4,param_3);
+    make_dptr_r6_minus_3_9028(param_3);
     *param_1 = *param_1 | 1;
     return;
   }
-  make_dptr_r6_minus_3_9028(4,param_3);
+  make_dptr_r6_minus_3_9028(param_3);
   *param_1 = *param_1 & 0xfe;
   return;
 }

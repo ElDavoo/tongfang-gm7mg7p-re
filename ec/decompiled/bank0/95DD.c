@@ -74,14 +74,14 @@ void fill_08xx_from_code_table(short param_1,undefined1 param_2,char param_3)
   }
   sVar5 = 0xa51;
   if ((BIOS_OEM_2 >> 2 & 1) == 1) {
-    load_dptr_be16_from_xdata();
+    load_dptr_be16_from_xdata(0xa51);
     store_code_byte_to_08c0(8);
     movc_lookup_set_dptr_08c1(9);
     store_code_byte_to_08c3(10);
     bVar2 = 0xb;
   }
   else {
-    load_dptr_be16_from_xdata();
+    load_dptr_be16_from_xdata(0xa51);
     store_code_byte_to_08c0(4);
     movc_lookup_set_dptr_08c1(5);
     store_code_byte_to_08c3(6);

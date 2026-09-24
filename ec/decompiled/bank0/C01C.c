@@ -19,7 +19,7 @@ void set_1610_40_and_clear_1601_bit0(void)
   byte *pbVar2;
   
   pbVar2 = &DAT_EXTMEM_1610;
-  bVar1 = write_40_to_dptr_then_read_1601();
+  bVar1 = write_40_to_dptr_then_read_1601((undefined1 *)0x1610);
   *pbVar2 = bVar1 & 0xfe;
   return;
 }

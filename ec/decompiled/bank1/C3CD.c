@@ -29,11 +29,11 @@ void compare_0434_04f4_against_0646(char param_1,char param_2)
     if ((param_2 == '\0' && param_1 == '\0') || (FUN_CODE_8863(), -1 < (char)in_PSW)) {
       in_PSW = in_PSW & 0xdd;
       if ((DAT_EXTMEM_08e2 & 8) == 0) {
-        subtract_shifted_reads_of_0646();
+        subtract_shifted_reads_of_0646(param_1,param_2);
         read_xdata_pair_to_r1r2(0x434);
         FUN_CODE_8863();
         if (-1 < (char)in_PSW) {
-          subtract_shifted_reads_of_0646();
+          subtract_shifted_reads_of_0646(param_1,param_2);
           read_xdata_pair_to_r1r2(0x4f4);
           FUN_CODE_8863();
           if (-1 < (char)in_PSW) {

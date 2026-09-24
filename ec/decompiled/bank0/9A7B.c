@@ -13,7 +13,7 @@
    evidence: ec/decompiled/bank0/9A7B.asm; ec/decompiled/bank0/9A7B.c
    basis: hand-decoded */
 
-void store_bd20_result_masked_7f(byte *param_1)
+void store_bd20_result_masked_7f(byte *dptr_from_bd20)
 
 {
   char cVar1;
@@ -21,7 +21,7 @@ void store_bd20_result_masked_7f(byte *param_1)
   
   cVar1 = clr_a();
   bVar2 = store_044b_then_read_08e2(cVar1 + '\x01');
-  *param_1 = bVar2 & 0x7f;
+  *dptr_from_bd20 = bVar2 & 0x7f;
   return;
 }
 

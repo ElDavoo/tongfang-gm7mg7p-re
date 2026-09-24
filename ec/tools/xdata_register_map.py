@@ -220,18 +220,28 @@ TOP_CALLEES = 3
 # (932 -> 5897) with issue #179's 43 entries, the same way, and 127 -> 142
 # (5897 -> 6016) with issue #180's 15, and 142 -> 146 (6016 -> 6060) with
 # issue #183's four.
+# *** 2026-09-24, merging issue #133 (PR #238): the FULL census moved for the first
+# time, 1172/14801 -> 1171/14792 (main EC 1063/13937 -> 1062/13931, PD refs 864 ->
+# 861). Not a new address and not an edit to any .asm: applying
+# ghidra-variables.csv commits some functions' signatures, and at bank1 0x9EA1
+# that dropped an argument at its call sites -- bank1/E100.c no longer passes
+# DAT_EXTMEM_0390, which was the census's only reference to 0x0390. Nine C-level
+# references moved in all (0x0390 -1, 0x0391 -1, 0x04AB -3, 0x07D8 -3, 0x08AD -1;
+# PD 0x07D0 -1, 0x07C9 +1). The census was always a lower bound on the machine
+# code; this is the annotation layer lowering it, recorded in
+# xdata-register-map.md and docs/findings.md 18 as an open question.
 ORACLE = {
     # DAT_EXTMEM_ only, i.e. what issue #132 counted, comments excluded.
-    "extmem_distinct": 1037, "extmem_refs": 8741,
-    "extmem_raw": 8750, "extmem_commented": 9,
-    "extmem_main_distinct": 917, "extmem_main_refs": 7877,
-    "extmem_pd_distinct": 157, "extmem_pd_refs": 864,
+    "extmem_distinct": 1036, "extmem_refs": 8732,
+    "extmem_raw": 8741, "extmem_commented": 9,
+    "extmem_main_distinct": 916, "extmem_main_refs": 7871,
+    "extmem_pd_distinct": 157, "extmem_pd_refs": 861,
     # What the decompiler named, which the issue's grep could not see.
     "symbol_main_distinct": 146, "symbol_main_refs": 6060,
     "symbol_pd_distinct": 0, "symbol_pd_refs": 0,
     # The full census this tool publishes.
-    "distinct": 1172, "refs": 14801,
-    "main_distinct": 1063, "main_refs": 13937,
+    "distinct": 1171, "refs": 14792,
+    "main_distinct": 1062, "main_refs": 13931,
     "pd_only": 109, "both": 48,
     # Addresses the symbol table names AND the census reaches. It is not
     # `len(symbols)`: naming an address in registers.yaml does not put it in
@@ -315,8 +325,8 @@ XSPACE_WINDOW = 32
 # `sum(buckets) == refs` either way. Presenting them as evidence that the
 # direction split is right is the mistake issue #178 exists to correct. What
 # makes the direction external is HAND_CHECKED.
-BUCKET_TOTALS = {"read": 8319, "write": 3186, "read+write": 2476,
-                 "passed-to-call": 549, "address-taken": 271}
+BUCKET_TOTALS = {"read": 8317, "write": 3186, "read+write": 2476,
+                 "passed-to-call": 543, "address-taken": 270}
 
 # Direction, per address, derived by reading the decompiled C and re-derivable
 # with the greps cited in each entry -- not by running this tool. That is the

@@ -12,10 +12,10 @@
    evidence: ec/decompiled/bank0/B93D.asm; ec/decompiled/bank0/B93D.c
    basis: hand-decoded */
 
-undefined1 load_dptr_be16_from_xdata(short param_1)
+undefined1 load_dptr_be16_from_xdata(short entry_dptr)
 
 {
-  return *(undefined1 *)(param_1 + 1);
+  return *(undefined1 *)(entry_dptr + 1);
 }
 
 

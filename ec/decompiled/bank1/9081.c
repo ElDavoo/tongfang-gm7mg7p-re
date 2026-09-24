@@ -23,7 +23,7 @@ void count_down_06e4_and_toggle_06e3(char param_1)
   }
   if (DAT_EXTMEM_06e4 != '\0') {
     DAT_EXTMEM_06e4 = DAT_EXTMEM_06e4 + -1;
-    step_counter_084e_dispatch();
+    step_counter_084e_dispatch(param_1);
     return;
   }
   DAT_EXTMEM_06e3 = DAT_EXTMEM_06e3 ^ 1;

@@ -45,7 +45,7 @@ void power_on_init_and_two_hang_paths(void)
     gather_0200_from_table_6d74();
     FUN_CODE_5597(0);
     zero_0a59_0a5a_then_call_series();
-    timer1_counted_delay_using_0a56(10);
+    timer1_counted_delay_using_0a56('\n');
     init_1f01_1f06_1f07();
     do {
                     /* WARNING: Do nothing block with infinite loop */

@@ -11,13 +11,13 @@
    evidence: ec/decompiled/pd/F440.asm; ec/decompiled/pd/F440.c
    basis: hand-decoded */
 
-void write_07d6_then_set_1(undefined1 param_1)
+void write_07d6_then_set_1(byte param_1)
 
 {
   undefined1 *puVar1;
   
   DAT_EXTMEM_07d6 = param_1;
-  build_masked_indexed_table_bytes();
+  build_masked_indexed_table_bytes(param_1);
   puVar1 = &DAT_EXTMEM_07d6;
   dptr_0a13_plus_17_times_a(DAT_EXTMEM_07d6);
   *puVar1 = 1;

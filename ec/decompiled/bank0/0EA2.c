@@ -19,14 +19,14 @@
    evidence: ec/decompiled/bank0/0EA2.asm; ec/decompiled/bank0/0EA2.c
    basis: hand-decoded */
 
-void timer1_counted_delay_using_0a56(char param_1)
+void timer1_counted_delay_using_0a56(char ticks)
 
 {
   char cVar1;
   
   TR1 = 0;
   ET1 = 0;
-  DAT_EXTMEM_0a56 = param_1;
+  DAT_EXTMEM_0a56 = ticks;
   FUN_CODE_05e8();
   for (; DAT_EXTMEM_0a56 != '\0'; DAT_EXTMEM_0a56 = DAT_EXTMEM_0a56 + -1) {
     FUN_CODE_0ee8();

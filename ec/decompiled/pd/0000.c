@@ -104,7 +104,7 @@ void c_startup_idata_clear(void)
       } while (bVar3 != 0);
     }
   }
-  poll_0208_0209_then_spin();
+  poll_0208_0209_then_spin('\0');
   return;
 }
 

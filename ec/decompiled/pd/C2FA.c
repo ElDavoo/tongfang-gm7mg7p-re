@@ -17,15 +17,15 @@
    evidence: ec/decompiled/pd/C2FA.asm; ec/decompiled/pd/C2FA.c; ec/annotations/registers.yaml
    basis: hand-decoded */
 
-void write_07d0_then_run_indexed_state_chain(byte param_1)
+void write_07d0_then_run_indexed_state_chain(char param_1,byte param_2)
 
 {
   byte bVar1;
   char cVar2;
   
-  DAT_EXTMEM_07d0 = param_1;
-  if (*(char *)CONCAT11('\b' - (((7 < param_1 * '^') << 7) >> 7),param_1 * '^' - 8) == '\0') {
-    FUN_CODE_8a4a(param_1);
+  DAT_EXTMEM_07d0 = param_2;
+  if (*(char *)CONCAT11('\b' - (((7 < param_2 * '^') << 7) >> 7),param_2 * '^' - 8) == '\0') {
+    FUN_CODE_8a4a(param_2);
   }
   bVar1 = DAT_EXTMEM_07d0;
   FUN_CODE_ee8b();
@@ -53,7 +53,7 @@ void write_07d0_then_run_indexed_state_chain(byte param_1)
     cVar2 = zero_extend_a_into_r4_r7(bVar1 & 2);
     if (cVar2 != '\0') {
       set_r7_r5_from_iram_then_read_07d0();
-      write_07d2_then_dispatch_on_07d1();
+      write_07d2_then_dispatch_on_07d1(param_1);
       if (bVar1 == 1) {
         FUN_CODE_d72e(DAT_EXTMEM_07d0);
       }

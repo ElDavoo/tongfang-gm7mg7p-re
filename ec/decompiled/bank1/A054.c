@@ -11,12 +11,12 @@
    evidence: ec/decompiled/bank1/A054.asm; ec/decompiled/bank1/A054.c
    basis: hand-decoded */
 
-void call_9fc1_a1bf_a064_a0cc_a12d(void)
+void call_9fc1_a1bf_a064_a0cc_a12d(char param_1)
 
 {
   call_9fcb_a029_9ff0();
   dispatch_045a_bits_to_1a44_1a5c_1a50();
-  gate_045a_bit0_set_0724_bit4();
+  gate_045a_bit0_set_0724_bit4(param_1);
   set_0724_bit5_when_gates_pass();
   set_0724_bit7_after_06c5_threshold();
   return;

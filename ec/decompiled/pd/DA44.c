@@ -17,7 +17,7 @@
    evidence: ec/decompiled/pd/DA44.asm; ec/decompiled/pd/DA44.c
    basis: hand-decoded */
 
-void poll_0208_0209_then_spin(char param_1)
+void poll_0208_0209_then_spin(char r7_from_e2e4)
 
 {
   bool bVar1;
@@ -42,8 +42,8 @@ void poll_0208_0209_then_spin(char param_1)
       ret_only_f7b7();
     } while (DAT_EXTMEM_0ae8 == '\0');
     poll_d78a_for_indices_0_and_1();
-    bVar1 = param_1 == '\0';
-    param_1 = '\0';
+    bVar1 = r7_from_e2e4 == '\0';
+    r7_from_e2e4 = '\0';
   } while (bVar1);
   DAT_EXTMEM_00be = 0xaa;
   DAT_EXTMEM_ffd3 = DAT_EXTMEM_ffd3 & 0xbf;

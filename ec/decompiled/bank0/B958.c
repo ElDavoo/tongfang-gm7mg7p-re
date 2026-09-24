@@ -12,13 +12,13 @@
    evidence: ec/decompiled/bank0/B958.asm; ec/decompiled/bank0/B958.c
    basis: hand-decoded */
 
-void write_4_bytes_ending_0a_4b_00(undefined1 param_1,undefined1 *param_2)
+void write_4_bytes_ending_0a_4b_00(undefined1 value_a,undefined1 *entry_dptr)
 
 {
-  *param_2 = param_1;
-  param_2[1] = 10;
-  param_2[2] = 0x4b;
-  param_2[3] = 0;
+  *entry_dptr = value_a;
+  entry_dptr[1] = 10;
+  entry_dptr[2] = 0x4b;
+  entry_dptr[3] = 0;
   return;
 }
 

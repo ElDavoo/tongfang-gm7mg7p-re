@@ -20,22 +20,25 @@ void dispatch_on_0a47(void)
 {
   char cVar1;
   undefined1 uVar2;
+  undefined1 *puVar3;
   
+  puVar3 = (undefined1 *)0xa47;
   if (DAT_EXTMEM_0a47 == '\x01') {
     init_0a48_to_40();
     set_dptr_0a59_b955();
     call_445e_40_88_then_load_0a49(1);
-    write_4_bytes_ending_0a_4b_00(0x9f);
+    write_4_bytes_ending_0a_4b_00(0x9f,puVar3);
     stage_and_commit_0a56_block(0xc);
     DAT_EXTMEM_079a = DAT_EXTMEM_0a4b + -0x30 + DAT_EXTMEM_0a4c * '\x10';
+    puVar3 = (undefined1 *)0xa4b;
     DAT_EXTMEM_0a4b = 1;
     uVar2 = read_be16_0a48();
     set_dptr_0a59_b955(0,uVar2);
     stage_and_commit_0a56_block(0x88);
     load_r3_r7_from_0a48_0a49();
-    write_4_bytes_ending_0a_4b_00(0x70);
+    write_4_bytes_ending_0a_4b_00(0x70,puVar3);
     copy_0a4b_0a4c_to_079b_079c();
-    write_4_bytes_ending_0a_4b_00(0x55);
+    write_4_bytes_ending_0a_4b_00(0x55,puVar3);
     DAT_EXTMEM_079d = read_0a4b_after_call_445e_0c();
     if (DAT_EXTMEM_079a != '\0') {
       DAT_EXTMEM_08ec = DAT_EXTMEM_08ec & 0xef | 1;
@@ -67,10 +70,11 @@ void dispatch_on_0a47(void)
   cVar1 = read_be16_0a48();
   set_dptr_0a59_b955(0xbf,cVar1 + '\x01');
   read_0a4b_after_call_445e_0c();
-  store_a_to_dptr_b994(0x79a);
-  write_4_bytes_ending_0a_4b_00(0xc0);
+  puVar3 = (undefined1 *)0x79a;
+  store_a_to_dptr_b994();
+  write_4_bytes_ending_0a_4b_00(0xc0,puVar3);
   copy_0a4b_0a4c_to_079b_079c();
-  write_4_bytes_ending_0a_4b_00(0xca);
+  write_4_bytes_ending_0a_4b_00(0xca,puVar3);
   DAT_EXTMEM_079d = read_0a4b_after_call_445e_08();
   if (DAT_EXTMEM_079a != '\0') {
     set_08ec_bit0_clear_bit4();

@@ -13,10 +13,10 @@
    evidence: ec/decompiled/pd/972E.asm; ec/decompiled/pd/972E.c
    basis: hand-decoded */
 
-char load_r0_r3_then_read_dptr_times_17(char *param_1)
+char load_r0_r3_then_read_dptr_times_17(char *entry_dptr)
 
 {
-  return *param_1 * '\x17';
+  return *entry_dptr * '\x17';
 }
 
 

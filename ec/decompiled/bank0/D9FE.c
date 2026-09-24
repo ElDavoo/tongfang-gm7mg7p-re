@@ -26,11 +26,11 @@ void seed_07d3_gfid_and_08xx_defaults(void)
   
   DAT_EXTMEM_073c = DAT_EXTMEM_073c & 6 | 1;
   set_1605_bit1();
-  timer1_counted_delay_using_0a56(200);
+  timer1_counted_delay_using_0a56(-0x38);
   DAT_EXTMEM_1646 = 0x40;
   set_1607_bit6();
   set_1603_bit4();
-  timer1_counted_delay_using_0a56(5);
+  timer1_counted_delay_using_0a56('\x05');
   if ((DAT_EXTMEM_1666 >> 2 & 1) == 0) {
     if ((DAT_EXTMEM_166a >> 4 & 1) == 0) {
       GFID = 0x70;

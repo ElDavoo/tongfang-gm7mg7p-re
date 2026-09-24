@@ -28,7 +28,7 @@ void write_4_bytes_after_f121_then_chain(short param_1,char param_2)
   stage_0a54_0a55_then_dispatch();
   if (param_2 != '\0') {
     cVar1 = '\x14';
-    timer1_counted_delay_using_0a56();
+    timer1_counted_delay_using_0a56('\x14');
     set_0f60_84_and_0a56_block();
     stage_0a54_0a55_then_dispatch();
     if (cVar1 != '\0') {

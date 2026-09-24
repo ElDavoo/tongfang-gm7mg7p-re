@@ -20,16 +20,18 @@
 //        component, evidence
 //   4  seed basis CSV, header-only, columns: program,addr,basis (or "" )
 //
-// The decompiler-availability guard below is the important part. Ghidra's
-// native decompiler can fail to load -- e.g. if the release was unpacked by
-// something that dropped the exec bit on
+// The decompiler-availability guard matters more than anything else here, and
+// it is TongFang.openDecompiler() rather than a copy: Ghidra's native
+// decompiler can fail to load -- e.g. if the release was unpacked by something
+// that dropped the exec bit on
 // Ghidra/Features/Decompiler/os/linux_x86_64/{decompile,sleigh} -- and when it
 // does, DecompInterface.openProgram() returns FALSE and getErrorMessage() is
 // the EMPTY STRING. That is indistinguishable, from the output, from "this
 // function will not decompile", which is exactly the mistake
 // windows/antitamper/README.md exists to stop people making about a different
-// cause with the same shape. So it is raised as a loud, specific failure here
-// rather than written into the output as a per-function note.
+// cause with the same shape. It used to live in this file, where the file that
+// exists so it cannot drift did not have it, and ApplyAnnotations.java now
+// opens a decompiler too and would have carried a second copy.
 //@category TongFang
 import ghidra.app.script.GhidraScript;
 import ghidra.app.decompiler.DecompInterface;
@@ -88,17 +90,7 @@ public class ExportDecompile extends GhidraScript {
         long windowBytes = 0;
         long bodyBytes = 0;
 
-        DecompInterface di = new DecompInterface();
-        if (!di.openProgram(currentProgram)) {
-            String why = di.getLastMessage();
-            di.dispose();
-            throw new Exception("DECOMPILER UNAVAILABLE for " + program + ": openProgram() returned false, "
-                + "getLastMessage()='" + why + "'. An empty message means Ghidra's "
-                + "native decompiler did not load -- check the exec bits on "
-                + "$GHIDRA_INSTALL_DIR/Ghidra/Features/Decompiler/os/linux_x86_64/{decompile,sleigh}. "
-                + "This is NOT a function that will not decompile, and the build must not be read as "
-                + "saying it is.");
-        }
+        DecompInterface di = TongFang.openDecompiler(currentProgram, program);
 
         new File(outDir).mkdirs();
         FunctionIterator it = currentProgram.getFunctionManager().getFunctions(true);

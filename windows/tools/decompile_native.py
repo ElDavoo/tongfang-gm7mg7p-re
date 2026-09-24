@@ -469,11 +469,13 @@ def export_batch(analyze_headless, project_dir, imports, work, index, context,
     cmd += ["-overwrite", "-scriptPath", SCRIPTS + ";" + WIN_SCRIPTS]
     if use_pdb_script:
         cmd += ["-preScript", "DisablePdbAnalyzer.java"]
-    # ApplyAnnotations: "-" for both CSVs = no annotation layer yet (this is a
-    # PE, not the EC: no XDATA space, no hand-maintained function CSV), plus a
-    # report dir. ExportDecompile: per-program .c, index, context, seed basis
-    # "-" (a PE has no curated seed basis).
-    cmd += ["-postScript", "ApplyAnnotations.java", "-", "-", reports]
+    # ApplyAnnotations: "-" for all three CSVs = no annotation layer yet (this
+    # is a PE, not the EC: no XDATA space, no hand-maintained function CSV, and
+    # so no variable layer either -- ec/annotations/ghidra-variables.csv names
+    # 8051 decompiler placeholders), plus a report dir. ExportDecompile:
+    # per-program .c, index, context, seed basis "-" (a PE has no curated seed
+    # basis).
+    cmd += ["-postScript", "ApplyAnnotations.java", "-", "-", reports, "-"]
     cmd += ["-postScript", "ExportDecompile.java", outdir, index, "per-program",
             context, "-"]
     # The disassembly, beside the decompilation. A PE decompilation is a reading

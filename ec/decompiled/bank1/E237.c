@@ -27,8 +27,8 @@ void gate_1c00_init_defaults(void)
   if (((DAT_EXTMEM_1c00 >> 1 & 1) != 0) && ((DAT_EXTMEM_1c00 & 0x7c) == 0)) {
     DAT_EXTMEM_0560 = 0;
     if ((DAT_EXTMEM_03ff >> 3 & 1) != 1) {
-      DAT_EXTMEM_0387 =
-           shift_pair_then_sum_and_divide_by_four(0x3c7,DAT_EXTMEM_1c04,DAT_EXTMEM_0391,0x91,3);
+      DAT_EXTMEM_0387 = shift_pair_then_sum_and_divide_by_four((byte *)0x3c7,DAT_EXTMEM_1c04,0x91,3)
+      ;
     }
     DAT_EXTMEM_0683 = 10;
     DAT_EXTMEM_1c04 = 0;

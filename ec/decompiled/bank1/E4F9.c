@@ -14,10 +14,10 @@
    evidence: ec/decompiled/bank1/E4F9.asm; ec/decompiled/bank1/E4F9.c
    basis: hand-decoded */
 
-void store_a_to_dptr_then_set_0680_4(undefined1 param_1,undefined1 *param_2)
+void store_a_to_dptr_then_set_0680_4(undefined1 value_a,undefined1 *entry_dptr)
 
 {
-  *param_2 = param_1;
+  *entry_dptr = value_a;
   DAT_EXTMEM_0680 = 4;
   return;
 }

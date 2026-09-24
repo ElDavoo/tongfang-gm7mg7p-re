@@ -101,6 +101,122 @@ process is recorded because the result is only as good as it:
 be rejected and one that must survive, and CI runs it: a check that has
 quietly stopped rejecting anything looks exactly like a check that is working.
 
+## Variables
+
+`ghidra-variables.csv` is the same layer one level down: a hand-maintained
+name for a **decompiler variable**, applied by the same script and regenerated
+by the same build, so a `.c` comes out carrying it. Same conventions —
+header-only, no comment lines, mandatory non-empty `evidence`, `basis` from the
+same vocabulary.
+
+**A separate file, not a column in this one.** A function's row *is* a function:
+`build_ec_decompile.py`'s `annotation_seeds()` reads every row's `addr` as a
+function seed, and `join_index()` keys one row per `(scope, addr)`. Eight
+parameter rows for one function would inject eight seeds and overwrite seven
+rows. Columns:
+
+| column | |
+|---|---|
+| `scope`, `addr` | the **owning function's** entry address, same semantics as above |
+| `key` | the decompiler placeholder being replaced — `param_1`, `cVar1` |
+| `name` | `snake_case`; what the value is, from the listing. Empty only for `kind=unresolved` |
+| `kind` | the controlled vocabulary, below |
+| `comment` | why, concretely, and what is **not** decoded |
+| `evidence` | mandatory, non-empty, the `.asm` first |
+| `basis` | the same `hand-decoded` / `restatement` / `inferred` as above |
+
+`kind` is a closed list: `param`, `local`, `return`, `artifact`, `unresolved`.
+
+**Most of these are not parameters, and the closed list is why.** 45 rows in
+`ghidra-functions.csv` already discuss a `param_N` by name, and in most the
+prose concludes the placeholder is a decompiler artifact — `bank0,0x901C`'s
+says "*param_1 is a pointer the decompiler invented, not a 8051 calling
+convention*", and `bank1,0x8DBC`'s says "the decompiler's param_1 is the R7
+result of 0x1984, not an argument passed in". A sweep that gave every
+`param_N` a confident semantic name would manufacture false precision on
+exactly the rows this repository has already flagged as misleading.
+
+- `param` — a genuine incoming value. In the first batch this is a value
+  arriving in **A**, the conventional 8051 argument register, and no further:
+  Ghidra has no Keil C51 calling-convention model, so "arrives in A" is the
+  whole of what the listing can say.
+- `local` — a genuine local. Reserved; unused in the first batch, which is
+  parameters only.
+- `return` — the decompiler rendering a **callee's R7** as a parameter.
+- `artifact` — the decompiler invented it: an uninitialised DPTR rendered as a
+  pointer, or a scratch register (R1–R7) promoted to a parameter slot. Name it
+  for what it actually is.
+- `unresolved` — the listing does not say. **No name; the placeholder stays.**
+  A result, not a failure, and exactly how `type=unresolved` behaves.
+
+`unresolved` is not a hedge. Four rows in the first batch use it, and in each
+the honest answer is that the identifier corresponds to nothing in the
+instructions — `bank1,0xBD20`'s `param_1` exists only because the decompiler
+split the listing's single `orl A,B` at 0xBD26 into two tests, and which of A
+or B it is has not been established. Naming it anyway would be a confident
+sentence about a register the code does not touch.
+
+**The key is positional; the name is earned.** The key has to be positional —
+it is how the script finds the variable — so all the weight is on `name`,
+`kind`, `comment` and `evidence`. Naming by position (`param_1` → `local_1`)
+produces something worse than `param_1`, because it looks finished.
+
+### What the checks refuse
+
+`build_ec_decompile.py --check` runs in CI and, for every row, requires the
+committed `.c` at that `(scope, addr)` to contain the `name` as a whole word
+**and** to no longer contain the `key`. That is bidirectional on purpose: a
+typo'd name is not in the output, and a key the build has already consumed is
+caught by the other half. It also refuses an empty `evidence`, a `kind` outside
+the vocabulary, a `name` that is an EC XDATA register name (the variable layer
+is not a back door for `registers.yaml`, and the PD image has its own XDATA
+map), and a `kind=unresolved` row that carries a name anyway.
+
+The scan is over the **code**, not the whole file. A function's own plate
+comment is allowed to name the placeholder it is explaining — that sentence is
+the reading, and it has to survive the rename it describes.
+
+### The rebuild asymmetry, and why it is deliberate
+
+An unmatched **function** row fails the build. An unmatched **variable** row is
+reported and counted in the manifest, not fatal. A function row is keyed on an
+address, stable forever; a variable row is keyed on a decompiler placeholder,
+which `--mode rebuild-project` **consumes** — once the name is persisted into
+the project, `param_1` no longer exists there, and rebuilding from the same CSV
+would find nothing to rename. Making that an error would break a documented,
+routine operation. Typos are caught by the `--check` above instead, which is
+stronger: it measures the committed output rather than the script's say-so.
+
+`ec/ghidra/manifest.csv` carries `variables_functions` (how many functions a
+row decompiled — the cost), `variables_applied` and `variables_unmatched`, read
+back from `apply-<program>.tsv`.
+
+### The first batch
+
+60 rows across 46 functions: every function whose existing `hand-decoded`
+comment already names a `param_N`, which is a measurable boundary rather than a
+round number, plus `bank0,0x0EA2` — the worked example the variable layer was
+built and proved on. Transcribing those comments is neither guesswork nor
+duplicated effort: the ground truth was already written, already cited, and in
+most cases already says the C misleads.
+
+39 `artifact`, 11 `return`, 5 `param`, 4 `unresolved`. The sweep's
+orchestration is not automated — the shard/author/verifier loop is driven by
+hand, exactly as the function sweep's is — but
+`../tools/merge_annotation_shards.py --csv-kind variables` runs it, and refuses
+the same seven things it refuses for functions.
+
+**Left for follow-ups**, sized by *declarations* rather than mentions, because
+a mention count is not the size of the job: the export holds 8,605 `param_N`
+mentions across 2,232 declared parameters, and it is the 2,232 that have to be
+read. After this batch about 2,170 parameters are unnamed, and the 1,725
+declared locals are blocked behind the XDATA map — 1,099 distinct
+`DAT_EXTMEM_NNNN` addresses appear in the export and the symbol layer names 7
+of them, so a local that mirrors an unnamed register cannot honestly be named
+before the register is. (Measured over the committed export; a regeneration
+that renames a symbol moves the mention counts, which is why the declaration
+counts are the ones quoted here.)
+
 ## Adding a row by hand
 
 Append it, with an `evidence` path, and re-run the build:

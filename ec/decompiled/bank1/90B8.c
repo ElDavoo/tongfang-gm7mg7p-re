@@ -15,7 +15,7 @@
    evidence: ec/decompiled/bank1/90B8.asm; ec/decompiled/bank1/90B8.c
    basis: hand-decoded */
 
-void step_counter_084e_dispatch(char param_1)
+void step_counter_084e_dispatch(char r7_from_1984)
 
 {
   if ((((DAT_EXTMEM_0490 & 1) == 0) && ((DAT_EXTMEM_0476 & 0x20) != 0)) &&
@@ -42,7 +42,7 @@ LAB_CODE_90ff:
   }
   load_dptr_aa04_tail_jump_1100();
 LAB_CODE_9125:
-  if ((((DAT_EXTMEM_0480 & 0x10) == 0) && (trampoline_to_c10c(), param_1 != '\0')) &&
+  if ((((DAT_EXTMEM_0480 & 0x10) == 0) && (trampoline_to_c10c(), r7_from_1984 != '\0')) &&
      ((DAT_EXTMEM_0472 & 0x20) == 0)) {
     trampoline_to_c118();
   }

@@ -24,7 +24,7 @@ void countdown_068d_then_branch_on_r7(char param_1)
     return;
   }
   DAT_EXTMEM_068d = 9;
-  gate_04fe_06e6_call_19a8();
+  gate_04fe_06e6_call_19a8(param_1);
   if (-1 < in_PSW) {
     trampoline_to_c10c();
     if (param_1 != '\0') {

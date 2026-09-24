@@ -1,6 +1,7 @@
 // Helpers every script in this directory uses, so the things that must not
 // drift exist once: the context-file contract, the export-identity rules, the
-// CSV parser, and Ghidra's placeholder-name list.
+// CSV parser, Ghidra's placeholder-name lists, and the decompiler-availability
+// guard.
 //
 // This is a plain class, not a GhidraScript. Ghidra compiles every .java on the
 // script path into the default package and only *runs* the ones named on the
@@ -10,6 +11,9 @@
 // collision check and the decompiler-availability guard are the two checks that
 // turn a silent export loss into a loud failure, and a copy in each of four
 // files is four chances to weaken one. See ghidra/README.md.
+
+import ghidra.app.decompiler.DecompInterface;
+import ghidra.program.model.listing.Program;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -140,6 +144,64 @@ public final class TongFang {
     public static String stem(String name) {
         int dot = name.lastIndexOf('.');
         return dot > 0 ? name.substring(0, dot) : name;
+    }
+
+    /**
+     * Ghidra's own placeholder names for VARIABLES, as distinct from
+     * {@link #isPlaceholderName} for function symbols.
+     *
+     * Separate rather than folded in, because the two answer different
+     * questions and merging them is how one of them stops being right: the
+     * index's `annotated` column asks whether a FUNCTION symbol is still
+     * Ghidra's, and a variable placeholder never appears there, while the
+     * variable-annotation layer keys on exactly these. The families are the
+     * ones the committed EC export actually carries, measured over all 2,708
+     * files -- `param_`/`uVar`/`cVar`/`bVar`/`sVar` and the rest -- so this
+     * list is a reading of the output rather than a guess at the naming scheme.
+     *
+     * Deliberately NOT here: `DAT_EXTMEM_`. Those are GLOBAL symbols read from
+     * the XDATA address map, and they are named by ec/ghidra/xdata-symbols.csv
+     * from ec/annotations/registers.yaml. A variable row that renamed one would
+     * be a back door for register naming, which is the layer that has the
+     * `status:` discipline behind it.
+     */
+    public static boolean isVariablePlaceholder(String name) {
+        return name.startsWith("param_") || name.startsWith("uVar")
+            || name.startsWith("cVar") || name.startsWith("bVar")
+            || name.startsWith("iVar") || name.startsWith("sVar")
+            || name.startsWith("uStack_") || name.startsWith("local_")
+            || name.startsWith("in_") || name.startsWith("extraout_")
+            || name.startsWith("CONCAT") || name.startsWith("switchD_")
+            || name.matches("(i|c|u|b|s)Var[0-9]+")
+            || name.matches("extraout_[0-9]+")
+            || name.matches("uStack_[0-9A-Fa-f]+");
+    }
+
+    /**
+     * Open the native decompiler, or refuse loudly.
+     *
+     * Ghidra's decompiler can be present and still unusable, and it fails
+     * SILENTLY: `openProgram()` returns false and `getLastMessage()` is the
+     * empty string. From the output alone that is indistinguishable from
+     * "this function will not decompile" -- the same shape as the ConfuserEx
+     * anti-tamper trap in windows/antitamper/README.md, and the mistake this
+     * message exists to stop. Every script that opens one calls this.
+     */
+    public static DecompInterface openDecompiler(Program program, String label)
+            throws Exception {
+        DecompInterface di = new DecompInterface();
+        if (!di.openProgram(program)) {
+            String why = di.getLastMessage();
+            di.dispose();
+            throw new Exception("DECOMPILER UNAVAILABLE for " + label
+                + ": openProgram() returned false, getLastMessage()='" + why
+                + "'. An empty message means Ghidra's native decompiler did not "
+                + "load -- check the exec bits on $GHIDRA_INSTALL_DIR/Ghidra/"
+                + "Features/Decompiler/os/linux_x86_64/{decompile,sleigh}. This is "
+                + "NOT a function that will not decompile, and the build must not be "
+                + "read as saying it is.");
+        }
+        return di;
     }
 
     /**

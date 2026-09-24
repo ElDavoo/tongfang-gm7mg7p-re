@@ -12,11 +12,11 @@
    evidence: ec/decompiled/bank1/A4CF.asm; ec/decompiled/bank1/A4CF.c
    basis: hand-decoded */
 
-void send_ea_to_9ed4_when_06e6_eq_05(char param_1)
+void send_ea_to_9ed4_when_06e6_eq_05(char r7_from_a_callee)
 
 {
-  if ((((DAT_EXTMEM_06e6 == '\x05') && (trampoline_to_c10c(), param_1 != '\0')) &&
-      (trampoline_to_c118(), param_1 != '\0')) &&
+  if ((((DAT_EXTMEM_06e6 == '\x05') && (trampoline_to_c10c(), r7_from_a_callee != '\0')) &&
+      (trampoline_to_c118(), r7_from_a_callee != '\0')) &&
      ((DAT_EXTMEM_047e != -0x33 && (DAT_EXTMEM_047e != -4)))) {
     ring_write_0990_len_2f(0xea);
     clear_0480_bit4_set_0459_01_06e1_a0();

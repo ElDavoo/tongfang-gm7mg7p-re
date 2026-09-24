@@ -15,7 +15,7 @@
    evidence: ec/decompiled/pd/B311.asm; ec/decompiled/pd/B311.c
    basis: hand-decoded */
 
-void write_07d2_then_dispatch_on_07d1(char param_1)
+void write_07d2_then_dispatch_on_07d1(char r5_value)
 
 {
   byte bVar1;
@@ -24,11 +24,11 @@ void write_07d2_then_dispatch_on_07d1(char param_1)
   char in_PSW;
   byte *pbVar4;
   
-  DAT_EXTMEM_07d2 = param_1;
+  DAT_EXTMEM_07d2 = r5_value;
   cVar3 = write_r7_to_dptr(0x7d1);
   if (cVar3 != '\0') {
     cVar3 = DAT_EXTMEM_07d1;
-    dptr_fffe_then_122f_at_e4d0(0x11,0x94,param_1 + '\x01');
+    dptr_fffe_then_122f_at_e4d0(0x11,0x94,r5_value + '\x01');
     if (cVar3 != '\0') {
       return;
     }

@@ -10,11 +10,11 @@
    evidence: ec/decompiled/bank1/ABCE.asm; ec/decompiled/bank1/ABCE.c
    basis: hand-decoded */
 
-void call_b728_c614_8915(void)
+void call_b728_c614_8915(char param_1)
 
 {
   clear_0610_bit5_and_dispatch();
-  gate_0755_and_0440_dispatch();
+  gate_0755_and_0440_dispatch(param_1);
   saturating_count_09f0_then_call_88f0();
   return;
 }

@@ -19,20 +19,40 @@
 //        apply-<program>.tsv inside it, one per program, because a batched
 //        analyzeHeadless run executes this script once per program and a
 //        single shared filename would leave only the last program's report.
+// arg 3 (optional): variable annotations CSV, header-only, columns:
+//          scope,addr,key,name,kind,comment,evidence,basis
+//        `key` is the decompiler placeholder being replaced (param_1, cVar1);
+//        `name` is what it is, from the listing. Pass "" or "-" for a program
+//        with no variable layer, which is every program but the EC's.
 //
 // A row that matches no function is REPORTED, never dropped. The driver turns
 // a non-zero unmatched count into a failure, because an annotation pointing at
 // an address the project has no function for is either a typo or a sign the
 // project needs a rebuild -- and quietly ignoring it is how a stale annotation
 // outlives the thing it named.
+//
+// The variable layer's unmatched rows are REPORTED and COUNTED but not fatal,
+// and that asymmetry is deliberate. A function row is keyed on an address,
+// which is stable forever. A variable row is keyed on a decompiler placeholder,
+// which `--mode rebuild-project` CONSUMES: once the name is persisted into the
+// project, `param_1` no longer exists there and a rebuild of the same CSV
+// would find nothing to rename. Making that an error would mean a documented,
+// routine operation breaks the build. A typo is caught anyway, and more
+// strongly, by the driver's --check: the committed .c has to contain the name
+// the row asked for and must NOT contain the key.
 //@category TongFang
 import ghidra.app.script.GhidraScript;
+import ghidra.app.decompiler.DecompInterface;
+import ghidra.app.decompiler.DecompileResults;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.ByteDataType;
 import ghidra.program.model.listing.CommentType;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Listing;
+import ghidra.program.model.pcode.HighFunction;
+import ghidra.program.model.pcode.HighFunctionDBUtil;
+import ghidra.program.model.pcode.HighSymbol;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
@@ -41,23 +61,37 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ApplyAnnotations extends GhidraScript {
+
+    private static final int DECOMPILE_TIMEOUT_S = 120;
 
     @Override
     public void run() throws Exception {
         String[] args = getScriptArgs();
         if (args.length < 3) {
             throw new IllegalArgumentException(
-                "usage: ApplyAnnotations.java <functions.csv|-> <xdata.csv|-> <report-dir>");
+                "usage: ApplyAnnotations.java <functions.csv|-> <xdata.csv|-> <report-dir> "
+                + "[variables.csv|->]");
         }
         String programName = currentProgram.getName();
         int applied = 0;
         int unmatched = 0;
         int labels = 0;
         int labelsSkipped = 0;
+        int varsApplied = 0;
+        int varsUnmatched = 0;
+        int varsFunctions = 0;
         List<String> problems = new ArrayList<>();
+        // Every name the XDATA map carries, however many this program consumed.
+        // The PD lock below needs the whole set, not the subset that applies
+        // here: the point is that a `pd` row must not borrow an EC register
+        // name, and a name this program would not have been given is exactly
+        // the one that proves the row came from the wrong map.
+        List<String> xdataNames = new ArrayList<>();
 
         // --- XDATA labels, banks only -------------------------------------
         // The ITE8850-PD program has its own XDATA map (ec/README.md,
@@ -74,6 +108,7 @@ public class ApplyAnnotations extends GhidraScript {
                 SymbolTable st = currentProgram.getSymbolTable();
                 Listing listing = currentProgram.getListing();
                 for (String[] row : readCsv(args[1])) {
+                    xdataNames.add(row[1].trim());
                     if (!appliesTo(row[5], programName)) {
                         continue;
                     }
@@ -113,15 +148,7 @@ public class ApplyAnnotations extends GhidraScript {
             ? new ArrayList<>()
             : readCsv(args[0]);
         for (String[] row : functionRows) {
-            String scope = row[0];
-            // The program name Ghidra reports is the imported FILE name
-            // ("bank0.bin"), so compare on the stem: an annotation row saying
-            // `bank0` should not stop matching because the image is a .bin.
-            String stem = stem(programName);
-            boolean mine = scope.equals(stem)
-                || (scope.equals(programName))
-                || ("common".equals(scope) && stem.startsWith("bank"));
-            if (!mine) {
+            if (!mine(row[0], programName)) {
                 continue;
             }
             long addr = hex(row[1]);
@@ -185,6 +212,68 @@ public class ApplyAnnotations extends GhidraScript {
             applied++;
         }
 
+        // --- variable names ------------------------------------------------
+        // Grouped by function first, so a function with eight named variables
+        // costs one decompile and not eight. DecompInterface is opened only
+        // once this program has at least one row of its own: a JVM start is
+        // ~15 s and the BIOS and Windows builds have no variable layer at all,
+        // so opening one eagerly would buy them a decompiler they never use.
+        if (args.length > 3 && !args[3].isEmpty() && !"-".equals(args[3])) {
+            Map<Long, List<String[]>> byFunction = new LinkedHashMap<>();
+            for (String[] row : readCsv(args[3])) {
+                if (!mine(row[0], programName)) {
+                    continue;
+                }
+                byFunction.computeIfAbsent(hex(row[1]), k -> new ArrayList<>()).add(row);
+            }
+            if (!byFunction.isEmpty()) {
+                DecompInterface di = TongFang.openDecompiler(currentProgram, programName);
+                try {
+                    for (Map.Entry<Long, List<String[]>> entry : byFunction.entrySet()) {
+                        long addr = entry.getKey();
+                        List<String[]> rows = entry.getValue();
+                        Function f = getFunctionAt(toAddr(addr));
+                        if (f == null) {
+                            varsUnmatched += rows.size();
+                            varsFunctions++;
+                            problems.add(String.format(
+                                "0x%04X in %s: %d variable row(s), no function at this address",
+                                addr, programName, rows.size()));
+                            continue;
+                        }
+                        DecompileResults r = di.decompileFunction(f, DECOMPILE_TIMEOUT_S, monitor);
+                        HighFunction high = (r != null && r.decompileCompleted())
+                            ? r.getHighFunction() : null;
+                        varsFunctions++;
+                        if (high == null) {
+                            varsUnmatched += rows.size();
+                            problems.add(String.format("0x%04X in %s: did not decompile, so its "
+                                + "%d variable row(s) had nothing to rename. This is not the "
+                                + "silent-decompiler-failure shape -- that raises DECOMPILER "
+                                + "UNAVAILABLE above -- it is this one function.", addr, programName,
+                                rows.size()));
+                            continue;
+                        }
+                        for (String[] row : rows) {
+                            // Both halves, because a per-row failure is a row
+                            // that did not apply. Counting only the
+                            // function-level ones made `variables_unmatched`
+                            // read 0 on a run where every row had been refused
+                            // -- which is the one number a reader trusts.
+                            if (renameVariable(high, row, addr, programName,
+                                    xdataNames, problems) == 1) {
+                                varsApplied++;
+                            } else {
+                                varsUnmatched++;
+                            }
+                        }
+                    }
+                } finally {
+                    di.dispose();
+                }
+            }
+        }
+
         new java.io.File(args[2]).mkdirs();
         try (PrintWriter pw = new PrintWriter(args[2] + "/apply-" + stem(programName) + ".tsv")) {
             pw.println("# ApplyAnnotations report for " + programName);
@@ -193,16 +282,144 @@ public class ApplyAnnotations extends GhidraScript {
             pw.println("annotations_unmatched\t" + unmatched);
             pw.println("xdata_labels\t" + labels);
             pw.println("xdata_labels_skipped\t" + labelsSkipped);
+            // variables_functions counts FUNCTIONS a variable row decompiled,
+            // not rows: one function with eight named variables is one
+            // decompile, and that is the number the cost scales with.
+            pw.println("variables_functions\t" + varsFunctions);
+            pw.println("variables_applied\t" + varsApplied);
+            pw.println("variables_unmatched\t" + varsUnmatched);
             for (String p : problems) {
                 pw.println("problem\t" + p.replace('\t', ' '));
             }
         }
         println("ApplyAnnotations " + programName + ": applied " + applied
             + ", unmatched " + unmatched + ", xdata labels " + labels
-            + (labelsSkipped > 0 ? " (" + labelsSkipped + " skipped)" : ""));
+            + (labelsSkipped > 0 ? " (" + labelsSkipped + " skipped)" : "")
+            + ", variables " + varsApplied + " in " + varsFunctions + " function(s)"
+            + (varsUnmatched > 0 ? " (" + varsUnmatched + " unmatched)" : ""));
         if (unmatched > 0) {
             println("  " + unmatched + " annotation(s) did not resolve -- see " + args[2]);
         }
+    }
+
+    /**
+     * Does a row's `scope` name this program? The Ghidra program name is the
+     * imported FILE name ("bank0.bin"), so compare on the stem too: a row
+     * saying `bank0` must not stop matching because the image is a .bin. A
+     * `common` row belongs to both bank programs, which is the one case where
+     * a row matches something that is not this program's name.
+     *
+     * One definition, shared by the function and variable layers. They used to
+     * be inline in two loops, and the second one being a copy is how a `common`
+     * variable row would have applied to the PD image.
+     */
+    private static boolean mine(String scope, String programName) {
+        String stem = stem(programName);
+        return scope.equals(stem)
+            || scope.equals(programName)
+            || ("common".equals(scope) && stem.startsWith("bank"));
+    }
+
+    /**
+     * Rename one decompiler variable in the database. Returns 1 on success, 0
+     * after reporting why not.
+     *
+     * `updateDBVariable` writes the name into the program's symbol table, which
+     * is what makes it survive into the *next* decompile: ExportDecompile
+     * decompiles again from scratch after this script has run, and the name it
+     * emits comes from the database. Verified end to end on bank0 0x0EA2, whose
+     * `param_1` comes out as `ticks` in the committed 0EA2.c.
+     *
+     * The `null` DataType is deliberate: it leaves the variable's type exactly
+     * as the decompiler inferred it. Naming a variable is not a claim about its
+     * width, and a row that got one wrong would be a silent type change in the
+     * output rather than a wrong identifier.
+     */
+    private static int renameVariable(HighFunction high, String[] row, long addr,
+        String programName, List<String> xdataNames, List<String> problems) {
+        String key = row[2].trim();
+        String name = row[3].trim();
+        String kind = row[4].trim();
+        if (row[6].trim().isEmpty()) {
+            problems.add(String.format(
+                "0x%04X %s in %s: no evidence citation; a variable annotation without "
+                + "one is a claim, not a finding", addr, key, programName));
+            return 0;
+        }
+        if (!TongFang.isVariablePlaceholder(key)) {
+            // A key that is not a decompiler placeholder means the row is
+            // pointing at something else -- a real name, a function symbol, a
+            // typo. Renaming on that key would either do nothing visible or
+            // rename a global, so refuse it and say which.
+            problems.add(String.format(
+                "0x%04X in %s: key %s is not a decompiler placeholder, so there is no "
+                + "variable by that name to replace", addr, programName, key));
+            return 0;
+        }
+        if ("unresolved".equals(kind) && !name.isEmpty()) {
+            problems.add(String.format("0x%04X %s in %s: kind=unresolved with a name; "
+                + "unresolved means the listing does not say, and the placeholder "
+                + "stays", addr, key, programName));
+            return 0;
+        }
+        // The PD image has its own XDATA map, so an EC register name in a pd
+        // row is a first-class overclaim whatever else the row says. The XDATA
+        // label loop above already locks this door for register addresses; this
+        // is the same lock for the variable layer, which is the one place a
+        // register name could otherwise arrive dressed as a local.
+        if (stem(programName).startsWith("pd") && xdataNames.contains(name)) {
+            problems.add(String.format("0x%04X in %s: variable name %s is an EC XDATA "
+                + "register name, and the PD image has its own map", addr, programName, name));
+            return 0;
+        }
+        if (name.isEmpty()) {
+            // `unresolved` rows keep the placeholder, so there is nothing to do
+            // and nothing wrong: the row's content is the comment, and saying
+            // so in a report is more useful than a silent no-op.
+            return 1;
+        }
+        HighSymbol sym = findVariable(high, key);
+        if (sym == null) {
+            problems.add(String.format("0x%04X in %s: no decompiler variable named %s",
+                addr, programName, key));
+            return 0;
+        }
+        try {
+            HighFunctionDBUtil.updateDBVariable(sym, name, null, SourceType.USER_DEFINED);
+        } catch (Exception e) {
+            problems.add(String.format("0x%04X %s in %s: could not be renamed to %s: %s",
+                addr, key, programName, name, e.getMessage()));
+            return 0;
+        }
+        return 1;
+    }
+
+    /**
+     * The HighSymbol a `key` names, parameters and locals alike. The local
+     * symbol map holds both, and the global map is consulted too so that a
+     * `DAT_EXTMEM_NNNN` key resolves rather than reporting unmatched -- though
+     * naming one of those is refused elsewhere, because those are address
+     * symbols and the XDATA layer owns them.
+     */
+    private static HighSymbol findVariable(HighFunction high, String key) {
+        // getSymbols() hands back an Iterator, not an Iterable -- an
+        // enhanced-for over it does not compile, and it is the sort of thing
+        // that is written from memory of the C# API and caught by the build.
+        java.util.Iterator<HighSymbol> locals = high.getLocalSymbolMap().getSymbols();
+        while (locals.hasNext()) {
+            HighSymbol s = locals.next();
+            if (key.equals(s.getName())) {
+                return s;
+            }
+        }
+        java.util.Iterator<HighSymbol> globals = high.getGlobalSymbolMap().getSymbols();
+        while (globals.hasNext()) {
+            HighSymbol s = globals.next();
+            if (key.equals(s.getName())) {
+                return s;
+            }
+        }
+        return null;
     }
 
     /** `programs` is `bank0;bank1`; a row applies if this program is named. */

@@ -13,7 +13,7 @@
    evidence: ec/decompiled/bank0/D9DC.asm; ec/decompiled/bank0/D9DC.c
    basis: hand-decoded */
 
-void select_0825_or_0827_into_0826(char param_1)
+void select_0825_or_0827_into_0826(char r7_from_c1e7)
 
 {
   undefined1 *puVar1;
@@ -21,7 +21,7 @@ void select_0825_or_0827_into_0826(char param_1)
   DAT_EXTMEM_0825 = 3;
   DAT_EXTMEM_0827 = 0;
   test_1664_bit0();
-  if (param_1 == '\0') {
+  if (r7_from_c1e7 == '\0') {
     puVar1 = &DAT_EXTMEM_0827;
   }
   else {

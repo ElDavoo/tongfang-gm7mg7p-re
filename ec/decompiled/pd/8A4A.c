@@ -51,7 +51,7 @@ void FUN_CODE_8a4a(char param_1)
       cVar2 = test_r7_bit_5();
       if (cVar2 != '\0') {
         call_returns_with_dptr_loaded();
-        load_r0_r3_then_read_dptr_times_17(0x7d1);
+        load_r0_r3_then_read_dptr_times_17((char *)0x7d1);
         dptr_low_from_a_add_23_no_dph_store();
         call_0faf_0f00_0dbc_then_r3_23();
         if ((char)in_PSW < '\0') {

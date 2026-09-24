@@ -14,7 +14,7 @@
    evidence: ec/decompiled/pd/E877.asm; ec/decompiled/pd/E877.c
    basis: hand-decoded */
 
-void store_080f_0810_and_pick_f50e_arg_on_carry(undefined1 param_1,undefined1 param_2)
+void store_080f_0810_and_pick_f50e_arg_on_carry(undefined1 param_1,char param_2)
 
 {
   undefined1 uVar1;
@@ -25,7 +25,7 @@ void store_080f_0810_and_pick_f50e_arg_on_carry(undefined1 param_1,undefined1 pa
   bVar2 = 0;
   DAT_EXTMEM_080f = param_2;
   DAT_EXTMEM_0810 = param_1;
-  make_dptr_r6_minus_3_9028(param_2,param_2);
+  make_dptr_r6_minus_3_9028(param_2);
   bVar2 = bVar2 & 0xdd;
   *pbVar3 = *pbVar3 & 0xf7 | 4;
   read_table_08f4_step_5e_minus_1(param_2);

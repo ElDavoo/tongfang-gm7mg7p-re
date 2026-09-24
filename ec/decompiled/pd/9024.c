@@ -13,10 +13,10 @@
    evidence: ec/decompiled/pd/9024.asm; ec/decompiled/pd/9024.c
    basis: hand-decoded */
 
-char make_dptr_a_minus_3(char param_1)
+char make_dptr_a_minus_3(char a_value)
 
 {
-  return param_1 + -3;
+  return a_value + -3;
 }
 
 

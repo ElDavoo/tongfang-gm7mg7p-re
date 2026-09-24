@@ -12,12 +12,12 @@
    evidence: ec/decompiled/pd/907E.asm; ec/decompiled/pd/907E.c
    basis: hand-decoded */
 
-char make_dptr_r6_minus_3_col_r5(char param_1)
+char make_dptr_r6_minus_3_col_r5(char r6_value)
 
 {
   char in_PSW;
   
-  return param_1 + (-3 - (in_PSW >> 7));
+  return r6_value + (-3 - (in_PSW >> 7));
 }
 
 

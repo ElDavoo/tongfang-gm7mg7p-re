@@ -57,6 +57,12 @@ LISTING_INDEX = os.path.join(OUTDIR, "listing-index.csv")
 MANIFEST = os.path.join(REPO, "ec", "ghidra", "manifest.csv")
 XDATA = os.path.join(REPO, "ec", "ghidra", "xdata-symbols.csv")
 ANNOTATIONS = os.path.join(REPO, "ec", "annotations", "ghidra-functions.csv")
+# The variable layer, over the same export. A separate file from the function
+# layer because a function's row IS a function -- annotation_seeds() below
+# reads every row's addr as a seed and join_index() keys one row per
+# (scope, addr) -- and a function with eight parameters cannot be eight rows
+# in that file. ec/annotations/README.md has the format.
+VARIABLES = os.path.join(REPO, "ec", "annotations", "ghidra-variables.csv")
 REGISTERS = os.path.join(REPO, "ec", "annotations", "registers.yaml")
 CALL_TARGETS = os.path.join(REPO, "ec", "annotations", "bank-call-targets.csv")
 GHIDRA_VERSION = "12.1.3"
@@ -73,12 +79,29 @@ INDEX_COLUMNS = ["program", "addr", "name", "size", "seed_basis", "common",
 MANIFEST_COLUMNS = ["program", "source", "sha256", "loader", "ghidra_version",
                     "functions", "decompiled", "failed", "instruction_bytes",
                     "body_bytes", "seeds_applied", "seeds_rejected",
-                    "annotations_applied", "annotations_unmatched", "mode"]
+                    "annotations_applied", "annotations_unmatched",
+                    "variables_functions", "variables_applied",
+                    "variables_unmatched", "mode"]
 # What the manifest's `mode` column may say. Kept as data because it is a
 # controlled vocabulary and a vocabulary is only enforced if something reads it
 # from one place: here the two modes the driver can produce, and --mode reads
 # the same tuple rather than repeating it.
 MANIFEST_MODES = ("export-only", "rebuild-project")
+
+# The variable layer's `kind`, a closed vocabulary and not decoration. Most
+# `param_N` in this export are not parameters at all: 45 rows of
+# ghidra-functions.csv already say so about their own, and a sweep that gave
+# every one of them a confident semantic name would manufacture false precision
+# on exactly the rows this repository has flagged as misleading. `unresolved` is
+# a result, not a failure, and mirrors how `type` treats it.
+VARIABLE_KINDS = ("param", "local", "return", "artifact", "unresolved")
+
+
+def read_csv(path):
+    import csv as _csv
+    with open(path, newline="") as f:
+        return list(_csv.DictReader(f))
+
 # The annotation layer's own header, transcribed from ec/ghidra/README.md's "The
 # annotation layer" and tabulated in ec/annotations/README.md. Asserted rather
 # than assumed, because this is the file a person or an agent edits to improve
@@ -368,7 +391,12 @@ def write_context(work, imgs, digest):
         f.write("generator=ec/tools/build_ec_decompile.py\n")
         f.write("symbols=ec/ghidra/xdata-symbols.csv "
                 "(generated from ec/annotations/registers.yaml)\n")
-        f.write("annotations=ec/annotations/ghidra-functions.csv\n")
+        # Both annotation files, because the provenance header this key becomes
+        # is read by someone asking "where did this identifier come from?" --
+        # and a file that names only the function layer answers wrongly for every
+        # variable name in it.
+        f.write("annotations=ec/annotations/ghidra-functions.csv; "
+                "ec/annotations/ghidra-variables.csv\n")
     return p
 
 
@@ -430,7 +458,8 @@ def analyze(ghidra, project_dir, work, imgs, spec, basis, context, digest,
         cmd += ["-postScript", "SeedFunctions.java", annot_spec]
         cmd += ["-postScript", "ApplyAnnotations.java",
                 ANNOTATIONS if os.path.isfile(ANNOTATIONS) else "", XDATA,
-                os.path.join(work, "reports")]
+                os.path.join(work, "reports"),
+                VARIABLES if os.path.isfile(VARIABLES) else "-"]
         cmd += ["-postScript", "ExportDecompile.java", os.path.join(work, "out"),
                 raw_index, "per-function", context, basis]
         cmd += ["-postScript", "ExportListing.java", os.path.join(work, "out"),
@@ -451,6 +480,7 @@ def analyze(ghidra, project_dir, work, imgs, spec, basis, context, digest,
                  "-postScript", "ApplyAnnotations.java",
                  ANNOTATIONS if os.path.isfile(ANNOTATIONS) else "", XDATA,
                  os.path.join(work, "reports"),
+                 VARIABLES if os.path.isfile(VARIABLES) else "-",
                  "-postScript", "ExportDecompile.java", os.path.join(work, "out"),
                  raw_index, "per-function", context, basis,
                  "-postScript", "ExportListing.java", os.path.join(work, "out"),
@@ -559,7 +589,40 @@ def join_index(raw_index, raw_listing, work):
     return raw, listing, len(drop)
 
 
-def write_outputs(raw, listing, work, digest, mode, seeds_info):
+def apply_report_counters(work):
+    """The variable-layer counters ApplyAnnotations.java wrote, keyed by program.
+
+    Read back rather than recomputed, because the script's own count is the
+    only one that knows what the decompiler actually found: a row whose key the
+    decompiler no longer produces looks identical to a row that was never
+    written, from out here. The driver could count the CSV's rows and would get
+    that wrong the first time `--mode rebuild-project` consumed a key.
+
+    A program with no report file is a program the script never ran on, which
+    is zero of everything rather than a missing entry.
+    """
+    out = {}
+    reports = os.path.join(work, "reports")
+    if not os.path.isdir(reports):
+        return out
+    for fn in sorted(os.listdir(reports)):
+        if not (fn.startswith("apply-") and fn.endswith(".tsv")):
+            continue
+        program = fn[len("apply-"):-len(".tsv")]
+        counts = {}
+        for line in open(os.path.join(reports, fn), errors="replace"):
+            key, _, value = line.partition("\t")
+            if key in ("variables_functions", "variables_applied",
+                       "variables_unmatched"):
+                try:
+                    counts[key] = int(value.strip())
+                except ValueError:
+                    pass
+        out[program] = counts
+    return out
+
+
+def write_outputs(raw, listing, work, digest, mode, seeds_info, var_counts):
     if os.path.isdir(OUTDIR):
         shutil.rmtree(OUTDIR)
     os.makedirs(OUTDIR, exist_ok=True)
@@ -612,6 +675,7 @@ def write_outputs(raw, listing, work, digest, mode, seeds_info):
             p = per_program.get(program, {"functions": 0, "failed": 0, "body": 0,
                                            "annotated": 0})
             c = counts.get("bank0" if program == "common" else program, {})
+            v = var_counts.get("bank0" if program == "common" else program, {})
             src = ("%s common area (0x0000-0x7FFF), exported from bank0; identical "
                    "in bank1" % program if program == "common" else
                    "ec/firmware/GMxMGxx_11.800, the %s image"
@@ -638,7 +702,16 @@ def write_outputs(raw, listing, work, digest, mode, seeds_info):
                     "bank0" if program == "common" else program, 0),
                 "seeds_rejected": seeds_info.get(program + ":rejected", 0),
                 "annotations_applied": p["annotated"],
-                "annotations_unmatched": 0, "mode": mode,
+                # Left at 0 and reconciled as separate work: this driver used to
+                # write a constant here and never read the report back, which is
+                # how 25 index rows came to claim an annotation that is no
+                # longer in the CSV. The variable counters below are read back
+                # from the start, so they do not start that way.
+                "annotations_unmatched": 0,
+                "variables_functions": v.get("variables_functions", 0),
+                "variables_applied": v.get("variables_applied", 0),
+                "variables_unmatched": v.get("variables_unmatched", 0),
+                "mode": mode,
             })
     return per_program
 
@@ -713,7 +786,9 @@ def main(argv=None):
     seeds_info = {"bank0": len({a for p, a, _ in rows if p == "bank0"}),
                   "bank1": len({a for p, a, _ in rows if p == "bank1"}),
                   "pd": len({a for p, a, _ in rows if p == "pd"})}
-    per_program = write_outputs(raw, listing, work, digest, args.mode, seeds_info)
+    var_counts = apply_report_counters(work)
+    per_program = write_outputs(raw, listing, work, digest, args.mode, seeds_info,
+                                var_counts)
     report(per_program, args.mode)
     if unattributed:
         print("\n  %d call-target rows name no bank (bucket C) and were NOT seeded: "
@@ -970,6 +1045,119 @@ def stale_no_entry_claims(ann_rows, entered):
     return out
 
 
+def decompiled_code(path):
+    """The C body of an exported function, with the plate comment removed.
+
+    The plate comment is where a function's own annotation lives, and several
+    of those comments DISCUSS their own `param_N` by name -- 0x901C's says
+    "param_1 is a pointer the decompiler invented, not a 8051 calling
+    convention". That sentence is the reading, and it stays. So the check that
+    a renamed placeholder is GONE has to look at the code rather than the whole
+    file, or it would refuse the very rows whose comments explain what the
+    placeholder was.
+    """
+    try:
+        text = open(path, errors="replace").read()
+    except OSError:
+        return None
+    end = text.find("*/")
+    return text[end + 2:] if end >= 0 else text
+
+
+def variable_csv_problems(vrows, index_rows, xdata_names):
+    """Faults in ec/annotations/ghidra-variables.csv, measured on the committed export.
+
+    The load-bearing assertion is bidirectional: a NAMED row's `name` must
+    appear in the committed `.c` and its `key` must not. A typo'd name is not
+    in the output, and a key the build already consumed -- which is what
+    `--mode rebuild-project` does to it, permanently -- is caught by the other
+    half. Either alone would be satisfied by a file that had simply stopped
+    being regenerated.
+
+    The scope is the CODE, not the file: see decompiled_code(). A function's
+    own plate comment is allowed to name the placeholder it is explaining.
+
+    A `kind=unresolved` row is the one case where the key is supposed to
+    survive, and it is checked as such rather than exempted: the row's content
+    is its comment, and a comment about an unnamed variable is worth carrying.
+    """
+    out = []
+    for row in vrows:
+        scope = (row.get("scope") or "").strip()
+        addr = (row.get("addr") or "").strip()
+        key = (row.get("key") or "").strip()
+        name = (row.get("name") or "").strip()
+        kind = (row.get("kind") or "").strip()
+        label = "variable %s %s %s" % (scope, addr, key or "(no key)")
+        if kind not in VARIABLE_KINDS:
+            out.append("%s: kind %r is outside the controlled vocabulary"
+                       % (label, kind))
+        if kind == "unresolved" and name:
+            # unresolved means the listing does not say, and the placeholder
+            # stays. A name on such a row is the whole failure this vocabulary
+            # exists to prevent, so it is refused here as well as in
+            # ApplyAnnotations.java -- the two layers must not disagree about
+            # which rows are allowed.
+            out.append("%s: kind=unresolved with the name %s; unresolved means "
+                       "the placeholder stays in place" % (label, name))
+        if not (row.get("evidence") or "").strip():
+            out.append("%s: no evidence citation; a variable annotation without "
+                       "one is a claim, not a finding" % label)
+        if not key:
+            out.append("%s: no key; a row has to name the placeholder it replaces"
+                       % label)
+        if name and name in xdata_names:
+            msg = ("%s: name %s is an EC XDATA register name, and the variable "
+                   "layer must not be a back door for register naming -- that "
+                   "is registers.yaml's discipline, not this file's"
+                   % (label, name))
+            if scope == "pd":
+                msg += ("; and the PD image has its own XDATA map, so an EC "
+                        "register name there is an overclaim whatever the row "
+                        "says about it")
+            out.append(msg)
+        norm = addr.upper().replace("0X", "")
+        idx = index_rows.get((scope, norm))
+        if idx is None:
+            out.append("%s: resolves to no exported function -- a typo, or the "
+                       "project needs --mode rebuild-project" % label)
+            continue
+        out_file = idx.get("out_file") or ""
+        if not out_file or out_file == "(failed)":
+            out.append("%s: index row for %s %s has no exported .c to check"
+                       % (label, scope, addr))
+            continue
+        code = decompiled_code(os.path.join(OUTDIR, out_file))
+        if code is None:
+            out.append("%s: committed .c at %s is missing" % (label, out_file))
+            continue
+        if not name:
+            # unresolved: the placeholder stays, and the row's content is its
+            # comment. Asserted, not skipped -- a row that says "the listing
+            # does not say" has to correspond to a placeholder that is there.
+            if not re.search(r"\b%s\b" % re.escape(key), code):
+                out.append("%s: kind=unresolved leaves %s in place, but the "
+                           "committed .c does not contain it"
+                           % (label, key or "(no key)"))
+            continue
+        if not re.search(r"\b%s\b" % re.escape(name), code):
+            out.append("%s: the committed .c does not contain the name it asked "
+                       "for -- a typo, or the export predates the row" % label)
+        if key and re.search(r"\b%s\b" % re.escape(key), code):
+            out.append("%s: the committed .c still contains the placeholder %s, "
+                       "so the rename did not take" % (label, key))
+    return out
+
+
+def xdata_symbol_names(path=XDATA):
+    """Every name ec/ghidra/xdata-symbols.csv carries, whatever program it names."""
+    if not os.path.isfile(path):
+        return set()
+    return {r["name"].strip()
+            for r in csv.DictReader(open(path, newline=""))
+            if (r.get("name") or "").strip()}
+
+
 def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     ok = True
     # One read of the annotations CSV, split by scope. The PD set used to be
@@ -1153,6 +1341,98 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
         {0x0741})
     check("a claim about addresses named as a wildcard is left alone rather "
           "than widened to a guess", not _p, str(_p))
+
+    # The variable layer, and the worked example the issue is built on.
+    # ec/decompiled/bank0/0EA2.c is the file whose every identifier a reader
+    # would follow was the wrong one, so it is the one place a regression in
+    # this layer shows up as a name that stopped being there.
+    _vrows = (list(csv.DictReader(open(VARIABLES, newline="")))
+              if os.path.isfile(VARIABLES) else [])
+    _xnames = xdata_symbol_names()
+    _idx = {(r["program"], r["addr"]): r for r in _ir}
+    _vproblems = variable_csv_problems(_vrows, _idx, _xnames)
+    check("every variable row resolves against the committed export (%d row(s))"
+          % len(_vrows), not _vproblems, "; ".join(_vproblems[:3]))
+    _c0 = decompiled_code(os.path.join(OUTDIR, "bank0", "0EA2.c"))
+    check("bank0 0x0EA2's param_1 is named in the committed export and the "
+          "placeholder is gone",
+          _c0 is not None and re.search(r"\bticks\b", _c0)
+          and not re.search(r"\bparam_1\b", _c0), "")
+    # The scope is the code, not the file: 0x901C's plate comment explains what
+    # its own param_1 was, and that sentence has to survive the rename it
+    # describes. A check on the whole file would refuse the row for saying what
+    # the row is for.
+    _c1 = decompiled_code(os.path.join(OUTDIR, "bank0", "901C.c"))
+    _c1full = (open(os.path.join(OUTDIR, "bank0", "901C.c"), errors="replace").read()
+               if os.path.isfile(os.path.join(OUTDIR, "bank0", "901C.c")) else "")
+    check("a plate comment that names the placeholder it is explaining is not "
+          "mistaken for the placeholder surviving",
+          _c1full is not None and "param_1" in _c1full, "")
+    # The guard itself, on synthetic rows against a real function. Known-good
+    # first, for the reason the structural checks above give.
+    def _vrow(**kw):
+        base = dict(scope="bank0", addr="0x0EA2", key="param_1", name="ticks",
+                    kind="param", comment="A count.", evidence="ec/x.asm",
+                    basis="hand-decoded")
+        base.update(kw)
+        return base
+    _p = variable_csv_problems([_vrow()], _idx, _xnames)
+    check("a well-formed variable row passes", not _p, str(_p))
+    _p = variable_csv_problems([_vrow(name="tikcs")], _idx, _xnames)
+    check("a variable row whose name is a typo is caught against the export",
+          len(_p) == 1 and "does not contain the name" in _p[0], str(_p))
+    _p = variable_csv_problems([_vrow(kind="unresolved", name="ticks")], _idx, _xnames)
+    check("a kind=unresolved row that also carries a name is refused, since "
+          "unresolved means the placeholder stays",
+          len(_p) == 1 and "the placeholder stays" in _p[0], str(_p))
+    _p = variable_csv_problems([_vrow(kind="unresolved", name="")], _idx, _xnames)
+    check("a kind=unresolved row with no name is checked for the placeholder it "
+          "leaves behind, not skipped",
+          any("leaves param_1 in place" in m for m in _p), str(_p))
+    _p = variable_csv_problems(
+        [dict(_vrow(), kind="parameter")], _idx, _xnames)
+    check("a variable kind outside the vocabulary is rejected",
+          len(_p) == 1 and "outside the controlled vocabulary" in _p[0], str(_p))
+    _p = variable_csv_problems([_vrow(evidence="")], _idx, _xnames)
+    check("a variable row with empty evidence is rejected",
+          len(_p) == 1 and "no evidence citation" in _p[0], str(_p))
+    _p = variable_csv_problems([_vrow(addr="0xABCD")], _idx, _xnames)
+    check("a variable row at an address no function resolves to is rejected",
+          len(_p) == 1 and "resolves to no exported function" in _p[0], str(_p))
+    _p = variable_csv_problems([_vrow(name="XDATA_0440")], _idx, _xnames)
+    check("a variable row naming an EC XDATA register is rejected -- the "
+          "variable layer is not a back door for registers.yaml",
+          any("XDATA register name" in m for m in _p), str(_p))
+    # On a pd address that really exists, so the register lock is the only
+    # thing this row can trip. The PD image has its own XDATA map, so an EC
+    # register name there is an overclaim whatever else the row says.
+    _pdrow = next((r for r in _ir if r["program"] == "pd"
+                   and (r.get("out_file") or "") not in ("", "(failed)")), None)
+    _p = (variable_csv_problems(
+          [dict(_vrow(), scope="pd", addr=_pdrow["addr"], name="XDATA_0440")],
+          _idx, _xnames) if _pdrow else ["no pd function found"])
+    check("a pd row carrying an EC XDATA register name says so specifically",
+          any("own XDATA map" in m for m in _p)
+          and not any("resolves to no exported function" in m for m in _p), str(_p))
+    # The other direction, on a function the layer has not touched: a row that
+    # claims a rename the export does not show is reported on both counts --
+    # the name is absent and the placeholder is still there. This is the
+    # `--mode rebuild-project` case, and it is why the check is bidirectional
+    # rather than just a search for the new name.
+    _control = next((r for r in _ir
+                     if r["program"] == "bank0"
+                     and (r.get("out_file") or "") not in ("", "(failed)")
+                     and re.search(r"\bparam_1\b",
+                                   decompiled_code(os.path.join(
+                                       OUTDIR, r["out_file"])) or "")), None)
+    _p = (variable_csv_problems(
+          [dict(_vrow(), addr=_control["addr"], name="a_name_no_export_has")],
+          _idx, _xnames) if _control else ["no control function found"])
+    check("a row claiming a rename the export does not show is caught in both "
+          "directions (bank0 %s still carries param_1)"
+          % (_control["addr"] if _control else "?"),
+          len(_p) == 2 and "does not contain the name" in _p[0]
+          and "still contains the placeholder" in _p[1], str(_p))
 
     # The known answers, on the committed files. These are docs/findings.md §15
     # as assertions: a re-export that moves a total fails here loudly and gets a
@@ -1586,6 +1866,21 @@ def check(work):
             fail("annotation %s %s resolves to no exported function -- either a "
                  "typo or the project needs a rebuild"
                  % (a["scope"], a["addr"]))
+    # The variable layer, and the same discipline one level down. Its rows are
+    # keyed on a decompiler placeholder rather than an address, so ApplyAnnotations
+    # reports an unmatched one instead of failing the build -- the build itself
+    # CONSUMES the key. This is where that is caught instead: the committed .c
+    # has to carry the name the row asked for and must no longer carry the key.
+    if os.path.isfile(VARIABLES):
+        vrows = list(csv.DictReader(open(VARIABLES, newline="")))
+        index_rows = {(r["program"], r["addr"]): r for r in rows}
+        vproblems = variable_csv_problems(vrows, index_rows, xdata_symbol_names())
+        for problem in vproblems[:5]:
+            fail(problem)
+        if len(vproblems) > 5:
+            fail("... and %d more variable-annotation problem(s)" % (len(vproblems) - 5))
+        print("  variables: %d row(s) in %s, all resolving against the committed "
+              "export" % (len(vrows), os.path.relpath(VARIABLES, REPO)))
     print("  all checks passed" if ok else "  FAILURES ABOVE")
     return 0 if ok else 1
 

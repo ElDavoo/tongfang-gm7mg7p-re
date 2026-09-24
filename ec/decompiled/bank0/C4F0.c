@@ -13,10 +13,10 @@
    evidence: ec/decompiled/bank0/C4F0.asm; ec/decompiled/bank0/C4F0.c
    basis: hand-decoded */
 
-undefined1 write_40_to_dptr_then_read_1601(undefined1 *param_1)
+undefined1 write_40_to_dptr_then_read_1601(undefined1 *entry_dptr)
 
 {
-  *param_1 = 0x40;
+  *entry_dptr = 0x40;
   return DAT_EXTMEM_1601;
 }
 

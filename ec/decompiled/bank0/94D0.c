@@ -14,7 +14,8 @@
    value 0xB8C0 leaves behind then selects between jumping to 0x9A0D and writing the fixed bytes
    0x64, 0x64, 0x2D, 0x3C and 0x01 to 0x07A7, 0x07A8, 0x0730, 0x0731 and 0x0737.
    ec/annotations/registers.yaml documents 0x0730-0x0737 and 0x07A7-0x07AA as the per-mode
-   PL1/PL2/PL4/D-state defaults; 0x0A50, 0x0A51, 0x0A52 and 0x07D3 have no entry there.
+   PL1/PL2/PL4/D-state defaults; 0x0A50, 0x0A51 and 0x0A52 have no entry there, and 0x07D3 is there
+   as GFID (issue #183).
    type: copy
    evidence: ec/decompiled/bank0/94D0.asm; ec/decompiled/bank0/94D0.c; ec/annotations/registers.yaml
    basis: hand-decoded */
@@ -46,7 +47,7 @@ void copy_code_table_into_0730_07a7(undefined1 param_1,char param_2)
   DAT_EXTMEM_0a51 = 0x61;
   if (DAT_EXTMEM_0a50 == '\0') {
     puVar3 = (undefined1 *)0xa51;
-    load_dptr_be16_from_xdata();
+    load_dptr_be16_from_xdata(0xa51);
     MODE_PL_DEFAULTS_GAMING_PL1_0 = *puVar3;
     sVar4 = 0x731;
     store_a_to_dptr_b939(*(undefined1 *)(CONCAT11(param_1,param_2) + 1));
@@ -60,7 +61,7 @@ void copy_code_table_into_0730_07a7(undefined1 param_1,char param_2)
     MODE_PL_DEFAULTS_TURBO_DSTATE_11 = *(char *)(CONCAT11(param_1,param_2) + 0xf) + '\x01';
     sVar4 = 0xa51;
     if ((BIOS_OEM_2 >> 2 & 1) == 0) {
-      load_dptr_be16_from_xdata();
+      load_dptr_be16_from_xdata(0xa51);
       load_code_byte_to_0734(4);
       sVar5 = 0x735;
       store_a_to_dptr_b939(*(undefined1 *)(sVar4 + 5));
@@ -68,7 +69,7 @@ void copy_code_table_into_0730_07a7(undefined1 param_1,char param_2)
       bVar2 = 7;
     }
     else {
-      load_dptr_be16_from_xdata();
+      load_dptr_be16_from_xdata(0xa51);
       load_code_byte_to_0734(8);
       sVar5 = 0x735;
       store_a_to_dptr_b939(*(undefined1 *)(sVar4 + 9));

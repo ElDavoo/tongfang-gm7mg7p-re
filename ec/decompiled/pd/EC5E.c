@@ -15,12 +15,12 @@ void set_or_clear_bits_1_2_6_via_9028(byte *param_1,char param_2)
 
 {
   if (param_2 == '\x01') {
-    make_dptr_r6_minus_3_9028(0x1e,BANK0_R7);
+    make_dptr_r6_minus_3_9028(BANK0_R7);
     *param_1 = *param_1 | 6;
     *param_1 = *param_1 | 0x40;
     return;
   }
-  make_dptr_r6_minus_3_9028(0x1e,BANK0_R7);
+  make_dptr_r6_minus_3_9028(BANK0_R7);
   *param_1 = *param_1 & 0xf9;
   *param_1 = *param_1 & 0xbf;
   return;

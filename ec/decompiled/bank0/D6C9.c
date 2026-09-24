@@ -15,8 +15,8 @@
 void call_0ea2_twice_with_fa(void)
 
 {
-  timer1_counted_delay_using_0a56(0xfa);
-  timer1_counted_delay_using_0a56(0xfa);
+  timer1_counted_delay_using_0a56(-6);
+  timer1_counted_delay_using_0a56(-6);
   return;
 }
 

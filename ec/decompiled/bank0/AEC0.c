@@ -23,12 +23,13 @@ void build_0795_0799_then_set_08ec(void)
   set_0a49_to_1_and_clear_0a4b(3);
   set_dptr_0a59_b955();
   call_445e_40_88_then_load_0a49(3);
-  write_4_bytes_ending_0a_4b_00(0x28);
+  write_4_bytes_ending_0a_4b_00(0x28,puVar1);
   set_dptr_0a4b_after_call_445e_08();
   load_r3_r7_from_0a48_store_a(*puVar1,0x795);
   DAT_EXTMEM_0796 = read_0a4b_after_call_445e_0c_b038();
-  store_a_to_dptr_b994(DAT_EXTMEM_0a4c,0x797);
-  write_4_bytes_ending_0a_4b_00(0x47);
+  puVar1 = (undefined1 *)0x797;
+  store_a_to_dptr_b994(DAT_EXTMEM_0a4c);
+  write_4_bytes_ending_0a_4b_00(0x47,puVar1);
   DAT_EXTMEM_0798 = read_0a4b_after_call_445e_0c_b038();
   DAT_EXTMEM_0799 = DAT_EXTMEM_0a4c;
   if (DAT_EXTMEM_0795 != '\0') {

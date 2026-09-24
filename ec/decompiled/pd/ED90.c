@@ -17,17 +17,19 @@
 void set_bit3_and_bits2_3_from_r5(byte *param_1,byte param_2)
 
 {
-  byte bVar1;
+  char cVar1;
+  byte bVar2;
   
+  cVar1 = BANK0_R7;
   if (param_2 == 1) {
-    bVar1 = read_xdata_00b0_plus_r4(BANK0_R7);
-    *param_1 = bVar1 | 8;
+    bVar2 = read_xdata_00b0_plus_r4();
+    *param_1 = bVar2 | 8;
   }
   else {
-    bVar1 = read_xdata_00b0_plus_r4(BANK0_R7);
-    *param_1 = bVar1 & 0xf7;
+    bVar2 = read_xdata_00b0_plus_r4();
+    *param_1 = bVar2 & 0xf7;
   }
-  make_dptr_r4_minus_3();
+  make_dptr_r4_minus_3(cVar1);
   *param_1 = (param_2 & 3) * '\x04' | *param_1 & 0xf3;
   return;
 }
