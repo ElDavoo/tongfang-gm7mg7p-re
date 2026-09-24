@@ -22,15 +22,15 @@ void dispatch_on_dpl_5b_7b_40(char param_1)
   byte bVar1;
   
   if (param_1 == '[') {
-    DAT_EXTMEM_0758 = DAT_EXTMEM_0758 & 0xf7 | (DAT_EXTMEM_045b & 1) << 3;
+    DAT_EXTMEM_0758 = DAT_EXTMEM_0758 & 0xf7 | (XDATA_045B & 1) << 3;
     return;
   }
   if (param_1 != '{') {
     if (param_1 != '@') {
       return;
     }
-    if (((DAT_EXTMEM_0398 != -0x5b) || ((DAT_EXTMEM_0476 & 0x20) == 0)) &&
-       ((DAT_EXTMEM_0442 & 8) == 0)) {
+    if (((DAT_EXTMEM_0398 != -0x5b) || ((DAT_EXTMEM_0476 & 0x20) == 0)) && ((XDATA_0442 & 8) == 0))
+    {
       DAT_EXTMEM_080f = 0x28;
       DAT_EXTMEM_080d = 0x23;
       DAT_EXTMEM_0806 = 100;

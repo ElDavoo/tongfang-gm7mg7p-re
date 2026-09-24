@@ -85,8 +85,20 @@ into `r2 -a 8051` with no stitching needed.
   it from (`--converge`). Not a disassembler: linear only, no branch
   following, no code/data separation. `python3 tools/disasm8051.py --self-test`
   re-decodes the two windows `annotations/charge-profile-flow.md` transcribed
-  from `r2` by hand and diffs against them — run it after touching either
-  table.
+  from `r2` by hand and diffs against them, resolves the four
+  `bank-call-audit.md` §8 branch sites, and checks the bit-addressed carry
+  forms against `BIT_SITES` — 11 sites transcribed from `r2 -a 8051` against the
+  image, plus the `0xC1`/`0xC2` pair stated from the manual — run it after
+  touching either table.
+- **`tools/verify_gap_text.py`** — cross-decodes the 143 instructions
+  `verify_reassembly.py` cannot re-encode, so none of the committed listing is
+  read by no check. It recomputes the set from `to_sdas()` rather than carrying
+  a list, decodes each instruction from the firmware image with
+  `disasm8051.py`, and records both texts, both canonical forms, the reason it
+  was excluded and the verdict in `ghidra/gap-text-check.csv` — 143 rows, all
+  agreeing. `--check` and `--report` need no assembler; `--report` writes the
+  CSV and nothing else does. `ghidra/README.md` has the method, what it folds
+  and what it deliberately does not, and its blind spots.
 - **`tools/find_banks.py`** — locates the bank-switch stubs and scores which
   file offset each bank maps to. Re-run this against any other firmware dump
   before trusting the offsets in the table above.
@@ -300,8 +312,14 @@ where the reading came from — those names come from
 `annotations/ghidra-functions.csv`, which is the editable surface. And the
 committed disassembly re-encodes to the firmware bytes: 45,394 of 45,537
 instructions, measured by `tools/verify_reassembly.py` and recorded in
-`ghidra/reassembly.csv`. That is a claim about the machine code, not about the
-C, and `ghidra/README.md` says at length what it is not. See the repo's GitHub issues for the
+`ghidra/reassembly.csv`. The other 143 use five forms `sdas8051` cannot
+express, so no assembler reaches them; they are covered instead by
+`tools/verify_gap_text.py`, which cross-decodes each one with
+`tools/disasm8051.py` and records the verdict per instruction in
+`ghidra/gap-text-check.csv` — all 143 agreeing. That does **not** make the
+claim 100%: the re-encode figure stays 45,394 of 45,537, and the two are
+different kinds of evidence. Both are claims about the machine code, not about
+the C, and `ghidra/README.md` says at length what it is not. See the repo's GitHub issues for the
 concrete next steps, several of which are independently useful (e.g. the 254
 call sites referencing `0x07D0`, which `trace_xdata_refs.py` places in the PD
 image rather than the EC and `annotations/ec-0x07d0-sites.md` now maps one by

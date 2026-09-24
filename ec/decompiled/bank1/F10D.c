@@ -13,7 +13,7 @@
 void ljmp_f219(void)
 
 {
-  if (((DAT_EXTMEM_06e6 == '\x01') && (DAT_EXTMEM_0440 != '\0')) && (DAT_EXTMEM_0636 == '\0')) {
+  if (((DAT_EXTMEM_06e6 == '\x01') && (XDATA_0440 != '\0')) && (DAT_EXTMEM_0636 == '\0')) {
     DAT_EXTMEM_0636 = '\n';
     DAT_EXTMEM_047b = DAT_EXTMEM_047b ^ 2;
     DAT_EXTMEM_097a = DAT_EXTMEM_097a | 2;

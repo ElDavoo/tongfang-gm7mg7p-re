@@ -80,7 +80,7 @@ LAB_CODE_e31a:
         return;
       }
       if ((DAT_EXTMEM_03a1 >> 4 & 1) == 1) {
-        if ((DAT_EXTMEM_045f != -0x25) || (DAT_EXTMEM_03c4 == 0x40)) {
+        if ((XDATA_045F != -0x25) || (DAT_EXTMEM_03c4 == 0x40)) {
           reset_03c4_03af_and_clear_03a1_bit();
           return;
         }
@@ -94,7 +94,7 @@ LAB_CODE_e31a:
           copy_03cd_03ce_03cf_to_1c02_1c04_1c05();
           return;
         }
-        if ((DAT_EXTMEM_045f != -0x25) ||
+        if ((XDATA_045F != -0x25) ||
            (DAT_EXTMEM_03c4 = DAT_EXTMEM_03c4 | 0x40, DAT_EXTMEM_03c4 == 0x50)) {
           reset_03c4_03af_and_clear_03a1_bit();
           return;

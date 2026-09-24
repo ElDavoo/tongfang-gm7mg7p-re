@@ -44,7 +44,7 @@ LAB_CODE_8ea8:
     return;
   }
   uVar1 = 0xcf;
-  if ((DAT_EXTMEM_0458 & 0x70) == 0x10) {
+  if ((XDATA_0458 & 0x70) == 0x10) {
     cVar2 = CPU_TEMP + 0xa9;
     if (0x56 < CPU_TEMP) goto LAB_CODE_8ef8;
   }

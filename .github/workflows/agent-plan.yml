@@ -43,7 +43,7 @@ permissions: {}
 # LOCAL CHANGE (2026-09-24, not yet in the agent-pipeline template): the group is now
 # `agent-pipeline/agent/issue-N`, one per issue, so stages for *different* issues run in parallel
 # and only stages for the *same* issue serialise. What bounds parallelism now is
-# MAX_OPEN_AGENT_PRS below (10) and agent-retry.yml's MAX_PARALLEL_AGENTS (10). The paragraphs
+# MAX_OPEN_AGENT_PRS below (5) and agent-retry.yml's MAX_PARALLEL_AGENTS (5). The paragraphs
 # below describe the original single-group design and are kept for its reasoning.
 #
 # One group for the whole pipeline rather than one per issue, and never cancelling. Every stage
@@ -74,7 +74,7 @@ permissions: {}
 
 env:
   # A cap on work in flight, not on work queued -- see the capacity step below.
-  MAX_OPEN_AGENT_PRS: '10'
+  MAX_OPEN_AGENT_PRS: '5'
 
 jobs:
   # Who filed it decides whether this runs unattended, and the question asked is "could this

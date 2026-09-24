@@ -16,7 +16,7 @@ void mov_a_c8(void)
 
 {
   DAT_EXTMEM_1804 = 200;
-  DAT_EXTMEM_075b = 200;
+  MAIN_FAN_L_DUTY = 200;
   return;
 }
 

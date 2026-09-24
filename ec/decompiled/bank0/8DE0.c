@@ -90,7 +90,7 @@ joined_c0x8eee:
 LAB_CODE_8eff:
   puVar3 = &DAT_EXTMEM_1804;
   copy_dptr_byte_to_075b_then_set_dptr_1809();
-  DAT_EXTMEM_075c = *puVar3;
+  MAIN_FAN_R_DUTY = *puVar3;
   return;
 }
 

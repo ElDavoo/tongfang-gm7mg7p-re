@@ -5,9 +5,10 @@
 
 
 /* Copies the byte at XDATA[DPTR] into XDATA 0x075B, then loads DPTR with 0x1809 and returns without
-   reading or writing that address. 0x075B is referred to as fan PWM in
-   ec/annotations/registers.yaml, in the note on the 0x0751 entry, so the destination is a
-   documented byte; what this copy sequence as a whole is for is not decoded further.
+   reading or writing that address. 0x075B is entered in ec/annotations/registers.yaml as
+   MAIN_FAN_L_DUTY, the vendor's ADDR_EC_MAIN_FAN_L_DUTY_BYTE (issue #123), so the destination is a
+   documented byte; what this copy sequence as a whole is for is not decoded further. Entering at
+   0xBB22 instead loads 200 first, which is that entry's whole difference.
    type: copy
    evidence: ec/decompiled/bank0/BB28.asm; ec/decompiled/bank0/BB28.c; ec/annotations/registers.yaml
    basis: hand-decoded */
@@ -15,7 +16,7 @@
 void copy_dptr_byte_to_075b_then_set_dptr_1809(undefined1 *param_1)
 
 {
-  DAT_EXTMEM_075b = *param_1;
+  MAIN_FAN_L_DUTY = *param_1;
   return;
 }
 

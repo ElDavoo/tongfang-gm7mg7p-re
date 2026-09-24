@@ -2,16 +2,12 @@
 """Offline checks; no EC is opened and the vendor driver is never called.
 
 gpu_block_watch.py imports ecrw, which binds kernel32 at import time and so
-only loads on Windows -- the fake below stands in for the whole module, and it
-exports Ec and EcError both, the fuller shape, for the reason docs/findings.md
-§16 gives: the fake that omits EcError is the one that breaks the others. This
-suite is a *peer* of test_ec_watch.py in that accident, not a third cause --
-if the leaner fake wins the setdefault under a shared interpreter, both
-`from ecrw import Ec, EcError` modules fail together and the runner's per-file
-isolation is what keeps that from being a red build. The fake also makes the
-sweep scriptable byte by byte.
+only loads on Windows -- windows/tools/ecrw_fake.py stands in for the whole
+module, installed by assignment, so this suite is not a party to the
+`setdefault` ordering accident docs/findings.md §16 records. The fake also makes
+the sweep scriptable byte by byte.
 
-Unlike the other two `windows/tools` suites this one reads committed inputs,
+Unlike most of the `windows/tools` suites this one reads committed inputs,
 `evidence/acpi/dsdt.dsl` and `ec/annotations/registers.yaml`, resolved relative
 to this file. It therefore has to run from inside the repository, which
 `tools/run-tests.sh` guarantees (it cds to the repo root), and a suite copied
@@ -31,7 +27,6 @@ import re
 import sys
 import tempfile
 import threading
-import types
 import unittest
 from unittest.mock import patch
 
@@ -47,17 +42,12 @@ REGISTERS = REPO / "ec" / "annotations" / "registers.yaml"
 sys.path.insert(0, str(TOOLS))
 
 
-class FakeEcError(RuntimeError):
-    pass
-
-
-# `Ec` only has to exist as a name -- `from ecrw import Ec, EcError` binds it
-# into the tool's namespace at import time and every run rebinds the tool's own
-# copy. EcError has to be the exception class the tool catches.
-fake_ecrw = types.ModuleType('ecrw')
-fake_ecrw.Ec = None
-fake_ecrw.EcError = FakeEcError
-sys.modules.setdefault('ecrw', fake_ecrw)
+# The shared offline stand-in for `ecrw` (windows/tools/ecrw_fake.py), installed
+# by assignment like the probe and ec_watch suites do, so this suite cannot lose
+# -- or win -- a `setdefault` race against them. `Ec` only has to exist as a
+# name: every run rebinds the tool's own copy.
+import ecrw_fake  # noqa: E402  (needs the sys.path entry above)
+ecrw_fake.install()
 
 watch = importlib.import_module('gpu_block_watch')
 

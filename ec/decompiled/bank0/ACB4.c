@@ -33,7 +33,7 @@ void FUN_CODE_acb4(void)
   clear_08a5_and_08a6();
   AP_OEM = AP_OEM & 0xfb;
   DAT_EXTMEM_073c = DAT_EXTMEM_073c & 0xf9;
-  DAT_EXTMEM_045a = DAT_EXTMEM_045a & 0x10;
+  XDATA_045A = XDATA_045A & 0x10;
   set_1606_bit2();
   set_1605_bit6();
   DAT_EXTMEM_072d = DAT_EXTMEM_072d | 1;
@@ -44,8 +44,8 @@ void FUN_CODE_acb4(void)
   store_a_then_clear_0824_bit7_and_0768_bit2(0,0x816);
   mask_0476_with_1f();
   DAT_EXTMEM_0471 = DAT_EXTMEM_0471 & 0x7f;
-  DAT_EXTMEM_0442 = DAT_EXTMEM_0442 & 0xe7;
-  DAT_EXTMEM_0456 = DAT_EXTMEM_0456 & 0xcf;
+  XDATA_0442 = XDATA_0442 & 0xe7;
+  SYSTEM_ID = SYSTEM_ID & 0xcf;
   DAT_EXTMEM_074c = DAT_EXTMEM_074c & 0xcf;
   FUN_CODE_2896();
   clear_08a5_and_08a6();

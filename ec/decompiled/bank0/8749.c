@@ -75,7 +75,7 @@ void mode_tick_084c_07a5_09ee(char param_1)
     DAT_EXTMEM_1804 = 0;
     DAT_EXTMEM_0461 = 0;
     DAT_EXTMEM_0460 = 0;
-    DAT_EXTMEM_075b = 0;
+    MAIN_FAN_L_DUTY = 0;
     DAT_EXTMEM_0469 = 0;
     DAT_EXTMEM_0468 = 0;
     DAT_EXTMEM_1809 = 0;
@@ -88,7 +88,7 @@ void mode_tick_084c_07a5_09ee(char param_1)
     DAT_EXTMEM_1809 = DAT_EXTMEM_1804;
     return;
   }
-  if ((DAT_EXTMEM_0440 == '\0') || (cVar1 = read_06e6_xor_01(), cVar1 != '\0')) {
+  if ((XDATA_0440 == '\0') || (cVar1 = read_06e6_xor_01(), cVar1 != '\0')) {
     DAT_EXTMEM_09ee = DAT_EXTMEM_09ee & 0xfe;
     DAT_EXTMEM_07a5 = DAT_EXTMEM_07a5 & 0xf7;
   }
@@ -166,8 +166,8 @@ LAB_CODE_88e7:
     *pcVar5 = param_1;
     bVar2 = bVar2 + 1;
   } while (bVar2 != 0x30);
-  puVar6 = &DAT_EXTMEM_08eb;
-  if ((DAT_EXTMEM_08eb & 0x48) != 0) {
+  puVar6 = &XDATA_08EB;
+  if ((XDATA_08EB & 0x48) != 0) {
     mov_a_c8();
     *puVar6 = 200;
     copy_dptr_byte_to_075c();
@@ -206,9 +206,9 @@ LAB_CODE_88e7:
       if ((char)bVar4 < '\0') {
         puVar6 = &DAT_EXTMEM_0469;
       }
-      DAT_EXTMEM_075b = *puVar6;
-      DAT_EXTMEM_1804 = DAT_EXTMEM_075b;
-      store_a_to_dptr_then_075c_and_notify(DAT_EXTMEM_075b,0x1809);
+      MAIN_FAN_L_DUTY = *puVar6;
+      DAT_EXTMEM_1804 = MAIN_FAN_L_DUTY;
+      store_a_to_dptr_then_075c_and_notify(MAIN_FAN_L_DUTY,0x1809);
     }
     if (((char)MANUAL_FAN_CTRL < '\0') ||
        (((BIOS_INFO_3 >> 1 & 1) != 0 && (cVar1 = fan_mode_get(), cVar1 == '\x10')))) {
