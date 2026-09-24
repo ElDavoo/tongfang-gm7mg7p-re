@@ -1,0 +1,18 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# timestamp below was written by hand. See ../README.md.
+# Shape: the 0x0F00-0x0F5F fan-table third of the same two blocks and the two
+# block-less restores, one second after the 0700 capture's, and no change rows
+# at all -- §4.2's prediction. Marks only is what a quiet page looks like
+# from three consoles. The 0x99 restores are the same marks as in the other
+# two, spelled the same way in all three, so nothing here is a disagreement
+# or a missing mark: the only thing wrong with this set is the two windows
+# that belong to no block. Not a prediction that the table stays put.
+ts,addr,old,new
+2026-01-01T12:00:03.000+01:00,MARK,,restored 0x0751=0x99
+2026-01-01T12:00:11.000+01:00,MARK,,no-op wrote 0x0751=0x10
+2026-01-01T12:00:41.000+01:00,MARK,,wrote 0x0751=0xA0
+2026-01-01T12:01:11.000+01:00,MARK,,restored 0x0751=0x10
+2026-01-01T12:04:01.000+01:00,MARK,,restored 0x0751=0x99
+2026-01-01T12:05:11.000+01:00,MARK,,no-op wrote 0x0751=0x00
+2026-01-01T12:06:11.000+01:00,MARK,,wrote 0x0751=0x10
+2026-01-01T12:06:41.000+01:00,MARK,,restored 0x0751=0x00

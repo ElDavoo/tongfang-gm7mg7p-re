@@ -69,6 +69,14 @@ MISSING_MARK = _set('missing-mark')
 DISAGREEING = _set('disagreeing-marks')
 VOID_BLOCK = _set('void-block')
 MULTI_BLOCK = _set('multi-block')
+# The same two-value day as `multi-block/`, with one `restore` in no block
+# ahead of the first block and one between the two. Every mark is in every
+# capture and both blocks are intact, so this set is not about the mark
+# checks refusing anything: it is about `--block` selecting a block's own
+# windows when a window in no block comes first. The two positions cover
+# both directions a count would be wrong in -- the leftover ahead of both
+# blocks, and the one between them.
+UNPLACED_WINDOW = _set('unplaced-window')
 # §6's per-block dumps for the two-value day, and the only ones of the four
 # that carry a <value> a reader could confuse: both pairs read the same two
 # bytes in the opposite order, so a §4.6 verdict filed under the wrong block
@@ -1078,6 +1086,47 @@ class GradeTests(unittest.TestCase):
                           (8, 'restored 0x0751=0x00')])
         self.assertIn('block 3/3: intact', out)
 
+    # A block's windows are the ones that belong to it, which is not the same
+    # as the ones that sit between where the blocks before it ended and where
+    # it ended. `assign_blocks` leaves a window it could not place in the same
+    # list, so a `--block` run that took a range of the length the blocks
+    # before it add up to would run short by however many of those came
+    # first: it would print a window in no block in place of this block's own
+    # restore and still call the block `intact`. That is the mis-attribution
+    # this tool exists to remove, reached through the scoping path rather than
+    # the mark one, so both directions of it are held here -- the leftover
+    # ahead of both blocks, and the one between them.
+    def test_a_block_is_its_own_windows_over_one_in_no_block(self):
+        for value, index, marks in (
+                ('0xA0', 1, [(2, 'no-op wrote 0x0751=0x10'),
+                             (3, 'wrote 0x0751=0xA0'),
+                             (4, 'restored 0x0751=0x10')]),
+                ('0x10', 2, [(6, 'no-op wrote 0x0751=0x00'),
+                             (7, 'wrote 0x0751=0x10'),
+                             (8, 'restored 0x0751=0x00')])):
+            with self.subTest(block=value):
+                rc, out, _ = run(*UNPLACED_WINDOW, '--block', value)
+                self.assertEqual(rc, 0)
+                self.assertIn(f'=== block {index} of 2, value under test '
+                              f'{value}, 3 window(s) in it ===', out)
+                # The block's own three, still numbered where they sit in
+                # the whole mark stream. The two 0x99 restores are marks 1
+                # and 5: a range that had counted the blocks before this one
+                # would have printed one of them here and dropped mark 4 or
+                # mark 8 -- this block's restore -- instead.
+                self.assertEqual(marked_windows(out), marks)
+                # Which is the window the §3 verdict names, so the two read
+                # as one run rather than as two unrelated attachments.
+                self.assertIn('block %d/2: intact' % index, out)
+                self.assertIn('window runs to the end of block', out)
+                # The census is printed whole, and it promises of each of
+                # these that `--block` cannot select it. A window section
+                # that printed one anyway would contradict the line above it
+                # in the same run, so the promise is checked against the
+                # windows as well as against itself.
+                self.assertEqual(census(out).count('`--block` cannot select '
+                                                   'it'), 2)
+
     # A value that is no block's is an input error, not a quiet one. An empty
     # report would be the strongest negative result the procedure can
     # produce, and the last thing a mistyped --block may look like. The
@@ -1365,7 +1414,7 @@ class MarkSetTests(unittest.TestCase):
     # cannot fix an unplaceable mark from "this label is malformed"; the three
     # forms are the whole of what has to change. `ec_watch.py` stamps an
     # empty line as `mark N`, which is how this shape arises at the machine
-    # (windows/tools/ec_watch.py:120).
+    # (windows/tools/ec_watch.py:119).
     def test_a_mark_that_is_not_one_of_the_three_forms_is_an_error(self):
         with tempfile.TemporaryDirectory() as tmp:
             p = Path(tmp) / 'unread.csv'

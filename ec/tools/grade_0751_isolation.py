@@ -1397,8 +1397,14 @@ def main(argv=None):
         end = None
         print(f"\n=== {len(windows)} window(s), one per mark ===")
     else:
-        first = sum(len(b.windows) for b in blocks[:selected.index - 1])
-        shown = list(range(first, first + len(selected.windows)))
+        # Selected by which block each window belongs to, not by counting the
+        # blocks before this one: `assign_blocks` leaves the windows it could
+        # not place in the same list, so a range of that length runs short by
+        # however many of them come first, and prints a window in no block in
+        # place of this block's own restore -- the census says of such a
+        # window that `--block` cannot select it, and printing it anyway
+        # would be the mis-attribution this tool exists to stop.
+        shown = [i for i, w in enumerate(windows) if w.block is selected]
         # The windows keep their place in the whole mark stream rather than
         # being renumbered from one, so a `--block` run is a subset of the
         # whole-capture run and the two attachments can be read side by side.

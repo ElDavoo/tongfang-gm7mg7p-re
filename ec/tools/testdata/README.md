@@ -29,6 +29,7 @@ placeholder `2026-01-01` timestamp so the two can never be confused.
 | `0751-isolation-run-disagreeing-marks/*.csv` | `../grade_0751_isolation.py` | The same `0xA0` block again, with **one console's write mark spelling `0x10` where the other two say `0xA0`** — a mistyped digit that `coalesce_marks` merges into `wrote 0x0751=0xA0 / wrote 0x0751=0x10` and that no amount of timestamp arithmetic can see. Every byte still lands in the right window, which is the point: the label is the only thing that can catch it, and §6 asks for the three captures to agree for exactly that reason. It is *not* a prediction that an operator will mistype a mark. |
 | `0751-isolation-run-void-block/*.csv` | `../grade_0751_isolation.py` | The same `0xA0` block with **no restore mark in any capture** — two marks per console, ending on the write. The duty byte drifts and nothing §4.1-§4.3 moves, so what the check withholds here would otherwise have been the quietest report the tool can produce, which is what makes withholding it worth a fixture. It is *not* a prediction that a restore will be lost. |
 | `0751-isolation-run-multi-block/*.csv` + `*-a0-before-0700.txt` etc. | `../grade_0751_isolation.py` | A clean **two-value day**, `0xA0` then `0x10`, in §6's three-CSV form with all six marks present in all three captures and spelled the same way in all of them. Nothing here is meant to be caught: it is the shape the mark census and the per-block grading are read against, and the one fixture with a dump of its own per block. The four dumps are a short `ecrw.py dump 0x0750 0x0010` around `0x0751` rather than the whole `0x0700` page, because §4.6 is the only question they are read for; `0x0751` reads `0x10` in the `a0` before-dump, holds `0xA0` in its after-dump, and the `10` pair is the same page in the other order, so one value's verdict cannot be read as another's. It is *not* a prediction that a day holds two values. |
+| `0751-isolation-run-unplaced-window/*.csv` | `../grade_0751_isolation.py` | The same two-value day as `multi-block/`, with **two `restore` marks in no block** — one before the first block and one between the two. Nothing else is wrong: every mark is in every capture and spelled the same way in all three, and both blocks are intact, so this set is not here to be refused. It is the fixture for `--block` selecting a block's *own* windows. `assign_blocks` leaves a window it could not place in the same list, so a `--block` run that took a range the length of the blocks ahead of it ran short by whichever of these came first — printing one in the block's place, dropping the block's own restore, and still calling the block `intact`. The two leftovers are one in each position so both blocks are held to the same promise the census makes of them (`--block` cannot select a window in no block); the stray at the front holds the first temperature row, so it is a window with real bytes in it and not a quiet one. It is *not* a prediction that a restore is ever typed with no block open. |
 
 The `0751-isolation-*` `.csv` files are in `ec_watch.py --mark --csv`
 format, `MARK` rows included; the two `capture-claims-example-*` ones are
@@ -70,6 +71,12 @@ same duty drift, the same climb, so what differs between a passing run and a
 refused one is the mark set and nothing else. All four are outside
 `0751-isolation-run/` for the same reason as `3blocks/`: that directory is the
 set §6 names, and `../test_grade_0751_isolation.py` holds the two equal.
+
+`0751-isolation-run-unplaced-window/` sits beside those four and is a fifth
+kind of case rather than a fifth mark set: its marks are all in all three
+captures and both its blocks are intact, and what it is for is `--block`
+picking a block's own windows when a window in no block comes first. Outside
+`0751-isolation-run/` for the same reason as the rest.
 
 `0751-isolation-run/` is the set §6 of
 `docs/hardware-tests/manual-fan-ctrl-0751-isolation.md` names, all ten
