@@ -1,0 +1,14 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# byte below was written by hand. See ../README.md.
+# Shape: `ecrw.py dump 0x0400 0x0060` as §3's step 0 takes it, one 16-byte row
+# per line, for the a0 block's before dump. CPU_TEMP 0x043E and GPU_TEMP 0x044F
+# read the first and the last value the 0x0400-0x045F capture records for them,
+# and 0x0402 -- the only other address that capture moves -- is here on the same
+# terms. The companion after dump differs at those three and nowhere else. Every
+# value is invented. Not a prediction that a real page looks like this.
+0400: 00 00 11 00 00 00 00 00 00 00 00 00 00 00 00 00
+0410: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0420: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0430: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 32 00
+0440: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 30
+0450: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00

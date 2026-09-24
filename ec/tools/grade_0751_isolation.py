@@ -26,10 +26,10 @@ between one mark and the next, and reading that off the change rows means
 doing the subtraction by eye across two terminal windows.
 
 `--dump-pair` reads the same §4.1-§4.3 bytes a second, wider way, from a
-before/after dump pair per range -- the two range dumps §3's steps 0 and 6
-take, which bracket the whole block where each CSV window brackets one arm
-of it. That bracket is complementary to the windowed one, not a stronger
-form of it: a byte that moved at any point in the block and is back where it
+before/after dump pair per range -- the range dumps §3's steps 0 and 6 take,
+which bracket the whole block where each CSV window brackets one arm of it.
+That bracket is complementary to the windowed one, not a stronger form of
+it: a byte that moved at any point in the block and is back where it
 started by the after-dump reads unchanged here, and a byte that moves
 entirely between two of `ec_watch.py`'s sweeps is in no change row at all.
 Each read has a gap the other does not close. An address one dump covers and
@@ -301,6 +301,15 @@ def report_dump_pairs(pairs):
     the §4.4/§4.5 context bytes printed and not graded, then everything else
     named for the human. No third category -- a byte's membership in one
     bucket is the same question here as it is per window.
+
+    A §4.4/§4.5 group the pair's addresses do not cover is named *not
+    covered by this pair* as well, on the §4.1-§4.3 branch's reasoning: §3
+    dumps one range per pair, so the temperatures are in neither the `0x0700`
+    nor the `0x0F00` one, and silence under a heading that promises them
+    reads as "nothing moved" when it means "never read". A group the pair
+    does cover but that held still still prints nothing -- that is the
+    windowed read's silence, not this branch's, and the §6 fixture never
+    reaches it.
     """
     print("\n=== whole-block dump pairs (§4.1-§4.3) ===")
     if not pairs:
@@ -327,8 +336,10 @@ def report_dump_pairs(pairs):
             hits = [a for a in moved if a in addrs]
             if not any(a in addrs for a in common):
                 # The fan table is not in a 0x0700 dump and the PLs are not
-                # in a 0x0F00 one, so §6's pairs each cover some of §4.1-§4.3
-                # and not all. Silence there would read as "nothing moved".
+                # in a 0x0F00 one, and the 0x0400 pair covers none of
+                # §4.1-§4.3 at all, so §6's pairs each cover some of
+                # §4.1-§4.3 and not all. Silence there would read as
+                # "nothing moved".
                 print(f"    {name}: not covered by this pair")
             elif not hits:
                 print(f"    {name}: unchanged across the block")
@@ -338,13 +349,28 @@ def report_dump_pairs(pairs):
                     print(f"      0x{a:04X}  0x{before[a]:02X} -> "
                           f"0x{after[a]:02X}")
 
-        groups = [(name, [a for a in moved if a in addrs])
-                  for name, addrs in CONTEXT]
-        groups = [(name, hits) for name, hits in groups if hits]
+        # `None` is a group this pair's addresses do not reach at all, kept
+        # apart from one that is reached and held still: "never read" is a
+        # different answer from "read and did not move", and the temperatures
+        # are in neither the 0x0700 nor the 0x0F00 dump, so the two bytes
+        # §4.5's comparison rests on would otherwise vanish under a heading
+        # that promises them. A reached group that did not move stays silent,
+        # as it does per window.
+        groups = []
+        for name, addrs in CONTEXT:
+            if not any(a in addrs for a in common):
+                groups.append((name, None))
+            else:
+                groups.append((name, [a for a in moved if a in addrs]))
+        groups = [(name, hits) for name, hits in groups
+                  if hits is None or hits]
         if groups:
             print("    candidate PWM / temperature bytes (§4.4/§4.5) -- "
                   "context, not graded here:")
             for name, hits in groups:
+                if hits is None:
+                    print(f"      {name}: not covered by this pair")
+                    continue
                 print(f"      {name}:")
                 for a in hits:
                     print(f"        0x{a:04X}  0x{before[a]:02X} -> "
