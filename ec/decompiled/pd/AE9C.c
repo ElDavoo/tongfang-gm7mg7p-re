@@ -62,7 +62,7 @@ void write_07d1_then_call_chain(undefined1 param_1,byte param_2)
   write4xdata_from_r4_r7(uVar1);
   DAT_EXTMEM_0208 = DAT_EXTMEM_0208 + DAT_EXTMEM_00d3;
   DAT_EXTMEM_0209 = DAT_EXTMEM_0209 + DAT_EXTMEM_00d3;
-  FUN_CODE_ea67();
+  reset_07c9_block_then_flag_00d3_1();
   DAT_EXTMEM_ffd0 = DAT_EXTMEM_00d5;
   DAT_EXTMEM_ffd1 = DAT_EXTMEM_00d4;
   if (((DAT_EXTMEM_ffe1 >> 2 & 1) == 0) && ((DAT_EXTMEM_ffe0 >> 2 & 1) != 0)) {

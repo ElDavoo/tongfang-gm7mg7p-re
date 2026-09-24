@@ -162,6 +162,11 @@ Two knock-on notes, since the same conflation reaches other entries:
   `USB_POWERSHARE`) whose EC addresses are nowhere in this repo, so they
   could not be checked either way.
 
+The same "separate program, separate map" premise, approached from the other
+end, is §3e: the ten `0xFF00`-`0xFFFF` addresses in the PD image's largest
+XDATA cluster, and whether a decompiler's `DAT_EXTMEM_` spelling is an
+address-space fact. It is not, and the encoding settles it.
+
 ### 3b. The 254 `0x07D0` sites, one by one
 
 §3a left "map the 254 call sites" as a PD-firmware task. It is done:
@@ -226,8 +231,15 @@ touches carry a name, and 1,022 do not**. The blocking problem the issue
 described is real and 96% of the register file is still `DAT_EXTMEM_xxxx`; what
 was wrong was the size of the named minority, and with it any argument that the
 firmware and `registers.yaml` are looking at the same bytes. They are nearly
-disjoint corpora: 44 of `registers.yaml`'s 56 addresses appear in the
-decompiled tree at all, 41 of them in the EC and 3 only in the PD image.
+disjoint corpora: 79 of `registers.yaml`'s 101 addresses appear in the
+decompiled tree at all, 72 of them touched by the main EC and 7 only by the PD
+image. (Corrected 2026-09-24, issue #181: this read "44 of `registers.yaml`'s
+56 addresses", which was true when §3c was written and stopped being true when
+`registers.yaml` grew to 101 entries without the census being regenerated. The
+*other* number here — the 41 main-EC addresses the decompile spells by symbol —
+is unchanged, and it is a different question: an address being in
+`xdata-symbols.csv` and an address being *spelled* by that symbol in the
+committed `.c` are two facts, and only the second one has moved.)
 
 Two smaller corrections travel with it, both pinned by the tool's `--self-test`
 so neither can drift unnoticed:
@@ -313,6 +325,113 @@ Nothing was read on hardware, no register is named, and 76 is what
 computed-`DPTR` blind spot means a byte reached through a register-held
 address is not in that number, and would have read as "not found by this
 method" rather than "absent" had there been none.
+
+One correction travels with the regeneration above: the two census CSVs' `name`
+column was stale, and §7 of
+`../ec/annotations/xdata-register-map.md` now reconciles **101** addresses
+instead of 56, with **12** main-EC gaps rather than 2. The ten new ones are all
+inside `0x0400`-`0x0457` and all belong to the same `registers.yaml` growth;
+**nothing here says why the census cannot see them**, and reconciling them is
+its own issue.
+
+### 3e. The ten `0xFFxx` addresses in `pd-001` are XDATA, and the encoding is what says so (2026-09-24, issue #181)
+
+`pd-001` in `../ec/annotations/xdata-clusters.csv` is 34 addresses,
+`0x00B6`-`0xFFE2`, the largest cluster in the `ITE8850-PD` program. Ten of the
+34 sit in `0xFF80`, `0xFF84`, `0xFFC0`-`0xFFC2`, `0xFFD0`, `0xFFD1` and
+`0xFFE0`-`0xFFE2` — inside the width of an SFR byte. The census counted them
+because Ghidra wrote `DAT_EXTMEM_ff80` in `../ec/decompiled/pd/A8AE.c`, and
+whether they are XDATA in the PD image's own space, a memory-mapped peripheral
+window, or a decompiler typing a direct address as external memory decides
+whether they belong in a register map at all. **They are XDATA.** The method
+was the instruction encoding, over the committed image and the committed
+`.asm`, and two arguments carry it.
+
+**The structural one needs no decompile.** No 8051 direct-addressing opcode
+takes a 16-bit operand. `MOV direct, ...` is `0x74`-`0x7F` / `0x84`-`0x87` /
+`0xA5`-`0xA7` with an 8-bit `direct` byte, `MOV A,direct` is `0xE5`, `MOV
+direct,A` is `0xF5`, and the bit forms are `0xC2`/`0xD2`/`0x20`/`0x22`/`0x40`/
+`0x60`/`0xA0` with an 8-bit `bit` byte — all 2 or 3 bytes with the address in
+one byte, in `../ec/tools/disasm8051.py`'s `OPCODE_LEN` table, which its own
+`--self-test` pins. The only opcode whose operand is a full 16-bit immediate is
+`0x90`, `MOV DPTR,#imm16`. So a `0xFFxx` value **cannot** be a direct address
+whatever anything spelled it as, and the issue's premise — that `0xFF00`-`0xFFFF`
+is "inside the 8051 direct-address/SFR range" — is loose in exactly the way that
+made the question look open: the SFR range is 8 bits wide, `0x80`-`0xFF`, and
+`0xFF80` is a 16-bit quantity that no direct-addressing mode can carry.
+
+**The positive one is what the bytes do.** Each of the ten is loaded by
+`mov DPTR,#imm16` and dereferenced by `movx` (`0xE0`/`0xF0`), and `movx` is the
+instruction that names the external space:
+
+```console
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0xa8ae; pd 3' /tmp/pd.bin
+            0x0000a8ae      c2af           clr ie.7
+            0x0000a8b0      90ff80         mov dptr, #0xff80
+            0x0000a8b3      e0             movx a, @dptr
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0xc6a9; pd 6' /tmp/pd.bin
+            0x0000c6a9      90ffc0         mov dptr, #0xffc0
+            0x0000c6ac      e0             movx a, @dptr
+            0x0000c6ad      fe             mov r6, a
+            0x0000c6ae      a3             inc dptr
+            0x0000c6af      e0             movx a, @dptr
+            0x0000c6b0      fd             mov r5, a
+```
+
+`disasm8051.py` over the same windows decodes them identically, and its
+`--self-test` guards the tables against a change made while reading them.
+
+**Three addresses are why the discrimination reads the `.asm` and not the
+image.** `0xFFC1`, `0xFFD1` and `0xFFDB` are reached only by an `inc DPTR`
+(`0xA3`) from the address below and are never a `MOV DPTR` operand, so a
+`90 hi lo` byte scan finds their seeds and **cannot find them at all**. They are
+three of the PD image's 23 census addresses at or above `0xF000` — 20 of which
+a byte scan does find, and `0xFFDB` is not one of the issue's ten (it sits in
+another cluster), so reading the issue's list alone would have made the count
+twenty-one and the gap invisible. `xdata_register_map.py --self-test` now pins
+all three by name and the 23 address for address, out of the committed
+`../ec/decompiled/pd/*.asm`: no image, no Ghidra, no network.
+
+**Two corrections ride along, because the issue quoted the annotation as its
+premise and the premise was over-stated twice.** Both are settled by bytes
+already committed, and both are corrected in place in
+`../ec/annotations/ghidra-functions.csv` with the wrong wording left visible:
+
+- **`0xAF` is a bit address, and the bit is `IE.7`.** `0xC2 AF` at `0xA8AE` is
+  `CLR bit` and `0xD2 AF` at `0xA9BE` is `SETB bit` — not a direct address, as
+  the `pd,0xA8AE` row said. A bit address `0xA8`+`n` is `IE.n`, so `0xAF` is
+  `IE.7`, the global interrupt enable. It is **not** `PSW.EA`: `PSW` is SFR
+  `0xD0`, and `EA` is not a `PSW` bit. `disasm8051.py` and `r2 -a 8051` both
+  print `clr ie.7` and `setb ie.7`, and the repository's own `pd,0xEBBB` row
+  already described `0xAF` that way — the `pd,0xA8AE` row was the outlier.
+- **The routine ends `ret` (`0x22`), not `reti` (`0x32`).** So its
+  clear-and-restore is the interrupt-masking idiom of a critical section, which
+  a routine reached from an interrupt path also uses, and not evidence that
+  `0xA8AE` is itself a vector. The row's "the pattern of an interrupt routine"
+  is narrowed to what the two opcodes carry.
+
+**What did not change, and what is still open.** `pd-001` keeps all 34
+addresses and all 141 references: the two census CSVs' only content change is
+the three `FUN_CODE_` functions now carrying hand names, and every address,
+cluster, size, reference count, bucket count and function list is byte-identical.
+**No `status:` in `../ec/annotations/registers.yaml` moved** — no static
+disassembly can move one, and the file is not otherwise touched. Nothing was
+read on hardware.
+
+**The encoding settles the address space and stops there. `movx` does not
+distinguish RAM from a memory-mapped peripheral window**, and no static method
+here does. That question, and the live test that would settle it, are written
+down in `../ec/annotations/pd-xdata-overlap.md` §5.3, §6 and §7 for a human
+with the physical machine. **Nothing in this section states or implies that
+test ran.** The two lower blocks in the same cluster, `0x00B6`-`0x00BE` and
+`0x07C9`-`0x07CE`, were read against that file's §5 and §6 and found not to
+bear on the boundary: the first is written by one PD routine and copied
+out of `0xFFC0`-`0xFFC2`, the second is a `0x07CB` counter loop with a
+`0x0945` gate, and neither is a base a pointer walk reaches `0x04A6` or
+`0x07E2` from. `0x07CC`'s status vocabulary is #32's, the stride families
+#75's, the `0x1253` pointer-add convention #69's, the unnamed DPTR-recipient
+entries #67's, the `0x0832`/`0x083A` index writers #80's and the `0x07D8`
+lightbar operand #45's; all are cited and stopped at, not reopened.
 
 ## 4. The charge limit: two retractions, in order
 

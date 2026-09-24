@@ -1183,9 +1183,11 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # lines, because one record's quoted `comment` (bank0 0x0EA2) spans three
     # of them, and a line count is not a record count. --check and this
     # self-test both read it with csv.DictReader, which returns the record.
-    check("EC: annotations/ghidra-functions.csv is 1,769 records, no short row "
+    # A pin, so it moves with every annotation row a change adds on purpose:
+    # 1,769 -> 1,772 with issue #181's three pd rows (0x7392, 0xEA67, 0xEFB9).
+    check("EC: annotations/ghidra-functions.csv is 1,772 records, no short row "
           "and no duplicate (scope, addr)",
-          len(_ann) == 1769 and not structure_problems("ghidra-functions.csv", _ann,
+          len(_ann) == 1772 and not structure_problems("ghidra-functions.csv", _ann,
                                                        annotation_key, "(scope, addr)"),
           "%d record(s)" % len(_ann))
     check("EC: bank-call-targets.csv is 5,998 records, no short row and no "
@@ -1201,7 +1203,7 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("EC: a raw and a normalised key count the same on both annotation "
           "CSVs, so normalising cannot merge two distinct keys",
           len({(r["scope"], r["addr"]) for r in _ann})
-          == len({annotation_key(r) for r in _ann}) == 1769
+          == len({annotation_key(r) for r in _ann}) == 1772
           and len({(r["file_offset"], r["target"]) for r in _ct})
           == len({call_target_key(r) for r in _ct}) == 5998)
 

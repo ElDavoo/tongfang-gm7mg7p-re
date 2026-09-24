@@ -77,7 +77,7 @@ void FUN_CODE_7b14(char param_1)
                                   DAT_EXTMEM_07c9 * '^' - 0x15);
         if ((*pbVar8 >> 1 & 1) == 0) {
           pbVar8 = (byte *)0x7c9;
-          FUN_CODE_7392(DAT_EXTMEM_07c9);
+          count_07cb_up_to_3_over_07ca_records(DAT_EXTMEM_07c9);
         }
         else {
           make_dptr_r6_minus_3_9028(0x1c,DAT_EXTMEM_07c9);

@@ -49,9 +49,9 @@ addr,program,spelled_as,span_group,cluster_id,refs,read,write,read+write,passed-
 0x00D0,both,DAT_EXTMEM,0x00D0-0x00D0,main-ec-344,2,0,1,0,0,1,0,1,2,no,,bank0:0xD3C8=zero_d0_d7_and_state [writer]; pd:0xEBE4=pick_00d0_or_00d1_then_tail_with_dp_0002 [logic]
 0x00D1,pd,DAT_EXTMEM,0x00D0-0x00D7,pd-015,1,0,1,0,0,0,0,1,1,yes,,pd:0xEBE4=pick_00d0_or_00d1_then_tail_with_dp_0002 [logic]
 0x00D2,pd,DAT_EXTMEM,0x00D0-0x00D7,pd-015,1,0,1,0,0,0,0,1,1,yes,,pd:0xEBE4=pick_00d0_or_00d1_then_tail_with_dp_0002 [logic]
-0x00D3,pd,DAT_EXTMEM,0x00D0-0x00D7,pd-001,6,4,1,0,1,0,2,1,3,no,,pd:0xA8AE=event_dispatch_ff80_ffe0 [dispatch]; pd:0xAE9C=write_07d1_then_call_chain [logic]; pd:0xEA67=FUN_CODE_ea67
-0x00D4,pd,DAT_EXTMEM,0x00D0-0x00D7,pd-001,3,2,1,0,0,0,2,1,3,no,,pd:0xA8AE=event_dispatch_ff80_ffe0 [dispatch]; pd:0xAE9C=write_07d1_then_call_chain [logic]; pd:0xEA67=FUN_CODE_ea67
-0x00D5,pd,DAT_EXTMEM,0x00D0-0x00D7,pd-001,4,2,2,0,0,0,2,2,4,no,,pd:0xA8AE=event_dispatch_ff80_ffe0 [dispatch]; pd:0xAE9C=write_07d1_then_call_chain [logic]; pd:0xC62B=write_00b8_pattern_then_copy_ffc0_to_00d5 [copy]; pd:0xEA67=FUN_CODE_ea67
+0x00D3,pd,DAT_EXTMEM,0x00D0-0x00D7,pd-001,6,4,1,0,1,0,2,1,3,no,,pd:0xA8AE=event_dispatch_ff80_ffe0 [dispatch]; pd:0xAE9C=write_07d1_then_call_chain [logic]; pd:0xEA67=reset_07c9_block_then_flag_00d3_1 [state]
+0x00D4,pd,DAT_EXTMEM,0x00D0-0x00D7,pd-001,3,2,1,0,0,0,2,1,3,no,,pd:0xA8AE=event_dispatch_ff80_ffe0 [dispatch]; pd:0xAE9C=write_07d1_then_call_chain [logic]; pd:0xEA67=reset_07c9_block_then_flag_00d3_1 [state]
+0x00D5,pd,DAT_EXTMEM,0x00D0-0x00D7,pd-001,4,2,2,0,0,0,2,2,4,no,,pd:0xA8AE=event_dispatch_ff80_ffe0 [dispatch]; pd:0xAE9C=write_07d1_then_call_chain [logic]; pd:0xC62B=write_00b8_pattern_then_copy_ffc0_to_00d5 [copy]; pd:0xEA67=reset_07c9_block_then_flag_00d3_1 [state]
 0x00D6,pd,DAT_EXTMEM,0x00D0-0x00D7,pd-001,1,0,1,0,0,0,0,1,1,yes,,pd:0xC62B=write_00b8_pattern_then_copy_ffc0_to_00d5 [copy]
 0x00D7,pd,DAT_EXTMEM,0x00D0-0x00D7,pd-001,1,0,1,0,0,0,0,1,1,yes,,pd:0xC62B=write_00b8_pattern_then_copy_ffc0_to_00d5 [copy]
 0x00D8,main-ec,DAT_EXTMEM,0x00D8-0x00E0,main-ec-027,12,6,3,2,0,1,2,2,3,no,,bank0:0xD389=store_r7_at_d8_advance_index [state]; bank0:0xD3C8=zero_d0_d7_and_state [writer]; bank0:0xD6D4=xor_00d8_00d9 [math]
@@ -541,12 +541,12 @@ addr,program,spelled_as,span_group,cluster_id,refs,read,write,read+write,passed-
 0x07C4,main-ec,DAT_EXTMEM,0x07C4-0x07C6,main-ec-001,23,15,0,8,0,0,4,4,4,no,,bank0:0x8038=index_table_base [unresolved]; bank0:0x8044=ajmp_into_83ff_tail [forwarder]; bank0:0x83FF=sync_0788_and_07d4_from_09e9 [state]; bank0:0x94C0=set_07c4_bit4_from_r7 [writer]
 0x07C5,main-ec,DAT_EXTMEM,0x07C4-0x07C6,main-ec-001,21,14,0,5,0,2,11,4,11,no,,bank0:0x8038=index_table_base [unresolved]; bank0:0x83FF=sync_0788_and_07d4_from_09e9 [state]; bank0:0x8B14=FUN_CODE_8b14; bank0:0x8C46=ramp_1804_1809_toward_0461_0469 [state]; bank0:0xA747=stage_0769_076e_convert_to_1803 [state]; bank0:0xACB4=FUN_CODE_acb4; bank0:0xB5D3=FUN_CODE_b5d3; bank0:0xB737=FUN_CODE_b737; bank0:0xBB80=store_a_then_read_07c5 [writer]; bank0:0xBB81=is_07c5_bit0_clear [reader]; bank0:0xCCFC=power_on_init_and_two_hang_paths [init]
 0x07C6,main-ec,symbol,0x07C4-0x07C6,main-ec-001,25,21,0,2,0,2,8,2,8,no,AP_OEM_6,bank0:0x8749=mode_tick_084c_07a5_09ee [state]; bank0:0x888D=fan_table_mailbox_handler [dispatch]; bank0:0x8931=FUN_CODE_8931; bank0:0x8B14=FUN_CODE_8b14; bank0:0x8C46=ramp_1804_1809_toward_0461_0469 [state]; bank0:0x9D9B=FUN_CODE_9d9b; bank0:0xACB4=FUN_CODE_acb4; bank0:0xCCFC=power_on_init_and_two_hang_paths [init]
-0x07C9,pd,DAT_EXTMEM,0x07C9-0x07E2,pd-001,22,7,2,0,8,5,1,2,2,no,,pd:0x7B14=FUN_CODE_7b14; pd:0xEA67=FUN_CODE_ea67
-0x07CA,pd,DAT_EXTMEM,0x07C9-0x07E2,pd-001,9,2,3,0,1,3,1,3,3,no,,pd:0x7392=FUN_CODE_7392; pd:0xE930=FUN_CODE_e930; pd:0xEA67=FUN_CODE_ea67
-0x07CB,pd,DAT_EXTMEM,0x07C9-0x07E2,pd-001,6,2,3,0,0,1,1,2,2,no,,pd:0x7392=FUN_CODE_7392; pd:0xEA67=FUN_CODE_ea67
-0x07CC,pd,DAT_EXTMEM,0x07C9-0x07E2,pd-001,2,0,2,0,0,0,0,2,2,no,USB_C_POWER_PRIORITY,pd:0x7392=FUN_CODE_7392; pd:0xF63F=store_r7_to_07cc_r5_to_0945 [writer]
-0x07CD,pd,DAT_EXTMEM,0x07C9-0x07E2,pd-001,2,0,2,0,0,0,0,1,1,yes,,pd:0x7392=FUN_CODE_7392
-0x07CE,pd,DAT_EXTMEM,0x07C9-0x07E2,pd-001,1,0,1,0,0,0,0,1,1,yes,,pd:0x7392=FUN_CODE_7392
+0x07C9,pd,DAT_EXTMEM,0x07C9-0x07E2,pd-001,22,7,2,0,8,5,1,2,2,no,,pd:0x7B14=FUN_CODE_7b14; pd:0xEA67=reset_07c9_block_then_flag_00d3_1 [state]
+0x07CA,pd,DAT_EXTMEM,0x07C9-0x07E2,pd-001,9,2,3,0,1,3,1,3,3,no,,pd:0x7392=count_07cb_up_to_3_over_07ca_records [state]; pd:0xE930=FUN_CODE_e930; pd:0xEA67=reset_07c9_block_then_flag_00d3_1 [state]
+0x07CB,pd,DAT_EXTMEM,0x07C9-0x07E2,pd-001,6,2,3,0,0,1,1,2,2,no,,pd:0x7392=count_07cb_up_to_3_over_07ca_records [state]; pd:0xEA67=reset_07c9_block_then_flag_00d3_1 [state]
+0x07CC,pd,DAT_EXTMEM,0x07C9-0x07E2,pd-001,2,0,2,0,0,0,0,2,2,no,USB_C_POWER_PRIORITY,pd:0x7392=count_07cb_up_to_3_over_07ca_records [state]; pd:0xF63F=store_r7_to_07cc_r5_to_0945 [writer]
+0x07CD,pd,DAT_EXTMEM,0x07C9-0x07E2,pd-001,2,0,2,0,0,0,0,1,1,yes,,pd:0x7392=count_07cb_up_to_3_over_07ca_records [state]
+0x07CE,pd,DAT_EXTMEM,0x07C9-0x07E2,pd-001,1,0,1,0,0,0,0,1,1,yes,,pd:0x7392=count_07cb_up_to_3_over_07ca_records [state]
 0x07CF,pd,DAT_EXTMEM,0x07C9-0x07E2,pd-018,50,23,6,4,13,4,6,5,6,no,,pd:0x4402=run_body_while_07cf_is_zero [state]; pd:0x4800=increment_dptr_byte_and_jump_back_to_4408 [unresolved]; pd:0xDBD9=loop_c901_per_index_0x07d0 [logic]; pd:0xDF6A=loop_256_passes_over_07cf [logic]; pd:0xE543=count_07cf_and_conditional_call_122d [logic]; pd:0xF79F=ljmp_4402 [forwarder]
 0x07D0,pd,DAT_EXTMEM,0x07C9-0x07E2,pd-027,42,17,4,2,17,2,10,5,11,no,DBD1,pd:0x8576=step_state_07d0_07d1 [state]; pd:0x8716=call_f22e_with_07d0 [forwarder]; pd:0x98A1=load_dptr_07d0 [reader]; pd:0xA571=dispatch_on_state_07d0 [dispatch]; pd:0xA5B3=and_16bit_fields_write_07d2_07d3 [logic]; pd:0xA678=inc_07d0_reenter_a571 [state]; pd:0xAD3C=set_dptr_07d0 [unresolved]; pd:0xC2FA=write_07d0_then_run_indexed_state_chain [state]; pd:0xC398=set_r7_r5_from_iram_then_read_07d0 [copy]; pd:0xDBD9=loop_c901_per_index_0x07d0 [logic]; pd:0xE8D4=FUN_CODE_e8d4
 0x07D1,pd,DAT_EXTMEM,0x07C9-0x07E2,pd-026,73,30,7,0,25,11,12,5,16,no,DBD2,pd:0x7580=set_07d2_and_return_r7_zero_or_one [logic]; pd:0x7753=call_f75c_with_07d1 [forwarder]; pd:0x775C=call_e4d0_return_r7 [forwarder]; pd:0x8576=step_state_07d0_07d1 [state]; pd:0x8A4A=FUN_CODE_8a4a; pd:0x8BC0=call_f739_then_read_07d1 [forwarder]; pd:0x96E8=dptr_07d1_then_scale_via_96ed [forwarder]; pd:0x973C=dptr_07d1_then_tail_0faf [forwarder]; pd:0xA571=dispatch_on_state_07d0 [dispatch]; pd:0xA5B3=and_16bit_fields_write_07d2_07d3 [logic]; pd:0xACE1=set_dptr_07d1 [unresolved]; pd:0xAD2A=read_xdata_07d1_into_a [reader]; pd:0xAD94=call_1041_then_return_07d1 [ec-io]; pd:0xAE9C=write_07d1_then_call_chain [logic]; pd:0xB311=write_07d2_then_dispatch_on_07d1 [state]; pd:0xD72E=FUN_CODE_d72e
@@ -761,7 +761,7 @@ addr,program,spelled_as,span_group,cluster_id,refs,read,write,read+write,passed-
 0x08F8,pd,DAT_EXTMEM,0x08F8-0x08F8,pd-050,1,0,1,0,0,0,0,1,1,yes,,pd:0xDF6A=loop_256_passes_over_07cf [logic]
 0x08FE,main-ec,DAT_EXTMEM,0x08FE-0x08FF,main-ec-091,2,0,2,0,0,0,0,2,2,no,,bank0:0xED47=gate_a4b_eq_9 [gate]; bank0:0xED52=write_1c41_12_copy_0a49_0a4a_clear_1601_bit4 [writer]
 0x08FF,main-ec,DAT_EXTMEM,0x08FE-0x08FF,main-ec-091,2,0,2,0,0,0,0,2,2,no,,bank0:0xED47=gate_a4b_eq_9 [gate]; bank0:0xED52=write_1c41_12_copy_0a49_0a4a_clear_1601_bit4 [writer]
-0x0945,pd,DAT_EXTMEM,0x0945-0x0945,pd-001,2,1,1,0,0,0,1,1,2,no,,pd:0xEA67=FUN_CODE_ea67; pd:0xF63F=store_r7_to_07cc_r5_to_0945 [writer]
+0x0945,pd,DAT_EXTMEM,0x0945-0x0945,pd-001,2,1,1,0,0,0,1,1,2,no,,pd:0xEA67=reset_07c9_block_then_flag_00d3_1 [state]; pd:0xF63F=store_r7_to_07cc_r5_to_0945 [writer]
 0x0974,main-ec,DAT_EXTMEM,0x0974-0x0976,main-ec-232,11,2,8,0,0,1,1,7,7,no,,bank1:0xA2F3=dispatch_0974_low_nibble [dispatch]; bank1:0xA31B=caseD_6; bank1:0xA32C=send_1a68_83_80_00_set_0974_02 [writer]; bank1:0xA33D=send_1a68_78_08_00_set_0974_03 [writer]; bank1:0xA34E=send_1a68_71_40_e0_set_0974_04 [writer]; bank1:0xA35F=send_1a68_14_01_00_set_0974_05 [writer]; bank1:0xA370=send_1a68_6c_02_e0_set_0974_00 [writer]
 0x0975,main-ec,DAT_EXTMEM,0x0974-0x0976,main-ec-114,11,3,8,0,0,0,3,3,6,no,,bank1:0xC4D2=setup_1c00_block_with_arg_4c [state]; bank1:0xC4F0=poll_1c00_status_up_to_100_cycles [state]; bank1:0xC54C=setup_and_poll_1c00_block_with_arg_48 [state]; bank1:0xDB0B=FUN_CODE_db0b; bank1:0xDC52=FUN_CODE_dc52; bank1:0xE2A0=setup_0975_0976_0978_0979_call_c54c [writer]
 0x0976,main-ec,DAT_EXTMEM,0x0974-0x0976,main-ec-114,15,3,12,0,0,0,3,3,6,no,,bank1:0xC4D2=setup_1c00_block_with_arg_4c [state]; bank1:0xC4F0=poll_1c00_status_up_to_100_cycles [state]; bank1:0xC54C=setup_and_poll_1c00_block_with_arg_48 [state]; bank1:0xDB0B=FUN_CODE_db0b; bank1:0xDC52=FUN_CODE_dc52; bank1:0xE2A0=setup_0975_0976_0978_0979_call_c54c [writer]
@@ -1154,14 +1154,14 @@ addr,program,spelled_as,span_group,cluster_id,refs,read,write,read+write,passed-
 0xFF62,pd,DAT_EXTMEM,0xFF62-0xFF62,pd-045,2,1,0,1,0,0,1,1,1,yes,,pd:0xB17D=write_dptr_byte_set_00bd_bit0_clear_ff62_bit3 [writer]
 0xFF80,pd,DAT_EXTMEM,0xFF80-0xFF80,pd-001,9,9,0,0,0,0,2,0,2,no,,pd:0xA8AE=event_dispatch_ff80_ffe0 [dispatch]; pd:0xAE9C=write_07d1_then_call_chain [logic]
 0xFF84,pd,DAT_EXTMEM,0xFF84-0xFF84,pd-001,2,0,0,0,2,0,0,0,2,no,,pd:0xA8AE=event_dispatch_ff80_ffe0 [dispatch]; pd:0xAE9C=write_07d1_then_call_chain [logic]
-0xFF88,pd,DAT_EXTMEM,0xFF88-0xFF88,pd-020,4,2,0,2,0,0,2,2,2,no,,pd:0xDFFA=init_sequence_then_ljmp_128d [init]; pd:0xEFB9=FUN_CODE_efb9
+0xFF88,pd,DAT_EXTMEM,0xFF88-0xFF88,pd-020,4,2,0,2,0,0,2,2,2,no,,pd:0xDFFA=init_sequence_then_ljmp_128d [init]; pd:0xEFB9=clear_0ffd3_ff88_ffe1_bits_then_ffd0_2e [writer]
 0xFFC0,pd,DAT_EXTMEM,0xFFC0-0xFFC2,pd-001,1,1,0,0,0,0,1,0,1,yes,,pd:0xC62B=write_00b8_pattern_then_copy_ffc0_to_00d5 [copy]
 0xFFC1,pd,DAT_EXTMEM,0xFFC0-0xFFC2,pd-001,1,1,0,0,0,0,1,0,1,yes,,pd:0xC62B=write_00b8_pattern_then_copy_ffc0_to_00d5 [copy]
 0xFFC2,pd,DAT_EXTMEM,0xFFC0-0xFFC2,pd-001,2,2,0,0,0,0,2,0,2,no,,pd:0xC62B=write_00b8_pattern_then_copy_ffc0_to_00d5 [copy]; pd:0xCBB0=FUN_CODE_cbb0
 0xFFC6,pd,DAT_EXTMEM,0xFFC6-0xFFC6,pd-039,4,2,0,2,0,0,2,2,2,no,,pd:0xF6F3=clear_ffc6_bit5 [writer]; pd:0xF6FB=set_ffc6_bit2 [writer]
-0xFFD0,pd,DAT_EXTMEM,0xFFD0-0xFFD1,pd-001,3,0,3,0,0,0,0,3,3,no,,pd:0xA8AE=event_dispatch_ff80_ffe0 [dispatch]; pd:0xAE9C=write_07d1_then_call_chain [logic]; pd:0xEFB9=FUN_CODE_efb9
-0xFFD1,pd,DAT_EXTMEM,0xFFD0-0xFFD1,pd-001,3,0,3,0,0,0,0,3,3,no,,pd:0xA8AE=event_dispatch_ff80_ffe0 [dispatch]; pd:0xAE9C=write_07d1_then_call_chain [logic]; pd:0xEFB9=FUN_CODE_efb9
-0xFFD3,pd,DAT_EXTMEM,0xFFD3-0xFFD5,pd-020,6,3,0,3,0,0,3,3,3,no,,pd:0xDA44=poll_0208_0209_then_spin [logic]; pd:0xDFFA=init_sequence_then_ljmp_128d [init]; pd:0xEFB9=FUN_CODE_efb9
+0xFFD0,pd,DAT_EXTMEM,0xFFD0-0xFFD1,pd-001,3,0,3,0,0,0,0,3,3,no,,pd:0xA8AE=event_dispatch_ff80_ffe0 [dispatch]; pd:0xAE9C=write_07d1_then_call_chain [logic]; pd:0xEFB9=clear_0ffd3_ff88_ffe1_bits_then_ffd0_2e [writer]
+0xFFD1,pd,DAT_EXTMEM,0xFFD0-0xFFD1,pd-001,3,0,3,0,0,0,0,3,3,no,,pd:0xA8AE=event_dispatch_ff80_ffe0 [dispatch]; pd:0xAE9C=write_07d1_then_call_chain [logic]; pd:0xEFB9=clear_0ffd3_ff88_ffe1_bits_then_ffd0_2e [writer]
+0xFFD3,pd,DAT_EXTMEM,0xFFD3-0xFFD5,pd-020,6,3,0,3,0,0,3,3,3,no,,pd:0xDA44=poll_0208_0209_then_spin [logic]; pd:0xDFFA=init_sequence_then_ljmp_128d [init]; pd:0xEFB9=clear_0ffd3_ff88_ffe1_bits_then_ffd0_2e [writer]
 0xFFD4,pd,DAT_EXTMEM,0xFFD3-0xFFD5,pd-032,10,5,1,4,0,0,3,3,3,no,,pd:0xD435=FUN_CODE_d435; pd:0xD72E=FUN_CODE_d72e; pd:0xF1B0=FUN_CODE_f1b0
 0xFFD5,pd,DAT_EXTMEM,0xFFD3-0xFFD5,pd-040,4,2,1,1,0,0,2,2,2,no,,pd:0xDFFA=init_sequence_then_ljmp_128d [init]; pd:0xE458=store_07d8_and_dispatch_07da [dispatch]
 0xFFD8,pd,DAT_EXTMEM,0xFFD8-0xFFD8,pd-009,1,0,1,0,0,0,0,1,1,yes,,pd:0xF2FB=write_ffda_ffdb_10_ffd8_48_ff40_bit1 [writer]
@@ -1169,5 +1169,5 @@ addr,program,spelled_as,span_group,cluster_id,refs,read,write,read+write,passed-
 0xFFDB,pd,DAT_EXTMEM,0xFFDA-0xFFDB,pd-009,1,0,1,0,0,0,0,1,1,yes,,pd:0xF2FB=write_ffda_ffdb_10_ffd8_48_ff40_bit1 [writer]
 0xFFDF,pd,DAT_EXTMEM,0xFFDF-0xFFE2,pd-023,1,0,1,0,0,0,0,1,1,yes,,pd:0xEBBB=init_sequence_with_ea_cleared [init]
 0xFFE0,pd,DAT_EXTMEM,0xFFDF-0xFFE2,pd-001,10,3,7,0,0,0,2,2,2,no,,pd:0xA8AE=event_dispatch_ff80_ffe0 [dispatch]; pd:0xAE9C=write_07d1_then_call_chain [logic]
-0xFFE1,pd,DAT_EXTMEM,0xFFDF-0xFFE2,pd-001,8,5,0,3,0,0,3,3,3,no,,pd:0xA8AE=event_dispatch_ff80_ffe0 [dispatch]; pd:0xAE9C=write_07d1_then_call_chain [logic]; pd:0xEFB9=FUN_CODE_efb9
+0xFFE1,pd,DAT_EXTMEM,0xFFDF-0xFFE2,pd-001,8,5,0,3,0,0,3,3,3,no,,pd:0xA8AE=event_dispatch_ff80_ffe0 [dispatch]; pd:0xAE9C=write_07d1_then_call_chain [logic]; pd:0xEFB9=clear_0ffd3_ff88_ffe1_bits_then_ffd0_2e [writer]
 0xFFE2,pd,DAT_EXTMEM,0xFFDF-0xFFE2,pd-001,14,14,0,0,0,0,2,0,2,no,,pd:0xA8AE=event_dispatch_ff80_ffe0 [dispatch]; pd:0xAE9C=write_07d1_then_call_chain [logic]
