@@ -267,6 +267,53 @@ purpose by any of this. A cluster in `../ec/annotations/xdata-clusters.csv` is
 a co-occurrence in static code, not a meaning — that file's §6 is the
 boundary, and reading a cluster is the follow-up issue's work.
 
+### 3d. The 76 `0x07D1` sites, and what `DBD2` is next to `DBD1` (2026-09-24, issue #185)
+
+§3b walked `0x07D0` and named the gap it left: `static-refs-audit.md` §6
+closed by saying that `0x07D1`, the other half of the DSDT's `DBD1`/`DBD2`
+pair, had never been walked site by site. That is done:
+`../ec/annotations/ec-0x07d1-sites.md`, site table beside it as
+`ec-0x07d1-sites.csv`. The gap sentence is retracted in place in that file,
+§4a-4d style, and this is the finding the retraction is about.
+
+The count reconciles the same way §3b's did — 76 rows, all `pd-image`, zero in
+the EC firmware — and the two site sets turn out to be **completely
+disjoint**, 0 shared file offsets of 76 and 254. That is a set question and
+only a set operation answers it; no pair of counts could have.
+
+The two bytes are the *same kind* of PD variable, and the evidence for that is
+stronger than the issue expected. Both are read-mostly indices multiplied
+against structure strides to address arrays. They share a stride (`0x5E`) and
+an array base (`0x08FC`, indexed by `0x07D0` through its helper `0x34D9` and by
+`0x07D1` at four of its own sites). And the walk turned up a shape that
+bears on the pair directly: five of the 76 reach past their own byte through
+`inc dptr`, four of them treating `0x07D1`+`0x07D2` as **one 16-bit
+little-endian quantity** — `0xAD83` and `0xB38E` load the word into `R7`/`R5`,
+and `0x3E91` stores the literal `0x9411`. The `0x07D0` half has the mirror
+image of the same idiom at its own site `0xDACF`, which reads
+`[0x07D0]`+`[0x07D1]` as a word — its CSV already scores it as a two-byte
+walk, so nothing there needed correcting, only interpreting. So the PD
+firmware holds the two bytes as adjacent halves of overlapping little-endian
+windows.
+
+**The divergence that is worth recording** is with the DSDT, not inside the
+PD image. The field list declares `Offset (0x7D0), DBD1, 8, DBD2, 8, Offset
+(0x7D3), , 4` (`dsdt.dsl:52248-52252`) — two independent 8-bit fields, with
+`0x07D2` unnamed — while the PD firmware's 16-bit quantities straddle that
+field boundary in both directions. **The DSDT's `DBD1`/`DBD2` pair is a pair
+of the DSDT's own making, not a 16-bit quantity the PD firmware agrees with.**
+Whether the two readings of the same physical bytes ever collide in practice
+is not determined, and the answer is not reachable from a static walk.
+
+**What did not change:** `0x07D1` keeps
+`unknown-not-absent-DO-NOT-WRITE-BLIND`, and no `static_refs*` count moved — a
+PD-image walk cannot move an EC-side grading, which is §3a's point restated.
+Nothing was read on hardware, no register is named, and 76 is what
+`trace_xdata_refs.py` found, which is a lower bound for §4c's reason: the
+computed-`DPTR` blind spot means a byte reached through a register-held
+address is not in that number, and would have read as "not found by this
+method" rather than "absent" had there been none.
+
 ## 4. The charge limit: two retractions, in order
 
 This is the part of the investigation that went wrong twice, in opposite

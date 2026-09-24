@@ -487,3 +487,31 @@ been walked site by site in a file of its own — `ec-0x07d0-sites.md` covers
 in the PD-image question and it is left open rather than papered over; the
 `0`-means-"not found by this method" caveat at the top of this file applies
 to the EC-side column in the same way it does to `0x07D0`'s.
+
+**Correction (issue #185, 2026-09-24), leaving the sentence above as it was
+written.** The gap is now closed: `ec-0x07d1-sites.md` walks all 76 site by
+site, with `ec-0x07d1-sites.csv` beside it, by the method
+`ec-0x07d0-sites.md` used. The correction is to this file's closing sentence
+only — nothing else in §6 moves, and no count, image split or `status:` value
+changed with the walk.
+
+The 17 handoffs are no longer unresolved by the repo, which is what §5.2's
+verdict was about: decoding the 8 callees one level deeper gives 14 read and
+3 write, so `--callee-depth 1` now reports
+`handoff->read 14 / handoff->write 3 / handoff->unresolved 0` and the
+population resolves to 60 read / 16 write with nothing left over. The
+site's own summary in the new file is that all 17 resolve, where this
+table's `handoff` column is a statement about the table and not the code —
+the same relationship §5.2 records for the `0x07D0` and `0x04A6` rows.
+
+Two things the walk found that the count-based rows above could not show, and
+which are recorded in full in the new file rather than summarised here: the
+`CODE`-pointer question for this address is a tighter one than for `0x07D0`
+(CODE `0x07D1` is the `+` of the `"+INF"` string, a live string start rather
+than the NUL terminator that `0x07D0`'s is) and the answer is still zero —
+both the `movc` and `jmp` columns hold; and five of the 76 walk past their own
+byte through `inc dptr`, four of them treating `0x07D1`+`0x07D2` as one
+16-bit little-endian quantity, a shape the single-byte class in §2's
+vocabulary scores as one access. The last point is why the `read`/`write`
+columns here are counts of *instructions storing or loading at the site*, not
+of bytes reached.
