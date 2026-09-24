@@ -25,7 +25,7 @@ void dispatch_043c_04fc_bits(void)
     DAT_EXTMEM_05f6 = DAT_EXTMEM_05f6 + -1;
     return;
   }
-  bVar3 = DAT_EXTMEM_04fc >> 4 | DAT_EXTMEM_04fc << 4 | DAT_EXTMEM_043c;
+  bVar3 = DAT_EXTMEM_04fc >> 4 | DAT_EXTMEM_04fc << 4 | XDATA_043C;
   if ((bVar3 & 1) == 1) {
     if ((bVar3 >> 2 & 1) == 1) {
       if ((bVar3 >> 6 & 1) != 0) {

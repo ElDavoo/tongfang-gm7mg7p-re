@@ -450,11 +450,278 @@ than only the listings quoted here.
   to a callee, and §9's `--callee-depth 1` follows exactly one level; the two
   routines they reach (`0xB716`, `0xB82E`) are themselves long. Following
   them is the same kind of work as §9 and is not done here.
+
+  > **Corrected 2026-09-24.** "are themselves long" was wrong, and this file's
+  > own table contradicted it: `manual-fan-ctrl-0751-arms.csv` records **20**
+  > and **8** instructions for `0xB716` and `0xB82E`, both ending in `ret`.
+  > The long things at those two sites are the *fall-through* arms, `0xB5F1` at
+  > 165 and `0xB743` at 154, which §9.1 already summarises. The reading is
+  > done — see **§8a** below. The error was reading a short clearing routine as
+  > a long one, which is the same shape as the `0x0F00` mistake in §6: a
+  > summary that sounds like the answer standing in for an answer nobody had
+  > looked at.
 - **What `0x075B` and `0x075C` actually are.** §9 finds the EC storing to
   both. That they are fan PWM is still an assumption from issue #99, not a
   measurement — see the file header of
   `docs/hardware-tests/manual-fan-ctrl-0751-isolation.md` §3 for the range
   that must not be swept.
+
+### 8a. The two routines the USER branches tail-jump to
+
+`0xB5F8` and `0xB758` are one-instruction arms, so §9's `--callee-depth 1`
+rows for `0xB716` and `0xB82E` are the whole of them. Both are short, both end
+in `ret`, and both are pure clearing routines — no call, no branch, no
+arithmetic. The listings are §7's convention, and `r2` re-decodes both
+instruction for instruction (commands at the end):
+
+```
+0xb716  9008eb   mov  dptr,#0x08eb
+0xb719  e0       movx a,@dptr
+0xb71a  54f7     anl  a,#0xf7            ; clear bit 3
+0xb71c  f0       movx @dptr,a
+0xb71d  9009e6   mov  dptr,#0x09e6
+0xb720  e0       movx a,@dptr
+0xb721  54fd     anl  a,#0xfd            ; clear bit 1
+0xb723  f0       movx @dptr,a
+0xb724  9009e7   mov  dptr,#0x09e7
+0xb727  e0       movx a,@dptr
+0xb728  54fd     anl  a,#0xfd            ; clear bit 1
+0xb72a  f0       movx @dptr,a
+0xb72b  e4       clr  a
+0xb72c  9008a2   mov  dptr,#0x08a2
+0xb72f  f0       movx @dptr,a            ; 0
+0xb730  90089e   mov  dptr,#0x089e      ; 0xB730 is its own entry; see below
+0xb733  f0       movx @dptr,a            ; 0
+0xb734  a3       inc  dptr               ;   -> 0x089f
+0xb735  f0       movx @dptr,a            ; 0
+0xb736  22       ret
+```
+
+```
+0xb82e  9008eb   mov  dptr,#0x08eb
+0xb831  e0       movx a,@dptr
+0xb832  54bf     anl  a,#0xbf            ; clear bit 6
+0xb834  f0       movx @dptr,a
+0xb835  e4       clr  a
+0xb836  9008a0   mov  dptr,#0x08a0
+0xb839  f0       movx @dptr,a            ; 0
+0xb83a  22       ret
+```
+
+**Why the `0xB716` listing is 20 instructions when the committed `.asm` shows
+15.** `0xB730` is its own function entry (`ghidra-functions.csv`, bank0
+`0xB730`, `store_a_to_089e_and_089f`) whose body sits inside `0xB716`'s span,
+and the exporter stops a function body where the next entry begins — so
+`ec/decompiled/bank0/B716.asm` ends at `0xB72F` and the six instructions from
+`0xB730` to `0xB736` appear only in the `.c`. That is the existing explanation
+on the `B716` annotation row, not a truncation to repair: repairing it would
+mean `--mode rebuild-project`, which two branches cannot both do. The 20 is
+the two entries added together and is what the arms CSV's `insns` column
+records.
+
+**The per-register attribution, and the one `unattributed` store resolved.**
+`0xB716` clears bit 3 of `0x08EB`, bit 1 of `0x09E6` and bit 1 of `0x09E7` —
+three read-modify-writes, masks `0xF7`/`0xFD`/`0xFD` — and then writes `0` to
+`0x08A2`, `0x089E` and `0x089F`. `0xB82E` clears bit 6 of `0x08EB` (mask
+`0xBF`) and writes `0` to `0x08A0`. The arms CSV records **one** `unattributed`
+store in the `0xB716` row and that is the whole of the mystery: it is the
+`movx @dptr,a` at `0xB735`. The tool tracks `DPTR` from the last
+`mov dptr,#imm16` and an `inc dptr` is not one, so the store lands on `0x089F`
+in the machine code and on nothing in the tool. `0x089E` and `0x089F` are
+written as one 16-bit store, and the `static_refs` count of 1 for `0x089F` in
+`registers.yaml` is a count of direct `mov dptr` sites, not of writers.
+
+**The USER bit is one gate among several, and it is not the only one that
+reaches either routine.** This is where the issue's framing has to be weakened:
+USER set and USER clear do not decide whether `0x08A0` and `0x08A2` are
+written at all — both paths write. What USER changes is the value. On the
+USER-**clear** path (the taken arm of both `jnb acc.7`) the EC *forces the
+byte to `0`*; on the USER-**set** fall-through arm it *computes and stores* one.
+Zero against a computed value, not present against absent.
+
+But "USER clear reaches `0xB716`" is itself only one of three ways in, and
+two of the three are not the USER bit:
+
+```
+0xb5e3  9006e6   mov  dptr,#0x06e6
+0xb5e6  e0       movx a,@dptr
+0xb5e7  b4010e   cjne a,#0x01,0xb5f8     ; 0x06E6 != 1 -- 0x0751 not read yet
+0xb5ea  900751   mov  dptr,#0x0751
+0xb5ed  e0       movx a,@dptr
+0xb5ee  30e707   jnb  acc.7,0xb5f8       ; USER clear
+0xb5f1  9007c5   mov  dptr,#0x07c5
+0xb5f4  e0       movx a,@dptr
+0xb5f5  30e403   jnb  acc.4,0xb5fb       ; 0x07C5 bit 4 SET -> fall into 0xb5f8
+0xb5f8  02b716   ljmp 0xb716
+```
+
+`0xB5E7` fires **before the mode byte is read at all**, so `0xB716` runs on a
+path where USER never entered the decision. And `0xB5F5` is the same gate
+that §9.1's `0xB743` row turns on at `0xB755`: `0x07C5` bit 4 set means the
+USER-**set** arm runs the USER-**clear** routine. `0xB82E` is looser still —
+four branches reach `0xB758` directly, and only `0xB740` is the USER bit:
+
+```
+0xb737  12b9d8   lcall 0xb9d8
+0xb73a  701c     jnz  0xb758             ; non-zero -- 0x0751 not read yet
+0xb73c  900751   mov  dptr,#0x0751
+0xb73f  e0       movx a,@dptr
+0xb740  30e715   jnb  acc.7,0xb758       ; USER clear
+0xb743  900490   mov  dptr,#0x0490
+0xb746  e0       movx a,@dptr
+0xb747  30e00e   jnb  acc.0,0xb758       ; 0x0490 bit 0 clear, on the USER-set arm
+0xb74a  9004ab   mov  dptr,#0x04ab
+0xb74d  e0       movx a,@dptr
+0xb74e  b46407   cjne a,#0x64,0xb758     ; 0x04AB != 100, on the USER-set arm
+0xb751  9007c5   mov  dptr,#0x07c5
+0xb754  e0       movx a,@dptr
+0xb755  30e403   jnb  acc.4,0xb75b       ; 0x07C5 bit 4 SET -> fall into 0xb758
+0xb758  02b82e   ljmp 0xb82e
+0xb75b  12ba36   lcall 0xba36
+```
+
+`0xB755` is a fifth gate rather than a fifth branch: `jnb acc.4` is *taken*
+when `0x07C5` bit 4 is clear, and its target is the `lcall 0xba36` at
+`0xB75B`, not the `ljmp 0xb82e` at `0xB758` — the same shape as the `0xB5F5`
+line above, which also reaches its tail jump by fall-through.
+
+So neither routine is "the USER-clear arm's routine". Both are the reset half
+of a state machine that USER selects *between*, alongside `0x06E6`, `0x07C5`
+bit 4, `0x0490` bit 0, `0x04AB` and whatever `0xB9D8` decides.
+
+**What the USER-set arm writes into the same bytes.** It is the other half of
+the pair, and it is where `0x08A0`'s real shape shows:
+
+```
+0xb7e8  9008a0   mov  dptr,#0x08a0
+0xb7eb  e0       movx a,@dptr
+0xb7ec  04       inc  a
+0xb7ed  f0       movx @dptr,a
+0xb7ee  e0       movx a,@dptr
+0xb7ef  d3       setb c
+0xb7f0  940a     subb a,#0x0a
+0xb7f2  4046     jc   0xb83a             ; A - 0x0A - 1 borrows: 0x0A or below -> retire
+0xb7f4  9008eb   mov  dptr,#0x08eb
+0xb7f7  e0       movx a,@dptr
+0xb7f8  4440     orl  a,#0x40            ; from 0x0B -> set bit 6
+0xb7fa  f0       movx @dptr,a
+0xb7fb  22       ret
+```
+
+The `setb c` at `0xB7EF` is load-bearing: `subb` carries in, so the `0xB7F2`
+compare is really `A - 0x0A - 1` and it retires at `0x0A` **or below**, not
+below `0x0A`. Bit 6 therefore latches from `0x0B` up, and the count runs one
+further than the operand suggests. The same idiom at `0x9E45` — `setb c`,
+`subb a,#0x23` — clamps a byte to `0x23` the same way, so this is the file's
+established reading of a carry-in compare rather than an inference from this
+one site.
+
+`0x08A0` is therefore a count that runs to `0x0A` and latches bit 6 of
+`0x08EB` on the next increment — and `0xB82E` clears the bit *and* zeroes the
+count, so the two instructions `0xB82E` performs are one reset of one
+mechanism rather than two unrelated writes. `0x08A2` has no such shape: the
+USER-set arm stores the immediate `0x04` at `0xB6A1` and the USER-clear
+routine stores `0` at `0xB72C`, and nothing else found by this method writes
+either byte.
+
+**What the accumulator holds at the `0xB730` store — the open question this
+reading had to settle.** `0xB730` has two entries in the main EC, and the
+`0xB716` annotation's "with A = 0 on entry" was true but attributed to the
+wrong place, because `0xB716` zeroes it itself one instruction earlier. The
+other entry is the USER-set path's `ljmp` at `0xB6A5`, and it arrives with `A`
+zeroed at `0xB6A4`, immediately before:
+
+```
+0xb690  9008eb   mov  dptr,#0x08eb
+0xb693  e0       movx a,@dptr
+0xb694  4408     orl  a,#0x08            ; set bit 3
+0xb696  f0       movx @dptr,a
+0xb697  9009e6   mov  dptr,#0x09e6
+0xb69a  e0       movx a,@dptr
+0xb69b  4402     orl  a,#0x02            ; set bit 1
+0xb69d  f0       movx @dptr,a
+0xb69e  9008a2   mov  dptr,#0x08a2
+0xb6a1  7404     mov  a,#0x04
+0xb6a3  f0       movx @dptr,a            ; 0x08A2 = 4
+0xb6a4  e4       clr  a                  ; A = 0 ...
+0xb6a5  02b730   ljmp 0xb730             ; ... and 0x089E/0x089F get it
+```
+
+A byte scan of bank0 for `02 b7 30` finds that one caller and no other, so
+**both** entries carry `A = 0` and `0x089E`/`0x089F` are zeroed on the USER-set
+path as well as the USER-clear one. The bit pattern here is the mirror image of
+`0xB716` — bits 3 and 1 are *set* where `0xB716` clears them — which is what
+makes the two routines read as one mechanism's two ends.
+
+**And what `0x089E`/`0x089F` are for is not settled.** On the USER-set path
+they are read back, big-endian, and subtracted from a bound computed out of a
+CODE table (`movc` at `0xB6B0` with `A = 0x0A`, then `mov b,#0x0A ; mul ab`,
+so the limit is ten times `table[0x0A]`):
+
+```
+0xb6b7  90089f   mov  dptr,#0x089f
+0xb6ba  e0       movx a,@dptr
+0xb6bb  9f       subb a,r7
+0xb6bc  90089e   mov  dptr,#0x089e
+0xb6bf  e0       movx a,@dptr
+0xb6c0  95f0     subb a,0xf0             ; B
+0xb6c2  4024     jc   0xb6e8
+```
+
+A zeroed 16-bit value compared against a derived bound reads as an elapsed
+count or a countdown, and the structure around it is consistent with that —
+but "reads as" is the whole of the claim, and this file does not get to make
+it. The `0xB5CC` annotation, on the `0x089C`/`0x089D` twin of this store, says
+it in one line: callers set `A` first, and the listing itself has no
+arithmetic. What `0xB6C2` does on the comparison is not read here, and a
+reader who wants the mechanism should treat this as the question rather than
+the answer.
+
+**What this section does not say.** All seven bytes are now in
+`ec/annotations/registers.yaml` at `present-untested` — `0x08A0`, `0x08A2`,
+`0x08EB`, `0x089E`, `0x089F`, `0x09E6`, `0x09E7` — named `XDATA_*` rather than
+after the USER bit, because "USER clear zeroes it" is a fact about several
+code paths and not a statement about what the register *is*. Nothing here was
+read back: per `CLAUDE.md` a store being written is not evidence the EC acts on
+the byte, and no value of any of the seven has ever been observed. A zero from
+a scan is "not found by this method", never absent, so "no site sets bit 1 of
+`0x09E7`" and "no site branches on bit 0 of `0x08EB`" are both statements about
+the scan. The one reader found for `0x08A2` (bank1 `0xA987`) was not decoded,
+and the remaining four members of the `main-ec-012` cluster are still unnamed.
+
+One thing §9.1 already had and this section makes precise: the `0xB5F1` row
+lists `0x08A2 write` and `0x09E7 r+w` even though the USER-**set** arm does not
+run `0xB716`. The reason is ordinary conditional reachability rather than any
+tail-jump descent: the `jnc 0xb736` at `0xB714` **falls through** into
+`0xB716`, so the arm's own linear block from `0xB6E8` decodes the whole
+`0xB716 … 0xB736 ret` body — including the `mov dptr,#0x08a2` at `0xB72C`,
+the `mov dptr,#0x09e7` at `0xB724`, and the `mov dptr,#0x089e` at `0xB730`
+that puts `0x089E` in the arm's `writes`. `walk_branch_arms.py` does *not*
+follow a tail jump inline: at `walk_branch_arms.py:380-388` it appends the
+target to `arm.callees` and ends the arm, so the callee's own instructions are
+never decoded into it. `0xB716` is in this arm's `callees` too, but for an
+unrelated path — the `ljmp 0xb716` at `0xB5F8` — which is not what puts those
+addresses in the `xdata` column. The addresses were visible; what was missing
+was which instruction wrote each one and what value.
+
+```console
+$ python3 ec/tools/make_bank_image.py ec/firmware/GMxMGxx_11.800 0 0x08000 /tmp/bank0.bin
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0xb716; pd 20' /tmp/bank0.bin
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0xb82e; pd 8'  /tmp/bank0.bin
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0xb5e3; pd 10' /tmp/bank0.bin
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0xb737; pd 15' /tmp/bank0.bin
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0xb6a1; pd 4'  /tmp/bank0.bin
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0xb6b7; pd 6'  /tmp/bank0.bin
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0xb7e8; pd 13' /tmp/bank0.bin
+```
+
+Each `pd` count is the length of the listing above it: 20 and 8 are the two
+`insns` values §8's corrected bullet quotes, and 10/15/4/6/13 are just where
+the last quoted instruction falls. The instruction counts in this section are
+the `insns` column of `manual-fan-ctrl-0751-arms.csv` — `0xB716` 20, `0xB82E`
+8, `0xB5F1` 165, `0xB743` 154 — and there is no gate that checks a document
+against that CSV, so they were compared by hand and by the commands above.
+
 
 ## 9. The 17 mode-bit branch arms
 

@@ -26,7 +26,7 @@ void lookup_94a0_table_by_0620_low3(void)
     sub_r0_from_r1_stash_r0_on_borrow(DAT_EXTMEM_0623);
     sub_r0_from_r1_stash_r0_on_borrow(DAT_EXTMEM_081d);
     DAT_EXTMEM_0874 = (&DAT_CODE_94a0)[bVar1 & 7];
-    DAT_EXTMEM_045c = bVar1;
+    XDATA_045C = bVar1;
     DAT_EXTMEM_087c = DAT_EXTMEM_0874;
     gate_0458b7_set_0723b2_from_045c();
     return;

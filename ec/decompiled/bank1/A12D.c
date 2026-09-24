@@ -23,12 +23,12 @@ void set_0724_bit7_after_06c5_threshold(char param_1)
   byte bVar1;
   char cVar2;
   
-  cVar2 = (DAT_EXTMEM_0440 < 8) << 7;
-  if (DAT_EXTMEM_0440 == 8) {
+  cVar2 = (XDATA_0440 < 8) << 7;
+  if (XDATA_0440 == 8) {
     nop_ret_stub_a1be();
     return;
   }
-  if ((DAT_EXTMEM_045a & 1) != 0) {
+  if ((XDATA_045A & 1) != 0) {
     trampoline_to_c118();
     if (param_1 == '\0') {
       load_dptr_c2b2_tail_jump_1100();
@@ -50,7 +50,7 @@ void set_0724_bit7_after_06c5_threshold(char param_1)
       if (-1 < (char)DAT_EXTMEM_097a) {
         return;
       }
-      if (-1 < (char)DAT_EXTMEM_045a) {
+      if (-1 < (char)XDATA_045A) {
         return;
       }
     }

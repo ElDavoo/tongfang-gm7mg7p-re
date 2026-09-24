@@ -73,7 +73,7 @@ LAB_CODE_9b30:
   DAT_EXTMEM_08cd = 0;
   DAT_EXTMEM_08ad = DAT_EXTMEM_08ad | 1;
 LAB_CODE_9b33:
-  if (DAT_EXTMEM_044b == '\x01') {
+  if (XDATA_044B == '\x01') {
     copy_code_table_into_0730_07a7(4);
     if ((DAT_EXTMEM_08ad & 1) != 1) {
       cVar1 = FUN_CODE_9c47();
@@ -82,7 +82,7 @@ LAB_CODE_9b33:
     cVar1 = forward_to_9a86();
     return cVar1;
   }
-  if (DAT_EXTMEM_044b == '\x02') {
+  if (XDATA_044B == '\x02') {
     puVar4 = &DAT_EXTMEM_08ad;
     if ((DAT_EXTMEM_08ad & 1) != 0) {
       load_dptr_08ce();
@@ -104,7 +104,7 @@ LAB_CODE_9b33:
     puVar4[1] = 0;
   }
   else {
-    if (DAT_EXTMEM_044b == '\x03') {
+    if (XDATA_044B == '\x03') {
       if ((DAT_EXTMEM_08ad & 1) == 0) {
         cVar1 = add_be16_08cc_and_compute_08be_x10_diff();
         if (-1 < (char)in_PSW) {
@@ -116,7 +116,7 @@ LAB_CODE_9b33:
              (bVar3 = DAT_EXTMEM_08c5 - (((DAT_EXTMEM_0873 < DAT_EXTMEM_08c4) << 7) >> 7),
              cVar1 = DAT_EXTMEM_087b - bVar3, bVar3 <= DAT_EXTMEM_087b)) {
             clr_a(cVar1);
-            DAT_EXTMEM_044b = 2;
+            XDATA_044B = 2;
             return '\x02';
           }
         }
@@ -144,11 +144,11 @@ LAB_CODE_9b33:
       }
       return cVar1;
     }
-    if (DAT_EXTMEM_044b == '\x04') {
+    if (XDATA_044B == '\x04') {
       cVar1 = clear_09e9_unless_0743_bit2();
       return cVar1;
     }
-    if (DAT_EXTMEM_044b != '\0') {
+    if (XDATA_044B != '\0') {
       cVar1 = FUN_CODE_9c47();
       return cVar1;
     }

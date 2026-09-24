@@ -9,17 +9,18 @@
    0x0985 when 0x0806 has reached 0x0A while bit 0 of 0x0490 is still clear, and clears it
    otherwise. It finishes at 0xC124 when 0x0780 == 0xA2, or when both 0x0985 and 0x09E7 are zero,
    and at 0xC12C otherwise. The decompiled C reads the 0x0806 threshold as 0x0B where the
-   instructions at 0x90C6 compare against 0x0A, and 0x0985, 0x045B, 0x0622, 0x0806 and 0x09E7 have
-   no entry in ec/annotations/registers.yaml, and 0x0780 appears there only in a passing note about
-   the 0x0780-0x07FF range.
+   instructions at 0x90C6 compare against 0x0A. ec/annotations/registers.yaml now carries 0x045B as
+   XDATA_045B, an EC-side site found with its meaning not established; 0x0985, 0x0622 and 0x0806
+   have no entry there, 0x09E7 is now carried there as XDATA_09E7, and 0x0780 appears there only in
+   a passing note about the 0x0780-0x07FF range.
    type: logic
-   evidence: ec/decompiled/bank0/909B.asm; ec/decompiled/bank0/909B.c
+   evidence: ec/decompiled/bank0/909B.asm; ec/decompiled/bank0/909B.c; ec/annotations/registers.yaml
    basis: hand-decoded */
 
 void update_flag_bits_in_0985(void)
 
 {
-  if ((DAT_EXTMEM_045b >> 3 & 1) != 1) {
+  if ((XDATA_045B >> 3 & 1) != 1) {
     if (((DAT_EXTMEM_0490 & 1) == 1) || ((DAT_EXTMEM_0622 < 7) << 7 < '\0')) {
       DAT_EXTMEM_0985 = DAT_EXTMEM_0985 & 0xfe;
     }
@@ -32,7 +33,7 @@ void update_flag_bits_in_0985(void)
     else {
       DAT_EXTMEM_0985 = DAT_EXTMEM_0985 | 8;
     }
-    if ((DAT_EXTMEM_0780 != -0x5e) && ((DAT_EXTMEM_0985 != 0 || (DAT_EXTMEM_09e7 != '\0')))) {
+    if ((DAT_EXTMEM_0780 != -0x5e) && ((DAT_EXTMEM_0985 != 0 || (XDATA_09E7 != '\0')))) {
       clear_1602_bit2();
       return;
     }

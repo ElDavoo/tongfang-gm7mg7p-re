@@ -5,11 +5,16 @@
 
 
 /* Clears bit 3 of XDATA 0x08EB, bit 1 of XDATA 0x09E6, and bit 1 of XDATA 0x09E7 (each a
-   read-modify-write), then writes 0 to XDATA 0x08A2. The bytes at 0xB731-0xB735 store A to XDATA
+   read-modify-write), then writes 0 to XDATA 0x08A2. The bytes at 0xB730-0xB735 store A to XDATA
    0x089E and 0x089F and are the same instructions that form the whole of 0xB730, so the .asm
-   listing for this entry stops at 0xB72F and only the .c shows those two stores; with A = 0 on
-   entry from 0xB5D3 they store zero. Same shape as 0xB5B2 with the bit 3 / bit 1 pair instead of
-   bit 5 / bit 0.
+   listing for this entry stops at 0xB72F and only the .c shows those two stores; the clr a at
+   0xB72B is one instruction ahead of both, so they store zero whatever A was on entry. Same shape
+   as 0xB5B2 with the bit 3 / bit 1 pair instead of bit 5 / bit 0. 0xB5F8 tail-jumps here on the
+   USER-clear arm of the 0x0751 test at 0xB5EA, but that is one of three gates in and not the only
+   one: 0xB5E7 reaches the same 0xB5F8 when XDATA 0x06E6 is not 1, before 0x0751 has been read at
+   all, and 0xB5F5 falls into it when XDATA 0x07C5 bit 4 is set, so the USER-set arm runs this
+   clearing too. Read in ec/annotations/manual-fan-ctrl-0751.md 8a. The seven bytes it writes are in
+   ec/annotations/registers.yaml at present-untested and none of them is read back.
    type: writer
    evidence: ec/decompiled/bank0/B716.asm; ec/decompiled/bank0/B716.c
    basis: hand-decoded */
@@ -17,12 +22,12 @@
 void clear_08eb_bit3_09e6_09e7_08a2_089e_089f(void)
 
 {
-  DAT_EXTMEM_08eb = DAT_EXTMEM_08eb & 0xf7;
-  DAT_EXTMEM_09e6 = DAT_EXTMEM_09e6 & 0xfd;
-  DAT_EXTMEM_09e7 = DAT_EXTMEM_09e7 & 0xfd;
-  DAT_EXTMEM_08a2 = 0;
-  DAT_EXTMEM_089e = 0;
-  DAT_EXTMEM_089f = 0;
+  XDATA_08EB = XDATA_08EB & 0xf7;
+  XDATA_09E6 = XDATA_09E6 & 0xfd;
+  XDATA_09E7 = XDATA_09E7 & 0xfd;
+  XDATA_08A2 = 0;
+  XDATA_089E = 0;
+  XDATA_089F = 0;
   return;
 }
 

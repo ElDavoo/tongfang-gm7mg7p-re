@@ -1534,3 +1534,171 @@ registers:
       name, so the writer is unidentified. Upstream also names bit 3
       BATTERY_CHARGE_FULL_OVER_24H and bit 4 BATTERY_ERM_STATUS_REACHED.
       Live 0x04 at rest.
+
+  # The next seven are the bytes the two routines the 0x0751 USER branches
+  # tail-jump to. The reading is ec/annotations/manual-fan-ctrl-0751.md 8a
+  # and the listings beside it; the names stay XDATA_* on purpose. "the USER
+  # bit zeroes it" is a fact about three code paths, not about what the
+  # register is, and nothing here says what consumes any of the seven.
+
+  - name: XDATA_08A0
+    addr: 0x08A0
+    bits: "0-7 value; 0xB7E8 increments it and 0xB7F0 tests it against 0x0A, carry-in included"
+    sources: [static-scan, xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Two main-EC sites, both inside the 0x0751 USER block, and no PD-image
+      site. They are the two arms of the same choice: 0xB7E8, on the USER-
+      set arm reached from 0xB73C, reads the byte, increments it, stores it
+      back and compares the result against 0x0A; because 0xB7EF sets the
+      carry first, the subb at 0xB7F0 really computes A - 0x0A - 1, so
+      0xB7F2 retires at 0x0A or below and bit 6 of 0x08EB is set from 0x0B
+      up rather than at 0x0A. 0xB836, in the routine the other arm
+      tail-jumps to, stores 0 into it after clearing bit 6 of 0x08EB -- so
+      the byte is a count that runs to 0x0A and latches, and the "clear" path
+      resets both the count and the latch. Zero against a count, not present
+      against absent: the write is not skipped either way.
+      Both sites are named here, so "two writers" is what this method finds
+      for this address and not a claim that no other exists -- a store
+      through a DPTR built at run time is invisible to it, which is the
+      0x07B0-0x07BE blind spot the header names. Nothing is read back, so
+      present-untested: the stores are instructions, not behaviour. What
+      reads the count, and what the attempts are attempts of, is not
+      established here.
+
+  - name: XDATA_08A2
+    addr: 0x08A2
+    bits: "0-7 value; stored 0x04 at 0xB6A1 or 0x00 at 0xB72C"
+    sources: [static-scan, xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Three sites, all in the EC -- two in bank0 and one in bank1 -- and
+      none in the PD image. The two bank0 writers are the same pair of arms
+      as 0x08A0: 0xB6A1 stores 0x04 on the USER-set path, and 0xB72C stores
+      0 in the routine the USER-clear path tail-jumps to (0xB716). Unlike
+      0x08A0 this byte is not a counter -- it is written the same two values
+      on the same two paths. So the USER bit chooses between 0x04 and 0x00, a
+      computed value against a forced zero. The third site, bank1 0xA987,
+      reads it (`movx a,@dptr ; mov r0,a ; lcall 0x88a4`), so the byte is not
+      write-only; that reader was not decoded for this entry and what it
+      does with the value is not established. Nothing is read back, and
+      nothing here says the two values mean "off" and "on".
+
+  - name: XDATA_08EB
+    addr: 0x08EB
+    bits: [2, 3, 4, 5, 6, 7]
+    sources: [static-scan, xdata-refs]
+    static_refs: 21
+    static_refs_main_ec: 21
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      21 sites, all of them in the EC -- 20 in bank0 and one in bank1 -- and
+      none in the PD image. It is the most-referenced byte in this group.
+      Bits 3 and 6 are the pair the two USER branches'
+      tail-jump targets write, and each is a set/clear pair rather than a
+      one-way flag: bit 3 is set at 0xB690 and cleared at 0xB716, bit 6 is
+      set at 0xB7F4 and cleared at 0xB82E
+      (ec/annotations/manual-fan-ctrl-0751.md 8a). Both set sites are
+      themselves conditional -- 0xB65F and 0xB7BF test the bit and skip the
+      counting block when it is already set, and 0xB7F2 retires once 0x08A0
+      has reached 0x0A, which latches bit 6 from 0x0B up -- so bit 6 looks
+      like a latch the counter trips.
+      0x8931 masks 0x48, which is exactly bits 3 and 6, and branches on the
+      result: the one site this method finds that reads the two together.
+      What it decides is not decoded here.
+      Bits 2, 4, 5 and 7 are also read-modify-written, at 0xD487 and 0xD6A8
+      (bit 2), 0xB476 and 0xC86A (bit 7), 0xCCB7 (bit 4, a set/clear pair
+      whose selector is bit 1 of 0x0490, tested by the jb acc.1 at 0xCCBA)
+      and 0xB53E and 0xB5B2 (bit 5); bits 2, 3, 4, 5, 6 and 7 are branched
+      on at other sites besides, including bank1 0xA916, which reads bit 4
+      and branches on it at 0xA91C without storing the byte back. Nothing
+      is read back. Every bit above is "the EC touches this bit", which is
+      not the same claim as "the EC acts on it".
+
+  - name: XDATA_089E
+    addr: 0x089E
+    sources: [static-scan, xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Three sites, all in the EC, and they read as a 16-bit pair with 0x089F
+      rather than as one byte. 0xB730 stores the accumulator here and then
+      `inc dptr`s to store it again at 0x089F, and the two of them are the
+      whole of that routine. Both entries into it carry A = 0: the fall-
+      through tail of 0xB716, where the `clr a` at 0xB72B is one instruction
+      earlier, and the `ljmp 0xb730` at 0xB6A5 on the USER-set path, where
+      the `clr a` at 0xB6A4 is one instruction earlier as well. A byte scan
+      for direct `ljmp 0xB730` finds that one caller and nothing else.
+      The other two sites are both on the USER-set path and both read the
+      pair big-endian: 0xB6BC reads this byte into a `subb` against B, and
+      0xB6E8 hands DPTR to 0xBADE with the direction unresolved by this
+      method. The pair is compared at 0xB6B7-0xB6C2 against a bound computed
+      from a CODE table at 0xB6A8-0xB6B5, so the stored value looks like an
+      elapsed count against a limit -- but "looks like" is the whole of it,
+      and what 0xB6C2 decides on the comparison is not established. Nothing
+      is read back, so a store of zero is not evidence the EC acts on the
+      byte.
+
+  - name: XDATA_089F
+    addr: 0x089F
+    sources: [static-scan, xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      One `mov dptr,#0x089f` site this method finds, 0xB6B7, and it is a
+      read: the high byte of the big-endian pair compared against R7 at
+      0xB6B7-0xB6C2. The byte is also written, but by the `inc dptr` at
+      0xB734 inside 0xB730, one byte past 0x089E. So the count of 1 here is
+      a count of direct `mov dptr` sites and it does not mean "written once"
+      or "written from one place" -- the write that reaches this byte is
+      invisible to that count, which is also why 0xB716's own arms row
+      carries one `unattributed` store. See XDATA_089E for the two entries
+      and the A = 0 they both carry. Nothing is read back.
+
+  - name: XDATA_09E6
+    addr: 0x09E6
+    bits: [0, 1]
+    sources: [static-scan, xdata-refs]
+    static_refs: 6
+    static_refs_main_ec: 6
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Six sites, all in the EC -- five in bank0 and one in bank1 (0x9872, a
+      write) -- and none in the PD image. Bit 1 is
+      the half the 0x0751 USER block writes: set at 0xB697 on the USER-set
+      path and cleared at 0xB71D in the routine its sibling path tail-jumps
+      to (0xB716). Bit 0 has the same shape one routine earlier, set at
+      0xB545 and cleared at 0xB5B9 in 0xB5B2 -- the bit 5 / bit 0 twin of
+      0xB716, and not read for this entry. The only site that reads the byte
+      without writing it back is 0x914A, and it tests the whole byte against
+      zero rather than branching on either bit, so no site this method finds
+      branches on bit 0 or bit 1. Nothing is read back.
+
+  - name: XDATA_09E7
+    addr: 0x09E7
+    bits: [0, 1]
+    sources: [static-scan, xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Three sites, all in the EC and none in the PD image. Bit 1 is cleared
+      at 0xB724 in 0xB716, the routine the 0x0751 USER-clear arm tail-jumps
+      to; bit 0 is cleared at 0xB5C0 in its 0xB5B2 twin. The third site,
+      0x90F1, reads the byte and tests it against zero, and nothing here
+      establishes what either bit selects or what that test decides. No site
+      this method finds sets either bit -- a limit of the scan, since a set
+      through a run-time DPTR would not appear -- and nothing is read back.

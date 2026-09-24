@@ -8,9 +8,17 @@
    pointer, pops the first two of them back into DPH and DPL so they form a big-endian XDATA
    address, writes the third CODE byte there with movx, restores the pushed destination and advances
    it by three. The .c reads the same bytes as a plain byte copy and does not show the address being
-   built from the two leading table bytes.
+   built from the two leading table bytes. The seven call sites all pass a literal DPTR and R2 and
+   the tables are enumerable from committed CODE: 0x83B7 walks 0x8453 for 0x43 records, 0x841D
+   0x851C for 0x17, 0x82FD 0x8561 for 0x11, 0x82C9 0x8594 for 1 -- the first three contiguous, 108
+   records over 0x8453-0x8596 -- then 0xC740 0xC6E2 for 0x0A, 0xC7AC 0xC7A1 for 2 and 0xC7F2 0xC7BD
+   for 0x10. Three of those records store 0x00 to XDATA 0x0440, at CODE 0x8453 record 0, 0x8453
+   record 2 and 0x851C record 9. The general search that found this, and the fifteen call sites of
+   the caller-supplied-DPTR helpers it does not resolve, are in
+   ec/annotations/xdata-0440-readers.md.
    type: copy
-   evidence: ec/decompiled/bank1/A530.asm; ec/decompiled/bank1/A530.c
+   evidence: ec/decompiled/bank1/A530.asm; ec/decompiled/bank1/A530.c;
+   ec/annotations/xdata-0440-readers.md
    basis: hand-decoded */
 
 void code_table_scatter_to_xdata(undefined2 *param_1,char param_2)
