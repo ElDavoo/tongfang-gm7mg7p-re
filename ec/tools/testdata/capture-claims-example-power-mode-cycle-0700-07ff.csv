@@ -1,0 +1,24 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# byte and timestamp below was written by hand so the negative case in
+# ../test_check_capture_claims.py can be a real file. See ../README.md.
+# Shape: a `0x0700-0x07FF` power-mode-cycle log carrying the two `0x07C4`
+# writes and the `0x07C6` run that the committed
+# 2026-09-23-power-mode-cycle-0700-07ff.csv carries, and nothing at all for
+# `0x07D4` or `0x07D5`. That absence is the point: it is the shape issue
+# #270's correction describes, and the sentence that used to contradict it is
+# the one the test asserts fails. It is not a prediction that a byte that did
+# not move once will not move again.
+ts,addr,old,new
+2026-01-01T12:00:03.000+01:00,0x0743,0x00,0x02
+2026-01-01T12:00:03.000+01:00,0x0745,0x00,0xFF
+2026-01-01T12:00:03.000+01:00,0x0746,0x00,0x05
+2026-01-01T12:00:09.500+01:00,0x0751,0xA0,0x00
+2026-01-01T12:00:19.000+01:00,0x0783,0x4B,0x3C
+2026-01-01T12:00:19.000+01:00,0x0784,0x4B,0x3C
+2026-01-01T12:00:19.000+01:00,0x0785,0xA5,0xA5
+2026-01-01T12:00:31.000+01:00,0x07A6,0x29,0x09
+2026-01-01T12:01:13.161+01:00,0x07C4,0x08,0x28
+2026-01-01T12:01:13.597+01:00,0x07C4,0x28,0x38
+2026-01-01T12:01:52.000+01:00,0x07C6,0x00,0x01
+2026-01-01T12:02:14.000+01:00,0x07C6,0x01,0x02
+2026-01-01T12:02:36.000+01:00,0x07C6,0x02,0x03

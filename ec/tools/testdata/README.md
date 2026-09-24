@@ -16,9 +16,13 @@ placeholder `2026-01-01` timestamp so the two can never be confused.
 | `0751-isolation-example-moved-pl2-before-0700.txt` + `...-after-0700.txt` | `../grade_0751_isolation.py --dump-pair` | A `0x0700-0x07FF` before/after pair in the shape §3's steps 0 and 6 take, differing at `0x0784` and at nothing else. It reaches the whole-block read's value line — the `else` that prints `0xNNNN 0xXX -> 0xXX` under a heading — which no pair in `0751-isolation-run/` reaches, because those differ only where the captures record movement. `0x50 -> 0x28` is the move `0751-isolation-example-active.csv` records at that byte, so the two agree. It is *not* a prediction that a PL moves. |
 | `0751-isolation-example-moved-fan-before-0f00.txt` + `...-after-0f00.txt` | `../grade_0751_isolation.py --dump-pair` | A `0x0F00-0x0F5F` pair differing at one §4.2 duty slot and at the three mailbox bytes after it, so the two halves have to come back under different headings and §4.2's own next step is printed. The three taking one value (`0x6E`) is the shape the 2026-09-23 power-mode-cycle capture shows, where they track `0x0F58-0x0F5C` and the `0xFD`/`0xC9` magic never appears. It is *not* a prediction that a table is written this way. |
 | `0751-isolation-example-moved-mailbox-before-0f00.txt` + `...-after-0f00.txt` | `../grade_0751_isolation.py --dump-pair` | The same page again, this time differing at `0x0F5D-0x0F5F` **only**, and holding the magic and a selector the `manual-fan-ctrl-0751.md` §6 handler at `0x888D` requires. This is the false-positive shape: with the vendor service up, §3's main arm, a poke there must not read as the EC reloading its own table, and §4.2's own bytes are unchanged here. It is *not* a prediction that the service poked the mailbox. |
+| `capture-claims-example-power-mode-cycle-0700-07ff.csv` | `../check_capture_claims.py`, via `../test_check_capture_claims.py` | A `0x0700-0x07FF` power-mode-cycle log in the committed `2026-09-23` file's shape — the two `0x07C4` writes, a `0x07C6` run, the `0x0743`/`0x0745`/`0x0746` plug-in sweep — and **no row at all for `0x07D4` or `0x07D5`**. That absence is the point: it is the shape issue #270's correction describes, and the sentence that used to contradict it is the one the test asserts fails. The prose is inline in the test rather than stored beside this file, because a `.md` under `ec/` naming a capture and claiming a movement is exactly what the tool flags, so committing one would make the tool's own committed-tree case red by construction. It is *not* a prediction that a byte which did not move once will not move again. |
+| `capture-claims-example-ac-plugin-sweep-summary.csv` | `../check_capture_claims.py`, via `../test_check_capture_claims.py` | A per-address summary in the committed sweep summary's own schema — one row per address, the change total in a `change_count` column rather than a row per change — so the reader's derived branch is exercised and not just the row tally. Its `#` comment lines are also the parse: the committed file opens with three, and a reader that does not drop them before the header takes a comment as the fieldnames and finds no `addr` column. It is *not* a prediction that a sweep changes any address this many times. |
 
-The `.csv` files are in `ec_watch.py --mark --csv` format, `MARK` rows
-included. The `.txt` files are `ecrw.py dump` output and are read through
+The `0751-isolation-*` `.csv` files are in `ec_watch.py --mark --csv`
+format, `MARK` rows included; the two `capture-claims-example-*` ones are
+read by their own tool and are in whatever schema the committed capture they
+stand in for uses. The `.txt` files are `ecrw.py dump` output and are read through
 `--dump-pair`, which compares two dumps against each other and takes its
 windows from whatever capture is passed alongside — so a `.txt` file on its
 own is a half of a pair, not a capture. The dump examples sit outside
@@ -53,5 +57,8 @@ consumed and every pair names both §4.4/§4.5 context groups — as value
 pairs where the range covers them, as *not covered by this pair* where it
 does not.
 Every file in the directory carries a `constructed` header saying no EC was
-read; `../test_grade_0751_isolation.py` asserts that the list in §6 and this
-directory are the same set, so a rename on one side and not the other fails.
+read; `../test_grade_0751_isolation.py` asserts that the list in §6 and
+`0751-isolation-run/` are the same set, so a rename on one side and not the
+other fails. The two `capture-claims-example-*` files are outside that set
+and outside §6 on purpose — they feed a different tool and are not a §6 run —
+so the assertion is over the run directory rather than over everything here.

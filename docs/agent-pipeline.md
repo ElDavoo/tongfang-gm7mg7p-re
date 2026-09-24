@@ -48,7 +48,7 @@ only covers what's specific to *this* copy.
   comparison — so `AGENT_GATES_DEEP=1 .github/scripts/agent-gates.sh` is the
   single command that checks everything, and the cheap tier's closing note
   names that command on every run.
-  Three things to carry across if this file is ever re-copied from the template:
+  Five things to carry across if this file is ever re-copied from the template:
   1. **The deep tier needs a schedule, and it does not have one.** What runs
      where, as of 2026-09-23 (issue #139): per commit, on `push` to `main` and
      on every pull request, `ci.yml` runs the cheap tier bare, and the deep
@@ -135,6 +135,27 @@ only covers what's specific to *this* copy.
      `ec/ghidra/gap-text-check.csv` can go stale in an otherwise-green commit
      — the same shape as item 1, and for the same reason. The command is named
      here so a template re-copy carries it.
+  5. **`check_capture_claims.py --check` is not in the cheap tier yet, and
+     should be** (2026-09-24, issue #277). It holds the prose's capture
+     claims to the committed CSVs they name: an address a sentence attributes
+     to `evidence/ec-watch/<file>.csv` has to have a row in that file, and a
+     stated row count has to equal the real one. That class of claim has been
+     wrong twice in `registers.yaml`'s history — issue #265, and the `0x07D4`
+     clause issue #270 had to retract in place — and both were caught by a
+     re-reading, because `check_register_counts.py` verifies the file's
+     numeric keys from the image and never opens a `note:`. Adding it is a
+     `check_capture_claims()` function and a `gate` line beside
+     `check_register_counts`, and the whole of it is prepared at
+     `docs/ci/agent-gates-capture-claims.patch`; a human lands it with
+     `git apply docs/ci/agent-gates-capture-claims.patch`. Cheap tier for the
+     same reason item 4 gives: it needs the committed CSVs and the standard
+     library's `csv` module — no firmware image, no Ghidra, no assembler. It
+     is not here for item 4's reason, template-copied file and no `workflow`
+     scope on the token, and **until a human lands it, no commit runs it** and
+     the next false capture claim merges the way the last two did. Its own
+     suite (`ec/tools/test_check_capture_claims.py`) needs no wiring to be
+     run at all: `tools/run-tests.sh` discovers every `test_*.py` in the
+     repository, so it is already collected by the runner above.
 - **`tools/run-tests.sh`, and the gate line that would call it**
   (2026-09-23, issue #162) — the four offline `unittest` suites
   (`ec/tools/test_grade_0751_isolation.py`, `windows/tools/test_ec_watch.py`,
