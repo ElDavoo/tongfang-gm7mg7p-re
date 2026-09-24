@@ -1,7 +1,7 @@
 # The `0x07D0` door: what moves first under a GPU TGP change, and who opens it
 
 **Status: not run.** This procedure was written by the pipeline for a human at
-the physical GM7MG7P (issue #184), and **issue #283 owns the run** — the
+the physical GM7MG7P (issue #184), and **issue #278 owns the run** — the
 capture, the ProcMon half and the observation. The watcher, the offline grader
 (`../../ec/tools/grade_gpu_door.py`) and both offline suites are committed; the
 observation is not. Nothing in this file reports a result, and nothing under
@@ -504,7 +504,7 @@ So, concretely:
 
 And a run that never happens is not a failure of this file. Nothing above is
 written to be filled in, and no part of it reports anything: the header stays
-"not run", the three notes keep the 2026-09-23 scope, and issue #184 stays
+"not run", the three notes keep the 2026-09-23 scope, and issue #278 stays
 open until a human with the machine closes it.
 
 ## Cross-references
