@@ -810,7 +810,7 @@ were annotated and measured 150; the 177 here is the merged tree's.)
 Sizes, reference counts and ranges are §4.3; `named inside` is mostly the
 symbol table.
 
-> **Correction, 2026-09-24 (issue #274).** Every mechanical column of this
+> **Drift record, 2026-09-24 (issue #274).** Every mechanical column of this
 > table — `key`, `name`, `size`, `refs`, `range`, `named inside` — is
 > transcribed from the **committed `ec/annotations/xdata-clusters.csv`**, not
 > from a fresh `xdata_register_map.py` run, and four of them were **stale**

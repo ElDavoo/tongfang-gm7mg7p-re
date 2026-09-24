@@ -567,6 +567,15 @@ print("addresses whose 'write' changes:",
 EOF
 ```
 
+**This block no longer perturbs anything, and the table above is kept as the
+historical record rather than as something to re-run.** The guard it inserts is
+`xdata_register_map.py`'s own, and that guard has since landed on `main` with
+issue #178 — so a verbatim run of the block now produces two byte-identical
+censuses, and its "after" column is what a plain run of the committed tool
+already gives. To reproduce the perturbation, **remove** the guard rather than
+add it; `xdata-register-map.md` §4.4 is the recipe that does, and the figures it
+records against the committed census are the ones to quote.
+
 **The absolute totals here are the committed census, and they match the
 14,801-reference table in `xdata-register-map.md` §4.1** — the unmodified tool
 run over the current tree sums to 7,483 / 4,019 / 2,480 / 548 / 271, and its own
