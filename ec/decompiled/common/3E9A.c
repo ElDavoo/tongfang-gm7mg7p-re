@@ -17,7 +17,7 @@ void FUN_CODE_3e9a(void)
   if (_0_1 != '\0') {
     DAT_EXTMEM_1300 = DAT_EXTMEM_1300 | 2;
   }
-  FUN_CODE_0ecc(5);
+  timer1_counted_delay_count_in_r7(5);
   FUN_CODE_436f();
   FUN_CODE_15f4(DAT_INTMEM_32);
   return;

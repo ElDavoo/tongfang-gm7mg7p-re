@@ -15,7 +15,7 @@ void FUN_CODE_8f6b(char param_1)
     if ((DAT_EXTMEM_0801 & 0x40) != 0) {
       trampoline_to_c10c();
       if ((param_1 == '\0') || ((DAT_EXTMEM_0472 & 0x20) != 0)) goto LAB_CODE_8fbe;
-      FUN_CODE_159a();
+      load_dptr_c251_tail_jump_1100();
       bVar1 = DAT_EXTMEM_06e1;
       if (param_1 == '\0') {
         DAT_EXTMEM_06ce = 5;

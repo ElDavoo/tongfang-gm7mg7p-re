@@ -111,6 +111,43 @@ the census to close the gap belongs to #254/#256/#326, and #326 already records
 the census as a lower bound for the same reason: it is what the committed tree
 spells, not a claim about every address the firmware touches.)*
 
+*(Correction, 2026-09-24, second pass — the census has since been re-derived, so
+the correction above no longer describes the tree.) The generated CSVs are
+regenerated from the committed tree and committed, which is what closes the
+`--check` gap it recorded. Re-run on this tree:
+
+```console
+$ python3 ec/tools/xdata_register_map.py
+wrote /home/runner/.../ec/annotations/xdata-registers.csv: 1171 rows
+wrote /home/runner/.../ec/annotations/xdata-clusters.csv: 430 rows
+  main-ec: 1062 distinct addresses, 13957 references, 380 clusters at threshold 0.5
+  pd: 157 distinct addresses, 861 references, 50 clusters at threshold 0.5
+$ python3 ec/tools/xdata_register_map.py --check
+/home/runner/.../ec/annotations/xdata-registers.csv: 1171 rows match a fresh generation from the committed tree at threshold 0.5
+/home/runner/.../ec/annotations/xdata-clusters.csv: 430 rows match a fresh generation from the committed tree at threshold 0.5
+```
+
+So `--check` now exits 0, where it exited 1 on both sides of this merge, and
+`--self-test` fails **8** assertions rather than the 9 above — the same eight,
+minus the `ok the committed CSVs match a fresh generation` line, which is the one
+the regeneration fixes. The other eight are not re-pinned here: they are the
+pre-existing failures the note above declines to re-derive, so fixing them is
+#254/#256/#326's work and not this merge's. Seven of the eight measure the same
+on `origin/main` and on the branch. The eighth is the §4.1 bucket totals, and
+there the honest statement is narrower than "untouched": its pin reads 8,317
+`read` and was already 8,328 on `origin/main` — 11 adrift before this merge —
+and the naming this merge did moves it five cells further, to 8,333, with
+`passed-to-call` 543 → 538. §8 records what those five cells are and why. The pin
+is left at 8,317 because this merge's five cells ride on top of a gap it did not
+open, and re-pinning to 8,333 would close that gap by accident and call the
+result a measured pin. §5 is re-transcribed
+from the 430-row census below, and the cluster ids that moved with it are
+corrected in `docs/findings.md` §17, `xdata-06c2-06db-timers.md`,
+`xdata-086x-dispatch.md` and `manual-fan-ctrl-0751.md`. The census is 1,171
+addresses in 14,818 references — the 1,172/14,801 the paragraph below quotes is
+that paragraph's own historical figure, and the 14,801 is not the current
+total.)*
+
 The census is the same 1,172 addresses in the same 14,801 references as before
 — §4.3 changed which *direction* each reference is, and not one address or
 reference moved. The cluster count did, because the writer axis is built on
@@ -218,8 +255,8 @@ commit that added it. Re-derivable without this tool: 79 of the 1,172 rows in
 were both staleness rather than method.** The committed `xdata-registers.csv`
 had an empty `name` column for every row and the committed
 `xdata-clusters.csv` an empty `named_addrs` column for all 25 clusters that
-have named addresses (25 then; 47 rows of the census name one now, 36
-`main-ec` and 11 `pd`), while the tool fills both and its own self-test
+have named addresses (25 then; 52 rows of the census name one now, 39
+`main-ec` and 13 `pd`), while the tool fills both and its own self-test
 asserts `name` is populated exactly for the addresses the symbol table names.
 So `--check` and `--self-test` both failed on the tree this file describes —
 nothing in `.github/scripts/agent-gates.sh` runs either mode, which is why it
@@ -841,32 +878,77 @@ symbol table.
 > fixes are in this tree, and the row values above are the post-#272 ones
 > re-read from the committed census — so this block is a record of the drift
 > rather than of the only repair.
+>
+> **The drift this records is now closed, and the table below is the
+> re-derivation, not a third reading of the same census.** Issue #134's merge
+> regenerated `xdata-clusters.csv` from the committed tree, so the committed
+> census is what a fresh generation produces and the "stale against the
+> committed CSV" half of this record can no longer happen: what it found
+> instead is a census that had moved underneath the table, not a table that had
+> fallen behind one. Every figure in the drift record above is kept as measured
+> — that is the point of a drift record, and the four rows it names are the ones
+> to read if you want to know what #274 found. What the table now carries is
+> the re-derived census, and the differences are not small: the counter block
+> is `main-ec-002` again and the gate block `main-ec-003`, both of which §5's
+> own note below and the pages that cite those ids
+> (`../../docs/findings.md` §17, `xdata-06c2-06db-timers.md`,
+> `xdata-086x-dispatch.md`, `manual-fan-ctrl-0751.md`) now say in correction of
+> the ids they used. Two numbers in the drift record's own table are the ones
+> that moved most: `main-ec-004` is 26 addresses / **280** references, not
+> 278, and the old `main-ec-002` is no longer a 44-address row at all.
 
 | cluster | key | name | size | refs | range | named inside | the functions the cluster's addresses share |
 |---|---|---|---:|---:|---|---|---|
-| `main-ec-001` | `k5be7031564f8` | `mode-oem-init` | 108 | 1,136 | `0x030E`-`0x1809` | 33 | `fill_08xx_from_code_table`, `apply_oem_overrides_then_fill_08xx`, `mode_tick_084c_07a5_09ee`, `charge_target_update` — the mode/OEM initialisation set |
-| `main-ec-002` | `k2d9004f7707b` | `level-block-086x` | 44 | 248 | `0x044C`-`0x1F07` | 19 | `gate_06e6_442_then_sync_046a_from_086b`, `dispatch_on_0860`, `FUN_CODE_9d9b` — the `0x06E6`/`0x0860` gate block |
-| `main-ec-003` | `k733222e83898` | `counter-sweep` | 43 | 4,965 | `0x0460`-`0x09CE` | 43 | `decrement_nonzero_xdata_counters`, `read_06c6`, `skip_06c6_decrement` — one loop walking a block of counters |
-| `main-ec-004` | `kffd18a7555bf` | — | 26 | 278 | `0x030A`-`0x082F` | `0x0403` | three unnamed `bank1` routines (`0xDEE8`, `0xDEF1`, `0xDB0B`) — unnamed here, so this one needs reading before it can be titled |
+| `main-ec-001` | `k7497cf885614` | `mode-oem-init` | 109 | 1,149 | `0x030E`-`0x1809` | 33 | `fill_08xx_from_code_table`, `apply_oem_overrides_then_fill_08xx`, `mode_tick_084c_07a5_09ee`, `charge_target_update` — the mode/OEM initialisation set |
+| `main-ec-002` | `k733222e83898` | `counter-sweep` | 43 | 4,966 | `0x0460`-`0x09CE` | 43 | `decrement_nonzero_xdata_counters`, `read_06c6`, `skip_06c6_decrement` — one loop walking a block of counters |
+| `main-ec-003` | `ka39cda99615f` | `level-block-086x` | 28 | 181 | `0x045C`-`0x1C3A` | 14 | `gate_06e6_442_then_sync_046a_from_086b`, `dispatch_on_0860`, `compute_level_blocks_086b_086c_086e` — the `0x06E6`/`0x0860` gate block |
+| `main-ec-004` | `kffd18a7555bf` | — | 26 | 280 | `0x030A`-`0x082F` | `0x0403` | three unnamed `bank1` routines (`0xDEE8`, `0xDEF1`, `0xDB0B`) — unnamed here, so this one needs reading before it can be titled |
 | `main-ec-005` | `k5795f893f0b3` | — | 17 | 70 | `0x0382`-`0x03C9` | none | `mul_0342_0514_into_0388_when_03d0_lt_0384`, `FUN_CODE_d6ee`, `FUN_CODE_d946` |
-| `main-ec-006` | `ka07bfc4f80cd` | — | 16 | 94 | `0x043E`-`0x300E` | `0x043E` | `FUN_CODE_9b3c`, `FUN_CODE_9c53`, `FUN_CODE_de83` |
+| `main-ec-006` | `ka07bfc4f80cd` | — | 16 | 94 | `0x043E`-`0x300E` | `0x043E` | `FUN_CODE_9b3c`, `FUN_CODE_9c53`, `stage_0a49_pair_then_30xx_block` |
 | `main-ec-007` | `kea0c67af9b51` | `ff-fill-stubs` | 12 | 280 | `0x0045`-`0x1504` | none | three `ff_filler_not_a_function_*`, the fill stub block |
 | `main-ec-008` | `ke96d2e265d5d` | — | 12 | 107 | `0x0A43`-`0x0FC3` | none | `call_ef17_then_copy_0f80_to_0fb1`, `store_dptr_byte_to_0fb2_copy_0f82`, `FUN_CODE_f002` |
-| `main-ec-009` | `k0ebf038645b0` | — | 12 | 40 | `0x049A`-`0x05B9` | none | `clear_049a_049e_0579_057a_05c2`, `latch_0490_bit3_or_bit7` |
+| `main-ec-009` | `k0ebf038645b0` | — | 12 | 42 | `0x049A`-`0x05B9` | none | `clear_049a_049e_0579_057a_05c2`, `latch_0490_bit3_or_bit7` |
 | `main-ec-010` | `k733571bb7f66` | — | 12 | 35 | `0x00C0`-`0x2275` | none | `copy_direct_65_66_to_x00c0`, `copy_x00c0_pair_to_iram_67_68` |
-| `main-ec-011` | `k76e75f349ea7` | `user-clear-bytes` | 10 | 91 | `0x0875`-`0x09E7` | 6 | `clear_08eb_bit5_09e6_09e7_08a1_089c_089d` and two unnamed `bank0` routines |
-| `main-ec-012` | `k3fdd14ddea2e` | `page-0300` | 9 | 36 | `0x0300`-`0x03FE` | none | `zero_0300_03ff_then_set_3fe_3a8_3fb`, `scan_table_03de_down_stride2` — the `0x0300` page |
+| `main-ec-012` | `k66512c56e77b` | `user-clear-bytes` | 9 | 52 | `0x0875`-`0x09E7` | 5 | `clear_08eb_bit5_09e6_09e7_08a1_089c_089d`, `clear_08eb_bit3_09e6_09e7_08a2_089e_089f` and two unnamed `bank0` routines |
+| `main-ec-013` | `k3fdd14ddea2e` | `page-0300` | 9 | 36 | `0x0300`-`0x03FE` | none | `zero_0300_03ff_then_set_3fe_3a8_3fb`, `scan_table_03de_down_stride2` — the `0x0300` page |
+
+*(Re-derived on the merged tree, 2026-09-24. These twelve rows are the twelve
+largest clusters of the 430-row census, re-sorted, and three of them changed
+home: the counter-loop cluster was `main-ec-003` and is now `main-ec-002`, the
+`0x0860` gate block was `main-ec-002` and is now `main-ec-003`, and the
+`0x0875`-`0x09E7` and `0x0300` rows are now `main-ec-012` and `main-ec-013`
+because a new `main-ec-011` (11 addresses over `0x045E`-`0x1F07`) took the id
+between them. The two that swapped did not trade places by accident: the old
+`main-ec-002` split, and the `addrs` columns of `xdata-clusters.csv` rows 4, 12
+and 50 are where the three pieces of it are — 28 addresses here, 11 in
+`main-ec-011`, and `0x044C 0x05F0 0x05F1 0x0841` in `main-ec-049`. A reader who
+remembers "`main-ec-002` is the gate block" is reading a table that no longer
+exists; the cluster that sentence is about is the one now numbered
+`main-ec-003`.)*
+
+*(The `key` and `name` columns are §4.4's, and they are the reason two of these
+rows can still be cited after this table moved. Three of the ten names in
+`xdata-cluster-names.csv` were re-keyed with it: `mode-oem-init` gained an
+address (Jaccard 0.99), `user-clear-bytes` lost one (0.90), and
+`level-block-086x` followed one half of the split above (0.64 — the weakest of
+the three, and the one that is a choice among the pieces rather than a
+consequence of the census. Its row in the names file says so.) `counter-sweep`
+needed no re-key: the counter block's membership did not move, only its rank
+and its reference count, 4,965 to 4,966. The ids, keys and counts in the table
+are the committed CSV's, and the committed CSV is what a fresh generation
+produces — `--check` exits 0 on this tree, where it exited 1 on both sides of
+this merge.)*
 
 `main-ec-001` is the one that matters most and the one most likely to be
 misread. It is where 33 named registers land, so it looks like "the named
 registers, discovered again", but what the clustering actually found is that
 the *initialisation* routines touch them all: a cluster is a co-occurrence, and
-108 addresses reached by one mode tick and one OEM override pass is a statement
+109 addresses reached by one mode tick and one OEM override pass is a statement
 about init order, not about the registers' purposes. Reading it is one issue.
 The top ten addresses by reference count (`0x0440` 181, `0x08A8` 170,
 `0x0843` 168, `0x0844` 168, `0x0706` 160, `0x06D6` 148, then `0x080D` 137,
 `0x063A` 136, `0x0986` 135, `0x07F3` 133) are the issue's own list and belong
-in that reading: nine of the ten are in `main-ec-003`, and the tenth,
+in that reading: nine of the ten are in `main-ec-002`, and the tenth,
 `0x0440`, is a size-1 cluster on its own. **All 181 of its references are reads
 and none of them is a write**, spread over 91 functions, and at threshold 0.50
 it has no neighbour. The most-referenced address in the firmware is the one the
@@ -1251,14 +1333,53 @@ still in the `.asm`, and the census row still absent.
 
 ## 8. What follows
 
+- **A longer callee name can move a reference between `read` and
+  `passed-to-call` without the firmware changing (2026-09-24, issue #134).**
+  Naming `bank1 0x8863` `cmp_r3r4_against_r1r2_16bit` made Ghidra wrap four of
+  its call sites across two lines, because the name is longer than
+  `FUN_CODE_8863` and the decompiler breaks before the argument list:
+
+  ```
+        cmp_r3r4_against_r1r2_16bit
+                  ((char)((ushort)DAT_EXTMEM_039a * 10), ...);
+  ```
+
+  The census's call-site pattern is line-based, so on the wrapped lines the
+  argument no longer reads as "passed to a call" and falls back to `read`. Five
+  cells move and **no total moves**: `0x039A` 5 refs, `read` 0→4 and
+  `passed-to-call` 4→0; `0x04BE` 4 refs, `read` 2→3 and `passed-to-call` 1→0.
+  Read it as a classifier limit, not as a change in what the code does — the
+  same pattern that put `bank0 0xCD64`'s callers in the wrong bucket for 838
+  rows in §4.3, and with the same consequence for a reader: **a `read` that is
+  really a call argument is a lower-bound artefact, not a second read.** The
+  fix is to join the wrapped line before matching, which belongs in its own
+  issue rather than inside a change about naming call-graph callees.
+
+  The rest of the drift in this regeneration is **not** issue #134's. Naming
+  `bank0 0xCC64` in the previous commit (#310) moved 72 numeric cells over 16
+  addresses: 58 across `0x0490`, `0x06E6`, `0x0743`, `0x0786`-`0x0788`,
+  `0x07C5`, `0x07D5`, `0x08A5`, `0x08A6`, `0x08EB`, `0x0988` and `0x09CE`, and
+  the other 14 across `0x0495` (refs 34→36, read 20→22), `0x0498` and
+  `0x049D`. And `xdata_register_map.py --check` was already failing on `main`
+  before this change began. Verified by regenerating at `HEAD` in a clean
+  worktree and diffing. Those moves are recorded here because this
+  regeneration is what first commits them; the addresses themselves are
+  unchanged, and the `main-ec-001` cluster grew 108→109 functions and
+  1,136→1,149 sites because `0xCC64` joined it.
+
 - One issue per cluster in §5's first twelve rows, each scoped to reading the
   functions in it and ending at whatever the code settles — with the live-test
   step written down as a human's where the code does not settle it.
-- The top ten addresses by reference count get folded into the `main-ec-003`
+- The top ten addresses by reference count get folded into the `main-ec-002`
   issue rather than opened separately: nine of the ten are in that cluster
   already, and the tenth is the `0x0440` singleton, so the cluster reading and
-  the address reading should not be two efforts over the same code. Note that
-  the cluster ids moved when §4.3 landed, so any follow-up issue opened against
+  the address reading should not be two efforts over the same code. (This bullet
+  read `main-ec-003`, which was right for the census the first version of this
+  table was written against and is wrong for the one committed here: the nine
+  are in the counter block, which is `main-ec-002` after the 2026-09-24
+  re-derivation. §5's table is the one to read an id from.) Note that
+  the cluster ids moved when §4.3 landed and again when the census was
+  re-derived, so any follow-up issue opened against
   an id from the first version of this table is pointing at a different cluster
   — re-read `xdata-clusters.csv` before scoping one. **Open it against the
   `name` column, not the `cluster_id` column** (§4.4): a name is a function of

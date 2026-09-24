@@ -23,7 +23,7 @@ void step_03c3_and_reload_03bf(void)
   
   read_xdata_pair_to_r1r2(900);
   read_xdata_pair_to_r3r4(0x3f8);
-  FUN_CODE_8863();
+  cmp_r3r4_against_r1r2_16bit();
   if (in_PSW < '\0') {
     if (DAT_EXTMEM_03c3 != 0) {
       DAT_EXTMEM_03c3 = DAT_EXTMEM_03c3 - 1 & 7;
@@ -32,7 +32,7 @@ void step_03c3_and_reload_03bf(void)
     return;
   }
   read_xdata_pair_to_r3r4(0x3f6);
-  FUN_CODE_8863();
+  cmp_r3r4_against_r1r2_16bit();
   if (in_PSW < '\0') {
     DAT_EXTMEM_03bf = 4;
     return;

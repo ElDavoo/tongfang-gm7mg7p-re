@@ -42,23 +42,23 @@ void dispatch_on_0860(char *param_1,char *param_2)
   code *pcVar3;
   
   if (XDATA_0860 == '\0') {
-    FUN_CODE_d2be();
+    ret_only_d2be();
     return;
   }
   if (XDATA_0860 == -1) {
-    FUN_CODE_d2be();
+    ret_only_d2be();
     return;
   }
   if ((DAT_EXTMEM_1c00 & 1) != 0) {
-    FUN_CODE_d2be();
+    ret_only_d2be();
     return;
   }
   if ((DAT_EXTMEM_1c11 & 1) != 0) {
-    FUN_CODE_d2be();
+    ret_only_d2be();
     return;
   }
   if ((DAT_EXTMEM_1c29 & 1) != 0) {
-    FUN_CODE_d2be();
+    ret_only_d2be();
     return;
   }
   XDATA_0866 = DAT_EXTMEM_1c04;

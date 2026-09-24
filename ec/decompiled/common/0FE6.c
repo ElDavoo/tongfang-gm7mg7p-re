@@ -13,7 +13,7 @@ void FUN_CODE_0fe6(char param_1)
   if (DAT_EXTMEM_1e06 != param_1) {
     DAT_EXTMEM_1e03 = 1;
     DAT_EXTMEM_1e06 = param_1;
-    FUN_CODE_05e8();
+    critical_section_enter_05e8();
     PCON = 2;
     nop();
     nop();

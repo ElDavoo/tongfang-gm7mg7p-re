@@ -54,7 +54,7 @@ LAB_CODE_e2e7:
         DAT_EXTMEM_0045 = 0x33;
         trampoline_bank1_a710();
         nop();
-        FUN_CODE_0200();
+        post_05e8_init_1042_16e7();
         return;
       }
       if (DAT_EXTMEM_0083 == -0x51) {

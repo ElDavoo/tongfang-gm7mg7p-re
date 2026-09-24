@@ -28,7 +28,7 @@ void rmw_1603_and_wait_tf1_2500_times(void)
   DAT_EXTMEM_1c34 = DAT_EXTMEM_1c34 | 0x90;
   TR1 = 0;
   ET1 = 0;
-  FUN_CODE_05e8();
+  critical_section_enter_05e8();
   store_40_to_1621_1622();
   DAT_EXTMEM_1603 = DAT_EXTMEM_1603 & 0xf9;
   bVar2 = false;

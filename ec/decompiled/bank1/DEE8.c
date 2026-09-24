@@ -36,13 +36,13 @@ LAB_CODE_df60:
   }
   read_xdata_pair_to_r3r4(0x312);
   read_xdata_pair_to_r1r2(0x332);
-  bVar1 = FUN_CODE_8863();
+  bVar1 = cmp_r3r4_against_r1r2_16bit();
   if ((bVar1 & 1) != 1) {
     write_r1r2_to_xdata_pair(FUN_CODE_0402);
     write_r1r2_to_xdata_pair(0x52a);
     read_xdata_pair_to_r3r4(0x316);
     read_xdata_pair_to_r1r2(0x336);
-    bVar1 = FUN_CODE_8863();
+    bVar1 = cmp_r3r4_against_r1r2_16bit();
     if ((bVar1 & 1) != 1) {
       write_r1r2_to_xdata_pair(0x52e);
       write_r1r2_to_xdata_pair(FUN_CODE_0408);

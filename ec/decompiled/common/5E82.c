@@ -76,9 +76,10 @@ LAB_CODE_5f0d_2:
           pbVar7 = pbVar8 + bVar4;
           param_4 = param_4 - ((CARRY1((byte)pbVar8,bVar4) << 7) >> 7);
           bVar4 = param_6 - ((CARRY1((byte)pbVar7,param_4) << 7) >> 7);
-          bVar4 = FUN_CODE_5a43(pbVar7 + param_4 +
-                                (bVar2 - ((CARRY1((byte)(pbVar7 + param_4),bVar4) << 7) >> 7)) +
-                                bVar4);
+          bVar4 = addc_chain_into_r7_5a43
+                            (pbVar7 + param_4 +
+                             (bVar2 - ((CARRY1((byte)(pbVar7 + param_4),bVar4) << 7) >> 7)) + bVar4)
+          ;
           return bVar4;
         }
 code_c0x5ec6:
@@ -111,7 +112,7 @@ code_c0x5f3f:
   param_4 = param_4 - ((CARRY1(bVar5,bVar4) << 7) >> 7);
   bVar5 = bVar3 + param_4;
   bVar4 = param_6 - ((CARRY1(bVar3,param_4) << 7) >> 7);
-  bVar4 = FUN_CODE_5a43(bVar5 + bVar4 + (bVar2 - ((CARRY1(bVar5,bVar4) << 7) >> 7)));
+  bVar4 = addc_chain_into_r7_5a43(bVar5 + bVar4 + (bVar2 - ((CARRY1(bVar5,bVar4) << 7) >> 7)));
   return bVar4;
 LAB_CODE_5efd:
   bVar2 = bVar3;
@@ -173,7 +174,8 @@ LAB_CODE_5f6d:
         param_4 = param_4 - ((CARRY1(bVar2,bVar4) << 7) >> 7);
         bVar2 = bVar5 + param_4;
         bVar4 = param_6 - ((CARRY1(bVar5,param_4) << 7) >> 7);
-        bVar4 = FUN_CODE_5a43(bVar2 + bVar4 + (bVar3 - ((CARRY1(bVar2,bVar4) << 7) >> 7)));
+        bVar4 = addc_chain_into_r7_5a43(bVar2 + bVar4 + (bVar3 - ((CARRY1(bVar2,bVar4) << 7) >> 7)))
+        ;
         return bVar4;
       }
 LAB_CODE_5fc0:

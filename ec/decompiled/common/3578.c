@@ -71,14 +71,14 @@ void thunk_FUN_CODE_3459(byte param_1)
             *(byte *)(cVar1 + -0x73) = *(byte *)(cVar1 + -0x73) & 0xfd;
             pbVar2 = (byte *)(*pcVar4 + -0x73);
             *pbVar2 = *pbVar2 | 0x20;
-            FUN_CODE_3b22(*pcVar4);
+            mul13_table_lookup_3b22(*pcVar4);
             FUN_CODE_3bae();
             *pcVar4 = '\x17';
             pbVar5 = &DAT_EXTMEM_0a47;
-            FUN_CODE_3b3e(DAT_EXTMEM_0a47);
-            FUN_CODE_3b70();
+            mul13_table_lookup_3b3e(DAT_EXTMEM_0a47);
+            dph_from_a_dpl_from_code_3b70();
             pbVar6 = pbVar5;
-            bVar3 = FUN_CODE_3b4e();
+            bVar3 = read_dptr_into_r6_then_r7_3b4e();
             *pbVar5 = param_1 | pbVar6[bVar3];
           }
         }

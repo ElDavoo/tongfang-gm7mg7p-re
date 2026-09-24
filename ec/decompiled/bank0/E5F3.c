@@ -34,7 +34,7 @@ void write_ff_f8_00_and_retry(void)
     if (cVar1 != '\0') {
       return;
     }
-    FUN_CODE_0ecc(0x78);
+    timer1_counted_delay_count_in_r7(0x78);
     puVar2 = (undefined1 *)0xa4d;
     inc_dptr_byte_sub3();
   } while (in_PSW < '\0');

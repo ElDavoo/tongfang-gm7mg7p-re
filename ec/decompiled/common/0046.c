@@ -42,7 +42,7 @@ void FUN_CODE_0046(char param_1,byte *param_2,char param_3,byte *param_4,byte pa
         bVar1 = 1;
         bVar5 = *param_2;
         if (bVar5 == 0) {
-          FUN_CODE_0200(uVar4);
+          post_05e8_init_1042_16e7(uVar4);
           return;
         }
         param_8 = bVar5 & 0x3f;
@@ -98,7 +98,7 @@ void FUN_CODE_0046(char param_1,byte *param_2,char param_3,byte *param_4,byte pa
     FUN_CODE_0f75(bVar3 + param_7 + (*param_4 - ((CARRY1(bVar3,param_7) << 7) >> 7)));
     uVar4 = FUN_CODE_1594();
     DAT_EXTMEM_0004 = DAT_EXTMEM_2006;
-    FUN_CODE_00cf(uVar4);
+    walk_code_table_6f39(uVar4);
     return;
   }
   nop();

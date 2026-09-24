@@ -29,7 +29,7 @@ void FUN_CODE_b784(void)
     DAT_EXTMEM_0497 = 0;
     DAT_EXTMEM_0722 = 0;
     read_xdata_pair_to_r1r2(0x60a);
-    FUN_CODE_8863(0x70,3);
+    cmp_r3r4_against_r1r2_16bit(0x70,3);
     if (-1 < (char)bVar1) {
       setup_state_and_copy_30_byte_table();
       return;
@@ -38,7 +38,7 @@ void FUN_CODE_b784(void)
   else if ((DAT_EXTMEM_0722 >> 2 & 1) != 1) {
     DAT_EXTMEM_0722 = DAT_EXTMEM_0722 + 1;
     read_xdata_pair_to_r1r2(0x60a);
-    FUN_CODE_8863(0x70,3);
+    cmp_r3r4_against_r1r2_16bit(0x70,3);
     if ((char)bVar1 < '\0') {
       if ((DAT_EXTMEM_0497 & 1) != 0) {
         set_0575_8_or_write_0404_and_call_88f0();

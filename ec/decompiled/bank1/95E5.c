@@ -21,7 +21,7 @@ void set_0476_bit1_then_branch_on_r7(char param_1)
 {
   char cVar1;
   
-  FUN_CODE_159a();
+  load_dptr_c251_tail_jump_1100();
   if (param_1 == '\0') {
     DAT_EXTMEM_0476 = DAT_EXTMEM_0476 & 0xfd;
   }
@@ -41,11 +41,11 @@ void set_0476_bit1_then_branch_on_r7(char param_1)
     }
     return;
   }
-  FUN_CODE_159a();
+  load_dptr_c251_tail_jump_1100();
   if (param_1 == '\0') {
     load_dptr_c349_tail_jump_1100();
     if ((((param_1 != '\0') && (DAT_EXTMEM_0633 == '\0')) && (DAT_EXTMEM_0631 == '\0')) &&
-       ((DAT_EXTMEM_0817 == '\0' && (FUN_CODE_159a(), param_1 == '\0')))) {
+       ((DAT_EXTMEM_0817 == '\0' && (load_dptr_c251_tail_jump_1100(), param_1 == '\0')))) {
       load_dptr_c478_tail_jump_1100();
     }
     return;

@@ -35,7 +35,8 @@ void count_0361_then_0362_toward_03a3(char param_1)
     DAT_EXTMEM_0361 = 0;
     read_xdata_pair_to_r1r2(0x382);
     cVar1 = '\0';
-    FUN_CODE_8863((char)((ushort)DAT_EXTMEM_039a * 10),(char)((ushort)DAT_EXTMEM_039a * 10 >> 8));
+    cmp_r3r4_against_r1r2_16bit
+              ((char)((ushort)DAT_EXTMEM_039a * 10),(char)((ushort)DAT_EXTMEM_039a * 10 >> 8));
     if (-1 < cVar1) {
       if (DAT_EXTMEM_0362 + 1 < 0x20) {
         DAT_EXTMEM_0362 = DAT_EXTMEM_0362 + 1;

@@ -9,7 +9,7 @@
 void FUN_CODE_1048(void)
 
 {
-  FUN_CODE_110a();
+  set_iram_08_0a_clear_p1_0_p1_2();
   return;
 }
 

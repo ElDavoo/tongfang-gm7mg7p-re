@@ -16,7 +16,7 @@
 void set_r6_from_a_r7_from_dptr(undefined1 param_1,undefined1 *param_2)
 
 {
-  FUN_CODE_708f(0,100,param_1,*param_2);
+  div_r6r4_by_r5_16bit(0,100,param_1,*param_2);
   return;
 }
 

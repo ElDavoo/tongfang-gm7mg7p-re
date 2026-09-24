@@ -120,19 +120,19 @@ void mode_tick_084c_07a5_09ee(char param_1)
     return;
   }
   if (DAT_EXTMEM_0f5d != -3) {
-    FUN_CODE_8931();
+    threshold_cascade_from_08eb_085f();
     return;
   }
   if (DAT_EXTMEM_0f5e != -0x37) {
-    FUN_CODE_8931();
+    threshold_cascade_from_08eb_085f();
     return;
   }
   if (DAT_EXTMEM_0f5f == 0) {
-    FUN_CODE_8931(0xff);
+    threshold_cascade_from_08eb_085f(0xff);
     return;
   }
   if (3 < DAT_EXTMEM_0f5f) {
-    FUN_CODE_8931(DAT_EXTMEM_0f5f - 4);
+    threshold_cascade_from_08eb_085f(DAT_EXTMEM_0f5f - 4);
     return;
   }
   if (DAT_EXTMEM_0f5f != 1) {

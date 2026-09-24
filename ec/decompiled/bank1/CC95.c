@@ -39,7 +39,7 @@ void set_0397_from_0342_by_0514_band(void)
     sub_r1r2_from_r3r4();
     if ((-1 < cVar1) && (-1 < cVar1)) {
       read_xdata_pair_to_r1r2(0x382);
-      FUN_CODE_8863(0x20,3);
+      cmp_r3r4_against_r1r2_16bit(0x20,3);
       if (cVar1 < '\0') {
         DAT_EXTMEM_0367 = DAT_EXTMEM_0367 | 1;
         goto LAB_CODE_ccf1;
@@ -57,7 +57,8 @@ LAB_CODE_ccf1:
     if ((DAT_EXTMEM_03bb & 0xc0) != 0) {
       read_xdata_pair_to_r1r2(0x382);
       cVar1 = '\0';
-      FUN_CODE_8863((char)((ushort)DAT_EXTMEM_039a * 10),(char)((ushort)DAT_EXTMEM_039a * 10 >> 8));
+      cmp_r3r4_against_r1r2_16bit
+                ((char)((ushort)DAT_EXTMEM_039a * 10),(char)((ushort)DAT_EXTMEM_039a * 10 >> 8));
       if (-1 < cVar1) {
         if ((DAT_EXTMEM_03a4 >> 1 & 1) != 0) {
           DAT_EXTMEM_03a4 = DAT_EXTMEM_03a4 | 1;
@@ -74,7 +75,7 @@ LAB_CODE_ccf1:
   }
   read_xdata_pair_to_r3r4(DAT_EXTMEM_0514 - 2,0x3d0);
   read_xdata_pair_to_r1r2(0x380);
-  FUN_CODE_8863();
+  cmp_r3r4_against_r1r2_16bit();
   if (-1 < cVar1) {
     DAT_EXTMEM_03b6 = 0;
     DAT_EXTMEM_0397 = 0xfa;

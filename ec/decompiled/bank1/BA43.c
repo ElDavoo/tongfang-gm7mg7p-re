@@ -51,7 +51,7 @@ void gate_chain_to_0491_bit0(undefined1 param_1)
     return;
   }
   if ((DAT_EXTMEM_0705 & 0x80) != 0) {
-    FUN_CODE_bd45();
+    mask_0491_c0_then_route_to_300x_40xx();
     return;
   }
   DAT_EXTMEM_0491 = DAT_EXTMEM_0491 & 0xc0 | 1;

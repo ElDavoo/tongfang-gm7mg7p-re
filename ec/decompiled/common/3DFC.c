@@ -22,7 +22,7 @@ void FUN_CODE_3dfc(void)
     cVar1 = TF1;
     if (cVar1 == '\x01') {
       FUN_CODE_4368();
-      FUN_CODE_3fa4(1);
+      store_r7_to_iram_31(1);
       return;
     }
   } while ((DAT_EXTMEM_1304 >> 1 & 1) == 0);

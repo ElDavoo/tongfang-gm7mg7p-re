@@ -18,15 +18,15 @@ undefined1 FUN_CODE_451a(char param_1)
   
   pcVar4 = &DAT_EXTMEM_0a56;
   FUN_CODE_4ab3(DAT_EXTMEM_0a58);
-  FUN_CODE_4a69();
+  code_word_to_dptr_4a69();
   *pcVar4 = param_1;
   pcVar4 = &DAT_EXTMEM_0a59;
   FUN_CODE_4aec();
-  FUN_CODE_4a69();
+  code_word_to_dptr_4a69();
   *pcVar4 = param_1;
   puVar5 = &DAT_EXTMEM_0a56;
   FUN_CODE_4ad1();
-  FUN_CODE_4a69();
+  code_word_to_dptr_4a69();
   *puVar5 = 0xfe;
   if (DAT_EXTMEM_0a5c == '\0') {
     bVar3 = DAT_EXTMEM_0a57 | 0x40;
@@ -80,11 +80,11 @@ LAB_CODE_45cb:
   else {
     pbVar6 = &DAT_EXTMEM_0a56;
     FUN_CODE_4ab8(DAT_EXTMEM_0a56);
-    FUN_CODE_4a69();
+    code_word_to_dptr_4a69();
     if ((*pbVar6 & 1) != 0) {
       FUN_CODE_4adf();
                     /* WARNING: Subroutine does not return */
-      FUN_CODE_4a4d();
+      code_word_to_dptr_4a4d();
     }
     DAT_EXTMEM_0a60 = 1;
   }

@@ -32,11 +32,11 @@ void FUN_CODE_2acd(byte param_1)
       cVar2 = '\0';
       do {
         if ((*(byte *)(cVar2 + -0x78) >> 6 & 1) != 0) {
-          FUN_CODE_3b22(cVar2);
+          mul13_table_lookup_3b22(cVar2);
           FUN_CODE_3b32();
-          FUN_CODE_3b70();
+          dph_from_a_dpl_from_code_3b70();
           pcVar6 = uStack_1;
-          bVar3 = FUN_CODE_3b4e();
+          bVar3 = read_dptr_into_r6_then_r7_3b4e();
           *uStack_1 = (code)(param_1 | (byte)pcVar6[bVar3]);
         }
         cVar2 = cVar2 + '\x01';
@@ -45,20 +45,20 @@ void FUN_CODE_2acd(byte param_1)
       do {
         puVar1 = &DAT_INTMEM_87;
         if (DAT_INTMEM_87 == cVar2) {
-          uVar4 = FUN_CODE_3b22(DAT_INTMEM_87);
+          uVar4 = mul13_table_lookup_3b22(DAT_INTMEM_87);
           puVar7 = (undefined1 *)CONCAT11(uVar4,uStack_1[1]);
           *puVar7 = 0x17;
-          uVar4 = FUN_CODE_3b3e(*puVar1);
+          uVar4 = mul13_table_lookup_3b3e(*puVar1);
           pbVar8 = (byte *)CONCAT11(uVar4,puVar7[1]);
           uStack_1 = (code *)CONCAT11(uVar4,puVar7[1]);
           bVar3 = *pbVar8;
-          bVar5 = FUN_CODE_3b51(*puVar1);
+          bVar5 = dptr_3a00_plus_13x_3b51(*puVar1);
           *uStack_1 = (code)(bVar3 | pbVar8[bVar5]);
         }
         cVar2 = cVar2 + '\x01';
       } while (cVar2 != '\x03');
-      FUN_CODE_2bc1(6);
-      FUN_CODE_3894();
+      clamp_iram_80_up_to_r7(6);
+      set_iram_ad_88_clear_33();
       return;
     }
     FUN_CODE_30b5();
@@ -67,7 +67,7 @@ void FUN_CODE_2acd(byte param_1)
     return;
   }
 LAB_CODE_2ae5:
-  FUN_CODE_2bc1(6);
+  clamp_iram_80_up_to_r7(6);
   return;
 }
 

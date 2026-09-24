@@ -3376,25 +3376,33 @@ half of the problem that was not a speed question.
 
 **The denominator (2026-09-24, this runner, warm page cache).** The sample is
 now derived from committed data — every annotated function the listing index
-carries (1,804), plus every eighth of the remaining 906, plus each program's
+carries (1,848), plus every eighth of the remaining 862, plus each program's
 first non-annotated row — so all four programs are represented by construction
 and the same inputs always give the same rows. Over that sample:
 
 ```
-compared 1003 of 1920 functions, 917 vacuous; 606 agreed, 397 disagreed, 0 no-export
+compared 1016 of 1957 functions, 940 vacuous; 615 agreed, 401 disagreed, 1 no-export
 ```
 
-The annotated half is 1,804 rather than the 1,783 this section was first
-measured over: issue #136 added 21 `common` interrupt-entry rows, and an
-annotated row is a backbone sample row, so they all join. `ec/ghidra/cross-decoder.csv`
-is regenerated with `--report` for the same reason.
+The annotated half is 1,848 rather than the 1,783 this section was first
+measured over: issue #136 added 21 `common` interrupt-entry rows and issue
+#134's call-graph tranche added 44 more (6 `bank0`, 5 `bank1`, 33 `common`), and
+an annotated row is a backbone sample row, so they all join.
+`ec/ghidra/cross-decoder.csv` is regenerated with `--report` for the same
+reason, and the stride half is the other side of the same coin — 44 rows moving
+out of the unannotated set is 44 fewer rows to stride, so the stride sample is
+not the one it was. The `1 no-export` is that arithmetic landing on
+`bank1 0x17FE`, whose listing-index row is `(no-instructions)`: the function
+exists and is exported, and there is no listing for the comparison to read. It
+is counted and reported rather than dropped, and it is a sampled row the
+previous sample never reached — not a new gap in the export.
 
 | program | sampled | compared | vacuous | disagree |
 |---|---|---|---|---|
-| bank0 | 693 | 437 | 256 | 134 |
-| bank1 | 594 | 337 | 257 | 152 |
-| common | 130 | 57 | 73 | 37 |
-| pd | 503 | 172 | 331 | 74 |
+| bank0 | 698 | 440 | 258 | 135 |
+| bank1 | 599 | 341 | 257 | 154 |
+| common | 158 | 62 | 96 | 38 |
+| pd | 502 | 173 | 329 | 74 |
 
 **This is §14b's failure one level up, and it is why the line above is printed
 on every run.** §14b is the Windows parser whose regex matched zero of 502,652
@@ -3943,22 +3951,29 @@ suites fake `ecrw` precisely so no Windows box is needed: no EC is opened, no
 register is read back, and no HID node is touched. What they establish is that
 the tools behave as specified on those fixtures, and nothing about the machine.
 
-## 17. The `main-ec-003` cluster is one 393-byte routine, counted 42 times over (2026-09-23, issue #179; id corrected by #253)
+## 17. The `main-ec-002` cluster is one 393-byte routine, counted 42 times over (2026-09-23, issue #179; id corrected by #253 and by the 2026-09-24 re-derivation)
 
-**The id in this section's subject was wrong, and both directions of the error
-are in the record.** Issue #179 asked about the cluster the committed census
-calls `main-ec-003`; it and the rest of this section used to call it
-`main-ec-002`, which is a different cluster sharing not one address with it
-(`xdata-clusters.csv` row 3 against row 4 — 44 addresses / 248 references over
-`0x044C`-`0x1F07` against 43 / 4,965 over `0x0460`-`0x09CE`, `addrs` columns
-disjoint). The ids moved when issue #4.3's census regeneration landed
-(#133 / #238), which is the hazard `ec/annotations/xdata-register-map.md` §8
-already records for its own table. The wrong ids are left standing where they
-quote issue #179, per §4a; `ec/tools/check_cluster_citations.py` is what holds
-the rest of the tree to the census.
+**The id in this section's subject has been wrong twice, and every version of
+the error is in the record.** Issue #179 asked about the cluster the committed
+census called `main-ec-002`. Issue #4.3's census regeneration (#133 / #238)
+renumbered it to `main-ec-003`, which is what this section's subject read until
+the census was re-derived on the merged tree (2026-09-24), which put it back at
+`main-ec-002` — `xdata-clusters.csv` row 3, 43 addresses and 4,966 references
+over `0x0460`-`0x09CE`, which is this block. The cluster that had taken the old
+`main-ec-002`'s meaning has itself split in that re-derivation. Its 28-address
+half is row 4, `main-ec-003`, over `0x045C`-`0x1C3A`. Its 11-address half is
+row 12, `main-ec-011`, over `0x045E`-`0x1F07`. The four-address remainder is row
+50, `main-ec-049`. None of the three shares an address with this block. The ids
+move because `xdata_register_map.py:1027` numbers clusters by size, which is the
+hazard `ec/annotations/xdata-register-map.md` §5 records for its own table. The
+wrong ids are left standing where they quote issue #179, per §4a;
+`ec/tools/check_cluster_citations.py` is what holds the rest of the tree to the
+census.
 
 Issue #179 asked what the `main-ec-002` cluster is: 43 addresses, 4,965
-references, 126 touching functions, nine of the ten busiest addresses in the
+references, 126 touching functions (the issue's figures; the census as
+re-derived on 2026-09-24 records 4,966 and 127 for the same membership), nine of
+the ten busiest addresses in the
 firmware, and an empty `named_addrs` column. **Three of the issue's framings did
 not survive the tree, a fourth number in it is a misreading of a column, and
 the corrections are the substance of the answer rather than a footnote to it.**
@@ -3979,7 +3994,7 @@ comments come off.
 address tokens, and has no way to know 42 of those files are the same 393
 bytes. Measured, per address: **4,784 of the 5,202 census tokens for the
 sweep's 46 byte addresses come from those 42 overlapping exports — 92%**, and
-4,642 of the 4,988 the 43 cluster rows sum to, **93%**. Per address the gap is
+4,642 of the 4,989 the 43 cluster rows sum to, **93%**. Per address the gap is
 starker than the total:
 
 | | census `refs` | direct `MOV DPTR,#addr` sites in the image |
@@ -3989,7 +4004,7 @@ starker than the total:
 | `0x06D6` | 148 | **1** |
 | `0x0706` | 160 | **1** |
 | `0x08A8` | 170 | **2** |
-| all 43 | 4,988 | **345** |
+| all 43 | 4,989 | **345** |
 
 **So "nine of the ten busiest addresses in the firmware" is a statement about
 the export, not about the bytes.** None of those five is among the ten busiest
@@ -4017,7 +4032,7 @@ hands back, and it needs a function seed.
 
 **The reading itself.** 37 of the 43 are countdowns the same twenty
 instructions walk over, 6 are what four of them do at zero, and the two the
-clustering cut into `main-ec-121` and `main-ec-198` (`0x06C6`, `0x06CD`) are
+clustering cut into `main-ec-123` and `main-ec-201` (`0x06C6`, `0x06CD`) are
 countdowns the same routine decrements. The block is gated twice — on
 `0x0440` (43 read sites, no direct `MOV DPTR` writer, value not established —
 its one writer is the CODE-table scatter at bank1 `0xA530` that stores `0x00`
@@ -4044,15 +4059,17 @@ because `ASSIGN` at line 138 contains `"="` and `"== 0x12".startswith("=")`.
 Regenerating the census with a one-line guard that rejects a bare `=` followed
 by a second `=`: **833 references leave the `write` column across 210 of 1,172
 addresses**, `0x08A8` goes from 84 reads / 44 writes to **126 / 2**, `0x0843`
-from 84 / 42 to **126 / 0**, and **`main-ec-003` goes from 43 addresses /
-4,965 references to 44 / 248** — a shape and not a row, since the guard's
+from 84 / 42 to **126 / 0**, and **`main-ec-002` goes from 43 addresses /
+4,966 references to 44 / 248** — a shape and not a row, since the guard's
 output is not the committed census. Neither figure is right yet — both still
 carry the 42-fold count above — but an issue scoped to "read `main-ec-002`"
 would be scoped to a membership its own prerequisite changes. (The id in that
-quoted scope is `main-ec-003` in the committed census, per the correction
-above; and the 44 / 248 it lands on is the size and reference count
-`main-ec-002` carries, which is a coincidence of two numbers and not of a
-membership — `xdata-06c2-06db-timers.md` §6a says so at the table.) The
+quoted scope is `main-ec-003` in the census as it stood when #253 corrected it,
+and `main-ec-002` again since the 2026-09-24 re-derivation, per the correction
+above; and the 44 / 248 it lands on is the size and reference count the old
+`main-ec-002` carried, which is a coincidence of two numbers and not of a
+membership — that block has since split, and `xdata-06c2-06db-timers.md` §6a
+says so at the table.) The
 issue's own "42 of its
 comparisons are `==`" is a second, independent misreading:
 `xdata-register-map.md` §4.1 defines `read+write` as "an `=` target whose
@@ -4501,12 +4518,14 @@ it by that name. The interesting part is not the map.
 transcribed.** Every count in §2 of that document was re-derived against the
 committed tree, and five of the figures the plan carried did not survive:
 `index.csv` exports 2710 functions and not 2708, `ghidra-functions.csv` holds
-1804 rows and not 1769, the common area carries 43 annotated rows and not 22,
+1848 rows and not 1769, the common area carries 76 annotated rows and not 22,
 `ec/ghidra/xdata-symbols.csv` holds 177 names and not 61, and `registers.yaml`
-holds 145 registers and not 29. The plan also said the 18-row gap between the
-index's `annotated=yes` count and the CSV's row count was 1787 − 1769; measured,
-it is 1822 − 1804, and **18 is unchanged**, because the tree moved on both sides
-at once. Had the plan's numbers been copied in, the document's own check would
+holds 145 registers and not 29. (1,804 and 43 were this section's own figures
+when it was written; issue #134's call-graph tranche added 44 rows, 33 of them
+`common`.) The plan also said the 18-row gap between the index's
+`annotated=yes` count and the CSV's row count was 1787 − 1769; measured, it is
+1866 − 1848, and **18 is unchanged**, because the tree moved on both sides at
+once. Had the plan's numbers been copied in, the document's own check would
 have failed on the first run.
 
 **The plan's row count was wrong too, in the direction that matters.** It
@@ -4558,7 +4577,7 @@ turned up the six the map does cite. The check is now widened from the cited
 rows to every row of the file, which is what makes the claim true going forward,
 and which a paragraph arguing that no gate asks whether an evidence path
 resolves should have had from the start. The eleven were real either way; what
-was overstated was the tool's reach, from 1,804 rows down to 59.
+was overstated was the tool's reach, from 1,848 rows down to 59.
 
 **Two smaller reconciliations, so the next reader does not have to redo them.**
 `common` `0x1207` is a bare `ljmp 0x1100` and `common` `0x0512` is a two-byte
@@ -4612,13 +4631,16 @@ The write-up is `docs/findings/name-basis-and-groups.md`; this is the summary.
 Two separable things landed, and the second is deliberately weaker than the
 first.
 
-**`name_basis` is on all 1,804 EC rows and all 788 BIOS rows**, and it is the
+**`name_basis` is on all 1,848 EC rows and all 788 BIOS rows**, and it is the
 first column in this repository that records what a *name* asserts rests on,
 as opposed to `basis`, which records where the *comment* came from. Mandatory
 and non-empty like `evidence`, refused by both build tools on the same
 grounds: a name that asserts a mechanism with no recorded footing is a claim,
-not a finding. EC distribution: 1,530 `code-shape`, 134 `ec-register`, 83
-`register-map`, 49 `unresolved`, 4 `abi-symbol`, 4 `mixed`.
+not a finding. EC distribution: 1,563 `code-shape`, 135 `ec-register`, 90
+`register-map`, 52 `unresolved`, 4 `abi-symbol`, 4 `mixed`. (1,530 / 134 / 83 /
+49 were this section's own figures; issue #134's 44 call-graph rows graded 33
+`code-shape`, 7 `register-map`, 3 `unresolved` and 1 `ec-register` — re-run
+`grade_name_basis.py --report` for the tree's own numbers.)
 
 **The grading rule is deliberately asymmetric** — strongest footing actually
 traceable to a committed input, else `code-shape` — and it is implemented in
@@ -4660,16 +4682,24 @@ fires *independently* of the "must cite a registers.yaml address" rule: a pd
 row naming an address that is in the map would pass that rule and still be an
 overclaim. Verified by poisoning a pd row and watching both fire.
 
-**The grouping layer is in, and it is honest about being weaker.** 1,804 EC
+**The grouping layer is in, and it is honest about being weaker.** 1,848 EC
 rows and 788 BIOS rows gain a `group`. The BIOS is module-first as the issue
 says it should be — 666 of 788 rows are `group_basis=module` — and the EC is
-seeded from the `type` column (30 `bank-switch` rows, 6 interrupt vectors) with
-call-graph clustering for the rest: 866 rows in a connected component, 576
-`ungrouped`.
+seeded from the `type` column (33 `bank-switch` rows, 6 interrupt vectors) with
+call-graph clustering for the rest: 1,016 rows in a connected component, 456
+`ungrouped`. (1,804 / 866 / 576 and 30 bank-switch rows were this section's own
+figures. Two separable things moved them, and quoting the old pair beside the
+new one without saying which is which is the mistake the `--check` ratchet
+exists to prevent: issue #134's 44 rows account for +56 components and −26
+`ungrouped` on their own, and the `group_functions.py` correction below for
+another +94 and −94. `--report` prints the tree's own numbers.)
 
 **A `callgraph` group is a connected component, not a subsystem, and the tool
-says so.** The largest holds 323 of the 1,804 rows. That is a real structural
-fact and a poor subsystem boundary, so the groups are named
+says so.** The largest holds 327 of the 1,848 rows, and three components are of
+50 or more (`callgraph_bank0_0EA2` 327, `callgraph_bank1_1738` 321,
+`callgraph_pd_0003` 303) — and every one of the three is a single scope, which
+was not true of any of them before the correction below. That is a real
+structural fact and a poor subsystem boundary, so the groups are named
 `callgraph_<scope>_<addr>`, their size is in every row's comment, and `--report`
 names any component of 50 or more. The `<scope>` is the component's **dominant**
 scope, and holding it to that is a check: a component can span scopes because
@@ -4679,7 +4709,7 @@ nineteen names were wrong that way — a 323-row component that is 316 bank1
 rows, and a 145-row component that is 144 rows of the **separate ITE8850-PD
 image** presenting as `common`, which is the same conflation the `pd` grade
 rule above exists to stop. `--check` now refuses a `callgraph` name whose scope
-token is not the dominant scope among its rows. **576 `ungrouped` is "not found
+token is not the dominant scope among its rows. **456 `ungrouped` is "not found
 by this method", never "these have no subsystem"** — the same discipline
 CLAUDE.md puts above every other rule, and the reason `ungrouped` is in the
 vocabulary at all.
@@ -4688,14 +4718,43 @@ vocabulary at all.
 Nothing in an `lcall` names a bank — bank0→bank1 and bank0→bank0 are the same
 three bytes — so the graph never joins bank0 to bank1. The rule is not a filter
 applied afterwards: the union never sees a cross-region edge, so there is no
-cluster to reject later. Measured over the committed listings, bucket A = 973,
-B = 1,428, C = 450 using `audit_call_targets.py`'s own `bucket_of()`; 27
+cluster to reject later. Measured over the committed listings, bucket A = 999,
+B = 1,474, C = 450 using `audit_call_targets.py`'s own `bucket_of()`; 27
 cross-region edges are counted and reported, never merged. Every run prints
-those numbers, so a small group count cannot read as a topology.
+those numbers, so a small group count cannot read as a topology. (A = 973 and
+B = 1,428 were this section's own figures, measured before issue #134's tranche
+annotated 33 more of the common area — see below for why the claim needed more
+than a recount.)
+
+**And "never sees a cross-region edge" was true of the edges and not of the
+nodes, which issue #134's tranche turned into a real failure rather than a
+latent one.** A `common`-scoped row is one function both bank images carry, so
+a bank0 caller and a bank1 caller that both reached it were two halves of *one*
+node — and that node is a cross-region endpoint whatever the edges around it
+are. With 43 of the common area annotated the committed groups happened to
+pass: the one component that spanned both banks had a single `bank0` row in it
+and that row was seeded, so the `callgraph` refusal had nothing to refuse. The
+44th tranche row was enough — 673 rows in one component, and
+`group_functions.py --check` refused it by name. The endpoint a bank caller
+uses for a common-area target is now a per-region proxy node (`PROXY_SCOPE` in
+`group_functions.py`), which keeps the relation the edge does carry — the
+`bank0` functions sharing a common helper stay connected — and drops the one it
+does not. That 673-row component splits into 327 `bank0` rows, 321 `bank1`
+rows, 14 more in small single-scope components and 11 that no longer reach the
+minimum size — and the separate ITE8850-PD program comes back together, which
+is the clearest sign the split was the right one: its 187 `pd` rows were spread
+over six components, two of them (`callgraph_pd_0180` at 144 `pd` rows and
+`callgraph_pd_0050` at 26) holding most of it, and they are one
+`callgraph_pd_0003` of 303 now. `cluster()`'s docstring carries the argument
+and `--self-test` carries a fixture for it, because a check that had been
+passing for the wrong reason is the failure mode this repository keeps warning
+about. **The refusal was not weakened to accommodate the tranche**:
+`cross_bank_groups` is unchanged, and the committed file now has nothing for it
+to refuse for the right reason.
 
 **Nothing here is a behavioural claim, and no live test ran.** A group says
 which routines are connected in the call graph, not what the EC does with them.
-No hardware is reachable from a GitHub-hosted runner. The 2,592 comments were
+No hardware is reachable from a GitHub-hosted runner. The 2,636 comments were
 not read by hand to infer subsystems: anything the seeds and the graph do not
 support stays `ungrouped` rather than getting a plausible label.
 

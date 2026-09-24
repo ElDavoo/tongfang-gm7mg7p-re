@@ -26,7 +26,7 @@ void FUN_CODE_dc52(undefined1 param_1)
       setup_1c00_block_with_arg_4c();
       if (-1 < in_PSW) {
         write_r3r4_to_xdata_pair(0x343);
-        FUN_CODE_e656();
+        select_dptr_by_0491_7c0_then_dispatch();
         read_xdata_pair_to_r1r2(0x3d2);
         read_xdata_pair_to_r3r4(0x363);
         sub_r1r2_from_r3r4();

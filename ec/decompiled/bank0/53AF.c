@@ -23,10 +23,10 @@ void stage_009b_block_branch_dispatch
   DAT_EXTMEM_0095 = param_1;
   DAT_EXTMEM_009b = param_3;
   DAT_EXTMEM_009c = param_4;
-  FUN_CODE_05e8();
+  critical_section_enter_05e8();
   if (DAT_EXTMEM_009d == -0x41) {
     if (DAT_EXTMEM_009e == '\x01') {
-      FUN_CODE_1636(0x50,0xde,0);
+      load_dptr_d991_tail_jump_1100(0x50,0xde,0);
       nop();
       nop();
       nop();
@@ -38,7 +38,7 @@ void stage_009b_block_branch_dispatch
       FUN_CODE_50de();
     }
     else {
-      FUN_CODE_1636(0x4f,0xed,0);
+      load_dptr_d991_tail_jump_1100(0x4f,0xed,0);
       nop();
       nop();
       nop();
@@ -51,7 +51,7 @@ void stage_009b_block_branch_dispatch
     }
   }
   else {
-    FUN_CODE_1636(0x4f,0x3e,0);
+    load_dptr_d991_tail_jump_1100(0x4f,0x3e,0);
     nop();
     nop();
     nop();
@@ -62,7 +62,7 @@ void stage_009b_block_branch_dispatch
     nop();
     FUN_CODE_4f3e();
   }
-  FUN_CODE_05ef();
+  critical_section_exit_05ef();
   return;
 }
 

@@ -23,7 +23,7 @@ void FUN_CODE_c032(char param_1,byte param_2)
     }
     param_1 = (char)((ushort)bVar1 * 0x3c >> 8);
     cVar2 = '\0';
-    FUN_CODE_8863((char)((ushort)bVar1 * 0x3c),param_1);
+    cmp_r3r4_against_r1r2_16bit((char)((ushort)bVar1 * 0x3c),param_1);
     if (-1 < cVar2) {
       return;
     }
@@ -32,7 +32,7 @@ void FUN_CODE_c032(char param_1,byte param_2)
     read_xdata_pair_to_r1r2(0x4ae);
     param_1 = (char)((ushort)DAT_EXTMEM_057d * 0x3c >> 8);
     cVar2 = '\0';
-    FUN_CODE_8863((char)((ushort)DAT_EXTMEM_057d * 0x3c),param_1);
+    cmp_r3r4_against_r1r2_16bit((char)((ushort)DAT_EXTMEM_057d * 0x3c),param_1);
     if (-1 < cVar2) {
       DAT_EXTMEM_0494 = DAT_EXTMEM_0494 & 0xf3;
       return;

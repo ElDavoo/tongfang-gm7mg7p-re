@@ -20,7 +20,7 @@ void stage_0a47_then_call_de83_r5_1b(void)
   
   mul_r7_by_8(0xa47);
   uVar1 = set_09c1_09c3_from_dptr(0xa47);
-  FUN_CODE_de83(0x1b,uVar1);
+  stage_0a49_pair_then_30xx_block(0x1b,uVar1);
   if (in_PSW < '\0') {
     return;
   }

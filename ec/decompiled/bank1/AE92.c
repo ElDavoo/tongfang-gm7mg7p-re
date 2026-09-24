@@ -17,7 +17,7 @@ void cmp_0436_0437_against_040c_040d(void)
 {
   read_xdata_pair_to_r3r4(0x436);
   read_xdata_pair_to_r1r2(0x40c);
-  FUN_CODE_8863();
+  cmp_r3r4_against_r1r2_16bit();
   return;
 }
 

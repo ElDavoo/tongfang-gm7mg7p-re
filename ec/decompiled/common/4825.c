@@ -21,24 +21,24 @@ void FUN_CODE_4825(undefined1 param_1,char param_2)
   pbVar2 = &DAT_EXTMEM_0a58;
   if (DAT_EXTMEM_0a58 != '\0') {
     cVar1 = DAT_EXTMEM_0a58;
-    FUN_CODE_4a76();
-    FUN_CODE_4a69();
+    mov_a_from_r1_4a76();
+    code_word_to_dptr_4a69();
     *pbVar2 = *pbVar2 | 0xc;
     FUN_CODE_4ad3(param_1);
-    FUN_CODE_4a69();
+    code_word_to_dptr_4a69();
     *pbVar2 = *pbVar2 | 0x80;
     if (cVar1 == '\x01') {
       FUN_CODE_4ac4();
                     /* WARNING: Subroutine does not return */
-      FUN_CODE_4a4d();
+      code_word_to_dptr_4a4d();
     }
-    FUN_CODE_4a76();
+    mov_a_from_r1_4a76();
                     /* WARNING: Subroutine does not return */
-    FUN_CODE_4a4d();
+    code_word_to_dptr_4a4d();
   }
-  FUN_CODE_4a76();
+  mov_a_from_r1_4a76();
                     /* WARNING: Subroutine does not return */
-  FUN_CODE_4a4d();
+  code_word_to_dptr_4a4d();
 }
 
 

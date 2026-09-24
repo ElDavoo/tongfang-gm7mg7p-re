@@ -15,7 +15,7 @@
 void tail_jump_708f_r4_0_r5_64(void)
 
 {
-  FUN_CODE_708f(0,100);
+  div_r6r4_by_r5_16bit(0,100);
   return;
 }
 

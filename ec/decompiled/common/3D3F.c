@@ -10,7 +10,7 @@ void FUN_CODE_3d3f(void)
 
 {
   DAT_INTMEM_3f = 0;
-  FUN_CODE_3fa4(8);
+  store_r7_to_iram_31(8);
   return;
 }
 

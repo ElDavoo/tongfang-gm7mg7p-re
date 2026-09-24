@@ -16,7 +16,7 @@
 void dptr_add_4x_a(void)
 
 {
-  FUN_CODE_7110(4);
+  dptr_plus_a_times_b_16bit(4);
   return;
 }
 

@@ -17,7 +17,7 @@ void store_a_then_tail_call_7110_b6
 
 {
   *param_2 = param_1;
-  FUN_CODE_7110(param_3,CONCAT11(param_4,param_5),6);
+  dptr_plus_a_times_b_16bit(param_3,CONCAT11(param_4,param_5),6);
   return;
 }
 

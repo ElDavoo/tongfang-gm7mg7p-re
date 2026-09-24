@@ -23,8 +23,8 @@ void stage_009b_block_dispatch_51c8
   DAT_EXTMEM_0095 = param_1;
   DAT_EXTMEM_009b = param_3;
   DAT_EXTMEM_009c = param_4;
-  FUN_CODE_05e8();
-  FUN_CODE_1636(0x51,200,0);
+  critical_section_enter_05e8();
+  load_dptr_d991_tail_jump_1100(0x51,200,0);
   nop();
   nop();
   nop();
@@ -34,7 +34,7 @@ void stage_009b_block_dispatch_51c8
   nop();
   nop();
   FUN_CODE_51c8();
-  FUN_CODE_05ef();
+  critical_section_exit_05ef();
   return;
 }
 

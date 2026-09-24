@@ -9,7 +9,7 @@
 void FUN_CODE_3ce6(void)
 
 {
-  FUN_CODE_3f9d(DAT_EXTMEM_001a);
+  store_r7_to_iram_bb_then_set_68_0(DAT_EXTMEM_001a);
   return;
 }
 

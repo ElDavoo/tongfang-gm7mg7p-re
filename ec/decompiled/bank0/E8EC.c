@@ -51,7 +51,7 @@ void mask_1603_and_wait_tf1(byte param_1)
   TR1 = 0;
   TF1 = 0;
   ET1 = 1;
-  FUN_CODE_05ef(BANK0_R1);
+  critical_section_exit_05ef(BANK0_R1);
   store_a_to_1621_1622(0);
   return;
 }

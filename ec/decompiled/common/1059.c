@@ -13,9 +13,9 @@ void FUN_CODE_1059(char param_1)
   undefined1 uVar2;
   byte *pbVar3;
   
-  FUN_CODE_159a();
+  load_dptr_c251_tail_jump_1100();
   if (param_1 != '\0') {
-    FUN_CODE_2896();
+    clear_iram_6d_7f_then_xdata_b00_bfe();
     return;
   }
   pbVar3 = &DAT_EXTMEM_00ff;

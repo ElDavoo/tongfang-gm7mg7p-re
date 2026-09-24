@@ -111,7 +111,7 @@ LAB_CODE_5d54:
       bVar6 = bVar6 - ((CARRY1(bVar8,bVar7) << 7) >> 7);
       bVar1 = CARRY1(bVar9,bVar6);
       bVar9 = bVar9 + bVar6;
-FUN_CODE_5a43_1:
+addc_chain_into_r7_5a43_1:
       cVar10 = (bVar1 << 7) >> 7;
       if (_6_3 != '\0') {
         bVar6 = *param_3 - cVar10;
@@ -137,8 +137,8 @@ code_c0x5a48:
           param_4 = param_4 - ((CARRY1(bVar6,bVar9) << 7) >> 7);
           bVar6 = bVar8 + param_4;
           bVar9 = param_6 - ((CARRY1(bVar8,param_4) << 7) >> 7);
-          pbVar3 = (byte *)FUN_CODE_5a43(bVar6 + bVar9 + (bVar7 - ((CARRY1(bVar6,bVar9) << 7) >> 7))
-                                        );
+          pbVar3 = (byte *)addc_chain_into_r7_5a43
+                                     (bVar6 + bVar9 + (bVar7 - ((CARRY1(bVar6,bVar9) << 7) >> 7)));
           return pbVar3;
         }
         DAT_SFR_aa = param_6;
@@ -162,7 +162,8 @@ code_c0x5a48:
         param_4 = param_4 - ((CARRY1(bVar7,bVar6) << 7) >> 7);
         bVar7 = bVar8 + param_4;
         bVar6 = param_6 - ((CARRY1(bVar8,param_4) << 7) >> 7);
-        pbVar3 = (byte *)FUN_CODE_5a43(bVar7 + bVar6 + (bVar9 - ((CARRY1(bVar7,bVar6) << 7) >> 7)));
+        pbVar3 = (byte *)addc_chain_into_r7_5a43
+                                   (bVar7 + bVar6 + (bVar9 - ((CARRY1(bVar7,bVar6) << 7) >> 7)));
         return pbVar3;
       }
       bVar9 = DAT_INTMEM_39 - cVar10;
@@ -191,8 +192,8 @@ LAB_CODE_5b91:
           param_4 = param_4 - ((CARRY1(bVar7,bVar6) << 7) >> 7);
           bVar7 = bVar8 + param_4;
           bVar6 = param_6 - ((CARRY1(bVar8,param_4) << 7) >> 7);
-          pbVar3 = (byte *)FUN_CODE_5a43(bVar7 + bVar6 + (bVar9 - ((CARRY1(bVar7,bVar6) << 7) >> 7))
-                                        );
+          pbVar3 = (byte *)addc_chain_into_r7_5a43
+                                     (bVar7 + bVar6 + (bVar9 - ((CARRY1(bVar7,bVar6) << 7) >> 7)));
           return pbVar3;
         }
         bVar6 = param_6 - (cVar10 >> 7);
@@ -279,7 +280,8 @@ LAB_CODE_5b40:
         param_4 = param_4 - ((CARRY1((byte)(param_2 + bVar6),bVar9) << 7) >> 7);
         bVar6 = bVar7 + param_4;
         bVar9 = param_6 - ((CARRY1(bVar7,param_4) << 7) >> 7);
-        pbVar3 = (byte *)FUN_CODE_5a43(bVar6 + bVar9 + (bVar5 - ((CARRY1(bVar6,bVar9) << 7) >> 7)));
+        pbVar3 = (byte *)addc_chain_into_r7_5a43
+                                   (bVar6 + bVar9 + (bVar5 - ((CARRY1(bVar6,bVar9) << 7) >> 7)));
         return pbVar3;
       }
 LAB_CODE_5bad:
@@ -340,8 +342,8 @@ LAB_CODE_5bad:
 LAB_CODE_5dd3:
     if (_6_7 != '\0') {
       param_7 = param_7 - (cVar10 >> 7);
-      pbVar3 = (byte *)FUN_CODE_5a43(bVar9 + param_7 + (bVar6 - ((CARRY1(bVar9,param_7) << 7) >> 7))
-                                    );
+      pbVar3 = (byte *)addc_chain_into_r7_5a43
+                                 (bVar9 + param_7 + (bVar6 - ((CARRY1(bVar9,param_7) << 7) >> 7)));
       return pbVar3;
     }
   }
@@ -365,7 +367,7 @@ LAB_CODE_5d43:
       bVar6 = bVar6 - ((CARRY1(bVar8,bVar7) << 7) >> 7);
       bVar1 = CARRY1(bVar9,bVar6);
       bVar9 = bVar9 + bVar6;
-      goto FUN_CODE_5a43_1;
+      goto addc_chain_into_r7_5a43_1;
     }
   }
   bVar9 = param_4 - (((0x4b < DAT_INTMEM_36) << 7) >> 7);
@@ -380,7 +382,7 @@ LAB_CODE_5d43:
     nop();
     if (_6_7 != '\0') {
       cVar10 = param_7 - cVar10;
-      pbVar3 = (byte *)FUN_CODE_5a43(cVar10 + (-2 - (((cVar10 != '\0') << 7) >> 7)));
+      pbVar3 = (byte *)addc_chain_into_r7_5a43(cVar10 + (-2 - (((cVar10 != '\0') << 7) >> 7)));
       return pbVar3;
     }
   }
@@ -496,9 +498,10 @@ LAB_CODE_5f0d_2:
           pbVar3 = param_2 + -0x17;
           param_4 = param_4 - (((&BANK2_R6 < param_2) << 7) >> 7);
           bVar6 = param_6 - ((CARRY1((byte)pbVar3,param_4) << 7) >> 7);
-          pbVar3 = (byte *)FUN_CODE_5a43(pbVar3 + param_4 +
-                                         (bVar9 - ((CARRY1((byte)(pbVar3 + param_4),bVar6) << 7) >>
-                                                  7)) + bVar6);
+          pbVar3 = (byte *)addc_chain_into_r7_5a43
+                                     (pbVar3 + param_4 +
+                                      (bVar9 - ((CARRY1((byte)(pbVar3 + param_4),bVar6) << 7) >> 7))
+                                      + bVar6);
           return pbVar3;
         }
 code_c0x5ec6:
@@ -550,7 +553,8 @@ code_c0x5f3f:
     param_4 = param_4 - ((CARRY1(bVar8,bVar6) << 7) >> 7);
     bVar8 = bVar7 + param_4;
     bVar6 = param_6 - ((CARRY1(bVar7,param_4) << 7) >> 7);
-    pbVar3 = (byte *)FUN_CODE_5a43(bVar8 + bVar6 + (bVar9 - ((CARRY1(bVar8,bVar6) << 7) >> 7)));
+    pbVar3 = (byte *)addc_chain_into_r7_5a43
+                               (bVar8 + bVar6 + (bVar9 - ((CARRY1(bVar8,bVar6) << 7) >> 7)));
     return pbVar3;
   }
   bVar7 = bVar6 | (byte)param_2;

@@ -9,7 +9,7 @@
 void FUN_CODE_3336(void)
 
 {
-  FUN_CODE_3b22(DAT_INTMEM_9e);
+  mul13_table_lookup_3b22(DAT_INTMEM_9e);
   FUN_CODE_3bb7();
   FUN_CODE_2ac1();
   FUN_CODE_3acc(0);

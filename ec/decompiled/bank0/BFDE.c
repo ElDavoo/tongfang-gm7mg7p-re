@@ -26,10 +26,10 @@ void init_xdata_from_code_table_64fd(void)
   DAT_INTMEM_69 = '\0';
   do {
     puVar2 = &DAT_CODE_64ff;
-    FUN_CODE_7110(DAT_INTMEM_69,3);
+    dptr_plus_a_times_b_16bit(DAT_INTMEM_69,3);
     uVar1 = *puVar2;
     puVar3 = (undefined2 *)&DAT_CODE_64fd;
-    FUN_CODE_7110(DAT_INTMEM_69,3);
+    dptr_plus_a_times_b_16bit(DAT_INTMEM_69,3);
     *(undefined1 *)*puVar3 = uVar1;
     DAT_INTMEM_69 = DAT_INTMEM_69 + '\x01';
   } while (DAT_INTMEM_69 != 'Z');

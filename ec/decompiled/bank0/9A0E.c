@@ -30,7 +30,7 @@ char mul_div_08ea_then_sub_044b_selected(void)
   uVar1 = 0;
   cVar2 = DAT_EXTMEM_08ea;
   mul16(0,0x13);
-  FUN_CODE_708f(10);
+  div_r6r4_by_r5_16bit(10);
   DAT_EXTMEM_0a49 = uVar1;
   DAT_EXTMEM_0a4a = cVar2;
   sub_dptr_byte_from_0a4a(0x8ca);

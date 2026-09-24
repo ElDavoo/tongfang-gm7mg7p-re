@@ -11,7 +11,7 @@ void FUN_CODE_063c(void)
 {
   DAT_EXTMEM_3290 = DAT_EXTMEM_3290 | 0x80;
   DAT_EXTMEM_1151 = DAT_EXTMEM_1151 | 4;
-  FUN_CODE_05ef();
+  critical_section_exit_05ef();
   FUN_CODE_05f2();
   FUN_CODE_05fa();
   FUN_CODE_14ce();

@@ -32,34 +32,34 @@ void FUN_CODE_43a5(char param_1)
   puVar4 = (undefined1 *)CONCAT11(uVar1,uVar2);
   *puVar4 = 0xfe;
   FUN_CODE_4b37();
-  FUN_CODE_4a69();
+  code_word_to_dptr_4a69();
   FUN_CODE_4b29(0x40);
-  FUN_CODE_4a69();
+  code_word_to_dptr_4a69();
   *puVar4 = 0x40;
   FUN_CODE_4397();
   pbVar5 = (byte *)CONCAT11((char)((ushort)puVar4 >> 8),param_1 * '\x0f' + -0x2a);
-  FUN_CODE_4a69();
+  code_word_to_dptr_4a69();
   *pbVar5 = *pbVar5 | *(byte *)CONCAT11('I' - (((0x27U < (byte)(param_1 * '\x0f')) << 7) >> 7),
                                         param_1 * '\x0f' - 0x28);
   FUN_CODE_4397();
   FUN_CODE_4b37();
-  FUN_CODE_4a69();
+  code_word_to_dptr_4a69();
   FUN_CODE_4b29(0);
-  FUN_CODE_4a69();
+  code_word_to_dptr_4a69();
   *pbVar5 = 0;
   FUN_CODE_4a77(param_1);
-  FUN_CODE_4a69();
+  code_word_to_dptr_4a69();
   *pbVar5 = 2;
   FUN_CODE_4b02();
-  FUN_CODE_4a69();
+  code_word_to_dptr_4a69();
   *pbVar5 = 3;
   FUN_CODE_4397();
   FUN_CODE_4b02();
-  FUN_CODE_4a69();
+  code_word_to_dptr_4a69();
   *pbVar5 = 7;
   FUN_CODE_4a77(param_1);
                     /* WARNING: Subroutine does not return */
-  FUN_CODE_4a4d();
+  code_word_to_dptr_4a4d();
 }
 
 

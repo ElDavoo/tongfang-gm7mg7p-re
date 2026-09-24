@@ -33,11 +33,11 @@ void FUN_CODE_1c00(void)
     bVar1 = DAT_EXTMEM_0a4b + 100;
     puVar4 = &LAB_CODE_69ff_1;
     DAT_EXTMEM_0a4d = bVar1;
-    FUN_CODE_7110(3,bVar1);
+    dptr_plus_a_times_b_16bit(3,bVar1);
     uVar2 = *puVar4;
     puVar4 = &LAB_CODE_6a01;
     DAT_EXTMEM_0a4b = uVar2;
-    FUN_CODE_7110(bVar1,3,uVar2);
+    dptr_plus_a_times_b_16bit(bVar1,3,uVar2);
     DAT_EXTMEM_0a4e = *puVar4;
     DAT_EXTMEM_0a4f = puVar4[1];
     FUN_CODE_1d20(DAT_EXTMEM_0a4c,DAT_EXTMEM_0a50);

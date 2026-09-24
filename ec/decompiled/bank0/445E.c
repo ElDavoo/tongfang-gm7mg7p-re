@@ -39,25 +39,25 @@ stage_and_commit_0a56_block(undefined1 param_1,byte param_2,undefined1 param_3,c
     return uVar1;
   }
   if (DAT_EXTMEM_0a5c != '\0') {
-    FUN_CODE_4725(param_1);
+    shift_and_xor_step_on_iram_af(param_1);
   }
   puVar4 = &DAT_EXTMEM_0a56;
   uVar1 = DAT_EXTMEM_0a58;
   FUN_CODE_4ab8(DAT_EXTMEM_0a56);
-  FUN_CODE_4a69();
+  code_word_to_dptr_4a69();
   *puVar4 = uVar1;
   if (DAT_EXTMEM_0a5c != '\0') {
-    FUN_CODE_4725(DAT_EXTMEM_0a59);
+    shift_and_xor_step_on_iram_af(DAT_EXTMEM_0a59);
   }
   puVar4 = &DAT_EXTMEM_0a56;
   uVar1 = DAT_EXTMEM_0a59;
   FUN_CODE_4aef(DAT_EXTMEM_0a56);
-  FUN_CODE_4a69();
+  code_word_to_dptr_4a69();
   *puVar4 = uVar1;
   DAT_EXTMEM_0a57 = DAT_EXTMEM_0a57 & 0x7f;
   if (DAT_EXTMEM_0a5c != '\0') {
     uVar1 = FUN_CODE_4b44();
-    FUN_CODE_4725(*(undefined1 *)CONCAT11(param_3,uVar1));
+    shift_and_xor_step_on_iram_af(*(undefined1 *)CONCAT11(param_3,uVar1));
   }
   cVar2 = FUN_CODE_4b44();
   uVar1 = *(undefined1 *)CONCAT11(param_3,cVar2);
@@ -67,18 +67,18 @@ stage_and_commit_0a56_block(undefined1 param_1,byte param_2,undefined1 param_3,c
   *puVar4 = uVar1;
   if (DAT_EXTMEM_0a57 == 0xc) {
     if (DAT_EXTMEM_0a5c != '\0') {
-      FUN_CODE_4725(*(undefined1 *)(CONCAT11(param_3,cVar2) + 1));
+      shift_and_xor_step_on_iram_af(*(undefined1 *)(CONCAT11(param_3,cVar2) + 1));
     }
     uVar1 = FUN_CODE_4b44();
     pcVar5 = (char *)(CONCAT11(param_3,uVar1) + 1);
     cVar2 = *pcVar5;
     FUN_CODE_4b0f();
-    FUN_CODE_4a69();
+    code_word_to_dptr_4a69();
     *pcVar5 = cVar2;
   }
   puVar4 = &DAT_EXTMEM_0a56;
   FUN_CODE_4ad1();
-  FUN_CODE_4a69();
+  code_word_to_dptr_4a69();
   *puVar4 = 0xfe;
   if (DAT_EXTMEM_0a5c == '\0') {
     bVar3 = DAT_EXTMEM_0a57 | 0x40;
@@ -132,11 +132,11 @@ LAB_CODE_45cb:
   else {
     pbVar6 = &DAT_EXTMEM_0a56;
     FUN_CODE_4ab8(DAT_EXTMEM_0a56);
-    FUN_CODE_4a69();
+    code_word_to_dptr_4a69();
     if ((*pbVar6 & 1) != 0) {
       FUN_CODE_4adf();
                     /* WARNING: Subroutine does not return */
-      FUN_CODE_4a4d();
+      code_word_to_dptr_4a4d();
     }
     DAT_EXTMEM_0a60 = 1;
   }

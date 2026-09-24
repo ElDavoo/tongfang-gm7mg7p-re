@@ -32,7 +32,7 @@ void init_06e6_1_clear_0743_07c5_and_07d5_ff(void)
   DAT_EXTMEM_0788 = 0xff;
   DBAP = 0xff;
   bEXTMEM200d = bEXTMEM200d | 200;
-  FUN_CODE_2896();
+  clear_iram_6d_7f_then_xdata_b00_bfe();
   DAT_EXTMEM_06e6 = 1;
   DAT_EXTMEM_0988 = 1;
   init_set_1304_bit4_and_clear_bit2();

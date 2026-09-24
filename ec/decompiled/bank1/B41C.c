@@ -72,7 +72,7 @@ LAB_CODE_b4de:
   }
   bVar1 = 1 - (((0xb < param_4) << 7) >> 7);
   cVar3 = CARRY1(param_5,bVar1) << 7;
-  FUN_CODE_8863(param_4 - 0xc,param_5 + bVar1);
+  cmp_r3r4_against_r1r2_16bit(param_4 - 0xc,param_5 + bVar1);
   if (cVar3 < '\0') {
     DAT_EXTMEM_0494 = DAT_EXTMEM_0494 | 0x20;
   }

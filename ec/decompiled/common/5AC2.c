@@ -21,7 +21,7 @@ void FUN_CODE_5ac2(byte param_1,char param_2,char param_3,char param_4,char para
   bVar1 = param_3 - ((CARRY1(bVar2,bVar1) << 7) >> 7);
   bVar2 = bVar3 + bVar1;
   bVar1 = param_4 - ((CARRY1(bVar3,bVar1) << 7) >> 7);
-  FUN_CODE_5a43(bVar2 + bVar1 + (param_5 - ((CARRY1(bVar2,bVar1) << 7) >> 7)));
+  addc_chain_into_r7_5a43(bVar2 + bVar1 + (param_5 - ((CARRY1(bVar2,bVar1) << 7) >> 7)));
   return;
 }
 

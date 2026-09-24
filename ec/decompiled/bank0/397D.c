@@ -15,8 +15,8 @@
 void call_3894_then_jmp_2de3(void)
 
 {
-  FUN_CODE_3894();
-  FUN_CODE_2de3();
+  set_iram_ad_88_clear_33();
+  mask_1106_then_clear_18_34();
   return;
 }
 

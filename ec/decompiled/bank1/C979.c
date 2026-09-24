@@ -20,7 +20,7 @@ void mul_0342_0514_into_0388_when_03d0_lt_0384(void)
   
   read_xdata_pair_to_r3r4(0x3d0);
   read_xdata_pair_to_r1r2(900);
-  FUN_CODE_8863();
+  cmp_r3r4_against_r1r2_16bit();
   if (-1 < in_PSW) {
     DAT_EXTMEM_0388 = 0;
     DAT_EXTMEM_0389 = 0;

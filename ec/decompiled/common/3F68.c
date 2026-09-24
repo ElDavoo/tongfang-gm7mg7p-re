@@ -13,7 +13,7 @@ void FUN_CODE_3f68(void)
     FUN_CODE_30fb(1);
   }
   if (DAT_INTMEM_9b == '\0') {
-    FUN_CODE_0ecc(0x14);
+    timer1_counted_delay_count_in_r7(0x14);
     FUN_CODE_2b6c(0xfc);
   }
   else {

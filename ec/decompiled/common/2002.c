@@ -13,7 +13,7 @@ void FUN_CODE_2002(undefined1 param_1,undefined1 *param_2,char param_3)
   param_2[1] = param_3;
   if (param_3 == '\x01') {
     FUN_CODE_29cf(0xb4,0x21,0xff);
-    FUN_CODE_2990(DAT_EXTMEM_0a54);
+    advance_bfe_counter_publish_at_bfd(DAT_EXTMEM_0a54);
     FUN_CODE_29cf(0xc9,0x21,0xff);
     return;
   }
@@ -21,9 +21,9 @@ void FUN_CODE_2002(undefined1 param_1,undefined1 *param_2,char param_3)
     FUN_CODE_29cf(0xc5,0x21,0xff);
   }
   else {
-    FUN_CODE_2990(0xe0);
+    advance_bfe_counter_publish_at_bfd(0xe0);
   }
-  FUN_CODE_2990(DAT_EXTMEM_0a54);
+  advance_bfe_counter_publish_at_bfd(DAT_EXTMEM_0a54);
   return;
 }
 

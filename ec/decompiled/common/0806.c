@@ -36,7 +36,7 @@ void FUN_CODE_0806(char param_1)
   TR1 = 0;
   TF1 = 0;
   ET1 = 1;
-  FUN_CODE_05ef();
+  critical_section_exit_05ef();
   FUN_CODE_05fa();
   FUN_CODE_14e0();
   return;

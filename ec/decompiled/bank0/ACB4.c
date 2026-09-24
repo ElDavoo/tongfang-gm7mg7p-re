@@ -63,7 +63,7 @@ void reset_xdata_flags_and_07d5_to_ff(void)
   XDATA_0442 = XDATA_0442 & 0xe7;
   SYSTEM_ID = SYSTEM_ID & 0xcf;
   DAT_EXTMEM_074c = DAT_EXTMEM_074c & 0xcf;
-  FUN_CODE_2896();
+  clear_iram_6d_7f_then_xdata_b00_bfe();
   clear_08a5_and_08a6();
   zero_96_bytes_at_0f00();
   DAT_EXTMEM_0787 = 0;

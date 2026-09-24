@@ -9,7 +9,7 @@
 void FUN_CODE_4198(void)
 
 {
-  FUN_CODE_2896();
+  clear_iram_6d_7f_then_xdata_b00_bfe();
   FUN_CODE_28c1();
   return;
 }

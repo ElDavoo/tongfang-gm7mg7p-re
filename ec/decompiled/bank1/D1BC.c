@@ -28,7 +28,7 @@ void select_ptr_0491_c080_then_0506(void)
     uVar1 = 0x1fa4;
   }
   read_xdata_pair_to_r3r4(0x506,(char)uVar1,(char)((ushort)uVar1 >> 8));
-  FUN_CODE_8863();
+  cmp_r3r4_against_r1r2_16bit();
   return;
 }
 

@@ -9,8 +9,8 @@
 void FUN_CODE_557f(void)
 
 {
-  FUN_CODE_05e8();
-  FUN_CODE_1636(0x16,0x30,0);
+  critical_section_enter_05e8();
+  load_dptr_d991_tail_jump_1100(0x16,0x30,0);
   nop();
   nop();
   nop();

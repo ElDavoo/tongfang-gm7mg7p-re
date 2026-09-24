@@ -82,7 +82,7 @@ void threshold_dispatch_0438_by_0491(void)
     }
   }
   read_xdata_pair_to_r1r2(0x438,(char)uVar5,(char)((ushort)uVar5 >> 8),uVar1,uVar2);
-  FUN_CODE_8863();
+  cmp_r3r4_against_r1r2_16bit();
   if (-1 < cVar4) {
     FUN_CODE_bba4();
     return;
@@ -120,7 +120,7 @@ void threshold_dispatch_0438_by_0491(void)
       FUN_CODE_be10();
       return;
     }
-    FUN_CODE_bd45();
+    mask_0491_c0_then_route_to_300x_40xx();
     return;
   }
   mask_0491_with_c0();

@@ -22,7 +22,7 @@ void set_0497_bit6_and_0394_to_5(void)
       return;
     }
     DAT_EXTMEM_0497 = DAT_EXTMEM_0497 & 0x7f | 0x40;
-    FUN_CODE_e5a7();
+    copy_code_pair_to_3e0_plus_r7();
     DAT_EXTMEM_0394 = 5;
   }
   return;

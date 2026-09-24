@@ -24,7 +24,7 @@ void gate_0572_bit0_clear(void)
     cVar2 = -0x55;
     gate_06e6_0440_then_call_89b5();
     push_r5_into_070f_ring_when_gates_pass(7);
-    FUN_CODE_159a();
+    load_dptr_c251_tail_jump_1100();
     if (cVar2 == '\0') {
       uVar1 = 0x16;
     }

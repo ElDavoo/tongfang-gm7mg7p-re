@@ -28,7 +28,7 @@ void guard_then_store_pair_0834(char param_1,undefined1 param_2,undefined1 param
   
   bVar2 = in_PSW & 0xdd;
   if ((DAT_EXTMEM_08e2 & 0x80) != 0) {
-    FUN_CODE_8863(param_2,param_3,0,4);
+    cmp_r3r4_against_r1r2_16bit(param_2,param_3,0,4);
     if ((char)bVar2 < '\0') {
       param_2 = 0;
       param_3 = 4;
@@ -37,14 +37,14 @@ void guard_then_store_pair_0834(char param_1,undefined1 param_2,undefined1 param
   cVar1 = read_xdata_pair_to_b_and_a(0x834);
   if (cVar1 != '\0' || param_1 != '\0') {
     read_xdata_pair_to_r3r4(0x834,param_2,param_3);
-    bVar2 = FUN_CODE_8863();
+    bVar2 = cmp_r3r4_against_r1r2_16bit();
     if ((bVar2 & 1) != 1) {
       read_xdata_pair_to_r3r4(0x836);
       read_xdata_pair_to_r1r2(0x522);
       if ((DAT_EXTMEM_0497 & 1) != 0) {
         read_xdata_pair_to_r1r2(0x522);
       }
-      bVar2 = FUN_CODE_8863();
+      bVar2 = cmp_r3r4_against_r1r2_16bit();
       if ((bVar2 & 1) != 1) {
         return;
       }

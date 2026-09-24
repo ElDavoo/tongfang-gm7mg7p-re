@@ -45,7 +45,7 @@ byte FUN_CODE_5b82(byte param_1,byte *param_2,byte param_3,char param_4,char par
     param_3 = param_3 - ((CARRY1(bVar2,bVar5) << 7) >> 7);
     bVar2 = bVar4 + param_3;
     bVar5 = param_5 - ((CARRY1(bVar4,param_3) << 7) >> 7);
-    bVar5 = FUN_CODE_5a43(bVar2 + bVar5 + (bVar3 - ((CARRY1(bVar2,bVar5) << 7) >> 7)));
+    bVar5 = addc_chain_into_r7_5a43(bVar2 + bVar5 + (bVar3 - ((CARRY1(bVar2,bVar5) << 7) >> 7)));
     return bVar5;
   }
   bVar5 = param_5 - cVar1;
@@ -68,7 +68,7 @@ byte FUN_CODE_5b82(byte param_1,byte *param_2,byte param_3,char param_4,char par
   param_3 = param_3 - ((CARRY1((byte)(param_2 + bVar2),bVar5) << 7) >> 7);
   bVar2 = bVar4 + param_3;
   bVar5 = param_5 - ((CARRY1(bVar4,param_3) << 7) >> 7);
-  bVar5 = FUN_CODE_5a43(bVar2 + bVar5 + (bVar3 - ((CARRY1(bVar2,bVar5) << 7) >> 7)));
+  bVar5 = addc_chain_into_r7_5a43(bVar2 + bVar5 + (bVar3 - ((CARRY1(bVar2,bVar5) << 7) >> 7)));
   return bVar5;
 }
 

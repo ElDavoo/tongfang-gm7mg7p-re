@@ -70,7 +70,7 @@ void select_probe_address_and_return_carry(char param_1)
       }
     }
   }
-  FUN_CODE_8863(uVar1,uVar2);
+  cmp_r3r4_against_r1r2_16bit(uVar1,uVar2);
   if (-1 < in_PSW) {
     read_xdata_pair_to_r1r2(0x502);
     uVar2 = 9;
@@ -98,7 +98,7 @@ void select_probe_address_and_return_carry(char param_1)
         }
       }
     }
-    FUN_CODE_8863(uVar1,uVar2);
+    cmp_r3r4_against_r1r2_16bit(uVar1,uVar2);
     if (in_PSW < '\0') {
       BANK0_R4 = 0x23;
       BANK0_R3 = 0x28;
@@ -116,7 +116,7 @@ void select_probe_address_and_return_carry(char param_1)
         }
       }
       read_xdata_pair_to_r1r2(0x506);
-      FUN_CODE_8863();
+      cmp_r3r4_against_r1r2_16bit();
       if (cVar4 < '\0') {
         return;
       }

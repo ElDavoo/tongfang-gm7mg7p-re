@@ -14,7 +14,7 @@
 void tail_call_7110_with_b4(undefined1 param_1,undefined1 param_2)
 
 {
-  FUN_CODE_7110(param_1,param_2,4);
+  dptr_plus_a_times_b_16bit(param_1,param_2,4);
   return;
 }
 

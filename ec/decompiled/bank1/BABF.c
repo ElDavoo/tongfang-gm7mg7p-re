@@ -40,10 +40,10 @@ void stage_0577_against_0834_0836(char param_1)
   cVar1 = read_xdata_pair_to_b_and_a(0x834);
   if (cVar1 != '\0' || param_1 != '\0') {
     read_xdata_pair_to_r3r4(0x834,0x80,1);
-    bVar2 = FUN_CODE_8863();
+    bVar2 = cmp_r3r4_against_r1r2_16bit();
     if ((bVar2 & 1) != 0) {
       read_xdata_pair_to_r3r4(0x834,0x80,1);
-      bVar2 = FUN_CODE_8863();
+      bVar2 = cmp_r3r4_against_r1r2_16bit();
       if ((bVar2 & 1) != 0) {
         forward_to_bd20_bb3d();
         return;
@@ -53,7 +53,7 @@ void stage_0577_against_0834_0836(char param_1)
     if ((DAT_EXTMEM_0497 & 1) != 0) {
       read_xdata_pair_to_r1r2(0x522,0x38,0x31);
     }
-    bVar2 = FUN_CODE_8863();
+    bVar2 = cmp_r3r4_against_r1r2_16bit();
     if ((bVar2 & 1) == 0) {
       DAT_EXTMEM_0491 = DAT_EXTMEM_0491 & 0xc0 | 3;
       return;

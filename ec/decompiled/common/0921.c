@@ -9,7 +9,7 @@
 void FUN_CODE_0921(void)
 
 {
-  FUN_CODE_05e8();
+  critical_section_enter_05e8();
   TR1 = 0;
   ET1 = 0;
   nop();

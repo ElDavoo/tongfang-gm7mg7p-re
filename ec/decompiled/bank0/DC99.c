@@ -15,7 +15,7 @@
 void set_r7_2_tail_3fa4(void)
 
 {
-  FUN_CODE_3fa4(2);
+  store_r7_to_iram_31(2);
   return;
 }
 

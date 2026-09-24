@@ -35,7 +35,7 @@ byte ten_count_gate_then_set_1300_and_200f(void)
       }
       DAT_INTMEM_bd = 0;
       write_10_2007_clear_1302_set_1300();
-      FUN_CODE_2896();
+      clear_iram_6d_7f_then_xdata_b00_bfe();
       if (_0_2 == '\0') {
         DAT_EXTMEM_1304 = DAT_EXTMEM_1304 & 0xfb;
       }

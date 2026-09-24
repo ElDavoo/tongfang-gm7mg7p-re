@@ -19,7 +19,7 @@ undefined1 mod_100_of_be16_0855(void)
   undefined1 uVar1;
   
   uVar1 = 100;
-  FUN_CODE_708f(0,100,DAT_EXTMEM_0855,DAT_EXTMEM_0856);
+  div_r6r4_by_r5_16bit(0,100,DAT_EXTMEM_0855,DAT_EXTMEM_0856);
   return uVar1;
 }
 

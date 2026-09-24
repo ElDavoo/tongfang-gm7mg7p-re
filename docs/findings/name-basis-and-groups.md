@@ -67,16 +67,21 @@ decide.
 
 ### The measured distribution
 
-EC, 1,804 rows:
+EC, 1,848 rows:
 
 | grade | rows | |
 |---|---:|---|
-| `code-shape` | 1,530 | the default, and the largest class by design |
-| `ec-register` | 134 | |
-| `register-map` | 83 | |
-| `unresolved` | 49 | |
+| `code-shape` | 1,563 | the default, and the largest class by design |
+| `ec-register` | 135 | |
+| `register-map` | 90 | |
+| `unresolved` | 52 | |
 | `abi-symbol` | 4 | |
 | `mixed` | 4 | |
+
+(1,530 / 134 / 83 / 49 were the figures when this was written; issue #134's
+call-graph tranche added 44 rows, grading 33 `code-shape`, 7 `register-map`, 3
+`unresolved` and 1 `ec-register`. `grade_name_basis.py --report` prints the
+tree's own numbers.)
 
 BIOS, 788 rows: 772 `code-shape`, 10 `register-map`, 6 `unresolved`, no
 `abi-symbol` and no `mixed`. Reproduce either with
@@ -226,18 +231,36 @@ three bytes, and both banks are mapped at base 0x8000. So
 cross-region edge, so there is no cluster to reject and the invariant cannot
 be violated by a bug in a later pass.
 
-Measured over the committed listings: **bucket A = 973, bucket B = 1,428,
+Measured over the committed listings: **bucket A = 999, bucket B = 1,474,
 bucket C = 450**, using `audit_call_targets.py`'s own `bucket_of()`. Bucket B
 is the population an `lcall` cannot resolve and it is the largest of the three,
 which is the honest shape of this firmware's call graph. 27 cross-region edges
 are counted and reported, never merged. Every run prints these numbers, so a
-small group count cannot read as a topology.
+small group count cannot read as a topology. (A = 973 and B = 1,428 were the
+figures when this was written, before issue #134's tranche annotated 33 more of
+the common area.)
+
+**The structural claim needed a node, not just an edge, and did not have one.**
+A `common`-scoped row is one function both bank images carry, so a bank0 caller
+and a bank1 caller that both reach it are two halves of *one* node — and the
+union joining them is a cross-region join whatever the edges around it are. The
+caveat is about the edges, and it was true about every edge; the node was the
+hole. It stayed hidden while the common area was thinly annotated, because the
+one component that spanned both banks had a single `bank0` row in it and that
+row was seeded, so the `callgraph` refusal had nothing to refuse. Issue #134's
+33 more `common` rows closed the gap: `--check` refused a 673-row
+`callgraph_bank0_0EA2` spanning both banks. The endpoint a caller in one region
+uses for a common-area target is now a **per-region proxy node**
+(`PROXY_SCOPE`), which keeps the relation the edge does carry — the `bank0`
+functions sharing a common helper stay connected — and drops the one it does
+not. The refusal itself is untouched; what changed is that the union no longer
+produces a component for it to refuse.
 
 ### What a group is not
 
 **A `callgraph` group is a connected component, not a subsystem.** Union-find
 answers "are these mutually reachable", and on this firmware the largest
-component holds **323 of 1,804 rows**; the next two hold 302 and 145. That is
+component holds **327 of 1,848 rows**; the next two hold 321 and 303. That is
 a real structural fact and a poor subsystem boundary, so the groups are named
 `callgraph_<scope>_<addr>`, their size is in every row's comment, and `--report`
 names any component of 50 or more. The seeds — read off the `type` column, the
@@ -253,17 +276,32 @@ names on the first committed file were wrong that way. The three large ones
 were `callgraph_bank0_1803` (323 rows, 316 of them bank1),
 `callgraph_common_0EF3` (145 rows, **144 of them `pd`**) and
 `callgraph_common_10F1` (27 rows, 26 `pd`); they now read
-`callgraph_bank1_1738`, `callgraph_pd_0180` and `callgraph_pd_0050`, and the
-sizes quoted above belong to those names. The middle one is the sharp case:
-naming 144 rows of the separate ITE8850-PD program `common` is exactly the
-conflation Part 1's `pd` rule exists to stop, reintroduced through the naming
-layer. `--check` refuses a `callgraph` name whose scope token is not the
-dominant scope among the rows carrying it, so this cannot drift again.
+`callgraph_bank1_1738`, `callgraph_pd_0180` and `callgraph_pd_0050`. The
+middle one is the sharp case: naming 144 rows of the separate ITE8850-PD
+program `common` is exactly the conflation Part 1's `pd` rule exists to stop,
+reintroduced through the naming layer. `--check` refuses a `callgraph` name
+whose scope token is not the dominant scope among the rows carrying it, so this
+cannot drift again.
 
-576 EC rows are `ungrouped`: no typed seed and no component at or above the
+**Those three names have moved once more, for a different reason, and the
+reason is the banking correction above rather than a rename.** On the merged
+tree the `pd` components are one `callgraph_pd_0003` of 303 — the shared common
+node had been holding two halves of that one program apart, exactly as it had
+been holding a 673-row blob together across the two banks — and the three
+components of 50 or more are now `callgraph_bank0_0EA2` (327, all `bank0`),
+`callgraph_bank1_1738` (321, all `bank1`) and `callgraph_pd_0003` (303, all
+`pd`). Every large component being a single scope is the visible consequence of
+the fix; it is a structural fact about the graph, not a claim that the banks do
+separate jobs.
+
+456 EC rows are `ungrouped`: no typed seed and no component at or above the
 minimum size. That is *not found by this method*, never "these functions have
 no subsystem", and the vocabulary has `ungrouped` in it so saying so costs
-nothing — the same argument `unresolved` makes in the `type` column.
+nothing — the same argument `unresolved` makes in the `type` column. (576 were
+`ungrouped` when this was written: issue #134's 44 rows took 26 of them out, and
+the banking correction above took 94 more, so the count fell for two reasons
+that are worth keeping apart — naming helpers is what merges the rest, and
+un-merging the banks is what puts the small pieces back under the minimum.)
 
 ### Three blind spots, none closed
 
@@ -279,7 +317,7 @@ nothing — the same argument `unresolved` makes in the `type` column.
 **And nothing here is a behavioural claim.** A group says which routines are
 connected in the call graph, not what the EC does with them on a live machine.
 No hardware is reachable from a GitHub-hosted runner, so no live test is
-claimed and none is possible here. The 2,592 comments were not read by hand to
+claimed and none is possible here. The 2,636 comments were not read by hand to
 infer subsystems; anything the seeds and the graph do not support stays
 `ungrouped` rather than getting a plausible label.
 
@@ -317,6 +355,6 @@ number into generated output, and `check_site_census.py` is what caught it.
   BL51 trampoline boundary, or on strong articulation points, would give
   tighter groups — and would need its own check that it did not merge across a
   bank.
-- **Reading the remaining `ungrouped` rows.** 576 of them are reachable by
+- **Reading the remaining `ungrouped` rows.** 456 of them are reachable by
   reading; they are not reachable by the method, and saying so is what the
   column is for.

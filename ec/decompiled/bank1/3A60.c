@@ -13,17 +13,17 @@ void FUN_CODE_3a60(void)
     if ((DAT_EXTMEM_1709 >> 3 & 1) == 0) {
       if (((((DAT_EXTMEM_1708 >> 3 & 1) != 0) && ((DAT_EXTMEM_1106 >> 4 & 1) != 0)) &&
           ((DAT_EXTMEM_1102 >> 4 & 1) != 1)) && (DAT_EXTMEM_1700 == '\x17')) {
-        FUN_CODE_029b(0);
+        chan_init_1708_then_jmp_11c2(0);
       }
     }
     else if ((((DAT_EXTMEM_1106 >> 3 & 1) != 0) && ((DAT_EXTMEM_1102 >> 3 & 1) != 1)) &&
             (DAT_EXTMEM_1701 == '\x17')) {
-      FUN_CODE_018c();
+      chan_init_1709_then_jmp_11bc();
     }
   }
   else if ((((DAT_EXTMEM_1106 >> 2 & 1) != 0) && ((DAT_EXTMEM_1102 >> 2 & 1) != 1)) &&
           (DAT_EXTMEM_1702 == '\x17')) {
-    FUN_CODE_012f();
+    chan_init_170a_then_jmp_11b6();
   }
   return;
 }

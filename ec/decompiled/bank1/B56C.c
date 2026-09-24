@@ -23,21 +23,21 @@ void cmp_043a_0436_store_0548(void)
   
   read_xdata_pair_to_r1r2(0x548);
   read_xdata_pair_to_r3r4(0x43a);
-  cVar1 = FUN_CODE_8863();
+  cVar1 = cmp_r3r4_against_r1r2_16bit();
   if (cVar1 == '\0') {
     return;
   }
   if ((DAT_EXTMEM_0490 & 1) == 1) {
     read_xdata_pair_to_r1r2(0x43a);
     read_xdata_pair_to_r3r4(0x436);
-    FUN_CODE_8863();
+    cmp_r3r4_against_r1r2_16bit();
     if (in_PSW < '\0') {
       return;
     }
   }
   else {
     read_xdata_pair_to_r1r2(0x436);
-    FUN_CODE_8863();
+    cmp_r3r4_against_r1r2_16bit();
     if (in_PSW < '\0') {
       return;
     }

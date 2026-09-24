@@ -16,11 +16,11 @@ void FUN_CODE_30b5(byte *param_1,byte param_2)
   cVar1 = '\0';
   do {
     if (*(char *)(cVar1 + -0x78) < '\0') {
-      FUN_CODE_3b22(cVar1);
+      mul13_table_lookup_3b22(cVar1);
       FUN_CODE_3b32();
-      FUN_CODE_3b70();
+      dph_from_a_dpl_from_code_3b70();
       pbVar3 = param_1;
-      bVar2 = FUN_CODE_3b4e();
+      bVar2 = read_dptr_into_r6_then_r7_3b4e();
       *param_1 = param_2 | pbVar3[bVar2];
     }
     cVar1 = cVar1 + '\x01';

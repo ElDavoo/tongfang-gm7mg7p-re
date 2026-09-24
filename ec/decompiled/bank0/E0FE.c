@@ -18,7 +18,7 @@ void FUN_CODE_e0fe(byte *param_1)
       DAT_INTMEM_3e = 0;
       bVar1 = (DAT_EXTMEM_1514 >> 4) * '\x02';
       read_code_pair_at_dptr_into_r2_r1('n' - (((6 < bVar1) << 7) >> 7),CONCAT11(0x15,bVar1 - 7));
-      FUN_CODE_7177();
+      mov_dph_r2_dpl_r1_7177();
       return;
     }
     DAT_INTMEM_3c = DAT_EXTMEM_1514;
@@ -26,7 +26,7 @@ void FUN_CODE_e0fe(byte *param_1)
       bVar1 = (DAT_INTMEM_3a >> 4) * '\x02';
       read_code_pair_at_dptr_into_r2_r1
                 ('o' - (((0xe6 < bVar1) << 7) >> 7),CONCAT11(0x15,bVar1 + 0x19));
-      FUN_CODE_7177();
+      mov_dph_r2_dpl_r1_7177();
       DAT_INTMEM_3b = DAT_INTMEM_3b + -1;
     }
   }

@@ -22,12 +22,12 @@ void unimplemented_ff_fill_ff17(undefined1 param_1)
   
   SP = 0xc0;
   DAT_EXTMEM_1001 = 0x3f;
-  FUN_CODE_110a(param_1);
+  set_iram_08_0a_clear_p1_0_p1_2(param_1);
   FUN_CODE_158e();
   FUN_CODE_0f75();
   uVar1 = FUN_CODE_1594();
   DAT_EXTMEM_0004 = DAT_EXTMEM_2006;
-  FUN_CODE_00cf(uVar1);
+  walk_code_table_6f39(uVar1);
   return;
 }
 

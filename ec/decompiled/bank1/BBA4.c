@@ -50,7 +50,7 @@ void FUN_CODE_bba4(char param_1)
     return;
   }
   read_xdata_pair_to_r3r4(0x834,uVar1,uVar2);
-  bVar4 = FUN_CODE_8863();
+  bVar4 = cmp_r3r4_against_r1r2_16bit();
   if ((bVar4 & 1) != 0) {
     forward_to_bd20_bf93();
     return;
@@ -59,7 +59,7 @@ void FUN_CODE_bba4(char param_1)
   if ((DAT_EXTMEM_0497 & 1) != 0) {
     read_xdata_pair_to_r1r2(0x522,0x38,0x31);
   }
-  bVar4 = FUN_CODE_8863();
+  bVar4 = cmp_r3r4_against_r1r2_16bit();
   if ((bVar4 & 1) == 0) {
     return;
   }

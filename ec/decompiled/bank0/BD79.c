@@ -15,7 +15,7 @@
 void tail_call_7110_with_b6(void)
 
 {
-  FUN_CODE_7110(6);
+  dptr_plus_a_times_b_16bit(6);
   return;
 }
 

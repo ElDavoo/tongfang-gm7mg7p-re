@@ -26,7 +26,7 @@ void power_on_init_and_two_hang_paths(void)
   load_dptr_83f8_tail_jump_1114();
   FUN_CODE_c4d1();
   set_0988_1();
-  FUN_CODE_2896();
+  clear_iram_6d_7f_then_xdata_b00_bfe();
   OEM_4_CHARGING_PROFILE = OEM_4_CHARGING_PROFILE & 0xbf;
   DAT_EXTMEM_07c5 = DAT_EXTMEM_07c5 & 0x7f;
   AP_OEM_6 = AP_OEM_6 & 0xfb;
@@ -44,7 +44,7 @@ void power_on_init_and_two_hang_paths(void)
     DAT_EXTMEM_077e = 0;
     DAT_EXTMEM_077f = 0;
     gather_0200_from_table_6d74();
-    FUN_CODE_5597(0);
+    write_009f_4f_or_0f_by_r7(0);
     zero_0a59_0a5a_then_call_series();
     timer1_counted_delay_using_0a56('\n');
     init_1f01_1f06_1f07();

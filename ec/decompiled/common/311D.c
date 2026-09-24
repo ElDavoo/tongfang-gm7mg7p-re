@@ -85,7 +85,7 @@ void FUN_CODE_311d(void)
   }
   FUN_CODE_3c18();
   *pbVar1 = *pbVar1 | 1;
-  FUN_CODE_3b22(bVar2);
+  mul13_table_lookup_3b22(bVar2);
   FUN_CODE_3bae();
   *puVar5 = 0x17;
   DAT_EXTMEM_0a4e = 0;
@@ -101,7 +101,7 @@ void FUN_CODE_311d(void)
     return;
   }
   puVar5 = &DAT_EXTMEM_0a4d;
-  FUN_CODE_3b22(DAT_EXTMEM_0a4d);
+  mul13_table_lookup_3b22(DAT_EXTMEM_0a4d);
   FUN_CODE_3bae();
   *puVar5 = 0x17;
   DAT_EXTMEM_0a4e = 0;
@@ -136,7 +136,7 @@ void FUN_CODE_311d(void)
       return;
     }
   }
-  FUN_CODE_3b22(DAT_EXTMEM_0a4d);
+  mul13_table_lookup_3b22(DAT_EXTMEM_0a4d);
   FUN_CODE_3bae();
   FUN_CODE_3bbf();
   DAT_EXTMEM_0a4d = DAT_EXTMEM_0a4d + 1;

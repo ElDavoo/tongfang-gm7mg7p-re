@@ -33,7 +33,7 @@ void FUN_CODE_2bd5(byte param_1,char param_2)
   }
   pcVar7 = (code *)0x1304;
   if (((DAT_EXTMEM_1304 & 1) != 1) && (((DAT_EXTMEM_1304 >> 1 & 1) != 1 && (_0_5 == '\0')))) {
-    uVar4 = FUN_CODE_3c0a();
+    uVar4 = read_0a49_then_index_iram_by_plus_97();
     FUN_CODE_2b6c(uVar4);
     if (DAT_INTMEM_85 != '\0') {
       DAT_INTMEM_85 = DAT_INTMEM_85 + -1;
@@ -43,11 +43,11 @@ void FUN_CODE_2bd5(byte param_1,char param_2)
         cVar3 = '\0';
         do {
           if ((*(byte *)(cVar3 + -0x78) >> 6 & 1) != 0) {
-            FUN_CODE_3b22(cVar3);
+            mul13_table_lookup_3b22(cVar3);
             FUN_CODE_3b32();
-            FUN_CODE_3b70();
+            dph_from_a_dpl_from_code_3b70();
             pcVar8 = pcVar7;
-            bVar5 = FUN_CODE_3b4e();
+            bVar5 = read_dptr_into_r6_then_r7_3b4e();
             *pcVar7 = (code)(param_1 | (byte)pcVar8[bVar5]);
           }
           cVar3 = cVar3 + '\x01';
@@ -58,19 +58,19 @@ void FUN_CODE_2bd5(byte param_1,char param_2)
           if (DAT_EXTMEM_0a49 == cVar3) {
             cVar1 = DAT_EXTMEM_0a49;
             cVar2 = DAT_EXTMEM_0a49;
-            uVar4 = FUN_CODE_3b22(DAT_EXTMEM_0a49,DAT_EXTMEM_0a49);
+            uVar4 = mul13_table_lookup_3b22(DAT_EXTMEM_0a49,DAT_EXTMEM_0a49);
             pbVar10 = (byte *)CONCAT11(uVar4,*(undefined1 *)(sVar9 + 1));
             *pbVar10 = 0x17;
-            FUN_CODE_3b3e(cVar1);
-            FUN_CODE_3b70();
+            mul13_table_lookup_3b3e(cVar1);
+            dph_from_a_dpl_from_code_3b70();
             bVar5 = *pbVar10;
             pbVar11 = pbVar10;
-            bVar6 = FUN_CODE_3b51(cVar2);
+            bVar6 = dptr_3a00_plus_13x_3b51(cVar2);
             *pbVar10 = bVar5 | pbVar11[bVar6];
           }
           cVar3 = cVar3 + '\x01';
         } while (cVar3 != '\x03');
-        FUN_CODE_2bc1(6);
+        clamp_iram_80_up_to_r7(6);
       }
     }
     else if (_c_4 != '\x01') {
@@ -80,7 +80,7 @@ void FUN_CODE_2bd5(byte param_1,char param_2)
     }
     return;
   }
-  DAT_INTMEM_8b = FUN_CODE_3c0a();
+  DAT_INTMEM_8b = read_0a49_then_index_iram_by_plus_97();
   DAT_INTMEM_ad = 0x33;
   return;
 }
