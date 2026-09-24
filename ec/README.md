@@ -70,10 +70,13 @@ into `r2 -a 8051` with no stitching needed.
   lowest address, which makes them a *rank*, and a rank is not an identity — one
   change anywhere in the ranking renumbers every id below the one that moved.
   Issue #274 measured that rather than assuming it: regenerating with the `==`
-  guard removed — the classifier change #178 made — leaves 366 of the 427
-  committed clusters keeping their number and changing what it names, and 61
-  surviving intact; a threshold change to 0.45 moves 417 of 427. Issue #253 is
-  four sentences whose pointer had drifted exactly that way.
+  guard removed — the classifier change #178 made — turns the 427 committed
+  clusters into 439, of which **48 survive intact** and **379 keep their
+  number and change the membership it names**; a threshold change to 0.45
+  gives 425 clusters, where 59 of the 427 ids are intact, 366 name a different
+  membership, 2 have no cluster at that number, and **413 of the 427 keys**
+  still name a cluster. Issue #253 is four sentences whose pointer had drifted
+  exactly that way.
   Three citation forms are therefore resolved (issue #274): the `main-ec-NNN`
   rank, the `cluster_key` content hash, and a `cluster_name` from
   `annotations/xdata-cluster-names.csv`, which is the only one of the three

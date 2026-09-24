@@ -14,9 +14,11 @@ by size, then references, then lowest address (`xdata_register_map.py`'s
 only against one ranking, and one change anywhere in that ranking reshuffles
 every id below the one that moved. Issue #274 measured that rather than
 assuming it — regenerating with the `==` guard removed, the classifier change
-#178 made, leaves 366 of the 427 committed clusters keeping their number and
-changing what it names, and 61 surviving intact; a threshold change to 0.45
-moves 417 of 427.
+#178 made, turns the 427 committed clusters into 439, of which 48 survive
+intact and 379 keep their number and change what it names; a threshold change
+to 0.45 gives 425 clusters, where 59 of the 427 ids are intact, 366 name a
+different membership, 2 have no cluster at that number, and 413 of the 427
+keys still name a cluster.
 
 Because that is the weak handle, three citation forms are accepted, in this
 order of durability:

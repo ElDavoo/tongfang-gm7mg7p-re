@@ -252,9 +252,11 @@ SWEEP_THRESHOLDS = (0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70)
 # `cluster_key` is the content half of a cluster's identity: sha256 over the
 # program's name and the cluster's space-joined sorted `addrs`, truncated to 12
 # hex digits and spelled `k<hex>`. Twelve is 48 bits, and the self-test asserts
-# the committed census's keys are distinct rather than taking a truncated hash's
-# word for it. It is computed in `build()` where the cluster is formed, never
-# read back out of a CSV, so the key cannot drift with the file that records it.
+# the keys are distinct in a fresh generation and, read back out of the file,
+# in the committed census as well, rather than taking a truncated hash's word
+# for it. It is computed in `build()` where the cluster is formed, never
+# written and read back to decide a key, so the key cannot drift with the file
+# that records it.
 CLUSTER_KEY_HEX = 12
 
 # How much membership a named cluster must keep for its name to follow it into
@@ -1551,10 +1553,11 @@ def build(funcs, names, symbols, census, calls, threshold):
     # size, then references, then lowest address, so `main-ec-001` is whichever
     # cluster sorts into first place -- and one change anywhere in the ranking
     # reshuffles every id below the one that moved. Issue #253 is the measured
-    # version of that: 366 of the committed 427 ids keep their number and change
-    # what the number names. This comment used to say the ids were "stable
-    # across regenerations" and that `main-01` was the same cluster today and
-    # after a re-run; both halves were false, and the second named an id shape
+    # version of that: with the `==` guard removed the committed 427 ids become
+    # a 439-cluster census, 48 surviving intact and 379 keeping their number and
+    # changing what the number names. This comment used to say the ids were
+    # "stable across regenerations" and that `main-01` was the same cluster today
+    # and after a re-run; both halves were false, and the second named an id shape
     # this tool does not emit. `cluster_key` below and `cluster_name` after it
     # are the identity a prose citation can survive the ranking on, and
     # `cluster_id` stays exactly as it was because the two CSVs and every page in
@@ -2252,13 +2255,28 @@ def self_test(args) -> int:
     # Issue #274. The rank above is a rank, so the identity a citation survives
     # a regeneration on is the content hash. Three things have to hold, and the
     # first is the one a truncated sha256 does not prove for itself: distinct
-    # memberships must get distinct keys in the census as committed.
+    # memberships must get distinct keys, and the place that has to hold is the
+    # census **as committed** -- the file every `cluster_key` and `cluster_name`
+    # citation in the tree resolves against. So the committed rows are checked
+    # from the file, not only the fresh generation above: a collision that is
+    # only in what this run would write is not one a reader can hit, and a
+    # check that covered only the fresh rows while the prose said "as committed"
+    # is the claim this file's own rule about calibration exists to catch.
     keys = [r["cluster_key"] for r in cluster_rows]
     dupes = sorted(k for k, n in collections.Counter(keys).items() if n > 1)
     check(f"every one of the {len(keys)} clusters has a distinct cluster_key, so "
           f"a key names a membership and not a rank (duplicates: "
           f"{', '.join(dupes) or 'none'})",
           not dupes)
+    old_keys = [(r.get("cluster_key") or "").strip() for r in old_rows]
+    old_dupes = sorted(k for k, n in collections.Counter(
+        k for k in old_keys if k).items() if n > 1)
+    check(f"every one of the {sum(1 for k in old_keys if k)} keys the committed "
+          f"{os.path.relpath(OUT_CLUSTERS, EC_DIR)} carries is distinct, read "
+          f"back from that file rather than from a fresh generation, so a "
+          f"cluster_key citation resolves to one membership (duplicates: "
+          f"{', '.join(old_dupes) or 'none'})",
+          not old_dupes)
     key_of_id = {r["cluster_id"]: r["cluster_key"] for r in cluster_rows}
     addrs_of_key = {r["cluster_key"]: r["addrs"] for r in cluster_rows}
     check("the registers CSV's cluster_key agrees with the clusters CSV's, "

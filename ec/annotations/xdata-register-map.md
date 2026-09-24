@@ -628,11 +628,14 @@ of the census.
 **`cluster_key` is the cheap half.** `sha256` over the program's name and the
 cluster's space-joined sorted `addrs`, truncated to 12 hex digits and spelled
 `k<hex>`, computed in `build()` where the cluster is formed and never read back
-out of a CSV — a key that came from the file it is written to could drift with
-the file. It is in both census CSVs, is exact, and says nothing about a near
-miss: two clusters whose membership differs by one address have keys with
-nothing in common. The self-test asserts the committed census's 427 keys are
-distinct rather than taking a truncated hash's word for it.
+out of a CSV to decide a key — a key that came from the file it is written to
+could drift with the file. It is in both census CSVs, is exact, and says
+nothing about a near miss: two clusters whose membership differs by one address
+have keys with nothing in common. The self-test asserts the keys are distinct
+rather than taking a truncated hash's word for it, and does it in both places
+that can hold it: over a fresh generation's rows, and over the **committed**
+census read back from `xdata-clusters.csv` — its 427 keys, the ones every
+`cluster_key` citation in the tree resolves against.
 
 **The 18 that a key cannot carry include the two the prose cares about most,
 which is why the key is not the answer.** `main-ec-001` (108 addresses) and
@@ -806,25 +809,6 @@ branch that added §4.4 forked before the GPU-boost bytes `0x07D6`/`0x07D7`
 were annotated and measured 150; the 177 here is the merged tree's.)
 Sizes, reference counts and ranges are §4.3; `named inside` is mostly the
 symbol table.
-
-| cluster | size | refs | range | named inside | the functions the cluster's addresses share |
-|---|---:|---:|---|---|---|
-| `main-ec-001` | 108 | 1,136 | `0x030E`-`0x1809` | 33 | `fill_08xx_from_code_table`, `apply_oem_overrides_then_fill_08xx`, `mode_tick_084c_07a5_09ee`, `charge_target_update` — the mode/OEM initialisation set |
-| `main-ec-002` | 44 | 248 | `0x044C`-`0x1F07` | 19 | `gate_06e6_442_then_sync_046a_from_086b`, `dispatch_on_0860`, `FUN_CODE_9d9b` — the `0x06E6`/`0x0860` gate block |
-| `main-ec-003` | 43 | 4,965 | `0x0460`-`0x09CE` | 43 | `decrement_nonzero_xdata_counters`, `read_06c6`, `skip_06c6_decrement` — one loop walking a block of counters |
-| `main-ec-004` | 26 | 278 | `0x030A`-`0x082F` | `0x0403` | three unnamed `bank1` routines (`0xDEE8`, `0xDEF1`, `0xDB0B`) — unnamed here, so this one needs reading before it can be titled |
-| `main-ec-005` | 17 | 70 | `0x0382`-`0x03C9` | none | `mul_0342_0514_into_0388_when_03d0_lt_0384`, `FUN_CODE_d6ee`, `FUN_CODE_d946` |
-| `main-ec-006` | 16 | 94 | `0x043E`-`0x300E` | `0x043E` | `FUN_CODE_9b3c`, `FUN_CODE_9c53`, `FUN_CODE_de83` |
-| `main-ec-007` | 12 | 280 | `0x0045`-`0x1504` | none | three `ff_filler_not_a_function_*`, the fill stub block |
-| `main-ec-008` | 12 | 107 | `0x0A43`-`0x0FC3` | none | `call_ef17_then_copy_0f80_to_0fb1`, `store_dptr_byte_to_0fb2_copy_0f82`, `FUN_CODE_f002` |
-| `main-ec-009` | 12 | 40 | `0x049A`-`0x05B9` | none | `clear_049a_049e_0579_057a_05c2`, `latch_0490_bit3_or_bit7` |
-| `main-ec-010` | 12 | 35 | `0x00C0`-`0x2275` | none | `copy_direct_65_66_to_x00c0`, `copy_x00c0_pair_to_iram_67_68` |
-| `main-ec-011` | 10 | 91 | `0x0875`-`0x09E7` | 6 | `clear_08eb_bit5_09e6_09e7_08a1_089c_089d` and two unnamed `bank0` routines |
-| `main-ec-012` | 9 | 36 | `0x0300`-`0x03FE` | none | `zero_0300_03ff_then_set_3fe_3a8_3fb`, `scan_table_03de_down_stride2` — the `0x0300` page |
-counts addresses `ec/ghidra/xdata-symbols.csv` names, and the symbol table has
-grown from 44 named addresses to 150 without these CSVs, or this table, being
-re-transcribed. Sizes, reference counts and ranges are §4.3; `named inside` is
-mostly the symbol table.
 
 > **Correction, 2026-09-24 (issue #274).** Every mechanical column of this
 > table — `key`, `name`, `size`, `refs`, `range`, `named inside` — is

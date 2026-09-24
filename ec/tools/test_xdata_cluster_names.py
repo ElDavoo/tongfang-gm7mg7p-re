@@ -283,9 +283,9 @@ class TheGuardOffRegeneration(unittest.TestCase):
 
     A regeneration that moves the ranking is the cheapest one available from
     committed text: deleting the `==` guard `xdata-06c2-06db-timers.md` §6a
-    measured. 427 clusters become 436 and 366 of the ranks keep their number
-    and change what the number names, which is the whole reason a rank is not
-    an identity.
+    measured. 427 clusters become 439, 48 of the ranks survive intact and 379
+    keep their number and change what the number names, which is the whole
+    reason a rank is not an identity.
     """
 
     @classmethod
