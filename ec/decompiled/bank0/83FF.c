@@ -38,15 +38,15 @@ void sync_0788_and_07d4_from_09e9(void)
     load_dptr_88f0_tail_jump_1114(0x83);
   }
   if (((CTGP_DB_CTRL & 1) != 0) &&
-     (((((DAT_EXTMEM_07c4 >> 3 & 1) != 0) != ((DAT_EXTMEM_07c4 >> 4 & 1) != 0) ||
-       (DAT_EXTMEM_07d4 != DAT_EXTMEM_09ea)) || (DAT_EXTMEM_07d5 != DAT_EXTMEM_09eb)))) {
-    DAT_EXTMEM_07d4 = DAT_EXTMEM_09ea;
-    DAT_EXTMEM_07d5 = DAT_EXTMEM_09eb;
-    if ((DAT_EXTMEM_07c4 >> 4 & 1) == 0) {
-      DAT_EXTMEM_07c4 = DAT_EXTMEM_07c4 & 0xf7;
+     (((((GPU_DYNAMIC_BOOST_STATUS >> 3 & 1) != 0) != ((GPU_DYNAMIC_BOOST_STATUS >> 4 & 1) != 0) ||
+       (CPUA != DAT_EXTMEM_09ea)) || (DBAP != DAT_EXTMEM_09eb)))) {
+    CPUA = DAT_EXTMEM_09ea;
+    DBAP = DAT_EXTMEM_09eb;
+    if ((GPU_DYNAMIC_BOOST_STATUS >> 4 & 1) == 0) {
+      GPU_DYNAMIC_BOOST_STATUS = GPU_DYNAMIC_BOOST_STATUS & 0xf7;
     }
     else {
-      DAT_EXTMEM_07c4 = DAT_EXTMEM_07c4 | 8;
+      GPU_DYNAMIC_BOOST_STATUS = GPU_DYNAMIC_BOOST_STATUS | 8;
     }
     load_dptr_88f0_tail_jump_1114(0x84);
   }

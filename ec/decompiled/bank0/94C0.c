@@ -16,10 +16,10 @@ void set_07c4_bit4_from_r7(char param_1)
 
 {
   if (param_1 != '\0') {
-    DAT_EXTMEM_07c4 = DAT_EXTMEM_07c4 | 0x10;
+    GPU_DYNAMIC_BOOST_STATUS = GPU_DYNAMIC_BOOST_STATUS | 0x10;
     return;
   }
-  DAT_EXTMEM_07c4 = DAT_EXTMEM_07c4 & 0xef;
+  GPU_DYNAMIC_BOOST_STATUS = GPU_DYNAMIC_BOOST_STATUS & 0xef;
   return;
 }
 

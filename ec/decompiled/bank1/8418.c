@@ -21,7 +21,7 @@ void zero_1510_and_clear_xdata_flag_bits(void)
   DAT_EXTMEM_0480 = DAT_EXTMEM_0480 & 0xcf;
   DAT_EXTMEM_0801 = DAT_EXTMEM_0801 & 0x9f;
   DAT_EXTMEM_06e1 = DAT_EXTMEM_06e1 | 0xa0;
-  DAT_EXTMEM_0442 = DAT_EXTMEM_0442 & 0xe7;
+  XDATA_0442 = XDATA_0442 & 0xe7;
   return;
 }
 

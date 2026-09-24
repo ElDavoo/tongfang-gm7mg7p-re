@@ -377,6 +377,15 @@ registers:
       0x07C4-0x07D7 block (CPUA 0x07D4, DBAP 0x07D5) for the same GPU
       purpose, which is what makes that block a GPU dynamic-boost control
       block rather than battery state.
+      2026-09-24, issue #183: four of that block's bytes -- 0x07C4, 0x07D3,
+      0x07D4 and 0x07D5 -- joined the file, walked per-site in
+      ec/annotations/ec-07c4-07d5-sites.md. The 0x07C4 observation §4o did
+      not have is in the new entry: the 2026-09-23 capture records two
+      writes to it at the AC plug-in, 0.44 s apart. The same capture shows
+      0x07D0 and 0x07D1 did not move at all, across that plug-in and six
+      Fn-key mode switches, which is new information about this pair and is
+      recorded as an observation scoped to those events. Neither this
+      entry's nor 0x07D1's counts, split or status moved with that.
       On the Windows side, windows/tools/t1wr_callers.py censuses every
       committed input for TempWrite1, T1WR, the 0x9C40A4DC IOCTL and the
       0x1173 Arg0: not found by this method, in the fully decrypted
@@ -442,6 +451,12 @@ registers:
       DO-NOT-WRITE-BLIND suffix matches 0x07D0 because a blind write here
       lands on the same GPU power pair with the same unknowns. No live
       test has touched this byte.
+      2026-09-24, issue #183: neither this byte nor 0x07D0 moved at all in
+      the 2026-09-23 capture -- 0.07D4, 0.07C4 and 0x07C6 did, in the same
+      window. That is an observation scoped to one AC plug-in and six Fn-key
+      mode switches, not a measurement of how often the byte changes, and
+      the per-site walk of this address is still open (issue #131 named it;
+      static-refs-audit.md 6 records the gap). No count or status moved.
 
   - name: LIGHTBAR_AC_CTRL / RED / GREEN / BLUE
     addr: [0x0748, 0x0749, 0x074A, 0x074B]
@@ -1474,3 +1489,148 @@ registers:
       name, so the writer is unidentified. Upstream also names bit 3
       BATTERY_CHARGE_FULL_OVER_24H and bit 4 BATTERY_ERM_STATUS_REACHED.
       Live 0x04 at rest.
+
+  - name: GPU_DYNAMIC_BOOST_STATUS (DSDT DBEN bit 3, DBST bit 5)
+    addr: 0x07C4
+    bits: "0-2 unnamed; 3 = DBEN; 4 unnamed; 5 = DBST"
+    sources: [dsdt(DBEN/DBST), live]
+    static_refs: 8
+    static_refs_main_ec: 5
+    static_refs_pd_image: 3
+    status: present-untested
+    note: >
+      The head of the 0x07C4-0x07D7 block docs/findings.md 4o reads as a
+      GPU dynamic-boost control block, and the ASL's only use of this byte is
+      to test DBEN (dsdt.dsl:50702 in T1WR's Arg0 == 0x73 branch, and
+      dsdt.dsl:52796 in _Q84) -- it never writes the byte. The DSDT ECMG
+      field list (dsdt.dsl:52238-52242) is three unnamed bits, DBEN, one
+      unnamed, DBST, so DBEN is bit 3 and DBST is bit 5; 4o's own bit-0
+      reading is corrected in place there.
+      *** CORRECTION to that bit-0 reading: DBEN is bit 3, not bit 0, and
+      the ASL sites test the named 1-bit field rather than bit 0. This entry
+      is named for the ASL's own field names rather than for what the bits
+      do, which is not established. ***
+      No committed Windows input writes it: ec-callsites-summary.csv has no
+      0x07C4 row (0x07C5 has ten writers, 0x07D3 one read), and 1988 is
+      absent from windows/decompiled/v3.1.6.0/ECSpec.cs, whose ADDR_AP_OEM
+      constants step straight from 1987 to ADDR_AP_OEM_BYTE5 = 1989. The
+      writer is therefore the EC firmware or firmware outside the committed
+      inputs.
+      The five EC-firmware sites are walked in
+      ec/annotations/ec-07c4-07d5-sites.md (site table
+      ec-07c4-07d5-sites.csv). Four sit in one routine entered at 0x83FF:
+      two reads that lift bits 4 and 3 into R7/R6 and compare them, and a
+      read-modify-write at 0x8483/0x8490 that sets bit 3 to follow bit 4
+      (orl a,#0x08 / anl a,#0xf7). The fifth, 0x94C1, is a read-modify-write
+      driven by R7: a non-zero R7 ORs 0x10 in, a zero one ANDs it with
+      0xEF, so that site sets and clears bit 4 -- and its one direct caller,
+      0x9711, passes bit 1 of 0x0743 (CTGP_DB_CTRL) in R7. So the EC image
+      contains a bit-3 writer and a bit-4 writer for the byte the ASL gates
+      on. That the 0x8483/0x8490 pair is the same gate the ASL calls DBEN is
+      an inference from the bytes, not a decode of what the routine is for.
+      Counts are direct MOV DPTR site counts and inherit this file's header
+      caveats: a computed DPH or an indirect movx @Ri is invisible to the
+      scan (issue #110, and the 0x07B9 retraction), so 5 is a lower bound,
+      and a write class is an instruction storing to the address, not
+      evidence the EC acts on it.
+      SEEN LIVE 2026-09-23, unattributed:
+      evidence/ec-watch/2026-09-23-power-mode-cycle-0700-07ff.csv carries two
+      rows for this byte, 0x08 -> 0x28 at 17:57:51.161 and 0x28 -> 0x38 at
+      17:57:51.597, 0.44 s apart at the AC plug-in where 0x0743/0x0745/
+      0x0746 land. Nothing in that capture attributes them, and no committed
+      input writes the byte at all, so who wrote them is open. Scope: the
+      first sets bits 3 and 5, the second sets bit 4 -- and bit 3 was
+      therefore already set in the 0x08 baseline, which is a question about
+      the baseline rather than a confirmation of the ASL's test. The same
+      capture shows 0x07D0 and 0x07D1 did not move across an AC plug-in or
+      six Fn-key mode switches, which is new information about those two
+      bytes. No register was written or read back to establish any of this;
+      the 2026-09-23 capture is quoted as a committed file, not as a result
+      of anything done here. Status stays present-untested: a passive capture
+      showing a byte move is not a live test of it.
+
+  - name: GFID (DSDT bits 4-6)
+    addr: 0x07D3
+    bits: "0-3 unnamed; 4-6 = GFID"
+    sources: [dsdt(GFID), vendor-3.1.39.0]
+    static_refs: 11
+    static_refs_main_ec: 4
+    static_refs_pd_image: 7
+    status: present-untested
+    note: >
+      Named from the DSDT ECMG field list (dsdt.dsl:52254-52256): four
+      unnamed bits, then GFID, three bits wide. The expansion is not in the
+      ASL and is not guessed at here. No ASL code reads or writes this byte
+      by name; what publishes GFID is not established.
+      The Windows side has exactly one site and it is a read with no writer
+      (windows/decompiled/v3.1.39.0/ec-callsites-summary.csv row 0x07D3:
+      reads=1, writes=0, no writer named), and no ECSpec constant covers it.
+      The four EC-firmware sites are walked in
+      ec/annotations/ec-07c4-07d5-sites.md. Two of them, 0xDA2D and 0xDA41,
+      sit in the routine entered at 0xD9FE and write this byte outright with
+      0x30, 0x40, 0x50 or 0x70 -- that is, with GFID = 3, 4, 5 or 7 -- on a
+      branch on bit 4 of the byte at 0x166A, which has no entry in this
+      file. A third, 0xBA46, is a read-modify-write that clears only the low
+      nibble and returns the masked value in A. The fourth, 0x94D5, reads the
+      byte, masks the high nibble and XORs 0x30 to test for GFID = 3, then
+      branches. Bits 0-3 therefore have two EC-side writers that touch only
+      that nibble and two that overwrite the whole byte with a value whose
+      low nibble is zero, so the two groups do not contradict each other.
+      Counts are direct MOV DPTR site counts and are lower bounds for the
+      reason the file header gives (#110); a write class is not evidence the
+      EC acts on the value. No hardware was involved.
+
+  - name: CPUA (DSDT)
+    addr: 0x07D4
+    bits: "0-7 value; the ASL publishes CPUA * 8 to NPCF.ATPP"
+    sources: [dsdt(CPUA)]
+    static_refs: 70
+    static_refs_main_ec: 2
+    static_refs_pd_image: 68
+    status: present-untested
+    note: >
+      One of the two bytes the ASL multiplies by 8 and hands to the NVIDIA
+      platform controller as a GPU power value: T1WR's Arg0 == 0x73 branch
+      (dsdt.dsl:50700-50717) and its _Q84 twin (dsdt.dsl:52796-52803) both
+      do ^^NPCF.ATPP = CPUA * 0x08, guarded by If ((DBEN == One)), and
+      DSDT's ECMG field list (dsdt.dsl:52257-52258) names it CPUA. No ASL
+      code writes it. The EC-firmware side is the two bank0 sites walked in
+      ec/annotations/ec-07c4-07d5-sites.md: 0x8460 reads it and compares it
+      against the byte at 0x09EA, and 0x8477 writes 0x09EA's value into it.
+      Both are in the same routine (entered at 0x83FF) that also handles
+      0x07C4 and 0x07D5, and the write is guarded by 0x0743 (CTGP_DB_CTRL)
+      bit 0 and by the comparison being unequal, so this is where CPUA is
+      set from on the path this method finds. The other 68 sites are in the
+      ITE8850-PD image and are a different program's variable, per
+      ec-0x07d0-sites.md 1; they are not EC-side evidence.
+      70 is a file-wide direct MOV DPTR site count and a lower bound (#110).
+      A write class is an instruction storing to the address, not evidence
+      the EC acts on it. Status is present-untested rather than anything
+      live: the two writes found here are static, and no write was made to
+      this byte to find out what it does.
+
+  - name: DBAP (DSDT)
+    addr: 0x07D5
+    bits: "0-7 value; the ASL publishes DBAP * 8 to NPCF.AMAT"
+    sources: [dsdt(DBAP)]
+    static_refs: 28
+    static_refs_main_ec: 4
+    static_refs_pd_image: 24
+    status: present-untested
+    note: >
+      The other half of that pair: ^^NPCF.AMAT = DBAP * 0x08 in the same two
+      ASL sites, from the same DSDT ECMG field list entry (dsdt.dsl:52259-
+      52260). No ASL code writes it. The four EC-firmware sites are walked
+      in ec/annotations/ec-07c4-07d5-sites.md: 0x846C reads it against the
+      byte at 0x09EB and 0x847F writes 0x09EB's value into it, both in the
+      routine entered at 0x83FF and both on the same guard as 0x07D4, so
+      what this byte is set from is 0x09EB by this method. The other two,
+      0xAD99 and 0xCC78, store the immediate 0xFF, each in a long bank0 run
+      that resets a set of XDATA bytes -- 0xACB4's decompile, which holds
+      0xAD99, is a whole-machine reset ending in a tail jump to 0x83D6.
+      Neither 0x09EB nor the meaning of 0xFF as a default has an entry in
+      this file. The remaining 24 sites are in the ITE8850-PD image and
+      describe a different program's variable.
+      28 is a file-wide direct MOV DPTR site count and a lower bound (#110);
+      a write class is not evidence the EC acts on the value. No hardware
+      was involved.

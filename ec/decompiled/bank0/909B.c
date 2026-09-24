@@ -19,7 +19,7 @@
 void update_flag_bits_in_0985(void)
 
 {
-  if ((DAT_EXTMEM_045b >> 3 & 1) != 1) {
+  if ((XDATA_045B >> 3 & 1) != 1) {
     if (((DAT_EXTMEM_0490 & 1) == 1) || ((DAT_EXTMEM_0622 < 7) << 7 < '\0')) {
       DAT_EXTMEM_0985 = DAT_EXTMEM_0985 & 0xfe;
     }

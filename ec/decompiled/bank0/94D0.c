@@ -29,7 +29,7 @@ void copy_code_table_into_0730_07a7(undefined1 param_1,char param_2)
   short sVar5;
   
   DAT_EXTMEM_0a50 = param_2;
-  if ((DAT_EXTMEM_07d3 & 0xf0) == 0x30) {
+  if ((GFID & 0xf0) == 0x30) {
     cVar1 = read_low_nibble_074c();
     if ((cVar1 == '\0') || (param_2 = read_low_nibble_074c(), param_2 == '\x03')) {
       DAT_EXTMEM_0a52 = 0xfe;

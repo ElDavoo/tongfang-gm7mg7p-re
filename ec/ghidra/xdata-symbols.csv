@@ -100,3 +100,7 @@ addr,name,from_register,register_status,derivation,programs
 0x07DA,MODE_TCC_OFFSET_DEFAULTS_TURBO_2,MODE_TCC_OFFSET_DEFAULTS,present-untested,override,bank0;bank1
 0x0786,CPU_TCC_OFFSET,CPU_TCC_OFFSET (APTC/APTN),present-untested,scalar-name,bank0;bank1
 0x07C6,AP_OEM_6,AP_OEM_6 (whisper status / universal fan control),present-untested,scalar-name,bank0;bank1
+0x07C4,GPU_DYNAMIC_BOOST_STATUS,"GPU_DYNAMIC_BOOST_STATUS (DSDT DBEN bit 3, DBST bit 5)",present-untested,scalar-name,bank0;bank1
+0x07D3,GFID,GFID (DSDT bits 4-6),present-untested,scalar-name,bank0;bank1
+0x07D4,CPUA,CPUA (DSDT),present-untested,scalar-name,bank0;bank1
+0x07D5,DBAP,DBAP (DSDT),present-untested,scalar-name,bank0;bank1

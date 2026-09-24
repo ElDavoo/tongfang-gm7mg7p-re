@@ -14,7 +14,7 @@
 char x0449_minus_x08ea_minus_1(void)
 
 {
-  return DAT_EXTMEM_0449 - (DAT_EXTMEM_08ea + '\x01');
+  return XDATA_0449 - (DAT_EXTMEM_08ea + '\x01');
 }
 
 

@@ -14,8 +14,8 @@
 undefined1 copy_043d_to_09cd_and_return_09cd(void)
 
 {
-  DAT_EXTMEM_09cd = DAT_EXTMEM_043d;
-  return DAT_EXTMEM_043d;
+  DAT_EXTMEM_09cd = XDATA_043D;
+  return XDATA_043D;
 }
 
 

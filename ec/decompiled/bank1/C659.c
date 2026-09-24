@@ -21,8 +21,8 @@ void toggle_045b_b0_and_0758_b3(void)
   byte bVar1;
   
   bVar1 = in_PSW & 0xdd;
-  if ((DAT_EXTMEM_045b & 1) == 0) {
-    DAT_EXTMEM_045b = DAT_EXTMEM_045b | 1;
+  if ((XDATA_045B & 1) == 0) {
+    XDATA_045B = XDATA_045B | 1;
     DAT_EXTMEM_0758 = DAT_EXTMEM_0758 | 8;
     gate_06e6_0440_then_call_89b5(0x31);
     bVar1 = bVar1 & 0xdd;
@@ -38,7 +38,7 @@ void toggle_045b_b0_and_0758_b3(void)
     }
   }
   else {
-    DAT_EXTMEM_045b = DAT_EXTMEM_045b & 0xfe;
+    XDATA_045B = XDATA_045B & 0xfe;
     DAT_EXTMEM_0758 = DAT_EXTMEM_0758 & 0xf7;
     bVar1 = in_PSW & 0xdd;
     gate_06e6_0440_then_call_89b5(0x32);

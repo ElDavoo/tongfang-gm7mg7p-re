@@ -71,9 +71,9 @@ void stage_0577_against_0834_0836(char param_1)
     if (DAT_EXTMEM_0539 != '\x01') goto LAB_CODE_bb8f;
   }
   else {
-    cVar1 = DAT_EXTMEM_0403 - 0x14;
+    cVar1 = BAT_DESIGN_CAPACITY_1 - 0x14;
     cVar3 = cVar1;
-    if (0x13 < DAT_EXTMEM_0403) {
+    if (0x13 < BAT_DESIGN_CAPACITY_1) {
 LAB_CODE_bb8f:
       write_r3r4_to_xdata_pair(cVar3,0x834,0x80,1);
       DAT_EXTMEM_0832 = DAT_EXTMEM_0832 | 1;

@@ -13,7 +13,7 @@
 char x044c_minus_r7(char param_1)
 
 {
-  return DAT_EXTMEM_044c - param_1;
+  return XDATA_044C - param_1;
 }
 
 

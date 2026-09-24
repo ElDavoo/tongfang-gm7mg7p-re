@@ -162,6 +162,14 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   enumerated and classified, with `annotations/ec-0x07d0-sites.csv` as the
   machine-readable table behind it. Answers what the sites *are*; deliberately
   does not answer what the EC does with the address of the same number.
+- **`annotations/ec-07c4-07d5-sites.md`** — the 15 main-EC reference sites of
+  `0x07C4`, `0x07D3`, `0x07D4` and `0x07D5`, against 102 in the PD image, with
+  `annotations/ec-07c4-07d5-sites.csv` as the machine-readable table behind it.
+  Answers what `CPUA` and `DBAP` are set from (`0x09EA` and `0x09EB`, in the
+  routine entered at `0x83FF`) and which four GFID values the EC writes to
+  `0x07D3`; deliberately stops short of naming the routine that wrote `0x07C4`
+  on 2026-09-23, because its only caller's framing is unresolved, and of the
+  102 PD-image sites, which are another program's variables.
 - **`annotations/xdata-0400-045f.md`** — the `0x0400-0x045F` page the fan
   isolation run sweeps, site by site: which of its 96 bytes the EC firmware
   references at all, in which image, reading or writing or handing DPTR to one
