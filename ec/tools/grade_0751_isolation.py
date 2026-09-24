@@ -11,7 +11,10 @@ that runs to the next mark, and for every window this reports whether the
 bytes §4 names moved inside it:
 
   * `0x0783-0x0785` -- PL1/PL2/PL4 (§4.1)
-  * `0x0F00-0x0F5F` -- the fan table (§4.2)
+  * `0x0F00-0x0F5C` -- the fan table (§4.2)
+  * `0x0F5D-0x0F5F` -- the fan-table reload mailbox, which is not a §4.x
+    byte: a change there is a host request and/or the tail of a table that
+    was written, and neither is §4.2's answer
   * `0x07C6`        -- the byte the vendor brackets its fan-table write with (§4.3)
 
 and, reported but not graded, the candidate fan-PWM bytes `0x075B`/`0x075C`
@@ -63,6 +66,7 @@ import argparse
 import csv
 import datetime
 import sys
+import textwrap
 
 MANUAL_FAN_CTRL = 0x0751
 
@@ -76,11 +80,61 @@ MARK_MERGE_SECONDS = 5
 # The bytes §4 asks about, in its order. Everything else in the sweep is
 # reported as context only: §4.4 says to read the whole 0x0700-0x07FF range
 # rather than the two addresses issue #99 names, because neither is confirmed.
+#
+# The fan table stops at 0x0F5C because of what the next three bytes are.
+# ec/annotations/manual-fan-ctrl-0751.md §6 decodes the handler at 0x888D as
+# requiring 0xFD/0xC9 in 0x0F5D/0x0F5E as a magic and a selector in 1..3 in
+# 0x0F5F, written by the host to ask the EC to copy a table -- and
+# windows/vendor-ec-map.md calls the same three bytes the last three GPU duty
+# slots, the tail of the row SetEcFanTable writes. So they are the trigger and
+# the tail of a written table, not §4.2's subject: filed under the fan table,
+# a host poke reads as the EC reloading its own table from the mode byte
+# alone, which is the one thing §6 says it does not do on static evidence. The
+# group is named for the address range so a `not covered by this pair` or
+# `unchanged across the block` line about it explains itself.
+TRIGGER_GROUP = ("fan-table reload trigger 0x0F5D-0x0F5F "
+                 "(host-written; see below)")
+
 WATCHED = (
     ("PL1/PL2/PL4 (§4.1)", range(0x0783, 0x0786)),
-    ("fan table (§4.2)", range(0x0F00, 0x0F60)),
+    ("fan table (§4.2)", range(0x0F00, 0x0F5D)),
+    (TRIGGER_GROUP, range(0x0F5D, 0x0F60)),
     ("fan-table bracket byte 0x07C6 (§4.3)", range(0x07C6, 0x07C7)),
 )
+
+# What to print under a watched group that has hits, keyed by group name so
+# both readers print the same words from one spelling -- the same reason
+# CONTEXT is one tuple they both walk. The trigger is the one group that
+# needs one: its value lines say only that three bytes differ, and read on
+# their own under a §4.2 heading they are the false positive this group
+# exists to stop. The group is in WATCHED rather than split out inside
+# report_dump_pairs, which would break the "no third category" invariant its
+# docstring states and leave the windowed reader filing a host mailbox poke
+# as a fan-table move.
+GROUP_NOTE = {
+    TRIGGER_GROUP: (
+        "these three are the mailbox ec/annotations/manual-fan-ctrl-0751.md "
+        "§6 decodes at 0x888D -- 0xFD/0xC9 and a 1-3 selector, written by "
+        "the host to ask the EC to copy a table -- and the last three GPU "
+        "duty slots (windows/vendor-ec-map.md), so they move when a table "
+        "is written as well. A change here is not §4.2's answer: §4.2 asks "
+        "whether 0x0751 alone reloaded the table, and the table's own bytes "
+        "are the line above."),
+}
+
+# §4.2's own named next step, for the whole-block read only, and only once a
+# table byte has actually changed. All three of its arguments are required
+# (windows/tools/fan_table_replay.py), so the line names them and the tool
+# says what it walks: the changed table is worth replaying, and the windowed
+# read is not the place to say so because it prints change rows as they
+# happen rather than an endpoint pair.
+FAN_TABLE_NEXT_STEP = (
+    "§4.2's next step for a table that did change: replay it with "
+    "windows/tools/fan_table_replay.py -- the 0x0F00-0x0F5F capture, a dump "
+    "taken after it, and a decoded Fan/Table MQTT capture (--csv --final "
+    "--mqtt, all three are required). It walks the states the capture passed "
+    "through backwards from that dump and checks each against what the "
+    "service published.")
 
 # The bytes §4.4/§4.5 name but this script does not grade. They get their own
 # section because they are what §7's call is made on, and a reader should not
@@ -205,23 +259,50 @@ def build_windows(marks, changes):
     return windows
 
 
+def note_lines(text):
+    """Text as the lines to print under a group, at the value lines' indent.
+
+    Six spaces and the same ~72 columns the rest of this file is written to,
+    so a note reads as part of the group it is printed under rather than as a
+    paragraph the report drifted into.
+    """
+    return textwrap.wrap(text, width=72,
+                         initial_indent="      ", subsequent_indent="      ")
+
+
+def group_note(name):
+    """The note for a watched group, or [] for the groups that need none.
+
+    Empty rather than absent so both readers can call it unconditionally in a
+    loop that has already decided the group has something to say.
+    """
+    note = GROUP_NOTE.get(name)
+    return note_lines(note) if note else []
+
+
 def report_window(w, n, total):
     end = "the next mark" if n < total else "the end of the capture"
     print(f"\n--- mark {n}/{total}: {w.ts.isoformat()}  {w.label!r} "
           f"({w.source})")
     print(f"    window runs to {end}")
 
-    moved = False
+    # The group names that had hits, in WATCHED order, so main can say which
+    # bytes moved rather than only that some did: a mailbox poke and a
+    # fan-table move are different answers to §4.2, and "at least one of
+    # §4.1-§4.3 moved" cannot tell them apart.
+    moved = []
     for name, addrs in WATCHED:
         hits = [c for c in w.changes if c.addr in addrs]
         if not hits:
             continue
-        moved = True
+        moved.append(name)
         print(f"    {name}:")
         for c in hits:
             dt = (c.ts - w.ts).total_seconds()
             print(f"      0x{c.addr:04X}  0x{c.old:02X} -> 0x{c.new:02X}"
                   f"   (+{dt:.1f}s)")
+        for line in group_note(name):
+            print(line)
     if not moved:
         print("    no watched byte moved in this window")
 
@@ -297,9 +378,29 @@ def report_dump_pairs(pairs):
     simply missing from it, and a plain `!=` over the union would call every
     one of them a difference. A gap like that is coverage, printed as such.
 
-    The bucketing is `report_window`'s, unchanged: the §4.1-§4.3 bytes, then
-    the §4.4/§4.5 context bytes printed and not graded, then everything else
-    named for the human. No third category -- a byte's membership in one
+    `0x0F5D-0x0F5F` is reported under a heading of its own, and the heading
+    is not a fifth §4. The dump §3 takes for this range is `ecrw.py dump
+    0x0F00 0x0060`, so it reaches those three bytes, and two different
+    things write them. The host does: ec/annotations/manual-fan-ctrl-0751.md
+    §6 decodes the handler at `0x888D` as checking `0x0F5D = 0xFD` and
+    `0x0F5E = 0xC9` as a magic, reading `0x0F5F` as a table selector accepted
+    only in 1..3, and then copying two 0x30-byte tables into `0x0F00` and
+    `0x0F30`; windows/vendor-ec-map.md records the same handshake from
+    `RefreshDefaultFanTable` and calls the mailbox the last three GPU duty
+    slots, which is where they sit inside the row `SetEcFanTable` writes at
+    `0x0F50-0x0F5F`. §3's main arm runs with the vendor service up, so a mode
+    switch is exactly when a host poke there is possible. Under §4.2's
+    heading such a difference would read as the one result §4.2 exists to
+    look for -- the EC reloading its own table -- where the annotation says
+    on static evidence that the trigger is the mailbox, on explicit host
+    request, and the selector is never read from `0x0751`. A difference there
+    is a host request and/or the tail of a table that was written; which of
+    those it was is the run's question, and neither is §4.2's, which asks
+    about the `0x0F00-0x0F5C` bytes above.
+
+    The bucketing is `report_window`'s, unchanged: the four watched groups,
+    then the §4.4/§4.5 context bytes printed and not graded, then everything
+    else named for the human. No third category -- a byte's membership in one
     bucket is the same question here as it is per window.
     """
     print("\n=== whole-block dump pairs (§4.1-§4.3) ===")
@@ -337,6 +438,11 @@ def report_dump_pairs(pairs):
                 for a in hits:
                     print(f"      0x{a:04X}  0x{before[a]:02X} -> "
                           f"0x{after[a]:02X}")
+                for line in group_note(name):
+                    print(line)
+                if name == "fan table (§4.2)":
+                    for line in note_lines(FAN_TABLE_NEXT_STEP):
+                        print(line)
 
         groups = [(name, [a for a in moved if a in addrs])
                   for name, addrs in CONTEXT]
@@ -367,7 +473,9 @@ def report_dump_pairs(pairs):
           "by the after-dump reads unchanged here whether or not the "
           "captures recorded the move, and a byte that moves entirely "
           "between two of ec_watch.py's sweeps is in no change row at all. "
-          "Neither gap is closed by the other read.")
+          "Neither gap is closed by the other read. `0x0F5D-0x0F5F` is a "
+          "bucket of its own for the reason printed under it, and §4.2's "
+          "prediction is about the `0x0F00-0x0F5C` bytes above it.")
 
 
 def main(argv=None):
@@ -404,9 +512,15 @@ def main(argv=None):
 
     windows = build_windows(marks, changes)
     print(f"\n=== {len(windows)} window(s), one per mark ===")
-    any_moved = False
+    # The union over the windows, in WATCHED order: which watched groups saw a
+    # change row at all. The closing paragraph has to name them, because a
+    # mailbox poke and a fan-table move are different answers and "at least
+    # one of §4.1-§4.3 moved" reads the same for both.
+    moved_groups = []
     for i, w in enumerate(windows, 1):
-        any_moved |= report_window(w, i, len(windows))
+        for name in report_window(w, i, len(windows)):
+            if name not in moved_groups:
+                moved_groups.append(name)
 
     dumps = [(p, read_dump(p)) for p in args.dump]
     report_dumps(dumps, wrote)
@@ -419,12 +533,27 @@ def main(argv=None):
     report_dump_pairs(pairs)
 
     print("\n=== what this does and does not settle ===")
-    if any_moved:
-        print("  At least one of the §4.1-§4.3 bytes moved after a mark. That "
-              "contradicts the static prediction in "
-              "ec/annotations/manual-fan-ctrl-0751.md §5 if it is the PLs, or "
-              "§4.2 if it is the fan table -- capture it in full, it is the "
-              "more interesting outcome.")
+    if moved_groups:
+        print(f"  At least one of the §4.1-§4.3 bytes moved after a mark: "
+              f"{', '.join(moved_groups)}.")
+        if moved_groups == [TRIGGER_GROUP]:
+            # The trigger group alone, with no table byte: the difference is
+            # the mailbox the host writes to ask for a copy, and reading it
+            # as the mode byte reloading the table is the attribution the
+            # split exists to stop -- here in the windowed reader.
+            print("  That is the host-written reload mailbox, not a §4.2 "
+                  "result: ec/annotations/manual-fan-ctrl-0751.md §6 decodes "
+                  "the handler at 0x888D as requiring 0xFD/0xC9 and a 1-3 "
+                  "selector there, and reads the selector from 0x0F5F and "
+                  "never from 0x0751 -- so on static evidence a mode change "
+                  "alone does not reload the table. The vendor service writes "
+                  "that mailbox, so which arm it happened in is the first "
+                  "thing to record.")
+        else:
+            print("  That contradicts the static prediction in "
+                  "ec/annotations/manual-fan-ctrl-0751.md §5 if it is the "
+                  "PLs, or §4.2 if it is the fan table -- capture it in "
+                  "full, it is the more interesting outcome.")
     else:
         print("  None of the §4.1-§4.3 bytes moved in any window: consistent "
               "with the static prediction, for this capture's window only "
