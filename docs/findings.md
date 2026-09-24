@@ -2267,12 +2267,13 @@ Windows nor the service running. The 3.9.18.0 dump is committed because a
 machine with Windows produced it; producing the 3.1.6.0 one is the deliverable
 for whoever has the hardware, and the command is the tool's `--help`.
 
-**The 143 EC instructions sdas8051 cannot encode** — `MOV bit,C`, `CPL bit`,
-`CLR bit`, `CJNE` on a direct address, `DJNZ A`, the carry-with-immediate
-forms. 0.31% of the instruction stream. Closing them means writing an 8051
-encoder here and cross-validating it against sdas8051 on the 45,394
-instructions sdas8051 does encode, which is a defensible way to take the 1:1
-claim to 100% but is a day's work for 143 instructions, so it is not started.
+**The 143 EC instructions sdas8051 cannot reproduce** — `MOV bit,C` (19),
+`CPL bit` (13) and `DJNZ A` (1) it refuses outright, plus the `AJMP` (74) and
+`ACALL` (36) it encodes differently from the manual. 0.31% of the instruction
+stream. Closing them means writing an 8051 encoder here and cross-validating it
+against sdas8051 on the 45,394 instructions sdas8051 does encode, which is a
+defensible way to take the 1:1 claim to 100% but is a day's work for 143
+instructions, so it is not started.
 
 **Everything about the hardware.** No live test has been run in any of this.
 

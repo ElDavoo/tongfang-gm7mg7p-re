@@ -211,13 +211,17 @@ $ SDAS8051=$(nix build nixpkgs#sdcc && echo $out/bin/sdas8051) \
 and no function disagrees.** 2,574 of 2,705 have every instruction verified; a
 further 73 have all but 143 between them.
 
-The 143 are `MOV bit,C`, `CPL bit`, `CLR bit`, `CJNE` on a direct address,
-`DJNZ A` and the carry-with-immediate forms. `CLR bit` is the only one the
-assembler gets *silently* wrong rather than refusing -- it emits `CLR direct`,
-a different instruction of the same length, with no error -- and the rest of
-the list is safe because a refusal is a refusal. `docs/findings.md` §11 records
-the first pass, which reported 97.80% because four opcodes in that list were
-written from memory rather than measured.
+The 143 are `MOV bit,C` (19), `CPL bit` (13) and `DJNZ A` (1), plus the
+`AJMP` (74) and `ACALL` (36) that sdas encodes differently -- the two branch
+forms are 110 of the 143. Three further forms the tool refuses have no instance in
+this firmware and are not part of the 143: 0xC1 `CLR bit`, `CJNE` on a direct
+address, and the carry-with-immediate forms. `CLR bit` is the one to name
+among them, because the assembler gets it *silently* wrong rather than
+refusing -- it emits `CLR direct`, a different instruction of the same length,
+with no error -- so the rule is in the tool before the byte is, and the rest
+are safe to leave as rules because a refusal is a refusal. `docs/findings.md`
+§11 records the first pass, which reported 97.80% because four opcodes in that
+list were written from memory rather than measured.
 
 Measured with `sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14` (SDCC 4.6.0), and
 reproduced unchanged on 4.5.0. The version is in every row of
