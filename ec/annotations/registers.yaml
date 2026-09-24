@@ -1710,8 +1710,11 @@ registers:
       on the caller's pointer, so it reads this byte and then returns
       0x0867 (or 0x0868) minus that value with the borrow in CY. That is the
       same direction for all three result bytes -- 0x086B, 0x086C and 0x086E
-      -- and the three call sites are 0x9E03/0x9E10, 0x9EEF/0x9EFC and
-      0x9FF6/0xA003. So 9 reads and 5 writes once the handoffs are counted.
+      -- and, quoted as the mov DPTR sites that
+      xdata-086x-dispatch-sites.csv records, the three call sites are
+      0x9E03/0x9E10, 0x9EEC/0x9EF9 and 0x9FF3/0xA000 (the lcall itself is
+      three bytes further on at 0x9E06, 0x9EEF, 0x9E13, 0x9EFC, 0x9FF6 and
+      0xA003). So 9 reads and 5 writes once the handoffs are counted.
       0x086B is the first of the three results FUN_CODE_9d9b computes and the
       byte gate_06e6_442_then_sync_046a_from_086b syncs 0x046A from. UNITS
       NOT DETERMINED. Per-address table: ec/annotations/xdata-086x-dispatch.md.

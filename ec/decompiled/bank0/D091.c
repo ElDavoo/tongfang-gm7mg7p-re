@@ -9,19 +9,21 @@
    0x1C15, 0x1C16, 0x1C39, 0x1C3A) into 0x0866-0x086B, and writes 0x48 to 0x0865 when 0x0860 is one
    of 0x06/0x16/0x36/0x07/0x17/0x37, 0x4C when it is one of 0x08/0x18/0x38/0x09/0x19/0x39, and 0
    otherwise; it then calls 0x7151 with A holding the byte at 0x0860. CORRECTION 2026-09-24, issue
-   #180: the 40 bytes from 0xD14B are a CODE table, not code, and this sentence's "not settled" is
-   superseded. The island is the inline table the 0x7151 reader consumes -- the same reader the
-   table at 0x8038 uses, which pops the return address this function's lcall at 0xD148 pushed. Read
-   as (big-endian address, case byte) triples it is 12 well-formed entries at file 0x0D14B-0x0D16E,
-   a 0x0000 terminator at 0x0D16F, and a default of 0xD289 at 0x0D171, which is clear_0860. The case
-   values are exactly the twelve the comparison chain above tests: 0x06 and 0x08 reach 0xD173, 0x07
-   and 0x09 reach 0xD198, 0x16 and 0x18 reach 0xD1C0, 0x17 and 0x19 reach 0xD1EF, 0x36 and 0x38
-   reach 0xD221, and 0x37 and 0x39 reach 0xD24E. Re-derived with `ec/tools/decode_index_table.py
-   ec/firmware/GMxMGxx_11.800 --at 0xD148`, which checks the entry layout against the reader rather
-   than against a linear disassembly, and reports the table well-formed. Note that the .asm's linear
-   decode of the same bytes -- ACALL to 0xD673, 0xD698, 0xD6C0, 0xD6EF and the SETBs of 0x21, 0x4E
-   and 0x89 quoted above -- is that data read as instructions and is not a reading of the table; the
-   targets it names are 0x500 higher than the table's. Per-address table:
+   #180: the 40 bytes from 0xD14B are a CODE table, not code. This supersedes the earlier reading of
+   the same bytes as ACALLs to 0xD673, 0xD698, 0xD6C0 and 0xD6EF interleaved with INC and DEC of
+   @R0, @R1, R0 and R1, SETB of bit addresses 0x21, 0x4E and 0x89, and two NOPs, and the "not
+   settled by the listing" that closed it. The island is the inline table the 0x7151 reader consumes
+   -- the same reader the table at 0x8038 uses, which pops the return address this function's lcall
+   at 0xD148 pushed. Read as (big-endian address, case byte) triples it is 12 well-formed entries at
+   file 0x0D14B-0x0D16E, a 0x0000 terminator at 0x0D16F, and a default of 0xD289 at 0x0D171, which
+   is clear_0860. The case values are exactly the twelve the comparison chain above tests: 0x06 and
+   0x08 reach 0xD173, 0x07 and 0x09 reach 0xD198, 0x16 and 0x18 reach 0xD1C0, 0x17 and 0x19 reach
+   0xD1EF, 0x36 and 0x38 reach 0xD221, and 0x37 and 0x39 reach 0xD24E. Re-derived with
+   `ec/tools/decode_index_table.py ec/firmware/GMxMGxx_11.800 --at 0xD148`, which checks the entry
+   layout against the reader rather than against a linear disassembly, and reports the table
+   well-formed. Note that the .asm's linear decode of the same bytes -- the ACALLs and SETBs named
+   in that superseded reading -- is that data read as instructions and is not a reading of the
+   table; the targets it names are 0x500 higher than the table's. Per-address table:
    ec/annotations/xdata-086x-dispatch.md. The tail writes 0x0863 to 0x1C04, calls 0xD2CB on the byte
    at 0x0864, ANDs the result with 0xFE and passes it to 0xD2DA, spins on 0xD2BF until it returns
    non-zero, then branches on 0xD319: a zero result stores A through the then-current DPTR and ljmps

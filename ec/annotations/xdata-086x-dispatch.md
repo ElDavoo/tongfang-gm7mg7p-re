@@ -270,14 +270,22 @@ puts `0x04FE`/`0x04FF`, `0x05F0`/`0x05F1` and `0x06D0`/`0x06F1`-`0x06F7`
 almost entirely in bank 1, in a state block gated on `0x0490` and `0x06E6`:
 `0x04FF` is reached only from bank 1 (`0x860F`, `0x9088`, `0x94A8`, `0x9581`,
 `0xAF0D`, `0xBE10`), `0x05F0` and `0x05F1` only from bank 1, and
-`magic_55aa_and_0704_countdown` at `0x94FA` holds nine of the group's sites
+`magic_55aa_and_0704_countdown` at `0x94FA` holds eight of the group's sites
 across `0x04FE`, `0x04FF`, `0x06D0`, `0x06F1`, `0x06F2` and `0x06F7` — a
 different signature from anything in the `0x086x` run, and none of those
-addresses appears in `dispatch_on_0860`, `0x9D9B` or the copy.
+addresses appears in `dispatch_on_0860`, `0x9D9B` or the copy. (Eight is what
+the sweep returns for those six addresses; over the whole `0x044C`-`0x05F1`
+range the same routine holds nine, and across the wider
+`0x06D0`/`0x06E3`/`0x06E4`/`0x06F1`-`0x06F7` set named here, fifteen.)
 
 `0x0466` is the one overlap: `bank0:0x9C50` tests bit 4 of it and
-`bank0:0x9D89` tests bit 1, while `bank1:0x9081` reads the same byte. That
-is a shared gate, and a shared gate is not a data path. (The bit-4 test is at
+`bank0:0x9D89` tests bit 1, while three bank-1 sites read the same byte —
+`bank1:0x9104` (in `step_counter_084e_dispatch`), `bank1:0x9B3C` and
+`bank1:0x9D5B`. That is a shared gate, and a shared gate is not a data path.
+(The bank-1 routine at `0x9088` listed above,
+`count_down_06e4_and_toggle_06e3`, is 47 bytes long and reaches `0x045F`,
+`0x04FF`, `0x06E3` and `0x06E4` but never `0x0466`, which is why `0x9088`
+is not among these three.) (The bit-4 test is at
 `0x9C50`, inside the bank-0 code just before `gate_06e6_442_then_sync_046a_from_086b`
 at `0x9CA6`, not inside it — `0x9CA6`'s own gate is `0x06E6 == 1` plus bit 4
 of `0x0442`.) This is a co-occurrence, and `xdata-register-map.md` §6's
