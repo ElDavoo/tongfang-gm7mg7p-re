@@ -528,7 +528,11 @@ six Fn-key mode switches, observed passively. **No register was written or
 read back to establish any of this.** A re-capture across an AC plug-in on
 a wider window, with a human at the machine, is the step that would move
 it, and this file names it rather than writing a procedure for it — the
-issue asks for the walk, not for a new test.
+issue asks for the walk, not for a new test. It still has no procedure:
+[ctgp-dben-07c4-bit3.md](../../docs/hardware-tests/ctgp-dben-07c4-bit3.md)
+is for §9's question, not this one — it drives `0x0743` from the host and
+watches, so nothing it captures could say which process wrote the byte on
+2026-09-23.
 
 ## 9. What is still open
 
@@ -543,9 +547,23 @@ issue asks for the walk, not for a new test.
 - **What `0x166A` and `0x0743` bit 1 are.** The first selects between four
   `GFID` values; the second sets `0x07C4` bit 4. Both have no entry.
 - **Whether the `DBEN` identification is the right one.** §3's bit-3
-  write is an inference from the bytes. A test that flips `CTGP_DB_CTRL`
-  bit 0 and watches bit 3 would decide it, and that is a hardware step no
-  runner can take.
+  write is an inference from the bytes, and a test would decide it. **The
+  test this bullet used to name flipped `CTGP_DB_CTRL` bit 0 and watched bit
+  3; bit 0 is the wrong bit, and what follows replaces it.** The right one:
+  set `CTGP_DB_CTRL` (`0x0743`) **bit 1** with **bit 0 held set** and watch
+  `0x07C4` bit 3, then clear bit 1 with bit 0 still set and watch again.
+  The [`ghidra-functions.csv`](ghidra-functions.csv) rows put the *value* in
+  bit 1 and leave bit 0 a gate: `0x96AD` "copies `0x0745` to `0x09EA` and
+  `0x0746` to `0x09EB` when `0x0743` bit 0 is set, calls `0x94C0` with
+  `0x0743` bit 1"; `0x94C0`'s read-modify-write turns that into `0x07C4`
+  bit 4; and `0x83FF`, the routine that makes bit 3 follow bit 4, is itself
+  "only when bit 0 of `0x0743` … is set". So the chain is **bit 1 → bit 4 →
+  bit 3** with bit 0 gating the last hop — a probe that drove bit 0 alone
+  would open a gate onto a bit 4 that never moved, and report "nothing
+  moved" while proving nothing. The procedure is
+  [ctgp-dben-07c4-bit3.md](../../docs/hardware-tests/ctgp-dben-07c4-bit3.md)
+  and the instrument it drives is `windows/tools/ctgp_dben_probe.py`;
+  running it is a hardware step no runner can take.
 - **The 102 `pd-image` sites.** A different 8051 program's variables, and
   out of scope here as `ec-0x07d0-sites.md` §1 sets out. Issue #30 owns
   discovery of the ECMG-named address list; this is the EC-firmware-side

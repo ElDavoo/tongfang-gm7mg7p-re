@@ -129,9 +129,23 @@ opens anything, so a capture records what it watched. Its procedure is
 and not run** — the attribution half of it, which process opened which door, is
 the step no cloud agent can take.
 
+`tools/ctgp_dben_probe.py` is a fourth, and it is the only one of the four with
+a write path aimed at the `0x0743` block. It writes `0x0743` **bit 1** with
+**bit 0 held set**, watches `0x07C4` bit 3, then clears bit 1 and watches
+again, restoring the original byte in a `finally` — the two-arm script
+`../ec/annotations/ghidra-functions.csv`'s `0x96AD`/`0x94C0`/`0x83FF` rows
+describe, and the bit `ec-07c4-07d5-sites.md` §3 makes follow bit 4. Bit 0 is
+the *gate* on that block and bit 1 the *value*; driving bit 0 alone would open
+a gate onto a bit that never moved. It refuses without `--i-mean-it` and
+without `--csv` before the EC is opened, and with neither it prints the byte
+script instead, so the plan can be read on a machine that is not the subject.
+It prints and does not score — issue #168 grades a capture. Its procedure is
+`../docs/hardware-tests/ctgp-dben-07c4-bit3.md`, **written and not run**, and
+no `status:` in `ec/annotations/registers.yaml` moves until a human runs it.
+
 ## Offline tests
 
-Six of the tools carry offline `unittest` suites, and all of them run from
+Seven of the tools carry offline `unittest` suites, and all of them run from
 Linux with no Windows box, no EC and no vendor code:
 
 ```sh
@@ -151,16 +165,23 @@ live runs took the write path. `tools/test_gpu_block_watch.py` checks the
 watcher's citation table against the DSDT and `ec/annotations/registers.yaml`
 — so a field rename or a status change there turns the suite red rather than
 letting the table rot — and pins that a mark reaches the CSV in the same
-schema. (`tools/test_system_id_probe.py` covers the `0x0456` probe;
+schema. `tools/test_ctgp_dben_probe.py` does the same job for the `DBEN`
+probe: its refusals, its byte script — run from a byte with the value bit
+clear, so a probe that drove bit 0 and never moved bit 1 fails on the byte it
+wrote, which on the vendor's own `0x07` is the same byte the right probe
+writes — its `finally`, its CSV, and the bit arithmetic pinned to the DSDT
+field list and to the three `ghidra-functions.csv` rows it is a transcription
+of, which is the half that says those are the bits the EC's own code reads.
+(`tools/test_system_id_probe.py` covers the `0x0456` probe;
 `../tools/README.md` lists it.) All of them work by faking
 `ecrw` — the module binds kernel32 at import time and only loads on Windows —
 which is also what makes the arms scriptable; the charge-target suite fakes the
-`powershell` call behind its WMI line as well. The probe, `ec_watch` and GPU-block
-suites use the shared `tools/ecrw_fake.py`; the other three still carry fakes of their
-own. `../tools/README.md` is the canonical home for the command, and records
-why the runner gives each suite its own interpreter: until those three are
-moved onto the shared fake, a single discovery over this directory is
-order-dependent (`docs/findings.md` §16).
+`powershell` call behind its WMI line as well. The probe, `ec_watch`,
+GPU-block and cTGP/DBEN suites use the shared `tools/ecrw_fake.py`; the other
+three still carry fakes of their own. `../tools/README.md` is the canonical
+home for the command, and records why the runner gives each suite its own
+interpreter: until those three are moved onto the shared fake, a single
+discovery over this directory is order-dependent (`docs/findings.md` §16).
 
 ## What's proven vs. what needs a Windows box
 

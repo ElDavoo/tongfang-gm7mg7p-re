@@ -2040,7 +2040,7 @@ table in `ec-07c4-07d5-sites.csv` beside it. The load-bearing results:
   one.
 - **A second `0x07C4` writer sets bit 4**, at `0x94C0`
   (`set_07c4_bit4_from_r7`, `ec/decompiled/bank0/94C0.c`), and its one
-  direct caller passes it bit 1 of `0x0743`. Neither writer is the one that
+  direct caller passes bit 1 of `0x0743`. Neither writer is the one that
   ran on 2026-09-23: `0x83FF`'s only caller is `0x8551`, inside the
   unresolved three-byte `lcall`/`ljmp` run at `0x851B` that §7a hit and
   deferred, so neither can be lined up against a capture timestamp.
