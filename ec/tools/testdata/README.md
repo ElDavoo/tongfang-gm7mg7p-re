@@ -24,6 +24,7 @@ placeholder `2026-01-01` timestamp so the two can never be confused.
 | `gpu-door-example-quiet.csv` | `../grade_gpu_door.py` | §6's third bullet: three marks, thirty seconds apart, and not one change row. Every one of the 24 watched addresses therefore has a `???? -> ????  net +0  total 0  max 0` line in every window, which is the fixture that makes "a zero is a stated line, not a missing one" testable rather than asserted. It is *not* a prediction that a run will be quiet. |
 | `gpu-door-example-moved-and-back.csv` | `../grade_gpu_door.py` | `0x07D0` steps up twice and returns to where it started inside one window, so its endpoint line reads `0x00 -> 0x00` — held — while `total 112` and `max 56` say it moved 112 and got 56 away. The block summary counts one address over three rows, and the block still counts as moved, so the ordering is unaffected. It is *not* a prediction that `0x07D0` moves and returns, or by how much. |
 | `gpu-door-example-close-marks.csv` | `../grade_gpu_door.py` | Two marks 1.0 s apart, inside `grade_0751_isolation.py`'s `MARK_MERGE_SECONDS`. That grader fuses them on purpose and this one must not, so the first — a one-second window with nothing in it — survives as a window of its own and the distance is printed. It is *not* a prediction that a run will be paced like this; §3 asks for ~30 s between actions. |
+| `0751-isolation-run-3blocks/*.csv` | `../grade_0751_isolation.py` | A three-value day: the three CSVs §6 names, carrying all three blocks' marks in one set the way §3 takes them, one block per value `a0`/`00`/`10`, and **block 2's restore mark absent** — what a mark typed after that watcher had exited looks like in a capture, printed by `ec_watch.py` and written to no CSV. It is the only fixture with a void block in it, and so the one §3's per-block integrity check and the grader's `--block` are read against. The duty byte drifts throughout and nothing §4.1-§4.3 moves, as in `0751-isolation-run/` above. It is *not* a prediction that a block will come out void, that a restore mark will be lost, or that a die warms the way the drift beside it suggests. |
 
 The `0751-isolation-*` `.csv` files are in `ec_watch.py --mark --csv`
 format, `MARK` rows included; the two `capture-claims-example-*` ones are
@@ -45,6 +46,16 @@ file set, and the run those fixtures stand in for is issue #283's and nobody
 has made it. `../test_grade_gpu_door.py` holds the `gpu-door-example-*.csv`
 on disk and the fixtures it runs equal, so a fixture nobody grades fails
 rather than sitting there looking covered.
+
+`0751-isolation-run-3blocks/` is a three-value day and only the three CSVs —
+no dumps and no snapshot, so it is not a §6 set and nothing holds it to one.
+It is what the per-block integrity check and the grader's `--block` are read
+against: eight marks over three blocks, the middle one's restore missing,
+which is the shape a mark typed after a watcher exited leaves behind. It sits
+outside `0751-isolation-run/` for the reason the dump examples sit outside it
+— that directory is the set §6 names — so a second directory under the same
+naming cannot be mistaken for §6's set by the equality in
+`../test_grade_0751_isolation.py`, which is over the run directory alone.
 
 `0751-isolation-run/` is the set §6 of
 `docs/hardware-tests/manual-fan-ctrl-0751-isolation.md` names, all ten

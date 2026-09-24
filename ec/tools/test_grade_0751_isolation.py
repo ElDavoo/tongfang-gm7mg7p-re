@@ -40,6 +40,16 @@ RUN = HERE / 'testdata' / '0751-isolation-run'
 RUN_CAPTURES = (str(RUN / '2026-01-01-0751-isolation-0700-07ff.csv'),
                 str(RUN / '2026-01-01-0751-isolation-0f00-0f5f.csv'),
                 str(RUN / '2026-01-01-0751-isolation-0400-045f.csv'))
+# A three-value day: the same three CSVs §6 names, with all three blocks'
+# marks in one set the way §3 takes them, one block per value, and block 2's
+# restore mark absent. That is what a mark typed after that watcher had
+# exited looks like in a capture -- printed by ec_watch.py, written to
+# nothing -- and it is the case §3's per-block check and --block are read
+# against: two intact blocks around one void one.
+BLOCK_CAPTURES = tuple(
+    str(HERE / 'testdata' / '0751-isolation-run-3blocks'
+        / f'2026-01-01-0751-isolation-{r}.csv')
+    for r in ('0700-07ff', '0f00-0f5f', '0400-045f'))
 RUN_BEFORE = str(RUN / '2026-01-01-0751-isolation-a0-before-0700.txt')
 RUN_AFTER = str(RUN / '2026-01-01-0751-isolation-a0-after-0700.txt')
 # The other pair §3's steps 0 and 6 take, for the fan-table range. These are
@@ -199,6 +209,40 @@ def group_body(section, name):
 def value_lines(text):
     """The differing-address lines in a group body, as printed."""
     return [l for l in text.splitlines() if VALUE_LINE.search(l)]
+
+
+# A window header as the report prints it: the mark's place in the whole
+# stream, its timestamp, the label in the repr the header puts it in, and the
+# captures it was recorded in.
+MARK_HEADER = re.compile(r"^--- mark (\d+)/(\d+): \S+  '(.+?)' \(", re.M)
+
+
+def marked_windows(out):
+    """The (number, label) of every window a report printed.
+
+    Read off the headers rather than asserted as substrings of the labels,
+    because §3's labels share their tails -- `wrote 0x0751=0x10` is inside
+    `no-op wrote 0x0751=0x10`, and both are in the capture -- so an
+    `assertIn` on one of them matches a window in another block. The number
+    is kept because `--block` leaves each window where it was in the whole
+    mark stream.
+    """
+    return [(int(n), label) for n, _, label in MARK_HEADER.findall(out)]
+
+
+def fixture_block_ends():
+    """Each block's last mark, as the label and whether it is a restore.
+
+    Taken from the fixture rather than written out here, so a mark edited in
+    it fails the tests below instead of leaving them asserting a block
+    structure the CSVs no longer have.
+    """
+    marks = []
+    for path in BLOCK_CAPTURES:
+        m, _ = grade.read_capture(path)
+        marks += m
+    return [(b[-1].label, grade.is_restore(b[-1].label))
+            for b in grade.split_blocks(grade.coalesce_marks(marks))]
 
 
 def dumped_change_addresses():
@@ -827,6 +871,131 @@ class GradeTests(unittest.TestCase):
         for path in (RUN_BEFORE, RUN_AFTER, RUN_BEFORE_0F00, RUN_AFTER_0F00,
                      RUN_BEFORE_0400, RUN_AFTER_0400):
             self.assertIn(Path(path).name, block)
+
+    # §3's per-block integrity check, on the capture shape it exists for. A
+    # block whose last mark is not the restore cannot show the byte being put
+    # back, and used to be graded exactly like one that could -- which is the
+    # "status moving with nothing behind it" shape issue #167 names as not
+    # done, one level up: the window report is the same either way, so the
+    # difference has to be somewhere else or nowhere.
+    def test_a_block_whose_last_mark_is_not_a_restore_is_void(self):
+        rc, out, _ = run(*BLOCK_CAPTURES)
+        self.assertEqual(rc, 1)
+        self.assertEqual(fixture_block_ends(),
+                         [('restored 0x0751=0x10', True),
+                          ('wrote 0x0751=0x00', False),
+                          ('restored 0x0751=0x00', True)])
+        self.assertIn('=== 3 block(s), one per no-op control arm (§3) ===', out)
+        # Three verdicts, and the void one names the label the block did end
+        # on: "void" on its own does not say which block or which mark, and
+        # the operator's next move is to go back to the terminals.
+        self.assertIn("block 1/3: intact -- last mark 'restored 0x0751=0x10' "
+                      "is the restore", out)
+        self.assertIn("block 2/3: VOID -- last mark is 'wrote 0x0751=0x00', "
+                      "not the restore", out)
+        self.assertIn("block 3/3: intact -- last mark 'restored 0x0751=0x00' "
+                      "is the restore", out)
+        # The two intact blocks say intact in their own right. A check that
+        # only speaks when it fails is a check a fold-in reader cannot tell
+        # from one that never ran.
+        self.assertEqual(out.count(': intact -- last mark'), 2)
+        # The note, on the two things that make this check a CSV check rather
+        # than a by-eye one: what a void block is short, and why the mark
+        # `ec_watch.py` printed at stop may not be in the capture at all.
+        section = out.split('=== 3 block(s), one per no-op control arm')[1] \
+                   .split('=== 0x0751 across the dumps')[0]
+        flat = " ".join(section.split())
+        self.assertIn('short the restore mark §3\'s step 5 makes', flat)
+        self.assertIn('printed in its `marks:` list and recorded nowhere else',
+                      flat)
+        self.assertIn('Redo the void block per §3', flat)
+        # And the windows are still graded, void block included: they are
+        # what the capture did hold, and a hole in the record is not a reason
+        # to drop the two thirds of it that is there.
+        self.assertEqual(len(marked_windows(out)), 8)
+        # "this block is void" and "this byte is inert" are different
+        # sentences, and this section is where they are most likely to be
+        # read as one.
+        self.assertNotIn('confirmed-working', section)
+        self.assertNotIn('confirmed-inert', section)
+
+    # The passing case, over §6's own file set: one block, intact, still 0.
+    # The §6 end-to-end test above covers the exit code; this pins the
+    # verdict and the sentence that keeps it from being read as a result.
+    def test_an_intact_capture_says_so_rather_than_being_silent(self):
+        rc, out, _ = run(*RUN_CAPTURES)
+        self.assertEqual(rc, 0)
+        self.assertIn('=== 1 block(s), one per no-op control arm (§3) ===', out)
+        self.assertIn("block 1/1: intact -- last mark 'restored 0x0751=0x10' "
+                      "is the restore", out)
+        section = out.split('=== 1 block(s), one per no-op control arm')[1] \
+                   .split('=== 0x0751 across the dumps')[0]
+        flat = " ".join(section.split())
+        self.assertIn('a statement about what was captured and not about what '
+                      'the EC did', flat)
+
+    # The issue asks for the grader to be run per block and its output
+    # attached, and §6's three CSVs are one set for the whole run -- so
+    # without --block every invocation prints every block's windows and the
+    # three attachments differ only in the dump section.
+    def test_block_one_of_a_three_block_capture_is_its_windows_alone(self):
+        rc, out, _ = run(*BLOCK_CAPTURES, '--block', '1')
+        self.assertEqual(rc, 0)
+        self.assertIn('=== block 1 of 3, 3 window(s) in it ===', out)
+        self.assertEqual(marked_windows(out),
+                         [(1, 'no-op wrote 0x0751=0x10'),
+                          (2, 'wrote 0x0751=0xA0'),
+                          (3, 'restored 0x0751=0x10')])
+        # Numbered where they are in the whole mark stream, so this run is a
+        # subset of the whole-capture one and the two read side by side. And
+        # the window that ends the block says the block ended, rather than
+        # claiming the capture did: the one false sentence a per-block read
+        # could otherwise print.
+        self.assertIn('window runs to the end of block 1 of 3', out)
+        self.assertNotIn('the end of the capture', out)
+        self.assertIn('block 1/3: intact', out)
+        # Only this block's verdict. Reporting the other two would put a
+        # second block's worth of meaning on an attachment made per block,
+        # and a reader could not tell which of them this run was about.
+        self.assertIn('the other 2 block(s) were not checked in this run', out)
+        self.assertNotIn('block 2/3', out)
+        self.assertNotIn('block 3/3', out)
+
+    # The same contract on the void block, which is the case a per-block run
+    # exists to be able to say out loud on its own.
+    def test_a_void_block_is_graded_on_its_own_and_says_so(self):
+        rc, out, _ = run(*BLOCK_CAPTURES, '--block', '2')
+        self.assertEqual(rc, 1)
+        self.assertIn('=== block 2 of 3, 2 window(s) in it ===', out)
+        self.assertEqual(marked_windows(out),
+                         [(4, 'no-op wrote 0x0751=0xA0'),
+                          (5, 'wrote 0x0751=0x00')])
+        self.assertIn("block 2/3: VOID -- last mark is 'wrote 0x0751=0x00', "
+                      "not the restore", out)
+        self.assertEqual(out.count(': intact -- last mark'), 0)
+
+    def test_the_last_block_of_a_capture_is_graded_on_its_own(self):
+        rc, out, _ = run(*BLOCK_CAPTURES, '--block', '3')
+        self.assertEqual(rc, 0)
+        self.assertIn('=== block 3 of 3, 3 window(s) in it ===', out)
+        self.assertEqual(marked_windows(out),
+                         [(6, 'no-op wrote 0x0751=0x00'),
+                          (7, 'wrote 0x0751=0x10'),
+                          (8, 'restored 0x0751=0x00')])
+        self.assertIn('block 3/3: intact', out)
+
+    # A block that is not in the capture is an input error, not a quiet one.
+    # An empty report would be the strongest negative result the procedure can
+    # produce, and the last thing a mistyped --block may look like.
+    def test_a_block_that_is_not_in_the_capture_is_an_error(self):
+        for n in ('0', '4', '-1'):
+            rc, out, err = run(*BLOCK_CAPTURES, '--block', n)
+            self.assertEqual(rc, 1)
+            self.assertIn(f'--block {n} is out of range', err)
+            self.assertIn('numbered 1 to 3', err)
+            self.assertNotIn('window(s), one per mark', out)
+            self.assertNotIn('no watched byte moved', out)
+            self.assertNotIn('block(s), one per no-op control arm', out)
 
 
 if __name__ == '__main__':

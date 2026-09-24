@@ -61,6 +61,35 @@ the readback was not taken, and names a `--dump-pair` that does cover it,
 whose after file is what §6 says to pass last. Neither check is a claim about
 the machine; both are claims about which files were handed in.
 
+One thing is read that is not a byte at all: §3's per-block integrity check.
+§3 calls that check mechanical and then leaves the operator to eyeball it
+against the mark list `ec_watch.py` prints at stop. Here the marks are grouped
+into blocks -- one per no-op control arm, §3's step 2, closed by the step-5
+restore -- and each block's last mark has to be that restore. A block whose
+last mark is not the restore is void: the capture cannot show the byte being
+put back, so its last window never closes. It is printed as void, by name and
+with the label it did end on, and the exit code is not zero. The windows are
+still graded either way: they are what the capture did hold, and a void block
+is a hole in the record rather than a reason to throw the record away.
+
+This is the check over the committed CSVs, not the by-eye one at the machine,
+and the two are not the same reading. `ec_watch.py` appends a mark to its own
+list and prints it whether or not the CSV sink is still open
+(`../../windows/tools/ec_watch.py:121-123` against the close at `:221-222`),
+so the last label a human reads off the terminal can be one the capture never
+received -- the case §3 wants caught. The committed CSV is what the fold-in
+reads, so the CSV is where the check belongs.
+
+`--block N` grades one block of a multi-block capture and reports that
+block's windows alone, which is what makes the output something a fold-in can
+attach per block: §6's three CSVs are one set for the whole run, so without it
+every invocation prints every block's windows and the three attachments differ
+only in the `--dump`/`--dump-pair` section.
+
+None of this is a register behaviour. A void block says the capture is short a
+mark; it says nothing about `0x0751`, and no line of any block verdict is a
+status.
+
 **This is not the §7 call and cannot be.** §7 moves `MANUAL_FAN_CTRL` off
 `present-untested` on fan duty or package power moving under a fixed load.
 Those bytes are captured and printed here, but printing them is not grading
@@ -84,6 +113,7 @@ Usage:
         [capture-0f00-0f5f.csv] [capture-0400-045f.csv] \
         [--dump before-0700.txt] [--dump after-0700.txt]
     python3 ec/tools/grade_0751_isolation.py capture.csv --wrote 0xA0
+    python3 ec/tools/grade_0751_isolation.py capture.csv --block 2
     python3 ec/tools/grade_0751_isolation.py capture.csv \
         --dump-pair before-0700.txt after-0700.txt \
         --dump-pair before-0f00.txt after-0f00.txt
@@ -164,6 +194,28 @@ FAN_TABLE_NEXT_STEP = (
     "--mqtt, all three are required). It walks the states the capture passed "
     "through backwards from that dump and checks each against what the "
     "service published.")
+
+# What a void block means, in the operator's words rather than this file's.
+# Printed once however many blocks are void: the per-block line already names
+# which they are and the label each ended on, so repeating the explanation
+# per block would be noise on a three-value run.
+VOID_BLOCK_NOTE = (
+    "A void block is short the restore mark §3's step 5 makes, so its last "
+    "window never closes and the block is not a finished one. The usual cause "
+    "is the mark itself: ec_watch.py writes a mark into the CSV only while "
+    "the sink is open, so a restore typed after the watcher has exited is "
+    "printed in its `marks:` list and recorded nowhere else -- which is why "
+    "this reads the CSVs and not that list. Redo the void block per §3; the "
+    "exit code is 1 while any block is void.")
+
+# The passing case, in as many words, because the block section is the one
+# place in this report that carries no address and would otherwise be the one
+# place a reader could mistake for a result.
+INTACT_BLOCK_NOTE = (
+    "Every block's last mark is its restore, so the capture is complete "
+    "enough to read. That is a statement about what was captured and not "
+    "about what the EC did: nothing here is a §7 verdict, and a void block "
+    "is a hole in the record rather than a finding about a register.")
 
 # The bytes §4.4/§4.5 name but this script does not grade. They get their own
 # section because they are what §7's call is made on, and a reader should not
@@ -307,6 +359,65 @@ def build_windows(marks, changes):
     return windows
 
 
+def mark_word(label, word):
+    """Whether a mark label opens with `word`.
+
+    §3 fixes the labels the operator types and `ec_watch.py` writes them into
+    the CSV verbatim, so the leading word is the only handle on it. Only that
+    word is read, case-insensitively: the byte and the value after it are the
+    operator's to spell, and both checks below are about the action rather
+    than the punctuation.
+
+    `coalesce_marks` joins the three consoles' labels for one action with
+    ' / ', so each is read on its own -- one console recording the mark is
+    what makes it that mark, since the three are already one action the merge
+    agreed on.
+    """
+    return any(part.strip().lower().startswith(word)
+               for part in label.split(" / "))
+
+
+def is_restore(label):
+    """§3's step-5 restore, on the label the operator types."""
+    return mark_word(label, "restore")
+
+
+def is_noop(label):
+    """§3's step-2 control arm, on the label the operator types."""
+    return mark_word(label, "no-op")
+
+
+def split_blocks(windows):
+    """The windows grouped into §3's blocks.
+
+    A block opens at the mark typed as §3's step 2 -- the no-op control arm
+    -- and closes at its own step-5 restore. Those are the two marks the
+    procedure's own sequence fixes, and they are what a capture can be read
+    by: a label says a run was one block or the next, where a gap in the
+    timestamps says only how long the operator took.
+
+    The restore cuts as well as the no-op, so a block that lost the *next*
+    one's control arm does not run the two together. A trailing group with no
+    restore is a block too -- that is the void one, and dropping it for want
+    of a closer would leave a mark stream graded as though it ended where the
+    operator intended.
+
+    A capture whose first mark is not a no-op opens a block there instead: a
+    run that started mid-block, or whose operator skipped the control arm, is
+    framed as well as the marks allow rather than refused. Whether the block
+    closes on a restore is then what `report_blocks` checks.
+    """
+    blocks, current = [], []
+    for w in windows:
+        if current and (is_noop(w.label) or is_restore(current[-1].label)):
+            blocks.append(current)
+            current = []
+        current.append(w)
+    if current:
+        blocks.append(current)
+    return blocks
+
+
 def window_delta(w, addr):
     """One context byte's movement inside one window, as a printed line.
 
@@ -364,8 +475,15 @@ def group_note(name):
     return note_lines(note) if note else []
 
 
-def report_window(w, n, total):
-    end = "the next mark" if n < total else "the end of the capture"
+def report_window(w, n, total, end=None):
+    """One window: the watched bytes that moved, and the context bytes.
+
+    `end` overrides what the last window of a `--block` read runs to. It
+    stops the read there, but it does not end the capture, and the default's
+    "the end of the capture" would be the one false sentence in a report
+    whose whole job is not to claim more than the capture holds.
+    """
+    end = end or ("the next mark" if n < total else "the end of the capture")
     print(f"\n--- mark {n}/{total}: {w.ts.isoformat()}  {w.label!r} "
           f"({w.source})")
     print(f"    window runs to {end}")
@@ -422,6 +540,59 @@ def report_window(w, n, total):
               "here -- read them against §4.4 and §4.5 by hand:")
         print("      " + " ".join(f"0x{a:04X}" for a in others))
     return moved
+
+
+def report_blocks(blocks, selected=None):
+    """§3's per-block integrity check, one verdict per block, and the count
+    of the ones that came back void.
+
+    Whether the capture is complete enough to read at all, which is a
+    different question from what it says. A block whose last mark is not the
+    restore is missing the mark that says the byte was put back; its windows
+    are real, but the last of them runs on to the end of the capture instead
+    of closing, so §4 has an arm it cannot read. The verdict names the label
+    the block did end on, because "void" on its own sends the operator back
+    to the terminals to find out which block and which mark.
+
+    `intact` prints as well, so a reader of a fold-in can see that the check
+    ran and held rather than inferring it from the absence of a complaint --
+    silence about a missing restore is the failure mode this exists to stop,
+    and the absence of the passing case is the same shape.
+
+    `selected` grades one block of a multi-block capture (`--block N`) and
+    says the rest were not looked at, so the exit code this returns is about
+    the block that was asked for and about nothing else.
+    """
+    total = len(blocks)
+    if selected is None:
+        print(f"\n=== {total} block(s), one per no-op control arm (§3) ===")
+        shown = range(1, total + 1)
+    else:
+        print(f"\n=== block {selected} of {total}, its integrity check ===")
+        print(f"    the other {total - 1} block(s) were not checked in this "
+              "run; run it without --block to check them all")
+        shown = [selected]
+    void = 0
+    for i in shown:
+        last = blocks[i - 1][-1]
+        if is_restore(last.label):
+            print(f"  block {i}/{total}: intact -- last mark {last.label!r} is "
+                  "the restore")
+            continue
+        void += 1
+        print(f"  block {i}/{total}: VOID -- last mark is {last.label!r}, not "
+              "the restore")
+    if void:
+        note = VOID_BLOCK_NOTE
+    elif selected is None:
+        note = INTACT_BLOCK_NOTE
+    else:
+        return void
+    print()
+    for line in textwrap.wrap(note, width=72, initial_indent="  ",
+                             subsequent_indent="  "):
+        print(line)
+    return void
 
 
 def report_dumps(dumps, wrote, pairs):
@@ -652,6 +823,12 @@ def main(argv=None):
                          "whole-block report and independent of --dump, whose "
                          "§4.6 readback still comes from the last one")
     ap.add_argument("--wrote", help="the value written to 0x0751 (e.g. 0xA0)")
+    ap.add_argument("--block", type=int, metavar="N",
+                    help="grade one block of a multi-block capture -- the "
+                         "windows from that block's no-op control arm through "
+                         "its restore -- and report that block's §3 verdict "
+                         "alone, so the output can be attached per block; "
+                         "default is every block")
     args = ap.parse_args(argv)
 
     wrote = int(args.wrote, 0) if args.wrote else None
@@ -671,16 +848,39 @@ def main(argv=None):
         return 1
 
     windows = build_windows(marks, changes)
-    print(f"\n=== {len(windows)} window(s), one per mark ===")
+    blocks = split_blocks(windows)
+    if args.block is None:
+        shown = list(range(len(windows)))
+        end = None
+        print(f"\n=== {len(windows)} window(s), one per mark ===")
+    else:
+        if not 1 <= args.block <= len(blocks):
+            print(f"\n--block {args.block} is out of range: this capture has "
+                  f"{len(blocks)} block(s), one per no-op control arm, "
+                  f"numbered 1 to {len(blocks)}. A block that is not in it is "
+                  "not graded as an empty one.", file=sys.stderr)
+            return 1
+        first = sum(len(b) for b in blocks[:args.block - 1])
+        shown = list(range(first, first + len(blocks[args.block - 1])))
+        # The windows keep their place in the whole mark stream rather than
+        # being renumbered from one, so a `--block` run is a subset of the
+        # whole-capture run and the two attachments can be read side by side.
+        end = (f"the end of block {args.block} of {len(blocks)}, which is "
+               "where this read stops")
+        print(f"\n=== block {args.block} of {len(blocks)}, "
+              f"{len(shown)} window(s) in it ===")
     # The union over the windows, in WATCHED order: which watched groups saw a
     # change row at all. The closing paragraph has to name them, because a
     # mailbox poke and a fan-table move are different answers and "at least
     # one of §4.1-§4.3 moved" reads the same for both.
     moved_groups = []
-    for i, w in enumerate(windows, 1):
-        for name in report_window(w, i, len(windows)):
+    for i in shown:
+        for name in report_window(windows[i], i + 1, len(windows),
+                                  end if i == shown[-1] else None):
             if name not in moved_groups:
                 moved_groups.append(name)
+
+    void = report_blocks(blocks, args.block)
 
     # Both file lists are read before either is printed, so §4.6 can name a
     # --dump-pair that covers 0x0751 while it is saying the readback was not
@@ -738,7 +938,7 @@ def main(argv=None):
           "not the call itself. `confirmed-inert` as a standalone control "
           "additionally needs all three values, with and without the vendor "
           "service (§3a).")
-    return 0
+    return 1 if void else 0
 
 
 if __name__ == "__main__":

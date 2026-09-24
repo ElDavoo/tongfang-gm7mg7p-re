@@ -151,6 +151,18 @@ mechanical, not a matter of remembering: `ec_watch.py` prints
 (`../../windows/tools/ec_watch.py:221`), so the last label in that list is the
 last mark the capture has. If it is not the restore, the block is short one.
 
+The check over the capture is the one that survives into the record, and
+`../../ec/tools/grade_0751_isolation.py` now makes it: it groups the marks
+into blocks — one per no-op control arm, closed by the restore — prints an
+`intact` or a `VOID` verdict for each, and exits non-zero if any block is
+void. It reads the CSVs rather than the terminal, and that is not a
+preference: `ec_watch.py` appends a mark to its own list and prints it
+whether or not the CSV sink is still open
+(`../../windows/tools/ec_watch.py:121-123` against the close at `:221-222`),
+so the last label on the screen can be one the capture never received. The
+by-eye check above is still the fastest one to do at the machine; run the
+tool over the committed CSVs as well, before they are filed.
+
 The `0x0400-0x045F` watcher is the EC's own temperature reading: `0x043E` is
 `CPU_TEMP` and `0x044F` is `GPU_TEMP`, both `confirmed-working` in
 `../../ec/annotations/registers.yaml`. It stops at `0x045F` on purpose — the
@@ -565,6 +577,17 @@ python ec\tools\grade_0751_isolation.py ^
                      <date>-0751-isolation-<value>-after-0400.txt ^
         --wrote 0xA0
 ```
+
+Three values make three blocks, and the three CSVs are one set for the whole
+run, so a plain invocation over them prints every block's windows. `--block N`
+grades one block and prints that block's windows alone, with its own
+`intact`/`VOID` verdict and the same non-zero exit if that block is void —
+which is what makes this output something a fold-in can attach per block, one
+attachment per value. The other blocks are not checked in such a run, and the
+report says so. §3a's service-stopped pass is a second run with its own
+`<date>`, not a fourth block of this one: the Office/Turbo pair is required in
+both arms and §6's names carry no arm, so the two passes' `<value>`-stamped
+dumps would overwrite each other.
 
 The `--dump-pair` report is a second, wider bracket on the same §4.1-§4.3
 bytes, and it is worth having for what the windows cannot show: a byte that
