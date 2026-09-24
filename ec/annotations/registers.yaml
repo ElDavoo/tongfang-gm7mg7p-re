@@ -685,6 +685,34 @@ registers:
       `read+write`. Second address where the corrected census agrees with a
       note already in this file; 0x0440 is the first.
 
+  - name: XDATA_0390
+    addr: 0x0390
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      One EC-side site, bank1/E100.asm:70, and no PD site. Two things happen
+      there and only one of them is a load. E100.asm:72 moves the byte into R2,
+      and that R2 is dead: 0x9EA1 reads R1, R3, R4, R5, R6 and R7 and never
+      R2, and E100.asm:100 overwrites R2 with no intervening read. The same
+      site hands the *address* to the callee as R3:R4 (E100.asm:73-74), and
+      0x9EA1 dereferences that pair -- reading it at 9EA1.asm:19 and writing
+      it at 9EA1.asm:43. So the byte has a reader and a writer in the machine
+      code and the dead R2 store is a sibling of a live reference, not the whole
+      of it. The C does not spell the address anywhere: the callee renders the
+      pair as CONCAT11(r4_value,r3_value) (9EA1.c:35 and :49) and the call site
+      passes only the constants 0x90 and 3 (E100.c:51), so the census's
+      DAT_EXTMEM_xxxx token pattern cannot reach it. That is why this address
+      has a row and still no census reference -- it is a present byte whose
+      C-level reference fell out of one method, which is neither `absent` (the
+      byte is read and written) nor `unknown-not-absent` (its site is counted
+      and pinned by the three refs fields above). No live test was run, so
+      `present-untested` is the ceiling. The annotation that moved the spelling,
+      and the census transcript: ec/annotations/xdata-register-map.md; the
+      calibration rule this note follows is docs/findings.md 4.
+
   - name: BAT_FULL_CAPACITY_1
     addr: 0x0404
     sources: [uniwill-laptop, xdata-refs]

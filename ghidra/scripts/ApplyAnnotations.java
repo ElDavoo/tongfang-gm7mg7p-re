@@ -40,6 +40,36 @@
 // routine operation breaks the build. A typo is caught anyway, and more
 // strongly, by the driver's --check: the committed .c has to contain the name
 // the row asked for and must NOT contain the key.
+//
+// A variable row may change a CALLER'S ARITY, and that is a correction rather
+// than a loss. This is the rule issue #259 settled, written here because this
+// is the code the effect comes from, and it is deliberately a comment: nothing
+// in this script's behaviour changed to accommodate it.
+//
+// The first case was bank1 0x9EA1 (rows 28-31 of the variables CSV). Its
+// committed four-argument signature dropped an argument at its call sites, and
+// `bank1/E100.c` stopped passing `DAT_EXTMEM_0390` -- the XDATA census's only
+// reference to that byte, so the census fell by one. The argument the
+// decompiler gave up was not a parameter: `0x9EA1` reads R1, R3, R4, R5, R6 and
+// R7 and never R2, while the call site loaded 0x0390 into R2 and then handed
+// the *address* on as R3:R4 for the callee to read and write. The old fifth
+// argument was an unconsumed scratch register promoted into a parameter slot.
+//
+// Three consequences, all of them about reading, none about this script:
+//
+//   * A C-level reference count is a LOWER BOUND on the machine code. The
+//     census matches `DAT_EXTMEM_xxxx` tokens and symbol names, so it cannot
+//     see an address the decompiler spells as arithmetic or over register
+//     names -- here as `CONCAT11(r4_value,r3_value)`.
+//   * A pin moves only with a MEASURED reason recorded in the same change.
+//     Naming the byte (XDATA_0390) and re-running the export moved no .c and
+//     no manifest.csv row at all, so the pins did not move either.
+//   * An address that leaves the census is "not found by this method" until an
+//     .asm witness says otherwise. `xdata_register_map.py --self-test` pins
+//     that witness for 0x0390, so a zero cannot read as absence.
+//
+// See ec/annotations/xdata-register-map.md 7.1, ec/annotations/README.md, and
+// docs/findings.md 18.
 //@category TongFang
 import ghidra.app.script.GhidraScript;
 import ghidra.app.decompiler.DecompInterface;
@@ -218,6 +248,17 @@ public class ApplyAnnotations extends GhidraScript {
         // once this program has at least one row of its own: a JVM start is
         // ~15 s and the BIOS and Windows builds have no variable layer at all,
         // so opening one eagerly would buy them a decompiler they never use.
+        //
+        // Applying a row here can change how many arguments a CALLER passes,
+        // because the signature this block drives is the one the call sites are
+        // then read against. That is allowed and it is a correction: the
+        // bank1 0x9EA1 case in the header comment is a four-argument
+        // signature that dropped a decompiler-promoted scratch register, and
+        // the census's C-level reference count moved with it. Nothing here
+        // compensates for that, on purpose -- compensating would mean renaming
+        // without committing the signature, which puts a claim the `.asm`
+        // contradicts into every future export. The account of what moved is
+        // ec/annotations/xdata-register-map.md 7.1.
         if (args.length > 3 && !args[3].isEmpty() && !"-".equals(args[3])) {
             Map<Long, List<String[]>> byFunction = new LinkedHashMap<>();
             for (String[] row : readCsv(args[3])) {

@@ -191,6 +191,48 @@ stronger: it measures the committed output rather than the script's say-so.
 row decompiled — the cost), `variables_applied` and `variables_unmatched`, read
 back from `apply-<program>.tsv`.
 
+### A variable row may change a caller's arity, and that is a correction
+
+The sibling rule to the one above, and the one an author is most likely to trip
+over, because the effect lands somewhere they did not edit. **Applying a
+variable row can change how many arguments a *caller* passes**: the signature
+these rows drive is the one the call sites are then read against. The first
+case was bank1 `0x9EA1` (rows 28-31 of the CSV), whose committed four-argument
+signature dropped an argument at its call sites — and `bank1/E100.c` stopped
+passing `DAT_EXTMEM_0390`, which was the XDATA census's only reference to that
+byte, so `xdata_register_map.py`'s reference count fell by one and `0x0390`
+left the census entirely.
+
+The argument that went was not a parameter. `0x9EA1` reads R1, R3, R4, R5, R6
+and R7 and never names R2, while the call site loaded `0x0390` into R2 and then
+handed the **address** on as R3:R4 for the callee to read (`9EA1.asm:19`) and
+write (`:43`). The fifth argument the decompiler used to promote was an
+unconsumed scratch register. So the row corrected the decompile and the census
+moved with it.
+
+Three things follow, and all three are about how to read a count:
+
+- **A C-level reference count is a lower bound on the machine code.** The
+  census matches `DAT_EXTMEM_xxxx` tokens and symbol names, so it cannot see an
+  address the decompiler spells as arithmetic or over register names — here as
+  `CONCAT11(r4_value,r3_value)`. Do not read a lower count as fewer accesses.
+- **A pin moves only with a measured reason recorded in the same change.**
+  Re-run `--check`, take the number the tool reports, and say in the commit
+  which way it moved and why. Issue #259 did exactly this: naming the byte
+  (`XDATA_0390`) and re-running the export in default mode moved no `.c` and no
+  `manifest.csv` row, so the pins did not move.
+- **An address that leaves the census is "not found by this method"** until an
+  `.asm` witness says otherwise — never "absent". `xdata_register_map.py
+  --self-test` now pins that witness for `0x0390`, asserting the site in the
+  `.asm` and the absent census row together so the two cannot drift apart.
+
+Renaming *without* committing the signature was considered and rejected: it
+would trade a correct decompile for a stable number and put a claim the `.asm`
+contradicts into every future export. The address-by-address account is
+`xdata-register-map.md` §7.1; `ghidra/scripts/ApplyAnnotations.java` carries
+the same rule where the effect happens, and `docs/findings.md` §18 has it in
+the findings record.
+
 ### The first batch
 
 60 rows across 46 functions: every function whose existing `hand-decoded`
