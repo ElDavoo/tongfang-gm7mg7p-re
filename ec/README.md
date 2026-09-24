@@ -59,7 +59,8 @@ into `r2 -a 8051` with no stitching needed.
   the numbers it guards are tabulated in `annotations/static-refs-audit.md`.
 - **`tools/check_cluster_citations.py`** — holds every `main-ec-NNN` in the
   committed prose to the membership it names in
-  `annotations/xdata-clusters.csv`. A cluster id in a sentence is a pointer,
+  `annotations/xdata-clusters.csv`, and holds every hand-typed count beside one
+  to the figures the same CSV gives. A cluster id in a sentence is a pointer,
   and pointers go stale: the ids are numbered by size, then references, then
   lowest address (`xdata_register_map.py:1027`), which holds them steady across
   a re-run and promises nothing once the classifier itself changes. Issue #253
@@ -68,17 +69,32 @@ into `r2 -a 8051` with no stitching needed.
   both a cluster and an XDATA address, the address has to be a member of the
   cluster that sentence pairs it with, or of one of the clusters it names where
   it pairs it with none — reporting file, line, id and address, and
-  exiting non-zero. Committed files only: no image, no Ghidra, no network. The
-  limits it earns the right to state: a sentence that *denies* membership is
-  skipped rather than checked, one that names a cluster without claiming
-  membership is skipped (which is what keeps
-  `annotations/xdata-register-map.md` §5's census table out of the results),
-  and a pairing the wording cannot be read for — the same split written with
+  exiting non-zero. A **census row** is the other kind of claim: a markdown
+  table row whose first cell is one cluster id, which is what all twelve rows
+  of `annotations/xdata-register-map.md` §5 are. Four of them disagreed with
+  the CSV beside them before issue #272 and nothing held them there, so a
+  census row's size, reference count, address range and named count are now
+  held to the same census. The two are separate gates over one walk and
+  neither inherits the other: a §5 row carries a range and a title but never
+  the word "member", so the membership rule skips every one of them and this
+  is the only rule that reads it. Committed files only: no image, no Ghidra,
+  no network. The limits it earns the right to state: a sentence that
+  *denies* membership is skipped rather than checked, one that names a cluster
+  without claiming membership is skipped (which is what keeps §5's *ranges*
+  out of the membership results; its *numbers* are the count rule's), and a
+  pairing the wording cannot be read for — the same split written with
   both ids first and the addresses in a trailing list — is back to being
-  satisfied by either. Passing means the checked sentences agree with the CSVs
-  beside them; it says nothing about whether the prose is right about the
-  firmware. `tools/test_check_cluster_citations.py` pins each of those skips
-  and asserts the committed tree currently agrees. Not run by
+  satisfied by either, so a two-cluster unit catches a wrong id there and a
+  wrong pairing only where its own wording says which is which. The count
+  rule reads a cell only when it is a bare number, thousands commas allowed,
+  or one of `none`/an em dash/a hyphen, which is
+  what leaves a listing like `` `0x0403` ``, a span like `` `0x030E`-`0x1809` ``
+  and a free-text cell alone — as it also leaves alone any row naming two
+  cluster ids, or any row whose id is not in its first cell. Passing means the
+  checked sentences and the checked counts agree with the CSVs beside them; it
+  says nothing about whether the prose is right about the firmware.
+  `tools/test_check_cluster_citations.py` pins each of those skips and asserts
+  the committed tree currently agrees. Not run by
   `.github/scripts/agent-gates.sh` — that file is not one this repo edits
   casually (`../../CLAUDE.md`), so the tool stands as something a human can
   wire up.

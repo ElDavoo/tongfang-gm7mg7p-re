@@ -1,22 +1,33 @@
 #!/usr/bin/env python3
-"""Check every `main-ec-NNN` cluster citation in the prose against the census.
+"""Hold every `main-ec-NNN` citation in the prose to the committed census.
 
-A cluster id in a sentence is a pointer: a reader who follows it into
-`ec/annotations/xdata-clusters.csv` has to land on the membership the sentence
-describes. Issue #253 is four sentences where the pointer drifted — the ids
-moved when issue #4.3's census regeneration landed (#133 / #238), and prose
-written against the old numbering kept the old ids. The ids are numbered by
-size, then references, then lowest address (`xdata_register_map.py:1027`),
+Two rules over one walk of the committed markdown under `ec/`, `docs/` and
+`evidence/`, both keyed on the same two CSVs, and independent of each other.
+
+**Membership.** A cluster id in a sentence is a pointer: a reader who follows
+it into `ec/annotations/xdata-clusters.csv` has to land on the membership the
+sentence describes. Issue #253 is four sentences where the pointer drifted —
+the ids moved when issue #4.3's census regeneration landed (#133 / #238), and
+prose written against the old numbering kept the old ids. The ids are numbered
+by size, then references, then lowest address (`xdata_register_map.py:1027`),
 which makes them stable across regenerations *of one tool version* and says
-nothing about staying put across a change to the tool's own classifier.
+nothing about staying put across a change to the tool's own classifier. So a
+unit that names one or more clusters and one or more XDATA addresses has to
+attribute each address to a member of one of the clusters it names: the
+cluster its own wording pairs the address with, and where it pairs it with
+none, one of the clusters the unit names.
 
-So this walks the committed markdown under `ec/`, `docs/` and `evidence/`,
-finds every unit that names one or more `main-ec-NNN` clusters and one or more
-XDATA addresses, and holds it to the census: an address attributed to a
-cluster has to be a member of the cluster the unit pairs it with, and where
-the unit pairs it with none, of one of the clusters the unit names.
+**Counts.** `xdata-register-map.md` §5 is a hand-typed copy of twelve rows of
+that CSV, and nothing held its numbers: four of the twelve rows disagreed with
+the census beside them before issue #272. A *census row* — a markdown table row
+whose first cell is one `main-ec-NNN` id — has its size, reference count,
+address range and named count held to the same CSV. It is a second gate rather
+than an extension of the membership one and inherits none of its conditions:
+a §5 row carries a range and a title but never the word "member", so the
+membership rule skips every one of them, and this rule reads cells the
+membership rule never sees.
 
-**What this does not check, which is as much of the point:**
+**What the membership rule does not check, which is as much of the point:**
 
   * *Denials.* A unit that says an address is **not** in a cluster is skipped
     rather than checked, so "X is not in main-ec-003" is never verified and a
@@ -24,22 +35,53 @@ the unit pairs it with none, of one of the clusters the unit names.
   * *Proximity.* A unit that mentions a cluster word without claiming
     membership ("the `0x06E6`/`0x0860` gate block" in a `main-ec-002` table row,
     where `0x06E6` is a byte the shared function reads and not a member) is
-    skipped. Requiring the membership cue is what keeps the census summary
-    table in `xdata-register-map.md` §5 out of the results.
+    skipped. Requiring the membership cue is what keeps §5's *ranges* out of
+    the membership results; its *numbers* are the count rule's.
   * *A split written as a list.* An address is held to the cluster its own
     words put it with — "`0x06C6` in `main-ec-121` and `0x06CD` in
     `main-ec-198`" — but only where a preposition joins the two tokens and no
     clause boundary falls between them. The same claim with the ids first and
     the addresses in a trailing list ("the two cut into `main-ec-121` and
     `main-ec-198` (`0x06C6`, `0x06CD`)") pairs nothing and is satisfied by
-    either id; the two in it can be exchanged without this noticing.
+    either id; the two in it can be exchanged without this noticing. So a
+    unit naming two clusters is caught when its own wording says which is
+    which, and only in the weaker sense of "a wrong id at all" where it does
+    not.
   * *Anything outside the three roots*, and any address the census does not
     know, so a code address that collides with an XDATA one is not examined.
 
+**And what the count rule does not check.** A cell is read as a count only if
+it is a bare decimal integer — thousands commas allowed, so `1,136` is 1136 —
+or, in the "named inside" column, one of `none`, an em dash or a hyphen, which
+there say zero. Everything else in a census row is left alone, which is most
+of why the rule can sit in the tree without flagging the corpus:
+
+  * *A listing.* `` `0x0403` `` in §5's "named inside" column is the one
+    address `main-ec-004` names, written out because a single name is worth
+    the space, and a listing is not a count of one.
+  * *A span.* `` `0x030E`-`0x1809` `` is two addresses of a range. The count
+    rule reads it as the row's range and holds it against `addr_range`, but it
+    is never read as a number of anything, in any column.
+  * *Free text.* `**43 addresses, 4,965 refs**` in
+    `xdata-06c2-06db-timers.md:491` is a deliberate contrast between the
+    committed cluster and the shape a code guard would produce, and the prose
+    under it says that shape carries no id. Reading counts out of free text
+    would flag those two figures permanently and for no reason.
+  * *A dash in a size or reference column.* The same corpus writes `—` there
+    for "this figure does not apply to this row", which is not a claim of
+    zero, so the two columns do not get the named cell's three spellings.
+  * *A row naming more than one cluster id.* Which row's figures would apply
+    is ambiguous, so a row that names two is not read as a census row at all.
+  * *A row whose cluster id is not in its first cell.* The
+    `gpu-tgp-07c4-07d7-door.md` cross-reference table puts `main-ec-001` in a
+    cross-reference column beside `dsdt.dsl:52204` source line numbers, which
+    are not counts of anything this census knows.
+
 Every one of those is "not found by this method", never "absent" — the same
 caveat `ec/annotations/registers.yaml` carries for a static scan. Passing this
-means the checked sentences agree with the committed CSVs; it does not mean the
-prose is right about the firmware.
+means the checked sentences and the checked counts agree with the committed
+CSVs; it does not mean the prose is right about the firmware, and where the
+count rule cannot read a cell it says nothing about that figure.
 
 Usage:
     python3 ec/tools/check_cluster_citations.py [--verbose]
@@ -97,20 +139,101 @@ CLAUSE_BREAK = re.compile(r"[;:.()]")
 # on into the next item's and drags its addresses along with it.
 TERMINATOR = re.compile(r"(?<=[.!?])\s+(?=[A-Z`*_|-])")
 
+# The shapes a census row's cells can be read in. A count is a bare decimal
+# integer -- thousands commas the way this corpus writes them, so `1,136` and
+# `4,965` both read and `1,,,2` does not -- or one of the three ways the
+# corpus says zero. Everything else in a table cell is left unread, and the
+# docstring names the committed prose each of those shapes is.
+BARE_NUMBER = re.compile(r"[0-9]{1,3}(?:,[0-9]{3})+|[0-9]+")
+ZERO = re.compile(r"none|—|-", re.IGNORECASE)
+# A range, which is what anchors the named count. §5 writes it
+# `` `0x030E`-`0x1809` ``, one backtick per address, so it is only recognisable
+# as a span once `clean` has taken the backticks out.
+SPAN = re.compile(r"0x[0-9A-Fa-f]{4}-0x[0-9A-Fa-f]{4}")
+MARKUP = re.compile(r"[`*]")
+
+
+def clean(cell):
+    """The cell's own text, without the markdown wrapped around it.
+
+    A §5 cell is bolded or backticked or both, and the id cell is both at
+    once (`**`main-ec-003`**` in `xdata-06c2-06db-timers.md`). The backticks
+    go throughout rather than off the ends, because a range is written
+    `` `0x030E`-`0x1809` `` and it is only the range once they are gone.
+    """
+    return MARKUP.sub("", cell).strip()
+
+
+def number(cell):
+    """The cell read as a plain number, or None if it is not one.
+
+    Deliberately narrow: a bare decimal integer, thousands commas the way this
+    corpus writes them. A listing, a span and a run of free text are all `None`
+    here, and every one of those shapes is real committed prose -- see the
+    docstring. An em dash is `None` too, and that is the point: in a size or
+    reference column a dash means the figure does not apply to that row, which
+    is not the same claim as zero.
+    """
+    text = clean(cell)
+    if BARE_NUMBER.fullmatch(text):
+        return int(text.replace(",", ""))
+    return None
+
+
+def named(cell):
+    """The cell read as a count of named addresses, or None if it is not one.
+
+    `number`, plus the three ways this corpus says zero -- `none`, an em dash,
+    a hyphen -- which in the "named inside" column do mean zero and so are
+    checked against the census's own count. This is the one cell where a
+    non-number is still a count claim, and it is what makes a row reading
+    `none` where the census names every member visible rather than merely
+    wrong. It is the reason the two readers are separate: the same dash means
+    "zero" here and "not applicable" in the two columns beside it.
+    """
+    stated = number(cell)
+    if stated is not None:
+        return stated
+    if ZERO.fullmatch(clean(cell)):
+        return 0
+    return None
+
+
+def cells(unit):
+    """(the cells of a markdown table row) or () if the unit is not one."""
+    if not (unit.startswith("|") and unit.endswith("|")):
+        return ()
+    return [c.strip() for c in unit[1:-1].split("|")]
+
+
+def plural(n, noun):
+    """`1 named address`, `43 named addresses` — a one is a real case here."""
+    head, _, word = noun.rpartition(" ")
+    if n != 1:
+        word += "es" if word.endswith(("s", "x", "z", "ch", "sh")) else "s"
+    return f"{n} {head} {word}" if head else f"{n} {word}"
+
 
 def census():
-    """(membership per cluster id, the set of addresses the census knows).
+    """(membership per cluster id, the addresses the census knows, its counts).
 
-    Membership comes from the clusters CSV, which is keyed by program, so a
-    `main-ec-NNN` id is unambiguous on its own. The registers CSV is read only
-    for its address column: an address that is not in the census is a code
-    address in a sentence full of them, not a cluster member claim.
+    Membership and the counted columns both come from the clusters CSV, which
+    is keyed by program, so a `main-ec-NNN` id is unambiguous on its own. The
+    registers CSV is read only for its address column: an address that is not
+    in the census is a code address in a sentence full of them, not a cluster
+    member claim.
     """
     with open(CLUSTERS, newline="") as f:
-        members = {r["cluster_id"]: set(r["addrs"].split()) for r in csv.DictReader(f)}
+        rows = list(csv.DictReader(f))
+    members = {r["cluster_id"]: set(r["addrs"].split()) for r in rows}
+    counts = {r["cluster_id"]: {"size": int(r["size"]),
+                               "refs": int(r["refs"]),
+                               "named": len(r["named_addrs"].split()),
+                               "addr_range": r["addr_range"]}
+              for r in rows}
     with open(REGISTERS, newline="") as f:
         known = {r["addr"] for r in csv.DictReader(f)}
-    return members, known
+    return members, known, counts
 
 
 def units(text):
@@ -208,7 +331,65 @@ def pairings(unit, addresses):
     return pairs
 
 
-def check(path, members, known, verbose):
+def census_row(path, lineno, unit, counts):
+    """(problems) for a census row's hand-typed counts.
+
+    Independent of the membership rule and run before it, because a §5 row
+    never reaches the membership rule: it has an address range and a title,
+    and not one of its cells says "member". So a row is read here, and only a
+    row is: the first cell has to be one cluster id the census knows.
+    """
+    row = cells(unit)
+    if len(row) < 3:
+        return []
+    head = clean(row[0])
+    ids = CLUSTER_ID.findall(head)
+    # `findall` rather than a `fullmatch`, so a cell naming two clusters is
+    # not a census row: whose figures would they be?
+    if len(ids) != 1 or head != ids[0]:
+        return []
+    facts = counts.get(ids[0])
+    if facts is None:
+        return []
+
+    problems = []
+    # Both counts quote the cell as the table writes it rather than as the
+    # number parsed out of it, so a reader can find the figure in the row
+    # without converting it first. A census problem has no paired id: the
+    # `kind` says which rule raised it, and only a membership one names a
+    # cluster for the unit's own wording to have paired the address with.
+    for cell, column, noun in ((row[1], "size", "address"),
+                               (row[2], "refs", "reference")):
+        stated = number(cell)
+        if stated is not None and stated != facts[column]:
+            problems.append((path, lineno, ids,
+                             f"{plural(facts[column], noun)} in the census, "
+                             f"{clean(cell)} in the row", "census count", None))
+    # The range anchors the named count, so the cell after it is where the
+    # count goes. The range itself is held to the row's own `addr_range` --
+    # nearly free once the cell has been parsed to find that neighbour -- and
+    # a second span is not treated as another anchor, which is what keeps a
+    # span in the named column from being read as a range.
+    for i, cell in enumerate(row[2:], start=2):
+        stated = clean(cell)
+        if not SPAN.fullmatch(stated):
+            continue
+        if stated.upper() != facts["addr_range"].upper():
+            problems.append((path, lineno, ids,
+                             f"range `{facts['addr_range']}` in the census, "
+                             f"`{stated}` in the row", "census range", None))
+        if i + 1 < len(row):
+            stated = named(row[i + 1])
+            if stated is not None and stated != facts["named"]:
+                problems.append((path, lineno, ids,
+                                 f"{plural(facts['named'], 'named address')} "
+                                 f"in the census, {clean(row[i + 1])} in the row",
+                                 "census count", None))
+        break
+    return problems
+
+
+def check(path, members, counts, known, verbose):
     """(problems, lines read) for one file."""
     problems = []
     with open(path, encoding="utf-8") as f:
@@ -219,6 +400,7 @@ def check(path, members, known, verbose):
         ids = sorted(set(CLUSTER_ID.findall(unit)))
         if not ids:
             continue
+        problems += census_row(path, lineno, unit, counts)
         addresses = sorted({"0x" + a.upper() for a in ADDRESS.findall(unit)
                             if "0x" + a.upper() in known})
         if not addresses:
@@ -240,7 +422,8 @@ def check(path, members, known, verbose):
             expected = [pairs[address]] if address in pairs else ids
             if not any(address in members.get(cid, ()) for cid in expected):
                 at = line_of_address(unit, address)
-                problems.append((path, at or lineno, ids, address, pairs.get(address)))
+                problems.append((path, at or lineno, ids, address, "membership",
+                                 pairs.get(address)))
     return problems, len(text.split("\n"))
 
 
@@ -251,7 +434,7 @@ def main() -> int:
                     help="report every unit skipped, and why")
     args = ap.parse_args()
 
-    members, known = census()
+    members, known, counts = census()
     paths = []
     for root in ROOTS:
         for dirpath, dirnames, filenames in os.walk(os.path.join(REPO, root)):
@@ -263,25 +446,28 @@ def main() -> int:
     problems = []
     read = 0
     for path in paths:
-        found, lines = check(path, members, known, args.verbose)
+        found, lines = check(path, members, counts, known, args.verbose)
         problems += found
         read += lines
 
-    for path, lineno, ids, address, paired in problems:
+    for path, lineno, ids, what, kind, paired in problems:
         where = f"{os.path.relpath(path, REPO)}:{lineno}"
-        if paired:
-            claim = f"not in `{paired}`, the cluster this line pairs it with"
+        named = ", ".join(f"`{cid}`" for cid in ids)
+        if kind == "membership":
+            if paired:
+                claim = f"not in `{paired}`, the cluster this line pairs it with"
+            else:
+                claim = f"not a member of any cluster this line names ({named})"
+            print(f"{where}: {what} is {claim}; it is a member of "
+                  f"{cluster_of(what, members)}", file=sys.stderr)
         else:
-            named = ", ".join(f"`{cid}`" for cid in ids)
-            claim = f"not a member of any cluster this line names ({named})"
-        print(f"{where}: {address} is {claim}; it is a member of "
-              f"{cluster_of(address, members)}", file=sys.stderr)
+            print(f"{where}: {kind} disagrees for {named}: {what}", file=sys.stderr)
     if problems:
         print(f"{len(problems)} citation(s) disagree with "
               f"{os.path.relpath(CLUSTERS, REPO)}", file=sys.stderr)
         return 1
     print(f"{len(paths)} files / {read} lines: every checked `main-ec-NNN` "
-          "citation resolves to the membership it names in the committed census")
+          "citation and hand-typed count agrees with the committed census")
     return 0
 
 
