@@ -43,11 +43,27 @@ cross-region edge is counted, bucketed and reported, and never used to merge
 two clusters: the rule is structural, so the union never sees a cross-region
 edge and there is no cluster to reject afterwards. Per CLAUDE.md a zero here
 means *not found by this method* and never "absent", so every run prints the
-A/B/C edge populations, the cross-region count and the ungrouped remainder,
-and `--check` refuses a `callgraph` group that spans two banks. The rule is
-scoped to `callgraph` on purpose: a `type`-seeded group can hold a bank0 row
-and a bank1 row, and that is two functions happening to share a role rather
-than a merge, which is what a role-based grouping means.
+A/B/C edge populations, the cross-region count, the proxy count and the
+ungrouped remainder split by reason, and `--check` refuses a `callgraph` group
+that spans two banks. The rule is scoped to `callgraph` on purpose: a
+`type`-seeded group can hold a bank0 row and a bank1 row, and that is two
+functions happening to share a role rather than a merge, which is what a
+role-based grouping means.
+
+**The rule needed a node as well as an edge, so a bank caller's endpoint for a
+common target is a per-bank proxy, not the common row.** A `common`-scoped row
+is one function both bank images carry, so a bank0 caller and a bank1 caller
+that both reach it were two halves of ONE node, and that node joined the two
+banks however sound each edge is. The endpoint is a `PROXY_SCOPE` proxy now,
+which keeps the relation the edge really does carry -- the bank0 functions
+sharing this helper stay connected -- and drops the one it does not.
+
+That makes the proxy the larger of the two discard populations on the committed
+tree, 196 bank->common edges against 27 bank<->bank, so `--report` prints it
+beside the cross-region count rather than letting the 27 stand as the rule's
+whole accounting. It also bounds what a group is: a path between two members of
+a `callgraph` group can run through a proxy that is not a member, so "mutually
+reachable" is a property of the graph the union walked, not of a set of rows.
 
 **What a group is not.** A group is a structural claim about call structure:
 these routines work together. It is not a claim about what the EC does with
@@ -65,6 +81,14 @@ artifact of where a boundary was drawn; and the paged `ajmp`/`acall` forms
 stay inside the caller's own region and are not edges at all. A cluster count
 is not a topology. Read the report.
 
+**And one edge the proxy rule files under a question it is not the same as.**
+A `pd` caller's edge to a `common`-scoped address is a question about two
+separate programs -- the ITE8850-PD image has its own address space, so the two
+rows are not two endpoints of one call -- and `region_of` has no way to say so,
+so the bank proxy rule is what it gets. `--report` breaks that edge out by
+caller scope so it is counted rather than hidden inside bank->common, and what
+it means is a follow-up rather than a rule this file settles.
+
 Usage:
     python3 ec/tools/group_functions.py --report
     python3 ec/tools/group_functions.py --apply
@@ -73,7 +97,9 @@ Usage:
 """
 import argparse
 import collections
+import contextlib
 import csv
+import io
 import itertools
 import os
 import re
@@ -146,6 +172,25 @@ ABSOLUTE = frozenset(("lcall", "ljmp"))
 # rather than read as fact by the next person to open the file.
 CALLGRAPH_NAME = re.compile(r"^callgraph_([a-z0-9]+)_([0-9A-F]{4,8})$",
                             re.I)
+
+# What the banking rule discarded, as one value the report and `group_rows()`
+# can both ask about. Two populations, because the rule cuts edges two ways and
+# reporting one of them as if it were the whole cost is what made 27 look like
+# the accounting for a rule that cuts 196 as well.
+#
+#   `cross_region` -- bucket-B edges whose target also exists in the other
+#     bank, i.e. the ones the same-bank assumption decides and this tool
+#     cannot.
+#   `proxy_edges` / `proxy_by_caller` -- edges a bank caller had to a
+#     `common` row, replaced by a per-bank proxy. Broken out by caller scope
+#     because `pd` is a different program and is not a bank question.
+#   `reached_only_by_bank` -- annotated `common` rows whose caller scopes are
+#     a non-empty subset of the banks, i.e. the rows this method DID find and
+#     then cut. Non-empty matters: a row no caller reaches at all is not
+#     "reached only by bank callers", it is unreached.
+ClusterStats = collections.namedtuple(
+    "ClusterStats",
+    "cross_region proxy_edges proxy_by_caller reached_only_by_bank")
 
 
 def read_csv(path):
@@ -263,7 +308,9 @@ def cluster(rows, repo=REPO, min_size=4):
     than a filter applied afterwards: the union simply never sees a
     cross-region edge, so there is no cluster to reject and the invariant
     cannot be violated by a bug in a later pass. The edges that cross a
-    region are counted and reported, never merged.
+    region are counted and reported, never merged, and the calling scope is
+    recorded against an annotated `common` target on the way past, so the
+    report can say which rows the method found and the rule then cut.
 
     "Never sees a cross-region edge" is about the union, and an edge to a
     common-area function is where that promise was being broken without
@@ -302,6 +349,13 @@ def cluster(rows, repo=REPO, min_size=4):
         by_addr[row["scope"]][norm_addr(row["addr"])] = row
 
     cross_region = 0
+    # Which caller scopes reach each annotated `common` address, and how many
+    # bank callers' edges were replaced by a proxy. Collected in the same walk
+    # as the union rather than by a second pass over the listings: a second
+    # read is a second chance to measure a different population from the one
+    # the clustering used, and these figures are reported beside it.
+    reach = collections.defaultdict(set)
+    proxy_by_caller = collections.Counter()
     for row in rows:
         scope = row["scope"]
         caller = (scope, norm_addr(row["addr"]))
@@ -316,6 +370,13 @@ def cluster(rows, repo=REPO, min_size=4):
             # graph, keyed to the common row.
             if target < BANK_BASE:
                 taddr = "%04X" % target
+                # Recorded BEFORE the join decision, so a `common` caller
+                # reaching a `common` row counts too: that edge is joined
+                # directly rather than proxied, but it still says this row
+                # was reached from outside the banks, which is what keeps it
+                # out of `reached_only_by_bank`.
+                if taddr in by_addr.get("common", {}):
+                    reach[taddr].add(scope)
                 if taddr in by_addr.get(scope, {}):
                     union(caller, (scope, taddr))
                 elif taddr in by_addr.get("common", {}):
@@ -339,6 +400,7 @@ def cluster(rows, repo=REPO, min_size=4):
                     # carrying a function is not the same function being
                     # called by both.
                     union(caller, (PROXY_SCOPE % scope, taddr))
+                    proxy_by_caller[scope] += 1
                 continue
             # At or above the bank base. The target is in the caller's own
             # bank by assumption -- the assumption audit_call_targets.py
@@ -366,7 +428,17 @@ def cluster(rows, repo=REPO, min_size=4):
         if key not in real:
             continue
         clusters[find(key)].append(key)
-    return clusters, cross_region
+    # A non-empty subset of the banks: at least one bank caller, and nobody
+    # outside them. The `scopes and` is the difference between "the method
+    # found this and the rule cut it" and "no caller was found for it at all",
+    # which is a different row in a different column of the report.
+    stats = ClusterStats(
+        cross_region=cross_region,
+        proxy_edges=sum(proxy_by_caller.values()),
+        proxy_by_caller=proxy_by_caller,
+        reached_only_by_bank={taddr for taddr, scopes in reach.items()
+                              if scopes and scopes <= set(BANKS)})
+    return clusters, stats
 
 
 def component_name(members):
@@ -438,7 +510,15 @@ def group_rows(rows, repo=REPO, is_bios=False, min_size=4):
     off something already established (`type`, the vector table, the module)
     and a cluster is a guess at structure. A row in a cluster too small to be
     a subsystem stays `ungrouped` rather than getting a plausible label --
-    the same rule that put `unresolved` in the `type` vocabulary."""
+    the same rule that put `unresolved` in the `type` vocabulary.
+
+    `ungrouped` is a result, not a failure, and it is not one reason. A row no
+    caller reaches was not found by this method; a `common` row reached only by
+    bank callers WAS found, and the per-bank proxy rule is what cut the edges.
+    The two get different comments, because on the second row `ungrouped` says
+    nothing about the method and everything about the rule -- and a comment
+    reading "not found by this method" there is a claim the tool's own edge
+    list contradicts."""
     seeds = seed_groups(rows)
     if is_bios:
         for row in rows:
@@ -447,7 +527,7 @@ def group_rows(rows, repo=REPO, is_bios=False, min_size=4):
                               "The module is the grouping: the export is "
                               "per-module and the module name is the real "
                               "structural layer the BIOS has."))
-    clusters, cross = cluster(rows, repo, min_size)
+    clusters, stats = cluster(rows, repo, min_size)
     out = {}
     assigned = collections.defaultdict(list)
     for members in clusters.values():
@@ -485,12 +565,21 @@ def group_rows(rows, repo=REPO, is_bios=False, min_size=4):
                         "them, not that they do one job."
                         % sizes[group],
                         row.get("evidence", ""))
+        elif key[0] == "common" and key[1] in stats.reached_only_by_bank:
+            out[key] = ("ungrouped", "ungrouped",
+                        "No typed seed and no connected component at or above "
+                        "the minimum size. This row WAS found: its callers are "
+                        "all bank rows, and the per-bank proxy rule cut every "
+                        "edge to it rather than join the banks through a "
+                        "common-area node. The reason is the rule, not the "
+                        "method.",
+                        row.get("evidence", ""))
         else:
             out[key] = ("ungrouped", "ungrouped",
                         "No typed seed and no connected component at or above "
                         "the minimum size. Not found by this method.",
                         row.get("evidence", ""))
-    return out, cross
+    return out, stats
 
 
 def write_groups(path, rows, grouped):
@@ -577,10 +666,17 @@ def cross_bank_groups(grows):
 
 
 def self_test():
-    """Pin the no-cross-bank rule, the seeds, and the vocabulary.
+    """Pin the no-cross-bank rule, the seeds, the vocabulary, and what the
+    report says about the edges the rule discarded.
 
     The fixture is a graph with a KNOWN cross-bank edge, because the whole
-    claim of this tool is that it refuses to join across one."""
+    claim of this tool is that it refuses to join across one.
+
+    The refusal is not the only thing pinned. The proxy fixtures below also pin
+    the figures a reader sees, because a `--report` that quietly stopped
+    printing the proxy population would leave the tool correct and its
+    accounting wrong again, which is the shape of the bug this pass exists to
+    fix."""
     failures = []
 
     def check(label, cond, detail=""):
@@ -621,7 +717,7 @@ def self_test():
         {"scope": "bank1", "addr": "8100", "name": "other_bank_callee",
          "type": "logic", "evidence": os.path.relpath(other_asm, REPO)},
     ]
-    grouped, cross_edges = group_rows(rows, repo=REPO, min_size=2)
+    grouped, stats = group_rows(rows, repo=REPO, min_size=2)
     g00 = grouped[("bank0", "8000")][0]
     g10 = grouped[("bank1", "8100")][0]
     check("a bucket-B edge into the other bank is not joined",
@@ -629,7 +725,7 @@ def self_test():
           "(bank0 0x8000 and bank1 0x8100 must not share a group: the same "
           "three bytes name a same-bank call)")
     check("the cross-region edge is counted",
-          cross_edges == 1, "(got %r)" % (cross_edges,))
+          stats.cross_region == 1, "(got %r)" % (stats.cross_region,))
 
     # The same two bank0 rows, with no bank1 row to tempt it, DO cluster.
     two = [r for r in rows if r["scope"] == "bank0"]
@@ -660,7 +756,7 @@ def self_test():
          "type": "gate", "evidence": os.path.relpath(
              asm("bridge_common.asm", [RET]), REPO)},
     ]
-    grouped3, _ = group_rows(bridge, repo=REPO, min_size=2)
+    grouped3, stats3 = group_rows(bridge, repo=REPO, min_size=2)
     check("one annotated common function reached from both banks is not a "
           "bridge between them",
           grouped3[("bank0", "8000")][0] != grouped3[("bank1", "8000")][0],
@@ -682,6 +778,81 @@ def self_test():
                             ("common", "05E8")},
           "(got %r)" % (sorted(grouped3),))
 
+    # ... and the rule's COST is counted, separately from the cross-region
+    # count, because on the committed tree it is the larger of the two and a
+    # report offering only the 27 would read as though the rule's whole
+    # accounting were 27. Four callers reach 0x05E8 and every one of those
+    # edges became a proxy; none of them is a bucket-B edge, so the two
+    # populations do not overlap and the cross-region count stays 0 here.
+    check("the proxy edges are counted as their own population",
+          stats3.proxy_edges == 4,
+          "(got %r; four callers reach 0x05E8, so four edges were proxied)"
+          % (stats3.proxy_edges,))
+    check("the proxy count is broken down by caller scope",
+          dict(stats3.proxy_by_caller) == {"bank0": 2, "bank1": 2},
+          "(got %r)" % (dict(stats3.proxy_by_caller),))
+    check("a proxied common target is not also a cross-region edge",
+          stats3.cross_region == 0,
+          "(got %r; 0x05E8 is below the bank base, so no bank call here is a "
+          "bucket-B edge)" % (stats3.cross_region,))
+    check("a common row only bank callers reach is reported as found-then-cut",
+          stats3.reached_only_by_bank == {"05E8"},
+          "(got %r; a `common` row reached by both banks and nobody else is "
+          "exactly the population the generic 'not found by this method' "
+          "comment gets wrong)" % (sorted(stats3.reached_only_by_bank),))
+    # The row's own comment carries the reason, because a CSV row is read
+    # without the report beside it. The basis stays `ungrouped` -- it asserts
+    # no membership, which is what `cross_bank_groups` relies on -- so the
+    # reason lives here and not in a new basis.
+    check("the found-then-cut row keeps the ungrouped basis",
+          grouped3[("common", "05E8")][1] == "ungrouped")
+    check("the found-then-cut row's comment names the rule, not the method",
+          "per-bank proxy rule" in grouped3[("common", "05E8")][2]
+          and "Not found by this method" not in grouped3[("common", "05E8")][2],
+          "(got %r)" % (grouped3[("common", "05E8")][2],))
+    # The 26-figure definition, pinned on the half of it that is easy to get
+    # wrong: one `common` caller is enough to take a row OUT of the population.
+    # That edge is joined directly rather than proxied (both ends are `common`,
+    # so no bank is implicated), but it still says the row is reached from
+    # outside the banks, and calling it "reached only by bank callers" would
+    # be a claim about its callers the edge list contradicts.
+    mixed = list(bridge) + [
+        {"scope": "common", "addr": "0100", "name": "c_caller", "type": "logic",
+         "evidence": os.path.relpath(
+             asm("bridge_common_caller.asm",
+                 ["0100     12 05 e8 lcall    0x05E8", RET]), REPO)}]
+    _grouped4, stats4 = group_rows(mixed, repo=REPO, min_size=2)
+    check("a common row a common caller also reaches is not found-then-cut",
+          stats4.reached_only_by_bank == set(),
+          "(got %r; the 26 counts rows whose callers are a subset of the "
+          "banks, and a `common` caller is outside them)" % (
+              sorted(stats4.reached_only_by_bank),))
+    check("adding a common caller proxies no more edges",
+          stats4.proxy_edges == 4,
+          "(got %r; a common->common edge is joined directly, so it is not "
+          "this population)" % (stats4.proxy_edges,))
+
+    # What a reader can SEE. The refusal fixtures above all pass on a report
+    # that says nothing about any of this, which is exactly how 27 came to
+    # stand for the whole cost of the rule: the tool was right and its
+    # accounting was not. So the printed figures are asserted, not just the
+    # numbers behind them.
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        report(grouped3, stats3, bridge, repo=REPO)
+    printed = out.getvalue()
+    for label, needle in (
+            ("the cross-region population",
+             "cross-region edges counted, not joined: 0"),
+            ("the proxy population", "cut by the per-bank proxy rule: 4"),
+            ("the proxy per-caller breakdown", "bank0=2, bank1=2"),
+            ("the found-then-cut rows", "reached only by bank callers: 1"),
+            ("the split ungrouped line",
+             "ungrouped: 1 (0 not found by this method + 1 found then cut"),
+    ):
+        check("the report prints %s" % label, needle in printed,
+              "(looked for %r in:\n%s)" % (needle, printed))
+
     # Seeds.
     seeded = group_rows([{"scope": "common", "addr": "0000",
                           "name": "reset_vector_forwarder_to_0070",
@@ -697,6 +868,13 @@ def self_test():
                          "type": "reader", "evidence": ""}], repo=REPO)
     check("a row with no seed and no cluster is ungrouped, not guessed",
           small[0][("bank0", "163C")][0] == "ungrouped")
+    # The other half of the split, and the reason it is asserted separately:
+    # giving `ungrouped` a second reason must not quietly take the first one
+    # away from the rows that still are "not found by this method".
+    check("a row the method did not reach keeps the generic reason",
+          "Not found by this method" in small[0][("bank0", "163C")][2]
+          and "proxy rule" not in small[0][("bank0", "163C")][2],
+          "(got %r)" % (small[0][("bank0", "163C")][2],))
 
     # The vocabulary, and the check's own refusals.
     check("check accepts every basis in the vocabulary", all(
@@ -838,7 +1016,7 @@ def bases_of(grouped):
     return out
 
 
-def report(grouped, cross, rows, repo=REPO, is_bios=False):
+def report(grouped, stats, rows, repo=REPO, is_bios=False):
     counts = collections.Counter(v[0] for v in grouped.values())
     bases = collections.Counter(v[1] for v in grouped.values())
     buckets = bucket_populations(rows, repo)
@@ -860,12 +1038,36 @@ def report(grouped, cross, rows, repo=REPO, is_bios=False):
         print("    note  %d call-graph group(s) of 50+ function(s): %s. These "
               "are connected components, not subsystems -- the graph says "
               "these functions are mutually reachable, not that they do one "
-              "job." % (len(big), ", ".join("%s=%d" % (g, n) for g, n in big[:3])))
+              "job. A path between two members can run through a per-bank "
+              "proxy node that is not a member itself."
+              % (len(big), ", ".join("%s=%d" % (g, n) for g, n in big[:3])))
     print("    call-edge buckets (audit_call_targets.py's): "
           + " ".join("%s=%d" % (b, buckets[b]) for b in "ABC" if buckets[b]))
-    print("    cross-region edges counted, not joined: %d" % cross)
-    print("    ungrouped: %d (not found by this method, never 'absent')"
-          % counts.get("ungrouped", 0))
+    # The two discard populations, printed together because one of them is
+    # seven times the other and the banking rule cut both. A report that
+    # printed only the cross-region count would read as though that were the
+    # rule's whole accounting, which is the claim this line exists to stop.
+    print("    cross-region edges counted, not joined: %d" % stats.cross_region)
+    print("    bank->common edges cut by the per-bank proxy rule: %d (%s). A "
+          "bank caller's endpoint for a common target is that bank's proxy, "
+          "not the common row, so the two banks are not joined through it."
+          % (stats.proxy_edges,
+             ", ".join("%s=%d" % (s, n)
+                       for s, n in sorted(stats.proxy_by_caller.items())) or "none"))
+    if stats.reached_only_by_bank:
+        print("    annotated common rows reached only by bank callers: %d. The "
+              "method found these and its own banking rule then cut the edges, "
+              "which is a different reason from not being found."
+              % len(stats.reached_only_by_bank))
+    ungrouped = counts.get("ungrouped", 0)
+    # Split by the reason the row carries, so the two populations sum to the
+    # headline rather than one of them being an unexplained remainder.
+    cut = sum(1 for key, value in grouped.items()
+              if value[0] == "ungrouped" and key[0] == "common"
+              and key[1] in stats.reached_only_by_bank)
+    print("    ungrouped: %d (%d not found by this method + %d found then cut "
+          "by the proxy rule, never 'absent')"
+          % (ungrouped, ungrouped - cut, cut))
 
 
 def check(repo=REPO):
@@ -939,12 +1141,12 @@ def main(argv=None):
     for annotations, groups_path, is_bios in (
             (EC_CSV, EC_GROUPS, False), (BIOS_CSV, BIOS_GROUPS, True)):
         rows = read_csv(annotations)
-        grouped, cross = group_rows(rows, REPO, is_bios)
+        grouped, stats = group_rows(rows, REPO, is_bios)
         if args.apply:
             write_groups(groups_path, rows, grouped)
         print("%s -- %s" % (os.path.relpath(groups_path, REPO),
                             "wrote" if args.apply else "proposed"))
-        report(grouped, cross, rows, REPO, is_bios)
+        report(grouped, stats, rows, REPO, is_bios)
     return 0
 
 

@@ -4808,7 +4808,10 @@ and `--self-test` carries a fixture for it, because a check that had been
 passing for the wrong reason is the failure mode this repository keeps warning
 about. **The refusal was not weakened to accommodate the tranche**:
 `cross_bank_groups` is unchanged, and the committed file now has nothing for it
-to refuse for the right reason.
+to refuse for the right reason. **The 27 above is the smaller of the rule's two
+discard populations** — the proxy cut 196 bank→common edges as well, and
+`--report` now prints both and splits `ungrouped` by reason; see
+`docs/findings/group-proxy-populations.md`.
 
 **Nothing here is a behavioural claim, and no live test ran.** A group says
 which routines are connected in the call graph, not what the EC does with them.
