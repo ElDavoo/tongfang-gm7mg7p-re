@@ -2142,23 +2142,31 @@ the mnemonic cannot run into it.
 
 It was found by a check that had not existed until this work: comparing every
 byte of every committed listing against the firmware image, which needs no
-assembler and therefore covers the 2.2% of instructions sdas8051 cannot
-express. The first version of that check reported *zero* disagreements while
+assembler and therefore covers the instructions sdas8051 cannot express. The
+first version of that check reported *zero* disagreements while
 parsing 30% of each file, because the listings were the old format and the
 parser the new one — so it now counts the lines beginning with an address and
 fails if the parser does not get all of them. A parser that reads a third of a
 file and finds nothing wrong in it is worse than one that reads none, because
 it reports a pass.
 
-**What sdas8051 cannot express, counted rather than skipped.** 1,004
-instructions (2.2%) use forms it rejects: the bit-addressed `CLR bit`, `SETB
-bit`, `CPL bit`, `MOV C,bit`, `MOV bit,C`, `MOVC A,bit`; `CJNE` on a direct
-address; `DJNZ A`; and the carry-with-immediate forms. `AJMP` and `ACALL` are
-in the same list for a different reason — sdas encodes them differently from
-the 8051 manual (at PC `0x8044` the firmware and both decoders agree `81 5D` is
-`ajmp 0x845D`; sdas emits `84 5D`). Every one of these is named in the source
-rather than filtered silently, because a filter that quietly drops 2% of the
-instruction stream turns a measured number into a flattering one.
+**What sdas8051 cannot express, counted rather than skipped.** 143
+instructions use forms it rejects, and the count means little on its own: 74
+`AJMP`, 36 `ACALL`, 19 `MOV bit,C`, 13 `CPL bit` and one `DJNZ A`. `AJMP` and
+`ACALL` are gaps for a different reason than the other three — sdas encodes
+them differently from the 8051 manual (at PC `0x8044` the firmware and both
+decoders agree `81 5D` is `ajmp 0x845D`; sdas emits `84 5D`) — and they are 110
+of the 143 between them. Every one of these is named in the source rather than
+filtered silently, because a filter that quietly drops a fraction of a percent
+of the instruction stream turns a measured number into a flattering one. *(`SETB
+bit` and `MOVC A,bit` were in this list on the first pass and are not gaps; the
+correction and its numbers are in the italic paragraph above, and §14g records
+the removal of that list from this file's forward text. Three further forms the
+tool refuses are not in the 143 at all — `CLR bit`, `CJNE` on a direct address,
+and the carry-with-immediate forms — because `BIT_UNSUPPORTED`, `GAP_FORMS` and
+the `CJNE` rule in `to_sdas()` are the assembler's vocabulary rather than this
+firmware's, and this image contains none of the three. §14g records the
+correction, and how the composition was measured.)*
 
 **The claim this does not make.** That the C recompiles. Keil C51 generated
 these bytes; SDCC does not emit Keil's code generation, and no amount of
@@ -2518,6 +2526,155 @@ by any of this. What is closed is one instance of a question a future migration
 still has to answer for itself, because the guard stops a second run and not the
 first. The caveat in `ec/ghidra/README.md` is narrowed to that; it is not
 deleted, and neither is this section's answer mistaken for the re-encode.
+
+### 14g. The nightly re-encode says which assembler answered and what moved (2026-09-23, issue #158)
+
+§14e put the correctness question entirely onto the re-encode and §14f anchored
+its digest column, and both left the re-encode itself unlanded. What was
+missing was not accuracy but *legibility*: a bare `verify_reassembly.py` printed
+two tallies and its exit status, so a nightly's entire output was a number with
+no tool named against it and nothing to compare it to. Three things about that
+run were unreadable, and all three were in the tool rather than in the schedule.
+
+**1. The run never said which assembler produced it.** `assembler_version()` was
+called from `write_report()` and nowhere else, so the bare verify path — the one
+`agent-gates-deep.sh:61` runs — never mentioned the tool that answered.
+`verify()` now calls it, prints both version strings, and compares them against
+the `assembler` column of the committed report. **It warns rather than fails**,
+because a version difference is the expected case: `project-setup` installs
+Ubuntu's `sdcc` and does not install the nix shell the report was measured in.
+
+**2. The run never compared itself to the committed report.** The bare run's
+exit status is `mismatch == 0` and the committed report holds zero `mismatch`
+rows, so the two agreed on the only value that gates the run and nothing
+compared the rest. The run now prints its tally beside the committed one, with a
+signed delta per category, and names each row whose `outcome` differs —
+capped at 20 with an "and N more", the same shape `compare_digests()` already
+used. The row key is `addr|program`, not `addr`: 54 addresses carry a row in
+each of the two bank windows, so a key of `addr` alone would leave one row of
+each of those 108 with nothing to compare against, and each would be printed as
+a category that had moved. Four of the 54 — `0x031C`, `0x3A60`, `0x703A`,
+`0xFF17` — are the ones whose instruction streams are identical as well, and
+those four are what `ec/ghidra/README.md`'s "`listing_digest` is" section
+records. This paragraph credited §14f with them and with being the reason the
+key is compound; §14f names none of the four, and the count that makes the key
+necessary is 54 rather than 4.
+
+**3. `check()`'s summary line did not add up to its own total.** It counted
+`match`, `assembler-gap` and `mismatch` and then printed "(of 2705)": 2,574 +
+58 = 2,632. The 73 `partial` rows were in none of the three, and `partial` is
+this file's own outcome. It now counts all four in a fixed order —
+`2574 match, 73 partial, 58 assembler-gap, 0 mismatch (of 2705)` — and names,
+without folding in, any row whose outcome is outside those four, so the line
+describes the report it is summarizing. The four the committed report actually
+holds; `check_one()` can also return `assembler-error`, `error`,
+`missing-listing` or `empty-listing`, and a summary that dropped those would
+reintroduce the same arithmetic error one row over.
+
+**The evidence, transcribed from the run on this repository's runner.** Its
+`sdas8051` is `/usr/bin/sdas8051`, reporting `02.00 + NoICE + SDCC mods`, against
+the report's `05.50.4+NoICE+SDCCmods-WIP-R14`; the `NOTE` fires by design. The
+tallies:
+
+| | this run | committed |
+|---|---|---|
+| `match` | 2621 | 2574 |
+| `partial` | 78 | 73 |
+| `assembler-gap` | 6 | 58 |
+| `mismatch` | 0 | 0 |
+| `instructions_checked` | 45394 | 45394 |
+| `instructions_unchecked` | 143 | 143 |
+
+52 rows moved, all of them `assembler-gap` in the committed report and either
+`match` (47) or `partial` (5) here. **Nothing about that says which assembler is
+right**, and the run does not say so either: a moved category is a measurement,
+"the assembler got better" is not, and nothing in this repository can support
+the second — two ASxxxx builds are two different things being measured, and
+which of them is right is a question about the disassembly.
+
+**It also corrects a claim this file's tool made about itself.**
+`assembler_version()`'s docstring said the match count "is not expected to move
+with the version -- the firmware bytes are the arbiter". It moved, by 47. What
+the firmware arbitrates is `mismatch`, which was 0 in both runs; which of
+`match` and `assembler-gap` a row gets is decided by what the assembler can
+express. The docstring now says that, with these numbers, rather than the
+prediction that was wrong. `instructions_checked` did not move at all, which is
+not guaranteed either — the forms this tool declines to translate are declined
+before the assembler sees them, so most of that count is the tool's own
+decision, and the remainder is the assembler's.
+
+**And the composition of the 143, which §11 and `ec/ghidra/README.md` both had
+wrong.** Each named six forms for the count, and three of them — `CLR bit`,
+`CJNE` on a direct address, and the carry-with-immediate forms — account for
+none of it, while the 110 `AJMP`/`ACALL` the same paragraphs demoted to a
+clause "for a different reason" are three quarters of it. All three of the
+unused forms are in `to_sdas()`'s refusal vocabulary; the vocabulary is the
+assembler's, not this firmware's, and a list of refused forms without what each
+contributes to the number is the shape of claim §4 is about. Replaying that
+decision order over the 2,705 rows of `ec/decompiled/listing-index.csv` — the
+parse `check_one()` does, naming the rule that returned `None` — gives 74
+`ajmp`, 36 `acall`, 19 `mov 0x??, CY` (0x92), 13 `cpl 0x??` (0xB2) and one
+`djnz A, 0xa581` at `0xa599`, which is 143. Both forward texts now carry that
+composition. What is *not* claimed for it: no committed check recomputes it.
+`--check` prints the 143 and not what is in it, so this is a measurement made
+while writing the correction, and this section's closing question is where it
+would become one.
+
+**A fourth thing, found by running it: `--jobs 4` was not reproducible.** The
+same committed inputs, on the same runner, gave `match` 2,579, 2,588, 2,590 and
+2,591 across four runs, against 2,621 on every `--jobs 1` run, with `mismatch` 0
+throughout. The scratch directories were handed out by `index % jobs`, which is
+one per index *slot* and not one per thread: a pool holds whichever indices are
+in flight, that set drifts as soon as one worker finishes early, and two
+concurrent functions then assemble into one directory and overwrite each other's
+`f.s51` and `f.lst`. The run reports `assembler-error` and "no bytes emitted at
+..." for functions that were never wrong. Each function now gets its own
+directory — 2,705 `mkdir`s, and the question is gone. This was not in the issue;
+it was found by running the issue's own test, and it is fixed here because the
+per-row comparison would otherwise have named the raced rows as rows that moved.
+
+**The exit status is unchanged, on purpose, and that is a calibration rather than
+an omission.** A version difference warns. A moved category is reported. Neither
+fails: a branch that has re-reported its listings and not yet committed its CSV
+moves the tally legitimately, and this tool cannot tell that from a regression,
+so a scheduled run that failed on a difference nobody could action unattended
+would be buying noise rather than a gate. `--limit` runs print the committed
+tally as a labelled reference and compare nothing, because 40 rows are not a
+disagreement with 2,705.
+
+**The schedule keeps a record.** `docs/ci/agent-gates-deep-schedule.yml` now
+tees its own output to `$RUNNER_TEMP/deep-gates.log` and uploads it with
+`actions/upload-artifact` and `if: always()`, so a run that happened leaves an
+artifact and a run that did not leaves none — which is the file's own comment
+about GitHub dropping scheduled runs, guarded against. `set -o pipefail` is set
+*before* the pipe, since the default `bash -e` does not set it and without it a
+failing gate exits as `tee`'s zero. **Absence is observable, not failing**:
+making a vanished run fail something needs a checker that runs when the
+scheduled one did not, and the scheduler is the thing that drops runs. The
+re-encode is still unscheduled, and nothing here should be read as closing that.
+
+**The retracted first-pass numbers are no longer restated forward.** §11's
+italic paragraph above is the record of that correction and is untouched. What
+was removed is the *forward* restatement of the retracted figure
+— in `ec/ghidra/README.md`, in three docstrings in `verify_reassembly.py`, and
+in §11's own "what sdas8051 cannot express" paragraph, whose opcode list still
+carried `SETB bit` and `MOVC A,bit`, the two forms §11 measured as assembling
+correctly. A file that contradicts itself four lines from its own correction is
+the problem §4 records, not the correction.
+
+**What this opens.** A nightly that consistently moves `partial` /
+`assembler-gap` against the committed report is telling you that the committed
+numbers describe one ASxxxx and the runner has another, and the durable answer
+may be for the report to record more than a version string — the assembler's
+own gap behaviour, or a per-row check that says which form was refused and by
+which build. That is not this change, and a version string plus a per-row diff
+is the most a log-reading human can be given tonight.
+
+**And one this raises without answering.** A committed report row whose outcome
+is outside the four — `error`, `assembler-error` — is now named by the residual
+rather than silently missing from the summary, and `check()` still passes it. A
+report saying `error` probably should fail and does not. The new line makes the
+question visible; it does not settle it.
 
 ## 15. The EC and BIOS indexes get the same structural guards (2026-09-23, issue #142)
 
