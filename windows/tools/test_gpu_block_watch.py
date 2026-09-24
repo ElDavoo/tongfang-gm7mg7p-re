@@ -33,7 +33,10 @@ tool's captures and cannot import it -- the `ecrw` import below binds
 kernel32 -- so it states its own two window bounds and its own 24 DSDT names.
 A grader reading a capture against different bounds than the one that wrote it
 would be grading one tool's watch set with another's, and would say so
-nowhere.
+nowhere. The sixth holds the two sections that tell a human's capture where to
+land and what it is allowed to change, for the same reason: a procedure that
+is written but not followed is the failure this suite can still catch before
+the machine.
 """
 import csv
 import contextlib
@@ -206,22 +209,29 @@ def bank_addresses(cell):
     return {int(a, 16) for a in re.findall(r"bank\d+:(0x[0-9A-Fa-f]{4})", cell)}
 
 
-def door_section(text):
-    """The procedure's §7, the section the tool's watch table is graded against.
+def doc_section(text, heading):
+    """The named `## ` section, from its heading up to the next one.
 
-    Everything from the `## 7.` heading up to the next one, so both the table
-    reader below and the note-count check read the same span. A missing
-    heading raises rather than returning an empty section: an empty span
-    makes every check that uses it pass vacuously.
+    A missing heading raises rather than returning an empty section: an empty
+    span makes every check that uses it pass vacuously, which is the one
+    outcome worse than a doc that says nothing at all.
     """
     lines = text.splitlines()
-    start = next(i for i, l in enumerate(lines)
-                 if l.startswith("## 7. The citation list"))
+    start = next(i for i, l in enumerate(lines) if l.startswith(heading))
     body = lines[start + 1:]
     for i, l in enumerate(body):
         if l.startswith("## "):
             return "\n".join(body[:i])
     return "\n".join(body)
+
+
+def door_section(text):
+    """The procedure's §7, the section the tool's watch table is graded against.
+
+    Everything from the `## 7.` heading up to the next one, so both the table
+    reader below and the note-count check read the same span.
+    """
+    return doc_section(text, "## 7. The citation list")
 
 
 def parse_door_table(section):
@@ -567,6 +577,99 @@ class GraderAgreementTests(unittest.TestCase):
         for addr in ADDRS:
             self.assertEqual(grader.window_of(addr), watch.window_of(addr),
                              f"0x{addr:04X}")
+
+
+class CaptureHandoffTests(unittest.TestCase):
+    """Where a returned capture lands, and what it is allowed to change.
+
+    The procedure had neither half. §3 passed `--csv` a bare filename, so an
+    operator running it from the repository root put the capture in the
+    repository root rather than in `evidence/`; §3 and §4a.2 both depend on
+    the run's marks, and neither gave them a committed name; and nothing told
+    a person filling in `registers.yaml` afterwards what a capture is worth.
+    #266 is what a duplicated table nobody holds costs -- four stale cells
+    through a whole merge cycle -- and this is the same hold on the two
+    sections that answer for an operator's file, before it exists.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.text = DOOR.read_text(encoding="utf-8")
+        cls.capture = doc_section(cls.text, "## 3. The byte capture")
+        cls.where = doc_section(cls.text, "## 8. Where the output goes")
+        cls.result = doc_section(cls.text, "## 9. What a result has to say")
+        cls.statuses, _ = read_registers()
+
+    def test_the_output_destination_exists_and_is_named(self):
+        # The section is read by heading and doc_section() raises on a
+        # missing one, so the checks below cannot pass on a procedure that
+        # has stopped saying this -- the vacuity guard §7's reader carries.
+        # The directory itself is checked because the name is worth nothing
+        # if it points at a place the tree does not have.
+        self.assertIn("evidence/ec-watch/", self.where)
+        # §8 is the section that tells the operator to index the files, so
+        # that half of "where the output goes" is held here too -- a capture
+        # that is committed and not indexed is cited by nothing.
+        self.assertIn("evidence/README.md", self.where)
+        self.assertTrue((REPO / "evidence" / "ec-watch").is_dir())
+
+    def test_the_capture_command_writes_into_that_destination(self):
+        # The check that stops §3's command drifting back to a bare filename.
+        # `CsvSink` resolves its path against whatever directory the tool
+        # runs in (windows/tools/ec_watch.py:56-57), so a command with no
+        # directory in it puts the capture wherever the operator happened to
+        # be standing -- which is how a run that happened ends up in a commit
+        # with no capture in it. Read out of the console block rather than
+        # the section, because the prose around it talks about `--csv` too.
+        # Separators are normalised because a relative path is spelled with
+        # either; the directory is not optional either way.
+        block = re.search(r"```console\n(.*?)```", self.capture, re.S)
+        self.assertIsNotNone(block, "§3's console block is gone")
+        # The `rem` lines are cmd comments and the section's own prose
+        # explains the flag by name, so neither is a command. Reading them
+        # as one is what would make this check fail on the documentation
+        # rather than on the command it is about.
+        cmd = "\n".join(l for l in block.group(1).splitlines()
+                        if not l.strip().startswith("rem"))
+        found = re.findall(r"--csv\s+(\S+)", cmd)
+        self.assertEqual(len(found), 1,
+                         "§3's --csv argument is gone or spelled more than "
+                         f"once: {found}")
+        path = found[0].replace("\\", "/")
+        self.assertTrue(path.startswith("evidence/ec-watch/"), path)
+
+    def test_the_result_section_names_the_rows_a_returned_capture_updates(self):
+        # The three notes that record only what the 2026-09-23 capture
+        # showed, the file the section says to update them from, and the two
+        # places the follow-up edit lands. Named here because §9 is a
+        # promise to a person holding a laptop, and a promise that stops
+        # naming its four destinations is not a promise anybody can act on.
+        for token in ("0x07D0", "0x07D1", "0x07C4", "registers.yaml",
+                      "evidence/README.md"):
+            self.assertIn(token, self.result)
+
+    def test_the_result_section_does_not_move_a_status(self):
+        # §9's claim is negative, so it is checked both ways against
+        # registers.yaml: each row §9 names a status for must carry the
+        # status that file holds today, and no status a capture cannot earn
+        # may appear. Either half alone is survivable -- a §9 that quietly
+        # dropped the rule, or one that granted a capture `confirmed-*` --
+        # and this is the one place a passive capture could be read as a
+        # live test without a row moving with it.
+        for addr in (0x07D0, 0x07D1, 0x07D4, 0x07D5):
+            self.assertIn(self.statuses[addr], self.result,
+                          f"0x{addr:04X}: §9 must carry the current status")
+        # The negative half is matched as an assignment rather than as a bare
+        # status value. §9 quoting the vocabulary to say a capture cannot
+        # reach it is that section doing its job, and the value alone is not
+        # the tell; a promoting word in front of one is. `to` and the arrow
+        # are in the alternation because those are how a status move reads
+        # in this repository's prose, and the leading \b keeps `to` out of
+        # the middle of a longer word.
+        promote = re.compile(r"\b(?:becomes?|status:\s*|moves? to|to|→)\s*"
+                             r"`?confirmed-(?:working|inert)")
+        self.assertIsNone(promote.search(self.result),
+                          "§9 promotes a status a capture cannot earn")
 
 
 class NamesOnlyTests(unittest.TestCase):

@@ -1,7 +1,7 @@
 # The `0x07D0` door: what moves first under a GPU TGP change, and who opens it
 
 **Status: not run.** This procedure was written by the pipeline for a human at
-the physical GM7MG7P (issue #184), and **issue #283 owns the run** — the
+the physical GM7MG7P (issue #184), and **issue #278 owns the run** — the
 capture, the ProcMon half and the observation. The watcher, the offline grader
 (`../../ec/tools/grade_gpu_door.py`) and both offline suites are committed; the
 observation is not. Nothing in this file reports a result, and nothing under
@@ -132,8 +132,11 @@ One watcher, both windows, one clock:
 rem  --interval 0.25 is ec_watch.py's default and a starting point, not a
 rem  validated-safe one: one ECRR per byte, 24 of them per sweep, with
 rem  nothing between calls (#94). If the fans audibly change, stop, raise it
-rem  and start again.
-python windows\tools\gpu_block_watch.py --csv <date>-gpu-door-07c4-07d7.csv --mark
+rem  and start again. The --csv path is resolved against whatever directory
+rem  this runs in, so a bare filename leaves the capture there and nowhere
+rem  else; §8 names where it belongs.
+python windows\tools\gpu_block_watch.py --mark ^
+        --csv evidence\ec-watch\<date>-gpu-door-07c4-07d7.csv
 ```
 
 `gpu_block_watch.py` prints its watch table before it opens the driver, so the
@@ -398,6 +401,114 @@ gets misread:
   `../../ec/annotations/xdata-clusters.csv` are inputs this procedure only
   reads; `../../ec/ghidra/xdata-symbols.csv` is generated from
   `registers.yaml` and must never be hand-edited.
+
+## 8. Where the output goes
+
+Name the files the way the existing captures do, so a reader can pair them:
+
+```
+evidence/ec-watch/<date>-gpu-door-07c4-07d7.csv
+evidence/ec-watch/<date>-gpu-door-07c4-07d7-marks.txt
+evidence/ec-watch/<date>-gpu-door-procmon.pml
+```
+
+`<date>` is that run's YYYY-MM-DD — the same placeholder §3's command takes, so
+following this list produces this set with no rename step. The CSV is the
+capture itself, both blocks and every mark in one file; `CsvSink` opens it in
+append mode (`../../windows/tools/ec_watch.py:56-61`), so a second run into the
+same name extends the file rather than replacing it, which is also why the two
+runs must not be merged by hand afterwards (§3).
+
+The marks file is the one §4a.2 leaves unnamed. That step says to keep the
+mark labels and their timestamps "on paper or in a text file next to the
+trace" because the `.PML` carries none of them; the committed one is this
+name, and it holds the same `ts  label` pairs the CSV already carries — as
+text, so a reader looking for "what happened at 14:32" can grep it without
+parsing a capture. If §3's three actions were each marked with an opening and
+a closing label, they are here in that order, and that order is the whole of
+§5's mark column.
+
+The `.PML` is §4a.2's saved trace under the same `<date>-gpu-door-` prefix,
+and it is the only one of the three that is not text: a ProcMon capture
+records a stack walk, so the file is large and does not read in a diff. The
+marks file is what pairs it to the CSV, which is why it is a separate artifact
+rather than a comment in either.
+
+Add all three to `evidence/README.md`, which is the index every findings claim
+cites through, and say in that entry what the run was: the date, the starting
+AC state (§2 asks for it written down), the TGP values as the UI showed them,
+the Fn mode on each side of the mode switch, how long the capture ran, and the
+three actions in the order they were taken. None of that is in the CSV, and
+§5's rows are unreadable without it — a `gpu tgp 115W->130W` mark beside an
+`ac plug` mark says nothing about either action if the run started on
+battery.
+
+No parser is needed to read the capture. The schema is `ts,addr,old,new` with
+a mark as `ts,MARK,,label` — `ec_watch.py`'s own, and the one
+`../../ec/tools/grade_gpu_door.py` and
+`../../ec/tools/grade_0751_isolation.py` already read, which is what lets
+§5's grader take this file as it stands. `gpu_block_watch.py` prints a
+windowed summary at the end, and that summary is a timing report rather than a
+grade: §5's ordering cell is read off the CSV, and
+`../../ec/tools/grade_gpu_door.py` (issue #283) owns the reading.
+
+## 9. What a result has to say
+
+**A capture that shows a byte move is an observation of movement, not a live
+test of the register.** That distinction is the whole of this section, and
+`../../CLAUDE.md` states it for the neighbouring case — a register write being
+accepted is not evidence the EC acts on it; this run does not even write, and
+a byte appearing between two of the watcher's sweeps says only that it was
+different at those two moments.
+
+So, concretely:
+
+- **`CPUA` (`0x07D4`) and `DBAP` (`0x07D5`) keep `present-untested`** in
+  `../../ec/annotations/registers.yaml` whatever the capture shows, and the
+  `0x07D0`/`0x07D1` pair keeps `unknown-not-absent-DO-NOT-WRITE-BLIND` on the
+  same grounds. The reason is that file's own vocabulary rather than a
+  judgement call: `confirmed-inert` is "write accepted, EC does not act on it
+  (proven live)", which a run that writes nothing cannot reach, and
+  `confirmed-working` is "live behaviour matches the driver's model", and
+  there is no model here for a byte no driver drives. What a capture *can*
+  produce is a note entry — *this byte moved under this action on this
+  machine* — and that is worth having. Note what it does not settle: the EC
+  copies these two from `0x09EA`/`0x09EB`
+  (`../../ec/annotations/ec-07c4-07d5-sites.md` §3) and neither is in the
+  watch set, so a row recording that `CPUA` moved says nothing about which
+  side moved it. §4a is the half that narrows that, and only for a host
+  write — an EC-internal one raises no `DeviceIoControl` to be captured.
+  Record the movement; do not promote it. `GPU_DYNAMIC_BOOST_STATUS`'s own
+  note already ends on that rule for the 2026-09-23 capture — "a passive
+  capture showing a byte move is not a live test of it" — and a GPU-only TGP
+  change in the capture does not move it either.
+- **The `0x07D0`, `0x07D1` and `0x07C4` notes are updated from the committed
+  capture file, in the same PR that adds it.** Each records only what
+  `evidence/ec-watch/2026-09-23-power-mode-cycle-0700-07ff.csv` showed across
+  an AC plug-in and six Fn mode switches, neither of them a GPU-only TGP
+  change: `0x07C4` has the two rows it carries, and `0x07D0` and `0x07D1`
+  did not move at all in that window — "not found to move here", scoped to
+  those events, and not "never written". A run that contains the action none
+  of them contains is the evidence that changes what they say. A note citing a
+  file that is not in the same commit is a claim no reader can check, which is
+  the same defect `evidence/README.md` being an index exists to prevent.
+- **The grading is `../../ec/tools/grade_gpu_door.py`'s, not this section's.**
+  That grader is committed (issue #283) and already fills §5's columns 1-5, so
+  a returned capture is graded by a tool this repository already holds rather
+  than by anything written for it here. The summary `gpu_block_watch.py` prints
+  is a timing report and says so; §5's verdict column is the operator's call
+  against §6; and §6's three-way reading is what that call is read against.
+  Nothing in this section is a fourth reading to be applied instead.
+- **Mixed, ambiguous, or empty is a result.** A run in which nothing moved
+  leaves §4o where it is and says so; a run in which the two windows moved on
+  different marks is a result the capture goes into `evidence/` with. Either
+  way the capture is committed and this file's status header stays
+  **not run** until a run it describes has actually been taken.
+
+And a run that never happens is not a failure of this file. Nothing above is
+written to be filled in, and no part of it reports anything: the header stays
+"not run", the three notes keep the 2026-09-23 scope, and issue #278 stays
+open until a human with the machine closes it.
 
 ## Cross-references
 
