@@ -525,7 +525,11 @@ to take for no reason:
 
 Pass one block's dumps, with the `after` one last — the §4.6 readback
 check is taken from the final `--dump`, and before-then-after is the order
-inside each `--dump-pair` too:
+inside each `--dump-pair` too. Both are checked now rather than left to the
+comment below: get the `--dump` order wrong and §4.6 says the readback was
+not taken and names the pair that does cover `0x0751`; give a pair the same
+file twice and it is named and not read, because a dump diffed against
+itself proves nothing:
 
 ```console
 rem  The 0x0700 pair is given twice on purpose, and not by accident of
@@ -535,7 +539,8 @@ rem  independent -- --dump-pair does not feed §4.6, and the readback still
 rem  comes from the last --dump -- so the 0x0700 after-dump has to stay the
 rem  last of the --dump flags. Putting the 0x0F00 dumps there instead would
 rem  look tidier and quietly stop the readback: that range does not cover
-rem  0x0751.
+rem  0x0751. The tool now catches that and says so under §4.6, so this
+rem  comment is the fallback rather than the only safeguard.
 python ec\tools\grade_0751_isolation.py ^
         <date>-0751-isolation-0700-07ff.csv <date>-0751-isolation-0f00-0f5f.csv ^
         <date>-0751-isolation-0400-045f.csv ^
@@ -577,6 +582,14 @@ service writes. A difference there is a host poke and/or a written table, and
 neither is §4.2's question, which is about `0x0F00-0x0F5C` alone. When §4.2
 does have a change, the section names its own next step,
 `../../windows/tools/fan_table_replay.py`.
+
+A pair given the same file twice is the one input error this flag cannot see
+on its own, so it is caught by path: the run names the pair, says both sides
+are the same file, and prints no whole-block read for it at all. A dump
+diffed against itself holds every byte equal by construction, so `unchanged`
+there is a true statement about nothing. The `<value>-before-` /
+`<value>-after-` naming is what keeps the two files apart to begin with, and
+the tool now says so when a pair does not.
 
 It is a first pass and not the answer. It prints §4.4's fan duty bytes
 and §4.5's temperature bytes per window so the control arm and the write can
