@@ -25,6 +25,11 @@ suite standing in for a tool's own behaviour:
 | `windows/tools/test_charge_target_test.py` | the charge-target tool's three refusals, the restore in its `finally`, and its CSV column set |
 | `linux/lightbar/test_probe_6005.py` | the lightbar probe's ioctl encoding, dry run, and off-after-failure |
 
+`windows/tools/ecrw_fake.py` is a shared fixture rather than a suite — it is
+the offline stand-in for the `ecrw` module, installed by
+`test_manual_fan_ctrl_probe.py` and `test_ec_watch.py`, and the `test_*.py` pattern above does not pick it up, so it costs no suite
+count.
+
 Named directories run alone, which is what to reach for when editing one tool:
 
 ```sh
@@ -40,18 +45,24 @@ the vacuous check is the same defect the gate's listing parse had in
 
 ## One interpreter per file, and why that is not a preference
 
-The `windows/tools` suites install a fake `ecrw` into `sys.modules` with
-`setdefault`, and the fakes are not all the same shape: two export `Ec` only
-(`test_manual_fan_ctrl_probe.py`, `test_ec_validate.py`), three export `Ec` and
-`EcError` (`test_ec_watch.py`, `test_system_id_probe.py`,
-`test_charge_target_test.py`), and `ec_watch.py` imports both. In one shared
-interpreter, whichever suite imports first wins, and a tool that imports a name
-the winner lacks dies with `ImportError: cannot import name 'EcError' from
-'ecrw'`. A combined discovery survives only by sort-order accident, which
-nothing asserts. `docs/findings.md` §16 has the reproduction. The runner's
-per-file isolation is what keeps a rename from turning that accident into a red
-build; the fix that would retire the question entirely is to reconcile the
-fakes into one shared module, which is a follow-up rather than part of this.
+The `windows/tools` suites used to install a fake `ecrw` into `sys.modules`
+with `setdefault`, and the fakes were not the same shape: some exported `Ec`
+only, others `Ec` and `EcError`, and `ec_watch.py` imports both. In one shared
+interpreter, whichever suite imported first won, and a tool that imports a name
+the winner lacks died with `ImportError: cannot import name 'EcError' from
+'ecrw'`. It passed only by sort-order accident, which nothing asserted.
+`docs/findings.md` §16 has the reproduction.
+
+**Issue #186 reconciled the two fakes that existed when it was written:**
+`windows/tools/ecrw_fake.py` carries `Ec` and `EcError` over the real module's
+whole surface, and `test_manual_fan_ctrl_probe.py` and `test_ec_watch.py`
+`install()` it (by assignment, not `setdefault`). Three suites that landed in
+parallel with it — `test_ec_validate.py` (`Ec` only), `test_system_id_probe.py`
+and `test_charge_target_test.py` (`Ec` and their own `EcError`) — still install
+their own fakes with `setdefault`, so a single discovery run over
+`windows/tools` is still order-dependent for them. Moving those three onto
+`ecrw_fake.install()` is a follow-up; until then the per-file loop is
+load-bearing, not only insurance.
 
 ## What it does not run
 

@@ -131,11 +131,12 @@ live runs took the write path. (`tools/test_system_id_probe.py` covers the
 `0x0456` probe; `../tools/README.md` lists it.) All of them work by faking
 `ecrw` — the module binds kernel32 at import time and only loads on Windows —
 which is also what makes the arms scriptable; the charge-target suite fakes the
-`powershell` call behind its WMI line as well. `../tools/README.md` is the
-canonical home for the command, and records why the runner gives each suite its
-own interpreter: the `ecrw` fakes are not all the same shape, and a single
-shared discovery over this directory survives only by sort-order accident
-(`docs/findings.md` §16).
+`powershell` call behind its WMI line as well. The probe and `ec_watch` suites
+use the shared `tools/ecrw_fake.py`; the other three still carry fakes of their
+own. `../tools/README.md` is the canonical home for the command, and records
+why the runner gives each suite its own interpreter: until those three are
+moved onto the shared fake, a single discovery over this directory is
+order-dependent (`docs/findings.md` §16).
 
 ## What's proven vs. what needs a Windows box
 

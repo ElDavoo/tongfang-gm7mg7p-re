@@ -2,8 +2,8 @@
 """Offline checks; no EC is opened and the vendor driver is never called.
 
 manual_fan_ctrl_probe.py imports ecrw, which binds kernel32 at import time and
-so only loads on Windows -- the fake below stands in for the whole module,
-which is also what lets the two arms be scripted byte by byte.
+so only loads on Windows -- ecrw_fake.py stands in for the whole module, and
+the FakeEc below scripts the two arms byte by byte on top of it.
 
 The script is keyed on the arm and the sweep within it, not on a timestamp, so
 what a byte does is an assertion about the run's shape -- the no-op moves PWM,
@@ -14,10 +14,10 @@ import contextlib
 import importlib.util
 import io
 from pathlib import Path
-import sys
-import types
 import unittest
 from unittest.mock import patch
+
+import ecrw_fake
 
 ORIG = 0x10
 TARGET = 0xA0
@@ -35,9 +35,7 @@ SCRIPT = {
     0x044F: ([0x50, 0x52, 0x53], [0x53, 0x55, 0x56]),
 }
 
-fake_ecrw = types.ModuleType('ecrw')
-fake_ecrw.Ec = lambda: None
-sys.modules.setdefault('ecrw', fake_ecrw)
+ecrw_fake.install()
 
 spec = importlib.util.spec_from_file_location(
     'manual_fan_ctrl_probe', Path(__file__).with_name('manual_fan_ctrl_probe.py'))
