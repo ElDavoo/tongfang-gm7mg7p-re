@@ -220,7 +220,8 @@ jobs:
             [ .[] | select(.status != "completed")
                   | select(.workflowName as $w
                            | ["Agent · plan","Agent · implement","Agent · review",
-                              "Agent · fix CI","Agent · followups","Claude · mention"]
+                              "Agent · fix CI","Agent · followups","Claude · mention",
+                              "Agent · conflicts"]
                            | index($w)) ]' > "$RUNNER_TEMP/busy.json"
           busy=$(jq length "$RUNNER_TEMP/busy.json")
           free=$(( MAX_PARALLEL_AGENTS - busy ))

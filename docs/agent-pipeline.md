@@ -190,6 +190,18 @@ only covers what's specific to *this* copy.
   statement about the firmware when Ghidra's decompiler can fail silently
   instead; and `ec/decompiled/` and `bios/decompiled/` added to the
   citable-evidence list, which `docs/findings.md` already cited.
+- **Parallel agents, and `.github/workflows/agent-conflicts.yml`** (2026-09-24,
+  not in the template). The `agent-pipeline` concurrency group is one per issue
+  (`agent-pipeline/agent/issue-N`) instead of one for the whole pipeline, so up
+  to `MAX_PARALLEL_AGENTS` (5, in `agent-retry.yml`) stages run at once and
+  `MAX_OPEN_AGENT_PRS` is 5; `agent-retry.yml` runs hourly and fills free slots.
+  Parallel branches conflict with each other as they merge, so
+  `agent-conflicts.yml` runs on every push to main (and hourly): it finds open
+  agent PRs GitHub reports as `CONFLICTING`, squash-merges each branch onto
+  current main, has Claude resolve the conflicted tree (regenerating the EC's
+  generated files rather than hand-merging them), and force-pushes one linear
+  commit, bounded at three attempts per PR head before `agent:stuck`. A re-copy
+  of the template's workflows has to carry all of this across.
 - **`.github/workflows/agent-followups.yml`** — its prompt reads
   `docs/MISSION.md`, and its label set is this repository's. Added here specifically so the issue queue doesn't dry up
   while `docs/MISSION.md`'s goal is nowhere near done; see its own header
