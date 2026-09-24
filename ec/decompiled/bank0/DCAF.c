@@ -10,7 +10,7 @@
    type: forwarder
    evidence: ec/decompiled/bank0/DCAF.asm; ec/decompiled/bank0/DCAF.c
    basis: hand-decoded
-   name_basis: abi-symbol */
+   name_basis: code-shape */
 
 void bank1_trampoline_a694(void)
 

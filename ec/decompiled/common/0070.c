@@ -15,7 +15,7 @@
    type: init
    evidence: ec/decompiled/common/0070.asm; ec/decompiled/common/0070.c
    basis: hand-decoded
-   name_basis: abi-symbol */
+   name_basis: code-shape */
 
 void reset_entry_stack_bank0_then_code_init(void)
 

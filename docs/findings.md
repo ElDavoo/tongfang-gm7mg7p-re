@@ -4617,8 +4617,8 @@ first column in this repository that records what a *name* asserts rests on,
 as opposed to `basis`, which records where the *comment* came from. Mandatory
 and non-empty like `evidence`, refused by both build tools on the same
 grounds: a name that asserts a mechanism with no recorded footing is a claim,
-not a finding. EC distribution: 1,477 `code-shape`, 134 `ec-register`, 83
-`register-map`, 57 `abi-symbol`, 49 `unresolved`, 4 `mixed`.
+not a finding. EC distribution: 1,530 `code-shape`, 134 `ec-register`, 83
+`register-map`, 49 `unresolved`, 4 `abi-symbol`, 4 `mixed`.
 
 **The grading rule is deliberately asymmetric** — strongest footing actually
 traceable to a committed input, else `code-shape` — and it is implemented in
@@ -4626,6 +4626,20 @@ traceable to a committed input, else `code-shape` — and it is implemented in
 than against its name, with `--check` re-grading the committed column so the
 two cannot drift. The default points at the weak end on purpose: grading by
 name-regex would overclaim, and grading the other way would under-claim.
+
+**The footing has to come from the name, and one place got that wrong.** The
+first grader also matched the `BL51`/`EDK` patterns against the row's
+**comment**, and reported 57 EC and 43 BIOS `abi-symbol` rows. Measured, 101 of
+those 105 `abi-symbol`/`mixed` rows took the token from the comment alone and
+four from the name — the four `bl51_bank_select_N` stubs in `common`, which are
+now the whole EC population. `load_dptr_88f0_tail_jump_1114` is the clearest
+case: every token of the name describes two instructions, and its
+`abi-symbol` grade came from a comment that itself says 0x1114 "is not present
+in this decompiled tree, so what it does with DPTR is not decoded here." A
+grade a prose comment can supply is not a grade of the name and is
+unfalsifiable for the same reason rule 4 reads the name and not the comment.
+The rest reclassify to `code-shape`, which strengthens rather than weakens the
+argument above: the default points at the weak end on purpose.
 
 **The issue's worked example is a negative finding, and that is the point.**
 `bank0 0x0EA2` is **not** renamed to `delay_polling_0a56` and **not** graded
@@ -4657,10 +4671,18 @@ call-graph clustering for the rest: 866 rows in a connected component, 576
 says so.** The largest holds 323 of the 1,804 rows. That is a real structural
 fact and a poor subsystem boundary, so the groups are named
 `callgraph_<scope>_<addr>`, their size is in every row's comment, and `--report`
-names any component of 50 or more. **576 `ungrouped` is "not found by this
-method", never "these have no subsystem"** — the same discipline CLAUDE.md
-puts above every other rule, and the reason `ungrouped` is in the vocabulary at
-all.
+names any component of 50 or more. The `<scope>` is the component's **dominant**
+scope, and holding it to that is a check: a component can span scopes because
+the common area is reachable from any bank, so naming the token after the first
+member described whichever row the union-find emitted first, and four of the
+nineteen names were wrong that way — a 323-row component that is 316 bank1
+rows, and a 145-row component that is 144 rows of the **separate ITE8850-PD
+image** presenting as `common`, which is the same conflation the `pd` grade
+rule above exists to stop. `--check` now refuses a `callgraph` name whose scope
+token is not the dominant scope among its rows. **576 `ungrouped` is "not found
+by this method", never "these have no subsystem"** — the same discipline
+CLAUDE.md puts above every other rule, and the reason `ungrouped` is in the
+vocabulary at all.
 
 **The banking caveat is inherited without softening, and it is structural.**
 Nothing in an `lcall` names a bank — bank0→bank1 and bank0→bank0 are the same
@@ -4680,17 +4702,28 @@ support stays `ungrouped` rather than getting a plausible label.
 **A plate-comment line moved a pinned citation, and the check caught it.**
 `ec/annotations/xdata-0860-census-sites.csv` pins **line numbers** into the
 committed `.c` files and `check_site_census.py` holds them, so the new
-`name_basis:` line shifted 5 of its 7 sites and the check went red with the
+`name_basis:` line shifted 6 of its 7 sites and the check went red with the
 right diagnosis. The refs were recomputed from the tool's own
 `census_occurrences()` rather than blanket-shifted, and **only the line numbers
 moved** — same sites, same per-site counts, same 17 occurrences. **A
 plate-comment edit is not confined to the plate**, which is the one thing worth
 knowing before the next annotation change.
 
-**One bug is worth recording because it was silent.** The first grader's
+**Two bugs are worth recording because both were silent.** The first grader's
 `DPTR_IMM` pattern was case-sensitive and the listing spells `DPTR` and `0x`,
 so XDATA detection was completely dead — and the report showed
 `ec-register=0` across 1,804 rows, which reads as a *finding* rather than as a
 broken pattern. It was caught only by the grader's own `--self-test` fixture.
 A zero meaning "the method is broken" and a zero meaning "the method found
 nothing" are the same number, which is the whole reason that self-test exists.
+
+The second is the same shape with nothing silent about the number.
+`grade_all()` wrote the computed grade straight over the `name_basis` key and
+`check()` then compared that key **with itself**, so the drift half of
+`--check` could not fail: hand-editing a committed grade to anything passed,
+and the line it printed was reporting a tautology. The check that exists to
+stop the column drifting from the rule was itself unable to notice it drift.
+The committed cell and the computed grade are now separate keys, and
+`--self-test` carries a fixture that poisons one and asserts the other refuses
+it. It was found the unremarkable way: edit a committed cell and see whether
+the gate that claims to hold it objects.

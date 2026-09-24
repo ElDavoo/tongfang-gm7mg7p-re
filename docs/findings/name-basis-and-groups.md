@@ -42,7 +42,7 @@ not a finding.*
 |---|---|
 | `register-map` | a decoded SFR/bit identity — 0x8E is TCON.6 = TR1. Checkable against `bit_name()` and `BIT_SFR`. |
 | `ec-register` | an XDATA address in `registers.yaml` carrying a decoded name/status. |
-| `abi-symbol` | a toolchain or ABI symbol rather than the bytes — the BL51 bank-select stubs, EDK II type/protocol names. |
+| `abi-symbol` | a toolchain or ABI symbol rather than the bytes — the BL51 bank-select stubs, EDK II type/protocol names. The token has to be in the **name**; a comment's mention of one is a claim about the comment. |
 | `code-shape` | only the instruction sequence's shape. |
 | `mixed` | the name asserts two things with different footing. |
 | `unresolved` | the row is `type: unresolved` and the name is a placeholder claiming nothing. |
@@ -71,16 +71,32 @@ EC, 1,804 rows:
 
 | grade | rows | |
 |---|---:|---|
-| `code-shape` | 1,477 | the default, and the largest class by design |
+| `code-shape` | 1,530 | the default, and the largest class by design |
 | `ec-register` | 134 | |
 | `register-map` | 83 | |
-| `abi-symbol` | 57 | |
 | `unresolved` | 49 | |
+| `abi-symbol` | 4 | |
 | `mixed` | 4 | |
 
-BIOS, 788 rows: 729 `code-shape`, 43 `abi-symbol`, 9 `register-map`, 6
-`unresolved`, 1 `mixed`. Reproduce either with
+BIOS, 788 rows: 772 `code-shape`, 10 `register-map`, 6 `unresolved`, no
+`abi-symbol` and no `mixed`. Reproduce either with
 `python3 ec/tools/grade_name_basis.py --report`.
+
+**`abi-symbol` is nearly empty here, and that is the rule working rather than
+the vocabulary failing.** An earlier version of the grader also matched the
+`BL51`/`EDK` patterns against the row's **comment**, and reported 57 EC and 43
+BIOS `abi-symbol` rows. Measured, 101 of those 105 `abi-symbol`/`mixed` rows
+carried the token in the comment alone and four in the name — the four
+`bl51_bank_select_N` stubs in `common`, which are the whole of what remains.
+`load_dptr_88f0_tail_jump_1114` is the clearest case: every token of that name
+describes two instructions, its `abi-symbol` grade came from a comment
+mentioning `bl51_bank_select_1`, and that comment itself says 0x1114 "is not
+present in this decompiled tree, so what it does with DPTR is not decoded
+here". A grade the comment can supply is not a grade of the name, and it
+would be unfalsifiable for the same reason rule 4 refuses the comment — a
+prose comment mentions a toolchain almost anywhere. The name-only rule
+reclassifies the rest to `code-shape`, which is the honest default and the
+column's own argument: the default points at the weak end on purpose.
 
 ### The issue's worked example is a finding, and it is a negative one
 
@@ -131,13 +147,22 @@ Rule 4 reads the **name, not the comment**, deliberately: a comment may
 discuss a decoded bit anywhere while the name itself is shape-only, and
 grading on the comment would make a `register-map` grade unfalsifiable.
 
+**The same reasoning is why the grader reads the name, and not the comment,
+for the `abi-symbol` footing too** — it is the one place the first version of
+this got it wrong, and the distribution above is what fixing it cost. A rule
+keyed on `name` or `comment` here was a rule keyed on both, and 101 of 105
+graded rows took their footing from prose. Rule 4 and the grader's
+`abi-symbol` test are the same rule about the same axis: the column grades
+the mechanism the **name** asserts, so a comment cannot be the thing that
+supplies the footing.
+
 One copy of the rules lives in `grade_name_basis.py` and both build tools
 `import` it. Two copies is how "the EC checks it and the BIOS means something
 slightly different" happens; the BIOS CSV is held to the same four rules, and
 the `pd` rule is carried there even though the BIOS has no PD image, for the
 same reason.
 
-### A bug worth recording, because it was silent
+### Two bugs worth recording, because both were silent
 
 The first implementation's `DPTR_IMM` pattern was case-sensitive and the
 listing spells the register `DPTR` and the operand `0x`. It matched neither, so
@@ -146,6 +171,24 @@ XDATA detection was **completely dead** — and the report showed
 broken pattern. It was caught by the grader's own `--self-test` fixture, which
 is the only reason it was caught at all. A zero that means "the method is
 broken" and a zero that means "the method found nothing" are the same number.
+
+The second is the same shape of failure with nothing silent about the number.
+`grade_all()` read each row, wrote the computed grade straight over the
+`name_basis` key, and `check()` then compared that key **with itself** — the
+committed cell had already been overwritten by the value it was being compared
+against. The drift half of `--check` therefore could not fail: hand-editing a
+committed grade to anything at all passed, and the line it printed ("every
+name_basis agrees with the rule") was reporting a tautology. The two are now
+separate keys — `committed_name_basis` and `name_basis` — and `--self-test`
+carries a fixture that puts a wrong grade in the first and asserts the second
+one is refused, so the keys cannot be collapsed back into one.
+
+It is worth stating plainly what this was: the check that exists to stop the
+column drifting from the rule was, itself, unable to notice the column drift.
+Nothing about the symptom would have surfaced it — the tool's exit status was
+0, the count was right, and the reported number was green. The way it was found
+is the unremarkable way: poison a committed cell, and see whether the gate that
+claims to hold it objects.
 
 ---
 
@@ -201,6 +244,22 @@ names any component of 50 or more. The seeds — read off the `type` column, the
 vector table and the BIOS modules — are the part of this layer that says what a
 group is *for*.
 
+**The `<scope>` in a `callgraph` name is the component's dominant scope, and
+that is load-bearing rather than a label.** A component can hold rows from more
+than one scope — the common area is reachable from any bank — so the token has
+to say which one the component mostly is. Taking the first member instead
+described whichever row the union-find emitted first, and four of the nineteen
+names on the first committed file were wrong that way. The three large ones
+were `callgraph_bank0_1803` (323 rows, 316 of them bank1),
+`callgraph_common_0EF3` (145 rows, **144 of them `pd`**) and
+`callgraph_common_10F1` (27 rows, 26 `pd`); they now read
+`callgraph_bank1_1738`, `callgraph_pd_0180` and `callgraph_pd_0050`, and the
+sizes quoted above belong to those names. The middle one is the sharp case:
+naming 144 rows of the separate ITE8850-PD program `common` is exactly the
+conflation Part 1's `pd` rule exists to stop, reintroduced through the naming
+layer. `--check` refuses a `callgraph` name whose scope token is not the
+dominant scope among the rows carrying it, so this cannot drift again.
+
 576 EC rows are `ungrouped`: no typed seed and no component at or above the
 minimum size. That is *not found by this method*, never "these functions have
 no subsystem", and the vocabulary has `ungrouped` in it so saying so costs
@@ -231,7 +290,7 @@ infer subsystems; anything the seeds and the graph do not support stays
 `ec/annotations/xdata-0860-census-sites.csv` pins **line numbers** into the
 committed `.c` files (`bank0/D091.c:43,47`) and `check_site_census.py` holds
 them. Adding the `name_basis:` line to every plate comment shifted every
-function body by exactly one line, and the census check failed on 5 of its 7
+function body by exactly one line, and the census check failed on 6 of its 7
 sites — correctly, and with a message that says exactly what happened ("the
 line moved, or the reference was dropped").
 

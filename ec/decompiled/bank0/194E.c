@@ -11,7 +11,7 @@
    type: bank-switch
    evidence: ec/decompiled/bank0/194E.asm; ec/decompiled/bank0/194E.c
    basis: hand-decoded
-   name_basis: abi-symbol */
+   name_basis: code-shape */
 
 void load_dptr_a69f_tail_jump_1114(void)
 

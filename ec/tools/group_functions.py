@@ -25,6 +25,16 @@ names any component of 50 or more rather than letting it read as a mechanism.
 The seeds -- the ones read off the `type` column, the vector table and the
 BIOS modules -- are the part of this layer that says what a group is *for*.
 
+**The scope in that name is the component's dominant scope, and --check holds
+it there.** A component can span scopes -- the common area is reachable from
+any bank -- so the token says which one the component mostly is. Naming it
+after the first member instead described whichever row the union-find emitted
+first, and four of the nineteen names were wrong that way: a 323-row component
+of mostly bank1 rows read `callgraph_bank0_1803`, and a 145-row component of
+mostly `pd` rows read `callgraph_common_0EF3`, which hands a reader 144 rows of
+the separate ITE8850-PD program under the token `common` -- the exact
+conflation the `pd` grade rule in grade_name_basis.py exists to prevent.
+
 **The banking caveat is inherited verbatim from audit_call_targets.py, and
 this is the part that must not be softened.** Nothing in an `lcall` names a
 bank: bank0->bank1 and bank0->bank0 are the same three bytes, and both banks
@@ -123,6 +133,12 @@ LISTING = re.compile(r"^\s*([0-9A-Fa-f]{4,8})\s+"
 # The 3-byte absolute forms. These are the ones that CAN name an address in
 # another bank, which is why they are the ones worth bucketing.
 ABSOLUTE = frozenset(("lcall", "ljmp"))
+
+# `callgraph_<scope>_<addr>`, the name a clustered component is given. Parsed
+# by `--check` so a name that no longer describes its own rows is caught there
+# rather than read as fact by the next person to open the file.
+CALLGRAPH_NAME = re.compile(r"^callgraph_([a-z0-9]+)_([0-9A-F]{4,8})$",
+                            re.I)
 
 
 def read_csv(path):
@@ -313,6 +329,68 @@ def cluster(rows, repo=REPO, min_size=4):
     return clusters, cross_region
 
 
+def component_name(members):
+    """`callgraph_<scope>_<addr>` for one component, and the (scope, addr)
+    pair the name asserts.
+
+    The scope token is the component's **dominant** scope, not its first
+    member's. A component can hold rows from more than one scope -- the
+    common area is reachable from any bank, and a bank0 caller can reach a
+    common row -- and taking the first member meant the token described
+    whichever row the union-find happened to emit first rather than the
+    component. Four of the nineteen names on the committed file were wrong
+    that way, and the worst was `callgraph_common_0EF3`: 144 of its 145 rows
+    are `pd`, the separate ITE8850-PD program, which this repository spends
+    three separate guards keeping distinct from the EC's common area, and the
+    name handed a reader 144 rows of that separate program under the token
+    `common`.
+
+    "Dominant" is the scope holding the most members, ties broken by scope
+    name so the choice does not depend on iteration order. The address is
+    the lowest in that scope, which keeps the name stable across re-runs and
+    is a real member address a reader can look up.
+    """
+    counts = collections.Counter(scope for scope, _addr in members)
+    scope = min(counts, key=lambda s: (-counts[s], s))
+    return ("callgraph_%s_%s" % (scope, min(a for s, a in members if s == scope)),
+            (scope, min(a for s, a in members if s == scope)))
+
+
+def misnamed_callgraph_groups(grows):
+    """`callgraph` names whose scope token contradicts the rows carrying them.
+
+    The whole-file form of the naming rule, in the same shape as
+    `cross_bank_groups`: the name is a property of the group, so it is
+    checked over the group column rather than per row. A name is right when
+    its token is the dominant scope among the rows that carry it, which is
+    what `component_name` writes and what a hand-edit can quietly stop being.
+    Without this the four misnames on the committed file sat there through
+    every other gate, which is the same silent failure `cross_bank_groups`
+    exists to catch.
+    """
+    scopes = collections.defaultdict(collections.Counter)
+    for row in grows:
+        if (row.get("group_basis") or "").strip() != "callgraph":
+            continue
+        scopes[(row.get("group") or "").strip()][
+            (row.get("scope") or "").strip()] += 1
+    out = []
+    for name, counts in sorted(scopes.items()):
+        m = CALLGRAPH_NAME.match(name)
+        if not m:
+            out.append((name, "is not a callgraph_<scope>_<addr> name, so a "
+                       "reader cannot tell what it identifies"))
+            continue
+        dominant = min(counts, key=lambda s: (-counts[s], s))
+        if m.group(1).lower() != dominant:
+            out.append((name, "says scope %r but %d of its %d rows are %s; the "
+                       "scope token is the component's dominant scope, so a "
+                       "reader who trusts it is told the wrong region"
+                       % (m.group(1), counts[dominant], sum(counts.values()),
+                          dominant)))
+    return out
+
+
 def group_rows(rows, repo=REPO, is_bios=False, min_size=4):
     """{key: (group, group_basis, comment, evidence)} for every row.
 
@@ -330,8 +408,6 @@ def group_rows(rows, repo=REPO, is_bios=False, min_size=4):
                               "per-module and the module name is the real "
                               "structural layer the BIOS has."))
     clusters, cross = cluster(rows, repo, min_size)
-    # A cluster's group name is its smallest member's address, which is
-    # stable across re-runs and does not depend on iteration order.
     out = {}
     assigned = collections.defaultdict(list)
     for members in clusters.values():
@@ -344,7 +420,11 @@ def group_rows(rows, repo=REPO, is_bios=False, min_size=4):
         # say they do one job, and reading it as though it did is the
         # overclaim this repository's rules are about. The name is prefixed
         # `callgraph_` precisely so it cannot be mistaken for a mechanism.
-        name = "callgraph_%s_%s" % (members[0][0], members[0][1])
+        #
+        # The scope in the name is the component's dominant scope, not its
+        # first member's -- see `component_name` for why that distinction is
+        # load-bearing rather than cosmetic.
+        name, _seed = component_name(members)
         for key in members:
             assigned[key].append(name)
     sizes = {name: sum(1 for v in assigned.values() if name in v)
@@ -388,7 +468,7 @@ def write_groups(path, rows, grouped):
             })
 
 
-def check_group_row(row, banks_by_addr):
+def check_group_row(row, banks_by_addr, repo=REPO):
     """One row's refusals.
 
     `banks_by_addr` maps a normalised address to the set of regions that
@@ -396,7 +476,8 @@ def check_group_row(row, banks_by_addr):
     about a *group*, not a row: the thing that must not happen is one group
     name collecting functions out of two banks. That is a whole-file
     property, so it is checked in `check()` over the group column; what this
-    function refuses per row is the vocabulary and an empty group.
+    function refuses per row is the vocabulary, an empty group, and an
+    `evidence` citation that resolves to nothing on disk.
 
     The address-level view is still useful and is asserted by --self-test:
     a bank0 0x8100 and a bank1 0x8100 are two functions, and the graph must
@@ -408,6 +489,19 @@ def check_group_row(row, banks_by_addr):
                    % (basis, ", ".join(GROUP_BASES)))
     if not (row.get("group") or "").strip():
         out.append("has an empty group")
+    # The group layer copies `evidence` from the annotation row, so this is
+    # the same citation a reader would trace the group back through -- and it
+    # is the one place in this file where the trace can be followed, which is
+    # what makes it worth holding to the same on-disk guard
+    # build_ec_decompile.py applies to the EC annotation CSV. Split on `;`
+    # like that guard does, and the separator is load-bearing: a cell written
+    # `a.asm, a.c` is one path here, and it is one path that is not on disk.
+    # That is exactly how fifteen `OemOcDxe` rows read before this check
+    # existed, and it passed every other gate because nothing asked whether
+    # the path resolved.
+    for path in (p.strip() for p in (row.get("evidence") or "").split(";")):
+        if path and not os.path.exists(os.path.join(repo, path)):
+            out.append("the evidence %s does not exist on disk" % path)
     return out
 
 
@@ -530,6 +624,32 @@ def self_test():
     check("check refuses an empty group", bool(check_group_row(
         {"scope": "bank0", "addr": "0", "group": "  ", "group_basis": "type"},
         {})))
+    # The evidence guard, on both halves of the shape that made it necessary:
+    # a path that is not on disk, and the comma-and-space separator that
+    # silently turns two real paths into one that is neither.
+    check("check accepts an evidence path that is on disk", not check_group_row(
+        {"scope": "bank0", "addr": "0", "group": "g", "group_basis": "type",
+         "evidence": "ec/annotations/README.md; ec/annotations/registers.yaml"},
+        {}))
+    check("check refuses an evidence path that is not on disk", bool(
+        check_group_row(
+            {"scope": "bank0", "addr": "0", "group": "g", "group_basis": "type",
+             "evidence": "ec/annotations/no-such-file.asm"}, {})),
+        "(a citation that resolves to nothing is not a citation)")
+    check("check refuses a comma-separated evidence cell as one dead path",
+          bool(check_group_row(
+              {"scope": "OemOcDxe", "addr": "0x3D0", "group": "OemOcDxe",
+               "group_basis": "module",
+               "evidence": "bios/decompiled/OemOcDxe.annotated.c, "
+                           "bios/decompiled/OemOcDxe.c"}, {})),
+          "('; ' is the separator; a ', ' cell is one path and it is not on "
+          "disk -- this is the shape fifteen BIOS rows carried past every "
+          "other gate)")
+    check("an empty evidence cell is not this check's business", not check_group_row(
+        {"scope": "bank0", "addr": "0", "group": "g", "group_basis": "type",
+         "evidence": ""}, {}),
+        "(the annotation CSV owns the non-empty rule; this one asks only "
+        "whether a path that IS named resolves)")
     # The whole-file form: one group name collecting both banks.
     spanning = [{"scope": "bank0", "addr": "8000", "group": "merged",
                  "group_basis": "callgraph"},
@@ -560,6 +680,56 @@ def self_test():
               {"scope": "bank1", "addr": "8100", "group": "arithmetic",
                "group_basis": "type"}]),
           "(two functions that share a role are not connected by anything)")
+
+    # The naming rule: a callgraph name's scope token is the component's
+    # DOMINANT scope. The fixture is the shape the committed file got wrong --
+    # a component that is mostly the separate PD program, reachable from the
+    # common area, so its first member is a `common` row.
+    mixed = [("common", "0EF3")] + [("pd", "%04X" % (0x180 + 4 * i)) for i in range(6)]
+    name, seed = component_name(mixed)
+    check("the scope token is the dominant scope, not the first member's",
+          name == "callgraph_pd_0180" and seed == ("pd", "0180"),
+          "(a `common` first member must not name a mostly-`pd` component "
+          "`common`; got %r)" % (name,))
+    check("the same component named from either end agrees",
+          component_name(list(reversed(mixed)))[0] == name,
+          "(a name that depends on iteration order is not stable)")
+    check("a component of one scope names that scope",
+          component_name([("bank1", "9A00"), ("bank1", "8100")])[0]
+          == "callgraph_bank1_8100")
+    check("check accepts a callgraph name that matches its rows",
+          not misnamed_callgraph_groups([
+              {"scope": "pd", "addr": "0180", "group": "callgraph_pd_0180",
+               "group_basis": "callgraph"},
+              {"scope": "pd", "addr": "0184", "group": "callgraph_pd_0180",
+               "group_basis": "callgraph"},
+              {"scope": "common", "addr": "0EF3",
+               "group": "callgraph_pd_0180", "group_basis": "callgraph"}]),
+          "(the common row is a minority member and does not name the group)")
+    check("check refuses a callgraph name that misstates its scope",
+          [n for n, _ in misnamed_callgraph_groups([
+              {"scope": "common", "addr": "0EF3", "group": "callgraph_common_0EF3",
+               "group_basis": "callgraph"},
+              {"scope": "pd", "addr": "0180", "group": "callgraph_common_0EF3",
+               "group_basis": "callgraph"},
+              {"scope": "pd", "addr": "0184", "group": "callgraph_common_0EF3",
+               "group_basis": "callgraph"}])] == ["callgraph_common_0EF3"],
+          "(two of three rows are pd; the name says common)")
+    check("check refuses a callgraph name that is not in the scheme",
+          [n for n, _ in misnamed_callgraph_groups([
+              {"scope": "bank0", "addr": "8100", "group": "blob",
+               "group_basis": "callgraph"},
+              {"scope": "bank0", "addr": "8104", "group": "blob",
+               "group_basis": "callgraph"}])] == ["blob"],
+          "(an unprefixed name cannot be mistaken for a connected component, "
+          "which is what the `callgraph_` prefix is for)")
+    check("a non-callgraph name is not this check's business",
+          not misnamed_callgraph_groups([
+              {"scope": "bank0", "addr": "8000", "group": "arithmetic",
+               "group_basis": "type"},
+              {"scope": "bank1", "addr": "8100", "group": "arithmetic",
+               "group_basis": "type"}]),
+          "(a type-seeded name is not a callgraph name to begin with)")
 
     if failures:
         for f in failures:
@@ -624,6 +794,9 @@ def check(repo=REPO):
             problems.append("no %s; run --apply" % os.path.relpath(groups_path, repo))
             continue
         grows = read_csv(groups_path)
+        for name, why in misnamed_callgraph_groups(grows):
+            problems.append("%s: group %r %s" % (
+                os.path.relpath(groups_path, repo), name, why))
         for name in cross_bank_groups(grows):
             problems.append("%s: group %r collects rows out of more than one "
                             "bank. An lcall does not name a bank -- bank0->bank1 "
@@ -633,7 +806,7 @@ def check(repo=REPO):
                             % (os.path.relpath(groups_path, repo), name))
         seen = set()
         for grow in grows:
-            for problem in check_group_row(grow, {}):
+            for problem in check_group_row(grow, {}, repo):
                 problems.append("%s %s: %s" % (os.path.relpath(groups_path, repo),
                                                grow["addr"], problem))
             key = (grow["scope"].strip(), norm_addr(grow["addr"]))
@@ -654,7 +827,8 @@ def check(repo=REPO):
         print("  FAILURES ABOVE")
         return 1
     print("  every annotated function has a group, every group_basis is in "
-          "the closed list, and no group row spans two banks")
+          "the closed list, every evidence path is on disk, and no group row "
+          "spans two banks")
     return 0
 
 

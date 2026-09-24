@@ -7,7 +7,7 @@ toolchain stub does the selecting. Before `name_basis` existed, nothing
 recorded **what the assertion rests on**, so a name decoded from a register
 map read exactly like a name guessed from instruction shape. Issue #135's
 worked example is the case that made it matter: bank0 0x0EA2's own comment
-contradicted its own name for a while (`docs/findings.md` §14).
+contradicted its own name for a while (`docs/findings.md` §20).
 
 **The rule is deliberately asymmetric: the strongest footing actually
 traceable to a committed input, else `code-shape`.** The default points at
@@ -23,7 +23,9 @@ Vocabulary (closed; `ec/annotations/README.md` carries the prose):
                  against disasm8051.bit_name() and BIT_SFR.
   ec-register    an XDATA address in registers.yaml carrying a decoded name.
   abi-symbol     a toolchain or ABI symbol rather than the bytes -- the BL51
-                 bank-select stubs, EDK II protocol/GUID names.
+                 bank-select stubs, EDK II protocol/GUID names. The token has
+                 to be in the NAME; a comment's mention of one is a claim
+                 about the comment.
   code-shape     only the instruction sequence's shape.
   mixed          the name asserts two things with different footing.
   unresolved     the row is `type: unresolved` and the name is a placeholder.
@@ -114,6 +116,19 @@ DPTR_IMM = re.compile(r"dptr\s*,\s*#0x([0-9a-fA-F]+)", re.I)
 # Both are symbols the *toolchain* supplies, not the bytes: a name resting on
 # one is making a claim about a linker or a calling convention, which is a
 # different kind of footing from a register map and is graded as such.
+#
+# Matched against the **name only**, and that restriction is the rule rather
+# than a simplification of it. This column grades what the mechanism *the
+# name asserts* rests on, so a token that appears only in the comment is a
+# claim about the comment, not about the name: `load_dptr_88f0_tail_jump_1114`
+# describes two instructions, and a comment noting the BL51 stub at 0x1114
+# does not turn the name into an ABI citation. Grading on the comment would
+# also make the grade unfalsifiable, the same objection rule 4 is written
+# against -- a prose comment almost always mentions a toolchain somewhere, so
+# nearly every row would pick up an `abi-symbol` footing and the column would
+# stop distinguishing anything. Measured before this was tightened, 101 of
+# 105 `abi-symbol`/`mixed` rows carried their token in the comment alone and
+# four in the name (the `bl51_bank_select_N` stubs).
 BL51 = re.compile(r"\bbl51_[a-z0-9_]+\b", re.I)
 EDK = re.compile(r"\b(EFI_[A-Z0-9_]+|g[A-Z][A-Za-z0-9]*Guid|"
                  r"g[A-Z][A-Za-z0-9]*Protocol[A-Za-z0-9]*)\b")
@@ -278,14 +293,13 @@ def grade(row, registers, asm_path=None):
          registers.yaml, and the listing shows that address in a DPTR
          immediate. Refused outright for a `pd`-scoped row.
       4. `abi-symbol`   -- the name rests on a BL51 stub or an EDK II
-         type/protocol symbol.
+         type/protocol symbol. The token has to be in the **name**; a
+         comment mentioning one grades this row on what the name says.
       5. `mixed`        -- two of the above with different footing.
       6. `code-shape`   -- everything else, which is the default and the
          point.
     """
     name = (row.get("name") or "").strip()
-    comment = (row.get("comment") or "")
-
     if (row.get("type", "").strip() == "unresolved"
             and PLACEHOLDER.fullmatch(name)):
         return "unresolved"
@@ -304,7 +318,10 @@ def grade(row, registers, asm_path=None):
         # asserting a decoded register that does not exist in the map.
         if any(v in xdata and v in registers for v in cited):
             footing.add("ec-register")
-    if BL51.search(name) or BL51.search(comment) or EDK.search(name) or EDK.search(comment):
+    # The name only, never the comment: the grade is about the mechanism the
+    # name asserts, and a comment's `EFI_*` or `bl51_` token is a claim about
+    # the comment. See the note on BL51 above.
+    if BL51.search(name) or EDK.search(name):
         footing.add("abi-symbol")
 
     if len(footing) == 1:
@@ -357,14 +374,27 @@ def asm_for(row, repo=REPO):
 
 
 def grade_all(repo=REPO):
-    """{path: [rows]} graded, in file order. The rows carry a `name_basis`
-    key the caller can compare against the committed cell."""
+    """{path: [rows]} graded, in file order.
+
+    Each row carries the computed grade under `name_basis` and the cell the
+    CSV actually holds under `committed_name_basis`. The two keys have to be
+    separate, and that is the whole reason this function is not a one-liner:
+    an earlier version read the CSV, wrote the computed grade straight over
+    `name_basis`, and then had `check()` compare that field with itself. The
+    drift half of `--check` compared a value with the value it had just
+    overwritten it with, so it could never fire -- hand-editing a committed
+    grade passed, which is the one thing a re-grading check exists to stop,
+    and the failure was silent in the exact way this repository keeps warning
+    about. `apply()` writes back the CSV's own fieldnames, so the extra key
+    never reaches the file.
+    """
     registers = register_addresses(repo)
     out = {}
     for path in (os.path.join(repo, "ec", "annotations", "ghidra-functions.csv"),
                  os.path.join(repo, "bios", "annotations", "ghidra-functions.csv")):
         rows = read_csv(path)
         for row in rows:
+            row["committed_name_basis"] = (row.get("name_basis") or "").strip()
             row["name_basis"] = grade(row, registers, asm_for(row, repo))
         out[path] = rows
     return out
@@ -511,12 +541,16 @@ def check(graded, repo=REPO):
     for path, rows in graded.items():
         rel = os.path.relpath(path, REPO)
         for row in rows:
-            if (row.get("name_basis") or "") != row["name_basis"]:
+            # `committed_name_basis` is the cell the CSV holds and
+            # `name_basis` is what the rule just derived from the same row.
+            # Comparing the cell with itself is what made this check
+            # unfalsifiable before the two were separated; see `grade_all`.
+            if row.get("committed_name_basis", "") != row["name_basis"]:
                 drift.append("%s %s %s (%s): committed name_basis %r, rule "
                              "gives %r" % (rel, row.get("scope"),
                                            row.get("addr"),
                                            row.get("name"),
-                                           row.get("name_basis") or "",
+                                           row.get("committed_name_basis") or "",
                                            row["name_basis"]))
             for problem in row_problems(row, registers):
                 problems.append("%s %s %s (%s) %s" % (
@@ -534,6 +568,12 @@ def check(graded, repo=REPO):
     print("  %d row(s) re-graded, every name_basis agrees with the rule and "
           "with the four cross-field rules" % n)
     return 0
+
+
+# The module-level `check`, bound here so `--self-test` can exercise it: the
+# fixture defines a local `check` of its own, which shadows this name for the
+# rest of that function.
+_run_check = check
 
 
 def self_test():
@@ -652,6 +692,27 @@ def self_test():
     check("grade: a BL51 stub name",
           grade(row(name="bl51_bank_select_1", type="gate"), registers, None)
           == "abi-symbol")
+    # The name is the mechanism, so a comment's ABI token cannot supply the
+    # footing. Without this the grade is unfalsifiable in the same way rule 4
+    # refuses: a prose comment mentions a toolchain almost anywhere, so the
+    # column would stop distinguishing anything.
+    check("grade: a BL51 token in the comment alone is not abi-symbol",
+          grade(row(name="load_dptr_88f0_tail_jump_1114", type="bank-switch",
+                    comment="the Keil BL51 stub at 0x1114 is not present in "
+                            "this decompiled tree"),
+                registers, None) == "code-shape",
+          "(the name describes two instructions; the comment's mention of "
+          "BL51 is a claim about the comment)")
+    check("grade: an EDK token in the comment alone is not abi-symbol",
+          grade(row(name="read_modify_write_two_variables", type="writer",
+                    comment="returns EFI_SUCCESS per the EDK II calling "
+                            "convention"),
+                registers, None) == "code-shape")
+    check("grade: an EDK token in the name is abi-symbol",
+          grade(row(name="gCpuSetupGuid", type="gate"), registers, None)
+          == "abi-symbol",
+          "(the EDK pattern is the toolchain's own casing, so a name carries "
+          "one as `g…Guid` and not as prose 'guid')")
     check("grade: a pd row citing an EC register is not ec-register",
           grade(row(scope="pd", name="write_07c4"), registers, xd)
           != "ec-register")
@@ -662,6 +723,29 @@ def self_test():
     check("grade: mnemonic-shaped tokens are not addresses",
           grade(row(name="dec_a_then_add_8e", type="math"), registers, None)
           == "code-shape")
+
+    # --check's drift half, on the exact shape that made it dead: a row whose
+    # committed cell has been overwritten with the computed grade is compared
+    # with itself and can never disagree. A fixture that puts a wrong grade in
+    # `committed_name_basis` and asserts check() rejects it is what stops the
+    # two keys being collapsed back into one again. Called through
+    # `_run_check`, because the local `check` above is this fixture's own
+    # recorder and shadows the module-level one.
+    def drift_fixture(committed_value, computed_value):
+        return {"fixture.csv": [
+            {"scope": "bank0", "addr": "0EA2", "name": "x", "type": "logic",
+             "comment": "", "evidence": "", "basis": "hand-decoded",
+             "committed_name_basis": committed_value,
+             "name_basis": computed_value}]}
+
+    # The expected failure prints its own diagnostic; that is the real
+    # `check()` writing to stdout, and it is left alone rather than silenced,
+    # so a run of --self-test still shows what it is refusing.
+    check("check refuses a committed grade that disagrees with the rule",
+          _run_check(drift_fixture("abi-symbol", "code-shape")) == 1,
+          "(a hand-edited name_basis must not pass --check)")
+    check("check accepts a committed grade that agrees with the rule",
+          _run_check(drift_fixture("code-shape", "code-shape")) == 0)
 
     if failures:
         for f in failures:

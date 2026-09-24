@@ -34,7 +34,7 @@
    type: forwarder
    evidence: ec/decompiled/bank1/19A8.asm; ec/decompiled/bank1/19A8.c
    basis: hand-decoded
-   name_basis: abi-symbol */
+   name_basis: code-shape */
 
 void trampoline_to_c118(void)
 

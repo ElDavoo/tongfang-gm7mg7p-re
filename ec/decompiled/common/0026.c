@@ -14,7 +14,7 @@
    type: forwarder
    evidence: ec/decompiled/common/0026.asm; ec/decompiled/common/0026.c
    basis: hand-decoded
-   name_basis: abi-symbol */
+   name_basis: code-shape */
 
 void table_entry_to_1168(void)
 

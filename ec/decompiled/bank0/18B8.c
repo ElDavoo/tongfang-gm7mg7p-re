@@ -11,7 +11,7 @@
    type: bank-switch
    evidence: ec/decompiled/bank0/18B8.asm; ec/decompiled/bank0/18B8.c
    basis: hand-decoded
-   name_basis: abi-symbol */
+   name_basis: code-shape */
 
 void load_dptr_823a_tail_jump_1114(void)
 

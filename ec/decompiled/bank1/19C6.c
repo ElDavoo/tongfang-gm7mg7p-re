@@ -10,7 +10,7 @@
    type: forwarder
    evidence: ec/decompiled/bank1/19C6.asm; ec/decompiled/bank1/19C6.c
    basis: hand-decoded
-   name_basis: abi-symbol */
+   name_basis: code-shape */
 
 void trampoline_to_a747(void)
 
