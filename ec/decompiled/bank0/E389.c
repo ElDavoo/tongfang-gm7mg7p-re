@@ -16,10 +16,10 @@
 void load_0434_0438_pairs_mul16_and_tailcall(undefined1 param_1,undefined1 param_2)
 
 {
-  set_r6_from_a_r7_from_dptr(DAT_EXTMEM_0435,0x434);
+  set_r6_from_a_r7_from_dptr(BAT_CURRENT_MA_1,0x434);
   DAT_EXTMEM_0a50 = param_1;
   DAT_EXTMEM_0a51 = param_2;
-  set_r6_from_a_r7_from_dptr(DAT_EXTMEM_0439,0x438);
+  set_r6_from_a_r7_from_dptr(BAT_VOLTAGE_MV_1,0x438);
   DAT_EXTMEM_0a52 = param_1;
   DAT_EXTMEM_0a53 = param_2;
   mul16(param_1,param_2,DAT_EXTMEM_0a50,DAT_EXTMEM_0a51);

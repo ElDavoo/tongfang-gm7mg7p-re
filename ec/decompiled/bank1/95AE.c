@@ -12,7 +12,7 @@
 void copy_045d_to_0704(void)
 
 {
-  DAT_EXTMEM_0704 = DAT_EXTMEM_045d;
+  DAT_EXTMEM_0704 = XDATA_045D;
   return;
 }
 

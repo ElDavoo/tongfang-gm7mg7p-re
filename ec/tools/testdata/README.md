@@ -16,21 +16,27 @@ placeholder `2026-01-01` timestamp so the two can never be confused.
 All are in `ec_watch.py --mark --csv` format, `MARK` rows included.
 
 `0751-isolation-run/` is the set §6 of
-`docs/hardware-tests/manual-fan-ctrl-0751-isolation.md` names, all eight
+`docs/hardware-tests/manual-fan-ctrl-0751-isolation.md` names, all ten
 files under exactly those names, so that section's command line can be run
 over it end to end offline. The three CSVs are one fixed-load `0xA0` block
 whose candidate PWM drifts *more* under the no-op than under the write, with
 `CPU_TEMP`/`GPU_TEMP` climbing throughout and nothing §4.1-§4.3 moving — the
 ambiguous, thermally-explained shape, and **not** a prediction that a re-run
-produces it. The four dumps are full `ecrw.py dump` ranges, `0x0751` reading
-`0x10` before and `0xA0` after; the `0x0700` pair differs only where the CSVs
-record movement, and the `0x0F00` pair is byte for byte identical by
-construction. That is what makes the second pair worth keeping: it is the
-one that exercises the whole-block read's *unchanged* branch, which the
-`0x0700` pair — always carrying the four addresses the captures record
-moving — cannot reach. Both pairs are now given to `--dump-pair` in §6's
-command, so all four dumps are consumed and the fixture set itself is
-unchanged.
+produces it. The six dumps are full `ecrw.py dump` ranges, one pair per
+range; the `0x0700` pair is the one that carries `0x0751`, reading `0x10`
+before and `0xA0` after. The `0x0700` and `0x0400` pairs each differ only
+where the CSVs record movement, and the `0x0F00` pair is byte for byte
+identical by construction. That is what makes the `0x0F00` pair worth
+keeping: it is the one that exercises the whole-block read's *unchanged*
+branch, which the `0x0700` pair — always carrying the four addresses the
+captures record moving — cannot reach. The `0x0400` pair is what puts
+§4.5's two temperatures in the whole-block read at all, and it differs at
+`0x0402` and at the two confirmed bytes, so it reaches the context group the
+`0x0700` and `0x0F00` pairs have to name as out of reach. All three pairs
+are now given to `--dump-pair` in §6's command, so all six dumps are
+consumed and every pair names both §4.4/§4.5 context groups — as value
+pairs where the range covers them, as *not covered by this pair* where it
+does not.
 Every file in the directory carries a `constructed` header saying no EC was
 read; `../test_grade_0751_isolation.py` asserts that the list in §6 and this
 directory are the same set, so a rename on one side and not the other fails.

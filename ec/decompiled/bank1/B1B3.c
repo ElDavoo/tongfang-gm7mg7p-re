@@ -27,9 +27,9 @@ void dispatch_0490_low3(void)
     read_xdata_pair_to_r3r4(0x436);
     FUN_CODE_8863(0xff,0xff);
     if (cVar2 < '\0') {
-      DAT_EXTMEM_043c = 4;
+      XDATA_043C = 4;
       cmp_0404_vs_0518_then_store_0436();
-      DAT_EXTMEM_0432 = 1;
+      BAT_STATUS_1 = 1;
       return;
     }
   }
@@ -41,13 +41,13 @@ void dispatch_0490_low3(void)
     if ((bVar1 >> 1 & 1) != 0) {
       return;
     }
-    if (DAT_EXTMEM_043c == '\x01') {
+    if (XDATA_043C == '\x01') {
       return;
     }
     write_r1r2_to_xdata_pair(0x436,0xff,0xff);
   }
-  DAT_EXTMEM_043c = 1;
-  DAT_EXTMEM_0432 = 0;
+  XDATA_043C = 1;
+  BAT_STATUS_1 = 0;
   write_r1r2_to_xdata_pair(0x434,0,0);
   write_r1r2_to_xdata_pair(0x438);
   return;
