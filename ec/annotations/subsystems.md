@@ -112,7 +112,10 @@ of the disassembler's vocabulary.
 ## 3. Reset and interrupt entry
 
 The table at `0x0000`-`0x002F` is the entry point the issue asks for, and it is
-the one group in this firmware that is now fully named. `ec/tools/build_ec_decompile.py`'s
+the one group in this firmware whose every slot now carries an annotation row.
+One thing it reaches does not: the entry at `0x002B` tail-jumps to `0x05E7`,
+which is exported and unannotated, and is read from its bytes below rather than
+from a row. `ec/tools/build_ec_decompile.py`'s
 `discover_vector_table()` walks it rather than assuming the textbook layout, and
 what the walk finds is 12 `ljmp` entries interleaved with 4 lone `ret` bytes.
 
@@ -192,9 +195,14 @@ that is there.
 `reti`" is a claim about this image. It is *not* "int0 and serial 0 are
 unimplemented": whether the EC services those sources is a question about the
 interrupt-enable and peripheral registers, which none of these addresses reads
-and which this document does not decode. The three rows are `type: unresolved`
-for that reason and are cited above with the marker, so a reader cannot take
-them for decoded handlers.
+and which this document does not decode. **Two of the three carry a row** —
+`common` `0x052F` and `common` `0x05E6`, both `type: unresolved` for that
+reason and both cited above with the marker, so a reader cannot take them for
+decoded handlers. **`0x05E7` carries no row at all**:
+`ec/decompiled/index.csv` exports it as `FUN_CODE_05e7` with `annotated=no`, and
+no citation in this document reaches it, so `--check` cannot see it either.
+Everything said about it above is read from its bytes and its `reassembly.csv`
+record, which is why it is written out here rather than cited.
 
 **The two common-area duplicates from §2.** Both are visible in the bytes and
 neither is settled:
@@ -205,10 +213,10 @@ neither is settled:
   scan found `01 03` there, not because the vector table does.
 - `common` `0x1207` is a bare `ljmp 0x1100` and the index names it
   `bl51_bank_select_0`. The three bytes before it, at `0x1204`, are
-  `90 bf 62` — `mov DPTR,#0xBF62` — so `0x1204`-`0x1207` is one six-instruction
-  thunk of the same shape as every function in §4, split in two by a call-target
-  frame, and the second half inherited the name of the first. Whether the
-  common area genuinely carries a second copy of the stub or Ghidra split one
+  `90 bf 62` — `mov DPTR,#0xBF62` — so `0x1204`-`0x1207` is one two-instruction,
+  six-byte thunk of the same shape as every function in §4, split in two by a
+  call-target frame, and the second half inherited the name of the first. Whether
+  the common area genuinely carries a second copy of the stub or Ghidra split one
   routine is not established by the bytes alone.
 
 ## 4. Cross-bank code access (BL51)
@@ -236,9 +244,12 @@ the committed listings by shape — a function whose whole body is
 which 282 name a BL51 stub: 261 to `0x1100` and 21 to `0x1114`, and none to
 `0x1128` or `0x113C`. **82 of those 282 are annotated** (62 and 20
 respectively), so the stub addresses are established and the callers are
-mostly not. The looser count — rows whose *prose* mentions `0x1100` or
-`0x1114` — is 90, and it is a different and weaker measurement: it catches a
-row that discusses a stub without being one of the 282.
+mostly not. The looser count — rows whose `comment` field names `0x1100` or
+`0x1114` — is 94, and it is a different and weaker measurement: it catches a
+row that discusses a stub without being one of the 282. `--check` recounts
+only the four census figures, so this one is not held to a recount by the gate
+and is stated here as a count of one named column rather than as a figure
+something will catch if it drifts.
 
 **The same-bank caveat carries over unchanged.** `bank-call-audit.md` states
 that a trampoline whose target lies in the banked window does not establish
@@ -316,11 +327,18 @@ touching `0x0751` and no other XDATA byte. The named functions among them:
 - `bank0` `0xB716` `clear_08eb_bit3_09e6_09e7_08a2_089e_089f`
 - `bank0` `0xB82E` `clear_08eb_bit6_and_zero_08a0`
 
-**What this group does not establish.** Per
-[`../../docs/findings.md`](../../docs/findings.md) §7b, the static walk stops at
-the branch, and both arms of all 17 mode-bit branches are open. So which of
-these functions a given mode actually reaches is not established, and a Linux
-`platform_profile` cannot be written from this list yet.
+**What this group does not establish.** The arm walk is finished, not open:
+[`../../docs/findings.md`](../../docs/findings.md) §7b records both arms of all
+17 mode-bit branches walked, 34 `kind: arm` rows in
+[`manual-fan-ctrl-0751-arms.csv`](manual-fan-ctrl-0751-arms.csv), every one
+`status: complete`. That does not answer this section's question, because the
+arm table records what each arm *touches* and *reaches* rather than which mode
+bit selects which of the functions above. Three of the nine are reached —
+`bank0` `0xBB40` `fan_mode_get`, `0xB716` and `0xB82E` all appear in the arms'
+`callees` column — and the other six appear in no column of it at all. So
+which of these functions a given mode actually reaches is still not
+established, and a Linux `platform_profile` cannot be written from this list
+yet.
 
 ## 8. Lightbar
 
@@ -351,12 +369,18 @@ points**, and it splits in two.
 `0xA3`/`0xA2` index bytes does not exist in the 8051 at all; it is the ACPI EC
 interface, and it is already mapped and typed `ec-io` in
 [`../../bios/annotations/ghidra-functions.csv`](../../bios/annotations/ghidra-functions.csv).
-Thirty rows carry that type. Two examples, both in `OemOcDxe`:
+Thirty rows carry that type, and the one that performs the whole write is:
+
+- `OemOcDxe` `0xF38` `EcWriteCommandData` — the `0xA3`/`0xA2` register write as a
+  three-argument call, waiting for IBF and draining OBF around it
+
+The function that carries the `0x62` port base and the index byte as its
+arguments is a neighbour of that set rather than a member of it, and its type
+says so:
 
 - `OemTurboModeDxe` `0x778` `write_index_data_byte` — every call site passes
-  `0x62` as the port base
-- `OemOcDxe` `0xF38` `EcWriteCommandData` — the `0xA3`/`0xA2` register write as a
-  three-argument call
+  `0x62` as the port base; it is `type: writer`, not `ec-io`, and is not one of
+  the thirty
 
 **The EC-side analogue is the index-helper family, and it is partly named.**
 [`pd-index-helpers.csv`](pd-index-helpers.csv) has 11 rows, of which four are
@@ -368,8 +392,10 @@ named functions:
 - `pd` `0x998F` `dbl_a_add_dph_write_dph`
 - `pd` `0x9A1B` `a_r3_b_60_tail_10bc`
 
-The other seven rows of that CSV are not exported functions and carry no
-annotation row. And the four *site* accessors the issue's phrase points at —
+The other seven rows of that CSV carry no annotation row of their own: six are
+not exported functions at all, and `pd` `0x998B` is exported but carries only
+the inherited name of `pd` `0x10BC`, which §2 records. And the four *site*
+accessors the issue's phrase points at —
 `0x7421`, `0x9DEC`, `0xB5D3` and `0xE9F5` — **are not exported functions at
 all**: each is a code site inside a larger routine that no `lcall` names.
 [`pd-index-callers.csv`](pd-index-callers.csv) traces all four, and **four of

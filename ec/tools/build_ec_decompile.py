@@ -2235,6 +2235,22 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("subsystems: an evidence path that is not on disk is reported",
           len(_p) == 1 and "does not exist on disk" in _p[0]
           and "ev/gone.asm" in _p[0], str(_p))
+    # The existence check reaches every row of the CSV, not only the ones this
+    # document quotes. Five of the eleven stale paths the map's check is
+    # credited with finding sit on rows it never cites, which is what a guard
+    # that stops at the citation list cannot see -- so the good uncited row and
+    # the bad one are both here, and the assertion is that only the bad one is
+    # reported.
+    _uncited = [dict(r) for r in _srows] + [
+        {"scope": "common", "addr": "0x0C7A", "name": "quoteless_helper",
+         "type": "logic", "evidence": "ev/ok.asm"},
+        {"scope": "common", "addr": "0x0EF3", "name": "quoteless_helper_2",
+         "type": "logic", "evidence": "ev/gone.asm"}]
+    _p = subsystems_problems(_good_doc, _uncited, repo=_sd)
+    check("subsystems: a dead evidence path on a row the document never cites "
+          "is reported, and an uncited row with a live path is not",
+          len(_p) == 1 and "does not exist on disk" in _p[0]
+          and "ev/gone.asm" in _p[0] and "0x0EF3" in _p[0], str(_p))
     _stated = subsystems_stated_counts(_census_doc)
     check("subsystems: the four census counts are read back out of the prose",
           {k: [v for _, v in vs] for k, vs in _stated.items()}
@@ -2957,11 +2973,14 @@ def subsystems_problems(text, ann_rows, repo=REPO, stated=None, measured=None):
       address. This is the one that actually bites, and it is why the check
       lives in the tool that owns the CSV.
     - a `type: unresolved` row cited without the `[unresolved]` marker.
-    - a cited `evidence` path that does not exist on disk. This closes, for
+    - an `evidence` path that does not exist on disk. This closes, for
       this document, the delete-the-row-and-the-file hole
       ec/annotations/README.md §"The checks" describes: a row that is gone
       cannot point at a file that is gone, so every other existence check
-      still holds.
+      still holds. It is checked over *every* row of the CSV rather than over
+      the cited ones: the citation list is this document's selection, and a row
+      it happens not to quote is exactly where a dead path can sit unseen.
+      A cited row is reported with its line; an uncited one by its key alone.
     """
     problems = []
     by_key = {(r["scope"], norm_addr(r["addr"])): r for r in ann_rows}
@@ -2969,8 +2988,10 @@ def subsystems_problems(text, ann_rows, repo=REPO, stated=None, measured=None):
     if not cites:
         return ["the document cites no functions: the citation format is three "
                 "backticked fields, a scope, an address and a name"]
+    cited_keys = set()
     for c in cites:
         key = (c["scope"], norm_addr(c["addr"]))
+        cited_keys.add(key)
         row = by_key.get(key)
         if row is None:
             problems.append("line %d: %s %s is not a row in %s -- a rename or a "
@@ -2997,6 +3018,18 @@ def subsystems_problems(text, ann_rows, repo=REPO, stated=None, measured=None):
                 problems.append("line %d: the evidence %s cited for %s %s does not "
                                 "exist on disk" % (c["lineno"], path, c["scope"],
                                                    c["addr"]))
+    # ...and over the rows the document does not cite, so the existence check
+    # is a property of the CSV rather than of the map's selection from it. The
+    # cited rows are already reported above, with a line number, and reporting
+    # them twice would make a count in the message mean nothing.
+    for r in ann_rows:
+        key = (r["scope"], norm_addr(r["addr"]))
+        if key in cited_keys:
+            continue
+        for path in (p.strip() for p in r.get("evidence", "").split(";")):
+            if path and not os.path.exists(os.path.join(repo, path)):
+                problems.append("%s %s: the evidence %s does not exist on disk"
+                                % (r["scope"], r["addr"], path))
     if stated and measured:
         for label in SUBSYSTEM_COUNTS:
             if label not in stated:

@@ -4492,7 +4492,7 @@ export-only run for this issue was made with the owner corrected in the scratch
 copy only, and the committed file is byte-identical afterwards. Both want their
 own issues.
 
-## 19. The map from mechanism to function, and the eleven citations it found stale (2026-09-24, issue #136)
+## 19. The map from mechanism to function, and the eleven stale evidence paths it fixed (2026-09-24, issue #136)
 
 `../ec/annotations/subsystems.md` now exists, and the issue it closes asked for
 it by that name. The interesting part is not the map.
@@ -4538,14 +4538,27 @@ because "the vector target is one `reti`" is not "int0 and serial 0 are
 unimplemented" — whether the EC services those sources is a question about the
 interrupt-enable registers, which none of those addresses reads.
 
-**The citation check found eleven rows of `ghidra-functions.csv` citing files
-that do not exist.** All eleven are `common` scope and all eleven cite
-`ec/decompiled/bank0/` for a function the common-area de-dup (§12) had already
-moved to `ec/decompiled/common/` — 22 dead paths, invisible until now, because
-every existing gate asks whether an `evidence` cell is *named* and none asked
-whether the path resolves. They are fixed here. This is the delete-the-row-and-
+**Eleven rows of `ghidra-functions.csv` were citing files that do not exist, and
+the existence check now reaches all of them.** All eleven are `common` scope and
+all eleven cite `ec/decompiled/bank0/` for a function the common-area de-dup (§12)
+had already moved to `ec/decompiled/common/` — 22 dead paths, invisible until now,
+because every existing gate asks whether an `evidence` cell is *named* and none
+asked whether the path resolves. They are fixed here. This is the delete-the-row-and-
 the-file hole the annotations README describes, reached from the other side: not
 a row deleted with its file, but a file moved out from under a row that stayed.
+
+**Correction to how they were found, and the gate change it produced.** This
+paragraph first said the citation check *found* all eleven. It did not, and the
+figure was doing more work than the tool behind it could carry. The existence
+check iterated only the rows `subsystems.md` cites — 61 citations, 59 distinct
+`(scope, addr)` keys — and five of the eleven (`common` `0x0C7A`, `0x0EF3`,
+`0x10F1`, `0x11C2`, `0x383A`) are cited nowhere in the map, so the check as
+written could not have flagged them. They came out of the same de-dup audit that
+turned up the six the map does cite. The check is now widened from the cited
+rows to every row of the file, which is what makes the claim true going forward,
+and which a paragraph arguing that no gate asks whether an evidence path
+resolves should have had from the start. The eleven were real either way; what
+was overstated was the tool's reach, from 1,804 rows down to 59.
 
 **Two smaller reconciliations, so the next reader does not have to redo them.**
 `common` `0x1207` is a bare `ljmp 0x1100` and `common` `0x0512` is a two-byte
