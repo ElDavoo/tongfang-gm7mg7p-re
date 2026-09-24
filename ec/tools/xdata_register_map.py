@@ -612,14 +612,16 @@ HAND_CHECKED = {
     #
     # CORRECTION (2026-09-24, issue #281): the line numbers above were 30, 34, 56,
     # 57, 60, 61 and 62, with the dispatch argument at :69 -- the seven `==` lines
-    # 13 lower than the committed file and the dispatch argument 12. D091.c's
-    # correction header grew when issue #180's table reading landed and nothing
-    # that named those lines moved with it. They were wrong from the day this entry
-    # was written, and issue #281 quotes them verbatim, so the wrong ones stay
-    # visible here rather than only in the history. A bucket total could never have
-    # caught it: every number in this entry is still right, and a line number is
-    # not a number the census sums. check_site_census.py re-checks them per site
-    # against classify()'s own output and fails if they drift again.
+    # 13 lower than the committed file and the dispatch argument 12. They were
+    # right when this entry was written (#206) and still right at 40744da^; they
+    # went stale in #225, which rewrote D091.c and grew its correction header by
+    # 13 lines -- the `==` shift exactly, and the dispatch argument one less
+    # because that rewrite also reflowed a closing paren onto the line above it.
+    # Issue #281 quotes them verbatim, so the wrong ones stay visible here rather
+    # than only in the history. A bucket total could never have caught it: every
+    # number in this entry is still right, and a line number is not a number the
+    # census sums. check_site_census.py re-checks them per site against
+    # classify()'s own output and fails if they drift again.
     "0x0860": {"read": 14, "write": 2, "read+write": 0, "passed-to-call": 1,
                "address-taken": 0, "writers": 2},
     # 12 references and zero `==` adjacent to the address. Four are genuine
