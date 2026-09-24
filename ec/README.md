@@ -380,7 +380,7 @@ needs:
    *register write* alone required a 30s power-button EC reset to recover.
 
 Treat this as the honest state: the Ghidra project now exists
-(`ghidra/project/`, with 2,709 decompiled functions under `decompiled/`), so
+(`ghidra/project/`, with 2,710 decompiled functions under `decompiled/`), so
 items 1 and 2 above have a real starting point rather than a plan — but a
 *correct, complete* reassembly is still a project, not a script, and nothing
 here has been reassembled or reflashed. `ghidra/README.md` has the method, the
@@ -393,14 +393,14 @@ and `decompiled/listing-index.csv` points at the listings. A function named
 rather than called `FUN_CODE_…` carries a plate comment saying what it does and
 where the reading came from — those names come from
 `annotations/ghidra-functions.csv`, which is the editable surface. And the
-committed disassembly re-encodes to the firmware bytes: 45,394 of 45,537
+committed disassembly re-encodes to the firmware bytes: 45,481 of 45,624
 instructions, measured by `tools/verify_reassembly.py` and recorded in
 `ghidra/reassembly.csv`. The other 143 use five forms `sdas8051` cannot
 express, so no assembler reaches them; they are covered instead by
 `tools/verify_gap_text.py`, which cross-decodes each one with
 `tools/disasm8051.py` and records the verdict per instruction in
 `ghidra/gap-text-check.csv` — all 143 agreeing. That does **not** make the
-claim 100%: the re-encode figure stays 45,394 of 45,537, and the two are
+claim 100%: the re-encode figure stays 45,481 of 45,624, and the two are
 different kinds of evidence. Both are claims about the machine code, not about
 the C, and `ghidra/README.md` says at length what it is not. See the repo's GitHub issues for the
 concrete next steps, several of which are independently useful (e.g. the 254

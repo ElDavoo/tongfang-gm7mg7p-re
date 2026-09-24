@@ -38,9 +38,9 @@ bigger ([`docs/MISSION.md`](docs/MISSION.md) is the canonical copy):
   `registers.yaml`, and cited back to bank and address. It's a
   reconstruction, since the vendor's source isn't available. That
   reconstruction is under way: `ec/ghidra/README.md` has the committed
-  Ghidra project, 2,703 decompiled functions each beside the machine code it
+  Ghidra project, 2,710 decompiled functions each beside the machine code it
   was read from, and the annotation layer that improves them (issue #20). The
-  committed disassembly re-encodes to the firmware bytes — 45,394 of 45,537
+  committed disassembly re-encodes to the firmware bytes — 45,481 of 45,624
   instructions, checked by `ec/tools/verify_reassembly.py`.
 
 No single change finishes it. Progress is one more register's behaviour

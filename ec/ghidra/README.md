@@ -7,7 +7,7 @@ cited back to its bank and address. The vendor's source isn't available, so
 this is its reconstruction. Tracked as issue #20.
 
 **Status: built.** `project/` holds a Ghidra 12.1.3 project with the three
-programs this firmware dump contains, `../decompiled/` holds 2,709
+programs this firmware dump contains, `../decompiled/` holds 2,710
 decompiled C files, and `annotations/ghidra-functions.csv` and
 `annotations/ghidra-variables.csv` are the editable layers that improve
 both. The five steps below are what it implements; the sections after them
@@ -72,7 +72,7 @@ never been seen to fail is not a check, and this is the discipline
 
 **What passing does and does not say.** It says Ghidra's output at one address
 agrees with a human reading of the same bytes, made mechanical. It is not a
-claim about the rest of the 2,708 files, and nothing in it is a claim the
+claim about the rest of the 2,710 files, and nothing in it is a claim the
 decompiler is working — a missing or empty `B1F0.c`/`.asm` is a **failure**,
 not a skip, because a silently empty export is one of the two states the check
 exists to catch. `TongFang.openDecompiler()` throwing `DECOMPILER UNAVAILABLE`
@@ -294,28 +294,28 @@ $ SDAS8051=$(nix build nixpkgs#sdcc && echo $out/bin/sdas8051) \
     python3 ../tools/verify_reassembly.py --work /tmp/ec --report
 
   assembler: sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14  (/nix/store/…-sdcc-4.6.0/bin/sdas8051, this run)
-  committed: sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14  (ec/ghidra/reassembly.csv, 2705 rows)
-    the committed report and this run used the same assembler
+  committed: sdas8051 02.00: 2 row(s), sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14: 2705 row(s)  (ec/ghidra/reassembly.csv, 2707 rows)
+    NOTE the committed report names 2 different assemblers, so there is no single answer to compare against and no agreement is established.
 
-  reassembly, by function (2705 total):
-    match            2574
+  reassembly, by function (2707 total):
+    match            2576
     partial          73
     assembler-gap    58
 
   reassembly, by instruction:
-    re-encode to the firmware bytes : 45394 of 45537 (99.69%)
+    re-encode to the firmware bytes : 45481 of 45624 (99.69%)
     unchecked (sdas8051 cannot express the form): 143
 
-  2574 function(s) have every instruction re-encode byte-exactly; 73 more have all but 143 instruction(s) verified.
+  2576 function(s) have every instruction re-encode byte-exactly; 73 more have all but 143 instruction(s) verified.
 
   compared against the committed report (ec/ghidra/reassembly.csv):
     outcome               this run  committed
-    match                     2574       2574
+    match                     2576       2576
     partial                     73         73
     assembler-gap               58         58
     mismatch                     0          0
-    rows                      2705       2705
-    instructions checked     45394      45394
+    rows                      2707       2707
+    instructions checked     45481      45481
     instructions unchecked       143        143
 
   moved since the committed report: nothing
@@ -333,8 +333,24 @@ and its assembler are the ones the report was measured with. A run on a
 runner's own assembler prints a disagreement in place of that agreement, and the
 paragraph below has what it says.
 
-**45,394 of 45,537 instructions re-encode to the exact bytes in the firmware,
-and no function disagrees.** 2,574 of 2,705 have every instruction verified; a
+**Two rows are not from the same run as the other 2,705.** `bank0,CC64`, the
+listing issue #285 added, and `bank1,C1E7`, the listing issue #262 added, were
+both measured with the runner's `sdas8051 02.00` and their `assembler` cells say
+`sdas8051 02.00`, because that is the assembler that measured them; every other
+row carries `05.50.4+NoICE+SDCCmods-WIP-R14`. The column is per-row so that this
+is visible instead of averaged away, and `compare_assembler()` reports a mixed
+report as the `NOTE` the transcript above now shows rather than as an agreement.
+Re-reporting under `05.50.4` -- the nix command in the transcript -- is what
+makes the column uniform again, and it re-measures those rows rather than copying
+them; `bank0,CC64` reads `match` with 58 of 58 instructions checked and
+`bank1,C1E7` reads `match` with 29 of 29, both 0 unchecked, as `02.00` measured
+them, and no run under `05.50.4` has been made to say what that assembler would
+answer. Nothing in the cheap tier depends on which assembler a row names:
+`--check` compares listing bytes and digests and the report's `mismatch` count,
+and the deep tier's exit status is `mismatch == 0` and nothing else.
+
+**45,481 of 45,624 instructions re-encode to the exact bytes in the firmware,
+and no function disagrees.** 2,576 of 2,707 have every instruction verified; a
 further 73 have all but 143 between them.
 
 The 143 are 74 `AJMP`, 36 `ACALL`, 19 `MOV bit,C`, 13 `CPL bit` and one
@@ -402,20 +418,20 @@ it at all.
 
 The re-encode is the strongest check the EC has and it has one hole: 143
 instructions in five forms `sdas8051` cannot express are excluded from it, and
-so were read by *no* check. The byte check reaches them — it covers all 45,537
+so were read by *no* check. The byte check reaches them — it covers all 45,624
 and needs no assembler — but a byte is not a mnemonic, and a listing whose
 bytes are right and whose text is wrong passes it.
 
 `../tools/verify_gap_text.py` closes that by asking a second decoder.
 `disasm8051.py` shares no code with Ghidra's SLEIGH, which is the same
-property that makes the 45,394 meaningful. For every instruction
+property that makes the 45,481 meaningful. For every instruction
 `verify_reassembly.to_sdas()` declines, it decodes the instruction **from the
 firmware image** at that instruction's own runtime address and compares that
 reading to the listing's text:
 
 ```
 $ python3 ../tools/verify_gap_text.py --report
-  gap text: 143 instruction(s) in 84 row(s) across 5 form(s); 45394 checked by re-encode
+  gap text: 143 instruction(s) in 84 row(s) across 5 form(s); 45481 checked by re-encode
     BIT_UNSUPPORTED 0x92         19
     BIT_UNSUPPORTED 0xB2         13
     GAP_FORMS "djnz a,"          1
@@ -428,13 +444,13 @@ $ python3 ../tools/verify_gap_text.py --report
 two texts, both canonical forms, why `to_sdas()` declined it, and the verdict —
 so no instruction is folded into a total.
 
-**This does not make the 1:1 claim 100%, and the number stays 45,394 of
-45,537 (99.69%).** `sdas8051` still cannot express those five forms; nothing
+**This does not make the 1:1 claim 100%, and the number stays 45,481 of
+45,624 (99.69%).** `sdas8051` still cannot express those five forms; nothing
 about this work changes that. What changes is *coverage*: every instruction in
-the committed listing is now read by an independent check — 45,394 by
+the committed listing is now read by an independent check — 45,481 by
 re-encode, the 143 by decoder agreement. The two are not the same kind of
 evidence and should not be added together into a single percentage. For the
-45,394 an independent assembler encodes the listing back and the firmware bytes
+45,481 an independent assembler encodes the listing back and the firmware bytes
 arbitrate, constructively. For the 143 the bytes are already settled by the
 byte check, and what is agreed is the *text*, between two decoders reading the
 same byte column. It is a weaker form of the same claim, and it inherits the
@@ -477,7 +493,7 @@ been "in agreement" with a hole.
   reproduced in common references has them the other way round. Three tools
   agreeing is why `disasm8051.py` follows them, and none of them arbitrating
   the other two is why that is recorded rather than settled. No committed
-  instruction is affected either way — all 12 occurrences are inside the 45,394,
+  instruction is affected either way — all 12 occurrences are inside the 45,481,
   because those are two of the bit forms `sdas8051` *does* express. But it is
   the shape of hole this tool cannot see: the re-encode passes on them because
   the decoder and the assembler agree, not because either is right.
@@ -535,8 +551,8 @@ column left correct, now fails the cheap tier with no assembler:
 ```
 $ # in ec/decompiled/bank0/031C.asm: `ljmp 0xd236` -> `sjmp 0xd236`, byte column untouched
 $ python3 ../tools/verify_reassembly.py --check
-  listing bytes: 45537 instruction(s) checked against the firmware, 0 disagreement(s)
-  listing digests: 2705 compared against the committed report, 1 disagreement(s)
+  listing bytes: 45624 instruction(s) checked against the firmware, 0 disagreement(s)
+  listing digests: 2707 compared against the committed report, 1 disagreement(s)
   FAIL bank0 031C poll_d6c2_then_branch (bank0/031C.asm): report says 38b4854aff7d69ca, bank0/031C.asm now digests to 180ddaa4dd467c12 -- the listing text changed after the report measured it
 ```
 

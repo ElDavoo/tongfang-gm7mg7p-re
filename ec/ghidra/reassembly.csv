@@ -1179,6 +1179,7 @@ bank1,BFD9,zero_04ae_and_04be,match,a60e825703957af3,7,0,,sdas8051 05.50.4+NoICE
 bank1,C032,FUN_CODE_c032,match,ef189592aab84efa,58,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,C0A8,FUN_CODE_c0a8,match,e241bb383cba6be8,65,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,C11C,latch_0490_bit3_or_bit7,match,1185dc97823de120,95,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank1,C1E7,latch_0498_bit1_or_bit3,match,aeab1c871d1bf81a,29,0,,sdas8051 02.00
 bank1,C245,dispatch_0490_bits_1_5_6,match,8a181875ebe64c60,13,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,C267,reset_0432_and_04f2,match,c130003d491e420f,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,C277,set_0432_from_0494,match,f06d694645ae17b1,28,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
