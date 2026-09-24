@@ -42,10 +42,21 @@ rows are `ungrouped`, and every one of them carried the identical comment:
 > No typed seed and no connected component at or above the minimum size. Not
 > found by this method.
 
-For **16 of those 456**, that sentence is false. The method found them — 196
-committed call sites reach them — and the tool's own banking rule is what cut
-the edges. "Not found by this method" is a statement about the method, and for
-these rows the method is not what happened to them.
+For **16 of those 456**, that sentence is false. The method found them, and the
+tool's own banking rule is what cut the edges. "Not found by this method" is a
+statement about the method, and for these rows the method is not what happened
+to them.
+
+The edge count and the row count are different populations, and 196 is not the
+number for these 16. The 196 proxied edges reach **36** distinct `common` rows,
+and **70** of those edges land on these 16. The other 126 edges reach 20 more
+rows in the same population: the 10 `reached_only_by_bank` rows that stayed
+grouped (45 edges), and 10 rows a `common` or `pd` caller also reaches (81
+edges), which are not found-then-cut at all — a non-bank caller's edge to one of
+them is joined directly rather than proxied, though the bank edges to those same
+rows are proxied like any other. So 196 is the population the rule discarded, 70
+is the part of it that reaches these 16, and quoting the 196 for them would
+repeat the error this note exists to correct.
 
 ---
 
@@ -63,12 +74,28 @@ All measured statically over the committed listings by
 | ↳ `bank0` callers | 126 | |
 | ↳ `bank1` callers | 69 | |
 | ↳ `pd` callers | **1** | not a bank question — see the follow-up below |
+| ↳ distinct `common` rows reached | **36** | the rows those 196 edges land on — *not* the same number as the 196 |
+| ↳ edges to `reached_only_by_bank` rows | 26 rows / 115 edges | 16 are `ungrouped` (70 edges), 10 stayed grouped (45 edges) |
+| ↳ edges to rows a non-bank caller also reaches | 10 rows / 81 edges | joined directly, so not found-then-cut |
 | `reached_only_by_bank` | **26** | annotated `common` rows whose caller scopes are a non-empty subset of `{bank0, bank1}` |
-| of those, `ungrouped` | **16** | reached by the method, then cut by the rule |
+| of those, `ungrouped` | **16** | reached by the method, then cut by the rule; 70 of the 196 proxied edges |
 | `ungrouped` total | **456** | 440 not found by this method + 16 found then cut |
 
-Two definitions are load-bearing, and both are pinned by `--self-test`:
+The `proxy_edges` block reconciles the same way the `ungrouped` line does: 115 +
+81 = 196 edges, and 70 + 45 = 115. Nothing in it is an unexplained remainder,
+which is the point — an edge total offered without the rows it lands on is the
+partial accounting this file is about, just one level down from the one the 27
+used to stand for.
 
+Three definitions are load-bearing, and all three are pinned by `--self-test`:
+
+- **`proxy_edges` counts edges; `reached_only_by_bank` counts rows.** They are
+  not the same population, and neither is a subset of the other: the 196 edges
+  reach 36 rows, 26 of which are reached only by bank callers and 10 of which a
+  non-bank caller also reaches. So the 196 is the accounting for the *edges the
+  rule cut*, and the 26 and the 16 are the accounting for *rows* — attaching the
+  edge total to a row count is what this pass corrected, and `--report` prints
+  the edges' per-target breakdown so the two can be reconciled by hand.
 - **`reached_only_by_bank` is a non-empty subset of the banks.** At least one
   bank caller, and nobody outside them. A `common` row a `common` caller also
   reaches is *excluded*: that edge is joined directly rather than proxied (both
@@ -121,9 +148,9 @@ read as the rule's total cost:
 
 ```
     cross-region edges counted, not joined: 27
-    bank->common edges cut by the per-bank proxy rule: 196 (bank0=126, bank1=69, pd=1). A bank caller's endpoint for a common target is that bank's proxy, not the common row, so the two banks are not joined through it.
+    bank->common edges cut by the per-bank proxy rule: 196 (bank0=126, bank1=69, pd=1). A bank caller's endpoint for a common target is that bank's proxy, not the common row, so the two banks are not joined through it. Those 196 edges reach 36 distinct common target(s): 115 land on rows reached only by bank callers, 81 on rows a non-bank caller also reaches.
     annotated common rows reached only by bank callers: 26. The method found these and its own banking rule then cut the edges, which is a different reason from not being found.
-    ungrouped: 456 (440 not found by this method + 16 found then cut by the proxy rule, never 'absent')
+    ungrouped: 456 (440 not found by this method + 16 found then cut by the proxy rule, reached by 70 of the 196 proxied edges, never 'absent')
 ```
 
 The two ungrouped reasons sum to the headline, so neither is an unexplained
@@ -136,6 +163,14 @@ them, and that is the part worth keeping. The existing fixtures check that the
 edge is proxied and the endpoint is not a row; every one of them passes against
 a report that says nothing about any of this, which is exactly how 27 came to
 stand for the whole cost. Pinning the refusal is not pinning the accounting.
+
+The same applies to the edges-versus-rows split, and it is why the report prints
+it rather than leaving the reader to infer it. The fixture has four callers
+reaching one `common` row, so it pins `4` edges, `1` distinct target, `4` edges
+attributed to the found-then-cut row — and then repeats the report for the same
+graph with a `common` caller added, where the same four edges must be attributed
+to the *other* population instead. A report that attributed every proxied edge to
+the found-then-cut rows would fail the second fixture.
 
 ---
 
@@ -170,8 +205,11 @@ for them. `region_of()` has no vocabulary for a program boundary, only for a
 bank one.
 
 It is **counted and broken out by caller scope** so it is visible rather than
-hidden inside "bank→common", and the tool says in `--report` that `pd` is not
-part of that population. It is not fixed here.
+hidden: `--report` prints it as `pd=1` *within* the 196, under a `bank->common`
+label, and itemises the caller scope so the one program-boundary edge can be
+told apart from the 195 bank ones. That is the whole of what the edge
+population can say about it — `region_of` has no word for the question. It is
+not fixed here.
 
 For scale: there are 7 `pd` → annotated-`common` edges in the committed
 listings, and only 1 becomes a proxy. The other 6 target addresses that exist as
@@ -179,6 +217,13 @@ listings, and only 1 becomes a proxy. The other 6 target addresses that exist as
 runs first and no proxy is built. That ratio is a property of how the two images'
 address spaces overlap, not a filter — worth knowing before anyone reads the 1
 as "the PD program barely calls the common area".
+
+It also shows up in the table above, which is the consistency check worth
+making. `common 0x11C2` is reached by one `pd` caller and one `common` caller
+and by **no bank caller at all**, so it is one of the 10 rows in the 81, reached
+there by that single `pd` edge — and it is not one of the 26
+`reached_only_by_bank` rows, because one non-bank caller is enough to take a row
+out of that population, exactly as one `common` caller is.
 
 ---
 

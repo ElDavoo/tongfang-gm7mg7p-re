@@ -183,14 +183,17 @@ CALLGRAPH_NAME = re.compile(r"^callgraph_([a-z0-9]+)_([0-9A-F]{4,8})$",
 #     cannot.
 #   `proxy_edges` / `proxy_by_caller` -- edges a bank caller had to a
 #     `common` row, replaced by a per-bank proxy. Broken out by caller scope
-#     because `pd` is a different program and is not a bank question.
+#     because `pd` is a different program and is not a bank question, and by
+#     target address because the edge total is not the row total: the edges
+#     spread over every `common` row they land on, found-then-cut or not.
 #   `reached_only_by_bank` -- annotated `common` rows whose caller scopes are
 #     a non-empty subset of the banks, i.e. the rows this method DID find and
 #     then cut. Non-empty matters: a row no caller reaches at all is not
 #     "reached only by bank callers", it is unreached.
 ClusterStats = collections.namedtuple(
     "ClusterStats",
-    "cross_region proxy_edges proxy_by_caller reached_only_by_bank")
+    "cross_region proxy_edges proxy_by_caller proxy_by_target "
+    "reached_only_by_bank")
 
 
 def read_csv(path):
@@ -349,13 +352,22 @@ def cluster(rows, repo=REPO, min_size=4):
         by_addr[row["scope"]][norm_addr(row["addr"])] = row
 
     cross_region = 0
-    # Which caller scopes reach each annotated `common` address, and how many
-    # bank callers' edges were replaced by a proxy. Collected in the same walk
-    # as the union rather than by a second pass over the listings: a second
-    # read is a second chance to measure a different population from the one
-    # the clustering used, and these figures are reported beside it.
+    # Which caller scopes reach each annotated `common` address, how many bank
+    # callers' edges were replaced by a proxy, and which rows those edges
+    # landed on. Collected in the same walk as the union rather than by a
+    # second pass over the listings: a second read is a second chance to
+    # measure a different population from the one the clustering used, and
+    # these figures are reported beside it.
+    #
+    # The per-target counts are what keep the two apart. `proxy_edges` is a
+    # population of EDGES and `reached_only_by_bank` one of ROWS, and on the
+    # committed tree the edges spread over more rows than the report line for
+    # `reached_only_by_bank` names -- so quoting the edge count for a row
+    # population is the same partial accounting this report exists to stop,
+    # one level down.
     reach = collections.defaultdict(set)
     proxy_by_caller = collections.Counter()
+    proxy_by_target = collections.Counter()
     for row in rows:
         scope = row["scope"]
         caller = (scope, norm_addr(row["addr"]))
@@ -401,6 +413,7 @@ def cluster(rows, repo=REPO, min_size=4):
                     # called by both.
                     union(caller, (PROXY_SCOPE % scope, taddr))
                     proxy_by_caller[scope] += 1
+                    proxy_by_target[taddr] += 1
                 continue
             # At or above the bank base. The target is in the caller's own
             # bank by assumption -- the assumption audit_call_targets.py
@@ -436,6 +449,7 @@ def cluster(rows, repo=REPO, min_size=4):
         cross_region=cross_region,
         proxy_edges=sum(proxy_by_caller.values()),
         proxy_by_caller=proxy_by_caller,
+        proxy_by_target=proxy_by_target,
         reached_only_by_bank={taddr for taddr, scopes in reach.items()
                               if scopes and scopes <= set(BANKS)})
     return clusters, stats
@@ -791,6 +805,16 @@ def self_test():
     check("the proxy count is broken down by caller scope",
           dict(stats3.proxy_by_caller) == {"bank0": 2, "bank1": 2},
           "(got %r)" % (dict(stats3.proxy_by_caller),))
+    # ... and by the target each edge landed on, because the edge total and the
+    # row populations below are not the same number and the report has to be
+    # able to say so. Four edges, one target row: on the committed tree the
+    # same shape is 196 edges over 36 rows, and a reader given only the 196
+    # for a row population would read the edge total as the row count.
+    check("the proxy count is broken down by target row",
+          dict(stats3.proxy_by_target) == {"05E8": 4},
+          "(got %r; the four proxied edges all target 0x05E8, so the edge "
+          "total and the target count are 4 and 1 respectively)"
+          % (dict(stats3.proxy_by_target),))
     check("a proxied common target is not also a cross-region edge",
           stats3.cross_region == 0,
           "(got %r; 0x05E8 is below the bank base, so no bank call here is a "
@@ -821,7 +845,7 @@ def self_test():
          "evidence": os.path.relpath(
              asm("bridge_common_caller.asm",
                  ["0100     12 05 e8 lcall    0x05E8", RET]), REPO)}]
-    _grouped4, stats4 = group_rows(mixed, repo=REPO, min_size=2)
+    grouped4, stats4 = group_rows(mixed, repo=REPO, min_size=2)
     check("a common row a common caller also reaches is not found-then-cut",
           stats4.reached_only_by_bank == set(),
           "(got %r; the 26 counts rows whose callers are a subset of the "
@@ -831,6 +855,15 @@ def self_test():
           stats4.proxy_edges == 4,
           "(got %r; a common->common edge is joined directly, so it is not "
           "this population)" % (stats4.proxy_edges,))
+    # The same four edges, now attributed to a row population they do not
+    # belong to. This is the half of the split that a report giving only the
+    # edge total gets wrong: the 196 is a population of edges and it reaches
+    # rows the method found AND rows a non-bank caller also reaches, so it is
+    # not the accounting for either of them.
+    check("a proxied edge is still attributed to its target row",
+          dict(stats4.proxy_by_target) == {"05E8": 4},
+          "(got %r; the common->common edge is joined directly, so the target "
+          "count is unchanged)" % (dict(stats4.proxy_by_target),))
 
     # What a reader can SEE. The refusal fixtures above all pass on a report
     # that says nothing about any of this, which is exactly how 27 came to
@@ -846,12 +879,37 @@ def self_test():
              "cross-region edges counted, not joined: 0"),
             ("the proxy population", "cut by the per-bank proxy rule: 4"),
             ("the proxy per-caller breakdown", "bank0=2, bank1=2"),
+            ("the distinct rows the proxied edges reach",
+             "Those 4 edges reach 1 distinct common target(s)"),
+            ("the proxied edges split by the row population they land on",
+             "4 land on rows reached only by bank callers, 0 on rows a "
+             "non-bank caller also reaches"),
             ("the found-then-cut rows", "reached only by bank callers: 1"),
             ("the split ungrouped line",
              "ungrouped: 1 (0 not found by this method + 1 found then cut"),
+            ("the proxied edges reaching the found-then-cut rows",
+             "reached by 4 of the 4 proxied edges"),
     ):
         check("the report prints %s" % label, needle in printed,
               "(looked for %r in:\n%s)" % (needle, printed))
+    # The same report for the `common`-caller fixture, where the four edges
+    # reach a row no bank caller reaches alone. Without this half, a report
+    # that attributed every proxied edge to the found-then-cut rows would
+    # still pass the assertions above.
+    out4 = io.StringIO()
+    with contextlib.redirect_stdout(out4):
+        report(grouped4, stats4, mixed, repo=REPO)
+    printed4 = out4.getvalue()
+    for label, needle in (
+            ("the distinct rows the proxied edges reach",
+             "Those 4 edges reach 1 distinct common target(s)"),
+            ("the proxied edges attributed to a non-bank-reached row",
+             "0 land on rows reached only by bank callers, 4 on rows a "
+             "non-bank caller also reaches"),
+    ):
+        check("the report prints %s when a non-bank caller also reaches it"
+              % label, needle in printed4,
+              "(looked for %r in:\n%s)" % (needle, printed4))
 
     # Seeds.
     seeded = group_rows([{"scope": "common", "addr": "0000",
@@ -1047,13 +1105,28 @@ def report(grouped, stats, rows, repo=REPO, is_bios=False):
     # seven times the other and the banking rule cut both. A report that
     # printed only the cross-region count would read as though that were the
     # rule's whole accounting, which is the claim this line exists to stop.
+    #
+    # The proxy line then says which ROWS its edges landed on. Without that,
+    # the only number a reader can attach to a row population is the edge
+    # total, which on the committed tree is the whole 196 for a reason the
+    # total does not describe: the edges spread over every `common` row they
+    # reach, so the 16 found-then-cut `ungrouped` rows and the 10 rows a
+    # non-bank caller also reaches are both inside it.
+    cut_targets = stats.reached_only_by_bank
+    cut_edges = sum(n for target, n in stats.proxy_by_target.items()
+                    if target in cut_targets)
     print("    cross-region edges counted, not joined: %d" % stats.cross_region)
     print("    bank->common edges cut by the per-bank proxy rule: %d (%s). A "
           "bank caller's endpoint for a common target is that bank's proxy, "
-          "not the common row, so the two banks are not joined through it."
+          "not the common row, so the two banks are not joined through it. "
+          "Those %d edges reach %d distinct common target(s): %d land on rows "
+          "reached only by bank callers, %d on rows a non-bank caller also "
+          "reaches."
           % (stats.proxy_edges,
              ", ".join("%s=%d" % (s, n)
-                       for s, n in sorted(stats.proxy_by_caller.items())) or "none"))
+                       for s, n in sorted(stats.proxy_by_caller.items())) or "none",
+             stats.proxy_edges, len(stats.proxy_by_target), cut_edges,
+             stats.proxy_edges - cut_edges))
     if stats.reached_only_by_bank:
         print("    annotated common rows reached only by bank callers: %d. The "
               "method found these and its own banking rule then cut the edges, "
@@ -1061,13 +1134,21 @@ def report(grouped, stats, rows, repo=REPO, is_bios=False):
               % len(stats.reached_only_by_bank))
     ungrouped = counts.get("ungrouped", 0)
     # Split by the reason the row carries, so the two populations sum to the
-    # headline rather than one of them being an unexplained remainder.
-    cut = sum(1 for key, value in grouped.items()
-              if value[0] == "ungrouped" and key[0] == "common"
-              and key[1] in stats.reached_only_by_bank)
+    # headline rather than one of them being an unexplained remainder. These
+    # rows also carry their share of the proxy edges, so the headline can be
+    # read against the edge total above: the 16 are a subset of what those
+    # edges reach, not the whole of it.
+    ungrouped_cut = {key[1] for key, value in grouped.items()
+                     if value[0] == "ungrouped" and key[0] == "common"
+                     and key[1] in stats.reached_only_by_bank}
+    cut = len(ungrouped_cut)
+    ungrouped_cut_edges = sum(stats.proxy_by_target.get(target, 0)
+                              for target in ungrouped_cut)
     print("    ungrouped: %d (%d not found by this method + %d found then cut "
-          "by the proxy rule, never 'absent')"
-          % (ungrouped, ungrouped - cut, cut))
+          "by the proxy rule, reached by %d of the %d proxied edges, never "
+          "'absent')"
+          % (ungrouped, ungrouped - cut, cut, ungrouped_cut_edges,
+             stats.proxy_edges))
 
 
 def check(repo=REPO):
