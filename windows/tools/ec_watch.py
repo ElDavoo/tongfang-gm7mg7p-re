@@ -26,11 +26,24 @@ With both --mark and --csv, each mark is written into the CSV as its own row
 operator acted -- see ec/tools/grade_0751_isolation.py, which grades a capture
 by what moved between one mark and the next.
 
+`--block` sweeps the same addresses four bytes per IOCTL through the driver's
+`MMRD` instead of one byte per `ECRR`, so the default 2 KiB sweep is 512 calls
+rather than 2048. It is off by default and nothing in this repository has run
+it:
+`ecrw.py`'s `readmany` is a reading of how the handler marshals, and whether
+the BIOS answers with what four single reads would have is the comparison
+written out in `manual_fan_ctrl_probe.py`'s docstring, for a human with the
+machine. A block read that covers the fan-tach page is a *wider* access to the
+page that stalled the fans on a sibling board (#94), not a narrower one, so
+the tool warns rather than refuses: `0x0000-0x07FF`, this tool's default
+range, contains it.
+
 Usage:
   ec_watch.py                                  # 0x0000-0x07FF until Ctrl-C
   ec_watch.py --start 0x0700 --len 0x100
   ec_watch.py --seconds 60 --csv out.csv
   ec_watch.py --mark                           # press Enter to timestamp an action
+  ec_watch.py --start 0x0700 --len 0x100 --block
 """
 import argparse
 import csv
@@ -40,6 +53,14 @@ import threading
 import time
 
 from ecrw import Ec, EcError
+
+# The fan-tach bytes, named as a range so the --block warning, this tool's
+# self-description and its suite can all name the same sixteen addresses
+# without each spelling the endpoints out again. Reading them through ECRR
+# stalled the fans on a sibling board (#94, docs/related-projects.md); nothing
+# here stops that, and --block does not help: a dword read that covers the page
+# is a four-byte access to the page rather than a one-byte one.
+FAN_TACH = range(0x0460, 0x0470)
 
 
 def now():
@@ -116,6 +137,10 @@ def main(argv=None):
     ap.add_argument("--mark", action="store_true",
                     help="read stdin; each line stamps a labelled mark, into "
                          "the CSV too if --csv is given")
+    ap.add_argument("--block", action="store_true",
+                    help="sweep 4 bytes per IOCTL (MMRD) instead of 1 (ECRR); "
+                         "a path that has never been run against the driver, "
+                         "and not a safety improvement over the byte path")
     args = ap.parse_args(argv)
 
     start = int(args.start, 0)
@@ -135,11 +160,34 @@ def main(argv=None):
 
     try:
         with Ec() as ec:
-            prev = {a: ec.read(a) for a in addrs}
+            def sweep():
+                # One shape for both paths, so what the diff below reads is
+                # the same {addr: byte} either way: readmany keys the range it
+                # was asked for, not the blocks it covered. The byte path
+                # therefore reports a sweep's changes after the sweep's reads
+                # rather than between them, which is the only thing that moved
+                # on the path that was already the default.
+                if args.block:
+                    return ec.readmany(start, length)
+                return {a: ec.read(a) for a in addrs}
+
+            prev = sweep()
             for a, v in prev.items():
                 first_last[a] = (v, v)
             print(f"{now()}  baseline: 0x{start:04X}-0x{start + length - 1:04X} "
                   f"({length} bytes), sweeping every {args.interval}s")
+            if args.block:
+                print("  --block: reading 4 bytes per IOCTL (MMRD) instead of "
+                      "1 (ECRR).\n  That path has never been run against the "
+                      "driver, and it is not a safety improvement over the "
+                      "byte read: see this tool's help")
+                if start < FAN_TACH.stop and start + length > FAN_TACH.start:
+                    print("  warning: this range covers the fan-tach bytes "
+                          f"0x{FAN_TACH.start:04X}-0x{FAN_TACH.stop - 1:04X}, "
+                          "whose ECRR reads stalled the fans on a sibling "
+                          "board (#94). A 4-byte read across the page is a "
+                          "different access shape, not a safer one -- run "
+                          "per-byte, or move the range off it.")
             if args.mark:
                 print("type a label + Enter to stamp a mark; Ctrl-C to stop")
             else:
@@ -148,8 +196,9 @@ def main(argv=None):
             while True:
                 time.sleep(args.interval)
                 sweeps += 1
+                cur = sweep()
                 for a in addrs:
-                    v = ec.read(a)
+                    v = cur[a]
                     old = prev[a]
                     if v != old:
                         prev[a] = v

@@ -33,11 +33,17 @@ class FakeEc:
     The two events pin the interleaving: without them "did the MARK row land
     between the two change rows" would be a race against the sweep timer, and
     the test would pass on a build where marks never reach the CSV at all.
+
+    `readmany` is the --block path's, and it is a whole sweep rather than four
+    bytes: ADDRS is one aligned block, so a real readmany of it is exactly one
+    IOCTL and this stands in for that. `blocks` is the recording that makes
+    "one IOCTL per sweep" checkable rather than asserted.
     """
 
     def __init__(self):
         self.at_last_sweep = threading.Event()
         self.marked = threading.Event()
+        self.blocks = []
         self._reads = 0
 
     def __enter__(self):
@@ -54,7 +60,14 @@ class FakeEc:
         if sweep >= len(SWEEPS):
             raise KeyboardInterrupt
         self._reads += 1
-        return SWEEPS[sweep][addr]
+        # The .get is for the --block cases' ranges, which are not ADDRS: an
+        # address the script does not name reads as 0x00 rather than raising,
+        # so a case can put its range on the fan-tach page and still run.
+        return SWEEPS[sweep].get(addr, 0x00)
+
+    def readmany(self, start, length):
+        self.blocks.append((start, length))
+        return {addr: self.read(addr) for addr in range(start, start + length)}
 
 
 class FakeStdin:
@@ -129,6 +142,88 @@ class MarkCsvTests(unittest.TestCase):
             rows = out.read_text().splitlines()
         self.assertEqual([r.split(',', 1)[1] for r in rows[1:]],
                          ['0x0701,0x00,0x11', '0x0702,0x00,0x22'])
+
+
+class BlockPathTests(unittest.TestCase):
+    """--block: opt-in, off the per-byte path, and loud about the fan-tach page.
+
+    Every case here runs the real `ec_watch.main` against the FakeEc above, so
+    what is under test is which method the tool calls, not a reimplementation
+    of the decision.
+    """
+
+    def run_watch(self, *argv):
+        ec = FakeEc()
+        ec.marked.set()
+        out = io.StringIO()
+        with patch.object(ec_watch, 'Ec', lambda: ec), \
+             contextlib.redirect_stdout(out):
+            rc = ec_watch.main(['--start', '0x0700', '--len', '0x4',
+                                '--interval', '0', *argv])
+        return rc, ec, out.getvalue()
+
+    def test_the_flag_is_opt_in(self):
+        # The default has to be the per-byte path: this is what says the block
+        # path is an addition rather than a replacement, and it is the run the
+        # committed captures were taken with.
+        _, ec, out = self.run_watch()
+        self.assertEqual(ec.blocks, [])
+        self.assertNotIn("--block:", out)
+
+    def test_block_sweeps_through_readmany(self):
+        rc, ec, _ = self.run_watch('--block')
+        self.assertEqual(rc, 0)
+        # The whole four-byte range in one call. The first is the baseline and
+        # the last is the sweep the fake cuts the run off in, so the run's
+        # length stays the fake's business and not this case's.
+        self.assertEqual(set(ec.blocks), {(0x0700, 0x4)})
+        self.assertEqual(ec.blocks[0], (0x0700, 0x4))
+
+    def test_the_banner_says_which_path_and_that_it_is_unverified(self):
+        _, ec, out = self.run_watch('--block')
+        # The operator is being asked to trust a path that has never met the
+        # driver, so the banner has to say that where it is read rather than
+        # leaving it to a help page nobody opens.
+        self.assertIn("4 bytes per IOCTL (MMRD) instead of 1 (ECRR)", out)
+        self.assertIn("never been run against the driver", out)
+        self.assertIn("not a safety improvement", out)
+        # And the sweep behind it is still the one IOCTL for four bytes.
+        self.assertEqual(set(ec.blocks), {(0x0700, 0x4)})
+
+    def test_a_block_sweep_reports_the_same_changes(self):
+        _, ec, out = self.run_watch('--block')
+        self.assertIn("0x0701: 0x00 -> 0x11", out)
+        self.assertIn("0x0702: 0x00 -> 0x22", out)
+
+    def test_the_fan_tach_warning_names_the_issue_and_the_page(self):
+        # 0x0460-0x046F stalled the fans on a sibling board through ECRR
+        # (#94). A 4-byte read that covers the page is a different access
+        # shape, not a smaller one, so the warning has to say so rather than
+        # let "fewer IOCTLs" read as "safer".
+        ec = FakeEc()
+        ec.marked.set()
+        out = io.StringIO()
+        with patch.object(ec_watch, 'Ec', lambda: ec), \
+             contextlib.redirect_stdout(out):
+            ec_watch.main(['--start', '0x0460', '--len', '0x4',
+                           '--interval', '0', '--block'])
+        text = out.getvalue()
+        self.assertIn("0x0460-0x046F", text)
+        self.assertIn("#94", text)
+        self.assertIn("not a safer one", text)
+        # No refusal: the run happened, and the warning did not stop it.
+        self.assertEqual(set(ec.blocks), {(0x0460, 0x4)})
+
+    def test_a_range_off_the_page_is_not_warned_about(self):
+        _, ec, out = self.run_watch('--block')
+        self.assertNotIn("#94", out)
+        self.assertNotIn("0x0460-0x046F", out)
+
+    def test_the_default_range_contains_the_page_so_the_warning_is_the_point(self):
+        # 0x0000-0x07FF is this tool's default, and 0x0460-0x046F is inside it.
+        # Pinned because the warning is otherwise easy to "fix" by narrowing a
+        # default nobody asked to narrow.
+        self.assertTrue(set(range(0x0000, 0x0800)) & set(ec_watch.FAN_TACH))
 
 
 if __name__ == '__main__':

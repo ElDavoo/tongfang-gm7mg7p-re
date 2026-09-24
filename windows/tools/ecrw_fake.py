@@ -29,6 +29,24 @@ class EcError(RuntimeError):
     """
 
 
+def block_runs(addrs):
+    """`ecrw.py`'s, for the tools that import the name at module scope.
+
+    A copy, because the real module binds kernel32 at import and cannot be
+    loaded here at all. It is arithmetic over its argument and nothing else, so
+    what the fixture needs from it is the shape of the answer rather than any
+    behaviour -- and the real one, which decides the blocks an actual sweep
+    issues, is what `test_ecrw.py` exercises, against the real watch sets.
+    """
+    runs = []
+    for a in sorted(set(addrs)):
+        if runs and a == runs[-1][0] + runs[-1][1]:
+            runs[-1][1] += 1
+        else:
+            runs.append([a, 1])
+    return [tuple(run) for run in runs]
+
+
 class Ec:
     """The real signatures and the whole protocol, and no behaviour.
 
@@ -45,6 +63,12 @@ class Ec:
 
     def read(self, addr):
         return 0x00
+
+    def readmany(self, start, length):
+        # Present so an accidentally unpatched --block run reads 0x00 rather
+        # than dying on a missing attribute. A suite that scripts bytes still
+        # has to bring its own class, same as for `read`.
+        return {a: 0x00 for a in range(start, start + length)}
 
     def write(self, addr, val):
         pass
@@ -70,5 +94,6 @@ def install():
     module = types.ModuleType('ecrw')
     module.Ec = Ec
     module.EcError = EcError
+    module.block_runs = block_runs
     sys.modules['ecrw'] = module
     return module

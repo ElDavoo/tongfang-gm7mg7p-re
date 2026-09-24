@@ -112,7 +112,12 @@ every number in those write-ups.
 ## Talking to the EC from Windows
 
 `tools/ecrw.py` is the raw door: `read`, `dump` and a guarded `write` over the
-vendor driver's own `ECRR`/`ECRW` IOCTLs, one byte per call. `tools/ec_watch.py`
+vendor driver's own `ECRR`/`ECRW` IOCTLs, one byte per call. `dump --block`
+reads four bytes per call through the driver's `MMRD` instead, which is
+**off by default and has never been run**: `../native/ACPIDriver.sys.analysis.md`
+walks the handler, and the one comparison that would tell a human with the
+machine whether the BIOS answers as four single reads would is written out in
+`tools/manual_fan_ctrl_probe.py`'s docstring. `tools/ec_watch.py`
 sweeps a range of it and reports what moved while you do something else in the
 vendor UI, with `--mark` rows so the capture says when you acted. Both need the
 physical machine, an elevated shell and the vendor driver present — nothing
@@ -145,7 +150,7 @@ no `status:` in `ec/annotations/registers.yaml` moves until a human runs it.
 
 ## Offline tests
 
-Seven of the tools carry offline `unittest` suites, and all of them run from
+Eight of the tools carry offline `unittest` suites, and all of them run from
 Linux with no Windows box, no EC and no vendor code:
 
 ```sh
@@ -173,12 +178,16 @@ writes — its `finally`, its CSV, and the bit arithmetic pinned to the DSDT
 field list and to the three `ghidra-functions.csv` rows it is a transcription
 of, which is the half that says those are the bits the EC's own code reads.
 (`tools/test_system_id_probe.py` covers the `0x0456` probe;
-`../tools/README.md` lists it.) All of them work by faking
+`../tools/README.md` lists it.) All but one of them work by faking
 `ecrw` — the module binds kernel32 at import time and only loads on Windows —
 which is also what makes the arms scriptable; the charge-target suite fakes the
 `powershell` call behind its WMI line as well. The probe, `ec_watch`,
 GPU-block and cTGP/DBEN suites use the shared `tools/ecrw_fake.py`; the other
-three still carry fakes of their own. `../tools/README.md` is the canonical
+three still carry fakes of their own. `tools/test_ecrw.py` is the exception
+and the reason the others can be: it puts a fake `ctypes.WinDLL` in front of
+the *real* `ecrw.py`, so the `MMRD` marshalling, the aligned-block arithmetic
+and the unchanged per-byte buffer are checked against the code that ships
+rather than against a stand-in. `../tools/README.md` is the canonical
 home for the command, and records why the runner gives each suite its own
 interpreter: until those three are moved onto the shared fake, a single
 discovery over this directory is order-dependent (`docs/findings.md` §16).

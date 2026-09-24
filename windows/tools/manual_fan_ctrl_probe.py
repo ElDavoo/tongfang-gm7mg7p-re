@@ -47,13 +47,49 @@ accounted for. Treat the electrical ones as context: they move with the pack,
 not with 0x0751.
 
 **That wider watch set is 206 ECRR reads per sweep, up from 110 -- an 87%
-increase, and `ecrw.Ec.read` (ecrw.py:115) is one ECRR DeviceIoControl per byte
+increase, and `ecrw.Ec.read` (ecrw.py:135) is one ECRR DeviceIoControl per byte
 with nothing between calls.** This run is the one
 `manual-fan-ctrl-0751-isolation.md` §3 holds under a fixed load, and a block
 that moves the fans itself is worth less than no block. There is no safe
 interval derivable without the driver and the machine (#94 is the open work), so
 `--interval`'s 0.5 s default is §3's starting point and nothing more: if the
 fans audibly change during a run, stop and raise it.
+
+`--block` sweeps the same 206 addresses in **56** IOCTLs instead, through the
+driver's `MMRD` -- `ecrw.Ec.readmany`, four bytes per call. 56 is 8 + 24 + 24:
+the 14 `WATCH` addresses land on 8 blocks, the fan table is 24, the
+temperature range is 24. It is **not** the 52 that `206/4` suggests, because
+the watch set is not contiguous; and 56 calls still read 224 bytes, so the
+saving is in calls and not in traffic. **The flag is off by default and
+nothing in this repository has run it.** What is committed is that the handler
+marshals four bytes and copies four back
+(`../native/ACPIDriver.sys.analysis.md` walks it, `0x1400015EC`); whether the
+BIOS hands back what four single reads would have is a live question. #94 is
+untouched by any of this: it is what makes the *per-byte* path safe, by
+skipping the fan-tach bytes and pacing, and a block read is neither of those.
+
+**What a human can check, and what it would not settle.** At idle -- not under
+a load, not during a probe run, since a read that moves the fans is the
+failure being looked for:
+
+    ecrw.py read 0x0750 0x0751 0x0752 0x0753     # four ECRR reads
+    ecrw.py dump 0x0750 0x04 --block             # one MMRD at 0xFE410750
+    ecrw.py read 0x0751 0x0752 0x0753 0x0754     # the same four, one byte on
+    ecrw.py dump 0x0750 0x08 --block             # 0x0750-0x0757, two MMRDs
+
+Compare each `dump --block` line against the `read` above it, byte for byte at
+the four addresses it names. Issue #147 words the check as one `MMRD` at
+`0xFE410000 + 0x0751`, which is **unaligned** -- `0x0751 % 4 == 1` -- and this
+tool cannot ask that question: `read_dword` refuses an unaligned start and
+`readmany` covers the enclosing block instead, so the block path only ever
+issues the aligned shape. The aligned rows are therefore the ones that bear on
+`--block`. Issuing an unaligned `MMRD` would take a `--mmrd` escape in
+`ecrw.py` that this tool does not have, and an aligned pass beside an
+unaligned fail would be a real result about the access width rather than
+about the flag. Even four matching readbacks at one address would not be proof
+that a wider read is safe across the window: per CLAUDE.md a readback that
+matches is not evidence the EC acts on the access the way it acts on the byte
+one, and #94 is still the open question of what this traffic does to a fan.
 
 `--level-block` adds 16 more -- `0x0860`-`0x086E` and `0x06E6`, 222 reads per
 sweep -- and is opt-in for exactly that reason: the #99/#122 run's footprint and
@@ -98,7 +134,7 @@ Run elevated, next to ecrw.py. Needs the vendor's ACPI driver present.
 
 Usage:
   manual_fan_ctrl_probe.py 0xA0 [hold_seconds] [--interval 0.5]
-                           [--csv PATH] [--level-block]
+                           [--csv PATH] [--level-block] [--block]
   manual_fan_ctrl_probe.py 0xA0 --self-test        # no EC, no driver
 """
 import argparse
@@ -110,7 +146,7 @@ import sys
 import tempfile
 import time
 
-from ecrw import Ec
+from ecrw import Ec, block_runs
 
 MODE = 0x0751
 WATCH = [0x0751, 0x0783, 0x0784, 0x0785, 0x0786, 0x0787,
@@ -157,6 +193,30 @@ def watch_set(level_block=False):
     return ALL + LEVEL if level_block else ALL
 
 
+def block_ioctls(addrs):
+    """The IOCTLs one `--block` sweep of `addrs` costs, four bytes each.
+
+    56 for the default watch set against 206 per-byte reads, and not the 52
+    that `206/4` suggests: the 14 `WATCH` addresses are scattered over
+    `0x0743`-`0x07C6` and fall on 8 blocks, not on 14/4 of one. Pinned in
+    `test_ecrw.py` against the real `ecrw.block_runs` and the real watch set.
+    """
+    return sum(((start + length - 1) & ~3) // 4 - (start & ~3) // 4 + 1
+               for start, length in block_runs(addrs))
+
+
+def block_span(addrs):
+    """The EC bytes a `--block` sweep of `addrs` reads, padding included.
+
+    Wider than `addrs` wherever a run's ends are unaligned -- which is what
+    #94's page is about, since a block that covered `0x0460`-`0x046F` would be
+    a four-byte access to the page that stalled the fans on a sibling board,
+    not a narrower one.
+    """
+    return {a for start, length in block_runs(addrs)
+            for a in range(start & ~3, ((start + length - 1) & ~3) + 4)}
+
+
 def now():
     return datetime.datetime.now().astimezone().isoformat(timespec="milliseconds")
 
@@ -195,8 +255,17 @@ class MarkCsv:
         self._fh.close()
 
 
-def snap(ec, addrs=ALL):
-    return {a: ec.read(a) for a in addrs}
+def snap(ec, addrs=ALL, block=False):
+    if not block:
+        return {a: ec.read(a) for a in addrs}
+    out = {}
+    for start, length in block_runs(addrs):
+        out.update(ec.readmany(start, length))
+    # Keyed by `addrs`, not by what the blocks covered: a run whose ends are
+    # unaligned is read past on both sides, and diff() and the level-block
+    # report walk the keys they are handed -- a snapshot with padding in it
+    # would report movement in bytes this run never asked for.
+    return {a: out[a] for a in addrs}
 
 
 def diff(base, cur):
@@ -208,7 +277,7 @@ def diff(base, cur):
 
 
 def hold_and_observe(ec, hold, interval, base, label,
-                     addrs=ALL, sink=None, observed=None):
+                     addrs=ALL, sink=None, observed=None, block=False):
     """Sweep for `hold` seconds; return what moved, as addr -> (first, last, n).
 
     `first` is the value at the arm's opening snapshot, not the value before
@@ -234,7 +303,9 @@ def hold_and_observe(ec, hold, interval, base, label,
     `observed`, if given, is the caller's {addr: {values}} accumulating set for
     the level-block bytes: it answers a different question from a change row,
     because a value held for a whole arm produces none at all and would be in
-    neither `moved` nor a capture.
+    neither `moved` nor a capture. `block` is the operator's --block, passed to
+    `snap` and to nothing else: the two paths read differently and compare
+    identically.
     """
     moved = {}
     if observed is not None:
@@ -242,7 +313,7 @@ def hold_and_observe(ec, hold, interval, base, label,
             observed[a].add(base[a])
     t0 = time.time()
     while time.time() - t0 < hold:
-        cur = snap(ec, addrs)
+        cur = snap(ec, addrs, block)
         for a, o, n in diff(base, cur):
             print(f"    +{time.time()-t0:4.1f}s  [{label}] 0x{a:04X}: "
                   f"0x{o:02X} -> 0x{n:02X}")
@@ -344,6 +415,13 @@ def self_test():
     check("0x0440 and 0x0442 are already watched, so xdata-086x-dispatch.md's "
           "clamp guards and gates need no new byte",
           0x0440 in default and 0x0442 in default)
+    check("--block costs 56 IOCTLs for the default set, not the 52 a "
+          "contiguous 206 would give",
+          block_ioctls(default) == 56 and block_ioctls(widened) == 61)
+    check("no block of either set covers a fan-tach byte, so --block cannot "
+          "widen the access to the page #94 is about",
+          not block_span(default) & set(FAN_TACH)
+          and not block_span(widened) & set(FAN_TACH))
 
     # Imported here, not at module scope: this tool runs next to ecrw.py on a
     # Windows box, where the repository layout is not something to depend on at
@@ -426,6 +504,11 @@ def main(argv=None):
                     help="the watch set's read-safety guard and the capture's "
                          "row shape against the real grader's reader; opens "
                          "no EC and reads no register")
+    ap.add_argument("--block", action="store_true",
+                    help="sweep 4 bytes per IOCTL (MMRD) instead of 1 (ECRR): "
+                         "56 IOCTLs per sweep instead of 206, on a path that "
+                         "has never been run against the driver -- see this "
+                         "tool's help for the one check that settles it")
     args = ap.parse_args(argv)
     if args.self_test:
         return self_test()
@@ -444,10 +527,16 @@ def main(argv=None):
         print(f"  level block: {len(LEVEL)} more addresses, {len(addrs)} ECRR "
               f"reads per sweep; 0x0860-0x086E and 0x06E6, and nothing there "
               f"is written")
+    if args.block:
+        print(f"  --block: {block_ioctls(addrs)} MMRD IOCTLs per sweep instead "
+              f"of {len(addrs)} ECRR reads, four bytes each. The path has "
+              f"never been run against the driver and the per-byte read is "
+              f"the default; see this tool's help for the one comparison that "
+              f"settles it")
     if args.csv:
         print(f"  capture: {args.csv} (appended; ec/tools/"
               f"grade_0751_isolation.py reads this shape unchanged)")
-    base = snap(ec, addrs)
+    base = snap(ec, addrs, args.block)
     control, written = {}, {}
     # One {addr: {values}} per arm, so the level-block report can say what a
     # byte sat at across a whole arm -- a value held for 30 s is in no change
@@ -467,18 +556,18 @@ def main(argv=None):
             sink.mark(no_op)
         ec.write(MODE, orig)
         control = hold_and_observe(ec, hold, interval, base, no_op, addrs,
-                                   sink, seen[0] if seen else None)
+                                   sink, seen[0] if seen else None, args.block)
         # Re-snapshot: the write window opens from the state the control arm
         # settled into, so the two arms share a starting point. This is what
         # the grader's per-mark windows do.
-        base = snap(ec, addrs)
+        base = snap(ec, addrs, args.block)
         mark = f"wrote 0x0751=0x{target:02X}"
         print(mark)
         if sink:
             sink.mark(mark)
         ec.write(MODE, target)
         written = hold_and_observe(ec, hold, interval, base, mark, addrs,
-                                   sink, seen[1] if seen else None)
+                                   sink, seen[1] if seen else None, args.block)
     finally:
         ec.write(MODE, orig)
         time.sleep(0.4)
