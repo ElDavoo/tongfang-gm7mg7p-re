@@ -241,10 +241,12 @@ Two caveats belong next to the table rather than in a footnote.
 Static, hand-checked into the tool's watch table and pinned there by
 `../../windows/tools/test_gpu_block_watch.py`, which fails if any cell below
 stops matching `../../evidence/acpi/dsdt.dsl` or
-`../../ec/annotations/registers.yaml` — and if this table's own status column
-stops agreeing with the tool's. The DSDT names and bits come
-from the `ECMG` field list at `../../evidence/acpi/dsdt.dsl:52204-52212` and
-`:52238-52258`.
+`../../ec/annotations/registers.yaml` — if this table's own status column
+stops agreeing with the tool's, and if the EC-side cross-reference column of
+the four rows the per-site census covers stops agreeing, in both directions,
+with `../../ec/annotations/ec-07c4-07d5-sites.csv` and its `.md`. The DSDT
+names and bits come from the `ECMG` field list at
+`../../evidence/acpi/dsdt.dsl:52204-52212` and `:52238-52258`.
 
 | addr | DSDT field (bit) | `registers.yaml` `status:` | EC-side cross-reference |
 |---|---|---|---|
