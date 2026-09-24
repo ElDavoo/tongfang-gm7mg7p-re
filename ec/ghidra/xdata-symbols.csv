@@ -172,3 +172,7 @@ addr,name,from_register,register_status,derivation,programs
 0x07D3,GFID,GFID (DSDT bits 4-6),present-untested,scalar-name,bank0;bank1
 0x07D4,CPUA,CPUA (DSDT),present-untested,scalar-name,bank0;bank1
 0x07D5,DBAP,DBAP (DSDT),present-untested,scalar-name,bank0;bank1
+0x07D6,DBSP,DBSP (DSDT),unknown-not-absent,scalar-name,bank0;bank1
+0x07D7,CGCT,CGCT (DSDT),unknown-not-absent,scalar-name,bank0;bank1
+0x07C7,XDATA_07C7,XDATA_07C7 (no DSDT field; no direct site found),unknown-not-absent,scalar-name,bank0;bank1
+0x07C8,XDATA_07C8,XDATA_07C8 (no DSDT field; no direct site found),unknown-not-absent,scalar-name,bank0;bank1

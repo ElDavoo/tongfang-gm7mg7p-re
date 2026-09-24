@@ -3208,3 +3208,151 @@ registers:
       28 is a file-wide direct MOV DPTR site count and a lower bound (#110);
       a write class is not evidence the EC acts on the value. No hardware
       was involved.
+
+  - name: DBSP (DSDT)
+    addr: 0x07D6
+    bits: "0-7 value; the ECMG field list declares it, no ASL code names it"
+    sources: [dsdt(DBSP), xdata-refs]
+    static_refs: 142
+    static_refs_main_ec: 0
+    static_refs_pd_image: 142
+    status: unknown-not-absent
+    note: >
+      Named from the DSDT ECMG field list, which allocates it 8 bits at
+      dsdt.dsl:52257, immediately after CPUA and DBAP. That declaration is
+      the whole of its ASL life: grepping the DSDT for the field name and
+      for the address returns that one line and nothing else, so no ASL
+      method reads or writes this byte, and unlike its two named
+      neighbours in the field list it has no decoded ASL site at all.
+      All 142 direct MOV DPTR sites are in the ITE8850-PD image and none is
+      in the EC firmware, so none of them is a reference to an EC register
+      -- they are the PD program's own variable at its own 0x07D6, per
+      ec/annotations/ec-0x07d0-sites.md 1. Status is
+      unknown-not-absent rather than present-untested for the reason this
+      file's header gives that value: the references that made the byte
+      look present turned out to belong to a different image. It is not
+      absent either (docs/findings.md 4c).
+      WALKED 2026-09-24 (issue #282): all 142 sites are enumerated in
+      ec/annotations/ec-07d6-07d7-sites.md (site table
+      ec-07d6-07d7-sites.csv), which reconciles them against
+      ec/annotations/xdata-registers.csv's census (cluster pd-028: 37 refs
+      -- 4 read, 11 write, 14 passed-to-call, 8 address-taken, over 15
+      functions -- a different unit from 142 raw byte patterns, and
+      section 1 of that file says which claim rests on which). Of the 142,
+      85 read, 10 write, 3 are read-modify-write, 5 walk on through inc
+      dptr into the following bytes (four of them stores, one a read), 3
+      are the window stopping before any movx, and 36 hand DPTR to a
+      subroutine. Three functions are tagged [writer] by the census and are
+      read against the committed decompiles: pd:0xBECB
+      stores R5 here and R3 into 0x07D7 in the same three instructions,
+      pd:0xF247 stores the caller's byte and then overwrites it with 0
+      after a call, and pd:0xF440 stores the caller's byte, lets
+      pd:0xABBF read it back, hands it to 0x96ED and then overwrites it
+      with 1. Those are write classes in one program's instruction stream.
+      They are not evidence the EC acts on this byte, and nothing here is a
+      live test. What DBSP is, and whether the ASL ever needs it, is open:
+      no writer on either side of the boundary is established.
+
+  - name: CGCT (DSDT)
+    addr: 0x07D7
+    bits: "0-7 value; T1WR's Arg0 == 0x1176 branch stores Arg1 into it"
+    sources: [dsdt(CGCT), xdata-refs]
+    static_refs: 71
+    static_refs_main_ec: 0
+    static_refs_pd_image: 71
+    status: unknown-not-absent
+    note: >
+      The second of the two ECMG-named bytes at 0x07D6/0x07D7
+      (dsdt.dsl:52257-52258), and the one with a decoded ASL writer that
+      the EC-firmware scan cannot see: T1WR's Arg0 == 0x1176 branch does
+      ^^PCI0.LPCB.EC0.CGCT = Arg1 and then
+      Notify (^^PCI0.PEG0.PEGP, 0xC0) (dsdt.dsl:50730-50733). So a byte
+      with zero direct sites in the EC image is written by ASL, which is
+      the same shape as the 0x07B0-0x07BE blind spot this file's header
+      records for 0x07B9. Two limits on that, both stated rather than
+      assumed away: the branch is decoded ASL, not observed hardware
+      behaviour -- whether 0x1176 is ever issued on this board is not
+      established -- and the notification is to the PEG0 PCI device, not
+      to \_SB.NPCF, so what the notification is for is not recovered here.
+      windows/tools/t1wr_callers.py has never searched for a caller of
+      0x1176: its ACPI_ARGS still reads [0x1171, 0x1172, 0x1173, 0x2273].
+      Widening it re-bakes that tool's expected-count tables and
+      docs/findings.md 4f's figures, so it is a follow-up rather than a
+      line here; the gap is recorded in
+      ec/annotations/ec-07d6-07d7-sites.md section 8.
+      All 71 direct MOV DPTR sites are in the ITE8850-PD image and none is
+      in the EC firmware, so the 71 are the PD program's own variable and
+      not references to an EC register. Status is unknown-not-absent for
+      the reason this file's header gives that value, not
+      present-untested, and not absent (docs/findings.md 4c).
+      WALKED 2026-09-24 (issue #282): all 71 sites are enumerated in
+      ec/annotations/ec-07d6-07d7-sites.md (site table
+      ec-07d6-07d7-sites.csv), reconciled in section 1 against
+      xdata-registers.csv's census (cluster pd-029: 35 refs -- 16 read,
+      6 write, 7 passed-to-call, 6 address-taken, over 5 functions). Of
+      the 71, 44 read, 11 write, 1 is a read-modify-write, 4 walk on
+      through inc dptr (three stores, one a read), 2 are the window
+      stopping before any movx, and 9 hand DPTR to a subroutine. The
+      census tags two functions [writer]: the
+      pd:0xABBF named build_masked_indexed_table_bytes, which stores R7
+      and then builds five masked indexed table bytes from the value read
+      back, and pd:0xBECB, which stores R3 here in the same three
+      instructions that store R5 into 0x07D6. pd:0x805E writes a zero here
+      as part of the same state update that copies a table byte into
+      0x07D6. Those are write classes, not evidence the EC acts on the
+      byte. No hardware was involved.
+
+  - name: XDATA_07C7 (no DSDT field; no direct site found)
+    addr: 0x07C7
+    bits: "0-7 unallocated in the DSDT field list; the block skips 0x07C7-0x07CF"
+    sources: [xdata-refs]
+    static_refs: 0
+    static_refs_main_ec: 0
+    static_refs_pd_image: 0
+    status: unknown-not-absent
+    note: >
+      In the middle of the 0x07C4-0x07D7 GPU block and outside the DSDT's
+      ECMG field list, which jumps Offset (0x7C6) WMS0, 2 to Offset (0x7D0)
+      DBD1, 8 (dsdt.dsl:52246-52249) and so declares no field at this byte.
+      trace_xdata_refs.py finds zero direct MOV DPTR sites for it in
+      either image, and ec/annotations/xdata-registers.csv has no row for
+      it at all, which is the strongest absence-shaped phrasing the door
+      procedure's table used to carry.
+      That zero means "not found by this method" and is recorded under
+      status unknown-not-absent rather than absent for the reason
+      docs/findings.md 4c retracted: #110 owns the computed-DPTR blind
+      spot, where 0x07B9 is writable and working with no direct reference
+      anywhere. The one computed-DPH construction this file rules out for
+      the page is narrow and is stated as such in
+      ec/annotations/ec-07d6-07d7-sites.md section 5: addc a,#0x07 ; mov
+      DPH,a (34 07 F5 83) does not occur in the EC image, where the same
+      four-byte shape with 20 other immediates does and the 0x0F control
+      reproduces eight known sites. The register form, mov DPH,a from a
+      register, and an indirect movx @Ri are all invisible to that grep.
+      0 is a lower bound, never a total. WALKED 2026-09-24 (issue #282):
+      recorded rather than resolved, and the name is the address on
+      purpose -- there is no field name to carry and inventing one would
+      be a claim the DSDT does not support, the same spelling
+      XDATA_0436_PAIR uses for the deliberately-unnamed 0x0436/0x0437 pair.
+      Nothing here is a live test and no hardware was involved.
+
+  - name: XDATA_07C8 (no DSDT field; no direct site found)
+    addr: 0x07C8
+    bits: "0-7 unallocated in the DSDT field list; the block skips 0x07C7-0x07CF"
+    sources: [xdata-refs]
+    static_refs: 0
+    static_refs_main_ec: 0
+    static_refs_pd_image: 0
+    status: unknown-not-absent
+    note: >
+      The byte after 0x07C7 and the same story: no ECMG field (the list
+      jumps Offset (0x7C6) to Offset (0x7D0), dsdt.dsl:52246-52249), no
+      direct MOV DPTR site in either image, no row in
+      ec/annotations/xdata-registers.csv. Recorded as
+      unknown-not-absent rather than absent, and the zero is "not found by
+      this method" (docs/findings.md 4c), for the reasons and against the
+      same blind spot (#110, the computed-DPTR form) as 0x07C7's, which
+      ec/annotations/ec-07d6-07d7-sites.md section 5 works through for
+      both. What does reach the 0x07 page at run time, if anything, is not
+      established. WALKED 2026-09-24 (issue #282): recorded rather than
+      resolved. No hardware was involved.
