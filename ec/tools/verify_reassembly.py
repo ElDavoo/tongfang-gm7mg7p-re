@@ -73,6 +73,7 @@ Usage:
     python3 ec/tools/verify_reassembly.py --work /tmp/ec            # full run
     python3 ec/tools/verify_reassembly.py --work /tmp/ec --limit 40 # a sample
     python3 ec/tools/verify_reassembly.py --check                   # no assembler
+    python3 ec/tools/verify_reassembly.py --emit-csv /tmp/reasm.csv  # per-row
     python3 ec/tools/verify_reassembly.py --self-test               # known answers
     python3 ec/tools/verify_reassembly.py --add-digest-column       # one-shot
     python3 ec/tools/verify_reassembly.py --verify-provenance \\
@@ -89,6 +90,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 from concurrent.futures import ThreadPoolExecutor
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -562,6 +564,36 @@ def scratch_dir(work, index):
     return d
 
 
+def run_rows(rows, work, images, sdas, jobs, check=None):
+    """check_one over `rows`, `jobs` at a time. -> results, in the order given.
+
+    Each row gets `scratch_dir(work, index)`, its own directory, so no two rows
+    in flight together can share one -- see scratch_dir() for the race that
+    `dirs[idx % jobs]` produced and what it cost the outcome tallies
+    (docs/findings.md §14g). An earlier fix on a parallel branch gave each
+    *worker thread* its own directory instead; either closes the race, and
+    this keeps the per-function one because it is the one the committed
+    measurement in §14g was taken with.
+
+    `check` defaults to check_one; the self-test substitutes a recorder,
+    which is the only way to observe the dispatch without running 2,705
+    assembles and hoping the race shows up.
+    """
+    check = check or check_one
+
+    def one(item):
+        idx, row = item
+        try:
+            return (row,) + check(
+                row, images.get(row["program"]) or images["bank0"],
+                scratch_dir(work, idx), sdas)
+        except Exception as exc:                       # a crash is a result
+            return row, "error", "%s: %s" % (type(exc).__name__, exc), 0, 0, ""
+
+    with ThreadPoolExecutor(max_workers=jobs) as pool:
+        return [tuple(r) for r in pool.map(one, list(enumerate(rows)))]
+
+
 def verify(limit=None, jobs=8, work=None, sdas=None, quiet=False):
     sdas = find_assembler(sdas)
     if not sdas:
@@ -580,20 +612,7 @@ def verify(limit=None, jobs=8, work=None, sdas=None, quiet=False):
     images = build_images(work)
     loaded = {p: open(path, "rb").read() for p, path in images.items()}
 
-    results = []
-
-    def job_threaded(item):
-        idx, row = item
-        try:
-            return (row,) + check_one(
-                row, loaded.get(row["program"]) or loaded["bank0"],
-                scratch_dir(work, idx), sdas)
-        except Exception as exc:                       # a crash is a result
-            return row, "error", "%s: %s" % (type(exc).__name__, exc), 0, 0, ""
-
-    with ThreadPoolExecutor(max_workers=jobs) as pool:
-        for result in pool.map(job_threaded, list(enumerate(rows))):
-            results.append(tuple(result))
+    results = run_rows(rows, work, loaded, sdas, jobs)
 
     tally = {}
     for _row, outcome, _detail, _c, _s, _d in results:
@@ -675,6 +694,59 @@ def write_report(results, sdas, path=REPORT, version=None):
                         digest, checked, skipped, detail,
                         "sdas8051 %s" % version])
     return path
+
+
+def refuses_committed_report(path):
+    """-> True, having said why, if `path` is the committed report.
+
+    One predicate rather than a check per caller, because the invariant is one
+    writer for one file: `reassembly.csv` is written by `--report` and by
+    nothing else, and a second path to it is the hazard `--add-digest-column`
+    needed its own guard for. `realpath` on both sides so a relative spelling
+    or a symlink reaches the same verdict as the absolute one.
+    """
+    if os.path.realpath(path) != os.path.realpath(REPORT):
+        # realpath follows symlinks but not hardlinks, and a hardlink to the
+        # report is the same inode under another name -- open(path, "w") on it
+        # truncates the committed report exactly as writing REPORT would. So
+        # the comparison is made on the inode where both files already exist.
+        try:
+            if os.path.exists(path) and os.path.samefile(path, REPORT):
+                pass                      # same file, fall through to refuse
+            else:
+                return False
+        except OSError:
+            return False
+    print("  %s is written by --report and by nothing else.\n"
+          "     A per-row comparison needs a second path, not a second writer "
+          "for the\n     first one; write it somewhere else."
+          % os.path.relpath(REPORT, REPO))
+    return True
+
+
+def emit_csv(results, sdas, path):
+    """The per-row results, to a path that is not the committed report.
+
+    Two runs of the re-encode cannot be compared without both of them on disk
+    as files, and one of the two is the committed `reassembly.csv`. It is not
+    re-written to get the other: `--report` is its single writer, because a
+    report written by a second assembler is a different report, and one written
+    by accident is a report nobody reads the `assembler` column of before
+    citing its counts.
+    """
+    if refuses_committed_report(path):
+        return 1
+    try:
+        write_report(results, sdas, path)
+    except OSError as exc:
+        # A mistyped or nested destination, said the way the rest of this tool
+        # says it. A traceback through emit_csv for a path that does not exist
+        # is a worse answer than the sentence, and this is the first flag here
+        # that takes a path the user typed.
+        print("  cannot write %s: %s" % (path, exc))
+        return 1
+    print("  wrote %s" % os.path.abspath(path))
+    return 0
 
 
 def check_listing_bytes():
@@ -1664,6 +1736,43 @@ def self_test():
                 "a changed byte column changes the digest, which is what keeps "
                 "this independent of the byte check rather than a copy of it")
 
+    # The guard on the committed report's one writer. Asserted with a path
+    # relative to the repo as well as the absolute one, because the two reach
+    # the same file and a guard that only catches one of them catches neither
+    # once someone types the other.
+    #
+    # Joined onto REPO rather than left relative, deliberately. A bare
+    # "ec/ghidra/reassembly.csv" resolves against the *process* cwd, so from
+    # anywhere but the repo root it names some other file -- and this
+    # assertion, run from there, would write a header-only report to it
+    # before failing. A test for "the guard stops the write" that performs the
+    # write is worse than no test.
+    for label, cand in (("absolute", REPORT),
+                        ("repo-relative", os.path.join(REPO, "ec", "ghidra",
+                                                       "reassembly.csv"))):
+        assert_that(refuses_committed_report(cand) is True
+                    and emit_csv([], "sdas8051", cand) == 1,
+                    "--emit-csv refuses the committed report (%s)" % label)
+    fd, epath = tempfile.mkstemp(prefix="emit-selftest-", suffix=".csv")
+    os.close(fd)
+    try:
+        assert_that(emit_csv([], "sdas8051", epath) == 0
+                    and os.path.getsize(epath) > 0,
+                    "--emit-csv writes to any other path")
+        # The hardlink, which is the case a realpath-only guard misses: same
+        # inode under a different name, so open(path, "w") truncates the
+        # committed report exactly as writing REPORT would. Linked to REPORT
+        # rather than to two scratch files, or samefile would be true of any
+        # pair and the assertion would prove nothing. The unlink in the
+        # finally removes the link, not the report.
+        os.remove(epath)
+        os.link(REPORT, epath)
+        assert_that(refuses_committed_report(epath) is True,
+                    "--emit-csv refuses a hardlink to the committed report")
+    finally:
+        if os.path.exists(epath):
+            os.remove(epath)
+
     # The comparison, not the hash: a check that cannot fail is not a check.
     # Written to a temporary report and read back through the same DictReader
     # check() uses, so a misspelled column name shows up here rather than as a
@@ -1697,6 +1806,46 @@ def self_test():
                     "than being skipped")
     finally:
         os.remove(rpath)
+
+    # The dispatch must never hand two rows that are in flight at the same
+    # time the same scratch directory, or they overwrite each other's source
+    # and read back each other's listing (docs/findings.md §14g).
+    #
+    # A race cannot be provoked by running the tool repeatedly and hoping, so
+    # the pickup order that provokes it is forced instead: the worker holding
+    # the first row is held until the pool has run `jobs` rows past it. Under
+    # `dirs[idx % jobs]` that first row and the fifth share a directory, both
+    # in flight together; under a per-thread scratch dir they cannot.
+    seen, lock, drained = [], threading.Lock(), threading.Event()
+
+    def recording_check(row, image, workdir, sdas_arg):
+        with lock:
+            first = not seen
+            seen.append((threading.current_thread().name, workdir))
+            if len(seen) > 5:
+                drained.set()
+        if first:
+            # Only the first row waits, and only until the pool has drained
+            # past it, so a broken dispatch fails this rather than hanging it.
+            drained.wait(30)
+        return "match", "", 0, 0, ""
+
+    probe = [{"program": "bank0", "addr": "%04X" % i, "name": "t",
+              "out_file": "(not a listing)"} for i in range(8)]
+    dwork = tempfile.mkdtemp(prefix="rasm-dispatch-")
+    try:
+        run_rows(probe, dwork, {"bank0": b""}, "unused", jobs=4,
+                 check=recording_check)
+    finally:
+        shutil.rmtree(dwork, ignore_errors=True)
+    holders = {}
+    for name, d in seen:
+        holders.setdefault(d, set()).add(name)
+    shared = sum(1 for v in holders.values() if len(v) > 1)
+    assert_that(len(seen) == 8 and drained.is_set() and shared == 0,
+                "no two concurrently-running rows share a scratch directory "
+                "(%d rows, %d directories, %d shared)"
+                % (len(seen), len(holders), shared))
 
     # The provenance comparison, which is the part of --verify-provenance with
     # no git in it and so the part that can quietly start passing everything.
@@ -2045,6 +2194,9 @@ def main():
     ap.add_argument("--limit", type=int, help="only the first N functions")
     ap.add_argument("--report", action="store_true",
                     help="write ec/ghidra/reassembly.csv")
+    ap.add_argument("--emit-csv", metavar="PATH",
+                    help="write the per-row results to PATH, for comparing two "
+                         "runs; refuses the committed report")
     ap.add_argument("--check", action="store_true",
                     help="CI: the report still describes the listings (no assembler)")
     ap.add_argument("--add-digest-column", action="store_true",
@@ -2061,6 +2213,16 @@ def main():
                          "listings, for the positive control (default: <base>^)")
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args()
+    if args.emit_csv and (args.check or args.self_test or args.add_digest_column):
+        # Those three do not re-encode, so there are no per-row results for
+        # --emit-csv to write. Saying so beats exiting 0 having written
+        # nothing, which is the whole failure mode the flag exists to avoid.
+        print("  --emit-csv needs the full re-encode, and --%s does not run "
+              "it.\n  Drop one of the two flags; the read-only verify path is "
+              "`--work <dir>`." % ("check" if args.check else
+                                   "self-test" if args.self_test else
+                                   "add-digest-column"))
+        return 2
     if args.self_test:
         return self_test()
     if args.verify_provenance:
@@ -2071,6 +2233,10 @@ def main():
         return add_digest_column()
     if args.check:
         return check()
+    # Checked here as well as in emit_csv(), so a refused path costs a
+    # millisecond rather than the whole 2,705-row re-encode that follows.
+    if args.emit_csv and refuses_committed_report(args.emit_csv):
+        return 1
     verified = verify(limit=args.limit, jobs=args.jobs, work=args.work,
                       sdas=args.assembler)
     if verified is None:
@@ -2083,7 +2249,13 @@ def main():
     if args.report:
         print("\n  wrote %s" % os.path.relpath(
             write_report(results, sdas, version=version), REPO))
-    return run_status(tally)
+    emitted = 0
+    if args.emit_csv:
+        emitted = emit_csv(results, sdas, args.emit_csv)
+    # A refused --emit-csv is the user's flag not being honoured, so it is a
+    # non-zero run whatever the tallies say; a run that quietly did not write
+    # the file it was asked for is how a comparison ends up comparing nothing.
+    return emitted or run_status(tally)
 
 
 if __name__ == "__main__":

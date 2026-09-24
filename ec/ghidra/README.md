@@ -358,6 +358,29 @@ check out with `fetch-depth: 0` and can run it; both of `ci.yml`'s checkouts
 are default-depth and cannot resolve `08b72e2` at all, which is why it is a
 full-clone command and not part of the per-commit gate.
 
+**That warning has since been measured rather than predicted**
+(`../../docs/findings.md` §14h, issue #157). The runner's `sdas8051` was
+`05.50.4`'s contemporary — SDCC 4.2.0, `sdas8051 02.00`, six years older — and
+a full report against it would indeed have rewritten every `assembler` cell. The
+measured part is sharper than "could move the gap tallies above": of the
+2,705 rows, **the 143 and the 45,394 are unchanged** — 0 rows differ in
+`instructions_checked` or `instructions_unchecked`, because those two columns
+come from `to_sdas()` in pure Python and not from the assembler — while **52
+rows change `outcome`**, all of them `assembler-gap` becoming `match` or
+`partial`. Those 52 are in `../../evidence/ec-reencode/2026-09-23-sdas8051-rowdiff.csv`.
+So re-reporting against a different build moves *coverage*, not the byte
+arithmetic, which is the distinction the `assembler` column exists to let a
+reader make.
+
+One caveat belongs here too, because this file is where a reader looks for the
+tallies. §14h also found a race in `verify()`'s dispatch that made repeated
+`--jobs 4` runs disagree, and the commit that wrote this report
+(`08b72e2`) records no `--jobs` value, so whether the 58 `assembler-gap` rows
+below carry that artefact is not settled from history. The 45,394 and the 143
+cannot be affected — they are computed before the assembler runs — but the
+outcome columns should be re-measured with the pinned nix build before they are
+treated as settled.
+
 **For the committed column the history supplies the proof the command could
 not** (2026-09-23, issue #150). `a56b3bb` changed nothing in this file but the
 new column — drop `listing_digest` from its header and rows and all 2,705 are
