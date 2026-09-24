@@ -4770,7 +4770,10 @@ rule above exists to stop. `--check` now refuses a `callgraph` name whose scope
 token is not the dominant scope among its rows. **456 `ungrouped` is "not found
 by this method", never "these have no subsystem"** — the same discipline
 CLAUDE.md puts above every other rule, and the reason `ungrouped` is in the
-vocabulary at all.
+vocabulary at all — **for 440 of them**. The other 16 were found by the method
+and then cut by the proxy rule, which is a different reason and says so in their
+comments and in `--report`'s split line; see
+`docs/findings/group-proxy-populations.md`.
 
 **The banking caveat is inherited without softening, and it is structural.**
 Nothing in an `lcall` names a bank — bank0→bank1 and bank0→bank0 are the same
