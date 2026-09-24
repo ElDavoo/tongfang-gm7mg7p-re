@@ -62,24 +62,36 @@ into `r2 -a 8051` with no stitching needed.
   `annotations/registers.yaml` from the image and exits non-zero on a mismatch
   or on an entry missing the split. Run by `.github/scripts/agent-gates.sh`;
   the numbers it guards are tabulated in `annotations/static-refs-audit.md`.
-- **`tools/check_cluster_citations.py`** — holds every `main-ec-NNN` in the
+- **`tools/check_cluster_citations.py`** — holds every cluster citation in the
   committed prose to the membership it names in
   `annotations/xdata-clusters.csv`, and holds every hand-typed count beside one
   to the figures the same CSV gives. A cluster id in a sentence is a pointer,
   and pointers go stale: the ids are numbered by size, then references, then
-  lowest address (`xdata_register_map.py:1027`), which holds them steady across
-  a re-run and promises nothing once the classifier itself changes. Issue #253
-  is four sentences whose pointer had drifted exactly that way. It walks the
-  markdown under `ec/`, `docs/` and `evidence/`, and where a sentence names
-  both a cluster and an XDATA address, the address has to be a member of the
-  cluster that sentence pairs it with, or of one of the clusters it names where
-  it pairs it with none — reporting file, line, id and address, and
-  exiting non-zero. A **census row** is the other kind of claim: a markdown
-  table row whose first cell is one cluster id, which is what all twelve rows
-  of `annotations/xdata-register-map.md` §5 are. Four of them disagreed with
-  the CSV beside them before issue #272 and nothing held them there, so a
-  census row's size, reference count, address range and named count are now
-  held to the same census. The two are separate gates over one walk and
+  lowest address, which makes them a *rank*, and a rank is not an identity — one
+  change anywhere in the ranking renumbers every id below the one that moved.
+  Issue #274 measured that rather than assuming it: regenerating with the `==`
+  guard removed — the classifier change #178 made — turns the 427 committed
+  clusters into 439, of which **48 survive intact** and **379 keep their
+  number and change the membership it names**; a threshold change to 0.45
+  gives 425 clusters, where 59 of the 427 ids are intact, 366 name a different
+  membership, 2 have no cluster at that number, and **413 of the 427 keys**
+  still name a cluster. Issue #253 is four sentences whose pointer had drifted
+  exactly that way.
+  Three citation forms are therefore resolved (issue #274): the `main-ec-NNN`
+  rank, the `cluster_key` content hash, and a `cluster_name` from
+  `annotations/xdata-cluster-names.csv`, which is the only one of the three
+  that survives a cluster that changed. It walks the markdown under `ec/`,
+  `docs/` and `evidence/`, and where a sentence names both a cluster and an
+  XDATA address, the address has to be a member of the cluster that sentence
+  pairs it with, or of one of the clusters it names where it pairs it with none
+  — reporting file, line, id and address, and exiting non-zero.
+  `--clusters`/`--registers` take an alternate census, so the same sentences can
+  be run against a regeneration's output. A **census row** is the other kind of
+  claim: a markdown table row whose first cell is one cluster id, which is what
+  all twelve rows of `annotations/xdata-register-map.md` §5 are. Four of them
+  disagreed with the CSV beside them before issue #272 and nothing held them
+  there, so a census row's size, reference count, address range and named count
+  are now held to the same census. The two are separate gates over one walk and
   neither inherits the other: a §5 row carries a range and a title but never
   the word "member", so the membership rule skips every one of them and this
   is the only rule that reads it. Committed files only: no image, no Ghidra,
@@ -90,9 +102,14 @@ into `r2 -a 8051` with no stitching needed.
   pairing the wording cannot be read for — the same split written with
   both ids first and the addresses in a trailing list — is back to being
   satisfied by either, so a two-cluster unit catches a wrong id there and a
-  wrong pairing only where its own wording says which is which. The count
-  rule reads a cell only when it is a bare number, thousands commas allowed,
-  or one of `none`/an em dash/a hyphen, which is
+  wrong pairing only where its own wording says which is which; only the
+  `main-ec-NNN` token is paired, so a `cluster_key` or a `cluster_name`
+  supplying the second cluster is answered by the any-of rule. A `cluster_name`
+  is resolved to whichever cluster holds it today without asking how it got
+  there, and a name too generic to be distinctive is matched wherever it
+  appears in a unit that also makes a membership claim. The count rule reads a
+  cell only when it is a bare number, thousands commas allowed, or one of
+  `none`/an em dash/a hyphen, which is
   what leaves a listing like `` `0x0403` ``, a span like `` `0x030E`-`0x1809` ``
   and a free-text cell alone — as it also leaves alone any row naming two
   cluster ids, or any row whose id is not in its first cell. Passing means the
@@ -167,7 +184,7 @@ into `r2 -a 8051` with no stitching needed.
   `--self-test` running on committed text alone (no image, no Ghidra, no
   network). Reach for it when the question is "which addresses exist, which
   routines share them, and is this number a read or a write" — the whole
-  `registers.yaml` list is 153 addresses, and this census is 1,172. Two limits
+  `registers.yaml` list is 153 addresses, and this census is 1,171. Two limits
   it earns the right to state: it splits the main EC from the separate
   `ITE8850-PD` program rather than mixing them, and a cluster is a
   co-occurrence in static code, not a purpose —
@@ -176,6 +193,34 @@ into `r2 -a 8051` with no stitching needed.
   also an upper bound on *distinct* references wherever one routine is exported
   as several overlapping functions; `annotations/xdata-06c2-06db-timers.md`
   §2a measures that at 42× on the one cluster measured so far.
+- **`tools/xdata_register_map.py --map OLD.csv`** — one row per cluster of an
+  older `xdata-clusters.csv` saying where it went in this generation: the old
+  and new id, whether the `cluster_key` changed, the carried name and *how* it
+  was carried (`seeded`/`exact`/`overlap <score>`/`tie`/`none`), the Jaccard,
+  and the membership delta address by address. Rows go to stdout as CSV, the
+  summary to stderr, so the report redirects without the prose ending up in it.
+  It is what makes the `main-ec-NNN` → stable-id prose sweep a diff rather than
+  a hunt, and it is the report issue #253 needed and did not have;
+  `annotations/xdata-register-map.md` §4.4 is the method and the measurements.
+- **`annotations/xdata-cluster-names.csv`** — the hand-edited
+  `cluster_key,cluster_name,note` file, the one place a cluster gets a name.
+  Keyed by the content hash rather than the `main-ec-NNN` rank, because the
+  rank is the thing that moves: a row keyed by a rank would name a different
+  cluster after every reshuffle, which is the problem
+  (`annotations/xdata-register-map.md` §4.4). **This is a hand-edited file, not
+  a generated one** — the two census CSVs are generated and are never edited by
+  hand, and this must not be added to the generated list in
+  `.github/workflows/agent-conflicts.yml` for exactly that reason. Adding a
+  name is a one-row edit; the `note` column records the evidence for it, the
+  same rule `ghidra-functions.csv` follows. Ten of the 427 clusters have one,
+  and they are the ten the committed prose already makes a membership claim
+  about; the rest have a key and no name, which is not coverage. A name is
+  carried across a regeneration *in changed form* by membership overlap, and
+  how a given name was carried is reported by the tool rather than recorded in
+  the cell — a name that clears 0.50 on Jaccard is a guess about which cluster
+  it is, and a cluster nothing matched is **not carried by this method**,
+  never *gone*: a function that stopped decompiling and a cluster that stopped
+  existing are different things.
 - **`tools/disasm8051.py`** — the opcode tables `trace_xdata_refs.py` decodes
   with, plus a CLI for reading a window of instructions at a file offset
   (`--at`) and for measuring how many nearby anchors a linear walk syncs onto
@@ -411,9 +456,9 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
 - **`annotations/xdata-registers.csv`** — one row per XDATA address the
   decompiled firmware touches: which program touches it, whether the export
   spelled it as a `DAT_EXTMEM_` token or as its symbol, the five direction
-  buckets, how many distinct functions read and write it, its cluster, its
-  `span_group`, and every touching function with the name and type
-  `ghidra-functions.csv` gives it. Produced by
+  buckets, how many distinct functions read and write it, its cluster and that
+  cluster's `cluster_key`, its `span_group`, and every touching function with
+  the name and type `ghidra-functions.csv` gives it. Produced by
   `tools/xdata_register_map.py`, which also writes
   `annotations/xdata-clusters.csv` and checks both; `spelled_as` and `name`
   are separate columns because the PD image is written with `DAT_EXTMEM_`
@@ -422,11 +467,15 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   `pd-xdata-overlap.md`'s mistake in a new place.
 - **`annotations/xdata-clusters.csv`** — one row per cluster: the addresses,
   the functions that touch two or more of them, the routines most of those
-  functions call, and the already-named addresses inside. The worklist, in
-  `annotations/xdata-register-map.md` §5's order; the clustering method, its
-  threshold and the sensitivity sweep behind it are §4 of that file, and the
-  gap this census cannot close (two addresses, both inside
-  `bank0:0x94D0`) is §7.
+  functions call, the already-named addresses inside, and the two identity
+  columns — `cluster_key`, a content hash over the program and the sorted
+  membership, and `cluster_name`, the hand name
+  `xdata-cluster-names.csv` gives it and that a regeneration carries forward in
+  changed form. The worklist, in `annotations/xdata-register-map.md` §5's
+  order; the clustering method, its threshold and the sensitivity sweep behind
+  it are §4 of that file, the identities and what a carried name does and does
+  not claim are §4.4, and the gap this census cannot close (two addresses, both
+  inside `bank0:0x94D0`) is §7. Generated: never hand-edited.
 - **`annotations/index-table-spans.csv`** — one row per candidate call site:
   the table's span, its case range, and the site's own `frame_onto`/
   `frame_over`. It is the census, not a filtered view of it, so a site whose

@@ -146,10 +146,40 @@ so a `0xFFxx` value cannot be a direct address whatever anything spelled it as.
 addresses a `90 hi lo` byte scan cannot find, because it reads the tree
 precisely for those.
 
+**A cluster has two identities and the prose needs the one that is not a rank.**
+`cluster_id` is a rank -- `build()` orders by size, then references, then
+lowest address, and `main-ec-001` is whatever sorts into first place. Issue
+#253 is what that costs: a single change anywhere in the ranking reshuffles every
+id below the one that moved, and the citations that named those ids drifted
+# with it.
+So the two census CSVs also carry `cluster_key`, a content hash over the
+cluster's program and its sorted `addrs`, and `cluster_name`, a hand name keyed
+by that hash in `annotations/xdata-cluster-names.csv`. A key is exact and says
+nothing about a near miss; a name is a claim a human made and can be carried
+across a regeneration *in changed form*, which is the case the key cannot cover
+-- `--map` reports both, and says which of the two happened and with what score.
+Both are additive: `cluster_id` keeps the exact values it has today, because
+`xdata-registers.csv` and every page in the tree name it, and switching over is
+a prose sweep rather than a decision this tool makes.
+
+**What a carried name does and does not claim.** `seeded` (the names file names
+this exact key) and `exact` (a named cluster of the committed census has this
+exact key) are the same claim. `overlap` is a weaker one -- the name came from
+the named cluster whose membership scores at least `CARRY_MIN_JACCARD` against
+this one -- and the score is reported with it, because a name carried at 0.98
+and one carried at 0.51 are not the same statement. `tie` is a named cluster
+being claimed by two old names at the same score: that is a fact about the
+clustering, so it is reported and no winner is picked. And `none` is **not
+carried by this method** -- never *gone*, never *lost*, never *disappeared*: a
+function that stopped decompiling, a threshold that moved, a guard that was
+removed and a cluster that stopped existing are four different things, and this
+column can only report that its own rule did not fire.
+
 Usage:
     python3 ec/tools/xdata_register_map.py               # write the two CSVs
     python3 ec/tools/xdata_register_map.py --check       # diff vs committed
     python3 ec/tools/xdata_register_map.py --self-test
+    python3 ec/tools/xdata_register_map.py --map ec/annotations/xdata-clusters.csv
     python3 ec/tools/xdata_register_map.py --threshold-sweep
     python3 ec/tools/xdata_register_map.py --threshold-sweep --no-writer-axis
     python3 ec/tools/xdata_register_map.py --reconcile ec/firmware/GMxMGxx_11.800
@@ -157,6 +187,7 @@ Usage:
 import argparse
 import collections
 import csv
+import hashlib
 import io
 import os
 import re
@@ -168,6 +199,7 @@ DECOMPILED = os.path.join(EC_DIR, "decompiled")
 INDEX_CSV = os.path.join(DECOMPILED, "index.csv")
 ANNOT_CSV = os.path.join(EC_DIR, "annotations", "ghidra-functions.csv")
 SYMBOLS_CSV = os.path.join(EC_DIR, "ghidra", "xdata-symbols.csv")
+NAMES_CSV = os.path.join(EC_DIR, "annotations", "xdata-cluster-names.csv")
 OUT_REGISTERS = os.path.join(EC_DIR, "annotations", "xdata-registers.csv")
 OUT_CLUSTERS = os.path.join(EC_DIR, "annotations", "xdata-clusters.csv")
 
@@ -194,11 +226,19 @@ REGISTER_COLUMNS = [
     "addr", "program", "spelled_as", "span_group", "cluster_id", "refs",
     "read", "write", "read+write", "passed-to-call", "address-taken",
     "readers", "writers", "functions_touched", "single_function", "name",
-    "functions",
+    "functions", "cluster_key",
 ]
 CLUSTER_COLUMNS = [
     "cluster_id", "program", "size", "refs", "addrs", "addr_range",
     "functions_touched", "shared_functions", "callees", "named_addrs",
+    "cluster_key", "cluster_name",
+]
+
+# The two columns `--map` prints, one row per old cluster. A row is a *report*,
+# not a file, so it is not in the column lists above and is never committed.
+MAP_COLUMNS = [
+    "old_cluster", "new_cluster", "key", "old_key", "new_key", "cluster_name",
+    "carried", "match", "jaccard", "added", "removed",
 ]
 
 # Jaccard >= 0.5 sits at the top of the plateau the sweep shows: from 0.35 to
@@ -208,6 +248,32 @@ CLUSTER_COLUMNS = [
 # default is a recorded choice rather than a tuned one.
 DEFAULT_THRESHOLD = 0.50
 SWEEP_THRESHOLDS = (0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70)
+
+# `cluster_key` is the content half of a cluster's identity: sha256 over the
+# program's name and the cluster's space-joined sorted `addrs`, truncated to 12
+# hex digits and spelled `k<hex>`. Twelve is 48 bits, and the self-test asserts
+# the keys are distinct in a fresh generation and, read back out of the file,
+# in the committed census as well, rather than taking a truncated hash's word
+# for it. It is computed in `build()` where the cluster is formed, never
+# written and read back to decide a key, so the key cannot drift with the file
+# that records it.
+CLUSTER_KEY_HEX = 12
+
+# How much membership a named cluster must keep for its name to follow it into
+# a new one. 0.50 is the clustering's own default and the top of the plateau
+# `--threshold-sweep` prints, so a name and a cluster are carried by the same
+# number: a rule that read the census two different ways would be one more thing
+# to re-derive. The measured carries are in `annotations/xdata-register-map.md`
+# §4.4, and the margin is not close -- across the guard-off regeneration the ten
+# named clusters' best match scores 0.64 to 1.00 and the *next* named cluster
+# scores 0.00 in every one of the ten -- so the exact value is a recorded choice
+# rather than a tuned one.
+#
+# Below it, the outcome is `none`: **not carried by this method**. Never *gone*,
+# never *lost* -- a cluster the decompiler stopped producing is not a cluster
+# that stopped existing, and only the firmware can answer that.
+CARRY_MIN_JACCARD = 0.50
+
 
 # The `callees` column lists this many routines per cluster, so a wide cluster
 # does not print a page of names. The cap is reported in the column itself
@@ -1251,6 +1317,126 @@ def jaccard(a, b) -> float:
     return len(a & b) / len(a | b)
 
 
+def cluster_key(g: str, addrs) -> str:
+    """The cluster's content hash: a function of the cluster, not of its rank.
+
+    The program is in the hash because the two programs have separate XDATA
+    maps and a shared address number is not a shared byte, so a main-EC cluster
+    and a pd-image cluster with identical membership are different clusters and
+    must not collide. `sorted()` is what makes the key order-independent: the
+    membership is a set, and a key that changed because a CSV column was sorted
+    a different way would be a key that lies."""
+    text = g + " " + " ".join(hexaddr(a) for a in sorted(addrs))
+    return "k" + hashlib.sha256(text.encode()).hexdigest()[:CLUSTER_KEY_HEX]
+
+
+def load_cluster_names() -> dict:
+    """`cluster_key` -> `cluster_name` from the hand-edited names file.
+
+    `ec/annotations/xdata-cluster-names.csv` is this tool's editable surface for
+    names, the way `ghidra-functions.csv` is for functions: the one file here a
+    human adds a row to. It is keyed by `cluster_key` rather than by
+    `cluster_id` because the rank is the thing that moves -- a row keyed by a
+    rank would name a different cluster after every reshuffle, which is the
+    whole problem. A missing file is an empty table and not an error: the
+    census is complete without names, and a name is a label, not a count."""
+    out = {}
+    try:
+        with open(NAMES_CSV, newline="") as f:
+            for row in csv.DictReader(f):
+                key = row["cluster_key"].strip()
+                if key:
+                    out[key] = row["cluster_name"].strip()
+    except FileNotFoundError:
+        return {}
+    return out
+
+
+def load_cluster_rows(path) -> list:
+    """The rows of a clusters CSV, or [] when there is no file to read.
+
+    A census written before the `cluster_key` and `cluster_name` columns are
+    still a census: `carry_names()` reads it with `dict.get`, so a missing
+    column is a cluster with no name rather than a crash."""
+    try:
+        with open(path, newline="") as f:
+            return list(csv.DictReader(f))
+    except FileNotFoundError:
+        return []
+
+
+def carry_names(old_rows, seeded, new_rows):
+    """({new cluster_key: name}, one report record per new cluster).
+
+    A hand name is a claim about a *cluster*, and a cluster is its membership,
+    so the name follows the membership rather than the rank. Five outcomes, and
+    they are five because they are five different claims:
+
+        seeded   the names file names this exact key -- a human said so
+        exact    a named row of the committed census has this exact key
+        overlap  a named row's membership scores >= CARRY_MIN_JACCARD against
+                 this one. A weaker claim, and the score is in the record with
+                 it: a name carried at 0.98 and one carried at 0.51 are not the
+                 same statement about the firmware
+        tie      two named rows are the joint best match. Which of them the new
+                 cluster is, is a fact about the clustering and not a coin this
+                 function flips, so no name is carried and both are reported
+        none     nothing cleared the threshold. **Not carried by this method**,
+                 never gone -- a cluster the decompiler stopped producing is a
+                 different claim from one that stopped existing, and the report
+                 prints the best score it saw so a reader can tell "nothing came
+                 close" from "nothing was even looked for"
+
+    `old_rows` is read from the *committed* census rather than from
+    `--out-clusters`, because the output is the thing being written: reading it
+    back would make the carry a function of where this run happens to write.
+    That is what lets a guard-off or a different-threshold run be carried from
+    the census that is actually committed beside the prose."""
+    old_named = [r for r in old_rows if (r.get("cluster_name") or "").strip()]
+    by_key = {r.get("cluster_key", ""): r for r in old_rows}
+    names, report = {}, []
+    for row in new_rows:
+        key, addrs = row["cluster_key"], set(row["addrs"].split())
+        name, how, score, from_key, detail = "", "", 1.0, "", ""
+        if seeded.get(key):
+            name, how = seeded[key], "seeded"
+        elif by_key.get(key, {}).get("cluster_name", "").strip():
+            hit = by_key[key]
+            name, how, from_key = hit["cluster_name"].strip(), "exact", key
+        else:
+            scored = sorted(
+                ((jaccard(addrs, set(r["addrs"].split())),
+                  r["cluster_name"].strip(), r.get("cluster_id", ""),
+                  r.get("cluster_key", ""))
+                 for r in old_named),
+                key=lambda t: (-t[0], t[1], t[2], t[3]))
+            best = scored[0][0] if scored else 0.0
+            winners = [t for t in scored if t[0] == best]
+            score = best
+            if best >= CARRY_MIN_JACCARD and len(winners) == 1:
+                _s, name, _cid, from_key = winners[0]
+                how = "overlap"
+            elif best >= CARRY_MIN_JACCARD:
+                how = "tie"
+                detail = " == ".join(f"{n} ({cid})" for _s, n, cid, _k in winners)
+            else:
+                how = "none"
+        if name:
+            names[key] = name
+        report.append({"cluster_id": row["cluster_id"], "cluster_key": key,
+                       "name": name, "how": how, "jaccard": score,
+                       "from_key": from_key, "detail": detail})
+    return names, report
+
+
+def name_clusters(cluster_rows, old_rows, seeded):
+    """Fill `cluster_name` in, and return the carry report for the modes to print."""
+    names, report = carry_names(old_rows, seeded, cluster_rows)
+    for row in cluster_rows:
+        row["cluster_name"] = names.get(row["cluster_key"], "")
+    return report
+
+
 def similar(a: int, b: int, group: dict, writers: dict, threshold: float) -> bool:
     """Two addresses are neighbours if they share their touching-function set
     *or* their writer set at `threshold`.
@@ -1363,20 +1549,33 @@ def build(funcs, names, symbols, census, calls, threshold):
             program_of.setdefault(a, []).append(g)
 
     clusters = {g: components(groups[g], threshold) for g in GROUPS}
-    # Numbering is by size, then references, then lowest address, so the ids
-    # are stable across regenerations and `main-01` is the same cluster today
-    # and after a re-run.
+    # **The ids are a rank, and a rank is not an identity.** Numbering is by
+    # size, then references, then lowest address, so `main-ec-001` is whichever
+    # cluster sorts into first place -- and one change anywhere in the ranking
+    # reshuffles every id below the one that moved. Issue #253 is the measured
+    # version of that: with the `==` guard removed the committed 427 ids become
+    # a 439-cluster census, 48 surviving intact and 379 keeping their number and
+    # changing what the number names. This comment used to say the ids were
+    # "stable across regenerations" and that `main-01` was the same cluster today
+    # and after a re-run; both halves were false, and the second named an id shape
+    # this tool does not emit. `cluster_key` below and `cluster_name` after it
+    # are the identity a prose citation can survive the ranking on, and
+    # `cluster_id` stays exactly as it was because the two CSVs and every page in
+    # the tree name it.
     cluster_id = {}
+    cluster_key_of = {}
     cluster_rows = []
     for g in GROUPS:
         ordered = sorted(clusters[g].values(),
                          key=lambda v: (-len(v), -sum(groups[g][a]["refs"] for a in v), v[0]))
         for n, members in enumerate(ordered, 1):
             cid = f"{g}-{n:03d}"
+            key = cluster_key(g, members)
             for a in members:
                 cluster_id[(g, a)] = cid
-            cluster_rows.append(cluster_rows_build(g, cid, members, groups[g], names,
-                                                   funcs, calls, symbols))
+                cluster_key_of[(g, a)] = key
+            cluster_rows.append(cluster_rows_build(g, cid, key, members, groups[g],
+                                                   names, funcs, calls, symbols))
 
     spans = {g: span_groups(groups[g]) for g in GROUPS}
     register_rows = []
@@ -1418,11 +1617,12 @@ def build(funcs, names, symbols, census, calls, threshold):
             "single_function": "yes" if len(funcs_touched) == 1 else "no",
             "name": symbols.get(addr, ""),
             "functions": "; ".join(func_label(f, names) for f in sorted(funcs_touched)),
+            "cluster_key": cluster_key_of.get((primary, addr), ""),
         })
     return register_rows, cluster_rows, groups
 
 
-def cluster_rows_build(g, cid, members, group, names, funcs, calls, symbols):
+def cluster_rows_build(g, cid, key, members, group, names, funcs, calls, symbols):
     """One row of xdata-clusters.csv.
 
     `shared_functions` is the subset touching two or more of the cluster's
@@ -1464,6 +1664,11 @@ def cluster_rows_build(g, cid, members, group, names, funcs, calls, symbols):
         "shared_functions": "; ".join(func_label(f, names) for f in shared),
         "callees": callees,
         "named_addrs": " ".join(hexaddr(a) for a in named),
+        "cluster_key": key,
+        # Filled in by name_clusters(), which is where a name carried forward
+        # from the committed census lands. Empty is "no name", which is the
+        # state of 417 of the 427 clusters and is not a claim about them.
+        "cluster_name": "",
     }
 
 
@@ -1494,7 +1699,12 @@ def diff(name, on_disk, generated) -> int:
 
 
 def generate(args):
-    """(register_rows, cluster_rows, groups), or None after printing why."""
+    """(register_rows, cluster_rows, groups, carry report), or None after
+    printing why.
+
+    The carry is part of the generation rather than of the writing, so `--check`
+    and the default agree about what a named cluster is -- the same reason
+    `outputs()` exists for the two CSVs."""
     funcs, by_file = load_index()
     problems = check_file_set(by_file)
     if problems:
@@ -1505,7 +1715,9 @@ def generate(args):
     census, calls, _raw = scan(by_file, names, func_names, symbols)
     register_rows, cluster_rows, groups = build(funcs, names, symbols, census,
                                                calls, args.threshold)
-    return register_rows, cluster_rows, groups
+    report = name_clusters(cluster_rows, load_cluster_rows(OUT_CLUSTERS),
+                           load_cluster_names())
+    return register_rows, cluster_rows, groups, report
 
 
 def outputs(args, built):
@@ -1514,12 +1726,39 @@ def outputs(args, built):
     Both modes go through this one list so `--check` and the writing default
     can never disagree about what a fresh generation is -- which is the whole
     reproducibility claim the two CSVs rest on."""
-    register_rows, cluster_rows, _ = built
+    register_rows, cluster_rows = built[0], built[1]
     out = []
     for rows, columns, path in ((register_rows, REGISTER_COLUMNS, args.out_registers),
                                 (cluster_rows, CLUSTER_COLUMNS, args.out_clusters)):
         out.append((rows, columns, path, render(rows, columns)))
     return out
+
+
+def print_carry(report) -> None:
+    """What happened to every hand name, on stderr so the CSVs stay pipeable.
+
+    Printed by every mode that builds a census, because a name that appears in
+    `xdata-clusters.csv` without saying how it got there is the overclaim
+    `CLAUDE.md` rules out: `seeded` and `exact` are the same claim, `overlap` is
+    a weaker one with a score, a `tie` was not carried at all, and a `none` is
+    this rule not firing rather than a cluster that went away."""
+    tallies = collections.Counter(r["how"] for r in report)
+    print("  names: " + ", ".join(
+        f"{n} {tallies[h]}" for h, n in
+        (("seeded", "seeded"), ("exact", "exact"), ("overlap", "carried by overlap"),
+         ("tie", "tied, not carried"), ("none", "with no name"))), file=sys.stderr)
+    for r in report:
+        if r["how"] in ("seeded", "exact"):
+            continue
+        if r["how"] == "overlap":
+            print(f"    {r['cluster_id']} carries {r['name']} by overlap, "
+                  f"Jaccard {r['jaccard']:.2f} from {r['from_key'] or 'an unnamed old row'}"
+                  f" -- re-key {os.path.relpath(NAMES_CSV, EC_DIR)} if the name moved",
+                  file=sys.stderr)
+        elif r["how"] == "tie":
+            print(f"    {r['cluster_id']} is claimed by two names at Jaccard "
+                  f"{r['jaccard']:.2f} ({r['detail']}); not carried by this method",
+                  file=sys.stderr)
 
 
 def check(args) -> int:
@@ -1541,6 +1780,7 @@ def check(args) -> int:
         else:
             print(f"{path}: {len(rows)} rows match a fresh generation from the "
                   f"committed tree at threshold {args.threshold}")
+    print_carry(built[3])
     return rc
 
 
@@ -1548,7 +1788,7 @@ def write(args) -> int:
     built = generate(args)
     if built is None:
         return 1
-    register_rows, cluster_rows, groups = built
+    register_rows, cluster_rows, groups = built[:3]
     for _rows, _columns, path, text in outputs(args, built):
         with open(path, "w", newline="") as f:
             f.write(text)
@@ -1559,6 +1799,7 @@ def write(args) -> int:
               f"{sum(e['refs'] for e in addrs.values())} references, "
               f"{sum(1 for r in cluster_rows if r['program'] == g)} clusters at "
               f"threshold {args.threshold}")
+    print_carry(built[3])
     return 0
 
 
@@ -1888,6 +2129,8 @@ def self_test(args) -> int:
 
     register_rows, cluster_rows, _ = build(funcs, names, symbols, census, calls,
                                            args.threshold)
+    old_rows = load_cluster_rows(OUT_CLUSTERS)
+    carry = name_clusters(cluster_rows, old_rows, load_cluster_names())
     by_addr = {r["addr"]: r for r in register_rows}
     # The wide direction oracle, and the only one here that is not internal.
     # Each entry is read off the decompiled C by hand (the greps are in the
@@ -2009,6 +2252,92 @@ def self_test(args) -> int:
           "separate count",
           sum(int(r["refs"]) for r in cluster_rows) == total_refs)
 
+    # Issue #274. The rank above is a rank, so the identity a citation survives
+    # a regeneration on is the content hash. Three things have to hold, and the
+    # first is the one a truncated sha256 does not prove for itself: distinct
+    # memberships must get distinct keys, and the place that has to hold is the
+    # census **as committed** -- the file every `cluster_key` and `cluster_name`
+    # citation in the tree resolves against. So the committed rows are checked
+    # from the file, not only the fresh generation above: a collision that is
+    # only in what this run would write is not one a reader can hit, and a
+    # check that covered only the fresh rows while the prose said "as committed"
+    # is the claim this file's own rule about calibration exists to catch.
+    keys = [r["cluster_key"] for r in cluster_rows]
+    dupes = sorted(k for k, n in collections.Counter(keys).items() if n > 1)
+    check(f"every one of the {len(keys)} clusters has a distinct cluster_key, so "
+          f"a key names a membership and not a rank (duplicates: "
+          f"{', '.join(dupes) or 'none'})",
+          not dupes)
+    old_keys = [(r.get("cluster_key") or "").strip() for r in old_rows]
+    old_dupes = sorted(k for k, n in collections.Counter(
+        k for k in old_keys if k).items() if n > 1)
+    check(f"every one of the {sum(1 for k in old_keys if k)} keys the committed "
+          f"{os.path.relpath(OUT_CLUSTERS, EC_DIR)} carries is distinct, read "
+          f"back from that file rather than from a fresh generation, so a "
+          f"cluster_key citation resolves to one membership (duplicates: "
+          f"{', '.join(old_dupes) or 'none'})",
+          not old_dupes)
+    key_of_id = {r["cluster_id"]: r["cluster_key"] for r in cluster_rows}
+    addrs_of_key = {r["cluster_key"]: r["addrs"] for r in cluster_rows}
+    check("the registers CSV's cluster_key agrees with the clusters CSV's, "
+          "address for address, and every address is in a cluster that has one",
+          all(r["cluster_key"] == key_of_id.get(r["cluster_id"], "")
+              for r in register_rows))
+    # The carry. A name is only ever reported with how it got here, a cluster
+    # nothing matched is reported rather than dropped, and the score in a
+    # report is the score re-measured from the CSVs rather than a number this
+    # function remembered.
+    by_old_key = {r.get("cluster_key", ""): r for r in old_rows}
+    misreported = []
+    for r in carry:
+        if r["how"] != "overlap":
+            continue
+        old = by_old_key.get(r["from_key"])
+        got = (jaccard(set(addrs_of_key[r["cluster_key"]].split()),
+                       set(old["addrs"].split()))
+               if old else None)
+        if got is None or abs(got - r["jaccard"]) > 1e-9:
+            misreported.append((r["cluster_id"], r["jaccard"], got))
+    check(f"every name carried by overlap reports the Jaccard re-measured from "
+          f"the CSVs ({sum(1 for r in carry if r['how'] == 'overlap')} carries; "
+          + (f"disagreed on {misreported}" if misreported
+             else "no disagreement") + ")",
+          not misreported)
+    old_names = {r["cluster_name"].strip() for r in old_rows
+                 if (r.get("cluster_name") or "").strip()}
+    # A tie's detail spells each claimant as `name (old id)`, so the name has
+    # to be recovered from it -- a tie that quietly dropped a name would leave
+    # the committed census carrying one this generation does not.
+    reported = ({r["name"] for r in carry if r["name"]} |
+                {n.rsplit(" (", 1)[0] for r in carry
+                 for n in r["detail"].split(" == ") if n})
+    check(f"every name the committed census carries is either carried again or "
+          f"reported as a tie, and none is silently dropped ({len(old_names)} "
+          f"names; unaccounted for: "
+          f"{', '.join(sorted(old_names - reported)) or 'none'})",
+          not (old_names - reported))
+    check("every cluster has a carry record, so a name that is not carried is a "
+          "reported outcome and not an absence",
+          len(carry) == len(cluster_rows) and
+          all(r["how"] in ("seeded", "exact", "overlap", "tie", "none")
+              for r in carry))
+    # Scoped to the **committed** census, which is what the names file is
+    # anchored to and what every `cluster_key`/`cluster_name` citation in the
+    # tree resolves against -- not to the fresh generation above. The two
+    # differ on this tree, and the gap is the pre-existing census staleness the
+    # next check reports in its own right; holding the names file to a census
+    # that is not committed would make this check red for a reason the names
+    # file does not own, and red twice for one cause. On the committed census
+    # all ten resolve, and this still catches the thing it is for: a name
+    # anchored to a membership the census has actually lost.
+    stale = sorted(k for k in load_cluster_names()
+                   if k not in {r.get("cluster_key", "") for r in old_rows})
+    check(f"every key in {os.path.relpath(NAMES_CSV, EC_DIR)} names a cluster of "
+          f"the committed census, which is what it is anchored to, so the names "
+          f"file is not attached to a membership that has gone (stale: "
+          f"{', '.join(stale) or 'none'})",
+          not stale)
+
     on_disk_ok = True
     for _rows, _columns, path, text in outputs(
             args, (register_rows, cluster_rows, groups)):
@@ -2050,6 +2379,111 @@ def threshold_sweep(args) -> int:
                 groups[g], t, not args.no_writer_axis).values()), reverse=True)
             row += [str(len(comps)), str(comps[0]), str(sum(1 for c in comps if c == 1))]
         print(",".join([f"{t:.2f}", relations] + row))
+    return 0
+
+
+def map_census(args) -> int:
+    """`--map OLD.csv`: where every row of an older clusters CSV went in this one.
+
+    This is the report issue #253 needed and did not have, and the thing that
+    makes the `main-ec-NNN` -> stable-id prose sweep mechanical rather than a
+    hunt. The usual invocation runs this tool over a *changed* tree -- a guard
+    removed, a threshold moved, a classifier fixed -- and names the committed
+    census as OLD, so every stale citation gets an answer in one pass:
+
+        python3 ec/tools/xdata_register_map.py \\
+            --map ec/annotations/xdata-clusters.csv > /tmp/map.csv
+
+    The rows go to stdout as CSV and the summary to stderr, so the report can be
+    redirected into the sweep's working file without the prose ending up in it.
+
+    `match` is how the old row found its way to a new cluster -- `key` when the
+    content hash is identical, `overlap` when the membership scored at least
+    `CARRY_MIN_JACCARD` against something else, `none` when nothing cleared it.
+    `carried` is the new cluster's own name outcome, which is a different
+    question: a cluster can be found by overlap and still hold no name. A
+    `none` in either column means this tool's rule did not fire; neither is a
+    claim that anything went away.
+
+    `--out-clusters` and `--out-registers` are **not** honoured here: this mode
+    reports, it does not write, and their defaults are the committed CSVs, so
+    honouring them would have a `--map` run silently overwrite the census it is
+    mapping. Produce a regeneration's CSVs with a separate writing run (the
+    plain invocation with no mode flag) and point
+    `check_cluster_citations.py --clusters/--registers` at those; both halves
+    read the same tree, so the sentences check the same way."""
+    built = generate(args)
+    if built is None:
+        return 1
+    _registers, clusters, _groups, report = built
+    by_key = {r["cluster_key"]: r for r in clusters}
+    carried = {r["cluster_key"]: r for r in report}
+    try:
+        with open(args.map, newline="") as f:
+            old_rows = list(csv.DictReader(f))
+    except FileNotFoundError:
+        print(f"{args.map} does not exist", file=sys.stderr)
+        return 1
+
+    rows = []
+    claimed = collections.Counter()
+    for old in old_rows:
+        old_key = (old.get("cluster_key") or "").strip()
+        old_addrs = set(old.get("addrs", "").split())
+        hit = by_key.get(old_key) if old_key else None
+        if hit is not None:
+            match, score = "key", 1.0
+        else:
+            best = max(((jaccard(old_addrs, set(r["addrs"].split())), r)
+                        for r in clusters), default=(0.0, None), key=lambda t: t[0])
+            score, hit = best
+            match = "overlap" if hit is not None and score >= CARRY_MIN_JACCARD \
+                else "none"
+        if hit is None:
+            unmatched = dict.fromkeys(MAP_COLUMNS, "")
+            unmatched.update({
+                "old_cluster": old.get("cluster_id", ""),
+                "new_cluster": "-", "key": "no match", "old_key": old_key,
+                "cluster_name": "-", "carried": "-", "match": "none",
+                "jaccard": f"{score:.2f}"})
+            rows.append(unmatched)
+            continue
+        new_key = hit["cluster_key"]
+        how = carried[new_key]
+        # Only a row that actually matched counts as a claim. A sub-threshold
+        # best guess is printed as its own row with `match=none`, and counting
+        # it would report a 0.02-Jaccard near miss as a collision.
+        if match != "none":
+            claimed[hit["cluster_id"]] += 1
+        rows.append({
+            "old_cluster": old.get("cluster_id", ""),
+            "new_cluster": hit["cluster_id"],
+            "key": ("unchanged" if old_key == new_key else
+                    "changed" if old_key else "absent"),
+            "old_key": old_key or "-",
+            "new_key": new_key,
+            "cluster_name": how["name"] or "-",
+            "carried": how["how"] if how["how"] != "overlap"
+                       else f"overlap {how['jaccard']:.2f}",
+            "match": match,
+            "jaccard": f"{score:.2f}",
+            "added": " ".join(sorted(set(hit["addrs"].split()) - old_addrs)),
+            "removed": " ".join(sorted(old_addrs - set(hit["addrs"].split()))),
+        })
+    print(render(rows, MAP_COLUMNS), end="")
+
+    moved = sum(1 for r in rows if r["key"] == "changed")
+    delta = sum(1 for r in rows if r["added"] or r["removed"])
+    nomatch = sum(1 for r in rows if r["match"] == "none")
+    shared = sorted(cid for cid, n in claimed.items() if n > 1)
+    print(f"{len(rows)} rows: {moved} whose cluster_key changed, {delta} whose "
+          f"membership changed, {nomatch} with no match at "
+          f"{CARRY_MIN_JACCARD:.2f}, {sum(1 for r in rows if r['cluster_name'] != '-')} "
+          f"carrying a name", file=sys.stderr)
+    if shared:
+        print("  a new cluster claimed by more than one old row -- a fact about "
+              "the clustering, so neither is picked: "
+              + ", ".join(shared), file=sys.stderr)
     return 0
 
 
@@ -2141,6 +2575,11 @@ def main() -> int:
     modes.add_argument("--threshold-sweep", action="store_true",
                        help="print the cluster count against each threshold in "
                             "--thresholds (the stability table in the report)")
+    modes.add_argument("--map", metavar="OLD_CSV",
+                       help="print one row per cluster of OLD_CSV saying where it "
+                            "went in this generation: id, cluster_key, carried "
+                            "name, Jaccard and the membership delta. The report "
+                            "a prose sweep of the cluster ids is driven from")
     modes.add_argument("--reconcile", metavar="FIRMWARE",
                        help="cross-check every registers.yaml address against "
                             "register_ref_table.py on the given image; needs the "
@@ -2167,6 +2606,8 @@ def main() -> int:
         return self_test(args)
     if args.threshold_sweep:
         return threshold_sweep(args)
+    if args.map:
+        return map_census(args)
     if args.reconcile:
         args.firmware = args.reconcile
         return reconcile(args)
