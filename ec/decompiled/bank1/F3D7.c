@@ -17,7 +17,8 @@
    XDATA_0449, an EC-side site found with its meaning not established; 0x060C has no entry there.
    type: math
    evidence: ec/decompiled/bank1/F3D7.asm; ec/decompiled/bank1/F3D7.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void store_scaled_quotient_0449(byte param_1,byte param_2,char param_3)
 

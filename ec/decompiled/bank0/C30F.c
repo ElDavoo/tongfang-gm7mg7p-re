@@ -8,7 +8,8 @@
    the other seven bits of 0x1606 keep their values.
    type: writer
    evidence: ec/decompiled/bank0/C30F.asm; ec/decompiled/bank0/C30F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_1606_bit3(void)
 

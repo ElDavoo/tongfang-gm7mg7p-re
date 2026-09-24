@@ -9,7 +9,8 @@
    returns. R4/R5 are the pair 0x58AB adds to, and what the product indexes is not determined here.
    type: math
    evidence: ec/decompiled/pd/584A.asm; ec/decompiled/pd/584A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 char mul_dptr_byte_77_to_r4r5_and_arg_d7(byte *param_1)
 

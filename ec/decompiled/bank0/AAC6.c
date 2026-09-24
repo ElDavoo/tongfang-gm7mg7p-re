@@ -12,7 +12,8 @@
    0xD14.
    type: state
    evidence: ec/decompiled/bank0/AAC6.asm; ec/decompiled/bank0/AAC6.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void advance_0d14_state(char param_1)
 

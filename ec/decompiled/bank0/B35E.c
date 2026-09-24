@@ -13,7 +13,8 @@
    records 0xB378/0xB389 as one of the two writers of this byte.
    type: math
    evidence: ec/decompiled/bank0/B35E.asm; ec/decompiled/bank0/B35E.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void charge_target_minus_r3_times_0a47(byte param_1)
 

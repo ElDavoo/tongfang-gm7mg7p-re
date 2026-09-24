@@ -9,7 +9,8 @@
    destination for those two bytes. The C models it as a pointer dereference and omits R3 and R2.
    type: reader
    evidence: ec/decompiled/pd/3720.asm; ec/decompiled/pd/3720.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_xdata_to_r7_set_r3_r2(undefined1 *param_1)
 

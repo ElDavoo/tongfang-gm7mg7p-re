@@ -8,7 +8,8 @@
    0xE51E or 0xE4FE returns zero.
    type: gate
    evidence: ec/decompiled/bank0/E7C7.asm; ec/decompiled/bank0/E7C7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void r7_zero_ret_2(void)
 

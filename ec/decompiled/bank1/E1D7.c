@@ -14,7 +14,8 @@
    address.
    type: logic
    evidence: ec/decompiled/bank1/E1D7.asm; ec/decompiled/bank1/E1D7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void counter_tick_03ae_0560(void)
 

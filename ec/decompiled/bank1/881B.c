@@ -9,7 +9,8 @@
    straight block copy. Returns no computed value.
    type: copy
    evidence: ec/decompiled/bank1/881B.asm; ec/decompiled/bank1/881B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void copy_2000_2002_to_0450_0452(void)
 

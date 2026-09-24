@@ -10,7 +10,8 @@
    follows at 0xCDCB, so the table is included in this item.
    type: dispatch
    evidence: ec/decompiled/bank1/CDCB.asm; ec/decompiled/bank1/CDCB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_03f1_low3(void)
 

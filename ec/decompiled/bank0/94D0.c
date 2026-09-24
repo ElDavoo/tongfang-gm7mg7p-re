@@ -18,7 +18,8 @@
    as GFID (issue #183).
    type: copy
    evidence: ec/decompiled/bank0/94D0.asm; ec/decompiled/bank0/94D0.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void copy_code_table_into_0730_07a7(undefined1 param_1,char param_2)
 

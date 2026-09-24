@@ -8,7 +8,8 @@
    here, so the value stored is whatever the caller left in it.
    type: writer
    evidence: ec/decompiled/bank0/A725.asm; ec/decompiled/bank0/A725.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_0857_from_acc(undefined1 param_1)
 

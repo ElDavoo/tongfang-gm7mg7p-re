@@ -14,7 +14,8 @@
    return values, 0xFF and 0x00, are the only outputs.
    type: gate
    evidence: ec/decompiled/pd/C0EF.asm; ec/decompiled/pd/C0EF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_0845_0847_then_return_ff_or_00
                (byte param_1,char param_2,byte param_3,byte param_4,byte param_5)

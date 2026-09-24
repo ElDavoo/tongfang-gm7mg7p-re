@@ -10,7 +10,8 @@
    arithmetic but drops the final read.
    type: reader
    evidence: ec/decompiled/pd/373C.asm; ec/decompiled/pd/373C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 scaled_lookup_from_07d2(void)
 

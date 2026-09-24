@@ -9,7 +9,8 @@
    named.
    type: logic
    evidence: ec/decompiled/bank0/C4D9.asm; ec/decompiled/bank0/C4D9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void test_166a_bit7_inverted(void)
 

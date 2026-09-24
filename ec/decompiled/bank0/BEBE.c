@@ -11,7 +11,8 @@
    instruction. 0x070A has no entry in ec/annotations/registers.yaml.
    type: math
    evidence: ec/decompiled/bank0/BEBE.asm; ec/decompiled/bank0/BEBE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte mod_070a_by_r5(byte divisor_r5)
 

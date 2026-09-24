@@ -13,7 +13,8 @@
    is not settled here.
    type: state
    evidence: ec/decompiled/pd/B311.asm; ec/decompiled/pd/B311.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_07d2_then_dispatch_on_07d1(char r5_value)
 

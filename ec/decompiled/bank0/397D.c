@@ -9,7 +9,8 @@
    neither callee is decoded here.
    type: forwarder
    evidence: ec/decompiled/bank0/397D.asm; ec/decompiled/bank0/397D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_3894_then_jmp_2de3(void)
 

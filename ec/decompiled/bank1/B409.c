@@ -9,7 +9,8 @@
    calls 0x8863, so this entry exists only to supply that constant.
    type: forwarder
    evidence: ec/decompiled/bank1/B409.asm; ec/decompiled/bank1/B409.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_dptr_1770_fallthru(void)
 

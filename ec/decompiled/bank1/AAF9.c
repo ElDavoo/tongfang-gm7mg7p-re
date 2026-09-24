@@ -11,7 +11,8 @@
    on 0x0490.
    type: state
    evidence: ec/decompiled/bank1/AAF9.asm; ec/decompiled/bank1/AAF9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_0830_0831_and_0832_bit5(void)
 

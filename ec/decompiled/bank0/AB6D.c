@@ -8,7 +8,8 @@
    conditional jump, so it acts as a shared do-nothing exit rather than a body of its own.
    type: forwarder
    evidence: ec/decompiled/bank0/AB6D.asm; ec/decompiled/bank0/AB6D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void shared_noop_ret(void)
 

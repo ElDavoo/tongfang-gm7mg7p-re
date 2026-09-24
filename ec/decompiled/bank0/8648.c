@@ -10,7 +10,8 @@
    entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/8648.asm; ec/decompiled/bank0/8648.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_200b(void)
 

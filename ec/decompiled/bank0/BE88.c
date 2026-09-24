@@ -8,7 +8,8 @@
    store; no other address is read or written.
    type: writer
    evidence: ec/decompiled/bank0/BE88.asm; ec/decompiled/bank0/BE88.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void write_9f_to_x1909(void)
 

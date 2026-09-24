@@ -11,7 +11,8 @@
    so no meaning is claimed for the values written.
    type: writer
    evidence: ec/decompiled/bank1/AC11.asm; ec/decompiled/bank1/AC11.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_0680_03_or_04_from_04fe_0490(void)
 

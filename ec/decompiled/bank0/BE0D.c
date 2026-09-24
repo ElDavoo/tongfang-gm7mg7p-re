@@ -9,7 +9,8 @@
    meaning not established, so what that bit gates is not determined from these instructions.
    type: writer
    evidence: ec/decompiled/bank0/BE0D.asm; ec/decompiled/bank0/BE0D.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_bit6_in_x0723(void)
 

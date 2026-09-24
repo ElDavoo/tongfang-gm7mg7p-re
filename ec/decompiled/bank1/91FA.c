@@ -9,7 +9,8 @@
    cleared counter is not visible in this listing.
    type: writer
    evidence: ec/decompiled/bank1/91FA.asm; ec/decompiled/bank1/91FA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_062e_and_jump_94a8(void)
 

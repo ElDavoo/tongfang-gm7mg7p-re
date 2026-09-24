@@ -10,7 +10,8 @@
    product, but it shows neither the read nor the four register loads.
    type: forwarder
    evidence: ec/decompiled/pd/972B.asm; ec/decompiled/pd/972B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_07d4_then_fall_through(void)
 

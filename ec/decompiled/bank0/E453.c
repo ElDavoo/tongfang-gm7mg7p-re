@@ -13,7 +13,8 @@
    0x0A58 minus 0x0A56, which is 0.
    type: copy
    evidence: ec/decompiled/bank0/E453.asm; ec/decompiled/bank0/E453.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char copy_bytes_between_two_16bit_bases
                (char param_1,byte param_2,char param_3,byte param_4,char param_5,byte param_6)

@@ -13,7 +13,8 @@
    have no entry there.
    type: logic
    evidence: ec/decompiled/bank0/90FE.asm; ec/decompiled/bank0/90FE.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void update_flag_bits_in_0723(void)
 

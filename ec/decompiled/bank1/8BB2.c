@@ -12,7 +12,8 @@
    shown here.
    type: state
    evidence: ec/decompiled/bank1/8BB2.asm; ec/decompiled/bank1/8BB2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: mixed */
 
 void set_0480_50_zero_048f_0459_02_06e1_a0(void)
 

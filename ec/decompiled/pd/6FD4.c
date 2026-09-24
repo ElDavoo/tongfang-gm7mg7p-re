@@ -10,7 +10,8 @@
    0x6FD5 listing and not in these bytes.
    type: unresolved
    evidence: ec/decompiled/pd/6FD4.asm; ec/decompiled/pd/6FD4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_r5_then_fall_through(undefined1 param_1)
 

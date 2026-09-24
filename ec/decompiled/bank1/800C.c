@@ -8,7 +8,8 @@
    mid-stream fragment of the counter-decrement sequence, not a routine in its own right.
    type: reader
    evidence: ec/decompiled/bank1/800C.asm; ec/decompiled/bank1/800C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void read_06cd(char *param_1,char param_2)
 

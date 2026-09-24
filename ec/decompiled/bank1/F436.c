@@ -13,7 +13,8 @@
    rendering of the same add/rrc/addc sequence.
    type: math
    evidence: ec/decompiled/bank1/F436.asm; ec/decompiled/bank1/F436.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void halve_sum_into_044c(void)
 

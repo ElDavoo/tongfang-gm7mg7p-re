@@ -13,7 +13,8 @@
    BCD-shaped transform whose intent is not decoded further -- and then sets 0xA4B to 1.
    type: dispatch
    evidence: ec/decompiled/bank0/ADAE.asm; ec/decompiled/bank0/ADAE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_on_0a47(void)
 

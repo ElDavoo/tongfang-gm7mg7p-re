@@ -9,7 +9,8 @@
    store is a copy of the same byte and nothing outside DPTR is touched.
    type: logic
    evidence: ec/decompiled/bank0/BCEE.asm; ec/decompiled/bank0/BCEE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 dptr_from_code_be16(byte param_1,short param_2)
 

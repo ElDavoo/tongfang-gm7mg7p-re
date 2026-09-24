@@ -11,7 +11,8 @@
    this listing.
    type: writer
    evidence: ec/decompiled/bank0/9A7B.asm; ec/decompiled/bank0/9A7B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_bd20_result_masked_7f(byte *dptr_from_bd20)
 

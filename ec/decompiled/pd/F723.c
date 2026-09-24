@@ -10,7 +10,8 @@
    not determinable from this listing.
    type: forwarder
    evidence: ec/decompiled/pd/F723.asm; ec/decompiled/pd/F723.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void chain_96ff_then_0c46(undefined1 *param_1,undefined1 param_2)
 

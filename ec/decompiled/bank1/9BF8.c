@@ -8,7 +8,8 @@
    the common tail reached by falling through from 0x9BE6 and by the ljmp at 0x9B44 and 0x9BE4.
    type: state
    evidence: ec/decompiled/bank1/9BF8.asm; ec/decompiled/bank1/9BF8.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void reset_1c11_1c15_1c16_set_68b_4(void)
 

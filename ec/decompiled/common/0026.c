@@ -13,7 +13,8 @@
    trampolines. What 0xBF20 holds is not decoded here.
    type: forwarder
    evidence: ec/decompiled/common/0026.asm; ec/decompiled/common/0026.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: abi-symbol */
 
 void table_entry_to_1168(void)
 

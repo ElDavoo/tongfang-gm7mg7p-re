@@ -10,7 +10,8 @@
    determined by the bytes.
    type: writer
    evidence: ec/decompiled/bank0/F498.asm; ec/decompiled/bank0/F498.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_at_dptr(undefined1 param_1,undefined1 *param_2)
 

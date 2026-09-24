@@ -10,7 +10,8 @@
    caller's, and nothing in the listing fixes what the low byte or the address base means.
    type: reader
    evidence: ec/decompiled/pd/90E8.asm; ec/decompiled/pd/90E8.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_xdata_r6_minus_3_low_a(undefined1 param_1,char param_2)
 

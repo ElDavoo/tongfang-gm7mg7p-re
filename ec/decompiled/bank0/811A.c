@@ -12,7 +12,8 @@
    plausible code in bank1 so bank0 is the table's bank and not a claim about which bank runs
    type: writer
    evidence: ec/annotations/bank-call-audit.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void index_case_03(undefined1 param_1,undefined1 param_2)
 

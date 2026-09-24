@@ -10,7 +10,8 @@
    in this listing.
    type: forwarder
    evidence: ec/decompiled/pd/9177.asm; ec/decompiled/pd/9177.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_b60_dptr_04a3_tail_10bc(void)
 

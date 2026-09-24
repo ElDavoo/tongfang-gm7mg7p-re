@@ -12,7 +12,8 @@
    the bit-addressable byte at 0xE0 is set.
    type: state
    evidence: ec/decompiled/bank1/CFB1.asm; ec/decompiled/bank1/CFB1.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void step_03c3_and_reload_03bf(void)
 

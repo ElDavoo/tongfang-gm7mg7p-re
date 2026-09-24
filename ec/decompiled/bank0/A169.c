@@ -9,7 +9,8 @@
    This address is a jump target from 0xA00E at 0xA0F3 rather than a called routine.
    type: writer
    evidence: ec/decompiled/bank0/A169.asm; ec/decompiled/bank0/A169.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_0983_bit1_then_0xa1c8(void)
 

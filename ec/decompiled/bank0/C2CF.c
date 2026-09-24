@@ -8,7 +8,8 @@
    significant bit only; the other seven bits keep their values.
    type: writer
    evidence: ec/decompiled/bank0/C2CF.asm; ec/decompiled/bank0/C2CF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_1605_bit7(void)
 

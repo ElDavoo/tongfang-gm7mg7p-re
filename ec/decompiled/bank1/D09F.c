@@ -8,7 +8,8 @@
    when the 16-bit product of the multiply has a nonzero high byte.
    type: writer
    evidence: ec/decompiled/bank1/D09F.asm; ec/decompiled/bank1/D09F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_ff_to_0397(void)
 

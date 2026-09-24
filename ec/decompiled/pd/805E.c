@@ -12,7 +12,8 @@
    high, low} of (byte at 0x07D4) * 0x17 + 0x0A14, and the listing has no ret after that call.
    type: state
    evidence: ec/decompiled/pd/805E.asm; ec/decompiled/pd/805E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void update_07d4_state(byte param_1)
 

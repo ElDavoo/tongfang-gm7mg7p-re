@@ -9,7 +9,8 @@
    this address performs no access by itself.
    type: logic
    evidence: ec/decompiled/bank1/8011.asm; ec/decompiled/bank1/8011.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void select_06d1(char param_1)
 

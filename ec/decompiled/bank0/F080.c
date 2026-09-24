@@ -10,7 +10,8 @@
    a hypothesis, so whether this is a callable entry or a mid-routine label is not established here.
    type: unresolved
    evidence: ec/decompiled/bank0/F080.asm; ec/decompiled/bank0/F080.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_five_zeros_at_dptr_plus1(short param_1)
 

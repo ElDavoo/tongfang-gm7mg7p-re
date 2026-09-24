@@ -12,7 +12,8 @@
    contain it.
    type: logic
    evidence: ec/decompiled/bank1/95B7.asm; ec/decompiled/bank1/95B7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_0704_from_045d_then_branch(char param_1)
 

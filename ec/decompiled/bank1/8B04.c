@@ -15,7 +15,8 @@
    0x198A and, if R7 and XDATA 0x0756 and 0x0845 are all zero, 0x1996.
    type: state
    evidence: ec/decompiled/bank1/8B04.asm; ec/decompiled/bank1/8B04.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void countdown_06c0_latch_097f_bit0(byte *param_1,char param_2)
 

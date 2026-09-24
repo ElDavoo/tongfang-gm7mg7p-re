@@ -10,7 +10,8 @@
    labels _d_5, and returns.
    type: writer
    evidence: ec/decompiled/bank0/D3C8.asm; ec/decompiled/bank0/D3C8.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void zero_d0_d7_and_state(void)
 

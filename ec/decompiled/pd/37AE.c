@@ -9,7 +9,8 @@
    callers past the store
    type: writer
    evidence: ec/annotations/ec-0x07d0-sites.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 store_r7_at_dptr(undefined1 *param_1,undefined1 param_2,undefined1 param_3)
 

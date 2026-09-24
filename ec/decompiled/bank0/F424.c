@@ -7,7 +7,8 @@
 /* Loads DPTR with 0x0E01, loads A with 0x06, writes it there and returns.
    type: writer
    evidence: ec/decompiled/bank0/F424.asm; ec/decompiled/bank0/F424.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_06_to_0e01(void)
 

@@ -12,7 +12,8 @@
    out of B, and no XDATA is written.
    type: gate
    evidence: ec/decompiled/bank1/A476.asm; ec/decompiled/bank1/A476.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 char gate_value_against_045a_bits(char param_1)
 

@@ -10,7 +10,8 @@
    from a call-target byte scan, so it may not be a whole routine either.
    type: unresolved
    evidence: ec/decompiled/pd/9A90.asm; ec/decompiled/pd/9A90.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 load_a_from_r7_stub(undefined1 param_1)
 

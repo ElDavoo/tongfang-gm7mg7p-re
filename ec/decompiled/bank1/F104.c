@@ -8,7 +8,8 @@
    The .c attached here is the decompilation of the branch target 0xF160, not of these two bytes.
    type: forwarder
    evidence: ec/decompiled/bank1/F104.asm; ec/decompiled/bank1/F104.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void sjmp_f160(void)
 

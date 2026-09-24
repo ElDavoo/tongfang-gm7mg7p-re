@@ -9,7 +9,8 @@
    here, so what it does with 0xD9EF is not established.
    type: forwarder
    evidence: ec/decompiled/pd/9850.asm; ec/decompiled/pd/9850.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_dptr_d9ef_tail_jump_10f1(void)
 

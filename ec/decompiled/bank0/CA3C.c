@@ -10,7 +10,8 @@
    0xC6B5 and 0xC6F2, and by falling through from 0xCA39.
    type: math
    evidence: ec/decompiled/bank0/CA3C.asm; ec/decompiled/bank0/CA3C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_from_a_with_carry_as_high_byte(void)
 

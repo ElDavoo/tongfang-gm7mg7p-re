@@ -8,7 +8,8 @@
    offset 0xEA and the high byte 0x08 plus carry. A is the caller's and no XDATA is touched.
    type: math
    evidence: ec/decompiled/pd/7095.asm; ec/decompiled/pd/7095.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_08ea_plus_5e_times_a(char param_1)
 

@@ -10,7 +10,8 @@
    running on into the following bytes.
    type: unresolved
    evidence: ec/decompiled/bank1/F0EE.asm; ec/decompiled/bank1/F0EE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void last_byte_of_row_f0ec(char param_1,char param_2)
 

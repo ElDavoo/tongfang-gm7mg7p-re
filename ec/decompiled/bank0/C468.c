@@ -9,7 +9,8 @@
    named.
    type: writer
    evidence: ec/decompiled/bank0/C468.asm; ec/decompiled/bank0/C468.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_1609_bit2(void)
 

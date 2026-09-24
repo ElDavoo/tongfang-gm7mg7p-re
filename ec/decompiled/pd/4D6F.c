@@ -12,7 +12,8 @@
    branch, not a separate entry
    type: dispatch
    evidence: ec/annotations/pd-0x38-consumers.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_case_06(char param_1,char *param_2,undefined1 param_3,undefined1 param_4)
 

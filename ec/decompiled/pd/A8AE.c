@@ -19,7 +19,8 @@
    rather than being a vector. pd-xdata-overlap.md 5.3.1.]
    type: dispatch
    evidence: ec/decompiled/pd/A8AE.asm; ec/decompiled/pd/A8AE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void event_dispatch_ff80_ffe0(void)
 

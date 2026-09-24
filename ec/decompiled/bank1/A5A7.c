@@ -11,7 +11,8 @@
    of the register results, so the final 32-bit layout is not decoded further.
    type: math
    evidence: ec/decompiled/bank1/A5A7.asm; ec/decompiled/bank1/A5A7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char mul_partial_products_r0_r1_r2_r3(byte param_1,byte param_2,byte param_3,byte param_4)
 

@@ -11,7 +11,8 @@
    0x0A4D nor 0x0F80 has an entry in ec/annotations/registers.yaml.
    type: gate
    evidence: ec/decompiled/bank0/E670.asm; ec/decompiled/bank0/E670.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void gate_poll_0f80_bit4(char param_1)
 

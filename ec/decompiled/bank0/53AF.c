@@ -11,7 +11,8 @@
    and then calls that address after eight NOPs, and all three rejoin at 0x05EF.
    type: dispatch
    evidence: ec/decompiled/bank0/53AF.asm; ec/decompiled/bank0/53AF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void stage_009b_block_branch_dispatch
                (undefined1 param_1,undefined1 param_2,undefined1 param_3,undefined1 param_4)

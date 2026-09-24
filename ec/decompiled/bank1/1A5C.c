@@ -11,7 +11,8 @@
    behaviour is decoded here.
    type: forwarder
    evidence: ec/decompiled/bank1/1A5C.asm; ec/decompiled/bank1/1A5C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_dptr_c2ef_tail_jump_1100(void)
 

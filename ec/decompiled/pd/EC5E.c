@@ -9,7 +9,8 @@
    arm returns without a common tail, and the address 0x9028 leaves in DPTR is not in this listing.
    type: logic
    evidence: ec/decompiled/pd/EC5E.asm; ec/decompiled/pd/EC5E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_or_clear_bits_1_2_6_via_9028(byte *param_1,char param_2)
 

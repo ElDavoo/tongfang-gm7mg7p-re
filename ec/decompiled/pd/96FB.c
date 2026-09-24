@@ -10,7 +10,8 @@
    0x0819; neither that byte nor the structure it indexes is decoded here.
    type: forwarder
    evidence: ec/decompiled/pd/96FB.asm; ec/decompiled/pd/96FB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_0819_then_scale_via_96ff(void)
 

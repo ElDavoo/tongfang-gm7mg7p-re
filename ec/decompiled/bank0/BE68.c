@@ -9,7 +9,8 @@
    the result. Neither address has an entry in ec/annotations/registers.yaml.
    type: math
    evidence: ec/decompiled/bank0/BE68.asm; ec/decompiled/bank0/BE68.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char x0469_minus_x1809(void)
 

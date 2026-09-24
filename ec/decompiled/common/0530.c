@@ -12,7 +12,8 @@
    0x06 is for, and what the 0x0A00 counter counts are not decoded here.
    type: state
    evidence: ec/decompiled/common/0530.asm; ec/decompiled/common/0530.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 timer0_target_decrements_xdata_0a00(undefined1 param_1)
 

@@ -12,7 +12,8 @@
    bit 3 is set when bits 7-5 of the new value equal bits 0-2 of it.
    type: state
    evidence: ec/decompiled/bank1/89B5.asm; ec/decompiled/bank1/89B5.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_r7_to_09f2_by_09f1_bits_0_2_and_bump(void)
 

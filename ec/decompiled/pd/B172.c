@@ -10,7 +10,8 @@
    use of the sum is outside this listing.
    type: reader
    evidence: ec/decompiled/pd/B172.asm; ec/decompiled/pd/B172.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 bool read_dptr_byte_to_r7_then_add_b0(byte *param_1)
 

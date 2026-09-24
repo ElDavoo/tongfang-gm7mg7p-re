@@ -10,7 +10,8 @@
    are its own reconstruction of that register shuffle.
    type: forwarder
    evidence: ec/decompiled/pd/9909.asm; ec/decompiled/pd/9909.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void pass_r6_and_a_to_0d70(undefined1 param_1,undefined1 param_2)
 

@@ -10,7 +10,8 @@
    0x530E, 0x537F, 0x53AF, 0x541D, 0x549B and 0x54C2.
    type: dispatch
    evidence: ec/decompiled/bank0/5349.asm; ec/decompiled/bank0/5349.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_to_4c5d(void)
 

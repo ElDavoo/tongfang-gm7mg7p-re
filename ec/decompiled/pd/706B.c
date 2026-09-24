@@ -9,7 +9,8 @@
    read or written.
    type: math
    evidence: ec/decompiled/pd/706B.asm; ec/decompiled/pd/706B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_08e9_plus_5e_times_a(char param_1)
 

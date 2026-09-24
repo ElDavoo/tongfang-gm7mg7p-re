@@ -9,7 +9,8 @@
    behavioural difference.
    type: forwarder
    evidence: ec/decompiled/bank0/DD10.asm; ec/decompiled/bank0/DD10.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void de4d_d991_ea0_tail_e256_d(void)
 

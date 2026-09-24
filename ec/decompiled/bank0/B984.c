@@ -9,7 +9,8 @@
    the head of the routine completed at 0xB989 is not determinable from this listing.
    type: unresolved
    evidence: ec/decompiled/bank0/B984.asm; ec/decompiled/bank0/B984.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 set_dptr_0a51_b984(void)
 

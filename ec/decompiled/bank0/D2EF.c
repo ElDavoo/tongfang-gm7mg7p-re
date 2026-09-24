@@ -12,7 +12,8 @@
    established by this listing.
    type: copy
    evidence: ec/decompiled/bank0/D2EF.asm; ec/decompiled/bank0/D2EF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void stage_0862_0865_into_1c12_1c14(undefined1 param_1)
 

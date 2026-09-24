@@ -10,7 +10,8 @@
    so what the sequence configures is not decoded here.
    type: logic
    evidence: ec/decompiled/bank0/AA90.asm; ec/decompiled/bank0/AA90.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_2990_1e1a_fixed_sequence(void)
 

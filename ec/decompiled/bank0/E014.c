@@ -10,7 +10,8 @@
    tail at 0xE024 stores R6:R7 to XDATA 0x046C/0x046D.
    type: logic
    evidence: ec/decompiled/bank0/E014.asm; ec/decompiled/bank0/E014.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void branch_on_06e6_eq_1(char param_1,undefined1 param_2)
 

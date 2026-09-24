@@ -9,7 +9,8 @@
    instructions do not.
    type: gate
    evidence: ec/decompiled/pd/1E9D.asm; ec/decompiled/pd/1E9D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 flag_from_f4ee(void)
 

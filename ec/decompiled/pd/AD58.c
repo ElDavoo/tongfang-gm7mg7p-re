@@ -10,7 +10,8 @@
    behaviour is not decoded here, and R2 and R1 are not set by these instructions.
    type: forwarder
    evidence: ec/decompiled/pd/AD58.asm; ec/decompiled/pd/AD58.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_r3_ff_dptr_0a86_call_10e8(void)
 

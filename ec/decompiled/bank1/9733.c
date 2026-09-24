@@ -10,7 +10,8 @@
    case the whole byte at internal RAM 0x28 is then written to XDATA 0x085A.
    type: state
    evidence: ec/decompiled/bank1/9733.asm; ec/decompiled/bank1/9733.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void sync_085a_from_iram28_and_call_896a(void)
 

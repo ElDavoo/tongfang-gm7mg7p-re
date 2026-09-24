@@ -10,7 +10,8 @@
    The meaning of 0x0983 is not established by this listing.
    type: logic
    evidence: ec/decompiled/bank0/B0DC.asm; ec/decompiled/bank0/B0DC.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void sync_0983_bit5_against_support_2_bit4(void)
 

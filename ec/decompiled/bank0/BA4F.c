@@ -12,7 +12,8 @@
    addresses has an entry in ec/annotations/registers.yaml.
    type: reader
    evidence: ec/decompiled/bank0/BA4F.asm; ec/decompiled/bank0/BA4F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char index_code_by_r7_at_0a49_and_0a4b(byte param_1)
 

@@ -10,7 +10,8 @@
    itself touches no memory.
    type: forwarder
    evidence: ec/decompiled/pd/0050.asm; ec/decompiled/pd/0050.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_10f1_then_jmp_1229(void)
 

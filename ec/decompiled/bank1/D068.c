@@ -11,7 +11,8 @@
    of more than 3 positions is clamped to B >> 3.
    type: math
    evidence: ec/decompiled/bank1/D068.asm; ec/decompiled/bank1/D068.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void scale_store_to_0397(byte param_1,byte param_2,byte param_3)
 

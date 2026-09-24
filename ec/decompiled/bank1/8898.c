@@ -9,7 +9,8 @@
    overwritten by the second read.
    type: reader
    evidence: ec/decompiled/bank1/8898.asm; ec/decompiled/bank1/8898.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_xdata_pair_to_b_and_a(short param_1)
 

@@ -12,7 +12,8 @@
    intermediate calls contribute is not visible from these bytes alone.
    type: writer
    evidence: ec/decompiled/pd/E15A.asm; ec/decompiled/pd/E15A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_0832_through_5874_58ab_ed46_56cb(undefined1 param_1)
 

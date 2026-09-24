@@ -10,7 +10,8 @@
    loses this distinction.
    type: logic
    evidence: ec/decompiled/pd/F4EE.asm; ec/decompiled/pd/F4EE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char return_1_if_dptr_byte_ge_02(byte *param_1,undefined1 param_2)
 

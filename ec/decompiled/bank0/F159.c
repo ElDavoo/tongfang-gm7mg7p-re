@@ -10,7 +10,8 @@
    is whatever the caller left in DPTR.
    type: math
    evidence: ec/decompiled/bank0/F159.asm; ec/decompiled/bank0/F159.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char inc_dptr_byte_sub3(char *param_1)
 

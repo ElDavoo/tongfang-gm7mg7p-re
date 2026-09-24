@@ -11,7 +11,8 @@
    on the byte just read.
    type: dispatch
    evidence: ec/decompiled/bank1/A841.asm; ec/decompiled/bank1/A841.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_086f_event_bits(void)
 

@@ -9,7 +9,8 @@
    touched; what either byte is, is not decoded here.
    type: writer
    evidence: ec/decompiled/pd/F598.asm; ec/decompiled/pd/F598.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_00bd_bit1_clear_ff42_bit7(void)
 

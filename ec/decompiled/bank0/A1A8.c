@@ -13,7 +13,8 @@
    0x0983 has no entry there.
    type: writer
    evidence: ec/decompiled/bank0/A1A8.asm; ec/decompiled/bank0/A1A8.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_state_bytes_then_0xa1c8(char param_1,char param_2)
 

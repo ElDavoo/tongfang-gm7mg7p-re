@@ -10,7 +10,8 @@
    is real work in the listing and is not what the decompiled C shows.
    type: reader
    evidence: ec/decompiled/bank0/E149.asm; ec/decompiled/bank0/E149.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 load_dptr_from_0d04_0d05(void)
 

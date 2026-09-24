@@ -8,7 +8,8 @@
    clobber does not invalidate the writer's source because 0x4DD6 loads R3 again
    type: dispatch
    evidence: ec/annotations/pd-0x38-consumers.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_r3_r0_jmp_0f0e(undefined1 param_1)
 

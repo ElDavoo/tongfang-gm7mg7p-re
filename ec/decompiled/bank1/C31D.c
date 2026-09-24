@@ -10,7 +10,8 @@
    nothing. The .c body is empty, consistent with the listing.
    type: unresolved
    evidence: ec/decompiled/bank1/C31D.asm; ec/decompiled/bank1/C31D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void ret_stub(void)
 

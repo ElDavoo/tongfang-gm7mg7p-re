@@ -9,7 +9,8 @@
    CODE-to-XDATA copy; neither address is decoded further in this body.
    type: copy
    evidence: ec/decompiled/bank0/DB8A.asm; ec/decompiled/bank0/DB8A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char copy_code_byte_to_r4_r5
                (undefined1 param_1,undefined1 param_2,undefined1 param_3,undefined1 param_4,

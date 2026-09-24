@@ -8,7 +8,8 @@
    byte in, one byte out; no 16-bit value is formed here.
    type: copy
    evidence: ec/decompiled/bank0/BDC6.asm; ec/decompiled/bank0/BDC6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void copy_x190d_to_x0a57(void)
 

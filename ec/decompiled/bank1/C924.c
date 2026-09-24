@@ -10,7 +10,8 @@
    listing.
    type: dispatch
    evidence: ec/decompiled/bank1/C924.asm; ec/decompiled/bank1/C924.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_03a3_low3(void)
 

@@ -10,7 +10,8 @@
    within this listing the result of 0x19A8 does not change what happens.
    type: logic
    evidence: ec/decompiled/bank1/D246.asm; ec/decompiled/bank1/D246.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_0394_or_call_cd80(char param_1)
 

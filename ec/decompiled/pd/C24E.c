@@ -14,7 +14,8 @@
    P1 = param_1 rests on that reading.
    type: state
    evidence: ec/decompiled/pd/C24E.asm; ec/decompiled/pd/C24E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_080d_then_branch_on_70e7(char param_1,char r5_value,char r7_value)
 

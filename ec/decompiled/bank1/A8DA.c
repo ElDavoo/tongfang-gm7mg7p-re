@@ -10,7 +10,8 @@
    function at the store and shows the clear as a mask on 0x086F.
    type: forwarder
    evidence: ec/decompiled/bank1/A8DA.asm; ec/decompiled/bank1/A8DA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void clear_bit_e4_then_tail_a8e9(byte param_1,byte *param_2)
 

@@ -9,7 +9,8 @@
    the three registers is not decoded here.
    type: writer
    evidence: ec/decompiled/bank1/A370.asm; ec/decompiled/bank1/A370.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void send_1a68_6c_02_e0_set_0974_00(void)
 

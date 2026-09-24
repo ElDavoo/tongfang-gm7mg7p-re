@@ -9,7 +9,8 @@
    0x800C-0x8010, so this address does no access by itself.
    type: logic
    evidence: ec/decompiled/bank1/8009.asm; ec/decompiled/bank1/8009.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void select_06cd(char param_1)
 

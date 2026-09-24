@@ -9,7 +9,8 @@
    two stores. 0x04AE and 0x04BE are not documented in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank1/BFD9.asm; ec/decompiled/bank1/BFD9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void zero_04ae_and_04be(void)
 

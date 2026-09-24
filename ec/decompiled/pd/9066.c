@@ -11,7 +11,8 @@
    The .c's return of param_1-3 does not match these instructions.
    type: math
    evidence: ec/decompiled/pd/9066.asm; ec/decompiled/pd/9066.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char make_dptr_a_minus_3_col_12(char a_value)
 

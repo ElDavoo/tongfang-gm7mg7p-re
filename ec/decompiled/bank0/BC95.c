@@ -9,7 +9,8 @@
    here and 0x632D is not an address in ec/annotations/registers.yaml.
    type: math
    evidence: ec/decompiled/bank0/BC95.asm; ec/decompiled/bank0/BC95.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char table_632d_index_times_4(byte *param_1)
 

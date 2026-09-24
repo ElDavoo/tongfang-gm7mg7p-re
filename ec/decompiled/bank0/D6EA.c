@@ -10,7 +10,8 @@
    not documented in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/D6EA.asm; ec/decompiled/bank0/D6EA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_a_to_dptr_set_1f06(undefined1 param_1,undefined1 *param_2)
 

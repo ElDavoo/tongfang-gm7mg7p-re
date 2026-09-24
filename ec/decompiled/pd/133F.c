@@ -11,7 +11,8 @@
    direct bit 0xE4 gates, is not decoded further here.
    type: dispatch
    evidence: ec/decompiled/pd/133F.asm; ec/decompiled/pd/133F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_0807_0808_dispatch_0805(char param_1,byte param_2,char param_3)
 

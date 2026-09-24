@@ -9,7 +9,8 @@
    returns the new high byte R1 in A. No memory is touched.
    type: math
    evidence: ec/decompiled/bank1/8844.asm; ec/decompiled/bank1/8844.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte ror16_r1r2_by_r7(byte param_1,byte param_2,byte param_3,char param_4)
 

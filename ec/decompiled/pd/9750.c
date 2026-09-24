@@ -10,7 +10,8 @@
    whole entry or a function-boundary artefact is not determinable here.
    type: unresolved
    evidence: ec/decompiled/pd/9750.asm; ec/decompiled/pd/9750.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char load_a_from_r7_9750(char param_1)
 

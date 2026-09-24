@@ -16,7 +16,8 @@
    is unimplemented'.
    type: unresolved
    evidence: ec/decompiled/common/052F.asm; ec/decompiled/common/052F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void int0_target_is_one_byte_reti(void)
 

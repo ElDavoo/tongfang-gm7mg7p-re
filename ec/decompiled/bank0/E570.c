@@ -12,7 +12,8 @@
    returns R7 = 0. Neither 0x2270 nor 0x2271 has an entry in ec/annotations/registers.yaml.
    type: gate
    evidence: ec/decompiled/bank0/E570.asm; ec/decompiled/bank0/E570.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void probe_c0_c1_expect_88_51_or_53(void)
 

@@ -9,7 +9,8 @@
    touched. The five instructions here do not match the arithmetic the C at this address shows.
    type: math
    evidence: ec/decompiled/pd/362A.asm; ec/decompiled/pd/362A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char add_carry_into_dph(undefined2 param_1)
 

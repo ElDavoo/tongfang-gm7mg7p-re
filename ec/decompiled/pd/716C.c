@@ -8,7 +8,8 @@
    caller's and no XDATA is touched.
    type: math
    evidence: ec/decompiled/pd/716C.asm; ec/decompiled/pd/716C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_08e3_plus_5e_times_a(char param_1)
 

@@ -9,7 +9,8 @@
    call. Both gate reads and the single call target are in the listing; what 0x1A7A does is not.
    type: gate
    evidence: ec/decompiled/bank1/A501.asm; ec/decompiled/bank1/A501.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void gate_0442_06e6_before_call_1a7a(void)
 

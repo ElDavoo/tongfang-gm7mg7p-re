@@ -7,7 +7,8 @@
 /* Big-endian 16-bit add, used to accumulate the temperature-weighted stress increment.
    type: math
    evidence: ec/annotations/charge-target-derating.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void be16_add(char param_1,short param_2,byte param_3)
 

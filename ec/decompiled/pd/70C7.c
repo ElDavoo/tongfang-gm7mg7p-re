@@ -8,7 +8,8 @@
    listing, so it falls through to 0x70C8, which immediately overwrites DPTR from R7.
    type: writer
    evidence: ec/decompiled/pd/70C7.asm; ec/decompiled/pd/70C7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char store_a_to_dptr(undefined1 param_1,undefined1 *param_2,char param_3)
 

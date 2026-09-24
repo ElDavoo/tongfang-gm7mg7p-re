@@ -8,7 +8,8 @@
    byte is touched.
    type: writer
    evidence: ec/decompiled/bank1/9E44.asm; ec/decompiled/bank1/9E44.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void set_68c_82(void)
 

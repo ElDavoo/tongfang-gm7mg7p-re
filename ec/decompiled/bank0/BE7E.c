@@ -8,7 +8,8 @@
    is written; 0x1905 is not touched here.
    type: writer
    evidence: ec/decompiled/bank0/BE7E.asm; ec/decompiled/bank0/BE7E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void write_9f_to_x1904(void)
 

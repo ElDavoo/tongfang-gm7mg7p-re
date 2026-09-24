@@ -9,7 +9,8 @@
    0xA694. Neither target address is decoded here.
    type: forwarder
    evidence: ec/decompiled/bank0/DD21.asm; ec/decompiled/bank0/DD21.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: abi-symbol */
 
 void bank1_trampoline_a69f(void)
 

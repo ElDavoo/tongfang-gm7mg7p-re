@@ -9,7 +9,8 @@
    entry's. What 0x0F1F does, and which register its result lands in, is not shown here.
    type: forwarder
    evidence: ec/decompiled/pd/36E6.asm; ec/decompiled/pd/36E6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 call_0f1f_then_fall_through(void)
 

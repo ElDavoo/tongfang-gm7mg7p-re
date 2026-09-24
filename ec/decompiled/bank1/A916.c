@@ -12,7 +12,8 @@
    equals it, and if bit 7 of XDATA 0x0456 is set it calls 0x88F0 with R5 = R1 + 0xD1.
    type: state
    evidence: ec/decompiled/bank1/A916.asm; ec/decompiled/bank1/A916.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clamp_078b_level_into_0804(void)
 

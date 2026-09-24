@@ -11,7 +11,8 @@
    at the first failure.
    type: writer
    evidence: ec/decompiled/bank0/EDD8.asm; ec/decompiled/bank0/EDD8.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_4_bytes_after_f121_then_chain(short param_1,char param_2)
 

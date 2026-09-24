@@ -17,7 +17,8 @@
    which ends at 0xBB3C.
    type: logic
    evidence: ec/decompiled/bank1/BABF.asm; ec/decompiled/bank1/BABF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void stage_0577_against_0834_0836(char param_1)
 

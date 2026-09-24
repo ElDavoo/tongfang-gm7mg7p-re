@@ -10,7 +10,8 @@
    call to 0xF73E then jump to 0xF13E is that continuation.
    type: unresolved
    evidence: ec/decompiled/bank1/F0E4.asm; ec/decompiled/bank1/F0E4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void mid_instruction_of_row_f0e3(void)
 

@@ -11,7 +11,8 @@
    here on the fan-flat-out path.
    type: copy
    evidence: ec/decompiled/bank0/8F09.asm; ec/decompiled/bank0/8F09.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void copy_dptr_byte_to_075c(undefined1 *param_1)
 

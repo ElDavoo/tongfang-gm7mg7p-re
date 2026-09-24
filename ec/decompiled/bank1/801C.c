@@ -9,7 +9,8 @@
    the call-target byte scan's hypothesis and the function-level role here is not determined.
    type: reader
    evidence: ec/decompiled/bank1/801C.asm; ec/decompiled/bank1/801C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void read_xdata_dptr_801c(char *param_1,char param_2)
 

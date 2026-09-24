@@ -14,7 +14,8 @@
    ec/annotations/registers.yaml.
    type: init
    evidence: ec/decompiled/bank0/91C5.asm; ec/decompiled/bank0/91C5.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void config_init_from_ba36_ba46(byte *param_1)
 

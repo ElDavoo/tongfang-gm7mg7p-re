@@ -11,7 +11,8 @@
    0xF04F does.
    type: forwarder
    evidence: ec/decompiled/pd/F035.asm; ec/decompiled/pd/F035.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void stage_07d6_chain_tail_f351(undefined1 param_1)
 

@@ -11,7 +11,8 @@
    0x122F's own listing has three returns.
    type: math
    evidence: ec/decompiled/pd/9ACD.asm; ec/decompiled/pd/9ACD.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dptr_add_0d0e_via_122f(void)
 

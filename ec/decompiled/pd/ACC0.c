@@ -10,7 +10,8 @@
    R0..R3 loads) and 0xACBF (the read).
    type: math
    evidence: ec/decompiled/pd/ACC0.asm; ec/decompiled/pd/ACC0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char index_a_by_23_add_0a35(char param_1)
 

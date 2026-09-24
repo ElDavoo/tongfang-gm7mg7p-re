@@ -10,7 +10,8 @@
    in total.
    type: writer
    evidence: ec/decompiled/pd/3544.asm; ec/decompiled/pd/3544.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void zero_5_xdata_bytes(undefined1 *param_1)
 

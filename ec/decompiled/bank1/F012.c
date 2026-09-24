@@ -9,7 +9,8 @@
    through the 0xEFE8 dispatch, not a routine with behaviour of its own.
    type: forwarder
    evidence: ec/decompiled/bank1/F012.asm; ec/decompiled/bank1/F012.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void table_efe8_row14_ljmp_f040(void)
 

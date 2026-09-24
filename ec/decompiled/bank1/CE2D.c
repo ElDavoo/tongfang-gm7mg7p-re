@@ -11,7 +11,8 @@
    7, publishes zero rather than its stored word at 0x3EE.
    type: writer
    evidence: ec/decompiled/bank1/CE2D.asm; ec/decompiled/bank1/CE2D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_slot_for_index_0_and_7(void)
 

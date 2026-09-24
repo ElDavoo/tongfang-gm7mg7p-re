@@ -9,7 +9,8 @@
    additionally clears bit 1 of XDATA 0x097A and bit 1 of XDATA 0x0720. Returns no computed value.
    type: state
    evidence: ec/decompiled/bank1/8300.asm; ec/decompiled/bank1/8300.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_and_set_xdata_flag_bits(void)
 

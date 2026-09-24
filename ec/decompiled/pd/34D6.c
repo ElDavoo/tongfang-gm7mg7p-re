@@ -9,7 +9,8 @@
    file's reason the entry addresses look unaligned
    type: math
    evidence: ec/annotations/ec-0x07d0-sites.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void index_stride_5e_from_07d6(void)
 

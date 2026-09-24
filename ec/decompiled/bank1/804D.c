@@ -14,7 +14,8 @@
    here is not determined.
    type: writer
    evidence: ec/decompiled/bank1/804D.asm; ec/decompiled/bank1/804D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void dec_then_test_063a_with_sign_guard(char param_1,char *param_2,char param_3)
 

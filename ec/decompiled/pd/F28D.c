@@ -10,7 +10,8 @@
    not decoded here.
    type: math
    evidence: ec/decompiled/pd/F28D.asm; ec/decompiled/pd/F28D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte dptr_eaf9_index_04(byte param_1,char param_2)
 

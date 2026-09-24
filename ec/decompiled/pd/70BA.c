@@ -8,7 +8,8 @@
    that address is 0x08ED + 0x5E*A. No ret in this listing.
    type: reader
    evidence: ec/decompiled/pd/70BA.asm; ec/decompiled/pd/70BA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char read_08ed_table_byte(char *param_1)
 

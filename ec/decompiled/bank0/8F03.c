@@ -9,7 +9,8 @@
    inside 0xBB28 or past this function's boundary, and this listing does not show which.
    type: forwarder
    evidence: ec/decompiled/bank0/8F03.asm; ec/decompiled/bank0/8F03.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_bb28_on_1804(void)
 

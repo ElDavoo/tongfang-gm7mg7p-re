@@ -9,7 +9,8 @@
    disassembly, so this fragment is real code and not a byte-scan artifact. It ends without a ret.
    type: writer
    evidence: ec/decompiled/bank0/8020.asm; ec/decompiled/bank0/8020.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_15_to_1902(void)
 

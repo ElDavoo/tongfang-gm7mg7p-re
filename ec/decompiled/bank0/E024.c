@@ -8,7 +8,8 @@
    routine whose head is at 0xE010, not a function of its own.
    type: writer
    evidence: ec/decompiled/bank0/E024.asm; ec/decompiled/bank0/E024.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_r6_r7_to_046c_046d(undefined1 param_1,undefined1 param_2)
 

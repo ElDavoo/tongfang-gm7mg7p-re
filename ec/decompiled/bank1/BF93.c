@@ -9,7 +9,8 @@
    0x08E4 and bit 0 of 0x0832), which belongs to the jumped-to routine rather than to this address.
    type: forwarder
    evidence: ec/decompiled/bank1/BF93.asm; ec/decompiled/bank1/BF93.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void forward_to_bd20_bf93(char param_1)
 

@@ -10,7 +10,8 @@
    calls in the same order.
    type: unresolved
    evidence: ec/decompiled/pd/9784.asm; ec/decompiled/pd/9784.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_0faf_0f00_0dbc_then_r3_23(void)
 

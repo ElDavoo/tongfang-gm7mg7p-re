@@ -8,7 +8,8 @@
    sets the same bit. Nothing else is touched and the bit's meaning is not decoded here.
    type: writer
    evidence: ec/decompiled/bank0/DCE5.asm; ec/decompiled/bank0/DCE5.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void clear_bit0_045b(void)
 

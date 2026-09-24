@@ -10,7 +10,8 @@
    hypothesis.
    type: math
    evidence: ec/decompiled/bank1/801F.asm; ec/decompiled/bank1/801F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dec_acc_801f(char param_1,char *param_2,char param_3)
 

@@ -9,7 +9,8 @@
    the jump reaches, and 0xBD20 is not part of this listing.
    type: forwarder
    evidence: ec/decompiled/bank1/BB3D.asm; ec/decompiled/bank1/BB3D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void forward_to_bd20_bb3d(char param_1)
 

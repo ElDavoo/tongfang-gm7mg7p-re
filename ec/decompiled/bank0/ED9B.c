@@ -9,7 +9,8 @@
    decompiled C shows is not confirmed from the asm; what 0x0EA2 does with 0xFA is not decoded here.
    type: logic
    evidence: ec/decompiled/bank0/ED9B.asm; ec/decompiled/bank0/ED9B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_0ea2_with_0xfa(void)
 

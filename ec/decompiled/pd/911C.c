@@ -9,7 +9,8 @@
    the byte at 0x07CA holds is not decoded here.
    type: reader
    evidence: ec/decompiled/pd/911C.asm; ec/decompiled/pd/911C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_xdata_07ca_into_r6(void)
 

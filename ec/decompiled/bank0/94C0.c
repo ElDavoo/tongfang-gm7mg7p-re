@@ -10,7 +10,8 @@
    as GPU_DYNAMIC_BOOST_STATUS (issue #183).
    type: writer
    evidence: ec/decompiled/bank0/94C0.asm; ec/decompiled/bank0/94C0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void set_07c4_bit4_from_r7(char param_1)
 

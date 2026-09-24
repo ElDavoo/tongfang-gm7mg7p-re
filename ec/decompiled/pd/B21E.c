@@ -11,7 +11,8 @@
    subtraction.
    type: reader
    evidence: ec/decompiled/pd/B21E.asm; ec/decompiled/pd/B21E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_xdata_at_r6r7_minus_3(undefined1 param_1,char param_2)
 

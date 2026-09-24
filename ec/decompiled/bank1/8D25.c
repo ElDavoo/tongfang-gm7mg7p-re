@@ -13,7 +13,8 @@
    7 path.
    type: logic
    evidence: ec/decompiled/bank1/8D25.asm; ec/decompiled/bank1/8D25.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void combine_0490_0495_049d_flags_into_carry(char param_1)
 

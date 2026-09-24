@@ -9,7 +9,8 @@
    except the 0x03A0 byte is a constant. 0xE1D7 tail-jumps here.
    type: state
    evidence: ec/decompiled/bank1/E27D.asm; ec/decompiled/bank1/E27D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void reset_1c00_group_and_toggle_03a0(void)
 

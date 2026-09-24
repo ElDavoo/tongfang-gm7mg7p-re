@@ -11,7 +11,8 @@
    are established here.
    type: gate
    evidence: ec/decompiled/bank1/C647.asm; ec/decompiled/bank1/C647.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void gate_0709b0_into_045b_branch(void)
 

@@ -9,7 +9,8 @@
    entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/C058.asm; ec/decompiled/bank0/C058.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_1611_1613_and_1616(void)
 

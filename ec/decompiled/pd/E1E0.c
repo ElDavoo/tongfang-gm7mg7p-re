@@ -12,7 +12,8 @@
    signed -0x67 is the same test on R5, read as 0x99.
    type: copy
    evidence: ec/decompiled/pd/E1E0.asm; ec/decompiled/pd/E1E0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void copy_0815_to_081b_then_call_c873(byte *param_1,char param_2)
 

@@ -12,7 +12,8 @@
    the next. None of these addresses has an entry in ec/annotations/registers.yaml.
    type: copy
    evidence: ec/decompiled/bank0/BA81.asm; ec/decompiled/bank0/BA81.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char copy_code_pair_63f0_to_xdata_at_2r7_offset(char param_1)
 

@@ -10,7 +10,8 @@
    XDATA 0x0497 and 0x03 to XDATA 0x0394.
    type: state
    evidence: ec/decompiled/bank1/C884.asm; ec/decompiled/bank1/C884.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void on_198a_result_advance_0394_to_3(char param_1)
 

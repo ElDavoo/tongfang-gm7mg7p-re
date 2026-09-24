@@ -9,7 +9,8 @@
    input. The .c returns the byte unchanged and drops the R4-R6 clears.
    type: logic
    evidence: ec/decompiled/pd/AD09.asm; ec/decompiled/pd/AD09.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 zero_extend_a_into_r4_r7(undefined1 param_1)
 

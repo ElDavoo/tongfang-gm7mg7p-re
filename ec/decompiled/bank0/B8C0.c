@@ -10,7 +10,8 @@
    ec/annotations/registers.yaml, so what the value selects is not determined here.
    type: reader
    evidence: ec/decompiled/bank0/B8C0.asm; ec/decompiled/bank0/B8C0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void test_0770_equals_04(void)
 

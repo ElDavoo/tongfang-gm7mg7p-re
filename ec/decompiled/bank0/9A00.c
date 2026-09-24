@@ -11,7 +11,8 @@
    ec/annotations/registers.yaml.
    type: copy
    evidence: ec/decompiled/bank0/9A00.asm; ec/decompiled/bank0/9A00.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void copy_dptr_to_088b_and_08bb_to_08ba(undefined1 *param_1)
 

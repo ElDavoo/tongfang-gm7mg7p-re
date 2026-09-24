@@ -10,7 +10,8 @@
    is where the decompiled C puts it. Neither address has an entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/C01C.asm; ec/decompiled/bank0/C01C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_1610_40_and_clear_1601_bit0(void)
 

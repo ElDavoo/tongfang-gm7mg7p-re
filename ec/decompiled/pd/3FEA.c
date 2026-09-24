@@ -10,7 +10,8 @@
    stops at the call, so these instructions alone do not show a write.
    type: writer
    evidence: ec/decompiled/pd/3FEA.asm; ec/decompiled/pd/3FEA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_ram_07_08_then_call_10e8_at_0988(void)
 

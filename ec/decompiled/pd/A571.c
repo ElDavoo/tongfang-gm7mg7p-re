@@ -15,7 +15,8 @@
    meaning is carried over.
    type: dispatch
    evidence: ec/decompiled/pd/A571.asm; ec/decompiled/pd/A571.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_on_state_07d0(byte param_1,byte param_2,char param_3,byte param_4,byte param_5)
 

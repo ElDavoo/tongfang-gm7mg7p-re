@@ -10,7 +10,8 @@
    caller left set.
    type: math
    evidence: ec/decompiled/pd/F3E2.asm; ec/decompiled/pd/F3E2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_high_r6_low_a(char param_1)
 

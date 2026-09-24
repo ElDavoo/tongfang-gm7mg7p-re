@@ -9,7 +9,8 @@
    nothing dereferences DPTR; at the ret A holds the byte written to DPH, 0x0A or 0x0B.
    type: math
    evidence: ec/decompiled/pd/9751.asm; ec/decompiled/pd/9751.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_from_a_mul_17_add_29(char param_1)
 

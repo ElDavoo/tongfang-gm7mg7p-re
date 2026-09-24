@@ -8,7 +8,8 @@
    below are 29.9 C and 39.9 C.
    type: reader
    evidence: ec/annotations/charge-target-derating.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 batt_temp_dK(void)
 

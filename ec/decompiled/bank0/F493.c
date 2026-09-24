@@ -9,7 +9,8 @@
    0xF4A3 is one routine that the call-target scan split into three entries.
    type: writer
    evidence: ec/decompiled/bank0/F493.asm; ec/decompiled/bank0/F493.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void store_bd_to_0f60_then_0a56_0a57(void)
 

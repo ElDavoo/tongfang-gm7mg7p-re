@@ -10,7 +10,8 @@
    a claim that any of it executes
    type: dispatch
    evidence: ec/annotations/bank-call-audit.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void index_table_default(void)
 

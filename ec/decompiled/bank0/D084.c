@@ -8,7 +8,8 @@
    touched.
    type: writer
    evidence: ec/decompiled/bank0/D084.asm; ec/decompiled/bank0/D084.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_0988_1(void)
 

@@ -12,7 +12,8 @@
    addresses 0x8004-0x8017 in this shard.
    type: writer
    evidence: ec/decompiled/bank1/8001.asm; ec/decompiled/bank1/8001.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void decrement_nonzero_xdata_counters(char param_1)
 

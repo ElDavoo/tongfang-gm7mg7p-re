@@ -10,7 +10,8 @@
    by `LJMP` from 0x8BFD and by the `JNC` at 0x8CD9, both inside the routine at 0x8BD1.
    type: writer
    evidence: ec/decompiled/bank1/8CDD.asm; ec/decompiled/bank1/8CDD.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_0a_to_07f2_fall_into_8ce3(void)
 

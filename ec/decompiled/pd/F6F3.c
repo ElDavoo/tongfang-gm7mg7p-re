@@ -9,7 +9,8 @@
    call is made. The meaning of that bit in this program's XDATA is not decoded here.
    type: writer
    evidence: ec/decompiled/pd/F6F3.asm; ec/decompiled/pd/F6F3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_ffc6_bit5(void)
 

@@ -8,7 +8,8 @@
    0x200B before the ret.
    type: writer
    evidence: ec/decompiled/bank1/C541.asm; ec/decompiled/bank1/C541.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_zero_to_200b_six_times(void)
 

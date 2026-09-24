@@ -9,7 +9,8 @@
    shows belong to 0xAD8B and are reported from the .c, not decoded from these bytes.
    type: forwarder
    evidence: ec/decompiled/bank1/AD80.asm; ec/decompiled/bank1/AD80.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void forwarder_to_ad8b(void)
 

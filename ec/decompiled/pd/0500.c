@@ -9,7 +9,8 @@
    that 0x20000 is a second program, and it is PD-image code, not EC code
    type: init
    evidence: ec/annotations/lightbar-bat-flow.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void c_startup_idata_clear(void)
 

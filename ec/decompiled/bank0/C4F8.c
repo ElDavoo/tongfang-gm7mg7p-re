@@ -9,7 +9,8 @@
    0x074C has no entry in ec/annotations/registers.yaml, so the nibble is not named.
    type: reader
    evidence: ec/decompiled/bank0/C4F8.asm; ec/decompiled/bank0/C4F8.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte read_074c_low_nibble(void)
 

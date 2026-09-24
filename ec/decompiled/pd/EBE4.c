@@ -13,7 +13,8 @@
    third, separate call in the .asm.
    type: logic
    evidence: ec/decompiled/pd/EBE4.asm; ec/decompiled/pd/EBE4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void pick_00d0_or_00d1_then_tail_with_dp_0002(char *param_1)
 

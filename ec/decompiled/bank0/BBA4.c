@@ -12,7 +12,8 @@
    ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/BBA4.asm; ec/decompiled/bank0/BBA4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void mask_0476_with_1f(void)
 

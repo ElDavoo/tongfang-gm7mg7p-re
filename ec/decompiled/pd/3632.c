@@ -10,7 +10,8 @@
    not contained in these three bytes.
    type: forwarder
    evidence: ec/decompiled/pd/3632.asm; ec/decompiled/pd/3632.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_dptr_042f_then_fall_through(void)
 

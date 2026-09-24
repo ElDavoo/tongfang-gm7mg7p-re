@@ -8,7 +8,8 @@
    low byte first to two adjacent XDATA bytes. Returns with the accumulator holding R2.
    type: writer
    evidence: ec/decompiled/bank1/888C.asm; ec/decompiled/bank1/888C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_r1r2_to_xdata_pair(undefined1 *param_1,undefined1 param_2,undefined1 param_3)
 

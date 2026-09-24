@@ -10,7 +10,8 @@
    byte. The decompiled C's `*(param_1 + 1)` reading does not match these instructions.
    type: reader
    evidence: ec/decompiled/bank0/B93D.asm; ec/decompiled/bank0/B93D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 load_dptr_be16_from_xdata(short entry_dptr)
 

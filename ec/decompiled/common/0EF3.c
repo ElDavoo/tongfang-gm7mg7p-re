@@ -12,7 +12,8 @@
    The .asm header marks the boundary a hypothesis.
    type: init
    evidence: ec/decompiled/common/0EF3.asm; ec/decompiled/common/0EF3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_internal_ram_init_constants(void)
 

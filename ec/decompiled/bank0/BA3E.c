@@ -9,7 +9,8 @@
    ec/annotations/registers.yaml, so what the bit gates is not decoded further.
    type: writer
    evidence: ec/decompiled/bank0/BA3E.asm; ec/decompiled/bank0/BA3E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_bit0_1901(void)
 

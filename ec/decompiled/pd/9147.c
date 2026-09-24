@@ -10,7 +10,8 @@
    the DPL store.
    type: math
    evidence: ec/decompiled/pd/9147.asm; ec/decompiled/pd/9147.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dpl_0929_plus_5e_times_a(char param_1)
 

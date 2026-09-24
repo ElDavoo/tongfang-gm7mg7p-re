@@ -9,7 +9,8 @@
    or read by these eight instructions, and nothing here says what 0x097D is for.
    type: math
    evidence: ec/decompiled/pd/B2E9.asm; ec/decompiled/pd/B2E9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_from_097d_plus_carry(byte param_1)
 

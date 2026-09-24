@@ -12,7 +12,8 @@
    decompiler's C renders the three writes that way.
    type: state
    evidence: ec/decompiled/bank1/966C.asm; ec/decompiled/bank1/966C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void step_06fd_06fe_06ff_counters_via_1a32(void)
 

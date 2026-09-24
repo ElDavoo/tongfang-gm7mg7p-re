@@ -14,7 +14,8 @@
    returning a single byte, which the instruction stream does not do.
    type: reader
    evidence: ec/decompiled/bank1/E582.asm; ec/decompiled/bank1/E582.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void read_code_pair_by_r7_index_then_call_889e
                (byte param_1,byte *param_2,undefined1 param_3,undefined1 param_4,byte param_5)

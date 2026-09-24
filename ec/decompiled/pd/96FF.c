@@ -9,7 +9,8 @@
    memory access. The C returns the high-byte expression alone and drops both pointer stores.
    type: math
    evidence: ec/decompiled/pd/96FF.asm; ec/decompiled/pd/96FF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_0a27_plus_17_times_a(char param_1)
 

@@ -10,7 +10,8 @@
    ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/BC7E.asm; ec/decompiled/bank0/BC7E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 store_a_then_read_086c_set_cy(undefined1 param_1,undefined1 *param_2)
 

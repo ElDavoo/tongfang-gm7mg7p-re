@@ -8,7 +8,8 @@
    returns straight to this function's caller. No other address is touched here.
    type: writer
    evidence: ec/decompiled/bank0/DD5C.asm; ec/decompiled/bank0/DD5C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void store_32_to_0458_then_tailcall_1954(void)
 

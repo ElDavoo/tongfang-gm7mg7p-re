@@ -10,7 +10,8 @@
    Neither 0x1F06 nor 0x1F07 is documented in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/D6C0.asm; ec/decompiled/bank0/D6C0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void write_5a_to_1f07_then_spin(undefined1 param_1,undefined1 *param_2)
 

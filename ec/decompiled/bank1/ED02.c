@@ -15,7 +15,8 @@
    not decoded.
    type: unresolved
    evidence: ec/decompiled/bank1/ED02.asm; ec/decompiled/bank1/ED02.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte * data_run_1a_1e(byte param_1,byte *param_2,char param_3,byte *param_4,byte *param_5,
                      byte param_6,char param_7,char param_8,char param_9,byte param_10)

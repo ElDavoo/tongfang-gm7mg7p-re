@@ -9,7 +9,8 @@
    in ec/annotations/registers.yaml.
    type: reader
    evidence: ec/decompiled/bank0/BA36.asm; ec/decompiled/bank0/BA36.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte read_low_nibble_074c(void)
 

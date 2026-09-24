@@ -8,7 +8,8 @@
    return. What the callee at 0x0C7A does with those four registers is not decoded in this listing.
    type: forwarder
    evidence: ec/decompiled/pd/36CB.asm; ec/decompiled/pd/36CB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void read_07d6_tail_0c7a(void)
 

@@ -13,7 +13,8 @@
    0xE877; the DPTR values the helpers leave are not shown in this listing.
    type: logic
    evidence: ec/decompiled/pd/E5B3.asm; ec/decompiled/pd/E5B3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_080e_and_accumulate_r6(byte param_1)
 

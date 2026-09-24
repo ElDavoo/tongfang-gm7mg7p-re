@@ -10,7 +10,8 @@
    lcalls 0x122F; no ret here, so it falls through to 0x7038.
    type: math
    evidence: ec/decompiled/pd/7021.asm; ec/decompiled/pd/7021.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void scale_5e_and_call_122f(byte *param_1)
 

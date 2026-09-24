@@ -11,7 +11,8 @@
    instructions do.
    type: math
    evidence: ec/decompiled/pd/B176.asm; ec/decompiled/pd/B176.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte make_dptr_from_a_low_byte(void)
 

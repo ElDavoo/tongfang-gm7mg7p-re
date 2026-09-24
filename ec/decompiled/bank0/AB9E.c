@@ -13,7 +13,8 @@
    is not fixed by this listing.
    type: state
    evidence: ec/decompiled/bank0/AB9E.asm; ec/decompiled/bank0/AB9E.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void set_0751_and_07a6_bits(char param_1)
 

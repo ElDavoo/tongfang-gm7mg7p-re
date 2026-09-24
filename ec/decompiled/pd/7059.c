@@ -8,7 +8,8 @@
    Nothing else is decoded from this address.
    type: forwarder
    evidence: ec/decompiled/pd/7059.asm; ec/decompiled/pd/7059.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void thunk_call_122f(void)
 

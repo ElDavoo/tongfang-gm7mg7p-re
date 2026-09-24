@@ -11,7 +11,8 @@
    ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/94AF.asm; ec/decompiled/bank0/94AF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_r7_to_098c_and_0463(byte param_1)
 

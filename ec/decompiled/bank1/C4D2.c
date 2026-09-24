@@ -9,7 +9,8 @@
    listing, so only this setup prefix is decoded here and the outcome of the jump is not.
    type: state
    evidence: ec/decompiled/bank1/C4D2.asm; ec/decompiled/bank1/C4D2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void setup_1c00_block_with_arg_4c(void)
 

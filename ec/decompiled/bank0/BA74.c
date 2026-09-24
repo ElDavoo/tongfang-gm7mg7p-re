@@ -10,7 +10,8 @@
    ec/annotations/registers.yaml.
    type: unresolved
    evidence: ec/decompiled/bank0/BA74.asm; ec/decompiled/bank0/BA74.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 load_dptr_0a51(void)
 

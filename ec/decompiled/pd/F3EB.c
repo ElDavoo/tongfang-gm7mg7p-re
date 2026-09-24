@@ -9,7 +9,8 @@
    write, and it consumes the incoming carry as-is.
    type: math
    evidence: ec/decompiled/pd/F3EB.asm; ec/decompiled/pd/F3EB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_high_r6_low_r3(char param_1)
 

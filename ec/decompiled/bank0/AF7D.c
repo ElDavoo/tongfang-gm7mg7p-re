@@ -9,7 +9,8 @@
    by this listing.
    type: state
    evidence: ec/decompiled/bank0/AF7D.asm; ec/decompiled/bank0/AF7D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void decrement_0a4a_then_redispatch(void)
 

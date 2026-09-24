@@ -10,7 +10,8 @@
    what B8F4's R7 encodes is not decoded here.
    type: gate
    evidence: ec/decompiled/bank0/C478.asm; ec/decompiled/bank0/C478.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void set_160a_bit0_unless_b8f4_and_08eb(char param_1)
 

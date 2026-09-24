@@ -10,7 +10,8 @@
    for this address reports a call to 0x708F that is not in these bytes.
    type: reader
    evidence: ec/decompiled/bank0/E3C4.asm; ec/decompiled/bank0/E3C4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_r6_from_a_r7_from_dptr(undefined1 param_1,undefined1 *param_2)
 

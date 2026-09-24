@@ -12,7 +12,8 @@
    hypothesis.
    type: writer
    evidence: ec/decompiled/bank1/806C.asm; ec/decompiled/bank1/806C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void reload_06d6_with_9_or_return_early(char param_1)
 

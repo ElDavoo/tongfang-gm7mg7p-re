@@ -10,7 +10,8 @@
    this listing is not evidence about the EC byte of the same address.
    type: reader
    evidence: ec/decompiled/pd/98A1.asm; ec/decompiled/pd/98A1.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char load_dptr_07d0(void)
 

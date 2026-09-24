@@ -8,7 +8,8 @@
    DPTR from 0x7095 that address is 0x08EA + 0x5E*A. No ret in this listing.
    type: reader
    evidence: ec/decompiled/pd/70A3.asm; ec/decompiled/pd/70A3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char read_08ea_table_byte(char *param_1)
 

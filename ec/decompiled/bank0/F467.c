@@ -9,7 +9,8 @@
    XDATA 0x0E02 and returns that byte in A.
    type: writer
    evidence: ec/decompiled/bank0/F467.asm; ec/decompiled/bank0/F467.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 undefined1 write_04_0e_a4_after_dptr_call_4777(short param_1)
 

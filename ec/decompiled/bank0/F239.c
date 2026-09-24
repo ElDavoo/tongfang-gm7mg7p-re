@@ -12,7 +12,8 @@
    sequential code. Which selector value reaches which case target is not decoded from this listing.
    type: gate
    evidence: ec/decompiled/bank0/F239.asm; ec/decompiled/bank0/F239.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void gate_06e6_then_dispatch_0e01(byte param_1)
 

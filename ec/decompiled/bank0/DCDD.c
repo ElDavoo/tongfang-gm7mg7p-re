@@ -8,7 +8,8 @@
    clears the same bit. What bit 0 of 0x045B gates is not decoded here.
    type: writer
    evidence: ec/decompiled/bank0/DCDD.asm; ec/decompiled/bank0/DCDD.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void set_bit0_045b(void)
 

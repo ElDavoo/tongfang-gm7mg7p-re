@@ -11,7 +11,8 @@
    a parameter, which the listing does not show.
    type: writer
    evidence: ec/decompiled/bank1/A6C5.asm; ec/decompiled/bank1/A6C5.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void zero_xdata_block_at_dph00(ushort param_1,char param_2)
 

@@ -10,7 +10,8 @@
    the routine tests is not determined by this listing.
    type: reader
    evidence: ec/decompiled/bank0/93FE.asm; ec/decompiled/bank0/93FE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_r7_into_a(char param_1)
 

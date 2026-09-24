@@ -10,7 +10,8 @@
    here, and the C reports an empty body.
    type: unresolved
    evidence: ec/decompiled/pd/39E7.asm; ec/decompiled/pd/39E7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void set_args_r1_d3_r2_07_r3_01(void)
 

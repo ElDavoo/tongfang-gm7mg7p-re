@@ -9,7 +9,8 @@
    B and R7 out, so the product is not consumed here.
    type: math
    evidence: ec/decompiled/bank0/E02D.asm; ec/decompiled/bank0/E02D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void mul_r7_by_8(short *param_1,byte param_2)
 

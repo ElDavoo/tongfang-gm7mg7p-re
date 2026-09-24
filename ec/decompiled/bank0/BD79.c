@@ -9,7 +9,8 @@
    in this listing.
    type: forwarder
    evidence: ec/decompiled/bank0/BD79.asm; ec/decompiled/bank0/BD79.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void tail_call_7110_with_b6(void)
 

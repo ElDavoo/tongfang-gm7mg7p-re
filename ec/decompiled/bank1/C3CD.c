@@ -14,7 +14,8 @@
    here.
    type: logic
    evidence: ec/decompiled/bank1/C3CD.asm; ec/decompiled/bank1/C3CD.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void compare_0434_04f4_against_0646(char param_1,char param_2)
 

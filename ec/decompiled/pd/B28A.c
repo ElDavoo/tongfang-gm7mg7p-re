@@ -9,7 +9,8 @@
    is a fresh read, not a reuse of an earlier one
    type: math
    evidence: ec/annotations/pd-0x38-consumers.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char mul38_of_xdata_0832(void)
 

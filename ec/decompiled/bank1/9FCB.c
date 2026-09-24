@@ -11,7 +11,8 @@
    is not shown in this listing.
    type: state
    evidence: ec/decompiled/bank1/9FCB.asm; ec/decompiled/bank1/9FCB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void tick_0724_bit4_decrement_067e(void)
 

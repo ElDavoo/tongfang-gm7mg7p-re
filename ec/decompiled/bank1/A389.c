@@ -10,7 +10,8 @@
    zero. The decompiler's param_1 is that R7, not an argument passed in.
    type: state
    evidence: ec/decompiled/bank1/A389.asm; ec/decompiled/bank1/A389.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void decrement_0980_then_run_19b4_198a(char r7_from_198a)
 

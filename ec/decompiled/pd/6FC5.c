@@ -9,7 +9,8 @@
    A. Nothing is written, and the meaning of the indexed byte is not determined from this listing.
    type: reader
    evidence: ec/decompiled/pd/6FC5.asm; ec/decompiled/pd/6FC5.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 undefined1 scaled_lookup_from_a_times_5e_plus_f7(char param_1)
 

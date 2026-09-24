@@ -10,7 +10,8 @@
    returns.
    type: unresolved
    evidence: ec/decompiled/pd/9792.asm; ec/decompiled/pd/9792.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clr_carry(undefined1 param_1)
 

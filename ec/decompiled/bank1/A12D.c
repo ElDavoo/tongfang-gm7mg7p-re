@@ -15,7 +15,8 @@
    tail jump with nothing passed.
    type: logic
    evidence: ec/decompiled/bank1/A12D.asm; ec/decompiled/bank1/A12D.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void set_0724_bit7_after_06c5_threshold(char param_1)
 

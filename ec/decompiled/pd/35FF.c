@@ -8,7 +8,8 @@
    with no ret, so what is done with the value is not decoded here.
    type: reader
    evidence: ec/decompiled/pd/35FF.asm; ec/decompiled/pd/35FF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char read_07d2_to_r3(void)
 

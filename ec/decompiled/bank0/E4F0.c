@@ -9,7 +9,8 @@
    which this listing does not contain, so the jump target's behaviour is not decoded here.
    type: forwarder
    evidence: ec/decompiled/bank0/E4F0.asm; ec/decompiled/bank0/E4F0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void jump_to_f0a3(char param_1,short param_2)
 

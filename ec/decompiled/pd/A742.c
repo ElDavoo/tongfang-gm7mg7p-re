@@ -10,7 +10,8 @@
    reads nor 0x0FBB is described in any annotation, and the routine it jumps to is not decoded here.
    type: reader
    evidence: ec/decompiled/pd/A742.asm; ec/decompiled/pd/A742.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_dptr_be16_from_0abf(void)
 

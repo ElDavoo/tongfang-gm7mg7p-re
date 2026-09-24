@@ -12,7 +12,8 @@
    decoded further.
    type: gate
    evidence: ec/decompiled/bank0/C3AE.asm; ec/decompiled/bank0/C3AE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void route_074c_nibble_to_160a_and_1608(byte *param_1)
 

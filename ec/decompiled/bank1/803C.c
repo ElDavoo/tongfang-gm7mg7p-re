@@ -11,7 +11,8 @@
    the call-target byte scan's hypothesis and the function-level role here is not determined.
    type: writer
    evidence: ec/decompiled/bank1/803C.asm; ec/decompiled/bank1/803C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void test_and_decrement_0638_after_prior_byte(char *param_1,char param_2)
 

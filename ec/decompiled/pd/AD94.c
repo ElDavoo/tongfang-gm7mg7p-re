@@ -9,7 +9,8 @@
    read. 0x1041 is not decoded in this shard; the .c shows the same order.
    type: ec-io
    evidence: ec/decompiled/pd/AD94.asm; ec/decompiled/pd/AD94.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 call_1041_then_return_07d1(void)
 

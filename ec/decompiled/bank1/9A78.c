@@ -10,7 +10,8 @@
    0 of 0x0497.
    type: state
    evidence: ec/decompiled/bank1/9A78.asm; ec/decompiled/bank1/9A78.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void step_0691_by_14_or_set_068c_80(void)
 

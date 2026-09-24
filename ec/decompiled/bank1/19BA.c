@@ -9,7 +9,8 @@
    decompiler rendering that as a call to the stub with 0xC381 as the argument.
    type: forwarder
    evidence: ec/decompiled/bank1/19BA.asm; ec/decompiled/bank1/19BA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: abi-symbol */
 
 void trampoline_to_c381(void)
 

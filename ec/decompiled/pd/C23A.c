@@ -10,7 +10,8 @@
    signed offset from 0xDC; the high-byte immediate 0xFF is what fixes the base at 0xFFDC.
    type: reader
    evidence: ec/decompiled/pd/C23A.asm; ec/decompiled/pd/C23A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_byte_at_ffdc_plus_a(byte param_1)
 

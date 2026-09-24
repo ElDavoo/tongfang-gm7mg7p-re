@@ -11,7 +11,8 @@
    constants; none of these addresses has an entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/E8C4.asm; ec/decompiled/bank0/E8C4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_r6_r7_r5_to_0f60_62(undefined1 param_1,undefined1 param_2,undefined1 param_3)
 

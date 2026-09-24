@@ -13,7 +13,8 @@
    the 0x08xx and 0x09xx addresses involved have no entry in ec/annotations/registers.yaml.
    type: dispatch
    evidence: ec/decompiled/bank0/9917.asm; ec/decompiled/bank0/9917.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_on_0a50(void)
 

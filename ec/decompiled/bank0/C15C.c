@@ -8,7 +8,8 @@
    significant bit only; the other seven bits keep their values. Pairs with 0xC154.
    type: writer
    evidence: ec/decompiled/bank0/C15C.asm; ec/decompiled/bank0/C15C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_1602_bit7(void)
 

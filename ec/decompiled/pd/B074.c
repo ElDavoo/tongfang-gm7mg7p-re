@@ -10,7 +10,8 @@
    same three steps and adds a does-not-return warning on 0x122F that these bytes do not show.
    type: writer
    evidence: ec/decompiled/pd/B074.asm; ec/decompiled/pd/B074.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_c1dd_store_r7_then_call_122f(undefined1 *param_1,undefined1 param_2)
 

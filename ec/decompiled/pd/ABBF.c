@@ -14,7 +14,8 @@
    misreading of the index expressions, not a different code path.
    type: writer
    evidence: ec/decompiled/pd/ABBF.asm; ec/decompiled/pd/ABBF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void build_masked_indexed_table_bytes(byte r7_value)
 

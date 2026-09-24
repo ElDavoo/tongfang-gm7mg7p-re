@@ -9,7 +9,8 @@
    they hold is not decoded here.
    type: writer
    evidence: ec/decompiled/bank1/8D74.asm; ec/decompiled/bank1/8D74.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_30_to_0679_and_14_to_0678(void)
 

@@ -10,7 +10,8 @@
    these bytes.
    type: forwarder
    evidence: ec/decompiled/bank1/AD77.asm; ec/decompiled/bank1/AD77.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void forwarder_to_b56c(void)
 

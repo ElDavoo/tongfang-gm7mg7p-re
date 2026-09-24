@@ -8,7 +8,8 @@
    0x10BC (the export's add_full_product_to_dptr) with no return.
    type: forwarder
    evidence: ec/decompiled/pd/3760.asm; ec/decompiled/pd/3760.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void read_dptr_byte_then_tail_10bc_at_042c(undefined1 *param_1)
 

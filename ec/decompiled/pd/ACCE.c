@@ -9,7 +9,8 @@
    decompiled C's comparison against 0xD3 is the 0xACD3 entry's arithmetic, not this one's.
    type: unresolved
    evidence: ec/decompiled/pd/ACCE.asm; ec/decompiled/pd/ACCE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char set_dptr_07d6(void)
 

@@ -10,7 +10,8 @@
    the sequence as a comparison and loses the pointer.
    type: math
    evidence: ec/decompiled/pd/AD67.asm; ec/decompiled/pd/AD67.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_08fb_plus_5e_times_a(char param_1)
 

@@ -9,7 +9,8 @@
    determined here. The C shows both calls but not the DPTR load.
    type: forwarder
    evidence: ec/decompiled/pd/9975.asm; ec/decompiled/pd/9975.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_10fd_dptr_0004_tail_0bc4(void)
 

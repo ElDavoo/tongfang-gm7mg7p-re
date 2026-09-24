@@ -8,7 +8,8 @@
    that routine.
    type: writer
    evidence: ec/decompiled/bank1/C6B0.asm; ec/decompiled/bank1/C6B0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void set_070d_to_5_then_jump_to_c638(void)
 

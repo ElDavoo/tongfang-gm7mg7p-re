@@ -12,7 +12,8 @@
    three onto one parameter pointer.
    type: writer
    evidence: ec/decompiled/pd/EED1.asm; ec/decompiled/pd/EED1.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_ff_clear_bit7_write_ff(byte *param_1)
 

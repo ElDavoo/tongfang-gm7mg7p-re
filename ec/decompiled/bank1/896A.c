@@ -8,7 +8,8 @@
    it returns immediately at 0x897A. Nothing else in the listing is read, written or called.
    type: gate
    evidence: ec/decompiled/bank1/896A.asm; ec/decompiled/bank1/896A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void gate_06e6_0440_then_call_89b5(void)
 

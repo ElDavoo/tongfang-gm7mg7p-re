@@ -15,7 +15,8 @@
    byte scan's hypothesis and the function-level role here is not determined.
    type: writer
    evidence: ec/decompiled/bank1/80D6.asm; ec/decompiled/bank1/80D6.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void clear_0460_0468_when_0706_reaches_zero(char param_1,char *param_2)
 

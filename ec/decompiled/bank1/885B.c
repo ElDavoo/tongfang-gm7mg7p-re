@@ -9,7 +9,8 @@
    arithmetic, no memory access.
    type: math
    evidence: ec/decompiled/bank1/885B.asm; ec/decompiled/bank1/885B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char sub_r1r2_from_r3r4(byte param_1,char param_2,byte param_3,char param_4)
 

@@ -12,7 +12,8 @@
    is not applied here.
    type: writer
    evidence: ec/decompiled/pd/BECB.asm; ec/decompiled/pd/BECB.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_07d6_07d7_07d8_07d9_then_store_07df
                (undefined1 param_1,undefined1 param_2,undefined1 param_3)

@@ -13,7 +13,8 @@
    0x88F0 with R5 = 0x0D. What any of these bytes represents is not decoded here.
    type: writer
    evidence: ec/decompiled/bank1/F198.asm; ec/decompiled/bank1/F198.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: mixed */
 
 void gate_045a_e0_bits_into_047b_0720_097a(void)
 

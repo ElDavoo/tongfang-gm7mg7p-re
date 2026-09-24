@@ -12,7 +12,8 @@
    and moving the result into DPH, calling 0x104D, and jumping to 0xC0AF.
    type: writer
    evidence: ec/decompiled/pd/C755.asm; ec/decompiled/pd/C755.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void latch_07d2_07d3_then_zero_23_bytes(undefined1 param_1,byte param_2)
 

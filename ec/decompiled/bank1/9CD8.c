@@ -12,7 +12,8 @@
    XDATA 0x1C15.
    type: math
    evidence: ec/decompiled/bank1/9CD8.asm; ec/decompiled/bank1/9CD8.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void halve_be16_after_add_r1(byte *param_1,byte param_2)
 

@@ -10,7 +10,8 @@
    mis-split boundary is not shown by the listing.
    type: writer
    evidence: ec/decompiled/bank0/D281.asm; ec/decompiled/bank0/D281.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void set_0860_ff_then_d284(void)
 

@@ -12,7 +12,8 @@
    further.
    type: unresolved
    evidence: ec/decompiled/bank1/8500.asm; ec/decompiled/bank1/8500.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 undefined1 table_bytes_disassembled_as_code_8500(char param_1,char param_2,char param_3)
 

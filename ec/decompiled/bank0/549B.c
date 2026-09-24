@@ -11,7 +11,8 @@
    call from one to the other.
    type: dispatch
    evidence: ec/decompiled/bank0/549B.asm; ec/decompiled/bank0/549B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void default_009d_bf_dispatch_4e2c(void)
 

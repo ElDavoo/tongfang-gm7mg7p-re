@@ -9,7 +9,8 @@
    discarded, so the caller has to use DPTR for the result; A holds 0x0A or 0x0B on return.
    type: math
    evidence: ec/decompiled/pd/97A9.asm; ec/decompiled/pd/97A9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_from_a_mul_17_add_2c(char param_1)
 

@@ -10,7 +10,8 @@
    instructions.
    type: copy
    evidence: ec/decompiled/bank0/B9A4.asm; ec/decompiled/bank0/B9A4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void copy_direct_65_66_to_x00c0(void)
 

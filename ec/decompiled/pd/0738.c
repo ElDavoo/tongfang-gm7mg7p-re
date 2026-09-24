@@ -10,7 +10,8 @@
    R7 are otherwise left alone; the MOV A,R5 / MOV R5,A pair at 0x0751 and 0x0754 is a no-op on R5.
    type: math
    evidence: ec/decompiled/pd/0738.asm; ec/decompiled/pd/0738.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte shift_r3r4_right_1(char param_1,char param_2,byte param_3,char param_4,char param_5)
 

@@ -10,7 +10,8 @@
    with the registers is not decoded here.
    type: state
    evidence: ec/decompiled/bank1/A816.asm; ec/decompiled/bank1/A816.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void flag_0832_bit6_send_12_12_8c(void)
 

@@ -10,7 +10,8 @@
    0x1E09, which sets R7 to 0 and returns; what those two callees do is not decoded here.
    type: forwarder
    evidence: ec/decompiled/pd/1820.asm; ec/decompiled/pd/1820.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_r7_12_clear_bit_4d_tailcall(undefined1 param_1)
 

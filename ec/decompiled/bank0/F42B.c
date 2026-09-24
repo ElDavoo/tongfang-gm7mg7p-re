@@ -8,7 +8,8 @@
    next byte, at 0xF430, is the ret that ends the routine.
    type: writer
    evidence: ec/decompiled/bank0/F42B.asm; ec/decompiled/bank0/F42B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_0e01(void)
 

@@ -11,7 +11,8 @@
    None of 0x1C00, 0x1C0A and 0x681 is documented in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank1/AC6D.asm; ec/decompiled/bank1/AC6D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_0681_bit7(void)
 

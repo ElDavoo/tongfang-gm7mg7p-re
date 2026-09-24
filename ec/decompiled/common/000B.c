@@ -10,7 +10,8 @@
    from the .c.
    type: forwarder
    evidence: ec/decompiled/common/000B.asm; ec/decompiled/common/000B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 timer0_vector_forwarder_to_0530(undefined1 param_1)
 

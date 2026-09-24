@@ -10,7 +10,8 @@
    is not decoded here.
    type: unresolved
    evidence: ec/decompiled/bank1/9004.asm; ec/decompiled/bank1/9004.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_dptr_06ce(undefined1 param_1)
 

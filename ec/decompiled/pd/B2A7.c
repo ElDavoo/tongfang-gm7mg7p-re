@@ -11,7 +11,8 @@
    is not applied here.
    type: copy
    evidence: ec/decompiled/pd/B2A7.asm; ec/decompiled/pd/B2A7.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_a_to_dptr_then_read4_from_07d8(undefined1 param_1,undefined1 *param_2)
 

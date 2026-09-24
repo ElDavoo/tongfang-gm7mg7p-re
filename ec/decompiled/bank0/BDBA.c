@@ -8,7 +8,8 @@
    Same destination as 0xBDAE and 0xBDC6, a different source byte each time.
    type: copy
    evidence: ec/decompiled/bank0/BDBA.asm; ec/decompiled/bank0/BDBA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void copy_x190a_to_x0a57(void)
 

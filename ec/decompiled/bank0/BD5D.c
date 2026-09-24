@@ -9,7 +9,8 @@
    low byte in A and borrow in CY; neither address has an entry in ec/annotations/registers.yaml.
    type: math
    evidence: ec/decompiled/bank0/BD5D.asm; ec/decompiled/bank0/BD5D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char be16_0464_0465_minus_100(void)
 

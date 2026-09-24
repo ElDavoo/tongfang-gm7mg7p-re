@@ -9,7 +9,8 @@
    returning with DPTR left pointing at the byte. Its body is not decoded here
    type: helper
    evidence: ec/annotations/ec-0x07d0-sites.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_returns_with_dptr_loaded(void)
 

@@ -10,7 +10,8 @@
    so which address is written and why is not decoded here.
    type: unresolved
    evidence: ec/decompiled/bank1/9000.asm; ec/decompiled/bank1/9000.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_to_xdata_at_dptr(undefined1 param_1,undefined1 *param_2)
 

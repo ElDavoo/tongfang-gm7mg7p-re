@@ -9,7 +9,8 @@
    call rather than by it, and the return value of 0xF739 is not read here.
    type: forwarder
    evidence: ec/decompiled/pd/8BC0.asm; ec/decompiled/pd/8BC0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 call_f739_then_read_07d1(void)
 

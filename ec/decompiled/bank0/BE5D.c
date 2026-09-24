@@ -10,7 +10,8 @@
    the decompiled C's boolean reading does not match these instructions.
    type: math
    evidence: ec/decompiled/bank0/BE5D.asm; ec/decompiled/bank0/BE5D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 bool add_20_carry_to_r6_r7(byte *param_1)
 

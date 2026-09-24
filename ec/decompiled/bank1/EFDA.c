@@ -12,7 +12,8 @@
    here.
    type: dispatch
    evidence: ec/decompiled/bank1/EFDA.asm; ec/decompiled/bank1/EFDA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_index_3x_from_byte_00(short param_1)
 

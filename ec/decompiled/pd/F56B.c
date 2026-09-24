@@ -9,7 +9,8 @@
    examined.
    type: logic
    evidence: ec/decompiled/pd/F56B.asm; ec/decompiled/pd/F56B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void return_1_if_acc_bits_2_3_set(void)
 

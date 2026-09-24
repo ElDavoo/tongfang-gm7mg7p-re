@@ -9,7 +9,8 @@
    not decoded.
    type: forwarder
    evidence: ec/decompiled/bank0/DCD5.asm; ec/decompiled/bank0/DCD5.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void read_0455_tail_3f9d(void)
 

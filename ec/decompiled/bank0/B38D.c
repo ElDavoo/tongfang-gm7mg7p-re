@@ -9,7 +9,8 @@
    boundary may have cut a longer routine short, and this row records that rather than guessing.
    type: unresolved
    evidence: ec/decompiled/bank0/B38D.asm; ec/decompiled/bank0/B38D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void unresolved_b38d(void)
 

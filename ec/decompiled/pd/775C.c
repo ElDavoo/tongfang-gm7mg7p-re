@@ -10,7 +10,8 @@
    0xE4D0 alters R7.
    type: forwarder
    evidence: ec/decompiled/pd/775C.asm; ec/decompiled/pd/775C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 call_e4d0_return_r7(void)
 

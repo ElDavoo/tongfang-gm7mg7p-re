@@ -10,7 +10,8 @@
    fall-through.
    type: copy
    evidence: ec/decompiled/pd/B2A6.asm; ec/decompiled/pd/B2A6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void mov_a_from_r7(undefined1 *param_1,undefined1 param_2)
 

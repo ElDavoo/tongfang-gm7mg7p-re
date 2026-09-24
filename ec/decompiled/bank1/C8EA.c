@@ -9,7 +9,8 @@
    role is not determinable from its own instructions.
    type: unresolved
    evidence: ec/decompiled/bank1/C8EA.asm; ec/decompiled/bank1/C8EA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_d5b4_then_d32c_and_d34b(void)
 

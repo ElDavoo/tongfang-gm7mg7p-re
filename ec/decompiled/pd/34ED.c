@@ -8,7 +8,8 @@
    ret. What happens to R7 next is not decoded here.
    type: reader
    evidence: ec/decompiled/pd/34ED.asm; ec/decompiled/pd/34ED.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void read_xdata_at_dptr_to_r7_34ed(undefined1 *param_1)
 

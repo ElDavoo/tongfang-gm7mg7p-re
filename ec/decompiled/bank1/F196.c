@@ -9,7 +9,8 @@
    This slot reads and writes nothing itself.
    type: forwarder
    evidence: ec/decompiled/bank1/F196.asm; ec/decompiled/bank1/F196.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void sjmp_to_f198(void)
 

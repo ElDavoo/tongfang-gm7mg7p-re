@@ -9,7 +9,8 @@
    none of the five helpers is decoded here.
    type: logic
    evidence: ec/decompiled/bank0/EDBC.asm; ec/decompiled/bank0/EDBC.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void four_calls_then_4777_flag(short param_1,char param_2)
 

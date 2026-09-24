@@ -11,7 +11,8 @@
    the listing -- the not-taken path is not shown here.
    type: state
    evidence: ec/decompiled/bank0/AF27.asm; ec/decompiled/bank0/AF27.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void fill_0790_0791_0793_via_calls(undefined1 *param_1)
 

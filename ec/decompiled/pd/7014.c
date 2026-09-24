@@ -9,7 +9,8 @@
    this file pair and its behaviour is not decoded here.
    type: forwarder
    evidence: ec/decompiled/pd/7014.asm; ec/decompiled/pd/7014.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_dptr_0a86_and_call_10e8(void)
 

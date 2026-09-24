@@ -11,7 +11,8 @@
    decoded here.
    type: delay
    evidence: ec/decompiled/bank1/A57E.asm; ec/decompiled/bank1/A57E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 write_0_to_200b_r5_times_330(undefined1 param_1,char param_2)
 

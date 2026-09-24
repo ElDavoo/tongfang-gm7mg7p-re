@@ -9,7 +9,8 @@
    named. C356 immediately after is the same test on the same bit with the polarity inverted.
    type: logic
    evidence: ec/decompiled/bank0/C349.asm; ec/decompiled/bank0/C349.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void test_1667_bit0(void)
 

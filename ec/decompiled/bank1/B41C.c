@@ -10,7 +10,8 @@
    to 0xB442, so the code there is not shown in this file.
    type: state
    evidence: ec/decompiled/bank1/B41C.asm; ec/decompiled/bank1/B41C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_054d_set_bit_on_10(byte param_1,byte *param_2,char param_3,byte param_4,byte param_5)
 

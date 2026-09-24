@@ -10,7 +10,8 @@
    names any of these bytes.
    type: writer
    evidence: ec/decompiled/bank0/BB78.asm; ec/decompiled/bank0/BB78.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void zero_0855_0856(void)
 

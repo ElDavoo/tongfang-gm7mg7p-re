@@ -12,7 +12,8 @@
    representation of the two quads is not established by these bytes.
    type: math
    evidence: ec/decompiled/bank0/724B.asm; ec/decompiled/bank0/724B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char normalize_sign_pair_4byte
                (char param_1,char param_2,char param_3,char param_4,char param_5,char param_6,

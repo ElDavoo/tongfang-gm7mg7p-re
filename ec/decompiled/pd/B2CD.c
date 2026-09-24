@@ -10,7 +10,8 @@
    MOVX reads; what 0x07D5 holds is not established here.
    type: reader
    evidence: ec/decompiled/pd/B2CD.asm; ec/decompiled/pd/B2CD.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void read3_from_07d5_into_r3_r1(void)
 

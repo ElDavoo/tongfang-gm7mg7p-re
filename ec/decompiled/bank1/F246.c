@@ -12,7 +12,8 @@
    cleared elsewhere.
    type: writer
    evidence: ec/decompiled/bank1/F246.asm; ec/decompiled/bank1/F246.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void if_045a_bit4_set_toggle_047b_10_set_0637_0a(void)
 

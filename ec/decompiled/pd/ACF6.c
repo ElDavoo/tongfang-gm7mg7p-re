@@ -10,7 +10,8 @@
    so the completion of that address is not shown here.
    type: math
    evidence: ec/decompiled/pd/ACF6.asm; ec/decompiled/pd/ACF6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte index_a_by_5e_add_08fc(char param_1,byte param_2)
 

@@ -10,7 +10,8 @@
    None of 0x0A56-0x0A5A has an entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/F081.asm; ec/decompiled/bank0/F081.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_five_times(undefined1 param_1,short param_2)
 

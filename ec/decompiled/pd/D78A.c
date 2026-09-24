@@ -13,7 +13,8 @@
    these instructions produce.
    type: gate
    evidence: ec/decompiled/pd/D78A.asm; ec/decompiled/pd/D78A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte return_one_when_arg_matches_queried_values(byte param_1)
 

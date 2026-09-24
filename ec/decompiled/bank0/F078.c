@@ -11,7 +11,8 @@
    the same run. None of 0x0A56-0x0A5A has an entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/F078.asm; ec/decompiled/bank0/F078.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_0_1_zeros_at_dptr_plus1(undefined1 param_1,short param_2)
 

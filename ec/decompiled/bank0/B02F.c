@@ -8,7 +8,8 @@
    instructions are identical to 0xB026; nothing in this listing distinguishes the two.
    type: forwarder
    evidence: ec/decompiled/bank0/B02F.asm; ec/decompiled/bank0/B02F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_dptr_0a4b_after_call_445e_08_b02f(void)
 

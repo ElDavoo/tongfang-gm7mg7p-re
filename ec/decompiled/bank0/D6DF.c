@@ -12,7 +12,8 @@
    bytes do not contain.
    type: math
    evidence: ec/decompiled/bank0/D6DF.asm; ec/decompiled/bank0/D6DF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 char add_d0_to_dptr_low_byte(byte *param_1)
 

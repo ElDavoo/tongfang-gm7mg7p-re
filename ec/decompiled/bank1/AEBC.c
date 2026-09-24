@@ -10,7 +10,8 @@
    None of 0x0497, 0x0514 or 0x0436 is documented in ec/annotations/registers.yaml.
    type: math
    evidence: ec/decompiled/bank1/AEBC.asm; ec/decompiled/bank1/AEBC.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 char cmp_0436_0437_against_1_or_test_0514(void)
 

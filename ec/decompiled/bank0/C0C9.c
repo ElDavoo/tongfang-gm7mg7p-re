@@ -9,7 +9,8 @@
    the second test. 0x3202 has no entry in ec/annotations/registers.yaml.
    type: logic
    evidence: ec/decompiled/bank0/C0C9.asm; ec/decompiled/bank0/C0C9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void return_1_if_3202_bits_1_and_2(void)
 

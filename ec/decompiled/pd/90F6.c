@@ -9,7 +9,8 @@
    caller left. The C's call to 0x10C8 is wrong on that point: an ljmp pushes no return address.
    type: forwarder
    evidence: ec/decompiled/pd/90F6.asm; ec/decompiled/pd/90F6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_1253_then_jump_10c8(void)
 

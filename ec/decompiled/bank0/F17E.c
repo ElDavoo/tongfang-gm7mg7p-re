@@ -9,7 +9,8 @@
    decompiled C omits.
    type: reader
    evidence: ec/decompiled/bank0/F17E.asm; ec/decompiled/bank0/F17E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_0a51_with_r7_from_0a4e(void)
 

@@ -10,7 +10,8 @@
    neither 0x1253 nor 0x10C8 is decoded here.
    type: forwarder
    evidence: ec/decompiled/pd/90F3.asm; ec/decompiled/pd/90F3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_dptr_0004_then_fall_through(void)
 

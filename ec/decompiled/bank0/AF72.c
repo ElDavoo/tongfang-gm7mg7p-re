@@ -8,7 +8,8 @@
    control continues into the code at 0xAF7D.
    type: writer
    evidence: ec/decompiled/bank0/AF72.asm; ec/decompiled/bank0/AF72.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_08ec_bit5_clear_bit1(void)
 

@@ -8,7 +8,8 @@
    A with R5 before tail-jumping to 0x7110. The tail target is not decoded in this listing.
    type: forwarder
    evidence: ec/decompiled/bank0/BD7F.asm; ec/decompiled/bank0/BD7F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_then_tail_call_7110_b6
                (undefined1 param_1,undefined1 *param_2,undefined1 param_3,undefined1 param_4,

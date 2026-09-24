@@ -9,7 +9,8 @@
    the 0x0A56/0x0A57 writes at 0xF499 and the return; the call from 0xF1E9 passes 0x80 in A.
    type: writer
    evidence: ec/decompiled/bank0/F495.asm; ec/decompiled/bank0/F495.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_dptr_0f60_then_store_a(undefined1 param_1)
 

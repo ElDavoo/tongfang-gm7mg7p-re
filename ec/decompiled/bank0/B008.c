@@ -8,7 +8,8 @@
    here and never written by these five instructions.
    type: reader
    evidence: ec/decompiled/bank0/B008.asm; ec/decompiled/bank0/B008.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_0a4b_after_call_445e_0c(void)
 

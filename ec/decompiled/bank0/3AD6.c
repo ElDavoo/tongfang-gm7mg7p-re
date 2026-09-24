@@ -9,7 +9,8 @@
    tool inserted. Nothing here identifies any of the three addresses.
    type: writer
    evidence: ec/decompiled/bank0/3AD6.asm; ec/decompiled/bank0/3AD6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_10_2007_clear_1302_set_1300(void)
 

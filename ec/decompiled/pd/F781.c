@@ -10,7 +10,8 @@
    image are not independently confirmed here.
    type: state
    evidence: ec/decompiled/pd/F781.asm; ec/decompiled/pd/F781.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void clear_sfr_88_set_sfr_a8(void)
 

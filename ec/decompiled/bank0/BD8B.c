@@ -7,7 +7,8 @@
 /* One of the comparisons behind the 250 mV-per-cell derating tier (stress > 18144).
    type: math
    evidence: ec/annotations/charge-target-derating.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char tier_250_eligible(void)
 

@@ -12,7 +12,8 @@
    ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/C03C.asm; ec/decompiled/bank0/C03C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_16xx_40_and_clear_1601_bits_1_3_6(void)
 

@@ -14,7 +14,8 @@
    entry of its own -- is not decoded here.
    type: bank-switch
    evidence: ec/decompiled/common/1150.asm; ec/decompiled/common/1150.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: abi-symbol */
 
 void load_dptr_bf1c_tail_jump_1100(void)
 

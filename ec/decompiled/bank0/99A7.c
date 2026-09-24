@@ -11,7 +11,8 @@
    ec/annotations/registers.yaml.
    type: math
    evidence: ec/decompiled/bank0/99A7.asm; ec/decompiled/bank0/99A7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clamp_0a53_0a54_down_to_08c4_08c5(void)
 

@@ -8,7 +8,8 @@
    a longer sequence rather than a complete routine.
    type: unresolved
    evidence: ec/decompiled/pd/34C9.asm; ec/decompiled/pd/34C9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void copy_a_to_r7_zero_r6(undefined1 param_1)
 

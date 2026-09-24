@@ -15,7 +15,8 @@
    passing note about the 0x0780-0x07FF range.
    type: logic
    evidence: ec/decompiled/bank0/909B.asm; ec/decompiled/bank0/909B.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void update_flag_bits_in_0985(void)
 

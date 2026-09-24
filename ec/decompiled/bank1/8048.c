@@ -10,7 +10,8 @@
    here is not determined.
    type: writer
    evidence: ec/decompiled/bank1/8048.asm; ec/decompiled/bank1/8048.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void store_acc_and_read_0639(undefined1 param_1,undefined1 *param_2,char param_3)
 

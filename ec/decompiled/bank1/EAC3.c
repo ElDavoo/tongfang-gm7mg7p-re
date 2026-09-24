@@ -16,7 +16,8 @@
    ec/annotations/bank-call-targets.csv. Nothing beyond that lcall is decoded.
    type: unresolved
    evidence: ec/decompiled/bank1/EAC3.asm; ec/decompiled/bank1/EAC3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void unresolved_byte_stream_eac3
                (short param_1,byte param_2,byte *param_3,byte *param_4,byte param_5,byte param_6,

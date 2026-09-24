@@ -11,7 +11,8 @@
    documented in ec/annotations/registers.yaml.
    type: logic
    evidence: ec/decompiled/bank0/D9DC.asm; ec/decompiled/bank0/D9DC.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void select_0825_or_0827_into_0826(char r7_from_c1e7)
 

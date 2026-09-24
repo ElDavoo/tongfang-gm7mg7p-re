@@ -9,7 +9,8 @@
    listing does not fix.
    type: writer
    evidence: ec/decompiled/bank0/D284.asm; ec/decompiled/bank0/D284.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_ff_to_dptr_then_d28e(undefined1 *param_1)
 

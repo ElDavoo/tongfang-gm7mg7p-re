@@ -14,7 +14,8 @@
    ec/annotations/registers.yaml.
    type: init
    evidence: ec/decompiled/bank0/D6F4.asm; ec/decompiled/bank0/D6F4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void zero_0a59_0a5a_then_call_series(void)
 

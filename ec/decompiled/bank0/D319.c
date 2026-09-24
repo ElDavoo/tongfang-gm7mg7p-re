@@ -9,7 +9,8 @@
    surviving the call is affected. What the surviving bits 0x7C represent is not decoded.
    type: logic
    evidence: ec/decompiled/bank0/D319.asm; ec/decompiled/bank0/D319.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 byte mask_dp_byte_7c_reset_dptr_0860(byte *param_1)
 

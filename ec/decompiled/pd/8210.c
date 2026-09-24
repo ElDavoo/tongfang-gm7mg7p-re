@@ -9,7 +9,8 @@
    renders it as FUN_CODE_dc29(0, DAT_EXTMEM_07d4), which matches R4=0 and R7=the byte.
    type: forwarder
    evidence: ec/decompiled/pd/8210.asm; ec/decompiled/pd/8210.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_dc29_with_07d4(void)
 

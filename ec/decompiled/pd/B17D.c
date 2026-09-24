@@ -10,7 +10,8 @@
    pointer parameter, which matches only because DPTR is the caller's.
    type: writer
    evidence: ec/decompiled/pd/B17D.asm; ec/decompiled/pd/B17D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_dptr_byte_set_00bd_bit0_clear_ff62_bit3(undefined1 param_1,undefined1 *param_2)
 

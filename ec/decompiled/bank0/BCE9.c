@@ -10,7 +10,8 @@
    no determinable role.
    type: unresolved
    evidence: ec/decompiled/bank0/BCE9.asm; ec/decompiled/bank0/BCE9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_first_code_byte_pair_frag(short param_1)
 

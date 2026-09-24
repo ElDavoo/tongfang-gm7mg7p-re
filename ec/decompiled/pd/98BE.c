@@ -9,7 +9,8 @@
    file pair, so what the constant addresses is not determined.
    type: math
    evidence: ec/decompiled/pd/98BE.asm; ec/decompiled/pd/98BE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_dptr_0004(byte param_1,char param_2,char param_3,byte param_4)
 

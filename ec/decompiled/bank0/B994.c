@@ -10,7 +10,8 @@
    listing.
    type: writer
    evidence: ec/decompiled/bank0/B994.asm; ec/decompiled/bank0/B994.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char store_a_to_dptr_b994(undefined1 param_1,undefined1 *param_2)
 

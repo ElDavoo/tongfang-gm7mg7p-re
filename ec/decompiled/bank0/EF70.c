@@ -9,7 +9,8 @@
    call and a different bit.
    type: logic
    evidence: ec/decompiled/bank0/EF70.asm; ec/decompiled/bank0/EF70.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_ee96_then_xor_0fc0_04(char param_1)
 

@@ -11,7 +11,8 @@
    and it omits the DPTR=0x04A3 load entirely.
    type: forwarder
    evidence: ec/decompiled/pd/EDB5.asm; ec/decompiled/pd/EDB5.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void setup_04a3_r3_7_then_call_10bc(void)
 

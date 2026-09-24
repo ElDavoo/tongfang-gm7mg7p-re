@@ -9,7 +9,8 @@
    whether the EC acts on a value the host wrote
    type: reader
    evidence: ec/annotations/manual-fan-ctrl-0751.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte fan_mode_get(void)
 

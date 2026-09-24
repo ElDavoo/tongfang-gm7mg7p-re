@@ -10,7 +10,8 @@
    call-target scan.
    type: writer
    evidence: ec/decompiled/bank0/E376.asm; ec/decompiled/bank0/E376.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void load_164b_and_80(void)
 

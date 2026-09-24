@@ -10,7 +10,8 @@
    its target and no register in that body belongs to this address.
    type: forwarder
    evidence: ec/decompiled/bank1/C8F4.asm; ec/decompiled/bank1/C8F4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void jump_to_c924(void)
 

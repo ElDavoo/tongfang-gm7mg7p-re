@@ -10,7 +10,8 @@
    determined by this listing.
    type: reader
    evidence: ec/decompiled/bank0/C1BE.asm; ec/decompiled/bank0/C1BE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void test_1663_bit6_inverted(void)
 

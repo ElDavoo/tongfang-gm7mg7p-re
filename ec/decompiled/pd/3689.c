@@ -9,7 +9,8 @@
    only, and what the byte there holds is not decoded here.
    type: forwarder
    evidence: ec/decompiled/pd/3689.asm; ec/decompiled/pd/3689.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void read_0a8b_then_tail_10bc(void)
 

@@ -12,7 +12,8 @@
    listing.
    type: logic
    evidence: ec/decompiled/bank0/9007.asm; ec/decompiled/bank0/9007.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void word_nonzero_check_tail(char param_1,short param_2)
 

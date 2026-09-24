@@ -8,7 +8,8 @@
    memory.
    type: logic
    evidence: ec/decompiled/bank1/8597.asm; ec/decompiled/bank1/8597.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 return_zero(void)
 

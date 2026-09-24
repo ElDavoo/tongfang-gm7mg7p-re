@@ -11,7 +11,8 @@
    does is described on the 0xCEA2 row.
    type: state
    evidence: ec/decompiled/bank0/CE9E.asm; ec/decompiled/bank0/CE9E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char load_index_06e7_head_of_cea2_loop(char param_1)
 

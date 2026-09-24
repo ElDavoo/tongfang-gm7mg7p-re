@@ -7,7 +7,8 @@
 /* A single mov DPTR,#0x424 with no ret, so the pointer's use is not decoded here.
    type: unresolved
    evidence: ec/decompiled/pd/34EF.asm; ec/decompiled/pd/34EF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_dptr_0424(void)
 

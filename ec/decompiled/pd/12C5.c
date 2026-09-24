@@ -8,7 +8,8 @@
    between each read. R0 is left pointing at the last byte read.
    type: reader
    evidence: ec/decompiled/pd/12C5.asm; ec/decompiled/pd/12C5.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read4_xdata_to_r4r7(char param_1)
 

@@ -9,7 +9,8 @@
    decompiled C shows are not in it.
    type: copy
    evidence: ec/decompiled/bank0/EFDC.asm; ec/decompiled/bank0/EFDC.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_ef17_then_copy_0f80_to_0fb1(char param_1)
 

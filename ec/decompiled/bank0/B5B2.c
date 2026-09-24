@@ -11,7 +11,8 @@
    entry from 0xB4A8 they store zero. Nothing is read back.
    type: writer
    evidence: ec/decompiled/bank0/B5B2.asm; ec/decompiled/bank0/B5B2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void clear_08eb_bit5_09e6_09e7_08a1_089c_089d(void)
 

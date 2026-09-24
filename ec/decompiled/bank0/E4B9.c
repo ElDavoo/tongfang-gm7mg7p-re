@@ -12,7 +12,8 @@
    here.
    type: state
    evidence: ec/decompiled/bank0/E4B9.asm; ec/decompiled/bank0/E4B9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void init_0a4d_block_and_count(char param_1,undefined1 param_2)
 

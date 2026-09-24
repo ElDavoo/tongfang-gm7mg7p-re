@@ -12,7 +12,8 @@
    shard, so what the loop drives is not determined.
    type: state
    evidence: ec/decompiled/pd/4402.asm; ec/decompiled/pd/4402.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void run_body_while_07cf_is_zero(void)
 

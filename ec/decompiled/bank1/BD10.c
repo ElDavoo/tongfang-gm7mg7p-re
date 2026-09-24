@@ -11,7 +11,8 @@
    so the bits' meaning is not claimed.
    type: writer
    evidence: ec/decompiled/bank1/BD10.asm; ec/decompiled/bank1/BD10.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void mask_0491_with_c0(void)
 

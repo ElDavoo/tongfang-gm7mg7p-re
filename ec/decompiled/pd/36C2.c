@@ -9,7 +9,8 @@
    a constant and shows neither read.
    type: reader
    evidence: ec/decompiled/pd/36C2.asm; ec/decompiled/pd/36C2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_0803_0804_to_r7_r5(void)
 

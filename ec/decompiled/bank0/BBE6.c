@@ -10,7 +10,8 @@
    an entry point is not determinable from the byte-scan boundary alone.
    type: unresolved
    evidence: ec/decompiled/bank0/BBE6.asm; ec/decompiled/bank0/BBE6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char load_dptr_0469(void)
 

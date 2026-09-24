@@ -11,7 +11,8 @@
    0x06CD. What any of these bytes represents is not decoded here.
    type: writer
    evidence: ec/decompiled/bank1/F2AD.asm; ec/decompiled/bank1/F2AD.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void if_06cd_zero_set_02_set_06ff_40(void)
 

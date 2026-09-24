@@ -13,7 +13,8 @@
    jumps to 0xE501.
    type: copy
    evidence: ec/decompiled/bank1/E3B5.asm; ec/decompiled/bank1/E3B5.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void copy_03cd_03ce_03cf_to_1c02_1c04_1c05(void)
 

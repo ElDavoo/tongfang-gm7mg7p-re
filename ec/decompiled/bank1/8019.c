@@ -10,7 +10,8 @@
    call-target byte scan's hypothesis and the function-level role here is not determined.
    type: reader
    evidence: ec/decompiled/bank1/8019.asm; ec/decompiled/bank1/8019.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void load_dptr_06d2(char param_1)
 

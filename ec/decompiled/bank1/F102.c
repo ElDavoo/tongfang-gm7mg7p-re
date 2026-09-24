@@ -8,7 +8,8 @@
    The .c attached here is the decompilation of the branch target 0xF154, not of these two bytes.
    type: forwarder
    evidence: ec/decompiled/bank1/F102.asm; ec/decompiled/bank1/F102.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void sjmp_f154(void)
 

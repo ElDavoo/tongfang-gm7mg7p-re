@@ -14,7 +14,8 @@
    the .asm shows all three are bits of XDATA 0x1304.
    type: state
    evidence: ec/decompiled/bank0/B065.asm; ec/decompiled/bank0/B065.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte ten_count_gate_then_set_1300_and_200f(void)
 

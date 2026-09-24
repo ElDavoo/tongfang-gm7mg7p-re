@@ -10,7 +10,8 @@
    point at is not decoded here.
    type: reader
    evidence: ec/decompiled/bank0/D872.asm; ec/decompiled/bank0/D872.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 load_code_ptr_from_table_6d74(char param_1)
 

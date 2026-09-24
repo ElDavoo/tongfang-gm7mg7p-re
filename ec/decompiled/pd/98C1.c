@@ -10,7 +10,8 @@
    register pair itself.
    type: math
    evidence: ec/decompiled/pd/98C1.asm; ec/decompiled/pd/98C1.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void add_r6r7_to_r1r2_tail_0bc4(byte param_1,char param_2,char param_3,byte param_4)
 

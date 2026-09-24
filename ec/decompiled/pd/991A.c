@@ -9,7 +9,8 @@
    decoded in this file pair, so what it does with the address is not determined.
    type: forwarder
    evidence: ec/decompiled/pd/991A.asm; ec/decompiled/pd/991A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dptr_001d_tail_0d38(void)
 

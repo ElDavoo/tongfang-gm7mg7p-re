@@ -8,7 +8,8 @@
    different constant. The C shows a call carrying 0x21. 0x0C58 is not decoded in this file pair.
    type: forwarder
    evidence: ec/decompiled/pd/995F.asm; ec/decompiled/pd/995F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dptr_0021_tail_0c58(void)
 

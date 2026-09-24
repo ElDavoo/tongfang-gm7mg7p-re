@@ -11,7 +11,8 @@
    are 0x885B; the C reads the 0x8886 and 0x889E calls as writes, which they are not.
    type: math
    evidence: ec/decompiled/bank1/B50E.asm; ec/decompiled/bank1/B50E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void derive_scaled_values_from_0404(char param_1,undefined1 param_2)
 

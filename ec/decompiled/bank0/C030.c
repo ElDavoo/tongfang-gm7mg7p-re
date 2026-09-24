@@ -8,7 +8,8 @@
    unconditional and nothing is read. Neither address has an entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/C030.asm; ec/decompiled/bank0/C030.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_1615_40_and_clear_1807(void)
 

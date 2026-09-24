@@ -12,7 +12,8 @@
    ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/F0CA.asm; ec/decompiled/bank0/F0CA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_read_0fa0_then_set_0a56_block(undefined1 param_1,undefined1 *param_2)
 

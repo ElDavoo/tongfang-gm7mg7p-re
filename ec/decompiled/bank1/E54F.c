@@ -9,7 +9,8 @@
    0x0681. Nothing else is read, so the wrap-clears-mask behaviour is the only conditional in it.
    type: state
    evidence: ec/decompiled/bank1/E54F.asm; ec/decompiled/bank1/E54F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void increment_03af_clear_03a1_on_wrap(void)
 

@@ -9,7 +9,8 @@
    output; what they mean and what 0xE458 does are not decoded here.
    type: forwarder
    evidence: ec/decompiled/pd/F604.asm; ec/decompiled/pd/F604.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_e458_then_r4r5r6r7_03120100(void)
 

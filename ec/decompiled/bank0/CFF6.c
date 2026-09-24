@@ -12,7 +12,8 @@
    ec/annotations/registers.yaml.
    type: copy
    evidence: ec/decompiled/bank0/CFF6.asm; ec/decompiled/bank0/CFF6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char load_stride5_table_word_into_06e8_pair(void)
 

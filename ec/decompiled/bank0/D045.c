@@ -9,7 +9,8 @@
    reads the byte at 0x06E8 into A and returns it.
    type: writer
    evidence: ec/decompiled/bank0/D045.asm; ec/decompiled/bank0/D045.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 inc_06e7_clear_06ea_eb_read_06e8(char param_1,char *param_2)
 

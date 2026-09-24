@@ -9,7 +9,8 @@
    is the read half of that split sequence.
    type: reader
    evidence: ec/decompiled/pd/ACE4.asm; ec/decompiled/pd/ACE4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char read_xdata_to_r3(char *param_1)
 

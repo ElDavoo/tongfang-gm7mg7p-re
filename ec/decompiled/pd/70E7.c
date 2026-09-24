@@ -9,7 +9,8 @@
    that register set is not in this listing and is not decoded here.
    type: forwarder
    evidence: ec/decompiled/pd/70E7.asm; ec/decompiled/pd/70E7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_0fcb_then_tail_jmp_0f0e(void)
 

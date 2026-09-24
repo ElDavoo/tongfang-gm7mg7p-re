@@ -10,7 +10,8 @@
    expression is not what these instructions produce.
    type: math
    evidence: ec/decompiled/pd/365C.asm; ec/decompiled/pd/365C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char scale_dptr_from_dptr_byte(char *param_1)
 

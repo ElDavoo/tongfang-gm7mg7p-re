@@ -10,7 +10,8 @@
    and 0x05B9 are not documented in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank1/BDEF.asm; ec/decompiled/bank1/BDEF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_0499_with_0x21(void)
 

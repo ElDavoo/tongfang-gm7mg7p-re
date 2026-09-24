@@ -8,7 +8,8 @@
    touched; what 0x068B selects is not decoded from this listing.
    type: writer
    evidence: ec/decompiled/bank1/9B35.asm; ec/decompiled/bank1/9B35.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_4_to_068b(void)
 

@@ -10,7 +10,8 @@
    byte into a page selected by R4.
    type: reader
    evidence: ec/decompiled/pd/97B9.asm; ec/decompiled/pd/97B9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_xdata_byte_at_r4_minus_3_page_01(char param_1)
 

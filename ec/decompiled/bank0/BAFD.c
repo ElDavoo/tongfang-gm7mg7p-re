@@ -11,7 +11,8 @@
    ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/BAFD.asm; ec/decompiled/bank0/BAFD.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_then_set_bits_1_and_0_of_1900(undefined1 param_1,undefined1 *param_2)
 

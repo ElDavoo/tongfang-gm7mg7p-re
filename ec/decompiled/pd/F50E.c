@@ -10,7 +10,8 @@
    written back with those two bits replaced and the low six preserved.
    type: writer
    evidence: ec/decompiled/pd/F50E.asm; ec/decompiled/pd/F50E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_bits_6_7_from_r5(byte *param_1,char param_2)
 

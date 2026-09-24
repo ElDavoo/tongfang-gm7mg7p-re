@@ -9,7 +9,8 @@
    0xf154, which passes 0x0A. What R5 means to the callee is not decoded here.
    type: gate
    evidence: ec/decompiled/bank1/F18A.asm; ec/decompiled/bank1/F18A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void if_0440_nonzero_call_88f0_0c(void)
 

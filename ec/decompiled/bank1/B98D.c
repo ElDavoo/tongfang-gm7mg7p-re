@@ -16,7 +16,8 @@
    0xBA43-0xBAB1 block the C shows as a continuation is not in this file.
    type: dispatch
    evidence: ec/decompiled/bank1/B98D.asm; ec/decompiled/bank1/B98D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void threshold_dispatch_0438_by_0491(void)
 

@@ -17,7 +17,8 @@
    second jc at 0xCCCD re-tests the carry the first one at 0xCCCB already consumed.
    type: logic
    evidence: ec/decompiled/bank1/CC95.asm; ec/decompiled/bank1/CC95.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_0397_from_0342_by_0514_band(void)
 

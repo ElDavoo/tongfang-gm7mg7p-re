@@ -10,7 +10,8 @@
    and the function-level role here is not determined.
    type: gate
    evidence: ec/decompiled/bank1/8060.asm; ec/decompiled/bank1/8060.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void branch_if_acc_zero_to_8064(char param_1,char *param_2,char param_3)
 

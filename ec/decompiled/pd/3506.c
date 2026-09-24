@@ -7,7 +7,8 @@
 /* A single mov DPTR,#0xA8B with no ret; the listing does not show what the pointer is used for.
    type: unresolved
    evidence: ec/decompiled/pd/3506.asm; ec/decompiled/pd/3506.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char set_dptr_0a8b(void)
 

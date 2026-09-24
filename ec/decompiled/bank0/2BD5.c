@@ -15,7 +15,8 @@
    0x2BC1 with no ret, so what follows is not decoded here.
    type: dispatch
    evidence: ec/decompiled/bank0/2BD5.asm; ec/decompiled/bank0/2BD5.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void event_id_latch_and_bit_merge(byte param_1,char param_2)
 

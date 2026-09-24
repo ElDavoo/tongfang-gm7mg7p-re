@@ -13,7 +13,8 @@
    function-level role here is not determined.
    type: writer
    evidence: ec/decompiled/bank1/8096.asm; ec/decompiled/bank1/8096.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void dec_06d9_only_if_both_calls_return_zero(char param_1)
 

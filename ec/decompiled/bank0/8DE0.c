@@ -14,7 +14,8 @@
    separately listed 0x8F03.
    type: state
    evidence: ec/decompiled/bank0/8DE0.asm; ec/decompiled/bank0/8DE0.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void ramp_1804_toward_0670_and_set_1809(byte param_1)
 

@@ -9,7 +9,8 @@
    cross-bank select stub at 0x1100; the 0x1100 body and what 0x8031 does are not in this listing.
    type: dispatch
    evidence: ec/decompiled/bank1/1A98.asm; ec/decompiled/bank1/1A98.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void trampoline_bank0_8031(void)
 

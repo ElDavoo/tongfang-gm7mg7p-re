@@ -9,7 +9,8 @@
    named.
    type: writer
    evidence: ec/decompiled/bank0/C371.asm; ec/decompiled/bank0/C371.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_1607_bit1(void)
 

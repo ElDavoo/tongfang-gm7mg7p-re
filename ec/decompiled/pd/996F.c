@@ -8,7 +8,8 @@
    register touched. The C shows a call carrying 0x10.
    type: forwarder
    evidence: ec/decompiled/pd/996F.asm; ec/decompiled/pd/996F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dptr_0010_tail_0c58(void)
 

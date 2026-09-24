@@ -9,7 +9,8 @@
    0x068C and advances 0x068B.
    type: writer
    evidence: ec/decompiled/bank1/9E92.asm; ec/decompiled/bank1/9E92.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_68c_inc_68b(void)
 

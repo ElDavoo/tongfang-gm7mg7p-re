@@ -10,7 +10,8 @@
    store through a pointer and a call to 0xF512 that do not correspond to these two bytes.
    type: unresolved
    evidence: ec/decompiled/bank1/F030.asm; ec/decompiled/bank1/F030.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void operand_of_mov_dptr_f02f(undefined1 param_1,undefined1 *param_2)
 

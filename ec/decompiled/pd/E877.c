@@ -12,7 +12,8 @@
    zero and applies the bit 2/bit 3 edit to 0x080F itself, neither of which the .asm shows.
    type: logic
    evidence: ec/decompiled/pd/E877.asm; ec/decompiled/pd/E877.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_080f_0810_and_pick_f50e_arg_on_carry(undefined1 param_1,char param_2)
 

@@ -11,7 +11,8 @@
    does not come back through 0x973C. What 0x0FAF then reads is not shown in this listing.
    type: forwarder
    evidence: ec/decompiled/pd/973C.asm; ec/decompiled/pd/973C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dptr_07d1_then_tail_0faf(void)
 

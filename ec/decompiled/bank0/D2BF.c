@@ -9,7 +9,8 @@
    the body the .c reports for this function.
    type: reader
    evidence: ec/decompiled/bank0/D2BF.asm; ec/decompiled/bank0/D2BF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte set_dptr_1c00_then_d2c2(void)
 

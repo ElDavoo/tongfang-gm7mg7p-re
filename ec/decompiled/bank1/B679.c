@@ -9,7 +9,8 @@
    clear bit 2 going to 0xB652 and both set going to 0xB68C. The targets are outside this listing.
    type: gate
    evidence: ec/decompiled/bank1/B679.asm; ec/decompiled/bank1/B679.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void gate_0572_bit0_set(void)
 

@@ -9,7 +9,8 @@
    ec/annotations/registers.yaml.
    type: logic
    evidence: ec/decompiled/bank0/C0DA.asm; ec/decompiled/bank0/C0DA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void return_1_unless_3202_bit0(void)
 

@@ -9,7 +9,8 @@
    XDATA 0x164B through 0x164E with 0x80.
    type: writer
    evidence: ec/decompiled/bank0/E37B.asm; ec/decompiled/bank0/E37B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_to_dptr_then_164c_164e(undefined1 param_1,undefined1 *param_2)
 

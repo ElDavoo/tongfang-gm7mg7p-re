@@ -8,7 +8,8 @@
    is not known.
    type: reader
    evidence: ec/annotations/charge-target-derating.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte cfg_cell_count_selector(void)
 

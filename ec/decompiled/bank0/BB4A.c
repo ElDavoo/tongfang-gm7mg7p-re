@@ -10,7 +10,8 @@
    establish where DPTR came from.
    type: writer
    evidence: ec/decompiled/bank0/BB4A.asm; ec/decompiled/bank0/BB4A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_to_dptr_then_load_0a(undefined1 value_a,undefined1 *entry_dptr)
 

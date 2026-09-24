@@ -11,7 +11,8 @@
    whether this is a callable entry or a mid-routine label is not established here.
    type: unresolved
    evidence: ec/decompiled/bank0/F090.asm; ec/decompiled/bank0/F090.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_0f_60_00_00_00_at_dptr(undefined1 *param_1)
 

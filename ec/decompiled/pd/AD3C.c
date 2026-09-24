@@ -10,7 +10,8 @@
    next entry does. 0x07D0 is the PD image's own XDATA byte and is left unnamed here.
    type: unresolved
    evidence: ec/decompiled/pd/AD3C.asm; ec/decompiled/pd/AD3C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char set_dptr_07d0(void)
 

@@ -9,7 +9,8 @@
    0x089B + A * 0x77. No page term was resolved by this bounded decode
    type: math
    evidence: ec/annotations/ec-0x07d0-sites.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char index_stride_77_addr_r1(byte *param_1)
 

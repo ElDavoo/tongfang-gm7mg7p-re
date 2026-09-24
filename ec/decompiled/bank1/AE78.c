@@ -11,7 +11,8 @@
    documented in ec/annotations/registers.yaml.
    type: state
    evidence: ec/decompiled/bank1/AE78.asm; ec/decompiled/bank1/AE78.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void chain_probes_update_056a_1_3(void)
 

@@ -8,7 +8,8 @@
    back. 0x0780 has no entry in ec/annotations/registers.yaml.
    type: reader
    evidence: ec/decompiled/bank0/BE9C.asm; ec/decompiled/bank0/BE9C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 byte read_x0780_xor_a2(void)
 

@@ -14,7 +14,8 @@
    that quotient lands in: an EC-side site found with its meaning not established.
    type: math
    evidence: ec/decompiled/bank1/F416.asm; ec/decompiled/bank1/F416.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void scale_0438_into_0448(undefined1 param_1,char param_2)
 

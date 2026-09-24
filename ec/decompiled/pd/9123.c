@@ -10,7 +10,8 @@
    expression and drops the DPL store.
    type: math
    evidence: ec/decompiled/pd/9123.asm; ec/decompiled/pd/9123.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dpl_090d_plus_5e_times_a(char param_1)
 

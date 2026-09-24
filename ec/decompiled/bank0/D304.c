@@ -11,7 +11,8 @@
    downstream is not established by this listing.
    type: copy
    evidence: ec/decompiled/bank0/D304.asm; ec/decompiled/bank0/D304.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void stage_0862_0865_into_1c36_1c38(undefined1 param_1)
 

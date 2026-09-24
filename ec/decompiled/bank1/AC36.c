@@ -10,7 +10,8 @@
    0x490, 0x1C00 and 0x680 is documented in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank1/AC36.asm; ec/decompiled/bank1/AC36.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_1c00_ff_and_0680_04(void)
 

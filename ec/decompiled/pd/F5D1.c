@@ -9,7 +9,8 @@
    of bytes from opposite conditions.
    type: gate
    evidence: ec/decompiled/pd/F5D1.asm; ec/decompiled/pd/F5D1.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_ff42_bit7_if_00bd_zero(void)
 

@@ -10,7 +10,8 @@
    with no branches and no calls.
    type: writer
    evidence: ec/decompiled/bank1/B937.asm; ec/decompiled/bank1/B937.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_0492_0496_0577_0578_0542(void)
 

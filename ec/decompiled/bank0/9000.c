@@ -11,7 +11,8 @@
    to be the routine the .c calls be16_add at 0x70E4.
    type: forwarder
    evidence: ec/decompiled/bank0/9000.asm; ec/decompiled/bank0/9000.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 ljmp_703d(byte param_1,undefined1 param_2,char param_3)
 

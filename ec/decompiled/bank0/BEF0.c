@@ -10,7 +10,8 @@
    entry. 0x0A4A has no entry in ec/annotations/registers.yaml.
    type: reader
    evidence: ec/decompiled/bank0/BEF0.asm; ec/decompiled/bank0/BEF0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char read_0a4a_minus_carry(void)
 

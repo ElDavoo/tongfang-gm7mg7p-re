@@ -14,7 +14,8 @@
    role in this function is not established.
    type: state
    evidence: ec/decompiled/bank0/EC59.asm; ec/decompiled/bank0/EC59.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_r7_to_0a4c_and_branch_on_1_or_2(char param_1)
 

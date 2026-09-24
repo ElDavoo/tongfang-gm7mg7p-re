@@ -11,7 +11,8 @@
    not established here.
    type: unresolved
    evidence: ec/decompiled/bank0/F0E0.asm; ec/decompiled/bank0/F0E0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_0f_80_at_dptr_plus1(short param_1)
 

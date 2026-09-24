@@ -9,7 +9,8 @@
    supported by these two instructions - 0x122F's own listing ends in a RET.
    type: forwarder
    evidence: ec/decompiled/pd/CC36.asm; ec/decompiled/pd/CC36.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_122f_with_dptr_fffd_cc36(void)
 

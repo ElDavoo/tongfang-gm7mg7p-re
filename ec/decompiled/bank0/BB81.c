@@ -10,7 +10,8 @@
    bit gates is not determined here.
    type: reader
    evidence: ec/decompiled/bank0/BB81.asm; ec/decompiled/bank0/BB81.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte is_07c5_bit0_clear(void)
 

@@ -9,7 +9,8 @@
    upwards are zeroed. No return of its own; the RET belongs to 0xB40C.
    type: forwarder
    evidence: ec/decompiled/bank0/B461.asm; ec/decompiled/bank0/B461.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void zero_96_bytes_at_0f00(void)
 

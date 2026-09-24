@@ -10,7 +10,8 @@
    mid-sequence at 0x8014 with no ret, so this fragment is the whole of what is described here.
    type: writer
    evidence: ec/decompiled/bank0/8000.asm; ec/decompiled/bank0/8000.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_1654_block_load_1900(void)
 

@@ -17,7 +17,8 @@
    not.
    type: copy
    evidence: ec/decompiled/bank0/95DD.asm; ec/decompiled/bank0/95DD.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void fill_08xx_from_code_table(short param_1,undefined1 param_2,char param_3)
 

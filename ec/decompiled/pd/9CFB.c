@@ -9,7 +9,8 @@
    perform.
    type: reader
    evidence: ec/decompiled/pd/9CFB.asm; ec/decompiled/pd/9CFB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_xdata_to_r7_set_dptr_066c(undefined1 *param_1)
 

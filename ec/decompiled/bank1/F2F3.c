@@ -11,7 +11,8 @@
    than under this address.
    type: writer
    evidence: ec/decompiled/bank1/F2F3.asm; ec/decompiled/bank1/F2F3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void inc_0443_low3_unless_0440_5_6_7(void)
 

@@ -10,7 +10,8 @@
    bit 4. 0x1304 has no entry in ec/annotations/registers.yaml.
    type: init
    evidence: ec/decompiled/bank0/CC51.asm; ec/decompiled/bank0/CC51.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void init_set_1304_bit4_and_clear_bit2(void)
 

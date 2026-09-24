@@ -11,7 +11,8 @@
    ec/annotations/registers.yaml.
    type: dispatch
    evidence: ec/decompiled/bank1/C245.asm; ec/decompiled/bank1/C245.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_0490_bits_1_5_6(void)
 

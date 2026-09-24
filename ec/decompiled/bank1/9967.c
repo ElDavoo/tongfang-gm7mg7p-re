@@ -8,7 +8,8 @@
    0x98FE here while this listing has no store of its own.
    type: forwarder
    evidence: ec/decompiled/bank1/9967.asm; ec/decompiled/bank1/9967.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void forward_to_98fe_9967(void)
 

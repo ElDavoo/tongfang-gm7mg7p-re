@@ -9,7 +9,8 @@
    attributes to this address are not in this listing - they belong to 0xED52 which follows.
    type: gate
    evidence: ec/decompiled/bank0/ED47.asm; ec/decompiled/bank0/ED47.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void gate_a4b_eq_9(void)
 

@@ -9,7 +9,8 @@
    indicates what the stored value or the destination address is.
    type: writer
    evidence: ec/decompiled/bank0/BB99.asm; ec/decompiled/bank0/BB99.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_then_1906_init(undefined1 param_1,undefined1 *param_2)
 

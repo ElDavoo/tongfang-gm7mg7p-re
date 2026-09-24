@@ -9,7 +9,8 @@
    is not decoded here.
    type: ec-io
    evidence: ec/decompiled/pd/7063.asm; ec/decompiled/pd/7063.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char call_1041_then_point_dptr_07d4(void)
 

@@ -12,7 +12,8 @@
    ec/annotations/registers.yaml.
    type: dispatch
    evidence: ec/decompiled/bank1/ADFD.asm; ec/decompiled/bank1/ADFD.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_on_056a_low3(void)
 

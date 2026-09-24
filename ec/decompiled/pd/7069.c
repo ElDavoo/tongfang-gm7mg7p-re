@@ -8,7 +8,8 @@
    value set by the chunk at 0x7063 the address read is 0x07D4.
    type: reader
    evidence: ec/decompiled/pd/7069.asm; ec/decompiled/pd/7069.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char read_07d4_into_r7(char *param_1)
 

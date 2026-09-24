@@ -9,7 +9,8 @@
    only
    type: math
    evidence: ec/annotations/manual-fan-ctrl-0751.md
-   basis: inferred  <- reading, not a fact read out of the binary */
+   basis: inferred  <- reading, not a fact read out of the binary
+   name_basis: code-shape */
 
 void fan_table_base_offset_helper(void)
 

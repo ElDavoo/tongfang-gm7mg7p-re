@@ -14,7 +14,8 @@
    0x0490 &= 0x77. 0x0490 is not documented in ec/annotations/registers.yaml.
    type: state
    evidence: ec/decompiled/bank1/C11C.asm; ec/decompiled/bank1/C11C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void latch_0490_bit3_or_bit7(void)
 

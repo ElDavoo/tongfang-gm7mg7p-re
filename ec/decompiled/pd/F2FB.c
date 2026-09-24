@@ -9,7 +9,8 @@
    read and no branch; what these bytes are is not decoded here.
    type: writer
    evidence: ec/decompiled/pd/F2FB.asm; ec/decompiled/pd/F2FB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_ffda_ffdb_10_ffd8_48_ff40_bit1(void)
 

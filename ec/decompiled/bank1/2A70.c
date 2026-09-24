@@ -10,7 +10,8 @@
    byte at 0x4C is.
    type: writer
    evidence: ec/decompiled/bank1/2A70.asm; ec/decompiled/bank1/2A70.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_bits_5_6_of_direct_4c(byte param_1)
 

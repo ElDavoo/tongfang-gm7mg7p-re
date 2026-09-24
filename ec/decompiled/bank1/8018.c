@@ -11,7 +11,8 @@
    hypothesis and the function-level role here is not determined.
    type: writer
    evidence: ec/decompiled/bank1/8018.asm; ec/decompiled/bank1/8018.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_acc_to_xdata_dptr_8018(undefined1 param_1,undefined1 *param_2,char param_3)
 

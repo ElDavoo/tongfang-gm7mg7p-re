@@ -10,7 +10,8 @@
    entry in ec/annotations/registers.yaml names 0x0A49 or 0x0A4B.
    type: writer
    evidence: ec/decompiled/bank0/BC06.asm; ec/decompiled/bank0/BC06.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_0a49_to_1_and_clear_0a4b(undefined1 param_1,short param_2)
 

@@ -11,7 +11,8 @@
    ec/annotations/registers.yaml.
    type: math
    evidence: ec/decompiled/bank1/AE2B.asm; ec/decompiled/bank1/AE2B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void cmp_0436_0437_against_040a_040b(void)
 

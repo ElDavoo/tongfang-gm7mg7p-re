@@ -9,7 +9,8 @@
    routine only computes a pointer for its caller.
    type: math
    evidence: ec/decompiled/bank0/D894.asm; ec/decompiled/bank0/D894.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 set_dptr_0200_plus_r7(void)
 

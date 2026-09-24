@@ -13,7 +13,8 @@
    what 0x4A26, 0x4A4D, 0x4A69, 0x4AC4 and 0x4AE0 do is not decoded here.
    type: writer
    evidence: ec/decompiled/bank1/4874.asm; ec/decompiled/bank1/4874.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void inc_0a54_then_0a58_sequence(undefined1 param_1)
 

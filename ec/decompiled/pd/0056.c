@@ -11,7 +11,8 @@
    here.
    type: forwarder
    evidence: ec/decompiled/pd/0056.asm; ec/decompiled/pd/0056.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 vector_wrapper_dp_0151(undefined1 param_1)
 

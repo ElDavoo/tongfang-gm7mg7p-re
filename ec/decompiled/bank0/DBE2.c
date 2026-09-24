@@ -10,7 +10,8 @@
    of the 0x105x/0x107x block, but what that block is not decoded here.
    type: init
    evidence: ec/decompiled/bank0/DBE2.asm; ec/decompiled/bank0/DBE2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_consts_105a_105e_1076_1079(void)
 

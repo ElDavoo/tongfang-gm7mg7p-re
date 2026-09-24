@@ -11,7 +11,8 @@
    other location is touched.
    type: state
    evidence: ec/decompiled/bank0/D320.asm; ec/decompiled/bank0/D320.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void tick_dd_da_dc(void)
 

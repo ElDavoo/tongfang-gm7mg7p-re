@@ -10,7 +10,8 @@
    There is no ret of its own, so control continues past the lcall.
    type: math
    evidence: ec/decompiled/pd/C1DD.asm; ec/decompiled/pd/C1DD.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_dptr_fffe_into_0d0c(void)
 

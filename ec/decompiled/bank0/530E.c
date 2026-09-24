@@ -10,7 +10,8 @@
    Nothing in this listing says what 0x05E8, 0x1636 or 0x4BB0 do.
    type: dispatch
    evidence: ec/decompiled/bank0/530E.asm; ec/decompiled/bank0/530E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void stage_009a_dispatch_to_4bb0(undefined1 param_1)
 

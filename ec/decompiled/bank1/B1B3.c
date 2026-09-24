@@ -13,7 +13,8 @@
    None of the addresses here is documented in ec/annotations/registers.yaml.
    type: dispatch
    evidence: ec/decompiled/bank1/B1B3.asm; ec/decompiled/bank1/B1B3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_0490_low3(void)
 

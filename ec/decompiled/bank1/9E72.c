@@ -8,7 +8,8 @@
    This is table case 5 of the dispatch at 0x9E26.
    type: writer
    evidence: ec/decompiled/bank1/9E72.asm; ec/decompiled/bank1/9E72.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void set_1621_1622_4_and_68c_86(void)
 

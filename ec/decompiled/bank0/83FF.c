@@ -13,7 +13,8 @@
    entry in ec/annotations/registers.yaml, so what the copied values hold is not determined here.
    type: state
    evidence: ec/decompiled/bank0/83FF.asm; ec/decompiled/bank0/83FF.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void sync_0788_and_07d4_from_09e9(void)
 

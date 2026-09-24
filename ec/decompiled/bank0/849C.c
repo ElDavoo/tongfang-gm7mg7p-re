@@ -9,7 +9,8 @@
    of its own.
    type: forwarder
    evidence: ec/decompiled/bank0/849C.asm; ec/decompiled/bank0/849C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void return_trampoline_83ff(void)
 

@@ -9,7 +9,8 @@
    0x7F) is 0xf2ad's code. The slot itself touches no XDATA address.
    type: forwarder
    evidence: ec/decompiled/bank1/F119.asm; ec/decompiled/bank1/F119.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void thunk_to_f2ad(void)
 

@@ -12,7 +12,8 @@
    with an SJMP into the shared tail at 0xB65C, and the body of the 0xB65C tail is not in this file.
    type: dispatch
    evidence: ec/decompiled/bank1/B5AF.asm; ec/decompiled/bank1/B5AF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void dispatch_043c_04fc_bits(void)
 

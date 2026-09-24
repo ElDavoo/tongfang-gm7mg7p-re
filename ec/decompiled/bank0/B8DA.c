@@ -9,7 +9,8 @@
    against that byte; the set tested is 0x04, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0C, 0x0E and 0x18.
    type: reader
    evidence: ec/decompiled/bank0/B8DA.asm; ec/decompiled/bank0/B8DA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void test_0770_equals_18(void)
 

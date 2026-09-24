@@ -9,7 +9,8 @@
    the arm taken when the sign test at 0x05CE does not carry.
    type: writer
    evidence: ec/decompiled/pd/075D.asm; ec/decompiled/pd/075D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 clear_r4_r7_return_zero(void)
 

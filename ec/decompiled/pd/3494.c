@@ -8,7 +8,8 @@
    use of the loaded B is not decoded here.
    type: unresolved
    evidence: ec/decompiled/pd/3494.asm; ec/decompiled/pd/3494.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_b_60(void)
 

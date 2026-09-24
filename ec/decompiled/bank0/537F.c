@@ -10,7 +10,8 @@
    there is a single target.
    type: dispatch
    evidence: ec/decompiled/bank0/537F.asm; ec/decompiled/bank0/537F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void stage_0094_block_dispatch_4d96(undefined1 param_1,undefined1 param_2,undefined1 param_3)
 

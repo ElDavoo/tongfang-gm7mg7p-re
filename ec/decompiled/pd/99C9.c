@@ -9,7 +9,8 @@
    prints a subtraction with a carry shift, which is not in this listing.
    type: math
    evidence: ec/decompiled/pd/99C9.asm; ec/decompiled/pd/99C9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char add_r5_to_dptr(undefined2 param_1,byte param_2)
 

@@ -14,7 +14,8 @@
    function-level role here is not determined.
    type: writer
    evidence: ec/decompiled/bank1/807E.asm; ec/decompiled/bank1/807E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void dec_06c3_and_dec_06d8_gated_on_0440(char param_1,char *param_2,char param_3)
 

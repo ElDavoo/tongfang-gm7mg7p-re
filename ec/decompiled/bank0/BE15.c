@@ -10,7 +10,8 @@
    no entry there.
    type: math
    evidence: ec/decompiled/bank0/BE15.asm; ec/decompiled/bank0/BE15.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char x0449_minus_x08ea_minus_1(void)
 

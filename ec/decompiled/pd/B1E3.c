@@ -11,7 +11,8 @@
    and loses the read.
    type: reader
    evidence: ec/decompiled/pd/B1E3.asm; ec/decompiled/pd/B1E3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_xdata_0800_table_stride_77(char param_1)
 

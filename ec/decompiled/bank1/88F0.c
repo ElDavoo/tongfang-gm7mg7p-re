@@ -12,7 +12,8 @@
    0xf` matches them.
    type: writer
    evidence: ec/decompiled/bank1/88F0.asm; ec/decompiled/bank1/88F0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void push_r5_into_070f_ring_when_gates_pass(undefined1 param_1)
 

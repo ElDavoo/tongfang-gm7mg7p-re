@@ -11,7 +11,8 @@
    listing alone.
    type: unresolved
    evidence: ec/decompiled/bank0/B9EA.asm; ec/decompiled/bank0/B9EA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_1919_byte_set_dptr_0a56(undefined1 *param_1)
 

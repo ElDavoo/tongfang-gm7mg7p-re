@@ -11,7 +11,8 @@
    of that other listing, not this one.
    type: math
    evidence: ec/decompiled/bank0/BB31.asm; ec/decompiled/bank0/BB31.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char sub_dptr_byte_from_0a4a(char *param_1)
 

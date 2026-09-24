@@ -10,7 +10,8 @@
    0xAF72 when it is zero.
    type: state
    evidence: ec/decompiled/bank0/AE87.asm; ec/decompiled/bank0/AE87.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void build_0791_0793_0794_then_branch(void)
 

@@ -10,7 +10,8 @@
    ec/annotations/registers.yaml.
    type: unresolved
    evidence: ec/decompiled/bank0/BADB.asm; ec/decompiled/bank0/BADB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_dptr_08ce(void)
 

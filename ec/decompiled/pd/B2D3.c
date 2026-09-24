@@ -8,7 +8,8 @@
    index 5 it discards B=01 and does not produce the full-product address 0x0A8E
    type: math
    evidence: ec/annotations/pd-0x38-consumers.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char mul38_ptr_0976(char param_1)
 

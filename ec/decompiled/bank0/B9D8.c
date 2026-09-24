@@ -9,7 +9,8 @@
    byte means is not determined here.
    type: logic
    evidence: ec/decompiled/bank0/B9D8.asm; ec/decompiled/bank0/B9D8.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte read_06e6_xor_01(void)
 

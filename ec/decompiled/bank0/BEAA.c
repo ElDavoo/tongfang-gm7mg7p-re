@@ -10,7 +10,8 @@
    ec/annotations/registers.yaml.
    type: math
    evidence: ec/decompiled/bank0/BEAA.asm; ec/decompiled/bank0/BEAA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char sub_33_from_09e4_low7(void)
 

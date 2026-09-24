@@ -8,7 +8,8 @@
    does not read that byte, so the loaded DPTR is the only result.
    type: forwarder
    evidence: ec/decompiled/bank0/B026.asm; ec/decompiled/bank0/B026.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_dptr_0a4b_after_call_445e_08(void)
 

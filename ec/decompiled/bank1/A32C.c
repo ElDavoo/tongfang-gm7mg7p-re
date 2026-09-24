@@ -9,7 +9,8 @@
    what 0x1A68 does with the three registers is not decoded here.
    type: writer
    evidence: ec/decompiled/bank1/A32C.asm; ec/decompiled/bank1/A32C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void send_1a68_83_80_00_set_0974_02(void)
 

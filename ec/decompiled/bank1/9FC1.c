@@ -9,7 +9,8 @@
    shared as a branch target by 0x9FCB and 0x9FF0.
    type: forwarder
    evidence: ec/decompiled/bank1/9FC1.asm; ec/decompiled/bank1/9FC1.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_9fcb_a029_9ff0(void)
 

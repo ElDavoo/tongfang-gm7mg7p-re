@@ -9,7 +9,8 @@
    adjacent. Neither address has an entry in ec/annotations/registers.yaml.
    type: copy
    evidence: ec/decompiled/bank0/BEE6.asm; ec/decompiled/bank0/BEE6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_code_byte_to_08c6(byte param_1,short param_2)
 

@@ -13,7 +13,8 @@
    ec/annotations/registers.yaml.
    type: math
    evidence: ec/decompiled/bank0/B9F5.asm; ec/decompiled/bank0/B9F5.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char add_be16_08cc_and_compute_08be_x10_diff(void)
 

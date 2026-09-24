@@ -9,7 +9,8 @@
    the call left, so what this routine goes on to divide is not fixed by these two instructions.
    type: forwarder
    evidence: ec/decompiled/pd/98AD.asm; ec/decompiled/pd/98AD.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_0d8f_then_take_r7(byte param_1)
 

@@ -9,7 +9,8 @@
    listing stops after the INC A, so what 0xB41C does with the stored value is not shown here.
    type: state
    evidence: ec/decompiled/bank1/B415.asm; ec/decompiled/bank1/B415.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void bump_counter_054d(char param_1,byte param_2,byte param_3)
 

@@ -11,7 +11,8 @@
    ec/annotations/registers.yaml, so no meaning is claimed for the values written.
    type: state
    evidence: ec/decompiled/bank1/AB29.asm; ec/decompiled/bank1/AB29.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void latch_0983_b2_from_0442_b3(void)
 

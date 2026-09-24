@@ -10,7 +10,8 @@
    here.
    type: dispatch
    evidence: ec/decompiled/pd/10FD.asm; ec/decompiled/pd/10FD.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void read3_ptr_kind_dispatch(undefined1 param_1,char param_2)
 

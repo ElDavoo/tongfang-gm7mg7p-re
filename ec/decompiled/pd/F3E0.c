@@ -10,7 +10,8 @@
    for.
    type: unresolved
    evidence: ec/decompiled/pd/F3E0.asm; ec/decompiled/pd/F3E0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char unresolved_0xF3E0(byte param_1,char param_2)
 

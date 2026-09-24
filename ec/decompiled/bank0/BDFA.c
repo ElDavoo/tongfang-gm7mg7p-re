@@ -9,7 +9,8 @@
    by these instructions.
    type: writer
    evidence: ec/decompiled/bank0/BDFA.asm; ec/decompiled/bank0/BDFA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 write_40_then_read_x1601(undefined1 *param_1)
 

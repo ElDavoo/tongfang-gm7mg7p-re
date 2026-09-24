@@ -9,7 +9,8 @@
    via MOVC and returns that byte in A and R7.
    type: reader
    evidence: ec/decompiled/bank0/DE56.asm; ec/decompiled/bank0/DE56.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_code_byte_at_ptr_0a35_0a36(void)
 

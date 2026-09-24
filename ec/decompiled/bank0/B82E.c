@@ -20,7 +20,8 @@
    ec/annotations/manual-fan-ctrl-0751.md 8a; nothing is read back.
    type: writer
    evidence: ec/decompiled/bank0/B82E.asm; ec/decompiled/bank0/B82E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void clear_08eb_bit6_and_zero_08a0(void)
 

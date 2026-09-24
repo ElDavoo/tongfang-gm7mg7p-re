@@ -10,7 +10,8 @@
    reading is taken from the decompiler's symbol and is not decoded here.
    type: bank-switch
    evidence: ec/decompiled/common/11C2.asm; ec/decompiled/common/11C2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: abi-symbol */
 
 void load_dptr_bf57_tail_jump_1100(void)
 

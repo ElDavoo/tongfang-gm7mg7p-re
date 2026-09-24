@@ -9,7 +9,8 @@
    at @R1. Any other R3 value reaches the ret with nothing written, so there is no CODE-space path.
    type: writer
    evidence: ec/decompiled/pd/0D70.asm; ec/decompiled/pd/0D70.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_two_bytes_by_ptr_kind
                (undefined1 param_1,undefined1 param_2,undefined1 *param_3,undefined1 param_4,

@@ -12,7 +12,8 @@
    without that distinction.
    type: writer
    evidence: ec/decompiled/pd/970D.asm; ec/decompiled/pd/970D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char zero_xdata_0a14_step_17(char param_1,char param_2)
 

@@ -10,7 +10,8 @@
    the pointer arithmetic the decompiled C shows.
    type: math
    evidence: ec/decompiled/pd/1013.asm; ec/decompiled/pd/1013.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void add_32bit_r4r7_into_xdata_at_dptr(char param_1,short param_2,char param_3,byte param_4)
 

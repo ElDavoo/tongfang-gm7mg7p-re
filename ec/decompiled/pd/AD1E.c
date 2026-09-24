@@ -10,7 +10,8 @@
    that the listing does not contain.
    type: unresolved
    evidence: ec/decompiled/pd/AD1E.asm; ec/decompiled/pd/AD1E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_0faf_then_clear_r3(void)
 

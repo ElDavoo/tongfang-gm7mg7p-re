@@ -8,7 +8,8 @@
    caller's input as the C has it. What 0x0F1F writes into R7 is not shown in this listing.
    type: logic
    evidence: ec/decompiled/pd/384E.asm; ec/decompiled/pd/384E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte call_0f1f_then_return_r7_and_3(byte param_1)
 

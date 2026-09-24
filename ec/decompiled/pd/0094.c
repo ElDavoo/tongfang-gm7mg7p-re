@@ -9,7 +9,8 @@
    push R0-R7. What the 0x0154 table entry selects is not decoded here.
    type: forwarder
    evidence: ec/decompiled/pd/0094.asm; ec/decompiled/pd/0094.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 vector_wrapper_dp_0154(undefined1 param_1)
 

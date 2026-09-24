@@ -9,7 +9,8 @@
    returns it in A. The listing does not show what R4 holds or what the block at 0x00B0 contains.
    type: reader
    evidence: ec/decompiled/pd/90C0.asm; ec/decompiled/pd/90C0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 undefined1 read_xdata_00b0_plus_r4(byte param_1)
 

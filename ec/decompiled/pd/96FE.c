@@ -10,7 +10,8 @@
    and shows neither the DPL nor the DPH store.
    type: reader
    evidence: ec/decompiled/pd/96FE.asm; ec/decompiled/pd/96FE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char read_dptr_to_a_then_scale(char *param_1)
 

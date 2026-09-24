@@ -9,7 +9,8 @@
    body is not decoded here and its exact site count is not stated
    type: writer
    evidence: ec/annotations/ec-0x07d0-sites.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_first_handoff_helper(undefined1 param_1,undefined1 *param_2)
 

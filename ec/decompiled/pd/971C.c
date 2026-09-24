@@ -10,7 +10,8 @@
    as an argument.
    type: math
    evidence: ec/decompiled/pd/971C.asm; ec/decompiled/pd/971C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_0a15_plus_17_times_r7(char param_1)
 

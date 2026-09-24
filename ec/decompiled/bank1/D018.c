@@ -11,7 +11,8 @@
    past 0xD036 that is not part of this listing, so that path is not decoded here.
    type: dispatch
    evidence: ec/decompiled/bank1/D018.asm; ec/decompiled/bank1/D018.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_on_03c3_low3(void)
 

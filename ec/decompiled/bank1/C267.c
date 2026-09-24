@@ -9,7 +9,8 @@
    no meaning is claimed for clearing them.
    type: writer
    evidence: ec/decompiled/bank1/C267.asm; ec/decompiled/bank1/C267.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void reset_0432_and_04f2(void)
 

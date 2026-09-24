@@ -10,7 +10,8 @@
    correspondingly empty, and nothing beyond the ret is decoded.
    type: logic
    evidence: ec/decompiled/bank0/A425.asm; ec/decompiled/bank0/A425.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void shared_return_stub_a425(void)
 

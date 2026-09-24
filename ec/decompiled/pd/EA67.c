@@ -18,7 +18,8 @@
    issue #32's.
    type: state
    evidence: ec/decompiled/pd/EA67.asm; ec/decompiled/pd/EA67.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void reset_07c9_block_then_flag_00d3_1(void)
 

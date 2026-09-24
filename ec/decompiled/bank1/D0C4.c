@@ -15,7 +15,8 @@
    0x0497.
    type: state
    evidence: ec/decompiled/bank1/D0C4.asm; ec/decompiled/bank1/D0C4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void update_0524_0526_4a0_and_0497_flags(char param_1,char param_2)
 

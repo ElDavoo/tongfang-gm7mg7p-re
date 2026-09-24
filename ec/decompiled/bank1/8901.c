@@ -11,7 +11,8 @@
    call-target byte scan's hypothesis and the function-level role is not determined.
    type: math
    evidence: ec/decompiled/bank1/8901.asm; ec/decompiled/bank1/8901.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void inc_accumulator_070f_index(char param_1,undefined1 param_2)
 

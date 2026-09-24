@@ -54,6 +54,12 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import disasm8051
 
+# The `name_basis` rules, imported rather than restated. One copy of the
+# vocabulary and the four cross-field rules, so the tool that writes the
+# column and the tools that check it cannot disagree about what the column
+# means (issue #135). Import-safe for the same reason disasm8051 is.
+import grade_name_basis
+
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 FIRMWARE = os.path.join(REPO, "ec", "firmware", "GMxMGxx_11.800")
 PROJECT = os.path.join(REPO, "ec", "ghidra", "project")
@@ -150,7 +156,7 @@ def read_csv(path):
 # a decompile and the tool reads its rows by column name: a column that moves
 # is a change in what every row means, and nothing else here would say so.
 ANNOTATION_COLUMNS = ["scope", "addr", "name", "signature", "type", "comment",
-                      "evidence", "basis"]
+                      "evidence", "basis", "name_basis"]
 # bank-call-targets.csv, as ec/tools/audit_call_targets.py's write_csv() emits
 # it. Also asserted rather than assumed, for the same reason with a sharper
 # edge: `region` is the column that decides which bank a site belongs to, and a
@@ -3282,6 +3288,28 @@ def check(work):
             fail("annotation %s %s resolves to no exported function -- either a "
                  "typo or the project needs a rebuild"
                  % (a["scope"], a["addr"]))
+    # What the NAME asserts, and what that assertion rests on (issue #135). The
+    # same discipline the `evidence` guard above applies to the comment, one
+    # level across: a name that says a mechanism without saying whether it came
+    # from a decoded register map, registers.yaml, an ABI symbol or the
+    # instruction shape is a claim a reader cannot audit. Four cross-field
+    # rules, imported from the grader so the two cannot drift; the one that
+    # matters most here is the `pd` refusal, which keeps 494 rows of the
+    # separate PD image off the EC's XDATA map.
+    _basis = grade_name_basis.register_addresses()
+    _bp = []
+    for a in _read.get("ghidra-functions.csv", []):
+        for problem in grade_name_basis.row_problems(a, _basis):
+            _bp.append("annotation %s %s (%s) %s"
+                       % (a["scope"], a["addr"], a.get("name", ""), problem))
+    for problem in _bp[:5]:
+        fail("name_basis: %s" % problem)
+    if len(_bp) > 5:
+        fail("name_basis: ... and %d more problem(s)" % (len(_bp) - 5))
+    if not _bp:
+        print("  name_basis: %d row(s), every one graded in the closed "
+              "vocabulary and consistent with registers.yaml and the "
+              "bit-addressable SFR map" % len(_read["ghidra-functions.csv"]))
     # The map from mechanism to function, and the same discipline from the
     # reading side. Every citation in ec/annotations/subsystems.md is a
     # (scope, addr, name) triple this file owns, so a rename here has to reach

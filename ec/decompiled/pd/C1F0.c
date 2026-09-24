@@ -9,7 +9,8 @@
    high-byte-equals-0x0D path. There is no ret of its own, so control leaves through 0x122F.
    type: math
    evidence: ec/decompiled/pd/C1F0.asm; ec/decompiled/pd/C1F0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_dptr_ffff_into_0d0d(void)
 

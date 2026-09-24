@@ -9,7 +9,8 @@
    routine stands for.
    type: logic
    evidence: ec/decompiled/bank1/A1BE.asm; ec/decompiled/bank1/A1BE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void nop_ret_stub_a1be(void)
 

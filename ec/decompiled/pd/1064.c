@@ -9,7 +9,8 @@
    exactly four inline argument bytes, not four executed caller instructions
    type: writer
    evidence: ec/annotations/pd-0x38-consumers.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 movc_byte_to_xdata(undefined1 *param_1,undefined1 param_2,undefined1 param_3)
 

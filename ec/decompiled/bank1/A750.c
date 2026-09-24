@@ -13,7 +13,8 @@
    does not settle which the hardware means.
    type: dispatch
    evidence: ec/decompiled/bank1/A750.asm; ec/decompiled/bank1/A750.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_0832_event_bits(void)
 

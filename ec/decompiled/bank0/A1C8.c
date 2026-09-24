@@ -19,7 +19,8 @@
    represent is not determined here.
    type: dispatch
    evidence: ec/decompiled/bank0/A1C8.asm; ec/decompiled/bank0/A1C8.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void select_code_table_entry_and_store_0872_087a_088a(char param_1,char param_2)
 

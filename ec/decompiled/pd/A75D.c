@@ -11,7 +11,8 @@
    chain.
    type: math
    evidence: ec/decompiled/pd/A75D.asm; ec/decompiled/pd/A75D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char shift_r4_r7_right_then_sub_0x30(char param_1,byte param_2,byte param_3,byte param_4)
 

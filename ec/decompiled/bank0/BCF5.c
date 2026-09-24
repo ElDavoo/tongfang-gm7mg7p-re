@@ -7,7 +7,8 @@
 /* Computes 65000 minus the stress counter minus 1, so the caller can skip the increment on borrow.
    type: math
    evidence: ec/annotations/charge-target-derating.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void stress_headroom(undefined1 *param_1)
 

@@ -13,7 +13,8 @@
    0x19F6 if R7 has become zero.
    type: logic
    evidence: ec/decompiled/bank1/95E5.asm; ec/decompiled/bank1/95E5.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_0476_bit1_then_branch_on_r7(char param_1)
 

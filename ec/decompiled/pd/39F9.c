@@ -9,7 +9,8 @@
    constant the caller cannot change; what the callee does with either is not shown here.
    type: forwarder
    evidence: ec/decompiled/pd/39F9.asm; ec/decompiled/pd/39F9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void tail_jump_10bc_with_b_60_and_r7(undefined1 param_1)
 

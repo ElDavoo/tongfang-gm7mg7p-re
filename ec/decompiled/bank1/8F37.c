@@ -10,7 +10,8 @@
    second parameter is the R7 result of 0x19A8, not an argument passed in.
    type: writer
    evidence: ec/decompiled/bank1/8F37.asm; ec/decompiled/bank1/8F37.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void write_047f_and_arm_06d1_fa(undefined1 param_1,char param_2)
 

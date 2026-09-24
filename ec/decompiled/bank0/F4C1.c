@@ -10,7 +10,8 @@
    listing. The decompiled C drops the R6 load entirely.
    type: writer
    evidence: ec/decompiled/bank0/F4C1.asm; ec/decompiled/bank0/F4C1.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_bc02_0f60_61_set_r6(void)
 

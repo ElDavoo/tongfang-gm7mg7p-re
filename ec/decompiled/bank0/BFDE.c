@@ -12,7 +12,8 @@
    decoded here. 0x1674 has no entry in ec/annotations/registers.yaml.
    type: copy
    evidence: ec/decompiled/bank0/BFDE.asm; ec/decompiled/bank0/BFDE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void init_xdata_from_code_table_64fd(void)
 

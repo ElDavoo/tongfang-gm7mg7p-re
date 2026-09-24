@@ -9,7 +9,8 @@
    left in DPTR.
    type: writer
    evidence: ec/decompiled/bank0/D27A.asm; ec/decompiled/bank0/D27A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_dp_to_0864_then_d289(undefined1 *param_1)
 

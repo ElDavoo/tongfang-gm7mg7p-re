@@ -9,7 +9,8 @@
    two-instruction routine itself.
    type: forwarder
    evidence: ec/decompiled/pd/122D.asm; ec/decompiled/pd/122D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void jmp_code_at_dptr(code *UNRECOVERED_JUMPTABLE)
 

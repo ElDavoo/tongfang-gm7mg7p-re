@@ -11,7 +11,8 @@
    zero. Nothing here establishes what 0x07A4 bit 2 or 0x09EE bit 1 represent.
    type: state
    evidence: ec/decompiled/bank0/B889.asm; ec/decompiled/bank0/B889.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void _9ee_bit1_edge_drives_0897_countdown(void)
 

@@ -8,7 +8,8 @@
    ec/annotations/registers.yaml, so the bit is not named.
    type: writer
    evidence: ec/decompiled/bank0/C48F.asm; ec/decompiled/bank0/C48F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_160a_bit0(void)
 

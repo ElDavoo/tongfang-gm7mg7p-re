@@ -8,7 +8,8 @@
    Nothing in the listing says what that path is meant to do.
    type: unresolved
    evidence: ec/decompiled/bank1/98B3.asm; ec/decompiled/bank1/98B3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void ret_only_stub_98b3(void)
 

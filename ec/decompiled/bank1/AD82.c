@@ -9,7 +9,8 @@
    are reported from the .c, not decoded from these bytes.
    type: forwarder
    evidence: ec/decompiled/bank1/AD82.asm; ec/decompiled/bank1/AD82.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void forwarder_to_b2d5(void)
 

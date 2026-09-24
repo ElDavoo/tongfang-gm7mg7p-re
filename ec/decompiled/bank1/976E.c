@@ -15,7 +15,8 @@
    0x044C and 0 to 0x0841 before falling into 0x9816.
    type: state
    evidence: ec/decompiled/bank1/976E.asm; ec/decompiled/bank1/976E.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_0480_bit0_then_step_05f1_countdown(char param_1)
 

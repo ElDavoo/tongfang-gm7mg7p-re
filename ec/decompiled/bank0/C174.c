@@ -8,7 +8,8 @@
    the other seven bits of 0x1603 keep their values.
    type: writer
    evidence: ec/decompiled/bank0/C174.asm; ec/decompiled/bank0/C174.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_1603_bit3(void)
 

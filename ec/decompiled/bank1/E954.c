@@ -13,7 +13,8 @@
    is a reading of this stream, not behaviour the instructions support. Not decoded further.
    type: unresolved
    evidence: ec/decompiled/bank1/E954.asm; ec/decompiled/bank1/E954.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 byte unresolved_byte_stream_e954(byte *param_1,byte *param_2,char param_3,char param_4)
 

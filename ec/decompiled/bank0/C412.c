@@ -9,7 +9,8 @@
    named.
    type: logic
    evidence: ec/decompiled/bank0/C412.asm; ec/decompiled/bank0/C412.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void test_1668_bit4(void)
 

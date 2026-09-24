@@ -13,7 +13,8 @@
    the four zero bytes there.
    type: writer
    evidence: ec/decompiled/pd/D83D.asm; ec/decompiled/pd/D83D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_4_zero_bytes_at_0904_plus_0809_times_5e(byte param_1,byte param_2,char param_3)
 

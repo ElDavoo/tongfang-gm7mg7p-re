@@ -11,7 +11,8 @@
    0x3C3 leaves only the 0x3EC store done.
    type: writer
    evidence: ec/decompiled/bank1/CF6D.asm; ec/decompiled/bank1/CF6D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_slot_for_index_6(void)
 

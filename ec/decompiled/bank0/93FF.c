@@ -14,7 +14,8 @@
    0x098C have no entry there.
    type: logic
    evidence: ec/decompiled/bank0/93FF.asm; ec/decompiled/bank0/93FF.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void select_table_byte_against_044f(char param_1)
 

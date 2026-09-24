@@ -9,7 +9,8 @@
    0x60 this adds 96 times A to the incoming DPTR. There is no ret in this listing.
    type: math
    evidence: ec/decompiled/pd/3500.asm; ec/decompiled/pd/3500.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void add_60a_to_dptr_3500(void)
 

@@ -13,7 +13,8 @@
    neither 0x1603 nor 0x1C34 has an entry in ec/annotations/registers.yaml.
    type: delay
    evidence: ec/decompiled/bank0/E9DE.asm; ec/decompiled/bank0/E9DE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void rmw_1603_and_wait_tf1_2500_times(void)
 

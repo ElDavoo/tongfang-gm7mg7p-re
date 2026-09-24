@@ -15,7 +15,8 @@
    because the loop back to 0xDA4D is unconditional.
    type: logic
    evidence: ec/decompiled/pd/DA44.asm; ec/decompiled/pd/DA44.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void poll_0208_0209_then_spin(char r7_from_e2e4)
 

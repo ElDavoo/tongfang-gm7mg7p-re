@@ -11,7 +11,8 @@
    value, which the instruction sequence does not support.
    type: state
    evidence: ec/decompiled/bank0/4777.asm; ec/decompiled/bank0/4777.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void stage_0a54_0a55_then_dispatch(undefined1 param_1,undefined1 param_2,char param_3)
 

@@ -10,7 +10,8 @@
    index are the caller's.
    type: copy
    evidence: ec/decompiled/bank0/BED2.asm; ec/decompiled/bank0/BED2.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void load_code_byte_to_0736(byte param_1,short param_2)
 

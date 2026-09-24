@@ -8,7 +8,8 @@
    Nothing in this listing says what 0xA55C does or what the three bytes represent.
    type: state
    evidence: ec/decompiled/bank1/859B.asm; ec/decompiled/bank1/859B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_1c04_1c05_set_1c00_ff(void)
 

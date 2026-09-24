@@ -10,7 +10,8 @@
    the two helpers do with these arguments is not decoded here.
    type: logic
    evidence: ec/decompiled/bank1/D1BC.asm; ec/decompiled/bank1/D1BC.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void select_ptr_0491_c080_then_0506(void)
 

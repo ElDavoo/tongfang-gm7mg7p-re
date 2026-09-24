@@ -8,7 +8,8 @@
    branch in this frame; neither call target is decoded here.
    type: forwarder
    evidence: ec/decompiled/bank1/AB86.asm; ec/decompiled/bank1/AB86.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_9aea_efbd(void)
 

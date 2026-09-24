@@ -33,7 +33,8 @@
    at this entry is not shown by these four instructions and is not established here.
    type: forwarder
    evidence: ec/decompiled/bank1/19A8.asm; ec/decompiled/bank1/19A8.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: abi-symbol */
 
 void trampoline_to_c118(void)
 

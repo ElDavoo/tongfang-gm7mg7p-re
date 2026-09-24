@@ -12,7 +12,8 @@
    bytes are not a coherent instruction stream and are not decoded further.
    type: unresolved
    evidence: ec/decompiled/bank1/8504.asm; ec/decompiled/bank1/8504.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 undefined1 table_bytes_disassembled_as_code_8504(char param_1,char param_2)
 

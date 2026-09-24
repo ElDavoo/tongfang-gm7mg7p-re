@@ -10,7 +10,8 @@
    decrements 0x00D8 by one.
    type: state
    evidence: ec/decompiled/bank0/D389.asm; ec/decompiled/bank0/D389.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_r7_at_d8_advance_index(undefined1 param_1)
 

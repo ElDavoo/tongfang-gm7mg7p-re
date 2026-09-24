@@ -9,7 +9,8 @@
    the two entries are one sequence Ghidra has cut in two.
    type: reader
    evidence: ec/decompiled/pd/ACD1.asm; ec/decompiled/pd/ACD1.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char read_xdata_to_a_r7(char *param_1)
 

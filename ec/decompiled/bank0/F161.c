@@ -9,7 +9,8 @@
    0xF161 and 0xF165 are one routine split by the call-target scan.
    type: writer
    evidence: ec/decompiled/bank0/F161.asm; ec/decompiled/bank0/F161.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_to_1603_then_clear_0a3e_0a3f(undefined1 param_1)
 

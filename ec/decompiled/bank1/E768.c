@@ -10,7 +10,8 @@
    file pair.
    type: logic
    evidence: ec/decompiled/bank1/E768.asm; ec/decompiled/bank1/E768.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void ret_no_op(void)
 

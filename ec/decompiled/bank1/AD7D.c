@@ -10,7 +10,8 @@
    the .c, not decoded from these bytes.
    type: forwarder
    evidence: ec/decompiled/bank1/AD7D.asm; ec/decompiled/bank1/AD7D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void forwarder_to_af06(undefined1 param_1)
 

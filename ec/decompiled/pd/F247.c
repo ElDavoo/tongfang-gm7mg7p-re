@@ -10,7 +10,8 @@
    survive the call.
    type: writer
    evidence: ec/decompiled/pd/F247.asm; ec/decompiled/pd/F247.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_07d6_then_table_entry_then_0_3(undefined1 param_1)
 

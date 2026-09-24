@@ -10,7 +10,8 @@
    of the entry that follows). What this instruction is for is not determinable here.
    type: unresolved
    evidence: ec/decompiled/pd/B154.asm; ec/decompiled/pd/B154.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_a_with_03(void)
 

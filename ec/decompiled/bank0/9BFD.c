@@ -10,7 +10,8 @@
    0x9BFB, so it is a jump target the call-target scan flagged as a routine.
    type: forwarder
    evidence: ec/decompiled/bank0/9BFD.asm; ec/decompiled/bank0/9BFD.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void forward_to_9a86(void)
 

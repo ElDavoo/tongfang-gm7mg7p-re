@@ -9,7 +9,8 @@
    zeroing store and drops the register loads entirely.
    type: writer
    evidence: ec/decompiled/bank0/D889.asm; ec/decompiled/bank0/D889.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void zero_dptr_and_load_regs(undefined1 *param_1)
 

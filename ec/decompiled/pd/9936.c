@@ -10,7 +10,8 @@
    expression are not in the listing.
    type: math
    evidence: ec/decompiled/pd/9936.asm; ec/decompiled/pd/9936.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void add_r6r7_to_r1r2_tail_0c58
                (byte param_1,char param_2,undefined1 param_3,char param_4,byte param_5)

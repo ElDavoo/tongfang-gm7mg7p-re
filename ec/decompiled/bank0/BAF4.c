@@ -10,7 +10,8 @@
    stores with the operands renamed from its own parameter mapping.
    type: writer
    evidence: ec/decompiled/bank0/BAF4.asm; ec/decompiled/bank0/BAF4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_r4_and_a_to_xdata_pair(undefined1 param_1,undefined1 *param_2,undefined1 param_3)
 

@@ -12,7 +12,8 @@
    and 0x720. The decompiler's param_1 is the R7 returned by 0x19A8, not an argument passed in.
    type: logic
    evidence: ec/decompiled/bank1/A064.asm; ec/decompiled/bank1/A064.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void gate_045a_bit0_set_0724_bit4(char r7_from_19a8)
 

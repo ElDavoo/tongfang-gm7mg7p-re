@@ -9,7 +9,8 @@
    listing.
    type: dispatch
    evidence: ec/decompiled/bank1/1AB0.asm; ec/decompiled/bank1/1AB0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void trampoline_bank0_c26e(void)
 

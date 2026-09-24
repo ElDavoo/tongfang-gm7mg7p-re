@@ -9,7 +9,8 @@
    returns. Nothing in the listing says what the three-byte value addresses or is passed to.
    type: math
    evidence: ec/decompiled/pd/5874.asm; ec/decompiled/pd/5874.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char mul_dptr_byte_77_to_arg_6c(byte *param_1)
 

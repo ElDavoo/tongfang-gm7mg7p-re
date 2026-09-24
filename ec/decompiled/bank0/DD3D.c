@@ -9,7 +9,8 @@
    is decoded here.
    type: writer
    evidence: ec/decompiled/bank0/DD3D.asm; ec/decompiled/bank0/DD3D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void store_0d32_to_045d_0704(void)
 

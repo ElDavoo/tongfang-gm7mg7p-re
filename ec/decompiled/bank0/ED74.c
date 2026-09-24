@@ -9,7 +9,8 @@
    0xEADA writes the same 0x0A59-0x0A5C block and makes the same 0x445E call with R3=@0x0A48.
    type: writer
    evidence: ec/decompiled/bank0/ED74.asm; ec/decompiled/bank0/ED74.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 write_0a59_block_then_445e(void)
 

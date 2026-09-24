@@ -10,7 +10,8 @@
    pointing at is not determinable from this listing.
    type: writer
    evidence: ec/decompiled/bank0/E0D3.asm; ec/decompiled/bank0/E0D3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void inc_indirect_then_store_3c_at_dptr(undefined1 *param_1,char *param_2)
 

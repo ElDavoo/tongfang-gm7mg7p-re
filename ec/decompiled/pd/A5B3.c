@@ -16,7 +16,8 @@
    registers.yaml's 0x07D0/0x07D1 row is an EC-side name not carried over to this image's XDATA.
    type: logic
    evidence: ec/decompiled/pd/A5B3.asm; ec/decompiled/pd/A5B3.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void and_16bit_fields_write_07d2_07d3
                (byte param_1,byte param_2,byte param_3,char param_4,byte param_5,byte param_6,

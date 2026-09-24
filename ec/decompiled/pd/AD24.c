@@ -10,7 +10,8 @@
    and drops the tail-jump.
    type: forwarder
    evidence: ec/decompiled/pd/AD24.asm; ec/decompiled/pd/AD24.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void copy_a_to_r0_r1_tail_jump_0f0e(undefined1 param_1)
 

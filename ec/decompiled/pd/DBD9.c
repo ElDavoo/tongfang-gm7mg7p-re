@@ -12,7 +12,8 @@
    in A, which is the return value.
    type: logic
    evidence: ec/decompiled/pd/DBD9.asm; ec/decompiled/pd/DBD9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char loop_c901_per_index_0x07d0(byte param_1)
 

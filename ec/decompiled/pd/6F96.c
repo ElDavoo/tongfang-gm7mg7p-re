@@ -9,7 +9,8 @@
    0x122F is not decoded in this shard.
    type: forwarder
    evidence: ec/decompiled/pd/6F96.asm; ec/decompiled/pd/6F96.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_122f_with_dptr_fffd_6f96(void)
 

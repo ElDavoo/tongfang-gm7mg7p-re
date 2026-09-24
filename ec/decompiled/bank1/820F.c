@@ -9,7 +9,8 @@
    result is the logical AND of the two R7 values. Neither call target is decoded here.
    type: logic
    evidence: ec/decompiled/bank1/820F.asm; ec/decompiled/bank1/820F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void and_r7_results_into_carry(char param_1)
 

@@ -10,7 +10,8 @@
    with neither the read nor the DPTR write.
    type: reader
    evidence: ec/decompiled/pd/B2F7.asm; ec/decompiled/pd/B2F7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void read3_from_dptr_then_set_dptr_0002(void)
 

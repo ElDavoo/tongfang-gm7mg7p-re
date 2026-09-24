@@ -9,7 +9,8 @@
    0xA747 only when bit 5 is set, otherwise falling through to the shared ret at 0xA73E.
    type: gate
    evidence: ec/decompiled/bank0/A72A.asm; ec/decompiled/bank0/A72A.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void gate_a747_on_06c2_0766(void)
 

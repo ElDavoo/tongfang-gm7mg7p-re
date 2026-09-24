@@ -12,7 +12,8 @@
    same parameter pointer, which the .asm does not do.
    type: logic
    evidence: ec/decompiled/pd/ED90.asm; ec/decompiled/pd/ED90.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_bit3_and_bits2_3_from_r5(byte *param_1,byte param_2)
 

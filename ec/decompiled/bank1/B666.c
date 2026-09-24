@@ -10,7 +10,8 @@
    0xB5AF; the code at those three targets is not in this listing.
    type: gate
    evidence: ec/decompiled/bank1/B666.asm; ec/decompiled/bank1/B666.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void gate_0572_bit0_clear(void)
 

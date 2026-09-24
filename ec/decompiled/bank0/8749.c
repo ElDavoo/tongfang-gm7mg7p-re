@@ -17,7 +17,8 @@
    continues well past it, so the remainder of the decompiled body is not covered here.
    type: state
    evidence: ec/decompiled/bank0/8749.asm; ec/decompiled/bank0/8749.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void mode_tick_084c_07a5_09ee(char param_1)
 

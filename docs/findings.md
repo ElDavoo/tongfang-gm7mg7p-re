@@ -4605,3 +4605,92 @@ only swapped which program's answer it borrowed. It is the same class of
 address-space confusion as §12, one row wide. **The fix is to key `readBasis()`
 on `(program, addr)`**, and it is not made here because it would restate the
 basis column across the whole index and wants its own verification.
+
+## 20. What grounds a name, and what a group is (2026-09-24, issue #135)
+
+The write-up is `docs/findings/name-basis-and-groups.md`; this is the summary.
+Two separable things landed, and the second is deliberately weaker than the
+first.
+
+**`name_basis` is on all 1,804 EC rows and all 788 BIOS rows**, and it is the
+first column in this repository that records what a *name* asserts rests on,
+as opposed to `basis`, which records where the *comment* came from. Mandatory
+and non-empty like `evidence`, refused by both build tools on the same
+grounds: a name that asserts a mechanism with no recorded footing is a claim,
+not a finding. EC distribution: 1,477 `code-shape`, 134 `ec-register`, 83
+`register-map`, 57 `abi-symbol`, 49 `unresolved`, 4 `mixed`.
+
+**The grading rule is deliberately asymmetric** — strongest footing actually
+traceable to a committed input, else `code-shape` — and it is implemented in
+`ec/tools/grade_name_basis.py` against the row's own committed `.asm` rather
+than against its name, with `--check` re-grading the committed column so the
+two cannot drift. The default points at the weak end on purpose: grading by
+name-regex would overclaim, and grading the other way would under-claim.
+
+**The issue's worked example is a negative finding, and that is the point.**
+`bank0 0x0EA2` is **not** renamed to `delay_polling_0a56` and **not** graded
+`code-shape`: 0x8E/0x8F are TCON.6/TF1, decoded and corroborated two ways, so
+the grade is `register-map`. Getting there needed something the plan did not
+anticipate — the name says `timer1` in *words* and never writes `0x8E`, so a
+rule keyed on hex literals alone grades it `code-shape` and loses the decode.
+**This is also where the "Reading left out" was taken as written:** no mass
+renaming, which is the issue's own "or in the row" reading and avoids
+re-symboling Ghidra to churn every generated header for a change the column
+itself captures.
+
+**The `pd` finding is enforced, not conventional.** A `pd`-scoped row may not
+be graded `ec-register`, because the ITE8850-PD image is a separate 8051
+program with its own XDATA map — a `MOV DPTR,#0x07E2` there is not a reference
+to the EC register at 0x07E2. That is the third lock on the same door, and it
+fires *independently* of the "must cite a registers.yaml address" rule: a pd
+row naming an address that is in the map would pass that rule and still be an
+overclaim. Verified by poisoning a pd row and watching both fire.
+
+**The grouping layer is in, and it is honest about being weaker.** 1,804 EC
+rows and 788 BIOS rows gain a `group`. The BIOS is module-first as the issue
+says it should be — 666 of 788 rows are `group_basis=module` — and the EC is
+seeded from the `type` column (30 `bank-switch` rows, 6 interrupt vectors) with
+call-graph clustering for the rest: 866 rows in a connected component, 576
+`ungrouped`.
+
+**A `callgraph` group is a connected component, not a subsystem, and the tool
+says so.** The largest holds 323 of the 1,804 rows. That is a real structural
+fact and a poor subsystem boundary, so the groups are named
+`callgraph_<scope>_<addr>`, their size is in every row's comment, and `--report`
+names any component of 50 or more. **576 `ungrouped` is "not found by this
+method", never "these have no subsystem"** — the same discipline CLAUDE.md
+puts above every other rule, and the reason `ungrouped` is in the vocabulary at
+all.
+
+**The banking caveat is inherited without softening, and it is structural.**
+Nothing in an `lcall` names a bank — bank0→bank1 and bank0→bank0 are the same
+three bytes — so the graph never joins bank0 to bank1. The rule is not a filter
+applied afterwards: the union never sees a cross-region edge, so there is no
+cluster to reject later. Measured over the committed listings, bucket A = 973,
+B = 1,428, C = 450 using `audit_call_targets.py`'s own `bucket_of()`; 27
+cross-region edges are counted and reported, never merged. Every run prints
+those numbers, so a small group count cannot read as a topology.
+
+**Nothing here is a behavioural claim, and no live test ran.** A group says
+which routines are connected in the call graph, not what the EC does with them.
+No hardware is reachable from a GitHub-hosted runner. The 2,592 comments were
+not read by hand to infer subsystems: anything the seeds and the graph do not
+support stays `ungrouped` rather than getting a plausible label.
+
+**A plate-comment line moved a pinned citation, and the check caught it.**
+`ec/annotations/xdata-0860-census-sites.csv` pins **line numbers** into the
+committed `.c` files and `check_site_census.py` holds them, so the new
+`name_basis:` line shifted 5 of its 7 sites and the check went red with the
+right diagnosis. The refs were recomputed from the tool's own
+`census_occurrences()` rather than blanket-shifted, and **only the line numbers
+moved** — same sites, same per-site counts, same 17 occurrences. **A
+plate-comment edit is not confined to the plate**, which is the one thing worth
+knowing before the next annotation change.
+
+**One bug is worth recording because it was silent.** The first grader's
+`DPTR_IMM` pattern was case-sensitive and the listing spells `DPTR` and `0x`,
+so XDATA detection was completely dead — and the report showed
+`ec-register=0` across 1,804 rows, which reads as a *finding* rather than as a
+broken pattern. It was caught only by the grader's own `--self-test` fixture.
+A zero meaning "the method is broken" and a zero meaning "the method found
+nothing" are the same number, which is the whole reason that self-test exists.

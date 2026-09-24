@@ -9,7 +9,8 @@
    its carry unchanged.
    type: forwarder
    evidence: ec/decompiled/bank0/DF35.asm; ec/decompiled/bank0/DF35.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void stage_0a47_then_call_de83_r5_1b(void)
 

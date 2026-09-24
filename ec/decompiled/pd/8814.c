@@ -10,7 +10,8 @@
    store_3byte_r3r2r1(param_1+1) with a pointer argument this listing does not set up.
    type: writer
    evidence: ec/decompiled/pd/8814.asm; ec/decompiled/pd/8814.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_3bytes_at_dptr_plus_1(short entry_dptr)
 

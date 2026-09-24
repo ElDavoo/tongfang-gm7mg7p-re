@@ -9,7 +9,8 @@
    here.
    type: writer
    evidence: ec/decompiled/bank0/BE2A.asm; ec/decompiled/bank0/BE2A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void write_64_91_pair(undefined1 *param_1)
 

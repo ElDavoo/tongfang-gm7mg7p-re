@@ -10,7 +10,8 @@
    its write-back are not what these bytes do.
    type: logic
    evidence: ec/decompiled/bank1/2A6C.asm; ec/decompiled/bank1/2A6C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_bit4_of_direct_4c(void)
 

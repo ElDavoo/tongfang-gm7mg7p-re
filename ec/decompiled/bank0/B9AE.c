@@ -11,7 +11,8 @@
    ec/annotations/registers.yaml.
    type: state
    evidence: ec/decompiled/bank0/B9AE.asm; ec/decompiled/bank0/B9AE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void init_0a59_block_from_direct_68(void)
 

@@ -11,7 +11,8 @@
    switch_case_dispatch is the call to 0x7151. 0x074C has no entry in ec/annotations/registers.yaml.
    type: gate
    evidence: ec/decompiled/bank0/9167.asm; ec/decompiled/bank0/9167.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void gate_on_074c_then_dispatch(void)
 

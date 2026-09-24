@@ -10,7 +10,8 @@
    that next entry.
    type: reader
    evidence: ec/decompiled/pd/ACBF.asm; ec/decompiled/pd/ACBF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char read_xdata_at_dptr_acbf(char *param_1)
 

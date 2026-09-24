@@ -10,7 +10,8 @@
    here is not shown.
    type: writer
    evidence: ec/decompiled/bank0/ED52.asm; ec/decompiled/bank0/ED52.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_1c41_12_copy_0a49_0a4a_clear_1601_bit4(void)
 

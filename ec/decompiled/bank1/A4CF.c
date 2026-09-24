@@ -10,7 +10,8 @@
    the return value of each of the two calls.
    type: logic
    evidence: ec/decompiled/bank1/A4CF.asm; ec/decompiled/bank1/A4CF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void send_ea_to_9ed4_when_06e6_eq_05(char r7_from_a_callee)
 

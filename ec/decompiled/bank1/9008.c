@@ -13,7 +13,8 @@
    continuation of the routine at 0x8F6B is not shown by the listing.
    type: state
    evidence: ec/decompiled/bank1/9008.asm; ec/decompiled/bank1/9008.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void update_06cf_countdown_and_06e1_bits(void)
 

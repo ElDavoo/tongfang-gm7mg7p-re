@@ -8,7 +8,8 @@
    ljmp 0xF13D and rows 1-15 are ljmp 0xF13E.
    type: dispatch
    evidence: ec/decompiled/bank1/F036.asm; ec/decompiled/bank1/F036.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_via_table_f0d1(undefined1 param_1)
 

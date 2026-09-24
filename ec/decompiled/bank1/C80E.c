@@ -11,7 +11,8 @@
    immediately before the function's own entry.
    type: dispatch
    evidence: ec/decompiled/bank1/C80E.asm; ec/decompiled/bank1/C80E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_0394_low3_through_ljmp_table(void)
 

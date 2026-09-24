@@ -11,7 +11,8 @@
    itself has no arithmetic.
    type: writer
    evidence: ec/decompiled/bank0/B5CC.asm; ec/decompiled/bank0/B5CC.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_to_089c_and_089d(undefined1 param_1)
 

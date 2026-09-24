@@ -9,7 +9,8 @@
    return is not supported by the two instructions shown.
    type: forwarder
    evidence: ec/decompiled/pd/DC29.asm; ec/decompiled/pd/DC29.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_122f_with_dptr_fffe(void)
 

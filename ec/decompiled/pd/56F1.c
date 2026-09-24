@@ -10,7 +10,8 @@
    instructions produce.
    type: math
    evidence: ec/decompiled/pd/56F1.asm; ec/decompiled/pd/56F1.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char scale_dptr_from_a_times_77_plus_6e(char param_1)
 

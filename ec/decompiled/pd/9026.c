@@ -12,7 +12,8 @@
    instruction.
    type: math
    evidence: ec/decompiled/pd/9026.asm; ec/decompiled/pd/9026.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char make_dptr_r6_minus_3_9026(byte param_1,char r6_value)
 

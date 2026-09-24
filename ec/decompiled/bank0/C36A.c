@@ -9,7 +9,8 @@
    ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/C36A.asm; ec/decompiled/bank0/C36A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void write_80_to_1641(void)
 

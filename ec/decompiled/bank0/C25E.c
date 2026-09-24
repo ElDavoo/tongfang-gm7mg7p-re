@@ -8,7 +8,8 @@
    the other seven bits keep their values. Pairs with 0xC266, which sets it.
    type: writer
    evidence: ec/decompiled/bank0/C25E.asm; ec/decompiled/bank0/C25E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_1605_bit1(void)
 

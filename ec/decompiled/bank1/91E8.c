@@ -11,7 +11,8 @@
    as 0x91FA, 0x9202, 0xC352, 0x92F7, 0x9373, 0x91FA, 0x91FA and 0x91FA.
    type: dispatch
    evidence: ec/decompiled/bank1/91E8.asm; ec/decompiled/bank1/91E8.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_062e_counter_via_table_91d0(void)
 

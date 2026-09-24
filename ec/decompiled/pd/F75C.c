@@ -9,7 +9,8 @@
    (0x716C instead of 0x715E); that callee is not decoded here.
    type: reader
    evidence: ec/decompiled/pd/F75C.asm; ec/decompiled/pd/F75C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_dptr_byte_via_716c(undefined1 *param_1,undefined1 param_2)
 

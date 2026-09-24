@@ -10,7 +10,8 @@
    incremented. 0x70E4's own body is not in this file pair.
    type: forwarder
    evidence: ec/decompiled/bank0/BADE.asm; ec/decompiled/bank0/BADE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void tailcall_70e4_add_0100_at_dptr(void)
 

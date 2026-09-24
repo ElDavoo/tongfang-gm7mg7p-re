@@ -11,7 +11,8 @@
    DPTR = 0x06E6, so the byte written is XDATA 0x06E6.
    type: forwarder
    evidence: ec/decompiled/bank0/8939.asm; ec/decompiled/bank0/8939.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_200_via_dptr_then_8f09(undefined1 *param_1)
 

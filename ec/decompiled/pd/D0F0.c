@@ -12,7 +12,8 @@
    with R7 = XDATA 0x07D6.
    type: gate
    evidence: ec/decompiled/pd/D0F0.asm; ec/decompiled/pd/D0F0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void require_nonzero_from_b074(char param_1,byte param_2,char param_3)
 

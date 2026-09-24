@@ -13,7 +13,8 @@
    0x06E7, 0x06E8/0x06E9 or 0x06EA/0x06EB has an entry in ec/annotations/registers.yaml.
    type: state
    evidence: ec/decompiled/bank0/CEE9.asm; ec/decompiled/bank0/CEE9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char walk_index_06e7_up_to_10_table_6d23(char param_1)
 

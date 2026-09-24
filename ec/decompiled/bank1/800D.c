@@ -9,7 +9,8 @@
    listing here is the conditional half of the group started at 0x8009.
    type: logic
    evidence: ec/decompiled/bank1/800D.asm; ec/decompiled/bank1/800D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void skip_06cd_decrement(char param_1,char *param_2,char param_3)
 

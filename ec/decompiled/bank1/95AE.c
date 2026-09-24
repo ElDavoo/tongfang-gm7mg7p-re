@@ -7,7 +7,8 @@
 /* Reads XDATA 0x045D and writes it unchanged to XDATA 0x0704. Nothing else is touched.
    type: copy
    evidence: ec/decompiled/bank1/95AE.asm; ec/decompiled/bank1/95AE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void copy_045d_to_0704(void)
 

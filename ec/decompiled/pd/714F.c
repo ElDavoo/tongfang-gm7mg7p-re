@@ -9,7 +9,8 @@
    whether both index the same table is not shown by this listing.
    type: math
    evidence: ec/decompiled/pd/714F.asm; ec/decompiled/pd/714F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dptr_0a2d_plus_17_times_a(char *param_1)
 

@@ -10,7 +10,8 @@
    not supported by the instructions.
    type: writer
    evidence: ec/decompiled/bank0/F177.asm; ec/decompiled/bank0/F177.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_and_zero_next_dptr_bytes(undefined1 value_a,short entry_dptr)
 

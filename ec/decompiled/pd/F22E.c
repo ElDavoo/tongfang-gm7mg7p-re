@@ -9,7 +9,8 @@
    the C's warning that 0x9A90 does not return is not settled by these instructions.
    type: reader
    evidence: ec/decompiled/pd/F22E.asm; ec/decompiled/pd/F22E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void read_04a3_then_call_9a90(void)
 

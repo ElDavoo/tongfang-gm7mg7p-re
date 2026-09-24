@@ -11,7 +11,8 @@
    Otherwise it calls 0xB784 then 0xB8E1 and leaves 0x0480 alone.
    type: dispatch
    evidence: ec/decompiled/bank1/B728.asm; ec/decompiled/bank1/B728.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_0610_bit5_and_dispatch(void)
 

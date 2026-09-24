@@ -8,7 +8,8 @@
    dispatches into. A table row, not a routine with behaviour of its own.
    type: forwarder
    evidence: ec/decompiled/bank1/F074.asm; ec/decompiled/bank1/F074.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void table_f071_row01_ljmp_f127(void)
 

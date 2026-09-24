@@ -9,7 +9,8 @@
    instructions shows what the callee does with B.
    type: forwarder
    evidence: ec/decompiled/pd/3635.asm; ec/decompiled/pd/3635.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void tail_jump_10bc_with_b_60(void)
 

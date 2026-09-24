@@ -8,7 +8,8 @@
    and returns that value. The 0xFF store lands on whatever address the caller left in DPTR.
    type: writer
    evidence: ec/decompiled/bank0/D2D2.asm; ec/decompiled/bank0/D2D2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 write_ff_to_dptr_return_0861(undefined1 *param_1)
 

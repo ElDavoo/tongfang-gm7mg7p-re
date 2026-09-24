@@ -8,7 +8,8 @@
    leaves the sum in R4:R7. No memory is touched.
    type: math
    evidence: ec/decompiled/pd/0DBC.asm; ec/decompiled/pd/0DBC.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char add_32bit_r0r3_to_r4r7
                (char param_1,char param_2,char param_3,byte param_4,char param_5,byte param_6,

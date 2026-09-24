@@ -11,7 +11,8 @@
    both the masking and the 0x08FC base.
    type: reader
    evidence: ec/decompiled/pd/909A.asm; ec/decompiled/pd/909A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_bit0_of_08fc_row(char param_1)
 

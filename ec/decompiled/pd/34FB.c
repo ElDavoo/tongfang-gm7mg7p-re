@@ -9,7 +9,8 @@
    three instructions are decoded here
    type: reader
    evidence: ec/annotations/ec-0x07d0-sites.md
-   basis: inferred  <- reading, not a fact read out of the binary */
+   basis: inferred  <- reading, not a fact read out of the binary
+   name_basis: code-shape */
 
 void read_byte_to_r7_base_0408(undefined1 *param_1)
 

@@ -9,7 +9,8 @@
    0xE0 and R2 = 0x2E and returns, leaving whatever carry 0x887A set for the caller to test.
    type: gate
    evidence: ec/decompiled/bank1/9354.asm; ec/decompiled/bank1/9354.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void gate_030a_030b_then_8892_887a(void)
 

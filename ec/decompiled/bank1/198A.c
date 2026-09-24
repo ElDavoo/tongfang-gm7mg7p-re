@@ -11,7 +11,8 @@
    DPTR,#0xc1e7` is the same address either way and is the right reading of it.
    type: forwarder
    evidence: ec/decompiled/bank1/198A.asm; ec/decompiled/bank1/198A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: abi-symbol */
 
 void trampoline_to_c1e7(void)
 

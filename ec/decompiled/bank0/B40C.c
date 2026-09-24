@@ -14,7 +14,8 @@
    way round.
    type: writer
    evidence: ec/decompiled/bank0/B40C.asm; ec/decompiled/bank0/B40C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char zero_xdata_block_ptr_r6r7_count_r4r5(char param_1,byte param_2,char param_3,char param_4)
 

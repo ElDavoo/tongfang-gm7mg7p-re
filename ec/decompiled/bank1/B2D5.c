@@ -15,7 +15,8 @@
    ec/annotations/registers.yaml.
    type: logic
    evidence: ec/decompiled/bank1/B2D5.asm; ec/decompiled/bank1/B2D5.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void copy_0514_0516_to_04ab_04ac_then_probe(void)
 

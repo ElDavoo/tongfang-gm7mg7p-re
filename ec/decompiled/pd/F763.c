@@ -9,7 +9,8 @@
    0x97FB is not decoded here.
    type: writer
    evidence: ec/decompiled/pd/F763.asm; ec/decompiled/pd/F763.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_r5_at_dptr_via_97fb(undefined1 *param_1,undefined1 param_2)
 

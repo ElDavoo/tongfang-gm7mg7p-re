@@ -9,7 +9,8 @@
    0x821B is called before the RET; the value 0x8814 returns in A is not used here.
    type: writer
    evidence: ec/decompiled/pd/F407.asm; ec/decompiled/pd/F407.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void zero_084c_call_8814_821b(void)
 

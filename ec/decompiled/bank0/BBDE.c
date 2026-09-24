@@ -10,7 +10,8 @@
    itself is not decoded here.
    type: math
    evidence: ec/decompiled/bank0/BBDE.asm; ec/decompiled/bank0/BBDE.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char gpu_temp_minus_code_table_byte(byte param_1,short param_2)
 

@@ -14,7 +14,8 @@
    is not established here.
    type: copy
    evidence: ec/decompiled/pd/C62B.asm; ec/decompiled/pd/C62B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_00b8_pattern_then_copy_ffc0_to_00d5(void)
 

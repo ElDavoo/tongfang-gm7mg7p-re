@@ -9,7 +9,8 @@
    appears in this listing, so its role is not determinable from these instructions.
    type: unresolved
    evidence: ec/decompiled/bank1/AC0C.asm; ec/decompiled/bank1/AC0C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void ret_only_ac0c(void)
 

@@ -9,7 +9,8 @@
    here.
    type: writer
    evidence: ec/decompiled/bank0/DC77.asm; ec/decompiled/bank0/DC77.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_bit0_1202_1204_1205(void)
 

@@ -14,7 +14,8 @@
    bytes from XDATA 0x0841 to XDATA 0x0984 with 0x0FAF and 0x1041.
    type: state
    evidence: ec/decompiled/pd/D8EE.asm; ec/decompiled/pd/D8EE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void copy_0841_to_0984_when_083c_matches_097f(char param_1,char param_2)
 

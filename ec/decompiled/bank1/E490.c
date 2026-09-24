@@ -14,7 +14,8 @@
    shows for that case are code this listing does not contain.
    type: logic
    evidence: ec/decompiled/bank1/E490.asm; ec/decompiled/bank1/E490.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void stage_1c00_block_from_code_table_indexed_03c4(short param_1)
 

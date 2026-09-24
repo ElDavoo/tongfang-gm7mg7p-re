@@ -9,7 +9,8 @@
    this routine is not analysed in the file that establishes it
    type: init
    evidence: ec/annotations/manual-fan-ctrl-0751.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void seed_fan_table_base(undefined1 *param_1,char *param_2,undefined1 param_3)
 

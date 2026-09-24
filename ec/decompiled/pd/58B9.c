@@ -10,7 +10,8 @@
    return does not match these instructions.
    type: math
    evidence: ec/decompiled/pd/58B9.asm; ec/decompiled/pd/58B9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 char scale_dptr_from_dptr_byte_77_plus_96(char *param_1)
 

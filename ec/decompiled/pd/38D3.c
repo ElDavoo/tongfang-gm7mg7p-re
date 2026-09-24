@@ -9,7 +9,8 @@
    the high byte. The C returns a single byte and drops the B load.
    type: reader
    evidence: ec/decompiled/pd/38D3.asm; ec/decompiled/pd/38D3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_be16_from_dptr(short param_1)
 

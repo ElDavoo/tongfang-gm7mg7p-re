@@ -10,7 +10,8 @@
    0x04BE/0x04BF and calls 0xC613. The listing ends at 0xB91A.
    type: state
    evidence: ec/decompiled/bank1/B8E1.asm; ec/decompiled/bank1/B8E1.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void arm_05f4_countdown_0576_clears_0490(void)
 

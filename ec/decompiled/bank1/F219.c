@@ -10,7 +10,8 @@
    calls 0x88F0 with R5 = 0x0F. What any of these bytes represents is not decoded here.
    type: writer
    evidence: ec/decompiled/bank1/F219.asm; ec/decompiled/bank1/F219.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void set_0636_0a_toggle_047b_02_set_097a_02(void)
 

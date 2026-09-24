@@ -14,7 +14,8 @@
    if bit 3 of XDATA 0x160A is clear, or 0x0A if that bit is set.
    type: state
    evidence: ec/decompiled/bank1/A9B4.asm; ec/decompiled/bank1/A9B4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void step_state_0845(char param_1)
 

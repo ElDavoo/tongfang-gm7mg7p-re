@@ -11,7 +11,8 @@
    same bytes as a comparison and drops the R3 copy.
    type: math
    evidence: ec/decompiled/pd/AD3F.asm; ec/decompiled/pd/AD3F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char read_dptr_byte_then_dpl_17x_plus_31(char *param_1)
 

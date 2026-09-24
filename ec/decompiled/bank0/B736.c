@@ -10,7 +10,8 @@
    void body and nothing further can be read from either file.
    type: unresolved
    evidence: ec/decompiled/bank0/B736.asm; ec/decompiled/bank0/B736.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void unresolved_b736(void)
 

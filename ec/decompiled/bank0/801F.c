@@ -8,7 +8,8 @@
    set, then falls into 0x8020. There is no ret.
    type: writer
    evidence: ec/decompiled/bank0/801F.asm; ec/decompiled/bank0/801F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_1901(undefined1 param_1,undefined1 *param_2)
 

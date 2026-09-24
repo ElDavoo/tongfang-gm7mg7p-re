@@ -9,7 +9,8 @@
    mean, is not identified here
    type: gate
    evidence: ec/annotations/pd-0x38-consumers.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte sub_or_cmp_r0_r7(char param_1,byte param_2,byte param_3,byte param_4,char param_5,char param_6,
                      char param_7,char param_8)

@@ -14,7 +14,8 @@
    table holds is not decoded.
    type: unresolved
    evidence: ec/decompiled/bank1/ED3A.asm; ec/decompiled/bank1/ED3A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte * data_run_2e_3e(char param_1,char *param_2,char param_3,byte *param_4,byte *param_5,
                      byte *param_6,byte *param_7,byte *param_8,byte param_9,char param_10,

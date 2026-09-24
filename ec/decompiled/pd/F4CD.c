@@ -10,7 +10,8 @@
    these instructions.
    type: forwarder
    evidence: ec/decompiled/pd/F4CD.asm; ec/decompiled/pd/F4CD.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_70c7_with_0_then_5c_tail_f55c(void)
 

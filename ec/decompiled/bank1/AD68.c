@@ -11,7 +11,8 @@
    the same routine. None of the eight targets is decoded here.
    type: dispatch
    evidence: ec/decompiled/bank1/AD68.asm; ec/decompiled/bank1/AD68.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void round_robin_dispatch_on_0566(void)
 

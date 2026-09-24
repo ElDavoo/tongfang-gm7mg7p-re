@@ -9,7 +9,8 @@
    the high byte comes back in A. The C returns the carry expression and drops the DPL store.
    type: math
    evidence: ec/decompiled/pd/912F.asm; ec/decompiled/pd/912F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char dpl_0931_plus_5e_times_a(char param_1)
 

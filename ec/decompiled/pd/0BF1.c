@@ -11,7 +11,8 @@
    arms, so the code-space arm is read-only and the other three update the byte in place.
    type: writer
    evidence: ec/decompiled/pd/0BF1.asm; ec/decompiled/pd/0BF1.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char add_a_into_byte_by_tag_r3(char param_1,char *param_2,undefined1 param_3,char param_4)
 

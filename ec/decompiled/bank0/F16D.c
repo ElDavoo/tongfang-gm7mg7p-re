@@ -10,7 +10,8 @@
    the low seven bits.
    type: math
    evidence: ec/decompiled/bank0/F16D.asm; ec/decompiled/bank0/F16D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char bit7_split_0a3e(void)
 

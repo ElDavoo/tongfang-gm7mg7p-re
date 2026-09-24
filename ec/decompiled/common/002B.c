@@ -12,7 +12,8 @@
    before that.
    type: forwarder
    evidence: ec/decompiled/common/002B.asm; ec/decompiled/common/002B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void table_entry_to_05e7(void)
 

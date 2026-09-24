@@ -13,7 +13,8 @@
    from this listing alone.
    type: forwarder
    evidence: ec/decompiled/bank1/D236.asm; ec/decompiled/bank1/D236.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_d2a3_then_d274(void)
 

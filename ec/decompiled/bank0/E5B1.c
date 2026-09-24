@@ -9,7 +9,8 @@
    stream and what 0xE896 makes of them is not in this listing.
    type: forwarder
    evidence: ec/decompiled/bank0/E5B1.asm; ec/decompiled/bank0/E5B1.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 forward_e896_with_fixed_args(undefined1 param_1)
 

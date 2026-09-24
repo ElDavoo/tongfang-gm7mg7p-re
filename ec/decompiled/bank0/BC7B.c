@@ -10,7 +10,8 @@
    determinable.
    type: unresolved
    evidence: ec/decompiled/bank0/BC7B.asm; ec/decompiled/bank0/BC7B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 load_dptr_0a47_then_nothing(undefined1 param_1)
 

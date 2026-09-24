@@ -8,7 +8,8 @@
    named in this listing and 0xF0A1's use of 0xD6 is not decoded here.
    type: logic
    evidence: ec/decompiled/bank0/EF17.asm; ec/decompiled/bank0/EF17.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void call_f0a1_with_d6_then_4777_flag(char param_1)
 

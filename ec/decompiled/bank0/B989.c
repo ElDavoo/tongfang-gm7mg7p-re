@@ -10,7 +10,8 @@
    instructions.
    type: reader
    evidence: ec/decompiled/bank0/B989.asm; ec/decompiled/bank0/B989.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 finish_dptr_be16_load(short entry_dptr)
 

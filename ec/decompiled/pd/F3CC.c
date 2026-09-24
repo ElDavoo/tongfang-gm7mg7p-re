@@ -10,7 +10,8 @@
    written.
    type: writer
    evidence: ec/decompiled/pd/F3CC.asm; ec/decompiled/pd/F3CC.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_r4r5_at_08ef_index_5e(undefined1 param_1,undefined1 param_2,char param_3)
 

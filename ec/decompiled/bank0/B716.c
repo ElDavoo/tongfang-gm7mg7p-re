@@ -17,7 +17,8 @@
    ec/annotations/registers.yaml at present-untested and none of them is read back.
    type: writer
    evidence: ec/decompiled/bank0/B716.asm; ec/decompiled/bank0/B716.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void clear_08eb_bit3_09e6_09e7_08a2_089e_089f(void)
 

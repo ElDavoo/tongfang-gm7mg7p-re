@@ -11,7 +11,8 @@
    as a signed comparison on 0x0458 rather than the bit test the instruction performs.
    type: logic
    evidence: ec/decompiled/bank1/C6B8.asm; ec/decompiled/bank1/C6B8.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void gate_0458b7_set_0723b2_from_045c(void)
 

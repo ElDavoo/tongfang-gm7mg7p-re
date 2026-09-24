@@ -10,7 +10,8 @@
    ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/F108.asm; ec/decompiled/bank0/F108.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 store_a_at_dptr_then_read_0fa0(undefined1 param_1,undefined1 *param_2)
 

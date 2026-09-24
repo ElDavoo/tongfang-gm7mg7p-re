@@ -10,7 +10,8 @@
    follow belong to the separate 0x9023 entry.
    type: unresolved
    evidence: ec/decompiled/pd/9021.asm; ec/decompiled/pd/9021.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char stub_set_r4_07(void)
 

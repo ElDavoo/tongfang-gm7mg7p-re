@@ -10,7 +10,8 @@
    from the byte-scan function boundary alone.
    type: unresolved
    evidence: ec/decompiled/bank0/BDA5.asm; ec/decompiled/bank0/BDA5.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char set_cy_fallthrough_to_bda6(byte param_1,short param_2)
 

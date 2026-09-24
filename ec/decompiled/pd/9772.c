@@ -9,7 +9,8 @@
    same region-wide boilerplate seen at 9750.c and does not correspond to these two instructions.
    type: reader
    evidence: ec/decompiled/pd/9772.asm; ec/decompiled/pd/9772.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char read_xdata_07d4_into_a(void)
 

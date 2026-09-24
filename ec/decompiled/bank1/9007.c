@@ -9,7 +9,8 @@
    read off this listing, since nothing in it loads DPTR, so the role is not decoded.
    type: unresolved
    evidence: ec/decompiled/bank1/9007.asm; ec/decompiled/bank1/9007.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_to_xdata_at_dptr_2(undefined1 param_1,undefined1 *param_2)
 

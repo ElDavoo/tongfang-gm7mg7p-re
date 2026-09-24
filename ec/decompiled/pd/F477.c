@@ -9,7 +9,8 @@
    including values with other bits set alongside, does nothing.
    type: gate
    evidence: ec/decompiled/pd/F477.asm; ec/decompiled/pd/F477.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_0180_if_00e2_is_1(void)
 

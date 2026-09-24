@@ -10,7 +10,8 @@
    0x069A in the multiply at 0x05A6 and from 0x074A in 0x0738.
    type: writer
    evidence: ec/decompiled/pd/0760.asm; ec/decompiled/pd/0760.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 undefined1 saturate_r4_from_d5_r5_80(void)
 

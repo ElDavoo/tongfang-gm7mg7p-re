@@ -9,7 +9,8 @@
    is the routine the bit tree at 0xB5AF calls before it arms XDATA 0x05F6.
    type: copy
    evidence: ec/decompiled/bank1/B6A8.asm; ec/decompiled/bank1/B6A8.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void snapshot_0432_043c_04f2_04fc(void)
 

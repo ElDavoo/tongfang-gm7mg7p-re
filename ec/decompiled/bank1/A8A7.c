@@ -10,7 +10,8 @@
    and tail-jumps to 0xA8E9. The table's length and contents are not decoded here.
    type: state
    evidence: ec/decompiled/bank1/A8A7.asm; ec/decompiled/bank1/A8A7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void flag_086f_bit2_send_5a_02_88_table(byte param_1,byte *param_2)
 

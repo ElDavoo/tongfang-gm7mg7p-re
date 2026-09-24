@@ -11,7 +11,8 @@
    elsewhere in the bank, including 0xA4CF and 0xA3F7.
    type: state
    evidence: ec/decompiled/bank1/8B8F.asm; ec/decompiled/bank1/8B8F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: mixed */
 
 void clear_0480_bit4_set_0459_01_06e1_a0(void)
 

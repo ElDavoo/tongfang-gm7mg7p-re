@@ -11,7 +11,8 @@
    addresses those are is not decoded here.
    type: copy
    evidence: ec/decompiled/bank0/D73D.asm; ec/decompiled/bank0/D73D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void gather_0200_from_table_6d74(undefined1 *param_1)
 

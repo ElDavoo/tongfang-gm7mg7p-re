@@ -13,7 +13,8 @@
    not traced there; 0x06E6, 0x06E7, 0x06E8/0x06E9 and 0x0816 have no entry.
    type: dispatch
    evidence: ec/decompiled/bank0/CF48.asm; ec/decompiled/bank0/CF48.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_06e6_after_counting_down_06e8_pair(void)
 

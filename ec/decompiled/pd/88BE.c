@@ -15,7 +15,8 @@
    depend on.
    type: state
    evidence: ec/decompiled/pd/88BE.asm; ec/decompiled/pd/88BE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void update_07d6_table_entries(byte param_1)
 

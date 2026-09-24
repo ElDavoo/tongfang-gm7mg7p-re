@@ -16,7 +16,8 @@
    compares to that meaning; 0x08E2, 0x0832, 0x0834, 0x0836, 0x0497 and 0x0400 are not documented.
    type: writer
    evidence: ec/decompiled/bank1/BF3A.asm; ec/decompiled/bank1/BF3A.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void guard_then_store_pair_0834(char param_1,undefined1 param_2,undefined1 param_3)
 

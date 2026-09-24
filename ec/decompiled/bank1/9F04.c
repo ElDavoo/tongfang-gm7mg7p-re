@@ -14,7 +14,8 @@
    is clear, writes 0xF2 to 0x097A and to 0x0720, and writes 0x1E to 0x0811 if XDATA 0x0760 is 0x05.
    type: dispatch
    evidence: ec/decompiled/bank1/9F04.asm; ec/decompiled/bank1/9F04.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_on_dpl_5b_7b_40(char param_1)
 

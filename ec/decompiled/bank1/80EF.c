@@ -15,7 +15,8 @@
    meaning not established, and names none of the other bytes above.
    type: writer
    evidence: ec/decompiled/bank1/80EF.asm; ec/decompiled/bank1/80EF.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dec_timers_and_set_expiry_flags(char *param_1)
 

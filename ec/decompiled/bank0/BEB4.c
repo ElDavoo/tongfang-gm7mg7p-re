@@ -9,7 +9,8 @@
    caller's DPTR selects is not decided here. 0x1804 has no entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/BEB4.asm; ec/decompiled/bank0/BEB4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dec_dptr_byte_and_set_1804(char *param_1)
 

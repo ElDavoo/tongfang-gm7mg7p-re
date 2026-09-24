@@ -11,7 +11,8 @@
    while zero sets bit 6 and clears bit 2 of 0x8EC and tail-jumps to 0xAF7D.
    type: state
    evidence: ec/decompiled/bank0/AEC0.asm; ec/decompiled/bank0/AEC0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void build_0795_0799_then_set_08ec(void)
 

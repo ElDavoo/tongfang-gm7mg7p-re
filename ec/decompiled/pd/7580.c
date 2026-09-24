@@ -22,7 +22,8 @@
    and its control flow should not be relied on here.
    type: logic
    evidence: ec/decompiled/pd/7580.asm; ec/decompiled/pd/7580.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_07d2_and_return_r7_zero_or_one(undefined1 param_1,byte param_2,byte param_3)
 

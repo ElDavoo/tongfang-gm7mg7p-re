@@ -12,7 +12,8 @@
    function.
    type: logic
    evidence: ec/decompiled/bank1/9B03.asm; ec/decompiled/bank1/9B03.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void countdown_068d_then_branch_on_r7(char param_1)
 

@@ -9,7 +9,8 @@
    input. Called from 0x89B5 with DPTR = 0x09F2 and A holding the index.
    type: writer
    evidence: ec/decompiled/bank1/89E7.asm; ec/decompiled/bank1/89E7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_xdata_at_dptr_plus_a(byte param_1,undefined2 param_2,undefined1 param_3)
 

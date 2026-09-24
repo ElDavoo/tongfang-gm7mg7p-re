@@ -7,7 +7,8 @@
 /* A single mov R3,A with no ret, so the surrounding sequence is not decoded here.
    type: unresolved
    evidence: ec/decompiled/pd/34CE.asm; ec/decompiled/pd/34CE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void copy_a_to_r3(undefined1 param_1)
 

@@ -13,7 +13,8 @@
    which the remainder is not determined from this listing.
    type: math
    evidence: ec/decompiled/pd/0E54.asm; ec/decompiled/pd/0E54.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 byte udiv_shift_subtract_core
                (char param_1,char param_2,char param_3,byte param_4,byte param_5,byte param_6,

@@ -10,7 +10,8 @@
    entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/BB24.asm; ec/decompiled/bank0/BB24.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_to_1804(undefined1 param_1)
 

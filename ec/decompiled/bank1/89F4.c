@@ -11,7 +11,8 @@
    separately at 0x8A03; the decompile's `BANK0_R3` comparison agrees with the operand form.
    type: writer
    evidence: ec/decompiled/bank1/89F4.asm; ec/decompiled/bank1/89F4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void zero_xdata_bytes_r2r1_through_r2r3(char param_1,byte param_2)
 

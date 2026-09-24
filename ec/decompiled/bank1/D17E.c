@@ -10,7 +10,8 @@
    0x0368 to 0x96. Every other combination ends at 0xD16F.
    type: logic
    evidence: ec/decompiled/bank1/D17E.asm; ec/decompiled/bank1/D17E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void increment_0514_toward_0x64(void)
 

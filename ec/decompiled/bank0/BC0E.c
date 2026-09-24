@@ -10,7 +10,8 @@
    this listing.
    type: forwarder
    evidence: ec/decompiled/bank0/BC0E.asm; ec/decompiled/bank0/BC0E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dptr_add_4x_a(void)
 

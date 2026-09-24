@@ -9,7 +9,8 @@
    the ljmp does not allow.
    type: forwarder
    evidence: ec/decompiled/pd/363E.asm; ec/decompiled/pd/363E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_a_from_r7_then_tail_10bc(undefined1 param_1)
 

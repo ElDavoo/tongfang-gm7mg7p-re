@@ -8,7 +8,8 @@
    which clears the same bit. 0x1607 has no entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/C39E.asm; ec/decompiled/bank0/C39E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_1607_bit6(void)
 

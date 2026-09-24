@@ -11,7 +11,8 @@
    that byte, 0x08E2, 0x0832, 0x0838 and 0x0839 have no entry there.
    type: state
    evidence: ec/decompiled/bank0/924C.asm; ec/decompiled/bank0/924C.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void set_0838_0839_0832_on_049f_bit2(void)
 

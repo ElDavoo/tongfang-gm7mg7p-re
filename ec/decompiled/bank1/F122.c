@@ -10,7 +10,8 @@
    from this listing.
    type: unresolved
    evidence: ec/decompiled/bank1/F122.asm; ec/decompiled/bank1/F122.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void bare_ret_f122(void)
 

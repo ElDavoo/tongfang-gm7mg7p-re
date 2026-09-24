@@ -9,7 +9,8 @@
    is not shown - unlike 0xEE0F the mov R7 1 bytes are missing from it.
    type: logic
    evidence: ec/decompiled/bank0/EED6.asm; ec/decompiled/bank0/EED6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void send_0x10_via_f079_then_chain(short param_1,char param_2)
 

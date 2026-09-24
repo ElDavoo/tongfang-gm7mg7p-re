@@ -9,7 +9,8 @@
    Neither 0x1609 nor 0x2006 is in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/C43F.asm; ec/decompiled/bank0/C43F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_1609_bit0_and_write_44_to_2006(void)
 

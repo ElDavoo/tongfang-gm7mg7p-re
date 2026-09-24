@@ -18,7 +18,8 @@
    this entry, so it is not part of these bytes.
    type: logic
    evidence: ec/decompiled/pd/AE9C.asm; ec/decompiled/pd/AE9C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_07d1_then_call_chain(undefined1 param_1,byte param_2)
 

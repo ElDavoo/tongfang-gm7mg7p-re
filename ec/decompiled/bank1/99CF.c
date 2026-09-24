@@ -10,7 +10,8 @@
    0x99E0, 0x99ED, 0x99F4, 0x9A01, 0x9A0E, 0x9A1B, 0x9A2E and 0x9A3B.
    type: dispatch
    evidence: ec/decompiled/bank1/99CF.asm; ec/decompiled/bank1/99CF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_0681_low3_via_99b7_table(void)
 

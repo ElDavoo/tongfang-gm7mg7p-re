@@ -10,7 +10,8 @@
    convention.
    type: writer
    evidence: ec/decompiled/bank0/901C.asm; ec/decompiled/bank0/901C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_1_to_dptr(undefined1 *entry_dptr)
 

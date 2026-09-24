@@ -8,7 +8,8 @@
    otherwise. The decompiled C again drops the R7 result, leaving only the comparison visible.
    type: reader
    evidence: ec/decompiled/bank0/B90E.asm; ec/decompiled/bank0/B90E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void test_0770_equals_07(void)
 

@@ -11,7 +11,8 @@
    entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank1/8202.asm; ec/decompiled/bank1/8202.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void clear_0801_bit5_then_call_19a2_84(void)
 

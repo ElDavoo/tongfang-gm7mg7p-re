@@ -9,7 +9,8 @@
    DPTR. Nothing else is in the body and the meaning of 0xA694 is not decoded here.
    type: forwarder
    evidence: ec/decompiled/bank0/DCAF.asm; ec/decompiled/bank0/DCAF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: abi-symbol */
 
 void bank1_trampoline_a694(void)
 

@@ -11,7 +11,8 @@
    ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/D567.asm; ec/decompiled/bank0/D567.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_bits_0_and_4_of_3206(void)
 

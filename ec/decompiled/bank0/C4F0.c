@@ -11,7 +11,8 @@
    is in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/C4F0.asm; ec/decompiled/bank0/C4F0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 write_40_to_dptr_then_read_1601(undefined1 *entry_dptr)
 

@@ -12,7 +12,8 @@
    but none of that is in the .asm for this address.
    type: gate
    evidence: ec/decompiled/bank1/E4E9.asm; ec/decompiled/bank1/E4E9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void gate_1c00_bit1_then_1c00_ff(void)
 

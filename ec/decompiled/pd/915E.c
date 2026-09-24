@@ -9,7 +9,8 @@
    that whole sequence into this address and shows only a pointer store and the constant 6.
    type: forwarder
    evidence: ec/decompiled/pd/915E.asm; ec/decompiled/pd/915E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 load_r5_then_write_via_915f(undefined1 *param_1,undefined1 param_2)
 

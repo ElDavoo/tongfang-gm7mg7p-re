@@ -10,7 +10,8 @@
    seen half-updated by an interrupt.
    type: math
    evidence: ec/decompiled/pd/122F.asm; ec/decompiled/pd/122F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void add_dptr_to_word_0d0e_ea_guard(undefined2 param_1)
 

@@ -10,7 +10,8 @@
    found a real empty routine is not determinable from the listing.
    type: unresolved
    evidence: ec/decompiled/bank1/F153.asm; ec/decompiled/bank1/F153.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: unresolved */
 
 void bare_ret_f153(void)
 

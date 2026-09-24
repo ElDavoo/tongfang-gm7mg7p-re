@@ -10,7 +10,8 @@
    decompiled C's param_2[0..3] form matches these four relative stores.
    type: writer
    evidence: ec/decompiled/bank0/B958.asm; ec/decompiled/bank0/B958.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_4_bytes_ending_0a_4b_00(undefined1 value_a,undefined1 *entry_dptr)
 

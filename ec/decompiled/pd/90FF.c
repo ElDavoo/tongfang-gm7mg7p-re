@@ -10,7 +10,8 @@
    decoded here.
    type: state
    evidence: ec/decompiled/pd/90FF.asm; ec/decompiled/pd/90FF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_dptr_0d0e_90ff(void)
 

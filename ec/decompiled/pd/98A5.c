@@ -9,7 +9,8 @@
    byte held in R6.
    type: math
    evidence: ec/decompiled/pd/98A5.asm; ec/decompiled/pd/98A5.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char mul_by_0c_return_r6r7(char param_1)
 

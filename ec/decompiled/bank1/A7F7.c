@@ -10,7 +10,8 @@
    is on bit address 0xE5, so the two bits are not distinguished by these bytes.
    type: state
    evidence: ec/decompiled/bank1/A7F7.asm; ec/decompiled/bank1/A7F7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void flag_0832_bit5_send_12_3b_8c(void)
 

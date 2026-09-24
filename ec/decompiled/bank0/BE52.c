@@ -8,7 +8,8 @@
    respectively. Returns nothing in A, and the meaning of the copied pair is not determined here.
    type: copy
    evidence: ec/decompiled/bank0/BE52.asm; ec/decompiled/bank0/BE52.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void copy_x00c0_pair_to_iram_67_68(void)
 

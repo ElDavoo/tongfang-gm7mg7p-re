@@ -8,7 +8,8 @@
    IRAM[0x0E], then returns. The .c renders this as a bare return and drops both moves.
    type: logic
    evidence: ec/decompiled/pd/705C.asm; ec/decompiled/pd/705C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_dptr_from_iram_0d_0e(void)
 

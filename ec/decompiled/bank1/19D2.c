@@ -9,7 +9,8 @@
    decompiler rendering that as a call to the stub with 0x85C6 as the argument.
    type: forwarder
    evidence: ec/decompiled/bank1/19D2.asm; ec/decompiled/bank1/19D2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: abi-symbol */
 
 void trampoline_to_85c6(void)
 

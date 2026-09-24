@@ -9,7 +9,8 @@
    cleared. Neither address has an entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/BA1C.asm; ec/decompiled/bank0/BA1C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_to_08ce_08cf(undefined1 param_1)
 

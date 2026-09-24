@@ -9,7 +9,8 @@
    in A. 0x0B68 has no entry in ec/annotations/registers.yaml.
    type: reader
    evidence: ec/decompiled/bank0/BD12.asm; ec/decompiled/bank0/BD12.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_x0b68(void)
 

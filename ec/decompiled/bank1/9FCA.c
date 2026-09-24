@@ -9,7 +9,8 @@
    work of its own.
    type: forwarder
    evidence: ec/decompiled/bank1/9FCA.asm; ec/decompiled/bank1/9FCA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void exit_ret(void)
 

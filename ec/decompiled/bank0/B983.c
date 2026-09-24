@@ -8,7 +8,8 @@
    return, and nothing in it sets DPTR, so the destination is supplied by the caller.
    type: writer
    evidence: ec/decompiled/bank0/B983.asm; ec/decompiled/bank0/B983.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 store_a_to_dptr_b983(undefined1 param_1,undefined1 *param_2)
 

@@ -8,7 +8,8 @@
    the other seven bits keep their values. Pairs with 0xC191, which sets it.
    type: writer
    evidence: ec/decompiled/bank0/C199.asm; ec/decompiled/bank0/C199.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_1603_bit4(void)
 

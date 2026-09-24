@@ -11,7 +11,8 @@
    this shard supplies DPTR = 0x06E6.
    type: forwarder
    evidence: ec/decompiled/bank0/893E.asm; ec/decompiled/bank0/893E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_via_dptr_then_jump_8f09(undefined1 param_1,undefined1 *param_2)
 

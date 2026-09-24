@@ -10,7 +10,8 @@
    these addresses is documented in ec/annotations/registers.yaml.
    type: logic
    evidence: ec/decompiled/bank1/B321.asm; ec/decompiled/bank1/B321.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void set_0575_8_or_write_0404_and_call_88f0(void)
 

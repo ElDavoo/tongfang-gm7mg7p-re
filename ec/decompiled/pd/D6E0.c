@@ -10,7 +10,8 @@
    two bytes are for, or whether they are code at all, is not shown here.
    type: unresolved
    evidence: ec/decompiled/pd/D6E0.asm; ec/decompiled/pd/D6E0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void inc_r0_then_reti(void)
 

@@ -8,7 +8,8 @@
    ret. What happens to R7 next is not decoded here.
    type: reader
    evidence: ec/decompiled/pd/3509.asm; ec/decompiled/pd/3509.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char read_xdata_at_dptr_to_r7_3509(char *param_1)
 

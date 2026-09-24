@@ -8,7 +8,8 @@
    0x1A98-0x1ABC. The stub at 0x1100 and the routine at 0xC17C are both outside this listing.
    type: dispatch
    evidence: ec/decompiled/bank1/1ABC.asm; ec/decompiled/bank1/1ABC.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void trampoline_bank0_c17c(void)
 

@@ -13,7 +13,8 @@
    otherwise it clears bits 0, 1 and 3 of 0x048C and sets bit 7.
    type: dispatch
    evidence: ec/decompiled/bank1/EF32.asm; ec/decompiled/bank1/EF32.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void xdata_request_dispatch_048c(void)
 

@@ -13,7 +13,8 @@
    settles it. (cited from 2 files)
    type: reader
    evidence: ec/annotations/lightbar-bat-flow.md; ec/annotations/pd-0x38-consumers.md
-   basis: inferred  <- reading, not a fact read out of the binary */
+   basis: inferred  <- reading, not a fact read out of the binary
+   name_basis: code-shape */
 
 undefined1 load_xdata_to_r0_r1_r2_or_r3(short param_1)
 

@@ -8,7 +8,8 @@
    sum in DPTR. Nothing is written to memory.
    type: math
    evidence: ec/decompiled/pd/1253.asm; ec/decompiled/pd/1253.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char add_word_0d0e_to_dptr(undefined2 param_1)
 

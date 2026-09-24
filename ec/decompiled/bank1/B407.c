@@ -9,7 +9,8 @@
    shows belong to 0xB40E and are reported from the .c, not decoded from these bytes.
    type: forwarder
    evidence: ec/decompiled/bank1/B407.asm; ec/decompiled/bank1/B407.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void forwarder_to_b40e(undefined2 param_1,char param_2)
 

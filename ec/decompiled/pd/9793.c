@@ -9,7 +9,8 @@
    0x9792. 0x0F0E is not decoded here.
    type: forwarder
    evidence: ec/decompiled/pd/9793.asm; ec/decompiled/pd/9793.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void copy_a_to_r0_r1_r2_tail_jump_0f0e(undefined1 param_1)
 

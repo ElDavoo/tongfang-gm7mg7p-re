@@ -12,7 +12,8 @@
    16-bit add helper appears nowhere in these bytes.
    type: writer
    evidence: ec/decompiled/bank0/4B1F.asm; ec/decompiled/bank0/4B1F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dec_a_store_and_advance_dptr(char param_1,char *param_2)
 

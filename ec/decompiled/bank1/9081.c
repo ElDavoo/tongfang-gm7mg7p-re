@@ -12,7 +12,8 @@
    and not decoded here.
    type: state
    evidence: ec/decompiled/bank1/9081.asm; ec/decompiled/bank1/9081.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void count_down_06e4_and_toggle_06e3(char param_1)
 

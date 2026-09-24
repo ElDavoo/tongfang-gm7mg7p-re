@@ -8,7 +8,8 @@
    0xD068 compares against R5 and B.
    type: forwarder
    evidence: ec/decompiled/bank1/D04C.asm; ec/decompiled/bank1/D04C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_r1_0e_jump_d068(void)
 

@@ -11,7 +11,8 @@
    0x1808 and the table at 0x63BE have no entry in ec/annotations/registers.yaml.
    type: math
    evidence: ec/decompiled/bank0/A6C6.asm; ec/decompiled/bank0/A6C6.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void table_63be_lookup_into_1808_then_inc_0857(byte *param_1)
 

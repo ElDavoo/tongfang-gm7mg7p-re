@@ -10,7 +10,8 @@
    has a decoded consumer in this body.
    type: copy
    evidence: ec/decompiled/bank0/DB57.asm; ec/decompiled/bank0/DB57.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 char stash_code_pair_to_0b7_0b8(undefined1 param_1,undefined1 param_2,char param_3)
 

@@ -11,7 +11,8 @@
    bytes stand. The decompile tests the pre-mask value, which is why it shows both calls.
    type: writer
    evidence: ec/decompiled/bank1/8AA7.asm; ec/decompiled/bank1/8AA7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_06f9_bits_0_3_then_call_abee(void)
 

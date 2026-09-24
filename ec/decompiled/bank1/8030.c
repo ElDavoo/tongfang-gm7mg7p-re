@@ -10,7 +10,8 @@
    the call-target byte scan's hypothesis.
    type: writer
    evidence: ec/decompiled/bank1/8030.asm; ec/decompiled/bank1/8030.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_acc_to_xdata_dptr_8030(undefined1 param_1,undefined1 *param_2,char param_3)
 

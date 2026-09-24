@@ -9,7 +9,8 @@
    pointer.
    type: reader
    evidence: ec/decompiled/pd/36B9.asm; ec/decompiled/pd/36B9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_xdata_to_r3_set_dptr_0400(undefined1 *param_1)
 

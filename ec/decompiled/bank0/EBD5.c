@@ -10,7 +10,8 @@
    not decoded in this listing.
    type: dispatch
    evidence: ec/decompiled/bank0/EBD5.asm; ec/decompiled/bank0/EBD5.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_on_0a4b_via_7151(char param_1,undefined1 param_2)
 

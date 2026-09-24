@@ -16,7 +16,8 @@
    decompiles are not covered by it and are not decoded here.
    type: init
    evidence: ec/decompiled/bank0/9334.asm; ec/decompiled/bank0/9334.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void seed_tcc_defaults_from_ba36(undefined1 param_1,byte param_2)
 

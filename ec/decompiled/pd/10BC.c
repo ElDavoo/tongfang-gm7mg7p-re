@@ -16,7 +16,8 @@
    type: math
    evidence: ec/annotations/ec-0x07d0-sites.md; ec/annotations/lightbar-bat-flow.md;
    ec/annotations/pd-0x38-consumers.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char add_full_product_to_dptr(byte param_1,undefined2 param_2,byte param_3)
 

@@ -9,7 +9,8 @@
    same through movx. As in the reader, any other R3 value reaches the ret with nothing written.
    type: writer
    evidence: ec/decompiled/pd/0D8F.asm; ec/decompiled/pd/0D8F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_two_bytes_at_offset_by_ptr_kind
                (undefined1 param_1,undefined2 param_2,undefined1 param_3,byte param_4,char param_5,

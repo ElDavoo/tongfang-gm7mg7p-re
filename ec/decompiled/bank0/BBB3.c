@@ -10,7 +10,8 @@
    ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/BBB3.asm; ec/decompiled/bank0/BBB3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_code_byte_to_08c0(byte param_1,short param_2)
 

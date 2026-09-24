@@ -12,7 +12,8 @@
    other way round, and does not model the R6=3 that the 0x0855 store is built from.
    type: writer
    evidence: ec/decompiled/pd/821B.asm; ec/decompiled/pd/821B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void fill_0849_0857_block(undefined1 param_1,undefined1 param_2)
 

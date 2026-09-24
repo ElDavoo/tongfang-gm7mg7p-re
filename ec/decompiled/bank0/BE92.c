@@ -8,7 +8,8 @@
    and same shape as 0xBE7E and 0xBE88, applied to a different address.
    type: writer
    evidence: ec/decompiled/bank0/BE92.asm; ec/decompiled/bank0/BE92.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void write_9f_to_x190c(void)
 

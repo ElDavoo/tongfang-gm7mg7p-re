@@ -9,7 +9,8 @@
    by these instructions.
    type: reader
    evidence: ec/decompiled/bank0/F12F.asm; ec/decompiled/bank0/F12F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 load_r6_r7_from_0a49(void)
 

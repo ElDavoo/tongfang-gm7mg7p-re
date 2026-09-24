@@ -9,7 +9,8 @@
    listing.
    type: state
    evidence: ec/decompiled/bank1/8834.asm; ec/decompiled/bank1/8834.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void zero_2200_2201_set_047e_ec(void)
 

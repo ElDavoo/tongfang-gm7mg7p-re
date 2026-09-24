@@ -10,7 +10,8 @@
    the .c shows the same three calls in the same order.
    type: forwarder
    evidence: ec/decompiled/pd/AD4D.asm; ec/decompiled/pd/AD4D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 call_0faf_0f00_0dbc_return_0(void)
 

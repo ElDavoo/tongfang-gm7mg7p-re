@@ -10,7 +10,8 @@
    called routine.
    type: writer
    evidence: ec/decompiled/bank0/A172.asm; ec/decompiled/bank0/A172.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_08a9_08aa_then_0xa1c8(void)
 

@@ -10,7 +10,8 @@
    independent sources.
    type: reader
    evidence: ec/decompiled/bank0/BC71.asm; ec/decompiled/bank0/BC71.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 undefined1 read_0434_keep_0435_in_r4(void)
 

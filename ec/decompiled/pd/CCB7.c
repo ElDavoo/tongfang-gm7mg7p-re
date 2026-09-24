@@ -11,7 +11,8 @@
    show.
    type: math
    evidence: ec/decompiled/pd/CCB7.asm; ec/decompiled/pd/CCB7.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_0a94_0a97_then_add_0a94_times_60
                (undefined1 param_1,undefined1 param_2,undefined1 param_3,undefined1 param_4)

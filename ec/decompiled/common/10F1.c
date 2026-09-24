@@ -10,7 +10,8 @@
    advance DPTR or four deliberate writes is not determinable from these instructions.
    type: writer
    evidence: ec/decompiled/common/10F1.asm; ec/decompiled/common/10F1.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void zero_xdata_200b(void)
 

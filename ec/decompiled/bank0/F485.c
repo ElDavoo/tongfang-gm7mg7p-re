@@ -9,7 +9,8 @@
    and the reload from 0x0E02.
    type: writer
    evidence: ec/decompiled/bank0/F485.asm; ec/decompiled/bank0/F485.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 call_4777_store_r7_to_0e02(void)
 

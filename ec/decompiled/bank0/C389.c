@@ -9,7 +9,8 @@
    not in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/C389.asm; ec/decompiled/bank0/C389.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_1607_bit2(void)
 

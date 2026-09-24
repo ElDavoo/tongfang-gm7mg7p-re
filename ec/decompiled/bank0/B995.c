@@ -11,7 +11,8 @@
    function sets up for its caller.
    type: reader
    evidence: ec/decompiled/bank0/B995.asm; ec/decompiled/bank0/B995.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char load_r3_r7_from_0a48_0a49(void)
 

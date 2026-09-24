@@ -9,7 +9,8 @@
    0x60 times the byte read. This listing stores nothing itself and has no ret.
    type: math
    evidence: ec/decompiled/pd/3565.asm; ec/decompiled/pd/3565.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dptr_0418_plus_60a(undefined1 *param_1)
 

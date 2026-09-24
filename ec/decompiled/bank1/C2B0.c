@@ -10,7 +10,8 @@
    these addresses is documented in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank1/C2B0.asm; ec/decompiled/bank1/C2B0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_04f2_04f4_04f8_set_04f6_ffff(void)
 

@@ -11,7 +11,8 @@
    this listing. The .c writes through a parameter pointer, which the .asm does not have.
    type: logic
    evidence: ec/decompiled/pd/EC36.asm; ec/decompiled/pd/EC36.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_or_clear_bits_0_5_via_9028(byte *param_1,char param_2)
 

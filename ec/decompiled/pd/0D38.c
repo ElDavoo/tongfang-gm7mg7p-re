@@ -10,7 +10,8 @@
    two CODE bytes at DPTR + R1:R2. B gets the first byte and A the second.
    type: reader
    evidence: ec/decompiled/pd/0D38.asm; ec/decompiled/pd/0D38.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1
 read_two_bytes_at_offset_by_ptr_kind(undefined2 param_1,byte param_2,char param_3,char param_4)

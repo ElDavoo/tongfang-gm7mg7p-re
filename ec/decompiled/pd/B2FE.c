@@ -10,7 +10,8 @@
    0x0832 has no entry in ec/annotations/registers.yaml.
    type: math
    evidence: ec/decompiled/pd/B2FE.asm; ec/decompiled/pd/B2FE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char read_0832_and_multiply_by_38(void)
 

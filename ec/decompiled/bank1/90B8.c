@@ -13,7 +13,8 @@
    0x03. The decompiler's param_1 is the R7 return of 0x1984, not an argument passed in.
    type: dispatch
    evidence: ec/decompiled/bank1/90B8.asm; ec/decompiled/bank1/90B8.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void step_counter_084e_dispatch(char r7_from_1984)
 

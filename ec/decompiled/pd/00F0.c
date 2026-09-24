@@ -9,7 +9,8 @@
    rather than 0x0056. What the 0x015A table entry selects is not decoded here.
    type: forwarder
    evidence: ec/decompiled/pd/00F0.asm; ec/decompiled/pd/00F0.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 vector_wrapper_dp_015a(undefined1 param_1)
 

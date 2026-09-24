@@ -9,7 +9,8 @@
    ec/annotations/registers.yaml.
    type: copy
    evidence: ec/decompiled/bank0/BC26.asm; ec/decompiled/bank0/BC26.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void copy_0a53_to_0873_and_0a54_to_087b(void)
 

@@ -10,7 +10,8 @@
    is claimed for the difference.
    type: math
    evidence: ec/decompiled/bank0/BBEA.asm; ec/decompiled/bank0/BBEA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char sub_0469_from_0461(char *param_1)
 

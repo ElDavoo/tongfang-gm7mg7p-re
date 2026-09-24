@@ -11,7 +11,8 @@
    zeroing.
    type: writer
    evidence: ec/decompiled/bank1/C751.asm; ec/decompiled/bank1/C751.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void zero_0300_03ff_then_set_3fe_3a8_3fb(undefined1 param_1)
 

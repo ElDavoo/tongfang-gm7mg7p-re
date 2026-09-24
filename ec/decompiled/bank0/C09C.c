@@ -9,7 +9,8 @@
    that bit. Neither address has an entry in ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank0/C09C.asm; ec/decompiled/bank0/C09C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_1608_bit5_and_clear_1601_bit4(void)
 

@@ -9,7 +9,8 @@
    the pointer is the DPL that 0x364A wrote. What 0x0FAF itself reads is not shown in this listing.
    type: reader
    evidence: ec/decompiled/pd/3655.asm; ec/decompiled/pd/3655.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 write_dph_call_0faf_return_r7(undefined1 param_1)
 

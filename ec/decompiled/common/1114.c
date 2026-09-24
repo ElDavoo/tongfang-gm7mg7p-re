@@ -10,7 +10,8 @@
    callers so no caller is attributed to this stub
    type: gate
    evidence: ec/annotations/bank-call-audit.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: abi-symbol */
 
 void bl51_bank_select_1(void)
 

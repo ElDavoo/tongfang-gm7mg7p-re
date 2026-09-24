@@ -9,7 +9,8 @@
    nibble is preserved in memory. 0x07D3 is in ec/annotations/registers.yaml as GFID (issue #183).
    type: writer
    evidence: ec/decompiled/bank0/BA46.asm; ec/decompiled/bank0/BA46.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 byte clear_low_nibble_07d3(void)
 

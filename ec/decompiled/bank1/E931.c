@@ -10,7 +10,8 @@
    is whatever each caller set up.
    type: logic
    evidence: ec/decompiled/bank1/E931.asm; ec/decompiled/bank1/E931.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void shared_return_point(void)
 

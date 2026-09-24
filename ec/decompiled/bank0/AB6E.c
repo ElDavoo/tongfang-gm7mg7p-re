@@ -11,7 +11,8 @@
    value passed in by the caller.
    type: state
    evidence: ec/decompiled/bank0/AB6E.asm; ec/decompiled/bank0/AB6E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_06e2_bit0_from_c412(char param_1)
 

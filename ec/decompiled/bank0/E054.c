@@ -11,7 +11,8 @@
    from this function alone.
    type: writer
    evidence: ec/decompiled/bank0/E054.asm; ec/decompiled/bank0/E054.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_to_dptr_e054(undefined1 param_1,undefined1 *param_2)
 

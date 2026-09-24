@@ -9,7 +9,8 @@
    decompiler rendering that as a call to the stub with 0xC4B7 as the argument.
    type: forwarder
    evidence: ec/decompiled/bank1/199C.asm; ec/decompiled/bank1/199C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: abi-symbol */
 
 void trampoline_to_c4b7(void)
 

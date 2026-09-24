@@ -11,7 +11,8 @@
    entry. None of 0x0490 or 0x056A is documented in ec/annotations/registers.yaml.
    type: state
    evidence: ec/decompiled/bank1/AE42.asm; ec/decompiled/bank1/AE42.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void chain_probes_update_056a_0_1_2(void)
 

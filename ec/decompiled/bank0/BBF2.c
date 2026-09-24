@@ -10,7 +10,8 @@
    units not determined.
    type: math
    evidence: ec/decompiled/bank0/BBF2.asm; ec/decompiled/bank0/BBF2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 char sub_0866_from_0865(void)
 

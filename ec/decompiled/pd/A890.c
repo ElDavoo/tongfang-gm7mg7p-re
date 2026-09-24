@@ -12,7 +12,8 @@
    nothing is decoded further.
    type: unresolved
    evidence: ec/decompiled/pd/A890.asm; ec/decompiled/pd/A890.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void ascii_string_not_code(char param_1,undefined1 param_2)
 

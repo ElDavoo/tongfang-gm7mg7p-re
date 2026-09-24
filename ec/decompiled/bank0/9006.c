@@ -13,7 +13,8 @@
    listing.
    type: reader
    evidence: ec/decompiled/bank0/9006.asm; ec/decompiled/bank0/9006.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void read_dptr_byte(char *param_1)
 

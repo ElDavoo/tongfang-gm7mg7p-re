@@ -9,7 +9,8 @@
    the index. The decompile's CONCAT11 expression is a garbled restatement of this 16-bit add.
    type: reader
    evidence: ec/decompiled/bank1/89A9.asm; ec/decompiled/bank1/89A9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_xdata_at_dptr_plus_a(byte param_1,undefined2 param_2)
 

@@ -12,7 +12,8 @@
    pointer into the function's own frame, which the instructions do not do.
    type: copy
    evidence: ec/decompiled/bank0/D72B.asm; ec/decompiled/bank0/D72B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void scatter_0200_to_table_6d74(undefined1 *param_1)
 

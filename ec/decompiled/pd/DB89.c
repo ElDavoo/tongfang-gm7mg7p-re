@@ -9,7 +9,8 @@
    constant 1999, which is 0x07CF, but no store appears in these bytes.
    type: forwarder
    evidence: ec/decompiled/pd/DB89.asm; ec/decompiled/pd/DB89.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void mov_dptr_07cf_and_call_10e8(void)
 

@@ -11,7 +11,8 @@
    the 0xA5/0x5A pair replaced by a single zero byte and 0xF107 in place of 0xF108.
    type: writer
    evidence: ec/decompiled/bank0/E5F3.asm; ec/decompiled/bank0/E5F3.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void write_ff_f8_00_and_retry(void)
 

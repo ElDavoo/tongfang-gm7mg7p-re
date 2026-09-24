@@ -16,7 +16,8 @@
    and the listing ends at that ljmp.
    type: state
    evidence: ec/decompiled/bank0/8F20.asm; ec/decompiled/bank0/8F20.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void state_0817_dispatch(char param_1)
 

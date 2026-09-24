@@ -9,7 +9,8 @@
    listing.
    type: forwarder
    evidence: ec/decompiled/bank0/D433.asm; ec/decompiled/bank0/D433.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void ret_only_d433(void)
 

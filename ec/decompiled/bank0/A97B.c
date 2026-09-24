@@ -14,7 +14,8 @@
    0x8A5/0x8A6 pair is not decoded here.
    type: dispatch
    evidence: ec/decompiled/bank0/A97B.asm; ec/decompiled/bank0/A97B.c; ec/annotations/registers.yaml
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void dispatch_on_06e6_and_0741(void)
 

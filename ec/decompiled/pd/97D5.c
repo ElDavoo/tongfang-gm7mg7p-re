@@ -10,7 +10,8 @@
    read4xdata_to_r4_r7.
    type: math
    evidence: ec/decompiled/pd/97D5.asm; ec/decompiled/pd/97D5.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dptr_from_a_mul_5e_add_04_tail_jump_0faf(char param_1)
 

@@ -10,7 +10,8 @@
    do is visible in this listing.
    type: forwarder
    evidence: ec/decompiled/pd/C0AF.asm; ec/decompiled/pd/C0AF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void forwarder_9926_985d_cfa0(void)
 

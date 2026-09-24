@@ -10,7 +10,8 @@
    the caller does with A and CY, is not visible in this listing.
    type: math
    evidence: ec/decompiled/pd/B24D.asm; ec/decompiled/pd/B24D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void broadcast_a_to_r0_r2_then_sub_r4_r7(undefined1 param_1)
 

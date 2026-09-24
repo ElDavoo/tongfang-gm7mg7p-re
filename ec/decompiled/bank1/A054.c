@@ -9,7 +9,8 @@
    value, so nothing from the callees is propagated here.
    type: logic
    evidence: ec/decompiled/bank1/A054.asm; ec/decompiled/bank1/A054.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_9fc1_a1bf_a064_a0cc_a12d(char param_1)
 

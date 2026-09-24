@@ -12,7 +12,8 @@
    own, so unlike the decompile's warning this path does return.
    type: writer
    evidence: ec/decompiled/pd/DFB2.asm; ec/decompiled/pd/DFB2.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_0x14_at_0810_and_write_0000(short param_1,undefined1 param_2)
 

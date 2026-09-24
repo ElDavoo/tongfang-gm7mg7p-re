@@ -11,7 +11,8 @@
    ec/annotations/registers.yaml.
    type: writer
    evidence: ec/decompiled/bank1/AE6F.asm; ec/decompiled/bank1/AE6F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void or_r6_into_0496_low5(byte param_1)
 

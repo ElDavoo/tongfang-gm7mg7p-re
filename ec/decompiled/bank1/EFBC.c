@@ -9,7 +9,8 @@
    with no request bit set does nothing and returns.
    type: forwarder
    evidence: ec/decompiled/bank1/EFBC.asm; ec/decompiled/bank1/EFBC.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void ret_stub_no_request_bit(void)
 

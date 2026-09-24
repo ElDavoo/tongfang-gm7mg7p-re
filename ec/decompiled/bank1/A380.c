@@ -8,7 +8,8 @@
    0x0725 holds is not decoded in this listing.
    type: writer
    evidence: ec/decompiled/bank1/A380.asm; ec/decompiled/bank1/A380.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_0725(void)
 

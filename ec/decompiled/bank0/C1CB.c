@@ -8,7 +8,8 @@
    XDATA access and no call. The decompiled C drops the R7 return.
    type: reader
    evidence: ec/decompiled/bank0/C1CB.asm; ec/decompiled/bank0/C1CB.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void test_1603_bit5(void)
 

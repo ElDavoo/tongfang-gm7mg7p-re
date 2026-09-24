@@ -10,7 +10,8 @@
    own bytes are not part of this listing, so what each index maps to is not decoded here.
    type: logic
    evidence: ec/decompiled/bank1/A452.asm; ec/decompiled/bank1/A452.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void map_0763_through_f13f_table(void)
 

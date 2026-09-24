@@ -11,7 +11,8 @@
    callers at 0x05A6 and 0x0738 to read. The .c for this address does not carry 0xD5 through at all.
    type: math
    evidence: ec/decompiled/pd/0721.asm; ec/decompiled/pd/0721.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 byte shift_right_2x16_sticky_d5(byte param_1,char param_2,byte param_3)
 

@@ -10,7 +10,8 @@
    before returning. The decompiled C's param_1 does not appear anywhere in these instructions.
    type: state
    evidence: ec/decompiled/bank1/C4AF.asm; ec/decompiled/bank1/C4AF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void reload_083e_when_0834_is_zero(char param_1)
 

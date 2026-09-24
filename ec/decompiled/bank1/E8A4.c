@@ -17,7 +17,8 @@
    listing has an entry in ec/annotations/registers.yaml.
    type: logic
    evidence: ec/decompiled/bank1/E8A4.asm; ec/decompiled/bank1/E8A4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void compute_097e_times_10_write_0386_0387(void)
 

@@ -8,7 +8,8 @@
    so it is the shared call site rather than a body of its own.
    type: forwarder
    evidence: ec/decompiled/bank0/A73B.asm; ec/decompiled/bank0/A73B.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_a747(void)
 

@@ -8,7 +8,8 @@
    reads two XDATA bytes and writes three, with no branching.
    type: writer
    evidence: ec/decompiled/bank0/D2DA.asm; ec/decompiled/bank0/D2DA.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void stage_1c03_1c02_1c01(undefined1 param_1)
 

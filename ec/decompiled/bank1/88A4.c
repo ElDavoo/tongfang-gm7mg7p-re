@@ -9,7 +9,8 @@
    this routine reads, then returns the same difference byte.
    type: math
    evidence: ec/decompiled/bank1/88A4.asm; ec/decompiled/bank1/88A4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char sub_r0_from_r1_stash_r0_on_borrow(byte param_1,byte param_2)
 

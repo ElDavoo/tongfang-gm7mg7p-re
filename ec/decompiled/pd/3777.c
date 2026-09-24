@@ -10,7 +10,8 @@
    the increment entirely.
    type: math
    evidence: ec/decompiled/pd/3777.asm; ec/decompiled/pd/3777.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char inc32_r4_r7_and_mul_r3_by_5e(char param_1)
 

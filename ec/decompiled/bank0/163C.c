@@ -10,7 +10,8 @@
    it does with DPTR is not decoded here.
    type: bank-switch
    evidence: ec/decompiled/bank0/163C.asm; ec/decompiled/bank0/163C.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: abi-symbol */
 
 void load_dptr_88f0_tail_jump_1114(void)
 

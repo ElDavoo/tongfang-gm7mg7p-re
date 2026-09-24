@@ -8,7 +8,8 @@
    in the C body are the target's.
    type: forwarder
    evidence: ec/decompiled/pd/0023.asm; ec/decompiled/pd/0023.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 ljmp_010e(undefined1 param_1)
 

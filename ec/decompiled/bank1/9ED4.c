@@ -11,7 +11,8 @@
    here and what they record is not decoded from this listing.
    type: writer
    evidence: ec/decompiled/bank1/9ED4.asm; ec/decompiled/bank1/9ED4.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 ring_write_0990_len_2f(undefined1 param_1)
 

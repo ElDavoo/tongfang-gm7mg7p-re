@@ -7,7 +7,8 @@
 /* Copies one byte: reads XDATA 0x0F81 into A and writes it to XDATA 0x0A58, then returns.
    type: copy
    evidence: ec/decompiled/bank0/F138.asm; ec/decompiled/bank0/F138.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void copy_0f81_to_0a58(void)
 

@@ -9,7 +9,8 @@
    header marks the function boundary as a call-target-scan hypothesis.
    type: forwarder
    evidence: ec/decompiled/pd/1229.asm; ec/decompiled/pd/1229.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void load_dptr_then_indirect_jump(undefined1 param_1,undefined1 param_2)
 

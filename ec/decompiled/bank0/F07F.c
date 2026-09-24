@@ -10,7 +10,8 @@
    address is a single `movx @DPTR, A`; the rest is the decompiler's reading of the run.
    type: writer
    evidence: ec/decompiled/bank0/F07F.asm; ec/decompiled/bank0/F07F.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void store_a_then_five_zeros(undefined1 param_1,undefined1 *param_2)
 

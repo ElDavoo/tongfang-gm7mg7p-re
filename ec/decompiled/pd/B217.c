@@ -9,7 +9,8 @@
    an empty void body.
    type: logic
    evidence: ec/decompiled/pd/B217.asm; ec/decompiled/pd/B217.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void clear_r3_r2_r1(void)
 

@@ -8,7 +8,8 @@
    decompilation of the branch target 0xF219, not of these three bytes.
    type: forwarder
    evidence: ec/decompiled/bank1/F10D.asm; ec/decompiled/bank1/F10D.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void ljmp_f219(void)
 

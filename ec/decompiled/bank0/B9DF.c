@@ -10,7 +10,8 @@
    are not in these five instructions.
    type: copy
    evidence: ec/decompiled/bank0/B9DF.asm; ec/decompiled/bank0/B9DF.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 copy_x1918_to_x0a57(void)
 

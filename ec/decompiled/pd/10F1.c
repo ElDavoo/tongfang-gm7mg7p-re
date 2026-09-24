@@ -9,7 +9,8 @@
    and is a hypothesis, so the listing may not be the whole routine.
    type: reader
    evidence: ec/decompiled/pd/10F1.asm; ec/decompiled/pd/10F1.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read3_code_to_r3r1(short param_1)
 

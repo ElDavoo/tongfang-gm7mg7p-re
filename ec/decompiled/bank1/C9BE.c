@@ -11,7 +11,8 @@
    XDATA 0x39A multiplied by ten, and on not-less falls through into 0xCA02 at XDATA 0xC9FF.
    type: logic
    evidence: ec/decompiled/bank1/C9BE.asm; ec/decompiled/bank1/C9BE.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void count_0361_then_0362_toward_03a3(char param_1)
 

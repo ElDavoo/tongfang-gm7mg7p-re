@@ -13,7 +13,8 @@
    here.
    type: dispatch
    evidence: ec/decompiled/bank1/8E91.asm; ec/decompiled/bank1/8E91.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dispatch_on_049d_049e_05e0(void)
 

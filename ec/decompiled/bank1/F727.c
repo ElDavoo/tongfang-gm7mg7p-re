@@ -12,7 +12,8 @@
    at this address.
    type: unresolved
    evidence: ec/decompiled/bank1/F727.asm; ec/decompiled/bank1/F727.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void unimplemented_ff_fill_f727(undefined1 param_1)
 

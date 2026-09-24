@@ -9,7 +9,8 @@
    same three bytes with bit 0 cleared; what the bit gates is not decoded here.
    type: writer
    evidence: ec/decompiled/bank0/DC60.asm; ec/decompiled/bank0/DC60.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 set_bit0_1202_1204_1205(void)
 

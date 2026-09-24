@@ -10,7 +10,8 @@
    XDATA 0x0497 is set, then writes 1 to 0x2009 and 0x80 to 0x0681 and returns.
    type: state
    evidence: ec/decompiled/bank1/9A41.asm; ec/decompiled/bank1/9A41.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: register-map */
 
 void step_0686_by_14_or_set_0681_80(void)
 

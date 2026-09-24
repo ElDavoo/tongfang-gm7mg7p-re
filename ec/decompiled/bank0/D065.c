@@ -8,7 +8,8 @@
    0x5A to 0x1F07. Nothing is read, so none of the three values is derived from existing state.
    type: writer
    evidence: ec/decompiled/bank0/D065.asm; ec/decompiled/bank0/D065.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void init_1f01_1f06_1f07(void)
 

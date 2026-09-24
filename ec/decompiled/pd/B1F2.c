@@ -9,7 +9,8 @@
    the second level, so this name records a handoff and nothing more
    type: forwarder
    evidence: ec/annotations/lightbar-bat-flow.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void unresolved_0xB1F2(void)
 

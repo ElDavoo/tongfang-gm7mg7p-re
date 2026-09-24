@@ -14,7 +14,8 @@
    far past that, so only the bytes here are described.
    type: state
    evidence: ec/decompiled/bank0/445E.asm; ec/decompiled/bank0/445E.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1
 stage_and_commit_0a56_block(undefined1 param_1,byte param_2,undefined1 param_3,char param_4)

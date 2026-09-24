@@ -10,7 +10,8 @@
    0x9C45, 0x9CFB and 0x9D39, so what it selects is not determined here.
    type: unresolved
    evidence: ec/decompiled/pd/9C18.asm; ec/decompiled/pd/9C18.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void set_b_67(void)
 

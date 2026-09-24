@@ -10,7 +10,8 @@
    0x0A00-0x0BFF.
    type: reader
    evidence: ec/decompiled/pd/979A.asm; ec/decompiled/pd/979A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 undefined1 read_xdata_table_byte_idx_a_mul_17_add_14(char param_1)
 

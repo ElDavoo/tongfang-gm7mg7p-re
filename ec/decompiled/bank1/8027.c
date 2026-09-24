@@ -9,7 +9,8 @@
    scan's hypothesis and the function-level role here is not determined.
    type: math
    evidence: ec/decompiled/bank1/8027.asm; ec/decompiled/bank1/8027.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void dec_acc_8027(char param_1,char *param_2,char param_3)
 

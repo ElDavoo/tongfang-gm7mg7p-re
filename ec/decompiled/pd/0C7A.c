@@ -11,7 +11,8 @@
    entry, so these instructions may not be the whole function.
    type: math
    evidence: ec/decompiled/pd/0C7A.asm; ec/decompiled/pd/0C7A.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 char mul_r7_r5_r4_into_r6r7(char param_1,byte param_2,char param_3,byte param_4)
 

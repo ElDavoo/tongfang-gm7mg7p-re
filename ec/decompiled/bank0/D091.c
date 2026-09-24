@@ -31,7 +31,8 @@
    type: dispatch
    evidence: ec/decompiled/bank0/D091.asm; ec/decompiled/bank0/D091.c;
    ec/annotations/xdata-086x-dispatch.md
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: ec-register */
 
 void dispatch_on_0860(char *param_1,char *param_2)
 

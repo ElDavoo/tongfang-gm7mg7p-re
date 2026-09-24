@@ -10,7 +10,8 @@
    listing does not show. No absolute address appears in these five instructions.
    type: forwarder
    evidence: ec/decompiled/bank0/D6C9.asm; ec/decompiled/bank0/D6C9.c
-   basis: hand-decoded */
+   basis: hand-decoded
+   name_basis: code-shape */
 
 void call_0ea2_twice_with_fa(void)
 
