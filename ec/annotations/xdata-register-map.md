@@ -350,15 +350,38 @@ so the retraction runs backwards from the usual direction. The pre-fix CSVs
 stay in git history, which is where those numbers remain visible; nothing here
 is deleted to make room for the correction.
 
-**What the corrected run gives.** 838 raw `==` in the tree, 837 of them in the
-census — the eighth-hundred-and-thirty-eighth is inside a comment, which
-`strip_comments()` blanks. All 837 become reads, except one that sits in a call
-argument and becomes `passed-to-call`. The worst-hit addresses were `0x06E6`,
-`0x0843`, `0x0844` and `0x08A8` (42 each) and `0x0706` (40). `0x0860` is the
+**What the corrected run gives.** 838 raw `==` in the tree, all 838 of them in
+the census, and 837 of those 838 change bucket: 836 become reads, and one that
+sits in a call argument becomes `passed-to-call`. The worst-hit addresses were
+`0x06E6`, `0x0843`, `0x0844` and `0x08A8` (42 each) and `0x0706` (40).
+`0x0860` is the
 row that shows how far off it could get: it read as 0 read / 13 `write` / 3
 `read+write` / 1 `passed-to-call` — a pure write-side dispatch byte — and is
 14 read / 2 `write` / 0 `read+write` / 1 `passed-to-call`, the two stores being
 `bank0/D281.c:18` and `bank0/D289.c:17` and the handoff `bank0/D091.c:69`.
+
+> **CORRECTION (2026-09-24, review of PR #206) to the first version of that
+> paragraph, which read:** "838 raw `==` in the tree, 837 of them in the
+> census — the eighth-hundred-and-thirty-eighth is inside a comment, which
+> `strip_comments()` blanks. All 837 become reads, except one that sits in a
+> call argument and becomes `passed-to-call`." **The mechanism is wrong.**
+> `strip_comments()` blanks none of the 838: counting the occurrences before
+> and after it gives 838 of 838, and the nine token occurrences it does remove
+> (§2's "nine comment occurrences") are `DAT_EXTMEM_` sites in annotation
+> prose, not comparisons. So the census has always seen all 838. What the 837
+> counts is the occurrences that **changed bucket**, and the one that did not
+> is `DAT_EXTMEM_076a` at `bank0/A747.c:24` — `address-taken` before this fix
+> and `address-taken` after it, because `classify()` tests
+> `left.endswith("&")` before it ever reaches `store_target()`, and in
+>
+> ```c
+> if (DAT_EXTMEM_076b == '\0' && (DAT_EXTMEM_0769 == '\0' && DAT_EXTMEM_076a == '\0')) {
+> ```
+>
+> the token is preceded by the **second** `&` of a `&&`. 838 in the census, 837
+> moved; the two were never the same number, and the difference is that site
+> rather than a comment. This is §6's `&&` limitation below, and it is the
+> adjacent finding this paragraph's wrong mechanism had hidden.
 
 `0x0443` is the control, and it does not move: four genuine
 read-modify-writes at `bank1/F11C.c:21`, `F11F.c:23`, `F2CA.c:23` and
@@ -529,6 +552,20 @@ is a human's, and the issue says so too.
   anywhere in a function's body counts as its callee, so a callee of a callee
   is credited to the outer function. It is a name-frequency column for picking
   a place to start reading, not a call graph.
+- **`address-taken` is a one-character test, and `&&` satisfies it.**
+  `classify()` asks only whether the text before the token ends in `&`, and
+  tests that *before* it reaches the store rule, so the second `&` of a boolean
+  `&&` files a plain comparison under `address-taken` instead of `read`. There
+  is exactly one such site in the committed tree — `bank0/A747.c:24`,
+  `DAT_EXTMEM_076a` — so §4.1's 271 is 270 genuine `&DAT_EXTMEM_xxxx` and one
+  comparison. No total is restated here, because none was recomputed for it and
+  the census the CSVs publish is the tool's own buckets either way; the fix is
+  `left.endswith("&") and not left.endswith("&&")`, which would move one
+  reference from `address-taken` to `read` and change no other bucket. The
+  ordering is pre-existing — `git show main:ec/tools/xdata_register_map.py`
+  has the same three-branch `classify()` — so §4.3 neither caused nor fixed
+  it, and it is not a regression from this work. Found by review of #206; §8
+  carries it as follow-up work.
 
 ## 7. Reconciling against the other method: one non-gap, and twelve rows the tree says zero on
 
@@ -625,3 +662,13 @@ a non-gap that reads exactly like one, and the two genuine gaps:
 - A cluster that turns out to be a record table should say so in
   `pd-index-geometry.md`'s terms (base and stride, then the field layout), not
   here.
+- **`classify()`'s `&` test should learn to tell `&&` from address-of.** It
+  files a boolean `&&` under `address-taken`, which is the one occurrence at
+  `bank0/A747.c:24` that §4.3's 838 could not correct (§6's bullet, and the
+  correction block above). The fix is one clause — `left.endswith("&") and not
+  left.endswith("&&")` — and it moves one reference from `address-taken` to
+  `read` (271/8,319 → 270/8,320) and touches no other bucket, so it is a
+  re-run and a diff of two numbers rather than a re-derivation. It belongs in
+  its own issue: the ordering is pre-existing on `main`, it is not a regression
+  from #206, and folding it in here would put an unrelated classifier change
+  inside a correction about `==`.
