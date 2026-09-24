@@ -5,10 +5,11 @@
 
 
 /* Calls 0xBA15, loads DPTR with 0x044B, stores the constant 0x02 there and returns. No other XDATA
-   address appears in the listing, and 0x044B has no entry in ec/annotations/registers.yaml, so what
-   the byte selects is not determined here. The decompiled C agrees with the listing on both points.
+   address appears in the listing, and ec/annotations/registers.yaml now carries 0x044B as
+   XDATA_044B, an EC-side site found with its meaning not established, so what the byte selects is
+   still not determined here. The decompiled C agrees with the listing on both points.
    type: writer
-   evidence: ec/decompiled/bank0/9A86.asm; ec/decompiled/bank0/9A86.c
+   evidence: ec/decompiled/bank0/9A86.asm; ec/decompiled/bank0/9A86.c; ec/annotations/registers.yaml
    basis: hand-decoded */
 
 void call_ba15_then_write_02_to_044b(void)

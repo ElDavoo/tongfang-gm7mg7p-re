@@ -10,8 +10,9 @@
    0x0986, 0x070D, 0x07F3, 0x0981, 0x0982, 0x0811, 0x0809, 0x080D and 0x08A7. Three of those have an
    extra action on reaching zero -- 0x0843 then stores 1 to 0x080C, 0x0844 clears 0x0621 to zero,
    and 0x08A8 clears bit 2 of 0x0985 (`anl A,#0xfb`) and bit 4 of 0x0723 (`anl A,#0xef`), each as a
-   separate read-modify-write. What any of these bytes means is not shown here, and none has an
-   entry in ec/annotations/registers.yaml.
+   separate read-modify-write. What any of these bytes means is not shown here;
+   ec/annotations/registers.yaml now carries 0x0440 as XDATA_0440, an EC-side site found with its
+   meaning not established, and names none of the other bytes above.
    type: writer
    evidence: ec/decompiled/bank1/80EF.asm; ec/decompiled/bank1/80EF.c; ec/annotations/registers.yaml
    basis: hand-decoded */
