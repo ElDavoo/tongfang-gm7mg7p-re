@@ -232,7 +232,9 @@ When `0x05F0` reaches 1 (21:18:56.790) the long path follows: `0x0490` goes
 is zeroed. 10 ms later `0x976E`'s own path runs again and reloads `0x06D8` and
 `0x070B`; those are the grader's two "up" steps. The AC plug-in runs the
 `0x9817` half again (`0x0490` `0x06` → `0x07` is the same `(old OR 1) AND 0x77`)
-and then `0x0490` bit 3 is set, which neither annotation accounts for. `0x044C`
+and then `0x0490` bit 3 is set, which neither annotation accounts for.
+`bank1:0xC11C latch_0490_bit3_or_bit7` is the named candidate, and the live
+rows are on #241. `0x044C`
 and `0x0841`, which the annotations also write, were not watched.
 
 **On battery, `0x06D9` held at 3 with no known writer running, so its gate was
@@ -340,7 +342,7 @@ Not settled:
 
 ## 6. What is left, for a human with the machine
 
-1. **Load a pre-return countdown.** Idle, AC, the Fn key, the lid and S3 did
+1. **Load a pre-return countdown (#374).** Idle, AC, the Fn key, the lid and S3 did
    not (§4a, §4b). The writers of the 12 in-window pre-return bytes, in
    `xdata-06c2-06db-timers.md` §3, say what else might load them. The ones
    with a known writer are where to read next: `0x06C6` and `0x06CD` (reloaded
@@ -350,8 +352,11 @@ Not settled:
    the event to trigger.
    `grade_timer_sweep.py` prints the full ratio as soon as one byte on each
    side of the return makes two consecutive `-1` steps.
-2. **The Windows arm** from §7 of the annotation: `ec_watch.py` over
+2. **The Windows arm (#378)** from §7 of the annotation: `ec_watch.py` over
    `0x06C0`-`0x06DF` with the Control Center started and stopped.
-3. **A read path to `0x1664` and `0x3202`.** Something other than the ECMG
+3. **A read path to `0x1664` and `0x3202` (#375).** Something other than the ECMG
    window, if the EC offers one. Until then §7's third step stays unrunnable
    as written.
+4. **What wrote `0x06C5` across the suspend (#376).**
+5. **Every `registers.yaml` row outside the host window (#377)**, since a live
+   read of any of them through ECMG returns `0xFF`.

@@ -4175,14 +4175,16 @@ countdown was loaded. `XDATA_06C5` joins the three above at
 `confirmed-working` on the same narrow scope, with the same "every pass"
 correction.
 
-**What this opens.** A run that loads a pre-return countdown. Idle, AC, the Fn
-key, the lid and S3 did not, and the pre-return bytes with known writers are
-listed in the hardware-test doc's §6. What wrote `0x06C5` across the suspend. A read path to `0x1664` and `0x3202`, if the EC has one
-other than ECMG. `0x0490` bit 3, set at AC plug-in by something neither
-annotation covers. Handling `KEY_F14` in the driver if the mode key is to do
-anything on Linux. And a pass over `registers.yaml` for every row the host
-window cannot reach, since a live read of any of them through this path returns
-`0xFF` whatever the EC holds.
+**What this opens,** each now tracked. A run that loads a pre-return countdown
+(#374); idle, AC, the Fn key, the lid and S3 did not, and the pre-return bytes
+with known writers are listed in the hardware-test doc's §6. What wrote
+`0x06C5` across the suspend (#376). A read path to `0x1664` and `0x3202`, if the
+EC has one other than ECMG (#375). `0x0490` bit 3, set at AC plug-in by
+something neither annotation covers (live rows on #241). A pass over
+`registers.yaml` for every row the host window cannot reach (#377), since a live
+read of any of them through this path returns `0xFF` whatever the EC holds. The
+Windows arm with the Control Center started and stopped (#378). And handling
+`KEY_F14` in the driver, if the mode key is to do anything on Linux.
 
 ## 18. The decompiler's variables, measured: most `param_N` are not parameters (2026-09-24, issue #133)
 
