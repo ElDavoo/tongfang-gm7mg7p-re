@@ -34,6 +34,16 @@ re-encode, and that still has no schedule (`docs/findings.md` §14e). Detecting
 a change is not verifying it, and the column's name invites the second reading
 more than the first.
 
+**`--verify-provenance` is what anchors that column to the text it covers.**
+`add_digest_column()` digests the listings on disk without re-encoding, so it
+cannot say they are the listings the report measured -- `docs/findings.md` §14f
+answers that from the repository's own history instead: the migration changed
+the column and nothing beneath it, and no listing text moved under it. This
+mode runs §14f's method rather than describing it. What it establishes is that
+the committed digests cover the text the last full `--report` measured; it says
+nothing about whether that text is right, which is the re-encode above, and it
+needs a full git history to resolve the revisions it names.
+
 Three decoders are in play and they are worth keeping distinct:
 
   Ghidra's SLEIGH      writes the .asm this script reads
@@ -65,6 +75,10 @@ Usage:
     python3 ec/tools/verify_reassembly.py --check                   # no assembler
     python3 ec/tools/verify_reassembly.py --self-test               # known answers
     python3 ec/tools/verify_reassembly.py --add-digest-column       # one-shot
+    python3 ec/tools/verify_reassembly.py --verify-provenance \\
+        --base 08b72e2 --migration a56b3bb --listings-from 8c7985e
+        # audit a digest migration against history; needs a full clone,
+        # so ci.yml's default-depth checkouts cannot run it
 """
 import argparse
 import csv
@@ -1160,12 +1174,13 @@ def add_digest_column(path=REPORT):
     What it asserts, and it is worth being exact about this because the command
     looks like a measurement: the digests are those of the listings on disk
     right now, and the report's outcomes are whatever they were. It cannot
-    prove that these are the listings the report measured -- proving that needs
-    the same assembler the report was made with, which is the thing this path
+    prove that these are the listings the report measured -- the re-encode
+    against the report's own assembler would, and that is the thing this path
     deliberately does not run, because the one available here is a different
     and older ASxxxx and a full report against it would rewrite every
-    `assembler` cell and could move the gap tallies. See
-    `ec/ghidra/README.md`."""
+    `assembler` cell and could move the gap tallies. For the committed column
+    that proof comes out of the history instead, and `--verify-provenance` is
+    what runs it. See `ec/ghidra/README.md`."""
     with open(path, newline="") as f:
         reader = csv.DictReader(f)
         fieldnames = list(reader.fieldnames or [])
@@ -1208,6 +1223,288 @@ def add_digest_column(path=REPORT):
           "  %s\n"
           "  which re-encodes with the assembler, rather than editing the CSV."
           % (len(rows), os.path.relpath(path, REPO), REPORT_COMMAND))
+    return 0
+
+
+# §14f's pathspec, as the one spelling of it. The negative check and the
+# positive control have to use the same string, or a control that matched
+# something says nothing about a negative that matched nothing.
+LISTING_PATHSPEC = "ec/decompiled/**/*.asm"
+REPORT_REL = "ec/ghidra/reassembly.csv"
+# What identifies a row. --check keys the same rows `addr|program`; a tuple is
+# that same identity without a separator, so nothing inside an address can
+# join two rows into one.
+PROVENANCE_KEY = ("program", "addr")
+
+# The mode reads two revisions out of the repository's own history, so how deep
+# the clone is is part of its contract the way the assembler is part of
+# --report's. The agent stages check out with `fetch-depth: 0` and can run it;
+# both of ci.yml's checkouts are default-depth and cannot resolve the
+# revisions §14f names at all. See docs/agent-pipeline.md.
+HISTORY_REQUIREMENT = (
+    "  This mode answers from the repository's history, so it needs a full\n"
+    "  clone: `git clone` without --depth, or `git fetch --unshallow` in one\n"
+    "  that is shallow. A default-depth checkout -- actions/checkout's default,\n"
+    "  which is what ci.yml uses -- has neither revision, and a mode that\n"
+    "  carried on anyway would be auditing whatever happened to be checked out.")
+
+
+def _git(*args):
+    """git, run against the repository whatever the cwd is."""
+    return subprocess.run(["git", "-C", REPO] + list(args),
+                          capture_output=True, text=True)
+
+
+def git_lines(*args):
+    """-> (lines, None) for git's non-empty output lines, or (None, why).
+
+    None rather than an empty list because an empty answer and a command that
+    did not run are the two things this mode most needs to tell apart: every
+    check it makes is "git said nothing", so a git that failed would read as a
+    pass on all of them.
+    """
+    try:
+        r = _git(*args)
+    except OSError as exc:
+        return None, "git could not be run: %s" % exc
+    if r.returncode != 0:
+        return None, r.stderr.strip() or ("git exited %d" % r.returncode)
+    return [ln for ln in r.stdout.splitlines() if ln.strip()], None
+
+
+def resolve_revision(rev):
+    """-> the commit sha `rev` names in this clone, or None if it has no such
+    commit. `^{commit}` so a tag or a branch name is measured, not a path."""
+    lines, _why = git_lines("rev-parse", "--verify", "--quiet", rev + "^{commit}")
+    return lines[0] if lines else None
+
+
+def compare_provenance(base_text, migration_text):
+    """Two revisions' reports, `listing_digest` dropped from both.
+    -> (rows identical, rows in the base, column (base, migration), problems).
+
+    This is the comparison inside `--verify-provenance` with no git in it, so it
+    is written to be exercised on its own: a comparison that compared nothing,
+    or that dropped one column too many, looks exactly like a working one on any
+    pair that agrees, and the committed pair is a pair that agrees.
+
+    The column is dropped rather than compared because that is the shape of a
+    migration -- the base predates it, so `listing_digest` is absent on that
+    side entirely -- and because the digests are *meant* to be new: comparing
+    them would fail every correct run. What has to hold is that nothing else
+    moved. Rows are keyed by (program, addr) so a re-order is not a change, and
+    anything that is, is named rather than skipped: a column added, renamed or
+    reordered beneath the digest, a row that is missing or extra, a key that
+    appears twice, or one differing cell. A repeated key is refused rather than
+    collapsed, because a dict that keeps one of the two says the two are equal.
+    """
+    import io
+
+    def read(text):
+        reader = csv.DictReader(io.StringIO(text), strict=True)
+        rows = list(reader)
+        fields = [f for f in (reader.fieldnames or [])
+                  if f != "listing_digest"]
+        return fields, rows, "listing_digest" in (reader.fieldnames or [])
+
+    problems = []
+    try:
+        base_fields, base_rows, base_has = read(base_text)
+        mig_fields, mig_rows, mig_has = read(migration_text)
+    except csv.Error as exc:
+        return 0, 0, (False, False), ["a report does not parse as strict CSV: %s"
+                                      % exc]
+    if not base_rows or not mig_rows:
+        problems.append("a report has no rows in it: %d in the base, %d in the "
+                        "migration" % (len(base_rows), len(mig_rows)))
+        return 0, len(base_rows), (base_has, mig_has), problems
+
+    headers_differ = base_fields != mig_fields
+    if headers_differ:
+        only_base = [f for f in base_fields if f not in mig_fields]
+        only_mig = [f for f in mig_fields if f not in base_fields]
+        detail = []
+        if only_base:
+            detail.append("only in the base: %s" % ", ".join(only_base))
+        if only_mig:
+            detail.append("only in the migration: %s" % ", ".join(only_mig))
+        if not detail:
+            detail.append("the same columns in a different order: %s vs %s"
+                          % (",".join(base_fields), ",".join(mig_fields)))
+        problems.append("the two headers differ beyond listing_digest -- %s"
+                        % "; ".join(detail))
+
+    def key_by(rows, which):
+        keyed = {}
+        for row in rows:
+            k = tuple(row.get(f, "") for f in PROVENANCE_KEY)
+            if k in keyed:
+                problems.append("%s %s appears more than once in the %s: a "
+                                "repeated key cannot be compared, and taking one "
+                                "of the two would report them as equal"
+                                % (k[0], k[1], which))
+            keyed[k] = row
+        return keyed
+
+    base_keyed = key_by(base_rows, "base")
+    mig_keyed = key_by(mig_rows, "migration")
+    for k in sorted(set(base_keyed) - set(mig_keyed)):
+        problems.append("%s %s is in the base and not in the migration"
+                        % (k[0], k[1]))
+    for k in sorted(set(mig_keyed) - set(base_keyed)):
+        problems.append("%s %s is in the migration and not in the base"
+                        % (k[0], k[1]))
+
+    # Compared over the columns both sides have. With a header difference that
+    # is only the overlap, and no row counts as identical: it would be saying
+    # a row matched when a column of it was never compared at all.
+    fields = [f for f in base_fields if f in mig_fields]
+    identical = 0
+    for k in sorted(set(base_keyed) & set(mig_keyed)):
+        diffs = [f for f in fields
+                 if base_keyed[k].get(f, "") != mig_keyed[k].get(f, "")]
+        for f in diffs:
+            problems.append("%s %s: %s is %r in the base and %r in the migration"
+                            % (k[0], k[1], f, base_keyed[k].get(f, ""),
+                               mig_keyed[k].get(f, "")))
+        if not diffs and not headers_differ:
+            identical += 1
+    return identical, len(base_rows), (base_has, mig_has), problems
+
+
+def verify_provenance(base, migration, listings_from=None):
+    """Audit a `listing_digest` migration against the history it sits in.
+    -> exit status. 0 means every check below measured what it claims to.
+
+    §14f answered, by hand, that the migration added the column and changed
+    nothing beneath it, and that no listing text moved while it did. This runs
+    that, and refuses to answer anything it cannot measure:
+
+      1. both revisions resolve in this clone, and so does the one the listings
+         were last written in;
+      2. the listings' pathspec matches something over that window, so the empty
+         answer over the migration is a measurement and not a pathspec quietly
+         matching nothing;
+      3. no `.asm` under the two revisions' window changed;
+      4. the two reports, `listing_digest` dropped, differ by nothing;
+      5. what the migration's window did touch, printed as a supporting view.
+
+    (2) is checked before (3) rather than after it, which is the one place this
+    departs from the order §14f presents them in: an empty diff printed as a
+    result and only then contradicted by the control is exactly the reading the
+    control exists to prevent. Both numbers are printed together either way.
+    """
+    base_sha = resolve_revision(base)
+    mig_sha = resolve_revision(migration)
+    for label, rev, sha in (("base", base, base_sha),
+                            ("migration", migration, mig_sha)):
+        if not sha:
+            print("  FAIL cannot resolve the %s revision %r in this clone."
+                  % (label, rev))
+            print(HISTORY_REQUIREMENT)
+            return 1
+    # Defaulted rather than required, but the default is resolved the same way
+    # a named revision is, so a window whose start is missing fails with the
+    # history requirement rather than as a control of zero.
+    from_rev = listings_from or (base + "^")
+    from_sha = resolve_revision(from_rev)
+    if not from_sha:
+        print("  FAIL cannot resolve --listings-from %r in this clone."
+              % from_rev)
+        print(HISTORY_REQUIREMENT)
+        return 1
+    print("  revisions: listings written %s..%s, migration %s..%s"
+          % (from_sha[:7], base_sha[:7], base_sha[:7], mig_sha[:7]))
+
+    control, why = git_lines("diff", "--name-only",
+                             "%s..%s" % (from_sha, base_sha), "--",
+                             LISTING_PATHSPEC)
+    if control is None:
+        print("  FAIL the control diff did not run: %s" % why)
+        return 1
+    moved, why = git_lines("diff", "--name-only",
+                           "%s..%s" % (base_sha, mig_sha), "--",
+                           LISTING_PATHSPEC)
+    if moved is None:
+        print("  FAIL the listing diff did not run: %s" % why)
+        return 1
+    if not control:
+        print("  FAIL the control returned 0 file(s) over %s..%s, so the pathspec"
+              "\n  is matching nothing and the empty answer below is not a "
+              "measurement." % (from_sha[:7], base_sha[:7]))
+        print("  Pass --listings-from the revision before the window that last "
+              "wrote\n  the listings, and check that the window is not empty.")
+        return 1
+    # One line for both, because either answer is only a measurement next to the
+    # control: "none moved" over a pathspec that matches nothing is the failure
+    # this is shaped to prevent, and "2,705 moved" beside a control of 0 would
+    # be a different one.
+    print("  listing text: %d of them changed over %s..%s; the same pathspec "
+          "returns %d file(s)\n  over %s..%s, the window that last wrote them, "
+          "so the first number is a measurement"
+          % (len(moved), base_sha[:7], mig_sha[:7], len(control), from_sha[:7],
+             base_sha[:7]))
+    if moved:
+        print("  FAIL %d listing(s) changed under the migration:" % len(moved))
+        for path in moved[:20]:
+            print("    %s" % path)
+        if len(moved) > 20:
+            print("    ... and %d more" % (len(moved) - 20))
+        print("  The digests were computed from the listings at HEAD, not from "
+              "the ones the\n  report measured. Re-report, or re-run this "
+              "against the migration that did not move\n  a listing.")
+        return 1
+
+    reports = {}
+    for label, sha in (("base", base_sha), ("migration", mig_sha)):
+        lines, why = git_lines("show", "%s:%s" % (sha, REPORT_REL))
+        if lines is None:
+            print("  FAIL cannot read %s at the %s revision: %s"
+                  % (REPORT_REL, label, why))
+            return 1
+        reports[label] = "\n".join(lines) + "\n"
+    identical, n_base, has_digest, problems = compare_provenance(
+        reports["base"], reports["migration"])
+    if problems:
+        print("  FAIL the two reports differ by more than the column "
+              "(%d problem(s)):" % len(problems))
+        for p in problems[:20]:
+            print("    %s" % p)
+        if len(problems) > 20:
+            print("    ... and %d more" % (len(problems) - 20))
+        return 1
+    print("  report: %d of %d row(s) identical once listing_digest is dropped "
+          "(present in the\n  base: %s; in the migration: %s)"
+          % (identical, n_base, "yes" if has_digest[0] else "no",
+             "yes" if has_digest[1] else "no"))
+
+    touched, why = git_lines("log", "--name-only", "--format=",
+                             "%s..%s" % (base_sha, mig_sha), "--",
+                             "ec/decompiled")
+    if touched is None:
+        print("  (the supporting view did not run: %s)" % why)
+    else:
+        # Supporting, not a gate: a `.c` re-export is a normal thing for a
+        # window to contain, and the digest is over the parsed `.asm`
+        # instruction stream, so it cannot move one. Deduped because --log
+        # names a path once per commit that touched it, and a count that moves
+        # with how the window happened to be split is not worth printing.
+        touched = list(dict.fromkeys(touched))
+        print("  the window touched %d path(s) under ec/decompiled:"
+              % len(touched))
+        for path in touched[:10]:
+            print("    %s" % path)
+        if len(touched) > 10:
+            print("    ... and %d more" % (len(touched) - 10))
+
+    print("  PASS  the migration changed the column and nothing beneath it, and "
+          "no listing text\n  moved while it did.")
+    print("  What that establishes: the committed digests are of the listings "
+          "the last full --report\n  measured. What it does not: that those "
+          "listings are right. The digests were taken\n  without a "
+          "re-encode, so they attest to the measured text and not to its\n  "
+          "correctness -- that is the re-encode's job (docs/findings.md §14e), "
+          "and it\n  still has no schedule.")
     return 0
 
 
@@ -1400,6 +1697,81 @@ def self_test():
                     "than being skipped")
     finally:
         os.remove(rpath)
+
+    # The provenance comparison, which is the part of --verify-provenance with
+    # no git in it and so the part that can quietly start passing everything.
+    # A comparison that compares nothing, or that drops one column too many, is
+    # indistinguishable from a correct one on any pair that agrees -- and the
+    # committed pair is a pair that agrees. No history needed, so these run
+    # wherever the rest of this file runs.
+    def as_csv(rows, fieldnames):
+        import io
+        buf = io.StringIO()
+        w = csv.DictWriter(buf, fieldnames=fieldnames, lineterminator="\n")
+        w.writeheader()
+        w.writerows(rows)
+        return buf.getvalue()
+
+    base_fields = ["program", "addr", "name", "outcome", "instructions_checked"]
+    mig_fields = ["program", "addr", "name", "outcome", "listing_digest",
+                  "instructions_checked"]
+    # The base rows have no listing_digest key at all, not an empty one: a
+    # migration is the column being absent on one side, and a comparison that
+    # had only ever seen an empty cell would not have been tested for that.
+    before = [{"program": "bank0", "addr": "0040", "name": "a",
+               "outcome": "match", "instructions_checked": "2"},
+              {"program": "bank0", "addr": "0042", "name": "b",
+               "outcome": "partial", "instructions_checked": "3"}]
+    # A migration's column: new on every row, and different from row to row, so
+    # comparing it -- or dropping only the first row's -- fails here.
+    after = [dict(before[0], listing_digest="38b4854aff7d69ca"),
+             dict(before[1], listing_digest="180ddaa4dd467c12")]
+    identical, n_base, has_digest, bad = compare_provenance(
+        as_csv(before, base_fields), as_csv(after, mig_fields))
+    assert_that(identical == 2 and n_base == 2 and not bad,
+                "a migration that adds the column and nothing else compares "
+                "equal (%d of %d row(s), %d problem(s))"
+                % (identical, n_base, len(bad)))
+    assert_that(has_digest == (False, True),
+                "the column is reported absent on the base and present on the "
+                "migration, which is the shape a migration has")
+    # The failure the comparison exists to catch: the migration that also
+    # touched a cell under the column. Byte-identical digests would not catch
+    # this; the rows underneath them do.
+    edited = [dict(after[0], instructions_checked="1"), after[1]]
+    identical, _n, _d, bad = compare_provenance(
+        as_csv(before, base_fields), as_csv(edited, mig_fields))
+    assert_that(identical == 1 and len(bad) == 1
+                and "instructions_checked" in bad[0] and "0040" in bad[0],
+                "one cell changed beneath the column fails, naming the row and "
+                "the cell (compared %d of 2, %d problem(s)%s)"
+                % (identical, len(bad), ": " + bad[0] if bad else ""))
+    # A row-count change. A row only one side has is not "nothing to differ".
+    identical, n_base, _d, bad = compare_provenance(
+        as_csv(before, base_fields), as_csv(after[:1], mig_fields))
+    assert_that(identical == 1 and n_base == 2 and len(bad) == 1
+                and "0042" in bad[0],
+                "a row missing from the migration fails and is named, rather "
+                "than compared as two rows that agree")
+    # And a column the migration also renamed, which a comparison that only
+    # walked the rows would never see: the renamed field matches nothing, so
+    # every row looks unchanged unless the header is compared too.
+    renamed = ["program", "addr", "name", "outcome", "listing_digest", "checked"]
+    identical, _n, _d, bad = compare_provenance(
+        as_csv(before, base_fields),
+        as_csv([{f: r["instructions_checked"] if f == "checked" else r[f]
+                 for f in renamed} for r in after], renamed))
+    assert_that(identical == 0 and len(bad) == 1 and "header" in bad[0],
+                "a column the migration also renamed fails as a header "
+                "difference, and no row counts as identical (%d identical%s)"
+                % (identical, ": " + bad[0] if bad else ""))
+    # An empty side is not a pass either. A reader that has compared no rows
+    # has compared nothing.
+    identical, n_base, _d, bad = compare_provenance(
+        as_csv(before, base_fields), "program,addr\n")
+    assert_that(identical == 0 and len(bad) == 1 and "no rows" in bad[0],
+                "an empty report fails rather than comparing zero rows to zero "
+                "and agreeing")
 
     # What a run says about itself: the assembler it used, and its tally beside
     # the committed report's. Reported against synthetic reports rather than the
@@ -1678,10 +2050,23 @@ def main():
     ap.add_argument("--add-digest-column", action="store_true",
                     help="one-shot: add listing_digest to the existing report, "
                          "without re-encoding (refuses to run twice)")
+    ap.add_argument("--verify-provenance", action="store_true",
+                    help="audit a listing_digest migration against the history "
+                         "it sits in; needs --base and --migration, and a full "
+                         "git history")
+    ap.add_argument("--base", help="last full --report revision")
+    ap.add_argument("--migration", help="the revision that added listing_digest")
+    ap.add_argument("--listings-from",
+                    help="revision before the window that last wrote the "
+                         "listings, for the positive control (default: <base>^)")
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args()
     if args.self_test:
         return self_test()
+    if args.verify_provenance:
+        if not args.base or not args.migration:
+            ap.error("--verify-provenance needs --base and --migration")
+        return verify_provenance(args.base, args.migration, args.listings_from)
     if args.add_digest_column:
         return add_digest_column()
     if args.check:

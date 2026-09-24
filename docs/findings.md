@@ -2581,6 +2581,47 @@ still has to answer for itself, because the guard stops a second run and not the
 first. The caveat in `ec/ghidra/README.md` is narrowed to that; it is not
 deleted, and neither is this section's answer mistaken for the re-encode.
 
+**The method is now a command** (2026-09-23, issue #159). The three commands
+and the `csv.DictReader` comparison above were hand-run, and the next migration
+will have to answer the same question; `ec/tools/verify_reassembly.py
+--verify-provenance` takes the two revisions and runs all of it — the empty
+`.asm` diff, the comparison with `listing_digest` dropped, and the positive
+control over the window that last wrote the listings, so the empty can never
+again be read as a pathspec matching nothing:
+
+```
+$ python3 ec/tools/verify_reassembly.py --verify-provenance \
+      --base 08b72e2 --migration a56b3bb --listings-from 8c7985e
+  revisions: listings written 8c7985e..08b72e2, migration 08b72e2..a56b3bb
+  listing text: 0 of them changed over 08b72e2..a56b3bb; the same pathspec returns 2705 file(s)
+  over 8c7985e..08b72e2, the window that last wrote them, so the first number is a measurement
+  report: 2705 of 2705 row(s) identical once listing_digest is dropped (present in the
+  base: no; in the migration: yes)
+  the window touched 1 path(s) under ec/decompiled:
+    ec/decompiled/bank0/0EA2.c
+  PASS  the migration changed the column and nothing beneath it, and no listing text
+  moved while it did.
+```
+
+The numbers are this section's: the 2,705 control, the empty diff, the
+2,705/2,705. `--listings-from` is passed rather than defaulted, because
+`8c7985e` is not `08b72e2`'s direct parent and the printed count should not
+depend on it being one. It reads the two revisions out of the repository's
+history, so it needs a full clone — the agent stages have one
+(`fetch-depth: 0`) and `ci.yml`'s two checkouts do not; the mode says so in the
+failure message and `docs/agent-pipeline.md` records it. What it prints is the
+claim above and nothing more: the digests are of the text the last full
+`--report` measured, and they attest to that text rather than verifying it.
+
+That the mode can fail is from the same history rather than a fixture: pointed
+at the window that *wrote* the listings (`--base 8c7985e --migration 08b72e2`)
+it reports 2,705 changed listings and exits non-zero, and a revision this clone
+does not have reproduces the history requirement. The drop-the-column
+comparison behind it carries its own known answers in `--self-test` — an
+agreeing pair, a pair differing beneath the column, a changed row count, a
+renamed column, an empty side — because a comparison that compares nothing looks
+exactly like a working one on a pair that agrees, and the pair above agrees.
+
 ### 14g. The nightly re-encode says which assembler answered and what moved (2026-09-23, issue #158)
 
 §14e put the correctness question entirely onto the re-encode and §14f anchored

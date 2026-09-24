@@ -48,7 +48,7 @@ only covers what's specific to *this* copy.
   comparison — so `AGENT_GATES_DEEP=1 .github/scripts/agent-gates.sh` is the
   single command that checks everything, and the cheap tier's closing note
   names that command on every run.
-  Two things to carry across if this file is ever re-copied from the template:
+  Three things to carry across if this file is ever re-copied from the template:
   1. **The deep tier needs a schedule, and it does not have one.** What runs
      where, as of 2026-09-23 (issue #139): per commit, on `push` to `main` and
      on every pull request, `ci.yml` runs the cheap tier bare, and the deep
@@ -95,6 +95,23 @@ only covers what's specific to *this* copy.
      `--check`-only case, so this has to be re-applied with it.** The
      re-encode of the committed listing is still the deep tier's, and is
      still unscheduled.
+  3. **`--verify-provenance` needs a full git history, and `ci.yml` does not
+     have one** (2026-09-23, issue #159). The mode audits a `listing_digest`
+     migration against two committed revisions (`docs/findings.md` §14f), so
+     how deep the clone is is part of its contract the way the assembler is part
+     of `--report`'s: the agent stages check out with `fetch-depth: 0`
+     (`agent-implement.yml:118`, `agent-fix.yml:116`, `agent-review.yml:64`)
+     and can run it, while both of `ci.yml`'s checkouts (`:34`, `:64`) are
+     default-depth, and `08b72e2` and `a56b3bb` do not resolve from one. It
+     therefore fails there with its history requirement rather than auditing
+     whatever happened to be checked out, and it is not in the gate for that
+     reason. Putting it in the per-commit gate is a one-line
+     `fetch-depth: 0` on those two checkouts that a human lands, and whether
+     that is worth growing every checkout for — or whether the mode stays a
+     full-clone command like `--add-digest-column` and `--report` — is the open
+     question. It is not made here: `.github/` is template-copied and the
+     pipeline token has no `workflow` scope, the same reason item 1's schedule
+     is prepared rather than landed.
 - **`tools/run-tests.sh`, and the gate line that would call it**
   (2026-09-23, issue #162) — the four offline `unittest` suites
   (`ec/tools/test_grade_0751_isolation.py`, `windows/tools/test_ec_watch.py`,
