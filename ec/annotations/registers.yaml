@@ -742,7 +742,34 @@ registers:
       overclaim CLAUDE.md warns about. docs/findings.md 4g groups 0x0436 with
       0x0438 as "voltage"; the capture is what says otherwise, and the
       correction is recorded there. Until a live read puts the value beside a
-      WMI RemainingCapacity the name stays a placeholder. Per-address table:
+      WMI RemainingCapacity the name stays a placeholder, and nothing has been
+      run to produce one.
+      The 0x0403 cross-reference, corrected: it is 10 of 0x0403's 11 direct
+      reads that subtract 0x14 from the byte, not 11. The 11th, bank1 0xA269, is
+      movx a,@dptr ; jz +0x6b, and both trace_xdata_refs.py and the r2
+      cross-check in ec/annotations/xdata-0400-045f.md 10a agree on that split.
+      BAT_DESIGN_CAPACITY's own note already said 10; the issue text did not,
+      and the difference matters because the 0x14 is the same constant as this
+      pair's step in the capture above. That is a coincidence-or-link question
+      and is recorded as one -- it is not a connection, and it is not a unit
+      for 0x0402/0x0403, which nothing here establishes.
+      What is written and waiting for a human: the 0x0436 arm of
+      windows/tools/ec_validate.py (WMI RemainingCapacity, the 4g exact-copy
+      rule, the 0x0404 bound), linux/battery-trace/remain-capacity-probe
+      (charge_now and capacity beside the pair, read-only), and the procedure
+      both are written into, docs/hardware-tests/remain-capacity-0436.md. A run
+      would produce three facts and settle none of them alone: the fraction of
+      WMI RemainingCapacity readings that are exact copies of a pair value the
+      EC had already held; whether the pair ever exceeded 0x0404, which is
+      one-directional since a small counter passes that bound too and so
+      staying under it settles nothing; and the pair's scale against
+      0x0402/0x0403. Name, status, static_refs and sources are unchanged here
+      on purpose -- a live run against the same firmware cannot move a static
+      site count, and sources gains live only when a capture is committed. If a
+      later run does justify the name, that change regenerates
+      ec/ghidra/xdata-symbols.csv with ec/tools/gen_xdata_symbols.py and adds
+      the two-address split to ec/ghidra/xdata-overrides.csv; neither belongs
+      in a change that has no run behind it. Per-address table:
       ec/annotations/xdata-0400-045f.md.
 
   - name: BAT_VOLTAGE_MV

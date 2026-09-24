@@ -32,18 +32,19 @@ suites=0
 failed=0
 
 # One interpreter per FILE -- not per directory, and not one for the lot.
-# The reason is a live landmine and not a preference. Both windows/tools
-# suites install a fake ecrw into sys.modules with setdefault, and the two
-# fakes are not the same shape: test_manual_fan_ctrl_probe.py exports only
-# Ec, test_ec_watch.py exports Ec and EcError, and ec_watch.py does
-# `from ecrw import Ec, EcError`. In one shared interpreter, whichever suite
-# imports first wins that setdefault, and the other dies on
+# The reason is a live landmine and not a preference. Every windows/tools
+# suite installs a fake ecrw into sys.modules with setdefault, and the fakes
+# are not all the same shape: test_manual_fan_ctrl_probe.py and
+# test_ec_validate.py export only Ec, test_ec_watch.py exports Ec and
+# EcError, and ec_watch.py does `from ecrw import Ec, EcError`. In one shared
+# interpreter, whichever suite imports first wins that setdefault, and the
+# narrow one dies on
 #   ImportError: cannot import name 'EcError' from 'ecrw' (unknown location)
 # It passes today only because discovery happens to sort test_ec_watch before
-# test_manual_fan_ctrl_probe. That is an ordering accident nothing asserts, so
-# do not "simplify" this into a single discovery run -- that is the landmine.
-# Per-directory isolation does not help either: both suites share one
-# directory. docs/findings.md §16 has the reproduction.
+# the two narrow fakes. That is an ordering accident nothing asserts, so do not
+# "simplify" this into a single discovery run -- that is the landmine.
+# Per-directory isolation does not help either: all three share one directory.
+# docs/findings.md §16 has the reproduction.
 #
 # Process substitution rather than a pipe, because a pipe would run the loop in
 # a subshell and the tally below would not survive back out. `sort -z` because

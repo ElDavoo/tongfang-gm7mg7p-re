@@ -654,6 +654,22 @@ one, separately established three ways (§4g). `0x0436` is left unnamed pending
 a live read beside WMI `RemainingCapacity`; `0x0438` is
 `BAT_VOLTAGE_MV`.
 
+*(**Addendum, 2026-09-23, issue #172.** The live read that correction is waiting
+on is now instrumented, and still unrun. `windows/tools/ec_validate.py` carries
+a `0x0436`/`0x0437` arm sampling the pair at 1 s beside the same WMI
+`RemainingCapacity` the voltage arm already uses, under the same §4g rule and
+the same one-directional guard; `linux/battery-trace/remain-capacity-probe` is
+the read-only Linux equivalent, pairing the pair with `charge_now` and `capacity`
+through the same `/dev/mem` window; and
+`docs/hardware-tests/remain-capacity-0436.md` is the step-by-step, written for a
+human at the machine. A run would produce three things: the exact-copy fraction,
+whether the pair ever exceeded `0x0404`, and its scale against `0x0402`/`0x0403`.
+Both probes check their address list against `0x0400-0x045F` in code rather than
+in prose, so neither can reach the `0x0460-0x046F` fan-tach block (issue #94),
+and both report without adjudicating — a counter fails the exact-copy test the
+same way, and the comparison assumes both sides are mWh. **No run has happened,
+so the question is exactly as open as it was: `0x0436`/`0x0437` is unnamed.)*
+
 Second, to test a reading of `charge-profile-flow.md` §2 against the
 running machine. That section traced the EC's profile handler statically:
 `0xB2E2`/`0xB330` mask `0x07A6` bits 4-5, select 200 for Stationary or 100
