@@ -65,18 +65,20 @@ into `r2 -a 8051` with no stitching needed.
   a re-run and promises nothing once the classifier itself changes. Issue #253
   is four sentences whose pointer had drifted exactly that way. It walks the
   markdown under `ec/`, `docs/` and `evidence/`, and where a sentence names
-  both a cluster and an XDATA address, the address has to be a member of one of
-  the clusters that sentence names — reporting file, line, id and address, and
+  both a cluster and an XDATA address, the address has to be a member of the
+  cluster that sentence pairs it with, or of one of the clusters it names where
+  it pairs it with none — reporting file, line, id and address, and
   exiting non-zero. Committed files only: no image, no Ghidra, no network. The
   limits it earns the right to state: a sentence that *denies* membership is
   skipped rather than checked, one that names a cluster without claiming
   membership is skipped (which is what keeps
   `annotations/xdata-register-map.md` §5's census table out of the results),
-  and one naming two clusters is satisfied if the address is in either — so it
-  catches a wrong id, not a wrong pairing. Passing means the checked sentences
-  agree with the CSVs beside them; it says nothing about whether the prose is
-  right about the firmware. `tools/test_check_cluster_citations.py` pins each
-  of those skips and asserts the committed tree currently agrees. Not run by
+  and a pairing the wording cannot be read for — the same split written with
+  both ids first and the addresses in a trailing list — is back to being
+  satisfied by either. Passing means the checked sentences agree with the CSVs
+  beside them; it says nothing about whether the prose is right about the
+  firmware. `tools/test_check_cluster_citations.py` pins each of those skips
+  and asserts the committed tree currently agrees. Not run by
   `.github/scripts/agent-gates.sh` — that file is not one this repo edits
   casually (`../../CLAUDE.md`), so the tool stands as something a human can
   wire up.

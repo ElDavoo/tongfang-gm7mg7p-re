@@ -13,7 +13,8 @@ nothing about staying put across a change to the tool's own classifier.
 So this walks the committed markdown under `ec/`, `docs/` and `evidence/`,
 finds every unit that names one or more `main-ec-NNN` clusters and one or more
 XDATA addresses, and holds it to the census: an address attributed to a
-cluster has to be a member of one of the clusters that unit names.
+cluster has to be a member of the cluster the unit pairs it with, and where
+the unit pairs it with none, of one of the clusters the unit names.
 
 **What this does not check, which is as much of the point:**
 
@@ -25,10 +26,13 @@ cluster has to be a member of one of the clusters that unit names.
     where `0x06E6` is a byte the shared function reads and not a member) is
     skipped. Requiring the membership cue is what keeps the census summary
     table in `xdata-register-map.md` §5 out of the results.
-  * *Which* of several named clusters an address belongs to. A unit naming
-    two clusters is satisfied if the address is in either. The cases where the
-    split between them is the claim — "`0x06C6` in A and `0x06CD` in B" — are
-    caught only in the weaker sense that a wrong id is caught at all.
+  * *A split written as a list.* An address is held to the cluster its own
+    words put it with — "`0x06C6` in `main-ec-121` and `0x06CD` in
+    `main-ec-198`" — but only where a preposition joins the two tokens and no
+    clause boundary falls between them. The same claim with the ids first and
+    the addresses in a trailing list ("the two cut into `main-ec-121` and
+    `main-ec-198` (`0x06C6`, `0x06CD`)") pairs nothing and is satisfied by
+    either id; the two in it can be exchanged without this noticing.
   * *Anything outside the three roots*, and any address the census does not
     know, so a code address that collides with an XDATA one is not examined.
 
@@ -72,6 +76,20 @@ DISCLAIM = re.compile(
     r"|\bsingleton\b",
     re.IGNORECASE,
 )
+
+# The preposition that turns two tokens into one claim. Both orders occur in
+# the corpus -- "`0x06C6` in `main-ec-121`", and "`main-ec-011` is the
+# 10-address, 91-reference cluster of `0x0875 0x089C ...`" -- so a pair is
+# read whichever way round the two tokens sit.
+MEMBERSHIP_PREP = re.compile(r"\b(?:in|into|within|of|inside|to)\b", re.IGNORECASE)
+
+# A span crossing one of these is not one claim, so nothing is paired across
+# it. The brackets are the conservative half: a preposition on one side of a
+# parenthetical is not a claim about a token on the other side of it, which is
+# what "cut into `main-ec-121` and `main-ec-198` (`0x06C6`, `0x06CD`)" would
+# otherwise invite. A unit is one joined line by `units()`, so there is no
+# newline to break on.
+CLAUSE_BREAK = re.compile(r"[;:.()]")
 
 # A sentence ends at a terminator followed by something that starts a new one.
 # The trailing set matters in a corpus written as wrapped prose inside list
@@ -156,6 +174,40 @@ def line_of_address(unit, address):
     return 0
 
 
+def pairings(unit, addresses):
+    """{address: cluster id} for the address/id pairs the unit's wording makes.
+
+    A unit saying "`0x06C6` in `main-ec-121` and `0x06CD` in `main-ec-198`" is
+    claiming the split between two clusters, and reading it as "in either" is
+    how `xdata-06c2-06db-timers.md`'s stale `main-ec-118` got past #253. An
+    address pairs with an id where a preposition joins the two tokens and
+    nothing else does: no second address, no second id, no clause boundary in
+    between. Where several ids qualify for one address the nearest wins, and
+    where none does the address is left to the any-of rule.
+    """
+    addr_spans = [m.span() for m in ADDRESS.finditer(unit)]
+    id_spans = [m.span() for m in CLUSTER_ID.finditer(unit)]
+    all_spans = addr_spans + id_spans
+    pairs = {}
+    for match in ADDRESS.finditer(unit):
+        address = "0x" + match.group(1).upper()
+        if address not in addresses:
+            continue
+        nearest = None
+        for span in id_spans:
+            lo, hi = sorted((match.span(), span))
+            between = unit[lo[1]:hi[0]]
+            if not MEMBERSHIP_PREP.search(between) or CLAUSE_BREAK.search(between):
+                continue
+            if any(lo[1] < s[0] < hi[0] for s in all_spans):
+                continue
+            if nearest is None or hi[0] - lo[1] < nearest[0]:
+                nearest = (hi[0] - lo[1], unit[span[0]:span[1]])
+        if nearest:
+            pairs[address] = nearest[1]
+    return pairs
+
+
 def check(path, members, known, verbose):
     """(problems, lines read) for one file."""
     problems = []
@@ -179,10 +231,16 @@ def check(path, members, known, verbose):
             if verbose:
                 print(f"  skip (no membership claim) {path}:{lineno}", file=sys.stderr)
             continue
+        # Ordered after the two skips above: a denial is not a claim, and a
+        # pairing rule reached first would read "a size-1 cluster of its own"
+        # as an attribution. The fallback is per address, not per unit, so a
+        # unit that pairs one byte still has its other addresses checked.
+        pairs = pairings(unit, addresses) if len(ids) > 1 else {}
         for address in addresses:
-            if not any(address in members.get(cid, ()) for cid in ids):
+            expected = [pairs[address]] if address in pairs else ids
+            if not any(address in members.get(cid, ()) for cid in expected):
                 at = line_of_address(unit, address)
-                problems.append((path, at or lineno, ids, address))
+                problems.append((path, at or lineno, ids, address, pairs.get(address)))
     return problems, len(text.split("\n"))
 
 
@@ -209,11 +267,14 @@ def main() -> int:
         problems += found
         read += lines
 
-    for path, lineno, ids, address in problems:
+    for path, lineno, ids, address, paired in problems:
         where = f"{os.path.relpath(path, REPO)}:{lineno}"
-        named = ", ".join(f"`{cid}`" for cid in ids)
-        print(f"{where}: {address} is not a member of any cluster this line "
-              f"names ({named}); it is a member of "
+        if paired:
+            claim = f"not in `{paired}`, the cluster this line pairs it with"
+        else:
+            named = ", ".join(f"`{cid}`" for cid in ids)
+            claim = f"not a member of any cluster this line names ({named})"
+        print(f"{where}: {address} is {claim}; it is a member of "
               f"{cluster_of(address, members)}", file=sys.stderr)
     if problems:
         print(f"{len(problems)} citation(s) disagree with "
