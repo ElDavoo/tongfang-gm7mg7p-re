@@ -69,9 +69,10 @@ arm and closed by the step-5 restore -- and each block's last mark has to be
 that restore. A block whose last mark is not the restore is void: the capture
 cannot show the byte being put back, so its last window never closes. It is
 printed as void, by name and with the label it did end on, and the exit code
-is not zero. The windows are still graded either way: they are what the
-capture did hold, and a void block is a hole in the record rather than a
-reason to throw the record away.
+is not zero. Its windows are withheld like any other block that fails a mark
+check: each prints a `not graded` line naming the capture that ends the block
+where, and the block's own line reads `-- NOT GRADED, its windows are not
+printed`.
 
 **The mark set is a precondition of the windows, and is checked as one.**
 A window is arithmetic over rows: every change after a mark belongs to that
