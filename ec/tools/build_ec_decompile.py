@@ -33,6 +33,8 @@ Usage:
     python3 build_ec_decompile.py --work /tmp/ec --check
     python3 build_ec_decompile.py --work /tmp/ec --self-test
     python3 build_ec_decompile.py --work /tmp/ec --self-test --oracle   # + real run
+    python3 build_ec_decompile.py --work /tmp/ec --self-test --cross-decoder
+    python3 build_ec_decompile.py --work /tmp/ec --report  # + cross-decoder.csv
 """
 import argparse
 import csv
@@ -42,6 +44,14 @@ import re
 import shutil
 import subprocess
 import sys
+
+# This repository's own linear 8051 decoder, imported rather than run as a
+# subprocess per sampled function. It is import-safe -- everything it does
+# hangs off main() and `if __name__ == "__main__"` -- and the two decoders stay
+# independent either way, which is the whole of what the comparison rests on:
+# Ghidra's SLEIGH and this file share no code.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import disasm8051
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 FIRMWARE = os.path.join(REPO, "ec", "firmware", "GMxMGxx_11.800")
@@ -56,6 +66,11 @@ INDEX = os.path.join(OUTDIR, "index.csv")
 LISTING_INDEX = os.path.join(OUTDIR, "listing-index.csv")
 MANIFEST = os.path.join(REPO, "ec", "ghidra", "manifest.csv")
 XDATA = os.path.join(REPO, "ec", "ghidra", "xdata-symbols.csv")
+# The cross-decoder comparison's recorded outcome, one row per sampled
+# function. Generated and committed beside manifest.csv and reassembly.csv, and
+# never hand-edited: --check recomputes every cell of it and fails on a
+# difference, so an edit here re-arms the ratchet without comparing anything.
+CROSS_DECODER = os.path.join(REPO, "ec", "ghidra", "cross-decoder.csv")
 ANNOTATIONS = os.path.join(REPO, "ec", "annotations", "ghidra-functions.csv")
 # The variable layer, over the same export. A separate file from the function
 # layer because a function's row IS a function -- annotation_seeds() below
@@ -70,6 +85,18 @@ GHIDRA_VERSION = "12.1.3"
 # The Keil BL51 bank-switch stubs, from ec/tools/find_banks.py and ec/README.md.
 BANK_STUBS = [0x1100, 0x1114, 0x1128, 0x113C]
 COMMON_END = 0x8000
+# Where each program lives in the one firmware file, so a runtime address can
+# be read out of the raw image without a Ghidra run. make_bank_image.py's
+# constants, which self-test them against the committed firmware. `common` is
+# an export grouping rather than a program -- those functions were exported
+# from bank0, so bank0's window is the one to read them at, and the common area
+# is byte-identical in both banks anyway.
+BANK_WINDOWS = {"bank0": 0x08000, "bank1": 0x10000, "common": 0x08000}
+PD_WINDOW = 0x20000
+# `mov dptr,#imm16`, the 8051's only way to name an XDATA address, and the one
+# instruction the cross-decoder comparison looks for. The immediate is read from
+# the encoding rather than from disasm8051's rendered text.
+MOV_DPTR = 0x90
 # How far into an image to look for its vector table. The EC's runs 0x0000-0x003C
 # and the PD image's 0x0000-0x0020; 0x40 covers both with room to spare.
 VECTOR_SCAN_LIMIT = 0x40
@@ -743,9 +770,15 @@ def main(argv=None):
     ap.add_argument("--cross-decoder", action="store_true",
                     help="with --self-test, also compare Ghidra's C against "
                          "ec/tools/disasm8051.py over each sampled function's "
-                         "opening instructions. Advisory: it prints, it does not "
-                         "fail the run, and it is what the deep gate tier runs "
-                         "(.github/scripts/agent-gates-deep.sh)")
+                         "opening straight-line instructions, and print the "
+                         "denominator. What it finds is committed by --report "
+                         "and ratcheted by --check, so the run and the cheap "
+                         "tier measure the same thing")
+    ap.add_argument("--report", action="store_true",
+                    help="(re)write ec/ghidra/cross-decoder.csv from the current "
+                         "sample. No Ghidra and no network: the report is a pure "
+                         "function of the committed inputs, so this is what "
+                         "refreshes it after a re-export or an annotation")
     args = ap.parse_args(argv)
     work = os.path.abspath(args.work)
     os.makedirs(work, exist_ok=True)
@@ -756,6 +789,17 @@ def main(argv=None):
     # traceback out of a reader --check had not reached yet.
     if args.check:
         return check(work)
+
+    # --report is the other one that needs no build, for the same reason and for
+    # the reason it is a separate path rather than a flag on the Ghidra run: the
+    # report is a function of the committed export, not of a run that produces
+    # one. Refreshing it must not require the toolchain that made the export.
+    if args.report:
+        rows = cross_decoder_results(open(FIRMWARE, "rb").read())
+        path = write_cross_decoder_report(rows)
+        print("  wrote %s (%d row(s))" % (os.path.relpath(path, REPO), len(rows)))
+        print("  " + denominator_line(cross_decoder_summary(rows)))
+        return 0
 
     fw = open(FIRMWARE, "rb").read()
     pd = fw[0x20000:0x30000]
@@ -1185,8 +1229,10 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # the gate runs against rather than on a copy of them.
     _ir, _lr, _mr = (read_index(p) if os.path.isfile(p) else []
                      for p in (INDEX, LISTING_INDEX, MANIFEST))
+    _lr_keys = {(r["program"], r["addr"]) for r in _lr}
     for _p, _cols in ((INDEX, INDEX_COLUMNS), (LISTING_INDEX, INDEX_COLUMNS),
                       (MANIFEST, MANIFEST_COLUMNS),
+                      (CROSS_DECODER, CROSS_DECODER_COLUMNS),
                       (ANNOTATIONS, ANNOTATION_COLUMNS),
                       (CALL_TARGETS, CALL_TARGET_COLUMNS)):
         check("%s carries this tool's own %d-column header"
@@ -1572,19 +1618,144 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
           len({a for a, _ in unattributed}) > 0
           and not any(basis == "call-target-unattributed" for _, _, basis in rows))
     check("seed spec is de-duplicated", len(rows) == len({(p, a) for p, a, _ in rows}))
+
+    # The per-program file-offset map, one known-answer anchor per program
+    # against the committed listing at that address. One per program rather
+    # than one in total because the failure this replaces -- bank 0's
+    # subtraction applied to a bank-1 or PD address -- reads a different 32 KiB
+    # and still produces a clean-looking comparison, so only an address that
+    # lives in a program the map gets wrong can catch it.
+    _anchors = (("bank0", 0xB158, b"\x90\x04\x39\xe0\xfc\x90"),
+                # 0x806C is in bank 1's window, where the two banks hold
+                # different code (make_bank_image.py --self-test), so this
+                # anchor cannot pass read at bank 0's offset.
+                ("bank1", 0x806C, b"\x90\x06\xd6\xe0\x60\x03"),
+                # The common area is byte-identical in both banks, so this one
+                # cannot tell bank0 from bank1 and is not asked to.
+                ("common", 0x707D, b"\xef\x8d\xf0\xa4\xa8\xf0"),
+                ("pd", 0xA678, b"\x90\x07\xd0\xe0\x04\xf0"))
+    for _prog, _addr, _want in _anchors:
+        _got = asm_opening_bytes(_prog, _addr, len(_want))
+        check("file_offset: %s 0x%04X reads the bytes its own committed listing "
+              "carries" % (_prog, _addr),
+              _got == _want and fw[file_offset(_prog, _addr):
+                                    file_offset(_prog, _addr) + len(_want)] == _want,
+              "listing %s, firmware %s" % (_got.hex(" ") if _got else "(none)",
+                                            fw[file_offset(_prog, _addr):
+                                               file_offset(_prog, _addr)
+                                               + len(_want)].hex(" ")))
+    # And the negative half, which is what makes the four above mean anything:
+    # no *other* offset may return the same six bytes, or a wrong mapping would
+    # pass by coincidence. `common` and bank0 share an offset for the common
+    # area and so are not a collision -- that is the fact the common anchor's
+    # own comment gives, stated as a fact here rather than as a carve-out.
+    _collide = [(p, "%04X" % a) for p, a, _ in _anchors
+                for q in ("bank0", "bank1", "pd")
+                if q != p and file_offset(q, a) != file_offset(p, a)
+                and fw[file_offset(q, a):file_offset(q, a) + 6]
+                == fw[file_offset(p, a):file_offset(p, a) + 6]]
+    check("file_offset: no anchor is reachable at another bank's or the PD's "
+          "offset, so the four above are not passing by coincidence",
+          not _collide, str(_collide))
+
+    # The sample, and the four fixtures inside it. The known answers are the
+    # measured ones, and they moved when the terminator did: 0xB1F0's opening
+    # names two addresses over seven instructions rather than six over forty,
+    # because the old branch matcher never fired and every window ran to the
+    # instruction cap with branches in it. 0xB158 still disagrees, on the byte
+    # pair 0x0438/0x0439 -- the first fold the straight-line opening reaches,
+    # where the forty-instruction window reached 0x04A6/0x04A7 further in.
+    _sample = cross_decoder_sample()
+    _sampled = {(r["program"], r["addr"]): kind for r, kind in _sample}
+    check("the cross-decoder sample reaches all four programs, so a program "
+          "cannot go unrepresented (%d function(s))" % len(_sample),
+          {p for p, _ in _sampled} == {"bank0", "bank1", "common", "pd"},
+          str(sorted({p for p, _ in _sampled})))
+    check("every sampled address is one the listing index carries, and no "
+          "address is sampled twice",
+          len(_sampled) == len(_sample)
+          and all((r["program"], r["addr"]) in _lr_keys for r, _ in _sample))
+    check("every function the comparison was introduced on is still in the "
+          "sample", all((p, "%04X" % a) in _sampled
+                        for p, a in CROSS_DECODER_FIXTURES))
+    _cd = {(r["program"], r["addr"]): r for r in cross_decoder_results(fw)}
+    # The `sample` column is a controlled vocabulary too, and the reason a
+    # reader can treat a `stride` row as "nobody has read this one" -- which is
+    # what makes the stride worth having.
+    check("every sampled row says how it was sampled, from the documented set",
+          all(r["sample"] in CROSS_DECODER_SAMPLES for r in _cd.values())
+          and all(k in CROSS_DECODER_SAMPLES for k in _sampled.values()),
+          str(sorted({r["sample"] for r in _cd.values()})))
+    check("every sampled row's outcome is one of the four",
+          all(r["outcome"] in CROSS_DECODER_OUTCOMES for r in _cd.values()),
+          str(sorted({r["outcome"] for r in _cd.values()})))
+    _expect = {("bank0", "B1F0"): ("agree", "7", "0A4E 0A4F", "0A4E 0A4F", ""),
+               ("bank0", "B158"): ("disagree", "6", "0438 0439 0A48", "0A48",
+                                   "0438 0439"),
+               ("bank0", "BAE5"): ("vacuous", "1", "", "", ""),
+               ("common", "707D"): ("vacuous", "13", "", "", "")}
+    for _key, (_outcome, _insns, _linear, _in_c, _missing) in _expect.items():
+        # `.get`, so a fixture that has dropped out of the sample is a failed
+        # assertion above and a failed assertion here, rather than a KeyError
+        # out of the middle of the self-test.
+        _row = _cd.get(_key)
+        check("%s 0x%s: %d straight-line instruction(s), %s"
+              % (_key[0], _key[1], int(_insns), _outcome),
+              _row is not None
+              and (_row["outcome"], _row["insns"], _row["linear"], _row["in_c"],
+                   _row["missing"]) == (_outcome, _insns, _linear, _in_c, _missing),
+              str({c: _row[c] for c in ("outcome", "insns", "linear", "in_c",
+                                        "missing")} if _row else "not sampled"))
+
+    # The ratchet, exercised. A check that has never been seen to fail is an
+    # absent one, which is §14b's own sentence and the reason these cases are
+    # here at all: the report that matches first, then a verdict flipped, a row
+    # in each direction, and a sample that compares nothing -- each of which has
+    # to be reported.
+    _rows_now = list(_cd.values())
+    _p = cross_decoder_problems(_rows_now, _rows_now)[1]
+    check("a report that matches this run has no problem", not _p, str(_p[:2]))
+    _flipped = [dict(r) for r in _rows_now]
+    _flipped[0]["outcome"] = ("disagree" if _flipped[0]["outcome"] == "agree"
+                               else "agree")
+    _p = cross_decoder_problems(_flipped, _rows_now)[1]
+    check("a hand-flipped outcome is reported, naming the row and the column",
+          len(_p) == 1 and "outcome" in _p[0] and _rows_now[0]["addr"] in _p[0],
+          str(_p))
+    _p = cross_decoder_problems(_rows_now, _rows_now[1:])[1]
+    check("a report carrying a row the sample no longer has is reported stale",
+          len(_p) == 1 and "not in the sample" in _p[0], str(_p))
+    _p = cross_decoder_problems(_rows_now[1:], _rows_now)[1]
+    check("a sampled row the report does not carry is reported as predating "
+          "this export", len(_p) == 1 and "not in the report" in _p[0], str(_p))
+    _p = degenerate_sample_problems({"agree": 0, "disagree": 0, "vacuous": 12,
+                                     "no-export": 0})
+    check("a wholly vacuous sample is a problem, not a pass",
+          len(_p) == 1 and "ratchets on nothing" in _p[0], str(_p))
+    _p = degenerate_sample_problems({"agree": 0, "disagree": 0, "vacuous": 0,
+                                     "no-export": 12})
+    # Both, and both true: nothing exported means nothing compared, so the
+    # no-export guard and the compared-0 guard fire together here. Naming one
+    # of them and not the other would be a summary that understates the sample.
+    check("a sample with nothing exported to compare is reported as both "
+          "unexported and vacuous", len(_p) == 2
+          and any("no exported C" in m for m in _p)
+          and any("compared 0 of" in m for m in _p), str(_p))
+    _p = degenerate_sample_problems({"agree": 3, "disagree": 1, "vacuous": 2,
+                                     "no-export": 0})
+    check("a sample with rows in it is not a degenerate sample", not _p, str(_p))
     print("  all assertions passed" if ok else "  FAILURES ABOVE")
     if not ok:
         return 1
-    # The cross-decoder comparison spawns disasm8051.py per sampled function.
-    # It is advisory -- its own docstring says so, and its result cannot fail
-    # this run either way -- so it runs only when asked for, which is what
-    # .github/scripts/agent-gates-deep.sh does. Worth being precise about what
-    # that is and is not: measured at 0.13 s, so this is a decision about where
-    # advisory output belongs, not a speed one. The self-test's actual 18 s was
-    # the set comprehension above, which re-read the annotations CSV once per
-    # seed row and is now 0.15 s in total.
+    # The cross-decoder comparison: Ghidra's C against disasm8051.py, over a
+    # sample of the committed export. It runs only when asked for, which is
+    # what .github/scripts/agent-gates-deep.sh does. What is no longer true of
+    # it is that its result is read by nobody: the outcome is committed to
+    # ec/ghidra/cross-decoder.csv and --check ratchets on it every commit, so
+    # the printed run is the same measurement the cheap tier makes and the
+    # difference between them is the tier, not the comparison.
     if args.cross_decoder:
-        check_cross_decoder_agreement()
+        print_cross_decoder(cross_decoder_results(open(FIRMWARE, "rb").read()))
     if args.oracle:
         return opt_in_ghidra_oracle(args, work)
     return 0
@@ -1604,108 +1775,428 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
 # desyncs, and its 0x90 bytes are then operands of instructions it lost track
 # of. Comparing a whole function that way reports dozens of addresses neither
 # decoder is wrong about, which is noise, not signal.
-CROSS_DECODER_FUNCTIONS = [("bank0", 0xB1F0), ("bank0", 0xB158),
-                              ("bank0", 0xBAE5), ("common", 0x707D)]
+#
+# It ends at the first flow instruction, taken from disasm8051.FLOW_OPCODES.
+# The list of mnemonics this used to match on was a `re` against the rendered
+# line, whose first column is the address, so it never fired and every sample
+# decoded all CROSS_DECODER_WINDOW instructions with branches and all -- which
+# is exactly the desync above, and the reason the recorded output said "40
+# straight-line instruction(s)" for a function whose straight-line opening is
+# seven. The opcode set is the decoder's own, and it also stops at the
+# cjne/djnz/ajmp/acall forms that the list omitted.
+CROSS_DECODER_COLUMNS = ["program", "addr", "name", "sample", "insns", "linear",
+                         "in_c", "missing", "outcome"]
+# The four outcomes, in the order the denominator reports them. A controlled
+# vocabulary, like VARIABLE_KINDS, and `disagree` is one bucket on purpose:
+# splitting it needs the byte-pair-folding case enumerated rather than
+# described, and guessing which of a function's C reads is a fold would
+# manufacture the very distinction the comparison is meant to measure. What
+# `disagree` does contain is measured in docs/findings.md §14i, and the answer
+# is not "the decompiler got it wrong".
+CROSS_DECODER_OUTCOMES = ("agree", "disagree", "vacuous", "no-export")
+CROSS_DECODER_SAMPLES = ("annotation", "stride")
+# One in eight of the non-annotated remainder. 927 rows over four programs at
+# this value, so each program is sampled rather than represented, and a tenth
+# of what the stride covers.
+CROSS_DECODER_STRIDE = 8
+# The bound on a window, not its length: every function measured ends sooner,
+# on a flow instruction or on its own size. Kept because the walk is linear
+# and unbounded would be a whole-function comparison, which is the noise
+# above.
+CROSS_DECODER_WINDOW = 40
+# The four functions the comparison was introduced on, kept in the sample as
+# known answers rather than as a special case: all four are annotated, so the
+# backbone below already carries them, and self_test() asserts what they now
+# read. Two of the four compare nothing at all -- 0xBAE5 and 0x707D have no
+# mov dptr,#imm in their opening -- which is the reason the denominator
+# exists.
+CROSS_DECODER_FIXTURES = [("bank0", 0xB1F0), ("bank0", 0xB158),
+                          ("bank0", 0xBAE5), ("common", 0x707D)]
+# How many disagreement rows a run prints before it points at the report. Same
+# reason as verify_reassembly.MOVED_CAP: a reader acts on the first few, and
+# the rest are a grep away in a file whose path is already on screen.
+CROSS_DECODER_CAP = 20
+# The XDATA addresses a decompiled C names. The comparison's whole vocabulary:
+# an address registers.yaml does not name cannot appear as an EXTMEM_ symbol,
+# so it is reported `disagree` whether or not the C mentions it. Measured
+# rather than argued in docs/findings.md §14i.
+_EXTMEM = re.compile(r"EXTMEM_([0-9a-f]{4})")
+# An address column in a committed .asm, and one slot of its byte column. Used
+# only to prove the per-program file-offset map against the listings themselves,
+# so both are anchored: a line whose shape is not the one the exporter writes is
+# skipped rather than parsed as though it were.
+_ASM_ADDR = re.compile(r"[0-9A-Fa-f]{4,8}")
+_ASM_SLOT = re.compile(r"[0-9A-Fa-f]{2}")
 
 
-def function_size(program, addr):
-    """Byte length Ghidra gave this function, from the committed index."""
-    if not os.path.isfile(INDEX):
-        return 0
-    for row in csv.DictReader(open(INDEX, newline="")):
-        if row["program"] == program and int(row["addr"], 16) == addr:
-            return int(row["size"])
-    return 0
+def file_offset(program, addr):
+    """Byte offset of a runtime address in ec/firmware/GMxMGxx_11.800.
 
+    A lookup over the three windows, not `0x08000 + (addr - COMMON_END)`, which
+    is bank 0's mapping and the other two wrong by a window: bank 1's CODE is
+    at 0x10000 and the PD image is a separate 64 KiB program at 0x20000.
+    Reading a bank-1 or PD address at bank 0's offset lands in a different
+    32 KiB, and the comparison would go on reporting a clean result over the
+    wrong bytes -- which is the shape of failure this returns rather than
+    raises, and why self_test() pins one anchor per program against the
+    committed .asm.
 
-def check_cross_decoder_agreement():
-    """Report whether Ghidra's C and ec/tools/disasm8051.py name the same
-    XDATA addresses in a function's straight-line opening.
-
-    Advisory, not a gate, and deliberately so. It is a real check in one
-    direction and not in the other:
-
-      - Ghidra naming an address the independent decoder did not see is
-        worth a look.
-      - Ghidra NOT naming one it saw usually is not a disagreement at all. It
-        folds a `mov dptr,#hi; movx a,@dptr; mov dptr,#lo; movx a,@dptr` pair
-        into a single wide read, and the two byte symbols go with it --
-        observed at 0xB158, where 0x04A7/0x04A6 are read and passed to the
-        big-endian store helper and neither appears in the C. That is the
-        decompiler's business, and a gate that failed on it would be failing
-        on correct output.
-
-    So this prints, and the reader decides. What it is for is the case it
-    confirms: Ghidra's 8051 decompile and this repository's own decoder,
-    which share no code, agree instruction for instruction on the operands
-    that both can see.
-
-    It runs on `--self-test --cross-decoder`, not on a bare `--self-test`.
-    `.github/scripts/agent-gates-deep.sh` is what passes the flag; the cheap
-    gate tier does not, and prints that it did not. Measured at 0.13 s, so
-    moving it is a statement about where advisory output belongs -- not a
-    speedup, and not a licence to assume the self-test's cost was here.
+    verify_gap_text.py reaches the same bytes a different way, by building the
+    flat per-bank images make_bank_image.py makes and reading address ==
+    offset, so it needs no arithmetic here. This reads the firmware itself, so
+    that the comparison and the manifest's SHA-256 are about one file.
     """
-    import re as _re
-    import subprocess as _sp
-    BRANCH = _re.compile(r"^\s*(jmp|ljmp|lcall|sjmp|acall|ajmp|ret|reti|djnz|"
-                         r"jc|jnc|jb|jnb|jae|jnbc|je|jne|jz|jnz|jl|jge|jle|jg|"
-                         r"jnb|jbc)\b")
-    MOVDPTR = _re.compile(r"mov\s+dptr,#0x([0-9a-f]{4})", _re.I)
-    print("  cross-decoder agreement (advisory: Ghidra's C vs disasm8051.py, "
-          "opening instructions):")
-    d = open(FIRMWARE, "rb").read()
-    for program, start in CROSS_DECODER_FUNCTIONS:
-        path = os.path.join(OUTDIR, program, "%04X.c" % start)
-        if not os.path.isfile(path):
-            print("    --    %s 0x%04X: no export committed yet, skipped"
-                  % (program, start))
+    if program == "pd":
+        return PD_WINDOW + addr
+    if addr < COMMON_END:
+        return addr
+    return BANK_WINDOWS[program] + (addr - COMMON_END)
+
+
+def asm_opening_bytes(program, addr, count):
+    """The first `count` bytes of the committed listing at `addr`, or None.
+
+    Strict about the address, and the strictness is the point: the first
+    instruction line of a committed .asm has to BE the function's entry, or a
+    listing read from the wrong place would still hand back bytes and the
+    mapping assertion would pass on them. The byte column is three fixed slots
+    with `-` for an absent byte (ghidra/README.md, "The disassembly, and the
+    1:1 property"), which is what makes `cols[1:4]` the encoding rather than
+    part of the mnemonic.
+    """
+    path = os.path.join(OUTDIR, program, "%04X.asm" % addr)
+    if not os.path.isfile(path):
+        return None
+    out = bytearray()
+    seen = False
+    for line in open(path, errors="replace"):
+        if line.startswith(";") or not line.strip():
             continue
-        # CODE 0x8000-0xFFFF maps to file 0x08000-0x0FFFF for bank 0, so the
-        # file offset is 0x08000 + (runtime - 0x8000). Forgetting the window
-        # base points the comparison at a different 32 KiB entirely.
-        file_off = 0x08000 + (start - COMMON_END)
-        out = _sp.run([sys.executable,
-                       os.path.join(REPO, "ec", "tools", "disasm8051.py"),
-                       FIRMWARE, "--at", hex(file_off), "-n", "40"],
-                      capture_output=True, text=True).stdout.splitlines()
-        # Stop on the printed address rather than on a byte count: the first
-        # column is where the instruction starts, which is exact, where
-        # reconstructing lengths from the printed bytes would not be.
-        size = function_size(program, start)
-        limit = file_off + size if size else None
-        linear, insns = set(), 0
-        for line in out:
-            if BRANCH.match(line):
-                break
-            cols = line.split()
-            if len(cols) < 2:
-                continue
-            try:
-                here = int(cols[0], 16)
-            except ValueError:
-                continue
-            if limit is not None and here >= limit:
-                break
-            insns += 1
-            m = MOVDPTR.search(line)
-            if m:
-                linear.add(m.group(1).upper())
-        in_c = {m.upper() for m in _re.findall(r"EXTMEM_([0-9a-f]{4})",
-                                               open(path).read())}
-        if not linear:
-            print("    --    %s 0x%04X: no mov dptr,#imm in the opening %d "
-                  "instruction(s); nothing to compare" % (program, start, insns))
+        cols = line.split()
+        if len(cols) < 2 or not _ASM_ADDR.fullmatch(cols[0]):
             continue
-        agree = linear <= in_c
-        print("    %s 0x%04X: %d straight-line instruction(s) name %d XDATA "
-              "address(es) linearly; the C names %d of them%s"
-              % ("ok  " if agree else "note", start, insns, len(linear),
-                 len(linear & in_c),
-                 "" if agree else
-                 " -- not named in the C: " + ", ".join(sorted(linear - in_c))
-                 + " (usually a byte pair folded into one wide read, which is "
-                   "the decompiler's business, not a disagreement)"))
+        if not seen:
+            seen = True
+            if int(cols[0], 16) != addr:
+                return None
+        slots = cols[1:4]
+        if any(s != "-" and not _ASM_SLOT.fullmatch(s) for s in slots):
+            return None              # not the fixed three-slot byte column
+        out += bytes(int(s, 16) for s in slots if s != "-")
+        if len(out) >= count:
+            break
+    return bytes(out[:count]) if seen else None
+
+
+def cross_decoder_sample():
+    """The sampled functions, as [(listing row, how it was sampled), ...].
+
+    Derived from two committed CSVs and nothing else, because a literal of four
+    addresses said nothing about the 2,710 the export carries -- the
+    denominator the issue asks for is only a denominator if M is a number this
+    function produced from the tree rather than a number someone typed:
+
+      backbone  every (scope, addr) in ec/annotations/ghidra-functions.csv
+               that the listing index carries -- the functions a person or an
+               agent has read and cited. All four programs are represented in
+               it, so per-program coverage holds by construction; self_test()
+               asserts that rather than assuming it.
+      stride    every CROSS_DECODER_STRIDE-th of the rest in sorted
+               (program, addr) order, plus each program's first non-annotated
+               row, so coverage survives a program whose remainder is tiny.
+
+    Sorted, and never ordered by a set or a hash, because --check compares the
+    committed report's rows against this list: a sample that came out in a
+    different order on a different run of the same inputs would fail the gate
+    for no reason at all.
+    """
+    if not os.path.isfile(LISTING_INDEX):
+        raise SystemExit("error: no listing index at %s; there is no export to "
+                         "sample" % os.path.relpath(LISTING_INDEX, REPO))
+    listing = {(r["program"], r["addr"]): r
+               for r in read_index(LISTING_INDEX)}
+    backbone = {annotation_key(r) for r in annotation_rows()} & set(listing)
+    kind = {key: "annotation" for key in backbone}
+    firsts = {}
+    for key in sorted(listing):
+        firsts.setdefault(key[0], key)
+    rest = sorted(set(listing) - backbone)
+    for key in rest[::CROSS_DECODER_STRIDE] + sorted(firsts.values()):
+        kind.setdefault(key, "stride")
+    return [(listing[key], kind[key]) for key in sorted(kind)]
+
+
+def compare_function(program, addr, size, out_file, fw):
+    """One function's straight-line opening against its committed C.
+
+    -> (outcome, insns, linear, in_c, missing), the address sets upper-case hex
+    and `missing` the one that decided the outcome.
+
+    The window's own bound is `size` from the listing index -- the exporters
+    count a function's bytes slightly differently, and the listing's extent is
+    the one this walk is over.
+    """
+    if not out_file or out_file.startswith("("):
+        return "no-export", 0, set(), set(), set()
+    path = os.path.join(OUTDIR, out_file.replace(".asm", ".c"))
+    if not os.path.isfile(path):
+        return "no-export", 0, set(), set(), set()
+    file_off = file_offset(program, addr)
+    limit = file_off + size if size else None
+    insns, linear = 0, set()
+    for i, raw, _text in disasm8051.decode(fw, file_off, CROSS_DECODER_WINDOW,
+                                          addr=addr, stop_at_flow=True):
+        # decode() yields the instruction it stopped at and the count this
+        # comparison has always reported excluded it, so it is dropped here
+        # rather than counted and then subtracted. The second condition is the
+        # function's own size, and is the one the first used to shadow by never
+        # matching.
+        if raw[0] in disasm8051.FLOW_OPCODES or (limit is not None and i >= limit):
+            break
+        insns += 1
+        if raw[0] == MOV_DPTR:
+            linear.add("%04X" % ((raw[1] << 8) | raw[2]))
+    if not linear:
+        return "vacuous", insns, set(), set(), set()
+    in_c = {m.upper() for m in _EXTMEM.findall(open(path, errors="replace").read())}
+    missing = linear - in_c
+    return ("disagree" if missing else "agree"), insns, linear, in_c, missing
+
+
+def cross_decoder_results(fw):
+    """The whole comparison, once. -> [report row, ...] by (program, addr).
+
+    One read of the listing index, one of the annotations, one of the firmware
+    and one of each sampled `.c`. The first two used to sit inside the
+    per-function path -- function_size() re-read all 2,710 listing rows for
+    every sampled function, and one subprocess was spawned per function -- which
+    at four functions was invisible and at 1,901 is the "loop over the wrong
+    collection" shape docs/findings.md §14a and §14d exist to warn about.
+
+    The rows carry string cells rather than Python values, so --report writes
+    them verbatim and --check can compare a recomputed row against a committed
+    one cell for cell. `in_c` is the intersection, not the C's whole symbol
+    set: the column is "what both decoders saw", and a function can name twenty
+    addresses of which the linear walk saw three.
+    """
+    rows = []
+    for row, kind in cross_decoder_sample():
+        program, addr = row["program"], int(row["addr"], 16)
+        outcome, insns, linear, in_c, missing = compare_function(
+            program, addr, int(row["size"]), row["out_file"], fw)
+        rows.append({
+            "program": program,
+            "addr": row["addr"],
+            "name": row["name"],
+            "sample": kind,
+            "insns": str(insns),
+            "linear": " ".join(sorted(linear)),
+            "in_c": " ".join(sorted(linear & in_c)),
+            "missing": " ".join(sorted(missing)),
+            "outcome": outcome,
+        })
+    return rows
+
+
+def cross_decoder_summary(rows):
+    """{outcome: n} over CROSS_DECODER_OUTCOMES, every key present."""
+    counts = dict.fromkeys(CROSS_DECODER_OUTCOMES, 0)
+    for row in rows:
+        counts[row["outcome"]] += 1
+    return counts
+
+
+def denominator_line(counts):
+    """The line that says how much of the sample was actually compared.
+
+    Printed on every run, in the shape the issue named, because the failure
+    this whole change exists to close is a vacuous sample printing in the same
+    form as a real one: two of the original four functions compared nothing, and
+    the run said nothing that a reader could tell apart from a pass.
+    """
+    total = sum(counts.values())
+    return ("compared %d of %d function%s, %d vacuous; %d agreed, %d disagreed, "
+            "%d no-export"
+            % (counts["agree"] + counts["disagree"], total,
+               "" if total == 1 else "s", counts["vacuous"], counts["agree"],
+               counts["disagree"], counts["no-export"]))
+
+
+def cross_decoder_line(row):
+    """One function's line, in the shape the comparison has always printed."""
+    head = "    %s %s 0x%s %s:" % (
+        {"agree": "ok  ", "disagree": "note"}.get(row["outcome"], "--   "),
+        row["program"], row["addr"], row["name"])
+    if row["outcome"] == "no-export":
+        return head + " no exported C committed, nothing to compare"
+    if row["outcome"] == "vacuous":
+        return head + (" no mov dptr,#imm in the opening %d instruction(s); "
+                       "nothing to compare" % int(row["insns"]))
+    linear = row["linear"].split()
+    return head + (" %d straight-line instruction(s) name %d XDATA address(es) "
+                   "linearly; the C names %d of them%s"
+                   % (int(row["insns"]), len(linear), len(row["in_c"].split()),
+                      "" if row["outcome"] == "agree"
+                      else " -- not named in the C: " + row["missing"]))
+
+
+def is_bank_switch_trampoline(row, span=8):
+    """True when a row's function opens with `mov dptr,#imm` and an `ljmp` to a
+    BL51 bank-switch stub.
+
+    Not an outcome -- CROSS_DECODER_OUTCOMES is the vocabulary and this is not
+    in it -- but a measured shape inside the `disagree` bucket, and worth
+    naming on a run because it is what the first rows of that list are. A
+    trampoline's C calls `bl51_bank_select_1(0x88f0)`, so the address is right
+    there in the output as a literal argument; it is simply not an `EXTMEM_`
+    symbol, and the comparison's vocabulary is `EXTMEM_`. Read without that,
+    a list of twenty consecutive trampolines reads as twenty defects.
+
+    Matched on the bytes rather than on the name: the names carry
+    "trampoline" today and that is a reading, not a fact about the encoding.
+    """
+    opening = asm_opening_bytes(row["program"], int(row["addr"], 16), span)
+    if not opening:
+        return False
+    return any(opening[i] == MOV_DPTR and opening[i + 3] == 0x02
+               and ((opening[i + 4] << 8) | opening[i + 5]) in BANK_STUBS
+               for i in range(len(opening) - 5))
+
+
+def print_cross_decoder(rows):
+    """The denominator, the per-program coverage, the fixtures, the misses.
+
+    A per-line dump of 1,901 rows would be unreadable and would be read
+    not at all, so the detail lives in the committed report and the run names
+    where. What is printed is what cannot be got from the report by eye: the
+    denominator, whether every program is still represented, and the four
+    functions the comparison started on.
+    """
+    counts = cross_decoder_summary(rows)
+    print("  cross-decoder agreement (Ghidra's C vs disasm8051.py, each sampled "
+          "function's opening straight-line instructions):")
+    per_program = {}
+    for row in rows:
+        bucket = per_program.setdefault(row["program"], dict.fromkeys(
+            CROSS_DECODER_OUTCOMES, 0))
+        bucket[row["outcome"]] += 1
+    for program in sorted(per_program):
+        c = per_program[program]
+        print("    %-7s %4d sampled, %4d compared, %4d vacuous, %4d disagree, "
+              "%d no-export" % (program, sum(c.values()), c["agree"]
+                                + c["disagree"], c["vacuous"], c["disagree"],
+                                c["no-export"]))
+    print("    " + denominator_line(counts))
+    print("    the %d function(s) the comparison was introduced on:"
+          % len(CROSS_DECODER_FIXTURES))
+    by_key = {(r["program"], r["addr"]): r for r in rows}
+    for program, addr in CROSS_DECODER_FIXTURES:
+        row = by_key.get((program, "%04X" % addr))
+        print(cross_decoder_line(row) if row else
+              "    FAIL  %s 0x%04X is no longer in the sample" % (program, addr))
+    disagree = [r for r in rows if r["outcome"] == "disagree"]
+    if disagree:
+        where = os.path.relpath(CROSS_DECODER, REPO)
+        print("    %d row(s) disagree; the first %d, the rest in %s:"
+              % (len(disagree), min(len(disagree), CROSS_DECODER_CAP), where))
+        for row in disagree[:CROSS_DECODER_CAP]:
+            print(cross_decoder_line(row))
+        if len(disagree) > CROSS_DECODER_CAP:
+            print("    ... and %d more" % (len(disagree) - CROSS_DECODER_CAP))
+        tramps = sum(1 for r in disagree if is_bank_switch_trampoline(r))
+        print("    %d of the %d are the `mov dptr,#imm; ljmp <BL51 stub>` "
+              "bank-switch trampoline, whose C passes the\n    address to "
+              "bl51_bank_select_* as a literal rather than naming it as XDATA. "
+              "A disagreement is not a\n    defect and not a decoder verdict: "
+              "docs/findings.md §14i measures what this bucket holds."
+              % (tramps, len(disagree)))
+
+
+def write_cross_decoder_report(rows, path=CROSS_DECODER):
+    """The rows, to the committed report. Its only writer.
+
+    Safe to regenerate from committed inputs alone -- firmware, listings, C,
+    disasm8051.py and the annotations -- so refreshing it needs python3 and no
+    Ghidra run. That is what keeps the check honest: a row cannot be refreshed
+    by copying a value across by hand, because --check recomputes it.
+    """
+    with open(path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=CROSS_DECODER_COLUMNS,
+                           lineterminator="\n")
+        w.writeheader()
+        w.writerows(rows)
+    return path
+
+
+def cross_decoder_problems(committed, current):
+    """The committed report against this run's rows. -> (compared, problems).
+
+    Three ways the report can stop describing the tree, and all three fail: a
+    row it carries that the sample no longer does, a sampled row it does not
+    carry, and a row whose recomputed cells differ from the committed ones.
+    The third is the load-bearing one and it compares every column, not just
+    `outcome`, so a drifted name or instruction count is caught as well as a
+    changed verdict.
+
+    This is a ratchet, not a gate on the comparison's result. A `disagree` or
+    a `vacuous` row is recorded and passes; what fails is a change, or a sample
+    that stopped comparing anything (degenerate_sample_problems). Promoting a
+    folded case to a failure is issue #140's other option and is out of scope
+    here: it needs the byte-pair-folding case enumerated rather than described,
+    and no one has enumerated it.
+
+    The firmware identity this rests on is the manifest's `sha256` column,
+    which check() has already compared against the image on disk. The report
+    carries no digest of its own on purpose -- a second committed record of one
+    value is a second thing to keep in step, and this check's addition is the
+    per-row recomputation, not the file's identity.
+    """
+    mine = {(r["program"], r["addr"]): r for r in current}
+    theirs = {(r["program"], r["addr"]): r for r in committed}
+    problems = []
+    for key in sorted(set(theirs) - set(mine)):
+        problems.append("%s %s is in the report and not in the sample: the "
+                        "report is stale -- re-run --report" % key)
+    for key in sorted(set(mine) - set(theirs)):
+        problems.append("%s %s is in the sample and not in the report: the "
+                        "report predates this export" % key)
+    compared = 0
+    for key in sorted(set(mine) & set(theirs)):
+        compared += 1
+        for column in CROSS_DECODER_COLUMNS:
+            if theirs[key].get(column) != mine[key].get(column):
+                problems.append(
+                    "%s %s: %s is %r in the report and %r now -- the export or "
+                    "the comparison moved, so regenerate the report"
+                    % (key[0], key[1], column, theirs[key].get(column, ""),
+                       mine[key].get(column, "")))
+    return compared, problems
+
+
+def degenerate_sample_problems(counts):
+    """A sample that compared nothing, or that had nothing to compare. -> problems.
+
+    The failure issue #140 reports, one level up from §14b's: a check that
+    reads a fraction of its input and prints the result in the same form as a
+    full pass. The denominator makes it visible to whoever is reading; this
+    makes it red, because a report recording a wholly vacuous or wholly
+    unexported sample is a ratchet on nothing at all.
+    """
+    total = sum(counts.values())
+    compared = counts["agree"] + counts["disagree"]
+    out = []
+    if not total:
+        out.append("the cross-decoder sample is empty, so the report records no "
+                   "comparison: the listing index and the annotations share no "
+                   "function")
+    if total and not compared:
+        out.append("compared 0 of %d function(s): no sampled function's opening "
+                   "names an XDATA address, so this report ratchets on nothing"
+                   % total)
+    if total and counts["no-export"] == total:
+        out.append("all %d sampled function(s) have no exported C, so this "
+                   "report ratchets on nothing" % total)
+    return out
 
 
 # The oracle's two facts, as (label, which export file, pattern), and the whole
@@ -2035,6 +2526,42 @@ def check(work):
             fail("... and %d more variable-annotation problem(s)" % (len(vproblems) - 5))
         print("  variables: %d row(s) in %s, all resolving against the committed "
               "export" % (len(vrows), os.path.relpath(VARIABLES, REPO)))
+
+    # The cross-decoder report, and the cheap tier's ratchet on the comparison
+    # docs/findings.md §14i describes. Until this existed the comparison was
+    # advisory output that ran in a tier no workflow calls, and a branch that
+    # re-exported ec/decompiled/ or edited an annotation moved it with nothing
+    # to notice -- the gap issue #140 reports as "the result is printed and
+    # nothing else". Recomputing every row here is what closes it, and it costs
+    # one pass over the sampled `.c` files, which this check already walks for
+    # DECOMPILER UNAVAILABLE.
+    if not os.path.isfile(CROSS_DECODER):
+        fail("no cross-decoder report at %s; run build_ec_decompile.py --report"
+             % os.path.relpath(CROSS_DECODER, REPO))
+    else:
+        try:
+            _cd = read_index(CROSS_DECODER)
+        except (OSError, csv.Error) as e:
+            _cd = None
+            fail("cross-decoder.csv does not parse as strict CSV: %s" % e)
+        if _cd is not None:
+            _cd_rows = cross_decoder_results(open(FIRMWARE, "rb").read())
+            _counts = cross_decoder_summary(_cd_rows)
+            _compared, _problems = cross_decoder_problems(_cd, _cd_rows)
+            for problem in _problems[:5]:
+                fail(problem)
+            if len(_problems) > 5:
+                fail("... and %d more cross-decoder report problem(s)"
+                     % (len(_problems) - 5))
+            for problem in degenerate_sample_problems(_counts):
+                fail(problem)
+            print("  cross-decoder: %s" % denominator_line(_counts))
+            # "recomputed against it", not "match this run": a count of matched
+            # rows would read as a pass on the runs this whole check exists to
+            # turn red, and the problem lines above it are the answer.
+            print("  cross-decoder report: %d row(s) committed, %d recomputed "
+                  "against them, %d problem(s) above"
+                  % (len(_cd), _compared, len(_problems)))
     print("  all checks passed" if ok else "  FAILURES ABOVE")
     return 0 if ok else 1
 
