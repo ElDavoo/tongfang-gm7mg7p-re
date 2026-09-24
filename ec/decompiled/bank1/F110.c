@@ -18,8 +18,8 @@ void ljmp_f246(void)
       bare_ret_f153();
       return;
     }
-    if (DAT_EXTMEM_0637 == '\0') {
-      DAT_EXTMEM_0637 = '\n';
+    if (XDATA_0637 == '\0') {
+      XDATA_0637 = '\n';
       DAT_EXTMEM_047b = DAT_EXTMEM_047b ^ 0x10;
       DAT_EXTMEM_097a = DAT_EXTMEM_097a | 0x10;
     }

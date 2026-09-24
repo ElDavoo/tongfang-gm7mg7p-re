@@ -6,7 +6,8 @@
 
 /* Copies the byte at the caller's XDATA DPTR into R7, reads XDATA 0x0868, clears the carry and
    returns that byte minus R7 in A with the borrow in CY. Same shape as the routine at 0xBD34 one
-   byte away; 0x0868 has no entry in ec/annotations/registers.yaml.
+   byte away; 0x0868 is recorded in ec/annotations/registers.yaml as XDATA_0868, units not
+   determined.
    type: math
    evidence: ec/decompiled/bank0/BD3D.asm; ec/decompiled/bank0/BD3D.c
    basis: hand-decoded */
@@ -14,7 +15,7 @@
 char sub_dptr_byte_from_0868(char *param_1)
 
 {
-  return DAT_EXTMEM_0868 - *param_1;
+  return XDATA_0868 - *param_1;
 }
 
 

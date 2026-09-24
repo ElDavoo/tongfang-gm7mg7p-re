@@ -7,10 +7,12 @@
 /* Sets bit 1 of XDATA 0x0983, writes 0x00 to XDATA 0x08A7, sets bit 2 of XDATA 0x0985, sets bit 4
    of XDATA 0x0723, and writes 0x05 to XDATA 0x08A8. The listing ends at 0xA1C7 with no ret, so
    control falls straight into 0xA1C8; the decompiled C for this address is that merged pair, and
-   the table-selection code it shows from there on is 0xA1C8, not this entry. None of these
-   addresses has an entry in ec/annotations/registers.yaml.
+   the table-selection code it shows from there on is 0xA1C8, not this entry.
+   ec/annotations/registers.yaml now carries 0x08A7, 0x08A8, 0x0985 and 0x0723 as XDATA_08A7,
+   XDATA_08A8, XDATA_0985 and XDATA_0723, EC-side sites found with their meanings not established;
+   0x0983 has no entry there.
    type: writer
-   evidence: ec/decompiled/bank0/A1A8.asm; ec/decompiled/bank0/A1A8.c
+   evidence: ec/decompiled/bank0/A1A8.asm; ec/decompiled/bank0/A1A8.c; ec/annotations/registers.yaml
    basis: hand-decoded */
 
 void set_state_bytes_then_0xa1c8(char param_1,char param_2)
@@ -23,10 +25,10 @@ void set_state_bytes_then_0xa1c8(char param_1,char param_2)
   short sVar5;
   
   DAT_EXTMEM_0983 = DAT_EXTMEM_0983 | 2;
-  DAT_EXTMEM_08a7 = 0;
-  DAT_EXTMEM_0985 = DAT_EXTMEM_0985 | 4;
-  DAT_EXTMEM_0723 = DAT_EXTMEM_0723 | 0x10;
-  DAT_EXTMEM_08a8 = 5;
+  XDATA_08A7 = 0;
+  XDATA_0985 = XDATA_0985 | 4;
+  XDATA_0723 = XDATA_0723 | 0x10;
+  XDATA_08A8 = 5;
   cfg_cell_count_selector();
   if (param_2 == -0x40) {
     DAT_EXTMEM_0a47 = 0x62;
@@ -74,22 +76,22 @@ void set_state_bytes_then_0xa1c8(char param_1,char param_2)
   tail_call_7110_with_b6(DAT_EXTMEM_0a49);
   sVar5 = 0x88a;
   store_a_then_tail_call_7110_b6(*(undefined1 *)(sVar4 + 3));
-  DAT_EXTMEM_080c = *(byte *)(sVar5 + 4);
+  XDATA_080C = *(byte *)(sVar5 + 4);
   sVar4 = 0xa47;
   read_dptr_byte_into_r6();
   tail_call_7110_with_b6(DAT_EXTMEM_0a49);
   if ((char)*(byte *)(sVar4 + 5) < '\0') {
-    DAT_EXTMEM_0723 = DAT_EXTMEM_0723 | 8;
+    XDATA_0723 = XDATA_0723 | 8;
   }
   if ((*(byte *)(sVar4 + 5) >> 6 & 1) != 0) {
-    DAT_EXTMEM_0985 = DAT_EXTMEM_0985 | 2;
+    XDATA_0985 = XDATA_0985 | 2;
   }
   if (DAT_EXTMEM_08af != '\0') {
     DAT_EXTMEM_08af = DAT_EXTMEM_08af + -1;
-    cVar2 = DAT_EXTMEM_080c - 3;
-    if (DAT_EXTMEM_080c < 3) {
+    cVar2 = XDATA_080C - 3;
+    if (XDATA_080C < 3) {
       cVar2 = '\x03';
-      DAT_EXTMEM_080c = 3;
+      XDATA_080C = 3;
     }
     load_dptr_a916_tail_jump_1114(cVar2);
   }

@@ -8,16 +8,29 @@
    0x1C29, each ljmp to 0xD2BE, which is a bare RET. Otherwise it copies six bytes (0x1C04, 0x1C05,
    0x1C15, 0x1C16, 0x1C39, 0x1C3A) into 0x0866-0x086B, and writes 0x48 to 0x0865 when 0x0860 is one
    of 0x06/0x16/0x36/0x07/0x17/0x37, 0x4C when it is one of 0x08/0x18/0x38/0x09/0x19/0x39, and 0
-   otherwise; it then calls 0x7151 with A holding the byte at 0x0860. The 40 bytes from 0xD14B
-   decode as ACALLs to 0xD673, 0xD698, 0xD6C0 and 0xD6EF interleaved with INC and DEC of @R0, @R1,
-   R0 and R1, SETB of bit addresses 0x21, 0x4E and 0x89 (the .c labels the last IE0, but 0x89 is
-   TCON bit 1 in the 8051 bit-address map), and two NOPs; whether that island is executed code or a
-   table is not settled by the listing. The tail writes 0x0863 to 0x1C04, calls 0xD2CB on the byte
+   otherwise; it then calls 0x7151 with A holding the byte at 0x0860. CORRECTION 2026-09-24, issue
+   #180: the 40 bytes from 0xD14B are a CODE table, not code. This supersedes the earlier reading of
+   the same bytes as ACALLs to 0xD673, 0xD698, 0xD6C0 and 0xD6EF interleaved with INC and DEC of
+   @R0, @R1, R0 and R1, SETB of bit addresses 0x21, 0x4E and 0x89, and two NOPs, and the "not
+   settled by the listing" that closed it. The island is the inline table the 0x7151 reader consumes
+   -- the same reader the table at 0x8038 uses, which pops the return address this function's lcall
+   at 0xD148 pushed. Read as (big-endian address, case byte) triples it is 12 well-formed entries at
+   file 0x0D14B-0x0D16E, a 0x0000 terminator at 0x0D16F, and a default of 0xD289 at 0x0D171, which
+   is clear_0860. The case values are exactly the twelve the comparison chain above tests: 0x06 and
+   0x08 reach 0xD173, 0x07 and 0x09 reach 0xD198, 0x16 and 0x18 reach 0xD1C0, 0x17 and 0x19 reach
+   0xD1EF, 0x36 and 0x38 reach 0xD221, and 0x37 and 0x39 reach 0xD24E. Re-derived with
+   `ec/tools/decode_index_table.py ec/firmware/GMxMGxx_11.800 --at 0xD148`, which checks the entry
+   layout against the reader rather than against a linear disassembly, and reports the table
+   well-formed. Note that the .asm's linear decode of the same bytes -- the ACALLs and SETBs named
+   in that superseded reading -- is that data read as instructions and is not a reading of the
+   table; the targets it names are 0x500 higher than the table's. Per-address table:
+   ec/annotations/xdata-086x-dispatch.md. The tail writes 0x0863 to 0x1C04, calls 0xD2CB on the byte
    at 0x0864, ANDs the result with 0xFE and passes it to 0xD2DA, spins on 0xD2BF until it returns
    non-zero, then branches on 0xD319: a zero result stores A through the then-current DPTR and ljmps
    to 0xD28E, a non-zero result ljmps to 0xD284.
    type: dispatch
-   evidence: ec/decompiled/bank0/D091.asm; ec/decompiled/bank0/D091.c
+   evidence: ec/decompiled/bank0/D091.asm; ec/decompiled/bank0/D091.c;
+   ec/annotations/xdata-086x-dispatch.md
    basis: hand-decoded */
 
 void dispatch_on_0860(char *param_1,char *param_2)
@@ -27,11 +40,11 @@ void dispatch_on_0860(char *param_1,char *param_2)
   char cVar2;
   code *pcVar3;
   
-  if (DAT_EXTMEM_0860 == '\0') {
+  if (XDATA_0860 == '\0') {
     FUN_CODE_d2be();
     return;
   }
-  if (DAT_EXTMEM_0860 == -1) {
+  if (XDATA_0860 == -1) {
     FUN_CODE_d2be();
     return;
   }
@@ -47,26 +60,25 @@ void dispatch_on_0860(char *param_1,char *param_2)
     FUN_CODE_d2be();
     return;
   }
-  DAT_EXTMEM_0866 = DAT_EXTMEM_1c04;
-  DAT_EXTMEM_0867 = DAT_EXTMEM_1c05;
-  DAT_EXTMEM_0868 = DAT_EXTMEM_1c15;
-  DAT_EXTMEM_0869 = DAT_EXTMEM_1c16;
-  DAT_EXTMEM_086a = DAT_EXTMEM_1c39;
-  DAT_EXTMEM_086b = DAT_EXTMEM_1c3a;
-  if ((((DAT_EXTMEM_0860 == '\x06') || (DAT_EXTMEM_0860 == '\x16')) || (DAT_EXTMEM_0860 == '6')) ||
-     (((DAT_EXTMEM_0860 == '\a' || (DAT_EXTMEM_0860 == '\x17')) || (DAT_EXTMEM_0860 == '7')))) {
-    DAT_EXTMEM_0865 = 0x48;
+  XDATA_0866 = DAT_EXTMEM_1c04;
+  XDATA_0867 = DAT_EXTMEM_1c05;
+  XDATA_0868 = DAT_EXTMEM_1c15;
+  XDATA_0869 = DAT_EXTMEM_1c16;
+  XDATA_086A = XDATA_1C39;
+  XDATA_086B = XDATA_1C3A;
+  if ((((XDATA_0860 == '\x06') || (XDATA_0860 == '\x16')) || (XDATA_0860 == '6')) ||
+     (((XDATA_0860 == '\a' || (XDATA_0860 == '\x17')) || (XDATA_0860 == '7')))) {
+    XDATA_0865 = 0x48;
   }
-  else if (((DAT_EXTMEM_0860 == '\b') || (DAT_EXTMEM_0860 == '\x18')) ||
-          ((DAT_EXTMEM_0860 == '8' ||
-           (((DAT_EXTMEM_0860 == '\t' || (DAT_EXTMEM_0860 == '\x19')) || (DAT_EXTMEM_0860 == '9'))))
-          )) {
-    DAT_EXTMEM_0865 = 0x4c;
+  else if (((XDATA_0860 == '\b') || (XDATA_0860 == '\x18')) ||
+          ((XDATA_0860 == '8' ||
+           (((XDATA_0860 == '\t' || (XDATA_0860 == '\x19')) || (XDATA_0860 == '9')))))) {
+    XDATA_0865 = 0x4c;
   }
   else {
-    DAT_EXTMEM_0865 = 0;
+    XDATA_0865 = 0;
   }
-  switch_case_dispatch(DAT_EXTMEM_0860);
+  switch_case_dispatch(XDATA_0860);
   FUN_CODE_d673();
   *param_1 = *param_1 + '\x01';
   func_0xd698();

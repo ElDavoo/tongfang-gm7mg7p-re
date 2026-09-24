@@ -14,10 +14,11 @@
    0x086B/0x086C/0x086D/0x086E: a mismatch copies the four source bytes across and takes the same
    three-call tail, while a match instead clears bit 7 of XDATA 0x0463 and calls 0x163C with
    R5=0x71, or clears bit 1 of XDATA 0x0466 and calls 0x163C with R5=0x72. If XDATA 0x0440 is zero
-   the function leaves through the bare ret at 0x9D9A. None of these addresses has an entry in
-   ec/annotations/registers.yaml.
+   the function leaves through the bare ret at 0x9D9A. ec/annotations/registers.yaml now carries
+   0x0440 and 0x0442 as XDATA_0440 and XDATA_0442, EC-side sites found with their meanings not
+   established, and names none of the other addresses above.
    type: state
-   evidence: ec/decompiled/bank0/9CA6.asm; ec/decompiled/bank0/9CA6.c
+   evidence: ec/decompiled/bank0/9CA6.asm; ec/decompiled/bank0/9CA6.c; ec/annotations/registers.yaml
    basis: hand-decoded */
 
 void gate_06e6_442_then_sync_046a_from_086b(void)
@@ -59,9 +60,9 @@ void gate_06e6_442_then_sync_046a_from_086b(void)
       shared_return_stub_9d9a();
       return;
     }
-    FUN_CODE_9d9b();
-    if ((((DAT_EXTMEM_046a == DAT_EXTMEM_086b) && (DAT_EXTMEM_046b == DAT_EXTMEM_086c)) &&
-        (DAT_EXTMEM_046e == DAT_EXTMEM_086d)) && (DAT_EXTMEM_046f == DAT_EXTMEM_086e)) {
+    compute_level_blocks_086b_086c_086e();
+    if ((((DAT_EXTMEM_046a == XDATA_086B) && (DAT_EXTMEM_046b == DAT_EXTMEM_086c)) &&
+        (DAT_EXTMEM_046e == XDATA_086D)) && (DAT_EXTMEM_046f == XDATA_086E)) {
       if ((char)DAT_EXTMEM_0463 < '\0') {
         DAT_EXTMEM_0463 = DAT_EXTMEM_0463 & 0x7f;
         uVar1 = 0x71;
@@ -76,10 +77,10 @@ void gate_06e6_442_then_sync_046a_from_086b(void)
       load_dptr_88f0_tail_jump_1114(uVar1);
       return;
     }
-    DAT_EXTMEM_046a = DAT_EXTMEM_086b;
+    DAT_EXTMEM_046a = XDATA_086B;
     DAT_EXTMEM_046b = DAT_EXTMEM_086c;
-    DAT_EXTMEM_046e = DAT_EXTMEM_086d;
-    puVar4 = &DAT_EXTMEM_086e;
+    DAT_EXTMEM_046e = XDATA_086D;
+    puVar4 = &XDATA_086E;
   }
   DAT_EXTMEM_046f = *puVar4;
   stage_0a47_then_call_de83_r5_1a(DAT_EXTMEM_046a);

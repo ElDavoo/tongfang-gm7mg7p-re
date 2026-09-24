@@ -31,15 +31,15 @@ void ramp_1804_toward_0670_and_set_1809(byte param_1)
   }
   if (DAT_EXTMEM_0672 == '\0') {
     if (DAT_EXTMEM_0670 == 0) {
-      if (DAT_EXTMEM_0986 == 0) {
-        DAT_EXTMEM_1804 = DAT_EXTMEM_0986;
+      if (XDATA_0986 == 0) {
+        DAT_EXTMEM_1804 = XDATA_0986;
       }
       else {
         DAT_EXTMEM_0670 = 0x3c;
       }
     }
     else {
-      DAT_EXTMEM_0986 = 0xb4;
+      XDATA_0986 = 0xb4;
     }
     if (DAT_EXTMEM_1804 != DAT_EXTMEM_0670) {
       DAT_EXTMEM_070a = DAT_EXTMEM_070a + 1;
@@ -66,31 +66,31 @@ void ramp_1804_toward_0670_and_set_1809(byte param_1)
   else {
     dec_dptr_byte_and_set_1804();
   }
-  if ((DAT_EXTMEM_0460 < 2) && (DAT_EXTMEM_0468 < 2)) {
+  if ((XDATA_0460 < 2) && (XDATA_0468 < 2)) {
     DAT_EXTMEM_1809 = 0;
     goto LAB_CODE_8eff;
   }
   DAT_EXTMEM_1809 = DAT_EXTMEM_1804;
   if (MANUAL_FAN_CTRL < '\0') {
-    if ((((DAT_EXTMEM_0460 < 4) << 7 < '\0') || (DAT_EXTMEM_0460 >= 9)) ||
-       (8U - (((DAT_EXTMEM_0460 < 9) << 7) >> 7) <= DAT_EXTMEM_0468)) {
-      if (((DAT_EXTMEM_0468 < 4) << 7 < '\0') || (DAT_EXTMEM_0468 >= 9)) goto LAB_CODE_8eff;
-      bVar2 = 8 - (((DAT_EXTMEM_0468 < 9) << 7) >> 7);
+    if ((((XDATA_0460 < 4) << 7 < '\0') || (XDATA_0460 >= 9)) ||
+       (8U - (((XDATA_0460 < 9) << 7) >> 7) <= XDATA_0468)) {
+      if (((XDATA_0468 < 4) << 7 < '\0') || (XDATA_0468 >= 9)) goto LAB_CODE_8eff;
+      bVar2 = 8 - (((XDATA_0468 < 9) << 7) >> 7);
 joined_c0x8eee:
-      if (bVar2 <= DAT_EXTMEM_0460) goto LAB_CODE_8eff;
+      if (bVar2 <= XDATA_0460) goto LAB_CODE_8eff;
     }
   }
-  else if ((((DAT_EXTMEM_0460 < 4) << 7 < '\0') || (DAT_EXTMEM_0460 >= 8)) ||
-          (7U - (((DAT_EXTMEM_0460 < 8) << 7) >> 7) <= DAT_EXTMEM_0468)) {
-    if (((DAT_EXTMEM_0468 < 4) << 7 < '\0') || (DAT_EXTMEM_0468 >= 8)) goto LAB_CODE_8eff;
-    bVar2 = 7 - (((DAT_EXTMEM_0468 < 8) << 7) >> 7);
+  else if ((((XDATA_0460 < 4) << 7 < '\0') || (XDATA_0460 >= 8)) ||
+          (7U - (((XDATA_0460 < 8) << 7) >> 7) <= XDATA_0468)) {
+    if (((XDATA_0468 < 4) << 7 < '\0') || (XDATA_0468 >= 8)) goto LAB_CODE_8eff;
+    bVar2 = 7 - (((XDATA_0468 < 8) << 7) >> 7);
     goto joined_c0x8eee;
   }
   DAT_EXTMEM_1809 = DAT_EXTMEM_1804 - 0x14;
 LAB_CODE_8eff:
   puVar3 = &DAT_EXTMEM_1804;
   copy_dptr_byte_to_075b_then_set_dptr_1809();
-  DAT_EXTMEM_075c = *puVar3;
+  MAIN_FAN_R_DUTY = *puVar3;
   return;
 }
 

@@ -15,8 +15,8 @@
 void store_a_to_089e_and_089f(undefined1 param_1)
 
 {
-  DAT_EXTMEM_089e = param_1;
-  DAT_EXTMEM_089f = param_1;
+  XDATA_089E = param_1;
+  XDATA_089F = param_1;
   return;
 }
 

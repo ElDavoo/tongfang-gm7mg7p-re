@@ -21,14 +21,14 @@ byte ten_count_gate_then_set_1300_and_200f(void)
 {
   byte bVar1;
   
-  if ((((XDATA_0440 != '\0') && (DAT_EXTMEM_06db != 0)) && (DAT_EXTMEM_06e6 == '\x01')) &&
+  if ((((XDATA_0440 != '\0') && (XDATA_06DB != 0)) && (DAT_EXTMEM_06e6 == '\x01')) &&
      (DAT_EXTMEM_047e == -0x14)) {
-    if (DAT_EXTMEM_06db >= 6) {
-      return DAT_EXTMEM_06db - 6;
+    if (XDATA_06DB >= 6) {
+      return XDATA_06DB - 6;
     }
     if (((DAT_EXTMEM_1304 & 1) != 0) && ((DAT_EXTMEM_1304 >> 1 & 1) != 1)) {
       DAT_INTMEM_bd = DAT_INTMEM_bd + 1;
-      bVar1 = 10 - (((DAT_EXTMEM_06db < 6) << 7) >> 7);
+      bVar1 = 10 - (((XDATA_06DB < 6) << 7) >> 7);
       if (DAT_INTMEM_bd < bVar1) {
         return DAT_INTMEM_bd - bVar1;
       }

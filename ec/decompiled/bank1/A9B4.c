@@ -22,7 +22,7 @@ void step_state_0845(char param_1)
   bool bVar1;
   char cVar2;
   
-  if (DAT_EXTMEM_06c2 != '\0') {
+  if (XDATA_06C2 != '\0') {
     return;
   }
   cVar2 = (DAT_EXTMEM_06e6 < 5) << 7;

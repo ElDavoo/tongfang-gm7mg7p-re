@@ -6,10 +6,11 @@
 
 /* Calls 0xBA15, writes the constant 0x04 to XDATA 0x044B, then reads XDATA 0x08E2, ORs in 0x80 and
    writes the byte straight back. The seven other bits of 0x08E2 are preserved by that
-   read-modify-write. Neither address has an entry in ec/annotations/registers.yaml, so what the
-   flag and the state byte mean is not determined here.
+   read-modify-write. ec/annotations/registers.yaml now carries 0x044B as XDATA_044B, an EC-side
+   site found with its meaning not established; 0x08E2 has no entry there, so what the flag and the
+   state byte mean is not determined here.
    type: writer
-   evidence: ec/decompiled/bank0/9A9C.asm; ec/decompiled/bank0/9A9C.c
+   evidence: ec/decompiled/bank0/9A9C.asm; ec/decompiled/bank0/9A9C.c; ec/annotations/registers.yaml
    basis: hand-decoded */
 
 void write_04_to_044b_and_set_08e2_bit7(void)

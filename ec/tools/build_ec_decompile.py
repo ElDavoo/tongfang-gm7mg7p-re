@@ -38,6 +38,7 @@ import argparse
 import csv
 import hashlib
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -56,6 +57,7 @@ LISTING_INDEX = os.path.join(OUTDIR, "listing-index.csv")
 MANIFEST = os.path.join(REPO, "ec", "ghidra", "manifest.csv")
 XDATA = os.path.join(REPO, "ec", "ghidra", "xdata-symbols.csv")
 ANNOTATIONS = os.path.join(REPO, "ec", "annotations", "ghidra-functions.csv")
+REGISTERS = os.path.join(REPO, "ec", "annotations", "registers.yaml")
 CALL_TARGETS = os.path.join(REPO, "ec", "annotations", "bank-call-targets.csv")
 GHIDRA_VERSION = "12.1.3"
 
@@ -77,12 +79,21 @@ MANIFEST_COLUMNS = ["program", "source", "sha256", "loader", "ghidra_version",
 # from one place: here the two modes the driver can produce, and --mode reads
 # the same tuple rather than repeating it.
 MANIFEST_MODES = ("export-only", "rebuild-project")
-
-
-def read_csv(path):
-    import csv as _csv
-    with open(path, newline="") as f:
-        return list(_csv.DictReader(f))
+# The annotation layer's own header, transcribed from ec/ghidra/README.md's "The
+# annotation layer" and tabulated in ec/annotations/README.md. Asserted rather
+# than assumed, because this is the file a person or an agent edits to improve
+# a decompile and the tool reads its rows by column name: a column that moves
+# is a change in what every row means, and nothing else here would say so.
+ANNOTATION_COLUMNS = ["scope", "addr", "name", "signature", "type", "comment",
+                      "evidence", "basis"]
+# bank-call-targets.csv, as ec/tools/audit_call_targets.py's write_csv() emits
+# it. Also asserted rather than assumed, for the same reason with a sharper
+# edge: `region` is the column that decides which bank a site belongs to, and a
+# wrong bank here means disassembling from an address that is not a function
+# entry there (call_target_seeds' docstring).
+CALL_TARGET_COLUMNS = ["file_offset", "region", "runtime", "opcode", "target",
+                       "bucket", "frame_onto", "frame_over", "calls_stub",
+                       "calls_trampoline", "own_bank", "other_bank"]
 
 
 def sha256(path):
@@ -146,7 +157,24 @@ def vector_seeds(image):
     return out
 
 
-def call_target_seeds(bank):
+def call_target_rows():
+    """bank-call-targets.csv, read strictly and structurally validated once.
+
+    Once per invocation, not once per bank: a short row and a duplicate
+    `(file_offset, target)` are whole-file properties, so re-running the
+    check for each of the two banks (and again for the bucket-C report) buys
+    nothing -- it is a whole-file check paid a per-row price, the shape §14d
+    found in the self-test."""
+    rows = read_index(CALL_TARGETS)
+    problems = structure_problems("bank-call-targets.csv", rows, call_target_key,
+                                  "(file_offset, target)")
+    if problems:
+        raise SystemExit("error: bank-call-targets.csv is not sound: "
+                         + "; ".join(problems[:3]))
+    return rows
+
+
+def call_target_seeds(bank, census):
     """Targets from bank-call-targets.csv that this program owns, with the
     attribution rule stated rather than guessed:
 
@@ -161,21 +189,44 @@ def call_target_seeds(bank):
     bank here means disassembling from an address that is not a function entry
     in that bank, which corrupts everything after it. Settling them is
     issue #48.
-    """
+
+    `census` is the validated read from call_target_rows(), passed in rather
+    than re-read here, so the two banks and the bucket-C report below are three
+    views of one parse."""
     mine, unattributed = [], []
-    with open(CALL_TARGETS, newline="") as f:
-        for row in csv.DictReader(f):
-            region = row["region"]
-            target = int(row["target"], 16)
-            in_bank_window = target >= COMMON_END
-            if not in_bank_window:
-                if region == "common":
-                    mine.append((target, "call-target"))
-            elif region == bank:
+    for row in census:
+        region = row["region"]
+        target = int(row["target"], 16)
+        in_bank_window = target >= COMMON_END
+        if not in_bank_window:
+            if region == "common":
                 mine.append((target, "call-target"))
-            elif region == "common":
-                unattributed.append((target, "call-target-unattributed"))
+        elif region == bank:
+            mine.append((target, "call-target"))
+        elif region == "common":
+            unattributed.append((target, "call-target-unattributed"))
     return mine, unattributed
+
+
+def annotation_rows():
+    """ec/annotations/ghidra-functions.csv, read strictly and structurally
+    validated, or [] when the file is not there.
+
+    The empty case is the tool's long-standing one -- the build runs without the
+    annotations -- so the file being absent is not an error here, while a file
+    that is present and unsound is. A duplicate `(scope, addr)` is the case
+    worth stopping for: join_index() below fills a dict keyed on it, so the
+    second row would silently win, and which of the two is the better reading is
+    not something a last-wins assignment can report."""
+    if not os.path.isfile(ANNOTATIONS):
+        return []
+    rows = read_index(ANNOTATIONS)
+    problems = structure_problems("ghidra-functions.csv", rows, annotation_key,
+                                  "(scope, addr)")
+    if problems:
+        raise SystemExit("error: ghidra-functions.csv is not sound: "
+                         + "; ".join(problems[:3]))
+    return rows
 
 
 def annotation_seeds():
@@ -191,9 +242,7 @@ def annotation_seeds():
     firmware is absent from the decompile.
     """
     out = []
-    if not os.path.isfile(ANNOTATIONS):
-        return out
-    for row in csv.DictReader(open(ANNOTATIONS, newline="")):
+    for row in annotation_rows():
         scope = row["scope"].strip()
         addr = int(row["addr"], 16)
         if scope in ("common", "bank0", "bank1", "pd"):
@@ -201,13 +250,13 @@ def annotation_seeds():
     return out
 
 
-def seed_rows(fw, pd):
+def seed_rows(fw, pd, census):
     """The seed spec: one row per (program, address, basis), de-duplicated."""
     per_program = {"bank0": [], "bank1": [], "pd": []}
     common_seeds = vector_seeds(fw[:COMMON_END])
     common_seeds += [(a, "stub") for a in BANK_STUBS]
     for bank in ("bank0", "bank1"):
-        bank_seeds, unattributed = call_target_seeds(bank)
+        bank_seeds, unattributed = call_target_seeds(bank, census)
         per_program[bank] = common_seeds + bank_seeds
     per_program["pd"] = vector_seeds(pd)
     # Seed order is evidential strength, strongest first, and it matters: the
@@ -425,17 +474,20 @@ def join_index(raw_index, raw_listing, work):
     raw = list(csv.DictReader(open(raw_index, newline=""), delimiter="\t"))
     listing = list(csv.DictReader(open(raw_listing, newline=""), delimiter="\t"))
     annot = {}
-    if os.path.isfile(ANNOTATIONS):
-        for row in csv.DictReader(open(ANNOTATIONS, newline="")):
-            key_addr = row["addr"].upper().replace("0X", "")
-            annot[(row["scope"], key_addr)] = row
-            # A `common`-scoped row is a common-area function, and at this point
-            # in the pipeline its index row still says bank0 or bank1 -- the
-            # rename to `common` happens in the de-duplication pass below. Index
-            # it under both banks so the join finds it either way.
-            if row["scope"] == "common":
-                annot[("bank0", key_addr)] = row
-                annot[("bank1", key_addr)] = row
+    # Read through the validating reader, so the structural check has already
+    # run before this dict assignment: a duplicate key used to be last-wins
+    # here, and which of the two rows is the better reading is not a question
+    # a dict can answer.
+    for row in annotation_rows():
+        key_addr = norm_addr(row["addr"])
+        annot[annotation_key(row)] = row
+        # A `common`-scoped row is a common-area function, and at this point
+        # in the pipeline its index row still says bank0 or bank1 -- the
+        # rename to `common` happens in the de-duplication pass below. Index
+        # it under both banks so the join finds it either way.
+        if row["scope"] == "common":
+            annot[("bank0", key_addr)] = row
+            annot[("bank1", key_addr)] = row
     for rows in (raw, listing):
         for row in rows:
             key = (row["program"], row["addr"])
@@ -625,16 +677,23 @@ def main(argv=None):
     work = os.path.abspath(args.work)
     os.makedirs(work, exist_ok=True)
 
+    # --check first, and ahead of the seed derivation, because it needs none of
+    # it: a committed CSV that does not parse should be a failed check that
+    # names the file, and running the build path first turned that into a
+    # traceback out of a reader --check had not reached yet.
+    if args.check:
+        return check(work)
+
     fw = open(FIRMWARE, "rb").read()
     pd = fw[0x20000:0x30000]
-    rows, b0, b1, pdseeds = seed_rows(fw, pd)
-    _, unattributed = call_target_seeds("bank0")
+    # One validated read of the census, shared by the seed set and the
+    # bucket-C report below.
+    census = call_target_rows()
+    rows, b0, b1, pdseeds = seed_rows(fw, pd, census)
+    _, unattributed = call_target_seeds("bank0", census)
 
     if args.self_test:
         return self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work)
-
-    if args.check:
-        return check(work)
 
     digest = sha256(FIRMWARE)
     ghidra_preflight(args.ghidra)
@@ -671,16 +730,67 @@ def main(argv=None):
 # --------------------------------------------------------------------------
 
 def read_index(path):
-    """Rows of a committed CSV -- an index or the manifest -- read strictly.
+    """Rows of a committed CSV, read strictly.
 
     `strict=True` is the point. csv's default reader is forgiving about quoting
     in the one way that hides an error rather than raising it: a bad quote ends
     the row early, the row comes back with a missing field, and every count
     taken from it is then quietly smaller than the file. A quoting mistake in a
-    committed index is exactly the kind of thing that should be loud, and it
+    committed CSV is exactly the kind of thing that should be loud, and it
     costs nothing to make it so."""
     with open(path, newline="") as f:
         return list(csv.DictReader(f, strict=True))
+
+
+def norm_addr(addr):
+    """An address as a key: uppercase, `0x` prefix stripped.
+
+    Both spellings are in the committed files and both are in use -- 1,039
+    annotation rows carry a bare `0EA2` and 730 a `0x0B158` -- so a plain string
+    key would call the two forms of one address two different functions and miss
+    the duplicate that is the whole point of looking. --self-test asserts that
+    the raw and the normalised key count agree over the committed file, which is
+    what makes the normalisation a fact about the data rather than an assumption
+    about it."""
+    return addr.upper().replace("0X", "")
+
+
+def index_key(row):
+    return (row["program"], row["addr"])
+
+
+def annotation_key(row):
+    return (row["scope"], norm_addr(row["addr"]))
+
+
+def call_target_key(row):
+    return (norm_addr(row["file_offset"]), norm_addr(row["target"]))
+
+
+def structure_problems(name, rows, key_of, key_label="key"):
+    """Rows that did not come out whole, and a key that appears twice.
+
+    The one copy of the rule, called once per committed file with that file's
+    own `key_of`. It is header-agnostic on purpose: each file has its own
+    column count, and a check written against one of them would call every row
+    of the others short.
+
+    A short row is a missing field and a surplus one is DictReader's `None`
+    restkey; either leaves a dict without a value that a later check reads, so
+    the row is reported and stepped over rather than keyed on. A duplicate key
+    is a file appended to twice or a de-dup that missed one, and it stops the
+    row count meaning what the counts around it are for."""
+    out = []
+    seen = set()
+    for i, r in enumerate(rows, start=2):
+        if None in r or any(v is None for v in r.values()):
+            out.append(f"{name}: line {i} has fewer or more fields than the header")
+            continue
+        key = key_of(r)
+        if key in seen:
+            out.append(f"{name}: duplicate {key_label} {key}")
+        seen.add(key)
+    return out
 
 
 def index_structure_problems(index_rows, listing_rows):
@@ -689,23 +799,11 @@ def index_structure_problems(index_rows, listing_rows):
 
     A duplicate key is an export appended to twice, or a de-dup that missed one;
     either way the row count no longer means "number of functions", which is
-    the only thing the counts around it are for. The bodies below are
-    header-agnostic on purpose: this index carries 12 columns, not the shared
-    exporter's 10, and a check written against the narrower one would call every
-    row here short."""
-    out = []
-    for name, rows in (("index.csv", index_rows),
-                       ("listing-index.csv", listing_rows)):
-        seen = set()
-        for i, r in enumerate(rows, start=2):
-            if None in r or any(v is None for v in r.values()):
-                out.append(f"{name}: line {i} has fewer or more fields than the header")
-                continue
-            key = (r.get("program"), r.get("addr"))
-            if key in seen:
-                out.append(f"{name}: duplicate (program, addr) {key}")
-            seen.add(key)
-    return out
+    the only thing the counts around it are for. Two calls into the one keyed
+    rule rather than a second copy of it."""
+    return (structure_problems("index.csv", index_rows, index_key, "(program, addr)")
+            + structure_problems("listing-index.csv", listing_rows, index_key,
+                                 "(program, addr)"))
 
 
 def coverage_mismatches(manifest_rows, count_for_program):
@@ -743,6 +841,135 @@ def manifest_mode_problems(manifest_rows):
             for r in manifest_rows if r.get("mode") not in MANIFEST_MODES]
 
 
+# "X has no entry in ec/annotations/registers.yaml" is a house idiom: a plate
+# comment saying what a byte is *not* yet. It goes stale the moment the byte is
+# entered, and a stale one is worse than a missing one -- it is a confident,
+# checkable, wrong sentence sitting in the file a reader opens to find out what
+# is known. The 0x0400-0x045F sweep left fifteen of them (issue #176).
+#
+# The check is address-scoped because most of those sentences also name addresses
+# the YAML genuinely does not hold, and those claims are findings: "0x060C has
+# no entry" is true, and dropping it to tidy a sentence would trade one
+# overclaim for another.
+
+# A 4-hex-digit address literal. Two of these in a row separated by a dash is
+# the range notation ("0x0F60-0x0F63") and yields both ends, which is the
+# claim's own reading of itself.
+_XDATA_LITERAL = re.compile(r"0x([0-9A-Fa-f]{4})\b")
+# Any address-shaped token, wildcards included. A subject written in this
+# notation has named its targets in a form the scan below cannot enumerate.
+_XDATA_SHAPED = re.compile(r"\b0x[0-9A-Fa-fxX*]*", re.I)
+# Sentence boundaries *and* semicolons. The split is what clears the false
+# positives: the sentences that need it are the ones that say both things in one
+# breath -- "registers.yaml documents 0x044F as GPU_TEMP; 0x0A49, 0x0A4A and
+# 0x098C have no entry there" -- and read as a single unit the first half looks
+# like a claim about 0x044F, so the check would demand an edit that is not
+# warranted. A guard that fires on correct prose is a guard that gets deleted.
+#
+# The period rule is `(?<!yaml)\.(?=\s)`: a period ends a sentence unless it is
+# the dot in `registers.yaml`, the one dotted token these comments carry. A
+# period after a hex literal does end one, and has to -- one comment's "these
+# bytes" reaches back across exactly that boundary.
+_CLAUSE_SPLIT = re.compile(r";|(?<!yaml)\.(?=\s)|(?<=[!?])\s")
+# <verb> <no|an> entry, the determiner captured so a positive claim can be told
+# from a negative one.
+_ENTRY_IDIOM = re.compile(r"\b(?:has|have|is|are|was|were)\s+(no|an?)\s+entry\b",
+                          re.I)
+# The quantifiers that turn `has an entry` into a negative claim. `not` is
+# deliberately not among them: "it is not an entry" in this tree is about a
+# function entry point, and reading that as a claim about the YAML would police
+# a sentence which says nothing of the kind.
+_NEGATIVE_QUANT = re.compile(r"\b(?:none|neither|either)\b", re.I)
+
+
+def comment_clauses(text):
+    """The clauses of a plate comment -- the unit a 'has no entry' claim governs."""
+    return [c for c in _CLAUSE_SPLIT.split(text) if c.strip()]
+
+
+def registered_addresses(path=REGISTERS):
+    """Every XDATA address ec/annotations/registers.yaml carries an entry for.
+
+    Read from the YAML rather than from the generated `xdata-symbols.csv`
+    because the claim being policed is a claim *about the YAML*: the two can
+    disagree, and it is the YAML a reader opens. A file that will not parse
+    raises rather than returning an empty set -- a check that could not run must
+    not be indistinguishable from one that found nothing.
+    """
+    import yaml
+    with open(path) as f:
+        data = yaml.safe_load(f)
+    out = set()
+    for entry in (data or {}).get("registers") or []:
+        addrs = entry.get("addr")
+        for a in (addrs if isinstance(addrs, list) else [addrs]):
+            if a is not None:
+                out.add(int(a))
+    return out
+
+
+def stale_no_entry_claims(ann_rows, entered):
+    """Annotation comments claiming registers.yaml holds no entry for an address
+    it does hold. One message per (row, address), naming the address.
+
+    The address is in the message on purpose: without it a false positive and a
+    real finding look the same, and the reader's only recourse is to re-derive
+    the whole scan by hand. With it, the claim that fired can be checked against
+    the row in front of them.
+
+    The five forms the idiom takes in this tree all resolve in three steps:
+
+      1. find the idiom, and work within the clause that carries it;
+      2. the claim's subject is the text between the clause start and the verb
+         -- or, where a quantifier introduces it ("none of 0x0434 or 0x060C has
+         an entry"), the text after the quantifier;
+      3. a subject naming no address is a pronoun ("neither address", "none of
+         these bytes"), and the addresses it refers to are the ones named in the
+         text before the clause.
+
+    Step 3 is what the two quantified forms need and why they need nothing else:
+    their addresses are two or three sentences back, and the clause-local view
+    would see a bare pronoun and stop there.
+    """
+    out = []
+    for row in ann_rows:
+        text = row.get("comment") or ""
+        clauses = comment_clauses(text)
+        for i, clause in enumerate(clauses):
+            for m in _ENTRY_IDIOM.finditer(clause):
+                # "0x06EB has an entry" is a positive claim and is not this
+                # check's business. Only `no entry`, or a quantifier in front of
+                # the verb, is the idiom.
+                if m.group(1).lower() != "no" \
+                        and not _NEGATIVE_QUANT.search(clause[:m.start()]):
+                    continue
+                subject = clause[:m.start()]
+                quant = list(_NEGATIVE_QUANT.finditer(subject))
+                if quant:
+                    subject = subject[quant[-1].end():]
+                if _XDATA_SHAPED.search(subject) \
+                        and not _XDATA_LITERAL.search(subject):
+                    # "none of the 0x08xx or 0x09xx destinations has an entry":
+                    # the targets are named in a notation this scan cannot
+                    # enumerate. Left alone rather than widened to a guess --
+                    # a check that guesses here demands edits nobody can check.
+                    continue
+                if _XDATA_LITERAL.search(subject):
+                    governed = {int(h, 16) for h in _XDATA_LITERAL.findall(subject)}
+                else:
+                    governed = set()
+                    for prior in clauses[:i]:
+                        governed |= {int(h, 16)
+                                     for h in _XDATA_LITERAL.findall(prior)}
+                for addr in sorted(governed & entered):
+                    out.append("%s %s (%s) says an address has no entry in "
+                               "ec/annotations/registers.yaml, but 0x%04X is in "
+                               "it -- reword the clause, or correct the claim"
+                               % (row["scope"], row["addr"],
+                                  row.get("name", ""), addr))
+    return out
+
+
 def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     ok = True
     # One read of the annotations CSV, split by scope. The PD set used to be
@@ -750,7 +977,8 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # re-parsed the whole file once per seed row -- 1,790 times, which is where
     # this self-test's 18 s went. The EC-side set had been hoisted already; only
     # the PD one had not, and the two now read the file once between them.
-    _ann = read_csv(ANNOTATIONS)
+    _ann = annotation_rows()
+    _ct = call_target_rows()
     ec_annotation_addrs = {int(r["addr"], 16) for r in _ann
                            if r["scope"] in ("bank0", "bank1", "common")}
     pd_annotation_addrs = {int(r["addr"], 16) for r in _ann if r["scope"] == "pd"}
@@ -770,7 +998,9 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     _ir, _lr, _mr = (read_index(p) if os.path.isfile(p) else []
                      for p in (INDEX, LISTING_INDEX, MANIFEST))
     for _p, _cols in ((INDEX, INDEX_COLUMNS), (LISTING_INDEX, INDEX_COLUMNS),
-                      (MANIFEST, MANIFEST_COLUMNS)):
+                      (MANIFEST, MANIFEST_COLUMNS),
+                      (ANNOTATIONS, ANNOTATION_COLUMNS),
+                      (CALL_TARGETS, CALL_TARGET_COLUMNS)):
         check("%s carries this tool's own %d-column header"
               % (os.path.relpath(_p, REPO), len(_cols)),
               os.path.isfile(_p)
@@ -802,6 +1032,58 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("two different addresses in one program are not a duplicate",
           not _p, str(_p))
 
+    # The same four cases over the two annotation-side CSVs, which have their
+    # own keys: (scope, addr) for the annotations, (file_offset, target) for
+    # the census. Same order, same reason -- clean first.
+    _agood = [{"scope": "bank0", "addr": "0EA2", "name": "a"},
+              {"scope": "bank1", "addr": "0x0B158", "name": "b"}]
+    check("a clean pair of annotation rows has no structural problem",
+          not structure_problems("ghidra-functions.csv", _agood, annotation_key,
+                                 "(scope, addr)"))
+    _p = structure_problems("ghidra-functions.csv", [_agood[0]] * 2, annotation_key,
+                            "(scope, addr)")
+    check("a duplicated (scope, addr) key is reported", len(_p) == 1, str(_p))
+    _p = structure_problems("ghidra-functions.csv",
+                            [{"scope": "bank0", "addr": "0EA2", "name": None}],
+                            annotation_key, "(scope, addr)")
+    check("an annotation row with fewer fields than the header is reported",
+          len(_p) == 1, str(_p))
+    _p = structure_problems("ghidra-functions.csv",
+                            [{"scope": "bank0", "addr": "0EA2", "name": "a",
+                              None: ["surplus"]}], annotation_key, "(scope, addr)")
+    check("an annotation row with more fields than the header is reported",
+          len(_p) == 1, str(_p))
+    # The one case the index cases have no analogue for: the two files spell an
+    # address both ways, so the duplicate key has to be the normalised address.
+    # With the raw string key these two rows are two different functions and the
+    # check reports nothing at all.
+    _p = structure_problems("ghidra-functions.csv",
+                            [{"scope": "bank0", "addr": "0x0B158"},
+                             {"scope": "bank0", "addr": "0B158"}],
+                            annotation_key, "(scope, addr)")
+    check("a 0x-prefixed and a bare address for one function are one key",
+          len(_p) == 1, str(_p))
+    _cgood = [{"file_offset": "0x0B000", "target": "0x04D5", "region": "common"},
+              {"file_offset": "0x0B200", "target": "0x04D8", "region": "common"}]
+    check("a clean pair of call-target rows has no structural problem",
+          not structure_problems("bank-call-targets.csv", _cgood, call_target_key,
+                                 "(file_offset, target)"))
+    _p = structure_problems("bank-call-targets.csv", [_cgood[0]] * 2,
+                            call_target_key, "(file_offset, target)")
+    check("a duplicated (file_offset, target) key is reported", len(_p) == 1,
+          str(_p))
+    _p = structure_problems("bank-call-targets.csv",
+                            [{"file_offset": "0x0B000", "region": None}],
+                            call_target_key, "(file_offset, target)")
+    check("a call-target row with fewer fields than the header is reported",
+          len(_p) == 1, str(_p))
+    _p = structure_problems("bank-call-targets.csv",
+                            [{"file_offset": "0x0B000", "target": "0x04D5",
+                              None: ["surplus"]}], call_target_key,
+                            "(file_offset, target)")
+    check("a call-target row with more fields than the header is reported",
+          len(_p) == 1, str(_p))
+
     # Coverage, on a manifest that agrees with its index and one that does not.
     check("coverage: a manifest that agrees with the index passes",
           not coverage_mismatches([{"program": "bank0", "functions": "2"}],
@@ -824,6 +1106,53 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("a mode outside the documented set is rejected", len(_p) == 1, str(_p))
     check("the committed manifest uses only documented modes",
           not manifest_mode_problems(_mr), str(manifest_mode_problems(_mr)))
+
+    # The "X has no entry in registers.yaml" idiom, which goes stale the moment
+    # the byte it names is entered. Scoped to the addresses each clause governs,
+    # so a sentence that also names addresses the YAML genuinely does not hold
+    # keeps saying so.
+    _claims = []
+    try:
+        _claims = stale_no_entry_claims(_ann, registered_addresses())
+    except (OSError, TypeError, ValueError) as e:
+        _claims = ["registers.yaml could not be read for the scan: %s" % e]
+    check("no annotation comment claims registers.yaml has no entry for an "
+          "address it holds (%d row(s) scanned)" % len(_ann),
+          not _claims,
+          "; ".join(_claims[:3])
+          + (" (+%d more)" % (len(_claims) - 3) if len(_claims) > 3 else ""))
+    # The guard itself, on synthetic comments. The known-good row comes first on
+    # purpose, for the reason the structural checks above give: a guard
+    # exercised only on known-bad input cannot tell "clean" from "never ran".
+    _p = stale_no_entry_claims(
+        [{"scope": "bank0", "addr": "0x93FF", "name": "positive_then_negative",
+          "comment": "registers.yaml documents 0x044F as GPU_TEMP; 0x0A49, "
+                     "0x0A4A and 0x098C have no entry there."}],
+        {0x044F})
+    check("a true 'no entry' claim about other addresses is not reported",
+          not _p, str(_p))
+    _p = stale_no_entry_claims(
+        [{"scope": "bank1", "addr": "0xF3D7", "name": "stale_in_a_list",
+          "comment": "reads 0x060C, and none of 0x0434 or 0x060C has an "
+                     "entry"}],
+        {0x0434, 0x0456})
+    check("a stale claim is reported, naming the address and not the true ones "
+          "beside it", len(_p) == 1 and "0x0434" in _p[0] and "0x060C" not in _p[0],
+          str(_p))
+    _p = stale_no_entry_claims(
+        [{"scope": "bank0", "addr": "0xBE15", "name": "back_referenced",
+          "comment": "Reads XDATA 0x08EA and XDATA 0x0449. Neither address has "
+                     "an entry in ec/annotations/registers.yaml."}],
+        {0x0449})
+    check("a claim whose subject is a pronoun resolves to the addresses named "
+          "before the clause", len(_p) == 1 and "0x0449" in _p[0], str(_p))
+    _p = stale_no_entry_claims(
+        [{"scope": "bank0", "addr": "0x96AD", "name": "wildcard_subject",
+          "comment": "documents 0x0741; none of the 0x08xx or 0x09xx "
+                     "destinations has an entry there."}],
+        {0x0741})
+    check("a claim about addresses named as a wildcard is left alone rather "
+          "than widened to a guess", not _p, str(_p))
 
     # The known answers, on the committed files. These are docs/findings.md §15
     # as assertions: a re-export that moves a total fails here loudly and gets a
@@ -849,6 +1178,36 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
           all(len({(r["program"], r["addr"]) for r in rows})
               == len({(r["program"], int(r["addr"], 16)) for r in rows}) == 2708
               for rows in (_ir, _lr)))
+    # The annotation layer's two committed CSVs, the same way. 1,769 records
+    # and not the 1,771 the follow-up issue quoted: the file is 1,772 physical
+    # lines, because one record's quoted `comment` (bank0 0x0EA2) spans three
+    # of them, and a line count is not a record count. --check and this
+    # self-test both read it with csv.DictReader, which returns the record.
+    # A pin, so it moves with every annotation row a change adds on purpose:
+    # 1,769 -> 1,772 with issue #181's three pd rows (0x7392, 0xEA67, 0xEFB9),
+    # 1,772 -> 1,775 with issue #179's three, 1,775 -> 1,779 with issue #180's four,
+    # 1,779 -> 1,781 with issue #183's two.
+    check("EC: annotations/ghidra-functions.csv is 1,781 records, no short row "
+          "and no duplicate (scope, addr)",
+          len(_ann) == 1781 and not structure_problems("ghidra-functions.csv", _ann,
+                                                       annotation_key, "(scope, addr)"),
+          "%d record(s)" % len(_ann))
+    check("EC: bank-call-targets.csv is 5,998 records, no short row and no "
+          "duplicate (file_offset, target)",
+          len(_ct) == 5998 and not structure_problems("bank-call-targets.csv", _ct,
+                                                      call_target_key,
+                                                      "(file_offset, target)"),
+          "%d record(s)" % len(_ct))
+    # Neither file mixes the two spellings of an address today, so the raw
+    # string key and the normalised key count the same. That equality is what
+    # makes the normalised duplicate key sound over the real file, and it is the
+    # claim that a file which has started mixing the two would break.
+    check("EC: a raw and a normalised key count the same on both annotation "
+          "CSVs, so normalising cannot merge two distinct keys",
+          len({(r["scope"], r["addr"]) for r in _ann})
+          == len({annotation_key(r) for r in _ann}) == 1781
+          and len({(r["file_offset"], r["target"]) for r in _ct})
+          == len({call_target_key(r) for r in _ct}) == 5998)
 
     # The common-area de-dup, on synthetic rows. A PD-image function that shares
     # an address, a name and a size with the EC's must survive it: the PD is a
@@ -1075,12 +1434,15 @@ def check(work):
     if not os.path.isfile(MANIFEST):
         fail("no manifest at %s" % os.path.relpath(MANIFEST, REPO))
         return 1
-    # The two committed indexes and the manifest, read strictly once each and
-    # then used by every check below. A read error is reported as a failed check
-    # rather than a traceback, so a broken index reads as a broken index.
+    # The two committed indexes, the manifest and the two annotation-side CSVs,
+    # read strictly once each and then used by every check below. A read error
+    # is reported as a failed check rather than a traceback, so a broken CSV
+    # reads as a broken CSV.
     _read = {}
     for _name, _path in (("manifest.csv", MANIFEST), ("index.csv", INDEX),
-                         ("listing-index.csv", LISTING_INDEX)):
+                         ("listing-index.csv", LISTING_INDEX),
+                         ("ghidra-functions.csv", ANNOTATIONS),
+                         ("bank-call-targets.csv", CALL_TARGETS)):
         if not os.path.isfile(_path):
             continue
         try:
@@ -1089,14 +1451,31 @@ def check(work):
             fail("%s does not parse as strict CSV: %s" % (_name, e))
     if not ok:
         return 1
+    # The census is the one of these the build cannot run without, so its
+    # absence is a failed check. The annotations stay optional the way they have
+    # always been -- the tool runs without them -- and the indexes and the
+    # manifest each report their own absence further down.
+    if "bank-call-targets.csv" not in _read:
+        fail("no bank-call-targets.csv at %s; every seed set is built from it"
+             % os.path.relpath(CALL_TARGETS, REPO))
+        return 1
     manifest = _read.get("manifest.csv", [])
     # Structure before content, and stop if it fails. A row that did not come
     # out whole has no `out_file` to open and no address to key on, so every
     # per-row check below would be reading past the end of it -- and the counts
     # those checks compare are exactly the ones a short row has quietly made
-    # smaller. Reported and stopped, not carried on from.
-    _struct = index_structure_problems(_read.get("index.csv", []),
-                                       _read.get("listing-index.csv", []))
+    # smaller. Reported and stopped, not carried on from. The two annotation-side
+    # CSVs get the same treatment, each on its own key: before this they had
+    # content guards only (evidence non-empty, an address that resolves), and
+    # neither of those notices a short row or a key that is written twice.
+    _struct = (index_structure_problems(_read.get("index.csv", []),
+                                        _read.get("listing-index.csv", []))
+               + structure_problems("ghidra-functions.csv",
+                                    _read.get("ghidra-functions.csv", []),
+                                    annotation_key, "(scope, addr)")
+               + structure_problems("bank-call-targets.csv",
+                                    _read["bank-call-targets.csv"],
+                                    call_target_key, "(file_offset, target)"))
     if _struct:
         fail("; ".join(_struct[:3]))
         return 1
@@ -1191,21 +1570,22 @@ def check(work):
             if "DECOMPILER UNAVAILABLE" in text:
                 fail("%s: the decompiler did not load; this is a broken toolchain, "
                      "not an undecodable function" % os.path.join(dp, fn))
-    if os.path.isfile(ANNOTATIONS):
-        for a in csv.DictReader(open(ANNOTATIONS, newline="")):
-            # An annotation with no citation is a claim, not a finding, and the
-            # build refuses it -- but the build is not what CI runs, so the
-            # check has to refuse it too or an uncited row reaches main.
-            if not a.get("evidence", "").strip():
-                fail("annotation %s %s (%s) has no evidence citation: a row that "
-                     "names a function has to say where the reading came from"
-                     % (a["scope"], a["addr"], a.get("name", "")))
-            key = (a["scope"], a["addr"].upper().replace("0X", ""))
-            if key not in seen_addr and not (a["scope"] == "common"
-                                             and any(k[0] == "common" for k in seen_addr)):
-                fail("annotation %s %s resolves to no exported function -- either a "
-                     "typo or the project needs a rebuild"
-                     % (a["scope"], a["addr"]))
+    # The content guards on the same rows the structural pass above read, not a
+    # second read of the file: the two are different questions about one parse.
+    for a in _read.get("ghidra-functions.csv", []):
+        # An annotation with no citation is a claim, not a finding, and the
+        # build refuses it -- but the build is not what CI runs, so the
+        # check has to refuse it too or an uncited row reaches main.
+        if not a.get("evidence", "").strip():
+            fail("annotation %s %s (%s) has no evidence citation: a row that "
+                 "names a function has to say where the reading came from"
+                 % (a["scope"], a["addr"], a.get("name", "")))
+        key = (a["scope"], norm_addr(a["addr"]))
+        if key not in seen_addr and not (a["scope"] == "common"
+                                         and any(k[0] == "common" for k in seen_addr)):
+            fail("annotation %s %s resolves to no exported function -- either a "
+                 "typo or the project needs a rebuild"
+                 % (a["scope"], a["addr"]))
     print("  all checks passed" if ok else "  FAILURES ABOVE")
     return 0 if ok else 1
 

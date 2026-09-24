@@ -8,10 +8,12 @@
    branches on R7. When R7 is 0 it sets R3=0x64 and R4=0, reads the 16-bit value at XDATA
    0x0438/0x0439 via 0x8886, divides by 100 via 0xA5E6, and writes the returned R1 to XDATA 0x0448.
    When R7 is nonzero it performs no reads at all and writes the constant 0xBE to XDATA 0x0448
-   instead. R7 is set nowhere in this listing or in 0x198A, and neither 0x0438 nor 0x0448 has an
-   entry in ec/annotations/registers.yaml.
+   instead. R7 is set nowhere in this listing or in 0x198A, and ec/annotations/registers.yaml now
+   carries 0x0438 as BAT_VOLTAGE_MV -- the little-endian mV pair this routine reads and divides by
+   100, established by three independent committed sources -- and 0x0448 as XDATA_0448, the byte
+   that quotient lands in: an EC-side site found with its meaning not established.
    type: math
-   evidence: ec/decompiled/bank1/F416.asm; ec/decompiled/bank1/F416.c
+   evidence: ec/decompiled/bank1/F416.asm; ec/decompiled/bank1/F416.c; ec/annotations/registers.yaml
    basis: hand-decoded */
 
 void scale_0438_into_0448(undefined1 param_1,char param_2)

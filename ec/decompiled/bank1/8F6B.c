@@ -11,7 +11,7 @@ void FUN_CODE_8f6b(char param_1)
 {
   byte bVar1;
   
-  if (DAT_EXTMEM_06c2 == '\0') {
+  if (XDATA_06C2 == '\0') {
     if ((DAT_EXTMEM_0801 & 0x40) != 0) {
       trampoline_to_c10c();
       if ((param_1 == '\0') || ((DAT_EXTMEM_0472 & 0x20) != 0)) goto LAB_CODE_8fbe;

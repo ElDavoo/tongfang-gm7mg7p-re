@@ -67,12 +67,12 @@ LAB_CODE_a340:
     return;
   }
   *pbVar8 = *pbVar8 & 0xfe;
-  if (DAT_EXTMEM_0890 != '\0') {
+  if (XDATA_0890 != '\0') {
     shared_return_stub_a425();
     return;
   }
   load_dptr_f381_tail_jump_1114((char)((ushort)bVar5 * (ushort)param_1 >> 8));
-  DAT_EXTMEM_0890 = 10;
+  XDATA_0890 = 10;
   return;
 }
 

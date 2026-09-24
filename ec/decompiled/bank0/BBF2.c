@@ -6,7 +6,8 @@
 
 /* Copies the byte at XDATA 0x0866 into R7, reads the byte at XDATA 0x0865, explicitly clears the
    carry and subtracts R7, returning 0x0865 minus 0x0866 in A. No further borrow is subtracted into
-   the result. Neither address has an entry in ec/annotations/registers.yaml.
+   the result. ec/annotations/registers.yaml records the two as XDATA_0865 and XDATA_0866, both with
+   units not determined.
    type: math
    evidence: ec/decompiled/bank0/BBF2.asm; ec/decompiled/bank0/BBF2.c
    basis: hand-decoded */
@@ -14,7 +15,7 @@
 char sub_0866_from_0865(void)
 
 {
-  return DAT_EXTMEM_0865 - DAT_EXTMEM_0866;
+  return XDATA_0865 - XDATA_0866;
 }
 
 

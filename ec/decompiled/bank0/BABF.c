@@ -7,18 +7,19 @@
 /* Adds the byte at XDATA 0x0460 plus 0x10 to the 16-bit value in R7 (low) and R6 (high): the
    overflow of the +0x10 is kept in R4, and R4 is then added into R6 with the carry, so DPTR becomes
    R6:R7 + XDATA[0x0460] + 0x10. The listing then reads the code byte at that address with MOVC and
-   has no RET; the byte is left in A. 0x0460 has no entry in ec/annotations/registers.yaml.
+   has no RET; the byte is left in A. ec/annotations/registers.yaml now carries 0x0460 as
+   XDATA_0460, an EC-side site found with its meaning not established.
    type: reader
-   evidence: ec/decompiled/bank0/BABF.asm; ec/decompiled/bank0/BABF.c
+   evidence: ec/decompiled/bank0/BABF.asm; ec/decompiled/bank0/BABF.c; ec/annotations/registers.yaml
    basis: hand-decoded */
 
 char read_code_byte_at_r6r7_plus_0460_10(char param_1,byte param_2)
 
 {
   return CPU_TEMP -
-         *(char *)CONCAT11(param_1 + (-((CARRY1(param_2,DAT_EXTMEM_0460 + 0x10) << 7) >> 7) -
-                                     (((0xef < DAT_EXTMEM_0460) << 7) >> 7)),
-                           param_2 + DAT_EXTMEM_0460 + 0x10);
+         *(char *)CONCAT11(param_1 + (-((CARRY1(param_2,XDATA_0460 + 0x10) << 7) >> 7) -
+                                     (((0xef < XDATA_0460) << 7) >> 7)),param_2 + XDATA_0460 + 0x10)
+  ;
 }
 
 

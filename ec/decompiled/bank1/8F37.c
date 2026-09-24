@@ -17,9 +17,9 @@ void write_047f_and_arm_06d1_fa(undefined1 param_1,char param_2)
 {
   DAT_EXTMEM_047f = param_1;
   trampoline_to_c118();
-  if ((param_2 != '\0') && (DAT_EXTMEM_06d1 == '\0')) {
+  if ((param_2 != '\0') && (XDATA_06D1 == '\0')) {
     push_r5_into_070f_ring_when_gates_pass(0x27);
-    DAT_EXTMEM_06d1 = -6;
+    XDATA_06D1 = -6;
   }
   return;
 }

@@ -20,11 +20,16 @@
 #   xdata-refs      : ec/tools/trace_xdata_refs.py -- the per-site form of the
 #                    same scan: which image each site is in, its runtime
 #                    address, and whether it reads, writes, or hands DPTR to a
-#                    subroutine. Site table and the page it covers:
-#                    ec/annotations/xdata-0400-045f.md. It is still a static
-#                    scan and is NOT `live`: a zero is "not found by this
-#                    method", never "absent", and a read-modify-write is
+#                    subroutine. Site table and the pages it covers:
+#                    ec/annotations/xdata-0400-045f.md and
+#                    ec/annotations/xdata-06c2-06db-timers.md. It is still a
+#                    static scan and is NOT `live`: a zero is "not found by
+#                    this method", never "absent", and a read-modify-write is
 #                    evidence the EC touches a byte, not that it acts on it.
+#                    The access column is a linear walk that stops at the first
+#                    control-flow instruction, so a store a branch jumps over is
+#                    invisible to it -- the timer block's one reload is exactly
+#                    such a store (xdata-06c2-06db-timers.md 5).
 #
 # reference-count keys (all three are direct MOV DPTR,#addr site counts,
 # and all three inherit the blind spot in the "absent" note below):
@@ -356,6 +361,15 @@ registers:
       DSDT ECMG field list, as DBD1 (with DBD2 at 0x07D1) -- what DBD1 is
       for is not established, and reading the vendor's name as "the resume
       threshold" would be a guess.
+      SCOPE NOTE 2026-09-23 (issue #178), because the census makes the trap
+      concrete: xdata-registers.csv's `0x07D0` row is `program=pd`, 4 write
+      and 2 read+write, every function in it `pd:`. Those are the PD image's
+      own 0x07D0, which is a different byte from the EC's 0x07D0 -- the
+      0x0400-page rule of docs/findings.md 3a. So "the only committed writer
+      of 0x07D0 in any committed input is the DSDT" above is about the EC
+      byte and the charge-threshold role, and the "15 write" PD sites named
+      in the 229/15/2 split are the same program the entry has already said
+      they are. No status moves; this only fixes the reading.
       WRITTEN LIVE 2026-09-17 (docs/findings.md 4f): 55 and 90, paired
       with 0x07B9, via the physical window; accepted, stable, no effect
       on charging within the sampled windows. DO-NOT-WRITE-BLIND is
@@ -420,6 +434,17 @@ registers:
       paths, not an observed failure -- no hardware was involved in
       establishing it, and the live writes in docs/findings.md 4f are still
       the only hands-on test of this byte -- so DO-NOT-WRITE-BLIND stands.
+      DOOR ATTRIBUTION, prepared and NOT RUN (issue #184): the observation
+      4o names as the only route left to the caller -- which process issues
+      the DeviceIoControl to \.\ACPIDriver at the moment this byte moves
+      under a GPU TGP or Dynamic Boost change -- has a written procedure
+      and an observe-only watcher at
+      docs/hardware-tests/gpu-tgp-07c4-07d7-door.md, with its per-address
+      citation list pinned to the DSDT and to this file by
+      windows/tools/test_gpu_block_watch.py. The capture has not been
+      taken: no Windows machine is reachable from the pipeline that wrote
+      it, and nothing in this entry's status rests on a run that did not
+      happen.
 
   - name: DBD2 (DSDT name; no vendor constant, no committed Windows writer)
     addr: 0x07D1
@@ -451,12 +476,44 @@ registers:
       DO-NOT-WRITE-BLIND suffix matches 0x07D0 because a blind write here
       lands on the same GPU power pair with the same unknowns. No live
       test has touched this byte.
+      WALKED 2026-09-24 (issue #185): all 76 sites are now enumerated in
+      ec/annotations/ec-0x07d1-sites.md (site table:
+      ec-0x07d1-sites.csv), by the same method and reconciliation
+      ec-0x07d0-sites.md used. 76 distinct sites, not one function called
+      repeatedly: 60 read, 16 write, none incremented in place, none
+      unresolved by this method. 17 of the 17 handoffs resolve one level
+      deeper -- 14 read, 3 write -- across 8 callees, which
+      register_ref_table.py --callee-depth 1 confirms independently. Read
+      sites multiply it against strides 0x5E and 0x17 to index arrays
+      (bases 0x08E8/0x08E9/0x08F4/0x08F6/0x08FC/0x0904 and
+      0x0A13/0x0A2C/0x0A2D/0x0A35/0x0A39), which is the shape of an index
+      or state variable of the PD firmware and says nothing about the EC's
+      own 0x07D1. Five of the 76 walk past their own byte through inc
+      dptr, four of them treating 0x07D1+0x07D2 as one 16-bit
+      little-endian quantity; 0x3E7D shifts [0x07D0]->0x07D1 and
+      [0x07D1]->0x07D2 in one routine, and 0x07D0's own site 0xDACF reads
+      [0x07D0]+[0x07D1] as a word. So the PD firmware holds this byte and
+      0x07D0 as adjacent halves of overlapping 16-bit windows, while the
+      DSDT field list (dsdt.dsl:52248-52250) declares them two independent
+      8-bit fields and leaves 0x07D2 unnamed. Where the two differ: this
+      byte is written at 21% of its sites against 6% for 0x07D0, is
+      incremented in place nowhere, and its handoffs reach 8 callees
+      rather than 25. Status is unchanged: that is a decode of one
+      program, not an observed effect, and
+      unknown-not-absent-DO-NOT-WRITE-BLIND stands. What the field is, and
+      whether the two readings of the same bytes ever collide, are #26/#67
+      and a live test respectively; neither is reachable from here.
+      DOOR ATTRIBUTION, prepared and NOT RUN (issue #184): the same
+      procedure as 0x07D0's, at
+      docs/hardware-tests/gpu-tgp-07c4-07d7-door.md, covers this byte in
+      the same one-clock capture of 0x07C4-0x07D7 and 0x0743-0x0746. The
+      capture has not been taken.
       2026-09-24, issue #183: neither this byte nor 0x07D0 moved at all in
-      the 2026-09-23 capture -- 0.07D4, 0.07C4 and 0x07C6 did, in the same
+      the 2026-09-23 capture -- 0x07D4, 0x07C4 and 0x07C6 did, in the same
       window. That is an observation scoped to one AC plug-in and six Fn-key
-      mode switches, not a measurement of how often the byte changes, and
-      the per-site walk of this address is still open (issue #131 named it;
-      static-refs-audit.md 6 records the gap). No count or status moved.
+      mode switches, not a measurement of how often the byte changes. (This
+      note was written before the per-site walk above, issue #185, merged; it
+      called that walk still open.) No count or status moved.
 
   - name: LIGHTBAR_AC_CTRL / RED / GREEN / BLUE
     addr: [0x0748, 0x0749, 0x074A, 0x074B]
@@ -600,6 +657,14 @@ registers:
       That is consistent with upstream's EC_ADDR_BAT_DESIGN_CAPACITY_1/_2
       (uniwill-acpi.c:58,60), uncorroborated on this board. Per-address table:
       ec/annotations/xdata-0400-045f.md.
+      *** CORRECTION 2026-09-23 (issue #178) ***  "all direct reads" is what
+      xdata-registers.csv now says too, and did not before. That file counted
+      0x0403 as having one writer; the single site was
+      `if (DAT_EXTMEM_0403 == 0)` at bank1/A24E.c:26, a comparison the
+      classifier read as a store. The corrected census is 18 C-level
+      references over 13 functions, all of them `read`, and not one `write` or
+      `read+write`. Second address where the corrected census agrees with a
+      note already in this file; 0x0440 is the first.
 
   - name: BAT_FULL_CAPACITY_1
     addr: 0x0404
@@ -862,18 +927,67 @@ registers:
 
   - name: XDATA_0440
     addr: 0x0440
-    sources: [xdata-refs]
+    sources: [xdata-refs, "dsdt(ECRW: uncalled)"]
     static_refs: 43
     static_refs_main_ec: 43
     static_refs_pd_image: 0
     status: present-untested
     note: >
       Busiest byte on the page: 43 EC-side sites (27 bank1, 13 bank0, 3
-      common) and every one of them a direct read. No writer, no PD site, no
-      upstream name, and the value is not established -- only that 43 places
-      in the firmware consult it. clear_and_set_xdata_flag_bits (bank1 0x8300)
-      tests it against 0x07, which is as much as any decoded routine does with
-      it. Per-address table: ec/annotations/xdata-0400-045f.md.
+      common) and every one of them a direct read, so no direct MOV DPTR site
+      writes it. A writer does exist and is not one of those 43:
+      code_table_scatter_to_xdata (bank1 0xA530) stores each 3-byte CODE record
+      -- BE16 destination, then value -- and three records across two of its
+      seven call sites (bank1 0x83B7 records 0 and 2 of the table at CODE
+      0x8453, bank1 0x841D record 9 of the table at 0x851C) store 0x00 to
+      0x0440. That is a static reading of a table, not a readback, and when
+      those tables are walked is not established; 0x8354 and 0x86EE are not
+      recorded call targets. Grouping the 43 readers by constant AND by what
+      each branch does: 39 are a zero test, and at 32 of them the zero arm is
+      inert (a ret, a sjmp past the body, or a forward call), so at those the
+      shape is an enable flag; at the other 7 the zero arm does work of its own
+      -- seeding, clearing, dispatching or toggling -- so zero is not one state
+      either and the byte reads as a selector between behaviours. The 4 cjne
+      sites test 0x07 (bank1 0x8328), 0x08 (bank1 0xA12D) and 0x05 (bank1
+      0xF2D5, 0xF2FE), the last two chaining on to 0x06 and 0x07, so the
+      compared set is {0, 5, 6, 7, 8} -- not a closed enumeration, since the 39
+      zero tests accept any non-zero byte. 16 of the 43 are co-gated on 0x06E6
+      == 0x01; the other 27 branch on 0x0440 whatever 0x06E6 holds, so the byte
+      is read inside that mode and outside it. The co-gated 16 are the
+      profile-shaped ones -- the fan toggle, the thermal-ceiling seed, the ring
+      producer -- and all four cjne sites are among the ungated 27, so the
+      scoping is an observation about those 16 and does not account for the rest.
+      0x06E6 is the same family 0x0440 is hypothesised to join (written 5 at
+      power-on by bank0 0xCCFC, dispatched on 0x81-0x84 at bank0 0xCF48).
+      HYPOTHESIS, not a decode: a host-written
+      platform-profile or mode index, zero at power-on and host-set thereafter.
+      What would falsify it is a live read outside {0, 5, 6, 7, 8}, or a
+      non-zero writer in code these methods do not reach. Per-site table and the
+      method-by-method writer hunt, including the 15 unresolved call sites that
+      are the largest remaining hole: ec/annotations/xdata-0440-readers.md.
+      Per-address table: ec/annotations/xdata-0400-045f.md. The DSDT's ECMG
+      field list steps from CPTM at offset 0x43E straight to VGAT at 0x44F, so
+      there is no field at 0x440 and the dsdt source tag carries ECRW rather
+      than a field name -- the parenthetical form this file already uses for a
+      DSDT reference that is not a plain field-list mention. ECRW
+      (evidence/acpi/dsdt.dsl:50504) is a general 0xFE410000 + 16-bit-arg write
+      that could reach 0x440 and has no call site in the committed DSDT.
+      *** CORRECTION 2026-09-23 (issue #178), see
+      ec/annotations/xdata-register-map.md 4.3 ***
+      The paragraph above is right, and a generated file contradicted it.
+      ec/annotations/xdata-registers.csv as first merged (PR #163) credited
+      this address with 15 writers. All 15 were `if (DAT_EXTMEM_0440 == ...)`
+      tests: xdata_register_map.py's store_target() accepted any operator in
+      ASSIGN, ASSIGN begins with '=', and a Ghidra comparison satisfies that
+      test. There is no `DAT_EXTMEM_0440 =` anywhere in ec/decompiled/. The
+      corrected C-level census is 181 references spread over 91 functions and
+      not one store; the classifier is fixed, both CSVs are regenerated, and
+      the self-test now pins this address against a hand-checked grep rather
+      than against the tool's own sum. No status moves -- a miscounted
+      comparison bucket is not new evidence about the firmware. The 43
+      static_refs above are register_ref_table.py's site count over the image,
+      a different unit from the 181 C-level references, and they do not move
+      either.
 
   - name: XDATA_0442
     addr: 0x0442
@@ -903,6 +1017,19 @@ registers:
       upstream name. They bracket inc_0443_low3_unless_0440_5_6_7 and its
       decrement twin, which move 0x0443 only while 0x0440 is not 5, 6 or 7.
       Per-address table: ec/annotations/xdata-0400-045f.md.
+      *** DISAGREEMENT recorded 2026-09-23 (issue #178), not adjudicated ***
+      "no writer" above is register_ref_table.py's reading: 2 sites, both
+      reads, from a bounded 8-instruction decode window. The decompiled C
+      holds four self-referencing stores -- bank1/F2CA.c:23 and F2F3.c:25,
+      reached through the F11C/F11F thunks, spelled
+      `DAT_EXTMEM_0443 = (DAT_EXTMEM_0443 & 7) ± 1` -- so
+      xdata_register_map.py counts 4 read+write references and 4 writer
+      functions. The paragraph above already contradicts itself: the routines
+      it names "move 0x0443". Two methods over two units (image sites vs
+      C-level references); what would settle it is a wider decode window, or
+      a hand disassembly of bank1 0xF2CA and 0xF2F3. Status unchanged and
+      static_refs unchanged -- this records a disagreement, it does not pick
+      a side.
 
   - name: XDATA_0448
     addr: 0x0448
@@ -1354,9 +1481,15 @@ registers:
       Stays present-untested for one narrow reason: whether the fan-mode
       bits (4-7) change how the EC drives the fans along the (unchanged)
       curve was not isolated -- the live run was near-idle with roughly
-      steady temperature, and fan PWM 0x075B/0x075C moved the same amount
-      under a no-op control write, i.e. thermally. That needs a fixed-load
-      comparison. Upstream defines the address but never touches it.
+      steady temperature, and the fan duty at 0x075B/0x075C moved the
+      same amount under a no-op control write, i.e. thermally. That needs
+      a fixed-load comparison. Upstream defines the address but never
+      touches it. (2026-09-24, issue #123: those two bytes are the
+      vendor's ADDR_EC_MAIN_FAN_L/R_DUTY_BYTE and have entries of their own
+      below, MAIN_FAN_L_DUTY and MAIN_FAN_R_DUTY. The observation above
+      stands; only the word "PWM" was wrong -- they are duty, published
+      by the EC and read by the vendor, not a control. See there before
+      writing them.)
 
       2026-09-23 (issue #129), the branch arms the window above stops short
       of, ec/annotations/manual-fan-ctrl-0751.md 9: all 34 arms of the 17
@@ -1387,6 +1520,201 @@ registers:
       Every arm reports status: complete at the tool's default bounds, so
       the negative is "no arm found by this method", not "the walk gave
       up" -- and it is still not evidence the EC does not.
+
+      Correction (issue #123, 2026-09-24), leaving the paragraphs above as
+      they were written. Item (1) is wrong on two counts and the entries
+      below replace it. 0x075B and 0x075C are in this file now, as
+      MAIN_FAN_L_DUTY and MAIN_FAN_R_DUTY, and they are the vendor's
+      ADDR_EC_MAIN_FAN_L/R_DUTY_BYTE -- so "not that they are fan PWM" was
+      half right for the wrong reason: they are fan *duty*, published by
+      the EC to be read, and the vendor only ever reads them. What still
+      stands from (1) is the second half unchanged: nothing here shows
+      that anything reacts to a host write to them, and the vendor's
+      callsites table records 0 writes for each.
+
+      The four sites in (1) are also now understood, and the pairing by
+      proximity in that paragraph does not survive. 0x87C5 -- not listed
+      in (1) -- is a zero-clear inside the run at 0x87B8, and 0x87D5 is
+      the same run reached through lcall 0xBC3F, whose first instruction
+      is the store, so 0x075C is cleared there too. 0x89E0 and 0x8F11 do
+      turn out to be a pair, as 0x89EB calls the 0x8F0F routine that
+      writes 0x075C; 0x8F0A is not the other half of that pair but the
+      last write before the ret ending the separate 0x8EE0 routine. The
+      EC keeps the computed duty in 0x1804/0x1809 and publishes it to
+      0x075B/0x075C through the shared helper at 0xBB22/0xBB28, which is
+      entered with the literal 0xC8 -- 100 % under the vendor's x2 duty
+      convention -- forced first when the fan is being run flat out. None
+      of these is a fan-table routine: 0x0F00 and 0x0F20 have zero direct
+      MOV DPTR sites, so the table is reached indirectly and 6 of
+      manual-fan-ctrl-0751.md stays open. None of this bears on the
+      fixed-load comparison the status still waits for, and the status
+      stays present-untested.
+
+  - name: MAIN_FAN_L_DUTY (fan duty, published to the Control Center)
+    addr: 0x075B
+    sources: [ecspec-3.1.6.0(ADDR_EC_MAIN_FAN_L_DUTY_BYTE),
+              vendor-3.1.39.0(FanInfo.GetEcCpuFanDuty), xdata-refs, live]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      The EC's own published fan duty for its first fan -- not a control.
+      ECSpec names 1883 ADDR_EC_MAIN_FAN_L_DUTY_BYTE, byte-identical at
+      windows/decompiled/v3.1.6.0/ECSpec.cs:237,
+      v3.1.39.0/GCUService/Define/ECSpec.cs:237 and
+      v3.9.18.0/Define/ECSpec.cs:237, so the name is stable across three
+      service versions rather than one build. FanInfo.GetEcCpuFanDuty reads
+      it and returns Data / 2 (FanInfo.cs:10-14). The vendor's only EC call
+      on the address is a read:
+      windows/decompiled/v3.1.39.0/ec-callsites.csv:62 is op=read
+      addr_kind=literal ref Data, and ec-callsites-summary.csv:42 gives
+      1 read and 0 writes. So do not write this expecting the fan to turn
+      -- the next paragraph is the one that says why not. Its pair is
+      0x075C, and its tachometer is not here: FanInfo.GetEcCpuFanRpm
+      reads 1124/1125 (0x0464/0x0465) as a 16-bit pair and
+      GetEcGpuFanRpm 1132/1131 (0x046C/0x046B), ECSpec.cs:221-229.
+
+      Duty is not PWM, and the vendor keeps three different blocks apart.
+      What it writes is the fan *table*, 0x0F00-0x0F5F
+      (windows/vendor-ec-map.md 222); what it calls PWM by name is
+      ADDR_MYFAN2_L1_PWM..L5_PWM, 1859-1863 = 0x0743-0x0747, and
+      ADDR_L1..L5_PWM_DEFAULT_MYFAN3/_MYFAN2, 1926-1933 = 0x0786-0x078D
+      (ECSpec.cs:253-261, 271-279, 307-315). None of those is 0x075B. Note
+      that 0x0786-0x078D is a live naming conflict, not a settled map --
+      see CPU_TCC_OFFSET below.
+
+      The /2 is the same convention the fan table stores duty in, and the
+      EC firmware corroborates it from its own side rather than taking the
+      vendor's word. The table's duty column is Duty x 2 with 0xC8 as 100 %
+      (windows/vendor-ec-map.md:226), and 0xC8 is the ceiling this byte is
+      held to inside the EC: the already hand-decoded routines 0x8C46 and
+      0x8DE0 in ec/annotations/ghidra-functions.csv step 0x1804 one count at
+      a time toward its target with 0xC8 as the cap, and the 0xBB22 entry
+      stores the literal 0xC8 into 0x1804 and then into 0x075B. 200 is 100 %
+      under exactly that convention. This is a static read of a constant and
+      a cap, not an observation of the fan at 100 %. Those targets are
+      0x0461 and 0x0670, which this repo does not characterise; note that
+      the page 0x0460-0x046F is called the fan-tachometer bytes in
+      windows/tools/manual_fan_ctrl_probe.py and
+      docs/hardware-tests/manual-fan-ctrl-0751-isolation.md, while ECSpec
+      puts the RPM pair at 0x0464/0x0465 and 0x046C/0x046B inside that same
+      page and these two behave as ramp targets. One label cannot cover all
+      of that; what the page is, is open and not settled here.
+
+      The three EC-side sites, all bank0, and what each does
+      (trace_xdata_refs.py, confirmed in r2 -a 8051 over the bank0 image
+      from make_bank_image.py):
+      0x87C5 stores a cleared accumulator, i.e. zero, inside the clear run
+      at 0x87B8 that also zeroes 0x1804, 0x1809, 0x0460, 0x0461, 0x0468,
+      0x0469, 0x085F and 0x0787 -- the 0x075B half of the 0x8749 entry's
+      own list, and the answer to 9 of manual-fan-ctrl-0751.md, which
+      recorded 0x87C5 as not reachable from any of the 34 arms: it is a
+      clearing path, not a fan-curve one. 0x89E0 copies 0x1804 into 0x075B
+      and then calls the 0x8F0F routine that publishes 0x075C; 9 of that
+      file already has where the staged value comes from, 0x0768 or 0x0469
+      on the carry out of 0xBBE6, which this confirms at the instruction
+      level. 0xBB29 is inside the 0xBB22 routine, which has two byte-aligned
+      entries (0xBB22 writes the 0xC8 first, 0xBB28 skips straight to the
+      store) so 0xBB29 is reachable as a publish on its own. 0x1804 and
+      0x1809 are the EC's own fan-duty scratch bytes and 0x075B/0x075C its
+      two published outputs; they have no entry of their own here yet,
+      which is a gap, not a finding.
+
+      Live, both bytes move with the fan, and they are two separately
+      driven channels rather than one value doubled. 0x8C46 ramps 0x1804 and
+      0x1809 toward 0x0461 and 0x0469 respectively, so the two can differ,
+      and 0x8DE0 writes 0x1809 as either 0 or 0x1804 - 0x14. Across the two
+      committed captures the difference 0x075B - 0x075C takes exactly two
+      values and no others: 0x14 in 102 of 449 paired samples of
+      evidence/ec-watch/2026-09-18-profile-switch-0700-07ff.csv and 0x00 in
+      the other 347, and 0x00 in all 297 paired samples of
+      evidence/ec-watch/2026-09-23-power-mode-cycle-0700-07ff.csv. The 0x14
+      is the offset the 0x8DE0 branch above produces, so the captures and
+      that hand-decode agree; what decides the branch is a four-way
+      comparison of 0x0460 and 0x0468 against 0x04 with 0x07 or 0x08 on bit 7
+      of 0x0751, which is not decoded here, and the 0x00 samples are the two
+      channels at the same value rather than a third offset. Individually
+      the bytes span 0x075B 0x3C-0xC7 and 0x075C 0x32-0xC7 across the two
+      captures. Halved that is 25-99.5 %, a duty span; the peak is 0xC7, one
+      step below the 0xC8 the table calls 100 %. A span that reaches 200 in
+      the byte and 0x32 at the low end is not a 0-100 register.
+
+      The name is not settled, and the disagreement is left visible
+      rather than resolved. ECSpec calls the pair L and R (left/right);
+      FanInfo reads the same two bytes as CPU and GPU. One vendor
+      codebase, two readings of one hardware pair, and nothing here
+      decides between them. docs/related-projects.md was checked first per
+      CLAUDE.md and no sibling board names either byte.
+
+      Not confirmed-working, and the reason is narrow: nothing has
+      exercised these as a control, and the vendor's /2 readback is the
+      vendor's readback, not this repo's. Not absent and not
+      unknown-not-absent either -- both of those turn on a zero or a
+      PD-only count and neither applies. The completeness caveat the
+      header gives applies: 3 is a direct MOV DPTR site count, not a
+      count of register accesses, and indirect or pointer access is
+      invisible to it (0x07B9 is the standing counter-example).
+
+      uniwill-laptop is absent from the sources above on purpose rather
+      than by omission: this stage had no network and no vendored copy of
+      uniwill-acpi.c, so whether upstream defines 0x075B at all is open.
+      Grepping its EC_ADDR_* defines settles it. The 0x0751 note above
+      is what pointed at the two bytes, and its own "fan PWM" wording for
+      them is corrected there.
+
+  - name: MAIN_FAN_R_DUTY (fan duty, published to the Control Center)
+    addr: 0x075C
+    sources: [ecspec-3.1.6.0(ADDR_EC_MAIN_FAN_R_DUTY_BYTE),
+              vendor-3.1.39.0(FanInfo.GetEcGpuFanDuty), xdata-refs, live]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      The second channel of the pair above, and everything said there
+      holds here. ECSpec names 1884 ADDR_EC_MAIN_FAN_R_DUTY_BYTE
+      (ECSpec.cs:239 in all three versions), FanInfo.GetEcGpuFanDuty
+      reads it and returns Data / 2 (FanInfo.cs:17-21), and
+      ec-callsites.csv:63 / ec-callsites-summary.csv:43 record it the same
+      way -- 1 read, 0 writes. Read-only to the vendor, like its pair, and
+      not a control.
+
+      The three sites differ from 0x075B's in a way worth recording,
+      because the pairing by address distance is misleading. 0x87D5 hands
+      DPTR to lcall 0xBC3F rather than storing directly, which
+      register_ref_table.py reports as a handoff with the direction
+      unresolved. It is resolved: 0xBC3F is a routine whose first
+      instruction is movx @dptr,a (it then clears bit 7 of 0x0824 and
+      bit 2 of 0x0768 and returns), so this is a write, and in the 0x87B8
+      clear run the accumulator is already cleared, so it writes zero
+      like its pair. The other two, 0x8F0A and 0x8F11, are 7 apart but
+      are not one routine's two stores: 0x8F0A is the last write before
+      the ret that ends the 0x8EE0 routine (an acall target from bank1 at
+      0x10F0D and 0x10F44), and 0x8F11 sits in the separate routine entered
+      at 0x8F0F by the lcall at 0x89EB. Between them 0x8EE0 computes a
+      value from 0x1804 -- optionally biased by 0xEC, gated on a compare
+      against 7 of a caller's byte and of 0x0460 -- publishes it to 0x1809,
+      calls 0xBB28 to publish 0x1804 into 0x075B, then stores the 0x1809
+      value here. So 0xBB28 is the helper both channels share and 0xBB22
+      is the same helper entered with the 0xC8 forced first.
+
+      This byte also gets the 0xC8, by the other channel's route rather than
+      the 0xBB28 one, and that route is already hand-decoded: the 0x8939
+      entry in ec/annotations/ghidra-functions.csv calls 0xBB22, loads A
+      with 200, falls through to 0x893E to store it through the caller's
+      DPTR, and ljmps to 0x8F09, which copies that byte here. So both
+      channels are driven to 200 on the fan-flat-out path, from two
+      different entry points, which is the same /2 convention the entry
+      above establishes for 0x075B and is the reason the two bytes' writer
+      sets are not mirror images of each other.
+
+      Those are the EC's fan-duty routines, and they are not the fan
+      table's. 0x0F00 and 0x0F20 have zero direct MOV DPTR sites anywhere
+      in the image, so no writer routine for the table exists to be the
+      same as these; the table is reached indirectly, which is the
+      long-standing question of ec/annotations/manual-fan-ctrl-0751.md 6
+      and is not settled by this.
 
   - name: BIOS_OEM_2 (DEFAULT_MODE / FAN_QKEY / FAN_TABLE_OFFICE_MODE)
     addr: 0x0782
@@ -1489,6 +1817,1190 @@ registers:
       name, so the writer is unidentified. Upstream also names bit 3
       BATTERY_CHARGE_FULL_OVER_24H and bit 4 BATTERY_ERM_STATUS_REACHED.
       Live 0x04 at rest.
+
+  # The next seven are the bytes the two routines the 0x0751 USER branches
+  # tail-jump to. The reading is ec/annotations/manual-fan-ctrl-0751.md 8a
+  # and the listings beside it; the names stay XDATA_* on purpose. "the USER
+  # bit zeroes it" is a fact about three code paths, not about what the
+  # register is, and nothing here says what consumes any of the seven.
+
+  - name: XDATA_08A0
+    addr: 0x08A0
+    bits: "0-7 value; 0xB7E8 increments it and 0xB7F0 tests it against 0x0A, carry-in included"
+    sources: [static-scan, xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Two main-EC sites, both inside the 0x0751 USER block, and no PD-image
+      site. They are the two arms of the same choice: 0xB7E8, on the USER-
+      set arm reached from 0xB73C, reads the byte, increments it, stores it
+      back and compares the result against 0x0A; because 0xB7EF sets the
+      carry first, the subb at 0xB7F0 really computes A - 0x0A - 1, so
+      0xB7F2 retires at 0x0A or below and bit 6 of 0x08EB is set from 0x0B
+      up rather than at 0x0A. 0xB836, in the routine the other arm
+      tail-jumps to, stores 0 into it after clearing bit 6 of 0x08EB -- so
+      the byte is a count that runs to 0x0A and latches, and the "clear" path
+      resets both the count and the latch. Zero against a count, not present
+      against absent: the write is not skipped either way.
+      Both sites are named here, so "two writers" is what this method finds
+      for this address and not a claim that no other exists -- a store
+      through a DPTR built at run time is invisible to it, which is the
+      0x07B0-0x07BE blind spot the header names. Nothing is read back, so
+      present-untested: the stores are instructions, not behaviour. What
+      reads the count, and what the attempts are attempts of, is not
+      established here.
+
+  - name: XDATA_08A2
+    addr: 0x08A2
+    bits: "0-7 value; stored 0x04 at 0xB6A1 or 0x00 at 0xB72C"
+    sources: [static-scan, xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Three sites, all in the EC -- two in bank0 and one in bank1 -- and
+      none in the PD image. The two bank0 writers are the same pair of arms
+      as 0x08A0: 0xB6A1 stores 0x04 on the USER-set path, and 0xB72C stores
+      0 in the routine the USER-clear path tail-jumps to (0xB716). Unlike
+      0x08A0 this byte is not a counter -- it is written the same two values
+      on the same two paths. So the USER bit chooses between 0x04 and 0x00, a
+      computed value against a forced zero. The third site, bank1 0xA987,
+      reads it (`movx a,@dptr ; mov r0,a ; lcall 0x88a4`), so the byte is not
+      write-only; that reader was not decoded for this entry and what it
+      does with the value is not established. Nothing is read back, and
+      nothing here says the two values mean "off" and "on".
+
+  - name: XDATA_08EB
+    addr: 0x08EB
+    bits: [2, 3, 4, 5, 6, 7]
+    sources: [static-scan, xdata-refs]
+    static_refs: 21
+    static_refs_main_ec: 21
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      21 sites, all of them in the EC -- 20 in bank0 and one in bank1 -- and
+      none in the PD image. It is the most-referenced byte in this group.
+      Bits 3 and 6 are the pair the two USER branches'
+      tail-jump targets write, and each is a set/clear pair rather than a
+      one-way flag: bit 3 is set at 0xB690 and cleared at 0xB716, bit 6 is
+      set at 0xB7F4 and cleared at 0xB82E
+      (ec/annotations/manual-fan-ctrl-0751.md 8a). Both set sites are
+      themselves conditional -- 0xB65F and 0xB7BF test the bit and skip the
+      counting block when it is already set, and 0xB7F2 retires once 0x08A0
+      has reached 0x0A, which latches bit 6 from 0x0B up -- so bit 6 looks
+      like a latch the counter trips.
+      0x8931 masks 0x48, which is exactly bits 3 and 6, and branches on the
+      result: the one site this method finds that reads the two together.
+      What it decides is not decoded here.
+      Bits 2, 4, 5 and 7 are also read-modify-written, at 0xD487 and 0xD6A8
+      (bit 2), 0xB476 and 0xC86A (bit 7), 0xCCB7 (bit 4, a set/clear pair
+      whose selector is bit 1 of 0x0490, tested by the jb acc.1 at 0xCCBA)
+      and 0xB53E and 0xB5B2 (bit 5); bits 2, 3, 4, 5, 6 and 7 are branched
+      on at other sites besides, including bank1 0xA916, which reads bit 4
+      and branches on it at 0xA91C without storing the byte back. Nothing
+      is read back. Every bit above is "the EC touches this bit", which is
+      not the same claim as "the EC acts on it".
+
+  - name: XDATA_089E
+    addr: 0x089E
+    sources: [static-scan, xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Three sites, all in the EC, and they read as a 16-bit pair with 0x089F
+      rather than as one byte. 0xB730 stores the accumulator here and then
+      `inc dptr`s to store it again at 0x089F, and the two of them are the
+      whole of that routine. Both entries into it carry A = 0: the fall-
+      through tail of 0xB716, where the `clr a` at 0xB72B is one instruction
+      earlier, and the `ljmp 0xb730` at 0xB6A5 on the USER-set path, where
+      the `clr a` at 0xB6A4 is one instruction earlier as well. A byte scan
+      for direct `ljmp 0xB730` finds that one caller and nothing else.
+      The other two sites are both on the USER-set path and both read the
+      pair big-endian: 0xB6BC reads this byte into a `subb` against B, and
+      0xB6E8 hands DPTR to 0xBADE with the direction unresolved by this
+      method. The pair is compared at 0xB6B7-0xB6C2 against a bound computed
+      from a CODE table at 0xB6A8-0xB6B5, so the stored value looks like an
+      elapsed count against a limit -- but "looks like" is the whole of it,
+      and what 0xB6C2 decides on the comparison is not established. Nothing
+      is read back, so a store of zero is not evidence the EC acts on the
+      byte.
+
+  - name: XDATA_089F
+    addr: 0x089F
+    sources: [static-scan, xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      One `mov dptr,#0x089f` site this method finds, 0xB6B7, and it is a
+      read: the high byte of the big-endian pair compared against R7 at
+      0xB6B7-0xB6C2. The byte is also written, but by the `inc dptr` at
+      0xB734 inside 0xB730, one byte past 0x089E. So the count of 1 here is
+      a count of direct `mov dptr` sites and it does not mean "written once"
+      or "written from one place" -- the write that reaches this byte is
+      invisible to that count, which is also why 0xB716's own arms row
+      carries one `unattributed` store. See XDATA_089E for the two entries
+      and the A = 0 they both carry. Nothing is read back.
+
+  - name: XDATA_09E6
+    addr: 0x09E6
+    bits: [0, 1]
+    sources: [static-scan, xdata-refs]
+    static_refs: 6
+    static_refs_main_ec: 6
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Six sites, all in the EC -- five in bank0 and one in bank1 (0x9872, a
+      write) -- and none in the PD image. Bit 1 is
+      the half the 0x0751 USER block writes: set at 0xB697 on the USER-set
+      path and cleared at 0xB71D in the routine its sibling path tail-jumps
+      to (0xB716). Bit 0 has the same shape one routine earlier, set at
+      0xB545 and cleared at 0xB5B9 in 0xB5B2 -- the bit 5 / bit 0 twin of
+      0xB716, and not read for this entry. The only site that reads the byte
+      without writing it back is 0x914A, and it tests the whole byte against
+      zero rather than branching on either bit, so no site this method finds
+      branches on bit 0 or bit 1. Nothing is read back.
+
+  - name: XDATA_09E7
+    addr: 0x09E7
+    bits: [0, 1]
+    sources: [static-scan, xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Three sites, all in the EC and none in the PD image. Bit 1 is cleared
+      at 0xB724 in 0xB716, the routine the 0x0751 USER-clear arm tail-jumps
+      to; bit 0 is cleared at 0xB5C0 in its 0xB5B2 twin. The third site,
+      0x90F1, reads the byte and tests it against zero, and nothing here
+      establishes what either bit selects or what that test decides. No site
+      this method finds sets either bit -- a limit of the scan, since a set
+      through a run-time DPTR would not appear -- and nothing is read back.
+
+  - name: XDATA_0460
+    addr: 0x0460
+    sources: [xdata-refs]
+    static_refs: 24
+    static_refs_main_ec: 24
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Not decremented by the sweep. It is one of six bytes the sweep writes as a
+      side effect: stored a zero at 0x80DC when 0x0706 reaches zero, and nothing
+      else. Its other writers are in bank0 and have nothing to do with the sweep
+      -- 0x87C1 stores a value, and 0x8AA7, 0x8AB7, 0x8BA9 and 0x8BB6 are
+      read-modify-writes in the 0x88xx fan-table handlers. 24 EC-side sites, 14
+      direct reads, 2 direct writes, 4 read-modify-writes, 2 DPTR handoffs and 2
+      sites with no movx in the decoded window. Its only writers outside the
+      sweep that this method found are bank0 0x87C1, bank0 0x8AA7, bank0 0x8AB7,
+      bank0 0x8BA9, bank0 0x8BB6. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0468
+    addr: 0x0468
+    sources: [xdata-refs]
+    static_refs: 17
+    static_refs_main_ec: 17
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Not decremented by the sweep. It is one of six bytes the sweep writes as a
+      side effect: stored a zero at 0x80E0 when 0x0706 reaches zero, and nothing
+      else. Its other writers are in bank0 and have nothing to do with the sweep
+      -- 0x87CD stores a value, and 0x8AE2, 0x8AFD, 0x8BFD and 0x8C22 are
+      read-modify-writes in the same 0x88xx fan-table handlers. 17 EC-side
+      sites, 10 direct reads, 2 direct writes, 4 read-modify-writes and 1 DPTR
+      handoff. Its only writers outside the sweep that this method found are
+      bank0 0x87CD, bank0 0x8AE2, bank0 0x8AFD, bank0 0x8BFD, bank0 0x8C22. No
+      upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_055F
+    addr: 0x055F
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 3 EC-side sites, 1 direct read and 2
+      direct writes. Its only writers outside the sweep that this method found
+      are bank1 0xDB88, bank1 0xE090. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0621
+    addr: 0x0621
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Not decremented by the sweep. It is one of six bytes the sweep writes as a
+      side effect: cleared to 0 at 0x814F when 0x0844 reaches zero, and nothing
+      else. No other writer was found by this method, which is a gap in the
+      search and not evidence that the sweep is its only writer. 2 EC-side
+      sites, 1 direct read and 1 direct write. No writer for it outside the
+      sweep was found by this method, which is a gap in the search and not
+      evidence that none exists. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0635
+    addr: 0x0635
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 1 EC-side site, 1 direct read. No
+      writer for it outside the sweep was found by this method, which is a gap
+      in the search and not evidence that none exists. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0636
+    addr: 0x0636
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 3 EC-side sites, 2 direct reads and 1
+      DPTR handoff. No writer for it outside the sweep was found by this method,
+      which is a gap in the search and not evidence that none exists. No
+      upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0637
+    addr: 0x0637
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 2 EC-side sites, 2 direct reads. No
+      writer for it outside the sweep was found by this method, which is a gap
+      in the search and not evidence that none exists. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0638
+    addr: 0x0638
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 1 EC-side site, 1 direct read. No
+      writer for it outside the sweep was found by this method, which is a gap
+      in the search and not evidence that none exists. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0639
+    addr: 0x0639
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 1 EC-side site, 1 direct read. No
+      writer for it outside the sweep was found by this method, which is a gap
+      in the search and not evidence that none exists. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_063A
+    addr: 0x063A
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, but not like its neighbours: the code tests the sign bit as
+      well as zero (jb 0xe7 at 0x8055, after the read at 0x8054), so a value of
+      0x80 or above is left alone and only 0x01-0x7F counts down. A sign guard
+      on a counter, not a purpose. 1 EC-side site, 1 direct read. No writer for
+      it outside the sweep was found by this method, which is a gap in the
+      search and not evidence that none exists. No upstream name. Per-address
+      table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_06C2
+    addr: 0x06C2
+    sources: [xdata-refs]
+    static_refs: 15
+    static_refs_main_ec: 15
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 15 EC-side sites, 15 direct reads. No
+      writer for it outside the sweep was found by this method, which is a gap
+      in the search and not evidence that none exists. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_06C3
+    addr: 0x06C3
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 2 EC-side sites, 2 direct reads. No
+      writer for it outside the sweep was found by this method, which is a gap
+      in the search and not evidence that none exists. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_06C5
+    addr: 0x06C5
+    sources: [xdata-refs]
+    static_refs: 4
+    static_refs_main_ec: 4
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 4 EC-side sites, 4 direct reads. No
+      writer for it outside the sweep was found by this method, which is a gap
+      in the search and not evidence that none exists. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_06D1
+    addr: 0x06D1
+    sources: [xdata-refs]
+    static_refs: 8
+    static_refs_main_ec: 8
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 8 EC-side sites, 5 direct reads and 3
+      direct writes. Its only writers outside the sweep that this method found
+      are bank0 0xB58F, bank0 0xB6E1, bank1 0x8F4F. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_06D2
+    addr: 0x06D2
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 3 EC-side sites, 2 direct reads and 1
+      direct write. Its only writers outside the sweep that this method found
+      are bank1 0x8F66. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_06D6
+    addr: 0x06D6
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      The one set-point in the block, and the only byte whose period is legible
+      from the code. A non-zero value is decremented and the routine returns at
+      0x8074 straight away, skipping everything below; a zero value is
+      overwritten with 9 and the sweep carries on. It is therefore both the
+      reload and the gate on how often the lower half of the sweep runs, and the
+      9 is a set-point the code states rather than one a reader supplies. 1
+      EC-side site, 1 direct read. No writer for it outside the sweep was found
+      by this method, which is a gap in the search and not evidence that none
+      exists. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_06D8
+    addr: 0x06D8
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189 only while XDATA 0x0440 is non-zero -- the block's first
+      test of that byte, at 0x807E. A zero at 0x0440 branches past this byte
+      untouched. 0x0440 has 43 read sites, every one a direct read, so no
+      direct MOV DPTR site writes it; a writer does exist and is not one of
+      those 43: code_table_scatter_to_xdata (bank1 0xA530) stores 0x00 to it
+      (ec/annotations/xdata-0440-readers.md section 5). Its value is not
+      established, so what this gate selects is not known either. 2 EC-side
+      sites, 1 direct read and 1 direct write. Its only writers outside the
+      sweep that this method found are bank1 0x9800. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_06D9
+    addr: 0x06D9
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      The only byte in the block whose countdown is conditional on a predicate
+      rather than on a value. The sweep calls the two banked forwarders 0x1984
+      (trampoline_to_c10c) and 0x198A (trampoline_to_c1e7) at 0x8096 and 0x809C
+      and decrements 0x06D9 only when both left R7 zero. 0xC1E7 is bank0
+      test_1664_bit0, which is already annotated; 0xC10C has no exported
+      function in any program, so the first of the two gates is the one thing
+      here that is not decoded at all. 3 EC-side sites, 1 direct read and 2
+      direct writes. Its only writers outside the sweep that this method found
+      are bank1 0x86E2, bank1 0x982E. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_06DA
+    addr: 0x06DA
+    sources: [xdata-refs]
+    static_refs: 5
+    static_refs_main_ec: 5
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 5 EC-side sites, 2 direct reads and 3
+      direct writes. Its only writers outside the sweep that this method found
+      are bank1 0x97A9, bank1 0xB7E2, bank1 0xB83A. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_06DB
+    addr: 0x06DB
+    sources: [xdata-refs]
+    static_refs: 4
+    static_refs_main_ec: 4
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189 only while XDATA 0x0440 is non-zero -- the block's third
+      and last test of that byte, at 0x8153. A zero at 0x0440 branches past
+      this byte untouched. 0x0440 has 43 read sites, every one a direct read,
+      so no direct MOV DPTR site writes it; a writer does exist and is not one
+      of those 43: code_table_scatter_to_xdata (bank1 0xA530) stores 0x00 to
+      it (ec/annotations/xdata-0440-readers.md section 5). Its value is not
+      established, so what this gate selects is not known either. 4 EC-side
+      sites, 4 direct reads. No writer for it outside the sweep was found by
+      this method, which is a gap in the search and not evidence that none
+      exists. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_06F3
+    addr: 0x06F3
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 1 EC-side site, 1 direct read. No
+      writer for it outside the sweep was found by this method, which is a gap
+      in the search and not evidence that none exists. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0706
+    addr: 0x0706
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189 like the plain timers, with one extra action: when the
+      decrement lands on zero the accumulator is also stored to 0x0460 and then
+      to 0x0468 (0x80DC and 0x80E0), so those two bytes are cleared by this byte
+      reaching zero rather than on their own schedule. 1 EC-side site, 1 direct
+      read. No writer for it outside the sweep was found by this method, which
+      is a gap in the search and not evidence that none exists. No upstream
+      name. Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_070B
+    addr: 0x070B
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 2 EC-side sites, 1 direct read and 1
+      direct write. Its only writers outside the sweep that this method found
+      are bank1 0x9806. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_070D
+    addr: 0x070D
+    sources: [xdata-refs]
+    static_refs: 4
+    static_refs_main_ec: 4
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 4 EC-side sites, 3 direct reads and 1
+      direct write. Its only writers outside the sweep that this method found
+      are bank1 0xC6B0. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0723
+    addr: 0x0723
+    sources: [xdata-refs]
+    static_refs: 16
+    static_refs_main_ec: 16
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Not decremented by the sweep. It is one of six bytes the sweep writes as a
+      side effect, and one of fourteen read-modify-writes: the one at 0x8182 is
+      the only one that clears bit 4 rather than setting it (anl A,#0xef), run
+      when 0x08A8 reaches zero. The other thirteen set or clear bits 0, 1, 2, 3,
+      4, 5 and 6 across bank0 and bank1; bit 4 is the one bit touched twice
+      (set at bank0 0xA1BB, cleared at bank1 0x8182), and bit 7 is touched by
+      none of them. A flag byte is a shape, not a name. 16 EC-side sites, 1
+      direct read, 1 direct write and 14 read-modify-writes.
+      Its only writers outside the sweep that this method found are bank0
+      0x910E, bank0 0x9117, bank0 0x912B, bank0 0x9134, bank0 0x97F9, bank0
+      0xA00E, bank0 0xA1BB, bank0 0xA2B5, bank0 0xBE0D, bank1 0x92C8, bank1
+      0x986E, bank1 0xC447, bank1 0xC6C7, bank1 0xC6D0. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_07F3
+    addr: 0x07F3
+    sources: [xdata-refs]
+    static_refs: 9
+    static_refs_main_ec: 4
+    static_refs_pd_image: 5
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 4 EC-side sites, 2 direct reads and 2
+      direct writes, and 5 in the PD image, which is another program's XDATA and
+      says nothing about the EC's use of this address. Its only writers outside
+      the sweep that this method found are bank1 0x9F61, bank1 0xA241. No
+      upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_07F6
+    addr: 0x07F6
+    sources: [xdata-refs]
+    static_refs: 9
+    static_refs_main_ec: 5
+    static_refs_pd_image: 4
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 5 EC-side sites, 3 direct reads and 2
+      direct writes, and 4 in the PD image, which is another program's XDATA and
+      says nothing about the EC's use of this address. Its only writers outside
+      the sweep that this method found are bank1 0xA1B1, bank1 0xA1B8. No
+      upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0809
+    addr: 0x0809
+    sources: [xdata-refs]
+    static_refs: 39
+    static_refs_main_ec: 2
+    static_refs_pd_image: 37
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 2 EC-side sites, 1 direct read and 1
+      direct write, and 37 in the PD image, which is another program's XDATA and
+      says nothing about the EC's use of this address. Its only writers outside
+      the sweep that this method found are bank1 0x9F6D. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_080C
+    addr: 0x080C
+    sources: [xdata-refs]
+    static_refs: 29
+    static_refs_main_ec: 7
+    static_refs_pd_image: 22
+    status: present-untested
+    note: >
+      Not decremented by the sweep. It is one of six bytes the sweep writes as a
+      side effect: set to 1 at 0x813E when 0x0843 reaches zero, and nothing
+      else. Four other writers were found, all in the 0xA0xx state-table code --
+      bank0 0xA03A and 0xA06A store 0, 0xA295 stores 3, and bank1 0x986A stores
+      0. 7 EC-side sites, 2 direct reads and 5 direct writes, and 22 in the PD
+      image, which is another program's XDATA and says nothing about the EC's
+      use of this address. Its only writers outside the sweep that this method
+      found are bank0 0xA03A, bank0 0xA06A, bank0 0xA295, bank1 0x986A. No
+      upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_080D
+    addr: 0x080D
+    sources: [xdata-refs]
+    static_refs: 78
+    static_refs_main_ec: 4
+    static_refs_pd_image: 74
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 4 EC-side sites, 2 direct reads and 2
+      direct writes, and 74 in the PD image, which is another program's XDATA
+      and says nothing about the EC's use of this address. Its only writers
+      outside the sweep that this method found are bank1 0x9F46, bank1 0xAB3F.
+      No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0811
+    addr: 0x0811
+    sources: [xdata-refs]
+    static_refs: 7
+    static_refs_main_ec: 2
+    static_refs_pd_image: 5
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 2 EC-side sites, 1 direct read and 1
+      direct write, and 5 in the PD image, which is another program's XDATA and
+      says nothing about the EC's use of this address. Its only writers outside
+      the sweep that this method found are bank1 0x9FBA. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0843
+    addr: 0x0843
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189 like the plain timers, with one extra action: when the
+      decrement lands on zero the code loads 1 into the accumulator and stores
+      it to 0x080C at 0x813E, so 0x080C is set by this byte reaching zero. 1
+      EC-side site, 1 direct read. No writer for it outside the sweep was found
+      by this method, which is a gap in the search and not evidence that none
+      exists. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0844
+    addr: 0x0844
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189 like the plain timers, with one extra action: when the
+      decrement lands on zero the code clears the accumulator and stores it to
+      0x0621 at 0x814F, so 0x0621 is cleared by this byte reaching zero. 1
+      EC-side site, 1 direct read. No writer for it outside the sweep was found
+      by this method, which is a gap in the search and not evidence that none
+      exists. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_085B
+    addr: 0x085B
+    sources: [xdata-refs]
+    static_refs: 6
+    static_refs_main_ec: 2
+    static_refs_pd_image: 4
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189 only while XDATA 0x0440 is non-zero -- the block's second
+      test of that byte, at 0x80EC. A zero at 0x0440 branches past this byte
+      untouched. 0x0440 has 43 read sites, every one a direct read, so no
+      direct MOV DPTR site writes it; a writer does exist and is not one of
+      those 43: code_table_scatter_to_xdata (bank1 0xA530) stores 0x00 to it
+      (ec/annotations/xdata-0440-readers.md section 5). Its value is not
+      established, so what this gate selects is not known either. 2 EC-side
+      sites, 2 direct reads, and 4 in the PD image, which is another program's
+      XDATA and says nothing about the EC's use of this address. No writer for
+      it outside the sweep was found by this method, which is a gap in the
+      search and not evidence that none exists. No upstream name. Per-address
+      table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0890
+    addr: 0x0890
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 3 EC-side sites, 2 direct reads and 1
+      direct write. Its only writers outside the sweep that this method found
+      are bank0 0xA380. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_08A7
+    addr: 0x08A7
+    sources: [xdata-refs]
+    static_refs: 4
+    static_refs_main_ec: 4
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 4 EC-side sites, 3 direct reads and 1
+      direct write. Its only writers outside the sweep that this method found
+      are bank0 0xA1B0. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_08A8
+    addr: 0x08A8
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189 like the plain timers, with two extra actions when the
+      decrement lands on zero: bit 2 of 0x0985 is cleared (anl A,#0xfb at
+      0x817F) and then bit 4 of 0x0723 (anl A,#0xef at 0x8186), each a separate
+      read-modify-write. 2 EC-side sites, 1 direct read and 1 direct write. Its
+      only writers outside the sweep that this method found are bank0 0xA1C2. No
+      upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_08E4
+    addr: 0x08E4
+    sources: [xdata-refs]
+    static_refs: 4
+    static_refs_main_ec: 4
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 4 EC-side sites, 2 direct reads and 2
+      direct writes. Its only writers outside the sweep that this method found
+      are bank1 0x8716, bank1 0xBD2C. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0981
+    addr: 0x0981
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 2 EC-side sites, 2 direct reads. No
+      writer for it outside the sweep was found by this method, which is a gap
+      in the search and not evidence that none exists. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0982
+    addr: 0x0982
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 2 EC-side sites, 2 direct reads. No
+      writer for it outside the sweep was found by this method, which is a gap
+      in the search and not evidence that none exists. No upstream name.
+      Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0985
+    addr: 0x0985
+    sources: [xdata-refs]
+    static_refs: 11
+    static_refs_main_ec: 11
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Not decremented by the sweep. It is one of six bytes the sweep writes as a
+      side effect, and one of ten read-modify-writes: the one at 0x817B is the
+      only one that clears bit 2 rather than setting it (anl A,#0xfb), run when
+      0x08A8 reaches zero. The other nine are in bank0 (0x90B2, 0x90BB, 0x90D2,
+      0x90DB, 0x9800, 0x98FB, 0xA015, 0xA1B4, 0xA2C0) and set or clear bits 0,
+      1, 2, 3 and 4; bit 2 is set at 0xA1B4 and cleared by the sweep's own 0x817B,
+      and no site touches bit 7. A flag byte is a shape, not a name. 11 EC-side
+      sites, 1 direct read and 10 read-modify-writes. Its only writers outside
+      the sweep that
+      this method found are bank0 0x90B2, bank0 0x90BB, bank0 0x90D2, bank0
+      0x90DB, bank0 0x9800, bank0 0x98FB, bank0 0xA015, bank0 0xA1B4, bank0
+      0xA2C0. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0986
+    addr: 0x0986
+    sources: [xdata-refs]
+    static_refs: 5
+    static_refs_main_ec: 5
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 5 EC-side sites, 3 direct reads and 2
+      direct writes. Its only writers outside the sweep that this method found
+      are bank0 0x8D16, bank0 0x8E29. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_09CE
+    addr: 0x09CE
+    sources: [xdata-refs]
+    static_refs: 7
+    static_refs_main_ec: 7
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Decremented by one on every pass of the counter sweep at bank1
+      0x8001-0x8189, and only while the byte is non-zero: mov DPTR,#addr / movx
+      A,@DPTR / jz / dec A / movx @DPTR,A. 7 EC-side sites, 6 direct reads and 1
+      direct write. Its only writers outside the sweep that this method found
+      are bank0 0xCCAD. No upstream name. Per-address table:
+      ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_0860
+    addr: 0x0860
+    sources: [xdata-refs]
+    static_refs: 9
+    static_refs_main_ec: 7
+    static_refs_pd_image: 2
+    status: present-untested
+    note: >
+      7 EC-side sites in bank0 -- 4 reads, 2 writes, 1 that loads DPTR and
+      returns with no movx -- and 2 in the PD image, which is a separate
+      program with its own XDATA map and not evidence about this byte. The
+      two writers are 0xD281 (whose store puts 0xFF here) and 0xD28A (whose
+      store puts a cleared A), both inside the 0xD281-0xD2BD block, and 0xD319
+      reloads DPTR to 0x0860 immediately before 0xD284's store. All four
+      reads are in dispatch_on_0860, which early-outs to a bare ret at 0xD2BE
+      when the byte is 0x00 or 0xFF or bit 0 is set in 0x1C00, 0x1C11 or
+      0x1C29, so 0x00 and 0xFF read as the idle and busy marks of a byte the
+      firmware dispatches on internally. That is also why the comparison
+      count is high and the writer count low. This does NOT establish that no
+      other writer or host path exists: a writer reached through a computed
+      DPTR is invisible to trace_xdata_refs.py, so its counts here are "not
+      found by this method" in that sense.
+      The direction split recorded for this address in
+      ec/annotations/xdata-registers.csv (13 write, 3 read+write, 1
+      passed-to-call, 0 read) is an artefact of that tool's C-level
+      classifier and is NOT corrected in place here: xdata_register_map.py's
+      store_target() tests whether the text after an occurrence starts with a
+      member of ASSIGN, and ASSIGN's first member is "=", which the "==" of a
+      Ghidra comparison also starts -- so every comparison is counted as a
+      store. Running the committed classifier over ec/decompiled/bank0/D091.c
+      returns write for eleven of its fourteen "==" sites and read+write for
+      the other three (the chained "||" forms put the address on the
+      right-hand side of the "==" as well), while the one genuine read, the
+      switch_case_dispatch site, is bucketed passed-to-call -- so read is
+      empty in that file. The numbers in this entry come from
+      trace_xdata_refs.py, which decodes opcodes rather than C, and the
+      census is left stale rather than regenerated because regenerating it
+      now would re-freeze the miscounted direction columns into the
+      committed files. Fixing the classifier and re-censusing is separate
+      work (moves 838 occurrences across 211 addresses); the reading is
+      complete without it. NOT NAMED: a selector and a busy mark are shape,
+      not units. Per-address table: ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_0862
+    addr: 0x0862
+    sources: [xdata-refs]
+    static_refs: 5
+    static_refs_main_ec: 3
+    static_refs_pd_image: 2
+    status: present-untested
+    note: >
+      3 EC-side sites in bank0, all three reads, and 2 in the PD image, a
+      separate program with its own XDATA map. The three readers are the
+      three staging routines, which copy this byte into 0x1C02 (at 0xD2DE,
+      in stage_1c03_1c02_1c01), 0x1C13 (at 0xD2F3, in FUN_CODE_d2ef) and
+      0x1C37 (at 0xD308, in FUN_CODE_d304). This method found no EC-side
+      writer, which is "not found by this method" and not absence: a byte
+      reached through a computed DPTR is invisible to it. What the staged
+      value is, and what sets it, is not determined here. The census's
+      direction split for this address carries the same classifier artefact
+      described on XDATA_0860. Per-address table:
+      ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_0865
+    addr: 0x0865
+    sources: [xdata-refs]
+    static_refs: 10
+    static_refs_main_ec: 10
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      10 EC-side sites, all in bank0: 6 writes and 4 reads. Three of the
+      writers are the seeds at 0x9DA4, 0x9E8D and 0x9FA7 that open each of
+      the three level blocks in FUN_CODE_9d9b, copying in 0x08C0, 0x08C1 and
+      0x08C3 respectively; the other three are the 0x48, 0x4C and 0x00 stores
+      in dispatch_on_0860's comparison chain. The four readers are 0xBBF7
+      (inside sub_0866_from_0865) and the three staging routines. UNITS NOT
+      DETERMINED: the same byte is written from a per-mode seed in one
+      routine and from two constants plus a zero in another, and nothing here
+      fixes what the value counts. Per-address table:
+      ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_0866
+    addr: 0x0866
+    sources: [xdata-refs]
+    static_refs: 12
+    static_refs_main_ec: 12
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      12 EC-side sites in bank0: 7 writes and 5 reads, no PD site. It is the
+      first byte of the three-block working set FUN_CODE_9d9b computes, and
+      one of the six copy_0866_86b_to_1c04_1c3a stages out. It is also the
+      right-hand operand of sub_0866_from_0865, which returns 0x0865 minus
+      0x0866. UNITS NOT DETERMINED. Per-address table:
+      ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_0867
+    addr: 0x0867
+    sources: [xdata-refs]
+    static_refs: 15
+    static_refs_main_ec: 9
+    static_refs_pd_image: 6
+    status: present-untested
+    note: >
+      9 EC-side sites in bank0 (7 writes, 2 reads) and 6 in the PD image,
+      which includes the one handoff to 0x903C this page records. It is the
+      second byte of the working set FUN_CODE_9d9b computes, overridden
+      there from 0x0872, 0x087A or 0x088A when the source is non-zero. The
+      PD count is a different program's XDATA and says nothing about this
+      byte. UNITS NOT DETERMINED. Per-address table:
+      ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_0868
+    addr: 0x0868
+    sources: [xdata-refs]
+    static_refs: 11
+    static_refs_main_ec: 9
+    static_refs_pd_image: 2
+    status: present-untested
+    note: >
+      9 EC-side sites in bank0 (7 writes, 2 reads) and 2 in the PD image,
+      which is where both handoffs to 0x0FAF and 0x1041 sit. Third byte of
+      the working set FUN_CODE_9d9b computes, overridden there from 0x0873,
+      0x087B or 0x088B when non-zero. UNITS NOT DETERMINED. Per-address
+      table: ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_0869
+    addr: 0x0869
+    sources: [xdata-refs]
+    static_refs: 8
+    static_refs_main_ec: 8
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      8 EC-side sites in bank0, 5 writes and 3 reads, no PD site. Fourth
+      byte of the three-block working set FUN_CODE_9d9b computes, and the cap
+      in the first two blocks only: at 0x9E22-0x9E2E and 0x9F0B-0x9F17 the
+      accumulated result is compared against it and the cap is substituted
+      when the result is the larger. The third block, 0x9FA3-0xA00D, never
+      reaches it -- the last 0x0869 seed in FUN_CODE_9d9b is 0x9F0B, and the
+      0x9FE4-0xA00D tail stores 0x086E with no cap at all. UNITS NOT
+      DETERMINED. Per-address table:
+      ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_086A
+    addr: 0x086A
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      2 EC-side sites in bank0, one write and one read, no PD site. The write
+      is dispatch_on_0860 at 0xD0E3, storing the byte it has just read from
+      0x1C39; the read is copy_0866_86b_to_1c04_1c3a at 0xD2AE, copying it
+      back out to 0x1C39. So the two are the same transfer seen from both
+      ends, and this method found no other site reaching this byte -- which
+      is "not found by this method", not a statement that nothing else does.
+      Per-address table: ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_086B
+    addr: 0x086B
+    sources: [xdata-refs]
+    static_refs: 14
+    static_refs_main_ec: 14
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      14 EC-side sites in bank0, the busiest byte in this block: 5 writes,
+      7 reads and 2 handing DPTR to 0xBD34 and 0xBD3D. Both handoffs resolve
+      to reads one level down: each helper's first instruction is movx A,@DPTR
+      on the caller's pointer, so it reads this byte and then returns
+      0x0867 (or 0x0868) minus that value with the borrow in CY. That is the
+      same direction for all three result bytes -- 0x086B, 0x086C and 0x086E
+      -- and, quoted as the mov DPTR sites that
+      xdata-086x-dispatch-sites.csv records, the three call sites are
+      0x9E03/0x9E10, 0x9EEC/0x9EF9 and 0x9FF3/0xA000 (the lcall itself is
+      three bytes further on at 0x9E06, 0x9EEF, 0x9E13, 0x9EFC, 0x9FF6 and
+      0xA003). So 9 reads and 5 writes once the handoffs are counted.
+      0x086B is the first of the three results FUN_CODE_9d9b computes and the
+      byte gate_06e6_442_then_sync_046a_from_086b syncs 0x046A from. UNITS
+      NOT DETERMINED. Per-address table: ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_086D
+    addr: 0x086D
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      2 EC-side sites in bank0, both reads, no PD site. They are the two
+      halves of gate_06e6_442_then_sync_046a_from_086b's 0x086B/0x086C/
+      0x086D/0x086E against 0x046A/0x046B/0x046E/0x046F comparison. This
+      method found no writer, which is "not found by this method" and not
+      absence: a byte reached through a computed DPTR is invisible to it.
+      Per-address table: ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_086E
+    addr: 0x086E
+    sources: [xdata-refs]
+    static_refs: 7
+    static_refs_main_ec: 7
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      7 EC-side sites in bank0: 3 writes, 2 reads, and 2 handing DPTR to
+      0xBD34 and 0xBD3D, which resolve to reads one level down exactly as
+      they do for 0x086B and 0x086C, so 4 reads against 3 writes. It is the
+      third result FUN_CODE_9d9b computes, and unlike the other two its block
+      carries no clamp -- the 0x9FE4-0xA00D tail is the same fold without the
+      three MANUAL_FAN_CTRL comparisons, which is a shape and not a reason to
+      name it. UNITS NOT DETERMINED. Per-address table:
+      ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_1C39
+    addr: 0x1C39
+    sources: [xdata-refs]
+    static_refs: 5
+    static_refs_main_ec: 5
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      5 EC-side sites in bank0 -- 2 reads and 3 writes -- all between 0xD0DF
+      and 0xD2B5, no PD site. It is one of three non-contiguous destination
+      pairs, not a mirror: copy_0866_86b_to_1c04_1c3a writes 0x086A here
+      while 0x1C04 and 0x1C15 hold 0x0866 and 0x0868, so the six source
+      bytes land at three different strides rather than at one offset. Nor
+      is this pair a staging area for the 0x0866-0x086B field alone: the
+      case-0x36/0x37/0x38/0x39 handlers at 0xD221 and 0xD24E write it from
+      0x0863 and clear it respectively, and the 0xD24E handler reads it back
+      into 0x0863 at 0xD26F. So the same two bytes carry a different source
+      pair in those handlers, which is the strongest form of the answer that
+      "a second buffer of the same field layout" is not supported by the
+      bytes. WHAT CONSUMES IT DOWNSTREAM IS NOT ANSWERED by the decompile: no
+      consumer of the pair is identified here, and co-occurrence with a
+      writer is not a consumer. Per-address table:
+      ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_1C3A
+    addr: 0x1C3A
+    sources: [xdata-refs]
+    static_refs: 5
+    static_refs_main_ec: 5
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      5 EC-side sites in bank0 -- 2 reads and 3 writes -- all between 0xD0E7
+      and 0xD2BA, no PD site. Its destination is one of three
+      non-contiguous pairs, and that is the reason "a second buffer of the
+      same field layout as the 0x0866-0x086B source" is not supported by the
+      bytes: 0x1C04, 0x1C15 and 0x1C39 receive 0x0866, 0x0868 and 0x086A,
+      so the six values are written to three separate pairs at three
+      different strides rather than copied to a fixed offset. The case
+      handlers at 0xD221 and 0xD24E also use this byte, writing it from
+      0x0864 and reading it back into 0x0864 at 0xD277, so the pair is not
+      even a staging area for one field. What consumes the pair downstream
+      is not answered by the decompile. Per-address table:
+      ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_1F01
+    addr: 0x1F01
+    sources: [xdata-refs]
+    static_refs: 4
+    static_refs_main_ec: 4
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      4 EC-side sites -- 3 in bank0, 1 in bank1 -- and all four are writes,
+      no PD site. One writer is init_1f01_1f06_1f07 at 0xD065, which stores
+      0x20 here with no read, so that value is not derived from existing
+      state; the other two bank0 sites are at 0xD6B5 and 0xFED4. Recorded as
+      a third thing alongside the 0x0860 block, not merged with it: nothing
+      in the 0x0860-0x086E run touches this byte. A byte only ever written
+      by this method is a candidate for a computed-DPTR writer it cannot
+      see, so this is where a computed access would matter most.
+      Per-address table: ec/annotations/xdata-086x-dispatch.md.
+
+  - name: XDATA_1F07
+    addr: 0x1F07
+    sources: [xdata-refs]
+    static_refs: 5
+    static_refs_main_ec: 5
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      5 EC-side sites, 3 in bank0 and 2 in bank1, all writes, no PD site.
+      init_1f01_1f06_1f07 stores 0x5A here at 0xD071 and
+      magic_55aa_and_0704_countdown writes it from bank1 at 0x952C; the
+      other bank0 sites are 0xD6C1 and 0xFEE0. Recorded as a third thing
+      alongside the 0x0860 block and not merged with it: nothing in the
+      0x0860-0x086E run touches this byte. The 0x5A constant and the
+      routine's own name are why this byte is worth a follow-up, not a
+      settled value -- what 0x5A means to the state machine is not
+      determined here. Per-address table:
+      ec/annotations/xdata-086x-dispatch.md.
 
   - name: GPU_DYNAMIC_BOOST_STATUS (DSDT DBEN bit 3, DBST bit 5)
     addr: 0x07C4

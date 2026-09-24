@@ -50,7 +50,7 @@ void toggle_045b_b0_and_0758_b3(void)
       }
     }
   }
-  DAT_EXTMEM_070d = 5;
+  XDATA_070D = 5;
   clear_bit0_of_0755_and_0709();
   return;
 }

@@ -24,7 +24,7 @@ void state_0817_fallthrough(char param_1)
   byte *pbVar3;
   
   test_1667_bit0_inverted();
-  if ((param_1 == '\0') || (DAT_EXTMEM_06c5 != '\0')) {
+  if ((param_1 == '\0') || (XDATA_06C5 != '\0')) {
     pbVar3 = (byte *)0x817;
     if (DAT_EXTMEM_0817 == '\x01') {
       cVar1 = DAT_EXTMEM_081e;

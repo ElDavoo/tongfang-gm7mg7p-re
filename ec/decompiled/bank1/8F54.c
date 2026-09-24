@@ -14,10 +14,10 @@
 void write_047f_and_arm_06d2_fa(undefined1 param_1)
 
 {
-  if (DAT_EXTMEM_06d2 == '\0') {
+  if (XDATA_06D2 == '\0') {
     DAT_EXTMEM_047f = param_1;
     push_r5_into_070f_ring_when_gates_pass(10);
-    DAT_EXTMEM_06d2 = -6;
+    XDATA_06D2 = -6;
   }
   return;
 }

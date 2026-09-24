@@ -26,7 +26,7 @@ void set_0724_bit5_when_gates_pass(char param_1)
     load_dptr_c2ef_tail_jump_1100();
   }
   else {
-    if (DAT_EXTMEM_0981 != '\0') {
+    if (XDATA_0981 != '\0') {
       return;
     }
     if ((DAT_EXTMEM_097a >> 5 & 1) != 1) {

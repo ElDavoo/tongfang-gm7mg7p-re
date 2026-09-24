@@ -81,6 +81,8 @@ addr,name,from_register,register_status,derivation,programs
 0x0784,CPU_PL1_PL2,CPU_PL1 / PL2 / PL4 (APL1/APL2/APL4),present-untested,name-split,bank0;bank1
 0x0785,CPU_PL1_PL4,CPU_PL1 / PL2 / PL4 (APL1/APL2/APL4),present-untested,name-split,bank0;bank1
 0x0751,MANUAL_FAN_CTRL,MANUAL_FAN_CTRL (power mode / fan mode),present-untested,scalar-name,bank0;bank1
+0x075B,MAIN_FAN_L_DUTY,"MAIN_FAN_L_DUTY (fan duty, published to the Control Center)",present-untested,scalar-name,bank0;bank1
+0x075C,MAIN_FAN_R_DUTY,"MAIN_FAN_R_DUTY (fan duty, published to the Control Center)",present-untested,scalar-name,bank0;bank1
 0x0782,BIOS_OEM_2,BIOS_OEM_2 (DEFAULT_MODE / FAN_QKEY / FAN_TABLE_OFFICE_MODE),present-untested,scalar-name,bank0;bank1
 0x049F,BIOS_INFO_3,BIOS_INFO_3 (Turbo mode supported),present-untested,scalar-name,bank0;bank1
 0x0730,MODE_PL_DEFAULTS_GAMING_PL1_0,MODE_PL_DEFAULTS (per-mode PL1/PL2/PL4/D-state defaults),present-untested,override,bank0;bank1
@@ -100,6 +102,71 @@ addr,name,from_register,register_status,derivation,programs
 0x07DA,MODE_TCC_OFFSET_DEFAULTS_TURBO_2,MODE_TCC_OFFSET_DEFAULTS,present-untested,override,bank0;bank1
 0x0786,CPU_TCC_OFFSET,CPU_TCC_OFFSET (APTC/APTN),present-untested,scalar-name,bank0;bank1
 0x07C6,AP_OEM_6,AP_OEM_6 (whisper status / universal fan control),present-untested,scalar-name,bank0;bank1
+0x08A0,XDATA_08A0,XDATA_08A0,present-untested,scalar-name,bank0;bank1
+0x08A2,XDATA_08A2,XDATA_08A2,present-untested,scalar-name,bank0;bank1
+0x08EB,XDATA_08EB,XDATA_08EB,present-untested,scalar-name,bank0;bank1
+0x089E,XDATA_089E,XDATA_089E,present-untested,scalar-name,bank0;bank1
+0x089F,XDATA_089F,XDATA_089F,present-untested,scalar-name,bank0;bank1
+0x09E6,XDATA_09E6,XDATA_09E6,present-untested,scalar-name,bank0;bank1
+0x09E7,XDATA_09E7,XDATA_09E7,present-untested,scalar-name,bank0;bank1
+0x0460,XDATA_0460,XDATA_0460,present-untested,scalar-name,bank0;bank1
+0x0468,XDATA_0468,XDATA_0468,present-untested,scalar-name,bank0;bank1
+0x055F,XDATA_055F,XDATA_055F,present-untested,scalar-name,bank0;bank1
+0x0621,XDATA_0621,XDATA_0621,present-untested,scalar-name,bank0;bank1
+0x0635,XDATA_0635,XDATA_0635,present-untested,scalar-name,bank0;bank1
+0x0636,XDATA_0636,XDATA_0636,present-untested,scalar-name,bank0;bank1
+0x0637,XDATA_0637,XDATA_0637,present-untested,scalar-name,bank0;bank1
+0x0638,XDATA_0638,XDATA_0638,present-untested,scalar-name,bank0;bank1
+0x0639,XDATA_0639,XDATA_0639,present-untested,scalar-name,bank0;bank1
+0x063A,XDATA_063A,XDATA_063A,present-untested,scalar-name,bank0;bank1
+0x06C2,XDATA_06C2,XDATA_06C2,present-untested,scalar-name,bank0;bank1
+0x06C3,XDATA_06C3,XDATA_06C3,present-untested,scalar-name,bank0;bank1
+0x06C5,XDATA_06C5,XDATA_06C5,present-untested,scalar-name,bank0;bank1
+0x06D1,XDATA_06D1,XDATA_06D1,present-untested,scalar-name,bank0;bank1
+0x06D2,XDATA_06D2,XDATA_06D2,present-untested,scalar-name,bank0;bank1
+0x06D6,XDATA_06D6,XDATA_06D6,present-untested,scalar-name,bank0;bank1
+0x06D8,XDATA_06D8,XDATA_06D8,present-untested,scalar-name,bank0;bank1
+0x06D9,XDATA_06D9,XDATA_06D9,present-untested,scalar-name,bank0;bank1
+0x06DA,XDATA_06DA,XDATA_06DA,present-untested,scalar-name,bank0;bank1
+0x06DB,XDATA_06DB,XDATA_06DB,present-untested,scalar-name,bank0;bank1
+0x06F3,XDATA_06F3,XDATA_06F3,present-untested,scalar-name,bank0;bank1
+0x0706,XDATA_0706,XDATA_0706,present-untested,scalar-name,bank0;bank1
+0x070B,XDATA_070B,XDATA_070B,present-untested,scalar-name,bank0;bank1
+0x070D,XDATA_070D,XDATA_070D,present-untested,scalar-name,bank0;bank1
+0x0723,XDATA_0723,XDATA_0723,present-untested,scalar-name,bank0;bank1
+0x07F3,XDATA_07F3,XDATA_07F3,present-untested,scalar-name,bank0;bank1
+0x07F6,XDATA_07F6,XDATA_07F6,present-untested,scalar-name,bank0;bank1
+0x0809,XDATA_0809,XDATA_0809,present-untested,scalar-name,bank0;bank1
+0x080C,XDATA_080C,XDATA_080C,present-untested,scalar-name,bank0;bank1
+0x080D,XDATA_080D,XDATA_080D,present-untested,scalar-name,bank0;bank1
+0x0811,XDATA_0811,XDATA_0811,present-untested,scalar-name,bank0;bank1
+0x0843,XDATA_0843,XDATA_0843,present-untested,scalar-name,bank0;bank1
+0x0844,XDATA_0844,XDATA_0844,present-untested,scalar-name,bank0;bank1
+0x085B,XDATA_085B,XDATA_085B,present-untested,scalar-name,bank0;bank1
+0x0890,XDATA_0890,XDATA_0890,present-untested,scalar-name,bank0;bank1
+0x08A7,XDATA_08A7,XDATA_08A7,present-untested,scalar-name,bank0;bank1
+0x08A8,XDATA_08A8,XDATA_08A8,present-untested,scalar-name,bank0;bank1
+0x08E4,XDATA_08E4,XDATA_08E4,present-untested,scalar-name,bank0;bank1
+0x0981,XDATA_0981,XDATA_0981,present-untested,scalar-name,bank0;bank1
+0x0982,XDATA_0982,XDATA_0982,present-untested,scalar-name,bank0;bank1
+0x0985,XDATA_0985,XDATA_0985,present-untested,scalar-name,bank0;bank1
+0x0986,XDATA_0986,XDATA_0986,present-untested,scalar-name,bank0;bank1
+0x09CE,XDATA_09CE,XDATA_09CE,present-untested,scalar-name,bank0;bank1
+0x0860,XDATA_0860,XDATA_0860,present-untested,scalar-name,bank0;bank1
+0x0862,XDATA_0862,XDATA_0862,present-untested,scalar-name,bank0;bank1
+0x0865,XDATA_0865,XDATA_0865,present-untested,scalar-name,bank0;bank1
+0x0866,XDATA_0866,XDATA_0866,present-untested,scalar-name,bank0;bank1
+0x0867,XDATA_0867,XDATA_0867,present-untested,scalar-name,bank0;bank1
+0x0868,XDATA_0868,XDATA_0868,present-untested,scalar-name,bank0;bank1
+0x0869,XDATA_0869,XDATA_0869,present-untested,scalar-name,bank0;bank1
+0x086A,XDATA_086A,XDATA_086A,present-untested,scalar-name,bank0;bank1
+0x086B,XDATA_086B,XDATA_086B,present-untested,scalar-name,bank0;bank1
+0x086D,XDATA_086D,XDATA_086D,present-untested,scalar-name,bank0;bank1
+0x086E,XDATA_086E,XDATA_086E,present-untested,scalar-name,bank0;bank1
+0x1C39,XDATA_1C39,XDATA_1C39,present-untested,scalar-name,bank0;bank1
+0x1C3A,XDATA_1C3A,XDATA_1C3A,present-untested,scalar-name,bank0;bank1
+0x1F01,XDATA_1F01,XDATA_1F01,present-untested,scalar-name,bank0;bank1
+0x1F07,XDATA_1F07,XDATA_1F07,present-untested,scalar-name,bank0;bank1
 0x07C4,GPU_DYNAMIC_BOOST_STATUS,"GPU_DYNAMIC_BOOST_STATUS (DSDT DBEN bit 3, DBST bit 5)",present-untested,scalar-name,bank0;bank1
 0x07D3,GFID,GFID (DSDT bits 4-6),present-untested,scalar-name,bank0;bank1
 0x07D4,CPUA,CPUA (DSDT),present-untested,scalar-name,bank0;bank1

@@ -13,8 +13,8 @@
 void ljmp_f219(void)
 
 {
-  if (((DAT_EXTMEM_06e6 == '\x01') && (XDATA_0440 != '\0')) && (DAT_EXTMEM_0636 == '\0')) {
-    DAT_EXTMEM_0636 = '\n';
+  if (((DAT_EXTMEM_06e6 == '\x01') && (XDATA_0440 != '\0')) && (XDATA_0636 == '\0')) {
+    XDATA_0636 = '\n';
     DAT_EXTMEM_047b = DAT_EXTMEM_047b ^ 2;
     DAT_EXTMEM_097a = DAT_EXTMEM_097a | 2;
     push_r5_into_070f_ring_when_gates_pass(0xf);

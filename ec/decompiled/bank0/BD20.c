@@ -5,10 +5,10 @@
 
 
 /* Writes the caller's A to XDATA 0x044B, then reads XDATA 0x08E2 and returns it in A. 0x08E2 is the
-   byte whose bit 4 the routine at 0xBD03 clears; neither address has an entry in
-   ec/annotations/registers.yaml.
+   byte whose bit 4 the routine at 0xBD03 clears; ec/annotations/registers.yaml now carries 0x044B
+   as XDATA_044B, an EC-side site found with its meaning not established; 0x08E2 has no entry there.
    type: writer
-   evidence: ec/decompiled/bank0/BD20.asm; ec/decompiled/bank0/BD20.c
+   evidence: ec/decompiled/bank0/BD20.asm; ec/decompiled/bank0/BD20.c; ec/annotations/registers.yaml
    basis: hand-decoded */
 
 undefined1 store_044b_then_read_08e2(undefined1 param_1)

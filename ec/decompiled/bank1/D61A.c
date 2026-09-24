@@ -14,7 +14,7 @@ byte FUN_CODE_d61a(byte param_1)
   
   cVar1 = DAT_EXTMEM_0366;
   bVar3 = XDATA_044C + 0x58;
-  if (((0xa7 < XDATA_044C) || (bVar3 = DAT_EXTMEM_08e4, DAT_EXTMEM_08e4 != 0)) ||
+  if (((0xa7 < XDATA_044C) || (bVar3 = XDATA_08E4, XDATA_08E4 != 0)) ||
      (bVar3 = DAT_EXTMEM_03fa, (DAT_EXTMEM_03fa >> 1 & 1) != 1)) {
     return bVar3;
   }
