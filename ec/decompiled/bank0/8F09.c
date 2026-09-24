@@ -5,8 +5,10 @@
 
 
 /* Three instructions: reads the XDATA byte the caller's DPTR addresses into A, points DPTR at XDATA
-   0x075C and writes A there. Nothing else is read or written, and 0x075C has no entry in
-   ec/annotations/registers.yaml.
+   0x075C and writes A there. Nothing else is read or written. 0x075C is entered in
+   ec/annotations/registers.yaml as MAIN_FAN_R_DUTY, the vendor's ADDR_EC_MAIN_FAN_R_DUTY_BYTE
+   (issue #123); this copy is how a value reaches it, and the repo's 0x8939 row shows 200 arriving
+   here on the fan-flat-out path.
    type: copy
    evidence: ec/decompiled/bank0/8F09.asm; ec/decompiled/bank0/8F09.c
    basis: hand-decoded */
@@ -14,7 +16,7 @@
 void copy_dptr_byte_to_075c(undefined1 *param_1)
 
 {
-  DAT_EXTMEM_075c = *param_1;
+  MAIN_FAN_R_DUTY = *param_1;
   return;
 }
 

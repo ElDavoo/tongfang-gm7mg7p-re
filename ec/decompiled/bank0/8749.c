@@ -75,7 +75,7 @@ void mode_tick_084c_07a5_09ee(char param_1)
     DAT_EXTMEM_1804 = 0;
     DAT_EXTMEM_0461 = 0;
     DAT_EXTMEM_0460 = 0;
-    DAT_EXTMEM_075b = 0;
+    MAIN_FAN_L_DUTY = 0;
     DAT_EXTMEM_0469 = 0;
     DAT_EXTMEM_0468 = 0;
     DAT_EXTMEM_1809 = 0;
@@ -206,9 +206,9 @@ LAB_CODE_88e7:
       if ((char)bVar4 < '\0') {
         puVar6 = &DAT_EXTMEM_0469;
       }
-      DAT_EXTMEM_075b = *puVar6;
-      DAT_EXTMEM_1804 = DAT_EXTMEM_075b;
-      store_a_to_dptr_then_075c_and_notify(DAT_EXTMEM_075b,0x1809);
+      MAIN_FAN_L_DUTY = *puVar6;
+      DAT_EXTMEM_1804 = MAIN_FAN_L_DUTY;
+      store_a_to_dptr_then_075c_and_notify(MAIN_FAN_L_DUTY,0x1809);
     }
     if (((char)MANUAL_FAN_CTRL < '\0') ||
        (((BIOS_INFO_3 >> 1 & 1) != 0 && (cVar1 = fan_mode_get(), cVar1 == '\x10')))) {
