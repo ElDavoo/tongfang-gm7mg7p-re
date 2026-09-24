@@ -34,8 +34,8 @@ shared address number is not a shared byte.
 **Each reference lands in exactly one of five direction buckets**, decided from
 the C text around the occurrence:
 
-    read             the value is used
-    write            a simple `=` target, including the compound forms Ghidra
+    read             the value is used, which includes every `==` comparison
+    write            an `=` target, including the compound forms Ghidra
                      spells `DAT_EXTMEM_1300 = DAT_EXTMEM_1300 & 0x0f`
     read+write       an `=` target whose right-hand side names the same address
     passed-to-call   an argument of a call to a routine `index.csv` records
@@ -59,6 +59,19 @@ address is a `read`, and there are two such sites in the whole tree. A `*`
 followed by a *space* is Ghidra's multiplication, not a dereference
 (`(param_2 + (ushort)param_1) * DAT_EXTMEM_0826;`), and is a `read` for the
 ordinary reason -- the value is used -- not because of the `*`.
+
+**`==` is a comparison, not a store, and 838 of them are in this tree.**
+`ASSIGN` begins with `=`, so `if (DAT_EXTMEM_0440 == '\\0')` used to satisfy
+the store test and land in `write` -- or in `read+write` when the right-hand
+side named the address too. That is not a rounding error in a description of
+the firmware: it invented writers, and the invented writers then fed the
+writer axis the clustering runs on, so whole clusters moved. The rule is now
+that the operator after the address must be an assignment and must not be
+`==`, and the self-test pins both halves -- a table of literal Ghidra-shaped
+lines through `classify()`, and a per-address direction oracle derived by grep
+rather than by this tool (issue #178). The `!=`/`<`/`>`/`>=`/`<=` operators were
+never in `ASSIGN` and already fell through, which is a claim the same
+assertion now measures instead of assuming.
 
 **What this does not say.** A cluster is a co-occurrence pattern in static code
 -- "these forty-three addresses are touched by the same four functions" -- and
@@ -149,8 +162,8 @@ CLUSTER_COLUMNS = [
 ]
 
 # Jaccard >= 0.5 sits at the top of the plateau the sweep shows: from 0.35 to
-# 0.50 the largest main-EC cluster holds at 109-114 addresses while the cluster
-# count only moves 340 -> 384, and 0.55 drops that to 42 and adds 150 clusters.
+# 0.50 the largest main-EC cluster holds at 108-112 addresses while the cluster
+# count only moves 337 -> 376, and 0.55 drops that to 43 and adds 149 clusters.
 # `--threshold-sweep` prints the whole curve and the report quotes it, so the
 # default is a recorded choice rather than a tuned one.
 DEFAULT_THRESHOLD = 0.50
@@ -186,14 +199,18 @@ TOP_CALLEES = 3
 # unchanged, and no .asm moved -- so this is the exporter catching up with a
 # symbol table that had already grown, which is the same re-derivation the
 # `named_in_tree` comment below records for 44 -> 79 -> 86.
+#
+# 82 -> 84 (915 -> 932) for the same reason when #237's MAIN_FAN_L_DUTY and
+# MAIN_FAN_R_DUTY entries were exported (0x075B/0x075C, 17 references that had
+# been `DAT_EXTMEM_075b`/`_075c`); the full census does not move.
 ORACLE = {
     # DAT_EXTMEM_ only, i.e. what issue #132 counted, comments excluded.
     "extmem_distinct": 1093, "extmem_refs": 13886,
-    "extmem_raw": 13895, "extmem_commented": 9,
-    "extmem_main_distinct": 981, "extmem_main_refs": 13022,
+    "extmem_raw": 13878, "extmem_commented": 9,
+    "extmem_main_distinct": 979, "extmem_main_refs": 13005,
     "extmem_pd_distinct": 157, "extmem_pd_refs": 864,
     # What the decompiler named, which the issue's grep could not see.
-    "symbol_main_distinct": 82, "symbol_main_refs": 915,
+    "symbol_main_distinct": 84, "symbol_main_refs": 932,
     "symbol_pd_distinct": 0, "symbol_pd_refs": 0,
     # The full census this tool publishes.
     "distinct": 1172, "refs": 14801,
@@ -207,8 +224,9 @@ ORACLE = {
     # this constant being re-derived, and the self-test was failing on `main`
     # because of it; 86 is the re-derived count, of which 7 are
     # 0x08A0/0x08A2/0x08EB/0x089E/0x089F/0x09E6/0x09E7
-    # (ec/annotations/manual-fan-ctrl-0751.md 8a).
-    "named_in_tree": 86,
+    # (ec/annotations/manual-fan-ctrl-0751.md 8a). 86 -> 88 when #237's
+    # MAIN_FAN_L_DUTY/MAIN_FAN_R_DUTY (0x075B/0x075C) were exported by name.
+    "named_in_tree": 88,
 }
 ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
 # The two symbol-table addresses register_ref_table.py finds main-EC sites for
@@ -219,6 +237,108 @@ ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
 # a raw base literal. Only the first is findable, so only it is checked; see
 # the self-test and the report's blind-spot section.
 BLIND_SPOT = (0x0733, 0x0735)
+
+# The five bucket totals `xdata-register-map.md` §4.1 publishes.
+#
+# This pin is INTERNAL, and deliberately kept apart from the two below: these
+# are this tool's own buckets summed back to itself, so they catch a classifier
+# that changes but not one that was wrong -- every entry satisfies
+# `sum(buckets) == refs` either way. Presenting them as evidence that the
+# direction split is right is the mistake issue #178 exists to correct. What
+# makes the direction external is HAND_CHECKED.
+BUCKET_TOTALS = {"read": 8319, "write": 3186, "read+write": 2476,
+                 "passed-to-call": 549, "address-taken": 271}
+
+# Direction, per address, derived by reading the decompiled C and re-derivable
+# with the greps cited in each entry -- not by running this tool. That is the
+# whole point: an internal consistency check passes on a misclassified
+# comparison, because the misclassification is itself internally consistent, and
+# 838 `==` comparisons were classified as stores for exactly that long (issue
+# #178). Each value is the per-bucket reference counts plus `writers`, the
+# number of distinct functions holding a write or read+write reference of their
+# own. An entry here that the census disagrees with is a disagreement between a
+# reading and a tool, and both are printed.
+HAND_CHECKED = {
+    # No `DAT_EXTMEM_0440 =` anywhere in ec/decompiled/. Of 181 references: 15
+    # `==` (bank0/8749.c:91, 8B14.c:136, 8C46.c:53, 8F20.c:97, 9334.c:30,
+    # 9CA6.c:58, B38E.c:28; bank1/8300.c:23, 8F6B.c:37, 9004.c:37, 9007.c:36,
+    # 9008.c:39, A12D.c:27, A916.c:27; common/3DA8.c:12), 164 `!=`, 1 `<`, and
+    # one bare right-hand-side read at bank0/8F20.c:98. All 181 are reads, and
+    # no function writes it. This is the entry that would have caught the
+    # original bug, and it is the machine-readable form of the "**No writer**"
+    # prose registers.yaml already carried.
+    "0x0440": {"read": 181, "write": 0, "read+write": 0, "passed-to-call": 0,
+               "address-taken": 0, "writers": 0},
+    # 17 references: 14 `==` inside bank0/D091.c's dispatch test (lines 30, 34,
+    # 56, 57, 60, 61 and 62 -- the later ones are multi-line boolean chains,
+    # three occurrences to a line), the dispatch argument itself at
+    # bank0/D091.c:69, a `= 0xff` at bank0/D281.c:18 and a `= 0` at
+    # bank0/D289.c:17. Two stores in two functions, and the dispatch argument
+    # is `passed-to-call` rather than a read. The worst-looking row the phantom
+    # writers produced: it read as 0 read / 13 write / 3 read+write, a pure
+    # write-side dispatch byte.
+    "0x0860": {"read": 14, "write": 2, "read+write": 0, "passed-to-call": 1,
+               "address-taken": 0, "writers": 2},
+    # 12 references and zero `==` adjacent to the address. Four are genuine
+    # read-modify-writes at bank1/F11C.c:21, F11F.c:23, F2CA.c:23, F2F3.c:25
+    # (`DAT_EXTMEM_0443 = (DAT_EXTMEM_0443 & 7) ± 1`). The other eight are
+    # reads: four in the `((DAT_EXTMEM_0443 & 7) == 7)` / `!= 0` guard shape,
+    # and four as the right-hand side of those same read-modify-writes, where
+    # the operator is not adjacent to the address and was already a read.
+    # Unchanged by the `==` fix, and it fails if that fix ever over-reaches: a
+    # self-referencing store is a real `read+write`, not a comparison.
+    "0x0443": {"read": 8, "write": 0, "read+write": 4, "passed-to-call": 0,
+               "address-taken": 0, "writers": 4},
+    # One shared writer, bank1/94FA.c:48 and :49, which is what holds a 16-bit
+    # store's halves together when the touching-function relation scores them
+    # 0.07 (xdata-register-map.md §4.2's worked example). 0x04FE's other ten
+    # references are the `>> n & 1` bit-test and `-1 <` shapes.
+    "0x04FE": {"read": 10, "write": 1, "read+write": 0, "passed-to-call": 0,
+               "address-taken": 0, "writers": 1},
+    "0x04FF": {"read": 6, "write": 1, "read+write": 0, "passed-to-call": 0,
+               "address-taken": 0, "writers": 1},
+}
+
+# Literal Ghidra-shaped lines through classify(), and the bucket each must
+# come back as. The rejection of `==` is pinned here rather than left to the
+# docstring, and it survives the tree changing: these are strings, not a count
+# of the committed files. The relational cases are here because they were
+# already outside ASSIGN -- an assertion that measures that is worth more than
+# a comment asserting it, and the last entry is a real name out of
+# xdata-symbols.csv so the fix is pinned for the symbol spelling too, which the
+# committed tree happens never to exercise.
+CLASSIFIER_SHAPE = (
+    ("DAT_EXTMEM_0440 = 0;", "write"),
+    ("DAT_EXTMEM_0440 = DAT_EXTMEM_0440 & 0x0f;", "read+write"),
+    # These two are `write` and should read as `read+write`: `read+write` is
+    # decided syntactically -- "the right-hand side of the `=` names this
+    # address" -- and `&=` compresses the self-reference out of the right-hand
+    # side, so the test cannot see it. Pinned as measured rather than as
+    # intended, because the shape does not occur: no compound assignment
+    # operator follows a `DAT_EXTMEM_` token anywhere in the committed tree,
+    # which is why the module docstring cites the spelled-out form Ghidra
+    # actually emits. So this costs no bucket and is a follow-up, not a fix
+    # folded silently into issue #178.
+    ("DAT_EXTMEM_0440 &= 0x0f;", "write"),
+    ("DAT_EXTMEM_0440 |= 0x0f;", "write"),
+    ("if (DAT_EXTMEM_0440 == 0) {", "read"),
+    ("if (DAT_EXTMEM_0440 == 0) {\n}", "read"),
+    ("if (DAT_EXTMEM_0440 != 0) {", "read"),
+    ("if (DAT_EXTMEM_0440 <= 7) {", "read"),
+    ("if (DAT_EXTMEM_0440 >= 7) {", "read"),
+    ("if (DAT_EXTMEM_0440 < 7) {", "read"),
+    ("if (DAT_EXTMEM_0440 > 7) {", "read"),
+    # No `case DAT_EXTMEM_xxxx:` occurs in the tree either, but the issue
+    # asks for the switch shape to be measured rather than assumed, so it is.
+    ("switch (DAT_EXTMEM_0440) {\ncase 1:\n}", "read"),
+    ("*DAT_EXTMEM_0440 = 5;", "read"),
+    ("param_1 = DAT_EXTMEM_0440;", "read"),
+    ("&DAT_EXTMEM_0440", "address-taken"),
+    ("switch_case_dispatch(DAT_EXTMEM_0440);", "passed-to-call"),
+    # The symbol spelling, which the tree never spells a comparison in today.
+    ("if (CPU_TEMP == 0) {", "read"),
+    ("CPU_TEMP = 0;", "write"),
+)
 
 BLOCK_COMMENT = re.compile(r"/\*.*?\*/", re.S)
 LINE_COMMENT = re.compile(r"//[^\n]*")
@@ -298,13 +418,21 @@ def store_target(text: str, start: int, end: int) -> bool:
 
     Every `=`-taking occurrence in the committed tree has `;`, `{`, `}`, `(`,
     `:`, `,` or `*` immediately before it -- Ghidra never emits a store
-    through a larger lvalue -- so "the `=` follows" is the whole test. The `*`
-    case is excluded because a store through a dereference is a store to
-    wherever the pointer points, not to this address; `classify()` sends it to
-    `read`."""
+    through a larger lvalue -- so "the `=` follows" is the whole test.
+
+    Two things are then excluded, both about what the `=` belongs to rather
+    than to the lvalue. `*` before the address: a store through a dereference
+    is a store to wherever the pointer points, not to this address.
+    `==` after it: that is a comparison, and a comparison uses the value
+    without storing one."""
     nxt = text[end:]
     stripped = nxt.lstrip()
     if not any(stripped.startswith(a) for a in ASSIGN):
+        return False
+    # A separate test rather than a reordering of ASSIGN, because the two
+    # exclusions are unrelated and `==` is by far the commoner of them:
+    # 838 occurrences in the committed tree against two dereference stores.
+    if stripped.startswith("=="):
         return False
     left = text[:start].rstrip()
     return not (left and left[-1] == "*")
@@ -452,7 +580,7 @@ def blank_entry():
     `funcs` is the ref count per function (the incidence matrix the clustering
     runs on) and `dirs` is which buckets *that function* used, because a
     reader count derived from the address's own buckets would call every one of
-    0x0440's 91 touchers a writer when 15 of its references write it."""
+    0x06E6's 50 touchers a writer when 3 of its 72 references write it."""
     return {"refs": 0, "buckets": collections.Counter(),
             "funcs": collections.Counter(), "dirs": collections.defaultdict(set),
             "spellings": set()}
@@ -877,7 +1005,7 @@ def self_test(args) -> int:
           all(names[k][0] == r["name"] for k, r in funcs.items()))
     # The occurrence regex matches a symbol name as a bare identifier, which is
     # only a register access if nothing else in the decompiled C claims the
-    # name. None of the 56 does, and a new local called TRIGGER would quietly
+    # name. None of the 101 does, and a new local called TRIGGER would quietly
     # inflate the census if one ever did.
     check("no generated symbol name is also a function, parameter or local in "
           "the decompiled tree",
@@ -897,6 +1025,17 @@ def self_test(args) -> int:
     check("passed-to-call and address-taken both fire, so the two unresolved-"
           "direction buckets are not dead vocabulary",
           fired["passed-to-call"] > 0 and fired["address-taken"] > 0)
+
+    # The narrow direction oracle: literal lines, so it pins the `==` rejection
+    # itself and cannot be satisfied by a tree that happens to contain no
+    # comparisons. The wide one is HAND_CHECKED below, the only direction check
+    # in this file that compares against something outside the tool.
+    pattern = occurrence_re(symbols)
+    for snippet, expected in CLASSIFIER_SHAPE:
+        m = pattern.search(snippet)
+        check(f"classify({snippet!r}) is {expected!r}",
+              m is not None and classify(snippet, m.start(), m.end(),
+                                         m.group(0), func_names) == expected)
 
     def tally(g, spelling=None):
         sub = groups[g] if spelling is None else of(g, spelling)
@@ -1015,6 +1154,32 @@ def self_test(args) -> int:
 
     register_rows, cluster_rows, _ = build(funcs, names, symbols, census, calls,
                                            args.threshold)
+    by_addr = {r["addr"]: r for r in register_rows}
+    # The wide direction oracle, and the only one here that is not internal.
+    # Each entry is read off the decompiled C by hand (the greps are in the
+    # comment beside it), so this is where a `==` classified as a store fails
+    # loudly instead of summing correctly.
+    wrong = {}
+    for addr, expected in HAND_CHECKED.items():
+        row = by_addr.get(addr)
+        got = ({k: int(row[k]) for k in expected} if row
+               else {k: "absent" for k in expected})
+        if got != expected:
+            wrong[addr] = (expected, got)
+    check(f"the hand-checked direction oracle: "
+          f"{len(HAND_CHECKED)} addresses, "
+          f"{', '.join(sorted(HAND_CHECKED))}, each read off the decompiled C by "
+          f"hand rather than by this tool"
+          + (f" -- disagreed on {', '.join(f'{a} (expected {e}, got {g})' for a, (e, g) in sorted(wrong.items()))}"
+             if wrong else ""),
+          not wrong)
+    # Internal by construction, and labelled so: the report's §4.1 table read
+    # off these, so a drift in any of them means the table and the CSVs have
+    # parted. It cannot vouch for the direction -- only HAND_CHECKED can.
+    check(f"the §4.1 bucket totals, "
+          f"{' '.join(f'{k} {v}' for k, v in BUCKET_TOTALS.items())} "
+          f"(got {' '.join(f'{k} {fired.get(k, 0)}' for k in BUCKET_TOTALS)})",
+          all(fired.get(k, 0) == v for k, v in BUCKET_TOTALS.items()))
     # `name` is what the symbol table calls the address, which is not the same
     # fact as `spelled_as`: the six named addresses the PD image touches are
     # named for the EC and written as DAT_EXTMEM_ there, so a PD row carries
@@ -1044,10 +1209,10 @@ def self_test(args) -> int:
           all(int(r["passed-to-call"]) + int(r["address-taken"]) <= int(r["refs"])
               for r in register_rows))
     # The reader/writer columns count *functions*, so each one needs a
-    # reference of its own direction to be there. 0x0440 is the case that
-    # matters: 91 functions touch it and 15 of its references write it, so
+    # reference of its own direction to be there. 0x06E6 is the case that
+    # matters: 50 functions touch it and 3 of its 72 references write it, so
     # anything that derives "writer" from the address's own buckets calls all
-    # 91 of them writers.
+    # 50 of them writers.
     check("each reader function has a read or read+write reference of its own, "
           "and each writer a write or read+write one",
           all(int(r["readers"]) <= int(r["read"]) + int(r["read+write"]) and
