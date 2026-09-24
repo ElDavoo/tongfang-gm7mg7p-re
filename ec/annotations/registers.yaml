@@ -2726,26 +2726,41 @@ registers:
       other writer or host path exists: a writer reached through a computed
       DPTR is invisible to trace_xdata_refs.py, so its counts here are "not
       found by this method" in that sense.
-      The direction split recorded for this address in
-      ec/annotations/xdata-registers.csv (13 write, 3 read+write, 1
-      passed-to-call, 0 read) is an artefact of that tool's C-level
-      classifier and is NOT corrected in place here: xdata_register_map.py's
-      store_target() tests whether the text after an occurrence starts with a
-      member of ASSIGN, and ASSIGN's first member is "=", which the "==" of a
-      Ghidra comparison also starts -- so every comparison is counted as a
-      store. Running the committed classifier over ec/decompiled/bank0/D091.c
-      returns write for eleven of its fourteen "==" sites and read+write for
-      the other three (the chained "||" forms put the address on the
-      right-hand side of the "==" as well), while the one genuine read, the
-      switch_case_dispatch site, is bucketed passed-to-call -- so read is
-      empty in that file. The numbers in this entry come from
-      trace_xdata_refs.py, which decodes opcodes rather than C, and the
-      census is left stale rather than regenerated because regenerating it
-      now would re-freeze the miscounted direction columns into the
+      *** CORRECTION 2026-09-24 (issue #249, correcting text added by PR
+      #225), see ec/annotations/xdata-register-map.md 4.3 ***
+      The paragraph above is right, and the paragraph that followed it here
+      was wrong in every clause. It read: "The direction split recorded for
+      this address in ec/annotations/xdata-registers.csv (13 write, 3
+      read+write, 1 passed-to-call, 0 read) is an artefact of that tool's
+      C-level classifier and is NOT corrected in place here ... so every
+      comparison is counted as a store" -- and then, of the census itself,
+      "the census is left stale rather than regenerated because regenerating
+      it now would re-freeze the miscounted direction columns into the
       committed files. Fixing the classifier and re-censusing is separate
       work (moves 838 occurrences across 211 addresses); the reading is
-      complete without it. NOT NAMED: a selector and a busy mark are shape,
-      not units. Per-address table: ec/annotations/xdata-086x-dispatch.md.
+      complete without it." Both describe a tool already fixed and a census
+      already regenerated. The == exclusion is present: xdata_register_map.py's
+      store_target() is at :505, ASSIGN at :165, the rejection at :524-525,
+      the reason for it in the function's own comment at :515-516 and the 838
+      tree-wide count at :523; the module docstring states the rule in the
+      past tense at :64-75 and credits issue #178, which merged before PR
+      #225. The committed row at ec/annotations/xdata-registers.csv:662 is 14
+      read, 2 write, 0 read+write, 1 passed-to-call -- the inverse of those
+      figures, not a refinement of them. The two stores are
+      bank0/D281.c:18 and bank0/D289.c:17, and the passed-to-call is the
+      switch_case_dispatch(XDATA_0860) call in bank0/D091.c, which is that
+      bucket rather than a read. HAND_CHECKED["0x0860"] at :359 pins those
+      buckets and the self-test's "hand-checked direction oracle" at
+      :1490-1496 fails if a generated row parts company with it; --check and
+      --self-test both exit 0 on main, and the committed ORACLE comment at
+      :258-259 records named_in_tree moving 131 -> 146 with issue #180's
+      entries, which are the ones this block is about, and 146 -> 150 with
+      issue #183's four since. The 7 EC-side static_refs above are
+      register_ref_table.py's opcode-site count and the 17 is the census's
+      C-level occurrence count: different units, and neither moves for this
+      correction. No status moves. NOT NAMED: a selector and a busy mark are
+      shape, not units. Per-address table:
+      ec/annotations/xdata-086x-dispatch.md.
 
   - name: XDATA_0862
     addr: 0x0862

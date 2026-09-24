@@ -60,49 +60,82 @@ This is the caveat `docs/findings.md` §4c carries, and it is why
 `0x0862` and `0x086D` are described as writerless rather than as inputs
 nobody supplies.
 
-## 3. The `0x0860` census row is wrong, and here is the mechanism
+## 3. The `0x0860` direction counts, and a correction to this section
 
 **Every direction claim in this file comes from `trace_xdata_refs.py` or
 from a `.asm` listing, never from the `read`/`write` columns of
 `xdata-registers.csv`.** That is deliberate, and the reason is worth
-recording.
+recording, because on this address the two methods are not in conflict —
+they have different denominators. The sweep counts **opcode sites**, a
+direct `MOV DPTR,#imm16` and the `movx` after it, which for `0x0860` is the
+7 EC-side sites of §8 and the `read 4 / write 2` among them. The census
+counts **C-level occurrences** of the address in the decompiled text, which
+is the `refs: 17` of `ec/annotations/xdata-registers.csv:662`. The
+14/2/0/1 below is the bucketing of those 17, not a rival count of the 7. The
+sweep is the right source for a **structural** claim — which routine holds a
+read or a write, and what the instruction there does — and the census is the
+one carrying **per-address direction** here.
 
-`ec/tools/xdata_register_map.py:138` defines
+> **CORRECTION (2026-09-24, issue #249, correcting text added by PR #225)
+> to this section as first merged, which read:**
+> "`ec/tools/xdata_register_map.py:138` defines `ASSIGN` ... and
+> `store_target()` at line 277 decides "is this the assignment target" by
+> testing whether the text following the occurrence starts with any member of
+> `ASSIGN`. A Ghidra comparison spells `==`, which also starts with `=`, so
+> **every comparison is counted as a store**. ..." "The census row for
+> `0x0860` therefore reads 13 `write`, 3 `read+write`, 1 `passed-to-call`,
+> **0 `read`**." ... "**The census is read and cited here, never
+> regenerated.** Re-running `xdata_register_map.py` today would re-freeze 838
+> miscounted occurrences across 211 addresses into the committed CSVs and
+> make the wrong row look authoritative." ... "One pre-existing condition,
+> recorded rather than fixed: the census's own `--check` and `--self-test`
+> already fail on `main` for an unrelated reason (`0x0400` gained the name
+> `BAT_POWER_UNIT_0` and the CSVs were not regenerated), and 60 symbol-table
+> addresses are named but not yet spelled in the decompile."
+>
+> **Every clause of that is false against the committed tree, and false in
+> the same direction twice over: it describes a classifier that had already
+> been fixed, and a census that had already been regenerated.** `==` is
+> excluded. `ASSIGN` is at `ec/tools/xdata_register_map.py:165` and
+> `store_target()` at `:505`; the rejection is at `:524-525`, the reason for
+> it in the function's own comment at `:515-516`, and the tree-wide count of
+> 838 at `:523`. The module docstring states the rule in the past tense at
+> `:64-75` and credits **issue #178**, which merged before PR #225 did. Both
+> CSVs are current: the committed `ORACLE` comment at `:258-259` records
+> `named_in_tree` moving `131 -> 146` with issue #180's 15
+> `0x086x`/`0x1Cxx`/`0x1Fxx` entries — this very cluster's — and `146 -> 150`
+> with issue #183's four since. `--check` and `--self-test` both exit 0 on
+> `main`. `0x0400` has carried
+> `BAT_POWER_UNIT_0` in the census since `ec/ghidra/xdata-overrides.csv:4`
+> put it there. And the "60 ... not yet spelled" figure was already wrong
+> when it was written: `xdata-symbols.csv` holds 172 rows against
+> `named_in_tree` 150, a gap of **22**.
 
-```python
-ASSIGN = ("=", "|=", "&=", "+=", "-=", "*=", "/=", "^=", "%=", "<<=", ">>=")
-```
+**What the census says, and what pins it.** `0x0860` is **14 read, 2 write,
+0 read+write, 1 passed-to-call**. The two stores are `bank0/D281.c:18`
+(`XDATA_0860 = 0xff`) and `bank0/D289.c:17` (`XDATA_0860 = 0`), and the one
+`passed-to-call` is the `switch_case_dispatch(XDATA_0860)` call in
+`dispatch_on_0860` — an address handed to a call is that bucket and not a
+read, which is why the census's 14 reads are all comparisons. The row is not
+the tool's own sum: `HAND_CHECKED["0x0860"]` at
+`ec/tools/xdata_register_map.py:359` pins exactly those buckets, and the
+self-test's "hand-checked direction oracle" assertion at `:1490-1496` fails
+loudly if a generated row ever parts company with it. It is one of five
+addresses in that oracle, and `0x0860` is the one that shows how far the
+pre-fix classifier got: the row then read 0 read / 13 `write` / 3
+`read+write`, a pure write-side dispatch byte, for a byte whose four opcode
+reads of §8 are this same routine's early-out, two of the case tests, and the
+dispatch itself.
 
-and `store_target()` at line 277 decides "is this the assignment target" by
-testing whether the text following the occurrence starts with any member of
-`ASSIGN`. A Ghidra comparison spells `==`, which also starts with `=`, so
-**every comparison is counted as a store**. Running the committed
-`classify()` over `ec/decompiled/bank0/D091.c` returns `write` for eleven of
-its fourteen `==` sites on `0x0860` and `read+write` for the other three,
-because the chained `||` forms put the address on the right-hand side of the
-`==` as well; the one genuine read, the `switch_case_dispatch(XDATA_0860)`
-site, is bucketed `passed-to-call`. So no occurrence in that file is
-classified `read` at all. The "14 of 17 references are `==`" figure the issue
-quotes is unaffected by that split, and now accounted for.
-
-The census row for `0x0860` therefore reads 13 `write`, 3 `read+write`, 1
-`passed-to-call`, **0 `read`**. The truth by the other method is **4 reads
-and 2 writes** in bank 0, plus one site that loads DPTR and returns with no
-`movx`, plus 2 sites in the PD image. `0x0860` is not a near-pure
-write-side byte, and this file says so with the method named on every count.
-
-**The census is read and cited here, never regenerated.** Re-running
-`xdata_register_map.py` today would re-freeze 838 miscounted occurrences
-across 211 addresses into the committed CSVs and make the wrong row look
-authoritative. Fixing the classifier is a separate change; the reading is
-complete without it, because `trace_xdata_refs.py` decodes opcodes rather
-than C and is unaffected.
-
-One pre-existing condition, recorded rather than fixed: the census's own
-`--check` and `--self-test` already fail on `main` for an unrelated reason
-(`0x0400` gained the name `BAT_POWER_UNIT_0` and the CSVs were not
-regenerated), and 60 symbol-table addresses are named but not yet spelled in
-the decompile. That is staleness independent of this cluster.
+**The comparison count is high and the writer count is low because `0x0860`
+is a dispatch selector, and that is structural rather than an artefact of any
+classifier.** Fourteen of the 17 occurrences are `==` tests inside
+`dispatch_on_0860`: the `0x00` and `0xFF` early-outs of §4, and the twelve
+case values §4's table is built from, whose later tests are multi-line `||`
+chains naming the address up to three times on a line. A byte the firmware
+gates and dispatches on internally gets compared far more often than it gets
+stored, and that one fact is what makes both this section's 14-read row and
+§8's `read 4` sensible.
 
 ## 4. `0x0860`: two writers, and a gate that is its own early-outs
 
@@ -131,7 +164,8 @@ comparison count so high and the writer count so low. Reading
 
 So `0x00` and `0xFF` are the **idle and busy marks of a byte the firmware
 sets on itself** — this is a byte the EC dispatches on internally, and the
-census's "0 reads" is what made that hard to see. Two things that are *not*
+census's "0 reads", which is what made that hard to see, was a miscount; §3
+is the correction, and the row is 14 reads. Two things that are *not*
 being claimed: that no other program can reach the byte, and that no writer
 exists that this method cannot see. A host path would have to arrive through
 a computed DPTR to be invisible here, which is the same blind spot §2 names
@@ -361,8 +395,6 @@ recomputes all three count keys for every entry and fails on a mismatch.
   both rebuild the 7 MB project cannot merge), so the addresses are named in
   this file rather than in `ghidra-functions.csv`. **That is a gap in
   coverage, not a finding about the bytes.**
-- **The census's `--check`/`--self-test`**, which fail on `main` for the
-  unrelated `0x0400` reason in §3.
 - **Anything about the two programs' address spaces.** The 2 PD-image sites
   for `0x0860` are a separate program with its own XDATA map;
   `pd-xdata-overlap.md` is not reopened.
@@ -408,8 +440,14 @@ entries stay `present-untested`, and the names stay placeholders.
   them by `gen_xdata_symbols.py` — never by hand.
 - **`xdata-086x-dispatch-sites.csv` added**, the machine-readable table
   behind every number here.
-- **The census CSVs are read, not regenerated** (§3). Regenerating today
-  would re-freeze the miscounted direction columns into the committed files.
+- **CORRECTION (2026-09-24, issue #249) to the bullet this section first
+  carried**, which read: "**The census CSVs are read, not regenerated** (§3).
+  Regenerating today would re-freeze the miscounted direction columns into
+  the committed files." It reports a breakage that does not exist. The census
+  CSVs are `xdata_register_map.py` output, kept current by its `--check`, in
+  the same relationship `ec/ghidra/xdata-symbols.csv` has with
+  `registers.yaml` through `gen_xdata_symbols.py`; §3 is the long form of
+  this correction.
 - **Open questions this reading raised**, for the follow-up pass:
   1. What consumes `0x1C39`/`0x1C3A` and the two staging trios — the single
      most useful thing a follow-up could settle, and it needs the code

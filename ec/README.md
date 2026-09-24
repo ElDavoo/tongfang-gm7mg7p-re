@@ -223,9 +223,10 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   `0xD091` row, the three-block level computation at `0x9D9B`, and why the
   `0x1C39`/`0x1C3A` copy is neither a mirror nor a second buffer.
   `xdata-086x-dispatch-sites.csv` is the per-site table behind it. Every
-  direction number there names the method that produced it, because the
-  census's own `read`/`write` split is wrong for this block — §3 gives the
-  mechanism. The units of the block are not fixed, so nothing is named.
+  direction number there names the method that produced it, because the two
+  methods have different denominators — the opcode sweep behind §8 and the
+  C-level census behind §3 — and §3 is the one that says which is which for
+  `0x0860`. The units of the block are not fixed, so nothing is named.
 - **`annotations/lightbar-bat-flow.md`** — the `0x07E2`-`0x07E5` site map, the
   evidence that those sites belong to the PD image rather than the EC, and the
   live probe still needed to say what (if anything) the EC does with those
