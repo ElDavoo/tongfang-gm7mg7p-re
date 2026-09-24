@@ -158,10 +158,13 @@ fan-tachometer bytes (`0x0460-0x046F`, issue #94) start right after, and
 reading those through `ECRR` stalled the fans on a sibling board
 (`../../docs/related-projects.md`). Every other byte in the range is context;
 §4.5 says what to do with it, and
-`../../ec/annotations/xdata-0400-045f.md` says what each of them *is* — 44 of
-the 96 bytes have an entry in `../../ec/annotations/registers.yaml` and the
-other 50 are named there as deliberately not entered, so a row this run prints
-is either nameable or accounted for.
+`../../ec/annotations/xdata-0400-045f.md` says what each of them *is* — 46 of
+the 96 bytes have an entry in `../../ec/annotations/registers.yaml`, which is
+44 entered by the sweep plus the two that were already there, `CPU_TEMP`
+`0x043E` and `GPU_TEMP` `0x044F`. Those 46 bytes are carried as 41 entries,
+because five are entered as 16-bit pairs. The other 50 are named there as
+deliberately not entered, and 46 + 50 = 96, so a row this run prints is either
+nameable or accounted for.
 
 **Three concurrent watchers put more `ECRR` traffic on the bus than any run
 before this one, and this is the only one held under a fixed load.** The
