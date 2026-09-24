@@ -219,6 +219,29 @@ only covers what's specific to *this* copy.
   markdown body of the `github-actions[bot]` review, and the same text is the
   fix stage's payload. A re-copy of the template brings back the inline pass
   and the one-paragraph `summary` schema.
+- **A third review verdict, `rejected`** (2026-09-24, not in the template).
+  The review can close a pull request instead of fixing it forward, for when
+  fixing the findings would mean starting over (wrong approach, misread issue,
+  a false core claim). The `Reject` step in `agent-review.yml` closes the pull
+  request with the push token and deletes its branch. It then puts the review
+  and the rejected plan at the top of the issue body, and moves the issue from
+  `agent:working` to `agent:queued`, so the retry sweep plans it again and the
+  new plan reads why the last attempt failed. The second rejection of an issue
+  (`MAX_REJECTIONS`, counted by `<!-- agent-rejected -->` markers) gets
+  `agent:stuck` instead. Before this, the only ways out were ten fix rounds
+  ending in a draft, or a human's `agent:stop`, and neither was a decision.
+- **`Refs`, not `Closes`, for `needs-hardware-test` issues** (2026-09-24, not in
+  the template). Both `agent-implement.yml` (opening the pull request) and the
+  review's `Approve` step (rewriting the body into the squash message) write
+  `Refs #N` for an issue with that label. Such a pull request is the
+  preparation and the issue is the live run. Closing it on merge is how #184
+  and #283 were closed with their runs never done.
+- **`MAX_OPEN_AGENT_PRS` is 2** (2026-09-24), in `agent-plan.yml` and
+  `agent-retry.yml`, down from 5 in the entry below. With 5 open, most merges
+  left the other agent PRs conflicting, since nearly all of them edit
+  `docs/findings.md` or `registers.yaml`. `CLAUDE.md` and the plan and
+  implement prompts also ask for new write-ups in new files, for the same
+  reason.
 - **Parallel agents, and `.github/workflows/agent-conflicts.yml`** (2026-09-24,
   not in the template). The `agent-pipeline` concurrency group is one per issue
   (`agent-pipeline/agent/issue-N`) instead of one for the whole pipeline, so up

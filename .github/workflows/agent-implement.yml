@@ -401,9 +401,16 @@ jobs:
           # squash default is "pull request title and description". Anything added here that is
           # not commit-message material would land in main's history, so the gate report goes
           # below a marker the review stage strips before merge.
+          # A needs-hardware-test issue is the live run; this pull request only prepares it, so it
+          # must not close the issue on merge. agent-review.yml makes the same choice on approval.
+          if gh issue view "$ISSUE" --json labels --jq '.labels[].name' | grep -qx 'needs-hardware-test'; then
+            link="Refs #${ISSUE} -- left open: it is the live run this prepares, for a human at the machine to close."
+          else
+            link="Closes #${ISSUE}."
+          fi
           {
             printf '%s\n\n' "${PR_BODY:-Implements #${ISSUE}.}"
-            printf 'Closes #%s.\n' "$ISSUE"
+            printf '%s\n' "$link"
             printf '\n<!-- agent-scratch -->\n\n'
             printf '### local gates at first push\n\n%s\n' "$GATES"
           } > /tmp/pr-body.md
