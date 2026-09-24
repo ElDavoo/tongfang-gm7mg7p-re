@@ -117,6 +117,17 @@ trusting one of theirs: every row says whether it was verified against
 
 ## Repository conventions
 
+- **New work goes in new files; shared files get a pointer.** Several agent
+  PRs are open at once, and every edit to a long shared file
+  (`docs/findings.md`, `ec/README.md`, `ec/annotations/xdata-register-map.md`)
+  is a likely merge conflict with one of them. Write a new investigation up
+  in its own file under `docs/findings/` (one per topic or issue), and add
+  only a short summary and link to `docs/findings.md`. Retractions of an
+  existing section still go in place, per the calibration rule above. The
+  same applies to code: a new tool is a new file, not another mode bolted
+  onto an existing one. Structured sources of truth (`registers.yaml`, the
+  annotation CSVs) stay single files: edit the rows you need and nothing
+  else.
 - **`ec/annotations/registers.yaml`** is the source of truth for EC
   register status. Its `status:` vocabulary
   (`confirmed-working`, `confirmed-inert`, `present-untested`, `absent`,
