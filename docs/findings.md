@@ -1730,13 +1730,15 @@ of `../ec/annotations/manual-fan-ctrl-0751.md`.
 
 Three results, and the first is the one §7a was reaching for.
 
-- **Both candidate fan-PWM bytes are written on a path a `0x0751` bit
+- **Both fan duty bytes are written on a path a `0x0751` bit
   selects.** `0x075B` at the `0x89E0` and `0xBB29` write sites, on the Fan
   Boost *not set* side of the `0x8942`/`0x899D` arms; `0x075C` at `0x8F0A`
   and `0x8F11`, on *both* arms of `0x8E8B` (USER). A byte scan puts these two
   bytes' write sites at five addresses in the main EC and the arms reach four
   of them; the fifth, `0x87C5`, is not reachable from any of the 34, which is
-  the limit of the claim rather than a fact about the EC. Neither address is
+  the limit of the claim rather than a fact about the EC — issue #123 later
+  found it to be a zero-clear rather than a fan-curve path, so the walk did
+  not miss it. Neither address is
   in `registers.yaml` and
   neither has ever been confirmed, so this is **not** "the fan PWM bytes are
   the mode byte's effect" — it is that the EC stores to both bytes there, on a
@@ -1744,6 +1746,21 @@ Three results, and the first is the one §7a was reaching for.
   `hardware-tests/manual-fan-ctrl-0751-isolation.md` §4.4 was asking for: two
   named bytes to watch and a named bit to flip, instead of a pointer at
   `0x075B`/`0x075C` with no prior.
+
+  **Correction (issue #123, 2026-09-24), leaving the bullet above as it was
+  written.** Both addresses are now in `registers.yaml`, as `MAIN_FAN_L_DUTY`
+  and `MAIN_FAN_R_DUTY`, and both are confirmed as to what they are: the
+  vendor's `ADDR_EC_MAIN_FAN_L/R_DUTY_BYTE`, read and halved by `FanInfo` and
+  never written by it. So "fan PWM bytes" is the wrong name for them twice
+  over — they are duty, and the vendor's PWM-named bytes are a different
+  block (`0x0743`-`0x0747`, `0x0786`-`0x078D`). The EC keeps the value in
+  `0x1804`/`0x1809` and publishes it through the `0xBB22`/`0xBB28` helper,
+  with `0xC8` as the 100 % cap in the same doubled convention the fan table
+  uses — the `/2` the vendor applies is the EC's own, not a display artefact.
+  What the bullet actually claims still stands and is still only a static
+  prediction: the EC stores to both, on a path one bit of `0x0751` selects.
+  Whether the mode byte is a usable control is still the fixed-load
+  experiment §4.4 asks for, and `0x0751` stays `present-untested`.
 - **The Fan Boost arms gate on temperature, and the EC writes `0x0751` back.**
   `0x8942`'s BOOST-set arm reads `0x085F` against `0x3C` (60), `0x086C` against
   `0x50` (80), then `CPU_TEMP` `0x043E` and `GPU_TEMP` `0x044F` against `0x46`

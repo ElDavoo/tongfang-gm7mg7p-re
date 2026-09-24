@@ -1399,9 +1399,15 @@ registers:
       Stays present-untested for one narrow reason: whether the fan-mode
       bits (4-7) change how the EC drives the fans along the (unchanged)
       curve was not isolated -- the live run was near-idle with roughly
-      steady temperature, and fan PWM 0x075B/0x075C moved the same amount
-      under a no-op control write, i.e. thermally. That needs a fixed-load
-      comparison. Upstream defines the address but never touches it.
+      steady temperature, and the fan duty at 0x075B/0x075C moved the
+      same amount under a no-op control write, i.e. thermally. That needs
+      a fixed-load comparison. Upstream defines the address but never
+      touches it. (2026-09-24, issue #123: those two bytes are the
+      vendor's ADDR_EC_MAIN_FAN_L/R_DUTY_BYTE and have entries of their own
+      below, MAIN_FAN_L_DUTY and MAIN_FAN_R_DUTY. The observation above
+      stands; only the word "PWM" was wrong -- they are duty, published
+      by the EC and read by the vendor, not a control. See there before
+      writing them.)
 
       2026-09-23 (issue #129), the branch arms the window above stops short
       of, ec/annotations/manual-fan-ctrl-0751.md 9: all 34 arms of the 17
@@ -1432,6 +1438,201 @@ registers:
       Every arm reports status: complete at the tool's default bounds, so
       the negative is "no arm found by this method", not "the walk gave
       up" -- and it is still not evidence the EC does not.
+
+      Correction (issue #123, 2026-09-24), leaving the paragraphs above as
+      they were written. Item (1) is wrong on two counts and the entries
+      below replace it. 0x075B and 0x075C are in this file now, as
+      MAIN_FAN_L_DUTY and MAIN_FAN_R_DUTY, and they are the vendor's
+      ADDR_EC_MAIN_FAN_L/R_DUTY_BYTE -- so "not that they are fan PWM" was
+      half right for the wrong reason: they are fan *duty*, published by
+      the EC to be read, and the vendor only ever reads them. What still
+      stands from (1) is the second half unchanged: nothing here shows
+      that anything reacts to a host write to them, and the vendor's
+      callsites table records 0 writes for each.
+
+      The four sites in (1) are also now understood, and the pairing by
+      proximity in that paragraph does not survive. 0x87C5 -- not listed
+      in (1) -- is a zero-clear inside the run at 0x87B8, and 0x87D5 is
+      the same run reached through lcall 0xBC3F, whose first instruction
+      is the store, so 0x075C is cleared there too. 0x89E0 and 0x8F11 do
+      turn out to be a pair, as 0x89EB calls the 0x8F0F routine that
+      writes 0x075C; 0x8F0A is not the other half of that pair but the
+      last write before the ret ending the separate 0x8EE0 routine. The
+      EC keeps the computed duty in 0x1804/0x1809 and publishes it to
+      0x075B/0x075C through the shared helper at 0xBB22/0xBB28, which is
+      entered with the literal 0xC8 -- 100 % under the vendor's x2 duty
+      convention -- forced first when the fan is being run flat out. None
+      of these is a fan-table routine: 0x0F00 and 0x0F20 have zero direct
+      MOV DPTR sites, so the table is reached indirectly and 6 of
+      manual-fan-ctrl-0751.md stays open. None of this bears on the
+      fixed-load comparison the status still waits for, and the status
+      stays present-untested.
+
+  - name: MAIN_FAN_L_DUTY (fan duty, published to the Control Center)
+    addr: 0x075B
+    sources: [ecspec-3.1.6.0(ADDR_EC_MAIN_FAN_L_DUTY_BYTE),
+              vendor-3.1.39.0(FanInfo.GetEcCpuFanDuty), xdata-refs, live]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      The EC's own published fan duty for its first fan -- not a control.
+      ECSpec names 1883 ADDR_EC_MAIN_FAN_L_DUTY_BYTE, byte-identical at
+      windows/decompiled/v3.1.6.0/ECSpec.cs:237,
+      v3.1.39.0/GCUService/Define/ECSpec.cs:237 and
+      v3.9.18.0/Define/ECSpec.cs:237, so the name is stable across three
+      service versions rather than one build. FanInfo.GetEcCpuFanDuty reads
+      it and returns Data / 2 (FanInfo.cs:10-14). The vendor's only EC call
+      on the address is a read:
+      windows/decompiled/v3.1.39.0/ec-callsites.csv:62 is op=read
+      addr_kind=literal ref Data, and ec-callsites-summary.csv:42 gives
+      1 read and 0 writes. So do not write this expecting the fan to turn
+      -- the next paragraph is the one that says why not. Its pair is
+      0x075C, and its tachometer is not here: FanInfo.GetEcCpuFanRpm
+      reads 1124/1125 (0x0464/0x0465) as a 16-bit pair and
+      GetEcGpuFanRpm 1132/1131 (0x046C/0x046B), ECSpec.cs:221-229.
+
+      Duty is not PWM, and the vendor keeps three different blocks apart.
+      What it writes is the fan *table*, 0x0F00-0x0F5F
+      (windows/vendor-ec-map.md 222); what it calls PWM by name is
+      ADDR_MYFAN2_L1_PWM..L5_PWM, 1859-1863 = 0x0743-0x0747, and
+      ADDR_L1..L5_PWM_DEFAULT_MYFAN3/_MYFAN2, 1926-1933 = 0x0786-0x078D
+      (ECSpec.cs:253-261, 271-279, 307-315). None of those is 0x075B. Note
+      that 0x0786-0x078D is a live naming conflict, not a settled map --
+      see CPU_TCC_OFFSET below.
+
+      The /2 is the same convention the fan table stores duty in, and the
+      EC firmware corroborates it from its own side rather than taking the
+      vendor's word. The table's duty column is Duty x 2 with 0xC8 as 100 %
+      (windows/vendor-ec-map.md:226), and 0xC8 is the ceiling this byte is
+      held to inside the EC: the already hand-decoded routines 0x8C46 and
+      0x8DE0 in ec/annotations/ghidra-functions.csv step 0x1804 one count at
+      a time toward its target with 0xC8 as the cap, and the 0xBB22 entry
+      stores the literal 0xC8 into 0x1804 and then into 0x075B. 200 is 100 %
+      under exactly that convention. This is a static read of a constant and
+      a cap, not an observation of the fan at 100 %. Those targets are
+      0x0461 and 0x0670, which this repo does not characterise; note that
+      the page 0x0460-0x046F is called the fan-tachometer bytes in
+      windows/tools/manual_fan_ctrl_probe.py and
+      docs/hardware-tests/manual-fan-ctrl-0751-isolation.md, while ECSpec
+      puts the RPM pair at 0x0464/0x0465 and 0x046C/0x046B inside that same
+      page and these two behave as ramp targets. One label cannot cover all
+      of that; what the page is, is open and not settled here.
+
+      The three EC-side sites, all bank0, and what each does
+      (trace_xdata_refs.py, confirmed in r2 -a 8051 over the bank0 image
+      from make_bank_image.py):
+      0x87C5 stores a cleared accumulator, i.e. zero, inside the clear run
+      at 0x87B8 that also zeroes 0x1804, 0x1809, 0x0460, 0x0461, 0x0468,
+      0x0469, 0x085F and 0x0787 -- the 0x075B half of the 0x8749 entry's
+      own list, and the answer to 9 of manual-fan-ctrl-0751.md, which
+      recorded 0x87C5 as not reachable from any of the 34 arms: it is a
+      clearing path, not a fan-curve one. 0x89E0 copies 0x1804 into 0x075B
+      and then calls the 0x8F0F routine that publishes 0x075C; 9 of that
+      file already has where the staged value comes from, 0x0768 or 0x0469
+      on the carry out of 0xBBE6, which this confirms at the instruction
+      level. 0xBB29 is inside the 0xBB22 routine, which has two byte-aligned
+      entries (0xBB22 writes the 0xC8 first, 0xBB28 skips straight to the
+      store) so 0xBB29 is reachable as a publish on its own. 0x1804 and
+      0x1809 are the EC's own fan-duty scratch bytes and 0x075B/0x075C its
+      two published outputs; they have no entry of their own here yet,
+      which is a gap, not a finding.
+
+      Live, both bytes move with the fan, and they are two separately
+      driven channels rather than one value doubled. 0x8C46 ramps 0x1804 and
+      0x1809 toward 0x0461 and 0x0469 respectively, so the two can differ,
+      and 0x8DE0 writes 0x1809 as either 0 or 0x1804 - 0x14. Across the two
+      committed captures the difference 0x075B - 0x075C takes exactly two
+      values and no others: 0x14 in 102 of 449 paired samples of
+      evidence/ec-watch/2026-09-18-profile-switch-0700-07ff.csv and 0x00 in
+      the other 347, and 0x00 in all 297 paired samples of
+      evidence/ec-watch/2026-09-23-power-mode-cycle-0700-07ff.csv. The 0x14
+      is the offset the 0x8DE0 branch above produces, so the captures and
+      that hand-decode agree; what decides the branch is a four-way
+      comparison of 0x0460 and 0x0468 against 0x04 with 0x07 or 0x08 on bit 7
+      of 0x0751, which is not decoded here, and the 0x00 samples are the two
+      channels at the same value rather than a third offset. Individually
+      the bytes span 0x075B 0x3C-0xC7 and 0x075C 0x32-0xC7 across the two
+      captures. Halved that is 25-99.5 %, a duty span; the peak is 0xC7, one
+      step below the 0xC8 the table calls 100 %. A span that reaches 200 in
+      the byte and 0x32 at the low end is not a 0-100 register.
+
+      The name is not settled, and the disagreement is left visible
+      rather than resolved. ECSpec calls the pair L and R (left/right);
+      FanInfo reads the same two bytes as CPU and GPU. One vendor
+      codebase, two readings of one hardware pair, and nothing here
+      decides between them. docs/related-projects.md was checked first per
+      CLAUDE.md and no sibling board names either byte.
+
+      Not confirmed-working, and the reason is narrow: nothing has
+      exercised these as a control, and the vendor's /2 readback is the
+      vendor's readback, not this repo's. Not absent and not
+      unknown-not-absent either -- both of those turn on a zero or a
+      PD-only count and neither applies. The completeness caveat the
+      header gives applies: 3 is a direct MOV DPTR site count, not a
+      count of register accesses, and indirect or pointer access is
+      invisible to it (0x07B9 is the standing counter-example).
+
+      uniwill-laptop is absent from the sources above on purpose rather
+      than by omission: this stage had no network and no vendored copy of
+      uniwill-acpi.c, so whether upstream defines 0x075B at all is open.
+      Grepping its EC_ADDR_* defines settles it. The 0x0751 note above
+      is what pointed at the two bytes, and its own "fan PWM" wording for
+      them is corrected there.
+
+  - name: MAIN_FAN_R_DUTY (fan duty, published to the Control Center)
+    addr: 0x075C
+    sources: [ecspec-3.1.6.0(ADDR_EC_MAIN_FAN_R_DUTY_BYTE),
+              vendor-3.1.39.0(FanInfo.GetEcGpuFanDuty), xdata-refs, live]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      The second channel of the pair above, and everything said there
+      holds here. ECSpec names 1884 ADDR_EC_MAIN_FAN_R_DUTY_BYTE
+      (ECSpec.cs:239 in all three versions), FanInfo.GetEcGpuFanDuty
+      reads it and returns Data / 2 (FanInfo.cs:17-21), and
+      ec-callsites.csv:63 / ec-callsites-summary.csv:43 record it the same
+      way -- 1 read, 0 writes. Read-only to the vendor, like its pair, and
+      not a control.
+
+      The three sites differ from 0x075B's in a way worth recording,
+      because the pairing by address distance is misleading. 0x87D5 hands
+      DPTR to lcall 0xBC3F rather than storing directly, which
+      register_ref_table.py reports as a handoff with the direction
+      unresolved. It is resolved: 0xBC3F is a routine whose first
+      instruction is movx @dptr,a (it then clears bit 7 of 0x0824 and
+      bit 2 of 0x0768 and returns), so this is a write, and in the 0x87B8
+      clear run the accumulator is already cleared, so it writes zero
+      like its pair. The other two, 0x8F0A and 0x8F11, are 7 apart but
+      are not one routine's two stores: 0x8F0A is the last write before
+      the ret that ends the 0x8EE0 routine (an acall target from bank1 at
+      0x10F0D and 0x10F44), and 0x8F11 sits in the separate routine entered
+      at 0x8F0F by the lcall at 0x89EB. Between them 0x8EE0 computes a
+      value from 0x1804 -- optionally biased by 0xEC, gated on a compare
+      against 7 of a caller's byte and of 0x0460 -- publishes it to 0x1809,
+      calls 0xBB28 to publish 0x1804 into 0x075B, then stores the 0x1809
+      value here. So 0xBB28 is the helper both channels share and 0xBB22
+      is the same helper entered with the 0xC8 forced first.
+
+      This byte also gets the 0xC8, by the other channel's route rather than
+      the 0xBB28 one, and that route is already hand-decoded: the 0x8939
+      entry in ec/annotations/ghidra-functions.csv calls 0xBB22, loads A
+      with 200, falls through to 0x893E to store it through the caller's
+      DPTR, and ljmps to 0x8F09, which copies that byte here. So both
+      channels are driven to 200 on the fan-flat-out path, from two
+      different entry points, which is the same /2 convention the entry
+      above establishes for 0x075B and is the reason the two bytes' writer
+      sets are not mirror images of each other.
+
+      Those are the EC's fan-duty routines, and they are not the fan
+      table's. 0x0F00 and 0x0F20 have zero direct MOV DPTR sites anywhere
+      in the image, so no writer routine for the table exists to be the
+      same as these; the table is reached indirectly, which is the
+      long-standing question of ec/annotations/manual-fan-ctrl-0751.md 6
+      and is not settled by this.
 
   - name: BIOS_OEM_2 (DEFAULT_MODE / FAN_QKEY / FAN_TABLE_OFFICE_MODE)
     addr: 0x0782

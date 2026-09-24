@@ -17,14 +17,14 @@ spec.loader.exec_module(grade)
 
 QUIET = str(HERE / 'testdata' / '0751-isolation-example-quiet.csv')
 ACTIVE = str(HERE / 'testdata' / '0751-isolation-example-active.csv')
-# The two captures of one fixed-load run, as §3 now takes them: the PWM bytes
+# The two captures of one fixed-load run, as §3 now takes them: the duty bytes
 # arrive in the 0x0700-0x07FF one, the temperatures in the 0x0400-0x045F one,
 # and both record a mark for every action.
 FIXED_LOAD = (str(HERE / 'testdata'
                   / '0751-isolation-example-fixed-load-0700-07ff.csv'),
               str(HERE / 'testdata'
                   / '0751-isolation-example-fixed-load-0400-045f.csv'))
-# The same PWM capture against a temperature capture whose CPU_TEMP moves more
+# The same duty capture against a temperature capture whose CPU_TEMP moves more
 # than once inside a window, so the window summary's first->last and its change
 # count disagree. Marked to pair with the file above.
 MULTI_MOVE = (str(HERE / 'testdata'
@@ -53,7 +53,7 @@ RUN_AFTER_0F00 = str(RUN / '2026-01-01-0751-isolation-a0-after-0f00.txt')
 # bytes have a whole-block read of their own rather than being named as out
 # of reach of every pair. It differs only where the temperature capture
 # records movement, so it also covers §4.5's "not covered by this pair" for
-# the candidate PWM and all of §4.1-§4.3.
+# the fan duty and all of §4.1-§4.3.
 RUN_BEFORE_0400 = str(RUN / '2026-01-01-0751-isolation-a0-before-0400.txt')
 RUN_AFTER_0400 = str(RUN / '2026-01-01-0751-isolation-a0-after-0400.txt')
 # The runbook, whose §6 is the list these fixtures are named from.
@@ -174,8 +174,8 @@ class GradeTests(unittest.TestCase):
         self.assertIn('None of the §4.1-§4.3 bytes moved', out)
         # The sensor-looking addresses are context, not a graded result.
         self.assertIn('0x0796 0x079A', out)
-        # No PWM or temperature byte moves here, so there is no section for it.
-        self.assertNotIn('candidate PWM / temperature bytes', out)
+        # No duty or temperature byte moves here, so there is no section for it.
+        self.assertNotIn('fan duty / temperature bytes', out)
         self.assertNotIn('window delta', out)
 
     def test_active_capture_names_the_byte_and_its_offset(self):
@@ -193,14 +193,14 @@ class GradeTests(unittest.TestCase):
         # of one action are seconds apart and open a single window.
         self.assertIn('=== 3 window(s), one per mark ===', out)
         self.assertEqual(out.count('no watched byte moved in this window'), 3)
-        # The window starts at the earliest mark, so the PWM change that
+        # The window starts at the earliest mark, so the duty change that
         # follows the last press is still timed from the first one.
         self.assertIn('0x075B  0x64 -> 0x66   (+2.4s)', out)
 
-    def test_context_section_names_pwm_and_temperature_bytes(self):
+    def test_context_section_names_duty_and_temperature_bytes(self):
         _, out, _ = run(*FIXED_LOAD)
-        self.assertIn('candidate PWM / temperature bytes (§4.4/§4.5)', out)
-        self.assertIn('candidate fan PWM 0x075B/0x075C -- unconfirmed', out)
+        self.assertIn('fan duty / temperature bytes (§4.4/§4.5)', out)
+        self.assertIn('fan duty 0x075B/0x075C -- MAIN_FAN_L/R_DUTY', out)
         self.assertIn('CPU_TEMP 0x043E / GPU_TEMP 0x044F -- confirmed', out)
         # Both arms, so the no-op control and the write under test are
         # comparable line for line: 0x075B +2 in the control, +3 under the
@@ -218,7 +218,7 @@ class GradeTests(unittest.TestCase):
     def test_window_delta_tells_the_control_arm_from_the_write(self):
         _, out, _ = run(*FIXED_LOAD)
         # §4.4's deciding number, one per arm: under the no-op the candidate
-        # PWM netted 2, under the write it netted 3. Read off the change rows
+        # Duty netted 2, under the write it netted 3. Read off the change rows
         # that is subtraction across two terminal windows; here it is two
         # lines. The sign is there too, on the temperature that comes back
         # down in the restore window.
@@ -373,7 +373,7 @@ class GradeTests(unittest.TestCase):
         self.assertEqual(section.count('96 address(es) compared'), 2)
         self.assertEqual(section.count('256 address(es) compared'), 1)
         # It reaches §4.5's two temperatures, which no other pair can, and
-        # names both of the groups it cannot reach -- the candidate PWM, and
+        # names both of the groups it cannot reach -- the fan duty, and
         # all of §4.1-§4.3 -- rather than dropping them under a heading that
         # promises them. Every pair therefore names both context groups, as
         # a value pair or as *not covered by this pair*.
@@ -381,13 +381,13 @@ class GradeTests(unittest.TestCase):
         self.assertIn('0x044F  0x30 -> 0x32', section)
         self.assertIn('CPU_TEMP 0x043E / GPU_TEMP 0x044F -- confirmed (§4.5): '
                       'not covered by this pair', section)
-        self.assertIn('candidate fan PWM 0x075B/0x075C -- unconfirmed '
+        self.assertIn('fan duty 0x075B/0x075C -- MAIN_FAN_L/R_DUTY '
                       '(§4.4): not covered by this pair', section)
 
         # The issue's other criterion: across all three pairs the report
         # shows exactly the addresses the captures record moving -- 0x0751
         # and the sensor-looking 0x0796 in the "other" bucket, 0x0402 from
-        # the temperature range, the §4.4 candidate PWM pair and the §4.5
+        # the temperature range, the §4.4 duty pair and the §4.5
         # temperatures under their own heading, printed and not graded.
         # Checked against the captures and the dumps rather than a literal
         # list, so a fixture edit on either side of this fails.
@@ -396,7 +396,7 @@ class GradeTests(unittest.TestCase):
         self.assertEqual(differing_addresses(section),
                          {'0x0751', '0x075B', '0x075C', '0x0796',
                           '0x0402', '0x043E', '0x044F'})
-        self.assertIn('candidate fan PWM 0x075B/0x075C -- unconfirmed '
+        self.assertIn('fan duty 0x075B/0x075C -- MAIN_FAN_L/R_DUTY '
                       '(§4.4)', section)
         self.assertIn('other addresses that differ (2), not graded here',
                       section)
@@ -429,7 +429,7 @@ class GradeTests(unittest.TestCase):
         # watchers seconds apart, which is what the merge is for.
         self.assertIn('=== 3 window(s), one per mark ===', out)
         self.assertEqual(out.count('no watched byte moved in this window'), 3)
-        # §4.4's deciding pair, and it reads ambiguous: the candidate PWM
+        # §4.4's deciding pair, and it reads ambiguous: the fan duty
         # netted 3 under the no-op and 2 under the write, so the write's
         # movement is inside the control's spread. CPU_TEMP is up across both.
         self.assertIn('window delta  0x075B  0x64 -> 0x67  net +3  (2 changes)',
