@@ -18,7 +18,7 @@ void call_bb28_on_1804(void)
   
   puVar1 = &DAT_EXTMEM_1804;
   copy_dptr_byte_to_075b_then_set_dptr_1809();
-  DAT_EXTMEM_075c = *puVar1;
+  MAIN_FAN_R_DUTY = *puVar1;
   return;
 }
 

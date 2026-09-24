@@ -34,7 +34,7 @@ void load_dptr_06ce(undefined1 param_1)
       DAT_EXTMEM_06cf = 'd';
       DAT_EXTMEM_06ce = 100;
       if ((bVar1 & 0x10) == 0) {
-        if (DAT_EXTMEM_0440 == '\0') {
+        if (XDATA_0440 == '\0') {
           load_dptr_c478_tail_jump_1100();
         }
         else {

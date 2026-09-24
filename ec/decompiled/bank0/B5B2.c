@@ -16,9 +16,9 @@
 void clear_08eb_bit5_09e6_09e7_08a1_089c_089d(void)
 
 {
-  DAT_EXTMEM_08eb = DAT_EXTMEM_08eb & 0xdf;
-  DAT_EXTMEM_09e6 = DAT_EXTMEM_09e6 & 0xfe;
-  DAT_EXTMEM_09e7 = DAT_EXTMEM_09e7 & 0xfe;
+  XDATA_08EB = XDATA_08EB & 0xdf;
+  XDATA_09E6 = XDATA_09E6 & 0xfe;
+  XDATA_09E7 = XDATA_09E7 & 0xfe;
   DAT_EXTMEM_08a1 = 0;
   DAT_EXTMEM_089c = 0;
   DAT_EXTMEM_089d = 0;

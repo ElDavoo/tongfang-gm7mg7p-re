@@ -20,7 +20,7 @@ void step_06fd_06fe_06ff_counters_via_1a32(void)
   undefined1 uVar1;
   
   sync_085a_from_iram28_and_call_896a();
-  if ((DAT_EXTMEM_06c2 == '\0') && (DAT_EXTMEM_0440 != '\0')) {
+  if ((DAT_EXTMEM_06c2 == '\0') && (XDATA_0440 != '\0')) {
     if (DAT_EXTMEM_06fd == 0) {
       if (DAT_EXTMEM_06fe == 0) {
         if (DAT_EXTMEM_06ff == 0) {

@@ -8,8 +8,9 @@
 #
 #   cp docs/ci/agent-gates-deep-schedule.yml .github/workflows/agent-gates-deep.yml
 #
-# and that is the whole change. Everything it runs is already committed; it
-# calls the deep tier's documented entry point and nothing else.
+# and that is the whole change. Everything it checks is already committed; it
+# calls the deep tier's documented entry point and nothing else, and uploads
+# the run's log as an artifact.
 #
 # Why it is written to pass the `workflows:` job in ci.yml (actionlint and
 # zizmor) before it lands: that job audits every file in this directory, so
@@ -58,11 +59,98 @@ jobs:
       - name: Set up the toolchain
         uses: ./.github/actions/project-setup
 
+      # Which assembler this run is about to use, and which one the committed
+      # report was measured with. The re-encode's outcome columns are a
+      # property of the assembler as much as of the listings -- 52 of 2,705
+      # rows differ between the committed nix build and the one project-setup
+      # installs (docs/findings.md §14h) -- so a nightly log that does not say
+      # which one produced its numbers is a log whose numbers cannot be read.
+      #
+      # The committed string is read from the report rather than written here,
+      # so this stays true as ubuntu-latest drifts instead of going stale the
+      # first time apt moves. It prints what it observed and asserts no
+      # relationship in either direction: a run that agrees with the committed
+      # report is information, and a run that does not is information too.
+      - name: Name the assembler
+        run: |
+          set -uo pipefail
+          echo "=== sdas8051 this run will use ==="
+          sdcc --version || echo "sdcc --version: unavailable"
+          if command -v sdas8051 >/dev/null 2>&1; then
+            echo "path:   $(command -v sdas8051)"
+            echo "real:   $(readlink -f "$(command -v sdas8051)")"
+            # The banner, not the exit code: with no arguments sdas8051
+            # prints usage and exits 1, so the || is load-bearing.
+            sdas8051 2>&1 | head -2 || true
+          else
+            echo "path:   NOT ON PATH -- the deep tier below will fail on this"
+          fi
+          echo
+          echo "=== the assembler ec/ghidra/reassembly.csv was measured with ==="
+          # Parsed, not cut. 73 of the rows carry a comma inside `detail`, so
+          # a `cut -d,` on the ninth field lands mid-detail on those and
+          # reports a list of mnemonics instead of a version string.
+          #
+          # `or ""` rather than .get's default: DictReader presents a short
+          # row's missing trailing field as None, and sorting a set containing
+          # None raises. This step's job is to describe the report, and it has
+          # to survive the report being in a state it is meant to be reporting
+          # on.
+          committed=$(python3 - <<'PY'
+          import csv
+          try:
+              with open("ec/ghidra/reassembly.csv", newline="") as f:
+                  cells = {r.get("assembler") or "" for r in csv.DictReader(f)}
+          except OSError as exc:
+              cells = {"<unreadable: %s>" % exc}
+          print(" ".join(sorted(cells)))
+          PY
+          )
+          echo "committed: ${committed:-<none: every row has no assembler cell>}"
+          echo
+          echo "If those differ, this run is not a re-measurement of the"
+          echo "committed report. See docs/findings.md §14h."
+
       # The same command ci.yml runs, with the deep tier switched on: the cheap
       # tier first, then the sdas8051 re-encode and the advisory cross-decoder
       # comparison. It is one command because agent-gates.sh hands off to
       # agent-gates-deep.sh, and agent-gates-deep.sh re-runs the cheap tier
       # first -- so this is a superset, not a second gate that can disagree
       # with the first.
+      #
+      # The whole run goes to a file, and the file is the record. The
+      # `schedule:` comment above says GitHub delays and sometimes drops
+      # scheduled runs without telling anyone: a run that happened leaves an
+      # artifact behind and a run that did not leaves none, so the absence is a
+      # signal rather than something to be inferred from silence. The log is
+      # the cheap tier's too, because its failures matter to the same reader.
+      #
+      # pipefail before the pipe, not after. `set -o pipefail` has to be in
+      # effect when the pipeline runs or the status is tee's, which is zero
+      # however the gate ended -- a failing deep tier reading as a passing one,
+      # which is the exact failure this file exists to stop. GitHub's default
+      # shell for `run:` is `bash -e`, and -e does not set pipefail.
       - name: Deep gates
-        run: AGENT_GATES_DEEP=1 .github/scripts/agent-gates.sh
+        run: |
+          set -o pipefail
+          AGENT_GATES_DEEP=1 .github/scripts/agent-gates.sh 2>&1 \
+            | tee "$RUNNER_TEMP/deep-gates.log"
+
+      - name: Upload the deep gates log
+        # if: always(), because the log anyone wants is the one from the run
+        # that failed. A run that fails with no artifact is the same silence
+        # this file is here to remove.
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          # The run id, so a reader can tell this night's artifact from last
+          # night's without cross-referencing the run list.
+          name: deep-gates-${{ github.run_id }}
+          path: ${{ runner.temp }}/deep-gates.log
+          if-no-files-found: warn
+          # 90 is GitHub's default, and saying so explicitly is the point: a
+          # value above a stricter repository or organisation cap fails the
+          # upload step rather than being clamped. The log is a point-in-time
+          # reading of one night; the durable record of a result that *changed*
+          # is a re-report and a docs/findings.md entry, not an artifact.
+          retention-days: 90

@@ -94,9 +94,9 @@ xdata_register_map.py --self-test
   ok    classify('switch_case_dispatch(DAT_EXTMEM_0440);') is 'passed-to-call'
   ok    classify('if (CPU_TEMP == 0) {') is 'read'
   ok    classify('CPU_TEMP = 0;') is 'write'
-  ok    the issue's 14399 file-wide DAT_EXTMEM_ occurrences and the 9 of them that are this repository's own annotation text quoting the decompile are still where they were (raw: {'DAT_EXTMEM': 14399, 'symbol': 473})
-  ok    oracle: DAT_EXTMEM_ only, what issue #132 counted -- main EC 1022 distinct / 13526 refs, PD 157/864, which is 1134 distinct addresses in all after the 48 both programs touch (got (1022, 13526) and (157, 864))
-  ok    oracle: the 41 main-EC addresses the decompiler named, 411 references, and 0/0 of them in the PD image (got (41, 411) and (0, 0))
+  ok    the issue's 13878 file-wide DAT_EXTMEM_ occurrences and the 9 of them that are this repository's own annotation text quoting the decompile are still where they were (raw: {'DAT_EXTMEM': 13878, 'symbol': 1016})
+  ok    oracle: DAT_EXTMEM_ only, what issue #132 counted -- main EC 979 distinct / 13005 refs, PD 157/864, which is 1093 distinct addresses in all after the 43 both spell there (got (979, 13005) and (157, 864))
+  ok    oracle: the 84 main-EC addresses the decompiler named, 932 references, and 0/0 of them in the PD image (got (84, 932) and (0, 0))
   ok    within each program the two spellings are disjoint address for address, so a named address is never also a DAT_EXTMEM_ token
   ok    the PD image is spelled entirely in DAT_EXTMEM_ tokens, which is gen_xdata_symbols.py's own refusal to name it
   ok    oracle: the full census, both spellings -- 1172 distinct / 14801 references, main EC 1063/13937 (got 1172/14801, (1063, 13937))
@@ -104,9 +104,11 @@ xdata_register_map.py --self-test
   ok    main + PD equals the file-wide total on both axes
   ok    oracle: the top two main-EC addresses by reference count are 0x0440=181, 0x08A8=170 (got 0x0440=181, 0x08A8=170)
   ok    the 0x07D8 correction: its main-EC reference is spelled MODE_TCC_OFFSET_DEFAULTS_GAMING_0, and the PD image spells the same address DAT_EXTMEM_07d8 because it is not named there
-  ok    of the 101 named addresses, 79 appear in the decompiled tree at all (got 79: 0x030E, 0x030F, 0x0400, 0x0401, 0x0403, 0x0432, 0x0434, 0x0435, 0x0436, 0x0437, 0x0438, 0x0439, 0x043C, 0x043D, 0x043E, 0x043F, 0x0440, 0x0442, 0x0443, 0x0448, 0x0449, 0x044B, 0x044C, 0x044F, 0x0450, 0x0451, 0x0452, 0x0454, 0x0455, 0x0456, 0x0458, 0x0459, 0x045A, 0x045B, 0x045C, 0x045D, 0x045E, 0x045F, 0x049F, 0x04A6, 0x04A7, 0x0522, 0x0523, 0x0730, 0x0731, 0x0732, 0x0734, 0x0736, 0x0737, 0x0740, 0x0741, 0x0743, 0x0744, 0x0745, 0x0746, 0x074E, 0x0751, 0x0766, 0x0767, 0x0768, 0x0782, 0x0783, 0x0784, 0x0785, 0x0786, 0x078C, 0x07A6, 0x07A7, 0x07A8, 0x07A9, 0x07AA, 0x07C6, 0x07CC, 0x07D0, 0x07D1, 0x07D8, 0x07D9, 0x07DA, 0x07E2)
+  ok    of the 110 named addresses, 88 appear in the decompiled tree at all (got 88: 0x030E, 0x030F, 0x0400, 0x0401, 0x0403, 0x0432, 0x0434, 0x0435, 0x0436, 0x0437, 0x0438, 0x0439, 0x043C, 0x043D, 0x043E, 0x043F, 0x0440, 0x0442, 0x0443, 0x0448, 0x0449, 0x044B, 0x044C, 0x044F, 0x0450, 0x0451, 0x0452, 0x0454, 0x0455, 0x0456, 0x0458, 0x0459, 0x045A, 0x045B, 0x045C, 0x045D, 0x045E, 0x045F, 0x049F, 0x04A6, 0x04A7, 0x0522, 0x0523, 0x0730, 0x0731, 0x0732, 0x0734, 0x0736, 0x0737, 0x0740, 0x0741, 0x0743, 0x0744, 0x0745, 0x0746, 0x074E, 0x0751, 0x075B, 0x075C, 0x0766, 0x0767, 0x0768, 0x0782, 0x0783, 0x0784, 0x0785, 0x0786, 0x078C, 0x07A6, 0x07A7, 0x07A8, 0x07A9, 0x07AA, 0x07C6, 0x07CC, 0x07D0, 0x07D1, 0x07D8, 0x07D9, 0x07DA, 0x07E2, 0x089E, 0x089F, 0x08A0, 0x08A2, 0x08EB, 0x09E6, 0x09E7)
   ok    every address the tree spells by symbol is in the generated symbol table, so the name column can never be empty for one
   ok    the two blind-spot addresses are 0x0733, 0x0735; of them the one that is spelled at all is 0x0733, behind a CODE pointer (got 0x0733), and 0x0735 is not findable by any spelling
+  ok    the hand-checked direction oracle: 5 addresses, 0x0440, 0x0443, 0x04FE, 0x04FF, 0x0860, each read off the decompiled C by hand rather than by this tool
+  ok    the §4.1 bucket totals, read 8319 write 3186 read+write 2476 passed-to-call 549 address-taken 271 (got read 8319 write 3186 read+write 2476 passed-to-call 549 address-taken 271)
   ok    the `name` column is populated exactly for the addresses the symbol table names, independently of how the tree spells them
   ok    every address is in exactly one cluster
   ok    cluster sizes sum to the address count of each program
@@ -121,7 +123,8 @@ xdata_register_map.py --self-test
   all assertions passed
 ```
 
-The `of the 101 named addresses, 79` line is a second correction that has
+The `of the N named addresses, M` line (101 and 79 when this was written) is a
+second correction that has
 nothing to do with the direction buckets, and it is **stale-pin damage from the
 symbol table growing**, not from anything in §4.3: the table held 56 names when
 that figure was measured and 44 of them were in the tree, it holds 101 now, and
@@ -129,6 +132,33 @@ that figure was measured and 44 of them were in the tree, it holds 101 now, and
 `main` since the tool landed — the table already held 100 names in the very
 commit that added it. Re-derivable without this tool: 79 of the 1,172 rows in
 `xdata-registers.csv` have an address in `ec/ghidra/xdata-symbols.csv`.
+
+**That block did not pass when it was first written, and the two failures
+were both staleness rather than method.** The committed `xdata-registers.csv`
+had an empty `name` column for every row and the committed
+`xdata-clusters.csv` an empty `named_addrs` column for all 25 clusters that
+have named addresses, while the tool fills both and its own self-test asserts
+`name` is populated exactly for the addresses the symbol table names. So
+`--check` and `--self-test` both failed on the tree this file describes —
+nothing in `.github/scripts/agent-gates.sh` runs either mode, which is why it
+went unnoticed. `ORACLE['named_in_tree']` had the same problem: it read 44
+from when the 0x0400-0x045F page entries were added to `registers.yaml`
+without the constant being re-derived, against 79 in the tree. Both are
+corrected here, and §5's "named inside" column is a reading of the corrected
+CSV — which is why four of its rows moved here too (`main-ec-001` 20 to 28,
+`main-ec-003` and `main-ec-007` from `none`, and `main-ec-012` from `none` to
+6). Only the `main-ec-012` row is this change's doing; the other three are the
+drift above catching up, and the count in the CSV rather than the hand-typed
+one in this table is the authority.
+
+*(Merge note, 2026-09-24. The transcript above is re-run on the merged tree,
+not copied from either branch. `named_in_tree` is 88 now, not 79 or 86: the two
+extra are `0x075B`/`0x075C`, which #237 entered in `registers.yaml` as
+`MAIN_FAN_L_DUTY`/`MAIN_FAN_R_DUTY` and which were exported by name once the
+decompile was regenerated. The same regeneration moved 17 references from the
+`DAT_EXTMEM_` spelling to those names, so the `DAT_EXTMEM_`-only oracle reads
+13,878 raw and 979/13,005 for the main EC; the full census is unchanged. In §5
+below, `main-ec-001`'s "named inside" is 29 for the same reason.)*
 
 ## 2. The two spellings, and what the issue's "six" actually counted
 
@@ -470,7 +500,7 @@ and ranges are §4.3; `named inside` is mostly the symbol table.
 
 | cluster | size | refs | range | named inside | the functions the cluster's addresses share |
 |---|---:|---:|---|---|---|
-| `main-ec-001` | 108 | 1,136 | `0x030E`-`0x1809` | 28 | `fill_08xx_from_code_table`, `apply_oem_overrides_then_fill_08xx`, `mode_tick_084c_07a5_09ee`, `charge_target_update` — the mode/OEM initialisation set |
+| `main-ec-001` | 108 | 1,136 | `0x030E`-`0x1809` | 29 | `fill_08xx_from_code_table`, `apply_oem_overrides_then_fill_08xx`, `mode_tick_084c_07a5_09ee`, `charge_target_update` — the mode/OEM initialisation set |
 | `main-ec-002` | 44 | 248 | `0x044C`-`0x1F07` | 4 | `gate_06e6_442_then_sync_046a_from_086b`, `dispatch_on_0860`, `FUN_CODE_9d9b` — the `0x06E6`/`0x0860` gate block |
 | `main-ec-003` | 43 | 4,965 | `0x0460`-`0x09CE` | none | `decrement_nonzero_xdata_counters`, `read_06c6`, `skip_06c6_decrement` — one loop walking a block of counters |
 | `main-ec-004` | 30 | 312 | `0x030A`-`0x082F` | `0x0403` | three unnamed `bank1` routines (`0xDEE8`, `0xDEF1`, `0xDB0B`) — unnamed here, so this one needs reading before it can be titled |
@@ -480,7 +510,7 @@ and ranges are §4.3; `named inside` is mostly the symbol table.
 | `main-ec-008` | 12 | 107 | `0x0A43`-`0x0FC3` | none | `call_ef17_then_copy_0f80_to_0fb1`, `store_dptr_byte_to_0fb2_copy_0f82`, `FUN_CODE_f002` |
 | `main-ec-009` | 12 | 40 | `0x049A`-`0x05B9` | none | `clear_049a_049e_0579_057a_05c2`, `latch_0490_bit3_or_bit7` |
 | `main-ec-010` | 12 | 35 | `0x00C0`-`0x2275` | none | `copy_direct_65_66_to_x00c0`, `copy_x00c0_pair_to_iram_67_68` |
-| `main-ec-011` | 10 | 91 | `0x0875`-`0x09E7` | none | `clear_08eb_bit5_09e6_09e7_08a1_089c_089d` and two unnamed `bank0` routines |
+| `main-ec-011` | 10 | 91 | `0x0875`-`0x09E7` | 6 | `clear_08eb_bit5_09e6_09e7_08a1_089c_089d` and two unnamed `bank0` routines |
 | `main-ec-012` | 9 | 36 | `0x0300`-`0x03FE` | none | `zero_0300_03ff_then_set_3fe_3a8_3fb`, `scan_table_03de_down_stride2` — the `0x0300` page |
 
 `main-ec-001` is the one that matters most and the one most likely to be

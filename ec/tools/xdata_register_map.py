@@ -186,33 +186,47 @@ TOP_CALLEES = 3
 #
 # Second, and much the larger: the issue counted `DAT_EXTMEM_` tokens only, and
 # the addresses Ghidra was given a name for are not written that way. Reading
-# both spellings adds 41 main-EC addresses and 411 references that were always
-# in the committed tree. Every number is pinned below -- the `DAT_EXTMEM_`
-# totals and the full ones -- so a drift in either says which moved.
+# both spellings adds the main-EC addresses the exporter named, which were
+# always in the committed tree. Every number is pinned below -- the
+# `DAT_EXTMEM_` totals and the full ones -- so a drift in either says which
+# moved.
+#
+# The split moved 41 -> 82 named addresses (411 -> 915 references) when
+# ec/decompiled/ was re-exported in issue #194, and the totals with it: 41
+# addresses that had been committed as `DAT_EXTMEM_xxxx` are now written by the
+# name ec/ghidra/xdata-symbols.csv gives them. Nothing was added or lost -- the
+# full census below (1172 distinct / 14801 references, main EC 1063/13937) is
+# unchanged, and no .asm moved -- so this is the exporter catching up with a
+# symbol table that had already grown, which is the same re-derivation the
+# `named_in_tree` comment below records for 44 -> 79 -> 86.
+#
+# 82 -> 84 (915 -> 932) for the same reason when #237's MAIN_FAN_L_DUTY and
+# MAIN_FAN_R_DUTY entries were exported (0x075B/0x075C, 17 references that had
+# been `DAT_EXTMEM_075b`/`_075c`); the full census does not move.
 ORACLE = {
     # DAT_EXTMEM_ only, i.e. what issue #132 counted, comments excluded.
-    "extmem_distinct": 1134, "extmem_refs": 14390,
-    "extmem_raw": 14399, "extmem_commented": 9,
-    "extmem_main_distinct": 1022, "extmem_main_refs": 13526,
+    "extmem_distinct": 1093, "extmem_refs": 13886,
+    "extmem_raw": 13878, "extmem_commented": 9,
+    "extmem_main_distinct": 979, "extmem_main_refs": 13005,
     "extmem_pd_distinct": 157, "extmem_pd_refs": 864,
     # What the decompiler named, which the issue's grep could not see.
-    "symbol_main_distinct": 41, "symbol_main_refs": 411,
+    "symbol_main_distinct": 84, "symbol_main_refs": 932,
     "symbol_pd_distinct": 0, "symbol_pd_refs": 0,
     # The full census this tool publishes.
     "distinct": 1172, "refs": 14801,
     "main_distinct": 1063, "main_refs": 13937,
     "pd_only": 109, "both": 48,
-    # *** CORRECTION 2026-09-23 (issue #178) ***  This read 44 when the symbol
-    # table held 56 names, and the table now holds 101, so the derived count is
-    # 79. It was stale from the day this tool landed: the table already held 100
-    # names in the commit that added the tool, and nothing ever re-pinned it, so
-    # this assertion has been red ever since -- which is a large part of why the
-    # `==` misclassification went unnoticed for as long as it did. Re-derivable
-    # without this tool: 79 of the 1172 rows in xdata-registers.csv have an
-    # address in ec/ghidra/xdata-symbols.csv. Every *census* total above is
-    # unaffected; only this derived count moved, because only the symbol table
-    # grew.
-    "named_in_tree": 79,
+    # Addresses the symbol table names AND the census reaches. It is not
+    # `len(symbols)`: naming an address in registers.yaml does not put it in
+    # a decompiled function, so the two counts part company whenever a
+    # register is named that no surviving function touches. It moved 44 -> 79
+    # when the 0x0400-0x045F page entries landed in registers.yaml without
+    # this constant being re-derived, and the self-test was failing on `main`
+    # because of it; 86 is the re-derived count, of which 7 are
+    # 0x08A0/0x08A2/0x08EB/0x089E/0x089F/0x09E6/0x09E7
+    # (ec/annotations/manual-fan-ctrl-0751.md 8a). 86 -> 88 when #237's
+    # MAIN_FAN_L_DUTY/MAIN_FAN_R_DUTY (0x075B/0x075C) were exported by name.
+    "named_in_tree": 88,
 }
 ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
 # The two symbol-table addresses register_ref_table.py finds main-EC sites for
@@ -1035,6 +1049,11 @@ def self_test(args) -> int:
     total_refs = refs["main-ec"] + refs["pd"]
     extmem = {g: tally(g, "DAT_EXTMEM") for g in GROUPS}
     syms = {g: tally(g, "symbol") for g in GROUPS}
+    # The two spellings overlap between programs on a different set of
+    # addresses than the full census's `both`, so it gets its own figure
+    # rather than reusing that one.
+    extmem_both = (ORACLE["extmem_main_distinct"] + ORACLE["extmem_pd_distinct"]
+                   - ORACLE["extmem_distinct"])
 
     check(f"the issue's {ORACLE['extmem_raw']} file-wide DAT_EXTMEM_ occurrences "
           f"and the {ORACLE['extmem_commented']} of them that are this "
@@ -1048,7 +1067,7 @@ def self_test(args) -> int:
           f"{ORACLE['extmem_main_refs']} refs, PD "
           f"{ORACLE['extmem_pd_distinct']}/{ORACLE['extmem_pd_refs']}, which is "
           f"{ORACLE['extmem_distinct']} distinct addresses in all after the "
-          f"{ORACLE['both']} both programs touch (got {extmem['main-ec']} and "
+          f"{extmem_both} both spell there (got {extmem['main-ec']} and "
           f"{extmem['pd']})",
           (extmem["main-ec"][0], extmem["main-ec"][1]) ==
           (ORACLE["extmem_main_distinct"], ORACLE["extmem_main_refs"]) and

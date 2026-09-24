@@ -16,9 +16,9 @@ void FUN_CODE_8931(byte param_1)
   undefined1 *puVar4;
   char *pcVar5;
   
-  puVar4 = &DAT_EXTMEM_08eb;
+  puVar4 = &XDATA_08EB;
   bVar3 = in_PSW & 0xdd;
-  if ((DAT_EXTMEM_08eb & 0x48) != 0) {
+  if ((XDATA_08EB & 0x48) != 0) {
     mov_a_c8();
     *puVar4 = 200;
     copy_dptr_byte_to_075c();
@@ -56,9 +56,9 @@ void FUN_CODE_8931(byte param_1)
       if ((char)bVar3 < '\0') {
         puVar4 = &DAT_EXTMEM_0469;
       }
-      DAT_EXTMEM_075b = *puVar4;
-      DAT_EXTMEM_1804 = DAT_EXTMEM_075b;
-      store_a_to_dptr_then_075c_and_notify(DAT_EXTMEM_075b,0x1809);
+      MAIN_FAN_L_DUTY = *puVar4;
+      DAT_EXTMEM_1804 = MAIN_FAN_L_DUTY;
+      store_a_to_dptr_then_075c_and_notify(MAIN_FAN_L_DUTY,0x1809);
     }
     if (((char)MANUAL_FAN_CTRL < '\0') ||
        (((BIOS_INFO_3 >> 1 & 1) != 0 && (cVar1 = fan_mode_get(), cVar1 == '\x10')))) {

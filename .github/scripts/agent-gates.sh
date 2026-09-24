@@ -6,11 +6,11 @@
 # CLAUDE.md's "calibrate, don't overclaim" rule is the half no script can
 # check, and is read separately by every stage.
 #
-# Two tiers. This is the cheap one: nothing here waits on an assembler, and
-# nothing re-derives coverage from the decompiled C. What that leaves out lives
-# in agent-gates-deep.sh, and AGENT_GATES_DEEP=1 runs the whole thing — the deep
-# script calls this one first, so that one command checks everything and a
-# scheduled workflow has something single to call.
+# Two tiers. This is the cheap one: no gate here turns on whether sdas8051 is
+# installed, and nothing re-derives coverage from the decompiled C. What that
+# leaves out lives in agent-gates-deep.sh, and AGENT_GATES_DEEP=1 runs the whole
+# thing — the deep script calls this one first, so that one command checks
+# everything and a scheduled workflow has something single to call.
 #
 # The split is printed, every run, whatever it did. A deferral nobody can see
 # is a check that gets dropped, which is the failure this arrangement was made
@@ -106,13 +106,15 @@ check_ghidra_tooling() {
   # --check and --self-test need no Ghidra and no network, which is what lets
   # them live in a gate at all. A full rebuild does not, and is not here.
   #
-  # Nothing in this loop waits on an assembler, which is the other half of the
-  # split. The sdas8051 re-encode used to run from here whenever `command -v
-  # sdas8051` found the tool, and that made the gate's contents a function of
-  # the runner: CI installed sdcc and a developer might not, so what got
-  # checked was whichever machine happened to be running, with nothing recording
-  # the difference. It is in agent-gates-deep.sh now, where asking for it is
-  # the thing that turns it on.
+  # Nothing in this loop turns on whether sdas8051 is installed, which is the
+  # other half of the split. The sdas8051 re-encode used to run from here
+  # whenever `command -v sdas8051` found the tool, and that made the gate's
+  # contents a function of the runner: CI installed sdcc and a developer might
+  # not, so what got checked was whichever machine happened to be running, with
+  # nothing recording the difference. It is in agent-gates-deep.sh now, where
+  # asking for it is the thing that turns it on. verify_reassembly.py's
+  # self-test does assemble a four-instruction fixture, and does it after every
+  # assertion, so it cannot change the verdict either way -- see the case below.
   scratch=$(mktemp -d)
   for tool in ec/tools/gen_xdata_symbols.py \
               ec/tools/build_ec_decompile.py \
@@ -136,13 +138,19 @@ check_ghidra_tooling() {
       *merge_annotation_shards.py)
         python3 "$tool" --self-test || rc=1
         ;;
-      # --check needs no Ghidra and no assembler: it confirms that every byte of
-      # every committed listing is the byte in the firmware, and that the
-      # committed reassembly report still describes those listings with nothing
-      # in it disagreeing. The re-encode -- the stronger claim, an independent
-      # assembler encoding the listing back to bytes -- is the deep tier's.
+      # --check needs no Ghidra: it confirms that every byte of every committed
+      # listing is the byte in the firmware, and that the committed reassembly
+      # report still describes those listings with nothing in it disagreeing.
+      # --self-test is the tool's own known answers -- the digest's canonical
+      # form, the compare_digests() failure paths, GAP_FORMS and
+      # BIT_UNSUPPORTED -- and they sit before the no-assembler early exit, so
+      # they run here whether or not sdas8051 is installed. What needs an
+      # assembler is the *re-encode*: an independent assembler encoding the
+      # committed listing back to bytes, the stronger claim, and the deep
+      # tier's. The self-test's own tail does invoke the assembler over a
+      # four-instruction fixture when it is present; that is not the re-encode.
       *verify_reassembly.py)
-        python3 "$tool" --check || rc=1
+        python3 "$tool" --check && python3 "$tool" --self-test || rc=1
         ;;
       *)
         # build_ec_decompile.py and bios_extract.py both take --work.
@@ -190,9 +198,10 @@ gate 'doc links'       check_doc_links
 # that a check has stopped running is before it has stopped failing. Wording is
 # "this tier" rather than "this run" so it stays true when the deep script
 # re-runs this file and then does those two things itself.
-printf '\nnote  this tier does not run: the sdas8051 re-encode and the advisory\n'
-printf '      cross-decoder comparison. Both are in agent-gates-deep.sh, which\n'
-printf '      AGENT_GATES_DEEP=1 .github/scripts/agent-gates.sh runs after this.\n'
+printf '\nnote  this tier does not run: the sdas8051 re-encode of the committed\n'
+printf '      listing, and the advisory cross-decoder comparison. Both are in\n'
+printf '      agent-gates-deep.sh, which AGENT_GATES_DEEP=1\n'
+printf '      .github/scripts/agent-gates.sh runs after this.\n'
 
 # The elapsed line is printed, never asserted. A wall-clock budget in a gate is
 # the flaky check that gets switched off after one bad afternoon on a shared
