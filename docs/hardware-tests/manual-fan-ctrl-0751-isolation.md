@@ -532,6 +532,15 @@ after-dump reads unchanged here whether or not the captures recorded it.
 Each read has a gap the other does not close. An address one dump covers and
 the other does not is a coverage gap, never a change, and the section emits
 no status of its own.
+`0x0F5D-0x0F5F`, the three bytes at the end of a `0x0F00-0x0F5F` dump, is
+reported under a heading of its own rather than under §4.2's, because they
+are the mailbox `../../ec/annotations/manual-fan-ctrl-0751.md` §6 decodes at
+`0x888D` — `0xFD`/`0xC9` and a selector, written by the host to ask the EC to
+copy a table — and the last three GPU duty slots, the tail of the row the
+service writes. A difference there is a host poke and/or a written table, and
+neither is §4.2's question, which is about `0x0F00-0x0F5C` alone. When §4.2
+does have a change, the section names its own next step,
+`../../windows/tools/fan_table_replay.py`.
 
 It is a first pass and not the answer. It prints §4.4's fan duty bytes
 and §4.5's temperature bytes per window so the control arm and the write can

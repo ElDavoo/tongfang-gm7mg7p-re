@@ -49,6 +49,27 @@ RUN_AFTER = str(RUN / '2026-01-01-0751-isolation-a0-after-0700.txt')
 # pair" lines for §4.1 and §4.3.
 RUN_BEFORE_0F00 = str(RUN / '2026-01-01-0751-isolation-a0-before-0f00.txt')
 RUN_AFTER_0F00 = str(RUN / '2026-01-01-0751-isolation-a0-after-0f00.txt')
+
+# Three constructed dump pairs, each a copy of the corresponding `RUN` page
+# with the smallest edit that reaches a branch §3's own fixtures cannot: the
+# `RUN` pairs differ only where the captures record movement, and the 0F00
+# pair is byte-for-byte identical, so the whole-block read's value line -- the
+# `else` that prints `0xNNNN 0xXX -> 0xXX` under a heading -- had no fixture
+# to run it. They sit beside the CSV examples and not in `0751-isolation-run/`,
+# which is the set §6's file list is held equal to.
+EXAMPLE = HERE / 'testdata'
+PL2_PAIR = (str(EXAMPLE / '0751-isolation-example-moved-pl2-before-0700.txt'),
+            str(EXAMPLE / '0751-isolation-example-moved-pl2-after-0700.txt'))
+FAN_PAIR = (str(EXAMPLE / '0751-isolation-example-moved-fan-before-0f00.txt'),
+            str(EXAMPLE / '0751-isolation-example-moved-fan-after-0f00.txt'))
+MAILBOX_PAIR = (
+    str(EXAMPLE / '0751-isolation-example-moved-mailbox-before-0f00.txt'),
+    str(EXAMPLE / '0751-isolation-example-moved-mailbox-after-0f00.txt'))
+# The same mailbox poke as a change row rather than as a dump difference, for
+# the windowed reader: `report_window` files the group the same way and its
+# closing paragraph has to keep the difference between the two apart.
+MAILBOX_CSV = str(EXAMPLE / '0751-isolation-example-mailbox-poke.csv')
+
 # The third pair, for the temperature range, so that §4.5's two confirmed
 # bytes have a whole-block read of their own rather than being named as out
 # of reach of every pair. It differs only where the temperature capture
@@ -56,6 +77,7 @@ RUN_AFTER_0F00 = str(RUN / '2026-01-01-0751-isolation-a0-after-0f00.txt')
 # the fan duty and all of §4.1-§4.3.
 RUN_BEFORE_0400 = str(RUN / '2026-01-01-0751-isolation-a0-before-0400.txt')
 RUN_AFTER_0400 = str(RUN / '2026-01-01-0751-isolation-a0-after-0400.txt')
+
 # The runbook, whose §6 is the list these fixtures are named from.
 RUNBOOK = (HERE.resolve().parents[1] / 'docs' / 'hardware-tests'
            / 'manual-fan-ctrl-0751-isolation.md')
@@ -136,6 +158,47 @@ def differing_addresses(section):
         if line.lstrip().startswith('other addresses that differ'):
             found |= set(re.findall(r'0x[0-9A-F]{4}', lines[i + 1]))
     return found
+
+
+def whole_block(out):
+    """The whole-block dump-pair section, and nothing after it.
+
+    One spelling of the two splits, which two tests each carried inline: a
+    section that later grew a header of its own would then be found by
+    whichever of the two had been updated.
+    """
+    return out.split('=== whole-block dump pairs (§4.1-§4.3) ===')[1] \
+               .split('=== what this does and does not settle')[0]
+
+
+def group_body(section, name):
+    """The lines under a `    {name}:` heading, up to the next one.
+
+    Cut by heading rather than searched for as a substring, so "reported
+    under its own §4.x heading" is an assertion about where a line sits and
+    not merely that the line is in the section somewhere. A note printed
+    under a group comes back with its value lines, which is the point: the
+    explanation and the bytes it explains are read together.
+    """
+    heading = f"    {name}:"
+    if heading not in section:
+        raise AssertionError(f"no {name!r} heading in the section; a watched "
+                             "group's heading is what this reads")
+    body = []
+    for line in section.split(heading, 1)[1].splitlines()[1:]:
+        # A group body is indented six spaces. The next group heading, the
+        # coverage-gap notice and the "other addresses" bucket are at four,
+        # and the section's closing paragraph at two, so all three end the
+        # body; blank lines are kept so a value line's spacing survives.
+        if line.strip() and not line.startswith("      "):
+            break
+        body.append(line)
+    return "\n".join(body)
+
+
+def value_lines(text):
+    """The differing-address lines in a group body, as printed."""
+    return [l for l in text.splitlines() if VALUE_LINE.search(l)]
 
 
 def dumped_change_addresses():
@@ -318,17 +381,18 @@ class GradeTests(unittest.TestCase):
             after = Path(tmp) / 'after-0700.txt'
             after.write_text('0750: 00 a0 02 03\n')
             _, out, _ = run(QUIET, '--dump-pair', str(before), str(after))
-        section = out.split('=== whole-block dump pairs (§4.1-§4.3) ===')[1]
+        section = whole_block(out)
         # Four addresses on both sides, and the four only the before dump
         # has are named as a gap rather than reported as four differences.
         self.assertIn('4 address(es) compared', section)
         self.assertIn('before dump only: 0x0754 0x0755 0x0756 0x0757',
                       section)
         self.assertIn('after dump only:  none', section)
-        # None of §4.1-§4.3 and neither §4.4/§4.5 context group is in this
-        # dump at all, so all five are named as not covered rather than
-        # passing as "unchanged" or dropping out of the section's heading.
-        self.assertEqual(section.count('not covered by this pair'), 5)
+        # None of §4.1-§4.3 (four watched groups, counting the reload trigger)
+        # and neither §4.4/§4.5 context group is in this dump at all, so all
+        # six are named as not covered rather than passing as "unchanged" or
+        # dropping out of the section's heading.
+        self.assertEqual(section.count('not covered by this pair'), 6)
         self.assertNotIn('unchanged across the block', section)
 
     # §6's whole-block read, over the same §6 set: what the CSV windows
@@ -343,20 +407,23 @@ class GradeTests(unittest.TestCase):
                          '--dump-pair', RUN_BEFORE_0400, RUN_AFTER_0400,
                          '--wrote', '0xA0')
         self.assertEqual(rc, 0)
-        section = out.split('=== whole-block dump pairs (§4.1-§4.3) ===')[1]
-        section = section.split('=== what this does and does not settle')[0]
+        section = whole_block(out)
 
         # The 0F00 pair is byte for byte identical by construction, which is
         # §4.2's prediction in the one form a machine can hold: the fan
         # table is unchanged across the whole block. §4.1 and §4.3 are not
         # in a 0x0F00 dump at all, and are named as not covered rather than
         # passed over in silence -- a range that was never read and a range
-        # that was read and did not move are different answers.
+        # that was read and did not move are different answers. The reload
+        # trigger is in a 0x0F00 dump, and gets the read-and-did-not-move
+        # answer: the split put it in a bucket of its own, not in a gap.
         self.assertIn('96 address(es) compared', section)
         self.assertIn('fan table (§4.2): unchanged across the block', section)
         self.assertIn('PL1/PL2/PL4 (§4.1): not covered by this pair', section)
         self.assertIn('fan-table bracket byte 0x07C6 (§4.3): not covered by '
                       'this pair', section)
+        self.assertIn(f'{grade.TRIGGER_GROUP}: unchanged across the block',
+                      section)
 
         # The 0700 pair, the other way round: it covers §4.1 and §4.3 and not
         # §4.2, and holds both of those unchanged across the block.
@@ -412,6 +479,125 @@ class GradeTests(unittest.TestCase):
                       'stronger one', section)
         self.assertNotIn('confirmed-working', section)
         self.assertNotIn('confirmed-inert', section)
+
+    # The whole-block read's value line -- the `else` that prints
+    # `0xNNNN  0xXX -> 0xXX` under a heading -- had no fixture to run it: the
+    # §6 pairs differ only at addresses WATCHED does not name. These three
+    # cover it per group, and the two fan-table ones cover the split.
+    def test_dump_pair_reports_a_pl_that_moved(self):
+        rc, out, _ = run(QUIET, '--dump-pair', *PL2_PAIR)
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        self.assertIn('0x0784  0x50 -> 0x28',
+                      group_body(section, 'PL1/PL2/PL4 (§4.1)'))
+        # A 0x0700 dump holds no §4.2 byte and none of the trigger, so both
+        # are named as not covered. §4.3's byte is in range and did not move,
+        # so it reads unchanged -- a group is answered per group, not per
+        # dump.
+        self.assertIn('fan table (§4.2): not covered by this pair', section)
+        self.assertIn(f'{grade.TRIGGER_GROUP}: not covered by this pair',
+                      section)
+        self.assertIn('fan-table bracket byte 0x07C6 (§4.3): unchanged across '
+                      'the block', section)
+        self.assertNotIn('confirmed-working', section)
+        self.assertNotIn('confirmed-inert', section)
+
+    def test_dump_pair_reports_a_fan_table_byte_that_moved(self):
+        rc, out, _ = run(QUIET, '--dump-pair', *FAN_PAIR)
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        body = group_body(section, 'fan table (§4.2)')
+        # The table byte is filed under §4.2 and the mailbox tail is not, even
+        # though this pair moves both -- which is the whole point of the
+        # split, and the only thing it can be checked by.
+        self.assertIn('0x0F0A  0x52 -> 0x56', body)
+        self.assertEqual(value_lines(body), ['      0x0F0A  0x52 -> 0x56'])
+        self.assertEqual(value_lines(group_body(section, grade.TRIGGER_GROUP)),
+                         ['      0x0F5D  0xB8 -> 0x6E',
+                          '      0x0F5E  0xC4 -> 0x6E',
+                          '      0x0F5F  0xD0 -> 0x6E'])
+        # §4.2's own named next step, which the section used not to have: the
+        # tool and the three inputs it already requires. Read off the printed
+        # lines with the wrapping undone, so the check is on the sentence and
+        # not on where the 72-column wrap happened to break it.
+        flat = " ".join(body.split())
+        self.assertIn('replay it with windows/tools/fan_table_replay.py', flat)
+        self.assertIn('MQTT capture (--csv --final --mqtt, all three are '
+                      'required)', flat)
+        self.assertNotIn('confirmed-working', section)
+        self.assertNotIn('confirmed-inert', section)
+
+    # The false-positive direction. §3's main arm runs with the vendor service
+    # up, which is the one that writes the mailbox, so a difference there must
+    # not read as the EC reloading its own table: that is the one result §4.2
+    # exists to look for.
+    def test_a_mailbox_change_is_not_reported_as_a_fan_table_reload(self):
+        rc, out, _ = run(QUIET, '--dump-pair', *MAILBOX_PAIR)
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        # §4.2 read the table and it did not change, while the three bytes
+        # after it did. The magic and selector go in as they arrive, so the
+        # three lines read as the write §6 decodes rather than as table
+        # content.
+        self.assertIn('fan table (§4.2): unchanged across the block', section)
+        trigger = group_body(section, grade.TRIGGER_GROUP)
+        self.assertEqual(value_lines(trigger),
+                         ['      0x0F5D  0xB8 -> 0xFD',
+                          '      0x0F5E  0xC4 -> 0xC9',
+                          '      0x0F5F  0xD0 -> 0x02'])
+        # And they are in neither of the two places they would still read as
+        # a table move: under §4.2, or in the bucket for addresses no watched
+        # group claims. The heading names the address range, so this is a
+        # statement about the bucketing and not a coincidence of wording.
+        self.assertNotRegex(group_body(section, 'fan table (§4.2)'),
+                            r'0x0F5[DEF]  0x[0-9A-F]{2} -> 0x[0-9A-F]{2}')
+        self.assertNotIn('other addresses that differ', section)
+        # The note is what the heading's "see below" points at, and it has to
+        # say the annotation and that this is not §4.2's answer. Unwrapped,
+        # for the same reason as the next step above.
+        flat = " ".join(trigger.split())
+        self.assertIn('ec/annotations/manual-fan-ctrl-0751.md §6 decodes at '
+                      '0x888D', flat)
+        self.assertIn("A change here is not §4.2's answer", flat)
+        # The two readings are both named, because a note claiming only one
+        # would be its own overclaim: §6 says host-written, and
+        # windows/vendor-ec-map.md says the last three GPU duty slots.
+        self.assertIn('written by the host to ask the EC to copy a table',
+                      flat)
+        self.assertIn('the last three GPU duty slots', flat)
+        self.assertNotIn('confirmed-working', section)
+        self.assertNotIn('confirmed-inert', section)
+
+    # The same split in the windowed reader, which files the group the same
+    # way -- `report_dump_pairs` says so as its "no third category"
+    # invariant -- and whose closing paragraph used to report only that
+    # "at least one of §4.1-§4.3 moved". That would have put a host mailbox
+    # poke in the sentence about the EC contradicting the static prediction,
+    # in the arm where the service is by definition allowed to be writing it.
+    def test_a_mailbox_change_in_a_capture_is_not_a_fan_table_reload(self):
+        rc, out, _ = run(MAILBOX_CSV)
+        self.assertEqual(rc, 0)
+        self.assertIn('0x0F5D  0xB8 -> 0xFD   (+0.4s)', out)
+        # The group is named, and the note comes back with its value lines.
+        self.assertIn(f'    {grade.TRIGGER_GROUP}:', out)
+        # The opening words are unchanged, so a reader who greps for them
+        # still finds them; what follows them is the attribution.
+        self.assertIn(f'At least one of the §4.1-§4.3 bytes moved after a '
+                      f'mark: {grade.TRIGGER_GROUP}.', out)
+        self.assertIn('That is the host-written reload mailbox, not a §4.2 '
+                      'result', out)
+        self.assertIn('reads the selector from 0x0F5F and never from 0x0751',
+                      out)
+        # The §4.2 sentence is the one about contradicting the prediction, and
+        # no table byte moved here, so it must not be the sentence printed.
+        self.assertNotIn('contradicts the static prediction', out)
+        self.assertNotIn('None of the §4.1-§4.3 bytes moved', out)
+        # And a §4.1 move still gets the sentence it always got.
+        _, out, _ = run(ACTIVE)
+        self.assertIn('contradicts the static prediction', out)
+        self.assertIn(f'mark: PL1/PL2/PL4 (§4.1), '
+                      f'fan-table bracket byte 0x07C6 (§4.3).', out)
+        self.assertNotIn('host-written reload mailbox', out)
 
     # §6 end to end, over the ten files §6 names and by the command line §6
     # gives. Everything a reader of that command line would take from its
