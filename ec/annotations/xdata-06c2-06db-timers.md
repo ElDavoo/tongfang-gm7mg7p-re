@@ -8,6 +8,23 @@ byte count below is re-derivable from the committed image by §1, and
 `../tools/check_register_counts.py` recomputes the `static_refs*` numbers in
 `registers.yaml` and fails on a mismatch.
 
+> **Correction, 2026-09-24 (issue #253).** The `main-ec-002` issue #179 asked
+> about is `main-ec-003` in the committed census, and `main-ec-002` is a
+> different cluster that shares not one address with this block:
+> `xdata-clusters.csv` row 4 gives `main-ec-003` 43 addresses and 4,965
+> references over `0x0460`-`0x09CE`, which is this block, while row 3 gives
+> `main-ec-002` 44 addresses and 248 references over `0x044C`-`0x1F07`, and the
+> two `addrs` columns are disjoint. All 43 addresses §1 sweeps carry
+> `cluster_id=main-ec-003` in `xdata-registers.csv`. The ids moved when issue
+> #4.3's census regeneration landed (#133 / #238): `xdata_register_map.py:1027`
+> numbers clusters by size, so the 44-address block is numbered ahead of the
+> 43-address one, and `xdata-register-map.md` §8 records the same hazard for its
+> own table. Every stale id below is corrected in place. The ones inside a
+> quote of issue #179 are left as it wrote them with this beside them, because
+> the quote is the evidence that the id moved.
+> `../tools/check_cluster_citations.py` is what holds the rest of the tree to
+> the census.
+
 Nothing here is a live observation. No register was read, written or read back,
 and nothing ran on the machine (`../../CLAUDE.md`, "Cloud agents cannot reach
 the hardware"). All 43 addresses are `present-untested`, and none is `absent`:
@@ -22,7 +39,7 @@ no entry in this file or in `registers.yaml` claims a zero is an absence.
   not be turned into by accident, so §6 lists exactly what this does not settle
   and the block still gets no name.
 - **Its headline census numbers are an artefact of how the routine is
-  exported.** `main-ec-002` is credited with 4,965 references and 126 touching
+  exported.** `main-ec-003` is credited with 4,965 references and 126 touching
   functions. **At least 4,642 of those references — 93% — are the same 393
   bytes counted 42 times over**, once per overlapping function boundary. The
   43 addresses have **345 direct `MOV DPTR,#addr` sites between them in the
@@ -175,7 +192,7 @@ to — 93%** — and the per-address result is starker than the total:
 | **total, 43 addresses** | **4,988** | **345** |
 
 (The 4,988 is the sum of the 43 rows in `xdata-registers.csv`. The
-`main-ec-002` row in `xdata-clusters.csv` records 4,965 for the same membership,
+`main-ec-003` row in `xdata-clusters.csv` records 4,965 for the same membership,
 and the 23 between them is a definitional split inside the tool, not staleness:
 both numbers reproduce from a fresh generation. Five of the 43 members are
 `program=both` — `0x07F3`, `0x07F6`, `0x0809`, `0x080C`, `0x080D` — and for
@@ -226,9 +243,11 @@ immediates in the run, which is what the sweep actually reaches.
 **The 37/6 split is the accounting, and the two bytes missing from the cluster
 are the clustering's, not the code's.** `0x06C6` and `0x06CD` are the first two
 countdowns in the run and are decremented by it exactly like the rest, but the
-clustering put `0x06C6` in `main-ec-118` and `0x06CD` in `main-ec-198` — 7 and
+clustering put `0x06C6` in `main-ec-121` and `0x06CD` in `main-ec-198` — 7 and
 26 references on their own rows in `xdata-registers.csv`, which is where the
-issue's figures come from. So 37 of the 43 are the countdowns, 6 are the
+issue's figures come from. Both ids are the census's; this file used to name
+`main-ec-118` for `0x06C6`, and that id is `0x0442 0x0801` and holds neither
+byte. So 37 of the 43 are the countdowns, 6 are the
 side-effect targets, and the two the cluster cut away are the two whose reload
 is the most legible in the whole block — see §5. The issue was right to scope
 the reading to the span rather than the cluster id, and this is the evidence for
@@ -404,7 +423,7 @@ version is left here rather than deleted, per `../../docs/findings.md` §4a's
 pattern.
 
 **And the two bytes the clustering cut away are the two whose reload is
-clearest.** `0x06C6` and `0x06CD` are not in `main-ec-002`, and both are reloaded
+clearest.** `0x06C6` and `0x06CD` are not in `main-ec-003`, and both are reloaded
 by an `if (byte == 0) byte = 2` store that this repository has already
 annotated: `dec_0443_low3_unless_0440_5_6_7` and
 `inc_0443_low3_unless_0440_5_6_7` write `2` to `0x06C6` at `0xF2CC` and
@@ -469,7 +488,17 @@ by a second `=`:
 | `0x08A8` read / write | 84 / 44 | **126 / 2** |
 | `0x0843` read / write | 84 / 42 | **126 / 0** |
 | main-EC clusters at threshold 0.50 | 384 | 376 |
-| **`main-ec-002`** | **43 addresses, 4,965 refs** | **44 addresses, 248 refs** |
+| **`main-ec-003`** | **43 addresses, 4,965 refs** | **44 addresses, 248 refs** |
+
+**The right-hand column is a shape, not a row, and it carries no id.** It
+records what this block's cluster becomes under the guard, and the guard's
+output is not the committed census, so no row in `xdata-clusters.csv` today is
+that cluster. Its 44 addresses and 248 references are the same two figures the
+committed `main-ec-002` row carries, and that is a coincidence of size and
+reference count rather than a match of membership: the two clusters' `addrs`
+columns are disjoint. So the left column names `main-ec-003` and the right
+column names nothing, and a reader who carries the left id across is wrong in
+the one way this file is about.
 
 ```console
 $ rm -rf /tmp/census && mkdir -p /tmp/census/{before,after}/ec/tools
@@ -529,7 +558,8 @@ holds the cluster together was computed over exactly those. With the guard it
 becomes a 44-address, 248-reference cluster. Neither number is right yet — both
 still carry §2a's 42-fold duplication — but the direction is not in doubt, and
 an issue scoped to "read `main-ec-002`" would be scoped to a membership its own
-prerequisite changes.
+prerequisite changes. (The id in that quoted scope is `main-ec-003` in the
+committed census — the correction at the top of this file is the one to read.)
 
 The issue's own "`0x08A8` is recorded as 84 reads / 44 writes / 42 read+write,
 and 42 of its comparisons are `==`" is a second, independent misreading:
@@ -612,7 +642,7 @@ touching it, not the EC's sweep.
    search cannot reach.
 3. **The direction-classifier fix** at `ec/tools/xdata_register_map.py:277`,
    measured in §6a: 833 references out of `write`, 210 addresses, and
-   `main-ec-002` itself reshaped. It wants its own diff with its own
+   `main-ec-003` itself reshaped. It wants its own diff with its own
    before/after census, and it should be read together with the de-duplication
    question below or the new numbers will be wrong in the other direction.
 4. **The census's 42-fold double count** (§2a). Nothing in

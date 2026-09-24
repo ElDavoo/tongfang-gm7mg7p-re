@@ -3596,7 +3596,19 @@ suites fake `ecrw` precisely so no Windows box is needed: no EC is opened, no
 register is read back, and no HID node is touched. What they establish is that
 the tools behave as specified on those fixtures, and nothing about the machine.
 
-## 17. The `main-ec-002` cluster is one 393-byte routine, counted 42 times over (2026-09-23, issue #179)
+## 17. The `main-ec-003` cluster is one 393-byte routine, counted 42 times over (2026-09-23, issue #179; id corrected by #253)
+
+**The id in this section's subject was wrong, and both directions of the error
+are in the record.** Issue #179 asked about the cluster the committed census
+calls `main-ec-003`; it and the rest of this section used to call it
+`main-ec-002`, which is a different cluster sharing not one address with it
+(`xdata-clusters.csv` row 3 against row 4 — 44 addresses / 248 references over
+`0x044C`-`0x1F07` against 43 / 4,965 over `0x0460`-`0x09CE`, `addrs` columns
+disjoint). The ids moved when issue #4.3's census regeneration landed
+(#133 / #238), which is the hazard `ec/annotations/xdata-register-map.md` §8
+already records for its own table. The wrong ids are left standing where they
+quote issue #179, per §4a; `ec/tools/check_cluster_citations.py` is what holds
+the rest of the tree to the census.
 
 Issue #179 asked what the `main-ec-002` cluster is: 43 addresses, 4,965
 references, 126 touching functions, nine of the ten busiest addresses in the
@@ -3658,7 +3670,7 @@ hands back, and it needs a function seed.
 
 **The reading itself.** 37 of the 43 are countdowns the same twenty
 instructions walk over, 6 are what four of them do at zero, and the two the
-clustering cut into `main-ec-118` and `main-ec-198` (`0x06C6`, `0x06CD`) are
+clustering cut into `main-ec-121` and `main-ec-198` (`0x06C6`, `0x06CD`) are
 countdowns the same routine decrements. The block is gated twice — on
 `0x0440` (43 read sites, no direct `MOV DPTR` writer, value not established —
 its one writer is the CODE-table scatter at bank1 `0xA530` that stores `0x00`
@@ -3685,10 +3697,16 @@ because `ASSIGN` at line 138 contains `"="` and `"== 0x12".startswith("=")`.
 Regenerating the census with a one-line guard that rejects a bare `=` followed
 by a second `=`: **833 references leave the `write` column across 210 of 1,172
 addresses**, `0x08A8` goes from 84 reads / 44 writes to **126 / 2**, `0x0843`
-from 84 / 42 to **126 / 0**, and **`main-ec-002` goes from 43 addresses /
-4,965 references to 44 / 248**. Neither figure is right yet — both still carry
-the 42-fold count above — but an issue scoped to "read `main-ec-002`" would be
-scoped to a membership its own prerequisite changes. The issue's own "42 of its
+from 84 / 42 to **126 / 0**, and **`main-ec-003` goes from 43 addresses /
+4,965 references to 44 / 248** — a shape and not a row, since the guard's
+output is not the committed census. Neither figure is right yet — both still
+carry the 42-fold count above — but an issue scoped to "read `main-ec-002`"
+would be scoped to a membership its own prerequisite changes. (The id in that
+quoted scope is `main-ec-003` in the committed census, per the correction
+above; and the 44 / 248 it lands on is the size and reference count
+`main-ec-002` carries, which is a coincidence of two numbers and not of a
+membership — `xdata-06c2-06db-timers.md` §6a says so at the table.) The
+issue's own "42 of its
 comparisons are `==`" is a second, independent misreading:
 `xdata-register-map.md` §4.1 defines `read+write` as "an `=` target whose
 right-hand side names the same address", so those 42 are 42 read-modify-writes,
