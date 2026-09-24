@@ -28,7 +28,7 @@ void write_057b_057c_057d_and_call_888c(void)
     if (DAT_EXTMEM_0539 == '\x01') goto LAB_CODE_932a;
   }
   else {
-    cVar1 = (DAT_EXTMEM_0403 < 0x14) << 7;
+    cVar1 = (BAT_DESIGN_CAPACITY_1 < 0x14) << 7;
     if (cVar1 < '\0') goto LAB_CODE_932a;
   }
   DAT_EXTMEM_057d = 0x11;

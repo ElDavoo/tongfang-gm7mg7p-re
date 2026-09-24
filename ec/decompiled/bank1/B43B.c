@@ -20,7 +20,7 @@ void FUN_CODE_b43b(char param_1,byte param_2,byte param_3)
   cVar2 = '\0';
   if (((((DAT_EXTMEM_0497 & 1) == 0) ||
        (cVar3 = read_xdata_pair_to_b_and_a(0x834,0), cVar3 == '\0' && param_1 == '\0')) &&
-      ((DAT_EXTMEM_0367 >> 2 & 1) != 1)) && (DAT_EXTMEM_0432 == '\0')) {
+      ((DAT_EXTMEM_0367 >> 2 & 1) != 1)) && (BAT_STATUS_1 == '\0')) {
 LAB_CODE_b487:
     write_r1r2_to_xdata_pair(0x434);
   }
@@ -42,7 +42,7 @@ LAB_CODE_b487:
     return;
   }
   cVar2 = '\0';
-  if (DAT_EXTMEM_0432 == '\0') goto LAB_CODE_b4b6;
+  if (BAT_STATUS_1 == '\0') goto LAB_CODE_b4b6;
   read_xdata_pair_to_r1r2(0x50e);
   if (cVar2 < '\0') {
     BANK0_R2 = BANK0_R2 ^ 0xff;
@@ -53,7 +53,7 @@ LAB_CODE_b487:
   if ((DAT_EXTMEM_0497 & 1) == 1) {
     if (DAT_EXTMEM_0539 != '\x01') goto LAB_CODE_b4de;
   }
-  else if (0x13 < DAT_EXTMEM_0403) {
+  else if (0x13 < BAT_DESIGN_CAPACITY_1) {
 LAB_CODE_b4de:
     if ((DAT_EXTMEM_0318 != -0x20) || (DAT_EXTMEM_0319 != '.')) {
       param_3 = 0x1a;

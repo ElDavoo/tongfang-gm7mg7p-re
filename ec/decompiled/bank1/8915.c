@@ -17,7 +17,7 @@
 void saturating_count_09f0_then_call_88f0(char param_1)
 
 {
-  if ((DAT_EXTMEM_06e6 == '\x01') && (DAT_EXTMEM_0440 != '\0')) {
+  if ((DAT_EXTMEM_06e6 == '\x01') && (XDATA_0440 != '\0')) {
     if (DAT_EXTMEM_047c != '\0') {
       if (DAT_EXTMEM_09f0 + 1 < 0x10) {
         DAT_EXTMEM_09f0 = DAT_EXTMEM_09f0 + 1;

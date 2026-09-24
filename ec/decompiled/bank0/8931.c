@@ -16,9 +16,9 @@ void FUN_CODE_8931(byte param_1)
   undefined1 *puVar4;
   char *pcVar5;
   
-  puVar4 = &DAT_EXTMEM_08eb;
+  puVar4 = &XDATA_08EB;
   bVar3 = in_PSW & 0xdd;
-  if ((DAT_EXTMEM_08eb & 0x48) != 0) {
+  if ((XDATA_08EB & 0x48) != 0) {
     mov_a_c8();
     *puVar4 = 200;
     copy_dptr_byte_to_075c();

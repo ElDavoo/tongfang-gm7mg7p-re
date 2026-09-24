@@ -15,14 +15,14 @@
 void dispatch_045a_bits_to_1a44_1a5c_1a50(void)
 
 {
-  if (((DAT_EXTMEM_045a & 1) != 0) && ((DAT_EXTMEM_072d & 1) != 0)) {
-    if ((DAT_EXTMEM_045a >> 4 & 1) != 1) {
+  if (((XDATA_045A & 1) != 0) && ((DAT_EXTMEM_072d & 1) != 0)) {
+    if ((XDATA_045A >> 4 & 1) != 1) {
       load_dptr_c1d8_tail_jump_1100();
     }
-    if ((DAT_EXTMEM_045a >> 5 & 1) != 1) {
+    if ((XDATA_045A >> 5 & 1) != 1) {
       load_dptr_c2ef_tail_jump_1100();
     }
-    if (-1 < (char)DAT_EXTMEM_045a) {
+    if (-1 < (char)XDATA_045A) {
       load_dptr_c2b2_tail_jump_1100();
     }
     DAT_EXTMEM_072d = DAT_EXTMEM_072d & 0xfe;

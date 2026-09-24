@@ -16,7 +16,7 @@
 void dispatch_on_0751_bits(char param_1)
 
 {
-  if ((DAT_EXTMEM_06e6 == '\x01') && (DAT_EXTMEM_0440 != '\0')) {
+  if ((DAT_EXTMEM_06e6 == '\x01') && (XDATA_0440 != '\0')) {
     if (((MANUAL_FAN_CTRL >> 4 & 1) == 0) || ((BIOS_INFO_3 >> 1 & 1) == 0)) {
       clear_1606_bit3();
     }

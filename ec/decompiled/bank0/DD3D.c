@@ -14,7 +14,7 @@
 void store_0d32_to_045d_0704(void)
 
 {
-  DAT_EXTMEM_045d = DAT_INTMEM_32;
+  XDATA_045D = DAT_INTMEM_32;
   DAT_EXTMEM_0704 = DAT_INTMEM_32;
   return;
 }

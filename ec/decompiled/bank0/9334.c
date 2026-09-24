@@ -27,7 +27,7 @@ void seed_tcc_defaults_from_ba36(undefined1 param_1,byte param_2)
   short sVar4;
   undefined2 uVar5;
   
-  if ((DAT_EXTMEM_06e6 != '\x01') || (DAT_EXTMEM_0440 == '\0')) {
+  if ((DAT_EXTMEM_06e6 != '\x01') || (XDATA_0440 == '\0')) {
     DAT_EXTMEM_098c = 0;
     return;
   }
@@ -74,7 +74,7 @@ void seed_tcc_defaults_from_ba36(undefined1 param_1,byte param_2)
     DAT_EXTMEM_0a49 = 1;
   }
 LAB_CODE_93f4:
-  if (DAT_EXTMEM_0456 < '\0') {
+  if (SYSTEM_ID < '\0') {
     FUN_CODE_c26e();
     if (param_2 == 0) {
       uVar5 = 0xa47;

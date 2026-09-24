@@ -8,8 +8,8 @@
    or more, then sets or clears bit 5 of the same byte according to whether 0x0806 is non-zero while
    bit 0 of 0x0490 is clear. It ends at 0xC49F when 0x0780 == 0xA2, when bit 0 of 0x0490 is set with
    0x0723, 0x09E6 both zero, or when 0x06E6 is neither 0x84 nor has that bit set; otherwise it
-   tail-jumps to 0xC497. 0x0723, 0x0622, 0x0806, 0x09E6 and 0x06E6 have no entry in
-   ec/annotations/registers.yaml.
+   tail-jumps to 0xC497. 0x0723, 0x0622, 0x0806 and 0x06E6 have no entry in
+   ec/annotations/registers.yaml; 0x09E6 is now carried there as XDATA_09E6.
    type: logic
    evidence: ec/decompiled/bank0/90FE.asm; ec/decompiled/bank0/90FE.c
    basis: hand-decoded */
@@ -30,7 +30,7 @@ void update_flag_bits_in_0723(void)
     DAT_EXTMEM_0723 = DAT_EXTMEM_0723 | 0x20;
   }
   if ((DAT_EXTMEM_0780 != -0x5e) &&
-     (((DAT_EXTMEM_0723 != 0 || (DAT_EXTMEM_09e6 != '\0')) ||
+     (((DAT_EXTMEM_0723 != 0 || (XDATA_09E6 != '\0')) ||
       (((DAT_EXTMEM_0490 & 1) != 1 && (DAT_EXTMEM_06e6 == -0x7c)))))) {
     set_160a_bit1();
     return;

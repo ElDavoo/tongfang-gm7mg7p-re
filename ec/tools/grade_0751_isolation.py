@@ -17,33 +17,36 @@ bytes §4 names moved inside it:
     was written, and neither is §4.2's answer
   * `0x07C6`        -- the byte the vendor brackets its fan-table write with (§4.3)
 
-and, reported but not graded, the candidate fan-PWM bytes `0x075B`/`0x075C`
+and, reported but not graded, the fan duty bytes `0x075B`/`0x075C`
 and `CPU_TEMP` `0x043E` / `GPU_TEMP` `0x044F` (§4.4/§4.5), plus whether
 `0x0751` still holds the written value in the after-dump (§4.6).
 
 Each context byte that moved in a window is also summarised as a
 `window delta` -- first value, last value, net, and how many times it moved
 inside the window. That is arithmetic on rows already in the capture, not a
-new judgement: §4.4's deciding comparison is how far the PWM bytes drifted
+new judgement: §4.4's deciding comparison is how far the duty bytes drifted
 between one mark and the next, and reading that off the change rows means
 doing the subtraction by eye across two terminal windows.
 
 `--dump-pair` reads the same §4.1-§4.3 bytes a second, wider way, from a
-before/after dump pair per range -- the two range dumps §3's steps 0 and 6
-take, which bracket the whole block where each CSV window brackets one arm
-of it. That bracket is complementary to the windowed one, not a stronger
-form of it: a byte that moved at any point in the block and is back where it
+before/after dump pair per range -- the range dumps §3's steps 0 and 6 take,
+which bracket the whole block where each CSV window brackets one arm of it.
+That bracket is complementary to the windowed one, not a stronger form of
+it: a byte that moved at any point in the block and is back where it
 started by the after-dump reads unchanged here, and a byte that moves
 entirely between two of `ec_watch.py`'s sweeps is in no change row at all.
 Each read has a gap the other does not close. An address one dump covers and
 the other does not is a coverage gap, never a change.
 
 **This is not the §7 call and cannot be.** §7 moves `MANUAL_FAN_CTRL` off
-`present-untested` on fan PWM or package power moving under a fixed load.
+`present-untested` on fan duty or package power moving under a fixed load.
 Those bytes are captured and printed here, but printing them is not grading
-them: the PWM address is unconfirmed (§4.4) and a fan's duty moves with the
-die whether or not anything wrote `0x0751` -- separating those is what the
-procedure's no-op control arm is for, not this script. Package power is read
+them: a fan's duty moves with the die whether or not anything wrote
+`0x0751` -- separating those is what the procedure's no-op control arm is
+for, not this script. (The duty bytes used to be excluded for a second
+reason as well, that §4.4 called their identity unconfirmed. Issue #123
+identified them, so that reason is gone; the die-drift one is not, and it
+alone keeps them out of the graded set.) Package power is read
 by hand from HWiNFO (§4.5) and is in no capture. What this script says is
 "of the bytes the sweep covers, these moved and these did not"; the call still
 comes from a human holding the rest of the notes.
@@ -79,7 +82,9 @@ MARK_MERGE_SECONDS = 5
 
 # The bytes §4 asks about, in its order. Everything else in the sweep is
 # reported as context only: §4.4 says to read the whole 0x0700-0x07FF range
-# rather than the two addresses issue #99 names, because neither is confirmed.
+# rather than the two addresses issue #99 names, because the neighbourhood
+# around them is still the least mapped part of that page -- 0x0786 in
+# particular carries three disagreeing vendor names (issue #123).
 #
 # The fan table stops at 0x0F5C because of what the next three bytes are.
 # ec/annotations/manual-fan-ctrl-0751.md §6 decodes the handler at 0x888D as
@@ -141,11 +146,15 @@ FAN_TABLE_NEXT_STEP = (
 # have to find them in the generic "other addresses" list to notice them --
 # but they are printed per window precisely so the no-op control arm and the
 # write under test can be compared by eye, change row by change row and then
-# as the net the rows add up to. The PWM pair is where issue #99 says to look
-# and is in no entry of registers.yaml; the two temperatures are
-# confirmed-working, and are here as the record of whether the load was flat.
+# as the net the rows add up to. The duty pair is identified -- issue #123
+# gave them the vendor's ADDR_EC_MAIN_FAN_L/R_DUTY_BYTE names and entries in
+# registers.yaml -- and it stays out of WATCHED anyway, because a duty byte
+# drifts on a warming die whether or not anything wrote 0x0751: grading it
+# would report "moved" on every window, the no-op control arm included, and
+# leave nothing to compare. The two temperatures are confirmed-working, and
+# are here as the record of whether the load was flat.
 CONTEXT = (
-    ("candidate fan PWM 0x075B/0x075C -- unconfirmed (§4.4)",
+    ("fan duty 0x075B/0x075C -- MAIN_FAN_L/R_DUTY (§4.4)",
      range(0x075B, 0x075D)),
     ("CPU_TEMP 0x043E / GPU_TEMP 0x044F -- confirmed (§4.5)",
      (0x043E, 0x044F)),
@@ -310,7 +319,7 @@ def report_window(w, n, total):
               for name, addrs in CONTEXT]
     groups = [(name, hits) for name, hits in groups if hits]
     if groups:
-        print("    candidate PWM / temperature bytes (§4.4/§4.5) -- context, "
+        print("    fan duty / temperature bytes (§4.4/§4.5) -- context, "
               "not graded here:")
         print("    net is the raw byte difference across the whole window, "
               "not a duty percentage:")
@@ -402,6 +411,15 @@ def report_dump_pairs(pairs):
     then the §4.4/§4.5 context bytes printed and not graded, then everything
     else named for the human. No third category -- a byte's membership in one
     bucket is the same question here as it is per window.
+
+    A §4.4/§4.5 group the pair's addresses do not cover is named *not
+    covered by this pair* as well, on the §4.1-§4.3 branch's reasoning: §3
+    dumps one range per pair, so the temperatures are in neither the `0x0700`
+    nor the `0x0F00` one, and silence under a heading that promises them
+    reads as "nothing moved" when it means "never read". A group the pair
+    does cover but that held still still prints nothing -- that is the
+    windowed read's silence, not this branch's, and the §6 fixture never
+    reaches it.
     """
     print("\n=== whole-block dump pairs (§4.1-§4.3) ===")
     if not pairs:
@@ -428,8 +446,10 @@ def report_dump_pairs(pairs):
             hits = [a for a in moved if a in addrs]
             if not any(a in addrs for a in common):
                 # The fan table is not in a 0x0700 dump and the PLs are not
-                # in a 0x0F00 one, so §6's pairs each cover some of §4.1-§4.3
-                # and not all. Silence there would read as "nothing moved".
+                # in a 0x0F00 one, and the 0x0400 pair covers none of
+                # §4.1-§4.3 at all, so §6's pairs each cover some of
+                # §4.1-§4.3 and not all. Silence there would read as
+                # "nothing moved".
                 print(f"    {name}: not covered by this pair")
             elif not hits:
                 print(f"    {name}: unchanged across the block")
@@ -444,13 +464,28 @@ def report_dump_pairs(pairs):
                     for line in note_lines(FAN_TABLE_NEXT_STEP):
                         print(line)
 
-        groups = [(name, [a for a in moved if a in addrs])
-                  for name, addrs in CONTEXT]
-        groups = [(name, hits) for name, hits in groups if hits]
+        # `None` is a group this pair's addresses do not reach at all, kept
+        # apart from one that is reached and held still: "never read" is a
+        # different answer from "read and did not move", and the temperatures
+        # are in neither the 0x0700 nor the 0x0F00 dump, so the two bytes
+        # §4.5's comparison rests on would otherwise vanish under a heading
+        # that promises them. A reached group that did not move stays silent,
+        # as it does per window.
+        groups = []
+        for name, addrs in CONTEXT:
+            if not any(a in addrs for a in common):
+                groups.append((name, None))
+            else:
+                groups.append((name, [a for a in moved if a in addrs]))
+        groups = [(name, hits) for name, hits in groups
+                  if hits is None or hits]
         if groups:
-            print("    candidate PWM / temperature bytes (§4.4/§4.5) -- "
+            print("    fan duty / temperature bytes (§4.4/§4.5) -- "
                   "context, not graded here:")
             for name, hits in groups:
+                if hits is None:
+                    print(f"      {name}: not covered by this pair")
+                    continue
                 print(f"      {name}:")
                 for a in hits:
                     print(f"        0x{a:04X}  0x{before[a]:02X} -> "
@@ -563,16 +598,16 @@ def main(argv=None):
         print("  The whole-block dump pairs above were read as a second, "
               "wider bracket on the same §4.1-§4.3 bytes. That is two "
               "brackets, not two results: each has a gap the other does not "
-              "close, and neither grades the PWM or temperature bytes the "
+              "close, and neither grades the duty or temperature bytes the "
               "pairs happen to print.")
-    print("  Any candidate PWM and temperature bytes printed above are "
-          "context, not a result: 0x075B/0x075C are where issue #99 says "
-          "to look, not a "
-          "confirmed fan-PWM register, and a fan's duty moves with the die "
+    print("  Any fan duty and temperature bytes printed above are "
+          "context, not a result: 0x075B/0x075C are the vendor's "
+          "ADDR_EC_MAIN_FAN_L/R_DUTY_BYTE (issue #123), which the Control "
+          "Center only reads, and a fan's duty moves with the die "
           "whether or not anything wrote 0x0751 -- which is what §3's no-op "
           "control arm measures, and what this script cannot. CPU package "
           "power (§4.5) is in no EC sweep and is still read by hand.")
-    print("  §7 keys `confirmed-working` on fan PWM or package power moving "
+    print("  §7 keys `confirmed-working` on fan duty or package power moving "
           "under a fixed load, so this output is an input to that call and "
           "not the call itself. `confirmed-inert` as a standalone control "
           "additionally needs all three values, with and without the vendor "
