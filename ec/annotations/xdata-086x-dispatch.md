@@ -96,12 +96,12 @@ one carrying **per-address direction** here.
 > **Every clause of that is false against the committed tree, and false in
 > the same direction twice over: it describes a classifier that had already
 > been fixed, and a census that had already been regenerated.** `==` is
-> excluded. `ASSIGN` is at `ec/tools/xdata_register_map.py:165` and
-> `store_target()` at `:505`; the rejection is at `:524-525`, the reason for
-> it in the function's own comment at `:515-516`, and the tree-wide count of
-> 838 at `:523`. The module docstring states the rule in the past tense at
+> excluded. `ASSIGN` is at `ec/tools/xdata_register_map.py:188` and
+> `store_target()` at `:740`; the rejection is at `:759-760`, the reason for
+> it in the function's own comment at `:750-751`, and the tree-wide count of
+> 838 at `:758`. The module docstring states the rule in the past tense at
 > `:64-75` and credits **issue #178**, which merged before PR #225 did. Both
-> CSVs are current: the committed `ORACLE` comment at `:258-259` records
+> CSVs are current: the committed `ORACLE` comment at `:301-303` records
 > `named_in_tree` moving `131 -> 146` with issue #180's 15
 > `0x086x`/`0x1Cxx`/`0x1Fxx` entries — this very cluster's — and `146 -> 150`
 > with issue #183's four since. `--check` and `--self-test` both exit 0 on
@@ -110,6 +110,33 @@ one carrying **per-address direction** here.
 > put it there. And the "60 ... not yet spelled" figure was already wrong
 > when it was written: `xdata-symbols.csv` holds 172 rows against
 > `named_in_tree` 150, a gap of **22**.
+>
+> **CORRECTION (2026-09-24, issue #280) to the figures in that last
+> sentence, which read as committed above.** `xdata-symbols.csv` now holds
+> **173** rows, not 172, so the gap is **23**, not 22; `named_in_tree` is
+> still 150. The extra row is `XDATA_0390`, added by issue #259, and the
+> census did not move — which is the whole of issue #259's result, and why
+> `0x0390` is one of the 23 below. The figure was always a difference between
+> two files rather than a finding: nothing in the correction above turned 22
+> into a defect, and nothing about its becoming 23 is one either.
+>
+> **What the 22 did leave unexplained, and no longer does: *which*
+> addresses.** A gap of a size, checked as a count, says only that the 150 and
+> the "60 ... not yet spelled" figure cannot both be right. It does not say
+> what the missing addresses are, or why, and that is what the correction
+> above was reaching for. It is now recorded per address in `NOT_IN_TREE` in
+> `ec/tools/xdata_register_map.py`, beside `BLIND_SPOT`, and the self-test
+> asserts the **set** rather than the count — so `ORACLE["named_in_tree"]` is
+> `len(symbols) - len(NOT_IN_TREE)`, 173 − 23, arithmetic rather than a number
+> to be taken on trust. **The accessor-argument reading lands there:** seven of
+> the 23 are reached only as a bare hex literal handed to a helper
+> (`read_xdata_pair_to_r1r2(0x40a)` at `bank1/AE2B.c:20`, and
+> `add_full_product_to_dptr(0x420,0x60,…)` at `pd/34A5.c:18`), and two more
+> through what is plainly a decompiler mistake — the export calls
+> `FUN_CODE_0402` and `FUN_CODE_0408` where the assembly reads
+> `mov DPTR,#0x402; lcall 0x889e`, and `index.csv` lists the two as
+> functions. The reasons use a three-word vocabulary with no word for
+> absence, and the self-test asserts that no line can acquire one.
 
 **What the census says, and what pins it.** `0x0860` is **14 read, 2 write,
 0 read+write, 1 passed-to-call**. The two stores are `bank0/D281.c:18`
@@ -118,14 +145,23 @@ one carrying **per-address direction** here.
 `dispatch_on_0860` — an address handed to a call is that bucket and not a
 read, which is why the census's 14 reads are all comparisons. The row is not
 the tool's own sum: `HAND_CHECKED["0x0860"]` at
-`ec/tools/xdata_register_map.py:359` pins exactly those buckets, and the
-self-test's "hand-checked direction oracle" assertion at `:1490-1496` fails
+`ec/tools/xdata_register_map.py:575` pins exactly those buckets, and the
+self-test's "hand-checked direction oracle" assertion at `:1872-1878` fails
 loudly if a generated row ever parts company with it. It is one of five
-addresses in that oracle, and `0x0860` is the one that shows how far the
-pre-fix classifier got: the row then read 0 read / 13 `write` / 3
-`read+write`, a pure write-side dispatch byte, for a byte whose four opcode
-reads of §8 are this same routine's early-out, two of the case tests, and the
-dispatch itself.
+addresses in that oracle — and since issue #280 it is **not** the only net:
+the self-test now also asserts, over the whole tree rather than over these
+five, that every occurrence the census buckets `write` or `read+write` has an
+assignment and not a `==` after the address, measured by a second code path
+that does not re-implement the classifier. That check covers 5,662
+occurrences across 1,008 addresses, and against the pre-fix classifier it
+fails naming `0x0860` and `0x0440` — so the hand check is now the per-address
+*count* oracle and the wide one is the per-occurrence shape oracle, and the
+two are not substitutes for each other.
+
+`0x0860` is the one that shows how far the pre-fix classifier got: the row
+then read 0 read / 13 `write` / 3 `read+write`, a pure write-side dispatch
+byte, for a byte whose four opcode reads of §8 are this same routine's
+early-out, two of the case tests, and the dispatch itself.
 
 **The comparison count is high and the writer count is low because `0x0860`
 is a dispatch selector, and that is structural rather than an artefact of any
