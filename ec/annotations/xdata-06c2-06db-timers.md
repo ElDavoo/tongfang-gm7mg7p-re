@@ -24,6 +24,16 @@ byte count below is re-derivable from the committed image by §1, and
 > the quote is the evidence that the id moved.
 > `../tools/check_cluster_citations.py` is what holds the rest of the tree to
 > the census.
+>
+> **This block now has a carried name, and the `main-ec-NNN` above is still a
+> rank** (issue #274). The census's `cluster_key` is a content hash over the
+> cluster's program and its membership, and `annotations/xdata-cluster-names.csv`
+> gives this cluster the name `counter-sweep` — a name follows a cluster through
+> a regeneration in changed form, an id does not, and `xdata-register-map.md`
+> §4.4 is the method and the measurements behind it. Nothing in this file's
+> block is rewritten: the ids above are left where the correction found them,
+> because the quote and the correction are the record that the rank moved.
+> `counter-sweep` is the handle new prose should quote.
 
 Nothing here is a live observation. No register was read, written or read back,
 and nothing ran on the machine (`../../CLAUDE.md`, "Cloud agents cannot reach

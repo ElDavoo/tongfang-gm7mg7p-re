@@ -36,11 +36,15 @@ spec.loader.exec_module(ccc)
 
 # A census small enough to reason about by hand: two clusters that share no
 # address, which is the property the real main-ec-002 and main-ec-003 also have
-# and the reason a wrong id cannot be caught by "close enough".
+# and the reason a wrong id cannot be caught by "close enough". The keys and
+# names are the census's own two durable handles, so a case can cite a cluster
+# by either without inventing a third way to spell it.
 MEMBERS = {
     'main-ec-002': {'0x044C', '0x0860', '0x086E'},
     'main-ec-003': {'0x0460', '0x08A8'},
 }
+BY_KEY = {'k0a0b0c0d0e0f': 'main-ec-002', 'k1a1b1c1d1e1f': 'main-ec-003'}
+BY_NAME = {'level-block-086x': 'main-ec-002', 'counter-sweep': 'main-ec-003'}
 KNOWN = {'0x044C', '0x0860', '0x086E', '0x0460', '0x08A8', '0x06C6', '0x06CD',
          '0x09CE'}
 
@@ -62,22 +66,26 @@ COUNTS = {
                     'addr_range': '0x0460-0x09CE'},
 }
 
-def _problems(text, members=None, counts=None):
+
+def _problems(text, members=None, counts=None, by_key=None, by_name=None):
     """The problem tuples the tool reports for one piece of prose."""
     with tempfile.NamedTemporaryFile('w', suffix='.md', delete=False) as f:
         f.write(text)
         path = f.name
     try:
-        problems, _ = ccc.check(path, members or MEMBERS, counts or COUNTS,
-                                KNOWN, False)
+        problems, _ = ccc.check(
+            path, members or MEMBERS, counts or COUNTS, KNOWN,
+            BY_KEY if by_key is None else by_key,
+            BY_NAME if by_name is None else by_name,
+            False)
     finally:
         os.unlink(path)
     return problems
 
 
-def cited(text, members=None):
+def cited(text, members=None, counts=None, by_key=None, by_name=None):
     """(count, first address) the tool reports for one piece of prose."""
-    problems = _problems(text, members)
+    problems = _problems(text, members, counts, by_key, by_name)
     return len(problems), problems[0][3] if problems else None
 
 
@@ -127,7 +135,8 @@ class ReportsRealDrift(unittest.TestCase):
             f.write(text)
             path = f.name
         try:
-            problems, _ = ccc.check(path, MEMBERS, COUNTS, KNOWN, False)
+            problems, _ = ccc.check(path, MEMBERS, COUNTS, KNOWN,
+                                    BY_KEY, BY_NAME, False)
         finally:
             os.unlink(path)
         self.assertEqual(len(problems), 1)
@@ -183,6 +192,66 @@ class HoldsThePairing(unittest.TestCase):
         text = ('`main-ec-002` is the cluster of `0x044C 0x086E 0x06C6`, and '
                 '`main-ec-003` holds `0x08A8`\n')
         self.assertEqual(cited(text), (1, '0x06C6'))
+
+
+class TheTwoDurableForms(unittest.TestCase):
+    """`cluster_key` and `cluster_name`, which is what a citation uses once the
+    rank stops being an identity (issue #274).
+
+    Each is a spelling of the same pointer, so each has to be held to the same
+    membership the `main-ec-NNN` form already was -- a new form that is
+    accepted without being checked would be a way of writing a citation this
+    tool cannot catch drift in, which is the opposite of what it is for.
+    """
+
+    def test_key_form_right_key_is_silent(self):
+        text = 'The clustering put `0x0860` in `k0a0b0c0d0e0f`.\n'
+        self.assertEqual(cited(text), (0, None))
+
+    def test_key_form_wrong_key_fails(self):
+        text = 'The clustering put `0x0860` in `k1a1b1c1d1e1f`.\n'
+        n, addr = cited(text)
+        self.assertEqual((n, addr), (1, '0x0860'))
+
+    def test_name_form_right_name_is_silent(self):
+        text = 'The `counter-sweep` cluster holds `0x08A8`.\n'
+        self.assertEqual(cited(text), (0, None))
+
+    def test_name_form_wrong_name_fails(self):
+        text = 'The `counter-sweep` cluster holds `0x0860`.\n'
+        n, addr = cited(text)
+        self.assertEqual((n, addr), (1, '0x0860'))
+
+    def test_key_and_name_of_the_same_cluster_are_one_citation(self):
+        # A sentence that cites both is making one claim about one cluster, so
+        # it is satisfied by either -- the same weaker sense the docstring
+        # promises for a sentence naming two ids.
+        text = 'The `level-block-086x` cluster, `k0a0b0c0d0e0f`, holds `0x0860`.\n'
+        self.assertEqual(cited(text), (0, None))
+
+    def test_a_key_this_census_does_not_have_is_not_a_citation(self):
+        # Not found by this method, not a cluster with no members: a key for a
+        # membership the census does not have cannot be a pointer, and
+        # reporting it as one would invent a failure.
+        text = 'The clustering put `0x0860` in `kdeadbeefcafe`.\n'
+        self.assertEqual(cited(text), (0, None))
+
+    def test_a_name_this_census_does_not_carry_is_not_a_citation(self):
+        text = 'The `a-name-nobody-assigned` cluster holds `0x0860`.\n'
+        self.assertEqual(cited(text), (0, None))
+
+    def test_a_name_is_matched_whole_and_not_inside_a_longer_one(self):
+        # The regex is built from the names, so a name added later that happens
+        # to be a prefix of another must not fire inside it.
+        by_name = {'gate': 'main-ec-002', 'gate-block': 'main-ec-003'}
+        text = 'The `gate-block` cluster holds `0x0860`.\n'
+        self.assertEqual(cited(text, by_name=by_name), (1, '0x0860'))
+
+    def test_a_name_mention_without_a_membership_claim_is_still_skipped(self):
+        # The membership cue is the same guard the id form has; a new citation
+        # form is not a new exemption from it.
+        text = '| `counter-sweep` | 43 | 4,965 | `0x0460`-`0x09CE` | none | a row |\n'
+        self.assertEqual(cited(text), (0, None))
 
 
 class SkipsDeliberately(unittest.TestCase):
@@ -393,17 +462,105 @@ class CensusParsing(unittest.TestCase):
                 f.write('addr,program,cluster_id\n')
                 f.write('0x0860,main-ec,main-ec-002\n')
                 f.write('0x086E,main-ec,main-ec-002\n')
-            old = (ccc.CLUSTERS, ccc.REGISTERS)
-            ccc.CLUSTERS, ccc.REGISTERS = clusters, registers
-            try:
-                members, known, counts = ccc.census()
-            finally:
-                ccc.CLUSTERS, ccc.REGISTERS = old
+            members, known, counts, by_key, by_name = ccc.census(clusters, registers)
         self.assertEqual(members, {'main-ec-002': {'0x0860', '0x086E'}})
         self.assertEqual(known, {'0x0860', '0x086E'})
         self.assertEqual(counts, {'main-ec-002': {'size': 2, 'refs': 10,
                                                    'named': 1,
                                                    'addr_range': '0x0860-0x086E'}})
+        # A census written before the key and name columns still resolves every
+        # `main-ec-NNN` sentence, rather than raising on a missing column.
+        self.assertEqual((by_key, by_name), ({}, {}))
+
+    def test_key_and_name_resolve_to_cluster_ids(self):
+        header = ('cluster_id,program,size,refs,addrs,cluster_key,cluster_name\n')
+        with tempfile.TemporaryDirectory() as d:
+            clusters = os.path.join(d, 'clusters.csv')
+            registers = os.path.join(d, 'registers.csv')
+            with open(clusters, 'w') as f:
+                f.write(header)
+                f.write('main-ec-002,main-ec,2,10,0x0860 0x086E,k0a0b0c0d0e0f,'
+                        'level-block-086x\n')
+                f.write('main-ec-003,main-ec,1,4,0x08A8,k1a1b1c1d1e1f,\n')
+            with open(registers, 'w') as f:
+                f.write('addr,program,cluster_id\n')
+                f.write('0x0860,main-ec,main-ec-002\n')
+            members, known, counts, by_key, by_name = ccc.census(clusters, registers)
+        self.assertEqual(by_key, {'k0a0b0c0d0e0f': 'main-ec-002',
+                                  'k1a1b1c1d1e1f': 'main-ec-003'})
+        # A cluster with no name contributes no name, and must not blank out a
+        # real one by being read as the empty string.
+        self.assertEqual(by_name, {'level-block-086x': 'main-ec-002'})
+        self.assertEqual(len(members), 2)
+        # Columns the two rules need are absent here rather than empty, and
+        # `census()` still yields the figures the count rule reads.
+        self.assertEqual(counts['main-ec-002'],
+                         {'size': 2, 'refs': 10, 'named': 0, 'addr_range': ''})
+
+
+class AnAlternateCensus(unittest.TestCase):
+    """`--clusters`/`--registers`: the same sentences against a regeneration.
+
+    This is the half of the issue's test that `check_cluster_citations.py` on
+    its own could not do. It checks prose against whatever the committed CSV
+    says today, so it holds the line for one generation; the point of
+    `xdata_register_map.py --map` is that a reader can run the *same*
+    sentences against the generation a reshuffle produced and find out which of
+    them the reshuffle invalidated.
+    """
+
+    def test_alternate_census_is_what_gets_checked_against(self):
+        # A census in which the two clusters have swapped membership. The
+        # sentence is right about the committed numbering and wrong about this
+        # one, which is exactly the drift #253 was.
+        with tempfile.TemporaryDirectory() as d:
+            clusters = os.path.join(d, 'clusters.csv')
+            registers = os.path.join(d, 'registers.csv')
+            with open(clusters, 'w') as f:
+                f.write('cluster_id,program,size,refs,addrs\n')
+                f.write('main-ec-002,main-ec,2,10,0x0460 0x08A8\n')
+                f.write('main-ec-003,main-ec,2,10,0x044C 0x0860 0x086E\n')
+            with open(registers, 'w') as f:
+                f.write('addr,program,cluster_id\n')
+                f.write('0x0860,main-ec,main-ec-003\n')
+            members, known, counts, by_key, by_name = ccc.census(clusters, registers)
+        with tempfile.NamedTemporaryFile('w', suffix='.md', delete=False) as f:
+            f.write('The clustering put `0x0860` in `main-ec-002`.\n')
+            path = f.name
+        try:
+            problems, _ = ccc.check(path, members, counts, known,
+                                    by_key, by_name, False)
+        finally:
+            os.unlink(path)
+        self.assertEqual([p[3] for p in problems], ['0x0860'])
+        # And the committed census says nothing wrong with the same sentence.
+        self.assertEqual(cited('The clustering put `0x0860` in `main-ec-002`.\n'),
+                         (0, None))
+
+    def test_a_census_row_in_an_alternate_census_without_a_range_is_not_flagged(self):
+        # The regeneration this flag exists for is one that keeps the same
+        # columns, so a row is held to it. A hand-built `--clusters` CSV with no
+        # `addr_range` at all has nothing to hold a range against, and reading
+        # the missing column as an empty string would flag every span.
+        with tempfile.TemporaryDirectory() as d:
+            clusters = os.path.join(d, 'clusters.csv')
+            registers = os.path.join(d, 'registers.csv')
+            with open(clusters, 'w') as f:
+                f.write('cluster_id,program,size,refs,addrs\n')
+                f.write('main-ec-002,main-ec,2,10,0x0860 0x086E\n')
+            with open(registers, 'w') as f:
+                f.write('addr,program,cluster_id\n')
+                f.write('0x0860,main-ec,main-ec-002\n')
+            members, known, counts, by_key, by_name = ccc.census(clusters, registers)
+        with tempfile.NamedTemporaryFile('w', suffix='.md', delete=False) as f:
+            f.write('| `main-ec-002` | 2 | 10 | `0x0860`-`0x086E` | 99 | a row |\n')
+            path = f.name
+        try:
+            problems, _ = ccc.check(path, members, counts, known,
+                                    by_key, by_name, False)
+        finally:
+            os.unlink(path)
+        self.assertEqual(problems, [])
 
 
 class TheCommittedTree(unittest.TestCase):

@@ -602,6 +602,182 @@ calls it two reads with no writer, the C-level census finds four
 read-modify-writes. Different methods over different units, and a real open
 question rather than an error in either.
 
+### 4.4 Two identities, because a rank is not one (2026-09-24, issue #274)
+
+`main-ec-NNN` is what sorts into that position, not what the cluster *is*. This
+section measures what that costs and records the two columns the census now
+carries so a citation can outlive the ranking. Every number below is a command
+re-run over the committed tree, and the recipe is
+`xdata-06c2-06db-timers.md` §6a's with the `==` guard issue #178 added
+**removed** instead — the classifier-and-everything-it-counts regeneration, in
+its cheapest form.
+
+**The cost, measured.** 427 clusters become 439. Of the 427 committed ids, **48
+survive intact** and **379 keep the number and change the membership the number
+names** — so an id is stable for one generation, not across one. That is the
+whole of issue #253's mechanism, and it is a property of the ordering key, not
+of the census.
+
+| | of 427 committed clusters |
+|---|---:|
+| rank (`main-ec-NNN`) intact across the regeneration | 48 |
+| `cluster_key` — a content hash — unchanged | 409 |
+| key, else best membership overlap ≥ 0.50 | 420 |
+| …where the new cluster is claimed by more than one old row | 0 |
+
+**`cluster_key` is the cheap half.** `sha256` over the program's name and the
+cluster's space-joined sorted `addrs`, truncated to 12 hex digits and spelled
+`k<hex>`, computed in `build()` where the cluster is formed and never read back
+out of a CSV — a key that came from the file it is written to could drift with
+the file. It is in both census CSVs, is exact, and says nothing about a near
+miss: two clusters whose membership differs by one address have keys with
+nothing in common. The self-test asserts the committed census's 427 keys are
+distinct rather than taking a truncated hash's word for it.
+
+**The 18 that a key cannot carry include the two the prose cares about most,
+which is why the key is not the answer.** `main-ec-001` (108 addresses) and
+`main-ec-002` (44) are two of them, and they are the two largest clusters any
+page in the tree cites. A key-only design hands the two most-cited clusters a
+brand-new identity under exactly the regeneration this section is about. Of the
+18, **11 reach a new cluster on overlap and 7 do not reach one at all** by this
+rule (best scores 0.50-0.97 for the eleven, 0.01-0.33 for the seven).
+
+**`cluster_name` is the half that does.** `annotations/xdata-cluster-names.csv`
+is a hand-edited `cluster_key,cluster_name,note` file — the one place a human
+adds a row, the way `ghidra-functions.csv` is for functions, and the `note` is
+the evidence for the name the way that file's `evidence` column is. A generation
+carries each named cluster forward by exact key first and otherwise by best
+Jaccard against the membership the key was last seen with, at
+`CARRY_MIN_JACCARD` = 0.50 (the clustering's own default, so a name and a
+cluster are carried by the same number). All ten names survive this
+regeneration; the four whose membership moved carry at 0.96, 0.64, 0.90 and
+0.78, and the other six are `seeded` — the names file's key is still this
+cluster's key. **The margin is not close**: for each of the ten, the best match
+scores 0.64 to 1.00 and the *next* named cluster scores **0.00**, so the
+threshold is not a tuned number sitting on a cliff — any value between 0.01
+and 0.64 gives these ten the same ten answers. **That the ten are the ten
+clusters the committed prose makes a membership claim about is the point, and
+it is also the limit: 417 clusters have a key and no name, and a name nobody
+cites is a column that reads as coverage it does not have.** Adding one is a
+one-row edit.
+
+**Four outcomes, four claims.** `seeded` and `exact` are the same claim and are
+reported as two because they are two different facts about where the name came
+from. `overlap` is a weaker one and the score travels with it, in the write
+transcript, in `--self-test` and in `--map`: a name carried at 0.98 and one
+carried at 0.78 are not the same statement about the firmware. `tie` — a named
+cluster claimed by two old names at the same best score — is reported and **no
+winner is picked**, because which of them the new cluster is, is a fact about
+the clustering rather than a coin to flip. And a cluster nothing matched is
+reported as **not carried by this method**: never *gone*, never *lost*. A
+function that stopped decompiling, a threshold that moved and a cluster that
+stopped existing are three different things, and this column can only report
+that its own rule did not fire.
+
+```console
+$ rm -rf /tmp/census && mkdir -p /tmp/census/ec/tools
+$ cp ec/tools/xdata_register_map.py /tmp/census/ec/tools/
+$ for d in decompiled annotations firmware ghidra; do
+>   ln -s "$PWD/ec/$d" /tmp/census/ec/$d
+> done
+$ python3 - <<'EOF'
+p = '/tmp/census/ec/tools/xdata_register_map.py'
+s = open(p).read()
+guard = '''    if stripped.startswith("=="):
+        return False
+'''
+assert guard in s
+open(p, 'w').write(s.replace(guard, ''))
+EOF
+$ python3 /tmp/census/ec/tools/xdata_register_map.py \
+    --out-registers /tmp/census/registers.csv \
+    --out-clusters /tmp/census/clusters.csv
+  names: seeded 6, exact 0, carried by overlap 4, tied, not carried 0, with no name 429
+    main-ec-001 carries mode-oem-init by overlap, Jaccard 0.96 from k5be7031564f8 -- re-key annotations/xdata-cluster-names.csv if the name moved
+    main-ec-003 carries level-block-086x by overlap, Jaccard 0.64 from k2d9004f7707b -- re-key annotations/xdata-cluster-names.csv if the name moved
+    main-ec-013 carries user-clear-bytes by overlap, Jaccard 0.90 from k76e75f349ea7 -- re-key annotations/xdata-cluster-names.csv if the name moved
+    main-ec-022 carries page-0300 by overlap, Jaccard 0.78 from k3fdd14ddea2e -- re-key annotations/xdata-cluster-names.csv if the name moved
+wrote /tmp/census/registers.csv: 1171 rows
+wrote /tmp/census/clusters.csv: 439 rows
+  main-ec: 1062 distinct addresses, 13957 references, 388 clusters at threshold 0.5
+  pd: 157 distinct addresses, 861 references, 51 clusters at threshold 0.5
+```
+
+The `re-key` is the one hand-edit this costs, and it is named because it is
+real: the names file is keyed by `cluster_key`, so a name that survives in
+changed form is now anchored to a key the current census no longer has. A
+regeneration's owner re-keys it once; the committed self-test fails on a stale
+key rather than letting the names file drift quietly out of the census.
+
+**The names are anchored to the committed census, and this tree already needs
+the re-key it describes.** The census committed here is behind a fresh
+generation of the same tree — 427 clusters to 430, the gap §5's correction
+block records — so three of the ten names already name a membership a fresh
+run does not produce: `mode-oem-init` (`k5be7031564f8`), `level-block-086x`
+(`k2d9004f7707b`) and `user-clear-bytes` (`k76e75f349ea7`). Every key here
+resolves against `xdata-clusters.csv` as committed, which is what a
+`cluster_key` or `cluster_name` citation in this tree resolves against, so
+that is what the self-test checks and what the names file is written against.
+The gap is the pre-existing staleness `--self-test` already reports on `main`
+as "the committed CSVs match a fresh generation", not something this issue
+introduced, and closing it is a regeneration of the committed CSVs rather than
+a re-key of the names: `xdata_register_map.py --check` without `--map` is the
+command that settles it. It is written down here because the alternative is a
+red self-test that looks like this file's doing.
+
+**`--map OLD_CSV` is the report a prose sweep is driven from.** One row per old
+cluster: where it went, whether its key changed, the carried name and how, the
+Jaccard, and the membership delta address by address — the thing issue #253
+needed and did not have. Rows go to stdout as CSV and the summary to stderr, so
+the report redirects without the prose ending up in it.
+
+```console
+$ python3 /tmp/census/ec/tools/xdata_register_map.py \
+    --map ec/annotations/xdata-clusters.csv > /tmp/census/map.csv
+427 rows: 18 whose cluster_key changed, 18 whose membership changed, 7 with no
+match at 0.50, 12 carrying a name
+```
+
+`--map` reports and does not write: `--out-clusters`/`--out-registers` default
+to the committed CSVs, so a `--map` run that honoured them would overwrite the
+very census it is mapping. The CSVs for a regeneration come from the writing
+run above — the same command without `--map` — and those are the files
+`../tools/check_cluster_citations.py --clusters/--registers` reads, so the two
+compose on one tree without either overwriting the other.
+
+**The test that settles it** is `../tools/test_xdata_cluster_names.py`, which
+runs that regeneration out of a `tempfile` and then holds four things: that the
+name `counter-sweep` still resolves to a cluster containing all 43 addresses
+`xdata-06c2-06db-timers.md` §1 sweeps; that the tool says what moved about it;
+that `main-ec-001` and `main-ec-002` are carried by **overlap and not by key**;
+and that no name is lost. What it measures is sharper than "nothing moved": the
+counter-sweep cluster keeps its key *and* its exact 43-address membership here,
+and only its **rank** changes, `main-ec-003` → `main-ec-002`, because a
+44-address cluster sorts ahead of a 43-address one once the `==` guard is gone.
+A name and a key both survive that; the rank is the only one of the three that
+does not, and `main-ec-002` in the guard-off census is a different cluster from
+`main-ec-002` in the committed one.
+
+**What this does not make true.** A `cluster_name` in the CSV cell does not
+record how it got there — that is what `--map` and the write transcript are for,
+and a name is only as good as the carry that put it there. A name that clears
+0.50 on Jaccard is a *guess about which cluster it is*, and this file's §6
+still says what a cluster is: a co-occurrence pattern in static code, evidence
+about shape and not about meaning. The counter-sweep cluster is 43 addresses and
+4,965 references and 93% of those references are one 393-byte routine counted 42
+times over (`xdata-06c2-06db-timers.md` §2a) — a name does not make that
+smaller, and `counter-sweep` names the block a page read, not a mechanism.
+A census is still a lower bound on the image: `cluster_key` is a hash of a
+membership, so a cluster the decompiler never produced has no key to lose.
+
+**The rank stays.** `cluster_id` keeps the exact values it has today, in both
+CSVs and in every page that names one, because switching over is a prose sweep
+and not a decision this change makes. `../tools/check_cluster_citations.py`
+resolves all three citation forms — `main-ec-NNN`, `cluster_key` and
+`cluster_name` — and takes `--clusters`/`--registers`, so the *same* sentences
+can be run against a regeneration's output, which is the half of the issue's
+test the committed checker could not do on its own.
+
 ## 5. The worklist, ranked
 
 By size, then reference count, then lowest address. Full rows in
@@ -610,6 +786,11 @@ By size, then reference count, then lowest address. Full rows in
 The last column is the repository's own hand annotations for the functions
 `ghidra-functions.csv` names, not this tool's reading of them — which is the
 point of §6 below.
+
+**The `key` and `name` columns are §4.4's**, and are the two ways to cite a row
+of this table that survive a regeneration. `name` is empty for six of the twelve
+rows because nothing outside this table's own census column names them, and an
+invented name would read as a reading this file does not have.
 
 **The ids in this table are not the ids the first version of this file
 published, and almost none of that is §4.3's doing.** The writer axis is built
@@ -620,7 +801,9 @@ counts addresses `ec/ghidra/xdata-symbols.csv` names, and the table grew from
 56 names to 101 without these CSVs being regenerated. (101 is this
 paragraph's figure; `xdata-symbols.csv` holds 177 names in the tree now — 177
 rows, and 177 distinct `addr`/`name` pairs, so the count is the same under
-every reading — and it is that table §5's "named inside" column counts.)
+every reading — and it is that table §5's "named inside" column counts. The
+branch that added §4.4 forked before the GPU-boost bytes `0x07D6`/`0x07D7`
+were annotated and measured 150; the 177 here is the merged tree's.)
 Sizes, reference counts and ranges are §4.3; `named inside` is mostly the
 symbol table.
 
@@ -638,6 +821,56 @@ symbol table.
 | `main-ec-010` | 12 | 35 | `0x00C0`-`0x2275` | none | `copy_direct_65_66_to_x00c0`, `copy_x00c0_pair_to_iram_67_68` |
 | `main-ec-011` | 10 | 91 | `0x0875`-`0x09E7` | 6 | `clear_08eb_bit5_09e6_09e7_08a1_089c_089d` and two unnamed `bank0` routines |
 | `main-ec-012` | 9 | 36 | `0x0300`-`0x03FE` | none | `zero_0300_03ff_then_set_3fe_3a8_3fb`, `scan_table_03de_down_stride2` — the `0x0300` page |
+counts addresses `ec/ghidra/xdata-symbols.csv` names, and the symbol table has
+grown from 44 named addresses to 150 without these CSVs, or this table, being
+re-transcribed. Sizes, reference counts and ranges are §4.3; `named inside` is
+mostly the symbol table.
+
+> **Correction, 2026-09-24 (issue #274).** Every mechanical column of this
+> table — `key`, `name`, `size`, `refs`, `range`, `named inside` — is
+> transcribed from the **committed `ec/annotations/xdata-clusters.csv`**, not
+> from a fresh `xdata_register_map.py` run, and four of them were **stale**
+> against it. `main-ec-004` was 30 addresses / 312 references and is 26 / 278;
+> `main-ec-002` had 4 named addresses inside and has 19; `main-ec-003` had
+> `none` and has all 43 of its members named; and `main-ec-001` had 29 and has
+> 33. The cause is the same as the movement the paragraph above describes and
+> none of it is about the firmware: the symbol table grew and §4.3's
+> regeneration moved the clusters, and this table is a transcription that was
+> not re-run. The hand-written last column is unchanged and is unaffected — it
+> is a reading, not a count.
+>
+> **The committed CSV is itself behind a fresh generation, and this table is
+> the committed CSV's row for row.** A fresh run of the committed tree gives
+> 430 clusters to the committed 427, and `main-ec-012` is `k66512c56e77b` /
+> 52 references where this table records `k3fdd14ddea2e` / 36. The gap is the
+> pre-existing census staleness `--self-test` already reports on `main` as "the
+> committed CSVs match a fresh generation", not something issue #274
+> introduced, and it is left visible here rather than re-transcribed away:
+> transcribing from a fresh run would make this table disagree with the CSVs
+> `check_cluster_citations.py` resolves it against, which is the direction
+> that check exists to prevent.
+>
+> Issue #272 reached the same four rows independently, from the other
+> direction: it put §5's hand-typed figures behind `check_cluster_citations.py`
+> so they could not drift again, rather than re-transcribing them once. Both
+> fixes are in this tree, and the row values above are the post-#272 ones
+> re-read from the committed census — so this block is a record of the drift
+> rather than of the only repair.
+
+| cluster | key | name | size | refs | range | named inside | the functions the cluster's addresses share |
+|---|---|---|---:|---:|---|---|---|
+| `main-ec-001` | `k5be7031564f8` | `mode-oem-init` | 108 | 1,136 | `0x030E`-`0x1809` | 33 | `fill_08xx_from_code_table`, `apply_oem_overrides_then_fill_08xx`, `mode_tick_084c_07a5_09ee`, `charge_target_update` — the mode/OEM initialisation set |
+| `main-ec-002` | `k2d9004f7707b` | `level-block-086x` | 44 | 248 | `0x044C`-`0x1F07` | 19 | `gate_06e6_442_then_sync_046a_from_086b`, `dispatch_on_0860`, `FUN_CODE_9d9b` — the `0x06E6`/`0x0860` gate block |
+| `main-ec-003` | `k733222e83898` | `counter-sweep` | 43 | 4,965 | `0x0460`-`0x09CE` | 43 | `decrement_nonzero_xdata_counters`, `read_06c6`, `skip_06c6_decrement` — one loop walking a block of counters |
+| `main-ec-004` | `kffd18a7555bf` | — | 26 | 278 | `0x030A`-`0x082F` | `0x0403` | three unnamed `bank1` routines (`0xDEE8`, `0xDEF1`, `0xDB0B`) — unnamed here, so this one needs reading before it can be titled |
+| `main-ec-005` | `k5795f893f0b3` | — | 17 | 70 | `0x0382`-`0x03C9` | none | `mul_0342_0514_into_0388_when_03d0_lt_0384`, `FUN_CODE_d6ee`, `FUN_CODE_d946` |
+| `main-ec-006` | `ka07bfc4f80cd` | — | 16 | 94 | `0x043E`-`0x300E` | `0x043E` | `FUN_CODE_9b3c`, `FUN_CODE_9c53`, `FUN_CODE_de83` |
+| `main-ec-007` | `kea0c67af9b51` | `ff-fill-stubs` | 12 | 280 | `0x0045`-`0x1504` | none | three `ff_filler_not_a_function_*`, the fill stub block |
+| `main-ec-008` | `ke96d2e265d5d` | — | 12 | 107 | `0x0A43`-`0x0FC3` | none | `call_ef17_then_copy_0f80_to_0fb1`, `store_dptr_byte_to_0fb2_copy_0f82`, `FUN_CODE_f002` |
+| `main-ec-009` | `k0ebf038645b0` | — | 12 | 40 | `0x049A`-`0x05B9` | none | `clear_049a_049e_0579_057a_05c2`, `latch_0490_bit3_or_bit7` |
+| `main-ec-010` | `k733571bb7f66` | — | 12 | 35 | `0x00C0`-`0x2275` | none | `copy_direct_65_66_to_x00c0`, `copy_x00c0_pair_to_iram_67_68` |
+| `main-ec-011` | `k76e75f349ea7` | `user-clear-bytes` | 10 | 91 | `0x0875`-`0x09E7` | 6 | `clear_08eb_bit5_09e6_09e7_08a1_089c_089d` and two unnamed `bank0` routines |
+| `main-ec-012` | `k3fdd14ddea2e` | `page-0300` | 9 | 36 | `0x0300`-`0x03FE` | none | `zero_0300_03ff_then_set_3fe_3a8_3fb`, `scan_table_03de_down_stride2` — the `0x0300` page |
 
 `main-ec-001` is the one that matters most and the one most likely to be
 misread. It is where 33 named registers land, so it looks like "the named
@@ -1042,7 +1275,12 @@ still in the `.asm`, and the census row still absent.
   the address reading should not be two efforts over the same code. Note that
   the cluster ids moved when §4.3 landed, so any follow-up issue opened against
   an id from the first version of this table is pointing at a different cluster
-  — re-read `xdata-clusters.csv` before scoping one.
+  — re-read `xdata-clusters.csv` before scoping one. **Open it against the
+  `name` column, not the `cluster_id` column** (§4.4): a name is a function of
+  the cluster and follows it through a regeneration in changed form, an id is a
+  rank and does not. `../tools/xdata_register_map.py --map <old clusters CSV>`
+  is what says where an id went, and the name column in its output is what an
+  issue should quote.
 - `xdata_register_map.py --check` and `--self-test` belong in
   `check_ghidra_tooling` in `.github/scripts/agent-gates.sh`, next to
   `gen_xdata_symbols.py`'s `--check`. **A human makes that one-line change** —
