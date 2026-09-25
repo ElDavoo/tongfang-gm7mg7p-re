@@ -227,14 +227,14 @@ fixtures off `Path(__file__).parent` at
 matter either way.
 
 Re-derived rather than restated, one count per commit that touches the suite
-plus the two commits between them that did not move it, each row self-labelling
+plus the two commits that did not move it, each row self-labelling
 (`grep -c "    def test_"` at each revision, which agrees with the run at the
 tip). Every step is attributed to a commit, so **no step is a residual**:
 
 | revision | count | step | what it is |
 |---|---|---|---|
 | `565b6f3c` | 69 | | #498 as #502 — the revision the "before" transcript at :46-50 is taken from |
-| `004ad3d7` | 72 | +3 | #529 as #537 — the last suite change before this one, and so `main` when this branch cut |
+| `004ad3d7` | 72 | +3 | #529 as #537 — the last suite-moving commit before this branch, which is why `main` held 72 when it cut |
 | `b3f30987` | 74 | +2 | #530 as #533, this change |
 | `7a26a932` | 76 | +2 | #532 as #538 |
 | `619afcb2` | 82 | +6 | #472 as #638, [`0751-stage-mark-labels.md`](0751-stage-mark-labels.md):246 |
@@ -364,9 +364,11 @@ That "only committed fixture" was re-checked the same way, over every
 holds. Nine of them print a withheld banner or the count line; `unread-window/`
 is the only one that prints both, and the census over all eleven committed
 `0751-isolation-run-*/` directories changes neither half of the claim. Only
-`staged/` has landed since this write-up was written (`b3f30987`, the commit
-that added it); the other ten were already in the tree then, which
-`git ls-tree --name-only b3f30987:ec/tools/testdata/` shows.
+`staged/` has landed since this write-up was written (`b3f30987`); the other
+ten were already in the tree then, which
+`git ls-tree --name-only b3f30987:ec/tools/testdata/` shows. `staged/` itself
+was added later still, by `619afcb2` (#472 as #638) — the +6 step in the table
+above, not by `b3f30987`.
 
 All three fail against the unfixed tool, and for the reasons they are here:
 the first on the count and the absence of `consistent with the static
