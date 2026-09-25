@@ -65,6 +65,24 @@ into `r2 -a 8051` with no stitching needed.
   `../../docs/findings/citing-listing-evidence.md` for the measured blast
   radius of both rules and the one corroborated pair that turns out not to be a
   call.
+- **`tools/citation_gap_scan.py`** — the population the two rules above
+  cannot reach: a real call at an address Ghidra's function boundary cut out of
+  the citing row's own export, so it is not in that export. Walks, per
+  `(callee, citer)` pair, the image bytes from the citing listing's end to three
+  bytes past the next exported entry in that row's own scope — the slack is
+  load-bearing, a 3-byte `lcall` straddling the boundary only completes by
+  reading past it — decodes the window with `disasm8051.py`, and returns one of
+  three verdicts: `boundary-cut`, `no-transfer` or `not-code`. 99 citing rows
+  and 124 pairs split 2 / 121 / 1, and 86 of the 99 rows turn out to have no
+  gap at all, so the window is the head of the neighbouring export. It walks
+  `disasm8051.py`'s own opcode and mnemonic tables rather than calling its
+  `decode()`, which raises `IndexError` on a window ending in a 1-byte opcode.
+  `--report` writes `ghidra/gap-citation-scan.csv` and nothing else does;
+  `--check` recomputes every per-pair verdict and fails on any diff;
+  `--self-test` runs the known answers. `call_graph.py` is not changed by it and
+  `annotations/call-graph-callees.csv` is byte-identical either way. See
+  `../../docs/findings/citation-gap-scan.md` for the split, the per-pair
+  boundary-cut table and what the split means for the ranking.
 - **`tools/scan_refs.py`** — counts direct `MOV DPTR,#addr` references to a
   given XDATA address. Fast way to check "does this EC firmware build
   implement register X". Every count comes out split `ec=`/`pd=` across the

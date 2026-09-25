@@ -406,6 +406,23 @@ leads on three citations to two `lcall` sites; that says it is cheap to read,
 not that it does anything in particular. Each tranche row says what its own
 bytes do and no further, and `unresolved` is a row that declines to guess.
 
+**And `cited_by == inbound` can be two columns counting different call sites.**
+`cited_by` is a count of comments and `inbound` a count of transfers, so they
+agreeing is the two-framings-agree check, not a proof they are counting the
+same thing. `../tools/citation_gap_scan.py` measured the case where they are
+not: a call at an address the citing row's export stopped short of is in
+neither. Over the 99 citing rows and 124 `(callee, citer)` pairs that gate's
+corroboration arm cannot reach, **32 pairs** already have a same-scope transfer
+to their callee booked to a *different* function, and **15 of the 90**
+`cited_by == inbound` agreements in `call-graph-callees.csv` are carried that
+way. **Rank 3 of the table is one of them**: `bank1,E5D6` reads
+`cited_by=3` / `inbound=1`, and its single inbound is `bank1,E5A7`'s `lcall`
+rather than the boundary-cut `lcall 0xE5D6` at 0xE580 that `bank1,E57E`'s
+comment names. That is a limit a reader must carry over the whole ranking, and
+`call_graph.py` is unchanged by the measurement — the 1,841-row table is
+byte-identical either way. Written up in
+[`../../docs/findings/citation-gap-scan.md`](../../docs/findings/citation-gap-scan.md).
+
 **No register `status:` changed and no behavioural test was run.** Naming a
 helper is not a finding about a register, so `registers.yaml` and
 `ghidra/xdata-symbols.csv` are untouched. Nothing here was observed on

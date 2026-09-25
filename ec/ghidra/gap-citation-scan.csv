@@ -1,0 +1,125 @@
+callee_scope,callee_addr,citer_scope,citer_addr,verdict,gap,end,next,window,transfers,hit_site,hit_text,at_next,neighbour_edge,db,unassigned,truncated,frame_onto,frame_over
+bank0,9AAD,bank0,9C47,no-transfer,94,9C48,9CA6,9006e6e064036007900466e030e44e900823e030e61f900829e06005e024fe801e900828e004f0e064147031f0900823e054bff022900829e06414600de004f0e090623493901807f022900828e004f0e0b40a09e4f0900823e04440f0229006e6,,,,,,0,0,no,24,0
+bank0,B4A8,bank0,B5B2,no-transfer,0,B5CC,B5CC,90089c,,,,,,0,0,no,24,0
+bank0,B4A8,bank0,B5CC,no-transfer,0,B5D2,B5D2,229006,,,,,,0,0,yes,24,0
+bank0,B4A8,bank0,B5D2,no-transfer,0,B5D3,B5D3,900602,,,,,,0,0,no,24,0
+bank0,B5D3,bank0,B736,no-transfer,0,B737,B737,12b9d8,0xB737 lcall 0xb9d8,,,,,0,0,no,24,0
+bank0,B737,bank0,B82E,no-transfer,0,B83B,B83B,12b9d8,0xB83B lcall 0xb9d8,,,,,0,0,no,24,0
+bank0,C26E,bank0,C278,no-transfer,16,C285,C295,901605e04408f022901605e054f7f022901665,,,,,bank0:9334 lcall,0,0,no,24,0
+bank0,D5DB,bank0,D5D4,no-transfer,0,D5DB,D5DB,901304,,,,,bank0:D5DB ljmp,0,0,no,24,0
+bank0,DFA0,bank0,E010,no-transfer,0,E014,E014,b40115,,,,,bank0:DFDF lcall,0,0,no,24,0
+bank0,DFA0,bank0,E014,no-transfer,0,E020,E020,fd12df,,,,,bank0:DFDF lcall,0,0,yes,22,2
+bank0,E033,bank0,E02D,no-transfer,0,E033,E033,e5f0f0,,,,,bank0:DF78 lcall,0,0,no,24,0
+bank0,E7B8,bank0,E893,no-transfer,0,E896,E896,900a50,,,,,bank0:E6F4 ljmp,0,0,no,24,0
+bank0,E7BB,bank1,CA02,no-transfer,0,CA16,CA16,9003a3,,,,,,0,0,no,24,0
+bank0,F0A1,bank1,EFDA,no-transfer,42,EFE8,F012,02f01802f02202f02c02f02c02f02c02f02c02f02c02f02c02f02c02f03602f04002f04002f04002f04002f040,0xEFE8 ljmp 0xf018; 0xEFEB ljmp 0xf022; 0xEFEE ljmp 0xf02c; 0xEFF1 ljmp 0xf02c; 0xEFF4 ljmp 0xf02c; 0xEFF7 ljmp 0xf02c; 0xEFFA ljmp 0xf02c; 0xEFFD ljmp 0xf02c; 0xF000 ljmp 0xf02c; 0xF003 ljmp 0xf036; 0xF006 ljmp 0xf040; 0xF009 ljmp 0xf040; 0xF00C ljmp 0xf040; 0xF00F ljmp 0xf040; 0xF012 ljmp 0xf040,,,,,0,0,no,24,0
+bank0,F0A1,bank1,F02C,no-transfer,1,F02F,F030,90f0a112,,,,,,0,0,yes,24,0
+bank0,F1E9,bank0,F495,no-transfer,0,F498,F498,f0900a,,,,,bank0:F239 ljmp,0,0,yes,21,3
+bank1,8ABB,bank1,8A98,no-transfer,0,8AA7,8AA7,9006f9,,,,,,0,0,no,24,0
+bank1,9B3C,bank0,DE83,no-transfer,0,DF1E,DF1E,900a47,,,,,,0,0,no,24,0
+bank1,9C53,bank0,DE83,no-transfer,0,DF1E,DF1E,900a47,,,,,,0,0,no,24,0
+bank1,9FF0,bank1,9FCA,no-transfer,0,9FCB,9FCB,900724,,,,,bank1:9FC1 lcall,0,0,no,24,0
+bank1,A24E,bank1,A2DA,no-transfer,24,A2DB,A2F3,902134ab82ac8390043412888612886340d2e490070ef022900440,0xA2E5 lcall 0x8886; 0xA2E8 lcall 0x8863,,,,bank1:AB64 lcall,0,0,no,24,0
+bank1,A8C5,bank1,A8DA,no-transfer,0,A8DF,A8DF,c2e5f0,,,,,bank1:A841 ljmp,0,0,no,24,0
+bank1,A8DF,bank1,A8E9,no-transfer,0,A8F0,A8F0,900623,,,,,bank1:A841 ljmp,0,0,no,24,0
+bank1,A8E4,bank1,A8E9,no-transfer,0,A8F0,A8F0,900623,,,,,bank1:A841 ljmp,0,0,no,24,0
+bank1,B33B,bank1,AD68,no-transfer,0,AD77,AD77,02b56c,0xAD77 ljmp 0xb56c,,,,bank1:AD85 ljmp,0,0,no,24,0
+bank1,B43B,bank1,B415,no-transfer,0,B41C,B41C,f0c394,,,,,bank1:B33B ljmp,0,0,yes,24,0
+bank1,C931,bank1,C924,no-transfer,0,C931,C931,900834,,,,,bank1:C90C ljmp,0,0,no,24,0
+bank1,CAB8,bank1,C924,no-transfer,0,C931,C931,900834,,,,,,0,0,no,24,0
+bank1,DEC4,bank1,9A78,no-transfer,45,9AA5,9AD2,901c29e020e319901c31e05403b40306e4900699f022900699e024144002f0229020097404f09006967480f02202c6db,0x9AD2 ljmp 0xc6db,,,,bank1:9A41 lcall,0,0,no,24,0
+bank1,E5D6,bank1,E57E,boundary-cut,2,E580,E582,12e5d6d007,0xE580 lcall 0xe5d6,0xE580,lcall 0xe5d6,no,bank1:E5A7 lcall,0,0,no,24,0
+common,0019,common,0EF3,no-transfer,0,0F12,0F12,54fbf6,,,,,,0,0,no,24,0
+common,0046,bank0,DE4D,no-transfer,0,DE56,DE56,900a35,,,,,,0,0,no,24,0
+common,0408,pd,34FB,no-transfer,0,3500,3500,75f060,,,,,,0,0,no,24,0
+common,0609,bank0,BAAE,no-transfer,0,BABF,BABF,900460,,,,,,0,0,no,24,0
+common,0806,bank1,9F04,no-transfer,0,9FC1,9FC1,129fcb,0x9FC1 lcall 0x9fcb,,,,,0,0,no,24,0
+common,0862,bank0,D2DA,no-transfer,0,D2EF,D2EF,901c14,,,,,,0,0,no,24,0
+common,0862,bank0,D2EF,no-transfer,0,D304,D304,901c38,,,,,,0,0,no,24,0
+common,0862,bank0,D304,no-transfer,0,D319,D319,e0547c,,,,,,0,0,no,24,0
+common,086B,bank0,D28E,no-transfer,0,D2BE,D2BE,22901c,,,,,,0,0,yes,24,0
+common,086B,bank0,D2BE,no-transfer,0,D2BF,D2BF,901c00,,,,,,0,0,no,24,0
+common,08A0,bank0,B82E,no-transfer,0,B83B,B83B,12b9d8,0xB83B lcall 0xb9d8,,,,,0,0,no,24,0
+common,08CD,bank0,BA15,no-transfer,0,BA16,BA16,9008cc,,,,,,0,0,no,24,0
+common,08CD,bank0,BA16,no-transfer,0,BA1C,BA1C,9008ce,,,,,,0,0,no,24,0
+common,08CE,bank0,BA15,no-transfer,0,BA16,BA16,9008cc,,,,,,0,0,no,24,0
+common,08CE,bank0,BA16,no-transfer,0,BA1C,BA1C,9008ce,,,,,,0,0,no,24,0
+common,08CE,bank0,BA1C,no-transfer,0,BA23,BA23,9009cc,,,,,,0,0,no,24,0
+common,08CE,bank0,BADB,no-transfer,0,BADE,BADE,e475f0,,,,,,0,0,yes,24,0
+common,08CE,bank0,BBC7,no-transfer,0,BBDD,BBDD,d393ff,,,,,,0,0,no,24,0
+common,08CF,bank0,BA15,no-transfer,0,BA16,BA16,9008cc,,,,,,0,0,no,24,0
+common,08CF,bank0,BA16,no-transfer,0,BA1C,BA1C,9008ce,,,,,,0,0,no,24,0
+common,08CF,bank0,BA1C,no-transfer,0,BA23,BA23,9009cc,,,,,,0,0,no,24,0
+common,08CF,bank0,BBC7,no-transfer,0,BBDD,BBDD,d393ff,,,,,,0,0,no,24,0
+common,08E0,bank0,BCB6,no-transfer,0,BCBD,BCBD,75f002,,,,,,0,0,no,24,0
+common,0A5A,bank0,B9AE,no-transfer,0,B9C6,B9C6,900318,,,,,,0,0,no,24,0
+common,0A5A,bank0,BDD2,no-transfer,0,BDDA,BDDA,93900a,,,,,,0,0,yes,24,0
+common,0A5A,bank0,F078,no-transfer,0,F079,F079,f0e4a3,,,,,,0,0,no,24,0
+common,0A5A,bank0,F079,no-transfer,0,F07E,F07E,04f0e4,,,,,,0,0,no,24,0
+common,0A5A,bank0,F07E,no-transfer,0,F07F,F07F,f0e4a3,,,,,,0,0,no,24,0
+common,0A5A,bank0,F07F,no-transfer,0,F080,F080,e4a3f0,,,,,,0,0,no,24,0
+common,0A5A,bank0,F080,no-transfer,0,F081,F081,a3f0a3,,,,,,0,0,no,24,0
+common,0A5A,bank0,F081,no-transfer,0,F083,F083,a3f0a3,,,,,,0,0,no,24,0
+common,0A5A,bank0,F083,no-transfer,0,F089,F089,a3f07e,,,,,,0,0,yes,24,0
+common,0A5A,bank0,F089,no-transfer,0,F08B,F08B,7e0f90,,,,,,0,0,yes,24,0
+common,0A5A,bank0,F08B,no-transfer,0,F090,F090,740ff0,,,,,,0,0,no,24,0
+common,0A5A,bank0,F095,no-transfer,0,F09F,F09F,748490,,,,,,0,0,yes,24,0
+common,0A5A,bank0,F09F,no-transfer,0,F0A1,F0A1,900f60,,,,,,0,0,no,24,0
+common,0A5A,bank0,F0A3,no-transfer,0,F0B1,F0B1,a3f07e,,,,,,0,0,yes,24,0
+common,0A5A,bank0,F0C4,no-transfer,0,F0C8,F0C8,f0a3f0,,,,,,0,0,no,22,2
+common,0A5A,bank0,F0C8,no-transfer,0,F0CA,F0CA,f0900f,,,,,,0,0,yes,24,0
+common,0A5A,bank0,F0CA,no-transfer,0,F0DC,F0DC,a3f07e,,,,,,0,0,yes,23,1
+common,0A5A,bank0,F0ED,no-transfer,0,F0EF,F0EF,900f60,,,,,,0,0,no,23,1
+common,0A5A,bank0,F0F3,no-transfer,0,F0FE,F0FE,74fef0,,,,,,0,0,no,24,0
+common,1042,pd,1041,no-transfer,0,104D,104D,a88285,,,,,,0,0,yes,24,0
+common,10F0,pd,10E8,no-transfer,0,10F1,10F1,e493fb,,,,,,0,0,no,24,0
+common,1204,bank0,DC60,no-transfer,0,DC77,DC77,901202,,,,,,0,0,no,24,0
+common,1204,bank0,DC77,no-transfer,0,DC8D,DC8D,901200,,,,,,0,0,no,24,0
+common,1300,bank0,3AD6,not-code,2414,3AF0,445E,170017041708170c1106110210170117051709170d110611020817021706170a170e1106110204c8c850c86450900a4fe0ff75f00da424f0f582e4343af583e49322fc740193f5828c837417f0ef75f00da424f8f582e4343af583e49322e0feef75f00da424fcf582e4343af583e422ef75f00da424f4f582e4343af583e493fc740193f5828c8322e4f6789ee6248df8e4f6789ee6248df822e0feef75f00da424f6f582e4343af583e493fa740193f5828a83eef08d828c83741cf022fe740193f5828e8322fe740193f5828e837411f0901102741cf022789ee62488f822fc740193fdf5828c83741df022c28ec28fd2ab22900a4ee004f0e0d3941122fe740193f5828e837417f0e4900a04f022900a47e0ff7b02ad3222900a49e0ff7887f674972ff8e622900a4de0ff2488f82274882ff8742046f6ef04789bf622900a47e0ff248df822901638e054fb22901639e054fb2290163ae054fb2290163be054fb2290163ce054fb2290163de054fb22758da6758b29c28fd28e22901304e030e164901304e030e31ae4f531c26890130ae0f530af3012424aaf301215dc306842802d124389306b14e53230e1051215e280031215e8c26be4f5318026e531601aaf301241edaf301215ee1531306813c26878bbe6ff120a398008123da8af32123fa71205f222af20023f9d900019e0ff023f9d90001ae0ff023f9d90001be0ff023f9d90001ce0ff023f9d7f01023fa47f01023fa47f01023fa47f01023fa47f01023fa47f01023fa47f01023fa47f01023fa47f01023fa478b2e61313543f30e0047ffa80027ff1123f9d22e4f53f7f08023fa478b2e61313543f30e012d254e4900018f0e654fef6900019e0ff8002e4ff123f9d22d20522c20522c213e4ff023f9d7f011230fbc213900e00ae83c3ee940f5005e4f0a380f37f550209a2e4ff023f9dd20478b2e64401f6122812e490007ef022900440e07004c204800690007e7414f078b2e654fef622227fbf023f9d1241ea023f9dd26b22c28ec2ab0000000012437e208f17901304e030e1f6e020e308124389af321209a2124368221243687f01123fa422c28ec2ab0000000012437e208f18901304e030e1f6e020e309124389123799120a5a124368221243687f01123fa4227f01123fa4c21322e4ff023f9de53020e023901304e054fbf01215e2903206e04440f0e054fbf0e490200bf0f0f0903206e04404f022853220300405123d978003123da8901304e03002044404f02254fbf022900019e532f02290001ae532f02290001be532f02290001ce532f022e532b4ff05e4ff1230fb9013047424f0901300e054fcf0300104e04402f07f05120ecc12436faf320215f47888e630e707e4ff123042800b7440124390120ecc12436faf320215fa7889e630e7077f01123042800b7480124390120ecc12436faf32021600788ae630e7077f02123042800e90130474c0f07f05120ecc12436faf32021606e53f700be532700778b2e654fbf622e53fc394085011af3f74102ff582e43400f583e532f0053fe532700678b2e64404f622e53230e1030215e21215e822af320209a2123799020a5ae532b4ff057f011230fb789be66017e62487f874fd56f6789b124358789be614ff122f85800a7f14120ecc7ffc122b6caf3202160c78bbeff6d268228f3122900a47eff0e4ff123835e4900a48f0a3f0a3f078ace67003024060e6a3f0e4f6e02410602524fd602b2406703d900a47e0f528a374faf0e52830e2051216128003121618a24192488026900a47e07893f6a38011900a47e07894f6e6ff7e001228d1900a4874faf08006900a4874fef0900a4be0ff64f36004efb4ed02d21a789ce6700c900a48e0ff6026120a39802112434c7f01123835900a4be0789cb4ed0712437654078003124376fd7b01122e9c900a47e0ff02161e900a47e012715140a2ec4098ed40a4ee40adf040b7f240cff340d8f440dff540e6f640a2f740a2f840a2f940a2fa40a2fb40f0ff0000412812436178ac76ed02412e8047900a4874eef002412e12436178ac76f002412e124361a374abf0300606a37483f08067900a4a7441f0805f12436178ac76f38056d21a122896800cc21a12419880051241988000124361803ec21a7f021230fb1228961228c1e4f5291210f0124361a374aaf0e4ff789ce6146f600e74882ff8e630e60674882ff8e4f60fefb403e68006900a4874fef0789ce67024ff123835900a48e0ff6051120a39900a49e0ff60471209e9900a4ae0ff603d1209e9803812434c900a47e0b4ff028018900a47e0b4f2047f038013900a47e0ff64f36004efb4ed047f0280027f01123835789c124376fd7b01122e9c900a47e0ff121624221228961228c122900a14eff0a3edf0900a14e0900a16f030290f900a15e0540125e0ffa3e054fd4ff0302b12900a15e0540133333354f8ffa3e054f74ff0900a16e0900a14f0a3e024ff9248900a14e0ff227f0d22ef127151421f60422273422574422876422b77422e90423191423492423793423aa5423dd14240d24243d34246d400004249023e61023e7e023e85023e8c023e93023e9a023ec5023ee2023eff023f1f023f51023f5d023f62123f6822ef12715142e52042e83342eb3442ee3642f13742f46042f77342fa7442fd76430077430390430691430992430c93430fa44312a54315a64318a7431ba8431ea94321aa4324ab4327ac432aad432dae4330af4333c04336d04339d1433cd2433fd34342d44345e04348f04348f14348f24348f34348f44348f54348f64348f74348f84348f94348fa4348fb4348fc4348fd4348fe4348ff0000434b023cd9023cde023ce6023cee023cf6023cfe023d03023d08023d0d023d12023d17023d1c023d21023d26023d2b023d3f023d47023d69023d6c023d6f023d76023d920210ff023d97023da8023dbf023dc0023dc5023dcb023dce023dfc023e2b023e33123e3822789ce62487f874fd56f6789ce62487f874f756f622900a4874faf022c28ec28fd2ab2290130874fcf022e614ff900a47e022758dc4758b1bc28fd28e2290130ae0f53222901304f07f0522e4ff900a61e004f00fefb4c8f522ceefceee6402700302445dee75f00fa424ccf582e43449f583e493fc740193fdf5828c83e0f565124a83e04402f0124a83e054fdf08d828c8374fef0124b37124a697440124b29124a697440f0124397ee75f00fa424d6f582e43449124a69c083c082e0ffee75f00fa424d8f582e43449f583e493fdef4dd082d083f0124397124b37124a69e4124b29124a69e4f0ee124a77124a697402f0124b02124a697403f0124397124b02124a697407f0ee124a77124a4d7401f022900a56,0x3AF8 acall 0x3806; 0x3AFA acall 0x3802; 0x3B05 acall 0x3806; 0x3B07 acall 0x3802; 0x3B0B ljmp 0x1706; 0x3B12 acall 0x3806; 0x3B14 acall 0x3802; 0x3C88 lcall 0x424a; 0x3C8D lcall 0x15dc; 0x3C95 lcall 0x4389; 0x3CA0 lcall 0x15e2; 0x3CA5 lcall 0x15e8; 0x3CB5 lcall 0x41ed; 0x3CBA lcall 0x15ee; 0x3CC8 lcall 0x0a39; 0x3CCD lcall 0x3da8; 0x3CD2 lcall 0x3fa7; 0x3CD5 lcall 0x05f2; 0x3CDB ljmp 0x3f9d; 0x3CE3 ljmp 0x3f9d; 0x3CEB ljmp 0x3f9d; 0x3CF3 ljmp 0x3f9d; 0x3CFB ljmp 0x3f9d; 0x3D00 ljmp 0x3fa4; 0x3D05 ljmp 0x3fa4; 0x3D0A ljmp 0x3fa4; 0x3D0F ljmp 0x3fa4; 0x3D14 ljmp 0x3fa4; 0x3D19 ljmp 0x3fa4; 0x3D1E ljmp 0x3fa4; 0x3D23 ljmp 0x3fa4; 0x3D28 ljmp 0x3fa4; 0x3D3B lcall 0x3f9d; 0x3D44 ljmp 0x3fa4; 0x3D65 lcall 0x3f9d; 0x3D73 ljmp 0x3f9d; 0x3D78 lcall 0x30fb; 0x3D8F ljmp 0x09a2; 0x3D94 ljmp 0x3f9d; 0x3D9F lcall 0x2812; 0x3DC2 ljmp 0x3f9d; 0x3DC5 lcall 0x41ea; 0x3DC8 ljmp 0x3f9d; 0x3DD6 lcall 0x437e; 0x3DE7 lcall 0x4389; 0x3DEC lcall 0x09a2; 0x3DEF lcall 0x4368; 0x3DF3 lcall 0x4368; 0x3DF8 lcall 0x3fa4; 0x3E04 lcall 0x437e; 0x3E15 lcall 0x4389; 0x3E18 lcall 0x3799; 0x3E1B lcall 0x0a5a; 0x3E1E lcall 0x4368; 0x3E22 lcall 0x4368; 0x3E27 lcall 0x3fa4; 0x3E2D lcall 0x3fa4; 0x3E35 ljmp 0x3f9d; 0x3E44 lcall 0x15e2; 0x3E67 lcall 0x3d97; 0x3E6C lcall 0x3da8; 0x3EA1 lcall 0x30fb; 0x3EBA lcall 0x0ecc; 0x3EBD lcall 0x436f; 0x3EC2 ljmp 0x15f4; 0x3ECD lcall 0x3042; 0x3ED4 lcall 0x4390; 0x3ED7 lcall 0x0ecc; 0x3EDA lcall 0x436f; 0x3EDF ljmp 0x15fa; 0x3EEA lcall 0x3042; 0x3EF1 lcall 0x4390; 0x3EF4 lcall 0x0ecc; 0x3EF7 lcall 0x436f; 0x3EFC ljmp 0x1600; 0x3F07 lcall 0x3042; 0x3F14 lcall 0x0ecc; 0x3F17 lcall 0x436f; 0x3F1C ljmp 0x1606; 0x3F56 ljmp 0x15e2; 0x3F59 lcall 0x15e8; 0x3F5F ljmp 0x09a2; 0x3F62 lcall 0x3799; 0x3F65 ljmp 0x0a5a; 0x3F6F lcall 0x30fb; 0x3F81 lcall 0x4358; 0x3F89 lcall 0x2f85; 0x3F90 lcall 0x0ecc; 0x3F95 lcall 0x2b6c; 0x3F9A ljmp 0x160c; 0x3FAE lcall 0x3835; 0x3FBF ljmp 0x4060; 0x3FE3 lcall 0x1612; 0x3FE8 lcall 0x1618; 0x4006 lcall 0x28d1; 0x4032 lcall 0x0a39; 0x4037 lcall 0x434c; 0x403C lcall 0x3835; 0x4048 lcall 0x4376; 0x404F lcall 0x4376; 0x4055 lcall 0x2e9c; 0x405D ljmp 0x161e; 0x4064 lcall 0x7151; 0x4096 ajmp 0x4228; 0x4098 lcall 0x4361; 0x409F ljmp 0x412e; 0x40AA ljmp 0x412e; 0x40AD lcall 0x4361; 0x40B4 ljmp 0x412e; 0x40B7 lcall 0x4361; 0x40CF lcall 0x4361; 0x40DA lcall 0x2896; 0x40E1 lcall 0x4198; 0x40E6 lcall 0x4198; 0x40EB lcall 0x4361; 0x40F4 lcall 0x30fb; 0x40F7 lcall 0x2896; 0x40FA lcall 0x28c1; 0x4100 lcall 0x10f0; 0x4103 lcall 0x4361; 0x4134 lcall 0x3835; 0x413E lcall 0x0a39; 0x4148 lcall 0x09e9; 0x4152 lcall 0x09e9; 0x4157 lcall 0x434c; 0x4181 lcall 0x3835; 0x4186 lcall 0x4376; 0x418C lcall 0x2e9c; 0x4194 lcall 0x1624; 0x4198 lcall 0x2896; 0x419B lcall 0x28c1; 0x41EE lcall 0x7151; 0x4205 acall 0x4442; 0x4211 acall 0x4642; 0x421F ljmp 0x3e61; 0x4222 ljmp 0x3e7e; 0x4225 ljmp 0x3e85; 0x4228 ljmp 0x3e8c; 0x422B ljmp 0x3e93; 0x422E ljmp 0x3e9a; 0x4231 ljmp 0x3ec5; 0x4234 ljmp 0x3ee2; 0x4237 ljmp 0x3eff; 0x423A ljmp 0x3f1f; 0x423D ljmp 0x3f51; 0x4240 ljmp 0x3f5d; 0x4243 ljmp 0x3f62; 0x4246 lcall 0x3f68; 0x424B lcall 0x7151; 0x4271 acall 0x4443; 0x42EE ljmp 0x3cee; 0x42F1 ljmp 0x3cf6; 0x42F4 ljmp 0x3cfe; 0x42F7 ljmp 0x3d03; 0x42FA ljmp 0x3d08; 0x42FD ljmp 0x3d0d; 0x4300 ljmp 0x3d12; 0x4303 ljmp 0x3d17; 0x4306 ljmp 0x3d1c; 0x4309 ljmp 0x3d21; 0x430C ljmp 0x3d26; 0x430F ljmp 0x3d2b; 0x4312 ljmp 0x3d3f; 0x4315 ljmp 0x3d47; 0x4318 ljmp 0x3d69; 0x431B ljmp 0x3d6c; 0x431E ljmp 0x3d6f; 0x4321 ljmp 0x3d76; 0x4324 ljmp 0x3d92; 0x4327 ljmp 0x10ff; 0x432A ljmp 0x3d97; 0x432D ljmp 0x3da8; 0x4330 ljmp 0x3dbf; 0x4333 ljmp 0x3dc0; 0x4336 ljmp 0x3dc5; 0x4339 ljmp 0x3dcb; 0x433C ljmp 0x3dce; 0x433F ljmp 0x3dfc; 0x4342 ljmp 0x3e2b; 0x4345 ljmp 0x3e33; 0x4348 lcall 0x3e38; 0x43AD ljmp 0x445d; 0x43CC lcall 0x4a83; 0x43D3 lcall 0x4a83; 0x43E1 lcall 0x4b37; 0x43E4 lcall 0x4a69; 0x43E9 lcall 0x4b29; 0x43EC lcall 0x4a69; 0x43F2 lcall 0x4397; 0x4401 lcall 0x4a69; 0x4422 lcall 0x4397; 0x4425 lcall 0x4b37; 0x4428 lcall 0x4a69; 0x442C lcall 0x4b29; 0x442F lcall 0x4a69; 0x4435 lcall 0x4a77; 0x4438 lcall 0x4a69; 0x443E lcall 0x4b02; 0x4441 lcall 0x4a69; 0x4447 lcall 0x4397; 0x444A lcall 0x4b02; 0x444D lcall 0x4a69; 0x4454 lcall 0x4a77; 0x4457 lcall 0x4a4d,,,,,74,9,no,24,0
+common,1300,common,2B6C,no-transfer,0,2BC1,2BC1,7880e6,,,,,,0,0,no,24,0
+common,1504,bank0,D5D4,no-transfer,0,D5DB,D5DB,901304,,,,,,0,0,no,24,0
+common,1510,bank0,D5D4,no-transfer,0,D5DB,D5DB,901304,,,,,bank0:EBD5 lcall,0,0,no,24,0
+common,1602,bank0,C124,no-transfer,0,C12C,C12C,901602,,,,,,0,0,no,24,0
+common,1602,bank0,C12C,no-transfer,32,C134,C154,901602e054dff022901602e04420f022901602e054bff022901602e04440f022901602,,,,,,0,0,no,24,0
+common,1602,bank0,C154,no-transfer,0,C15C,C15C,901602,,,,,,0,0,no,24,0
+common,1602,bank0,C15C,no-transfer,16,C164,C174,901603e04401f022901603e054fef022901603,,,,,,0,0,no,24,0
+common,1606,bank0,C2F7,no-transfer,0,C2FF,C2FF,901606,,,,,,0,0,no,24,0
+common,1606,bank0,C2FF,no-transfer,0,C307,C307,901606,,,,,,0,0,no,24,0
+common,1606,bank0,C307,no-transfer,0,C30F,C30F,901606,,,,,,0,0,no,24,0
+common,1606,bank0,C30F,no-transfer,0,C317,C317,901606,,,,,,0,0,no,24,0
+common,1606,bank0,C317,no-transfer,0,C31F,C31F,901606,,,,,,0,0,no,24,0
+common,1606,bank0,C31F,no-transfer,7,C32C,C333,901606e04480f0229016,,,,,,0,0,yes,24,0
+common,1C00,bank0,D2BE,no-transfer,0,D2BF,D2BF,901c00,,,,,,0,0,no,24,0
+common,1C00,bank0,D2BF,no-transfer,0,D2C2,D2C2,e09008,,,,,,0,0,yes,24,0
+common,1C00,bank0,D2C2,no-transfer,0,D2CB,D2CB,901c05,,,,,,0,0,no,24,0
+common,1C00,bank0,D2CB,no-transfer,0,D2D2,D2D2,74fff0,,,,,,0,0,no,24,0
+common,1C00,bank1,AC6D,no-transfer,0,AC83,AC83,229004,,,,,,0,0,yes,24,0
+common,1C00,bank1,C4D2,no-transfer,0,C4F0,C4F0,900975,,,,,,0,0,no,24,0
+common,1C00,bank1,E27D,no-transfer,0,E2A0,E2A0,749a90,,,,,,0,0,yes,24,0
+common,1C00,bank1,E2C3,no-transfer,0,E2D3,E2D3,90036c,,,,,,0,0,no,24,0
+common,1C00,bank1,E4E9,no-transfer,0,E4F9,E4F9,f09006,,,,,,0,0,yes,24,0
+common,1C00,bank1,E4F9,no-transfer,0,E501,E501,e49003,,,,,,0,0,yes,24,0
+common,1C14,bank0,D2EF,no-transfer,0,D304,D304,901c38,,,,,,0,0,no,24,0
+common,2002,bank1,881B,no-transfer,0,8834,8834,e49022,,,,,,0,0,yes,24,0
+common,30DF,common,3BDD,no-transfer,0,3BE4,3BE4,900a4e,,,,,common:2DE3 lcall,0,0,no,24,0
+common,3459,common,355E,boundary-cut,25,355F,3578,306315c26378ade66433600c1235f67880e6700478a1e62222023459,0x356B lcall 0x35f6; 0x3578 ljmp 0x3459,0x3578,ljmp 0x3459,yes,common:3578 ljmp,0,0,no,24,0
+common,34C6,common,355E,no-transfer,25,355F,3578,306315c26378ade66433600c1235f67880e6700478a1e62222023459,0x356B lcall 0x35f6; 0x3578 ljmp 0x3459,,,,common:3555 ljmp,0,0,no,24,0
+common,3609,common,3BDD,no-transfer,0,3BE4,3BE4,900a4e,,,,,common:2F1D lcall,0,0,no,24,0
+common,383D,common,3BDD,no-transfer,0,3BE4,3BE4,900a4e,,,,,,0,0,no,24,0
+common,3A0D,common,3BDD,no-transfer,0,3BE4,3BE4,900a4e,,,,,common:2E9C ljmp,0,0,no,24,0
+common,3B60,common,3B4E,no-transfer,0,3B51,3B51,75f00d,,,,,common:3609 lcall,0,0,no,24,0
+common,3CD9,common,3F9D,no-transfer,0,3FA4,3FA4,8f3122,,,,,,0,0,no,24,0
+common,3DCE,common,4368,no-transfer,0,436F,436F,901308,,,,,,0,0,no,24,0
+common,3DFC,common,4368,no-transfer,0,436F,436F,901308,,,,,,0,0,no,24,0
+common,451A,common,4AFB,no-transfer,0,4B02,4B02,ee75f0,,,,,,0,0,yes,24,0
+common,4666,common,4AFB,no-transfer,0,4B02,4B02,ee75f0,,,,,common:4666 ljmp,0,0,yes,24,0
+common,46F9,common,4AFB,no-transfer,0,4B02,4B02,ee75f0,,,,,common:4666 ljmp,0,0,yes,24,0
+common,4825,common,4AFB,no-transfer,0,4B02,4B02,ee75f0,,,,,,0,0,yes,24,0
+common,4921,common,4AFB,no-transfer,0,4B02,4B02,ee75f0,,,,,common:48B1 ljmp,0,0,yes,24,0
+common,492D,common,4A76,no-transfer,0,4A77,4A77,75f00f,,,,,common:4825 ljmp,0,0,no,24,0
+common,4A77,common,4A76,no-transfer,0,4A77,4A77,75f00f,,,,,common:43A5 lcall,0,0,no,24,0
+common,4A83,common,4A76,no-transfer,0,4A77,4A77,75f00f,,,,,common:43A5 lcall,0,0,no,24,0
+common,5A5A,common,5A55,no-transfer,0,5A5A,5A5A,8caac8,,,,,common:0046 lcall,0,0,no,24,0
+pd,06EA,bank0,D045,no-transfer,0,D053,D053,9006e7,,,,,,0,0,no,24,0
+pd,39E6,pd,39E7,no-transfer,11,39EE,39F9,743b2ff974043efa7b012275f060,,,,,pd:6673 lcall,0,0,no,24,0
+pd,E930,bank1,E924,no-transfer,0,E931,E931,221a7c,,,,,,0,0,yes,24,0

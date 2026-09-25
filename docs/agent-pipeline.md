@@ -240,6 +240,37 @@ only covers what's specific to *this* copy.
      **A re-copy of `agent-gates.sh` from the template restores the
      eight-tool list, so the path and the arm have to be re-applied with
      it.**
+  8. **`citation_gap_scan.py --check` and `--self-test` are added to the tool
+     list in `check_ghidra_tooling`, and a re-copy drops both**
+     (2026-09-25, issue #560). The population the call-graph gate cannot
+     reach — 99 citing rows and 124 `(callee, citer)` pairs whose call, if
+     real, sits at an address Ghidra's function boundary cut out of the citing
+     row's own export — was an estimate until this tool measured it, and an
+     estimate that `docs/findings/citing-listing-evidence.md` and
+     `../ec/annotations/call-graph.md` both quote. `--check` holds the
+     124-row `ec/ghidra/gap-citation-scan.csv` against the current bytes, the
+     current listings and the current `disasm8051.py` tables; `--self-test`
+     pins the population, the three verdicts and the `bank1,E57E` cut from
+     oracles stated in the committed listings and `bank-call-targets.csv`.
+     Item 6's arm shape verbatim, because the shape is forced by the tool:
+     no `--work`, no scratch dir, both modes needing only python3, the
+     committed listings and the committed firmware:
+
+     ```sh
+           *citation_gap_scan.py)
+             python3 "$tool" --check && python3 "$tool" --self-test || rc=1
+             ;;
+     ```
+
+     Cheap tier for item 4's reason, and the bank images build in pure Python
+     from the committed firmware, so it needs no Ghidra, no network and no
+     assembler. **A re-copy of `agent-gates.sh` from the template restores the
+     eight-tool list, so the path and the arm have to be re-applied with
+     it.** Its unit suite,
+     `ec/tools/test_citation_gap_scan.py`, needs no wiring to be run at all:
+     `tools/run-tests.sh` discovers every `test_*.py` in the repository, so it
+     is already collected by the runner below — the same state the four suites
+     in that paragraph are in.
 - **`tools/run-tests.sh`, and the gate line that would call it**
   (2026-09-23, issue #162) — the four offline `unittest` suites
   (`ec/tools/test_grade_0751_isolation.py`, `windows/tools/test_ec_watch.py`,
