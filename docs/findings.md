@@ -1987,6 +1987,15 @@ three-value day with a withheld block printed "consistent with the static
 prediction" over the 6 of its 8 windows it had actually read. Write-up:
 `docs/findings/0751-grader-partial-grade-claims.md`.
 
+**The withheld banner counted the run's own windows while the headers above it
+numbered the day's.** A `--block` run that withheld anything printed "2 of the
+2 window(s) above were not graded" directly under two headers numbered 4/8 and
+5/8 — a denominator false about the windows printed above it, on every
+attachment issue #380's §6 workflow produces. The banner now names both (the
+block's 2 and the capture's 8); the whole-capture wording is byte-identical,
+since there the two denominators are one number. Write-up:
+`docs/findings/0751-grader-withheld-count-denominators.md`.
+
 **The same sentence was also unqualified on a `--block` run, which withheld
 nothing and so matched none of the cases above.** A clean block is graded
 whole, so a `--block` run over one value of a day printed "consistent with the

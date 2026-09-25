@@ -454,6 +454,32 @@ UNPLACED_GRADED_NOTE = (
     "above names each of these by timestamp and label, in no block and so "
     "beyond what `--block` can select.")
 
+# The withheld banner's reason and its refusal, split out because the banner
+# names its count over two different denominators and the rest of the sentence
+# is one sentence either way. A `--block` run reads its own block's windows and
+# the day's mark stream is larger, so `len(shown)` is not `len(windows)` there
+# -- and the banner used to say "of the 2 window(s) above" directly under two
+# headers numbered 4/8 and 5/8, which is false about the windows printed above
+# it. The per-window headers and the section header are *not* renumbered to
+# match: the whole-stream numbering is what makes a `--block` run a subset of
+# the whole-capture run (§6 runs one `--block` per value and reads the
+# attachments side by side), and the section header's own count is simply true
+# -- the block does have 2 windows. So the banner names both denominators
+# instead, and the one it names first is unchanged for a whole-capture run,
+# where the two coincide by construction and the existing wording is correct.
+#
+# The reason is left saying all three withholding reasons on both paths, even
+# though `--block` can only reach the first of them: it is one sentence and
+# narrowing it would be a claim about which path this run took, which the loop
+# above the print is what decides. The refusal at the end is the load-bearing
+# half and survives both, so what a withheld window would have shown is not
+# quotable from either kind of run.
+WITHHELD_REASON = (
+    "the mark set of the block they fall in does not hold, or the window falls "
+    "in no block at all and either no label could be read for it or the "
+    "captures disagree about the action it opened. What they would have shown "
+    "is not reported here and is not to be quoted from this run.")
+
 # The bytes §4.4/§4.5 name but this script does not grade. They get their own
 # section because they are what §7's call is made on, and a reader should not
 # have to find them in the generic "other addresses" list to notice them --
@@ -2127,9 +2153,22 @@ def main(argv=None):
                 moved_groups.append(name)
 
     # The windows the loop above actually printed. `len(shown)` and not
-    # `len(windows)`: it is the denominator the withheld banner already uses,
-    # so the two counts agree by construction, and on a --block run it is that
-    # block's own windows rather than the whole mark stream's.
+    # `len(windows)`: on a --block run that is that block's own windows rather
+    # than the whole mark stream's, and a figure over the stream would be
+    # counting windows this run was never shown. `withheld` is subtracted from
+    # the same set it was counted over, so the two cannot name one window
+    # twice.
+    #
+    # It no longer shares a denominator with the withheld banner, which names
+    # both on a `--block` run, so the agreement the two used to have by
+    # construction is stated here instead of there. On a `--block` run it is
+    # also 0 or `len(shown)`, and that is a property of the paths rather than
+    # a fixture: the two "in no block" refusals are fed from `assign_blocks`'
+    # `unplaced` list, whose windows have no block and so cannot be in `shown`,
+    # which leaves only the block's own mark set -- and a block either has
+    # problems or does not. The two sentences below that print `graded` are
+    # therefore unreachable on a `--block` run: a withheld block grades
+    # nothing, so `graded == 0` takes the branch before either of them.
     graded = len(shown) - withheld
 
     void = report_blocks(blocks, selected)
@@ -2157,12 +2196,23 @@ def main(argv=None):
 
     print("\n=== what this does and does not settle ===")
     if withheld:
-        print(f"  {withheld} of the {len(shown)} window(s) above were not "
-              "graded: the mark set of the block they fall in does not hold, "
-              "or the window falls in no block at all and either no label "
-              "could be read for it or the captures disagree about the action "
-              "it opened. What they would have shown is not reported here and "
-              "is not to be quoted from this run.")
+        # Two denominators on a `--block` run, one on a whole-capture run.
+        # `withheld` is the count the loop above took, printed on both paths
+        # rather than the `All` that `withheld == len(shown)` would license
+        # here: the text reports what was counted, and does not bake in an
+        # invariant a future refusal path could break. The block's own count
+        # comes first because the windows printed directly above are its
+        # windows, and the capture's second because they are numbered in the
+        # day's mark stream and the withheld ones are 2 of the day's 8, which
+        # is the number a reader needs before §7's `confirmed-inert` call.
+        # Whole-capture wording is left byte for byte: the two counts are one
+        # number there, so it is already correct, and five tests pin it.
+        if selected is None:
+            scope = f"{len(shown)} window(s) above"
+        else:
+            scope = (f"{len(shown)} window(s) of this block ({withheld} of the "
+                     f"capture's {len(windows)} window(s))")
+        print(f"  {withheld} of the {scope} were not graded: {WITHHELD_REASON}")
     if unreads:
         # The line the withheld banner above would have printed, and printed
         # on its own when the run's unreadable windows are not in `shown` at
