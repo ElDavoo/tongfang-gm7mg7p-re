@@ -1,20 +1,24 @@
 #!/usr/bin/env python3
-"""The `--no-eq-guard` refusal contract (issue #556).
+"""The refusal contract of `xdata_register_map.py`'s two census flags
+(issues #556 and #604).
 
-The flag carries three claims. The first -- that it flips the `==` rejection
-and nothing else, so the pre-#178 classifier stays measurable from the
-committed tree -- is held by the tool's own `--self-test`, against a literal
-table. `test_xdata_cluster_names.py` was to hold it a second way, by running
-the census the flag produces, but it has raised in `setUpClass` since #528
-without running any of its six cases; the write-up says so and leaves the fix
-named rather than folded in. This suite holds the other two claims, the
-refusals, which nothing held before -- the tool's own `--self-test` cannot,
-because a flag that is refused with `--self-test` is by definition not
-answerable from it.
+Each flag carries three claims, and for each it is the last that is held here.
+`--no-eq-guard` claims it flips the `==` rejection and nothing else, so the
+pre-#178 classifier stays measurable from the committed tree; that is held by
+the tool's own `--self-test`, against a literal table, and
+`test_xdata_cluster_names.py` was to hold it a second way, by running the census
+the flag produces, but it has raised in `setUpClass` since #528 without running
+any of its six cases; the write-up says so and leaves the fix named rather than
+folded in. `--export-ownership` claims it reads each routine once, from the
+export that owns it, and `ec/annotations/xdata-export-ownership.md` 4-5 is the
+measurement, held by the tool's own `OWNERSHIP` table. The two refusals were
+held by nothing before, for either flag -- the tool's own `--self-test` cannot
+hold them, because a flag that is refused with `--self-test` is by definition
+not answerable from it.
 
-Both refusals fire in `main()` before the mode dispatch, so reaching them costs
-no census pass: no image, no Ghidra, no network, and nothing here touched
-hardware. The one accepted run is a regeneration from the same committed text
+All four refusals fire in `main()` before the mode dispatch, so reaching them
+costs no census pass: no image, no Ghidra, no network, and nothing here touched
+hardware. The two accepted runs are regenerations from the same committed text
 into a `tempfile.TemporaryDirectory()`.
 
 **The tripwires are the point of `Refusals`, not belt-and-braces.** Asserting
@@ -25,9 +29,12 @@ is replaced with a recorder, and a guard that regressed fails the test cleanly
 instead of overwriting the two files the whole tree is keyed to. A test that
 could damage the repository on failure would be the wrong place to pin this.
 
-**Not tested, deliberately.** `--check --self-test --no-eq-guard` together is
-refused by argparse's mutually-exclusive group, but that is testing argparse,
-and its exit code is indistinguishable from a guard firing.
+**Not tested, deliberately.** `--check --self-test <flag>` together, for either
+flag, is refused by argparse's mutually-exclusive group, but that is testing
+argparse, and its exit code is indistinguishable from a guard firing. And no
+*third* flag is covered: the two here are the two `main()` carries today, and
+`TripwireCoverage` reads the mode dispatch rather than the guards, so a flag
+added without its refusals would be a gap this suite could not see.
 """
 import ast
 import contextlib
@@ -49,15 +56,28 @@ xrm = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(xrm)
 
 # The entry points `main()` dispatches to, in the order it tries them. A
-# `--no-eq-guard` run must not reach any of them; the tripwires replace all of
-# them so a refusal that moved below the dispatch is caught wherever it moved
-# to. Nine rather than the six this suite was written against: #566 added the
-# three co-reading modes to the dispatch, and a tripwire naming only the old six
-# would have let a relocated guard reach one of the three it did not mock.
-# `TripwireCoverage` below keeps the two lists from drifting again.
+# `--no-eq-guard` or `--export-ownership` run must not reach any of them; the
+# tripwires replace all of them so a refusal that moved below the dispatch is
+# caught wherever it moved to. Nine rather than the six this suite was written
+# against: #566 added the three co-reading modes to the dispatch, and a tripwire
+# naming only the old six would have let a relocated guard reach one of the
+# three it did not mock. `TripwireCoverage` below keeps the two lists from
+# drifting again.
 MODES = ("self_test", "threshold_sweep", "co_reading_sweep",
          "co_reading_group_table", "collapse_co_readings", "map_census",
          "reconcile", "check", "write")
+
+# The two flags `main()` guards, and the two refusals each carries. The tripwire
+# is already flag-agnostic -- it mocks the same nine entry points either way --
+# so the two flags are one table and the cases below loop over it. The guard
+# messages are byte-identical apart from the flag name, which is what makes them
+# shared constants rather than a string per flag: `main()`'s own comment says the
+# two pairs are "the same two refusals, for the same two reasons", and a shared
+# fragment makes that a thing a case checks rather than a sentence a reader
+# believes. A flag that stopped carrying one of them goes red here.
+GUARDED_FLAGS = ("--no-eq-guard", "--export-ownership")
+REFUSED_WITH_A_MODE = "cannot be combined with --check or --self-test"
+REFUSED_AT_THE_DEFAULTS = "would overwrite the committed census"
 
 
 def run_main(*argv):
@@ -89,10 +109,27 @@ def committed_census():
             Path(xrm.OUT_CLUSTERS).read_bytes())
 
 
-def write_totals(path):
-    """{addr: write references} from a registers CSV."""
+def column_totals(path, column):
+    """{addr: `column` total} from a registers CSV.
+
+    One column at a time because the two accepted runs assert opposite signs on
+    two different columns -- `AcceptedWrite` sums `write` while
+    `AcceptedExportOwnershipWrite` sums `refs` -- and a reader should be able to
+    see which is which from the call rather than from a helper named after
+    either.
+    """
     with open(path, newline="") as f:
-        return {r["addr"]: int(r["write"]) for r in csv.DictReader(f)}
+        return {r["addr"]: int(r[column]) for r in csv.DictReader(f)}
+
+
+def cluster_keys(path):
+    """The `cluster_key` of every cluster in a clusters CSV.
+
+    Read through the tool's own row reader rather than a local `csv` call, the
+    way `committed_census()` reads the defaults: the suite follows the tool's
+    idea of a clusters CSV rather than a second one.
+    """
+    return {r["cluster_key"] for r in xrm.load_cluster_rows(path)}
 
 
 class TripwireCoverage(unittest.TestCase):
@@ -129,17 +166,20 @@ class TripwireCoverage(unittest.TestCase):
 
 
 class Refusals(unittest.TestCase):
-    """`--no-eq-guard` with `--check`, with `--self-test`, or without scratch
+    """Either guarded flag with `--check`, with `--self-test`, or without scratch
     outputs is refused, and the refusal costs the repository nothing.
 
-    Two refusals, five cases, and each case gives the *other* guard nothing to
-    fire on so it tests the guard it is about. The `--check` and `--self-test`
-    cases are the ones that need it: at the default outputs a run of those is
-    also caught by the second guard, so a case left at the defaults would pass
-    on either guard and a `--check` guard that was moved below the dispatch
-    would go unnoticed behind the one still above it. The issue's literal
-    invocation -- `--no-eq-guard --check` at the defaults -- is refused either
-    way, and the third case below is that run with the flag alone.
+    Two flags, two refusals each, five cases, and every case loops over
+    `GUARDED_FLAGS` -- a `subTest` per flag rather than a second class, because
+    the guards differ only in the flag they read and the tripwire is the same
+    one either way. Each case still gives the *other* guard nothing to fire on,
+    so it tests the guard it is about on both flags. The `--check` and
+    `--self-test` cases are the ones that need it: at the default outputs a run
+    of those is also caught by the second guard, so a case left at the defaults
+    would pass on either guard and a `--check` guard that was moved below the
+    dispatch would go unnoticed behind the one still above it. The issue's
+    literal invocation -- a flag with `--check` at the defaults -- is refused
+    either way, and the third case below is that run with the flag alone.
 
     The two half-scratch cases are here because the second guard is an `or` --
     a refactor that required *both* outputs to be scratch would otherwise pass
@@ -175,37 +215,46 @@ class Refusals(unittest.TestCase):
     def test_it_is_refused_with_check(self):
         # `--check`'s whole claim is that the committed CSVs already match a
         # fresh generation; a flag that re-buckets occurrences cannot be
-        # answerable from a mode that reports on the guard's own output. The
+        # answerable from a mode that reports on the guard's own output -- and
+        # `--export-ownership` re-buckets just as much, by de-duplicating. The
         # scratch outputs are given so this is the only guard that can fire.
-        with tempfile.TemporaryDirectory(prefix="xdata-refused-") as tmp:
-            _code, err = self.refuse(
-                "--no-eq-guard", "--check",
-                "--out-registers", os.path.join(tmp, "registers.csv"),
-                "--out-clusters", os.path.join(tmp, "clusters.csv"))
-        self.assertIn("cannot be combined with --check or --self-test", err)
+        for flag in GUARDED_FLAGS:
+            with self.subTest(flag=flag), \
+                    tempfile.TemporaryDirectory(prefix="xdata-refused-") as tmp:
+                _code, err = self.refuse(
+                    flag, "--check",
+                    "--out-registers", os.path.join(tmp, "registers.csv"),
+                    "--out-clusters", os.path.join(tmp, "clusters.csv"))
+                self.assertIn(REFUSED_WITH_A_MODE, err)
 
     def test_it_is_refused_with_self_test(self):
         # The same guard, reached the other way round. `ap.error` prints the
         # one message for both, so both cases read the same line; they are two
         # cases because the dispatch offers them as two arguments.
-        with tempfile.TemporaryDirectory(prefix="xdata-refused-") as tmp:
-            _code, err = self.refuse(
-                "--no-eq-guard", "--self-test",
-                "--out-registers", os.path.join(tmp, "registers.csv"),
-                "--out-clusters", os.path.join(tmp, "clusters.csv"))
-        self.assertIn("cannot be combined with --check or --self-test", err)
+        for flag in GUARDED_FLAGS:
+            with self.subTest(flag=flag), \
+                    tempfile.TemporaryDirectory(prefix="xdata-refused-") as tmp:
+                _code, err = self.refuse(
+                    flag, "--self-test",
+                    "--out-registers", os.path.join(tmp, "registers.csv"),
+                    "--out-clusters", os.path.join(tmp, "clusters.csv"))
+                self.assertIn(REFUSED_WITH_A_MODE, err)
 
     def test_it_is_refused_bare_with_the_default_outputs(self):
-        # The hazard: run bare, it writes the pre-#178 census over
-        # `xdata-registers.csv` and `xdata-clusters.csv`. That is caught, but
-        # only afterwards and by other tools -- `--check` is refused with the
-        # flag, so it regenerates guard-on and goes red, and so do the
-        # citations. The guard's job is to stop the write, not to leave the
-        # repository to be noticed afterwards. This is the issue's third
-        # combination verbatim, and the only one where a mode would reach the
-        # committed paths if the guard were not there.
-        _code, err = self.refuse("--no-eq-guard")
-        self.assertIn("would overwrite the committed census", err)
+        # The hazard: run bare, it writes a census the committed CSVs do not
+        # match -- the pre-#178 one for `--no-eq-guard`, the de-duplicated one
+        # for `--export-ownership`, which re-keys 35 of the 430 clusters and
+        # breaks 5 of the 10 hand names. That is caught, but only afterwards and
+        # by other tools -- `--check` is refused with the flag, so it
+        # regenerates default and goes red, and so do the citations. The
+        # guard's job is to stop the write, not to leave the repository to be
+        # noticed afterwards. This is the issue's third combination verbatim,
+        # and the only one where a mode would reach the committed paths if the
+        # guard were not there.
+        for flag in GUARDED_FLAGS:
+            with self.subTest(flag=flag):
+                _code, err = self.refuse(flag)
+                self.assertIn(REFUSED_AT_THE_DEFAULTS, err)
 
     def test_it_is_refused_with_scratch_registers_only(self):
         # `or`, not `and`: clusters are still on their default here, so the
@@ -213,23 +262,29 @@ class Refusals(unittest.TestCase):
         # write. Nothing is written to the scratch path either -- a refusal
         # that redirected instead of refusing would still be a refusal that
         # does the wrong thing.
-        with tempfile.TemporaryDirectory(prefix="xdata-refused-") as tmp:
-            scratch = os.path.join(tmp, "registers.csv")
-            self.refuse("--no-eq-guard", "--out-registers", scratch)
-            self.assertFalse(os.path.exists(scratch))
+        for flag in GUARDED_FLAGS:
+            with self.subTest(flag=flag), \
+                    tempfile.TemporaryDirectory(prefix="xdata-refused-") as tmp:
+                scratch = os.path.join(tmp, "registers.csv")
+                self.refuse(flag, "--out-registers", scratch)
+                self.assertFalse(os.path.exists(scratch))
 
     def test_it_is_refused_with_scratch_clusters_only(self):
         # The other half of the same `or`, and it fails the same way.
-        with tempfile.TemporaryDirectory(prefix="xdata-refused-") as tmp:
-            scratch = os.path.join(tmp, "clusters.csv")
-            self.refuse("--no-eq-guard", "--out-clusters", scratch)
-            self.assertFalse(os.path.exists(scratch))
+        for flag in GUARDED_FLAGS:
+            with self.subTest(flag=flag), \
+                    tempfile.TemporaryDirectory(prefix="xdata-refused-") as tmp:
+                scratch = os.path.join(tmp, "clusters.csv")
+                self.refuse(flag, "--out-clusters", scratch)
+                self.assertFalse(os.path.exists(scratch))
 
     def test_the_defaults_still_point_into_the_committed_tree(self):
-        # The whole hazard is premised on this. If the defaults move, the
+        # The whole hazard is premised on this, for both flags, and it is the
+        # one case here that is not per-flag. If the defaults move, the
         # refusals above keep passing while meaning something else -- a bare
-        # `--no-eq-guard` run would no longer be a threat to these two files,
-        # and the guard's reason at xdata_register_map.py:3623-3626 would be stale.
+        # run of either flag would no longer be a threat to these two files, and
+        # both guards' reasons at xdata_register_map.py:3677-3680 and
+        # :3687-3697 would be stale.
         self.assertEqual(Path(xrm.OUT_REGISTERS).parent, EC / "annotations")
         self.assertEqual(Path(xrm.OUT_CLUSTERS).parent, EC / "annotations")
 
@@ -290,13 +345,130 @@ class AcceptedWrite(unittest.TestCase):
         # `xdata-06c2-06db-timers.md` §6a measured 833 and 210. Those are that
         # page's figures and are re-derivable from the command it prints;
         # pinning them here would make this suite red for an unrelated change.
-        off = write_totals(self.registers)
-        committed = write_totals(xrm.OUT_REGISTERS)
+        off = column_totals(self.registers, "write")
+        committed = column_totals(xrm.OUT_REGISTERS, "write")
         self.assertEqual(set(off), set(committed))
         self.assertGreater(sum(off.values()), sum(committed.values()))
         moved = [addr for addr in off if off[addr] != committed[addr]]
         self.assertTrue(moved, "no address's `write` differs, so this run "
                               "did not measure the guard being off")
+
+
+class AcceptedExportOwnershipWrite(unittest.TestCase):
+    """The one `--export-ownership` invocation that is not refused writes only
+    into the temporary directory it was given, and de-duplicates rather than
+    removing a rejection.
+
+    Every effect case here asserts a *relation* and never a figure, for the
+    reason the sibling's does: 9,404 against 14,822 references is
+    `xdata-export-ownership.md` §4's, recorded on a committed page, and pinning
+    it here would make this suite red for an unrelated re-derivation. What is
+    asserted instead is the sign of the relation, both sides of the two
+    renumberings, and the one thing the pass must never do.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory(prefix="xdata-ownership-")
+        cls.registers = os.path.join(cls.tmp.name, "registers.csv")
+        cls.clusters = os.path.join(cls.tmp.name, "clusters.csv")
+        cls.before = committed_census()
+        # No tripwires, for the same reason as `AcceptedWrite` and with the same
+        # consequence: this is the case that has to really write, or the "wrote
+        # only into the tempdir" half is vacuous. The two scratch paths are all
+        # that stand between this run and the committed CSVs, which is exactly
+        # the property the refusals above pin.
+        cls.code, _out, cls.err = run_main(
+            "--export-ownership", "--out-registers", cls.registers,
+            "--out-clusters", cls.clusters)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
+
+    def test_the_run_is_accepted(self):
+        self.assertEqual(self.code, 0, self.err)
+
+    def test_both_scratch_files_exist(self):
+        self.assertTrue(os.path.exists(self.registers), self.registers)
+        self.assertTrue(os.path.exists(self.clusters), self.clusters)
+
+    def test_the_committed_census_is_byte_identical_afterwards(self):
+        # The issue's "writes only into the TemporaryDirectory", and this is
+        # what makes the two cases below non-vacuous: if the run had written
+        # the committed files instead, "the scratch file is not a copy of the
+        # committed one" would be comparing a file with itself.
+        self.assertEqual(committed_census(), self.before)
+
+    def test_the_scratch_census_is_not_a_copy_of_the_committed_one(self):
+        # The shape `AcceptedWrite` uses, and a sharper second opinion here.
+        # The committed census matches a fresh generation on this tree, so a
+        # run that ignored `--export-ownership` would reproduce it byte for
+        # byte -- the de-duplicated census is 9,404 references against the
+        # committed 14,822, which is not a byte for byte anything.
+        self.assertNotEqual(Path(self.registers).read_bytes(), self.before[0],
+                            "the scratch census is a byte-for-byte copy of the "
+                            "committed one, so this run did not measure the "
+                            "pass being on")
+
+    def test_the_pass_only_removes_references(self):
+        # Direction, and the sign is the opposite of `AcceptedWrite`'s, which
+        # is why that case's `assertGreater` is not reused here: the `==` guard
+        # rejects occurrences, so turning it off can only add writes, while
+        # this pass reads one routine once instead of 42 times and so can only
+        # drop references. Neither sign is a count, and both survive a
+        # re-derivation that a pinned figure would not.
+        dedup = column_totals(self.registers, "refs")
+        committed = column_totals(xrm.OUT_REGISTERS, "refs")
+        self.assertLess(sum(dedup.values()), sum(committed.values()))
+        moved = [addr for addr in dedup if dedup[addr] != committed[addr]]
+        self.assertTrue(moved, "no address's `refs` differs, so this run "
+                              "did not measure the pass being on")
+
+    def test_no_address_is_lost(self):
+        # The one thing the pass must never do. `OWNERSHIP["lost"]` pins it
+        # from the tool's own oracle, and `--self-test` cannot be the route
+        # here for the reason the flag is refused with `--self-test` in the
+        # first place: the check and the flag cannot be combined. So the
+        # relation is derived from the two CSVs, which is what the empty `lost`
+        # set says anyway. §4's correction records the one grouping that did
+        # lose `0x05E0`, and losing it would fail here.
+        self.assertEqual(set(column_totals(self.registers, "refs")),
+                         set(column_totals(xrm.OUT_REGISTERS, "refs")),
+                         "the pass dropped or invented an address, which is "
+                         "what OWNERSHIP['lost'] pins and must stay empty")
+
+    def test_cluster_keys_are_renumbered_rather_than_rekeyed(self):
+        # Two-sided on purpose, and both halves are load-bearing. A committed
+        # key that survives says the pass re-keyed 35 clusters rather than
+        # every one of them; a committed key that goes missing says the flip
+        # is a tree-wide renumbering and not a no-op. The 35 of 430 that break
+        # and the 37 that are new are `xdata-export-ownership.md` §5's figures
+        # and `OWNERSHIP`'s, and they stay there.
+        scratch, committed = cluster_keys(self.clusters), cluster_keys(xrm.OUT_CLUSTERS)
+        self.assertTrue(committed - scratch,
+                        "every committed cluster_key survives, so this run did "
+                        "not measure the renumbering")
+        self.assertTrue(scratch & committed,
+                        "no committed cluster_key survives, so the pass re-keyed "
+                        "the census wholesale rather than renumbering it")
+
+    def test_some_hand_cluster_names_break_and_some_survive(self):
+        # The same two-sided relation over the ten hand names, read through the
+        # tool's own `load_cluster_names()` rather than a spelled-out path. Five
+        # of the ten break, and which five is not pinned: §5 names
+        # `counter-sweep` (`k733222e83898`) as `main-ec-002`'s own key and one
+        # that does not survive as a single cluster at all, but a membership
+        # claim would make this suite red for an unrelated re-derivation -- the
+        # same trade `test_the_scratch_census_is_not_a_copy_of_the_committed_one`
+        # makes against §6a's figures.
+        names, scratch = set(xrm.load_cluster_names()), cluster_keys(self.clusters)
+        self.assertTrue(names - scratch,
+                        "every hand-named cluster_key survives the pass, so "
+                        "this run did not measure the renumbering")
+        self.assertTrue(names & scratch,
+                        "no hand-named cluster_key survives, so the pass re-keyed "
+                        "the census wholesale rather than renumbering it")
 
 
 if __name__ == "__main__":

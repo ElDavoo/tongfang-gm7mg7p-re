@@ -21,7 +21,7 @@ claims, and until now only the first was tested.
 
 | | claim | held by |
 |---|---|---|
-| 1 | it flips exactly the `==` snippets in `CLASSIFIER_SHAPE` and nothing else | the tool's own `--self-test`, at `xdata_register_map.py:2467-2487`, and `test_xdata_cluster_names.py::TheGuardOffRegeneration`, which runs the census the flag produces — but that class has been in error in `setUpClass` since #528 and runs none of its six cases (see below), so of the two only the first is green today |
+| 1 | it flips exactly the `==` snippets in `CLASSIFIER_SHAPE` and nothing else | the tool's own `--self-test`, at `xdata_register_map.py:2521-2541`, and `test_xdata_cluster_names.py::TheGuardOffRegeneration`, which runs the census the flag produces — but that class has been in error in `setUpClass` since #528 and runs none of its six cases (see below), so of the two only the first is green today |
 | 2 | it is refused with `--check` and with `--self-test` | `Refusals.test_it_is_refused_with_check`, `..._with_self_test` |
 | 3 | it is refused unless given scratch `--out-registers` **and** `--out-clusters` | `Refusals.test_it_is_refused_bare_with_the_default_outputs`, `..._with_scratch_registers_only`, `..._with_scratch_clusters_only` |
 
@@ -67,7 +67,7 @@ this tree's and move as the tree's citations do; the split is what makes 45
 reconcilable with a 37 measured over `ec/annotations/` alone.
 
 **The tool's own comment said otherwise, and said so in this write-up's first
-draft too.** `xdata_register_map.py:3623-3626` claimed, from #528, that a bare
+draft too.** `xdata_register_map.py:3677-3680` claimed, from #528, that a bare
 run leaves `--check` green "because the files now agree with each other". That
 is false on this tree, for the reason above, and the comment is corrected in
 place here rather than left standing for the next reader to re-derive from.
@@ -329,7 +329,7 @@ not on a silent one.
   comment names the cause and deliberately leaves the mode out of the gate: the
   annotation CSV has **renamed 17** functions that `ec/decompiled/index.csv`
   still spells `FUN_CODE_*`, so the "annotation CSV and index.csv agree" check
-  at `xdata_register_map.py:2431` fails and clearing it means re-exporting the
+  at `xdata_register_map.py:2485` fails and clearing it means re-exporting the
   generated decompiled tree. The direction is the easy half to get backwards:
   the hand-annotated side is the one that moved — all 17 are
   `ff_filler_not_a_function_*`, the names #561's byte scan gave them — and
@@ -363,11 +363,19 @@ not on a silent one.
 - **`--export-ownership`'s own pair of refusals.** #565 added a second flag
   carrying the same two guards for the same two reasons, immediately below the
   `--no-eq-guard` pair and immediately above the same dispatch
-  (`xdata_register_map.py:3644-3653`), and this suite pins only the
+  (`xdata_register_map.py:3698-3707`), and this suite pins only the
   `--no-eq-guard` half. The tripwire would catch a relocated `--export-ownership`
   guard just as well — it mocks the same nine entry points — so the coverage is
   one flag short of what the dispatch now carries, and that is recorded here
   rather than quietly widened, because a third flag is not this issue's to add.
+
+  > **Corrected 2026-09-25, issue #604.** The paragraph above was true when it
+  > was written and is not now: `--export-ownership`'s own pair of refusals is
+  > pinned, by this same suite, on the same tripwire, and the write-up is
+  > [`xdata-export-ownership-refusal-contract.md`](xdata-export-ownership-refusal-contract.md).
+  > The `Refusals` cases now loop over both flags, so the coverage is no longer
+  > one flag short of what the dispatch carries. A third flag is still not
+  > added, and that half of the sentence still stands.
 - **The committed census CSVs.** Not regenerated, not re-keyed, not swept. They
   are what the refusal contract exists to protect, so a suite that rewrote
   them to check something about their contents would contradict its own point.
