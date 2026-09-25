@@ -11,10 +11,3 @@ C271     e0 - -   movx     A, @DPTR
 C272     20 e7 03 jb       0xe7, 0xc278
 C275     7f 01 -  mov      R7, #0x1
 C277     22 - -   ret      
-C278     90 16 65 mov      DPTR, #0x1665
-C27B     e0 - -   movx     A, @DPTR
-C27C     30 e2 03 jnb      0xe2, 0xc282
-C27F     7f 01 -  mov      R7, #0x1
-C281     22 - -   ret      
-C282     7f 00 -  mov      R7, #0x0
-C284     22 - -   ret      

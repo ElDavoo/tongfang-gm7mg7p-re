@@ -12,7 +12,14 @@
    and 0x08A8 clears bit 2 of 0x0985 (`anl A,#0xfb`) and bit 4 of 0x0723 (`anl A,#0xef`), each as a
    separate read-modify-write. What any of these bytes means is not shown here;
    ec/annotations/registers.yaml now carries 0x0440 as XDATA_0440, an EC-side site found with its
-   meaning not established, and names none of the other bytes above.
+   meaning not established, and names none of the other bytes above. CORRECTION (2026-09-25, issue
+   #555): the 94 instructions and the extent are right; the comparison is not. The body starts at
+   `0x8001` and is 393 bytes, so this 155-byte listing is its tail -- the same function, not the
+   same span. The one byte-scan site naming it frames at 1 of 24 and is a `cjne` displacement byte
+   the scan read as a call, and the one real call *into* the run among those 180 byte-scan sites is
+   a three-byte call at `bank1:0xABB8` whose target is `0x8001` -- a forwarder outside the run whose
+   other six call targets (0xc613, 0x91e8, 0xa8f0, 0xa916, 0x1aa4, 0xa2f3) all fall outside it as
+   well. Method and the full table: `docs/findings/counter-sweep-entry-set.md`.
    type: writer
    evidence: ec/decompiled/bank1/80EF.asm; ec/decompiled/bank1/80EF.c; ec/annotations/registers.yaml
    basis: hand-decoded

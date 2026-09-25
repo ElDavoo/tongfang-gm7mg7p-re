@@ -97,9 +97,9 @@ larger. The committed map is the strict-subset derivation.
 ### The body floor, which is the load-bearing choice
 
 At 0.90 a **one-statement** body is contained by any larger body that happens
-to spell that one statement, and 1,272 of the tree's 2,710 bodies are two
-statements or fewer — 494 of them a single statement, of which 426 name
-`return` and 111 are exactly `return`. Unguarded, those fragments chain a
+to spell that one statement, and 1,276 of the tree's 2,714 bodies are two
+statements or fewer — 495 of them a single statement, of which 427 name
+`return` and 112 are exactly `return`. Unguarded, those fragments chain a
 whole program together. Every cell below is at the committed 0.90, so the
 three columns are one detector rather than two:
 
@@ -134,7 +134,7 @@ grouping.
 
 ## 4. What the committed tool measures on this tree
 
-`xdata-export-ownership.csv`, 2,710 rows — one per `index.csv` row — and
+`xdata-export-ownership.csv`, 2,714 rows — one per `index.csv` row — and
 `--check` holds it to a fresh derivation:
 
 | | |
@@ -142,7 +142,7 @@ grouping.
 | containment classes | 56 |
 | non-owner rows (`shared=yes`) | 146 |
 | largest class | 42, owned by `bank1/8001.c` |
-| bodies too short to compare | 1,272 |
+| bodies too short to compare | 1,276 |
 | non-owners reaching their owner only by a chain | 29 |
 
 And what the pass does to the census, measured with

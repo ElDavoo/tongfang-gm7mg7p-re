@@ -8,7 +8,15 @@
    byte DPTR points at; these bytes never load DPTR, so the address is whatever the caller left. The
    .c at this address is not a decompile of that single instruction but of a body running from
    0x8018 to the `ret` at 0x8189, so the one-instruction boundary is the call-target byte scan's
-   hypothesis and the function-level role here is not determined.
+   hypothesis and the function-level role here is not determined. CORRECTION (2026-09-25, issue
+   #555): the body does not start at `0x8018`. It starts at `0x8001` and runs 393 bytes to the same
+   `ret` at `0x8189`, 23 more than the span named above -- the `0x06C6` and `0x06CD` countdowns in
+   full, then the `mov DPTR,#0x06D1` / `movx` / `jz` / `dec A` that precede `0x8018`.
+   `ec/tools/counter_sweep_entry.py` finds exactly one of the 180 `bank1` rows targeting into the
+   run at an instruction start in a committed listing: a three-byte call at `bank1:0xABB8` whose
+   target is `0x8001`, 24 of 24, so the boundary is settled rather than a hypothesis. This address
+   is named by 3 of the 180, best framing 1 of 24. Method and the full table:
+   `docs/findings/counter-sweep-entry-set.md`.
    type: writer
    evidence: ec/decompiled/bank1/8018.asm; ec/decompiled/bank1/8018.c
    basis: hand-decoded

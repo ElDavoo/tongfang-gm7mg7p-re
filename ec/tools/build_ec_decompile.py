@@ -2134,13 +2134,19 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # 2,709 -> 2,710 with issue #262's one seeded bank1 routine, 0xC1E7. Its
     # sibling 0xC118 could not be seeded -- it is the immediate byte of an
     # instruction inside FUN_CODE_c0a8, not an entry -- so that issue moves the
-    # total by one, not two.
-    check("EC: index.csv is 2,710 rows, and the manifest records 2,710 "
+    # total by one, not two. 2,710 -> 2,714 with issue #267's four bank0
+    # routines 0xC278, 0xC2C2, 0xC33C and 0xC4E7. One of those four, 0xC278,
+    # is seeded inside what was a single function at 0xC26E, so that seed
+    # splits the old function in two rather than only adding: C26E keeps its
+    # row and loses the 0xC278 half (12 bytes -> 10), and C278 becomes a
+    # function of its own. The split adds one to both totals, so the movement
+    # is +4 and not +3 -- C26E's row does not go away to pay for C278's.
+    check("EC: index.csv is 2,714 rows, and the manifest records 2,714 "
           "functions across 4 programs",
-          len(_ir) == 2710 and len(_mr) == 4
-          and sum(int(r["functions"]) for r in _mr) == 2710,
+          len(_ir) == 2714 and len(_mr) == 4
+          and sum(int(r["functions"]) for r in _mr) == 2714,
           "%d row(s), %d manifest row(s)" % (len(_ir), len(_mr)))
-    check("EC: listing-index.csv is the same 2,710 rows", len(_lr) == 2710,
+    check("EC: listing-index.csv is the same 2,714 rows", len(_lr) == 2714,
           "%d row(s)" % len(_lr))
     check("EC: the manifest's program set is the index's, with no label mapping "
           "in between",
@@ -2154,7 +2160,7 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("EC: addresses are uniformly 4 bare hex digits in both indexes, so "
           "string and int (program, addr) keys agree",
           all(len({(r["program"], r["addr"]) for r in rows})
-              == len({(r["program"], int(r["addr"], 16)) for r in rows}) == 2710
+              == len({(r["program"], int(r["addr"], 16)) for r in rows}) == 2714
               for rows in (_ir, _lr)))
     # The annotation layer's two committed CSVs, the same way. 1,769 records
     # and not the 1,771 the follow-up issue quoted: the file is 1,772 physical
@@ -2176,62 +2182,70 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # docs/findings/common-07f0-0f75-158e-1594-tranche.md), and 1,855 -> 1,872
     # with issue #561's seventeen common-area 0xFF fill rows
     # (docs/findings/ff-fill-census.md) -- both sets of rows are in this tree.
-    check("EC: annotations/ghidra-functions.csv is 1,872 records, no short row "
+    check("EC: annotations/ghidra-functions.csv is 1,876 records, no short row "
           "and no duplicate (scope, addr)",
-          len(_ann) == 1872 and not structure_problems("ghidra-functions.csv", _ann,
+          len(_ann) == 1876 and not structure_problems("ghidra-functions.csv", _ann,
                                                        annotation_key, "(scope, addr)"),
           "%d record(s)" % len(_ann))
     # The function layer's three counters, on the committed files, which is where
     # docs/findings.md §18's corrected figures come from. The history of each
     # pin, because these are the numbers that move on purpose:
     #
-    # annotations_applied 786 / 684 / 497, summing to 1,967 program-applications
-    #   rather than 1,872 rows, because ApplyAnnotations.mine() hands a
+    # annotations_applied 790 / 684 / 497, summing to 1,971 program-applications
+    #   rather than 1,876 rows, because ApplyAnnotations.mine() hands a
     #   `common`-scoped row to BOTH bank programs and the 95 of them are counted
-    #   once per program (691 + 95 = 786 for bank0, 589 + 95 = 684 for bank1).
-    #   The manifest's `common` row borrows bank0's 786
+    #   once per program (695 + 95 = 790 for bank0, 589 + 95 = 684 for bank1).
+    #   The manifest's `common` row borrows bank0's 790
     #   (MANIFEST_PROGRAM_SOURCE), and is excluded from the sum here for the
     #   same reason. This is not a pin that has moved on its own: it is the
     #   first run in which the number came from a report at all, and it has
-    #   moved once since, 769 / 667 -> 786 / 684, when issue #561 added 17
-    #   `common`-scoped 0xFF-fill rows that a bank consumes twice.
+    #   moved twice since, 769 / 667 -> 786 / 684 when issue #561 added 17
+    #   `common`-scoped 0xFF-fill rows that a bank consumes twice, then
+    #   786 -> 790 for bank0 alone with issue #267's four `bank0`-scoped rows.
+    #   Only bank0 moves on a bank0-scoped addition, which is the shape of the
+    #   pin worth keeping: it is a per-program measurement, not a total.
     # annotations_unmatched 0 / 0 / 0. Also the first run that could have
     #   reported otherwise -- the driver used to write a literal 0 here, so
     #   every manifest in the repository's history recorded a match it had not
-    #   checked. 1,872 rows and zero unresolved is now a measurement.
-    # functions_named 693 / 599 / 97 / 501, summing to 1,890. These are the
+    #   checked. 1,876 rows and zero unresolved is now a measurement.
+    # functions_named 697 / 605 / 97 / 502, summing to 1,901. These are the
     #   figures the old `annotations_applied` column carried, unchanged: the
     #   number did not move, it acquired the name that describes it. It was
     #   1,787 when §18's drift paragraph was written and has grown with the
     #   annotation tranches since (1,866 at the time of the subsystems census,
     #   recorded in a later paragraph of §19, which also measured the gap at
-    #   18); §18's correction quotes today's 1,890. Only `common` moved with
+    #   18); §18's correction quotes 1,890, issue #267's four rows take
+    #   bank0 from 693 to 697, and #602's seven renames take bank1 from 599 to
+    #   605 and pd from 501 to 502 -- 1,894 on either side of the merge, 1,901
+    #   on the tree holding both. Only `common` moved with
     #   #561 (80 -> 97): those 17 rows sit at addresses both banks carry, so the
     #   de-dup exports each one once, under `common`, and it lands there and
     #   nowhere else.
-    _want_applied = {"bank0": 786, "bank1": 684, "pd": 497}
+    _want_applied = {"bank0": 790, "bank1": 684, "pd": 497}
     check("EC: the manifest's annotations_applied is what the exporter's reports "
-          "said -- 786 / 684 / 497 across the three programs, with `common` "
+          "said -- 790 / 684 / 497 across the three programs, with `common` "
           "borrowing bank0's",
           {r["program"]: int(r["annotations_applied"]) for r in _mr
            if r["program"] in _want_applied} == _want_applied
           and next(int(r["annotations_applied"]) for r in _mr
-                   if r["program"] == "common") == 786,
+                   if r["program"] == "common") == 790,
           str({r["program"]: r["annotations_applied"] for r in _mr}))
     check("EC: annotations_unmatched is 0 for all four programs, measured rather "
           "than written as a literal",
           all(int(r["annotations_unmatched"]) == 0 for r in _mr),
           str({r["program"]: r["annotations_unmatched"] for r in _mr}))
-    _want_named = {"bank0": 693, "bank1": 605, "common": 97, "pd": 502}
+    # Merged tree: #602's seven renames restored bank1's 605 and pd's 502 on
+    # top of #267's four bank0 rows, so 697 / 605 / 97 / 502 and 1,901.
+    _want_named = {"bank0": 697, "bank1": 605, "common": 97, "pd": 502}
     check("EC: functions_named is the index's own annotated=yes count per "
-          "program, 693 / 605 / 97 / 502, summing to 1,897",
+          "program, 697 / 605 / 97 / 502, summing to 1,901",
           {r["program"]: int(r["functions_named"]) for r in _mr} == _want_named
-          and sum(_want_named.values()) == 1897
+          and sum(_want_named.values()) == 1901
           and not annotation_ledger_mismatches(_mr, _ir, _ann),
           str(annotation_ledger_mismatches(_mr, _ir, _ann)[:2]))
     # The two-way ledger on the committed files, which is the whole substance of
     # the §18 correction. 25 and 0, and they close the arithmetic exactly:
-    # 1,872 rows - 0 applied-but-unflagged + 25 named-without-a-row = 1,897.
+    # 1,876 rows - 0 applied-but-unflagged + 25 named-without-a-row = 1,901.
     # The 25 is 15 `auto` (Ghidra's own caseD_* / default labels on switch
     # dispatchers, which isPlaceholderName() does not list among its placeholder
     # prefixes), 9 `call-target` and 1 `vector` -- pd 0x0000, where the only
@@ -2279,8 +2293,8 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
           "predates the row",
           _abu == [],
           str([(r["program"], r["addr"]) for r, _bk in _abu]))
-    check("EC: the two ledger directions close the arithmetic -- 1,872 - 0 + 25 "
-          "= the 1,897 functions named",
+    check("EC: the two ledger directions close the arithmetic -- 1,876 - 0 + 25 "
+          "= the 1,901 functions named",
           len(_ann) - len(_abu) + len(_nwr) == sum(_want_named.values()),
           "%d - %d + %d = %d, not %d"
           % (len(_ann), len(_abu), len(_nwr),
@@ -2326,7 +2340,7 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("EC: a raw and a normalised key count the same on both annotation "
           "CSVs, so normalising cannot merge two distinct keys",
           len({(r["scope"], r["addr"]) for r in _ann})
-          == len({annotation_key(r) for r in _ann}) == 1872
+          == len({annotation_key(r) for r in _ann}) == 1876
           and len({(r["file_offset"], r["target"]) for r in _ct})
           == len({call_target_key(r) for r in _ct}) == 5998)
 
@@ -3540,7 +3554,7 @@ SUBSYSTEM_CITE = re.compile(
 # remainder -- so every occurrence is collected, not just the last, and a
 # wrong number in the first of the two is as wrong as one in the second.
 #
-#     - `exported functions` — 2710
+#     - `exported functions` — 2714
 #
 # The value is compared against a recount, so editing a number in the prose
 # without re-deriving it is a failed check rather than a claim nobody notices.

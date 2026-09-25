@@ -425,11 +425,13 @@ bank0,C249,set_1604_bit5,match,7e3c988809c66bab,5,0,,sdas8051 05.50.4+NoICE+SDCC
 bank0,C251,test_1665_bit0_inverted,match,d0010387eaac91e5,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,C25E,clear_1605_bit1,match,50d3a8afcebe6866,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,C266,set_1605_bit1,match,3d7d0786866a1425,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
-bank0,C26E,FUN_CODE_c26e,match,66ab0ea7641eb5cd,12,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank0,C26E,FUN_CODE_c26e,match,3a4d7e4799be1ce1,5,0,,sdas8051 02.00
+bank0,C278,test_1665_bit2,match,a34b61e326b4a2ea,7,0,,sdas8051 02.00
 bank0,C295,test_1665_bit4_inverted,match,f9f4ec7aa7b1af64,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,C2A2,set_1605_bit5,match,611aad860b19193a,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,C2AA,clear_1605_bit5,match,6d144d591254b1a2,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,C2BA,set_1605_bit6,match,2fc1fa3ee8c0ad3d,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank0,C2C2,test_1665_bit6_inverted,match,3a01ad1e340400a5,7,0,,sdas8051 02.00
 bank0,C2CF,clear_1605_bit7,match,4b4f9a79c46f476d,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,C2F7,set_1606_bit2,match,5e98e138f7e247a0,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,C2FF,set_1606_bit0,match,c8e9ce6403510856,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -438,6 +440,7 @@ bank0,C30F,set_1606_bit3,match,4af04418273a358e,5,0,,sdas8051 05.50.4+NoICE+SDCC
 bank0,C317,clear_1606_bit3,match,91856677f2b111aa,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,C31F,test_1606_bit4_inverted,match,97e87a6dae225874,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,C333,nop_stub_c333,match,635b7c03121d7f31,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank0,C33C,test_1666_bit7,match,e4a87b49d3915418,7,0,,sdas8051 02.00
 bank0,C349,test_1667_bit0,match,b73bc826ba371f17,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,C356,test_1667_bit0_inverted,match,9648be4a99d01c12,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,C363,write_40_to_1641,match,331317c62262c8f1,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -461,6 +464,7 @@ bank0,C4AF,FUN_CODE_c4af,match,3a8c5b75abec0147,5,0,,sdas8051 05.50.4+NoICE+SDCC
 bank0,C4C9,FUN_CODE_c4c9,match,52292ca61c2a19fe,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,C4D1,FUN_CODE_c4d1,match,62516424fe3ec2d9,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,C4D9,test_166a_bit7_inverted,match,e8d3c8e61df1b623,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank0,C4E7,cflag_1665_bit4_inverted,match,50970118cf26432b,5,0,,sdas8051 02.00
 bank0,C4F0,write_40_to_dptr_then_read_1601,match,a35831c7d4074bd1,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,C4F8,read_074c_low_nibble,match,bab70f1c044d2727,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,C55F,FUN_CODE_c55f,match,a8f9bfb8d7f71ee7,49,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14

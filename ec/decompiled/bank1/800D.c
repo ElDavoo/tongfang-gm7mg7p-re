@@ -6,7 +6,14 @@
 
 /* One instruction: jz 0x8011. When the value read from XDATA 0x06CD is zero it skips the two bytes
    at 0x800F-0x8010, the dec A / movx @DPTR,A pair; otherwise it falls through into them. The
-   listing here is the conditional half of the group started at 0x8009.
+   listing here is the conditional half of the group started at 0x8009. CORRECTION (2026-09-25,
+   issue #555): the slice reading above holds, and the boundary framing is settled rather than open.
+   Of the 180 `bank1` rows of `bank-call-targets.csv` that target into `0x8001`-`0x8189`,
+   `ec/tools/counter_sweep_entry.py` finds exactly one at an instruction start in a committed
+   listing -- a three-byte call at `bank1:0xABB8` whose target is `0x8001`, 24 of 24 -- so the run
+   is one routine entering at `0x8001` and the cut the scan produced is the exporter's. This address
+   is named by 7 of the 180, best framing 2 of 24. Method and the full table:
+   `docs/findings/counter-sweep-entry-set.md`.
    type: logic
    evidence: ec/decompiled/bank1/800D.asm; ec/decompiled/bank1/800D.c
    basis: hand-decoded

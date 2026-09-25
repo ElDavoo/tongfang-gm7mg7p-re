@@ -6,7 +6,14 @@
 
 /* One instruction: mov DPTR,#0x06CD, which selects the next byte counter in the same sequence. The
    read, zero test, decrement and store that consume it are split by the call-target scan across
-   0x800C-0x8010, so this address does no access by itself.
+   0x800C-0x8010, so this address does no access by itself. CORRECTION (2026-09-25, issue #555): the
+   slice reading above holds, and the boundary framing is settled rather than open. Of the 180
+   `bank1` rows of `bank-call-targets.csv` that target into `0x8001`-`0x8189`,
+   `ec/tools/counter_sweep_entry.py` finds exactly one at an instruction start in a committed
+   listing -- a three-byte call at `bank1:0xABB8` whose target is `0x8001`, 24 of 24 -- so the run
+   is one routine entering at `0x8001` and the cut the scan produced is the exporter's. This address
+   is named by 4 of the 180, best framing 1 of 24. Method and the full table:
+   `docs/findings/counter-sweep-entry-set.md`.
    type: logic
    evidence: ec/decompiled/bank1/8009.asm; ec/decompiled/bank1/8009.c
    basis: hand-decoded

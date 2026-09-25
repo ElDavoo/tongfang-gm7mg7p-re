@@ -2134,6 +2134,79 @@ live run with a mechanism isolated would be.
 capture. All three are named as follow-ups in the walk's §9 rather than
 answered here, and none of them is another repository's issue to answer.
 
+**The `0x166A` half closed 2026-09-25 (issue #267);** the paragraph above is
+left as it was written. `0x1665`, `0x1666` and `0x166A` now carry
+`registers.yaml` rows — `XDATA_1665`, `XDATA_1666`, `XDATA_166A`, all
+`present-untested` — with 6, 2 and 3 direct sites, all reads, and the bit
+map in each note. `check_register_counts.py` reproduces all three from the
+image. The other two thirds of the gap are untouched: `0x0743` bit 1 still
+has no entry, and the `0x851B` stub run is still the gate on dating the
+capture.
+
+**And the question `0x07D3` was opened for has an answer this section did
+not have: the ASL reads `GFID`.** The walk above could say the EC wrote four
+distinct values and stop there. It can now be said which consumer
+distinguishes them, and the answer is two consumers that disagree about how
+many values matter. `Method (SMRW, 1)` at `dsdt.dsl:50764` compares GFID
+against `0x07`, `0x05`, `0x03` and `0x06` (`dsdt.dsl:50772`, `50799`,
+`50826`, `50854`), and each comparison picks a different pair of EC register
+blocks, jointly with `PDIN` (4 bits at `Offset (0x74C)`,
+`dsdt.dsl:52213`): GFID 7 → `ACPB`/`ACSB`, 5 → `ACPC`/`ACSC`, 3 →
+`ACPD`/`ACSD`, 6 → `ACPE`, each arm also naming a 32-bit overlay. So on the
+ASL side the two-bit select is genuinely four-way and chooses a register
+*bank*. On the firmware side `0x94D0` collapses it: it tests for GFID == 3
+alone and gives every other value the same seed pair, so there the select
+behaves as a two-way choice. Neither corrects the other — they are
+different consumers of one byte.
+
+**The paragraph above is corrected here rather than edited** (issue #267, fix
+round 1, 2026-09-25): it called the seven targets "EC register blocks" and
+said the select "chooses a register *bank*". The one below it said they were
+"not *declared* anywhere in it" and that `SMRW` "has no caller anywhere in the
+disassembly, so what invokes it is not in the committed inputs". All of that
+was a false negative, and the committed tree contradicts it.
+The seven are declared: `Name (ACPx, Buffer (n))` with initial contents at
+`dsdt.dsl:50383` (`ACPB`), `50387` (`ACSB`), `50391` (`ACPC`), `50396` (`ACSC`),
+`50401` (`ACPD`), `50406` (`ACSD`) and `50411` (`ACPE`) — 8 bytes for the first,
+second and seventh, 12 for the other four. What `SMRW` does with one is a copy
+in each direction, not a register access: `RWFG == 0xAA` stores `WRBF` (a
+0x60-bit field of `Arg0` at offset 8) into the selected buffer and
+`RWFG == 0xBB` lays a `CreateDWordField` over it at the caller's `REOF` index
+and returns that DWord. So the select picks one of seven ASL buffers, not a
+register bank; the seven carry five distinct initial patterns (ACPC matches
+ACSC and ACPD matches ACSD byte for byte) and not one of the five, nor either
+shared four-byte prefix `50 50 5F 00` / `78 78 A5 05`, occurs anywhere in
+`ec/firmware/GMxMGxx_11.800` — the ASL's own values, not bytes read back from
+the EC by anything committed. The caller is
+committed too: `WMIEC.cs:331-343` opens a WMI `ManagementObject` on
+`AcpiTest_MULong` (`ACPI\PNP0C14\1_1`), takes
+`GetMethodParameters("SMRW")` / `InvokeMethod("SMRW", …)` and reads `Return`,
+its `SMRW_CMD_READ = 187` / `SMRW_CMD_WRITE = 170` (`:23-31`) being the `0xBB`
+and `0xAA` the ASL tests, and `windows/native/ACPIDriver.sys.analysis.md:328,400`
+records the driver's `SMAPCTable` entry for `SMRW` and the 0x80-byte buffer it
+marshals where the other twenty entries take integers. So the consumer is the
+vendor service through the WMI ACPI driver, not something outside the tree.
+
+`SMRW` has no caller anywhere in the disassembly, so what invokes it is not
+in the committed inputs; and none of `ACPB`, `ACSB`, `ACPC`, `ACSC`, `ACPD`,
+`ACSD`, `ACPE` or those overlays is *declared* anywhere in it either, so
+their offsets and meanings are not recovered here. Two asymmetries do fall
+out and are recorded rather than smoothed over: GFID 4 is written by the EC
+and tested by no arm, and GFID 6 is tested by an arm and written by nothing
+either committed method finds. What makes GFID 3 special to the GPU is
+still open, and
+
+[`gpu-tgp-07c4-07d7-door.md`](hardware-tests/gpu-tgp-07c4-07d7-door.md) is
+the written procedure for it — marked **not run**, and nothing here reports
+an observation from it.
+
+**What is *not* established, corrected** (issue #267 fix round 1): the two
+negatives above are both replaced, and the claim that survives is narrower than
+either. Not established is what the EC does with the buffer the select lands
+on -- the copy crosses the ASL boundary, and nothing committed shows the other
+end of it. Established, and not in doubt, is who invokes `SMRW` and what it
+addresses. The two asymmetries above are unaffected and stand.
+
 **2026-09-25 (issue #264): the first of those is now closed, and the chain
 is drawn.** `0x09EA`/`0x09EB` have carried `registers.yaml` rows
 (`XDATA_09EA`/`XDATA_09EB`, both `present-untested`) since this paragraph was
@@ -2463,8 +2536,8 @@ a cached byte, and "reads like" is not "is".)*
 `ec/tools/verify_reassembly.py` re-encodes the committed EC listing with
 `sdas8051` and compares the result to `ec/firmware/GMxMGxx_11.800`. Ghidra's
 SLEIGH decodes; an assembler that never saw the firmware encodes; the firmware
-arbitrates. **45,481 of 45,624 instructions re-encode to the exact bytes in
-the image (99.69%), with no function in disagreement.** 2,576 of the 2,707
+arbitrates. **45,500 of 45,643 instructions re-encode to the exact bytes in
+the image (99.69%), with no function in disagreement.** 2,580 of the 2,711
 functions have every instruction verified; a further 73 have all but 143
 between them. Reproduced unchanged on two SDCC versions (4.5.0 and 4.6.0,
 `sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14`).
@@ -2477,6 +2550,20 @@ That is where 45,537 becomes 45,624 and 2,574 becomes 2,576. Both new rows in
 the `assembler` column says so, because `05.50.4` is not reachable on a
 GitHub-hosted runner; `ec/ghidra/README.md` says what a report holding two
 assembler versions does and does not do.)*
+
+*(2,707 to 2,711 rows, and 2,710 to 2,714 listings, with issue #267's four
+seeded bank0 routines 0xC278, 0xC2C2, 0xC33C and 0xC4E7. The 0xC278 seed lands
+inside what was one function, so it splits that function in two rather than
+only adding: 0xC26E keeps its row at 10 bytes and 0xC278 becomes a function of
+its own, which is why the movement is +4 and not +3. That is where 45,624
+becomes 45,643 and 2,576 becomes 2,580. The five rows involved -- those four
+plus 0xC26E, whose listing text moved and so had to be re-measured -- carry
+`assembler` `sdas8051 02.00` for the same reason the two above do, and the
+report was *not* regenerated in full to get them: `--report` rewrites every
+row, and a full re-run under `02.00` moves 52 outcomes that have nothing to
+do with this issue and would replace the pinned baseline §14g and §14h measure.
+The five were spliced in from a `02.00` run of `--emit-csv`, so their values
+are the tool's, and `ec/ghidra/README.md` records the splice.)*
 
 *(A first pass reported 97.80% and 1,004 unchecked instructions. Four of the
 seven opcodes in the "sdas8051 cannot express this" list were wrong: 0xC0 is
@@ -3816,7 +3903,7 @@ against drift rather than a bug hunt:
 
 | | `index.csv` | `listing-index.csv` | manifest |
 |---|---|---|---|
-| EC (`ec/decompiled/`, `ec/ghidra/manifest.csv`) | 2,710 rows, 2,710 distinct `(program, addr)`, 0 dups, 0 short rows | 2,710 / 2,710, same | 4 rows, `functions` agrees with both indexes on every row and sums to 2,710; all `mode` = `export-only` |
+| EC (`ec/decompiled/`, `ec/ghidra/manifest.csv`) | 2,714 rows, 2,714 distinct `(program, addr)`, 0 dups, 0 short rows | 2,714 / 2,714, same | 4 rows, `functions` agrees with both indexes on every row and sums to 2,714; all `mode` = `export-only` |
 | BIOS (`bios/ghidra/`) | 955 rows, 955 distinct keys, 0 dups, 0 short rows | 955 / 955, same | 38 rows, `functions` agrees with both indexes on every row and sums to 955; all `mode` = `export-only` |
 
 Reproduce it, one command per component, with no Ghidra and no network:

@@ -4,18 +4,22 @@
 // Machine output carrying this repository's symbols. Not the vendor's source.
 
 
-/* Stores R7 into XDATA 0x0A50, then picks a two-byte seed pair at 0x0A51/0x0A52: 0x61/0xFE or
-   0x61/0xC8 when the high nibble of 0x07D3 is 0x30 and the two 0xBA36 calls agree, and 0x61/0x92 in
-   every other case. A non-zero 0x0A50 tail-jumps to 0x95DD; a zero one calls 0xB93D, which leaves a
-   CODE pointer in R6:R7, and copies indexed bytes of that table into 0x0730, 0x0731, 0x0732,
-   0x0733, 0x07A7, 0x07A8, 0x07A9 and 0x07AA, restoring R6:R7 into DPTR before each read and routing
-   four of the bytes through 0xB939. Bit 2 of 0x0782 selects an 8/9/10/11 or a 4/5/6/7 index group,
-   and the chosen byte is copied to 0x0735 and 0x0737 through 0xBEC8, 0xBED2 and 0xB939; the R7
-   value 0xB8C0 leaves behind then selects between jumping to 0x9A0D and writing the fixed bytes
-   0x64, 0x64, 0x2D, 0x3C and 0x01 to 0x07A7, 0x07A8, 0x0730, 0x0731 and 0x0737.
-   ec/annotations/registers.yaml documents 0x0730-0x0737 and 0x07A7-0x07AA as the per-mode
-   PL1/PL2/PL4/D-state defaults; 0x0A50, 0x0A51 and 0x0A52 have no entry there, and 0x07D3 is there
-   as GFID (issue #183).
+/* Stores R7 into XDATA 0x0A50, then picks a two-byte seed pair at 0x0A51/0x0A52. 0x61/0xC8 only
+   when the high nibble of 0x07D3 is 0x30 AND the first 0xBA36 call returns non-zero while the
+   second returns something other than 3; 0x61/0xFE in the other two outcomes of that arm; and
+   0x61/0x92 whenever the high nibble is not 0x30, so the three GFID values 4, 5 and 7 collapse onto
+   one seed pair and this path treats the two-bit select as a two-way choice. This row used to say
+   "the two 0xBA36 calls agree", which the listing does not support -- it tests the first against
+   zero and the second against 3, and never compares them to each other (issue #267). A non-zero
+   0x0A50 tail-jumps to 0x95DD; a zero one calls 0xB93D, which leaves a CODE pointer in R6:R7, and
+   copies indexed bytes of that table into 0x0730, 0x0731, 0x0732, 0x0733, 0x07A7, 0x07A8, 0x07A9
+   and 0x07AA, restoring R6:R7 into DPTR before each read and routing four of the bytes through
+   0xB939. Bit 2 of 0x0782 selects an 8/9/10/11 or a 4/5/6/7 index group, and the chosen byte is
+   copied to 0x0735 and 0x0737 through 0xBEC8, 0xBED2 and 0xB939; the R7 value 0xB8C0 leaves behind
+   then selects between jumping to 0x9A0D and writing the fixed bytes 0x64, 0x64, 0x2D, 0x3C and
+   0x01 to 0x07A7, 0x07A8, 0x0730, 0x0731 and 0x0737. ec/annotations/registers.yaml documents
+   0x0730-0x0737 and 0x07A7-0x07AA as the per-mode PL1/PL2/PL4/D-state defaults; 0x0A50, 0x0A51 and
+   0x0A52 have no entry there, and 0x07D3 is there as GFID (issue #183).
    type: copy
    evidence: ec/decompiled/bank0/94D0.asm; ec/decompiled/bank0/94D0.c; ec/annotations/registers.yaml
    basis: hand-decoded

@@ -12,7 +12,7 @@ void FUN_CODE_c26e(void)
   if (-1 < SYSTEM_ID) {
     return;
   }
-  if ((DAT_EXTMEM_1665 >> 2 & 1) != 0) {
+  if ((XDATA_1665 >> 2 & 1) != 0) {
     return;
   }
   return;

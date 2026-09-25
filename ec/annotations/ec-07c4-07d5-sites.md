@@ -72,8 +72,10 @@ first written. That line read `73 entries / 105 addresses`, and it was
 this file was written moved it, and 105 had not been the tool's output for
 some time. It read `155 entries / 187 addresses` on `main` immediately
 before this change, and adding `XDATA_09EA` and `XDATA_09EB` (issue #264,
-below) moved it to the 157 / 189 above. The same stale figure was
-transcribed in `static-refs-audit.md` §6 and is corrected there too. The
+below) moved it to the 157 / 189 above. **It has moved again since:**
+`XDATA_1665`, `XDATA_1666` and `XDATA_166A` (issue #267) take it to
+**160 entries / 192 addresses**, which is what the tool prints now. The same
+figure is corrected in `static-refs-audit.md` §6. The
 `117` and the `15`/`102` split below are counts over **this file's own CSV**
 and are unaffected by any of that — only this one line was a
 whole-`registers.yaml` total.
@@ -364,9 +366,14 @@ nothing here says which one runs when.
 ### 4.2 `0x07D3`'s four sites: `GFID` gets 3, 4, 5 and 7
 
 Two of the four are in the routine entered at `0xD9FE`, reached by one
-`lcall` from `0xD905` in bank0. They write the byte outright:
+`lcall` from `0xD905` in bank0. Both write the byte outright, and both are
+inside an *outer* select on bit 2 of the byte at `0x1666` that the
+transcription below used to start past:
 
 ```
+0xda22  901666   mov  dptr,#0x1666
+0xda25  e0       movx a,@dptr
+0xda26  30e214   jnb  acc.2,0xda3d       ; outer select: which arm
 0xda29  90166a   mov  dptr,#0x166a
 0xda2c  e0       movx a,@dptr
 0xda2d  9007d3   mov  dptr,#0x07d3
@@ -388,12 +395,77 @@ Two of the four are in the routine entered at `0xD9FE`, reached by one
 0xda4e  f0       movx @dptr,a
 ```
 
+The outer `0xda22` line is what makes the four values a *four*-way select
+rather than a two-way one, and it was the one line missing above: without
+it the two arms look like a pair of independent tests. Reading the pair
+together, the four constants are selected on the two bits as
+
+| bit 2 of `0x1666` | bit 4 of `0x166A` | stored |
+| --- | --- | --- |
+| set | set | `0x30` — GFID 3 |
+| set | clear | `0x40` — GFID 4 |
+| clear | set | `0x50` — GFID 5 |
+| clear | clear | `0x70` — GFID 7 |
+
 `0x30`/`0x40`/`0x50`/`0x70` are `GFID` = 3, 4, 5 and 7 in bits 4-6 — the
-field the DSDT field list names (`dsdt.dsl:52254-52256`). So the EC
-firmware writes that field with four distinct values, and that is a
-statement about the instruction stream, not about what any of them means
-to the GPU. The branch is on bit 4 of the byte at `0x166A`, which has no
-entry in `registers.yaml` and is not given one here.
+field the DSDT field list names (`dsdt.dsl:52251-52253`; the range quoted
+here before issue #267, `52254-52256`, is the next field run — `Offset
+(0x7D4)`, `CPUA`, `DBAP` — and not GFID). So the EC firmware writes that
+field with four distinct values, and that is a statement about the
+instruction stream, not about what any of them means to the GPU. Both
+selecting bytes now have entries — `XDATA_1666` and `XDATA_166A` in
+`registers.yaml`, added by issue #267; this paragraph used to say `0x166A`
+had no entry there and did not give it one.
+
+**What `GFID` selects, and how far that is established.** The two-bit
+select above is real, but the two consumers in the committed tree
+disagree about how many values matter, and the difference is worth
+recording rather than flattening.
+
+- The ASL reads it. `Method (SMRW, 1)` at `dsdt.dsl:50764` compares GFID
+  against `0x07`, `0x05`, `0x03` and `0x06` at `dsdt.dsl:50772`, `50799`,
+  `50826` and `50854`, and each comparison selects a different ACPI `Buffer`,
+  jointly with a second field, `PDIN` (4 bits at
+  `Offset (0x74C)`, `dsdt.dsl:52213`): GFID 7 → `ACPB`/`ACSB`, GFID 5 →
+  `ACPC`/`ACSC`, GFID 3 → `ACPD`/`ACSD`, GFID 6 → `ACPE`, each arm also
+  naming a 32-bit overlay (`E7B1`/`E7B2`, `E5B1`/`E5B2`, `E3B1`/`E3B2`,
+  `MQB1`). The bullet above this one used to call those "EC register
+  blocks", say they were not *declared* anywhere, say `SMRW` had no caller in
+  the disassembly, and conclude the value picks a register *bank*. **All four
+  were false negatives, and the committed tree contradicts them** (issue #267,
+  fix round 1, 2026-09-25; the text is left visible above per the calibration
+  rule). The seven buffers *are* declared — `dsdt.dsl:50383` (`ACPB`),
+  `50387` (`ACSB`), `50391` (`ACPC`), `50396` (`ACSC`), `50401` (`ACPD`),
+  `50406` (`ACSD`), `50411` (`ACPE`), each `Name (n, Buffer (m))` with
+  initial contents, 8 bytes for the first, second and seventh and 12 for the
+  other four — and `SMRW` copies a caller-supplied buffer into one
+  (`RWFG == 0xAA`) or returns a `CreateDWordField` DWord view of one
+  (`RWFG == 0xBB`), so the value picks an ASL buffer, not a register bank.
+  The seven overlays are the one part that is not declared: each is created
+  inside its own arm, so its offset is the caller's `REOF` byte at run time.
+  `SMRW`'s caller is committed as well —
+  `windows/decompiled/v3.1.39.0/GCUService/MyControlCenter/WMIEC.cs:331-343`
+  invokes it by name over WMI on the class `AcpiTest_MULong`, and
+  `windows/native/ACPIDriver.sys.analysis.md:328,400` records the driver's
+  `SMAPCTable` entry and the 0x80-byte buffer argument it marshals — so the
+  consumer is the vendor service through the WMI ACPI driver, not something
+  outside the tree. What *is* still not established is what the EC does with
+  the buffer the select lands on. Two asymmetries follow from the pairing and
+  are worth writing
+  down: GFID 4 is written by the EC and tested by no arm, and GFID 6 is
+  tested by an arm and written by nothing either committed method finds.
+- The EC firmware reads it, and collapses three of the four values onto one
+  outcome — the `0x94D5` bullet further down works through it.
+
+So on the firmware path the select behaves as a *two*-way choice, GFID ==
+3 against everything else, and on the ASL path as a four-way one. Neither
+is a correction of the other: they are different consumers of the same
+byte, and the `0x94D0` narrowing is a statement about that routine, not
+about the field. What makes GFID 3 special to the GPU, and whether 4, 5
+and 7 differ anywhere the committed tree does not reach, is not determined
+here; the open question and the procedure that would settle it are in
+[`gpu-tgp-07c4-07d7-door.md`](../../docs/hardware-tests/gpu-tgp-07c4-07d7-door.md),
+which is marked **not run**.
 
 The other two sites touch only the low nibble, so they do not contradict
 the above:
@@ -414,6 +486,18 @@ the above:
   [`ghidra-functions.csv`](ghidra-functions.csv): it reads the byte, masks
   the high nibble, XORs `0x30` and branches — that is, it tests for
   `GFID == 3` before choosing between two seed pairs. It is a **read**.
+  The choice is worth spelling out, because it is where the four values
+  stop being four (`94D0.asm:0x94D5-0x9518`): `0x61`/`0xC8` is taken only
+  when a first `0xBA36` returns non-zero *and* a second `0xBA36` returns
+  something other than `0x03`; `0x61`/`0xFE` covers the other two outcomes
+  of that arm; and `0x61`/`0x92` covers every case where the high nibble
+  is not `0x30`. GFID 4, 5 and 7 therefore all reach the same seed pair,
+  so the two-bit select is a two-way choice here and a four-way one in the
+  ASL (§4.2's other bullet). The pair is a CODE pointer rather than two PL
+  values: `0x94D0` stores it at `0x0A51`/`0x0A52` and then reads the
+  per-mode defaults out of the table it addresses with `movc`, into
+  `0x0730`-`0x0733`, `0x0735`, `0x0737` and `0x07A7`-`0x07AA`, which do
+  have entries. `0x0A50`-`0x0A52` themselves do not.
 
 ### 4.3 `0x07D5`'s two reset-shaped writers
 
@@ -697,6 +781,30 @@ watches, so nothing it captures could say which process wrote the byte on
   passive, single-page capture can.
 - **What `0x166A` and `0x0743` bit 1 are.** The first selects between four
   `GFID` values; the second sets `0x07C4` bit 4. Both have no entry.
+  **Half closed 2026-09-25 (issue #267); the sentence above is left as it
+  was written.** `0x1666` and `0x166A` now have `registers.yaml` entries,
+  `XDATA_1666` and `XDATA_166A`, `present-untested`, 2 and 3 direct sites
+  each and all reads, with the full bit map in their notes; `0x1665` joined
+  them as `XDATA_1665` with 6. The four-way select is §4.2's table, which
+  also now carries the `0xDA22` outer select on bit 2 of `0x1666` that this
+  file's first transcription of it left out. `0x0743` bit 1 still has no
+  entry, so that half of the bullet stands.
+- **Who writes `0x1665`, `0x1666` and `0x166A`.** Open, and the more
+  interesting half of the same bullet. All 11 sites across the three bytes
+  are reads — `register_ref_table.py --callee-depth 1` classifies every one
+  `read` — so a writer exists outside what either committed scan can see,
+  because a byte that is only read is never set. That is "not found by
+  this method" and not "never written": a computed `DPH` or an indirect
+  `movx @Ri` is invisible to both (`#110`, the `0x07B9` retraction). What
+  would settle it is a writer census aimed at the `0x16xx` page the way §6.1
+  was aimed at `0x09`, which is the same shape of question as the `0x09E9`
+  second writer `ec-09e9-09eb-sites.md` §6 already carries. The
+  neighbouring `0x1601`-`0x1607` bytes *do* have bit-set/bit-clear writer
+  pairs annotated on either side of these sites, so the page is not inert;
+  what is missing is the entry point that reaches these three. (The
+  `0x1605`/`0x1606`/`0x160A` writers sit interleaved with these sites in
+  the same `0xC240`-`0xC4A0` run, which is the more specific form of the
+  same point; issue #267 fix round 1 drops the duplicate sentence.)
 - **Whether the `DBEN` identification is the right one.** §3's bit-3
   write is an inference from the bytes, and a test would decide it. **The
   test this bullet used to name flipped `CTGP_DB_CTRL` bit 0 and watched bit

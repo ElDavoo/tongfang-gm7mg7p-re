@@ -5,17 +5,17 @@
 
 
 /* Loads A from XDATA 0x166A and leaves 1 in R7 when bit 7 is clear, 0 when it is set: JB on bit 7
-   jumps to the R7=0 return. 0x166A has no entry in ec/annotations/registers.yaml, so the bit is not
-   named.
+   jumps to the R7=0 return. 0x166A is XDATA_166A in ec/annotations/registers.yaml as of issue #267,
+   which is what lets the bit be named; before that it had no entry there.
    type: logic
    evidence: ec/decompiled/bank0/C4D9.asm; ec/decompiled/bank0/C4D9.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void test_166a_bit7_inverted(void)
 
 {
-  if (-1 < DAT_EXTMEM_166a) {
+  if (-1 < XDATA_166A) {
     return;
   }
   return;
