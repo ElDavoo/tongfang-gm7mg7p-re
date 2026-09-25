@@ -2608,6 +2608,50 @@ def main(argv=None):
                   f"The other {len(blocks) - 1} block(s) were not checked in "
                   "this run, so what they would have shown is not reported "
                   "here.")
+        elif graded_unplaced:
+            # The `moved_groups` half's own unattributed case, and the
+            # counterpart of the no-movement chain's third arm: the same count
+            # and the same two strays, but something moved, so what needs
+            # scoping is the line above rather than an `else` this run did not
+            # take. Every window here was read, so nothing was withheld and
+            # neither arm above fires -- which is what let the movement reach
+            # the attribution with no scope at all.
+            #
+            # The withheld arm's wording cannot be reused for a reason that is
+            # `moved_groups` itself: it is a union of group *names* over
+            # `shown`, carrying no window identity, so a `0x0784` step inside
+            # an unattributed window and the same step inside a block's own
+            # window print the same line and leave the same `moved_groups`.
+            # "That is the 6 window(s) that belong to a value under test" is
+            # therefore not a narrower true sentence here but a false one --
+            # the row that produced this line, moved into the 12:00 stray
+            # instead of into block 1's write window, grades this run the same
+            # and moves under the same arm. So the movement stays over all
+            # `graded` and the unattributed windows are named as part of it.
+            #
+            # "A run it only read part of" is left off for the reason the
+            # no-movement arm leaves it off and states in its own comment: this
+            # run read every window it was shown, so the gap is what an
+            # unattributed window is a window of, not the coverage. The decline
+            # itself is that arm's, unchanged, because it is the same claim
+            # over the same set of windows.
+            #
+            # Last in the chain because the two arms above it are the more
+            # specific: a withheld window or a selected block is a reason this
+            # run is already smaller than the day, and this one adds an
+            # attribution gap to a run that is the whole capture. The withheld
+            # case over the same set of `graded` windows is a different
+            # sentence with a different fix and is deliberately not handled
+            # here. Nor can a `--block` run reach this: `graded_unplaced` is
+            # structurally 0 there, the same argument the count's own comment
+            # above makes.
+            print(f"  That is the {graded} window(s) that were graded. The "
+                  f"{graded_unplaced} in no block are part of it, and this "
+                  "run cannot say which arm they are a window of. The static "
+                  "prediction is a claim about the whole capture, and this "
+                  "output does not make it over a run in which "
+                  f"{graded_unplaced} of its {graded} graded window(s) are "
+                  "in no block.")
         if moved_groups == [TRIGGER_GROUP]:
             # The trigger group alone, with no table byte: the difference is
             # the mailbox the host writes to ask for a copy, and reading it

@@ -2001,6 +2001,106 @@ class MarkSetTests(unittest.TestCase):
         # windows were graded, and one of them moved.
         self.assertNotIn('No window in this run was graded', out)
 
+    # The same movement half with nothing withheld, which is a combination no
+    # committed fixture reaches: `unplaced-window/` reads every window it is
+    # shown, `3blocks-moved/` is the only set that moves, and the two do not
+    # meet. The count is over the windows and not over the arms, so one
+    # `0x0784` row is all it takes to put them together -- in either of the
+    # two placements the count does not distinguish. Copies rather than a
+    # directory of their own, for the reason `copies_of`'s docstring gives.
+    def test_a_movement_in_the_graded_windows_of_a_partly_unplaced_run_is_scoped(
+            self):
+        # `3blocks-moved/`'s row is this address and this step, and both
+        # anchors are named rather than counted, so a mark that moves in the
+        # fixture cannot quietly change which window this row is in.
+        def moved_copy(tmp, anchor, ts):
+            return copies_of(tmp, UNPLACED_WINDOW, {
+                '2026-01-01-0751-isolation-0700-07ff.csv':
+                insert_after(anchor, f'{ts},0x0784,0x50,0x28')})
+
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = moved_copy(
+                tmp, '2026-01-01T12:00:40.000+01:00,MARK,,wrote 0x0751=0xA0',
+                '2026-01-01T12:00:43.000+01:00')
+            rc, out, err = run(*paths)
+        self.assertEqual(rc, 0, err)
+        section = out.split('=== what this does and does not settle ===')[1]
+        flat = " ".join(section.split())
+        # The count is #530's and is still only a count: what follows it is
+        # the branch's own sentence, so the two now say the same thing about
+        # the same set rather than the count disclaiming the claim below it.
+        self.assertIn('2 of the 8 graded window(s) above are in no block', flat)
+        # The movement line is the run's own and names the group the row
+        # belongs to: a PL move and not a mailbox poke, so the attribution
+        # underneath is the static-prediction one, and scoping is not
+        # retracting -- a PL that moved is still the more interesting outcome
+        # whatever this run can say about where.
+        self.assertIn('At least one of the §4.1-§4.3 bytes moved after a '
+                      'mark: PL1/PL2/PL4 (§4.1).', out)
+        self.assertIn('That contradicts the static prediction', out)
+        self.assertNotIn('host-written reload mailbox', out)
+        # And between them, the scope: the whole graded set rather than a
+        # subset of it, with the unattributed windows named as *part* of that
+        # set. That is the claim `moved_groups` supports -- it is a union of
+        # group names over `shown` and carries no window identity -- so no
+        # narrower one is available, and the sentence says why rather than
+        # leaving the reader to work out that a window in no block was in it.
+        self.assertIn('That is the 8 window(s) that were graded. The 2 in no '
+                      'block are part of it, and this run cannot say which arm '
+                      'they are a window of.', flat)
+        # The capture-level comparison is declined for the attribution reason,
+        # in the no-movement arm's own words and not the withheld arm's: this
+        # run read every window it was shown, so "a run it only read part of"
+        # would be false here in a way it is not there.
+        self.assertIn('this output does not make it over a run in which 2 of '
+                      'its 8 graded window(s) are in no block', flat)
+        self.assertNotIn('a run it only read part of', section)
+        # And none of the four siblings came with it. Nothing was withheld and
+        # no block was selected, so the first two are out of reach here, and a
+        # run that moves must not pick up the no-movement chain's narrowing
+        # either -- there is a movement to scope, not a `None ... moved` to
+        # place.
+        self.assertNotIn('were not graded', out)
+        self.assertNotIn('That is the 6 window(s) that were graded', out)
+        self.assertNotIn('That is block', out)
+        self.assertNotIn('No window in this run was graded', out)
+        self.assertNotIn('belong to a value under test: that is what those 6 '
+                         'windows show', flat)
+
+        # The same run with the same row inside the 12:00 stray rather than
+        # inside block 1's write window: same marks, same block structure, same
+        # `moved_groups`, same count, and `--block` cannot reach either
+        # placement. Pinned as an equality over the closing section rather than
+        # as a restatement of it, because the two placements are what decide
+        # the wording -- "that is the 6 window(s) that belong to a value under
+        # test" is true of the first and false of the second, and a sentence
+        # that cannot tell them apart is the defect.
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = moved_copy(
+                tmp, '2026-01-01T12:00:02.000+01:00,MARK,,restored 0x0751=0x99',
+                '2026-01-01T12:00:05.000+01:00')
+            rc, out, err = run(*paths)
+        self.assertEqual(rc, 0, err)
+        self.assertEqual(
+            out.split('=== what this does and does not settle ===')[1],
+            section)
+
+        # And the arm cannot reach a `--block` run, structurally rather than by
+        # a guard: that run's `shown` is the block's own windows, and a window
+        # in no block cannot be one of them. The same bytes are still the
+        # per-block run, still over its own three windows.
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = moved_copy(
+                tmp, '2026-01-01T12:00:40.000+01:00,MARK,,wrote 0x0751=0xA0',
+                '2026-01-01T12:00:43.000+01:00')
+            rc, out, err = run(*paths, '--block', '0xA0')
+        self.assertEqual(rc, 0, err)
+        section = out.split('=== what this does and does not settle ===')[1]
+        self.assertIn('That is block 1 of 2, value under test 0xA0, over its 3 '
+                      'window(s).', " ".join(section.split()))
+        self.assertNotIn('That is the 3 window(s) that were graded', section)
+        self.assertNotIn('graded window(s) above are in no block', section)
+
     # The other half of the same hole, found one step earlier: two consoles
     # that disagree about what an action was. A mistyped digit in one of three
     # labels is invisible to the merge -- the three labels join into

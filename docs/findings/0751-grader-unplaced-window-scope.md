@@ -281,7 +281,21 @@ does not contain the literal string `block: unplaced`, which is the coupling
   unattributed window if a run ever reached it. No committed fixture does:
   `3blocks-moved/` is the only one that both moves and withholds and it has no
   unattributed graded window, so a change there would be untested prose. It is
-  left for a fixture that reaches it rather than written blind.
+  left for a fixture that reaches it rather than written blind. **The fixture
+  that reaches it is issue #725**, and it is the other side of this bullet
+  rather than this bullet's own line: `withheld == 0`, `moved_groups` non-empty,
+  `graded_unplaced > 0`. #725 takes reading (a), the branch scoped, over
+  reading (b), the bare form, for the reason the last sentence above gives: the
+  sentence directly under the movement line is a whole-capture claim, and the
+  count two lines above it has just said 2 of the run's 8 graded windows are
+  attributable to no value under test. It cannot reuse this bullet's withheld
+  wording, because `moved_groups` carries no window identity — the same row
+  moved into an unattributed window rather than a block's own leaves the output
+  byte-identical — so it declines in the no-movement arm's words instead. **The
+  withheld half of the line named here is
+  [#724](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues/724)'s** and is
+  deliberately untouched. See
+  [`0751-grader-moved-unplaced-scope.md`](0751-grader-moved-unplaced-scope.md).
 - **A new `testdata/` fixture.** Both cases are committed, and widening the
   shared fixture tree is what the other three write-ups in this family decline.
 - **`ec/README.md`.** Its `grade_0751_isolation.py` entry describes `--block`
