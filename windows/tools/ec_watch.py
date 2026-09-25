@@ -48,6 +48,22 @@ file, and `--grader <path>` names a third place. A grader in none of them, or
 one that is there and will not load, refuses before the CSV and long before the
 EC, and the refusal names every place it looked.
 
+That check is a per-process fact, and the `--csv` it appends to is a per-file
+one. `CsvSink` opens the path in append mode without reading it, and §3 fixes
+the three CSVs as one set for the whole run -- blocks 2 and 3 are meant to land
+on the marks block 1 left there. So a file can carry marks this
+process did not type and could not have checked: a pre-`--label-vocab` run, a
+console started without the flag, a watcher restarted mid-block, or a
+`manual_fan_ctrl_probe.py` capture, which writes the same `ts,MARK,,label` row.
+A run that finds any says so, naming them, above the file and a long way above
+the EC -- a warning rather than a refusal, because §3's own second block is
+that collision and because no process can check a mark another one already
+wrote. The grader's `existing_mark_labels` is what reads them, for the same
+reason the check is the grader's `parse_mark`, and the notice says what the
+mark counter counts while both sequences are in view: the marks this run
+records, numbered from 1 whatever the file already holds. #548,
+`ec_watch-marks.md`.
+
 `--block` sweeps the same addresses four bytes per IOCTL through the driver's
 `MMRD` instead of one byte per `ECRR`, so the default 2 KiB sweep is 512 calls
 rather than 2048. It is off by default and nothing in this repository has run
@@ -67,6 +83,7 @@ Usage:
   ec_watch.py --mark                           # type a label + Enter to stamp a mark
   ec_watch.py --mark --label-vocab 0751        # and refuse a label the 0751 grader cannot read
   ec_watch.py --mark --label-vocab 0751 --grader <path-to-grade_0751_isolation.py>
+  ec_watch.py --mark --label-vocab 0751 --csv run.csv   # and name the marks run.csv already holds
   ec_watch.py --start 0x0700 --len 0x100 --block
 
 `--label-vocab 0751` reads the grader from `ec/tools/grade_0751_isolation.py`
@@ -160,18 +177,29 @@ def grader_candidates(grader_path=None):
 
 
 def load_label_vocab(ap, name, grader_path=None):
-    """(check, forms) for the label vocabulary `name`, read from its grader.
+    """(check, forms, existing_marks) for the vocabulary `name`, read from
+    its grader.
 
     `--label-vocab 0751` names §3's forms, and
     `grade_0751_isolation.py` is where they are written down, so the prompt
-    loads that module by path rather than carrying a second copy of either
-    half: `check` is `parse_mark(label)[0] is not None`, the test
-    `unplaceable_marks` applies to decide a mark is unreadable, and the notice
-    quotes that module's own `REQUIRED_LABEL_FORMS`. A copy could drift from
-    the grader, and a prompt that has drifted promises something the grading
-    does not do. The count is the grader's for the same reason: §3 has three
-    action forms and three stage boundaries as of issue #472, and a word in
-    this docstring saying which would be a fourth place to keep in step.
+    loads that module by path rather than carrying a second copy of any of the
+    three: `check` is `parse_mark(label)[0] is not None`, the test
+    `unplaceable_marks` applies to decide a mark is unreadable, `forms` is
+    that module's own `REQUIRED_LABEL_FORMS` for the refusal to quote, and
+    `existing_marks` is its reader for the mark rows a `--csv` already holds.
+    A copy could drift from the grader, and a prompt that has drifted promises
+    something the grading does not do. The count is the grader's for the same
+    reason: §3 has three action forms and three stage boundaries as of issue
+    #472, and a word in this docstring saying which would be a fourth place to
+    keep in step.
+
+    `existing_marks` rides on the one load rather than making a second, because
+    it is the same rule seen from the other side (#548): a mark row is the
+    grader's shape, and the marks already sitting in a file are the ones the
+    check the other two return cannot reach. It is a preflight, and it does not
+    raise on the *content* `read_capture` would -- neither a row it rejects nor
+    a byte the encoding cannot decode -- see its docstring for why that is the
+    point rather than an accident.
 
     The import is the one `manual_fan_ctrl_probe.py`'s self-test makes, and it
     is by path and only under this flag, for the reason that call gives: this
@@ -214,12 +242,54 @@ def load_label_vocab(ap, name, grader_path=None):
             ap.error(f"--label-vocab {name} needs grade_0751_isolation.py at "
                      f"{path}, and it is there but will not load: {e}")
         return (lambda label: grader.parse_mark(label)[0] is not None,
-                grader.REQUIRED_LABEL_FORMS)
+                grader.REQUIRED_LABEL_FORMS,
+                grader.existing_mark_labels)
     ap.error(f"--label-vocab {name} needs grade_0751_isolation.py, the module "
              f"this prompt reads its vocabulary from, and none of these is it:\n"
              + "".join(f"  {p}\n" for p in tried)
              + "Put a copy of it beside ec_watch.py, or run from a checkout "
                "that has one; --grader names a third place.")
+
+
+def warn_unchecked_marks(path, existing_marks):
+    """Name the marks `path` already holds, before `CsvSink` appends to it.
+
+    A warning rather than a refusal, and the runbook is why: §3 fixes the
+    three CSVs as one set for the whole run, so blocks 2 and 3 are *meant* to
+    append to the marks block 1 left there, and a tool that refused
+    a non-empty `--csv` would refuse the procedure it documents. What no
+    process can do is check a mark another one wrote, and the grader judges
+    the whole file rather than the rows this run added, so a mark already in
+    the file that it cannot place refuses the day however it got there. Saying
+    so at the top of the run is the only point at which the operator can still
+    act on it: a day later the same fact is a withheld run and no remedy.
+
+    The notice is worded in terms of this run and not of the file's history,
+    because the file's history is not something this process can read. Block 1
+    carries `--label-vocab` too, so in the case this notice calls expected the
+    marks it names *were* checked against the forms, as they were typed, by the
+    process that typed them -- and a sentence about the file rather than the run
+    would have to be false in exactly that case. What is true is that this
+    process did not check them, and cannot, having not written them.
+
+    The count is stated rather than left implicit, because the file's marks and
+    this run's are two sequences the console's `mark N` numbers are easy to
+    conflate with -- the counter is on marks *this* process records, and
+    starts at 1 whatever the file already holds.
+    """
+    marks = existing_marks(path)
+    if not marks:
+        return
+    print(f"  appending to {path}, which already holds {len(marks)} "
+          "mark(s) placed by a process that did not type them here:")
+    for ts, label in marks:
+        print(f"    {ts}  {label!r}")
+    print("  this run did not check those marks and cannot: it did not write "
+          "them. §3's three CSVs are one file for the whole run, so blocks 2 "
+          "and 3 are expected to land here; the grader judges the whole file, "
+          "though, so a mark it cannot place refuses the day however it got "
+          "in. The mark numbers in this run's prompts count this run's marks "
+          "only: they start at 1 whatever the file already holds.")
 
 
 class Marker:
@@ -305,9 +375,12 @@ def main(argv=None):
                     help="refuse a mark label the named vocabulary cannot "
                          "read, with the blank press's notice and counting "
                          "rule, rather than recording a mark the grader will "
-                         "not be able to place. Needs --mark. Off by default: "
-                         "the other tools that take marks through this one "
-                         "use their own free-form labels")
+                         "not be able to place; on a --csv that already holds "
+                         "mark rows, name them and say they were not checked, "
+                         "because the file is graded whole and this run's "
+                         "labels are the only ones it checks. Needs --mark. "
+                         "Off by default: the other tools that take marks "
+                         "through this one use their own free-form labels")
     ap.add_argument("--grader", metavar="PATH",
                     help="read the --label-vocab grader from this file rather "
                          "than from ec/tools/ in a checkout or from beside "
@@ -322,7 +395,10 @@ def main(argv=None):
 
     # The startup refusals, all of them above the CSV and a long way above the
     # EC: a run that cannot keep the promise has to say so before it starts,
-    # not halfway through the first block.
+    # not halfway through the first block. So is the append notice, which is
+    # the same promise seen from the file's side rather than the process's: it
+    # names what the --csv already holds, and the file has to exist to be
+    # read, so the fresh path of §3's block 1 stays quiet on both counts.
     check = forms = None
     if args.grader and not args.label_vocab:
         # The same shape as the one below, and for the same reason: it is a
@@ -334,7 +410,10 @@ def main(argv=None):
         if not args.mark:
             ap.error("--label-vocab needs --mark: the mark prompt is the only "
                      "place a label is typed")
-        check, forms = load_label_vocab(ap, args.label_vocab, args.grader)
+        check, forms, existing_marks = load_label_vocab(
+            ap, args.label_vocab, args.grader)
+        if args.csv and Path(args.csv).is_file():
+            warn_unchecked_marks(args.csv, existing_marks)
 
     start = int(args.start, 0)
     length = int(args.length, 0)

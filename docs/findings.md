@@ -4314,6 +4314,25 @@ file. Offline behaviour against a fake EC and temp directories; whether a
 staged copy is where an operator puts it is a human's step. Same file:
 [ec_watch-marks.md](../windows/tools/ec_watch-marks.md).
 
+**2026-09-25 (issue #548): that check is a per-process fact, and a `--csv` is a
+per-file one, so the tool now names the marks it is appending to.** `Marker`
+checks a label as it is typed; `CsvSink` opens the path in append mode without
+reading it, and §3 fixes the three CSVs as one set for the whole run. So a file
+can already carry marks this process did not type and could not have checked —
+a pre-flag run's, a console started without the flag, a watcher restarted
+mid-block, a `manual_fan_ctrl_probe.py` capture — and `unplaceable_marks` is
+fatal for the whole run over the whole file regardless. `--label-vocab 0751` on
+a `--csv` that already holds MARK rows now says so, names them, and continues:
+a warning and not a refusal, because §3's own blocks 2 and 3 are
+supposed to find marks already there, and no process can check a mark another
+one wrote. The predicate is *marks*, not *non-empty*, so a header-only or a
+changes-only file stays quiet and block 1 stays quiet. The reader is
+`grade_0751_isolation.py`'s `existing_mark_labels`, loaded by path on the same
+load as `parse_mark`, and the grader's refusal, `build_windows` and the exit
+code are unchanged. Offline behaviour against a fake EC; nothing here has met a
+real §3 run. Written up in
+[0751-append-unchecked-marks.md](findings/0751-append-unchecked-marks.md).
+
 ## 17. The `main-ec-003` cluster is one 393-byte routine, counted 42 times over (2026-09-23, issue #179; id corrected by #253, by the 2026-09-24 re-derivation, and again by #279 on 2026-09-25)
 
 **The id in this section's subject has been wrong twice, and every version of

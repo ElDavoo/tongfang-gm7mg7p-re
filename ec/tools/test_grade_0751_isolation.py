@@ -3340,6 +3340,133 @@ class EarlyExitTests(unittest.TestCase):
         self.assertNotIn('NOT GRADED', out)
 
 
+class ExistingMarkLabelTests(unittest.TestCase):
+    """`existing_mark_labels`: what a --csv holds before a watcher appends.
+
+    #548. The reader `windows/tools/ec_watch.py` asks at startup, so it lives
+    here rather than in the prompt: the mark row's shape is the grader's, and
+    a second copy in the tool is the drift `load_label_vocab` exists to stop.
+
+    It is a preflight, not a reader, and every case below is about the
+    difference. `read_capture` may raise -- a short row, a timestamp it cannot
+    parse, a byte the encoding cannot decode -- because a capture that does not
+    load is a capture that gets told so. This one may not, because the file it
+    is pointed at is one a run is about to append to, and refusing to open it
+    would lose the one warning that says what is already in it. So the
+    timestamp is the text it was written as, a truncated mark row comes back
+    with an empty label, a change row is not parsed at all, and an undecodable
+    byte comes back as U+FFFD in a label rather than ending the run.
+    """
+
+    # One of each row kind, so "which rows are skipped" and "which are marks"
+    # are separable questions rather than one. The `#` and the blank are the
+    # two `read_capture` skips that a hand-annotated capture relies on, and
+    # every committed fixture under testdata/ opens with a `#` block.
+    ROWS = [
+        '# 0751 isolation, 0xA0 block',
+        'ts,addr,old,new',
+        '',
+        '2026-01-01T12:00:05.000+01:00,0x0701,0x00,0x11',
+        '2026-01-01T12:00:00.000+01:00,MARK,,wrote 0x0751=0xA0',
+        '# the operator noted the settle here',
+        '2026-01-01T12:00:30.000+01:00,MARK,,settled',
+    ]
+
+    def capture(self, rows, tmp):
+        path = Path(tmp) / 'capture.csv'
+        path.write_text(''.join(row + '\n' for row in rows))
+        return str(path)
+
+    def test_the_skip_rule_is_read_captures_and_only_marks_come_back(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self.capture(self.ROWS, tmp)
+            self.assertEqual(grade.existing_mark_labels(path),
+                             [('2026-01-01T12:00:00.000+01:00',
+                               'wrote 0x0751=0xA0'),
+                              ('2026-01-01T12:00:30.000+01:00', 'settled')])
+        # The change row in the middle of the fixture is the case that fails
+        # if the reader keeps every row rather than the mark ones, and the
+        # `#` and the header are what fail it if the skip rule drifts from
+        # `read_capture`'s.
+
+    def test_a_row_read_capture_would_raise_on_comes_back_as_a_label(self):
+        # A hand-edited timestamp, and a mark row truncated to three fields:
+        # `read_capture` raises on both (`:690` for the short one,
+        # `parse_ts` for the other) and neither stops this. The preflight has
+        # one job -- say what is already in the file -- and a file it cannot
+        # open is a file the operator is not warned about.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self.capture(['2026-01-01 12:00,MARK,,held',
+                                 '2026-01-01T12:01:00.000+01:00,MARK,',
+                                 '2026-01-01T12:02:00.000+01:00,MARK,,watch over'],
+                                tmp)
+            self.assertEqual(grade.existing_mark_labels(path),
+                             [('2026-01-01 12:00', 'held'),
+                              ('2026-01-01T12:01:00.000+01:00', ''),
+                              ('2026-01-01T12:02:00.000+01:00', 'watch over')])
+            # And the same file really is one `read_capture` refuses, so the
+            # leniency is a difference and not a row shape that never occurs.
+            with self.assertRaises(ValueError):
+                grade.read_capture(path)
+
+    def test_a_byte_the_encoding_cannot_read_does_not_stop_the_preflight(self):
+        # The other thing the file can hold that `read_capture` refuses and
+        # this must not: bytes. `CsvSink` appends to the same path and never
+        # decodes it, so a capture carries whatever its writing process's
+        # locale wrote -- 0xE9, as latin-1 and cp1252 both write for `café`,
+        # and as a UTF-8 process cannot read. Read with
+        # the default encoding and iteration is lazy, so the raise comes out of
+        # the loop rather than the open, and it came out of the startup path:
+        # the run died before it began, on exactly the foreign capture the
+        # docstring says this exists to tolerate, where appending had worked.
+        #
+        # The label comes back with U+FFFD where the byte was on a UTF-8
+        # process, and with the character on one whose own encoding reads it.
+        # Both satisfy the assertion, and both are correct: the job is to name
+        # the row so the operator can recognise it, not to reproduce it.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'capture.csv'
+            path.write_bytes(b'ts,addr,old,new\n'
+                             b'2026-01-01T12:00:00.000+01:00,MARK,,caf\xe9\n'
+                             b'2026-01-01T12:00:30.000+01:00,MARK,,settled\n')
+            marks = grade.existing_mark_labels(str(path))
+        # Both marks, not just the one before the bad byte: laziness is what
+        # made this a startup crash rather than a truncated notice, and a
+        # reader that swallowed the decode error to survive it would swallow
+        # the rest of the file with it.
+        self.assertEqual([ts for ts, _ in marks],
+                         ['2026-01-01T12:00:00.000+01:00',
+                          '2026-01-01T12:00:30.000+01:00'])
+        self.assertTrue(marks[0][1].startswith('caf'), marks[0][1])
+        self.assertEqual(marks[1][1], 'settled')
+
+    def test_a_file_with_no_marks_comes_back_empty(self):
+        # The quiet side, and the reason the notice keys on marks rather than
+        # on the file being non-empty: §3's block-1 start appends to a path
+        # that does not exist yet or holds the header `CsvSink` wrote, and
+        # neither carries a label any process could have failed to check.
+        with tempfile.TemporaryDirectory() as tmp:
+            for rows in ([], ['ts,addr,old,new'],
+                         ['ts,addr,old,new',
+                          '2026-01-01T12:00:05.000+01:00,0x0701,0x00,0x11']):
+                with self.subTest(rows=rows):
+                    self.assertEqual(
+                        grade.existing_mark_labels(self.capture(rows, tmp)), [])
+
+    def test_read_capture_is_unchanged(self):
+        # The reader is additive. `read_capture` still skips `#`, blank and
+        # header, still returns `(marks, changes)`, and still raises on a row
+        # it cannot grade -- the cases above depend on it, and so does every
+        # fixture under testdata/.
+        with tempfile.TemporaryDirectory() as tmp:
+            marks, changes = grade.read_capture(self.capture(self.ROWS, tmp))
+        self.assertEqual([m.label for m in marks],
+                         ['wrote 0x0751=0xA0', 'settled'])
+        self.assertEqual([(c.addr, c.old, c.new) for c in changes],
+                         [(0x0701, 0x00, 0x11)])
+        self.assertTrue(all(m.source.endswith('capture.csv') for m in marks))
+
+
 class SelfTestModeTests(unittest.TestCase):
     # The mode the gate calls, and the one
     # `docs/ci/agent-gates-0751-self-test.patch` wires in. Driven through its

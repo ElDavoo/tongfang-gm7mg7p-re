@@ -38,6 +38,13 @@ still describes what `gpu_block_watch.py` and `system_id_probe.py` get through
 their mark prompts, which is the reason the check is a flag and not a rule.
 Only `gpu_block_watch.py` shares this class; the other keeps its own.
 
+**CORRECTION (issue #548, 2026-09-25), beside the one above rather than under
+it.** *The tool does not read it* is still true of the decision — nothing here
+passes or fails a label — and is no longer true of the reading. With
+`--label-vocab 0751` and a `--csv` that already holds mark rows, the tool reads
+that file's mark labels at startup, to name them; see *The marks already in the
+file* below. So the file has two readers now, and only one of them judges.
+
 ## The blank press
 
 `ec_watch.py` strips the line. If what is left is empty — an empty line, or
@@ -119,6 +126,17 @@ failure caught a step later rather than a step earlier, and an operator told a
 label was refused by a check that was never there has been told something
 false.
 
+**CORRECTION (issue #548, 2026-09-25), leaving the two sentences above as they
+were written.** *A capture taken under a promise* is true of the labels this
+process types and was false of the labels already in the file it appends to: the
+check runs where a label is typed, and `CsvSink` opens the path without reading
+it. So a `--label-vocab 0751` run is under a promise about its own rows and
+about nothing else in that file, and a mark another process wrote is not
+something it kept any promise about. A run that finds any now says so and names
+them, above the file — see *The marks already in the file*. The refusal above
+it, a grader that will not load, is unchanged and is still fatal: there the
+check is off for the whole run rather than partial for its oldest rows.
+
 ## Where the grader is looked for
 
 The lookup is an ordered list, and the order is the whole of it:
@@ -163,6 +181,95 @@ temp directories in `test_ec_watch.py`'s `RefusedLabelTests` rather than
 against a staged copy on Windows; an operator there starting §3's three
 watchers is the one who finds out whether the second candidate is where they
 put the file, and that is their step.
+
+## The marks already in the file
+
+Everything above is a per-process fact: the check runs on each label as it is
+typed, and a label this process typed is one it can stand behind. A `--csv` is
+not a process. `CsvSink` opens it with `open(path, "a", newline="")` and never
+reads what is in it, and the runbook fixes the three CSVs as one set for the
+whole run — so a run started against a file another process wrote is appending
+to marks it did not type and could not have checked.
+
+When `--label-vocab 0751` meets a `--csv` that already holds MARK rows, it says
+so, names them, and goes on:
+
+```
+  appending to <path>, which already holds 2 mark(s) placed by a process that did not type them here:
+    2026-01-01T12:00:00.000+01:00  'wrote 0x0751=0xA0'
+    2026-01-01T12:00:30.000+01:00  'settled'
+  this run did not check those marks and cannot: it did not write them. §3's three CSVs are one file for the whole run, so blocks 2 and 3 are expected to land here; the grader judges the whole file, though, so a mark it cannot place refuses the day however it got in. The mark numbers in this run's prompts count this run's marks only: they start at 1 whatever the file already holds.
+```
+
+printed above the file and a long way above the EC, beside the startup
+refusals, so no capture is opened under a notice the operator did not see.
+
+**The notice is scoped to this run, and the wording is load-bearing.** A first
+cut said the marks in the file "were not checked against the 0751 forms", which
+is a claim about the file's *history* — and false in the very case the notice
+calls expected. §3's block 1 carries `--label-vocab` like the other two, so the
+marks blocks 2 and 3 find were checked against the forms, as they were typed,
+by the process that typed them. The tool cannot tell that case from a console
+started without the flag, which is the premise of warning over refusing, so the
+strongest sentence it can support is the one about the process in front of it:
+this run did not check them and cannot, having not written them. The grader's
+half is unchanged and is the half that decides the day — it reads and checks
+every mark in the file, so an unplaceable one refuses the day however it got in.
+
+**It is a warning and not a refusal, and the runbook is the reason.** §3's
+blocks 2 and 3 are *meant* to append to block 1's marks, so a tool that
+refused a non-empty `--csv` would refuse the procedure it documents. What no
+process can do is check a mark another one wrote, and the grader judges the
+whole file rather than this run's rows — which is why an unchecked one can
+still refuse the day, and why the operator is better told at the top of a run
+they can still stop than a day later as a withheld run with no remedy.
+
+**The predicate is "already holds MARK rows", not "is not empty."** A file
+holding only a header, or only change rows, carries no unchecked label: a change
+row is not a label, opens no block, and is not something any process could have
+checked against §3's forms. §3's block-1 start legitimately appends to exactly
+that. A `st_size` predicate warns on the second console of every run, which is
+how an operator learns to skip the line.
+
+**Four ways a file comes to hold marks this run did not type** (#548). A
+process cannot check any of them, which is the whole of what the notice can say,
+and the first three are the ones that can leave the day ungraded:
+
+1. a run taken before `--label-vocab` existed;
+2. a §3 console started without the flag — three processes, and nothing forces
+   the flag onto all three;
+3. a watcher restarted mid-block, appending into the file the first one left;
+4. a `manual_fan_ctrl_probe.py` capture, which writes the same
+   `ts,MARK,,label` row (`:433-438`) and was never a `--label-vocab` prompt at
+   all. The probe is only a *source* of a mark in someone else's file, and is
+   unchanged by this.
+
+§3a's service-stopped pass is *not* one of them, and its own runbook note is
+why: it is a second run with its own `<date>`, not a fourth block of §3's
+(`manual-fan-ctrl-0751-isolation.md:904-907`), so a §3a pass on a fresh date
+writes three new files and starts on empty ones — the one routine that
+correctly *avoids* the collision, which is why the notice stays quiet for it.
+The collision the warning has to allow for is §3's own blocks 2 and 3.
+
+There is no flag to silence the notice, on purpose. Silencing it would be a way
+to wave through a collision the tool provably cannot verify, and the cost is one
+line at the top of a four-minute run, before a mark has been typed or a number
+spent. A later reader who wants one should meet that argument rather than
+re-derive it.
+
+The reader is `grade_0751_isolation.py`'s `existing_mark_labels`, loaded by path
+on the same load as `parse_mark` and `REQUIRED_LABEL_FORMS` and for the same
+reason: the shape of a mark row is the grader's, and a copy in the prompt is a
+copy that can drift from the thing that enforces it. It does not raise on the
+file's *content* — a row `read_capture` rejects, or a byte the encoding cannot
+decode, which comes back as U+FFFD inside a label rather than ending the run —
+so a preflight that could not read the file would lose the one warning that
+says what is in it. `CsvSink` appends to that same path and never decodes it,
+so the bytes are whatever the writing process's locale wrote; `read_capture`
+still raises on them, and still grades. `unplaceable_marks`,
+`build_windows` and the exit code are all untouched: the grader's refusal is
+correct, and forgiving marks it cannot attribute to a process would need it to
+know which process wrote each one, which is not in the file.
 
 ## Why the substitution went
 
@@ -219,6 +326,18 @@ recorded one. Nothing else in the output numbers the marks — the grader reads
 labels, not numbers — so this is about the console being readable rather than
 about the capture.
 
+**The counter is on this process, and a file can hold another process's.** From
+2026-09-25 (issue #548) `--label-vocab 0751` on a `--csv` that already holds
+marks says so at startup and names them, which puts two sequences on the screen
+at once: the file's marks, counted there, and the numbers in this run's
+prompts, which count marks *this* process recorded and start at 1 whatever the
+file holds. A block 2 that opens on `no mark 1 taken` over a file already
+carrying block 1's six is two correct statements about two different things,
+and the startup notice is what keeps a reader from taking the first for the
+second. Nothing downstream is affected either way — the grader reads labels
+and not numbers — so this is entirely about the console not lying by
+juxtaposition.
+
 ## Where the refusal shows up
 
 - [manual-fan-ctrl-0751-isolation.md](../../docs/hardware-tests/manual-fan-ctrl-0751-isolation.md)
@@ -234,7 +353,9 @@ about the capture.
   keyword parameters on `Marker`. The parameters default to no check because
   `windows/tools/gpu_block_watch.py:166` constructs `Marker(sink)` and stamps
   free-form labels, so a default that checked anything would refuse that
-  procedure's own marks.
+  procedure's own marks. `load_label_vocab` returns the grader's
+  `existing_mark_labels` as a third value, and `warn_unchecked_marks` is the
+  startup notice, beside the startup refusals and above `CsvSink` and `Ec`.
 - `windows/tools/test_ec_watch.py`'s `RefusedLabelTests`, beside
   `BlankMarkTests`. It pins the refusal, the notice, the counter, and the
   default: with the flag absent an unplaceable label is recorded unchanged,
@@ -244,7 +365,8 @@ about the capture.
   candidate order and the refusal are one file's behaviour rather than a list
   in a write-up. The committed copy needs no case of its own: every other case
   in the class reaches it from a real checkout, so a lookup that stopped
-  looking there would fail them.
+  looking there would fail them. Its `AppendNoticeTests` (issue #548) pins the
+  file side on the same fixture shape.
 - [`windows/README.md`](../README.md)'s staging section, and
   §2 of
   [manual-fan-ctrl-0751-isolation.md](../../docs/hardware-tests/manual-fan-ctrl-0751-isolation.md)
@@ -252,11 +374,16 @@ about the capture.
   §3's commands refuse to start, rather than at the refusal itself.
 - `ec/tools/grade_0751_isolation.py` — `parse_mark`, `unplaceable_marks` and
   `build_windows` are the three functions above. None of them changed: the
-  grader's refusal was correct and still is.
+  grader's refusal was correct and still is. `existing_mark_labels` is the one
+  addition, and it is additive.
 - `ec/tools/test_grade_0751_isolation.py` — its `mark 3` case is a
   hand-written fixture of the shape, and it still exits 1, because a capture
   carrying that row is still fatal however it got there.
-- `docs/findings.md` §16a is the one-paragraph version of this file.
+  `ExistingMarkLabelTests` pins the new reader, and holds `read_capture`'s own
+  behaviour beside it so the leniency cannot spread.
+- `docs/findings.md` §16a is the one-paragraph version of this file, and
+  `docs/findings/0751-append-unchecked-marks.md` is the reasoning behind the
+  file side — including why there is no flag to silence the notice.
 
 ## The same substitution, in two other tools
 

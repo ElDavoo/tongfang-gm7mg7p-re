@@ -117,6 +117,14 @@ rem  with no rename step. The three CSVs are one file for all three blocks,
 rem  because ec_watch.py appends to a --csv file that already exists and the
 rem  marks say which write each row follows; the dumps are not, so they carry
 rem  <value> and block 2 cannot overwrite block 1's.
+rem
+rem  --- as of 2026-09-25 (issue #548) each of the three commands below says so
+rem  ---    when its --csv already holds mark rows: it names them and carries
+rem  ---    on. That is the block 2 and 3 case working as intended, not a
+rem  ---    fault. Read the names -- a mark this block did not type is one
+rem  ---    nobody checked as it was typed here, and the grader still reads
+rem  ---    and checks every mark in the file, so an unplaceable one can
+rem  ---    still refuse the day. See ec_watch-marks.md.
 
 rem  --- 0. snapshot, read-only ---
 python windows\tools\ecrw.py dump 0x0700 0x0100 ^
@@ -704,10 +712,23 @@ block, lower case and without `0x` (`a0`, `00`, `10`) — the same two
 placeholders §3's commands take, spelled the same way so a filename carries
 between the two without a rename. The three CSVs are one set for the whole
 run: `ec_watch.py` appends to a `--csv`
-file that already exists, and the marks say which write each row follows. The
-dumps are per block and have to be, because they are whole-range reads with
-no marks in them — nothing inside one says which write it brackets, so §3's
-`>` would otherwise leave block 1 with block 2's bytes. That naming is also
+file that already exists, and the marks say which write each row follows.
+**As of 2026-09-25 (issue #548) sharing the three CSVs across blocks also means
+sharing their marks, and the marks in front of this run's are not this run's.**
+`--label-vocab 0751` names them at startup, above the file, and carries on —
+the sharing above is the reason it is a notice and not a refusal, since blocks 2
+and 3 are meant to find marks already there. (§3a's service-stopped pass is not
+one of them — it takes its own `<date>`, so it writes to a fresh file; see
+`:904`.) A label any of them does not check is one the grader will still read:
+`unplaceable_marks` is fatal for
+the whole run over the whole file, so an unchecked mark from a console started
+without the flag, a run from before the flag existed, a restarted watcher, or a
+`manual_fan_ctrl_probe.py` capture refuses the day as surely as a mistyped one
+typed here would. Start each of the three commands with the flag, and read what
+the notice says. The dumps are per block and have to be, because they are
+whole-range reads with no marks in them — nothing inside one says which write
+it brackets, so §3's `>` would otherwise leave block 1 with block 2's bytes.
+That naming is also
 what lets the grader say which block a `--dump` belongs to, which is the one
 thing in a dump that says so; see the command below. The snapshot has to
 say which mode each block started from and what was written, since nothing
