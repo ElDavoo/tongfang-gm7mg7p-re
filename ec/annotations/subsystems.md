@@ -131,23 +131,45 @@ basis rather than the presence of a name.
 > either side.
 
 **160 of the 1914 rows are `type: unresolved`, and 279 carry a name that
-describes a shape rather than a job** — `call_` (88), `load_` (120),
-`trampoline_` (29), `ret_` (27), `nop_` (9), `seed_` (6). Each is counted on the
-whole prefix, not a narrower one: the `ret_` rows are the 19 `ret_only_` ones
-plus eight that read `ret_stub`, `ret_immediately`, `ret_no_op`,
-`ret_terminating_89f4`, `ret_stub_no_request_bit` and the two
-`ret_stub_table_f041_row..`, and all 27 predate issue #603 — the tranche's one
-`ret`-shaped name is `return_low_three_bits_of_0a49` at `0x221F`, which is
-`return_` rather than `ret_` and so falls outside this census — while 83 of the
-`load_` rows are `load_dptr_` with the other 37 the register and table loads
-beside them. `thunk_` has no row in the census at all:
-#602 renamed the last seven, so the prefix is gone rather than merely smaller.
+describes a shape rather than a job.** Each is counted on the whole prefix, not
+a narrower one, and the six prefixes below are the whole scope of that 279 — a
+family that is not a row here is outside the total rather than quietly
+uncounted:
+
+| prefix | rows | of which |
+|---|---|---|
+| `call_` | 88 | |
+| `load_` | 120 | 83 `load_dptr_`, 37 register and table |
+| `trampoline_` | 29 | |
+| `ret_` | 27 | 19 `ret_only_`, 8 named beside them |
+| `nop_` | 9 | |
+| `seed_` | 6 | |
+| **total** | **279** | |
+
+`--check` recounts that table off `ghidra-functions.csv` and holds every row,
+every breakdown and the total to it, so a tranche that moves a prefix tally
+turns the build red rather than leaving this paragraph right by luck. The
+`of which` cell is a breakdown of the row it sits in and not a seventh row: the
+`ret_` rows are the 19 `ret_only_` ones plus eight that read `ret_stub` (two
+rows), `ret_immediately`, `ret_no_op`, `ret_terminating_89f4`,
+`ret_stub_no_request_bit` and the two `ret_stub_table_f041_row..`, and all 27
+predate issue #603 — the tranche's one `ret`-shaped name is
+`return_low_three_bits_of_0a49` at `0x221F`, which is `return_` rather than
+`ret_` and so falls outside this census — and the 83 `load_dptr_` rows are
+inside the 120 `load_` ones, with the other 37 the register and table loads
+beside them. `thunk_` has no row in the census at all: #602 renamed the last
+seven, so the prefix is gone rather than merely smaller, and `--check` does not
+ask for one, a prefix no row carries not being a row that went missing. The
+`forward_to_*` rows are outside the total for the same reason — `forward_to_`
+is not one of the six prefixes above, its spelling is issue #629's to settle,
+and this table is written so that either answer leaves it green.
 **This paragraph's counts were 152 and 271 over 1848 rows before issue #603 —
 the 271 then over the seven prefixes that draft enumerated, `thunk_` included —
 and they had already drifted from the recounted `unresolved rows` bullet above
 it, the bullet being the figure `--check` holds: the two were never one
 measurement.** Both are recounted here from the tree rather than left to drift
-again.
+again, and the shape table above is held to a recount the way the bullet
+already was.
 `sub_input_from_cpu_temp_043e` is a subtraction step; `trampoline_to_c0a2` is a
 jump. Neither is a mechanism, and a map built only from the names would be a map
 of the disassembler's vocabulary.
