@@ -10,12 +10,12 @@
    type: reader
    evidence: ec/decompiled/bank0/C251.asm; ec/decompiled/bank0/C251.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void test_1665_bit0_inverted(void)
 
 {
-  if ((DAT_EXTMEM_1665 & 1) != 1) {
+  if ((XDATA_1665 & 1) != 1) {
     return;
   }
   return;

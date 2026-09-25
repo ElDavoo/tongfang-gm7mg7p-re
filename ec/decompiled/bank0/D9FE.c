@@ -10,10 +10,24 @@
    bit 4 of 0x166A select one of 0x30, 0x40, 0x50 or 0x70, i.e. GFID = 3, 4, 5 or 7. All four stores
    write the whole byte, so the low nibble is zero on each of them. It goes on to set or clear bit 4
    of 0x07A4 from bit 6 of 0x1665, write 0x00/0x10/0x23/0x25 into 0x083A/0x083B/0x08B8/0x08B9, set
-   bit 3 of 0x0832 and bits 6-7 of 0x0456, and clear bit 1 of 0x0782. 0x1665, 0x1666 and 0x166A have
-   no entry in ec/annotations/registers.yaml, and the DSDT names the 0x07D3 field GFID
-   (dsdt.dsl:52254-52256) without expanding it, so what the four values select is not established
-   here.
+   bit 3 of 0x0832 and bits 6-7 of 0x0456, and clear bit 1 of 0x0782. All three now have entries --
+   XDATA_1665, XDATA_1666 and XDATA_166A, added by issue #267 -- and the GFID select is the two-bit
+   one above, whose outer half is the bit-2 test on 0x1666 at 0xDA22 that the first transcription of
+   this block left out. The DSDT names the 0x07D3 field GFID (dsdt.dsl:52251-52253; the 52254-52256
+   this row used to cite is the next field run, Offset (0x7D4), CPUA and DBAP) without expanding it,
+   but it does read the field: Method (SMRW, 1) at dsdt.dsl:50764 compares it against 0x07, 0x05,
+   0x03 and 0x06 and, with PDIN, picks which of seven declared ACPI Buffers to address: ACPB, ACSB,
+   ACPC, ACSC, ACPD, ACSD and ACPE, Name objects at dsdt.dsl:50383-50414, 8 bytes for the first,
+   second and seventh and 12 for the other four. *** CORRECTION (issue #267, fix round 1,
+   2026-09-25), stated in place: this row used to call those EC register blocks, to say they are not
+   declared in the disassembly, and to say SMRW has no caller in it. All three were false negatives.
+   The seven are declared (dsdt.dsl:50383, 50387, 50391, 50396, 50401, 50406, 50411) and SMRW copies
+   a caller-supplied buffer into one of them or returns a DWord CreateDWordField view of one, so the
+   select picks an ASL buffer, not a register bank; what the EC does with that copy is still not
+   established here. The caller is committed as well:
+   windows/decompiled/v3.1.39.0/GCUService/MyControlCenter/WMIEC.cs:331-343 invokes SMRW by name on
+   the WMI class AcpiTest_MULong, and windows/native/ACPIDriver.sys.analysis.md:328,400 records the
+   driver's SMAPCTable entry for SMRW and the 0x80-byte buffer argument it marshals. ***
    type: init
    evidence: ec/decompiled/bank0/D9FE.asm; ec/decompiled/bank0/D9FE.c;
    ec/annotations/ec-07c4-07d5-sites.md; ec/annotations/registers.yaml
@@ -32,21 +46,21 @@ void seed_07d3_gfid_and_08xx_defaults(void)
   set_1607_bit6();
   set_1603_bit4();
   timer1_counted_delay_using_0a56('\x05');
-  if ((DAT_EXTMEM_1666 >> 2 & 1) == 0) {
-    if ((DAT_EXTMEM_166a >> 4 & 1) == 0) {
+  if ((XDATA_1666 >> 2 & 1) == 0) {
+    if ((XDATA_166A >> 4 & 1) == 0) {
       GFID = 0x70;
     }
     else {
       GFID = 0x50;
     }
   }
-  else if ((DAT_EXTMEM_166a >> 4 & 1) == 0) {
+  else if ((XDATA_166A >> 4 & 1) == 0) {
     GFID = 0x40;
   }
   else {
     GFID = 0x30;
   }
-  if ((DAT_EXTMEM_1665 >> 6 & 1) == 0) {
+  if ((XDATA_1665 >> 6 & 1) == 0) {
     DAT_EXTMEM_07a4 = DAT_EXTMEM_07a4 & 0xef;
   }
   else {

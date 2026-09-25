@@ -406,10 +406,12 @@ bank0,C249,set_1604_bit5,annotation,4,1604,1604,,agree
 bank0,C251,test_1665_bit0_inverted,annotation,2,1665,1665,,agree
 bank0,C25E,clear_1605_bit1,annotation,4,1605,1605,,agree
 bank0,C266,set_1605_bit1,annotation,4,1605,1605,,agree
+bank0,C278,test_1665_bit2,annotation,2,1665,1665,,agree
 bank0,C295,test_1665_bit4_inverted,annotation,2,1665,1665,,agree
 bank0,C2A2,set_1605_bit5,annotation,4,1605,1605,,agree
 bank0,C2AA,clear_1605_bit5,annotation,4,1605,1605,,agree
 bank0,C2BA,set_1605_bit6,annotation,4,1605,1605,,agree
+bank0,C2C2,test_1665_bit6_inverted,annotation,2,1665,1665,,agree
 bank0,C2CF,clear_1605_bit7,annotation,4,1605,1605,,agree
 bank0,C2F7,set_1606_bit2,annotation,4,1606,1606,,agree
 bank0,C2FF,set_1606_bit0,annotation,4,1606,1606,,agree
@@ -418,6 +420,7 @@ bank0,C30F,set_1606_bit3,annotation,4,1606,1606,,agree
 bank0,C317,clear_1606_bit3,annotation,4,1606,1606,,agree
 bank0,C31F,test_1606_bit4_inverted,annotation,2,1606,1606,,agree
 bank0,C333,nop_stub_c333,annotation,0,,,,vacuous
+bank0,C33C,test_1666_bit7,annotation,2,1666,1666,,agree
 bank0,C349,test_1667_bit0,annotation,2,1667,1667,,agree
 bank0,C356,test_1667_bit0_inverted,annotation,2,1667,1667,,agree
 bank0,C363,write_40_to_1641,annotation,3,1641,1641,,agree
@@ -437,6 +440,7 @@ bank0,C497,set_160a_bit1,annotation,4,160A,160A,,agree
 bank0,C49F,FUN_CODE_c49f,stride,4,160A,160A,,agree
 bank0,C4A7,set_160a_bit2,annotation,4,160A,160A,,agree
 bank0,C4D9,test_166a_bit7_inverted,annotation,2,166A,166A,,agree
+bank0,C4E7,cflag_1665_bit4_inverted,annotation,2,1665,,1665,disagree
 bank0,C4F0,write_40_to_dptr_then_read_1601,annotation,4,1601,1601,,agree
 bank0,C4F8,read_074c_low_nibble,annotation,3,074C,074C,,agree
 bank0,C8C5,select_0027_0028_from_five_probes,annotation,0,,,,vacuous

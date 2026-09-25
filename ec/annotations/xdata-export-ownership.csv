@@ -426,10 +426,12 @@ bank0/C251.c,bank0,C251,2,bank0/C251.c,C251,test_1665_bit0_inverted,no,1.00
 bank0/C25E.c,bank0,C25E,2,bank0/C25E.c,C25E,clear_1605_bit1,no,1.00
 bank0/C266.c,bank0,C266,2,bank0/C266.c,C266,set_1605_bit1,no,1.00
 bank0/C26E.c,bank0,C26E,3,bank0/C26E.c,C26E,FUN_CODE_c26e,no,1.00
+bank0/C278.c,bank0,C278,2,bank0/C278.c,C278,test_1665_bit2,no,1.00
 bank0/C295.c,bank0,C295,2,bank0/C295.c,C295,test_1665_bit4_inverted,no,1.00
 bank0/C2A2.c,bank0,C2A2,2,bank0/C2A2.c,C2A2,set_1605_bit5,no,1.00
 bank0/C2AA.c,bank0,C2AA,2,bank0/C2AA.c,C2AA,clear_1605_bit5,no,1.00
 bank0/C2BA.c,bank0,C2BA,2,bank0/C2BA.c,C2BA,set_1605_bit6,no,1.00
+bank0/C2C2.c,bank0,C2C2,2,bank0/C2C2.c,C2C2,test_1665_bit6_inverted,no,1.00
 bank0/C2CF.c,bank0,C2CF,2,bank0/C2CF.c,C2CF,clear_1605_bit7,no,1.00
 bank0/C2F7.c,bank0,C2F7,2,bank0/C2F7.c,C2F7,set_1606_bit2,no,1.00
 bank0/C2FF.c,bank0,C2FF,2,bank0/C2FF.c,C2FF,set_1606_bit0,no,1.00
@@ -438,6 +440,7 @@ bank0/C30F.c,bank0,C30F,2,bank0/C30F.c,C30F,set_1606_bit3,no,1.00
 bank0/C317.c,bank0,C317,2,bank0/C317.c,C317,clear_1606_bit3,no,1.00
 bank0/C31F.c,bank0,C31F,2,bank0/C31F.c,C31F,test_1606_bit4_inverted,no,1.00
 bank0/C333.c,bank0,C333,1,bank0/C333.c,C333,nop_stub_c333,no,1.00
+bank0/C33C.c,bank0,C33C,2,bank0/C33C.c,C33C,test_1666_bit7,no,1.00
 bank0/C349.c,bank0,C349,2,bank0/C349.c,C349,test_1667_bit0,no,1.00
 bank0/C356.c,bank0,C356,2,bank0/C356.c,C356,test_1667_bit0_inverted,no,1.00
 bank0/C363.c,bank0,C363,2,bank0/C363.c,C363,write_40_to_1641,no,1.00
@@ -461,6 +464,7 @@ bank0/C4AF.c,bank0,C4AF,2,bank0/C4AF.c,C4AF,FUN_CODE_c4af,no,1.00
 bank0/C4C9.c,bank0,C4C9,2,bank0/C4C9.c,C4C9,FUN_CODE_c4c9,no,1.00
 bank0/C4D1.c,bank0,C4D1,2,bank0/C4D1.c,C4D1,FUN_CODE_c4d1,no,1.00
 bank0/C4D9.c,bank0,C4D9,2,bank0/C4D9.c,C4D9,test_166a_bit7_inverted,no,1.00
+bank0/C4E7.c,bank0,C4E7,1,bank0/C4E7.c,C4E7,cflag_1665_bit4_inverted,no,1.00
 bank0/C4F0.c,bank0,C4F0,2,bank0/C4F0.c,C4F0,write_40_to_dptr_then_read_1601,no,1.00
 bank0/C4F8.c,bank0,C4F8,1,bank0/C4F8.c,C4F8,read_074c_low_nibble,no,1.00
 bank0/C55F.c,bank0,C55F,24,bank0/C55F.c,C55F,FUN_CODE_c55f,no,1.00

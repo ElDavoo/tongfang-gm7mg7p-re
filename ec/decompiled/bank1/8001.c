@@ -9,7 +9,14 @@
    addr only when it is non-zero, and 8001.c shows that shape applied down a long list of byte
    addresses. The call-target scan has cut that one stream into separate entries, so this address's
    own listing is truncated to the first three bytes and the rest of the sequence appears under the
-   addresses 0x8004-0x8017 in this shard.
+   addresses 0x8004-0x8017 in this shard. CORRECTION (2026-09-25, issue #555): this is the entry,
+   and it is measured rather than inferred. Of the 180 `bank1` rows of `bank-call-targets.csv` that
+   target into `0x8001`-`0x8189`, `ec/tools/counter_sweep_entry.py` finds exactly one at an
+   instruction start in a committed listing -- a three-byte call at `bank1:0xABB8` whose target is
+   `0x8001`, scoring 24 of 24. `0x8001` is named by 5 of the 180, is itself a frame boundary at 24
+   of 24, and the byte before it is the `ret` ending the preceding routine. So the cut the scan
+   produced is the exporter's, not the firmware's. Method and the full table:
+   `docs/findings/counter-sweep-entry-set.md`.
    type: writer
    evidence: ec/decompiled/bank1/8001.asm; ec/decompiled/bank1/8001.c
    basis: hand-decoded

@@ -9,7 +9,14 @@
    result is the movx at 0x8018, and both are the same pair the 0x06C6 and 0x06CD groups use. It is
    a mid-stream fragment of the counter-decrement sequence, not a routine in its own right: the .c
    here decompiles the whole sweep rather than this single instruction, so the one-instruction
-   boundary is the call-target scan's hypothesis.
+   boundary is the call-target scan's hypothesis. CORRECTION (2026-09-25, issue #555): the
+   hypothesis is refuted, not confirmed. `ec/tools/counter_sweep_entry.py` finds 6 byte-scan sites
+   naming this address and no call among them: the best of them frames at 1 of 24 and is a byte in a
+   committed gap between two listings. Of the 180 `bank1` rows of `bank-call-targets.csv` that
+   target into `0x8001`-`0x8189`, exactly one is at an instruction start in a committed listing -- a
+   three-byte call at `bank1:0xABB8` whose target is `0x8001`, 24 of 24. The run is one routine
+   entering at `0x8001`; this address is a slice of it. Method and the full table:
+   `docs/findings/counter-sweep-entry-set.md`.
    type: math
    evidence: ec/decompiled/bank1/8017.asm; ec/decompiled/bank1/8017.c
    basis: hand-decoded

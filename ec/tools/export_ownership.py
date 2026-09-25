@@ -318,7 +318,11 @@ def check(args) -> int:
 # replace all three rather than reconciling them. Re-derive any of them with
 # --map --threshold, or read the class shape with --self-test.
 OWNERSHIP_ORACLE = {
-    "rows": 2710,
+    # 2,710 -> 2,714, and 1,272 -> 1,276, both moved by issue #267 alone: its
+    # four `bank0`-scoped rows seed 0xC278, 0xC2C2, 0xC33C and 0xC4E7, and all
+    # four are short enough to be counted as tiny bodies, so the second figure
+    # moves by the same four.
+    "rows": 2714,
     "classes": 56,
     "shared_rows": 146,
     "largest_class": 42,
@@ -336,7 +340,7 @@ OWNERSHIP_ORACLE = {
     "flood_no_floor": 562,
     # The body-size floor's own justification, as a count so a reader does not
     # have to take "half the tree's smallest exports are `return`" on trust.
-    "tiny_bodies": 1272,
+    "tiny_bodies": 1276,
 }
 
 

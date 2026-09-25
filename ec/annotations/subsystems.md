@@ -54,16 +54,16 @@ The per-function byte readings are the committed listings, one `.asm` and one
 Measured over the committed export, by `index.csv` for the functions and
 `ghidra-functions.csv` for the names:
 
-- `exported functions` — 2710
-- `annotated function rows` — 1872
-- `rows the index marks annotated` — 1897
+- `exported functions` — 2714
+- `annotated function rows` — 1876
+- `rows the index marks annotated` — 1901
 - `unresolved rows` — 169
 
 By program, as exported minus annotated minus the rest:
 
 | program | exported | annotated | unannotated |
 |---|---|---|---|
-| `bank0` | 746 | 693 | 53 (7%) |
+| `bank0` | 750 | 697 | 53 (7%) |
 | `bank1` | 676 | 605 | 71 (11%) |
 | `pd` | 535 | 502 | 33 (6%) |
 | `common` | 753 | 97 | 656 (87%) |
@@ -74,7 +74,7 @@ and most of the runtime helpers live. It is also the area this document had to
 extend to say anything about interrupt entry, which is what §3 is.
 
 **The three counts disagree, and the difference is measured rather than
-smoothed.** `index.csv` marks 1897 rows `annotated=yes` and the CSV holds 1872
+smoothed.** `index.csv` marks 1901 rows `annotated=yes` and the CSV holds 1876
 rows: a gap of 25. Both sides are enumerated. 25 index rows are marked
 `annotated=yes` with no CSV row at all, and no CSV row is recorded by the index
 as `annotated=no`; 25 − 0 = 25.
@@ -133,7 +133,7 @@ of the disassembler's vocabulary.
 
 > **Correction, 2026-09-25 (#602): recounted against the committed CSV, and
 > every number in the paragraph above is stale — not only the `thunk_` (7) the
-> rename removed.** The current figures are 169 `type: unresolved` rows of 1872,
+> rename removed.** The current figures are 169 `type: unresolved` rows of 1876,
 > and 269 names over the same seven prefixes: `call_` (87), `load_` (117),
 > `trampoline_` (29), `ret_only_` (21), `nop_` (9), `seed_` (6), of which 80 of
 > the `load_` rows are `load_dptr_` and the other 37 are the register and table
@@ -142,8 +142,11 @@ of the disassembler's vocabulary.
 > `seed_` 4 → 6, 1848 → 1872 and 152 → 169 were **already wrong on `main`** —
 > the paragraph was written against an older CSV and nothing recounted it,
 > because unlike the four bullets above it is not one of the counts
-> `check_subsystems` holds to a recount. The six renamed `forward_to_*` rows are
-> a shape census item too and are not in the 269, because `forward_to_` is not
+> `check_subsystems` holds to a recount. The denominator has since moved again,
+> 1872 → 1876, with issue #267's four `bank0`-scoped `0x1665`/`0x1666`/`0x166A`
+> rows; none of the four takes a name over one of the seven prefixes, so the 269
+> and its breakdown are unchanged. The six renamed `forward_to_*` rows are a
+> shape census item too and are not in the 269, because `forward_to_` is not
 > one of the seven prefixes this document enumerates; they bring that separate
 > family to 17.
 
@@ -506,9 +509,9 @@ The same four totals as §2, restated here so the remainder can be read on its
 own. `--check` compares both occurrences against the same recount, so they
 cannot drift apart silently:
 
-- `exported functions` — 2710
-- `annotated function rows` — 1872
-- `rows the index marks annotated` — 1897
+- `exported functions` — 2714
+- `annotated function rows` — 1876
+- `rows the index marks annotated` — 1901
 - `unresolved rows` — 169
 
 **656 of the 753 common-area functions are unannotated, and that is the largest

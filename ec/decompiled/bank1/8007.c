@@ -6,7 +6,13 @@
 
 /* One instruction: dec A, which decrements the value read from XDATA 0x06C6. It is reached only
    when that byte was non-zero, because the jz at 0x8005 skips over it; the store that commits the
-   result is the movx at 0x8008.
+   result is the movx at 0x8008. CORRECTION (2026-09-25, issue #555): the slice reading above holds,
+   and the boundary framing is settled rather than open. Of the 180 `bank1` rows of
+   `bank-call-targets.csv` that target into `0x8001`-`0x8189`, `ec/tools/counter_sweep_entry.py`
+   finds exactly one at an instruction start in a committed listing -- a three-byte call at
+   `bank1:0xABB8` whose target is `0x8001`, 24 of 24 -- so the run is one routine entering at
+   `0x8001` and the cut the scan produced is the exporter's. This address is named by 9 of the 180,
+   best framing 1 of 24. Method and the full table: `docs/findings/counter-sweep-entry-set.md`.
    type: math
    evidence: ec/decompiled/bank1/8007.asm; ec/decompiled/bank1/8007.c
    basis: hand-decoded

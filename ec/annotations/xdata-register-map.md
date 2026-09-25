@@ -1400,7 +1400,7 @@ symbol table.
 
 | cluster | key | name | size | refs | range | named inside | co-reading (§4.5) | the functions the cluster's addresses share |
 |---|---|---|---:|---:|---|---|---|---|
-| `main-ec-001` | `k7497cf885614` | `mode-oem-init` | 109 | 1,149 | `0x030E`-`0x1809` | 35 | 19/133 fns, 294 (26%) | `fill_08xx_from_code_table`, `apply_oem_overrides_then_fill_08xx`, `mode_tick_084c_07a5_09ee`, `charge_target_update` — the mode/OEM initialisation set |
+| `main-ec-001` | `k7497cf885614` | `mode-oem-init` | 109 | 1,150 | `0x030E`-`0x1809` | 37 | 19/134 fns, 294 (26%) | `fill_08xx_from_code_table`, `apply_oem_overrides_then_fill_08xx`, `mode_tick_084c_07a5_09ee`, `charge_target_update` — the mode/OEM initialisation set |
 | `main-ec-002` | `k733222e83898` | `counter-sweep` | 43 | 4,966 | `0x0460`-`0x09CE` | 43 | **62/127 fns, 4,642 (93%)** | `decrement_nonzero_xdata_counters`, `read_06c6`, `skip_06c6_decrement` — one loop walking a block of counters |
 | `main-ec-003` | `ka39cda99615f` | `level-block-086x` | 28 | 181 | `0x045C`-`0x1C3A` | 14 | 8/21 fns, 66 (36%) | `gate_06e6_442_then_sync_046a_from_086b`, `dispatch_on_0860`, `compute_level_blocks_086b_086c_086e` — the `0x06E6`/`0x0860` gate block |
 | `main-ec-004` | `kffd18a7555bf` | — | 26 | 280 | `0x030A`-`0x082F` | `0x0403` | 20/52 fns, 93 (33%) | three unnamed `bank1` routines (`0xDEE8`, `0xDEF1`, `0xDB0B`) — unnamed here, so this one needs reading before it can be titled |
@@ -1436,6 +1436,15 @@ and 50 are where the three pieces of it are — 28 addresses here, 11 in
 remembers "`main-ec-002` is the gate block" is reading a table that no longer
 exists; the cluster that sentence is about is the one now numbered
 `main-ec-003`.)*
+
+*(Re-derived again, 2026-09-25, on the tree that also carries issue #267. Only
+`main-ec-001` moved, and only because `0x1666` and `0x166A` became named: #267
+added `registers.yaml` rows for the three GFID-select bytes, and two of them
+sit in this cluster, so 35 → 37 named addresses. The reference count follows the
+new `0x1665` test routines (1,149 → 1,150) and the co-reading denominator is
+`functions_touched` 133 → 134, the four `bank0` functions #267 seeded. The share
+is unchanged at 26%, the key is unchanged, and no other row of the twelve
+moved.)*
 
 *(The `key` and `name` columns are §4.4's, and they are the reason two of these
 rows can still be cited after this table moved. Three of the ten names in

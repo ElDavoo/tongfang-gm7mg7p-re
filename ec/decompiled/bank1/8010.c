@@ -7,7 +7,15 @@
 /* One instruction: movx @DPTR, A, writing back the value dec A produced at 0x800F and so committing
    the decrement of XDATA 0x06CD. It closes the group the call-target scan cut at 0x8009-0x8010 and
    is not a routine in its own right: the .c here decompiles the whole counter sweep rather than
-   this single instruction, so the one-instruction boundary is the scan's hypothesis.
+   this single instruction, so the one-instruction boundary is the scan's hypothesis. CORRECTION
+   (2026-09-25, issue #555): the hypothesis is refuted, not confirmed.
+   `ec/tools/counter_sweep_entry.py` finds 4 byte-scan sites naming this address and no call among
+   them: the best of them frames at 1 of 24 and is a `cjne` displacement byte the scan read as a
+   call. Of the 180 `bank1` rows of `bank-call-targets.csv` that target into `0x8001`-`0x8189`,
+   exactly one is at an instruction start in a committed listing -- a three-byte call at
+   `bank1:0xABB8` whose target is `0x8001`, 24 of 24. The run is one routine entering at `0x8001`;
+   this address is a slice of it. Method and the full table:
+   `docs/findings/counter-sweep-entry-set.md`.
    type: writer
    evidence: ec/decompiled/bank1/8010.asm; ec/decompiled/bank1/8010.c
    basis: hand-decoded

@@ -425,11 +425,13 @@ bank0,C249,set_1604_bit5,8,annotation,no,yes,writer,hand-decoded,ec/decompiled/b
 bank0,C251,test_1665_bit0_inverted,13,annotation,no,yes,reader,hand-decoded,ec/decompiled/bank0/C251.asm; ec/decompiled/bank0/C251.c,,bank0/C251.c
 bank0,C25E,clear_1605_bit1,8,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/C25E.asm; ec/decompiled/bank0/C25E.c,,bank0/C25E.c
 bank0,C266,set_1605_bit1,8,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/C266.asm; ec/decompiled/bank0/C266.c,,bank0/C266.c
-bank0,C26E,FUN_CODE_c26e,23,call-target,no,no,,,,,bank0/C26E.c
+bank0,C26E,FUN_CODE_c26e,10,call-target,no,no,,,,,bank0/C26E.c
+bank0,C278,test_1665_bit2,13,annotation,no,yes,reader,hand-decoded,ec/decompiled/bank0/C278.asm; ec/decompiled/bank0/C278.c,,bank0/C278.c
 bank0,C295,test_1665_bit4_inverted,13,annotation,no,yes,reader,hand-decoded,ec/decompiled/bank0/C295.asm; ec/decompiled/bank0/C295.c,,bank0/C295.c
 bank0,C2A2,set_1605_bit5,8,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/C2A2.asm; ec/decompiled/bank0/C2A2.c,,bank0/C2A2.c
 bank0,C2AA,clear_1605_bit5,8,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/C2AA.asm; ec/decompiled/bank0/C2AA.c,,bank0/C2AA.c
 bank0,C2BA,set_1605_bit6,8,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/C2BA.asm; ec/decompiled/bank0/C2BA.c,,bank0/C2BA.c
+bank0,C2C2,test_1665_bit6_inverted,13,annotation,no,yes,reader,hand-decoded,ec/decompiled/bank0/C2C2.asm; ec/decompiled/bank0/C2C2.c,,bank0/C2C2.c
 bank0,C2CF,clear_1605_bit7,8,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/C2CF.asm; ec/decompiled/bank0/C2CF.c,,bank0/C2CF.c
 bank0,C2F7,set_1606_bit2,8,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/C2F7.asm; ec/decompiled/bank0/C2F7.c,,bank0/C2F7.c
 bank0,C2FF,set_1606_bit0,8,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/C2FF.asm; ec/decompiled/bank0/C2FF.c,,bank0/C2FF.c
@@ -438,6 +440,7 @@ bank0,C30F,set_1606_bit3,8,annotation,no,yes,writer,hand-decoded,ec/decompiled/b
 bank0,C317,clear_1606_bit3,8,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/C317.asm; ec/decompiled/bank0/C317.c,,bank0/C317.c
 bank0,C31F,test_1606_bit4_inverted,13,annotation,no,yes,logic,hand-decoded,ec/decompiled/bank0/C31F.asm; ec/decompiled/bank0/C31F.c,,bank0/C31F.c
 bank0,C333,nop_stub_c333,1,annotation,no,yes,unresolved,hand-decoded,ec/decompiled/bank0/C333.asm; ec/decompiled/bank0/C333.c,,bank0/C333.c
+bank0,C33C,test_1666_bit7,13,annotation,no,yes,reader,hand-decoded,ec/decompiled/bank0/C33C.asm; ec/decompiled/bank0/C33C.c,,bank0/C33C.c
 bank0,C349,test_1667_bit0,13,annotation,no,yes,logic,hand-decoded,ec/decompiled/bank0/C349.asm; ec/decompiled/bank0/C349.c,,bank0/C349.c
 bank0,C356,test_1667_bit0_inverted,13,annotation,no,yes,logic,hand-decoded,ec/decompiled/bank0/C356.asm; ec/decompiled/bank0/C356.c,,bank0/C356.c
 bank0,C363,write_40_to_1641,7,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/C363.asm; ec/decompiled/bank0/C363.c,,bank0/C363.c
@@ -461,6 +464,7 @@ bank0,C4AF,FUN_CODE_c4af,8,annotation,no,no,,,,,bank0/C4AF.c
 bank0,C4C9,FUN_CODE_c4c9,8,call-target,no,no,,,,,bank0/C4C9.c
 bank0,C4D1,FUN_CODE_c4d1,8,call-target,no,no,,,,,bank0/C4D1.c
 bank0,C4D9,test_166a_bit7_inverted,13,annotation,no,yes,logic,hand-decoded,ec/decompiled/bank0/C4D9.asm; ec/decompiled/bank0/C4D9.c,,bank0/C4D9.c
+bank0,C4E7,cflag_1665_bit4_inverted,9,annotation,no,yes,reader,hand-decoded,ec/decompiled/bank0/C4E7.asm; ec/decompiled/bank0/C4E7.c,,bank0/C4E7.c
 bank0,C4F0,write_40_to_dptr_then_read_1601,8,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/C4F0.asm; ec/decompiled/bank0/C4F0.c,,bank0/C4F0.c
 bank0,C4F8,read_074c_low_nibble,7,annotation,no,yes,reader,hand-decoded,ec/decompiled/bank0/C4F8.asm; ec/decompiled/bank0/C4F8.c,,bank0/C4F8.c
 bank0,C55F,FUN_CODE_c55f,94,call-target,no,no,,,,,bank0/C55F.c

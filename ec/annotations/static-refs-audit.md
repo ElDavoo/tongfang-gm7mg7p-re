@@ -641,7 +641,9 @@ read `155 entries / 187 addresses` on `main` immediately before this change.
 `XDATA_09EA` and `XDATA_09EB` were added below and it now reads
 **157 entries / 189 addresses**; the same stale figure was transcribed in
 `ec-07c4-07d5-sites.md` §1 and is corrected there too. The per-address counts
-in the two tables either side of this line are unaffected.
+in the two tables either side of this line are unaffected. **It has moved
+again since**, for the reason §8 below gives: `XDATA_1665`, `XDATA_1666` and
+`XDATA_166A` (issue #267) take it to **160 entries / 192 addresses**.
 
 **Same shape as §6, in both directions.** The `movc` and `jmp` columns are
 zero for all four, as they are for all 29 of §2 and for the pair §6 added, so
@@ -673,3 +675,27 @@ the gap stands: `0x166A` still has no entry, the `0x07C4` writer is still
 unattributed, and `0x09E9` — which `0x83FF` syncs into `0x0788` — still has
 no entry either, because it has two direct writers and is a different
 question. That file's §6 carries the three forward.
+
+**The `0x166A` half closed too, 2026-09-25 (issue #267);** the paragraph
+above is left as it was written. `0x1665`, `0x1666` and `0x166A` now carry
+`registers.yaml` entries — `XDATA_1665`, `XDATA_1666`, `XDATA_166A`, all
+`present-untested` — and `check_register_counts.py` recomputes all three
+from the image: 6/6/0, 2/2/0 and 3/3/0. The file-wide total this line
+records moves with them, to **160 entries / 192 addresses**. The two
+remaining thirds of the gap are untouched: the `0x07C4` writer is still
+unattributed and `0x09E9` still has no entry.
+
+One thing this file's own shape applies to the new rows, and which the
+three entries record in place: `trace_xdata_refs.py` finds 6 sites for
+`0x1665` and 2 for `0x1666` where `xdata-registers.csv` counted 4 and 1.
+The two count different units over different trees, and the two methods
+were measuring that gap rather than contradicting each other — the missing
+sites were 0xC2C2 and 0xC4E7 for `0x1665` and 0xC33C for `0x1666`, all in
+routines that had no exported `.c` at all. Seeding them closed the gap in
+the counts, and the CSVs are regenerated here to match, so `--check` holds.
+The composition still does not line up for `0x1665`, and that is recorded
+in its entry rather than papered over: the C-level method counts the
+0xC278 access twice, because Ghidra folded that block into the 0xC26E
+decompile, and misses 0xC4E7, whose decompile is a bare `return;`. One too
+many and one too few on a total that lands on 6 either way. `0x1666` and
+`0x166A` agree with the image in both count and composition.

@@ -230,7 +230,7 @@ into `r2 -a 8051` with no stitching needed.
   exporter cut `bank1:0x8001`-`0x8189` into 42 of them whose `.c` files all
   decompile the same body, which is where the 42× above comes from. This
   derives a containment class per group of exports and one owner per class, in
-  `annotations/xdata-export-ownership.csv` — 2,710 rows, 56 classes, 146
+  `annotations/xdata-export-ownership.csv` — 2,714 rows, 56 classes, 146
   non-owner rows, the 42-file class owned by `bank1/8001.c`. `--check` holds
   the CSV to a fresh derivation and `--self-test` pins the rule against inline
   fixtures plus the tree-wide figures. `xdata_register_map.py

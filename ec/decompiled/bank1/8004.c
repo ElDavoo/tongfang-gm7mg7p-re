@@ -6,7 +6,13 @@
 
 /* One instruction: movx A,@DPTR, reached by falling through from the mov DPTR,#0x06C6 at 0x8001, so
    it reads XDATA 0x06C6. It is a mid-stream fragment of the counter-decrement sequence, not a
-   routine in its own right.
+   routine in its own right. CORRECTION (2026-09-25, issue #555): the slice reading above holds, and
+   the boundary framing is settled rather than open. Of the 180 `bank1` rows of
+   `bank-call-targets.csv` that target into `0x8001`-`0x8189`, `ec/tools/counter_sweep_entry.py`
+   finds exactly one at an instruction start in a committed listing -- a three-byte call at
+   `bank1:0xABB8` whose target is `0x8001`, 24 of 24 -- so the run is one routine entering at
+   `0x8001` and the cut the scan produced is the exporter's. This address is named by 5 of the 180,
+   best framing 3 of 24. Method and the full table: `docs/findings/counter-sweep-entry-set.md`.
    type: reader
    evidence: ec/decompiled/bank1/8004.asm; ec/decompiled/bank1/8004.c
    basis: hand-decoded

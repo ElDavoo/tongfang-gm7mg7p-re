@@ -3471,6 +3471,146 @@ registers:
       determined here. Per-address table:
       ec/annotations/xdata-086x-dispatch.md.
 
+  - name: XDATA_1665
+    addr: 0x1665
+    sources: [xdata-refs]
+    static_refs: 6
+    static_refs_main_ec: 6
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      6 direct MOV DPTR sites, all bank0, all classified `read` by
+      ec/tools/register_ref_table.py --no PD site. No writer is found by
+      either committed method, which is "not found by this method": a
+      computed DPH or an indirect movx @Ri is invisible to both (#110, and
+      the 0x07B9 retraction), and a byte only ever read must be written by
+      something, so the writer is an open question rather than an absence.
+      *** The two committed methods disagreed here, and still do about which
+      site is which (issue #267). *** Before this change
+      xdata-registers.csv attributed 4 C-level DAT_EXTMEM_1665 references
+      to this address where trace_xdata_refs.py found 6 image sites; the two
+      methods count different units over different trees, and the two
+      missing ones were 0xC2C2 and 0xC4E7, in routines that had no exported
+      .c at all. Seeding them closed the gap in the *count* -- the
+      regenerated CSV now reads 6 -- but not in the composition, and the
+      agreement is a coincidence of two errors rather than a confirmation.
+      The C-level method double-counts the 0xC278 access, because Ghidra
+      folded that block into the decompile of 0xC26E and C26E.c carries
+      `XDATA_1665 >> 2 & 1` as well as C278.c does; and it misses
+      0xC4E7 entirely, because that routine's decompile is a bare `return;`
+      with no XDATA reference in it at all. One reference too many and one
+      too few, landing on the right total. The image sites -- 0xC251,
+      0xC278, 0xC295, 0xC2C2, 0xC4E7, 0xDA4F -- are the ones recorded
+      above. The .asm is the authority over the .c wherever the two
+      disagree, as each listing's own header says, and for 0xC4E7 they do:
+      the listing is five instructions over nine bytes and the decompile
+      is an empty body.
+      The 0x0443 entry above records the same two-methods disagreement in
+      the other direction.
+      Bit map, one entry per site, read off the committed listings --
+      0xDA4F from D9FE.asm and the other five from the bit-test listings
+      the annotation build exports beside it. Four are single-bit tests
+      that return 0/1, and the
+      polarity is the *name*, so it is given per site rather than as a
+      blanket "inverted":
+      0xC251 bit 0 (`jb acc.0, 0xC25B`), returns R7 = 1 when bit 0 is CLEAR
+      -- named test_1665_bit0_inverted;
+      0xC278 bit 2 (`jnb acc.2, 0xC282`), returns R7 = 1 when bit 2 is SET
+      -- the one non-inverted site, and it is reached only when bit 7 of
+      0x0456 is set, because the routine at 0xC26E returns 1 on the other
+      arm; now seeded as test_1665_bit2;
+      0xC295 bit 4 (`jnb acc.4, 0xC29F`), returns R7 = 1 when bit 4 is
+      CLEAR -- named test_1665_bit4_inverted;
+      0xC2C2 bit 6 (`jb acc.6, 0xC2CC`), returns R7 = 1 when bit 6 is CLEAR
+      -- now seeded as test_1665_bit6_inverted;
+      0xC4E7 bit 4 (`jb acc.4, 0xC4EF`) is the one site that answers in the
+      carry flag rather than in R7, and does so on one arm only: SETB C runs
+      when bit 4 is clear, and when it is set JB jumps straight to the bare
+      RET and leaves PSW.0 as the caller passed it in. Whether the carry a
+      caller reads back is the complement of the bit therefore depends on the
+      carry on entry, which nothing here establishes -- no committed listing
+      calls 0xC4E7, and the CLR C at 0xC4E6 below is reached by no entry --
+      so the name records the SETB arm's convention rather than a return
+      value; now seeded as cflag_1665_bit4_inverted;
+      0xDA4F bit 6 (`jnb 0xe6, 0xDA5F`) is the only site with a *named
+      consequence*: in seed_07d3_gfid_and_08xx_defaults it sets bit 4 of
+      0x07A4 (`orl a,#0x10`) when bit 6 is set and clears it (`anl a,#0xef`)
+      when it is not. 0x07A4 has no entry in this file either, so the
+      consequence lands on an undocumented byte; recorded as a follow-up
+      rather than expanded into here.
+      The DSDT does not reach this byte, and that is a fact about the ASL
+      rather than a scan result: the ECMG field list is dsdt.dsl:52194-52328
+      and its highest Offset is 0x0EA0, over 28 offsets from 0x043E, so
+      0x1665 is an order of magnitude above anything the list declares.
+      dsdt.dsl names 0x1665 nowhere either, which is the same fact about
+      the ASL text rather than a second kind of scan: the byte map this
+      note is built from is the six committed listings that carry
+      0x1665 (C251, C278, C295, C2C2, C4E7 and D9FE, each as
+      mov DPTR, #0x1665), and it is those that refute the claim this
+      sentence used to make -- it said grepping the whole disassembly for
+      0x1665 returns nothing at all, and six listings say otherwise.
+      These three bytes are EC-internal configuration, invisible to ACPI.
+      Cross-reference #228 for what the field list does cover rather than
+      re-deriving its boundary. No hardware was involved and no status was
+      promoted; a static walk supplies references, not behaviour.
+
+  - name: XDATA_1666
+    addr: 0x1666
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      2 direct MOV DPTR sites, both bank0, both `read`, no PD site. No
+      writer found by either committed method, on the "not found by this
+      method" terms XDATA_1665 sets out -- a computed DPH or an indirect
+      movx @Ri is invisible to both scans (#110). Here the two committed
+      methods used to disagree as well, xdata-registers.csv counting 1
+      C-level reference against trace_xdata_refs.py's 2 image sites, the
+      missing one being 0xC33C in a routine with no exported .c. This
+      change seeds 0xC33C, and unlike its neighbour the two methods now
+      agree in count *and* in composition: the regenerated CSV reads 2,
+      from 0xC33C and 0xD9FE, which are the image's two sites.
+      Bit map, one entry per site:
+      0xC33C bit 7 (`jnb acc.7, 0xC346`), returns R7 = 1 when bit 7 is SET
+      -- not inverted, the opposite polarity to the two named 0x1665 tests,
+      and now seeded as test_1666_bit7;
+      0xDA22 bit 2 (`jnb 0xe2, 0xDA3D`) is the *outer* select in
+      seed_07d3_gfid_and_08xx_defaults: it chooses which of two identical
+      0x166A bit-4 tests runs, and so which pair of GFID constants
+      0x07D3 is written with. 0xDA22 also being a site is why the count is 2.
+      The DSDT does not reach this byte -- the ECMG field list is
+      dsdt.dsl:52194-52328 and tops out at 0x0EA0 (see XDATA_1665). No
+      hardware was involved; status stays present-untested.
+
+  - name: XDATA_166A
+    addr: 0x166A
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      3 direct MOV DPTR sites, all bank0, all `read`, no PD site. No
+      writer found by either committed method, on the "not found by this
+      method" terms XDATA_1665 sets out. Here the two committed methods
+      agree, in count and in composition: xdata-registers.csv reads 3
+      references across 0xC4D9 and 0xD9FE, one and two, which is the
+      image's three sites exactly. Unlike its two neighbours this byte has
+      no disagreement to record, and it had none before this change
+      either.
+      Bit map, one entry per site:
+      0xC4D9 bit 7 (`jb acc.7, 0xC4E3`), returns R7 = 1 when bit 7 is CLEAR
+      -- named test_166a_bit7_inverted;
+      0xDA29 and 0xDA3D both bit 4 (`jnb 0xe4`), the two GFID writes in
+      seed_07d3_gfid_and_08xx_defaults. The byte is read once per arm of the
+      branch, which is why the count is 3 and not 2: bit 2 of 0x1666 picks
+      the arm, and each arm re-reads 0x166A before writing 0x07D3.
+      The DSDT does not reach this byte -- the ECMG field list is
+      dsdt.dsl:52194-52328 and tops out at 0x0EA0 (see XDATA_1665). No
+      hardware was involved; status stays present-untested.
+
   - name: GPU_DYNAMIC_BOOST_STATUS (DSDT DBEN bit 3, DBST bit 5)
     addr: 0x07C4
     bits: "0-2 unnamed; 3 = DBEN; 4 unnamed; 5 = DBST"
@@ -3539,22 +3679,140 @@ registers:
     static_refs_pd_image: 7
     status: present-untested
     note: >
-      Named from the DSDT ECMG field list (dsdt.dsl:52254-52256): four
-      unnamed bits, then GFID, three bits wide. The expansion is not in the
-      ASL and is not guessed at here. No ASL code reads or writes this byte
-      by name; what publishes GFID is not established.
+      Named from the DSDT ECMG field list (dsdt.dsl:52251-52253): Offset
+      (0x7D3), four unnamed bits, then GFID, three bits wide. The expansion
+      is not in the ASL and is not guessed at here.
+      *** CORRECTION (issue #267, 2026-09-25), stated in place: this note
+      used to cite dsdt.dsl:52254-52256, which is Offset (0x7D4), CPUA and
+      DBAP -- the next field run, not GFID -- and used to say that no ASL
+      code reads or writes this byte by name. The second half of that is
+      false: GFID is compared against 0x07, 0x05, 0x03 and 0x06 at
+      dsdt.dsl:50772, 50799, 50826 and 50854, inside Method (SMRW, 1) at
+      dsdt.dsl:50764. GFID's expansion is still not in the ASL, and the ASL
+      still does not *write* this byte by name. ***
+      *** SECOND CORRECTION (issue #267, fix round 1, 2026-09-25), also
+      stated in place: the correction above went on to say that SMRW "has no
+      caller anywhere in this disassembly", so that what invokes it is
+      "outside the committed inputs", and the paragraph below it said the
+      select "picks a register bank" of "EC register blocks" that are "not
+      declared anywhere in this disassembly". Both were false negatives,
+      and the committed tree contradicts them. What invokes SMRW is
+      committed: the vendor service's own WMIEC.cs, at
+      windows/decompiled/v3.1.39.0/GCUService/MyControlCenter/WMIEC.cs
+      lines 331-343, opens a WMI ManagementObject on AcpiTest_MULong
+      (ACPI\PNP0C14\1_1), takes GetMethodParameters("SMRW") and
+      InvokeMethod("SMRW", ...) on it and reads its "Return" property, and
+      its SMRW_CMD_READ = 187 / SMRW_CMD_WRITE = 170 at :23-31 are 0xBB and
+      0xAA, the two values SMRW's RWFG field is compared against at
+      dsdt.dsl:50780 and 50776. Its SMRW_CMD_OFFSET = 0 and
+      SMRW_VALUE_OFFSET = 8 (:23, :25) are the same two offsets the ASL cuts
+      Arg0 at; the dumped .cs references neither constant, so that is the
+      layout agreeing rather than a call the source makes.
+      windows/native/ACPIDriver.sys.analysis.md:328 carries the driver's
+      SMAPCTable entry for SMRW, and :400 records that it marshals a
+      0x80-byte buffer argument where every other entry in that table takes
+      integers -- which is what the method's single Buffer argument is. So
+      the consumer is the vendor service through the WMI ACPI driver, not
+      something outside the tree. How the provider binds the name SMRW to
+      \_SB.INOU.SMRW is the provider's own business and is not decoded here;
+      the method set the two name (MMRW, SMRW, IORD, T1RD, ...) is the INOU
+      method set. ***
+      What GFID selects, which the two corrections above make answerable:
+      each of those four comparisons in SMRW picks a different ACPI Buffer
+      for the method to address, jointly with a second field, PDIN (4 bits
+      at Offset 0x74C, dsdt.dsl:52213). GFID == 0x07 selects ACPB or ACSB
+      on PDIN 8/7/5 vs 4/6; GFID == 0x05 selects ACPC or ACSC on the same
+      split; GFID == 0x03 selects ACPD or ACSD on PDIN 8/7/5/4/6 vs 0/3;
+      GFID == 0x06 selects ACPE, on PDIN 4 only. Those seven are declared:
+      ACPB (dsdt.dsl:50383), ACSB (50387), ACPC (50391), ACSC (50396),
+      ACPD (50401), ACSD (50406) and ACPE (50411), each a Name (n, Buffer
+      (m)) with initial contents, 8 bytes for ACPB, ACSB and ACPE and 12
+      for the other four. What SMRW does with one is a copy in each
+      direction rather than a register access. Arg0 is cut into RWFG (8
+      bits at offset 0), REOF (8 bits at 0x08) and WRBF (0x60 bits, 12
+      bytes, at 0x08) at dsdt.dsl:50768-50770; RWFG == 0xAA stores WRBF
+      into the selected buffer, and RWFG == 0xBB lays a
+      CreateDWordField over it at the index the caller put in REOF and
+      returns that DWord in Local0. WRBF is 12 bytes and three of the
+      seven buffers are 8, so the write arm stores more than its shortest
+      targets hold; how an AML store reconciles the two lengths is not
+      something this repository has run, and which bytes land is not
+      established here. The
+      seven overlays (E7B1/E7B2, E5B1/E5B2, E3B1/E3B2, MQB1) are the one
+      thing here that is not declared anywhere: each is created inside its
+      own arm by that CreateDWordField (dsdt.dsl:50782 and the six
+      following it), so its offset is the caller's byte at run time rather
+      than a fixed one. So the select picks one of seven ASL buffers, not a
+      register bank, and the initial byte patterns are the only thing the
+      declarations say about what they hold: 50 50 5F 00 87 0F 57 FF
+      (ACPB), 50 50 5F 00 73 0F 57 FF (ACSB), 78 78 A5 05 0A 0F 57 73 23
+      FF FF FF (ACPC and ACSC), 78 78 A5 05 23 0F 57 50 23 FF FF FF
+      (ACPD and ACSD) and 50 50 5F 00 5A 14 57 FF (ACPE) -- five distinct
+      patterns for seven names, since ACPC matches ACSC and ACPD matches
+      ACSD byte for byte. None of the five, and neither shared four-byte
+      prefix (50 50 5F 00, 78 78 A5 05), occurs anywhere in
+      ec/firmware/GMxMGxx_11.800, which is all a byte scan can say about
+      it: they are the ASL's own values, not bytes read back from the EC by
+      anything committed. What the EC does with the copy is not established
+      here. Two facts fall out of the pairing that are worth writing down:
+      GFID == 0x04 is written by the EC at 0xDA2D/0xDA41 and tested by no
+      SMRW arm, so on this path it falls through to Local0 = Zero; and
+      GFID == 0x06 is tested by SMRW but written by nothing either committed
+      method finds, so it has no producer here the way 3, 4, 5 and 7 do.
       The Windows side has exactly one site and it is a read with no writer
       (windows/decompiled/v3.1.39.0/ec-callsites-summary.csv row 0x07D3:
       reads=1, writes=0, no writer named), and no ECSpec constant covers it.
+      *** The "no ECSpec constant covers it" clause is retracted in place
+      (issue #267, fix round 1): there is one, and it is live. ECSpec calls
+      0x07D3 ADDR_ModuleID = 2003 (Define/ECSpec.cs:389 in
+      v3.1.39.0/GCUService, v3.1.6.0 and v3.9.18.0/Define), and
+      windows/decompiled/v3.1.39.0/GCUService/MyECIO/MyEcCtrl.cs:164 reads
+      it as that address -- AcpiModel.Read(GetType().Name, 2003, ref Data),
+      2003 = 0x07D3 -- so the ASL's GFID and the service's ADDR_ModuleID are
+      one byte under two vocabularies. GetSku() (:158-190) masks it with
+      0xF0 and switches the high nibble over seven values, 0x30 to E3, 0x40
+      to E4, 0x50 to E5, 0x60 to MaxQ, 0x70 to E7, 0x80 to P0, 0x90 to P1,
+      and IsHeroProject() (:192) keys off sku == MaxQ; the EC-written 0x30,
+      0x40, 0x50 and 0x70 are E3, E4, E5 and E7, and 0x60 -- the value the
+      GFID == 0x06 arm tests and that neither committed method finds a
+      writer for -- is the one the service names. That is what the byte is
+      called on the Windows side; what GFID 3 means to the GPU is still
+      open, and the ec-callsites row above attributes nothing either way --
+      it counts 1 read and leaves the writers column empty, so it is not a
+      citation for the site.
+      ***
       The four EC-firmware sites are walked in
       ec/annotations/ec-07c4-07d5-sites.md. Two of them, 0xDA2D and 0xDA41,
       sit in the routine entered at 0xD9FE and write this byte outright with
-      0x30, 0x40, 0x50 or 0x70 -- that is, with GFID = 3, 4, 5 or 7 -- on a
-      branch on bit 4 of the byte at 0x166A, which has no entry in this
-      file. A third, 0xBA46, is a read-modify-write that clears only the low
-      nibble and returns the masked value in A. The fourth, 0x94D5, reads the
-      byte, masks the high nibble and XORs 0x30 to test for GFID = 3, then
-      branches. Bits 0-3 therefore have two EC-side writers that touch only
+      0x30, 0x40, 0x50 or 0x70 -- that is, with GFID = 3, 4, 5 or 7 -- on
+      bit 4 of the byte at 0x166A within an arm chosen by bit 2 of the byte
+      at 0x1666. Both now have entries in this file, as XDATA_166A and
+      XDATA_1666; before issue #267 neither did, and the note here used to
+      say so. A third, 0xBA46, is a read-modify-write that clears only the
+      low nibble and returns the masked value in A. The fourth, 0x94D5, reads
+      the byte, masks the high nibble and XORs 0x30 to test for GFID = 3,
+      then branches.
+      *** What that 0x94D5 branch does with the answer, scoped tightly
+      (issue #267). *** In copy_code_table_into_0730_07a7, GFID == 3 picks a
+      seed pair at 0x0A51/0x0A52 of 0x61/0xC8, and every other GFID --
+      4, 5 and 7 alike -- picks 0x61/0x92 (ec/decompiled/bank0/94D0.asm,
+      0x94D5-0x9518). Within the GFID == 3 arm there is a second condition:
+      0x61/0xFE is taken when the first 0xBA36 call returns zero, or when a
+      second 0xBA36 returns 3; 0x61/0xC8 needs the first call non-zero and
+      the second's return other than 3. So on this path the two-bit select
+      behaves as a two-way choice, GFID == 3 against everything else, and
+      the three other constants 0x94D0 collapses onto one seed pair. That
+      is a statement about 0x94D0 and not about the field: GFID is a
+      four-way select as far as SMRW is concerned, as the paragraph above
+      sets out. The seed pair is a CODE pointer, not a pair of PL values --
+      0x94D0 stores it and then reads bytes out of the table it addresses
+      with movc, copying them into 0x0730-0x0733, 0x0735, 0x0737 and
+      0x07A7-0x07AA, which do have entries here. What makes GFID 3 special
+      to the GPU is not determined by the instruction stream; the open
+      question and the procedure that would settle it are in
+      docs/hardware-tests/gpu-tgp-07c4-07d7-door.md, which is marked NOT
+      RUN.
+      Bits 0-3 therefore have two EC-side writers that touch only
       that nibble and two that overwrite the whole byte with a value whose
       low nibble is zero, so the two groups do not contradict each other.
       Counts are direct MOV DPTR site counts and are lower bounds for the
