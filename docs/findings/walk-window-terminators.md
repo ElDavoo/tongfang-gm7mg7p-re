@@ -219,16 +219,23 @@ that CSV row and nowhere else. It is recorded here rather than quietly fixed
 because a re-cut that moves a cell is exactly the thing a reader has to be
 able to see, and "this work changed a decode" would have been the wrong
 conclusion. `test_walk_budget_census.py` pins it as the *only* cell that moved,
-by diffing every re-cut table against `git show HEAD:`.
+by diffing every re-cut table against `e198fd9` — the commit immediately before
+this one. The ref is pinned rather than `HEAD` because `HEAD` is *this* work on
+the merge commit, where each table is its own baseline and the diff finds
+nothing; step 9 below carries the same ref for the same reason.
 
 ## Prose that inherited a cell: a measurement, not an assumption
 
 The issue asks for the `.md` companions to be re-read for prose inheriting one
 of the moving cells. Checked rather than assumed, by grepping the four issue
 addresses and the three class-B additions across every `.md` under
-`ec/annotations/` and `docs/`:
+`ec/annotations/` and `docs/` **as they stood before this change** — the two
+files this work adds (`docs/findings.md` §57 and this one) quote the addresses
+themselves, so a grep run after the merge hits them and that is this write-up
+talking to itself, not a page inheriting a cell:
 
-- `0x2E8D4`, `0x28B8B`, `0x0DD4A`, `0x2BECB`: **quoted nowhere.** So
+- `0x2E8D4`, `0x28B8B`, `0x0DD4A`, `0x2BECB`: **quoted in no pre-existing
+  page.** So
   `ec-0x07d0-sites.md`, `ec-0x07d1-sites.md`, `manual-fan-ctrl-0751.md` and
   `xdata-0400-045f.md` inherit none of them, and the issue's third bullet is a
   no-op.
@@ -328,11 +335,13 @@ python3 ec/tools/walk_budget_census.py ec/firmware/GMxMGxx_11.800 --check
 python3 ec/tools/walk_budget_census.py ec/firmware/GMxMGxx_11.800 --budget 16 --check
 python3 ec/tools/walk_budget_census.py ec/firmware/GMxMGxx_11.800 --extend 9 --csv
 
-# 9. the one `window` cell that moved, and that it predates this work: HEAD's
-#    table says `db 0xa2`, and HEAD's tool has the loop walk() now hands to
-#    walk_why() at its own :224-243
-git show HEAD:ec/annotations/xdata-0400-045f-sites.csv | sed -n '385p'
-git show HEAD:ec/tools/trace_xdata_refs.py | sed -n '224,243p'
+# 9. the one `window` cell that moved, and that it predates this work: the
+#    pre-change table says `db 0xa2`, and the pre-change tool has the loop
+#    walk() now hands to walk_why() at its own :224-243. e198fd9 is the commit
+#    before this one; HEAD is this work once merged, so `git show HEAD:` would
+#    print the new cell and this step would show nothing at all.
+git show e198fd9:ec/annotations/xdata-0400-045f-sites.csv | sed -n '385p'
+git show e198fd9:ec/tools/trace_xdata_refs.py | sed -n '224,243p'
 
 # 10. consumers of the re-cut tables: two of pd_index_geometry.py's pins are
 #     `window` cells in ec-0x07d0-sites.csv, and the 0x086x table is read by

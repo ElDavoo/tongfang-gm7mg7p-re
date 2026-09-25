@@ -6,10 +6,10 @@ budget would have put in that row's `access` cell instead.
 `../../docs/findings/opcode-len-bounds-census.md` drove that loop from every
 one of the image's 262144 start offsets to count where it stops: `max_insns (8)
 exhausted` fires 119530 times. That figure is a property of the file, and
-nothing in the tree had asked what it means for the ten committed tables whose
+nothing in the tree had asked what it means for the nine committed tables whose
 `window` column this same function produces. This asks, and the answer is that
-45 rows of the nine tables are truncated, so their windows are shorter than
-the code around them and their `access` cells are summaries of a cut.
+45 of their rows are truncated, so their windows are shorter than the code
+around them and their `access` cells are summaries of a cut.
 
 **The terminator is re-derived here, not re-implemented.** Every row goes
 through `trace_xdata_refs.walk_why()`, the function `trace_xdata_refs.py`

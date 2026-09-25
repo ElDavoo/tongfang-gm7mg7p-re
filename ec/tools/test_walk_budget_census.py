@@ -525,6 +525,17 @@ class ReCutTests(unittest.TestCase):
     when the rule landed. It reproduces on clean `origin/main` and has nothing
     to do with the terminator column."""
 
+    # The tree this re-cut was measured against: the commit immediately before
+    # it, `e198fd9`. Pinned by SHA because a moving ref is exactly the bug this
+    # replaced -- on the merge commit `HEAD` already holds the re-cut, so a
+    # HEAD-relative baseline compares each table with itself, finds no moved
+    # cell, and goes red for the wrong reason; `origin/main` is no better once
+    # this lands, since then it holds the re-cut too. A re-cut that moves a
+    # second cell goes red against this SHA, which is the property the test is
+    # cited for, and updating the work then means moving this SHA and the
+    # expected tuple in `...preexisting_drift` together.
+    BASELINE = "e198fd9801709d276d0aca93df0b92129e2d7f93"
+
     # The six pages whose generating command gained --terminator-column.
     RECUT = ("ec-07c4-07d5-sites.csv", "ec-07d6-07d7-sites.csv",
              "ec-0x07d0-sites.csv", "ec-0x07d1-sites.csv",
@@ -562,15 +573,14 @@ class ReCutTests(unittest.TestCase):
         self.assertNotIn("file_offset", arms[0])
 
     def test_the_only_window_cell_that_moved_is_the_preexisting_drift(self):
-        # Stated as a count over the committed `git` HEAD's version of each
-        # table, so a future re-cut that moves a second cell fails here rather
-        # than in a reviewer's eye. Skipped when the tables are not committed
-        # (a scratch tree), never skipped to make this pass.
+        # Stated as a count over BASELINE's version of each table, so a future
+        # re-cut that moves a second cell fails here rather than in a
+        # reviewer's eye. A baseline that cannot be read is a failure and not a
+        # skip: this test is cited for the diff it measures, and a gate that
+        # compares a table with nothing measures nothing while reporting green.
         moved = []
         for name in self.RECUT:
-            before = self._committed_at_head(name)
-            if before is None:
-                continue
+            before = self._committed_at_baseline(name)
             after = rows_of(name)
             old = list(csv.DictReader(io.StringIO(before)))
             self.assertEqual(len(old), len(after), f"{name} row count moved")
@@ -593,10 +603,16 @@ class ReCutTests(unittest.TestCase):
         self.assertEqual(W.census_table(firmware(),
                                         W.BUDGET, W.EXTEND)[4], [])
 
-    def _committed_at_head(self, name):
-        text = subprocess.run(["git", "show", f"HEAD:ec/annotations/{name}"],
+    def _committed_at_baseline(self, name):
+        path = f"ec/annotations/{name}"
+        text = subprocess.run(["git", "show", f"{self.BASELINE}:{path}"],
                               cwd=str(REPO), capture_output=True, text=True)
-        return text.stdout if text.returncode == 0 else None
+        self.assertEqual(
+            text.returncode, 0,
+            f"cannot read {path} at baseline {self.BASELINE[:7]}: the claim "
+            f"under test is the diff against exactly that tree, and a missing "
+            f"baseline is not a pass")
+        return text.stdout
 
 
 class FifteenAddressSweepTests(unittest.TestCase):

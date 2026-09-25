@@ -7680,6 +7680,8 @@ an `access` column looks enough like a register finding to say so. **#799 and
 therefore says nothing about, and #800 owns the `0x086x` table's `census`
 column. Prose inheriting a moving cell was checked rather than assumed: of the
 issue's four addresses, `0x2E8D4`, `0x28B8B`, `0x0DD4A` and `0x2BECB` are
-quoted nowhere in the tree, and `0x2C2FA` is quoted only in
+quoted in no pre-existing page (the two files this change adds quote them
+themselves, which is this work talking to itself and not a page inheriting a
+cell), and `0x2C2FA` is quoted only in
 `pd-index-geometry.md`, not in the three pages the issue names. No capture was
 opened, no register read back, and no EC, hardware, Windows or Ghidra involved.
