@@ -23,11 +23,11 @@ void fill_0790_0791_0793_via_calls(undefined1 *param_1)
   init_0a48_and_0a59_blocks();
   set_dptr_0a4b_after_call_445e_08();
   entry_dptr = (undefined1 *)0x790;
-  store_a_to_dptr_b994(*param_1);
+  store_a_to_dptr_b994(*param_1,(undefined1 *)0x790);
   write_4_bytes_ending_0a_4b_00(0x22,entry_dptr);
   set_dptr_0a4b_after_call_445e_08_b02f();
   entry_dptr_00 = (undefined1 *)0x791;
-  store_a_to_dptr_b994(*entry_dptr);
+  store_a_to_dptr_b994(*entry_dptr,(undefined1 *)0x791);
   write_4_bytes_ending_0a_4b_00(0x21,entry_dptr_00);
   set_dptr_0a4b_after_call_445e_08_b02f();
   read_dptr_byte_then_set_dptr_0792(entry_dptr_00);

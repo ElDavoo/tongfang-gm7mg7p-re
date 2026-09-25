@@ -12,11 +12,11 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void unresolved_0xB1F2(void)
+void unresolved_0xB1F2(undefined1 *param_1,undefined1 param_2,char param_3)
 
 {
   read3_xdata_to_r3r1_10c8();
-  write_byte_by_tag_r3(1);
+  write_byte_by_tag_r3(1,param_1,param_2,param_3);
   return;
 }
 

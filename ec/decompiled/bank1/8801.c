@@ -13,11 +13,11 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void single_movx_store_not_a_function(undefined1 param_1,undefined1 *param_2)
+void single_movx_store_not_a_function(undefined1 value_a,undefined1 *param_2)
 
 {
-  *param_2 = param_1;
-  *param_2 = param_1;
+  *param_2 = value_a;
+  *param_2 = value_a;
   XDATA_0450 = DAT_EXTMEM_2001;
   XDATA_0452 = DAT_EXTMEM_2002;
   return;

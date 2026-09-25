@@ -13,10 +13,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_a_to_xdata_at_dptr(undefined1 param_1,undefined1 *param_2)
+void store_a_to_xdata_at_dptr(undefined1 a_from_8ffe,undefined1 *param_2)
 
 {
-  *param_2 = param_1;
+  *param_2 = a_from_8ffe;
   return;
 }
 

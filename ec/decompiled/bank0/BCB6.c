@@ -12,10 +12,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_a_then_clear_08e0(undefined1 param_1,undefined1 *param_2)
+void store_a_then_clear_08e0(undefined1 value_a,undefined1 *param_2)
 
 {
-  *param_2 = param_1;
+  *param_2 = value_a;
   DAT_EXTMEM_08e0 = 0;
   return;
 }

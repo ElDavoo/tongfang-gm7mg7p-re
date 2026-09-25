@@ -17,7 +17,7 @@ void zero_1803_1805_1808_then_set_0852_0854_to_ff(void)
 
 {
   DAT_EXTMEM_1803 = 0;
-  write_a_to_x1805_and_x1808();
+  write_a_to_x1805_and_x1808(0);
   fill_0852_0854_with_ff();
   return;
 }

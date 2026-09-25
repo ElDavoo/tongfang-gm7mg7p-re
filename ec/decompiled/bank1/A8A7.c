@@ -13,10 +13,10 @@
    basis: hand-decoded
    name_basis: register-map */
 
-void flag_086f_bit2_send_5a_02_88_table(byte param_1,byte *param_2)
+void flag_086f_bit2_send_5a_02_88_table(byte a_086f_bit2_cleared,byte *param_2)
 
 {
-  *param_2 = param_1 & 0xfb;
+  *param_2 = a_086f_bit2_cleared & 0xfb;
   load_dptr_85de_tail_jump_1100(0x5a,2,0x88,(&DAT_CODE_a83c)[DAT_EXTMEM_0826],0);
   clear_1c15_1c16_set_1c11_ff();
   write_5_to_068b();

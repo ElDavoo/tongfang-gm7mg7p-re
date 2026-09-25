@@ -55,6 +55,7 @@ void write_080d_then_branch_on_70e7(char param_1,char r5_value,char r7_value)
       nop();
       uVar1 = 0x44;
     }
+    puVar3 = (undefined1 *)0x80d;
     copy_0815_to_081b_then_call_c873(uVar1,DAT_EXTMEM_080d);
     read_xdata_080d_and_set_r3_ff(0x3e,0xd6);
     uVar1 = 10;
@@ -75,11 +76,12 @@ void write_080d_then_branch_on_70e7(char param_1,char r5_value,char r7_value)
       read4xdata_to_r4_r7(0x80f);
       write4xdata_from_r4_r7(0x815);
       copy_0815_to_081b_then_call_c873(0x88,DAT_EXTMEM_080d);
+      puVar3 = (undefined1 *)0x80d;
       set_dptr_0a86_and_call_10e8(0x53,0xd6,0xff,DAT_EXTMEM_080d);
       uVar1 = 0xf;
     }
   }
-  store_a_to_dptr_and_zero_r2_r3(uVar1);
+  store_a_to_dptr_and_zero_r2_r3(uVar1,puVar3);
   store_4bytes_to_0a82();
   return;
 }

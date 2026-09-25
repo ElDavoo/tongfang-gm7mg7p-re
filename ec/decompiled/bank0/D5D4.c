@@ -61,7 +61,7 @@ FUN_CODE_d5db:
             DAT_EXTMEM_07fe = 0x55;
             DAT_EXTMEM_07ff = 0xaa;
             puVar3 = &DAT_EXTMEM_07fd;
-            write_a_to_dptr_set_1f06(0x5a);
+            write_a_to_dptr_set_1f06(0x5a,(undefined1 *)0x7fd);
             *puVar3 = 3;
             timer1_counted_delay_using_0a56(-6);
             clear_1609_bit0_and_write_04_to_2006();

@@ -76,10 +76,10 @@ void apply_oem_overrides_then_fill_08xx(undefined1 param_1,char param_2)
   set_dptr_0a51_b93a();
   DAT_EXTMEM_08bd = pcVar5[0x16];
   sVar6 = 0x8be;
-  store_a_to_dptr_b939(*(undefined1 *)(CONCAT11(param_1,param_2) + 0x17));
+  store_a_to_dptr_b939(*(undefined1 *)(CONCAT11(param_1,param_2) + 0x17),(undefined1 *)0x8be);
   DAT_EXTMEM_08e9 = *(undefined1 *)(sVar6 + 0x19);
   sVar6 = 0x8c4;
-  store_a_to_dptr_b939(*(undefined1 *)(CONCAT11(param_1,param_2) + 0x10));
+  store_a_to_dptr_b939(*(undefined1 *)(CONCAT11(param_1,param_2) + 0x10),(undefined1 *)0x8c4);
   DAT_EXTMEM_08c5 = *(char *)(sVar6 + 0x11);
   DAT_EXTMEM_08c6 = *(char *)(CONCAT11(param_1,param_2) + 0x12);
   sVar6 = 0x8c6;
@@ -91,10 +91,10 @@ void apply_oem_overrides_then_fill_08xx(undefined1 param_1,char param_2)
   set_dptr_0a51_b93a();
   DAT_EXTMEM_08c7 = *(byte *)(sVar6 + 0x13);
   sVar6 = 0x8c8;
-  store_a_to_dptr_b939(*(undefined1 *)(CONCAT11(param_1,param_2) + 0x14));
+  store_a_to_dptr_b939(*(undefined1 *)(CONCAT11(param_1,param_2) + 0x14),(undefined1 *)0x8c8);
   DAT_EXTMEM_08c9 = *(undefined1 *)(sVar6 + 0x15);
   sVar6 = 0x8c2;
-  store_a_to_dptr_b939(*(undefined1 *)(CONCAT11(param_1,param_2) + 0x31));
+  store_a_to_dptr_b939(*(undefined1 *)(CONCAT11(param_1,param_2) + 0x31),(undefined1 *)0x8c2);
   DAT_EXTMEM_08ca = *(undefined1 *)(sVar6 + 0x32);
   DAT_EXTMEM_08cb = *(undefined1 *)(CONCAT11(param_1,param_2) + 0x33);
   if ((AP_OEM & 1) != 0) {
@@ -162,7 +162,7 @@ void apply_oem_overrides_then_fill_08xx(undefined1 param_1,char param_2)
       set_dptr_0a51_b93a();
       DAT_EXTMEM_08c4 = puVar8[0x28];
       sVar6 = 0x8c5;
-      store_a_to_dptr_b983(*(undefined1 *)(CONCAT11(param_1,param_2) + 0x29));
+      store_a_to_dptr_b983(*(undefined1 *)(CONCAT11(param_1,param_2) + 0x29),(undefined1 *)0x8c5);
       DAT_EXTMEM_08c6 = *(char *)(sVar6 + 0x2a);
       sVar6 = 0x741;
       if ((AP_OEM & 1) != 0) {

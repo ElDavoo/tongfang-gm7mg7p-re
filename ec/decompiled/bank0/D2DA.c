@@ -11,10 +11,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void stage_1c03_1c02_1c01(undefined1 param_1)
+void stage_1c03_1c02_1c01(undefined1 value_a)
 
 {
-  DAT_EXTMEM_1c03 = param_1;
+  DAT_EXTMEM_1c03 = value_a;
   DAT_EXTMEM_1c02 = XDATA_0862;
   DAT_EXTMEM_1c01 = XDATA_0865;
   return;

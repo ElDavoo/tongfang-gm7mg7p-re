@@ -14,10 +14,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void load_r3_r7_from_0a48_store_a(undefined1 param_1,undefined1 *param_2)
+void load_r3_r7_from_0a48_store_a(undefined1 value_a,undefined1 *param_2)
 
 {
-  *param_2 = param_1;
+  *param_2 = value_a;
   DAT_EXTMEM_0a59 = 0x46;
   DAT_EXTMEM_0a5a = 10;
   DAT_EXTMEM_0a5b = 0x4b;

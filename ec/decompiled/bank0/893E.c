@@ -14,10 +14,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_a_via_dptr_then_jump_8f09(undefined1 param_1,undefined1 *param_2)
+void store_a_via_dptr_then_jump_8f09(undefined1 ac8_from_893c,undefined1 *param_2)
 
 {
-  *param_2 = param_1;
+  *param_2 = ac8_from_893c;
   copy_dptr_byte_to_075c();
   return;
 }

@@ -29,7 +29,7 @@ void index_case_03(undefined1 param_1,undefined1 param_2)
   DAT_EXTMEM_08d7 = param_2;
   DAT_EXTMEM_0607 = add_r6_r7_to_0a58_pair_then_halve(0x607);
   DAT_EXTMEM_0606 = DAT_EXTMEM_0a59;
-  store_a_to_dptr_ba3d(DAT_EXTMEM_0610 | 8);
+  store_a_to_dptr_ba3d(DAT_EXTMEM_0610 | 8,(undefined1 *)0x610);
   write_9f_to_x190c();
   index_case_epilogue(0x84);
   return;

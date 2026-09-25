@@ -6,31 +6,38 @@
 
 /* Loads DPTR with 0xC118 and ljmp 0x1100, the stub this repository's decompiled output names
    bl51_bank_select_0; no instruction here reads or writes any XDATA address itself. 19A8.c is the
-   decompiler rendering that as a call to the stub with 0xC118 as the argument. 0xC118 is not an
-   instruction boundary: it is the immediate byte of `anl A,#0xf3` at 0xC117, the second-to-last
-   instruction of FUN_CODE_c0a8 (ec/decompiled/bank1/C0A8.asm, 116 bytes, 0xC0A8-0xC11B), so an
-   annotation row seeding a function there resolves to nothing and the build reports `0xC118 in
-   bank1.bin: no function at this address`. Decoded from this address the four bytes are `movx
-   @R1,A` (0xF3), `orl A,R5` (0x4D), `movx @DPTR,A` (0xF0) and `ret` (0x22), the last three being
-   the same tail 0xC119-0xC11B that FUN_CODE_c0a8 reaches from its own mask, and none of the four
-   writes R7. It is not the only target in that position. Of the 48 bank1 forwarders in this file
-   whose listing is the BL51 stub -- `mov DPTR,#imm16` then `ljmp 0x1100`, read off the bytes rather
-   than the comment -- 19 name an instruction start, 7 are not covered by any committed bank1
-   listing at all, and 22 name an operand byte: byte 1 of a two-byte instruction or byte 2 of a
-   three-byte one, and never an opcode byte. Two of the 22 are in this very listing, so 0xC118 is a
-   case of a family rather than the exception to it -- 0xC10C, named by the forwarder at 0x1984, is
-   byte 1 of the `mov R4, B` at 0xC10B, and 0xC0AD, named by the forwarder at 0x1A08, is byte 1 of
-   the `add A, #0x1` at 0xC0AC. The other side of the count is real too: 0xC201 and 0xC209 land on
-   instruction starts inside latch_0498_bit1_or_bit3, and 0xC174 inside latch_0490_bit3_or_bit7, so
-   the split runs both ways. The census counts where the targets fall in the committed listings and
-   is reproducible from them: take the `imm16` of each bank1 `mov DPTR,#imm16` + `ljmp 0x1100`
-   listing and test it against the instruction-start addresses of the committed .asm files. What the
-   22 mean is not settled here. Those listings are byte-exact against the image
-   (`ec/tools/verify_reassembly.py --check`), so the imm16 values are not in question; whether these
-   are entries the linear listing frames differently from the code the linker placed, or targets
-   that are not entries at all, is a question the listings cannot answer. Issue #255 asks it of
-   bank1's 0xC10C, and on this count it is 22 addresses wide, not one. Where A, R5 and R1 come from
-   at this entry is not shown by these four instructions and is not established here.
+   decompiler rendering that as a call to the stub with 0xC118 as the argument. The stub tail-jumped
+   to here is the one ec/annotations/bank-call-audit.md section 2 records as selecting bank 0, so
+   the imm16 is read in bank 0, not in the bank this forwarder sits in. CORRECTION 2026-09-24, issue
+   #255: the 0xC118 reading in this row was measured against the wrong bank, and the family count
+   built on it is withdrawn. The text here previously read that 0xC118 'is not an instruction
+   boundary: it is the immediate byte of `anl A,#0xf3` at 0xC117, the second-to-last instruction of
+   FUN_CODE_c0a8 (ec/decompiled/bank1/C0A8.asm, 116 bytes, 0xC0A8-0xC11B), so an annotation row
+   seeding a function there resolves to nothing and the build reports `0xC118 in bank1.bin: no
+   function at this address`', and went on to decode four bytes from bank-1 0xC118, of which 'none
+   of the four writes R7'. That is true of bank 1 and says nothing about what runs. In bank 0,
+   0xC118 is a real entry: file offset 0x0C118 is `12 c0 e7 ef 60 03 7f 01 22 7f 00 22`, seven
+   instructions, which lcall the annotated `test_3202_bit0` at 0xC0E7 and restate that answer in R7
+   as 1 or 0, so the R7 the callers of 0x19A8 test is 1 exactly when bit 0 of XDATA 0x3202 is set.
+   ec/annotations/bank-call-targets.csv:2977 records it independently as
+   `0x0C118,bank0,0xC118,lcall,0xC0E7,...,entry`. The withdrawn census is kept here as a record of
+   what it measured, not as a conclusion: of the 48 bank1 forwarders in this file whose listing is
+   the BL51 stub, testing each imm16 against the instruction-start addresses of the committed bank1
+   .asm files gives 19 on an instruction start, 7 not covered by any committed bank1 listing at all,
+   and 22 on an operand byte, reproducible from those listings alone. All three figures describe
+   bank-1 listings, and these trampolines do not execute bank 1. Every address this row named as an
+   example of the family is an instruction start in bank 0: 0xC118 as above, 0xC10C at file 0x0C10C
+   is `lcall 0xC0C9` followed by the same six-instruction restatement
+   (ec/annotations/xdata-06c2-06db-timers.md section 4), and 0xC0AD at file 0x0C0AD is `lcall
+   0xC030`. In bank 0 the three addresses the withdrawn text read as operand bytes -- 0xC10B, 0xC117
+   and 0xC0AC -- are the closing `ret` of the thunk or reader that precedes each. So the conclusion
+   does not survive for the three addresses it was checked on, and a count of 22 against bank-1
+   listings is not evidence that the rest are not entries either: that has not been re-measured
+   against bank 0 here and this row asserts no replacement count. The export side is unchanged and
+   is not withdrawn by any of this. 0xC118 and 0xC10C have no listing under ec/decompiled/, and
+   landing one needs a --report run on the pinned assembler (ec/ghidra/README.md), so both readings
+   rest on the twelve bytes at the image offset quoted above and on the 0xC0C9 and 0xC0E7
+   annotations beside them.
    type: forwarder
    evidence: ec/decompiled/bank1/19A8.asm; ec/decompiled/bank1/19A8.c
    basis: hand-decoded

@@ -13,10 +13,10 @@
    basis: hand-decoded
    name_basis: register-map */
 
-void clear_bit_e4_then_tail_a8e9(byte param_1,byte *param_2)
+void clear_bit_e4_then_tail_a8e9(byte a_086f_bit4_cleared,byte *param_2)
 
 {
-  *param_2 = param_1 & 0xef;
+  *param_2 = a_086f_bit4_cleared & 0xef;
   write_5_to_068b();
   return;
 }

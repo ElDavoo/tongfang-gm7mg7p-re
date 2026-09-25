@@ -13,10 +13,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-undefined1 store_a_then_read_086c_set_cy(undefined1 param_1,undefined1 *param_2)
+undefined1 store_a_then_read_086c_set_cy(undefined1 value_a,undefined1 *param_2)
 
 {
-  *param_2 = param_1;
+  *param_2 = value_a;
   return DAT_EXTMEM_086c;
 }
 

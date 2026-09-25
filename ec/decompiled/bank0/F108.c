@@ -13,10 +13,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-undefined1 store_a_at_dptr_then_read_0fa0(undefined1 param_1,undefined1 *param_2)
+undefined1 store_a_at_dptr_then_read_0fa0(undefined1 a_from_prev_load,undefined1 *param_2)
 
 {
-  *param_2 = param_1;
+  *param_2 = a_from_prev_load;
   return DAT_EXTMEM_0fa0;
 }
 

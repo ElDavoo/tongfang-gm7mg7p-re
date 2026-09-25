@@ -20,8 +20,8 @@ void unresolved_midstream_bytes(char *param_1,undefined1 param_2,char param_3)
 
 {
   char cVar1;
-  undefined1 uVar2;
-  undefined1 *puVar3;
+  undefined1 value_a;
+  undefined1 *puVar2;
   
   cVar1 = SP;
   SP = cVar1 + '\x01';
@@ -38,10 +38,10 @@ void unresolved_midstream_bytes(char *param_1,undefined1 param_2,char param_3)
       return;
     }
     clear_bit0_1901();
-    puVar3 = &DAT_EXTMEM_1904;
-    uVar2 = store_a_then_1906_init(0x80);
-    *puVar3 = uVar2;
-    store_a_then_set_bits_1_and_0_of_1900(0x190c);
+    puVar2 = &DAT_EXTMEM_1904;
+    value_a = store_a_then_1906_init(0x80,(undefined1 *)0x1904);
+    *puVar2 = value_a;
+    store_a_then_set_bits_1_and_0_of_1900(value_a,(undefined1 *)0x190c);
     load_dptr_08e1_and_a_06_then_nothing();
     return;
   }
@@ -51,7 +51,7 @@ void unresolved_midstream_bytes(char *param_1,undefined1 param_2,char param_3)
   DAT_EXTMEM_08d1 = param_3;
   DAT_EXTMEM_0601 = add_r6_r7_to_0a58_pair_then_halve(0x601);
   DAT_EXTMEM_0600 = DAT_EXTMEM_0a59;
-  store_a_to_dptr_ba3d(DAT_EXTMEM_0610 | 1);
+  store_a_to_dptr_ba3d(DAT_EXTMEM_0610 | 1,(undefined1 *)0x610);
   write_9f_to_x1904();
   index_case_epilogue(0x81);
   return;

@@ -24,7 +24,7 @@ void write_4_bytes_after_f121_then_chain(short param_1,char param_2)
   *(undefined1 *)(param_1 + 2) = 0;
   *(undefined1 *)(param_1 + 3) = 0xff;
   *(undefined1 *)(param_1 + 4) = 0xff;
-  store_a_four_times(0);
+  store_a_four_times(0,param_1 + 4);
   set_r3_09_r5_80_r7_01();
   stage_0a54_0a55_then_dispatch();
   if (param_2 != '\0') {

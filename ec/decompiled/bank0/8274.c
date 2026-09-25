@@ -16,18 +16,18 @@
 void index_table_default(void)
 
 {
-  undefined1 uVar1;
-  undefined1 *puVar2;
+  undefined1 value_a;
+  undefined1 *puVar1;
   
   if (DAT_EXTMEM_08e1 != '\0') {
     DAT_EXTMEM_08e1 = DAT_EXTMEM_08e1 + -1;
     return;
   }
   clear_bit0_1901();
-  puVar2 = &DAT_EXTMEM_1904;
-  uVar1 = store_a_then_1906_init(0x80);
-  *puVar2 = uVar1;
-  store_a_then_set_bits_1_and_0_of_1900(0x190c);
+  puVar1 = &DAT_EXTMEM_1904;
+  value_a = store_a_then_1906_init(0x80,(undefined1 *)0x1904);
+  *puVar1 = value_a;
+  store_a_then_set_bits_1_and_0_of_1900(value_a,(undefined1 *)0x190c);
   load_dptr_08e1_and_a_06_then_nothing();
   return;
 }

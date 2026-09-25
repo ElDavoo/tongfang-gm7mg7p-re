@@ -21,125 +21,126 @@
 void advance_07d2_counter_and_dispatch(char param_1)
 
 {
-  byte bVar1;
-  undefined1 uVar2;
+  undefined1 uVar1;
+  byte bVar2;
   char cVar3;
-  undefined1 uVar4;
-  undefined1 *puVar5;
-  char *pcVar6;
-  undefined2 uVar7;
-  short sVar8;
-  byte *pbVar9;
+  char cVar4;
+  undefined1 uVar5;
+  undefined1 *puVar6;
+  char *pcVar7;
+  undefined2 uVar8;
+  short sVar9;
+  byte *pbVar10;
   
-  puVar5 = &DAT_EXTMEM_07d2;
+  puVar6 = &DAT_EXTMEM_07d2;
   DAT_EXTMEM_07d2 = param_1;
   dptr_0428_plus_60a();
   dph_plus_double_a_349b(param_1);
-  set_dptr_042f_then_fall_through(param_1,*puVar5);
+  set_dptr_042f_then_fall_through(param_1,*puVar6);
   dph_plus_double_a_349b(param_1);
   add_r6_to_dpl();
-  *puVar5 = 0;
-  puVar5 = (undefined1 *)0x7d2;
+  *puVar6 = 0;
+  puVar6 = (undefined1 *)0x7d2;
   read_dptr_byte_then_tail_10bc_at_042c();
   dph_plus_double_a_349b(param_1);
   add_r6_to_dpl();
-  *puVar5 = 0xff;
+  *puVar6 = 0xff;
   pick_00d0_or_00d1_then_tail_with_dp_0002(2);
   read_07d2_to_r3();
-  pcVar6 = puVar5 + 1;
-  if (*pcVar6 < '\0') {
-    scaled_lookup_from_07d2();
-    uVar4 = (undefined1)((ushort)pcVar6 >> 8);
-    cVar3 = store_a_then_multiply_r7_by_5e();
-    uVar7 = CONCAT11(uVar4,cVar3 + '%');
-    write_dph_call_0faf_return_r7(uVar7);
-    uVar4 = (undefined1)((ushort)uVar7 >> 8);
+  pcVar7 = puVar6 + 1;
+  if (*pcVar7 < '\0') {
+    bVar2 = scaled_lookup_from_07d2();
+    cVar3 = store_a_then_multiply_r7_by_5e(bVar2 & 0x7f,pcVar7,param_1);
+    uVar8 = CONCAT11((char)((ushort)pcVar7 >> 8),cVar3 + '%');
+    write_dph_call_0faf_return_r7(uVar8);
+    uVar5 = (undefined1)((ushort)uVar8 >> 8);
     cVar3 = inc32_r4_r7_and_mul_r3_by_5e();
-    set_dph_call_1041_r7_03(CONCAT11(uVar4,cVar3 + '%'));
+    puVar6 = (undefined1 *)CONCAT11(uVar5,cVar3 + '%');
+    set_dph_call_1041_r7_03();
     write_3bytes_to_0a86(0x34,0xa8,0xff);
-    write_xdata_then_set_r5_2(0x12);
+    write_xdata_then_set_r5_2(0x12,puVar6);
     store_4bytes_to_0a82();
   }
   cVar3 = DAT_EXTMEM_07d2;
   read_dptr_byte_via_716c();
   if (cVar3 == '\0') {
-    store_4_zero_bytes_at_0904_plus_0809_times_5e(0,0,DAT_EXTMEM_07d2);
+    cVar3 = DAT_EXTMEM_07d2;
+    store_4_zero_bytes_at_0904_plus_0809_times_5e(0,0);
   }
-  sVar8 = 0x7d2;
+  sVar9 = 0x7d2;
   read_byte_to_r7_base_0420();
   dph_plus_double_a_349b();
   read4xdata_and_clear_r7_bit0();
   write4xdata_from_r4_r7();
   read_07d2_to_r3();
-  pbVar9 = (byte *)(sVar8 + 1);
-  if ((*pbVar9 >> 5 & 1) != 0) {
-    scaled_lookup_from_07d2();
-    uVar4 = (undefined1)((ushort)pbVar9 >> 8);
-    cVar3 = store_a_then_multiply_r7_by_5e();
-    uVar7 = CONCAT11(uVar4,cVar3 + '!');
-    write_dph_call_0faf_return_r7(uVar7);
-    uVar4 = (undefined1)((ushort)uVar7 >> 8);
-    cVar3 = inc32_r4_r7_and_mul_r3_by_5e();
-    set_dph_call_1041_r7_03(CONCAT11(uVar4,cVar3 + '!'));
-    uVar4 = BANK0_R7;
-    pbVar9 = (byte *)0xa8f;
+  pbVar10 = (byte *)(sVar9 + 1);
+  if ((*pbVar10 >> 5 & 1) != 0) {
+    bVar2 = scaled_lookup_from_07d2();
+    cVar4 = store_a_then_multiply_r7_by_5e(bVar2 & 0xdf,pbVar10,cVar3);
+    uVar8 = CONCAT11((char)((ushort)pbVar10 >> 8),cVar4 + '!');
+    write_dph_call_0faf_return_r7(uVar8);
+    uVar5 = (undefined1)((ushort)uVar8 >> 8);
+    cVar4 = inc32_r4_r7_and_mul_r3_by_5e();
+    set_dph_call_1041_r7_03(CONCAT11(uVar5,cVar4 + '!'));
+    uVar5 = BANK0_R7;
+    pbVar10 = (byte *)0xa8f;
     write4_inline_args();
     nop();
     nop();
     nop();
     nop();
-    BANK0_R7 = uVar4;
+    BANK0_R7 = uVar5;
     call_7ce0_with_r5_0b(0,1);
     write_3bytes_to_0a86(0x47,0xa8);
-    write_xdata_then_set_r5_2(0xf);
+    write_xdata_then_set_r5_2(0xf,pbVar10);
     store_4bytes_to_0a82();
   }
   read_07d2_to_r3();
-  pbVar9 = pbVar9 + 1;
-  if ((*pbVar9 >> 6 & 1) != 0) {
-    scaled_lookup_from_07d2();
-    uVar4 = (undefined1)((ushort)pbVar9 >> 8);
-    cVar3 = store_a_then_multiply_r7_by_5e();
-    uVar7 = CONCAT11(uVar4,cVar3 + '5');
-    write_dph_call_0faf_return_r7(uVar7);
-    uVar4 = (undefined1)((ushort)uVar7 >> 8);
+  pbVar10 = pbVar10 + 1;
+  if ((*pbVar10 >> 6 & 1) != 0) {
+    bVar2 = scaled_lookup_from_07d2();
+    cVar3 = store_a_then_multiply_r7_by_5e(bVar2 & 0xbf,pbVar10,cVar3);
+    uVar8 = CONCAT11((char)((ushort)pbVar10 >> 8),cVar3 + '5');
+    write_dph_call_0faf_return_r7(uVar8);
+    uVar5 = (undefined1)((ushort)uVar8 >> 8);
     cVar3 = inc32_r4_r7_and_mul_r3_by_5e();
-    set_dph_call_1041_r7_03(CONCAT11(uVar4,cVar3 + '5'));
-    uVar4 = BANK0_R7;
-    write4_inline_args(0xa8f);
+    set_dph_call_1041_r7_03(CONCAT11(uVar5,cVar3 + '5'));
+    uVar5 = BANK0_R7;
+    puVar6 = (undefined1 *)0xa8f;
+    write4_inline_args();
     nop();
     nop();
     nop();
     nop();
-    BANK0_R7 = uVar4;
+    BANK0_R7 = uVar5;
     call_7ce0_with_r5_0b(0,0);
     write_3bytes_to_0a86(0x57,0xa8);
-    write_xdata_then_set_r5_2(0xb);
+    write_xdata_then_set_r5_2(0xb,puVar6);
     store_4bytes_to_0a82();
   }
-  pbVar9 = &DAT_EXTMEM_07d2;
+  pbVar10 = &DAT_EXTMEM_07d2;
   scale_dptr_from_dptr_byte();
-  uVar4 = BANK0_R7;
-  bVar1 = *pbVar9;
-  *pbVar9 = bVar1 + 1;
-  if ((bVar1 < 3) << 7 < '\0') {
-    write4_inline_args(bVar1 - 3,0xa98);
+  uVar5 = BANK0_R7;
+  bVar2 = *pbVar10;
+  *pbVar10 = bVar2 + 1;
+  if ((bVar2 < 3) << 7 < '\0') {
+    write4_inline_args(bVar2 - 3,0xa98);
     nop();
     nop();
     nop();
     nop();
-    uVar2 = 5;
+    uVar1 = 5;
   }
   else {
-    write4_inline_args(bVar1 - 3,0xa98);
+    write4_inline_args(bVar2 - 3,0xa98);
     nop();
     nop();
     nop();
     nop();
-    uVar2 = 1;
-    BANK0_R7 = uVar4;
+    uVar1 = 1;
+    BANK0_R7 = uVar5;
   }
-  store_0a94_0a97_then_add_0a94_times_60(0,uVar2,0);
+  store_0a94_0a97_then_add_0a94_times_60(0,uVar1,0);
   return;
 }
 

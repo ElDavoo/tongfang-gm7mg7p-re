@@ -14,10 +14,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-char write_a_to_dptr(undefined1 param_1,undefined1 *param_2,char param_3)
+char write_a_to_dptr(undefined1 a0_from_971a,undefined1 *param_2,char param_3)
 
 {
-  *param_2 = param_1;
+  *param_2 = a0_from_971a;
   return '\n' - (((0xeaU < (byte)(param_3 * '\x17')) << 7) >> 7);
 }
 

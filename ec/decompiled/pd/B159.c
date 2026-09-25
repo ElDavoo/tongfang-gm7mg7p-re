@@ -12,10 +12,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_first_handoff_helper(undefined1 param_1,undefined1 *param_2)
+void store_first_handoff_helper(undefined1 a3_from_b154,undefined1 *param_2)
 
 {
-  *param_2 = param_1;
+  *param_2 = a3_from_b154;
                     /* WARNING: Subroutine does not return */
   add_dptr_to_word_0d0e_ea_guard(0xfffc);
 }

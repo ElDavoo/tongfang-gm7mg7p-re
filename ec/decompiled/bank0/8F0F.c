@@ -15,10 +15,10 @@
    basis: hand-decoded
    name_basis: ec-register */
 
-void store_a_to_dptr_then_075c_and_notify(undefined1 param_1,undefined1 *param_2)
+void store_a_to_dptr_then_075c_and_notify(undefined1 value_a,undefined1 *param_2)
 
 {
-  *param_2 = param_1;
+  *param_2 = value_a;
   MAIN_FAN_R_DUTY = *param_2;
   store_r7_at_6a_then_jump_1666(0xa7);
   store_r7_at_6a_then_jump_1666(0x43);

@@ -13,11 +13,11 @@
    basis: hand-decoded
    name_basis: ec-register */
 
-void store_a_to_089e_and_089f(undefined1 param_1)
+void store_a_to_089e_and_089f(undefined1 a0_from_b72b)
 
 {
-  XDATA_089E = param_1;
-  XDATA_089F = param_1;
+  XDATA_089E = a0_from_b72b;
+  XDATA_089F = a0_from_b72b;
   return;
 }
 

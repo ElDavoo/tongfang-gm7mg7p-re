@@ -26,7 +26,7 @@ void gate_poll_0f80_bit4(char param_1)
     if (cVar1 != '\0') {
       DAT_EXTMEM_0a4d = '\0';
       do {
-        store_a_twice_at_dptr(0xff,0xf60);
+        store_a_twice_at_dptr(0xff,(undefined1 *)0xf60);
         stage_0a54_0a55_then_dispatch();
         if (cVar1 == '\0') {
           return;

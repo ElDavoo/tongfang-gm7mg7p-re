@@ -457,6 +457,60 @@ before the register is. (Measured over the committed export; a regeneration
 that renames a symbol moves the mention counts, which is why the declaration
 counts are the ones quoted here.)
 
+> **The "about 2,170" above is replaced by a counted figure, and the paragraph
+> is left as it was written.** After the second batch below the export holds
+> **2,181** declared `param_N` — `--census` output, not an estimate — and
+> `docs/findings.md` §18 carries the per-family table with a correction, because
+> the 2,232 and 1,725 this paragraph quotes are no longer re-derivable from any
+> committed input. The estimate was close; the reason it is quoted as a count now
+> is that a reader can re-run it.
+
+### The second batch: a predicate, and what it decided
+
+**88 more rows, bounded on a measured predicate rather than on prose.** The
+boundary is every function whose own listing's **first** instruction that
+touches the accumulator A is a `movx @DPTR, A` — so A still holds whatever it
+held on entry, and the value stored is that. It is the one family the listing
+decides alone, and it is countable from the committed `.asm`: run
+`../tools/merge_annotation_shards.py --census` and the boundary, the filters
+between the predicate and the batch, and the declaration census all print
+themselves. The batch is bank0 55, bank1 17, pd 16, declaring 187 `param_N`
+between them.
+
+**37 `param`, 49 `artifact`, 2 `unresolved` — and that distribution is the
+finding.** A value arriving in A is the minority case on this predicate,
+because Ghidra's function boundaries on this firmware cut through
+straight-line code: **53 of the 88 listings contain no `ret` at all**, and
+inside a block A is produced by the instruction before. `bank0,0xF079`–
+`0xF118` is one constant-writing block carved into twelve entries, and only
+two of them take a value that arrives. So most of the batch is `artifact` rows
+named for where the value really came from (`a88_from_8014`, `a0_from_b5c7`,
+`a_from_8047`, `a_from_r5`), which is a **better** row than `value_a` would
+have been. `docs/findings/a-store-predicate-batch.md` has the full account,
+including the defect the verification stage caught three times: a
+`mov DPTR,#imm` as the last instruction before an entry is **not** evidence
+that nothing set A, because the `movx A,@DPTR` ahead of it in the same
+two-instruction block is.
+
+**The two short comment forms are both needed, and which one applies is a
+measured fact rather than a matter of taste.** Where
+`../bank-call-targets.csv` records an `lcall`/`ljmp` into the address, a
+`param` row may say the caller left the value in A and cites that file beside
+the `.asm`. Where nothing does, the comment says only that the value is the
+accumulator's on entry and that these instructions do not say where it came
+from. That second form is not a formality: **every readable caller of the
+`0xF079`–`0xF118` run sets A explicitly immediately before the call** — a
+constant, a `clr A`, or a register copy — which is staging a value, not
+passing one, so the edge is evidence that the address is reached and not that
+a caller supplied what is in A.
+
+**The backlog figure, counted.** `2,181` declared parameters remain unnamed
+after both batches, and `1,601` declared locals are blocked behind the XDATA
+map. Both are `../tools/merge_annotation_shards.py --census` output over the
+committed export; §18 of `docs/findings.md` has the per-family table and the
+correction to the pre-#238 figures, which are kept there but are no longer
+re-derivable from any committed input.
+
 ## The second pass: edges, not leaves
 
 The sweep above works from `index.csv` minus everything already annotated, so

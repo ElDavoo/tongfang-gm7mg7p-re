@@ -20,7 +20,7 @@ void store_byte_through_0a59_into_0600(undefined1 *param_1)
   DAT_EXTMEM_0a59 = *param_1;
   DAT_EXTMEM_0601 = add_r6_r7_to_0a58_pair_then_halve(0x601);
   DAT_EXTMEM_0600 = DAT_EXTMEM_0a59;
-  store_a_to_dptr_ba3d(DAT_EXTMEM_0610 | 1);
+  store_a_to_dptr_ba3d(DAT_EXTMEM_0610 | 1,(undefined1 *)0x610);
   write_9f_to_x1904();
   index_case_epilogue(0x81);
   return;

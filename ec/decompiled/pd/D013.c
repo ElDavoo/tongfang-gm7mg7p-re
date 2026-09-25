@@ -18,33 +18,33 @@
 void latch_07d4_07d5_and_call_7014_with_63_or_6c(undefined1 param_1,char param_2,byte param_3)
 
 {
-  undefined1 uVar1;
-  char cVar2;
-  byte *pbVar3;
+  undefined1 value_a;
+  char cVar1;
+  byte *pbVar2;
   
-  pbVar3 = (byte *)0x7d4;
+  pbVar2 = (byte *)0x7d4;
   DAT_EXTMEM_07d4 = param_3;
   DAT_EXTMEM_07d5 = param_2;
   if (param_2 == '\x01') {
     dptr_0a2d_plus_17_times_a();
     read4xdata_to_r4_r7();
     call_1041_then_point_dptr_07d4(param_1,param_3 | 2);
-    *pbVar3 = *pbVar3 | 1;
+    *pbVar2 = *pbVar2 | 1;
     set_dptr_0a86_and_call_10e8(99,0xd6,0xff);
-    uVar1 = 8;
+    value_a = 8;
   }
   else {
     dptr_0a2d_plus_17_times_a();
     read4xdata_to_r4_r7();
     call_1041_then_point_dptr_07d4(param_1,param_3 & 0xfd);
-    *pbVar3 = *pbVar3 & 0xfe;
+    *pbVar2 = *pbVar2 & 0xfe;
     set_dptr_0a86_and_call_10e8(0x6c,0xd6,0xff);
-    uVar1 = 9;
+    value_a = 9;
   }
-  store_a_to_dptr_and_zero_r2_r3(uVar1);
+  store_a_to_dptr_and_zero_r2_r3(value_a,pbVar2);
   store_4bytes_to_0a82();
-  cVar2 = read_dptr_byte_into_r7(0x7d4);
-  if (cVar2 == '\0') {
+  cVar1 = read_dptr_byte_into_r7(0x7d4);
+  if (cVar1 == '\0') {
     branch_on_ram_r5_then_set_indirect_bits(DAT_EXTMEM_07d5);
   }
   return;

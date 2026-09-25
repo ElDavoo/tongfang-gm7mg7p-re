@@ -13,10 +13,11 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-undefined1 store_a_then_scaled_lookup_from_r7(undefined1 param_1,undefined1 *param_2,char param_3)
+undefined1
+store_a_then_scaled_lookup_from_r7(undefined1 a_from_clr_a,undefined1 *param_2,char param_3)
 
 {
-  *param_2 = param_1;
+  *param_2 = a_from_clr_a;
   return *(undefined1 *)
           CONCAT11('\b' - (((0x90U < (byte)(param_3 * 'w')) << 7) >> 7),param_3 * 'w' + 0x6f);
 }

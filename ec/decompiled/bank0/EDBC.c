@@ -12,12 +12,12 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void four_calls_then_4777_flag(short param_1,char param_2)
+void four_calls_then_4777_flag(undefined1 *param_1,char param_2)
 
 {
   write_98_to_0f60();
-  store_a_and_zero_next_dptr_bytes(4,param_1);
-  store_a_then_five_zeros(3);
+  store_a_and_zero_next_dptr_bytes(4,(short)param_1);
+  store_a_then_five_zeros(3,param_1);
   set_r3_09_r5_80_r7_01();
   stage_0a54_0a55_then_dispatch();
   if (param_2 != '\0') {

@@ -12,10 +12,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-undefined1 store_a_to_dptr_b939(undefined1 param_1,undefined1 *param_2)
+undefined1 store_a_to_dptr_b939(undefined1 value_a,undefined1 *param_2)
 
 {
-  *param_2 = param_1;
+  *param_2 = value_a;
   return DAT_EXTMEM_0a52;
 }
 

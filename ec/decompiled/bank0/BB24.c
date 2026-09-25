@@ -13,11 +13,11 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_a_to_1804(undefined1 param_1)
+void store_a_to_1804(undefined1 value_a)
 
 {
-  DAT_EXTMEM_1804 = param_1;
-  MAIN_FAN_L_DUTY = param_1;
+  DAT_EXTMEM_1804 = value_a;
+  MAIN_FAN_L_DUTY = value_a;
   return;
 }
 

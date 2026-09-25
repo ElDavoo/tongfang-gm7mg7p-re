@@ -14,7 +14,7 @@ void FUN_CODE_d5a6(void)
   DAT_EXTMEM_1a04 = 0xc2;
   DAT_EXTMEM_1804 = 200;
   puVar1 = &DAT_EXTMEM_1809;
-  write_a_to_dptr_set_1f06();
+  write_a_to_dptr_set_1f06(200,(undefined1 *)0x1809);
   *puVar1 = 0xfa;
   critical_section_enter_05e8();
   store_r4_r5_into_record_6e65(0xd5,0xd4,1);

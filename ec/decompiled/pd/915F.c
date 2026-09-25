@@ -12,10 +12,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-undefined1 write_a_to_dptr_set_r6_r4_ret6(undefined1 param_1,undefined1 *param_2)
+undefined1 write_a_to_dptr_set_r6_r4_ret6(undefined1 a_from_r5,undefined1 *param_2)
 
 {
-  *param_2 = param_1;
+  *param_2 = a_from_r5;
   return 6;
 }
 

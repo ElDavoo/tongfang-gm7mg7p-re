@@ -68,7 +68,7 @@ void fill_08xx_from_code_table(short param_1,undefined1 param_2,char param_3)
     set_dptr_0a51_b93a();
     store_code_byte_to_08c3(0xe);
     sVar7 = 0x8bb;
-    store_a_to_dptr_b983(*(undefined1 *)(sVar5 + 0xf));
+    store_a_to_dptr_b983(*(undefined1 *)(sVar5 + 0xf),(undefined1 *)0x8bb);
     DAT_EXTMEM_08ea = *(undefined1 *)(sVar7 + 0x1b);
     apply_oem_overrides_then_fill_08xx();
     return;
@@ -135,10 +135,10 @@ void fill_08xx_from_code_table(short param_1,undefined1 param_2,char param_3)
   set_dptr_0a51_b93a();
   DAT_EXTMEM_08bd = pcVar8[0x16];
   sVar5 = 0x8be;
-  store_a_to_dptr_b939(*(undefined1 *)(CONCAT11(param_2,param_3) + 0x17));
+  store_a_to_dptr_b939(*(undefined1 *)(CONCAT11(param_2,param_3) + 0x17),(undefined1 *)0x8be);
   DAT_EXTMEM_08e9 = *(undefined1 *)(sVar5 + 0x19);
   sVar5 = 0x8c4;
-  store_a_to_dptr_b939(*(undefined1 *)(CONCAT11(param_2,param_3) + 0x10));
+  store_a_to_dptr_b939(*(undefined1 *)(CONCAT11(param_2,param_3) + 0x10),(undefined1 *)0x8c4);
   DAT_EXTMEM_08c5 = *(char *)(sVar5 + 0x11);
   DAT_EXTMEM_08c6 = *(char *)(CONCAT11(param_2,param_3) + 0x12);
   sVar5 = 0x8c6;
@@ -150,10 +150,10 @@ void fill_08xx_from_code_table(short param_1,undefined1 param_2,char param_3)
   set_dptr_0a51_b93a();
   DAT_EXTMEM_08c7 = *(byte *)(sVar5 + 0x13);
   sVar5 = 0x8c8;
-  store_a_to_dptr_b939(*(undefined1 *)(CONCAT11(param_2,param_3) + 0x14));
+  store_a_to_dptr_b939(*(undefined1 *)(CONCAT11(param_2,param_3) + 0x14),(undefined1 *)0x8c8);
   DAT_EXTMEM_08c9 = *(undefined1 *)(sVar5 + 0x15);
   sVar5 = 0x8c2;
-  store_a_to_dptr_b939(*(undefined1 *)(CONCAT11(param_2,param_3) + 0x31));
+  store_a_to_dptr_b939(*(undefined1 *)(CONCAT11(param_2,param_3) + 0x31),(undefined1 *)0x8c2);
   DAT_EXTMEM_08ca = *(undefined1 *)(sVar5 + 0x32);
   DAT_EXTMEM_08cb = *(undefined1 *)(CONCAT11(param_2,param_3) + 0x33);
   if ((AP_OEM & 1) != 0) {
@@ -221,7 +221,7 @@ void fill_08xx_from_code_table(short param_1,undefined1 param_2,char param_3)
       set_dptr_0a51_b93a();
       DAT_EXTMEM_08c4 = puVar6[0x28];
       sVar5 = 0x8c5;
-      store_a_to_dptr_b983(*(undefined1 *)(CONCAT11(param_2,param_3) + 0x29));
+      store_a_to_dptr_b983(*(undefined1 *)(CONCAT11(param_2,param_3) + 0x29),(undefined1 *)0x8c5);
       DAT_EXTMEM_08c6 = *(char *)(sVar5 + 0x2a);
       sVar5 = 0x741;
       if ((AP_OEM & 1) != 0) {

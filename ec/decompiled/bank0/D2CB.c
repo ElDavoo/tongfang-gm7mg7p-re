@@ -12,10 +12,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-undefined1 store_a_to_1c05_then_d2d2(undefined1 param_1)
+undefined1 store_a_to_1c05_then_d2d2(undefined1 value_a)
 
 {
-  DAT_EXTMEM_1c05 = param_1;
+  DAT_EXTMEM_1c05 = value_a;
   DAT_EXTMEM_1c00 = 0xff;
   return DAT_EXTMEM_0861;
 }

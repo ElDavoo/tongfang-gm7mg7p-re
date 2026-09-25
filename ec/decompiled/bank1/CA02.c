@@ -15,11 +15,11 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_a_then_03a3_3_over_1f(byte param_1,byte *param_2)
+void store_a_then_03a3_3_over_1f(byte a_inc_0362,byte *param_2)
 
 {
-  *param_2 = param_1;
-  if (0x1f < param_1) {
+  *param_2 = a_inc_0362;
+  if (0x1f < a_inc_0362) {
     DAT_EXTMEM_03a3 = 3;
     DAT_EXTMEM_0362 = 0;
   }

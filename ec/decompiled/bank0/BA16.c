@@ -13,13 +13,13 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_a_to_08cc_08cd(undefined1 param_1)
+void store_a_to_08cc_08cd(undefined1 a0_from_ba15)
 
 {
-  DAT_EXTMEM_08cc = param_1;
-  DAT_EXTMEM_08cd = param_1;
-  DAT_EXTMEM_08ce = param_1;
-  DAT_EXTMEM_08cf = param_1;
+  DAT_EXTMEM_08cc = a0_from_ba15;
+  DAT_EXTMEM_08cd = a0_from_ba15;
+  DAT_EXTMEM_08ce = a0_from_ba15;
+  DAT_EXTMEM_08cf = a0_from_ba15;
   return;
 }
 

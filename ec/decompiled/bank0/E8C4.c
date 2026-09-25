@@ -21,7 +21,7 @@ void write_r6_r7_r5_to_0f60_62(undefined1 param_1,undefined1 param_2,undefined1 
   
   DAT_EXTMEM_0f60 = param_2;
   DAT_EXTMEM_0f61 = param_3;
-  store_a_at_dptr_then_read_0fa0(param_1,0xf62);
+  store_a_at_dptr_then_read_0fa0(param_1,(undefined1 *)0xf62);
   set_0a56_to_0f_60_00_00_00();
   cVar1 = '\x01';
   stage_0a54_0a55_then_dispatch(3);

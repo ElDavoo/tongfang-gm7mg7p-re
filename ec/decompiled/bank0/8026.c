@@ -22,7 +22,7 @@ void write_bcb6_result_to_1906(void)
   short sVar2;
   
   sVar2 = 0x1905;
-  uVar1 = store_a_then_clear_08e0(0x80);
+  uVar1 = store_a_then_clear_08e0(0x80,(undefined1 *)0x1905);
   *(undefined1 *)(sVar2 + 1) = uVar1;
   return;
 }

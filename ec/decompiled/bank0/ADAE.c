@@ -70,9 +70,9 @@ void dispatch_on_0a47(void)
   stage_and_commit_0a56_block(0x40,0x88,1);
   cVar1 = read_be16_0a48();
   set_dptr_0a59_b955(0xbf,cVar1 + '\x01');
-  read_0a4b_after_call_445e_0c();
+  uVar2 = read_0a4b_after_call_445e_0c();
   puVar3 = (undefined1 *)0x79a;
-  store_a_to_dptr_b994();
+  store_a_to_dptr_b994(uVar2,(undefined1 *)0x79a);
   write_4_bytes_ending_0a_4b_00(0xc0,puVar3);
   copy_0a4b_0a4c_to_079b_079c();
   write_4_bytes_ending_0a_4b_00(0xca,puVar3);

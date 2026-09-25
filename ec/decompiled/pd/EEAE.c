@@ -18,15 +18,21 @@
 void write_r7_at_0x0260_plus_0bab_result(undefined1 param_1)
 
 {
-  char cVar1;
-  byte bVar2;
+  undefined1 *puVar1;
+  undefined1 uVar2;
+  char cVar3;
+  char cVar4;
+  byte bVar5;
   
-  cVar1 = read_byte_by_tag_r3(0xff,2,1);
-  if (cVar1 == -0x61) {
-    write_byte_by_tag_r3(0);
+  cVar3 = '\x01';
+  uVar2 = 2;
+  puVar1 = (undefined1 *)0xff;
+  cVar4 = read_byte_by_tag_r3();
+  if (cVar4 == -0x61) {
+    write_byte_by_tag_r3(0,puVar1,uVar2,cVar3);
   }
-  bVar2 = read_byte_by_tag_r3();
-  *(undefined1 *)CONCAT11('\x02' - (((0x9f < bVar2) << 7) >> 7),bVar2 + 0x60) = param_1;
+  bVar5 = read_byte_by_tag_r3();
+  *(undefined1 *)CONCAT11('\x02' - (((0x9f < bVar5) << 7) >> 7),bVar5 + 0x60) = param_1;
   add_a_into_byte_by_tag_r3(1);
   return;
 }

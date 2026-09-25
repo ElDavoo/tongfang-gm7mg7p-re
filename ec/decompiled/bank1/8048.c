@@ -13,10 +13,10 @@
    basis: hand-decoded
    name_basis: ec-register */
 
-void store_acc_and_read_0639(undefined1 param_1,undefined1 *param_2,char param_3)
+void store_acc_and_read_0639(undefined1 a_from_8047,undefined1 *param_2,char param_3)
 
 {
-  *param_2 = param_1;
+  *param_2 = a_from_8047;
   if (XDATA_0639 != '\0') {
     XDATA_0639 = XDATA_0639 + -1;
   }

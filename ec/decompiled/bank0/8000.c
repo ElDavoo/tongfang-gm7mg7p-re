@@ -27,7 +27,7 @@ void clear_1654_block_load_1900(void)
   DAT_EXTMEM_1901 = 0xa0;
   DAT_EXTMEM_1902 = 0x15;
   sVar2 = 0x1905;
-  uVar1 = store_a_then_clear_08e0(0x80);
+  uVar1 = store_a_then_clear_08e0(0x80,(undefined1 *)0x1905);
   *(undefined1 *)(sVar2 + 1) = uVar1;
   return;
 }

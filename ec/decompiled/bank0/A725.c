@@ -11,10 +11,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void write_0857_from_acc(undefined1 param_1)
+void write_0857_from_acc(undefined1 value_a)
 
 {
-  DAT_EXTMEM_0857 = param_1;
+  DAT_EXTMEM_0857 = value_a;
   return;
 }
 

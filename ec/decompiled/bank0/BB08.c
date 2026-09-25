@@ -14,10 +14,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_a_then_set_bit0_1901(undefined1 param_1,undefined1 *param_2)
+void store_a_then_set_bit0_1901(undefined1 a_from_x1900_or_1,undefined1 *param_2)
 
 {
-  *param_2 = param_1;
+  *param_2 = a_from_x1900_or_1;
   DAT_EXTMEM_1901 = DAT_EXTMEM_1901 | 1;
   return;
 }

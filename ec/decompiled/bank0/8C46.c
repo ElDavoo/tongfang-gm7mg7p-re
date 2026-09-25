@@ -19,7 +19,7 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void ramp_1804_1809_toward_0461_0469(byte param_1,char param_2,byte param_3)
+void ramp_1804_1809_toward_0461_0469(byte value_a,char param_2,byte param_3)
 
 {
   bool bVar1;
@@ -35,7 +35,7 @@ void ramp_1804_1809_toward_0461_0469(byte param_1,char param_2,byte param_3)
     divisor_r5 = DAT_EXTMEM_0787 & 0x7f;
   }
   pbVar4 = &SYSTEM_ID;
-  DAT_EXTMEM_0469 = param_1;
+  DAT_EXTMEM_0469 = value_a;
   if (SYSTEM_ID < '\0') {
     load_dptr_0469();
     if (in_PSW < '\0') {

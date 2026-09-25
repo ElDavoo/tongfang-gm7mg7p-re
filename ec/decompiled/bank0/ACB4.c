@@ -57,7 +57,7 @@ void reset_xdata_flags_and_07d5_to_ff(void)
   DAT_EXTMEM_0720 = 0xf2;
   load_dptr_8955_tail_jump_1114();
   AP_OEM = AP_OEM & 0x7f;
-  store_a_then_clear_0824_bit7_and_0768_bit2(0,0x816);
+  store_a_then_clear_0824_bit7_and_0768_bit2(0,(undefined1 *)0x816);
   mask_0476_with_1f();
   DAT_EXTMEM_0471 = DAT_EXTMEM_0471 & 0x7f;
   XDATA_0442 = XDATA_0442 & 0xe7;

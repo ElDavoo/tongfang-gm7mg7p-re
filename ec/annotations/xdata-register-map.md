@@ -1331,6 +1331,70 @@ therefore stand as committed, and the transcript in §1 carries a `0x0390`
 witness that fails if *either* half of the fact stops being true — the site
 still in the `.asm`, and the census row still absent.
 
+### 7.2 The 88 rows moved six addresses, and the pins were already 26 behind (2026-09-25, issue #263)
+
+§7.1 is the first time an *annotation* moved this census. It is the second, and
+it moves less: **14,818 → 14,819 references over six addresses**, with
+`distinct` unmoved at 1,171.
+
+| address | before | after | Δ |
+|---|---:|---:|---:|
+| `0x07D6` | 37 | 36 | −1 |
+| `0x07F3` | 133 | 132 | −1 |
+| `0x0832` | 78 | 77 | −1 |
+| `0x086F` | 24 | 28 | **+4** |
+| `0x0A56` | 108 | 109 | +1 |
+| `0x0F80` | 6 | 5 | −1 |
+
+The mechanism is §7.1's, running in the direction #238 did not see.
+`ec/annotations/ghidra-variables.csv` grew by 88 rows, each of which commits a
+function's signature, and a committed signature changes how many arguments the
+decompiler infers **at the call sites**. Measured by diffing the declared
+placeholders of every `.c` against a pristine checkout of the parent commit:
+
+- **86** of the 88 functions lost their `param_1` — the two `kind=unresolved`
+  rows keep theirs on purpose.
+- **17** functions this batch never annotated lost one each (−17).
+- **11** functions this batch never annotated gained parameters (+25).
+
+Net −78 against the −86 the renames account for, which is arithmetically the
+census's own Δ and is the reason the address list above is six rows and not 88.
+Two worked examples, both committed in the diff:
+
+- `ec/decompiled/common/7401.c` **lost** an argument. It used to call
+  `store_a_then_clear_08e0(0x80, param_1)`; committing that callee's signature
+  made the decompiler read the second argument as a pointer constant,
+  `(undefined1 *)0x1905`, so the caller no longer needs a parameter at all and
+  its signature is now `void FUN_CODE_7401(void)`.
+- `ec/decompiled/pd/F4CD.c` **gained** one. `store_a_to_dptr(0)` is now
+  `store_a_to_dptr(0, (undefined1 *)0x7d6, param_1)`, and the caller's own
+  accumulator became an argument.
+
+**None of the six addresses is gone from the machine code**, and none is here
+for the first time: `verify_reassembly.py --check` passes with 0 disagreements
+over 45,624 instructions, which is what makes "the census moved because of the
+annotation, not the code" checkable rather than asserted. `0x07D6` and `0x07F3`
+are §4.4's own example addresses and `0x086F` is the fan-control byte the
+`0xA87x` handlers mask, so all three are already carried.
+
+**And the pins were already wrong before any of this.** Run against a pristine
+checkout of the parent commit, this census read 14,818 references against a pin
+of 14,792, `named_in_tree` 153 against 150, and `BUCKET_TOTALS` read 8,333 /
+passed-to-call 538 against 8,317 / 543. `xdata_register_map.py --self-test` was
+red on `main` for that reason, not because of this batch. The pins are now set
+to what was measured; the dated comment block above `ORACLE` carries the
+pre-existing drift and this batch's +1 as two separate rows, because folding
+them into one number would credit this issue with 26 references of drift it
+did not cause and hide a red gate behind a green one.
+
+**One failure is left, and it is not this issue's.** The `NOT_IN_TREE`
+assertion wants every address `xdata-symbols.csv` names and the census does not
+reach to carry a recorded reason, and **`0x07C7` and `0x07C8` do not**: both are
+`unknown-not-absent` in `registers.yaml` with `static_refs: 0`, and no reason
+row was written for either. That is true of the parent commit identically, and
+adding the two reasons is a finding about two addresses rather than a
+re-measurement, so it is left for its own issue rather than folded in here.
+
 ## 8. What follows
 
 - **A longer callee name can move a reference between `read` and

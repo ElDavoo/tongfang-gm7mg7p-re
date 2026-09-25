@@ -12,13 +12,13 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_a_to_dptr_then_164c_164e(undefined1 param_1,undefined1 *param_2)
+void store_a_to_dptr_then_164c_164e(undefined1 a80_from_e379,undefined1 *param_2)
 
 {
-  *param_2 = param_1;
-  DAT_EXTMEM_164c = param_1;
-  DAT_EXTMEM_164d = param_1;
-  DAT_EXTMEM_164e = param_1;
+  *param_2 = a80_from_e379;
+  DAT_EXTMEM_164c = a80_from_e379;
+  DAT_EXTMEM_164d = a80_from_e379;
+  DAT_EXTMEM_164e = a80_from_e379;
   return;
 }
 

@@ -13,10 +13,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-undefined1 write_xdata_then_set_r5_2(undefined1 param_1,undefined1 *param_2)
+undefined1 write_xdata_then_set_r5_2(undefined1 a_from_const_07,undefined1 *param_2)
 
 {
-  *param_2 = param_1;
+  *param_2 = a_from_const_07;
   return 0;
 }
 

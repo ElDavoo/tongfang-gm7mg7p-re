@@ -13,7 +13,7 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_054d_set_bit_on_10(byte param_1,byte *param_2,char param_3,byte param_4,byte param_5)
+void store_054d_set_bit_on_10(byte a_inc_054d,byte *param_2,char param_3,byte param_4,byte param_5)
 
 {
   byte bVar1;
@@ -21,9 +21,10 @@ void store_054d_set_bit_on_10(byte param_1,byte *param_2,char param_3,byte param
   char cVar3;
   char cVar4;
   
-  *param_2 = param_1;
-  cVar3 = (param_1 < 10) << 7;
-  if ((param_1 >= 10) && (DAT_EXTMEM_0495 = DAT_EXTMEM_0495 | 0x40, (DAT_EXTMEM_0497 & 1) != 0)) {
+  *param_2 = a_inc_054d;
+  cVar3 = (a_inc_054d < 10) << 7;
+  if ((a_inc_054d >= 10) && (DAT_EXTMEM_0495 = DAT_EXTMEM_0495 | 0x40, (DAT_EXTMEM_0497 & 1) != 0))
+  {
     DAT_EXTMEM_0514 = 0;
     publish_0514_and_0342_product();
   }

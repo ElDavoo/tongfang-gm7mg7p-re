@@ -12,11 +12,11 @@
    name_basis: code-shape */
 
 void store_a_then_tail_call_7110_b6
-               (undefined1 param_1,undefined1 *param_2,undefined1 param_3,undefined1 param_4,
+               (undefined1 value_a,undefined1 *param_2,undefined1 param_3,undefined1 param_4,
                undefined1 param_5)
 
 {
-  *param_2 = param_1;
+  *param_2 = value_a;
   dptr_plus_a_times_b_16bit(param_3,CONCAT11(param_4,param_5),6);
   return;
 }

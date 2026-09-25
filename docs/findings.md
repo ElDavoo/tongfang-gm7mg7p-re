@@ -4297,6 +4297,56 @@ issue's headline figures are wrong for two of the three families it names.
 | `sVarN` | 340 | — | 70 |
 | `DAT_EXTMEM_NNNN` | 13,967 | 1,099 addresses | n/a (globals) |
 
+> **RE-MEASURED 2026-09-25, issue #263. The table above stands as written, and
+> its own method is not reproducible from the committed tree.** The counts are
+> right for the export they were taken on; what could not be re-derived is *how*
+> they were taken, so the figures above are kept rather than silently replaced.
+> The re-measurement, over the export this issue's batch rebuilt, is
+> `ec/tools/merge_annotation_shards.py --census` — a committed tool, so the
+> numbers below are re-runnable rather than transcribed:
+>
+> | family | mentions | distinct names | **declarations** |
+> |---|---|---|---|
+> | `param_N` | 8,391 | 11 | **2,181** |
+> | `bVarN` | 8,750 | 14 | 655 |
+> | `cVarN` | 3,436 | 11 | 496 |
+> | `uVarN` | 1,446 | 10 | 307 |
+> | `sVarN` | 343 | 10 | 77 |
+> | `pbVarN` | 1,709 | 12 | 7 |
+>
+> **2,710** `.c` files, of which 1,352 carry a placeholder in the code and 1,338
+> declare one. **2,181** declared parameters (the signature's parameter list) and
+> **1,601** declared locals (a declaration statement anywhere in the body), for
+> **3,723** distinct (file, name) pairs. The two totals are not disjoint: 59
+> placeholders are declared twice, once in the signature and once as a local, so
+> adding the two lines does not give the total.
+>
+> **Three differences from the table above, and only one of them is a
+> correction.** The `param_N` delta (−51) is the two batches: 86 of this issue's
+> 88 rows committed a name in place of a placeholder, the other two are
+> `kind=unresolved` and deliberately kept theirs, and the net is smaller because
+> committing a signature moves *callers* too — see "The second batch" below. The
+> local figures are higher, not lower (`cVarN` 391 → 496, `bVarN` 372 → 655),
+> and the reason is the method, not the tree: this census counts a declaration
+> statement **anywhere in the body**, because Ghidra emits some locals inside an
+> inner block, while a parse of the leading declarations block alone gives 459
+> and 586. A few hundred locals live below the top of the body and a reader has
+> to name them either way. `pbVarN` appears in the new table and not the old one
+> because the old table listed only four families and this one lists every family
+> the placeholder pattern matches.
+>
+> **What is genuinely a correction is that the old figures cannot be
+> re-derived at all.** Three methods were run against a pristine checkout of
+> this section's own commit (`6ff6c6d2`, the parent of the change that added
+> it) and none of them produces 2,232 / 1,725 / 3,957 / 1,950: the signature
+> plus leading-declarations parse gives 2,304 / 1,443; the signature plus
+> every declaration in the body gives 2,363 / 1,543; and distinct (file, name)
+> pairs over mentions gives 2,305 / 1,914. The table is not withdrawn — it was
+> measured, and the mention column still matches this census to within the two
+> batches — but **its declaration column is no longer re-derivable from any
+> committed input**, and a figure that cannot be re-derived is worth less than
+> one a tool prints. That is the correction: quote `--census`, not the table.
+
 **Two corrections to the issue, in place.** It reports "3,410 `param_N`" — 3,410
 is the `cVarN` figure; `param_N` is the largest family at 8,605 mentions. And
 its "~600 `uVarN`" is 1,451. Its `DAT_EXTMEM` figure of 14,399 is close as a
@@ -4310,6 +4360,43 @@ nothing to rename. So this is roughly 2x the existing 1,769-row function sweep,
 not "roughly an order of magnitude" as the issue estimates. That is the
 difference between a plausible single PR and a fan-out, and it is why the first
 batch below is bounded on a predicate rather than a round number.
+
+### The second batch: a predicate the listing decides on its own, and what it decided
+
+Issue #263 took the next batch on the family §18 above called "a fact rather
+than a reading": every function whose own listing's **first** instruction that
+touches the accumulator A is a `movx @DPTR, A`, so A still holds whatever it
+held on entry. The boundary is measured by
+`ec/tools/merge_annotation_shards.py --census`, and it is 88 functions
+(bank0 55, bank1 17, pd 16) declaring 187 `param_N` between them.
+
+**The predicate is a fact about A and not about a caller, and the difference
+turned out to be most of the batch.** 37 rows are `kind=param` — a value that
+arrives — 49 are `kind=artifact` where the decompiler promoted a constant or a
+register copy to a parameter slot, and 2 are `kind=unresolved` with no name.
+The cause is structural rather than a judgement call: Ghidra's function
+boundaries on this firmware cut through straight-line code, **53 of the 88
+listings contain no `ret` at all**, and inside a block A is produced by the
+instruction before. `bank0,0xF079`–`0xF118` is one constant-writing block carved
+into twelve entries and only two of them take a value that arrives.
+
+`docs/findings/a-store-predicate-batch.md` has the batch, the three defects the
+adversarial verification stage caught (all of which would have been confident
+sentences about the wrong instruction), and the four `lcall` limits the census
+turned out to have. Two of those belong in this section because they bear on
+what §18 already claims:
+
+- **A recorded `lcall` into the address is not evidence that a caller supplied
+  the value.** Every readable caller of the `0xF079`–`0xF118` run sets A
+  explicitly immediately before the call — a constant, a `clr A`, or a register
+  copy — which is staging a value, not passing one.
+- **The arity question moved again, in the direction #238 did not see.**
+  Committing 88 signatures moved **28 functions this batch never annotated**:
+  11 now pass more arguments (+25 declared parameters) and 17 pass fewer (−17).
+  The census's net −78 against the −86 the renames account for is exactly that
+  difference, which is why the per-address XDATA movement is six addresses and
+  not 88. **The question is not settled here**; this is the second batch's data
+  point, recorded and not resolved.
 
 These counts move when the export is regenerated — a symbol rename changes a
 mention count without changing a single declaration — so the declaration column
@@ -4581,6 +4668,40 @@ any other user with `NotOwnerException` before it analyses anything; the
 export-only run for this issue was made with the owner corrected in the scratch
 copy only, and the committed file is byte-identical afterwards. Both want their
 own issues.
+
+**Merge note, 2026-09-25, issue #263: the census moved by one reference, and
+the pins were already 26 behind.** The second batch above committed 88
+signatures, and the XDATA census read over the rebuilt export is **1,171
+distinct / 14,819 references** — main EC 13,961, PD 858. Measured against a
+pristine checkout of the parent commit as well as against this branch, the two
+do not agree about how much of that is this issue's:
+
+| | pin said | pristine `main` | this branch | this change |
+|---|---:|---:|---:|---:|
+| refs | 14,792 | 14,818 | 14,819 | **+1** |
+| main refs | 13,931 | 13,957 | 13,961 | +4 |
+| PD refs | 861 | 861 | 858 | −3 |
+| `named_in_tree` | 150 | 153 | 153 | 0 |
+| `symbol_main` | 146 / 6,060 | 147 / 6,070 | 147 / 6,070 | 0 |
+| `BUCKET_TOTALS` read | 8,317 | 8,333 | 8,341 | +8 |
+| `BUCKET_TOTALS` passed-to-call | 543 | 538 | 534 | −4 |
+
+**So `xdata_register_map.py --self-test` was already red on `main`** — 26
+references and 3 named addresses of drift, found by running it against a clean
+checkout rather than against this branch, and it is recorded here rather than
+folded into the +1 because it is not this issue's. That is the first time the
+tool's self-test has been run on a pristine parent in this repository, and the
+policy it was written to test ("a pin moves only with a measured reason
+recorded in the same change") needs the parent as much as it needs the change.
+The pins are now set to what was measured, and the dated comment block in
+`xdata_register_map.py` carries the two halves separately.
+
+The +1 is the arity effect above, and the six addresses that moved are
+accounted address by address in `ec/annotations/xdata-register-map.md` §7.2.
+`ec/decompiled/bank1/19A8.c` was stale against its own `ghidra-functions.csv`
+row — issue #255's correction landed without a re-export — and this build
+caught it up; **measured on its own that file moves no census figure at all**,
+so the whole +1 belongs to the 88 rows.
 
 ## 19. The map from mechanism to function, and the eleven stale evidence paths it fixed (2026-09-24, issue #136)
 

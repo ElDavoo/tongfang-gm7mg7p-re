@@ -87,7 +87,7 @@ undefined1 dispatch_r5_write_083b_0300(char param_1,undefined1 param_2)
     }
     uVar1 = 0xec;
   }
-  store_first_handoff_helper(uVar1,0x83d);
+  store_first_handoff_helper(uVar1,(undefined1 *)0x83d);
   write4_inline_args();
   nop();
   nop();

@@ -13,10 +13,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_a_0f_80_and_r6_0f(undefined1 param_1,short param_2)
+void store_a_0f_80_and_r6_0f(undefined1 a1_from_f0da,short param_2)
 
 {
-  *(undefined1 *)(param_2 + 1) = param_1;
+  *(undefined1 *)(param_2 + 1) = a1_from_f0da;
   *(undefined1 *)(param_2 + 2) = 0xf;
   *(undefined1 *)(param_2 + 3) = 0x80;
   return;
