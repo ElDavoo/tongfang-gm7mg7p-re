@@ -69,6 +69,34 @@ grader = importlib.util.module_from_spec(grader_spec)
 grader_spec.loader.exec_module(grader)
 
 
+def run_grader(*argv):
+    """The real grader over `argv`, as (rc, stdout, stderr).
+
+    `run` in the grader's own suite, for the same reason: the probe's
+    `--self-test` walks the block by hand, and the case that matters is the
+    one the whole report and the exit code come from, neither of which
+    exists until `main` has run.
+    """
+    out, err = io.StringIO(), io.StringIO()
+    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+        rc = grader.main(list(argv))
+    return rc, out.getvalue(), err.getvalue()
+
+
+# §6's label forms with the value blanked out, so "is one of the forms §6
+# fixes" is a question about the words and not about the one value §6's
+# example happens to carry: a run taken from 0xE0 writes
+# `no-op wrote 0x0751=0xE0`, which is equal to no entry of the grader's own
+# REQUIRED_LABEL_FORMS and is still the form.
+REQUIRED_FORMS = {grader.MARK_VALUE.sub("0x<value>", f)
+                  for f in grader.REQUIRED_LABEL_FORMS}
+
+
+def is_required_form(label):
+    """Whether `label` is one of the grader's required forms, value aside."""
+    return grader.MARK_VALUE.sub("0x<value>", label) in REQUIRED_FORMS
+
+
 class FakeEc:
     """A watch set where a sweep ends at its last address.
 
@@ -421,14 +449,35 @@ class ProbeTests(unittest.TestCase):
         self.assertNotIn("0x0860", out)
 
     # 10. --csv writes the capture the grader already reads, and its marks land
-    #     on the two arm boundaries. This is #124's attachment point, and the
-    #     reason to check it is the grader, not the writer: a mark in the wrong
-    #     place windows every change under the wrong arm and still exits zero.
-    def capture(self, argv):
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "capture.csv"
-            self.run_probe(argv=list(argv) + ['--csv', str(path)])
-            return path.read_text()
+    #     on the two arm boundaries and the restore. This is #124's attachment
+    #     point, and the reason to check it is the grader, not the writer: a
+    #     mark in the wrong place windows every change under the wrong arm and
+    #     still exits zero, and a mark that is not written at all refuses the
+    #     whole block.
+    def capture_path(self, argv, ec=None, clock=None):
+        """(path, stdout) for a `--csv` run, in a file this case owns.
+
+        The path rather than the text, because the case that matters hands it
+        to the real grader as a file, and a fresh one per call so a case
+        cannot be reading a capture a previous case left behind. The
+        directory is `addCleanup`ed rather than a `with`, so the file is still
+        there for the assertions after the run.
+        """
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        path = Path(tmp.name) / "capture.csv"
+        _, out = self.run_probe(argv=list(argv) + ['--csv', str(path)],
+                                ec=ec, clock=clock)
+        return path, out
+
+    def capture(self, argv, **kw):
+        path, _ = self.capture_path(argv, **kw)
+        return path.read_text()
+
+    def mark_rows(self, path):
+        """The labels on a capture's `MARK` rows, in the order they landed."""
+        return [r[3] for r in csv.reader(path.read_text().splitlines())
+                if len(r) == 4 and r[1] == "MARK"]
 
     def test_the_capture_is_the_shape_the_grader_reads(self):
         text = self.capture(('0xA0', '--level-block'))
@@ -441,19 +490,61 @@ class ProbeTests(unittest.TestCase):
             path = Path(tmp) / "capture.csv"
             path.write_text(text)
             marks, changes = grader.read_capture(str(path))
+        # All three, the restore included: the reader has read two of these
+        # and rejected none, which is exactly why the third going missing was
+        # invisible until the block walk was added (#457).
         self.assertEqual([m.label for m in marks],
-                         ["no-op wrote 0x0751=0x10", "wrote 0x0751=0xA0"])
+                         list(probe.arm_labels(ORIG, TARGET)))
         self.assertTrue(changes)
         self.assertTrue(all(0 <= c.addr <= 0xFFFF for c in changes))
 
+    def test_the_marks_are_the_ones_the_grader_windows_on(self):
+        path, _ = self.capture_path(('0xA0',))
+        labels = self.mark_rows(path)
+        # What the tool writes, and nothing else: a second spelling of a label
+        # is a spelling that agrees today and drifts tomorrow, and a drifted
+        # one is a mark `parse_mark` cannot place, which refuses a whole run.
+        self.assertEqual(labels, list(probe.arm_labels(ORIG, TARGET)))
+        self.assertEqual([grader.parse_mark(l) for l in labels],
+                         [("control", ORIG), ("write", TARGET),
+                          ("restore", ORIG)])
+        for label in labels:
+            self.assertTrue(is_required_form(label), label)
+        # The restore names the value being put back, not the one that was
+        # under test, and it is the block's last mark: both are what the
+        # grader's void check turns on.
+        self.assertEqual(labels[-1],
+                         f"restored 0x{probe.MODE:04X}=0x{ORIG:02X}")
+        self.assertNotEqual(labels[-1], labels[1])
+
+    def test_a_probe_capture_passes_the_real_grader_end_to_end(self):
+        # The issue's done-condition: a capture this tool wrote, read by the
+        # grader the runbook points at, coming back one block, intact, three
+        # roles, every window printed and exit 0. Before the restore mark this
+        # was the same run reported VOID with both arms withheld, in the
+        # format §7's `confirmed-inert` call would otherwise have quoted.
+        path, _ = self.capture_path(('0xA0',))
+        rc, out, err = run_grader(str(path))
+        self.assertEqual(rc, 0, err)
+        self.assertIn("block 1/1: intact", out)
+        self.assertIn("value under test 0xA0; roles control, write, restore",
+                      out)
+        # Every window printed, in the windowed report rather than in place of
+        # it, and nothing anywhere says one of them was withheld.
+        for n in (1, 2, 3):
+            self.assertIn(f"--- mark {n}/3:", out)
+        # `NOT GRADED` in capitals is the block and withheld-window marker,
+        # and nothing else in the report spells it that way -- the
+        # "context, not graded here" banner over the duty and temperature
+        # bytes is printed on every window of every run and means the
+        # opposite.
+        self.assertNotIn("NOT GRADED", out)
+
     def test_each_arm_s_change_rows_land_in_its_own_window(self):
-        text = self.capture(('0xA0', '--level-block'))
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "capture.csv"
-            path.write_text(text)
-            windows = grader.build_windows(*grader.read_capture(str(path)))
-        self.assertEqual(len(windows), 2)
-        control, written = windows
+        path, _ = self.capture_path(('0xA0', '--level-block'))
+        windows = grader.build_windows(*grader.read_capture(str(path)))
+        self.assertEqual(len(windows), 3)
+        control, written, restored = windows
         # 0x075B drifts under the no-op and 0x075C under the write, and the
         # two arms' movement stayed apart: attributing either to the other
         # mark is exactly the defect a mislabelled mark produces.
@@ -463,6 +554,77 @@ class ProbeTests(unittest.TestCase):
         # The level block's own row, in the write arm's window.
         self.assertTrue(any(c.addr == 0x0860 and c.new == 0xFF
                             for c in written.changes))
+        # And the restore's window is the restore's, carrying neither arm's
+        # movement: it opens after the write arm's last sweep, so a row filed
+        # in it is a row attributed to an action that did not cause it.
+        self.assertEqual(grader.parse_mark(restored.label), ("restore", ORIG))
+        self.assertFalse([c.addr for c in restored.changes])
+
+    def test_the_restore_line_and_the_capture_row_are_the_same_string(self):
+        # §3's by-eye check is a reader looking at the terminal and the file
+        # at once, so the two have to say the same thing. A restore that
+        # reached the screen and not the CSV is the case the void check
+        # exists for, and a readback standing in for the mark is how that
+        # happens without anybody noticing.
+        path, out = self.capture_path(('0xA0',))
+        restored = self.mark_rows(path)[-1]
+        self.assertIn(restored, out.splitlines())
+        # The readback stays a line of its own and says what it is: four
+        # matching readbacks are a statement about writes, not about what the
+        # EC did with the byte (CLAUDE.md).
+        readback = [l for l in out.splitlines() if "readback" in l]
+        self.assertEqual(len(readback), 1)
+        self.assertIn("not evidence the EC acted on it", readback[0])
+        self.assertNotIn(restored, readback[0])
+
+    def test_a_crashed_run_records_why_and_still_closes_its_block(self):
+        # A crash part way through the write arm -- far enough in that the
+        # three marks are still more than the grader's MARK_MERGE_SECONDS
+        # apart, which is what keeps the capture three windows rather than
+        # one coalesced label. A crash on the arm's first sweep coalesces the
+        # write and the restore into one window instead, and the block reads
+        # VOID; the grader is right to say so there, and this case is about
+        # the case it cannot see. Where the crash goes is learned from a run
+        # that did not crash rather than counted here, because the number of
+        # reads a sweep costs is the fake's own.
+        plain = FakeEc()
+        self.run_probe(argv=['0xA0'], ec=plain, clock=Clock(step=0.5))
+        crashed = FakeEc(boom_at=plain.writes_at[1] + 1
+                         + 30 * len(probe.ALL))
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "capture.csv"
+            with self.assertRaises(RuntimeError):
+                self.run_probe(argv=['0xA0', '--csv', str(path)], ec=crashed,
+                               clock=Clock(step=0.5))
+            # The capture is flushed per row and closed through the readback's
+            # own `finally`, so this is the whole of what the operator would
+            # find in the file.
+            self.assertEqual(self.mark_rows(path),
+                             list(probe.arm_labels(ORIG, TARGET)))
+            self.assertIn("# the run ended early: RuntimeError: "
+                          "observation failed mid-run", path.read_text())
+            self.assertEqual(crashed.writes[-1], (probe.MODE, ORIG))
+            rc, out, err = run_grader(str(path))
+            windows = grader.build_windows(*grader.read_capture(str(path)))
+        # The restore landed, so its mark lands, so the block is intact and
+        # the grader exits 0 over a write window cut at 30 sweeps. Nothing in
+        # the report says the window is short; the `#` row does, and only for
+        # a reader who opens the capture.
+        self.assertEqual(rc, 0, err)
+        self.assertIn("block 1/1: intact", out)
+        self.assertIn("roles control, write, restore", out)
+        self.assertEqual(len(windows), 3)
+        # And the write window really is short: it runs to the crash rather
+        # than to the end of the hold. The change rows are the same count
+        # either way, the script having saturated after three sweeps, which
+        # is the point -- the truncation is not a thing the report can show,
+        # and the grader grades the short window in the same format as the
+        # long one.
+        full, _ = self.capture_path(('0xA0',), clock=Clock(step=0.5))
+        held = grader.build_windows(*grader.read_capture(str(full)))
+        self.assertLess((windows[2].ts - windows[1].ts).total_seconds(),
+                        (held[2].ts - held[1].ts).total_seconds())
+        self.assertEqual(len(windows[1].changes), len(held[1].changes))
 
     def test_a_second_run_appends_to_the_same_capture(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -472,22 +634,42 @@ class ProbeTests(unittest.TestCase):
             clock = Clock()
             self.run_probe(argv=['0xA0', '--csv', str(path)], clock=clock)
             first = path.read_text()
-            self.run_probe(argv=['0x00', '--csv', str(path)], clock=clock)
+            # The second run opens a session later, the way a §3 day does.
+            # One clock keeps the two runs' rows in order, which is what it
+            # was for; the later epoch is the gap between them, and without it
+            # the second run's first mark lands on the first run's last and
+            # the grader's coalescing folds the two into one window -- a
+            # capture shape no operator produces, since starting the next run
+            # is a thing that takes seconds.
+            self.run_probe(argv=['0x00', '--csv', str(path)],
+                           clock=Clock(base=clock.base + 600))
             both = path.read_text()
             marks, changes = grader.read_capture(str(path))
+            windows = grader.build_windows(marks, changes)
+            blocks, unplaced = grader.assign_blocks(windows)
         self.assertTrue(both.startswith(first))
         self.assertEqual(both.count("ts,addr,old,new"), 1)
         self.assertIn("wrote 0x0751=0x00", both)
         # §4 wants three modes in one session, so the third run's two arms
         # have to extend the file rather than replace it. The second run's
         # control arm re-writes 0x10, not 0x00, because the first run's
-        # finally restored 0x0751 -- a fresh Clock does not get to pretend
-        # otherwise, or the restore would be untested here too.
-        self.assertEqual(both.count(",MARK,"), 4)
+        # finally restored 0x0751 -- a later epoch does not get to pretend
+        # otherwise, or the restore would be untested here too. Each run
+        # appends a whole block, so both are there to be read.
+        self.assertEqual(both.count(",MARK,"), 6)
         self.assertEqual([m.label for m in marks],
-                         ["no-op wrote 0x0751=0x10", "wrote 0x0751=0xA0",
-                          "no-op wrote 0x0751=0x10", "wrote 0x0751=0x00"])
-        self.assertEqual(len(grader.build_windows(marks, changes)), 4)
+                         list(probe.arm_labels(ORIG, TARGET))
+                         + list(probe.arm_labels(ORIG, 0x00)))
+        self.assertEqual(len(windows), 6)
+        # Two blocks rather than one long one, each closed by its own
+        # restore: the cheapest proof the block walk survives being appended
+        # to, and the shape a three-value session is.
+        self.assertEqual(len(blocks), 2)
+        self.assertFalse(unplaced)
+        self.assertEqual([b.roles for b in blocks],
+                         [["control", "write", "restore"]] * 2)
+        self.assertEqual([grader.block_verdict(b) for b in blocks],
+                         ["intact"] * 2)
 
     def test_no_capture_is_written_without_the_flag(self):
         with tempfile.TemporaryDirectory() as tmp:
