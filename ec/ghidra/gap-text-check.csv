@@ -20,7 +20,7 @@ bank0,D091,dispatch_on_0860,D15D,d1c0,acall 0xd6c0,acall 0xd6c0,acall 0xd6c0,aca
 bank0,D091,dispatch_on_0860,D160,d1ef,acall 0xd6ef,acall 0xd6ef,acall 0xd6ef,acall 0xd6ef,GAP_MNEMONICS acall,agree
 bank0,D434,FUN_CODE_d434,D43D,91d4,acall 0xd4d4,acall 0xd4d4,acall 0xd4d4,acall 0xd4d4,GAP_MNEMONICS acall,agree
 bank0,D434,FUN_CODE_d434,D45B,a1d4,ajmp 0xd5d4,ajmp 0xd5d4,ajmp 0xd5d4,ajmp 0xd5d4,GAP_MNEMONICS ajmp,agree
-bank0,D757,FUN_CODE_d757,D783,92e4,"mov 0xe4, CY","mov  acc.4,c",mov 0xe4|c,mov 0xe4|c,BIT_UNSUPPORTED 0x92,agree
+bank0,D757,state_1500_1504_1510_1514_to_0200,D783,92e4,"mov 0xe4, CY","mov  acc.4,c",mov 0xe4|c,mov 0xe4|c,BIT_UNSUPPORTED 0x92,agree
 bank0,E9DE,rmw_1603_and_wait_tf1_2500_times,E9FE,b2e2,cpl 0xe2,cpl  acc.2,cpl 0xe2,cpl 0xe2,BIT_UNSUPPORTED 0xB2,agree
 bank0,E9DE,rmw_1603_and_wait_tf1_2500_times,EA03,b2e1,cpl 0xe1,cpl  acc.1,cpl 0xe1,cpl 0xe1,BIT_UNSUPPORTED 0xB2,agree
 bank0,EBD5,dispatch_on_0a4b_via_7151,EBE4,01ec,ajmp 0xe8ec,ajmp 0xe8ec,ajmp 0xe8ec,ajmp 0xe8ec,GAP_MNEMONICS ajmp,agree

@@ -12,40 +12,67 @@
 #
 # and that is the whole change.
 #
+# Re-cut whole against the committed `.github/scripts/agent-gates.sh` (blob
+# 125d647) on 2026-09-25, issue #745. The previous cut did not apply at all,
+# and BOTH its hunks were broken, not the one the issue named. The tool-list
+# hunk needed three contiguous lines that stopped being contiguous when item
+# 8's citation_gap_scan.py and xdata_register_map.py landed in the same list.
+# The case-arm hunk needed the `*)` arm as its trailing context, which sat
+# three lines below it and now sits at :238, with the whole citation_gap_scan
+# and xdata_register_map arms in between -- `git` stops reporting at the first
+# failing hunk, which is what made it look like the tool list alone. It now
+# carries an `index` line, which it did not have: a future `--3way` has nothing
+# to work from without one.
+#
 # Why the cheap tier and not agent-gates-deep.sh: what the mode reads is the
 # committed CSVs under `ec/tools/testdata/` and the standard library's
 # `unittest`. No firmware image, no Ghidra, no network, no assembler -- so by the
 # split `docs/agent-pipeline.md` records, it belongs beside
-# `check_register_counts`, not in the deep tier. It measures 0.32 s end to end
-# here (the 76 tests are 0.192-0.193 s of that, the rest interpreter start),
-# against a cheap tier recorded at 5.9 s, on 2026-09-25. That is one runner's
-# figure and the ratio is the point; `docs/agent-pipeline.md` item 6 gives the
-# same caveat for `call_graph.py`.
+# `check_register_counts`, not in the deep tier. It measures 0.25 s end to end
+# here (0.25-0.26 s over five runs; the 103 tests are 0.160 s of that, the rest
+# interpreter start), against a cheap tier recorded at 5.9 s, on 2026-09-25.
+# That is one runner's figure and the ratio is the point; `docs/agent-pipeline.md`
+# item 6 gives the same caveat for `call_graph.py`.
 #
-# What it buys, and what it does not: the grader's 76 committed tests -- 74
-# before this branch's two -- are the pinned record of a dozen refusal
-# policies, and `grep -rn 'grade_0751' .github/` finds nothing, so a PR that
-# breaks one merges green. **Until a human lands this, nothing runs the suite
-# per commit, and a PR that breaks one of its refusals still merges green.** No
-# line of that patch, of the mode, or of the write-up beside it is a claim
-# about a laptop: the suite reads hand-built fixtures, and no EC is opened and
-# no register read back.
+# What it buys, and what it does not: the grader's 103 committed tests are the
+# pinned record of a dozen refusal policies, and `grep -rn 'grade_0751'
+# .github/` finds nothing, so a PR that breaks one merges green. **Until a human
+# lands this, nothing runs the suite per commit, and a PR that breaks one of its
+# refusals still merges green.** No line of that patch, of the mode, or of the
+# write-up beside it is a claim about a laptop: the suite reads hand-built
+# fixtures, and no EC is opened and no register read back.
+#
+# The 103 is what `python3 ec/tools/grade_0751_isolation.py --self-test` prints
+# on the tree this was cut from. It was 76 when this patch was first written, and
+# 94 by the time issue #745 was filed; neither was ever right for long, which is
+# the point of reading it off a run. The other occurrences of the figure are
+# issue #685's to correct -- deliberately not here, so this issue and that one
+# cannot both be editing the same sentences. They are
+# `docs/findings/0751-grader-self-test-gate.md`, which carries a count in six
+# places as a per-commit chain each figure is correct for, and
+# `docs/findings.md:2077` ("Those 76 tests ran nowhere", in §7), which is
+# historical -- past tense, about issue #532's own branch at the time -- and not
+# a live claim. The plan behind this cut also expected two tool docstrings
+# carrying the figure; a search of `ec/tools/*.py` and `windows/tools/*.py` found
+# none, because `grade_0751_isolation.py` parses the count out of the run rather
+# than asserting one.
 #
 # The comment it adds at the call site says the same thing where the next reader
 # of the gate will see it, rather than only here.
 
 diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
+index 125d647..9d80607 100755
 --- a/.github/scripts/agent-gates.sh
 +++ b/.github/scripts/agent-gates.sh
-@@ -123,6 +123,7 @@
+@@ -123,6 +123,7 @@ check_ghidra_tooling() {
                ec/tools/grade_name_basis.py \
                ec/tools/group_functions.py \
                ec/tools/call_graph.py \
 +              ec/tools/grade_0751_isolation.py \
+               ec/tools/citation_gap_scan.py \
+               ec/tools/xdata_register_map.py \
                bios/tools/bios_extract.py \
-               windows/tools/decompile_native.py; do
-     [ -f "$tool" ] || continue
-@@ -187,6 +188,27 @@
+@@ -189,6 +190,27 @@ check_ghidra_tooling() {
        *call_graph.py)
          python3 "$tool" --check && python3 "$tool" --self-test || rc=1
          ;;
@@ -70,6 +97,6 @@ diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
 +      *grade_0751_isolation.py)
 +        python3 "$tool" --self-test || rc=1
 +        ;;
-       *)
-         # build_ec_decompile.py and bios_extract.py both take --work.
-         python3 "$tool" --work "$scratch" --check && \
+       # The call graph's own blind spot, measured. It reads the bytes Ghidra's
+       # function boundary cut out of a citing listing and returns one of three
+       # verdicts per (callee, citer) pair, so the 99-row population

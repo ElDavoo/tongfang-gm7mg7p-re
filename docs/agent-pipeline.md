@@ -142,11 +142,23 @@ only covers what's specific to *this* copy.
 
      It is not here because this is a template-copied file and the plan
      stage's push token has no `workflow` scope, so a branch editing it fails
-     at the end of the PR rather than the start. **Until a human lands it,
-     nothing runs `--check` per commit** and the committed verdicts in
-     `ec/ghidra/gap-text-check.csv` can go stale in an otherwise-green commit
-     — the same shape as item 1, and for the same reason. The command is named
-     here so a template re-copy carries it.
+     at the end of the PR rather than the start. The whole of it is prepared
+     at `docs/ci/agent-gates-gap-text-check.patch` (added 2026-09-25, issue
+     #745, which found this item had a recipe and no patch file at all), and
+     a human lands it with `git apply
+     docs/ci/agent-gates-gap-text-check.patch`. **Until a human
+     lands it, nothing runs `--check` per commit** and the committed verdicts
+     in `ec/ghidra/gap-text-check.csv` can go stale in an otherwise-green
+     commit — the same shape as item 1, and for the same reason. The command
+     is named here so a template re-copy carries it.
+
+     One thing to do before landing it, recorded in that patch's header:
+     `--check` was red on the tree the patch was cut from, on one row's
+     `row_name` column, because a function rename had landed without
+     regenerating the CSV. Issue #745 regenerated it with the tool's own
+     `--report` (one row, one column, no assembler), so the prepared patch is
+     green. An earlier cut would have landed a red gate, which is the cheapest
+     way to make a gate get switched off.
   5. **`check_capture_claims.py --check` is not in the cheap tier yet, and
      should be** (2026-09-24, issue #277). It holds the prose's capture
      claims to the committed CSVs they name: an address a sentence attributes
@@ -159,7 +171,8 @@ only covers what's specific to *this* copy.
      `check_capture_claims()` function and a `gate` line beside
      `check_register_counts`, and the whole of it is prepared at
      `docs/ci/agent-gates-capture-claims.patch`; a human lands it with
-     `git apply docs/ci/agent-gates-capture-claims.patch`. Cheap tier for the
+     `git apply docs/ci/agent-gates-capture-claims.patch`. That patch carries
+     item 9's check as well, for the reason item 9 gives. Cheap tier for the
      same reason item 4 gives: it needs the committed CSVs and the standard
      library's `csv` module — no firmware image, no Ghidra, no assembler. It
      is not here for item 4's reason, template-copied file and no `workflow`
@@ -225,12 +238,18 @@ only covers what's specific to *this* copy.
      which from outside a gate is a pass. Cheap tier for item 4's reason: the
      committed CSVs under `ec/tools/testdata/` and the standard library's
      `unittest` — no firmware image, no Ghidra, no network, no assembler. It
-     measures **0.32 s** end to end here (the 76 tests are 0.192-0.193 s of
-     that, the rest interpreter start) on 2026-09-25, against a cheap tier the
-     paragraph above records at 5.9 s; that is one runner's figure and the
-     ratio is the point, as item 6 says of its own. The 76 is the merged
-     tree's: 74 on the branch point (`db6d7d2d`), 2 added here, and none
-     since — #530's unplaced-window-scope cases are already its ancestor.
+     measures **0.25 s** end to end here (0.25-0.26 s over five runs; the 103
+     tests are 0.160 s of that, the rest interpreter start) on 2026-09-25,
+     against a cheap tier the paragraph above records at 5.9 s; that is one
+     runner's figure and the ratio is the point, as item 6 says of its own.
+     The 103 is what `python3 ec/tools/grade_0751_isolation.py --self-test`
+     prints on this tree, read off a run rather than carried forward: it was
+     76 when this item was written and 94 when issue #745 was filed, and
+     neither was right for long, which is the whole argument for reading it
+     off a run. The other places this repository quotes the figure are
+     corrected in #685, which owns it; they are named in
+     `docs/findings/prepared-gate-patches.md` rather than fixed here, so this
+     issue and that one are not editing the same sentences.
      **Until a human lands it, no commit runs that suite and a PR that breaks
      one of those refusals still merges green.** It is not here for item 4's
      reason, template-copied file and no `workflow` scope on the token; the
@@ -281,8 +300,11 @@ only covers what's specific to *this* copy.
      `grep -rn 'testdata/README'` over the gate and the suite returned two prose
      mentions and not one read. Adding it is a `check_testdata_index()`
      function and a `gate` line beside `check_register_counts`, and the whole of
-     it is prepared at `docs/ci/agent-gates-testdata-index.patch`; a human lands
-     it with `git apply docs/ci/agent-gates-testdata-index.patch`. Cheap tier
+     it is prepared in `docs/ci/agent-gates-capture-claims.patch` — **not in a
+     patch of its own**, since issue #745: this check and item 5's insert at
+     the same two anchors, and the `gate` list is seven lines long, so two
+     patches editing it cannot both be applied in either order. A human lands
+     both with `git apply docs/ci/agent-gates-capture-claims.patch`. Cheap tier
      for item 4's reason: the committed tree under `ec/tools/testdata/` and the
      standard library's `glob` — no firmware image, no Ghidra, no assembler —
      and it measures 0.03 s here against a cheap tier the paragraph above

@@ -1,9 +1,11 @@
-# ec/tools/check_capture_claims.py, wired into the cheap gate. Prepared here
-# rather than landed, because `.github/scripts/agent-gates.sh` is copied from
-# the agent-pipeline template and the pipeline's push token has no `workflow`
-# scope, so a branch editing it fails at the end of the PR rather than at the
-# start of it. `docs/agent-pipeline.md` says the same thing about every other
-# leg of this that a human has to land, and carries this one across too.
+# ec/tools/check_capture_claims.py and ec/tools/check_testdata_index.py, both
+# wired into the cheap gate. Prepared here rather than landed, because
+# `.github/scripts/agent-gates.sh` is copied from the agent-pipeline template
+# and the pipeline's push token has no `workflow` scope, so a branch editing it
+# fails at the end of the PR rather than at the start of it.
+# `docs/agent-pipeline.md` says the same thing about every other leg of this
+# that a human has to land, and carries these two across too, as its items 5
+# and 9.
 #
 # To land it:
 #
@@ -11,21 +13,62 @@
 #
 # and that is the whole change.
 #
-# Why the cheap tier and not agent-gates-deep.sh: what it reads is the
-# committed CSVs under `evidence/ec-watch/` and the standard library's `csv`
-# module. No firmware image, no Ghidra, no network, no assembler -- so by the
-# split `docs/agent-pipeline.md` records, it belongs beside
-# `check_register_counts`, not in the deep tier. It runs in well under a
-# second against a cheap tier measured at 5.9 s.
+# This patch carries BOTH checks, and that is not tidiness -- they cannot be
+# landed apart. It was two files until 2026-09-25 (issue #745): this one and
+# agent-gates-testdata-index.patch. Both applied cleanly on their own, and
+# neither could be applied after the other, in either order, because each put
+# its function at the same anchor below check_register_counts() and its `gate`
+# line at the same anchor in the gate list. Whichever landed first inserted a
+# line between the other's leading and trailing context, and the gate list is
+# seven lines long, so re-anchoring does not rescue it either: any two
+# insertions into it share a context window. The two `gate` lines ship in one
+# patch or not at all. The other file is deleted and its content and rationale
+# folded in here; the item and the two write-ups that named it point here
+# instead. The filename is kept rather than given an honest one because seven
+# other references across four files already cite it as this repository's
+# canonical account of the prepared-not-landed shape, and a name is not worth
+# churning the long shared files for.
 #
-# The comment it adds at the call site says the same thing where the next
-# reader of the gate will see it, rather than only here.
+# Why the cheap tier and not agent-gates-deep.sh: between them the two read
+# the committed CSVs under `evidence/ec-watch/`, the committed tree under
+# `ec/tools/testdata/`, and the standard library's `csv` and `glob` modules. No
+# firmware image, no Ghidra, no network, no assembler -- so by the split
+# `docs/agent-pipeline.md` records, both belong beside `check_register_counts`,
+# not in the deep tier. The first runs in well under a second and the second
+# measures 0.03 s over three runs here, against a cheap tier recorded at
+# 5.9 s.
+#
+# What they buy, and what they do not. check_capture_claims holds the prose's
+# capture claims to the committed CSVs they name: an address a sentence
+# attributes to `evidence/ec-watch/<file>.csv` has to have a row in that file,
+# and a stated row count has to equal the real one. That class of claim has
+# been wrong twice in registers.yaml's history -- issue #265, and the 0x07D4
+# clause #270 had to retract in place -- and both were caught by a re-reading,
+# because check_register_counts.py verifies the file's numeric keys from the
+# image and never opens a `note:`. check_testdata_index holds
+# `ec/tools/testdata/README.md` to the tree under it in both directions: a
+# fixture directory no index names is a gap, and a path the index's table names
+# that is not on disk is a miss. That index is hand-written and has been
+# repaired by hand twice, and nothing read it before. **Until a human lands
+# this, no commit runs either**, and the next false capture claim -- or the
+# eleventh fixture directory with no row -- merges the way the earlier ones did.
+# Neither tool reads a fixture for what it contains, opens a capture, or
+# touches an EC: both are disagreements between committed files about which
+# paths and rows exist. Each prints what it actually checked, because a run
+# that checked nothing and a run that found nothing look the same from the
+# exit code alone. Both own suites (`ec/tools/test_check_capture_claims.py`,
+# `ec/tools/test_check_testdata_index.py`) need no wiring to be run at all --
+# `tools/run-tests.sh` discovers every `test_*.py` in the repository, so they
+# are already collected by the runner.
+#
+# The comments the two functions add at the call site say the same thing where
+# the next reader of the gate will see it, rather than only here.
 
 diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
-index 5e2fdf2..2ea2a7e 100755
+index 125d647..6a3cffe 100755
 --- a/.github/scripts/agent-gates.sh
 +++ b/.github/scripts/agent-gates.sh
-@@ -84,6 +84,20 @@ check_register_counts() {
+@@ -84,6 +84,36 @@ check_register_counts() {
    python3 ec/tools/check_register_counts.py ec/firmware/GMxMGxx_11.800
  }
  
@@ -43,14 +86,31 @@ index 5e2fdf2..2ea2a7e 100755
 +  python3 ec/tools/check_capture_claims.py --check
 +}
 +
++# A fixture directory under ec/tools/testdata/ with no row in the index, or a
++# row naming a path that is not on disk, is invisible to anyone who greps the
++# index to learn which fixture holds which grader case -- and the index is
++# written by hand, and nothing reads it: `grep -rn 'testdata/README'` over this
++# script and the suite returns two prose mentions and not one read. That gap
++# is what this closes. It is not a check on whether a fixture is what its row
++# says it is, which is the third column and a separate piece of work. This
++# holds the two files to each other, in both directions. Cheap tier because of
++# what it reads: the committed tree under ec/tools/testdata/ and the standard
++# library's glob -- no firmware image, no Ghidra, no network, no assembler. It
++# prints what it actually checked, because a run that checked nothing and a run
++# that found nothing look the same from the exit code alone.
++check_testdata_index() {
++  python3 ec/tools/check_testdata_index.py --check
++}
++
  check_python_syntax() {
    local f rc=0
    for f in ec/tools/*.py bios/tools/*.py windows/tools/*.py ghidra/tools/*.py; do
-@@ -188,6 +202,7 @@ check_doc_links() {
+@@ -271,6 +301,8 @@ check_doc_links() {
  gate 'registers.yaml'  check_registers_yaml
  gate 'scan_refs.py smoke test' check_scan_refs_smoke_test
  gate 'register counts'  check_register_counts
 +gate 'capture claims'   check_capture_claims
++gate 'testdata index'   check_testdata_index
  gate 'ghidra tooling'  check_ghidra_tooling
  gate 'python syntax'   check_python_syntax
  gate 'shellcheck'      check_shellcheck

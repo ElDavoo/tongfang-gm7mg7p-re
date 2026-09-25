@@ -6,8 +6,11 @@ the index over `ec/tools/testdata/` being written by hand and nothing checking
 it. What this branch adds is **a checker and a prepared patch**:
 `ec/tools/check_testdata_index.py` walks the two directions an index and a tree
 can disagree in, and the two lines that would put it in the cheap gate are
-prepared at `docs/ci/agent-gates-testdata-index.patch` rather than landed, for
-the reason `docs/ci/agent-gates-capture-claims.patch` gives.
+prepared at `docs/ci/agent-gates-capture-claims.patch` rather than landed, for
+the reason that patch's own header gives. It has its own
+`check_testdata_index()` there and not a patch to itself, since issue #745:
+the two `gate` lines it needs were at the same anchor as
+`check_capture_claims()`'s and could not both be landed.
 
 **Until a human lands that patch, no commit runs the check.** What runs today is
 `ec/tools/test_check_testdata_index.py`, which `tools/run-tests.sh` discovers by
@@ -140,10 +143,13 @@ fail when the tree drifts.
 
 ## The prepared patch
 
-`docs/ci/agent-gates-testdata-index.patch`, in the header-and-`git apply` shape
-`docs/ci/agent-gates-capture-claims.patch` established. It adds a
+This check has no patch of its own. It rides in
+`docs/ci/agent-gates-capture-claims.patch`, which adds a
 `check_testdata_index()` function beside `check_register_counts()` and one
-`gate` line beside `register counts`, with a comment at the call site saying why
+`gate` line beside `register counts` alongside `check_capture_claims()`'s —
+issue #745 folded the two together because they insert at the same two anchors
+and so cannot both be landed, in either order. The comment at the call site
+says why
 it is cheap-tier (the committed tree under `ec/tools/testdata/` and the standard
 library's `glob` — no firmware image, no Ghidra, no network, no assembler), what
 it holds, and that it prints what it actually checked because "a run that checked

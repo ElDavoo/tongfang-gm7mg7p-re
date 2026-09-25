@@ -6887,10 +6887,12 @@ is the "not found by this method, never absent" line made mechanical.
 **The suite is what runs today; the gate arm is not.** Its 28 cases hold the
 refusals — a directory with no row, a row with no file, a prefix passing on a
 sibling's row — and seven deliberate loosenings of the tool were each caught by
-them. The cheap-tier wiring is prepared at
-`docs/ci/agent-gates-testdata-index.patch` and a human lands it with `git apply
-docs/ci/agent-gates-testdata-index.patch`; **until then no commit runs the
-check**, and `docs/agent-pipeline.md` carries it across a template re-copy as
+them. The cheap-tier wiring is prepared as half of
+`docs/ci/agent-gates-capture-claims.patch` and a human lands it with `git apply
+docs/ci/agent-gates-capture-claims.patch`; it shares that file with
+`check_capture_claims.py` because the two `gate` lines sit at the same anchor
+and cannot both be landed, in either order (issue #745). **Until then no commit
+runs the check**, and `docs/agent-pipeline.md` carries it across a template re-copy as
 its item 9. This is tooling hygiene, as the issue says: two committed files and a
 directory listing, no capture opened, no EC, no hardware, and no claim that any
 fixture is correct.
@@ -6924,3 +6926,41 @@ throwaway copy of the tree carrying a real fourteenth directory and a real row
 for it is green at `(14, 28, 35)` with no committed fixture added. Still tooling
 hygiene: strings in a `tempfile` and two committed files, no capture opened, no
 EC, no hardware.
+
+## 43. The prepared gate patches compose, and a test says so (2026-09-25, issue #745)
+
+Each `docs/ci/agent-gates-*.patch` header says `git apply
+docs/ci/agent-gates-<name>.patch`, "and that is the whole change", and
+`docs/agent-pipeline.md` items 4, 5, 7 and 9 repeat it. Measured on this tree,
+none of it held. `agent-gates-0751-self-test.patch` applied to nothing — and
+**both** of its hunks were broken, not the one the issue named, because `git`
+stops reporting at the first failure and the second hunk's trailing context had
+moved 47 lines down the file. `agent-gates-capture-claims.patch` and
+`agent-gates-testdata-index.patch` each applied cleanly alone and could not be
+applied after one another in either order, because both inserted a function at
+the same anchor below `check_register_counts()` and a `gate` line at the same
+anchor in a seven-line list.
+
+So the two are one file: `check_testdata_index()` folds into
+`agent-gates-capture-claims.patch`, the second is deleted, and the six
+references to it across four files are repointed. The 0751 patch is re-cut
+whole against the committed blob and given the `index` line it was missing, and
+item 4's long-documented-but-never-written `verify_gap_text.py` wiring is now a
+third prepared patch. `tools/test_agent_gates_patches.py` holds the result: the
+set on disk equals the set the suite names, each patch applies alone, every
+ordered pair lands, the full set lands and still parses under `bash -n` and
+`shellcheck`, the fold is still whole, and each header names its own file.
+
+One thing the plan this branch was built from got wrong, found by running the
+check rather than confirming the file existed: `verify_gap_text.py --check` was
+**red**, on one stale `row_name` column left by a function rename. Preparing
+item 4's patch without regenerating it would have prepared a trap — a human
+following the header would have landed a red cheap gate, which is the cheapest
+way to make a gate get switched off. The CSV is regenerated here by the tool's
+own `--report`, one row and one column, no assembler.
+
+The 0751 suite's count is 103, measured by running `--self-test`; the header
+said 76 and the issue said 94, and neither was right for long. The other places
+the figure appears are #685's, named by path in the write-up rather than
+overwritten here. Write-up:
+`docs/findings/prepared-gate-patches.md`.

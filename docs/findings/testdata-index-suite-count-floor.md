@@ -215,6 +215,9 @@ suite is pinned" asks for.
 ## Nothing in another repository
 
 No upstream patch is part of this work, and none is planned. The gate arm stays
-prepared at `docs/ci/agent-gates-testdata-index.patch` for a human to `git apply`,
-which is what that file's own header says and what `docs/agent-pipeline.md`
-carries; this change does not touch it and the patch still applies unchanged.
+prepared for a human to `git apply`; this change does not touch it. It is no
+longer a patch of its own — issue #745 folded
+`check_testdata_index()` into `docs/ci/agent-gates-capture-claims.patch`,
+because the two `gate` lines it needs sit at the same anchor in a seven-line list
+and could not both be landed, in either order, and
+`docs/findings/prepared-gate-patches.md` is that fold's write-up.
