@@ -194,14 +194,20 @@ a regression test: **nothing in the repository asserted the clean sentence
 anywhere before this change.** A `grep` for `consistent with the static
 prediction` over the committed tree finds **nothing at all** — the tool splits
 the phrase across two adjacent string literals (`"...in any window: consistent
-"` / `"with the static prediction, ..."`, `grade_0751_isolation.py:1572-1573`),
+"` / `"with the static prediction, ..."`, `grade_0751_isolation.py:1631-1632`),
 so a line-oriented grep cannot see it, and the three
 `assertIn('None of the §4.1-§4.3 bytes moved', out)` lines are on the opening
 words only either way. The conclusion that nothing pinned the sentence is
 therefore stronger than "grep found the tool and nothing else" would have
 been: so the strongest claim the tool makes could have been dropped or
-reworded off every clean run without a failing test. The only two other
-occurrences anywhere now are the two assertions this change added.
+reworded off every clean run without a failing test. Since then the phrase has
+turned up in two files, both of them this change's own: in
+`ec/tools/test_grade_0751_isolation.py` it is the three assertions named in
+the table above — the clean-case `assertIn` and the two `assertNotIn`
+regression checks — and the comment above the pin that records why it was
+needed; in this write-up it is four quotations of the sentence, the title, the
+"before" output, the prose naming what was wrong, and the `3blocks/` row of
+the table.
 
 The pre-existing pins that stayed green and were not edited are the evidence
 that the other two cases were not disturbed: the all-withheld assertion in
