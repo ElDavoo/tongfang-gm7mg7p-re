@@ -92,7 +92,7 @@ void walk_code_table_6f39(void)
       } while (bVar2 != 0);
     }
   }
-  post_05e8_init_1042_16e7();
+  post_05e8_sp_0c0_init_1042_16e7_3105();
   return;
 }
 

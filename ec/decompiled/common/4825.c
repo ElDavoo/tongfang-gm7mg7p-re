@@ -21,7 +21,7 @@ void FUN_CODE_4825(undefined1 param_1,char param_2)
   pbVar2 = &DAT_EXTMEM_0a58;
   if (DAT_EXTMEM_0a58 != '\0') {
     cVar1 = DAT_EXTMEM_0a58;
-    mov_a_from_r1_4a76();
+    dptr_4900_plus_15x_r1();
     code_word_to_dptr_4a69();
     *pbVar2 = *pbVar2 | 0xc;
     FUN_CODE_4ad3(param_1);
@@ -32,11 +32,11 @@ void FUN_CODE_4825(undefined1 param_1,char param_2)
                     /* WARNING: Subroutine does not return */
       code_word_to_dptr_4a4d();
     }
-    mov_a_from_r1_4a76();
+    dptr_4900_plus_15x_r1();
                     /* WARNING: Subroutine does not return */
     code_word_to_dptr_4a4d();
   }
-  mov_a_from_r1_4a76();
+  dptr_4900_plus_15x_r1();
                     /* WARNING: Subroutine does not return */
   code_word_to_dptr_4a4d();
 }

@@ -80,7 +80,7 @@ LAB_CODE_d79a:
         DAT_EXTMEM_07ff = 0xaa;
         DAT_EXTMEM_07fd = 0;
         DAT_EXTMEM_0045 = 0x33;
-        post_05e8_init_1042_16e7();
+        post_05e8_sp_0c0_init_1042_16e7_3105();
         return;
       }
     }

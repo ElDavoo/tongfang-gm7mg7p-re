@@ -69,7 +69,7 @@ bank0,8648,clear_200b,annotation,8,200B,200B,,agree
 bank0,8653,seed_fan_table_base,annotation,8,08E6,08E6,,agree
 bank0,8749,mode_tick_084c_07a5_09ee,annotation,0,,,,vacuous
 bank0,888D,fan_table_mailbox_handler,annotation,3,0F5D,0F5D,,agree
-bank0,8931,threshold_cascade_from_08eb_085f,annotation,3,08EB,08EB,,agree
+bank0,8931,gate_0751_0741_blocks_then_tail_jump_8c46,annotation,3,08EB,08EB,,agree
 bank0,8939,store_200_via_dptr_then_8f09,annotation,0,,,,vacuous
 bank0,893E,store_a_via_dptr_then_jump_8f09,annotation,1,,,,vacuous
 bank0,8C46,ramp_1804_1809_toward_0461_0469,annotation,5,0469 0787,0469 0787,,agree
@@ -123,7 +123,7 @@ bank0,9BFD,forward_to_9a86,annotation,0,,,,vacuous
 bank0,9C00,clear_09e9_unless_0743_bit2,annotation,1,,,,vacuous
 bank0,9C1D,clear_two_bytes_at_dptr_then_9a90,annotation,4,,,,vacuous
 bank0,9C24,reset_08ad_08bf_and_clear_08e2_bit7,annotation,1,,,,vacuous
-bank0,9C47,ret_only_9c47,annotation,0,,,,vacuous
+bank0,9C47,return_trampoline_9aad_044b_case_bailout,annotation,0,,,,vacuous
 bank0,9CA6,gate_06e6_442_then_sync_046a_from_086b,annotation,2,06E6,06E6,,agree
 bank0,9D9A,shared_return_stub_9d9a,annotation,0,,,,vacuous
 bank0,9D9B,compute_level_blocks_086b_086c_086e,annotation,1,,,,vacuous
@@ -487,7 +487,7 @@ bank0,D281,set_0860_ff_then_d284,annotation,1,0860,0860,,agree
 bank0,D284,write_ff_to_dptr_then_d28e,annotation,2,,,,vacuous
 bank0,D289,clear_0860,annotation,3,0860,0860,,agree
 bank0,D28E,copy_0866_86b_to_1c04_1c3a,annotation,24,0866 0867 0868 0869 086A 086B 1C04 1C05 1C15 1C16 1C39 1C3A,0866 0867 0868 0869 086A 086B 1C04 1C05 1C15 1C16 1C39 1C3A,,agree
-bank0,D2BE,ret_only_d2be,annotation,0,,,,vacuous
+bank0,D2BE,return_trampoline_d091_0860_guard_fail,annotation,0,,,,vacuous
 bank0,D2BF,set_dptr_1c00_then_d2c2,annotation,1,1C00,1C00,,agree
 bank0,D2C2,copy_dp_to_086c_return_masked_7e,annotation,5,086C,086C,,agree
 bank0,D2CB,store_a_to_1c05_then_d2d2,annotation,3,1C00 1C05,1C00 1C05,,agree
@@ -517,7 +517,7 @@ bank0,D722,zero_0a4b_then_tail_jump_541d,annotation,1,0A4B,,0A4B,disagree
 bank0,D72B,scatter_0200_to_table_6d74,annotation,2,,,,vacuous
 bank0,D73D,gather_0200_from_table_6d74,annotation,2,,,,vacuous
 bank0,D74F,write_33_to_1511_then_loop,annotation,4,1511,1511,,agree
-bank0,D757,unresolved_multiarm_dispatch_d757,annotation,5,1500 1F06,1500 1F06,,agree
+bank0,D757,state_1500_1504_1510_1514_to_0200,annotation,5,1500 1F06,1500 1F06,,agree
 bank0,D872,load_code_ptr_from_table_6d74,annotation,14,,,,vacuous
 bank0,D889,zero_dptr_and_load_regs,annotation,6,,,,vacuous
 bank0,D894,set_dptr_0200_plus_r7,annotation,6,,,,vacuous
@@ -560,7 +560,7 @@ bank0,DD5C,store_32_to_0458_then_tailcall_1954,annotation,3,0458,0458,,agree
 bank0,DE4D,init_0046_to_64_and_clear_af,annotation,4,0046,0046,,agree
 bank0,DE56,read_code_byte_at_ptr_0a35_0a36,annotation,10,0A35,0A35,,agree
 bank0,DE65,init_163e_16f1_300e_3008,annotation,17,163E 16F1 3008 300E,163E 16F1 3008 300E,,agree
-bank0,DE83,stage_0a49_pair_then_30xx_block,annotation,40,09C0 09C1 0A49 0A4A 3001 3002 3003 3004 3005 3006,0A49 0A4A 3001 3002 3003 3004 3005 3006,09C0 09C1,disagree
+bank0,DE83,stage_3000_block_then_probe_3000_3007,annotation,40,09C0 09C1 0A49 0A4A 3001 3002 3003 3004 3005 3006,0A49 0A4A 3001 3002 3003 3004 3005 3006,09C0 09C1,disagree
 bank0,DF1E,stage_0a47_then_call_de83_r5_1a,annotation,1,0A47,,0A47,disagree
 bank0,DF35,stage_0a47_then_call_de83_r5_1b,annotation,1,0A47,,0A47,disagree
 bank0,DF78,scale_r7_by_8_then_set_09c1_09c3,annotation,5,0A47,0A47,,agree
@@ -1096,7 +1096,7 @@ bank1,BCAA,set_0494_bit1,annotation,4,0494,0494,,agree
 bank1,BCB3,FUN_CODE_bcb3,stride,7,0491 0492,0491 0492,,agree
 bank1,BD10,mask_0491_with_c0,annotation,4,0491,0491,,agree
 bank1,BD20,clear_0834_word_when_nonzero,annotation,1,0834,,0834,disagree
-bank1,BD45,mask_0491_c0_then_route_to_300x_40xx,annotation,7,030D 0491,030D 0491,,agree
+bank1,BD45,force_0491_0x21_then_base_0300_or_0180,annotation,7,030D 0491,030D 0491,,agree
 bank1,BDEF,write_0499_with_0x21,annotation,9,0180 0499 05B9,0499,0180 05B9,disagree
 bank1,BE02,override_src_0180_when_1,annotation,1,,,,vacuous
 bank1,BE91,pick_0f80_0800_0bb0_1800_1f00,annotation,2,06E6,06E6,,agree
@@ -1163,7 +1163,7 @@ bank1,CB80,div_0343_by_31e_shifted_into_03a9,annotation,4,031E 0343,031E,0343,di
 bank1,CBE8,increment_0349_saturating,annotation,4,0349,0349,,agree
 bank1,CBF3,publish_0514_and_0342_product,annotation,15,0342 0347 04AB 0514 0516 0518,0342 0347 04AB 0514 0516,0518,disagree
 bank1,CC95,set_0397_from_0342_by_0514_band,annotation,4,0514,0514,,agree
-bank1,CD80,count_0397_down_to_03b5_then_0514,annotation,7,0397 03B5,0397 03B5,,agree
+bank1,CD80,reset_03b5_at_limit_then_decrement_0514,annotation,7,0397 03B5,0397 03B5,,agree
 bank1,CDCB,dispatch_03f1_low3,annotation,9,03F1 CDB3,03F1,CDB3,disagree
 bank1,CDDA,clamp_r1r2_against_const_from_0491,annotation,7,0491,0491,,agree
 bank1,CE2D,store_slot_for_index_0_and_7,annotation,1,,,,vacuous
@@ -1223,7 +1223,7 @@ bank1,E54F,increment_03af_clear_03a1_on_wrap,annotation,3,03AF,03AF,,agree
 bank1,E57E,push_r7_call_e5d6_pop_r7,annotation,1,,,,vacuous
 bank1,E582,read_code_pair_by_r7_index_then_call_889e,annotation,23,03E0,,03E0,disagree
 bank1,E5A7,copy_code_pair_to_3e0_plus_r7,annotation,0,,,,vacuous
-bank1,E656,select_dptr_by_0491_7c0_then_dispatch,annotation,0,,,,vacuous
+bank1,E656,dptr_from_0491_031c_then_step_0e,annotation,0,,,,vacuous
 bank1,E6CB,decrement_0365_and_0368_if_nonzero,annotation,2,0365,0365,,agree
 bank1,E722,write_r1_to_tmod_and_jump_8801,annotation,1,,,,vacuous
 bank1,E768,ret_no_op,annotation,0,,,,vacuous
@@ -1323,7 +1323,7 @@ common,0070,reset_entry_stack_bank0_then_code_init,annotation,4,1001,1001,,agree
 common,00CF,walk_code_table_6f39,annotation,4,6F39,,6F39,disagree
 common,012F,chan_init_170a_then_jmp_11b6,annotation,2,170A,170A,,agree
 common,018C,chan_init_1709_then_jmp_11bc,annotation,2,1709,1709,,agree
-common,0200,post_05e8_init_1042_16e7,annotation,0,,,,vacuous
+common,0200,post_05e8_sp_0c0_init_1042_16e7_3105,annotation,0,,,,vacuous
 common,029B,chan_init_1708_then_jmp_11c2,annotation,2,1708,1708,,agree
 common,0408,FUN_CODE_0408,stride,7,,,,vacuous
 common,052F,int0_target_is_one_byte_reti,annotation,0,,,,vacuous
@@ -1418,7 +1418,7 @@ common,3894,set_iram_ad_88_clear_33,annotation,3,,,,vacuous
 common,3ACC,FUN_CODE_3acc,stride,3,,,,vacuous
 common,3B22,mul13_table_lookup_3b22,annotation,9,,,,vacuous
 common,3B3E,mul13_table_lookup_3b3e,annotation,9,,,,vacuous
-common,3B4E,read_dptr_into_r6_then_r7_3b4e,annotation,3,,,,vacuous
+common,3B4E,read_dptr_to_r6_then_dptr_3a00_plus_13x,annotation,3,,,,vacuous
 common,3B51,dptr_3a00_plus_13x_3b51,annotation,8,,,,vacuous
 common,3B70,dph_from_a_dpl_from_code_3b70,annotation,5,,,,vacuous
 common,3B7B,FUN_CODE_3b7b,stride,3,,,,vacuous
@@ -1442,7 +1442,7 @@ common,4825,FUN_CODE_4825,stride,0,,,,vacuous
 common,4A40,FUN_CODE_4a40,stride,1,,,,vacuous
 common,4A4D,code_word_to_dptr_4a4d,annotation,8,,,,vacuous
 common,4A69,code_word_to_dptr_4a69,annotation,8,,,,vacuous
-common,4A76,mov_a_from_r1_4a76,annotation,1,,,,vacuous
+common,4A76,dptr_4900_plus_15x_r1,annotation,1,,,,vacuous
 common,4A9C,FUN_CODE_4a9c,stride,8,,,,vacuous
 common,4ADF,FUN_CODE_4adf,stride,1,,,,vacuous
 common,4B22,FUN_CODE_4b22,stride,2,,,,vacuous
@@ -1461,7 +1461,7 @@ common,70FA,limit_65000_minus_x,annotation,15,,,,vacuous
 common,7110,dptr_plus_a_times_b_16bit,annotation,6,,,,vacuous
 common,711C,FUN_CODE_711c,stride,8,,,,vacuous
 common,7151,switch_case_dispatch,annotation,5,,,,vacuous
-common,7177,mov_dph_r2_dpl_r1_7177,annotation,2,,,,vacuous
+common,7177,jump_to_dptr_from_r1_r2,annotation,2,,,,vacuous
 common,7401,ff_filler_not_a_function_7401,annotation,3,,,,vacuous
 common,7404,ff_filler_not_a_function_7404,annotation,1,,,,vacuous
 common,7405,ff_filler_not_a_function_7405,annotation,3,,,,vacuous

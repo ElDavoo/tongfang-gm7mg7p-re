@@ -18,7 +18,7 @@
 void code_jump_to_two_bytes_at_dptr(undefined1 param_1,undefined1 param_2)
 
 {
-  mov_dph_r2_dpl_r1_7177
+  jump_to_dptr_from_r1_r2
             (((undefined1 *)CONCAT11(param_1,param_2))[1],*(undefined1 *)CONCAT11(param_1,param_2));
   return;
 }

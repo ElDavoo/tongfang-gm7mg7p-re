@@ -20,7 +20,7 @@ void FUN_CODE_30b5(byte *param_1,byte param_2)
       FUN_CODE_3b32();
       dph_from_a_dpl_from_code_3b70();
       pbVar3 = param_1;
-      bVar2 = read_dptr_into_r6_then_r7_3b4e();
+      bVar2 = read_dptr_to_r6_then_dptr_3a00_plus_13x();
       *param_1 = param_2 | pbVar3[bVar2];
     }
     cVar1 = cVar1 + '\x01';

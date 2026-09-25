@@ -78,7 +78,7 @@ void thunk_FUN_CODE_3459(byte param_1)
             mul13_table_lookup_3b3e(DAT_EXTMEM_0a47);
             dph_from_a_dpl_from_code_3b70();
             pbVar6 = pbVar5;
-            bVar3 = read_dptr_into_r6_then_r7_3b4e();
+            bVar3 = read_dptr_to_r6_then_dptr_3a00_plus_13x();
             *pbVar5 = param_1 | pbVar6[bVar3];
           }
         }

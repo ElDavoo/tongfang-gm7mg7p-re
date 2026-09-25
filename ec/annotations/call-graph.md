@@ -25,20 +25,20 @@ trees the numbers were taken on.
 | quantity | value |
 |---|---|
 | function rows in `decompiled/index.csv` | 2,710 |
-| of those, still `FUN_*` | 807 |
+| of those, still `FUN_*` | 807 † |
 | transfer instructions in the `.asm` listings | 5,027 |
 | — `lcall` / `ljmp` / `ajmp` / `acall` | 3,854 / 1,063 / 74 / 36 |
 | — resolving to an index row | 4,924 |
 | distinct targets reaching a row | 1,841 |
 | transfer sites whose target is no index row | 103, over 80 targets |
 | targets still anonymous | 470 |
-| inbound sites to those | 780 |
-| anonymous rows no direct transfer reaches | 337 |
-| distinct `FUN_*` callees the `.c` files name | 815 |
-| anonymous callees a comment names | 105 |
-| comments that name one | 131 |
-| — candidate (callee, comment) pairs, before the frame gate | 351 |
-| — kept / rejected / undecided by it | 140 / 185 / 26 |
+| inbound sites to those | 779 |
+| anonymous rows no direct transfer reaches | 337 † |
+| distinct `FUN_*` callees the `.c` files name | 815 † |
+| anonymous callees a comment names | 110 |
+| comments that name one | 136 |
+| — candidate (callee, comment) pairs, before the frame gate | 364 |
+| — kept / rejected / undecided by it | 146 / 188 / 30 |
 
 *** CORRECTION 2026-09-25 (issue #470), leaving the table above as it was
 written.*** One row stopped being anonymous. `pd 0x11C2` was `FUN_CODE_11c2`
@@ -47,11 +47,12 @@ with no `ghidra-functions.csv` row behind it, and is now
 `ec/decompiled/`**. It is a target (`pd 0xCB2A` `lcall`s 0x11C2) and a `.c`-named
 callee, so all three of those cells lose one: "still `FUN_*`" **790 → 789**,
 "targets still anonymous" **470 → 469**, "distinct `FUN_*` callees the `.c` files
-name" **798 → 797**. Each before-value is the same tool run on `origin/main`, so
-both ends of every movement come from `call_graph.py` itself. (A `grep -c 'FUN_'`
-over `index.csv` instead reads 813 → 812 for the first cell: it also counts the
-`FUN_` tokens sitting in comment columns, which is why that was the wrong pair
-to quote.)
+name" **798 → 797**. The inbound sites to that one target lose one with it, so
+"inbound sites to those" **780 → 779**. Each before-value is the same tool run on
+`origin/main`, so both ends of every movement come from `call_graph.py` itself.
+(A `grep -c 'FUN_'` over `index.csv` instead reads 813 → 812 for the first cell:
+it also counts the `FUN_` tokens sitting in comment columns, which is why that
+was the wrong pair to quote.)
 
 **The table's own figures were already behind before this, and are not corrected
 here**: 807 and 815 were measured on an earlier tree, and the gap is another
@@ -72,6 +73,24 @@ emits calls the listing does not carry directly. It is also the framing that
 annotated the two frames disagree about whether anything reaches it. This
 follows the precedent `../tools/audit_call_targets.py` sets by reporting an
 upper bound and a decode count for every figure and never one.
+
+**The three † rows were already wrong before issue #456 touched this file, and
+are left as they were rather than quietly corrected.** The tool measures
+`still FUN_*` **789** against the table's 807, anonymous rows no transfer
+reaches **320** against 337, and `FUN_*` callees in the `.c` files **797**
+against 815 — re-run `../tools/call_graph.py` on this tree and those are what it
+prints. `--check` does not catch it because it compares
+`call-graph-callees.csv` against the listings and never reads this table, which
+is transcribed by hand. **Issue #456 re-measured the four citation rows and the
+frame-gate partition against the tool and changed nothing else** — those four
+now read 110 / 136 / 364 / 146 / 188 / 30, which is what
+`../tools/call_graph.py` prints on this tree, rather than the one-low values a
++4 delta applied to `main`'s stale absolutes would have produced. The candidate
+and rejected counts are one below what #456 measured on a tree without #470: the
+`pd 0x11C2` row is what that comment names, and a named callee is not an
+anonymous one, so its one rejected pair left the gate rather than joining it.
+The drift in the three † rows is older than this tranche and belongs to a
+separate correction.
 
 **Parse the `.asm`, not the `.c`.** That is the one thing that will silently
 produce a wrong graph, and a future agent re-deriving this will reach for
@@ -269,16 +288,67 @@ the index carries, and no bank is ever guessed from a call site — a
 `common/0EA2.asm` and a `bank0/0EA2.asm` reading of the same bytes are
 indistinguishable in a listing.
 
-**Twelve of the 44 are `type=unresolved`**, and that is a result, not a gap.
-Five are genuinely undecodable from the bytes: 0x9C47 and 0xD2BE are a bare
-`ret`; 0x4A76, 0x3B4E and 0x7177 are one to three instructions with no `ret`,
-because Ghidra's function boundary on this firmware cuts through straight-line
-code. Six are large enough that a first reading pass cannot honestly reach a
-role: 0xD757 (282 bytes), 0x8931 (474), 0xDE83 (155), 0xBD45 (170), 0xE656
-(117) and 0xCD80 (51). The twelfth is 0x0200, whose listing is 19 bytes and a
-header-marked fragment of a longer routine. Each of those rows says what the
-entry does, names the registers it touches, and says what is not decoded. A
-plausible name would have been the one thing a row must never do.
+**None of the 44 is `type=unresolved` any more.** All twelve that were have been
+retyped from their own bytes by issue #456, and **the row count did not move**:
+1877 before it and 1877 after, because the one thing the tranche was missing was
+not entries. Each retyping, and the evidence it rests on, is in
+[`../../docs/findings/call-graph-unresolved.md`](../../docs/findings/call-graph-unresolved.md);
+what follows is what the table above now says because of it.
+
+**The five boundary rows were the load-bearing correction, and it went against
+the hypothesis the rows themselves carried.** Four of them said the address might
+be the head of straight-line code rather than a function, and `common 0x0200`
+said outright that it was "the entry, not the function". **All five are real
+entries, and each already had a row** — so none needed a new one. The split
+Ghidra cut is real but it is a split *after* the entry: reading forward from the
+committed image, 0x4A76 runs twelve bytes past its one-instruction body into
+`FUN_CODE_4a77` and returns at 0x4A82; 0x3B4E runs fifteen bytes into
+`dptr_3a00_plus_13x_3b51`, which was already a row; 0x7177 runs two bytes into
+`FUN_CODE_717B` and ends in `jmp @A+DPTR`; 0x0200 runs 136 bytes into
+`FUN_CODE_0213`. What settles each is the caller side, not the boundary:
+`lcall 0x4A76` at 0x485B, 0x4868 and 0x492D is each followed by a separate
+`lcall 0x4A4D`, which only makes sense if control comes back; `ec/decompiled/index.csv`
+gives 0xD2BE and 0x9C47 a size of 1 each, so their single `ret` is the whole
+function and not a window. All five are now typed from what the routine does —
+`math`, `math`, `dispatch`, `init` and `forwarder`.
+
+**The caller-side question 0x9C47 was opened for has an answer, and 0xD2BE turns
+out to be the same shape.** `ec/decompiled/bank0/9AAD.asm` dispatches on XDATA
+0x044B with a `dec`/`jz` chain giving cases 0, 1, 2, 3 and 4; `0x9B4A` is the
+**default** arm, and the other six `ljmp 0x9C47` sites are bail-outs from inside
+a case whose own test failed. So every path into it means "this case's condition
+did not hold", and returning untouched is the whole of what the caller expected.
+0xD2BE is the same device: all five `ljmp` sites are in `dispatch_on_0860`
+(0xD091) and each is a guard — 0x0860 zero, 0x0860 0xFF, or bit 0 of 0x1C00,
+0x1C11 or 0x1C29 set. Both are typed `forwarder` and named for the caller, which
+is the house shape `bank1 0xA9B3` and `bank0 0x849C` already set.
+
+**The six large bodies each got a type from the rest of the body, and five of
+the readings were not what the first pass had written.** 0xD757 is a `state`
+machine that re-enters its own head from nine places — its two dispatch operands
+are bits 1 and 3 of XDATA 0x1500, not "bit 0 of 0xE1 and bit 1 of 0xE3", and
+only the `0x1514 == 0xFC` case reaches 0x0200. 0x8931 is a `gate` over five
+independently-enabled blocks that names CPU_TEMP and GPU_TEMP, and its head's
+`jz` skips one nine-byte arm rather than the body. 0xDE83 is an `init` that
+stages a descriptor at 0x3000-0x3007 and probes it, returning the result in the
+carry; the 0x3000 block is **not** outside the EC's XDATA map as the row said.
+0xBD45 is a `dispatch` whose 0x0497/0x0403/0x0539 consultation, which its old
+text never reached, loads the same DPTR on both sides — a shape that invites the
+opposite conclusion.
+0xE656 is `math`: a 14-byte-stride walk of one of three CODE tables whose trip
+count its own bytes fix at eight entries, and whose `jnb 0xF3` is not a PSW bit
+at all but bit 3 of B. 0xCD80 is `state`, and its step is "at least 3" as the row
+said: the substitution fires when `0x0397 & 0xFC == 0`, that is when 0x0397 is 0,
+1, 2 or 3, and a larger 0x0397 passes through as itself, so nothing gives a step
+below 3 — what the mask settles is the condition, not the bound.
+
+**The citation figures moved and the count pin did not.** The four citation rows
+and the frame-gate partition above are re-measured; `call-graph-callees.csv` was
+regenerated with the tool over the same 1,841 rows, and **four of them gained
+their first citation** — `common` 0x4A77, 0x492D, 0x0FE6 and 0x150A, all named in
+the new comments — while none lost one, and the twelve rows above carry their new
+names. `build_ec_decompile.py`'s record pin stays at 1,877 — a pin, so it moves
+with rows a change adds on purpose, and this one added none.
 
 **Naming 0x0EE8 is what closes `bank0,0x0EA2`'s comment.** Its own comment
 already said the wait is on Timer 1 overflow; 0x0EE8 is what loads TH1 with
@@ -297,7 +367,7 @@ inbound distribution is already spent.
 
 ## What is left, and the two limits a reader must carry
 
-**The work list is the `annotated=no` rows**, 470 of them, of which **105 are
+**The work list is the `annotated=no` rows**, 470 of them, of which **110 are
 cited** by a comment and so are the ones a reader can trace to a sentence that
 needs them. The rest are reachable but uncited: worth naming, not yet blocking
 any explanation. The ranking is the order to work them in, and its top has
@@ -406,11 +476,11 @@ zeroed all 27 would have failed. The 25 that are gone are all `pd` comments
 naming the PD image's own byte, every one of them carrying the
 `cross-program` reason.
 
-**0x1C00 is the limit worth carrying, not an absence.** Twenty comments name
-it, 19 in a data frame and 1 unsettled — but it has **no row in this table at
+**0x1C00 is the limit worth carrying, not an absence.** Twenty-one comments name
+it, 20 in a data frame and 1 unsettled — but it has **no row in this table at
 all**, because no transfer reaches it, so it was never in the ranking to be
 wrong in. That is the shape to watch for in any other count
-here: not ranked is not absent, and 63 candidate pairs name a callee the table
+here: not ranked is not absent, and 67 candidate pairs name a callee the table
 carries no row for. The tool prints that number beside the gate's.
 
 ## Adding the next tranche

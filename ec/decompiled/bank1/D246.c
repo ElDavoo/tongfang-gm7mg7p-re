@@ -28,10 +28,10 @@ void clear_0394_or_call_cd80(char param_1)
   }
   trampoline_to_c118();
   if (param_1 != '\0') {
-    count_0397_down_to_03b5_then_0514();
+    reset_03b5_at_limit_then_decrement_0514();
     return;
   }
-  count_0397_down_to_03b5_then_0514();
+  reset_03b5_at_limit_then_decrement_0514();
   return;
 }
 

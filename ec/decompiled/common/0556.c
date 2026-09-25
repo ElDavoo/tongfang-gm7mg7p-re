@@ -33,7 +33,7 @@ undefined1 int1_target_six_calls_14c8_012f_018c_029b_7110_7177(undefined1 param_
     else {
       puVar1 = (undefined1 *)0x636;
       dptr_plus_a_times_b_16bit(DAT_EXTMEM_1110,2);
-      mov_dph_r2_dpl_r1_7177(puVar1[1],*puVar1);
+      jump_to_dptr_from_r1_r2(puVar1[1],*puVar1);
     }
   }
   else {

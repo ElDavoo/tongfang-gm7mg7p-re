@@ -13,7 +13,7 @@ void FUN_CODE_4921(undefined1 param_1,char param_2)
   if (param_2 == '\0') {
     FUN_CODE_43a5(0,param_1);
   }
-  mov_a_from_r1_4a76();
+  dptr_4900_plus_15x_r1();
                     /* WARNING: Subroutine does not return */
   code_word_to_dptr_4a4d();
 }

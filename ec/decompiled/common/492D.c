@@ -9,7 +9,7 @@
 void FUN_CODE_492d(void)
 
 {
-  mov_a_from_r1_4a76();
+  dptr_4900_plus_15x_r1();
                     /* WARNING: Subroutine does not return */
   code_word_to_dptr_4a4d();
 }

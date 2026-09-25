@@ -5,9 +5,12 @@
 
 
 /* Multiplies the accumulator by 13 (B=0x0D, MUL AB), adds 0xFC to the low byte and 0x3A to the high
-   byte through carry, leaving DPTR = 0x3AFC + 13*A, clears A and returns. It computes the table
-   address that 0x3B22 and 0x3B3E then read, offset by 0x0C, and returns no value itself. The table
-   is not decoded.
+   byte -- with the carry cleared first by the clr A at 0x3B59, so the high byte is 0x3A whatever
+   the low byte did and the index is truncated to one byte -- leaving DPTR = 0x3A00 + (13*A + 0xFC)
+   & 0xFF, then clears A and returns. It computes the table address that 0x3B22 and 0x3B3E then
+   read, offset by 0x0C, and returns no value itself. The table is not decoded. Corrected in place:
+   an earlier version of this sentence said the high byte was added through the carry, which the clr
+   A at 0x3B59 rules out.
    type: math
    evidence: ec/decompiled/common/3B51.asm; ec/decompiled/common/3B51.c
    basis: hand-decoded

@@ -38,7 +38,7 @@ void match_0a49_loop_tail(byte *param_1,byte param_2,char param_3)
       FUN_CODE_3b32();
       dph_from_a_dpl_from_code_3b70();
       pbVar8 = param_1;
-      bVar5 = read_dptr_into_r6_then_r7_3b4e();
+      bVar5 = read_dptr_to_r6_then_dptr_3a00_plus_13x();
       *param_1 = param_2 | pbVar8[bVar5];
       param_3 = cVar3;
     }

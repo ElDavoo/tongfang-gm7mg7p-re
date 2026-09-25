@@ -6130,3 +6130,64 @@ disagreements. The refusals are still worth pinning because they stop the write
 silent one. #512 (the `--self-test` redness, which #566's gate comment names
 and deliberately does not run) and #433, with the #504 naming backlog, are left
 open.
+
+## 30. The call-graph tranche's twelve `unresolved` rows, retyped from their bytes (2026-09-25, issue #456)
+
+Issue #134's tranche left twelve of its 44 rows at `type=unresolved` and
+`call-graph.md` said so and stopped. All twelve are now typed from what their
+own bytes do, and **the record count did not move — 1,877 before and 1,877
+after** — because the entry the issue expected to be missing was not missing.
+Full account in
+[`call-graph-unresolved.md`](findings/call-graph-unresolved.md).
+
+**The five boundary rows all turned out to be real entries, and the split Ghidra
+cut is *after* the entry, not before it.** `ec/decompiled/index.csv` gives
+`common 0x4A76` one byte with a second function at 0x4A77, `0x3B4E` three with
+one at 0x3B51, `0x7177` four with one at 0x717B, and `0x0200` nineteen with one
+at 0x0213 — and reading forward from the committed image each routine runs on
+into the next function and returns. **What settles it is the caller side**: at
+0x485B, 0x4868 and 0x492D a `lcall 0x4A76` is each followed by a separate
+`lcall 0x4A4D`, which only makes sense if control comes back; and every transfer
+the export shows reaching `0x0200` is an `ljmp`, never an `lcall`. `0x4A76` turns
+out to be the first half of a two-stage computed goto into a **CODE** table at
+0x4900, and `0x7177` a jump-table thunk that `common 0x05A6` reaches from
+inside an interrupt epilogue.
+
+**The caller-side question 0x9C47 was opened for has an answer, and 0xD2BE is the
+same device.** 0x9AAD dispatches on XDATA 0x044B with cases 0, 1, 2, 3 and 4;
+`0x9B4A` is the **default** arm, the other six `ljmp` sites are bail-outs from
+inside a case whose test failed, and four more conditional branches land there
+without a transfer. So every path means "this case's condition did not hold".
+0xD2BE's five sites are all guards in `dispatch_on_0860` — 0x0860 zero, 0x0860
+0xFF, or bit 0 of 0x1C00/0x1C11/0x1C29 set. Both typed `forwarder`, which is what
+`bank1 0xA9B3` and `bank0 0x849C` already set for the same shape.
+
+**Five of the six large bodies carried a claim the bytes refute, and the
+corrections are in place.** 0xD757's "bits 0xE1 and 0xE3" are bit *addresses* —
+bits 1 and 3 of the byte at XDATA 0x1500 — and its 0x103B-0x103F run and its
+jump to 0x0200 are separate cases, not one; 0x8931's head skips nine bytes of
+another function, not "the whole body", and its cascade names CPU_TEMP and
+GPU_TEMP; 0xDE83's 0x3000 block is **not** outside the EC's XDATA map, and its
+carry-set return is not reachable from its own writes; 0xE656's `jnb 0xF3` is no
+PSW bit at all but bit 3 of the B register — bit 3 of the byte loaded from XDATA
+`0x031C` — where the row had bit 0 of 0xF3; 0xCD80 tests bit 2 of 0x03FF where
+the row said bit 0, and its body runs whenever the step is at or below the limit
+rather than only on reaching it. **The step bound is the claim that did survive,
+and the mask is what shows it**: `anl A, #0xfc` replaces R2 with 3 only when
+`0x0397 & 0xFC == 0`, so a 0x0397 of 0 to 3 gives a step of exactly 3 and
+anything larger passes through as itself, which is "at least 3" either way — what
+the mask fixes is the condition, not the size. 0xBD45 is the sixth, and it only
+adds: the 0x0497/0x0403/0x0539 consultation, which its old text never reached,
+loads the same DPTR on both sides. 0xE656's trip count is also new — fixed at
+eight entries by its own bytes.
+
+One clause outside the twelve was corrected in place: `common 0x3B51` said its
+high byte is added "through the carry", which its own `clr A` at 0x3B59 rules
+out, and 0x3B4E's new reading depends on it. `ec/decompiled/` was re-exported
+(73 files against `main`, **no instruction line changed**), the record pin holds
+at 1,877 with its history comment recording that, `subsystems.md`'s census moved
+169 → 157 and 269 → 267, and the four citation figures in `call-graph.md` were
+re-measured because the new comments cite more addresses. **No register
+`status:` changed, no `registers.yaml` row was added, no hardware was involved,
+and no Ghidra project was written** — the export-only build copied the committed
+project to scratch.

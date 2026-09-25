@@ -21,7 +21,7 @@ void indirect_code_jump_via_stride5_table_6cd9(void)
   puVar1 = (undefined1 *)
            CONCAT11('l' - (((0x26U < (byte)(DAT_EXTMEM_06e7 * '\x05')) << 7) >> 7),
                     DAT_EXTMEM_06e7 * '\x05' - 0x27);
-  mov_dph_r2_dpl_r1_7177(puVar1[1],*puVar1);
+  jump_to_dptr_from_r1_r2(puVar1[1],*puVar1);
   return;
 }
 
