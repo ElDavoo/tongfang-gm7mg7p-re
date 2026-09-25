@@ -2002,7 +2002,8 @@ label the parse could not place, which is fatal for the whole run because
 attribution rests entirely on the labels — was disclosed in the census and
 nowhere else, so a run could print `intact`, print the clean closing sentence
 and exit 1 with no sentence joining the two. The closing summary now prints the
-reason beside the withheld count. Write-up:
+reason in the place the withheld count would be, whether or not anything was
+withheld. Write-up:
 `docs/findings/0751-grader-block-scoping.md`.
 
 ### 7c. `0x07C4` moved on 2026-09-23, and the 15 EC-side sites of `0x07C4`-`0x07D5` (2026-09-24, issue #183)

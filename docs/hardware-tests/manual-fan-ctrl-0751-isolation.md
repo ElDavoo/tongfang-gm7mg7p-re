@@ -666,7 +666,9 @@ which case the capture is holding a block it cannot name, or a restore typed
 between a block's write and its restore, which would close that block early and
 leave it void rather than `intact`. So a `--block` run over a capture carrying
 one exits 1 however clean the block it printed was, and the closing summary
-says so in a line of its own, beside the count of withheld windows.
+says so in a line of its own, in the place the count of withheld windows would
+be — printed there whether or not anything was withheld, and so on its own when
+nothing was.
 
 The selector is the value rather than a block number because the value is
 what §6 stamps every dump with, and a dump is a whole-range read with no

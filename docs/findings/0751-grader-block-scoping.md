@@ -25,15 +25,29 @@ the whole of what separates the two rows below.
 
     python3 ec/tools/grade_0751_isolation.py ec/tools/testdata/0751-isolation-run-unread-window/*.csv --block 0xA0
 
-printed, before this change:
+printed, before this change. "Before" is the tool at this branch's merge
+base and "after" is the file on this branch, so the transcripts name the
+revision they were recorded against rather than leaving the reader to
+assume the one checked out — the "before" lines below are the output of
+`git show a1d79a89:ec/tools/grade_0751_isolation.py` on the same command, and
+the "after" lines are this branch's `ec/tools/grade_0751_isolation.py`:
 
 ```
 === block 1 of 2, its integrity check ===  (value under test 0xA0)
     the other 1 block(s) were not checked in this run; run it without --block to check them all
   block 1/2: intact -- last mark 'restored 0x0751=0x10' is the restore
+    value under test 0xA0; roles control, write, restore
+
+=== 0x0751 across the dumps (§4.6) ===
+  no dump given (--dump); §4.6 not checked
+
+=== whole-block dump pairs (§4.1-§4.3) ===
+  no dump pair given (--dump-pair); the whole-block read is not checked
 
 === what this does and does not settle ===
-  None of the §4.1-§4.3 bytes moved in any window: consistent with the static prediction, for this capture's window only (§5: a byte that does not move inside the window may still move at the next suspend, AC transition or EC reset).
+  None of the §4.1-§4.3 bytes moved in any of the 3 window(s) in block 1 of 2, value under test 0xA0: that is what those 3 windows show. The other 1 block(s) are not part of it. The static prediction is a claim about the whole capture, and this output does not make it over one block of them -- the same CSVs graded without --block is what would.
+  Any fan duty and temperature bytes printed above are context, not a result: 0x075B/0x075C are the vendor's ADDR_EC_MAIN_FAN_L/R_DUTY_BYTE (issue #123), which the Control Center only reads, and a fan's duty moves with the die whether or not anything wrote 0x0751 -- which is what §3's no-op control arm measures, and what this script cannot. CPU package power (§4.5) is in no EC sweep and is still read by hand.
+  §7 keys `confirmed-working` on fan duty or package power moving under a fixed load, so this output is an input to that call and not the call itself. `confirmed-inert` as a standalone control additionally needs all three values, with and without the vendor service (§3a).
 ```
 
 and prints, after it:
@@ -42,10 +56,19 @@ and prints, after it:
 === block 1 of 2, its integrity check ===  (value under test 0xA0)
     the other 1 block(s) were not checked in this run; run it without --block to check them all
   block 1/2: intact -- last mark 'restored 0x0751=0x10' is the restore
+    value under test 0xA0; roles control, write, restore
+
+=== 0x0751 across the dumps (§4.6) ===
+  no dump given (--dump); §4.6 not checked
+
+=== whole-block dump pairs (§4.1-§4.3) ===
+  no dump pair given (--dump-pair); the whole-block read is not checked
 
 === what this does and does not settle ===
   A mark this cannot read is a mark no block can be attributed to, and the labels are the only thing that says which block a window is a window of: one the parse cannot place could have been a write -- in which case the capture is holding a block this run cannot name -- or a restore typed between a block's write and its restore, which would close that block early and leave it void rather than intact. So a capture carrying one cannot be read block by block: --block narrows what is graded, not what is known, and this refusal holds for the whole run whichever block was selected. The census above names every mark the parse could not read, per capture; the fix is the label, which has to be one of the three forms §6 fixes. The exit code is 1 until they do.
-  None of the §4.1-§4.3 bytes moved in any window: consistent with the static prediction, for this capture's window only (§5: a byte that does not move inside the window may still move at the next suspend, AC transition or EC reset).
+  None of the §4.1-§4.3 bytes moved in any of the 3 window(s) in block 1 of 2, value under test 0xA0: that is what those 3 windows show. The other 1 block(s) are not part of it. The static prediction is a claim about the whole capture, and this output does not make it over one block of them -- the same CSVs graded without --block is what would.
+  Any fan duty and temperature bytes printed above are context, not a result: 0x075B/0x075C are the vendor's ADDR_EC_MAIN_FAN_L/R_DUTY_BYTE (issue #123), which the Control Center only reads, and a fan's duty moves with the die whether or not anything wrote 0x0751 -- which is what §3's no-op control arm measures, and what this script cannot. CPU package power (§4.5) is in no EC sweep and is still read by hand.
+  §7 keys `confirmed-working` on fan duty or package power moving under a fixed load, so this output is an input to that call and not the call itself. `confirmed-inert` as a standalone control additionally needs all three values, with and without the vendor service (§3a).
 ```
 
 **The exit code did not change; what changed is that there is now a sentence to
@@ -155,14 +178,14 @@ the run-level comparison in the `elif withheld:` branch, and still exits 1 —
 that is right and it is untouched. The four tests #486 added stay green; none
 of them asserts on `unreads`-free output that the note could reach.
 
-Measured rather than asserted: the old tool from `HEAD` and this one were run
-over each of the nine `0751-isolation-run-*/` fixture directories four ways —
-unscoped, and `--block` at each of `0xA0`, `0x10` and `0x00` — and all 36 pairs
-of reports were diffed. **Three changed, and each by exactly one added line:
-the note.** They are the three `unread-window/` invocations that reach the
-closing section (the fourth, `--block 0x00`, names no block in that capture and
-is refused before the section prints, unchanged in both). No exit code moved.
-The one-capture `mark 3` case in
+Measured rather than asserted: the old tool from the merge base and this one
+were run over each of the nine `0751-isolation-run-*/` fixture directories
+four ways — unscoped, and `--block` at each of `0xA0`, `0x10` and `0x00` — and
+all 36 pairs of reports were diffed. **Three changed, and each by exactly one
+added line: the note.** They are the three `unread-window/` invocations that
+reach the closing section (the fourth, `--block 0x00`, names no block in that
+capture and is refused before the section prints, unchanged in both). No exit
+code moved. The one-capture `mark 3` case in
 `test_a_mark_that_is_not_one_of_the_three_forms_is_an_error` is the only other
 reachable run with unreads, and diffing it the same way gives the same single
 added line.
@@ -188,6 +211,7 @@ added line.
 
 No EC and no laptop is reachable from a GitHub-hosted runner. Every figure in
 this file is arithmetic over hand-constructed CSVs in `ec/tools/testdata/`,
-reproducible offline with the command above and the test named. No live run,
+reproducible offline with the command above, against the revision each
+transcript names, and the test named. No live run,
 no register readback, no hardware observation; no line of this change may be
 read as a report of a capture, and none is one.
