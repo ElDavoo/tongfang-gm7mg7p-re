@@ -7296,3 +7296,47 @@ letting a green suite imply the prose was verified. `XDATA_0860` stays
 two stores, not that the EC acts on the value. Still tooling hygiene — four CSV
 cells, prose line numbers, and a dated addendum to §46's sibling file, no
 capture opened, no EC, no hardware.
+
+## 49. The decoder's oracle is prepared for the cheap gate, and the placements are not where you would put them (2026-09-25, issue #798)
+
+The write-up is
+[`disasm8051-self-test-gate.md`](findings/disasm8051-self-test-gate.md); this
+is the summary. `ec/tools/test_disasm8051.py:3-6` names `disasm8051.py
+--self-test` as "the oracle for the opcode and mnemonic tables", and §3e's
+`:355-356` rests a load-bearing claim on the same mode — that no 8051
+direct-addressing opcode takes a 16-bit operand, so a `0xFFxx` value
+"**cannot** be a direct address whatever anything spelled it as" — saying of
+the 256-entry `OPCODE_LEN` table that "its own `--self-test` pins" it. The mode
+ran in no gate, in either tier. It is green today (0.02 s over five runs) and
+it is not run today, so the wiring is prepared at
+`docs/ci/agent-gates-disasm8051-self-test.patch` rather than landed, for item
+4's reason. **Until a human applies it, no commit runs it, and the PR does not
+claim CI does** — applying it to a scratch copy and running that is a different
+claim, and says so.
+
+It holds **five** groups, 36 assertions, not the three the issue names: the two
+`charge-profile-flow.md` windows (18 instructions), 4 `REL_SITES`, 11
+`BIT_SITES`, the `0xC1`/`0xC2` pair stated from the manual because an oracle
+derived from the tool under test asserts nothing, and the `paged_target()` page
+edge. What it does **not** hold is in the write-up and the patch header, and is
+not optional: it is not a disassembler check, 18 of 256 `OPCODE_LEN` entries are
+covered by transference, and it says nothing about `decode()`'s bounds contract,
+whose own suite `tools/run-tests.sh` collects and **no gate calls** — so both
+halves of this decoder's testing are ungated today, in two different ways. It
+also arbitrates none of the `0xA0`/`0xB0` `ANL`/`ORL C,/bit` disagreement
+`disasm8051.py:176-186` leaves open on purpose, where no committed instruction
+is affected either way.
+
+One thing a reader will want corrected: the tool-list entry goes at the **end**
+of the `for tool in` list and the arm after `*xdata_register_map.py)`, so
+neither is beside its semantic neighbour. That is placement-for-composition —
+§43's suite applies the set in every ordered pair, and `:129` is the only line
+in the list outside the other four patches' context windows — and tidying
+either one back breaks every-ordered-pair landing while each patch still
+applies cleanly alone. `tools/test_agent_gates_patches.py` gains the path and
+one new case, `ArmRetentionTests`, because a re-cut that kept the list entry and
+dropped the arm would pass every other case in the suite and hand the tool
+`--work "$scratch"` back. The deep tier's cross-decoder ratchet is **not** here
+(#774 owns it), and neither is a gate call for `tools/run-tests.sh` (#775/#773).
+Still tooling hygiene: a patch, a test, and pointers — no capture opened, no EC,
+no register read back, and no hardware observation needed.

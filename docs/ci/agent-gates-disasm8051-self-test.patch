@@ -1,0 +1,133 @@
+# ec/tools/disasm8051.py --self-test, wired into the cheap gate. Prepared here
+# rather than landed, for the reason docs/ci/agent-gates-capture-claims.patch
+# gives: `.github/scripts/agent-gates.sh` is copied from the agent-pipeline
+# template and the pipeline's push token has no `workflow` scope, so a branch
+# editing it fails at the end of the PR rather than at the start of it.
+# `docs/agent-pipeline.md` carries this one across a re-copy too, as its item 11.
+#
+# To land it:
+#
+#   git apply docs/ci/agent-gates-disasm8051-self-test.patch
+#
+# and that is the whole change.
+#
+# Why the cheap tier and not agent-gates-deep.sh: what the mode reads is the
+# committed `ec/firmware/GMxMGxx_11.800`, the two hand transcriptions in
+# `ec/annotations/`, and a hard-coded table. No Ghidra, no network, no
+# assembler, and no `r2` either -- `r2 -a 8051` is in the *provenance* of those
+# transcriptions, not in the run. So by the split `docs/agent-pipeline.md`
+# records, it belongs beside `check_register_counts`, not in the deep tier. It
+# measures 0.02 s here over five runs, against a cheap tier recorded at 5.9 s,
+# on 2026-09-25. That is one runner's figure and the ratio is the point;
+# item 6 gives the same caveat for `call_graph.py`.
+#
+# What it buys, and what it does not: `docs/findings.md:355` carries a
+# load-bearing claim -- that no 8051 direct-addressing opcode takes a 16-bit
+# operand, so a `0xFFxx` value "**cannot** be a direct address whatever
+# anything spelled it as" -- and says of the table behind it that "its own
+# `--self-test` pins" it. That mode ran in no gate, in either tier, and
+# `grep -rn "disasm8051.py --self-test" .github/` returns nothing. The same
+# goes for the r2 transcriptions `ec/tools/test_disasm8051.py:3-6` names as
+# "the oracle for the opcode and mnemonic tables". **Until a human lands this,
+# both tables can change in an otherwise-green PR.**
+#
+# Five groups, not the two the issue lists: 18 instructions across the two
+# `charge-profile-flow.md` windows diffed byte for byte against the hand
+# transcriptions; 4 `REL_SITES` (two backward branches the windows contain none
+# of, and 0xFE24 as the last-byte-not-second-byte check); 11 `BIT_SITES`; the
+# `0xC1`/`0xC2` `TEXTBOOK_BIT_SITES` pair, stated from the manual rather than
+# transcribed, which exists because an oracle derived from the tool under test
+# asserts nothing; and the `paged_target()` page-rule edge (`01 ff` at 0x07FE
+# -> 0x08FF). 36 assertions in all.
+#
+# What it does not do, so the comment at the call site is not read as more than
+# it is. It is **not** a disassembler check. It covers 18 of OPCODE_LEN's 256
+# entries by transference, so a row change outside those windows is not caught.
+# It says nothing about `decode()`'s bounds contract, which has its own suite
+# at `ec/tools/test_disasm8051.py` that `tools/run-tests.sh` collects and **no
+# gate calls** -- so both halves of this decoder's own testing are ungated
+# today, in two different ways. And it arbitrates none of the 0xA0/0xB0
+# `ANL C,/bit` / `ORL C,/bit` disagreement that disasm8051.py:176-186 leaves
+# open on purpose, where no committed instruction is affected either way. It
+# reads a committed image, a committed annotation file and a hard-coded table:
+# no capture is opened, no EC is opened, no register is read back, and nothing
+# here is evidence about the laptop.
+#
+# **Where the two hunks are cut, and why not somewhere tidier.** The tool-list
+# entry sits at the *end* of the `for tool in` list, after
+# `windows/tools/decompile_native.py` and so not grouped with the other
+# `ec/tools/` paths; the `case` arm sits after `*xdata_register_map.py)` and
+# so not beside its semantic neighbour `*citation_gap_scan.py)`. Both are
+# deliberate and neither is where a reader would put them. The reason is
+# `tools/test_agent_gates_patches.py`, which applies the set in **every
+# ordered pair** against a scratch copy of the committed script. Two hunks
+# cutting one contiguous region cannot both be independently applicable --
+# whichever lands first inserts a line between the other's leading and
+# trailing context -- so the placements are the ones that leave each of this
+# patch's two hunks outside the other four patches' context windows:
+#
+#   tool list :119-124  held by agent-gates-gap-text-check.patch hunk 1
+#   tool list :123-128  held by agent-gates-0751-self-test.patch hunk 1
+#   arms      :162-167  held by agent-gates-gap-text-check.patch hunk 2
+#   arms      :189-194  held by agent-gates-0751-self-test.patch hunk 2
+#
+# The union of the tool-list windows is :119-128, and :129 -- the `; do` line
+# this hunk splits -- is the only line in the list outside every one of them.
+# The arm's is the same shape at the other end of the arm list. List order here
+# is cosmetic: nothing reads the order, the loop is over a `for tool in` word
+# list. **"Tidying" either placement back to where a reader expects it breaks
+# every-ordered-pair landing**, and the failure is silent in the sense that
+# matters -- each patch still applies cleanly alone. That is the same class of
+# note the 0751 header carries about its own re-cut, and
+# `docs/findings/prepared-gate-patches.md` is where a future re-cut should
+# start.
+
+diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
+index 125d6478..e005d84 100755
+--- a/.github/scripts/agent-gates.sh
++++ b/.github/scripts/agent-gates.sh
+@@ -126,7 +126,8 @@ check_ghidra_tooling() {
+               ec/tools/citation_gap_scan.py \
+               ec/tools/xdata_register_map.py \
+               bios/tools/bios_extract.py \
+-              windows/tools/decompile_native.py; do
++              windows/tools/decompile_native.py \
++              ec/tools/disasm8051.py; do
+     [ -f "$tool" ] || continue
+     case "$tool" in
+       # The symbol generator takes no --work and has no --self-test; its
+@@ -235,6 +236,34 @@ check_ghidra_tooling() {
+       *xdata_register_map.py)
+         python3 "$tool" --check || rc=1
+         ;;
++      # The 8051 decoder's own oracle. --self-test diffs 18 instructions across
++      # the two windows ec/annotations/charge-profile-flow.md transcribed by
++      # hand from `r2 -a 8051`, which is what pins the two opcode tables:
++      # docs/findings.md §3e's "no direct-addressing opcode takes a 16-bit
++      # operand" is OPCODE_LEN's claim, and nothing else holds that table to
++      # a transcription. Then relative_target() against four hand decodes
++      # (bank-call-audit.md §8) -- two backward branches the windows contain
++      # none of, and 0xFE24 as the last-byte-not-second-byte case -- the
++      # mnemonics against 11 bit-addressed carry forms, the 0xC1/0xC2 CLR
++      # pair stated from the manual rather than transcribed (an oracle from
++      # the tool under test asserts nothing), and the AJMP page-rule edge.
++      #
++      # Not a disassembler check: `r2` is in the provenance of the
++      # transcriptions, not in the run, and no assembler, Ghidra or network is
++      # involved. 18 of OPCODE_LEN's 256 entries are covered by transference,
++      # so a row change outside those windows is not caught. It says nothing
++      # about decode()'s bounds contract, whose own suite
++      # (ec/tools/test_disasm8051.py) tools/run-tests.sh collects and no gate
++      # calls -- so both halves of this decoder's testing are ungated today,
++      # in two different ways. It arbitrates none of the 0xA0/0xB0 ANL/ORL
++      # C,/bit disagreement disasm8051.py leaves open on purpose.
++      #
++      # Until a human lands this, nothing runs it per commit and both tables
++      # can change in an otherwise-green PR. It reads a committed image and a
++      # committed annotation file: no capture, no EC, no register read back.
++      *disasm8051.py)
++        python3 "$tool" --self-test || rc=1
++        ;;
+       *)
+         # build_ec_decompile.py and bios_extract.py both take --work.
+         python3 "$tool" --work "$scratch" --check && \

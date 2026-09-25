@@ -58,6 +58,7 @@ GATE = '.github/scripts/agent-gates.sh'
 PATCHES = [
     'docs/ci/agent-gates-0751-self-test.patch',
     'docs/ci/agent-gates-capture-claims.patch',
+    'docs/ci/agent-gates-disasm8051-self-test.patch',
     'docs/ci/agent-gates-gap-text-check.patch',
     'docs/ci/agent-gates-testdata-row-claims.patch',
 ]
@@ -358,6 +359,51 @@ class FoldTests(unittest.TestCase):
                     'could not both be landed at the same anchors; a re-cut '
                     'that keeps one half and drops the other still applies, so '
                     'nothing else here would notice.')
+
+
+@unittest.skipUnless(has_git(), 'no git on PATH')
+class ArmRetentionTests(unittest.TestCase):
+    """The disasm8051 patch still lands both halves of its change.
+
+    Every other patch here is one function and one `gate` line, or one tool
+    line and one arm, and every case above checks that the patch *applies*.
+    None of them checks that it applies whole. For
+    `agent-gates-disasm8051-self-test.patch` that gap is not academic: a re-cut
+    that kept the tool-list line and dropped the `case` arm would apply
+    cleanly, pass every other case in this suite, and hand the tool back to
+    the `*)` default -- which is `--work "$scratch" --check` and `--self-test`,
+    three flags `--self-test` does not take. That is the whole reason the arm
+    exists, and it is the reason the same is checked in both directions here:
+    a patch that dropped the list entry instead would carry an arm the loop
+    never reaches.
+    """
+
+    PATCH = 'docs/ci/agent-gates-disasm8051-self-test.patch'
+    # The arm is one string rather than the two lines the issue names, because
+    # `python3 "$tool" --self-test || rc=1` is already in the
+    # merge_annotation_shards and grade_0751 arms -- checking it on its own
+    # would pass with this patch's arm dropped, which is the exact case this
+    # class exists to catch.
+    REQUIRED = [
+        'ec/tools/disasm8051.py; do',
+        '      *disasm8051.py)\n'
+        '        python3 "$tool" --self-test || rc=1\n'
+        '        ;;',
+    ]
+
+    def test_both_the_list_entry_and_the_arm_land(self):
+        with scratch_tree() as tree:
+            done = apply_patch(tree, self.PATCH)
+            self.assertEqual(done.returncode, 0, done.stderr)
+            landed = (tree / GATE).read_text()
+        for line in self.REQUIRED:
+            with self.subTest(line=line):
+                self.assertIn(
+                    line, landed,
+                    f'{self.PATCH} no longer lands {line!r}. Its two halves are '
+                    'what keep disasm8051.py off the `*)` default arm, and a '
+                    're-cut that lands one without the other still applies, '
+                    'so nothing else here would notice.')
 
 
 class HeaderInstructionTests(unittest.TestCase):

@@ -339,6 +339,45 @@ only covers what's specific to *this* copy.
      token, and **until a human lands it, no commit runs it**. Its own suite
      (`ec/tools/test_check_testdata_row_claims.py`) needs no wiring to be run
      at all, for item 5's reason.
+  11. **`disasm8051.py --self-test` is added to the tool list in
+     `check_ghidra_tooling`, and a re-copy drops it**
+     (2026-09-25, issue #798). `--self-test` holds the r2 hand transcriptions,
+     which `ec/tools/test_disasm8051.py:3-6` names as "the oracle for the
+     opcode and mnemonic tables", and `docs/findings.md:355-356` rests a
+     load-bearing claim on the same mode — that no 8051 direct-addressing
+     opcode takes a 16-bit operand, so a `0xFFxx` value "**cannot** be a direct
+     address whatever anything spelled it as" — saying of the 256-entry
+     `OPCODE_LEN` table that "its own `--self-test` pins" it. The mode ran in
+     no gate, in either tier, and both tables could change in an
+     otherwise-green PR. It takes no `--work` and has no `--check`, so the `*)`
+     default would have handed it flags it does not have, and it needs neither
+     the scratch dir nor an argument: `main()` derives the firmware path from
+     `__file__`, so the gate's cwd is irrelevant. Adding the path and this arm
+     is the whole of it:
+
+     ```sh
+           *disasm8051.py)
+             python3 "$tool" --self-test || rc=1
+             ;;
+     ```
+
+     Cheap tier for item 4's reason: the committed
+     `ec/firmware/GMxMGxx_11.800`, two hand transcriptions in
+     `ec/annotations/` and a hard-coded table — no Ghidra, no network, no
+     assembler, and no `r2` either, which is in the *provenance* of those
+     transcriptions rather than in the run. It measures **0.02 s** here over
+     five runs on 2026-09-25, against a cheap tier the paragraph above records
+     at 5.9 s, on item 6's caveat about the ratio being the point. The whole of
+     it is prepared in `docs/ci/agent-gates-disasm8051-self-test.patch` — a
+     patch of its own, and **a re-copy restores the eleven-tool list**, so this
+     item and that patch are the only things carrying it. It is not here for
+     item 4's reason, template-copied file and no `workflow` scope on the
+     token, and **until a human lands it, no commit runs the mode**. Its
+     neighbours in the patch are placed for composition rather than for reading
+     — the tool-list entry is at the end of the list and the arm is after
+     `*xdata_register_map.py)`, both outside the four other patches' context
+     windows — and the patch header says so, because tidying either one back
+     breaks every-ordered-pair landing while each patch still applies alone.
 - **`tools/run-tests.sh`, and the gate line that would call it**
   (2026-09-23, issue #162) — the four offline `unittest` suites
   (`ec/tools/test_grade_0751_isolation.py`, `windows/tools/test_ec_watch.py`,
