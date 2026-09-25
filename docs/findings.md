@@ -2018,6 +2018,19 @@ rather than run-wide, so a `--block` attachment is still decided by its own
 block. Write-up:
 `docs/findings/0751-grader-unplaced-window-checks.md`.
 
+**And a window the run read is not automatically a window of a value under
+test.** A mark in no block opens a window that grades — its rows are real and
+there is no other arm to mis-file them under — and it is a window of nothing,
+because a label is the only thing that attributes one. A plain unscoped run over
+a day with a stray mark in it therefore reached the bare `else` and printed
+"consistent with the static prediction" over a set that is not the whole
+capture's windows of anything. The closing section now counts those windows
+beside the unreadable-mark note and declines the capture-level comparison over
+the rest — and on a run that also withheld a window, states the movement over
+the graded windows that are a window of a value under test rather than over all
+of them; the exit code is unchanged. Write-up:
+`docs/findings/0751-grader-unplaced-window-scope.md`.
+
 ### 7c. `0x07C4` moved on 2026-09-23, and the 15 EC-side sites of `0x07C4`-`0x07D5` (2026-09-24, issue #183)
 
 **The observation, already in the tree and written down nowhere.** §7 cites

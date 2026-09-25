@@ -37,9 +37,13 @@ and prints, after it:
 
 ```
 === what this does and does not settle ===
-  2 of the 8 window(s) above were not graded: the mark set of the block they fall in does not hold, or no block could be attributed to them at all. What they would have shown is not reported here and is not to be quoted from this run.
+  2 of the 8 window(s) above were not graded: the mark set of the block they fall in does not hold, or the window falls in no block at all and either no label could be read for it or the captures disagree about the action it opened. What they would have shown is not reported here and is not to be quoted from this run.
   None of the §4.1-§4.3 bytes moved in any of the 6 window(s) that were graded: that is what those 6 windows show, and the 2 window(s) withheld above are not part of it. The static prediction is a claim about the whole capture, and this output does not make it over a run it only read part of -- a run in which every window was graded is what would. §7's `confirmed-inert` needs all three values, and a window this report refused to read is one this run cannot speak for -- whether it sits in a block of its own is not something this output can say -- so the paragraph below is as far as this run goes.
 ```
+
+(The banner's second clause is later wording — #529 added the agreement
+refusal to the two no-block paths it lists, and the banner names all of them.
+The sentence under it is this change's and is unchanged by that.)
 
 **The banner was right in both.** "What they would have shown is not
 reported here and is not to be quoted from this run" is exactly the truth
