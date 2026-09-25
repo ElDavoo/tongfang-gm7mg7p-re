@@ -657,6 +657,19 @@ which is what makes this output something a fold-in can attach per block, one
 attachment per value. The other blocks are not checked in such a run, and the
 report says so, in the census and in the block section.
 
+Marks in no block are not scoped by `--block` either, and the census says of
+each that `--block` cannot select it. One of them — a label that is not one of
+the three forms named above — refuses the whole run rather than the block that
+was selected, because the labels are the only thing that says which block a
+window is a window of: one the grader cannot place could have been a write, in
+which case the capture is holding a block it cannot name, or a restore typed
+between a block's write and its restore, which would close that block early and
+leave it void rather than `intact`. So a `--block` run over a capture carrying
+one exits 1 however clean the block it printed was, and the closing summary
+says so in a line of its own, in the place the count of withheld windows would
+be — printed there whether or not anything was withheld, and so on its own when
+nothing was.
+
 The selector is the value rather than a block number because the value is
 what §6 stamps every dump with, and a dump is a whole-range read with no
 marks in it: the `<value>` in the file name is the only thing in it that says
