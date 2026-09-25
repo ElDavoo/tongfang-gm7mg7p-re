@@ -55,7 +55,7 @@ Measured over the committed export, by `index.csv` for the functions and
 `ghidra-functions.csv` for the names:
 
 - `exported functions` — 2710
-- `annotated function rows` — 1848
+- `annotated function rows` — 1851
 - `rows the index marks annotated` — 1866
 - `unresolved rows` — 152
 
@@ -441,7 +441,7 @@ own. `--check` compares both occurrences against the same recount, so they
 cannot drift apart silently:
 
 - `exported functions` — 2710
-- `annotated function rows` — 1848
+- `annotated function rows` — 1851
 - `rows the index marks annotated` — 1866
 - `unresolved rows` — 152
 

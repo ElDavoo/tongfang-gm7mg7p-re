@@ -1804,10 +1804,12 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # (bank0 0xCC64), 1,782 -> 1,783 with issue #262's one bank1 0xC1E7,
     # 1,783 -> 1,804 with issue #136's 21 common-area interrupt-entry rows, then
     # 1,804 -> 1,848 with issue #134's 44 -- the call-graph tranche in
-    # ec/annotations/call-graph.md.
-    check("EC: annotations/ghidra-functions.csv is 1,848 records, no short row "
+    # ec/annotations/call-graph.md, and 1,848 -> 1,851 with issue #250's three
+    # (bank1 0x9CE8, 0x9D53 and 0xE2D3 -- the 0x1C12-trio seeds and the
+    # 0x1C00-block dispatch its search turned on).
+    check("EC: annotations/ghidra-functions.csv is 1,851 records, no short row "
           "and no duplicate (scope, addr)",
-          len(_ann) == 1848 and not structure_problems("ghidra-functions.csv", _ann,
+          len(_ann) == 1851 and not structure_problems("ghidra-functions.csv", _ann,
                                                        annotation_key, "(scope, addr)"),
           "%d record(s)" % len(_ann))
     check("EC: bank-call-targets.csv is 5,998 records, no short row and no "
@@ -1823,7 +1825,7 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("EC: a raw and a normalised key count the same on both annotation "
           "CSVs, so normalising cannot merge two distinct keys",
           len({(r["scope"], r["addr"]) for r in _ann})
-          == len({annotation_key(r) for r in _ann}) == 1848
+          == len({annotation_key(r) for r in _ann}) == 1851
           and len({(r["file_offset"], r["target"]) for r in _ct})
           == len({call_target_key(r) for r in _ct}) == 5998)
 
