@@ -135,7 +135,7 @@ of the disassembler's vocabulary.
 > every number in the paragraph above is stale — not only the `thunk_` (7) the
 > rename removed.** The current figures are 169 `type: unresolved` rows of 1872,
 > and 269 names over the same seven prefixes: `call_` (87), `load_` (117),
-> `trampoline_` (29), `ret_only_` (21), `nop_` (9), `seed_` (4), of which 80 of
+> `trampoline_` (29), `ret_only_` (21), `nop_` (9), `seed_` (6), of which 80 of
 > the `load_` rows are `load_dptr_` and the other 37 are the register and table
 > loads beside them. Only two of those moved because of the rename: `thunk_`
 > (7) is gone and `call_` gained the one `call_122f`. `load_` 115 → 117,

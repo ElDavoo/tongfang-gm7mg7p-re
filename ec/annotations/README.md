@@ -80,8 +80,8 @@ never happened: there is nothing to grep for and no error to read.
 
 Seven rows did this with `thunk_`, which is Ghidra's prefix for an auto-thunk
 (`thunk_to_f275`, `thunk_call_122f`, …), and `ec/annotations/subsystems.md` §2
-carried the consequence for months as a live count. Issue #602 renamed them
-into the convention this file's neighbours already used:
+carried the consequence as a live count until this change. Issue #602 renamed
+them into the convention this file's neighbours already used:
 
 | instead of | write | for |
 |---|---|---|

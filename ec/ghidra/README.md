@@ -896,9 +896,10 @@ every exporter" true rather than aspirational.
 `isPlaceholderName()` no longer agree.** `scripts/TongFang.java` tests
 `name.equals("entry")`; `scripts/ExportDecompile.java` tests
 `name.startsWith("entry")`. The first is the canonical one and the second is
-what the listing exporter calls. The blast radius is measured, not guessed:
-**zero** EC rows, because no exported EC function is named `entry*`, so #602's
-re-export did not move a single EC row on account of it. Four BIOS rows are
+what the `.c` exporter and the `annotated` column in `index.csv` call. The
+blast radius is measured, not guessed: **zero** EC rows, because no exported
+EC function is named `entry*`, so #602's re-export did not move a single EC row
+on account of it. Four BIOS rows are
 reported `annotated=no` on the same fault — `Setup 0x000004B0` and
 `EcPs2Kbd 0x260` (`entry`), plus `PeiOverClock FFCFBB49`
 (`entry_clamp_status`) and `OemGlobalNvsDxe 0x370` (`entry_dispatch`), the last
