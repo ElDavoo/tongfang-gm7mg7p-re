@@ -195,11 +195,23 @@ guard-off one (445):
   named clusters keep key *and* membership while their rank moves**, and two —
   `mode-oem-init` and `level-block-086x` — change both, which is the key-only
   design's failure case", over a table marking those two **changed** on both
-  columns. **The run gives three movers, and neither of those two rows is what
-  the table says.** Six plus two does not reach the nine names the census has
-  either, and the table's own `rank` column reads `main-ec-002 → -002` and
-  `main-ec-004 → -004` for the two rows it marks **changed**. The wrong version
-  is kept above rather than deleted, per `../findings.md` §4a-4d.)*
+  columns. **The run gives three movers, not six** — `countdown-06c6`,
+  `fan-step-08a0` and `flag-pair-0442`, the first three rows of the table, each
+  of whose `same`/`same` cells is correct. **Of the two rows the table marks
+  changed/changed, `mode-oem-init`'s is confirmed by the run on all three
+  columns; only `level-block-086x`'s is wrong, in both of its `changed` cells** —
+  its key stays `ka39cda99615f` and its membership is unchanged, so both read
+  `same`. That leaves two wrong cells, both in one row.
+
+  Two further things about the old bullet are recorded rather than counted,
+  because neither is evidence about either row. Its arithmetic does not close:
+  six movers and two changers is eight, over a census of nine names and a table
+  that listed five rows in all, so the six was a count nothing else was checked
+  against. And its `rank` column reading `main-ec-002 → -002` and `main-ec-004 →
+  -004` for the two rows it marks **changed** is what the run gives for both
+  (`rank same`); the bullet never claimed those two rows moved rank, so that
+  column is not a defect in them either. The wrong version is kept above rather
+  than deleted, per `../findings.md` §4a-4d.)*
 
   **The derivation, printed rather than summarised** — this file's own form,
   §6a's heredoc is reproduced at `:141-163` for that reason. Both runs write
@@ -210,9 +222,17 @@ guard-off one (445):
       --out-clusters /tmp/off-clusters.csv --out-registers /tmp/off-registers.csv
     names: seeded 8, exact 0, carried by overlap 1, tied, not carried 0, with no name 436
       main-ec-002 carries mode-oem-init by overlap, Jaccard 0.97 from kefb63d82f8c7 -- re-key annotations/xdata-cluster-names.csv if the name moved
+  wrote /tmp/off-registers.csv: 1326 rows
+  wrote /tmp/off-clusters.csv: 445 rows
+    main-ec: 1218 distinct addresses, 14838 references, 394 clusters at threshold 0.5
+    pd: 157 distinct addresses, 858 references, 51 clusters at threshold 0.5
   $ python3 ec/tools/xdata_register_map.py \
       --out-clusters /tmp/on-clusters.csv --out-registers /tmp/on-registers.csv
     names: seeded 9, exact 0, carried by overlap 0, tied, not carried 0, with no name 430
+  wrote /tmp/on-registers.csv: 1326 rows
+  wrote /tmp/on-clusters.csv: 439 rows
+    main-ec: 1218 distinct addresses, 14838 references, 389 clusters at threshold 0.5
+    pd: 157 distinct addresses, 858 references, 50 clusters at threshold 0.5
   $ python3 - <<'EOF'
   import csv
   named = lambda p: {r["cluster_name"]: r
@@ -261,16 +281,19 @@ guard-off one (445):
   argument, over the 15 changed-key clusters, is
   `annotations/xdata-register-map.md:1139-1146` and is unaffected by any of this.
 
-  **Where the two `changed` rows came from.** `annotations/xdata-06c2-06db-timers.md`
-  §6b (`:858-870`) is an `--export-ownership` run — 440 cluster rows, 390
-  main-EC, `seeded 4, exact 0, carried by overlap 3`, three carry lines — and
-  this table imported its two `changed` rows from that transcript. The `0.97`
-  appears in **both** runs, so that one cell was right by coincidence and only
-  the other two were not, which is what made the error hard to see:
-  `level-block-086x` is a carry at 0.75 under §6b's flag and `seeded` at
-  `ka39cda99615f` under this one, because the two flags measure different
-  classifiers. §6b is a correct record of a different run and is not to be
-  re-imported here.
+  **Where the old table's two `changed` rows came from.**
+  `annotations/xdata-06c2-06db-timers.md` §6b (`:858-870`) is an
+  `--export-ownership` run — 440 cluster rows, 390 main-EC, `seeded 4, exact 0,
+  carried by overlap 3` — and the table above read its two `changed` rows off
+  that transcript's three carry lines: `mode-oem-init` at 0.97,
+  `level-block-086x` at 0.75 and `ff-fill-stubs` at 0.60. **Of those three,
+  only the `0.97` line also appears under `--no-eq-guard`, character for
+  character** — which is why `mode-oem-init`'s row came out right on all three
+  columns, since that one carry is real under this flag as well. The `0.75`
+  line has no counterpart here: `level-block-086x` is `seeded` at
+  `ka39cda99615f` under `--no-eq-guard`, because the two flags measure different
+  classifiers, and those are the two cells the correction finds wrong. §6b is a
+  correct record of a different run and is not to be re-imported here.
 
   **One observation, recorded rather than opened.** The corrected reading puts a
   *membership* change on `main-ec-002` — `annotations/xdata-register-map.md:1142`

@@ -414,9 +414,12 @@ class TheGuardOffRegeneration(unittest.TestCase):
         # censuses now; the `main-ec-002` the paragraph above leaves it at is
         # itself a superseded reading, kept here rather than edited out for the
         # same reason. It is the most-cited cluster in the tree all the same
-        # (`xdata-register-map.md:1156` counts nine `.md` files naming
-        # `main-ec-003`), so the exhibit this case fell back on is the one the
-        # ranking happens to spare. The assertion stays `assertTrue(movers, …)`
+        # (`xdata-register-map.md:1156` records the count that line was written
+        # against — `grep -rl 'main-ec-003\b' --include=*.md .` naming nine
+        # files, against seven for `main-ec-002` — and this file is the tenth,
+        # so the numeral is that line's figure rather than a current one), so
+        # the exhibit this case fell back on is the one the ranking happens to
+        # spare. The assertion stays `assertTrue(movers, …)`
         # on purpose: pinning the count would be the hazard this class's own
         # docstring exists to record — a total pasted into a file is a snapshot
         # of the merge it was measured on — and it would go red on any
