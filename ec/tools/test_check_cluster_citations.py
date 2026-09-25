@@ -66,15 +66,32 @@ COUNTS = {
                     'addr_range': '0x0460-0x09CE'},
 }
 
+# The two clusters §26's summary sentence runs together, as the committed
+# census has them (xdata-clusters.csv:82, :101): `main-ec-081` is the three
+# bytes the `0xD96C` clear steps over, and `main-ec-100` is the three that hold
+# `0x0800`, which is the second bound the `setb c` makes. Neither is "close
+# enough" to the other, so an address in the wrong one is a real disagreement.
+CLEAR_MEMBERS = {
+    'main-ec-081': {'0x07FD', '0x07FE', '0x07FF'},
+    'main-ec-100': {'0x0630', '0x06C4', '0x0800'},
+}
 
-def _problems(text, members=None, counts=None, by_key=None, by_name=None):
+# The registers CSV's `known` set, narrowed to what that sentence names: the
+# three spared bytes, and `0x0800`. `0x0100` and `0x0FFF` are the clear's own
+# bounds and have no registers row, and `0xD89F`/`0xD96C`/`0xD982` are code.
+CLEAR_KNOWN = {'0x07FD', '0x07FE', '0x07FF', '0x0800'}
+
+
+def _problems(text, members=None, counts=None, by_key=None, by_name=None,
+              known=None):
     """The problem tuples the tool reports for one piece of prose."""
     with tempfile.NamedTemporaryFile('w', suffix='.md', delete=False) as f:
         f.write(text)
         path = f.name
     try:
         problems, _ = ccc.check(
-            path, members or MEMBERS, counts or COUNTS, KNOWN,
+            path, members or MEMBERS, counts or COUNTS,
+            KNOWN if known is None else known,
             BY_KEY if by_key is None else by_key,
             BY_NAME if by_name is None else by_name,
             False)
@@ -83,9 +100,10 @@ def _problems(text, members=None, counts=None, by_key=None, by_name=None):
     return problems
 
 
-def cited(text, members=None, counts=None, by_key=None, by_name=None):
+def cited(text, members=None, counts=None, by_key=None, by_name=None,
+          known=None):
     """(count, first address) the tool reports for one piece of prose."""
-    problems = _problems(text, members, counts, by_key, by_name)
+    problems = _problems(text, members, counts, by_key, by_name, known)
     return len(problems), problems[0][3] if problems else None
 
 
@@ -192,6 +210,47 @@ class HoldsThePairing(unittest.TestCase):
         text = ('`main-ec-002` is the cluster of `0x044C 0x086E 0x06C6`, and '
                 '`main-ec-003` holds `0x08A8`\n')
         self.assertEqual(cited(text), (1, '0x06C6'))
+
+
+class OneAttributionPerUnit(unittest.TestCase):
+    """A unit sized to one attribution, in the one place it was two.
+
+    §26's summary packed the membership claim and the `setb c` operand into a
+    single sentence, and the any-of fallback resolved the ambiguity
+    conservatively: the unit named one cluster, so the one address in it that
+    the census puts elsewhere was a disagreement (issue #605). The summary was
+    reworded rather than the rule loosened — see
+    `docs/findings/reset-vector-dptr-targets.md` — and these two cases pin the
+    decision itself, so an edit that re-packs the pair goes red again.
+    """
+
+    def test_the_split_pair_is_silent(self):
+        # The membership sentence, with the bound moved out of it. The second
+        # sentence names no cluster, so it is not read as a citation at all;
+        # the first is read, and every address it carries that the registers
+        # CSV knows is a member of the one id it names.
+        text = ('**`0xD89F` is a single `ret` byte, and `0xD96C` is a real '
+                'routine that clears XDATA `0x0100`–`0x0FFF` except it steps '
+                'over `0x07FD`, `0x07FE` and `0x07FF`** — 3,837 of 3,840 bytes, '
+                'and those three are the whole of the `main-ec-081` cluster. The '
+                '`setb c` at `0xD982` is what makes the second bound `0x0800` '
+                'rather than the `0x07FF` its own immediates spell out.\n')
+        self.assertEqual(cited(text, CLEAR_MEMBERS, known=CLEAR_KNOWN),
+                         (0, None))
+
+    def test_the_re_packed_sentence_still_reports_the_operand(self):
+        # The form the summary was in, and still the wrong one. This is not a
+        # case the tool has to go green on: it says the unit was too big, and
+        # a rule change that admitted `0x0800` here would be admitting it for
+        # every membership sentence in the corpus.
+        text = ('**`0xD89F` is a single `ret` byte, and `0xD96C` is a real '
+                'routine that clears XDATA `0x0100`–`0x0FFF` except it steps '
+                'over `0x07FD`, `0x07FE` and `0x07FF`** — 3,837 of 3,840 bytes, '
+                'the `setb c` at `0xD982` making the second bound `0x0800` '
+                'rather than `0x07FF` — and those three are the whole of the '
+                '`main-ec-081` cluster.\n')
+        self.assertEqual(cited(text, CLEAR_MEMBERS, known=CLEAR_KNOWN),
+                         (1, '0x0800'))
 
 
 class TheTwoDurableForms(unittest.TestCase):
