@@ -456,7 +456,7 @@ def section_shapes(grader, timer, tmp: str) -> int:
 # claim was wrong, and the two need a reader, not a guess.
 CITATIONS = [
     # -- writers -------------------------------------------------------------
-    ("windows/tools/ec_watch.py", 458,
+    ("windows/tools/ec_watch.py", 473,
      'self._sink.row([ts, "MARK", "", label])',
      "writer: the Marker._loop the issue's shape A is scoped to"),
     ("windows/tools/system_id_probe.py", 261,
@@ -574,7 +574,7 @@ CITATIONS = [
     ("windows/tools/ec_watch.py", 288,
      "def warn_unchecked_marks(path, existing_findings):",
      "the notice the measurement exists for"),
-    ("windows/tools/ec_watch.py", 351,
+    ("windows/tools/ec_watch.py", 361,
      "accepted, refused, unplaceable = existing_findings(path)",
      "the notice's one call into the grader's reader"),
     ("windows/tools/test_manual_fan_ctrl_probe.py", 515,

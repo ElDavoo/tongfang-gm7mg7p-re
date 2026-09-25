@@ -1059,6 +1059,61 @@ class AppendNoticeTests(unittest.TestCase):
             self.assertNotIn('row(s)', text.getvalue())
             self.assertNotIn('no row to fix', text.getvalue())
 
+    def test_a_bom_is_refused_by_name_and_gets_the_same_remedy(self):
+        # The other refusal of the file rather than of a row (#750): the
+        # strict reader refuses a capture carrying a byte-order mark by name,
+        # before it reads a row, so this lands in the same `row is None`
+        # branch the decode case above reaches and the sentence under that
+        # branch is one sentence for both. It was not saying what both could
+        # agree on. It named a locale, and for this case that is false
+        # outright: the capture is valid utf-8, this interpreter reads it, and
+        # it is already in an encoding this Python reads -- so "re-saving the
+        # capture in an encoding this Python reads is the fix" sat directly
+        # under the grader's own "re-save this one without one", and the
+        # second of the two remedies could not be acted on at all.
+        #
+        # Driven through `main` rather than through the reader, because the
+        # claim is about the notice as an operator reads it and the case
+        # before this one already covers the reader; and seeded as bytes
+        # because a byte-order mark is not something a text-mode write makes.
+        ec = FakeEc()
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / 'capture.csv'
+            out.write_bytes(b'\xef\xbb\xbf' + ''.join(
+                line + '\n' for line in
+                (self.HEADER, self.MARK_2, self.CHANGE)).encode('utf-8'))
+            text = io.StringIO()
+            with patch.object(ec_watch, 'Ec', lambda: ec), \
+                 patch.object(ec_watch.sys, 'stdin',
+                              FakeStdin(ec, 'wrote 0x0751=0x10\n')), \
+                 contextlib.redirect_stdout(text):
+                rc = ec_watch.main(['--start', '0x0700', '--len', '0x4',
+                                    '--interval', '0', '--csv', str(out),
+                                    '--mark', *self.VOCAB])
+        notice = text.getvalue()
+        self.assertEqual(rc, 0)
+        # The mark is still named. A preflight that could not read the file
+        # would lose the one warning that says what is in it, and the strip in
+        # `capture_snapshot` is what keeps this true for a refused file.
+        self.assertIn('settled', notice)
+        # Refused as the file, so no row is offered for deletion. The row the
+        # delete-the-row remedy would have pointed at is the header, and the
+        # whole of #750 is that it is not named as a bad timestamp.
+        self.assertIn('the file itself', notice)
+        self.assertNotIn('fix or delete the row(s) above', notice)
+        self.assertIn('no row to fix', notice)
+        # The grader's own sentence, verbatim: the warning an operator reads
+        # and the error the grading raises are one remedy, and asking the
+        # grader for it is what stops this file carrying a second copy.
+        self.assertIn(grader.bom_refusal(str(out)), notice)
+        # And the shared sentence says no cause at all, because a cause is
+        # true of one of the three file-level refusals and false of the other
+        # two. These two are the assertion the old wording failed; each is
+        # here rather than a copy of the new wording so that a wording which
+        # went back to naming a locale would be caught by both.
+        self.assertNotIn('locale', notice)
+        self.assertNotIn('encoding this Python reads', notice)
+
     def test_the_reader_is_the_graders_own(self):
         # `load_label_vocab` loads the grader by path precisely so the prompt
         # carries no second copy of the row shape, and a copy is exactly what

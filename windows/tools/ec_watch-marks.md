@@ -275,9 +275,24 @@ and which one applies depends on the reader rather than on the row.
 The strict reader refuses the *file*, by name, before it reads a row: a capture
 is `utf-8` with no BOM, so the notice prints `the file itself`, says what a
 byte-order mark is, and asks for the capture to be re-saved — the same
-file-level shape as the decode refusal above, and with no row attached, so there
-is nothing to offer for deletion. The three preflights still have to read a
-capture the strict reader refused, and for them the shape is what retires the
+file-level shape as the decode refusal above, down to the wording, and with no
+row attached, so there is nothing to offer for deletion. The two also share one
+remedy sentence, and that sentence names no cause on purpose. It used to name
+the writing process's locale, which is true of the decode refusal and false of
+this one: a BOM'd capture is valid utf-8, so this interpreter reads it, and it
+is already in an encoding this Python reads — so "re-saving the capture in an
+encoding this Python reads is the fix" landed directly under the grader's own
+"re-save this one without one", two remedies on consecutive lines, the second
+of them contradicting the first and neither actionable. What the sentence says
+now is the one thing all three of the grader's file-level refusals agree on —
+the file is what its reader will not take, so there is no line to point at and
+no line to edit — and the reason printed directly above it is what says what to
+do, which here is `bom_refusal`'s own. `test_a_bom_is_refused_by_name_and_gets_
+the_same_remedy` is what holds the two halves together, over a capture seeded
+as bytes and driven through `main`; the case above it only ever reaches the
+decode refusal, so it passes either way. The three preflights still have to
+read a capture the strict reader refused, and for them the shape is what
+retires the
 mark: it is stated once, in the grader's `normalised_rows`, which strips a
 leading U+FEFF off every row's first field, so the header compares equal to
 `ts` again. `capture_rows` — the one place a capture is opened — goes through

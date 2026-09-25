@@ -295,7 +295,7 @@ them once more. The `at c9e72c1` column is the state the issue measured; the
 
 | symbol | at `c9e72c1` | now |
 |---|---|---|
-| `EARLY_EXIT_TAG` | `:427` | `:432` |
+| `EARLY_EXIT_TAG` | `:427` | `:428` |
 | the skip rule | `:687`, `:732` (`:776` unquoted) | `:845` — `skippable_row`'s return |
 | `read_capture` | `:678` | `:852` |
 | its byte-order-mark refusal | — (added) | `:886` — `path_starts_with_bom(path)` |
@@ -312,8 +312,8 @@ them once more. The `at c9e72c1` column is the state the issue measured; the
 | its phrase test | `:760` | `:1384` |
 | the per-capture census line | `:2347` | `:2972` |
 | `warn_unchecked_marks` | `ec_watch.py:254` | `ec_watch.py:288` |
-| the notice's call into the reader | `ec_watch.py:280` | `ec_watch.py:351` |
-| `Marker._loop`'s writer | `ec_watch.py:355` | `ec_watch.py:458` |
+| the notice's call into the reader | `ec_watch.py:280` | `ec_watch.py:361` |
+| `Marker._loop`'s writer | `ec_watch.py:355` | `ec_watch.py:473` |
 | `grade_timer_sweep.load`'s mark branch and phrase test | `:134`, `:135` | `grade_timer_sweep.py:138`, `:139` |
 | `ec_timer_capture.py`'s four writers and its `#` writer | `:164`, `:199`, `:205`, `:227`, `:144` | `ec_timer_capture.py:169`, `:204`, `:210`, `:232`, `:149` |
 | `system_id_probe.py`'s writer | `:256` | `system_id_probe.py:261` |
@@ -378,9 +378,19 @@ absorbing into the change:
    `skippable_row`; and the length test, the indexing and the mark branch are
    `take_capture_row`'s, which `read_capture` calls. #749's own pins are
    re-anchored at the lines the split left them at rather than dropped, and the
-   merged table is the union of the two — #750's one-skip-rule row became three
-   here (the predicate's body and the two readers that call it above it), which
-   is where **44** rather than 42 comes from. The tool now prints `ok` for all
+   merged table is the union of the two. The skip rule went from the two rows
+   `origin/main` cited it on — `:695` and `:871`, the same test written out
+   twice, in `read_capture` and in the reader the notice used — to the four
+   this table holds: `skippable_row`'s body at `:845` and the three readers
+   that call it, at `:890`, `:1065` and `:1086`. That 2 → 4 is worth 2 of the
+   run; the other 4 are this branch's newly cited sites,
+   `grade_0751_isolation.py:976`, its byte-order-mark refusal at `:886`, and
+   `check_capture_encoding.py:166` and `:243`. So 38 rows on `origin/main`, + 2
+   for the rule and + 4 new sites, is the **44** the tool prints. The 42 is
+   #750's own branch figure, and the difference between the two is the merge
+   with #749 rather than the skip rule — which is how `docs/findings.md`
+   records it, the two pages being the same claim about the same run. The tool
+   now prints `ok` for all
    **44** rows and exits 0, and
    `docs/findings/0751-mark-provenance-shapes.md` names every one of them,
    which is what `check_page` holds it to.

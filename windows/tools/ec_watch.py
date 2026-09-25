@@ -330,9 +330,19 @@ def warn_unchecked_marks(path, existing_findings):
 
     The refused section's remedy depends on what was refused. A row can be
     edited, and telling the operator to fix or delete one is the whole value
-    of naming it. The encoding cannot: that refusal is the file's and names no
-    row, so the remedy there is re-saving the capture rather than an
-    instruction to edit a line that is not at fault.
+    of naming it. A refusal of the *file* cannot: it names no row, so there
+    is no line to point an operator at, and what the file needs is what the
+    reason printed above it already says. Three of the grader's refusals are
+    the file's rather than a row's -- a byte the declared codec cannot decode,
+    a byte-order mark (#750), and the one place the strict pass and the
+    partition disagree and no row can be tied to the failure -- so the remedy
+    sentence is one for all three, and it says what they share rather than
+    why any of them happened. A cause named in it would be false of two of the
+    three: a BOM'd capture is valid utf-8, so this interpreter reads it and it
+    is already in an encoding this Python reads, and "re-save it in an
+    encoding this Python reads" cannot be its fix. That was what the sentence
+    used to say, and an operator was handed two remedies on one line, the
+    second of them contradicting the first.
 
     The closing paragraph is unchanged from #548 and its wording is
     load-bearing, so it is printed as it was whatever the sections above did.
@@ -362,7 +372,9 @@ def warn_unchecked_marks(path, existing_findings):
               "only the ones this run adds.")
         for row, reason in refused:
             # A refusal of the file rather than of a row has no row to name,
-            # and the encoding is the one that is like this.
+            # and the grader has three of those: a byte its declared codec
+            # cannot decode, a byte-order mark, and the one place the strict
+            # pass and the partition disagree and the failure ties to no row.
             print(f"    {'the file itself' if row is None else repr(row)}  "
                   f"-- {reason}")
         if any(row is not None for row, _ in refused):
@@ -370,13 +382,16 @@ def warn_unchecked_marks(path, existing_findings):
                   "the one thing here worth stopping for. The run itself "
                   "does not care -- it appends either way.")
         else:
-            # Nothing above to edit. The refusal is the file's encoding, so
-            # naming a row to fix would name something that is not there.
-            print("  no row to fix: the file has to be readable by the "
-                  "interpreter that grades it, and this one is not. The "
-                  "bytes are whatever the writing process's locale wrote, so "
-                  "re-saving the capture in an encoding this Python reads is "
-                  "the fix.")
+            # Nothing above to edit and nothing above to name. The remedy is
+            # the reason's own, so this says only what the three refusals
+            # share -- that the file is what the grader's reader will not
+            # take -- rather than a cause, which is true of one of the three
+            # and false of the other two. See the docstring.
+            print("  no row to fix: the refusal above is the file's rather "
+                  "than a row's, so there is nothing here to point at and "
+                  "nothing here to edit. The grader's reader will not take "
+                  "this capture as it stands, and the reason above is what "
+                  "says what to do about that.")
         print("  the marks it could not place are not reported while the "
               "file is refused: it is refused whole, so that would add "
               "nothing.")

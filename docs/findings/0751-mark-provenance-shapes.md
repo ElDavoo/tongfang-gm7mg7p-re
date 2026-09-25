@@ -91,7 +91,7 @@ remembered to update:
      ec/tools/ec_timer_capture.py:204  sink.row([now(), "MARK", "", label])
      ec/tools/ec_timer_capture.py:210  sink.row([now(), "MARK", "", label])
      ec/tools/ec_timer_capture.py:232  sink.row([now(), "MARK", "", label])
-     windows/tools/ec_watch.py:458  self._sink.row([ts, "MARK", "", label])
+     windows/tools/ec_watch.py:473  self._sink.row([ts, "MARK", "", label])
      windows/tools/manual_fan_ctrl_probe.py:443  self.row([now() if ts is None else ts, "MARK", "", label])
      windows/tools/system_id_probe.py:261  self._sink.row([ts, "MARK", "", label])
    8 site(s) consuming it:
@@ -362,7 +362,7 @@ though seven calls happened.
 this measurement, and it is a limit on the notice, not on the format.** It is
 a preflight, and a preflight that echoed provenance would be doing the job
 `parse_mark` does. But the consequence is the same under both shapes: the
-notice at `ec_watch.py:288` calls `existing_findings(path)` at `:351` and gets
+notice at `ec_watch.py:288` calls `existing_findings(path)` at `:361` and gets
 the same list either way, so *the provenance a fifth column carries is as
 invisible to the notice as a comment row is*. Neither shape, as scoped, makes
 `warn_unchecked_marks` say anything new. Both make the fact available to a
@@ -601,7 +601,7 @@ prose above uses the repository's `:NNN` shorthand, so this table is what ties
 a line number to a file.
 
 ```console
-   ok   windows/tools/ec_watch.py:458  writer: the Marker._loop the issue's shape A is scoped to
+   ok   windows/tools/ec_watch.py:473  writer: the Marker._loop the issue's shape A is scoped to
    ok   windows/tools/system_id_probe.py:261  writer: a third class, importing no ec_watch.Marker
    ok   ec/tools/ec_timer_capture.py:169  writer: mark_loop
    ok   ec/tools/ec_timer_capture.py:204  writer: auto_mark_loop, the resume branch
@@ -620,7 +620,7 @@ a line number to a file.
    ok   windows/tools/test_system_id_probe.py:311  the same in the other suite, so the blind side is the tree's and not one file's
    ok   ec/tools/grade_0751_isolation.py:852  read_capture
    ok   ec/tools/grade_0751_isolation.py:845  the one skip rule, where a `# provenance` row goes
-   ok   ec/tools/grade_0751_isolation.py:890  read_capture refusing a byte-order mark before it reads a row, which is what keeps the header out of the row shape's data rows
+   ok   ec/tools/grade_0751_isolation.py:886  read_capture refusing a byte-order mark before it reads a row, which is what keeps the header out of the row shape's data rows
    ok   ec/tools/grade_0751_isolation.py:890  read_capture calls that one skip rule rather than spelling it
    ok   ec/tools/grade_0751_isolation.py:1042  read_capture's only length test: a fifth column passes it
    ok   ec/tools/grade_0751_isolation.py:1044  explicit indexing, not an unpack of row -- the correction to the issue
@@ -637,7 +637,7 @@ a line number to a file.
    ok   ec/tools/grade_timer_sweep.py:115  grade_timer_sweep drops every `#` line before the CSV parse
    ok   ec/tools/grade_timer_sweep.py:139  the one phrase grade_timer_sweep reads a MARK row for
    ok   windows/tools/ec_watch.py:288  the notice the measurement exists for
-   ok   windows/tools/ec_watch.py:351  the notice's one call into the grader's reader
+   ok   windows/tools/ec_watch.py:361  the notice's one call into the grader's reader
    ok   windows/tools/test_manual_fan_ctrl_probe.py:515  the canary: the only committed assertion of an exact column count
    ok   windows/tools/manual_fan_ctrl_probe.py:257  the probe's own spelling of the same phrase
    ok   windows/tools/manual_fan_ctrl_probe.py:927  the only machine-written `#` row in the 0751 family
