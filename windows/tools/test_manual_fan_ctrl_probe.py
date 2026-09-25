@@ -106,12 +106,20 @@ class FakeEc:
     value the arms see. A write starts a new arm, which is what makes the
     script's two lists mean what they say.
 
-    `addrs` is the set the run was asked for, because --level-block makes the
-    watch set a runtime choice and this closes its sweeps on whichever address
-    that choice ends at. `block` moves that boundary: --block reads the set as
-    ascending runs, so the address the sweep closes on is the set's highest
-    rather than the last of the list, and a fake that kept the list order would
-    advance the script one address early and fail as wrong values.
+    `addrs` is the set the run was asked for, because --level-block and
+    --watch-page both make the watch set a runtime choice and this closes its
+    sweeps on whichever address that choice ends at. `block` moves that
+    boundary: --block reads the set as ascending runs, so the address the
+    sweep closes on is the set's highest rather than the last of the list, and
+    a fake that kept the list order would advance the script one address early
+    and fail as wrong values.
+
+    The list order is kept rather than only its set, because the byte path's
+    boundary is `addrs[-1]` -- the last address `snap` reads -- and a fake that
+    took the boundary from a module constant would close a page-arm run's
+    sweeps on a page it never sweeps, landing every scripted value on the
+    wrong sweep. `test_the_sweep_ends_on_the_same_address_in_every_set` holds
+    the tool's side of that.
 
     `readmany` is the --block path's, and it is a whole run rather than four
     bytes: the per-address path underneath is the byte path's, with the bytes
@@ -127,9 +135,10 @@ class FakeEc:
         self.boom_at = boom_at
         self.blocks = []        # (start, length) per readmany call
         self.point_reads = []   # addresses that came through read() alone
-        self._addrs = set(addrs if addrs is not None else probe.ALL)
+        self._addrs = list(addrs if addrs is not None else probe.ALL)
+        self._set = set(self._addrs)
         self._sweep = 0         # within the current arm
-        self._last = max(self._addrs) if block else probe.ALL[-1]
+        self._last = max(self._addrs) if block else self._addrs[-1]
 
     def read(self, addr):
         self.point_reads.append(addr)
@@ -152,7 +161,7 @@ class FakeEc:
     def readmany(self, start, length):
         self.blocks.append((start, length))
         return {a: self._read(a) for a in range(start, start + length)
-                if a in self._addrs}
+                if a in self._set}
 
     def write(self, addr, val):
         self.writes.append((addr, val))
@@ -212,7 +221,8 @@ class ProbeTests(unittest.TestCase):
     def run_probe(self, argv=('0xA0', '30'), ec=None, clock=None, **kw):
         argv = list(argv)
         ec = ec if ec is not None else FakeEc(
-            addrs=probe.watch_set('--level-block' in argv),
+            addrs=probe.watch_set('--level-block' in argv,
+                                  '--watch-page' in argv),
             block='--block' in argv, **kw)
         clock = clock if clock is not None else Clock()
         out = io.StringIO()
@@ -268,15 +278,23 @@ class ProbeTests(unittest.TestCase):
         self.assertEqual(set(probe.ALL) & set(range(0x0460, 0x0470)), set())
         self.assertIn(0x045F, probe.ALL)
         self.assertNotIn(0x0460, probe.ALL)
-        # Named one at a time rather than as a range, because 0x046A is the
+        # Every set the tool can be asked for, not just the default one: each
+        # of these flags widens what a run reads, and a widening that reached
+        # the page is a wider access to it rather than a safer one. Named one
+        # at a time rather than as a range, because 0x046A is the
         # destination of the 0x9CA6 sync the level-block doc is not allowed to
         # read (docs/hardware-tests/level-block-0860-086e.md §6): a byte that
         # is both a level-block answer and on the forbidden page is the one
         # this has to keep out, and asserting the range's endpoints would miss
         # it.
-        for a in (0x0460, 0x046A, 0x046F):
-            self.assertNotIn(a, probe.ALL)
-            self.assertNotIn(a, probe.watch_set(level_block=True))
+        sets = (probe.watch_set(), probe.watch_set(level_block=True),
+                probe.watch_set(watch_page=True),
+                probe.watch_set(level_block=True, watch_page=True))
+        for addrs in sets:
+            self.assertIn(0x045F, addrs)
+            for a in (0x0460, 0x046A, 0x046F):
+                self.assertNotIn(a, addrs)
+            self.assertEqual(set(addrs) & set(range(0x0460, 0x0470)), set())
 
     # 5. The whitelist constrains the value under test, not the control arm's
     #    re-write: a board sitting in a mode the tool does not target still
@@ -980,7 +998,158 @@ class ProbeTests(unittest.TestCase):
     def test_the_self_test_checks_no_block_reaches_the_fan_tach_page(self):
         code, out = self.run_self_test()
         self.assertEqual(code, 0)
-        self.assertIn("no block of either set covers a fan-tach byte", out)
+        self.assertIn("no block of any of the four sets covers a fan-tach "
+                      "byte", out)
+
+    # 13. --watch-page (issue #666). Opt-in, substitutes for WATCH rather than
+    #     adding to it, and read-only like every other set this tool sweeps.
+    def test_the_whole_page_arm_is_opt_in(self):
+        # The default set is the footprint the committed 2026-09-23 run was
+        # taken at, so "the flag is off" is the first thing to hold -- and the
+        # two ends of the page are the addresses only a run that asked for
+        # them can have read.
+        self.assertEqual(len(probe.watch_set()), 206)
+        self.assertNotIn(0x0700, probe.watch_set())
+        self.assertNotIn(0x07FF, probe.watch_set())
+        paged = probe.watch_set(watch_page=True)
+        self.assertEqual(len(paged), 448)
+        self.assertIn(0x0700, paged)
+        self.assertIn(0x07FF, paged)
+
+    def test_the_page_arm_is_section_3s_three_watchers(self):
+        # §3's three commands in one process: `0x100 + 0x60 + 0x60 = 448`.
+        # Written as the three ranges rather than as the count, so a set that
+        # hit 448 with the wrong addresses would fail here.
+        self.assertEqual(set(probe.watch_set(watch_page=True)),
+                         set(range(0x0400, 0x0460))
+                         | set(range(0x0700, 0x0800))
+                         | set(range(0x0F00, 0x0F60)))
+        # Substituting rather than adding: all 14 WATCH addresses are already
+        # inside the page, so a set that took both would dedup to the page and
+        # any code counting the concatenation rather than the set would report
+        # a 270 that no configuration sweeps.
+        self.assertLessEqual(set(probe.WATCH), set(probe.PAGE))
+        self.assertEqual(len(probe.PAGE) + len(probe.FANTBL) + len(probe.TEMP),
+                         448)
+
+    def test_the_page_arm_still_writes_only_the_mode_byte(self):
+        # On the fake's own write list, not on a docstring sentence: this is
+        # the claim that makes a 448-address sweep the same kind of read as a
+        # 206-address one, and a bigger sweep is exactly where it deserves a
+        # check rather than a sentence.
+        ec, _ = self.run_probe(argv=('0xA0', '--watch-page'))
+        self.assertEqual(ec.writes,
+                         [(0x0751, ORIG), (0x0751, TARGET), (0x0751, ORIG)])
+        # And the mode byte is still left to a point read under --block,
+        # where the 448 are swept through MMRD instead.
+        blocked, _ = self.run_probe(argv=('0xA0', '--watch-page', '--block'))
+        self.assertEqual(blocked.point_reads, [probe.MODE, probe.MODE])
+        self.assertEqual(blocked.writes, ec.writes)
+
+    def test_the_page_arm_reports_what_the_default_reports(self):
+        # Same scripted values, same sweeps, same arms. The four addresses
+        # SCRIPT moves are all inside the page or inside TEMP, so a run that
+        # appended the page instead of substituting it, or that let the sweep
+        # boundary move to 0x07FF, would land them on different sweeps and
+        # this would catch it as wrong values -- which is how the ordering
+        # invariant in watch_set fails if it is ever broken.
+        def report(out):
+            return out[out.index("no-op wrote"):]
+
+        _, plain = self.run_probe()
+        _, paged = self.run_probe(argv=('0xA0', '--watch-page'))
+        self.assertEqual(report(paged), report(plain))
+        self.assertIn("0x075B: 0x10 -> 0x30 (2 changes)", report(paged))
+        self.assertIn("0x075C: 0x00 -> 0x70 (2 changes)", report(paged))
+
+    def test_every_set_closes_its_sweep_on_the_address_the_fake_expects(self):
+        # `addrs[-1]` is the address the fake closes a byte-path sweep on, so
+        # it is the tool's half of the same fact: the page arm ends on 0x045F
+        # like the default rather than on 0x07FF, and --level-block's own tail
+        # is the gate byte it appends last.
+        for level_block, watch_page, tail in ((False, False, 0x045F),
+                                              (True, False, 0x06E6),
+                                              (False, True, 0x045F),
+                                              (True, True, 0x06E6)):
+            self.assertEqual(
+                probe.watch_set(level_block=level_block,
+                                watch_page=watch_page)[-1], tail)
+
+    def test_the_banner_states_the_whole_page_and_the_read_only_path(self):
+        _, out = self.run_probe(argv=('0xA0', '--watch-page'))
+        self.assertIn("0x0700-0x07FF in place of WATCH's 14", out)
+        self.assertIn("448 ECRR reads per sweep", out)
+        self.assertIn("Nothing in the page is written", out)
+        # The #94 caveat is on this banner too, and 2.2x the reads is what
+        # makes it more load-bearing rather than less.
+        self.assertIn("no interval here is validated", out)
+        self.assertIn("fans audibly change, stop", out)
+
+    def test_no_page_banner_without_the_flag(self):
+        # A default run whose output read "answers §4.4" would be the
+        # confident-sounding overclaim the flag exists to avoid, so the line
+        # is on the page arm's banner and nowhere else.
+        _, out = self.run_probe()
+        self.assertNotIn("0x0700-0x07FF", out)
+        self.assertNotIn("whole page", out)
+
+    def test_the_page_arm_block_sweep_is_three_whole_runs(self):
+        ec, out = self.run_probe(argv=('0xA0', '--watch-page', '--block'))
+        # The three §3 ranges, each read as one run and each already
+        # 4-aligned, so the sweep is the 112 that `448/4` suggests -- unlike
+        # the default set's 56 against the 52 the same arithmetic gives there.
+        self.assertEqual(ec.blocks[:3],
+                         [(0x0400, 0x60), (0x0700, 0x100), (0x0F00, 0x60)])
+        self.assertEqual(len(ec.blocks) % 3, 0)
+        self.assertEqual(probe.block_ioctls(probe.watch_set(watch_page=True)),
+                         112)
+        self.assertEqual(probe.block_ioctls(
+            probe.watch_set(level_block=True, watch_page=True)), 117)
+        self.assertIn("112 MMRD IOCTLs per sweep instead of 448 ECRR reads",
+                      out)
+
+    def test_a_page_arm_capture_passes_the_real_grader_end_to_end(self):
+        # The same done-condition as the default run's case, on the wider set:
+        # one block, intact, three roles, every window printed, exit 0. A
+        # 448-address capture that the grader could not read would make the
+        # flag worse than the gap it closes.
+        path, _ = self.capture_path(('0xA0', '--watch-page'))
+        rc, out, err = run_grader(str(path))
+        self.assertEqual(rc, 0, err)
+        self.assertIn("block 1/1: intact", out)
+        self.assertIn("value under test 0xA0; roles control, write, restore",
+                      out)
+        for n in (1, 2, 3):
+            self.assertIn(f"--- mark {n}/3:", out)
+        self.assertNotIn("NOT GRADED", out)
+
+    def test_a_page_arm_capture_keeps_its_ungraded_rows_visible(self):
+        # Every change row outside the grader's WATCHED and CONTEXT groups
+        # lands on one `other addresses that moved (N), not graded here` line
+        # rather than being dropped, and a page arm is where that line gets
+        # long -- up to 240 addresses on a real run, against the one here.
+        # 0x0790 is inside the page and in neither group, and is given a move
+        # for this case alone; the cleanup puts SCRIPT back before the next
+        # case reads it. The count is 2 rather than 1 because 0x0751 lands in
+        # the same bucket -- it is the byte the run itself wrote, and the
+        # grader grades none of it, which is the same already-calibrated
+        # landing a page-arm row takes.
+        SCRIPT[0x0790] = ([0x00], [0x00, 0x5A])
+        self.addCleanup(SCRIPT.pop, 0x0790)
+        path, _ = self.capture_path(('0xA0', '--watch-page'))
+        rc, out, err = run_grader(str(path))
+        self.assertEqual(rc, 0, err)
+        self.assertIn("other addresses that moved (2), not graded here", out)
+        self.assertIn("0x0751 0x0790", out)
+
+    def test_the_self_test_checks_the_page_arms_figures(self):
+        # 448, 112 and 464 are figures the docstring quotes, so the self-test
+        # a human can run without a driver is where they are pinned; the run
+        # passing means all three held.
+        code, out = self.run_self_test()
+        self.assertEqual(code, 0)
+        self.assertIn("448 addresses, and 0x0700-0x07FF", out)
+        self.assertIn("112 IOCTLs for the page arm's 448", out)
 
 
 if __name__ == '__main__':

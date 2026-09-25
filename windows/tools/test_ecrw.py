@@ -345,15 +345,40 @@ class EcrwTests(unittest.TestCase):
             last = (start + length - 1) & ~3
             covered.update(range(first, last + 4))
         self.assertEqual(covered & FAN_TACH, set())
-        # ...and the two sets the tool can be asked for are the ones checked,
-        # rather than the union of them: a set that grows later has to fail
-        # here too.
-        for addrs in (probe.watch_set(), probe.watch_set(level_block=True)):
+        # ...and every set the tool can be asked for is checked in its own
+        # right, rather than the union of them: a set that grows later -- the
+        # page arm is one already -- has to fail here too rather than be
+        # covered by a sibling's clearance.
+        for addrs in (probe.watch_set(), probe.watch_set(level_block=True),
+                      probe.watch_set(watch_page=True),
+                      probe.watch_set(level_block=True, watch_page=True)):
             covered = set()
             for start, length in ecrw.block_runs(addrs):
                 covered.update(range(start & ~3,
                                      ((start + length - 1) & ~3) + 4))
             self.assertEqual(covered & FAN_TACH, set())
+
+    # The page arm against the real IOCTLs, which is the only way to see that
+    # 112 is what the wire carries and not what the set's address count
+    # divided by four suggests. Both of its ranges are 4-aligned, so this is
+    # the one watch set with no padding: 448 addresses, 448 bytes read.
+    def test_the_page_arm_costs_112_ioctls_and_reads_448_bytes(self):
+        addrs = probe.watch_set(watch_page=True)
+        self.assertEqual(len(addrs), 448)
+        self.assertEqual(ecrw.block_runs(addrs),
+                         [(0x0400, 0x60), (0x0700, 0x100), (0x0F00, 0x60)])
+        self.assertEqual(K32.codes(), [])  # nothing read yet
+        got = self.read_runs(addrs)
+        self.assertEqual(K32.codes(), [FAKE_IOCTL_MMRD] * 112)
+        self.assertEqual(len(K32.offsets()) * 4, 448)
+        self.assertEqual(got, {a: K32.ram[a] for a in addrs})
+        # No MMRD outside the three ranges, so the access is the width the
+        # default set already issues and only the count moves.
+        self.assertEqual(sorted({run[0] for run in ecrw.block_runs(addrs)}),
+                         [0x0400, 0x0700, 0x0F00])
+        self.assertTrue(all(any(start <= o < start + length
+                                for start, length in ecrw.block_runs(addrs))
+                            for o in K32.offsets()))
 
 
 if __name__ == "__main__":

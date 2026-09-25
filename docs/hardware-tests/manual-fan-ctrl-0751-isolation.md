@@ -224,8 +224,11 @@ ranges are `0x100/4 + 0x60/4 + 0x60/4 = 112` IOCTLs — all three ranges are
 whole numbers of aligned 4-byte blocks — and that is a *call count*, not a
 statement that the traffic is safe: the path has never been run against the
 driver, and the one comparison a human can make is written out in
-`../../windows/tools/manual_fan_ctrl_probe.py`'s docstring. Quote 448 for the
-run as written, 112 only for a `--block` run, and neither as a safety claim.
+`../../windows/tools/manual_fan_ctrl_probe.py`'s docstring. The tool's
+`--watch-page` computes the same 448 and the same 112 from the same three
+ranges (issue #666), so a reader meeting two 448s is meeting one figure. Quote
+448 for the run as written, 112 only for a `--block` run, and neither as a
+safety claim.
 `../../docs/related-projects.md` records the same mechanism stalling the fans
 on a sibling board, where the OEM software sleeps 6 ms after every EC access,
 and says to avoid bulk sweeps under load — which is the condition this run
@@ -382,7 +385,9 @@ does §3" is not read as "the probe does all of this file".
   temperature range whole, so a probe run answers §4.1 through §4.4 and lacks
   only §4.5's by-hand power readings and §4.6's dump pairs, as the two
   bullets above say. The one part of that four it does *not* answer whole is
-  §4.4's whole-page arm, which the next bullet takes up.
+  §4.4's whole-page arm, which the next bullet takes up — and that last clause
+  is itself narrowed by the next bullet's correction, for a `--watch-page` run
+  rather than a default one.
 - **§6's ten files, all but three of them.** A probe run with `--csv` produces
   the three CSVs' content and none of the other seven: no dumps and no
   snapshot, so §4.6 has nothing to read as the bullet above says, and there
@@ -411,6 +416,36 @@ does §3" is not read as "the probe does all of this file".
   `--block <value>` takes them apart as it does for a §3 day. The capture is
   then the run's own log, as 2026-09-23's was, and §7 still has no dump
   behind it.
+
+  **Correction (issue #666, 2026-09-25), leaving the bullet above as it was
+  written.** Its `0x0700` half still describes a **default** probe run, and
+  what it says is still true of one: `WATCH` reads 14 addresses of that page
+  and `--watch-page` is off. A run taken with `--watch-page` does reproduce
+  §4.4's whole-page arm, in one console, by sweeping `0x0700-0x07FF` whole in
+  place of `WATCH`'s 14 — §3's first watcher over the same three ranges the
+  probe's other two already sweep, so the sweep is §3's own
+  `0x100 + 0x60 + 0x60 = 448` ECRR reads, or `112` with `--block` (all three
+  ranges are 4-aligned there, so 112 is exactly the `448/4`). It is opt-in for
+  the reason `--level-block` is: the **default** footprint stays as committed,
+  rather than moving under a flag nobody reading a run knows about. The
+  committed `2026-09-23` run was not taken at that default: its own header
+  lists `WATCH` plus the fan table and no temperature range, so it swept
+  **110**, and `TEMP` only joined the set the next day, with #143. **206 is
+  the current default, and no committed run was taken at it.** 448 is 2.2x
+  that default and 4.1x the 110 the committed run actually swept, on the one
+  run §3 holds under a fixed load with #94 still the open question of what it
+  does to a fan. **Nothing in the page is written** — the only byte
+  this tool writes is `0x0751` in `{0x00, 0x10, 0xA0}`, whatever else is
+  swept, which is what makes the wider sweep the same kind of read as the
+  narrow one. §4.6 is unchanged by any of this: the page arm produces no dump
+  pair either way, and §3a's service-stopped pass, §4.5's by-hand power
+  readings and §6's seven non-CSV files are as absent from a `--watch-page`
+  run as from a default one.
+  **The flag has never been run** — not against the vendor driver, on this
+  machine or any other — and every figure above is arithmetic over the tool's
+  own watch set, pinned offline in `--self-test` and in
+  `../../windows/tools/test_manual_fan_ctrl_probe.py`. The write-up is
+  `../findings/probe-0700-whole-page-arm.md`.
 
 And one difference in shape, which the numbers do not show. A §3 block is
 ~10 s settle + ~30 s hold + ~60 s watch, so ~100 s of observation in all, with
@@ -476,6 +511,13 @@ For each run, from the three CSVs plus the by-hand power readings:
    `ADDR_L1_PWM_DEFAULT_MYFAN3` in ECSpec, three names and no agreement
    (recorded in that register's own entry). The audible fan is evidence too —
    write down whether it changed, and when.
+
+   **The single-tool form of that instruction is `--watch-page`** (issue
+   #666): one console, the whole page swept, at 448 ECRR reads per sweep or
+   112 `--block` IOCTLs — §3's own arithmetic over §3's own three ranges. It
+   is opt-in, and a probe run without it still reads only 14 addresses of the
+   page; §3b says what that costs and what it does not. The flag has never
+   been run.
 
    **Where the static arms say to look first.**
    `../../ec/annotations/manual-fan-ctrl-0751.md` §9 walked both arms of all

@@ -6511,3 +6511,28 @@ entry *does* need one and is filed as the named follow-up, together with
 crediting the 0xE580 `lcall` to the call graph, where `bank1,E5D6`'s
 `inbound=1` is a known undercount. `call-graph-callees.csv` stays
 byte-identical. No register `status:` moved, no hardware, no Windows.
+
+## 37. The probe's watch set can be §3's first watcher, whole (2026-09-25, issue #666)
+
+The write-up is `docs/findings/probe-0700-whole-page-arm.md`; this is the
+summary. Issue #666 asked whether the `0x0751` probe should close §4.4's
+whole-page gap, and both acceptable ends are now decidable against the
+arithmetic §3 already prints: the page arm is **not a new traffic figure** but
+§3's own three watchers in one process, `0x100 + 0x60 + 0x60 = 448` ECRR reads
+and `112` `--block` IOCTLs over the same three ranges, so
+`windows/tools/manual_fan_ctrl_probe.py --watch-page` reproduces §4.4 whole in
+one console where a default run does not. It is **opt-in, takes no address and
+substitutes** the page for the 14 of `WATCH` rather than adding to them (all 14
+are inside the page, so adding would report a 270 no configuration sweeps), so
+the tool's 206-read default stays as committed — the committed 2026-09-23 run
+was taken at 110, its own header recording no temperature range, so 206 is
+what a later run would sweep and no committed run was taken at it — the
+fan-tach page stays unreachable by typing and by construction across all four
+sets, and the only byte the tool writes is still `0x0751`. It is also the one
+configuration where `block_ioctls` matches the naive division — 112 *is* the
+448/4 the default's 56 is not — with no padding at all. **The flag has never
+been run**: no EC, no Windows box, no vendor driver, on this machine or any
+other, and no register `status:` moves — the page arm widens what a human can
+observe, not what is known. The default's 87%-over-110 footprint is unchanged
+and pinned, and the §3b note in the runbook keeps its text with a dated
+correction beside it.
