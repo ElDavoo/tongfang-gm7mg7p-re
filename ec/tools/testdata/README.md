@@ -167,15 +167,20 @@ and outside §6 on purpose — they feed a different tool and are not a §6 run 
 so the assertion is over the run directory rather than over everything here.
 
 **What keeps this index honest.** `../check_testdata_index.py` holds this file
-and the tree under it to each other in both directions: every directory here is
-named above or carries its own `README.md`, and every path the table's first
-column names resolves to something on disk. The `...-suffix.csv` and `*-glob`
-shorthands are resolved by glob rather than by splicing, and a token whose shape
-it cannot read is reported as unresolved rather than as absent. **Nothing runs
+and the tree under it to each other in four directions: every directory here is
+named above or carries its own `README.md`; every path the table's first column
+names resolves to something on disk; every tool the `Feeds` column names is still
+there under that name, resolved beside this directory rather than inside it; and
+every table in a self-indexed directory's own `README.md` is read too, so a
+listing or a CSV row that one names is held to the disk in the same way. The
+`...-suffix.csv` and `*-glob` shorthands are resolved by glob rather than by
+splicing, and a token whose shape it cannot read is reported as unresolved rather
+than as absent. **Nothing runs
 it per commit yet** — the gate wiring is prepared as half of
 `docs/ci/agent-gates-capture-claims.patch`, which carries this check and
 `check_capture_claims.py` in one file because their two `gate` lines sit at the
 same anchor and cannot both be landed (issue #745), and a human lands it with
 `git apply docs/ci/agent-gates-capture-claims.patch`. `../test_check_testdata_index.py` is
 already collected by `tools/run-tests.sh`, and it is the refusals — a directory
-with no row, a row with no file — that it holds.
+with no row, a row with no file, a `Feeds` cell naming a tool that is gone, a
+nested row naming a listing that is not — that it holds.

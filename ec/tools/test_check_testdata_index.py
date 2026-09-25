@@ -16,6 +16,13 @@ root, which keeps each case readable as the tree and the index beside it rather
 than as a diff against a stored pair. The real committed tree is the last class,
 and it is what says the index and the tree currently agree.
 
+**Four sources, one rule.** A path the index names has to be there, and the four
+places this tree reads one from are the four lines the tool prints: the table's
+first column, its `Feeds` column, and the tables in every self-indexed
+directory's own README. The first two are one class each; the third is
+`ReadsASelfIndexedReadme`; and the one rule over all four is
+`assert_the_run_reached_something`, which every class below holds itself to.
+
 **Nothing here reads a capture, an EC, or a laptop.** Every path is a
 hand-written string in a `tempfile`, and the last class reads two committed
 files with `open()`.
@@ -24,6 +31,7 @@ import contextlib
 import importlib.util
 import io
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -41,6 +49,19 @@ spec.loader.exec_module(ctti)
 
 HEADER = '| File | Feeds | What it constructs |\n| --- | --- | --- |\n'
 
+# The `Feeds` cell a row gets when the case is about something else. Emitted
+# verbatim, because the column carries three shapes -- plain, flag-suffixed and
+# `via`-paired -- and a helper that wrapped the whole string in backticks could
+# not write two of them. `ScratchIndex.setUp` puts the tool it names beside the
+# scratch `testdata/`, so the default resolves from the moment the column is
+# read and a case that is not about `Feeds` does not start reporting a miss.
+FEEDS = '`../grade_0751_isolation.py`'
+
+# A second table in a self-indexed README, in the committed `call-graph`
+# fixture's own shape: the header is not `File`, which is what stops it being
+# read as the top-level table's, and the separator is the short `|---|` form.
+NESTED_HEADER = '| file / row | what it pins |\n|---|---|\n'
+
 
 class ScratchIndex:
     """A throwaway `testdata/` and the index that is supposed to describe it.
@@ -56,11 +77,22 @@ class ScratchIndex:
         self.addCleanup(shutil.rmtree, self.root)
         self.testdata = os.path.join(self.root, "testdata")
         os.mkdir(self.testdata)
+        # The tools live beside `testdata/`, which is what a `../tool.py` in a
+        # `Feeds` cell names. Without it every row built here would report a
+        # `Feeds` miss the moment that column started being read.
+        self.write_tool("grade_0751_isolation.py")
         self.rows, self.below = [], ""
 
-    def row(self, cell, feeds='../grade_0751_isolation.py', note='a fixture'):
+    def write_tool(self, name):
+        """Put a tool beside the scratch `testdata/`, where `../` finds it."""
+        path = os.path.join(self.root, name)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("# a tool the index names\n")
+        return path
+
+    def row(self, cell, feeds=FEEDS, note='a fixture'):
         """Add one table row naming `cell`, and return the index it is in."""
-        self.rows.append(f'| `{cell}` | `{feeds}` | {note} |')
+        self.rows.append(f'| `{cell}` | {feeds} | {note} |')
         return self.index
 
     def prose(self, text):
@@ -85,6 +117,29 @@ class ScratchIndex:
         path = os.path.join(self.testdata, rel)
         os.makedirs(path, exist_ok=True)
         return path
+
+    def self_indexed(self, name="a-self-indexed-set", tables=1):
+        """A directory the top-level index does not name, with its own tables.
+
+        The one thing `reachable()` calls `self` on, and the only place a nested
+        table is read from. It carries a listing and a CSV row so that both
+        nested rules have something to resolve and neither is vacuous; a
+        self-indexed directory whose README holds no table reaches the third
+        direction not at all, which is a case of its own.
+        """
+        self.mkdir(f"{name}/decompiled/common")
+        self.write(f"{name}/decompiled/common/00CF.asm", "; a listing\n")
+        self.write(f"{name}/index.csv", "program,addr,name\ncommon,00CF,walker\n")
+        body = NESTED_HEADER + (
+            "| `decompiled/common/00CF.asm` | a listing |\n"
+            "| `index.csv` row `0x00CF` | the row that listing came from |\n")
+        if tables > 1:
+            body += "\n" + NESTED_HEADER + (
+                "| `decompiled/common/05E8.asm` | a second table's row |\n")
+        self.write(f"{name}/README.md", "# the set\n\n" + body)
+        if tables > 1:
+            self.write(f"{name}/decompiled/common/05E8.asm", "; a listing\n")
+        return name
 
     def write_index(self, index=None):
         """Put the index beside the tree, where a run of the tool would find it.
@@ -112,6 +167,18 @@ class ScratchIndex:
         return ([name for _, name in result.gaps],
                 [token for _, token, _ in result.missing],
                 [token for _, token, _ in result.unresolved])
+
+    def feeds(self, index=None):
+        """(missing, unresolved) for the `Feeds` column, as bare names."""
+        result = self.check(index)
+        return ([token for _, token, _ in result.feeds_missing],
+                [token for _, token, _ in result.feeds_unresolved])
+
+    def nested(self, index=None):
+        """(missing, unresolved) for the self-indexed READMEs, as bare names."""
+        result = self.check(index)
+        return ([token for _, token, _ in result.nested_missing],
+                [token for _, token, _ in result.nested_unresolved])
 
 
 class DirectoryReachability(ScratchIndex, unittest.TestCase):
@@ -216,9 +283,12 @@ class AcceptsBothReachableDirectories(ScratchIndex, unittest.TestCase):
     def test_an_empty_tree_and_an_empty_index_are_green(self):
         # Stated rather than assumed: a checker with no fixtures to look at has
         # nothing to be wrong about, and this says so rather than reaching for
-        # a floor that a legitimate emptying of the directory would trip.
+        # a floor that a legitimate emptying of the directory would trip. Every
+        # count is written out, which is what says the two directions added
+        # later are reached by nothing here and fail on nothing either.
         result = self.check()
-        self.assertEqual(result, ctti.Result([], [], [], 0, 0, 0, 0, 0))
+        self.assertEqual(result, ctti.Result([], [], [], [], [], [], [],
+                                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
 
 
 class RefusesARowWithNoFile(ScratchIndex, unittest.TestCase):
@@ -250,17 +320,139 @@ class RefusesARowWithNoFile(ScratchIndex, unittest.TestCase):
         _, missing, _ = self.verdicts()
         self.assertEqual(missing, ["0751-isolation-run-staged/*.csv"])
 
-    def test_the_feeds_column_is_not_a_fixture_path(self):
-        # The second column is a tool reference and the third is prose; a check
-        # that read either would report the tool it feeds as a missing fixture
-        # on the day it is renamed, which is a different invariant with a
-        # different owner.
-        self.row("`0751-isolation-example-quiet.csv`", feeds="../no_such_tool.py",
+    def test_the_feeds_column_is_read_as_a_tool_and_not_as_a_fixture(self):
+        # The second column is a tool reference and the third is prose. A check
+        # that read the third would resolve every address the descriptions
+        # quote, which is not a rule this tool has; and a check that read the
+        # second as a fixture path would report the tool it feeds as a missing
+        # fixture. So the column is read, but as a *tool*: the fixture beside
+        # it is on disk, the tool it names is not, and the finding is the
+        # tool's -- in `feeds_missing`, and not in the first-column `missing`.
+        self.row("`0751-isolation-example-quiet.csv`",
+                 feeds="`../no_such_tool.py`",
                  note="the same marks as `0751-isolation-run/a.csv`")
         self.write("0751-isolation-example-quiet.csv")
         result = self.check()
-        self.assertEqual((result.gaps, result.missing, result.unresolved),
-                         ([], [], []))
+        self.assertEqual((result.missing, result.unresolved), ([], []))
+        self.assertEqual([token for _, token, _ in result.feeds_missing],
+                         ["../no_such_tool.py"])
+        self.assertEqual([token for _, token, _ in result.feeds_unresolved], [])
+        self.assertEqual(ctti.resolve_tool("../no_such_tool.py", self.root)[0],
+                         ctti.MISSING)
+
+
+class ReadsTheFeedsColumn(ScratchIndex, unittest.TestCase):
+    """The second column, read as a tool reference and not as a fixture path.
+
+    Three shapes and one resolution: a plain name, a name with a flag suffix,
+    and a `via` pair. The issue's condition on the whole direction is the same
+    one it conditioned the `...` rule on -- a check that false-positives is
+    worse than none -- and a checker that did not cut the flag suffix would
+    report three misses on the committed tree on the day it landed.
+    """
+
+    def test_a_tool_beside_the_fixture_root_resolves(self):
+        # The base is the *parent* of `testdata/`, because that is where a
+        # fixture's tool is: `../grade_0751_isolation.py` written from the
+        # fixture's point of view is a sibling of the fixture, not a path
+        # inside it. Joining against `testdata/` would answer a different
+        # question, and the default `Feeds` cell in every other case here would
+        # report a miss.
+        self.row("`a.csv`")
+        self.write("a.csv")
+        result = self.check()
+        self.assertEqual((result.feeds_missing, result.feeds_unresolved), ([], []))
+        self.assertEqual((result.feeds_cells, result.feeds_tokens), (1, 1))
+
+    def test_a_tool_that_is_not_there_is_a_feeds_missing(self):
+        self.row("`a.csv`", feeds="`../check_capture_claims.py`")
+        self.write("a.csv")
+        self.assertEqual(self.feeds()[0], ["../check_capture_claims.py"])
+
+    def test_a_tool_renamed_out_from_under_the_column_fails_the_run(self):
+        # The issue's "done looks like": renaming a tool is what this column
+        # exists to catch. `main()` returns whatever `report()` returns, so
+        # this is the exit code, asserted where the shipped calibration case
+        # asserts the other half of it.
+        self.row("`a.csv`", feeds="`../no_such_tool.py`")
+        self.write("a.csv")
+        result = self.check()
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            total = ctti.report(result.gaps, result.missing, result.unresolved,
+                               (result.feeds_missing, result.feeds_unresolved),
+                               (result.nested_missing, result.nested_unresolved))
+        self.assertEqual(total, 1)
+        self.assertIn('`Feeds` column names `../no_such_tool.py`',
+                      err.getvalue())
+        self.assertIn('not a tool on disk', err.getvalue())
+
+    def test_the_flag_suffix_is_cut_and_the_cell_resolves(self):
+        # Three committed rows carry `../grade_0751_isolation.py --dump-pair`,
+        # and the tool is `grade_0751_isolation.py`. Without the cut this is
+        # three false misses on the day the check lands.
+        self.row("`a.csv` + `b.txt`", feeds="`../grade_0751_isolation.py --dump-pair`")
+        self.write("a.csv")
+        self.write("b.txt")
+        result = self.check()
+        self.assertEqual((result.feeds_missing, result.feeds_unresolved), ([], []))
+        self.assertEqual((result.feeds_cells, result.feeds_tokens), (1, 1))
+        self.assertEqual(ctti.feeds_pointers('`../grade.py --dump-pair`'),
+                         ['../grade.py'])
+
+    def test_a_via_clause_is_read_as_both_of_its_halves(self):
+        # The committed shape, and the reason the `via` needs no rule of its
+        # own: both halves are backticked, so reading every backticked token
+        # reads both. Two pointers over one cell is what the tally counts.
+        self.write_tool("check_capture_claims.py")
+        self.write_tool("test_check_capture_claims.py")
+        self.row("`a.csv`",
+                 feeds="`../check_capture_claims.py`, via `../test_check_capture_claims.py`")
+        self.write("a.csv")
+        result = self.check()
+        self.assertEqual((result.feeds_missing, result.feeds_unresolved), ([], []))
+        self.assertEqual((result.feeds_cells, result.feeds_tokens), (1, 2))
+
+    def test_a_via_second_half_that_is_not_there_is_its_own_finding(self):
+        # Its own, and not a verdict about the cell: the first half still
+        # resolves, so a reader who fixed only the second would be fixing the
+        # wrong line.
+        self.write_tool("check_capture_claims.py")
+        self.row("`a.csv`",
+                 feeds="`../check_capture_claims.py`, via `../no_such_tool.py`")
+        self.write("a.csv")
+        self.assertEqual(self.feeds()[0], ["../no_such_tool.py"])
+
+    def test_a_plus_joined_feeds_cell_is_read_as_both(self):
+        # A shape the committed index has none of, pinned here rather than
+        # claimed to be exercised: two tools in one cell is the ` + ` rule the
+        # first column already has, applied to a column that needed a reader.
+        self.write_tool("grade_0751_isolation.py")
+        self.write_tool("grade_gpu_door.py")
+        self.row("`a.csv`",
+                 feeds="`../grade_0751_isolation.py` + `../grade_gpu_door.py`")
+        self.write("a.csv")
+        result = self.check()
+        self.assertEqual((result.feeds_missing, result.feeds_unresolved), ([], []))
+        self.assertEqual((result.feeds_cells, result.feeds_tokens), (1, 2))
+
+    def test_a_feeds_token_matching_no_rule_is_unresolved_and_does_not_fail(self):
+        # The calibration line again, in the second column. A shape this tool
+        # cannot read is "not resolved by this method" and never "absent", and
+        # a check that failed on its own parser would be pushed to grow a rule
+        # for whatever it could not read.
+        self.row("`a.csv`", feeds="`0x0700-0x07FF`")
+        self.write("a.csv")
+        result = self.check()
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            total = ctti.report(result.gaps, result.missing, result.unresolved,
+                                (result.feeds_missing, result.feeds_unresolved),
+                                (result.nested_missing, result.nested_unresolved))
+        self.assertEqual(total, 0)
+        self.assertEqual([token for _, token, _ in result.feeds_unresolved],
+                         ["0x0700-0x07FF"])
+        self.assertIn('not checked, not absent', err.getvalue())
 
 
 class ResolvesTheShorthand(ScratchIndex, unittest.TestCase):
@@ -346,7 +538,7 @@ class SaysUnresolvedRatherThanAbsent(ScratchIndex, unittest.TestCase):
         err = io.StringIO()
         with contextlib.redirect_stderr(err):
             self.assertEqual(ctti.report(result.gaps, result.missing,
-                                         result.unresolved), 0)
+                                         result.unresolved, ([], []), ([], [])), 0)
         self.assertIn('not checked, not absent', err.getvalue())
 
     def test_the_shape_the_unresolved_note_prints_is_the_token(self):
@@ -359,12 +551,213 @@ class SaysUnresolvedRatherThanAbsent(ScratchIndex, unittest.TestCase):
                                            "0751-isolation-run-staged"))
 
 
+class ReadsASelfIndexedReadme(ScratchIndex, unittest.TestCase):
+    """A self-indexed directory's own tables, which are a harder shape.
+
+    The top-level reader cannot express these cells: a row names a `.asm`
+    *and* a `ghidra-functions.csv` row, in one cell, and the file holds three
+    tables rather than one. The rules are the same ones the top-level table
+    states -- a path the index names has to be there -- in the two shapes that
+    cell uses, plus the `unresolved` line for anything neither of them reads.
+    """
+
+    def nested_tables(self, name, *rows):
+        """Put `rows` into a self-indexed directory's README as one table."""
+        directory = self.mkdir(name)
+        body = NESTED_HEADER + "".join(f"| {row} |\n" for row in rows)
+        self.write(f"{name}/README.md", "# the set\n\n" + body)
+        return directory
+
+    def test_a_second_and_a_third_table_are_read(self):
+        # The defect the issue names, and the one `table_cells` had by
+        # construction: a reader pointed at this file returned after the first
+        # table that ended, so eight of nineteen rows were never looked at.
+        # Located by shape rather than by header name, so the count is the
+        # file's and not this tool's.
+        name = "three-tables"
+        self.write(f"{name}/decompiled/common/018C.asm", "; a listing\n")
+        self.write(f"{name}/decompiled/common/029B.asm", "; a listing\n")
+        self.write(f"{name}/index.csv", "program,addr,name\ncommon,DEAD,nothing\n")
+        self.write(f"{name}/README.md", (
+            "# the set\n\n"
+            + NESTED_HEADER + "| `decompiled/common/018C.asm` | the first |\n\n"
+            + NESTED_HEADER + "| `decompiled/common/029B.asm` | the second |\n\n"
+            + NESTED_HEADER + "| `index.csv` row `0xDEAD` | the third |\n"))
+        result = self.check()
+        self.assertEqual((result.nested_missing, result.nested_unresolved),
+                         ([], []))
+        self.assertEqual((result.nested_indexes, result.nested_tables,
+                          result.nested_rows, result.nested_checks),
+                         (1, 3, 3, 3))
+
+    def test_an_asm_path_not_on_disk_is_a_nested_missing(self):
+        # The one cell the committed `call-graph` README got wrong, and the
+        # reason the direction is worth having: this path has been named by a
+        # table nothing read since the table was written.
+        self.nested_tables("a-set", "`decompiled/common/0EA2.asm` | a listing")
+        self.assertEqual(self.nested()[0], ["decompiled/common/0EA2.asm"])
+
+    def test_an_asm_path_resolves_against_the_directory_and_not_testdata(self):
+        # The resolution is the whole of the case: a `..` that escaped to
+        # `testdata/` would answer about a tree this check never looked at, and
+        # the committed path is relative to the README that names it.
+        name = "a-set"
+        self.write(f"{name}/decompiled/common/00CF.asm", "; a listing\n")
+        self.nested_tables(name, "`decompiled/common/00CF.asm` | a listing")
+        result = self.check()
+        self.assertEqual((result.nested_missing, result.nested_unresolved),
+                         ([], []))
+        self.assertEqual(result.nested_checks, 1)
+
+    def test_a_csv_row_reference_at_an_address_the_csv_does_not_hold_is_a_miss(self):
+        # Existence, not identity: the row the index names has to be in the
+        # file it names. The `program` column is not read, because requiring it
+        # to match something the cell does not state would be inventing a
+        # constraint the index does not make.
+        name = "a-set"
+        self.write(f"{name}/index.csv", "program,addr,name\ncommon,DEAD,nothing\n")
+        self.nested_tables(name, "`index.csv` row `0x0EA2` | a row")
+        result = self.check()
+        self.assertEqual([token for _, token, _ in result.nested_missing],
+                         ["0x0EA2"])
+        self.assertEqual([note for _, _, note in result.nested_missing],
+                         ["index.csv 0x0EA2"])
+
+    def test_the_prefix_case_and_the_padding_are_not_spelling(self):
+        # The three ways the two sides of one address differ, all three live in
+        # the committed file -- `0x0EA2` against `0EA2`, `0xDEAD` against
+        # `DEAD`, `0x0070` against `0070`. A string compare reports a miss on
+        # every one, and the check would be wrong on the day it landed.
+        name = "a-set"
+        self.write(f"{name}/ghidra-functions.csv",
+                   "scope,addr,name\ncommon,0EA2,one\ncommon,DEAD,two\n"
+                   "common,0070,three\n")
+        self.nested_tables(name,
+                           "`ghidra-functions.csv` `0x0ea2` | lower case",
+                           "`ghidra-functions.csv` `0xdead` | no prefix here",
+                           "`ghidra-functions.csv` `0x0070` | padded here")
+        result = self.check()
+        self.assertEqual((result.nested_missing, result.nested_unresolved),
+                         ([], []))
+        self.assertEqual((result.nested_rows, result.nested_checks), (3, 3))
+        self.assertEqual(ctti.as_address("0x0ea2"), ctti.as_address("0EA2"))
+        self.assertIsNone(ctti.as_address("0x0ZZ"))
+
+    def test_a_plus_joined_cell_is_read_as_both_an_asm_and_a_csv_reference(self):
+        # One row and two references, the second naming two rows -- the shape
+        # the count is per reference for, and the reason a tally taken per cell
+        # would be wrong.
+        name = "a-set"
+        self.write(f"{name}/decompiled/common/0071.asm", "; a listing\n")
+        self.write(f"{name}/index.csv", "program,addr,name\ncommon,1400,a\ncommon,1410,b\n")
+        self.nested_tables(name, (
+            "`decompiled/common/0071.asm` + `index.csv` rows `0x1400`/`0x1410`"
+            " | the corroborated shape"))
+        result = self.check()
+        self.assertEqual((result.nested_missing, result.nested_unresolved),
+                         ([], []))
+        self.assertEqual((result.nested_rows, result.nested_checks), (1, 3))
+
+    def test_a_part_matching_neither_rule_is_unresolved_and_does_not_fail(self):
+        name = "a-set"
+        self.write(f"{name}/index.csv", "program,addr,name\ncommon,00CF,a\n")
+        self.nested_tables(name, "`0x0700-0x07FF` a window, spelled as prose")
+        result = self.check()
+        self.assertEqual(result.nested_missing, [])
+        self.assertEqual([token for _, token, _ in result.nested_unresolved],
+                         ["0x0700-0x07FF"])
+
+    def test_a_csv_with_no_addr_column_is_unresolved_and_not_missing(self):
+        # "this tool cannot read that shape" and "the row is not there" are
+        # different claims, and only the second is a failure. Reporting the
+        # first as the second is how a checker starts inventing constraints.
+        name = "a-set"
+        self.write(f"{name}/index.csv", "program,offset,name\ncommon,00CF,a\n")
+        self.nested_tables(name, "`index.csv` row `0x00CF` | a row")
+        result = self.check()
+        self.assertEqual(result.nested_missing, [])
+        self.assertEqual([note for _, _, note in result.nested_unresolved],
+                         ["index.csv has no `addr` column"])
+
+    def test_a_csv_named_without_an_address_is_unresolved(self):
+        name = "a-set"
+        self.write(f"{name}/index.csv", "program,addr,name\ncommon,00CF,a\n")
+        self.nested_tables(name, "`index.csv` named, with no row named")
+        result = self.check()
+        self.assertEqual(result.nested_missing, [])
+        self.assertEqual([note for _, _, note in result.nested_unresolved],
+                         ["index.csv is named with no address"])
+
+    def test_a_csv_the_index_names_that_is_not_there_is_a_nested_missing(self):
+        name = self.nested_tables("a-set", "`no_such.csv` row `0x00CF` | a row")
+        self.assertEqual([token for _, token, _ in self.check().nested_missing],
+                         ["no_such.csv"])
+
+    def test_a_self_indexed_readme_with_no_table_reads_no_rows(self):
+        # Not a failure, and not a tally: the self-indexed clause is about the
+        # directory's existence, and a directory that indexes itself in prose
+        # still indexes itself. The count is what says so, rather than a
+        # `missing` this tool would have to invent a shape for.
+        self.mkdir("prose-only")
+        self.write("prose-only/README.md", "# the set\n\nNo table here.\n")
+        self.row("`a.csv`")
+        self.write("a.csv")
+        result = self.check()
+        self.assertEqual((result.nested_indexes, result.nested_tables,
+                          result.nested_rows, result.nested_checks), (1, 0, 0, 0))
+        self.assertEqual((result.nested_missing, result.gaps), ([], []))
+
+    def test_a_directory_the_index_merely_names_is_not_walked(self):
+        # The two reachability clauses stay the two things they were: only a
+        # directory that indexes *itself* carries a nested index, so a
+        # directory the top-level table names has nothing here to walk. Its
+        # README is not read, its files are not resolved a second time against
+        # it, and `reachable()` is what decides -- which is why the one
+        # self-indexed directory in the committed tree is named in the tool's
+        # docstring as the case that motivated the clause and in no code path.
+        self.mkdir("named-only/decompiled/common")
+        self.write("named-only/decompiled/common/0EA2.asm", "; a listing\n")
+        self.write("named-only/0DDD.asm", "; a listing nothing names\n")
+        self.row("`named-only/*.csv`")
+        self.write("named-only/a.csv")
+        result = self.check()
+        self.assertEqual((result.nested_indexes, result.nested_checks), (0, 0))
+        self.assertEqual((result.nested_missing, result.gaps), ([], []))
+
+    def test_nothing_is_double_counted(self):
+        # One `Feeds` finding names the top-level index and one nested finding
+        # names the self-indexed README beside it, which is the only way a
+        # reader of the report knows which file to open. Both lists are handed
+        # to `report()` as the same triple, so this is where it is said.
+        self.write("a.csv")
+        self.row("`a.csv`", feeds="`../no_such_tool.py`")
+        name = "a-set"
+        self.nested_tables(name, "`decompiled/common/0EA2.asm` | a listing")
+        result = self.check()
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            ctti.report(result.gaps, result.missing, result.unresolved,
+                        (result.feeds_missing, result.feeds_unresolved),
+                        (result.nested_missing, result.nested_unresolved))
+        out = err.getvalue()
+        feeds_where = [where for where, _, _ in result.feeds_missing]
+        nested_where = [where for where, _, _ in result.nested_missing]
+        self.assertNotEqual(feeds_where, nested_where)
+        self.assertTrue(feeds_where[0].endswith('testdata/README.md'),
+                        feeds_where[0])
+        self.assertTrue(nested_where[0].endswith('testdata/a-set/README.md'),
+                        nested_where[0])
+        self.assertNotIn(f'{nested_where[0]}: the `Feeds` column', out)
+
+
 class ParsesOnlyTheFirstColumn(unittest.TestCase):
     """The parse itself, because a bad regex here passes vacuously.
 
     A `table_cells()` that found nothing matches an empty tree, and an empty
     tree is green -- the same §14b defect the runner's empty-discovery guard
-    exists for, one level down.
+    exists for, one level down. It also holds what the re-implementation onto
+    `markdown_tables` must not have changed: the first column by default, the
+    second on request, and no row at all out of a table headed something else.
     """
 
     INDEX = '\n'.join([
@@ -376,6 +769,16 @@ class ParsesOnlyTheFirstColumn(unittest.TestCase):
         '| `c.csv` + `d.csv` | `../tool.py` | two files |',
         '',
         'after the table, a `|` line that is not a row',
+    ])
+
+    # A table ahead of the index's own, in the nested README's header and
+    # separator spelling. A nested index is not the index, and the wrapper has
+    # to say which is which.
+    ScratchNESTED = '\n'.join([
+        '| file / row | what it pins |',
+        '|---|---|',
+        '| `a.asm` | a listing |',
+        '',
     ])
 
     def test_only_lines_after_the_file_header_are_rows(self):
@@ -391,6 +794,30 @@ class ParsesOnlyTheFirstColumn(unittest.TestCase):
     def test_a_table_with_no_header_reads_no_rows(self):
         self.assertEqual(ctti.table_cells('| a | b |\n|---|---|\n| `x.csv` | y |'),
                          [])
+
+    def test_the_file_table_is_picked_out_of_several(self):
+        # `table_cells` is a wrapper over the walker rather than a second
+        # reader, so the thing worth pinning is that the wrapper still finds
+        # the index's own table in a file carrying two -- the shape
+        # `call-graph/README.md` has, and the shape the nested reader takes
+        # three of. The `a \`| b.csv\` description` cell is split by its own
+        # pipe, which is the shipped reader's behaviour and is harmless: the
+        # third column is not read in either direction.
+        self.assertEqual(ctti.markdown_tables(self.ScratchNESTED + self.INDEX),
+                         [(['file / row', 'what it pins'],
+                           [['`a.asm`', 'a listing']]),
+                          (['File', 'Feeds', 'What it constructs'],
+                           [['`a.csv`', '`../tool.py`', 'a `', 'b.csv` description'],
+                            ['`c.csv` + `d.csv`', '`../tool.py`', 'two files']])])
+        self.assertEqual(ctti.table_cells(self.ScratchNESTED + self.INDEX),
+                         ['`a.csv`', '`c.csv` + `d.csv`'])
+
+    def test_the_second_column_is_read_as_the_second_column(self):
+        # Columns are counted from 1, so `column=2` is `Feeds` and not the prose
+        # beside it. Reading the third column instead would resolve every
+        # address the descriptions quote, which is not a rule this tool has.
+        self.assertEqual(ctti.table_cells(self.INDEX, column=2),
+                         ['`../tool.py`', '`../tool.py`'])
 
 
 class TheReachedSomethingRule:
@@ -429,26 +856,40 @@ class TheReachedSomethingRule:
     def assert_the_run_reached_something(self, root):
         """Assert a run over `root` read something, and that it read it.
 
-        Each tally non-zero, and `tokens > rows` on top of them. The tallies are
-        parsed out of what the run *printed* rather than read off a `Result`,
-        because the claim being pinned is the docstring's: they print whether
-        or not they found anything, since a run that checked nothing and a run
-        that found nothing look the same from the exit code alone. The parse is
-        part of what is held here, and the three are named in each message so a
-        case that is refused knows which clause said so.
+        Each of the four tallies non-zero, and `tokens > rows` on top of them.
+        The tallies are parsed out of what the run *printed* rather than read
+        off a `Result`, because the claim being pinned is the docstring's: they
+        print whether or not they found anything, since a run that checked
+        nothing and a run that found nothing look the same from the exit code
+        alone. The parse is part of what is held here, and each is named in its
+        message so a case that is refused knows which clause said so.
+
+        The order is the order the output prints, because a case that is
+        refused should be refused by the *first* thing it failed to reach:
+        a tree with a directory and a rowless index is short a row, not short
+        everything, and a tree with one token per row is short only the
+        relation between two tallies it did reach.
         """
         rc, out, err = self.run_tool(root)
         self.assertEqual(rc, 0, err)
-        directories = int(out.split(' testdata/ ')[0])
-        rows = int(out.split(' table row(s)')[0].split('\n')[1])
-        tokens = int(out.split('path token(s): ')[0].split(' table row(s), ')[1])
-        for name, tally in (('directories', directories), ('rows', rows),
-                            ('tokens', tokens)):
+        counts = {}
+        for line in out.splitlines():
+            for piece in re.split(r'[:,]', line):
+                number, _, label = piece.strip().partition(' ')
+                if number.isdigit() and label:
+                    counts[label] = int(number)
+        for name, label in (('directories', 'testdata/ directories'),
+                            ('rows', 'table row(s)'),
+                            ('tokens', 'path token(s)'),
+                            ('feeds cells', 'Feeds cell(s)'),
+                            ('feeds pointers', 'tool pointer(s)'),
+                            ('nested rows', 'row(s)'),
+                            ('nested checks', 'check(s)')):
             self.assertGreater(
-                tally, 0,
+                counts.get(label, 0), 0,
                 f"the run reached no {name}: a run that checked nothing and a "
                 "run that found nothing look the same from the exit code alone")
-        self.assertGreater(tokens, rows,
+        self.assertGreater(counts['path token(s)'], counts['table row(s)'],
                            "one row holds several paths; a token count that "
                            "equals the row count means only the first is read")
 
@@ -457,8 +898,8 @@ class TheCommittedTree(TheReachedSomethingRule, unittest.TestCase):
     """The real thing: the index and the tree beside it currently agree.
 
     This goes red on any future edit that drifts the index and the tree apart in
-    either direction. It does not go red on an edit to what a row says its
-    fixture is: that is the third column, which this tool does not read, and
+    any of the four directions. It does not go red on an edit to what a row says
+    its fixture is: that is the third column, which this tool does not read, and
     which both of the index's past hand-repairs were. It does not go red on the
     tree being a different size either, which is what
     `TheTalliesAreNotAFloor` is about.
@@ -469,7 +910,7 @@ class TheCommittedTree(TheReachedSomethingRule, unittest.TestCase):
         self.assertEqual(rc, 0, err)
         self.assertIn('table row(s)', out)
 
-    def test_the_run_actually_reached_both_directions(self):
+    def test_the_run_actually_reached_every_source(self):
         # A run that reports 0 directories and 0 rows is green for the wrong
         # reason, and the tallies are the only way to tell. This is not a floor
         # on coverage: nothing says the numbers have to stay where they are,
@@ -504,18 +945,88 @@ class TheCommittedTree(TheReachedSomethingRule, unittest.TestCase):
     def test_the_report_names_the_path_it_is_given(self):
         # `check()` hands back a repository-relative path, so `report()` joins
         # it rather than resolving it again against the working directory. A
-        # report nobody can paste into an editor is a report nobody opens.
+        # report nobody can paste into an editor is a report nobody opens. The
+        # two pairs added later are passed here too, and they are where the
+        # `where` earns its keep: one of the four lines names this index and
+        # another names the self-indexed README beside it.
         err = io.StringIO()
         with contextlib.redirect_stderr(err):
             self.assertEqual(ctti.report(
                 [('ec/tools/testdata', 'newset')],
-                [('ec/tools/testdata/README.md', 'gone.csv', 'gone.csv')], []), 2)
+                [('ec/tools/testdata/README.md', 'gone.csv', 'gone.csv')], [],
+                ([('ec/tools/testdata/README.md', '../gone.py', 'gone.py')], []),
+                ([('ec/tools/testdata/call-graph/README.md', 'gone.asm',
+                   'gone.asm')], [])), 4)
         lines = err.getvalue().splitlines()
         self.assertTrue(lines[0].startswith('ec/tools/testdata/newset/:'), lines[0])
         self.assertIn('ec/tools/testdata/README.md', lines[1])
+        self.assertIn('`Feeds` column', lines[2])
+        self.assertIn('ec/tools/testdata/call-graph/README.md', lines[3])
         for line in lines:
             self.assertNotIn('/../', line)
             self.assertFalse(line.startswith('/'), line)
+
+    def test_the_committed_run_reads_all_four_sources(self):
+        # The figures are today's, and the claim is not that they have to stay:
+        # it is that a run which reached nothing is distinguishable from a run
+        # which found nothing. `TheTalliesAreNotAFloor` is what says the first
+        # of those two things, and this is the same four tallies on the real
+        # tree rather than a scratch one.
+        rc, out, err = self.run_tool(ctti.TESTDATA)
+        self.assertEqual(rc, 0, err)
+        counts = {}
+        for line in out.splitlines():
+            for piece in re.split(r'[:,]', line):
+                number, _, label = piece.strip().partition(' ')
+                if number.isdigit() and label:
+                    counts[label] = int(number)
+        self.assertEqual(counts['testdata/ directories'], 13)
+        self.assertEqual((counts['named in the index'], counts['self-indexed'],
+                          counts['gap(s)']), (12, 1, 0))
+        self.assertEqual((counts['table row(s)'], counts['path token(s)']),
+                         (27, 34))
+        self.assertEqual((counts['Feeds cell(s)'], counts['tool pointer(s)']),
+                         (27, 29))
+        self.assertEqual((counts['self-indexed README(s)'], counts['table(s)'],
+                          counts['row(s)'], counts['check(s)']),
+                         (1, 3, 19, 21))
+        # Every pointer is resolved and nothing is unreadable, which is the
+        # "the index and the tree currently agree" half. It is a statement
+        # about today and not a floor: the tallies above are what a run that
+        # reached nothing would be caught by, in either direction.
+        self.assertEqual([line.rsplit(', ', 2)[1:] for line in out.splitlines()
+                          if ' resolved, ' in line],
+                         [['0 missing', '0 unresolved']] * 3)
+
+    def test_the_committed_feeds_column_carries_a_flag_suffix(self):
+        # The issue's "also asserted over the committed tree, where three rows
+        # carry it": the flag suffix is not a shape this suite invented. The
+        # three rows are also the reason the cut is not optional -- without it
+        # this column reports three misses on the day the check lands.
+        with open(ctti.INDEX, encoding='utf-8') as f:
+            cells = ctti.table_cells(f.read(), column=2)
+        flagged = [cell for cell in cells if '--dump-pair' in cell]
+        self.assertEqual(len(flagged), 3)
+        for cell in flagged:
+            self.assertEqual(ctti.feeds_pointers(cell),
+                             ['../grade_0751_isolation.py'])
+
+    def test_the_committed_call_graph_readme_names_a_bank0_listing(self):
+        # The one cell this branch corrects, pinned here so the fix is in the
+        # suite and not only in the write-up. Both committed CSVs and the file
+        # on disk agree it is a `bank0` row: `index.csv:2` and
+        # `ghidra-functions.csv:2` both name `ec/decompiled/bank0/0EA2.asm`, and
+        # the fixture carries `decompiled/bank0/0EA2.asm` and no `common` one.
+        # A decidable fact about three committed files, and nothing at all about
+        # what the fixture exercises.
+        readme = os.path.join(ctti.TESTDATA, 'call-graph', 'README.md')
+        with open(readme, encoding='utf-8') as f:
+            cells = [row[0] for _, rows in ctti.markdown_tables(f.read())
+                     for row in rows]
+        self.assertIn('`decompiled/bank0/0EA2.asm`', cells)
+        self.assertNotIn('`decompiled/common/0EA2.asm`', cells)
+        self.assertTrue(os.path.isfile(os.path.join(
+            ctti.TESTDATA, 'call-graph', 'decompiled', 'bank0', '0EA2.asm')))
 
 
 class TheTalliesAreNotAFloor(ScratchIndex, TheReachedSomethingRule,
@@ -552,6 +1063,7 @@ class TheTalliesAreNotAFloor(ScratchIndex, TheReachedSomethingRule,
             self.write(f"{name}/a.csv")
         self.write(f"{names[0]}/c.csv")
         self.prose(" ".join(f"`{name}/`" for name in names) + "\n")
+        self.self_indexed()
         # The second token is load-bearing: a one-token table leaves
         # `tokens == rows`, the helper's `tokens > rows` refuses it, and the
         # case would be proving the wrong thing.
@@ -569,6 +1081,7 @@ class TheTalliesAreNotAFloor(ScratchIndex, TheReachedSomethingRule,
         self.write("0751-isolation-run-only/a.csv")
         self.write("0751-isolation-run-only/c.csv")
         self.prose("`0751-isolation-run-only/` is the set the procedure names.\n")
+        self.self_indexed()
         self.row("`0751-isolation-run-only/a.csv` + `0751-isolation-run-only/c.csv`")
         self.write_index()
         self.assert_the_run_reached_something(self.testdata)
@@ -593,6 +1106,7 @@ class TheTalliesAreNotAFloor(ScratchIndex, TheReachedSomethingRule,
         self.mkdir("0751-isolation-run-rowless-index")
         self.write("0751-isolation-run-rowless-index/a.csv")
         self.prose("`0751-isolation-run-rowless-index/` is named in prose only.\n")
+        self.self_indexed()
         self.write_index()
         with self.assertRaises(AssertionError) as caught:
             self.assert_the_run_reached_something(self.testdata)
@@ -608,6 +1122,7 @@ class TheTalliesAreNotAFloor(ScratchIndex, TheReachedSomethingRule,
         self.mkdir("0751-isolation-run-one-token")
         self.write("0751-isolation-run-one-token/a.csv")
         self.prose("`0751-isolation-run-one-token/` is the set the procedure names.\n")
+        self.self_indexed()
         self.row("`0751-isolation-run-one-token/a.csv`")
         self.write_index()
         with self.assertRaises(AssertionError) as caught:
