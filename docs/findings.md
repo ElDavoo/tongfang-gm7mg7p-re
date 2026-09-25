@@ -7414,3 +7414,38 @@ corrections quote instead is one command each, which is what a re-derivation
 actually runs. No `status:` moved, no CSV, YAML, tool, suite or gate script was
 edited, no `.asm` or `.c` was hand-edited, no hardware or Windows step was
 taken, and nothing was opened in another repository.
+
+## 52. `tools/README.md`'s totals are re-derived from a run, and the red set behind the total is measured (2026-09-25, issue #817)
+
+The write-up is
+[`tools-readme-totals.md`](findings/tools-readme-totals.md); this is the
+summary. The three paragraphs of `tools/README.md` that carry the runner's
+figures were quoting a red set and a total the tree no longer has: `874` tests,
+"two of the thirty are red in this tree", and a last line reading `30 suite(s)
+run, 874 tests; one or more FAILED` with the runner exiting 1. A fresh
+`bash tools/run-tests.sh` at `64dbde19` prints **`All 30 suite(s) passed, 882
+tests`** and exits 0, so the paragraphs are rewritten from that run rather than
+patched from a diff — and the diff will not close, because the two deltas the
+tree names give 881 and 883 and straddle the measured 882, with an unnamed −1
+between them. *(Merged-tree note: `2ed6f030` (#822) added
+`xdata-cluster-names-guard-off-recipe.md`, and one suite is red on that tree —
+`test_check_cluster_citations.py`, on `:220` of that new file — so the
+**counts** this section re-derives still hold at thirty suites and 882 tests
+while the **verdict** is `30 suite(s) run, 882 tests; one or more FAILED`. It
+reproduces on a clean `origin/main`, it is #822's file, and it is named in
+`tools/README.md` and in
+[`tools-readme-totals.md`](findings/tools-readme-totals.md) rather than fixed
+here.)* **The total moves with *how* a suite was red, not only with
+whether it was, and that mechanism is now measured rather than assumed**: a
+class whose `setUpClass` raises contributes none of its own cases to `Ran N` and
+the error is not itself counted (28 → 21 on `test_xdata_cluster_names.py`,
+measured in-process), where an ordinary failing case runs and is counted like
+any other (28). The two sentences that were true of the old text — re-derive by
+running the runner, and the totals are not a pass — are kept in place rather
+than replaced, and "this branch adds" is de-anchored to `#688`, which merged
+four commits ago. **No count assertion was added to
+`test_readme_suite_table.py`**: comparing a prose figure to a live run is a
+count gate wearing a different hat, and §46's "finds two" and this file's own
+two `Left out on purpose` bullets are left as dated records. No gate was wired
+(#162 is unblocked by the evidence, not by this branch), no `.github/` file was
+touched, and nothing here was read off a machine.
