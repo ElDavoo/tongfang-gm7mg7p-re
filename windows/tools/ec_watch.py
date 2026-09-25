@@ -30,7 +30,7 @@ the operator did not describe. `ec_watch-marks.md` is why.
 
 `--label-vocab 0751` is that refusal one step earlier, and opt-in: the prompt
 refuses a label the 0751 grader's own `parse_mark` cannot read, quotes §3's
-three forms back, and asks again -- where a mistyped `=`, or the `0x` dropped
+forms back, and asks again -- where a mistyped `=`, or the `0x` dropped
 from the address, is corrected while the run is still going rather than at the
 grading as `unplaceable_marks` and a withheld run. It refuses only what the
 grader would refuse: a label that parses but names the wrong value is still
@@ -115,14 +115,16 @@ class CsvSink:
 def load_label_vocab(ap, name):
     """(check, forms) for the label vocabulary `name`, read from its grader.
 
-    `--label-vocab 0751` names §3's three forms, and
+    `--label-vocab 0751` names §3's forms, and
     `grade_0751_isolation.py` is where they are written down, so the prompt
     loads that module by path rather than carrying a second copy of either
     half: `check` is `parse_mark(label)[0] is not None`, the test
     `unplaceable_marks` applies to decide a mark is unreadable, and the notice
     quotes that module's own `REQUIRED_LABEL_FORMS`. A copy could drift from
     the grader, and a prompt that has drifted promises something the grading
-    does not do.
+    does not do. The count is the grader's for the same reason: §3 has three
+    action forms and three stage boundaries as of issue #472, and a word in
+    this docstring saying which would be a fourth place to keep in step.
 
     The import is the one `manual_fan_ctrl_probe.py`'s self-test makes, for the
     same reason: this tool runs next to `ecrw.py` on a Windows box, where the

@@ -119,6 +119,16 @@ MULTI_A0_DUMPS = (str(MULTI / '2026-01-01-0751-isolation-a0-before-0700.txt'),
 MULTI_10_DUMPS = (str(MULTI / '2026-01-01-0751-isolation-10-before-0700.txt'),
                   str(MULTI / '2026-01-01-0751-isolation-10-after-0700.txt'))
 
+# §3's command block as it prints it: the same two-value day, with all six of
+# its mark rounds per block rather than the three the grader could read before
+# #472. The three stage boundaries are here because §3 asks the operator for
+# them, and the day is otherwise `multi-block/`'s -- same 0xA0 and 0x10 blocks,
+# same duty drift, same climb, nothing §4.1-§4.3 moving. The one thing that is
+# not `multi-block/`'s is where the 0x075B rows sit around the `watch over`
+# mark, which is the property the boundary exists for and the reason the two
+# windows have to be checkable apart.
+STAGED_CAPTURES = _set('staged')
+
 # The void one-block set with dumps of its own: `void-block/` byte for byte,
 # and `multi-block/`'s `a0` pair under that file's own name so the `<value>`
 # in it still says 0xA0. It is the case the two clean sets cannot reach --
@@ -178,15 +188,71 @@ RUNBOOK = (HERE.resolve().parents[1] / 'docs' / 'hardware-tests'
 
 
 def concrete(text):
-    """§6's two placeholders, resolved to the fixture's own values.
+    """The runbook's four placeholders, resolved to one day's values.
 
-    Shared by both §6 readers so the fence of names and the fence of the
-    command line are read with one spelling of the substitution and not
-    two, and applied to the runbook's text rather than to a fixture name --
-    it is §6 that carries the placeholders.
+    Shared by all three section readers so the fence of names, the fence of the
+    command line and §3's mark rounds are read with one spelling of the
+    substitution and not three, and applied to the runbook's text rather than
+    to a fixture name -- it is the runbook that carries the placeholders.
+
+    `<current>` and `<original>` are the mode the §3 block starts in, and
+    they are the same one: the control arm writes the value already there back
+    to itself and the restore puts that value back, so `10` is what both read
+    as over the `0xA0` block §3's command line writes. §3 spells them without
+    a `0x` because the `0x` is already in the command (`0x0751=0x<current>`),
+    so the substitution carries the bare byte rather than a second prefix.
+    Adding them here is safe for the two §6 readers, whose text contains
+    neither -- which is what the file-list test below would otherwise have to
+    check.
     """
     return (text.replace("<date>", "2026-01-01")
-                .replace("<value>", "a0"))
+                .replace("<value>", "a0")
+                .replace("<current>", "10")
+                .replace("<original>", "10"))
+
+
+def section3_command(doc):
+    """§3's fenced console block -- the procedure's own command list.
+
+    Cut on §3 and on `### 3a.`, not on the first fence in the file, for the
+    reason `section6_command` gives: a fence added above it must not be able
+    to take its place unnoticed. Found by its info string as well as by what
+    is in it, because §3's block is the `console` fence that runs the
+    watchers -- a `console` fence holding something else must not be read as
+    the one that fixes the mark labels.
+    """
+    if "\n## 3. " not in doc:
+        raise AssertionError("no §3 in the runbook; the block that fixes the "
+                             "mark labels has moved or gone")
+    section = doc.split("\n## 3. ", 1)[1].split("\n### 3a. ", 1)[0]
+    for fence in re.finditer(r"```[a-z]*\n(.*?)```", section, re.S):
+        if "ec_watch.py" in fence.group(1):
+            return fence.group(1)
+    raise AssertionError("§3 has no fenced console block any more")
+
+
+# A §3 mark round, as the console block names it: the `rem` line under that
+# round, carrying the exact string the operator types into all three consoles.
+# Read by the prefix rather than by line number, so a runbook that renames,
+# reorders, adds or drops a round changes this list and the case below it
+# fails, which is the whole point of reading §3 rather than restating it.
+SECTION3_MARK = re.compile(r"^rem  mark each console: (.+)$", re.M)
+
+
+def section3_marks(doc):
+    """§3's six mark-round labels, in the order the console block prints them.
+
+    The `concrete()` placeholders resolved, because `<current>` and
+    `<original>` are the two the round labels carry and a label is not a label
+    the grader can read until they are the values that block writes.
+    """
+    block = section3_command(doc)
+    labels = [concrete(m) for m in SECTION3_MARK.findall(block)]
+    if not labels:
+        raise AssertionError("§3's console block names no mark rounds; the "
+                             "`rem  mark each console:` lines are what this "
+                             "reads, and one of them is missing")
+    return labels
 
 
 def section6_file_list(doc):
@@ -312,6 +378,69 @@ def marked_windows(out):
     mark stream.
     """
     return [(int(n), label) for n, _, label in MARK_HEADER.findall(out)]
+
+
+def window_body(out, number):
+    """One window's printed body, up to the next window's header.
+
+    Cut on the mark number rather than searched for in the whole output,
+    because the stages a staged capture adds are windows over the *same*
+    addresses: a duty byte's `window delta` line reads alike whichever window
+    it is in, and the change rows under it print as an offset from that
+    window's own mark, so a row at the same distance after two different marks
+    is the same text. Which window a line sits in is the assertion, and only
+    the cut can make it.
+    """
+    match = re.search(rf"^--- mark {number}/\d+:.*?(?=^--- mark |\Z)", out,
+                      re.M | re.S)
+    if match is None:
+        raise AssertionError(f"no mark {number} window in the report")
+    return match.group(0)
+
+
+def staged_copies(tmp, edits):
+    """`staged/`'s three CSVs, copied into `tmp` with `edits` applied.
+
+    `edits` maps a capture's range -- `0700-07ff.csv`, `0f00-0f5f.csv`,
+    `0400-045f.csv`, the suffixes `_set` spells them by -- to a function over
+    that capture's text, and a capture the map does not name is copied
+    unchanged. A case that a stage boundary fails is a property of the
+    boundary rather than a second shape of the day, so it is written beside
+    the fixture in a temporary directory instead of taking a directory of its
+    own: the alternative is three more rows in `testdata/README.md` to learn
+    that the same two checks reach a `watch over` as reach a `wrote`.
+    """
+    out = []
+    for path in STAGED_CAPTURES:
+        text = Path(path).read_text(encoding="utf-8")
+        edit = edits.get(Path(path).name.rsplit("-0751-isolation-", 1)[1])
+        copy = Path(tmp) / Path(path).name
+        copy.write_text(edit(text) if edit else text, encoding="utf-8")
+        out.append(str(copy))
+    return out
+
+
+def edit_mark(ts, label=None):
+    """A rewrite of one capture's text: the mark at `ts` gone or respelled.
+
+    Cut by the row's timestamp rather than by its label, because §3's block
+    has one `watch over` round *per block* and a case that withholds the
+    first block's has to leave the second one's alone -- an edit that reached
+    both would be testing two blocks at once and the per-block half of the
+    assertion below would have nothing left to say. `ts` is the row's leading
+    timestamp, so it can only ever name one row. `label=None` drops the row,
+    which is the shape a mark typed after a watcher exited leaves behind in
+    the other two captures.
+    """
+    def rewrite(text):
+        out = []
+        for line in text.splitlines(keepends=True):
+            if not line.startswith(ts):
+                out.append(line)
+            elif label is not None:
+                out.append(line.split(",MARK,,")[0] + f",MARK,,{label}\n")
+        return "".join(out)
+    return rewrite
 
 
 def as_main_reads(paths):
@@ -2369,19 +2498,22 @@ class MarkSetTests(unittest.TestCase):
                          {0xA0: ''})
 
     # A label the block walk cannot place is fatal, and the message quotes the
-    # three forms §6 fixes rather than describing the problem. The operator
-    # cannot fix an unplaceable mark from "this label is malformed"; the three
-    # forms are the whole of what has to change. The `mark 3` row below is a
-    # hand-written fixture of that shape, and a capture carrying one is still
-    # fatal for the whole run however it got there. `ec_watch.py`'s mark
-    # prompt used to write it -- `Marker._loop` stamped an empty line as
-    # `mark N` -- and stopped on 2026-09-25 (#474): it now refuses a blank
-    # press and records nothing, so a capture of that tool's own cannot
-    # produce this row any more -- though windows/tools/system_id_probe.py
-    # still substitutes the same label, and writes the same shape of row. The
-    # fixture and every assertion below stand; see
-    # windows/tools/ec_watch-marks.md.
-    def test_a_mark_that_is_not_one_of_the_three_forms_is_an_error(self):
+    # forms §6 fixes rather than describing the problem. The operator cannot
+    # fix an unplaceable mark from "this label is malformed"; the forms are
+    # the whole of what has to change. It used to say "the three forms" and
+    # quote three; it now quotes all six -- the three stage boundaries as well
+    # as the three actions -- and takes the count from the tuple rather than
+    # from a word in the sentence, so the two cannot disagree. The `mark 3`
+    # row below is a hand-written fixture of that shape, and a capture
+    # carrying one is still fatal for the whole run however it got there.
+    # `ec_watch.py`'s mark prompt used to write it -- `Marker._loop` stamped
+    # an empty line as `mark N` -- and stopped on 2026-09-25 (#474): it now
+    # refuses a blank press and records nothing, so a capture of that tool's
+    # own cannot produce this row any more -- though
+    # windows/tools/system_id_probe.py still substitutes the same label, and
+    # writes the same shape of row. The fixture and every assertion below
+    # stand; see windows/tools/ec_watch-marks.md.
+    def test_a_mark_that_is_not_one_of_the_forms_is_an_error(self):
         with tempfile.TemporaryDirectory() as tmp:
             p = Path(tmp) / 'unread.csv'
             p.write_text('ts,addr,old,new\n'
@@ -2392,7 +2524,11 @@ class MarkSetTests(unittest.TestCase):
             rc, out, _ = run(str(p))
         self.assertEqual(rc, 1)
         flat = " ".join(out.split())
-        self.assertIn("'mark 3' is not one of the three forms §6 fixes", flat)
+        self.assertIn("'mark 3' is not one of the forms §6 fixes", flat)
+        # All six, from the tuple and not from a copy: a stage boundary the
+        # message did not quote is a boundary an operator who mistyped one
+        # cannot see the right spelling of.
+        self.assertEqual(len(grade.REQUIRED_LABEL_FORMS), 6)
         for form in grade.REQUIRED_LABEL_FORMS:
             self.assertIn(repr(form), flat)
         self.assertIn('a mark this cannot read is a mark no block can be '
@@ -2618,7 +2754,7 @@ class MarkSetTests(unittest.TestCase):
         # stray is refused once, the 12:04 one is read -- and the narrower
         # sentence is #530's, pinned in full by the two tests it added.
         self.assertIn('1 of the 7 graded window(s) above are in no block', out)
-        self.assertIn('not one of the three forms §6 fixes',
+        self.assertIn('not one of the forms §6 fixes',
                       " ".join(out.split()))
 
     # The function on its own, reached directly the way the other per-window
@@ -2654,6 +2790,240 @@ class MarkSetTests(unittest.TestCase):
         self.assertEqual(len(unplaced), 2)
         self.assertEqual(
             grade.unplaced_window_problems(unplaced, captures), {})
+
+
+class StageBoundaryTests(unittest.TestCase):
+    """§3's six mark rounds, and the three of them that are not writes.
+
+    Before #472 the settle, the hold and the end of the watch were rounds
+    §3's own command block asked for and the grader could not read: a label
+    outside the three action forms returned `(None, None)`, the window went
+    to `unplaced`, and `unplaceable_marks` refused the whole run -- over the
+    day below, six of twelve windows withheld and exit 1, the boundary halves
+    of every block ungraded. A boundary is now a role of its own, so the block
+    the procedure prints is one the block model can name.
+
+    The cases below are the two ends of that. The first reads the runbook and
+    the grader against each other, so a rename, a reorder, an added round or
+    a dropped one is a failing test rather than a human's day. The rest say
+    what the new class of mark does once it is in the block: it closes a
+    window, it is scoped by `--block`, and it fails the same checks any other
+    mark does.
+    """
+
+    # The contract the issue is really about. §3, §6 and `parse_mark` are one
+    # list of forms, and a disagreement between any two of them has to be a
+    # red test rather than a day's capture. Read out of the runbook rather
+    # than restated, for the reason `section6_file_list` gives.
+    def test_section3s_six_rounds_are_the_forms_the_grader_reads(self):
+        doc = RUNBOOK.read_text(encoding="utf-8")
+        labels = section3_marks(doc)
+        # Exactly six, and each one parses to the role the block model gives
+        # it -- so the round the operator is told to type and the window the
+        # grader opens for it are the same thing.
+        self.assertEqual(
+            [grade.parse_mark(label) for label in labels],
+            [("settle", None), ("control", 0x10), ("hold", None),
+             ("write", 0xA0), ("watch", None), ("restore", 0x10)])
+        # The three boundaries carry no value and the three actions do, which
+        # is the whole of the difference between them and the reason the form
+        # table has a flag for it.
+        self.assertEqual(grade.BOUNDARY_ROLES, ("settle", "hold", "watch"))
+        # And the roles §3's six rounds produce are exactly the roles the six
+        # forms the refusal message quotes produce: a role added to the grader
+        # without a round to type it, or a round added without a form to read
+        # it, fails here rather than at a mark prompt.
+        self.assertEqual(set(grade.parse_mark(l)[0] for l in labels),
+                         {grade.parse_mark(f)[0]
+                          for f in grade.REQUIRED_LABEL_FORMS})
+        # The three stage words are in the tuple by name, so the prompt's
+        # notice and `unplaceable_marks`' message quote a string the operator
+        # can type verbatim.
+        for word in ("settled", "held", "watch over"):
+            self.assertIn(word, grade.REQUIRED_LABEL_FORMS)
+        # §6 names the same six, and the three actions in it are the three it
+        # has always named: a §6 that listed the actions and dropped the
+        # boundaries would leave the operator reading a list the prompt
+        # refuses half of.
+        section6 = doc.split("\n## 6. ", 1)[1].split("\n## 7. ", 1)[0]
+        for word in ("settled", "held", "watch over"):
+            self.assertIn(word, section6)
+        for form in grade.REQUIRED_LABEL_FORMS[:3]:
+            self.assertIn(form, section6)
+
+    # The defect, measured. §3's block as printed is now a capture the grader
+    # grades rather than refuses: twelve windows, two intact blocks, no
+    # withheld and nothing unreadable.
+    def test_a_staged_six_round_run_is_graded_rather_than_refused(self):
+        rc, out, _ = run(*STAGED_CAPTURES)
+        self.assertEqual(rc, 0)
+        self.assertNotIn('UNREADABLE', out)
+        self.assertNotIn('NOT GRADED', out)
+        self.assertNotIn('were not graded', out)
+        # Every window of both blocks printed, in the block's own order, and
+        # the roles line is the six §3 asks for rather than the three the
+        # model had room for.
+        self.assertEqual(
+            marked_windows(out),
+            [(1, 'settled'), (2, 'no-op wrote 0x0751=0x10'), (3, 'held'),
+             (4, 'wrote 0x0751=0xA0'), (5, 'watch over'),
+             (6, 'restored 0x0751=0x10'), (7, 'settled'),
+             (8, 'no-op wrote 0x0751=0x00'), (9, 'held'),
+             (10, 'wrote 0x0751=0x10'), (11, 'watch over'),
+             (12, 'restored 0x0751=0x00')])
+        for block, value in ((1, '0xA0'), (2, '0x10')):
+            self.assertIn(f"block {block}/2: intact -- last mark", out)
+            self.assertIn(f"value under test {value}; roles settle, control, "
+                          "hold, write, watch, restore", out)
+        # The last-mark-is-the-restore check reaches the boundary windows and
+        # is unaffected by them: `watch over` is not a restore, and a block
+        # that ended on one would be void.
+        self.assertEqual(out.count(': intact -- last mark'), 2)
+        self.assertNotIn('VOID', out)
+
+    # The substantive claim, and the reason the fixture puts a 0x075B row on
+    # each side of the `watch over` mark. §4.4's control-vs-write comparison
+    # is taken over the write's window, so that window has to stop at the end
+    # of the watch rather than run on into the restore.
+    def test_the_end_of_watch_round_closes_the_write_window(self):
+        rc, out, _ = run(*STAGED_CAPTURES)
+        self.assertEqual(rc, 0)
+        write, watch, restore = (window_body(out, n) for n in (4, 5, 6))
+        # The two duty rows on either side of the boundary are in different
+        # windows, and each says so by its own figures: two changes inside
+        # the write's, one in the window the boundary opened. Merged -- the
+        # shape a capture without a `watch over` mark has -- the write's
+        # window reads `0x68 -> 0x6D` over three changes, and the restore's
+        # own 0x0751 write is inside the same bracket as the observation.
+        self.assertIn('window delta  0x075B  0x68 -> 0x6B  net +3  total 3  '
+                      'max 3  (2 changes)', write)
+        self.assertIn('window delta  0x075B  0x6B -> 0x6D  net +2  total 2  '
+                      'max 2  (1 change)', watch)
+        self.assertNotIn('0x6D', write)
+        self.assertNotIn('0x68', watch)
+        # `0x0751` itself is in neither watched nor context group, so the
+        # report names it among "other addresses that moved" without printing
+        # the two values -- which is why the fixture moves the duty byte
+        # around the boundary rather than the byte under test. The restore's
+        # own 0x0751 write is after the 12:03:00 row, so it is in the restore
+        # window and the split above already says it is not in the write's.
+        self.assertIn('0x0751', write)
+        self.assertIn('0x0751', restore)
+        # The same boundary in the temperature capture, so the property is
+        # not one address's accident: CPU_TEMP moves in the write window and
+        # again in the one the boundary opened.
+        self.assertIn('window delta  0x043E  0x37 -> 0x3B', write)
+        self.assertIn('window delta  0x043E  0x3B -> 0x3C', watch)
+
+    # A boundary is one mark like any other to the agreement checks, which is
+    # the point of making it one. Both failure kinds, because they are
+    # different checks and a fix that reached only one of them would leave a
+    # `watch over` half-checked: a stage round a console missed is as much a
+    # hole in the record as a `write` it missed.
+    def test_a_stage_boundary_is_checked_like_any_other_mark(self):
+        # `staged/`'s 0f00 capture records a round a second after the 0700
+        # capture's and its 0400 one two seconds after, so block 1's
+        # `watch over` is the `12:02:4x` row in each case below. The label
+        # the two consoles disagree on is `watched over`: it reads as the
+        # stage it is and the merge still parses it, so the case is the
+        # disagreement check and not the unplaceable one.
+        cases = [
+            ('0f00-0f5f.csv', '2026-01-01T12:02:41', None, 'missing',
+             'recorded in 2 of 3 capture(s), absent from '
+             '2026-01-01-0751-isolation-0f00-0f5f.csv',
+             'read quiet for want of a mark rather than because nothing '
+             'moved'),
+            ('0400-045f.csv', '2026-01-01T12:02:42', 'watched over', 'labels',
+             'the captures spell this action differently',
+             'the window it opens is not the action any of them recorded'),
+        ]
+        for capture, ts, respelt, kind, refused, cost in cases:
+            with tempfile.TemporaryDirectory() as tmp:
+                rc, out, _ = run(*staged_copies(
+                    tmp, {capture: edit_mark(ts, respelt)}))
+            self.assertEqual(rc, 1, kind)
+            flat = " ".join(out.split())
+            # Named per capture and with the consequence that check states,
+            # which is a different sentence for each of the two.
+            self.assertIn(refused, flat, kind)
+            self.assertIn(cost, flat, kind)
+            # The whole block is withheld, its boundary windows included: the
+            # check is over the block's mark set, so a block that fails it
+            # loses all six windows and not the four after the bad one.
+            self.assertEqual(
+                out.count('block: 0xA0 (block 1 of 2) -- NOT GRADED'), 6,
+                kind)
+            self.assertIn(f'1 mark-set problem(s): {kind}', flat, kind)
+            # Block 2 never saw the edit and is unaffected, which is what
+            # makes this a per-block check rather than a run-wide one -- and
+            # the only thing the edit had to be cut by timestamp to show.
+            self.assertIn('block 2/2: intact', out, kind)
+            self.assertEqual(out.count('block: 0x10 (block 2 of 2) -- '
+                                      'NOT GRADED'), 0, kind)
+            self.assertEqual(out.count('no watched byte moved in this '
+                                      'window'), 6, kind)
+
+    # `--block` selects the windows a boundary opened, not the three an older
+    # capture of the same block carries. A scoping that silently dropped them
+    # would print a clean per-block attachment whose write window was the
+    # `settle` window's, which is the mis-attribution the block model exists
+    # to stop.
+    def test_block_selects_all_six_windows_of_a_staged_block(self):
+        rc, out, _ = run(*STAGED_CAPTURES, '--block', '0xA0')
+        self.assertEqual(rc, 0)
+        self.assertIn('=== block 1 of 2, value under test 0xA0, '
+                      '6 window(s) in it ===', out)
+        self.assertEqual(
+            marked_windows(out),
+            [(1, 'settled'), (2, 'no-op wrote 0x0751=0x10'), (3, 'held'),
+             (4, 'wrote 0x0751=0xA0'), (5, 'watch over'),
+             (6, 'restored 0x0751=0x10')])
+        # Numbered where they are in the whole mark stream, so the two reads
+        # sit side by side, and the block's own last window still says the
+        # block ended rather than the capture.
+        self.assertIn('window runs to the end of block 1 of 2', out)
+        self.assertNotIn('the end of the capture', out)
+        self.assertIn('block 1/2: intact', out)
+        # And the scoping declined is the capture-level comparison, as it is
+        # over any block: a boundary does not turn one block into the day.
+        self.assertIn('The other 1 block(s) are not part of it', out)
+        self.assertNotIn('consistent with the static prediction', out)
+
+    # The scoping choice, pinned. Boundaries are a new class of mark the
+    # procedure asks for; making one mandatory would refuse every capture this
+    # tool grades today, which is the one thing the issue did not ask for and
+    # the reason these three sets are still here unchanged.
+    def test_a_capture_with_no_boundaries_still_grades_as_it_did(self):
+        for captures, roles, exit_code in (
+                (RUN_CAPTURES, [['control', 'write', 'restore']], 0),
+                (MULTI_BLOCK, [['control', 'write', 'restore']] * 2, 0),
+                # The void block ends on its write and so has one role
+                # fewer, and a boundary is not a restore: giving it one
+                # would have made the void check pass over a block that
+                # never closed. `fixture_block_ends` is what says the second
+                # half of that in the tool's own predicate.
+                (BLOCK_CAPTURES,
+                 [['control', 'write', 'restore'], ['control', 'write'],
+                  ['control', 'write', 'restore']], 1)):
+            rc, out, _ = run(*captures)
+            self.assertEqual(rc, exit_code, f"{len(roles)} block(s)")
+            # The three action roles and no more: nothing here invents a
+            # window the capture did not record. Read off `Block.roles`
+            # through the same walk `main` does rather than counted in the
+            # printed census, which prints each block's roles twice and
+            # appends `-- NOT GRADED` to the line of one that fails a check.
+            _, _, blocks, _ = as_main_reads(captures)
+            self.assertEqual([b.roles for b in blocks], roles)
+            # And none of the three boundary labels is in the report at all,
+            # quoted so the closing section's own "what this does and does
+            # not settle" is not what fails the assertion.
+            for boundary in ("'settled'", "'held'", "'watch over'"):
+                self.assertNotIn(boundary, out, boundary)
+        # `3blocks/`'s void block is still void, which is the one exit code in
+        # the three that is not 0 and the one thing a boundary must not have
+        # changed: it is still short its restore, and still exit 1.
+        self.assertEqual(fixture_block_ends()[1],
+                         ('wrote 0x0751=0x00', False))
 
 
 class SelfTestModeTests(unittest.TestCase):

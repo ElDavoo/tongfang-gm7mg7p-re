@@ -123,15 +123,21 @@ python windows\tools\ec_watch.py --start 0x0400 --len 0x0060 --seconds 240 --int
 
 rem  --- 2. control arm: let all three settle ~10 s, mark each, then write
 rem  ---    the value already there back to itself and mark that as a no-op ---
+rem  mark each console: settled
 python windows\tools\ecrw.py write 0x0751=0x<current> --i-mean-it
+rem  mark each console: no-op wrote 0x0751=0x<current>
 
 rem  --- 3. hold ~30 s, mark each, then the write under test, mark ---
+rem  mark each console: held
 python windows\tools\ecrw.py write 0x0751=0xA0 --i-mean-it
+rem  mark each console: wrote 0x0751=0xA0
 
 rem  --- 4. watch for ~60 s; mark again at the end ---
+rem  mark each console: watch over
 
 rem  --- 5. restore, and mark once more ---
 python windows\tools\ecrw.py write 0x0751=<original> --i-mean-it
+rem  mark each console: restored 0x0751=0x<original>
 
 rem  --- 6. after all three watchers exit ---
 python windows\tools\ecrw.py dump 0x0700 0x0100 ^
@@ -238,8 +244,8 @@ itself is worth less than no block.
 "I wrote it now", a byte that moves 400 ms later and one that moves 40 s
 later look the same in the log. With `--csv` it writes each mark into the
 capture itself as a `ts,MARK,,label` row, so the CSV is self-contained — type
-what you just did as the label (`no-op wrote 0x0751=0xA0`,
-`wrote 0x0751=0x10`, `restored 0x0751=0xA0`) rather than keeping the timing
+what you just did as the label — one of the six forms the block above names,
+`rem mark each console:` under each round — rather than keeping the timing
 in separate notes. **A blank line records nothing: the mark prompt says so and
 asks again**, so there is no such thing as an unnamed mark in a capture
 ([`../../windows/tools/ec_watch-marks.md`](../../windows/tools/ec_watch-marks.md)).
@@ -248,13 +254,17 @@ seconds of each other; the grader treats marks less than five seconds apart as
 one action, which is what keeps three consoles from reporting one write as
 three windows.
 
-**Those three forms are now load-bearing rather than illustrative.** The
-grader reads the leading word to tell the control arm from the write under
-test, reads the value after `0x0751=` to name the block the window belongs
-to, and refuses a mark that is none of the three — quoting the three back,
-because a window whose opening mark cannot be placed is a window it cannot
-say what it is a window of. **As of 2026-09-25 (issue #474) pressing Enter on a
-blank line is no longer one way this happens by accident**: the mark prompt in
+**Those six forms are now load-bearing rather than illustrative.** Three of
+them are actions and carry a value after `0x0751=`: `no-op wrote ...`,
+`wrote ...`, `restored ...`. Three are **stage boundaries** and carry none:
+`settled`, `held`, `watch over`. The grader reads the leading word to tell the
+control arm from the write under test, reads the value after `0x0751=` to name
+the block the window belongs to, and reads a boundary as a mark that opens a
+window without a write behind it. It refuses a mark that is none of the six —
+quoting them back, because a window whose opening mark cannot be placed is a
+window it cannot say what it is a window of. **As of 2026-09-25 (issue #474)
+pressing Enter on a blank line is no longer one way this happens by
+accident**: the mark prompt in
 `ec_watch.py` (`Marker._loop`) refuses the press, records nothing, prints that
 it did, and asks again. It used to substitute `mark N` for the empty label —
 the `ec_watch.py:119` this paragraph cited until now — and the substitution was
@@ -270,7 +280,7 @@ second way to produce that shape by accident is refused at the prompt too**:
 §3's three commands above carry `--label-vocab 0751`, and the mark prompt then
 checks each label against the grader's own `parse_mark` — the same predicate
 `unplaceable_marks` applies — refusing a label it cannot place at all, quoting
-these three forms back, and asking again, with the blank press's notice and its
+these six forms back, and asking again, with the blank press's notice and its
 `no mark N taken` counting rule. A mistyped `=`, or the `0x` dropped from the
 address, is that case. **The mistyped digit just named is not**, and the
 comparison above is still what is for it: `0x0751=0xA` parses as a value of its
@@ -279,6 +289,25 @@ know which values the run means to write or what its actions should be. None
 of this has been run at a machine — the check, the notice and the counter are
 offline behaviour of the tool against a fake EC, and a human at the laptop is
 the one who would see the new prompt.
+
+**As of 2026-09-25 (issue #472) the three boundary rounds have a label and a
+place in the block, and they are optional rather than required.** A boundary
+carries no value, so it cannot name a block; it joins the one already open and
+waits for the next write if there is none, which is what the control arm does
+too. A block recorded with all six rounds therefore reads
+`settle, control, hold, write, watch, restore` on the grader's `roles` line,
+and `--block` selects all six of its windows rather than the three an older
+capture carries. **What a block recorded without `watch over` costs is stated
+here rather than checked.** A window is every change after a mark up to the
+next one, so the end-of-watch mark is what closes the write's ~60 s observation
+window: without it the write's window runs on into the `restored` write, and
+§4.4's control-vs-write comparison is taken over a window that contains the
+restore. The grader does not refuse that block — a three-mark capture grades
+exactly as it always did, and every fixture under
+`../../ec/tools/testdata/0751-isolation-run-*/` but the staged one is a
+three-mark capture — and the `roles` line says so on its face: a block that
+reads `control, write, restore` is a block whose write window ran into its
+restore, and the reader is the one who knows whether that matters for the day.
 
 Values to run, one block each: `0xA0` (Office), `0x00` (Gaming), `0x10`
 (Turbo). Start from a *different* mode each time — writing Turbo's `0x10`
@@ -591,14 +620,21 @@ what lets the grader say which block a `--dump` belongs to, which is the one
 thing in a dump that says so; see the command below. The snapshot has to
 say which mode each block started from and what was written, since nothing
 else in the set says it. The marks in all three CSVs must carry the same
-labels, and they must tell the control arm from the write under test:
-`no-op wrote 0x0751=0xA0`, `wrote 0x0751=0x10`, `restored 0x0751=0xA0`. All
-three requirements are checked, per block and per capture, before a window is
-printed — see §3, and the census the grader puts above the windows. **As of
-2026-09-25 (issue #531) the three forms are checked at the prompt as well**,
+labels, must tell the control arm from the write under test, and must leave
+every block ending on its restore. All three are checked, per block and per
+capture, before a window is
+printed — see §3, and the census the grader puts above the windows. The labels
+are §3's six forms: the three that name a write and carry a value —
+`no-op wrote 0x0751=0xA0`, `wrote 0x0751=0x10`, `restored 0x0751=0xA0` — and
+the three stage boundaries that carry none, `settled`, `held`, `watch over`.
+A boundary is one mark like any other to the checks above, so a `watch over`
+one console missed or that two spelled differently withholds its block's
+windows on exactly the terms a `wrote` would; a capture with none of the three
+is not refused, and §3 says what a block without a `watch over` costs. **As of
+2026-09-25 (issue #531) the forms are checked at the prompt as well**,
 by `--label-vocab 0751` in §3's three commands, which runs this grader's own
 `parse_mark` over each label as it is typed and refuses the ones it cannot
-place — the same message, the same three forms, the same counting rule. That is
+place — the same message, the same forms, the same counting rule. That is
 offline behaviour of the tool against a fake EC, not a live run; what it moves
 is the correction to where the day is still being spent, and what it promises
 is that a label it accepts is one this grader can place. Both ends apply that
@@ -684,7 +720,7 @@ report says so, in the census and in the block section.
 
 Marks in no block are not scoped by `--block` either, and the census says of
 each that `--block` cannot select it. One of them — a label that is not one of
-the three forms named above — refuses the whole run rather than the block that
+the forms named above — refuses the whole run rather than the block that
 was selected, because the labels are the only thing that says which block a
 window is a window of: one the grader cannot place could have been a write, in
 which case the capture is holding a block it cannot name, or a restore typed
