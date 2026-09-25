@@ -467,6 +467,17 @@ anywhere in this file.
   `pd-xdata-overlap.md`'s headline verdict and its hedge stand exactly as
   written; this file decodes one image's internal address arithmetic and says
   nothing about the other's map.
+- **A `--sites` address is checked for range, and the boundary is not checked at
+  all.** `check_site_addr()` refuses anything outside `0x0000-0xFFFF` — the
+  width a PD runtime address has on any dump, not a property of this image — and
+  names the file range beside it, because the tool's own output prints
+  `file_offset` next to `runtime` and its committed CSVs carry both columns.
+  What it does **not** check is the instruction boundary: a caller naming a
+  mid-instruction address still gets a listing that is visibly wrong rather than
+  refused, and §7's `--sites`-only sites and windows are read on that basis. One
+  range, one precondition, and they are not the same check —
+  [`../../docs/findings/pd-sites-address-range.md`](../../docs/findings/pd-sites-address-range.md)
+  has the measurements and the argument for which is which.
 - **No `registers.yaml` status moved, and none could have.** See the preamble.
 
 ## 6. What would settle it, and what follows

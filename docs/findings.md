@@ -7500,6 +7500,16 @@ without it. `pd_index_geometry.py:600-601` gets **no guard**: its window peaks a
 `0x3002C` against a `0x40000`-byte image, so it did not raise over the range run
 — which is a statement about this input, not about the code, and a guard
 justified by "it cannot happen here" would be a guard justified by an assumption.
+
+*(**Qualification, 2026-09-25, §56.** The "no guard" and the `:600-601` are both
+superseded: `check_site_addr()` now refuses a `--sites` address outside
+`0x0000-0xFFFF`, and the listing is `:636-637`. The reasoning above still stands
+about what that new check is *not* — it tests the caller's argument, not this
+image's 262144 bytes, so `0x3002C` is still what bounds a *legal* address's
+window and the instruction boundary is still unchecked. The census's row 10 is
+retracted in place beside itself; the write-up is
+[`pd-sites-address-range.md`](findings/pd-sites-address-range.md).)*
+
 Nothing here asserts any site "cannot raise", no live test ran, no capture was
 opened, and no EC or hardware was involved; the sweep bounds the table the way
 `ec/annotations/registers.yaml` bounds a zero-result scan, and the
@@ -7575,3 +7585,42 @@ The census's own citations of `:307,308` were re-run to `:314,315` rather than
 left stale, since the docstring sits above them; its sweep count is unchanged
 at 39. No EC, no hardware, no Windows, no capture, and no claim about what the
 EC does — this is a property of Python walking a `bytes` object.
+
+## 56. `--sites` refuses an out-of-region address, so the census's row-10 caveat is a statement about the code (2026-09-25, issue #848)
+
+The write-up is
+[`pd-sites-address-range.md`](findings/pd-sites-address-range.md); this is the
+summary. §53's row 10 declined to guard `site_rows()` on principle — *a guard
+justified by "it cannot happen on this image" is a guard justified by an
+assumption* — and recorded in the same paragraph that **the code does not clamp
+`addr`**, leaving a claim about the CLI on the reader's word. The code was worse
+than the sentence: `--sites 0x1FFFF` raised a bare `IndexError` from inside the
+listing loop. **`check_site_addr()` now refuses an address outside
+`0x0000-0xFFFF` by name**, naming the region, its runtime range, its file range
+and the value given, and `main()` turns it into `ap.error` and exit 2 — the same
+shape `parse_span()`'s refusal already used for an out-of-range `--bases` /
+`--strides` span. The census's principle is **not** overridden: the new check
+tests the caller's *argument* and holds for any dump, where the guard row 10
+declined would have rested on this image's 262144 bytes, and the two guards
+behave differently on a different image, which is the test that separates them.
+The instruction-boundary precondition deliberately **stays** a precondition,
+since no byte says where a routine's instructions begin, so `site_rows()`'s
+docstring now carries the two preconditions side by side so neither reads as the
+only one. The census's row-10 sentence is retracted in place beside itself, and
+its table cell, its reproduction block and follow-up 1 point here; the shared
+file edits are a row, a retraction, a bullet, two commands and one line. **The
+realised last read is `0x3000E`, not the `0x3002C` the census's cell called the
+peak** — `0x3002C` is the worst case of fifteen three-byte instructions, and
+every byte from `0x30000` to `0x40000` is `0xFF`, which also makes `0x1FFF1` the
+first address that raised and not the `0x1FFFB` #848's issue put it at. That same
+fill means `--sites 0x1FFF0` is now **refused as well**, since it was never a
+16-bit runtime address, only an unchecked one. **#843's "the only two" is
+twelve** under the literal `grep -n 'lo, _ = pd_bounds()'`, and **four** under
+the narrower test its issue applies — the extra pair being `site_rows` and its
+caller `print_sites`, the first of which is row 10. `--callers` was measured and
+**exits 0** on the same input, `--helpers 0x1FFE9` still raises and is left
+raising as the census's follow-up 1, and every mode's output on the legal range
+is **byte-identical** before and after — a `diff` against the pre-change file,
+not an impression, which is what makes it a regression test. No live test ran,
+no register was read back, no capture was opened, and no hardware, EC, Windows,
+Ghidra or `registers.yaml` row was involved.
