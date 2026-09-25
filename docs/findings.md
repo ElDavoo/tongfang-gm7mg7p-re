@@ -4292,14 +4292,14 @@ fake EC; §3's commands carry the flag, and a human at the laptop sees the
 prompt. Same file:
 [ec_watch-marks.md](../windows/tools/ec_watch-marks.md).
 
-## 17. The `main-ec-002` cluster is one 393-byte routine, counted 42 times over (2026-09-23, issue #179; id corrected by #253 and by the 2026-09-24 re-derivation)
+## 17. The `main-ec-003` cluster is one 393-byte routine, counted 42 times over (2026-09-23, issue #179; id corrected by #253, by the 2026-09-24 re-derivation, and again by #279 on 2026-09-25)
 
 **The id in this section's subject has been wrong twice, and every version of
 the error is in the record.** Issue #179 asked about the cluster the committed
-census called `main-ec-003`. Issue #4.3's census regeneration (#133 / #238)
-renumbered it to `main-ec-004`, which is what this section's subject read until
+census called `main-ec-002`. Issue #4.3's census regeneration (#133 / #238)
+renumbered it to `main-ec-003`, which is what this section's subject read until
 the census was re-derived on the merged tree (2026-09-24), which put it back at
-`main-ec-003` — `xdata-clusters.csv` row 3, 43 addresses and 4,966 references
+`main-ec-002` — `xdata-clusters.csv` row 3, 43 addresses and 4,966 references
 over `0x0460`-`0x09CE`, which is this block. The cluster that had taken the old
 `main-ec-002`'s meaning has itself split in that re-derivation. Its 28-address
 half is row 4, `main-ec-004`, over `0x045C`-`0x1C3A`. Its 11-address half is
@@ -4315,7 +4315,26 @@ wrong ids are left standing where they quote issue #179, per §4a;
 `ec/tools/check_cluster_citations.py` is what holds the rest of the tree to the
 census.
 
-Issue #179 asked what the `main-ec-003` cluster is: 43 addresses, 4,965
+> **(2026-09-25, issue #279: the ids moved once more, and this is where the
+> current ones live.)** The census was re-derived again for this issue — 39 new
+> `cluster_key`s among the main-EC rows, 380 → 389, and the ranking moved under
+> them, by one at the top and by more down the tail — so **the 43-address /
+> 4,966-reference sweep over `0x0460`-`0x09CE` is `main-ec-003` again**, the
+> fourth name this block has carried after `main-ec-002` on 2026-09-23,
+> `main-ec-003` under #253 and `main-ec-002` on 2026-09-24. That is why the
+> subject line above names it and the sentences beside it do not. The old
+> 44-address block's three remainders are the same memberships under their new
+> rank slots: `main-ec-004` (28 addresses, `0x045C`-`0x1C3A`, was
+> `main-ec-003`), `main-ec-012` (11, `0x045E`-`0x1F07`, was `main-ec-011`) and
+> `main-ec-055` (4, was `main-ec-049`) — each one's `cluster_key` unchanged, so
+> the key is what identifies a cluster across the move and a `main-ec-NNN` is
+> only its rank (`annotations/xdata-cluster-names.csv` is keyed by it).
+> **The renumbering this issue made is in the membership claims, not in the
+> sentences that record what #179, #253 and #254 said** — those are left as
+> they were written, per §4a, and this paragraph carries the current ids once
+> instead of rewriting them.
+
+Issue #179 asked what the `main-ec-002` cluster is: 43 addresses, 4,965
 references, 126 touching functions (the issue's figures; the census as
 re-derived on 2026-09-24 records 4,966 and 127 for the same membership), nine of
 the ten busiest addresses in the
@@ -4537,14 +4556,16 @@ addresses**, `0x08A8` goes from 84 reads / 44 writes to **126 / 2**, `0x0843`
 from 84 / 42 to **126 / 0**, and **`main-ec-003` goes from 43 addresses /
 4,966 references to 44 / 248** — a shape and not a row, since the guard's
 output is not the committed census. Neither figure is right yet — both still
-carry the 42-fold count above — but an issue scoped to "read `main-ec-003`"
+carry the 42-fold count above — but an issue scoped to "read `main-ec-002`"
 would be scoped to a membership its own prerequisite changes. (The id in that
-quoted scope is `main-ec-004` in the census as it stood when #253 corrected it,
+quoted scope is `main-ec-003` in the census as it stood when #253 corrected it,
 and `main-ec-002` again since the 2026-09-24 re-derivation, per the correction
 above; and the 44 / 248 it lands on is the size and reference count the old
-`main-ec-003` carried, which is a coincidence of two numbers and not of a
+`main-ec-002` carried, which is a coincidence of two numbers and not of a
 membership — that block has since split, and `xdata-06c2-06db-timers.md` §6a
-says so at the table.) The
+says so at the table. §17's 2026-09-25 note records the third move: the same
+membership is `main-ec-003` again, so the quoted scope resolves to this block
+today while reading `main-ec-002` in the issue.) The
 issue's own "42 of its
 comparisons are `==`" is a second, independent misreading:
 `xdata-register-map.md` §4.1 defines `read+write` as "an `=` target whose
@@ -4560,8 +4581,10 @@ and per §1 all 42 come from the overlapping exports.
 > address for address, because the guard moves references *between* direction
 > buckets and out of none of them — **0 of 1,171 addresses have a different
 > `refs` total either way**. There is no 44-address / 248-reference cluster in
-> either generation. An issue scoped to "read `main-ec-003`" is therefore scoped
-> to a membership its own prerequisite leaves alone. The guard's real reach is
+> either generation. An issue scoped to "read `main-ec-002`" is therefore scoped
+> to a membership its own prerequisite leaves alone (§17's 2026-09-25 note
+> records the third move of that id, back to `main-ec-003`, and both readings
+> name this same membership). The guard's real reach is
 > the two figures that did reproduce: 833 references leaving `write`, 210 of
 > 1,171 addresses changing, and the `0x08A8` / `0x0843` rows.
 > Both line citations were wrong against the tool as it now stands: the

@@ -700,7 +700,9 @@ and the remaining four members of the `main-ec-013` cluster are still unnamed.
 > (`xdata-clusters.csv` row 13), five of which are the seven bytes above, so the
 > four left are `0x0875 0x089C 0x089D 0x08A1` — the count of four is what
 > identifies the intended cluster, and the addresses confirm it. The
-> `0x0300`-`0x03FE` cluster is `main-ec-013` (row 14) and holds none of them.
+> `0x0300`-`0x03FE` page is no longer a cluster of its own — issue #279's
+> re-derivation absorbed it — and none of the rows its bytes now sit in holds
+> any of the seven above.
 > The seventh byte, `0x08A0`, is a size-1 cluster of its own (`main-ec-292`),
 > and `0x08EB` has left the block entirely — it is a size-1 cluster of its own
 > now, `main-ec-206` — which is why seven bytes here are five members of one

@@ -1591,8 +1591,9 @@ The 214 addresses reached include 58 that also carry a token spelling and
 are in `../registers.yaml`, which is why a `grep '^0x0402,'` over
 `xdata-registers.csv` — the issue's evidence — finds nothing while the address
 was documented all along. `0x0403`, the `inc DPTR` half of the first, was
-already a row at 18 references and 25 reads; it moves to **28 references, 25
-reads, 3 writes and 3 writers**, so it picks up a writer for the first time. All eight
+already a row at 18 references, all 18 of them reads, over 13 functions; it
+moves to **28 references, 25 reads, 3 writes and 3 writers**, so it picks up a
+writer for the first time. All eight
 `NOT_IN_TREE` entries this closes are listed in the tool: `0x0402 0x0404
 0x0408 0x040A 0x040C 0x040E 0x0410 0x043A`, which is the 25-entry set becoming
 17 and `named_in_tree` 167 → 175.
@@ -1643,7 +1644,8 @@ other way again, is still out of reach, which is the reason the `NOT_IN_TREE`
 vocabulary has no word for absence.
 
 **The self-test pins the resolved set, not a total.** `--self-test` asserts
-the accessor set equals the six names above, that every one of them still has
+the accessor set equals the seven names above — the six bank1 routines and
+`pd:0x38D3 read_be16_from_dptr` — that every one of them still has
 two `movx` in its committed `.asm` (the encoding half of the discriminator,
 read back out of the tree rather than taken from the table), the exact
 `(file, direction)` multiset for `0x0402` and `0x0408`, that `9354.c` is not

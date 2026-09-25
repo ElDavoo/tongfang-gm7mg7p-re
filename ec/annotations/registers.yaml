@@ -694,7 +694,7 @@ registers:
       `read+write`. Second address where the corrected census agrees with a
       note already in this file; 0x0440 is the first.
       *** 2026-09-25 (issue #279): the census half of the sentence above now
-      reads 28 C-level references, 25 read and 3 write, over 14 functions --
+      reads 28 C-level references, 25 read and 3 write, over 16 functions --
       0x0403 picks up its first writer, because the 0x0402 pair is read and
       written through the bank1 pair accessors and 0x0403 is the accessor's
       `inc DPTR` half. static_refs and static_refs_main_ec are UNCHANGED at

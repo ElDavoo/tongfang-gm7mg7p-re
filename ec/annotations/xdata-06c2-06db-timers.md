@@ -1,6 +1,6 @@
 # `0x06C2`-`0x06DB`: the counter sweep at `bank1:0x8001`-`0x8189`
 
-Issue #179 asked what the `main-ec-003` cluster actually is: how many distinct
+Issue #179 asked what the `main-ec-002` cluster actually is: how many distinct
 timers it holds, what decrements each, what reloads it, and what gates it. This
 is the answer, and it is a reading of `ec/decompiled/bank1/8018.c` beside
 `ec/decompiled/bank1/80EF.asm` — the machine code and one reading of it. Every
@@ -9,8 +9,8 @@ byte count below is re-derivable from the committed image by §1, and
 `registers.yaml` and fails on a mismatch.
 
 > **Correction, 2026-09-24 (issue #253).** The `main-ec-002` issue #179 asked
-> about is `main-ec-003` again in the committed census, and the block this file
-> sweeps shares not one address with the one that took the old `main-ec-003`'s
+> about is `main-ec-002` again in the committed census, and the block this file
+> sweeps shares not one address with the one that took the old `main-ec-002`'s
 > meaning: `xdata-clusters.csv` row 3 gives `main-ec-003` 43 addresses and 4,966
 > references over `0x0460`-`0x09CE`, which is this block, while the old 44-address
 > block has since split in two: its 28-address half is row 4, `main-ec-004` over
@@ -33,16 +33,34 @@ byte count below is re-derivable from the committed image by §1, and
 > because
 > the quote is the evidence that the id moved.
 >
-> **Issue #254's own instruction to change this block's id to `main-ec-004` was
+> **Issue #254's own instruction to change this block's id to `main-ec-003` was
 > not applied, because the prediction it rested on was itself stale.** #254
-> predicted `main-ec-004` from the pre-split numbering; the committed census
-> puts the 43-address / 4,966-reference sweep at `main-ec-003`, and
-> `../tools/check_cluster_citations.py` passes, so this page's `main-ec-003`
-> needed no change and the stale `main-ec-004` was in `ec/README.md`, which is
+> predicted `main-ec-003` from the pre-split numbering; the committed census
+> puts the 43-address / 4,966-reference sweep at `main-ec-002`, and
+> `../tools/check_cluster_citations.py` passes, so this page's `main-ec-002`
+> needed no change and the stale `main-ec-003` was in `ec/README.md`, which is
 > the copy that moved. Left visible here so a reader holding #254 reads the
 > unapplied instruction rather than an oversight.
 > `../tools/check_cluster_citations.py` is what holds the rest of the tree to
 > the census.
+>
+> **(2026-09-25, issue #279: the ids moved a third time, and #254's prediction
+> is the one the census now carries.)** The census was re-derived again for this
+> issue, adding 39 `cluster_key`s among the main-EC rows (380 → 389) and moving
+> the ranking under them. The committed census therefore puts the 43-address /
+> 4,966-reference sweep at
+> `main-ec-003` over `0x0460`-`0x09CE`, all 43 addresses §1 sweeps carry
+> `cluster_id=main-ec-003` in `xdata-registers.csv`, and the three remainders
+> the old 44-address block split into are the same memberships under their new
+> rank slots: `main-ec-004` (28 addresses, `0x045C`-`0x1C3A`, was
+> `main-ec-003`), `main-ec-012` (11, `0x045E`-`0x1F07`, was `main-ec-011`) and
+> `main-ec-055` (4, was `main-ec-049`).
+> **Issue #254's instruction, "should read `main-ec-003`", is therefore the id
+> this page now carries**, and `ec/README.md`'s pointer follows the census to
+> `main-ec-003` rather than needing #254's rename. The paragraph above is left
+> as it was written on 2026-09-24, when the census said `main-ec-002`; per §4a
+> that record stands, and this one carries the current ids once rather than
+> rewriting the sentences that record what #179, #253 and #254 asked for.
 >
 > **This block now has a carried name, and the `main-ec-NNN` above is still a
 > rank** (issue #274). The census's `cluster_key` is a content hash over the
