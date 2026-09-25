@@ -225,7 +225,7 @@ directly:
   `:216`. These are a per-commit chain, each figure correct for the commit it
   was measured on, and #735 built them that way deliberately; overwriting them
   here would destroy the chain rather than fix a number.
-- `docs/findings.md:2077` — "Those 76 tests ran nowhere." This one is
+- `docs/findings.md:2086` — "Those 76 tests ran nowhere." This one is
   **historical**, in the past tense, describing what issue #532's write-up said
   about its own branch at the time. It is not a live count claim and is not
   wrong; the plan named it as a stale figure to correct, and it is not one.
