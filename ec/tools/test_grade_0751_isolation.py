@@ -1412,9 +1412,16 @@ class MarkSetTests(unittest.TestCase):
     # A label the block walk cannot place is fatal, and the message quotes the
     # three forms §6 fixes rather than describing the problem. The operator
     # cannot fix an unplaceable mark from "this label is malformed"; the three
-    # forms are the whole of what has to change. `ec_watch.py` stamps an
-    # empty line as `mark N`, which is how this shape arises at the machine
-    # (windows/tools/ec_watch.py:119).
+    # forms are the whole of what has to change. The `mark 3` row below is a
+    # hand-written fixture of that shape, and a capture carrying one is still
+    # fatal for the whole run however it got there. `ec_watch.py`'s mark
+    # prompt used to write it -- `Marker._loop` stamped an empty line as
+    # `mark N` -- and stopped on 2026-09-25 (#474): it now refuses a blank
+    # press and records nothing, so a capture of that tool's own cannot
+    # produce this row any more -- though windows/tools/system_id_probe.py
+    # still substitutes the same label, and writes the same shape of row. The
+    # fixture and every assertion below stand; see
+    # windows/tools/ec_watch-marks.md.
     def test_a_mark_that_is_not_one_of_the_three_forms_is_an_error(self):
         with tempfile.TemporaryDirectory() as tmp:
             p = Path(tmp) / 'unread.csv'
