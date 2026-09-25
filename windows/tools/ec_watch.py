@@ -40,6 +40,14 @@ by default because `gpu_block_watch.py:59,166` imports this `Marker` and
 stamps free-form labels through it, which a blanket check would refuse, while
 `system_id_probe.py:232` has its own, still `strip() or` at `:252` (#483, #484).
 
+The rule that check applies is read out of the grader rather than carried
+here, so the grader is a startup dependency of that flag and of nothing else
+in this tool: a checkout finds it at `ec/tools/grade_0751_isolation.py`, a
+directory of tools staged onto a Windows box finds a copy of it beside this
+file, and `--grader <path>` names a third place. A grader in none of them, or
+one that is there and will not load, refuses before the CSV and long before the
+EC, and the refusal names every place it looked.
+
 `--block` sweeps the same addresses four bytes per IOCTL through the driver's
 `MMRD` instead of one byte per `ECRR`, so the default 2 KiB sweep is 512 calls
 rather than 2048. It is off by default and nothing in this repository has run
@@ -58,7 +66,13 @@ Usage:
   ec_watch.py --seconds 60 --csv out.csv
   ec_watch.py --mark                           # type a label + Enter to stamp a mark
   ec_watch.py --mark --label-vocab 0751        # and refuse a label the 0751 grader cannot read
+  ec_watch.py --mark --label-vocab 0751 --grader <path-to-grade_0751_isolation.py>
   ec_watch.py --start 0x0700 --len 0x100 --block
+
+`--label-vocab 0751` reads the grader from `ec/tools/grade_0751_isolation.py`
+in a checkout, or from a copy of it in this file's own directory where the
+tools have been staged onto a Windows box; `--grader` is a third place, and
+needs `--label-vocab`.
 """
 import argparse
 import csv
@@ -112,7 +126,40 @@ class CsvSink:
             self._fh.close()
 
 
-def load_label_vocab(ap, name):
+def grader_candidates(grader_path=None):
+    """Every place the grader is looked for, in the order it is tried.
+
+    `--grader` is the whole list when given, rather than the first entry of it:
+    an explicit path that quietly fell through to a different file would be the
+    silent fallback `load_label_vocab` refuses to make, and an operator who
+    named a file has already been told where it is.
+
+    The committed copy comes first among the built-ins so a checkout grades its
+    prompts against the grader its own tests pin, and a copy staged beside this
+    file can only matter where there is no checkout to have one -- which is what
+    §3's three watchers meet when a directory of tools has been copied onto a
+    Windows box rather than run out of the tree.
+    """
+    if grader_path:
+        return [Path(grader_path)]
+    here = Path(__file__).resolve()
+    # The checkout copy is `here.parents[2]`, which a tools directory staged
+    # onto a Windows box can be too shallow to have: `C:\tools\ec_watch.py` is
+    # two levels down and `parents[2]` is off the drive, so indexing it there
+    # is an IndexError rather than a candidate. A path that cannot be named is
+    # not a place to look -- there is no checkout above a drive root -- so it
+    # is offered only when the path is deep enough to have one. The
+    # beside-the-tool copy below is what reaches that depth, and offering it
+    # unconditionally is the whole of candidate 3.
+    candidates = []
+    if len(here.parents) > 2:
+        candidates.append(here.parents[2] / "ec/tools"
+                          / "grade_0751_isolation.py")
+    candidates.append(here.with_name("grade_0751_isolation.py"))
+    return candidates
+
+
+def load_label_vocab(ap, name, grader_path=None):
     """(check, forms) for the label vocabulary `name`, read from its grader.
 
     `--label-vocab 0751` names §3's forms, and
@@ -126,30 +173,53 @@ def load_label_vocab(ap, name):
     action forms and three stage boundaries as of issue #472, and a word in
     this docstring saying which would be a fourth place to keep in step.
 
-    The import is the one `manual_fan_ctrl_probe.py`'s self-test makes, for the
-    same reason: this tool runs next to `ecrw.py` on a Windows box, where the
-    repository layout is not something to depend on at import time. The grader
+    The import is the one `manual_fan_ctrl_probe.py`'s self-test makes, and it
+    is by path and only under this flag, for the reason that call gives: this
+    tool is imported at module scope by `gpu_block_watch.py:59,166`, and a
+    grader requirement it never asked for is not one it should inherit. What
+    that call rules out is a dependency on the repository *layout*, and this
+    lookup was one hard-coded path, which made the layout the whole of it. The
+    layout is one of the places `grader_candidates` looks now; the dependency
+    that is real is on the file existing somewhere, which is one -- §3's three
+    commands carry the flag and will not start without it -- and is what this
+    function's refusal is for rather than something to look past. The grader
     imports stdlib only and its module-level work is constants and a
     `__main__` guard, so loading it there opens no capture and touches no
     hardware.
 
-    A grader that will not load is a refusal rather than a fallback. A run with
-    the check silently off is #502's failure one step earlier -- a capture taken
-    under a promise the tool did not keep -- and the operator would not find
-    out until the grading.
+    A grader that will not load is a refusal rather than a fallback, and so is
+    one that is present and broken: the search advances past a candidate that
+    is not there and stops at one that raises, naming that path. A staged copy
+    silently standing in for a committed grader that has been broken since the
+    checkout was made is a capture graded against a rule the tree does not
+    hold. A run with the check silently off is #502's failure one step earlier
+    -- a capture taken under a promise the tool did not keep -- and the
+    operator would not find out until the grading.
     """
-    path = Path(__file__).resolve().parents[2] / "ec/tools" \
-        / "grade_0751_isolation.py"
-    try:
-        spec = importlib.util.spec_from_file_location("grade_0751_isolation",
-                                                      path)
-        grader = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(grader)
-    except (OSError, ImportError, SyntaxError) as e:
-        ap.error(f"--label-vocab {name} needs ec/tools/"
-                 f"grade_0751_isolation.py at {path}: {e}")
-    return (lambda label: grader.parse_mark(label)[0] is not None,
-            grader.REQUIRED_LABEL_FORMS)
+    tried = []
+    for path in grader_candidates(grader_path):
+        if not path.is_file():
+            tried.append(path)
+            continue
+        try:
+            spec = importlib.util.spec_from_file_location(
+                "grade_0751_isolation", path)
+            if spec is None or spec.loader is None:
+                # No loader for this suffix (a .txt and friends): there, and
+                # there is no module to run. The same one refusal.
+                raise ImportError("importlib has no loader for this file")
+            grader = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(grader)
+        except Exception as e:
+            ap.error(f"--label-vocab {name} needs grade_0751_isolation.py at "
+                     f"{path}, and it is there but will not load: {e}")
+        return (lambda label: grader.parse_mark(label)[0] is not None,
+                grader.REQUIRED_LABEL_FORMS)
+    ap.error(f"--label-vocab {name} needs grade_0751_isolation.py, the module "
+             f"this prompt reads its vocabulary from, and none of these is it:\n"
+             + "".join(f"  {p}\n" for p in tried)
+             + "Put a copy of it beside ec_watch.py, or run from a checkout "
+               "that has one; --grader names a third place.")
 
 
 class Marker:
@@ -238,21 +308,33 @@ def main(argv=None):
                          "not be able to place. Needs --mark. Off by default: "
                          "the other tools that take marks through this one "
                          "use their own free-form labels")
+    ap.add_argument("--grader", metavar="PATH",
+                    help="read the --label-vocab grader from this file rather "
+                         "than from ec/tools/ in a checkout or from beside "
+                         "this one. It is the only place looked, so a path "
+                         "that will not load refuses rather than falling back; "
+                         "needs --label-vocab")
     ap.add_argument("--block", action="store_true",
                     help="sweep 4 bytes per IOCTL (MMRD) instead of 1 (ECRR); "
                          "a path that has never been run against the driver, "
                          "and not a safety improvement over the byte path")
     args = ap.parse_args(argv)
 
-    # Both refusals here, above the CSV and a long way above the EC: a run
-    # that cannot keep the promise has to say so before it starts, not
-    # halfway through the first block.
+    # The startup refusals, all of them above the CSV and a long way above the
+    # EC: a run that cannot keep the promise has to say so before it starts,
+    # not halfway through the first block.
     check = forms = None
+    if args.grader and not args.label_vocab:
+        # The same shape as the one below, and for the same reason: it is a
+        # modifier of --label-vocab, and a grader path beside a run that reads
+        # no vocabulary is a flag that reads as a setting and changes nothing.
+        ap.error("--grader needs --label-vocab: it names where that flag's "
+                 "grader is, and there is no vocabulary without that flag")
     if args.label_vocab:
         if not args.mark:
             ap.error("--label-vocab needs --mark: the mark prompt is the only "
                      "place a label is typed")
-        check, forms = load_label_vocab(ap, args.label_vocab)
+        check, forms = load_label_vocab(ap, args.label_vocab, args.grader)
 
     start = int(args.start, 0)
     length = int(args.length, 0)
