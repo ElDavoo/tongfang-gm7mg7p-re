@@ -209,9 +209,12 @@ class TripwireCoverage(unittest.TestCase):
     mocked. #566 added three co-reading modes to a dispatch this suite had
     enumerated at six, and the gap would have been silent: a run that reached
     `co_reading_sweep` instead of `write` writes nothing, so the refusals below
-    would have gone on passing. So the list is read out of `main()`'s own AST --
-    every bare-name call in statement or return position -- and a tenth mode
-    fails here rather than going unmocked.
+    would have gone on passing. So the list is read out of `main()`'s own AST,
+    by `dispatch_names`, on its own stated rule: every bare-name call in
+    `main()` that is not another call's argument -- which is an assignment
+    right-hand side, a `with` header and a bare comprehension as much as a
+    statement or a `return` -- and a tenth mode fails here rather than going
+    unmocked.
 
     Statement position is in that sentence because it was not, until issue
     #608: the reader then implemented `visit_Return`, and a tenth mode reached

@@ -139,9 +139,10 @@ big trees are not copied. Each mutation was reverted immediately, and the
 mirror's two census CSVs were `cmp`-ed against their pre-run bytes after every
 run. To get the first row honestly, this branch's **base** version of the test
 file — the reader as it was before this change — was dropped into the mirror
-(`git show 4efb8eb0:ec/tools/test_xdata_register_map.py`; `4efb8eb0` is
-`origin/main`, *"guard the probe's `--csv` hold against the grader's mark-merge
-window (#667)"*, the commit this branch forks from) and the mutated mirror run
+(`git show a37faef9:ec/tools/test_xdata_register_map.py`; `a37faef9` is what
+`git merge-base origin/main HEAD` returns on this branch, *"measure the citation
+calls a function boundary cut out of a citing listing (#668)"*, and the test
+file is byte-identical at its predecessor `4efb8eb0`) and the mutated mirror run
 against it, then against the fixed one. The commit rather than the branch name
 is what keeps the recipe re-runnable by someone who is not standing in this
 branch, once `origin/main` has moved on.
@@ -156,8 +157,20 @@ branch, once `origin/main` has moved on.
 > mutated mirror against the fixed suite and seen 1 failure where this section
 > promises 20 green, which is the one claim the section exists to make
 > checkable. The row itself was always right; it is **20 tests, green** against
-> `origin/main`'s test file, which is what the command above now names, and the
-> base file at `4efb8eb0` is verified to be that 20-test version.
+> the fork point's test file, which is what the command above now names, and the
+> base file at `a37faef9` is verified to be that 20-test version.
+>
+> **Corrected 2026-09-25, issue #608 (PR #675 review, round 2).** That
+> correction left the command pinning `4efb8eb0` under the gloss "`4efb8eb0` is
+> `origin/main` ... the commit this branch forks from", and neither half is true
+> of this tree: `git merge-base origin/main HEAD` is `a37faef9`, and `4efb8eb0`
+> is its grandparent — the *previous* `origin/main`, which `a37faef9` (#668) has
+> since moved past, exactly as the "once `origin/main` has moved on" above says
+> it would. The command itself was never wrong: `ec/tools/test_xdata_register_map.py`
+> is byte-identical at `4efb8eb0` and `a37faef9` (`git diff` between the two is
+> empty), so either pin yields the same 20-test base file. The command now names
+> `a37faef9`, the actual fork point, and the predecessor is recorded only as the
+> commit the same bytes are also reachable at.
 
 The tenth mode is added the way a tenth mode is added: a `--demo-mode` flag
 registered on the mutually-exclusive group, and a branch dispatched as a
