@@ -87,6 +87,21 @@ watched.
   `python ec\tools\grade_0751_isolation.py` are both repo-relative — so a
   staged directory has to type its own paths. The tool half of §3 is the part
   that now works either way; the grader bullet above is what makes it start.
+
+  **Correction (issue #748, 2026-09-25), leaving the bullet above as it was
+  written.** "Grades identically either way" was true of these ten files as
+  committed, and it was not a property of the format — it was a property of
+  the interpreter that happened to read them. The readers opened a capture
+  with no `encoding=`, so a file whose bytes were written in another encoding
+  was gradeable at the machine and refused from a checkout. The capture format
+  is now **`utf-8`, no BOM**, declared at every reader and every writer of it
+  ([`0751-capture-encoding.md`](../findings/0751-capture-encoding.md)), so
+  "identically" is now a property of the files rather than a coincidence: §3's
+  watchers write `utf-8` themselves, and a capture in anything else is refused
+  with the encoding and the remedy named. A run taken **before** that
+  declaration, or a file an operator annotated in an editor that saved
+  something else, is the case the refusal exists for — re-save it as UTF-8
+  without a BOM and it grades the same as it always did.
 - Record the starting value of `0x0751`, and the current mode as the vendor
   UI reports it. `evidence/ec-watch/2026-09-23-power-mode-snapshot-dc.txt`
   is the format to copy for the snapshot.

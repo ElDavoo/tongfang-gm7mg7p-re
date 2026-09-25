@@ -418,10 +418,15 @@ class MarkCsv:
     run extends a finished block rather than an open one, and the grader's
     block walk reads each of them separately. The header goes to a new file
     only, and `read_capture` skips it either way.
+
+    `utf-8`, declared as `ec_watch.py`'s `CsvSink` declares it, because this
+    file writes the shape that grader opens and not a shape of its own: an
+    arm label carrying `§` is then a byte the grader reads back rather than
+    one it refuses the whole capture over.
     """
 
     def __init__(self, path):
-        self._fh = open(path, "a", newline="")
+        self._fh = open(path, "a", newline="", encoding="utf-8")
         self._writer = csv.writer(self._fh)
         if self._fh.tell() == 0:
             self.row(["ts", "addr", "old", "new"])

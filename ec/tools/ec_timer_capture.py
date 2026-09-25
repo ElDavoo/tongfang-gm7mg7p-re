@@ -134,8 +134,13 @@ def power_state():
 
 
 class Sink:
+    # `utf-8`, the codec `ec_watch.py`'s `CsvSink` and the graders declare.
+    # This is a Linux tool writing the shape the Windows graders read, so the
+    # bytes it puts on the box are the format's and not this process locale's
+    # -- otherwise a `§` in a comment or a mark is a byte the grader refuses
+    # the capture over, written by a tool that had no way to know.
     def __init__(self, path):
-        self._fh = open(path, "w", newline="")
+        self._fh = open(path, "w", newline="", encoding="utf-8")
         self._w = csv.writer(self._fh, lineterminator="\n")
         self._lock = threading.Lock()
 

@@ -3518,19 +3518,21 @@ class ExistingMarkLabelTests(unittest.TestCase):
 
     def test_a_byte_the_encoding_cannot_read_does_not_stop_the_preflight(self):
         # The other thing the file can hold that `read_capture` refuses and
-        # this must not: bytes. `CsvSink` appends to the same path and never
-        # decodes it, so a capture carries whatever its writing process's
-        # locale wrote -- 0xE9, as latin-1 and cp1252 both write for `café`,
-        # and as a UTF-8 process cannot read. Read with
-        # the default encoding and iteration is lazy, so the raise comes out of
-        # the loop rather than the open, and it came out of the startup path:
-        # the run died before it began, on exactly the foreign capture the
-        # docstring says this exists to tolerate, where appending had worked.
+        # this must not: bytes. The format declares `utf-8` and every writer
+        # of it declares the same, but `CsvSink` appends to a path without
+        # ever decoding it, so a file written before the codec was declared
+        # or annotated in an editor that saved something else is still here
+        # at startup -- 0xE9, as latin-1 and cp1252 both write for `café`,
+        # and as a capture cannot hold. Under the declared codec and with
+        # iteration lazy, the raise comes out of the loop rather than the
+        # open, and it came out of the startup path: the run died before it
+        # began, on exactly the foreign capture the docstring says this
+        # exists to tolerate, where appending had worked.
         #
-        # The label comes back with U+FFFD where the byte was on a UTF-8
-        # process, and with the character on one whose own encoding reads it.
-        # Both satisfy the assertion, and both are correct: the job is to name
-        # the row so the operator can recognise it, not to reproduce it.
+        # The label comes back with U+FFFD where the byte was, and now that is
+        # the only answer rather than one of two: the job is to name the row
+        # so the operator can recognise it, not to reproduce it, and the
+        # grading still refuses the same file over the same byte.
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / 'capture.csv'
             path.write_bytes(b'ts,addr,old,new\n'
@@ -3544,7 +3546,10 @@ class ExistingMarkLabelTests(unittest.TestCase):
         self.assertEqual([ts for ts, _ in marks],
                          ['2026-01-01T12:00:00.000+01:00',
                           '2026-01-01T12:00:30.000+01:00'])
-        self.assertTrue(marks[0][1].startswith('caf'), marks[0][1])
+        # The prefix survives and the byte does not, on every interpreter --
+        # which is what `errors="replace"` is for, and what the declared
+        # encoding did not take away.
+        self.assertEqual(marks[0][1], 'caf\ufffd')
         self.assertEqual(marks[1][1], 'settled')
 
     def test_the_strict_readers_verdict_splits_the_marks_a_file_holds(self):
@@ -3817,15 +3822,14 @@ class ExistingMarkLabelTests(unittest.TestCase):
                 len(grade.existing_mark_findings(str(path))[0]), 1)
 
     def test_a_byte_this_python_cannot_decode_reports_the_verdict_it_observed(self):
-        # The encoding question, measured rather than assumed, and the notice
-        # reports whichever answer this interpreter gives. `read_capture`
-        # opens without an `encoding=`, so it decodes in the running locale's
-        # preferred encoding: under the gate's UTF-8 the 0xE9 raises, and on a
-        # box whose default reads it the same file is accepted and the mark is
-        # named as `café`. Both are correct here and the test accepts either,
-        # because what it holds is that the notice says what *this* run
-        # observed -- and a notice that claimed a decode failure the grading
-        # would not have hit would be the one thing this must never do.
+        # The encoding question, and it no longer has two answers. `read_capture`
+        # declares `utf-8`, so the 0xE9 raises on every interpreter that runs
+        # this -- not under the gate's UTF-8 and not under a box whose default
+        # reads the byte. The notice reports the verdict it observed, which is
+        # now a property of the format rather than of the reader: a notice
+        # that claimed a decode failure the grading would not have hit is
+        # still the one thing this must never do, and a notice that stayed
+        # silent on a file the grading *will* hit is the same failure.
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / 'capture.csv'
             path.write_bytes(b'ts,addr,old,new\n'
@@ -3837,38 +3841,81 @@ class ExistingMarkLabelTests(unittest.TestCase):
                 grade.read_capture(str(path))
             except UnicodeDecodeError as e:
                 raised = e
-        if raised is None:
-            # An interpreter whose default reads the byte: no refusal claimed,
-            # the mark accepted, and the file stays gradeable. This is the case
-            # the issue asks to keep in `read_capture`'s contract and out of
-            # the notice.
-            self.assertEqual(refused, [])
-            self.assertEqual([ts for ts, _ in accepted],
-                             ['2026-01-01T12:00:00.000+01:00',
-                              '2026-01-01T12:00:30.000+01:00'])
-            self.assertEqual(accepted[0][1], 'café')
-        else:
-            # One refusal, and it is the file's rather than a row's: iteration
-            # is lazy, so the raise comes out of the loop and there is no row
-            # to name it by. `None` is what says so.
-            self.assertEqual(len(refused), 1)
-            self.assertIsNone(refused[0][0])
-            self.assertIn(str(raised), refused[0][1])
-            # The encoding is named, and it is the one the interpreter really
-            # used rather than a re-derivation of which locale rule applies --
-            # so it matches the codec in the exception's own words.
-            self.assertIn(raised.encoding.lower(), refused[0][1].lower())
-            # The rows are still named, through the lenient reader, with the
-            # byte as U+FFFD: both of them, not just the one before it, and
-            # that is how the operator finds the byte that stopped it.
-            self.assertEqual([ts for ts, _ in accepted],
-                             ['2026-01-01T12:00:00.000+01:00',
-                              '2026-01-01T12:00:30.000+01:00'])
-            self.assertTrue(accepted[0][1].startswith('caf'), accepted[0][1])
-            self.assertEqual(accepted[1][1], 'settled')
+        # The refusal is the only arm left, and it is asserted rather than
+        # branched on, because a test that accepts either answer no longer
+        # pins anything about which one this build gives.
+        self.assertIsNotNone(raised)
+        # One refusal, and it is the file's rather than a row's: iteration
+        # is lazy, so the raise comes out of the loop and there is no row
+        # to name it by. `None` is what says so.
+        self.assertEqual(len(refused), 1)
+        self.assertIsNone(refused[0][0])
+        self.assertIn(str(raised), refused[0][1])
+        # The codec is named, and it is the format's declared one rather than
+        # a re-derivation of whichever locale happens to apply -- so it is
+        # `utf-8` whatever box runs this, and it matches the codec in the
+        # exception's own words.
+        self.assertIn('utf-8', refused[0][1].lower())
+        self.assertEqual(raised.encoding.lower(), 'utf-8')
+        # And the remedy, so the refusal is not only a complaint: an operator
+        # holding a capture from another box is told what to do about it
+        # rather than shown a decode error and left to guess.
+        self.assertIn('re-save', refused[0][1].lower())
+        # The rows are still named, through the lenient reader, with the
+        # byte as U+FFFD: both of them, not just the one before it, and
+        # that is how the operator finds the byte that stopped it.
+        self.assertEqual([ts for ts, _ in accepted],
+                         ['2026-01-01T12:00:00.000+01:00',
+                          '2026-01-01T12:00:30.000+01:00'])
+        self.assertTrue(accepted[0][1].startswith('caf'), accepted[0][1])
+        self.assertEqual(accepted[1][1], 'settled')
         # A label verdict needs a file the grader can read, and one it cannot
         # read is already refused whole: there is nothing for a second list to
-        # add, whichever way the encoding went.
+        # add.
+        self.assertEqual(unplaceable, [])
+
+    def test_a_leading_bom_is_refused_by_name_and_not_as_a_bad_hex_row(self):
+        # The BOM half of the same decision, and the one that needed a
+        # refusal of its own. `utf-8` is declared and `utf-8-sig` is not, so
+        # a leading BOM is *not* retired: it decodes to U+FEFF, glues to the
+        # first field, the `ts` header test misses, and the header is graded
+        # as a change row. Left alone that is refused on `int("addr", 16)` --
+        # a complaint about a hex literal on a line that is not a change, and
+        # one that never mentions the encoding at all. So the strict reader
+        # catches it before the hex is read and says what it is.
+        #
+        # What this does *not* decide is whether the format should ever accept
+        # a BOM. That is a separate question; all this pins is that a capture
+        # carrying one is refused legibly under the encoding declared here.
+        bom = b'\xef\xbb\xbf'
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'capture.csv'
+            path.write_bytes(bom + b'ts,addr,old,new\n'
+                             b'2026-01-01T12:00:00.000+01:00,MARK,,settled\n'
+                             b'2026-01-01T12:00:30.000+01:00,0x0701,0x00,0x11\n')
+            with self.assertRaises(ValueError) as caught:
+                grade.read_capture(str(path))
+            # And the notice reports that same refusal rather than explaining
+            # the header in hex: the grading and the warning are one verdict.
+            accepted, refused, unplaceable = grade.existing_mark_findings(str(path))
+        message = str(caught.exception)
+        # Named as what it is, and as the format's rule rather than as a
+        # mystery about an integer: not the `int()` complaint the header
+        # would otherwise produce.
+        self.assertIn('byte-order mark', message.lower())
+        self.assertNotIn('invalid literal for int()', message)
+        # With the remedy in it, the way the decode refusal carries one.
+        self.assertIn('re-save', message.lower())
+        self.assertIn('utf-8', message.lower())
+        self.assertIn('bom', message.lower())
+        # The notice's first reason is `read_capture`'s own exception,
+        # verbatim -- the anti-drift contract, holding for a refusal of the
+        # file's encoding as it does for a row's contents.
+        self.assertEqual(refused[0][1], message)
+        # Every mark still named, through the lenient reader: the preflight
+        # did not lose the run to the refusal the grading gives.
+        self.assertEqual([ts for ts, _ in accepted],
+                         ['2026-01-01T12:00:00.000+01:00'])
         self.assertEqual(unplaceable, [])
 
     def test_on_a_file_the_strict_reader_accepts_the_two_readers_agree(self):
