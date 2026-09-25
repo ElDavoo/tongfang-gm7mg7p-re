@@ -111,12 +111,15 @@ python windows\tools\ecrw.py dump 0x0400 0x0060 ^
 rem  --- 1. start all three watchers (three consoles), with the load running ---
 rem  ---    --interval 0.5 is a starting point, not a validated-safe value;
 rem  ---    see the pacing note below before leaving it there ---
+rem  ---    --label-vocab 0751 is what makes the prompt check each label
+rem  ---    against the grader's own parse; without it a label it cannot place
+rem  ---    is recorded here and costs the whole run at grading time ---
 python windows\tools\ec_watch.py --start 0x0700 --len 0x0100 --seconds 240 --interval 0.5 ^
-       --mark --csv <date>-0751-isolation-0700-07ff.csv
+       --mark --label-vocab 0751 --csv <date>-0751-isolation-0700-07ff.csv
 python windows\tools\ec_watch.py --start 0x0F00 --len 0x0060 --seconds 240 --interval 0.5 ^
-       --mark --csv <date>-0751-isolation-0f00-0f5f.csv
+       --mark --label-vocab 0751 --csv <date>-0751-isolation-0f00-0f5f.csv
 python windows\tools\ec_watch.py --start 0x0400 --len 0x0060 --seconds 240 --interval 0.5 ^
-       --mark --csv <date>-0751-isolation-0400-045f.csv
+       --mark --label-vocab 0751 --csv <date>-0751-isolation-0400-045f.csv
 
 rem  --- 2. control arm: let all three settle ~10 s, mark each, then write
 rem  ---    the value already there back to itself and mark that as a no-op ---
@@ -148,7 +151,7 @@ end of a capture, and **a mark after the watcher has exited is written
 nowhere.** A block whose final mark lands late is void; redo it. The check is
 mechanical, not a matter of remembering: `ec_watch.py` prints
 `=== N sweeps over Ms` and then every mark it recorded when it stops
-(`../../windows/tools/ec_watch.py:221`), so the last label in that list is the
+(`../../windows/tools/ec_watch.py:335`), so the last label in that list is the
 last mark the capture has. If it is not the restore, the block is short one.
 
 The check over the capture is the one that survives into the record, and
@@ -158,7 +161,7 @@ closed by the restore — prints an `intact` or a `VOID` verdict for each, and
 exits non-zero if any block is void. It reads the CSVs rather than the
 terminal, and that is not a preference: `ec_watch.py` appends a mark to its
 own list and prints it whether or not the CSV sink is still open
-(`../../windows/tools/ec_watch.py:121-123` against the close at `:221-222`),
+(`../../windows/tools/ec_watch.py:211-214` against the close at `:330-332`),
 so the last label on the screen can be one the capture never received. The
 by-eye check above is still the fastest one to do at the machine; run the
 tool over the committed CSVs as well, before they are filed.
@@ -202,8 +205,8 @@ before this one, and this is the only one held under a fixed load.** The
 arithmetic is worth having in front of you: `ecrw.Ec.read`
 (`../../windows/tools/ecrw.py:135`) is one `ECRR` `DeviceIoControl` per byte
 with nothing between calls, and `ec_watch.py` reads every address in its range
-once per sweep (`addrs`, `../../windows/tools/ec_watch.py:147`) with
-`--interval` slept between sweeps (`ec_watch.py:193`), not between bytes. So
+once per sweep (`addrs`, `../../windows/tools/ec_watch.py:257`) with
+`--interval` slept between sweeps (`ec_watch.py:307`), not between bytes. So
 one sweep of each of the three watchers is `0x100 + 0x60 + 0x60 = 448` ECRR
 reads, all three running at once, for as long as the block runs.
 **448 is what this section's commands above do today, and it is what the
@@ -262,7 +265,20 @@ had. What still produces the shape by accident is a mistyped digit in one of
 the three consoles, and nothing but the comparison catches it: the merge joins
 the three labels into `wrote 0x0751=0xA0 / wrote 0x0751=0x10` and the window
 opens on that, while the timestamps are perfectly happy because the write
-really did happen between the two marks.
+really did happen between the two marks. **As of 2026-09-25 (issue #531) a
+second way to produce that shape by accident is refused at the prompt too**:
+§3's three commands above carry `--label-vocab 0751`, and the mark prompt then
+checks each label against the grader's own `parse_mark` — the same predicate
+`unplaceable_marks` applies — refusing a label it cannot place at all, quoting
+these three forms back, and asking again, with the blank press's notice and its
+`no mark N taken` counting rule. A mistyped `=`, or the `0x` dropped from the
+address, is that case. **The mistyped digit just named is not**, and the
+comparison above is still what is for it: `0x0751=0xA` parses as a value of its
+own, as does a value this run never wrote, because a per-line prompt cannot
+know which values the run means to write or what its actions should be. None
+of this has been run at a machine — the check, the notice and the counter are
+offline behaviour of the tool against a fake EC, and a human at the laptop is
+the one who would see the new prompt.
 
 Values to run, one block each: `0xA0` (Office), `0x00` (Gaming), `0x10`
 (Turbo). Start from a *different* mode each time — writing Turbo's `0x10`
@@ -578,7 +594,16 @@ else in the set says it. The marks in all three CSVs must carry the same
 labels, and they must tell the control arm from the write under test:
 `no-op wrote 0x0751=0xA0`, `wrote 0x0751=0x10`, `restored 0x0751=0xA0`. All
 three requirements are checked, per block and per capture, before a window is
-printed — see §3, and the census the grader puts above the windows.
+printed — see §3, and the census the grader puts above the windows. **As of
+2026-09-25 (issue #531) the three forms are checked at the prompt as well**,
+by `--label-vocab 0751` in §3's three commands, which runs this grader's own
+`parse_mark` over each label as it is typed and refuses the ones it cannot
+place — the same message, the same three forms, the same counting rule. That is
+offline behaviour of the tool against a fake EC, not a live run; what it moves
+is the correction to where the day is still being spent, and what it promises
+is that a label it accepts is one this grader can place. Both ends apply that
+one predicate, so a label the prompt accepts and this grader later refuses
+would be a bug in one of the two rather than a documented gap.
 
 Add a header comment to the snapshot in the style of
 `evidence/ec-watch/2026-09-23-power-mode-snapshot-dc.txt`: date, AC/battery,

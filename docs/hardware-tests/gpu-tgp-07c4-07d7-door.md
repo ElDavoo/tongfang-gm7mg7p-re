@@ -164,7 +164,7 @@ Hold ~30 s after each action before the closing mark. `--seconds` defaults to
 running until Ctrl-C, which is the right default here: the length of the run
 does not matter, the marks inside it do. A mark typed after the watcher has
 exited is written nowhere — `CsvSink` drops it rather than traceback
-(`../../windows/tools/ec_watch.py:83-90`) — so the run's value is in its marks,
+(`../../windows/tools/ec_watch.py:98-105`) — so the run's value is in its marks,
 and the last label `gpu_block_watch.py` prints at the end is the last one the
 capture holds.
 
@@ -415,7 +415,7 @@ evidence/ec-watch/<date>-gpu-door-procmon.pml
 `<date>` is that run's YYYY-MM-DD — the same placeholder §3's command takes, so
 following this list produces this set with no rename step. The CSV is the
 capture itself, both blocks and every mark in one file; `CsvSink` opens it in
-append mode (`../../windows/tools/ec_watch.py:76-81`), so a second run into the
+append mode (`../../windows/tools/ec_watch.py:91-96`), so a second run into the
 same name extends the file rather than replacing it, which is also why the two
 runs must not be merged by hand afterwards (§3).
 

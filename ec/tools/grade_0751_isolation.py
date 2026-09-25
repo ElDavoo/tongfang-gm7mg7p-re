@@ -123,7 +123,7 @@ the label parse run either way.
 This is the check over the committed CSVs, not the by-eye one at the machine,
 and the two are not the same reading. `ec_watch.py` appends a mark to its own
 list and prints it whether or not the CSV sink is still open
-(`../../windows/tools/ec_watch.py:121-123` against the close at `:221-222`),
+(`../../windows/tools/ec_watch.py:211-214` against the close at `:330-332`),
 so the last label a human reads off the terminal can be one the capture never
 received -- the case §3 wants caught. The committed CSV is what the fold-in
 reads, so the CSV is where the check belongs.

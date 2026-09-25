@@ -28,6 +28,18 @@ by what moved between one mark and the next. A blank line is not a mark: the
 prompt records nothing, says so, and asks again, so no capture holds a mark
 the operator did not describe. `ec_watch-marks.md` is why.
 
+`--label-vocab 0751` is that refusal one step earlier, and opt-in: the prompt
+refuses a label the 0751 grader's own `parse_mark` cannot read, quotes §3's
+three forms back, and asks again -- where a mistyped `=`, or the `0x` dropped
+from the address, is corrected while the run is still going rather than at the
+grading as `unplaceable_marks` and a withheld run. It refuses only what the
+grader would refuse: a label that parses but names the wrong value is still
+recorded, and so is a dropped hex digit, because a per-line prompt cannot know
+which values the run means to write or what its actions should be. It is off
+by default because `gpu_block_watch.py:59,166` imports this `Marker` and
+stamps free-form labels through it, which a blanket check would refuse, while
+`system_id_probe.py:232` has its own, still `strip() or` at `:252` (#483, #484).
+
 `--block` sweeps the same addresses four bytes per IOCTL through the driver's
 `MMRD` instead of one byte per `ECRR`, so the default 2 KiB sweep is 512 calls
 rather than 2048. It is off by default and nothing in this repository has run
@@ -45,11 +57,14 @@ Usage:
   ec_watch.py --start 0x0700 --len 0x100
   ec_watch.py --seconds 60 --csv out.csv
   ec_watch.py --mark                           # type a label + Enter to stamp a mark
+  ec_watch.py --mark --label-vocab 0751        # and refuse a label the 0751 grader cannot read
   ec_watch.py --start 0x0700 --len 0x100 --block
 """
 import argparse
 import csv
 import datetime
+import importlib.util
+from pathlib import Path
 import sys
 import threading
 import time
@@ -97,13 +112,59 @@ class CsvSink:
             self._fh.close()
 
 
-class Marker:
-    """Lets the operator stamp 'I clicked the thing now' into the log."""
+def load_label_vocab(ap, name):
+    """(check, forms) for the label vocabulary `name`, read from its grader.
 
-    def __init__(self, sink=None):
+    `--label-vocab 0751` names §3's three forms, and
+    `grade_0751_isolation.py` is where they are written down, so the prompt
+    loads that module by path rather than carrying a second copy of either
+    half: `check` is `parse_mark(label)[0] is not None`, the test
+    `unplaceable_marks` applies to decide a mark is unreadable, and the notice
+    quotes that module's own `REQUIRED_LABEL_FORMS`. A copy could drift from
+    the grader, and a prompt that has drifted promises something the grading
+    does not do.
+
+    The import is the one `manual_fan_ctrl_probe.py`'s self-test makes, for the
+    same reason: this tool runs next to `ecrw.py` on a Windows box, where the
+    repository layout is not something to depend on at import time. The grader
+    imports stdlib only and its module-level work is constants and a
+    `__main__` guard, so loading it there opens no capture and touches no
+    hardware.
+
+    A grader that will not load is a refusal rather than a fallback. A run with
+    the check silently off is #502's failure one step earlier -- a capture taken
+    under a promise the tool did not keep -- and the operator would not find
+    out until the grading.
+    """
+    path = Path(__file__).resolve().parents[2] / "ec/tools" \
+        / "grade_0751_isolation.py"
+    try:
+        spec = importlib.util.spec_from_file_location("grade_0751_isolation",
+                                                      path)
+        grader = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(grader)
+    except (OSError, ImportError, SyntaxError) as e:
+        ap.error(f"--label-vocab {name} needs ec/tools/"
+                 f"grade_0751_isolation.py at {path}: {e}")
+    return (lambda label: grader.parse_mark(label)[0] is not None,
+            grader.REQUIRED_LABEL_FORMS)
+
+
+class Marker:
+    """Lets the operator stamp 'I clicked the thing now' into the log.
+
+    `check` and `forms` are the label vocabulary `load_label_vocab` returns,
+    and both default to None rather than to a rule: this class is imported by
+    `gpu_block_watch.py`, which takes free-form labels a 0751 check would
+    refuse, so a default that checked anything would break it.
+    """
+
+    def __init__(self, sink=None, check=None, forms=None):
         self.marks = []
         self._n = 0
         self._sink = sink
+        self._check = check
+        self._forms = forms or ()
 
     def start(self):
         t = threading.Thread(target=self._loop, daemon=True)
@@ -131,6 +192,20 @@ class Marker:
                       f"{self._n + 1} taken; type a label + Enter ---",
                       flush=True)
                 continue
+            if self._check and not self._check(label):
+                # A described mark whose description is wrong, which the grader
+                # is right to refuse and which `unplaceable_marks` treats as
+                # fatal for the whole run. Refused here for the reason the
+                # blank press is: the place to stop it is before a day of
+                # hardware time is spent on it, not at the grading. Same shape
+                # as the notice above -- nothing recorded, no mark N taken --
+                # and before `_n += 1`, so the number it names is the number
+                # the next accepted mark carries.
+                print("--- unplaceable label: nothing recorded, no mark "
+                      f"{self._n + 1} taken; one of: "
+                      + " / ".join(self._forms)
+                      + "; type a label + Enter ---", flush=True)
+                continue
             self._n += 1
             ts = now()
             self.marks.append((ts, label))
@@ -151,13 +226,31 @@ def main(argv=None):
     ap.add_argument("--csv", help="also write every change to this CSV")
     ap.add_argument("--mark", action="store_true",
                     help="read stdin; each line stamps a labelled mark, into "
-                         "the CSV too if --csv is given. A blank line records "
-                         "nothing and the prompt asks again")
+                         "the CSV too if --csv is given. A blank line, and "
+                         "any label --label-vocab refuses, records nothing "
+                         "and the prompt asks again")
+    ap.add_argument("--label-vocab", choices=("0751",),
+                    help="refuse a mark label the named vocabulary cannot "
+                         "read, with the blank press's notice and counting "
+                         "rule, rather than recording a mark the grader will "
+                         "not be able to place. Needs --mark. Off by default: "
+                         "the other tools that take marks through this one "
+                         "use their own free-form labels")
     ap.add_argument("--block", action="store_true",
                     help="sweep 4 bytes per IOCTL (MMRD) instead of 1 (ECRR); "
                          "a path that has never been run against the driver, "
                          "and not a safety improvement over the byte path")
     args = ap.parse_args(argv)
+
+    # Both refusals here, above the CSV and a long way above the EC: a run
+    # that cannot keep the promise has to say so before it starts, not
+    # halfway through the first block.
+    check = forms = None
+    if args.label_vocab:
+        if not args.mark:
+            ap.error("--label-vocab needs --mark: the mark prompt is the only "
+                     "place a label is typed")
+        check, forms = load_label_vocab(ap, args.label_vocab)
 
     start = int(args.start, 0)
     length = int(args.length, 0)
@@ -165,7 +258,7 @@ def main(argv=None):
 
     sink = CsvSink(args.csv) if args.csv else None
 
-    marker = Marker(sink)
+    marker = Marker(sink, check, forms)
     if args.mark:
         marker.start()
 
