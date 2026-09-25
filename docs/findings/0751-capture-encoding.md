@@ -57,12 +57,12 @@ The split is the point, not an accident of the edit:
 
 | Site | Side | `errors=` | Line |
 |---|---|---|---|
-| `grade_0751_isolation.py` `read_capture` | read | — (strict) | `:692` |
-| `grade_0751_isolation.py` `existing_mark_labels` | read | `replace` | `:757` |
-| `grade_0751_isolation.py` `refused_capture_rows` | read | `replace` | `:801` |
-| `grade_0751_isolation.py` `existing_mark_findings` | read | `replace` | `:904` |
-| `grade_0751_isolation.py` `read_early_exits` | read | — (strict) | `:962` |
-| `grade_0751_isolation.py` `read_dump` | read | — (strict) | `:989` |
+| `grade_0751_isolation.py` `read_capture` | read | — (strict) | `:693` |
+| `grade_0751_isolation.py` `existing_mark_labels` | read | `replace` | `:740` |
+| `grade_0751_isolation.py` `refused_capture_rows` | read | `replace` | `:789` |
+| `grade_0751_isolation.py` `capture_snapshot`, which `existing_mark_findings` reads through | read | `replace` (in `capture_lines`) | `:919` |
+| `grade_0751_isolation.py` `read_early_exits` | read | — (strict) | `:1108` |
+| `grade_0751_isolation.py` `read_dump` | read | — (strict) | `:1135` |
 | `ec_watch.py` `CsvSink` | write | — | `:143` |
 | `system_id_probe.py` `CsvSink` | write | — | `:217` |
 | `ec_validate.py` `SampleCsv` | write | — | `:163` |
@@ -129,8 +129,12 @@ Refused, with the encoding and the remedy named — not decoded per row.
 *Why refuse rather than per-row decode:* per-row decoding would make the
 meaning of the file a property of the reader again, which is exactly what this
 change retires. It would also let the strict reader accept a file whose bytes
-are not the format, so `f.encoding` and the file's real bytes could disagree —
-which is the bug, not the fix.
+are not the format, so the codec a reader reports and the file's real bytes
+could disagree — which is the bug, not the fix. (On this tree the strict
+readers no longer open the file a second time to ask what codec they used:
+#749 merged in alongside, and the codec now comes out of the decode that
+failed. The argument is the same either way — the disagreement, not the
+particular way of learning the codec.)
 
 *Why refusal is safe on the lenient side:* the three preflight readers keep
 `errors="replace"`. The startup notice still cannot die on a foreign byte. The

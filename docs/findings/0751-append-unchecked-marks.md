@@ -245,6 +245,17 @@ stop, rather than a day later as a withheld run with no remedy. Running §3, or
 
 # Addendum, 2026-09-25 (issue #718): the notice names two lists, and the reasons are the grader's
 
+> **Closed by issue #749, 2026-09-25: the two reads were not the same moment,
+> and there is one now.** Everything below is left as it was written, including
+> the drift table, which records the tree this addendum's citations were taken
+> from. `existing_mark_findings` opened the `--csv` once through
+> `read_capture` and once through `existing_mark_labels`, on a file three
+> watchers append to by design, so a row landing between the two could be named
+> in one section of the notice and absent from the other. It now opens the
+> file once and feeds one row list to both. The reasoning, the decision not to
+> unify the skip rule, and the line drift this change caused are in
+> [0751-notice-two-moments.md](0751-notice-two-moments.md).
+
 The finding above is #548. This is the same notice, refined, and it is an
 addendum rather than a second file because it is not a new investigation: it is
 the same tool, the same file, and the same finding. What changes is that the

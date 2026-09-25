@@ -4386,6 +4386,24 @@ behaviour against a fake EC and hand-written rows; no Windows box was reached,
 and the notice has not been seen against a real §3 run. Addendum to the same
 file: [0751-append-unchecked-marks.md](findings/0751-append-unchecked-marks.md).
 
+**2026-09-25 (issue #749): that notice then described two moments as one, and
+it now describes one.** #718 read the `--csv` twice — `read_capture` for the
+placement verdict and `existing_mark_labels` for the list printed above it —
+and the capture is a file three watchers append to by design (§3 runs one per
+console, `CsvSink.row` flushes every row, the lock is per-instance), so a
+notice could name a mark its own accepted list did not hold. `existing_mark_findings`
+now opens the file once, reads the bytes once and feeds one row list to both:
+`read_capture`'s per-row body and `existing_mark_labels`' extraction are
+shared helpers it calls, so the strict verdict is the reader's own rather than
+a second rule, and `f.encoding` — a third open — is gone in favour of the
+failing decode's own `.encoding`, which cannot disagree with it. The file is
+still being appended to: a mark landing after the call is still graded later
+by the whole-file grading, and the skip rule is still spelled in both readers,
+so this is one `open()` and not one function. The open count is asserted
+rather than the effect, since the effect is only visible when the append lands.
+Offline on hand-written rows; no §3 run and no Windows box. Written up in
+[0751-notice-two-moments.md](findings/0751-notice-two-moments.md).
+
 **2026-09-25 (issue #719): a fifth column on the MARK row measured against a
 `# provenance` row, and nothing changed.** That notice cannot say which process
 wrote a mark, and the ceiling is the format rather than the process — but
@@ -4441,6 +4459,18 @@ were drifted before this change and 29 are after, measured both ways and
 recorded rather than hidden; that tool's crash and its re-anchoring are its
 own issue. Written up in
 [0751-capture-encoding.md](findings/0751-capture-encoding.md).
+
+> **Correction (2026-09-25, issue #749 merged on top), leaving the measurement
+> above as it was taken.** The two figures are right for this change and are
+> not the tree's: #749 fixed the crash that made section 5 end in a
+> `ValueError` instead of reporting anything, and re-measured the grader's own
+> pins after this change's `encoding="utf-8"` moved them. The tree now reports
+> **18** drifted pins and **37** citation problems, none of them a
+> `grade_0751_isolation.py` line. Fifteen of the 18 are pins this change moved
+> in the other capture files and are still where it left them, which is what
+> the sentence above decided; the other three (`ec_watch.py:254`/`:280`/
+> `:355`) were already drifted before either change. The split and the numbers
+> are in `0751-notice-two-moments.md`.
 
 ## 17. The `main-ec-003` cluster is one 393-byte routine, counted 42 times over (2026-09-23, issue #179; id corrected by #253, by the 2026-09-24 re-derivation, and again by #279 on 2026-09-25)
 

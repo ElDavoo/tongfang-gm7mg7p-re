@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Offline checks against the constructed captures in testdata/; no hardware
 and no real capture is involved."""
+import builtins
 import contextlib
 import importlib.util
 import io
@@ -3463,6 +3464,15 @@ class ExistingMarkLabelTests(unittest.TestCase):
     listing them all as equally fine. The contract above is its contract -- it
     is the reason the notice is printed at all -- so the cases below cover
     both, and none of them is about which of the two raises.
+
+    It is also one `open()` of the file and not two (#749). A `--csv` under
+    `--label-vocab` is appended to by three watchers on purpose, so a second
+    read is a second moment and the two sections of one notice could describe
+    two different files -- a mark named in the placement section that the
+    section above it does not list. The cases that follow stand a watcher in
+    the middle of the read and assert what the notice says afterwards; the
+    open count is asserted rather than the effect, because the effect is only
+    visible when the race happens to land and a count is true every time.
     """
 
     # One of each row kind, so "which rows are skipped" and "which are marks"
@@ -3931,6 +3941,170 @@ class ExistingMarkLabelTests(unittest.TestCase):
         self.assertEqual(len(accepted), 2)
         self.assertEqual(refused, [])
         self.assertEqual(unplaceable, [])
+
+    def snapshot_then_append(self, path, row):
+        """A stand-in for a watcher landing a row at the instant the notice
+        reads the file: the rows handed back are the real read's, and the file
+        is changed afterwards.
+
+        Patched over `capture_snapshot` rather than over `read_capture`,
+        because `existing_mark_findings` does not call `read_capture` any more
+        (#749) -- a stub there would go unused and pass for the wrong reason.
+        The append is *after* the delegate on purpose: it is what a second
+        read would have picked up and the first had not, which is the whole of
+        the two-moments defect.
+        """
+        real = grade.capture_snapshot
+
+        def read_then_append(p):
+            rows, failure = real(p)
+            with open(p, "a", newline="") as f:
+                f.write(row + "\n")
+            return rows, failure
+        return read_then_append
+
+    def count_opens(self, path, call):
+        """What `call` returned, and how many times it `open()`ed `path`.
+
+        The count rather than the effect: the two reads #749 removed differ
+        from one read only when the append lands between them, and a test that
+        waits for that to happen is a test that passes on a quiet filesystem.
+        Counting is true every run, and the opens of the target path are the
+        only thing counted -- the tempfile the fixture wrote is not one of
+        them.
+        """
+        opened = []
+        real = builtins.open
+
+        def counting(name, *args, **kwargs):
+            if str(name) == str(path):
+                opened.append(str(name))
+            return real(name, *args, **kwargs)
+        with patch.object(builtins, 'open', counting):
+            return call(), len(opened)
+
+    def test_the_capture_is_opened_once_on_both_paths(self):
+        # The issue's first "Done" bullet, pinned as the count rather than as
+        # a symptom. Measured on the module as #749 found it: two on the
+        # clean path -- `read_capture`, then `existing_mark_labels` -- and
+        # three on the decode path, where `f.encoding` was the second of them
+        # and the lenient read the third. (The issue called those the third
+        # and the fourth; the count is this tree's, and one lower.) The
+        # encoding now comes out of the exception that raised, so this is one
+        # either way.
+        with tempfile.TemporaryDirectory() as tmp:
+            good = self.capture(self.ROWS, tmp)
+            (_, refused, _), clean = self.count_opens(
+                good, lambda: grade.existing_mark_findings(good))
+            self.assertEqual(refused, [])
+
+            latin = Path(tmp) / 'latin1.csv'
+            latin.write_bytes(b'ts,addr,old,new\n'
+                              b'2026-01-01T12:00:00.000+01:00,MARK,,caf\xe9\n')
+            (_, refused, _), decode = self.count_opens(
+                str(latin), lambda: grade.existing_mark_findings(str(latin)))
+        self.assertEqual(clean, 1)
+        self.assertEqual(decode, 1)
+        # Both are one *open* and not one reader: the skip rule is still
+        # spelled in `read_capture` and in `mark_labels_of`, and the case
+        # above plus `measure_mark_provenance.py --self-test` hold the two to
+        # each other rather than a delegation that does not exist.
+
+    def test_a_row_that_lands_at_the_read_is_not_in_this_notice(self):
+        # The defect, made to land. A watcher appends a well-formed mark the
+        # instant after the read: the notice must describe the file as it was,
+        # in all three lists, and a second call must then see the new row --
+        # both directions, so a function that never opened the file at all
+        # cannot pass this by returning something constant.
+        appended = ('2026-01-01T12:01:00.000+01:00,MARK,,garbage label')
+        rows = ['ts,addr,old,new',
+                '2026-01-01T12:00:00.000+01:00,MARK,,settled']
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self.capture(rows, tmp)
+            with patch.object(grade, 'capture_snapshot',
+                              self.snapshot_then_append(path, appended)):
+                accepted, refused, unplaceable = grade.existing_mark_findings(
+                    path)
+            # Unpatched, and the appended row is there to be found.
+            after, refused_after, unplaceable_after = \
+                grade.existing_mark_findings(path)
+        self.assertEqual(accepted,
+                         [('2026-01-01T12:00:00.000+01:00', 'settled')])
+        self.assertEqual(refused, [])
+        self.assertEqual(unplaceable, [])
+        # The second direction, and it is the placement verdict that moves
+        # rather than the label list: a minute on, so the appended mark opens
+        # its own window instead of being coalesced into the one above. Had
+        # the placement pass run over a second read, this list would have
+        # named a mark the accepted list above it did not hold.
+        self.assertEqual([ts for ts, _ in after],
+                         ['2026-01-01T12:00:00.000+01:00',
+                          '2026-01-01T12:01:00.000+01:00'])
+        self.assertEqual(refused_after, [])
+        self.assertEqual([label for _, label, _ in unplaceable_after],
+                         ['garbage label'])
+
+    def test_a_half_written_row_at_the_read_is_refused_by_the_next_call(self):
+        # The sharper case the issue names: the row that lands between the two
+        # reads is one the grader cannot grade. The notice reports the file it
+        # read, with no refusal in it, and the refusal appears on the next
+        # call -- which is the only place it can honestly appear.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self.capture(['ts,addr,old,new',
+                                 '2026-01-01T12:00:00.000+01:00,MARK,,settled'],
+                                tmp)
+            half = '2026-01-01T12:01:00.000+01:00,MARK,'
+            with patch.object(grade, 'capture_snapshot',
+                              self.snapshot_then_append(path, half)):
+                accepted, refused, unplaceable = grade.existing_mark_findings(
+                    path)
+            after, refused_after, _ = grade.existing_mark_findings(path)
+            with self.assertRaises(ValueError):
+                grade.read_capture(path)
+        self.assertEqual(len(accepted), 1)
+        self.assertEqual(refused, [])
+        self.assertEqual(unplaceable, [])
+        self.assertEqual(refused_after[0][0],
+                         ['2026-01-01T12:01:00.000+01:00', 'MARK', ''])
+        # A second bad row is appended *after* the read as well, so a verdict
+        # re-read after the fact would name two where only one was there.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self.capture(['ts,addr,old,new',
+                                 '2026-01-01T12:00:00.000+01:00,MARK,'],
+                                tmp)
+            with patch.object(grade, 'capture_snapshot',
+                              self.snapshot_then_append(
+                                  path,
+                                  '2026-01-01T12:01:00.000+01:00,MARK,')):
+                _, refused, _ = grade.existing_mark_findings(path)
+        self.assertEqual(len(refused), 1)
+        self.assertEqual(refused[0][0],
+                         ['2026-01-01T12:00:00.000+01:00', 'MARK', ''])
+
+    def test_every_mark_the_notice_calls_unplaceable_is_one_it_accepted(self):
+        # The internal-consistency property the two reads could not hold, now
+        # held by construction: the placement verdict is computed from the
+        # same rows the accepted list is extracted from, so it cannot name a
+        # mark that list does not hold. Asserted on the pair rather than on
+        # the label alone, and the fixture writes the timestamp in the one
+        # spelling `unplaceable` normalises back to -- `accepted` carries it
+        # as written, so a `T` separator would make this a test of two
+        # different timestamps rather than of one list naming another.
+        first = '2026-01-01 12:00:00+01:00'
+        second = '2026-01-01 12:01:00+01:00'
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self.capture(['ts,addr,old,new',
+                                 f'{first},MARK,,garbage label',
+                                 f'{second},MARK,,settled'], tmp)
+            accepted, refused, unplaceable = grade.existing_mark_findings(path)
+        self.assertEqual(refused, [])
+        self.assertEqual(accepted, [(first, 'garbage label'),
+                                    (second, 'settled')])
+        pairs = [(ts, label) for ts, label, _ in unplaceable]
+        # Not vacuous: one window is reported, so the loop below runs.
+        self.assertEqual(pairs, [(first, 'garbage label')])
+        for pair in pairs:
+            self.assertIn(pair, accepted)
 
     def test_a_file_with_no_marks_comes_back_empty(self):
         # The quiet side, and the reason the notice keys on marks rather than

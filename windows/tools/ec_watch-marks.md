@@ -578,3 +578,50 @@ for a blank press, and both are follow-ups.
   `resumed` label rather than §3's forms, so the consequence there is a
   misleading row rather than a withheld run — a smaller cost, not a smaller
   bug.
+
+## Addendum (issue #749, 2026-09-25): the notice reads the file once
+
+The #718 addendum near the top of this file said, of the notice: *"The file is
+read twice where it was read once"*, and left it there rather than saying
+whether the two reads were the same moment. They were not, and that sentence
+is why the reader it sits next to was re-checked. The sentence is left as
+written; this is the correction beside it.
+
+**What was true.** `existing_mark_findings` opened the `--csv` twice on the
+clean path: once through `read_capture`, whose marks the placement verdict is
+computed from, and once through `existing_mark_labels`, whose list the notice
+prints above it. On a file this tool is about to append to — which is what
+`--csv` under `--label-vocab` always is, and what §3's blocks 2 and 3 rely on
+— those are two moments, and the two sections of one notice could end up
+describing two different files: a mark named in the placement section that the
+section above it did not list, or listed as accepted although the placement
+pass never saw it. The decode branch was worse, with a third open for
+`f.encoding` and a fourth for the lenient read. The odds are low — two
+`open()` calls apart is a microsecond — and that was never the point. Nothing
+held the two answers to the same bytes, and the function's docstring claimed
+they were the same.
+
+**What is true now.** One `open()`, one read, one row list, and all three
+sections of the notice out of it. `read_capture`'s per-row body and
+`existing_mark_labels`' extraction are shared helpers `existing_mark_findings`
+calls, so the reasons it quotes are the grader's own rather than a rule copied
+into this tool — which was #718's whole argument and is unchanged. The
+encoding named in a decode refusal now comes out of the `UnicodeDecodeError`
+itself, so it cannot name a codec other than the one that actually failed, and
+one open went with it.
+
+**What did not change, and is worth a reader's attention.** The file is still
+being appended to; one `open()` is a moment, not a lock. A mark that lands
+after the notice is printed is still graded, by the whole-file grading at the
+end of the day, which is what the closing sentence above already tells the
+operator. Nor is the file now read by one *function*: the skip rule — `#`,
+blank, the `ts` header — is still spelled in both readers, as it has been
+since #548, and is held to itself by two tests rather than by a delegation
+that does not exist.
+
+**Nothing here has been seen against a real §3 run.** The notice's wording,
+its sections and its unpacking are untouched, and `ec_watch.py` needed no edit:
+`load_label_vocab` still reads four names and `warn_unchecked_marks` still
+unpacks a three-tuple. The four cases that hold the new behaviour are offline,
+over hand-written rows in a temporary directory, and the whole reasoning is in
+[`docs/findings/0751-notice-two-moments.md`](../../docs/findings/0751-notice-two-moments.md).

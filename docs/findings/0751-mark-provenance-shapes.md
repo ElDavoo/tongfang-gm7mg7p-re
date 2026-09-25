@@ -4,7 +4,7 @@ The write-up for [issue
 #719](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues/719), which asks
 for the measurement and not the change. #548 named the ceiling three times and
 was right each time: `warn_unchecked_marks`
-(`windows/tools/ec_watch.py:254`) says a run "did not check those marks and
+(`windows/tools/ec_watch.py:288`) says a run "did not check those marks and
 cannot: it did not write them", and nothing in a capture file says which
 process wrote which mark. The writing process knows its own `sys.argv`, so the
 file *could* carry that. Whether it should is a question about the format, and
@@ -33,16 +33,22 @@ temp file. Neither is a statement about the machine.
 
 The issue says a five-column row is backward-compatible on the read side
 because it "passes `len(row) < 4` at `:690` and `row[0..3]` unpacks". The first
-half is right and the second is not what the code does. Two lines of
-`read_capture` (`ec/tools/grade_0751_isolation.py:678`):
+half is right and the second is not what the code does. Three lines — one in
+`read_capture` and two in the row body it now calls
+(`ec/tools/grade_0751_isolation.py`):
 
 | line | reads |
 |---|---|
-| `:687` | `if not row or row[0].startswith("#") or row[0] == "ts":` |
-| `:689` | `if len(row) < 4:` |
-| `:691` | `ts, addr, old, new = row[0], row[1], row[2], row[3]` |
+| `:695` | `if not row or row[0].startswith("#") or row[0] == "ts":` |
+| `:828` | `if len(row) < 4:` |
+| `:830` | `ts, addr, old, new = row[0], row[1], row[2], row[3]` |
 
-`:691` is explicit indexing of the first four fields, not an unpack of `row`.
+`:828` and `:830` are `take_capture_row`'s, and `read_capture` at `:679` calls
+them for the rows its own skip rule lets past. That extraction is #749's, and
+nothing about the shape is different: the row is read by the same code in the
+same order.
+
+`:830` is explicit indexing of the first four fields, not an unpack of `row`.
 A fifth column is therefore **ignored** — `Window` is constructed from `new`,
 which is `row[3]` — where the issue's reading predicts a `ValueError`. The
 conclusion the issue draws is the same and the reason is the opposite, so the
@@ -50,7 +56,7 @@ reasons are worth getting right: a shape that would have raised on the next
 field is a shape that can be extended a field at a time, and one that raises
 is a format change every existing reader has to be reopened for.
 
-`:689` is a real test in the other direction, and the tool's self-test asserts
+`:828` is a real test in the other direction, and the tool's self-test asserts
 it: a *three*-column mark row still raises `ValueError`. The first version of
 that assertion wrote `MARK,,x`, which is four columns, and the self-test failed
 by passing for the wrong reason. A threshold that had stopped testing anything
@@ -58,23 +64,27 @@ would have been the more expensive version of that bug.
 
 ## The row's census
 
-Seven writers and four decision sites, from scanning for the `"MARK"` literal
+Seven writers and eight decision sites, from scanning for the `"MARK"` literal
 rather than off a list — so a writer spelled the way these seven are is in
 tomorrow's census rather than a row of a list someone remembered to update:
 
 ```console
    7 writer(s) of ts,MARK,,label:
-     ec/tools/ec_timer_capture.py:164  sink.row([ts, "MARK", "", label])
-     ec/tools/ec_timer_capture.py:199  sink.row([now(), "MARK", "", label])
-     ec/tools/ec_timer_capture.py:205  sink.row([now(), "MARK", "", label])
-     ec/tools/ec_timer_capture.py:227  sink.row([now(), "MARK", "", label])
-     windows/tools/ec_watch.py:355  self._sink.row([ts, "MARK", "", label])
-     windows/tools/manual_fan_ctrl_probe.py:438  self.row([now() if ts is None else ts, "MARK", "", label])
-     windows/tools/system_id_probe.py:256  self._sink.row([ts, "MARK", "", label])
-   4 site(s) consuming it:
-     ec/tools/grade_0751_isolation.py:692  if addr == "MARK":
-     ec/tools/grade_0751_isolation.py:734  if len(row) > 1 and row[1] == "MARK":
-     ec/tools/grade_timer_sweep.py:134  if r[1] == "MARK":
+     ec/tools/ec_timer_capture.py:169  sink.row([ts, "MARK", "", label])
+     ec/tools/ec_timer_capture.py:204  sink.row([now(), "MARK", "", label])
+     ec/tools/ec_timer_capture.py:210  sink.row([now(), "MARK", "", label])
+     ec/tools/ec_timer_capture.py:232  sink.row([now(), "MARK", "", label])
+     windows/tools/ec_watch.py:458  self._sink.row([ts, "MARK", "", label])
+     windows/tools/manual_fan_ctrl_probe.py:443  self.row([now() if ts is None else ts, "MARK", "", label])
+     windows/tools/system_id_probe.py:261  self._sink.row([ts, "MARK", "", label])
+   8 site(s) consuming it:
+     ec/tools/check_capture_encoding.py:166  if len(row) > 1 and row[1] == "MARK":
+     ec/tools/check_capture_encoding.py:243  row = ["2026-01-01T12:00:00.000+01:00", "MARK", "", PROBE]
+     ec/tools/grade_0751_isolation.py:770  all: `read_capture` branches on `addr == "MARK"` before the `int()` calls,
+     ec/tools/grade_0751_isolation.py:831  if addr == "MARK":
+     ec/tools/grade_0751_isolation.py:853  if len(row) > 1 and row[1] == "MARK":
+     ec/tools/grade_0751_isolation.py:884  if addr == "MARK":
+     ec/tools/grade_timer_sweep.py:138  if r[1] == "MARK":
      windows/tools/test_manual_fan_ctrl_probe.py:508  if len(r) == 4 and r[1] == "MARK"]
 ```
 
@@ -84,14 +94,41 @@ above cannot see it. Six call sites of the grader's readers do not:
 
 ```console
    6 call(s) of the grader's readers, none of which writes the literal:
-     ec/tools/check_capture_claims.py:508  index[WATCH + "/" + name] = read_capture(os.path.join(REPO, WATCH, name))
-     ec/tools/grade_0751_isolation.py:2343  m, c = read_capture(path)
-     ec/tools/grade_0751_isolation.py:2352  rows = read_early_exits(path)
+     ec/tools/check_capture_claims.py:514  index[WATCH + "/" + name] = read_capture(os.path.join(REPO, WATCH, name))
+     ec/tools/grade_0751_isolation.py:2694  m, c = read_capture(path)
+     ec/tools/grade_0751_isolation.py:2703  rows = read_early_exits(path)
      ec/tools/grade_gpu_door.py:421  m, c = fan.read_capture(path)
-     windows/tools/manual_fan_ctrl_probe.py:696  marks, changes = grader.read_capture(str(path))
-     windows/tools/manual_fan_ctrl_probe.py:702  void_marks, void_changes = grader.read_capture(str(void_path))
-   25 further call(s) inside `test_*.py` suites, counted and not listed.
+     windows/tools/manual_fan_ctrl_probe.py:701  marks, changes = grader.read_capture(str(path))
+     windows/tools/manual_fan_ctrl_probe.py:707  void_marks, void_changes = grader.read_capture(str(void_path))
+   39 further call(s) inside `test_*.py` suites, counted and not listed.
 ```
+
+> **The figures above moved, and the reasons are three different changes.** The
+> four decision sites and six call sites this section was written against grew
+> to six and stayed at six when issue #718 added `refused_capture_rows` and
+> `existing_mark_findings` (#729), which between them branch on `"MARK"` and
+> call two of the grader's readers. Issue #749 then took three of those calls
+> out again — one `open()` of a capture and one row list feeding both readers,
+> so `existing_mark_findings` calls neither a second time — which is why the
+> site count held at six while the call count did not move. Issue #748 then
+> added `check_capture_encoding.py`, whose own `count()` skips MARK rows the
+> way `read_capture` does and whose writer round-trip writes one, so the site
+> count is eight while the writer count is unchanged; #748 also shifted every
+> line number in the list above. The `test_*.py` count moved because #749's
+> cases call the readers. Re-run the tool rather than trusting this paragraph:
+> it is a quotation, and a quotation rots.
+>
+> `windows/tools/ec_watch.py:355` and `:254`/`:280` are cited by the tool and
+> are **DRIFT against this tree** — #718's insertions moved them, #748's
+> `encoding="utf-8"` moved them again, and nothing here retargets them. The
+> same is true of the pins in `ec_timer_capture.py`, `grade_timer_sweep.py`,
+> `check_capture_claims.py`, `manual_fan_ctrl_probe.py`, `system_id_probe.py`
+> and `docs/hardware-tests/manual-fan-ctrl-0751-isolation.md`: they are
+> recorded rather than quietly fixed because they are not this change's to
+> move, and because a pin that is corrected in passing is a pin whose history
+> cannot be read. #748 recorded the same split from its side, and this page
+> re-measures the grader's own pins — the ones #749 does own — rather than
+> either side's number.
 
 The two scans have opposite blind sides and neither is the whole tree: the
 literal scan cannot see a consumer that only counts, and the call scan cannot
@@ -118,16 +155,16 @@ The issue names two other writers and readers: `manual_fan_ctrl_probe.py` and
 list is what turned up these four, and all four are in scope for a change to
 the row's shape.
 
-1. **`windows/tools/system_id_probe.py:256` — a third writer**, from a `Marker`
+1. **`windows/tools/system_id_probe.py:261` — a third writer**, from a `Marker`
    class of its own. It imports no `ec_watch.Marker`, and it still carries the
    `strip() or f"mark {self._n}"` default that #483/#484 track as open. Shape A
    as the issue scopes it — `Marker._loop` in `ec_watch.py` — would not reach
    it. That is a decision the implementation issue has to make deliberately,
    not one this measurement makes by omission.
-2. **`ec/tools/ec_timer_capture.py:164`, `:199`, `:205`, `:227` — a fourth
+2. **`ec/tools/ec_timer_capture.py:169`, `:204`, `:210`, `:232` — a fourth
    writer at four sites.** The rows are the same shape in files the 0751 grader
-   would also open, and `grade_timer_sweep.py:134` reads them under a different
-   label convention (`resumed` at `:135`, not §3's forms). The row shape is
+   would also open, and `grade_timer_sweep.py:138` reads them under a different
+   label convention (`resumed` at `:139`, not §3's forms). The row shape is
    genuinely shared across two procedures, which is the strongest argument
    there is for measuring before changing it.
 3. **`windows/tools/test_manual_fan_ctrl_probe.py:508` and `:515` — the
@@ -139,7 +176,7 @@ the row's shape.
    does not, and that zero is the finding: these two lines are what fires if a
    later issue widens the shape to the probe, and a reader looking for where
    that would show up should look here first.
-4. **`ec/tools/check_capture_claims.py:508` — a fifth consumer**, and the only
+4. **`ec/tools/check_capture_claims.py:514` — a fifth consumer**, and the only
    one that opens *every* committed capture in `evidence/ec-watch/` through
    `read_capture`. It is a checker for the prose, so a committed capture that
    grew a column is something it would read rather than refuse — but it means
@@ -235,27 +272,27 @@ those lines would be reading the table upside down.
 
 Per reader. The first three rows and the last are the ones the tool *calls*;
 the middle three it does not, and their cells follow from a citation the tool
-verifies — `grade_gpu_door.py:421` and `check_capture_claims.py:508` call the
-`read_capture` the first row measured, and `grade_0751_isolation.py:2347`
+verifies — `grade_gpu_door.py:421` and `check_capture_claims.py:514` call the
+`read_capture` the first row measured, and `grade_0751_isolation.py:2698`
 counts that function's return. That is a checked link rather than a second
 measurement, and it is worth saying so rather than presenting seven rows as
 though seven calls happened.
 
 | site | fifth column | `# provenance` row |
 |---|---|---|
-| `read_capture` (`:678`) | zero — `:689` is `len(row) < 4` and `:691` indexes `row[0..3]`, so the tail is dropped and `Window` is identical | zero — caught by the `row[0].startswith("#")` skip at `:687` |
-| `existing_mark_labels` (`:700`) | zero — `:735` returns `(row[0], row[3] if len(row) > 3 else "")`, identical at 4 or 5 columns | zero, same skip at `:732` |
-| `read_early_exits` (`:739`) | zero — `:760` tests `row[0]`, and a mark row's `row[0]` is a timestamp, which cannot open with a `#` | zero *by the invariant* documented above `grade_0751_isolation.py:427`, not by the skip: the phrase test is a prefix test, and the safety is that a hand annotation does not open with that phrase |
+| `read_capture` (`:679`) | zero — `:828` is `len(row) < 4` and `:830` indexes `row[0..3]`, so the tail is dropped and `Window` is identical | zero — caught by the `row[0].startswith("#")` skip at `:695` |
+| `existing_mark_labels` (`:701`) | zero — `mark_labels_of` at `:854` returns `(row[0], row[3] if len(row) > 3 else "")`, identical at 4 or 5 columns | zero, same skip at `:871` |
+| `read_early_exits` (`:1083`) | zero — `:1110` tests `row[0]`, and a mark row's `row[0]` is a timestamp, which cannot open with a `#` | zero *by the invariant* documented above `grade_0751_isolation.py:428`, not by the skip: the phrase test is a prefix test, and the safety is that a hand annotation does not open with that phrase |
 | `grade_gpu_door.py:421` | zero — it unpacks `read_capture`'s two-tuple, which is what the first row measured | zero, same reason |
-| `grade_0751_isolation.py:2347` | zero — `f"{path}: {len(m)} mark(s), {len(c)} change row(s)"` counts and never spells the row | zero, same reason |
-| `check_capture_claims.py:508` | zero — it calls the same `read_capture` over committed captures | zero, same reason |
-| `grade_timer_sweep.py:134` | zero — `r[1] == "MARK"` then `"resumed" in r[3]` at `:135`; both index, `r[4]` is never read | zero — `:111` drops every `#` line before the CSV parse and only three phrase regexes survive it |
+| `grade_0751_isolation.py:2698` | zero — `f"{path}: {len(m)} mark(s), {len(c)} change row(s)"` counts and never spells the row | zero, same reason |
+| `check_capture_claims.py:514` | zero — it calls the same `read_capture` over committed captures | zero, same reason |
+| `grade_timer_sweep.py:138` | zero — `r[1] == "MARK"` then `"resumed" in r[3]` at `:139`; both index, `r[4]` is never read | zero — `:115` drops every `#` line before the CSV parse and only three phrase regexes survive it |
 
 **The preflight returning the same list under both shapes is the real limit of
 this measurement, and it is a limit on the notice, not on the format.** It is
 a preflight, and a preflight that echoed provenance would be doing the job
 `parse_mark` does. But the consequence is the same under both shapes: the
-notice at `ec_watch.py:254` calls `existing_marks(path)` at `:280` and gets
+notice at `ec_watch.py:288` calls `existing_findings(path)` at `:351` and gets
 the same list either way, so *the provenance a fifth column carries is as
 invisible to the notice as a comment row is*. Neither shape, as scoped, makes
 `warn_unchecked_marks` say anything new. Both make the fact available to a
@@ -308,19 +345,19 @@ position.
 
 The real cost is that nothing returns the position:
 
-- `existing_mark_labels` (`:700`) returns a flat `(ts, label)` list — `:735`
-  builds it — with no index, no line number and no row. A reader that wanted to
-  bind a provenance row to a mark has to re-read the file and re-derive an
-  ordering the preflight deliberately flattened.
+- `existing_mark_labels` (`:701`) returns a flat `(ts, label)` list — its
+  `mark_labels_of` at `:854` builds it — with no index, no line number and no
+  row. A reader that wanted to bind a provenance row to a mark has to re-read
+  the file and re-derive an ordering the preflight deliberately flattened.
 - The binding is *positional*, so it is fragile in a way a column is not. An
   operator who reorders a capture, or a writer that appends a provenance row
   after the marks it describes, silently reassigns every mark beneath it. A
   column cannot be reordered away from its mark.
 - And under shape A the fifth column is *also* invisible to
-  `existing_mark_labels` (`:735` drops `row[4]`). The difference is not that
-  shape A is preflight-visible and shape B is not. It is that shape A's answer
-  sits on the mark's own row, where a reader can reach it without first
-  inventing the order the preflight threw away.
+  `existing_mark_labels` (`:854` reads `row[3]` and never `row[4]`). The
+  difference is not that shape A is preflight-visible and shape B is not. It is
+  that shape A's answer sits on the mark's own row, where a reader can reach it
+  without first inventing the order the preflight threw away.
 
 ## What each shape would and would not resolve
 
@@ -401,8 +438,8 @@ their provenance in their own row, against 0 of 3** — and 1 of 1 against 0 of
    per-process row answers a different, coarser question and makes the reader
    re-derive the per-mark one.
 2. **It costs zero in all seven consumers** — four called directly and three
-   reached through them — because each indexes rather than unpacks: `:691`
-   for `read_capture`, `:735` for `existing_mark_labels`, `r[3]` for
+   reached through them — because each indexes rather than unpacks: `:830`
+   for `read_capture`, `:854` for `existing_mark_labels`, `r[3]` for
    `grade_timer_sweep`, and the three programs that only take
    `read_capture`'s two-tuple.
 3. **It does not spend the `#` namespace.** The skip rule is documented as
@@ -428,7 +465,7 @@ their provenance in their own row, against 0 of 3** — and 1 of 1 against 0 of
 - **It is a format change to a row four writers in this tree share** — seven
   call sites across four files. The implementation issue has to decide the
   other three writers deliberately, rather than letting them drift by omission.
-  The two that matter are `system_id_probe.py:256`, which imports no
+  The two that matter are `system_id_probe.py:261`, which imports no
   `ec_watch.Marker` and so is not reached by scoping to `Marker._loop`, and
   `ec_timer_capture.py`'s four sites, whose files a different grader reads.
 - **`windows/tools/test_manual_fan_ctrl_probe.py:515` would fail** if the
@@ -436,10 +473,10 @@ their provenance in their own row, against 0 of 3** — and 1 of 1 against 0 of
   canary and not an argument against the shape, but it is a real cost to name:
   the first thing a widened implementation hits is a failing assertion.
 - **It does not make the notice say anything.** Under either shape
-  `existing_mark_labels` at `:735` returns the same flat list, so
-  `warn_unchecked_marks` is unchanged. The value lands in the grader and in
-  whatever tool reads provenance later, and the implementation issue should
-  not promise the operator a better warning as part of it.
+  `existing_mark_labels` at `:701`, building at `:854`, returns the same flat
+  list, so `warn_unchecked_marks` is unchanged. The value lands in the grader
+  and in whatever tool reads provenance later, and the implementation issue
+  should not promise the operator a better warning as part of it.
 
 If a later measurement contradicts any of the four grounds, the measurement
 wins and this section is what has to be edited. The grounds rest on figures
@@ -494,43 +531,44 @@ prose above uses the repository's `:NNN` shorthand, so this table is what ties
 a line number to a file.
 
 ```console
-   ok   windows/tools/ec_watch.py:355  writer: the Marker._loop the issue's shape A is scoped to
-   ok   windows/tools/system_id_probe.py:256  writer: a third class, importing no ec_watch.Marker
-   ok   ec/tools/ec_timer_capture.py:164  writer: mark_loop
-   ok   ec/tools/ec_timer_capture.py:199  writer: auto_mark_loop, the resume branch
-   ok   ec/tools/ec_timer_capture.py:205  writer: auto_mark_loop, the machine-state branch
-   ok   ec/tools/ec_timer_capture.py:227  writer: input_mark_loop
-   ok   windows/tools/manual_fan_ctrl_probe.py:438  writer: MarkCsv.mark
-   ok   ec/tools/grade_0751_isolation.py:692  reader: read_capture recognising the row
-   ok   ec/tools/grade_0751_isolation.py:734  reader: existing_mark_labels recognising the row
-   ok   ec/tools/grade_timer_sweep.py:134  reader: grade_timer_sweep.load recognising the row
+   DRIFT  windows/tools/ec_watch.py:355  writer: the Marker._loop the issue's shape A is scoped to
+   DRIFT  windows/tools/system_id_probe.py:256  writer: a third class, importing no ec_watch.Marker
+   DRIFT  ec/tools/ec_timer_capture.py:164  writer: mark_loop
+   DRIFT  ec/tools/ec_timer_capture.py:199  writer: auto_mark_loop, the resume branch
+   DRIFT  ec/tools/ec_timer_capture.py:205  writer: auto_mark_loop, the machine-state branch
+   DRIFT  ec/tools/ec_timer_capture.py:227  writer: input_mark_loop
+   DRIFT  windows/tools/manual_fan_ctrl_probe.py:438  writer: MarkCsv.mark
+   ok   ec/tools/grade_0751_isolation.py:831  reader: take_capture_row recognising the row, read_capture's own body
+   ok   ec/tools/grade_0751_isolation.py:884  reader: the partition naming the mark rows it accepted, a mark row is never hex-read
+   ok   ec/tools/grade_0751_isolation.py:853  reader: mark_labels_of recognising the row, existing_mark_labels' own extraction
+   DRIFT  ec/tools/grade_timer_sweep.py:134  reader: grade_timer_sweep.load recognising the row
    ok   windows/tools/test_manual_fan_ctrl_probe.py:508  reader: the only exact-column-count filter in the tree
    ok   windows/tools/test_ec_watch.py:145  a single-quoted MARK the scan cannot match: a test assertion, not a writer
    ok   windows/tools/test_system_id_probe.py:311  the same in the other suite, so the blind side is the tree's and not one file's
-   ok   ec/tools/grade_0751_isolation.py:678  read_capture
-   ok   ec/tools/grade_0751_isolation.py:687  read_capture's skip rule, where a `# provenance` row goes
-   ok   ec/tools/grade_0751_isolation.py:689  read_capture's only length test: a fifth column passes it
-   ok   ec/tools/grade_0751_isolation.py:691  explicit indexing, not an unpack of row -- the correction to the issue
-   ok   ec/tools/grade_0751_isolation.py:700  existing_mark_labels
-   ok   ec/tools/grade_0751_isolation.py:732  existing_mark_labels takes read_capture's skip rule
-   ok   ec/tools/grade_0751_isolation.py:735  the (ts, label) pair: no position, and no fifth column either
-   ok   ec/tools/grade_0751_isolation.py:739  read_early_exits
-   ok   ec/tools/grade_0751_isolation.py:760  the phrase test: a mark's row[0] is a timestamp
-   ok   ec/tools/grade_0751_isolation.py:427  the one machine phrase the `#` namespace spends in this family
-   ok   ec/tools/grade_0751_isolation.py:2347  the per-capture census line, which counts rather than spells
+   ok   ec/tools/grade_0751_isolation.py:679  read_capture
+   ok   ec/tools/grade_0751_isolation.py:695  read_capture's skip rule, where a `# provenance` row goes
+   ok   ec/tools/grade_0751_isolation.py:828  read_capture's only length test: a fifth column passes it
+   ok   ec/tools/grade_0751_isolation.py:830  explicit indexing, not an unpack of row -- the correction to the issue
+   ok   ec/tools/grade_0751_isolation.py:701  existing_mark_labels
+   ok   ec/tools/grade_0751_isolation.py:871  mark_labels_of takes read_capture's skip rule
+   ok   ec/tools/grade_0751_isolation.py:854  the (ts, label) pair: no position, and no fifth column either
+   ok   ec/tools/grade_0751_isolation.py:1083  read_early_exits
+   ok   ec/tools/grade_0751_isolation.py:1110  the phrase test: a mark's row[0] is a timestamp
+   ok   ec/tools/grade_0751_isolation.py:428  the one machine phrase the `#` namespace spends in this family
+   ok   ec/tools/grade_0751_isolation.py:2698  the per-capture census line, which counts rather than spells
    ok   ec/tools/grade_gpu_door.py:421  the second consumer of read_capture's two-tuple
-   ok   ec/tools/check_capture_claims.py:508  a third, and the only one that reads every committed capture
-   ok   ec/tools/grade_timer_sweep.py:111  grade_timer_sweep drops every `#` line before the CSV parse
-   ok   ec/tools/grade_timer_sweep.py:135  the one phrase grade_timer_sweep reads a MARK row for
-   ok   windows/tools/ec_watch.py:254  the notice the measurement exists for
-   ok   windows/tools/ec_watch.py:280  the notice's one call into the grader's reader
+   DRIFT  ec/tools/check_capture_claims.py:508  a third, and the only one that reads every committed capture
+   DRIFT  ec/tools/grade_timer_sweep.py:111  grade_timer_sweep drops every `#` line before the CSV parse
+   DRIFT  ec/tools/grade_timer_sweep.py:135  the one phrase grade_timer_sweep reads a MARK row for
+   DRIFT  windows/tools/ec_watch.py:254  the notice the measurement exists for
+   DRIFT  windows/tools/ec_watch.py:280  the notice's one call into the grader's reader
    ok   windows/tools/test_manual_fan_ctrl_probe.py:515  the canary: the only committed assertion of an exact column count
    ok   windows/tools/manual_fan_ctrl_probe.py:257  the probe's own spelling of the same phrase
-   ok   windows/tools/manual_fan_ctrl_probe.py:922  the only machine-written `#` row in the 0751 family
-   ok   ec/tools/ec_timer_capture.py:144  the timer family's `#` writer, which writes by prefix not by phrase
-   ok   docs/hardware-tests/manual-fan-ctrl-0751-isolation.md:144  §3 block 1, the console that holds the flag
-   ok   docs/hardware-tests/manual-fan-ctrl-0751-isolation.md:146  §3 block 2
-   ok   docs/hardware-tests/manual-fan-ctrl-0751-isolation.md:148  §3 block 3
+   DRIFT  windows/tools/manual_fan_ctrl_probe.py:922  the only machine-written `#` row in the 0751 family
+   DRIFT  ec/tools/ec_timer_capture.py:144  the timer family's `#` writer, which writes by prefix not by phrase
+   DRIFT  docs/hardware-tests/manual-fan-ctrl-0751-isolation.md:144  §3 block 1, the console that holds the flag
+   DRIFT  docs/hardware-tests/manual-fan-ctrl-0751-isolation.md:146  §3 block 2
+   DRIFT  docs/hardware-tests/manual-fan-ctrl-0751-isolation.md:148  §3 block 3
 ```
 
 What it does not check: whether either shape is a good idea; what a widened
