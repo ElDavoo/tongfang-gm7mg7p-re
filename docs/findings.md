@@ -6668,3 +6668,54 @@ opens is per-program `refs` / bucket columns, and re-keying §2's `both` rows
 per program, which would take that table's `distinct` total from 1,326 to
 1,375 and invalidate three superseded-table blocks — its own change, with its
 own corrections.
+
+## 40. The 107 `inc DPTR`-only bytes: the rule stated, the 73 declined, all 107 accounted (2026-09-25, issue #707)
+
+The write-up is `ec/annotations/xdata-inc-dptr-only.md`; this is the summary.
+§4.7 of `ec/annotations/xdata-register-map.md` counted 107 addresses the pair
+pass reaches *only* as the `inc DPTR` half of an accessor's pair, 73 of them with
+no `MOV DPTR,#addr` encoding in the main EC, and declined to enter any — correctly,
+since a rule change needs a decision and not a pass. This is the decision.
+
+**The 107 are all accounted for: 73 declined, 7 already entered, 27 not.** The
+73 is **71 + 2** — the two are `0x043B` and `0x04A5`, whose only `MOV DPTR` sites
+are in the pd image, which is another program's byte at the same address number
+and not a second site for the main EC's. The 27 have a main-EC site and no entry,
+which is §6's existing rule applied consistently, and **none of the 27 is on the
+`0x0400`-`0x045F` page** while all four page addresses among the 34 are already
+entered — so no existing rule governs them and they are named as a follow-up
+rather than entered on one. Every row is in
+`ec/annotations/xdata-inc-dptr-only.csv`, produced by the new
+`ec/tools/inc_dptr_sites.py`, whose `--check` regenerates in memory and diffs it
+byte for byte with no Ghidra, no image and no hardware.
+
+**The list needed a tool because the census CSV cannot answer the question.**
+`scan()` folds a pair call's seed and its `+1` into one `pair-literal` row, so
+174 of the 214 pair-reached rows have a `+1` neighbour spelled identically and
+the seed/`+1` distinction exists only inside `pair_sites()`. On the committed
+tree the two halves are **disjoint** — 107 + 107 == 214, measured on every run
+rather than assumed — and the eleventh address in the 73 is `0x0364`: §4.7 names
+**ten** and says "and 63 more", which closes on 73, while the issue's prose called
+them eleven.
+
+**The pair accessor is a second admitting encoding, and the 73 are declined
+anyway** — on a ground that is about what the two files are *for*, not about what
+either found. `registers.yaml` is what `gen_xdata_symbols.py`, the Ghidra project
+and an upstream driver treat as the register list, and the census is a per-`.c`
+lower bound on the machine code (an *upper* bound over the overlapping exports
+§4.7 measures); admitting on it would make the census an authority on the thing it
+is a lower bound for. The rule is edited into §6 of
+`ec/annotations/xdata-0400-045f.md` **in place** rather than added beside it, so
+the two are one rule and not two. `0x0420` is the counter-example that keeps the
+rule narrow: the same bare-hex spelling, but `add_full_product_to_dptr` is
+`mul AB / add A,DPL / addc A,DPH / ret` with **no `movx` at all**, so it
+dereferences nothing and the address space is a property of the callee's body,
+not of the token. **The issue's claim that "the 73 are not a census figure" is
+retracted** — they are: 196 references, all `pair-literal`-only, main-EC only.
+
+Nothing entered `registers.yaml`, no `status:` moved, no `static_refs*` count
+moved, no `.asm` or `.c` was hand-edited, and no hardware or Windows machine was
+involved. The test suite is **not** in `.github/scripts/agent-gates.sh` — that
+file is under `.github/`, which this branch's push token cannot write, so the
+registration is a human's change and the page says so rather than implying CI
+runs it.
