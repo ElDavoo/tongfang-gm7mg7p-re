@@ -95,6 +95,16 @@ sentence of its own because the copy is a fact about the framing:
 - and the two in the common area, `0x0512` and `0x1207`, are discussed in §3,
   because both are visible from the bytes and neither is settled.
 
+**That list of 11 is a pinned figure, not the authority.**
+`python3 ec/tools/second_copy_census.py --check` derives it: 11 of the 25 are a
+body that is nothing but a transfer of control into a function this CSV backs
+under the same name (7 `ljmp`/`ajmp`, 4 `lcall`), and 14 are Ghidra's own
+`switchD_*` namespace, read from the committed `.c`. `--check` fails on a row it
+cannot account for, so a 26th named-without-row function that is neither shape
+turns this red rather than quietly extending the list above.
+[`docs/findings/named-without-a-row.md`](../../docs/findings/named-without-a-row.md)
+has the per-address reading.
+
 The 7 the index records as `annotated=no` are `bank1` `0xF113`, `0xF116`,
 `0xF119`, `0xF11C`, `0xF11F` and `0xF123`, and `pd` `0x7059` — all seven seeded
 by the annotation layer, so the index's `annotated` column is recording the seed
@@ -218,6 +228,34 @@ neither is settled:
   call-target frame, and the second half inherited the name of the first. Whether
   the common area genuinely carries a second copy of the stub or Ghidra split one
   routine is not established by the bytes alone.
+
+**Correction, 2026-09-25 (#601): one of the two is settled, and the other's
+"second path" is withdrawn.** The paragraph above is left as written.
+
+- `0x1207`'s *framing* is settled. `ec/decompiled/common/1204.asm` is a
+  committed listing in its own right and carries one instruction, so
+  `0x1204`-`0x1206` is a whole exported function and `0x1207` begins the next
+  statement rather than sitting inside one. The name is the target's: `0x1100`
+  is `bl51_bank_select_0` and a row of `ghidra-functions.csv` names it. What the
+  bytes still do not decide is the question the paragraph above leaves open —
+  a second copy or one routine split in two is about the vendor's linker output,
+  not about the bytes at either address.
+- `0x0512`'s *name* is settled and is `common 0x0003`'s: the two bytes
+  `01 03` are an `ajmp 0x0003`, `0x0003` is the int0 vector slot, and the
+  decompiled C at `0x0512` is `0x0003`'s. The **"a real second path to the int0
+  forwarder" above is withdrawn**: read linearly from `0x050D`, the bytes at
+  `0x0512`-`0x0513` are the immediate and the displacement of the
+  `cjne a,#0x01,0x0517` at `0x0511`, and all 24 anchors in the 24 bytes to the
+  left step over `0x0512` rather than landing on it — so the frame is a byte
+  scan's `01 03` pattern inside a real instruction, and no execution reaches
+  `0x0512` as an instruction start by that read. The same read is
+  `disasm8051.converges_from()`, whose own docstring warns that a site nobody
+  syncs onto may instead be preceded by data no linear walk can align to; the
+  window here is code either way (`0x050D`-`0x0517` is a compare and two
+  stores), which is what rules that out rather than the anchor count alone.
+  [`docs/findings/named-without-a-row.md`](../../docs/findings/named-without-a-row.md)
+  §5 has the reading and the same four-address finding for `bank0 0x031C`,
+  `bank1 0x031C` and `bank1 0x703A`.
 
 ## 4. Cross-bank code access (BL51)
 
