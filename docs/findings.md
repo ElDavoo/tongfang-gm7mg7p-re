@@ -6208,6 +6208,13 @@ silent one. #512 (the `--self-test` redness, which #566's gate comment names
 and deliberately does not run) and #433, with the #504 naming backlog, are left
 open.
 
+**Updated 2026-09-25, issue #608.** The `TripwireCoverage` reader this section
+describes was a `visit_Return`, so it held for a mode dispatched as a `return`
+and for nothing else — a tenth mode in statement position was in neither the
+recorded list nor `MODES`, and the suite stayed green with it unmocked. It now
+reads statement position too; the write-up is
+[`docs/findings/xdata-dispatch-tripwire-coverage.md`](findings/xdata-dispatch-tripwire-coverage.md).
+
 ## 30. The call-graph tranche's twelve `unresolved` rows, retyped from their bytes (2026-09-25, issue #456)
 
 Issue #134's tranche left twelve of its 44 rows at `type=unresolved` and

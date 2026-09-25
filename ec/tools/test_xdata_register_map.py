@@ -79,6 +79,17 @@ GUARDED_FLAGS = ("--no-eq-guard", "--export-ownership")
 REFUSED_WITH_A_MODE = "cannot be combined with --check or --self-test"
 REFUSED_AT_THE_DEFAULTS = "would overwrite the committed census"
 
+# The two `main()` shapes `TripwireCoverage` pins its readers on, kept as
+# strings rather than written out per case so the reading and the pin cannot
+# drift apart. Neither is reachable from the committed dispatch, which is the
+# point: the real one dispatches all nine modes as `return`, so only a
+# synthetic source can show that a reader stopped depending on that shape.
+STATEMENT_DISPATCH = ("def main():\n"
+                      "    if args.demo_mode:\n"
+                      "        demo_mode(args)\n"
+                      "        return 0\n")
+ATTRIBUTE_DISPATCH = "def main():\n    return xrm.write(args)\n"
+
 
 def run_main(*argv):
     """(exit code, stdout, stderr) for one `main()` under `argv`.
@@ -132,6 +143,64 @@ def cluster_keys(path):
     return {r["cluster_key"] for r in xrm.load_cluster_rows(path)}
 
 
+def main_of(source):
+    """The `main()` of `source`, which both dispatch readers below start from."""
+    return next(n for n in ast.walk(ast.parse(source))
+                if isinstance(n, ast.FunctionDef) and n.name == "main")
+
+
+def dispatch_names(source):
+    """The bare-name calls `main()` in `source` dispatches to, in source order.
+
+    A call is recorded on the way in and the walk does not descend past it into
+    its arguments, so a call that is only *another call's* argument is that
+    callee's business and not `main()`'s dispatch. That is what keeps the two
+    `list(...)` defaults at `xdata_register_map.py:3634` and `:3637` out: they
+    are real, they are bare names, and a reader collecting every one of them
+    records `list` twice on top of the nine. The attribute calls fall out for
+    free under the `ast.Name` restriction, with no exclusion list to maintain --
+    and a name-based list is what the issue proposed, and it is wrong the first
+    time it is written down for exactly those two calls.
+
+    A NodeVisitor walks the fields in order, so this is pre-order, which is
+    source order for the flat `if args.*` chain the committed dispatch is. A
+    mode reached through a wrapper (`return run(demo_mode(args))`) records the
+    wrapper rather than the mode, and that is correct rather than a gap: the
+    entry point `main()` dispatches to has changed, so `MODES` has to change
+    with it and a tenth name turning up is the coverage change firing.
+    """
+    class Dispatch(ast.NodeVisitor):
+        def __init__(self):
+            self.names = []
+
+        def visit_Call(self, node):
+            if isinstance(node.func, ast.Name):
+                self.names.append(node.func.id)
+            # Deliberately no `generic_visit`: see the docstring.
+
+    dispatch = Dispatch()
+    dispatch.visit(main_of(source))
+    return dispatch.names
+
+
+def mode_attributes(source):
+    """The `MODES` names `main()` in `source` reaches as an attribute, sorted.
+
+    The other half of the boundary `dispatch_names` cannot close by itself. A
+    mode dispatched as `return xrm.write(args)` is not a bare-name call and so
+    records nothing; widening the reader to attribute calls brings back every
+    `ap.error`, `ap.add_argument` and `os.path.join` on the way, which is the
+    fragile list the second reader was meant to replace. So the boundary is
+    stated as its own assertion instead: no attribute in `main()` may be
+    spelled like a mode, and a mode reached that way fails here loudly rather
+    than being missed quietly.
+    """
+    return sorted({call.func.attr for call in ast.walk(main_of(source))
+                   if isinstance(call, ast.Call)
+                   and isinstance(call.func, ast.Attribute)
+                   and call.func.attr in MODES})
+
+
 class TripwireCoverage(unittest.TestCase):
     """`MODES` is the dispatch, read from the tool rather than kept by hand.
 
@@ -140,29 +209,41 @@ class TripwireCoverage(unittest.TestCase):
     mocked. #566 added three co-reading modes to a dispatch this suite had
     enumerated at six, and the gap would have been silent: a run that reached
     `co_reading_sweep` instead of `write` writes nothing, so the refusals below
-    would have gone on passing. So the list is read out of `main()`'s own AST
-    and a tenth mode fails here rather than going unmocked.
+    would have gone on passing. So the list is read out of `main()`'s own AST --
+    every bare-name call in statement or return position -- and a tenth mode
+    fails here rather than going unmocked.
+
+    Statement position is in that sentence because it was not, until issue
+    #608: the reader then implemented `visit_Return`, and a tenth mode reached
+    as `demo_mode(args); return 0` landed in neither the recorded list nor
+    `MODES`, so every case here stayed green with the mode unmocked. The one
+    shape left out is a mode dispatched through an attribute, and
+    `mode_attributes` asserts against it rather than leaving it to this
+    docstring to promise.
     """
 
     def test_modes_is_every_entry_point_main_dispatches_to(self):
-        # `ast.walk` is breadth-first, which puts the trailing `return
-        # write(args)` -- the only one at the function's own level -- first; a
-        # NodeVisitor walks the fields in order, so this is source order and
-        # matches the order `MODES` claims.
-        class Dispatch(ast.NodeVisitor):
-            def __init__(self):
-                self.names = []
+        self.assertEqual(tuple(dispatch_names(TOOL.read_text())), MODES)
 
-            def visit_Return(self, node):
-                if (isinstance(node.value, ast.Call)
-                        and isinstance(node.value.func, ast.Name)):
-                    self.names.append(node.value.func.id)
+    def test_a_mode_dispatched_as_a_statement_is_collected_too(self):
+        # The regression pin, and it is on synthetic source because the real
+        # `main()` dispatches all nine as a `return`: an edit narrowing
+        # `dispatch_names` back to `visit_Return` would leave the case above
+        # green. This is the issue's shape verbatim.
+        self.assertEqual(dispatch_names(STATEMENT_DISPATCH), ["demo_mode"])
 
-        main_fn = next(n for n in ast.walk(ast.parse(TOOL.read_text()))
-                       if isinstance(n, ast.FunctionDef) and n.name == "main")
-        dispatch = Dispatch()
-        dispatch.visit(main_fn)
-        self.assertEqual(tuple(dispatch.names), MODES)
+    def test_the_dispatch_reaches_no_mode_as_an_attribute(self):
+        # The real tree, against the assertion the docstring claims for it.
+        self.assertEqual(mode_attributes(TOOL.read_text()), [])
+
+    def test_a_mode_reached_as_an_attribute_is_caught_by_the_other_reader(self):
+        # So the case above is a property of the committed dispatch and not a
+        # helper that would answer `[]` to anything. `dispatch_names` records
+        # nothing for this shape -- that is the whole reason `mode_attributes`
+        # exists, and pinning it here keeps the residual boundary stated as a
+        # measurement rather than as a sentence a reader has to trust.
+        self.assertEqual(dispatch_names(ATTRIBUTE_DISPATCH), [])
+        self.assertEqual(mode_attributes(ATTRIBUTE_DISPATCH), ["write"])
 
 
 class Refusals(unittest.TestCase):

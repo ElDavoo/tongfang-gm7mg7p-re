@@ -104,6 +104,20 @@ CSVs untouched and every refusal case still green. `TripwireCoverage` now reads
 the entry points out of `main()`'s own AST and fails on a tenth mode rather
 than going unmocked.
 
+  > **Corrected 2026-09-25, issue #608.** The last sentence above over-claims,
+  > and it is left standing rather than rewritten, because the same sentence is
+  > what this page and the `tools/README.md` row were believed on for the life
+  > of the suite. The reader was a `visit_Return`, so it held for a mode
+  > dispatched as a `return` and for nothing else: a tenth mode reached as
+  > `demo_mode(args); return 0` recorded nothing, so it was in neither the
+  > recorded list nor `MODES`, the comparing case stayed green, and the mode ran
+  > unmocked — the same silent gap as the one the paragraph above describes,
+  > reopened one shape over. The reader now records a bare-name call in
+  > statement position as well as return position, and the boundary it cannot
+  > close (a mode dispatched through an attribute) is asserted rather than
+  > assumed away. The write-up is
+  > [`xdata-dispatch-tripwire-coverage.md`](xdata-dispatch-tripwire-coverage.md).
+
 ## Shown to fail, not merely shown to pass
 
 A green suite proves nothing on its own, so each guard was broken in a scratch
