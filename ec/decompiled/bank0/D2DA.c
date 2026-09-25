@@ -9,14 +9,14 @@
    type: writer
    evidence: ec/decompiled/bank0/D2DA.asm; ec/decompiled/bank0/D2DA.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void stage_1c03_1c02_1c01(undefined1 value_a)
 
 {
-  DAT_EXTMEM_1c03 = value_a;
-  DAT_EXTMEM_1c02 = XDATA_0862;
-  DAT_EXTMEM_1c01 = XDATA_0865;
+  XDATA_1C03 = value_a;
+  XDATA_1C02 = XDATA_0862;
+  XDATA_1C01 = XDATA_0865;
   return;
 }
 

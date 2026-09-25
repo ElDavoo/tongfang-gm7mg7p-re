@@ -14,15 +14,15 @@ void FUN_CODE_de3c(undefined1 param_1,undefined1 param_2)
   
   if (DAT_EXTMEM_1c00 == 0) {
     bVar1 = DAT_EXTMEM_0561 & 0x7f;
-    DAT_EXTMEM_1c02 = (&DAT_CODE_dcbc)[bVar1];
+    XDATA_1C02 = (&DAT_CODE_dcbc)[bVar1];
     if ((&DAT_CODE_dd3c)[bVar1] == '\0') {
       FUN_CODE_dee8();
       return;
     }
     DAT_EXTMEM_0564 = (&DAT_CODE_dd3c)[bVar1];
     DAT_EXTMEM_0563 = (&DAT_CODE_ddbc)[bVar1];
-    DAT_EXTMEM_1c03 = 0xa1;
-    DAT_EXTMEM_1c01 = 0x48;
+    XDATA_1C03 = 0xa1;
+    XDATA_1C01 = 0x48;
     return;
   }
   if (((DAT_EXTMEM_1c00 >> 1 & 1) != 0) && ((DAT_EXTMEM_1c00 & 0x7c) == 0)) {

@@ -22,9 +22,9 @@ void ff_filler_not_a_function_ff17(undefined1 param_1)
   SP = 0xc0;
   DAT_EXTMEM_1001 = 0x3f;
   set_iram_08_0a_clear_p1_0_p1_2(param_1);
-  FUN_CODE_158e();
-  FUN_CODE_0f75();
-  uVar1 = FUN_CODE_1594();
+  load_dptr_d89f_tail_jump_1100();
+  clr_xdata_0000_00ff_iram_20_bf_xdata_9000_97ff();
+  uVar1 = load_dptr_d96c_tail_jump_1100();
   DAT_EXTMEM_0004 = DAT_EXTMEM_2006;
   walk_code_table_6f39(uVar1);
   return;

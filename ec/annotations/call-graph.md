@@ -25,22 +25,22 @@ trees the numbers were taken on.
 | quantity | value |
 |---|---|
 | function rows in `decompiled/index.csv` | 2,710 |
-| of those, still `FUN_*` | 814 |
+| of those, still `FUN_*` | 807 |
 | transfer instructions in the `.asm` listings | 5,027 |
 | — `lcall` / `ljmp` / `ajmp` / `acall` | 3,854 / 1,063 / 74 / 36 |
 | — resolving to an index row | 4,924 |
 | distinct targets reaching a row | 1,841 |
 | transfer sites whose target is no index row | 103, over 80 targets |
-| targets still anonymous | 475 |
-| inbound sites to those | 787 |
-| anonymous rows no direct transfer reaches | 339 |
-| distinct `FUN_*` callees the `.c` files name | 822 |
-| anonymous callees a comment names | 109 |
-| comments that name one | 137 |
-| — candidate (callee, comment) pairs, before the frame gate | 382 |
-| — kept / rejected / undecided by it | 148 / 206 / 28 |
+| targets still anonymous | 470 |
+| inbound sites to those | 780 |
+| anonymous rows no direct transfer reaches | 337 |
+| distinct `FUN_*` callees the `.c` files name | 815 |
+| anonymous callees a comment names | 105 |
+| comments that name one | 131 |
+| — candidate (callee, comment) pairs, before the frame gate | 351 |
+| — kept / rejected / undecided by it | 140 / 185 / 26 |
 
-**The 475 and the 822 are two framings of related things, and neither is "the"
+**The 470 and the 815 are two framings of related things, and neither is "the"
 count.** The first is decoded out of the committed `.asm` listings; the second
 is read off the `.c` export. The `.c` figure is larger because the decompiler
 emits calls the listing does not carry directly. It is also the framing that
@@ -115,8 +115,8 @@ over the whole sentence rejects a genuine list: seven `bank1` comments write
 "then calls to 0x110A, 0x158E, 0x0F75, 0x1594 and 0x00CF", where "to" is a
 data marker and all five are real code addresses. A code frame is *necessary*,
 a data frame is a *veto*, and **what neither settles is returned as
-`undecided`** — 28 pairs today, 17 of which have since been settled by one of
-the two signals below — rather than defaulted either way. The rejected and
+`undecided`** — 26 pairs today, against the 45 the gate started from — rather
+than defaulted either way. The rejected and
 undecided populations are printed by the tool and are never dropped, because a
 guard that silently discards what it rejects cannot be told apart from one that
 rejects too much. **Each of the 45 pairs the frame gate alone returned carries
@@ -126,10 +126,16 @@ one row each, settled on the listing or on the committed firmware bytes. Those
 are readings of the *sentences*, not reclassifications: the tool still reports
 a pair as undecided unless a signal settles it, and an undecided line carries
 the frame verdicts its mentions drew rather than a bare `--`. **The count has
-moved twice, from 45, and each move is accounted for**: `sjmp` joined
+moved three times, from 45, and each move is accounted for**: `sjmp` joined
 `CODE_VERB` for the one committed comment that needed it (`bank1,9B03`'s "it
-ends in an sjmp to 0x9B3C"), and the citing listing's own transfer took 16 more
-(§"The third signal" below). `sjmp` is **not** a member of `TRANSFERS` above
+ends in an sjmp to 0x9B3C"); the citing listing's own transfer took 16 more
+(§"The third signal" below), four of which are no longer in the population
+because naming the callee took it out of it; and the re-export in issue #558
+carried `bank1,9CE8` and `bank1,9D53` into the index, which took two undecided
+pairs with them — that re-export is what
+[`../../docs/findings/common-07f0-0f75-158e-1594-tranche.md`](../../docs/findings/common-07f0-0f75-158e-1594-tranche.md)
+§"The export this change regenerates had been one commit stale" is about.
+`sjmp` is **not** a member of `TRANSFERS` above
 and must not become one: a PC-relative branch is not a call, and a comment's
 lexicon and this tool's transfer set are deliberately different sets.
 
@@ -189,9 +195,11 @@ in.**
   now refused** as `fill-at-citer` and the three rows read **`cited_by=1`
   against their own `inbound=1`**, `citing` reduced to `common:0070`, whose
   listing carries the three `lcall`s. The same listing evidence credits 16 pairs
-  the window left `undecided`, so the partition above is 148 / 206 / 28 — the 28
+  the window left `undecided`, so the partition **was** 148 / 206 / 28 — the 28
   rather than the 29 this correction was written against because `sjmp` had
-  already taken one of them (the frame-gate paragraph above). The
+  already taken one of them (the frame-gate paragraph above). That partition has
+  moved since; the census table carries the current one and the frame-gate
+  paragraph accounts for the difference. The
   comments themselves are **unchanged**: substituting a name there would assert
   the very call the comment denies, and the gate now makes their text irrelevant
   to the count.
@@ -200,11 +208,12 @@ in.**
   annotated, whether or not its citing comments changed. The `citing` column is
   the work list; it is empty for a row that has been done.
 
-**The citing comments keep their bare addresses, on purpose.** 1,300 comments
-already cite an already-named function by address — the figure is on the
-committed tree, and it rises every time a function is named, because a new row
-tends to cite helpers that are already named — so replacing the address with a
-name in the tranche's 109 citing comments would leave the export internally
+**The citing comments keep their bare addresses, on purpose.** 1,310 comments
+already cite an already-named function by address — recounted on this tree by
+the `citations()` match with the `FUN_*` test inverted, and it rises every time a
+function is named, because a new row tends to cite helpers that are already
+named — so replacing the address with a
+name in the tranche's 105 citing comments would leave the export internally
 inconsistent for no gain. Where the *point* of a sentence is what the callee
 is rather than where it lives, the name is now there too: `bank0,0x0EA2` reads
 "calls 0x0EE8 (timer1_load_th1_fd_tl0_clear_tf1_start)", and the matched
@@ -264,16 +273,20 @@ inbound distribution is already spent.
 
 ## What is left, and the two limits a reader must carry
 
-**The work list is the `annotated=no` rows**, 475 of them, of which **109 are
+**The work list is the `annotated=no` rows**, 470 of them, of which **105 are
 cited** by a comment and so are the ones a reader can trace to a sentence that
 needs them. The rest are reachable but uncited: worth naming, not yet blocking
-any explanation. The ranking is the order to work them in, and the top of it
-changed with issue #525: the three `0xFF`-fill rows that held ranks 1–3 are at
-`cited_by=1` each, and `common,07F0` now leads at 3 with three comments and
-three `lcall` sites agreeing.
+any explanation. The ranking is the order to work them in, and its top has
+moved twice since issue #525 corrected it: the three `0xFF`-fill rows that held
+ranks 1–3 fell to `cited_by=1` each, `common,07F0` then led at 3, and issue #558
+has since named that one and the three rows behind it
+([`../../docs/findings/common-07f0-0f75-158e-1594-tranche.md`](../../docs/findings/common-07f0-0f75-158e-1594-tranche.md)).
+**The head of the table is now `bank0,DFA0` at `cited_by=3` against
+`inbound=2`** — a row the ranking promotes on citations alone, which is the
+ordering this file argues for and the first thing to read about it.
 
-**339 anonymous rows have no direct transfer reaching them at all** — 339 of
-the 814 `FUN_*` rows, reached by function pointer, by a dispatch table, or not
+**337 anonymous rows have no direct transfer reaching them at all** — 337 of
+the 807 `FUN_*` rows, reached by function pointer, by a dispatch table, or not
 reached. **That is a limit of this method and not a claim that they are
 unreachable.** The same goes for the 103 transfer sites whose target is no
 index row: those are branches into straight-line code, not evidence of a
@@ -281,10 +294,10 @@ missing function. They are counted and reported rather than dropped or
 guessed, because a target resolving to more than one scope row is left
 unresolved rather than assigned to the caller's bank.
 
-**A count is a ranking, not evidence of what a function does.** 0x110A is
-worth two `lcall`s of attention; that says it is cheap to read, not that it is a
-bank switch. Each tranche row says what its own bytes do and no further, and
-`unresolved` is a row that declines to guess.
+**A count is a ranking, not evidence of what a function does.** `bank0,DFA0`
+leads on three citations to two `lcall` sites; that says it is cheap to read,
+not that it does anything in particular. Each tranche row says what its own
+bytes do and no further, and `unresolved` is a row that declines to guess.
 
 **No register `status:` changed and no behavioural test was run.** Naming a
 helper is not a finding about a register, so `registers.yaml` and
@@ -373,7 +386,7 @@ naming the PD image's own byte, every one of them carrying the
 it, 19 in a data frame and 1 unsettled — but it has **no row in this table at
 all**, because no transfer reaches it, so it was never in the ranking to be
 wrong in. That is the shape to watch for in any other count
-here: not ranked is not absent, and 67 candidate pairs name a callee the table
+here: not ranked is not absent, and 63 candidate pairs name a callee the table
 carries no row for. The tool prints that number beside the gate's.
 
 ## Adding the next tranche

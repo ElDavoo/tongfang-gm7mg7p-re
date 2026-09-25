@@ -20,10 +20,10 @@ void poll_1c00_status_up_to_100_cycles(void)
 {
   char cVar1;
   
-  DAT_EXTMEM_1c03 = DAT_EXTMEM_0975;
-  DAT_EXTMEM_1c02 = DAT_EXTMEM_0976;
+  XDATA_1C03 = DAT_EXTMEM_0975;
+  XDATA_1C02 = DAT_EXTMEM_0976;
   DAT_EXTMEM_1c00 = 0xff;
-  DAT_EXTMEM_1c01 = 0x48;
+  XDATA_1C01 = 0x48;
   cVar1 = 'd';
   while( true ) {
     write_zero_to_200b_six_times();

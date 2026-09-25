@@ -14,25 +14,25 @@
    type: copy
    evidence: ec/decompiled/bank1/E3B5.asm; ec/decompiled/bank1/E3B5.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void copy_03cd_03ce_03cf_to_1c02_1c04_1c05(void)
 
 {
   if ((XDATA_045F == -0x25) && (DAT_EXTMEM_1c00 == 0)) {
-    DAT_EXTMEM_1c02 = DAT_EXTMEM_03cd;
+    XDATA_1C02 = DAT_EXTMEM_03cd;
     DAT_EXTMEM_03cd = 0;
     if (-1 < DAT_EXTMEM_03a1) {
       DAT_EXTMEM_1c04 = 0;
       DAT_EXTMEM_1c05 = 0;
-      DAT_EXTMEM_1c03 = 0xa1;
-      DAT_EXTMEM_1c01 = 0x48;
+      XDATA_1C03 = 0xa1;
+      XDATA_1C01 = 0x48;
       return;
     }
     DAT_EXTMEM_1c04 = DAT_EXTMEM_03ce;
     DAT_EXTMEM_1c05 = DAT_EXTMEM_03cf;
-    DAT_EXTMEM_1c03 = 0xa0;
-    DAT_EXTMEM_1c01 = 0x48;
+    XDATA_1C03 = 0xa0;
+    XDATA_1C01 = 0x48;
     return;
   }
   if (((DAT_EXTMEM_1c00 >> 1 & 1) != 0) && ((DAT_EXTMEM_1c00 & 0x7c) == 0)) {

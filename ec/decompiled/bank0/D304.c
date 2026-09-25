@@ -17,9 +17,9 @@
 void stage_0862_0865_into_1c36_1c38(undefined1 value_a)
 
 {
-  DAT_EXTMEM_1c38 = value_a;
-  DAT_EXTMEM_1c37 = XDATA_0862;
-  DAT_EXTMEM_1c36 = XDATA_0865;
+  XDATA_1C38 = value_a;
+  XDATA_1C37 = XDATA_0862;
+  XDATA_1C36 = XDATA_0865;
   return;
 }
 

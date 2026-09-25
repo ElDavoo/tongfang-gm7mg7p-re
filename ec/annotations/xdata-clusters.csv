@@ -209,7 +209,7 @@ main-ec-207,main-ec,1,21,0x0D14,0x0D14,1,,bank0:0xAA90 [1/1]; bank0:0xAB6D [1/1]
 main-ec-208,main-ec,1,20,0x0681,0x0681,17,,bank1:0xE2C3 [4/17]; bank1:0x8854 [2/17]; bank1:0x8886 [2/17] (+23 more called by the cluster's functions),,kbb0b25e376ad,,2,2,no
 main-ec-209,main-ec,1,19,0x03AF,0x03AF,5,,bank1:0xE2C3 [5/5]; bank1:0x8854 [2/5]; bank1:0x8886 [2/5] (+5 more called by the cluster's functions),,k2bf5873f9bff,,2,10,yes
 main-ec-210,main-ec,1,19,0x0480,0x0480,11,,bank1:0x1A14 [3/11]; bank1:0x1A02 [3/11]; bank1:0x1A0E [3/11] (+33 more called by the cluster's functions),,k77d0fdffee7e,,2,4,no
-main-ec-211,main-ec,1,19,0x068B,0x068B,13,,bank1:0x9CC0 [2/13]; bank1:0x9CE8 [1/13]; bank1:0x9D53 [1/13] (+15 more called by the cluster's functions),,k5b3ab804825a,,3,7,no
+main-ec-211,main-ec,1,19,0x068B,0x068B,13,,bank1:0x9CC0 [2/13]; bank1:0x9B03 [1/13]; bank1:0x9E26 [1/13] (+15 more called by the cluster's functions),,k5b3ab804825a,,3,7,no
 main-ec-212,main-ec,1,19,0x1300,0x1300,6,,common:0x0C7A [2/6]; common:0x2896 [1/6]; bank0:0x3AD6 [1/6] (+4 more called by the cluster's functions),,k34820fc32a4e,,0,0,no
 main-ec-213,main-ec,1,19,0x1603,0x1603,7,,common:0x05EF [1/7]; bank0:0xF118 [1/7]; common:0x05E8 [1/7] (+1 more called by the cluster's functions),,k9a0e9e578c06,,0,0,no
 main-ec-214,main-ec,1,19,0x160A,0x160A,10,,bank0:0xC4F8 [1/10]; bank0:0xB8F4 [1/10]; bank1:0x1A74 [1/10] (+7 more called by the cluster's functions),,k5182fbd443a7,,0,0,no
@@ -219,7 +219,7 @@ main-ec-217,main-ec,1,17,0x0F60,0x0F60,17,,bank0:0x4777 [6/17]; bank0:0xF0F3 [4/
 main-ec-218,main-ec,1,16,0x056A,0x056A,9,,bank1:0xAEBC [3/9]; bank1:0xAE6F [3/9]; bank1:0xAE2B [2/9] (+3 more called by the cluster's functions),,k15297b4dddda,,0,0,no
 main-ec-219,main-ec,1,16,0x1601,0x1601,9,,bank0:0xEAD1 [3/9]; bank0:0xC030 [2/9]; common:0x1510 [1/9] (+16 more called by the cluster's functions),,k047da7d61103,,0,0,no
 main-ec-220,main-ec,1,16,0x200B,0x200B,15,,common:0x07E7 [3/15]; common:0x07F0 [3/15]; common:0x0200 [2/15] (+12 more called by the cluster's functions),,k53076d0d2682,,2,2,no
-main-ec-221,main-ec,1,15,0x068C,0x068C,14,,bank1:0x9CE8 [1/14]; bank1:0x9D53 [1/14]; bank1:0x9B03 [1/14] (+19 more called by the cluster's functions),,kb7064b2ca61a,,2,1,no
+main-ec-221,main-ec,1,15,0x068C,0x068C,14,,bank1:0x9B03 [1/14]; bank1:0x9E26 [1/14]; bank1:0xA841 [1/14] (+19 more called by the cluster's functions),,kb7064b2ca61a,,2,1,no
 main-ec-222,main-ec,1,15,0x0724,0x0724,6,,bank1:0x19A8 [3/6]; bank1:0x1A44 [2/6]; bank1:0x9FCA [2/6] (+8 more called by the cluster's functions),,k67dbc0bdb524,,0,0,no
 main-ec-223,main-ec,1,14,0x0394,0x0394,10,,bank1:0x198A [4/10]; bank1:0xE5A7 [3/10]; bank1:0xD6C6 [3/10] (+27 more called by the cluster's functions),,k7d5465705109,,3,3,no
 main-ec-224,main-ec,1,14,0x03A3,0x03A3,11,,bank1:0x8886 [6/11]; bank1:0x8863 [3/11]; bank1:0x8898 [3/11] (+16 more called by the cluster's functions),,k3a452019e3e0,,0,0,no

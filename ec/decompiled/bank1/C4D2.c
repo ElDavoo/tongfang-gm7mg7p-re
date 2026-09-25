@@ -17,10 +17,10 @@ void setup_1c00_block_with_arg_4c(void)
 {
   char cVar1;
   
-  DAT_EXTMEM_1c03 = DAT_EXTMEM_0975;
-  DAT_EXTMEM_1c02 = DAT_EXTMEM_0976;
+  XDATA_1C03 = DAT_EXTMEM_0975;
+  XDATA_1C02 = DAT_EXTMEM_0976;
   DAT_EXTMEM_1c00 = 0xff;
-  DAT_EXTMEM_1c01 = 0x4c;
+  XDATA_1C01 = 0x4c;
   cVar1 = 'd';
   while( true ) {
     write_zero_to_200b_six_times();

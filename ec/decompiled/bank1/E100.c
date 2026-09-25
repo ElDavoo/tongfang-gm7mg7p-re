@@ -14,7 +14,7 @@ void FUN_CODE_e100(void)
   
   bVar2 = DAT_EXTMEM_03a0;
   if (DAT_EXTMEM_03a1 != '\0') {
-    FUN_CODE_e2d3();
+    dispatch_036c_low3_then_seed_1c00_block();
     return;
   }
   if ((DAT_EXTMEM_0367 & 2) != 0) {
@@ -41,9 +41,9 @@ void FUN_CODE_e100(void)
     return;
   }
   if (DAT_EXTMEM_1c00 == 0) {
-    DAT_EXTMEM_1c03 = 0x9b;
-    DAT_EXTMEM_1c02 = 1;
-    DAT_EXTMEM_1c01 = 0x48;
+    XDATA_1C03 = 0x9b;
+    XDATA_1C02 = 1;
+    XDATA_1C01 = 0x48;
     return;
   }
   if (((DAT_EXTMEM_1c00 >> 1 & 1) != 0) && ((DAT_EXTMEM_1c00 & 0x7c) == 0)) {

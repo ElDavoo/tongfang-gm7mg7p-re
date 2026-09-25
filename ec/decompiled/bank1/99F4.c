@@ -8,12 +8,12 @@
    type: writer
    evidence: ec/decompiled/bank1/99F4.asm; ec/decompiled/bank1/99F4.c
    basis: hand-decoded
-   name_basis: register-map */
+   name_basis: mixed */
 
 void set_1c01_0_and_0681_83(void)
 
 {
-  DAT_EXTMEM_1c01 = 0;
+  XDATA_1C01 = 0;
   DAT_EXTMEM_0681 = 0x83;
   return;
 }

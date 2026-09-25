@@ -111,6 +111,17 @@ there would assert the very call the comment denies, and the gate now makes
 their text irrelevant to the count, so `ec/annotations/ghidra-functions.csv` is
 untouched — 1,851 rows, deliberately.
 
+*(**Correction, 2026-09-25, issue #558.** The 1,851 is what the CSV held when
+this was written, and the "untouched" is this issue's, not the tree's. #558 has
+since added four rows, so the CSV is 1,855 — and it annotated `common,0F75`,
+`0x158E` and `0x1594`, three of the four addresses the 21 pairs above name.
+`cited_by` counts anonymous callees only, so annotating them takes all 21 out
+of the table instead of moving their counts, which is why the ranking they used
+to top is a different set of addresses now. `../findings.md` §27 is the reading.
+Every figure in this file is this issue's, measured then, and is left as
+measured rather than silently re-run — the numbers are the record of what #525
+did, not a census of the tree today.)*
+
 ### Why the narrow fill test and not "this listing has no transfer at all"
 
 Measured: **979** commented annotation rows sit on a listing with zero transfer

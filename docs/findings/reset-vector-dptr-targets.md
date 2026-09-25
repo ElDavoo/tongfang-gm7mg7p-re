@@ -328,9 +328,16 @@ Everything that moves when the export lands, so that run needs no re-derivation:
 | 4 | `ec/decompiled/listing-index.csv` | +2 rows, 2,710 → 2,712 |
 | 5 | `ec/ghidra/reassembly.csv` | +2 rows, 2,707 → 2,709, via a full `--report` on the pinned toolchain |
 | 6 | `ec/ghidra/c-digests.csv` | +2 rows, 2,710 → 2,712, via `--write-digests` |
-| 7 | `ec/tools/build_ec_decompile.py` | the 1,851 pins at lines 1810, 1812 and 1828 → 1,853, plus the history comment at 1807; the 2,710 pins at 1774, 1776, 1777, 1779 and 1793 → 2,712, plus the history comment at 1770 |
-| 8 | `ec/annotations/subsystems.md` | `annotated function rows` 1851 → 1853 at **both** line 58 and line 444; `exported functions` 2710 → 2712 at **both** line 57 and line 443; the per-program `bank0` row and the unannotated percentage, which `check_subsystems()` recomputes |
-| 9 | `docs/findings/citing-listing-evidence.md` | 1,851 → 1,853 at lines 112 and 277 |
+| 7 | `ec/tools/build_ec_decompile.py` | the 1,855 pins at lines 1810, 1812 and 1828 → 1,857, plus the history comment at 1807; the 2,710 pins at 1774, 1776, 1777, 1779 and 1793 → 2,712, plus the history comment at 1770 |
+| 8 | `ec/annotations/subsystems.md` | `annotated function rows` 1855 → 1857 at **both** line 58 and line 444; `exported functions` 2710 → 2712 at **both** line 57 and line 443; the per-program `bank0` row and the unannotated percentage, which `check_subsystems()` recomputes |
+| 9 | `docs/findings/citing-listing-evidence.md` | 1,855 → 1,857 at lines 112 and 277 |
+
+Items 7–9 were written against the 1,851 the CSV held when this list was
+derived. **Issue #558 has since added four rows** (`common,0x07F0`, `0x0F75`,
+`0x158E`, `0x1594`), so the CSV is 1,855 and each of those three items starts
+from 1,855 and lands on 1,857 rather than from 1,851 to 1,853. The `bank0`
+per-program row and the 2,710 figures are unmoved, because #558's four rows are
+all common-area and it changed no export row count.
 
 Items 3–9 are all build gates rather than documentation figures, which is why
 none of them is moved here: every one of them is a hard `--check` that a

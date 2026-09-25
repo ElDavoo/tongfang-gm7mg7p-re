@@ -33,13 +33,13 @@ void dispatch_068b_low3_via_9ad2_table(void)
     countdown_068d_then_branch_on_r7();
     return;
   case 3:
-    FUN_CODE_9ce8();
+    seed_1c12_trio_or_update_1c11_1c15_1c16();
     return;
   case 4:
     dispatch_086f_event_bits();
     return;
   case 5:
-    FUN_CODE_9d53();
+    seed_1c12_trio_9f_or_run_0x9d7a_ladder();
     return;
   case 6:
     write_0_to_068b();
