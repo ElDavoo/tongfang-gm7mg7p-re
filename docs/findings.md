@@ -4775,7 +4775,7 @@ function-layer counters offline and prints the ledger they come from:
 
 | was read as | is actually |
 |---|---|
-| `annotations_applied` totals 1,787 against 1,769 rows, a gap of 25 | the gap is **18**, not 25 (1,787 − 1,769 = 18) — the label never matched even its own numbers. A later paragraph in this same section ("The plan's numbers were stale") had already re-measured the gap as 18 against a newer pair of totals, so the 25 was wrong twice over |
+| `annotations_applied` totals 1,787 against 1,769 rows, a gap of 25 | the gap is **18**, not 25 (1,787 − 1,769 = 18) — the label never matched even its own numbers. A later paragraph in §19 ("The plan's numbers were stale") had already re-measured the gap as 18 against a newer pair of totals, so the 25 was wrong twice over |
 | the two totals are comparable, so their difference is drift | the label never described either figure. `annotations_applied` was the index's `annotated=yes` count (`ExportDecompile.java:129`, `isPlaceholderName(name) ? "no" : "yes"`) — exported functions whose symbol is no longer a Ghidra placeholder, **not** rows of `ghidra-functions.csv` that applied |
 | 25 index rows "came to claim an annotation that is no longer in the CSV" | **zero** CSV rows are stale. All 1,855 resolve to an exported function, and `--check` already refuses one that does not |
 
@@ -4811,11 +4811,18 @@ and these addresses have none, and `ExportDecompile.java` only reads
 `f.getName()`. Since the export takes its names from the project it was handed
 and the project is the committed one, those seven are symbols in the committed
 `.rep` — by exhaustion of the repo's own export path, not by inspection of the
-database. (A raw string search is not the way to show it: searching the
-committed `.gbf` files finds **none** of the seven, because Ghidra stores
-strings in compressed blocks. "Not found by grep" is not "absent" — the same
-caveat `ec/annotations/registers.yaml` carries, and the reason the argument
-above does not rest on a grep.)
+database. (A raw string search is not the way to show it, and it does not even
+cut one way: `grep -ral` over the committed `.gbf` files finds **3 of the 7** —
+`index_table_default` and `bl51_bank_select_0` in `~00000000.db/db.1.gbf` (the
+latter also in `~00000001.db/db.1.gbf`), and `c_startup_idata_clear` in
+`~00000002.db/db.1.gbf` — while missing the other four
+(`poll_d6c2_then_branch`, `call_d2a3_then_d274`,
+`write_r1_to_tmod_and_jump_8801`, `int0_vector_forwarder_to_052f`). A hit is
+real; a miss proves nothing. "Not found by grep" is not "absent" — the same
+caveat `ec/annotations/registers.yaml` carries. The three hits are positive
+support for the same conclusion the exhaustion argument reaches, and the reason
+the argument above rests on the export path rather than on grep is that grep is
+not a reliable index in either direction.)
 
 **This also corrects the issue's own attribution.** #261 quoted
 `bank0,031C,poll_d6c2_then_branch` as "a function named by `SeedFunctions.java`

@@ -2157,8 +2157,8 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     #   number did not move, it acquired the name that describes it. It was
     #   1,787 when §18's drift paragraph was written and has grown with the
     #   annotation tranches since (1,866 at the time of the subsystems census,
-    #   recorded in a later paragraph of the same §18 subsection, which also
-    #   measured the gap at 18); §18's correction quotes today's 1,873.
+    #   recorded in a later paragraph of §19, which also measured the gap at
+    #   18); §18's correction quotes today's 1,873.
     _want_applied = {"bank0": 769, "bank1": 667, "pd": 497}
     check("EC: the manifest's annotations_applied is what the exporter's reports "
           "said -- 769 / 667 / 497 across the three programs, with `common` "
