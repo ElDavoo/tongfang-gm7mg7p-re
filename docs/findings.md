@@ -5670,9 +5670,8 @@ the `xdata-06c2-06db-timers.md` §6a measurement stays re-derivable, now have
 mode entry points with recorders and assert that none of them ran**, which is
 the claim rather than the consequence: a guard moved below the dispatch fails
 the test instead of writing the pre-#178 census over
-`annotations/xdata-registers.csv` and `annotations/xdata-clusters.csv`, after
-which `--check` is green because the two files agree with each other. The count
-is nine rather than the six this work was written against because #566's
+`annotations/xdata-registers.csv` and `annotations/xdata-clusters.csv`. The
+count is nine rather than the six this work was written against because #566's
 co-reading modes joined the dispatch, and a tripwire that named only the old
 six would have let a relocated guard reach one of the three it did not mock.
 Each mutation was run against a scratch copy of `ec/` to show the suite goes
@@ -5695,9 +5694,13 @@ membership claim — is a correction for #564 to make in place rather than one
 this issue absorbs. Nothing here is an EC finding: no register
 `status:` changed, no hardware was involved, and the committed census is
 untouched. `--check` is now **green** — #566 regenerated the two CSVs, so
-#326's symptom is gone from the tree this lands on, and that makes the hazard
-above sharper rather than softer: a bare `--no-eq-guard` run would leave a
-check that starts out green still green, over a source of truth that is now
-wrong. #512 (the `--self-test` redness, which #566's gate comment names and
-deliberately does not run) and #433, with the #504 naming backlog, are left
+#326's symptom is gone from the tree this lands on, which is this issue's
+requirement met ("this changed nothing about the verdict"). It does not make
+the hazard sharper: `--check` is refused with `--no-eq-guard`, so it
+regenerates guard-on and goes red on a guard-off file whether the check was
+red before or green, and `check_cluster_citations.py` goes red with 45
+disagreements. The refusals are still worth pinning because they stop the write
+*before* it lands, but the failure they prevent is a loud one rather than a
+silent one. #512 (the `--self-test` redness, which #566's gate comment names
+and deliberately does not run) and #433, with the #504 naming backlog, are left
 open.

@@ -30,10 +30,49 @@ and `OUT_CLUSTERS` (`xdata_register_map.py:298-299`) default to
 `ec/annotations/xdata-registers.csv` and `ec/annotations/xdata-clusters.csv`,
 which is what `check_cluster_citations.py` reads and what every `main-ec-NNN`
 citation in the tree names. A bare `--no-eq-guard` run therefore writes the
-pre-#178 census over both — and then `--check` is **green**, because the two
-files now agree with each other and the source of truth is simply wrong. The
-damage is silent, it is self-certifying, and the two files it lands on are
-what the rest of the tree is keyed to.
+pre-#178 census over both, and the two files it lands on are what the rest of
+the tree is keyed to.
+
+**That run is caught, but loudly and by other tools — not silently, and not by
+these two files agreeing with each other.** `--check` is refused with
+`--no-eq-guard` (guard 1, `:3600`), so it always regenerates the *guard-on*
+census and compares the on-disk file to that. A guard-off file can never match
+it, by construction: an on-disk guard-off file and a fresh guard-on generation
+disagree by definition, not by accident. So the harm a bare run gets to do is
+a corrupted committed source of truth plus a red `--check` and a red
+`check_cluster_citations.py`, not a wrong census that quietly certifies itself.
+No mutation is needed to see it — write a guard-off census to scratch, then
+point `--check` at it:
+
+```console
+$ python3 ec/tools/xdata_register_map.py --no-eq-guard \
+    --out-registers /tmp/guardoff-r.csv --out-clusters /tmp/guardoff-c.csv
+wrote /tmp/guardoff-r.csv: 1171 rows
+wrote /tmp/guardoff-c.csv: 439 rows
+$ python3 ec/tools/xdata_register_map.py --check \
+    --out-registers /tmp/guardoff-r.csv --out-clusters /tmp/guardoff-c.csv
+/tmp/guardoff-r.csv differs from a fresh generation (1172 on disk vs 1172 generated) -- run without --check to rewrite
+/tmp/guardoff-c.csv differs from a fresh generation (440 on disk vs 431 generated) -- run without --check to rewrite
+  names: seeded 10, exact 0, carried by overlap 0, tied, not carried 0, with no name 420
+$ echo $?
+1
+```
+
+Against the committed CSVs the same command exits **0**, 1,171 and 430 rows
+matching. With guard 2 deleted in a scratch `ec/`, a bare run does overwrite
+both committed files, and the fallout is again loud rather than silent:
+`--check` exits 1 naming both files, and `check_cluster_citations.py` reports
+**45** disagreements — 37 in `ec/annotations/`, 8 in `docs/`. Both totals are
+this tree's and move as the tree's citations do; the split is what makes 45
+reconcilable with a 37 measured over `ec/annotations/` alone.
+
+**The tool's own comment said otherwise, and said so in this write-up's first
+draft too.** `xdata_register_map.py:3605-3608` claimed, from #528, that a bare
+run leaves `--check` green "because the files now agree with each other". That
+is false on this tree, for the reason above, and the comment is corrected in
+place here rather than left standing for the next reader to re-derive from.
+This paragraph originally restated the comment as if it were a measurement;
+it is a disproof of it.
 
 ## The tripwires are the design, not the decoration
 
@@ -259,15 +298,22 @@ CSVs when it added the co-reading columns, which is what cleared #326's symptom:
 | pristine `origin/main` | 0 | `xdata-registers.csv` 1,171 rows match, `xdata-clusters.csv` 430 rows match |
 | this tree | 0 | the same two, and the full output is byte-identical once the repository path is normalised out |
 
-**That is the sharpest form of the hazard, and it is why the refusals matter
-more on this tree than they did on the branch's.** When `--check` was red, a
-bare `--no-eq-guard` run left a check that was red before and red after, and a
-reader could notice. Now it starts out green: the run overwrites both CSVs with
-the pre-#178 census, the check still passes because the two files agree with
-each other, and nothing else in the tree — every `main-ec-NNN` citation,
-`check_cluster_citations.py`, `xdata-register-map.md` — sees a disagreement. A
-silently wrong source of truth that certifies itself is a worse failure than
-one that was already failing.
+**The refusals are worth pinning on this tree for the reason they were worth
+pinning on the branch's, and not for a sharper one.** A green `--check` here
+does not make a bare `--no-eq-guard` run any less damaging than it was when
+the check was red: `--check` is refused with the flag, so it regenerates
+guard-on either way and a guard-off file fails it either way. The run is caught
+immediately and loudly — `--check` goes red on both files,
+`check_cluster_citations.py` goes red with 45 disagreements — because `--check`
+and the citation check both re-derive from the committed tree and neither can
+be satisfied by a census that was written with the guard off.
+
+What the refusals buy is narrower and is worth saying precisely: they stop the
+run **before** it writes. The harm a run gets to do is a corrupted committed
+source of truth plus two red checks, and the refusals reduce that to nothing,
+rather than leaving the repository's integrity to a reader noticing the red
+afterwards. That is a real saving, but it is a saving on a *detected* failure,
+not on a silent one.
 
 ## What this suite does not cover
 

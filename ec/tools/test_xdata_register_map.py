@@ -196,10 +196,12 @@ class Refusals(unittest.TestCase):
         self.assertIn("cannot be combined with --check or --self-test", err)
 
     def test_it_is_refused_bare_with_the_default_outputs(self):
-        # The hazard the docstring calls unreachable: run bare, it writes the
-        # pre-#178 census over `xdata-registers.csv` and `xdata-clusters.csv`,
-        # after which `--check` is green because the two files agree with each
-        # other and the source of truth is wrong. This is the issue's third
+        # The hazard: run bare, it writes the pre-#178 census over
+        # `xdata-registers.csv` and `xdata-clusters.csv`. That is caught, but
+        # only afterwards and by other tools -- `--check` is refused with the
+        # flag, so it regenerates guard-on and goes red, and so do the
+        # citations. The guard's job is to stop the write, not to leave the
+        # repository to be noticed afterwards. This is the issue's third
         # combination verbatim, and the only one where a mode would reach the
         # committed paths if the guard were not there.
         _code, err = self.refuse("--no-eq-guard")
@@ -227,7 +229,7 @@ class Refusals(unittest.TestCase):
         # The whole hazard is premised on this. If the defaults move, the
         # refusals above keep passing while meaning something else -- a bare
         # `--no-eq-guard` run would no longer be a threat to these two files,
-        # and the guard's reason at xdata_register_map.py:3382-3385 would be stale.
+        # and the guard's reason at xdata_register_map.py:3605-3608 would be stale.
         self.assertEqual(Path(xrm.OUT_REGISTERS).parent, EC / "annotations")
         self.assertEqual(Path(xrm.OUT_CLUSTERS).parent, EC / "annotations")
 

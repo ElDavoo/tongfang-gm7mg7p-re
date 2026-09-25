@@ -3620,10 +3620,10 @@ def main() -> int:
                  "combined with --check or --self-test. To see the pre-#178 "
                  "buckets, write a census to a scratch path and diff it "
                  "against the committed one.")
-    # The other way this flag could do damage is quieter: run bare it writes the
-    # pre-#178 census over the committed CSVs, after which --check is green
-    # because the files now agree with each other and the source of truth is
-    # wrong. So a --no-eq-guard run must be given somewhere to write.
+    # The other way this flag could do damage is by writing at all: run bare
+    # it overwrites the committed CSVs with the pre-#178 census. --check would
+    # catch that, but only because the guard above refuses the two together
+    # and so regenerates guard-on; don't rely on it. Write somewhere scratch.
     if args.no_eq_guard and (args.out_registers == OUT_REGISTERS
                              or args.out_clusters == OUT_CLUSTERS):
         ap.error("--no-eq-guard would overwrite the committed census, so it "
