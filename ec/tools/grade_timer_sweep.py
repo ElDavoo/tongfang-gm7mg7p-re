@@ -99,13 +99,17 @@ def find_gaps(rows):
 
 
 def load(paths):
-    """Return (watched addrs or None, baseline {addr: v}, rows, span, interval)."""
+    """Return (watched addrs or None, baseline {addr: v}, rows, span, interval).
+
+    `utf-8` is declared, the codec the writers of this shape put on disk, so
+    a capture reads the same here as it does in the grader that shares it.
+    """
     watched, baseline, rows = None, {}, []
     RESUMES.clear()
     first = last = None
     interval = None
     for p in paths:
-        with open(p, newline="") as f:
+        with open(p, newline="", encoding="utf-8") as f:
             body = []
             for line in f:
                 if line.startswith("#"):

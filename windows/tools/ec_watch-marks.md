@@ -414,6 +414,33 @@ reported as accepted with no decode failure claimed. The case stays in
 encoding cannot read the byte — and out of the notice on the box where it does
 not.
 
+> **Correction (2026-09-25, issue #748), leaving the paragraph above as it was
+> written.** Its subject is no longer the interpreter. The capture format
+> **declares `utf-8`, no BOM**, and `read_capture` opens with that `encoding=`
+> rather than inheriting one, so the verdict is now the same on every
+> interpreter instead of a property of the box reading it. A lone 0xE9 is
+> refused everywhere, and the refusal names the format's encoding and the
+> remedy rather than the locale the reader happened to prefer.
+>
+> What survives from the paragraph above, and is still load-bearing: the notice
+> reports the verdict **it observed** rather than one it predicted, and a mark
+> it read is reported as accepted with no decode failure claimed. The strict
+> reader still raises over a byte the encoding cannot read — that is the
+> contract — and the three preflight readers still keep `errors="replace"`, so
+> the notice still cannot die on a foreign byte. The split the paragraph
+> describes is unchanged; only the reason the encoding varies is gone.
+>
+> The cp1252 reading stays a **prediction from the documented default with no
+> Windows box reached**, and is not confirmed here. What the declaration
+> retires is only its being load-bearing: with the encoding named, which
+> interpreter reads the file is no longer part of what the file means. A
+> leading BOM is **not** retired by the declaration — `utf-8` reads it as
+> U+FEFF — so it gets a refusal that names it, and whether the format should
+> ever accept one is a separate question this does not decide. Measured over
+> the 62 committed captures: 36 carry a high byte, 0 carry a BOM, all 62
+> decode. Full argument:
+> [`0751-capture-encoding.md`](../../docs/findings/0751-capture-encoding.md).
+
 ## Why the substitution went
 
 It was `label = label.strip() or f"mark {self._n}"` — a default that made

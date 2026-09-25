@@ -152,10 +152,15 @@ class SampleCsv:
     part that matters -- a run stopped and resumed has to extend the capture
     rather than replace it, so a finished run can be committed under
     `evidence/ec-watch/` as the file it was captured to.
+
+    The capture format is `utf-8` and this declares it, so a committed run is
+    a file the grader can read back wherever it is graded. A note in a label
+    is free text, and the same literal is repeated rather than imported for
+    the reason `ec_watch.py`'s `CsvSink` gives.
     """
 
     def __init__(self, path, columns=CAP_COLUMNS):
-        self._fh = open(path, "a", newline="")
+        self._fh = open(path, "a", newline="", encoding="utf-8")
         self._writer = csv.writer(self._fh)
         if self._fh.tell() == 0:
             self.row(columns)

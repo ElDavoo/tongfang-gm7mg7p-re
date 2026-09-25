@@ -680,12 +680,32 @@ def read_capture(path):
 
     Blank lines and `#` lines are skipped so an operator can annotate a
     capture by hand without breaking this.
+
+    `utf-8`, declared rather than inherited from the interpreter reading the
+    file, and no `errors=`: a byte outside the format is a refusal of the
+    file, not something to grade past. The writers declare the same codec
+    (`ec_watch.py`'s `CsvSink` and the four other classes that write this
+    shape), so the bytes are a property of the format and the same capture
+    grades the same way whichever box reads it.
     """
     marks, changes = [], []
-    with open(path, newline="") as f:
+    with open(path, newline="", encoding="utf-8") as f:
         for row in csv.reader(f):
             if not row or row[0].startswith("#") or row[0] == "ts":
                 continue
+            if row[0].startswith("\ufeff"):
+                # A leading BOM is not retired by the declared encoding, and
+                # the cost of not retiring it is that the refusal names
+                # nothing: `utf-8` reads U+FEFF as a character, it glues to
+                # the first field, the `ts` test above misses, and the header
+                # is graded as a change row and refused on `int("addr", 16)` --
+                # a complaint about a hex literal on a line that is not a
+                # change. Named here instead. Whether the format should ever
+                # *accept* a BOM is a separate question this does not decide.
+                raise ValueError(
+                    f"{path}: starts with a byte-order mark, so its first "
+                    f"field is '\ufeffts' and not 'ts'. A capture is utf-8 with "
+                    f"no BOM; re-save this one without one.")
             if len(row) < 4:
                 raise ValueError(f"{path}: short row {row!r}")
             ts, addr, old, new = row[0], row[1], row[2], row[3]
@@ -711,15 +731,22 @@ def existing_mark_labels(path):
     and this must not: refusing to open a capture would be the wrong way to
     lose the one warning that says what is already in it.
 
-    Nor may the file's *encoding*. `CsvSink` appends to the same path without
-    decoding it, so the bytes are whatever the writing process's locale wrote
-    and a foreign or hand-annotated capture on the Windows box is no rarer
-    than the rows above. Read with the default encoding and iteration is lazy,
-    so a lone 0xE9 -- a byte UTF-8 cannot decode, and latin-1 and cp1252 both
-    write for `café` -- raises `UnicodeDecodeError` out of the loop, at
-    startup, on the run that used to append to that file fine. Hence
-    `errors="replace"`: the byte comes back as U+FFFD inside a label the
-    operator is being shown anyway, which is a smaller loss than the day.
+    Nor may the file's *encoding*. The format declares `utf-8` and
+    `read_capture` refuses a file that is not it, but a capture on the box
+    is not necessarily one the format wrote: a file from before the codec was
+    declared, one an operator annotated in an editor that saved something
+    else, one another tool produced. `CsvSink` appends to the same path
+    without ever decoding it, so those bytes are still here at startup. Under
+    the declared codec and with iteration lazy, a lone 0xE9 -- a byte UTF-8
+    cannot decode, and latin-1 and cp1252 both write for `café` -- raises
+    `UnicodeDecodeError` out of the loop on the run that would otherwise have
+    appended to that file fine. Hence `errors="replace"`: the byte comes back
+    as U+FFFD inside a label the operator is being shown anyway, which is a
+    smaller loss than the day, and the grading still refuses the file over the
+    same byte. Declaring the codec made the strict reader's verdict a fact
+    about the format rather than about the interpreter; it did not make this
+    one lenient, because the notice's job is to survive the file the grading
+    will not.
 
     The shape of a mark row is the grader's and lives here rather than in
     `ec_watch.py` for the same reason `parse_mark` does: the prompt loads this
@@ -727,7 +754,7 @@ def existing_mark_labels(path):
     thing that enforces it (#548).
     """
     out = []
-    with open(path, newline="", errors="replace") as f:
+    with open(path, newline="", encoding="utf-8", errors="replace") as f:
         for row in csv.reader(f):
             if not row or row[0].startswith("#") or row[0] == "ts":
                 continue
@@ -771,7 +798,7 @@ def refused_capture_rows(path):
     reading it.
     """
     accepted, refused = [], []
-    with open(path, newline="", errors="replace") as f:
+    with open(path, newline="", encoding="utf-8", errors="replace") as f:
         for row in csv.reader(f):
             if not row or row[0].startswith("#") or row[0] == "ts":
                 continue
@@ -843,13 +870,18 @@ def existing_mark_findings(path):
     unparseable one. What is reported is what `unplaceable_marks` returned:
     a whole window, or nothing.
 
-    The encoding is the one thing here that is not a property of the file. It
-    is a property of the interpreter reading it: `read_capture` opens without
-    an `encoding=`, so it decodes in whatever the running locale prefers, and
-    the same capture can be gradeable on one box and refused on another. So
-    the verdict reported is the one this interpreter produced and the encoding
-    it produced it under is named -- never a claim about what another Python
-    would have done with the same bytes.
+    The encoding is the one thing here that is a property of the format
+    rather than of the file, and it is why a byte can refuse a whole capture
+    while a hand-edited timestamp refuses only a row. `read_capture` declares
+    `utf-8`, so a capture in anything else is not this format's and is
+    refused whole: it is not decoded per row, because a per-row decode would
+    make the meaning of the file a property of this reader again, and would
+    let `f.encoding` and the bytes on disk disagree -- which is the failure
+    the declaration removes. The refusal names the codec the format declares
+    and the remedy, so an operator holding a file from another box is told
+    what to do rather than shown a `UnicodeDecodeError` and left to guess.
+    Reading `f.encoding` off the `open` still beats re-deriving which codec
+    applies, and now it reads back the declared one by construction.
 
     `build_windows` is deliberately not on the label path: it indexes
     `windows[0]`, so it needs a mark list and the change rows, and neither is
@@ -866,15 +898,18 @@ def existing_mark_findings(path):
         # this comes out of the loop and there is no row to name it by. The
         # rows are still reported, through the lenient reader, with U+FFFD
         # where the byte was -- which is how the operator finds the byte that
-        # stopped it. `f.encoding` rather than a re-derivation of which
-        # locale rule CPython applies, because it is the answer from the same
-        # call `read_capture` makes and so cannot disagree with it.
-        with open(path, newline="", errors="replace") as f:
+        # stopped it. `f.encoding` rather than a re-derivation of which codec
+        # the format declares, because it is the answer from the same call
+        # `read_capture` makes and so cannot disagree with it.
+        with open(path, newline="", encoding="utf-8", errors="replace") as f:
             encoding = f.encoding
         refused.append((None, "the grader's reader cannot decode a byte of "
-                              f"this file in the {encoding} this interpreter "
-                              f"opens it with, and raises before it reaches a "
-                              f"row: {e}"))
+                              f"this file in the {encoding} a capture is "
+                              f"defined to be, and raises before it reaches a "
+                              f"row: {e}. A capture is utf-8; this one is "
+                              f"written in something else. Re-save it as utf-8, "
+                              f"or re-run the capture with a writer that "
+                              f"declares the codec."))
         return existing_mark_labels(path), refused, unplaceable
     except ValueError as e:
         accepted, refused = refused_capture_rows(path)
@@ -916,9 +951,15 @@ def read_early_exits(path):
     phrase and carries no timestamp this can read comes back with `ts=None`
     and the rest of the line as its reason, so the caller can refuse it by
     name instead of the capture grading as one that finished.
+
+    The declared `utf-8` and, unlike the preflight readers, no `errors=`: a
+    capture in another encoding is a grading-time failure here as well as a
+    notice-time one, which was already true and is now the format's rule
+    rather than a side effect of the interpreter. The codec is named in the
+    `UnicodeDecodeError` this propagates, so the failure says which one.
     """
     out = []
-    with open(path, newline="") as f:
+    with open(path, newline="", encoding="utf-8") as f:
         for row in csv.reader(f):
             if not row or not row[0].startswith(EARLY_EXIT_TAG):
                 continue
@@ -941,10 +982,11 @@ def read_dump(path):
     `#` lines are skipped, as `read_capture` skips them. The two are written
     by the same operator out of the same run, and §6 tells them to annotate
     what they hand in; a comment carrying a colon is otherwise read as a row
-    of bytes and raises out of `int()`.
+    of bytes and raises out of `int()`. `newline=""` as the five readers
+    above pass it, so a hand-annotated dump is read the way it is written.
     """
     values = {}
-    with open(path) as f:
+    with open(path, newline="", encoding="utf-8") as f:
         for line in f:
             if line.startswith("#"):
                 continue

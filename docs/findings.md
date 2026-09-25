@@ -4331,6 +4331,16 @@ file. Offline behaviour against a fake EC and temp directories; whether a
 staged copy is where an operator puts it is a human's step. Same file:
 [ec_watch-marks.md](../windows/tools/ec_watch-marks.md).
 
+> **Correction (2026-09-25, issue #748), leaving the paragraph above as it was
+> written.** "Grades identically at the laptop or brought back" was true of
+> §6's committed set and was not a property of the format: every reader opened
+> a capture with no `encoding=`, so a file whose bytes were written in another
+> encoding was gradeable on one machine and refused on another. The capture
+> format is now **`utf-8`, no BOM**, declared at all thirteen read and write
+> sites, so the claim holds for a capture the format wrote and a foreign one is
+> refused by name rather than half-decoded. Full argument and the measured
+> corpus: [0751-capture-encoding.md](findings/0751-capture-encoding.md).
+
 **2026-09-25 (issue #548): that check is a per-process fact, and a `--csv` is a
 per-file one, so the tool now names the marks it is appending to.** `Marker`
 checks a label as it is typed; `CsvSink` opens the path in append mode without
@@ -4402,6 +4412,35 @@ row must never read as "held no flag". Offline, over committed files and
 constructed ones; no capture taken, no format changed, and implementing the
 recommended shape is the next issue's. Written up in
 [0751-mark-provenance-shapes.md](findings/0751-mark-provenance-shapes.md).
+
+**2026-09-25 (issue #748): the capture format declares its encoding, so a
+capture's bytes are a property of the format and not of the box that wrote
+it.** The `ts,addr,old,new` format is **`utf-8`, no BOM**, declared at all
+thirteen read and write sites — six readers in the grader, five writer
+classes, and two further readers the issue's list missed
+(`ec_timer_capture.Sink` is a fifth writer by its own docstring;
+`check_capture_claims` and `grade_timer_sweep.load` are the seventh and
+eighth readers). The strict/lenient split is unchanged and is what makes the
+refusal safe: the three preflight readers keep `errors="replace"`, so the
+startup notice still cannot die on a foreign byte, and the grading refuses
+the file with the encoding and the remedy named. A capture already on disk in
+another encoding is **refused, not decoded per row** — a per-row decode would
+make the format's meaning a property of the reader again, which is the thing
+being retired. Measured over the 62 committed captures: 36 carry a high byte,
+**0 carry a BOM**, and all 62 decode as UTF-8, so the declaration admits the
+whole corpus and refuses none of it — which is also why it is `utf-8` and not
+`utf-8-sig`, whose write side would *emit* the BOM no committed file has. A
+leading BOM is **not** retired by a plain `utf-8` declaration; it now gets a
+refusal that names it rather than a complaint about `int("addr", 16)` on the
+header. The Windows cp1252 case stays a **prediction from the documented
+default with no box reached**; what the declaration retires is only its being
+load-bearing. Offline: a count over two committed directories, a round-trip
+through a temp directory, and a reader's behaviour on a constructed file. This
+makes an already-red `measure_mark_provenance.py` redder — 6 of its 37 pins
+were drifted before this change and 29 are after, measured both ways and
+recorded rather than hidden; that tool's crash and its re-anchoring are its
+own issue. Written up in
+[0751-capture-encoding.md](findings/0751-capture-encoding.md).
 
 ## 17. The `main-ec-003` cluster is one 393-byte routine, counted 42 times over (2026-09-23, issue #179; id corrected by #253, by the 2026-09-24 re-derivation, and again by #279 on 2026-09-25)
 

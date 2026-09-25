@@ -206,10 +206,15 @@ class CsvSink:
 
     The sweep loop runs on the main thread and marks arrive on the stdin
     thread, so without this a mark can land in the middle of a sample row.
+
+    A second class of this name rather than `ec_watch.py`'s, because this is
+    deployed on its own; `utf-8` is declared for the same reason and with the
+    same repeated literal, so a mark label of `§` is the same byte here as it
+    is in a capture the grader reads.
     """
 
     def __init__(self, path):
-        self._fh = open(path, "a", newline="")
+        self._fh = open(path, "a", newline="", encoding="utf-8")
         self._writer = csv.writer(self._fh)
         self._lock = threading.Lock()
         if self._fh.tell() == 0:

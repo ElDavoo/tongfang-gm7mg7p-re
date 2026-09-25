@@ -126,10 +126,22 @@ class CsvSink:
 
     The sweep loop runs on the main thread and marks arrive on the stdin
     thread, so without this a mark can land in the middle of a change row.
+
+    `encoding="utf-8"` is the format's, not this process's: a mark label is
+    free text and the vocabulary is named after `§3` and `§6`, so `§` in a
+    label is the likeliest non-ASCII byte an operator types at the box. Left
+    to the locale it is written in whatever the Windows box's Python prefers
+    and read by a UTF-8 grader from a checkout, which refuses the whole file
+    over one byte. The literal is repeated in the other four classes that write
+    this shape rather than imported from here, because `windows/tools/` is
+    deployed as a directory and a shared constant would be one more thing to
+    copy -- and because this file already loads the grader by path precisely
+    so no second copy of a rule can drift from the thing that enforces it
+    (#548).
     """
 
     def __init__(self, path):
-        self._fh = open(path, "a", newline="")
+        self._fh = open(path, "a", newline="", encoding="utf-8")
         self._writer = csv.writer(self._fh)
         self._lock = threading.Lock()
         if self._fh.tell() == 0:

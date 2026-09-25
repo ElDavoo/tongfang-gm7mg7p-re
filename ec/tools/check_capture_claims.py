@@ -218,8 +218,14 @@ def read_capture(path: str):
     naive DictReader takes a comment as the header and yields three garbage
     fieldnames -- which reads as "the file has no addr column" rather than as
     a parser that skipped what it should not have.
+
+    `utf-8` is declared, as every other reader and writer of this shape
+    declares it. This is the reader that walks the whole committed corpus, so
+    it is the one most likely to meet a file a foreign writer produced, and
+    the codec is the format's rather than whatever this process's locale
+    prefers.
     """
-    with open(path, newline="") as f:
+    with open(path, newline="", encoding="utf-8") as f:
         lines = [line for line in f if not line.lstrip().startswith("#")]
     rows = list(csv.DictReader(lines))
     derived = bool(rows) and "change_count" in rows[0]
