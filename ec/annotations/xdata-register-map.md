@@ -2642,6 +2642,25 @@ re-measurement, so it is left for its own issue rather than folded in here.
   > census"**, so this paragraph and that page went stale together; that
   > sentence is left to #816, and the `--self-test` half of the bullet above to
   > #815, because each is mid-way through its own issue.
+  >
+  > **CORRECTION (2026-09-25, issue #815) to the `--self-test` half being
+  > "still open and is not a one-liner":** it is wired, and the reason this
+  > bullet gave for not wiring it is false. `--self-test` exits **0** on the
+  > committed tree — measured at `64dbde1`, 5.11 s and 101 assertions ending
+  > `all assertions passed`, against `--check`'s 2.03 s. The `FUN_CODE_*` claim
+  > was already untrue when written, for the reason
+  > `docs/findings/thunk-prefix-collision.md:271-289` records from the rename
+  > side: `ec/decompiled/index.csv:996`, `:999` and `:1333` have read
+  > `seed_1c12_trio_or_update_1c11_1c15_1c16`,
+  > `seed_1c12_trio_9f_or_run_0x9d7a_ladder` and
+  > `dispatch_036c_low3_then_seed_1c00_block` for `bank1:0x9CE8`, `0x9D53` and
+  > `0xE2D3` for a while. No `build_ec_decompile.py` run was needed to clear
+  > it, and the export-only rewrite this bullet warned about was not the
+  > mechanism. `agent-gates.sh` now runs both modes, so "until that run
+  > happens, `--check` is the half that can be gated" no longer describes
+  > anything. The two suites this bullet closes with are untouched by it.
+  > Measured, with the commands, in
+  > `docs/findings/xdata-census-self-test-gate.md`.
 - **The 42 boundaries, now that §4.5 measures them.**
   `build_ec_decompile.py --mode rebuild-project` writes the 7 MB database, and
   two branches that both rebuild one cannot merge, so this still wants a branch

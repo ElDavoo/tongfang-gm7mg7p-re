@@ -213,27 +213,53 @@ check_ghidra_tooling() {
       # CSV that no longer describes the tree fails here rather than in prose --
       # and it needs no scratch dir, no Ghidra and no image, which is what puts
       # it in this cheap tier. The tool's docstring has claimed a place here
-      # since it was written; issue #256 is what wired it.
+      # since it was written; issue #256 wired `--check` and issue #815 wired
+      # `--self-test`.
       #
-      # **`--self-test` is deliberately not run, and that is not an oversight.**
-      # It is red on `main` for a reason no census change can clear: the
-      # annotation CSV names three functions (`bank1:0x9CE8`, `bank1:0x9D53`,
-      # `bank1:0xE2D3`) that `ec/decompiled/index.csv` still spells `FUN_CODE_*`,
-      # so the "annotation CSV and index.csv agree" assertion fails. Clearing it
-      # means re-running `build_ec_decompile.py` in its default export-only
-      # mode, which rewrites the generated `ec/decompiled/**` tree and belongs to
-      # whoever landed the renames. Adding the mode to this gate before that
-      # would turn the gate red for an unrelated cause, which is the cheapest
-      # way to make a gate get switched off.
+      # **`--self-test` used to be deliberately not run, and the reason it gave
+      # was false.** The claim, kept rather than deleted: it was "red on `main`
+      # for a reason no census change can clear", because the annotation CSV
+      # named three functions (`bank1:0x9CE8`, `bank1:0x9D53`, `bank1:0xE2D3`)
+      # that `ec/decompiled/index.csv` still spelled `FUN_CODE_*`, so the
+      # "annotation CSV and index.csv agree" assertion failed. **It was already
+      # untrue when written** -- a later `build_ec_decompile.py` export cleared
+      # the drift, and `ec/decompiled/index.csv:996`, `:999` and `:1333` have
+      # read `seed_1c12_trio_or_update_1c11_1c15_1c16`,
+      # `seed_1c12_trio_9f_or_run_0x9d7a_ladder` and
+      # `dispatch_036c_low3_then_seed_1c00_block` for those three addresses for
+      # a while. `docs/findings/thunk-prefix-collision.md:271-289` made the same
+      # correction from the rename side and left the wiring to this issue, so
+      # nothing else in the tree has to re-derive it.
       #
-      # Its half that *is* green is the half `--check` runs: the committed CSVs
-      # matching a fresh generation, and the counting pins (ORACLE, the five
-      # bucket totals, ORACLE_TOP_MAIN, the rank total) holding. Those are
-      # assertions inside --self-test that cannot be reached from --check, so
-      # the honest description of what is gated here is the CSVs, not the
-      # tool's whole self-test.
+      # **Measured 2026-09-25 at 64dbde1, both modes exit 0** from the repo
+      # root: `--check` in 2.03 s, `--self-test` in 5.11 s over 101 assertions,
+      # ending `all assertions passed`. Those are one runner's figures and they
+      # move by roughly a factor of two between runners, so the ratio is the
+      # durable part and a reader who wants the numbers re-derived rather than
+      # quoted has the commands in
+      # `docs/findings/xdata-census-self-test-gate.md`. Both modes read
+      # committed text only -- `--self-test` additionally the 2,711 committed
+      # `ec/decompiled/*/*.asm` -- so no image, no Ghidra and no network, and
+      # the tree is unchanged afterwards.
+      #
+      # What the mode adds, none of which `--check` reaches: the corpus-wide
+      # direction invariant (none of the tree's 838 `==` occurrences is bucketed
+      # as a store), the §4.1 bucket totals, the whole export-ownership oracle
+      # (1,326 distinct / 10,178 references, the 296 addresses whose `refs` it
+      # moves, and the renumber a guard flip would cause -- 440 clusters against
+      # the committed 439, 400 of the committed `cluster_key`s surviving, 4 of
+      # the 9 hand names), the `NOT_IN_TREE` arithmetic, the check that all 439
+      # committed `cluster_key`s are distinct, and the name-carry and Jaccard
+      # checks. So the honest description of what is gated here is no longer the
+      # two CSVs.
+      #
+      # The refusals are why the chain above can be trusted, and no gate calls
+      # `ec/tools/test_xdata_register_map.py` that holds them: `--no-eq-guard`
+      # and `--export-ownership` change what the census means and are refused
+      # with both modes, and refused again without the two `--out-` paths so
+      # neither can reach the committed CSVs.
       *xdata_register_map.py)
-        python3 "$tool" --check || rc=1
+        python3 "$tool" --check && python3 "$tool" --self-test || rc=1
         ;;
       *)
         # build_ec_decompile.py and bios_extract.py both take --work.
