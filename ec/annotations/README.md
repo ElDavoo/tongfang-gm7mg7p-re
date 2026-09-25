@@ -182,6 +182,17 @@ whose `name` disagrees with the row's current name, a `type: unresolved` row
 cited without the `[unresolved]` marker, and a census count that disagrees with a
 recount.
 
+Both of that document's tables are held to a recount as well: the per-program
+split against `index.csv`, and the shape census at the top of §2 against the
+`name` column here. **The shape table's six prefixes are a vocabulary the check
+derives from rather than an illustration of a number**, so its rows, its
+`of which` breakdowns and its total are all recounted, and a prefix that
+appears as a row without being one of the six is reported rather than counted.
+A `>`-quoted line is not read by any of the three: a correction or a retraction
+recorded beside a live figure stays where the document put it and is not held to
+the recount, which is the only way a correction can sit beside the figure it
+corrects.
+
 ## Groups: [`function-groups.csv`](function-groups.csv)
 
 One row per annotated function — `scope,addr,group,group_basis,comment,

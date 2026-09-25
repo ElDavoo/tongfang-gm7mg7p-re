@@ -5797,6 +5797,22 @@ address-space confusion as §12, one row wide. **The fix is to key `readBasis()`
 on `(program, addr)`**, and it is not made here because it would restate the
 basis column across the whole index and wants its own verification.
 
+**The shape census is held to a recount now (2026-09-25, issue #630).** §2's
+shape-census paragraph states 160 `type: unresolved` rows and 279 names over six
+prefixes, and until now it stated them in prose no gate could reach — which is
+how #602's own recount found the same paragraph four figures out on a green
+build. `build_ec_decompile.py --check` now derives it from
+`ghidra-functions.csv` and refuses a row, an `of which` breakdown or the total
+that disagrees with the recount, and the paragraph's inline prefix list has
+become a table whose rows *are* the vocabulary: the `forward_to_*` family is a
+shape-census item by the document's own account and is outside the total, which
+an illustrative list could not say and a table says by construction. All three
+of that document's census readers now skip a `>`-quoted line, so a correction
+recorded beside a live figure stays where the document put it without the check
+pinning the retracted number. The recount, the vocabulary decision and the
+`#629` boundary are in
+[`findings/shape-census-gate.md`](findings/shape-census-gate.md).
+
 ## 20. What grounds a name, and what a group is (2026-09-24, issue #135)
 
 The write-up is `docs/findings/name-basis-and-groups.md`; this is the summary.

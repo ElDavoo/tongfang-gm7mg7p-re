@@ -2940,15 +2940,164 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
           "and not raised",
           len(_p) == 2 and "line 10: the census's per-program table has a "
           "`bank2` row" in _p[0] and "states no `pd` row" in _p[1], str(_p))
+    # The shape census beside those, which is the same discipline over the
+    # names rather than over the programs. §2's paragraph used to state this
+    # census in prose that no gate could reach, and the fixture is the whole of
+    # the correction's worth: a paragraph that cannot go red is a paragraph
+    # nobody re-derives. The known-good case is first for the reason the rest
+    # of this block is ordered that way.
+    _shape = {"call_": 2, "load_": 3, "trampoline_": 1, "ret_": 2, "nop_": 1,
+              "seed_": 1, "load_dptr_": 2, "ret_only_": 1}
+    _shape_rows = ("| prefix | rows | of which |\n"
+                   "|---|---|---|\n"
+                   "| `call_` | 2 | |\n"
+                   "| `load_` | 3 | 2 `load_dptr_`, 1 register and table |\n"
+                   "| `trampoline_` | 1 | |\n"
+                   "| `ret_` | 2 | 1 `ret_only_`, 1 named beside it |\n"
+                   "| `nop_` | 1 | |\n"
+                   "| `seed_` | 1 | |\n"
+                   "| **total** | **10** | |\n")
+    _shape_doc = _census_doc + _shape_rows
+    # Only the shape entry is carried over: a per-program recount against a
+    # document with no per-program table would be four faults the shape cases
+    # have nothing to do with.
+    _measured_shape = dict(_measured)
+    _measured_shape[SUBSYSTEM_SHAPE_KEY] = _shape
+    _read_shapes = subsystems_stated_shapes(_shape_doc)
+    check("subsystems: the shape table is read back out of the document",
+          _read_shapes == {"call_": [(7, 2, None)],
+                           "load_": [(8, 3, ("load_dptr_", 2, 1))],
+                           "trampoline_": [(9, 1, None)],
+                           "ret_": [(10, 2, ("ret_only_", 1, 1))],
+                           "nop_": [(11, 1, None)], "seed_": [(12, 1, None)],
+                           SHAPE_TOTAL: [(13, 10, None)]}, str(_read_shapes))
+    check("subsystems: the shape recount is taken over the prefixes the table "
+          "names, breakdowns included",
+          shape_census_prefixes(_shape_doc) == ["call_", "load_", "load_dptr_",
+                                                "nop_", "ret_", "ret_only_",
+                                                "seed_", "trampoline_"],
+          str(shape_census_prefixes(_shape_doc)))
+    _p = _sp(_shape_doc + _good_doc, _measured_shape)
+    check("subsystems: a shape table that agrees with the recount passes",
+          not _p, "; ".join(_p))
+    # The case the whole reader exists for, and the reason the three census
+    # readers skip a `>`-quoted line. The retracted copy sits immediately after
+    # the live one, which is what §2 looks like, and it has to survive there
+    # and stay unread -- including when a number inside it is edited, which is
+    # the only way to show it is being skipped rather than merely matching.
+    _retracted = ("> | `call_` | 87 | |\n"
+                  "> | `load_` | 117 | 80 `load_dptr_`, 37 register and table |\n"
+                  "> | `trampoline_` | 29 | |\n"
+                  "> | `ret_` | 21 | 21 `ret_only_` |\n"
+                  "> | `nop_` | 9 | |\n"
+                  "> | `seed_` | 6 | |\n"
+                  "> | **total** | **267** | |\n")
+    _p = _sp(_shape_doc + _retracted + _good_doc, _measured_shape)
+    check("subsystems: a retracted table left visible in a blockquote beside "
+          "the live one passes",
+          not _p, "; ".join(_p))
+    _p = _sp(_shape_doc + _retracted.replace("| `call_` | 87 |", "| `call_` | 1 |")
+             + _good_doc, _measured_shape)
+    check("subsystems: a number edited inside that blockquote is not read, so "
+          "the retraction cannot be pinned",
+          not _p, "; ".join(_p))
+    _p = _sp(_shape_doc.replace("| `call_` | 2 | |", "| `call_` | 3 | |")
+             + _good_doc, _measured_shape)
+    check("subsystems: a shape row whose tally disagrees with the recount is "
+          "reported",
+          len(_p) == 1 and "line 7: the census states 3 `call_` rows and the "
+          "committed CSV holds 2" in _p[0], str(_p))
+    _p = _sp(_shape_doc.replace("| **total** | **10** | |",
+                                "| **total** | **9** | |") + _good_doc,
+             _measured_shape)
+    check("subsystems: a shape total that is not the recount over the prefixes "
+          "is reported",
+          len(_p) == 1 and "line 13: the census's shape table states a total "
+          "of 9 and the 6 prefixes it derives over add to 10" in _p[0], str(_p))
+    _p = _sp(_shape_doc.replace("| **total** | **10** | |\n", "") + _good_doc,
+             _measured_shape)
+    check("subsystems: a shape table that states no total is reported",
+          len(_p) == 1 and "states no `**total**` row" in _p[0], str(_p))
+    # The dropped row, which the total cannot see: drop `seed_` and the
+    # remaining rows still add to the same total the document states, and the
+    # total is not wrong, so only the missing row says anything is.
+    _p = _sp(_shape_doc.replace("| `seed_` | 1 | |\n", "") + _good_doc,
+             _measured_shape)
+    check("subsystems: a shape prefix with no row is reported, and the total it "
+          "did not move is not",
+          len(_p) == 1 and "states no `seed_` row" in _p[0], str(_p))
+    _p = _sp(_shape_doc.replace("`seed_`", "`thunk_`") + _good_doc,
+             _measured_shape)
+    check("subsystems: a shape row the vocabulary does not hold is reported, and "
+          "not raised",
+          len(_p) == 2 and "states no `seed_` row" in _p[0]
+          and "has a `thunk_` row" in _p[1], str(_p))
+    # A breakdown is held to the recount and to its own row, separately. The
+    # first is taken off the recount rather than off the document, so the two
+    # are two faults rather than one number reached two ways.
+    _short_sub = dict(_measured_shape)
+    _short_sub[SUBSYSTEM_SHAPE_KEY] = dict(_shape, load_dptr_=1)
+    _p = _sp(_shape_doc + _good_doc, _short_sub)
+    check("subsystems: a within breakdown that disagrees with the recount is "
+          "reported",
+          len(_p) == 1 and "line 8: the census states 2 `load_dptr_` rows "
+          "inside its 3 `load_` ones and the committed CSV holds 1" in _p[0],
+          str(_p))
+    _p = _sp(_shape_doc.replace("1 `ret_only_`, 1 named beside it",
+                                "1 `ret_only_`, 2 named beside it") + _good_doc,
+             _measured_shape)
+    check("subsystems: a within breakdown that disagrees with its own parent row "
+          "is reported",
+          len(_p) == 1 and "line 10: the census breaks its 2 `ret_` rows into "
+          "1 and 2, which is 3" in _p[0], str(_p))
+    _p = _sp(_shape_doc.replace("| `call_` | 2 | |", "| `call_` | 3 | |")
+             + _shape_rows + _good_doc, _measured_shape)
+    check("subsystems: a shape census stated twice and wrong in the earlier "
+          "occurrence is reported",
+          len(_p) == 1 and "line 7: the census states 3 `call_` rows" in _p[0],
+          str(_p))
+    # The negative control for the shared filter, without which the blockquote
+    # case above would pass whether or not the rule reached the other two
+    # readers: the same bullet, quoted and then unquoted, is skipped and then
+    # compared.
+    _p = _sp(_shape_doc + "> - `exported functions` — 11\n" + _good_doc,
+             _measured_shape)
+    check("subsystems: a census count inside a blockquote correction is not "
+          "read, and the same bullet outside one is still compared",
+          not _p and len(_sp(_shape_doc
+                             + _census_doc.replace("`exported functions` — 10",
+                                                   "`exported functions` — 11")
+                             + _good_doc, _measured_shape)) == 1,
+          "; ".join(_p))
     _p = _sp("## 3. a section that cites nothing at all\n")
     check("subsystems: a document that cites no function is reported",
           len(_p) == 1 and "cites no functions" in _p[0], str(_p))
     # And the committed document, read the way the gate reads it.
     if os.path.isfile(SUBSYSTEMS):
-        _real, _n = check_subsystems(_ann, _ir)
+        _real, _n, _shapes = check_subsystems(_ann, _ir)
         check("subsystems: the committed %s passes its own check"
               % os.path.relpath(SUBSYSTEMS, REPO), not _real, "; ".join(_real[:3]))
         check("subsystems: the committed map cites functions", _n > 0, "%d" % _n)
+        # The shape census is the half of that pass which could be vacuous: an
+        # empty recount makes every fault above unreachable and the document
+        # green, so the gate's own derived figure is asserted to be there.
+        check("subsystems: the committed shape census is recounted for every "
+              "prefix the table names",
+              all(p in _shapes for p in SUBSYSTEM_SHAPE_PREFIXES)
+              and _shapes["call_"] > 0, str(_shapes))
+        # ...and the live-line rule is a no-op on it. Skipping a `>`-quoted
+        # figure is correct here because the document states its four counts
+        # twice and both copies are live; if a correction ever moved one of
+        # them into a blockquote this goes red rather than quietly halving
+        # what the four-count check compares.
+        _text = open(SUBSYSTEMS, errors="replace").read()
+        _quoted = [m for m in SUBSYSTEM_COUNT.finditer(_text)
+                   if is_blockquote_line(_text, m.start())]
+        check("subsystems: all %d of the committed census's own count bullets "
+              "are live lines, so skipping a blockquote costs this document "
+              "nothing" % sum(len(v) for v in
+                              subsystems_stated_counts(_text).values()),
+              not _quoted, "%d quoted" % len(_quoted))
 
     print("  all assertions passed" if ok else "  FAILURES ABOVE")
     if not ok:
@@ -3627,6 +3776,58 @@ SUBSYSTEM_TABLE = re.compile(
 # the four rather than among them, which is why the loop over SUBSYSTEM_COUNTS
 # does not see it.
 SUBSYSTEM_TABLE_KEY = "per-program table"
+# The census's shape table: the claim §2's paragraph used to make in passing,
+# as a table, so the prefixes are a committed vocabulary rather than an
+# illustration of a number. A row is a prefix and the rows carrying it; the
+# third cell is a breakdown of the row it sits in rather than a seventh row,
+# and the `**total**` row is what the listed rows add up to.
+#
+#     | `load_` | 120 | 83 `load_dptr_`, 37 register and table |
+#     | **total** | **279** | |
+#
+# It is held to a recount of the names in ghidra-functions.csv for the same
+# reason the per-program table is held to one of the export, and the reason is
+# the one #602 established the hard way: this paragraph's figures were four out
+# on a green build, because nothing recounted them. A row whose cells do not
+# parse is not read as a row at all, so it is reported as the prefix it leaves
+# missing rather than as a malformed cell -- the same signal either way, and
+# the one a reader can act on, for the reason `subsystems_stated_table` says.
+SUBSYSTEM_SHAPE = re.compile(
+    r"^\|\s*(?:\*\*total\*\*\s*\|\s*\*\*(?P<total>\d+)\*\*"
+    r"|`(?P<prefix>[a-z][a-z0-9_]*)`\s*\|\s*(?P<rows>\d+))"
+    r"\s*\|(?:\s*|\s*(?P<within>\d+)\s+`(?P<within_prefix>[a-z][a-z0-9_]*)`"
+    r"(?:\s*,\s*(?P<within_rest>\d+)[^|\n]*)?)\|[ \t]*$", re.M)
+# The prefixes the shape census is derived over. Committed here rather than
+# read out of the document, because a vocabulary derived from the prose it is
+# meant to check is not a vocabulary. `thunk_` is deliberately absent: #602
+# renamed the last seven rows off it, so the prefix is gone rather than merely
+# smaller, and a prefix no row carries is not a row that went missing.
+SUBSYSTEM_SHAPE_PREFIXES = ("call_", "load_", "trampoline_", "ret_", "nop_",
+                            "seed_")
+# The key the shape recount travels under in `measured`, and the label the
+# `**total**` row is read under -- a row of that table like any other, and not
+# a prefix, which is why the missing-row check walks the vocabulary above
+# rather than the recount.
+SUBSYSTEM_SHAPE_KEY = "shape table"
+SHAPE_TOTAL = "total"
+
+
+# A `>`-quoted line is not read by any of the three census readers, and that is
+# a reading rule rather than a deletion: a blockquote in this document is a
+# correction or a retraction recorded beside the figure it corrects, and #602's
+# own census correction is one, sitting under the paragraph it corrects. The
+# readers collect every occurrence of a label on purpose, so without the rule
+# the check would pin the retracted figure and turn the correction red -- which
+# is the one thing a correction is not. The rule lives here rather than in one
+# reader because §2 already states its census three ways -- four bullets, a
+# per-program table and the shape table -- and a rule one of the three readers
+# has never heard of is a rule the other two will trip over.
+#
+# A `>` that opens a block whose continuation lines carry no marker of their
+# own is not covered, and this document's own blockquotes prefix every line.
+def is_blockquote_line(text, pos):
+    """True if the line holding `pos` is a `>`-quoted correction."""
+    return text[text.rfind("\n", 0, pos) + 1:].lstrip().startswith(">")
 
 
 def subsystems_citations(text):
@@ -3744,6 +3945,12 @@ def subsystems_problems(text, ann_rows, repo=REPO, stated=None, measured=None):
         # per-program recount to hold it to.
         problems.extend(subsystems_table_problems(
             text, measured.get(SUBSYSTEM_TABLE_KEY)))
+        # ...and the shape table, which is the same discipline over the names
+        # rather than over the programs. §2's paragraph used to state this
+        # census in prose that no gate could reach, and a paragraph that
+        # cannot go red is a paragraph nobody re-derives.
+        problems.extend(subsystems_shape_problems(
+            text, measured.get(SUBSYSTEM_SHAPE_KEY)))
     return problems
 
 
@@ -3758,6 +3965,8 @@ def subsystems_stated_counts(text):
     """
     out = {}
     for m in SUBSYSTEM_COUNT.finditer(text):
+        if is_blockquote_line(text, m.start()):
+            continue
         out.setdefault(m.group("label"), []).append(
             (text.count("\n", 0, m.start()) + 1, int(m.group("value"))))
     return out
@@ -3775,10 +3984,132 @@ def subsystems_stated_table(text):
     """
     out = {}
     for m in SUBSYSTEM_TABLE.finditer(text):
+        if is_blockquote_line(text, m.start()):
+            continue
         g = m.groupdict()
         out.setdefault(g["program"], []).append(
             (text.count("\n", 0, m.start()) + 1, int(g["exported"]),
              int(g["annotated"]), int(g["unannotated"]), int(g["pct"])))
+    return out
+
+
+def subsystems_stated_shapes(text):
+    """The census's shape table, read back out of its rows.
+
+    {prefix: [(line, rows, within), ...]}, every occurrence rather than the
+    last, for the reason the two readers above collect every occurrence of a
+    label: a copied table is as wrong as an edited one. `within` is
+    (sub_prefix, sub_rows, rest) off the row's own third cell, or None where
+    that cell is empty; the `**total**` row is keyed on SHAPE_TOTAL and states
+    no breakdown, which is the only difference between it and the others.
+    """
+    out = {}
+    for m in SUBSYSTEM_SHAPE.finditer(text):
+        if is_blockquote_line(text, m.start()):
+            continue
+        g = m.groupdict()
+        lineno = text.count("\n", 0, m.start()) + 1
+        if g["total"] is not None:
+            out.setdefault(SHAPE_TOTAL, []).append((lineno, int(g["total"]), None))
+            continue
+        within = None
+        if g["within"] is not None:
+            within = (g["within_prefix"], int(g["within"]),
+                      int(g["within_rest"]) if g["within_rest"] is not None else None)
+        out.setdefault(g["prefix"], []).append((lineno, int(g["rows"]), within))
+    return out
+
+
+def shape_census_prefixes(text):
+    """Every prefix the shape table names, row prefixes and the sub-prefixes
+    their `of which` cells break them down into alike. A breakdown is held to
+    the recount exactly as the row it sits in is, so it needs recounting too.
+    """
+    prefixes = set(SUBSYSTEM_SHAPE_PREFIXES)
+    for rows in subsystems_stated_shapes(text).values():
+        for _, _, within in rows:
+            if within:
+                prefixes.add(within[0])
+    return sorted(prefixes)
+
+
+def subsystems_shape_problems(text, measured):
+    """The census's shape table, against a recount over the annotation CSV.
+
+    `measured` is {prefix: rows} off ghidra-functions.csv for every prefix the
+    table names, or None when the caller brought no shape recount -- in which
+    case the table is not checked, rather than checked against nothing.
+
+    Five faults, and the first is the one a total cannot see: a prefix the
+    census is derived over with no row. The `**total**` is held to the recount
+    over all six rather than to the rows the table happens to list, so a dropped
+    row leaves it correct and it is the missing row that is the only signal.
+    Then a row for a prefix the vocabulary does not hold -- a name no recount is
+    made against, a mistyped prefix, and reported rather than raised on this
+    file's rule that a broken input is a failed check and not a traceback -- a
+    row whose tally disagrees with the recount, a `within` breakdown that
+    disagrees with the recount or with its own parent row, and a `**total**`
+    that is not that recount.
+    """
+    if not measured:
+        return []
+    out = []
+    stated = subsystems_stated_shapes(text)
+    for prefix in SUBSYSTEM_SHAPE_PREFIXES:
+        rows = stated.get(prefix)
+        if not rows:
+            out.append("the census's shape table states no `%s` row; %d row(s) "
+                       "of the committed CSV carry that name"
+                       % (prefix, measured.get(prefix, 0)))
+            continue
+        for lineno, value, within in rows:
+            if value != measured.get(prefix):
+                out.append("line %d: the census states %d `%s` rows and the "
+                           "committed CSV holds %d"
+                           % (lineno, value, prefix, measured[prefix]))
+                # The breakdown is stated off the row's own tally, so a row
+                # that is wrong is reported once rather than three times.
+                continue
+            if within is None:
+                continue
+            sub, sub_rows, rest = within
+            if sub not in measured:
+                out.append("line %d: the census breaks its `%s` row down into "
+                           "`%s` and there is nothing to recount that against"
+                           % (lineno, prefix, sub))
+                continue
+            if sub_rows != measured[sub]:
+                out.append("line %d: the census states %d `%s` rows inside its "
+                           "%d `%s` ones and the committed CSV holds %d"
+                           % (lineno, sub_rows, sub, value, prefix, measured[sub]))
+            if rest is not None and sub_rows + rest != value:
+                out.append("line %d: the census breaks its %d `%s` rows into %d "
+                           "and %d, which is %d"
+                           % (lineno, value, prefix, sub_rows, rest,
+                              sub_rows + rest))
+    for prefix in sorted(stated):
+        if prefix in SUBSYSTEM_SHAPE_PREFIXES or prefix == SHAPE_TOTAL:
+            continue
+        out.append("line %d: the census's shape table has a `%s` row and `%s` "
+                   "is not one of the prefixes this census is derived over (%s)"
+                   % (stated[prefix][0][0], prefix, prefix,
+                      ", ".join("`%s`" % p for p in SUBSYSTEM_SHAPE_PREFIXES)))
+    # The total is held to the recount over the whole vocabulary rather than to
+    # the table's own arithmetic, which is the stronger of the two and the one
+    # that reads the way the rest of this document's numbers do. It also keeps
+    # each fault standing alone: a dropped row is reported as the prefix it
+    # leaves missing, with the total it did not move reported as correct.
+    listed = sum(measured.get(p, 0) for p in SUBSYSTEM_SHAPE_PREFIXES)
+    if not stated.get(SHAPE_TOTAL):
+        out.append("the census's shape table states no `**total**` row; the %d "
+                   "prefixes it derives over add to %d"
+                   % (len(SUBSYSTEM_SHAPE_PREFIXES), listed))
+    for lineno, value, _ in stated.get(SHAPE_TOTAL, []):
+        if value != listed:
+            out.append("line %d: the census's shape table states a total of %d "
+                       "and the %d prefixes it derives over add to %d in the "
+                       "committed CSV"
+                       % (lineno, value, len(SUBSYSTEM_SHAPE_PREFIXES), listed))
     return out
 
 
@@ -3837,15 +4168,18 @@ def subsystems_table_problems(text, measured):
 def check_subsystems(ann_rows, index_rows, repo=REPO, doc=SUBSYSTEMS):
     """The subsystems.md pass, over committed files only.
 
-    Returns (problems, n_citations). Two of the four counts are properties of
-    ec/decompiled/index.csv and two of ghidra-functions.csv, so both files are
-    read and the recount is the union -- a count the document cannot derive
-    from the two committed CSVs is not a count this check can hold it to.
+    Returns (problems, n_citations, shape_recount). Two of the four counts are
+    properties of ec/decompiled/index.csv and two of ghidra-functions.csv, so
+    both files are read and the recount is the union -- a count the document
+    cannot derive from the two committed CSVs is not a count this check can
+    hold it to. The shape recount comes back out because it is the one measured
+    entry `--check` prints, and a gate whose figure is only visible as a pass
+    is a gate nobody re-reads.
     """
     if not os.path.isfile(doc):
         return ["no %s: the map from mechanism to function is the entry point "
                 "this repository does not have"
-                % os.path.relpath(doc, repo)], 0
+                % os.path.relpath(doc, repo)], 0, {}
     text = open(doc, errors="replace").read()
     counts = {
         "exported functions": len(index_rows),
@@ -3865,10 +4199,18 @@ def check_subsystems(ann_rows, index_rows, repo=REPO, doc=SUBSYSTEMS):
             slot[1] += 1
     counts[SUBSYSTEM_TABLE_KEY] = {p: (e, a, e - a)
                                    for p, (e, a) in per_prog.items()}
+    # The shape census is a property of the names in the annotation CSV and of
+    # nothing in the index, so it is counted here rather than folded in above.
+    # Every prefix the table names is counted -- the six row prefixes and
+    # whatever each row's breakdown names -- on the whole prefix, which is the
+    # rule the document states for itself.
+    counts[SUBSYSTEM_SHAPE_KEY] = {
+        p: sum(1 for r in ann_rows if r["name"].startswith(p))
+        for p in shape_census_prefixes(text)}
     return (subsystems_problems(text, ann_rows, repo=repo,
                                 stated=subsystems_stated_counts(text),
                                 measured=counts),
-            len(subsystems_citations(text)))
+            len(subsystems_citations(text)), counts[SUBSYSTEM_SHAPE_KEY])
 
 
 def check(work):
@@ -4196,15 +4538,27 @@ def check(work):
     # (scope, addr, name) triple this file owns, so a rename here has to reach
     # the map or the build fails -- which is the whole reason the check lives
     # in the tool that wrote the CSV rather than in a tool of its own.
-    sp, ncites = check_subsystems(_read.get("ghidra-functions.csv", []), rows)
+    sp, ncites, _shapes = check_subsystems(_read.get("ghidra-functions.csv", []),
+                                           rows)
     for problem in sp[:5]:
         fail("subsystems.md: %s" % problem)
     if len(sp) > 5:
         fail("subsystems.md: ... and %d more problem(s)" % (len(sp) - 5))
     if not sp:
+        _shape = {p: n for p, n in _shapes.items()
+                  if p in SUBSYSTEM_SHAPE_PREFIXES}
         print("  subsystems: %d citation(s) in %s, every one resolving against "
               "the committed CSV and the census recounted"
               % (ncites, os.path.relpath(SUBSYSTEMS, REPO)))
+        # The shape census, stated by the document and derived here, so the
+        # reader of a green run sees the figure rather than the absence of a
+        # complaint about it.
+        print("  shape census: %d name(s) over %d prefix(es), recounted off "
+              "%s -- %s"
+              % (sum(_shape.values()), len(_shape),
+                 os.path.relpath(ANNOTATIONS, REPO),
+                 ", ".join("`%s` %d" % (p, _shape[p])
+                           for p in SUBSYSTEM_SHAPE_PREFIXES)))
     # The variable layer, and the same discipline one level down. Its rows are
     # keyed on a decompiler placeholder rather than an address, so ApplyAnnotations
     # reports an unmatched one instead of failing the build -- the build itself
