@@ -815,7 +815,7 @@ rem  record, not a quiet result -- see §3.
 rem
 rem  This path is repo-relative, and it is the only part of the grading that
 rem  needs a checkout rather than the files: the grader is stdlib-only and
-rem  reads these ten files rather than the machine, so running it here over
+rem  reads nine of the ten files rather than the machine, so running it here over
 rem  the machine's copies and running it back in a checkout over the same ten
 rem  give the same answer. §2 says which of the two §3 needs.
 python ec\tools\grade_0751_isolation.py ^

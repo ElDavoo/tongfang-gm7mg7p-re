@@ -154,9 +154,16 @@ no `status:` in `ec/annotations/registers.yaml` moves until a human runs it.
 
 ## Staging the tools onto a Windows box
 
-The tools here are plain stdlib Python 3, and the vendor driver is the only
-thing they need beyond it, so a directory of them can be copied onto a machine
-that has no checkout of this repository. The command lines in
+The EC tools here — `ecrw.py`, `ec_watch.py` and the probes — are plain stdlib
+Python 3, and the vendor driver is the only thing they need beyond it, so a
+directory of them can be copied onto a machine that has no checkout of this
+repository. That is a claim about those tools and not about every file in the
+directory: the .NET-side ones (`dotnet_dump.py`, `dotnet_bodies.py`, and
+`t1wr_callers.py`, which reuses `dotnet_bodies`) want `pefile` or `dnfile`
+from pip, and `decompile_native.py` is the Ghidra export scaffold, refused
+without `analyzeHeadless` and reading its target list from
+`../ghidra/native-binaries.csv`, so it wants the checkout it runs from. The
+command lines in
 [`../docs/hardware-tests/manual-fan-ctrl-0751-isolation.md`](../docs/hardware-tests/manual-fan-ctrl-0751-isolation.md)
 §3 and §6 are written repo-relative — `python windows\tools\...`,
 `python ec\tools\grade_0751_isolation.py` — and a staged operator types their
@@ -164,7 +171,7 @@ own paths instead. That is a property of the runbook's commands, not of the
 tools: `ecrw.py`, `ec_watch.py` and the probes reach each other by the
 directory they sit in.
 
-Two of them need a file from outside that directory, and both want
+Two of those EC tools need a file from outside that directory, and both want
 [`../ec/tools/grade_0751_isolation.py`](../ec/tools/grade_0751_isolation.py)
 — the module that holds §3's mark vocabulary and reads a §6 capture.
 
