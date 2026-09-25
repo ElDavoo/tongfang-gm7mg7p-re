@@ -5403,9 +5403,10 @@ trampolines that carry their target as a `mov DPTR,#imm16` immediate, which is
 why no call-target census row and no byte scan ever named them. Both were
 seeded through `ghidra-functions.csv` and read. **`0xD89F` is a single `ret`
 byte, and `0xD96C` is a real routine that clears XDATA `0x0100`–`0x0FFF` except
-it steps over `0x07FD` and `0x07FE`** — 3,838 of 3,840 bytes — and those two
-are the low two thirds of the `main-ec-081` cluster. Both score 24 of 24 on
-`disasm8051.py --converge`, so neither is an operand byte. This corrects the
+it steps over `0x07FD`, `0x07FE` and `0x07FF`** — 3,837 of 3,840 bytes, the
+`setb c` at `0xD982` making the second bound `0x0800` rather than `0x07FF` —
+and those three are the whole of the `main-ec-081` cluster. Both score 24 of 24
+on `disasm8051.py --converge`, so neither is an operand byte. This corrects the
 issue's expectation of a real routine at each: one is a bare `ret`, and it would
 join the 77 one-byte `ret`-only listings already in the tree rather than be the
 first. The audit gap is a missing census of the 403 trampoline immediates, not

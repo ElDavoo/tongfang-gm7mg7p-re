@@ -306,8 +306,8 @@ makes the call cross-bank, and it is carried in an operand this census does not
 match. That is the blind spot §6 names, stated as a missing census rather than
 as a wrong one. Two of the 403 have since been read on their own, both reached
 from the reset vector: `common,158E`'s `mov DPTR,#0xD89F` is a single `ret`
-byte, and `common,1594`'s `mov DPTR,#0xD96C` is a 20-instruction routine that
-clears XDATA `0x0100`–`0x0FFF` except `0x07FD`/`0x07FE`
+byte, and `common,1594`'s `mov DPTR,#0xD96C` is a 24-instruction routine that
+clears XDATA `0x0100`–`0x0FFF` except `0x07FD`/`0x07FE`/`0x07FF`
 ([reset-vector-dptr-targets.md](../../docs/findings/reset-vector-dptr-targets.md),
 issue #559). **One real routine
 and one bare `ret` licenses nothing for the other 401**, and nothing about them

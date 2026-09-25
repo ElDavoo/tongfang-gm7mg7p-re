@@ -20,8 +20,8 @@ on the boot path. Neither had a listing, an index row, an annotation row, a
 `bank-call-targets.csv` row, or any mention in a findings file.
 
 **Both were seeded and read for this issue. `0xD89F` is a single `ret` byte, and
-`0xD96C` is a 0x25-byte routine that clears 3,838 bytes of XDATA and
-deliberately steps over two of them.** The two need different answers, and one
+`0xD96C` is a 0x25-byte routine that clears 3,837 bytes of XDATA and
+steps over three of them.** The two need different answers, and one
 of them corrects the expectation the issue was filed with — the issue reads
 *"they are not routines in their own right"* and expects a real routine at each.
 One is. The other is a real code entry whose entire body is `ret`, which is
@@ -65,10 +65,10 @@ operand names the `ret` before it. Whether the linker meant `0xD8A0` and lost a
 byte, or meant the stub, is not determinable here, and is a follow-up rather
 than a conclusion.
 
-## `0xD96C`: a clear that spares two bytes of a named cluster
+## `0xD96C`: a clear that spares exactly a three-byte cluster
 
 ```
-$ python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0x0D96C --runtime 0xD96C -n 20
+$ python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0x0D96C --runtime 0xD96C -n 24
 0xd96c  900100   mov  dptr,#0x0100
 0xd96f  af82     mov  r7,0x82
 0xd971  ae83     mov  r6,0x83
@@ -105,27 +105,41 @@ against `0x10` (`clr C` / `mov A,R6` / `subb A,#0x10` / `jnc`), so the loop
 leaves at DPTR `0x1000` and the range is XDATA `0x0100`–`0x0FFF`, 3,840 bytes.
 
 **The exclusion, which is the sharper finding.** The second bound is *not* the
-range end. A 16-bit `subb` chain computes DPTR−`0x07FD`, and if that borrows it
-stores; otherwise a second chain computes DPTR−`0x07FF`, and if that borrows it
-skips the store. The two `jc` arms land on **different** instructions:
+range end, and it is not the `0x07FF` its own immediates spell out. Two 16-bit
+`subb` chains test DPTR, and the **`setb c` at `0xD982` is what makes the
+second one read as `0x0800`**: with carry already set, `subb a,#0xff` is an
+effective `−0x100` that always borrows, so the chain's high `subb a,#0x07`
+computes `DPH−0x08` rather than `DPH−0x07`.
 
 | address | test | lands on | effect |
 |---|---|---|---|
 | `0xD980` | DPTR < `0x07FD` | `jc 0xD98B` → `clr A` | **stores** 0x00 |
-| `0xD989` | DPTR < `0x07FF` | `jc 0xD98D` → `inc DPTR` | **skips** the store |
+| `0xD989` | DPTR < `0x0800` | `jc 0xD98D` → `inc DPTR` | **skips** the store |
 
-So the loop writes `0x0100`–`0x0FFF` with two exceptions: **`0x07FD` and
-`0x07FE` are stepped over, and `0x07FF` is re-cleared.** 3,840 − 2 = **3,838
-bytes cleared**. This was checked by simulating the decoded branch structure
-against the committed image, not by reading the count off the disassembly.
+The two `jc` arms land on **different** instructions, so the first chain's
+`DPTR < 0x07FD` store and the second chain's `DPTR < 0x0800` skip overlap on
+`0x07FD`–`0x07FF`: the first having already established `DPTR ≥ 0x07FD`, the
+second decides the whole skip window.
 
-**The pair is not arbitrary.** `ec/annotations/xdata-clusters.csv:82` carries
-`main-ec-081` over `0x07FD`–`0x07FF` — three bytes, 6 direct citing functions,
-21 total, with named writers among them (`bank0:0xD5D4`
+So the loop writes `0x0100`–`0x0FFF` with three exceptions: **`0x07FD`,
+`0x07FE` and `0x07FF` are all stepped over, and none of the three is
+re-cleared.** 3,840 − 3 = **3,837 bytes cleared**. This was checked by
+executing the 24 committed instructions at `0xD96C`–`0xD990` with 8051
+`subb`/`jc` semantics, not by reading the count off the disassembly: `0x07FC`
+takes the `0xD980` store arm, `0x07FD`–`0x07FF` fall through to the skip, and
+`0x0800` stores again. The branch offsets are 2-byte *relative* (`jc 0xD98B` at
+`0xD980` is `40 09`), and treating them as absolute step-over corrupts the
+carry into the first `subb` — the two ways this number has been got wrong.
+
+**The skip window is exactly the cluster, and that is all that is claimed.**
+`ec/annotations/xdata-clusters.csv:82` carries `main-ec-081` over
+`0x07FD`–`0x07FF` — three bytes, 6 direct citing functions, 21 total, with
+named writers among them (`bank0:0xD5D4`
 `write_33_to_1501_join_loop_d5db`, `bank0:0xD74F`
-`write_33_to_1511_then_loop`). A boot-time clear that spares the low two bytes
-of a live three-byte cluster and re-clears the third is doing something
-deliberate with that cluster.
+`write_33_to_1511_then_loop`). The three bytes the loop steps over are those
+three bytes, and no others. The window landing on the whole span rather than on
+part of it is a fact about the bytes; what the range clear is *for* is not
+established here.
 
 **No register row is added, and none should be from this.** No row in
 `ec/annotations/registers.yaml` names `0x07FD`, `0x07FE` or `0x07FF`; the
@@ -133,13 +147,13 @@ nearest named addresses in that page are `0x07A6` (`OEM_4`,
 `confirmed-working-partially`, the battery-profile byte) and `0x07F3` / `0x07F6`
 (`XDATA_07F3` / `XDATA_07F6`, both `present-untested`). This routine clears a
 *range*, not a register, so it is not evidence of any register's status, and the
-two spared bytes are named by nothing. `ec/annotations/xdata-symbols.csv` is
+three spared bytes are named by nothing. `ec/annotations/xdata-symbols.csv` is
 generated from `registers.yaml` and is not hand-edited.
 
-**What is not claimed.** The loop steps over `0x07FD`/`0x07FE`; that it is
-*meant* to preserve them across a warm reset is a hypothesis this reading does
-not establish, and it is left to whoever takes the cluster next. Nothing here
-was observed on hardware.
+**What is not claimed.** The loop steps over `0x07FD`/`0x07FE`/`0x07FF`; that
+it is *meant* to preserve them across a warm reset is a hypothesis this reading
+does not establish, and it is left to whoever takes the cluster next. Nothing
+here was observed on hardware.
 
 ## Both addresses are instruction starts, not operand bytes
 
@@ -167,10 +181,11 @@ these addresses:
 | `0xD8A0` | 1 — at **`0x1504`**, a different trampoline | 0 |
 | `0xD96C` | 1 — at `0x1594` (`common,1594`), the reset trampoline | 0 |
 
-The common area is mapped at file `0x8000` + address in
-`ec/firmware/GMxMGxx_11.800`, so `common,158E` is the image byte `0x958E` and
-`common,1504` is `0x9504`; bank 0's code is at image offset `0x8000` + (addr −
-`0x8000`), so `bank0,0xD89F` is image byte `0x0D89F`.
+The common area is identity-mapped in `ec/firmware/GMxMGxx_11.800` — file
+`0x158E` holds `90 d8 9f 02 11 00`, the reset trampoline itself — so
+`common,158E` is the image byte `0x158E` and `common,1504` is `0x1504`; bank
+0's code is at image offset `0x8000` + (addr − `0x8000`), so `bank0,0xD89F` is
+image byte `0x0D89F`.
 
 **This is why neither address has a census row, and it is a category fact
 rather than a gap.** `ec/annotations/bank-call-targets.csv` counts `lcall` and
@@ -199,7 +214,7 @@ any byte scan"* — which is an absent census, not a wrong one.
 **`0xD96C` is (a), and more specifically than (a).** It is a real routine on the
 boot path. The issue's (a) says "real routines on the boot path, which is the
 answer worth having"; what the bytes add is the shape — an XDATA clear that
-preserves two bytes of a named cluster.
+preserves all three bytes of a named cluster.
 
 **`0xD89F` is closest to (b), but (b) as written does not fit it either, and
 the issue's premise is corrected here rather than dropped.** The issue frames
@@ -239,8 +254,9 @@ committed `.rep` is never opened for writing. The scratch run reports
 `annotations_applied 767`, **`annotations_unmatched 0`** for bank0, and emits
 `D89F.asm`/`D89F.c` and `D96C.asm`/`D96C.c` in scratch. The boundaries it
 corroborates are the ones above: `D89F.asm` is a single `ret` instruction and
-`D96C.asm` is `0xD96C`–`0xD990`, 20 instructions, matching `disasm8051.py` byte
-for byte. `D96C.c` shows the same store/skip structure the two `jc` arms encode.
+`D96C.asm` is `0xD96C`–`0xD990`, 0x25 bytes and 24 instructions, matching
+`disasm8051.py` byte for byte. `D96C.c` shows the same store/skip structure
+the two `jc` arms encode.
 
 **So one risk in the plan this was written against did not occur, and the
 reason is worth recording: the tree already holds 77 one-byte `ret`-only
@@ -306,7 +322,7 @@ Everything that moves when the export lands, so that run needs no re-derivation:
 
 | # | file | change |
 |---|---|---|
-| 1 | `ec/annotations/ghidra-functions.csv` | add the 2 rows: `bank0,0xD89F` `ret_only_d89f` (`unresolved`/`unresolved`) and `bank0,0xD96C` `clear_xdata_0100_0fff_sparing_07fd_07fe` (`init`/`code-shape`), both `basis: hand-decoded` with the `evidence` paths the .asm/.c pair will exist under |
+| 1 | `ec/annotations/ghidra-functions.csv` | add the 2 rows: `bank0,0xD89F` `ret_only_d89f` (`unresolved`/`unresolved`) and `bank0,0xD96C` `clear_xdata_0100_0fff_sparing_07fd_07fe_07ff` (`init`/`code-shape`), both `basis: hand-decoded` with the `evidence` paths the .asm/.c pair will exist under |
 | 2 | `ec/decompiled/bank0/` | add `D89F.asm`, `D89F.c`, `D96C.asm`, `D96C.c` |
 | 3 | `ec/decompiled/index.csv` | +2 rows, 2,710 → 2,712 |
 | 4 | `ec/decompiled/listing-index.csv` | +2 rows, 2,710 → 2,712 |
@@ -328,7 +344,7 @@ every claim above re-derives from committed inputs:
 ```sh
 # 1. the two decodes
 python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0x0D89F --runtime 0xD89F -n 8
-python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0x0D96C --runtime 0xD96C -n 20
+python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0x0D96C --runtime 0xD96C -n 24
 
 # 2. both are instruction starts, not operand bytes: 24 of 24 onto, 0 over
 python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0x0D89F --converge
@@ -338,18 +354,47 @@ python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0x0D96C --converg
 cat ec/decompiled/common/0070.asm ec/decompiled/common/158E.asm ec/decompiled/common/1594.asm
 cat ec/decompiled/bank0/D889.asm ec/decompiled/bank0/D894.asm
 
-# 4. the cluster the clear spares two bytes of, and the absent register rows
+# 4. the cleared count: execute the committed bytes, 3,837 stored, sparing
+#    0x07FD-0x07FF. jc/sjmp are 2-byte *relative*; setb c at 0xd982 is what
+#    makes the second chain's bound 0x0800 rather than 0x07FF.
+python3 - <<'EOF'
+img=open('ec/firmware/GMxMGxx_11.800','rb').read()
+def rel(pc):
+    o=img[pc+1]; return pc+2+(o-0x100 if o>0x7F else o)
+C=0;A=0;r7=r6=0;dptr=0x0100; stored=set(); pc=0xD96C
+while True:
+    op=img[pc]
+    if   op==0x90: dptr=(img[pc+1]<<8)|img[pc+2]; pc+=3
+    elif op==0xAF: r7=dptr&0xFF; pc+=2
+    elif op==0xAE: r6=(dptr>>8)&0xFF; pc+=2
+    elif op==0xC3: C=0; pc+=1
+    elif op==0xD3: C=1; pc+=1
+    elif op==0xEE: A=r6; pc+=1
+    elif op==0xEF: A=r7; pc+=1
+    elif op==0x94: t=A-img[pc+1]-C; C=1 if t<0 else 0; A=t&0xFF; pc+=2
+    elif op==0x50: pc = rel(pc) if C==0 else pc+2
+    elif op==0x40: pc = rel(pc) if C==1 else pc+2
+    elif op==0xE4: A=0; pc+=1
+    elif op==0xF0: stored.add(dptr); pc+=1
+    elif op==0xA3: dptr=(dptr+1)&0xFFFF; pc+=1
+    elif op==0x80: pc = rel(pc)
+    elif op==0x22: break
+print(len(stored), [hex(x) for x in range(0x100,0x1000) if x not in stored])
+EOF
+# -> 3837 ['0x7fd', '0x7fe', '0x7ff']
+
+# 5. the cluster the clear spares all of, and the absent register rows
 sed -n '82p' ec/annotations/xdata-clusters.csv
 grep -nE '0x?0?7[Ff][d-f]' ec/annotations/registers.yaml || echo "(no row)"
 
-# 5. the 77 existing one-byte ret-only listings, and the two named precedents
+# 6. the 77 existing one-byte ret-only listings, and the two named precedents
 for f in $(find ec/decompiled -name '*.asm'); do
   n=$(grep -cE '^[0-9A-F]{4} +[0-9a-f]{2} ' "$f")
   [ "$n" = 1 ] && grep -qE '^[0-9A-F]{4} +22 +.*ret' "$f" && echo "$f"
 done | wc -l
 cat ec/decompiled/bank0/D9DB.asm ec/decompiled/bank0/D2BE.asm
 
-# 6. the gate, which stays green because nothing generated moved
+# 7. the gate, which stays green because nothing generated moved
 bash .github/scripts/agent-gates.sh
 ```
 
@@ -377,10 +422,10 @@ grep -h annotations_unmatched /tmp/ec/reports/apply-bank0.tsv   # 0
    family is not an undecoded 403-row gap. This is the real gap; it is a
    separate change that would touch `audit_call_targets.py` and
    `bank-call-audit.md` substantially.
-3. **What XDATA `0x07FD`/`0x07FE` are** — the two bytes a boot-time clear
-   spares, inside `main-ec-081` (`0x07FD`–`0x07FF`, 21 citing functions), with
-   no `registers.yaml` row and placeholder rows at `0x07F3`/`0x07F6` either
-   side. A value preserved across a warm reset is the obvious hypothesis and is
-   explicitly not claimed here.
+3. **What XDATA `0x07FD`/`0x07FE`/`0x07FF` are** — the three bytes a boot-time
+   clear spares, which are exactly `main-ec-081` (`0x07FD`–`0x07FF`, 21 citing
+   functions), with no `registers.yaml` row and placeholder rows at
+   `0x07F3`/`0x07F6` either side. A value preserved across a warm reset is the
+   obvious hypothesis and is explicitly not claimed here.
 4. **The export itself**, on a machine with the nix-pinned `sdas8051`, per the
    row-by-row list above.
