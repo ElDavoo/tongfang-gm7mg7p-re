@@ -320,10 +320,19 @@ class RefusedLabelTests(unittest.TestCase):
         about which file the lookup reaches and not about what a grader says;
         the committed one's own behaviour is asserted above, against the
         committed one.
+
+        `existing_mark_labels` is here because `load_label_vocab` reads three
+        names off the grader (#548 added the third) and a stub missing it would
+        be refused by the merged function for a reason that has nothing to do
+        with the lookup. It reports no marks, which is the neutral answer: the
+        cases that reach this stub are about which file was loaded, and none of
+        them is about the append notice, so the notice stays out of their way.
         """
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("def parse_mark(label):\n"
                         "    return (None, None)\n"
+                        "def existing_mark_labels(path):\n"
+                        "    return []\n"
                         f"REQUIRED_LABEL_FORMS = ({self.STAGED_FORM!r},)\n")
 
     def staged_tool(self, root):
@@ -510,8 +519,8 @@ class RefusedLabelTests(unittest.TestCase):
             # Neither built-in candidate exists in this tree, so the flag is
             # the only thing that can answer.
             with patch.object(ec_watch, '__file__', str(tool)):
-                _, forms = ec_watch.load_label_vocab(RefusingParser(), '0751',
-                                                     str(staged))
+                _, forms, _ = ec_watch.load_label_vocab(RefusingParser(),
+                                                        '0751', str(staged))
         self.assertEqual(list(forms), [self.STAGED_FORM])
 
     def test_a_grader_that_is_present_and_broken_is_refused_not_skipped(self):
@@ -632,6 +641,206 @@ class RefusedLabelTests(unittest.TestCase):
             self.assertNotEqual(caught.exception.code, 0)
             self.assertFalse(out.exists())
         self.assertIn('--grader needs --label-vocab', err.getvalue())
+
+
+class AppendNoticeTests(unittest.TestCase):
+    """--label-vocab 0751 on a --csv that already holds marks says so.
+
+    The check `--label-vocab` adds is a per-process fact: it runs on each
+    label as it is typed. A `--csv` is a per-file one, and `CsvSink` opens it
+    in append mode without reading it, so the file can already carry marks
+    this process did not type and could not have checked. §3's blocks 2 and 3
+    are *meant* to land on block 1's; a pre-`--label-vocab` run's,
+    a console started without the flag, a watcher restarted mid-block and a
+    `manual_fan_ctrl_probe.py` capture are not, and `unplaceable_marks` is
+    fatal for the whole run over the whole file either way. So the tool names
+    what is already there, above the file, rather than letting the day
+    discover it from a prompt that said every label was fine.
+
+    A warning and not a refusal, and these cases hold it to that: the run
+    completes and the append is a real append. What they also hold is the
+    predicate -- *marks*, not rows -- because a file holding only a header or
+    only change rows carries no unchecked label, and §3's block-1 start
+    legitimately appends to exactly that.
+    """
+
+    VOCAB = ('--label-vocab', '0751')
+    HEADER = 'ts,addr,old,new'
+    # Block 1's own rows, as a capture holds them: the mark and a change
+    # either side of it, so "holds a mark" and "is not empty" are two
+    # different fixtures rather than one.
+    MARK_1 = '2026-01-01T12:00:00.000+01:00,MARK,,wrote 0x0751=0xA0'
+    MARK_2 = '2026-01-01T12:00:30.000+01:00,MARK,,settled'
+    CHANGE = '2026-01-01T12:00:05.000+01:00,0x0701,0x00,0x11'
+
+    def run_watch(self, lines, seeded=None, vocab=True):
+        """The run, over a --csv that already holds `seeded`, or over a fresh
+        path when it is None."""
+        ec = FakeEc()
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / 'capture.csv'
+            if seeded is not None:
+                out.write_text(''.join(line + '\n' for line in seeded))
+            text = io.StringIO()
+            with patch.object(ec_watch, 'Ec', lambda: ec), \
+                 patch.object(ec_watch.sys, 'stdin', FakeStdin(ec, lines)), \
+                 contextlib.redirect_stdout(text):
+                rc = ec_watch.main(['--start', '0x0700', '--len', '0x4',
+                                    '--interval', '0', '--csv', str(out),
+                                    '--mark', *(self.VOCAB if vocab else ())])
+            return rc, out.read_text().splitlines(), text.getvalue()
+
+    def test_a_file_already_holding_a_mark_is_named_at_startup(self):
+        rc, _, text = self.run_watch('wrote 0x0751=0x10\n',
+                                     [self.HEADER, self.MARK_1, self.CHANGE])
+        self.assertEqual(rc, 0)
+        notice = [ln for ln in text.splitlines() if 'appending to' in ln]
+        self.assertEqual(len(notice), 1)
+        # The path, because an operator is running three watchers and has to
+        # know which of the three files this is about.
+        self.assertIn('capture.csv', notice[0])
+        # The count, and the labels themselves: a count says how many and not
+        # which, and which is the half the operator can act on.
+        self.assertIn('1 mark(s)', notice[0])
+        self.assertIn(repr('wrote 0x0751=0xA0'), text)
+
+    def test_the_notice_is_above_the_file_and_the_ec_and_the_append_still_happens(self):
+        rc, rows, text = self.run_watch('wrote 0x0751=0x10\n',
+                                        [self.HEADER, self.MARK_1,
+                                         self.CHANGE])
+        self.assertEqual(rc, 0)
+        # Above the EC: the notice is printed before `Ec()` is entered and the
+        # baseline line inside it, so their order is the ordering a fake EC
+        # can witness. This is the same thing
+        # `test_a_vocabulary_without_mark_is_refused_before_anything_opens`
+        # pins for the other refusal, in the shape a warning rather than a
+        # refusal can take.
+        self.assertLess(text.index('appending to'), text.index('baseline:'))
+        # Above the file, and the append is an append: the pre-existing mark
+        # is still the first MARK row and this run's is after it, so the
+        # notice changed nothing about what was written.
+        marks = [r for r in rows if ',MARK,' in r]
+        self.assertEqual([r.split(',')[3] for r in marks],
+                         ['wrote 0x0751=0xA0', 'wrote 0x0751=0x10'])
+
+    def test_a_fresh_path_and_a_header_only_file_are_quiet(self):
+        # §3's block-1 start, twice over. The first is a path that does not
+        # exist yet, which is every first block of a first run; the second is
+        # the same file once `CsvSink` has written its header, which is what a
+        # run with no marks in it leaves for the next one. A predicate of
+        # "non-empty" would warn on the second, and the second is a legitimate
+        # start rather than a collision.
+        for seeded in (None, [self.HEADER]):
+            with self.subTest(seeded=seeded):
+                rc, rows, text = self.run_watch('wrote 0x0751=0xA0\n', seeded)
+                self.assertEqual(rc, 0)
+                self.assertNotIn('appending to', text)
+        # The header is still not doubled on the append, which is the other
+        # half of the file being left the way it was found.
+        _, rows, _ = self.run_watch('wrote 0x0751=0xA0\n', [self.HEADER])
+        self.assertEqual(rows[0], self.HEADER)
+        self.assertEqual(rows.count(self.HEADER), 1)
+
+    def test_a_file_of_change_rows_is_quiet(self):
+        # The predicate is "holds marks", not "is not empty": a change row is
+        # not a label, opens no block, and is not something any process could
+        # have checked against the 0751 forms. This is the case that fails if
+        # the notice is written against the file's size instead.
+        rc, rows, text = self.run_watch('wrote 0x0751=0xA0\n',
+                                        [self.HEADER, self.CHANGE])
+        self.assertEqual(rc, 0)
+        self.assertNotIn('appending to', text)
+        # The file really did hold a row, so the quiet is the predicate's and
+        # not an accident of the fixture.
+        self.assertIn(self.CHANGE, rows)
+
+    def test_the_notice_says_what_was_not_checked_and_what_still_holds_the_day(self):
+        _, _, text = self.run_watch('wrote 0x0751=0x10\n',
+                                    [self.HEADER, self.MARK_1])
+        flat = " ".join(text.split())
+        # Two halves, asserted separately so a rewording that keeps one and
+        # drops the other fails. The first is scoped to *this run*, and has to
+        # be: §3's block 1 carries `--label-vocab` too, so in the case the
+        # notice calls expected -- blocks 2 and 3 landing on block 1's file --
+        # the marks it names were checked against the forms as they were typed,
+        # by the process that typed them. "This run did not check them" is what
+        # is true, and the only thing a process can know about marks it did
+        # not write. The second half: the grader judges the file rather than
+        # the rows this run added, so an unplaceable one refuses the day
+        # either way.
+        self.assertIn('this run did not check those marks and cannot', flat)
+        self.assertIn('the grader judges the whole file', flat)
+        # And the wording it is not: a claim about the file's history is false
+        # in the expected case, and the tool cannot tell the two apart -- that
+        # is the premise of warning rather than refusing.
+        self.assertNotIn('were not checked against the 0751 forms', flat)
+
+    def test_the_files_marks_and_this_runs_counter_are_two_sequences(self):
+        rc, rows, text = self.run_watch(['wrote 0x0751=\n',
+                                         'wrote 0x0751=0x10\n'],
+                                        [self.HEADER, self.MARK_1,
+                                         self.MARK_2])
+        self.assertEqual(rc, 0)
+        # The file's two, by name...
+        self.assertIn('2 mark(s)', text)
+        for label in ('wrote 0x0751=0xA0', 'settled'):
+            self.assertIn(repr(label), text)
+        # ...and this run's numbering, which starts at 1 over them because
+        # `_n` counts marks this process recorded. The refusal notice is the
+        # other end of the same rule `ec_watch-marks.md` states, and a reader
+        # who took "2 mark(s)" above it for the mark count would be off by
+        # two on every number the prompt went on to print.
+        self.assertIn('nothing recorded, no mark 1 taken', text)
+        self.assertNotIn('no mark 3 taken', text)
+        # And the file ends up with the two that were there plus the one this
+        # run took: whether to append is not a choice the notice makes.
+        marks = [r for r in rows if ',MARK,' in r]
+        self.assertEqual([r.split(',')[3] for r in marks],
+                         ['wrote 0x0751=0xA0', 'settled', 'wrote 0x0751=0x10'])
+
+    def test_without_the_vocabulary_a_non_empty_file_says_nothing(self):
+        # The check is opt-in and the notice rides on it, so every other
+        # append-only caller stays silent. `gpu_block_watch.py:59,166` builds
+        # this same `Marker` with no vocabulary and stamps free-form labels,
+        # and a notice that this run did not check the marks in the file would
+        # be false there: nothing in that procedure ever promised them.
+        ec = FakeEc()
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / 'capture.csv'
+            out.write_text(f'{self.HEADER}\n{self.MARK_1}\n')
+            text = io.StringIO()
+            with patch.object(ec_watch, 'Ec', lambda: ec), \
+                 patch.object(ec_watch.sys, 'stdin',
+                              FakeStdin(ec, 'block one\n')), \
+                 contextlib.redirect_stdout(text):
+                rc = ec_watch.main(['--start', '0x0700', '--len', '0x4',
+                                    '--interval', '0', '--csv', str(out),
+                                    '--mark'])
+            rows = out.read_text().splitlines()
+        self.assertEqual(rc, 0)
+        self.assertNotIn('appending to', text.getvalue())
+        # The free-form label is still recorded, which is what the flag being
+        # off has always meant.
+        self.assertEqual([r.split(',')[3] for r in rows if ',MARK,' in r],
+                         ['wrote 0x0751=0xA0', 'block one'])
+
+    def test_the_reader_is_the_graders_own(self):
+        # `load_label_vocab` loads the grader by path precisely so the prompt
+        # carries no second copy of the row shape, and a copy is exactly what
+        # would drift without anything failing. Asserted on where the
+        # function was defined -- the shape
+        # `test_manual_fan_ctrl_probe.py:905` uses for `read_capture` -- and
+        # then on what it does, so a shadow that kept the name would not pass
+        # the second half either.
+        _, _, existing_marks = ec_watch.load_label_vocab(None, '0751')
+        self.assertEqual(existing_marks.__module__, 'grade_0751_isolation')
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / 'capture.csv'
+            out.write_text(f'{self.HEADER}\n{self.CHANGE}\n{self.MARK_1}\n')
+            self.assertEqual(existing_marks(str(out)),
+                             grader.existing_mark_labels(str(out)))
+            self.assertEqual([label for _, label in existing_marks(str(out))],
+                             ['wrote 0x0751=0xA0'])
 
 
 class BlockPathTests(unittest.TestCase):

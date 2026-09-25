@@ -697,6 +697,45 @@ def read_capture(path):
     return marks, changes
 
 
+def existing_mark_labels(path):
+    """(ts, label) for the mark rows `path` already holds, as `(text, str)`.
+
+    A preflight, not a reader, and the difference is the whole contract: what
+    is asked is which marks are already in a file a watcher is about to append
+    to, and the answer has to survive a file this cannot grade. So it takes
+    `read_capture`'s skip rule -- `#`, blank, `ts` header -- and none of its
+    strictness. The timestamp is left as the text it was written as, a short
+    mark row comes back with an empty label rather than a `ValueError`, and a
+    change row is not parsed at all, so a hand-edited or half-written file is
+    still something the caller can name. `read_capture` may raise at `:690`
+    and this must not: refusing to open a capture would be the wrong way to
+    lose the one warning that says what is already in it.
+
+    Nor may the file's *encoding*. `CsvSink` appends to the same path without
+    decoding it, so the bytes are whatever the writing process's locale wrote
+    and a foreign or hand-annotated capture on the Windows box is no rarer
+    than the rows above. Read with the default encoding and iteration is lazy,
+    so a lone 0xE9 -- a byte UTF-8 cannot decode, and latin-1 and cp1252 both
+    write for `café` -- raises `UnicodeDecodeError` out of the loop, at
+    startup, on the run that used to append to that file fine. Hence
+    `errors="replace"`: the byte comes back as U+FFFD inside a label the
+    operator is being shown anyway, which is a smaller loss than the day.
+
+    The shape of a mark row is the grader's and lives here rather than in
+    `ec_watch.py` for the same reason `parse_mark` does: the prompt loads this
+    module by path precisely so no second copy of the rule can drift from the
+    thing that enforces it (#548).
+    """
+    out = []
+    with open(path, newline="", errors="replace") as f:
+        for row in csv.reader(f):
+            if not row or row[0].startswith("#") or row[0] == "ts":
+                continue
+            if len(row) > 1 and row[1] == "MARK":
+                out.append((row[0], row[3] if len(row) > 3 else ""))
+    return out
+
+
 def read_early_exits(path):
     """The early-exit rows of one capture: a second reader over what
     `read_capture` drops.
