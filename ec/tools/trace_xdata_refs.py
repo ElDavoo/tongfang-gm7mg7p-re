@@ -233,8 +233,13 @@ def walk(d: bytes, start: int, max_insns: int = 8):
         if d[i] in FLOW_OPCODES:
             break
         i += n
+        # `max_insns`, not `len(d)`, bounds this loop, so the first disjunct is
+        # its only end-of-buffer check: it continues the walk only while two
+        # more bytes follow, which is what keeps the `d[i]` above in range, and
+        # the `or` leaves it unread when the bound fails. The second says DPTR
+        # was reloaded -- whatever follows is a different access.
         if i + 2 >= len(d) or d[i] == MOV_DPTR:
-            break  # DPTR reloaded: whatever follows is a different access
+            break
     return out
 
 
