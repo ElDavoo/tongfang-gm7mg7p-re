@@ -18,8 +18,10 @@ a figure nobody can re-derive. Five sections:
   1. **the row's census** -- every site in the tree that constructs
      `ts,MARK,,label` and every site that consumes it, found by scanning for
      the `"MARK"` literal rather than off a hand-typed list, so a writer
-     added tomorrow is in tomorrow's census and a list cannot go stale
-     without anyone noticing;
+     spelled the way these seven are is in tomorrow's census. The scan matches
+     one spelling: the two single-quoted `'MARK'` assertions in the test
+     suites are invisible to it, so what keeps a site from going stale is the
+     two-way join in section 5, not the scan's coverage;
   2. **the committed fixtures** -- every `*.csv` under `ec/tools/testdata/`
      and `evidence/ec-watch/` that holds a MARK row, with its mark count, its
      column counts, whether it carries a `ts,addr,old,new` header and whether
@@ -89,7 +91,10 @@ FIXTURE_ROOTS = (os.path.join(EC, "tools", "testdata"),
 
 # The row's marker as it is spelled in every writer. Scanned for as a Python
 # string literal: `ts,MARK,,label` appears in three docstrings as prose and
-# would make the writer census a census of documentation.
+# would make the writer census a census of documentation. The double quotes are
+# part of the match, so a line spelling the row `'MARK'` is not found -- the two
+# such lines in the tree are `test_ec_watch.py` and `test_system_id_probe.py`,
+# both assertions, and the page names the blind side rather than the count.
 ROW_LITERAL = '"MARK"'
 
 # What a constructed capture carries in its fifth column and in its
@@ -482,6 +487,15 @@ CITATIONS = [
     ("windows/tools/test_manual_fan_ctrl_probe.py", 508,
      'if len(r) == 4 and r[1] == "MARK"]',
      "reader: the only exact-column-count filter in the tree"),
+    # -- the spelling the literal scan cannot see ----------------------------
+    ("windows/tools/test_ec_watch.py", 145,
+     "('MARK', '', 'wrote 0x0751=0xA0')",
+     "a single-quoted MARK the scan cannot match: a test assertion, not a "
+     "writer"),
+    ("windows/tools/test_system_id_probe.py", 311,
+     "('MARK', '', 'GPU mode -> dGPU')",
+     "the same in the other suite, so the blind side is the tree's and not "
+     "one file's"),
     # -- the lines the read-side claim rests on -----------------------------
     ("ec/tools/grade_0751_isolation.py", 678, "def read_capture(path):",
      "read_capture"),

@@ -59,8 +59,8 @@ would have been the more expensive version of that bug.
 ## The row's census
 
 Seven writers and four decision sites, from scanning for the `"MARK"` literal
-rather than off a list — so a writer added tomorrow is in tomorrow's census,
-and a list cannot quietly go stale:
+rather than off a list — so a writer spelled the way these seven are is in
+tomorrow's census rather than a row of a list someone remembered to update:
 
 ```console
    7 writer(s) of ts,MARK,,label:
@@ -98,6 +98,18 @@ literal scan cannot see a consumer that only counts, and the call scan cannot
 see a reader that opened the CSV itself. That is the argument for running both
 rather than trusting a hand-assembled list, and it is how the four sites below
 were found — none of which the issue names.
+
+**The literal scan has a second blind side, and this tree already shows it.**
+It matches the double-quoted `"MARK"` the seven above spell the row with, so a
+line quoting it the other way is invisible to it. The two such lines are
+`windows/tools/test_ec_watch.py:145` and
+`windows/tools/test_system_id_probe.py:311`, both `assertEqual` comparisons in
+test suites. Neither constructs a row, so seven is the right count — but that is
+a reading of those two files rather than a result of the scan, and a writer
+spelling the row `'MARK'` would not be counted. The anti-staleness is enforced
+from the other end instead, and §"What the tool checks" below says how: the
+citation check's two-way join fails on a scanned site this page does not name,
+so a writer the scan *does* find cannot drop out unnoticed either.
 
 ## Four sites the issue does not name
 
@@ -161,9 +173,12 @@ All 50 files hold four-column MARK rows, all 50 carry a
 
 The two directories are not symmetric, and neither number should be quoted
 without its split. `evidence/ec-watch/` holds 15 committed files — 10 CSVs and
-5 `ecrw.py dump` text files — and **2** of the CSVs hold MARK rows at all; the
-other 8 hold none. The two are `2026-09-24-06c2-06db-perturb-linux.csv` (6
-marks) and `2026-09-24-06c2-06db-suspend-linux.csv` (2 marks), both written by
+5 `.txt` files that are not captures at all: one `ecrw.py dump` hex dump, two
+hand-written test logs (`# Issue #99 …` and `# Issue #8 …`), one read-only EC
+snapshot and one `ec/tools/ec_timer_capture.py --census` output — and **2** of
+the CSVs hold MARK rows at all; the other 8 hold none. The two are
+`2026-09-24-06c2-06db-perturb-linux.csv` (6 marks) and
+`2026-09-24-06c2-06db-suspend-linux.csv` (2 marks), both written by
 `ec_timer_capture.py` and both in the timer family, so under either shape they
 are fixtures a later change would have to be able to read *and* would have
 stopped being representative the day a capture was taken with the new shape.
@@ -461,6 +476,16 @@ was four columns. Both are the same class of drift
 `docs/findings/0751-append-unchecked-marks.md` §"The issue's line numbers have
 drifted" records as a caution, turned into a check.
 
+**One boundary of that closure is worth naming, because it is where this page's
+own argument bit.** `check_page` holds *this page* to the tool's output and
+nothing holds the summary paragraph in `docs/findings.md` §16a, which is
+transcribed by hand. That paragraph is the one place in the measurement with a
+figure and no check behind it, and the first draft of it hedged the tool's exact
+`50` and `four` as "over 50" and "over four". The figures are the tool's and are
+quoted as it prints them now; that they are the tool's is still a claim, not a
+check, and a reader should re-run the tool rather than trust the summary for
+them.
+
 ### The evidence index
 
 Section 5 of the tool's output, printed in full so a reader can see every site
@@ -480,6 +505,8 @@ a line number to a file.
    ok   ec/tools/grade_0751_isolation.py:734  reader: existing_mark_labels recognising the row
    ok   ec/tools/grade_timer_sweep.py:134  reader: grade_timer_sweep.load recognising the row
    ok   windows/tools/test_manual_fan_ctrl_probe.py:508  reader: the only exact-column-count filter in the tree
+   ok   windows/tools/test_ec_watch.py:145  a single-quoted MARK the scan cannot match: a test assertion, not a writer
+   ok   windows/tools/test_system_id_probe.py:311  the same in the other suite, so the blind side is the tree's and not one file's
    ok   ec/tools/grade_0751_isolation.py:678  read_capture
    ok   ec/tools/grade_0751_isolation.py:687  read_capture's skip rule, where a `# provenance` row goes
    ok   ec/tools/grade_0751_isolation.py:689  read_capture's only length test: a fifth column passes it
