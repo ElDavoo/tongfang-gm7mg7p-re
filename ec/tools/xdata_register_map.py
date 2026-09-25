@@ -199,7 +199,7 @@ one function. Clusters rank by size, then references, then address, so all of
 that is a large part of why one 393-byte routine holds those addresses near the
 top of the worklist at all. `ec/tools/export_ownership.py` derives which export
 owns which body and `--export-ownership` reads each routine once, from that one
-export, taking the census to 9,401 references with 0x0843 at 4 and one function
+export, taking the census to 9,404 references with 0x0843 at 4 and one function
 behind it.
 
 **The default stays off, and that is the calibrated answer rather than a
@@ -994,7 +994,7 @@ BUCKET_TOTALS = {"read": 8344, "write": 3195, "read+write": 2482,
 # ownership block asserts all four rather than leaving the promise to a reader.
 #
 # **The plan stage's estimate for this pass was 9112 references with 0x05E0
-# falling out of the census entirely; the committed tool measures 9401 with
+# falling out of the census entirely; the committed tool measures 9404 with
 # nothing lost, and both are recorded because the difference is the detector,
 # not the arithmetic.** The plan's detector folded `bank1/8E91.c` -- the only
 # export in the tree that spells `DAT_EXTMEM_05e0` -- into a larger body, so
