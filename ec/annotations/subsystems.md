@@ -513,7 +513,7 @@ cannot drift apart silently:
 
 **656 of the 753 common-area functions are unannotated, and that is the largest
 single block of undecoded firmware in this repository** — larger than the whole
-`pd` program. It is the natural next issue, and §2 is what sizes it. The 152
+`pd` program. It is the natural next issue, and §2 is what sizes it. The 169
 `unresolved` rows are a second, separate queue: functions that were looked at
 and are correctly described as far as the bytes go.
 
@@ -522,7 +522,7 @@ and are correctly described as far as the bytes go.
 Stated as a list, because the limit is the point of the document:
 
 1. **It is not a partition of the firmware.** §2's counts are the evidence, and
-   677 common-area functions and 152 `unresolved` rows are not in any group
+   677 common-area functions and 169 `unresolved` rows are not in any group
    here.
 2. **Nothing was observed on hardware.** No register behaviour, no interrupt
    delivery, no fan response, no charge current. Every claim above traces to a
