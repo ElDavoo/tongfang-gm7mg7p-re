@@ -513,8 +513,9 @@ ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
 # `bank0` group -- so its `sources_beyond` is **0** and the count of sources
 # this relation can distinguish is 0 too. The pin stands as written: the census
 # counts references and does not de-duplicate them, and the second entry here
-# is the *third*-busiest address in the firmware by that count. This comment is
-# where the inflation is written down next to the number it inflates.
+# is the *second*-busiest address in the firmware by that count (`0x0440`, at
+# 181, is the first). This comment is where the inflation is written down next
+# to the number it inflates.
 # `xdata-registers.csv`'s `co_reading` and `sources_beyond` columns carry it per
 # address; COREADING_CHECKED below is the hand-read half.
 

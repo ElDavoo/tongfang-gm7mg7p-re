@@ -994,10 +994,11 @@ largest main-EC cluster grows from 109 addresses to **150**, spanning
 ```
 
 So 30 of the counter block's 43 addresses are pulled into the 150 by the
-sweep's single pseudo-function, and each of the other 13 ends up alone in a
-cluster of its own — 11 singletons, one sharing with a single other address and
-one with six. `0x0440`, which the sweep reads 42 times and which no single
-function dominates, is **not in the 150 at all**. A de-duplicated source count
+sweep's single pseudo-function, and each of the other 13 lands in a cluster of
+its own — 11 of them singletons, one sharing with a single other address and
+one (`0x09CE`) with six, those six from a six-address cluster of their own.
+`0x0440`, which the sweep reads 42 times and which no single function
+dominates, is **not in the 150 at all**. A de-duplicated source count
 here therefore neither tidies the clustering up nor rescues the block: it turns
 one overlapping routine into one very widely-shared function and hands it a
 *larger* cluster than the one the 42 copies were propping up, while the
