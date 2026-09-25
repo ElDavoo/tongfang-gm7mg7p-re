@@ -21,7 +21,7 @@ byte count below is re-derivable from the committed image by §1, and
 > `cluster_id=main-ec-002` in `xdata-registers.csv`. The ids moved when issue
 > #4.3's census regeneration landed (#133 / #238), and moved again on the
 > 2026-09-24 re-derivation of the census on the merged tree:
-> `xdata_register_map.py:1650-1651`
+> `xdata_register_map.py:1654-1655`
 > numbers clusters by size, so the 43-address block is now numbered ahead of
 > the 28-address one, and `xdata-register-map.md` §5 records the same hazard for
 > its own table. (`:1027`, the citation this replaces, never pointed at the sort
@@ -32,6 +32,15 @@ byte count below is re-derivable from the committed image by §1, and
 > inside a quote of issue #179 are left as it wrote them with this beside them,
 > because
 > the quote is the evidence that the id moved.
+>
+> **Issue #254's own instruction to change this block's id to `main-ec-003` was
+> not applied, because the prediction it rested on was itself stale.** #254
+> predicted `main-ec-003` from the pre-split numbering; the committed census
+> puts the 43-address / 4,966-reference sweep at `main-ec-002`, and
+> `../tools/check_cluster_citations.py` passes, so this page's `main-ec-002`
+> needed no change and the stale `main-ec-003` was in `ec/README.md`, which is
+> the copy that moved. Left visible here so a reader holding #254 reads the
+> unapplied instruction rather than an oversight.
 > `../tools/check_cluster_citations.py` is what holds the rest of the tree to
 > the census.
 >
@@ -228,8 +237,8 @@ and the 22 between them is a definitional split inside the tool, not staleness:
 both numbers reproduce from a fresh generation. Five of the 43 members are
 `program=both` — `0x07F3`, `0x07F6`, `0x0809`, `0x080C`, `0x080D` — and for
 those the register row absorbs both programs and counts an address once per
-program (`xdata_register_map.py:1381` `merge_group()`, `:1665-1666`) while the
-cluster row sums one program's own count (`:1734`). Two columns both named
+program (`xdata_register_map.py:1385` `merge_group()`, `:1669-1670`) while the
+cluster row sums one program's own count (`:1738`). Two columns both named
 `refs`, defined differently. The whole of the gap is those five addresses' PD
 references, 3 + 4 + 5 + 2 + 8 = 22. Only the name and spelling columns of the
 committed CSVs are stale — §6. The earlier version of this parenthetical said
@@ -592,10 +601,10 @@ longer a reason to distrust the census.
 
 **The defect.** `store_target()` decides an occurrence is a store by testing
 `stripped.startswith(a) for a in ASSIGN`, and `ASSIGN`
-(`ec/tools/xdata_register_map.py:239`) contains `"="` — so `"== 0x12"
+(`ec/tools/xdata_register_map.py:243`) contains `"="` — so `"== 0x12"
 .startswith("=")` is true, and every `==` in the tree was counted as a write.
-The rejection is at `ec/tools/xdata_register_map.py:935`, inside
-`store_target()` (`:912`), with the comment above it recording 838 occurrences
+The rejection is at `ec/tools/xdata_register_map.py:939`, inside
+`store_target()` (`:916`), with the comment above it recording 838 occurrences
 against two dereference stores. It landed in issue #178, and
 `xdata-register-map.md` §4.3 is the retraction written at the time.
 
@@ -603,7 +612,7 @@ against two dereference stores. It landed in issue #178, and
 produces.** Regenerating with no arguments reproduces every `read`, `write`,
 `refs` and `addrs` cell of both CSVs: 0 differences across 1,171 register rows
 and 430 cluster rows. The tree's own `BUCKET_TOTALS` oracle
-(`xdata_register_map.py:664`) reads `read 8341 write 3195 read+write 2482
+(`xdata_register_map.py:668`) reads `read 8341 write 3195 read+write 2482
 passed-to-call 534 address-taken 267`, which are the post-guard figures.
 
 **The effect**, from running the committed tool twice — once as it stands, and
@@ -841,7 +850,7 @@ touching it, not the EC's sweep.
    before/after census, and it should be read together with the de-duplication
    question below or the new numbers will be wrong in the other direction.~~
    **Closed — the diff it asked for landed in issue #178**, and the guard is at
-   `xdata_register_map.py:935`. Two things in the withdrawn text were wrong
+   `xdata_register_map.py:939`. Two things in the withdrawn text were wrong
    besides the line citation: `:277` was never the classifier's location, and
    `main-ec-002` does **not** reshape — it keeps the same 43 addresses and the
    same 4,966 references with and without the guard, because the guard moves
