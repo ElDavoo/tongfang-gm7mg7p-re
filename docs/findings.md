@@ -7201,9 +7201,14 @@ and no suite or test total is quoted anywhere new, because a total is a property
 of the merge. **What it changes for #162 is the size of its blocker**: three
 suites in two kinds — two judgements about the decompile with their own issues,
 and one piece of bookkeeping — so whoever lands the four-line wiring re-derives
-the set and finds two. `tools/README.md:14`'s own counts sentence is #615's, is
-out of date, and is invisible to every test by design, because the table check
-compares the *set* and never the counts; it is byte-untouched here. No register
+the set and finds two. *(Correction, 2026-09-25, issue #819: it now finds
+**none**. Both suites this section names are green, as is the third, and §46's
+own companion file already reaches the empty set at
+`0751-grader-self-test-gate.md:163-175`; the measurement is in
+[`xdata-green-set.md`](findings/xdata-green-set.md).)* `tools/README.md:14`'s
+own counts sentence is #615's, is out of date, and is invisible to every test by
+design, because the table check compares the *set* and never the counts; it is
+byte-untouched here. No register
 `status:` moved, no `.asm` or `.c` was hand-edited, no gate was wired, and
 nothing was read off a machine.
 
@@ -7368,3 +7373,44 @@ naming this defect and this flag, so #528's failure did have an owner; what it
 lacked was a slot in the queue, and this issue is the re-file that supersedes
 #568. No CSV, `registers.yaml` or `xdata_register_map.py` was edited, no gate
 was wired, and nothing was read off a machine.
+
+## 51. The green set is empty, and the status sentences that said otherwise now carry corrections beside them (2026-09-25, issue #819)
+
+The write-up is
+[`xdata-green-set.md`](findings/xdata-green-set.md);
+this is the summary. Both modes of `ec/tools/xdata_register_map.py` exit 0 and
+both suites that read its CSVs are green — and **two commits cleared them, not
+one**: `23240095` (#752) for `test_check_site_census.py`, `64dbde19` (#753) for
+`test_xdata_cluster_names.py`, which now runs the tool's own `--no-eq-guard`
+instead of patching a copy of it. That is why the sentence naming both as red
+for "their own separate reasons" was wrong twice over, each half for its own
+reason. **Five sites across the two annotation pages were false, and each is
+corrected beside itself rather than over it**, per §4a-4d: in
+`ec/annotations/xdata-register-map.md`, "two other suites that read these CSVs
+are red for their own separate reasons" and that block's own closing "that
+leaves **one** suite of the two red"; in
+`ec/annotations/xdata-06c2-06db-timers.md`, "neither is green today: both exit
+1 on `main`", "**Neither mode is in `agent-gates.sh`'s tool list**" — false of
+`--check` from #256, and contradicting `xdata-register-map.md:2582-2584` for as
+long as it stood — and the page's second phrasing of the same claim. **The fifth
+is the one the issue's table splits across two rows**, and correcting one copy
+while leaving the next would have reproduced at
+`xdata-register-map.md:2599` exactly the defect the issue is filed about; a
+reviewer who prefers the issue's own count can drop that one blockquote and
+nothing else moves. The empty set is therefore what
+[`runner-red-suite-set.md`](findings/runner-red-suite-set.md) now tracks.
+**Three sibling claims are named to their owner rather than absorbed here**:
+the `--self-test` half of both pages is **#815**'s — the naming drift, the
+gate's `--self-test` reason comment at
+`.github/scripts/agent-gates.sh:218-234`, and the wiring decision — **#816**
+owns its "only working scripted route to a guard-off census", which the same
+`64dbde19` falsified, and **#817** owns `tools/README.md`'s "874 tests" and its
+"two of the thirty are red". `agent-gates.sh` is named and not edited: it is
+copied from `ElDavoo/agent-pipeline`, and #815's title covers it. No suite or
+test total is quoted anywhere new, for the reason
+[`runner-red-suite-set.md`](findings/runner-red-suite-set.md) gives when it
+leaves the totals line out — a total is a property of the merge, and what the
+corrections quote instead is one command each, which is what a re-derivation
+actually runs. No `status:` moved, no CSV, YAML, tool, suite or gate script was
+edited, no `.asm` or `.c` was hand-edited, no hardware or Windows step was
+taken, and nothing was opened in another repository.
