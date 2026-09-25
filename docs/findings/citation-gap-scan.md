@@ -548,10 +548,10 @@ decoder rather than of this tool. `citation_gap_scan.py --check` and
 conflict-resolution workflow's merge step, and **that runner is red today**,
 on `ec/tools/test_check_site_census.py::test_the_committed_join_holds` and
 `ec/tools/test_xdata_cluster_names.py`. Neither is this tool's, and both
-reproduce identically on `main` at `d9170a77`. A third was red on each side of
-the #679 merge — `tools/test_readme_suite_table.py`, for a missing
-`ec/tools/test_inc_dptr_sites.py` row — and is green in the merged tree, which
-holds both that row (#751) and this branch's for
+reproduce identically on `main` at `d9170a77`. A third was red until #751 landed
+the `ec/tools/test_inc_dptr_sites.py` row — `tools/test_readme_suite_table.py`,
+green at `d9170a77` and at this branch's merge base `8b76c965` alike — and is
+green in the merged tree, which holds that row and this branch's for
 `ec/tools/test_disasm8051.py`; `tools/README.md` records the same state.
 `docs/findings/0751-grader-self-test-gate.md`
 ("Which of the issue's two options") records the causes and owns the
@@ -561,7 +561,7 @@ first is true on this tree: naming a suite's runner says where it runs, not
 what came back. `disasm8051.py --self-test` runs
 nowhere in CI at all, which is the same gap `docs/agent-pipeline.md` records
 for `tools/run-tests.sh` as a whole. ~~…and issue #162 owns~~ **Corrected
-2026-09-25, issue #679**: #162 is closed, and `docs/agent-pipeline.md:326`
+2026-09-25, issue #679**: #162 is closed, and `docs/agent-pipeline.md:349-350`
 records that it landed the runner *deliberately not the gate call*, so the
 wiring is owned by no open issue rather than by #162. `grep -rn
 "disasm8051.py --self-test" .github/` returns nothing, and no gate calls

@@ -11,23 +11,22 @@ bash tools/run-tests.sh
 
 Every `test_*.py` under the repository, found by `find` — not a hardcoded list,
 so a suite in a directory that does not exist yet is picked up by having its
-file committed. There are twenty-nine today, 836 tests in all — both figures
+file committed. There are thirty today, 874 tests in all — both figures
 are what the runner below prints, one line per suite and a total on its last
 line — and each is a `unittest` suite standing in for a tool's own behaviour.
 Re-derive them by running it rather than by editing this sentence. Two of the
-twenty-nine are red in this tree and are left red here:
+thirty are red in this tree and are left red here:
 `ec/tools/test_check_site_census.py` and `ec/tools/test_xdata_cluster_names.py`,
-both because their subject is stale. A third was red on each side of this merge
-and is green here, each side waiting on a row of its own:
+both because their subject is stale. A third was red until #751 landed the row
+for `ec/tools/test_inc_dptr_sites.py`, and is green in this tree, which holds
+that row and the one for `ec/tools/test_disasm8051.py` this branch adds:
 `tools/test_readme_suite_table.py` is this table's own check, and a missing row
-is the one step a runner that finds suites by `find` cannot do for itself — the
-row for `ec/tools/test_inc_dptr_sites.py` came down with #751 and the row for
-`ec/tools/test_disasm8051.py` with #679, and a table missing either would fail
-it. The totals above count tests *run*, failing suites included, which is what
-the runner counts.
+is the one step a runner that finds suites by `find` cannot do for itself — a
+table missing either of those two rows would fail it. The totals above count
+tests *run*, failing suites included, which is what the runner counts.
 
-The totals are not a pass. On 2026-09-25 this tree's last line reads `29
-suite(s) run, 836 tests; one or more FAILED`, and the runner exits 1, on
+The totals are not a pass. On 2026-09-25 this tree's last line reads `30
+suite(s) run, 874 tests; one or more FAILED`, and the runner exits 1, on
 `ec/tools/test_check_site_census.py::test_the_committed_join_holds` and
 `ec/tools/test_xdata_cluster_names.py::TheGuardOffRegeneration.setUpClass` —
 the two named above, and nothing else. Both are red on each side of this merge
