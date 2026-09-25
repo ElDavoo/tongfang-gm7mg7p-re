@@ -303,7 +303,9 @@ into `r2 -a 8051` with no stitching needed.
   `bank-call-audit.md` §8 branch sites, and checks the bit-addressed carry
   forms against `BIT_SITES` — 11 sites transcribed from `r2 -a 8051` against the
   image, plus the `0xC1`/`0xC2` pair stated from the manual — run it after
-  touching either table.
+  touching either table; the gate call for it is prepared at
+  `../docs/ci/agent-gates-disasm8051-self-test.patch`, and no gate runs it
+  until a human lands that.
 - **`tools/verify_gap_text.py`** — cross-decodes the 143 instructions
   `verify_reassembly.py` cannot re-encode, so none of the committed listing is
   read by no check. It recomputes the set from `to_sdas()` rather than carrying

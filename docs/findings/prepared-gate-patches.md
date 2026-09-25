@@ -268,3 +268,43 @@ its author's to write, and another agent PR may be open against the same file.
 It is a one-line documentation fix for whoever owns that suite. The counts
 `tools/README.md` quotes are re-derived from this run, as that README
 instructs.
+
+## A fifth patch, and two more regions a re-cut cannot use
+
+**2026-09-25, issue #798.** The set is five now, and this section exists for
+the same reason the file does: a future re-cut needs to know where it may cut.
+`docs/ci/agent-gates-disasm8051-self-test.patch` is the new one, and the reason
+it is *not* cut where a reader would put it is the reason this file is here.
+
+The collision table from the top of this file, updated:
+
+| region of `agent-gates.sh` | held by |
+|---|---|
+| tool list `:119-124` | `agent-gates-gap-text-check.patch` hunk 1 |
+| tool list `:123-128` | `agent-gates-0751-self-test.patch` hunk 1 |
+| arms `:162-167` | `agent-gates-gap-text-check.patch` hunk 2 |
+| arms `:189-194` | `agent-gates-0751-self-test.patch` hunk 2 |
+| `check_register_counts` region, `gate` list `:271-277` | capture-claims, testdata-row-claims |
+
+The union of the two tool-list windows is `:119-128`, and **`:129` is the only
+line in the list outside every one of them** — which is why the new patch splits
+`windows/tools/decompile_native.py; do` rather than inserting a line above it,
+and why its `case` arm goes at the far end of the arm list after
+`*xdata_register_map.py)` rather than beside `*citation_gap_scan.py)`. List
+order is cosmetic (the loop is over a `for tool in` word list and nothing reads
+the order), so the cost is a placement that looks wrong and a header that has
+to explain it. The alternative — tidying either placement back to where a
+reader expects it — breaks every-ordered-pair landing, and the failure is
+silent in the way that matters: **each patch still applies cleanly alone.**
+
+The new patch adds a third way for a patch here to be half-right without
+noticing, so the suite grew a case for it. `FoldTests` covers the folded
+capture-claims patch; `ArmRetentionTests` covers this one, whose two halves
+(tool-list entry, `case` arm) can each be dropped by a re-cut that still
+applies, still composes, and still passes `bash -n` and `shellcheck` — because
+the dropped arm is precisely what keeps the tool off the `*)` default, which
+passes `--work "$scratch"`. Both halves were checked against that mutation
+(§"The test" above records the same discipline for the fold); the new case is
+the only one of fifteen that fails.
+
+Written-up in [`disasm8051-self-test-gate.md`](disasm8051-self-test-gate.md).

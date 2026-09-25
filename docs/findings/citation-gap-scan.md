@@ -565,5 +565,13 @@ for `tools/run-tests.sh` as a whole. ~~…and issue #162 owns~~ **Corrected
 records that it landed the runner *deliberately not the gate call*, so the
 wiring is owned by no open issue rather than by #162. `grep -rn
 "disasm8051.py --self-test" .github/` returns nothing, and no gate calls
-`tools/run-tests.sh`; closing that is an upstream `agent-pipeline` change and a
-re-copy, not a line here.
+`tools/run-tests.sh`; ~~closing that is an upstream `agent-pipeline` change and a
+re-copy, not a line here.~~ **Corrected 2026-09-25, issue #798**: half of it now
+is a line, and not in `.github/`. `disasm8051.py --self-test` has its tool-list
+entry and `case` arm prepared at
+`docs/ci/agent-gates-disasm8051-self-test.patch`, for a human to `git apply` —
+so `grep -rn "disasm8051.py --self-test" .github/` **still returns nothing** and
+no gate still calls it, because the patch is prepared and not landed. The
+`tools/run-tests.sh` half is unchanged and still owned by #775/#773;
+`docs/agent-pipeline.md` records that recipe. Write-up:
+`docs/findings/disasm8051-self-test-gate.md`.
