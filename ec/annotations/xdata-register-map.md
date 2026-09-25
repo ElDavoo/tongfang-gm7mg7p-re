@@ -1716,6 +1716,22 @@ change that. The census is a different method and must not become a back door
 into it. They have census rows — that is what this section is for — and no
 `registers.yaml` entry, and no `status:` anywhere moved.
 
+> **Update, 2026-09-25 (issue #707).** The 73 are now a committed list, the
+> 107 split three ways (73 / 7 entered / 27 not), and the rule above is stated
+> rather than only applied: **`xdata-inc-dptr-only.md` and
+> `xdata-inc-dptr-only.csv`**, produced by `ec/tools/inc_dptr_sites.py`. The
+> ten addresses named in this paragraph are the **first ten** of the 73 — the
+> issue's prose called them eleven, and the eleventh is `0x0364`, which this
+> paragraph does not name; §2a of that page has the correction. Two figures
+> this paragraph does not give: the 73 is **71 + 2**, the two being `0x043B` and
+> `0x04A5`, whose 2 and 3 pd-image sites are another program's bytes rather than
+> main-EC ones; and all 73 are `pair-literal`-only in the census, carrying 196
+> references between them. Nothing entered `registers.yaml` and no `status:`
+> moved. The sentence above — "they have census rows and no `registers.yaml`
+> entry" — is correct and stands; the issue's contrary claim that "the 73 are
+> not a census figure" is retracted on §7 of that page, and the two lists that
+> partition the `0x0400`-`0x045F` page's 50 meet at `0x043B` alone.
+
 **What it does not establish.** A resolved site is a **static** read or write:
 the EC reads or writes this byte in code, and nothing here is evidence the EC
 *acts* on it, that the byte is a register, or that any two of the sites agree

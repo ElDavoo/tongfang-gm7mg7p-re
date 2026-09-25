@@ -446,6 +446,17 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   battery/temperature block does, and deliberately stops at naming: the 32
   bytes with no cited name are `XDATA_04XX` in the symbol table, and §9 of
   that file says where each name that *is* used came from.
+- **`annotations/xdata-inc-dptr-only.md`** — the 107 addresses the pair-accessor
+  pass reaches *only* as the `inc DPTR` half of an accessor's pair, all 107
+  accounted for as 73 / 7 already entered / 27 not, and the rule for admitting
+  an `inc DPTR`-only byte stated in the form
+  `annotations/xdata-0400-045f.md` §6 already uses. The 73 is **71 + 2** and the
+  two are pd-image-only, which is a different reason from the 71's.
+  `xdata-inc-dptr-only.csv` is the per-address table behind it, produced by
+  `tools/inc_dptr_sites.py` and held by its `--check`; the census CSV cannot
+  answer the question, because `xdata_register_map.py`'s `scan()` folds a pair
+  call's seed and its `+1` into one `pair-literal` row. Read it before arguing
+  from a zero `MOV DPTR` site count, and before proposing to enter one of the 73.
 - **`annotations/xdata-086x-dispatch.md`** — the `0x0860`-`0x086E` run: the
   two instructions that set `0x0860` and the early-outs that gate it, the
   twelve-entry case table at `0xD14B` and the correction it forces on the
