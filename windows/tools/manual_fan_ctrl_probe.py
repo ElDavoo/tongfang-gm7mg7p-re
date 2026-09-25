@@ -130,10 +130,14 @@ grader's block walk refuses a capture whose last mark is not a restore, so
 without it both arms of a perfectly good run come back ungraded, and what they
 would have shown is not reported. The file is appended, so a second mode's run
 extends the capture rather than replacing it, and the marks say which arm each
-row belongs to. A run that dies part way through records why in a `#` row,
-which the reader skips by design: the restore and its mark still land, so the
-block would otherwise read `intact` over a window that was cut short. One
-`MARK` row is one action only while the marks are more than the grader's
+row belongs to. A run that dies part way through records why, and when, in a
+`#` row the reader can place: the grader charges that row to the block whose
+window it fell in, withholds that block's windows and exits 1, while a `#`
+annotation an operator wrote by hand is still skipped as one. The restore and
+its mark still land either way, so the block would otherwise read `intact`
+over a window that was cut short -- the capture is short a *hold* rather than
+short a *mark*, and the two read alike on the block line. One `MARK` row is
+one action only while the marks are more than the grader's
 `MARK_MERGE_SECONDS` (5 s) apart, and a `--csv` run at or under that window is
 refused before the EC is opened rather than left to write a capture no block
 can be read out of: the grader's `coalesce_marks` closes a group at exactly the
@@ -149,9 +153,10 @@ value the EC already holds, so it introduces nothing the machine has not seen,
 and gating it would make the tool refuse to run in a mode the vendor UI has
 set. Restores 0x0751 in a finally block, which wraps both arms.
 
-`--self-test` opens no EC. It checks the watch set's read-safety guard and the
-floor a `--csv` run's hold is held to, and hands a synthesised three-mark block
-to the real `ec/tools/grade_0751_isolation.py` -- its reader, and then the
+`--self-test` opens no EC. It checks the watch set's read-safety guard, the
+floor a `--csv` run's hold is held to, and this run's early-exit tag against
+the grader's own spelling of it, then hands a synthesised three-mark block to
+the real `ec/tools/grade_0751_isolation.py` -- its reader, and then the
 block walk and `check_block_marks` that issue #457 made load-bearing, with the
 two-mark capture this tool used to write kept as the negative control -- so a
 mark set the grader refuses is a failing row here rather than a green
@@ -191,6 +196,23 @@ ALL = WATCH + FANTBL + TEMP
 ALLOWED = {0x00, 0x10, 0xA0}
 DUTY = (0x075B, 0x075C)
 TEMPS = (0x043E, 0x044F)
+
+# The one `#` row this tool writes that is a record *about* the run rather than
+# an annotation *of* the capture, and the one the grader reads. It keeps the
+# `#` prefix so `read_capture` still skips it and a hand annotation is still a
+# hand annotation; the timestamp the handler writes after it is what lets
+# `ec/tools/grade_0751_isolation.py` say which arm the crash cut short, which
+# is the whole of the difference between a block that ran its hold and one that
+# was cut at 5 s and reads exactly the same on the block line.
+#
+# The grader's own spelling of the phrase is a second constant in a second
+# file, because that tool cannot import this one -- `ecrw` binds kernel32 at
+# import time, so importing the probe is Windows-only. The two are pinned
+# equal by the offline suite and by the `--self-test` below, the arrangement
+# `arm_labels` already uses for this tool's mark labels. A drifted tag is not
+# a quiet failure: the grader would match nothing and every crashed run's
+# capture would grade as one that finished.
+EARLY_EXIT_TAG = "# the run ended early:"
 
 # The four bytes --level-block's own readings are taken from. 0x0860 is the
 # dispatch selector and the busy mark; the other three are the results
@@ -482,18 +504,22 @@ def report_level_block(arms):
 def self_test():
     """The tool's own logic on a fixture. Opens no EC and reads no register.
 
-    Two things it can establish. The watch set's read-safety guard, and the
-    floor a `--csv` run's hold is held to, are arithmetic over this file's own
-    constants, with the counts they are supposed to hold to written into the
-    check rather than read out of the thing being checked. The mark set is
-    settled by handing a synthesised capture to the real
-    `ec/tools/grade_0751_isolation.py` -- its reader, and then the block
+    Two things it can establish, and a third it can only keep honest. The
+    watch set's read-safety guard, and the floor a `--csv` run's hold is held
+    to, are arithmetic over this file's own constants, with the counts they
+    are supposed to hold to written into the check rather than read out of the
+    thing being checked. The mark set is settled by handing a synthesised
+    capture to the real `ec/tools/grade_0751_isolation.py` -- its reader, and
+    then the block
     walk and `check_block_marks` that #457 made load-bearing, with the
     two-mark capture this tool used to write kept beside it as the negative
     control. Reading was never the part that decided anything: the reader has
     not changed since, and a mark set the grader's block walk refuses is a
     whole run ungraded, so "the grader can grade this capture" is a check
-    rather than a claim. What this cannot establish is anything about the
+    rather than a claim. The third is the early-exit row's tag against the
+    grader's spelling of it -- two constants in two files, which agree today
+    and would not have to tomorrow, and whose disagreement would not look like
+    a failure anywhere else. What this cannot establish is anything about the
     machine -- the sense `ecrw_fake.py` gives that phrase, and the reason this
     is not a substitute for the run
     docs/hardware-tests/level-block-0860-086e.md describes.
@@ -615,6 +641,14 @@ def self_test():
           len(void_blocks) == 1
           and grader.block_verdict(void_blocks[0]) == "void"
           and len(void_problems) == 1)
+    # The drift guard, in the mode a human runs at the box rather than only in
+    # the offline suite: the two spellings of the early-exit phrase are a
+    # constant each, and the only thing that holds them equal is this check and
+    # its twin. A drifted one is not a wrong-looking string, it is a grader
+    # that matches no crashed capture and a day that grades green.
+    check("the early-exit row's tag is the phrase the grader reads, so a "
+          "crashed run's capture is one the grader can place",
+          EARLY_EXIT_TAG == grader.EARLY_EXIT_TAG)
 
     print(f"\nself-test {'passed' if ok else 'FAILED'}: the tool's own logic "
           "on a fixture. No EC was opened, no register was read, and nothing "
@@ -752,15 +786,25 @@ def main(argv=None):
     except BaseException as exc:
         # Whatever ended the run -- an observation that raised, a Ctrl-C at the
         # keyboard -- the `finally` below still restores and still records the
-        # restore, so the block would read `intact` over a window cut short in
-        # a place nothing in the capture says. `read_capture` skips a `#` row
-        # by design, for an operator annotating a file by hand, and
-        # `build_windows` never sees one at all: this row is the only record
-        # that the arm did not run to its hold. Written before the restore
-        # mark so the reason is in the file rather than in a terminal nobody
-        # reads twice.
+        # restore, so the block reads `intact` over a window cut short in a
+        # place nothing else in the capture says. This row is the record of
+        # that, and it is written in a shape the reader can act on: the tag
+        # `read_capture` still skips, so a hand annotation is still a hand
+        # annotation, and `now()` on the front, because a row that says *that*
+        # a run ended and not *when* cannot be said to cut any arm short --
+        # `grade_0751_isolation.py`'s `read_early_exits` places it against the
+        # window it fell in and withholds that block's windows. Written before
+        # the restore mark so the reason is in the file rather than in a
+        # terminal nobody reads twice, and on the same clock as the marks
+        # around it, which is what makes "between the write and the restore"
+        # a fact about the file.
         if sink:
-            sink.row([f"# the run ended early: {type(exc).__name__}: {exc}"])
+            # The tool's own name rather than `__name__`, which is `__main__`
+            # for the run an operator takes at the box: the field is there for
+            # whoever opens the file, and `__main__` names the interpreter
+            # rather than the thing that raised.
+            sink.row([f"{EARLY_EXIT_TAG} {now()}",
+                      f"{Path(__file__).stem}: {type(exc).__name__}: {exc}"])
         raise
     finally:
         ec.write(MODE, orig)

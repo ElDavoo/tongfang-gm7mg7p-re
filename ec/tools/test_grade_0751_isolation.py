@@ -420,6 +420,59 @@ def staged_copies(tmp, edits):
     return out
 
 
+def copies_of(tmp, captures, edits=None):
+    """`captures` copied into `tmp`, with `edits` applied per file name.
+
+    The arrangement `staged_copies` uses and the reason it uses it: a case
+    that is about one row in one capture is a property of that row rather than
+    a second shape of the day, so it is written beside the fixture in a
+    temporary directory rather than taking a directory of its own in
+    `ec/tools/testdata/`. `edits` is keyed on the file's name --
+    `staged_copies` keys on the range, which is the same file -- and a capture
+    the map does not name is copied unchanged.
+    """
+    out = []
+    for path in captures:
+        text = Path(path).read_text(encoding="utf-8")
+        edit = (edits or {}).get(Path(path).name)
+        copy = Path(tmp) / Path(path).name
+        copy.write_text(edit(text) if edit else text, encoding="utf-8")
+        out.append(str(copy))
+    return out
+
+
+def insert_after(ts, line):
+    """A rewrite of one capture's text: `line` inserted below the row at `ts`.
+
+    The timestamp-keyed cut `edit_mark` makes, for the same reason: one row of
+    a capture is named rather than counted, so an edit cannot reach a second
+    row that reads alike -- in a two-value day block 2's marks carry the same
+    shape as block 1's, and a test that reached both would be testing two
+    blocks at once.
+    """
+    def rewrite(text):
+        out = []
+        for row in text.splitlines(keepends=True):
+            out.append(row)
+            if row.startswith(ts):
+                out.append(line if line.endswith("\n") else line + "\n")
+        return "".join(out)
+    return rewrite
+
+
+def early_exit_row(ts, reason="manual_fan_ctrl_probe: RuntimeError: "
+                              "observation failed mid-run"):
+    """The row the probe's `except BaseException` handler writes, as text.
+
+    Two CSV fields after the header row is what the tool writes, the tag first
+    and the reason in the second, and the tag is the grader's own constant
+    rather than a third spelling kept in this file: what these cases are about
+    is what the reader makes of the row, not that a test holds its own copy of
+    the phrase. The probe's own suite pins the two spellings equal.
+    """
+    return f"{grade.EARLY_EXIT_TAG} {ts},{reason}"
+
+
 def edit_mark(ts, label=None):
     """A rewrite of one capture's text: the mark at `ts` gone or respelled.
 
@@ -2978,7 +3031,7 @@ class StageBoundaryTests(unittest.TestCase):
             self.assertEqual(
                 out.count('block: 0xA0 (block 1 of 2) -- NOT GRADED'), 6,
                 kind)
-            self.assertIn(f'1 mark-set problem(s): {kind}', flat, kind)
+            self.assertIn(f'1 problem(s): {kind}', flat, kind)
             # Block 2 never saw the edit and is unaffected, which is what
             # makes this a per-block check rather than a run-wide one -- and
             # the only thing the edit had to be cut by timestamp to show.
@@ -3049,6 +3102,242 @@ class StageBoundaryTests(unittest.TestCase):
         # changed: it is still short its restore, and still exit 1.
         self.assertEqual(fixture_block_ends()[1],
                          ('wrote 0x0751=0x00', False))
+
+
+class EarlyExitTests(unittest.TestCase):
+    # The one `#` row this tool reads rather than skips: the one
+    # `windows/tools/manual_fan_ctrl_probe.py` writes when a run stops part
+    # way through. Every case is over a temp copy of `multi-block/` -- §6's
+    # shape, two values, every mark in every capture -- with one row added to
+    # one capture, so the only thing that differs between a graded run and a
+    # refused one is that row. Two blocks rather than one because the decision
+    # is per block and a one-block capture cannot show what it does to the
+    # rest of the day.
+    ANCHOR = '2026-01-01T12:00:55.000+01:00'  # inside block 1's write window
+    CRASHED_TS = '2026-01-01T12:00:57.000+01:00'
+    CAPTURE = '2026-01-01-0751-isolation-0700-07ff.csv'
+
+    def crashed(self, tmp, line, anchor=None):
+        """`multi-block/`'s three captures, `line` added to one of them."""
+        return copies_of(tmp, MULTI_BLOCK,
+                         {self.CAPTURE: insert_after(anchor or self.ANCHOR,
+                                                      line)})
+
+    # The decision: a row that places is charged to the block whose window it
+    # fell in, that block's windows are withheld and the exit code is 1. The
+    # block stays *intact* -- the restore is there, the `finally` puts it back
+    # whether or not the arm got to its hold -- which is why this case is
+    # worth a fixture of its own rather than a line in the void check's case:
+    # the void check has nothing to say here, and before this the report said
+    # so in the only words it had.
+    def test_an_early_exit_row_withholds_the_block_it_falls_in(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = self.crashed(tmp, early_exit_row(self.CRASHED_TS))
+            # The a0 pair with it, as `test_a_refused_mark_set_is_marked...`
+            # does: a withheld block's marker rides on the two file sections'
+            # group lines, and that is where a reader of a fold-in meets it.
+            rc, out, err = run(*paths, '--wrote', '0xA0',
+                               *dumps(*MULTI_A0_DUMPS),
+                               '--dump-pair', *MULTI_A0_DUMPS)
+        flat = " ".join(out.split())
+        self.assertEqual(rc, 1, err)
+        # Counted on the read line, which is the last line a run with no MARK
+        # rows is refused after.
+        self.assertIn('2026-01-01-0751-isolation-0700-07ff.csv: 6 mark(s), '
+                      '15 change row(s), 1 early-exit row(s)', out)
+        # The census names the kind, so a reader can see at a glance that this
+        # is not a mark-set problem, and the block section calls the block
+        # intact and withheld anyway: two facts, printed as two.
+        self.assertIn('block 1 of 2: value under test 0xA0, roles control, '
+                      'write, restore -- NOT GRADED, 1 problem(s): early-exit',
+                      census(out))
+        self.assertIn('block 1/2: intact', out)
+        self.assertIn('NOT GRADED, its windows are not printed', out)
+        # The section above the windows: which row, which capture, where it
+        # fell and what it said. Whole, and not scoped -- this run grades
+        # both blocks, so "whole" is the census's own rule rather than a
+        # stretch, and the reason is in the block's own window below.
+        self.assertIn('=== early-exit rows (a run that did not reach its '
+                      'hold) ===', out)
+        self.assertIn('2026-01-01-0751-isolation-0700-07ff.csv '
+                      '(1 row(s)):', out)
+        self.assertIn("in mark 2/6 ('wrote 0x0751=0xA0') of block 0xA0 "
+                      "(block 1 of 2)", flat)
+        self.assertIn('manual_fan_ctrl_probe: RuntimeError: observation '
+                      'failed mid-run', flat)
+        # All three of block 1's windows are withheld -- the block is the unit
+        # §3 defines, and the capture cannot say which arms before the cut are
+        # still worth reading -- and block 2's are printed as they always were.
+        # That last half is what a `--block 0x10` attachment depends on, and
+        # it is the half a refusal would have cost.
+        self.assertEqual(out.count('block: 0xA0 (block 1 of 2) -- NOT GRADED'),
+                         3)
+        self.assertEqual(out.count('no watched byte moved in this window'), 3)
+        self.assertIn('3 of the 6 window(s) above were not graded', out)
+        # And the reason is quoted where the block's own verdict is carried,
+        # rather than the mark-set wording, which would send the operator to a
+        # console that recorded every mark this block has.
+        for section in (dumps_section(out), whole_block(out)):
+            self.assertIn("block 0xA0, from the <value> in these files' §6 "
+                          "names -- this capture records the run ending "
+                          "early inside it, its windows were withheld "
+                          "above", section)
+        # The block section's note is the early-exit one: a mark set that does
+        # hold is not what went wrong here.
+        self.assertIn('What it is short is not a mark but the hold the arm '
+                      'was to run for', flat)
+        self.assertNotIn('A block whose mark set does not hold has no windows',
+                         out)
+
+    # The invariant the change could have broken, pinned directly rather than
+    # left to the rest of the suite. §6 tells the operator to annotate what
+    # they hand in, `read_capture` skips `#` rows for exactly that, and the row
+    # is told apart by its opening phrase rather than by being a comment -- so
+    # a hand row has to reach neither the new reader nor the exit code.
+    def test_a_hand_annotated_capture_grades_exactly_as_it_did(self):
+        note = '"# annotated by hand: dock attached, laptop on a desk"'
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = self.crashed(tmp, note)
+            # The row is in the file it was written into, before anything is
+            # run over it: an assertion about a row that was never written
+            # would pass for the wrong reason.
+            self.assertIn(note, Path(paths[0]).read_text(encoding='utf-8'))
+            rc, out, _ = run(*paths)
+            rc_plain, plain, _ = run(*MULTI_BLOCK)
+        self.assertEqual(rc, 0)
+        # Byte for byte the same report, the copies' directory swapped back for
+        # the fixture's -- the strongest form of the claim, and it covers the
+        # read line, the census, all six windows and the exit code at once.
+        self.assertEqual(out.replace(str(tmp), str(MULTI)), plain)
+        self.assertEqual(rc_plain, rc)
+        # Named rather than implied: the hand row is in the file and in no
+        # section of the report.
+        self.assertNotIn('annotated by hand', out)
+        self.assertNotIn('early-exit', out)
+
+    # The two shapes a row this cannot place takes, each of which used to be a
+    # green run. Both are refusals for the whole invocation rather than a
+    # window or a block: a row that says where it stopped and cannot be said
+    # to say it leaves every window's length uncertifiable, which is
+    # `unplaceable_marks`'s argument for a label the parse cannot read.
+    def test_a_row_this_cannot_place_refuses_the_run(self):
+        cases = (
+            # No timestamp, the shape a capture written before the probe
+            # stamped its row has. The reason is quoted back rather than
+            # discarded, so the operator can see which row of which file.
+            (f"{grade.EARLY_EXIT_TAG} when the fan stalled,"
+             "manual_fan_ctrl_probe: RuntimeError: observation failed "
+             "mid-run",
+             'the row carries no timestamp this can read'),
+            # A timestamp before the first mark: there is no window for the row
+            # to have cut short, and it is placed by timestamp rather than by
+            # where in the file it was written -- which is why a row written
+            # mid-capture and stamped at 12:00:05 lands outside every window.
+            (early_exit_row('2026-01-01T12:00:05.000+01:00'),
+             'no mark in the capture is at or before it'),
+        )
+        for line, why in cases:
+            with tempfile.TemporaryDirectory() as tmp:
+                paths = self.crashed(tmp, line)
+                rc, out, err = run(*paths)
+            flat = " ".join(err.split())
+            self.assertEqual(rc, 1, why)
+            # The section still prints whole, so the row is visible on the run
+            # that refuses it, and says it was not placed rather than naming a
+            # window it was not placed in.
+            self.assertIn('=== early-exit rows (a run that did not reach its '
+                          'hold) ===', out, why)
+            self.assertIn(f'NOT PLACED -- {why}', " ".join(out.split()), why)
+            # The refusal, and it says what is missing rather than implying
+            # something was found and lost.
+            self.assertIn('A row saying a run ended early has to be placed '
+                          'against the window it cut short', flat, why)
+            self.assertIn(why, flat, why)
+            # And nothing is graded: not one window, of either block.
+            self.assertNotIn('--- mark ', out, why)
+            self.assertNotIn('window delta', out, why)
+            self.assertNotIn('None of the §4.1-§4.3 bytes moved', out, why)
+        # A row with a readable timestamp but no reason on it is placed rather
+        # than refused -- the timestamp is the thing this can act on -- and the
+        # report says the row carries no reason rather than quoting nothing as
+        # though it had.
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = self.crashed(tmp, f"{grade.EARLY_EXIT_TAG} "
+                                      f"{self.CRASHED_TS}")
+            rc, out, _ = run(*paths)
+        self.assertEqual(rc, 1)
+        self.assertIn('the row records no reason', " ".join(out.split()))
+
+    # The count is on the read line rather than in the section, because there
+    # is a path where the section never prints: a capture with no MARK rows at
+    # all is refused before anything else this tool says about a capture, and
+    # the row is then the only record that a run stopped. It has to be visible
+    # on that path too.
+    def test_a_capture_with_no_marks_still_names_its_early_exit_row(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'no-marks.csv'
+            path.write_text('ts,addr,old,new\n'
+                            + early_exit_row(self.CRASHED_TS) + '\n',
+                            encoding='utf-8')
+            rc, out, err = run(str(path))
+        self.assertEqual(rc, 1)
+        self.assertIn('0 mark(s), 0 change row(s), 1 early-exit row(s)', out)
+        self.assertIn('no MARK rows in these captures', err)
+        # The one refusal that fired is the one about the marks: there is
+        # nothing to place the row against, which is a different fact from the
+        # one the early-exit refusal states.
+        self.assertNotIn('cannot be placed', err)
+        self.assertNotIn('=== early-exit rows', out)
+
+    # One capture is §3's single-tool form, and the probe's own `--csv` output
+    # is one file. The cross-console checks need a second console to have
+    # anything to disagree with; this one needs none, exactly as the census's
+    # "one capture" notice says for those.
+    def test_the_check_does_not_wait_for_a_second_capture(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = copies_of(tmp, (MULTI_BLOCK[0],),
+                              {self.CAPTURE: insert_after(
+                                  self.ANCHOR,
+                                  early_exit_row(self.CRASHED_TS))})
+            rc, out, _ = run(*paths)
+        self.assertEqual(rc, 1)
+        self.assertIn('one capture: the cross-console checks did not run', out)
+        self.assertIn('1 early-exit row(s)', out)
+        self.assertIn('NOT GRADED, 1 problem(s): early-exit', census(out))
+        self.assertEqual(out.count('block: 0xA0 (block 1 of 2) -- NOT GRADED'),
+                         3)
+        self.assertEqual(out.count('no watched byte moved in this window'), 3)
+        # And without the row the same one-capture run grades, so the refusal
+        # above is the row's and not the shape's.
+        rc, out, _ = run(MULTI_BLOCK[0])
+        self.assertEqual(rc, 0)
+        self.assertNotIn('early-exit', out)
+
+    # A `--block` run is graded by its own block, so a day in which another
+    # value's block crashed still attaches: §6 runs one `--block` per value,
+    # and refusing all three over one bad value would be the opposite of what
+    # that command line is for. The section prints whole either way.
+    def test_a_block_run_of_a_good_value_passes_over_a_day_that_crashed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = self.crashed(tmp, early_exit_row(self.CRASHED_TS))
+            rc, out, _ = run(*paths, '--block', '0x10')
+        self.assertEqual(rc, 0)
+        self.assertIn('=== block 2 of 2, value under test 0x10, 3 window(s) '
+                      'in it ===', out)
+        self.assertEqual(out.count('no watched byte moved in this window'), 3)
+        # The crash is named anyway, and the block it fell in is named as not
+        # selected rather than graded: the census's own scoping, which is why
+        # the section's exit-code sentence is scoped with it.
+        self.assertIn('in mark 2/6 (\'wrote 0x0751=0xA0\') of block 0xA0 '
+                      '(block 1 of 2)', " ".join(out.split()))
+        self.assertIn('block 1 of 2: value under test 0xA0, roles control, '
+                      'write, restore -- not selected in this run',
+                      census(out))
+        self.assertIn('still exits 0 over a day in which another value did',
+                      " ".join(out.split()))
+        # Nothing of *this* block's was withheld, so no banner names a reason.
+        self.assertNotIn('were not graded', out)
+        self.assertNotIn('NOT GRADED', out)
 
 
 class SelfTestModeTests(unittest.TestCase):

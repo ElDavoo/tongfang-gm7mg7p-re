@@ -121,6 +121,20 @@ and printing them in the usual format is the defect. The census that carries
 the diagnosis is printed whole either way, and names which capture is short,
 which two disagree, and what the consequence is.
 
+**One `#` row is a record about the run rather than an annotation of it.**
+`read_capture` skips every row whose first field starts with `#`, so an
+operator can annotate a capture by hand, and that skip is load-bearing. The
+probe's `except BaseException` handler writes exactly such a row when a run
+stops part way through, and the restore is in a `finally`, so the block still
+holds its restore: a write window cut at 5 s passes the void check and grades
+in the same format as one that ran its hold, which is the false green that row
+is in the file to stop. The row is told apart by the phrase it opens with and
+given a timestamp, which is the only thing that can say which arm it cut
+short. A placed row is charged to the block whose window it falls in, withholds
+that block's windows and turns the exit code to 1; a row that cannot be placed
+refuses the run. A hand-written `#` row opens with something else and is
+skipped, as §6's annotations are. None of this is a claim about the machine.
+
 The census also names each block by the value its `write` mark carries, so a
 window list, a `--dump` pair and a §4.6 verdict can all say which block they
 are about. §6 stamps every dump with the `<value>` of the block it belongs to,
@@ -395,6 +409,23 @@ DUMP_VALUE = re.compile(r"-0751-isolation-([0-9a-f]{1,2})-(?:before|after)-",
 # address to the operator and would otherwise read as an unplaceable mark.
 MARK_VALUE = re.compile(r"0x0*751\s*=\s*(?:0x)?([0-9a-f]{1,2})\b", re.I)
 
+# The `#` row `windows/tools/manual_fan_ctrl_probe.py` writes when its run
+# stops part way through, and the one `#` row this reads: a record *about* the
+# run rather than an annotation *of* the capture. `read_capture` skips every
+# `#` row so an operator can annotate a file by hand, and that skip is the
+# invariant this row is read beside rather than through -- a hand annotation
+# does not open with this phrase, and one that did would be the operator
+# saying so.
+#
+# Two spellings of one phrase, one in each file, and they cannot share a
+# constant: this tool cannot import the probe, because `ecrw` binds kernel32
+# at import time and that import is Windows-only. What holds them together is
+# the probe's offline suite and its `--self-test`, both of which read this one
+# by path -- the arrangement `arm_labels` and `REQUIRED_LABEL_FORMS` already
+# use. A drifted tag is not a quiet failure: `read_early_exits` would match
+# nothing, and every capture of a crashed run would grade as one that finished.
+EARLY_EXIT_TAG = "# the run ended early:"
+
 # The passing case, in as many words, because the block section is the one
 # place in this report that carries no address and would otherwise be the one
 # place a reader could mistake for a result.
@@ -468,17 +499,60 @@ UNPLACED_GRADED_NOTE = (
 # instead, and the one it names first is unchanged for a whole-capture run,
 # where the two coincide by construction and the existing wording is correct.
 #
-# The reason is left saying all three withholding reasons on both paths, even
-# though `--block` can only reach the first of them: it is one sentence and
+# The reason is left saying every withholding reason on both paths, even
+# though `--block` can only reach the first two of them: it is one sentence and
 # narrowing it would be a claim about which path this run took, which the loop
 # above the print is what decides. The refusal at the end is the load-bearing
 # half and survives both, so what a withheld window would have shown is not
-# quotable from either kind of run.
+# quotable from either kind of run. The early-exit reason is the second clause
+# for the same reason the third is there: a `--block` run is graded by its own
+# block, and a crash in a different block's capture is not this run's exit
+# code, but the banner cannot say which of its windows were withheld for which
+# reason without becoming a table.
 WITHHELD_REASON = (
-    "the mark set of the block they fall in does not hold, or the window falls "
-    "in no block at all and either no label could be read for it or the "
-    "captures disagree about the action it opened. What they would have shown "
-    "is not reported here and is not to be quoted from this run.")
+    "the mark set of the block they fall in does not hold, or that block's "
+    "capture records the run ending early inside it, or the window falls in "
+    "no block at all and either no label could be read for it or the captures "
+    "disagree about the action it opened. What they would have shown is not "
+    "reported here and is not to be quoted from this run.")
+
+# The block section's note for a block withheld for an early exit rather than
+# for its mark set. A block like that is intact by the check above -- the
+# restore is there, because the probe's `finally` puts it back whether or not
+# the run got to its hold -- so the note that explains a mark set would be
+# explaining a failure this block did not have, and a reader who has been sent
+# to fix a missing mark would be sent to a console that recorded all of them.
+EARLY_EXIT_NOTE = (
+    "A block whose capture records the run ending early inside it is withheld "
+    "for the same reason and a different one. What it is short is not a mark "
+    "but the hold the arm was to run for: the restore is there, so the check "
+    "above passed, and the one row that says the run stopped is the whole of "
+    "the record of how far it got. Its windows are left out rather than "
+    "printed in the usual format and quoted -- a window that ran five seconds "
+    "of a thirty-second hold reads exactly like one that ran all of it, which "
+    "is the false green the row is in the file to stop -- the section above "
+    "names the row, the window it fell in and the block, and the exit code is "
+    "1 while the row is there. Redo that block per §3; the other blocks in "
+    "the same capture are not affected by it and still print.")
+
+# The one refusal this adds, and it is the whole run rather than one block: a
+# row that cannot be placed against a window says nothing about any arm, so
+# every window below would be a window of a length nobody could name. The
+# exit code is 1 and nothing is printed, which is the register the
+# repeated-capture refusal and the "no MARK rows" refusal are written on --
+# each a statement about which files were handed in, none of them about the
+# machine.
+EARLY_EXIT_REFUSAL = (
+    "A row saying a run ended early has to be placed against the window it "
+    "cut short, and these rows cannot be placed: {why}. So the run is refused "
+    "rather than partly reported: a window is a window of a value under test "
+    "only by the mark that opened it, and a window whose length this cannot "
+    "bound is not quotable as one. Nothing in these captures is reported and "
+    "the exit code is 1 until the rows place. The row the probe writes is "
+    "stamped -- see windows/tools/manual_fan_ctrl_probe.py's "
+    "`except BaseException` -- so a row that carries no timestamp is a "
+    "capture written before that, or one annotated by hand, and the fix is to "
+    "re-run the block or to put a timestamp of its own on the row.")
 
 # The bytes §4.4/§4.5 name but this script does not grade. They get their own
 # section because they are what §7's call is made on, and a reader should not
@@ -507,6 +581,28 @@ class Change:
         self.addr = addr
         self.old = old
         self.new = new
+        self.source = source
+
+
+class EarlyExit:
+    """One `#` row saying a run stopped, and when it stopped.
+
+    `ts` is the whole of what makes the row worth reading: a window is a
+    window of an arm only by its position in the mark stream, and a row that
+    says *that* a run ended rather than *when* cannot be said to cut any arm
+    short. It is None for a row carrying no timestamp this can read, which is
+    the shape a capture written before the probe stamped its row has -- kept
+    rather than dropped, because a row this cannot place is refused and a row
+    it never returned would be a false green.
+
+    `reason` is the rest of the row verbatim. Nothing here parses it and
+    nothing here claims to know who wrote the row: the tool name the probe
+    puts in it is for whoever opens the file.
+    """
+
+    def __init__(self, ts, reason, source):
+        self.ts = ts
+        self.reason = reason
         self.source = source
 
 
@@ -599,6 +695,42 @@ def read_capture(path):
                 changes.append(Change(parse_ts(ts), int(addr, 16),
                                       int(old, 16), int(new, 16), path))
     return marks, changes
+
+
+def read_early_exits(path):
+    """The early-exit rows of one capture: a second reader over what
+    `read_capture` drops.
+
+    A second reader rather than a change to `read_capture`, for two
+    independent reasons. Its two-tuple is a contract with a second tool --
+    `grade_gpu_door.py` imports this module and unpacks it at `:421` -- and its
+    skip rule is the invariant this has to be added beside rather than
+    through: `#` rows are skipped *so that* an operator can annotate a capture
+    by hand without breaking this, and every committed fixture under
+    `ec/tools/testdata/` opens with a `#` block.
+
+    A row is recognised by the phrase alone, not by being a comment, and its
+    remainder is the timestamp the writer stamped. A row that opens with the
+    phrase and carries no timestamp this can read comes back with `ts=None`
+    and the rest of the line as its reason, so the caller can refuse it by
+    name instead of the capture grading as one that finished.
+    """
+    out = []
+    with open(path, newline="") as f:
+        for row in csv.reader(f):
+            if not row or not row[0].startswith(EARLY_EXIT_TAG):
+                continue
+            rest = row[0][len(EARLY_EXIT_TAG):].strip()
+            said = ", ".join(part for part in [rest, *row[1:]] if part)
+            try:
+                ts = parse_ts(rest)
+            except ValueError:
+                out.append(EarlyExit(None, said, path))
+                continue
+            # What is left of the row once the timestamp is off the front: the
+            # writer's reason, in whichever field it was put.
+            out.append(EarlyExit(ts, said[len(rest):].strip(" ,"), path))
+    return out
 
 
 def read_dump(path):
@@ -986,6 +1118,60 @@ def check_block_marks(block, captures):
     return problems
 
 
+def charge_early_exits(early_exits, windows):
+    """(placed, refused): the rows a window puts in a block, and the rest.
+
+    A placed row is appended to `Block.problems` as one more
+    `(kind, window, text)` row -- the shape `check_block_marks` returns and
+    the shape the window loop, `report_census` and `block_marker` already
+    read. So a block an early exit falls in is withheld by the machinery that
+    withholds every other block with a problem, and the window report, the
+    block verdict and the exit code cannot disagree about which blocks were
+    graded. That is `Block.problems`' own reason for being one list, and the
+    new kind rides on it rather than beside it.
+
+    The block, not the one window, is the unit charged: §3 defines a block, it
+    is what the void check already withholds on, and the capture cannot say
+    which arms before the cut were still worth reading. It is also why
+    this can be quiet about the void check -- a run that stopped still records
+    its restore, so the block reads `intact` and the void check has nothing to
+    say. What it is short is a *hold*, and that is a different fact wearing
+    the same word on the block line.
+
+    A row that cannot be placed -- no readable timestamp, no window at or
+    before it, or a window in no block -- is refused by the caller instead of
+    filed anywhere. It is a run-level refusal on `unplaceable_marks`'s
+    argument: block attribution rests entirely on the labels and where each
+    row falls, so a row this cannot place leaves every block's completeness
+    uncertifiable, and `--block` narrows what is graded rather than what is
+    known.
+    """
+    placed, refused = [], []
+    order = sorted(windows, key=lambda w: w.ts)
+    for e in early_exits:
+        if e.ts is None:
+            refused.append((e, "the row carries no timestamp this can "
+                               "read, so nothing in it says when the run "
+                               "stopped"))
+            continue
+        before = [w for w in order if w.ts <= e.ts]
+        if not before:
+            refused.append((e, "no mark in the capture is at or before it, so "
+                               "there is no window for it to have cut short"))
+            continue
+        w = before[-1]
+        if w.block is None:
+            refused.append((e, f"it falls in the window {w.label!r} opened, "
+                               "which is in no block"))
+            continue
+        w.block.problems.append(("early-exit", w, (
+            f"{os.path.basename(e.source)} records that the run ended early "
+            f"at {e.ts.isoformat(sep=' ')}: "
+            f"{e.reason or 'the row carries no reason'}")))
+        placed.append((e, w))
+    return placed, refused
+
+
 def window_delta(w, addr):
     """One context byte's movement inside one window, as a printed line.
 
@@ -1130,10 +1316,11 @@ def report_census(captures, windows, blocks, unplaced, unreads, selected):
         elif b.problems:
             # The kinds, not just the count: a reader of a fold-in wants to
             # know whether a block is short a mark or a capture is short one,
-            # and the two send the operator to different terminals.
+            # and the two send the operator to different terminals. The
+            # heading is not "mark-set", because a block withheld for an early
+            # exit is not short a mark -- it holds all of them.
             kinds = ", ".join(sorted({k for k, _, _ in b.problems}))
-            line += (f" -- NOT GRADED, {len(b.problems)} mark-set "
-                     f"problem(s): {kinds}")
+            line += f" -- NOT GRADED, {len(b.problems)} problem(s): {kinds}"
         print(line)
     if unplaced:
         for w in unplaced:
@@ -1143,6 +1330,66 @@ def report_census(captures, windows, blocks, unplaced, unreads, selected):
                       "in no block, so the void check cannot reach it -- there "
                       "is no block whose last mark in a capture it could be "
                       "-- and `--block` cannot select it either")
+
+
+def report_early_exits(exits, placed, refused, windows, blocks):
+    """The rows that say a run stopped, and what this run did about them.
+
+    Printed whole, above the window header, on the census's reasoning rather
+    than its own: §6 runs one `--block` per value and reads the attachments
+    side by side, so a section that named only the selected block's rows would
+    read as a day in which no run ever crashed. A row this run did not charge
+    is named as unplaced here rather than only in the refusal, so the section
+    is the whole of what the capture holds on this question.
+
+    Printed at all only when a capture carries one. A run in which nothing
+    stopped has nothing to say here, and the section is below the census
+    rather than inside it, so every case in this tool's suite that cuts the
+    census on the next `===` header keeps reading the same text.
+
+    The rows are named per capture, with the window and the block each fell
+    in, and the consequence is the paragraph under them rather than a line at
+    each: withholding is per block, so one sentence covers every window that
+    lost its number to it.
+    """
+    print("\n=== early-exit rows (a run that did not reach its hold) ===")
+    landed = {row: w for row, w in placed}
+    why = dict(refused)
+    for path, rows in exits:
+        print(f"  {os.path.basename(path)} ({len(rows)} row(s)):")
+        for e in rows:
+            w = landed.get(e)
+            if w is not None:
+                where = (f"in mark {windows.index(w) + 1}/{len(windows)} "
+                         f"({w.label!r}) of block {w.block.name} "
+                         f"(block {w.block.index} of {len(blocks)})")
+            else:
+                where = f"NOT PLACED -- {why[e]}"
+            at = e.ts.isoformat(sep=" ") if e.ts else "no readable timestamp"
+            print(wrap_note(f"{at}  {where}: "
+                            f"{e.reason or 'the row records no reason'}",
+                            indent=4))
+    print()
+    # Not `EARLY_EXIT_NOTE`: that one belongs to the block section below, and
+    # this is a whole report's worth of runs in which one block is the whole
+    # report, so printing it twice would be the same paragraph twice on one
+    # screen. This one says what this run did about the rows and stops; the
+    # block section is where the intact-but-withheld half is explained.
+    #
+    # The exit-code clause is scoped rather than stated flat, because this
+    # section prints whole under `--block` and the run's exit code is that
+    # block's alone: a run over a value that did not crash exits 0 over a day
+    # in which another value did, which is the scoping `report_census` and
+    # `report_blocks` already keep.
+    print(wrap_note(
+        "A placed row withholds the windows of the block it names, and "
+        "whether that turns this run's exit code to 1 is that block's own "
+        "answer: `--block` scopes the decision as it scopes everything else, "
+        "so a run over a value that did not crash still prints its windows "
+        "and still exits 0 over a day in which another value did. A row this "
+        "cannot place is the exception, and refuses the run outright. Neither "
+        "is a claim about the machine -- they are claims about which files "
+        "were handed in and which block this run graded."))
 
 
 def report_withheld_window(w, n, total, where, problems):
@@ -1274,11 +1521,22 @@ def block_marker(block):
     because the windows are what this run refused and what it is not entitled
     to speak for. `VOID` here means the same thing `report_blocks` means by
     it: short a restore mark, not that anything did or did not happen.
+
+    The early-exit branch is a third fact rather than a fourth wording of the
+    first: a block that holds its restore and whose capture records the run
+    ending early inside it is intact, and a marker saying its mark set does not
+    hold would send the operator to a console that recorded all of them. It
+    wins over the mark-set wording when a block has both, because the census
+    above prints the kinds and this line is the one a reader takes to a
+    terminal.
     """
     if not block.problems:
         return ""
     if block_verdict(block) == "void":
         return "VOID, its windows were withheld above"
+    if any(k == "early-exit" for k, _, _ in block.problems):
+        return ("this capture records the run ending early inside it, its "
+                "windows were withheld above")
     return "its mark set does not hold, its windows were withheld above"
 
 
@@ -1376,7 +1634,12 @@ def report_blocks(blocks, selected=None):
     A block whose mark set does not hold is intact here and not graded
     anyway, which is two different facts and are printed as two: the restore
     is there, and an action before it is missing from a capture. Only the
-    second one withholds the windows.
+    second one withholds the windows. So does a block whose capture records
+    the run ending early inside it, and for the same reason: the restore is
+    written from a `finally`, so it lands whether or not the arm got to its
+    hold, and the capture is short a hold rather than short a mark.
+    `EARLY_EXIT_NOTE` is what this section says for that one, because the
+    mark-set note would be sending the operator after a mark the block has.
 
     `selected` grades one block of a multi-block capture (`--block VALUE`)
     and says the rest were not looked at, so the count this returns is about
@@ -1408,8 +1671,18 @@ def report_blocks(blocks, selected=None):
         if block.problems:
             tail += " -- NOT GRADED, its windows are not printed"
         print(f"    {tail}")
+    # One note under the section, as before, and which one is the decision
+    # rather than an ordering accident: a block withheld for an early exit is
+    # intact, so the mark-set note would be explaining a failure it did not
+    # have. An early exit wins over a mark set here for the reason
+    # `block_marker` gives: the kinds are on the census line above, and this
+    # paragraph is the one that says what to do about it.
+    early = any(k == "early-exit"
+                for b in shown for k, _, _ in b.problems)
     if void:
         note = VOID_BLOCK_NOTE
+    elif early:
+        note = EARLY_EXIT_NOTE
     elif any(b.problems for b in shown):
         note = MARK_SET_NOTE
     elif selected is None:
@@ -2026,12 +2299,22 @@ def main(argv=None):
 
     captures = []
     marks, changes = [], []
+    exits = []
     for path in paths:
         m, c = read_capture(path)
         captures.append((path, m))
         marks += m
         changes += c
-        print(f"{path}: {len(m)} mark(s), {len(c)} change row(s)")
+        read = f"{path}: {len(m)} mark(s), {len(c)} change row(s)"
+        # Counted here rather than at the section below, because this line is
+        # what a capture with no MARK rows is refused on -- and a capture with
+        # no marks and an early-exit row in it is the one the refusal has to
+        # be able to name.
+        rows = read_early_exits(path)
+        if rows:
+            exits.append((path, rows))
+            read += f", {len(rows)} early-exit row(s)"
+        print(read)
 
     if not marks:
         print("\nno MARK rows in these captures. ec_watch.py writes them only "
@@ -2046,6 +2329,11 @@ def main(argv=None):
     unagreed = unplaced_window_problems(unplaced, captures)
     for block in blocks:
         block.problems = check_block_marks(block, captures)
+    # After the block walk, because that is what a row is charged to, and
+    # after `check_block_marks`, because `Block.problems` is assigned there:
+    # appending to a list this replaces would drop the row on the floor again.
+    early_placed, early_refused = charge_early_exits(
+        [e for _, rows in exits for e in rows], windows)
 
     selected = None
     if args.block is not None:
@@ -2064,6 +2352,23 @@ def main(argv=None):
         selected = next((b for b in blocks if b.value == wanted), None)
 
     report_census(captures, windows, blocks, unplaced, unreads, selected)
+    if exits:
+        # Whole, and not scoped to the selected block, the way the census is:
+        # §6 runs one `--block` per value, and an attachment for a good value
+        # that said nothing about a crash in another one would be a report of
+        # a day in which nothing stopped.
+        report_early_exits(exits, early_placed, early_refused, windows, blocks)
+
+    if early_refused:
+        # Before the window report, and not per block: a row that cannot be
+        # placed says nothing about any arm, so a window printed beside it
+        # would be a window of a length this run cannot name. `--block` does
+        # not narrow it away, on `unplaceable_marks`' argument -- and, as
+        # with that one, a scoped refusal here would print the block that was
+        # selected `intact` and exit 0 over a capture that says otherwise.
+        why = "; ".join(text for _, text in early_refused)
+        print(f"\n{EARLY_EXIT_REFUSAL.format(why=why)}", file=sys.stderr)
+        return 1
 
     if args.block is not None and selected is None:
         found = ", ".join(b.name for b in blocks) or "none"
@@ -2478,7 +2783,13 @@ def main(argv=None):
     # nothing about the other blocks and passes if this one held. The
     # agreement refusal on a window in no block is counted into `withheld`, so
     # it takes that same scope: a window already in no block cannot re-shape
-    # one, and no block's completeness rests on it. `unreads` is the whole
+    # one, and no block's completeness rests on it. An early exit lands the
+    # same way -- its block's windows are withheld, so it is decided by the
+    # block it fell in, and a `--block` run over a value that did not crash
+    # passes over a day in which another value did. The unplaceable row is the
+    # one early-exit path with no such scope: like `unreads`, it is refused
+    # above, for the whole run, because a row that cannot be placed against a
+    # window leaves every block's length uncertifiable. `unreads` is the whole
     # capture's however the run was scoped, per `unplaceable_marks`, and
     # `UNREAD_MARK_NOTE` above is the line that says so where the exit code is
     # read from.
