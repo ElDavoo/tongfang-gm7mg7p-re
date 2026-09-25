@@ -1306,6 +1306,7 @@ class GradeTests(unittest.TestCase):
     def test_a_void_block_is_graded_on_its_own_and_says_so(self):
         rc, out, _ = run(*BLOCK_CAPTURES, '--block', '0x00')
         self.assertEqual(rc, 1)
+        flat = " ".join(out.split())
         self.assertIn('=== block 2 of 3, value under test 0x00, '
                       '2 window(s) in it ===', out)
         # The marks are still locatable -- the headers and the numbering are
@@ -1313,9 +1314,33 @@ class GradeTests(unittest.TestCase):
         # its restore has a last window that never closes and nothing in the
         # capture to close it with. What the withheld windows would have
         # shown is not reported here and is not to be quoted from this run.
+        #
+        # This is the one run in the suite that holds all three denominators
+        # of a `--block` read at once: the section header's 2 above, the
+        # headers' /8, and the banner's own pair below. The first two are
+        # asserted already and neither is renumbered to match the third --
+        # the whole-stream numbering is what makes a `--block` run a subset
+        # of the whole-capture run, which is how §6's one-attachment-per-value
+        # workflow reads the two side by side.
         self.assertEqual(marked_windows(out),
                          [(4, 'no-op wrote 0x0751=0xA0'),
                           (5, 'wrote 0x0751=0x00')])
+        # So the banner names both of its own rather than picking one. The
+        # withheld count is written out on each half, so a change to the
+        # number the loop counted, to the block's window count, or to the
+        # capture's fails here rather than reading as a still-correct pair.
+        self.assertIn('2 of the 2 window(s) of this block', flat)
+        self.assertIn("2 of the capture's 8 window(s)", flat)
+        # And the defect is pinned, not merely reworded: "of the 2 window(s)
+        # above" was false about the two windows printed directly above a
+        # line that numbered them 4/8 and 5/8, and no phrasing of that same
+        # single denominator may come back.
+        self.assertNotIn('2 of the 2 window(s) above were not graded', flat)
+        # The refusal is the load-bearing half and it survives the rewrite, on
+        # this path as on the whole-capture one: what the withheld windows
+        # would have shown is still not quotable from this run.
+        self.assertIn('What they would have shown is not reported here and is '
+                      'not to be quoted from this run', flat)
         self.assertEqual(
             out.count('block: 0x00 (block 2 of 3) -- NOT GRADED'), 2)
         self.assertIn("block 2/3: VOID -- last mark is 'wrote 0x0751=0x00', "
