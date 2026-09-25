@@ -12,7 +12,7 @@ cannot reach.
 
 `ec/tools/citation_callers.py` asks the citing row's own `.asm` that second
 question, and `citations()` consults the answer at the precedence point below.
-This file carries the two rules, the measured blast radius of each, the 16
+This file carries the two rules, the measured blast radius of each, the 12
 corroborated pairs read one by one, the corrected partition, and the limits.
 `docs/findings/citation-code-vs-data.md` is the write-up for the frame half;
 `docs/findings.md` §24 and `ec/annotations/call-graph.md` carry the summary.
@@ -28,7 +28,7 @@ a text measurement over committed inputs.
 The issue named three candidate discriminators and this takes the listings. The
 other two were measured on the committed tree and rejected:
 
-- **`type` is not a discriminator.** All twelve annotated fill rows are
+- **`type` is not a discriminator.** All twenty-nine annotated fill rows are
   `type=unresolved`, and so are ordinary citing rows that cite genuinely
   (`common,018C`, `common,029B`; `bank0,B5D2`, `bank0,B82E`). Keying on `type`
   would reject real citations.
@@ -86,18 +86,35 @@ defensive path rather than a measured population, and the guard is that
 `is_fill` answers `False` for a listing it read nothing from, which is not the
 answer it gives one it read and ruled out.
 
-## The veto's blast radius: 30 listings, 12 annotated, 21 pairs
+## The veto's blast radius: 30 listings, 29 annotated, 1 pair
 
-**30** listings in `ec/decompiled` are an all-`0xFF` run. **12** of them carry
-an annotation row: the seven `unimplemented_ff_fill_*` in `bank1` and the five
-`ff_filler_not_a_function_*` in `bank0`. The five `bank0` rows name no
-anonymous callee at all, so the rule changes nothing for them.
+**30** listings in `ec/decompiled` are an all-`0xFF` run. **29** of them carry
+an annotation row: the seven `unimplemented_ff_fill_*` in `bank1`, the five
+`ff_filler_not_a_function_*` in `bank0`, and — since issue #561 — seventeen more
+`ff_filler_not_a_function_*` in `common`, the unprogrammed `0x728F`-`0x7FFF` band
+`docs/findings/ff-fill-census.md` censuses. The five `bank0` rows name no
+anonymous callee at all, so the rule changes nothing for them, and the
+seventeen `common` rows name exactly one between them (below).
 
-That leaves **exactly 21 pairs**, all of them the ones the issue names: the seven
-`bank1` rows × `common,0F75`, `common,158E` and `common,1594`. Nothing else on
-this tree moves, and the rejections are reported rather than dropped — they
-appear in the existing `rejected on fill-at-citer` tally, fourth in the report's
-top five reasons.
+That leaves **exactly 1 pair**, and it is `common,375E` ← `common,7DF2`. It is a
+consequence of #561's new rows rather than of the rule changing: the
+`common,7DF2` comment names the `mov R3, #0x2` at `0x375E` that its own
+call-target byte match sits inside, which is the evidence for "not an entry
+point", and `0x375E` is an unannotated anonymous export. The comment does not
+claim a call there, and the veto rejects the pair anyway — the citing listing is
+fill — so no credit moves. It is here because the guard's audit trail is the
+record of what it saw, and a rejection that is silently dropped could not be
+told apart from one that never happened.
+
+**The twenty-one pairs the issue named are not in this count, and their absence
+is not the rule working.** Those were the seven `bank1` rows × `common,0F75`,
+`common,158E` and `common,1594`, and this branch's own tree measured 21 → 22
+with them in. Issue #558 then annotated all three `common` callees, and
+`citations()` only ever considers a `FUN_`-prefixed index row — so the twenty-one
+left the candidate set because their callees stopped being anonymous, not
+because the veto got better. Three rows is all it took. Nothing else on this
+tree moves, and the rejection is reported rather than dropped — it appears in the
+existing `rejected on fill-at-citer` tally.
 
 The result the issue wanted: `common,0F75`, `common,158E` and `common,1594` each
 read **`cited_by=1` / `inbound=1` / `named_callers=1`**, with `citing` reduced to
@@ -108,8 +125,10 @@ same number, which is what makes it a check rather than a coincidence.
 
 **The seven comments are not rewritten.** Substituting a name for an address
 there would assert the very call the comment denies, and the gate now makes
-their text irrelevant to the count, so `ec/annotations/ghidra-functions.csv` is
-untouched — 1,851 rows, deliberately.
+their text irrelevant to the count, so their own text is left alone. The file is
+no longer untouched in the literal sense: its **1,872** rows are the 1,851 this
+section was written against, plus issue #558's four and the seventeen `common`
+fill rows issue #561 added. Neither set touches these seven.
 
 *(**Correction, 2026-09-25, issue #558.** The 1,851 is what the CSV held when
 this was written, and the "untouched" is this issue's, not the tree's. #558 has
@@ -122,38 +141,51 @@ Every figure in this file is this issue's, measured then, and is left as
 measured rather than silently re-run — the numbers are the record of what #525
 did, not a census of the tree today.)*
 
+*(**Second correction, 2026-09-25, issue #561.** The 1,855 is the same kind of
+snapshot: #561's seventeen `common` fill rows took the CSV to 1,872, and the
+blast-radius and partition figures above are re-derived on the merged tree, which
+carries both sets of rows. That re-derivation is why they no longer agree with
+this file's original 21-pair reading — see
+[§The veto's blast radius](#the-vetos-blast-radius-30-listings-29-annotated-1-pair)
+for which of the two causes each figure moved for.)*
+
 ### Why the narrow fill test and not "this listing has no transfer at all"
 
-Measured: **979** commented annotation rows sit on a listing with zero transfer
-instructions, and **107** of them are a citer on some candidate pair. Seven of
-those 107 are the fill listings above. **The other 100 are not fill**, and many
-of them are real calls the listing does not carry because Ghidra's function
-boundary cut the call into a neighbouring export — `bank1,E57E` is the clearest:
-its own comment reads "the listing for this address is a single instruction,
-`PUSH direct 0x07`, which saves bank-0 R7 … `ec/annotations/bank-call-targets.csv`
-records an `lcall` to 0xE5D6 at 0xE580 … and the matching `POP`".
+Measured on the merged tree: **998** commented annotation rows sit on a listing
+with zero transfer instructions, and **100** of them are a citer on some
+candidate pair. One of those 100 is the fill listing above, `common,7DF2`.
+**The other 99 are not fill**, and many of them are real calls
+the listing does not carry because Ghidra's function boundary cut the call into
+a neighbouring export — `bank1,E57E` is the clearest: its own comment reads "the
+listing for this address is a single instruction, `PUSH direct 0x07`, which saves
+bank-0 R7 … `ec/annotations/bank-call-targets.csv` records an `lcall` to 0xE5D6 at
+0xE580 … and the matching `POP`".
 
-So the broad form would reject **100 real pairs** to save 21 fake ones. The
+The citer count falls from 108 to 100 for the same reason the twenty-one pairs
+did: the seven `bank1` fill rows were citers only through `common,0F75`,
+`common,158E` and `common,1594`, and #558 named all three.
+
+So the broad form would reject **99 real pairs** to save 1 fake one. The
 `0xFF`-run form cannot: it fires only where the bytes positively show a listing
 with no code. **That asymmetry is the whole reason for the narrow form**, and it
 is why no narrower-or-broader variant was tried — the numbers above are the
 argument, not a preference.
 
-## The credit's blast radius: 16 pairs, read one by one
+## The credit's blast radius: 12 pairs, read one by one
 
-**16** pairs are kept on a listing transfer rather than on a frame. Three are
-the `common,0070` ones the issue names; the other 13 are below. Each is listed
+**12** pairs are kept on a listing transfer rather than on a frame, and all 12
+are below. This branch's own tree held 16, and the four that left are the ones
+whose callee issue #558 named: `common,0F75`, `common,158E` and `common,1594`
+(the `common,0070` reset-path list) and `common,07F0` (the `common,012F` poll).
+Each is listed
 with the citing listing, the transfer line that settles it, and a verdict from
-reading the sentence. `common,1E1A` and `common,07F0` are two of the pairs
+reading the sentence. `common,1E1A` is one of the pairs
 `citation-code-vs-data.md` names among those a `FILLER_BUDGET` of 2 would have
-rejected *wrongly*.
+rejected *wrongly*; `common,07F0` was the other, and it left the set by being
+annotated rather than by being reclassified.
 
 | callee | cited by | listing line | verdict |
 |---|---|---|---|
-| `common,0F75` | `common,0070` | `0070.asm:13` `lcall 0x0f75` | real. "…followed by 0x158E, 0x0F75 and 0x1594", in the reset path's call list |
-| `common,158E` | `common,0070` | `0070.asm:12` `lcall 0x158e` | real, same list |
-| `common,1594` | `common,0070` | `0070.asm:14` `lcall 0x1594` | real, same list |
-| `common,07F0` | `common,012F` | `012F.asm:27` `lcall 0x07f0` | real. "waits on a 0x07F0 poll until it returns 5" |
 | `common,1E1A` | `bank0,AA90` | `AA90.asm:16` `lcall 0x1e1a` | real. "0x1E1A twice with R7 = 0x5F and R5 = 0 then 1" |
 | `common,4B0F` | `bank0,445E` | `445E.asm:104` `lcall 0x4b0f` | real. "passes the result through 0x4B0F and 0x4A69"; the listing's closing `sjmp` is *after* this site, so the comment's "the listing stops at an sjmp to 0x4534" is not in tension with it |
 | `common,4F3E` | `bank0,53AF` | `53AF.asm:74` `lcall 0x4f3e` | real. One of three compare-chain arms, each `lcall` then `sjmp` to the common tail |
@@ -167,7 +199,7 @@ rejected *wrongly*.
 | `pd,06EA` | `pd,D83D` | `D83D.asm:38` `lcall 0x06ea` | real, in a call list with register arguments |
 | `pd,CBB0` | `pd,EF79` | `EF79.asm:19` `lcall 0xcbb0` | real. "with 0x716C in place of 0x715E and 0xCBB0 in place of 0xED90" — the substituted call target in a structurally identical twin |
 
-**Fifteen of the sixteen are right; one is not, and it is not narrowed away.**
+**Eleven of the twelve are right; one is not, and it is not narrowed away.**
 `bank0,D091`'s own comment carries `CORRECTION 2026-09-24, issue #180`: the 40
 bytes from 0xD14B are a CODE table, not code, and "this supersedes the earlier
 reading of the same bytes as ACALLs to 0xD673, 0xD698, 0xD6C0 and 0xD6EF
@@ -185,8 +217,11 @@ mechanical condition either: the obvious candidates (require a 3-byte `lcall`/
 fitted to this one known wrong answer, and the first would drop the `ajmp` and
 `acall` corroborations the tool exists to keep — 0x5A43 is reached by 11 `ajmp`
 and zero `lcall` in the real census. **So the rule stays as it is and the
-miscount is reported**: 1 wrong credit in 16, against 15 right ones and against
-the alternative of leaving three real `common,0070` calls uncounted. A wrong
+miscount is reported**: 1 wrong credit in 12, against 11 right ones. On this
+branch's own tree the same trade read 1 in 16 against 15 right ones and against
+the alternative of leaving three real `common,0070` calls uncounted; #558 named
+those three, so they are credited by name now and the trade is the narrower one.
+A wrong
 credit costs a naming agent one unnecessary read of `bank0,D673` — a real
 76-byte function that is worth reading anyway — and does not reach the top of
 the ranking. That trade is recorded here rather than tuned away, and
@@ -196,25 +231,55 @@ re-measuring it is a one-line check (§Re-deriving).
 
 | | before | after |
 |---|---:|---:|
-| candidate (callee, comment) pairs | 382 | 382 |
-| kept | 153 | **148** |
-| — of those, settled by the citing listing's transfer | — | **16** |
-| rejected | 185 | **206** |
-| — of those, on `fill-at-citer` | — | **21** |
-| undecided | 44 | **28** |
-| anonymous callees a comment names | 99 | **109** |
-| comments that name one | 142 | **137** |
+| candidate (callee, comment) pairs | 382 | 352 |
+| kept | 153 | **140** |
+| — of those, settled by the citing listing's transfer | — | **12** |
+| rejected | 185 | **186** |
+| — of those, on `fill-at-citer` | — | **1** |
+| undecided | 44 | **26** |
+| anonymous callees a comment names | 99 | **105** |
+| comments that name one | 142 | **131** |
 
-148 + 206 + 28 = 382, so the three buckets still partition the candidates and
+140 + 186 + 26 = 352, so the three buckets still partition the candidates and
 no comment is both credited and reported against — the assertion `--self-test`
 makes. **The `before` column is 153 / 185 / 44 rather than the 152 / 185 / 45
 this rule was written against**, because issue #526 landed `sjmp` in
 `CODE_VERB` and took one pair out of `undecided` first. Both rules are in the
-merged tree, so the tree moved 152 → 153 (one `sjmp` credit) → 148 (−21 fill,
-+16 corroborated).
+merged tree, so the tree moved 152 → 153 (one `sjmp` credit) → 140 (+12
+corroborated); the single remaining `fill-at-citer` rejection is #561's
+`common,7DF2` naming the instruction its own byte match sits inside, named in
+the blast-radius section above.
 
-Both moves widen the work list rather than narrowing it. Ten more callees are
-cited now (99 → 109) and five fewer comments (142 → 137), because a single fill
+**Where the candidate count's move came from, measured rather than guessed.**
+This is a separate measurement from the table above — every row is a *real* tree
+with **both** rules already in, each read with one side's change held out, so the
+`382` in the first row is this section's base tree and not the `before` column
+above:
+
+| tree | candidates | kept | settled by listing | rejected | `fill-at-citer` | undecided |
+|---|---:|---:|---:|---:|---:|---:|
+| this section's base tree, neither change | 382 | 148 | 16 | 206 | 21 | 28 |
+| #561 alone | 383 | 148 | 16 | 207 | 22 | 28 |
+| #558 alone | 351 | 140 | 12 | 185 | 0 | 26 |
+| **the merged tree** | **352** | **140** | **12** | **186** | **1** | **26** |
+
+**All 31 pairs the re-export removed are accounted for, and they are all the same
+cause.** #570's re-export renamed seven `FUN_CODE_*` index rows, and
+`citations()` only ever considers a `FUN_`-prefixed target, so those pairs left
+candidacy because their callee stopped being anonymous: `common,0F75`,
+`common,158E` and `common,1594` 8 each, `common,07F0` 3, `bank1,9CE8` 3,
+`bank1,9D53` 1, `bank1,E2D3` 0 — 31, with **zero** lost pairs pointing at
+anything else. That single rename is also what took the issue's 21 fill
+rejections to 0; the rule did not improve. #561's side moves one pair the other
+way (`common,375E` ← `common,7DF2`), which the veto still rejects.
+
+**This branch's own version of the table above put 382 in the candidate row
+against 148 / 207 / 28, and those sum to 383. The 383 is the measured value; the
+382 was a slip.** The row figures themselves were right, and #561 moved no other
+column. Corrected in place rather than carried forward.
+
+Both moves widen the work list rather than narrowing it. Six more callees are
+cited now (99 → 105) and eleven fewer comments (142 → 131), because a single fill
 comment used to carry three of a callee's citations and each real one now counts
 once; the ranking is a work list of *addresses* to name, and the addresses went
 up, not down.
@@ -226,7 +291,12 @@ three comments read "polls 0x07F0 until it returns 5" — a strong code verb —
 `lcall 0x07f0`. Three comments, three transfer sites, and the one that needed the
 listing (`common,012F`, "waits on a 0x07F0 poll") is the arm the other two
 describe. This was **not** predicted and no gate was tuned to produce it; it is
-where the 13 extra credits landed.
+where the extra credits landed. **It is history in the merged tree**: #558
+annotated `common,07F0` and re-exported it, so it is no longer an anonymous
+callee and no longer ranks here at all. What the reading established — that a
+callee cited three times by three comments that each name a transfer is a real
+dependency, not a frame artefact — carries over to whatever ranks first now, and
+`../findings.md` §27 is the reading of the four addresses this change named.
 
 ## What the rule still cannot decide
 
@@ -234,8 +304,8 @@ where the 13 extra credits landed.
   above. Corroboration can only see that the listing carries a transfer to the
   address; it cannot see whether those bytes are instructions. The same blind
   spot is why the module's rule is a corroboration and never a *proof*: the
-  comment still has to be read, and 1 in 16 needed it.
-- **A call the listing does not carry is invisible here.** 979 commented rows sit
+  comment still has to be read, and 1 in 12 needed it.
+- **A call the listing does not carry is invisible here.** 998 commented rows sit
   on a transfer-free listing, 100 of them citing something. `bank1,E57E`'s
   `lcall 0xE5D6` at 0xE580 is in a neighbouring export. A pair like that is
   still decided by the frame alone, and the `undecided` population is where it
@@ -250,7 +320,11 @@ where the 13 extra credits landed.
 - **`fill-at-citer` is a mechanical test on one byte column.** A listing that
   begins in a fill region but contains real code is not fill, because its
   non-`ff` bytes say so — and the five `bank0` `ff_filler_not_a_function_*` rows
-  show the tool already draws that distinction upstream of this gate.
+  show the tool already draws that distinction upstream of this gate. The
+  seventeen `common` rows of #561 draw it in the other direction: they are
+  annotated *as* fill, and the veto fires on the one of them that names an
+  address, so a row added to say "this is not a function" is subject to the same
+  rule as a row added to say what a function does.
 - **Neither rule touches a register, a hardware register, or the `.c` files.**
   `ec/annotations/registers.yaml` and `ec/ghidra/xdata-symbols.csv` are
   untouched: no register `status:` changed, no listing was re-read, and nothing
@@ -269,7 +343,7 @@ python3 -c "import sys,csv; sys.path.insert(0,'ec/tools'); import call_graph as 
 ```
 
 ```
-fill listings 30 of which annotated 12
+fill listings 30 of which annotated 29
 ```
 
 ```sh
@@ -277,7 +351,7 @@ python3 -c "import sys; sys.path.insert(0,'ec/tools'); import call_graph as cg; 
 ```
 
 ```
-fill rejections 21 | kept on a listing 16 | partition 148 206 28
+fill rejections 1 | kept on a listing 12 | partition 140 186 26
 ```
 
 ```sh
@@ -285,7 +359,7 @@ python3 -c "import sys,csv; sys.path.insert(0,'ec/tools'); import call_graph as 
 ```
 
 ```
-commented rows 1851 | transfer-free listings 979 | of those citing 107 | of those not fill 100
+commented rows 1872 | transfer-free listings 998 | of those citing 100 | of those not fill 99
 ```
 
 ```sh

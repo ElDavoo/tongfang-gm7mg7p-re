@@ -5492,9 +5492,9 @@ first. The audit gap is a missing census of the 403 trampoline immediates, not
 a wrong census, and the two read here license nothing for the other 401. No
 register `status:` changed, the 2,710 index-row pin stands, and the export is
 deferred to a pinned-toolchain run for the reason #255 gives. The 1,851
-annotation-count pin this section quoted when it was written is 1,855 in the
-merged tree, moved by issue #558's four rows and re-pinned in
-`../ec/tools/build_ec_decompile.py`.
+annotation-count pin this section quoted when it was written is 1,872 in the
+merged tree, moved by issue #558's four rows (§27) and issue #561's seventeen
+fill rows (§28), and re-pinned in `../ec/tools/build_ec_decompile.py`.
 
 ## 27. The corrected ranking's top four, read (2026-09-25, issue #558)
 
@@ -5570,3 +5570,54 @@ needs `--mode rebuild-project` and so cannot share a branch with another EC
 change. `--mode export-only` seeds the scratch copy and exports from it, and the
 committed `.rep` is never opened for writing. The two rows and their listings
 are still uncommitted, for #559's own reason and not this one.
+
+## 28. Every all-`0xFF` listing in the export, and the byte scan that made seventeen of them (2026-09-25, issue #561)
+
+Thirty listings in `ec/decompiled` are an unbroken `0xFF` run — every
+instruction line's first byte is `ff`, which the 8051 map fixes to `MOV R7, A`
+and nothing else. Twelve carried a `ghidra-functions.csv` row saying so; **18
+carried none**, and 17 of those are `common` listings inside one unprogrammed
+band, `0x728F`-`0x7FFF` (3,441 bytes, all `0xFF`, measured — not the `0x7400` the
+issue's title has, which is just the lowest address the scan seeded). The
+eighteenth is `pd,0012`, issue #489's, deliberately left out of this diff.
+
+**All seventeen were put there by a byte scan**, `seed_basis=call-target`
+throughout, and `ec/annotations/bank-call-audit.md` §1 now says what that costs
+in its own terms: 28 rows across the three regions name them, **not one at an
+instruction boundary** — 22 inside another instruction, 6 at a site no committed
+listing covers. A `12 74 01` read across a `jnz`'s rel8 and the next `mov`'s
+immediate is a site no byte anchor decodes onto (`frame_onto` 0) and no call,
+which is what the "upper bound" caveat on those listing headers means where it
+actually bites.
+
+Seventeen `ff_filler_not_a_function_*` rows land in
+[`ghidra-functions.csv`](../ec/annotations/ghidra-functions.csv) — the `bank0`
+siblings' name, because the verifiable fact is structural rather than a routine
+waiting to be implemented, and because that spelling is what
+`grade_name_basis.py --check` recomputes for `unresolved`. The record-count pins
+move 1,855 → 1,872, `ec/annotations/function-groups.csv` gains the seventeen as
+`ungrouped` (no typed seed, no component — the right answer for an address that
+is not a function), and `ec/ghidra/cross-decoder.csv` is regenerated: all
+seventeen come back `vacuous`, the tool's own 8051 decode finding no `MOV DPTR`
+in any of them. **No Ghidra export runs in this change**, so the seventeen keep
+`FUN_CODE_*` in the index and their listing headers until one does, and the
+anonymous-name counts #458 measures do not move. One citation pair moves with
+it — `common,375E ← common,7DF2`, from a new comment naming the instruction its
+own byte match sits inside — and `call_graph.py`'s `fill-at-citer` veto rejects
+it, so nothing is credited. That veto's rejection count is 0 on `main` and 1
+with these rows; the twenty-one measured on the pre-#570 base tree are gone
+because #558 named `common,0F75`, `0x158E` and `0x1594`, and a named callee is
+not an anonymous one — not because the rule changed.
+
+The band is measured; its cause is not. The same runtime addresses hold live
+code in the PD program — 165 non-`0xFF` bytes across the seventeen spans, seven
+`pd` exports inside the band, and `0x7421` is the `pd-xdata-overlap.md` §3.1
+site — so "reserved region" and "linker artefact" both still fit every number,
+and settling it needs a Keil linker map or a sibling dump this repository does
+not have. The full census, its 30/29/1 split, the byte confirmation read from
+the firmware, the provenance read back instruction by instruction, and the
+cross-program comparison are in
+[`docs/findings/ff-fill-census.md`](findings/ff-fill-census.md), all re-derived
+by `python3 ec/tools/census_ff_fill.py` and pinned by its `--self-test`. Nothing
+here is a behavioural claim: no register `status:` changed, no listing was
+re-read, and no live test ran.
