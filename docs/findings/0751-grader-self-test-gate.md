@@ -111,6 +111,20 @@ third measured on this tree on 2026-09-25.
    #162's already-written four-line wiring the right next step rather than a
    near-term one.
 
+   **(Addendum, 2026-09-25, issue #752 — the follow-up was filed, and the
+   answer is that the counts move.)** The judgement above is now made, against
+   the committed `D091.c` rather than against the old rows: **the counts do not
+   change, only the line numbers do.** The four `census_refs` cells are corrected
+   and `census_count` is untouched on all four, because all 17 occurrences and
+   every bucket total are unmoved — #180's header rewrite added *lines*, and
+   added, removed and reflowed no comparison. `test_the_committed_join_holds` is
+   green, which makes this the first of the two suites in this finding that is.
+   `test_xdata_cluster_names.py` is still red on #528's own `setUpClass`, so #162
+   is still blocked — one suite rather than two. Nothing else in this file is
+   edited: the tool output at the figures above is a record of how the runner
+   printed on 2026-09-25, and it is left as it printed. The write-up is
+   `docs/findings/xdata-0860-census-sites-relined.md`.
+
 3. **The cost is the cheapest in the repository.** Measured on this tree,
    2026-09-25, over three runs each:
 

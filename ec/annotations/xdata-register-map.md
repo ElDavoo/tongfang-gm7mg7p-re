@@ -944,7 +944,7 @@ sits in a call argument becomes `passed-to-call`. The worst-hit addresses were
 row that shows how far off it could get: it read as 0 read / 13 `write` / 3
 `read+write` / 1 `passed-to-call` — a pure write-side dispatch byte — and is
 14 read / 2 `write` / 0 `read+write` / 1 `passed-to-call`, the two stores being
-`bank0/D281.c:18` and `bank0/D289.c:17` and the handoff `bank0/D091.c:69`.
+`bank0/D281.c:19` and `bank0/D289.c:18` and the handoff `bank0/D091.c:84`.
 
 > **CORRECTION (2026-09-24, review of PR #206) to the first version of that
 > paragraph, which read:** "838 raw `==` in the tree, 837 of them in the
@@ -2601,6 +2601,22 @@ re-measurement, so it is left for its own issue rather than folded in here.
   that the tool's `--no-eq-guard` switch grew an `eq_guard and` conjunct in
   front of, and `test_check_site_census.py` wants 14 mapped `0x0860` sites at
   `bank0/D091.c` line numbers the file has moved past.
+
+  > **CORRECTION (2026-09-25, issue #752) to the second of those two:** it is
+  > green. The `xdata-0860-census-sites.csv` rows cited `bank0/D091.c` lines
+  > `44, 48`, `70, 71`, `74, 75, 76` and `82`, and #180's CORRECTION header
+  > rewrite on 2026-09-24 moved them again — by one for the `==` lines and by
+  > two for the dispatch argument — after #281 had corrected the same numbers
+  > in `HAND_CHECKED`'s comment earlier the same day. The four rows now cite
+  > `45, 49`, `71, 72`, `75, 76, 77` and `84`. No `census_count` moved: all 17
+  > occurrences and every bucket total in this section are unchanged, because the
+  > header rewrite added *lines* and added, removed and reflowed no comparison.
+  > The sentence above is left as it was written rather than edited to the new
+  > figure, for the §4a-4d reason, and the set is re-derived by running
+  > `tools/run-tests.sh` rather than by editing the prose. That leaves **one**
+  > suite of the two red, and `docs/findings/runner-red-suite-set.md` is the file
+  > that tracks the set. Nothing about the firmware is established by the
+  > correction; `XDATA_0860` stays `present-untested`.
 - **The 42 boundaries, now that §4.5 measures them.**
   `build_ec_decompile.py --mode rebuild-project` writes the 7 MB database, and
   two branches that both rebuild one cannot merge, so this still wants a branch
