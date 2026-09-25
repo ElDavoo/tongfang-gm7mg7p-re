@@ -581,6 +581,15 @@ audit as unresolvable rather than guessed at. "The scan predicted all 20
 correctly" therefore still rests on the original testing notes; what is
 re-derivable from committed files is the 14.)*
 
+*(One class of correction this section covers has a machine check behind it in
+one place, which is a stronger guarantee than the convention alone: §6a's
+re-derivation is held to its published figures by
+`test_the_census_is_the_one_6a_measured`, and what a re-derivation costs and
+what to do about it is
+[`xdata-census-rederivation-checklist.md`](findings/xdata-census-rederivation-checklist.md).
+The convention is unchanged by it — a superseded figure still stays visible with
+the correction beside it.)*
+
 ### 4e. The Windows write path, traced end to end
 
 §4c says Windows "talks to the EC via `ACPIDriver.sys`'s custom IOCTL, a
@@ -7395,7 +7404,7 @@ leaves **one** suite of the two red"; in
 long as it stood — and the page's second phrasing of the same claim. **The fifth
 is the one the issue's table splits across two rows**, and correcting one copy
 while leaving the next would have reproduced at
-`xdata-register-map.md:2599` exactly the defect the issue is filed about; a
+`xdata-register-map.md:2606` exactly the defect the issue is filed about; a
 reviewer who prefers the issue's own count can drop that one blockquote and
 nothing else moves. The empty set is therefore what
 [`runner-red-suite-set.md`](findings/runner-red-suite-set.md) now tracks.
@@ -7496,3 +7505,32 @@ opened, and no EC or hardware was involved; the sweep bounds the table the way
 `ec/annotations/registers.yaml` bounds a zero-result scan, and the
 `converges_from` retraction at `docs/findings/citation-gap-scan.md:443-446` and
 `citation_gap_scan.py:26-46` both stay exactly as they are.
+
+## 54. The census re-derivation's cost is written down where the procedure is (2026-09-25, issue #820)
+
+The write-up is
+[`xdata-census-rederivation-checklist.md`](findings/xdata-census-rederivation-checklist.md);
+this is the summary. §50 added a test that goes **red because the census was
+re-derived**, and the response to that lived only in a comment inside the test.
+The three places the tree tells a person or an agent to re-derive that census did
+not mention it, so the tripwire was a surprise rather than a known cost. Each of
+them now carries a one-line pointer to the checklist, which is four pointers
+because the issue's third site is two sentences on one page: the export
+instruction in `ec/annotations/xdata-register-map.md`, §4d above, and in
+`ec/annotations/xdata-06c2-06db-timers.md` both §6a's closing paragraph and the
+#279 re-derivation note beside it.
+
+The checklist names the seven figures `test_the_census_is_the_one_6a_measured`
+holds §6a to, and — the half the test cannot do — **the eight more in §6a's table
+and §6b's console block that no test holds and which therefore decay silently**,
+the tool's `BUCKET_TOTALS` five, the `xdata-cluster-names.csv` re-key, and the
+`> 300` moved-ranks floor at its measured 315 with the argument for leaving it
+there. It states the response as the order the work happens, `--check` first,
+and it asserts nothing about what a re-derivation *would* produce: every figure
+in it is today's snapshot, marked as one, the way §6a's own re-derivation note
+is. One of the eight is commonly mis-transcribed — the console block reads
+`1326 rows` / `440 rows`, `1218 / 9320 / 390` and `157 / 858 / 50`, where
+`14,838` is §6b's own table cell rather than a per-program total — so the
+checklist quotes the page and names the trap rather than the wrong figure. No
+measurement moved, no CSV, `registers.yaml`, tool, gate or assertion was edited,
+no re-export was run, and nothing was read off a machine.

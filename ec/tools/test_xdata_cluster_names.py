@@ -310,7 +310,7 @@ class TheGuardOffRegeneration(unittest.TestCase):
         # reason this case exists (#753: the recipe had been re-pointed three
         # times and a `source.replace()` that stopped matching failed
         # silently). §6b prints the derivation of the first three at
-        # `xdata-06c2-06db-timers.md:921`; the 2026-09-25 re-derivation
+        # `xdata-06c2-06db-timers.md:924`; the 2026-09-25 re-derivation
         # recorded beside it is what put them at their current values.
         #
         # `test_xdata_register_map.py::AcceptedWrite` holds the same flag and
@@ -342,6 +342,11 @@ class TheGuardOffRegeneration(unittest.TestCase):
         # The denominators are pinned with the numerators because a
         # re-derivation that changes them has changed what §6a measured, and
         # the response to that is to re-derive §6a, not to move a number here.
+        # That response is written out -- the seven figures below, the eight in
+        # §6a's table and §6b's console block that nothing holds, the order to
+        # run the checks in -- at
+        # docs/findings/xdata-census-rederivation-checklist.md, which is where
+        # the export instruction and §6a itself now point.
         self.assertEqual(
             (sum(1 for a in on if off[a]["write"] != on[a]["write"]), len(on)),
             (210, 1326), "§6a: 'addresses whose write changes: 210 of 1326'")

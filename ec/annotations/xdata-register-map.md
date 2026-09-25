@@ -2594,7 +2594,14 @@ re-measurement, so it is left for its own issue rather than folded in here.
   <scratch>` in its default export-only mode, which rewrites the generated
   `ec/decompiled/**` tree, and that belongs to whoever added the renames rather
   than to a measurement issue: it would sweep every annotation landed since the
-  last export into whatever diff it rode in on. Until that run happens,
+  last export into whatever diff it rode in on. **What that costs the census is
+  written down, with the response to it, in
+  [`../../docs/findings/xdata-census-rederivation-checklist.md`](../../docs/findings/xdata-census-rederivation-checklist.md)**
+  — a re-derivation of this census makes
+  `test_xdata_cluster_names.py::test_the_census_is_the_one_6a_measured` red on
+  purpose, and the response is to re-derive
+  `xdata-06c2-06db-timers.md` §6a, not to move a pinned number.**
+  Until that run happens,
   `--check` is the half that can be gated. Two other suites that read these
   CSVs are red for their own separate reasons and are not in that loop either:
   `test_xdata_cluster_names.py` patches a literal `if stripped.startswith("==")`

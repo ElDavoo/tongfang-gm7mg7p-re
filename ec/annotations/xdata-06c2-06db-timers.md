@@ -808,7 +808,10 @@ and main-EC clusters 388 → 380. What moved is the pair-accessor pass adding
 155 addresses and 874 references, which re-derives every *level* in the table
 and none of the *differences*: the `0x08A8` and `0x0843` rows, the 833, the 210
 and the 0 are the same numbers this tree gives, which is what says the guard is
-the same guard.)*
+the same guard. The next re-derivation has its checklist at
+[`../../docs/findings/xdata-census-rederivation-checklist.md`](../../docs/findings/xdata-census-rederivation-checklist.md),
+which is also where the eight figures this table does *not* have a test holding
+are named, since those decay silently rather than going red.)*
 
 ### 6b. The other defect, now measured: the 42-fold export count
 
@@ -964,6 +967,15 @@ green light, and closing it belongs with whoever regenerates the CSVs.
 > file copied from `ElDavoo/agent-pipeline`, and the correction is to the
 > sentence rather than to the gate. The measurement is transcribed in
 > [`../../docs/findings/xdata-green-set.md`](../../docs/findings/xdata-green-set.md).
+
+**Whoever that is: the census re-derivation has a checklist, and it is
+[`../../docs/findings/xdata-census-rederivation-checklist.md`](../../docs/findings/xdata-census-rederivation-checklist.md).**
+It names the seven figures `test_the_census_is_the_one_6a_measured` holds this
+section to, the eight more in this section's table and §6b's console block that
+no test holds and which therefore decay silently, the tool's `BUCKET_TOTALS`
+five, the `xdata-cluster-names.csv` re-key, and the `> 300` moved-ranks floor at
+its measured 315 — with the order to run them in, `--check` first. The response
+to a trip on the test is to re-derive this section, not to move the number.
 
 **The reproduction this replaces was a no-op, and the reason it was is worth
 keeping.** It copied the tool and patched a *second* `==` guard in, which the
