@@ -76,11 +76,11 @@ $ python3 ec/tools/trace_xdata_refs.py ec/firmware/GMxMGxx_11.800 0x0043 0x200B 
 0x200B: 18 direct MOV DPTR site(s)  bank0=3  bank1=4  common=11
 ```
 
-`0x0043` is written at four sites and the only reads of it anywhere in the
-image are this function's two — `common` `0x0147`, `0x01A4` and `0x02B3` (three
+`0x0043` is written at four direct-`MOV DPTR` sites, and the only reads among
+them are this function's two — `common` `0x0147`, `0x01A4` and `0x02B3` (three
 bare `movx @dptr,a`, each immediately preceded by its own `clr a`) and `0x07F0`.
-**`0x200B` is written at all eighteen and read at none**, which is the more
-interesting of the two: it is a sink. The three sites
+**`0x200B` is written at all eighteen direct-`MOV DPTR` sites and not one of
+them reads**, which is the more interesting of the two. The three sites
 that pair it with `0x07F0` are `0x0153`, `0x01B0` and `0x02BF`, the poll loops
 above. The rest are `common` `0x02CC` and `0x07B7` (seven consecutive
 `movx @dptr,a`), `0x10F2` (four, then `ret`), `0x2AC2` (seven), `0x362A`
@@ -93,6 +93,20 @@ away:
 ```
 python3 ec/tools/trace_xdata_refs.py ec/firmware/GMxMGxx_11.800 0x0043 0x200B --csv
 ```
+
+**Both counts are bounded by what the sweep cannot see.** "Direct `MOV DPTR`"
+*is* the whole method: a read reached through a computed DPTR, or through a
+pointer handed to a helper, leaves no such site. So what is measured here is
+that this scan finds no read of `0x200B`, and only `0x07F0`'s own two reads of
+`0x0043` — "not found by this method", never "no consumer exists", and never
+"it is a sink" as a conclusion about the firmware. That is the bound
+`../ec/annotations/xdata-086x-dispatch.md` puts on the same shape of negative,
+and the computed-DPTR remainder is issue **#110**, whose §6 is the method table.
+The C-level census in `../ec/annotations/xdata-registers.csv` records the same
+direction (`0x200B` read=0, write=16), but it is a census of the same
+decompiled text and shares the blind spot, so it is not independent
+confirmation of absence. Neither of those two counts is a claim about what the
+firmware does with either byte.
 
 **Why this change does not add the rows.** Issue #558 made adding them
 conditional ("if a row is genuinely warranted, change it in the same PR as the
@@ -188,15 +202,17 @@ The rows do not repeat the `.c`'s call-and-return shape, and the `.c` files are
 left as the machine emitted them — correcting a decompile is a separate step
 from naming a function, and the row is where the correction lives.
 
-**Both immediates are bank-0 addresses, and the issue's `#465` does not
-resolve.** A repo-wide search for `465` and for the bank the stub actually
-selects finds no such issue; the method the issue is reaching for — read a BL51
-forwarder's `imm16` in the bank the stub selects, not the bank the stub sits in
-— is **issue #255**, written up at `../ec/annotations/xdata-06c2-06db-timers.md`
-§4 and carried in the `bank1,0x19A8` row, which also records that its
-48-forwarder census was **not** re-measured against bank 0. So both `0xD89F`
-and `0xD96C` are bank-0 addresses even though the stubs are common-area, and
-nothing here re-runs that census.
+**Both immediates are bank-0 addresses; the method is issue #255 and the
+outstanding re-measurement is issue #465.** The issue's `#465` does resolve — it
+is the open issue that tracks exactly the work this leaves outstanding:
+re-measuring the `bank1,0x19A8` row's 48-forwarder census against bank 0, the
+bank the stub actually selects. The *method* the issue is reaching for — read a
+BL51 forwarder's `imm16` in the bank the stub selects, not the bank the stub
+sits in — is **issue #255**, written up at
+`../ec/annotations/xdata-06c2-06db-timers.md` §4 and carried in the
+`bank1,0x19A8` row, and #465 is the follow-up that has still not re-measured
+the census it holds. So both `0xD89F` and `0xD96C` are bank-0 addresses even
+though the stubs are common-area, and nothing here re-runs that census.
 
 **The citation and the byte scan agree, independently.**
 `../ec/annotations/bank-call-targets.csv:24` and `:26` carry the `lcall 0x158E`

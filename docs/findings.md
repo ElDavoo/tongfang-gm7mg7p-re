@@ -5491,11 +5491,11 @@ issue skips entirely), and XDATA `0x9000`-`0x97FF` (**2,048 bytes, not the 152**
 the issue's `0x98` immediate suggests; `0x98` is compared against DPH, not DPL).
 `0F75.c` agrees with the `.asm` on all three. The two stubs' `.c` files show a
 `return;` that no `ret` in either listing backs — the decompiler reading a tail
-`ljmp` as a call — and the rows do not repeat that shape. The issue's `#465`
-does not resolve to anything in the tree; the method it describes is issue
-**#255**, at `../ec/annotations/xdata-06c2-06db-timers.md` §4 and in the
-`bank1,0x19A8` row, so both immediates are **bank-0** addresses and its
-48-forwarder census is still not re-measured against bank 0.
+`ljmp` as a call — and the rows do not repeat that shape. The method the issue
+describes is issue **#255**, at `../ec/annotations/xdata-06c2-06db-timers.md` §4
+and in the `bank1,0x19A8` row, so both immediates are **bank-0** addresses. The
+48-forwarder census that row carries is still not re-measured against bank 0,
+and **#465** is the open issue that tracks exactly that.
 
 **The `0x1592`-`0x1593` question is settled, and the answer is that it was
 never a gap.** They carry no listing line and no index row, which is the shape
@@ -5511,9 +5511,14 @@ write one are committed instead.** The issue made the rows conditional and they
 are declined: `registers.yaml` is a claim about a register, and the preceding
 tranche's own precedent in `call-graph.md` is that naming a helper is not one.
 What a follow-up needs is the measurement, so the write-up carries
-`scan_refs.py` / `trace_xdata_refs.py` output for both — `0x0043` at four sites
-whose only reads anywhere are `0x07F0`'s own two, `0x200B` written at all
-eighteen and read at none — and that is the whole of the input.
+`scan_refs.py` / `trace_xdata_refs.py` output for both — `0x0043` at four
+direct-`MOV DPTR` sites whose only reads among them are `0x07F0`'s own two,
+`0x200B` written at all eighteen and not one of them reading — and that is the
+whole of the input. That is bounded to the method the way
+`../ec/annotations/xdata-086x-dispatch.md` bounds the same shape of negative: a
+read reached through a computed DPTR leaves no direct-`MOV DPTR` site, so these
+are "not found by this method", never "no consumer exists". The gap is issue
+**#110**.
 
 **The export this change regenerates had been one commit stale, and that is
 why the diff is larger than four rows.** `a1d79a89` (#250, PR #504) changed
