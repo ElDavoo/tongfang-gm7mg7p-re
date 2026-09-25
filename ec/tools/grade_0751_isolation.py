@@ -251,6 +251,7 @@ Usage:
 import argparse
 import csv
 import datetime
+import io
 import os
 import re
 import subprocess
@@ -693,27 +694,7 @@ def read_capture(path):
         for row in csv.reader(f):
             if not row or row[0].startswith("#") or row[0] == "ts":
                 continue
-            if row[0].startswith("\ufeff"):
-                # A leading BOM is not retired by the declared encoding, and
-                # the cost of not retiring it is that the refusal names
-                # nothing: `utf-8` reads U+FEFF as a character, it glues to
-                # the first field, the `ts` test above misses, and the header
-                # is graded as a change row and refused on `int("addr", 16)` --
-                # a complaint about a hex literal on a line that is not a
-                # change. Named here instead. Whether the format should ever
-                # *accept* a BOM is a separate question this does not decide.
-                raise ValueError(
-                    f"{path}: starts with a byte-order mark, so its first "
-                    f"field is '\ufeffts' and not 'ts'. A capture is utf-8 with "
-                    f"no BOM; re-save this one without one.")
-            if len(row) < 4:
-                raise ValueError(f"{path}: short row {row!r}")
-            ts, addr, old, new = row[0], row[1], row[2], row[3]
-            if addr == "MARK":
-                marks.append(Window(parse_ts(ts), new, path))
-            else:
-                changes.append(Change(parse_ts(ts), int(addr, 16),
-                                      int(old, 16), int(new, 16), path))
+            take_capture_row(row, path, marks, changes)
     return marks, changes
 
 
@@ -727,9 +708,9 @@ def existing_mark_labels(path):
     strictness. The timestamp is left as the text it was written as, a short
     mark row comes back with an empty label rather than a `ValueError`, and a
     change row is not parsed at all, so a hand-edited or half-written file is
-    still something the caller can name. `read_capture` may raise at `:690`
-    and this must not: refusing to open a capture would be the wrong way to
-    lose the one warning that says what is already in it.
+    still something the caller can name. `read_capture` may raise in
+    `take_capture_row` and this must not: refusing to open a capture would be
+    the wrong way to lose the one warning that says what is already in it.
 
     Nor may the file's *encoding*. The format declares `utf-8` and
     `read_capture` refuses a file that is not it, but a capture on the box
@@ -751,33 +732,35 @@ def existing_mark_labels(path):
     The shape of a mark row is the grader's and lives here rather than in
     `ec_watch.py` for the same reason `parse_mark` does: the prompt loads this
     module by path precisely so no second copy of the rule can drift from the
-    thing that enforces it (#548).
+    thing that enforces it (#548). What this spends on the *rows* is
+    `mark_labels_of`, which `existing_mark_findings` also calls -- over the
+    rows of its own single read, so a mark the notice lists is a mark it read
+    in the same breath (#749).
     """
-    out = []
     with open(path, newline="", encoding="utf-8", errors="replace") as f:
-        for row in csv.reader(f):
-            if not row or row[0].startswith("#") or row[0] == "ts":
-                continue
-            if len(row) > 1 and row[1] == "MARK":
-                out.append((row[0], row[3] if len(row) > 3 else ""))
-    return out
+        return mark_labels_of(csv.reader(f))
 
 
 def refused_capture_rows(path):
     """(accepted, refused) over one capture, by the rules `read_capture` at
-    `:689-696` applies, for the rows its own reader never got to.
+    `take_capture_row` applies, for the rows its own reader never got to.
 
     Not a second reader and not a second rule. `read_capture` stops at the
     first row it cannot grade, so its exception names one row and the rest of
     a file that holds more than one bad row would be a fix-one, re-run,
-    meet-the-next loop. The skip and shape checks below are its, re-applied
-    here so the rows it never reached can be named with the reason it would
-    have refused each. What holds them to it is
+    meet-the-next loop. The checks in `partition_capture_rows` are its,
+    re-applied over the same rows so the ones it never reached can be named
+    with the reason it would have refused each -- and it is that re-application,
+    not the first reason, that the two readers share a body over: the first
+    reason is `read_capture`'s own exception, which
+    `existing_mark_findings` puts there rather than re-deriving it. What holds
+    the re-applied half is
     `ExistingMarkLabelTests.test_the_refusal_reasons_are_read_captures_own`,
-    which runs this over every fixture and asserts the first reason is the
-    exception `read_capture` itself raised, verbatim. Tighten `:690` or
-    `parse_ts` and that fails rather than the notice quietly disagreeing with
-    the grading.
+    which runs this over every fixture and asserts that first reason is the
+    exception `read_capture` itself raised, verbatim. Tighten `take_capture_row`
+    or `parse_ts` and that fails rather than the notice quietly disagreeing
+    with the grading; the same test holds the ordering the rest is spelled in
+    and the wording each refused row is named with.
 
     The order of the checks is `read_capture`'s, and it is load-bearing. It
     reads the timestamp before a change row's hex -- Python evaluates the
@@ -796,34 +779,169 @@ def refused_capture_rows(path):
     change row that parses is in neither list -- it is not a mark, and the
     notice is about the marks in a file and the rows that stop the grader
     reading it.
+
+    The path here is the entry point, and the only part of this that opens
+    anything: `existing_mark_findings` reads once and hands its own rows
+    straight to `partition_capture_rows` (#749), so what is left of this is
+    the open and a delegate, kept for a caller that holds a path rather than
+    rows.
+    """
+    with open(path, newline="", encoding="utf-8", errors="replace") as f:
+        return partition_capture_rows(csv.reader(f), path)
+
+
+def take_capture_row(row, path, marks, changes):
+    """`read_capture`'s one row, as its own loop body, appending to the two
+    lists it would have appended to.
+
+    Moved out rather than spelled twice because `existing_mark_findings` now
+    runs the strict rules over rows it read itself (#749): a second copy of
+    this body would be a second set of rules the notice could apply, and the
+    whole of its value is that its verdict is the reader's. Same order, same
+    exceptions, same messages -- it is the body, in a function of its own.
+
+    The order inside the `Change(...)` call is load-bearing and is left exactly
+    as it was: Python evaluates its arguments left to right, so the timestamp
+    is read before the hex and a change row bad in both ways is refused for the
+    timestamp. `refused_capture_rows` spells that order again to *name* the
+    rows rather than stop at them, and
+    `test_the_refusal_reasons_are_read_captures_own` holds the two together.
+
+    The BOM check is in here rather than in the loops that call this, for the
+    same reason: both of them run this body, so a file carrying one gets the
+    refusal that names it in either path rather than a complaint about a hex
+    literal from only one of them.
+    """
+    if row[0].startswith("﻿"):
+        # A leading BOM is not retired by the declared encoding, and
+        # the cost of not retiring it is that the refusal names
+        # nothing: `utf-8` reads U+FEFF as a character, it glues to
+        # the first field, the caller's `ts` test misses, and the header
+        # is graded as a change row and refused on `int("addr", 16)` --
+        # a complaint about a hex literal on a line that is not a
+        # change. Named here instead. Whether the format should ever
+        # *accept* a BOM is a separate question this does not decide.
+        raise ValueError(
+            f"{path}: starts with a byte-order mark, so its first "
+            f"field is '﻿ts' and not 'ts'. A capture is utf-8 with "
+            f"no BOM; re-save this one without one.")
+    if len(row) < 4:
+        raise ValueError(f"{path}: short row {row!r}")
+    ts, addr, old, new = row[0], row[1], row[2], row[3]
+    if addr == "MARK":
+        marks.append(Window(parse_ts(ts), new, path))
+    else:
+        changes.append(Change(parse_ts(ts), int(addr, 16),
+                              int(old, 16), int(new, 16), path))
+
+
+def mark_labels_of(rows):
+    """(ts, label) for the mark rows among `rows`, as `(text, str)`.
+
+    `existing_mark_labels`' extraction, over rows rather than a path, so the
+    notice lists the labels of the rows it read in its one open and the
+    preflight lists the labels of the rows it read in its own (#749). The skip
+    rule is still spelled here rather than delegated to `read_capture`, which
+    is the duplication #548 left and this does not remove;
+    `test_the_skip_rule_is_read_captures_and_only_marks_come_back` plus
+    `measure_mark_provenance.py --self-test` are what hold the two to it.
+    """
+    out = []
+    for row in rows:
+        if not row or row[0].startswith("#") or row[0] == "ts":
+            continue
+        if len(row) > 1 and row[1] == "MARK":
+            out.append((row[0], row[3] if len(row) > 3 else ""))
+    return out
+
+
+def partition_capture_rows(rows, path):
+    """(accepted, refused) over already-read `rows`, by the rules
+    `take_capture_row` applies, for the ones `read_capture` never got to.
+
+    Takes rows rather than a path so `existing_mark_findings` can partition the
+    rows of its single read beside the marks it placed from the same rows --
+    the two lists the notice prints cannot then be describing two different
+    files, because there is only one file in this function (#749). Opening
+    them is `refused_capture_rows`' job, leniently, for the reason that
+    function gives.
     """
     accepted, refused = [], []
-    with open(path, newline="", encoding="utf-8", errors="replace") as f:
-        for row in csv.reader(f):
-            if not row or row[0].startswith("#") or row[0] == "ts":
-                continue
-            if len(row) < 4:
-                refused.append((row, f"short row: {len(row)} field(s), "
-                                      "read_capture needs four"))
-                continue
-            ts, addr, old, new = row[0], row[1], row[2], row[3]
+    for row in rows:
+        if not row or row[0].startswith("#") or row[0] == "ts":
+            continue
+        if len(row) < 4:
+            refused.append((row, f"short row: {len(row)} field(s), "
+                                  "read_capture needs four"))
+            continue
+        ts, addr, old, new = row[0], row[1], row[2], row[3]
+        try:
+            parse_ts(ts)
+        except ValueError as e:
+            refused.append((row, "read_capture cannot read this "
+                                 f"timestamp: {e}"))
+            continue
+        if addr == "MARK":
+            accepted.append((ts, new))
+            continue
+        for field, text in (("address", addr), ("old", old), ("new", new)):
             try:
-                parse_ts(ts)
+                int(text, 16)
             except ValueError as e:
-                refused.append((row, "read_capture cannot read this "
-                                     f"timestamp: {e}"))
-                continue
-            if addr == "MARK":
-                accepted.append((ts, new))
-                continue
-            for field, text in (("address", addr), ("old", old), ("new", new)):
-                try:
-                    int(text, 16)
-                except ValueError as e:
-                    refused.append((row, f"the {field} of a change row is not "
-                                         f"hex: {e}"))
-                    break
+                refused.append((row, f"the {field} of a change row is not "
+                                     f"hex: {e}"))
+                break
     return accepted, refused
+
+
+def capture_snapshot(path):
+    """(rows, decode_failure) for one capture, from one `open()` and one read.
+
+    The bytes are the moment, which is the whole of it. §3 runs three watchers
+    on one `--csv` and `CsvSink.row` flushes every row, so a capture is a file
+    with a second writer on it by design -- and two reads of it are two
+    moments, microseconds apart or not. Whatever landed between them is a row
+    one of the two answers has and the other does not.
+
+    `open(path, "rb")` and one `read()`, so there is no second open to be a
+    second moment. The decode is then the format's, in `capture_lines`: the
+    same `utf-8` `read_capture` declares (#748), over the same bytes, so the
+    refusal this returns is the refusal `read_capture` would have raised over
+    them -- and it is raised before any row is looked at, which is what makes
+    it a refusal of the file rather than of a row.
+
+    On a file that decodes, `decode_failure` is None and `rows` is every row
+    `csv.reader` reads. On one that does not, `decode_failure` is the
+    `UnicodeDecodeError` the decode raised and `rows` is the *same bytes* read
+    leniently -- for the listing only, since a strict verdict over a file this
+    cannot decode is a refusal of the file, not a partial one.
+    """
+    with open(path, "rb") as f:
+        raw = f.read()
+    try:
+        return list(csv.reader(capture_lines(raw))), None
+    except UnicodeDecodeError as e:
+        return list(csv.reader(capture_lines(raw, errors="replace"))), e
+
+
+def capture_lines(raw, **errors):
+    """`raw` as the lines `open(path, newline="", encoding="utf-8")` would
+    have iterated.
+
+    A `TextIOWrapper` over the buffer rather than `raw.decode()` and a split,
+    and the wrapper is the point rather than the convenience: the line
+    splitting is part of the contract (`newline=""` is universal newlines with
+    the terminators kept, so `\\r`, `\\n` and `\\r\\n` all end a line, and
+    `str.splitlines` would break on a dozen characters that are perfectly
+    legal inside a label), and declaring the *format's* codec here rather than
+    inheriting this interpreter's is what makes a `UnicodeDecodeError` from
+    here the one `read_capture` would have raised over the same bytes (#748)
+    rather than one this tool decided to raise -- and the one it raises on
+    every box rather than on the ones whose default happens to read the file.
+    """
+    with io.TextIOWrapper(io.BytesIO(raw), newline="",
+                          encoding="utf-8", **errors) as text:
+        return text.readlines()
 
 
 def existing_mark_findings(path):
@@ -836,9 +954,26 @@ def existing_mark_findings(path):
     `ec_watch.py` prints at startup is only worth the operator's attention if
     the reason it gives is the enforcing reader's. A copy of `read_capture`'s
     rules spelled into the prompt would be right until the reader changed, and
-    the operator would have fixed a row the grading accepts. So
-    `read_capture` is run first and its verdict is the verdict; the per-row
-    conditions only name the rows it never got to.
+    the operator would have fixed a row the grading accepts. So the strict
+    rules are run first and their verdict is the verdict; the per-row
+    conditions only name the rows the strict pass never got to.
+
+    **One `open()`, one read, one row list, and all three lists out of it**
+    (#749). This used to be two opens of a file three watchers are appending
+    to by design, microseconds apart, and the two sections of one notice could
+    describe two different files: a mark named in the placement section that
+    the section above it does not list, or listed as accepted although the
+    placement pass never saw it. `capture_snapshot` reads the bytes once and
+    the strict rules, the label extraction and the partition all run over the
+    rows of that one buffer.
+
+    What that does **not** fix is the file moving. A mark that lands after
+    this call is still graded, by the whole-file grading, which is what the
+    closing paragraph below already tells the operator; and this is one
+    `open()`, not one reader -- the skip rule (`#`, blank, `ts` header) is
+    still spelled once per reader, in `read_capture` and again in
+    `mark_labels_of`, as it was in #548. `ExistingMarkLabelTests` counts the
+    opens, so the claim is a test rather than a promise.
 
     Three lists, and each answers one question:
 
@@ -846,13 +981,14 @@ def existing_mark_findings(path):
       with the timestamp *as written*, which is #548's deliberate choice and
       the display an operator already reads. On a file `read_capture` accepts
       this is exactly `existing_mark_labels`, called rather than written out
-      again, so the success path grows no second label-extraction rule.
+      again -- `mark_labels_of` over the same rows -- so the success path
+      grows no second label-extraction rule.
     - `refused` -- `(row, reason)` per row the strict reader raises on: a
-      short row (`:690`), a timestamp `parse_ts` cannot read, a change row
-      whose hex does not parse. The first reason is `read_capture`'s own
-      exception text verbatim, because that reader stops at the first bad row
-      and its message is the error the grading will raise. `row` is None for a
-      refusal that is the file's rather than one row's -- the encoding, below.
+      short row, a timestamp `parse_ts` cannot read, a change row whose hex
+      does not parse. The first reason is `read_capture`'s own exception text
+      verbatim, because that reader stops at the first bad row and its message
+      is the error the grading will raise. `row` is None for a refusal that is
+      the file's rather than one row's -- the encoding, below.
     - `unplaceable` -- `(ts, label, message)` for the marks `unplaceable_marks`
       reports, with *its* sentence, so the operator reads the same words the
       grading will print rather than a paraphrase of them.
@@ -874,14 +1010,18 @@ def existing_mark_findings(path):
     rather than of the file, and it is why a byte can refuse a whole capture
     while a hand-edited timestamp refuses only a row. `read_capture` declares
     `utf-8`, so a capture in anything else is not this format's and is
-    refused whole: it is not decoded per row, because a per-row decode would
-    make the meaning of the file a property of this reader again, and would
-    let `f.encoding` and the bytes on disk disagree -- which is the failure
-    the declaration removes. The refusal names the codec the format declares
-    and the remedy, so an operator holding a file from another box is told
-    what to do rather than shown a `UnicodeDecodeError` and left to guess.
-    Reading `f.encoding` off the `open` still beats re-deriving which codec
-    applies, and now it reads back the declared one by construction.
+    refused whole rather than decoded row by row -- a per-row decode would
+    make the meaning of the file a property of this reader again, which is
+    the failure the declaration removes. What the refusal below names is the
+    `UnicodeDecodeError`'s *own* `encoding`: out of the decode that failed,
+    so it cannot name a codec other than the one the format really used, and
+    named from the one buffer this read rather than from a second `open()` of
+    a moving file. It names the remedy with it, so an operator holding a file
+    from another box is told what to do rather than shown a decode error and
+    left to guess. The verdict reported is the one the format defines, so it
+    is the same on every interpreter -- and the notice reports the verdict it
+    observed rather than predicting one, which is the half of #748's
+    correction that does not depend on what the codec turns out to be.
 
     `build_windows` is deliberately not on the label path: it indexes
     `windows[0]`, so it needs a mark list and the change rows, and neither is
@@ -891,42 +1031,48 @@ def existing_mark_findings(path):
     §3's block-1 start quiet.
     """
     accepted, refused, unplaceable = [], [], []
-    try:
-        marks, _ = read_capture(path)
-    except UnicodeDecodeError as e:
-        # A refusal of the file rather than of a row: iteration is lazy, so
-        # this comes out of the loop and there is no row to name it by. The
-        # rows are still reported, through the lenient reader, with U+FFFD
-        # where the byte was -- which is how the operator finds the byte that
-        # stopped it. `f.encoding` rather than a re-derivation of which codec
-        # the format declares, because it is the answer from the same call
-        # `read_capture` makes and so cannot disagree with it.
-        with open(path, newline="", encoding="utf-8", errors="replace") as f:
-            encoding = f.encoding
+    rows, decode_failure = capture_snapshot(path)
+    if decode_failure is not None:
+        # A refusal of the file rather than of a row, and on firmer ground
+        # than the lazy loop this replaces: the strict decode is over the
+        # whole buffer, so a byte it cannot read means no row list came back
+        # at all rather than one that stopped short of a row. The rows are
+        # still named -- from those same bytes, read leniently, with U+FFFD
+        # where the byte was, which is how the operator finds the byte that
+        # stopped it. The codec is the exception's own `encoding` rather than
+        # a re-derivation of what the format declares, so it is the answer
+        # from the decode that failed and cannot disagree with it.
         refused.append((None, "the grader's reader cannot decode a byte of "
-                              f"this file in the {encoding} a capture is "
-                              f"defined to be, and raises before it reaches a "
-                              f"row: {e}. A capture is utf-8; this one is "
-                              f"written in something else. Re-save it as utf-8, "
-                              f"or re-run the capture with a writer that "
-                              f"declares the codec."))
-        return existing_mark_labels(path), refused, unplaceable
+                              f"this file in the {decode_failure.encoding} a "
+                              f"capture is defined to be, and raises before it "
+                              f"reaches a row: {decode_failure}. A capture is "
+                              f"utf-8; this one is written in something else. "
+                              f"Re-save it as utf-8, or re-run the capture "
+                              f"with a writer that declares the codec."))
+        return mark_labels_of(rows), refused, unplaceable
+    marks, changes = [], []
+    try:
+        for row in rows:
+            if not row or row[0].startswith("#") or row[0] == "ts":
+                continue
+            take_capture_row(row, path, marks, changes)
     except ValueError as e:
-        accepted, refused = refused_capture_rows(path)
+        accepted, refused = partition_capture_rows(rows, path)
         if refused:
             refused[0] = (refused[0][0], str(e))
         else:
-            # The partition named no row, which `read_capture`'s own rules
-            # make a contradiction: it raised on a row this just found none
-            # of, so the file moved between the two reads. Reported as a
-            # refusal of the file rather than dropped -- a refusal this
-            # function could not tie to a row is still one that happened, and
-            # the anti-drift test holds the two readers together precisely so
-            # that arriving here means the file changed rather than the rules
-            # having drifted.
+            # The partition named no row, which over one row list is a
+            # contradiction rather than a file that moved: the strict pass
+            # raised on a row this just decided was fine, so one of the two
+            # is wrong about what grades. Reported as a refusal of the file
+            # rather than dropped -- a refusal this function could not tie to
+            # a row is still one that happened, and the anti-drift test holds
+            # the two readers together precisely so that arriving here means
+            # the rules have drifted rather than the file having changed
+            # under a second read.
             refused.append((None, str(e)))
     else:
-        accepted = existing_mark_labels(path)
+        accepted = mark_labels_of(rows)
         _, unplaced = assign_blocks(coalesce_marks(marks))
         for window, said in unplaceable_marks(unplaced).items():
             unplaceable += [(m.ts.isoformat(sep=" "), m.label, message)

@@ -477,11 +477,20 @@ CITATIONS = [
      'self.row([now() if ts is None else ts, "MARK", "", label])',
      "writer: MarkCsv.mark"),
     # -- readers that index the row -----------------------------------------
-    ("ec/tools/grade_0751_isolation.py", 692, 'if addr == "MARK":',
-     "reader: read_capture recognising the row"),
-    ("ec/tools/grade_0751_isolation.py", 734,
+    # The grader's pins are the ones #749 retargets, and #749 was rebased on
+    # #748, which declared utf-8 at the readers and added a leading-BOM check
+    # to the row body -- so every line below is re-measured on the merged tree
+    # rather than carried over from either tip. The pins in the other files are
+    # #748's to move and are left where it left them (#748 records that red).
+    ("ec/tools/grade_0751_isolation.py", 831, 'if addr == "MARK":',
+     "reader: take_capture_row recognising the row, read_capture's own body"),
+    ("ec/tools/grade_0751_isolation.py", 884, 'if addr == "MARK":',
+     "reader: the partition naming the mark rows it accepted, a mark row is "
+     "never hex-read"),
+    ("ec/tools/grade_0751_isolation.py", 853,
      'if len(row) > 1 and row[1] == "MARK":',
-     "reader: existing_mark_labels recognising the row"),
+     "reader: mark_labels_of recognising the row, existing_mark_labels' own "
+     "extraction"),
     ("ec/tools/grade_timer_sweep.py", 134, 'if r[1] == "MARK":',
      "reader: grade_timer_sweep.load recognising the row"),
     ("windows/tools/test_manual_fan_ctrl_probe.py", 508,
@@ -497,33 +506,33 @@ CITATIONS = [
      "the same in the other suite, so the blind side is the tree's and not "
      "one file's"),
     # -- the lines the read-side claim rests on -----------------------------
-    ("ec/tools/grade_0751_isolation.py", 678, "def read_capture(path):",
+    ("ec/tools/grade_0751_isolation.py", 679, "def read_capture(path):",
      "read_capture"),
-    ("ec/tools/grade_0751_isolation.py", 687,
+    ("ec/tools/grade_0751_isolation.py", 695,
      'if not row or row[0].startswith("#") or row[0] == "ts":',
      "read_capture's skip rule, where a `# provenance` row goes"),
-    ("ec/tools/grade_0751_isolation.py", 689, "if len(row) < 4:",
+    ("ec/tools/grade_0751_isolation.py", 828, "if len(row) < 4:",
      "read_capture's only length test: a fifth column passes it"),
-    ("ec/tools/grade_0751_isolation.py", 691,
+    ("ec/tools/grade_0751_isolation.py", 830,
      "ts, addr, old, new = row[0], row[1], row[2], row[3]",
      "explicit indexing, not an unpack of row -- the correction to the issue"),
-    ("ec/tools/grade_0751_isolation.py", 700,
+    ("ec/tools/grade_0751_isolation.py", 701,
      "def existing_mark_labels(path):", "existing_mark_labels"),
-    ("ec/tools/grade_0751_isolation.py", 732,
+    ("ec/tools/grade_0751_isolation.py", 871,
      'if not row or row[0].startswith("#") or row[0] == "ts":',
-     "existing_mark_labels takes read_capture's skip rule"),
-    ("ec/tools/grade_0751_isolation.py", 735,
+     "mark_labels_of takes read_capture's skip rule"),
+    ("ec/tools/grade_0751_isolation.py", 854,
      'out.append((row[0], row[3] if len(row) > 3 else ""))',
      "the (ts, label) pair: no position, and no fifth column either"),
-    ("ec/tools/grade_0751_isolation.py", 739, "def read_early_exits(path):",
+    ("ec/tools/grade_0751_isolation.py", 1083, "def read_early_exits(path):",
      "read_early_exits"),
-    ("ec/tools/grade_0751_isolation.py", 760,
+    ("ec/tools/grade_0751_isolation.py", 1110,
      "if not row or not row[0].startswith(EARLY_EXIT_TAG):",
      "the phrase test: a mark's row[0] is a timestamp"),
-    ("ec/tools/grade_0751_isolation.py", 427,
+    ("ec/tools/grade_0751_isolation.py", 428,
      'EARLY_EXIT_TAG = "# the run ended early:"',
      "the one machine phrase the `#` namespace spends in this family"),
-    ("ec/tools/grade_0751_isolation.py", 2347,
+    ("ec/tools/grade_0751_isolation.py", 2698,
      'read = f"{path}: {len(m)} mark(s), {len(c)} change row(s)"',
      "the per-capture census line, which counts rather than spells"),
     ("ec/tools/grade_gpu_door.py", 421, "m, c = fan.read_capture(path)",
@@ -598,7 +607,7 @@ def check_citations(scan: set) -> list:
                             "moved or the claim is wrong")
         if ROW_LITERAL in want:
             named.add((path, lineno))
-    for path, lineno, _ in sorted(scan - named):
+    for path, lineno in sorted(scan - named):
         problems.append(f"{path}:{lineno}: a `ts,MARK,,label` site no citation "
                         "names, so the page's census is a hand-typed list and "
                         "not this scan")
