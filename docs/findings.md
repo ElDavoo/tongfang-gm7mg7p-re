@@ -7190,3 +7190,66 @@ out of date, and is invisible to every test by design, because the table check
 compares the *set* and never the counts; it is byte-untouched here. No register
 `status:` moved, no `.asm` or `.c` was hand-edited, no gate was wired, and
 nothing was read off a machine.
+
+## 47. The testdata index's third column is now held to the fixtures it names (2026-09-25, issue #747)
+
+The write-up is
+[`testdata-third-column-claims.md`](findings/testdata-third-column-claims.md);
+this is the summary. §41's check reads the index's first column, its `Feeds`
+column and the nested tables, and §45 added the two it was missing — but the
+**third** column, the description, is the one a reader opens the index to read
+and the one that names the addresses each fixture is supposed to contain, and
+both of the index's hand-repairs (#502, #720) were to that column. Every check
+on the index was green through both. **Not claimed: that this would have
+caught either** — what those two repairs changed is in the issues, not in the
+tree, and neither has been read back as a diff this tool could have been run
+over.
+
+`ec/tools/check_testdata_row_claims.py` is a **new file**, not a mode on
+`check_capture_claims.py`, for the reason that tool's docstring records, and
+it imports the same `units()` so issue #273's fix to the splitting logic lands
+once for all three. The rule is the sibling's invariant aimed at a different
+prose/tree pair: **an address a row's third column attributes to its fixture
+has to occur in a file that row names** — searched across the whole set the
+first column resolves to, never per file, because `0x075B` is in one of
+`0751-isolation-run-staged/`'s three CSVs and in neither of the other two
+while the row names the directory.
+
+**The census came first, and it is the deliverable either way.** Over all 27
+rows: 17 carry at least one `0xNNNN` literal, 54 in all, and they split
+**28 resolved / 26 unresolved** — 14 rows, 14 distinct addresses, 28 claims,
+all present in the fixture their row names today. The 26 are a **closed list
+of six shapes**, each with a case: a capture or window bound (16), a denial
+(3), another capture's address (2), a dump-command argument (2), a watched-set
+span (2), and a firmware code address (1). That sixth one is the census's own
+find rather than the issue's, and it is why the code filter is
+`ghidra-functions.csv` **minus** `xdata-registers.csv` rather than either
+alone: on this firmware `0x07D0` is both `FUN_CODE_07d0` and a door byte, and
+it is a claim in two rows.
+
+**Three readings were measured rather than assumed, and each one is a rule.**
+No `MOVEMENT` predicate: 18 of the 54 literals sit in a sentence carrying none
+of its verbs and most are genuine claims, and the width is four hex digits
+because `0x50 -> 0x28` and `0xA0`/`0x10` are the values the dumps and mark
+labels carry. And a denial is read in **two directions**, because the two
+committed denials are written in opposite orders and a proximity window wide
+enough to reach the trailing one also reaches forward over row 9's `0x0746` —
+a claim that is true today. The tool is green on the committed tree under the
+final rule; with the six shapes removed it is red on **4 rows with 5 missing
+literals** and calls **54 of the 54** literals claims. The six rules overlap —
+four literals are caught by two of them at once — so a single shape's drop is
+not additive and no per-shape counts add up to that run.
+
+**38 cases, nine of which are refusals**: every rule is dropped in turn and
+each is asserted to make the run *check more*, against the run as shipped
+rather than against a figure, so an added fixture row breaks none of them.
+Four of the six shapes cannot turn the run red by being dropped — the literals
+they exempt genuinely are in the files their rows name — and the suite says so
+in its own class docstring rather than leaving it to be found. The committed
+tree's tallies are asserted as **non-emptiness**, never as a floor. The gate
+arm is prepared at `docs/ci/agent-gates-testdata-row-claims.patch`, a patch of
+its own that composes with item 9's in any order (item 10), and **until a
+human lands it no commit runs the check**. This is tooling hygiene: two
+committed annotation CSVs, a markdown file and a directory of fixtures, no
+capture opened, no EC, no hardware, and no claim that any fixture constructs
+what its row says.
