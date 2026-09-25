@@ -338,6 +338,21 @@ class RefusedLabelTests(unittest.TestCase):
         tools.mkdir(parents=True)
         return tools / 'ec_watch.py'
 
+    def shallow_tool(self):
+        """`ec_watch.py` two levels below a root, the depth it is staged at.
+
+        A bare tools directory copied onto a Windows box sits where
+        `C:\\tools\\ec_watch.py` does: too shallow to have a checkout two
+        parents up, so `parents[2]` is off the drive and the lookup has to
+        offer the beside-the-tool copy alone rather than raise IndexError.
+        The path is never created -- what is under test is that the lookup
+        survives the depth, and a real directory two levels below a root is
+        not something a test can stage portably (and this tool is
+        Windows-facing). The candidates it derives are compared after
+        `resolve()`, the way `grader_candidates` reads `__file__`.
+        """
+        return Path('/tools/ec_watch.py')
+
     def test_a_refused_label_writes_no_row_and_leaves_the_real_mark_alone(self):
         # The recognised leading word with no readable value behind it: what a
         # mistyped `=`, or a value that never got typed, leaves, and the shape
@@ -537,6 +552,71 @@ class RefusedLabelTests(unittest.TestCase):
                         ec_watch.load_label_vocab(RefusingParser(), '0751',
                                                  str(named))
                     self.assertIn(str(named), str(caught.exception))
+
+    def test_a_tool_two_levels_down_offers_the_grader_beside_it_and_no_checkout(self):
+        # Candidate 3 is the feature, and at the depths a staged tools
+        # directory actually meets it was unreachable: `grader_candidates`
+        # indexed `parents[2]` and raised before the beside-the-tool copy --
+        # the one candidate those runs have -- was ever offered. A path that
+        # cannot be named is not a place a checkout can be, so at this depth
+        # the beside-the-tool copy is offered alone, and that it is offered is
+        # what `test_a_grader_beside_the_tool_is_found` then loads.
+        with patch.object(ec_watch, '__file__', str(self.shallow_tool())):
+            candidates = ec_watch.grader_candidates()
+        self.assertEqual(
+            candidates,
+            [self.shallow_tool().resolve()
+             .with_name('grade_0751_isolation.py')])
+
+    def test_a_tool_two_levels_down_with_nothing_beside_it_is_refused_by_name(self):
+        # No IndexError, and a refusal that names the one place it looked
+        # rather than a traceback. Through main(), so the whole startup path
+        # is what refuses.
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / 'capture.csv'
+            err = io.StringIO()
+            with patch.object(ec_watch, '__file__', str(self.shallow_tool())), \
+                 contextlib.redirect_stderr(err):
+                with self.assertRaises(SystemExit) as caught:
+                    ec_watch.main(['--start', '0x0700', '--len', '0x4',
+                                   '--interval', '0', '--csv', str(out),
+                                   '--mark', *self.VOCAB])
+            message = err.getvalue()
+        self.assertNotEqual(caught.exception.code, 0)
+        # The beside-the-tool copy is the only place looked at that depth, and
+        # it is named whether or not it is there -- here it is not.
+        beside = self.shallow_tool().resolve() \
+            .with_name('grade_0751_isolation.py')
+        self.assertIn(str(beside), message)
+
+    def test_a_grader_that_is_there_and_will_not_load_is_refused_by_name(self):
+        # A `--grader` path to a file importlib has no loader for (.txt and
+        # friends) is there but unusable, and `module_from_spec(None)` is an
+        # AttributeError traceback that names nothing an operator can act on.
+        # New surface, because `--grader` is this PR's own flag and takes a
+        # path the operator typed. The refusal has to be the documented one:
+        # that path, by name.
+        with tempfile.TemporaryDirectory() as tmp:
+            notes = Path(tmp) / 'notes.txt'
+            notes.write_text('these are not a grader\n')
+            with self.assertRaises(Refusal) as caught:
+                ec_watch.load_label_vocab(RefusingParser(), '0751', str(notes))
+        message = str(caught.exception)
+        self.assertIn(str(notes), message)
+        self.assertIn('will not load', message)
+
+    def test_a_grader_that_raises_at_load_is_refused_by_name(self):
+        # The same refusal for a module that is importable but blows up while
+        # it runs. The caught set is any load failure, so a RuntimeError at
+        # module level is reported against the path rather than raised.
+        with tempfile.TemporaryDirectory() as tmp:
+            boom = Path(tmp) / 'boom.py'
+            boom.write_text("raise RuntimeError('boom')\n")
+            with self.assertRaises(Refusal) as caught:
+                ec_watch.load_label_vocab(RefusingParser(), '0751', str(boom))
+        message = str(caught.exception)
+        self.assertIn(str(boom), message)
+        self.assertIn('will not load', message)
 
     def test_the_grader_flag_needs_a_vocabulary(self):
         # It is a modifier of --label-vocab, so a grader path beside a run that

@@ -143,8 +143,20 @@ def grader_candidates(grader_path=None):
     if grader_path:
         return [Path(grader_path)]
     here = Path(__file__).resolve()
-    return [here.parents[2] / "ec/tools" / "grade_0751_isolation.py",
-            here.with_name("grade_0751_isolation.py")]
+    # The checkout copy is `here.parents[2]`, which a tools directory staged
+    # onto a Windows box can be too shallow to have: `C:\tools\ec_watch.py` is
+    # two levels down and `parents[2]` is off the drive, so indexing it there
+    # is an IndexError rather than a candidate. A path that cannot be named is
+    # not a place to look -- there is no checkout above a drive root -- so it
+    # is offered only when the path is deep enough to have one. The
+    # beside-the-tool copy below is what reaches that depth, and offering it
+    # unconditionally is the whole of candidate 3.
+    candidates = []
+    if len(here.parents) > 2:
+        candidates.append(here.parents[2] / "ec/tools"
+                          / "grade_0751_isolation.py")
+    candidates.append(here.with_name("grade_0751_isolation.py"))
+    return candidates
 
 
 def load_label_vocab(ap, name, grader_path=None):
@@ -192,9 +204,13 @@ def load_label_vocab(ap, name, grader_path=None):
         try:
             spec = importlib.util.spec_from_file_location(
                 "grade_0751_isolation", path)
+            if spec is None or spec.loader is None:
+                # No loader for this suffix (a .txt and friends): there, and
+                # there is no module to run. The same one refusal.
+                raise ImportError("importlib has no loader for this file")
             grader = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(grader)
-        except (OSError, ImportError, SyntaxError) as e:
+        except Exception as e:
             ap.error(f"--label-vocab {name} needs grade_0751_isolation.py at "
                      f"{path}, and it is there but will not load: {e}")
         return (lambda label: grader.parse_mark(label)[0] is not None,
