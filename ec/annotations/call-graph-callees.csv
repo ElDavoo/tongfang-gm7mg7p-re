@@ -1,91 +1,60 @@
 scope,addr,name,annotated,also_in,inbound,lcall,ljmp,ajmp,acall,callers,named_callers,cited_by,citing
-common,07D0,FUN_CODE_07d0,no,bank1,2,2,0,0,0,2,2,27,common:018C common:029B pd:10BC pd:347B pd:34A5 pd:34D6 pd:34FB pd:357E pd:37AE pd:39AC pd:4C20 pd:8576 pd:8716 pd:98A1 pd:98A4 pd:A571 pd:A5B3 pd:A678 pd:A681 pd:ACE1 pd:AD3C pd:C2FA pd:C398 pd:D085 pd:DBD9 pd:E543 pd:F739
-common,0A5A,FUN_CODE_0a5a,no,bank1,2,1,1,0,0,2,0,24,bank0:53AF bank0:8F20 bank0:B40C bank0:B9AE bank0:BDD2 bank0:D6F4 bank0:E7CA bank0:F078 bank0:F079 bank0:F07E bank0:F07F bank0:F080 bank0:F081 bank0:F083 bank0:F089 bank0:F08B bank0:F095 bank0:F09F bank0:F0A3 bank0:F0C4 bank0:F0C8 bank0:F0CA bank0:F0ED bank0:F0F3
-common,07D6,FUN_CODE_07d6,no,bank1,1,1,0,0,0,1,1,16,common:012F pd:34D6 pd:36CB pd:805E pd:88BE pd:ACCE pd:B2CD pd:BECB pd:CFA0 pd:D0F0 pd:EF59 pd:EF79 pd:F035 pd:F247 pd:F440 pd:F4CD
-pd,06EA,FUN_CODE_06ea,no,,2,2,0,0,0,2,2,8,bank0:CA53 bank0:CDE4 bank0:CE37 bank0:CEA2 bank0:CEE9 bank0:D045 pd:88BE pd:D83D
-common,0F75,FUN_CODE_0f75,no,bank1,1,1,0,0,0,1,1,8,bank1:F512 bank1:F70D bank1:F727 bank1:F73E bank1:F902 bank1:FF17 bank1:FF63 common:0070
-common,158E,FUN_CODE_158e,no,bank1,1,1,0,0,0,1,1,8,bank1:F512 bank1:F70D bank1:F727 bank1:F73E bank1:F902 bank1:FF17 bank1:FF63 common:0070
-common,1594,FUN_CODE_1594,no,bank1,1,1,0,0,0,1,1,8,bank1:F512 bank1:F70D bank1:F727 bank1:F73E bank1:F902 bank1:FF17 bank1:FF63 common:0070
-common,0806,FUN_CODE_0806,no,bank1,1,1,0,0,0,1,0,7,bank0:9049 bank0:909B bank0:90FE bank1:976E bank1:9F04 pd:ADAB pd:B80E
-common,1606,FUN_CODE_1606,no,bank1,1,0,1,0,0,1,0,6,bank0:C2F7 bank0:C2FF bank0:C307 bank0:C30F bank0:C317 bank0:C31F
-common,1510,FUN_CODE_1510,no,bank1,3,3,0,0,0,3,1,5,bank0:D5D4 bank0:D757 bank0:E256 bank0:EBD5 bank1:8418
-common,08CE,FUN_CODE_08ce,no,bank1,1,0,1,0,0,1,0,5,bank0:BA15 bank0:BA16 bank0:BA1C bank0:BADB bank0:BBC7
-bank0,DFA0,FUN_CODE_dfa0,no,,2,2,0,0,0,2,2,4,bank0:DFDF bank0:E010 bank0:E014 bank0:E020
-bank0,F0A1,FUN_CODE_f0a1,no,,1,1,0,0,0,1,1,4,bank0:EF17 bank1:EFDA bank1:F02C bank1:F030
-common,086B,FUN_CODE_086b,no,bank1,1,0,1,0,0,1,0,4,bank0:9CA6 bank0:9D9B bank0:D091 bank0:D28E
-common,08CD,FUN_CODE_08cd,no,bank1,1,0,1,0,0,1,0,4,bank0:9C24 bank0:B9F5 bank0:BA15 bank0:BA16
-common,08CF,FUN_CODE_08cf,no,bank1,1,0,1,0,0,1,0,4,bank0:BA15 bank0:BA16 bank0:BA1C bank0:BBC7
-common,1504,FUN_CODE_1504,no,bank1,1,1,0,0,0,1,0,4,bank0:D5D4 bank0:D757 bank0:E256 bank0:FE0F
-common,07F0,FUN_CODE_07f0,no,bank1,3,3,0,0,0,3,3,3,common:012F common:018C common:029B
-common,09E9,FUN_CODE_09e9,no,bank1,3,2,1,0,0,2,0,3,bank0:83FF bank0:96AD bank0:9C00
+common,0F75,FUN_CODE_0f75,no,bank1,1,1,0,0,0,1,1,7,bank1:F512 bank1:F70D bank1:F727 bank1:F73E bank1:F902 bank1:FF17 bank1:FF63
+common,158E,FUN_CODE_158e,no,bank1,1,1,0,0,0,1,1,7,bank1:F512 bank1:F70D bank1:F727 bank1:F73E bank1:F902 bank1:FF17 bank1:FF63
+common,1594,FUN_CODE_1594,no,bank1,1,1,0,0,0,1,1,7,bank1:F512 bank1:F70D bank1:F727 bank1:F73E bank1:F902 bank1:FF17 bank1:FF63
+bank0,DFA0,FUN_CODE_dfa0,no,,2,2,0,0,0,2,2,3,bank0:DFDF bank0:E010 bank0:E014
 common,07B6,FUN_CODE_07b6,no,bank1,2,2,0,0,0,2,2,3,common:012F common:018C common:029B
 bank1,D16F,FUN_CODE_d16f,no,,1,1,0,0,0,1,1,3,bank1:D0C4 bank1:D17E bank1:D1B8
-bank1,D235,FUN_CODE_d235,no,,1,1,0,0,0,1,1,3,bank1:C8F6 bank1:D219 bank1:D236
 bank1,E5D6,FUN_CODE_e5d6,no,,1,1,0,0,0,1,1,3,bank1:E57E bank1:E582 bank1:E5A7
-common,05E7,FUN_CODE_05e7,no,bank1,1,0,1,0,0,1,1,3,common:002B common:05B6 common:05E6
-common,0862,FUN_CODE_0862,no,bank1,1,0,1,0,0,1,0,3,bank0:D2DA bank0:D2EF bank0:D304
 common,07E7,FUN_CODE_07e7,no,bank1,3,3,0,0,0,3,3,2,common:012F common:018C
+common,07F0,FUN_CODE_07f0,no,bank1,3,3,0,0,0,3,3,2,common:018C common:029B
 bank0,9A0D,FUN_CODE_9a0d,no,,2,0,2,0,0,2,2,2,bank0:94D0 bank0:9917
-bank0,C26E,FUN_CODE_c26e,no,,2,2,0,0,0,2,1,2,bank1:1AB0 bank1:BE91
 bank1,AF32,FUN_CODE_af32,no,,2,2,0,0,0,2,2,2,bank1:AF06 bank1:B841
-bank1,BBA4,FUN_CODE_bba4,no,,2,0,2,0,0,2,2,2,bank1:B98D bank1:BABF
 bank1,CC2D,FUN_CODE_cc2d,no,,2,2,0,0,0,2,2,2,bank1:C8E3 bank1:D219
 bank1,DEC4,FUN_CODE_dec4,no,,2,2,0,0,0,2,1,2,bank1:9A41 bank1:9A78
+common,07D0,FUN_CODE_07d0,no,bank1,2,2,0,0,0,2,2,2,common:018C common:029B
 common,0E72,FUN_CODE_0e72,no,bank1,2,2,0,0,0,2,1,2,common:001B common:05B6
-pd,7CE0,FUN_CODE_7ce0,no,,2,2,0,0,0,2,2,2,pd:1820 pd:8EA6
-bank0,A426,FUN_CODE_a426,no,,1,0,1,0,0,1,1,2,bank0:A663 bank0:A678
-bank0,C4C9,FUN_CODE_c4c9,no,,1,1,0,0,0,1,1,2,bank0:CC64 bank1:1A6E
-bank0,E033,FUN_CODE_e033,no,,1,1,0,0,0,1,1,2,bank0:DF78 bank0:E02D
-bank0,E822,FUN_CODE_e822,no,,1,0,0,1,0,1,1,2,bank0:E7CA bank0:EF12
+bank0,F0A1,FUN_CODE_f0a1,no,,1,1,0,0,0,1,1,2,bank0:EF17 bank1:EFDA
 bank0,F1E9,FUN_CODE_f1e9,no,,1,0,1,0,0,1,1,2,bank0:F239 bank0:F495
 bank1,8F6B,FUN_CODE_8f6b,no,,1,1,0,0,0,1,1,2,bank1:9008 bank1:AB7F
-bank1,9FF0,FUN_CODE_9ff0,no,,1,1,0,0,0,1,1,2,bank1:9FC1 bank1:9FCA
-bank1,A24E,FUN_CODE_a24e,no,,1,1,0,0,0,1,1,2,bank1:A2DA bank1:AB64
-bank1,A8C5,FUN_CODE_a8c5,no,,1,0,1,0,0,1,1,2,bank1:A841 bank1:A8DA
 bank1,A8DF,FUN_CODE_a8df,no,,1,0,1,0,0,1,1,2,bank1:A841 bank1:A8E9
 bank1,A8E4,FUN_CODE_a8e4,no,,1,0,1,0,0,1,1,2,bank1:A841 bank1:A8E9
-bank1,B33B,FUN_CODE_b33b,no,,1,0,1,0,0,1,1,2,bank1:AD68 bank1:AD85
-bank1,B43B,FUN_CODE_b43b,no,,1,0,1,0,0,1,0,2,bank1:B415 bank1:B6C9
 bank1,CA16,FUN_CODE_ca16,no,,1,0,1,0,0,1,1,2,bank1:C9BE bank1:CA3E
-bank1,E9CE,FUN_CODE_e9ce,no,,1,0,0,0,1,1,1,2,bank1:E954 bank1:EAC3
-common,0609,FUN_CODE_0609,no,bank1,1,1,0,0,0,1,0,2,bank0:815D bank0:BAAE
-common,08E0,FUN_CODE_08e0,no,bank1,1,1,0,0,0,1,0,2,bank0:821F bank0:BCB6
-common,0979,FUN_CODE_0979,no,bank1,1,1,0,0,0,1,0,2,bank1:C54C bank1:E2A0
+bank1,D235,FUN_CODE_d235,no,,1,1,0,0,0,1,1,2,bank1:C8F6 bank1:D236
 common,0E5E,FUN_CODE_0e5e,no,bank1,1,1,0,0,0,1,1,2,common:000B common:0530
 common,0E7D,FUN_CODE_0e7d,no,bank1,1,1,0,0,0,1,1,2,common:001B common:05B6
-common,1E1A,FUN_CODE_1e1a,no,bank1,3,2,1,0,0,2,1,1,bank0:AA90
+common,1510,FUN_CODE_1510,no,bank1,3,3,0,0,0,3,1,1,bank0:EBD5
 common,4AC4,FUN_CODE_4ac4,no,bank1,3,3,0,0,0,2,1,1,bank1:4874
-common,4B44,FUN_CODE_4b44,no,bank1,3,3,0,0,0,1,1,1,bank0:445E
-bank0,D078,FUN_CODE_d078,no,,2,2,0,0,0,1,1,1,bank0:CFC6
-bank0,D673,FUN_CODE_d673,no,,2,0,0,0,2,1,1,1,bank0:D091
-common,05F2,FUN_CODE_05f2,no,bank1,2,2,0,0,0,2,0,1,bank1:B841
-common,0896,FUN_CODE_0896,no,bank1,2,1,1,0,0,2,0,1,bank1:C59F
+bank1,BBA4,FUN_CODE_bba4,no,,2,0,2,0,0,2,2,1,bank1:BABF
 common,2A84,FUN_CODE_2a84,no,bank1,2,2,0,0,0,1,1,1,common:2990
 common,2CB3,FUN_CODE_2cb3,no,bank1,2,0,2,0,0,2,1,1,bank1:2C70
 common,4AB8,FUN_CODE_4ab8,no,bank1,2,2,0,0,0,2,1,1,bank0:445E
 common,4AE0,FUN_CODE_4ae0,no,bank1,2,2,0,0,0,2,2,1,bank1:4874
-common,4B0F,FUN_CODE_4b0f,no,bank1,2,2,0,0,0,2,1,1,bank0:445E
 common,711C,FUN_CODE_711c,no,bank1,2,2,0,0,0,2,1,1,bank0:E896
 common,713C,FUN_CODE_713c,no,bank1,2,2,0,0,0,2,1,1,bank0:E896
 common,71B9,FUN_CODE_71b9,no,bank1,2,2,0,0,0,1,1,1,bank0:724B
-pd,A0E6,FUN_CODE_a0e6,no,,2,2,0,0,0,1,1,1,pd:7580
-pd,E6C0,FUN_CODE_e6c0,no,,2,2,0,0,0,1,1,1,pd:7580
+pd,06EA,FUN_CODE_06ea,no,,2,2,0,0,0,2,2,1,pd:88BE
+pd,7CE0,FUN_CODE_7ce0,no,,2,2,0,0,0,2,2,1,pd:1820
 pd,F775,FUN_CODE_f775,no,,2,1,1,0,0,2,2,1,pd:BBE7
 bank0,9277,FUN_CODE_9277,no,,1,1,0,0,0,1,1,1,bank0:924C
-bank0,C49F,FUN_CODE_c49f,no,,1,1,0,0,0,1,1,1,bank0:90FE
+bank0,A426,FUN_CODE_a426,no,,1,0,1,0,0,1,1,1,bank0:A678
+bank0,C4C9,FUN_CODE_c4c9,no,,1,1,0,0,0,1,1,1,bank0:CC64
 bank0,C4D1,FUN_CODE_c4d1,no,,1,1,0,0,0,1,1,1,bank0:CCFC
 bank0,D5DB,FUN_CODE_d5db,no,,1,0,1,0,0,1,0,1,bank0:D5D4
+bank0,E033,FUN_CODE_e033,no,,1,1,0,0,0,1,1,1,bank0:DF78
 bank0,E6F4,FUN_CODE_e6f4,no,,1,0,1,0,0,1,0,1,bank0:E6B1
-bank0,E7B8,FUN_CODE_e7b8,no,,1,0,1,0,0,1,0,1,bank0:E893
 bank1,17FE,FUN_CODE_17fe,no,,1,1,0,0,0,1,1,1,bank1:9199
+bank1,9FF0,FUN_CODE_9ff0,no,,1,1,0,0,0,1,1,1,bank1:9FC1
+bank1,A24E,FUN_CODE_a24e,no,,1,1,0,0,0,1,1,1,bank1:AB64
+bank1,A8C5,FUN_CODE_a8c5,no,,1,0,1,0,0,1,1,1,bank1:A841
+bank1,B33B,FUN_CODE_b33b,no,,1,0,1,0,0,1,1,1,bank1:AD85
+bank1,B43B,FUN_CODE_b43b,no,,1,0,1,0,0,1,0,1,bank1:B415
 bank1,B784,FUN_CODE_b784,no,,1,1,0,0,0,1,1,1,bank1:B728
 bank1,B88C,FUN_CODE_b88c,no,,1,1,0,0,0,1,1,1,bank1:B841
 bank1,BCB3,FUN_CODE_bcb3,no,,1,0,1,0,0,1,1,1,bank1:BA43
 bank1,BE10,FUN_CODE_be10,no,,1,0,1,0,0,1,1,1,bank1:BA43
 bank1,BFBB,FUN_CODE_bfbb,no,,1,1,0,0,0,1,1,1,bank1:ABEE
-bank1,C0A8,FUN_CODE_c0a8,no,,1,0,1,0,0,1,0,1,bank1:19A8
 bank1,C392,FUN_CODE_c392,no,,1,1,0,0,0,1,1,1,bank1:C352
-bank1,C931,FUN_CODE_c931,no,,1,0,1,0,0,1,1,1,bank1:C924
 bank1,CBAB,FUN_CODE_cbab,no,,1,0,1,0,0,1,1,1,bank1:C8F6
 bank1,D4D3,FUN_CODE_d4d3,no,,1,1,0,0,0,1,1,1,bank1:AB75
 bank1,D524,FUN_CODE_d524,no,,1,1,0,0,0,1,1,1,bank1:ABA8
@@ -97,48 +66,37 @@ bank1,DB0B,FUN_CODE_db0b,no,,1,0,1,0,0,1,1,1,bank1:AC84
 bank1,DE3C,FUN_CODE_de3c,no,,1,0,1,0,0,1,1,1,bank1:AC36
 bank1,E100,FUN_CODE_e100,no,,1,0,1,0,0,1,1,1,bank1:AC11
 bank1,E322,FUN_CODE_e322,no,,1,0,1,0,0,1,1,1,bank1:703F
+bank1,E9CE,FUN_CODE_e9ce,no,,1,0,0,0,1,1,1,1,bank1:E954
 bank1,F040,FUN_CODE_f040,no,,1,0,1,0,0,1,1,1,bank1:F012
 bank1,F1F8,FUN_CODE_f1f8,no,,1,1,0,0,0,1,1,1,bank1:F198
-common,0859,FUN_CODE_0859,no,bank1,1,0,1,0,0,1,0,1,bank0:A2E0
-common,08A0,FUN_CODE_08a0,no,bank1,1,0,1,0,0,1,0,1,bank0:B82E
-common,08D0,FUN_CODE_08d0,no,bank1,1,1,0,0,0,1,0,1,bank0:8054
+common,05E7,FUN_CODE_05e7,no,bank1,1,0,1,0,0,1,1,1,common:002B
+common,07D6,FUN_CODE_07d6,no,bank1,1,1,0,0,0,1,1,1,common:012F
 common,1048,FUN_CODE_1048,no,bank1,1,1,0,0,0,1,1,1,common:0200
 common,11B6,FUN_CODE_11b6,no,bank1,1,0,1,0,0,1,1,1,common:012F
 common,11BC,FUN_CODE_11bc,no,bank1,1,0,1,0,0,1,1,1,common:018C
 common,14C8,FUN_CODE_14c8,no,bank1,1,1,0,0,0,1,1,1,common:0556
 common,30DF,FUN_CODE_30df,no,bank1,1,1,0,0,0,1,1,1,common:2DE3
-common,3BC1,FUN_CODE_3bc1,no,bank1,1,1,0,0,0,1,1,1,common:2DE3
 common,451A,FUN_CODE_451a,no,bank1,1,0,1,0,0,1,1,1,bank0:445E
 common,4AEF,FUN_CODE_4aef,no,bank1,1,1,0,0,0,1,1,1,bank0:445E
-common,4BB0,FUN_CODE_4bb0,no,bank1,1,1,0,0,0,1,1,1,bank0:530E
 common,4C5D,FUN_CODE_4c5d,no,bank1,1,1,0,0,0,1,1,1,bank0:5349
 common,4D96,FUN_CODE_4d96,no,bank1,1,1,0,0,0,1,1,1,bank0:537F
 common,4E2C,FUN_CODE_4e2c,no,bank1,1,1,0,0,0,1,1,1,bank0:549B
 common,4ECD,FUN_CODE_4ecd,no,bank1,1,1,0,0,0,1,1,1,bank0:54C2
-common,4F3E,FUN_CODE_4f3e,no,bank1,1,1,0,0,0,1,1,1,bank0:53AF
-common,4FED,FUN_CODE_4fed,no,bank1,1,1,0,0,0,1,1,1,bank0:53AF
-common,50DE,FUN_CODE_50de,no,bank1,1,1,0,0,0,1,1,1,bank0:53AF
 common,51C8,FUN_CODE_51c8,no,bank1,1,1,0,0,0,1,1,1,bank0:541D
 common,7281,FUN_CODE_7281,no,bank1,1,1,0,0,0,1,1,1,bank0:724B
-pd,0CF7,FUN_CODE_0cf7,no,,1,1,0,0,0,1,1,1,pd:D085
 pd,0DC9,FUN_CODE_0dc9,no,,1,1,0,0,0,1,1,1,pd:DFB2
-pd,11C2,FUN_CODE_11c2,no,,1,1,0,0,0,1,1,1,pd:CB2A
 pd,3883,FUN_CODE_3883,no,,1,1,0,0,0,1,1,1,pd:CCB7
-pd,39E6,FUN_CODE_39e6,no,,1,1,0,0,0,1,0,1,pd:39E7
 pd,7B14,FUN_CODE_7b14,no,,1,0,1,0,0,1,1,1,pd:F786
-pd,8A4A,FUN_CODE_8a4a,no,,1,1,0,0,0,1,1,1,pd:C2FA
 pd,987F,FUN_CODE_987f,no,,1,1,0,0,0,1,1,1,pd:C0EF
 pd,A000,FUN_CODE_a000,no,,1,0,0,0,1,1,1,1,pd:A339
 pd,B73F,FUN_CODE_b73f,no,,1,1,0,0,0,1,1,1,pd:C755
 pd,B8DB,FUN_CODE_b8db,no,,1,1,0,0,0,1,1,1,pd:ABBF
 pd,B9A1,FUN_CODE_b9a1,no,,1,1,0,0,0,1,1,1,pd:C755
-pd,CBB0,FUN_CODE_cbb0,no,,1,1,0,0,0,1,1,1,pd:EF79
 pd,D435,FUN_CODE_d435,no,,1,0,1,0,0,1,1,1,pd:E458
 pd,D72E,FUN_CODE_d72e,no,,1,1,0,0,0,1,1,1,pd:C2FA
 pd,E757,FUN_CODE_e757,no,,1,1,0,0,0,1,1,1,pd:A339
 pd,E8D4,FUN_CODE_e8d4,no,,1,1,0,0,0,1,1,1,pd:DF6A
 pd,E902,FUN_CODE_e902,no,,1,1,0,0,0,1,1,1,pd:DA44
-pd,E930,FUN_CODE_e930,no,,1,1,0,0,0,1,0,1,bank1:E924
 pd,EE8B,FUN_CODE_ee8b,no,,1,1,0,0,0,1,1,1,pd:C2FA
 common,1100,bl51_bank_select_0,yes,bank1,264,0,264,0,0,264,66,0,
 bank1,8886,read_xdata_pair_to_r1r2,yes,,98,98,0,0,0,58,41,0,
@@ -458,9 +416,11 @@ bank1,E490,stage_1c00_block_from_code_table_indexed_03c4,yes,,3,0,3,0,0,3,1,0,
 common,012F,chan_init_170a_then_jmp_11b6,yes,bank1,3,3,0,0,0,3,2,0,
 common,018C,chan_init_1709_then_jmp_11bc,yes,bank1,3,3,0,0,0,3,2,0,
 common,029B,chan_init_1708_then_jmp_11c2,yes,bank1,3,3,0,0,0,3,2,0,
+common,09E9,FUN_CODE_09e9,no,bank1,3,2,1,0,0,2,0,0,
 common,0A39,FUN_CODE_0a39,no,bank1,3,3,0,0,0,3,0,0,
 common,10F1,zero_xdata_200b,yes,bank1,3,3,0,0,0,2,0,0,
 common,15E2,FUN_CODE_15e2,no,bank1,3,2,1,0,0,3,0,0,
+common,1E1A,FUN_CODE_1e1a,no,bank1,3,2,1,0,0,2,1,0,
 common,21EB,FUN_CODE_21eb,no,bank1,3,3,0,0,0,1,0,0,
 common,2226,FUN_CODE_2226,no,bank1,3,3,0,0,0,1,0,0,
 common,23F4,FUN_CODE_23f4,no,bank1,3,3,0,0,0,2,0,0,
@@ -485,6 +445,7 @@ common,4376,FUN_CODE_4376,no,bank1,3,3,0,0,0,2,0,0,
 common,4389,FUN_CODE_4389,no,bank1,3,3,0,0,0,3,0,0,
 common,4397,FUN_CODE_4397,no,bank1,3,3,0,0,0,1,0,0,
 common,4A8F,FUN_CODE_4a8f,no,bank1,3,3,0,0,0,3,1,0,
+common,4B44,FUN_CODE_4b44,no,bank1,3,3,0,0,0,1,1,0,
 common,6817,FUN_CODE_6817,no,bank1,3,0,0,2,1,3,0,0,
 pd,06B1,shl32_16_iters,yes,,3,3,0,0,0,2,2,0,
 pd,0BAB,read_byte_by_tag_r3,yes,,3,3,0,0,0,2,2,0,
@@ -627,6 +588,7 @@ bank0,C066,set_1608_bit5,yes,,2,1,1,0,0,2,2,0,
 bank0,C06E,clear_1608_bit5,yes,,2,2,0,0,0,2,2,0,
 bank0,C191,set_1603_bit4,yes,,2,1,1,0,0,2,2,0,
 bank0,C199,clear_1603_bit4,yes,,2,2,0,0,0,2,2,0,
+bank0,C26E,FUN_CODE_c26e,no,,2,2,0,0,0,2,1,0,
 bank0,C2A2,set_1605_bit5,yes,,2,2,0,0,0,2,2,0,
 bank0,C2AA,clear_1605_bit5,yes,,2,1,1,0,0,2,2,0,
 bank0,C2FF,set_1606_bit0,yes,,2,2,0,0,0,1,1,0,
@@ -648,10 +610,12 @@ bank0,D01A,indirect_code_jump_via_stride5_table_6cd9,yes,,2,2,0,0,0,1,1,0,
 bank0,D041,read_06e7,yes,,2,2,0,0,0,2,2,0,
 bank0,D045,inc_06e7_clear_06ea_eb_read_06e8,yes,,2,2,0,0,0,2,2,0,
 bank0,D065,init_1f01_1f06_1f07,yes,,2,2,0,0,0,1,1,0,
+bank0,D078,FUN_CODE_d078,no,,2,2,0,0,0,1,1,0,
 bank0,D319,mask_dp_byte_7c_reset_dptr_0860,yes,,2,2,0,0,0,2,2,0,
 bank0,D3C8,zero_d0_d7_and_state,yes,,2,1,1,0,0,2,2,0,
 bank0,D567,set_bits_0_and_4_of_3206,yes,,2,2,0,0,0,1,1,0,
 bank0,D5D4,write_33_to_1501_join_loop_d5db,yes,,2,0,1,1,0,2,0,0,
+bank0,D673,FUN_CODE_d673,no,,2,0,0,0,2,1,1,0,
 bank0,D6C0,write_5a_to_1f07_then_spin,yes,,2,0,0,0,2,1,1,0,
 bank0,D6C9,call_0ea2_twice_with_fa,yes,,2,2,0,0,0,1,0,0,
 bank0,D6D4,xor_00d8_00d9,yes,,2,2,0,0,0,2,2,0,
@@ -740,8 +704,11 @@ bank1,E8A4,compute_097e_times_10_write_0386_0387,yes,,2,2,0,0,0,2,0,0,
 bank1,E924,read_code_pair_at_r5_index,yes,,2,2,0,0,0,1,1,0,
 bank1,F13E,bare_ret_f13e,yes,,2,0,2,0,0,2,2,0,
 bank1,F153,bare_ret_f153,yes,,2,0,2,0,0,2,2,0,
+common,05F2,FUN_CODE_05f2,no,bank1,2,2,0,0,0,2,0,0,
 common,05FA,FUN_CODE_05fa,no,bank1,2,2,0,0,0,2,0,0,
 common,063C,FUN_CODE_063c,no,bank1,2,2,0,0,0,1,0,0,
+common,0896,FUN_CODE_0896,no,bank1,2,1,1,0,0,2,0,0,
+common,0A5A,FUN_CODE_0a5a,no,bank1,2,1,1,0,0,2,0,0,
 common,0C6D,FUN_CODE_0c6d,no,bank1,2,2,0,0,0,2,0,0,
 common,0C7A,clear_low_nibble_of_1304,yes,bank1,2,2,0,0,0,2,0,0,
 common,0E84,FUN_CODE_0e84,no,bank1,2,2,0,0,0,2,0,0,
@@ -796,6 +763,7 @@ common,4AD3,FUN_CODE_4ad3,no,bank1,2,2,0,0,0,2,0,0,
 common,4ADF,FUN_CODE_4adf,no,bank1,2,2,0,0,0,2,0,0,
 common,4AEC,FUN_CODE_4aec,no,bank1,2,2,0,0,0,2,0,0,
 common,4B02,FUN_CODE_4b02,no,bank1,2,2,0,0,0,1,0,0,
+common,4B0F,FUN_CODE_4b0f,no,bank1,2,2,0,0,0,2,1,0,
 common,4B29,FUN_CODE_4b29,no,bank1,2,2,0,0,0,1,0,0,
 common,4B37,FUN_CODE_4b37,no,bank1,2,2,0,0,0,1,0,0,
 common,4B4C,FUN_CODE_4b4c,no,bank1,2,2,0,0,0,2,0,0,
@@ -891,6 +859,7 @@ pd,9958,call_10fd_then_dptr_0007,yes,,2,2,0,0,0,1,1,0,
 pd,995F,dptr_0021_tail_0c58,yes,,2,2,0,0,0,1,1,0,
 pd,9975,call_10fd_dptr_0004_tail_0bc4,yes,,2,2,0,0,0,1,1,0,
 pd,9ADD,set_dptr_0d0e_9add,yes,,2,2,0,0,0,1,1,0,
+pd,A0E6,FUN_CODE_a0e6,no,,2,2,0,0,0,1,1,0,
 pd,A339,stash_args_dispatch_code_table,yes,,2,2,0,0,0,2,0,0,
 pd,A75D,shift_r4_r7_right_then_sub_0x30,yes,,2,2,0,0,0,1,1,0,
 pd,ACB7,load_r0_r3_4_5_6_7,yes,,2,2,0,0,0,2,2,0,
@@ -924,6 +893,7 @@ pd,D013,latch_07d4_07d5_and_call_7014_with_63_or_6c,yes,,2,2,0,0,0,2,2,0,
 pd,E458,store_07d8_and_dispatch_07da,yes,,2,2,0,0,0,2,2,0,
 pd,E4D0,dptr_fffe_then_122f_at_e4d0,yes,,2,2,0,0,0,2,2,0,
 pd,E5B3,store_080e_and_accumulate_r6,yes,,2,0,2,0,0,2,2,0,
+pd,E6C0,FUN_CODE_e6c0,no,,2,2,0,0,0,1,1,0,
 pd,F035,stage_07d6_chain_tail_f351,yes,,2,1,1,0,0,2,1,0,
 pd,F3E0,unresolved_0xF3E0,yes,,2,2,0,0,0,2,1,0,
 pd,F3E2,dptr_high_r6_low_a,yes,,2,2,0,0,0,2,1,0,
@@ -1069,6 +1039,7 @@ bank0,C44D,clear_1609_bit0_and_write_04_to_2006,yes,,1,1,0,0,0,1,0,0,
 bank0,C468,set_1609_bit2,yes,,1,1,0,0,0,1,1,0,
 bank0,C470,clear_1609_bit2,yes,,1,1,0,0,0,1,1,0,
 bank0,C497,set_160a_bit1,yes,,1,0,1,0,0,1,1,0,
+bank0,C49F,FUN_CODE_c49f,no,,1,1,0,0,0,1,1,0,
 bank0,CC3D,init_clear_00f5_and_1304_bit2,yes,,1,1,0,0,0,1,1,0,
 bank0,CC51,init_set_1304_bit4_and_clear_bit2,yes,,1,1,0,0,0,1,1,0,
 bank0,CCFC,power_on_init_and_two_hang_paths,yes,,1,1,0,0,0,1,1,0,
@@ -1104,7 +1075,9 @@ bank0,E570,probe_c0_c1_expect_88_51_or_53,yes,,1,1,0,0,0,1,0,0,
 bank0,E5BE,write_ff_f8_a5_5a_and_retry,yes,,1,1,0,0,0,1,0,0,
 bank0,E624,gate_04_09_then_0f80_bit1_set,yes,,1,1,0,0,0,1,0,0,
 bank0,E722,FUN_CODE_e722,no,,1,0,1,0,0,1,1,0,
+bank0,E7B8,FUN_CODE_e7b8,no,,1,0,1,0,0,1,0,0,
 bank0,E7CA,init_0a50_2_then_start_0x13_block,yes,,1,1,0,0,0,1,1,0,
+bank0,E822,FUN_CODE_e822,no,,1,0,0,1,0,1,1,0,
 bank0,E896,write_0f60_0f61_then_0x7049,yes,,1,1,0,0,0,1,1,0,
 bank0,E8C4,write_r6_r7_r5_to_0f60_62,yes,,1,1,0,0,0,1,1,0,
 bank0,E8EC,mask_1603_and_wait_tf1,yes,,1,0,0,1,0,1,1,0,
@@ -1281,6 +1254,7 @@ bank1,BE91,pick_0f80_0800_0bb0_1800_1f00,yes,,1,0,1,0,0,1,0,0,
 bank1,BF0E,pick_0800_or_0bb0_by_05b9,yes,,1,0,1,0,0,1,0,0,
 bank1,BFD9,zero_04ae_and_04be,yes,,1,1,0,0,0,1,1,0,
 bank1,C032,FUN_CODE_c032,no,,1,1,0,0,0,1,0,0,
+bank1,C0A8,FUN_CODE_c0a8,no,,1,0,1,0,0,1,0,0,
 bank1,C11C,latch_0490_bit3_or_bit7,yes,,1,1,0,0,0,1,1,0,
 bank1,C245,dispatch_0490_bits_1_5_6,yes,,1,0,1,0,0,1,1,0,
 bank1,C267,reset_0432_and_04f2,yes,,1,0,1,0,0,1,1,0,
@@ -1308,6 +1282,7 @@ bank1,C884,on_198a_result_advance_0394_to_3,yes,,1,0,1,0,0,1,1,0,
 bank1,C8C7,on_198a_result_step_03c2_low2,yes,,1,0,1,0,0,1,1,0,
 bank1,C8E3,call_cc2d_then_d0c4,yes,,1,0,1,0,0,1,1,0,
 bank1,C924,dispatch_03a3_low3,yes,,1,1,0,0,0,1,1,0,
+bank1,C931,FUN_CODE_c931,no,,1,0,1,0,0,1,1,0,
 bank1,CB1F,set_039b_039c_from_0404_div_100,yes,,1,1,0,0,0,1,0,0,
 bank1,CC95,set_0397_from_0342_by_0514_band,yes,,1,1,0,0,0,1,0,0,
 bank1,CDCB,dispatch_03f1_low3,yes,,1,1,0,0,0,1,1,0,
@@ -1386,17 +1361,29 @@ common,0530,timer0_target_decrements_xdata_0a00,yes,bank1,1,0,1,0,0,1,1,0,
 common,0556,int1_target_six_calls_14c8_012f_018c_029b_7110_7177,yes,bank1,1,0,1,0,0,1,1,0,
 common,05B6,timer1_target_splits_internal_ram_41_on_carry,yes,bank1,1,0,1,0,0,1,1,0,
 common,05E6,serial0_target_is_one_byte_reti,yes,bank1,1,0,1,0,0,1,1,0,
+common,0609,FUN_CODE_0609,no,bank1,1,1,0,0,0,1,0,0,
 common,0703,FUN_CODE_0703,no,bank1,1,0,1,0,0,1,1,0,
 common,0713,FUN_CODE_0713,no,bank1,1,1,0,0,0,1,0,0,
 common,07C1,FUN_CODE_07c1,no,bank1,1,1,0,0,0,1,1,0,
 common,07F8,FUN_CODE_07f8,no,bank1,1,1,0,0,0,1,0,0,
+common,0806,FUN_CODE_0806,no,bank1,1,1,0,0,0,1,0,0,
+common,0859,FUN_CODE_0859,no,bank1,1,0,1,0,0,1,0,0,
+common,0862,FUN_CODE_0862,no,bank1,1,0,1,0,0,1,0,0,
+common,086B,FUN_CODE_086b,no,bank1,1,0,1,0,0,1,0,0,
 common,0877,FUN_CODE_0877,no,bank1,1,0,1,0,0,1,0,0,
 common,0883,FUN_CODE_0883,no,bank1,1,0,1,0,0,1,0,0,
 common,0884,FUN_CODE_0884,no,bank1,1,1,0,0,0,1,0,0,
+common,08A0,FUN_CODE_08a0,no,bank1,1,0,1,0,0,1,0,0,
 common,08B0,FUN_CODE_08b0,no,bank1,1,0,1,0,0,1,0,0,
+common,08CD,FUN_CODE_08cd,no,bank1,1,0,1,0,0,1,0,0,
+common,08CE,FUN_CODE_08ce,no,bank1,1,0,1,0,0,1,0,0,
+common,08CF,FUN_CODE_08cf,no,bank1,1,0,1,0,0,1,0,0,
+common,08D0,FUN_CODE_08d0,no,bank1,1,1,0,0,0,1,0,0,
+common,08E0,FUN_CODE_08e0,no,bank1,1,1,0,0,0,1,0,0,
 common,0902,FUN_CODE_0902,no,bank1,1,1,0,0,0,1,0,0,
 common,0921,FUN_CODE_0921,no,bank1,1,1,0,0,0,1,0,0,
 common,0950,FUN_CODE_0950,no,bank1,1,1,0,0,0,1,0,0,
+common,0979,FUN_CODE_0979,no,bank1,1,1,0,0,0,1,0,0,
 common,0A04,FUN_CODE_0a04,no,bank1,1,1,0,0,0,1,0,0,
 common,0A7F,FUN_CODE_0a7f,no,bank1,1,1,0,0,0,1,0,0,
 common,0AD8,FUN_CODE_0ad8,no,bank1,1,1,0,0,0,1,0,0,
@@ -1451,6 +1438,7 @@ common,14EC,FUN_CODE_14ec,no,bank1,1,1,0,0,0,1,0,0,
 common,14F2,FUN_CODE_14f2,no,bank1,1,1,0,0,0,1,0,0,
 common,14F8,FUN_CODE_14f8,no,bank1,1,1,0,0,0,1,0,0,
 common,14FE,FUN_CODE_14fe,no,bank1,1,1,0,0,0,1,0,0,
+common,1504,FUN_CODE_1504,no,bank1,1,1,0,0,0,1,0,0,
 common,150A,FUN_CODE_150a,no,bank1,1,1,0,0,0,1,0,0,
 common,1516,FUN_CODE_1516,no,bank1,1,1,0,0,0,1,0,0,
 common,151C,FUN_CODE_151c,no,bank1,1,1,0,0,0,1,0,0,
@@ -1482,6 +1470,7 @@ common,15DC,FUN_CODE_15dc,no,bank1,1,1,0,0,0,1,0,0,
 common,15EE,FUN_CODE_15ee,no,bank1,1,1,0,0,0,1,0,0,
 common,15F4,FUN_CODE_15f4,no,bank1,1,0,1,0,0,1,0,0,
 common,15FA,FUN_CODE_15fa,no,bank1,1,0,1,0,0,1,0,0,
+common,1606,FUN_CODE_1606,no,bank1,1,0,1,0,0,1,0,0,
 common,160C,FUN_CODE_160c,no,bank1,1,0,1,0,0,1,0,0,
 common,1612,FUN_CODE_1612,no,bank1,1,1,0,0,0,1,0,0,
 common,1618,FUN_CODE_1618,no,bank1,1,1,0,0,0,1,0,0,
@@ -1550,6 +1539,7 @@ common,3B80,FUN_CODE_3b80,no,bank1,1,1,0,0,0,1,0,0,
 common,3B82,FUN_CODE_3b82,no,bank1,1,1,0,0,0,1,0,0,
 common,3B83,FUN_CODE_3b83,no,bank1,1,1,0,0,0,1,0,0,
 common,3BB7,FUN_CODE_3bb7,no,bank1,1,1,0,0,0,1,0,0,
+common,3BC1,FUN_CODE_3bc1,no,bank1,1,1,0,0,0,1,1,0,
 common,3BC9,FUN_CODE_3bc9,no,bank1,1,1,0,0,0,1,0,0,
 common,3C62,FUN_CODE_3c62,no,bank1,1,1,0,0,0,1,0,0,
 common,3C6D,FUN_CODE_3c6d,no,bank1,1,1,0,0,0,1,0,0,
@@ -1578,6 +1568,10 @@ common,4AB3,FUN_CODE_4ab3,no,bank1,1,1,0,0,0,1,0,0,
 common,4B22,FUN_CODE_4b22,no,bank1,1,1,0,0,0,1,0,0,
 common,4B57,FUN_CODE_4b57,no,bank1,1,1,0,0,0,1,0,0,
 common,4B62,FUN_CODE_4b62,no,bank1,1,1,0,0,0,1,0,0,
+common,4BB0,FUN_CODE_4bb0,no,bank1,1,1,0,0,0,1,1,0,
+common,4F3E,FUN_CODE_4f3e,no,bank1,1,1,0,0,0,1,1,0,
+common,4FED,FUN_CODE_4fed,no,bank1,1,1,0,0,0,1,1,0,
+common,50DE,FUN_CODE_50de,no,bank1,1,1,0,0,0,1,1,0,
 common,57C2,FUN_CODE_57c2,no,bank1,1,0,1,0,0,1,0,0,
 common,5A5A,FUN_CODE_5a5a,no,bank1,1,1,0,0,0,1,0,0,
 common,5AC2,FUN_CODE_5ac2,no,bank1,1,0,1,0,0,1,0,0,
@@ -1603,9 +1597,11 @@ pd,0756,saturate_all_ones,yes,,1,0,1,0,0,1,1,0,
 pd,075D,clear_r4_r7_return_zero,yes,,1,0,1,0,0,1,1,0,
 pd,0BF1,add_a_into_byte_by_tag_r3,yes,,1,0,1,0,0,1,1,0,
 pd,0C13,FUN_CODE_0c13,no,,1,1,0,0,0,1,0,0,
+pd,0CF7,FUN_CODE_0cf7,no,,1,1,0,0,0,1,1,0,
 pd,0EE6,and_32bit_r0r3_r4r7,yes,,1,1,0,0,0,1,1,0,
 pd,0F45,read4_ptr_kind_dispatch,yes,,1,0,1,0,0,1,1,0,
 pd,1013,add_32bit_r4r7_into_xdata_at_dptr,yes,,1,0,0,1,0,1,1,0,
+pd,11C2,FUN_CODE_11c2,no,,1,1,0,0,0,1,1,0,
 pd,122D,jmp_code_at_dptr,yes,,1,1,0,0,0,1,1,0,
 pd,12B9,read4_idata_to_r4r7,yes,,1,0,1,0,0,1,1,0,
 pd,12C5,read4_xdata_to_r4r7,yes,,1,0,1,0,0,1,1,0,
@@ -1648,6 +1644,7 @@ pd,38CA,read_xdata_to_r3_set_dptr_0418,yes,,1,1,0,0,0,1,1,0,
 pd,38D3,read_be16_from_dptr,yes,,1,1,0,0,0,1,1,0,
 pd,3977,read_dptr_byte_then_07d2,yes,,1,1,0,0,0,1,0,0,
 pd,39AC,read_byte_to_r7_set_r3_1,yes,,1,1,0,0,0,1,1,0,
+pd,39E6,FUN_CODE_39e6,no,,1,1,0,0,0,1,0,0,
 pd,39E7,set_args_r1_d3_r2_07_r3_01,yes,,1,1,0,0,0,1,0,0,
 pd,39F9,tail_jump_10bc_with_b_60_and_r7,yes,,1,1,0,0,0,1,0,0,
 pd,3A0E,read4xdata_and_return_r7_bit0,yes,,1,1,0,0,0,1,1,0,
@@ -1684,6 +1681,7 @@ pd,821B,fill_0849_0857_block,yes,,1,1,0,0,0,1,1,0,
 pd,8576,step_state_07d0_07d1,yes,,1,1,0,0,0,1,1,0,
 pd,8814,store_3bytes_at_dptr_plus_1,yes,,1,1,0,0,0,1,1,0,
 pd,88BE,update_07d6_table_entries,yes,,1,1,0,0,0,1,0,0,
+pd,8A4A,FUN_CODE_8a4a,no,,1,1,0,0,0,1,1,0,
 pd,8D41,advance_07d2_counter_and_dispatch,yes,,1,1,0,0,0,1,1,0,
 pd,9024,make_dptr_a_minus_3,yes,,1,1,0,0,0,1,0,0,
 pd,9026,make_dptr_r6_minus_3_9026,yes,,1,1,0,0,0,1,1,0,
@@ -1779,6 +1777,7 @@ pd,C2FA,write_07d0_then_run_indexed_state_chain,yes,,1,1,0,0,0,1,1,0,
 pd,C808,store_a_at_dptr_and_r7_at_0800_plus_a,yes,,1,0,0,1,0,1,1,0,
 pd,C873,compare_55_then_mark_0819,yes,,1,1,0,0,0,1,1,0,
 pd,CB2A,store_0803_0805_then_jump_c808,yes,,1,1,0,0,0,1,0,0,
+pd,CBB0,FUN_CODE_cbb0,no,,1,1,0,0,0,1,1,0,
 pd,CC36,call_122f_with_dptr_fffd_cc36,yes,,1,1,0,0,0,1,1,0,
 pd,CDB7,FUN_CODE_cdb7,no,,1,1,0,0,0,1,0,0,
 pd,CFA0,store_4_at_07d6_then_branch_on_991a,yes,,1,1,0,0,0,1,1,0,
@@ -1798,6 +1797,7 @@ pd,E2E4,poll_d78a_for_indices_0_and_1,yes,,1,1,0,0,0,1,1,0,
 pd,E323,dptr_fffe_then_122f_at_e323,yes,,1,1,0,0,0,1,0,0,
 pd,E543,count_07cf_and_conditional_call_122d,yes,,1,1,0,0,0,1,1,0,
 pd,E877,store_080f_0810_and_pick_f50e_arg_on_carry,yes,,1,1,0,0,0,1,1,0,
+pd,E930,FUN_CODE_e930,no,,1,1,0,0,0,1,0,0,
 pd,E9E3,store_3byte_r3r2r1_at_0803,yes,,1,1,0,0,0,1,0,0,
 pd,EA67,reset_07c9_block_then_flag_00d3_1,yes,,1,1,0,0,0,1,1,0,
 pd,EBBB,init_sequence_with_ea_cleared,yes,,1,1,0,0,0,1,1,0,

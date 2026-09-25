@@ -35,8 +35,10 @@ trees the numbers were taken on.
 | inbound sites to those | 787 |
 | anonymous rows no direct transfer reaches | 339 |
 | distinct `FUN_*` callees the `.c` files name | 822 |
-| anonymous callees a comment names | 141 |
-| comments that name one | 315 |
+| anonymous callees a comment names | 99 |
+| comments that name one | 142 |
+| — candidate (callee, comment) pairs, before the frame gate | 382 |
+| — kept / rejected / undecided by it | 152 / 185 / 45 |
 
 **The 475 and the 822 are two framings of related things, and neither is "the"
 count.** The first is decoded out of the committed `.asm` listings; the second
@@ -103,19 +105,56 @@ function at 0x0064 that the comment never mentions. A comment writing a short
 form (`0x5E8` for 0x05E8) is **not found by this method**; that is not
 evidence the address is uncited.
 
+**The width rule does not stop a 4-digit data address, so a frame gates the
+citation.** On this firmware the same token is a function entry and an XDATA
+byte — 0x07D0 is `FUN_CODE_07d0` here and `DBD1` in `registers.yaml` — so
+`citations()` asks `../tools/citation_frames.py` whether a code frame governs
+the mention, and credits it only if one does. **The window is bounded and local
+to the mention, not the sentence and not the comment**, because a data veto
+over the whole sentence rejects a genuine list: seven `bank1` comments write
+"then calls to 0x110A, 0x158E, 0x0F75, 0x1594 and 0x00CF", where "to" is a
+data marker and all five are real code addresses. A code frame is *necessary*,
+a data frame is a *veto*, and **what neither settles is returned as
+`undecided`** — 45 pairs today — rather than defaulted either way. The
+rejected and undecided populations are printed by the tool and are never
+dropped, because a guard that silently discards what it rejects cannot be told
+apart from one that rejects too much.
+
+**Two further signals sit beside the frame, and the second is not lexical.** A
+`pd` comment cannot cite an EC row at all: the dump holds two 8051 programs
+with separate address spaces (`registers.yaml`'s `static-scan` caveat, and
+`build_ec_decompile.py` refusing an EC XDATA name on a `pd` row), and 45 of
+the 71 `pd`-scoped candidate pairs name one — 25 of them `common,07D0`. Three
+of those 45 read as a *code* frame, so the program-identity check is doing
+work no lexical rule reaches. The complementary case is deliberately **not**
+decided: a `bank0`/`bank1` comment citing a `common` row is legitimate,
+because a common-area function is exported once and reached from both banks
+(see the `Index` docstring in `../tools/call_graph.py`), so those fall to the
+frame test alone. `0x1606` has six citations, all of them `XDATA 0x1606`, and
+**no `registers.yaml` row at all** — which is why a lookup against that file
+is not the guard, and why the discriminator is lexical plus program identity.
+The full write-up, the frame census and the collision set are in
+[`../../docs/findings/citation-code-vs-data.md`](../../docs/findings/citation-code-vs-data.md).
+
 **Two known distortions in the citation count, both real and both left in.**
 
 - *A comment that refutes the decompile still writes the address.* Seven rows
   in `bank1` share one sentence ending "is not supported by these
-  instructions", and every one of them names 0x110A and 0x00CF inside the body
-  it is rejecting. Each address has **8 citations, of which those seven are
-  the artifact**; the eighth is `common,0x0070`, whose comment records the 0x110A
-  call as the bank-0 select and tail-jumps to 0x00CF, both supportively. So 7 of
-  8, not all 8, and for 0x110A that eighth is the only citation that is not part
-  of the artifact — which is why the two addresses rank near the top of the
-  primary key for a reason that has little to do with being worth reading.
-  Rewriting those comments to substitute a new name would assert the very call
-  the comment denies, so they were left alone.
+  instructions", and every one of them names 0x110A, 0x158E, 0x0F75, 0x1594
+  and 0x00CF inside the body it is rejecting. The frame gate keeps those
+  mentions, and it is right to: each one does read as a call, to a code
+  address, in a call enumeration. What is wrong is the **caller** — the
+  address the comment is attached to is `0xFF` fill, not the reset path those
+  calls live in. 0x110A and 0x00CF have since been named and left the
+  candidate set; the three that remain, **0x0F75, 0x158E and 0x1594, are
+  ranks 1–3 with 7 citations each, all seven of them this artifact**, and the
+  eighth citation (`common,0x0070`, which records the calls supportively) is
+  `undecided`, because the aside between its governing verb and the mention is
+  longer than the window. **So the top of the ranking is now right about the
+  addresses and still wrong about who calls them** — the second, distinct
+  defect, and the next thing to fix. Rewriting those comments to substitute a
+  new name would assert the very call the comment denies, so they were left
+  alone.
 - *Naming a function removes it from the count.* `cited_by` is defined over
   anonymous callees only, so a row's count goes to 0 the moment it is
   annotated, whether or not its citing comments changed. The `citing` column is
@@ -185,7 +224,7 @@ inbound distribution is already spent.
 
 ## What is left, and the two limits a reader must carry
 
-**The work list is the `annotated=no` rows**, 475 of them, of which **141 are
+**The work list is the `annotated=no` rows**, 475 of them, of which **99 are
 cited** by a comment and so are the ones a reader can trace to a sentence that
 needs them. The rest are reachable but uncited: worth naming, not yet blocking
 any explanation. The ranking is the order to work them in.
@@ -257,7 +296,11 @@ figures above are the merged tree's, not the tranche's own: the arithmetic in
 the previous paragraph (146 cited, 486 anonymous callees, 798 inbound sites)
 is the tranche on the tree before #136, and #136 takes the table to 141, 475
 and 787, with `FUN_*` rows 829 → 814, unreached anonymous rows 343 → 339,
-`.c`-named `FUN_*` callees 836 → 822 and citing comments 314 → 315. The
+`.c`-named `FUN_*` callees 836 → 822 and citing comments 314 → 315. **Those
+two citation figures — 141 callees and 314 → 315 comments — are pre-frame-gate
+counts**, measured under the canonical-width rule alone; the guard described
+below is what takes them to the census table's **99** and **142**, and they are
+left in pre-gate units here so the paragraph still records what #136 did. The
 already-named citation count in §"The citing comments" is 1,279 on the tranche's
 tree and 1,300 on the merged one — a comment row citing at least one named
 index row by canonical-width address, its own included, which is the
@@ -267,6 +310,28 @@ and 0x05EF turned a comment that cited nothing already-named into one that cites
 three, and it is counted here like any other. The 1,299 this section first
 carried was the figure before that row was annotated; re-derive it with the
 `citations()` match rather than carrying either number forward.
+
+### The frame gate's own correction: 0x07D0 is 2, not 0 and not 27
+
+Issue #453 argued that the top of this table was XDATA, and that is right —
+`common,07D0` carried 27 citations and only 2 of them are calls. What it also
+said, that *no* comment citing 0x07D0 is citing that code function, is too
+strong, and the wrong version is left here rather than quietly fixed.
+`common,018C` reads "The other arm calls 0x07D0" and `common,029B` reads "The
+other arm writes 0x11 to 0x1700, calls 0x07D0" — and both listings carry the
+transfer: `../decompiled/common/018C.asm:40` and `029B.asm:50` are
+`lcall 0x07d0`. So `cited_by` for that row is **2**, which is also its
+`inbound`, and the two framings agreeing is the check that a guard which
+zeroed all 27 would have failed. The 25 that are gone are all `pd` comments
+naming the PD image's own byte, every one of them carrying the
+`cross-program` reason.
+
+**0x1C00 is the limit worth carrying, not an absence.** Twenty comments name
+it, 19 in a data frame and 1 unsettled — but it has **no row in this table at
+all**, because no transfer reaches it, so it was never in the ranking to be
+wrong in. That is the shape to watch for in any other count
+here: not ranked is not absent, and 67 candidate pairs name a callee the table
+carries no row for. The tool prints that number beside the gate's.
 
 ## Adding the next tranche
 

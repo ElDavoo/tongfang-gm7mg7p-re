@@ -62,6 +62,22 @@ XDATA 0x0465"), and matching it numerically would credit 43 citations to the
 short form (`0x5E8` for 0x05E8) is **not found by this method**; it is not
 evidence the address is uncited.
 
+**The width rule does not stop a 4-digit data address, so a frame gates the
+citation.** The same token is a function entry and an XDATA byte -- 0x07D0 is
+`FUN_CODE_07d0` here and `DBD1` in `registers.yaml` -- so `citations()` asks
+`citation_frames.classify()` whether a code frame governs the mention. The test
+is a bounded window, not the sentence and not the comment, because a data veto
+over the whole sentence would reject a genuine list: seven `bank1` comments
+write "then calls to 0x110A, 0x158E, 0x0F75, 0x1594 and 0x00CF", and "to" is
+a data marker. A code frame is necessary, a data frame is a veto, and what
+neither settles is returned as `undecided`: the rejected and undecided
+populations are reported, never dropped, because a guard that silently
+discards what it rejects cannot be told apart from one that rejects too much.
+A `pd` comment additionally cannot cite an EC row at all -- the two programs
+have separate address spaces (`citation_frames.program_reason`) -- which is
+decidable from program identity and not from prose. See
+docs/findings/citation-code-vs-data.md.
+
 **`also_in`, never a guessed bank.** A `common` function is exported once, so
 which bank executed a given common call site is not in the listing: a
 `common/0EA2.asm` and a `bank0/0EA2.asm` reading of the same bytes are
@@ -95,6 +111,9 @@ import glob
 import os
 import re
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import citation_frames
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.abspath(__file__))))
@@ -235,22 +254,37 @@ def scan(index, decompiled=DECOMPILED):
 
 
 def citations(index, rows=ANNOTATIONS):
-    """`(callee_key, citing_key)` for every anonymous callee a named comment
-    names, plus the count of comments, not of mentions.
+    """`(kept, rejected, undecided)` for the anonymous callees comments name.
 
-    A comment naming the same callee twice is one comment, because the work
-    list is "which comments have to stop writing a bare address", and one
-    comment rewritten settles one dependency however many times it says so.
+    `kept` maps a callee key to its citing comments, and is a count of
+    *comments*, not of mentions: a comment naming the same callee twice is one
+    comment, because the work list is "which comments have to stop writing a
+    bare address", and one comment rewritten settles one dependency however
+    many times it says so. A pair is kept when no mention carries a data frame
+    or a program veto and at least one carries a code frame, so a comment that
+    calls an address once and stores to it once is one *rejection*, not one
+    call citation: a data frame vetoes the pair whatever a code frame says.
+
+    `rejected` and `undecided` are the guard's own audit trail, per
+    `citation_frames.Candidate`. They are returned rather than dropped for the
+    reason `audit_call_targets.py` reports both framings for the same one: a
+    guard that silently discards what it rejects cannot be told apart from a
+    guard that rejects too much. The program-identity veto outranks the frame
+    verdict because it is not a reading of the prose at all -- a `pd` comment
+    and a `common` row are different programs, whatever the sentence says.
     """
     with open(rows, newline="") as f:
         ann = list(csv.DictReader(f, strict=True))
-    out = collections.defaultdict(list)
+    verdicts = collections.defaultdict(set)
+    data_reasons = collections.defaultdict(list)
+    program_reasons = collections.defaultdict(list)
+    citer_name = {}
     for r in ann:
         comment = r.get("comment") or ""
         scope, addr = r["scope"], norm_addr(r["addr"])
         if not comment:
             continue
-        seen = set()
+        citer_name[(scope, addr)] = r["name"]
         for m in HEXREF.finditer(comment):
             digits = m.group("d")
             # Canonical width, and only then. See the module docstring: this
@@ -258,14 +292,40 @@ def citations(index, rows=ANNOTATIONS):
             if digits.upper() != "%04X" % int(digits, 16):
                 continue
             row = index.resolve(scope, digits.upper())
-            if row is None:
+            if row is None or not row["name"].startswith("FUN_"):
                 continue
             key = (row["program"], row["_addr"])
-            if not row["name"].startswith("FUN_") or key in seen:
-                continue
-            seen.add(key)
-            out[key].append((scope, addr, r["name"]))
-    return out
+            pair = (key, (scope, addr))
+            frame = citation_frames.classify(comment, m)
+            verdicts[pair].add(frame.verdict)
+            if frame.verdict == citation_frames.DATA:
+                if frame.reason not in data_reasons[pair]:
+                    data_reasons[pair].append(frame.reason)
+            program = citation_frames.program_reason(scope, row["program"])
+            if program and program not in program_reasons[pair]:
+                program_reasons[pair].append(program)
+    kept = collections.defaultdict(list)
+    rejected, undecided = [], []
+    for pair, seen in verdicts.items():
+        key, citer = pair
+        # Both reasons are kept when both fire. The program veto decides on
+        # its own, so recording only the frame reading would hide the pairs
+        # the prose gets wrong: three of the 45 cross-program rejections read
+        # as a code frame, and those three are what the veto is for. The count
+        # is derived and printed by `report()`, because the figure written in
+        # the prose drifted once already: "four" was how many of the 45 carry
+        # no data reason at all, not how many read as a code frame.
+        reasons = program_reasons[pair] + data_reasons[pair]
+        if reasons:
+            rejected.append(citation_frames.Candidate(key, citer,
+                                                       tuple(reasons),
+                                                       tuple(sorted(seen))))
+        elif citation_frames.CODE in seen:
+            kept[key].append((citer[0], citer[1], citer_name[citer]))
+        else:
+            undecided.append(citation_frames.Candidate(key, citer, (),
+                                                        tuple(sorted(seen))))
+    return kept, rejected, undecided
 
 
 def is_named(index, key):
@@ -403,7 +463,8 @@ def check_table(have, want):
     return 1, lines
 
 
-def report(index, rows, edges, unresolved, orphan_callers, total):
+def report(index, rows, edges, unresolved, orphan_callers, total,
+           cited_rows, rejected, undecided):
     """Print the census, every figure twice-framed where a second framing
     exists, and the method's stated limits. These are the numbers
     ec/annotations/call-graph.md quotes, so a reader can re-derive them with
@@ -413,6 +474,44 @@ def report(index, rows, edges, unresolved, orphan_callers, total):
     cited = [r for r in anon_edges if r["cited_by"]]
     unreached = len(anon_rows) - len(anon_edges)
     c_callees = decompiled_callees()
+    # Two different counts, and the gap between them is the point of the
+    # block below. `cited_by` sums over the rows this table carries, so a
+    # citation of a callee no transfer reaches is in neither; the frame gate
+    # counts (callee, comment) pairs, which is the whole population the
+    # matcher sees. 0x1C00 is the worked example: no lcall reaches it, so it
+    # has no row to be right or wrong in, and its comments split across the
+    # rejected and undecided buckets rather than falling out of the census
+    # altogether.
+    table_keys = {(r["scope"], r["addr"]) for r in rows}
+    kept = sum(len(v) for v in cited_rows.values())
+    unranked = sum(1 for c in rejected + undecided
+                   if c.callee not in table_keys)
+    unranked += sum(len(v) for k, v in cited_rows.items()
+                    if k not in table_keys)
+    candidates = kept + len(rejected) + len(undecided)
+    # The three numbers the 0x1C00 sentence is made of, counted rather than
+    # written out. All three were literals once and the sentence below was the
+    # only one of them the census did not produce, so it drifted into claiming
+    # "every one" in a data frame where the same run reports 18 rejected and 1
+    # undecided. A limit sentence that contradicts the block above it is worse
+    # than no limit sentence, so the counts come from the same lists the block
+    # prints.
+    c1c00 = ("common", "1C00")
+    c1c00_rejected = sum(1 for c in rejected if c.callee == c1c00)
+    c1c00_undecided = sum(1 for c in undecided if c.callee == c1c00)
+    c1c00_named = (c1c00_rejected + c1c00_undecided
+                   + len(cited_rows.get(c1c00, ())))
+    # The program-identity sentence's number, counted rather than written out,
+    # for the reason the three above are. It cannot be read off `reasons`: a
+    # `cross-program` pair that also lists a data marker may still have had a
+    # mention the frame test called `code`, so the frame verdict has to travel
+    # with the candidate. Stated as a literal this figure drifted into the
+    # neighbouring statistic -- "four of the 45" is how many of them carry no
+    # data reason at all, not how many read as a code frame.
+    cross_program = [c for c in rejected
+                     if "cross-program" in c.reasons]
+    cross_program_code = [c for c in cross_program
+                          if citation_frames.CODE in c.verdicts]
     print("call_graph.py -- EC call graph, from ec/decompiled/*/*.asm")
     print()
     print("  %-52s %6s" % ("function rows in index.csv", len(index.rows)))
@@ -441,6 +540,25 @@ def report(index, rows, edges, unresolved, orphan_callers, total):
     print("  %-52s %6d" % ("  comments that name one",
                            sum(r["cited_by"] for r in cited)))
     print()
+    print("  frame gate (citation_frames.py), the same comments:")
+    print("  %-52s %6d" % ("  candidate (callee, comment) pairs", candidates))
+    print("  %-52s %6d" % ("  kept: a code frame governs the mention", kept))
+    print("  %-52s %6d" % ("  rejected: a data frame, or another program",
+                           len(rejected)))
+    print("  %-52s %6d" % ("  undecided: no frame inside the window",
+                           len(undecided)))
+    print("  %-52s %6d" % ("  of those, naming a callee no transfer reaches",
+                           unranked))
+    print("  %-52s %6d" % ("  cross-program rejections", len(cross_program)))
+    print("  %-52s %6d" % ("    of those, a mention reads as a code frame",
+                           len(cross_program_code)))
+    for reason, n in citation_frames.reason_counts(rejected).most_common(5):
+        print("  %-52s %6d" % ("    rejected on " + reason, n))
+    print("  rejected set, largest callee first (citation_frames.rejected_rows"
+          " renders all):")
+    for line in citation_frames.rejected_rows(rejected, limit=10):
+        print(line)
+    print()
     print("  ranked  scope    addr    in  named  cited  name")
     for rank, r in zip(range(1, 13), cited[:12]):
         print("  %6d  %-7s %-6s %3d %6d %6d  %s"
@@ -454,6 +572,14 @@ def report(index, rows, edges, unresolved, orphan_callers, total):
     print("  method is not absent. The ranking is a work order, not evidence "
           "of what any")
     print("  function does.")
+    print("  limit: %d citation candidates name a callee this table carries "
+          "no row" % unranked)
+    print("  for, because no transfer reaches it, so the gate can count them "
+          "but the")
+    print("  table cannot rank them. 0x1C00 is the worked example: %d "
+          "comments name it, %d" % (c1c00_named, c1c00_rejected))
+    print("  in a data frame and %d unsettled. Not ranked is not absent."
+          % c1c00_undecided)
 
 
 def decompiled_callees(decompiled=DECOMPILED):
@@ -475,15 +601,19 @@ def self_test() -> int:
     The fixture is small enough to read, and every assertion in it exists
     because the corresponding failure is quiet: a graph that cannot see 0x5A43
     looks exactly like a graph with a smaller number in it. The fixture is
-    modelled on the three real cases -- a paged-form-only callee, an
-    `ljmp`-only callee, and a call from a bank listing into the common area.
+    modelled on the real cases -- a paged-form-only callee, an `ljmp`-only
+    callee, a call from a bank listing into the common area, and a comment
+    whose code and data addresses are the same four hex digits.
     """
     index = load_index(os.path.join(FIXTURE, "index.csv"))
     edges, unresolved, orphans, total = scan(
         index, os.path.join(FIXTURE, "decompiled"))
-    cited = citations(index, os.path.join(FIXTURE, "ghidra-functions.csv"))
+    cited, rejected, undecided = citations(
+        index, os.path.join(FIXTURE, "ghidra-functions.csv"))
     rows = build(index, edges, cited)
     by_key = {(r["scope"], r["addr"]): r for r in rows}
+    rejected_keys = {(c.callee, c.citer) for c in rejected}
+    undecided_keys = {(c.callee, c.citer) for c in undecided}
     ok = True
 
     def check(label, cond):
@@ -494,7 +624,7 @@ def self_test() -> int:
 
     print("call_graph.py --self-test (fixture: ec/tools/testdata/call-graph)")
     check("every transfer site in the fixture resolves (%d)" % total,
-          total == 8 and not unresolved)
+          total == 15 and not unresolved)
     check("the 2-byte ajmp is seen: 0x5A43 inbound=3 via ajmp only, "
           "lcall=0",
           by_key[("common", "5A43")]["inbound"] == 3
@@ -574,6 +704,70 @@ def self_test() -> int:
     check("no fixture listing is an orphan, so callers == named_callers is "
           "only false where a real anonymous caller makes it false",
           orphans == 0)
+    # The frame gate. Each of these is a number that shrinks when the guard is
+    # wrong in one direction, which is the failure the guard exists to stop.
+    check("a code callee and a colliding XDATA byte in one sentence: 0x018C "
+          "credits 0x07D0 and credits 0x0A5A nothing, though both are "
+          "reachable anonymous rows in this same fixture",
+          ("common", "07D0") in cited
+          and ("common", "0A5A") not in cited
+          and by_key[("common", "0A5A")]["inbound"] == 1
+          and by_key[("common", "0A5A")]["cited_by"] == 0)
+    check("the XDATA 0x0A56-0x0A5A run credits neither end, and the rejection "
+          "is reported with the pattern that made it rather than dropped",
+          (("common", "0A5A"), ("common", "018C")) in rejected_keys
+          and any("data-marker" in r
+                  for c in rejected
+                  if (c.callee, c.citer) == (("common", "0A5A"),
+                                            ("common", "018C"))
+                  for r in c.reasons))
+    check("a data-marked word inside a code list does not veto it: 0x0070's "
+          "'calls to 0x110A, 0x158E, 0x0F75, 0x1594 and 0x00CF' credits all "
+          "four anonymous addresses, and the named 0x00CF is not a candidate "
+          "at all",
+          all(("common", a) in cited and
+              by_key[("common", a)]["cited_by"] == 1
+              for a in ("110A", "158E", "0F75", "1594"))
+          and ("common", "00CF") not in cited)
+    check("0x07D0 lands on the count its own listings support: two comments "
+          "say 'calls 0x07D0' and two listings carry the lcall, so cited_by "
+          "and inbound agree at 2",
+          by_key[("common", "07D0")]["cited_by"] == 2
+          and by_key[("common", "07D0")]["inbound"] == 2)
+    check("a pd comment cannot cite an EC row whatever the prose says: the "
+          "0x07D0 in 0x10BC's comment is this program's own byte",
+          (("common", "07D0"), ("pd", "10BC")) in rejected_keys
+          and any("cross-program" in c.reasons
+                  for c in rejected
+                  if (c.callee, c.citer) == (("common", "07D0"),
+                                            ("pd", "10BC")))
+          and by_key[("common", "07D0")]["citing"]
+          == "common:018C common:029B")
+    check("a mention with no frame in the window is undecided, not credited "
+          "and not counted as rejected: 0x029B's 'the shared helper here is "
+          "0x5A43'",
+          (("common", "5A43"), ("common", "029B")) in undecided_keys
+          and by_key[("common", "5A43")]["cited_by"] == 0)
+    # The program-identity sentence's figure is derived from these verdicts,
+    # so they are pinned here. The fixture's single cross-program rejection is
+    # the mixed case: its mentions read code, data and undecided, and the
+    # program veto is the only thing rejecting it. Lose the population and the
+    # report's count falls to 0 while the prose keeps claiming otherwise,
+    # which is the drift this field exists to prevent.
+    check("a rejected candidate carries the frame verdicts its mentions drew, "
+          "so the code-frame count is derived rather than written out: the "
+          "fixture's one pd citation reads as a code frame",
+          all(c.verdicts for c in rejected + undecided)
+          and sum(1 for c in rejected
+                  if "cross-program" in c.reasons
+                  and citation_frames.CODE in c.verdicts) == 1)
+    check("kept, rejected and undecided partition the candidate pairs, so no "
+          "comment is both credited and reported against",
+          len(cited) and rejected and undecided
+          and not ({(k, c) for k, v in cited.items() for c in
+                    ((s, a) for s, a, _ in v)} & rejected_keys)
+          and not ({(k, c) for k, v in cited.items() for c in
+                    ((s, a) for s, a, _ in v)} & undecided_keys))
     print("  all assertions passed" if ok else "  FAILURES ABOVE")
     return 0 if ok else 1
 
@@ -592,7 +786,8 @@ def main() -> int:
 
     index = load_index()
     edges, unresolved, orphans, total = scan(index)
-    rows = build(index, edges, citations(index))
+    cited, rejected, undecided = citations(index)
+    rows = build(index, edges, cited)
     text = render(rows)
 
     if args.check:
@@ -615,7 +810,8 @@ def main() -> int:
 
     with open(CALLEES, "w", newline="") as f:
         f.write(text)
-    report(index, rows, edges, unresolved, orphans, total)
+    report(index, rows, edges, unresolved, orphans, total,
+           cited, rejected, undecided)
     print()
     print("wrote %s (%d rows)"
           % (os.path.relpath(CALLEES, REPO), len(rows)))

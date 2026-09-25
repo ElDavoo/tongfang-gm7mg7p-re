@@ -42,7 +42,11 @@ into `r2 -a 8051` with no stitching needed.
   the only framing that survives the annotation pass: a `.c` names its callees,
   so a name-based inbound count is zeroed by the very act of naming. Parses all
   four transfer forms, because a `lcall`-only scan misses 0x5A43 (11 `ajmp`, 0
-  `lcall`) and 0x00CF (1 `ljmp`) entirely. Default mode prints the census and
+  `lcall`) and 0x00CF (1 `ljmp`) entirely. A citation is gated on a code frame
+  rather than on the address alone — on this firmware the same four hex digits
+  are a function entry and an XDATA byte, and `tools/citation_frames.py`
+  decides which a given mention is, reporting what it rejects and what it
+  cannot decide instead of dropping either. Default mode prints the census and
   writes `annotations/call-graph-callees.csv`, `--check` recomputes that table
   and fails on any diff, and `--self-test` runs the tool against the fixture
   in `tools/testdata/call-graph/`. Both are run by
