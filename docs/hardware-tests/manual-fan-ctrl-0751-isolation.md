@@ -667,6 +667,22 @@ graded*, and names that block in the section. A `--block 0x10` run handed the
 than putting 0xA0's byte under 0x10's windows. Where a dump's name carries no
 value, the run falls back to `--block`/`--wrote` and says which it used.
 
+The same rule covers the whole-block report, and it has to: a `--dump-pair`
+bracket is wider than a window and answers the same question, so a pair
+filed under the wrong block is a result about the wrong bytes rather than a
+second reading of the right ones. Each pair is filed by the `<value>` in its
+two file names — either one names the block and the other is silent, and two
+that name different blocks is an input error, reported and not read rather
+than resolved by picking one — and the section groups the pairs the way it
+groups the dumps. A `--block 0x10` run handed the `a0` pair prints the
+`belongs to block 0xA0, not the block under test (0x10) -- not read for
+§4.1-§4.3 here` line in place of the bracket, and says that no `--dump-pair`
+was given for 0x10, so the whole-block read for it was not taken. Note what
+that refusal is *not*: the two blocks' brackets here are the same reading of
+the same page in opposite directions and come out byte for byte identical, so
+nothing inside a mis-filed bracket looks wrong. The group line above it is
+the whole of the attribution.
+
 §3a's service-stopped pass is a second run with its own `<date>`, not a fourth
 block of this one: the Office/Turbo pair is required in both arms and §6's
 names carry no arm, so the two passes' `<value>`-stamped dumps would overwrite

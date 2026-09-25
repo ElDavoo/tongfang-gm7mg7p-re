@@ -4914,3 +4914,63 @@ and therefore a `pd` edge that genuinely targets it, keeps its
 for `pd`→`common` edges is still open — `region_of()` has no vocabulary for one
 — and the 7-edges-and-1-proxy ratio in
 `docs/findings/group-proxy-populations.md` is unchanged.
+
+## 22. The whole-block bracket was filed under whatever block the run named (2026-09-25, issue #475)
+
+The write-up is `docs/findings/dump-pair-block-attribution.md`; this is the
+summary. It is a reporting and attribution change: **no fixture was added, no
+capture was re-read, and no register status moved.**
+
+**`--dump-pair` is grouped by block now, the way `--dump` already was.** §6
+stamps every dump with the `<value>` of the block it belongs to, and
+`report_dumps()` has grouped on it since #457: on a `--block 0x10` run handed
+the `a0` dumps it prints `belongs to block 0xA0, not the block under test
+(0x10) -- not read for §4.6 here` and takes no readback. `report_dump_pairs()`
+took the pairs with no block argument at all, so in the whole-day form §6
+documents — one plain invocation over all three values — every window above the
+section carried a `block:` line and the three brackets below it carried nothing.
+A pair is filed by `dump_pair_block()`, which asks `dump_block()` per side
+rather than re-implementing it: both names agreeing is `name`, one name and a
+silent other side is that block's (`one-name`), neither is the `--block`
+fallback (`flag`, so a pair that names its own block is never re-filed under
+the run's flag), and **two names that disagree is an input error — named,
+printed, not compared, and exit code unchanged**, on the same-file-twice
+precedent, because the window report and the §4.6 readback the operator also
+needs still get printed.
+
+**A mis-filed bracket is not visible in its body, and that is the finding.**
+The two pairs in `0751-isolation-run-multi-block/` read the same two bytes in
+the opposite order (`0x10 -> 0xA0` and `0xA0 -> 0x10`), and the committed tool
+prints **byte-identical** whole-block brackets for them apart from the file
+names: `16 address(es) compared`, four `not covered by this pair`,
+`other addresses that differ (1)` naming `0x0751` — *as an address only*, the
+values being in the §4.6 readback, a different section. So the calibrated
+claim is not that grouping makes a mis-filed bracket show up in the output; it
+is that **the group line above it and the refusal to compare are the whole of
+the attribution, and without them there is none.** The grouping is what makes
+that attribution exist. `test_both_blocks_pairs_are_grouped_in_one_unscoped_run`
+pins the identity, so the property cannot be lost quietly, and the scoped case
+asserts on the label and on what is absent rather than on a value — there is no
+value-level difference to find. Printing the differing addresses' *values* in
+the bracket would have made it self-evident, and is not done: it changes a line
+`differing_addresses()` reads flat and an existing test pins, and it cuts
+against the "no third category" invariant in `report_dump_pairs`' own docstring.
+
+**The heading is byte-identical** —
+`=== whole-block dump pairs (§4.1-§4.3) ===` — and every line inside a pair
+body keeps its indentation, because both §4.6 readers in the suite cut the
+section on that heading and `group_body()` cuts the bodies on `    {name}:`.
+`graded` counts only pairs compared in scope, so a `--block` run handed only
+another block's pairs is 0 and the closing summary reports no whole-block
+read. **No live run happened and none is implied**: every input is a committed
+hand-written fixture and the tool's own output over it, `0x0751` stays
+`present-untested`, and no line of this is a §7 verdict.
+
+**Two follow-ups, both named rather than done.** `report_readback`'s
+`--dump-pair` hint is still not block-aware — it can point a `--block 0x10` run
+at an `a0` file — which is advice rather than a verdict and lives inside the
+§4.6 section two tests pin. And a name disagreement stays exit code 0: the
+argument is that `--block`/`--wrote` name the value under test for the whole
+run, so one of them being wrong leaves no window in the report gradeable, which
+is not true of one pair out of three — a change to the exit-code contract rather
+than a report fix.

@@ -132,9 +132,11 @@ reads, so the CSV is where the check belongs.
 block's windows alone, which is what makes the output something a fold-in can
 attach per block: §6's three CSVs are one set for the whole run, so without it
 every invocation prints every block's windows and the three attachments differ
-only in the `--dump`/`--dump-pair` section. Every window carries a `block:`
-line naming the block its marks fall in, so an unscoped run's output says the
-same thing the scoped one does.
+only in the `--dump`/`--dump-pair` section, where it decides which block's
+files are read and not merely printed. Every window carries a `block:` line
+naming the block its marks fall in, and every dump and dump pair is grouped
+under the block it names or the run was given, so an unscoped run's output
+says the same thing the scoped one does.
 
 None of this is a register behaviour. A void block says the capture is short a
 mark; it says nothing about `0x0751`, and no line of any block verdict is a
@@ -1071,6 +1073,43 @@ def dump_block(path, fallback):
     return None, "none"
 
 
+def dump_pair_block(before, after, fallback):
+    """(value, how) for a --dump-pair: which block it is, and what says so.
+
+    A pair is one range's bracket for one block, so it is that block's if
+    either of its two file names says so -- a name is the only thing in a
+    dump that says which block it belongs to, and one of the two carrying it
+    is that statement with the other silent, the same reading
+    `report_readback` gives a name against `--wrote`. `dump_block` is the
+    thing asked, not re-implemented: the name beats the flag, and the report
+    says which of the two it used.
+
+    Two names that disagree are not settled here. A pair is one block's, so
+    a before-dump of 0xA0 and an after-dump of 0x10 bracket two different
+    blocks, and picking either file's block would file a bracket over the
+    wrong bytes with a clean face. The pair is named, the disagreement
+    printed, and nothing is read from it -- the same non-fatal handling the
+    same-file-twice pair gets, because it is the same class of thing: an
+    input error, stated, with the window report and the §4.6 readback the
+    operator also needs still printed. `disagree` carries no value for the
+    same reason.
+
+    The fallback is only consulted when neither name speaks, so a pair that
+    names its own block is never quietly re-filed under the run's `--block`.
+    """
+    b, b_how = dump_block(before, None)
+    a, a_how = dump_block(after, None)
+    if b_how == "name" and a_how == "name" and b != a:
+        return None, "disagree"
+    if b_how == "name" and a_how == "name":
+        return b, "name"
+    if b_how == "name" or a_how == "name":
+        return (b, "one-name") if b_how == "name" else (a, "one-name")
+    if fallback is not None:
+        return fallback, "flag"
+    return None, "none"
+
+
 def report_dumps(dumps, wrote, pairs, block_value=None):
     """0x0751 in each --dump, and what the last of them says about §4.6.
 
@@ -1187,7 +1226,7 @@ def report_readback(here, wrote, pairs, value):
               "run is what separates the vendor service from the EC.")
 
 
-def report_dump_pairs(pairs):
+def report_dump_pairs(pairs, block_value=None, wrote=None):
     """The same watched bytes, read across a whole block instead of a window.
 
     A pair is §3's own bracket for one range -- step 0 and step 6, ~100 s
@@ -1237,102 +1276,179 @@ def report_dump_pairs(pairs):
     windowed read's silence, not this branch's, and the §6 fixture never
     reaches it.
 
+    Pairs are grouped by the block they name, the way `report_dumps` groups
+    the dumps, and a `--block` run takes no read from another block's. The
+    bracket is wider than the window and answers the same question, so a
+    pair filed under the wrong block is a result about the wrong bytes: the
+    two `a0`/`10` pairs in the two-value fixture read the same two bytes in
+    the opposite order and print byte-identical brackets, so nothing in a
+    bracket's body distinguishes them and the group line above it is the
+    whole of the attribution. The heading is unchanged for the reason
+    `report_dumps` gives: both §4.6 readers in the test suite cut the
+    section on it.
+
     Returns how many pairs were actually compared, so the closing summary
-    cannot report a whole-block read for a run that took none.
+    cannot report a whole-block read for a run that took none -- a `--block`
+    run handed only another block's pairs is 0.
     """
     print("\n=== whole-block dump pairs (§4.1-§4.3) ===")
     if not pairs:
         print("  no dump pair given (--dump-pair); the whole-block read is not "
               "checked")
         return 0
+    fallback = block_value if block_value is not None else wrote
+    groups = []
+    for pair in pairs:
+        value, how = dump_pair_block(pair[0], pair[1], fallback)
+        # Grouped on the pair's own reading rather than on the value alone, so
+        # a group line cannot claim that a file it holds says something it does
+        # not: `report_dumps` can only mix `name` and `flag` in one group, and
+        # both of those have to name the same value, while a pair also has the
+        # one-name and disagree shapes.
+        for value_, how_, here in groups:
+            if (value_, how_) == (value, how):
+                here.append(pair)
+                break
+        else:
+            groups.append([value, how, [pair]])
+
     graded = 0
-    for before_path, after_path, before, after in pairs:
-        if os.path.realpath(before_path) == os.path.realpath(after_path):
-            # Path identity, not the before-/after- naming: a pair is whatever
-            # the operator says it is, and the same file twice is the one
-            # input error this flag cannot see on its own. Grading it would
-            # print "unchanged" for every address, which is a true statement
-            # about nothing -- the file agrees with itself by construction.
-            # Flagged and skipped rather than fatal, so the window report and
-            # the §4.6 readback the operator also needs still get printed.
-            print(f"\n  {before_path} -> {after_path}")
-            print("    both sides are the same file, so this pair is not "
-                  "graded: a read compared with itself proves nothing. Pass "
-                  "the before and after dumps of one range as two different "
-                  "files.")
+    for value, how, here in groups:
+        if how == "disagree":
+            # Before the `value is None` line, which would be false for it:
+            # these two files name a value each, and it is their disagreement
+            # that leaves the pair with none to be filed under.
+            print("  the two file names name different blocks, so this pair is "
+                  "one of neither and is not compared; which two they name is "
+                  "printed with it below")
+        elif value is None:
+            print("  no block named: these files carry no §6 <value> and "
+                  "neither --block nor --wrote was given")
+        elif how == "name":
+            print(f"  block 0x{value:02X}, from the <value> in these files' "
+                  "§6 names")
+        elif how == "one-name":
+            print(f"  block 0x{value:02X}, from the <value> in one of these "
+                  "two file names; the other carries none")
+        else:
+            print(f"  block 0x{value:02X}, from --block/--wrote; these files "
+                  "carry no <value> of their own")
+        if how == "disagree":
+            for before_path, after_path, _, _ in here:
+                b, _ = dump_block(before_path, None)
+                a, _ = dump_block(after_path, None)
+                print(f"\n    {before_path} -> {after_path}: the before side "
+                      f"names block 0x{b:02X} and the after side 0x{a:02X}; a "
+                      "pair is one block's before and after, so there is "
+                      "nothing here to read. Pass the two dumps of one "
+                      "range.")
             continue
-        graded += 1
-        common = sorted(set(before) & set(after))
-        moved = [a for a in common if before[a] != after[a]]
-        print(f"\n  {before_path} -> {after_path}, {len(common)} address(es) "
-              "compared")
+        if block_value is not None and value != block_value:
+            for before_path, after_path, _, _ in here:
+                print(f"\n    {before_path} -> {after_path}: belongs to block "
+                      f"0x{value:02X}, not the block under test "
+                      f"(0x{block_value:02X}) -- not read for §4.1-§4.3 here")
+            continue
+        for before_path, after_path, before, after in here:
+            if os.path.realpath(before_path) == os.path.realpath(after_path):
+                # Path identity, not the before-/after- naming: a pair is
+                # whatever the operator says it is, and the same file twice is
+                # the one input error this flag cannot see on its own. Grading
+                # it would print "unchanged" for every address, which is a true
+                # statement about nothing -- the file agrees with itself by
+                # construction. Flagged and skipped rather than fatal, so the
+                # window report and the §4.6 readback the operator also needs
+                # still get printed.
+                print(f"\n  {before_path} -> {after_path}")
+                print("    both sides are the same file, so this pair is not "
+                      "graded: a read compared with itself proves nothing. "
+                      "Pass the before and after dumps of one range as two "
+                      "different files.")
+                continue
+            graded += 1
+            common = sorted(set(before) & set(after))
+            moved = [a for a in common if before[a] != after[a]]
+            print(f"\n  {before_path} -> {after_path}, {len(common)} "
+                  "address(es) compared")
 
-        only_before = sorted(set(before) - set(after))
-        only_after = sorted(set(after) - set(before))
-        if only_before or only_after:
-            print("    coverage gap, not a change: whatever moved in the part "
-                  "one of these does not cover is outside this read.")
-            print("      before dump only: "
-                  + (" ".join(f"0x{a:04X}" for a in only_before) or "none"))
-            print("      after dump only:  "
-                  + (" ".join(f"0x{a:04X}" for a in only_after) or "none"))
+            only_before = sorted(set(before) - set(after))
+            only_after = sorted(set(after) - set(before))
+            if only_before or only_after:
+                print("    coverage gap, not a change: whatever moved in the "
+                      "part one of these does not cover is outside this read.")
+                print("      before dump only: "
+                      + (" ".join(f"0x{a:04X}" for a in only_before)
+                         or "none"))
+                print("      after dump only:  "
+                      + (" ".join(f"0x{a:04X}" for a in only_after)
+                         or "none"))
 
-        for name, addrs in WATCHED:
-            hits = [a for a in moved if a in addrs]
-            if not any(a in addrs for a in common):
-                # The fan table is not in a 0x0700 dump and the PLs are not
-                # in a 0x0F00 one, and the 0x0400 pair covers none of
-                # §4.1-§4.3 at all, so §6's pairs each cover some of
-                # §4.1-§4.3 and not all. Silence there would read as
-                # "nothing moved".
-                print(f"    {name}: not covered by this pair")
-            elif not hits:
-                print(f"    {name}: unchanged across the block")
-            else:
-                print(f"    {name}:")
-                for a in hits:
-                    print(f"      0x{a:04X}  0x{before[a]:02X} -> "
-                          f"0x{after[a]:02X}")
-                for line in group_note(name):
-                    print(line)
-                if name == "fan table (§4.2)":
-                    for line in note_lines(FAN_TABLE_NEXT_STEP):
+            for name, addrs in WATCHED:
+                hits = [a for a in moved if a in addrs]
+                if not any(a in addrs for a in common):
+                    # The fan table is not in a 0x0700 dump and the PLs are not
+                    # in a 0x0F00 one, and the 0x0400 pair covers none of
+                    # §4.1-§4.3 at all, so §6's pairs each cover some of
+                    # §4.1-§4.3 and not all. Silence there would read as
+                    # "nothing moved".
+                    print(f"    {name}: not covered by this pair")
+                elif not hits:
+                    print(f"    {name}: unchanged across the block")
+                else:
+                    print(f"    {name}:")
+                    for a in hits:
+                        print(f"      0x{a:04X}  0x{before[a]:02X} -> "
+                              f"0x{after[a]:02X}")
+                    for line in group_note(name):
                         print(line)
+                    if name == "fan table (§4.2)":
+                        for line in note_lines(FAN_TABLE_NEXT_STEP):
+                            print(line)
 
-        # `None` is a group this pair's addresses do not reach at all, kept
-        # apart from one that is reached and held still: "never read" is a
-        # different answer from "read and did not move", and the temperatures
-        # are in neither the 0x0700 nor the 0x0F00 dump, so the two bytes
-        # §4.5's comparison rests on would otherwise vanish under a heading
-        # that promises them. A reached group that did not move stays silent,
-        # as it does per window.
-        groups = []
-        for name, addrs in CONTEXT:
-            if not any(a in addrs for a in common):
-                groups.append((name, None))
-            else:
-                groups.append((name, [a for a in moved if a in addrs]))
-        groups = [(name, hits) for name, hits in groups
-                  if hits is None or hits]
-        if groups:
-            print("    fan duty / temperature bytes (§4.4/§4.5) -- "
-                  "context, not graded here:")
-            for name, hits in groups:
-                if hits is None:
-                    print(f"      {name}: not covered by this pair")
-                    continue
-                print(f"      {name}:")
-                for a in hits:
-                    print(f"        0x{a:04X}  0x{before[a]:02X} -> "
-                          f"0x{after[a]:02X}")
+            # `None` is a group this pair's addresses do not reach at all, kept
+            # apart from one that is reached and held still: "never read" is a
+            # different answer from "read and did not move", and the
+            # temperatures are in neither the 0x0700 nor the 0x0F00 dump, so
+            # the two bytes §4.5's comparison rests on would otherwise vanish
+            # under a heading that promises them. A reached group that did not
+            # move stays silent, as it does per window. `context_groups` rather
+            # than `groups` because the block grouping above is still being
+            # walked by name.
+            context_groups = []
+            for name, addrs in CONTEXT:
+                if not any(a in addrs for a in common):
+                    context_groups.append((name, None))
+                else:
+                    context_groups.append(
+                        (name, [a for a in moved if a in addrs]))
+            context_groups = [(name, hits) for name, hits in context_groups
+                              if hits is None or hits]
+            if context_groups:
+                print("    fan duty / temperature bytes (§4.4/§4.5) -- "
+                      "context, not graded here:")
+                for name, hits in context_groups:
+                    if hits is None:
+                        print(f"      {name}: not covered by this pair")
+                        continue
+                    print(f"      {name}:")
+                    for a in hits:
+                        print(f"        0x{a:04X}  0x{before[a]:02X} -> "
+                              f"0x{after[a]:02X}")
 
-        others = [a for a in moved
-                  if not any(a in addrs for _, addrs in WATCHED)
-                  and not any(a in addrs for _, addrs in CONTEXT)]
-        if others:
-            print(f"    other addresses that differ ({len(others)}), not "
-                  "graded here -- read them against §4.4 and §4.5 by hand:")
-            print("      " + " ".join(f"0x{a:04X}" for a in others))
+            others = [a for a in moved
+                      if not any(a in addrs for _, addrs in WATCHED)
+                      and not any(a in addrs for _, addrs in CONTEXT)]
+            if others:
+                print(f"    other addresses that differ ({len(others)}), "
+                      "not graded here -- read them against §4.4 and §4.5 "
+                      "by hand:")
+                print("      " + " ".join(f"0x{a:04X}" for a in others))
+
+    if block_value is not None and not any(v == block_value
+                                           for v, _, _ in groups):
+        print(f"  no --dump-pair was given for block 0x{block_value:02X}, so "
+              "the whole-block read for it was not taken; the pairs named "
+              "above are another block's")
 
     print("\n  Every `unchanged` above says the byte did not differ between "
           "these two reads, which is not a claim that it did not move inside "
@@ -1369,7 +1485,10 @@ def main(argv=None):
                          "proves nothing and is not graded. Read for the "
                          "whole-block report and independent of --dump, whose "
                          "§4.6 readback still comes from the last of that "
-                         "block's --dump flags")
+                         "block's --dump flags. Pairs are grouped by the "
+                         "block they name, and --block scopes that report as "
+                         "it scopes the --dump one: a pair of another "
+                         "block's is named and not read")
     ap.add_argument("--wrote", metavar="VALUE",
                     help="the value written to 0x0751, spelled as --block "
                          "takes it (0xA0, A0 or a0); must agree with --block "
@@ -1534,7 +1653,8 @@ def main(argv=None):
              for b, a in args.dump_pair]
     report_dumps(dumps, wrote, pairs,
                  selected.value if selected is not None else None)
-    graded_pairs = report_dump_pairs(pairs)
+    graded_pairs = report_dump_pairs(
+        pairs, selected.value if selected is not None else None, wrote)
 
     print("\n=== what this does and does not settle ===")
     if withheld:

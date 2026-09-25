@@ -299,11 +299,14 @@ into `r2 -a 8051` with no stitching needed.
 - **`tools/grade_0751_isolation.py`** — applies §4 of
   `../docs/hardware-tests/manual-fan-ctrl-0751-isolation.md` to a `0x0751`
   capture mechanically, so the sweep half of that procedure is read the same way
-  twice; §4.4's PWM comparison is left as a number for a human. Its offline
-  suite is `tools/test_grade_0751_isolation.py`, and `bash tools/run-tests.sh`
-  from the repo root runs it with every other `test_*.py` in the repository
-  (`../tools/README.md`). It runs against the committed `tools/testdata/`
-  captures and is not evidence about the machine.
+  twice; §4.4's PWM comparison is left as a number for a human. `--block`
+  grades one block of a multi-block capture and scopes the file sections with
+  it: dumps and dump pairs are grouped by the `<value>` in their file names,
+  and a group that is not the block under test is named and not read. Its
+  offline suite is `tools/test_grade_0751_isolation.py`, and
+  `bash tools/run-tests.sh` from the repo root runs it with every other
+  `test_*.py` in the repository (`../tools/README.md`). It runs against the
+  committed `tools/testdata/` captures and is not evidence about the machine.
 - **`tools/ec_timer_capture.py`** — the Linux read-only counterpart of
   `../windows/tools/ec_watch.py`: samples an explicit address list through the
   ECMG window (`/dev/mem`, read-only, the mapping `tools/ecmem.py` uses) at
