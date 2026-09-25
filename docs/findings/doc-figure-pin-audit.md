@@ -59,12 +59,12 @@ decided it:
 ```console
 $ python3 ec/tools/check_doc_figure_pins.py \
     docs/findings/xdata-census-rederivation-checklist.md --section 2b
-    1326  held-by-assertion      ORACLE["distinct"] @ ec/tools/xdata_register_map.py:654, asserted at ec/tools/xdata_register_map.py:3406-3411  [marked held]
-     440  held-by-assertion      OWNERSHIP["clusters"] @ ec/tools/xdata_register_map.py:1292, asserted at ec/tools/xdata_register_map.py:3889-3896  [marked held]
-    1218  held-by-assertion      ORACLE["main_distinct"] @ ec/tools/xdata_register_map.py:655, asserted at ec/tools/xdata_register_map.py:3406-3411  [marked held]
-    9320  held-by-assertion      OWNERSHIP["main_refs"] @ ec/tools/xdata_register_map.py:1264, asserted at ec/tools/xdata_register_map.py:3857-3861  [marked held]
-     157  held-by-assertion      ORACLE["extmem_pd_distinct"] @ ec/tools/xdata_register_map.py:649, asserted at ec/tools/xdata_register_map.py:3260-3277  [marked held]
-     858  held-by-assertion      ORACLE["extmem_pd_refs"] @ ec/tools/xdata_register_map.py:649, asserted at ec/tools/xdata_register_map.py:3260-3277  [marked held]
+    1326  held-by-assertion      ORACLE["distinct"] @ ec/tools/xdata_register_map.py:654, asserted at ec/tools/xdata_register_map.py:3485-3490  [marked held]
+     440  held-by-assertion      OWNERSHIP["clusters"] @ ec/tools/xdata_register_map.py:1292, asserted at ec/tools/xdata_register_map.py:3968-3975  [marked held]
+    1218  held-by-assertion      ORACLE["main_distinct"] @ ec/tools/xdata_register_map.py:655, asserted at ec/tools/xdata_register_map.py:3485-3490  [marked held]
+    9320  held-by-assertion      OWNERSHIP["main_refs"] @ ec/tools/xdata_register_map.py:1264, asserted at ec/tools/xdata_register_map.py:3936-3940  [marked held]
+     157  held-by-assertion      ORACLE["extmem_pd_distinct"] @ ec/tools/xdata_register_map.py:649, asserted at ec/tools/xdata_register_map.py:3339-3356  [marked held]
+     858  held-by-assertion      ORACLE["extmem_pd_refs"] @ ec/tools/xdata_register_map.py:649, asserted at ec/tools/xdata_register_map.py:3339-3356  [marked held]
      390  unheld                 no occurrence in ec/tools/*.py and no committed cell  [marked unheld]
       50  unheld                 no occurrence in ec/tools/*.py and no committed cell  [marked unheld]
     3948  unheld                 no occurrence in ec/tools/*.py and no committed cell  [marked unheld]
@@ -268,3 +268,22 @@ thirty-three / 1018 pair as its own. This change moved none of the figures
 eighteen figures, eight held, ten unheld, and agrees with the page's own
 marking, because #801 added no constant and no check that any §2b figure could
 resolve to.)*
+
+*(Third merged-tree note, 2026-09-25: the tree this change lands in also carries
+#851, which added `census_shape()` and `carry_advice()` to
+`ec/tools/xdata_register_map.py` — 80 lines, every one of them above the `check()`
+at `:2970` — while this issue added 19 from the other side. **The transcript
+above is re-run on that merged tree, not carried across**: all eighteen verdicts
+and the `8 held / 10 unheld` split are unchanged, and so is the
+`175 literal(s) inside a check`, which #851's new suite did not move because it
+contributes no *distinct* literal inside a `check()`. What did move is every
+`file:line` in the transcript, and they are re-measured rather than shifted by
+arithmetic: `:3406-3411` → `:3485-3490`, `:3889-3896` → `:3968-3975`,
+`:3857-3861` → `:3936-3940`, `:3260-3277` → `:3339-3356`. The `ORACLE` and
+`OWNERSHIP` definition lines (`:649`, `:654`, `:655`, `:1264`, `:1292`) sit
+above both sides' insertions and are unchanged, which is the same reason
+`xdata-06c2-06db-timers.md`'s `BUCKET_TOTALS` citation survives at `:1212-1213`.
+`ec/tools/test_check_doc_figure_pins.py` pins two of these spans in its own
+cases, so it was red for the duration and is green again; both are re-measured
+too, and the write-up's own claim that the tree "moves under a page that cited
+it" is now a thing that happened to the checker rather than only to the prose.)*

@@ -107,7 +107,7 @@ The flag wins on four counts, all citable inside this tree:
 - **The scratch tree was doing no work the flag does not already do.** The copy
   existed to read the committed decompile and write nothing into it. Run in
   place, the tool reads the same committed decompile, and the flag's own second
-  refusal (`xdata_register_map.py:4508`) will not let it be given the committed
+  refusal (`xdata_register_map.py:4606`) will not let it be given the committed
   output paths — so the CSVs have to go somewhere scratch either way, and
   `setUpClass` already had that directory.
 
@@ -363,7 +363,7 @@ sentence each:
 | where | claim | now |
 |---|---|---|
 | `docs/findings/0751-grader-self-test-gate.md:109` | "#528's `==`-guard failure already has its own issue on `main` and needs nothing from here" | the sentence **stands as written** — `gh issue view 568` shows #568 **open** since `2026-09-25T03:03:44Z`, naming this defect and this flag, queued behind the open-PR cap rather than unowned — with a correction beside it. The issue cites this as `:76`, which is the pre-#751 line; the sentence is at `:109` both on `main` and here, and the correction quotes it rather than pinning a line that has already moved once |
-| `ec/annotations/xdata-register-map.md:2607` | "`test_xdata_cluster_names.py` patches a literal `if stripped.startswith("==")`" | the suite no longer patches anything; it runs the committed tool with `--no-eq-guard` |
+| `ec/annotations/xdata-register-map.md:2610` | "`test_xdata_cluster_names.py` patches a literal `if stripped.startswith("==")`" | the suite no longer patches anything; it runs the committed tool with `--no-eq-guard` |
 | `docs/findings/xdata-no-eq-guard-refusal-contract.md:250-252` | "the accepted run in `test_xdata_register_map.py` is the only working scripted route to a guard-off census from the committed tree" | it is now one of two, and the other is the census §6a measures |
 | `ec/tools/test_xdata_register_map.py:9-12` | "it has raised in `setUpClass` since #528 without running any of its six cases" | **corrected in place** — a test file, and a direct description of the suite this branch fixes |
 

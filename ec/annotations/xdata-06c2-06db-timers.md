@@ -863,9 +863,9 @@ $ python3 ec/tools/xdata_register_map.py --export-ownership \
     --out-registers /tmp/after-registers.csv \
     --out-clusters  /tmp/after-clusters.csv                    # read once, per owner
   names: seeded 4, exact 0, carried by overlap 3, tied, not carried 0, with no name 433
-    main-ec-002 carries mode-oem-init by overlap, Jaccard 0.97 from kefb63d82f8c7 -- re-key annotations/xdata-cluster-names.csv if the name moved
-    main-ec-004 carries level-block-086x by overlap, Jaccard 0.75 from ka39cda99615f -- re-key annotations/xdata-cluster-names.csv if the name moved
-    main-ec-007 carries ff-fill-stubs by overlap, Jaccard 0.60 from kea0c67af9b51 -- re-key annotations/xdata-cluster-names.csv if the name moved
+    main-ec-002 carries mode-oem-init by overlap, Jaccard 0.97 from kefb63d82f8c7 -- this run's ids are not the committed census's (--export-ownership), and annotations/xdata-cluster-names.csv is anchored to the committed one, so a carry here is arithmetic over a different clustering, not a re-key request
+    main-ec-004 carries level-block-086x by overlap, Jaccard 0.75 from ka39cda99615f -- this run's ids are not the committed census's (--export-ownership), and annotations/xdata-cluster-names.csv is anchored to the committed one, so a carry here is arithmetic over a different clustering, not a re-key request
+    main-ec-007 carries ff-fill-stubs by overlap, Jaccard 0.60 from kea0c67af9b51 -- this run's ids are not the committed census's (--export-ownership), and annotations/xdata-cluster-names.csv is anchored to the committed one, so a carry here is arithmetic over a different clustering, not a re-key request
 wrote /tmp/after-registers.csv: 1326 rows
 wrote /tmp/after-clusters.csv: 440 rows
   main-ec: 1218 distinct addresses, 9320 references, 390 clusters at threshold 0.5

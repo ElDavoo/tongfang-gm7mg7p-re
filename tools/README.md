@@ -11,7 +11,7 @@ bash tools/run-tests.sh
 
 Every `test_*.py` under the repository, found by `find` — not a hardcoded list,
 so a suite in a directory that does not exist yet is picked up by having its
-file committed. There are thirty-three today, 1018 tests in all — both figures
+file committed. There are thirty-four today, 1033 tests in all — both figures
 are what the runner below prints, one line per suite and a total on its last
 line — and each is a `unittest` suite standing in for a tool's own behaviour.
 Re-derive them by running it rather than by editing this sentence. None of the
@@ -108,6 +108,31 @@ alone in a worktree of clean `origin/main`, where it fails with the same two
 fixes it. Both of the newly merged suites are green:
 `test_check_citation_lines.py` at 40 and `test_check_doc_figure_pins.py` at
 44.)*
+*(Sixth merged-tree note, 2026-09-25, issue #851 landing beside #801 and #849:
+the counts above are this merged tree's, re-derived from a `bash
+tools/run-tests.sh` on it — **thirty-four suites and 1033 tests**, which is the
+fifth note's 1018 plus #851's one new suite,
+`ec/tools/test_xdata_carry_notice.py` at 15. The last line reads `34 suite(s)
+run, 1033 tests; one or more FAILED` with the runner exiting 1, and the red one
+is **still only** `ec/tools/test_check_cluster_citations.py` on the same `:220`
+of the same #822 file — confirmed once more here by running that suite alone in
+a worktree of clean `origin/main`, where it fails with the same two
+`0x0464`/`0x0465` disagreements, so #851 neither caused it nor fixes it. The new
+suite is green at 15.*
+
+*(A seventh thing this merge moved, recorded here because it is the kind that
+survives a totals note: #851 added 80 lines to `ec/tools/xdata_register_map.py`
+above every `check()` past `:2970`, and #849 had added 19 above the same
+`check()`s from the other side, so **every `file:line` either issue cited into
+that file was stale the moment the two landed together**. Both sides' citations
+were re-measured against the merged file and repointed — #849's `:3260-3277` →
+`:3339-3356` and five more in `doc-figure-pin-audit.md` and the checklist's §2b,
+#851's `:4587-4592` → `:4606-4611` and a dozen more across six pages — and
+`ec/tools/test_check_doc_figure_pins.py`'s two line pins with them, since a
+suite that pins a line is the same defect a page that pins one is. That suite was
+red for the duration and is green again; it is named here rather than left as a
+detail of the diff because "the merge only renumbered some prose" is the reading
+this file exists to make impossible.)*
 `docs/findings/0751-grader-self-test-gate.md` records the red set as it stood
 and the follow-up issues that owned it, and
 [`tools-readme-totals.md`](../docs/findings/tools-readme-totals.md)
@@ -191,6 +216,7 @@ re-derived by running the runner rather than by arithmetic on a diff.
 | `ec/tools/test_inc_dptr_sites.py` | `ec/tools/inc_dptr_sites.py`'s half-split of a pair accessor: the 107 addresses `xdata_register_map.py`'s pair pass reaches only as the `inc DPTR` half, their 73 / 34 cut and the 34's 7 entered / 27 not, the 73's own 71 with no `MOV DPTR` site in any image against 2 in the pd image only (a site in the pd image is another program's byte at the same address number, so it is not a second site), and §4.7's ten named addresses as the head of the 73 with `0x0364` as the eleventh §4.7 does not name — every figure re-derived by the tool's own `build()` against the committed firmware and the committed decompiled tree rather than read off `xdata-inc-dptr-only.csv`, so a CSV edited to match a stale claim fails rather than satisfying the suite, and the committed table held against a fresh generation as the one direction a hand-edited file can fail; the census's *shape* rather than its figures (`census_refs` closing on the bucket columns, the 73 `pair-literal`-only and main-EC-only); the ten confirmed by a second entry point beside the tool's own table, a byte scan of the image and a real `main()` run; `0x0420` as the counter-example keeping the rule off the spelling of a literal first argument, the same hex reaching `add_full_product_to_dptr` whose committed `.asm` is `mul AB / add A,DPL / addc A,DPH / ret` with no `movx` — so the address space is a property of the callee's body — beside the positive half, that every accessor the table names still dereferences XDATA; and the refusal that keeps a tool keyed to three committed CSVs harmless, from both sides: `open` replaced by a tripwire raising on any write mode for every mode, an unidentified pd marker refused rather than reported as a 73 / 0 that would read as a finding, and the module's own AST walked for a write vector no case runs |
 | `ec/tools/test_walk_branch_arms.py` | `ec/tools/walk_branch_arms.py`'s direction classification, bounds, refusals, and negative-result wording |
 | `ec/tools/test_walk_budget_census.py` | `ec/tools/walk_budget_census.py` and the `trace_xdata_refs.walk_why()` it reports on: one hand-built byte fixture per terminator guard, each asserting the guard that fired *and* the one that did not, so a loop that swapped two guards cannot pass; that `walk()` still returns a bare list of triples and `classify()` still re-derives every committed table's `access` cell; that the terminator vocabulary is closed, so a sixth way to stop is refused rather than rendered into a cell `--check` would go green on; that the class A/B verdict reports `undecided` rather than picking a side when the `--extend` budget is too small to reach the access in question, which the committed data never exercises; the census `--check`'s exit code on the committed CSV, on a doctored one, and its refusal of a budget that CSV does not record; and the re-cut's own load-bearing claim, as a count over the pinned pre-change commit `e198fd9`'s copy of each table -- no `access` cell and no `window` cell changed, with the one pre-existing `disasm8051.py` mnemonic drift at `xdata-0400-045f-sites.csv` `0x11F16` named rather than left to be noticed, which is what the fifteen-address `0x086x` sweep reproducing its table byte for byte is the regression test for. The ref is a SHA rather than `HEAD` or `origin/main` because both of those hold the re-cut once this lands, and a baseline that already contains the change compares each table with itself and pins nothing; an unreadable baseline fails the test instead of skipping it, for the same reason |
+| `ec/tools/test_xdata_carry_notice.py` | which census a carry line is a claim about: `census_shape()` naming the flags that put a run's cluster ids off the committed pair the names file is anchored to — and refusing to name `--no-writer-axis`, which clusters as a default run does — `carry_advice()`'s committed clause pinned to the exact string the committed transcripts carry, and the two shapes' `print_carry` stderr asserted to differ in the overlap tails and nowhere else, so the `names:` tally and the tie line stay the mode-independent facts they are. In-process on a synthetic report: no census run, because the property is a function of the flags and not of the firmware |
 | `ec/tools/test_xdata_cluster_names.py` | `ec/tools/xdata_register_map.py`'s cluster identity: the `cluster_key` content hash, the `cluster_name` carry across a regeneration, `--map`, and the settling test that a cited cluster still resolves to the membership the prose describes |
 | `ec/tools/test_xdata_register_map.py` | the `--no-eq-guard` and `--export-ownership` refusals of the same tool: the three refused combinations per flag plus one per half of the scratch-output `or`, each with every mode entry point replaced by a recorder — all nine of them, read out of `main()`'s own AST by `dispatch_names` as every bare-name call in `main()` that is not another call's argument, with a mode dispatched through an attribute asserted against rather than collected, so a tenth fails here rather than going unmocked — so a guard that moved below the dispatch fails the test instead of writing a census the committed CSVs do not match over them, and the two accepted runs, which write only into their `tempfile` |
 | `windows/tools/test_manual_fan_ctrl_probe.py` | the fan-mode probe's two-arm byte script, its read-safety guard under `--level-block` and `--watch-page`, the three mark rows its `--csv` capture lands, that capture read back through the real `ec/tools/grade_0751_isolation.py` reader and then through its block walk as a whole grader run — one block, `intact`, three roles, every window printed, exit 0 — the mark set against the grader's own §6 forms, a crashed run's `#` row, `--watch-page`: that the flag is opt-in, that it is §3's three ranges rather than 448 addresses of the tool's own choosing, that it substitutes for `WATCH` instead of adding to it, that it writes nothing but `0x0751`, and that its capture still grades and keeps its ungraded rows on the grader's `other addresses that moved` line — and `--block`: the seven runs the watch set decomposes into, the page arm's three whole runs, that the block path reports exactly what the byte path does, that only the mode byte is left to a point read, and the 56/61 and 112/117 figures the banner and the self-test quote |

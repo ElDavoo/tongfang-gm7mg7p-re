@@ -133,10 +133,10 @@ what was broken.
 
 | mutation | what the suite said | census CSVs after |
 |---|---|---|
-| guard B (`xdata_register_map.py:3703-3704`) moved past `return write(args)` | 3 failures, each `Lists differ: ['write'] != []` — the bare case and both half-scratch cases | byte-identical |
+| guard B (`xdata_register_map.py:4628-4632`) moved past `return write(args)` | 3 failures, each `Lists differ: ['write'] != []` — the bare case and both half-scratch cases | byte-identical |
 | guard B deleted outright | the same 3 failures, `['write']` each | byte-identical |
 | guard B moved between the `if args.*` chain and the fallthrough | **20 tests, green** | byte-identical |
-| guard A (`:3698`) moved past `return write(args)` | 2 failures: `Lists differ: ['check'] != []` and `Lists differ: ['self_test'] != []` | byte-identical |
+| guard A (`xdata_register_map.py:4623-4627`) moved past `return write(args)` | 2 failures: `Lists differ: ['check'] != []` and `Lists differ: ['self_test'] != []` | byte-identical |
 | guard A deleted outright | the same 2 failures | byte-identical |
 
 **"Below the dispatch" has to mean past the fallthrough, and row three is why

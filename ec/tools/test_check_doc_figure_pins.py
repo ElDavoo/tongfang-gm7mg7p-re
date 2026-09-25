@@ -419,11 +419,16 @@ class TheOracleRule(unittest.TestCase):
         # prints and the span is part of it: the `check()` holding the constant
         # is written over seven lines, and the subscription is in the message
         # three lines above the `==` that uses it.
+        #
+        # The span is a line pin, so it moves with the tree: `:3902-3908` on the
+        # tree this was written on, `:3981-3987` after #851's `census_shape` /
+        # `carry_advice` landed above it in the same file. Re-measured, not
+        # shifted by arithmetic.
         self.assertEqual(
             cdfp.where(cdfp.reads("export_ownership", "OWNERSHIP_ORACLE",
                                   "largest_class", 1, 2, found["texts"],
                                   found["asserted"])),
-            "ec/tools/xdata_register_map.py:3902-3908")
+            "ec/tools/xdata_register_map.py:3981-3987")
 
     def test_the_census_csvs_are_read_from_the_tool_that_writes_them(self):
         # Derived from `OUT_REGISTERS`/`OUT_CLUSTERS` rather than named here, so
@@ -442,15 +447,18 @@ class TheOracleRule(unittest.TestCase):
         # a case so a rule change that drops the preference is visible.
         self.assertEqual(measured(157), cdfp.BY_ASSERTION)
         _v, detail = cdfp.measure(157, [], FOUND)
-        self.assertIn("3260-3277", detail)
-        self.assertNotIn(":3250", detail)
+        # The two line pins are `#3260-3277` (was, on the tree this was written
+        # on) and the `extmem_both` sum at `#3329` (was `:3250`), both moved by
+        # #851's insertions above them in the same file; re-measured here.
+        self.assertIn("3339-3356", detail)
+        self.assertNotIn(":3329", detail)
         # The span opens on the `check(` and encloses the comparison, so a reader
         # following it lands on the call rather than on the sum above it.
         lines = FOUND["texts"]["xdata_register_map.py"].split("\n")
-        self.assertIn("extmem_both", lines[3249])
-        self.assertIn("check(", lines[3259])
+        self.assertIn("extmem_both", lines[3328])
+        self.assertIn("check(", lines[3338])
         self.assertIn('(ORACLE["extmem_pd_distinct"], ORACLE["extmem_pd_refs"]',
-                      lines[3276])
+                      lines[3355])
 
 
 class SectionSelection(unittest.TestCase):

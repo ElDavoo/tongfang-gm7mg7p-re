@@ -7146,7 +7146,7 @@ out, per §4a; the full derivation is in
 [`xdata-4-4-identity-rederivation.md`](findings/xdata-4-4-identity-rederivation.md)'s
 "Which tree §4.4 was measured against".)*
 Re-running the block's own recipe with the flag that now does what its
-workaround did (`--no-eq-guard`, `xdata_register_map.py:4457`) gives 439 → 445,
+workaround did (`--no-eq-guard`, `xdata_register_map.py:4568`) gives 439 → 445,
 124 ranks intact and 315 changed, 424 keys unchanged, 434 committed rows
 reaching a new cluster, 15 clusters a key cannot carry (10 on overlap, 5 on
 nothing), nine names carried and 430 committed clusters with a key and none.
@@ -7836,7 +7836,9 @@ the tree made on purpose.
 > **Numbering note, added at the merge.** This section was written as §59, and
 > #816 (`2665a6a8`) took §59 on `main` while it was open, so it is renumbered
 > to the next free number rather than left to collide. §59 is now #816's
-> measured-state correction above, and this is the last section in the file.
+> measured-state correction above. It is not, as this note first said, the last
+> section in the file: #851's summary renumbered from the same §59 in the same
+> window, collided here a second time, and gave way to land as §61 below.
 > Nothing this branch wrote pointed at its own section number — the write-up,
 > the checklist's correction block and both READMEs all name §2b, §3, §4a-4d
 > and the issue numbers instead — so there was no reference to repoint. A
@@ -7894,3 +7896,41 @@ touched: its `BUCKET_TOTALS` citation is named in §3 and **#838 owns stale pins
 in this file family**. No live test ran, no register was read back, no image was
 opened, and no hardware, EC, Windows, Ghidra or `registers.yaml` row was
 involved.
+
+## 61. The carry line names the census it is a claim about (2026-09-25, issue #851)
+
+> **Numbering note, added at the merge.** This summary was written as §59 and
+> has been renumbered twice on the way. #816's refusal-contract measured-state
+> summary (`2665a6a8`) took §59 on `main` while this was open, so this one moved
+> to §60; #849's doc-figure-pin-audit summary (`a00fe940`) then took §60 on
+> `main` in the same window, having renumbered from the same §59 for the same
+> reason, so this one moves again to the next free number and sits below it. §59
+> is now #816's, §60 #849's, and this is the last section in the file. The
+> collision is recorded here rather than left for the next reader. Nothing else
+> cites a number for this section: the write-up names the census and
+> `carry_advice`, not a section, and the `§59` pointers in
+> `xdata-cluster-names-guard-off-recipe.md`,
+> `xdata-no-eq-guard-measured-state-correction.md` and `xdata-register-map.md`
+> all belong to #816's summary above, so only the heading moves.
+
+`ec/annotations/xdata-cluster-names.csv` is anchored to the **committed** census
+— the two CSVs as committed, which is the run `--check` reproduces — and four
+places said so without naming it as a mode or flag combination, so the one
+sentence a reader needed in order to act was the sentence that carried no such
+statement. The rule now on the line is that **a carry is a statement about the
+run that printed it, and only a run whose cluster keys are the committed ones can
+turn a carry into a re-key request**: `census_shape(args)` names the flags that
+move the ids off the anchor (`--threshold`, `--no-eq-guard`,
+`--export-ownership`; deliberately not `--no-writer-axis`, which clusters as a
+default run does) and `carry_advice` keeps the old clause verbatim for the
+committed census while any other shape names its flag, names the file, and says
+it is not a re-key request. The `names:` tally and the `tie` line are
+mode-independent and stayed as they were, and the committed shape's output is
+byte-identical. The issue's second half is recorded as a decision and not built:
+**no**, a membership that moved cannot keep resolving, because `cluster_key` is a
+content hash of the membership — so `--self-test`'s stale-key check already
+fires — and the open part is the `note` column, which nothing reads and which
+would need either prose-scraping or a new column on the one file a human edits by
+hand. The write-up is
+[`xdata-names-file-census-anchor.md`](findings/xdata-names-file-census-anchor.md);
+this is the summary, and it restates no measurement.
