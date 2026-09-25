@@ -462,12 +462,24 @@ TOP_CALLEES = 3
 # it open, and this is the second batch's data point rather than its answer.
 ORACLE = {
     # DAT_EXTMEM_ only, i.e. what issue #132 counted, comments excluded.
-    "extmem_distinct": 1035, "extmem_refs": 8749,
-    "extmem_raw": 8758, "extmem_commented": 9,
-    "extmem_main_distinct": 915, "extmem_main_refs": 7891,
+    #
+    # 8758/8749 -> 8707/8698 and 915/7891 -> 906/7840, with the symbol tally
+    # below moving 147 -> 156 distinct and 6070 -> 6121 refs. One cause, and it
+    # is issue #250's: `a1d79a89` (PR #504) added nine `XDATA_*` symbols to
+    # xdata-symbols.csv without re-exporting, so the committed `.c`/`.asm` text
+    # kept spelling those nine addresses `DAT_EXTMEM_*` and both halves of this
+    # oracle were pinned against that stale export. Issue #558's re-export is
+    # the first one since, so the renames reach the text and the nine addresses
+    # move from the DAT_EXTMEM_ tally to the symbol tally. `extmem_commented`
+    # (9), the PD half (157/858) and `extmem_both` (37) are unmoved, which is
+    # what fixes the diagnosis: the PD image is never given a symbol table, and
+    # the nine renames are all main-EC.
+    "extmem_distinct": 1026, "extmem_refs": 8698,
+    "extmem_raw": 8707, "extmem_commented": 9,
+    "extmem_main_distinct": 906, "extmem_main_refs": 7840,
     "extmem_pd_distinct": 157, "extmem_pd_refs": 858,
     # What the decompiler named, which the issue's grep could not see.
-    "symbol_main_distinct": 147, "symbol_main_refs": 6070,
+    "symbol_main_distinct": 156, "symbol_main_refs": 6121,
     "symbol_pd_distinct": 0, "symbol_pd_refs": 0,
     # The full census this tool publishes.
     "distinct": 1171, "refs": 14819,

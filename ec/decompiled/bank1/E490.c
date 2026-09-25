@@ -11,7 +11,12 @@
    and 0x8854 with R3=1 and R4=0, and advances 0x03C4 by 3, wrapping it to 0 when the result would
    be 0x78. When XDATA 0x1C00 is non-zero on entry the listing branches to 0xE4E9 instead; the
    0x03AF counter, the 0x03A1 bit clearing and the 0x0680 and 0x0681 writes that the decompiled C
-   shows for that case are code this listing does not contain.
+   shows for that case are code this listing does not contain. NOTE FOR THE NEXT READER:
+   trace_xdata_refs.py reports 0x1C02's site at 0xE4AE as 'read x1, write x1', and that read is not
+   of 0x1C02 -- the movx a,@dptr at 0xE4B6 reads the XDATA byte at the address the CODE table's own
+   first two bytes name, which is also what 0x1C04 and 0x1C05 are set from, and the store to 0x1C02
+   at 0xE4B1 is the table's third byte. Read the .asm for direction here; see
+   ec/annotations/xdata-1c3x-consumers.md 4.1.
    type: logic
    evidence: ec/decompiled/bank1/E490.asm; ec/decompiled/bank1/E490.c
    basis: hand-decoded
@@ -52,9 +57,9 @@ void stage_1c00_block_from_code_table_indexed_03c4(short param_1)
          *(undefined1 *)
           CONCAT11(*(undefined1 *)(param_1 + (ushort)DAT_EXTMEM_03c4),
                    *(undefined1 *)(param_1 + 1 + (ushort)DAT_EXTMEM_03c4));
-    DAT_EXTMEM_1c03 = 0xa0;
-    DAT_EXTMEM_1c01 = 0x48;
-    DAT_EXTMEM_1c02 = cVar1;
+    XDATA_1C03 = 0xa0;
+    XDATA_1C01 = 0x48;
+    XDATA_1C02 = cVar1;
     DAT_EXTMEM_1c05 = DAT_EXTMEM_1c04;
     read_xdata_pair_to_r1r2(0x36e);
     add_r1r2_to_r3r4(1,0);

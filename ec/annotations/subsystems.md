@@ -55,8 +55,8 @@ Measured over the committed export, by `index.csv` for the functions and
 `ghidra-functions.csv` for the names:
 
 - `exported functions` — 2710
-- `annotated function rows` — 1851
-- `rows the index marks annotated` — 1866
+- `annotated function rows` — 1855
+- `rows the index marks annotated` — 1873
 - `unresolved rows` — 152
 
 By program, as exported minus annotated minus the rest:
@@ -64,17 +64,17 @@ By program, as exported minus annotated minus the rest:
 | program | exported | annotated | unannotated |
 |---|---|---|---|
 | `bank0` | 746 | 693 | 53 (7%) |
-| `bank1` | 676 | 596 | 80 (12%) |
+| `bank1` | 676 | 599 | 77 (11%) |
 | `pd` | 535 | 501 | 34 (6%) |
-| `common` | 753 | 76 | 677 (90%) |
+| `common` | 753 | 80 | 673 (89%) |
 
 **The common area is the finding.** It is 28% of the export by row count and
-90% of it is unannotated, and it is where the interrupt vectors, the BL51 stubs
+89% of it is unannotated, and it is where the interrupt vectors, the BL51 stubs
 and most of the runtime helpers live. It is also the area this document had to
 extend to say anything about interrupt entry, which is what §3 is.
 
 **The three counts disagree, and the difference is measured rather than
-smoothed.** `index.csv` marks 1866 rows `annotated=yes` and the CSV holds 1848
+smoothed.** `index.csv` marks 1873 rows `annotated=yes` and the CSV holds 1855
 rows: a gap of 18. Both sides are enumerated. 25 index rows are marked
 `annotated=yes` with no CSV row at all, and 7 CSV rows are recorded by the index
 as `annotated=no`; 25 − 7 = 18.
@@ -441,11 +441,11 @@ own. `--check` compares both occurrences against the same recount, so they
 cannot drift apart silently:
 
 - `exported functions` — 2710
-- `annotated function rows` — 1851
-- `rows the index marks annotated` — 1866
+- `annotated function rows` — 1855
+- `rows the index marks annotated` — 1873
 - `unresolved rows` — 152
 
-**677 of the 753 common-area functions are unannotated, and that is the largest
+**673 of the 753 common-area functions are unannotated, and that is the largest
 single block of undecoded firmware in this repository** — larger than the whole
 `pd` program. It is the natural next issue, and §2 is what sizes it. The 152
 `unresolved` rows are a second, separate queue: functions that were looked at

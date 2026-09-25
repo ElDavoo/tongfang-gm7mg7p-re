@@ -36,7 +36,7 @@ void chan_init_1708_then_jmp_11c2(void)
       do {
         if ((DAT_EXTMEM_1708 & 1) == 1) break;
         DAT_EXTMEM_200b = 0;
-        cVar1 = FUN_CODE_07f0();
+        cVar1 = inc_xdata_0043_return_new();
       } while (cVar1 != '\x05');
     }
     FUN_CODE_07c1();

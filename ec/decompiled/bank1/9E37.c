@@ -9,12 +9,12 @@
    type: writer
    evidence: ec/decompiled/bank1/9E37.asm; ec/decompiled/bank1/9E37.c
    basis: hand-decoded
-   name_basis: register-map */
+   name_basis: mixed */
 
 void set_1c12_2_and_68c_81(void)
 
 {
-  DAT_EXTMEM_1c12 = 2;
+  XDATA_1C12 = 2;
   DAT_EXTMEM_068c = 0x81;
   return;
 }

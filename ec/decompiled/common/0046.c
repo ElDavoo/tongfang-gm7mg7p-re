@@ -95,8 +95,9 @@ void FUN_CODE_0046(char param_1,byte *param_2,char param_3,byte *param_4,byte pa
   }
   bVar3 = func_0x0134((char)pbVar2 + param_6 & *param_4);
   if (_4_0 == '\x01') {
-    FUN_CODE_0f75(bVar3 + param_7 + (*param_4 - ((CARRY1(bVar3,param_7) << 7) >> 7)));
-    uVar4 = FUN_CODE_1594();
+    clr_xdata_0000_00ff_iram_20_bf_xdata_9000_97ff
+              (bVar3 + param_7 + (*param_4 - ((CARRY1(bVar3,param_7) << 7) >> 7)));
+    uVar4 = load_dptr_d96c_tail_jump_1100();
     DAT_EXTMEM_0004 = DAT_EXTMEM_2006;
     walk_code_table_6f39(uVar4);
     return;

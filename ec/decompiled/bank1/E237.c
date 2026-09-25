@@ -20,9 +20,9 @@ void gate_1c00_init_defaults(void)
 
 {
   if (DAT_EXTMEM_1c00 == 0) {
-    DAT_EXTMEM_1c03 = 0x9b;
-    DAT_EXTMEM_1c02 = 1;
-    DAT_EXTMEM_1c01 = 0x48;
+    XDATA_1C03 = 0x9b;
+    XDATA_1C02 = 1;
+    XDATA_1C01 = 0x48;
     return;
   }
   if (((DAT_EXTMEM_1c00 >> 1 & 1) != 0) && ((DAT_EXTMEM_1c00 & 0x7c) == 0)) {

@@ -5462,5 +5462,78 @@ issue's expectation of a real routine at each: one is a bare `ret`, and it would
 join the 77 one-byte `ret`-only listings already in the tree rather than be the
 first. The audit gap is a missing census of the 403 trampoline immediates, not
 a wrong census, and the two read here license nothing for the other 401. No
-register `status:` changed, the 1,851 and 2,710 pins stand, and the export is
-deferred to a pinned-toolchain run for the reason #255 gives.
+register `status:` changed, the 2,710 index-row pin stands, and the export is
+deferred to a pinned-toolchain run for the reason #255 gives. The 1,851
+annotation-count pin this section quoted when it was written is 1,855 in the
+merged tree, moved by issue #558's four rows and re-pinned in
+`../ec/tools/build_ec_decompile.py`.
+
+## 27. The corrected ranking's top four, read (2026-09-25, issue #558)
+
+The write-up is `docs/findings/common-07f0-0f75-158e-1594-tranche.md`; this is
+the summary. #525's `citation_callers.py` put four different addresses at the
+top of `../ec/annotations/call-graph-callees.csv`, and this names all four:
+`common,0x07F0` (`inc_xdata_0043_return_new`, `writer`), `common,0x0F75`
+(`clr_xdata_0000_00ff_iram_20_bf_xdata_9000_97ff`, `init`), and the two BL51
+stubs `common,0x158E` / `common,0x1594`
+(`load_dptr_d89f_tail_jump_1100` / `load_dptr_d96c_tail_jump_1100`,
+`bank-switch`). All four are `name_basis=code-shape`, which is forced rather
+than chosen: `0x0043` has no `registers.yaml` row, and `load_dptr_*` names
+deliberately carry no `bl51_` token.
+
+**Three of the issue's readings of the bytes did not survive them, and the
+wrong version is quoted beside the right one in the write-up rather than
+quietly fixed.** `0x07F0` is six instructions, not seven. `0x0F75` has **three**
+clear loops, not two, and all three bound on the pointer's *high* byte, so it
+clears XDATA `0x0000`-`0x00FF` (256 bytes, not the 32 the issue's `0x20`
+immediate suggests), **internal** RAM `0x20`-`0xBF` (160 bytes — the loop the
+issue skips entirely), and XDATA `0x9000`-`0x97FF` (**2,048 bytes, not the 152**
+the issue's `0x98` immediate suggests; `0x98` is compared against DPH, not DPL).
+`0F75.c` agrees with the `.asm` on all three. The two stubs' `.c` files show a
+`return;` that no `ret` in either listing backs — the decompiler reading a tail
+`ljmp` as a call — and the rows do not repeat that shape. The issue's `#465`
+does not resolve to anything in the tree; the method it describes is issue
+**#255**, at `../ec/annotations/xdata-06c2-06db-timers.md` §4 and in the
+`bank1,0x19A8` row, so both immediates are **bank-0** addresses and its
+48-forwarder census is still not re-measured against bank 0.
+
+**The `0x1592`-`0x1593` question is settled, and the answer is that it was
+never a gap.** They carry no listing line and no index row, which is the shape
+an un-owned run would have, so they were read out of the firmware: at file
+offset `0x1592` they are `11 00`, the last two bytes of `0x158E`'s own
+`ljmp 0x1100` at `0x1591`, and the index's six-byte size for `0x158E` already
+covers them. All four boundaries are hard ends — a `ret` plus the next index
+row for the first two, an unbroken six-byte trampoline grid for the last two —
+so the header's "this boundary is a hypothesis" caveat is off all four.
+
+**No `registers.yaml` row for `0x0043` or `0x200B`, and the scans that would
+write one are committed instead.** The issue made the rows conditional and they
+are declined: `registers.yaml` is a claim about a register, and the preceding
+tranche's own precedent in `call-graph.md` is that naming a helper is not one.
+What a follow-up needs is the measurement, so the write-up carries
+`scan_refs.py` / `trace_xdata_refs.py` output for both — `0x0043` at four sites
+whose only reads anywhere are `0x07F0`'s own two, `0x200B` written at all
+eighteen and read at none — and that is the whole of the input.
+
+**The export this change regenerates had been one commit stale, and that is
+why the diff is larger than four rows.** `a1d79a89` (#250, PR #504) changed
+`../ec/ghidra/xdata-symbols.csv` and added three `ghidra-functions.csv` rows
+without re-exporting, and `--check` does not catch that — it holds the `.c`
+headers against `index.csv` and both against the annotations internally, and
+both were self-consistent in the stale name. The re-export therefore moves
+**seven** rows, not four, and `c-digests.csv` 38 rather than 4. Nothing was
+hand-edited and nothing was reverted: the `.asm` instruction bodies are
+byte-identical across the whole diff, and a second `--work` re-export leaves
+`git status` clean.
+
+**No live test is implied anywhere.** The counter, the three cleared regions and
+the two bank selects are static readings of committed bytes, no register
+`status:` moved, `../ec/ghidra/xdata-symbols.csv` is unchanged and
+`gen_xdata_symbols.py` is a no-op on this tree. The follow-up for seeding
+`0xD89F` / `0xD96C` — as `bank0` rows, per #255, which this section is what
+earns — **has since been done**, by #559 and §26 above: it read both, and it
+corrected the premise this section was filed against, that seeding a function
+needs `--mode rebuild-project` and so cannot share a branch with another EC
+change. `--mode export-only` seeds the scratch copy and exports from it, and the
+committed `.rep` is never opened for writing. The two rows and their listings
+are still uncommitted, for #559's own reason and not this one.
