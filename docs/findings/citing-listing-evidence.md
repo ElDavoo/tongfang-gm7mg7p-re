@@ -310,6 +310,19 @@ dependency, not a frame artefact — carries over to whatever ranks first now, a
   `lcall 0xE5D6` at 0xE580 is in a neighbouring export. A pair like that is
   still decided by the frame alone, and the `undecided` population is where it
   lands.
+
+  **That population now has a committed measurement**, so the bullet above is no
+  longer a dead end even though every word of it still holds *of
+  `citation_callers.py`* — the call is still invisible to that tool and the
+  frame still decides it alone. `../findings.md` §35 calls this page the one
+  that "measured and could not classify"; the measurement is
+  [`citation-gap-scan.md`](citation-gap-scan.md), writing
+  `ec/ghidra/gap-citation-scan.csv`: **99 citing rows / 124 `(callee, citer)`
+  pairs, split 2 `boundary-cut` / 121 `no-transfer` / 1 `not-code`**. One of the
+  two `boundary-cut` pairs is this exact example — callee `bank1,E5D6`, citer
+  `bank1,E57E` — so the address this page names by name is one of the two the
+  other page resolved. What moved is what is *known* about what
+  `citation_callers.py` cannot see, not what the tool can see.
 - **A listing that parses to nothing is not fill.** It would be unknown to this
   rule, not evidence of anything, and a citing row on one would get no veto and
   no credit. No committed listing is in that state, so the branch is here as a
@@ -361,6 +374,17 @@ python3 -c "import sys,csv; sys.path.insert(0,'ec/tools'); import call_graph as 
 ```
 commented rows 1872 | transfer-free listings 998 | of those citing 100 | of those not fill 99
 ```
+
+The trailing **99** is the same **99** `citation-gap-scan.md` measures, in a
+different unit — the two are not two disagreeing figures. This census counts
+**citing rows**, one per comment, so a comment naming three callees is one row
+here. The gap scan takes those same 99 rows and expands each into one pair per
+named callee, which is where its **124** comes from: the two row sets are equal,
+not merely the same size, and of the 99 rows 83 carry a single pair while the
+other 16 carry 2 to 5 — the 25 extra pairs. The 2 / 121 / 1 split is over those
+124 pairs, so it is a verdict per pair and never per row, and a reader comparing
+the two pages should read "99" and "99 rows / 124 pairs" as the same rows
+counted before and after the expansion.
 
 ```sh
 python3 -c "import sys,glob; sys.path.insert(0,'ec/tools'); import citation_callers as cc; p=sorted(glob.glob('ec/decompiled/*/*.asm')); i=lambda x: list(cc.iter_instructions(x)); nt=[x for x in p if not list(cc.transfers(x))]; print('listings', len(p), '| no instruction line', sum(1 for x in p if not i(x)), '| no transfer', len(nt), '| of those not fill', sum(1 for x in nt if not cc.is_fill(x)), '| operand-less only', sum(1 for x in p if i(x) and all(len(y)<6 for y in i(x))))"

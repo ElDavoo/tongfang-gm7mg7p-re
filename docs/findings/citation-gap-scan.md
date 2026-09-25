@@ -344,14 +344,35 @@ bank-scope entry inside its gap — and `--self-test` now pins the 9-and-one spl
 by name rather than asserting a blanket that no longer holds. The branch is
 still there for a re-export that changes it.
 
-## The neighbouring open issues, and what is claimed for none of them
+## The neighbouring issues, their state, and what is claimed for none of them
 
-| issue | overlap with this population | claimed here |
-|---|---|---|
-| #456, real entries for the tranche's boundary rows | 4 of the six rows `call-graph-unresolved.md`'s table lists are population citers: `bank0,D2BE`, `bank0,9C47`, `common,3B4E`, `common,4A76` | nothing. All four are zero-gap except `bank0,9C47` (94 bytes), and the tool reports what the window carries; it does not re-adjudicate whether an entry belongs there. |
-| #522, the nine `0x1C01`–`0x1C03` store sites in unexported gaps | **none** — no `0x1C01`, `0x1C02` or `0x1C03` row is in the population | nothing |
-| #465, the 48-forwarder family | 6 population citers are `type=forwarder` in `index.csv`: `bank0,9C47`, `bank0,D2BE`, `bank1,9FCA`, `bank1,A8DA`, `bank1,E57E`, `common,355E` | nothing. Named so a reader of either write-up knows the sets overlap. The sixth is #603's rank-1 tranche row, and it is the second `boundary-cut` above — a one-`ret` shared tail whose only reaching transfer is a neighbouring thunk's `ljmp`. |
-| #543, the corroborated pair that is a data table read as code | the one `not-code` window (`bank0,3AD6`) is the same failure mode one address over, and its head is a switch table | that it is the same *shape*. Not which it is — see above |
+**Correction (2026-09-25), leaving the superseded heading visible rather than
+silently rewritten.** This section was filed under "The neighbouring open
+issues, and what is claimed for none of them", which read as a claim that all
+four were open. That was true when it was written and is not the reading to take
+now. Re-read with `gh issue view <n> --json state,closedAt`: **#456 closed
+2026-09-25** (`closedAt=2026-09-25T08:23:14Z`), and **#522, #465 and #543 are
+open**, so `../findings.md`'s "**#465** is the open issue" still stands. State is
+a column of its own now because an issue can close underneath a table like this
+one, and this table was filed before that happened to it. The column carries the
+read and its date so the next reader re-derives the state rather than inheriting
+it.
+
+**Nothing in the overlap is retracted.** Every claim in the middle column is a
+set intersection over the committed population, and all four still hold on this
+tree: #522's `0x1C01`–`0x1C03` sites are in none of it, #465's six names are all
+still population citers and all still `type=forwarder` with the sixth still
+`common,355E` and still the second `boundary-cut`, #456's four are all still
+citers, and #543's `not-code` window is still `bank0,3AD6`. One issue's state
+moved. The reading did not, and the corrections the table was filed for are
+about the heading, not the sets.
+
+| issue | state (2026-09-25) | overlap with this population | claimed here |
+|---|---|---|---|
+| #456, real entries for the tranche's boundary rows | **closed** 2026-09-25 | 4 of the six rows `call-graph-unresolved.md`'s table lists are population citers: `bank0,D2BE`, `bank0,9C47`, `common,3B4E`, `common,4A76` | nothing. All four are zero-gap except `bank0,9C47` (94 bytes), and the tool reports what the window carries; it does not re-adjudicate whether an entry belongs there. |
+| #522, the nine `0x1C01`–`0x1C03` store sites in unexported gaps | **open** | **none** — no `0x1C01`, `0x1C02` or `0x1C03` row is in the population | nothing |
+| #465, the 48-forwarder family | **open** | 6 population citers are `type=forwarder` in `index.csv`: `bank0,9C47`, `bank0,D2BE`, `bank1,9FCA`, `bank1,A8DA`, `bank1,E57E`, `common,355E` | nothing. Named so a reader of either write-up knows the sets overlap. The sixth is #603's rank-1 tranche row, and it is the second `boundary-cut` above — a one-`ret` shared tail whose only reaching transfer is a neighbouring thunk's `ljmp`. |
+| #543, the corroborated pair that is a data table read as code | **open** | the one `not-code` window (`bank0,3AD6`) is the same failure mode one address over, and its head is a switch table | that it is the same *shape*. Not which it is — see above |
 
 ## What the tool cannot decide
 
