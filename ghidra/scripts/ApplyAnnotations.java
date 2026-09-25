@@ -29,21 +29,23 @@
 //        `name` is what it is, from the listing. Pass "" or "-" for a program
 //        with no variable layer, which is every program but the EC's.
 //
-// A row that matches no function is REPORTED, never dropped. The driver turns
-// a non-zero unmatched count into a failure, because an annotation pointing at
-// an address the project has no function for is either a typo or a sign the
-// project needs a rebuild -- and quietly ignoring it is how a stale annotation
-// outlives the thing it named.
+// A row that matches no function is REPORTED and COUNTED, never dropped, and
+// the driver reads the count back out of this report into the manifest -- so an
+// annotation pointing at an address the project has no function for shows up as
+// a number rather than being lost, because quietly ignoring it is how a stale
+// annotation outlives the thing it named. (The driver does NOT yet turn a
+// non-zero count into a failure; ec/ghidra/README.md carries that as an open
+// question, since it would fire on a routine edit whose target moved.)
 //
-// The variable layer's unmatched rows are REPORTED and COUNTED but not fatal,
-// and that asymmetry is deliberate. A function row is keyed on an address,
-// which is stable forever. A variable row is keyed on a decompiler placeholder,
-// which `--mode rebuild-project` CONSUMES: once the name is persisted into the
-// project, `param_1` no longer exists there and a rebuild of the same CSV
-// would find nothing to rename. Making that an error would mean a documented,
-// routine operation breaks the build. A typo is caught anyway, and more
-// strongly, by the driver's --check: the committed .c has to contain the name
-// the row asked for and must NOT contain the key.
+// Neither layer's unmatched rows are fatal today, and the reason a function
+// row must not simply be made fatal is the same one. A function row is keyed on
+// an address, which is stable forever. A variable row is keyed on a decompiler
+// placeholder, which `--mode rebuild-project` CONSUMES: once the name is
+// persisted into the project, `param_1` no longer exists there and a rebuild of
+// the same CSV would find nothing to rename. Making that an error would mean a
+// documented, routine operation breaks the build. A typo is caught anyway, and
+// more strongly, by the driver's --check: the committed .c has to contain the
+// name the row asked for and must NOT contain the key.
 //
 // A variable row may change a CALLER'S ARITY, and that is a correction rather
 // than a loss. This is the rule issue #259 settled, written here because this

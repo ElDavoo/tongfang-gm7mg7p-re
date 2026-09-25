@@ -2157,23 +2157,23 @@ common,717B,FUN_CODE_717b,2,call-target,yes,no,,,,bank1,common/717B.asm
 common,71B9,FUN_CODE_71b9,182,call-target,yes,no,,,,bank1,common/71B9.asm
 common,7202,FUN_CODE_7202,22,call-target,yes,no,,,,bank1,common/7202.asm
 common,7281,FUN_CODE_7281,14,call-target,yes,no,,,,bank1,common/7281.asm
-common,7401,FUN_CODE_7401,3,call-target,yes,no,,,,bank1,common/7401.asm
-common,7404,FUN_CODE_7404,1,call-target,yes,no,,,,bank1,common/7404.asm
-common,7405,FUN_CODE_7405,3,call-target,yes,no,,,,bank1,common/7405.asm
-common,7408,FUN_CODE_7408,8,call-target,yes,no,,,,bank1,common/7408.asm
-common,7410,FUN_CODE_7410,5,call-target,yes,no,,,,bank1,common/7410.asm
-common,741C,FUN_CODE_741c,17,call-target,yes,no,,,,bank1,common/741C.asm
-common,7602,FUN_CODE_7602,17,call-target,yes,no,,,,bank1,common/7602.asm
-common,7848,FUN_CODE_7848,17,call-target,yes,no,,,,bank1,common/7848.asm
-common,7883,FUN_CODE_7883,17,call-target,yes,no,,,,bank1,common/7883.asm
-common,7BFF,FUN_CODE_7bff,3,call-target,yes,no,,,,bank1,common/7BFF.asm
-common,7C02,FUN_CODE_7c02,17,call-target,yes,no,,,,bank1,common/7C02.asm
-common,7DF2,FUN_CODE_7df2,15,call-target,yes,no,,,,bank1,common/7DF2.asm
-common,7E01,FUN_CODE_7e01,17,call-target,yes,no,,,,bank1,common/7E01.asm
-common,7F01,FUN_CODE_7f01,1,call-target,yes,no,,,,bank1,common/7F01.asm
-common,7F02,FUN_CODE_7f02,16,call-target,yes,no,,,,bank1,common/7F02.asm
-common,7FF1,FUN_CODE_7ff1,14,call-target,yes,no,,,,bank1,common/7FF1.asm
-common,7FFF,FUN_CODE_7fff,1,call-target,yes,no,,,,bank1,common/7FFF.asm
+common,7401,ff_filler_not_a_function_7401,3,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/common/7401.asm; ec/decompiled/common/7401.c,bank1,common/7401.asm
+common,7404,ff_filler_not_a_function_7404,1,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/common/7404.asm; ec/decompiled/common/7404.c,bank1,common/7404.asm
+common,7405,ff_filler_not_a_function_7405,3,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/common/7405.asm; ec/decompiled/common/7405.c,bank1,common/7405.asm
+common,7408,ff_filler_not_a_function_7408,8,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/common/7408.asm; ec/decompiled/common/7408.c,bank1,common/7408.asm
+common,7410,ff_filler_not_a_function_7410,5,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/common/7410.asm; ec/decompiled/common/7410.c,bank1,common/7410.asm
+common,741C,ff_filler_not_a_function_741c,17,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/common/741C.asm; ec/decompiled/common/741C.c,bank1,common/741C.asm
+common,7602,ff_filler_not_a_function_7602,17,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/common/7602.asm; ec/decompiled/common/7602.c,bank1,common/7602.asm
+common,7848,ff_filler_not_a_function_7848,17,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/common/7848.asm; ec/decompiled/common/7848.c,bank1,common/7848.asm
+common,7883,ff_filler_not_a_function_7883,17,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/common/7883.asm; ec/decompiled/common/7883.c,bank1,common/7883.asm
+common,7BFF,ff_filler_not_a_function_7bff,3,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/common/7BFF.asm; ec/decompiled/common/7BFF.c,bank1,common/7BFF.asm
+common,7C02,ff_filler_not_a_function_7c02,17,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/common/7C02.asm; ec/decompiled/common/7C02.c,bank1,common/7C02.asm
+common,7DF2,ff_filler_not_a_function_7df2,15,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/common/7DF2.asm; ec/decompiled/common/7DF2.c,bank1,common/7DF2.asm
+common,7E01,ff_filler_not_a_function_7e01,17,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/common/7E01.asm; ec/decompiled/common/7E01.c,bank1,common/7E01.asm
+common,7F01,ff_filler_not_a_function_7f01,1,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/common/7F01.asm; ec/decompiled/common/7F01.c,bank1,common/7F01.asm
+common,7F02,ff_filler_not_a_function_7f02,16,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/common/7F02.asm; ec/decompiled/common/7F02.c,bank1,common/7F02.asm
+common,7FF1,ff_filler_not_a_function_7ff1,14,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/common/7FF1.asm; ec/decompiled/common/7FF1.c,bank1,common/7FF1.asm
+common,7FFF,ff_filler_not_a_function_7fff,1,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/common/7FFF.asm; ec/decompiled/common/7FFF.c,bank1,common/7FFF.asm
 pd,0000,c_startup_idata_clear,3,vector,yes,yes,,,,,pd/0000.asm
 pd,0003,ljmp_0056,3,annotation,yes,yes,forwarder,hand-decoded,ec/decompiled/pd/0003.asm; ec/decompiled/pd/0003.c,,pd/0003.asm
 pd,000B,ljmp_0094,3,annotation,yes,yes,forwarder,hand-decoded,ec/decompiled/pd/000B.asm; ec/decompiled/pd/000B.c,,pd/000B.asm
