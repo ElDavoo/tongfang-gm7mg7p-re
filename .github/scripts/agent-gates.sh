@@ -217,19 +217,19 @@ check_ghidra_tooling() {
       # `--self-test`.
       #
       # **`--self-test` used to be deliberately not run, and the reason it gave
-      # was false.** The claim, kept rather than deleted: it was "red on `main`
-      # for a reason no census change can clear", because the annotation CSV
-      # named three functions (`bank1:0x9CE8`, `bank1:0x9D53`, `bank1:0xE2D3`)
+      # is no longer true.** The claim, kept rather than deleted: it was "red on
+      # `main` for a reason no census change can clear", because the annotation
+      # CSV named three functions (`bank1:0x9CE8`, `bank1:0x9D53`, `bank1:0xE2D3`)
       # that `ec/decompiled/index.csv` still spelled `FUN_CODE_*`, so the
-      # "annotation CSV and index.csv agree" assertion failed. **It was already
-      # untrue when written** -- a later `build_ec_decompile.py` export cleared
-      # the drift, and `ec/decompiled/index.csv:996`, `:999` and `:1333` have
-      # read `seed_1c12_trio_or_update_1c11_1c15_1c16`,
-      # `seed_1c12_trio_9f_or_run_0x9d7a_ladder` and
-      # `dispatch_036c_low3_then_seed_1c00_block` for those three addresses for
-      # a while. `docs/findings/thunk-prefix-collision.md:271-289` made the same
-      # correction from the rename side and left the wiring to this issue, so
-      # nothing else in the tree has to re-derive it.
+      # "annotation CSV and index.csv agree" assertion failed. **It was true when
+      # written**: the comment landed in #566 (`88a0e0ba`, 2026-09-25 05:20), where
+      # `index.csv` did spell all three `FUN_CODE_*` and `--self-test` did exit 1 on
+      # that assertion. The `build_ec_decompile.py` export-only run it prescribed,
+      # and charged to whoever landed the renames, is the run that cleared it --
+      # #570 (`05af8c32`), 33 minutes later. The note named the right remedy and the
+      # right owner, the remedy landed almost at once, and the note outlived its own
+      # condition; `index.csv:996`, `:999` and `:1333` have read the three
+      # `seed_*`/`dispatch_*` names since that export.
       #
       # **Measured 2026-09-25 at 64dbde1, both modes exit 0** from the repo
       # root: `--check` in 2.03 s, `--self-test` in 5.11 s over 101 assertions,

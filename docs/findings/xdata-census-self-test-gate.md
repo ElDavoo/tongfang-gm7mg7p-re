@@ -3,7 +3,7 @@
 
 The XDATA register census is the one tool in this repository whose self-test is
 the oracle for a large set of committed claims, and the cheap tier ran the
-weaker of its two modes for reasons that had gone stale. This branch runs **both**
+weaker of its two modes for a reason that had gone stale. This branch runs **both**
 and rewrites the comment that gave the reason, in place, keeping the stale claim
 visible next to a dated correction per [`../findings.md` §4a-4d](../findings.md).
 
@@ -34,15 +34,16 @@ $ python3 ec/tools/xdata_register_map.py --self-test | tail -1 ; echo $?
 the tree — `git status` is unchanged after both, which is what makes them safe to
 put in a per-commit gate rather than only a local one.
 
-## The retraction: `FUN_CODE_*` was not why the mode was off
+## The retraction: the `FUN_CODE_*` reason no longer holds
 
 The comment this branch replaces said, in its own emphatic words, that
 `--self-test` was "**deliberately not run, and that is not an oversight**" and
 "red on `main` for a reason no census change can clear", because the annotation
 CSV named three functions that `ec/decompiled/index.csv` "still spells
-`FUN_CODE_*`". That reason was **already untrue when it was written**, and it is
-the same correction [`thunk-prefix-collision.md:271-289`](thunk-prefix-collision.md)
-recorded from the rename side and left unwired. The three rows, as committed:
+`FUN_CODE_*`". That reason **was true when it was written** — and the correction
+from the rename side, recorded and left unwired in
+[`thunk-prefix-collision.md:271-289`](thunk-prefix-collision.md), is that it no
+longer is. The three rows, as committed:
 
 | address | `ec/decompiled/index.csv` | name |
 |---|---|---|
@@ -55,18 +56,32 @@ $ grep -n "FUN_CODE_9CE8\|FUN_CODE_9D53\|FUN_CODE_E2D3" ec/decompiled/index.csv 
 1
 ```
 
-So the write it said would have to happen to clear the assertion — a
-`build_ec_decompile.py` export-only run, rewriting the generated
-`ec/decompiled/**` tree and belonging to whoever landed the renames — **was not
-the mechanism**, and the warning about sweeping every later annotation into that
-diff was warning about a run nobody needed to make. The annotation CSV's
-agreement-with-`index.csv` assertion passes on the committed tree today.
+**The chronology, because "the comment was wrong" is the weaker and less useful
+version of this.** The comment landed in #566 (`88a0e0ba`, 2026-09-25 05:20),
+and in *that* commit's tree the drift is real and the mode is genuinely red:
 
-The cost of leaving a well-documented deferral in place is the thing the cheap
-tier's own doctrine names: *"a deferral nobody can see is a check that gets
-dropped."* This one was unusually visible, and it was still wrong for long
-enough that four separate files had repeated it. That is the finding, and the
-gate arm is the fix.
+```console
+$ git show 88a0e0ba:ec/decompiled/index.csv | grep -E '^bank1,(9CE8|9D53|E2D3),'
+bank1,9CE8,FUN_CODE_9ce8,90,call-target,no,no,,,,,bank1/9CE8.c
+bank1,9D53,FUN_CODE_9d53,187,call-target,no,no,,,,,bank1/9D53.c
+bank1,E2D3,FUN_CODE_e2d3,195,call-target,no,no,,,,,bank1/E2D3.c
+```
+
+and, in a worktree at that commit, `--self-test` exits 1 on the exact assertion
+the comment names — `FAIL  the annotation CSV and index.csv agree on every
+address they share`. Thirty-three minutes later, #570 (`05af8c32`, 05:53) is
+the write the comment prescribed: a `build_ec_decompile.py` export-only run,
+rewriting the generated `ec/decompiled/**` tree, belonging to whoever landed the
+renames. It is that commit, not any later one, that turns those three rows into
+the `seed_*`/`dispatch_*` names the table above shows.
+
+So the export **was** the mechanism, the comment named it, it named who had to
+make it, and that run was made 33 minutes after the comment landed. What went
+stale was the note, not the diagnosis: the condition it warned about stopped
+holding almost at once, and nothing revisited the note in the time since. The
+finding this branch acts on is the cheap tier's own doctrine: *"a deferral
+nobody can see is a check that gets dropped."* This one was unusually visible,
+and visibility is not the same as being revisited. The gate arm is the fix.
 
 ## What the mode adds that `--check` cannot reach
 
@@ -202,8 +217,8 @@ open against, and the gate arm is the deliverable.
 
 - [`../../ec/annotations/xdata-06c2-06db-timers.md:937-938`](../../ec/annotations/xdata-06c2-06db-timers.md)
   — "neither is green today: both exit 1 on `main`". Both exit 0. Its
-  `:965-966` "red on `main` at the time of writing" is the same claim again.
-- [`xdata-cluster-names-guard-off-recipe.md:289-292`](xdata-cluster-names-guard-off-recipe.md)
+  `:987-988` "red on `main` at the time of writing" is the same claim again.
+- [`xdata-cluster-names-guard-off-recipe.md:406-407`](xdata-cluster-names-guard-off-recipe.md)
   — "the cheap tier not running the tool's `--check`/`--self-test`, which are
   red on `main`". The cheap tier runs both, and they are green.
 - [`0751-grader-self-test-gate.md:344-350`](0751-grader-self-test-gate.md) and

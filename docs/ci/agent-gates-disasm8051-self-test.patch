@@ -83,7 +83,7 @@
 # start.
 
 diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
-index c423951..0fa624c 100755
+index de5db1f..161bcd7 100755
 --- a/.github/scripts/agent-gates.sh
 +++ b/.github/scripts/agent-gates.sh
 @@ -126,7 +126,8 @@ check_ghidra_tooling() {

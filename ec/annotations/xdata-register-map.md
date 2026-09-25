@@ -2645,21 +2645,20 @@ re-measurement, so it is left for its own issue rather than folded in here.
   >
   > **CORRECTION (2026-09-25, issue #815) to the `--self-test` half being
   > "still open and is not a one-liner":** it is wired, and the reason this
-  > bullet gave for not wiring it is false. `--self-test` exits **0** on the
-  > committed tree — measured at `64dbde1`, 5.11 s and 101 assertions ending
+  > bullet gave for not wiring it no longer holds. `--self-test` exits **0** on
+  > the committed tree — measured at `64dbde1`, 5.11 s and 101 assertions ending
   > `all assertions passed`, against `--check`'s 2.03 s. The `FUN_CODE_*` claim
-  > was already untrue when written, for the reason
-  > `docs/findings/thunk-prefix-collision.md:271-289` records from the rename
-  > side: `ec/decompiled/index.csv:996`, `:999` and `:1333` have read
-  > `seed_1c12_trio_or_update_1c11_1c15_1c16`,
-  > `seed_1c12_trio_9f_or_run_0x9d7a_ladder` and
-  > `dispatch_036c_low3_then_seed_1c00_block` for `bank1:0x9CE8`, `0x9D53` and
-  > `0xE2D3` for a while. No `build_ec_decompile.py` run was needed to clear
-  > it, and the export-only rewrite this bullet warned about was not the
-  > mechanism. `agent-gates.sh` now runs both modes, so "until that run
-  > happens, `--check` is the half that can be gated" no longer describes
-  > anything. The two suites this bullet closes with are untouched by it.
-  > Measured, with the commands, in
+  > was true when written: the comment landed in #566 (`88a0e0ba`, 2026-09-25
+  > 05:20), where `ec/decompiled/index.csv` really did spell all three of
+  > `bank1:0x9CE8`, `0x9D53` and `0xE2D3` that way, and `--self-test` really
+  > did exit 1 on the agreement assertion. The `build_ec_decompile.py`
+  > export-only rewrite this bullet warned about is the run that cleared it —
+  > #570 (`05af8c32`), 33 minutes later — so the cost described here was real
+  > and the branch that owned it paid it; `:996`, `:999` and `:1333` have read
+  > the three `seed_*`/`dispatch_*` names since. `agent-gates.sh` now runs both
+  > modes, so "until that run happens, `--check` is the half that can be
+  > gated" no longer describes anything. The two suites this bullet closes with
+  > are untouched by it. Measured, with the commands, in
   > `docs/findings/xdata-census-self-test-gate.md`.
 - **The 42 boundaries, now that §4.5 measures them.**
   `build_ec_decompile.py --mode rebuild-project` writes the 7 MB database, and
