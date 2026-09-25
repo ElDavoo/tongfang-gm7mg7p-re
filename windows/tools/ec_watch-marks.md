@@ -34,8 +34,9 @@ still true whenever `--label-vocab` is absent — which is every caller in this
 tree except §3's three commands. With `--label-vocab 0751` the prompt reads
 every label against that same `parse_mark` and refuses the ones it cannot place
 — see *The refused label* below. Nothing else changes, so the sentence above
-still describes what `gpu_block_watch.py` and `system_id_probe.py` get, which is
-the reason the check is a flag and not a rule.
+still describes what `gpu_block_watch.py` and `system_id_probe.py` get through
+their mark prompts, which is the reason the check is a flag and not a rule.
+Only `gpu_block_watch.py` shares this class; the other keeps its own.
 
 ## The blank press
 
@@ -59,11 +60,12 @@ line that will never come.
 ## The refused label
 
 `--label-vocab 0751` is that same refusal one step along, and it is opt-in for
-a reason that is not caution: this one `Marker` class is the mark prompt for
-`gpu_block_watch.py` and `system_id_probe.py` too (#483, #484), and both take
-their labels free-form. A blanket check would refuse labels those procedures
-are entitled to write, so the check is a flag and §3's three commands are where
-the operator turns it on.
+a reason that is not caution: `gpu_block_watch.py:59,166` imports this `Marker`
+and stamps free-form labels through it, so a blanket check would refuse labels
+that procedure is entitled to write. `system_id_probe.py:232` keeps a class of
+its own of the same shape, still carrying the `strip() or` default at `:252`
+(#483, #484, named there as still open). So the check is a flag, and §3's
+three commands are where the operator turns it on.
 
 With it on, a label `grade_0751_isolation.py`'s own `parse_mark` cannot place is
 refused exactly as a blank press is — no row, nothing appended, the counter held

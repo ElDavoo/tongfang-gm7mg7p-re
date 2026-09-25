@@ -36,9 +36,9 @@ grading as `unplaceable_marks` and a withheld run. It refuses only what the
 grader would refuse: a label that parses but names the wrong value is still
 recorded, and so is a dropped hex digit, because a per-line prompt cannot know
 which values the run means to write or what its actions should be. It is off
-by default because `gpu_block_watch.py` and `system_id_probe.py` take their
-marks through this same class, with free-form labels this vocabulary would
-refuse.
+by default because `gpu_block_watch.py:59,166` imports this `Marker` and
+stamps free-form labels through it, which a blanket check would refuse, while
+`system_id_probe.py:232` has its own, still `strip() or` at `:252` (#483, #484).
 
 `--block` sweeps the same addresses four bytes per IOCTL through the driver's
 `MMRD` instead of one byte per `ECRR`, so the default 2 KiB sweep is 512 calls

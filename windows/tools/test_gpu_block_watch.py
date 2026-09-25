@@ -616,7 +616,7 @@ class CaptureHandoffTests(unittest.TestCase):
     def test_the_capture_command_writes_into_that_destination(self):
         # The check that stops §3's command drifting back to a bare filename.
         # `CsvSink` resolves its path against whatever directory the tool
-        # runs in (windows/tools/ec_watch.py:87-94), so a command with no
+        # runs in (windows/tools/ec_watch.py:91-96), so a command with no
         # directory in it puts the capture wherever the operator happened to
         # be standing -- which is how a run that happened ends up in a commit
         # with no capture in it. Read out of the console block rather than

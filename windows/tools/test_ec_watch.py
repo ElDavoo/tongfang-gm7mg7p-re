@@ -345,10 +345,10 @@ class RefusedLabelTests(unittest.TestCase):
         self.assertEqual(len(marks_summary(text)), 1)
 
     def test_the_check_is_opt_in(self):
-        # `gpu_block_watch.py` and `system_id_probe.py` (#483, #484) construct
-        # this same Marker with no vocabulary and stamp their own free-form
-        # labels, so an unplaceable one is theirs to record. Pinned so the
-        # blanket check cannot come back unnoticed under them.
+        # `gpu_block_watch.py:59,166` imports this same Marker, constructs it
+        # with no vocabulary, and stamps its own free-form labels, so an
+        # unplaceable one is theirs to record. Pinned so the blanket check
+        # cannot come back unnoticed under it.
         ec = FakeEc()
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / 'capture.csv'
