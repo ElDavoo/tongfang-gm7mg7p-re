@@ -24,7 +24,7 @@ It is not "the opcode table is indexed". `OPCODE_LEN` covers all 256 byte
 values — 16 rows of 16, opcode `0x00` first (`ec/tools/disasm8051.py:39-56`) —
 so `OPCODE_LEN[op]` where `op` is already a byte value cannot go out of range,
 and `counter_sweep_entry.py:319,384,551,565` and
-`audit_call_targets.py:170,307` index the table exactly that way. The
+`audit_call_targets.py:170,314` index the table exactly that way. The
 distinction is the whole content of this census, and it is stated here because a
 grep for `OPCODE_LEN[` returns both kinds and a reader has to be told which is
 which.
@@ -32,13 +32,17 @@ which.
 Two more shapes are adjacent and are **excluded**, with the reason, so the
 sweep's boundary is stated rather than assumed:
 
-- `audit_call_targets.py:171,308`'s `d[i + OPCODE_LEN[op] - 1]` — a
+- `audit_call_targets.py:171,315`'s `d[i + OPCODE_LEN[op] - 1]` — a
   last-byte-of-the-instruction read. The table is indexed by a byte value and
   the *buffer* read is the displacement, at an offset derived from the table.
   A different shape with a different bound. `audit_call_targets.py` over the
   committed image exits 0 (`## Reproducing it`, command 8), so nothing here is
   a report of a live fault; whether that pair wants a check of its own is a
-  question for a follow-up, not a finding.
+  question for a follow-up, not a finding. Asked as issue #847 and answered in
+  [`rel8-displacement-bound.md`](rel8-displacement-bound.md): the pair wants a
+  `--self-test` check of the bound, not a `len(d)` guard, because `hi` is a
+  constant in another module and it is `main()`'s PD-marker check, three frames
+  from the read, that holds it in range.
 - `counter_sweep_entry.py`'s `OPCODE_LEN[r["owner_opcode"]]` — a table index by
   a value read out of a dict, so by the paragraph above it cannot raise.
 
@@ -92,8 +96,8 @@ ec/tools/walk_branch_arms.py:213:        n = OPCODE_LEN[op]
 ec/tools/walk_branch_arms.py:328:            n = OPCODE_LEN[op]
 ec/tools/audit_call_targets.py:170:        if op in REL_OPCODES and i + OPCODE_LEN[op] <= hi:
 ec/tools/audit_call_targets.py:171:            yield i, op, relative_target(op, d[i + OPCODE_LEN[op] - 1],
-ec/tools/audit_call_targets.py:307:                "length": OPCODE_LEN[op],
-ec/tools/audit_call_targets.py:308:                "disp": d[off + OPCODE_LEN[op] - 1],
+ec/tools/audit_call_targets.py:314:                "length": OPCODE_LEN[op],
+ec/tools/audit_call_targets.py:315:                "disp": d[off + OPCODE_LEN[op] - 1],
 ec/tools/citation_gap_scan.py:28:called in a loop over these windows.** It evaluates `OPCODE_LEN[d[i]]` *before*
 ec/tools/citation_gap_scan.py:234:        n = D.OPCODE_LEN[window[i]]
 ```
@@ -102,6 +106,12 @@ ec/tools/citation_gap_scan.py:234:        n = D.OPCODE_LEN[window[i]]
 14 are accounted for here so that the arithmetic is checkable rather than
 asserted:
 
+*(Line numbers note, added by #847: the two `audit_call_targets.py` sites at
+`:307,308` are `:314,315` now, because `region_bounds()` above them grew a
+docstring. The count is unchanged at 39 — the sweep still exits 0, and the new
+`check()` line adds no `OPCODE_LEN[` of its own. The block above is the grep
+re-run, not the old output edited by hand.)*
+
 | not a site | lines | why |
 |---|---|---|
 | `disasm8051.py:108,114` | 2 | `relative_target()`'s docstring and body, indexing by the `op` **argument** — a byte value, and this function indexes no buffer at all |
@@ -109,8 +119,8 @@ asserted:
 | `test_disasm8051.py:52` | 1 | a comment in the test that already pins the #679 fix |
 | `pd_index_geometry.py:567,593` | 2 | `OPCODE_LEN[MOV_DPTR]` — the constant, not a buffer read |
 | `counter_sweep_entry.py:319,384,551,565` | 4 | `op` or `r["owner_opcode"]` is a byte value already in hand |
-| `audit_call_targets.py:170,307` | 2 | the same: `op` is in hand from `d[i]` at `:169`, and `:307`'s `OPCODE_LEN[op]` is a length value with no buffer read at all |
-| `audit_call_targets.py:171,308` | 2 | the adjacent last-byte-of-instruction read, excluded above |
+| `audit_call_targets.py:170,314` | 2 | the same: `op` is in hand from `d[i]` at `:169`, and `:314`'s `OPCODE_LEN[op]` is a length value with no buffer read at all |
+| `audit_call_targets.py:171,315` | 2 | the adjacent last-byte-of-instruction read, excluded above |
 
 The six sites the issue named are a subset of the table, not its content. Three
 more rows are the sweep's finding beyond both the issue and the plan that
@@ -337,8 +347,14 @@ vector is left visible above rather than quietly replaced.
   `ec/annotations/registers.yaml`, a sweep that finds nothing means "not found
   by this method". Twenty functions is what this grep finds in `ec/tools/`
   today; it is not a claim that no other tool or no other buffer-indexed table
-  has the shape, and it says nothing at all about `bios/tools` or
-  `windows/tools`.
+  has the shape. The other two tools directories have been swept the same way
+  since, and found nothing **by this method**:
+  `grep -rn 'OPCODE_LEN\[' --include=*.py bios/tools windows/tools` returns no
+  lines, and neither directory can have the shape for a stronger reason than
+  the empty grep — `OPCODE_LEN` is defined once, in `ec/tools/disasm8051.py:39`,
+  and nothing under `bios/` or `windows/` imports `disasm8051` at all. Both
+  commands and their counts are in
+  [`rel8-displacement-bound.md`](rel8-displacement-bound.md) (issue #847).
 - **No live test ran.** No EC was opened, no register read back, no hardware
   and no Windows involved. Every number here is a static read of a committed
   file or the output of a command over a committed file.

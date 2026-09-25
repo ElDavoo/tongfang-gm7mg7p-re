@@ -204,6 +204,13 @@ def trampolines(d: bytes, stubs, limit: int = 0x8000):
 
 
 def region_bounds(name: str):
+    """(lo, hi) for `name`, straight out of REGIONS.
+
+    `hi` is therefore a constant, not a bound on `len(d)`: every loop here is
+    region-relative, so the invariant is `hi <= len(d)` -- a property of these
+    call sites, which no loop can state for itself. main()'s PD-marker check is
+    what holds it, and --self-test now reports it rather than assuming it.
+    See docs/findings/rel8-displacement-bound.md."""
     return next((lo, hi) for n, lo, hi, _, _ in REGIONS if n == name)
 
 
@@ -717,6 +724,15 @@ def self_test(d: bytes) -> int:
     check(not escaped,
           f"all {total} paged site(s) in the audited regions resolve inside the "
           f"caller's own region{'' if not escaped else ' -- escaped at ' + ', '.join(escaped[:8])}")
+
+    # The property every region-relative loop in this tool rests on and none of
+    # them can state: `hi` comes from REGIONS, so it does not move with the
+    # buffer. main()'s PD-marker check is what keeps it inside `d`.
+    hi = max(region_bounds(name)[1] for name in AUDITED)
+    check(hi <= len(d),
+          f"the largest audited region bound 0x{hi:05X} is inside the "
+          f"{len(d)}-byte image, so no walk below reads past its own region"
+          f"{'' if hi <= len(d) else ' -- exceeded, main() would have refused this image'}")
 
     walked = {}
     for name in AUDITED:
