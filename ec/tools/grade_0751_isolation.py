@@ -1725,6 +1725,17 @@ def main(argv=None):
         # that were read, the withheld ones are named as outside it, and the
         # run-level comparison is declined rather than quietly narrowed -- the
         # overclaim `docs/findings.md` §4 is a record of.
+        #
+        # The clause about `confirmed-inert` names the withheld *window* and
+        # not the block it sits in, because the two withholding paths above do
+        # not agree on whether there is one. A window refused for its block's
+        # mark set is in that block; a window refused for an unreadable label
+        # is in no block at all, and the census has just said so in the same
+        # run ("a mark this cannot read is a mark no block can be attributed
+        # to"). So the sentence this branch ends on is the one fact both paths
+        # support -- the run is not a three-value read -- and it declines to
+        # say which of them happened rather than picking the one it was
+        # written against.
         print(f"  None of the §4.1-§4.3 bytes moved in any of the {graded} "
               f"window(s) that were graded: that is what those {graded} "
               f"windows show, and the {withheld} window(s) withheld above "
@@ -1732,8 +1743,10 @@ def main(argv=None):
               "whole capture, and this output does not make it over a run it "
               "only read part of -- a run in which every window was graded is "
               "what would. §7's `confirmed-inert` needs all three values, and "
-              "a block this report refused to read is one of the three, so "
-              "the paragraph below is as far as this run goes.")
+              "a window this report refused to read is one this run cannot "
+              "speak for -- whether it sits in a block of its own is not "
+              "something this output can say -- so the paragraph below is as "
+              "far as this run goes.")
     else:
         print("  None of the §4.1-§4.3 bytes moved in any window: consistent "
               "with the static prediction, for this capture's window only "

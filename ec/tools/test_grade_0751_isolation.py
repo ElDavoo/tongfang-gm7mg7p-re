@@ -78,6 +78,14 @@ MULTI_BLOCK = _set('multi-block')
 # both directions a count would be wrong in -- the leftover ahead of both
 # blocks, and the one between them.
 UNPLACED_WINDOW = _set('unplaced-window')
+# `unplaced-window/` with the first of its two block-less restores relabelled
+# to a form §6 does not fix, in all three captures. Nothing else differs, so
+# the label is the whole variable between the two strays: the 12:04 one still
+# parses and is graded as `block: unplaced`, the 12:00 one is refused. It
+# withholds 1 window of 8 and grades 7, against `3blocks/`'s 2 withheld of 8
+# -- the other reason a run can be partly graded, reached by no other
+# committed fixture, and the one whose withheld window is in no block at all.
+UNREAD_WINDOW = _set('unread-window')
 # `3blocks/` with one `0x0784` row added inside block 1's write window, which
 # is the address and the step `0751-isolation-example-active.csv` records, so
 # the two agree. The marks are untouched, so the block structure and the void
@@ -1407,10 +1415,57 @@ class MarkSetTests(unittest.TestCase):
         # one may not reach for either of the other two's wording.
         self.assertNotIn('No window in this run was graded', out)
         # §7's call is named as out of reach rather than left to be inferred
-        # from the banner: the withheld block is one of the three values
-        # `confirmed-inert` needs, and the paragraph below already says so.
-        self.assertIn('`confirmed-inert` needs all three values, and a block '
-                      'this report refused to read is one of the three', flat)
+        # from the banner: a window this run refused to read is one it cannot
+        # speak for, so this is not the three-value read `confirmed-inert`
+        # needs, and the paragraph below already says so. Named as a window
+        # and not as a block, because the other withholding path has no block
+        # to name -- see the `unreads` test below.
+        self.assertIn('`confirmed-inert` needs all three values, and a window '
+                      'this report refused to read is one this run cannot '
+                      'speak for', flat)
+
+    # The same split reached the other way, and the reason the clause above is
+    # worded about a window rather than a block. A window is withheld either
+    # because the block it falls in has a mark set that does not hold, or
+    # because its own label is a form §6 does not fix -- and the second path's
+    # window is in *no* block, which this run's own census says in the same
+    # breath ("a mark this cannot read is a mark no block can be attributed
+    # to"). So a closing sentence about a block this report refused to read
+    # is a §7 fact the run denies, and it is the sentence the whole branch is
+    # for. Withheld 1 of 8 here against the 2 of 8 on the mark-set path, so the
+    # counts are the fixture's rather than shared.
+    def test_a_withheld_window_in_no_block_claims_no_block_was_refused(self):
+        rc, out, _ = run(*UNREAD_WINDOW)
+        self.assertEqual(rc, 1)
+        flat = " ".join(out.split())
+        # The same split, from the label rather than the mark set: 1 withheld,
+        # 7 graded, and the refusal to compare with the prediction is
+        # unchanged. This branch is reached either way.
+        self.assertIn('1 of the 8 window(s) above were not graded', flat)
+        self.assertIn('None of the §4.1-§4.3 bytes moved in any of the 7 '
+                      'window(s) that were graded', flat)
+        self.assertIn('the 1 window(s) withheld above are not part of it', flat)
+        self.assertNotIn('consistent with the static prediction', out)
+        # What is withheld, and the reason, are both named at the window: the
+        # header says which block it is in, and here that is `unplaced`.
+        self.assertIn('block: unplaced -- NOT GRADED', out)
+        self.assertIn('a mark this cannot read is a mark no block can be '
+                      'attributed to', flat)
+        # The two strays differ in nothing but the label, and the output
+        # treats them differently: the 12:04 one parses, so it is graded
+        # under the same `unplaced` header without the refusal.
+        self.assertEqual(out.count('block: unplaced -- NOT GRADED'), 1)
+        self.assertEqual(out.count('block: unplaced'), 2)
+        # And the clause the issue is about, which now holds on both paths
+        # because it names neither: the run cannot speak for the window it
+        # refused, and it does not claim a block was refused, because on this
+        # path none was.
+        self.assertIn('`confirmed-inert` needs all three values, and a window '
+                      'this report refused to read is one this run cannot '
+                      'speak for', flat)
+        self.assertIn('whether it sits in a block of its own is not something '
+                      'this output can say', flat)
+        self.assertNotIn('a block this report refused to read', out)
 
     # The same split with something having moved, which no committed fixture
     # reached before this one: the sets above withhold every window, and the
