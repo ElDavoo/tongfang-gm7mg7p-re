@@ -191,6 +191,94 @@ guard-off one (445):
   | `mode-oem-init` | `main-ec-002` → `-002` | **changed** | **changed** |
   | `level-block-086x` | `main-ec-004` → `-004` | **changed** | **changed** |
 
+  *(Correction, 2026-09-25, issue #818. The bullet above used to read "**Six
+  named clusters keep key *and* membership while their rank moves**, and two —
+  `mode-oem-init` and `level-block-086x` — change both, which is the key-only
+  design's failure case", over a table marking those two **changed** on both
+  columns. **The run gives three movers, and neither of those two rows is what
+  the table says.** Six plus two does not reach the nine names the census has
+  either, and the table's own `rank` column reads `main-ec-002 → -002` and
+  `main-ec-004 → -004` for the two rows it marks **changed**. The wrong version
+  is kept above rather than deleted, per `../findings.md` §4a-4d.)*
+
+  **The derivation, printed rather than summarised** — this file's own form,
+  §6a's heredoc is reproduced at `:141-163` for that reason. Both runs write
+  only to `/tmp`; `git status --porcelain` prints nothing after them:
+
+  ```console
+  $ python3 ec/tools/xdata_register_map.py --no-eq-guard \
+      --out-clusters /tmp/off-clusters.csv --out-registers /tmp/off-registers.csv
+    names: seeded 8, exact 0, carried by overlap 1, tied, not carried 0, with no name 436
+      main-ec-002 carries mode-oem-init by overlap, Jaccard 0.97 from kefb63d82f8c7 -- re-key annotations/xdata-cluster-names.csv if the name moved
+  $ python3 ec/tools/xdata_register_map.py \
+      --out-clusters /tmp/on-clusters.csv --out-registers /tmp/on-registers.csv
+    names: seeded 9, exact 0, carried by overlap 0, tied, not carried 0, with no name 430
+  $ python3 - <<'EOF'
+  import csv
+  named = lambda p: {r["cluster_name"]: r
+                     for r in csv.DictReader(open(p)) if r["cluster_name"]}
+  committed, off = named("ec/annotations/xdata-clusters.csv"), named("/tmp/off-clusters.csv")
+  movers, changed = [], []
+  print(f"  {'name':<16} {'committed':<12} {'guard-off':<12} {'key':<8} {'membership':<11} rank")
+  for name in sorted(committed):
+      o, n = committed[name], off[name]
+      a, b = set(o["addrs"].split()), set(n["addrs"].split())
+      key = "same" if o["cluster_key"] == n["cluster_key"] else "changed"
+      mem = "same" if a == b else "changed"
+      rank = "same" if o["cluster_id"] == n["cluster_id"] else "moved"
+      print(f"  {name:<16} {o['cluster_id']:<12} {n['cluster_id']:<12} {key:<8} {mem:<11} {rank}")
+      (changed if "changed" in (key, mem) else movers if rank == "moved" else []).append(name)
+  print("movers:", len(movers), "of", len(committed), sorted(movers))
+  for name in changed:
+      o, n = committed[name], off[name]
+      a, b = set(o["addrs"].split()), set(n["addrs"].split())
+      print(f"{name}: {o['cluster_key']} -> {n['cluster_key']}, {len(a)} -> {len(b)} "
+            f"addrs, joined {sorted(b - a)}, left {sorted(a - b)}")
+  EOF
+    name             committed    guard-off    key      membership  rank
+    countdown-06c6   main-ec-128  main-ec-125  same     same        moved
+    countdown-06cd   main-ec-214  main-ec-214  same     same        same
+    counter-sweep    main-ec-003  main-ec-003  same     same        same
+    fan-step-08a0    main-ec-292  main-ec-297  same     same        moved
+    ff-fill-stubs    main-ec-007  main-ec-007  same     same        same
+    flag-pair-0442   main-ec-125  main-ec-122  same     same        moved
+    level-block-086x main-ec-004  main-ec-004  same     same        same
+    mode-oem-init    main-ec-002  main-ec-002  changed  changed     same
+    user-clear-bytes main-ec-013  main-ec-013  same     same        same
+  movers: 3 of 9 ['countdown-06c6', 'fan-step-08a0', 'flag-pair-0442']
+  mode-oem-init: kefb63d82f8c7 -> kc0f2a0be0103, 92 -> 93 addrs, joined ['0x0464', '0x0465'], left ['0x1804']
+  $ git status --porcelain
+  ```
+
+  The two `names:` lines are the part of the default run this claim rests on:
+  `seeded 9` with nothing carried, against `seeded 8` with one, and that one is
+  `mode-oem-init`. **Its membership delta is the cell the corrected claim turns
+  on** — 92 addresses to 93, `0x0464` and `0x0465` joining, `0x1804` leaving —
+  and it is *why* the name arrives on overlap at 0.97 rather than by key. So the
+  argument against a key-only design is narrower than the bullet's and is still
+  an argument: **one** name, changing both columns, which is the failure case a
+  content hash alone does not cover. The cluster-level version of the same
+  argument, over the 15 changed-key clusters, is
+  `annotations/xdata-register-map.md:1139-1146` and is unaffected by any of this.
+
+  **Where the two `changed` rows came from.** `annotations/xdata-06c2-06db-timers.md`
+  §6b (`:858-870`) is an `--export-ownership` run — 440 cluster rows, 390
+  main-EC, `seeded 4, exact 0, carried by overlap 3`, three carry lines — and
+  this table imported its two `changed` rows from that transcript. The `0.97`
+  appears in **both** runs, so that one cell was right by coincidence and only
+  the other two were not, which is what made the error hard to see:
+  `level-block-086x` is a carry at 0.75 under §6b's flag and `seeded` at
+  `ka39cda99615f` under this one, because the two flags measure different
+  classifiers. §6b is a correct record of a different run and is not to be
+  re-imported here.
+
+  **One observation, recorded rather than opened.** The corrected reading puts a
+  *membership* change on `main-ec-002` — `annotations/xdata-register-map.md:1142`
+  records it as the cluster `mode-oem-init` names, cited by seven pages of the
+  tree. Whether a name cited that widely deserves its own finding for a
+  membership that moves by one address is a question for the tracker, not for
+  this issue.
+
 - **`--map` emits 439 rows** keyed to the committed identifiers, plus the
   `whose cluster_key changed` line the case asserts on.
 

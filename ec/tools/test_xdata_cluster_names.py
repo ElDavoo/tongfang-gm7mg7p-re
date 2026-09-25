@@ -406,6 +406,26 @@ class TheGuardOffRegeneration(unittest.TestCase):
         # regeneration leaves every named rank standing, this fails, which is
         # the same guard `test_the_regeneration_really_moves_the_ranks` puts on
         # the whole census.
+        #
+        # The margin, since "weaker" is doing a lot of work in that sentence:
+        # **three** of the nine names move rank with key and membership intact
+        # — `countdown-06c6`, `fan-step-08a0`, `flag-pair-0442` — and
+        # `counter-sweep` is not one of them. It is at `main-ec-003` in both
+        # censuses now; the `main-ec-002` the paragraph above leaves it at is
+        # itself a superseded reading, kept here rather than edited out for the
+        # same reason. It is the most-cited cluster in the tree all the same
+        # (`xdata-register-map.md:1156` counts nine `.md` files naming
+        # `main-ec-003`), so the exhibit this case fell back on is the one the
+        # ranking happens to spare. The assertion stays `assertTrue(movers, …)`
+        # on purpose: pinning the count would be the hazard this class's own
+        # docstring exists to record — a total pasted into a file is a snapshot
+        # of the merge it was measured on — and it would go red on any
+        # re-derivation for a reason that says nothing about the design being
+        # argued here. The count is recorded as prose in
+        # `docs/findings/xdata-cluster-names-guard-off-recipe.md`, which is
+        # where the derivation behind it is printed; the floor this case does
+        # hold is the census-wide one in
+        # `test_the_regeneration_really_moves_the_ranks`.
         old_by_name = {r["cluster_name"]: r for r in self.committed.values()
                        if r["cluster_name"]}
         movers = sorted(
