@@ -272,14 +272,19 @@ guard-off one (445):
 
   The two `names:` lines are the part of the default run this claim rests on:
   `seeded 9` with nothing carried, against `seeded 8` with one, and that one is
-  `mode-oem-init`. **Its membership delta is the cell the corrected claim turns
-  on** — 92 addresses to 93, `0x0464` and `0x0465` joining, `0x1804` leaving —
-  and it is *why* the name arrives on overlap at 0.97 rather than by key. So the
-  argument against a key-only design is narrower than the bullet's and is still
-  an argument: **one** name, changing both columns, which is the failure case a
-  content hash alone does not cover. The cluster-level version of the same
-  argument, over the 15 changed-key clusters, is
-  `annotations/xdata-register-map.md:1139-1146` and is unaffected by any of this.
+  `mode-oem-init`. **Its changed key is the cell the corrected claim turns
+  on** — `kefb63d82f8c7` to `kc0f2a0be0103` — and it is *why* the name arrives
+  on overlap at all rather than by key: a key that no longer matches anything
+  is found by membership instead. Its membership delta, 92 addresses to 93
+  with `0x0464` and `0x0465` joining and `0x1804` leaving, is the second
+  changed cell, and it is why that overlap reads 0.97 rather than the 1.00 a
+  byte-identical membership would score — a key change alone would still have
+  arrived on overlap, just at 1.00. So the argument against a key-only design
+  is narrower than the bullet's and is still an argument: **one** name,
+  changing both columns, which is the failure case a content hash alone does
+  not cover. The cluster-level version of the same argument, over the 15
+  changed-key clusters, is `annotations/xdata-register-map.md:1139-1146` and
+  is unaffected by any of this.
 
   **Where the old table's two `changed` rows came from.**
   `annotations/xdata-06c2-06db-timers.md` §6b (`:858-870`) is an

@@ -416,8 +416,10 @@ class TheGuardOffRegeneration(unittest.TestCase):
         # same reason. It is the most-cited cluster in the tree all the same
         # (`xdata-register-map.md:1156` records the count that line was written
         # against — `grep -rl 'main-ec-003\b' --include=*.md .` naming nine
-        # files, against seven for `main-ec-002` — and this file is the tenth,
-        # so the numeral is that line's figure rather than a current one), so
+        # files, against seven for `main-ec-002` — and the tenth is
+        # `docs/findings/xdata-cluster-names-guard-off-recipe.md`, whose
+        # comparison transcript names `counter-sweep` on both sides, so the
+        # numeral is that line's figure rather than a current one), so
         # the exhibit this case fell back on is the one the ranking happens to
         # spare. The assertion stays `assertTrue(movers, …)`
         # on purpose: pinning the count would be the hazard this class's own
