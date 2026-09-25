@@ -96,7 +96,7 @@ picks one, in two places the report did not cite:
   entirely on the labels, so a mark this cannot read leaves every block's
   completeness uncertifiable — not only the one it would have landed in.
   `--block` scoping narrows what is graded, not what is known."*
-- `ec/tools/test_grade_0751_isolation.py:2221-2222` — *"a capture carrying one
+- `ec/tools/test_grade_0751_isolation.py:2232-2233` — *"a capture carrying one
   is still **fatal for the whole run** however it got there."*
 
 So the exit code is not the defect. The **silence about it** is, and this is

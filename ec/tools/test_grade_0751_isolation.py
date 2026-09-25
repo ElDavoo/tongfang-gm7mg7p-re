@@ -78,6 +78,17 @@ MULTI_BLOCK = _set('multi-block')
 # both directions a count would be wrong in -- the leftover ahead of both
 # blocks, and the one between them.
 UNPLACED_WINDOW = _set('unplaced-window')
+# `unplaced-window/` with one thing wrong with each of its two block-less
+# restores, so the two strays are refused for the two *different* reasons a
+# window in no block can be: the 12:00 one is in all three captures and
+# disagrees about the value, the 12:04 one is in two of the three. Both labels
+# still parse, so neither is an `unreads` case and the shape is the one
+# `unread-window/` below cannot reach -- a stray that is refused for what the
+# captures said rather than for what the parse could not read. The six block
+# windows and both blocks are that set verbatim, so the only thing that
+# withholds a window here is a stray, and the same bytes with both labels
+# fixed -- `unplaced-window/` itself -- must not be withheld at all.
+UNPLACED_FAILURES = _set('unplaced-window-failures')
 # `unplaced-window/` with the first of its two block-less restores relabelled
 # to a form §6 does not fix, in all three captures. Nothing else differs, so
 # the label is the whole variable between the two strays: the 12:04 one still
@@ -2325,6 +2336,158 @@ class MarkSetTests(unittest.TestCase):
                     for p in grade.check_block_marks(b, captures)]
         self.assertEqual([kind for kind, _, _ in problems], ['void'])
         self.assertIn('ends this block on', problems[0][2])
+
+    # The per-window agreement checks are properties of the marks, not of the
+    # block a window falls in, and a window the block walk could not place was
+    # reaching neither of them: `main` handed `check_block_marks` the blocks
+    # and `unplaceable_marks` the strays, and a stray whose label parses and
+    # that one console spelled two ways or did not record was passed to nobody
+    # and graded in full. The census named both defects on the run before it;
+    # nothing withheld the window or moved the exit code.
+    #
+    # The two strays are refused for the two different reasons rather than
+    # being one case, because the tool checks them separately and a one-sided
+    # fix would then have nothing to fail against: `labels` on the 12:00 one,
+    # `missing` on the 12:04. Both blocks are intact and all six of their
+    # windows print, so what withholds the two is the strays' own marks and
+    # not a block's.
+    def test_a_window_in_no_block_fails_the_same_agreement_checks(self):
+        rc, out, _ = run(*UNPLACED_FAILURES)
+        self.assertEqual(rc, 1)
+        # Two strays, two refusals, and no third window caught up in them.
+        self.assertEqual(out.count('block: unplaced -- NOT GRADED'), 2)
+        # Each refusal carries the problem that produced it, under the window
+        # it is about, in the window's own place in the mark stream. The
+        # 12:00 stray is the disagreement: all three consoles recorded it and
+        # one typed a different value, so the census's own per-capture list
+        # is what the refusal has to name.
+        disagree = out.split('\n--- mark 1/8:')[1].split('\n--- mark 2/8:')[0]
+        flat = " ".join(disagree.split())
+        self.assertIn('block: unplaced -- NOT GRADED', disagree)
+        self.assertIn('not graded -- the captures spell this action '
+                      'differently', flat)
+        self.assertIn("2026-01-01-0751-isolation-0700-07ff.csv: "
+                      "'restored 0x0751=0x0a'", flat)
+        # And the 12:04 one is the missing mark, naming the console that did
+        # not record it rather than the label it did record.
+        absent = out.split('\n--- mark 5/8:')[1].split('\n--- mark 6/8:')[0]
+        flat = " ".join(absent.split())
+        self.assertIn('block: unplaced -- NOT GRADED', absent)
+        self.assertIn('not graded -- recorded in 2 of 3 capture(s)', flat)
+        self.assertIn('absent from 2026-01-01-0751-isolation-0f00-0f5f.csv',
+                      flat)
+        # Neither refusal is a block's: both blocks still hold their restore
+        # and are called intact, and the six windows between them are printed
+        # in the usual format rather than refused. Counted on the `block:`
+        # line rather than on `marked_windows`, which finds a header for a
+        # withheld window too -- that is what the header is for, so the mark
+        # stays locatable in a report that will not print its rows.
+        self.assertIn('block 1/2: intact', out)
+        self.assertIn('block 2/2: intact', out)
+        self.assertEqual(out.count('\n    block: 0xA0 (block 1 of 2)\n'), 3)
+        self.assertEqual(out.count('\n    block: 0x10 (block 2 of 2)\n'), 3)
+        # Every `unplaced` line in the window section is a refusal, and there
+        # is no plain one: the clean half below is the case where two of them
+        # are graded, and this is not that case.
+        self.assertNotIn('\n    block: unplaced\n', out)
+        self.assertEqual(marked_windows(out), [
+            (1, 'restored 0x0751=0x0a / restored 0x0751=0x99'),
+            (2, 'no-op wrote 0x0751=0x10'), (3, 'wrote 0x0751=0xA0'),
+            (4, 'restored 0x0751=0x10'), (5, 'restored 0x0751=0x99'),
+            (6, 'no-op wrote 0x0751=0x00'), (7, 'wrote 0x0751=0x10'),
+            (8, 'restored 0x0751=0x00')])
+        self.assertIn('2 of the 8 window(s) above were not graded', out)
+        self.assertIn('6 window(s) that were graded', out)
+        # The banner has to name the reason, or it is a count an operator
+        # cannot act on. Its second clause is the one this case reaches, and
+        # the "no label could be read" half of it must not be the only
+        # answer: both labels here parse.
+        flat = " ".join(out.split('=== what this does and does not settle '
+                                  '===')[1].split())
+        self.assertIn('the captures disagree about the action it opened', flat)
+        # And the census, which prints whole, still names both strays and
+        # still says what the agreement checks now reach and what they do not.
+        self.assertEqual(census(out).count('`--block` cannot select it'), 2)
+        self.assertEqual(census(out).count('the void check cannot'), 2)
+
+    # The clean half, which is the half this could have broken. A check that
+    # has quietly started refusing everything looks exactly like a check that
+    # is working, and `unplaced-window/` is the same day byte for byte with
+    # both stray labels whole: every mark in all three captures, all three
+    # spelling it the same way, both blocks intact. Nothing in the tree
+    # asserted `NOT GRADED` is *absent* over it before this -- the clean half
+    # of the unreadable-mark test stands on rc 0 plus a census count -- so a
+    # check that fired on a stray whose marks agree would not have failed
+    # anything.
+    def test_a_window_in_no_block_whose_marks_agree_is_not_refused(self):
+        rc, out, _ = run(*UNPLACED_WINDOW)
+        self.assertEqual(rc, 0)
+        self.assertNotIn('NOT GRADED', out)
+        self.assertNotIn('were not graded', out)
+        # Both strays graded, and the census still promises what it always
+        # did about them: `--block` cannot select either one.
+        self.assertEqual(marked_windows(out), [
+            (1, 'restored 0x0751=0x99'), (2, 'no-op wrote 0x0751=0x10'),
+            (3, 'wrote 0x0751=0xA0'), (4, 'restored 0x0751=0x10'),
+            (5, 'restored 0x0751=0x99'), (6, 'no-op wrote 0x0751=0x00'),
+            (7, 'wrote 0x0751=0x10'), (8, 'restored 0x0751=0x00')])
+        self.assertEqual(out.count('block: unplaced'), 2)
+        # And the run is the clean one the census said it was: every window
+        # graded, so the closing section is the whole-capture sentence rather
+        # than either of the partly-graded ones.
+        self.assertIn('None of the §4.1-§4.3 bytes moved in any window: '
+                      'consistent with the static prediction', out)
+        self.assertIn('block 1/2: intact', out)
+        self.assertIn('block 2/2: intact', out)
+
+        # And the refusal that was there before this one still is, and still
+        # reaches only its own window. `unread-window/` is this same day with
+        # the 12:00 stray's label made unreadable in all three captures, so it
+        # is refused for `unreads` rather than for a disagreement, and the
+        # 12:04 one -- whose label is the one this case's fixture edits and
+        # that one leaves alone -- is still graded. A new check that swallowed
+        # the old one would refuse both and print 2 of the same marker.
+        rc, out, _ = run(*UNREAD_WINDOW)
+        self.assertEqual(rc, 1)
+        self.assertEqual(out.count('block: unplaced -- NOT GRADED'), 1)
+        self.assertIn('1 of the 8 window(s) above were not graded', out)
+        self.assertIn('7 window(s) that were graded', out)
+        self.assertIn('not one of the three forms §6 fixes',
+                      " ".join(out.split()))
+
+    # The function on its own, reached directly the way the other per-window
+    # and per-block readers are, so that what the two strays are refused for
+    # is pinned as the kinds rather than only as the sentences the kinds
+    # happen to print. `labels` on the 12:00 window and `missing` on the 12:04,
+    # one each: a stray can fail both at once and nothing in the report would
+    # then say which, so a change that made the second problem crowd out the
+    # first would print the same words.
+    def test_the_unplaced_window_problems_name_their_kind_per_window(self):
+        captures, windows, blocks, unplaced = as_main_reads(UNPLACED_FAILURES)
+        self.assertEqual(len(unplaced), 2)
+        problems = grade.unplaced_window_problems(unplaced, captures)
+        # One entry per failing window, and it is the window that is the key
+        # -- `main` prints each refusal in its own window's place.
+        self.assertEqual(set(problems), set(unplaced))
+        for w, texts in problems.items():
+            self.assertEqual(len(texts), 1, f'{w.label!r}')
+        # The kinds, in mark order, and each window's own text carrying the
+        # fact that named it.
+        names, _ = grade.distinct_captures(path for path, _ in captures)
+        self.assertEqual(
+            [kind for w in unplaced for kind, _, _
+             in grade.window_mark_problems(w, names, set(names))],
+            ['labels', 'missing'])
+        disagree, absent = (problems[w][0] for w in unplaced)
+        self.assertIn('the captures spell this action differently', disagree)
+        self.assertIn('2026-01-01-0751-isolation-0f00-0f5f.csv', absent)
+        # The empty half, and it is the one that fails if the check has
+        # started refusing everything: the same day with both strays' labels
+        # whole is not a single problem.
+        captures, windows, blocks, unplaced = as_main_reads(UNPLACED_WINDOW)
+        self.assertEqual(len(unplaced), 2)
+        self.assertEqual(
+            grade.unplaced_window_problems(unplaced, captures), {})
 
 
 if __name__ == '__main__':

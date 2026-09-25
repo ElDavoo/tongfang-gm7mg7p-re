@@ -643,9 +643,12 @@ def assign_blocks(windows):
     label this cannot read are three different things and are reported as
     three. They are graded as the windows the capture did hold -- their rows
     are real and there is no other arm to mis-file them under -- with `block:
-    unplaced` on their header, and the unreadable ones refused as well
-    because a label this cannot read is a label it cannot say what a window
-    is a window of.
+    unplaced` on their header, unless one of the checks reaches them. The
+    unreadable ones are refused because a label this cannot read is a label it
+    cannot say what a window is a window of (`unplaceable_marks`), and one the
+    captures spelled two ways, or that one of them did not record, is refused
+    too, because the window it opens is then not the action any capture
+    recorded (`unplaced_window_problems`).
     """
     blocks, unplaced, pending, current = [], [], [], None
     for w in windows:
@@ -705,6 +708,71 @@ def unplaceable_marks(unplaced):
     return out
 
 
+def unplaced_window_problems(unplaced, captures):
+    """The agreement problems on the windows in no block, per window.
+
+    `labels` and `missing` come along, and `void` does not: the void check is
+    a block's last recorded mark in a capture, and a window in no block has no
+    block to have one in. That is a property of what the check is defined over
+    rather than a limit found by looking and not finding a case, and it is
+    said here rather than left for a reader to infer from the check's absence.
+
+    The agreement checks engage at two or more captures, exactly as they do
+    over a block: with one there is no other console for the mark to be
+    missing from and no second spelling to disagree with it.
+
+    A dict rather than a list because `main` prints each refusal in the window
+    it belongs to and counts the window rather than the problem -- the shape
+    `unplaceable_marks` returns, and the one the branch reading it expects.
+    """
+    names, _ = distinct_captures(path for path, _ in captures)
+    known = set(names)
+    out = {}
+    for w in unplaced:
+        problems = window_mark_problems(w, names, known)
+        if problems:
+            out[w] = [text for _, _, text in problems]
+    return out
+
+
+def window_mark_problems(w, names, known):
+    """One window's agreement problems, as `check_block_marks` returns them.
+
+    Both of them are properties of the marks alone -- which captures recorded
+    the action, and whether they spelled it the same way -- and neither names a
+    block, so a window the block walk could not place is checked by the same
+    two as one it could. Lifted out of `check_block_marks` for that reason
+    rather than written a second time.
+
+    `names` and `known` are the run's, passed in rather than re-derived per
+    window so that every window is read against the same capture list the
+    census counted, and cannot disagree with it.
+    """
+    by_source = {}
+    for m in w.marks:
+        by_source.setdefault(m.source, []).append(m.label)
+    spellings = {label for labels in by_source.values() for label in labels}
+    problems = []
+    if len(spellings) > 1:
+        said = "; ".join(
+            f"{os.path.basename(p)}: {by_source[p][0]!r}"
+            for p in names if p in by_source)
+        problems.append(("labels", w, (
+            f"the captures spell this action differently -- {said} -- so "
+            "the window it opens is not the action any of them recorded")))
+    if len(names) > 1 and set(by_source) != known:
+        absent = ", ".join(os.path.basename(p)
+                           for p in names if p not in by_source)
+        problems.append(("missing", w, (
+            f"recorded in {len(by_source)} of {len(names)} capture(s), "
+            f"absent from {absent}. The capture(s) that missed it have "
+            "their rows for this arm filed under whichever window their "
+            "timestamps fall in, and nothing in the result ties them to "
+            "the arm whose mark is gone -- so this arm can read quiet for "
+            "want of a mark rather than because nothing moved")))
+    return problems
+
+
 def check_block_marks(block, captures):
     """The problems in one block's mark set, each against the window it is on.
 
@@ -726,6 +794,10 @@ def check_block_marks(block, captures):
         capture that recorded only one block would otherwise look complete
         for every block in the day.
 
+    The first two are `window_mark_problems`, and the third is not: it is
+    defined over a block, and the windows a block walk could not place are
+    checked by `unplaced_window_problems` for the other two.
+
     The agreement checks need a second capture to have anything to disagree
     with, so they engage at two or more and the census says so below that
     rather than letting one capture pass a check it never ran.
@@ -737,28 +809,7 @@ def check_block_marks(block, captures):
     known = set(names)
     problems = []
     for w in block.windows:
-        by_source = {}
-        for m in w.marks:
-            by_source.setdefault(m.source, []).append(m.label)
-        spellings = {label for labels in by_source.values()
-                     for label in labels}
-        if len(spellings) > 1:
-            said = "; ".join(
-                f"{os.path.basename(p)}: {by_source[p][0]!r}"
-                for p in names if p in by_source)
-            problems.append(("labels", w, (
-                f"the captures spell this action differently -- {said} -- so "
-                "the window it opens is not the action any of them recorded")))
-        if len(names) > 1 and set(by_source) != known:
-            absent = ", ".join(os.path.basename(p)
-                               for p in names if p not in by_source)
-            problems.append(("missing", w, (
-                f"recorded in {len(by_source)} of {len(names)} capture(s), "
-                f"absent from {absent}. The capture(s) that missed it have "
-                "their rows for this arm filed under whichever window their "
-                "timestamps fall in, and nothing in the result ties them to "
-                "the arm whose mark is gone -- so this arm can read quiet for "
-                "want of a mark rather than because nothing moved")))
+        problems += window_mark_problems(w, names, known)
     for path in names:
         here = block.marks_in(path)
         if here and parse_mark(here[-1].label)[0] != "restore":
@@ -923,8 +974,9 @@ def report_census(captures, windows, blocks, unplaced, unreads, selected):
             role, _ = parse_mark(w.label)
             if role is not None:
                 print(f"  unplaced: {w.ts.isoformat(sep=' ')}  {w.label!r} -- "
-                      "in no block, so no §3 integrity check covers it and "
-                      "`--block` cannot select it")
+                      "in no block, so the void check cannot reach it -- there "
+                      "is no block whose last mark in a capture it could be "
+                      "-- and `--block` cannot select it either")
 
 
 def report_withheld_window(w, n, total, where, problems):
@@ -1766,6 +1818,7 @@ def main(argv=None):
     windows = build_windows(marks, changes)
     blocks, unplaced = assign_blocks(windows)
     unreads = unplaceable_marks(unplaced)
+    unagreed = unplaced_window_problems(unplaced, captures)
     for block in blocks:
         block.problems = check_block_marks(block, captures)
 
@@ -1829,11 +1882,26 @@ def main(argv=None):
             # A label this cannot read is a window it cannot say what it is a
             # window of. An unplaced mark whose label *is* readable -- a stray
             # restore, a control arm whose write never came -- is graded
-            # below, with `unplaced` on its header: its rows are real and
-            # there is no other arm to mis-file them under.
+            # below, with `unplaced` on its header, unless the branch under
+            # this one refuses it first: its rows are real and there is no
+            # other arm to mis-file them under, but the window it opens is
+            # still not the action any capture recorded.
             withheld += 1
             report_withheld_window(w, i + 1, len(windows), "unplaced",
                                    unreads[w])
+            continue
+        if w in unagreed:
+            # The two agreement checks the block branch below runs, over a
+            # window no block's mark set can reach. Window-scoped, so a
+            # `--block` run is still decided by its own block alone -- unlike
+            # the branch above it, which is fatal for the whole run because an
+            # unreadable label can change which blocks there are at all
+            # (`unplaceable_marks` is where that is reasoned). A window
+            # already in no block cannot re-shape one, and no block's
+            # completeness rests on it.
+            withheld += 1
+            report_withheld_window(w, i + 1, len(windows), "unplaced",
+                                   unagreed[w])
             continue
         if w.block is not None and w.block.problems:
             withheld += 1
@@ -1881,9 +1949,10 @@ def main(argv=None):
     if withheld:
         print(f"  {withheld} of the {len(shown)} window(s) above were not "
               "graded: the mark set of the block they fall in does not hold, "
-              "or no block could be attributed to them at all. What they "
-              "would have shown is not reported here and is not to be quoted "
-              "from this run.")
+              "or the window falls in no block at all and either no label "
+              "could be read for it or the captures disagree about the action "
+              "it opened. What they would have shown is not reported here and "
+              "is not to be quoted from this run.")
     if unreads:
         # The line the withheld banner above would have printed, and printed
         # on its own when the run's unreadable windows are not in `shown` at
@@ -1950,15 +2019,15 @@ def main(argv=None):
         # overclaim `docs/findings.md` §4 is a record of.
         #
         # The clause about `confirmed-inert` names the withheld *window* and
-        # not the block it sits in, because the two withholding paths above do
-        # not agree on whether there is one. A window refused for its block's
-        # mark set is in that block; a window refused for an unreadable label
-        # is in no block at all, and the census has just said so in the same
-        # run ("a mark this cannot read is a mark no block can be attributed
-        # to"). So the sentence this branch ends on is the one fact both paths
-        # support -- the run is not a three-value read -- and it declines to
-        # say which of them happened rather than picking the one it was
-        # written against.
+        # not the block it sits in, because the three withholding paths above
+        # do not agree on whether there is one. A window refused for its
+        # block's mark set is in that block; the windows refused in no block
+        # are in none at all, and the census has just said so in the same run
+        # ("a mark this cannot read is a mark no block can be attributed
+        # to"). So the sentence this branch ends on is the one fact all three
+        # paths support -- the run is not a three-value read -- and it
+        # declines to say which of them happened rather than picking the one it
+        # was written against.
         print(f"  None of the §4.1-§4.3 bytes moved in any of the {graded} "
               f"window(s) that were graded: that is what those {graded} "
               f"windows show, and the {withheld} window(s) withheld above "
@@ -2045,19 +2114,24 @@ def main(argv=None):
           "not the call itself. `confirmed-inert` as a standalone control "
           "additionally needs all three values, with and without the vendor "
           "service (§3a).")
-    # Five ways a run can be refused rather than graded, and they are five
-    # facts about the input rather than five verdicts about the machine: a
-    # block short its restore, a mark set that cannot support its windows, a
-    # label the block walk could not place, a --block that named no block, and
-    # a capture named twice. The last two are not in this expression at all --
-    # both are refused above, before the closing section prints -- so three
-    # reach it, and they are not scoped alike. `void` and `withheld` are this
-    # run's selected block: `report_blocks` grades `selected` alone, and
-    # `withheld` is counted over `shown`, which is that block's own windows,
-    # so a `--block` run says nothing about the other blocks and passes if
-    # this one held. `unreads` is the whole capture's however the run was
-    # scoped, per `unplaceable_marks`, and `UNREAD_MARK_NOTE` above is the
-    # line that says so where the exit code is read from.
+    # Six ways a run can be refused rather than graded, and they are six
+    # facts about the input rather than six verdicts about the machine: a
+    # block short its restore, a mark set that cannot support a block's
+    # windows, a window in no block whose marks the captures spell two ways or
+    # that one of them did not record, a label the block walk could not place,
+    # a --block that named no block, and a capture named twice. The last two
+    # are not in this expression at all -- both are refused above, before the
+    # closing section prints -- so the other four reach it, and they are not
+    # scoped alike. `void` and `withheld` are this run's selected block:
+    # `report_blocks` grades `selected` alone, and `withheld` is counted over
+    # `shown`, which is that block's own windows, so a `--block` run says
+    # nothing about the other blocks and passes if this one held. The
+    # agreement refusal on a window in no block is counted into `withheld`, so
+    # it takes that same scope: a window already in no block cannot re-shape
+    # one, and no block's completeness rests on it. `unreads` is the whole
+    # capture's however the run was scoped, per `unplaceable_marks`, and
+    # `UNREAD_MARK_NOTE` above is the line that says so where the exit code is
+    # read from.
     return 1 if (void or unreads or withheld) else 0
 
 

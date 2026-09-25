@@ -1,0 +1,39 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# byte and timestamp below was written by hand. See ../README.md.
+# Shape: the 0x0400-0x045F third of
+# ../../0751-isolation-run-unplaced-window/'s two-value day byte for byte, the
+# same eight marks two seconds after the 0700 capture's, so the grader sees one
+# action marked in every watcher. The only thing wrong with this set is in the
+# other two files: 0700-07ff spells the 12:00 block-less restore 0x0a where
+# this one says 0x99, and 0f00-0f5f is short the 12:04 one. This capture
+# holds 0x99 for both and is right about both as far as it goes, which is what
+# makes it the third console of each disagreement rather than a second one.
+# CPU_TEMP and GPU_TEMP climb throughout, which is what makes the duty drift
+# beside them thermal rather than a response to the write, and 0x0402 is
+# context, not one of the two confirmed bytes. The stray window at the front
+# holds the first temperature row, so it is a window with real bytes in it
+# and not a quiet one: what withholds it is the label, not the absence of
+# anything to show. It is not a prediction that a die warms like this.
+ts,addr,old,new
+2026-01-01T12:00:04.000+01:00,MARK,,restored 0x0751=0x99
+2026-01-01T12:00:06.000+01:00,0x043E,0x32,0x33
+2026-01-01T12:00:12.000+01:00,MARK,,no-op wrote 0x0751=0x10
+2026-01-01T12:00:19.000+01:00,0x043E,0x33,0x35
+2026-01-01T12:00:26.000+01:00,0x0402,0x11,0x12
+2026-01-01T12:00:36.000+01:00,0x044F,0x30,0x31
+2026-01-01T12:00:42.000+01:00,MARK,,wrote 0x0751=0xA0
+2026-01-01T12:00:50.000+01:00,0x043E,0x35,0x36
+2026-01-01T12:01:00.000+01:00,0x043E,0x36,0x38
+2026-01-01T12:01:05.000+01:00,0x044F,0x31,0x32
+2026-01-01T12:01:12.000+01:00,MARK,,restored 0x0751=0x10
+2026-01-01T12:01:15.000+01:00,0x043E,0x38,0x37
+2026-01-01T12:04:02.000+01:00,MARK,,restored 0x0751=0x99
+2026-01-01T12:05:12.000+01:00,MARK,,no-op wrote 0x0751=0x00
+2026-01-01T12:05:20.000+01:00,0x043E,0x37,0x39
+2026-01-01T12:05:36.000+01:00,0x044F,0x32,0x33
+2026-01-01T12:06:12.000+01:00,MARK,,wrote 0x0751=0x10
+2026-01-01T12:06:20.000+01:00,0x043E,0x39,0x3B
+2026-01-01T12:06:30.000+01:00,0x043E,0x3B,0x3D
+2026-01-01T12:06:35.000+01:00,0x044F,0x33,0x34
+2026-01-01T12:06:42.000+01:00,MARK,,restored 0x0751=0x00
+2026-01-01T12:06:45.000+01:00,0x043E,0x3D,0x3C
