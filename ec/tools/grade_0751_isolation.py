@@ -1695,6 +1695,20 @@ def main(argv=None):
             print(f"  That is the {graded} window(s) that were graded. The "
                   f"{withheld} window(s) withheld above are not part of it, "
                   "and what they would have shown is not reported here.")
+        elif selected is not None and len(blocks) > 1:
+            # The same scoping, for a `--block` run that withheld nothing: a
+            # clean block is graded whole, so the branch above has no count to
+            # print and the movement line would be a claim about the day
+            # reached with nothing between it and the attribution under it.
+            # Placed here rather than in the `withheld` branch because the two
+            # are not additive -- one of them already scopes the line -- and
+            # because a run that both selected a block and withheld part of it
+            # is scoped by the more specific of the two.
+            print(f"  That is block {selected.index} of {len(blocks)}, value "
+                  f"under test {selected.name}, over its {graded} window(s). "
+                  f"The other {len(blocks) - 1} block(s) were not checked in "
+                  "this run, so what they would have shown is not reported "
+                  "here.")
         if moved_groups == [TRIGGER_GROUP]:
             # The trigger group alone, with no table byte: the difference is
             # the mailbox the host writes to ask for a copy, and reading it
@@ -1747,6 +1761,32 @@ def main(argv=None):
               "speak for -- whether it sits in a block of its own is not "
               "something this output can say -- so the paragraph below is as "
               "far as this run goes.")
+    elif selected is not None and len(blocks) > 1:
+        # A `--block` run over a day of more than one value graded every
+        # window it was shown, so `graded == len(shown)`, `withheld == 0` and
+        # neither branch above fires: it reached the whole-capture sentence
+        # over one value of a day. §6's own command line passes `--block` and
+        # §7 keys `confirmed-inert` on all three values, so the strongest
+        # line an attachment printed once per value has to say which value it
+        # is about. The run already knows -- the header counts the block, the
+        # integrity check names the blocks it skipped, and `end` stopped at
+        # the block rather than at the capture.
+        #
+        # `len(blocks) > 1` is the part that does not read as obvious. A
+        # `--block` run over a *one*-block capture is not this case: there
+        # the block is the whole capture, the windows it graded are the whole
+        # mark stream, and the whole-capture comparison is exactly the claim
+        # that run can support -- the integrity check even calls the skipped
+        # set "the other 0 block(s)". Scoping it there would decline a
+        # comparison that is true, which is a new overclaim in place of the
+        # old one.
+        print(f"  None of the §4.1-§4.3 bytes moved in any of the {graded} "
+              f"window(s) in block {selected.index} of {len(blocks)}, value "
+              f"under test {selected.name}: that is what those {graded} "
+              f"windows show. The other {len(blocks) - 1} block(s) are not "
+              "part of it. The static prediction is a claim about the whole "
+              "capture, and this output does not make it over one block of "
+              "them -- the same CSVs graded without --block is what would.")
     else:
         print("  None of the §4.1-§4.3 bytes moved in any window: consistent "
               "with the static prediction, for this capture's window only "

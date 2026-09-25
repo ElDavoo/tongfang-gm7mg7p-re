@@ -1987,6 +1987,15 @@ three-value day with a withheld block printed "consistent with the static
 prediction" over the 6 of its 8 windows it had actually read. Write-up:
 `docs/findings/0751-grader-partial-grade-claims.md`.
 
+**The same sentence was also unqualified on a `--block` run, which withheld
+nothing and so matched none of the cases above.** A clean block is graded
+whole, so a `--block` run over one value of a day printed "consistent with the
+static prediction" for a capture it had read 3 of 8 windows of — and, one
+branch up, "That contradicts the static prediction" with nothing scoping it.
+The closing summary now declines the capture-level comparison there too, and
+still makes it over a `--block` run whose block *is* the whole capture.
+Write-up: `docs/findings/0751-grader-block-scope-claims.md`.
+
 ### 7c. `0x07C4` moved on 2026-09-23, and the 15 EC-side sites of `0x07C4`-`0x07D5` (2026-09-24, issue #183)
 
 **The observation, already in the tree and written down nowhere.** §7 cites

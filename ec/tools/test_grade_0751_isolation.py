@@ -1294,6 +1294,83 @@ class GradeTests(unittest.TestCase):
         self.assertNotIn('were not graded', out)
         self.assertNotIn('No window in this run was graded', out)
 
+    # The same sentence, on a run that read one value of a day. §6's own
+    # command line passes `--block` and asks for it once per value, and a
+    # clean block is graded whole -- `withheld == 0`, `graded == len(shown)` --
+    # so none of the branches above fired and the whole-capture sentence was
+    # printed over 3 of the day's 8 windows, on a run whose header, integrity
+    # check and closing window had already said it read one block of three.
+    def test_a_clean_per_block_run_does_not_claim_the_whole_capture(self):
+        rc, out, _ = run(*BLOCK_CAPTURES, '--block', '0xA0')
+        self.assertEqual(rc, 0)
+        # The movement fact is still reported, and over what carries it: the
+        # block, the value under test, and the count the run graded. Dropping
+        # the number would make the claim unreadable rather than safe.
+        self.assertIn('None of the §4.1-§4.3 bytes moved in any of the 3 '
+                      'window(s) in block 1 of 3, value under test 0xA0', out)
+        # And the capture-level comparison is declined, by the withheld
+        # branch's own words and for its reason: the prediction is about the
+        # whole capture, and the same CSVs read unscoped is what would make it.
+        self.assertIn('The static prediction is a claim about the whole '
+                      'capture, and this output does not make it over one '
+                      'block of them', out)
+        self.assertIn('the same CSVs graded without --block is what would',
+                      out)
+        self.assertNotIn('consistent with the static prediction', out)
+        # Neither of the other two shapes, either. This run withheld nothing,
+        # and reaching for the banner would report a block that graded clean
+        # as one this tool could not read.
+        self.assertNotIn('were not graded', out)
+        self.assertNotIn('No window in this run was graded', out)
+        # The blocks it did not read are still named as unchecked by the
+        # integrity check above the summary, so the sentence and the section
+        # it closes are saying one thing about the denominator.
+        self.assertIn('the other 2 block(s) were not checked in this run', out)
+
+    # The same scoping one branch up, where the claim is the stronger of the
+    # two rather than the weaker: a `--block` run over `3blocks-moved/` moved a
+    # PL inside its own write window and withheld nothing, so the movement line
+    # and the `That contradicts ...` attribution under it printed with nothing
+    # between them, and the attribution read as a statement about the day.
+    def test_a_per_block_movement_is_scoped_before_the_attribution(self):
+        rc, out, _ = run(*BLOCK_CAPTURES_MOVED, '--block', '0xA0')
+        self.assertEqual(rc, 0)
+        self.assertIn('At least one of the §4.1-§4.3 bytes moved after a '
+                      'mark: PL1/PL2/PL4 (§4.1).', out)
+        # The scope sits where the withheld branch puts it -- between the
+        # movement and the attribution -- and declines the same thing: the
+        # blocks this run did not read, and what they would have shown.
+        self.assertIn('That is block 1 of 3, value under test 0xA0, over its '
+                      '3 window(s). The other 2 block(s) were not checked in '
+                      'this run', out)
+        self.assertIn('what they would have shown is not reported here', out)
+        # The attribution itself is unchanged, and scoping is not retracting:
+        # a PL that moved inside a window is still the more interesting
+        # outcome, and this run really did see it. What is gone is the
+        # unqualified reading, because it now has the block in front of it.
+        self.assertIn('That contradicts the static prediction', out)
+        self.assertNotIn('host-written reload mailbox', out)
+        self.assertNotIn('were not graded', out)
+        self.assertNotIn('No window in this run was graded', out)
+
+    # What the `len(blocks) > 1` in the guard above is for, and the only
+    # thing that holds it. §6's own set is a one-block capture, so a
+    # `--block` run over it selects a block that *is* the whole capture: its
+    # windows are the whole mark stream, and the whole-capture comparison is
+    # exactly the claim that run can support. Scoping it there would decline a
+    # comparison that is true, which trades one overclaim for another. Green
+    # before this change and green after it -- it pins the guard rather than
+    # the fix, and fails the day someone drops the second clause.
+    def test_a_block_run_over_a_one_block_capture_still_compares(self):
+        rc, out, _ = run(*RUN_CAPTURES, '--block', '0xA0')
+        self.assertEqual(rc, 0)
+        self.assertIn('None of the §4.1-§4.3 bytes moved in any window: '
+                      'consistent with the static prediction', out)
+        self.assertIn("for this capture's window only", out)
+        # And not the per-block sentence, which would be declining over a
+        # set of blocks that is empty.
+        self.assertNotIn('is a claim about the whole capture', out)
+
 
 class MarkSetTests(unittest.TestCase):
     """§6's "the marks in all three CSVs must carry the same labels", checked.
