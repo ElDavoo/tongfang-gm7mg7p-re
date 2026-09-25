@@ -17,8 +17,11 @@ single-tool form does *not* do is §3b of that file: the service-stopped second
 pass, the by-hand package-power notes, and the other seven of §6's ten files --
 the six range dumps and the snapshot, none of which this tool writes. With
 `--csv` it does produce what §6's three CSVs hold, in one appended file rather
-than three, and the grader reads that with no conversion. This tool produces
-no range dump.
+than three, and the grader reads that with no conversion -- but not at equal
+coverage: FANTBL and TEMP sweep their ranges whole, while WATCH reads 14
+addresses of the 0x0700-0x07FF page where §3's `ec_watch.py --start 0x0700
+--len 0x0100` takes all 256, so §4.4's whole-page instruction is not
+reproduced. This tool produces no range dump.
 
 Two arms, because 0x075B/0x075C (the fan duty bytes -- the vendor's
 ADDR_EC_MAIN_FAN_L/R_DUTY_BYTE, issue #123) move with the die
@@ -265,7 +268,7 @@ def arm_labels(orig, target):
     §3's three action forms with this run's values in them: the control arm
     writes the byte back the value it already holds, the write arm writes the
     value under test, and the restore puts `orig` back again. One function
-    rather than an f-string at each of the four use sites, because the
+    rather than the f-strings that were at each label site, because the
     `--self-test` and the offline suite have to exercise the labels *this tool*
     writes -- a second spelling of them is a spelling that agrees today and
     drifts tomorrow, and a drifted label is a capture the grader's `parse_mark`
