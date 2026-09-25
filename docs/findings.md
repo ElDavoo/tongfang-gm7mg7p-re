@@ -4012,6 +4012,19 @@ be invented is the prompt. Written up in
 [ec_watch-marks.md](../windows/tools/ec_watch-marks.md), which also names the
 two other tools still carrying the substitution.
 
+**2026-09-25 (issue #531): a label that was typed and is wrong is refused the
+same way, and with the grader's own rule.** `ec_watch.py --mark
+--label-vocab 0751` applies `parse_mark(label)[0] is not None` — the test
+`unplaceable_marks` applies — to each label as it is typed, and quotes that
+module's `REQUIRED_LABEL_FORMS` back rather than carrying a copy of either. It
+is opt-in because `gpu_block_watch.py` and `system_id_probe.py` construct the
+same `Marker` with free-form labels (#483, #484), and it promises only that the
+grader can place the row: a value the run never wrote still parses, and §3's
+three-console comparison is still what catches it. Offline behaviour against a
+fake EC; §3's commands carry the flag, and a human at the laptop sees the
+prompt. Same file:
+[ec_watch-marks.md](../windows/tools/ec_watch-marks.md).
+
 ## 17. The `main-ec-002` cluster is one 393-byte routine, counted 42 times over (2026-09-23, issue #179; id corrected by #253 and by the 2026-09-24 re-derivation)
 
 **The id in this section's subject has been wrong twice, and every version of

@@ -28,6 +28,15 @@ grader does: `grade_0751_isolation.py`'s `parse_mark` reads the leading word
 and the value after `0x0751=`, which is why §3 fixes three forms and why they
 are load-bearing rather than illustrative.
 
+**CORRECTION (issue #531, 2026-09-25), leaving the sentence above as it was
+written.** *The tool does not read it* was true when this was written, and is
+still true whenever `--label-vocab` is absent — which is every caller in this
+tree except §3's three commands. With `--label-vocab 0751` the prompt reads
+every label against that same `parse_mark` and refuses the ones it cannot place
+— see *The refused label* below. Nothing else changes, so the sentence above
+still describes what `gpu_block_watch.py` and `system_id_probe.py` get, which is
+the reason the check is a flag and not a rule.
+
 ## The blank press
 
 `ec_watch.py` strips the line. If what is left is empty — an empty line, or
@@ -46,6 +55,57 @@ is on the same stream the operator is already reading.
 Closed stdin still ends the thread: the EOF check is ahead of the blank check,
 so a redirected or closed input stops the marker rather than spinning it on a
 line that will never come.
+
+## The refused label
+
+`--label-vocab 0751` is that same refusal one step along, and it is opt-in for
+a reason that is not caution: this one `Marker` class is the mark prompt for
+`gpu_block_watch.py` and `system_id_probe.py` too (#483, #484), and both take
+their labels free-form. A blanket check would refuse labels those procedures
+are entitled to write, so the check is a flag and §3's three commands are where
+the operator turns it on.
+
+With it on, a label `grade_0751_isolation.py`'s own `parse_mark` cannot place is
+refused exactly as a blank press is — no row, nothing appended, the counter held
+back, the same notice shape:
+
+```
+--- unplaceable label: nothing recorded, no mark 1 taken; one of: no-op wrote 0x0751=0xA0 / wrote 0x0751=0x10 / restored 0x0751=0xA0; type a label + Enter ---
+```
+
+Both halves of that are the grader's rather than a copy of it. The predicate is
+`parse_mark(label)[0] is not None` — the test `unplaceable_marks` applies to
+decide a mark is unreadable — and the three forms are that module's own
+`REQUIRED_LABEL_FORMS`, loaded from it by path. A copy could drift from the
+grader, and a prompt that has drifted promises something the grading does not
+do. What is left is the operator correcting the label while the run is still
+going, instead of finding out at the grading that a day is withheld.
+
+**What it does not catch is as much of the point as what it does.** `parse_mark`
+reads the leading word and the value after `0x0751=`, and it knows nothing about
+which values this run means to write or what its sequence of actions should be.
+So:
+
+- `wrote 0x0751=0xB0` parses, and is recorded — the prompt cannot know that §3's
+  three values are `0xA0`/`0x00`/`0x10`;
+- `WROTE 0x0751=0xA0` parses, because `parse_mark` is case-insensitive, and is
+  written verbatim, which is as it should be;
+- a dropped hex *digit* parses too: `0x0751=0xA` is a value of its own. A
+  dropped `0x` from the address is caught; a dropped digit is not;
+- a wrong *sequence* — two writes in a row, a restore with no block open — is
+  not a per-line question at all. Those still reach `build_windows` and
+  `check_block_marks` at grading time.
+
+The promise is exactly *the grader can place this row*, and the mistyped digit
+that survives is what §3's three-console comparison is for.
+
+A grader that will not load is a refusal rather than a fallback, printed before
+the CSV is opened and long before the EC is:
+`error: --label-vocab 0751 needs ec/tools/grade_0751_isolation.py at <path>`.
+A capture taken under a promise the tool silently did not keep is #502's
+failure caught a step later rather than a step earlier, and an operator told a
+label was refused by a check that was never there has been told something
+false.
 
 ## Why the substitution went
 
@@ -95,9 +155,12 @@ does not advance it, which is what lets the notice name the number the press
 would have taken: a blank at the start says `no mark 1 taken`, and the label
 typed next is the capture's first mark. So the number in a notice is always
 the number the operator's next accepted mark will carry, and a run where three
-presses are refused still reads 1, 2, 3 at the console. Nothing else in the
-output numbers the marks — the grader reads labels, not numbers — so this is
-about the console being readable rather than about the capture.
+presses are refused still reads 1, 2, 3 at the console. A label `--label-vocab`
+refuses is held back by the same rule and for the same reason, which is why the
+two notices read alike: the counter is on marks recorded, and neither press
+recorded one. Nothing else in the output numbers the marks — the grader reads
+labels, not numbers — so this is about the console being readable rather than
+about the capture.
 
 ## Where the refusal shows up
 
@@ -105,7 +168,18 @@ about the console being readable rather than about the capture.
   §3 is where the operator is told what to type, and its "three forms are
   load-bearing" paragraph carries the dated correction: a blank press is no
   longer one way to produce an unplaceable mark, and the mistyped digit that
-  survives is what the three-console comparison is for.
+  survives is what the three-console comparison is for. Its three commands also
+  carry `--label-vocab 0751`, which is where the operator turns the second
+  refusal on.
+- `windows/tools/ec_watch.py` — `load_label_vocab` and the `check`/`forms`
+  keyword parameters on `Marker`. The parameters default to no check because
+  `windows/tools/gpu_block_watch.py:166` constructs `Marker(sink)` and stamps
+  free-form labels, so a default that checked anything would refuse that
+  procedure's own marks.
+- `windows/tools/test_ec_watch.py`'s `RefusedLabelTests`, beside
+  `BlankMarkTests`. It pins the refusal, the notice, the counter, and the
+  default: with the flag absent an unplaceable label is recorded unchanged,
+  which is what those two other tools depend on.
 - `ec/tools/grade_0751_isolation.py` — `parse_mark`, `unplaceable_marks` and
   `build_windows` are the three functions above. None of them changed: the
   grader's refusal was correct and still is.
