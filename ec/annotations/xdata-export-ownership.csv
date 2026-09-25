@@ -2238,7 +2238,7 @@ pd/10E8.c,pd,10E8,4,pd/10E8.c,10E8,store_3byte_r3r2r1,no,1.00
 pd/10F1.c,pd,10F1,1,pd/10F1.c,10F1,read3_code_to_r3r1,no,1.00
 pd/10FD.c,pd,10FD,5,pd/10FD.c,10FD,read3_ptr_kind_dispatch,no,1.00
 pd/119C.c,pd,119C,9,pd/119C.c,119C,dispatch_code_table,no,1.00
-pd/11C2.c,pd,11C2,9,pd/11C2.c,11C2,FUN_CODE_11c2,no,1.00
+pd/11C2.c,pd,11C2,9,pd/11C2.c,11C2,dispatch_code_table_2byte_key,no,1.00
 pd/1229.c,pd,1229,2,pd/1229.c,1229,load_dptr_then_indirect_jump,no,1.00
 pd/122D.c,pd,122D,2,pd/122D.c,122D,jmp_code_at_dptr,no,1.00
 pd/122F.c,pd,122F,13,pd/122F.c,122F,add_dptr_to_word_0d0e_ea_guard,no,1.00

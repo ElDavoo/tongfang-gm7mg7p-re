@@ -2238,7 +2238,7 @@ pd,10E8,store_3byte_r3r2r1,9,annotation,yes,yes,writer,hand-decoded,ec/annotatio
 pd,10F1,read3_code_to_r3r1,12,annotation,yes,yes,reader,hand-decoded,ec/decompiled/pd/10F1.asm; ec/decompiled/pd/10F1.c,,pd/10F1.asm
 pd,10FD,read3_ptr_kind_dispatch,32,annotation,yes,yes,dispatch,hand-decoded,ec/decompiled/pd/10FD.asm; ec/decompiled/pd/10FD.c,,pd/10FD.asm
 pd,119C,dispatch_code_table,38,annotation,yes,yes,dispatch,hand-decoded,ec/annotations/pd-0x38-consumers.md,,pd/119C.asm
-pd,11C2,FUN_CODE_11c2,45,annotation,yes,no,,,,,pd/11C2.asm
+pd,11C2,dispatch_code_table_2byte_key,45,annotation,yes,yes,dispatch,hand-decoded,ec/decompiled/pd/11C2.asm; ec/decompiled/pd/11C2.c,,pd/11C2.asm
 pd,1229,load_dptr_then_indirect_jump,4,annotation,yes,yes,forwarder,hand-decoded,ec/decompiled/pd/1229.asm; ec/decompiled/pd/1229.c,,pd/1229.asm
 pd,122D,jmp_code_at_dptr,2,annotation,yes,yes,forwarder,hand-decoded,ec/decompiled/pd/122D.asm; ec/decompiled/pd/122D.c,,pd/122D.asm
 pd,122F,add_dptr_to_word_0d0e_ea_guard,36,annotation,yes,yes,math,hand-decoded,ec/decompiled/pd/122F.asm; ec/decompiled/pd/122F.c,,pd/122F.asm

@@ -6,8 +6,11 @@
 
 /* Stores R7 into XDATA 0x0803, R5 into XDATA 0x0804 and 0 into XDATA 0x0805, and returns
    immediately if R3 is 0x0D. Otherwise it re-reads XDATA 0x0803 into R1, calls 0x34EF with that
-   byte, then 0x349B, 0x38D3 and 0x11C2, exchanges the last result with R3, ANDs it with R5, and
-   jumps to 0xC808.
+   byte, then 0x349B, 0x38D3 and 0x11C2. 0x11C2 does not return to 0xCB4D: its only exit is the
+   indirect jump at 0x11DC, and its two entry pops take the return address this lcall pushed,
+   leaving DPTR at 0xCB4D. The xch A,R3 / anl A,R5 / ajmp 0xC808 that follow at 0xCB4D..0xCB4F are
+   therefore the bytes 0x11C2 reads at that table pointer rather than a call-and-return tail; what
+   that means for this call site is not settled here. See docs/findings/pd-common-address-spaces.md.
    type: forwarder
    evidence: ec/decompiled/pd/CB2A.asm; ec/decompiled/pd/CB2A.c
    basis: hand-decoded
@@ -27,7 +30,7 @@ void store_0803_0805_then_jump_c808(byte param_1,byte param_2,undefined1 param_3
   set_dptr_0424(param_3,0);
   dph_plus_double_a_349b(param_3);
   read_be16_from_dptr();
-  uVar1 = FUN_CODE_11c2();
+  uVar1 = dispatch_code_table_2byte_key();
   store_a_at_dptr_and_r7_at_0800_plus_a(param_1 & param_2,uVar1);
   return;
 }

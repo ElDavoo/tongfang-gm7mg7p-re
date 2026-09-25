@@ -28,34 +28,34 @@ is one function both bank images carry, so a bank0 caller and a bank1 caller
 that both reach it are two halves of *one* node, and that node joins the banks
 however sound each edge is. `PROXY_SCOPE` gives each bank its own endpoint
 instead, so the callers sharing a helper stay connected inside their own bank
-and the banks are not joined. **196 edges.**
+and the banks are not joined. **195 edges.**
 
 So the rule that reads in the report as "cross-region edges counted, not
-joined: 27" was in fact discarding **196 + 27** edges, and the 27 is the smaller
+joined: 27" was in fact discarding **195 + 27** edges, and the 27 is the smaller
 of the two by a factor of seven. Nothing was wrong with the clustering: the
 report was offering a partial accounting as a complete one, which is the same
 class of error as the overclaims `CLAUDE.md` §4 is about, one layer up.
 
-**The second consequence is sharper, and it is about a claim in a file.** 456 EC
+**The second consequence is sharper, and it is about a claim in a file.** 478 EC
 rows are `ungrouped`, and every one of them carried the identical comment:
 
 > No typed seed and no connected component at or above the minimum size. Not
 > found by this method.
 
-For **16 of those 456**, that sentence is false. The method found them, and the
+For **16 of those 478**, that sentence is false. The method found them, and the
 tool's own banking rule is what cut the edges. "Not found by this method" is a
 statement about the method, and for these rows the method is not what happened
 to them.
 
-The edge count and the row count are different populations, and 196 is not the
-number for these 16. The 196 proxied edges reach **36** distinct `common` rows,
-and **70** of those edges land on these 16. The other 126 edges reach 20 more
+The edge count and the row count are different populations, and 195 is not the
+number for these 16. The 195 proxied edges reach **35** distinct `common` rows,
+and **70** of those edges land on these 16. The other 125 edges reach 19 more
 rows in the same population: the 10 `reached_only_by_bank` rows that stayed
-grouped (45 edges), and 10 rows a `common` or `pd` caller also reaches (81
+grouped (45 edges), and 9 rows a `common` or `pd` caller also reaches (80
 edges), which are not found-then-cut at all — a non-bank caller's edge to one of
 them is joined directly rather than proxied, though the bank edges to those same
-rows are proxied like any other. So 196 is the population the rule discarded, 70
-is the part of it that reaches these 16, and quoting the 196 for them would
+rows are proxied like any other. So 195 is the population the rule discarded, 70
+is the part of it that reaches these 16, and quoting the 195 for them would
 repeat the error this note exists to correct.
 
 ---
@@ -70,19 +70,19 @@ All measured statically over the committed listings by
 | population | count | what it counts |
 |---|---|---|
 | `cross_region` | **27** | bucket-B edges whose target also exists in the other bank |
-| `proxy_edges` | **196** | edges a caller had to an annotated `common` row, replaced by a per-bank proxy |
+| `proxy_edges` | **195** | edges a caller had to an annotated `common` row, replaced by a per-bank proxy |
 | ↳ `bank0` callers | 126 | |
 | ↳ `bank1` callers | 69 | |
-| ↳ `pd` callers | **1** | not a bank question — see the follow-up below |
-| ↳ distinct `common` rows reached | **36** | the rows those 196 edges land on — *not* the same number as the 196 |
+| ↳ `pd` callers | **0** | was 1 — an annotation gap, closed by #470; see the correction below |
+| ↳ distinct `common` rows reached | **35** | the rows those 195 edges land on — *not* the same number as the 195 |
 | ↳ edges to `reached_only_by_bank` rows | 26 rows / 115 edges | 16 are `ungrouped` (70 edges), 10 stayed grouped (45 edges) |
-| ↳ edges to rows a non-bank caller also reaches | 10 rows / 81 edges | joined directly, so not found-then-cut |
+| ↳ edges to rows a non-bank caller also reaches | 9 rows / 80 edges | joined directly, so not found-then-cut |
 | `reached_only_by_bank` | **26** | annotated `common` rows whose caller scopes are a non-empty subset of `{bank0, bank1}` |
-| of those, `ungrouped` | **16** | reached by the method, then cut by the rule; 70 of the 196 proxied edges |
-| `ungrouped` total | **456** | 440 not found by this method + 16 found then cut |
+| of those, `ungrouped` | **16** | reached by the method, then cut by the rule; 70 of the 195 proxied edges |
+| `ungrouped` total | **478** | 462 not found by this method + 16 found then cut |
 
 The `proxy_edges` block reconciles the same way the `ungrouped` line does: 115 +
-81 = 196 edges, and 70 + 45 = 115. Nothing in it is an unexplained remainder,
+80 = 195 edges, and 70 + 45 = 115. Nothing in it is an unexplained remainder,
 which is the point — an edge total offered without the rows it lands on is the
 partial accounting this file is about, just one level down from the one the 27
 used to stand for.
@@ -90,9 +90,9 @@ used to stand for.
 Three definitions are load-bearing, and all three are pinned by `--self-test`:
 
 - **`proxy_edges` counts edges; `reached_only_by_bank` counts rows.** They are
-  not the same population, and neither is a subset of the other: the 196 edges
-  reach 36 rows, 26 of which are reached only by bank callers and 10 of which a
-  non-bank caller also reaches. So the 196 is the accounting for the *edges the
+  not the same population, and neither is a subset of the other: the 195 edges
+  reach 35 rows, 26 of which are reached only by bank callers and 9 of which a
+  non-bank caller also reaches. So the 195 is the accounting for the *edges the
   rule cut*, and the 26 and the 16 are the accounting for *rows* — attaching the
   edge total to a row count is what this pass corrected, and `--report` prints
   the edges' per-target breakdown so the two can be reconciled by hand.
@@ -162,9 +162,9 @@ read as the rule's total cost:
 
 ```
     cross-region edges counted, not joined: 27
-    bank->common edges cut by the per-bank proxy rule: 196 (bank0=126, bank1=69, pd=1). A bank caller's endpoint for a common target is that bank's proxy, not the common row, so the two banks are not joined through it. Those 196 edges reach 36 distinct common target(s): 115 land on rows reached only by bank callers, 81 on rows a non-bank caller also reaches.
+    bank->common edges cut by the per-bank proxy rule: 195 (bank0=126, bank1=69). A bank caller's endpoint for a common target is that bank's proxy, not the common row, so the two banks are not joined through it. Those 195 edges reach 35 distinct common target(s): 115 land on rows reached only by bank callers, 80 on rows a non-bank caller also reaches.
     annotated common rows reached only by bank callers: 26. The method found these and its own banking rule then cut the edges, which is a different reason from not being found.
-    ungrouped: 456 (440 not found by this method + 16 found then cut by the proxy rule, reached by 70 of the 196 proxied edges, never 'absent')
+    ungrouped: 478 (462 not found by this method + 16 found then cut by the proxy rule, reached by 70 of the 195 proxied edges, never 'absent')
 ```
 
 The two ungrouped reasons sum to the headline, so neither is an unexplained
@@ -243,10 +243,50 @@ out of that population, exactly as one `common` caller is.
 the rule.** The 7-edges-and-1-proxy ratio above is unchanged and is still the
 right reading. But the 6 same-scope joins were also recording a `pd` reach
 against the `common` row at the same address — a row their edges never reached
-— and `common 0x11C2` keeps its real `['common', 'pd']` attribution precisely
-because it has no `pd` row beside it. See
-[`pd-common-address-attribution.md`](pd-common-address-attribution.md); the
-program-boundary question this section raises is still open.
+— and `common 0x11C2` kept its real `['common', 'pd']` attribution precisely
+because it had no `pd` row beside it. See
+[`pd-common-address-attribution.md`](pd-common-address-attribution.md).
+
+---
+
+*** CORRECTION 2026-09-25 (issue #470), leaving the section above as it was
+written.*** **The single `pd` proxy edge was a missing annotation, not a
+program-boundary question**, and the section above is wrong about which. The
+premise survives — `pd 0x11C2` and `common 0x11C2` really are one row in each of
+two firmware images and are not two endpoints of one call — but the *reason* the
+proxy branch was reached has nothing to do with that.
+
+The branch is reached on one condition: **the target has no row in the caller's
+own scope.** For a `pd` caller that means "no `pd` row at 0x11C2", and nothing
+more — a statement about `ghidra-functions.csv`, not about the images. The
+`pd/11C2.asm` listing was already exported (the function entry came from the
+call-target scan) with no row behind it. Adding the row — `pd 0x11C2`
+`dispatch_code_table_2byte_key`, the two-byte-key twin of `pd 0x119C`
+`dispatch_code_table` — joins the edge directly and the `pd=1` falls out of the
+196.
+
+**So `region_of()` never needed a program boundary, and adding one would have
+modelled a question the code does not ask.** The counting was never wrong; the
+`pd=1` was read as a banking result because it sat inside a `bank->common`
+parenthetical under a `bank->common` label. What was missing was a row and a
+reader who could tell a gap from a region.
+
+Four figures move, and nothing else does: 196 → **195** (bank0=126, bank1=69
+both unchanged), the distinct `common` targets 36 → **35**, the 81-edge
+non-bank-reached bucket → **80**, and the `callgraph_pd_0003` component 413 →
+**414**. `reached_only_by_bank` stays 26, `cross_region` stays 27, and the
+`callgraph_pd_0003` rows carrying the name stay 303 — the new row takes a
+`type=dispatch` seed into `dispatch-tables` instead, and a seed outranks a
+cluster. "A listing with no row" is **not found by this method**, never absent
+from the PD program; 37 `pd` listings still have no row, and each is ordinary
+annotation work. Full write-up, the byte comparison and the reproduction are in
+[`pd-common-address-spaces.md`](pd-common-address-spaces.md).
+
+**The two 32 KiB low areas are not interchangeable, which is what the premise
+above was reaching for and did not have.** `firmware[0x00000:0x08000]` and
+`firmware[0x20000:0x28000]` agree on 503 of 32768 bytes (1.54%), and all ten
+addresses now carrying rows in both scopes differ. That is a comparison of two
+images, not a behavioural claim, and it is why the two rows must not be merged.
 
 ---
 

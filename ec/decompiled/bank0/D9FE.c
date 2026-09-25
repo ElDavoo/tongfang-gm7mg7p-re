@@ -19,12 +19,10 @@
    0x03 and 0x06 and, with PDIN, picks which of seven declared ACPI Buffers to address: ACPB, ACSB,
    ACPC, ACSC, ACPD, ACSD and ACPE, Name objects at dsdt.dsl:50383-50414, 8 bytes for the first,
    second and seventh and 12 for the other four. *** CORRECTION (issue #267, fix round 1,
-   2026-09-25), stated in place: this row used to call those EC register blocks, to say they are not
-   declared in the disassembly, and to say SMRW has no caller in it. All three were false negatives.
-   The seven are declared (dsdt.dsl:50383, 50387, 50391, 50396, 50401, 50406, 50411) and SMRW copies
-   a caller-supplied buffer into one of them or returns a DWord CreateDWordField view of one, so the
-   select picks an ASL buffer, not a register bank; what the EC does with that copy is still not
-   established here. The caller is committed as well:
+   2026-09-25): the seven are declared (dsdt.dsl:50383, 50387, 50391, 50396, 50401, 50406, 50411)
+   and SMRW copies a caller-supplied buffer into one of them or returns a DWord CreateDWordField
+   view of one, so the select picks an ASL buffer, not a register bank; what the EC does with that
+   copy is still not established here. The caller is committed as well:
    windows/decompiled/v3.1.39.0/GCUService/MyControlCenter/WMIEC.cs:331-343 invokes SMRW by name on
    the WMI class AcpiTest_MULong, and windows/native/ACPIDriver.sys.analysis.md:328,400 records the
    driver's SMAPCTable entry for SMRW and the 0x80-byte buffer argument it marshals. ***

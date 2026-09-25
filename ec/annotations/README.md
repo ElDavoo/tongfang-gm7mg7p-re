@@ -279,6 +279,16 @@ caller on this tree. `common 0x11C2`, which has no `pd` row beside it, keeps its
 real `pd` reach. See
 [`docs/findings/pd-common-address-attribution.md`](../../docs/findings/pd-common-address-attribution.md).
 
+*** CORRECTION 2026-09-25 (issue #470), leaving the paragraph above as it was
+written.*** The counts in it are the ones measured when that bug was fixed and
+they were correct then. **The shared-address set is now ten, not nine**:
+`pd 0x11C2` `dispatch_code_table_2byte_key` was added, so the last sentence
+above no longer holds — `common 0x11C2` has a `pd` row beside it now, the
+`pd 0xCB2A` edge joins that row directly, and the 196 / 36 / 115/81 figures are
+**195 / 35 / 115/80**. The "no published figure moves" claim was about that
+one-line fix and is unaffected by this one. See
+[`docs/findings/pd-common-address-spaces.md`](../../docs/findings/pd-common-address-spaces.md).
+
 **No group is a behavioural claim.** A group says which routines are connected
 in the call graph, not what the EC does with them. No hardware is reachable
 from a GitHub-hosted runner, so no live test is claimed here.

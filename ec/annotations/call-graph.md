@@ -40,6 +40,30 @@ trees the numbers were taken on.
 | — candidate (callee, comment) pairs, before the frame gate | 351 |
 | — kept / rejected / undecided by it | 140 / 185 / 26 |
 
+*** CORRECTION 2026-09-25 (issue #470), leaving the table above as it was
+written.*** One row stopped being anonymous. `pd 0x11C2` was `FUN_CODE_11c2`
+with no `ghidra-functions.csv` row behind it, and is now
+`dispatch_code_table_2byte_key`; **`FUN_CODE_11c2` no longer appears anywhere in
+`ec/decompiled/`**. It is a target (`pd 0xCB2A` `lcall`s 0x11C2) and a `.c`-named
+callee, so all three of those cells lose one: "still `FUN_*`" **790 → 789**,
+"targets still anonymous" **470 → 469**, "distinct `FUN_*` callees the `.c` files
+name" **798 → 797**. Each before-value is the same tool run on `origin/main`, so
+both ends of every movement come from `call_graph.py` itself. (A `grep -c 'FUN_'`
+over `index.csv` instead reads 813 → 812 for the first cell: it also counts the
+`FUN_` tokens sitting in comment columns, which is why that was the wrong pair
+to quote.)
+
+**The table's own figures were already behind before this, and are not corrected
+here**: 807 and 815 were measured on an earlier tree, and the gap is another
+pass's, not this one's. The table's 470 is the exception — it is exactly what
+`call_graph.py` prints on `origin/main`, which is why the movement above starts
+from it. That per-cell movement is what
+[#470](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues/470) changed, and
+it is stated separately rather than folded into a new number that would hide
+which drift is which. The tranche-history `FUN_*` figures further down
+(`829 → 814`) are a record of what a past pass did and are untouched. See
+[`docs/findings/pd-common-address-spaces.md`](../../docs/findings/pd-common-address-spaces.md).
+
 **The 470 and the 815 are two framings of related things, and neither is "the"
 count.** The first is decoded out of the committed `.asm` listings; the second
 is read off the `.c` export. The `.c` figure is larger because the decompiler

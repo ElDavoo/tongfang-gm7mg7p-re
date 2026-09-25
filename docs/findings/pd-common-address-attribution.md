@@ -21,6 +21,21 @@ holding steady as evidence the bug was harmless.
 this file has the one remaining place where a `pd` edge and a `common` row were
 treated as the same thing.
 
+*** CORRECTION 2026-09-25 (issue #470), leaving this file's own measurements as
+they were written.*** **Three figures below have moved, and one conclusion is
+withdrawn.** "There is **no `pd` row at 0x11C2**" is no longer true:
+`pd 0x11C2` `dispatch_code_table_2byte_key` was added, so the shared-address
+count is **ten, not nine** (`0x11C2` is the tenth), the unannotated `pd`
+population is **37 listings, not 38**, and the "The `11C2` case that must keep
+its attribution" section below describes a case that no longer exists on the
+committed tree. **Everything this file measured about the bug is unchanged** —
+the six same-scope joins, the ordering fix, the 26/36/196 figures at the time,
+and the fixture — because the row that landed was at an address no bank caller
+reaches. The conclusion about 0x11C2 does not survive: the deferred
+program-boundary question is answered, and the answer is that the edge was a
+missing annotation rather than a question `region_of()` could not express. See
+[`pd-common-address-spaces.md`](pd-common-address-spaces.md).
+
 ---
 
 ## The bug, stated precisely
@@ -226,6 +241,15 @@ wants its own issue.
 ---
 
 ## The `11C2` case that must keep its attribution
+
+*** SUPERSEDED 2026-09-25 (issue #470).*** This section is kept because the
+fixture it describes is still the one that guards the overcorrection, and
+because the reasoning that produced it is what found the answer. But its
+premise is gone: **`pd 0x11C2` has a row now**, the edge joins it directly, and
+the `['common', 'pd']` attribution this section says `common 0x11C2` keeps is no
+longer a live case — `pd` is no longer among its caller scopes, so it drops out
+of the "reached from outside the banks" reasoning entirely. The fixture below it
+is what still runs.
 
 `pd 0xCB2A` (`store_0803_0805_then_jump_c808`) targets `common 0x11C2`
 (`load_dptr_bf57_tail_jump_1100`), and there is **no `pd` row at 0x11C2** — the

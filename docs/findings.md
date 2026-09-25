@@ -3107,6 +3107,14 @@ committed annotations, it prints its denominator, and its outcome is committed
 to `ec/ghidra/cross-decoder.csv` and ratcheted by `--check` on every commit.
 **§14i has the measured figures, the correction to the "40 straight-line
 instruction(s)" this comparison used to print, and what the sample found.**
+**The 1,920 above is §14f's figure, measured on the tree carrying issue #136's
+rows, and it went stale in the passes after that — not from anything issue #470
+did.** The committed report holds **1,983** rows on this tree: 1,978 before
+either issue, +4 for issue #267's four seeded `bank0` routines and +1 for #470's
+one `ghidra-functions.csv` row. The sample's backbone is every annotated row, so
+both additions land in it. `ec/ghidra/cross-decoder.csv` is the current record
+and is regenerated with `build_ec_decompile.py --report`, which prints the
+denominator on every run.
 
 ### 14e. What the split is, and what it costs while the deep tier is opt-in
 
@@ -5549,9 +5557,25 @@ passing for the wrong reason is the failure mode this repository keeps warning
 about. **The refusal was not weakened to accommodate the tranche**:
 `cross_bank_groups` is unchanged, and the committed file now has nothing for it
 to refuse for the right reason. **The 27 above is the smaller of the rule's two
-discard populations** — the proxy cut 196 bank→common edges as well, and
+discard populations** — the proxy cut 195 bank→common edges as well, and
 `--report` now prints both and splits `ungrouped` by reason; see
 `docs/findings/group-proxy-populations.md`.
+
+**The one `pd` proxy edge was a missing annotation, and the program-boundary
+question it was read as is answered (2026-09-25, issue #470).** The 196 above is
+195, because `pd 0xCB2A` → 0x11C2 no longer proxies: `pd 0x11C2` is now
+`dispatch_code_table_2byte_key` and the edge joins it directly. It was never a
+second kind of region — the proxy branch is reached when the target has no row
+in the **caller's own** scope, so for a `pd` caller that means "no `pd` row",
+and "no row" is *not found by this method*, never *absent from the PD program*.
+`region_of()` needed no new vocabulary because it was never consulted. The
+distinct `common` targets are 35 and the non-bank-reached bucket 80 edges; the
+`callgraph_pd_0003` component is 414 while its rows carrying the name stay 303,
+because the new row takes a `type=dispatch` seed and a seed outranks a cluster.
+The two 32 KiB low areas of the dump agree on 503 of 32768 bytes, which is what
+the two rows are not interchangeable looks like. Full write-up, the byte
+comparison and the reproduction:
+`docs/findings/pd-common-address-spaces.md`.
 
 **Nothing here is a behavioural claim, and no live test ran.** A group says
 which routines are connected in the call graph, not what the EC does with them.
@@ -5638,6 +5662,33 @@ and therefore a `pd` edge that genuinely targets it, keeps its
 for `pd`→`common` edges is still open — `region_of()` has no vocabulary for one
 — and the 7-edges-and-1-proxy ratio in
 `docs/findings/group-proxy-populations.md` is unchanged.
+
+*** CORRECTION 2026-09-25 (issue #470), leaving the paragraphs above as they
+were written.*** **The program-boundary question is answered and the answer is
+that no such rule is needed.** `pd 0x11C2` is now
+`dispatch_code_table_2byte_key`, so the one edge that carried this question is
+joined directly and there is no longer a `pd` caller on the proxy line. The
+proxy branch is reached when the target has no row in the **caller's own**
+scope, and for a `pd` caller that means "no `pd` row" — a fact about
+`ghidra-functions.csv`, not a second kind of region. `region_of()` was never
+consulted for that edge, which is why it had nothing to say. The write-up is
+`docs/findings/pd-common-address-spaces.md`.
+
+Three figures in the paragraphs above moved with it, and each is a statement
+about the tree rather than about the bug: **nine shared addresses → ten**
+(`0x11C2` is the tenth), **38 unannotated `pd` listings → 37**, and
+`common 0x11C2` no longer keeps a `['common','pd']` attribution, because it now
+has a `pd` row beside it and the `pd` edge joins that row instead. The
+`26 / 196 / 36 / 115-81 / 456` line is what that fix measured at the time and is
+untouched; the current figures are 26, 195, 35, 115-80 and 478, and
+`ec/annotations/call-graph.md` and `group-proxy-populations.md` carry the same
+corrections. (The last of those, `ungrouped`, is 474 at `e30dbd2d` and 478 from
+`d8525eae` on: +4 for issue #267's four `bank0` routines landing ungrouped, which
+reached `main` before this branch was cut rather than arriving with the merge,
+re-measured with `group_functions.py --report`.) **Everything this
+section measured about the ordering bug is
+unchanged** — the six same-scope joins, the `scope == "common"` guard, and the
+fixture that fails on the unfixed tool.
 
 ## 22. The whole-block bracket was filed under whatever block the run named (2026-09-25, issue #475)
 
