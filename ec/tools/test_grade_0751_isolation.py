@@ -1231,6 +1231,57 @@ class GradeTests(unittest.TestCase):
                 self.assertEqual(census(out).count('`--block` cannot select '
                                                    'it'), 2)
 
+    # An unreadable label refuses the run whichever block `--block` selected,
+    # and the closing section has to say so where the exit code is read from.
+    # The two fixtures below are one day byte for byte with a single mark's
+    # label differing, so the whole variable between exit 0 and exit 1 is that
+    # label -- and over a `--block` run of the refused one the block reads
+    # `intact`, no window is withheld, and the movement line below is the
+    # clean sentence. So the exit code had no reason printed next to it, which
+    # is the shape this test holds shut: the note, and only the note, is what
+    # joins the 1 to something the reader can act on.
+    def test_an_unreadable_mark_refuses_a_block_run_and_says_why(self):
+        rc, out, _ = run(*UNREAD_WINDOW, '--block', '0xA0')
+        self.assertEqual(rc, 1)
+        section = out.split('=== what this does and does not settle ===')[1]
+        flat = " ".join(section.split())
+        self.assertIn('A mark this cannot read is a mark no block can be '
+                      'attributed to', flat)
+        # The scoping clause and the exit code, so a note that stopped saying
+        # either of the two things this issue is about would fail here rather
+        # than pass on the fact that it printed at all.
+        self.assertIn('--block narrows what is graded, not what is known, and '
+                      'this refusal holds for the whole run whichever block '
+                      'was selected', flat)
+        self.assertIn('The exit code is 1 until they do', flat)
+        # The two facts that made this a mystery, pinned as still true: the
+        # block is intact and nothing was withheld, so the note is not a
+        # restatement of the banner above it.
+        self.assertIn('block 1/2: intact', out)
+        self.assertNotIn('were not graded', section)
+        self.assertNotIn('NOT GRADED', out)
+        # And the census line the note points at is the one that is there: the
+        # refused window is in `unreads`, so it never gets the `unplaced:`
+        # line, and a note pointing there would send the reader after a line
+        # this run does not print.
+        self.assertIn('UNREADABLE  unplaced', out)
+        self.assertEqual(census(out).count('`--block` cannot select it'), 1)
+
+        # The other direction, over the same bytes with that one label
+        # readable: a window in no block whose label parses is graded as
+        # `unplaced` and does not refuse the run, so the note is absent and
+        # the exit code is 0. This is what makes "the note is printed
+        # exactly when this refusal fires" a property of the tool rather than
+        # a fact about one fixture.
+        rc, out, _ = run(*UNPLACED_WINDOW, '--block', '0xA0')
+        self.assertEqual(rc, 0)
+        self.assertNotIn('A mark this cannot read', out)
+        self.assertIn('block 1/2: intact', out)
+        # Both strays get the census line here, because both of their labels
+        # parse, which is the other half of the pair: the line the note points
+        # at counts one in the first run and two in this one.
+        self.assertEqual(census(out).count('`--block` cannot select it'), 2)
+
     # A value that is no block's is an input error, not a quiet one. An empty
     # report would be the strongest negative result the procedure can
     # produce, and the last thing a mistyped --block may look like. The

@@ -328,6 +328,28 @@ INTACT_BLOCK_NOTE = (
     "about what the EC did: nothing here is a §7 verdict, and a void block "
     "is a hole in the record rather than a finding about a register.")
 
+# A label the parse could not place, and the one refusal `--block` does not
+# narrow. Scoping it to the selected block would be the wrong direction rather
+# than the smaller one: the run is holding a block the unreadable label may
+# have been a `write` for and cannot name, and that label may instead have been
+# a `restore` between a block's write and its restore, which would leave the
+# selected block void where a scoped refusal would print it `intact` and exit 0.
+# `unplaceable_marks` is where that is reasoned, and this is where the reader
+# is told so.
+UNREAD_MARK_NOTE = (
+    "A mark this cannot read is a mark no block can be attributed to, and "
+    "the labels are the only thing that says which block a window is a "
+    "window of: one the parse cannot place could have been a write -- in "
+    "which case the capture is holding a block this run cannot name -- or a "
+    "restore typed between a block's write and its restore, which would "
+    "close that block early and leave it void rather than intact. So a "
+    "capture carrying one cannot be read block by block: --block narrows "
+    "what is graded, not what is known, and this refusal holds for the "
+    "whole run whichever block was selected. The census above names every "
+    "mark the parse could not read, per capture; the fix is the label, which "
+    "has to be one of the three forms §6 fixes. The exit code is 1 until "
+    "they do.")
+
 # The bytes §4.4/§4.5 name but this script does not grade. They get their own
 # section because they are what §7's call is made on, and a reader should not
 # have to find them in the generic "other addresses" list to notice them --
@@ -1862,6 +1884,14 @@ def main(argv=None):
               "or no block could be attributed to them at all. What they "
               "would have shown is not reported here and is not to be quoted "
               "from this run.")
+    if unreads:
+        # The line the withheld banner above would have printed, and printed
+        # on its own when the run's unreadable windows are not in `shown` at
+        # all -- a window in no block is not in the selected block's windows,
+        # so the banner counts none of them while the exit code still turns on
+        # them. Next to the banner rather than inside it because the two are
+        # not one count: `withheld` is this block's and `unreads` is the run's.
+        print(f"  {UNREAD_MARK_NOTE}")
     if moved_groups:
         print(f"  At least one of the §4.1-§4.3 bytes moved after a mark: "
               f"{', '.join(moved_groups)}.")
@@ -2019,7 +2049,15 @@ def main(argv=None):
     # facts about the input rather than five verdicts about the machine: a
     # block short its restore, a mark set that cannot support its windows, a
     # label the block walk could not place, a --block that named no block, and
-    # a capture named twice.
+    # a capture named twice. The last two are not in this expression at all --
+    # both are refused above, before the closing section prints -- so three
+    # reach it, and they are not scoped alike. `void` and `withheld` are this
+    # run's selected block: `report_blocks` grades `selected` alone, and
+    # `withheld` is counted over `shown`, which is that block's own windows,
+    # so a `--block` run says nothing about the other blocks and passes if
+    # this one held. `unreads` is the whole capture's however the run was
+    # scoped, per `unplaceable_marks`, and `UNREAD_MARK_NOTE` above is the
+    # line that says so where the exit code is read from.
     return 1 if (void or unreads or withheld) else 0
 
 
