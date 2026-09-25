@@ -170,6 +170,36 @@ call-target scan's hypothesis.
 `bank-call-audit.md` §1 is the standing caveat on that census, and it is an
 upper bound, not a partition.
 
+> **(2026-09-25, issue #555) The hypothesis is now tested, and the entry is
+> `0x8001`.** `../tools/counter_sweep_entry.py` takes the 180 `bank1` census
+> rows that target into `0x8001`-`0x8189`, scores each caller with
+> `disasm8051.converges_from()` and cross-checks it against the committed
+> listings: **exactly one** of the 180 is at an instruction start, a three-byte
+> call at `bank1:0xABB8` whose target is `0x8001`, at 24 of 24, and **177 of
+> the 179 others are operand bytes** of instructions the listings already
+> carry — 135 of them a `cjne`'s `rel8` displacement, which the scan's
+> `0x02`/`0x12` byte test cannot tell from an `ljmp` opcode — while the other
+> two, `bank1:0x81E7` and `bank1:0xA6DC`, sit in a committed gap no listing
+> covers, which is "not found by this method" rather than an identification.
+> `0x8001` is itself a frame boundary at 24 of 24 and the byte before it is the
+> `ret` ending the preceding routine. One caller was *confirmed by this
+> method*; that is not "the only caller in the firmware", and the 179 others
+> are a gap in a byte scan with a named blind spot rather than 179 absent
+> calls.
+>
+> **Two of this section's own claims were wrong, and both corrections are in
+> place in the 42 rows rather than edited away here.** The three seeds'
+> hypotheses are **refuted, not confirmed** — no site naming `0x8008`, `0x8010`
+> or `0x8017` scores above 1 of 24. And 28 rows said the body runs `0x8018` to
+> the `ret` at `0x8189`; it runs `0x8001` to that same `ret`, 393 bytes rather
+> than 370, the 23 extra being the `0x06C6` and `0x06CD` countdowns and the
+> `0x06D1` load-and-decrement that precede `0x8018`. **No figure in this section
+> or in §2a moved**: the 42 exports are still 42, and §2a's arithmetic is a
+> census question, not a boundary one. The full reading, the per-target table
+> and why the slice rows could not be deleted on a runner are
+> [`../../docs/findings/counter-sweep-entry-set.md`](../../docs/findings/counter-sweep-entry-set.md);
+> §6 and §8 item 7 point at the same page.
+
 ### 2a. What that does to the census's headline numbers
 
 `xdata_register_map.py` counts references by searching the **decompiled C** for
@@ -211,6 +241,13 @@ to — 93%**.
 >
 > What the tool does **not** do is subtract anything, so this section's
 > arithmetic is unchanged and the census still publishes 168, 168, 170 and 148.
+
+**Still unchanged by issue #555, which settled the boundaries rather than
+moving any count.** The 42 exports this section is a consequence of are still
+42, so every figure above is the same figure; what #555 established is *where
+the one routine starts* (`0x8001`), which is a question about the export's
+shape and not about the census. Removing the double count is §8 item 5's job
+and stays there, and §2's correction note carries the pointer.
 
 The per-address result is starker than the total:
 
@@ -672,9 +709,25 @@ to a cluster id, and it is why §3 reads the span.
   every zero in the sweep, are gaps in a search with a named blind spot — never
   `absent`. No entry in this change is `absent`, and `registers.yaml`'s own
   header keeps the `0x07B9` retraction for the method's limits.
-- **The function boundaries are a hypothesis**, and §2a is a consequence of
+- ~~**The function boundaries are a hypothesis**, and §2a is a consequence of
   that rather than a separate defect: 42 exports is how the committed project
-  has this routine cut, not how the firmware is structured.
+  has this routine cut, not how the firmware is structured.~~ **The first
+  clause is settled and it is settled against the annotations, in part: the
+  entry is `0x8001` and the five boundaries this page's own rows argued about
+  are all slices of it.** `../tools/counter_sweep_entry.py` measures it — one
+  site at an instruction start out of 180, `bank1:0xABB8` → `0x8001` at 24 of
+  24, 177 of the other 179 operand bytes of instructions the listings already
+  carry (135 of them a `cjne` displacement) and two — `bank1:0x81E7` and
+  `bank1:0xA6DC` — in a committed gap no listing covers. The three seeds'
+  hypotheses are refuted rather than confirmed, and the 28 rows saying the body
+  starts at `0x8018` were wrong: it starts 23 bytes earlier. The withdrawn
+  wording stands in each row with the correction beside it, per
+  `docs/findings.md` §4a.
+  **The second clause still holds, and it is now the whole of what is left:**
+  42 exports is how the committed project has this routine cut, and §2a is a
+  consequence of *that*, not of any doubt about the entry. Fixing it is
+  §8 item 7, and the measurement is
+  [`../../docs/findings/counter-sweep-entry-set.md`](../../docs/findings/counter-sweep-entry-set.md).
 
 ### 6a. The `==` direction-classifier defect: measured, and fixed since #178
 
@@ -1055,17 +1108,43 @@ touching it, not the EC's sweep.
    carries 3/3/0 and `check_register_counts.py` holds it there. If that is
    systematic, the `read`/`refs` columns understate any address whose readers
    sit in unexported gaps — a census question distinct from §2a, and open.
-7. **The 42 wrong function boundaries**, if anyone wants them fixed rather than
-   documented. `build_ec_decompile.py --mode rebuild-project` writes the 7 MB
-   database, and two branches that both rebuild one cannot merge. Since #256
-   there is also a measurement of what fixing them would imply
+7. ~~**The 42 wrong function boundaries**, if anyone wants them fixed rather
+   than documented. `build_ec_decompile.py --mode rebuild-project` writes the
+   7 MB database, and two branches that both rebuild one cannot merge. Since
+   #256 there is also a measurement of what fixing them would imply
    (`xdata_register_map.md` §4.5, `--collapse-co-readings`), and a group table
    that says which groups a different export would produce — the relation is
-   over *this* export's files, so it is a property of the boundaries too. Since
-   #554 there is a second measurement of the same fix, from the ownership side
-   rather than the co-reading side: what a de-duplicated census costs the
-   citations keyed to this tree (`xdata_register-map.md` §4.6,
-   `xdata-export-ownership.md`).
+   over *this* export's files, so it is a property of the boundaries too.
+   Since #554 there is a second measurement of the same fix, from the
+   ownership side rather than the co-reading side: what a de-duplicated
+   census costs the citations keyed to this tree (`xdata-register-map.md`
+   §4.6, `xdata-export-ownership.md`).~~
+   **Half closed by #555, and the half that is left is the rebuild, not the
+   reading.** The boundaries are now *established* rather than hypothesised:
+   the run is one routine and it enters at `0x8001`, measured at one site at
+   an instruction start out of 180 (`bank1:0xABB8` `lcall 0x8001`, 24 of 24),
+   with 177 of the 179 others identified as operand bytes of instructions the
+   listings already carry — 135 of them a `cjne`'s `rel8` displacement — and
+   two in a committed gap no listing covers. Five of the six boundaries this
+   page's rows argued about are refuted in the same pass (`0x8001` is confirmed
+   as the entry instead), including the 28 rows that put the body's start 23
+   bytes late at `0x8018`. **What could not be done is the deletion and the
+   re-export, and
+   the reason is mechanical rather than a matter of effort:** `seed_rows()`
+   takes the *union* of the annotation rows and the census, and every one of
+   the 42 annotation addresses is also a census seed, so deleting them removes
+   **no** seeds at all; `--mode export-only` copies the committed project and
+   cannot un-carve the 42 functions already in the 7 MB `.rep` (no script
+   under `ghidra/scripts/` calls `removeFunction`, `clearListing` or
+   `deleteFunction`); and the rebuild that would change the listing set turns
+   `bank1/8001.asm` from 3 bytes to 393, which `verify_reassembly.py --check`
+   fails in the cheap gate until the pinned `sdas8051` regenerates a
+   single-writer report no runner can touch. So this item stays open with the
+   boundaries *known*: what is left is a pinned-toolchain run, and the recipe
+   and the prediction to check it against are
+   [`../../docs/findings/counter-sweep-entry-set.md`](../../docs/findings/counter-sweep-entry-set.md)
+   §7. The withdrawn wording above is left standing per `docs/findings.md`
+   §4a.
 8. **`0x0440`'s value.** 43 read sites, no direct `MOV DPTR` writer, and this
    block reads it three times. What 43 places in the firmware consult it for is
    still open (`xdata-0400-045f.md` §11 carries the same question from the
