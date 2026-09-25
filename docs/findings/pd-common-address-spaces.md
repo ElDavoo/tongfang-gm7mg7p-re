@@ -99,12 +99,73 @@ conflation this change removes.**
 
 ---
 
+## The caller count is a listing figure, not a program one
+
+The `pd 0x11C2` row names one caller — `0xCB2A`'s `lcall` at `0xCB4A` — and the
+section on the CB2A comment below reasons from that call site. The row said "the
+only caller **in this program**", and a `grep` of the committed
+`ec/decompiled/pd/*.asm` listings cannot carry a whole-program claim. **The row
+now says "the only caller in the committed listings",** which is what the method
+actually shows, and the wider scan behind that narrowing is below.
+
+**The listings are a quarter of the program.** 535 `pd` rows cover 16,381 of
+the image's 65,536 bytes, so "not in a listing" is *not found by this method* —
+CLAUDE.md's standing rule — and never "absent":
+
+```
+$ python3 - <<'PY'
+import csv
+d = open('ec/firmware/GMxMGxx_11.800', 'rb').read()
+pd = d[0x20000:0x30000]
+rows = [r for r in csv.DictReader(open('ec/decompiled/listing-index.csv'))
+        if r['program'] == 'pd']
+cov = sum(int(r['size'], 0) for r in rows)
+print("pd listings: %d, covering %d of %d bytes (%.2f%%)" % (
+    len(rows), cov, len(pd), 100 * cov / len(pd)))
+hits = [i for i in range(len(pd) - 2) if pd[i:i+3] == b"\x12\x11\xc2"]
+print("lcall 0x11C2 triples in the image: %d" % len(hits))
+print(" ".join("%04X" % h for h in hits))
+print("inside a pd listing: %s" % " ".join(
+    "%04X" % h for h in hits
+    if any(int(r['addr'], 16) <= h < int(r['addr'], 16) + int(r['size'], 0)
+           for r in rows)))
+PY
+pd listings: 535, covering 16381 of 65536 bytes (25.00%)
+lcall 0x11C2 triples in the image: 16
+13F6 153E 16A7 1AB6 1C88 3A46 4587 483A 4FFA 617D 776C 7948 8288 83CF 92EF CB4A
+inside a pd listing: CB4A
+```
+
+**A byte scan of the whole image finds sixteen candidates, not one.** The
+`lcall 0x11C2` encoding is `12 11 c2`, and it occurs sixteen times in the PD
+image at file `0x20000`. Cross-checked per-program against
+`listing-index.csv`, only `0xCB4A` falls inside a committed `pd` listing
+(`pd/CB2A.asm`); the other **fifteen** fall outside every one — which follows
+from the 25% coverage rather than sitting in tension with it.
+
+**What a raw triple is, and is not.** `12 11 c2` is a byte pattern, not a
+decoded instruction. At fifteen of the sixteen sites nothing here has
+disassembled the surrounding code, so each may be a real call, a
+mid-instruction coincidence, or table data. **This method can neither call them
+callers nor data**, so the sixteen are *candidate* sites and the count of
+*confirmed* callers stays one. Nothing above changes the `0xCB4D` reading: that
+conclusion was always about the `0xCB4A` call site alone, which is exactly what
+the listings do show.
+
+**What would settle it.** Annotating the `pd` listings covering the other fifteen
+raises coverage and turns whichever are real calls into confirmed ones; each
+remaining site is ordinary annotation work. A control-flow-aware scan that
+disassembles instead of pattern-matching would separate calls from data in one
+pass, and is the tool this open question actually wants.
+
+---
+
 ## The byte evidence
 
 Offsets from `ec/ghidra/manifest.csv` and `ec/tools/make_bank_image.py`:
-`common` is `firmware[0x00000:0x08000]`, the ITE8850-PD image is
-`firmware[0x20000:0x28000]`. The two 32 KiB low areas are **not
-interchangeable**:
+`common` is `firmware[0x00000:0x08000]`; the ITE8850-PD image is
+`firmware[0x20000:0x30000]`, 64 KiB, of which this comparison takes the low
+32 KiB. The two 32 KiB low areas are **not interchangeable**:
 
 ```
 $ python3 - <<'PY'

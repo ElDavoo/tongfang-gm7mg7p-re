@@ -5,15 +5,16 @@
 
 
 /* Consumes the return address as a CODE-table pointer: the two entry pops take whatever the caller
-   pushed, and the only caller in this program is 0xCB2A's lcall at 0xCB4A, so DPTR becomes 0xCB4D.
-   Scans 4-byte records whose first two bytes are the target and whose last two are the key, byte +2
-   compared with B and byte +3 with the incoming A (copied to R0); a match loads DPTR from the first
-   pair, because the jz into 0x11D2 arrives with A=0 and DPTR still at the record base. A record
-   whose first pair is 00 00 is the default and takes its target from the following two bytes. A is
-   cleared before the jmp @A+DPTR at 0x11DC, which is the only exit: there is no ret, so nothing
-   returns to the caller. The two-byte key is what tells it apart from 0x119C dispatch_code_table
-   0x26 bytes earlier, which is the same routine testing byte +2 against A alone. Which record a
-   given call site's table selects is read from the bytes and is not decoded here.
+   pushed, and the only caller in the committed listings is 0xCB2A's lcall at 0xCB4A, which leaves
+   DPTR at 0xCB4D. Scans 4-byte records whose first two bytes are the target and whose last two are
+   the key, byte +2 compared with B and byte +3 with the incoming A (copied to R0); a match loads
+   DPTR from the first pair, because the jz into 0x11D2 arrives with A=0 and DPTR still at the
+   record base. A record whose first pair is 00 00 is the default and takes its target from the
+   following two bytes. A is cleared before the jmp @A+DPTR at 0x11DC, which is the only exit: there
+   is no ret, so nothing returns to the caller. The two-byte key is what tells it apart from 0x119C
+   dispatch_code_table 0x26 bytes earlier, which is the same routine testing byte +2 against A
+   alone. Which record a given call site's table selects is read from the bytes and is not decoded
+   here.
    type: dispatch
    evidence: ec/decompiled/pd/11C2.asm; ec/decompiled/pd/11C2.c
    basis: hand-decoded
