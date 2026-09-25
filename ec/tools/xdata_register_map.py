@@ -1362,11 +1362,11 @@ HAND_CHECKED = {
     # prose registers.yaml already carried.
     "0x0440": {"read": 181, "write": 0, "read+write": 0, "passed-to-call": 0,
                "address-taken": 0, "writers": 0},
-    # 17 references: 14 `==` inside bank0/D091.c's dispatch test (lines 43, 47,
-    # 69, 70, 73, 74 and 75 -- the later ones are multi-line boolean chains,
+    # 17 references: 14 `==` inside bank0/D091.c's dispatch test (lines 45, 49,
+    # 71, 72, 75, 76 and 77 -- the later ones are multi-line boolean chains,
     # three occurrences to a line), the dispatch argument itself at
-    # bank0/D091.c:81, a `= 0xff` at bank0/D281.c:18 and a `= 0` at
-    # bank0/D289.c:17. Two stores in two functions, and the dispatch argument
+    # bank0/D091.c:84, a `= 0xff` at bank0/D281.c:19 and a `= 0` at
+    # bank0/D289.c:18. Two stores in two functions, and the dispatch argument
     # is `passed-to-call` rather than a read. The worst-looking row the phantom
     # writers produced: it read as 0 read / 13 write / 3 read+write, a pure
     # write-side dispatch byte.
@@ -1383,6 +1383,19 @@ HAND_CHECKED = {
     # number in this entry is still right, and a line number is not a number the
     # census sums. check_site_census.py re-checks them per site against
     # classify()'s own output and fails if they drift again.
+    #
+    # CORRECTION (2026-09-25, issue #752): the line numbers above were 43, 47, 69,
+    # 70, 73, 74 and 75, with the dispatch argument at :81, `= 0xff` at
+    # bank0/D281.c:18 and `= 0` at bank0/D289.c:17 -- the seven `==` lines 1 lower
+    # than the committed file and the dispatch argument 2. #281 fixed this comment
+    # on 2026-09-24 and #180's CORRECTION header rewrite moved them again the same
+    # day, so a comment no tool reads was correct for part of one day. The shift
+    # is not uniform and a blanket `+1` does not carry it, for the reason #281
+    # already gave: the rewrite reflowed a closing paren out of the second
+    # boolean chain onto its own line. Every bucket total in this entry is still
+    # right and the counts did not move; re-derived from
+    # check_site_census.py's own census_occurrences() rather than shifted by
+    # hand. Quoted verbatim, so these wrong ones stay visible too.
     "0x0860": {"read": 14, "write": 2, "read+write": 0, "passed-to-call": 1,
                "address-taken": 0, "writers": 2},
     # 12 references and zero `==` adjacent to the address. Four are genuine

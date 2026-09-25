@@ -256,8 +256,8 @@ is the bucketing of those 17, not a rival count of the 7.
 > wrongly.
 
 **What the census says, and what pins it.** `0x0860` is **14 read, 2 write,
-0 read+write, 1 passed-to-call**. The two stores are `bank0/D281.c:18`
-(`XDATA_0860 = 0xff`) and `bank0/D289.c:17` (`XDATA_0860 = 0`), and the one
+0 read+write, 1 passed-to-call**. The two stores are `bank0/D281.c:19`
+(`XDATA_0860 = 0xff`) and `bank0/D289.c:18` (`XDATA_0860 = 0`), and the one
 `passed-to-call` is the `switch_case_dispatch(XDATA_0860)` call in
 `dispatch_on_0860` — an address handed to a call is that bucket and not a
 read, which is why the census's 14 reads are all comparisons. The row is not
@@ -310,12 +310,12 @@ census reads `D091.c`, and neither number is inferred.
 
 | site | sweep `access` | `census` | C occurrence(s) | why the two are not the same shape |
 |---|---|---|---|---|
-| `0x0D091` | `read x1` | `read x2` | `D091.c:43` (`== 0x00`), `:47` (`== -1`) | `0xD094 movx` (`jnz`) and `0xD09A movx` (`cpl`) — two early-outs behind one DPTR load |
-| `0x0D0EF` | `read x1` | `read x6` | `D091.c:69,70` | the `0x48` chain: six `movx` re-reads at `0xD0F2`–`0xD10B` testing `0x06 0x16 0x36 0x07 0x17 0x37`, no DPTR reload between them |
-| `0x0D117` | `read x1` | `read x6` | `D091.c:73,74,75` | the `0x4C` chain: six re-reads at `0xD11A`–`0xD133` testing `0x08 0x18 0x38 0x09 0x19 0x39` |
-| `0x0D144` | `read x1` | `passed-to-call x1` | `D091.c:81` | `movx a,@dptr ; lcall 0x7151` — **the same instruction, two vocabularies** |
-| `0x0D281` | `write x1` | `write x1` | `D281.c:18` | `XDATA_0860 = 0xff` |
-| `0x0D28A` | `write x1` | `write x1` | `D289.c:17` | `XDATA_0860 = 0` — `clear_0860`'s decompile entry is `0xD289`, one byte before the site, so the file and the offset do not match |
+| `0x0D091` | `read x1` | `read x2` | `D091.c:45` (`== 0x00`), `:49` (`== -1`) | `0xD094 movx` (`jnz`) and `0xD09A movx` (`cpl`) — two early-outs behind one DPTR load |
+| `0x0D0EF` | `read x1` | `read x6` | `D091.c:71,72` | the `0x48` chain: six `movx` re-reads at `0xD0F2`–`0xD10B` testing `0x06 0x16 0x36 0x07 0x17 0x37`, no DPTR reload between them |
+| `0x0D117` | `read x1` | `read x6` | `D091.c:75,76,77` | the `0x4C` chain: six re-reads at `0xD11A`–`0xD133` testing `0x08 0x18 0x38 0x09 0x19 0x39` |
+| `0x0D144` | `read x1` | `passed-to-call x1` | `D091.c:84` | `movx a,@dptr ; lcall 0x7151` — **the same instruction, two vocabularies** |
+| `0x0D281` | `write x1` | `write x1` | `D281.c:19` | `XDATA_0860 = 0xff` |
+| `0x0D28A` | `write x1` | `write x1` | `D289.c:18` | `XDATA_0860 = 0` — `clear_0860`'s decompile entry is `0xD289`, one byte before the site, so the file and the offset do not match |
 | `0x0D31C` | `no movx found in the decoded window` | `no census occurrence` | — | `mask_dp_byte_7c_reset_dptr_0860` reloads DPTR and returns; `D319.c`'s body is `return *param_1 & 0x7c;` and never names the address |
 | `0x25CE4`, `0x25CFC` | `read x1, walks 2 consecutive…`, `read x1` | `other program` | — | the PD image, which has its own XDATA map; `xdata-registers.csv:662`'s `0x0860` row is `main-ec` |
 

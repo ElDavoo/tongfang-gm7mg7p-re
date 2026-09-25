@@ -1,8 +1,8 @@
 region,file_offset,census_state,census_bucket,census_count,census_refs
-bank0,0x0D091,mapped,read,2,"bank0/D091.c:44,48"
-bank0,0x0D0EF,mapped,read,6,"bank0/D091.c:70,71"
-bank0,0x0D117,mapped,read,6,"bank0/D091.c:74,75,76"
-bank0,0x0D144,mapped,passed-to-call,1,bank0/D091.c:82
+bank0,0x0D091,mapped,read,2,"bank0/D091.c:45,49"
+bank0,0x0D0EF,mapped,read,6,"bank0/D091.c:71,72"
+bank0,0x0D117,mapped,read,6,"bank0/D091.c:75,76,77"
+bank0,0x0D144,mapped,passed-to-call,1,bank0/D091.c:84
 bank0,0x0D281,mapped,write,1,bank0/D281.c:19
 bank0,0x0D28A,mapped,write,1,bank0/D289.c:18
 bank0,0x0D31C,no-occurrence,none,0,none

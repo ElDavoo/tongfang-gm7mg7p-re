@@ -418,7 +418,7 @@ class CsvReading(unittest.TestCase):
         self.assertEqual(cells['0x25CE4'], 'other program')
 
     def test_a_committed_row_citing_several_lines_is_one_row(self):
-        # The commas in `bank0/D091.c:44,48` are the CSV's own quoting: read
+        # The commas in `bank0/D091.c:45,49` are the CSV's own quoting: read
         # unquoted, the field shifts and the citation loses its second line --
         # which is how this file was written wrong once already.
         #

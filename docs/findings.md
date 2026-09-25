@@ -7253,3 +7253,30 @@ human lands it no commit runs the check**. This is tooling hygiene: two
 committed annotation CSVs, a markdown file and a directory of fixtures, no
 capture opened, no EC, no hardware, and no claim that any fixture constructs
 what its row says.
+
+## 48. The `0x0860` census citations move; the counts do not (2026-09-25, issue #752)
+
+The write-up is
+[`xdata-0860-census-sites-relined.md`](findings/xdata-0860-census-sites-relined.md);
+this is the summary. §46's runner is red on two suites, and the first of them,
+`ec/tools/test_check_site_census.py`, is now green: the four `census_refs` cells
+in `ec/annotations/xdata-0860-census-sites.csv` are re-derived against the
+committed `ec/decompiled/bank0/D091.c`, which #180 hand-corrected on 2026-09-24
+and whose header rewrite moved the body out from under them. **The counts do not
+change — only the line numbers do** (`0x0D091` → `45,49`; `0x0D0EF` → `71,72`;
+`0x0D117` → `75,76,77`; `0x0D144` → `84`), and each row is justified by the
+occurrences on the lines it now cites rather than by being the old number plus
+one. The judgement is forced rather than chosen, and the write-up gives the two
+constraints that force it: all 17 occurrences and every bucket total are
+unmoved, and the per-bucket-totals clause **never fired**, before the change or
+after. **The shift is not uniform** — 1, 1, 1 and **2** — so a blanket `+1`
+would have left `0x0D144` red; it is written down for that reason. Six stale
+cells in `xdata-086x-dispatch.md`'s site-by-site table, and the same numbers
+repeated in `xdata-register-map.md` and in `HAND_CHECKED["0x0860"]`'s comment,
+move with them — two of the `D281`/`D289` cells had been stale *before* the
+`#180` rewrite, which no check covers, and the write-up says so rather than
+letting a green suite imply the prose was verified. `XDATA_0860` stays
+`present-untested`: a `write x2` census count is evidence the decompile holds
+two stores, not that the EC acts on the value. Still tooling hygiene — four CSV
+cells, prose line numbers, and a dated addendum to §46's sibling file, no
+capture opened, no EC, no hardware.
