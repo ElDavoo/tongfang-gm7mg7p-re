@@ -1,0 +1,92 @@
+# ec/tools/check_testdata_row_claims.py, wired into the cheap gate. Prepared
+# here rather than landed, for the reason every other file in docs/ci/ is:
+# `.github/scripts/agent-gates.sh` is copied from the agent-pipeline template
+# and the pipeline's push token has no `workflow` scope, so a branch editing it
+# fails at the end of the PR rather than at the start of it.
+# `docs/agent-pipeline.md` carries this across a template re-copy as its item
+# 10, beside the item 9 that says the same for the index checker.
+#
+# To land it:
+#
+#   git apply docs/ci/agent-gates-testdata-row-claims.patch
+#
+# and that is the whole change.
+#
+# It is a patch of its own, and it still composes with
+# `agent-gates-capture-claims.patch`, which issue #745 had to fold two
+# patches into one. The two inserts into the seven-line `gate` list are the
+# part that cannot be re-anchored, so this one goes after `gate 'doc links'`
+# and lands last, where #745's patch's context ends at `gate 'shellcheck'`
+# and the two windows no longer touch. The function goes above
+# `check_register_counts()` rather than beside it, which is the other half:
+# #745's patch anchors there, and two inserts at one anchor are the case that
+# started this. `tools/test_agent_gates_patches.py` applies the set in every
+# ordered pair and asserts the result still parses, so no landing order has to
+# be written down anywhere.
+#
+# What it buys, and what it does not. The index over `ec/tools/testdata/` is
+# written by hand, and `check_testdata_index.py` already holds it to the tree
+# in four directions -- but it reads the first column, the `Feeds` column and
+# the nested tables, and not the third. The third is the description: the
+# column a reader opens the index to read, and the one that names the
+# addresses each fixture is supposed to contain. Both of the index's
+# hand-repairs (#502, #720) were to that column, and every check on the index
+# would have been green through them. **Not claimed: that this would have
+# caught either** -- what those two repairs changed is in the issues, not in
+# the tree, and the PR says so in its own words.
+#
+# The rule is an address a row's third column attributes to a fixture having
+# to occur in a file that row names, searched across the whole set the row's
+# first column resolves to rather than per file. Six shapes are counted,
+# printed with the reason, and do not fail the run -- a checker that reported
+# its own blind spot as a broken index would be pushed to grow a rule for
+# whatever it could not read, and would end up inventing the thing it is
+# checking. The list is closed and each entry has a case.
+#
+# **Until a human lands this, no commit runs it.** The suite
+# (`ec/tools/test_check_testdata_row_claims.py`) needs no wiring to be run at
+# all: `tools/run-tests.sh` discovers every `test_*.py` in the repository, so
+# it is already collected by the runner.
+#
+# The comment the function adds at the call site says the same thing where the
+# next reader of the gate will see it, rather than only here.
+
+diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
+--- a/.github/scripts/agent-gates.sh
++++ b/.github/scripts/agent-gates.sh
+@@ -76,6 +76,27 @@
+   echo "$out" | grep -q 'refs=15' && echo "$out" | grep -q 'referenced'
+ }
+ 
++# Not a style check either: the index over ec/tools/testdata/ is hand-written,
++# and the column a reader checks it by -- the third, the description -- names
++# the addresses each fixture is supposed to carry. Nothing read that column, so
++# a row could say a fixture differs at 0x0784 and the fixture need not, and the
++# index has needed a hand-repair twice (#502, #720), both times in a
++# description of a row whose file was already named correctly. This holds those
++# sentences to the files the row names, across the whole set its first column
++# resolves to rather than per file: 0x075B is in one of
++# 0751-isolation-run-staged/'s three CSVs and in neither of the other two,
++# while the row names the directory. Cheap tier because of what it reads -- the
++# committed index, the committed tree under ec/tools/testdata/ and two
++# annotation CSVs, no firmware image, no Ghidra, no network, no assembler. It
++# prints what it checked and how many literals it could not place, because a
++# run that checked nothing and a run that found nothing look the same from the
++# exit code alone, and because "unresolved" there means not checked by this
++# method and never absent. Not claimed: that it would have caught #502 or
++# #720 -- what those repairs changed is in the issues, not in the tree.
++check_testdata_row_claims() {
++  python3 ec/tools/check_testdata_row_claims.py --check
++}
++
+ # The per-image reference counts in registers.yaml are the evidence several
+ # statuses rest on, and a file-wide total hiding PD-image references is the
+ # mistake docs/findings.md §3a had to correct. This recomputes every count
+@@ -275,6 +296,7 @@
+ gate 'python syntax'   check_python_syntax
+ gate 'shellcheck'      check_shellcheck
+ gate 'doc links'       check_doc_links
++gate 'testdata row claims'  check_testdata_row_claims
+ 
+ # What this tier does not run, and the one command that runs it. Printed
+ # unconditionally, including on a failing run, because the moment to notice

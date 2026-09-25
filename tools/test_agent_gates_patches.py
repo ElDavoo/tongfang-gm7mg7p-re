@@ -59,6 +59,7 @@ PATCHES = [
     'docs/ci/agent-gates-0751-self-test.patch',
     'docs/ci/agent-gates-capture-claims.patch',
     'docs/ci/agent-gates-gap-text-check.patch',
+    'docs/ci/agent-gates-testdata-row-claims.patch',
 ]
 
 # `agent-gates-deep-schedule.yml` is deliberately not in this set and is not

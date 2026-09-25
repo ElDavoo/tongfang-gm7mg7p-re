@@ -316,6 +316,29 @@ only covers what's specific to *this* copy.
      all, for item 5's reason: `tools/run-tests.sh` discovers every
      `test_*.py` in the repository, so it is already collected by the runner
      below.
+  10. **`check_testdata_row_claims.py --check` is not in the cheap tier
+     either, and should be** (2026-09-25, issue #747). Item 9's check reads
+     the index's first column, its `Feeds` column and the nested tables; the
+     **third** column, the description, is the one a reader opens the index
+     for and the one that names the addresses each fixture is supposed to
+     contain — and both of the index's hand-repairs (#502, #720) were to that
+     column, so every check on the index was green through them. **Not
+     claimed: that this would have caught either.** Adding it is a
+     `check_testdata_row_claims()` function and a `gate` line, and the whole of
+     it is prepared in `docs/ci/agent-gates-testdata-row-claims.patch` — a
+     patch of its own, but one that still composes with item 9's: its `gate`
+     line goes after `gate 'doc links'` rather than at the same anchor item
+     9's uses, for the reason #745 gives, and
+     `tools/test_agent_gates_patches.py` applies the set in every ordered pair
+     so no landing order has to be written down anywhere. Cheap tier for item
+     4's reason: the committed index, the committed tree under
+     `ec/tools/testdata/` and two annotation CSVs — no firmware image, no
+     Ghidra, no network, no assembler; 0.05 s here against item 9's 0.03 s and
+     a cheap tier the paragraph above records at 5.9 s. It is not here for
+     item 4's reason, template-copied file and no `workflow` scope on the
+     token, and **until a human lands it, no commit runs it**. Its own suite
+     (`ec/tools/test_check_testdata_row_claims.py`) needs no wiring to be run
+     at all, for item 5's reason.
 - **`tools/run-tests.sh`, and the gate line that would call it**
   (2026-09-23, issue #162) — the four offline `unittest` suites
   (`ec/tools/test_grade_0751_isolation.py`, `windows/tools/test_ec_watch.py`,
