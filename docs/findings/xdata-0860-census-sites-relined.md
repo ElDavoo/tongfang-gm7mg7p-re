@@ -18,11 +18,14 @@ not an observation of a byte. `XDATA_0860` stays `present-untested`, and the
 
 ## The failure, decomposed
 
-`check_site_census.py` reads the census through `xdata_register_map.py`'s own
-`census_occurrences()`, never a re-grep, and `strip_comments()` keeps every
-newline — so the line numbers it checks are the reader's own line numbers in the
-committed `.c`. The 14 disagreements decompose as three clauses firing on one
-cause, and the decomposition reproduces the issue's figures exactly:
+`check_site_census.py` reads the census through its own
+`census_occurrences()`, which borrows `load_index`, `load_symbols`,
+`occurrence_re`, `strip_comments` and `classify` from
+`xdata_register_map.py` and never re-greps, and `strip_comments()` keeps
+every newline — so the line numbers it checks are the reader's own line
+numbers in the committed `.c`. The 14 disagreements decompose as three
+clauses firing on one cause, and the decomposition reproduces the issue's
+figures exactly:
 
 | source | count | which |
 |---|---|---|
@@ -108,8 +111,10 @@ were verified by reading the files, and the tool is green on them today.
 `ec/annotations/xdata-086x-dispatch.md`'s "The two methods, site by site" table
 is the prose twin of these four rows, and it carried six stale references:
 `D091.c:43,47`, `:69,70`, `:73,74,75`, `:81`, plus `D281.c:18` and `D289.c:17`.
-Those became the CSV's new values and `:19`/`:18` respectively — six cells in one
-table, no prose rewrite. Fixing only the CSV would have left the page disagreeing
+Those became the CSV's new values and `:19`/`:18` respectively. Six cells are in
+the one table and the two `D281`/`D289` cells are in the "What the census says"
+paragraph above it — eight line-number cells in the file, still only cells: no
+prose was rewritten. Fixing only the CSV would have left the page disagreeing
 with the data it points at, which on `0x0D091` it already did by one line.
 
 **Two of those cells were not stale from the #180 rewrite, and that is a

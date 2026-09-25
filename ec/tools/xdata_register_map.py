@@ -1386,11 +1386,11 @@ HAND_CHECKED = {
     #
     # CORRECTION (2026-09-25, issue #752): the line numbers above were 43, 47, 69,
     # 70, 73, 74 and 75, with the dispatch argument at :81, `= 0xff` at
-    # bank0/D281.c:18 and `= 0` at bank0/D289.c:17 -- the seven `==` lines 1 lower
-    # than the committed file and the dispatch argument 2. #281 fixed this comment
+    # bank0/D281.c:18 and `= 0` at bank0/D289.c:17 -- the seven `==` lines 2 lower
+    # than the committed file and the dispatch argument 3. #281 fixed this comment
     # on 2026-09-24 and #180's CORRECTION header rewrite moved them again the same
     # day, so a comment no tool reads was correct for part of one day. The shift
-    # is not uniform and a blanket `+1` does not carry it, for the reason #281
+    # is not uniform and a blanket `+2` does not carry it, for the reason #281
     # already gave: the rewrite reflowed a closing paren out of the second
     # boolean chain onto its own line. Every bucket total in this entry is still
     # right and the counts did not move; re-derived from
