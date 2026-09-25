@@ -1,6 +1,6 @@
 # call-graph fixture
 
-A miniature `ec/decompiled/` tree for `call_graph.py --self-test`. Fifteen
+A miniature `ec/decompiled/` tree for `call_graph.py --self-test`. Eighteen
 transfer sites, and one deliberate near-miss per mechanism the tool has a
 trap for.
 
@@ -33,6 +33,16 @@ cases where a wrong answer is a *plausible* number rather than a missing one.
 | `decompiled/pd/10BC.asm` | a `pd` comment naming the common area's 0x07D0. The two programs have separate address spaces, so this is refused on program identity whatever the sentence says — the one rejection no lexical rule can reach |
 | `decompiled/common/0D20.asm` | carries an `sjmp` to 0x0D40, a form `TRANSFERS` does not scan, and the comment on that row names the same `sjmp` |
 | `ghidra-functions.csv` `0x0D20` | "it ends in an sjmp to 0x0D40" — the one committed sentence that put `sjmp` in the comment lexicon. The self-test asserts **both** halves: the citation is credited, and 0x0D40 still has no inbound edge, because the graph's transfer set and the comment lexicon are different sets |
+
+The caller-listing gate (`../citation_callers.py`) has three more, and each is
+the failure a rule that got the precedence wrong would produce.
+
+| file / row | what it pins |
+|---|---|
+| `decompiled/bank1/F6A0.asm` | an all-`0xFF` run, `mov R7, A` to the end of the function, with a comment that reads as a genuine call enumeration. Seven real `bank1` listings have this shape; **the address is deliberately not one of them**, so the assertion is about the shape and cannot rot into a list of seven addresses |
+| `ghidra-functions.csv` `0xF6A0` | that comment — "then calls to 0x0F75, 0x158E and 0x1594 … the .c body is not supported by these instructions". Every mention reads as a code frame and the citing listing still cannot make the call, which is the whole of the defect: **the guard is listing-scoped, not prose-scoped** |
+| `decompiled/common/0071.asm` + `index.csv` rows `0x1400`/`0x1410` | the corroborated shape: two mentions with no frame inside the window, and two `lcall`s in the listing that settle them. `cited_by == inbound == 1` is the same two-framings-agree assertion `0x07D0` carries, and it only means something because the frame alone would have left both undecided |
+| `decompiled/pd/10E0.asm` | a `pd` listing that **does** carry an `lcall` to the common area, with a comment naming it. It stays refused on program identity, so the precedence is pinned: a listing transfer never overrides a veto. `pd/10BC.asm` has no transfer and cannot carry this case, and `0x0CE1` is its own row rather than `0x07D0` because a `pd` transfer to an address the PD image has no row for resolves to the `common` row and would take 0x07D0's `inbound` to 3 |
 
 The `-` byte-column padding in `0EA2.asm`'s `ajmp` is the trap the module
 docstring names: a `[0-9a-f-]{2}` column regex matches nothing on that line
