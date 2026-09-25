@@ -11,12 +11,12 @@ bash tools/run-tests.sh
 
 Every `test_*.py` under the repository, found by `find` — not a hardcoded list,
 so a suite in a directory that does not exist yet is picked up by having its
-file committed. There are twenty today, 551 tests in all — the count is
+file committed. There are twenty-two today, 587 tests in all — the count is
 what the runner below prints, one line per suite — and each is a `unittest`
-suite standing in for a tool's own behaviour. (539 before this branch merged
-with main: issue #525 adds `test_citation_callers.py`, and main's #526 and
-#531 add cases to `test_citation_frames.py`, `test_grade_0751_isolation.py`
-and `test_ec_watch.py`.)
+suite standing in for a tool's own behaviour. (575 without this suite: issue
+#525 adds `test_citation_callers.py`, main's #526 and #531 add cases to
+`test_citation_frames.py`, `test_grade_0751_isolation.py` and
+`test_ec_watch.py`, and #565 adds `test_export_ownership.py`.)
 
 | suite | what it stands in for |
 |---|---|
@@ -30,6 +30,7 @@ and `test_ec_watch.py`.)
 | `ec/tools/test_grade_timer_sweep.py` | `ec/tools/grade_timer_sweep.py`, the grader of the `0x8001` counter-sweep capture: its before/after-return lists re-read from the firmware image, the `0x06D6` period and the 10x rate ratio on a constructed clean capture, a flat capture reported as held rather than absent, a second writer flagged, an unresolved step warned, and a suspend gap left out of the figures and counted mod 10 |
 | `ec/tools/test_walk_branch_arms.py` | `ec/tools/walk_branch_arms.py`'s direction classification, bounds, refusals, and negative-result wording |
 | `ec/tools/test_xdata_cluster_names.py` | `ec/tools/xdata_register_map.py`'s cluster identity: the `cluster_key` content hash, the `cluster_name` carry across a regeneration, `--map`, and the settling test that a cited cluster still resolves to the membership the prose describes |
+| `ec/tools/test_xdata_register_map.py` | the `--no-eq-guard` refusals of the same tool: the three refused combinations plus one per half of the scratch-output `or`, each with every mode entry point replaced by a recorder — all nine of them, read out of `main()`'s own AST so a tenth fails here rather than going unmocked — so a guard that moved below the dispatch fails the test instead of writing the pre-#178 census over the committed CSVs, and the one accepted run, which writes only into its `tempfile` |
 | `windows/tools/test_manual_fan_ctrl_probe.py` | the fan-mode probe's two-arm byte script, its read-safety guard under `--level-block`, the mark rows its `--csv` capture lands, that capture read back through the real `ec/tools/grade_0751_isolation.py` reader, and `--block`: the seven runs the watch set decomposes into, that the block path reports exactly what the byte path does, that only the mode byte is left to a point read, and the 56/61 figures the banner and the self-test quote |
 | `windows/tools/test_ec_watch.py` | the mark-CSV sweep and the mark landing between two change rows, that a blank press at the mark prompt records no row and takes no mark number while a padded label is still taken, plus `--block`: that it sweeps through `readmany`, that the flag is off by default, that the banner says the path is unverified, and that a range covering the fan-tach page is warned about rather than refused |
 | `windows/tools/test_ecrw.py` | the real `ecrw.py`, on a fake `ctypes.WinDLL` standing in for kernel32: the `MMRD` IOCTL's little-endian physical address, the aligned-block decomposition of a range, the probe watch set's 56-IOCTL cost against the 52 a `206/4` suggests, the window's last in-window dword, an unaligned start's discarded lead, `dump --block` printing what the byte path prints, and the per-byte path's buffer byte for byte as it always was |

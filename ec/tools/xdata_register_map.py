@@ -261,7 +261,9 @@ invariant added two more occurrences of the same string. Neither is the
 pre-#178 classifier, which appears only at #206's parent, a revision the search
 does not name, so the recipe was "copy the tool and patch it", which is how §6a
 came to compare the tool against itself. The numbers that recipe produced are
-real and the recipe is the problem; this flag is the recipe, kept.
+real and the recipe is the problem; this flag is the recipe, kept. Both
+refusals are pinned by `test_xdata_register_map.py`, which holds that no mode
+runs before either of them fires.
 
 Usage:
     python3 ec/tools/xdata_register_map.py               # write the two CSVs
