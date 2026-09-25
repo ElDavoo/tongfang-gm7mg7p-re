@@ -609,12 +609,20 @@ def self_test(d, index, annotations, rows, targets) -> int:
           " (`ret`): the one ending the preceding routine, and the one ending "
           "this one")
 
-    check(len(annotated) == ORACLE["annotated"] and annotated <= set(by),
+    # The union is the point. seed_rows() seeds an *address*, not a row, so
+    # deleting the annotation row for an address the census also seeds removes
+    # nothing: with every row deleted the annotation side is empty and the
+    # survivors are the whole census set -- all 70 of them, not the 28 of them
+    # with no annotation row. Assert the surviving count rather than printing a
+    # difference, so the figure and the check cannot drift apart again.
+    deleted = annotated
+    surviving = set(by) | (annotated - deleted)
+    check(len(annotated) == ORACLE["annotated"] and annotated <= set(by)
+          and len(surviving) == ORACLE["targets"],
           f"{ORACLE['annotated']} annotation row(s) sit in the run and every one "
-          f"of them is a census target, so deleting them removes "
-          f"{len(annotated & set(by))} of the {len(by)} seeds rather than all "
-          f"of them -- {len(set(by) - annotated)} census seed(s) would remain, "
-          "and seed_rows() takes the union of the two")
+          f"of them is a census target too, so seed_rows()'s *union* loses none "
+          f"of them to the deletion: all {len(surviving)} of the {len(by)} seeds "
+          f"remain, {len(surviving - annotated)} of them with no annotation row")
 
     # The two silent misreadings, asserted rather than described.
     runtime = runtime_addr(ENTRY_SITE_FILE_OFFSET, True)

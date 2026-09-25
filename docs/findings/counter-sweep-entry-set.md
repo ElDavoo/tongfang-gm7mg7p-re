@@ -5,17 +5,20 @@
 `../ec/annotations/ghidra-functions.csv` that describe them say in their own
 words that the boundary is a hypothesis of the call-target scan's making, and
 **28** of them say something stronger and wrong: that the body runs `0x8018`
-to the `ret` at `0x8189`. `../ec/annotations/xdata-06c2-06db-timers.md` 8 item
+to the `ret` at `0x8189`. `../ec/annotations/xdata-06c2-06db-timers.md` §8 item
 7 has asked for the boundaries to be settled rather than documented.
 
 **They are settled here, by measurement, and the answer is one address:
 `0x8001`.** Of the 180 census rows that target into the run, exactly one is at
-an instruction start in a committed listing. The other 179 are operand bytes of
-instructions that are already there, 135 of them the `rel8` displacement of a
-`cjne`. **One confirmed caller found by this method** is the whole of the
-finding — not "the only caller in the firmware", and not "179 absent calls".
-The method is `../ec/tools/counter_sweep_entry.py`; every figure below is its
-output, and `--self-test` asserts the load-bearing ones.
+an instruction start in a committed listing. The other 179 are not: 177 are
+operand bytes of instructions a committed listing already carries, 135 of them
+the `rel8` displacement of a `cjne`, and the remaining two — `bank1:0x81E7`
+and `bank1:0xA6DC` — sit in a committed gap no listing covers, which is a
+*different* kind of "not found by this method" from an identified operand byte
+and is reported as one. **One confirmed caller found by this method** is the
+whole of the finding — not "the only caller in the firmware", and not "179
+absent calls". The method is `../ec/tools/counter_sweep_entry.py`; every figure
+below is its output, and `--self-test` asserts the load-bearing ones.
 
 **The deletion the issue also asked for is not here, and not because it was
 skipped.** Removing the slice rows removes *no* seeds (every one of the 42
@@ -28,7 +31,7 @@ can finish it.
 ## 1. The run, re-derived
 
 Every descriptive claim in the issue and in
-`../ec/annotations/xdata-06c2-06db-timers.md` 2 holds exactly:
+`../ec/annotations/xdata-06c2-06db-timers.md` §2 holds exactly:
 
 | | |
 |---|---:|
@@ -42,7 +45,7 @@ Every descriptive claim in the issue and in
 
 ## 2. The entry set: how it was measured
 
-`../ec/annotations/bank-call-audit.md` 1 is the standing caveat on
+`../ec/annotations/bank-call-audit.md` §1 is the standing caveat on
 `../ec/annotations/bank-call-targets.csv`: the census is a **byte-scan upper
 bound, not a partition**, because a `0x02` or `0x12` byte is read as an
 `ljmp`/`lcall` opcode whether or not one is there. This is that caveat turned
@@ -59,7 +62,7 @@ and never separately, because neither is sufficient:
 - **the frame score alone proves nothing.** `converges_from()`'s own docstring
   says a site nobody syncs onto "is not thereby misframed — it may simply be
   preceded by data (a dispatch table, padding) that no linear walk can decode
-  into alignment", and `bank-call-audit.md` 1 makes the converse point, listing
+  into alignment", and `bank-call-audit.md` §1 makes the converse point, listing
   sites that score 24 of 24 and are plainly inside an address table. This
   repository's own note that "the anchored number is not the phantom-free one"
   is why the score is never the verdict here;
@@ -230,7 +233,7 @@ and `bank1/8001.asm` grows from 3 bytes to 393.** Then:
 
 `../ec/ghidra/README.md` states it outright: *"A new export wants a machine
 with the nix toolchain."* This is the identical wall
-`../ec/annotations/xdata-06c2-06db-timers.md` 8 item 1 documented for the
+`../ec/annotations/xdata-06c2-06db-timers.md` §8 item 1 documented for the
 `0xC10C` seed, where the precedent was explicit: *"a red
 `verify_reassembly.py --check` is not a way to land them."* It also writes the
 7.4 MB `.rep` that `.gitattributes` makes unmergeable, so per the issue it
@@ -284,7 +287,7 @@ to record, not a reason to re-add slice rows.**
   that work needs, not what it needs from this page.
 - **The frame score is one method's opinion, reported beside the listing
   evidence for that reason.** `converges_from()` is the repository's own, and
-  `bank-call-audit.md` 1's note that its anchored counts are demonstrably not
+  `bank-call-audit.md` §1's note that its anchored counts are demonstrably not
   phantom-free applies to the 24/24 here as much as to the 0/24s.
 
 ## Reproducing it

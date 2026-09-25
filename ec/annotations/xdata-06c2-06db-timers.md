@@ -175,14 +175,17 @@ upper bound, not a partition.
 > rows that target into `0x8001`-`0x8189`, scores each caller with
 > `disasm8051.converges_from()` and cross-checks it against the committed
 > listings: **exactly one** of the 180 is at an instruction start, a three-byte
-> call at `bank1:0xABB8` whose target is `0x8001`, at 24 of 24, and the 179
-> others are operand bytes of instructions the listings already carry — **135
-> of them a `cjne`'s `rel8` displacement**, which the scan's `0x02`/`0x12`
-> byte test cannot tell from an `ljmp` opcode. `0x8001` is itself a frame
-> boundary at 24 of 24 and the byte before it is the `ret` ending the preceding
-> routine. One caller was *confirmed by this method*; that is not "the only
-> caller in the firmware", and the 179 others are a gap in a byte scan with a
-> named blind spot rather than 179 absent calls.
+> call at `bank1:0xABB8` whose target is `0x8001`, at 24 of 24, and **177 of
+> the 179 others are operand bytes** of instructions the listings already
+> carry — 135 of them a `cjne`'s `rel8` displacement, which the scan's
+> `0x02`/`0x12` byte test cannot tell from an `ljmp` opcode — while the other
+> two, `bank1:0x81E7` and `bank1:0xA6DC`, sit in a committed gap no listing
+> covers, which is "not found by this method" rather than an identification.
+> `0x8001` is itself a frame boundary at 24 of 24 and the byte before it is the
+> `ret` ending the preceding routine. One caller was *confirmed by this
+> method*; that is not "the only caller in the firmware", and the 179 others
+> are a gap in a byte scan with a named blind spot rather than 179 absent
+> calls.
 >
 > **Two of this section's own claims were wrong, and both corrections are in
 > place in the 42 rows rather than edited away here.** The three seeds'
@@ -191,11 +194,11 @@ upper bound, not a partition.
 > the `ret` at `0x8189`; it runs `0x8001` to that same `ret`, 393 bytes rather
 > than 370, the 23 extra being the `0x06C6` and `0x06CD` countdowns and the
 > `0x06D1` load-and-decrement that precede `0x8018`. **No figure in this section
-> or in 2a moved**: the 42 exports are still 42, and §2a's arithmetic is a
+> or in §2a moved**: the 42 exports are still 42, and §2a's arithmetic is a
 > census question, not a boundary one. The full reading, the per-target table
 > and why the slice rows could not be deleted on a runner are
 > [`../../docs/findings/counter-sweep-entry-set.md`](../../docs/findings/counter-sweep-entry-set.md);
-> 6 and 8 item 7 point at the same page.
+> §6 and §8 item 7 point at the same page.
 
 ### 2a. What that does to the census's headline numbers
 
@@ -243,7 +246,7 @@ to — 93%**.
 moving any count.** The 42 exports this section is a consequence of are still
 42, so every figure above is the same figure; what #555 established is *where
 the one routine starts* (`0x8001`), which is a question about the export's
-shape and not about the census. Removing the double count is 8 item 5's job
+shape and not about the census. Removing the double count is §8 item 5's job
 and stays there, and §2's correction note carries the pointer.
 
 The per-address result is starker than the total:
@@ -713,11 +716,13 @@ to a cluster id, and it is why §3 reads the span.
   entry is `0x8001` and the five boundaries this page's own rows argued about
   are all slices of it.** `../tools/counter_sweep_entry.py` measures it — one
   site at an instruction start out of 180, `bank1:0xABB8` → `0x8001` at 24 of
-  24, the other 179 operand bytes of instructions the listings already carry,
-  135 of them a `cjne` displacement. The three seeds' hypotheses are refuted
-  rather than confirmed, and the 28 rows saying the body starts at `0x8018`
-  were wrong: it starts 23 bytes earlier. The withdrawn wording stands in each
-  row with the correction beside it, per `docs/findings.md` §4a.
+  24, 177 of the other 179 operand bytes of instructions the listings already
+  carry (135 of them a `cjne` displacement) and two — `bank1:0x81E7` and
+  `bank1:0xA6DC` — in a committed gap no listing covers. The three seeds'
+  hypotheses are refuted rather than confirmed, and the 28 rows saying the body
+  starts at `0x8018` were wrong: it starts 23 bytes earlier. The withdrawn
+  wording stands in each row with the correction beside it, per
+  `docs/findings.md` §4a.
   **The second clause still holds, and it is now the whole of what is left:**
   42 exports is how the committed project has this routine cut, and §2a is a
   consequence of *that*, not of any doubt about the entry. Fixing it is
@@ -1118,10 +1123,11 @@ touching it, not the EC's sweep.
    reading.** The boundaries are now *established* rather than hypothesised:
    the run is one routine and it enters at `0x8001`, measured at one site at
    an instruction start out of 180 (`bank1:0xABB8` `lcall 0x8001`, 24 of 24),
-   with the 179 others identified as operand bytes of instructions the
-   listings already carry — 135 of them a `cjne`'s `rel8` displacement. All
-   six boundaries this page's rows argued about are overturned in the same
-   pass, including the 28 rows that put the body's start 23 bytes late at
+   with 177 of the 179 others identified as operand bytes of instructions the
+   listings already carry — 135 of them a `cjne`'s `rel8` displacement — and
+   two in a committed gap no listing covers. All six boundaries this page's
+   rows argued about are overturned in the same pass, including the 28 rows
+   that put the body's start 23 bytes late at
    `0x8018`. **What could not be done is the deletion and the re-export, and
    the reason is mechanical rather than a matter of effort:** `seed_rows()`
    takes the *union* of the annotation rows and the census, and every one of
