@@ -7,9 +7,17 @@ Each flag carries three claims, and for each it is the last that is held here.
 pre-#178 classifier stays measurable from the committed tree; that is held by
 the tool's own `--self-test`, against a literal table, and
 `test_xdata_cluster_names.py` was to hold it a second way, by running the census
-the flag produces, but it has raised in `setUpClass` since #528 without running
-any of its six cases; the write-up says so and leaves the fix named rather than
-folded in. `--export-ownership` claims it reads each routine once, from the
+the flag produces, and could not: it raised in `setUpClass` from #528 until
+issue #753, which dropped the copy-and-patch recipe its error message named and
+put this flag in its place. The six cases it could not run now run, and a
+seventh was added beside them that pins the census to the figures
+`xdata-06c2-06db-timers.md` §6a publishes -- the census-identity claim, where
+`AcceptedWrite` below holds direction on purpose so that it survives an
+unrelated re-derivation. The sentence that said otherwise, "but it has raised in
+`setUpClass` since #528 without running any of its six cases", is corrected
+here beside itself per `../../docs/findings.md` §4a-4d rather than deleted; the
+write-up named that fix and left it unfolded.
+`--export-ownership` claims it reads each routine once, from the
 export that owns it, and `ec/annotations/xdata-export-ownership.md` 4-5 is the
 measurement, held by the tool's own `OWNERSHIP` table. The two refusals were
 held by nothing before, for either flag -- the tool's own `--self-test` cannot

@@ -125,6 +125,77 @@ third measured on this tree on 2026-09-25.
    printed on 2026-09-25, and it is left as it printed. The write-up is
    `docs/findings/xdata-0860-census-sites-relined.md`.
 
+   *(Correction, 2026-09-25, issue #753. The sentence this paragraph ends on
+   is a claim to re-check rather than coverage, and re-checking found it
+   **true**, not false, so it is left exactly as it was written above rather
+   than moved into this note, per `../findings.md` §4a-4d. `gh issue view 568`
+   on this tree shows **#568 open**, created `2026-09-25T03:03:44Z` — 31
+   minutes after #528 merged at `02:32:26Z` (`db6d7d2d`) and 13 h 51 m before
+   #751's `d9170a77` at `16:54:52Z` — labelled `agent:queued` and titled for
+   this exact defect, naming the `--no-eq-guard` flag this branch uses. **The
+   gap was the queue, not the coverage**: #568's one comment records "Not
+   planning this yet: 5 agent pull requests are already open, which is the
+   cap", so the failure was held rather than unowned. An earlier draft of this
+   note claimed the opposite — "#528 is closed … and no open issue owned it" —
+   and inferred ownership from #528's closed state, which is a zero-hit read
+   standing in for an absence, the rule `CLAUDE.md` puts above every other,
+   applied to an ownership claim. That claim is retracted here and named so a
+   later reader can check it. #753 is a re-file of #568 that supersedes it: it
+   replaced `test_xdata_cluster_names.py`'s copy-and-patch recipe with the
+   `--no-eq-guard` flag the recipe was written before, so the class's six cases
+   run again, and it added a seventh that pins the guard-off census to the
+   figures `xdata-06c2-06db-timers.md` §6a publishes. See
+   [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md).
+   #568 is left open for a human to close as superseded — the cap is what held
+   it, not anything about the work. The sentences above about #180's census are
+   a different claim and are untouched.)*
+
+   **(Merge note, 2026-09-25 — the two notes above meet on one clause, and the
+   tree settles it.)** Both were written against the same two-suite red set
+   above, from opposite ends of it. The #752 addendum reports `test_check_site_census.py`
+   green and `test_xdata_cluster_names.py` **still red on #528's own
+   `setUpClass`**, "so #162 is still blocked — one suite rather than two"; the
+   #753 correction is what clears that second suite. Both are dated records of
+   what a runner printed on 2026-09-25 and neither is edited, per
+   `../findings.md` §4a-4d, but read together they would leave the file
+   asserting both a red suite and a fix for it.
+
+   Measured on the merged tree, 2026-09-25, from the repo root:
+
+   ```
+   $ bash tools/run-tests.sh
+   ...
+   All 30 suite(s) passed, 882 tests.
+   ```
+
+   **The runner's red set is empty**, so #162 is no longer blocked by a failing
+   suite — `test_check_site_census.py` (45 tests) and
+   `test_xdata_cluster_names.py` (28 tests, up from the 21 main's copy runs
+   before the six `setUpClass` cases it kept out) are both green, and so is
+   `tools/test_readme_suite_table.py`, the third of the original three. Against
+   `origin/main`'s own copy of the suite, the same discovery ends
+   `Ran 21 tests … FAILED (errors=1)` on the `==`-guard assertion, so the pair
+   is a measured before-and-after rather than an inference from the two notes.
+
+   That is the **size** of #162's blocker, not its content, and the wiring
+   itself is still unlanded for the reason the first `Left out on purpose` bullet
+   gives: `.github/scripts/agent-gates.sh` is copied from `ElDavoo/agent-pipeline`
+   and this pipeline's push token has no `workflow` scope. Nothing else in this
+   file is edited, and the figures in the block quotes above stay as they
+   printed.
+
+   **Three sentences elsewhere in the tree phrase the red set in the present
+   tense and are stale for this reason; they are named here rather than edited,
+   for the reason the section above is recorded where it is.** The
+   `Left out on purpose` bullets for `tools/run-tests.sh` ("the runner is red
+   today … is two now") and for `tools/README.md`'s stale counts ("the runner is
+   red today on the two suites finding (2) names"), both in this file, and
+   `../findings.md` §46's closing clause ("whoever lands the four-line wiring
+   re-derives the set and **finds two**"). Each of the three already tells the
+   reader to re-derive rather than to trust the figure — that is the point of
+   the clauses this merge is not editing — so none of them is load-bearing for
+   a decision, and the runner's own output above is the figure.
+
 3. **The cost is the cheapest in the repository.** Measured on this tree,
    2026-09-25, over three runs each:
 
