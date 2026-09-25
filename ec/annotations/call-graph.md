@@ -415,13 +415,22 @@ neither. Over the 99 citing rows and 124 `(callee, citer)` pairs that gate's
 corroboration arm cannot reach, **32 pairs** already have a same-scope transfer
 to their callee booked to a *different* function, and **15 of the 90**
 `cited_by == inbound` agreements in `call-graph-callees.csv` are carried that
-way. **Rank 3 of the table is one of them**: `bank1,E5D6` reads
-`cited_by=3` / `inbound=1`, and its single inbound is `bank1,E5A7`'s `lcall`
-rather than the boundary-cut `lcall 0xE5D6` at 0xE580 that `bank1,E57E`'s
-comment names. That is a limit a reader must carry over the whole ranking, and
-`call_graph.py` is unchanged by the measurement — the 1,841-row table is
-byte-identical either way. Written up in
-[`../../docs/findings/citation-gap-scan.md`](../../docs/findings/citation-gap-scan.md).
+way. **Those 15 have now been read one at a time**, and the split is **9 where
+the kept comment names the neighbour's own site / 6 where it names a different
+one** — the mechanical test for it, whether the `neighbour_edge` address is in
+the callee's `citing` list, comes out identical to the verdict on this tree.
+The two population callees among the 90 that carry no such signal, `common,451A`
+and `pd,06EA`, were read the same way and both agree one-for-one. **Rank 3 of
+the table is one of the 32 neighbour-edge pairs but not one of the 15
+agreements**, so it is outside that reading: `bank1,E5D6` reads `cited_by=3` /
+`inbound=1`, and its single inbound is `bank1,E5A7`'s `lcall` rather than the
+boundary-cut `lcall 0xE5D6` at 0xE580 that `bank1,E57E`'s comment names. That
+is a limit a reader must carry over the whole ranking, and `call_graph.py` is
+unchanged by the measurement — the 1,841-row table is byte-identical either
+way. Written up in
+[`../../docs/findings/citation-gap-scan.md`](../../docs/findings/citation-gap-scan.md);
+the per-row verdicts in
+[`../../docs/findings/neighbour-edge-attribution.md`](../../docs/findings/neighbour-edge-attribution.md).
 
 **No register `status:` changed and no behavioural test was run.** Naming a
 helper is not a finding about a register, so `registers.yaml` and

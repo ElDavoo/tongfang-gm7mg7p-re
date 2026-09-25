@@ -243,6 +243,21 @@ population callees in that set without the signal — `common,451A` and `pd,06EA
 the two columns are counting the same call sites. That is the check working, and
 it is the majority case.
 
+**Correction to the reason, not the conclusion (issue #681).** The sentence
+above stands, and it now has a per-row reading behind it: `common,451A`'s one
+kept comment on `bank0,445E` is the `ljmp 0x451a` at 0x447E in that very
+listing, and `pd,06EA`'s two kept comments on `pd,88BE` and `pd,D83D` are the
+`lcall 0x06ea` at 0x8937 and 0xD86B. What the sentence attributes to *the
+population pair* is true of the **kept** citing row instead. Each population
+pair is a rejected data-frame mention — `common,4AFB` → `data-marker:copy`,
+`bank0,D045` → `data-marker:clears` — contributing nothing to `cited_by`, and
+its own citing listing carries no transfer at all, which is the predicate that
+put the row in this population. So the check is working, for a better reason
+than the one written down. The fifteen above were read the same way: **9 name
+the neighbour's own site, 6 name a different one.** Verdicts, sites and the
+commands are in
+[`neighbour-edge-attribution.md`](neighbour-edge-attribution.md).
+
 **One `boundary-cut` is the ranking's rank 3.** `bank1,E5D6` reads
 **`cited_by=3` / `inbound=1`**, with `citing` = `bank1:E57E bank1:E582
 bank1:E5A7`. Three comments name it; one transfer reaches it; and that one

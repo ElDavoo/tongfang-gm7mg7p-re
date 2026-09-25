@@ -6536,3 +6536,36 @@ other, and no register `status:` moves — the page arm widens what a human can
 observe, not what is known. The default's 87%-over-110 footprint is unchanged
 and pinned, and the §3b note in the runbook keeps its text with a dated
 correction beside it.
+
+## 38. Whether the kept citation names the neighbour's call site, decided per row (2026-09-25, issue #681)
+
+The write-up is `docs/findings/neighbour-edge-attribution.md`; this is the
+summary. §35 measured that 15 of the 90 `cited_by == inbound` agreements are
+carried by a transfer the graph books to a neighbouring function, and stopped
+there: a `neighbour_edge` column said the two columns *could* be counting
+different call sites without saying that any particular row does. **All 15 have
+now been read one at a time**, on the *kept* citation rather than the population
+pair — for 7 of the 15 those are different rows, and the population pair is a
+rejected or undecided mention contributing nothing to `cited_by`.
+
+**The split is 9 where the kept comment names the neighbour's own site and 6
+where it names a different one**, and the mechanical screen for it — is the
+`neighbour_edge` address in the callee's `citing` list? — comes out
+**identical to the verdict on all 15 rows**. That is a measured fact about 15
+rows rather than a rule, and it is the cheapest check a reader can run. The six
+name, among others, 0xD607 where the graph books 0xD662, and 0x5A5A as the tail
+of a data run where the graph books a real `lcall` at 0x0049. The two
+population callees among the 90 that carry no such signal, `common,451A` and
+`pd,06EA`, were read the same standard and both agree one-for-one, so **§35's
+conclusion for them stands while its stated reason is corrected in place
+beside the original**: the sentence is true of the kept citing row, not of the
+population pair, which is a rejected data-frame mention whose own listing
+carries no transfer. The file also records what a recovered edge would need
+before it were credited — an independent re-measurement, a boundary that
+survives a re-decode, and its own `call_graph.py --check`. No CSV moved, no
+re-export, no register `status:`, no hardware. *(Two corrections to this
+change's plan, both in that file: the plan put the population-pair count at 11
+where the committed tables give 7, and read `bank1,DEC4`'s contrast mention as
+the graph booking `9A78` as a caller — it books `DEA5`, and sides with the
+comment's denial of its own site. The split, the verdicts and every site address
+reproduced.)*
