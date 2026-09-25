@@ -21,16 +21,16 @@ void FUN_CODE_3dce(void)
   do {
     cVar1 = TF1;
     if (cVar1 == '\x01') {
-      FUN_CODE_4368();
+      stop_timer1_and_set_et1_4368();
       store_r7_to_iram_31(1);
       return;
     }
   } while ((DAT_EXTMEM_1304 >> 1 & 1) == 0);
   if ((DAT_EXTMEM_1304 >> 3 & 1) != 1) {
     FUN_CODE_4389();
-    FUN_CODE_09a2(DAT_INTMEM_32);
+    call_0c7a_then_write_1300_1306(DAT_INTMEM_32);
   }
-  FUN_CODE_4368();
+  stop_timer1_and_set_et1_4368();
   return;
 }
 

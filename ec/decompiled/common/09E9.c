@@ -16,7 +16,7 @@ void FUN_CODE_09e9(undefined1 param_1)
     FUN_CODE_0c6d(DAT_EXTMEM_004b - 4);
     *puVar1 = param_1;
     DAT_EXTMEM_004b = DAT_EXTMEM_004b + 1;
-    FUN_CODE_0a74();
+    rearm_timer1_then_set_bit_4_of_internal_41();
   }
   return;
 }

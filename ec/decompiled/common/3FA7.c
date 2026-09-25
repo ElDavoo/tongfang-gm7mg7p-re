@@ -13,7 +13,7 @@ void FUN_CODE_3fa7(byte param_1)
   byte bVar2;
   
   DAT_EXTMEM_0a47 = param_1;
-  FUN_CODE_3835(0);
+  store_r7_to_upper_internal_ram_byte_3835(0);
   cVar1 = DAT_INTMEM_ac;
   DAT_EXTMEM_0a48 = 0;
   DAT_EXTMEM_0a49 = 0;
@@ -60,7 +60,7 @@ LAB_CODE_4017:
   }
   else {
     FUN_CODE_434c();
-    FUN_CODE_3835(1);
+    store_r7_to_upper_internal_ram_byte_3835(1);
     if (DAT_EXTMEM_0a4b == -0x13) {
       bVar2 = FUN_CODE_4376(0x9c);
       bVar2 = bVar2 & 7;
@@ -68,7 +68,7 @@ LAB_CODE_4017:
     else {
       bVar2 = FUN_CODE_4376(0x9c);
     }
-    FUN_CODE_2e9c(1,bVar2);
+    store_0a4c_triplet_then_countdown_and_dispatch(1,bVar2);
   }
   FUN_CODE_161e(DAT_EXTMEM_0a47);
   return;

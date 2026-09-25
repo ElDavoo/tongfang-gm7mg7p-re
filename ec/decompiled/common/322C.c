@@ -10,7 +10,7 @@ void FUN_CODE_322c(void)
 
 {
   mul13_table_lookup_3b22(DAT_EXTMEM_0a4d);
-  FUN_CODE_3bae();
+  load_dptr_high_from_a_low_from_code_table();
   FUN_CODE_3bbf();
   DAT_EXTMEM_0a4d = DAT_EXTMEM_0a4d + '\x01';
   FUN_CODE_311d();

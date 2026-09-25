@@ -18,7 +18,7 @@ undefined1 FUN_CODE_4602(char param_1)
   }
   DAT_EXTMEM_0a60 = 1;
   puVar1 = &DAT_EXTMEM_0a56;
-  FUN_CODE_4a42(DAT_EXTMEM_0a56);
+  dptr_from_21byte_stride_index(DAT_EXTMEM_0a56);
   *puVar1 = 0xfe;
   return DAT_EXTMEM_0a60;
 }

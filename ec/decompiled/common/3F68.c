@@ -14,7 +14,7 @@ void FUN_CODE_3f68(void)
   }
   if (DAT_INTMEM_9b == '\0') {
     timer1_counted_delay_count_in_r7(0x14);
-    FUN_CODE_2b6c(0xfc);
+    set_1304_mode_bits_then_write_1300_and_1308(0xfc);
   }
   else {
     *(byte *)(DAT_INTMEM_9b + -0x79) = *(byte *)(DAT_INTMEM_9b + -0x79) & 0xfd;

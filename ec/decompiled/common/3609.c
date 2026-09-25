@@ -43,11 +43,11 @@ LAB_CODE_3622:
   }
   puVar5 = (undefined1 *)
            CONCAT11(':' - (((9U < (byte)(param_2 * '\r')) << 7) >> 7),param_2 * '\r' - 10);
-  FUN_CODE_3bae(*puVar5);
+  load_dptr_high_from_a_low_from_code_table(*puVar5);
   DAT_INTMEM_95 = *puVar5;
   bVar2 = 0;
 LAB_CODE_3656:
-  uVar3 = FUN_CODE_3bdd(bVar2);
+  uVar3 = stop_timer1_and_set_et1_3bdd(bVar2);
   return uVar3;
 }
 

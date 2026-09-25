@@ -13,9 +13,10 @@ undefined1 FUN_CODE_36af(undefined1 param_1,char param_2)
   
   DAT_EXTMEM_0a09 = param_2;
   DAT_EXTMEM_0a0a = param_1;
-  FUN_CODE_2f1d(1,0xf3);
+  store_0a4f_triplet_then_retry_loop(1,0xf3);
   if ((param_2 == '\0') &&
-     (cVar1 = DAT_EXTMEM_0a09, FUN_CODE_2f1d(1,DAT_EXTMEM_0a0a), cVar1 == '\0')) {
+     (cVar1 = DAT_EXTMEM_0a09, store_0a4f_triplet_then_retry_loop(1,DAT_EXTMEM_0a0a), cVar1 == '\0')
+     ) {
     DAT_EXTMEM_0a0b = 1;
     return 1;
   }

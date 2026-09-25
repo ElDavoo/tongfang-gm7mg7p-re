@@ -12,12 +12,12 @@ void FUN_CODE_3042(undefined1 param_1)
   undefined1 uVar1;
   
   DAT_EXTMEM_0a47 = param_1;
-  FUN_CODE_3983(0);
+  store_r7_to_upper_internal_ram_byte_3983(0);
   set_iram_ad_88_clear_33();
   if (_3_3 != '\0') {
-    FUN_CODE_3983(1);
+    store_r7_to_upper_internal_ram_byte_3983(1);
     FUN_CODE_3c03(0xa47);
-    FUN_CODE_2e9c();
+    store_0a4c_triplet_then_countdown_and_dispatch();
     _3_3 = 0;
     return;
   }
@@ -36,9 +36,9 @@ void FUN_CODE_3042(undefined1 param_1)
   else {
     uVar1 = 1;
   }
-  FUN_CODE_3983(uVar1);
+  store_r7_to_upper_internal_ram_byte_3983(uVar1);
   FUN_CODE_3c03(0xa47);
-  FUN_CODE_2e9c();
+  store_0a4c_triplet_then_countdown_and_dispatch();
   return;
 }
 

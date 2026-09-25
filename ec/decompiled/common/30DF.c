@@ -25,7 +25,7 @@ void FUN_CODE_30df(void)
   do {
     cVar1 = TF1;
   } while (cVar1 == '\0');
-  FUN_CODE_3bdd();
+  stop_timer1_and_set_et1_3bdd();
   return;
 }
 

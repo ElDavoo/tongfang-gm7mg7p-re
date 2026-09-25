@@ -24,7 +24,7 @@ void chan_init_170a_then_jmp_11b6(void)
   
   if ((DAT_EXTMEM_170a >> 3 & 1) == 0) {
     DAT_EXTMEM_1700 = 0x11;
-    FUN_CODE_07d6(0x1701);
+    mask_1106_store_0x1c_to_1102_set_bit_23_0(0x1701);
     DAT_INTMEM_aa = 2;
     DAT_EXTMEM_1106 = DAT_EXTMEM_1106 | 4;
   }
@@ -32,7 +32,7 @@ void chan_init_170a_then_jmp_11b6(void)
     DAT_EXTMEM_1106 = DAT_EXTMEM_1106 & 0xfb;
     DAT_EXTMEM_1102 = 4;
     if (_c_0 == '\0') {
-      FUN_CODE_07b6();
+      zero_seven_xdata_bytes_from_200b();
     }
     else {
       DAT_EXTMEM_0043 = 0;
@@ -43,7 +43,7 @@ void chan_init_170a_then_jmp_11b6(void)
       } while (cVar1 != '\x05');
     }
     DAT_INTMEM_84 = 2;
-    FUN_CODE_07e7();
+    set_bit_06_4_clear_bit_23_0_store_ff_via_r0_07e7();
     DAT_INTMEM_99 = DAT_EXTMEM_170e;
   }
   FUN_CODE_11b6();

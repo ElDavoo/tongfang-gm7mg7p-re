@@ -12,7 +12,7 @@ void FUN_CODE_4825(undefined1 param_1,char param_2)
   char cVar1;
   byte *pbVar2;
   
-  FUN_CODE_4afb();
+  stop_timer1_and_set_et1_4afb();
   if (param_2 == '\0') {
     FUN_CODE_4940();
     FUN_CODE_492d();

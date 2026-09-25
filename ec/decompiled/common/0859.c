@@ -9,7 +9,7 @@
 void FUN_CODE_0859(void)
 
 {
-  FUN_CODE_0937(0);
+  store_r7_to_0a49_then_pulse_bit_3206_4(0);
   DAT_INTMEM_36 = 1;
   return;
 }

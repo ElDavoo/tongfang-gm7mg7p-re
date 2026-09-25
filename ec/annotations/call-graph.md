@@ -24,21 +24,21 @@ trees the numbers were taken on.
 
 | quantity | value |
 |---|---|
-| function rows in `decompiled/index.csv` | 2,710 |
-| of those, still `FUN_*` | 807 † |
+| function rows in `decompiled/index.csv` | 2,714 |
+| of those, still `FUN_*` | 752 |
 | transfer instructions in the `.asm` listings | 5,027 |
 | — `lcall` / `ljmp` / `ajmp` / `acall` | 3,854 / 1,063 / 74 / 36 |
 | — resolving to an index row | 4,924 |
 | distinct targets reaching a row | 1,841 |
 | transfer sites whose target is no index row | 103, over 80 targets |
-| targets still anonymous | 470 |
-| inbound sites to those | 779 |
-| anonymous rows no direct transfer reaches | 337 † |
-| distinct `FUN_*` callees the `.c` files name | 815 † |
-| anonymous callees a comment names | 110 |
-| comments that name one | 136 |
-| — candidate (callee, comment) pairs, before the frame gate | 364 |
-| — kept / rejected / undecided by it | 146 / 188 / 30 |
+| targets still anonymous | 432 |
+| inbound sites to those | 598 |
+| anonymous rows no direct transfer reaches | 320 |
+| distinct `FUN_*` callees the `.c` files name | 760 |
+| anonymous callees a comment names | 124 |
+| comments that name one | 147 |
+| — candidate (callee, comment) pairs, before the frame gate | 353 |
+| — kept / rejected / undecided by it | 157 / 165 / 31 |
 
 *** CORRECTION 2026-09-25 (issue #470), leaving the table above as it was
 written.*** One row stopped being anonymous. `pd 0x11C2` was `FUN_CODE_11c2`
@@ -54,18 +54,23 @@ name" **798 → 797**. The inbound sites to that one target lose one with it, so
 it also counts the `FUN_` tokens sitting in comment columns, which is why that
 was the wrong pair to quote.)
 
-**The table's own figures were already behind before this, and are not corrected
-here**: 807 and 815 were measured on an earlier tree, and the gap is another
-pass's, not this one's. The table's 470 is the exception — it is exactly what
-`call_graph.py` prints on `origin/main`, which is why the movement above starts
-from it. That per-cell movement is what
-[#470](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues/470) changed, and
-it is stated separately rather than folded into a new number that would hide
-which drift is which. The tranche-history `FUN_*` figures further down
-(`829 → 814`) are a record of what a past pass did and are untouched. See
-[`docs/findings/pd-common-address-spaces.md`](../../docs/findings/pd-common-address-spaces.md).
+**The table's own figures were already behind before this, and each later pass
+states its own movement rather than folding it into a new number that would hide
+which drift is which.** 807 and 815 were measured on an earlier tree, and the
+gap from there is another pass's, not this one's; the table's 470 was the
+exception, because it was exactly what `call_graph.py` printed on the tree
+*before* #470 landed and so is where the movement above starts. The table has
+been re-measured twice since. Issue #603's tranche took the 37 common-area rows
+it added off the anonymous side, and #470's one `pd 0x11C2` row is the −1 the
+correction above records, so the table now reads the **752 / 432 / 760** of
+those three cells — what `call_graph.py` prints on the merged tree. See
+[`docs/findings/pd-common-address-spaces.md`](../../docs/findings/pd-common-address-spaces.md)
+for #470 and
+[`../../docs/findings/common-runtime-tranche.md`](../../docs/findings/common-runtime-tranche.md)
+for #603. The tranche-history `FUN_*` figures further down (`829 → 814`) are a
+record of what a past pass did and are untouched.
 
-**The 470 and the 815 are two framings of related things, and neither is "the"
+**The 432 and the 760 are two framings of related things, and neither is "the"
 count.** The first is decoded out of the committed `.asm` listings; the second
 is read off the `.c` export. The `.c` figure is larger because the decompiler
 emits calls the listing does not carry directly. It is also the framing that
@@ -74,23 +79,31 @@ annotated the two frames disagree about whether anything reaches it. This
 follows the precedent `../tools/audit_call_targets.py` sets by reporting an
 upper bound and a decode count for every figure and never one.
 
-**The three † rows were already wrong before issue #456 touched this file, and
-are left as they were rather than quietly corrected.** The tool measures
-`still FUN_*` **789** against the table's 807, anonymous rows no transfer
-reaches **320** against 337, and `FUN_*` callees in the `.c` files **797**
-against 815 — re-run `../tools/call_graph.py` on this tree and those are what it
-prints. `--check` does not catch it because it compares
-`call-graph-callees.csv` against the listings and never reads this table, which
-is transcribed by hand. **Issue #456 re-measured the four citation rows and the
-frame-gate partition against the tool and changed nothing else** — those four
-now read 110 / 136 / 364 / 146 / 188 / 30, which is what
-`../tools/call_graph.py` prints on this tree, rather than the one-low values a
-+4 delta applied to `main`'s stale absolutes would have produced. The candidate
-and rejected counts are one below what #456 measured on a tree without #470: the
+**The three † rows were already wrong before issue #456 touched this file. They
+were left as they were rather than quietly corrected; the table above now carries
+the corrected figures instead, and the movement is recorded here rather than
+lost.** The tool measured `still FUN_*` **789** against the table's 807, anonymous
+rows no transfer reaches **320** against 337, and `FUN_*` callees in the `.c`
+files **797** against 815 — `--check` never caught it because it compares
+`call-graph-callees.csv` against the listings and never reads this table, which is
+transcribed by hand. Issue #456 then re-measured the four citation rows and the
+frame-gate partition against the tool and changed nothing else — on its tree they
+read 110 / 136 / 364 / 146 / 188 / 30, rather than the one-low values a +4 delta
+applied to `main`'s stale absolutes would have produced. The candidate and
+rejected counts were one below what #456 measured on a tree without #470: the
 `pd 0x11C2` row is what that comment names, and a named callee is not an
 anonymous one, so its one rejected pair left the gate rather than joining it.
-The drift in the three † rows is older than this tranche and belongs to a
-separate correction.
+
+**On the tree holding both #456 and #603 the whole table is re-measured, and the
+six citation and frame-gate cells are not #456's numbers any more.** Re-running
+`../tools/call_graph.py` on this tree prints **124 / 147 / 353 / 157 / 165 / 31**
+for those six, and the three † cells **752 / 320 / 760**; that is what the table
+above records. The rise is not a measurement moving under us — it is this tree's
+own two sets of new comments. #603's 37 rows and #456's twelve retypings between
+them name addresses the previous tree's comments did not, so more anonymous
+callees are cited and more candidate pairs reach the gate. Each side's own
+before-value is preserved above rather than overwritten, so which drift is which
+stays readable.
 
 **Parse the `.asm`, not the `.c`.** That is the one thing that will silently
 produce a wrong graph, and a future agent re-deriving this will reach for
@@ -251,7 +264,7 @@ in.**
   annotated, whether or not its citing comments changed. The `citing` column is
   the work list; it is empty for a row that has been done.
 
-**The citing comments keep their bare addresses, on purpose.** 1,310 comments
+**The citing comments keep their bare addresses, on purpose.** 1,357 comments
 already cite an already-named function by address — recounted on this tree by
 the `citations()` match with the `FUN_*` test inverted, and it rises every time a
 function is named, because a new row tends to cite helpers that are already
@@ -367,7 +380,7 @@ inbound distribution is already spent.
 
 ## What is left, and the two limits a reader must carry
 
-**The work list is the `annotated=no` rows**, 470 of them, of which **110 are
+**The work list is the `annotated=no` rows**, 432 of them, of which **124 are
 cited** by a comment and so are the ones a reader can trace to a sentence that
 needs them. The rest are reachable but uncited: worth naming, not yet blocking
 any explanation. The ranking is the order to work them in, and its top has
@@ -379,8 +392,8 @@ has since named that one and the three rows behind it
 `inbound=2`** — a row the ranking promotes on citations alone, which is the
 ordering this file argues for and the first thing to read about it.
 
-**337 anonymous rows have no direct transfer reaching them at all** — 337 of
-the 807 `FUN_*` rows, reached by function pointer, by a dispatch table, or not
+**320 anonymous rows have no direct transfer reaching them at all** — 320 of
+the 752 `FUN_*` rows, reached by function pointer, by a dispatch table, or not
 reached. **That is a limit of this method and not a claim that they are
 unreachable.** The same goes for the 103 transfer sites whose target is no
 index row: those are branches into straight-line code, not evidence of a
@@ -480,7 +493,7 @@ naming the PD image's own byte, every one of them carrying the
 it, 20 in a data frame and 1 unsettled — but it has **no row in this table at
 all**, because no transfer reaches it, so it was never in the ranking to be
 wrong in. That is the shape to watch for in any other count
-here: not ranked is not absent, and 67 candidate pairs name a callee the table
+here: not ranked is not absent, and 74 candidate pairs name a callee the table
 carries no row for. The tool prints that number beside the gate's.
 
 ## Adding the next tranche

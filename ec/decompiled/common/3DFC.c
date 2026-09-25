@@ -21,7 +21,7 @@ void FUN_CODE_3dfc(void)
   do {
     cVar1 = TF1;
     if (cVar1 == '\x01') {
-      FUN_CODE_4368();
+      stop_timer1_and_set_et1_4368();
       store_r7_to_iram_31(1);
       return;
     }
@@ -31,7 +31,7 @@ void FUN_CODE_3dfc(void)
     FUN_CODE_3799();
     FUN_CODE_0a5a();
   }
-  FUN_CODE_4368();
+  stop_timer1_and_set_et1_4368();
   return;
 }
 

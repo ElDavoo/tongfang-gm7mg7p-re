@@ -48,7 +48,7 @@ void FUN_CODE_0213(byte param_1,byte *param_2)
       FUN_CODE_150a();
     } while (cVar1 != -1);
     FUN_CODE_1510();
-    FUN_CODE_0c86();
+    poll_flag_bytes_30_to_3b_and_dispatch();
     FUN_CODE_063c();
     nop();
     nop();

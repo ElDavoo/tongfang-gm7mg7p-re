@@ -9,9 +9,9 @@
 void FUN_CODE_4921(undefined1 param_1,char param_2)
 
 {
-  FUN_CODE_4afb();
+  stop_timer1_and_set_et1_4afb();
   if (param_2 == '\0') {
-    FUN_CODE_43a5(0,param_1);
+    per_channel_state_sequence_on_15byte_stride_table_43a5(0,param_1);
   }
   dptr_4900_plus_15x_r1();
                     /* WARNING: Subroutine does not return */

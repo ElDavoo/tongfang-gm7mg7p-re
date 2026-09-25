@@ -10,7 +10,7 @@ void FUN_CODE_0896(undefined1 param_1)
 
 {
   DAT_EXTMEM_1501 = param_1;
-  FUN_CODE_0937(0);
+  store_r7_to_0a49_then_pulse_bit_3206_4(0);
   return;
 }
 

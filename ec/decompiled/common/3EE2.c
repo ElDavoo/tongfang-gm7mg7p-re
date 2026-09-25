@@ -15,7 +15,7 @@ void FUN_CODE_3ee2(void)
   else {
     FUN_CODE_4390(0x80);
     timer1_counted_delay_count_in_r7();
-    FUN_CODE_436f();
+    store_0xfc_to_xdata_1308();
   }
   BANK1_R0 = 10;
   P1_0 = 0;

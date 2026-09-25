@@ -20,14 +20,14 @@ byte FUN_CODE_1d20(char param_1,undefined1 param_2,byte param_3,byte param_4)
     param_1 = -0x44;
     param_4 = DAT_INTMEM_bc >> 2 & 1;
     if ((DAT_INTMEM_bc >> 1 & 1) != 0 || param_4 != 0) {
-      bVar1 = FUN_CODE_21dc(DAT_INTMEM_bc);
+      bVar1 = load_dptr_0a52_then_call_out(DAT_INTMEM_bc);
       while (param_1 = param_1 + -1, param_1 != '\0') {
         bVar1 = bVar1 << 1;
       }
       DAT_EXTMEM_0a52 = bVar1 | param_4;
       param_1 = '\0';
     }
-    FUN_CODE_220a();
+    increment_xdata_0a53();
   }
   sVar3 = 0xa51;
   bVar1 = DAT_EXTMEM_0a51;
@@ -41,20 +41,20 @@ byte FUN_CODE_1d20(char param_1,undefined1 param_2,byte param_3,byte param_4)
       DAT_EXTMEM_0a52 = bVar2 | param_4;
       param_1 = '\0';
     }
-    FUN_CODE_220a();
+    increment_xdata_0a53();
   }
   if ((bVar1 >> 3 & 1) != 0) {
     param_1 = -0x44;
     param_4 = DAT_INTMEM_bc;
     if ((DAT_INTMEM_bc >> 4 & 1) != 0) {
-      bVar1 = FUN_CODE_21dc();
+      bVar1 = load_dptr_0a52_then_call_out();
       while (param_1 = param_1 + -1, param_1 != '\0') {
         bVar1 = bVar1 << 1;
       }
       DAT_EXTMEM_0a52 = bVar1 | param_4;
       param_1 = '\0';
     }
-    FUN_CODE_220a();
+    increment_xdata_0a53();
   }
   if ((DAT_EXTMEM_0a51 >> 4 & 1) != 0) {
     param_1 = -0x44;
@@ -66,13 +66,13 @@ byte FUN_CODE_1d20(char param_1,undefined1 param_2,byte param_3,byte param_4)
       DAT_EXTMEM_0a52 = bVar1 | param_4;
       param_1 = '\0';
     }
-    FUN_CODE_220a();
+    increment_xdata_0a53();
   }
   if ((DAT_EXTMEM_0a51 >> 5 & 1) != 0) {
     FUN_CODE_1ac2(DAT_EXTMEM_0a51,param_2);
     param_4 = param_3;
     if (param_3 == 1) {
-      bVar1 = FUN_CODE_21dc();
+      bVar1 = load_dptr_0a52_then_call_out();
       while (param_1 = param_1 + -1, param_1 != '\0') {
         bVar1 = bVar1 << 1;
       }
@@ -80,30 +80,30 @@ byte FUN_CODE_1d20(char param_1,undefined1 param_2,byte param_3,byte param_4)
       param_1 = '\0';
       param_4 = param_3;
     }
-    FUN_CODE_220a();
+    increment_xdata_0a53();
   }
   if ((DAT_EXTMEM_0a51 >> 6 & 1) != 0) {
     FUN_CODE_15be();
     if (param_4 == 0xff) {
-      bVar1 = FUN_CODE_21dc();
+      bVar1 = load_dptr_0a52_then_call_out();
       while (param_1 = param_1 + -1, param_1 != '\0') {
         bVar1 = bVar1 << 1;
       }
       DAT_EXTMEM_0a52 = bVar1 | param_4;
       param_1 = '\0';
     }
-    FUN_CODE_220a();
+    increment_xdata_0a53();
   }
   if ((char)DAT_EXTMEM_0a51 < '\0') {
     FUN_CODE_15c4();
     if (param_4 == 0xff) {
-      bVar1 = FUN_CODE_21dc();
+      bVar1 = load_dptr_0a52_then_call_out();
       while (param_1 = param_1 + -1, param_1 != '\0') {
         bVar1 = bVar1 << 1;
       }
       DAT_EXTMEM_0a52 = bVar1 | param_4;
     }
-    FUN_CODE_220a();
+    increment_xdata_0a53();
   }
   return DAT_EXTMEM_0a52;
 }

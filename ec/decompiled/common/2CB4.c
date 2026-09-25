@@ -16,8 +16,8 @@ void FUN_CODE_2cb4(char param_1,char param_2)
   _c_1 = 0;
   DAT_EXTMEM_0a49 = param_2;
   DAT_EXTMEM_0a4a = param_1;
-  FUN_CODE_3ad1();
-  FUN_CODE_3acc(0);
+  clear_upper_internal_ram_byte_3ad1();
+  store_r7_to_upper_internal_ram_byte_3acc(0);
   pbVar2 = (byte *)&DAT_INTMEM_8c;
   cVar3 = DAT_EXTMEM_0a49;
   FUN_CODE_3b82();
@@ -74,7 +74,7 @@ void FUN_CODE_2cb4(char param_1,char param_2)
     }
     if (*(char *)(DAT_EXTMEM_0a49 + -0x78) != '\x02') {
       if (*(char *)(DAT_EXTMEM_0a49 + -0x5e) != '\0') {
-        FUN_CODE_3acc(0xff);
+        store_r7_to_upper_internal_ram_byte_3acc(0xff);
         DAT_INTMEM_8c = DAT_EXTMEM_0a49 + -0x60;
       }
       goto code_c0x2d7a;
@@ -84,7 +84,7 @@ void FUN_CODE_2cb4(char param_1,char param_2)
   DAT_INTMEM_8c = cVar3 + -0x50;
 code_c0x2d7a:
   if (DAT_EXTMEM_0a4a == '\x01') {
-    FUN_CODE_30b5();
+    or_table_bytes_into_dptr_under_flag_87();
   }
   return;
 }

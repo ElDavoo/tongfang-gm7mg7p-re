@@ -15,15 +15,15 @@ undefined1 FUN_CODE_46f9(void)
   
   cVar1 = TF1;
   if (cVar1 != '\0') {
-    FUN_CODE_4afb();
-    FUN_CODE_43a5(DAT_EXTMEM_0a17);
+    stop_timer1_and_set_et1_4afb();
+    per_channel_state_sequence_on_15byte_stride_table_43a5(DAT_EXTMEM_0a17);
     DAT_EXTMEM_0a1d = 0;
   }
   pbVar3 = &DAT_EXTMEM_0a17;
   uVar2 = DAT_EXTMEM_0a17;
   FUN_CODE_4a5e(DAT_EXTMEM_0a17);
   *pbVar3 = *pbVar3 & 0xdf;
-  FUN_CODE_4a42(uVar2);
+  dptr_from_21byte_stride_index(uVar2);
   *pbVar3 = 0xfe;
   return DAT_EXTMEM_0a1d;
 }

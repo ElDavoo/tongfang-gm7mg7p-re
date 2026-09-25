@@ -23,9 +23,9 @@ void FUN_CODE_48a6(byte *param_1,undefined1 param_2,byte param_3)
     if (cVar1 == '\x01') {
       FUN_CODE_4947();
       cVar1 = '\0';
-      FUN_CODE_4afb();
+      stop_timer1_and_set_et1_4afb();
       if (cVar1 == '\0') {
-        FUN_CODE_43a5(0,param_2);
+        per_channel_state_sequence_on_15byte_stride_table_43a5(0,param_2);
       }
       dptr_4900_plus_15x_r1();
                     /* WARNING: Subroutine does not return */

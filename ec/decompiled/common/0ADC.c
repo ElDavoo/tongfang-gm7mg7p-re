@@ -29,7 +29,7 @@ undefined1 FUN_CODE_0adc(undefined1 param_1,char param_2)
     DAT_EXTMEM_0a48 = 0;
   }
   if (DAT_EXTMEM_0a49 != '\0') {
-    FUN_CODE_09a2();
+    call_0c7a_then_write_1300_1306();
   }
   return DAT_EXTMEM_0a48;
 }

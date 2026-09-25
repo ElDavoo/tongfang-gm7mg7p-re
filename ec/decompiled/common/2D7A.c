@@ -10,7 +10,7 @@ void FUN_CODE_2d7a(void)
 
 {
   if (DAT_EXTMEM_0a4a == '\x01') {
-    FUN_CODE_30b5();
+    or_table_bytes_into_dptr_under_flag_87();
   }
   return;
 }

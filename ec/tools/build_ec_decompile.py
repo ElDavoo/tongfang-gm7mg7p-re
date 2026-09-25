@@ -2180,14 +2180,17 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # 0x1C00-block dispatch its search turned on), then 1,851 -> 1,855 with
     # issue #558's four (common 0x07F0, 0x0F75, 0x158E and 0x1594 -- the top of
     # the corrected call-graph ranking, written up in
-    # docs/findings/common-07f0-0f75-158e-1594-tranche.md), and 1,855 -> 1,872
+    # docs/findings/common-07f0-0f75-158e-1594-tranche.md), then 1,855 -> 1,872
     # with issue #561's seventeen common-area 0xFF fill rows
     # (docs/findings/ff-fill-census.md), then 1,872 -> 1,876 with issue #267's
     # four `bank0` rows 0xC278, 0xC2C2, 0xC33C and 0xC4E7 -- the 0x1665/0x1666
-    # bit tests written up in ec/annotations/ec-07c4-07d5-sites.md -- and 1,876 ->
-    # 1,877 with issue #470's one `pd 0x11C2` row
-    # (docs/findings/pd-common-address-spaces.md). All four sets of rows are in
-    # this tree.
+    # bit tests written up in ec/annotations/ec-07c4-07d5-sites.md -- then two
+    # tranches that each fork from 1,876 and are additive on top of one another:
+    # 1,876 -> 1,877 with issue #470's one `pd 0x11C2` row
+    # (docs/findings/pd-common-address-spaces.md) and 1,876 -> 1,913 with
+    # issue #603's 37 common-area rows
+    # (docs/findings/common-runtime-tranche.md). 1,877 + 37 = 1,914 on the
+    # tree holding both -- every set of rows is in this tree.
     # Issue #456 retyped the twelve `unresolved` rows issue #134's tranche left
     # behind and added **no** rows, so it did not move the pin: the five whose
     # comments called the address a possible fragment of straight-line code are
@@ -2196,79 +2199,95 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # docs/findings/call-graph-unresolved.md. The pin is here so a change that
     # adds a row on purpose has to say so, and a change that adds none has to
     # say that too.
-    check("EC: annotations/ghidra-functions.csv is 1,877 records, no short row "
+    check("EC: annotations/ghidra-functions.csv is 1,914 records, no short row "
           "and no duplicate (scope, addr)",
-          len(_ann) == 1877 and not structure_problems("ghidra-functions.csv", _ann,
+          len(_ann) == 1914 and not structure_problems("ghidra-functions.csv", _ann,
                                                        annotation_key, "(scope, addr)"),
           "%d record(s)" % len(_ann))
     # The function layer's three counters, on the committed files, which is where
     # docs/findings.md §18's corrected figures come from. The history of each
     # pin, because these are the numbers that move on purpose:
     #
-    # annotations_applied 790 / 684 / 498, summing to 1,972 program-applications
-    #   rather than 1,877 rows, because ApplyAnnotations.mine() hands a
-    #   `common`-scoped row to BOTH bank programs and the 95 of them are counted
-    #   once per program (695 + 95 = 790 for bank0, 589 + 95 = 684 for bank1).
-    #   The manifest's `common` row borrows bank0's 790
+    # annotations_applied 827 / 721 / 498, summing to 2,046 program-applications
+    #   rather than 1,914 rows, because ApplyAnnotations.mine() hands a
+    #   `common`-scoped row to BOTH bank programs and the 132 of them are counted
+    #   once per program (695 + 132 = 827 for bank0, 589 + 132 = 721 for bank1).
+    #   The manifest's `common` row borrows bank0's 827
     #   (MANIFEST_PROGRAM_SOURCE), and is excluded from the sum here for the
     #   same reason. This is not a pin that has moved on its own: it is the
     #   first run in which the number came from a report at all, and it has
-    #   moved three times since, 769 / 667 -> 786 / 684 when issue #561 added
-    #   17 `common`-scoped 0xFF-fill rows that a bank consumes twice, then
+    #   moved four times since, 769 / 667 -> 786 / 684 when issue #561 added 17
+    #   `common`-scoped 0xFF-fill rows that a bank consumes twice, then three
+    #   changes that each fork from 786 / 684 and are additive on one another:
     #   786 -> 790 for bank0 alone with issue #267's four `bank0`-scoped rows,
-    #   and 497 -> 498 on the `pd` side with issue #470's one `pd 0x11C2` row.
-    #   Each program moves only on rows scoped to it, which is the shape of the
-    #   pin worth keeping: it is a per-program measurement, not a total.
+    #   where only bank0 moves on a bank0-scoped addition, which is the shape
+    #   of the pin worth keeping -- it is a per-program measurement and not a
+    #   total; 497 -> 498 on the `pd` side with issue #470's one `pd 0x11C2`
+    #   row; and 786 / 684 -> 823 / 721 with issue #603's 37 `common`-scoped
+    #   rows, where both banks rise by 37 because a `common`-scoped row is
+    #   handed to each of them -- the count is over rows handed over, so where
+    #   an address sits in the export is not what moves it. 790 + 37 = 827 is
+    #   where the two bank0 paths meet.
     # annotations_unmatched 0 / 0 / 0. Also the first run that could have
     #   reported otherwise -- the driver used to write a literal 0 here, so
     #   every manifest in the repository's history recorded a match it had not
-    #   checked. 1,877 rows and zero unresolved is now a measurement.
-    # functions_named 697 / 605 / 97 / 503, summing to 1,902. These are the
+    #   checked. 1,914 rows and zero unresolved is now a measurement.
+    # functions_named 697 / 605 / 135 / 503, summing to 1,940. These are the
     #   figures the old `annotations_applied` column carried, unchanged: the
     #   number did not move, it acquired the name that describes it. It was
     #   1,787 when §18's drift paragraph was written and has grown with the
     #   annotation tranches since (1,866 at the time of the subsystems census,
     #   recorded in a later paragraph of §19, which also measured the gap at
-    #   18); §18's correction quotes 1,890, issue #267's four rows take
-    #   bank0 from 693 to 697, and #602's seven renames take bank1 from 599 to
-    #   605 and pd from 501 to 502 -- 1,894 on either side of the merge, 1,901
-    #   on the tree holding both. `pd` then moves once more, 502 -> 503 with
-    #   issue #470's one `pd 0x11C2` row, for 1,902; each of those two `pd`
-    #   steps is one row the de-dup cannot fold into a bank. Only `common` moved
-    #   with #561 (80 -> 97): those 17 rows sit at addresses both banks carry,
-    #   so the de-dup exports each one once, under `common`, and it lands there
-    #   and nowhere else.
-    _want_applied = {"bank0": 790, "bank1": 684, "pd": 498}
+    #   18); §18's correction quotes 1,890. Four changes have moved it since,
+    #   each landing where the de-dup sends its rows. Issue #267's four
+    #   `bank0`-scoped rows take bank0 from 693 to 697. Issue #602's seven
+    #   renames take bank1 from 599 to 605 and pd from 501 to 502, because the
+    #   index can now see a row whose name no longer reads as Ghidra's -- see
+    #   the ledger comment below. Issue #470's one `pd 0x11C2` row then takes
+    #   pd from 502 to 503; each of those two `pd` steps is one row the de-dup
+    #   cannot fold into a bank. And the tranches move only `common`
+    #   (80 -> 97 with #561, 97 -> 135 with #603's 37): those rows sit at
+    #   addresses both banks carry, so the de-dup exports each one once, under
+    #   `common`, and it lands there and nowhere else, which is also why no
+    #   bank's own figure moved with #603. 1,890 + 4 + 6 + 2 + 38 = 1,940 on
+    #   the tree holding all four.
+    _want_applied = {"bank0": 827, "bank1": 721, "pd": 498}
     check("EC: the manifest's annotations_applied is what the exporter's reports "
-          "said -- 790 / 684 / 498 across the three programs, with `common` "
+          "said -- 827 / 721 / 498 across the three programs, with `common` "
           "borrowing bank0's",
           {r["program"]: int(r["annotations_applied"]) for r in _mr
            if r["program"] in _want_applied} == _want_applied
           and next(int(r["annotations_applied"]) for r in _mr
-                   if r["program"] == "common") == 790,
+                   if r["program"] == "common") == 827,
           str({r["program"]: r["annotations_applied"] for r in _mr}))
     check("EC: annotations_unmatched is 0 for all four programs, measured rather "
           "than written as a literal",
           all(int(r["annotations_unmatched"]) == 0 for r in _mr),
           str({r["program"]: r["annotations_unmatched"] for r in _mr}))
     # Merged tree: #267's four bank0 rows and #602's seven renames put
-    # 697 / 605 / 97 / 502 and 1,901 on it, and #470's one `pd 0x11C2` row takes
-    # pd to 503 and the sum to 1,902.
-    _want_named = {"bank0": 697, "bank1": 605, "common": 97, "pd": 503}
+    # 697 / 605 / 97 / 502 and 1,901 on it, #470's one `pd 0x11C2` row takes
+    # pd to 503 and the sum to 1,902, and #603's 37 takes `common` from 97 to
+    # 135 and the sum to 1,940.
+    _want_named = {"bank0": 697, "bank1": 605, "common": 135, "pd": 503}
     check("EC: functions_named is the index's own annotated=yes count per "
-          "program, 697 / 605 / 97 / 503, summing to 1,902",
+          "program, 697 / 605 / 135 / 503, summing to 1,940",
           {r["program"]: int(r["functions_named"]) for r in _mr} == _want_named
-          and sum(_want_named.values()) == 1902
+          and sum(_want_named.values()) == 1940
           and not annotation_ledger_mismatches(_mr, _ir, _ann),
           str(annotation_ledger_mismatches(_mr, _ir, _ann)[:2]))
     # The two-way ledger on the committed files, which is the whole substance of
-    # the §18 correction. 25 and 0, and they close the arithmetic exactly:
-    # 1,877 rows - 0 applied-but-unflagged + 25 named-without-a-row = 1,902.
-    # The 25 is 15 `auto` (Ghidra's own caseD_* / default labels on switch
+    # the §18 correction. 26 and 0, and they close the arithmetic exactly:
+    # 1,914 rows - 0 applied-but-unflagged + 26 named-without-a-row = 1,940.
+    # The 26 is 15 `auto` (Ghidra's own caseD_* / default labels on switch
     # dispatchers, which isPlaceholderName() does not list among its placeholder
-    # prefixes), 9 `call-target` and 1 `vector` -- pd 0x0000, where the only
+    # prefixes), 10 `call-target` and 1 `vector` -- pd 0x0000, where the only
     # annotation row at that address is `common`-scoped and the PD image has its
     # own separate function, so mine() correctly does not hand it over.
+    #
+    # The `call-target` count rose from 9 with issue #603, by exactly one: naming
+    # common 0x0A74 made the exporter rename the bare `ljmp 0x0A74` thunk at
+    # common 0x10FA after it, and a derived name lands in the index with no CSV
+    # row of its own -- which is why 37 rows moved 38 index rows.
     #
     # The 0 is the seventh and last of what #602 renamed. The seven were
     # `thunk_to_*` / `thunk_call_*`: they applied, and isPlaceholderName()
@@ -2279,7 +2298,11 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # assertion is deliberately prefix-free: the fault was never "the name
     # starts with thunk_", it was "the index cannot see a row whose name reads
     # as Ghidra's", and an assertion naming the prefix would go green again the
-    # moment a different reserved prefix was taken.
+    # moment a different reserved prefix was taken. They are the only such rows,
+    # and they are six `bank1` and one `pd` -- which is why the per-program
+    # figures above are 605 and 502, 503 on this tree once issue #470's one
+    # `pd 0x11C2` row lands on top, where an export taken before the rename
+    # reported 599 and 501 for the same 37 extra rows.
     #
     # That the count reached 0 rather than merely falling is the whole claim,
     # and it was not a short walk: issue #561's 17 `ff_filler_not_a_function_*`
@@ -2293,9 +2316,9 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     _seed = {}
     for _r in _nwr:
         _seed[_r.get("seed_basis", "?")] = _seed.get(_r.get("seed_basis", "?"), 0) + 1
-    check("EC: the ledger's 25 named-without-a-CSV-row split 15 auto / 9 "
+    check("EC: the ledger's 26 named-without-a-CSV-row split 15 auto / 10 "
           "call-target / 1 vector",
-          len(_nwr) == 25 and _seed == {"auto": 15, "call-target": 9,
+          len(_nwr) == 26 and _seed == {"auto": 15, "call-target": 10,
                                         "vector": 1},
           "%d row(s), %s" % (len(_nwr), _seed))
     # The fact, not a cause. Both faults that have ever produced a non-empty
@@ -2311,8 +2334,8 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
           "predates the row",
           _abu == [],
           str([(r["program"], r["addr"]) for r, _bk in _abu]))
-    check("EC: the two ledger directions close the arithmetic -- 1,877 - 0 + 25 "
-          "= the 1,902 functions named",
+    check("EC: the two ledger directions close the arithmetic -- 1,914 - 0 + 26 "
+          "= the 1,940 functions named",
           len(_ann) - len(_abu) + len(_nwr) == sum(_want_named.values()),
           "%d - %d + %d = %d, not %d"
           % (len(_ann), len(_abu), len(_nwr),
@@ -2358,7 +2381,7 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("EC: a raw and a normalised key count the same on both annotation "
           "CSVs, so normalising cannot merge two distinct keys",
           len({(r["scope"], r["addr"]) for r in _ann})
-          == len({annotation_key(r) for r in _ann}) == 1877
+          == len({annotation_key(r) for r in _ann}) == 1914
           and len({(r["file_offset"], r["target"]) for r in _ct})
           == len({call_target_key(r) for r in _ct}) == 5998)
 

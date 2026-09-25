@@ -27,13 +27,13 @@ void FUN_CODE_2acd(byte param_1)
     else {
       DAT_INTMEM_85 = DAT_INTMEM_85 + -1;
     }
-    FUN_CODE_2b6c(DAT_INTMEM_8b);
+    set_1304_mode_bits_then_write_1300_and_1308(DAT_INTMEM_8b);
     if (_2_3 == '\0') {
       cVar2 = '\0';
       do {
         if ((*(byte *)(cVar2 + -0x78) >> 6 & 1) != 0) {
           mul13_table_lookup_3b22(cVar2);
-          FUN_CODE_3b32();
+          load_dptr_high_from_a_low_from_code_table_3b32();
           dph_from_a_dpl_from_code_3b70();
           pcVar6 = uStack_1;
           bVar3 = read_dptr_to_r6_then_dptr_3a00_plus_13x();
@@ -61,7 +61,7 @@ void FUN_CODE_2acd(byte param_1)
       set_iram_ad_88_clear_33();
       return;
     }
-    FUN_CODE_30b5();
+    or_table_bytes_into_dptr_under_flag_87();
     FUN_CODE_2bcb(6);
     FUN_CODE_2b68();
     return;

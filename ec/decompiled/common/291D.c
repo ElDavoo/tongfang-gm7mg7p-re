@@ -32,7 +32,7 @@ void FUN_CODE_291d(void)
     bVar1 = DAT_INTMEM_41;
     FUN_CODE_27e3();
     if (bVar1 != 0) {
-      thunk_FUN_CODE_0a74();
+      rearm_timer1_then_set_bit_4_of_internal_41();
     }
   }
   return;

@@ -12,9 +12,9 @@ void FUN_CODE_3336(void)
   mul13_table_lookup_3b22(DAT_INTMEM_9e);
   FUN_CODE_3bb7();
   FUN_CODE_2ac1();
-  FUN_CODE_3acc(0);
+  store_r7_to_upper_internal_ram_byte_3acc(0);
   DAT_INTMEM_8c = DAT_INTMEM_9e + -0x38;
-  FUN_CODE_30b5();
+  or_table_bytes_into_dptr_under_flag_87();
   return;
 }
 

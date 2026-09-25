@@ -35,7 +35,7 @@ void match_0a49_loop_tail(byte *param_1,byte param_2,char param_3)
     param_3 = cVar3;
     if ((*pbVar4 >> 6 & 1) != 0) {
       mul13_table_lookup_3b22(cVar3);
-      FUN_CODE_3b32();
+      load_dptr_high_from_a_low_from_code_table_3b32();
       dph_from_a_dpl_from_code_3b70();
       pbVar8 = param_1;
       bVar5 = read_dptr_to_r6_then_dptr_3a00_plus_13x();

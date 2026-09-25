@@ -18,7 +18,7 @@
 undefined1 timer0_target_decrements_xdata_0a00(undefined1 param_1)
 
 {
-  FUN_CODE_0e5e();
+  timer0_reload_8a_06_8c_f1_clear_8d();
   _6_5 = 1;
   if (DAT_EXTMEM_0a00 != '\0') {
     DAT_EXTMEM_0a00 = DAT_EXTMEM_0a00 + -1;

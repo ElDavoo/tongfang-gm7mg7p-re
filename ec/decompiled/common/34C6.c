@@ -17,7 +17,7 @@ void FUN_CODE_34c6(byte param_1)
   
   pcVar3 = (char *)0xa47;
   if (2 < DAT_EXTMEM_0a47) {
-    FUN_CODE_355e(DAT_EXTMEM_0a47 - 3);
+    shared_tail_return_of_3459_and_34c6(DAT_EXTMEM_0a47 - 3);
     return;
   }
   if ((*(byte *)(DAT_EXTMEM_0a47 + 0x88) & 1) != 0) {
@@ -26,7 +26,7 @@ void FUN_CODE_34c6(byte param_1)
       bVar2 = DAT_EXTMEM_0a47;
       FUN_CODE_3c2f();
       if ((*pbVar1 >> 4 & 1) != 0) {
-        FUN_CODE_2f1d(1,0xf4);
+        store_0a4f_triplet_then_retry_loop(1,0xf4);
         if (bVar2 == 0) {
           FUN_CODE_3c2f();
           *pbVar1 = *pbVar1 & 0xef;
@@ -34,7 +34,7 @@ void FUN_CODE_34c6(byte param_1)
           pbVar1 = (byte *)(*pcVar3 + -0x73);
           *pbVar1 = *pbVar1 | 0x20;
           mul13_table_lookup_3b22(*pcVar3);
-          FUN_CODE_3bae();
+          load_dptr_high_from_a_low_from_code_table();
           *pcVar3 = '\x17';
           pbVar4 = &DAT_EXTMEM_0a47;
           mul13_table_lookup_3b3e(DAT_EXTMEM_0a47);
@@ -47,7 +47,7 @@ void FUN_CODE_34c6(byte param_1)
     }
     else {
       bVar2 = DAT_EXTMEM_0a47;
-      FUN_CODE_2f1d(1,0xf5);
+      store_0a4f_triplet_then_retry_loop(1,0xf5);
       if (bVar2 == 0) {
         FUN_CODE_3c2f();
         *pbVar1 = *pbVar1 & 0xfe;

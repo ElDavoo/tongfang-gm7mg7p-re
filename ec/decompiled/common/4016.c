@@ -22,7 +22,7 @@ void FUN_CODE_4016(undefined1 param_1,undefined1 *param_2)
   }
   else {
     FUN_CODE_434c();
-    FUN_CODE_3835(1);
+    store_r7_to_upper_internal_ram_byte_3835(1);
     if (DAT_EXTMEM_0a4b == -0x13) {
       bVar1 = FUN_CODE_4376(0x9c);
       bVar1 = bVar1 & 7;
@@ -30,7 +30,7 @@ void FUN_CODE_4016(undefined1 param_1,undefined1 *param_2)
     else {
       bVar1 = FUN_CODE_4376(0x9c);
     }
-    FUN_CODE_2e9c(1,bVar1);
+    store_0a4c_triplet_then_countdown_and_dispatch(1,bVar1);
   }
   FUN_CODE_161e(DAT_EXTMEM_0a47);
   return;

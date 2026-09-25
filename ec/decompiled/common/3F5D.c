@@ -9,7 +9,7 @@
 void FUN_CODE_3f5d(void)
 
 {
-  FUN_CODE_09a2(DAT_INTMEM_32);
+  call_0c7a_then_write_1300_1306(DAT_INTMEM_32);
   return;
 }
 

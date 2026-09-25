@@ -29,9 +29,9 @@ char FUN_CODE_4666(void)
     } while ((bVar1 & 0xfc) == 0);
     if ((bVar1 & 0x7c) != 0) {
       if ((bVar1 & 0x18) != 0) {
-        FUN_CODE_43a5();
+        per_channel_state_sequence_on_15byte_stride_table_43a5();
       }
-      FUN_CODE_4afb();
+      stop_timer1_and_set_et1_4afb();
       DAT_EXTMEM_0a1d = 0;
       cVar3 = FUN_CODE_46f9();
       return cVar3;
@@ -58,19 +58,19 @@ char FUN_CODE_4666(void)
     code_word_to_dptr_4a69();
     *puVar5 = 0xfe;
   } while (cVar3 != '\0');
-  cVar3 = FUN_CODE_4afb();
+  cVar3 = stop_timer1_and_set_et1_4afb();
   DAT_EXTMEM_0a1d = cVar3 + '\x01';
   cVar3 = TF1;
   if (cVar3 != '\0') {
-    FUN_CODE_4afb();
-    FUN_CODE_43a5(DAT_EXTMEM_0a17);
+    stop_timer1_and_set_et1_4afb();
+    per_channel_state_sequence_on_15byte_stride_table_43a5(DAT_EXTMEM_0a17);
     DAT_EXTMEM_0a1d = '\0';
   }
   pbVar4 = &DAT_EXTMEM_0a17;
   uVar2 = DAT_EXTMEM_0a17;
   FUN_CODE_4a5e(DAT_EXTMEM_0a17);
   *pbVar4 = *pbVar4 & 0xdf;
-  FUN_CODE_4a42(uVar2);
+  dptr_from_21byte_stride_index(uVar2);
   *pbVar4 = 0xfe;
   return DAT_EXTMEM_0a1d;
 }
