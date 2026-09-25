@@ -414,7 +414,7 @@ about the heading, not the sets.
   the machine, so nothing is deferred to a human who has one.
 - **No register `status:` changed.** `ec/annotations/registers.yaml` and
   `ec/ghidra/xdata-symbols.csv` are untouched; this tool reads neither.
-- **`disasm8051.decode()` is not called in a loop, and that is a workaround.**
+- ~~**`disasm8051.decode()` is not called in a loop, and that is a workaround.**
   `decode()` evaluates `OPCODE_LEN[d[i]]` *before* its own `i + n > len(d)` guard,
   so a window whose last byte is a 1-byte opcode raises `IndexError` — and a gap
   window ends on one routinely (`bank0,B5D2` is a bare `ret`). `walk()` does the
@@ -424,7 +424,29 @@ about the heading, not the sets.
   `decode()`) is recorded as a follow-up rather than done here**, to keep this a
   new-file change and off a file another agent may be touching. The self-test
   asserts that `decode()` still raises, so if it is fixed the guard's reason
-  disappears loudly rather than silently.
+  disappears loudly rather than silently.~~ **Done 2026-09-25, issue #679**: the
+  end-of-buffer check now runs before the index it guards, so `decode()` stops
+  cleanly on a short window rather than raising, and the two self-test
+  assertions that pinned the raise now pin the clean stop instead — the one in
+  `citation_gap_scan.py --self-test` and the one in
+  `ec/tools/test_citation_gap_scan.py`, renamed to say what it holds now. The
+  bounds contract has a suite of its own at `ec/tools/test_disasm8051.py`,
+  because its only assertion had been living inside another tool's suite, tied
+  to the workaround rather than to the decoder.
+  **`walk()` survives, and its reason is not the bounds.** It also carries the
+  per-instruction map-unassigned flag that the `not-code` verdict reads and a
+  `truncated` column saying the walk stopped on an instruction that did not fit
+  rather than on the end of the buffer; `decode()` produces a 3-tuple with
+  neither. It shares `OPCODE_LEN` and `mnemonic` with `decode()`, so there is
+  still no second opcode or mnemonic table here to keep in step.
+  Two things this retraction deliberately does not say. The fix is *"the guard
+  runs before the index it guards"*, not *"decode() is now safe"*: the
+  truncated-instruction case was already handled, by `i + n > len(d)`, and both
+  checks are pinned separately so a later folding of them into one is caught.
+  And `converges_from` keeps its own `OPCODE_LEN[d[i]]` shape — it is bounded by
+  `i < off` and exists to land *exactly on* `off`, which is a different
+  invariant with a different failure mode, so widening the fix to it would need
+  its own reason.
 - **`call_graph.py` is not changed, and neither is its table.**
   `ec/annotations/call-graph-callees.csv` is byte-identical across this change,
   which is the proof that no number in the ranking moved.
@@ -505,13 +527,43 @@ neighbour-edge pairs 32 | of those cited_by == inbound 15 | ranked rows 124 | ci
 
 **The tests that hold this in place.**
 `python3 ec/tools/citation_gap_scan.py --self-test` pins the population, the
-three verdicts, the `E57E` cut, the zero-gap shape, the overrun guard, the
-`not-code` criterion's byte test and the two image scopes, from oracles stated
-in the committed listings, `bank-call-targets.csv` and the 8051 map — never
-recorded from the tool. `--check` recomputes all 124 rows and fails on any byte
-difference. `ec/tools/test_citation_gap_scan.py` covers the pieces on their own:
-the window arithmetic including the slack, the overrun guard, the byte criterion
-against the `db` form, the scope-dependent boundary, and `--check` rejecting a
-CRLF table whose rows parse equal. All three run from
+three verdicts, the `E57E` cut, the zero-gap shape, the overrun guard — on both
+`walk()`'s `truncated` column and `decode()`'s clean stop at the end of its
+buffer — the `not-code` criterion's byte test and the two image scopes, from
+oracles stated in the committed listings, `bank-call-targets.csv` and the 8051
+map — never recorded from the tool. `--check` recomputes all 124 rows and fails
+on any byte difference. `ec/tools/test_citation_gap_scan.py` covers the pieces
+on their own: the window arithmetic including the slack, the overrun guard, the
+byte criterion against the `db` form, the scope-dependent boundary, and
+`--check` rejecting a CRLF table whose rows parse equal. ~~All three run from
 `.github/scripts/agent-gates.sh`; the unit suite also runs from
-`bash tools/run-tests.sh`.
+`bash tools/run-tests.sh`.~~ **Corrected 2026-09-25, issue #679**: only
+`citation_gap_scan.py --check` and `--self-test` run from the gate, and
+`tools/run-tests.sh` is run by no gate at all. `decode()`'s own bounds
+contract is held by `ec/tools/test_disasm8051.py`, which is a test of the
+decoder rather than of this tool. `citation_gap_scan.py --check` and
+`--self-test` are the two of these that run from
+`.github/scripts/agent-gates.sh`; the two unit suites run from
+`bash tools/run-tests.sh`, which **no gate calls** — its only caller is the
+conflict-resolution workflow's merge step, and **that runner is red today**,
+on `ec/tools/test_check_site_census.py::test_the_committed_join_holds` and
+`ec/tools/test_xdata_cluster_names.py`. Neither is this tool's, and both
+reproduce identically on `main` at `d9170a77`. A third was red until #751 landed
+the `ec/tools/test_inc_dptr_sites.py` row — `tools/test_readme_suite_table.py`,
+green at `d9170a77` and at this branch's merge base `8b76c965` alike — and is
+green in the merged tree, which holds that row and this branch's for
+`ec/tools/test_disasm8051.py`; `tools/README.md` records the same state.
+`docs/findings/0751-grader-self-test-gate.md`
+("Which of the issue's two options") records the causes and owns the
+follow-ups. That is worth separating explicitly, because the sentence above
+and "`tools/run-tests.sh` is green" are two different claims and only the
+first is true on this tree: naming a suite's runner says where it runs, not
+what came back. `disasm8051.py --self-test` runs
+nowhere in CI at all, which is the same gap `docs/agent-pipeline.md` records
+for `tools/run-tests.sh` as a whole. ~~…and issue #162 owns~~ **Corrected
+2026-09-25, issue #679**: #162 is closed, and `docs/agent-pipeline.md:349-350`
+records that it landed the runner *deliberately not the gate call*, so the
+wiring is owned by no open issue rather than by #162. `grep -rn
+"disasm8051.py --self-test" .github/` returns nothing, and no gate calls
+`tools/run-tests.sh`; closing that is an upstream `agent-pipeline` change and a
+re-copy, not a line here.

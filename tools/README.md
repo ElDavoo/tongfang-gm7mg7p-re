@@ -11,18 +11,32 @@ bash tools/run-tests.sh
 
 Every `test_*.py` under the repository, found by `find` — not a hardcoded list,
 so a suite in a directory that does not exist yet is picked up by having its
-file committed. There are twenty-eight today, 794 tests in all — both figures
+file committed. There are thirty today, 874 tests in all — both figures
 are what the runner below prints, one line per suite and a total on its last
 line — and each is a `unittest` suite standing in for a tool's own behaviour.
 Re-derive them by running it rather than by editing this sentence. Two of the
-twenty-eight are red at `HEAD` and are left red here:
+thirty are red in this tree and are left red here:
 `ec/tools/test_check_site_census.py` and `ec/tools/test_xdata_cluster_names.py`,
-both because their subject is stale. A third was red until the row for
-`ec/tools/test_inc_dptr_sites.py` landed below —
+both because their subject is stale. A third was red until #751 landed the row
+for `ec/tools/test_inc_dptr_sites.py`, and is green in this tree, which holds
+that row and the one for `ec/tools/test_disasm8051.py` this branch adds:
 `tools/test_readme_suite_table.py` is this table's own check, and a missing row
-is the one step a runner that finds suites by `find` cannot do for itself. The
-totals above count tests *run*, failing suites included, which is what the
-runner counts.
+is the one step a runner that finds suites by `find` cannot do for itself — a
+table missing either of those two rows would fail it. The totals above count
+tests *run*, failing suites included, which is what the runner counts.
+
+The totals are not a pass. On 2026-09-25 this tree's last line reads `30
+suite(s) run, 874 tests; one or more FAILED`, and the runner exits 1, on
+`ec/tools/test_check_site_census.py::test_the_committed_join_holds` and
+`ec/tools/test_xdata_cluster_names.py::TheGuardOffRegeneration.setUpClass` —
+the two named above, and nothing else. Both are red on each side of this merge
+and on `main` at `d9170a77` alike;
+`docs/findings/0751-grader-self-test-gate.md` records the causes and the
+follow-up issues that own them, so nothing here sets out to fix either.
+`test_readme_suite_table.py` checks the *set* of rows below and deliberately
+not these counts — its docstring gives the reason — so the paragraphs above
+are the only thing holding them, which is exactly why they have to be
+re-derived by running the runner rather than by arithmetic on a diff.
 
 | suite | what it stands in for |
 |---|---|
@@ -34,7 +48,8 @@ runner counts.
 | `ec/tools/test_check_testdata_row_claims.py` | `ec/tools/check_testdata_row_claims.py`'s rule over the **third** column of `ec/tools/testdata/README.md` — an address a row attributes to its fixture has to occur in a file that row names, across the whole set the first column resolves to rather than per file, so `0x075B` living in one of `0751-isolation-run-staged/`'s three CSVs is a claim the row makes and not a miss — with each of the six shapes pinned as a case from both sides: the page-boundary range, the `capture`/`page` word, the two-token watched-set span, the denial in both its spellings, the `ecrw.py dump` argument, the firmware code address filtered against `ghidra-functions.csv` minus `xdata-registers.csv`, and another capture's address told from a backticked date by its spelling; and the four-hex-digit width and the backticked-only predicate besides — then all nine rules dropped in turn and each asserted to make the committed tree check *more*, against the run as shipped rather than against a figure, so no added fixture row breaks any of them |
 | `ec/tools/test_citation_callers.py` | `ec/tools/citation_callers.py`'s two predicates on the citing listing: all-`0xFF` detection including the `-`-pad spelling every 1-byte instruction uses, the `ret` that is a five-token line a fixed-width reader never sees, a two-byte instruction that is not a fill run, a listing with no instruction line at all asserted **not** fill, header lines that must not parse as code, and transfer-target extraction across all four forms — plus that `call_graph.parse_listing` and `citation_callers.transfers` agree token for token, so the two tools cannot drift on the listing grammar |
 | `ec/tools/test_citation_frames.py` | `ec/tools/citation_frames.py`'s code/data frame test, on sentences taken from the committed annotations and truncated to the clause under test: the two that a whole-sentence rule gets backwards (`calls to 0x110A, 0x158E, …` is a code list, `the 0x07D0 sites` is a byte count), the `FILLER_BUDGET` limit stated as a rejection case, and the reason and population reporting |
-| `ec/tools/test_citation_gap_scan.py` | `ec/tools/citation_gap_scan.py`'s window arithmetic and three verdicts, on the real committed bytes: the listing end read from the byte column so a bare `ret` has a length, the next entry taken from the citing row's **own** scope, the zero-byte gap whose window is the neighbour's head, and the 3 bytes of slack that let a straddling `lcall` complete where a window stopping at the boundary decodes nothing — plus the overrun guard (`disasm8051.decode()` still raises, which is why the tool walks the committed tables itself), the `not-code` byte criterion against the looser `db` form, the scope-dependent boundary, and `--check` rejecting a CRLF table whose rows parse equal |
+| `ec/tools/test_citation_gap_scan.py` | `ec/tools/citation_gap_scan.py`'s window arithmetic and three verdicts, on the real committed bytes: the listing end read from the byte column so a bare `ret` has a length, the next entry taken from the citing row's **own** scope, the zero-byte gap whose window is the neighbour's head, and the 3 bytes of slack that let a straddling `lcall` complete where a window stopping at the boundary decodes nothing — plus the overrun guard (~~`disasm8051.decode()` still raises, which is why the tool walks the committed tables itself~~ **Corrected 2026-09-25, issue #679** — `decode()` stops rather than raising at the end of its buffer now, and `walk()` stays because it reports a window holding less than was asked for through `truncated` and carries the per-instruction map-unassigned flag), the `not-code` byte criterion against the looser `db` form, the scope-dependent boundary, and `--check` rejecting a CRLF table whose rows parse equal |
+| `ec/tools/test_disasm8051.py` | `ec/tools/disasm8051.py`'s bounds contract, on hand-built windows: the end-of-buffer check running before the index it guards, so a caller over-asking a one-byte `ret` window for four instructions gets that `ret` and a stop rather than an `IndexError`; `start == len(d)` and the empty buffer decoding to nothing; a `stop_at_flow` walk reaching the end; and the neighbouring, older guard it must not have been folded into — a 2-of-3-byte `lcall` yielding nothing, and the `ret` before it kept while the `lcall` that does not fit is not decoded |
 | `ec/tools/test_export_ownership.py` | `ec/tools/export_ownership.py`'s containment rule — the smaller body's statements at least `THRESHOLD` of the way into the larger, classes as connected components, one owner per class as the largest body with a tie to the lowest address — pinned one case per named rule, each asserting the direction a loosened rule would get backwards, so a class cannot quietly merge two routines that share a `return` or split one exported 42 ways, plus the refusals that stop `--check` and `--self-test` from answering for a derivation nobody committed, and the `--map` round trip through a scratch path |
 | `ec/tools/test_grade_0751_isolation.py` | `ec/tools/grade_0751_isolation.py`, the §4 grader of the `0x0751` capture procedure, against the committed `testdata/` fixtures |
 | `ec/tools/test_grade_gpu_door.py` | `ec/tools/grade_gpu_door.py`, the §5 grader of the `0x07D0` door capture: the ordering and its ms delta, both one-block shapes, a quiet capture, a byte that moved and came back, marks left unmerged, and the ten-column mapping |
