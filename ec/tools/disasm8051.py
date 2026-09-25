@@ -298,9 +298,16 @@ def mnemonic(d: bytes, i: int, addr: int = None) -> str:
 
 def decode(d: bytes, start: int, count: int, addr: int = None, stop_at_flow: bool = False):
     """Decode `count` instructions from d[start]. Yields (offset, raw, text).
-    `addr` is the runtime address of d[start], if it differs from start."""
+    `addr` is the runtime address of d[start], if it differs from start.
+
+    Stops cleanly rather than raising: the end-of-buffer check runs before the
+    index it guards, so a caller asking for more instructions than the buffer
+    holds gets what fitted, and an instruction that does not fit is not decoded
+    out of bytes that are not there. `count` is a request, not a promise."""
     i = start
     for _ in range(count):
+        if i >= len(d):
+            return
         n = OPCODE_LEN[d[i]]
         if i + n > len(d):
             return

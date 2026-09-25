@@ -232,9 +232,15 @@ the same reason. Not bolted onto this change.
   `citation-gap-scan.md` names it, and names `bank0,D091` as the wrong-credit
   precedent — so the table stays **byte-identical** here. This is the concrete
   consequence of the reading.
-- **The `disasm8051.decode()` `IndexError`** one-line fix stays recorded as its
+- ~~**The `disasm8051.decode()` `IndexError`** one-line fix stays recorded as its
   own follow-up in `citation-gap-scan.md`, kept there so this change stays off a
-  file another agent may hold.
+  file another agent may hold.~~ **Done 2026-09-25, issue #679**, landed in
+  #688: the guard now runs before the index it guards, so `decode()` stops
+  cleanly on a short window rather than raising — the decoder no longer walks off
+  the end of a gap window, which is what this bullet recorded. The fix and the
+  retraction are in `citation-gap-scan.md`, its bounds contract is pinned by the
+  new `ec/tools/test_disasm8051.py`, and this bullet is kept visible rather than
+  deleted so it stops reading as an open follow-up.
 
 Explicitly **not** touched here, so a reader does not think it was overlooked:
 `bank0,3AD6`'s not-code window and 0x3AF0–0x445D (left to **#543**, which is

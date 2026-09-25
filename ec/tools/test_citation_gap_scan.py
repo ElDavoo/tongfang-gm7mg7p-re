@@ -132,10 +132,12 @@ class WindowArithmetic(unittest.TestCase):
 
 
 class OverrunGuard(unittest.TestCase):
-    """`disasm8051.decode()` indexes `OPCODE_LEN[d[i]]` before its own bounds
-    check, so a window whose last byte is a 1-byte opcode raises rather than
-    stopping. A gap window ends on one routinely, which is why this tool walks
-    the same tables itself."""
+    """A window that holds less than the caller asked for ends the walk rather
+    than decoding past the end. A gap window ends on a 1-byte opcode routinely,
+    which is the shape the cases below are built from; `walk()` reports it
+    through `truncated`, and `disasm8051.decode()` now stops rather than
+    raising. This tool still walks the tables itself, for the unassigned flag
+    and the truncation column rather than for the bounds."""
 
     def test_a_window_that_is_one_1_byte_opcode_decodes_and_stops(self):
         got, truncated = insns(b"\x22", 0xB5D2)
@@ -167,19 +169,23 @@ class OverrunGuard(unittest.TestCase):
         self.assertEqual(got, [])
         self.assertFalse(truncated)
 
-    def test_disasm8051_decode_still_raises_which_is_why_this_tool_does_not_use_it(self):
-        # Asserted rather than assumed: if this stops being true the guard's
-        # reason is gone and `walk()` should be replaced by a `decode()` call
-        # rather than kept as a second walk.
-        with self.assertRaises(IndexError):
-            list(scan.D.decode(b"\x22", 0, 4, 0xB5D2))
+    def test_disasm8051_decode_stops_at_the_end_of_the_buffer(self):
+        # Asserted rather than assumed, and the assertion is the clean stop
+        # rather than the raise: `decode()`'s end-of-buffer check runs before
+        # the index it guards, so over-asking yields what fitted. This used to
+        # be pinned the other way round, as the reason this tool did not route
+        # through it; #679 made the check true and left the walk() above
+        # carrying the unassigned flag and the `truncated` column instead.
+        self.assertEqual(list(scan.D.decode(b"\x22", 0, 4, 0xB5D2)),
+                         [(0, b"\x22", "ret")])
 
     def test_the_tool_carries_no_second_opcode_table(self):
         # A length or mnemonic table of its own would be a second thing to keep
         # in step with `disasm8051.py`, and the drift would be silent in the
-        # quiet direction. Sharing the committed tables is the whole reason
-        # `walk()` exists rather than a call to `decode()`, so the absence is
-        # asserted rather than left to a reader's attention.
+        # quiet direction. `walk()` shares the committed tables rather than
+        # carrying its own, which is what keeps the two decoders in step now
+        # that both stop cleanly -- the absence is asserted rather than left to
+        # a reader's attention.
         for name in ('OPCODE_LEN', 'REL_OPCODES', 'FLOW_OPCODES', 'BIT_SFR',
                      'mnemonic', 'paged_target', 'relative_target'):
             self.assertFalse(hasattr(scan, name), name)

@@ -76,7 +76,14 @@ into `r2 -a 8051` with no stitching needed.
   and 124 pairs split 2 / 121 / 1, and 86 of the 99 rows turn out to have no
   gap at all, so the window is the head of the neighbouring export. It walks
   `disasm8051.py`'s own opcode and mnemonic tables rather than calling its
-  `decode()`, which raises `IndexError` on a window ending in a 1-byte opcode.
+  `decode()`. ~~The reason was that `decode()` raises `IndexError` on a window
+  ending in a 1-byte opcode.~~ **Corrected 2026-09-25, issue #679**: that was
+  the reason until #679 put the end-of-buffer check ahead of the index it
+  guards, so `decode()` stops cleanly on a short window now. `walk()` stays for
+  the two things it carries that `decode()` does not produce: the
+  per-instruction map-unassigned flag and the `truncated` column. The
+  retraction in full is in `tools/citation_gap_scan.py`, and the bounds contract
+  that pins it has a suite of its own at `tools/test_disasm8051.py`.
   `--report` writes `ghidra/gap-citation-scan.csv` and nothing else does;
   `--check` recomputes every per-pair verdict and fails on any diff;
   `--self-test` runs the known answers. `call_graph.py` is not changed by it and

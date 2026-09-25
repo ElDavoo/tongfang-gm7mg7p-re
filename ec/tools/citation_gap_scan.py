@@ -23,17 +23,27 @@ worked case proves it: the window `[0xE580, 0xE585)` decodes `12 e5 d6` to
 `lcall 0xE5D6` at 0xE580, and a window stopping at the boundary decodes nothing
 there at all.
 
-**`disasm8051.decode()` cannot be called in a loop over these windows.** It
-evaluates `OPCODE_LEN[d[i]]` *before* its own `i + n > len(d)` guard, so a
-window whose last byte is a 1-byte opcode walks off the end and raises
-`IndexError` -- and a gap window ends on one routinely (`bank0,B5D2` is a bare
-`ret`). `walk()` below does the same linear decode over the same committed
-tables and stops when the instruction does not fit. Sharing `OPCODE_LEN` and
-`mnemonic` means there is no second opcode or mnemonic table here to keep in
-step; the one-line upstream fix (`if i >= len(d): return`) is recorded as a
-follow-up in `docs/findings/citation-gap-scan.md` rather than done here, so
-that this stays a new-file change and stays off a file another agent may be
-touching.
+**`walk()` below is not a workaround for `disasm8051.decode()` raising, and it
+survives the fix for a different reason.** ~~**`disasm8051.decode()` cannot be
+called in a loop over these windows.** It evaluates `OPCODE_LEN[d[i]]` *before*
+its own `i + n > len(d)` guard, so a window whose last byte is a 1-byte opcode
+walks off the end and raises `IndexError` -- and a gap window ends on one
+routinely (`bank0,B5D2` is a bare `ret`). `walk()` below does the same linear
+decode over the same committed tables and stops when the instruction does not
+fit. Sharing `OPCODE_LEN` and `mnemonic` means there is no second opcode or
+mnemonic table here to keep in step; the one-line upstream fix
+(`if i >= len(d): return`) is recorded as a follow-up in
+`docs/findings/citation-gap-scan.md` rather than done here, so that this stays a
+new-file change and stays off a file another agent may be touching.~~
+**Corrected 2026-09-25, issue #679:** the end-of-buffer check now runs before
+the index it guards, so `decode()` stops cleanly rather than raising and the
+reason this tool did not route through it is gone. `walk()` stays for the two
+things it carries that `decode()` does not produce: the per-instruction
+map-unassigned flag that the `not-code` verdict reads, and the `truncated`
+column. Sharing `OPCODE_LEN` and `mnemonic` with `decode()` is a property of
+`walk()` rather than a reason for it, and it means there is no second opcode or
+mnemonic table here to keep in step; the retraction is in place in
+`docs/findings/citation-gap-scan.md`.
 
 **The unit is the pair, and there are more pairs than rows.** The gate
 enumerates `(callee, citer)` pairs, so one citing comment that names three
@@ -210,11 +220,13 @@ def nearer_in_bank(by_scope, scope, addr, next_addr):
 def walk(window, base):
     """`(site, raw, text, unassigned)` for each instruction the window holds.
 
-    The linear decode `disasm8051.decode()` does, with the bounds check in the
-    order that does not raise: `OPCODE_LEN` is indexed only after the remaining
-    length is known to cover it. An instruction that does not fit ends the walk
-    and is reported through `truncated`; it is not decoded, because there are
-    not the bytes for it.
+    The linear decode `disasm8051.decode()` does, carrying two things it does
+    not produce: the per-instruction map-unassigned flag, which is the
+    `not-code` criterion below, and a `truncated` column saying the walk
+    stopped on an instruction that did not fit rather than on the end of the
+    buffer. `OPCODE_LEN` is indexed only after the remaining length is known to
+    cover it, and an instruction that does not fit ends the walk and is
+    reported rather than decoded, because there are not the bytes for it.
     """
     out = []
     i = 0
@@ -657,11 +669,13 @@ def self_test():
     assert_that(verdict_of([(0x10, b"\x22", "ret", False)]) is None,
                 "and a clean window is not")
 
-    # The overrun guard. `decode()` evaluates `OPCODE_LEN[d[i]]` before its own
-    # `i + n > len(d)`, so asking it for more instructions than the buffer
-    # holds raises rather than stopping -- and a gap window ends on a 1-byte
-    # opcode routinely (`bank0,B5D2` is a bare `ret`). `walk()` is the same
-    # linear decode with the check the other way round.
+    # The overrun guard, on `walk()` and on `decode()`. A gap window ends on a
+    # 1-byte opcode routinely (`bank0,B5D2` is a bare `ret`), so the shape that
+    # matters is a window that holds less than the caller asked for. `walk()`
+    # reports that through `truncated`; `decode()` now stops rather than
+    # raising, which is what removed the reason this tool did not route
+    # through it, so the same window is asserted on both and the two answers
+    # are read together.
     got, truncated = walk(b"\x22", 0xB5D2)
     assert_that([t for _a, _r, t, _u in got] == ["ret"] and not truncated,
                 "a window that is one 1-byte `ret` decodes to that one "
@@ -674,14 +688,12 @@ def self_test():
     assert_that(_got == [] and truncated,
                 "while one that stops short of its 3 bytes decodes nothing and "
                 "reports the truncation rather than reading past the end")
-    try:
-        list(D.decode(b"\x22", 0, 4, 0xB5D2))
-        raised = False
-    except IndexError:
-        raised = True
-    assert_that(raised,
-                "disasm8051.decode() itself still raises on that window, which "
-                "is why this tool does not route through it")
+    assert_that([(a, t) for a, _r, t in D.decode(b"\x22", 0, 4, 0xB5D2)]
+                == [(0, "ret")],
+                "and disasm8051.decode() asked for four instructions over that "
+                "one yields the same `ret` and stops, which is why this tool "
+                "keeps walk() for the unassigned flag and the truncated column "
+                "rather than for the bounds check")
 
     # The population, and the pins the write-up quotes.
     ctx = context()
