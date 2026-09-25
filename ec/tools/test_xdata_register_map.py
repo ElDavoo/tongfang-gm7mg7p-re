@@ -229,7 +229,7 @@ class Refusals(unittest.TestCase):
         # The whole hazard is premised on this. If the defaults move, the
         # refusals above keep passing while meaning something else -- a bare
         # `--no-eq-guard` run would no longer be a threat to these two files,
-        # and the guard's reason at xdata_register_map.py:3605-3608 would be stale.
+        # and the guard's reason at xdata_register_map.py:3623-3626 would be stale.
         self.assertEqual(Path(xrm.OUT_REGISTERS).parent, EC / "annotations")
         self.assertEqual(Path(xrm.OUT_CLUSTERS).parent, EC / "annotations")
 

@@ -250,8 +250,8 @@ can change a bucket without changing anything on disk must not be reachable
 inside a mode whose whole claim is that nothing changed. It is also refused
 unless it is given `--out-registers` and `--out-clusters`, for the same reason
 one step removed: run bare it would write the pre-#178 census over the
-committed CSVs, and `--check` would then be green because the files agree with
-each other. It exists because
+committed CSVs, and `--check` would then go red, because the refusal above
+regenerates guard-on and a guard-off file cannot match. It exists because
 `annotations/xdata-06c2-06db-timers.md` §6a measures what the guard bought, and
 that measurement has to stay re-derivable from the committed tree forever. It
 could not be, from a commit pointer: `git log --oneline -S 'startswith("==")' --

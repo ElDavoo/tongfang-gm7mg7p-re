@@ -21,7 +21,7 @@ claims, and until now only the first was tested.
 
 | | claim | held by |
 |---|---|---|
-| 1 | it flips exactly the `==` snippets in `CLASSIFIER_SHAPE` and nothing else | the tool's own `--self-test`, at `xdata_register_map.py:2449-2466`, and `test_xdata_cluster_names.py::TheGuardOffRegeneration`, which runs the census the flag produces — but that class has been in error in `setUpClass` since #528 and runs none of its six cases (see below), so of the two only the first is green today |
+| 1 | it flips exactly the `==` snippets in `CLASSIFIER_SHAPE` and nothing else | the tool's own `--self-test`, at `xdata_register_map.py:2467-2487`, and `test_xdata_cluster_names.py::TheGuardOffRegeneration`, which runs the census the flag produces — but that class has been in error in `setUpClass` since #528 and runs none of its six cases (see below), so of the two only the first is green today |
 | 2 | it is refused with `--check` and with `--self-test` | `Refusals.test_it_is_refused_with_check`, `..._with_self_test` |
 | 3 | it is refused unless given scratch `--out-registers` **and** `--out-clusters` | `Refusals.test_it_is_refused_bare_with_the_default_outputs`, `..._with_scratch_registers_only`, `..._with_scratch_clusters_only` |
 
@@ -35,7 +35,7 @@ the tree is keyed to.
 
 **That run is caught, but loudly and by other tools — not silently, and not by
 these two files agreeing with each other.** `--check` is refused with
-`--no-eq-guard` (guard 1, `:3600`), so it always regenerates the *guard-on*
+`--no-eq-guard` (guard 1, `:3618`), so it always regenerates the *guard-on*
 census and compares the on-disk file to that. A guard-off file can never match
 it, by construction: an on-disk guard-off file and a fresh guard-on generation
 disagree by definition, not by accident. So the harm a bare run gets to do is
@@ -67,7 +67,7 @@ this tree's and move as the tree's citations do; the split is what makes 45
 reconcilable with a 37 measured over `ec/annotations/` alone.
 
 **The tool's own comment said otherwise, and said so in this write-up's first
-draft too.** `xdata_register_map.py:3605-3608` claimed, from #528, that a bare
+draft too.** `xdata_register_map.py:3623-3626` claimed, from #528, that a bare
 run leaves `--check` green "because the files now agree with each other". That
 is false on this tree, for the reason above, and the comment is corrected in
 place here rather than left standing for the next reader to re-derive from.
@@ -117,9 +117,9 @@ did not distinguish, and row five now fails twice where it failed once.
 
 | mutation | what the suite said | census CSVs after |
 |---|---|---|
-| guard 2 (the `or` at `:3609-3610`) moved below the dispatch | 3 failures, each `Lists differ: ['write'] != []` | byte-identical |
+| guard 2 (the `or` at `:3627-3628`) moved below the dispatch | 3 failures, each `Lists differ: ['write'] != []` | byte-identical |
 | guard 2 moved below the `if args.*` chain but above the fallthrough | **12 tests, green** | byte-identical |
-| guard 1 (`:3600`) moved below the dispatch | 2 failures, `['check']` and `['self_test']` | byte-identical |
+| guard 1 (`:3618`) moved below the dispatch | 2 failures, `['check']` and `['self_test']` | byte-identical |
 | guard 1 deleted outright | 2 failures, `['check']` and `['self_test']` | byte-identical |
 | `--no-eq-guard` made a no-op in `census_and_groups()` | 2 failures: `3195 not greater than 3195`, and the not-a-copy case | byte-identical |
 
@@ -219,9 +219,9 @@ Its `GUARD` recipe is the literal line pair
 ```
 
 and that pair **no longer exists in the tool.** #528 threaded the flag through
-as a parameter — `store_target(text, start, end, eq_guard=True)` at `:1202`,
-`if eq_guard and stripped.startswith("==")` at `:1225`, carried to `scan()` at
-`:1586` and flipped by `not args.no_eq_guard` at `:2274` — so deleting the two
+as a parameter — `store_target(text, start, end, eq_guard=True)` at `:1220`,
+`if eq_guard and stripped.startswith("==")` at `:1243`, carried to `scan()` at
+`:1604` and flipped by `not args.no_eq_guard` at `:2292` — so deleting the two
 lines no longer removes the rejection; it removes a conditional and the guard
 stays on for every run. The suite's own guard against exactly this fires
 first, which is why the error is an `AssertionError` and not a silently
@@ -276,7 +276,7 @@ issue absorbs:
 
 ```console
 $ python3 ec/tools/check_cluster_citations.py
-docs/findings.md:5483: 0x0800 is not a member of any cluster this line names (`main-ec-081`); it is a member of `main-ec-100`
+docs/findings.md:5520: 0x0800 is not a member of any cluster this line names (`main-ec-081`); it is a member of `main-ec-100`
 1 citation(s) disagree with ec/annotations/xdata-clusters.csv
 ```
 
@@ -327,11 +327,34 @@ not on a silent one.
   code is indistinguishable from a guard firing.
 - **The `--self-test` redness on `main`.** Pre-existing, and #566's gate
   comment names the cause and deliberately leaves the mode out of the gate: the
-  annotation CSV names three functions `ec/decompiled/index.csv` still spells
-  `FUN_CODE_*`, so the "annotation CSV and index.csv agree" assertion fails and
-  clearing it means re-exporting the generated decompiled tree. `--check` is no
-  longer part of this — it is green, and #566 wired it into the gate. Making
-  `--self-test` green here would silently absorb #512 and #433.
+  annotation CSV has **renamed 17** functions that `ec/decompiled/index.csv`
+  still spells `FUN_CODE_*`, so the "annotation CSV and index.csv agree" check
+  at `xdata_register_map.py:2431` fails and clearing it means re-exporting the
+  generated decompiled tree. The direction is the easy half to get backwards:
+  the hand-annotated side is the one that moved — all 17 are
+  `ff_filler_not_a_function_*`, the names #561's byte scan gave them — and
+  `index.csv` is the side still holding Ghidra's placeholder. All 17 are
+  `common` listings inside `docs/findings.md` §28's unprogrammed
+  `0x728F`-`0x7FFF` band, and not one of them is in the census, so the redness
+  is entirely outside what the census measures. This bullet first gave the count
+  as three; a reader who goes looking for that 3 will find it in a different
+  assertion, the `--no-eq-guard` block's own "flips exactly the 3 `==` snippets"
+  line at `:2482-2484`. The 17 is the tool's own loader pair, so it needs no
+  interpretation:
+
+  ```console
+  $ python3 -c "
+  import sys; sys.path.insert(0, 'ec/tools')
+  import xdata_register_map as xrm
+  funcs, _ = xrm.load_index(); names = xrm.load_names(funcs)
+  bad = [(k, r['name']) for k, r in funcs.items() if names[k][0] != r['name']]
+  print(len(bad), 'disagreements, all', sorted({k[0] for k, _ in bad}))
+  "
+  17 disagreements, all ['common']
+  ```
+
+  `--check` is no longer part of this — it is green, and #566 wired it into the
+  gate. Making `--self-test` green here would silently absorb #512 and #433.
 - **Agreement with `test_xdata_cluster_names.py::guard_off()`.** That case
   reaches the same guard-off census by a different mechanism — deleting the
   `==` guard line rather than passing the flag — so the two are independent
@@ -340,7 +363,7 @@ not on a silent one.
 - **`--export-ownership`'s own pair of refusals.** #565 added a second flag
   carrying the same two guards for the same two reasons, immediately below the
   `--no-eq-guard` pair and immediately above the same dispatch
-  (`xdata_register_map.py:3626-3635`), and this suite pins only the
+  (`xdata_register_map.py:3644-3653`), and this suite pins only the
   `--no-eq-guard` half. The tripwire would catch a relocated `--export-ownership`
   guard just as well — it mocks the same nine entry points — so the coverage is
   one flag short of what the dispatch now carries, and that is recorded here
