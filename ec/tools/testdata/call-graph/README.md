@@ -42,3 +42,8 @@ caller, which is what makes `callers` != `named_callers` checkable.
 Not a model of the real tree, and not meant to be: the real censuses are in
 `ec/annotations/call-graph.md`, and the real `.asm` files are generated. This
 tree is hand-written and hand-checked, which is what makes it an oracle.
+
+The `evidence` column in `ghidra-functions.csv` keeps the real tree's
+`ec/decompiled/…` shape for consistency and is **not resolved on disk** — the
+self-test never reads it, and the fixture-only `0x0D20`/`0x0D40` have no
+counterpart under `ec/decompiled/`.

@@ -5260,7 +5260,7 @@ discover it by counting 44 against a 45-row table. `FILLER_BUDGET` stays at 1 �
 7 are jump-table claims settled by reading the table bytes out of
 `ec/firmware/GMxMGxx_11.800` (`0x8A80`, `0x9AD2`, `0xAD50`, `0xC90C`,
 `0xD20D` — the last corroborated by the `lcall 0xCC2D` that follows it);
-13 name another function's *body*, an *exit* or a comparable listing, where no
+12 name another function's *body*, an *exit* or a comparable listing, where no
 transfer is claimed in either direction; 8 are XDATA mentions and true
 rejections; and 2 are neither — one is a code reading the *same comment*
 retracts (`bank0,D091`'s ACALLs, which `decode_index_table.py --at 0x0D148`

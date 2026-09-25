@@ -16,7 +16,7 @@ census, the collision set, the corrections, and the limits. `docs/findings.md`
 canonical-width rule it succeeds.
 
 What `python3 ec/tools/call_graph.py` prints, and what this file quotes from
-it: the 382/152/185/45 partition, the 99 ranked callees and 142 citing
+it: the 382/153/185/44 partition, the 99 ranked callees and 142 citing
 comments, the 67 candidates naming an unranked callee, the 45 cross-program
 rejections and the 3 of those reading as a code frame, and 0x1C00's 20/19/1.
 **The remaining figures are not printed by that run** and are derived from the
@@ -40,11 +40,11 @@ worth having — before it there was no way to ask what the matcher had seen.
 
 | verdict | pairs | |
 |---|---:|---|
-| kept — a code frame governs the mention | 152 | enters `cited_by` |
+| kept — a code frame governs the mention | 153 | enters `cited_by` |
 | rejected — a data frame, or another program's row | 185 | reported, not dropped |
-| undecided — no frame inside the window | 45 | reported, not defaulted |
+| undecided — no frame inside the window | 44 | reported, not defaulted |
 
-Those 152 kept pairs are 107 distinct callees, 99 of which the table can rank.
+Those 153 kept pairs are 108 distinct callees, 99 of which the table can rank.
 Before the guard the same matcher credited 315 comments to 141 callees, **so
 142 of the 315 — 45% — were calls at all; 138 were rejected, 136 of them in a
 data frame and 2 on program identity alone, and 35 are undecided.** The ranked
