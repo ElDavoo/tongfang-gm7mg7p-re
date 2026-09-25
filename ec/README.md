@@ -325,7 +325,10 @@ into `r2 -a 8051` with no stitching needed.
   scope. Its
   offline suite is `tools/test_grade_0751_isolation.py`, and
   `bash tools/run-tests.sh` from the repo root runs it with every other
-  `test_*.py` in the repository (`../tools/README.md`). It runs against the
+  `test_*.py` in the repository (`../tools/README.md`). `--self-test` runs that
+  one suite by name, in a subprocess, and hands back its exit code; the gate
+  call for it is prepared at `../docs/ci/agent-gates-0751-self-test.patch`, and
+  no gate runs it until a human lands that. The suite runs against the
   committed `tools/testdata/` captures and is not evidence about the machine.
 - **`tools/ec_timer_capture.py`** — the Linux read-only counterpart of
   `../windows/tools/ec_watch.py`: samples an explicit address list through the
