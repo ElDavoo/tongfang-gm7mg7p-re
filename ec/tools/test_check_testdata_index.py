@@ -86,6 +86,16 @@ class ScratchIndex:
         os.makedirs(path, exist_ok=True)
         return path
 
+    def write_index(self, index=None):
+        """Put the index beside the tree, where a run of the tool would find it.
+
+        `main()` opens `<root>/README.md` and parses a tally out of what it
+        printed, so a case pointing it at a scratch tree has to leave the index
+        on disk the way a committed tree has it. Nothing is kept in a variable
+        a run never reads.
+        """
+        self.write("README.md", self.index if index is None else index)
+
     def check(self, index=None):
         """The tool's `Result` for this scratch tree.
 
@@ -93,7 +103,7 @@ class ScratchIndex:
         reads it from `testdata/README.md` and a case that bypassed that would
         pass against a reader no run ever uses.
         """
-        self.write("README.md", self.index if index is None else index)
+        self.write_index(index)
         return ctti.check(self.testdata)
 
     def verdicts(self, index=None):
@@ -383,28 +393,79 @@ class ParsesOnlyTheFirstColumn(unittest.TestCase):
                          [])
 
 
-class TheCommittedTree(unittest.TestCase):
-    """The real thing: the index and the tree beside it currently agree.
+class TheReachedSomethingRule:
+    """The one rule about a run's tallies, over whatever tree it is handed.
 
-    This goes red on any future edit that drifts the index and the tree apart in
-    either direction. It does not go red on an edit to what a row says its
-    fixture is: that is the third column, which this tool does not read, and
-    which both of the index's past hand-repairs were.
+    `check_testdata_index.py`'s docstring says there is no floor on either tally
+    and that the suite asserts non-emptiness instead. That is this. The root is
+    a parameter rather than `ctti.TESTDATA` so the rule is a property of a run
+    and can be pointed at a scratch tree beside the committed one; the two are
+    held to the same method, so neither half can be edited alone.
     """
 
-    def run_tool(self):
+    def run_tool(self, root):
+        """(exit code, stdout, stderr) for one run of the tool over `root`.
+
+        `main()` reads the committed `TESTDATA` and `INDEX` as module globals
+        and has no flag pointing it anywhere else, so a scratch tree is reached
+        by patching both -- `report()` prints `INDEX` on its summary line, so
+        patching only the first would have a run over a `tempfile` report a
+        disagreement against the committed index. Both go back in the same
+        `finally` that already restored `sys.argv`, for the reason `tools/`
+        §16 records for the suites that used to leave a fake installed.
+        """
         out, err = io.StringIO(), io.StringIO()
-        argv = sys.argv
+        argv, was = sys.argv, (ctti.TESTDATA, ctti.INDEX)
         sys.argv = ['check_testdata_index.py', '--check']
+        ctti.TESTDATA, ctti.INDEX = root, os.path.join(root, "README.md")
         try:
             with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
                 rc = ctti.main()
         finally:
             sys.argv = argv
+            ctti.TESTDATA, ctti.INDEX = was
         return rc, out.getvalue(), err.getvalue()
 
+    def assert_the_run_reached_something(self, root):
+        """Assert a run over `root` read something, and that it read it.
+
+        Each tally non-zero, and `tokens > rows` on top of them. The tallies are
+        parsed out of what the run *printed* rather than read off a `Result`,
+        because the claim being pinned is the docstring's: they print whether
+        or not they found anything, since a run that checked nothing and a run
+        that found nothing look the same from the exit code alone. The parse is
+        part of what is held here, and the three are named in each message so a
+        case that is refused knows which clause said so.
+        """
+        rc, out, err = self.run_tool(root)
+        self.assertEqual(rc, 0, err)
+        directories = int(out.split(' testdata/ ')[0])
+        rows = int(out.split(' table row(s)')[0].split('\n')[1])
+        tokens = int(out.split('path token(s): ')[0].split(' table row(s), ')[1])
+        for name, tally in (('directories', directories), ('rows', rows),
+                            ('tokens', tokens)):
+            self.assertGreater(
+                tally, 0,
+                f"the run reached no {name}: a run that checked nothing and a "
+                "run that found nothing look the same from the exit code alone")
+        self.assertGreater(tokens, rows,
+                           "one row holds several paths; a token count that "
+                           "equals the row count means only the first is read")
+
+
+class TheCommittedTree(TheReachedSomethingRule, unittest.TestCase):
+    """The real thing: the index and the tree beside it currently agree.
+
+    This goes red on any future edit that drifts the index and the tree apart in
+    either direction. It does not go red on an edit to what a row says its
+    fixture is: that is the third column, which this tool does not read, and
+    which both of the index's past hand-repairs were. It does not go red on the
+    tree being a different size either, which is what
+    `TheTalliesAreNotAFloor` is about.
+    """
+
     def test_the_committed_index_and_tree_agree(self):
-        rc, out, err = self.run_tool()
+        rc, out, err = self.run_tool(ctti.TESTDATA)
         self.assertEqual(rc, 0, err)
         self.assertIn('table row(s)', out)
 
@@ -413,14 +474,7 @@ class TheCommittedTree(unittest.TestCase):
         # reason, and the tallies are the only way to tell. This is not a floor
         # on coverage: nothing says the numbers have to stay where they are,
         # only that a run reaching nothing fails.
-        _, out, _ = self.run_tool()
-        directories = int(out.split(' testdata/ ')[0])
-        rows = int(out.split(' table row(s)')[0].split('\n')[1])
-        tokens = int(out.split('path token(s): ')[0].split(' table row(s), ')[1])
-        self.assertEqual((directories, rows, tokens), (13, 27, 34))
-        self.assertGreater(tokens, rows,
-                           "one row holds several paths; a token count that "
-                           "equals the row count means only the first is read")
+        self.assert_the_run_reached_something(ctti.TESTDATA)
 
     def test_the_committed_call_graph_directory_is_self_indexed(self):
         # `call-graph/` is the case the issue names: a directory the top-level
@@ -462,6 +516,103 @@ class TheCommittedTree(unittest.TestCase):
         for line in lines:
             self.assertNotIn('/../', line)
             self.assertFalse(line.startswith('/'), line)
+
+
+class TheTalliesAreNotAFloor(ScratchIndex, TheReachedSomethingRule,
+                             unittest.TestCase):
+    """`TheReachedSomethingRule`, pointed at scratch trees, from both sides.
+
+    `ParsesOnlyTheFirstColumn`'s docstring already names the failure this class
+    walked into one level up -- "a `table_cells()` that found nothing matches an
+    empty tree, and an empty tree is green" -- and the suite answered the parser
+    for it with a case, while answering the run itself with three hand-typed
+    integers. So the one check that a run reached anything was the one thing a
+    new fixture directory turned red, as a bare
+    `AssertionError: (14, 28, 35) != (13, 27, 34)`, in a suite whose module
+    docstring says the only thing that notices a silent check is a reader who
+    has already been misled.
+
+    Two trees either side of today's size, so the assertion cannot be reading a
+    minimum, and four it still refuses, so it cannot be reading nothing. Every
+    case calls the method the committed case calls: a floor reinstated in the
+    helper fails here, and a clause dropped here fails on the committed tree
+    being the wrong size to notice.
+    """
+
+    def test_a_tree_carrying_more_of_them_than_today_is_green(self):
+        # The event #744 is about: a fourteenth `0751-isolation-run-<case>/`
+        # arriving with its own row. Bigger than the committed tree on one
+        # tally and smaller on the other two, which is the strongest form of
+        # the pin -- any assertion reading a size, a minimum or an exact set,
+        # refuses this tree. The directories are named in prose rather than by a
+        # row each, which leaves the table carrying the one two-token row below.
+        names = [f"0751-isolation-run-case{n:02d}" for n in range(14)]
+        for name in names:
+            self.mkdir(name)
+            self.write(f"{name}/a.csv")
+        self.write(f"{names[0]}/c.csv")
+        self.prose(" ".join(f"`{name}/`" for name in names) + "\n")
+        # The second token is load-bearing: a one-token table leaves
+        # `tokens == rows`, the helper's `tokens > rows` refuses it, and the
+        # case would be proving the wrong thing.
+        self.row(f"`{names[0]}/a.csv` + `{names[0]}/c.csv`")
+        self.write_index()
+        self.assert_the_run_reached_something(self.testdata)
+
+    def test_a_tree_carrying_fewer_of_them_than_today_is_green(self):
+        # The other direction a floor would catch, and the same two edits from
+        # the other end: a directory removed, a row dropped. One of each where
+        # the committed tree has thirteen and twenty-seven, so an assertion
+        # reading a minimum is caught here even if the case above did not
+        # reach it.
+        self.mkdir("0751-isolation-run-only")
+        self.write("0751-isolation-run-only/a.csv")
+        self.write("0751-isolation-run-only/c.csv")
+        self.prose("`0751-isolation-run-only/` is the set the procedure names.\n")
+        self.row("`0751-isolation-run-only/a.csv` + `0751-isolation-run-only/c.csv`")
+        self.write_index()
+        self.assert_the_run_reached_something(self.testdata)
+
+    def test_an_empty_tree_reaches_nothing(self):
+        # The rule is not "any tree passes". `(0, 0, 0)` is the vacuous check
+        # the module docstring is about, on the tally side, and the clause that
+        # refuses it names the first tally because that is the one that is zero.
+        self.write_index()
+        with self.assertRaises(AssertionError) as caught:
+            self.assert_the_run_reached_something(self.testdata)
+        self.assertIn('directories', str(caught.exception))
+
+    def test_a_tree_with_a_directory_and_a_rowless_index_reaches_no_row(self):
+        # `ParsesOnlyTheFirstColumn`'s shape one level up: a `table_cells()`
+        # that reads nothing over a tree that has something is the same
+        # vacuous pass as an empty tree, and `rows == 0` is the clause that
+        # catches it. The header is there and carries no row, which is what a
+        # moved table header or a broken split would leave behind -- and the
+        # directory is named in prose, so the run still exits 0 and only the
+        # tally says what happened.
+        self.mkdir("0751-isolation-run-rowless-index")
+        self.write("0751-isolation-run-rowless-index/a.csv")
+        self.prose("`0751-isolation-run-rowless-index/` is named in prose only.\n")
+        self.write_index()
+        with self.assertRaises(AssertionError) as caught:
+            self.assert_the_run_reached_something(self.testdata)
+        self.assertIn('rows', str(caught.exception))
+
+    def test_one_token_per_row_is_refused(self):
+        # The sharpest of the five, because every other clause passes here: a
+        # directory is reached, a row is read, `rc` is 0. `tokens > rows` is the
+        # only thing standing between this tree and a green run, which is what
+        # stops that clause being dropped as redundant -- the committed tree
+        # carries six multi-path cells today and would be the only thing left to
+        # notice.
+        self.mkdir("0751-isolation-run-one-token")
+        self.write("0751-isolation-run-one-token/a.csv")
+        self.prose("`0751-isolation-run-one-token/` is the set the procedure names.\n")
+        self.row("`0751-isolation-run-one-token/a.csv`")
+        self.write_index()
+        with self.assertRaises(AssertionError) as caught:
+            self.assert_the_run_reached_something(self.testdata)
+        self.assertIn('only the first is read', str(caught.exception))
 
 
 if __name__ == '__main__':
