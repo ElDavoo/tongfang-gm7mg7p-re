@@ -6191,3 +6191,46 @@ re-measured because the new comments cite more addresses. **No register
 `status:` changed, no `registers.yaml` row was added, no hardware was involved,
 and no Ghidra project was written** — the export-only build copied the committed
 project to scratch.
+
+## 31. `--export-ownership`'s two refusals are pinned too, and the direction reverses (2026-09-25, issue #604)
+
+The write-up is
+`docs/findings/xdata-export-ownership-refusal-contract.md`; this is the
+summary. The second census flag's pair of refusals — the same two guards, for
+the same two reasons, immediately above the same dispatch as `--no-eq-guard`'s
+— was held by nothing, and the gap was one flag short by accident rather than by
+design: the tripwire mocks all nine of `main()`'s mode entry points and never
+reads the flag argument, so it covers a second flag for free. The `Refusals`
+cases now loop over both flags as `subTest` runs, so a failure names the flag it
+is about and a duplicated class — the copy that stops being updated when a guard
+is rewritten — cannot exist. **The accepted run is the one genuinely new piece,
+and its direction is the mirror image of §29's:** `--no-eq-guard` removes a
+rejection so the `write` total can only rise, while `--export-ownership` turns a
+de-duplication pass *on* so the `refs` total can only fall (14,822 → 9,404). The
+sibling's `assertGreater` is therefore not reusable here, and the new case
+asserts `assertLess` and is named for the direction. Every figure is asserted
+as a **relation**, never a count, and the pinned numbers stay on
+`xdata-export-ownership.md` §4-§5: the sign, both sides of the `cluster_key`
+renumbering (35 of 430 break, 395 survive) and of the hand names (5 of 10 break,
+5 survive), and `no address is lost` — the one thing the pass must never do, and
+the one `--self-test` cannot be the route to, for the same reason the flag is
+refused with it. All four guards were broken in a scratch `ec/` copy to show
+the suite goes red with `Lists differ: ['write'] != []` or `['check']` /
+`['self_test']`, with the mirror's census CSVs byte-identical after each;
+`--no-eq-guard`'s half stayed green throughout, because its guards are not what
+was broken. `tools/run-tests.sh` is **21 of 23 suites, 609 tests** on this tree,
+and the two failures are §29's own — `test_check_site_census.py`'s `D091.c`
+line-pin drift and `test_xdata_cluster_names.py::TheGuardOffRegeneration` — both
+of which reproduce on a pristine `main`. The two suites that had gone red since
+§29 was written, `test_export_ownership.py`'s `FUN_CODE_7401` and
+`test_check_cluster_citations.py`'s §26 prose, are green here because `main`
+re-exported the tree under them in the meantime, not because this work absorbed
+them. The census pair moved for the same reason and by the same hand: #267's
+three `registers.yaml` rows take `refs` to 14,822 and the de-duplicated 9,404,
+moving `read` by three on each side and nothing else. Every relation above is
+unmoved by that, which is what relations are for. Nothing here is an EC
+finding, no register `status:` changed, no census
+CSV was regenerated, and `--check` is green before and after, which this issue's
+requirement reads as "this changed nothing about the verdict". #591 (the
+`export_ownership.py` tool in no gate), #512 and #528's recipe regression are
+left open and untouched.
