@@ -201,11 +201,125 @@ passing under `python3 ec/tools/test_grade_0751_isolation.py` (the two
 difference are this one; the count is the merged tree's, `main` plus these
 three):
 
+*(**Correction, 2026-09-25, issue
+[#726](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues/726).** The two
+figures are not wrong, and were not wrong when written: 72 + 2 = 74 is this
+change's two new methods, and 72 is what `main` held when this branch cut. Three
+things are. **The parenthetical reads as a delta of three** — "the count is the
+merged tree's, `main` plus these three" cannot be reconciled with 74, and the
+delta is two added methods plus one *updated* test, which is what the third row
+of the table below says in its own words ("unchanged in what it is for, updated
+for the narrowing"). **The section is headed "What is pinned" and read as
+current while it was 20 tests stale:** on the tree this file now sits in the
+suite runs **94**. And **the two figures are each right against a different
+revision, which the sentence does not name** — see the `565b6f3c` note below.
+The wrong reading is left above rather than edited out.)*
+
+The count is `python3 -m unittest test_grade_0751_isolation` from `ec/tools`,
+the form the neighbouring write-ups use
+([`0751-grader-unplaced-window-checks.md`](0751-grader-unplaced-window-checks.md):198-199,
+[`0751-stage-mark-labels.md`](0751-stage-mark-labels.md):247,
+[`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md):207-208). The
+`python3 ec/tools/test_grade_0751_isolation.py` spelling this section used works
+equally well and is **not** what is being corrected: the suite locates its
+fixtures off `Path(__file__).parent` at
+`ec/tools/test_grade_0751_isolation.py:16`, so the working directory does not
+matter either way.
+
+Re-derived rather than restated, one count per commit that touches the suite
+plus the two commits that did not move it, each row self-labelling
+(`grep -c "    def test_"` at each revision, which agrees with the run at the
+tip). Every step is attributed to a commit, so **no step is a residual**:
+
+| revision | count | step | what it is |
+|---|---|---|---|
+| `565b6f3c` | 69 | | #498 as #502 — the revision the "before" transcript at :46-50 is taken from |
+| `004ad3d7` | 72 | +3 | #529 as #537 — the last suite-moving commit before this branch, which is why `main` held 72 when it cut |
+| `b3f30987` | 74 | +2 | #530 as #533, this change |
+| `7a26a932` | 76 | +2 | #532 as #538 |
+| `619afcb2` | 82 | +6 | #472 as #638, [`0751-stage-mark-labels.md`](0751-stage-mark-labels.md):246 |
+| `3f713159` | 82 | — | #500 as #657, assertions added inside an existing method |
+| `f0f3b251` | 88 | +6 | #664 as #674, [`0751-early-exit-row.md`](0751-early-exit-row.md):230 |
+| `0a1fef97` | 88 | — | #549 as #710, `test_ec_watch.py` only |
+| `1e0bc0f2` | **93** | +5 | #548 as #712, [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md):210 |
+| `061b2213` | 93 | — | #707 as #723, #728's base; touches no 0751 test file |
+| `a393229b` | **94** | +1 | #725 as #736, [`0751-grader-moved-unplaced-scope.md`](0751-grader-moved-unplaced-scope.md):201-202, the tip |
+
+The 74 to 94 is +20, and it is +2 (→76) +6 (→82) +6 (→88) +5 (→93) +1 (→94)
+with the two zero steps contributing nothing. The +6 at `619afcb2` is seven
+methods added and one renamed:
+`test_a_mark_that_is_not_one_of_the_three_forms_is_an_error` became
+`test_a_mark_that_is_not_one_of_the_forms_is_an_error`, because #472 extended
+§3's forms from three to six. That rename is the subject of its own correction
+further down this file.
+
+**On which `main` the 72 is counted against.** `565b6f3c` is named at :46 as
+this branch's merge base, and it is the right revision for the *tool* transcript
+above — but it is an **ancestor** of this change whose suite has **69**, not 72,
+because #529 landed between them and added the three cases
+[`0751-grader-unplaced-window-checks.md`](0751-grader-unplaced-window-checks.md):197
+records. The count is about the suite, and #529 is the last thing that moved it
+before this branch, so 72 is the right figure for the count and `565b6f3c` the
+right one for the transcript. The ambiguity is the section using one revision
+word for both, not either number.
+
+At the tip, 2026-09-25:
+
+    $ cd ec/tools && python3 -m unittest test_grade_0751_isolation
+    ..............................................................................................
+    ----------------------------------------------------------------------
+    Ran 94 tests in 0.271s
+
+    OK
+
+    $ grep -c "    def test_" ec/tools/test_grade_0751_isolation.py
+    94
+
+The two agreeing is the point: a suite whose static method count and whose run
+count disagree would mean the figure is not what it claims. The 0.271 s is one
+runner's figure, recorded for the reason
+[`0751-grader-self-test-gate.md`](0751-grader-self-test-gate.md):80-95 records
+its own.
+
+**Two figures in the files this section cites do not survive the same
+measurement.** Neither file is this change's and neither is edited here; both are
+recorded so the chain above is not read as agreeing with them.
+
+- [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md):210 puts the
+  grader suite at "88 to 92". The commit it describes, `1e0bc0f2`, takes it
+  **88 to 93** — five methods, of which that table names four;
+  `test_a_byte_the_encoding_cannot_read_does_not_stop_the_preflight` is the one
+  it does not. The same sentence's `test_ec_watch.py` "21 tests to 29" has both
+  endpoints 10 low for the same reason: #549's ten grader-lookup cases (five of
+  them named `test_a_grader_*`) landed in between at `0a1fef97`, so that file's
+  step is 31 to 39, not 21 to 29.
+- [`0751-grader-block-scoping.md`](0751-grader-block-scoping.md):165 and :189
+  cite `test_a_mark_that_is_not_one_of_the_three_forms_is_an_error` by its
+  pre-#472 name. That is #498's file, so the same correction is not applied
+  here.
+
 | test | what it holds |
 |---|---|
 | `test_a_graded_window_in_no_block_is_scoped_where_the_prediction_is_read_from` | `unplaced-window/` unscoped: rc 0; the count over the graded denominator; **the note ending at the count, with `The claim below is therefore over the other` and `rather than over the day` asserted absent**, so the count cannot grow a cross-reference to a sentence it does not own; the movement over the 6 that belong to a value under test with the other 2 named as outside it; the capture-level comparison declined for the count's reason and *not* the withheld branch's; neither refusal shape reached; `block 1/2: intact`, `block 2/2: intact` and both `` `--block` cannot select it `` census lines still printed, so a note that quietly changed a block verdict fails a test that only reads prose. Second half: `unplaced-window/ --block 0xA0` still exits 0, still gets the per-block sentence, and prints neither the count nor `UNREAD_MARK_NOTE` |
 | `test_an_unreadable_mark_does_not_count_twice_in_the_graded_unplaced_line` | `unread-window/` unscoped: the banner's `1 of the 8` and the count's `1 of the 7` over **different denominators**; `UNREAD_MARK_NOTE` still printed; **the withheld branch's sentence over the 6 that are a window of a value under test, naming both the 1 withheld and the 1 in no block as outside it, and `in any of the 7 window(s)` asserted absent** — the pairing the count cannot leave alone; and `block: unplaced -- NOT GRADED` exactly once against `block: unplaced` twice, so the 12:00 window is named as refused once and only once |
 | `test_a_withheld_window_in_no_block_claims_no_block_was_refused` | `unread-window/` unscoped, and the test that held this branch's §7 clause from #498: unchanged in what it is for, updated for the narrowing. It no longer pins a movement claim over 7 graded windows; it pins the 6, both excluded windows, the §7 clause naming the window in no block *and* the refused one, and the "sits in a block of its own" caveat on the refused window specifically. It still asserts that no block is claimed to have been refused, which is the §7 fact the branch exists for |
+
+All three rows above were checked against the suite as it stands, not taken on
+trust: each method is present, and each row's prose still matches what the method
+asserts. `test_a_graded_window_in_no_block_…` is at
+`ec/tools/test_grade_0751_isolation.py:1862` and still asserts rc 0, the count
+over the graded denominator, both scope phrases absent, the movement over the 6,
+the count's reason for declining, neither refusal shape, both `intact` lines and
+both `` `--block` cannot select it `` census lines — then the `--block 0xA0`
+second half. `test_an_unreadable_mark_…` is at :1937 and still asserts the
+banner's `1 of the 8` and the count's `1 of the 7`, `UNREAD_MARK_NOTE`, the
+narrowed sentence over the 6 with both exclusions named, `in any of the 7
+window(s)` absent, and `block: unplaced -- NOT GRADED` exactly once against
+`block: unplaced` twice. `test_a_withheld_window_in_no_block_…` is at :1804 and
+still asserts what row three says it asserts. **No test named in this section
+has vanished.** The one name in this file that has not survived is the
+`test_a_mark_that_is_not_one_of_the_three_forms_is_an_error` at "What must not
+change" below, which was renamed rather than removed.
 
 The second test is pinned on the *lesser* fixture deliberately. On
 `unplaced-window/` the two denominators coincide (8 shown, 8 graded), so a
@@ -214,12 +328,49 @@ fixture could not tell the two placements apart. `unread-window/` is the only
 committed fixture where they differ, and a count of the wrong set prints
 `2 of the 8` there.
 
+**That claim was re-checked here, in its own right, and not inherited.**
+[#720](https://github.com/ElDavoo/tongfang-gm7mg7p-re/pull/720)'s body re-ran
+the two unscoped fixtures and the `--block 0xA0` run, and this claim is
+downstream of all three, so a reader should not have to assume that re-run
+covered it. Run again over the committed CSVs on 2026-09-25:
+
+    $ python3 ec/tools/grade_0751_isolation.py ec/tools/testdata/0751-isolation-run-unplaced-window/*.csv   # exit 0
+      === 8 window(s), one per mark ===
+      2 of the 8 graded window(s) above are in no block: ...
+      None of the §4.1-§4.3 bytes moved in any of the 6 window(s) that belong to a value under test: ...
+
+    $ python3 ec/tools/grade_0751_isolation.py ec/tools/testdata/0751-isolation-run-unread-window/*.csv     # exit 1
+      === 8 window(s), one per mark ===
+      1 of the 8 window(s) above were not graded: ...          <- the withheld banner
+      1 of the 7 graded window(s) above are in no block: ...    <- the count line
+
+    $ python3 ec/tools/grade_0751_isolation.py ec/tools/testdata/0751-isolation-run-unplaced-window/*.csv --block 0xA0   # exit 0
+      None of the §4.1-§4.3 bytes moved in any of the 3 window(s) in block 1 of 2, value under test 0xA0: ...
+      (no `graded window(s) above are in no block` line)
+
+The paragraph holds as written. On `unplaced-window/` there is no withheld
+banner at all and both denominators read 8; only `unread-window/` separates
+`1 of the 8` from `1 of the 7`, over 8 shown and 7 graded. The `--block 0xA0`
+half of row one holds too — exit 0, the per-block sentence, and neither the
+count line nor `UNREAD_MARK_NOTE`.
+
 It is also the only committed fixture where `withheld > 0` and
 `graded_unplaced > 0` together, which is why two tests reach the narrowed
 withheld branch and not one: `test_an_unreadable_mark…` pins the count beside
 the claim it disclaims, and `test_a_withheld_window_in_no_block…` pins the
 claim itself. A change that narrowed the count's scope but not the branch's
 sentence would pass the first and fail the second.
+
+That "only committed fixture" was re-checked the same way, over every
+`0751-isolation-run-*/` directory rather than the three runs above, and it still
+holds. Nine of them print a withheld banner or the count line; `unread-window/`
+is the only one that prints both, and the census over all eleven committed
+`0751-isolation-run-*/` directories changes neither half of the claim. Only
+`staged/` has landed since this write-up was written (`b3f30987`); the other
+ten were already in the tree then, which
+`git ls-tree --name-only b3f30987:ec/tools/testdata/` shows. `staged/` itself
+was added later still, by `619afcb2` (#472 as #638) — the +6 step in the table
+above, not by `b3f30987`.
 
 All three fail against the unfixed tool, and for the reasons they are here:
 the first on the count and the absence of `consistent with the static
@@ -265,6 +416,18 @@ the note points at them rather than restating them. The new note deliberately
 does not contain the literal string `block: unplaced`, which is the coupling
 `test_a_mark_that_is_not_one_of_the_three_forms_is_an_error` already relies on
 (#498) — it still passes unedited.
+
+*(**Correction, 2026-09-25, issue
+[#726](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues/726).** The
+coupling holds and the case still passes, but "unedited" no longer describes the
+method: #472 renamed it, in `619afcb2`, to
+`test_a_mark_that_is_not_one_of_the_forms_is_an_error` — the "three" is gone
+because §3's forms went from three to six, and the case now quotes all six
+rather than three. It is at `ec/tools/test_grade_0751_isolation.py:2694` under
+the new name and is in the 94 above. The pre-rename spelling is left in the
+paragraph above so the reference is still findable.
+[`0751-grader-block-scoping.md`](0751-grader-block-scoping.md):165 and :189
+carry the same old spelling; that is #498's file and is not corrected here.)*
 
 ## Left out on purpose
 
@@ -315,9 +478,12 @@ does not contain the literal string `block: unplaced`, which is the coupling
 ## **None of this is a live test.**
 
 No EC and no laptop is reachable from a GitHub-hosted runner. Every figure in
-this file is arithmetic over hand-constructed CSVs in `ec/tools/testdata/`,
-reproducible offline with the two commands above against the revisions each
-transcript names, and with the two tests named. No live run, no register
-readback, no hardware observation; no line of this change may be read as a
-report of a capture, and none is one. `confirmed-inert` is §7's call, made by a
-human holding the rest of the notes, and nothing here bears on it either way.
+this file is arithmetic over hand-constructed CSVs in `ec/tools/testdata/` and
+over committed sources — the suite counts are counts of methods in
+`ec/tools/test_grade_0751_isolation.py` at named revisions, and the chain that
+reaches the current one is a count per commit — reproducible offline with the
+commands above against the revisions each transcript names, and with the tests
+named. No live run, no register readback, no hardware observation; no line of
+this change may be read as a report of a capture, and none is one.
+`confirmed-inert` is §7's call, made by a human holding the rest of the notes,
+and nothing here bears on it either way.
