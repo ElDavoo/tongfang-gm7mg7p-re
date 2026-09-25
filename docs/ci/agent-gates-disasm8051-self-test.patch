@@ -83,7 +83,7 @@
 # start.
 
 diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
-index 125d6478..e005d84 100755
+index de5db1f..161bcd7 100755
 --- a/.github/scripts/agent-gates.sh
 +++ b/.github/scripts/agent-gates.sh
 @@ -126,7 +126,8 @@ check_ghidra_tooling() {
@@ -96,9 +96,9 @@ index 125d6478..e005d84 100755
      [ -f "$tool" ] || continue
      case "$tool" in
        # The symbol generator takes no --work and has no --self-test; its
-@@ -235,6 +236,34 @@ check_ghidra_tooling() {
+@@ -261,6 +262,34 @@ check_ghidra_tooling() {
        *xdata_register_map.py)
-         python3 "$tool" --check || rc=1
+         python3 "$tool" --check && python3 "$tool" --self-test || rc=1
          ;;
 +      # The 8051 decoder's own oracle. --self-test diffs 18 instructions across
 +      # the two windows ec/annotations/charge-profile-flow.md transcribed by
