@@ -4219,6 +4219,48 @@ does not claim to have fixed them.
 `ec/annotations/xdata-export-ownership.md` carries the measurement and what it
 does not establish; `xdata-register-map.md` §4.6 carries the flip's cost.
 
+**Update (2026-09-25, issue #555): the boundaries are now *known*, and fixing
+them is a toolchain run rather than a question.** The write-up is
+`docs/findings/counter-sweep-entry-set.md`; this is the summary. Of the 180
+`bank1` census rows that target into `0x8001`-`0x8189`,
+`ec/tools/counter_sweep_entry.py` scores each caller with
+`disasm8051.converges_from()` and cross-checks it against the committed
+listings: **exactly one** of the 180 is at an instruction start — a three-byte
+call at `bank1:0xABB8` whose target is `0x8001`, 24 of 24 — and **135 of the
+179 others are the `rel8` displacement byte of a `cjne`**, which the census's
+`0x02`/`0x12` byte test cannot tell from an `ljmp` opcode. `0x8001` is itself a
+frame boundary at 24 of 24 and the byte before it is the `ret` ending the
+preceding routine. **One caller was confirmed by this method, which is not
+"the only caller in the firmware" and not "179 absent calls"** — the rest are a
+gap in a byte scan with a named blind spot, the same caveat
+`ec/annotations/bank-call-audit.md` §1 has carried for the census as a whole.
+
+**All six boundaries the annotations argued about are overturned, and two of
+this section's own framings with them.** The three seeds `0x8008`, `0x8010`
+and `0x8017` are **refuted rather than confirmed** — no site naming them scores
+above 1 of 24. And 28 rows said the body runs `0x8018` to the `ret` at
+`0x8189`; it runs `0x8001` to that same `ret`, 393 bytes rather than 370, the
+23 extra being the `0x06C6` and `0x06CD` countdowns and the `0x06D1`
+load-and-decrement that precede `0x8018`. The `0x80EF` row's "here the listing
+and the body agree" is corrected narrowly rather than bluntly: its 94
+instructions and 155-byte extent are right, and what is wrong is the
+comparison — the body is 393 bytes, so that listing is its tail. The wrong
+wording stands in every affected row with the correction beside it, per §4a.
+
+**No figure in §2 or §2a moved, and the deletion and the re-export are
+mechanically blocked rather than skipped.** `seed_rows()` takes the *union* of
+the annotation rows and the census, and every one of the 42 annotation
+addresses is also a census seed, so deleting them removes **no** seeds;
+`--mode export-only` copies the committed project and cannot un-carve the 42
+functions already in the 7 MB `.rep`; and the rebuild turns `bank1/8001.asm`
+from 3 bytes to 393, which `verify_reassembly.py --check` fails in the cheap
+gate until the pinned `sdas8051` regenerates a single-writer report no runner
+can touch. The new page carries the exact recipe and a prediction to check it
+against. So `xdata-06c2-06db-timers.md` §8 item 7 stays open with the
+boundaries established, and `call-graph-callees.csv` did not drift, so it is
+untouched. No `status:` in `registers.yaml` moves and no live test is implied:
+this is a byte-frame and text measurement over committed inputs.
+
 **2. Seventeen of the issue's twenty "unnamed" functions already had rows, and
 the three that did not were the only ones that had not.** `8008`, `8010` and
 `8017` are the work; all three were `seed_basis=call-target`, `size=1`,
