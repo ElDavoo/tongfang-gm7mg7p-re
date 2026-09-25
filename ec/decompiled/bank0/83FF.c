@@ -9,8 +9,11 @@
    calls 0x163C with R5=0x83 when they differ, and -- only when bit 0 of 0x0743 (CTGP_DB_CTRL) is
    set -- copies 0x09EA and 0x09EB into 0x07D4 and 0x07D5, sets or clears bit 3 of 0x07C4 to follow
    bit 4, and calls 0x163C with R5=0x84, but only when bits 3 and 4 of 0x07C4 differ from each other
-   or either byte of 0x07D4/0x07D5 differs from 0x09EA/0x09EB. 0x09E9, 0x09EA and 0x09EB have no
-   entry in ec/annotations/registers.yaml, so what the copied values hold is not determined here.
+   or either byte of 0x07D4/0x07D5 differs from 0x09EA/0x09EB. 0x09EA and 0x09EB have entries in
+   ec/annotations/registers.yaml (XDATA_09EA, XDATA_09EB, both present-untested) as of issue #264,
+   each with one direct writer, at 0x96F8 and 0x9700 in this image's 0x96AD; 0x09E9, which this
+   routine syncs into 0x0788, still has no entry, so what that byte is set from is not determined
+   here.
    type: state
    evidence: ec/decompiled/bank0/83FF.asm; ec/decompiled/bank0/83FF.c; ec/annotations/registers.yaml
    basis: hand-decoded
@@ -40,9 +43,9 @@ void sync_0788_and_07d4_from_09e9(void)
   }
   if (((CTGP_DB_CTRL & 1) != 0) &&
      (((((GPU_DYNAMIC_BOOST_STATUS >> 3 & 1) != 0) != ((GPU_DYNAMIC_BOOST_STATUS >> 4 & 1) != 0) ||
-       (CPUA != DAT_EXTMEM_09ea)) || (DBAP != DAT_EXTMEM_09eb)))) {
-    CPUA = DAT_EXTMEM_09ea;
-    DBAP = DAT_EXTMEM_09eb;
+       (CPUA != XDATA_09EA)) || (DBAP != XDATA_09EB)))) {
+    CPUA = XDATA_09EA;
+    DBAP = XDATA_09EB;
     if ((GPU_DYNAMIC_BOOST_STATUS >> 4 & 1) == 0) {
       GPU_DYNAMIC_BOOST_STATUS = GPU_DYNAMIC_BOOST_STATUS & 0xf7;
     }

@@ -512,12 +512,27 @@ ORACLE = {
     # (9), the PD half (157/858) and `extmem_both` (37) are unmoved, which is
     # what fixes the diagnosis: the PD image is never given a symbol table, and
     # the nine renames are all main-EC.
-    "extmem_distinct": 1026, "extmem_refs": 8698,
-    "extmem_raw": 8707, "extmem_commented": 9,
-    "extmem_main_distinct": 906, "extmem_main_refs": 7840,
+    #
+    # 1026/8698 -> 1024/8683 and 906/7840 -> 904/7825, with the symbol tally
+    # below moving 156 -> 158 distinct and 6121 -> 6136 refs: issue #264's two
+    # `XDATA_09EA`/`XDATA_09EB` rows, and the same mechanism as the nine above
+    # rather than a new one. The plan for #264 expected only `named_in_tree` to
+    # move, on the reasoning that export-only mode would leave the `.c` text
+    # spelling `DAT_EXTMEM_*`; it does not, because `ApplyAnnotations.java`
+    # applies xdata-symbols.csv to the project *copy* the export makes, so a
+    # new name reaches the text without `--mode rebuild-project`. The deltas
+    # cross-check exactly, which is what says this is explained: -2/+2
+    # distinct and -15/+15 refs, and 15 is the census's own 7+8 references to
+    # 0x09EA and 0x09EB. `extmem_commented` (9), the PD half (157/858) and
+    # the full census below (1171/14819, main 1062/13961, 109/48) are all
+    # unmoved -- the addresses and references did not change, only which token
+    # spells them.
+    "extmem_distinct": 1024, "extmem_refs": 8683,
+    "extmem_raw": 8692, "extmem_commented": 9,
+    "extmem_main_distinct": 904, "extmem_main_refs": 7825,
     "extmem_pd_distinct": 157, "extmem_pd_refs": 858,
     # What the decompiler named, which the issue's grep could not see.
-    "symbol_main_distinct": 156, "symbol_main_refs": 6121,
+    "symbol_main_distinct": 158, "symbol_main_refs": 6136,
     "symbol_pd_distinct": 0, "symbol_pd_refs": 0,
     # The full census this tool publishes.
     "distinct": 1171, "refs": 14819,
@@ -555,7 +570,10 @@ ORACLE = {
     # NOT_IN_TREE entries with their registers.yaml evidence, and this pin is
     # 187 - 25. Measured on `main` before this change touched anything: the two
     # rows and the two missing reasons were already there.
-    "named_in_tree": 162,
+    # 162 -> 164, issue #264: XDATA_09EA and XDATA_09EB are both reached by a
+    # decompiled function, so both are named-in-tree. Same cause as the
+    # extmem/symbol movement above, and the same cross-check applies.
+    "named_in_tree": 164,
 }
 ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
 # `0x08A8`'s 170 above is 42-fold: all 44 of its source functions are members of

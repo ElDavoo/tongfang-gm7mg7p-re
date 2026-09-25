@@ -633,6 +633,16 @@ $ python3 ec/tools/check_register_counts.py ec/firmware/GMxMGxx_11.800
 73 entries / 105 addresses: every static_refs, static_refs_main_ec and static_refs_pd_image reproduced from ec/firmware/GMxMGxx_11.800
 ```
 
+**CORRECTION** (issue #264, 2026-09-25), leaving the line above as it was
+written. That `73 entries / 105 addresses` was **already stale before this
+change** — it is a whole-`registers.yaml` total, so every entry any issue has
+added since moves it, and 105 had not been the tool's output for some time. It
+read `155 entries / 187 addresses` on `main` immediately before this change.
+`XDATA_09EA` and `XDATA_09EB` were added below and it now reads
+**157 entries / 189 addresses**; the same stale figure was transcribed in
+`ec-07c4-07d5-sites.md` §1 and is corrected there too. The per-address counts
+in the two tables either side of this line are unaffected.
+
 **Same shape as §6, in both directions.** The `movc` and `jmp` columns are
 zero for all four, as they are for all 29 of §2 and for the pair §6 added, so
 none of these counts is inflated by a CODE pointer by this method. And the
@@ -652,3 +662,14 @@ the routine that wrote `0x07C4` on 2026-09-23 is not identified because
 `0x851B`. `0x07C5` and `0x07C6` are not touched here: #106 and #101 own them.
 `0x07D6` and `0x07D7` stay with the census pass, and the 102 PD-image sites
 are a different program's variables, as §1 of `ec-0x07d0-sites.md` sets out.
+
+**Partly closed 2026-09-25 (issue #264);** the sentence above is left as it
+was written. `0x09EA` and `0x09EB` now have entries — `XDATA_09EA` and
+`XDATA_09EB`, `present-untested`, three direct sites each and one direct
+writer each — and
+[`ec-09e9-09eb-sites.md`](ec-09e9-09eb-sites.md) walks the nine sites of
+`0x09E9`-`0x09EB` and draws the four-hop chain they close. The other half of
+the gap stands: `0x166A` still has no entry, the `0x07C4` writer is still
+unattributed, and `0x09E9` — which `0x83FF` syncs into `0x0788` — still has
+no entry either, because it has two direct writers and is a different
+question. That file's §6 carries the three forward.

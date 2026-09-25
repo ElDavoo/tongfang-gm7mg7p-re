@@ -108,8 +108,8 @@ void fill_08xx_from_code_table(short param_1,undefined1 param_2,char param_3)
     }
   }
   if ((CTGP_DB_CTRL & 1) != 0) {
-    DAT_EXTMEM_09ea = CTGP_DB_TPP_TARGET;
-    DAT_EXTMEM_09eb = CTGP_DB_MAX_TGP;
+    XDATA_09EA = CTGP_DB_TPP_TARGET;
+    XDATA_09EB = CTGP_DB_MAX_TGP;
     param_3 = (CTGP_DB_CTRL >> 1 & 1) != 0;
     set_07c4_bit4_from_r7();
   }

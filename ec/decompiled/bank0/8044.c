@@ -17,9 +17,9 @@
 void ajmp_into_83ff_tail(char *param_1)
 
 {
-  if ((CPUA != *param_1) || (DBAP != DAT_EXTMEM_09eb)) {
-    CPUA = DAT_EXTMEM_09ea;
-    DBAP = DAT_EXTMEM_09eb;
+  if ((CPUA != *param_1) || (DBAP != XDATA_09EB)) {
+    CPUA = XDATA_09EA;
+    DBAP = XDATA_09EB;
     if ((GPU_DYNAMIC_BOOST_STATUS >> 4 & 1) == 0) {
       GPU_DYNAMIC_BOOST_STATUS = GPU_DYNAMIC_BOOST_STATUS & 0xf7;
     }

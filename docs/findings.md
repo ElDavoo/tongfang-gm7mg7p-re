@@ -2134,6 +2134,43 @@ live run with a mechanism isolated would be.
 capture. All three are named as follow-ups in the walk's §9 rather than
 answered here, and none of them is another repository's issue to answer.
 
+**2026-09-25 (issue #264): the first of those is now closed, and the chain
+is drawn.** `0x09EA`/`0x09EB` have carried `registers.yaml` rows
+(`XDATA_09EA`/`XDATA_09EB`, both `present-untested`) since this paragraph was
+written; the paragraph above is left as it was. Each has three direct `MOV
+DPTR` sites, all EC-side and none in the PD image, and exactly one direct
+writer — `0x96F8`/`0x9700` in `0x96AD`, copying `0x0745`/`0x0746` when
+`CTGP_DB_CTRL` (`0x0743`) bit 0 is set. The one computed-`DPH` site aimed at
+the `0x09` page is `0x83D6`, whose `DPTR` is bounded to `0x0990`-`0x09BE` and
+so cannot reach them. That closes the four-hop GPU dynamic-boost path end to
+end — the service's power-mode write, `0x96AD`, `0x83FF`, and the ASL that
+publishes `CPUA * 8`/`DBAP * 8` to `NPCF.ATPP`/`NPCF.AMAT` — as one drawing
+in `ec/annotations/ec-09e9-09eb-sites.md` §4, cross-referenced from
+`ec/annotations/ec-07c4-07d5-sites.md` §3a.
+
+**What the 2026-09-23 capture does and does not establish about it, which is
+the second half of that issue.** It does not establish that the tail of the
+chain ran, and it does not establish that it did not. `0x07D4` and `0x07D5`
+have no rows in that file, but the file watched `0x0700`-`0x07FF` and so has
+no observation of `0x09EA`/`0x09EB` — the "already equal" hypothesis has
+nothing on either side of its comparison — and it is a sweep-based change log,
+so a value held between two sweeps is not written down either. One thing it
+does settle, from the committed `.asm` rather than from itself: for the
+`0x07C4 = 0x28` state the compare at `0x8460` is not reached at all, because
+`0x8459` jumps to the copy first, so "already equal" is not a reachable
+explanation for that state. A third route the two-hypothesis framing skips:
+`0x83FF` returns at `0x8405` (`0x080F` non-zero) or `0x840D` (`0xB9D8` returns
+non-zero) before touching `0x07D4`, `0x07D5` or `0x07C4` at all, and neither
+of those two bytes has an entry or is in the capture's window. **No `status:`
+was promoted and none should be**: a byte that did not move is not evidence
+the EC ignores it. The follow-ups this opens are `0x09E9`'s second writer,
+`0x83D6`'s entry point, `0x080F`, `0xB9D8`, and a watcher window over
+`0x09E9`-`0x09EB` — all carried in `ec/annotations/ec-09e9-09eb-sites.md` §6,
+and the last of them recorded as a gap in
+`docs/hardware-tests/gpu-tgp-07c4-07d7-door.md`, whose `WATCH` set covers
+`0x07C4`-`0x07D7` and `0x0743`-`0x0746` and no `0x09xx` address, so the
+procedure as written cannot separate the two readings.
+
 ## 8. The Memory Overclocking Menu is behind one `UniWillVariable` byte (2026-09-23)
 
 **Result, confirmed live.** Setting `UniWillVariable.MemoryOverClockSwitch`

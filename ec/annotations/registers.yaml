@@ -2042,6 +2042,64 @@ registers:
       this method finds sets either bit -- a limit of the scan, since a set
       through a run-time DPTR would not appear -- and nothing is read back.
 
+  - name: XDATA_09EA
+    addr: 0x09EA
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Three sites, all in the EC and none in the PD image, and one writer
+      among them. The single write is 0x96F8, in the routine entered at
+      0x96AD, which copies 0x0745 into this byte when CTGP_DB_CTRL (0x0743)
+      bit 0 is set. The other two are reads in the routine entered at 0x83FF:
+      0x845B loads it into R7 to compare against 0x07D4 (CPUA), and 0x8473
+      loads it as the source of the copy into 0x07D4. 0x07D4 is what the ASL
+      publishes as NPCF.ATPP = CPUA * 8, so the four hops run 0x0745 ->
+      0x09EA -> 0x07D4 -> ATPP; the whole chain, with the two routines and
+      the DSDT legs, is drawn once in
+      ec/annotations/ec-09e9-09eb-sites.md 4 and cross-referenced from
+      ec/annotations/ec-07c4-07d5-sites.md 3a.
+      "One writer" is one direct MOV DPTR site, not one place the byte can
+      be written: an indirect movx @Ri, or a DPTR built at run time, is
+      invisible to this scan. The one computed-DPH site aimed at the 0x09 page
+      is 0x83D6 (ring_push_0990), whose DPTR is bounded to 0x0990-0x09BE and
+      so cannot reach this address -- ec/annotations/ec-09e9-09eb-sites.md 3.
+      That is a positive result about one idiom, not a proof that no other
+      writer exists. No hardware was involved and nothing is read back; see
+      that file for what the 2026-09-23 capture does and does not settle
+      about the tail of the chain.
+
+  - name: XDATA_09EB
+    addr: 0x09EB
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Three sites, all in the EC and none in the PD image, and one writer
+      among them. The single write is 0x9700, in the routine entered at
+      0x96AD, which copies 0x0746 into this byte when CTGP_DB_CTRL (0x0743)
+      bit 0 is set. The other two are reads in the routine entered at 0x83FF:
+      0x8467 loads it into R7 to compare against 0x07D5 (DBAP), and 0x847B
+      loads it as the source of the copy into 0x07D5. 0x07D5 is what the ASL
+      publishes as NPCF.AMAT = DBAP * 8, so the four hops run 0x0746 ->
+      0x09EB -> 0x07D5 -> AMAT; the whole chain, with the two routines and
+      the DSDT legs, is drawn once in
+      ec/annotations/ec-09e9-09eb-sites.md 4 and cross-referenced from
+      ec/annotations/ec-07c4-07d5-sites.md 3a.
+      "One writer" is one direct MOV DPTR site, not one place the byte can
+      be written: an indirect movx @Ri, or a DPTR built at run time, is
+      invisible to this scan. The one computed-DPH site aimed at the 0x09 page
+      is 0x83D6 (ring_push_0990), whose DPTR is bounded to 0x0990-0x09BE and
+      so cannot reach this address -- ec/annotations/ec-09e9-09eb-sites.md 3.
+      That is a positive result about one idiom, not a proof that no other
+      writer exists. No hardware was involved and nothing is read back; see
+      that file for what the 2026-09-23 capture does and does not settle
+      about the tail of the chain.
+
   - name: XDATA_0460
     addr: 0x0460
     sources: [xdata-refs]
@@ -3516,7 +3574,10 @@ registers:
       platform controller as a GPU power value: T1WR's Arg0 == 0x73 branch
       (dsdt.dsl:50700-50717) and its _Q84 twin (dsdt.dsl:52796-52803) both
       do ^^NPCF.ATPP = CPUA * 0x08, guarded by If ((DBEN == One)), and
-      DSDT's ECMG field list (dsdt.dsl:52257-52258) names it CPUA. No ASL
+      DSDT's ECMG field list names it CPUA at dsdt.dsl:52255. That line
+      number is a correction (issue #264): this note and DBAP's said
+      52257-52258 and 52259-52260, which are DBSP/CGCT and CPUT -- off by
+      two, and pointing at the wrong fields. No ASL
       code writes it. The EC-firmware side is the two bank0 sites walked in
       ec/annotations/ec-07c4-07d5-sites.md: 0x8460 reads it and compares it
       against the byte at 0x09EA, and 0x8477 writes 0x09EA's value into it.
@@ -3526,9 +3587,29 @@ registers:
       set from on the path this method finds. The other 68 sites are in the
       ITE8850-PD image and are a different program's variable, per
       ec-0x07d0-sites.md 1; they are not EC-side evidence.
-      70 is a file-wide direct MOV DPTR site count and a lower bound (#110).
+      The full chain this byte sits at the end of -- 0x0745 (the service's
+      per-power-mode write) copied to 0x09EA at 0x96F8 in 0x96AD, copied to
+      CPUA at 0x847A in 0x83FF, published as ATPP -- is drawn once in
+      ec/annotations/ec-09e9-09eb-sites.md 4 and cross-referenced from
+      ec/annotations/ec-07c4-07d5-sites.md 3a. 0x09EA has carried its own row
+      (XDATA_09EA) since issue #264, which closed the gap this note used to
+      leave open.
+      What the 2026-09-23 capture establishes about this byte
+      (evidence/ec-watch/2026-09-23-power-mode-cycle-0700-07ff.csv): it has
+      no row in that file at all, in a window where 0x0743 bit 0 went set and
+      0x0745 was written 0xFF eight ms earlier. That is a weak negative and
+      it is two things over saying the tail of the chain did not run -- the
+      file watched 0x0700-0x07FF and so has no observation of 0x09EA, the
+      other side of the compare; and it is a sweep-based change log, so a
+      value held between two sweeps is not written down. What the committed
+      .asm does settle is narrower: for the 0x07C4=0x28 state the compare at
+      0x8460 is not even reached, because 0x8459 jumps to the copy first, so
+      "already equal" is not a reachable explanation there. None of this
+      promotes the status. 70 is a file-wide direct MOV DPTR site count and a
+      lower bound (#110).
       A write class is an instruction storing to the address, not evidence
-      the EC acts on it. Status is present-untested rather than anything
+      the EC acts on it, and a byte that did not move is not evidence the EC
+      ignores it. Status is present-untested rather than anything
       live: the two writes found here are static, and no write was made to
       this byte to find out what it does.
 
@@ -3542,8 +3623,10 @@ registers:
     status: present-untested
     note: >
       The other half of that pair: ^^NPCF.AMAT = DBAP * 0x08 in the same two
-      ASL sites, from the same DSDT ECMG field list entry (dsdt.dsl:52259-
-      52260). No ASL code writes it. The four EC-firmware sites are walked
+      ASL sites, from the same DSDT ECMG field list, which names it DBAP at
+      dsdt.dsl:52256 (this note's own earlier citation of 52259-52260 was
+      off by two and named CPUT -- corrected with CPUA's, issue #264). No ASL
+      code writes it. The four EC-firmware sites are walked
       in ec/annotations/ec-07c4-07d5-sites.md: 0x846C reads it against the
       byte at 0x09EB and 0x847F writes 0x09EB's value into it, both in the
       routine entered at 0x83FF and both on the same guard as 0x07D4, so
@@ -3551,9 +3634,23 @@ registers:
       0xAD99 and 0xCC78, store the immediate 0xFF, each in a long bank0 run
       that resets a set of XDATA bytes -- 0xACB4's decompile, which holds
       0xAD99, is a whole-machine reset ending in a tail jump to 0x83D6.
-      Neither 0x09EB nor the meaning of 0xFF as a default has an entry in
-      this file. The remaining 24 sites are in the ITE8850-PD image and
+      0x09EB now has an entry in this file (XDATA_09EB, present-untested,
+      issue #264); this note used to say it did not, and what is still true is
+      narrower -- neither the meaning of 0xFF as a default nor the choice
+      between the two 0xFF sites and the 0x83FF copy is established. The
+      remaining 24 sites are in the ITE8850-PD image and
       describe a different program's variable.
+      The chain this byte sits at the end of -- 0x0746 copied to 0x09EB at
+      0x9700 in 0x96AD, copied to DBAP at 0x8482 in 0x83FF, published as AMAT
+      -- is drawn once in ec/annotations/ec-09e9-09eb-sites.md 4 and
+      cross-referenced from ec/annotations/ec-07c4-07d5-sites.md 3a. This
+      byte has no row in
+      evidence/ec-watch/2026-09-23-power-mode-cycle-0700-07ff.csv, for the
+      same two reasons and with the same bounds as CPUA's note above: the
+      capture watched 0x0700-0x07FF and never saw 0x09EB, and it is a
+      sweep-based change log. The 0x38 state of 0x07C4 is the only one in
+      which 0x83FF's compare is reached at all, and that file is silent
+      there. A byte that did not move is not evidence the EC ignores it.
       28 is a file-wide direct MOV DPTR site count and a lower bound (#110);
       a write class is not evidence the EC acts on the value. No hardware
       was involved.
