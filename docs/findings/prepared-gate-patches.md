@@ -212,8 +212,12 @@ and the header and `docs/agent-pipeline.md` item 7 now say **103**, with the
 timing re-derived alongside it (0.25-0.26 s end to end over five runs; the 103
 tests are 0.160 s of that).
 
-The remaining occurrences are **left to #685**, which owns the figure, and are
-named here by path so that issue does not have to re-find them:
+The other occurrences are **left to #685**, which owns the figure, and are
+named here by path so that issue does not have to re-find them. This is not
+every occurrence in the tree — every sibling `docs/findings/0751-*.md`
+write-up carries a count measured on its own commit, and there are more of
+those than are worth listing here — but it is every one this branch looked at
+directly:
 
 - `docs/findings/0751-grader-self-test-gate.md` — six places: the measured
   table at `:86`, the reconciliation at `:101` and `:106`, the section heading
@@ -225,12 +229,19 @@ named here by path so that issue does not have to re-find them:
   **historical**, in the past tense, describing what issue #532's write-up said
   about its own branch at the time. It is not a live count claim and is not
   wrong; the plan named it as a stale figure to correct, and it is not one.
+- `docs/findings/0751-grader-unplaced-window-scope.md:271` — "Ran 94 tests
+  in 0.271s", under the `At the tip, 2026-09-25:` transcript. A count measured
+  at a dated tip and correct for that commit; `:199`'s "72 tests on `main` and
+  74 after" in the same file is the same kind of figure.
+- `docs/findings/0751-stage-mark-labels.md:246` — "goes 76 tests to 82", under
+  a `## What is pinned` heading that pins the suite size as issue #472 found
+  it. A per-commit pin, not a live claim.
 
 **Not found, though the plan expected them:** the plan recorded "two tool
 docstrings" carrying the figure. A search of `ec/tools/*.py` and
 `windows/tools/*.py` for a claimed suite size returns none — neither
 `grade_0751_isolation.py` nor `test_grade_0751_isolation.py` states a count,
-and `grade_0751_isolation.py:2390` parses the count *out* of the run rather
+and `grade_0751_isolation.py:2432` parses the count *out* of the run rather
 than asserting one. Recorded here rather than left for #685 to look for.
 
 ## Left red, and why
