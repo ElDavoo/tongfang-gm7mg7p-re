@@ -131,7 +131,8 @@ instructions**, not the read this image performs. Walked from `0xFFFF`, the
 sixteenth read actually starts at `0x2FFFF + 15` = **`0x3000E`**, because the
 window runs into the same `0xFF` fill. The census says "peak read `0x3002C`";
 the realised peak is `0x3000E` and `0x3002C` is its ceiling. The row's cell now
-says so, and the self-test pins the realised figure with the bound beside it.
+says so, and the self-test pins the realised figure as a floor, with the bound
+beside it.
 
 **One consequence of the change itself, stated here because it is not what a
 reader of the issue's transcript would expect.** The check refuses anything
@@ -199,14 +200,17 @@ guessing at a question the bytes do not answer.
 
 ## What the check does not do
 
-- **It does not make the peak read into "cannot raise".** After the change, no
-  `--sites` address can put a read outside the region, so the window's furthest
-  possible read is bounded by the code rather than by this image's spare bytes —
-  that is a different and stronger sentence than the one row 10 carried. It is
-  still **not** "cannot raise": the realised peak on this image remains
-  `0x3000E`, a property of these bytes, and the `0x3002C` ceiling remains
-  arithmetic. What the check removed is the *unbounded* direction, and only
-  that.
+- **It does not make the peak read into "cannot raise".** What the check bounds
+  is the *start* address, not the reads: `0 <= addr < 0x10000` puts the first
+  read at `0x20000-0x2FFFF`, and from there the window's furthest possible read
+  is bounded at `0x3002C` by the code rather than by this image's spare bytes —
+  a different and stronger sentence than the one row 10 carried. It is still
+  **not** "cannot raise", and a *legal* address's reads do still leave the
+  region: `--sites 0xFFFF` starts in-region at `0x2FFFF` and its last read
+  starts at file `0x3000E`, 14 bytes past the region's last byte. The realised
+  peak on this image remains `0x3000E`, a property of these bytes, and the
+  `0x3002C` ceiling remains arithmetic. What the check removed is the
+  *unbounded* direction, and only that.
 - **It does not make `--callers` consistent with `--sites`.** Measured above:
   `--callers 0x1FFFF` **exits 0** and prints a three-row byte-scan caller list.
   It has no traceback to replace, and its output is the over-counting the module
@@ -278,7 +282,9 @@ this file rather than argued from the table.
   property of the code. The byte-identical diffs are what make it a regression
   test; on their own they would be a formality.
 - **The self-test pins three facts, not a proof.** That `--sites 0xFFFF` still
-  walks its 16-instruction window with the last read at `0x3000E`, and that
+  walks its full `SITE_WINDOW` with the last read at or above `0x3000E` and no
+  higher than the `0x3002C` ceiling — a range, not the realised figure, so a
+  window that walked further would still pass — and that
   `0x1FFF1` and `0x23478` are each refused with the region and both ranges named.
   It does not pin that the *message wording* is the best wording; it pins that
   the message keeps naming what a reader needs.
