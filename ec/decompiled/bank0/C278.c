@@ -8,9 +8,10 @@
    branches to the path that loads R7 with 0. Unlike the bit 0 and bit 4 tests at 0xC251 and 0xC295
    the polarity is not inverted, which is why the name carries no _inverted suffix. The entry is
    shared with the routine at 0xC26E, which returns 1 on its own arm and branches here only when bit
-   7 of XDATA 0x0456 is set, so this bit is read only in that case; 0x0456 is not in
-   ec/annotations/registers.yaml. No other XDATA access and no call. Bit 2 is also the outer half of
-   the GFID select, read again at 0xDA22.
+   7 of XDATA 0x0456 is set, so this bit is read only in that case; that byte is SYSTEM_ID at 0x0456
+   in ec/annotations/registers.yaml, upstream's EC_ADDR_SYSTEM_ID, whose note already counts this
+   0xC26E read among the nine bit-7 tests. No other XDATA access and no call. Bit 2 is also the
+   outer half of the GFID select, read again at 0xDA22.
    type: reader
    evidence: ec/decompiled/bank0/C278.asm; ec/decompiled/bank0/C278.c
    basis: hand-decoded

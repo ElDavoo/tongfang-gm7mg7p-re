@@ -422,6 +422,12 @@ select above is real, but the two consumers in the committed tree
 disagree about how many values matter, and the difference is worth
 recording rather than flattening.
 
+**The count above is corrected here rather than edited** (issue #267, fix
+round 1, 2026-09-25): there are **three** consumers of the byte in the
+committed tree, not two. The framing counted the ASL and the EC firmware
+and missed the vendor service, which reads the byte directly and splits it
+more finely than either of the other two.
+
 - The ASL reads it. `Method (SMRW, 1)` at `dsdt.dsl:50764` compares GFID
   against `0x07`, `0x05`, `0x03` and `0x06` at `dsdt.dsl:50772`, `50799`,
   `50826` and `50854`, and each comparison selects a different ACPI `Buffer`,
@@ -456,14 +462,56 @@ recording rather than flattening.
   tested by an arm and written by nothing either committed method finds.
 - The EC firmware reads it, and collapses three of the four values onto one
   outcome — the `0x94D5` bullet further down works through it.
+- **The vendor service reads it too, and splits it seven ways rather than
+  four.** `windows/decompiled/v3.1.39.0/GCUService/MyECIO/MyEcCtrl.cs:164`
+  is `AcpiModel.Read(GetType().Name, 2003, ref Data)` and `2003 = 0x07D3`; it
+  is a read, with no writer on this path, and it is a *third* path rather than
+  a restatement of the first: `AcpiCtrl.Read` reaches the driver through
+  `ReadACPI(2621482120u, …)` (`MyECIO/AcpiCtrl.cs:182,190`), not the WMI
+  `InvokeMethod("SMRW")` the first bullet names. `GetSku()` (`:158-190`) masks
+  the byte with `0xF0` and switches the high nibble over seven values —
+  `0x30`→`GN20_GPU_SKU.E3`, `0x40`→`E4`, `0x50`→`E5`, `0x60`→`MaxQ`,
+  `0x70`→`E7`, `0x80`→`P0`, `0x90`→`P1`, anything else `NA`
+  (`GN20_GPU_SKU.cs:3-13`) — and `IsHeroProject()` (`:192`) keys off
+  `sku == GN20_GPU_SKU.MaxQ`.
+
+  Four of those seven are the four values the EC writes, in the same order:
+  GFID 3 / 4 / 5 / 7 → E3 / E4 / E5 / E7. The fifth, `MaxQ` = `0x60`, is the
+  value `SMRW` tests and that neither committed method finds a writer for — so
+  the GFID 6 asymmetry the bullets above record is not a dead arm, it is the
+  one nibble the service gives a name of its own to, and a *different* name
+  from the ASL's `ACPE` overlay `MQB1` that the same arm reaches for.
+
+  Two things this bullet corrects rather than adds. The claim that no
+  `ECSpec` constant covers `0x07D3` is false: `ADDR_ModuleID = 2003` is
+  defined at `windows/decompiled/v3.1.39.0/GCUService/Define/ECSpec.cs:389`,
+  `v3.1.6.0/ECSpec.cs:389` and `v3.9.18.0/Define/ECSpec.cs:389`, so the ASL's
+  `GFID` and the service's `ADDR_ModuleID` are one byte under two
+  vocabularies. And
+  `windows/decompiled/v3.1.39.0/ec-callsites-summary.csv:76` — the row for
+  `0x07D3` — reads `0x07D3,literal,1,0,` with the `writers` column empty, so
+  it counts the read and 0 writes but attributes neither; `MyEcCtrl.cs:164` is
+  the citation for the site, and the CSV is not.
 
 So on the firmware path the select behaves as a *two*-way choice, GFID ==
-3 against everything else, and on the ASL path as a four-way one. Neither
-is a correction of the other: they are different consumers of the same
-byte, and the `0x94D0` narrowing is a statement about that routine, not
-about the field. What makes GFID 3 special to the GPU, and whether 4, 5
-and 7 differ anywhere the committed tree does not reach, is not determined
-here; the open question and the procedure that would settle it are in
+3 against everything else; on the ASL path as a four-way one; and on the
+service path as a seven-way one, `0xF0` to `GN20_GPU_SKU`. None is a
+correction of the others: they are different consumers of the same byte
+at three different widths, and the `0x94D0` narrowing is a statement
+about that routine, not about the field. The widths do not quite
+coincide either — the service's `0xF0` mask includes bit 7, which the
+ASL's 3-bit `GFID` field (`dsdt.dsl:52251-52253`) leaves unnamed — so a
+byte the service would call `NA` is still a three-bit GFID the ASL can
+select on.
+
+What makes GFID 3 special to the GPU is **still not determined here**, and
+the seven-value consumer does not answer it: it says what the field is
+*called* on the Windows side, not what the GPU does with it. What it does
+establish is that a consumer distinguishing seven values exists, which the
+two-consumer answer missed, and that four of the seven names line up with
+the four values the EC writes. Whether 4, 5 and 7 differ anywhere the
+committed tree does not reach is likewise open; the open question and the
+procedure that would settle it are in
 [`gpu-tgp-07c4-07d7-door.md`](../../docs/hardware-tests/gpu-tgp-07c4-07d7-door.md),
 which is marked **not run**.
 

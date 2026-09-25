@@ -3496,14 +3496,15 @@ registers:
       agreement is a coincidence of two errors rather than a confirmation.
       The C-level method double-counts the 0xC278 access, because Ghidra
       folded that block into the decompile of 0xC26E and C26E.c carries
-      `DAT_EXTMEM_1665 >> 2 & 1` as well as C278.c does; and it misses
+      `XDATA_1665 >> 2 & 1` as well as C278.c does; and it misses
       0xC4E7 entirely, because that routine's decompile is a bare `return;`
       with no XDATA reference in it at all. One reference too many and one
       too few, landing on the right total. The image sites -- 0xC251,
       0xC278, 0xC295, 0xC2C2, 0xC4E7, 0xDA4F -- are the ones recorded
       above. The .asm is the authority over the .c wherever the two
       disagree, as each listing's own header says, and for 0xC4E7 they do:
-      the listing is six instructions and the decompile is an empty body.
+      the listing is five instructions over nine bytes and the decompile
+      is an empty body.
       The 0x0443 entry above records the same two-methods disagreement in
       the other direction.
       Bit map, one entry per site, read off the committed listings --
@@ -3535,7 +3536,13 @@ registers:
       rather than a scan result: the ECMG field list is dsdt.dsl:52194-52328
       and its highest Offset is 0x0EA0, over 28 offsets from 0x043E, so
       0x1665 is an order of magnitude above anything the list declares.
-      Grepping the whole disassembly for 0x1665 returns nothing at all.
+      dsdt.dsl names 0x1665 nowhere either, which is the same fact about
+      the ASL text rather than a second kind of scan: the byte map this
+      note is built from is the six committed listings that carry
+      0x1665 (C251, C278, C295, C2C2, C4E7 and D9FE, each as
+      mov DPTR, #0x1665), and it is those that refute the claim this
+      sentence used to make -- it said grepping the whole disassembly for
+      0x1665 returns nothing at all, and six listings say otherwise.
       These three bytes are EC-internal configuration, invisible to ACPI.
       Cross-reference #228 for what the field list does cover rather than
       re-deriving its boundary. No hardware was involved and no status was
@@ -3749,6 +3756,25 @@ registers:
       The Windows side has exactly one site and it is a read with no writer
       (windows/decompiled/v3.1.39.0/ec-callsites-summary.csv row 0x07D3:
       reads=1, writes=0, no writer named), and no ECSpec constant covers it.
+      *** The "no ECSpec constant covers it" clause is retracted in place
+      (issue #267, fix round 1): there is one, and it is live. ECSpec calls
+      0x07D3 ADDR_ModuleID = 2003 (Define/ECSpec.cs:389 in
+      v3.1.39.0/GCUService, v3.1.6.0 and v3.9.18.0/Define), and
+      windows/decompiled/v3.1.39.0/GCUService/MyECIO/MyEcCtrl.cs:164 reads
+      it as that address -- AcpiModel.Read(GetType().Name, 2003, ref Data),
+      2003 = 0x07D3 -- so the ASL's GFID and the service's ADDR_ModuleID are
+      one byte under two vocabularies. GetSku() (:158-190) masks it with
+      0xF0 and switches the high nibble over seven values, 0x30 to E3, 0x40
+      to E4, 0x50 to E5, 0x60 to MaxQ, 0x70 to E7, 0x80 to P0, 0x90 to P1,
+      and IsHeroProject() (:192) keys off sku == MaxQ; the EC-written 0x30,
+      0x40, 0x50 and 0x70 are E3, E4, E5 and E7, and 0x60 -- the value the
+      GFID == 0x06 arm tests and that neither committed method finds a
+      writer for -- is the one the service names. That is what the byte is
+      called on the Windows side; what GFID 3 means to the GPU is still
+      open, and the ec-callsites row above attributes nothing either way --
+      it counts 1 read and leaves the writers column empty, so it is not a
+      citation for the site.
+      ***
       The four EC-firmware sites are walked in
       ec/annotations/ec-07c4-07d5-sites.md. Two of them, 0xDA2D and 0xDA41,
       sit in the routine entered at 0xD9FE and write this byte outright with

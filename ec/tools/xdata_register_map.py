@@ -529,16 +529,52 @@ ORACLE = {
     # the full census below (1171/14819, main 1062/13961, 109/48) are all
     # unmoved -- the addresses and references did not change, only which token
     # spells them.
-    "extmem_distinct": 1024, "extmem_refs": 8683,
-    "extmem_raw": 8692, "extmem_commented": 9,
-    "extmem_main_distinct": 904, "extmem_main_refs": 7825,
+    #
+    # 1024/8683 -> 1021/8675, 904/7825 -> 901/7817, 158/6136 -> 161/6147,
+    # issue #267, and the same mechanism for the third time rather than a new
+    # one: 0x1665, 0x1666 and 0x166A got registers.yaml rows, gen_xdata_symbols
+    # turned them into three `XDATA_*` names, and ApplyAnnotations.java applies
+    # the symbol table to the project *copy* the export makes, so the rename
+    # reaches the .c text without `--mode rebuild-project` exactly as the nine
+    # above and the #264 two did. That is the DAT_EXTMEM_ -> symbol half; the
+    # rest of the movement is issue #267's four seeded routines, and the two
+    # halves are separable per address by reading the committed
+    # xdata-registers.csv on this branch and on `main`:
+    #
+    #   0x1665   4 -> 6 refs    +0xC278.c and +0xC2C2.c
+    #   0x1666   1 -> 2 refs    +0xC33C.c
+    #   0x166A   3 -> 3 refs    unmoved -- only the spelling moved
+    #
+    # so 8 references leave the DAT_EXTMEM_ tally and 11 arrive in the symbol
+    # tally, which is exactly -8/+11 and a main-EC total of +3 (13961 ->
+    # 13964). The cross-check is the same shape as the two above, and it holds
+    # for the same reason: `extmem_commented` (9, and arithmetically
+    # 8684-7817-858), the PD half (157/858), `extmem_both` (37, recomputed from
+    # the pins either side of this block), `distinct` (1171) and `both` (48)
+    # are all unmoved, so the addresses and references did not change -- only
+    # which token spells them, plus the two newly exported .c files.
+    #
+    # 0xC4E7 is seeded in the same batch and contributes **nothing** here, which
+    # is the one place a reader might expect otherwise: its decompile is a bare
+    # `return;` with no XDATA reference in it, so seeding it moves the
+    # image-site count (0x1665's row now reads 6 against trace_xdata_refs.py's
+    # 6, where it read 4) without moving this census. The 0x1665 note in
+    # registers.yaml works through that two-methods disagreement.
+    #
+    # `named_in_tree` 164 -> 167 is the third name of the three: all three
+    # addresses are now in the symbol table *and* reached by a decompiled
+    # function, which is what that pin counts. Still 192 - 25, with the same two
+    # NOT_IN_TREE entries (0x07C7, 0x07C8) as issue #256 recorded.
+    "extmem_distinct": 1021, "extmem_refs": 8675,
+    "extmem_raw": 8684, "extmem_commented": 9,
+    "extmem_main_distinct": 901, "extmem_main_refs": 7817,
     "extmem_pd_distinct": 157, "extmem_pd_refs": 858,
     # What the decompiler named, which the issue's grep could not see.
-    "symbol_main_distinct": 158, "symbol_main_refs": 6136,
+    "symbol_main_distinct": 161, "symbol_main_refs": 6147,
     "symbol_pd_distinct": 0, "symbol_pd_refs": 0,
     # The full census this tool publishes.
-    "distinct": 1171, "refs": 14819,
-    "main_distinct": 1062, "main_refs": 13961,
+    "distinct": 1171, "refs": 14822,
+    "main_distinct": 1062, "main_refs": 13964,
     "pd_only": 109, "both": 48,
     # Addresses the symbol table names AND the census reaches. It is not
     # `len(symbols)`: naming an address in registers.yaml does not put it in
@@ -575,7 +611,9 @@ ORACLE = {
     # 162 -> 164, issue #264: XDATA_09EA and XDATA_09EB are both reached by a
     # decompiled function, so both are named-in-tree. Same cause as the
     # extmem/symbol movement above, and the same cross-check applies.
-    "named_in_tree": 164,
+    # 164 -> 167, issue #267: 0x1665, 0x1666 and 0x166A, the same three.
+    # Still 192 - 25, and the two NOT_IN_TREE entries are unchanged.
+    "named_in_tree": 167,
 }
 ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
 # `0x08A8`'s 170 above is 42-fold: all 44 of its source functions are members of
@@ -929,7 +967,15 @@ XSPACE_WINDOW = 32
 # access are where those land. See the dated block above ORACLE for the census
 # totals and ec/annotations/xdata-register-map.md 7.2 for the per-address
 # account.
-BUCKET_TOTALS = {"read": 8341, "write": 3195, "read+write": 2482,
+#
+# Issue #267, fix round 1: read 8341 -> 8344, the other four unmoved. Same
+# cause as the ORACLE block's extmem/symbol movement and nothing else -- the
+# three addresses #267 named each have their references counted in a
+# different spelling, and each of the three is a read, so `read` takes the +3
+# and the write-shaped buckets do not move at all. The cross-check is the
+# census's own: the five buckets still sum to ORACLE["refs"], which moved
+# 14819 -> 14822 for the same three references.
+BUCKET_TOTALS = {"read": 8344, "write": 3195, "read+write": 2482,
                  "passed-to-call": 534, "address-taken": 267}
 
 # Issue #554: what `scan(export_ownership=True)` says on this tree, pinned the
@@ -958,9 +1004,17 @@ BUCKET_TOTALS = {"read": 8341, "write": 3195, "read+write": 2482,
 # property of that grouping, which is why the rule is a committed tool and the
 # figures are re-derived rather than carried forward.
 OWNERSHIP = {
-    "distinct": 1171, "refs": 9401,
-    "main_distinct": 1062, "main_refs": 8543,
-    "buckets": {"read": 4920, "write": 2707, "read+write": 1018,
+    "distinct": 1171, "refs": 9404,
+    "main_distinct": 1062, "main_refs": 8546,
+    # Issue #267, fix round 1: refs 9401 -> 9404 and read 4920 -> 4923, the
+    # other buckets unmoved, for the reason the ORACLE block gives -- the same
+    # three addresses, all three reads, re-spelled rather than re-counted.
+    # `distinct` does not move, which is the point: the de-duplicated pass
+    # removes nothing here, it only renumbers what the default census already
+    # had. `main_refs` is not asserted by --self-test (only `distinct`,
+    # `refs` and the buckets are); it is re-derived rather than carried
+    # forward, so it is not left stale beside a total that moved.
+    "buckets": {"read": 4923, "write": 2707, "read+write": 1018,
                 "passed-to-call": 500, "address-taken": 256},
     # Addresses present without the pass and absent with it. Empty here, and
     # that is a measurement rather than an absence: it is the failure the pass

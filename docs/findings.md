@@ -2159,6 +2159,51 @@ alone and gives every other value the same seed pair, so there the select
 behaves as a two-way choice. Neither corrects the other — they are
 different consumers of one byte.
 
+**The two-consumer count above is corrected here rather than edited** (issue
+#267, fix round 1): there are **three** consumers of the byte in the committed
+tree, and the third distinguishes *more* values than either of the other two —
+so the answer is not two disagreeing about how many matter, it is two plus a
+third, and the third is the finer-grained of the three. The vendor service
+reads `0x07D3` outright:
+`windows/decompiled/v3.1.39.0/GCUService/MyECIO/MyEcCtrl.cs:164`,
+`AcpiModel.Read(GetType().Name, 2003, ref Data)`, and `2003 = 0x07D3`.
+`GetSku()` (`:158-190`) masks the byte with `0xF0` and switches the high
+nibble — `0x30`→`GN20_GPU_SKU.E3`, `0x40`→`E4`, `0x50`→`E5`, `0x60`→`MaxQ`,
+`0x70`→`E7`, `0x80`→`P0`, `0x90`→`P1`, anything else `NA` — and
+`IsHeroProject()` (`:192`) keys off `sku == GN20_GPU_SKU.MaxQ`. This is a
+third *path*, not a restatement of the two above: it reaches the driver
+through `AcpiModel.Read`, not the WMI `InvokeMethod("SMRW")` at
+`WMIEC.cs:331-343`, and it reads the byte itself rather than a buffer the
+select picks.
+
+Four of those seven names are the four values the EC writes, in the same
+order: GFID 3 / 4 / 5 / 7 → E3 / E4 / E5 / E7. The one the service calls
+`MaxQ` is `0x60`, the value `SMRW` tests and that neither committed method
+finds a writer for. The service's `ECSpec` name for the byte is
+`ADDR_ModuleID`, defined as `2003` at
+`windows/decompiled/v3.1.39.0/GCUService/Define/ECSpec.cs:389`,
+`v3.1.6.0/ECSpec.cs:389` and `v3.9.18.0/Define/ECSpec.cs:389` — live code that
+`GetSku()` reads, so the ASL's `GFID` and the service's `ADDR_ModuleID` are one
+byte under two vocabularies.
+
+**The "each comparison picks a different pair of EC register blocks" clause
+above is retracted too**, and not only in the word "blocks": the `GFID == 0x06`
+arm selects the single buffer `ACPE`, so "pair" was wrong for one arm of the
+four. The three arms it does describe are pairs.
+
+**The open question, restated with the SKU mapping in view (issue #267, fix
+round 1).** What GFID 3 means to the GPU is still not answered by any of the
+three consumers, and nothing here claims it is. What the third consumer adds
+is that the three read one byte at three *widths* — the ASL's 3-bit `GFID`
+field (`dsdt.dsl:52251-52253`), the service's `0xF0` mask, and `0x94D0`'s
+high-nibble XOR — and that they do not quite coincide: the service's mask
+includes bit 7, which the ASL's field list leaves unnamed. So the field being
+a GPU-SKU selector is established in the *service's* vocabulary, from a
+seven-value consumer; whether the GPU reads it that way, and what GFID 3 buys
+it, is what
+[`gpu-tgp-07c4-07d7-door.md`](hardware-tests/gpu-tgp-07c4-07d7-door.md) is for
+— still **not run**, and nothing here reports an observation from it.
+
 **The paragraph above is corrected here rather than edited** (issue #267, fix
 round 1, 2026-09-25): it called the seven targets "EC register blocks" and
 said the select "chooses a register *bank*". The one below it said they were
