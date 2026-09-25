@@ -130,6 +130,95 @@ runner reads.
 round, so a row outliving its file would have failed too. One missing row fixes
 the suite; the fix was not to loosen either assertion.
 
+  > **Corrected 2026-09-25, issue #816.** The section above is left standing, and
+  > one of its premises is no longer true: `tools/README.md`'s counts are **not
+  > out of date on this tree**. #821 re-derived them from a green run —
+  > `90ac6d2c`, which is the commit that took the sentence from `874` to `882` —
+  > and #846 re-derived them again, at `31`/`934`, having added
+  > `ec/tools/test_walk_budget_census.py` at 52 tests. #801 has moved them once
+  > more on `main` since, to `32`/`974` for its own
+  > `ec/tools/test_check_citation_lines.py` at 40, and the runner still prints
+  > `32 suite(s) run, 974 tests`, so the sentence and
+  > the runner agree today. What survives the correction is the rest of the
+  > section and the half that matters: **no check
+  > in the tree compares a count**, by the decision the three places it names
+  > record. So the counts are not this issue's to fix *because they are stale*
+  > any more — they are simply not a check's business, and that is a stronger
+  > reason to leave them alone than the one the section gives. The last
+  > paragraph of this file carries the same correction in the terms this file
+  > uses for the two suites the section above is really about.
+
+## The two suites named above are green, and the set is not empty (2026-09-25, issue #816)
+
+Both suites this file names as red are green, and the section above — left
+standing rather than rewritten, for the `../findings.md` §4a-4d reason — now
+reads as a record of a runner state that has passed. **Nothing here was fixed by
+this issue**; both were fixed elsewhere and this file is the place a reader would
+not think to look, because it is the file `../ec/annotations/xdata-register-map.md`
+nominates as "the file that tracks the set".
+
+| suite | was | now | fixed by |
+|---|---|---|---|
+| `ec/tools/test_check_site_census.py` | 14 `census_refs` line disagreements against an `ec/decompiled/bank0/D091.c` hand-corrected on 2026-09-24 | green, 45 tests | #752 re-pinned the four cells; no `census_count` moved |
+| `ec/tools/test_xdata_cluster_names.py` | #528's `==`-guard failure, raising in `setUpClass` before any case runs | green, 28 tests, seven cases running | #753 replaced the copy-and-patch recipe with `--no-eq-guard` |
+| `ec/tools/test_check_cluster_citations.py` | 1 failure: §26 of `docs/findings.md` put a cluster id and an address in the same sentence | **still red**, 48 tests, 1 failure — but on `xdata-cluster-names-guard-off-recipe.md:220`, not on §26 | **#822** (`2ed6f030`), whose `:220` paragraph is a pasted `xdata_register_map.py` transcript — it prints cluster ids of its own — in the same paragraph as the addresses a later sentence of it discusses. `../findings.md` §52 records it in a merged-tree note and names it to that file's owner |
+
+```console
+$ bash tools/run-tests.sh
+...
+ec/tools/test_check_cluster_citations.py: FAILED
+32 suite(s) run, 974 tests; one or more FAILED.
+$ echo $?
+1
+$ git status --porcelain
+                                    # empty: a red runner wrote nothing either
+```
+
+**The red set is the claim; the totals are not, and the two are deliberately
+kept apart.** The paragraph above spends a page on why a total belongs to the
+merge rather than to any suite, and that reasoning is why this section does not
+paste `32` and `974` into a file that will be read long after they moved — that
+is the mechanism by which the sentences above went wrong in the first place.
+Re-derive the figures; this section records the shape, which is *one suite, and
+not either of the two this file's first section names*.
+
+**This section was first drafted with that cell absent and the runner green**,
+against `64dbde19`. #822 landed afterwards and made it false, and the
+correction is made here rather than by editing the rows above, because the rows
+above are the ones §4a-4d protects. The reason to name the red suite at all is
+that this file is the tracker: a reader who came here to check whether the
+runner is green would otherwise find a page saying so, and the page would be
+wrong in the same direction as the sentences it was written to correct.
+
+**The `#615` counts section above is deliberately left alone, but its premise
+has moved.** The counts in `tools/README.md` are `32` and `974`, re-derived by
+#801 from a run on this tree (#846 put them at `31` and `934`, and `#821`'s
+`90ac6d2c` at `30` and `882`),
+and the runner still prints exactly that — so
+there is no stale number there to patch, and leaving them alone is a decision
+rather than an omission. What has not moved is the reason no check in the tree
+can see them: `tools/test_readme_suite_table.py` checks the table's row *set* and
+deliberately not the prose or the counts, and `tools/run-tests.sh` asserts no
+total, by the decision that section records three ways. That stays by design: a
+wrong number nobody is blocked by is cheaper than a right number that turns every
+added case red. A reader who wants the current figure runs the runner; a reader
+who wants to know why nothing in the tree would notice that figure changing has
+the reason three paragraphs up.
+
+The write-up is
+[`xdata-no-eq-guard-measured-state-correction.md`](xdata-no-eq-guard-measured-state-correction.md).
+One consequence is recorded here because it follows from the same measurement,
+and **only** from it: the section above gives two reasons the gate wiring is not
+landed, and this section's two named suites being green answers one of them —
+which is as much as the measurement carries, since the colour half of "the
+runner is red" was never what the gate is blocked on. What it does **not** do is
+establish anything about #162 itself — that issue's state is not read here, and
+this file has no way to read it. What a reader can derive is narrower and is
+worth saying precisely: *the colour half of the recorded blocker is gone, and
+the remaining half is that `agent-gates.sh` is template-copied and this
+pipeline's push token has no `workflow` scope for it.* Whether that is enough is
+whoever owns #162's call.
+
 ## The tool's issue is #707 in this tree, not #734
 
 The issue body calls `ec/tools/inc_dptr_sites.py` "the tool #734's title

@@ -91,6 +91,57 @@ not these counts — its docstring gives the reason — so the paragraphs above
 are the only thing holding them, which is exactly why they have to be
 re-derived by running the runner rather than by arithmetic on a diff.
 
+> **Corrected 2026-09-25, issue #816.** The paragraph under "The totals are
+> not a pass" is left as it was written, and **both of the suites this file
+> names as red are green** on the tree this lands on. The first paragraph
+> already says so — #821 (`90ac6d2c`) re-cast the two as history rather than
+> as state, and #846 and #801 re-derived the counts above it — so what is left
+> for this block to add is the half none of those sentences carries: *which*
+> suite is red now, and that it is not either of the two named here.
+> `ec/tools/test_check_site_census.py` was cleared by #752, which re-pinned
+> the four `census_refs` cells onto the lines the corrected `bank0/D091.c`
+> has; `ec/tools/test_xdata_cluster_names.py` was cleared by #753, which
+> replaced its copy-and-patch recipe with `--no-eq-guard`. **The runner
+> nonetheless still exits 1, on a third suite**, and that is the measurement:
+>
+> ```console
+> $ bash tools/run-tests.sh
+> ...
+> ec/tools/test_check_cluster_citations.py: FAILED
+> 32 suite(s) run, 974 tests; one or more FAILED.
+> $ echo $?
+> 1
+> ```
+>
+> Its one failure is a cluster-membership claim in
+> `docs/findings/xdata-cluster-names-guard-off-recipe.md:220` — #822's write-up,
+> not this repository's runner being broken. `docs/findings.md` §52 records it
+> and names it to that file's owner;
+> `docs/findings/runner-red-suite-set.md` tracks the set, one suite wide. So
+> "the runner exits 1" above is still true and is now true of a different line.
+>
+> **The suite and test counts in the two paragraphs above are deliberately left
+> as they are**, and this correction does not update them. They are `32` and
+> `974` — the *Third merged-tree note* above re-derived them for #801, which
+> added `ec/tools/test_check_citation_lines.py` — and they are exactly what the
+> runner still prints, as the transcript above shows, so leaving them alone is
+> a decision rather than a patch over a stale number. (This block was first
+> written against the tree #821 measured, where the paragraphs above read `30`
+> and `882`; #846's note superseded those above it at `31` and `934` and
+> #801's superseded that, so the block is re-pointed
+> rather than left contradicting the sentence it sits under. The count of
+> *red* suites is unchanged by either, and this is not the place it is argued.)
+> What no check in the tree can see them is still the reason not to touch them:
+> `test_readme_suite_table.py` compares the row *set* and nothing else and
+> `tools/run-tests.sh` prints its totals and asserts none, a decision
+> `docs/findings/runner-red-suite-set.md` sets out at length. **Re-derive them**
+> by running the runner, which is what the first paragraph above already
+> requires, and which is the whole reason the red/green claim beside it had to
+> be re-measured too. `tools/README.md` also has no reason to know anything
+> about prose: nothing written in this block can turn a suite red or green. The
+> write-up is
+> [`docs/findings/xdata-no-eq-guard-measured-state-correction.md`](../docs/findings/xdata-no-eq-guard-measured-state-correction.md).
+
 | suite | what it stands in for |
 |---|---|
 | `ec/tools/test_bank1_e582_framing.py` | The byte facts behind the issue #680 reading that the `bank1,0xE582` entry is reached through 0xE580 and the census row at 0x9F03 is a displacement byte: the push/lcall/pop save-restore pair across the 0xE57E cut, `converges_from` on both halves of each site, and the `80 02` at 0x9F02 read as a `sjmp` whose displacement's landing address is the committed `9F04.asm` first instruction — asserted against the image rather than by re-running the scan that wrote the census, so a regenerated table that disagreed would fail rather than pass on a stale pair, plus that both annotation comments still carry the clause their `CORRECTION` replaces, that no entry is seeded at 0xE580, and that the phantom census row is deliberately left in place |

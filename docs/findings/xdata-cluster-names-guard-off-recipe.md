@@ -387,6 +387,38 @@ occurrences; **four files and eight** of those are other than this one (three in
 in `xdata-register-map.md`), and the `xdata-4-4-identity-rederivation.md:215`
 copy is the only executable one left.
 
+> **Closed 2026-09-25, issue #816 — rows 2 and 3 are corrected in place, and
+> they cost more than the two sentences this table priced them at.** The offer
+> above — *a reviewer can overrule that, and the cost of doing so is one
+> sentence each* — was taken up, and the count came out at six. Not because
+> either sentence was expensive to edit, but because neither stood alone:
+> `xdata-no-eq-guard-refusal-contract.md`'s measured-state section is one claim
+> spread over a heading, an opening paragraph and three suite paragraphs, and
+> `docs/findings.md` §29 restates the same "only working route" sentence as the
+> summary of that page. The corrections are dated blocks beside the sentences
+> they belong to, in `xdata-no-eq-guard-refusal-contract.md`,
+> `../ec/annotations/xdata-register-map.md`, `docs/findings.md` §29 and `§59`,
+> `tools/README.md` and
+> [`runner-red-suite-set.md`](runner-red-suite-set.md). **Row 1 still stands as
+> written** and row 4 was already corrected in place here, so nothing in this
+> table is a promise any more, and a reader does not need to go looking. The
+> write-up is
+> [`xdata-no-eq-guard-measured-state-correction.md`](xdata-no-eq-guard-measured-state-correction.md),
+> and the one thing worth keeping from this table is its own reason for
+> existing: a correction recorded in a sibling file is a promise, and the cost of
+> not keeping it falls on whoever notices.
+>
+> **Not this issue's, and recorded here because a reader of this file is the
+> likeliest to want it: this file's `:220` paragraph is the one red case in the
+> tree.** #822's addition put a pasted `xdata_register_map.py` transcript — which
+> prints cluster ids of its own — in the same paragraph as the addresses a later
+> sentence of it discusses, and `check_cluster_citations.py` reads that pairing as
+> a membership claim. It is the reason `bash tools/run-tests.sh` exits 1 on this
+> tree, it reproduces on a clean `origin/main`, and `docs/findings.md` §52 names
+> it to this file's owner rather than fixing it in a correction sweep. The
+> mechanism is the one the write-up measures: a unit naming an address, a cluster
+> id and a membership word reads as a claim, whatever sits between them.
+
 ## What this does not do
 
 - **`xdata_register_map.py` is not touched at all.** That is the point of the

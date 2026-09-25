@@ -6546,6 +6546,37 @@ recorded list nor `MODES`, and the suite stayed green with it unmocked. It now
 reads statement position too; the write-up is
 [`docs/findings/xdata-dispatch-tripwire-coverage.md`](findings/xdata-dispatch-tripwire-coverage.md).
 
+**Updated 2026-09-25, issue #816 — the three failures this section names are
+resolved, two of the three suites are green, and the third
+"committed-prose case" below is not owed.** Three sentences
+of this section are left standing and are now false, so this addendum is their
+correction rather than a replacement: "19 of 22 suites", "all three failures
+reproduce on a pristine `HEAD`", and "the accepted run in the new suite is
+currently the only working checked-in-suite route".
+#752 re-pinned the `census_refs` cells and cleared
+`test_check_site_census.py`; #753 replaced the copy-and-patch recipe with
+`--no-eq-guard` and cleared `test_xdata_cluster_names.py` along with the
+`setUpClass` error this section attributes to #528. **The runner nonetheless
+still exits 1**, on the third of the three suites this section names —
+`ec/tools/test_check_cluster_citations.py` — and its one failure is on
+`docs/findings/xdata-cluster-names-guard-off-recipe.md:220`, which is **#822's**
+write-up and reproduces on a clean `origin/main`. `bash tools/run-tests.sh` gives
+`32 suite(s) run, 974 tests; one or more FAILED` here, with
+`git status --porcelain` empty afterwards, and §52's merged-tree note, further
+down this file, is where that is recorded. There are now **two** working
+scripted routes to a guard-off census rather than one, and #753 is the follow-up
+this section says the fix "belongs with" — it read this page to choose, and
+chose the flag over re-pointing the recipe. The §26 disagreement this section
+calls **main's own** and hands to #564 is likewise not owed: `main-ec-086`'s
+committed row really is `0x07FD 0x07FE 0x07FF`, so that claim is true. The
+address `0x0800` now falls in a following sentence that names no cluster id at
+all, so the checker drops that unit before it reads the address. The refusal
+contract, `tools/README.md`,
+`runner-red-suite-set.md` and
+`../ec/annotations/xdata-register-map.md` each carry the same correction beside
+the sentence it belongs to; the write-up is
+[`docs/findings/xdata-no-eq-guard-measured-state-correction.md`](findings/xdata-no-eq-guard-measured-state-correction.md), and the summary is §59.
+
 ## 30. The call-graph tranche's twelve `unresolved` rows, retyped from their bytes (2026-09-25, issue #456)
 
 Issue #134's tranche left twelve of its 44 rows at `type=unresolved` and
@@ -7731,3 +7762,71 @@ not loosened out of the checker. No `status:` moved (`XDATA_0860` is still
 `present-untested`), no count moved, no CSV or Ghidra export was regenerated,
 `check_site_census.py`'s output is byte-identical, and no EC, hardware or
 Windows machine is involved anywhere: every input is a committed file.
+
+## 59. The refusal contract's measured state, corrected against the tree that inherited it (2026-09-25, issue #816)
+
+> **Numbering note, added at the merge.** This section was written as §57, and
+> #846 (`964279dc`) took §57 on `main` while it was open, so it is renumbered
+> to the next free number rather than left to collide. §57 is now #846's
+> `walk()` summary above; the §29 addendum, the
+> `xdata-cluster-names-guard-off-recipe.md` block, the register-map correction
+> and the write-up's own table all point at **§59** for this one. §58 then went
+> to #801 (`72ff69d1`, the prose-line-citation checker) on `main` in the same
+> window, so this section is renumbered a second time and sits below it. A
+> section number is a property of the merge in the same way the runner's totals
+> are — see `runner-red-suite-set.md` — which is why the collision is recorded
+> here rather than left for the next reader to find.
+
+The write-up is
+[`xdata-no-eq-guard-measured-state-correction.md`](findings/xdata-no-eq-guard-measured-state-correction.md);
+this is the summary. §50 landed the flag and then, because the two sentences it
+had relied on sat in long shared prose files, **recorded them as superseded in
+its write-up rather than editing them** — offering that a reviewer could overrule
+that at the cost of one sentence each. This is that reviewer, and the cost came
+out at six, for a reason worth stating: the refusal contract's measured-state
+section is **one claim, not several**. Its heading counts the red suites, its
+next paragraph names the two behind the flag, and three paragraphs follow each
+naming one and giving its cause; the "only working route" sentence appears in
+the contract *and* in §29, which summarises it; and the register map's "one
+suite of the two red" depends on a count its own neighbouring sentence had
+already halved. Correcting the six suite-sentences and leaving the rest would
+have left a page that contradicted itself three paragraphs down. Nothing was
+rewritten or deleted — each correction is a dated block beside the sentence it
+belongs to, quoting it rather than pinning a line number, because these
+corrections add lines to the files they correct and a `:NNN` aimed at one of
+them is wrong on arrival. **The three failures these sentences are about are
+resolved, and two of the three suites are green** —
+`test_xdata_cluster_names.py` and `test_check_site_census.py`, at 28 and 45
+tests; the third, `test_check_cluster_citations.py`, is still red at 48 tests,
+so the red set the contract's heading counted is down to the third of those
+three rather than to none — and it is red on a *different* line for a
+*different* reason. `bash tools/run-tests.sh` still exits 1 on this tree, on
+`ec/tools/test_check_cluster_citations.py`, and the failing line is
+`docs/findings/xdata-cluster-names-guard-off-recipe.md:220` — **#822's**
+write-up, reproduced on a clean `origin/main` and recorded in §52's merged-tree
+note above, which is why the figures here were re-derived rather than carried
+over from the commit this work started at. One figure from the issue did not
+move and one did — `45` was already right for `test_check_site_census.py` and
+`46 → 48` is the real change, which is the split a reader pinning a single "it
+is at N tests" would have got wrong.
+**The open question came back answered, and not the way it was framed**: §26 is
+not flagged *not* because the tree stopped being checked for the disagreement
+but because §26 stopped making it. `main-ec-086`'s committed row really is
+`0x07FD 0x07FE 0x07FF`, so that claim is true and #564 is owed nothing. The
+address `0x0800` now falls in a following sentence that names no cluster id at
+all, so its unit is dropped before the address is read. Measured
+rather than
+reasoned, and the sharper form is that **any** unit naming an address, a cluster
+id and a membership word reads as a claim — so quoting §26's sentence is enough
+to turn that suite red, which is how this write-up's own first draft
+failed. The rules did not loosen, the prose changed shape, and the mechanism is
+recorded with a citation rather than asserted. Also left standing, as
+deliberately: the refusal contract's "the third time this recipe has been
+re-pointed at a line number, which is itself the argument for the flag" — it is
+the reasoning #753 acted on, and the four pins in that same paragraph are now
+352 to 625 lines stale — four different offsets, `:1220`→`:1572`, `:1243`→`:1595`,
+`:1604`→`:2168`, `:2292`→`:2917` — for the very reason it names. No tool, CSV,
+`registers.yaml`
+row or gate was edited, no image was opened, no register was read back, and no
+new test was added: a check over prose nobody asserts on would duplicate a rule
+the tree made on purpose.
