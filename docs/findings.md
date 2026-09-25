@@ -7457,7 +7457,7 @@ The write-up is
 the summary. Issue #679 fixed one instance of *read a byte out of a buffer, then
 index `OPCODE_LEN` with it, before checking the buffer's end*, and wrote the
 shape down for the first time. This is the census of the rest of `ec/tools/` for
-it: **one grep, 39 lines, 25 sites in 20 functions** — the six the issue named
+it: **one grep, 39 lines, 25 sites in 20 rows** — the six the issue named
 are a subset, not the content — with a measured verdict per row and the other 14
 lines accounted for as docstrings, constants, dict values, or the adjacent
 `audit_call_targets.py` last-byte read. The three classes come out differently,
@@ -7468,10 +7468,12 @@ rather than a guard, because a `len(d)` check there would be testing something
 other than the loop's own invariant. The deliverable is
 `ec/tools/trace_xdata_refs.py:241-242`, where the comment `# DPTR reloaded: ...`
 described the **second** disjunct of the guard and was silent on the **first** —
-the `i + 2 >= len(d)` test that is the loop's only end-of-buffer check, since the
-loop's own bound is `max_insns` and not `len(d)`. **Restated as comment lines
-only; the fifteen-address `--check` sweep exits 0 before and after, which is
-what makes it a regression test rather than a formality.** The restatement is
+the `i + 2 >= len(d)` test that holds the index in range, since the loop's own
+bound is `max_insns` and not `len(d)`, and the loop's other `len(d)` test (at
+`:230`) asks whether the *instruction* fits and so permits `i + n == len(d)`.
+**Restated as comment lines only; the fifteen-address `--check` sweep exits 0
+before and after, which is what makes it a regression test rather than a
+formality.** The restatement is
 load-bearing rather than cosmetic because the two disjuncts do not fire equally:
 driven from all 262144 offsets of `ec/firmware/GMxMGxx_11.800` the `MOV_DPTR`
 test fires 26257 times and the bounds check **10**, all from starts in the last

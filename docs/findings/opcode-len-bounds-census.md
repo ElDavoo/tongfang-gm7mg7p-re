@@ -97,7 +97,7 @@ ec/tools/citation_gap_scan.py:28:called in a loop over these windows.** It evalu
 ec/tools/citation_gap_scan.py:234:        n = D.OPCODE_LEN[window[i]]
 ```
 
-**39 lines, and 25 of them are sites of the shape, in 20 functions.** The other
+**39 lines, and 25 of them are sites of the shape, in 20 rows.** The other
 14 are accounted for here so that the arithmetic is checkable rather than
 asserted:
 
@@ -136,7 +136,7 @@ in the function that walks.
 | 6 | `pd_index_geometry.py:1142` `access_entries()` | `for i in range(lo, hi)`, `hi = min(hi, len(d))` at `:1139` | region, clamped | yes | — | existing guard |
 | 7 | `pd_index_geometry.py:1471` `byte_address()` | `while i < len(raw)` | **is** (`len(raw)`) | yes | `--self-test` over the committed fixtures, exit 0 | existing bound; not the image |
 | 8 | `walk_branch_arms.py:327-328` `descend()` | `while True`, `budget <= 0` at `:324`; `if off + n > len(d)` at `:329` | **is**, but the test runs *after* the read | yes | `--self-test` over the image, exit 0 | existing guard; see follow-up 2 |
-| 9 | **`trace_xdata_refs.py:229` `walk()`** | `range(max_insns)`; `len(d)` is nowhere in the loop | **no** — held by `:241` | yes, 114 walks / 311 iterations over the committed sweep | the guard's first disjunct fired **0** times; the exposure is real (see below) | **restated comment at `:241-242`** |
+| 9 | **`trace_xdata_refs.py:229` `walk()`** | `range(max_insns)`; `len(d)` is tested twice, `:230` and the guard's first disjunct, and only the latter bounds the index | **no** — held by `:241` | yes, 114 walks / 311 iterations over the committed sweep | the guard's first disjunct fired **0** times; the exposure is real (see below) | **restated comment at `:241-242`** |
 | 10 | `pd_index_geometry.py:600-601` `site_rows()` | `range(max_insns)` = `SITE_WINDOW` (16), no flow break, two `d[j]` per iteration | **no** | yes, every `--sites` run | peak read `0x3002C` against a `0x40000` image; command 2, exit 0 | **no guard** — arithmetic, below |
 | 11 | `pd_index_geometry.py:384` `_insns()` | `while i < start + length` | caller's | yes | `--helpers` and `--accesses`, exit 0 | census row + verdict |
 | 12 | `pd_index_geometry.py:1026` `access_frames()` | `while i < off` | caller's | yes | `--accesses` over the image, 980 lines, exit 0 | census row + verdict |
@@ -212,11 +212,15 @@ So a reader who instruments the tool finds that the comment's disjunct does
 essentially all the work — 75 of 114 walks on the committed sweep, and 26257 of
 every walk this image admits — while the other fires 10 times in 262144 driven
 offsets. That reads as *the comment is accurate and the first disjunct is dead
-code*. It is not dead code. It is the only end-of-buffer check in the loop, and
-deleting it raises, as the vector below shows. The measurement is the reason
-the comment has to be restated carefully rather than casually: a comment that is
-merely incomplete is easy to leave alone, and this one is contradicted by the
-numbers a reader is most likely to go and collect.
+code*. It is not dead code. It is the check that holds the index in range, and
+the loop's other `len(d)` test does not: `:230` asks whether the *instruction*
+fits (`i + n > len(d)`) rather than whether the index is readable, so it permits
+`i + n == len(d)` and can leave `i` sitting at `len(d)` for the `d[i]` at the top
+of the next iteration. That off-by-one is what makes the first disjunct the test
+that does bound the index, and deleting it raises, as the vector below shows. The
+measurement is the reason the comment has to be restated carefully rather than
+casually: a comment that is merely incomplete is easy to leave alone, and this
+one is contradicted by the numbers a reader is most likely to go and collect.
 
 **What the change is.** Comment lines only, naming both disjuncts, saying
 plainly which one is the bounds check and what it bounds, and saying that the
