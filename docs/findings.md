@@ -4333,6 +4333,33 @@ code are unchanged. Offline behaviour against a fake EC; nothing here has met a
 real §3 run. Written up in
 [0751-append-unchecked-marks.md](findings/0751-append-unchecked-marks.md).
 
+**2026-09-25 (issue #719): a fifth column on the MARK row measured against a
+`# provenance` row, and nothing changed.** That notice cannot say which process
+wrote a mark, and the ceiling is the format rather than the process — but
+implementing either candidate is the *next* step, so this measures instead.
+`ec/tools/measure_mark_provenance.py` scans the tree for every writer and
+consumer of `ts,MARK,,label` rather than taking a list, and found four sites
+the issue does not name: a third `Marker` in `system_id_probe.py`; a fourth
+writer in `ec_timer_capture.py` at four sites, under a different label
+convention; `test_manual_fan_ctrl_probe.py`'s two lines, the only committed
+assertion of an exact column count and so the canary a widened shape trips
+first; and `check_capture_claims.py`, which reads every committed capture.
+50 committed fixtures holding 247 MARK rows, all four columns, and four
+readers called on temp files, **both shapes cost zero** — the readers index
+rather than unpack, and the issue's "`row[0..3]` unpacks" is explicit indexing
+at `grade_0751_isolation.py:691`, so a fifth column is ignored where the
+issue's reading predicts a `ValueError`. The one number the shapes differ on is
+3-of-3 marks carrying provenance in their own row against 0-of-3, which is why
+the page recommends the fifth column and states what it costs. It corrects the
+issue's framing of the comment row as well: a `# provenance` row does bind to
+the marks after it, by position, and the real cost is that
+`existing_mark_labels` returns a flat `(ts, label)` list with no position to
+recover. Three states, not two — absent, empty, populated — and a four-column
+row must never read as "held no flag". Offline, over committed files and
+constructed ones; no capture taken, no format changed, and implementing the
+recommended shape is the next issue's. Written up in
+[0751-mark-provenance-shapes.md](findings/0751-mark-provenance-shapes.md).
+
 ## 17. The `main-ec-003` cluster is one 393-byte routine, counted 42 times over (2026-09-23, issue #179; id corrected by #253, by the 2026-09-24 re-derivation, and again by #279 on 2026-09-25)
 
 **The id in this section's subject has been wrong twice, and every version of
