@@ -3336,14 +3336,18 @@ registers:
       computed DPTR, the CODE-table copy class, the DPTR-handoff class, and
       the three host components. The negative is bounded per method and each
       method's blind spot is named, in
-      ec/annotations/xdata-1c3x-consumers.md 7. One structural result is worth
-      carrying here: 0x1C39 is written by FUN_CODE_8294's computed-DPTR pair
-      store, as the second byte of a pair at 0x1C38/0x1C39, when
-      XDATA[0x0A56] holds 0x34 or 0xB4 -- so 0x1C38's only direct writer is
-      not the only way that pair can be filled. That store's DPH is hard
-      0x08, so it cannot reach page 0x1C00; the one page-0x1C construction
-      does not exist (no addc-into-DPH site in the EC builds that high
-      byte). Per-address table:
+      ec/annotations/xdata-1c3x-consumers.md 7. One structural negative is
+      worth carrying here: the computed-DPTR pair store at bank0 0x8365 in
+      FUN_CODE_8294 is NOT a writer of this byte or of 0x1C38. Its DPH is
+      hard 0x08, so every destination it builds sits on the 0x0800 page and
+      cannot reach page 0x1C00. Its DPL is (2*XDATA[0x0A56] + 0xD0) mod
+      256, so XDATA[0x0A56] holding 0x34 or 0xB4 gives DPL 0x38 -- the
+      pair 0x0838/0x0839 on page 0x08, a destination unrelated to this one.
+      Of the 64 addc-into-DPH sites in the EC image the 58 that follow a
+      clr A take exactly the immediate and none of them is 0x1C; the six that
+      do not are named as a residual in section 6.2, and a store through one
+      of them reaching a 0x1Cxx byte is not excluded -- not found by this
+      method, not absent. Per-address table:
       ec/annotations/xdata-086x-dispatch.md, and
       ec/annotations/xdata-1c3x-consumers.md.
 
