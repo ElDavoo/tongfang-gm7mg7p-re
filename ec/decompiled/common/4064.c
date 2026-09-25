@@ -38,7 +38,7 @@ code_c0x4020:
 LAB_CODE_4029:
     if (bVar2 != 0) {
       FUN_CODE_434c();
-      FUN_CODE_3835(1);
+      store_r7_to_upper_internal_ram_byte_3835(1);
       if (DAT_EXTMEM_0a4b == -0x13) {
 code_c0x4048:
         param_6 = FUN_CODE_4376();
@@ -48,7 +48,7 @@ code_c0x4048:
         param_6 = FUN_CODE_4376(0x9c);
       }
 LAB_CODE_4053:
-      FUN_CODE_2e9c(param_6,1);
+      store_0a4c_triplet_then_countdown_and_dispatch(param_6,1);
       bVar2 = DAT_EXTMEM_0a47;
       goto LAB_CODE_405d;
     }

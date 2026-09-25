@@ -19,11 +19,11 @@
 undefined1 timer1_target_splits_internal_ram_41_on_carry(undefined1 param_1)
 
 {
-  FUN_CODE_0e7d();
+  stop_timer1_clear_tf1_and_bit_06_2();
   if ((DAT_INTMEM_41 >> 4 & 1) != 0) {
     _6_2 = 1;
     DAT_INTMEM_41 = DAT_INTMEM_41 & 0xef;
-    FUN_CODE_0e72();
+    timer1_load_th1_fa_tl1_01_clear_tf1_start();
   }
   return param_1;
 }

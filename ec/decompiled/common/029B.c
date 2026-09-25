@@ -21,7 +21,7 @@ void chan_init_1708_then_jmp_11c2(void)
   char cVar1;
   
   if ((DAT_EXTMEM_1708 >> 3 & 1) == 0) {
-    FUN_CODE_07d0(0x1701);
+    write_0x11_to_1702(0x1701);
     DAT_INTMEM_aa = 0;
     DAT_EXTMEM_1106 = DAT_EXTMEM_1106 | 0x10;
   }
@@ -39,9 +39,9 @@ void chan_init_1708_then_jmp_11c2(void)
         cVar1 = inc_xdata_0043_return_new();
       } while (cVar1 != '\x05');
     }
-    FUN_CODE_07c1();
+    write_0x11_to_1700_1701_1702();
     DAT_INTMEM_84 = 0;
-    FUN_CODE_07e7();
+    set_bit_06_4_clear_bit_23_0_store_ff_via_r0_07e7();
     DAT_INTMEM_97 = DAT_EXTMEM_170c;
   }
   load_dptr_bf57_tail_jump_1100();

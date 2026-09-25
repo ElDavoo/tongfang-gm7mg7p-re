@@ -9,7 +9,7 @@
 char FUN_CODE_375e(char param_1)
 
 {
-  FUN_CODE_2f1d(2,0xf2);
+  store_0a4f_triplet_then_retry_loop(2,0xf2);
   if (param_1 == '\0') {
     return DAT_INTMEM_95;
   }

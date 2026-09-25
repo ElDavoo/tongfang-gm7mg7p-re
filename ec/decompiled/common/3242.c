@@ -10,8 +10,8 @@ void FUN_CODE_3242(void)
 
 {
   if ((DAT_INTMEM_9b == '\0') && (DAT_INTMEM_9c == '\0')) {
-    FUN_CODE_3ad1();
-    FUN_CODE_3acc(0);
+    clear_upper_internal_ram_byte_3ad1();
+    store_r7_to_upper_internal_ram_byte_3acc(0);
   }
   return;
 }

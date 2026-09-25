@@ -9,7 +9,7 @@
 void FUN_CODE_08b0(void)
 
 {
-  FUN_CODE_0937(0);
+  store_r7_to_0a49_then_pulse_bit_3206_4(0);
   if (DAT_INTMEM_36 == '\x02') {
     DAT_INTMEM_38 = DAT_INTMEM_37;
     return;

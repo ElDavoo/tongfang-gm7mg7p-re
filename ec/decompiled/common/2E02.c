@@ -19,27 +19,27 @@ void FUN_CODE_2e02(char param_1,byte *param_2,char param_3)
   }
   if (_c_0 != '\0') {
     _c_0 = 0;
-    FUN_CODE_3b20();
-    FUN_CODE_3b32();
-    FUN_CODE_3bae();
+    read_xdata_at_dptr_into_r7();
+    load_dptr_high_from_a_low_from_code_table_3b32();
+    load_dptr_high_from_a_low_from_code_table();
     bVar1 = *param_2;
     sVar3 = 0xa47;
     bVar2 = dptr_3a00_plus_13x_3b51(DAT_EXTMEM_0a47);
     *param_2 = bVar1 | *(byte *)(sVar3 + (ushort)bVar2);
-    FUN_CODE_3ad1();
+    clear_upper_internal_ram_byte_3ad1();
     return;
   }
   if (_c_1 != '\0') {
     FUN_CODE_2cb4(1,DAT_EXTMEM_0a47);
     return;
   }
-  FUN_CODE_3acc(0);
-  FUN_CODE_3ad1();
+  store_r7_to_upper_internal_ram_byte_3acc(0);
+  clear_upper_internal_ram_byte_3ad1();
   if (*(char *)(DAT_EXTMEM_0a47 + -0x78) < '\0') {
     event_id_latch_and_bit_merge();
     return;
   }
-  FUN_CODE_30b5(DAT_EXTMEM_0a47);
+  or_table_bytes_into_dptr_under_flag_87(DAT_EXTMEM_0a47);
   return;
 }
 

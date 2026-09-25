@@ -9,7 +9,7 @@
 undefined1 FUN_CODE_2d85(void)
 
 {
-  FUN_CODE_3acc(0xff);
+  store_r7_to_upper_internal_ram_byte_3acc(0xff);
   return DAT_EXTMEM_0a49;
 }
 

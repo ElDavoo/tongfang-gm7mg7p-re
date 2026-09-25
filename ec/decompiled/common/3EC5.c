@@ -15,7 +15,7 @@ void FUN_CODE_3ec5(void)
   else {
     FUN_CODE_4390(0x40);
     timer1_counted_delay_count_in_r7();
-    FUN_CODE_436f();
+    store_0xfc_to_xdata_1308();
   }
   FUN_CODE_15fa(DAT_INTMEM_32);
   return;

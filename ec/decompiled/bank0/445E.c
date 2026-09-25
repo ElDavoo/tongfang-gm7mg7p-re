@@ -105,10 +105,10 @@ stage_and_commit_0a56_block(undefined1 param_1,byte param_2,undefined1 param_3,c
     cVar2 = TF1;
     if (cVar2 == '\x01') goto LAB_CODE_4598;
     pbVar6 = &DAT_EXTMEM_0a56;
-    FUN_CODE_4a42(DAT_EXTMEM_0a56);
+    dptr_from_21byte_stride_index(DAT_EXTMEM_0a56);
     DAT_EXTMEM_0a5f = *pbVar6;
   } while ((DAT_EXTMEM_0a5f & 0x7e) == 0);
-  FUN_CODE_4afb();
+  stop_timer1_and_set_et1_4afb();
 LAB_CODE_4598:
   cVar2 = TF1;
   if (cVar2 == '\0') {
@@ -117,12 +117,12 @@ LAB_CODE_4598:
       goto LAB_CODE_45cb;
     }
     if ((DAT_EXTMEM_0a5f & 0x18) != 0) {
-      FUN_CODE_43a5(DAT_EXTMEM_0a56);
+      per_channel_state_sequence_on_15byte_stride_table_43a5(DAT_EXTMEM_0a56);
     }
   }
   else {
-    FUN_CODE_4afb();
-    FUN_CODE_43a5(DAT_EXTMEM_0a56);
+    stop_timer1_and_set_et1_4afb();
+    per_channel_state_sequence_on_15byte_stride_table_43a5(DAT_EXTMEM_0a56);
   }
   DAT_EXTMEM_0a5e = -0x12;
 LAB_CODE_45cb:
@@ -141,7 +141,7 @@ LAB_CODE_45cb:
     DAT_EXTMEM_0a60 = 1;
   }
   puVar4 = &DAT_EXTMEM_0a56;
-  FUN_CODE_4a42(DAT_EXTMEM_0a56);
+  dptr_from_21byte_stride_index(DAT_EXTMEM_0a56);
   *puVar4 = 0xfe;
   return DAT_EXTMEM_0a60;
 }

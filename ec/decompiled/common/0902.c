@@ -20,7 +20,7 @@ void FUN_CODE_0902(void)
   TR1 = 0;
   TF1 = 0;
   DAT_EXTMEM_1500 = DAT_EXTMEM_1500 & 0xef;
-  FUN_CODE_0937(0);
+  store_r7_to_0a49_then_pulse_bit_3206_4(0);
   _d_5 = 0;
   return;
 }

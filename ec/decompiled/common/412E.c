@@ -12,7 +12,7 @@ void FUN_CODE_412e(void)
   undefined1 uVar1;
   
   if (DAT_INTMEM_9c == '\0') {
-    FUN_CODE_3835(0);
+    store_r7_to_upper_internal_ram_byte_3835(0);
     if (((DAT_EXTMEM_0a48 != '\0') && (FUN_CODE_0a39(DAT_EXTMEM_0a48), DAT_EXTMEM_0a49 != '\0')) &&
        (FUN_CODE_09e9(DAT_EXTMEM_0a49), DAT_EXTMEM_0a4a != '\0')) {
       FUN_CODE_09e9(DAT_EXTMEM_0a4a);
@@ -31,9 +31,9 @@ LAB_CODE_417b:
     if ((DAT_EXTMEM_0a47 == -0xd) || (DAT_EXTMEM_0a47 == -0x13)) goto LAB_CODE_417b;
     uVar1 = 1;
   }
-  FUN_CODE_3835(uVar1);
+  store_r7_to_upper_internal_ram_byte_3835(uVar1);
   uVar1 = FUN_CODE_4376(0x9c);
-  FUN_CODE_2e9c(1,uVar1);
+  store_0a4c_triplet_then_countdown_and_dispatch(1,uVar1);
 LAB_CODE_418f:
   FUN_CODE_1624(DAT_EXTMEM_0a47);
   return;

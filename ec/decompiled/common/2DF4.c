@@ -19,14 +19,14 @@ void FUN_CODE_2df4(undefined1 param_1,undefined1 param_2)
   mask_1106_then_clear_18_34();
   _c_1 = 1;
   _c_0 = 1;
-  FUN_CODE_3b20(0xa01);
+  read_xdata_at_dptr_into_r7(0xa01);
   FUN_CODE_3bd0();
   FUN_CODE_3b8a(0xa02);
   pbVar3 = (byte *)0xa01;
-  FUN_CODE_3b20();
+  read_xdata_at_dptr_into_r7();
   dph_from_a_dpl_from_code_3b70();
   FUN_CODE_3b3c(0x1e);
-  FUN_CODE_3bae();
+  load_dptr_high_from_a_low_from_code_table();
   bVar1 = *pbVar3;
   sVar4 = 0xa01;
   bVar2 = dptr_3a00_plus_13x_3b51(DAT_EXTMEM_0a01);

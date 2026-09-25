@@ -13,8 +13,8 @@ void FUN_CODE_3353(void)
   char cVar2;
   byte bVar3;
   
-  FUN_CODE_3ad1();
-  FUN_CODE_3acc(0);
+  clear_upper_internal_ram_byte_3ad1();
+  store_r7_to_upper_internal_ram_byte_3acc(0);
   puVar1 = &DAT_INTMEM_9e;
   FUN_CODE_3b80();
   *puVar1 = 0;

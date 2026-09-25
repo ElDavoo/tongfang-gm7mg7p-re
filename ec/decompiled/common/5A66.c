@@ -50,7 +50,8 @@ LAB_CODE_5b68_1:
       bVar8 = (byte)pbVar7 | 0x46;
     }
     else {
-      bVar8 = FUN_CODE_5a55((byte)pbVar7 | *param_3 | (byte)param_3 | param_8);
+      bVar8 = table_bytes_disassembled_as_code_5a55
+                        ((byte)pbVar7 | *param_3 | (byte)param_3 | param_8);
       nop();
       if (_6_2 != '\0') {
         bVar3 = bVar8 - (cVar10 >> 7);
@@ -132,7 +133,8 @@ LAB_CODE_5b91:
       if (CARRY1(bVar3,bVar8)) goto LAB_CODE_5b40;
       goto LAB_CODE_5b91;
     }
-    bVar4 = FUN_CODE_5a55(bVar3 + bVar8 | *param_3 | (byte)param_3 | param_8,0xff);
+    bVar4 = table_bytes_disassembled_as_code_5a55
+                      (bVar3 + bVar8 | *param_3 | (byte)param_3 | param_8,0xff);
     nop();
     pbVar5 = param_2;
     if (_6_2 != '\0') {

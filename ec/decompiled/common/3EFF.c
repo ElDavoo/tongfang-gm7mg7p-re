@@ -15,7 +15,7 @@ void FUN_CODE_3eff(void)
   else {
     DAT_EXTMEM_1304 = 0xc0;
     timer1_counted_delay_count_in_r7(5);
-    FUN_CODE_436f();
+    store_0xfc_to_xdata_1308();
   }
   FUN_CODE_1606(DAT_INTMEM_32);
   return;

@@ -10,7 +10,7 @@ void FUN_CODE_35f6(void)
 
 {
   if ((DAT_INTMEM_80 != '\0') && (DAT_INTMEM_80 = DAT_INTMEM_80 + -1, DAT_INTMEM_80 == '\0')) {
-    FUN_CODE_30b5();
+    or_table_bytes_into_dptr_under_flag_87();
   }
   if (DAT_INTMEM_a1 != '\0') {
     DAT_INTMEM_a1 = DAT_INTMEM_a1 + -1;

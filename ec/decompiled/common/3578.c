@@ -20,28 +20,28 @@ void thunk_FUN_CODE_3459(byte param_1)
   byte *pbVar6;
   
   if (DAT_EXTMEM_0760 == '\v') {
-    FUN_CODE_355e();
+    shared_tail_return_of_3459_and_34c6();
     return;
   }
   if (DAT_EXTMEM_0760 == '\x0f') {
-    FUN_CODE_355e();
+    shared_tail_return_of_3459_and_34c6();
     return;
   }
   if (DAT_EXTMEM_0d15 != '\0') {
-    FUN_CODE_355e();
+    shared_tail_return_of_3459_and_34c6();
     return;
   }
   if (_c_3 != '\x01') {
-    FUN_CODE_355e();
+    shared_tail_return_of_3459_and_34c6();
     return;
   }
   _c_3 = 0;
   if (DAT_INTMEM_ad == '3') {
-    FUN_CODE_355e();
+    shared_tail_return_of_3459_and_34c6();
     return;
   }
   if (DAT_INTMEM_85 != '\0') {
-    FUN_CODE_355e();
+    shared_tail_return_of_3459_and_34c6();
     return;
   }
   if (DAT_INTMEM_80 != '\0') {
@@ -50,12 +50,12 @@ void thunk_FUN_CODE_3459(byte param_1)
   }
   if ((DAT_EXTMEM_1708 >> 2 & 1) == 0) {
     if ((DAT_EXTMEM_1709 >> 2 & 1) != 0) {
-      FUN_CODE_355e();
+      shared_tail_return_of_3459_and_34c6();
       return;
     }
     if ((DAT_EXTMEM_170a >> 2 & 1) == 0) {
       if (_6_4 != '\0') {
-        FUN_CODE_355e();
+        shared_tail_return_of_3459_and_34c6();
         return;
       }
       DAT_EXTMEM_0a47 = DAT_INTMEM_80;
@@ -65,14 +65,15 @@ void thunk_FUN_CODE_3459(byte param_1)
         if ((DAT_INTMEM_8d & 1) == 0) {
           cVar1 = DAT_INTMEM_80;
           FUN_CODE_3c2f();
-          if (((*pbVar2 >> 4 & 1) != 0) && (FUN_CODE_2f1d(1,0xf4), cVar1 == '\0')) {
+          if (((*pbVar2 >> 4 & 1) != 0) &&
+             (store_0a4f_triplet_then_retry_loop(1,0xf4), cVar1 == '\0')) {
             FUN_CODE_3c2f();
             *pbVar2 = *pbVar2 & 0xef;
             *(byte *)(cVar1 + -0x73) = *(byte *)(cVar1 + -0x73) & 0xfd;
             pbVar2 = (byte *)(*pcVar4 + -0x73);
             *pbVar2 = *pbVar2 | 0x20;
             mul13_table_lookup_3b22(*pcVar4);
-            FUN_CODE_3bae();
+            load_dptr_high_from_a_low_from_code_table();
             *pcVar4 = '\x17';
             pbVar5 = &DAT_EXTMEM_0a47;
             mul13_table_lookup_3b3e(DAT_EXTMEM_0a47);
@@ -84,7 +85,7 @@ void thunk_FUN_CODE_3459(byte param_1)
         }
         else {
           cVar1 = DAT_INTMEM_80;
-          FUN_CODE_2f1d(1,0xf5);
+          store_0a4f_triplet_then_retry_loop(1,0xf5);
           if (cVar1 == '\0') {
             FUN_CODE_3c2f();
             *pbVar2 = *pbVar2 & 0xfe;
@@ -99,10 +100,10 @@ void thunk_FUN_CODE_3459(byte param_1)
       FUN_CODE_34c6();
       return;
     }
-    FUN_CODE_355e();
+    shared_tail_return_of_3459_and_34c6();
     return;
   }
-  FUN_CODE_355e();
+  shared_tail_return_of_3459_and_34c6();
   return;
 }
 

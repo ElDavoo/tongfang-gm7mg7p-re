@@ -55,9 +55,9 @@ Measured over the committed export, by `index.csv` for the functions and
 `ghidra-functions.csv` for the names:
 
 - `exported functions` — 2714
-- `annotated function rows` — 1877
-- `rows the index marks annotated` — 1902
-- `unresolved rows` — 157
+- `annotated function rows` — 1914
+- `rows the index marks annotated` — 1940
+- `unresolved rows` — 160
 
 By program, as exported minus annotated minus the rest:
 
@@ -66,22 +66,26 @@ By program, as exported minus annotated minus the rest:
 | `bank0` | 750 | 697 | 53 (7%) |
 | `bank1` | 676 | 605 | 71 (11%) |
 | `pd` | 535 | 503 | 32 (6%) |
-| `common` | 753 | 97 | 656 (87%) |
+| `common` | 753 | 135 | 618 (82%) |
 
 **The common area is the finding.** It is 28% of the export by row count and
-87% of it is unannotated, and it is where the interrupt vectors, the BL51 stubs
-and most of the runtime helpers live. It is also the area this document had to
-extend to say anything about interrupt entry, which is what §3 is.
+was 87% of it unannotated before issue #603's tranche; it is 82% now, and it is
+where the interrupt vectors, the BL51 stubs and most of the runtime helpers
+live. It is also the area this document had to extend to say anything about
+interrupt entry, which is what §3 is. The tranche is
+[`common-runtime-tranche.md`](../../docs/findings/common-runtime-tranche.md) —
+37 rows, the ordering they came out of, and the 201 in the `0x1150`-`0x1ABC`
+block that issue #574 owns, which is where the rest of the 656 was.
 
 **The three counts disagree, and the difference is measured rather than
-smoothed.** `index.csv` marks 1902 rows `annotated=yes` and the CSV holds 1877
-rows: a gap of 25. Both sides are enumerated. 25 index rows are marked
+smoothed.** `index.csv` marks 1940 rows `annotated=yes` and the CSV holds 1914
+rows: a gap of 26. Both sides are enumerated. 26 index rows are marked
 `annotated=yes` with no CSV row at all, and no CSV row is recorded by the index
-as `annotated=no`; 25 − 0 = 25.
+as `annotated=no`; 26 − 0 = 26.
 
-Of the 25, 14 carry a name no CSV row has — `caseD_0` at eleven bank1
+Of the 26, 14 carry a name no CSV row has — `caseD_0` at eleven bank1
 addresses, plus `caseD_6`, `caseD_1` and `default` — which is the switch-case
-naming Ghidra applies to a `switch` it framed, not an annotation. The other 11
+naming Ghidra applies to a `switch` it framed, not an annotation. The other 12
 are second copies of a name that does have a CSV row, and each is worth a
 sentence of its own because the copy is a fact about the framing:
 
@@ -92,15 +96,19 @@ sentence of its own because the copy is a fact about the framing:
   `add_full_product_to_dptr` from `pd` `0x10BC`, which is the one address in
   that family that is an entry;
 - `pd` `0x0000` repeats `0x0500`;
-- and the two in the common area, `0x0512` and `0x1207`, are discussed in §3,
-  because both are visible from the bytes and neither is settled.
+- and the three in the common area, `0x0512`, `0x10FA` and `0x1207`, are
+  discussed in §3, because all three are visible from the bytes and none is
+  settled. `0x10FA` is the twelfth copy and the newest: it is a bare `ljmp
+  0x0A74`, and the exporter renamed it when issue #603's tranche named
+  `0x0A74` `rearm_timer1_then_set_bit_4_of_internal_41`, so a three-byte thunk
+  picked up a name for the routine it jumps to.
 
-**That list of 11 is a pinned figure, not the authority.**
-`python3 ec/tools/second_copy_census.py --check` derives it: 11 of the 25 are a
+**That list of 12 is a pinned figure, not the authority.**
+`python3 ec/tools/second_copy_census.py --check` derives it: 12 of the 26 are a
 body that is nothing but a transfer of control into a function this CSV backs
-under the same name (7 `ljmp`/`ajmp`, 4 `lcall`), and 14 are Ghidra's own
+under the same name (8 `ljmp`/`ajmp`, 4 `lcall`), and 14 are Ghidra's own
 `switchD_*` namespace, read from the committed `.c`. `--check` fails on a row it
-cannot account for, so a 26th named-without-row function that is neither shape
+cannot account for, so a 27th named-without-row function that is neither shape
 turns this red rather than quietly extending the list above.
 [`docs/findings/named-without-a-row.md`](../../docs/findings/named-without-a-row.md)
 has the per-address reading.
@@ -122,54 +130,77 @@ basis rather than the presence of a name.
 > naming rule is in `README.md`, and a check now refuses the collision from
 > either side.
 
-**152 of the 1848 rows are `type: unresolved`, and 271 carry a name that
-describes a shape rather than a job** — `call_` (86), `load_` (115),
-`trampoline_` (29), `ret_only_` (21), `nop_` (9), `thunk_` (7), `seed_` (4).
-Each is counted on the whole prefix, not a narrower one: 78 of the `load_` rows
-are `load_dptr_` and the other 37 are the register and table loads beside them.
+**172 of the 1914 rows are `type: unresolved`, and 281 carry a name that
+describes a shape rather than a job** — `call_` (88), `load_` (120),
+`trampoline_` (29), `ret_` (29), `nop_` (9), `seed_` (6). Each is counted on the
+whole prefix, not a narrower one: the `ret_` rows are the 21 `ret_only_` ones
+plus eight that read `ret_immediately`, `ret_no_op`, `ret_stub…` or
+`ret_terminating_89f4`, and all 29 predate issue #603 — the tranche's one
+`ret`-shaped name is `return_low_three_bits_of_0a49` at `0x221F`, which is
+`return_` rather than `ret_` and so falls outside this census — while 83 of the
+`load_` rows are `load_dptr_` with the other 37 the register and table loads
+beside them. `thunk_` has no row in the census at all:
+#602 renamed the last seven, so the prefix is gone rather than merely smaller.
+**This paragraph's counts were 152 and 271 over 1848 rows before issue #603,
+which had already drifted from the recounted `unresolved rows` bullet above it —
+the bullet is the figure `--check` holds and the two were never one
+measurement.** Both are recounted here from the tree rather than left to drift
+again.
 `sub_input_from_cpu_temp_043e` is a subtraction step; `trampoline_to_c0a2` is a
 jump. Neither is a mechanism, and a map built only from the names would be a map
 of the disassembler's vocabulary.
 
-> **Correction, 2026-09-25 (#602): recounted against the committed CSV, and
+> **Correction, 2026-09-25 (#602, extended by #603 and #456, plus #267's four
+> rows and #470's one `pd` row): recounted against the committed CSV, and
 > every number in the paragraph above is stale — not only the `thunk_` (7) the
-> rename removed.** The current figures are 169 † `type: unresolved` rows of
-> 1877, and 269 † names over the same seven prefixes: `call_` (87), `load_`
-> (117), `trampoline_` (29), `ret_only_` (21), `nop_` (9), `seed_` (6), of which
-> 80 of the `load_` rows are `load_dptr_` and the other 37 are the register and
-> table loads beside them. Only two of those moved because of the rename:
-> `thunk_` (7) is gone and `call_` gained the one `call_122f`. `load_` 115 → 117,
-> `seed_` 4 → 6, 1848 → 1872 and 152 → 169 were **already wrong on `main`** —
-> the paragraph was written against an older CSV and nothing recounted it,
-> because unlike the four bullets above it is not one of the counts
-> `check_subsystems` holds to a recount. The denominator has since moved twice
-> more, 1872 → 1876 with issue #267's four `bank0`-scoped
-> `0x1665`/`0x1666`/`0x166A` rows and then 1876 → 1877 with issue #470's one
-> `pd 0x11C2` row; none of the five takes a name over one of the seven
-> prefixes, so the 269 and its breakdown are unchanged. The six renamed
-> `forward_to_*` rows are a shape census item too and are not in that 269,
-> because `forward_to_` is not
-> one of the seven prefixes this document enumerates; they bring that separate
-> family to 17.
+> rename removed.** #602's own recount read 169 `type: unresolved` rows of 1872,
+> and 269 names over the same seven prefixes: `call_` (87), `load_` (117),
+> `trampoline_` (29), `ret_only_` (21), `nop_` (9), `seed_` (6), of which 80 of
+> the `load_` rows are `load_dptr_` and the other 37 are the register and table
+> loads beside them. Only two of those moves were the rename: `thunk_` (7) is
+> gone and `call_` gained the one `call_122f`. `load_` 115 → 117, `seed_` 4 → 6,
+> 1848 → 1872 and 152 → 169 were **already wrong on `main`** — the paragraph was
+> written against an older CSV and nothing recounted it, because unlike the four
+> bullets above it is not one of the counts `check_subsystems` holds to a
+> recount.
 >
-> **† The two counts this block gives are left as #602 left them, and #456 moved
-> both again** — `unresolved` 169 → 157 and the shape census 269 → 267, with
-> `ret_only_` 21 → 19. The current figures are in the block below, which is the
-> one to read; the treatment matches the `†` rows in `call-graph.md`, so the
-> number a later reader would otherwise find missing stays visible.
+> **The current figures on the tree holding both #456 and #603 are 160
+> `type: unresolved` rows of 1914 and 271 names over the same seven prefixes**,
+> and they are reached from #602's 169 / 269 by three additive steps, each
+> visible in its own right rather than folded into a single new number:
 >
-> **Correction, 2026-09-25 (#456): 169 -> 157 and 269 -> 267, both from the same
-> twelve rows.** Issue #456 retyped issue #134's tranche's twelve
-> `type: unresolved` rows from their own bytes, and all twelve are now typed
-> from what the routine does, so none of the 169 above is a `unresolved` row
-> any more. Two of the twelve were also `ret_only_*` names, which is why the
-> shape census is two lower and the `unresolved` count twelve lower rather than
-> both twelve. Nothing else in this document moved on #456's account: it added
-> and removed no row, so `annotated function rows` and `rows the index marks
-> annotated` hold whatever the four bullets in §2 say — 1877 and 1902 on this
-> tree, from issue #267's four `bank0` rows and issue #470's one `pd 0x11C2`
-> row rather than from this issue.
-> `docs/findings/call-graph-unresolved.md` has the readings.
+> - **Issue #456 retyped issue #134's tranche's twelve `type: unresolved` rows**
+>   from their own bytes, so none of the 169 is `unresolved` any more
+>   (169 → 157). It added and removed no row, so it did not move the
+>   denominator. Two of the twelve also carried `ret_only_*` names, which is why
+>   the shape census is two lower (269 → 267) and the `unresolved` count twelve
+>   lower, rather than both twelve. See
+>   `docs/findings/call-graph-unresolved.md` for the readings.
+> - **Issue #267's four `bank0`-scoped `0x1665`/`0x1666`/`0x166A` rows** take
+>   1872 → 1876 and take no name over one of the seven prefixes at all.
+> - **Issue #470's one `pd 0x11C2` row** takes 1876 → 1877, and
+>   `dispatch_code_table_2byte_key` is outside the seven prefixes too, so the
+>   census and its breakdown were unchanged by it.
+> - **Issue #603's 37 `common`-scoped rows** take 1877 → 1914 and land one
+>   `call_` and three `load_` (all three `load_dptr_`) on the census, so
+>   `call_` 87 → 88 and `load_` 117 → 120, and the other 33 are outside it. The
+>   three `load_dptr_` rows take `load_dptr_` 80 → 83, which is 271 total.
+>
+> **The `ret_` half, read whole, is 27 — the 19 `ret_only_` rows plus eight
+> more.** #602 enumerated the half as the 21 `ret_only_` rows and stopped there;
+> #456's two retypings bring that to 19, and the eight `ret_`-named rows beside
+> them (`ret_stub`, `ret_immediately`, `ret_no_op`, `ret_terminating_89f4`,
+> `ret_stub_no_request_bit` and the two `ret_stub_table_f041_row..`) are the
+> rest. **Those eight were once attributed here to `0x355E`'s shared tail
+> return, and that was wrong**: the `ret_` count is the same on `main` as here,
+> so issue #603 added no `ret_` row at all, and `0x355E` is itself named
+> `shared_tail_return_of_3459_and_34c6` — a `forwarder`, not a `ret_` row.
+> Reading the `ret_` half whole puts the shape census at 279 rather than the 271
+> the six-prefix-plus-`ret_only_` reading gives.
+>
+> The six renamed `forward_to_*` rows are a shape census item too and are not in
+> the 271, because `forward_to_` is not one of the seven prefixes this document
+> enumerates; they bring that separate family to 17.
 
 ## 3. Reset and interrupt entry
 
@@ -257,22 +288,34 @@ that is there.
 `reti`" is a claim about this image. It is *not* "int0 and serial 0 are
 unimplemented": whether the EC services those sources is a question about the
 interrupt-enable and peripheral registers, which none of these addresses reads
-and which this document does not decode. **Two of the three carry a row** —
-`common` `0x052F` and `common` `0x05E6`, both `type: unresolved` for that
-reason and both cited above with the marker, so a reader cannot take them for
-decoded handlers. **`0x05E7` carries no row at all**:
-`ec/decompiled/index.csv` exports it as `FUN_CODE_05e7` with `annotated=no`, and
-no citation in this document reaches it, so `--check` cannot see it either.
-Everything said about it above is read from its bytes and its `reassembly.csv`
-record, which is why it is written out here rather than cited.
+and which this document does not decode. **All three carry a row** —
+`common` `0x052F`, `common` `0x05E6` and `common` `0x05E7`, all `type:
+unresolved` for that reason, and the first two cited above with the marker so a
+reader cannot take them for decoded handlers. **`0x05E7` was the one that
+carried no row at all** and did so until issue #603's tranche named it
+`table_entry_002b_target_is_one_byte_reti` [unresolved]: `ec/decompiled/index.csv`
+had exported it as `FUN_CODE_05e7` with `annotated=no`, and no citation in this
+document reached it, so `--check` could not see it either. Everything this
+section says about it was read from its bytes and its `reassembly.csv` record,
+which is why it was written out here rather than cited; the row now says the
+same thing with the citation attached.
 
-**The two common-area duplicates from §2.** Both are visible in the bytes and
-neither is settled:
+**The three common-area duplicates from §2.** All three are visible in the
+bytes and none is settled:
 
 - `common` `0x0512` is `ajmp 0x0003` — two bytes, and a real second path to the
   int0 forwarder, so Ghidra's `int0_vector_forwarder_to_052f` name at that
   address is right about where it goes. It exists because the call-target byte
   scan found `01 03` there, not because the vector table does.
+- `common` `0x10FA` is a bare `ljmp 0x0A74`, three bytes, and the index names it
+  after its target. It is the newest of the three and the only one whose name
+  arrived by a rename rather than by a forwarder seed: it exported as
+  `FUN_CODE_10fa` until issue #603's tranche named `0x0A74`
+  `rearm_timer1_then_set_bit_4_of_internal_41`, at which point the exporter
+  renamed the thunk after the routine it jumps to — the same shape as the
+  `0x1207` case below, where a call-target frame split one routine and the
+  second half inherited the first's name. The decompile at that address is
+  `10FA.c`'s three statements, which are `0x0A74`'s own, read through the jump.
 - `common` `0x1207` is a bare `ljmp 0x1100` and the index names it
   `bl51_bank_select_0`. The three bytes before it, at `0x1204`, are
   `90 bf 62` — `mov DPTR,#0xBF62` — so `0x1204`-`0x1207` is one two-instruction,
@@ -281,8 +324,10 @@ neither is settled:
   the common area genuinely carries a second copy of the stub or Ghidra split one
   routine is not established by the bytes alone.
 
-**Correction, 2026-09-25 (#601): one of the two is settled, and the other's
-"second path" is withdrawn.** The paragraph above is left as written.
+**Correction, 2026-09-25 (#601): of the two this section had when it was
+written, one is settled and the other's "second path" is withdrawn.** The
+paragraph above is left as written, and the third bullet — `0x10FA`, added by
+issue #603's tranche after #601 ran — is not covered by it.
 
 - `0x1207`'s *framing* is settled. `ec/decompiled/common/1204.asm` is a
   committed listing in its own right and carries one instruction, so
@@ -531,22 +576,27 @@ own. `--check` compares both occurrences against the same recount, so they
 cannot drift apart silently:
 
 - `exported functions` — 2714
-- `annotated function rows` — 1877
-- `rows the index marks annotated` — 1902
-- `unresolved rows` — 157
+- `annotated function rows` — 1914
+- `rows the index marks annotated` — 1940
+- `unresolved rows` — 160
 
-**656 of the 753 common-area functions are unannotated, and that is the largest
-single block of undecoded firmware in this repository** — larger than the whole
-`pd` program. It is the natural next issue, and §2 is what sizes it. The 157
-`unresolved` rows are a second, separate queue: functions that were looked at
-and are correctly described as far as the bytes go.
+**618 of the 753 common-area functions are unannotated, and that is still the
+largest single block of undecoded firmware in this repository** — larger than
+the whole `pd` program. It was 656 before issue #603's tranche took 37 of them,
+and the remainder is now a queue rather than a size:
+[`common-runtime-tranche.md`](../../docs/findings/common-runtime-tranche.md)
+orders all 455 that no other open issue owns and cuts the next tranche out of
+that ordering, with 418 rows still below the cut and 201 more in the
+`0x1150`-`0x1ABC` block issue #574 owns. The 160 `unresolved` rows are a
+second, separate queue: functions that were looked at and are correctly
+described as far as the bytes go.
 
 ## 12. What this does not establish
 
 Stated as a list, because the limit is the point of the document:
 
 1. **It is not a partition of the firmware.** §2's counts are the evidence, and
-   677 common-area functions and 157 `unresolved` rows are not in any group
+   618 common-area functions and 160 `unresolved` rows are not in any group
    here.
 2. **Nothing was observed on hardware.** No register behaviour, no interrupt
    delivery, no fan response, no charge current. Every claim above traces to a

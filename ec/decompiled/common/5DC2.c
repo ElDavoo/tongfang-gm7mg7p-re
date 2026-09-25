@@ -81,7 +81,7 @@ LAB_CODE_5e11:
     cVar8 = CARRY1(bVar4,bVar3) << 7;
     bVar2 = bVar4 + bVar3;
     if (!CARRY1(bVar4,bVar3)) {
-      bVar2 = FUN_CODE_5a55(bVar2 | *param_3 | (byte)param_3 | param_8);
+      bVar2 = table_bytes_disassembled_as_code_5a55(bVar2 | *param_3 | (byte)param_3 | param_8);
       nop();
       if (_6_2 != '\0') {
         bVar3 = bVar2 - (cVar8 >> 7);
@@ -245,7 +245,8 @@ LAB_CODE_5f6d:
     if (CARRY1(bVar4,bVar3)) goto LAB_CODE_5fc0;
   }
   else {
-    bVar3 = FUN_CODE_5a55(bVar4 + bVar3 | *param_3 | (byte)param_3 | param_8);
+    bVar3 = table_bytes_disassembled_as_code_5a55
+                      (bVar4 + bVar3 | *param_3 | (byte)param_3 | param_8);
     nop();
     bVar2 = bVar3;
     do {

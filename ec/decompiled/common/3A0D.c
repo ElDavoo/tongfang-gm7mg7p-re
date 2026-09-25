@@ -33,17 +33,17 @@ void FUN_CODE_3a0d(undefined1 param_1)
       _c_0 = '\0';
       DAT_INTMEM_84 = 0xff;
       pbVar4 = (byte *)0xa50;
-      FUN_CODE_3b20();
-      FUN_CODE_3b32();
-      FUN_CODE_3bae();
+      read_xdata_at_dptr_into_r7();
+      load_dptr_high_from_a_low_from_code_table_3b32();
+      load_dptr_high_from_a_low_from_code_table();
       bVar2 = *pbVar4;
       sVar5 = 0xa50;
       bVar3 = dptr_3a00_plus_13x_3b51(DAT_EXTMEM_0a50);
       *pbVar4 = bVar2 | *(byte *)(sVar5 + (ushort)bVar3);
-      FUN_CODE_3ad1();
+      clear_upper_internal_ram_byte_3ad1();
     }
   }
-  FUN_CODE_3bdd();
+  stop_timer1_and_set_et1_3bdd();
   return;
 }
 

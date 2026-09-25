@@ -18,7 +18,7 @@ void FUN_CODE_3d76(void)
       puVar2 = puVar2 + 1) {
     *puVar2 = 0;
   }
-  FUN_CODE_09a2(bVar1 - 0xf,0x55);
+  call_0c7a_then_write_1300_1306(bVar1 - 0xf,0x55);
   return;
 }
 

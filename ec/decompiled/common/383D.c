@@ -14,7 +14,7 @@ void FUN_CODE_383d(char param_1)
   if (param_1 != -1) {
     DAT_INTMEM_87 = param_1;
   }
-  FUN_CODE_2b6c();
+  set_1304_mode_bits_then_write_1300_and_1308();
   TR1 = 0;
   ET1 = 0;
   nop();
@@ -29,7 +29,7 @@ void FUN_CODE_383d(char param_1)
     cVar1 = TF1;
     if ((cVar1 == '\x01') || ((DAT_EXTMEM_1304 & 1) == 0)) break;
   } while ((DAT_EXTMEM_1304 >> 1 & 1) == 0);
-  FUN_CODE_3bdd();
+  stop_timer1_and_set_et1_3bdd();
   return;
 }
 

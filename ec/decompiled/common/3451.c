@@ -9,8 +9,8 @@
 void FUN_CODE_3451(void)
 
 {
-  FUN_CODE_30b5();
-  FUN_CODE_3acc(0);
+  or_table_bytes_into_dptr_under_flag_87();
+  store_r7_to_upper_internal_ram_byte_3acc(0);
   return;
 }
 

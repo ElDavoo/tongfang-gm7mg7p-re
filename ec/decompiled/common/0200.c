@@ -31,7 +31,7 @@ void post_05e8_sp_0c0_init_1042_16e7_3105(void)
   
   critical_section_enter_05e8();
   SP = 0xc0;
-  FUN_CODE_1048();
+  bl51_bank_select_0_tail_110a_wrapper();
   DAT_EXTMEM_1042 = 7;
   DAT_EXTMEM_16e7 = DAT_EXTMEM_16e7 | 0x80;
   DAT_EXTMEM_3105 = 4;
@@ -70,7 +70,7 @@ void post_05e8_sp_0c0_init_1042_16e7_3105(void)
       FUN_CODE_150a();
     } while (cVar1 != -1);
     FUN_CODE_1510();
-    FUN_CODE_0c86();
+    poll_flag_bytes_30_to_3b_and_dispatch();
     FUN_CODE_063c();
     nop();
     nop();

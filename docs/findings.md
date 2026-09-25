@@ -5012,6 +5012,49 @@ above is that output, not a hand count.
 > paragraph. `ec/annotations/subsystems.md` §2 carries the same correction
 > against its own census.
 
+**Correction, 2026-09-25 (#603, landing on top of #602): every figure in the
+two tables above has moved again, and the mechanism is the one this section is
+about.** The section is left as written. `build_ec_decompile.py --self-test`
+pins these numbers by hand, and issue #603's 37-row tranche moved them on a
+tree that had already taken #602's rename, so the unflagged column stays shut:
+
+| quantity | as corrected by #261 | after #602 | after #603 (this tree) |
+|---|---|---|---|
+| rows in `ghidra-functions.csv` | 1,872 | 1,872 | **1,909** |
+| …applied *and* reported `annotated=yes` | 1,865 | 1,872 | **1,909** |
+| …applied but reported `annotated=no` | 7 | **0** | **0** |
+| exported functions named with no CSV row | 25 | 25 | **26** |
+| `functions_named` | 1,890 | 1,897 | **1,935** |
+| `annotations_applied`, bank0 / bank1 / pd | 786 / 684 / 497 | 786 / 684 / 497 | **823 / 721 / 497** |
+
+1,909 − 0 + 26 = 1,935 still closes exactly, which is the point: the gap is
+never rows lost from the CSV, it is the difference between two questions, and
+this tranche widened it by one rather than breaking it. **That one is worth
+naming**, because it is a case the section's framing did not have: naming
+`common 0x0A74` made the exporter rename the bare `ljmp 0x0A74` thunk at
+`common 0x10FA` after it, so **37 rows moved 38 index rows** and the
+`call-target` half of the 26 rose from 9 to 10. A derived name lands in the
+index with no CSV row of its own — the same "second copy of a name"
+`ec/annotations/subsystems.md` §2 enumerates, and this tranche is what made the
+list twelve rather than eleven.
+
+> **Addendum, 2026-09-25 (merged tree): the table's last column is #603's, and
+> the tree carrying both also carries issue #267's four `bank0`-scoped
+> `0x1665`/`0x1666`/`0x166A` rows, which landed alongside it, and issue #470's
+> one `pd 0x11C2` row.** All three additions are `bank0`/`common`/`pd`-scoped and
+> additive, so none of the table's structure moves — only the figures. Measured
+> on the merged tree by `build_ec_decompile.py --self-test` and by the
+> regenerated `ec/ghidra/manifest.csv`: 1,872 + 4 + 1 + 37 = **1,914** rows, all
+> applied and all reported `annotated=yes`; `annotations_applied`
+> **827 / 721 / 498**, because #267's four rows are `bank0`-scoped and add to
+> bank0 alone while #470's one row is `pd`-scoped and adds to `pd` alone; and
+> `functions_named` **697 / 605 / 135 / 503 = 1,940**, up 4 on bank0, 38 on
+> `common` and 1 on `pd`, with no bank's own figure moving for #603. The 26
+> named with no CSV row and the 0 unflagged are unchanged, so
+> 1,914 − 0 + 26 = 1,940 still closes exactly. `ec/annotations/subsystems.md`
+> §2 and §11 carry the same census, and both now read 1,914 / 1,940 rather than
+> 1,909 / 1,935.
+
 **The "7" is only 7 on an export that has caught up with the CSV.** Measured
 against the export as this change first found it, the same `--check` reported
 **24** applied-but-unflagged and named 1,873 functions, and the manifest was 17
@@ -6276,3 +6319,81 @@ are byte-identical before and after, and `--self-test`, `--check` and the
 open; the same pre-#267 pair on `xdata-06c2-06db-timers.md`,
 `xdata-register-map.md`, `ec/README.md:226` and the rest of this file's census
 prose is #583's and is not touched here.
+
+## 33. The 656 unannotated `common` functions, ordered, and the first 37 (2026-09-25, issue #603)
+
+`ec/annotations/subsystems.md` §2 measured 656 of the 753 `common`-area
+functions as unannotated — 87% of the program, the largest undecoded block in
+this repository. A size is not a queue, and §2 said so itself. This is the
+queue: `ec/tools/rank_common_runtime.py` orders the **455** rows no other open
+issue owns, by inbound call-graph degree, then XDATA read+write weight, then
+address, and the ordering is committed as
+`ec/annotations/common-runtime-ranking.csv` so the next tranche is a cut over
+that file rather than a re-derivation. The write-up is
+`docs/findings/common-runtime-tranche.md`; this is the summary.
+
+**The 455 is 656 minus 201**, and the 201 are #574's `0x1150`-`0x1ABC` block,
+excluded **by address** and not by a hand-typed skip list — #555's
+`bank1:0x8001`-`0x8189` window contributes **0** because the common area ends
+at `0x7FFF` (printed as a measurement, not assumed), and #456's five boundary
+rows all carry rows already. The block's unannotated rows run `0x116E`-`0x1800`,
+not `0x1150`-`0x1ABC`: the two ends are already annotated, so #574's band is the
+remaining two-thirds of a partly-filled block rather than a gap.
+
+**The cut is `inbound >= 4` unioned with reachability from the vector table**, a
+predicate over the ranking rather than a round number, and it took **37 rows and
+999 bytes of listing**. Reachability is a *column*, not a fourth sort key: its
+12 roots are `discover_vector_table()`'s own, it reaches 13 unannotated common
+functions, and folding it into the sort would let a 1-inbound vector-reached
+address outrank a 12-inbound one for a reason the reader has to hold in their
+head. The census effect: `common` unannotated **656 → 618** (87% → 82%),
+annotated **97 → 135**, annotation rows **1877 → 1914**, `unresolved` **157 →
+160** — the `before` figures are the tree this branch forked from, which
+already carries issue #456's twelve retypings and issue #470's one `pd 0x11C2`
+row, so this tranche's own movement is **+37** rows and **+3** `unresolved`, and
+the `after` figures are the tree this landed on, re-measured rather than added
+up. A **38th** index row moved, `common 0x10FA` — a bare `ljmp 0x0A74` the
+exporter renamed when the tranche named its target, so a thunk picked up a name
+for the routine it jumps to.
+
+**The one correction worth carrying into the tool:** the XDATA weight must be
+read from `xdata-registers.csv`'s **`functions`** column, not
+`functions_touched`. The latter is a *count*; reading it as a token list yields
+a weight of exactly **0 for all 455 rows** — which looks like a measurement and
+sorts the pool on its address alone while appearing to have consulted a second
+signal. The self-test runs both columns and asserts the wrong one gives zero.
+The same trap sits one column over in `call-graph-callees.csv`, where
+**`callers`** is a count and **`citing`** is the token list.
+
+**A rank is a ranking, not a reading, and the tranche says so in its rows.**
+`common 0x355E` ranks **first** in the pool on twelve inbound — and its listing
+is **one `ret` byte**, reached by twelve `ljmp` from exactly two callers: a
+shared epilogue, not a mechanism. Inbound count does not guarantee smallness
+either; nine of the 37 are over 16 bytes and five of them are large, and a large
+row is not an unread one — four of the five carry a mechanism (`0x0C86` is the
+`dispatch`, the other three `state`), with only `0x43A5` landing
+`type: unresolved` because the bytes do not carry one, which is a correct
+outcome rather than a failure.
+
+**What the 37 turned out to be** is in the write-up; the two results the
+ranking could not have predicted are the EC's **background dispatcher at
+`0x0C86`** (195 bytes, eleven polled flag bits each with its own callee, fourteen
+branches back to its own entry) and the **Timer 1 window** the `0x0E72`/`0x0E7D`
+pair opens and closes around the `0x05B6` handler's body. `0x05E7` — the one
+vector target §3 recorded as carrying no row and no citation — is in the tranche
+by the reachability arm, and that blind spot is closed. No `registers.yaml` row
+was added and no `status:` moved: the tranche's 37 listings reach **25** distinct
+XDATA addresses — 24 loaded by a `mov DPTR,#imm`, plus `0x0A4E`, which no
+immediate names and `0x2E9C` reaches by `inc DPTR` — and **not one** has an
+`addr:` row in the map, so the generated `ec/ghidra/xdata-symbols.csv` is
+untouched.
+
+**Two defects in the annotation layer's own grading** surfaced and are *not*
+fixed here, because each would re-grade rows across the whole file and is
+merge-hostile: `grade_name_basis.py`'s `SFR_WORDS` pairs `timer0`/`tr0`/`tf0`
+with `0x89`/`0x89`/`0x8A`, but `TR0` and `TF0` are `TCON.4` and `TCON.5`, i.e.
+bit addresses `0x8C` and `0x8D`; and its `listing_facts` reads a
+`mov R0,#0xNN` immediate as an SFR bit operand, so a name citing an indirect
+internal-RAM base can earn a `register-map` grade on a value the architecture
+says is not an SFR. The 37 rows' names are shaped around both, and the write-up
+says so.

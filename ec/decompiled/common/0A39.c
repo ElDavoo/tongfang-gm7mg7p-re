@@ -11,7 +11,7 @@ void FUN_CODE_0a39(undefined1 param_1)
 {
   DAT_EXTMEM_0a4c = param_1;
   if (((DAT_EXTMEM_1304 & 1) != 1) && ((DAT_EXTMEM_1304 >> 1 & 1) == 0)) {
-    FUN_CODE_09a2(param_1);
+    call_0c7a_then_write_1300_1306(param_1);
     return;
   }
   FUN_CODE_09e9(param_1);

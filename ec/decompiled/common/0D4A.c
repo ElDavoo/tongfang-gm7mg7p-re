@@ -10,7 +10,7 @@ void FUN_CODE_0d4a(void)
 
 {
   if ((DAT_EXTMEM_004c != DAT_EXTMEM_004b) || (DAT_EXTMEM_0bfd != DAT_EXTMEM_0bfe)) {
-    FUN_CODE_0a74();
+    rearm_timer1_then_set_bit_4_of_internal_41();
   }
   if ((DAT_EXTMEM_1304 >> 1 & 1) != 0) {
     _6_0 = 1;

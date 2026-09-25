@@ -20,23 +20,23 @@ void FUN_CODE_1059(char param_1)
   }
   pbVar3 = &DAT_EXTMEM_00ff;
   if ((DAT_EXTMEM_00ff >> 6 & 1) == 0) {
-    cVar1 = FUN_CODE_221f();
+    cVar1 = return_low_three_bits_of_0a49();
     DAT_INTMEM_68 = *pbVar3 >> 4 | cVar1 << 4;
     DAT_INTMEM_67 =
          *(undefined1 *)
           CONCAT11(DAT_EXTMEM_0027 - ((CARRY1(DAT_EXTMEM_0028,DAT_INTMEM_68) << 7) >> 7),
                    DAT_EXTMEM_0028 + DAT_INTMEM_68);
     FUN_CODE_15a0(*pbVar3);
-    DAT_EXTMEM_098d = FUN_CODE_221f();
+    DAT_EXTMEM_098d = return_low_three_bits_of_0a49();
     DAT_EXTMEM_098e = DAT_EXTMEM_0a49 >> 4;
     pbVar3 = &DAT_EXTMEM_098f;
     DAT_EXTMEM_098f = DAT_INTMEM_67;
-    uVar2 = FUN_CODE_221f();
+    uVar2 = return_low_three_bits_of_0a49();
     FUN_CODE_15a6(*pbVar3 >> 4,*pbVar3,uVar2);
     FUN_CODE_1bf3(DAT_EXTMEM_0a4a,DAT_INTMEM_67);
   }
   else if ((DAT_EXTMEM_00fc == -1) && (DAT_EXTMEM_0a4a == '\0')) {
-    DAT_EXTMEM_00fa = FUN_CODE_221f();
+    DAT_EXTMEM_00fa = return_low_three_bits_of_0a49();
     DAT_EXTMEM_00fb = DAT_EXTMEM_0a49 >> 4;
     DAT_EXTMEM_00fc = 0x33;
     return;

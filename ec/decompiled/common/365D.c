@@ -9,7 +9,7 @@
 bool FUN_CODE_365d(char param_1)
 
 {
-  FUN_CODE_2f1d(1,0xf4);
+  store_0a4f_triplet_then_retry_loop(1,0xf4);
   DAT_EXTMEM_0a05 = param_1 == '\0';
   return param_1 == '\0';
 }

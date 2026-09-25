@@ -12,11 +12,11 @@ void FUN_CODE_0a7f(char param_1)
   byte bVar1;
   
   DAT_EXTMEM_0a47 = '\0';
-  FUN_CODE_0a74();
+  rearm_timer1_then_set_bit_4_of_internal_41();
   if (((DAT_EXTMEM_1304 & 1) != 1) && ((DAT_EXTMEM_1304 >> 1 & 1) != 1)) {
     if (DAT_EXTMEM_004b != '\0') {
       FUN_CODE_0a04(DAT_EXTMEM_004b + -1);
-      FUN_CODE_09a2();
+      call_0c7a_then_write_1300_1306();
       return;
     }
     if ((_0_4 != '\x01') && ((DAT_EXTMEM_1304 >> 1 & 1) != 1)) {

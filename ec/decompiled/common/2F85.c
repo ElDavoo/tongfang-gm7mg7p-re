@@ -16,10 +16,10 @@ void FUN_CODE_2f85(undefined1 param_1)
   DAT_EXTMEM_0a47 = param_1;
   FUN_CODE_3d6c();
   set_iram_ad_88_clear_33();
-  FUN_CODE_3983(0);
+  store_r7_to_upper_internal_ram_byte_3983(0);
   DAT_INTMEM_90 = 0;
   if (_3_3 != '\0') {
-    FUN_CODE_3983(1);
+    store_r7_to_upper_internal_ram_byte_3983(1);
     if (DAT_INTMEM_82 == -1) {
       DAT_INTMEM_82 = DAT_INTMEM_32;
     }
@@ -27,7 +27,7 @@ void FUN_CODE_2f85(undefined1 param_1)
       DAT_INTMEM_83 = DAT_INTMEM_32;
     }
     FUN_CODE_3c00();
-    FUN_CODE_2e9c();
+    store_0a4c_triplet_then_countdown_and_dispatch();
     _3_3 = 0;
     return;
   }
@@ -77,12 +77,12 @@ LAB_CODE_300d:
   else {
     uVar3 = 1;
   }
-  FUN_CODE_3983(uVar3);
+  store_r7_to_upper_internal_ram_byte_3983(uVar3);
   if (((DAT_INTMEM_8f >> 1 & 1) != 0) && (DAT_INTMEM_32 == -0xc)) {
     DAT_INTMEM_32 = -0xb;
   }
   FUN_CODE_3c00();
-  FUN_CODE_2e9c();
+  store_0a4c_triplet_then_countdown_and_dispatch();
   return;
 }
 

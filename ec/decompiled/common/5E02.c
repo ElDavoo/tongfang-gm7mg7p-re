@@ -159,7 +159,8 @@ code_c0x5f3f:
     if (CARRY1(bVar2,bVar4)) goto LAB_CODE_5fc0;
   }
   else {
-    bVar4 = FUN_CODE_5a55(bVar2 + bVar4 | *param_3 | (byte)param_3 | param_8);
+    bVar4 = table_bytes_disassembled_as_code_5a55
+                      (bVar2 + bVar4 | *param_3 | (byte)param_3 | param_8);
     nop();
     bVar5 = bVar4;
     do {

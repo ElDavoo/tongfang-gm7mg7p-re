@@ -46,7 +46,7 @@ void event_id_latch_and_bit_merge(byte param_1,char param_2)
   pcVar7 = (code *)0x1304;
   if (((DAT_EXTMEM_1304 & 1) != 1) && (((DAT_EXTMEM_1304 >> 1 & 1) != 1 && (_0_5 == '\0')))) {
     uVar4 = read_0a49_then_index_iram_by_plus_97();
-    FUN_CODE_2b6c(uVar4);
+    set_1304_mode_bits_then_write_1300_and_1308(uVar4);
     if (DAT_INTMEM_85 != '\0') {
       DAT_INTMEM_85 = DAT_INTMEM_85 + -1;
     }
@@ -56,7 +56,7 @@ void event_id_latch_and_bit_merge(byte param_1,char param_2)
         do {
           if ((*(byte *)(cVar3 + -0x78) >> 6 & 1) != 0) {
             mul13_table_lookup_3b22(cVar3);
-            FUN_CODE_3b32();
+            load_dptr_high_from_a_low_from_code_table_3b32();
             dph_from_a_dpl_from_code_3b70();
             pcVar8 = pcVar7;
             bVar5 = read_dptr_to_r6_then_dptr_3a00_plus_13x();
@@ -86,7 +86,7 @@ void event_id_latch_and_bit_merge(byte param_1,char param_2)
       }
     }
     else if (_c_4 != '\x01') {
-      FUN_CODE_30b5();
+      or_table_bytes_into_dptr_under_flag_87();
       FUN_CODE_2bcb(6);
       return;
     }

@@ -9,7 +9,7 @@
 void FUN_CODE_4947(undefined1 param_1,undefined1 param_2)
 
 {
-  FUN_CODE_43a5(param_1,param_2);
+  per_channel_state_sequence_on_15byte_stride_table_43a5(param_1,param_2);
   return;
 }
 
