@@ -5680,11 +5680,12 @@ about the tree rather than about the bug: **nine shared addresses → ten**
 `common 0x11C2` no longer keeps a `['common','pd']` attribution, because it now
 has a `pd` row beside it and the `pd` edge joins that row instead. The
 `26 / 196 / 36 / 115-81 / 456` line is what that fix measured at the time and is
-untouched; the current figures are 26, 195, 35, 115-80 and 474, and
+untouched; the current figures are 26, 195, 35, 115-80 and 478, and
 `ec/annotations/call-graph.md` and `group-proxy-populations.md` carry the same
-corrections. (The last of those, `ungrouped`, has since moved again on the
-merged tree: 474 → **478**, +4 for issue #267's four `bank0` routines landing
-ungrouped, re-measured with `group_functions.py --report`.) **Everything this
+corrections. (The last of those, `ungrouped`, is 474 at `e30dbd2d` and 478 from
+`d8525eae` on: +4 for issue #267's four `bank0` routines landing ungrouped, which
+reached `main` before this branch was cut rather than arriving with the merge,
+re-measured with `group_functions.py --report`.) **Everything this
 section measured about the ordering bug is
 unchanged** — the six same-scope joins, the `scope == "common"` guard, and the
 fixture that fails on the unfixed tool.

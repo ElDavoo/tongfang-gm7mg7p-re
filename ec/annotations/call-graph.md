@@ -45,13 +45,19 @@ written.*** One row stopped being anonymous. `pd 0x11C2` was `FUN_CODE_11c2`
 with no `ghidra-functions.csv` row behind it, and is now
 `dispatch_code_table_2byte_key`; **`FUN_CODE_11c2` no longer appears anywhere in
 `ec/decompiled/`**. It is a target (`pd 0xCB2A` `lcall`s 0x11C2) and a `.c`-named
-callee, so all three of those cells lose one: "still `FUN_*`" **813 → 812**,
+callee, so all three of those cells lose one: "still `FUN_*`" **790 → 789**,
 "targets still anonymous" **470 → 469**, "distinct `FUN_*` callees the `.c` files
-name" **815 → 814**.
+name" **798 → 797**. Each before-value is the same tool run on `origin/main`, so
+both ends of every movement come from `call_graph.py` itself. (A `grep -c 'FUN_'`
+over `index.csv` instead reads 813 → 812 for the first cell: it also counts the
+`FUN_` tokens sitting in comment columns, which is why that was the wrong pair
+to quote.)
 
 **The table's own figures were already behind before this, and are not corrected
-here**: 807, 470 and 815 were measured on an earlier tree, and the gap is
-another pass's, not this one's. The per-cell movement above is what
+here**: 807 and 815 were measured on an earlier tree, and the gap is another
+pass's, not this one's. The table's 470 is the exception — it is exactly what
+`call_graph.py` prints on `origin/main`, which is why the movement above starts
+from it. That per-cell movement is what
 [#470](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues/470) changed, and
 it is stated separately rather than folded into a new number that would hide
 which drift is which. The tranche-history `FUN_*` figures further down

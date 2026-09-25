@@ -59,7 +59,7 @@ which keeps the relation the edge really does carry -- the bank0 functions
 sharing this helper stay connected -- and drops the one it does not.
 
 That makes the proxy the larger of the two discard populations on the committed
-tree, 196 bank->common edges against 27 bank<->bank, so `--report` prints it
+tree, 195 bank->common edges against 27 bank<->bank, so `--report` prints it
 beside the cross-region count rather than letting the 27 stand as the rule's
 whole accounting. It also bounds what a group is: a path between two members of
 a `callgraph` group can run through a proxy that is not a member, so "mutually
@@ -188,7 +188,7 @@ CALLGRAPH_NAME = re.compile(r"^callgraph_([a-z0-9]+)_([0-9A-F]{4,8})$",
 # What the banking rule discarded, as one value the report and `group_rows()`
 # can both ask about. Two populations, because the rule cuts edges two ways and
 # reporting one of them as if it were the whole cost is what made 27 look like
-# the accounting for a rule that cuts 196 as well.
+# the accounting for a rule that cuts 195 as well.
 #
 #   `cross_region` -- bucket-B edges whose target also exists in the other
 #     bank, i.e. the ones the same-bank assumption decides and this tool
@@ -842,7 +842,7 @@ def self_test():
     # ... and by the target each edge landed on, because the edge total and the
     # row populations below are not the same number and the report has to be
     # able to say so. Four edges, one target row: on the committed tree the
-    # same shape is 196 edges over 36 rows, and a reader given only the 196
+    # same shape is 195 edges over 35 rows, and a reader given only the 195
     # for a row population would read the edge total as the row count.
     check("the proxy count is broken down by target row",
           dict(stats3.proxy_by_target) == {"05E8": 4},
@@ -891,7 +891,7 @@ def self_test():
           "this population)" % (stats4.proxy_edges,))
     # The same four edges, now attributed to a row population they do not
     # belong to. This is the half of the split that a report giving only the
-    # edge total gets wrong: the 196 is a population of edges and it reaches
+    # edge total gets wrong: the 195 is a population of edges and it reaches
     # rows the method found AND rows a non-bank caller also reaches, so it is
     # not the accounting for either of them.
     check("a proxied edge is still attributed to its target row",

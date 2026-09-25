@@ -66,20 +66,26 @@ from the call-target scan, so the listing existed with a `FUN_CODE_11c2` name
 and no row behind it. Only the hand-read row was missing.
 
 **`pd 0x11C2` is `dispatch_code_table_2byte_key`.** It is the two-byte-key twin
-of `pd 0x119C` (`dispatch_code_table`), 0x26 bytes earlier and instruction for
-instruction the same routine with one comparison added:
+of `pd 0x119C` (`dispatch_code_table`), 0x26 bytes earlier and the same routine
+with a second key byte added — which is also what makes its records one byte
+longer, 3 → 4:
 
 | | `pd 0x119C` | `pd 0x11C2` |
 |---|---|---|
 | entry | `pop DPH` / `pop DPL` / `mov R0, A` | identical |
 | record test | byte +2 against A (`xrl A, R0`) | byte +2 against **B** (`cjne A, B`), then byte +3 against **A** |
+| record stride | 3 bytes (`inc DPTR` ×3 at 0x11BD) | 4 bytes (`inc DPTR` ×4 at 0x11E9) |
 | exit | `clr A` / `jmp @A+DPTR` at 0x11B6 | `clr A` / `jmp @A+DPTR` at 0x11DC |
 
-Both consume the popped return address as a CODE-table pointer and scan 4-byte
-records whose first two bytes are the target and whose last two are the key; a
-record whose first two bytes are both zero supplies the default target from the
-next two, and a match jumps to the target pair -- the first two bytes -- not to
-the key bytes that matched. **Neither has a `ret`**: the only exit is the
+Both consume the popped return address as a CODE-table pointer, and in both the
+key field and the jump target are the *same* bytes rather than two fields: bytes
++2 and +3 are loaded into `DPTR` as a little-endian pair — `mov DPL` from +3 at
+0x11B1 / 0x11D7, `mov DPH` from +2 at 0x11B3 / 0x11D9 — and the routine jumps
+there. A record whose first two bytes are both zero is the last one and takes
+that same pair as its default target. `pd 0x11C2` scans 4-byte records and tests
+both key bytes; `pd 0x119C` scans 3-byte records and tests byte +2 alone, so
+there the one byte it matches is the *high* half of the target and byte +3
+supplies the low half. **Neither has a `ret`**: the only exit is the
 indirect jump, so neither returns to its caller. That is the same framing
 [`pd-0x38-consumers.md`](../../ec/annotations/pd-0x38-consumers.md) already
 recorded for 0x119C, and it is why the row is graded `code-shape` — the name
@@ -111,9 +117,10 @@ PY
 agree 503 of 32768 (1.54%)
 ```
 
-1.54% is what two unrelated 8051 images look like; 98.46% of the shared address
-range is different code. At the ten addresses that carry rows in **both** scopes,
-every one differs in its first four bytes:
+1.54% is the share these two images agree on, and 98.46% of the shared address
+range is different code — a fact about this pair, not a general property of
+unrelated 8051 code, which nothing here measures. At the ten addresses that carry
+rows in **both** scopes, every one differs in its first four bytes:
 
 | address | `common` row | `pd` row | `common` bytes | `pd` bytes |
 |---|---|---|---|---|
@@ -182,20 +189,25 @@ wrong: `--report` is where the 303 named-row count is read
 (`callgraph_pd_0003=303`), and the component size is the `One of 414` comment
 the same tool writes into `ec/annotations/function-groups.csv`.
 
-**`ungrouped` does not move under this change** — it is 478 on the merged
-tree, 474 on either side of it, and the +4 is issue #267's four seeded `bank0`
-routines landing ungrouped rather than anything #470 did — and the report's
-split line prints the new total against the new edge count (70 of the 195, not
-of the 196). The table above is what this change moved. Two things in the diff
+**`ungrouped` does not move under this change** — it is 478 on this tree and 478
+on `origin/main` (`d8525eae`), the parent this branch was cut from, so both sides
+of the merge carry the same total. The +4 that produced it is issue #267's four
+seeded `bank0` routines (`C278`, `C2C2`, `C33C`, `C4E7`) landing ungrouped:
+474 at `e30dbd2d`, 478 from `d8525eae` on. That reached `main` before the branch
+existed, so the merge brought only the `pd 0x11C2` row with it. What does move
+is the report's split line, because the edge denominator does — `pd 0xCB2A` →
+`0x11C2` now resolves to a `pd` row and is joined directly instead of proxied,
+so it prints 70 of the 195 where `origin/main` prints 70 of the 196. The table
+above is what this change moved. Two things in the diff
 are not in it, so they are named here rather than left to be found: the 303
 `callgraph_pd_0003` rows in `function-groups.csv` all carry a component-size
 comment that goes `One of 413` → `One of 414`, which is the component line above
 expressed per row; and `group-proxy-populations.md` had a `456`/`440`
 `ungrouped` figure that was **already stale before this change** (another pass's
 drift), which had to move to 474/458 once the report block quoted verbatim
-beside it was made current, and on to 478/462 when the merge brought #267's four
-`bank0` rows with it. Neither is a figure this change altered, and the
-tranche-history figures in that file and in §20 of `docs/findings.md` are
+beside it was made current, and on to 478/462 for that same +4 — #267 reaching
+`main` at `d8525eae`, not the merge. Neither is a figure this change altered, and
+the tranche-history figures in that file and in §20 of `docs/findings.md` are
 untouched.
 
 ---
