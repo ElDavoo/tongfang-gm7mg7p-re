@@ -4480,8 +4480,7 @@ through a temp directory, and a reader's behaviour on a constructed file.
 > `python3 ec/tools/measure_mark_provenance.py` reports them rather than
 > raising, and reported both counts at the trees they were taken on. What has
 > changed is the debt it left: the re-anchoring landed with #750 in this tree,
-> all **44** citations resolve — 44 rather than #750's own 42 because this
-> merged with #749 as well, as the #750 entry below records the same way — and
+> all **44** citations resolve, as the #750 entry below counts them — and
 > the two `check_capture_encoding.py` sites
 > this issue added are cited rather than left as a gap in the census. Written
 > up in [0751-capture-encoding.md](findings/0751-capture-encoding.md).
@@ -4533,12 +4532,12 @@ Both edits moved the line numbers `measure_mark_provenance.py` cites, so its
 rows are re-anchored here rather than in either PR: **44 citations, all
 resolving**, which covers the six already red at the fork point, the 23 #748's
 own edits drifted, the two new `check_capture_encoding.py` sites, and the
-`path_starts_with_bom` line. The figure is 44 rather than #750's 42 because
-this merged with #749 as well, and the two are additive: #749's own pins are
-cited at the lines the split left them at, and #750's skip-rule citations are
-four — the predicate's body plus the three readers that call it, `:845`, `:890`,
-`:1065` and `:1086` — where `origin/main` had two, the rule written out twice
-at `:695` and `:871`. That 2 → 4 is worth 2 of the run and the rest is this
+`path_starts_with_bom` line. The count is 44 because both branches' pins are
+cited: #749's own at the lines the split left them at, and #750's skip-rule
+citations are four — the predicate's body plus the three readers that call it,
+`:845`, `:890`, `:1065` and `:1086` — where `origin/main` had two, the rule
+written out twice at `:695` and `:871`. That 2 → 4 is worth 2 of the run and
+the rest is this
 branch's four newly cited sites, `grade_0751_isolation.py:976`, its
 byte-order-mark refusal at `:886`, and `check_capture_encoding.py:166` and
 `:243`: 38 rows on `origin/main`, + 2 for the rule, + 4 new sites, is 44. Its

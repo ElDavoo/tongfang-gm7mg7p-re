@@ -308,18 +308,26 @@ them once more. The `at c9e72c1` column is the state the issue measured; the
 | its `(ts, label)` pair | `:735` | `:1068` — same helper |
 | the partition's docstring quoting the mark branch | — (added) | `:976` |
 | `refused_capture_rows`' mark branch | `:789` | `:1099` — in `partition_capture_rows`, over the notice's own read |
-| `read_early_exits` | `:739` | `:1342` |
-| its phrase test | `:760` | `:1384` |
-| the per-capture census line | `:2347` | `:2972` |
-| `warn_unchecked_marks` | `ec_watch.py:254` | `ec_watch.py:288` |
-| the notice's call into the reader | `ec_watch.py:280` | `ec_watch.py:361` |
-| `Marker._loop`'s writer | `ec_watch.py:355` | `ec_watch.py:473` |
+| `read_early_exits` | `:902` | `:1342` |
+| its phrase test | `:923` | `:1384` |
+| the per-capture census line | `:2510` | `:2972` |
+| `warn_unchecked_marks` | `ec_watch.py:276` | `ec_watch.py:288` |
+| the notice's call into the reader | `ec_watch.py:339` | `ec_watch.py:361` |
+| `Marker._loop`'s writer | `ec_watch.py:446` | `ec_watch.py:473` |
 | `grade_timer_sweep.load`'s mark branch and phrase test | `:134`, `:135` | `grade_timer_sweep.py:138`, `:139` |
 | `ec_timer_capture.py`'s four writers and its `#` writer | `:164`, `:199`, `:205`, `:227`, `:144` | `ec_timer_capture.py:169`, `:204`, `:210`, `:232`, `:149` |
 | `system_id_probe.py`'s writer | `:256` | `system_id_probe.py:261` |
 | `manual_fan_ctrl_probe.py`'s writer and its early-exit row | `:438`, `:922` | `manual_fan_ctrl_probe.py:443`, `:927` |
 | the encoding check's own mark/change census and its constructed row | — (added by #748) | `check_capture_encoding.py:166`, `:243` |
-| §3's three commands in the runbook | `…:144`, `:146`, `:148` | `…:159`, `:161`, `:163` |
+| §3's three commands in the runbook | `…:152`, `:156`, `:159` | `…:152`, `:156`, `:159` — the file's §3 did not move |
+
+Six of those left-column values are worth naming, because the numbers the *pins*
+carried at `c9e72c1` were not the numbers the code was on: `CITATIONS` held
+`read_early_exits` at `:739`, its phrase test at `:760`, the per-capture census
+line at `:2347`, and `ec_watch.py` at `:254`, `:280` and `:355`, while the code
+those pins named sat at `:902`, `:923`, `:2510` and `ec_watch.py:276`, `:339`,
+`:446`. Those six are the red rows the next paragraph is about, and the two
+columns here are code positions on both sides, not pins on the left.
 
 `docs/findings/0751-append-unchecked-marks.md`'s one-sided drift claim and
 `docs/findings.md` §16a's `#719` paragraph keep the numbers they were written
@@ -386,12 +394,8 @@ absorbing into the change:
    run; the other 4 are this branch's newly cited sites,
    `grade_0751_isolation.py:976`, its byte-order-mark refusal at `:886`, and
    `check_capture_encoding.py:166` and `:243`. So 38 rows on `origin/main`, + 2
-   for the rule and + 4 new sites, is the **44** the tool prints. The 42 is
-   #750's own branch figure, and the difference between the two is the merge
-   with #749 rather than the skip rule — which is how `docs/findings.md`
-   records it, the two pages being the same claim about the same run. The tool
-   now prints `ok` for all
-   **44** rows and exits 0, and
+   for the rule and + 4 new sites, is the **44** the tool prints. The tool
+   now prints `ok` for all **44** rows and exits 0, and
    `docs/findings/0751-mark-provenance-shapes.md` names every one of them,
    which is what `check_page` holds it to.
 
