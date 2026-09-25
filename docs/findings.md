@@ -2040,6 +2040,23 @@ the graded windows that are a window of a value under test rather than over all
 of them; the exit code is unchanged. Write-up:
 `docs/findings/0751-grader-unplaced-window-scope.md`.
 
+**And the same run, with something moving, scoped nothing at all.** The count
+above is over the windows, not over the arms, and `3blocks-moved/` — the only
+committed set where a byte moved — has no unattributed graded window, so no
+committed run reached the combination. One `0x0784` row inside a block's write
+window puts them together: the movement line printed with no denominator over
+all 8 graded windows, 2 of which the count directly above had said are a
+window of no value under test, and a whole-capture claim under that. The
+`moved_groups` branch now states its scope where nothing was withheld and no
+block was selected. It cannot narrow to the windows that belong to a value
+under test, because `moved_groups` is a union of group names and carries no
+window identity — the same row moved into an unattributed window leaves the
+output byte-identical — so it names all 8, says the 2 are part of it, and
+declines the capture-level comparison for the attribution reason rather than
+the withheld reason. The attribution underneath is unchanged: scoping is not
+retracting. Write-up:
+`docs/findings/0751-grader-moved-unplaced-scope.md`.
+
 **§3's three unlabelled mark rounds were a fourth class of mark, and the block
 model had no place for them.** §3's command block asks for six mark rounds per
 block and says so in its own `--seconds 240` paragraph, and only the three that
