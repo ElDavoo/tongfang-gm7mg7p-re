@@ -345,19 +345,19 @@ position.
 
 The real cost is that nothing returns the position:
 
-- `existing_mark_labels` (`:700`) returns a flat `(ts, label)` list — `:735`
-  builds it — with no index, no line number and no row. A reader that wanted to
-  bind a provenance row to a mark has to re-read the file and re-derive an
-  ordering the preflight deliberately flattened.
+- `existing_mark_labels` (`:701`) returns a flat `(ts, label)` list — its
+  `mark_labels_of` at `:854` builds it — with no index, no line number and no
+  row. A reader that wanted to bind a provenance row to a mark has to re-read
+  the file and re-derive an ordering the preflight deliberately flattened.
 - The binding is *positional*, so it is fragile in a way a column is not. An
   operator who reorders a capture, or a writer that appends a provenance row
   after the marks it describes, silently reassigns every mark beneath it. A
   column cannot be reordered away from its mark.
 - And under shape A the fifth column is *also* invisible to
-  `existing_mark_labels` (`:735` drops `row[4]`). The difference is not that
-  shape A is preflight-visible and shape B is not. It is that shape A's answer
-  sits on the mark's own row, where a reader can reach it without first
-  inventing the order the preflight threw away.
+  `existing_mark_labels` (`:854` reads `row[3]` and never `row[4]`). The
+  difference is not that shape A is preflight-visible and shape B is not. It is
+  that shape A's answer sits on the mark's own row, where a reader can reach it
+  without first inventing the order the preflight threw away.
 
 ## What each shape would and would not resolve
 
@@ -438,8 +438,8 @@ their provenance in their own row, against 0 of 3** — and 1 of 1 against 0 of
    per-process row answers a different, coarser question and makes the reader
    re-derive the per-mark one.
 2. **It costs zero in all seven consumers** — four called directly and three
-   reached through them — because each indexes rather than unpacks: `:691`
-   for `read_capture`, `:735` for `existing_mark_labels`, `r[3]` for
+   reached through them — because each indexes rather than unpacks: `:830`
+   for `read_capture`, `:854` for `existing_mark_labels`, `r[3]` for
    `grade_timer_sweep`, and the three programs that only take
    `read_capture`'s two-tuple.
 3. **It does not spend the `#` namespace.** The skip rule is documented as
@@ -465,7 +465,7 @@ their provenance in their own row, against 0 of 3** — and 1 of 1 against 0 of
 - **It is a format change to a row four writers in this tree share** — seven
   call sites across four files. The implementation issue has to decide the
   other three writers deliberately, rather than letting them drift by omission.
-  The two that matter are `system_id_probe.py:256`, which imports no
+  The two that matter are `system_id_probe.py:261`, which imports no
   `ec_watch.Marker` and so is not reached by scoping to `Marker._loop`, and
   `ec_timer_capture.py`'s four sites, whose files a different grader reads.
 - **`windows/tools/test_manual_fan_ctrl_probe.py:515` would fail** if the
@@ -473,10 +473,10 @@ their provenance in their own row, against 0 of 3** — and 1 of 1 against 0 of
   canary and not an argument against the shape, but it is a real cost to name:
   the first thing a widened implementation hits is a failing assertion.
 - **It does not make the notice say anything.** Under either shape
-  `existing_mark_labels` at `:735` returns the same flat list, so
-  `warn_unchecked_marks` is unchanged. The value lands in the grader and in
-  whatever tool reads provenance later, and the implementation issue should
-  not promise the operator a better warning as part of it.
+  `existing_mark_labels` at `:701`, building at `:854`, returns the same flat
+  list, so `warn_unchecked_marks` is unchanged. The value lands in the grader
+  and in whatever tool reads provenance later, and the implementation issue
+  should not promise the operator a better warning as part of it.
 
 If a later measurement contradicts any of the four grounds, the measurement
 wins and this section is what has to be edited. The grounds rest on figures

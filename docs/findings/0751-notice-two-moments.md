@@ -49,10 +49,10 @@ to be removed and this one is a feature of the procedure.
   capture. `coalesce_marks` joins the consoles' labels with `' / '`, and
   `MARK_MERGE_SECONDS = 5` (`:275`) exists precisely to fuse one action's marks
   into one window.
-- `CsvSink.row` (`windows/tools/ec_watch.py:138-145`) flushes every row, so the
+- `CsvSink.row` (`windows/tools/ec_watch.py:150-157`) flushes every row, so the
   other console's rows land as they are typed rather than at the end of a
   buffer.
-- The lock at `windows/tools/ec_watch.py:134` is **per-instance**. Its own
+- The lock at `windows/tools/ec_watch.py:146` is **per-instance**. Its own
   docstring says what it is for: so a mark cannot land in the middle of a
   change row on the stdin thread. It is not there to serialise two watchers,
   and nothing claims it is.
@@ -304,6 +304,30 @@ it checks them against,
 [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md), carries
 the same numbers in its prose, its tables and a quoted tool run. All three
 moved together, and all three were measured again after the merge.
+
+> **Correction (2026-09-25, issue #749 review), leaving the sentence above as
+> it was written.** "All three moved together" was true of the tables and the
+> quoted tool run and false of the prose, and it is the sentence a reader is
+> entitled to rely on. The tables and the quoted run were retargeted to the
+> merged tree; seven prose anchors at six lines were not, so the page was
+> internally inconsistent about the same function — `existing_mark_labels` at
+> `:700` where the drift table above puts it at `:701`, the `(ts, label)` pair
+> at `:735` where `mark_labels_of` now builds it at `:854`, `read_capture`'s
+> explicit indexing at `:691` where it is now `:830`, and
+> `system_id_probe.py:256` where that page's own census and its own item 1
+> already said `:261`. They are retargeted, and every one of the page's own
+> anchors has been re-read against this tree — the `:690` it quotes at the top
+> is the issue's number, in a quotation of the issue, and is left as quoted.
+> The anchors still standing are the non-#749 pins its addendum already
+> records as DRIFT.
+>
+> Nothing caught it because `measure_mark_provenance.py` checks its own pins
+> and never reads the page's prose, so a stale prose anchor is invisible to it
+> and every grader pin reading `ok` says nothing about one. The addendum's
+> DRIFT note covers the tool's pins for the same reason and does not extend to
+> unchecked prose. The gap is in what the tool verifies, not in what it
+> reports: the two are not the same set, and this is the first time they came
+> apart on a page this change claimed to have re-measured.
 
 Three things about that tool are worth recording, and none of them is a change
 to its methodology:
