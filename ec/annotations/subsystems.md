@@ -56,7 +56,7 @@ Measured over the committed export, by `index.csv` for the functions and
 
 - `exported functions` — 2710
 - `annotated function rows` — 1872
-- `rows the index marks annotated` — 1873
+- `rows the index marks annotated` — 1890
 - `unresolved rows` — 169
 
 By program, as exported minus annotated minus the rest:
@@ -74,7 +74,7 @@ and most of the runtime helpers live. It is also the area this document had to
 extend to say anything about interrupt entry, which is what §3 is.
 
 **The three counts disagree, and the difference is measured rather than
-smoothed.** `index.csv` marks 1873 rows `annotated=yes` and the CSV holds 1855
+smoothed.** `index.csv` marks 1890 rows `annotated=yes` and the CSV holds 1872
 rows: a gap of 18. Both sides are enumerated. 25 index rows are marked
 `annotated=yes` with no CSV row at all, and 7 CSV rows are recorded by the index
 as `annotated=no`; 25 − 7 = 18.
@@ -442,7 +442,7 @@ cannot drift apart silently:
 
 - `exported functions` — 2710
 - `annotated function rows` — 1872
-- `rows the index marks annotated` — 1873
+- `rows the index marks annotated` — 1890
 - `unresolved rows` — 169
 
 **673 of the 753 common-area functions are unannotated, and that is the largest

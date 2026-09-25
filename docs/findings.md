@@ -4777,23 +4777,37 @@ function-layer counters offline and prints the ledger they come from:
 |---|---|
 | `annotations_applied` totals 1,787 against 1,769 rows, a gap of 25 | the gap is **18**, not 25 (1,787 − 1,769 = 18) — the label never matched even its own numbers. A later paragraph in §19 ("The plan's numbers were stale") had already re-measured the gap as 18 against a newer pair of totals, so the 25 was wrong twice over |
 | the two totals are comparable, so their difference is drift | the label never described either figure. `annotations_applied` was the index's `annotated=yes` count (`ExportDecompile.java:129`, `isPlaceholderName(name) ? "no" : "yes"`) — exported functions whose symbol is no longer a Ghidra placeholder, **not** rows of `ghidra-functions.csv` that applied |
-| 25 index rows "came to claim an annotation that is no longer in the CSV" | **zero** CSV rows are stale. All 1,855 resolve to an exported function, and `--check` already refuses one that does not |
+| 25 index rows "came to claim an annotation that is no longer in the CSV" | **zero** CSV rows are stale. All 1,872 resolve to an exported function, and `--check` already refuses one that does not |
 
 The gap was never rows lost from the CSV. It is the difference between two
 questions, and it decomposes exactly:
 
 | quantity | value |
 |---|---|
-| rows in `ec/annotations/ghidra-functions.csv` | **1,855** |
-| …that applied *and* are reported `annotated=yes` | **1,848** |
+| rows in `ec/annotations/ghidra-functions.csv` | **1,872** |
+| …that applied *and* are reported `annotated=yes` | **1,865** |
 | …that applied but are reported `annotated=no` | **7** |
 | exported functions named with **no** CSV row behind them | **25** |
-| `functions_named`, the old `annotations_applied` figure | **1,873** = 1,848 + 25 |
+| `functions_named`, the old `annotations_applied` figure | **1,890** = 1,865 + 25 |
 
-1,855 − 7 + 25 = 1,873, and the 1,855 rows back exactly one index row each, so
+1,872 − 7 + 25 = 1,890, and the 1,872 rows back exactly one index row each, so
 the two sides are reconciled rather than merely compared. `build_ec_decompile.py
 --check` prints both directions, the addresses, and the arithmetic; the table
 above is that output, not a hand count.
+
+**The "7" is only 7 on an export that has caught up with the CSV.** Measured
+against the export as this change first found it, the same `--check` reported
+**24** applied-but-unflagged and named 1,873 functions, and the manifest was 17
+short of what its own rows applied to. That was not a third statement to
+correct; it was a stale measurement. The 17 extra are issue #561's
+`ff_filler_not_a_function_*` rows, and the export those were counted against
+predated the rows themselves — it still carried Ghidra's `FUN_CODE_7401`-style
+placeholders at those addresses, so the ledger saw a name it could not match and
+counted each row as unflagged. Re-exporting renames all 17 to the names their
+rows chose, none of which `isPlaceholderName()` matches, and the count falls to
+7 on its own. Two counters moving because the export was older than the CSV is
+worth stating separately from a counter being wrong, because only the second one
+is a defect in the reasoning.
 
 **What the 25 are, and what they are not.** 18 of them carry names Ghidra
 generated itself: `caseD_0` on eleven of bank1's switch dispatchers, one
@@ -4845,7 +4859,7 @@ column and the `[named]` marker across the whole export.
 was a literal `0` in `write_outputs()`, discarded from a report that
 `ApplyAnnotations.java` had been filling in all along. It is now read back from
 `apply-<program>.tsv` like the variable counters, and measured: **0** for all
-four programs, from 1,855 rows that all resolve. The BIOS driver reaches the
+four programs, from 1,872 rows that all resolve. The BIOS driver reaches the
 same two numbers a different way — it derives them from the index rather than
 from the report (`bios_extract.py:895-896,912-913,940-941`) and fails the build
 on a non-zero unmatched count (`bios_extract.py:1241`) — so no manifest in this
@@ -4853,16 +4867,21 @@ repository carries a counter typed in as a constant. The EC is the one that was
 discarding a figure its own exporter had already computed.
 
 **The corrected columns.** `manifest.csv` now carries `annotations_applied` and
-`annotations_unmatched` read back from the reports (769 / 667 / 497 across the
+`annotations_unmatched` read back from the reports (786 / 684 / 497 across the
 three programs; `common` borrows bank0's, as the variable counters always have),
-plus a new `functions_named` (693 / 599 / 80 / 501) for the figure the old
+plus a new `functions_named` (693 / 599 / 97 / 501) for the figure the old
 `annotations_applied` name was really carrying. Note the new `annotations_applied`
-sums to 1,933, not 1,855, and that is not drift either: `mine()`
-(`ApplyAnnotations.java:373-378`) hands every `common`-scoped row to **both**
-bank programs, so the 78 common rows are counted once per program. There is no
+sums to 1,967, not 1,872, and that is not drift either: `mine()`
+(`ApplyAnnotations.java:375-379`) hands every `common`-scoped row to **both**
+bank programs, so the 95 common rows are counted once per program (691 + 95 =
+786 for bank0, 589 + 95 = 684 for bank1). There is no
 `apply-common.tsv`; `common` is an export grouping the de-dup produces after the
 fact. The number §18's paragraph was reaching for — functions carrying a real
-name — is 1,873, and it now has a column that says so.
+name — is 1,890, and it now has a column that says so. `common` is the only
+program whose `functions_named` moved with #561 (80 → 97): those 17 rows sit at
+addresses both banks carry identically, so the de-dup exports each one once,
+under `common`, and it lands there and nowhere else — which is the same folding
+that makes the row count twice in `annotations_applied` and once here.
 
 **No hardware or Windows test is claimed here.** This change is static: the
 proof is the regenerated export, and nothing in it observes the machine.

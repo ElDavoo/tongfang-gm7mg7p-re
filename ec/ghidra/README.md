@@ -879,10 +879,13 @@ An address with no function is counted as `annotations_unmatched` and carried
 into `manifest.csv` rather than dropped, so the figure is one a run produced.
 That is either a typo or a sign the project needs `--mode rebuild-project`; the
 fix is to say which, not to let a stale annotation outlive the thing it named.
-All **1,855** rows resolve against the committed project, and `manifest.csv`
+All **1,872** rows resolve against the committed project, and `manifest.csv`
 records `annotations_unmatched` = 0 for all four programs (measured 2026-09-25,
 issue #261). A non-zero count is reported by the script and verified against the
-CSV by `--check`, but it does not yet fail anything; whether it should is open.
+CSV by `--check`; what is open is whether the *counter's own* disagreement
+should fail the build. The separate resolve guard is not what is open — an
+annotation row that matches no exported function already fails `--check`
+(`build_ec_decompile.py:3819-3823`), so an unresolved row is caught either way.
 The "67 rows" this sentence used to carry was a count that had gone stale.
 
 **A row is a claim about a function boundary, and a source that declines to

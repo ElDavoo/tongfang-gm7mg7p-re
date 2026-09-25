@@ -2141,54 +2141,66 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # docs/findings.md §18's corrected figures come from. The history of each
     # pin, because these are the numbers that move on purpose:
     #
-    # annotations_applied 769 / 667 / 497, summing to 1,933 program-applications
-    #   rather than 1,855 rows, because ApplyAnnotations.mine() hands a
-    #   `common`-scoped row to BOTH bank programs and the 78 of them are counted
-    #   once per program. The manifest's `common` row borrows bank0's 769
+    # annotations_applied 786 / 684 / 497, summing to 1,967 program-applications
+    #   rather than 1,872 rows, because ApplyAnnotations.mine() hands a
+    #   `common`-scoped row to BOTH bank programs and the 95 of them are counted
+    #   once per program (691 + 95 = 786 for bank0, 589 + 95 = 684 for bank1).
+    #   The manifest's `common` row borrows bank0's 786
     #   (MANIFEST_PROGRAM_SOURCE), and is excluded from the sum here for the
-    #   same reason. 1,855 -> this is not a pin that has moved: it is the first
-    #   run in which the number came from a report at all.
+    #   same reason. This is not a pin that has moved on its own: it is the
+    #   first run in which the number came from a report at all, and it has
+    #   moved once since, 769 / 667 -> 786 / 684, when issue #561 added 17
+    #   `common`-scoped 0xFF-fill rows that a bank consumes twice.
     # annotations_unmatched 0 / 0 / 0. Also the first run that could have
     #   reported otherwise -- the driver used to write a literal 0 here, so
     #   every manifest in the repository's history recorded a match it had not
-    #   checked. 1,855 rows and zero unresolved is now a measurement.
-    # functions_named 693 / 599 / 80 / 501, summing to 1,873. These are the
+    #   checked. 1,872 rows and zero unresolved is now a measurement.
+    # functions_named 693 / 599 / 97 / 501, summing to 1,890. These are the
     #   figures the old `annotations_applied` column carried, unchanged: the
     #   number did not move, it acquired the name that describes it. It was
     #   1,787 when §18's drift paragraph was written and has grown with the
     #   annotation tranches since (1,866 at the time of the subsystems census,
     #   recorded in a later paragraph of §19, which also measured the gap at
-    #   18); §18's correction quotes today's 1,873.
-    _want_applied = {"bank0": 769, "bank1": 667, "pd": 497}
+    #   18); §18's correction quotes today's 1,890. Only `common` moved with
+    #   #561 (80 -> 97): those 17 rows sit at addresses both banks carry, so the
+    #   de-dup exports each one once, under `common`, and it lands there and
+    #   nowhere else.
+    _want_applied = {"bank0": 786, "bank1": 684, "pd": 497}
     check("EC: the manifest's annotations_applied is what the exporter's reports "
-          "said -- 769 / 667 / 497 across the three programs, with `common` "
+          "said -- 786 / 684 / 497 across the three programs, with `common` "
           "borrowing bank0's",
           {r["program"]: int(r["annotations_applied"]) for r in _mr
            if r["program"] in _want_applied} == _want_applied
           and next(int(r["annotations_applied"]) for r in _mr
-                   if r["program"] == "common") == 769,
+                   if r["program"] == "common") == 786,
           str({r["program"]: r["annotations_applied"] for r in _mr}))
     check("EC: annotations_unmatched is 0 for all four programs, measured rather "
           "than written as a literal",
           all(int(r["annotations_unmatched"]) == 0 for r in _mr),
           str({r["program"]: r["annotations_unmatched"] for r in _mr}))
-    _want_named = {"bank0": 693, "bank1": 599, "common": 80, "pd": 501}
+    _want_named = {"bank0": 693, "bank1": 599, "common": 97, "pd": 501}
     check("EC: functions_named is the index's own annotated=yes count per "
-          "program, 693 / 599 / 80 / 501, summing to 1,873",
+          "program, 693 / 599 / 97 / 501, summing to 1,890",
           {r["program"]: int(r["functions_named"]) for r in _mr} == _want_named
-          and sum(_want_named.values()) == 1873
+          and sum(_want_named.values()) == 1890
           and not annotation_ledger_mismatches(_mr, _ir, _ann),
           str(annotation_ledger_mismatches(_mr, _ir, _ann)[:2]))
     # The two-way ledger on the committed files, which is the whole substance of
     # the §18 correction. 25 and 7, and they close the arithmetic exactly:
-    # 1,855 rows - 7 applied-but-unflagged + 25 named-without-a-row = 1,873.
+    # 1,872 rows - 7 applied-but-unflagged + 25 named-without-a-row = 1,890.
     # The 25 is 15 `auto` (Ghidra's own caseD_* / default labels on switch
     # dispatchers, which isPlaceholderName() does not list among its placeholder
     # prefixes), 9 `call-target` and 1 `vector` -- pd 0x0000, where the only
     # annotation row at that address is `common`-scoped and the PD image has its
     # own separate function, so mine() correctly does not hand it over. The 7
     # are the `thunk_to_*` / `thunk_call_*` rows: they applied, and
-    # isPlaceholderName() matched the prefix they chose for themselves.
+    # isPlaceholderName() matched the prefix they chose for themselves. They are
+    # the only such rows, and that is worth stating because it was not true for
+    # a while: issue #561's 17 `ff_filler_not_a_function_*` rows were reported
+    # here too, on a stale export still carrying the `FUN_CODE_*` placeholders
+    # Ghidra had given those addresses. Re-exporting renamed them, and 24 became
+    # 7 -- not because 17 rows stopped applying, but because the export that said
+    # they had not was itself older than they were.
     _nwr, _abu, _bk = annotation_ledger(_ir, _ann)
     _seed = {}
     for _r in _nwr:
@@ -2204,8 +2216,8 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
           and all(n.startswith("thunk_") for _r, _bk in _abu for n in
                   [b["name"] for b in _bk]),
           str([(r["program"], r["addr"]) for r, _bk in _abu]))
-    check("EC: the two ledger directions close the arithmetic -- 1,855 - 7 + 25 "
-          "= the 1,873 functions named",
+    check("EC: the two ledger directions close the arithmetic -- 1,872 - 7 + 25 "
+          "= the 1,890 functions named",
           len(_ann) - len(_abu) + len(_nwr) == sum(_want_named.values()),
           "%d - %d + %d = %d, not %d"
           % (len(_ann), len(_abu), len(_nwr),
