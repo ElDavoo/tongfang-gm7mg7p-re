@@ -321,18 +321,21 @@ class RefusedLabelTests(unittest.TestCase):
         the committed one's own behaviour is asserted above, against the
         committed one.
 
-        `existing_mark_labels` is here because `load_label_vocab` reads three
-        names off the grader (#548 added the third) and a stub missing it would
-        be refused by the merged function for a reason that has nothing to do
-        with the lookup. It reports no marks, which is the neutral answer: the
-        cases that reach this stub are about which file was loaded, and none of
-        them is about the append notice, so the notice stays out of their way.
+        `existing_mark_labels` and `existing_mark_findings` are here because
+        `load_label_vocab` reads four names off the grader (#548 added the
+        third, #718 the fourth) and a stub missing either would be refused by
+        the merged function for a reason that has nothing to do with the
+        lookup. Both report no marks, which is the neutral answer: the cases
+        that reach this stub are about which file was loaded, and none of them
+        is about the append notice, so the notice stays out of their way.
         """
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("def parse_mark(label):\n"
                         "    return (None, None)\n"
                         "def existing_mark_labels(path):\n"
                         "    return []\n"
+                        "def existing_mark_findings(path):\n"
+                        "    return ([], [], [])\n"
                         f"REQUIRED_LABEL_FORMS = ({self.STAGED_FORM!r},)\n")
 
     def staged_tool(self, root):
@@ -519,8 +522,8 @@ class RefusedLabelTests(unittest.TestCase):
             # Neither built-in candidate exists in this tree, so the flag is
             # the only thing that can answer.
             with patch.object(ec_watch, '__file__', str(tool)):
-                _, forms, _ = ec_watch.load_label_vocab(RefusingParser(),
-                                                        '0751', str(staged))
+                _, forms, _, _ = ec_watch.load_label_vocab(RefusingParser(),
+                                                           '0751', str(staged))
         self.assertEqual(list(forms), [self.STAGED_FORM])
 
     def test_a_grader_that_is_present_and_broken_is_refused_not_skipped(self):
@@ -627,6 +630,31 @@ class RefusedLabelTests(unittest.TestCase):
         self.assertIn(str(boom), message)
         self.assertIn('will not load', message)
 
+    def test_a_grader_that_loads_and_lacks_a_name_is_refused_by_path(self):
+        # The other way a staged copy goes stale, and the more likely one: it
+        # is a whole, working grader from before #718, so the lookup finds it,
+        # loads it, and the four names it reads are not all there. Read
+        # outside the `try` that guards the load, that is a bare
+        # `AttributeError` naming the name and not the file -- and the file is
+        # the thing an operator at the box can act on, since a tools directory
+        # holds a copy of the grader rather than a checkout to update.
+        with tempfile.TemporaryDirectory() as tmp:
+            old = Path(tmp) / 'grade_0751_isolation.py'
+            old.write_text("def parse_mark(label):\n"
+                           "    return (None, None)\n"
+                           "def existing_mark_labels(path):\n"
+                           "    return []\n"
+                           f"REQUIRED_LABEL_FORMS = ({self.STAGED_FORM!r},)\n")
+            with self.assertRaises(Refusal) as caught:
+                ec_watch.load_label_vocab(RefusingParser(), '0751', str(old))
+        message = str(caught.exception)
+        self.assertIn(str(old), message)
+        self.assertIn('will not load', message)
+        # The same one refusal as a syntax error, so the two ways a staged
+        # copy can be unusable read alike, and the staged form is never
+        # returned: the check was never got as far as being on.
+        self.assertNotIn(self.STAGED_FORM, message)
+
     def test_the_grader_flag_needs_a_vocabulary(self):
         # It is a modifier of --label-vocab, so a grader path beside a run that
         # reads no vocabulary changes nothing while reading as a setting.
@@ -672,6 +700,20 @@ class AppendNoticeTests(unittest.TestCase):
     MARK_1 = '2026-01-01T12:00:00.000+01:00,MARK,,wrote 0x0751=0xA0'
     MARK_2 = '2026-01-01T12:00:30.000+01:00,MARK,,settled'
     CHANGE = '2026-01-01T12:00:05.000+01:00,0x0701,0x00,0x11'
+    # A mark row truncated to three fields: `read_capture` raises on it at
+    # `:690`, and it is the shape #718 is about -- a watcher interrupted
+    # mid-write leaves one, and the operator can find and fix it before a run
+    # rather than explain the day after.
+    SHORT = '2026-01-01T12:01:00.000+01:00,MARK,'
+    # A change row whose address `int(addr, 16)` cannot read, which is the
+    # third of the reasons `read_capture` raises over and the one outside the
+    # two the issue named: a mark row is not the only row it can stop on.
+    BAD_CHANGE = '2026-01-01T12:00:05.000+01:00,0xzz,0x00,0x11'
+    # A four-field mark row whose label the grader's `parse_mark` reads no
+    # role in, so the file itself loads and it is the placement pass that
+    # refuses the day. 30 s from MARK_1, past `MARK_MERGE_SECONDS`, so this is
+    # a window of its own rather than a second console in MARK_1's group.
+    UNPLACEABLE = '2026-01-01T12:00:30.000+01:00,MARK,,pressed the thing'
 
     def run_watch(self, lines, seeded=None, vocab=True):
         """The run, over a --csv that already holds `seeded`, or over a fresh
@@ -689,6 +731,21 @@ class AppendNoticeTests(unittest.TestCase):
                                     '--interval', '0', '--csv', str(out),
                                     '--mark', *(self.VOCAB if vocab else ())])
             return rc, out.read_text().splitlines(), text.getvalue()
+
+    def graders_own_message(self, rows):
+        """`unplaceable_marks`'s own sentence about `rows`, from the grader.
+
+        Asked of the committed module rather than spelled out here, because the
+        notice quotes that sentence and a copy of it in this file is a copy
+        that can go on saying what the grading stopped saying.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'capture.csv'
+            path.write_text(''.join(line + '\n' for line in rows))
+            marks, _ = grader.read_capture(str(path))
+        _, unplaced = grader.assign_blocks(grader.coalesce_marks(marks))
+        return [said for said in grader.unplaceable_marks(unplaced).values()
+                for said in said]
 
     def test_a_file_already_holding_a_mark_is_named_at_startup(self):
         rc, _, text = self.run_watch('wrote 0x0751=0x10\n',
@@ -824,16 +881,197 @@ class AppendNoticeTests(unittest.TestCase):
         self.assertEqual([r.split(',')[3] for r in rows if ',MARK,' in r],
                          ['wrote 0x0751=0xA0', 'block one'])
 
+    def test_the_notice_splits_the_marks_it_takes_from_the_rows_it_refuses(self):
+        # The issue's own shape, and the reason the notice could not say which
+        # row mattered before #718: one list of every mark row the *preflight*
+        # returns, and the preflight is deliberately the lenient reader, so a
+        # file of six good marks and one half-written row read as seven
+        # equally fine ones. Now the accepted half is the six and the refused
+        # half names the seventh with the reason `read_capture` will raise.
+        seeded = [self.HEADER, self.MARK_1, self.CHANGE, self.MARK_2,
+                  self.SHORT]
+        rc, rows, text = self.run_watch('wrote 0x0751=0x10\n', seeded)
+        self.assertEqual(rc, 0)
+        # The two counts are separate, and each names its own list rather than
+        # a total: the short row is a row, not a mark, and counting it as one
+        # would report a mark the grader is never going to read. Two good
+        # marks and one short row are three rows in the file and two marks the
+        # grader will read.
+        self.assertIn('2 mark(s)', text)
+        self.assertIn('1 row(s)', text)
+        self.assertNotIn('3 mark(s)', text)
+        self.assertNotIn('2 row(s)', text)
+        for label in ('wrote 0x0751=0xA0', 'settled'):
+            self.assertIn(repr(label), text)
+        # The row itself, as the grader parsed it, and the reason quoted from
+        # the grader's own exception rather than from a rule the prompt
+        # re-spelled -- the operator fixes the row from this line and from the
+        # grading's error, and those are the same sentence. Asked of the
+        # committed module so a reword is a reword and not a failure here.
+        self.assertIn(repr(['2026-01-01T12:01:00.000+01:00', 'MARK', '']), text)
+        with tempfile.TemporaryDirectory() as tmp:
+            named = Path(tmp) / 'capture.csv'
+            named.write_text(''.join(line + '\n' for line in seeded))
+            with self.assertRaises(ValueError) as caught:
+                grader.read_capture(str(named))
+        # `read_capture` leads its message with the path, and this run and the
+        # one above seeded two different temporary directories -- so it is the
+        # sentence after the path that has to match, and it is the whole of
+        # what `:690` says about the row.
+        self.assertIn(str(caught.exception).split(': ', 1)[1], text)
+        # And the remedy, which the one-list notice had no way to give: a row
+        # can be fixed now, and this is the only thing on the screen that can.
+        self.assertIn('fix or delete the row(s) above before the run', text)
+        # A refused file reports nothing about placement, and says why, rather
+        # than leaving the silence to read as "the labels are fine".
+        self.assertNotIn('unplaceable', text)
+        self.assertIn('are not reported while the file is refused', text)
+        # The notice is still a warning: the run took its mark and the file
+        # still ends with the pre-existing rows first, the bad one and all.
+        self.assertIn('baseline:', text)
+        self.assertLess(text.index('refuses'), text.index('baseline:'))
+        self.assertEqual([r for r in rows if ',MARK,' in r][-1].split(',')[3],
+                         'wrote 0x0751=0x10')
+
+    def test_the_notice_names_an_unplaceable_mark_from_the_graders_own_verdict(self):
+        # The label side, and a second kind of "this file is a problem": this
+        # one *is* readable, so the day is refused by the placement pass rather
+        # than by a row. The message is `unplaceable_marks`'s own, quoted, so
+        # the operator reads the same sentence the grading prints rather than
+        # a paraphrase that can drift from it.
+        rc, rows, text = self.run_watch('wrote 0x0751=0x10\n',
+                                        [self.HEADER, self.MARK_1, self.UNPLACEABLE])
+        self.assertEqual(rc, 0)
+        self.assertIn('1 mark(s)', text)
+        self.assertNotIn('row(s)', text)
+        # The grader's own words, from the grader's own call over this file's
+        # own marks -- asserted against the module rather than a copy of the
+        # sentence, so a reworded message fails here rather than passing a
+        # stale string.
+        expected = self.graders_own_message([self.HEADER, self.MARK_1,
+                                             self.UNPLACEABLE])
+        self.assertEqual(len(expected), 1)
+        self.assertIn(expected[0], text)
+        # And the wording says it is a verdict over the group the consoles'
+        # marks form, because that is what `unplaceable_marks` returns: a
+        # window led by a label that does place is not reported at all, and a
+        # notice that said this *label* was unreadable would be false for the
+        # second console in a group the first one placed.
+        self.assertIn("over the group the consoles' marks form", text)
+        self.assertLess(text.index('unplaceable'), text.index('baseline:'))
+        # Still only a warning, and the unplaceable mark is still in the file:
+        # the notice reports the grading's verdict, it does not act on it.
+        self.assertIn('pressed the thing', "\n".join(rows))
+        self.assertEqual(rc, 0)
+
+    def test_a_file_the_notice_can_read_still_reads_as_one_count(self):
+        # The regression guard, and the reason the split is additive: a file
+        # the grader takes whole says what it said in #548 -- one count, the
+        # marks, and the closing paragraph -- with no refused section and no
+        # placement section to read past.
+        _, _, text = self.run_watch('wrote 0x0751=0x10\n',
+                                    [self.HEADER, self.MARK_1, self.CHANGE])
+        self.assertIn('appending to', text)
+        self.assertIn('1 mark(s)', text)
+        self.assertNotIn('row(s)', text)
+        self.assertNotIn('unplaceable', text)
+        self.assertIn('this run did not check those marks and cannot', text)
+        self.assertIn('they start at 1 whatever the file already holds', text)
+
+    def test_a_file_with_a_bad_row_still_prints_a_notice_rather_than_raising(self):
+        # The property the preflight exists for (#548) held at its new size:
+        # a file `read_capture` refuses is still a file this run is about to
+        # append to, so it still gets the notice. The run completes, there is
+        # no traceback, and the append is a real append.
+        rc, rows, text = self.run_watch('wrote 0x0751=0x10\n',
+                                        [self.HEADER, self.MARK_1, self.SHORT])
+        self.assertEqual(rc, 0)
+        self.assertNotIn('Traceback', text)
+        self.assertIn('appending to', text)
+        self.assertIn('fix or delete the row(s) above before the run', text)
+        # The short row is still in the file. The notice is a report and the
+        # grader's refusal is still the grader's; nothing here edits a file an
+        # operator can still correct by hand.
+        self.assertIn(self.SHORT, rows)
+
+    def test_the_counts_are_two_lists_and_not_one_total(self):
+        # The same two counts on the other kind of refused row, because the
+        # count is kind-blind: a change row whose address is not hex is a row
+        # the grader refuses exactly as a short mark row is, and the reason it
+        # is named is `int(addr, 16)` in `read_capture` rather than `:690`.
+        # The widening to change rows is the plan's over the issue's two named
+        # reasons, and a notice that stopped at those would report a file as
+        # checked when the grader refuses it over the whole run.
+        rc, _, text = self.run_watch('wrote 0x0751=0x10\n',
+                                     [self.HEADER, self.MARK_1, self.MARK_2,
+                                      self.BAD_CHANGE])
+        self.assertEqual(rc, 0)
+        self.assertIn('2 mark(s)', text)
+        self.assertIn('1 row(s)', text)
+        self.assertNotIn('3 mark(s)', text)
+        # Each count is on its own line's heading, so neither is read as the
+        # other's: the refused row is listed, not counted as a mark.
+        header = [ln for ln in text.splitlines() if 'mark(s)' in ln][0]
+        self.assertIn('2 mark(s)', header)
+        # The reason is `read_capture`'s own exception, verbatim -- the error
+        # the grading will raise, quoted by the prompt rather than paraphrased
+        # into a rule that could read the file differently from the grader.
+        self.assertIn("invalid literal for int() with base 16: '0xzz'", text)
+
+    def test_a_refusal_of_the_file_itself_names_no_row_to_fix(self):
+        # The encoding case, and the one branch of the remedy that is not
+        # "fix or delete the row": that refusal is the file's and names no
+        # row, so an instruction to edit one would be naming something that
+        # is not there. The 0xE9 is the byte latin-1 and cp1252 both write for
+        # `café`; whether this interpreter can read it is the property #718
+        # said to report rather than predict, so the case holds the wording
+        # under either answer.
+        ec = FakeEc()
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / 'capture.csv'
+            out.write_bytes(f'{self.HEADER}\n'
+                            f'2026-01-01T12:00:00.000+01:00,MARK,,café\n'
+                            f'{self.MARK_2}\n'.encode('latin-1'))
+            text = io.StringIO()
+            with patch.object(ec_watch, 'Ec', lambda: ec), \
+                 patch.object(ec_watch.sys, 'stdin',
+                              FakeStdin(ec, 'wrote 0x0751=0x10\n')), \
+                 contextlib.redirect_stdout(text):
+                rc = ec_watch.main(['--start', '0x0700', '--len', '0x4',
+                                    '--interval', '0', '--csv', str(out),
+                                    '--mark', *self.VOCAB])
+        self.assertEqual(rc, 0)
+        # Both marks are named either way. A preflight that could not read the
+        # file would be the one warning lost, and this is the file it exists
+        # for.
+        for label in ('caf', 'settled'):
+            self.assertIn(label, text.getvalue())
+        if 'the file itself' in text.getvalue():
+            # Refused: named as a refusal of the file, with the encoding, and
+            # with a remedy that is not about editing a row.
+            self.assertIn('1 row(s)', text.getvalue())
+            self.assertNotIn('fix or delete the row(s) above', text.getvalue())
+            self.assertIn('no row to fix', text.getvalue())
+        else:
+            # Read by this interpreter: nothing refused, nothing claimed. A
+            # notice that said a decode failure the grading would not hit is
+            # the one thing this must never do.
+            self.assertNotIn('row(s)', text.getvalue())
+            self.assertNotIn('no row to fix', text.getvalue())
+
     def test_the_reader_is_the_graders_own(self):
         # `load_label_vocab` loads the grader by path precisely so the prompt
         # carries no second copy of the row shape, and a copy is exactly what
-        # would drift without anything failing. Asserted on where the
+        # would drift without anything failing. Asserted on where each
         # function was defined -- the shape
         # `test_manual_fan_ctrl_probe.py:905` uses for `read_capture` -- and
         # then on what it does, so a shadow that kept the name would not pass
-        # the second half either.
-        _, _, existing_marks = ec_watch.load_label_vocab(None, '0751')
+        # the second half either. The second reader is the one that carries
+        # the reasons now (#718), so it is the more load-bearing of the two.
+        _, _, existing_marks, existing_findings = \
+            ec_watch.load_label_vocab(None, '0751')
         self.assertEqual(existing_marks.__module__, 'grade_0751_isolation')
+        self.assertEqual(existing_findings.__module__, 'grade_0751_isolation')
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / 'capture.csv'
             out.write_text(f'{self.HEADER}\n{self.CHANGE}\n{self.MARK_1}\n')
@@ -841,6 +1079,12 @@ class AppendNoticeTests(unittest.TestCase):
                              grader.existing_mark_labels(str(out)))
             self.assertEqual([label for _, label in existing_marks(str(out))],
                              ['wrote 0x0751=0xA0'])
+            # A change row between the two mark rows is a row the file is
+            # gradeable over, so the finding agrees with the reader on this
+            # file rather than reporting a refusal the grading would not make.
+            accepted, refused, unplaceable = existing_findings(str(out))
+            self.assertEqual(accepted, existing_marks(str(out)))
+            self.assertEqual((refused, unplaceable), ([], []))
 
 
 class BlockPathTests(unittest.TestCase):

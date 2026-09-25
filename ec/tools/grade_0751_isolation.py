@@ -736,6 +736,169 @@ def existing_mark_labels(path):
     return out
 
 
+def refused_capture_rows(path):
+    """(accepted, refused) over one capture, by the rules `read_capture` at
+    `:689-696` applies, for the rows its own reader never got to.
+
+    Not a second reader and not a second rule. `read_capture` stops at the
+    first row it cannot grade, so its exception names one row and the rest of
+    a file that holds more than one bad row would be a fix-one, re-run,
+    meet-the-next loop. The skip and shape checks below are its, re-applied
+    here so the rows it never reached can be named with the reason it would
+    have refused each. What holds them to it is
+    `ExistingMarkLabelTests.test_the_refusal_reasons_are_read_captures_own`,
+    which runs this over every fixture and asserts the first reason is the
+    exception `read_capture` itself raised, verbatim. Tighten `:690` or
+    `parse_ts` and that fails rather than the notice quietly disagreeing with
+    the grading.
+
+    The order of the checks is `read_capture`'s, and it is load-bearing. It
+    reads the timestamp before a change row's hex -- Python evaluates the
+    arguments of its `Change(...)` left to right -- so a *change* row bad in
+    both ways is refused here for the timestamp, which is the reason the grader
+    will give rather than one picked here. A mark row is never hex-read at
+    all: `read_capture` branches on `addr == "MARK"` before the `int()` calls,
+    and so does this. That test holds this to the reader as well, through its
+    last fixture: a change row bad in both ways and *not* the first bad row,
+    because the first row's reason is `read_capture`'s own exception pasted
+    over this one's and so cannot show which check ran first.
+
+    `errors="replace"` as `existing_mark_labels` reads it, so a byte the
+    encoding cannot decode does not stop this either; the row is named with
+    U+FFFD where the byte was, which is what the operator is shown anyway. A
+    change row that parses is in neither list -- it is not a mark, and the
+    notice is about the marks in a file and the rows that stop the grader
+    reading it.
+    """
+    accepted, refused = [], []
+    with open(path, newline="", errors="replace") as f:
+        for row in csv.reader(f):
+            if not row or row[0].startswith("#") or row[0] == "ts":
+                continue
+            if len(row) < 4:
+                refused.append((row, f"short row: {len(row)} field(s), "
+                                      "read_capture needs four"))
+                continue
+            ts, addr, old, new = row[0], row[1], row[2], row[3]
+            try:
+                parse_ts(ts)
+            except ValueError as e:
+                refused.append((row, "read_capture cannot read this "
+                                     f"timestamp: {e}"))
+                continue
+            if addr == "MARK":
+                accepted.append((ts, new))
+                continue
+            for field, text in (("address", addr), ("old", old), ("new", new)):
+                try:
+                    int(text, 16)
+                except ValueError as e:
+                    refused.append((row, f"the {field} of a change row is not "
+                                         f"hex: {e}"))
+                    break
+    return accepted, refused
+
+
+def existing_mark_findings(path):
+    """(accepted, refused, unplaceable) about a `--csv` a watcher is about to
+    append to: the mark rows `read_capture` takes, the rows it will refuse the
+    file over, and the marks its placement pass cannot place.
+
+    The union of `existing_mark_labels`' contract (never raise on the content)
+    and `read_capture`'s (decide by the strict rules), because the notice
+    `ec_watch.py` prints at startup is only worth the operator's attention if
+    the reason it gives is the enforcing reader's. A copy of `read_capture`'s
+    rules spelled into the prompt would be right until the reader changed, and
+    the operator would have fixed a row the grading accepts. So
+    `read_capture` is run first and its verdict is the verdict; the per-row
+    conditions only name the rows it never got to.
+
+    Three lists, and each answers one question:
+
+    - `accepted` -- the mark rows the strict reader takes, as `(ts, label)`
+      with the timestamp *as written*, which is #548's deliberate choice and
+      the display an operator already reads. On a file `read_capture` accepts
+      this is exactly `existing_mark_labels`, called rather than written out
+      again, so the success path grows no second label-extraction rule.
+    - `refused` -- `(row, reason)` per row the strict reader raises on: a
+      short row (`:690`), a timestamp `parse_ts` cannot read, a change row
+      whose hex does not parse. The first reason is `read_capture`'s own
+      exception text verbatim, because that reader stops at the first bad row
+      and its message is the error the grading will raise. `row` is None for a
+      refusal that is the file's rather than one row's -- the encoding, below.
+    - `unplaceable` -- `(ts, label, message)` for the marks `unplaceable_marks`
+      reports, with *its* sentence, so the operator reads the same words the
+      grading will print rather than a paraphrase of them.
+
+    `unplaceable` is empty whenever the file is refused, and that is the whole
+    of why: a label verdict needs a file the grader can read, and one it
+    cannot read is already refused whole, so a second list would add nothing
+    the refusal has not said. The notice prints one line in its place saying
+    so, rather than leaving the operator to wonder whether the tool checked.
+
+    `unplaceable` is a *group* verdict and not a per-label one, and the
+    wording has to keep that straight. `coalesce_marks` joins the consoles'
+    labels with `' / '` and `parse_mark` reads the first part that matches, so
+    a window whose first label is `settled` places over a second console's
+    unparseable one. What is reported is what `unplaceable_marks` returned:
+    a whole window, or nothing.
+
+    The encoding is the one thing here that is not a property of the file. It
+    is a property of the interpreter reading it: `read_capture` opens without
+    an `encoding=`, so it decodes in whatever the running locale prefers, and
+    the same capture can be gradeable on one box and refused on another. So
+    the verdict reported is the one this interpreter produced and the encoding
+    it produced it under is named -- never a claim about what another Python
+    would have done with the same bytes.
+
+    `build_windows` is deliberately not on the label path: it indexes
+    `windows[0]`, so it needs a mark list and the change rows, and neither is
+    what a label verdict is about. `coalesce_marks([])` and `assign_blocks([])`
+    return empty without a guard, so an empty or mark-less file needs none
+    here either -- and a file with no marks coming back empty is what keeps
+    §3's block-1 start quiet.
+    """
+    accepted, refused, unplaceable = [], [], []
+    try:
+        marks, _ = read_capture(path)
+    except UnicodeDecodeError as e:
+        # A refusal of the file rather than of a row: iteration is lazy, so
+        # this comes out of the loop and there is no row to name it by. The
+        # rows are still reported, through the lenient reader, with U+FFFD
+        # where the byte was -- which is how the operator finds the byte that
+        # stopped it. `f.encoding` rather than a re-derivation of which
+        # locale rule CPython applies, because it is the answer from the same
+        # call `read_capture` makes and so cannot disagree with it.
+        with open(path, newline="", errors="replace") as f:
+            encoding = f.encoding
+        refused.append((None, "the grader's reader cannot decode a byte of "
+                              f"this file in the {encoding} this interpreter "
+                              f"opens it with, and raises before it reaches a "
+                              f"row: {e}"))
+        return existing_mark_labels(path), refused, unplaceable
+    except ValueError as e:
+        accepted, refused = refused_capture_rows(path)
+        if refused:
+            refused[0] = (refused[0][0], str(e))
+        else:
+            # The partition named no row, which `read_capture`'s own rules
+            # make a contradiction: it raised on a row this just found none
+            # of, so the file moved between the two reads. Reported as a
+            # refusal of the file rather than dropped -- a refusal this
+            # function could not tie to a row is still one that happened, and
+            # the anti-drift test holds the two readers together precisely so
+            # that arriving here means the file changed rather than the rules
+            # having drifted.
+            refused.append((None, str(e)))
+    else:
+        accepted = existing_mark_labels(path)
+        _, unplaced = assign_blocks(coalesce_marks(marks))
+        for window, said in unplaceable_marks(unplaced).items():
+            unplaceable += [(m.ts.isoformat(sep=" "), m.label, message)
+                            for m, message in zip(window.marks, said)]
+    return accepted, refused, unplaceable
+
+
 def read_early_exits(path):
     """The early-exit rows of one capture: a second reader over what
     `read_capture` drops.

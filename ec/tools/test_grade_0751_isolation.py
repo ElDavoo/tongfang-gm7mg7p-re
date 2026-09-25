@@ -3456,6 +3456,13 @@ class ExistingMarkLabelTests(unittest.TestCase):
     timestamp is the text it was written as, a truncated mark row comes back
     with an empty label, a change row is not parsed at all, and an undecodable
     byte comes back as U+FFFD in a label rather than ending the run.
+
+    `existing_mark_findings` (#718) is the same preflight seen from both
+    sides: the strict reader's verdict beside the lenient one's, so the notice
+    can name which of a file's rows the grader will refuse it over rather than
+    listing them all as equally fine. The contract above is its contract -- it
+    is the reason the notice is printed at all -- so the cases below cover
+    both, and none of them is about which of the two raises.
     """
 
     # One of each row kind, so "which rows are skipped" and "which are marks"
@@ -3540,18 +3547,360 @@ class ExistingMarkLabelTests(unittest.TestCase):
         self.assertTrue(marks[0][1].startswith('caf'), marks[0][1])
         self.assertEqual(marks[1][1], 'settled')
 
+    def test_the_strict_readers_verdict_splits_the_marks_a_file_holds(self):
+        # The issue's own shape, at the size it describes: six good marks and
+        # one half-written row. `existing_mark_labels` returns all seven as
+        # labels, which is right for what it was asked and cannot say which of
+        # them `read_capture` will refuse the file over. The strict reader's
+        # verdict is the split: six the grader reads, one it raises on.
+        rows = ['ts,addr,old,new']
+        rows += [f'2026-01-01T12:0{n}:00.000+01:00,MARK,,wrote 0x0751=0xA0'
+                 for n in range(6)]
+        rows.append('2026-01-01T12:06:00.000+01:00,MARK,')
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self.capture(rows, tmp)
+            accepted, refused, unplaceable = grade.existing_mark_findings(path)
+            # The lenient reader still names all seven, unchanged: this is
+            # added beside it, not through it.
+            self.assertEqual(len(grade.existing_mark_labels(path)), 7)
+        self.assertEqual(len(accepted), 6)
+        self.assertEqual(len(refused), 1)
+        # The row is named as the grader parsed it, so the operator can find it
+        # in the file rather than being told a count -- and the reason quotes
+        # the row back, which is `:690`'s own message and is the error the
+        # grading will raise. Asserted on the row rather than on the word
+        # "short": how the reader words it is the reader's business, and a
+        # reword must not read here as the notice disagreeing with it.
+        self.assertEqual(refused[0][0],
+                         ['2026-01-01T12:06:00.000+01:00', 'MARK', ''])
+        self.assertIn(repr(refused[0][0]), refused[0][1])
+        # A refused file is already refused whole, so there is no second
+        # verdict to add and the list says so by being empty.
+        self.assertEqual(unplaceable, [])
+
+    def test_a_hand_edited_timestamp_is_a_refused_row_and_is_named(self):
+        # Free text rather than a loose ISO stamp, and deliberately: this
+        # suite's `:3399` fixture leans on the *short row* for its
+        # `assertRaises`, so its timestamp is not a raising one under the
+        # interpreter the gate runs. `datetime.fromisoformat` was widened in
+        # 3.11 and reads `'2026-01-01 12:00'` without complaint, so a fixture
+        # copied from there would pass for the wrong reason -- a test that
+        # looks like it covers a bad timestamp and is really covering the
+        # short row a second time. A word is not an ISO 8601 stamp in any
+        # version.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self.capture(['ts,addr,old,new',
+                                 '2026-01-01T12:00:00.000+01:00,MARK,,settled',
+                                 'when i clicked,MARK,,held'], tmp)
+            accepted, refused, _ = grade.existing_mark_findings(path)
+            with self.assertRaises(ValueError) as caught:
+                grade.read_capture(path)
+        self.assertEqual([ts for ts, _ in accepted],
+                         ['2026-01-01T12:00:00.000+01:00'])
+        self.assertEqual(len(refused), 1)
+        self.assertEqual(refused[0][0],
+                         ['when i clicked', 'MARK', '', 'held'])
+        # `parse_ts`'s own message, which is the exception `read_capture`
+        # raised and the reason this function quotes for it.
+        self.assertEqual(refused[0][1], str(caught.exception))
+        self.assertIn('when i clicked', refused[0][1])
+
+    def test_the_refusal_reasons_are_read_captures_own(self):
+        # The anti-drift guard, and the one that makes the per-row conditions
+        # in `refused_capture_rows` safe rather than a second rule. Over every
+        # fixture `read_capture` refuses, the first reason this returns is the
+        # exception `read_capture` itself raised, byte for byte. Tighten
+        # `:690` or widen `parse_ts` and this fails -- rather than the notice
+        # going on explaining a refusal the grading no longer makes.
+        #
+        # The *order* of those checks is pinned by the last fixture below, not
+        # by that first reason: `existing_mark_findings` replaces the first
+        # row's reason with `read_capture`'s own exception, so no fixture whose
+        # only bad row is the first one can see which check ran first. The
+        # order *among* the three `int()` calls is not pinned at all -- every
+        # fixture that reaches them has exactly one bad field -- so nothing
+        # here claims it.
+        fixtures = {
+            # `:690`, the short row. The one whose own message names the row,
+            # so it is the one that can be checked to be the same row.
+            'short row': ['ts,addr,old,new',
+                          '2026-01-01T12:00:00.000+01:00,MARK,,settled',
+                          '2026-01-01T12:01:00.000+01:00,MARK,'],
+            # `parse_ts`, on a timestamp an operator edited.
+            'timestamp': ['ts,addr,old,new',
+                          'when i clicked,MARK,,held'],
+            # The `int(addr, 16)` of a change row, outside the two reasons the
+            # issue named: a mark row is not the only row that stops the
+            # grader, so the notice cannot be only about mark rows.
+            'change address': ['ts,addr,old,new',
+                               '2026-01-01T12:00:05.000+01:00,0xzz,0x00,0x11'],
+            'change old': ['ts,addr,old,new',
+                           '2026-01-01T12:00:05.000+01:00,0x0701,old,0x11'],
+            'change new': ['ts,addr,old,new',
+                           '2026-01-01T12:00:05.000+01:00,0x0701,0x00,new'],
+            # Two bad rows, so the partition has a row `read_capture` never
+            # reached to name and the first is still the one it raised on.
+            'two bad rows': ['ts,addr,old,new',
+                             '2026-01-01T12:01:00.000+01:00,MARK,',
+                             'when i clicked,MARK,,held'],
+            # The order of the checks, on the one input where it is
+            # observable: a change row bad in *both* ways, which
+            # `read_capture` refuses for the timestamp because it reads the
+            # timestamp before the hex. It is deliberately not the first bad
+            # row -- `existing_mark_findings` replaces the first row's reason
+            # with `read_capture`'s own exception, so a first-row fixture
+            # could not see the partition's ordering at all.
+            'change row bad in both ways': [
+                'ts,addr,old,new',
+                '2026-01-01T12:01:00.000+01:00,MARK,',
+                'when i clicked,0xzz,0x00,0x11'],
+        }
+        for name, rows in fixtures.items():
+            with self.subTest(fixture=name), \
+                 tempfile.TemporaryDirectory() as tmp:
+                path = self.capture(rows, tmp)
+                with self.assertRaises(ValueError) as caught:
+                    grade.read_capture(path)
+                _, refused, _ = grade.existing_mark_findings(path)
+                self.assertTrue(refused, name)
+                self.assertEqual(refused[0][1], str(caught.exception))
+                self.assertIsNotNone(refused[0][0])
+                if name == 'short row':
+                    # `:690` is the one that puts the row in its own message,
+                    # and that is what makes the first entry checkable rather
+                    # than only quotable: the row named here has to be the
+                    # row the reader stopped on, not merely a row it dislikes.
+                    self.assertIn(repr(refused[0][0]), str(caught.exception))
+                    self.assertEqual(len(refused), 1)
+                if name == 'two bad rows':
+                    # Both, and the reader stopped at the first -- so the
+                    # second is the reason this names every one of them.
+                    self.assertEqual(len(refused), 2)
+                    self.assertEqual(refused[1][0],
+                                     ['when i clicked', 'MARK', '', 'held'])
+                if name == 'change row bad in both ways':
+                    # The order, asserted on the one row whose reason is the
+                    # partition's own rather than the exception text pasted
+                    # over the first. Reading the hex before the timestamp is
+                    # the opposite of `read_capture`'s order and would name
+                    # the wrong one of two real reasons for the row.
+                    self.assertEqual(len(refused), 2)
+                    self.assertEqual(
+                        refused[1][0],
+                        ['when i clicked', '0xzz', '0x00', '0x11'])
+                    self.assertIn('timestamp', refused[1][1])
+
+    def test_a_malformed_change_row_is_a_refused_row_too(self):
+        # The widening, pinned on its own so it cannot go quietly: a change
+        # row is not a mark and holds no label, but `int(addr, 16)` is in
+        # `read_capture` and a file with one in it is refused whole, so a
+        # notice that named only the two reasons the issue listed would report
+        # a file as checked when the grading stops on it.
+        good = '2026-01-01T12:00:00.000+01:00,0x0701,0x00,0x11'
+        rows = ['ts,addr,old,new', good,
+                '2026-01-01T12:00:05.000+01:00,0xzz,0x00,0x11',
+                '2026-01-01T12:00:06.000+01:00,0x0701,old,0x11',
+                '2026-01-01T12:00:07.000+01:00,0x0701,0x00,new']
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self.capture(rows, tmp)
+            accepted, refused, _ = grade.existing_mark_findings(path)
+            with self.assertRaises(ValueError) as caught:
+                grade.read_capture(path)
+        # No marks in the fixture at all, so `accepted` is empty and the whole
+        # of the notice would be the refusal list.
+        self.assertEqual(accepted, [])
+        self.assertEqual(len(refused), 3)
+        # The first one is `read_capture`'s own exception, verbatim, and that
+        # is what it says: `int()` names the value it choked on and not which
+        # of the three fields it was reading. The row beside it is the other
+        # half, and between them the operator has the field -- here the
+        # address, the only one of the three whose value is not a plain hex
+        # literal and so the only one the row itself makes obvious.
+        self.assertEqual(refused[0][1], str(caught.exception))
+        self.assertEqual(refused[0][0][1], '0xzz')
+        # The rows `read_capture` never reached are named per row, and each
+        # names the field `read_capture`'s tuple unpack gave that name to --
+        # in the order `read_capture` evaluates them, so a row bad in two
+        # fields is refused for the earlier one.
+        for (row, reason), field, value in zip(refused[1:],
+                                               ['old', 'new'],
+                                               ['old', 'new']):
+            self.assertIn(f'the {field} of a change row is not hex', reason)
+            self.assertIn(repr(value), reason)
+            self.assertNotEqual(row[0], 'ts')
+        # A well-formed change row is in neither list: it is not a mark, and it
+        # is not what stops the grader.
+        self.assertNotIn(good.split(','), [row for row, _ in refused])
+
+    def test_an_unplaceable_label_is_reported_from_the_graders_own_verdict(self):
+        # The label side, and the two halves of its calibration. A garbage
+        # label is reported with `unplaceable_marks`' own message -- asked of
+        # the module rather than spelled here, so a reworded message fails
+        # this rather than passing a stale string. And a `settled`/`garbage`
+        # pair inside one merge window is *not* reported, because
+        # `parse_mark` reads the first part that matches and `settled` places
+        # the whole group; a notice that said the second console's label was
+        # unreadable would be false about it.
+        with tempfile.TemporaryDirectory() as tmp:
+            alone = self.capture(['ts,addr,old,new',
+                                  '2026-01-01T12:00:00.000+01:00,MARK,,'
+                                  'garbage label'], tmp)
+            accepted, refused, unplaceable = grade.existing_mark_findings(alone)
+            # The window `unplaceable_marks` keys on, so the message below is
+            # the module's own over the module's own marks.
+            marks, _ = grade.read_capture(alone)
+            _, unplaced = grade.assign_blocks(grade.coalesce_marks(marks))
+            expected = [said for said
+                        in grade.unplaceable_marks(unplaced).values()
+                        for said in said]
+            # And the calibration case: same garbage label, but not leading
+            # its group. 2 s apart, inside `MARK_MERGE_SECONDS`.
+            led = self.capture(['ts,addr,old,new',
+                                '2026-01-01T12:00:00.000+01:00,MARK,,settled',
+                                '2026-01-01T12:00:02.000+01:00,MARK,,'
+                                'garbage label'], tmp)
+            merged = grade.existing_mark_findings(led)
+        self.assertEqual(len(unplaceable), 1)
+        self.assertEqual(len(expected), 1)
+        self.assertEqual(unplaceable[0][2], expected[0])
+        self.assertIn("'garbage label'", unplaceable[0][2])
+        self.assertEqual(unplaceable[0][1], 'garbage label')
+        self.assertEqual(refused, [])
+        self.assertEqual([ts for ts, _ in accepted],
+                         ['2026-01-01T12:00:00.000+01:00'])
+        # Both marks are named as accepted -- the file is readable and this run
+        # is appending after both -- and neither group is reported unplaceable.
+        self.assertEqual([ts for ts, _ in merged[0]],
+                         ['2026-01-01T12:00:00.000+01:00',
+                          '2026-01-01T12:00:02.000+01:00'])
+        self.assertEqual((merged[1], merged[2]), ([], []))
+
+    def test_the_preflight_does_not_raise_on_any_of_them(self):
+        # `existing_mark_labels`' docstring argues for this and the whole
+        # notice rests on it: the file a run is about to append to has to be
+        # nameable whatever is in it, or the one warning that says what is
+        # already there is the one thing lost. Every hostile fixture above,
+        # through both readers.
+        hostile = {
+            'short row': ['ts,addr,old,new', '2026-01-01T12:00:00.000+01:00,MARK,'],
+            'timestamp': ['ts,addr,old,new', 'when i clicked,MARK,,held'],
+            'change address': ['ts,addr,old,new',
+                               '2026-01-01T12:00:05.000+01:00,0xzz,0x00,0x11'],
+            'change old': ['ts,addr,old,new',
+                           '2026-01-01T12:00:05.000+01:00,0x0701,old,0x11'],
+            'change new': ['ts,addr,old,new',
+                           '2026-01-01T12:00:05.000+01:00,0x0701,0x00,new'],
+            'two bad rows': ['ts,addr,old,new',
+                             '2026-01-01T12:01:00.000+01:00,MARK,',
+                             'when i clicked,MARK,,held'],
+            'good garbage': ['ts,addr,old,new',
+                             '2026-01-01T12:00:00.000+01:00,MARK,,garbage label'],
+            'only a comment': ['# a note', ''],
+            'header only': ['ts,addr,old,new'],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            for name, rows in hostile.items():
+                with self.subTest(fixture=name):
+                    path = self.capture(rows, tmp)
+                    # Both readers, and no assertion on what they return: the
+                    # property is that nothing escapes.
+                    self.assertIsInstance(grade.existing_mark_labels(path), list)
+                    self.assertIsInstance(
+                        grade.existing_mark_findings(path), tuple)
+            # And the byte, which is a refusal of the whole file rather than
+            # of a row, and so takes the other branch entirely.
+            path = Path(tmp) / 'latin1.csv'
+            path.write_bytes(b'ts,addr,old,new\n'
+                             b'2026-01-01T12:00:00.000+01:00,MARK,,caf\xe9\n')
+            self.assertEqual(len(grade.existing_mark_labels(str(path))), 1)
+            self.assertEqual(
+                len(grade.existing_mark_findings(str(path))[0]), 1)
+
+    def test_a_byte_this_python_cannot_decode_reports_the_verdict_it_observed(self):
+        # The encoding question, measured rather than assumed, and the notice
+        # reports whichever answer this interpreter gives. `read_capture`
+        # opens without an `encoding=`, so it decodes in the running locale's
+        # preferred encoding: under the gate's UTF-8 the 0xE9 raises, and on a
+        # box whose default reads it the same file is accepted and the mark is
+        # named as `café`. Both are correct here and the test accepts either,
+        # because what it holds is that the notice says what *this* run
+        # observed -- and a notice that claimed a decode failure the grading
+        # would not have hit would be the one thing this must never do.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'capture.csv'
+            path.write_bytes(b'ts,addr,old,new\n'
+                             b'2026-01-01T12:00:00.000+01:00,MARK,,caf\xe9\n'
+                             b'2026-01-01T12:00:30.000+01:00,MARK,,settled\n')
+            accepted, refused, unplaceable = grade.existing_mark_findings(str(path))
+            raised = None
+            try:
+                grade.read_capture(str(path))
+            except UnicodeDecodeError as e:
+                raised = e
+        if raised is None:
+            # An interpreter whose default reads the byte: no refusal claimed,
+            # the mark accepted, and the file stays gradeable. This is the case
+            # the issue asks to keep in `read_capture`'s contract and out of
+            # the notice.
+            self.assertEqual(refused, [])
+            self.assertEqual([ts for ts, _ in accepted],
+                             ['2026-01-01T12:00:00.000+01:00',
+                              '2026-01-01T12:00:30.000+01:00'])
+            self.assertEqual(accepted[0][1], 'café')
+        else:
+            # One refusal, and it is the file's rather than a row's: iteration
+            # is lazy, so the raise comes out of the loop and there is no row
+            # to name it by. `None` is what says so.
+            self.assertEqual(len(refused), 1)
+            self.assertIsNone(refused[0][0])
+            self.assertIn(str(raised), refused[0][1])
+            # The encoding is named, and it is the one the interpreter really
+            # used rather than a re-derivation of which locale rule applies --
+            # so it matches the codec in the exception's own words.
+            self.assertIn(raised.encoding.lower(), refused[0][1].lower())
+            # The rows are still named, through the lenient reader, with the
+            # byte as U+FFFD: both of them, not just the one before it, and
+            # that is how the operator finds the byte that stopped it.
+            self.assertEqual([ts for ts, _ in accepted],
+                             ['2026-01-01T12:00:00.000+01:00',
+                              '2026-01-01T12:00:30.000+01:00'])
+            self.assertTrue(accepted[0][1].startswith('caf'), accepted[0][1])
+            self.assertEqual(accepted[1][1], 'settled')
+        # A label verdict needs a file the grader can read, and one it cannot
+        # read is already refused whole: there is nothing for a second list to
+        # add, whichever way the encoding went.
+        self.assertEqual(unplaceable, [])
+
+    def test_on_a_file_the_strict_reader_accepts_the_two_readers_agree(self):
+        # The success path reuses `existing_mark_labels` rather than adding a
+        # second label-extraction rule, so a file the grader takes whole reads
+        # at the console exactly as it did in #548. Asserted as a list and not
+        # as a count, because the order is what a reader is looking down.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self.capture(self.ROWS, tmp)
+            accepted, refused, unplaceable = grade.existing_mark_findings(path)
+            lenient = grade.existing_mark_labels(path)
+        self.assertEqual(accepted, lenient)
+        self.assertEqual(len(accepted), 2)
+        self.assertEqual(refused, [])
+        self.assertEqual(unplaceable, [])
+
     def test_a_file_with_no_marks_comes_back_empty(self):
         # The quiet side, and the reason the notice keys on marks rather than
         # on the file being non-empty: §3's block-1 start appends to a path
         # that does not exist yet or holds the header `CsvSink` wrote, and
         # neither carries a label any process could have failed to check.
+        # The second reader is empty on the same fixtures, so the split adds
+        # nothing to say about a file the grader takes whole.
         with tempfile.TemporaryDirectory() as tmp:
             for rows in ([], ['ts,addr,old,new'],
                          ['ts,addr,old,new',
                           '2026-01-01T12:00:05.000+01:00,0x0701,0x00,0x11']):
                 with self.subTest(rows=rows):
-                    self.assertEqual(
-                        grade.existing_mark_labels(self.capture(rows, tmp)), [])
+                    path = self.capture(rows, tmp)
+                    self.assertEqual(grade.existing_mark_labels(path), [])
+                    self.assertEqual(grade.existing_mark_findings(path),
+                                     ([], [], []))
 
     def test_read_capture_is_unchanged(self):
         # The reader is additive. `read_capture` still skips `#`, blank and
