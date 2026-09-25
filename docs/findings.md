@@ -4404,6 +4404,19 @@ rather than the effect, since the effect is only visible when the append lands.
 Offline on hand-written rows; no §3 run and no Windows box. Written up in
 [0751-notice-two-moments.md](findings/0751-notice-two-moments.md).
 
+> **Correction (2026-09-25, issue #750 merged on top), leaving the rest of the
+> entry as it was taken.** One clause is no longer true: *the skip rule is still
+> spelled in both readers*. #750 took the rule out of both and put it in
+> `skippable_row`, which `read_capture`, `mark_labels_of` and
+> `partition_capture_rows` all call, and moved the open itself into
+> `capture_rows`/`normalised_rows` — which `existing_mark_findings`'s one read
+> also goes through, so the notice's row list and the readers' own agree about
+> what a first field may look like. It is still one `open()` and not one
+> function, because the four-field test and the `MARK` branch are three
+> deliberate contracts rather than one rule. Everything else above — the shared
+> helpers, the `.encoding` from the failing decode, the asserted open count —
+> holds as written.
+
 **2026-09-25 (issue #719): a fifth column on the MARK row measured against a
 `# provenance` row, and nothing changed.** That notice cannot say which process
 wrote a mark, and the ceiling is the format rather than the process — but
@@ -4419,7 +4432,10 @@ first; and `check_capture_claims.py`, which reads every committed capture.
 readers called on temp files, **both shapes cost zero** — the readers index
 rather than unpack, and the issue's "`row[0..3]` unpacks" is explicit indexing
 at `grade_0751_isolation.py:691`, so a fifth column is ignored where the
-issue's reading predicts a `ValueError`. The one number the shapes differ on is
+issue's reading predicts a `ValueError`. (That line number is this paragraph's
+own tree, as the rest of it is — #749's split moved it to `:830` and #750's
+consolidation to `:1044`; the measurement is quoted from
+`0751-mark-provenance-shapes.md`, which is the half that is re-derived.) The one number the shapes differ on is
 3-of-3 marks carrying provenance in their own row against 0-of-3, which is why
 the page recommends the fifth column and states what it costs. It corrects the
 issue's framing of the comment row as well: a `# provenance` row does bind to
@@ -4453,24 +4469,111 @@ refusal that names it rather than a complaint about `int("addr", 16)` on the
 header. The Windows cp1252 case stays a **prediction from the documented
 default with no box reached**; what the declaration retires is only its being
 load-bearing. Offline: a count over two committed directories, a round-trip
-through a temp directory, and a reader's behaviour on a constructed file. This
-makes an already-red `measure_mark_provenance.py` redder — 6 of its 37 pins
-were drifted before this change and 29 are after, measured both ways and
-recorded rather than hidden; that tool's crash and its re-anchoring are its
-own issue. Written up in
-[0751-capture-encoding.md](findings/0751-capture-encoding.md).
+through a temp directory, and a reader's behaviour on a constructed file.
+
+> **The last sentence of that paragraph is superseded, leaving the measurement
+> in it.** It read: *This makes an already-red `measure_mark_provenance.py`
+> redder — 6 of its 37 pins were drifted before this change and 29 are after,
+> measured both ways and recorded rather than hidden; that tool's crash and its
+> re-anchoring are its own issue.* Both figures are confirmed here and
+> unchanged, and both are measurements of the tool as committed: a bare
+> `python3 ec/tools/measure_mark_provenance.py` reports them rather than
+> raising, and reported both counts at the trees they were taken on. What has
+> changed is the debt it left: the re-anchoring landed with #750 in this tree,
+> all **44** citations resolve, as the #750 entry below counts them — and
+> the two `check_capture_encoding.py` sites
+> this issue added are cited rather than left as a gap in the census. Written
+> up in [0751-capture-encoding.md](findings/0751-capture-encoding.md).
+
+**2026-09-25 (issue #750): the shape of a capture row is stated once, and the
+readers that still open a refused capture no longer blame its header.** The
+skip rule — blank, `#`, `ts` header — was written out three times verbatim, and
+a fourth reader read the same file. It is now a row stream (`capture_rows`,
+which owns the open, each reader's decode policy and the first field) plus one
+predicate (`skippable_row`) the three strict-side readers call; a stream and not
+a filtered iterator, because `read_early_exits` *keeps* the rows the other three
+drop (`EARLY_EXIT_TAG` opens with `#`). A leading U+FEFF is stripped from the
+first field there, so a BOM'd capture is no longer reported as "the header row
+has an unreadable timestamp" with a delete-the-header remedy.
+
+> **One sentence of that paragraph is superseded by the issue above, and the
+> reason it gave for its own decision is not the reason any more.** It read:
+> *That is a shape-level strip and not `encoding="utf-8-sig"`, which would pin
+> the open encoding the tree records as deliberately undecided.* The open
+> encoding is no longer undecided — it is `utf-8`, declared — and
+> `utf-8-sig` is still not used, for a different reason: the format says **no
+> BOM**, so a codec that accepts one is a format change rather than a reader's
+> convenience. The consequence is a division of labour the strip was not
+> written for: the strict reader refuses a BOM'd capture as a *file*, by name,
+> before it reads a row, and the shape is what the three preflights read such a
+> capture *with*. The two agree on every file that exists, and the strip is
+> redundant rather than wrong for the strict one. `path_starts_with_bom` is a
+> seventh open in the grader and a binary one — three bytes, to answer a
+> file-level question, declaring no `encoding=` — so the count of declared sites
+> above is unchanged. **And the seventh open is not the only way the notice
+> learns of a mark:** `existing_mark_findings` reads a capture once (#749), so
+> it is told `has_bom` off the buffer it had to read anyway, by the same
+> `starts_with_bom` test over those bytes. One question, two callers, one open
+> either way.
+
+The anti-drift guard is extended past the reasons to the shape: all four
+readers on a fixture carrying `#` rows, blanks and a header; the partition's
+accepted and refused lists on a file `read_capture` refuses; the BOM case with a
+no-BOM control in it; and the `int()` order among a change row's three hex
+fields, which that test's own comment recorded as unpinned. **The one of those
+cases that changed is recorded in the tree rather than quietly dropped:**
+`test_a_byte_order_mark_does_not_turn_the_header_into_a_bad_row` asserted that
+`read_capture` *grades* a BOM'd capture, which #748's decision makes false. It
+now asserts the merged contract — refused by name, and the preflights still
+reading the header as the header — with the superseded expectation and the
+reason for it left in the test's own comment.
+
+Both edits moved the line numbers `measure_mark_provenance.py` cites, so its
+rows are re-anchored here rather than in either PR: **44 citations, all
+resolving**, which covers the six already red at the fork point, the 23 #748's
+own edits drifted, the two new `check_capture_encoding.py` sites, and the
+`path_starts_with_bom` line. The count is 44 because both branches' pins are
+cited: #749's own at the lines the split left them at, and #750's skip-rule
+citations are four — the predicate's body plus the three readers that call it,
+`:845`, `:890`, `:1065` and `:1086` — where `origin/main` had two, the rule
+written out twice at `:695` and `:871`. That 2 → 4 is worth 2 of the run and
+the rest is this
+branch's four newly cited sites, `grade_0751_isolation.py:976`, its
+byte-order-mark refusal at `:886`, and `check_capture_encoding.py:166` and
+`:243`: 38 rows on `origin/main`, + 2 for the rule, + 4 new sites, is 44. Its
+citation check reports rather than raising — a bare
+`python3 ec/tools/measure_mark_provenance.py` prints its rows and its problem
+count and exits 1 while any row is red — so the 6/29 above and the 18/37
+#749 recorded are both measurements of the tool as committed, and what
+separates them is the tree and not the check. Re-anchoring is the whole of this
+branch's change to that tool: `check_citations` and the `scan` it joins
+against are byte-identical to `origin/main`, where the same command prints 38
+rows, 18 of them `DRIFT`, and 37 citation problems before exiting 1. Offline
+over hand-written rows and bytes; no capture taken, no
+Windows box reached, and a Windows tool writing a BOM remains a prediction.
+Written up in
+[0751-capture-row-shape.md](findings/0751-capture-row-shape.md).
 
 > **Correction (2026-09-25, issue #749 merged on top), leaving the measurement
 > above as it was taken.** The two figures are right for this change and are
 > not the tree's: #749 fixed the crash that made section 5 end in a
 > `ValueError` instead of reporting anything, and re-measured the grader's own
-> pins after this change's `encoding="utf-8"` moved them. The tree now reports
-> **18** drifted pins and **37** citation problems, none of them a
-> `grade_0751_isolation.py` line. Fifteen of the 18 are pins this change moved
-> in the other capture files and are still where it left them, which is what
+> pins after this change's `encoding="utf-8"` moved them. The tree reported
+> **18** drifted pins and **37** citation problems at that point, none of them a
+> `grade_0751_isolation.py` line. Fifteen of the 18 were pins this change moved
+> in the other capture files and were still where it left them, which is what
 > the sentence above decided; the other three (`ec_watch.py:254`/`:280`/
 > `:355`) were already drifted before either change. The split and the numbers
 > are in `0751-notice-two-moments.md`.
+>
+> **And a second correction, because #750 then landed on the same tree and
+> retired every one of them.** `measure_mark_provenance.py` now exits 0 on it:
+> **0 drifted pins and 0 citation problems, all 44 citations resolving** and
+> the row-site join closing both ways. The fifteen pins in the other capture
+> files were drifted by #748 and #749 and are re-anchored by #750 as well —
+> #748's retarget was never applied to them, and all 18 of them read `DRIFT`
+> on `origin/main` after it merged. The paragraph above is left as #749 wrote
+> it; this is the number a reader should use.
 
 ## 17. The `main-ec-003` cluster is one 393-byte routine, counted 42 times over (2026-09-23, issue #179; id corrected by #253, by the 2026-09-24 re-derivation, and again by #279 on 2026-09-25)
 

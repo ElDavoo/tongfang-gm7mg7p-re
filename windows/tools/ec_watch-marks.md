@@ -77,8 +77,8 @@ line that will never come.
 `--label-vocab 0751` is that same refusal one step along, and it is opt-in for
 a reason that is not caution: `gpu_block_watch.py:59,166` imports this `Marker`
 and stamps free-form labels through it, so a blanket check would refuse labels
-that procedure is entitled to write. `system_id_probe.py:232` keeps a class of
-its own of the same shape, still carrying the `strip() or` default at `:252`
+that procedure is entitled to write. `system_id_probe.py:237` keeps a class of
+its own of the same shape, still carrying the `strip() or` default at `:257`
 (#483, #484, named there as still open). So the check is a flag, and §3's
 three commands are where the operator turns it on.
 
@@ -252,9 +252,9 @@ an operator fixes the row from this screen or from the grading log and gets
 the same sentence either way. Every bad row is named, not just the first —
 `read_capture` stops at the first, so a file holding two after a half-finished
 write or a hand edit would otherwise be a fix-one-re-run-meet-the-next loop.
-The four reasons it can raise over are a short row (`:690`), a timestamp
-`parse_ts` cannot read, hex that is not hex in a change row, and a byte this
-interpreter's encoding cannot decode.
+The four reasons it can raise over are a short row (`read_capture`'s
+four-field test), a timestamp `parse_ts` cannot read, hex that is not hex in a
+change row, and a byte this interpreter's encoding cannot decode.
 
 **The last of those is a refusal of the file, not of a row, and the remedy
 changes with it.** Iteration is lazy, so the decode failure comes out of the
@@ -263,6 +263,58 @@ names the encoding it opened the file with, and asks for the capture to be
 re-saved rather than telling the operator to fix a row that is not at fault.
 The marks beside it are still named, with U+FFFD where the byte was, which is
 how the operator finds it.
+
+**A byte-order mark is not a fifth reason, and it is not a row's fault to be
+named (2026-09-25, issue #750, under the encoding #748 declared).** With
+`EF BB BF` at offset 0 the header's first field is not `ts`, so the header was
+read as a data row and the notice named the row carrying the column names as a
+row whose timestamp could not be parsed — with the delete-the-row remedy
+pointed straight at it. Two things now stand between the mark and that outcome,
+and which one applies depends on the reader rather than on the row.
+
+The strict reader refuses the *file*, by name, before it reads a row: a capture
+is `utf-8` with no BOM, so the notice prints `the file itself`, says what a
+byte-order mark is, and asks for the capture to be re-saved — the same
+file-level shape as the decode refusal above, down to the wording, and with no
+row attached, so there is nothing to offer for deletion. The two also share one
+remedy sentence, and that sentence names no cause on purpose. It used to name
+the writing process's locale, which is true of the decode refusal and false of
+this one: a BOM'd capture is valid utf-8, so this interpreter reads it, and it
+is already in an encoding this Python reads — so "re-saving the capture in an
+encoding this Python reads is the fix" landed directly under the grader's own
+"re-save this one without one", two remedies on consecutive lines, the second
+of them contradicting the first and neither actionable. What the sentence says
+now is the one thing all three of the grader's file-level refusals agree on —
+the file is what its reader will not take, so there is no line to point at and
+no line to edit — and the reason printed directly above it is what says what to
+do, which here is `bom_refusal`'s own. `test_a_bom_is_refused_by_name_and_gets_
+the_same_remedy` is what holds the two halves together, over a capture seeded
+as bytes and driven through `main`; the case above it only ever reaches the
+decode refusal, so it passes either way. The three preflights still have to
+read a capture the strict reader refused, and for them the shape is what
+retires the
+mark: it is stated once, in the grader's `normalised_rows`, which strips a
+leading U+FEFF off every row's first field, so the header compares equal to
+`ts` again. `capture_rows` — the one place the four capture readers open a
+file — goes through it, and so does `capture_snapshot`, the notice's single
+read since #749, so none of the five reads the grader makes of a capture
+sees a mark still glued to a first field. Two readers outside that scope are
+not covered: `ec/tools/check_capture_encoding.py`'s `count` and
+`ec/tools/grade_timer_sweep.py`'s `load` each spell the `ts`/`#` test out
+with no strip, so a BOM'd header is a data row to both, and the grader's own
+`path_starts_with_bom` opens the same file again, in binary, for three bytes
+— to ask the file-level question a row cannot — which `docs/findings.md`
+records as a seventh open. The three preflights call one `skippable_row` predicate and
+`read_early_exits` reads the same stream with its own phrase test, because
+`EARLY_EXIT_TAG` opens with `#` and that reader *keeps* the rows the other three
+drop.
+
+The strip is at the shape rather than at the open because `utf-8-sig` would
+accept a mark the format does not have, and whether it should ever is a separate
+question the encoding decision below explicitly leaves open. The version of this
+paragraph written before that decision said the open encoding was "the next
+section's" to decide; it is decided, and the strip is now redundant for the
+strict reader rather than wrong — the two rules agree on every file that exists.
 
 **The counts are per list and never one total.** Two good marks and one short
 row read "2 mark(s)" and "1 row(s)": the short row is a row, not a mark, and
@@ -441,6 +493,34 @@ not.
 > decode. Full argument:
 > [`0751-capture-encoding.md`](../../docs/findings/0751-capture-encoding.md).
 
+**A UTF-8 BOM is this section's question only in the sense that the decision
+above leaves it open, and nothing here reopens it (2026-09-25, issue #750).**
+`EF BB BF` decodes to U+FEFF, and the shape stated once in the grader's
+`normalised_rows` takes it off the first field of every row, so for the readers
+that still open such a file the header compares equal to `ts` again under
+whichever reader is looking. The strict reader does not get that far: it refuses
+the file, by name, as the correction above sets out.
+
+**Two claims in the version of this paragraph written before #748 are no longer
+true, and are corrected here rather than deleted.** The first is the open
+question it named — whether `read_capture` should pin `encoding=` at all. That
+is settled, by the decision recorded above, and this section no longer holds it
+open. The second is the `ï»¿` reading of the same three bytes under a latin-1 or
+cp1252 locale, which no U+FEFF strip catches. That paragraph called repairing it
+a mojibake decoder *reachable once the codec is pinned*; pinning the codec is
+what retired it rather than opening it. The bytes are no longer read under any
+locale but the declared one, so there is no second reading of them to repair —
+this is a statement about what `utf-8` cannot produce, not a prediction about a
+Windows box, and the prediction framing is withdrawn with the claim.
+
+What is genuinely still open, and is the decision above's to make rather than
+this section's: whether the format should ever *accept* a BOM. The shape's strip
+does not decide it, and `utf-8-sig` is not used at any reader. The
+measurement is in
+[`0751-append-unchecked-marks.md`](../../docs/findings/0751-append-unchecked-marks.md)
+and the shape decision beside it in
+[`0751-capture-row-shape.md`](../../docs/findings/0751-capture-row-shape.md).
+
 ## Why the substitution went
 
 It was `label = label.strip() or f"mark {self._n}"` — a default that made
@@ -569,11 +649,11 @@ runbook, and `ec_timer_capture.py`'s marks are read by the timer-sweep grader
 under a different label convention. Both write the same `ts,MARK,,mark N` row
 for a blank press, and both are follow-ups.
 
-- `windows/tools/system_id_probe.py:252` — the same
+- `windows/tools/system_id_probe.py:257` — the same
   `label = label.strip() or f"mark {self._n}"`, in a `Marker._loop` of the
   same shape. Its mark rows are the shape the 0751 grader reads, so a mark
   captured with that tool and graded with this one fails the same way.
-- `ec/tools/ec_timer_capture.py:162` — `mark_loop`, the same `strip() or`
+- `ec/tools/ec_timer_capture.py:167` — `mark_loop`, the same `strip() or`
   default over a plain `for line in sys.stdin`. `grade_timer_sweep.py` reads a
   `resumed` label rather than §3's forms, so the consequence there is a
   misleading row rather than a withheld run — a smaller cost, not a smaller
@@ -619,9 +699,40 @@ blank, the `ts` header — is still spelled in both readers, as it has been
 since #548, and is held to itself by two tests rather than by a delegation
 that does not exist.
 
+> **Correction (2026-09-25, issue #750 merged on top), leaving the paragraph
+> above as it was written.** The second half of that last paragraph is no longer
+> true: the skip rule is not spelled in both readers, because it is now
+> `skippable_row` and the two call it, and the open is `capture_rows`, which
+> the notice's single read goes through as well. The delegation #749 said did
+> not exist now does, for the part of the shape that is one rule. What still
+> keeps the notice from being one function is unchanged and is the rest of
+> #750's argument: the four-field test and the `MARK` branch are three
+> deliberate contracts — a `ValueError` in `read_capture`, a tolerated short
+> row in `existing_mark_labels`, a *named refusal* in the partition — and
+> merging them would delete the preflight rather than state the shape once.
+> `ExistingMarkLabelTests` holds the three to each other instead of a
+> delegation standing in for them.
+
 **Nothing here has been seen against a real §3 run.** The notice's wording,
 its sections and its unpacking are untouched, and `ec_watch.py` needed no edit:
 `load_label_vocab` still reads four names and `warn_unchecked_marks` still
 unpacks a three-tuple. The four cases that hold the new behaviour are offline,
 over hand-written rows in a temporary directory, and the whole reasoning is in
 [`docs/findings/0751-notice-two-moments.md`](../../docs/findings/0751-notice-two-moments.md).
+
+> **Correction (2026-09-25, issue #750 merged on top), leaving the paragraph
+> above as it was written.** Its claim that `ec_watch.py` needed no edit and
+> that the notice's wording is untouched is no longer true of this tree, and
+> both halves fail together: #750 did edit `ec_watch.py`, and what it edited
+> was the notice's wording. The file-level remedy sentence in
+> `warn_unchecked_marks` had to serve three file-level refusals rather than
+> one, so it was rewritten to say what all three share instead of naming a
+> cause that is true of one and false of the other two — which left
+> `load_label_vocab`'s four names and `warn_unchecked_marks`' three-tuple
+> unpack, both of which are indeed untouched. The edit is described at
+> length in the byte-order-mark section above. The paragraph's other
+> claim — that nothing here has been seen against a real §3 run — is
+> unaffected and stands, and so does the prediction framing it rests on:
+> whether a Windows tool writes a mark at all is a prediction, and it is
+> stated as one in
+> [`docs/findings/0751-capture-row-shape.md`](../../docs/findings/0751-capture-row-shape.md).

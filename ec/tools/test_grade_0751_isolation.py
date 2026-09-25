@@ -3508,7 +3508,7 @@ class ExistingMarkLabelTests(unittest.TestCase):
 
     def test_a_row_read_capture_would_raise_on_comes_back_as_a_label(self):
         # A hand-edited timestamp, and a mark row truncated to three fields:
-        # `read_capture` raises on both (`:690` for the short one,
+        # `read_capture` raises on both (its short-row check for the first,
         # `parse_ts` for the other) and neither stops this. The preflight has
         # one job -- say what is already in the file -- and a file it cannot
         # open is a file the operator is not warned about.
@@ -3582,10 +3582,11 @@ class ExistingMarkLabelTests(unittest.TestCase):
         self.assertEqual(len(refused), 1)
         # The row is named as the grader parsed it, so the operator can find it
         # in the file rather than being told a count -- and the reason quotes
-        # the row back, which is `:690`'s own message and is the error the
-        # grading will raise. Asserted on the row rather than on the word
-        # "short": how the reader words it is the reader's business, and a
-        # reword must not read here as the notice disagreeing with it.
+        # the row back, which is the short-row check's own message and is
+        # the error the grading will raise. Asserted on the row rather than
+        # on the word "short": how the reader words it is the reader's
+        # business, and a reword must not read here as the notice
+        # disagreeing with it.
         self.assertEqual(refused[0][0],
                          ['2026-01-01T12:06:00.000+01:00', 'MARK', ''])
         self.assertIn(repr(refused[0][0]), refused[0][1])
@@ -3625,8 +3626,8 @@ class ExistingMarkLabelTests(unittest.TestCase):
         # in `refused_capture_rows` safe rather than a second rule. Over every
         # fixture `read_capture` refuses, the first reason this returns is the
         # exception `read_capture` itself raised, byte for byte. Tighten
-        # `:690` or widen `parse_ts` and this fails -- rather than the notice
-        # going on explaining a refusal the grading no longer makes.
+        # that check or widen `parse_ts` and this fails -- rather than the
+        # notice going on explaining a refusal the grading no longer makes.
         #
         # The *order* of those checks is pinned by the last fixture below, not
         # by that first reason: `existing_mark_findings` replaces the first
@@ -3636,8 +3637,8 @@ class ExistingMarkLabelTests(unittest.TestCase):
         # fixture that reaches them has exactly one bad field -- so nothing
         # here claims it.
         fixtures = {
-            # `:690`, the short row. The one whose own message names the row,
-            # so it is the one that can be checked to be the same row.
+            # The short row, the one whose own message names the row, so it
+            # is the one that can be checked to be the same row.
             'short row': ['ts,addr,old,new',
                           '2026-01-01T12:00:00.000+01:00,MARK,,settled',
                           '2026-01-01T12:01:00.000+01:00,MARK,'],
@@ -3681,10 +3682,11 @@ class ExistingMarkLabelTests(unittest.TestCase):
                 self.assertEqual(refused[0][1], str(caught.exception))
                 self.assertIsNotNone(refused[0][0])
                 if name == 'short row':
-                    # `:690` is the one that puts the row in its own message,
-                    # and that is what makes the first entry checkable rather
-                    # than only quotable: the row named here has to be the
-                    # row the reader stopped on, not merely a row it dislikes.
+                    # The short-row check is the one that puts the row in its
+                    # own message, and that is what makes the first entry
+                    # checkable rather than only quotable: the row named here
+                    # has to be the row the reader stopped on, not merely a
+                    # row it dislikes.
                     self.assertIn(repr(refused[0][0]), str(caught.exception))
                     self.assertEqual(len(refused), 1)
                 if name == 'two bad rows':
@@ -3704,6 +3706,229 @@ class ExistingMarkLabelTests(unittest.TestCase):
                         refused[1][0],
                         ['when i clicked', '0xzz', '0x00', '0x11'])
                     self.assertIn('timestamp', refused[1][1])
+
+    def test_the_shape_agrees_across_all_four_readers(self):
+        # The half of the guard that is not the reasons. The test above holds
+        # four of them, their order and the first one byte for byte, and says
+        # nothing about *which rows are data rows at all* -- every fixture it
+        # uses opens with a plain `ts,addr,old,new`, so the header case is
+        # pinned only as a side effect, and the one fixture that puts a `#`
+        # row and a blank through the partition
+        # (`test_the_preflight_does_not_raise_on_any_of_them`'s 'only a
+        # comment') asserts `assertIsInstance(..., tuple)`, which is that
+        # nothing escapes and not what came back. A change to the skip rule
+        # on any of the three readers is therefore invisible here, and the
+        # failure it makes is the one #718 set out to remove: the notice
+        # naming a row the grading treats differently, in either direction.
+        #
+        # One fixture carrying all three at once, so no reader is checked
+        # against a file that happens not to exercise the rule, plus a row
+        # that is none of the three -- the early-exit phrase, which the other
+        # three drop and `read_early_exits` exists to keep.
+        crash = '2026-01-01T12:01:00.000+01:00'
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self.capture(
+                self.ROWS + [early_exit_row(crash, 'the fan stalled')], tmp)
+            marks, changes = grade.read_capture(path)
+            labels = grade.existing_mark_labels(path)
+            accepted, refused = grade.refused_capture_rows(path)
+            exits = grade.read_early_exits(path)
+        # Written out rather than compared with `len`: the order is what a
+        # reader is looking down, and a skip that took one of the two marks
+        # would keep the count and lose the position.
+        self.assertEqual(labels,
+                         [('2026-01-01T12:00:00.000+01:00',
+                           'wrote 0x0751=0xA0'),
+                          ('2026-01-01T12:00:30.000+01:00', 'settled')])
+        # The strict reader's marks are the lenient reader's pairs, in order:
+        # one read as objects and one as the text they were written as, and
+        # the `#` rows, the blank and the header are in neither.
+        self.assertEqual([m.label for m in marks],
+                         [label for _, label in labels])
+        self.assertEqual([m.ts for m in marks],
+                         [grade.parse_ts(ts) for ts, _ in labels])
+        self.assertEqual([(c.addr, c.old, c.new) for c in changes],
+                         [(0x0701, 0x00, 0x11)])
+        # And the partition takes the same mark rows on a file the strict
+        # reader accepts whole -- the equality, not a count, because a
+        # partition that took one row too few would still hold the count.
+        self.assertEqual(accepted, labels)
+        self.assertEqual(refused, [])
+        # The early-exit row reaches the one reader it is for, and nothing
+        # else: it is a `#` row, so the other three cannot see it even on a
+        # file that holds it, and `read_early_exits` is here because of that
+        # rather than in spite of it.
+        self.assertEqual([e.ts for e in exits], [grade.parse_ts(crash)])
+        self.assertIn('the fan stalled', exits[0].reason)
+        # And the hand annotation is in the file and in no return value. Named
+        # rather than counted: a reader that quietly kept it as a data row
+        # would not raise, it would grade.
+        self.assertNotIn('the operator noted',
+                         ' '.join([m.label for m in marks]
+                                  + [f'{ts}{label}' for ts, label in labels]
+                                  + [f'{ts}{new}' for ts, new in accepted]
+                                  + [e.reason for e in exits]))
+
+    def test_on_a_file_the_strict_reader_refuses_the_partition_names_every_row(
+            self):
+        # The reader-side half is the first-reason equality above. This is the
+        # other half, and it is the only way it can be said mechanically:
+        # `read_capture` stops at the first row it cannot grade and returns
+        # nothing at all on a file like this, so "the partition equals
+        # `read_capture`'s own view" has to be written out here rather than
+        # compared against a call that raised.
+        #
+        # Expected rows written literally, not derived from the module: a
+        # partition and a reader that agreed on the wrong rows would pass any
+        # comparison between themselves. A `#` row, a blank, the header, one
+        # good mark and one row neither can read -- every row kind the skip
+        # rule decides, with a verdict for each.
+        good = ('2026-01-01T12:00:00.000+01:00', 'MARK', '', 'settled')
+        short = ['2026-01-01T12:01:00.000+01:00', 'MARK', '']
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self.capture(['# a hand annotation', 'ts,addr,old,new', '',
+                                 ','.join(good), ','.join(short)], tmp)
+            with self.assertRaises(ValueError) as caught:
+                grade.read_capture(path)
+            accepted, refused = grade.refused_capture_rows(path)
+            labels = grade.existing_mark_labels(path)
+        # The good mark, and only the good mark. The `#` row, the blank and
+        # the header are in neither list: that is the whole of the shape, and
+        # it is asserted here rather than inferred from the reader's silence.
+        self.assertEqual(accepted, [good[:1] + good[3:]])
+        self.assertEqual(len(refused), 1)
+        self.assertEqual(refused[0][0], short)
+        # The row, not the wording: how the partition words a refusal is its
+        # business, and the existing case above says so. What is checked is
+        # that the row it refused is the row the reader named in the exception
+        # it raised -- a partition that found a *different* bad row, or none,
+        # would pass any assertion comparing the reason text alone.
+        self.assertIn(repr(refused[0][0]), str(caught.exception))
+        # The lenient reader still says what the file holds, both mark rows,
+        # with the short one coming back under its timestamp and an empty
+        # label rather than as a `ValueError` -- which is the whole of why the
+        # strict one can be strict at all.
+        self.assertEqual(labels, [(good[0], 'settled'), (short[0], '')])
+
+    def test_a_byte_order_mark_does_not_turn_the_header_into_a_bad_row(self):
+        # The shape's own case, and the one this tree had no answer for. With
+        # `EF BB BF` at offset 0 the header's first field was not `ts`, so the
+        # header was a data row: `parse_ts` raised on a timestamp no reader
+        # can parse, the partition named the header -- a first field of
+        # U+FEFF followed by `ts` -- as the row at fault, and the notice's
+        # remedy -- fix or delete the rows above -- pointed at the row
+        # carrying the column names. The anti-drift guard did its job
+        # throughout; the diagnosis was invented, because nothing owned the
+        # shape of a row.
+        #
+        # **Superseded, and the correction is the point of this case.** The
+        # version of this test written alongside the shape asserted that
+        # `read_capture` *grades* a capture carrying a BOM -- one mark, no
+        # changes, nothing refused. Issue #748 then declared the format
+        # utf-8 with no BOM at every reader and writer (#756), which is a
+        # decision about what a capture is rather than about how a row is
+        # read, and it puts a byte-order mark outside the format: the strict
+        # reader now refuses such a file whole and by name. Left in place
+        # that expectation would have un-declared the codec, so it is
+        # replaced here rather than quietly dropped. What survives of it --
+        # and what the rest of this case holds -- is the part about the
+        # *other three* readers, which still have to read the file far enough
+        # to say what it holds, and which must not turn a header into a row
+        # with a bad field in it.
+        #
+        # Whether a Windows tool writes one is a prediction, not a case
+        # measured here, and the fixture is written as bytes on purpose: the
+        # point of the test is the three bytes, and a fixture that typed a BOM
+        # as a character would be testing a different thing on an interpreter
+        # that opened the file some other way.
+        mark = b'2026-01-01T12:00:00.000+01:00,MARK,,settled\n'
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'bom.csv'
+            path.write_bytes(b'\xef\xbb\xbf' + b'ts,addr,old,new\n' + mark)
+            # The strict reader's own verdict, which is what the grading is:
+            # a refusal of the file, and no rows at all. (The message is
+            # held by the sibling case below this one; what is asserted here
+            # is only that it raises rather than grading the header.)
+            with self.assertRaises(ValueError):
+                grade.read_capture(str(path))
+            accepted, refused, unplaceable = grade.existing_mark_findings(
+                str(path))
+            lenient = grade.existing_mark_labels(str(path))
+            # The control, in the same case: the identical fixture written the
+            # same way with the three bytes absent. Without it, a case that
+            # passed for the wrong reason -- a reader that had stopped
+            # parsing the header altogether, say -- would look the same.
+            plain = Path(tmp) / 'plain.csv'
+            plain.write_bytes(b'ts,addr,old,new\n' + mark)
+            plain_marks, plain_changes = grade.read_capture(str(plain))
+            plain_accepted, plain_refused, _ = grade.existing_mark_findings(
+                str(plain))
+        # The control is what the pre-#748 version of this case compared
+        # against, and it has to still hold: the strict reader takes the mark
+        # and nothing else, and grades the file whole.
+        self.assertEqual([m.label for m in plain_marks], ['settled'])
+        self.assertEqual(plain_changes, [])
+        # What the three preflights make of the same file. The mark is in all
+        # three the way it is in the control, because the shape retires the
+        # byte-order mark off the first field in the shared stream -- it
+        # cannot be strict in one reader and lenient in another.
+        self.assertEqual(accepted, plain_accepted)
+        self.assertEqual([ts for ts, _ in accepted],
+                         ['2026-01-01T12:00:00.000+01:00'])
+        self.assertEqual(lenient, [('2026-01-01T12:00:00.000+01:00',
+                                    'settled')])
+        # The notice's difference from the control is exactly one refusal,
+        # it is the file's rather than a row's, and nothing is refused over
+        # the header. `None` is what says "the file", and it is also what
+        # keeps the notice from offering the operator the row carrying the
+        # column names to delete.
+        self.assertEqual(len(refused), 1)
+        self.assertIsNone(refused[0][0])
+        self.assertNotIn('not hex', refused[0][1])
+        self.assertEqual(refused[0][1], refused[0][1].strip())
+        self.assertEqual(len(plain_refused), 0)
+        self.assertEqual(unplaceable, [])
+        # And the header is named nowhere, in either list: the remedy the
+        # notice would print is not "delete the row above".
+        self.assertNotIn([grade.BOM + 'ts', 'addr', 'old', 'new'],
+                         [row for row, _ in refused])
+        self.assertNotIn('ts,addr,old,new', refused[0][1])
+        # What the strip is standing in for, asserted so this case cannot go
+        # quiet: a timestamp opening with U+FEFF is not one this can read.
+        # If `parse_ts` ever learned to, the fixture would pass for the wrong
+        # reason and the reason would be gone.
+        self.assertRaises(ValueError, grade.parse_ts, grade.BOM + 'ts')
+
+    def test_a_change_row_bad_in_two_hex_fields_names_the_earlier_one(self):
+        # The gap the anti-drift test's own comment records: the order *among*
+        # the three `int()` calls "is not pinned at all", because every
+        # fixture reaching them has exactly one bad field. So a partition that
+        # named the *new* of a row whose `old` is also not hex would pass that
+        # test -- and the operator would be sent to the wrong column of the
+        # wrong row.
+        #
+        # Not the first bad row, for the reason the sibling fixture gives:
+        # `existing_mark_findings` pastes `read_capture`'s own exception over
+        # the first reason, so a first-row fixture could not see the
+        # partition's own ordering at all. This one goes through
+        # `refused_capture_rows` directly, and checks the reason on the row
+        # the reader never reached.
+        both = ['2026-01-01T12:02:00.000+01:00', '0x0701', 'not hex', 'nor is '
+                'this']
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self.capture(['ts,addr,old,new',
+                                 '2026-01-01T12:01:00.000+01:00,MARK,',
+                                 ','.join(both)], tmp)
+            with self.assertRaises(ValueError):
+                grade.read_capture(path)
+            accepted, refused = grade.refused_capture_rows(path)
+        self.assertEqual(len(refused), 2)
+        self.assertEqual(refused[1][0], both)
+        # `old`, because `Change(parse_ts(ts), int(addr, 16), int(old, 16),
+        # int(new, 16), path)` evaluates left to right and this row's address
+        # is the one that parses.
+        self.assertIn('the old of a change row is not hex', refused[1][1])
+        self.assertNotIn('the new of a change row', refused[1][1])
 
     def test_a_malformed_change_row_is_a_refused_row_too(self):
         # The widening, pinned on its own so it cannot go quietly: a change
@@ -3952,15 +4177,17 @@ class ExistingMarkLabelTests(unittest.TestCase):
         (#749) -- a stub there would go unused and pass for the wrong reason.
         The append is *after* the delegate on purpose: it is what a second
         read would have picked up and the first had not, which is the whole of
-        the two-moments defect.
+        the two-moments defect. The three-tuple is passed through whole, so
+        the byte-order mark `capture_snapshot` reports off the same buffer
+        (#750) survives the patch rather than being dropped on the way past.
         """
         real = grade.capture_snapshot
 
         def read_then_append(p):
-            rows, failure = real(p)
+            rows, failure, has_bom = real(p)
             with open(p, "a", newline="") as f:
                 f.write(row + "\n")
-            return rows, failure
+            return rows, failure, has_bom
         return read_then_append
 
     def count_opens(self, path, call):
@@ -4005,10 +4232,15 @@ class ExistingMarkLabelTests(unittest.TestCase):
                 str(latin), lambda: grade.existing_mark_findings(str(latin)))
         self.assertEqual(clean, 1)
         self.assertEqual(decode, 1)
-        # Both are one *open* and not one reader: the skip rule is still
-        # spelled in `read_capture` and in `mark_labels_of`, and the case
-        # above plus `measure_mark_provenance.py --self-test` hold the two to
-        # each other rather than a delegation that does not exist.
+        # Both are one *open* and not one reader. The skip rule is one
+        # function now -- `read_capture`, `mark_labels_of` and
+        # `partition_capture_rows` all call `skippable_row` -- so the
+        # delegation #749 said did not exist does, and this case plus
+        # `measure_mark_provenance.py --self-test` hold the count to it.
+        # What still keeps the notice from being one reader is the rest of
+        # the shape: the four-field test and the `MARK` branch are three
+        # deliberate contracts rather than one to be merged. See
+        # `docs/findings/0751-capture-row-shape.md`.
 
     def test_a_row_that_lands_at_the_read_is_not_in_this_notice(self):
         # The defect, made to land. A watcher appends a well-formed mark the

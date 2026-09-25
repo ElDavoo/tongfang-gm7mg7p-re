@@ -186,6 +186,18 @@ the same rows, which is a rule drift rather than a file that changed.
   and `measure_mark_provenance.py --self-test`, which runs both readers over
   all three shapes. This is still a duplication, and saying the file is read
   by one function would be the false claim in the other direction.
+
+  > **Correction (2026-09-25, issue #750 merged on top), leaving the bullet
+  > above as it was written.** The duplication it names is gone: the rule is
+  > `skippable_row`, and `read_capture`, `mark_labels_of` and
+  > `partition_capture_rows` call it. The line numbers above (`:695`,
+  > `:871`) are this change's, and the rule's own body is at `:845` on the
+  > merged tree. What is left un-unified is the rest of the shape — the
+  > four-field test and the `MARK` branch — and the bullet's own reason for
+  > leaving it holds and is #750's: they are three different contracts, so
+  > merging them would delete the preflight rather than state the shape once.
+  > The two tests named above still hold the three to each other; they now
+  > guard the strictness rather than a spelling.
 - **The partition's per-row wording is still its own.** The first refused row's
   reason is `read_capture`'s own exception, which `existing_mark_findings`
   puts there rather than re-deriving it. The rows after it are named by
@@ -292,6 +304,22 @@ visible in the table.
 | `coalesce_marks` | `:985` | `:1173` |
 | `unplaceable_marks` | `:1188` | `:1376` |
 | `main`'s `read_capture(path)` / `read_early_exits(path)` | `:2506`, `:2515` | `:2694`, `:2703` |
+
+The second column is this change's tree and is dated: #750 merged on top of it
+and moved every line again, because it stated the row's skip rule and first
+field once (`skippable_row`, `normalised_rows`) and put the open itself in
+`capture_rows`. The same symbols on the merged tree are
+`read_capture` `:852`, `existing_mark_labels` `:896`,
+`refused_capture_rows` `:947`, `take_capture_row` `:1015`,
+`mark_labels_of` `:1052`, `partition_capture_rows` `:1072`,
+`capture_snapshot` `:1112`, `capture_lines` `:1155`,
+`existing_mark_findings` `:1175`, `read_early_exits` `:1342`,
+`coalesce_marks` `:1447`, `unplaceable_marks` `:1650`, and `main`'s two call
+sites `:2968` and `:2977`. Those two changes are additive — #749 split the
+readers' bodies out, #750 consolidated the shape — so nothing above is
+withdrawn; the numbers simply moved a second time. The merged line numbers
+`measure_mark_provenance.py` cites are re-anchored there, and that tool exits 0
+on this tree.
 
 Every citation in this file is from the merged tree, except the middle column,
 which is against the tree the change starts from as the column says.

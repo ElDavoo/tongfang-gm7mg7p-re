@@ -456,43 +456,62 @@ def section_shapes(grader, timer, tmp: str) -> int:
 # claim was wrong, and the two need a reader, not a guess.
 CITATIONS = [
     # -- writers -------------------------------------------------------------
-    ("windows/tools/ec_watch.py", 355,
+    ("windows/tools/ec_watch.py", 473,
      'self._sink.row([ts, "MARK", "", label])',
      "writer: the Marker._loop the issue's shape A is scoped to"),
-    ("windows/tools/system_id_probe.py", 256,
+    ("windows/tools/system_id_probe.py", 261,
      'self._sink.row([ts, "MARK", "", label])',
      "writer: a third class, importing no ec_watch.Marker"),
-    ("ec/tools/ec_timer_capture.py", 164, 'sink.row([ts, "MARK", "", label])',
+    ("ec/tools/ec_timer_capture.py", 169, 'sink.row([ts, "MARK", "", label])',
      "writer: mark_loop"),
-    ("ec/tools/ec_timer_capture.py", 199,
+    ("ec/tools/ec_timer_capture.py", 204,
      'sink.row([now(), "MARK", "", label])',
      "writer: auto_mark_loop, the resume branch"),
-    ("ec/tools/ec_timer_capture.py", 205,
+    ("ec/tools/ec_timer_capture.py", 210,
      'sink.row([now(), "MARK", "", label])',
      "writer: auto_mark_loop, the machine-state branch"),
-    ("ec/tools/ec_timer_capture.py", 227,
+    ("ec/tools/ec_timer_capture.py", 232,
      'sink.row([now(), "MARK", "", label])',
      "writer: input_mark_loop"),
-    ("windows/tools/manual_fan_ctrl_probe.py", 438,
+    ("windows/tools/manual_fan_ctrl_probe.py", 443,
      'self.row([now() if ts is None else ts, "MARK", "", label])',
      "writer: MarkCsv.mark"),
     # -- readers that index the row -----------------------------------------
-    # The grader's pins are the ones #749 retargets, and #749 was rebased on
-    # #748, which declared utf-8 at the readers and added a leading-BOM check
-    # to the row body -- so every line below is re-measured on the merged tree
-    # rather than carried over from either tip. The pins in the other files are
-    # #748's to move and are left where it left them (#748 records that red).
-    ("ec/tools/grade_0751_isolation.py", 831, 'if addr == "MARK":',
+    # Every pin below is re-measured on the merged tree rather than carried
+    # over from either tip, because the two sides moved the same lines: #749
+    # split the readers' bodies out into `take_capture_row`/`mark_labels_of`/
+    # `partition_capture_rows` so the notice could run the strict rules over
+    # its own single read, and #750 stated the row's skip rule and first
+    # field once, in `skippable_row` and `normalised_rows`. The two are
+    # additive -- the merged tree has both -- so a fact only one side held is
+    # a row only one side wrote, and the lines they landed on are the merged
+    # ones. The pins in the other files were drifted by #748 and #749 and are
+    # re-anchored here too, so nothing is red on this tree.
+    ("ec/tools/grade_0751_isolation.py", 1045, 'if addr == "MARK":',
      "reader: take_capture_row recognising the row, read_capture's own body"),
-    ("ec/tools/grade_0751_isolation.py", 884, 'if addr == "MARK":',
-     "reader: the partition naming the mark rows it accepted, a mark row is "
-     "never hex-read"),
-    ("ec/tools/grade_0751_isolation.py", 853,
+    ("ec/tools/grade_0751_isolation.py", 1099, 'if addr == "MARK":',
+     "reader: partition_capture_rows recognising the row -- the fourth site "
+     "over this shape, and the one the notice partitions its own read with, "
+     "so a mark row is never hex-read there either"),
+    ("ec/tools/grade_0751_isolation.py", 1067,
      'if len(row) > 1 and row[1] == "MARK":',
      "reader: mark_labels_of recognising the row, existing_mark_labels' own "
      "extraction"),
-    ("ec/tools/grade_timer_sweep.py", 134, 'if r[1] == "MARK":',
+    ("ec/tools/grade_0751_isolation.py", 976,
+     '`addr == "MARK"` before the `int()` calls, and so does this',
+     "the partition's docstring quoting that branch, which the scan matches "
+     "because it is the same literal spelled in prose"),
+    ("ec/tools/grade_timer_sweep.py", 138, 'if r[1] == "MARK":',
      "reader: grade_timer_sweep.load recognising the row"),
+    ("ec/tools/check_capture_encoding.py", 166,
+     'if len(row) > 1 and row[1] == "MARK":',
+     "reader: the encoding check's own mark/change census, written against "
+     "the same shape and declared against the same codec"),
+    ("ec/tools/check_capture_encoding.py", 243,
+     '"2026-01-01T12:00:00.000+01:00", "MARK", "", PROBE]',
+     "a constructed row rather than a writer: `check_capture_encoding` builds "
+     "one to hand a writer that takes a label alone, and the literal scan "
+     "counts it as a consumer because the `.row(` call is on the next line"),
     ("windows/tools/test_manual_fan_ctrl_probe.py", 508,
      'if len(r) == 4 and r[1] == "MARK"]',
      "reader: the only exact-column-count filter in the tree"),
@@ -506,49 +525,57 @@ CITATIONS = [
      "the same in the other suite, so the blind side is the tree's and not "
      "one file's"),
     # -- the lines the read-side claim rests on -----------------------------
-    ("ec/tools/grade_0751_isolation.py", 679, "def read_capture(path):",
+    ("ec/tools/grade_0751_isolation.py", 852, "def read_capture(path):",
      "read_capture"),
-    ("ec/tools/grade_0751_isolation.py", 695,
-     'if not row or row[0].startswith("#") or row[0] == "ts":',
-     "read_capture's skip rule, where a `# provenance` row goes"),
-    ("ec/tools/grade_0751_isolation.py", 828, "if len(row) < 4:",
+    ("ec/tools/grade_0751_isolation.py", 845,
+     'return not row or row[0].startswith("#") or row[0] == "ts"',
+     "the one skip rule, where a `# provenance` row goes"),
+    ("ec/tools/grade_0751_isolation.py", 886, "if path_starts_with_bom(path):",
+     "read_capture refusing a byte-order mark before it reads a row, which is "
+     "what keeps the header out of the row shape's data rows"),
+    ("ec/tools/grade_0751_isolation.py", 890, "if skippable_row(row):",
+     "read_capture calls that one skip rule rather than spelling it"),
+    ("ec/tools/grade_0751_isolation.py", 1042, "if len(row) < 4:",
      "read_capture's only length test: a fifth column passes it"),
-    ("ec/tools/grade_0751_isolation.py", 830,
+    ("ec/tools/grade_0751_isolation.py", 1044,
      "ts, addr, old, new = row[0], row[1], row[2], row[3]",
      "explicit indexing, not an unpack of row -- the correction to the issue"),
-    ("ec/tools/grade_0751_isolation.py", 701,
+    ("ec/tools/grade_0751_isolation.py", 896,
      "def existing_mark_labels(path):", "existing_mark_labels"),
-    ("ec/tools/grade_0751_isolation.py", 871,
-     'if not row or row[0].startswith("#") or row[0] == "ts":',
-     "mark_labels_of takes read_capture's skip rule"),
-    ("ec/tools/grade_0751_isolation.py", 854,
+    ("ec/tools/grade_0751_isolation.py", 1065, "if skippable_row(row):",
+     "mark_labels_of takes that one skip rule, so existing_mark_labels -- which "
+     "delegates its extraction to it -- cannot spell a second copy"),
+    ("ec/tools/grade_0751_isolation.py", 1086, "if skippable_row(row):",
+     "and so does the partition, over the notice's own read"),
+    ("ec/tools/grade_0751_isolation.py", 1068,
      'out.append((row[0], row[3] if len(row) > 3 else ""))',
      "the (ts, label) pair: no position, and no fifth column either"),
-    ("ec/tools/grade_0751_isolation.py", 1083, "def read_early_exits(path):",
+    ("ec/tools/grade_0751_isolation.py", 1342, "def read_early_exits(path):",
      "read_early_exits"),
-    ("ec/tools/grade_0751_isolation.py", 1110,
+    ("ec/tools/grade_0751_isolation.py", 1384,
      "if not row or not row[0].startswith(EARLY_EXIT_TAG):",
      "the phrase test: a mark's row[0] is a timestamp"),
     ("ec/tools/grade_0751_isolation.py", 428,
      'EARLY_EXIT_TAG = "# the run ended early:"',
      "the one machine phrase the `#` namespace spends in this family"),
-    ("ec/tools/grade_0751_isolation.py", 2698,
+    ("ec/tools/grade_0751_isolation.py", 2972,
      'read = f"{path}: {len(m)} mark(s), {len(c)} change row(s)"',
      "the per-capture census line, which counts rather than spells"),
     ("ec/tools/grade_gpu_door.py", 421, "m, c = fan.read_capture(path)",
      "the second consumer of read_capture's two-tuple"),
-    ("ec/tools/check_capture_claims.py", 508,
+    ("ec/tools/check_capture_claims.py", 514,
      "read_capture(os.path.join(REPO, WATCH, name))",
      "a third, and the only one that reads every committed capture"),
-    ("ec/tools/grade_timer_sweep.py", 111, 'if line.startswith("#"):',
+    ("ec/tools/grade_timer_sweep.py", 115, 'if line.startswith("#"):',
      "grade_timer_sweep drops every `#` line before the CSV parse"),
-    ("ec/tools/grade_timer_sweep.py", 135, 'if "resumed" in r[3]:',
+    ("ec/tools/grade_timer_sweep.py", 139, 'if "resumed" in r[3]:',
      "the one phrase grade_timer_sweep reads a MARK row for"),
     # -- the notice, the canary, and the `#` namespace -----------------------
-    ("windows/tools/ec_watch.py", 254,
-     "def warn_unchecked_marks(path, existing_marks):",
+    ("windows/tools/ec_watch.py", 288,
+     "def warn_unchecked_marks(path, existing_findings):",
      "the notice the measurement exists for"),
-    ("windows/tools/ec_watch.py", 280, "marks = existing_marks(path)",
+    ("windows/tools/ec_watch.py", 361,
+     "accepted, refused, unplaceable = existing_findings(path)",
      "the notice's one call into the grader's reader"),
     ("windows/tools/test_manual_fan_ctrl_probe.py", 515,
      "self.assertEqual(len(row), 4, row)",
@@ -556,18 +583,18 @@ CITATIONS = [
     ("windows/tools/manual_fan_ctrl_probe.py", 257,
      'EARLY_EXIT_TAG = "# the run ended early:"',
      "the probe's own spelling of the same phrase"),
-    ("windows/tools/manual_fan_ctrl_probe.py", 922,
+    ("windows/tools/manual_fan_ctrl_probe.py", 927,
      'sink.row([f"{EARLY_EXIT_TAG} {now()}",',
      "the only machine-written `#` row in the 0751 family"),
-    ("ec/tools/ec_timer_capture.py", 144, 'self._fh.write(f"# {text}\\n")',
+    ("ec/tools/ec_timer_capture.py", 149, 'self._fh.write(f"# {text}\\n")',
      "the timer family's `#` writer, which writes by prefix not by phrase"),
     # -- the runbook ---------------------------------------------------------
-    ("docs/hardware-tests/manual-fan-ctrl-0751-isolation.md", 144,
+    ("docs/hardware-tests/manual-fan-ctrl-0751-isolation.md", 159,
      "--mark --label-vocab 0751 --csv",
      "§3 block 1, the console that holds the flag"),
-    ("docs/hardware-tests/manual-fan-ctrl-0751-isolation.md", 146,
+    ("docs/hardware-tests/manual-fan-ctrl-0751-isolation.md", 161,
      "--mark --label-vocab 0751 --csv", "§3 block 2"),
-    ("docs/hardware-tests/manual-fan-ctrl-0751-isolation.md", 148,
+    ("docs/hardware-tests/manual-fan-ctrl-0751-isolation.md", 163,
      "--mark --label-vocab 0751 --csv", "§3 block 3"),
 ]
 
@@ -579,15 +606,15 @@ CITATIONS = [
 COMMENT_PHRASES = [
     ("windows/tools/manual_fan_ctrl_probe.py", 257,
      "# the run ended early:"),
-    ("ec/tools/ec_timer_capture.py", 291, "ec/tools/ec_timer_capture.py, "
+    ("ec/tools/ec_timer_capture.py", 296, "ec/tools/ec_timer_capture.py, "
      "read-only, ECMG window "),
-    ("ec/tools/ec_timer_capture.py", 293, "started "),
-    ("ec/tools/ec_timer_capture.py", 294, "power: "),
-    ("ec/tools/ec_timer_capture.py", 295, "interval "),
-    ("ec/tools/ec_timer_capture.py", 298, "note: "),
-    ("ec/tools/ec_timer_capture.py", 301, "baseline "),
-    ("ec/tools/ec_timer_capture.py", 307, "auto-mark state at start: "),
-    ("ec/tools/ec_timer_capture.py", 337, "ended "),
+    ("ec/tools/ec_timer_capture.py", 298, "started "),
+    ("ec/tools/ec_timer_capture.py", 299, "power: "),
+    ("ec/tools/ec_timer_capture.py", 300, "interval "),
+    ("ec/tools/ec_timer_capture.py", 303, "note: "),
+    ("ec/tools/ec_timer_capture.py", 306, "baseline "),
+    ("ec/tools/ec_timer_capture.py", 312, "auto-mark state at start: "),
+    ("ec/tools/ec_timer_capture.py", 342, "ended "),
 ]
 
 
