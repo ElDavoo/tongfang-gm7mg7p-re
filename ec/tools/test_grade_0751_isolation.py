@@ -7,8 +7,11 @@ import io
 import os
 from pathlib import Path
 import re
+import subprocess
+import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 HERE = Path(__file__).parent
 spec = importlib.util.spec_from_file_location(
@@ -2651,6 +2654,92 @@ class MarkSetTests(unittest.TestCase):
         self.assertEqual(len(unplaced), 2)
         self.assertEqual(
             grade.unplaced_window_problems(unplaced, captures), {})
+
+
+class SelfTestModeTests(unittest.TestCase):
+    # The mode the gate calls, and the one
+    # `docs/ci/agent-gates-0751-self-test.patch` wires in. Driven through its
+    # `run` seam rather than launched for real: a case that ran the mode would
+    # have the mode run this suite, which contains the case, which runs the
+    # mode. The real discovery is what
+    # `python3 ec/tools/grade_0751_isolation.py --self-test` and the gate's
+    # case arm do, and this file is not either of them.
+    def test_the_self_test_mode_runs_the_committed_suite_and_exits_zero(self):
+        def discovery(returncode, said):
+            def fake_run(cmd, **kw):
+                return subprocess.CompletedProcess(cmd, returncode, said)
+            return fake_run
+
+        seen = []
+
+        def record(cmd, **kw):
+            seen.append(cmd)
+            return subprocess.CompletedProcess(
+                cmd, 0, '....\nRan 3 tests in 0.002s\n\nOK\n')
+
+        # The flag reaches the mode with no capture behind it and the parser
+        # never run. `csv` is still a required positional, and the mode is
+        # dispatched ahead of it precisely so that stays true.
+        with patch.object(grade, 'self_test', return_value=0) as stub:
+            rc, out, err = run('--self-test')
+        self.assertEqual(rc, 0)
+        stub.assert_called_once_with()
+        self.assertEqual(out, '')
+        self.assertEqual(err, '')
+
+        # And the mode hands unittest this suite, by file name and not by
+        # `test_*.py` -- nine other suites live in that same directory -- over
+        # the tool's own directory by absolute path, so the mode works from
+        # any cwd.
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            self.assertEqual(grade.self_test(run=record), 0)
+        printed = out.getvalue()
+        self.assertEqual(seen, [[sys.executable, '-m', 'unittest', 'discover',
+                                 '-s', str(grade.TOOL_DIR),
+                                 '-p', grade.SUITE_FILE]])
+        self.assertEqual(Path(seen[0][seen[0].index('-s') + 1]).resolve(),
+                         Path(__file__).parent.resolve())
+        self.assertIn('3 tests, passed', printed)
+        # The count decorates and does not decide, and the mode says what it is
+        # not: refusals over committed fixtures, never §4 re-applied to a
+        # capture a human took.
+        self.assertIn('evidence about the machine', printed)
+
+        # Two runs the exit code alone would have called a pass. A discovery
+        # that matched nothing exits 0 and prints OK, and one that failed says
+        # so in its exit code and nowhere else -- a suite name that no longer
+        # resolves is the shape this is for, and it is green from outside. The
+        # two are told apart by the line, not by the verdict: the vacuous run
+        # says why it found nothing, the failing one says nothing and passes
+        # the discovery's own output through.
+        zero = 'Ran 0 tests in 0.000s\n\nOK\n'
+        bad = 'Ran 3 tests in 0.002s\n\nFAILED (failures=1)\n'
+        for returncode, said, why in ((0, zero, 'no test ran'),
+                                      (1, bad, ': FAILED\n')):
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                self.assertEqual(
+                    grade.self_test(run=discovery(returncode, said)), 1)
+            printed = out.getvalue()
+            self.assertIn(why, printed)
+            # What the discovery said is passed on rather than swallowed, so a
+            # failing gate's log carries the failure rather than a verdict.
+            self.assertIn(said.splitlines()[0], printed)
+
+    def test_a_run_with_no_capture_is_still_argparse_s_usage_error(self):
+        # argparse names the running script in its usage line, so the line
+        # itself is not asserted on. What has to hold is the shape: a command
+        # line carrying no capture is a usage error, and --self-test did not
+        # cost that.
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            with self.assertRaises(SystemExit) as cm:
+                grade.main([])
+        self.assertEqual(cm.exception.code, 2)
+        self.assertIn('usage:', err.getvalue())
+        self.assertIn('the following arguments are required: csv',
+                      err.getvalue())
 
 
 if __name__ == '__main__':

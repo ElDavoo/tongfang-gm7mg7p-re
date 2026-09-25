@@ -190,6 +190,21 @@ is not the three-value read either, and now says so rather than reading as one.
 
 Nothing here touches hardware; it reads files only.
 
+`--self-test` runs this tool's own committed suite,
+`test_grade_0751_isolation.py`, and hands back its exit code: the entry point
+every tool in `check_ghidra_tooling()` has, and the one
+`docs/ci/agent-gates-0751-self-test.patch` prepares for that gate to call --
+prepared rather than landed, so nothing runs it per commit yet. It is
+dispatched before the parser rather than after, because `csv` is a required
+positional and relaxing it to `nargs="*"` would give up the bare run's exit 2
+-- and the refusals are what this tool is for, so a mode that made a command
+line with no capture in it a passing run would be one of them. `call_graph.py`
+and `grade_name_basis.py` dispatch after parsing only because neither has a
+required positional. The suite runs in a subprocess rather than being imported,
+because it loads this file a second time under the name `grade`; two copies of
+one module in one interpreter is the ordering accident
+`docs/findings.md` §16 is written about.
+
 Usage:
     python3 ec/tools/grade_0751_isolation.py capture-0700-07ff.csv \
         [capture-0f00-0f5f.csv] [capture-0400-045f.csv] \
@@ -199,16 +214,25 @@ Usage:
     python3 ec/tools/grade_0751_isolation.py capture.csv \
         --dump-pair before-0700.txt after-0700.txt \
         --dump-pair before-0f00.txt after-0f00.txt
+    python3 ec/tools/grade_0751_isolation.py --self-test
 """
 import argparse
 import csv
 import datetime
 import os
 import re
+import subprocess
 import sys
 import textwrap
 
 MANUAL_FAN_CTRL = 0x0751
+
+# The suite `--self-test` runs, and the directory it is discovered in. Absolute
+# so the mode works from any cwd, and named by file rather than by
+# `test_*.py` so the gate's cost is this suite's and not the whole directory's
+# -- `ec/tools/` holds other suites.
+SUITE_FILE = "test_grade_0751_isolation.py"
+TOOL_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # How close two marks have to be to count as one action. The procedure holds
 # ~30 s between the control arm and the write and ~60 s before the restore, so
@@ -1768,7 +1792,66 @@ def report_dump_pairs(pairs, block_value=None, wrote=None, verdicts=None):
     return graded
 
 
+def self_test(run=None):
+    """Run the committed suite in a subprocess and return its exit code.
+
+    `run` is `subprocess.run` unless a caller passes its own. That seam is what
+    the suite's own case for this mode drives: a `--self-test` case that ran
+    the mode for real would have the mode run the suite that contains it, which
+    runs the case again, and so on. The real discovery is what the gate calls,
+    and what `python3 ec/tools/grade_0751_isolation.py --self-test` runs by
+    hand.
+    """
+    cmd = [sys.executable, "-m", "unittest", "discover",
+           "-s", TOOL_DIR, "-p", SUITE_FILE]
+    proc = (subprocess.run if run is None else run)(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    # unittest's summary on one stream, so there is one thing to parse and one
+    # thing to print: it writes to stderr, and its verdict is the exit code.
+    out = proc.stdout or ""
+    if out and not out.endswith("\n"):
+        out += "\n"
+    # The count decorates and never decides. An expected count in a runner
+    # turns every added test into a failure, which is the wrong trade --
+    # tools/run-tests.sh gives the same reason for printing its own counts.
+    m = re.search(r"^Ran (\d+) tests? ", out, re.M)
+    n = int(m.group(1)) if m else 0
+    if proc.returncode:
+        print(out, end="")
+        print(f"{SUITE_FILE}: FAILED")
+        return 1
+    if not n:
+        # A discovery that matched nothing exits 0 and prints OK, which from
+        # the outside is indistinguishable from a suite that passed. A renamed
+        # file, a moved -s, a pattern that no longer matches: each turns a gate
+        # green without running anything, and the moment to notice is before it
+        # has stopped failing. tools/run-tests.sh refuses the same empty glob a
+        # level up, and says the same thing about it.
+        print(out, end="")
+        print(f"{SUITE_FILE}: FAILED -- no test ran, which is not a pass. It "
+              f"is discovered at {os.path.relpath(TOOL_DIR)}; if that is not "
+              "where the suite is, this mode is looking in the wrong place.")
+        return 1
+    print(f"{SUITE_FILE}: {n} test{'s' if n != 1 else ''}, passed")
+    # The gate's own deferral, in the same place and for the same reason: a
+    # run that exercises nothing a reader can see is a check that gets
+    # dropped. These are refusals over hand-built CSVs committed under
+    # ec/tools/testdata/ -- no EC is opened, no register is read back, and no
+    # capture was taken on the machine.
+    print("\nnote  this is the tool's own refusals over the committed "
+          "fixtures in\n      ec/tools/testdata/, not a run of the procedure "
+          "on a laptop: §4 is not\n      re-applied to a real capture here, "
+          "nothing is graded over a mark a\n      human took, and no sentence "
+          "this prints is evidence about the machine.")
+    return 0
+
+
 def main(argv=None):
+    # `sys.argv[1:]` spelled out because argparse does that itself for a None,
+    # and the flag has to be readable before the parser ever sees the list.
+    argv = sys.argv[1:] if argv is None else list(argv)
+    if "--self-test" in argv:
+        return self_test()
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("csv", nargs="+",

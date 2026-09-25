@@ -48,7 +48,7 @@ only covers what's specific to *this* copy.
   comparison — so `AGENT_GATES_DEEP=1 .github/scripts/agent-gates.sh` is the
   single command that checks everything, and the cheap tier's closing note
   names that command on every run.
-  Six things to carry across if this file is ever re-copied from the template:
+  Seven things to carry across if this file is ever re-copied from the template:
   1. **The deep tier needs a schedule, and it does not have one.** What runs
      where, as of 2026-09-23 (issue #139): per commit, on `push` to `main` and
      on every pull request, `ci.yml` runs the cheap tier bare, and the deep
@@ -197,6 +197,47 @@ only covers what's specific to *this* copy.
      everything looks exactly like a check that is working. That is why this
      one is `--self-test` in the arm rather than `--check` alone, unlike
      item 4's. **A re-copy of `agent-gates.sh` from the template restores the
+     eight-tool list, so the path and the arm have to be re-applied with
+     it.**
+  7. **`grade_0751_isolation.py --self-test` is added to the tool list in
+     `check_ghidra_tooling`, and a re-copy drops it**
+     (2026-09-25, issue #532). The 0x0751 isolation grader's suite is the
+     pinned record of a dozen refusal policies — a mark set that does not
+     hold, a void block, a withheld window, a `--block` that named no block, a
+     capture given twice, a mark no block can be attributed to — and each is a
+     gate between a human's hardware day and a wrong §7 call. The tool had
+     neither `--check` nor `--self-test`, so it was absent from the list *and*
+     the `*)` default would have handed it flags it does not have. Adding the
+     path above the loop and this arm is the whole of it:
+
+     ```sh
+           *grade_0751_isolation.py)
+             python3 "$tool" --self-test || rc=1
+             ;;
+     ```
+
+     No `--work` and no `--check`, for item 6's reason: the grader has a
+     required capture positional and neither mode, and a mode it does not have
+     is not a thing the gate should call. Unlike every other tool in the loop,
+     its `--self-test` runs the committed `unittest` suite by name in a
+     subprocess rather than a hand-written list of known answers, and refuses a
+     discovery that matched nothing — `Ran 0 tests` exits 0 and prints `OK`,
+     which from outside a gate is a pass. Cheap tier for item 4's reason: the
+     committed CSVs under `ec/tools/testdata/` and the standard library's
+     `unittest` — no firmware image, no Ghidra, no network, no assembler. It
+     measures **0.32 s** end to end here (the 76 tests are 0.192-0.193 s of
+     that, the rest interpreter start) on 2026-09-25, against a cheap tier the
+     paragraph above records at 5.9 s; that is one runner's figure and the
+     ratio is the point, as item 6 says of its own. The 76 is the merged
+     tree's: 74 on the branch point (`db6d7d2d`), 2 added here, and none
+     since — #530's unplaced-window-scope cases are already its ancestor.
+     **Until a human lands it, no commit runs that suite and a PR that breaks
+     one of those refusals still merges green.** It is not here for item 4's
+     reason, template-copied file and no `workflow` scope on the token; the
+     whole of it is prepared at
+     `docs/ci/agent-gates-0751-self-test.patch` and lands with
+     `git apply docs/ci/agent-gates-0751-self-test.patch`.
+     **A re-copy of `agent-gates.sh` from the template restores the
      eight-tool list, so the path and the arm have to be re-applied with
      it.**
 - **`tools/run-tests.sh`, and the gate line that would call it**

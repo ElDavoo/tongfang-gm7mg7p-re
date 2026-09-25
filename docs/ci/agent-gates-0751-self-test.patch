@@ -1,0 +1,75 @@
+# ec/tools/grade_0751_isolation.py --self-test, wired into the cheap gate.
+# Prepared here rather than landed, for the reason
+# docs/ci/agent-gates-capture-claims.patch gives: `.github/scripts/agent-gates.sh`
+# is copied from the agent-pipeline template and the pipeline's push token has no
+# `workflow` scope, so a branch editing it fails at the end of the PR rather than
+# at the start of it. `docs/agent-pipeline.md` carries this one across a re-copy
+# too, as its item 7.
+#
+# To land it:
+#
+#   git apply docs/ci/agent-gates-0751-self-test.patch
+#
+# and that is the whole change.
+#
+# Why the cheap tier and not agent-gates-deep.sh: what the mode reads is the
+# committed CSVs under `ec/tools/testdata/` and the standard library's
+# `unittest`. No firmware image, no Ghidra, no network, no assembler -- so by the
+# split `docs/agent-pipeline.md` records, it belongs beside
+# `check_register_counts`, not in the deep tier. It measures 0.32 s end to end
+# here (the 76 tests are 0.192-0.193 s of that, the rest interpreter start),
+# against a cheap tier recorded at 5.9 s, on 2026-09-25. That is one runner's
+# figure and the ratio is the point; `docs/agent-pipeline.md` item 6 gives the
+# same caveat for `call_graph.py`.
+#
+# What it buys, and what it does not: the grader's 76 committed tests -- 74
+# before this branch's two -- are the pinned record of a dozen refusal
+# policies, and `grep -rn 'grade_0751' .github/` finds nothing, so a PR that
+# breaks one merges green. **Until a human lands this, nothing runs the suite
+# per commit, and a PR that breaks one of its refusals still merges green.** No
+# line of that patch, of the mode, or of the write-up beside it is a claim
+# about a laptop: the suite reads hand-built fixtures, and no EC is opened and
+# no register read back.
+#
+# The comment it adds at the call site says the same thing where the next reader
+# of the gate will see it, rather than only here.
+
+diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
+--- a/.github/scripts/agent-gates.sh
++++ b/.github/scripts/agent-gates.sh
+@@ -123,6 +123,7 @@
+               ec/tools/grade_name_basis.py \
+               ec/tools/group_functions.py \
+               ec/tools/call_graph.py \
++              ec/tools/grade_0751_isolation.py \
+               bios/tools/bios_extract.py \
+               windows/tools/decompile_native.py; do
+     [ -f "$tool" ] || continue
+@@ -187,6 +188,27 @@
+       *call_graph.py)
+         python3 "$tool" --check && python3 "$tool" --self-test || rc=1
+         ;;
++      # The 0x0751 isolation grader's refusals, and the one tool here that runs
++      # its own unittest suite rather than a hand-written list of known
++      # answers: grade_0751_isolation.py --self-test discovers
++      # test_grade_0751_isolation.py in that tool's own directory and runs it in
++      # a subprocess, which is what keeps two copies of one file out of one
++      # interpreter. The tool takes a required capture positional and has
++      # neither --check nor a --work dir, so --self-test alone is the whole of
++      # it here -- the *) default below would hand it flags it does not have.
++      # What it holds is a dozen refusal policies, each of which is a gate
++      # between a human's hardware day and a wrong §7 call: a mark set that
++      # does not hold, a void block, a withheld window, a --block that named no
++      # block, a capture given twice, a mark no block can be attributed to. A
++      # PR that breaks one of them merges green today. Cheap tier because of
++      # what it reads: committed CSVs under ec/tools/testdata/ and the standard
++      # library's unittest -- no firmware image, no Ghidra, no network, no
++      # assembler. It prints its own deferral, that none of it is hardware
++      # evidence, and it asserts no test count: the exit code decides, for the
++      # reason tools/run-tests.sh gives.
++      *grade_0751_isolation.py)
++        python3 "$tool" --self-test || rc=1
++        ;;
+       *)
+         # build_ec_decompile.py and bios_extract.py both take --work.
+         python3 "$tool" --work "$scratch" --check && \

@@ -2031,6 +2031,20 @@ the graded windows that are a window of a value under test rather than over all
 of them; the exit code is unchanged. Write-up:
 `docs/findings/0751-grader-unplaced-window-scope.md`.
 
+**Those 76 tests ran nowhere.** `grade_0751_isolation.py` had no `--check` and
+no `--self-test`, so it was absent from `check_ghidra_tooling()`'s tool list —
+and absent from it *and* without a mode, the loop's `*)` default would hand it
+flags it does not have. It grows the `--self-test` entry point every other gated
+tool has, and the two lines that wire it in are prepared at
+`docs/ci/agent-gates-0751-self-test.patch` rather than landed; until a human
+lands that patch, the suite still does not run per commit. The suite is not a
+coverage claim:
+it is a dozen refusal policies, each one a gate between a human's hardware day
+and a wrong §7 call. The 76 is this merged tree's: 74 on the branch point
+(`db6d7d2d`), 2 added by this branch, and none since — #530's
+unplaced-window-scope cases predate it. Write-up:
+`docs/findings/0751-grader-self-test-gate.md`.
+
 ### 7c. `0x07C4` moved on 2026-09-23, and the 15 EC-side sites of `0x07C4`-`0x07D5` (2026-09-24, issue #183)
 
 **The observation, already in the tree and written down nowhere.** §7 cites
