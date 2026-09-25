@@ -4350,6 +4350,32 @@ code are unchanged. Offline behaviour against a fake EC; nothing here has met a
 real §3 run. Written up in
 [0751-append-unchecked-marks.md](findings/0751-append-unchecked-marks.md).
 
+**2026-09-25 (issue #718): that notice named one list, and the list was written
+entirely on the preflight's side of the disagreement with the grader.**
+`existing_mark_labels` is deliberately the lenient reader, so a file of six good
+marks and one half-written row printed as seven equally fine ones and the
+closing sentence — true, and the only warning — could not say which of the seven
+the run would be refused over. The notice now names the mark rows the grader's
+own reader takes and the rows it will refuse the file over, each with the reason
+from `read_capture` rather than from a rule copied into the prompt, plus what
+`unplaceable_marks` reports it cannot place, in that function's own words and
+worded as a group verdict (`parse_mark` reads the first `' / '`-separated part
+that matches, so a window led by `settled` places over a second console's
+unparseable label). The refused list covers all four reasons `read_capture`
+raises over — short row, unreadable timestamp, hex that is not hex, a byte the
+interpreter's encoding cannot decode — not only the two the issue named, and
+names every bad row rather than the one the reader stops at. The encoding half
+is reported as the verdict the running interpreter actually produced: measured
+UTF-8 here, predicted cp1252 on a stock Windows Python, and the grader is
+therefore not encoding-portable. The reader is a fourth name on the same load,
+read inside the guard that already refused a grader which will not load, so a
+staged copy that predates it is refused by path rather than by an
+`AttributeError`. The grader's refusal, `build_windows` and the exit code are
+unchanged, and a file the grader takes whole reads as it did before. Offline
+behaviour against a fake EC and hand-written rows; no Windows box was reached,
+and the notice has not been seen against a real §3 run. Addendum to the same
+file: [0751-append-unchecked-marks.md](findings/0751-append-unchecked-marks.md).
+
 **2026-09-25 (issue #719): a fifth column on the MARK row measured against a
 `# provenance` row, and nothing changed.** That notice cannot say which process
 wrote a mark, and the ceiling is the format rather than the process — but

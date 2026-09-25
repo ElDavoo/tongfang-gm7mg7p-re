@@ -45,6 +45,14 @@ passes or fails a label — and is no longer true of the reading. With
 that file's mark labels at startup, to name them; see *The marks already in the
 file* below. So the file has two readers now, and only one of them judges.
 
+> **Addendum (issue #718, 2026-09-25).** Still only one of them judges, and
+> still nothing here passes or fails a label. What changed is that the tool now
+> *asks* the judging reader for its verdict instead of working from the lenient
+> one's list, so "two readers" is three functions: the same lenient reader
+> doing the naming, a partition that names the rows the strict reader refuses,
+> and the strict reader itself deciding. The file is read twice where it was
+> read once, and the notice's reasons come from the half that judges.
+
 ## The blank press
 
 `ec_watch.py` strips the line. If what is left is empty — an empty line, or
@@ -157,6 +165,17 @@ in for a committed grader that has been broken since the checkout was made is a
 capture graded against a rule the tree does not hold, and the operator would
 find that out at the grading rather than at the watcher.
 
+**A copy that loads but is missing one of the four names is refused the same
+way** (2026-09-25, issue #718). `load_label_vocab` reads `parse_mark`,
+`REQUIRED_LABEL_FORMS`, `existing_mark_labels` and `existing_mark_findings` off
+the grader, and the fourth is new, so a staged copy taken before it is a
+working grader that is not a usable one. Read outside the guard around the
+load, that is a bare `AttributeError` naming the attribute and not the file —
+and the file is the thing an operator can act on, because a staged tools
+directory holds a copy rather than a checkout to pull. The four reads are
+inside the `try` now, so the refusal is the "there and will not load" one
+above, naming the path to copy the current grader over.
+
 **What this settles is which dependency is the real one, not that there is
 none.** `load_label_vocab`'s docstring used to argue that the repository layout
 is not something to depend on, over the same line that computed
@@ -192,7 +211,8 @@ whole run — so a run started against a file another process wrote is appending
 to marks it did not type and could not have checked.
 
 When `--label-vocab 0751` meets a `--csv` that already holds MARK rows, it says
-so, names them, and goes on:
+so, names them, and goes on. A file the grader's own reader takes whole reads
+exactly as it did in #548:
 
 ```
   appending to <path>, which already holds 2 mark(s) placed by a process that did not type them here:
@@ -203,6 +223,96 @@ so, names them, and goes on:
 
 printed above the file and a long way above the EC, beside the startup
 refusals, so no capture is opened under a notice the operator did not see.
+
+**The notice names two lists, not one (2026-09-25, issue #718).** The block
+above is the clean case and it is unchanged. A file that also holds a row the
+grader will refuse gets a second section between the marks and the closing
+paragraph, one line per row, each with the reason:
+
+```
+  appending to <path>, which already holds 2 mark(s) placed by a process that did not type them here:
+    2026-01-01T12:00:00.000+01:00  'wrote 0x0751=0xA0'
+    2026-01-01T12:00:30.000+01:00  'settled'
+  and 1 row(s) of it the grader's own reader refuses, which refuses the file whole: every mark in it, not only the ones this run adds.
+    ['2026-01-01T12:01:00.000+01:00', 'MARK', '']  -- <path>: short row ['2026-01-01T12:01:00.000+01:00', 'MARK', '']
+  fix or delete the row(s) above before the run: that is the one thing here worth stopping for. The run itself does not care -- it appends either way.
+  the marks it could not place are not reported while the file is refused: it is refused whole, so that would add nothing.
+  this run did not check those marks and cannot: it did not write them. ... [closing paragraph, unchanged]
+```
+
+Three blocks are reproduced from the tool's own output rather than written out
+by hand, so a rewording that changes what an operator reads changes them here
+too. The `<path>` is the operator's own file, and the reason the first line of a
+refusal repeats it is that `read_capture` leads its message with it.
+
+**The reason is the grader's own, and the first one is quoted whole.** The
+`short row` sentence above is `read_capture`'s `ValueError` text verbatim, and
+that is deliberate: the prompt is showing the error the grading will raise, so
+an operator fixes the row from this screen or from the grading log and gets
+the same sentence either way. Every bad row is named, not just the first —
+`read_capture` stops at the first, so a file holding two after a half-finished
+write or a hand edit would otherwise be a fix-one-re-run-meet-the-next loop.
+The four reasons it can raise over are a short row (`:690`), a timestamp
+`parse_ts` cannot read, hex that is not hex in a change row, and a byte this
+interpreter's encoding cannot decode.
+
+**The last of those is a refusal of the file, not of a row, and the remedy
+changes with it.** Iteration is lazy, so the decode failure comes out of the
+loop and there is no line to point at; the notice prints `the file itself`,
+names the encoding it opened the file with, and asks for the capture to be
+re-saved rather than telling the operator to fix a row that is not at fault.
+The marks beside it are still named, with U+FFFD where the byte was, which is
+how the operator finds it.
+
+**The counts are per list and never one total.** Two good marks and one short
+row read "2 mark(s)" and "1 row(s)": the short row is a row, not a mark, and
+folding it into the mark count would tell the operator to go looking for a
+third mark that is not there. The header count is the accepted count, so the
+clean case above is byte-for-byte what it was.
+
+**A file that loads can still be refused by its labels**, and that is a third
+section rather than a second refusal, because the day is what it costs rather
+than the file. The message is `unplaceable_marks`' own, quoted:
+
+```
+  appending to <path>, which already holds 2 mark(s) placed by a process that did not type them here:
+    2026-01-01T12:00:00.000+01:00  'wrote 0x0751=0xA0'
+    2026-01-01T12:00:30.000+01:00  'pressed the thing'
+  and the grader's own placement pass reports 1 mark(s) in it as unplaceable, which refuses the day whole. That is its verdict over the group the consoles' marks form, not one label's:
+    <path> at 2026-01-01 12:00:30+01:00: 'pressed the thing' is not one of the forms §6 fixes ('no-op wrote 0x0751=0xA0', 'wrote 0x0751=0x10', 'restored 0x0751=0xA0', 'settled', 'held', 'watch over'), and a mark this cannot read is a mark no block can be attributed to
+  this run did not check those marks and cannot: ... [closing paragraph, unchanged]
+```
+
+**That third section is worded as a group verdict, and the wording is the
+calibration.** `coalesce_marks` joins the consoles' labels for one action with
+`' / '` and `parse_mark` reads the first part that matches, so a window whose
+first label is `settled` places over a second console's unparseable one. A
+notice that said "this label is unreadable" would be false about that second
+console, so the notice says what `unplaceable_marks` returned — a window it
+could not place, or nothing — and a `settled`/`garbage` pair in one merge
+window is not reported at all. That is the difference between the issue's
+phrase ("fatal only when it leads its group"), which describes the symptom,
+and the mechanism: `parse_mark` returns on the first part whose leading word
+matches one of §6's forms, and an action part whose value does not parse fails
+the whole label there and then, without the rest of the group being tried. So
+"nothing in the group parses" is one way to reach that and not the only one — a
+hand-edited `wrote 0x0751` with the `=0xA0` dropped off is enough by itself,
+and a second console's `settled` does not rescue it.
+
+**A refused file reports no placement verdict, and says so in one line.** A
+label verdict needs a file the grader can read, and one it cannot read is
+already refused whole, so a second list would add nothing the refusal has not
+already said. Leaving the section out silently would read as "the labels are
+fine", which is the one thing the operator must not infer here.
+
+**What the notice still cannot say.** It is a preflight and not a second
+grader, and three things are outside it on purpose: `unplaced_window_problems`
+(a window whose consoles disagree, or whose action one of them never recorded)
+is not reported; the cross-console and block checks are not run; and a file
+that is accepted here can still be refused at the grading, because the check
+that refuses it is a comparison between blocks and this notice looks at one
+file. None of those can be known before a run, which is the whole of what a
+startup notice is.
 
 **The notice is scoped to this run, and the wording is load-bearing.** A first
 cut said the marks in the file "were not checked against the 0751 forms", which
@@ -215,6 +325,9 @@ strongest sentence it can support is the one about the process in front of it:
 this run did not check them and cannot, having not written them. The grader's
 half is unchanged and is the half that decides the day — it reads and checks
 every mark in the file, so an unplaceable one refuses the day however it got in.
+**That closing paragraph is printed unchanged whatever the sections above did**
+(#718), because its two halves are load-bearing and a second closing to keep in
+step with the first is a second thing to get wrong.
 
 **It is a warning and not a refusal, and the runbook is the reason.** §3's
 blocks 2 and 3 are *meant* to append to block 1's marks, so a tool that
@@ -270,6 +383,36 @@ still raises on them, and still grades. `unplaceable_marks`,
 `build_windows` and the exit code are all untouched: the grader's refusal is
 correct, and forgiving marks it cannot attribute to a process would need it to
 know which process wrote each one, which is not in the file.
+
+> **Correction (2026-09-25, issue #718).** The paragraph above describes the
+> notice as reading the file with one lenient reader, and it was the whole of
+> the notice then. It now reads it with the grader's own
+> `existing_mark_findings` instead, a fourth name on the same load: the
+> lenient reader is still what does the naming and still does not raise on the
+> content, and the strict reader's *verdict* is now beside it rather than
+> inferred. Nothing above it is wrong — `existing_mark_labels` is unchanged and
+> still returns every mark row — but "it does not raise on the file's content"
+> read as though that were the only property the notice needed, and it is not:
+> a reader that cannot raise is also a reader that cannot say which of a file's
+> rows will be refused. That gap is what #718 closed, and the reason is
+> recorded rather than quietly edited.
+
+**The encoding is a property of the interpreter, not of the file, and the
+notice reports the verdict it observed rather than one it predicted**
+(2026-09-25, issue #718). `read_capture` opens with `open(path, newline="")`
+and no `encoding=`, so it decodes in whatever the running locale prefers. A
+lone 0xE9 — which latin-1 and cp1252 both write for `café` — is refused under
+UTF-8 and read as `café` under cp1252, so the same capture can be gradeable on
+the box it was taken on and refused when it is brought back to a machine whose
+default differs. Measured under the gate's Python 3.12 on ubuntu (UTF-8), the
+0xE9 raises and the notice says so and names the encoding; the cp1252 case is a
+**prediction from the documented default and has not been observed on a Windows
+box.** The design does not depend on which is right: the notice reports what
+the interpreter it is running under actually did, and a mark it read is
+reported as accepted with no decode failure claimed. The case stays in
+`read_capture`'s contract — the strict reader still raises wherever the
+encoding cannot read the byte — and out of the notice on the box where it does
+not.
 
 ## Why the substitution went
 
@@ -356,6 +499,13 @@ juxtaposition.
   procedure's own marks. `load_label_vocab` returns the grader's
   `existing_mark_labels` as a third value, and `warn_unchecked_marks` is the
   startup notice, beside the startup refusals and above `CsvSink` and `Ec`.
+  **Later the same day (issue #718), leaving the sentence above as it was:**
+  that is still true and now incomplete in the way a reader would notice. The
+  function returns **four** values, and the fourth — `existing_mark_findings`,
+  which carries the refusal reasons beside the accepted marks — is the one
+  `warn_unchecked_marks` now reads. The notice does not run on the third value;
+  a reader following this bullet to find out what the notice is built from
+  needs the fourth.
 - `windows/tools/test_ec_watch.py`'s `RefusedLabelTests`, beside
   `BlankMarkTests`. It pins the refusal, the notice, the counter, and the
   default: with the flag absent an unplaceable label is recorded unchanged,
