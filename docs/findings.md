@@ -7010,3 +7010,58 @@ its two-largest case pairs ids with names a generation behind — reported, not
 edited around, and a follow-up rather than a line to move inside a
 documentation change; and `test_xdata_cluster_names.py:286` carries a
 third-generation figure in its docstring, recorded rather than fixed.
+
+## 45. The testdata index's `Feeds` column and its self-indexed nested tables are read too (2026-09-25, issue #746)
+
+The write-up is
+[`testdata-index-feeds-and-call-graph.md`](findings/testdata-index-feeds-and-call-graph.md);
+this is the summary. §41's "Left out on purpose" list named four things, and its
+first two were the same rule family as what shipped — a path the index names
+has to be there — so they belong with it rather than as a new idea.
+`ec/tools/check_testdata_index.py` now reads **four** sources instead of two and
+prints **four** tallies instead of two: the top-level table's first column, its
+`Feeds` column as tool references resolved against `ec/tools/`, and **every**
+table in a self-indexed directory's own `README.md`, in the three shapes those
+cells use — a relative `.asm` path resolved against the directory, a `X.csv` plus
+one or more addresses looked up in that CSV's `addr` column and compared as hex
+integers, and both joined by ` + `. The measured tree: 27 `Feeds` cells over 29
+pointers in 3 shapes and 4 distinct tools, and one nested index of 3 tables / 19
+rows / 21 checks, all resolved, 0 missing, 0 unresolved. The parser underneath
+was rewritten onto one table walker located by a table's **shape** rather than by
+a header name, which is what keeps the nested rule structural instead of an
+exemption list — the same argument §41 makes for the self-indexed clause, and the
+reason the next self-indexed directory needs no edit here.
+
+**It found one wrong cell.** `call-graph/README.md:16` read
+`` `decompiled/common/0EA2.asm` ``; the fixture carries
+`decompiled/bank0/0EA2.asm` and both committed CSVs say `bank0` at that address.
+Nothing read those tables, so the cell has been wrong since it was written. The
+fix is the index, not the rule — one cell — and it is load-bearing: reverting it
+turns the run red with a line naming the exact missing path. **That is a
+decidable static fact about three committed files, and it says nothing about
+what the fixture exercises and nothing about the EC.**
+
+**Calibrated, in the two ways that matter here.** A nested address is compared
+as a hex integer because one address has three spellings and all three are live
+in the committed file (`0x0EA2`/`0EA2`, `0xDEAD`/`DEAD`, `0x0070`/`0070`) — a
+string compare would report a miss on every one. And the CSV lookup checks
+**existence, not identity**: a row that exists at the address resolves even if it
+says something else, because "the row the index names is in the file it names" is
+the invariant and "and it says the right thing" has a different owner. The cost
+is written down rather than left implied: a typo to an address that happens to
+exist in that CSV passes. Anything the two new readers cannot parse is
+`unresolved` and does not fail the run, so "not found by this method" is never
+reported as "absent".
+
+**The suite is what runs today; the gate arm is still not.** 59 cases, up from
+33, and the tallies are still not a floor — one root-parameterised method over
+all four lines, with scratch trees either side of today's size both green. **All
+fifteen deliberate loosenings are caught**: the seven §41 records re-run because
+the parser was rewritten under them, and the eight this branch adds. The
+cheap-tier wiring stays prepared in `docs/ci/agent-gates-capture-claims.patch`,
+regenerated so the human's `git apply` still lands — the gate line, the command
+and both hunk headers are unchanged, and only the comment at the call site grew
+the two new kinds of pointer. **Until a human lands it, no commit runs the
+check.** This is tooling hygiene: two markdown files, a directory listing and two
+CSVs, no capture opened, no EC, no hardware, and no claim that any fixture is
+correct.

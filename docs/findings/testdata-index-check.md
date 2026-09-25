@@ -186,9 +186,17 @@ ratio is the point, the caveat `docs/agent-pipeline.md` item 6 records for
 - **`call-graph/README.md`'s own table.** A nested index of a different and
   harder shape: its rows name a `ghidra-functions.csv` row, not a path on disk.
   The check reads only the top-level table. Extending it is its own piece of
-  work.
+  work. **Done, in
+  [`testdata-index-feeds-and-call-graph.md`](testdata-index-feeds-and-call-graph.md)
+  (issue #746): every table in a self-indexed `README.md` is now walked, and a
+  `.asm` path and a `X.csv` address are read in the shapes those cells use.
+  Finding it turned up one cell that named a `common` listing the fixture
+  carries under `bank0`.**
 - **The `Feeds` column.** Tool references, not fixture paths, and a different
-  invariant.
+  invariant. **Done, in the same write-up:** the column is read as tool
+  references resolved against `ec/tools/`, with the flag suffix cut and both
+  halves of a `via` clause read. It is still not a fixture-path check, and
+  resolving it against `testdata/` is what keeps the two columns distinct.
 - **Direction 1 for top-level *files*.** The issue's first sentence is about
   directories. The twenty loose `*.csv`/`*.txt` files are covered in the other
   direction, as rows; a *new* one added beside them with no row is not caught

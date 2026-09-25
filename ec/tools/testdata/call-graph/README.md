@@ -13,7 +13,7 @@ misses.
 | file / row | what it pins |
 |---|---|
 | `decompiled/common/05E8.asm` | 3-byte `lcall` into the common area from a **bank0** listing, which must resolve to the `common` row and report `also_in=bank0` rather than a guessed bank |
-| `decompiled/common/0EA2.asm` | the issue's worked example: 2 `lcall`s to 0x0EE8, and a 2-byte `ajmp` to 0x5A43 |
+| `decompiled/bank0/0EA2.asm` | the issue's worked example: 2 `lcall`s to 0x0EE8, and a 2-byte `ajmp` to 0x5A43 |
 | `decompiled/common/0ECC.asm` | the second 0x0EE8 caller — what makes 0x0EE8 inbound=2 but cited=1 |
 | `decompiled/common/00CF.asm` | reached by a single `ljmp` and no `lcall` at all |
 | `decompiled/common/5A43.asm` | reached by 3 `ajmp` and **zero** `lcall`: the case a `lcall`-only scan calls unreachable |

@@ -31,7 +31,8 @@
 #
 # Why the cheap tier and not agent-gates-deep.sh: between them the two read
 # the committed CSVs under `evidence/ec-watch/`, the committed tree under
-# `ec/tools/testdata/`, and the standard library's `csv` and `glob` modules. No
+# `ec/tools/testdata/` and the two CSVs beside it, and the standard library's
+# `csv` and `glob` modules. No
 # firmware image, no Ghidra, no network, no assembler -- so by the split
 # `docs/agent-pipeline.md` records, both belong beside `check_register_counts`,
 # not in the deep tier. The first runs in well under a second and the second
@@ -46,12 +47,15 @@
 # clause #270 had to retract in place -- and both were caught by a re-reading,
 # because check_register_counts.py verifies the file's numeric keys from the
 # image and never opens a `note:`. check_testdata_index holds
-# `ec/tools/testdata/README.md` to the tree under it in both directions: a
-# fixture directory no index names is a gap, and a path the index's table names
-# that is not on disk is a miss. That index is hand-written and has been
-# repaired by hand twice, and nothing read it before. **Until a human lands
-# this, no commit runs either**, and the next false capture claim -- or the
-# eleventh fixture directory with no row -- merges the way the earlier ones did.
+# `ec/tools/testdata/README.md` to the tree under it in all four directions: a
+# fixture directory no index names is a gap; a path its table's first column
+# names that is not on disk is a miss; a `Feeds` cell naming a tool that is not
+# there is a miss of its own; and a self-indexed directory's own README is read
+# as a nested index, so a listing or a `ghidra-functions.csv` row it names that
+# is not there is a miss too. That index is hand-written and has been repaired
+# by hand twice, and nothing read it before. **Until a human lands this, no
+# commit runs either**, and the next false capture claim -- or the eleventh
+# fixture directory with no row -- merges the way the earlier ones did.
 # Neither tool reads a fixture for what it contains, opens a capture, or
 # touches an EC: both are disagreements between committed files about which
 # paths and rows exist. Each prints what it actually checked, because a run
@@ -65,7 +69,7 @@
 # the next reader of the gate will see it, rather than only here.
 
 diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
-index 125d647..6a3cffe 100755
+index 125d6478..f7a613ea 100755
 --- a/.github/scripts/agent-gates.sh
 +++ b/.github/scripts/agent-gates.sh
 @@ -84,6 +84,36 @@ check_register_counts() {
@@ -86,18 +90,18 @@ index 125d647..6a3cffe 100755
 +  python3 ec/tools/check_capture_claims.py --check
 +}
 +
-+# A fixture directory under ec/tools/testdata/ with no row in the index, or a
-+# row naming a path that is not on disk, is invisible to anyone who greps the
-+# index to learn which fixture holds which grader case -- and the index is
-+# written by hand, and nothing reads it: `grep -rn 'testdata/README'` over this
-+# script and the suite returns two prose mentions and not one read. That gap
-+# is what this closes. It is not a check on whether a fixture is what its row
-+# says it is, which is the third column and a separate piece of work. This
-+# holds the two files to each other, in both directions. Cheap tier because of
-+# what it reads: the committed tree under ec/tools/testdata/ and the standard
-+# library's glob -- no firmware image, no Ghidra, no network, no assembler. It
-+# prints what it actually checked, because a run that checked nothing and a run
-+# that found nothing look the same from the exit code alone.
++# A fixture directory under ec/tools/testdata/ with no row in the index, a row
++# naming a path that is not on disk, a `Feeds` cell naming a tool that is not
++# there, a self-indexed directory's own table naming a listing or a CSV row
++# that is not there: all four are invisible to anyone who greps the index to
++# learn which fixture holds which grader case, and the index is written by hand.
++# That is what this closes, and it is not a check on whether a fixture is what
++# its row says it is -- the third column, and a separate piece of work. Cheap
++# tier because of what it reads: the committed tree under ec/tools/testdata/,
++# the two CSVs beside it, and the standard library's glob and csv -- no
++# firmware image, no Ghidra, no network, no assembler. It prints what it
++# actually checked, because a run that checked nothing and a run that found
++# nothing look the same from the exit code alone.
 +check_testdata_index() {
 +  python3 ec/tools/check_testdata_index.py --check
 +}
