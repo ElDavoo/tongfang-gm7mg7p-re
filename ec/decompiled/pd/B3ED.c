@@ -20,7 +20,7 @@ void write_r7_at_0d0d_then_load_0d0b(undefined1 *param_1,undefined1 param_2)
   set_dptr_ffff_tail_jmp_122f();
   *param_1 = param_2;
                     /* WARNING: Subroutine does not return */
-  thunk_call_122f(0xfffd);
+  call_122f(0xfffd);
 }
 
 

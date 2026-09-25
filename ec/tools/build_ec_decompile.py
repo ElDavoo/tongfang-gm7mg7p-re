@@ -1273,11 +1273,13 @@ def annotation_ledger(index_rows, ann_rows):
     names from somewhere else -- Ghidra's own `caseD_*` labels on switch
     dispatchers, and symbols that were already in the committed project
     database. A one-way count sees those and calls them drift. Counting only the
-    other direction misses its own case: `isPlaceholderName()`
-    (ExportDecompile.java:334-340) matches any name starting `thunk_`, because
-    that is how Ghidra renders an auto-thunk, and annotated rows have chosen
-    that prefix themselves -- so rows that DID apply are reported as
-    unannotated. Both halves have to be counted for either to read correctly.
+    other direction misses its own case: the `annotated` column answers "did
+    Ghidra name this, or did a person", so a row can apply and still be reported
+    unannotated, and the case is a row that took its name out of Ghidra's own
+    reserved namespace. That is what the seven `thunk_`-prefixed rows were until
+    #602 renamed them; nothing about the direction is route-specific, so the
+    list stays a check rather than becoming a name filter. Both halves have to
+    be counted for either to read correctly.
 
     The third list is the matched middle, and its length is what lets the two
     directions be added up rather than merely reported: it says how many index
@@ -1700,6 +1702,40 @@ def xdata_address_names(path=XDATA):
         if m and (r.get("addr") or "").strip().lower() == "0x" + m.group(1).lower():
             out[m.group(1).upper()] = name
     return out
+
+
+# The canonical `isPlaceholderName()` and the Python transcription of it in
+# grade_name_basis.py, read against each other. The Java is what the exporters
+# and the index actually call, so it is the source of truth and the Python set
+# is the derivation; this is the pair TongFang.java:132 claims there is one of,
+# and the claim had already stopped being true of the copy in
+# ExportDecompile.java. Comparing the two is the point -- a Python list nobody
+# checks against the Java is the same second derivation, free to drift again.
+TONGFANG_JAVA = os.path.join(SCRIPTS, "TongFang.java")
+_PLACEHOLDER_NAME = re.compile(
+    r"public static boolean isPlaceholderName\(String name\)\s*\{(.*?)\n    \}",
+    re.S)
+_PLACEHOLDER_TEST = re.compile(r'name\.(startsWith|equals)\("([^"]*)"\)')
+
+
+def placeholder_name_tests(java_path=TONGFANG_JAVA):
+    """`(startsWith|equals, literal)` for every test in the canonical
+    `isPlaceholderName()`, in source order.
+
+    Parsed out of the Java rather than restated, so a new prefix added there
+    cannot be quietly left out of the Python. A body that does not parse
+    yields an empty list rather than raising, because a raise here would read
+    as a broken build instead of as the drift it is -- and the caller asserts
+    against an empty list, which fails. The method body is bounded on the
+    closing `\\n    }` at the method's own indent, so `isVariablePlaceholder`
+    and everything after it are not counted.
+    """
+    try:
+        text = open(java_path, errors="replace").read()
+    except OSError:
+        return []
+    m = _PLACEHOLDER_NAME.search(text)
+    return _PLACEHOLDER_TEST.findall(m.group(1)) if m else []
 
 
 def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
@@ -2186,29 +2222,41 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
           "than written as a literal",
           all(int(r["annotations_unmatched"]) == 0 for r in _mr),
           str({r["program"]: r["annotations_unmatched"] for r in _mr}))
-    _want_named = {"bank0": 693, "bank1": 599, "common": 97, "pd": 501}
+    _want_named = {"bank0": 693, "bank1": 605, "common": 97, "pd": 502}
     check("EC: functions_named is the index's own annotated=yes count per "
-          "program, 693 / 599 / 97 / 501, summing to 1,890",
+          "program, 693 / 605 / 97 / 502, summing to 1,897",
           {r["program"]: int(r["functions_named"]) for r in _mr} == _want_named
-          and sum(_want_named.values()) == 1890
+          and sum(_want_named.values()) == 1897
           and not annotation_ledger_mismatches(_mr, _ir, _ann),
           str(annotation_ledger_mismatches(_mr, _ir, _ann)[:2]))
     # The two-way ledger on the committed files, which is the whole substance of
-    # the §18 correction. 25 and 7, and they close the arithmetic exactly:
-    # 1,872 rows - 7 applied-but-unflagged + 25 named-without-a-row = 1,890.
+    # the §18 correction. 25 and 0, and they close the arithmetic exactly:
+    # 1,872 rows - 0 applied-but-unflagged + 25 named-without-a-row = 1,897.
     # The 25 is 15 `auto` (Ghidra's own caseD_* / default labels on switch
     # dispatchers, which isPlaceholderName() does not list among its placeholder
     # prefixes), 9 `call-target` and 1 `vector` -- pd 0x0000, where the only
     # annotation row at that address is `common`-scoped and the PD image has its
-    # own separate function, so mine() correctly does not hand it over. The 7
-    # are the `thunk_to_*` / `thunk_call_*` rows: they applied, and
-    # isPlaceholderName() matched the prefix they chose for themselves. They are
-    # the only such rows, and that is worth stating because it was not true for
-    # a while: issue #561's 17 `ff_filler_not_a_function_*` rows were reported
-    # here too, on a stale export still carrying the `FUN_CODE_*` placeholders
-    # Ghidra had given those addresses. Re-exporting renamed them, and 24 became
-    # 7 -- not because 17 rows stopped applying, but because the export that said
-    # they had not was itself older than they were.
+    # own separate function, so mine() correctly does not hand it over.
+    #
+    # The 0 is the seventh and last of what #602 renamed. The seven were
+    # `thunk_to_*` / `thunk_call_*`: they applied, and isPlaceholderName()
+    # matched the prefix they had chosen for themselves, because `thunk_` is
+    # Ghidra's reserved prefix for an auto-thunk. Taking the name out of the
+    # namespace -- `forward_to_*`, which eleven rows already used, and `call_*`
+    # for the one forwarder that is a bare lcall -- is what moved them, and this
+    # assertion is deliberately prefix-free: the fault was never "the name
+    # starts with thunk_", it was "the index cannot see a row whose name reads
+    # as Ghidra's", and an assertion naming the prefix would go green again the
+    # moment a different reserved prefix was taken.
+    #
+    # That the count reached 0 rather than merely falling is the whole claim,
+    # and it was not a short walk: issue #561's 17 `ff_filler_not_a_function_*`
+    # rows were reported here too, on a stale export still carrying the
+    # `FUN_CODE_*` placeholders Ghidra had given those addresses. Re-exporting
+    # renamed them, and 24 became 7 -- not because 17 rows stopped applying, but
+    # because the export that said they had not was itself older than they were.
+    # Both rounds were the same fault seen at different ages, which is the
+    # calibration this comment exists to keep.
     _nwr, _abu, _bk = annotation_ledger(_ir, _ann)
     _seed = {}
     for _r in _nwr:
@@ -2218,18 +2266,45 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
           len(_nwr) == 25 and _seed == {"auto": 15, "call-target": 9,
                                         "vector": 1},
           "%d row(s), %s" % (len(_nwr), _seed))
-    check("EC: the ledger's 7 applied-but-flagged-unannotated are all "
-          "thunk_-prefixed names the rows chose themselves",
-          len(_abu) == 7
-          and all(n.startswith("thunk_") for _r, _bk in _abu for n in
-                  [b["name"] for b in _bk]),
+    check("EC: no index row a CSV row backs is reported annotated=no -- a row "
+          "that applies and reads as unannotated is a name in Ghidra's reserved "
+          "namespace, not a stale annotation",
+          _abu == [],
           str([(r["program"], r["addr"]) for r, _bk in _abu]))
-    check("EC: the two ledger directions close the arithmetic -- 1,872 - 7 + 25 "
-          "= the 1,890 functions named",
+    check("EC: the two ledger directions close the arithmetic -- 1,872 - 0 + 25 "
+          "= the 1,897 functions named",
           len(_ann) - len(_abu) + len(_nwr) == sum(_want_named.values()),
           "%d - %d + %d = %d, not %d"
           % (len(_ann), len(_abu), len(_nwr),
              len(_ann) - len(_abu) + len(_nwr), sum(_want_named.values())))
+    # The reserved-namespace rule, and the two derivations of it. (a) is the
+    # population claim and is the one that would have caught #602 before it was
+    # opened: scanning the committed CSV for names the predicate matches needs
+    # no Ghidra run at all, and it found exactly these seven. (b) and (c) are
+    # what keep the rule from going stale -- the Java is what the exporters
+    # call, the Python is what the check uses, and TongFang.java:132's "one
+    # definition, used by every exporter" is only true while the two agree.
+    _rp = grade_name_basis.reserved_prefix_problems(_ann)
+    check("EC: no row in ghidra-functions.csv takes a name out of Ghidra's "
+          "reserved namespace, so no row can apply and read as unannotated",
+          not _rp, str(_rp[:3]))
+    _want_literals = ([("startsWith", p)
+                       for p in grade_name_basis.GHIDRA_RESERVED_PREFIXES]
+                      + [("equals", x)
+                         for x in grade_name_basis.GHIDRA_RESERVED_EXACT])
+    _java = placeholder_name_tests()
+    check("EC: every reserved prefix grade_name_basis.py knows is a literal in "
+          "TongFang.java's isPlaceholderName()",
+          all(lit in _java for lit in _want_literals),
+          "%d of %d found; Java has %s"
+          % (sum(1 for lit in _want_literals if lit in _java),
+             len(_want_literals), _java))
+    check("EC: isPlaceholderName() tests nothing grade_name_basis.py does not -- "
+          "the two copies have not drifted apart",
+          len(_java) == len(_want_literals),
+          "%d test(s) in the Java, %d in the Python set; the extra is %s"
+          % (len(_java), len(_want_literals),
+             sorted(set(_java) - set(_want_literals)) or "none"))
     check("EC: bank-call-targets.csv is 5,998 records, no short row and no "
           "duplicate (file_offset, target)",
           len(_ct) == 5998 and not structure_problems("bank-call-targets.csv", _ct,
@@ -3928,9 +4003,16 @@ def check(work):
                       % (_v["program"], _v["addr"], _v["name"],
                          _v["seed_basis"], _v["bucket"], _v["why"]))
         if _unflagged:
+            # The fact, and not a cause this loop has not checked. The obvious
+            # cause -- a name out of Ghidra's reserved namespace, which is what
+            # the seven `thunk_` rows were -- is checked once, over the whole
+            # CSV, further down; asserting it here for these rows in particular
+            # would be a claim the code had not made, and it would keep making
+            # it after the next rename moved the ground under it. So the rows
+            # are named and the reader is left the predicate.
             print("    %d annotation row(s) DID apply and are reported "
-                  "annotated=no -- `isPlaceholderName()` matched the name they "
-                  "chose:" % len(_unflagged))
+                  "annotated=no, so the index's `annotated` column disagrees "
+                  "with the annotation layer for them:" % len(_unflagged))
             for _r, _backing in sorted(_unflagged, key=lambda p: (p[0]["program"],
                                                                    p[0]["addr"])):
                 print("      %-6s %s %s"
@@ -4027,6 +4109,25 @@ def check(work):
         print("  name_basis: %d row(s), every one graded in the closed "
               "vocabulary and consistent with registers.yaml and the "
               "bit-addressable SFR map" % len(_read["ghidra-functions.csv"]))
+    # A name out of Ghidra's own namespace, which is the other direction of the
+    # ledger printed above and a different fault from a stale name: the row
+    # resolves, applies, and is then reported unannotated, so the two layers
+    # disagree about a function that is there. Five cross-field rules is the
+    # wrong count above because this is not one -- it grades no column, and it
+    # is the only rule here whose fault is in the NAME's namespace rather than
+    # in what the name rests on. Scoped to the EC, and the scope is the honest
+    # one: the same scan over the BIOS CSV finds two rows, and those belong to
+    # the `equals("entry")` / `startsWith("entry")` divergence between the two
+    # copies of isPlaceholderName(), which reconciling would need a BIOS
+    # re-export. docs/findings/thunk-prefix-collision.md.
+    _rp = grade_name_basis.reserved_prefix_problems(_read["ghidra-functions.csv"])
+    for problem in _rp[:5]:
+        fail("reserved name: %s" % problem)
+    if len(_rp) > 5:
+        fail("reserved name: ... and %d more problem(s)" % (len(_rp) - 5))
+    if not _rp:
+        print("  reserved names: %d row(s), none of them a name Ghidra could "
+              "have produced itself" % len(_read["ghidra-functions.csv"]))
     # The map from mechanism to function, and the same discipline from the
     # reading side. Every citation in ec/annotations/subsystems.md is a
     # (scope, addr, name) triple this file owns, so a rename here has to reach

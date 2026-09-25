@@ -56,7 +56,7 @@ Measured over the committed export, by `index.csv` for the functions and
 
 - `exported functions` — 2710
 - `annotated function rows` — 1872
-- `rows the index marks annotated` — 1890
+- `rows the index marks annotated` — 1897
 - `unresolved rows` — 169
 
 By program, as exported minus annotated minus the rest:
@@ -64,8 +64,8 @@ By program, as exported minus annotated minus the rest:
 | program | exported | annotated | unannotated |
 |---|---|---|---|
 | `bank0` | 746 | 693 | 53 (7%) |
-| `bank1` | 676 | 599 | 77 (11%) |
-| `pd` | 535 | 501 | 34 (6%) |
+| `bank1` | 676 | 605 | 71 (11%) |
+| `pd` | 535 | 502 | 33 (6%) |
 | `common` | 753 | 97 | 656 (87%) |
 
 **The common area is the finding.** It is 28% of the export by row count and
@@ -74,10 +74,10 @@ and most of the runtime helpers live. It is also the area this document had to
 extend to say anything about interrupt entry, which is what §3 is.
 
 **The three counts disagree, and the difference is measured rather than
-smoothed.** `index.csv` marks 1890 rows `annotated=yes` and the CSV holds 1872
-rows: a gap of 18. Both sides are enumerated. 25 index rows are marked
-`annotated=yes` with no CSV row at all, and 7 CSV rows are recorded by the index
-as `annotated=no`; 25 − 7 = 18.
+smoothed.** `index.csv` marks 1897 rows `annotated=yes` and the CSV holds 1872
+rows: a gap of 25. Both sides are enumerated. 25 index rows are marked
+`annotated=yes` with no CSV row at all, and no CSV row is recorded by the index
+as `annotated=no`; 25 − 0 = 25.
 
 Of the 25, 14 carry a name no CSV row has — `caseD_0` at eleven bank1
 addresses, plus `caseD_6`, `caseD_1` and `default` — which is the switch-case
@@ -110,6 +110,18 @@ The 7 the index records as `annotated=no` are `bank1` `0xF113`, `0xF116`,
 by the annotation layer, so the index's `annotated` column is recording the seed
 basis rather than the presence of a name.
 
+> **Correction, 2026-09-25 (#602): the sentence above is wrong, and the seven
+> rows it names no longer exist in that state.** `thunk_` is Ghidra's reserved
+> prefix for an auto-thunk, so those seven names were invisible to the index
+> that had to record them: all seven applied, and all seven were reported
+> `annotated=no`. The column was not recording the seed basis — it was reading
+> the name, and the name read as Ghidra's. The rows have been renamed into the
+> repository's existing convention (`forward_to_*`, and `call_122f` for the one
+> forwarder that is a bare `lcall`), they now report `annotated=yes`, and the
+> count is 0. `docs/findings/thunk-prefix-collision.md` has the account; the
+> naming rule is in `README.md`, and a check now refuses the collision from
+> either side.
+
 **152 of the 1848 rows are `type: unresolved`, and 271 carry a name that
 describes a shape rather than a job** — `call_` (86), `load_` (115),
 `trampoline_` (29), `ret_only_` (21), `nop_` (9), `thunk_` (7), `seed_` (4).
@@ -118,6 +130,22 @@ are `load_dptr_` and the other 37 are the register and table loads beside them.
 `sub_input_from_cpu_temp_043e` is a subtraction step; `trampoline_to_c0a2` is a
 jump. Neither is a mechanism, and a map built only from the names would be a map
 of the disassembler's vocabulary.
+
+> **Correction, 2026-09-25 (#602): recounted against the committed CSV, and
+> every number in the paragraph above is stale — not only the `thunk_` (7) the
+> rename removed.** The current figures are 169 `type: unresolved` rows of 1872,
+> and 269 names over the same seven prefixes: `call_` (87), `load_` (117),
+> `trampoline_` (29), `ret_only_` (21), `nop_` (9), `seed_` (4), of which 80 of
+> the `load_` rows are `load_dptr_` and the other 37 are the register and table
+> loads beside them. Only two of those moved because of the rename: `thunk_`
+> (7) is gone and `call_` gained the one `call_122f`. `load_` 115 → 117,
+> `seed_` 4 → 6, 1848 → 1872 and 152 → 169 were **already wrong on `main`** —
+> the paragraph was written against an older CSV and nothing recounted it,
+> because unlike the four bullets above it is not one of the counts
+> `check_subsystems` holds to a recount. The six renamed `forward_to_*` rows are
+> a shape census item too and are not in the 269, because `forward_to_` is not
+> one of the seven prefixes this document enumerates; they bring that separate
+> family to 17.
 
 ## 3. Reset and interrupt entry
 
@@ -480,7 +508,7 @@ cannot drift apart silently:
 
 - `exported functions` — 2710
 - `annotated function rows` — 1872
-- `rows the index marks annotated` — 1890
+- `rows the index marks annotated` — 1897
 - `unresolved rows` — 169
 
 **656 of the 753 common-area functions are unannotated, and that is the largest
