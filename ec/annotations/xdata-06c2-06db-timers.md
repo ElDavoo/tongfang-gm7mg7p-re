@@ -695,13 +695,15 @@ the *earlier* version of this table quoted 3,569 / 2,827, 6,773 / 7,519,
 smaller. Those have drifted with the tree and are superseded by the numbers
 above, which are the ones `--no-eq-guard` produces. Separately, `--self-test`
 and `--check` are **red on `main` at the time of writing, for an unrelated
-reason**: issue #504 annotated 88 more functions without regenerating the
-census, so the `name` / `functions` / `shared_functions` / `named_addrs`
-columns drift on 32 register rows and 6 cluster rows (`name` on 9 register rows,
-`functions` on 29, 6 in both; `shared_functions` on 5 cluster rows,
-`named_addrs` on 3, 6 in the union). Every direction and membership
-column still matches — `read`, `write`, `read+write`, `refs`, `size`, `addrs`
-and `spelled_as` among them — which is the 0-difference result above. That
+reason**: issue #504 added 9 `XDATA_` symbol rows to `xdata-symbols.csv` and
+named 3 previously unnamed functions in `ghidra-functions.csv` (`bank1:0xE2D3`,
+`0x9CE8`, `0x9D53`), neither of which regenerated the census, so the `name` /
+`functions` / `shared_functions` / `named_addrs` columns drift on 32 register
+rows and 6 cluster rows (`name` on 9 register rows, `functions` on 29, 6 in
+both; `shared_functions` on 5 cluster rows, `named_addrs` on 3, 6 in the
+union). Every direction and membership column still matches — `read`, `write`,
+`read+write`, `refs`, `size`, `addrs` and `spelled_as` among them — which is
+the 0-difference result above. That
 redness is a naming backlog, not a direction-classifier problem, and it is not
 fixed here.
 
