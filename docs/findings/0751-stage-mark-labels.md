@@ -113,6 +113,22 @@ wrote …` and `wrote …` — behaving unchanged. It is also the narrowest read
 that delivers the issue's bar: *the §3 block as printed produces a capture the
 grader grades rather than refuses*.
 
+*(**Correction, 2026-09-25, issue #476.** The paragraph above is kept as it was
+written, and its clause about the probe no longer describes the tool. The
+probe writes a third mark — `restored 0x0751=…`, §3's step 5 — so a capture it
+writes is `no-op wrote …`, `wrote …`, `restored …` rather than the two forms
+quoted, and the real `ec/tools/grade_0751_isolation.py` reads that capture as
+one `intact` block, roles `control, write, restore`, every window printed,
+exit 0 — where the same run's two-mark capture, which is the shape the tool
+used to write, comes back `VOID` with its windows withheld. The grading tool
+is not what changed here; the capture is. The scoping choice this section
+defends is untouched and this change confirms it rather than disturbs it:
+boundaries are still optional, a capture carrying the three action marks
+still grades exactly as it did, and the `0751-isolation-run-*/` fixtures
+grade as they always have. What moved is the shape the probe *emits*, and its
+third mark is a restore rather than a stage boundary — which is #476's
+business, not #472's.)*
+
 What it costs is stated in §3 rather than checked. A window is every change
 after a mark up to the next one, so the end-of-watch mark is what closes the
 write's ~60 s observation window; without it the write's window runs on into
@@ -209,6 +225,17 @@ three new forms without an edit.
 - `windows/tools/manual_fan_ctrl_probe.py` and its suite — the probe emits only
   the two action forms, and optional boundaries leave its captures exactly as
   they are.
+
+  **Correction (issue #476, 2026-09-25), leaving the bullet above as it was
+  written.** Issue #476 changed both files this bullet names, so the claim
+  about what the probe emits is out of date: it now writes the restore's mark
+  as well, a capture it writes is three marks — `no-op wrote …`, `wrote …`,
+  `restored …` — and that capture grades `intact`, roles `control, write,
+  restore`, exit 0, where the two-mark shape the tool used to write comes
+  back `VOID` with its windows withheld. The bullet's second half survives
+  and this change is a confirmation of it: boundaries stayed optional, and a
+  capture without them grades as it did. Only the probe's own output moved,
+  and only by gaining the mark that closes its block.
 - `ec/annotations/registers.yaml` — no register's status changes. This is
   capture plumbing; `MANUAL_FAN_CTRL` stays `present-untested`.
 - `evidence/` — no capture is added. The run is a human's.
