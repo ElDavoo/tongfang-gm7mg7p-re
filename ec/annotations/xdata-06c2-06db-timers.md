@@ -21,12 +21,26 @@ byte count below is re-derivable from the committed image by §1, and
 > `cluster_id=main-ec-002` in `xdata-registers.csv`. The ids moved when issue
 > #4.3's census regeneration landed (#133 / #238), and moved again on the
 > 2026-09-24 re-derivation of the census on the merged tree:
-> `xdata_register_map.py:1027`
+> `xdata_register_map.py:1654-1655`
 > numbers clusters by size, so the 43-address block is now numbered ahead of
 > the 28-address one, and `xdata-register-map.md` §5 records the same hazard for
-> its own table. Every stale id below is corrected in place. The ones inside a
-> quote of issue #179 are left as it wrote them with this beside them, because
+> its own table. (`:1027`, the citation this replaces, never pointed at the sort
+> on `main` either — the key is at 1629 there, and 1027 is
+> `return oper in ("DPH", "DPL")` — so this corrects a long-stale citation
+> rather than relocating a sound one.) Every stale id below is corrected in
+> place. The ones
+> inside a quote of issue #179 are left as it wrote them with this beside them,
+> because
 > the quote is the evidence that the id moved.
+>
+> **Issue #254's own instruction to change this block's id to `main-ec-003` was
+> not applied, because the prediction it rested on was itself stale.** #254
+> predicted `main-ec-003` from the pre-split numbering; the committed census
+> puts the 43-address / 4,966-reference sweep at `main-ec-002`, and
+> `../tools/check_cluster_citations.py` passes, so this page's `main-ec-002`
+> needed no change and the stale `main-ec-003` was in `ec/README.md`, which is
+> the copy that moved. Left visible here so a reader holding #254 reads the
+> unapplied instruction rather than an oversight.
 > `../tools/check_cluster_citations.py` is what holds the rest of the tree to
 > the census.
 >
@@ -167,7 +181,7 @@ per address and splitting them by whether the file is one of the 42:
 |---|---:|---:|---:|
 | the sweep's 46 byte addresses | **4,784** | 418 | 5,202 |
 
-For the 43 cluster addresses alone that is **4,642 of the 4,989 their rows sum
+For the 43 cluster addresses alone that is **4,642 of the 4,988 their rows sum
 to — 93%** — and the per-address result is starker than the total:
 
 | addr | census `refs` | direct `MOV DPTR,#addr` sites in the image |
@@ -215,19 +229,21 @@ to — 93%** — and the per-address result is starker than the total:
 | `0x0985` | 115 | 11 |
 | `0x0986` | 135 | 5 |
 | `0x09CE` | 129 | 7 |
-| **total, 43 addresses** | **4,989** | **345** |
+| **total, 43 addresses** | **4,988** | **345** |
 
-(The 4,989 is the sum of the 43 rows in `xdata-registers.csv`. The
+(The 4,988 is the sum of the 43 rows in `xdata-registers.csv`. The
 `main-ec-002` row in `xdata-clusters.csv` records 4,966 for the same membership,
-and the 23 between them is a definitional split inside the tool, not staleness:
+and the 22 between them is a definitional split inside the tool, not staleness:
 both numbers reproduce from a fresh generation. Five of the 43 members are
 `program=both` — `0x07F3`, `0x07F6`, `0x0809`, `0x080C`, `0x080D` — and for
 those the register row absorbs both programs and counts an address once per
-program (`xdata_register_map.py:648-655`, `:674`) while the cluster row sums one
-program's own count (`:718`). Two columns both named `refs`, defined
-differently. The whole of the gap is those five addresses' PD references, 4 + 4
-+ 5 + 2 + 8 = 23. Only the name and spelling columns of the committed CSVs are
-stale — §6.)
+program (`xdata_register_map.py:1385` `merge_group()`, `:1669-1670`) while the
+cluster row sums one program's own count (`:1738`). Two columns both named
+`refs`, defined differently. The whole of the gap is those five addresses' PD
+references, 3 + 4 + 5 + 2 + 8 = 22. Only the name and spelling columns of the
+committed CSVs are stale — §6. The earlier version of this parenthetical said
+4,989, a gap of 23, and gave `0x07F3`'s PD share as 4; all three are one too
+high, and 4,988 / 22 / 3 are what the committed CSVs sum to today.)
 
 **So the issue's "nine of the ten busiest addresses in the firmware are in it"
 is an artefact of the export, not a statement about the bytes.** `0x0843` and
@@ -575,122 +591,143 @@ to a cluster id, and it is why §3 reads the span.
   that rather than a separate defect: 42 exports is how the committed project
   has this routine cut, not how the firmware is structured.
 
-### 6a. The direction classifier, measured, and why it is not this change's diff
+### 6a. The `==` direction-classifier defect: measured, and fixed since #178
 
 `xdata-registers.csv` and `xdata-clusters.csv` are **not** regenerated here and
-are **not** read as evidence. §2a is the first reason; the second is the
-direction classifier, and it was measured rather than asserted.
+are **not** read as evidence. §2a is the reason, and now it is the whole of it:
+this section used to give a second reason — that the direction classifier was
+wrong — and that reason was withdrawn when the classifier was fixed. It is no
+longer a reason to distrust the census.
 
-**The defect.** `ec/tools/xdata_register_map.py:277` decides an occurrence is a
-store by testing `stripped.startswith(a) for a in ASSIGN`, and `ASSIGN` at line
-138 contains `"="` — so `"== 0x12".startswith("=")` is true, and every `==` in
-the tree is counted as a write. **The effect**, from regenerating the census
-twice, once as committed and once with a guard that rejects a bare `=` followed
-by a second `=`:
+**The defect.** `store_target()` decides an occurrence is a store by testing
+`stripped.startswith(a) for a in ASSIGN`, and `ASSIGN`
+(`ec/tools/xdata_register_map.py:243`) contains `"="` — so `"== 0x12"
+.startswith("=")` is true, and every `==` in the tree was counted as a write.
+The rejection is at `ec/tools/xdata_register_map.py:939`, inside
+`store_target()` (`:916`), with the comment above it recording 838 occurrences
+against two dereference stores. It landed in issue #178, and
+`xdata-register-map.md` §4.3 is the retraction written at the time.
 
-| | as committed | with the guard |
+**The committed census is post-guard, and is exactly what the committed tool
+produces.** Regenerating with no arguments reproduces every `read`, `write`,
+`refs` and `addrs` cell of both CSVs: 0 differences across 1,171 register rows
+and 430 cluster rows. The tree's own `BUCKET_TOTALS` oracle
+(`xdata_register_map.py:668`) reads `read 8341 write 3195 read+write 2482
+passed-to-call 534 address-taken 267`, which are the post-guard figures.
+
+**The effect**, from running the committed tool twice — once as it stands, and
+once with `--no-eq-guard`, which re-runs the census with the `==` rejection
+turned off and is therefore the pre-#178 classifier measured on today's tree,
+not a number remembered from 2026-09-23:
+
+| | guard removed (`--no-eq-guard`) | as committed today |
 |---|---:|---:|
-| main-EC `write` references (1,015 addresses, 13,100 refs) | 3,569 | 2,827 |
-| main-EC `read` references | 6,773 | 7,519 |
-| PD-image `write` references (109 addresses, 605 refs) | 193 | 142 |
-| references in `write` for the 48 addresses in both images | 257 | 217 |
+| main-EC `write` references (1,014 addresses, 13,123 refs) | 3,577 | 2,835 |
+| main-EC `read` references | 6,792 | 7,538 |
+| PD-image `write` references (109 addresses, 604 refs) | 193 | 142 |
+| references in `write` for the 48 addresses in both images | 258 | 218 |
 | **references leaving `write`, all three programs** | — | **833** |
-| **addresses whose `write` column changes** | — | **210 of 1,172** |
+| **addresses whose `write` column changes** | — | **210 of 1,171** |
 | `0x08A8` read / write | 84 / 44 | **126 / 2** |
 | `0x0843` read / write | 84 / 42 | **126 / 0** |
-| main-EC clusters at threshold 0.50 | 384 | 376 |
-| **`main-ec-002`** | **43 addresses, 4,966 refs** | **44 addresses, 248 refs** |
+| main-EC clusters at threshold 0.50 | 388 | 380 |
+| **`main-ec-002` (this block)** | **43 addresses, 4,966 refs** | **43 addresses, 4,966 refs** |
 
-**The right-hand column is a shape, not a row, and it carries no id.** It
-records what this block's cluster becomes under the guard, and the guard's
-output is not the committed census, so no row in `xdata-clusters.csv` today is
-that cluster. Its 44 addresses and 248 references were, before the 2026-09-24
-re-derivation, the same two figures the then-committed `main-ec-002` row
-carried, and that was a coincidence of size and reference count rather than a
-match of membership: the two clusters' `addrs` columns were disjoint. No row in
-the census as regenerated now carries 44 and 248. So the left column names
-`main-ec-002` (it read `main-ec-003`, 4,965, before the re-derivation) and the right
-column names nothing, and a reader who carries the left id across is wrong in
-the one way this file is about.
+**What the guard does and does not change.** It moves references *between*
+direction buckets and out of none of them: **0 of 1,171 addresses have a
+different `refs` total** either way. Every row of §2a's 43-address table is
+therefore guard-invariant, and that is the direct confirmation that §2a's
+42-fold double count is a wholly separate defect — the guard neither creates
+nor repairs it.
+
+**The last row is the one this section previously got wrong, and the wrong
+version is kept above rather than deleted.** This block used to close by
+arguing that the cluster this issue is scoped to "does not survive the
+classifier fix in its current shape", reporting `main-ec-002` going from 43
+addresses / 4,966 references to 44 / 248. **That is wrong, and the reason is
+that `main-ec-NNN` is a rank slot and not an identity** — clusters are ordered
+by size, then references, then lowest address
+(`xdata_register_map.py:150`). Re-measured, `main-ec-002` holds the same 43
+addresses with the same 4,966 references both with and without the guard, with
+membership identical address for address, and the two runs agree on the
+`refs` of every one of the 1,171 rows. The cluster survives the fix intact.
+What the guard does move is the *number* of main-EC clusters (388 → 380),
+because it shrinks writer sets everywhere, and it moves the sweep's own
+direction buckets — which is the `0x08A8` and `0x0843` rows above. No 44-address
+/ 248-reference cluster exists in either generation, and none did when this was
+first written either: the 44/248 pair belonged to a different membership that
+merely held rank slot 2 at the time, which is the same hazard the correction
+at the top of this file records for the ids themselves.
 
 ```console
-$ rm -rf /tmp/census && mkdir -p /tmp/census/{before,after}/ec/tools
-$ for v in before after; do
->   cp ec/tools/xdata_register_map.py /tmp/census/$v/ec/tools/
->   for d in decompiled annotations firmware ghidra; do
->     ln -s "$PWD/ec/$d" /tmp/census/$v/ec/$d
->   done
-> done
-$ python3 - <<'EOF'
-p = '/tmp/census/after/ec/tools/xdata_register_map.py'
-s = open(p).read()
-old = '''    nxt = text[end:]
-    stripped = nxt.lstrip()
-    if not any(stripped.startswith(a) for a in ASSIGN):'''
-new = '''    nxt = text[end:]
-    stripped = nxt.lstrip()
-    if stripped.startswith("=="):
-        return False
-    if not any(stripped.startswith(a) for a in ASSIGN):'''
-assert old in s
-open(p, 'w').write(s.replace(old, new))
-EOF
-$ for v in before after; do
->   python3 /tmp/census/$v/ec/tools/xdata_register_map.py \
->       --out-registers /tmp/census/$v/registers.csv \
->       --out-clusters  /tmp/census/$v/clusters.csv \
->       --registers ec/annotations/registers.yaml > /dev/null
-> done
+$ python3 ec/tools/xdata_register_map.py --no-eq-guard \
+    --out-registers /tmp/before-registers.csv \
+    --out-clusters  /tmp/before-clusters.csv                  # the pre-#178 classifier
 $ python3 - <<'EOF'
 import csv
-u = {r['addr']: r for r in csv.DictReader(open('/tmp/census/before/registers.csv'))}
-f = {r['addr']: r for r in csv.DictReader(open('/tmp/census/after/registers.csv'))}
+u = {r['addr']: r for r in csv.DictReader(open('/tmp/before-registers.csv'))}
+f = {r['addr']: r for r in csv.DictReader(open('ec/annotations/xdata-registers.csv'))}
 print("references leaving 'write':",
       sum(int(u[k]['write']) - int(f[k]['write']) for k in u))
 print("addresses whose 'write' changes:",
       sum(1 for k in u if u[k]['write'] != f[k]['write']), "of", len(u))
+print("addresses whose 'refs' changes:",
+      sum(1 for k in u if u[k]['refs'] != f[k]['refs']), "of", len(u))
 EOF
+references leaving 'write': 833
+addresses whose 'write' changes: 210 of 1171
+addresses whose 'refs' changes: 0 of 1171
 ```
 
-**This block no longer perturbs anything, and the table above is kept as the
-historical record rather than as something to re-run.** The guard it inserts is
-`xdata_register_map.py`'s own, and that guard has since landed on `main` with
-issue #178 — so a verbatim run of the block now produces two byte-identical
-censuses, and its "after" column is what a plain run of the committed tool
-already gives. To reproduce the perturbation, **remove** the guard rather than
-add it; `xdata-register-map.md` §4.4 is the recipe that does, and the figures it
-records against the committed census are the ones to quote.
+`--self-test` and `--check` are **not** part of that reproduction and neither is
+green today: both exit 1 on `main`, on the naming drift described below. What
+they do still establish is the part this section rests on — `--self-test`'s
+`BUCKET_TOTALS` oracle and its corpus-wide direction invariant both pass, and a
+default regeneration differs from the committed CSVs in **no** `read`, `write`,
+`refs` or `addrs` cell. Neither mode is in `agent-gates.sh`'s tool list, so that
+redness does not currently fail the build; that is a gap in the gate, not a
+green light, and closing it belongs with whoever regenerates the CSVs.
 
-**The absolute totals here are the committed census, and they match the
-14,801-reference table in `xdata-register-map.md` §4.1** — the unmodified tool
-run over the current tree sums to 7,483 / 4,019 / 2,480 / 548 / 271, and its own
-full-census oracle passes. What this tree is ahead on is *symbol coverage*: the
-43 new symbols move references from the `DAT_EXTMEM_` spelling to the symbol
-table's, which is why the committed CSVs' `spelled_as` / `name` /
-`named_addrs` / function-name columns are stale and `--self-test` is red on the
-`DAT_EXTMEM_` spelling oracles. A rename does not move a reference from one
-direction bucket to another, so every absolute number above is the report's
-number, and the deltas are a property of the classifier alone.
+**The reproduction this replaces was a no-op, and the reason it was is worth
+keeping.** It copied the tool and patched a *second* `==` guard in, which the
+committed file has had since #178, so its two censuses came out byte-identical
+and it compared the tool against itself. A commit pointer is not a usable
+recipe either — `git log --oneline -S 'startswith("==")' -- ec/tools/xdata_register_map.py`
+reaches **two commits on `origin/main`**: #206, which is itself the commit that
+added the guard, and #302, whose tree-wide invariant added two more occurrences
+of the same string (three on this branch, once this issue's own docstring
+sentence is in the tree). Neither is the pre-#178 classifier, which appears only
+at #206's parent — a revision the search does not name — so `--no-eq-guard` was
+added instead, and the tool's self-test pins that it flips exactly the `==` lines
+of `CLASSIFIER_SHAPE` and nothing else. The numbers were right; the recipe was
+the defect.
 
-**The last row is why this is out of scope here, and it is a new question
-rather than a footnote: the cluster this issue is scoped to does not survive
-the classifier fix in its current shape.** Its 4,966 references are largely the
-`==` comparisons in the 42 overlapping exports, and the writer-set Jaccard that
-holds the cluster together was computed over exactly those. With the guard it
-becomes a 44-address, 248-reference cluster. Neither number is right yet — both
-still carry §2a's 42-fold duplication — but the direction is not in doubt, and
-an issue scoped to "read `main-ec-002`" would be scoped to a membership its own
-prerequisite changes. (The id in that quoted scope was `main-ec-003` in the
-census #253 corrected against and is `main-ec-002` again in the committed one —
-the correction at the top of this file is the one to read.)
+**A note on the figures above and on `--self-test`.** The left-hand column is
+the pre-#178 classifier run on the current tree, so it is a live measurement;
+the *earlier* version of this table quoted 3,569 / 2,827, 6,773 / 7,519,
+257 / 217, 210 of 1,172 and 384 / 376, measured when the decompiled tree was
+smaller. Those have drifted with the tree and are superseded by the numbers
+above, which are the ones `--no-eq-guard` produces. Separately, `--self-test`
+and `--check` are **red on `main` at the time of writing, for an unrelated
+reason**: issue #504 added 9 `XDATA_` symbol rows to `xdata-symbols.csv` and
+named 3 previously unnamed functions in `ghidra-functions.csv` (`bank1:0xE2D3`,
+`0x9CE8`, `0x9D53`), neither of which regenerated the census, so the `name` /
+`functions` / `shared_functions` / `named_addrs` columns drift on 32 register
+rows and 6 cluster rows (`name` on 9 register rows, `functions` on 29, 6 in
+both; `shared_functions` on 5 cluster rows, `named_addrs` on 3, 6 in the
+union). Every direction and membership column still matches — `read`, `write`,
+`read+write`, `refs`, `size`, `addrs` and `spelled_as` among them — which is
+the 0-difference result above. That
+redness is a naming backlog, not a direction-classifier problem, and it is not
+fixed here.
 
 The issue's own "`0x08A8` is recorded as 84 reads / 44 writes / 42 read+write,
 and 42 of its comparisons are `==`" is a second, independent misreading:
 `xdata-register-map.md` §4.1 defines the `read+write` column as "an `=` target
 whose right-hand side names the same address", so `0x08A8`'s 42 are 42
-read-modify-writes, not 42 equality tests. And per §2a all 42 of them come from
-the 42 overlapping exports. The wrong reading is left in the issue, not
-silently dropped.
+read-modify-writes, not 42 equality tests — and they are 42 on both sides of
+the guard above. Per §2a all 42 of them come from the 42 overlapping exports.
+The wrong reading is left in the issue, not silently dropped.
 
 **Nothing in §3 or §4 needs a census column.** Every count in this file comes
 from the `.c`, the `.asm` and the image.
@@ -807,11 +844,19 @@ touching it, not the EC's sweep.
    suspect on the separate grounds that it was unexported. It still is (item 1
    is that export), but its twelve bytes, decoded by hand in §4, are a thunk on
    `0xC0C9` that reads `0x3202`, so that reason is gone (§5).
-4. **The direction-classifier fix** at `ec/tools/xdata_register_map.py:277`,
+4. ~~**The direction-classifier fix** at `ec/tools/xdata_register_map.py:277`,
    measured in §6a: 833 references out of `write`, 210 addresses, and
    `main-ec-002` (this block) itself reshaped. It wants its own diff with its own
    before/after census, and it should be read together with the de-duplication
-   question below or the new numbers will be wrong in the other direction.
+   question below or the new numbers will be wrong in the other direction.~~
+   **Closed — the diff it asked for landed in issue #178**, and the guard is at
+   `xdata_register_map.py:939`. Two things in the withdrawn text were wrong
+   besides the line citation: `:277` was never the classifier's location, and
+   `main-ec-002` does **not** reshape — it keeps the same 43 addresses and the
+   same 4,966 references with and without the guard, because the guard moves
+   references between direction buckets and out of none of them (0 of 1,171
+   `refs` totals change). §6a carries the corrected measurement and
+   `--no-eq-guard` re-derives it. What is genuinely still open is item 5.
 5. **The census's 42-fold double count** (§2a). Nothing in
    `xdata_register_map.py` knows that 42 exports are one routine, and until
    something does, every reference count for a byte this sweep touches is

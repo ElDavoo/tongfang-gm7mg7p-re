@@ -416,7 +416,7 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   evidence that those sites belong to the PD image rather than the EC, and the
   live probe still needed to say what (if anything) the EC does with those
   bytes.
-- **`annotations/xdata-06c2-06db-timers.md`** — the `main-ec-003` cluster read
+- **`annotations/xdata-06c2-06db-timers.md`** — the `main-ec-002` cluster read
   as the block the issue asked about: 37 of its 43 addresses are countdowns one
   393-byte routine walks over, and the other 6 are what four of them do at zero.
   It also measures why the cluster's headline census numbers are inflated 42×,
