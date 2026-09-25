@@ -5595,7 +5595,7 @@ Seventeen `ff_filler_not_a_function_*` rows land in
 siblings' name, because the verifiable fact is structural rather than a routine
 waiting to be implemented, and because that spelling is what
 `grade_name_basis.py --check` recomputes for `unresolved`. The record-count pins
-move 1,851 → 1,868, `ec/annotations/function-groups.csv` gains the seventeen as
+move 1,855 → 1,872, `ec/annotations/function-groups.csv` gains the seventeen as
 `ungrouped` (no typed seed, no component — the right answer for an address that
 is not a function), and `ec/ghidra/cross-decoder.csv` is regenerated: all
 seventeen come back `vacuous`, the tool's own 8051 decode finding no `MOV DPTR`
@@ -5604,7 +5604,10 @@ in any of them. **No Ghidra export runs in this change**, so the seventeen keep
 anonymous-name counts #458 measures do not move. One citation pair moves with
 it — `common,375E ← common,7DF2`, from a new comment naming the instruction its
 own byte match sits inside — and `call_graph.py`'s `fill-at-citer` veto rejects
-it for the same reason it rejects the other 21, so nothing is credited.
+it, so nothing is credited. That veto's rejection count is 0 on `main` and 1
+with these rows; the twenty-one measured on the pre-#570 base tree are gone
+because #558 named `common,0F75`, `0x158E` and `0x1594`, and a named callee is
+not an anonymous one — not because the rule changed.
 
 The band is measured; its cause is not. The same runtime addresses hold live
 code in the PD program — 165 non-`0xFF` bytes across the seventeen spans, seven
