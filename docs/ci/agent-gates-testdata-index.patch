@@ -1,0 +1,71 @@
+# ec/tools/check_testdata_index.py, wired into the cheap gate. Prepared here
+# rather than landed, for the reason docs/ci/agent-gates-capture-claims.patch
+# gives: `.github/scripts/agent-gates.sh` is copied from the agent-pipeline
+# template and the pipeline's push token has no `workflow` scope, so a branch
+# editing it fails at the end of the PR rather than at the start of it.
+# `docs/agent-pipeline.md` carries this one across a re-copy too, as its item 9.
+#
+# To land it:
+#
+#   git apply docs/ci/agent-gates-testdata-index.patch
+#
+# and that is the whole change.
+#
+# Why the cheap tier and not agent-gates-deep.sh: what it reads is the
+# committed tree under `ec/tools/testdata/` and the standard library's `glob`.
+# No firmware image, no Ghidra, no network, no assembler -- so by the split
+# `docs/agent-pipeline.md` records, it belongs beside `check_register_counts`,
+# not in the deep tier. It measures 0.03 s over three runs here, against a cheap
+# tier recorded at 5.9 s, on 2026-09-25. That is one runner's figure and the
+# ratio is the point; `docs/agent-pipeline.md` item 6 gives the same caveat for
+# `call_graph.py`.
+#
+# What it buys, and what it does not: an index/tree disagreement fails instead
+# of waiting for a person to notice. `ec/tools/testdata/README.md` is
+# hand-written and nothing reads it, so a fixture directory with no row in it and
+# a row naming a path that is not on disk are both gaps in the index's own
+# invariant and both are invisible today. **Until a human lands this, no commit
+# runs it.** It is a disagreement between two files about which paths exist, and
+# nothing more: no fixture is read for what it contains, no capture is opened,
+# no EC and no laptop. Its own suite (`ec/tools/test_check_testdata_index.py`)
+# needs no wiring to be run at all -- `tools/run-tests.sh` discovers every
+# `test_*.py` in the repository, so it is already collected by the runner.
+#
+# The comment it adds at the call site says the same thing where the next reader
+# of the gate will see it, rather than only here.
+
+diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
+index 125d647..811116f 100755
+--- a/.github/scripts/agent-gates.sh
++++ b/.github/scripts/agent-gates.sh
+@@ -84,6 +84,22 @@ check_register_counts() {
+   python3 ec/tools/check_register_counts.py ec/firmware/GMxMGxx_11.800
+ }
+ 
++# A fixture directory under ec/tools/testdata/ with no row in the index, or a
++# row naming a path that is not on disk, is invisible to anyone who greps the
++# index to learn which fixture holds which grader case -- and the index is
++# written by hand, and nothing reads it: `grep -rn 'testdata/README'` over this
++# script and the suite returns two prose mentions and not one read. That gap
++# is what this closes. It is not a check on whether a fixture is what its row
++# says it is, which is the third column and a separate piece of work. This
++# holds the two files to each other, in both directions. Cheap tier because of
++# what it reads: the committed tree under ec/tools/testdata/ and the standard
++# library's glob -- no firmware image, no Ghidra, no network, no assembler. It
++# prints what it actually checked, because a run that checked nothing and a run
++# that found nothing look the same from the exit code alone.
++check_testdata_index() {
++  python3 ec/tools/check_testdata_index.py --check
++}
++
+ check_python_syntax() {
+   local f rc=0
+   for f in ec/tools/*.py bios/tools/*.py windows/tools/*.py ghidra/tools/*.py; do
+@@ -271,6 +287,7 @@ check_doc_links() {
+ gate 'registers.yaml'  check_registers_yaml
+ gate 'scan_refs.py smoke test' check_scan_refs_smoke_test
+ gate 'register counts'  check_register_counts
++gate 'testdata index'  check_testdata_index
+ gate 'ghidra tooling'  check_ghidra_tooling
+ gate 'python syntax'   check_python_syntax
+ gate 'shellcheck'      check_shellcheck

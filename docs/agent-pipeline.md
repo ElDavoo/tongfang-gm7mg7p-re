@@ -48,7 +48,7 @@ only covers what's specific to *this* copy.
   comparison — so `AGENT_GATES_DEEP=1 .github/scripts/agent-gates.sh` is the
   single command that checks everything, and the cheap tier's closing note
   names that command on every run.
-  Seven things to carry across if this file is ever re-copied from the template:
+  Nine things to carry across if this file is ever re-copied from the template:
   1. **The deep tier needs a schedule, and it does not have one.** What runs
      where, as of 2026-09-23 (issue #139): per commit, on `push` to `main` and
      on every pull request, `ci.yml` runs the cheap tier bare, and the deep
@@ -271,6 +271,29 @@ only covers what's specific to *this* copy.
      `tools/run-tests.sh` discovers every `test_*.py` in the repository, so it
      is already collected by the runner below — the same state the four suites
      in that paragraph are in.
+  9. **`check_testdata_index.py --check` is not in the cheap tier yet, and
+     should be** (2026-09-25, issue #727). It holds
+     `ec/tools/testdata/README.md` to the tree under it in both directions: a
+     fixture directory no index names is a gap, and a path the index's table
+     names that is not on disk is a miss. That index is hand-written and has
+     been repaired by hand twice — #720 fixed two rows of it by reading the
+     grader and the CSVs by hand, and the repair before it was one too — while
+     `grep -rn 'testdata/README'` over the gate and the suite returned two prose
+     mentions and not one read. Adding it is a `check_testdata_index()`
+     function and a `gate` line beside `check_register_counts`, and the whole of
+     it is prepared at `docs/ci/agent-gates-testdata-index.patch`; a human lands
+     it with `git apply docs/ci/agent-gates-testdata-index.patch`. Cheap tier
+     for item 4's reason: the committed tree under `ec/tools/testdata/` and the
+     standard library's `glob` — no firmware image, no Ghidra, no assembler —
+     and it measures 0.03 s here against a cheap tier the paragraph above
+     records at 5.9 s. It is not here for item 4's reason, template-copied file
+     and no `workflow` scope on the token, and **until a human lands it, no
+     commit runs it** and the eleventh fixture directory can arrive with no row
+     the way the earlier ones did. Its own suite
+     (`ec/tools/test_check_testdata_index.py`) needs no wiring to be run at
+     all, for item 5's reason: `tools/run-tests.sh` discovers every
+     `test_*.py` in the repository, so it is already collected by the runner
+     below.
 - **`tools/run-tests.sh`, and the gate line that would call it**
   (2026-09-23, issue #162) — the four offline `unittest` suites
   (`ec/tools/test_grade_0751_isolation.py`, `windows/tools/test_ec_watch.py`,

@@ -6763,3 +6763,39 @@ involved. The test suite is **not** in `.github/scripts/agent-gates.sh` — that
 file is under `.github/`, which this branch's push token cannot write, so the
 registration is a human's change and the page says so rather than implying CI
 runs it.
+
+## 41. `ec/tools/testdata/README.md` is held to the tree under it, and the gate wiring is prepared (2026-09-25, issue #727)
+
+The write-up is `docs/findings/testdata-index-check.md`; this is the summary.
+The index over `ec/tools/testdata/` is what a change greps to learn which
+fixture holds which grader case, it is written by hand, and nothing reads it, so
+a directory it does not name and a row naming a path that is not on disk are both
+invisible. `ec/tools/check_testdata_index.py` now holds the two files to each
+other in both directions: a directory no index names is a gap, and a path the
+index's table names that is not on disk is a miss. **Those two are the error
+class, and not a repair history**: the index needed hand-repair twice, in #502
+and #720, and both repairs were to a row's third column — the description — so
+this check would have been green through both. Not claimed: that it would have
+caught them.
+
+**The merged tree is green, and that is the finding rather than a defect** —
+13 directories, 12 named in the index, `call-graph/` self-indexed, 27 rows, 34
+path tokens, 0 gaps, 0 misses, 0 unresolved. The issue is that nothing *checked*
+that, not that anything is wrong; the gaps it now closes have simply never
+occurred. `call-graph/` passes on a structural rule — a directory with its own
+`README.md` — not on an exemption list, and the `...-suffix.csv` shorthand is
+resolved by glob rather than by splicing, because a
+check that false-positives on the abbreviations is worse than none. A token whose
+shape matches no rule is reported as `unresolved` and does not fail the run: that
+is the "not found by this method, never absent" line made mechanical.
+
+**The suite is what runs today; the gate arm is not.** Its 28 cases hold the
+refusals — a directory with no row, a row with no file, a prefix passing on a
+sibling's row — and seven deliberate loosenings of the tool were each caught by
+them. The cheap-tier wiring is prepared at
+`docs/ci/agent-gates-testdata-index.patch` and a human lands it with `git apply
+docs/ci/agent-gates-testdata-index.patch`; **until then no commit runs the
+check**, and `docs/agent-pipeline.md` carries it across a template re-copy as
+its item 9. This is tooling hygiene, as the issue says: two committed files and a
+directory listing, no capture opened, no EC, no hardware, and no claim that any
+fixture is correct.
