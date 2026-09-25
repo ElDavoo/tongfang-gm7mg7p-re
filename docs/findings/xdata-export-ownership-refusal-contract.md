@@ -90,6 +90,28 @@ The list is still nine long and is still read out of `main()`'s own AST, so a
 tenth mode fails there. The suite gains no entry-point knowledge of its own;
 the new cases go through the same `refuse()`.
 
+> **Corrected 2026-09-25, issue #608 (PR #675 review, round 3).** The sentence
+> above over-claims, and it is left standing rather than rewritten, because it
+> is the same promise this issue was opened to correct and the same one believed
+> for the life of the suite — the two siblings that carried it are corrected in
+> place at `xdata-no-eq-guard-refusal-contract.md` and in
+> [`xdata-dispatch-tripwire-coverage.md`](xdata-dispatch-tripwire-coverage.md).
+> The reader was a `visit_Return`, so it held for a mode dispatched as a
+> `return` and for nothing else: a tenth mode reached as
+> `demo_mode(args); return 0` recorded nothing, so it was in neither the
+> recorded list nor `MODES`, the comparing case stayed green, and the mode ran
+> unmocked. The reader now records a bare-name call in statement position as
+> well as return position, and the boundary it cannot close — a mode dispatched
+> through an attribute — is asserted by `mode_attributes` rather than assumed
+> away. The claim is still bounded after that, and "a tenth mode fails there"
+> does not survive it: a mode passed as *another call's argument* is recorded
+> only as the outer call, and `mode_attributes` is empty, so
+> `return check(demo_mode(args))` records `['check']` and reports by neither
+> reader — measured on synthetic source. That is the documented edge of the
+> positional rule (a call that is only another call's argument is that callee's
+> business, not `main()`'s dispatch), not a gap in it: the entry point
+> `main()` dispatches to has changed, so `MODES` has to change with it.
+
 What that buys is the property rather than the consequence: the refusal happens
 *before* any mode runs, so **a failing run of this suite cannot damage the
 repository.** The new accepted run is the deliberate exception and is confined

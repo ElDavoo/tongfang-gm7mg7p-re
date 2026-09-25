@@ -139,13 +139,16 @@ big trees are not copied. Each mutation was reverted immediately, and the
 mirror's two census CSVs were `cmp`-ed against their pre-run bytes after every
 run. To get the first row honestly, this branch's **base** version of the test
 file — the reader as it was before this change — was dropped into the mirror
-(`git show a37faef9:ec/tools/test_xdata_register_map.py`; `a37faef9` is what
-`git merge-base origin/main HEAD` returns on this branch, *"measure the citation
-calls a function boundary cut out of a citing listing (#668)"*, and the test
-file is byte-identical at its predecessor `4efb8eb0`) and the mutated mirror run
-against it, then against the fixed one. The commit rather than the branch name
-is what keeps the recipe re-runnable by someone who is not standing in this
-branch, once `origin/main` has moved on.
+(`git show a37faef9:ec/tools/test_xdata_register_map.py`; `a37faef9` is *"measure
+the citation calls a function boundary cut out of a citing listing (#668)"*).
+The commit is named directly rather than derived from a moving ref, and the
+property the row actually needs is that it holds the 20-test `visit_Return`
+version — verified, and not by assertion of a fork point: the test file is
+byte-identical at `a37faef9`, at its parent `4efb8eb0`, and at this branch's
+actual fork point `f0f3b251`, so all three yield the same base file. The
+mutated mirror was then run against it, and against the fixed one. The commit
+rather than the branch name is what keeps the recipe re-runnable by someone who
+is not standing in this branch, once `origin/main` has moved on.
 
 > **Corrected 2026-09-25, issue #608 (PR #675 review).** This recipe first said
 > `git show HEAD:ec/tools/test_xdata_register_map.py`, and `HEAD` is the wrong
@@ -171,6 +174,24 @@ branch, once `origin/main` has moved on.
 > empty), so either pin yields the same 20-test base file. The command now names
 > `a37faef9`, the actual fork point, and the predecessor is recorded only as the
 > commit the same bytes are also reachable at.
+>
+> **Corrected 2026-09-25, issue #608 (PR #675 review, round 3).** That
+> correction is left standing rather than rewritten, because it is itself a
+> correction, and it is wrong on both of the git facts it asserts. `git
+> merge-base origin/main HEAD` on this branch returns `f0f3b251` (*"stop a short
+> write arm from grading as an intact block (#674)"*), not `a37faef9` — the
+> branch has moved a commit past the fork point since — and `4efb8eb0` is the
+> **parent** of `a37faef9` (`git rev-parse a37faef9~1` is `4efb8eb0`), not its
+> grandparent; there is exactly one commit between them. The round-2 sentence
+> therefore repaired the pin and reintroduced a false ref claim, which is the
+> same defect the round-1 correction was made to fix. The command was never the
+> problem and is unchanged: `ec/tools/test_xdata_register_map.py` is verified
+> byte-identical (`md5 f7ad22f0`, 20 `def test_`, a `visit_Return` visitor) at
+> `a37faef9`, at its parent `4efb8eb0`, and at `f0f3b251`, so every one of them
+> yields the same 20-test base file. The `merge-base` gloss is now dropped from
+> the recipe above as a *reason* for the pin: the commit is named directly, and
+> the property the row actually needs — that it holds the 20-test `visit_Return`
+> version — is the thing asserted, rather than a moving ref standing in for it.
 
 The tenth mode is added the way a tenth mode is added: a `--demo-mode` flag
 registered on the mutually-exclusive group, and a branch dispatched as a
