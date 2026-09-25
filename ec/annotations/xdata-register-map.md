@@ -1084,10 +1084,10 @@ re-run over the committed tree, and the recipe is
 `xdata-06c2-06db-timers.md` §6a's with the `==` guard issue #178 added
 **removed** instead — the classifier-and-everything-it-counts regeneration, in
 its cheapest form. That is the `--no-eq-guard` flag
-(`../tools/xdata_register_map.py:4457`) with scratch outputs, which is what §6a
+(`../tools/xdata_register_map.py:4568`) with scratch outputs, which is what §6a
 and this block's transcript now do rather than a source edit: the flag is
 refused with the committed output paths
-(`../tools/xdata_register_map.py:4495-4499`), so everything below is a report
+(`../tools/xdata_register_map.py:4606-4611`), so everything below is a report
 about the committed census and not a replacement for it. The derivation, with
 the commands and their output, is
 `../../docs/findings/xdata-4-4-identity-rederivation.md`.
@@ -1216,7 +1216,7 @@ wrote /tmp/census/clusters.csv: 445 rows
   main-ec: 1218 distinct addresses, 14838 references, 394 clusters at threshold 0.5
   pd: 157 distinct addresses, 858 references, 51 clusters at threshold 0.5
   names: seeded 8, exact 0, carried by overlap 1, tied, not carried 0, with no name 436
-    main-ec-002 carries mode-oem-init by overlap, Jaccard 0.97 from kefb63d82f8c7 -- re-key annotations/xdata-cluster-names.csv if the name moved
+    main-ec-002 carries mode-oem-init by overlap, Jaccard 0.97 from kefb63d82f8c7 -- this run's ids are not the committed census's (--no-eq-guard), and annotations/xdata-cluster-names.csv is anchored to the committed one, so a carry here is arithmetic over a different clustering, not a re-key request
 ```
 
 **The copy-and-`str.replace` this transcript used to open with is gone, and its
@@ -1230,7 +1230,7 @@ stripped.startswith("==")`) so `--no-eq-guard` could be a flag. A regeneration
 now writes to a scratch path and reads the committed decompile in place, with
 no copy of the tool and no source edit. The `--out-*` flags are not decoration
 either: the tool refuses `--no-eq-guard` with the committed output paths
-(`../tools/xdata_register_map.py:4495-4499`), which is what keeps a run of
+(`../tools/xdata_register_map.py:4606-4611`), which is what keeps a run of
 this transcript from overwriting the census it is measuring.
 
 *(Correction, 2026-09-25, issue #582's re-run. The transcript above is the same
@@ -1243,11 +1243,14 @@ The superseded transcript is kept in the correction record at
 `../../docs/findings/xdata-4-4-identity-rederivation.md` rather than here, so
 that this block holds one run rather than two.)*
 
-The `re-key` is the one hand-edit this costs, and it is named because it is
-real: the names file is keyed by `cluster_key`, so a name that survives in
-changed form is now anchored to a key the current census no longer has. A
-regeneration's owner re-keys it once; the committed self-test fails on a stale
-key rather than letting the names file drift quietly out of the census.
+The re-key is the one hand-edit a regeneration costs, and it is named because it
+is real: the names file is keyed by `cluster_key`, so a name that survives in
+changed form is now anchored to a key the current census no longer has. The
+owner of a regeneration of the *committed* census re-keys it once; the committed
+self-test fails on a stale key rather than letting the names file drift quietly
+out of the census. **This run is not that regeneration** — its ids are off the
+committed census's, which is why its one carry line carries no re-key request,
+and the anchor such a request is made against is the paragraph below.
 
 **The names are anchored to the committed census, and this tree already needs
 the re-key it describes.** The census committed here is behind a fresh
@@ -1306,7 +1309,7 @@ whose `match` is `none`: `main-ec-145`, a two-address row, is printed with
 `mode-oem-init` beside a 0.02 Jaccard because that is the best guess `--map`
 found. Nine is the number of names, 10 the number of rows that mention one, and
 the report's own rule — a claim is counted only for a row that actually matched
-(`../tools/xdata_register_map.py:4298-4300`) — is what keeps the near miss out
+(`../tools/xdata_register_map.py:4396-4398`) — is what keeps the near miss out
 of the "claimed by more than one old row" cell, which is 0 above.
 
 **The test that settles it** is `../tools/test_xdata_cluster_names.py`, which

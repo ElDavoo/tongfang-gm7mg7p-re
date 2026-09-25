@@ -15,7 +15,7 @@ own argument is that a name is a human addition and an id is a rank, so a
 regeneration that rewrote the committed census to match the prose would invert
 the thing the section is about. Every run below writes to `/tmp`, and that is
 structural rather than a promise this file makes:
-`ec/tools/xdata_register_map.py:4495-4499` refuses `--no-eq-guard` with the
+`ec/tools/xdata_register_map.py:4606-4611` refuses `--no-eq-guard` with the
 committed output paths.
 
 ## What the committed census holds, with a parser rather than a summary
@@ -122,7 +122,7 @@ quotes ("of the 439 committed clusters, 315 change what their `main-ec-NNN`
 names and 124 do not"), so this re-run confirms that paragraph rather than
 replacing it. The `claimed by >1 old row` cell is 0 for a reason worth keeping:
 `--map` counts a claim only for a row that actually matched
-(`xdata_register_map.py:4298-4300`), so a sub-threshold best guess cannot be
+(`xdata_register_map.py:4396-4398`), so a sub-threshold best guess cannot be
 reported as a collision. The tool prints that cell's non-zero form itself, as
 `a new cluster claimed by more than one old row`, and printed nothing.
 
@@ -436,7 +436,7 @@ carry a correction naming their tree are left as they are.
   guard-on re-run of the committed tree is 439 → 439 with nothing moved, since
   `--check` is green. The suite's *assertions* are threshold-based
   (`assertGreater(len(moved), 300)`) and do not depend on any of it.
-- `ec/tools/xdata_register_map.py:2695` and `:2857` — two comments in the tool
+- `ec/tools/xdata_register_map.py:2723` and `:2885` — two comments in the tool
   carrying "the committed 427 ids" and "417 of the 427 clusters".
 - `ec/tools/check_cluster_citations.py:17-20` — its module docstring carries the
   427/439/48 and the 425/59/366/413 figures. **Not a false claim**: the checker
@@ -446,11 +446,11 @@ carry a correction naming their tree are left as they are.
 - `ec/annotations/xdata-register-map.md:189`, `:360`, `:404` — the H1/§1
   reproduction blocks and their correction paragraphs, which already say in
   place that their figures are the tree they were measured on.
-- `ec/annotations/xdata-register-map.md:1906`, `:1917`, `:1992`, `:2001` — §5's
+- `ec/annotations/xdata-register-map.md:1909`, `:1917`, `:1992`, `:2001` — §5's
   drift record and its two re-derivation blocks, which carry the "430 against
   the committed 427" contrast and the `k7497cf885614` row under an issue-#256
   correction that already says the gap closed.
-- `ec/annotations/xdata-register-map.md:1269` — §4.4's own issue-#256
+- `ec/annotations/xdata-register-map.md:1272` — §4.4's own issue-#256
   correction says `xdata-cluster-names.csv` "carries `k7497cf885614` and its
   eight siblings", in the present tense; issue #279 re-keyed that row to
   `kefb63d82f8c7`. Another issue's correction, in a block this change was told

@@ -21,7 +21,7 @@ claims, and until now only the first was tested.
 
 | | claim | held by |
 |---|---|---|
-| 1 | it flips exactly the `==` snippets in `CLASSIFIER_SHAPE` and nothing else | the tool's own `--self-test`, at `xdata_register_map.py:2521-2541`, and `test_xdata_cluster_names.py::TheGuardOffRegeneration`, which runs the census the flag produces — but that class has been in error in `setUpClass` since #528 and runs none of its six cases (see below), so of the two only the first is green today |
+| 1 | it flips exactly the `==` snippets in `CLASSIFIER_SHAPE` and nothing else | the tool's own `--self-test`, at `xdata_register_map.py:3196-3201`, and `test_xdata_cluster_names.py::TheGuardOffRegeneration`, which runs the census the flag produces — but that class has been in error in `setUpClass` since #528 and runs none of its six cases (see below), so of the two only the first is green today |
 | 2 | it is refused with `--check` and with `--self-test` | `Refusals.test_it_is_refused_with_check`, `..._with_self_test` |
 | 3 | it is refused unless given scratch `--out-registers` **and** `--out-clusters` | `Refusals.test_it_is_refused_bare_with_the_default_outputs`, `..._with_scratch_registers_only`, `..._with_scratch_clusters_only` |
 
@@ -83,12 +83,13 @@ this tree's and move as the tree's citations do; the split is what makes 45
 reconcilable with a 37 measured over `ec/annotations/` alone.
 
 **The tool's own comment said otherwise, and said so in this write-up's first
-draft too.** `xdata_register_map.py:3677-3680` claimed, from #528, that a bare
-run leaves `--check` green "because the files now agree with each other". That
-is false on this tree, for the reason above, and the comment is corrected in
-place here rather than left standing for the next reader to re-derive from.
-This paragraph originally restated the comment as if it were a measurement;
-it is a disproof of it.
+draft too.** The comment now at `xdata_register_map.py:4602-4605` claimed, from
+#528, that a bare run leaves `--check` green "because the files now agree with
+each other"; #562 reworded that line to say the opposite, so the wording this
+paragraph disproves is no longer in the tool. It was false on this tree, for
+the reason above, and it was corrected in place rather than left standing for
+the next reader to re-derive from. This paragraph originally restated the
+comment as if it were a measurement; it is a disproof of it.
 
 ## The tripwires are the design, not the decoration
 
@@ -611,7 +612,7 @@ not on a silent one.
 - **`--export-ownership`'s own pair of refusals.** #565 added a second flag
   carrying the same two guards for the same two reasons, immediately below the
   `--no-eq-guard` pair and immediately above the same dispatch
-  (`xdata_register_map.py:3698-3707`), and this suite pins only the
+  (`xdata_register_map.py:4623-4632`), and this suite pins only the
   `--no-eq-guard` half. The tripwire would catch a relocated `--export-ownership`
   guard just as well — it mocks the same nine entry points — so the coverage is
   one flag short of what the dispatch now carries, and that is recorded here

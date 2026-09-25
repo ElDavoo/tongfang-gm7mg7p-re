@@ -186,7 +186,7 @@ is unmoved by #267, but that is a fact about #267 rather than arithmetic, and
 inference is not a derivation.
 
 It does not need one, though. `write()` prints per-group totals on the way out
-(`xdata_register_map.py:2448-2452`), and both runs above show the line:
+(`xdata_register_map.py:3105-3110`), and both runs above show the line:
 
 | | `main-ec` distinct | `main-ec` references | `pd` distinct | `pd` references |
 |---|---:|---:|---:|---:|

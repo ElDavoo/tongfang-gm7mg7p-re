@@ -2374,7 +2374,14 @@ def load_cluster_names() -> dict:
     `cluster_id` because the rank is the thing that moves -- a row keyed by a
     rank would name a different cluster after every reshuffle, which is the
     whole problem. A missing file is an empty table and not an error: the
-    census is complete without names, and a name is a label, not a count."""
+    census is complete without names, and a name is a label, not a count.
+
+    It is anchored to the **committed** census -- the two CSVs as committed,
+    which is the run `--check` reproduces: the `==` guard on, no
+    `--export-ownership`, `--threshold 0.5`. A run that re-classifies
+    occurrences re-clusters, so its keys are not the committed ones, and this
+    file says nothing about that run's clusters. `--self-test` holds it to the
+    committed census for the same reason."""
     out = {}
     try:
         with open(NAMES_CSV, newline="") as f:
@@ -2964,14 +2971,86 @@ def outputs(args, built):
     return out
 
 
-def print_carry(report) -> None:
+def census_shape(args) -> str:
+    """The flags that put this run's cluster ids off the committed census, or
+    `""` when this run *is* the committed census.
+
+    `xdata-cluster-names.csv` is anchored to the committed pair of CSVs -- the
+    `==` guard on, no `--export-ownership`, `--threshold 0.5`, exactly the run
+    `--check` reproduces, so only a run whose keys are the committed ones can
+    turn a carry into a re-key request. The flags that re-cluster or re-key:
+
+        --threshold          the clustering floor itself, so the memberships
+                             can differ, though not uniformly: a higher floor
+                             splits the weakly-merged clusters and leaves the
+                             strongly-merged ones alone. Measured on this tree
+                             at 0.6: 631 clusters against the committed 439,
+                             of which 361 `cluster_key`s survive unchanged
+        --no-eq-guard        counts `==` as a store, so occurrences are
+                             re-bucketed and the memberships differ
+        --export-ownership   reads each routine from the export that owns it,
+                             so the reference counts differ, and 39 of the 439
+                             committed `cluster_key`s do not survive into it
+
+    `--no-writer-axis` is deliberately **not** among them: `build()` calls
+    `components(groups[g], threshold)` with the writer axis always on, and its
+    own help scopes it to `--threshold-sweep`, so a write passing it clusters
+    as a default run -- listing it is the same overclaim the other way.
+
+    Returned in `main()`'s own declaration order, the order the parser has.
+    """
+    off = []
+    if args.threshold != DEFAULT_THRESHOLD:
+        off.append(f"--threshold {args.threshold:g}")
+    if args.no_eq_guard:
+        off.append("--no-eq-guard")
+    if args.export_ownership:
+        off.append("--export-ownership")
+    return " ".join(off)
+
+
+def carry_advice(shape) -> str:
+    """The clause an overlap line ends with, for a run of this shape.
+
+    The committed census keeps the original wording verbatim, because on that
+    census the line *is* the re-key request: the keys are the committed ones,
+    so a name arriving by overlap is a name whose membership moved.
+
+    Any other run is a statement about its own clustering. `--export-ownership`
+    on this tree breaks 5 of the hand names outright
+    (`annotations/xdata-export-ownership.md` 5), so its three `carried by
+    overlap` lines are arithmetic over a different set of ids -- they are not
+    three names that moved, and a reader who re-keys the file from them would be
+    re-anchoring it to a census it is not anchored to. So the line says which
+    flags did the re-clustering, names the file, and denies the request. The
+    names are not thereby wrong or gone; this run simply cannot say whether
+    they moved, and does not claim to.
+    """
+    names_csv = os.path.relpath(NAMES_CSV, EC_DIR)
+    if not shape:
+        return f" -- re-key {names_csv} if the name moved"
+    return (f" -- this run's ids are not the committed census's ({shape}), and "
+            f"{names_csv} is anchored to the committed one, so a carry here is "
+            f"arithmetic over a different clustering, not a re-key request")
+
+
+def print_carry(report, shape) -> None:
     """What happened to every hand name, on stderr so the CSVs stay pipeable.
 
     Printed by every mode that builds a census, because a name that appears in
     `xdata-clusters.csv` without saying how it got there is the overclaim
     `CLAUDE.md` rules out: `seeded` and `exact` are the same claim, `overlap` is
     a weaker one with a score, a `tie` was not carried at all, and a `none` is
-    this rule not firing rather than a cluster that went away."""
+    this rule not firing rather than a cluster that went away.
+
+    The *advice* on an overlap line is the part that is not mode-independent,
+    and the split is deliberate (issue #851). The tally and the tie line above
+    and here are about this run's own arithmetic whatever flags produced it, so
+    they stay as they are. Whether a carry is a re-key request is a question
+    about the run: only a run whose cluster keys are the committed ones can
+    answer it, so `shape` -- `census_shape(args)` -- decides, and a run that is
+    not the committed census says so on the line rather than advising a re-key
+    it has no standing to advise."""
     tallies = collections.Counter(r["how"] for r in report)
     print("  names: " + ", ".join(
         f"{n} {tallies[h]}" for h, n in
@@ -2983,7 +3062,7 @@ def print_carry(report) -> None:
         if r["how"] == "overlap":
             print(f"    {r['cluster_id']} carries {r['name']} by overlap, "
                   f"Jaccard {r['jaccard']:.2f} from {r['from_key'] or 'an unnamed old row'}"
-                  f" -- re-key {os.path.relpath(NAMES_CSV, EC_DIR)} if the name moved",
+                  f"{carry_advice(shape)}",
                   file=sys.stderr)
         elif r["how"] == "tie":
             print(f"    {r['cluster_id']} is claimed by two names at Jaccard "
@@ -3010,7 +3089,7 @@ def check(args) -> int:
         else:
             print(f"{path}: {len(rows)} rows match a fresh generation from the "
                   f"committed tree at threshold {args.threshold}")
-    print_carry(built[3])
+    print_carry(built[3], census_shape(args))
     return rc
 
 
@@ -3029,7 +3108,7 @@ def write(args) -> int:
               f"{sum(e['refs'] for e in addrs.values())} references, "
               f"{sum(1 for r in cluster_rows if r['program'] == g)} clusters at "
               f"threshold {args.threshold}")
-    print_carry(built[3])
+    print_carry(built[3], census_shape(args))
     return 0
 
 

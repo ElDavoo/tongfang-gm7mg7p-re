@@ -66,11 +66,11 @@ part of the table below:
 
 | figure | what it is | line | verdict | pin |
 |---|---|---|---|---|
-| `1326` | the `wrote … after-registers.csv` row count | `:869` | held | `ORACLE["distinct"]`, `ec/tools/xdata_register_map.py:654`, asserted `:3406-3411` |
-| `440` | the `after-clusters.csv` row count | `:870` | held | `OWNERSHIP["clusters"]`, `ec/tools/xdata_register_map.py:1292`, asserted `:3889-3896` |
-| `1218` | main-EC distinct addresses | `:871` | held | `ORACLE["main_distinct"]`, `ec/tools/xdata_register_map.py:655`, asserted `:3406-3411` |
-| `9320` | main-EC references | `:871` | held | `OWNERSHIP["main_refs"]`, `ec/tools/xdata_register_map.py:1264`, asserted `:3857-3861` |
-| `157` / `858` | pd distinct addresses / references | `:872` | held | `ORACLE["extmem_pd_distinct"]` / `["extmem_pd_refs"]`, `ec/tools/xdata_register_map.py:649`, asserted `:3260-3277` |
+| `1326` | the `wrote … after-registers.csv` row count | `:869` | held | `ORACLE["distinct"]`, `ec/tools/xdata_register_map.py:654`, asserted `:3485-3490` |
+| `440` | the `after-clusters.csv` row count | `:870` | held | `OWNERSHIP["clusters"]`, `ec/tools/xdata_register_map.py:1292`, asserted `:3968-3975` |
+| `1218` | main-EC distinct addresses | `:871` | held | `ORACLE["main_distinct"]`, `ec/tools/xdata_register_map.py:655`, asserted `:3485-3490` |
+| `9320` | main-EC references | `:871` | held | `OWNERSHIP["main_refs"]`, `ec/tools/xdata_register_map.py:1264`, asserted `:3936-3940` |
+| `157` / `858` | pd distinct addresses / references | `:872` | held | `ORACLE["extmem_pd_distinct"]` / `["extmem_pd_refs"]`, `ec/tools/xdata_register_map.py:649`, asserted `:3339-3356` |
 | `390` / `50` | main-EC / pd cluster counts | `:871-872` | unheld | |
 
 **`390` and `50` are the residual, and only their sum is pinned.** `440` above
@@ -88,7 +88,7 @@ claim, so it is not folded in here. The write-up records it as the next call.
 | `7,189` / `7,935` | main-EC `read` references | `:782` | unheld | |
 | `193` / `142` | PD-image `write` references | `:783` | unheld | |
 | `279` / `239` | references in `write` for the 49 addresses in both images | `:784` | unheld | |
-| 43 addresses, `4,966` refs | `main-ec-003` (this block), **identical either way** | `:790` | held | the `size` and `refs` cells of `main-ec-003`, `ec/annotations/xdata-clusters.csv:4`, compared cell-for-cell by `check()` at `ec/tools/xdata_register_map.py:2994` (`:3008`) |
+| 43 addresses, `4,966` refs | `main-ec-003` (this block), **identical either way** | `:790` | held | the `size` and `refs` cells of `main-ec-003`, `ec/annotations/xdata-clusters.csv:4`, compared cell-for-cell by `check()` at `ec/tools/xdata_register_map.py:3073` (`:3087`) |
 
 **The eight `unheld` figures are unheld because the per-subset sums are computed
 inline in §6a's heredoc and asserted nowhere.** The census they come from is the
@@ -118,7 +118,7 @@ already does, and `9320` / `390` / `50` — the ones that really are unpinned �
 were left looking like company. `9320` was the sharpest case, because it was
 `OWNERSHIP["main_refs"]`, and **a value in a constant that no check reads is a
 promise wearing the costume of a pin**; that key is now read by the "and its
-main-EC half is" check at `ec/tools/xdata_register_map.py:3857-3861`, so the
+main-EC half is" check at `ec/tools/xdata_register_map.py:3936-3940`, so the
 console block above is six held against two unheld rather than five against
 three. The wrong classification is kept here verbatim, per
 [`../findings.md`](../findings.md) §4a-4d:)*
@@ -155,22 +155,30 @@ the older `:668` in its prose; **cite the live line, `:1212`.**
 
 **The two committed CSVs** — `ec/annotations/xdata-clusters.csv` at **439** rows
 and `ec/annotations/xdata-registers.csv` at **1,326**. `--check`
-(`ec/tools/xdata_register_map.py:2986`) compares every `read`, `write`, `refs`
+(`ec/tools/xdata_register_map.py:3073`) compares every `read`, `write`, `refs`
 and `addrs` cell against a fresh generation from the committed tree, cell for
 cell. It is the only mode that does.
 
-**The names-file re-key** — 9 keys in `ec/annotations/xdata-cluster-names.csv`.
-The tool says so itself, once per name carried by overlap, **on stderr** so the
-CSVs stay pipeable — the emitting function's own docstring opens with that reason
-(`xdata_register_map.py:2960`, *"What happened to every hand name, on stderr so
-the CSVs stay pipeable"*) and the print carries `file=sys.stderr` at `:2979`:
-*"-- re-key annotations/xdata-cluster-names.csv if the name moved"* (`:2976-2979`).
-**So read it off the terminal, not off a redirected `--check` pipe** — the pipe
-that keeps the CSVs usable is the same pipe the hint is kept out of. A
-re-derivation that moves a key leaves the names file attached to a membership
-that has gone, which is what `--self-test`'s check at `:4030` exists to catch
-("every key … names a cluster of the committed census"). **Re-key by hand; there
-is no command that writes that file for you.**
+**The names-file re-key** — 9 keys in `ec/annotations/xdata-cluster-names.csv`,
+**anchored to the committed census**: the two CSVs as committed, which is the run
+`--check` reproduces — the `==` guard on, no `--export-ownership`, `--threshold 0.5`.
+A run that re-classifies occurrences is a different clustering and cannot be made
+into that one: `--export-ownership` on this tree moves 39 of the 439 committed
+`cluster_key`s and breaks 5 of the 9 hand names outright
+(`xdata-06c2-06db-timers.md:851-855`), so its three `carried by overlap` lines are
+arithmetic over ids that were never the committed ones. **The notice carries that
+distinction on the line, so read the tail and not the count** — on the committed
+census a carry ends `-- re-key annotations/xdata-cluster-names.csv if the name
+moved` and *is* the request; on any other shape it names the flag that took the
+run off the anchor, names the file, and says it is not a re-key request
+(`xdata_register_map.py:3037` is the emitting function, `census_shape` the
+predicate, `carry_advice` the clause). All of it is **on stderr** so the CSVs stay
+pipeable — **so read it off the terminal, not off a redirected `--check` pipe**,
+the pipe that keeps the CSVs usable being the same pipe the hint is kept out of. A
+committed-shape re-derivation that moves a key leaves the names file attached to a
+membership that has gone, which is what `--self-test`'s check at `:4128` exists to
+catch ("every key … names a cluster of the committed census"). **Re-key by hand;
+there is no command that writes that file for you.**
 
 **The `> 300` floor** — `ec/tools/test_xdata_cluster_names.py:387`,
 `assertGreater(len(moved), 300)`, measured at **315** today: **15 of headroom**.
@@ -205,8 +213,14 @@ measurement.
    with `--no-eq-guard` and is the longest run in the tree; budget for it.
 4. **Re-derive §6a's figures from the two scratch CSVs**, per its own printed
    heredoc (`:920-937`), which prints the 833 / 210 / 0 triple itself.
-5. **Re-key `xdata-cluster-names.csv`** if step 1's *stderr* (§3) or a scratch run
-   moved a key.
+5. **Re-key `xdata-cluster-names.csv`** if a **committed-shape** run — step 1's
+   `--check`, or a bare write at the default threshold with the guard on —
+   reports a key that is no longer `seeded`/`exact` for its own cluster, which is
+   what `--self-test` reports as `stale` (§3). **§6b's `--export-ownership` run is
+   not a trigger.** Its three `carried by overlap` lines are that run's *own* ids,
+   and the tail on each says so in as many words; a run measured to break five of
+   the nine names cannot be reporting that three of them moved. Re-key by hand;
+   there is no command that writes that file for you.
 6. **Re-run `--check`** to confirm.
 
 A `bash .github/scripts/agent-gates.sh` run covers **all of steps 1 and 2** —
