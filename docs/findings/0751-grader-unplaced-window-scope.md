@@ -210,8 +210,8 @@ merged tree's, `main` plus these three" cannot be reconciled with 74, and the
 delta is two added methods plus one *updated* test, which is what the third row
 of the table below says in its own words ("unchanged in what it is for, updated
 for the narrowing"). **The section is headed "What is pinned" and read as
-current while it was 19 merges stale:** on the tree this file now sits in the
-suite runs **93**. And **the two figures are each right against a different
+current while it was 20 tests stale:** on the tree this file now sits in the
+suite runs **94**. And **the two figures are each right against a different
 revision, which the sentence does not name** — see the `565b6f3c` note below.
 The wrong reading is left above rather than edited out.)*
 
@@ -242,11 +242,13 @@ tip). Every step is attributed to a commit, so **no step is a residual**:
 | `f0f3b251` | 88 | +6 | #664 as #674, [`0751-early-exit-row.md`](0751-early-exit-row.md):230 |
 | `0a1fef97` | 88 | — | #549 as #710, `test_ec_watch.py` only |
 | `1e0bc0f2` | **93** | +5 | #548 as #712, [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md):210 |
-| `061b2213` | 93 | — | #707 as #723, the tip; touches no 0751 test file |
+| `061b2213` | 93 | — | #707 as #723, #728's base; touches no 0751 test file |
+| `a393229b` | **94** | +1 | #725 as #736, [`0751-grader-moved-unplaced-scope.md`](0751-grader-moved-unplaced-scope.md):201-202, the tip |
 
-The 74 to 93 is +19, and it is +2 (→76) +6 (→82) +6 (→88) +5 (→93) with the two
-zero steps contributing nothing. The +6 at `619afcb2` is seven methods added and
-one renamed: `test_a_mark_that_is_not_one_of_the_three_forms_is_an_error` became
+The 74 to 94 is +20, and it is +2 (→76) +6 (→82) +6 (→88) +5 (→93) +1 (→94)
+with the two zero steps contributing nothing. The +6 at `619afcb2` is seven
+methods added and one renamed:
+`test_a_mark_that_is_not_one_of_the_three_forms_is_an_error` became
 `test_a_mark_that_is_not_one_of_the_forms_is_an_error`, because #472 extended
 §3's forms from three to six. That rename is the subject of its own correction
 further down this file.
@@ -264,17 +266,17 @@ word for both, not either number.
 At the tip, 2026-09-25:
 
     $ cd ec/tools && python3 -m unittest test_grade_0751_isolation
-    .............................................................................................
+    ..............................................................................................
     ----------------------------------------------------------------------
-    Ran 93 tests in 0.197s
+    Ran 94 tests in 0.271s
 
     OK
 
     $ grep -c "    def test_" ec/tools/test_grade_0751_isolation.py
-    93
+    94
 
 The two agreeing is the point: a suite whose static method count and whose run
-count disagree would mean the figure is not what it claims. The 0.197 s is one
+count disagree would mean the figure is not what it claims. The 0.271 s is one
 runner's figure, recorded for the reason
 [`0751-grader-self-test-gate.md`](0751-grader-self-test-gate.md):80-95 records
 its own.
@@ -421,8 +423,8 @@ coupling holds and the case still passes, but "unedited" no longer describes the
 method: #472 renamed it, in `619afcb2`, to
 `test_a_mark_that_is_not_one_of_the_forms_is_an_error` — the "three" is gone
 because §3's forms went from three to six, and the case now quotes all six
-rather than three. It is at `ec/tools/test_grade_0751_isolation.py:2594` under
-the new name and is in the 93 above. The pre-rename spelling is left in the
+rather than three. It is at `ec/tools/test_grade_0751_isolation.py:2694` under
+the new name and is in the 94 above. The pre-rename spelling is left in the
 paragraph above so the reference is still findable.
 [`0751-grader-block-scoping.md`](0751-grader-block-scoping.md):165 and :189
 carry the same old spelling; that is #498's file and is not corrected here.)*
