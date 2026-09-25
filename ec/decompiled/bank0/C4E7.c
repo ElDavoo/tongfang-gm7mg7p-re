@@ -4,12 +4,16 @@
 // Machine output carrying this repository's symbols. Not the vendor's source.
 
 
-/* Reads the byte at XDATA 0x1665 and returns the test in the carry flag rather than in R7, which is
-   what the name says and what separates it from the other 0x1665 bit tests: JB 0xE4 jumps past the
-   SETB C to a bare RET, so the carry is left set when bit 4 is clear and clear when it is set. The
-   byte immediately below, at 0xC4E6, is a CLR C that no entry reaches. No other XDATA access and no
-   call. Callers that want a 0/1 value have to test C themselves, so this routine and
-   test_1665_bit4_inverted at 0xC295 read the same bit and hand back opposite-shaped answers.
+/* Reads the byte at XDATA 0x1665 and tests bit 4, which is what separates it from the other 0x1665
+   bit tests: it hands no value out in R7 or A, only in the carry flag the name is built on. The
+   five instructions are mov DPTR, movx A,@DPTR, JB 0xE4 -> 0xC4EF, SETB C, RET; the SETB C is on
+   the bit-4-clear arm, and on the bit-4-set arm JB jumps straight to the RET and leaves PSW.0 as
+   the caller passed it in, so whether the carry a caller reads back is the complement of bit 4
+   depends on the carry on entry. The listing does not establish that entry carry: the CLR C at
+   0xC4E6 immediately below is reached by no entry, and no committed listing calls 0xC4E7. The
+   _inverted in the name therefore records the SETB arm's convention, not a return value shown here.
+   No other XDATA access and no call. test_1665_bit4_inverted at 0xC295 reads the same bit and does
+   put a definite 0/1 in R7.
    type: reader
    evidence: ec/decompiled/bank0/C4E7.asm; ec/decompiled/bank0/C4E7.c
    basis: hand-decoded

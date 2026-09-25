@@ -3523,9 +3523,15 @@ registers:
       CLEAR -- named test_1665_bit4_inverted;
       0xC2C2 bit 6 (`jb acc.6, 0xC2CC`), returns R7 = 1 when bit 6 is CLEAR
       -- now seeded as test_1665_bit6_inverted;
-      0xC4E7 bit 4 (`jb acc.4, 0xC4EF`) returns the inverted value in the
-      carry flag, not in R7: SETB C on the bit-clear arm and a bare RET on
-      the other -- now seeded as cflag_1665_bit4_inverted;
+      0xC4E7 bit 4 (`jb acc.4, 0xC4EF`) is the one site that answers in the
+      carry flag rather than in R7, and does so on one arm only: SETB C runs
+      when bit 4 is clear, and when it is set JB jumps straight to the bare
+      RET and leaves PSW.0 as the caller passed it in. Whether the carry a
+      caller reads back is the complement of the bit therefore depends on the
+      carry on entry, which nothing here establishes -- no committed listing
+      calls 0xC4E7, and the CLR C at 0xC4E6 below is reached by no entry --
+      so the name records the SETB arm's convention rather than a return
+      value; now seeded as cflag_1665_bit4_inverted;
       0xDA4F bit 6 (`jnb 0xe6, 0xDA5F`) is the only site with a *named
       consequence*: in seed_07d3_gfid_and_08xx_defaults it sets bit 4 of
       0x07A4 (`orl a,#0x10`) when bit 6 is set and clears it (`anl a,#0xef`)
