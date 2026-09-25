@@ -1,0 +1,11 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; the
+# bytes below were written by hand. See ../README.md.
+# Shape: byte for byte 0751-isolation-run-multi-block/'s a0 before-dump, kept
+# under that file's own name so its <value> still says 0xA0 -- the whole of
+# what DUMP_VALUE reads out of a dump name. `ecrw.py dump 0x0750 0x0010` as
+# §3's step 0 takes it -- a short range around 0x0751 rather than the whole
+# 0x0700 page the procedure dumps, because §4.6 is the only question these
+# files are read for and 0x0751 is the only address it is about. 0x0751 reads
+# 0x10 here, the mode block 1 starts in. Copied rather than shared so an edit
+# to that day's dumps cannot move this set's block under it.
+0750: 00 10 00 00 00 00 00 00 00 00 00 00 00 00 00 00

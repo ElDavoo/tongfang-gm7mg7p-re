@@ -1,0 +1,9 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; the
+# bytes below were written by hand. See ../README.md.
+# Shape: byte for byte 0751-isolation-run-multi-block/'s a0 after-dump, the
+# same short dump after this block's write and the same page otherwise.
+# 0x0751 holds the written 0xA0, which per CLAUDE.md is a readback and not
+# evidence the EC acted on it -- which is what the grader's §4.6 section says
+# about this line, and all it says. Copied rather than shared so an edit to
+# that day's dumps cannot move this set's block under it.
+0750: 00 a0 00 00 00 00 00 00 00 00 00 00 00 00 00 00

@@ -1,0 +1,9 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# timestamp below was written by hand. See ../README.md.
+# Shape: byte for byte the 0751-isolation-run-void-block/ capture in that
+# directory, the 0x0F00-0x0F5F fan-table third of the same two actions, no
+# change rows at all -- §4.2's prediction -- and no restore mark either, so
+# this capture ends on the write like the other two.
+ts,addr,old,new
+2026-01-01T12:00:11.000+01:00,MARK,,no-op wrote 0x0751=0x10
+2026-01-01T12:00:41.000+01:00,MARK,,wrote 0x0751=0xA0

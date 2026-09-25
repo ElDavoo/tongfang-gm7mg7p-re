@@ -105,6 +105,21 @@ MULTI_A0_DUMPS = (str(MULTI / '2026-01-01-0751-isolation-a0-before-0700.txt'),
 MULTI_10_DUMPS = (str(MULTI / '2026-01-01-0751-isolation-10-before-0700.txt'),
                   str(MULTI / '2026-01-01-0751-isolation-10-after-0700.txt'))
 
+# The void one-block set with dumps of its own: `void-block/` byte for byte,
+# and `multi-block/`'s `a0` pair under that file's own name so the `<value>`
+# in it still says 0xA0. It is the case the two clean sets cannot reach --
+# `run/` and `multi-block/` both grade every window, so neither has a
+# `--dump` read for a block whose windows the run refused, which is what
+# issue #499 is about. Copied rather than composed from the two directories
+# in the test, for the reason the other derived sets here are: a failure
+# names its own case, and an edit to `multi-block/`'s dumps cannot move this
+# set's block under it.
+VOID_BLOCK_WITH_DUMPS = _set('void-block-with-dumps')
+VOID_DUMPS = HERE / 'testdata' / '0751-isolation-run-void-block-with-dumps'
+VOID_A0_DUMPS = (
+    str(VOID_DUMPS / '2026-01-01-0751-isolation-a0-before-0700.txt'),
+    str(VOID_DUMPS / '2026-01-01-0751-isolation-a0-after-0700.txt'))
+
 RUN_BEFORE = str(RUN / '2026-01-01-0751-isolation-a0-before-0700.txt')
 RUN_AFTER = str(RUN / '2026-01-01-0751-isolation-a0-after-0700.txt')
 # The other pair §3's steps 0 and 6 take, for the fan-table range. These are
@@ -1864,6 +1879,289 @@ class MarkSetTests(unittest.TestCase):
         self.assertIn('no block named: these files carry no §6 <value> and '
                       'neither --block nor --wrote was given', section)
         self.assertIn('256 address(es) compared', section)
+
+    # Issue #499: the block section knew the block was void and the two file
+    # sections were not told, so a §4.6 readback and a whole-block bracket
+    # were read and printed for a block whose windows the run had already
+    # refused -- in §6's own per-block command form, which is the form
+    # #380's run produces. The read itself stays: a void block says the
+    # capture is short a mark, not that these two files agree or disagree
+    # about anything. What changes is that the group line now carries the
+    # verdict, so neither can read as a result for a block the run refused.
+    def test_a_dump_pair_for_a_void_block_carries_the_blocks_verdict(self):
+        rc, out, _ = run(*VOID_BLOCK_WITH_DUMPS, '--block', '0xA0',
+                         '--wrote', '0xA0', '--dump-pair', *VOID_A0_DUMPS)
+        # Still 1, for the reason it already was: the block is void.
+        self.assertEqual(rc, 1)
+        section = whole_block(out)
+        line = [l for l in section.splitlines()
+                if l.startswith("  block 0xA0, from the <value>")][0]
+        # Which block, and what this run did with it -- on the one line that
+        # is the whole of the attribution, since the bracket body below
+        # cannot show either.
+        self.assertIn('block 0xA0', line)
+        self.assertIn('VOID', line)
+        self.assertIn('its windows were withheld above', line)
+        # The bracket is still read and still says what it says. 0x0751 is
+        # the one address this pair's two pages disagree on, and it lands in
+        # the "other" bucket as an address -- the section names which
+        # addresses differ, not what they hold.
+        self.assertIn('16 address(es) compared', section)
+        self.assertIn('other addresses that differ (1), not graded here',
+                      section)
+        self.assertIn('0x0751', section)
+        # And it is otherwise byte-identical to the same read over the same
+        # two files on the two-value day, which is what "the marker is the
+        # only change" has to mean -- asserted by comparing the two bodies
+        # rather than by picking lines out of one of them. The group line
+        # is above both and is the only thing that differs.
+        _, intact, _ = run(*MULTI_BLOCK, '--block', '0xA0', '--wrote', '0xA0',
+                           '--dump-pair', *MULTI_A0_DUMPS)
+        bodies = [re.split(r'^  block 0x[0-9A-F]{2}, .*\n', s, flags=re.M)[1]
+                  for s in (section, whole_block(intact))]
+        self.assertEqual(bodies[0].replace('void-block-with-dumps', '<set>'),
+                         bodies[1].replace('multi-block', '<set>'))
+
+    # The §4.6 half of the same judgement, pinned on its own because it is the
+    # half a later change would most easily get wrong in either direction.
+    # "The last dump still holds the written 0xA0" is a claim about two files
+    # on disk and is true whatever the CSV mark set did, so withdrawing it
+    # would throw away a fact the operator can use. What must not survive is
+    # the unmarked version: the sentence alone sits under a group line that
+    # names no verdict, which is exactly what it read as a result before.
+    def test_the_readback_for_a_void_block_is_still_taken_and_says_so(self):
+        rc, out, _ = run(*VOID_BLOCK_WITH_DUMPS, '--block', '0xA0',
+                         '--wrote', '0xA0', *dumps(*VOID_A0_DUMPS))
+        self.assertEqual(rc, 1)
+        section = dumps_section(out)
+        # Taken, and unchanged in what it says.
+        self.assertIn('the last dump still holds the written 0xA0', section)
+        self.assertIn('that is a readback, not evidence', section)
+        self.assertIn('2026-01-01-0751-isolation-a0-after-0700.txt: '
+                      '0x0751 = 0xA0', section)
+        # And scoped: the group line carries the verdict, and the sentence
+        # below says what kind of read it is, naming the block whose windows
+        # are not being read.
+        self.assertIn("block 0xA0, from the <value> in these files' §6 names "
+                      "-- VOID, its windows were withheld above", section)
+        self.assertIn("That is a read of these files and not of block 0xA0's "
+                      "windows", section)
+        self.assertIn('it says nothing about §4.1-§4.3 for that block',
+                      section)
+        # Not a register verdict, and not a claim the block was quiet.
+        self.assertNotIn('confirmed-', section)
+        self.assertNotIn('nothing happened', section)
+
+    # The closing sentence is the third half, and the only one that could read
+    # as a counterweight: it sits directly under "No window in this run was
+    # graded, so this output says nothing about §4.1-§4.3 for it", and before
+    # the fix it answered that with a flat claim that the pairs were read as
+    # a bracket on the same bytes. The pair *was* compared, so the count and
+    # the sentence both stand; what the withheld block adds is the scope.
+    def test_the_closing_summary_does_not_claim_a_whole_block_read_for_a_refused_block(
+            self):
+        rc, out, _ = run(*VOID_BLOCK_WITH_DUMPS, '--block', '0xA0',
+                         '--wrote', '0xA0', '--dump-pair', *VOID_A0_DUMPS)
+        self.assertEqual(rc, 1)
+        # The read is still reported, because one was taken.
+        self.assertIn('The whole-block dump pairs above were read', out)
+        # And scoped to the block whose windows were refused. The companion
+        # is the second sentence, so a reader who reads only the first --
+        # which is the case the withheld banner above makes -- still meets
+        # it a line later rather than nowhere.
+        self.assertIn('Those pairs are a read of two dump files, and not a '
+                      'statement about §4.1-§4.3 for block 0xA0', out)
+        self.assertIn('whose windows this run refused to print above', out)
+        # And the run really did grade nothing, so the sentence it scopes is
+        # not contradicting anything.
+        self.assertIn('No window in this run was graded', out)
+
+        # The negative that keeps it from being a sentence bolted onto every
+        # run: over the two-value day every window is graded, both blocks are
+        # intact, and there is nothing to scope.
+        rc, out, _ = run(*MULTI_BLOCK, '--dump-pair', *MULTI_A0_DUMPS)
+        self.assertEqual(rc, 0)
+        self.assertIn('The whole-block dump pairs above were read', out)
+        self.assertNotIn('Those pairs are a read of two dump files', out)
+        self.assertNotIn('windows this run refused to print above', out)
+
+    # The regression guard on the other side. The marker exists for a block
+    # whose windows were withheld, so an intact block's group line has nothing
+    # to carry and must come out exactly as it did before the marker existed --
+    # a marker on the common path would be noise on every run, and the line is
+    # the one the attribution tests cut on.
+    def test_an_intact_block_still_reads_with_no_verdict_marker(self):
+        rc, out, _ = run(*RUN_CAPTURES, '--wrote', '0xA0',
+                         *dumps(*(RUN_BEFORE, RUN_AFTER)),
+                         '--dump-pair', *(RUN_BEFORE, RUN_AFTER))
+        self.assertEqual(rc, 0)
+        for section in (dumps_section(out), whole_block(out)):
+            lines = [l for l in section.splitlines()
+                     if l.startswith("  block 0xA0, from the <value>")]
+            self.assertEqual(lines,
+                             ["  block 0xA0, from the <value> in these "
+                              "files' §6 names"])
+            self.assertNotIn('VOID', section)
+            self.assertNotIn('windows were withheld', section)
+        # The scoping line in §4.6 is keyed on the same marker, so it is
+        # absent here too rather than firing with nothing to say.
+        self.assertNotIn('That is a read of these files and not of block', out)
+        self.assertNotIn('Those pairs are a read of two dump files', out)
+
+    # The same silence one step further out: a `--dump` naming a value that is
+    # in no block of this run prints as a normal result today, and `verdicts`
+    # being empty for it is not the same as a verdict. Said here, where the
+    # index exists and the answer is free.
+    def test_a_group_naming_a_value_in_no_block_says_no_verdict_is_carried(self):
+        # 0xB0 is a value no block under test in `multi-block/` carries, and
+        # the PL2 example pair carries no `<value>` of its own, so the flag
+        # is the only thing filing it under 0xB0.
+        rc, out, _ = run(*MULTI_BLOCK, '--wrote', '0xB0',
+                         *dumps(*(PL2_PAIR[0],)), '--dump-pair', *PL2_PAIR)
+        self.assertEqual(rc, 0)
+        said = ('no block under test 0xB0 is in this run, so no verdict is '
+                'carried on this read')
+        for section in (dumps_section(out), whole_block(out)):
+            self.assertIn(said, " ".join(section.split()))
+            self.assertNotIn('VOID', section)
+        # Both sections are still read -- this is a read of two files, and the
+        # scope of it is what the sentence is about.
+        self.assertIn('256 address(es) compared', whole_block(out))
+        self.assertIn('0x0784  0x50 -> 0x28', whole_block(out))
+
+    # `verdicts_for` mirrors `report_blocks`' scoping, and the mirror is the
+    # load-bearing part: on a `--block 0xA0` run over `3blocks/`, the capture
+    # holds a genuinely void block 2 (0x00) and an intact block 3 (0x10), and
+    # this run checked neither. An index built over all of them would print
+    # "0x00 is VOID" about a block the report says it did not look at -- the
+    # defect this fixes, one step removed.
+    #
+    # Two guards stand between that and the output and both are pinned, so
+    # neither can be deleted as redundant: the readers pass `None` rather
+    # than the index for a group that is not the block under test, which is
+    # what this case asserts against, and `verdicts_for` itself scopes to
+    # `selected`, which `test_two_blocks_with_one_value_name_both_verdicts`
+    # asserts on directly -- an unscoped index would also mis-report which
+    # blocks the closing summary names as refused.
+    def test_an_unchecked_block_is_given_no_verdict(self):
+        rc, out, _ = run(*BLOCK_CAPTURES, '--block', '0xA0', '--wrote', '0xA0',
+                         *dumps(*MULTI_10_DUMPS),
+                         '--dump-pair', *MULTI_10_DUMPS)
+        # 0, and not 1: 0x00 is void but this run did not check it, and the
+        # exit code is about the block that was asked for.
+        self.assertEqual(rc, 0)
+        self.assertIn('the other 2 block(s) were not checked in this run', out)
+        for section, what in ((dumps_section(out), '§4.6'),
+                              (whole_block(out), '§4.1-§4.3')):
+            # The existing refusal, byte-unchanged.
+            self.assertIn('belongs to block 0x10, not the block under test '
+                          '(0xA0) -- not read for ' + what + ' here', section)
+            # And no verdict about it, or about the void block this run never
+            # looked at, in either section.
+            self.assertNotIn('VOID', section)
+            self.assertNotIn('is intact', section)
+            self.assertNotIn('no verdict is carried', section)
+        # The block section did print 0xA0's own verdict -- checked and
+        # intact, so the run is the clean one it says it is.
+        self.assertIn('block 1/3: intact', out)
+        self.assertNotIn('block 2/3: VOID', out)
+
+    # The mark set is a precondition of the windows and is checked as one, so
+    # "its windows were withheld" has two reasons and not one. `void-block/`
+    # is the restore missing; `missing-mark/` and `disagreeing-marks/` are an
+    # action missing or spelled two ways *inside* a block that does hold its
+    # restore, and `block_verdict` calls those blocks `intact`. A marker keyed
+    # on the restore alone would print nothing for them, which is this issue's
+    # defect reached by the other road: a read taken for a block whose windows
+    # the run refused. Neither of those sets carries a dump, so this is pinned
+    # on the builder against the real `problems` lists, and end to end by
+    # handing one of them the copied `0xA0` dumps.
+    def test_a_refused_mark_set_is_marked_as_well_as_a_void_restore(self):
+        for captures, kind in ((MISSING_MARK, 'missing'),
+                               (DISAGREEING, 'labels')):
+            reads, _, blocks, _ = as_main_reads(captures)
+            for b in blocks:
+                b.problems = grade.check_block_marks(b, reads)
+            block = blocks[0]
+            # The two facts `report_blocks` prints as two, and the marker
+            # keys on the one that withheld the windows.
+            self.assertEqual(grade.block_verdict(block), 'intact')
+            self.assertEqual([k for k, _, _ in block.problems], [kind])
+            self.assertEqual(grade.block_marker(block),
+                             'its mark set does not hold, its windows were '
+                             'withheld above')
+        # A block with no problems has nothing to mark, which is what keeps
+        # the common path byte-identical.
+        _, _, blocks, _ = as_main_reads(MULTI_BLOCK)
+        self.assertEqual(blocks[0].problems, [])
+        self.assertEqual(grade.block_marker(blocks[0]), '')
+
+        # And the same case end to end. Neither set carries a dump of its own,
+        # so the two are handed together: the `0xA0` dumps name `0xA0`, which
+        # is the one value under test in both, and the read is over the dumps
+        # either way -- which is the whole claim. Composed rather than built
+        # as a seventh directory for the reason `void-block-with-dumps/` is a
+        # copy is not: nothing here is a case a failure has to name, and the
+        # dumps are the ones already copied, so an edit to `multi-block/`
+        # cannot reach it.
+        rc, out, _ = run(*MISSING_MARK, '--wrote', '0xA0',
+                         *dumps(*VOID_A0_DUMPS), '--dump-pair', *VOID_A0_DUMPS)
+        self.assertEqual(rc, 1)
+        # The block section calls it intact and withholds its windows, which
+        # is the pair of facts the marker has to sit between.
+        self.assertIn("block 1/1: intact -- last mark 'restored 0x0751=0x10' "
+                      "is the restore", out)
+        self.assertIn('-- NOT GRADED, its windows are not printed', out)
+        for section in (dumps_section(out), whole_block(out)):
+            self.assertIn("block 0xA0, from the <value> in these files' §6 "
+                          "names -- its mark set does not hold, its windows "
+                          "were withheld above", section)
+        # Still read, still counted, still scoped.
+        self.assertIn('16 address(es) compared', whole_block(out))
+        self.assertIn('That is a read of these files and not of block', out)
+        self.assertIn('Those pairs are a read of two dump files', out)
+        # Not a void block, so the void wording is not what is claimed.
+        self.assertNotIn('VOID', out)
+
+    # The same two blocks under one value, which no committed capture has: §3's
+    # blocks are opened by their write mark, so the same value written twice in
+    # a day is two blocks under one name. `Block.index` is what tells them
+    # apart, and a marker naming only one of them would be a half-truth in
+    # whichever direction it picked -- a read under that value spans both.
+    # Asserted on the builder rather than on a run, because a fixture for it
+    # is a third block structure this tree does not otherwise carry.
+    def test_two_blocks_with_one_value_name_both_verdicts(self):
+        at = grade.parse_ts('2026-01-01T12:00:40+01:00')
+        printed = grade.Block(0xA0, [grade.Window(at, 'restored 0x0751=0xA0',
+                                                  'x.csv')])
+        void = grade.Block(0xA0, [grade.Window(at, 'wrote 0x0751=0xA0',
+                                               'x.csv')])
+        void.problems = [('void', void.windows[-1], 'short its restore')]
+        self.assertEqual(grade.verdict_marker([void]),
+                         'VOID, its windows were withheld above')
+        self.assertEqual(grade.verdict_marker([printed]), '')
+        # Both named, in block order, so a read under this value cannot be
+        # taken for the one block whose windows were printed.
+        self.assertEqual(
+            grade.verdict_marker([printed, void]),
+            'block 1 of 2 is intact, its windows were printed; block 2 of 2 '
+            'is VOID, its windows were withheld above')
+        self.assertEqual(grade.verdict_marker([void, void]),
+                         'block 1 of 2 is VOID, its windows were withheld '
+                         'above; block 2 of 2 is VOID, its windows were '
+                         'withheld above')
+        # And the index collapses the value to one entry, not two.
+        self.assertEqual(grade.verdicts_for([printed, void], None),
+                         {0xA0: 'block 1 of 2 is intact, its windows were '
+                                'printed; block 2 of 2 is VOID, its windows '
+                                'were withheld above'})
+        # A `--block` run's index is over the selected block alone, which is
+        # the scoping `test_an_unchecked_block_is_given_no_verdict` pins from
+        # the outside.
+        self.assertEqual(grade.verdicts_for([printed, void], void),
+                         {0xA0: 'VOID, its windows were withheld above'})
+        self.assertEqual(grade.verdicts_for([printed, void], printed),
+                         {0xA0: ''})
 
     # A label the block walk cannot place is fatal, and the message quotes the
     # three forms §6 fixes rather than describing the problem. The operator
