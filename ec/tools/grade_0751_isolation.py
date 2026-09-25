@@ -53,13 +53,19 @@ entirely between two of `ec_watch.py`'s sweeps is in no change row at all.
 Each read has a gap the other does not close. An address one dump covers and
 the other does not is a coverage gap, never a change.
 
-Neither flag is taken on trust. A `--dump-pair` given the same file twice is
-not a bracket and is not graded: a read diffed against itself holds every
-byte equal by construction. And §4.6 is a coverage statement before it is a
-comparison -- when the last `--dump` does not cover `0x0751` the section says
-the readback was not taken, and names a `--dump-pair` that does cover it,
-whose after file is what §6 says to pass last. Neither check is a claim about
-the machine; both are claims about which files were handed in.
+Nothing handed in is taken on trust. A capture given twice is one console and
+not two, and the run is refused before a mark is read: a file that agrees with
+itself satisfies every cross-console check there is, and the census would have
+counted the one console as two. A `--dump-pair` given the same file twice is
+not a bracket and is not graded, on the same reasoning: a read diffed against
+itself holds every byte equal by construction. The first is fatal and the
+second is flagged and skipped, because a repeated pair is one entry among
+several and the window report is still worth printing, where every section of
+this report is about the captures. And §4.6 is a coverage statement before it
+is a comparison -- when the last `--dump` does not cover `0x0751` the section
+says the readback was not taken, and names a `--dump-pair` that does cover
+it, whose after file is what §6 says to pass last. None of the three is a
+claim about the machine; each is a claim about which files were handed in.
 
 One thing is read that is not a byte at all: §3's per-block integrity check.
 §3 calls that check mechanical and then leaves the operator to eyeball it
@@ -110,8 +116,9 @@ The cross-console checks engage at two or more captures, which is §6's form.
 With one there is no other console for a mark to be missing from and no
 second spelling to disagree with it, so "the consoles agree" has nothing to be
 true of; the census says so in as many words rather than letting the single
-capture pass a check it never ran. The void rule and the label parse run
-either way.
+capture pass a check it never ran. The count is of distinct captures, so a
+file given twice cannot reach the threshold with itself. The void rule and
+the label parse run either way.
 
 This is the check over the committed CSVs, not the by-eye one at the machine,
 and the two are not the same reading. `ec_watch.py` appends a mark to its own
@@ -443,6 +450,31 @@ def read_dump(path):
     return values
 
 
+def distinct_captures(paths):
+    """The capture paths that are each one file, and the repeats dropped.
+
+    The first spelling of each file is the one kept, and a repeat comes back
+    as `(path as given, path it repeats, the file both resolve to)`, so a
+    caller can name all three: two spellings of one file is one file, and the
+    operator has to be able to see which of the two was dropped.
+
+    Keyed on `os.path.realpath` rather than on the string, for the reason
+    `report_dump_pairs` gives -- a path is what the operator hands in, and
+    `x.csv`, `./x.csv` and a symlink to it are one capture. One spelling of
+    the test, so `main` and the readers cannot disagree about which captures
+    a run has.
+    """
+    kept, seen, repeats = [], {}, []
+    for path in paths:
+        resolved = os.path.realpath(path)
+        if resolved in seen:
+            repeats.append((path, seen[resolved], resolved))
+        else:
+            seen[resolved] = path
+            kept.append(path)
+    return kept, repeats
+
+
 def coalesce_marks(marks):
     """One window per action, however many consoles recorded it.
 
@@ -660,7 +692,10 @@ def check_block_marks(block, captures):
     with, so they engage at two or more and the census says so below that
     rather than letting one capture pass a check it never ran.
     """
-    names = [path for path, _ in captures]
+    # `main` refuses a repeated capture before this runs; the line is held here
+    # too, because these are the checks a repeat would switch on and a reader
+    # reached directly still has one capture counted once.
+    names, _ = distinct_captures(path for path, _ in captures)
     known = set(names)
     problems = []
     for w in block.windows:
@@ -676,7 +711,7 @@ def check_block_marks(block, captures):
             problems.append(("labels", w, (
                 f"the captures spell this action differently -- {said} -- so "
                 "the window it opens is not the action any of them recorded")))
-        if len(captures) > 1 and set(by_source) != known:
+        if len(names) > 1 and set(by_source) != known:
             absent = ", ".join(os.path.basename(p)
                                for p in names if p not in by_source)
             problems.append(("missing", w, (
@@ -686,7 +721,7 @@ def check_block_marks(block, captures):
                 "timestamps fall in, and nothing in the result ties them to "
                 "the arm whose mark is gone -- so this arm can read quiet for "
                 "want of a mark rather than because nothing moved")))
-    for path, _ in captures:
+    for path in names:
         here = block.marks_in(path)
         if here and parse_mark(here[-1].label)[0] != "restore":
             problems.append(("void", block.windows[-1], (
@@ -785,8 +820,15 @@ def report_census(captures, windows, blocks, unplaced, unreads, selected):
     Nothing here is a result. It is a statement about which labels the
     captures hold, and the windows below are only as good as it is.
     """
-    names = [path for path, _ in captures]
-    total = sum(len(m) for _, m in captures)
+    # The same invariant as the refusal in `main` and as `check_block_marks`,
+    # and for the same reason: the count, the one-capture notice and the
+    # listing below are of the captures the operator really handed in, each of
+    # them once. `main` is in front of this and has refused the run already if
+    # there was a repeat, so what is defended here is a reader reached
+    # directly -- which the test suite does.
+    names, _ = distinct_captures(path for path, _ in captures)
+    marks_by_path = dict(captures)
+    total = sum(len(marks_by_path[path]) for path in names)
     print("\n=== mark census (§3/§6) ===")
     print(f"  {len(names)} capture(s), {total} mark row(s), "
           f"{len(windows)} action(s) after the merge")
@@ -800,7 +842,8 @@ def report_census(captures, windows, blocks, unplaced, unreads, selected):
             for line in lines:
                 print(wrap_note(line))
 
-    for path, marks in captures:
+    for path in names:
+        marks = marks_by_path[path]
         print(f"  {os.path.basename(path)} ({len(marks)} mark(s)):")
         for m in marks:
             role, _ = parse_mark(m.label)
@@ -1310,7 +1353,12 @@ def main(argv=None):
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("csv", nargs="+",
-                    help="ec_watch.py --mark --csv capture(s)")
+                    help="ec_watch.py --mark --csv capture(s), one per "
+                         "watcher, and never the same file twice -- the "
+                         "cross-console checks key off how many captures "
+                         "there are, and a file listed twice is one console "
+                         "agreeing with itself. By resolved path, so ./x.csv "
+                         "and x.csv are the same repeat")
     ap.add_argument("--dump", action="append", default=[], metavar="FILE",
                     help="ecrw.py dump output; repeat for before- and after-")
     ap.add_argument("--dump-pair", action="append", nargs=2, default=[],
@@ -1336,6 +1384,36 @@ def main(argv=None):
                          "can be attached per block; default is every block")
     args = ap.parse_args(argv)
 
+    paths, repeats = distinct_captures(args.csv)
+    if repeats:
+        # Refused, where a `--dump-pair` naming one file twice is only flagged
+        # and skipped, and the asymmetry is the shape of the report rather
+        # than a difference in how much the input is trusted: a repeated pair
+        # is one entry among several, so dropping it still leaves a window
+        # report and a §4.6 readback worth printing, while every section of
+        # this report is about the captures -- the census, the agreement
+        # checks, the void check. A skip would hand back a report that is
+        # quietly a single-capture run, which is the thing the operator has to
+        # be told about rather than left to infer. A wrong command line is
+        # fatal elsewhere here too (--wrote, --block, a --block in no block),
+        # and this is one. None of which is a claim about the machine: it is
+        # a claim about which files were handed in, before any of them is
+        # read.
+        for given, first, resolved in repeats:
+            if given == first:
+                print(f"\n{given!r} is given twice, and both times it is "
+                      f"{resolved}.", file=sys.stderr)
+            else:
+                print(f"\n{given!r} and {first!r} are both {resolved}.",
+                      file=sys.stderr)
+        print("A capture given twice is one console and not two, so nothing "
+              "was read: the census would have counted it twice, the "
+              "cross-console checks would have run with a file agreeing with "
+              "itself, and a mark that file did not record would have read as "
+              "recorded. §6 passes one CSV per watcher; pass each of them "
+              "once.", file=sys.stderr)
+        return 1
+
     wrote = parse_value(args.wrote) if args.wrote else None
     if args.wrote and wrote is None:
         print(f"\n--wrote {args.wrote!r} is not a value: the value written to "
@@ -1345,7 +1423,7 @@ def main(argv=None):
 
     captures = []
     marks, changes = [], []
-    for path in args.csv:
+    for path in paths:
         m, c = read_capture(path)
         captures.append((path, m))
         marks += m
@@ -1513,10 +1591,11 @@ def main(argv=None):
           "not the call itself. `confirmed-inert` as a standalone control "
           "additionally needs all three values, with and without the vendor "
           "service (§3a).")
-    # Four ways a run can be refused rather than graded, and they are four
-    # facts about the input rather than four verdicts about the machine: a
+    # Five ways a run can be refused rather than graded, and they are five
+    # facts about the input rather than five verdicts about the machine: a
     # block short its restore, a mark set that cannot support its windows, a
-    # label the block walk could not place, and a --block that named no block.
+    # label the block walk could not place, a --block that named no block, and
+    # a capture named twice.
     return 1 if (void or unreads or withheld) else 0
 
 
