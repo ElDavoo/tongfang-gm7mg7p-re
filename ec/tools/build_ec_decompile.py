@@ -2266,9 +2266,17 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
           len(_nwr) == 25 and _seed == {"auto": 15, "call-target": 9,
                                         "vector": 1},
           "%d row(s), %s" % (len(_nwr), _seed))
-    check("EC: no index row a CSV row backs is reported annotated=no -- a row "
-          "that applies and reads as unannotated is a name in Ghidra's reserved "
-          "namespace, not a stale annotation",
+    # The fact, not a cause. Both faults that have ever produced a non-empty
+    # _abu are checked or named elsewhere -- the reserved namespace by
+    # grade_name_basis.reserved_prefix_problems below, the stale export by the
+    # comment above -- but neither is what this predicate tests, so it does not
+    # assert either. See the matching print() in the --check report, which was
+    # reworded for the same reason.
+    check("EC: no index row a CSV row backs is reported annotated=no -- the "
+          "index's `annotated` column disagrees with the annotation layer for "
+          "it, and the two things to check first are "
+          "grade_name_basis.reserved_prefix_problems and whether the export "
+          "predates the row",
           _abu == [],
           str([(r["program"], r["addr"]) for r, _bk in _abu]))
     check("EC: the two ledger directions close the arithmetic -- 1,872 - 0 + 25 "
