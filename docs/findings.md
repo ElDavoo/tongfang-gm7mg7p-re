@@ -7168,3 +7168,25 @@ the two new kinds of pointer. **Until a human lands it, no commit runs the
 check.** This is tooling hygiene: two markdown files, a directory listing and two
 CSVs, no capture opened, no EC, no hardware, and no claim that any fixture is
 correct.
+
+## 46. The runner's red set: two suites, and the third of #162's blocker was a missing table row (2026-09-25, issue #751)
+
+The write-up is
+[`runner-red-suite-set.md`](findings/runner-red-suite-set.md); this is the
+summary. `docs/findings/0751-grader-self-test-gate.md` says **two** of the
+suites `tools/run-tests.sh` runs fail here, and three were failing: the two it
+names, both of them failing on their own subject, and
+`tools/test_readme_suite_table.py`, which was red because
+`ec/tools/test_inc_dptr_sites.py` had no row in `tools/README.md`'s suite table
+— the one step a runner that finds its suites by `find` cannot do for itself.
+That row has landed and the check is green, the count in the sibling file is
+corrected in place beside itself rather than edited out per the §4a-4d pattern,
+and no suite or test total is quoted anywhere new, because a total is a property
+of the merge. **What it changes for #162 is the size of its blocker**: three
+suites in two kinds — two judgements about the decompile with their own issues,
+and one piece of bookkeeping — so whoever lands the four-line wiring re-derives
+the set and finds two. `tools/README.md:14`'s own counts sentence is #615's, is
+out of date, and is invisible to every test by design, because the table check
+compares the *set* and never the counts; it is byte-untouched here. No register
+`status:` moved, no `.asm` or `.c` was hand-edited, no gate was wired, and
+nothing was read off a machine.
