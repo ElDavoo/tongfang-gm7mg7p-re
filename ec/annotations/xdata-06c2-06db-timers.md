@@ -182,7 +182,37 @@ per address and splitting them by whether the file is one of the 42:
 | the sweep's 46 byte addresses | **4,784** | 418 | 5,202 |
 
 For the 43 cluster addresses alone that is **4,642 of the 4,988 their rows sum
-to — 93%** — and the per-address result is starker than the total:
+to — 93%**.
+
+> **The tool now measures all of this (2026-09-25, issue #256), and the numbers
+> above are reproduced by it rather than by a hand count.** §4.5 of
+> `xdata-register-map.md` is the full reading; the three things this page's
+> version depends on are:
+>
+> - **The 42 are one co-reading group of exactly 42.** `xdata_register_map.py
+>   --co-reading-group-table` prints it, and `--self-test` asserts 24 groups
+>   over 120 files with 42 the largest, the first and last files being
+>   `bank1/8001.c` and `bank1/80EF.c`, the group's common core being 19
+>   addresses, and the group's `index.csv` listing sizes summing to **393** with
+>   **16** one-instruction listings. §2's three checkable facts and the census
+>   now agree by construction rather than by two people counting.
+> - **4,642 of the cluster's 4,966 is a published column.**
+>   `xdata-clusters.csv`'s `co_reading_refs` is 4,642 on the `main-ec-002` row
+>   and `co_reading_dominant` is `yes`, so "93% of the references are the 42
+>   exports" is a cell a reader can check rather than a sentence they have to
+>   trust. (`co_reading_refs` is measured against the cluster row's own 4,966;
+>   the 4,988 above is the sum of the 43 *register* rows, and the 22 between
+>   them is the same definitional split the parenthetical below records.)
+> - **Per address, `sources_beyond` is 0 for `0x0843`, `0x0844`, `0x08A8` and
+>   `0x06D6`** — every one of their source functions is in a group, so the
+>   count of sources this relation can tell apart is zero for all four. The
+>   per-address table below is the image's reading and is not affected; `refs`
+>   did not move, and neither did any other counting column.
+>
+> What the tool does **not** do is subtract anything, so this section's
+> arithmetic is unchanged and the census still publishes 168, 168, 170 and 148.
+
+The per-address result is starker than the total:
 
 | addr | census `refs` | direct `MOV DPTR,#addr` sites in the image |
 |---|---:|---:|
@@ -259,6 +289,28 @@ census has no notion of overlapping exports, and giving it one is the
 classifier's own issue. What this change does is record the size of the effect
 and refuse to read the inflated columns as evidence — §3 uses the image, not
 the census.
+
+> **CORRECTION, 2026-09-25 (issue #256): the census has that notion now, and
+> the first sentence above is the one that went stale.**
+> `xdata_register_map.py` carries a co-reading relation — two `.c` files in one
+> program naming the same eight or more XDATA addresses, grouped into connected
+> components per program — and publishes `co_reading` and `sources_beyond` per
+> address plus three columns per cluster. The sweep is **one group of exactly
+> 42** of them, which is §2's three checkable facts reproduced by the tool
+> rather than by a hand count. **None of it subtracts anything**: `refs` is
+> still 168, 168, 170 and 148 here, and no bucket, cluster id or `cluster_key`
+> moved. So the effect is visible in the census's own output where before it was
+> only in this page's prose — and it is still **not fixed**, because the
+> sentence that survives is the one about the columns: the inflated counts are
+> still inflated, and §3 still reads the image rather than the census.
+> `--collapse-co-readings` prints what assuming the 42 are one routine would
+> imply — `main-ec` 380 → 466 clusters, and the largest cluster *grows* from
+> 109 to 150 addresses, taking in 30 of this block's 43 and pushing the other
+> 13 out to clusters of one, two and seven — and writes nothing, because the
+> boundaries are still a hypothesis and `--mode rebuild-project` is still what
+> would settle them. That last figure is also why the collapse is not adopted:
+> de-duplicating the sources does not tidy the clustering up, it merges this
+> block into a larger one.
 
 ## 3. The per-address table
 
@@ -857,11 +909,29 @@ touching it, not the EC's sweep.
    references between direction buckets and out of none of them (0 of 1,171
    `refs` totals change). §6a carries the corrected measurement and
    `--no-eq-guard` re-derives it. What is genuinely still open is item 5.
-5. **The census's 42-fold double count** (§2a). Nothing in
+5. ~~**The census's 42-fold double count** (§2a). Nothing in
    `xdata_register_map.py` knows that 42 exports are one routine, and until
    something does, every reference count for a byte this sweep touches is
    inflated by roughly 42× — which is most of what made this cluster look
-   like the firmware's busiest.
+   like the firmware's busiest.~~ **Half closed by #256, and the half that is
+   left is the boundaries, not the measurement.** The census now knows: two
+   `.c` files in one program naming the same eight or more XDATA addresses are
+   co-readings, and the sweep is **one group of exactly 42** of them, with a
+   19-address common core and the §2 size pattern (393 bytes, 16 one-instruction
+   listings) reproduced by `--self-test`. `xdata-clusters.csv` publishes
+   `co_reading_refs = 4,642` of this cluster's 4,966 and
+   `xdata-registers.csv` publishes `sources_beyond = 0` for `0x0843`,
+   `0x0844`, `0x08A8` and `0x06D6`, so "inflated by 42×" is a cell rather than
+   a sentence. **What is still open is the part that would change a number:**
+   no `refs` value moved and no reference is de-duplicated, because doing either
+   is deciding that the 42 are one routine — a boundary claim, and the
+   boundaries are item 7. `--collapse-co-readings` prints what that assumption
+   implies — and the answer is not a tidy one: `main-ec` goes 380 → 466 clusters
+   and the largest cluster *grows* from 109 addresses to 150, taking in 30 of
+   this block's 43 and pushing the other 13 out to clusters of one, two and
+   seven. So the honest statement of where this stands is: **the inflation is
+   now visible wherever a reader looks, it is still there, and removing it would
+   not tidy the clustering up — it would merge this block into a larger one.**
 6. ~~**`0x1664` is read as a gate by the block and has no `registers.yaml`
    row.** One site, one bit, one caller — but the caller is the only countdown
    in the block whose rate is not its own value.~~ **Closed by #255**, in the
@@ -873,7 +943,11 @@ touching it, not the EC's sweep.
    sit in unexported gaps — a census question distinct from §2a, and open.
 7. **The 42 wrong function boundaries**, if anyone wants them fixed rather than
    documented. `build_ec_decompile.py --mode rebuild-project` writes the 7 MB
-   database, and two branches that both rebuild one cannot merge.
+   database, and two branches that both rebuild one cannot merge. Since #256
+   there is also a measurement of what fixing them would imply
+   (`xdata_register_map.md` §4.5, `--collapse-co-readings`), and a group table
+   that says which groups a different export would produce — the relation is
+   over *this* export's files, so it is a property of the boundaries too.
 8. **`0x0440`'s value.** 43 read sites, no direct `MOV DPTR` writer, and this
    block reads it three times. What 43 places in the firmware consult it for is
    still open (`xdata-0400-045f.md` §11 carries the same question from the

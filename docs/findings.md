@@ -4113,7 +4113,7 @@ comments come off.
 address tokens, and has no way to know 42 of those files are the same 393
 bytes. Measured, per address: **4,784 of the 5,202 census tokens for the
 sweep's 46 byte addresses come from those 42 overlapping exports — 92%**, and
-4,642 of the 4,989 the 43 cluster rows sum to, **93%**. Per address the gap is
+4,642 of the 4,988 the 43 cluster rows sum to, **93%**. Per address the gap is
 starker than the total:
 
 | | census `refs` | direct `MOV DPTR,#addr` sites in the image |
@@ -4123,12 +4123,36 @@ starker than the total:
 | `0x06D6` | 148 | **1** |
 | `0x0706` | 160 | **1** |
 | `0x08A8` | 170 | **2** |
-| all 43 | 4,989 | **345** |
+| all 43 | 4,988 | **345** |
+
+*(CORRECTION, 2026-09-25, issue #256: this row read 4,989, and 4,988 is what
+the committed CSVs sum to today. `xdata-06c2-06db-timers.md` §2a already carried
+the correction — 4,988, a gap of 22 to the cluster row's 4,966, and the gap is
+the five `program=both` members' PD references rather than staleness — so this
+section was a reader's second place to find the wrong figure. The wrong one
+stays visible per §4a.)*
 
 **So "nine of the ten busiest addresses in the firmware" is a statement about
 the export, not about the bytes.** None of those five is among the ten busiest
 once the 42-fold count comes out. The largest of the 43 by direct sites is
 `0x080D` at 78, and 74 of those are in the PD image.
+
+*(**Update, 2026-09-25, issue #256: the census now knows 42 files are one
+routine, and the paragraph above is no longer prose only.**
+`xdata_register_map.py` carries a co-reading relation — two `.c` files in one
+program naming the same eight or more XDATA addresses, grouped into connected
+components per program — and the sweep is **one group of exactly 42** of them,
+with a 19-address common core and §2's size pattern (393 listing bytes, 16
+one-instruction listings) reproduced by `--self-test` rather than by a hand
+count. `xdata-clusters.csv` publishes `co_reading_refs = 4,642` against this
+cluster's 4,966, and `xdata-registers.csv` publishes `sources_beyond = 0` for
+`0x0843`, `0x0844`, `0x08A8` and `0x06D6`, so the five rows above now have a
+column that says the same thing the image's site counts say. **Nothing was
+subtracted**: `refs` is still 168, 168, 148, 160 and 170, and no bucket,
+cluster id or `cluster_key` moved, so the counts this section warns about are
+unchanged — they are just no longer the only place the effect is written down.
+The full reading, including the counter-example that keeps this a count of
+files rather than a verdict, is `ec/annotations/xdata-register-map.md` §4.5.)*
 
 **2. Seventeen of the issue's twenty "unnamed" functions already had rows, and
 the three that did not were the only ones that had not.** `8008`, `8010` and
@@ -4138,6 +4162,19 @@ the one-instruction boundary is the call-target scan's hypothesis — the wordin
 `8001`-`800F` already used. The 42 rows describe slices of one routine and that
 is not fixed here: correcting the boundaries needs `--mode rebuild-project`,
 which writes the 7 MB database and cannot merge alongside anything else.
+
+*(CORRECTION, 2026-09-25, issue #256: "were `seed_basis=call-target`" is true
+of the state this section describes and **is not what `index.csv` says today**.
+All 42 rows now read `seed_basis=annotation`, because #179's annotation rows
+carried that field in with them. So a reader who opens `index.csv` to check the
+boundary hypothesis finds a column that no longer records which hypothesis
+produced the boundaries, and the wrong-but-benign conclusion to draw from it is
+that the call-target scan was superseded. It was not: the boundaries are the
+same hypotheses, recorded here and in `xdata-06c2-06db-timers.md` §2 rather than
+in that column. **The evidence for the split is the size pattern and nothing
+else** — 42 `index.csv` sizes summing to exactly 393 with 16 of them one
+instruction — which is why #256's co-reading group table reports the byte total
+and the one-instruction count per group and does not read `seed_basis` at all.)*
 
 **3. `bank1:0x1984` and `0x198A` are annotated bank-switch forwarders, and
 their 45/126 and 41/126 figures are the `callees` name-frequency column**,
@@ -4260,7 +4297,10 @@ Deliberately **not** widened to: the direction-classifier fix, the census's
 the block or for any of the 43 bytes, or a live write to `0x0440` or any byte
 in the sweep. Each is named in `ec/annotations/xdata-06c2-06db-timers.md` §6
 and §8 with what it would take; the read-only procedure for a human with the
-machine is that file's §7, and it is written down rather than run.
+machine is that file's §7, and it is written down rather than run. (The
+direction-classifier fix landed as #178 and the double count was measured by
+#256, both noted above; the 42 boundaries and the rest are still open, and
+nothing in this section is a claim that they are not.)
 
 *(**Update, 2026-09-24, §17a.** The Linux half of that procedure has now been
 run on the machine, read only. "Written down rather than run" held when this
