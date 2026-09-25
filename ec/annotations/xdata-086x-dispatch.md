@@ -158,6 +158,21 @@ is the bucketing of those 17, not a rival count of the 7.
 > when it was written: `xdata-symbols.csv` holds 172 rows against
 > `named_in_tree` 150, a gap of **22**.
 >
+> **FURTHER CORRECTION (2026-09-25, issue #254) to the line citations in the
+> #249 block above, not to its findings.** Every one of them was correct when
+> #249 wrote it and none of them resolves now, because the tool has grown since:
+> `ASSIGN` is at `xdata_register_map.py:235` (was `:191`), `store_target()` at
+> `:908` (was `:769`), the `==` rejection at `:931` (was `:788-789`), and the
+> 838-occurrence comment at `:930` (was `:561`). The `:64-75` docstring
+> paragraph still resolves. **The substance of the #249 correction is unchanged
+> and is confirmed again here:** `==` is excluded, the committed census is
+> post-guard, and `0x0860`'s committed row is 14 `read` / 2 `write` / 0
+> `read+write` / 1 `passed-to-call` over 17 references — the `14/2/0/1` in §3's
+> live table, not the `13/3/1/0` the quoted original text carried. The tool now
+> also has a `--no-eq-guard` switch that re-derives the pre-#178 buckets from
+> the committed tree; see `xdata-06c2-06db-timers.md` §6a for the measurement
+> and for why a re-freeze is no longer the thing to fear.
+>
 > **CORRECTION (2026-09-24, issue #280) to the figures in that last
 > sentence, which read as committed above.** `xdata-symbols.csv` now holds
 > **173** rows, not 172, so the gap is **23**, not 22; `named_in_tree` is
@@ -192,8 +207,8 @@ is the bucketing of those 17, not a rival count of the 7.
 `dispatch_on_0860` — an address handed to a call is that bucket and not a
 read, which is why the census's 14 reads are all comparisons. The row is not
 the tool's own sum: `HAND_CHECKED["0x0860"]` at
-`ec/tools/xdata_register_map.py:593` pins exactly those buckets, and the
-self-test's "hand-checked direction oracle" assertion at `:1901-1907` fails
+`ec/tools/xdata_register_map.py:762` pins exactly those buckets, and the
+self-test's "hand-checked direction oracle" assertion at `:2240-2248` fails
 loudly if a generated row ever parts company with it. It is one of five
 addresses in that oracle — and since issue #280 it is **not** the only net:
 the self-test now also asserts, over the whole tree rather than over these

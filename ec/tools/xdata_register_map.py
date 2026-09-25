@@ -175,6 +175,21 @@ function that stopped decompiling, a threshold that moved, a guard that was
 removed and a cluster that stopped existing are four different things, and this
 column can only report that its own rule did not fire.
 
+**`--no-eq-guard` re-runs the census with the `==` rejection turned off**, and
+is refused with `--check` and `--self-test` because both are gates: a flag that
+can change a bucket without changing anything on disk must not be reachable
+inside a mode whose whole claim is that nothing changed. It is also refused
+unless it is given `--out-registers` and `--out-clusters`, for the same reason
+one step removed: run bare it would write the pre-#178 census over the
+committed CSVs, and `--check` would then be green because the files agree with
+each other. It exists because
+`annotations/xdata-06c2-06db-timers.md` §6a measures what the guard bought, and
+that measurement has to stay re-derivable from the committed tree forever. It
+could not be, from a commit pointer: `git log -S 'startswith("==")'` reaches one
+squashed commit here, so the recipe was "copy the tool and patch it", which is
+how §6a came to compare the tool against itself. The numbers that recipe
+produced are real and the recipe is the problem; this flag is the recipe, kept.
+
 Usage:
     python3 ec/tools/xdata_register_map.py               # write the two CSVs
     python3 ec/tools/xdata_register_map.py --check       # diff vs committed
@@ -182,6 +197,7 @@ Usage:
     python3 ec/tools/xdata_register_map.py --map ec/annotations/xdata-clusters.csv
     python3 ec/tools/xdata_register_map.py --threshold-sweep
     python3 ec/tools/xdata_register_map.py --threshold-sweep --no-writer-axis
+    python3 ec/tools/xdata_register_map.py --no-eq-guard --out-registers /tmp/before.csv
     python3 ec/tools/xdata_register_map.py --reconcile ec/firmware/GMxMGxx_11.800
 """
 import argparse
@@ -893,7 +909,7 @@ def rhs_of(text: str, pos: int) -> str:
     return text[pos:]
 
 
-def store_target(text: str, start: int, end: int) -> bool:
+def store_target(text: str, start: int, end: int, eq_guard: bool = True) -> bool:
     """True if this occurrence is the assignment target itself.
 
     Every `=`-taking occurrence in the committed tree has `;`, `{`, `}`, `(`,
@@ -904,7 +920,11 @@ def store_target(text: str, start: int, end: int) -> bool:
     than to the lvalue. `*` before the address: a store through a dereference
     is a store to wherever the pointer points, not to this address.
     `==` after it: that is a comparison, and a comparison uses the value
-    without storing one."""
+    without storing one.
+
+    `eq_guard=False` is `--no-eq-guard`, and drops only that second exclusion:
+    the pre-#178 classifier, kept runnable so the guard's effect stays
+    measurable rather than becoming a paragraph of remembered numbers."""
     nxt = text[end:]
     stripped = nxt.lstrip()
     if not any(stripped.startswith(a) for a in ASSIGN):
@@ -912,7 +932,7 @@ def store_target(text: str, start: int, end: int) -> bool:
     # A separate test rather than a reordering of ASSIGN, because the two
     # exclusions are unrelated and `==` is by far the commoner of them:
     # 838 occurrences in the committed tree against two dereference stores.
-    if stripped.startswith("=="):
+    if eq_guard and stripped.startswith("=="):
         return False
     left = text[:start].rstrip()
     return not (left and left[-1] == "*")
@@ -1115,13 +1135,14 @@ def enclosing_call(text: str, start: int, func_names):
     return None
 
 
-def classify(text: str, start: int, end: int, addr: str, func_names) -> str:
+def classify(text: str, start: int, end: int, addr: str, func_names,
+             eq_guard: bool = True) -> str:
     """One occurrence -> one of BUCKETS. See the module docstring for why
     `passed-to-call` and `address-taken` are buckets of their own."""
     left = text[:start].rstrip()
     if left.endswith("&"):
         return "address-taken"
-    if store_target(text, start, end):
+    if store_target(text, start, end, eq_guard):
         eq = text.index("=", end)
         return "read+write" if addr in rhs_of(text, eq) else "write"
     if enclosing_call(text, start, func_names):
@@ -1256,7 +1277,7 @@ def touches(entry, bucket: str):
     return {f for f, buckets in entry["dirs"].items() if bucket in buckets}
 
 
-def scan(by_file, names, func_names, symbols):
+def scan(by_file, names, func_names, symbols, eq_guard: bool = True):
     """(per-program census, call graph, raw occurrence count) over the tree.
 
     An address is reached from many files in one program, so the per-file
@@ -1285,7 +1306,8 @@ def scan(by_file, names, func_names, symbols):
                 addr, spelling = int(m.group(1), 16), "DAT_EXTMEM"
             else:
                 addr, spelling = by_name[m.group(2)], "symbol"
-            bucket = classify(text, m.start(), m.end(), m.group(0), func_names)
+            bucket = classify(text, m.start(), m.end(), m.group(0), func_names,
+                              eq_guard)
             entry = per_addr[addr]
             entry["refs"] += 1
             entry["buckets"][bucket] += 1
@@ -1771,7 +1793,8 @@ def generate(args):
     names = load_names(funcs)
     symbols = load_symbols()
     func_names = {r["name"] for r in funcs.values()}
-    census, calls, _raw = scan(by_file, names, func_names, symbols)
+    census, calls, _raw = scan(by_file, names, func_names, symbols,
+                               not args.no_eq_guard)
     register_rows, cluster_rows, groups = build(funcs, names, symbols, census,
                                                calls, args.threshold)
     report = name_clusters(cluster_rows, load_cluster_rows(OUT_CLUSTERS),
@@ -1924,6 +1947,28 @@ def self_test(args) -> int:
         check(f"classify({snippet!r}) is {expected!r}",
               m is not None and classify(snippet, m.start(), m.end(),
                                          m.group(0), func_names) == expected)
+
+    # `--no-eq-guard` has to be a switch on the `==` exclusion and on nothing
+    # else, or the before/after in xdata-06c2-06db-timers.md 6a stops being a
+    # measurement of the guard and becomes a measurement of this flag. Pinned
+    # against the same literal table: every `==` snippet flips to `write`, and
+    # every other snippet is untouched. The count is an assertion rather than a
+    # loop over the committed tree, so it cannot be satisfied by a tree that has
+    # stopped containing comparisons.
+    def buckets_of(snippet, eq_guard):
+        m = pattern.search(snippet)
+        return classify(snippet, m.start(), m.end(), m.group(0), func_names,
+                        eq_guard)
+
+    eq_snippets = [s for s, _ in CLASSIFIER_SHAPE if "== " in s]
+    flips = [s for s, _ in CLASSIFIER_SHAPE
+             if buckets_of(s, False) != buckets_of(s, True)]
+    check(f"--no-eq-guard flips exactly the {len(eq_snippets)} `==` snippets in "
+          f"CLASSIFIER_SHAPE and no other (flipped {len(flips)})",
+          flips == eq_snippets and eq_snippets)
+    check("and each flipped `==` snippet becomes a `write`, which is the "
+          "pre-#178 miscount this flag exists to reproduce",
+          all(buckets_of(s, False) == "write" for s in eq_snippets))
 
     def tally(g, spelling=None):
         sub = groups[g] if spelling is None else of(g, spelling)
@@ -2652,6 +2697,10 @@ def main() -> int:
                     help="for --threshold-sweep: cluster on the touching-function "
                          "relation alone, which is how the second relation's "
                          "contribution is measured")
+    ap.add_argument("--no-eq-guard", action="store_true",
+                    help="count `==` as a store, the way the pre-#178 classifier "
+                         "did, so the guard's effect stays measurable; refused "
+                         "with --check and --self-test")
     ap.add_argument("--out-registers", default=OUT_REGISTERS,
                     help=f"per-address CSV (default: {OUT_REGISTERS})")
     ap.add_argument("--out-clusters", default=OUT_CLUSTERS,
@@ -2660,6 +2709,27 @@ def main() -> int:
                                                          "registers.yaml"),
                     help="registers.yaml for --reconcile")
     args = ap.parse_args()
+
+    # Refused here, before any mode runs, rather than inside the two of them:
+    # both are gates, and a flag that re-buckets occurrences while writing
+    # nothing must not be reachable from a mode whose claim is that the
+    # committed CSVs already match. `--check` would go red and `--self-test`
+    # would go red for the same reason, which is the point -- they should not
+    # be answerable to a switch.
+    if args.no_eq_guard and (args.check or args.self_test):
+        ap.error("--no-eq-guard changes what the census says, so it cannot be "
+                 "combined with --check or --self-test. To see the pre-#178 "
+                 "buckets, write a census to a scratch path and diff it "
+                 "against the committed one.")
+    # The other way this flag could do damage is quieter: run bare it writes the
+    # pre-#178 census over the committed CSVs, after which --check is green
+    # because the files now agree with each other and the source of truth is
+    # wrong. So a --no-eq-guard run must be given somewhere to write.
+    if args.no_eq_guard and (args.out_registers == OUT_REGISTERS
+                             or args.out_clusters == OUT_CLUSTERS):
+        ap.error("--no-eq-guard would overwrite the committed census, so it "
+                 "must be given scratch outputs: pass --out-registers and "
+                 "--out-clusters (see annotations/xdata-06c2-06db-timers.md 6a).")
 
     if args.self_test:
         return self_test(args)

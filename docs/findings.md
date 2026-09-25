@@ -4065,8 +4065,10 @@ over `0x0460`-`0x09CE`, which is this block. The cluster that had taken the old
 half is row 4, `main-ec-003`, over `0x045C`-`0x1C3A`. Its 11-address half is
 row 12, `main-ec-011`, over `0x045E`-`0x1F07`. The four-address remainder is row
 50, `main-ec-049`. None of the three shares an address with this block. The ids
-move because `xdata_register_map.py:1027` numbers clusters by size, which is the
-hazard `ec/annotations/xdata-register-map.md` §5 records for its own table. The
+move because `xdata_register_map.py:1647` numbers clusters by size, which is the
+hazard `ec/annotations/xdata-register-map.md` §5 records for its own table. (That
+line read `:1027` until issue #254; the tool grew and the sort moved with it.)
+The
 wrong ids are left standing where they quote issue #179, per §4a;
 `ec/tools/check_cluster_citations.py` is what holds the rest of the tree to the
 census.
@@ -4198,6 +4200,28 @@ comparisons are `==`" is a second, independent misreading:
 `xdata-register-map.md` §4.1 defines `read+write` as "an `=` target whose
 right-hand side names the same address", so those 42 are 42 read-modify-writes,
 and per §1 all 42 come from the overlapping exports.
+
+> **Correction, 2026-09-25 (issue #254).** The paragraph above is kept as it was
+> written and three of its claims do not survive re-measurement. The lead —
+> "the direction-classifier defect reshapes the unit this issue was scoped to" —
+> is **wrong**. The defect is real, it was fixed in issue #178, and it does
+> **not** reshape this block: with the guard and without it, `main-ec-002` holds
+> the same 43 addresses with the same 4,966 references, membership identical
+> address for address, because the guard moves references *between* direction
+> buckets and out of none of them — **0 of 1,171 addresses have a different
+> `refs` total either way**. There is no 44-address / 248-reference cluster in
+> either generation. An issue scoped to "read `main-ec-002`" is therefore scoped
+> to a membership its own prerequisite leaves alone. The guard's real reach is
+> the two figures that did reproduce: 833 references leaving `write`, 210 of
+> 1,171 addresses changing, and the `0x08A8` / `0x0843` rows.
+> Both line citations were wrong and never resolved: the classifier is
+> `store_target()` at `xdata_register_map.py:908`, its `==` rejection is at
+> `:931`, and `ASSIGN` is at `:235` — not `:277` and not line 138. The 1,172 is
+> 1,171 rows.
+> The diff this called follow-up work has landed, and the census in the tree has
+> been post-guard since. `xdata_register_map.py --no-eq-guard` now re-derives
+> the before column from the committed tool, and
+> `xdata-06c2-06db-timers.md` §6a carries the corrected measurement.
 
 **What a clean result means, precisely.** The committed files carry no
 structural fault, and every count in the new annotation is reproducible from
