@@ -226,7 +226,12 @@ on the two partial fixtures. `void-block`, `missing-mark`,
 `example-mailbox-poke` captures are byte-for-byte unchanged, exit codes
 included.
 
-## Left out on purpose, and it wants its own issue
+## Left out on purpose — and it wanted its own issue
+
+*(This is the gap issue #497 opened from this file. It was **flagged, not
+fixed** here; it is fixed under #497, and the one-block guard it turned out to
+need is explained in
+[`0751-grader-block-scope-claims.md`](0751-grader-block-scope-claims.md).)*
 
 A `--block 0xA0` run over `0751-isolation-run-3blocks/` grades that block's
 own windows and withholds nothing *within the run* — `graded == len(shown)`,
@@ -243,8 +248,12 @@ adjacent question and it is a different one from this defect:
 The existing sentence already carries "for this capture's window only", the
 §7 paragraph already says the output is an input to the call and not the
 call, and widening this change into `--block`'s semantics would buy no part of
-what this issue asks for. **Flagged, not fixed** — it is the one thing in this
-neighbourhood worth an issue of its own.
+what this issue asks for. **Flagged, not fixed here** — it is the one thing in
+this neighbourhood worth an issue of its own, and that issue is
+[#497](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues/497). The two
+readings above turned out to be the right frame: the `--block` run's
+denominator was always right, and what it lacked was any statement that it was
+one block of a day.
 
 Also unchanged, deliberately: `docs/hardware-tests/manual-fan-ctrl-0751-isolation.md`
 does not quote the closing-summary text verbatim and §7's `confirmed-inert`
