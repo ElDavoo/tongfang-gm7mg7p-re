@@ -151,7 +151,7 @@ unproven.** 28 of the 42 rows say the body runs `0x8018` to the `ret` at
 `0x8189`, which is 370 bytes. The body is 393 bytes and starts 23 bytes
 earlier, at `0x8001`. The 23 bytes the claim omits are the `0x06C6` and
 `0x06CD` countdowns in full and the `mov DPTR,#0x06D1` / `movx` / `jz` / `dec A`
-that precede the `0x06D2` store-back. Separately, 31 of the 42 rows say in
+that precede the store-back at `0x8018`. Separately, 31 of the 42 rows say in
 their own words that the boundary is a hypothesis of the call-target scan's
 making; that hypothesis is now tested rather than open. The wrong wording is
 left standing in every affected row with the correction beside it, per
