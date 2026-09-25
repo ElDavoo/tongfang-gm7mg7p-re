@@ -178,7 +178,7 @@ windows were not read rather than guessing what they would have shown.
 
 ## What is pinned
 
-`ec/tools/test_grade_0751_isolation.py`, 46 tests before and 50 after, all
+`ec/tools/test_grade_0751_isolation.py`, 48 tests before and 52 after, all
 passing under `bash tools/run-tests.sh ec/tools`:
 
 | test | case | what it holds |
