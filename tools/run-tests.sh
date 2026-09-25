@@ -29,6 +29,7 @@ if [ "${#dirs[@]}" -eq 0 ]; then
 fi
 
 suites=0
+tests=0
 failed=0
 
 # One interpreter per FILE -- not per directory, and not one for the lot.
@@ -64,11 +65,18 @@ while IFS= read -r -d '' path; do
   rc=$?
   suites=$((suites + 1))
   n=$(printf '%s\n' "$out" | sed -nE 's/^Ran ([0-9]+) tests? .*/\1/p')
+  # Counted here rather than in the pass branch, and a failing suite
+  # included rather than skipped, because the figure this builds is *tests
+  # run*: a failure changes the verdict, not how much of the suite ran. The
+  # ${n:-0} is for the branch below where there is no n at all -- a unittest
+  # that changed its summary line, or never printed one.
+  tests=$((tests + ${n:-0}))
 
   # The exit code decides pass or fail; the count only decorates it, so a
   # unittest that ever changes its summary line costs a count and not a
   # verdict. The counts are printed, never asserted -- an expected count in a
   # runner turns every added test into a failure, which is the wrong trade.
+  # That is why the total below is there to be read off a run, and not a gate.
   if [ "$rc" -ne 0 ]; then
     failed=1
     printf '%s: FAILED\n' "$shown"
@@ -106,8 +114,8 @@ printf '      no EC is opened, no register is read back, and no HID node is\n'
 printf '      touched. See linux/lightbar/README.md and the per-tool headers.\n'
 
 if [ "$failed" -ne 0 ]; then
-  printf '\n%d suite(s) run; one or more FAILED.\n' "$suites"
+  printf '\n%d suite(s) run, %d tests; one or more FAILED.\n' "$suites" "$tests"
   exit 1
 fi
 
-printf '\nAll %d suite(s) passed.\n' "$suites"
+printf '\nAll %d suite(s) passed, %d tests.\n' "$suites" "$tests"

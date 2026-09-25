@@ -387,3 +387,11 @@ is 21 and 575. The table is now two rows short rather than one —
 `test_export_ownership.py` (26 of them, #565) is unlisted for the same reason
 `test_group_functions.py` is. The count is printed by the runner, so it is a
 thing to re-measure rather than to maintain by hand.
+
+**Resolved by #606**, which left this section as written rather than editing
+it: both rows are in `tools/README.md` now, and the runner also prints the
+test total beside the suite count, so the figures above are that PR's and not
+this file's to keep in step. The reason this had to be a follow-up twice over
+is the half #606 added — `tools/test_readme_suite_table.py` compares the
+discovered suite set against the table's first column in both directions — so
+the next missing row is a failing run rather than a reading of the tree.
