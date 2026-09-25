@@ -380,18 +380,33 @@ Each occurrence lands in exactly one, decided from the C around it:
 
 | bucket | what it is | total |
 |---|---|---:|
-| `read` | the value is used, which includes every `==` comparison | 8,319 |
-| `write` | an `=` target, including Ghidra's `DAT_EXTMEM_1300 = DAT_EXTMEM_1300 & 0x0f` spelling | 3,186 |
-| `read+write` | an `=` target whose right-hand side names the same address | 2,476 |
-| `passed-to-call` | an argument of a call to a routine `index.csv` records | 549 |
-| `address-taken` | `&DAT_EXTMEM_xxxx` | 271 |
-| | | **14,801** |
+| `read` | the value is used, which includes every `==` comparison | 8,341 |
+| `write` | an `=` target, including Ghidra's `DAT_EXTMEM_1300 = DAT_EXTMEM_1300 & 0x0f` spelling | 3,195 |
+| `read+write` | an `=` target whose right-hand side names the same address | 2,482 |
+| `passed-to-call` | an argument of a call to a routine `index.csv` records | 534 |
+| `address-taken` | `&DAT_EXTMEM_xxxx` | 267 |
+| | | **14,819** |
+
+**Drift record, 2026-09-25 (issue #256).** Every total in this table was
+stale, and the table is re-derived here rather than left to disagree with the
+tool it describes. The row above this block read `8,319 / 3,186 / 2,476 / 549 /
+271`, totalling **14,801** — that is the census as §4.3's `==` fix left it, and
+`xdata_register_map.py`'s own comment records the movement since: issue #263
+read the buckets against a pristine checkout of its parent commit and found
+`read` 8,317→8,341, `passed-to-call` 543→534 and `address-taken` 270→267, with
+`write` and `read+write` standing, most of it already on `main` before that
+branch touched anything. The totals now published are the ones
+`--self-test` pins as `BUCKET_TOTALS`, which is where a reader should take a
+figure from; the wrong ones stay here because a drift record that deletes the
+drift records nothing. **None of this is §4.5's doing**: the co-reading columns
+are appended to both CSVs and `refs` is unchanged on every row, so the bucket
+totals are the same numbers a fresh generation produced before this change.
 
 The totals are the tool's own, and the self-test pins them — but a pin on this
 table is internal: these are the buckets summed back to themselves, so they
 catch a classifier that changes and not one that was wrong. §4.3 is what the
 `read` row's size is *evidence* of, and it needed an external check. What moved
-here is 837 references leaving the two store buckets: 833 `write` and 4
+in §4.3 is 837 references leaving the two store buckets: 833 `write` and 4
 `read+write` became reads, 836 of them, plus **one that became
 `passed-to-call`** because a comparison inside a call's argument list is a
 handoff and not a bare read. Nothing moved into `address-taken`.
@@ -819,6 +834,200 @@ resolves all three citation forms — `main-ec-NNN`, `cluster_key` and
 can be run against a regeneration's output, which is the half of the issue's
 test the committed checker could not do on its own.
 
+### 4.5 A source count is a count of files, and 42 files can be one routine (2026-09-25, issue #256)
+
+Numbered after §4.4 rather than before it, so every page that cites §4.4's
+identities still resolves.
+
+`refs` counts *references*, and a reference is attributed to a source function
+file — `blank_entry()["funcs"]` has been that per-file incidence matrix since
+the beginning, and §5's `functions` column is its published form. What the
+census had no notion of is the other half: **42 `.c` files naming the same
+addresses.** The counter sweep of `xdata-06c2-06db-timers.md` §2 is 393 bytes
+the exporter split into 42 listings, and all 42 decompiled the routine rather
+than their own bytes, so the 19 addresses every one of them names are each
+counted 42 times over — `0x0843` is credited with 168 references and has **one**
+direct `MOV DPTR,#0x0843` in the image. The relation this section adds is:
+
+> **Two `.c` files in one program are co-readings when they name the same
+> `COREADING_MIN_CORE` (8) or more XDATA addresses. A co-reading group is a
+> connected component of that relation, computed per program, exactly as
+> `components()` does for addresses.**
+
+Components rather than a cover, for `components()`'s reason: the relation is
+not transitive, so a greedy pass would make the output depend on file order.
+Per program, because the two images have separate XDATA maps and a shared
+address *number* is not a shared byte — `--self-test` asserts no group ever
+spans two.
+
+**The floor is recorded, not tuned.** `python3 ../tools/xdata_register_map.py
+--co-reading-sweep` prints it:
+
+| floor | 2 | 4 | 6 | **8** | 10 | 12 | 16 | 20 | 24 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| largest group | 282 | 61 | 42 | **42** | 42 | 42 | 42 | 41 | 40 |
+| files in groups | 723 | 335 | 213 | **120** | 89 | 79 | 62 | 50 | 48 |
+
+Floors 2 and 4 are the trivially-equal-address-set artefact — two files that
+each name one address score a Jaccard of 1.00 — and 6 to 16 hold the sweep's 42
+together while the file count keeps falling. 8 is where files-in-groups halves
+against 6 with the largest group unchanged, the same "recorded, not tuned"
+argument §4.2 makes for `DEFAULT_THRESHOLD`.
+
+**The groups, all 24 of them**
+(`--co-reading-group-table` prints this; `core` is the addresses *every* member
+names, `bytes` the sum of the group's `index.csv` listing sizes, `1-byte` how
+many of those listings are a single instruction):
+
+| program | files | core | bytes | 1-byte | first → last |
+|---|---:|---:|---:|---:|---|
+| `bank1` | **42** | 19 | **393** | **16** | `bank1/8001.c` → `bank1/80EF.c` |
+| `bank0` | 8 | 8 | 720 | 0 | `bank0/D5D4.c` → `bank0/FE0F.c` |
+| `bank1` | 7 | 11 | 465 | 0 | `bank1/AD85.c` → `bank1/B43B.c` |
+| `bank0` | 6 | **1** | 1,969 | 0 | `bank0/8749.c` → `bank0/8DE0.c` |
+| `bank0` | 6 | 4 | 1,597 | 0 | `bank0/95DD.c` → `bank0/9D9B.c` |
+| `bank0` | 4 | 6 | 708 | 0 | `bank0/A00E.c` → `bank0/A1C8.c` |
+| `bank0` | 4 | 8 | 82 | 0 | `bank0/EFDC.c` → `bank0/F012.c` |
+| `bank1` | 4 | 2 | 808 | 0 | `bank1/DB0B.c` → `bank1/E090.c` |
+| `common` | 4 | 8 | 394 | 0 | `common/223F.c` → `common/22EF.c` |
+| `bank0` | 3 | 21 | 562 | 0 | `bank0/B12C.c` → `bank0/B1F0.c` |
+| `bank0` | 3 | 12 | 316 | 0 | `bank0/D091.c` → `bank0/D28E.c` |
+| `bank1` | 3 | 10 | 159 | 0 | `bank1/8AE5.c` → `bank1/8B04.c` |
+| `bank1` | 3 | 8 | 194 | 0 | `bank1/C4D2.c` → `bank1/C54C.c` |
+| `bank1` | 3 | 7 | 404 | 0 | `bank1/E2D3.c` → `bank1/E490.c` |
+| `bank0` | 2 | 9 | 159 | 0 | `bank0/8038.c` → `bank0/83FF.c` |
+| `bank0` | 2 | 8 | 33 | 0 | `bank0/8048.c` → `bank0/8054.c` |
+| `bank1` | 2 | 9 | 324 | 0 | `bank1/976E.c` → `bank1/9817.c` |
+| `bank1` | 2 | 8 | 279 | 0 | `bank1/9B3C.c` → `bank1/9C53.c` |
+| `bank1` | 2 | 8 | 277 | 0 | `bank1/9CE8.c` → `bank1/9D53.c` |
+| `bank1` | 2 | 9 | 306 | 0 | `bank1/B98D.c` → `bank1/BA43.c` |
+| `bank1` | 2 | 8 | 237 | 0 | `bank1/D0C4.c` → `bank1/D17E.c` |
+| `bank1` | 2 | 10 | 285 | 0 | `bank1/E100.c` → `bank1/E237.c` |
+| `common` | 2 | 8 | 155 | 0 | `common/0200.c` → `common/0213.c` |
+| `pd` | 2 | 17 | 363 | 0 | `pd/A8AE.c` → `pd/AE9C.c` |
+
+Three rows of that table are the whole argument, and they are three different
+kinds of row.
+
+**The 42 are one group, and the tool now reproduces §2's three checkable
+facts.** The largest group is 42 files, `bank1/8001.c` through `bank1/80EF.c`
+— the sweep's own seeds, all of them inside `0x8001`-`0x8189` — with a
+**19-address common core**, `index.csv` listing sizes summing to **393** and
+**16** of them one instruction. `--self-test` asserts the file count, the byte
+total, the one-instruction count and the core, so §2's hand count and the
+census agree. The core is 19 and not the 46 addresses `8001.c` itself names,
+because the listings start at different points in the body: `8001.c` spells out
+`0x06C6` where `8018.c` opens at the store-back, and the 19-address tail
+`80EF.c` names 19, exactly as §2 records.
+
+**The `bank0/8749.c` six is the counter-example, and it is why the core column
+is published.** Six files, a **one-address** common core (`0x1804`, which all
+six read), and 1,969 listing bytes between them. Three of the six also read
+`0x0440`; the other three do not, and that is the whole of what a one-address
+core means — a shared address, not a shared body. They are six real readers
+that a neighbour connects, and the component — not a pair — is what puts them
+in one group. Reading a group as "one routine" would merge them; the `bytes`
+column is what says no. `bank1/8008.c` is the sharpest single illustration of
+what the observable is: `index.csv` records it at **one byte** — the single
+`movx @DPTR, A` §2 names — and the census finds **45** addresses in it. A
+one-byte listing naming 45 addresses is the fact; "this file is a slice of a
+larger routine" is the hypothesis, and `xdata-06c2-06db-timers.md` §2 is where
+it is stated.
+
+**The `pd` pair is in its own program, on purpose.** `pd/A8AE.c` and
+`pd/AE9C.c` share 17 addresses including seven of `pd-001`'s ten `0xFFxx` bytes
+(§5.1), and no group crosses into the main EC — which is the split §3 insists
+on, now asserted rather than assumed.
+
+**Per address, the new `co_reading` and `sources_beyond` columns.** `refs` is
+unchanged; `sources_beyond` is the count of source functions this relation
+cannot pair with another copy of, which is the closest thing here to a distinct
+source count and is a count of *files*:
+
+| addr | `refs` | `functions_touched` | `co_reading` | `sources_beyond` |
+|---|---:|---:|---:|---:|
+| `0x0843` | 168 | 42 | 42 | **0** |
+| `0x0844` | 168 | 42 | 42 | **0** |
+| `0x08A8` | 170 | 44 | 44 | **0** |
+| `0x06D6` | 148 | 37 | 37 | **0** |
+| `0x080D` | 137 | 48 | 42 | 6 |
+| `0x06C2` | 126 | 52 | 39 | 13 |
+| `0x0460` | 115 | 48 | 46 | 2 |
+| `0x0440` | 181 | 91 | 46 | 45 |
+
+`0x0440` is the row that keeps this a count and not a verdict: it loses 46 of
+91 sources to groups and **keeps 45**, is all-read with no writer (§4.3,
+`HAND_CHECKED`), and is the most-referenced address in the firmware. A flag
+that retired it would be reporting a shape as a conclusion. `0x0843` keeps
+none. `0x00B6` — one PD function, no group — is in the tool's hand-read table
+to pin that the relation never crosses the two programs.
+
+**Per cluster, three more columns.** `co_reading` is how many of the cluster's
+touching functions are in a group, `co_reading_refs` is what the largest single
+group supplies *of that cluster's own references*, and `co_reading_dominant`
+says whether that is more than half. It reads `yes` for **24 of the 430**
+clusters — 7/229 at size 1, 11/151 at 2-4, 3/37 at 5-9, 3/12 at 10-49, 0/1 at
+50+ — so it is a place to look rather than a defect, and it is uninformative
+at size 1, where one function is all of the refs by construction. **The share
+is the readable number, not the boolean.** By share, `main-ec-002` is 4,642 of
+4,966 = **93%** and the next cluster of size ≥10 is `main-ec-008` at 79%, then
+`main-ec-007` at 75% and `pd-001` at 50%.
+
+**What the boundary hypothesis would imply, printed and not adopted.**
+`--collapse-co-readings` maps each group to one pseudo-function and re-clusters,
+writing neither CSV:
+
+| | clusters | largest | singletons |
+|---|---:|---:|---:|
+| `main-ec` | 380 → **466** | 109 → **150** | 204 → 282 |
+| `pd` | 50 → **61** | 35 → **16** | 25 → 36 |
+
+**The collapse does not dissolve the co-occurrence — it merges it into
+something bigger, and that is the strongest argument against adopting it.** The
+largest main-EC cluster grows from 109 addresses to **150**, spanning
+`0x030A`-`0x1F07`. The same command says where the old clusters' addresses went:
+
+```
+  109 addresses over 0x030E-0x1809: 63 stay together in a 150-address cluster, 46 do not, across 26 other clusters
+   43 addresses over 0x0460-0x09CE: 30 stay together in a 150-address cluster, 13 do not, across 13 other clusters
+   28 addresses over 0x045C-0x1C3A: 24 stay together in a 150-address cluster,  4 do not, across 3 other clusters
+```
+
+So 30 of the counter block's 43 addresses are pulled into the 150 by the
+sweep's single pseudo-function, and each of the other 13 ends up alone in a
+cluster of its own — 11 singletons, one sharing with a single other address and
+one with six. `0x0440`, which the sweep reads 42 times and which no single
+function dominates, is **not in the 150 at all**. A de-duplicated source count
+here therefore neither tidies the clustering up nor rescues the block: it turns
+one overlapping routine into one very widely-shared function and hands it a
+*larger* cluster than the one the 42 copies were propping up, while the
+addresses only the copies shared fall out the bottom. (`main-ec-001` loses 46
+of its 109 across 26 clusters the same way, so the 150 is not "the counter block
+plus its friends" — three old clusters now share one pseudo-function and
+nothing else.) So the honest reading of the committed census is neither "93% of
+this cluster is an artefact, ignore the cluster" nor "collapse the sweep and the
+block is a clean 43" — it is that the cluster's membership is a property of the
+export's boundaries either way, and `cluster_id = main-ec-002` is no more a
+description of the firmware than a 150-address cluster would be.
+
+**This is not the committed clustering and does not become it**, because a
+group is a relation over files and adopting the collapsed counts would be
+deciding the boundary question with a count of files. `cluster_id`, every
+`refs`, every `cluster_key` and the whole worklist order are exactly what they
+were before this section: the rank is `(size, refs, lowest address)` and the
+new columns move none of the three, so **nothing can reorder** — the
+`refs`-driven reordering a de-duplicated census would cause is the one thing
+this change declines to do.
+
+**What it does not establish.** A co-reading group is a *count of files*. It
+is not a claim that the files are one routine, that a reference is wrong, or
+that an address is read fewer times than `refs` says; `refs` is unchanged on
+every row and no de-duplication heuristic is attached to the tokenizer. The
+`bank0/8749.c` row is the standing counter-example, and `0x0440`'s 45 surviving
+sources is the standing control. And a group is a relation over *this* export:
+a re-export that moved a boundary would move the groups, which is another
+reason the durable citation is §4.4's `cluster_key` and not an id or a flag.
+
 ## 5. The worklist, ranked
 
 By size, then reference count, then lowest address. Full rows in
@@ -897,20 +1106,30 @@ symbol table.
 > that moved most: `main-ec-004` is 26 addresses / **280** references, not
 > 278, and the old `main-ec-002` is no longer a 44-address row at all.
 
-| cluster | key | name | size | refs | range | named inside | the functions the cluster's addresses share |
-|---|---|---|---:|---:|---|---|---|
-| `main-ec-001` | `k7497cf885614` | `mode-oem-init` | 109 | 1,149 | `0x030E`-`0x1809` | 33 | `fill_08xx_from_code_table`, `apply_oem_overrides_then_fill_08xx`, `mode_tick_084c_07a5_09ee`, `charge_target_update` — the mode/OEM initialisation set |
-| `main-ec-002` | `k733222e83898` | `counter-sweep` | 43 | 4,966 | `0x0460`-`0x09CE` | 43 | `decrement_nonzero_xdata_counters`, `read_06c6`, `skip_06c6_decrement` — one loop walking a block of counters |
-| `main-ec-003` | `ka39cda99615f` | `level-block-086x` | 28 | 181 | `0x045C`-`0x1C3A` | 14 | `gate_06e6_442_then_sync_046a_from_086b`, `dispatch_on_0860`, `compute_level_blocks_086b_086c_086e` — the `0x06E6`/`0x0860` gate block |
-| `main-ec-004` | `kffd18a7555bf` | — | 26 | 280 | `0x030A`-`0x082F` | `0x0403` | three unnamed `bank1` routines (`0xDEE8`, `0xDEF1`, `0xDB0B`) — unnamed here, so this one needs reading before it can be titled |
-| `main-ec-005` | `k5795f893f0b3` | — | 17 | 70 | `0x0382`-`0x03C9` | none | `mul_0342_0514_into_0388_when_03d0_lt_0384`, `FUN_CODE_d6ee`, `FUN_CODE_d946` |
-| `main-ec-006` | `ka07bfc4f80cd` | — | 16 | 94 | `0x043E`-`0x300E` | `0x043E` | `FUN_CODE_9b3c`, `FUN_CODE_9c53`, `stage_0a49_pair_then_30xx_block` |
-| `main-ec-007` | `kea0c67af9b51` | `ff-fill-stubs` | 12 | 280 | `0x0045`-`0x1504` | none | three `ff_filler_not_a_function_*`, the fill stub block |
-| `main-ec-008` | `ke96d2e265d5d` | — | 12 | 107 | `0x0A43`-`0x0FC3` | none | `call_ef17_then_copy_0f80_to_0fb1`, `store_dptr_byte_to_0fb2_copy_0f82`, `FUN_CODE_f002` |
-| `main-ec-009` | `k0ebf038645b0` | — | 12 | 42 | `0x049A`-`0x05B9` | none | `clear_049a_049e_0579_057a_05c2`, `latch_0490_bit3_or_bit7` |
-| `main-ec-010` | `k733571bb7f66` | — | 12 | 35 | `0x00C0`-`0x2275` | none | `copy_direct_65_66_to_x00c0`, `copy_x00c0_pair_to_iram_67_68` |
-| `main-ec-012` | `k66512c56e77b` | `user-clear-bytes` | 9 | 52 | `0x0875`-`0x09E7` | 5 | `clear_08eb_bit5_09e6_09e7_08a1_089c_089d`, `clear_08eb_bit3_09e6_09e7_08a2_089e_089f` and two unnamed `bank0` routines |
-| `main-ec-013` | `k3fdd14ddea2e` | `page-0300` | 9 | 36 | `0x0300`-`0x03FE` | none | `zero_0300_03ff_then_set_3fe_3a8_3fb`, `scan_table_03de_down_stride2` — the `0x0300` page |
+| cluster | key | name | size | refs | range | named inside | co-reading (§4.5) | the functions the cluster's addresses share |
+|---|---|---|---:|---:|---|---|---|---|
+| `main-ec-001` | `k7497cf885614` | `mode-oem-init` | 109 | 1,149 | `0x030E`-`0x1809` | 33 | 19/133 fns, 294 (26%) | `fill_08xx_from_code_table`, `apply_oem_overrides_then_fill_08xx`, `mode_tick_084c_07a5_09ee`, `charge_target_update` — the mode/OEM initialisation set |
+| `main-ec-002` | `k733222e83898` | `counter-sweep` | 43 | 4,966 | `0x0460`-`0x09CE` | 43 | **62/127 fns, 4,642 (93%)** | `decrement_nonzero_xdata_counters`, `read_06c6`, `skip_06c6_decrement` — one loop walking a block of counters |
+| `main-ec-003` | `ka39cda99615f` | `level-block-086x` | 28 | 181 | `0x045C`-`0x1C3A` | 14 | 8/21 fns, 66 (36%) | `gate_06e6_442_then_sync_046a_from_086b`, `dispatch_on_0860`, `compute_level_blocks_086b_086c_086e` — the `0x06E6`/`0x0860` gate block |
+| `main-ec-004` | `kffd18a7555bf` | — | 26 | 280 | `0x030A`-`0x082F` | `0x0403` | 20/52 fns, 93 (33%) | three unnamed `bank1` routines (`0xDEE8`, `0xDEF1`, `0xDB0B`) — unnamed here, so this one needs reading before it can be titled |
+| `main-ec-005` | `k5795f893f0b3` | — | 17 | 70 | `0x0382`-`0x03C9` | none | 0/4 fns, 0 (0%) | `mul_0342_0514_into_0388_when_03d0_lt_0384`, `FUN_CODE_d6ee`, `FUN_CODE_d946` |
+| `main-ec-006` | `ka07bfc4f80cd` | — | 16 | 94 | `0x043E`-`0x300E` | `0x043E` | 6/22 fns, 34 (36%) | `FUN_CODE_9b3c`, `FUN_CODE_9c53`, `stage_0a49_pair_then_30xx_block` |
+| `main-ec-007` | `kea0c67af9b51` | `ff-fill-stubs` | 12 | 280 | `0x0045`-`0x1504` | none | 10/31 fns, 209 (75%) | three `ff_filler_not_a_function_*`, the fill stub block |
+| `main-ec-008` | `ke96d2e265d5d` | — | 12 | 107 | `0x0A43`-`0x0FC3` | none | 4/8 fns, 85 (79%) | `call_ef17_then_copy_0f80_to_0fb1`, `store_dptr_byte_to_0fb2_copy_0f82`, `FUN_CODE_f002` |
+| `main-ec-009` | `k0ebf038645b0` | — | 12 | 42 | `0x049A`-`0x05B9` | none | 0/9 fns, 0 (0%) | `clear_049a_049e_0579_057a_05c2`, `latch_0490_bit3_or_bit7` |
+| `main-ec-010` | `k733571bb7f66` | — | 12 | 35 | `0x00C0`-`0x2275` | none | 0/10 fns, 0 (0%) | `copy_direct_65_66_to_x00c0`, `copy_x00c0_pair_to_iram_67_68` |
+| `main-ec-012` | `k66512c56e77b` | `user-clear-bytes` | 9 | 52 | `0x0875`-`0x09E7` | 5 | 1/12 fns, 1 (2%) | `clear_08eb_bit5_09e6_09e7_08a1_089c_089d`, `clear_08eb_bit3_09e6_09e7_08a2_089e_089f` and two unnamed `bank0` routines |
+| `main-ec-013` | `k3fdd14ddea2e` | `page-0300` | 9 | 36 | `0x0300`-`0x03FE` | none | 0/5 fns, 0 (0%) | `zero_0300_03ff_then_set_3fe_3a8_3fb`, `scan_table_03de_down_stride2` — the `0x0300` page |
+
+The `co-reading` column is §4.5's `co_reading / functions_touched` and
+`co_reading_refs` as a share, and it is a column rather than a re-sort because
+nothing about the ranking moved: the order is still `(size, refs, lowest
+address)`, and the two of those three the new columns could have disturbed are
+untouched. `main-ec-002` is the row the whole section is about — 93% of its
+references come from the one 42-file group — and `main-ec-007`/`main-ec-008` at
+75% and 79% are the two that were not obvious from the size column. Four of the
+twelve have no co-reading source at all, which is the other half of the
+answer: the export artefact is concentrated, not general.
 
 *(Re-derived on the merged tree, 2026-09-24. These twelve rows are the twelve
 largest clusters of the 430-row census, re-sorted, and three of them changed
@@ -1131,6 +1350,27 @@ is a human's, and the issue says so too.
   from outside this tool the way the five hand-read addresses are. The narrow
   net is kept for exactly that reason, and `HAND_CHECKED`'s comment says what
   the five are for and which shape they leave uncovered.
+- **A co-reading group is a count of files, not a count of routines (§4.5).**
+  Two `.c` files naming the same eight XDATA addresses are *similar*, and a
+  connected component of that relation is *connected*; neither is one routine,
+  and the relation is transitive by component, so a group's members need not
+  resemble each other pairwise at all. The six-file `bank0` group around
+  `0x8749.c` has a one-address common core and 1,969 listing bytes between its
+  members, which is the counter-example in one row. So `co_reading` is not a
+  count of "copies" and `sources_beyond` is not a distinct-source count in any
+  sense a register reading could be built on: it is the number of source files
+  this relation cannot pair, and a file can be in a group and still be a
+  routine in its own right. `0x0440` is the control — 46 of its 91 sources in
+  groups, **45 not** — and no `refs` value, bucket total or cluster id moved to
+  produce any of it.
+- **The relation is a property of this export, and a re-export would move it.**
+  A group is a set of `.c` files; the decompiler's function boundaries are
+  hypotheses (`bank-call-audit.md` §1, an upper bound rather than a partition),
+  so a different export is a different set of groups over the same firmware.
+  This is the same reason §4.4's `cluster_key` and not `cluster_id` is the
+  durable citation: a group has no key of its own, and the honest way to cite
+  one is by its members and its `index.csv` listing sizes, which is what
+  `--co-reading-group-table` prints.
 - **The `callees` column over-counts depth.** A name in a call position
   anywhere in a function's body counts as its callee, so a callee of a callee
   is credited to the outer function. It is a name-frequency column for picking
@@ -1451,13 +1691,46 @@ re-measurement, so it is left for its own issue rather than folded in here.
   rank and does not. `../tools/xdata_register_map.py --map <old clusters CSV>`
   is what says where an id went, and the name column in its output is what an
   issue should quote.
-- `xdata_register_map.py --check` and `--self-test` belong in
-  `check_ghidra_tooling` in `.github/scripts/agent-gates.sh`, next to
-  `gen_xdata_symbols.py`'s `--check`. **A human makes that one-line change** —
-  the branch's push token has no `workflow` scope, so it fails at the end
-  rather than the start. Both modes need no Ghidra, no network and no image,
-  which is what makes them affordable in that gate; `--reconcile` does need the
-  image and is deliberately not in the list.
+- `xdata_register_map.py --check` belongs in `check_ghidra_tooling` in
+  `.github/scripts/agent-gates.sh`, next to `gen_xdata_symbols.py`'s `--check`.
+  Both modes need no Ghidra, no network and no image, which is what makes them
+  affordable in that gate; `--reconcile` does need the image and is
+  deliberately not in the list. **Partly done by #256:** the `--check` half is
+  wired (that bullet's "a human makes that one-line change" was itself stale —
+  `.github/scripts/` is pushable, only `.github/workflows/` and
+  `.github/actions/` are not). **The `--self-test` half is still open and is
+  not a one-liner:** `--self-test` is red on `main` for a reason that predates
+  any co-reading work, so wiring it would turn the gate red for an unrelated
+  cause. The failure is one assertion — *"the annotation CSV and index.csv
+  agree on every address they share"* — and it is real:
+  `ec/annotations/ghidra-functions.csv` names `bank1:0x9CE8`, `bank1:0x9D53` and
+  `bank1:0xE2D3`, and `ec/decompiled/index.csv` still spells all three
+  `FUN_CODE_*`, because the export has not been re-run since those renames
+  landed. Clearing it means `python3 ec/tools/build_ec_decompile.py --work
+  <scratch>` in its default export-only mode, which rewrites the generated
+  `ec/decompiled/**` tree, and that belongs to whoever added the renames rather
+  than to a measurement issue: it would sweep every annotation landed since the
+  last export into whatever diff it rode in on. Until that run happens,
+  `--check` is the half that can be gated. Two other suites that read these
+  CSVs are red for their own separate reasons and are not in that loop either:
+  `test_xdata_cluster_names.py` patches a literal `if stripped.startswith("==")`
+  that the tool's `--no-eq-guard` switch grew an `eq_guard and` conjunct in
+  front of, and `test_check_site_census.py` wants 14 mapped `0x0860` sites at
+  `bank0/D091.c` line numbers the file has moved past.
+- **The 42 boundaries, now that §4.5 measures them.**
+  `build_ec_decompile.py --mode rebuild-project` writes the 7 MB database, and
+  two branches that both rebuild one cannot merge, so this still wants a branch
+  of its own — but it is no longer a bare "the census double counts" note. Two
+  things are measured and re-derivable: the sweep is one co-reading group of
+  exactly 42 files whose `index.csv` sizes sum to 393 with 16 one-instruction
+  listings, and collapsing the groups moves `main-ec` from 380 clusters with a
+  109-address largest to 466 with a **150**-address largest that takes in 30 of
+  the sweep's 43 addresses and pushes the other 13 out (`--collapse-co-readings`).
+  Neither is the boundary fix, and adopting the collapsed counts on the strength
+  of either would be deciding the question with a count of files. The second
+  figure is also the argument *against* adopting them: de-duplicating the
+  sources makes the largest cluster **bigger**, not smaller, so the collapse is
+  not the tidying-up the "it's just double counting" reading assumes.
 - A cluster that turns out to be a record table should say so in
   `pd-index-geometry.md`'s terms (base and stride, then the field layout), not
   here.

@@ -113,6 +113,47 @@ store the decompiler mis-spelled, a write through a pointer, and a per-address
 `HAND_CHECKED` measures per-address counts, and it is five addresses wide
 because those five are a shape catalogue rather than a sample.
 
+**A source count is a count of files, and 42 files can be one routine.** The
+counter sweep at `bank1:0x8001`-`0x8189` is 393 bytes the exporter split into 42
+listings whose sizes sum to exactly 393 (`annotations/xdata-06c2-06db-timers.md`
+§2), and every one of the 42 decompiled the routine rather than its own bytes,
+so the 19 addresses **all 42 of them name** are each counted 42 times over --
+93% of `main-ec-002`'s references, and every one of `0x0843`'s 168. The count
+falls off away from those 19, because a listing near the end of the run covers
+less of it: `8001.c` names 46 addresses and the 19-address tail `80EF.c` names
+19. The relation here makes that visible without deciding it:
+
+> **Two `.c` files in the same program are co-readings when they name the same
+> `COREADING_MIN_CORE` or more XDATA addresses. A co-reading group is a
+> connected component of that relation, computed per program, exactly as
+> `components()` already does for addresses.**
+
+Connected components rather than a cover, and transitive by construction: the
+relation is not transitive, so a greedy pass would make the output depend on
+file order, and the same objection `components()` documents applies verbatim.
+The component is what makes a group bigger than a pair -- and it is also why a
+group's members need not resemble each other pairwise. The six-file `bank0`
+group around `0x8749.c` has a **one-address** common core, `0x1804`, which all
+six read; only three of the six also read `0x0440`. They are six real readers
+that a neighbour connects, and the tool reports the core size in
+`--co-reading-group-table` precisely so that shape is visible rather than
+implied. **A co-reading group is a count of files, never a
+claim that the files are one routine.** Deciding that is the boundary
+hypothesis `--mode rebuild-project` owns, which is why
+`--collapse-co-readings` prints what assuming it would imply and writes
+nothing.
+
+What the columns add is therefore bounded on purpose. `refs` does not move and
+no reference is de-duplicated, the five direction buckets do not move, the
+clustering does not move and `cluster_id` keeps its exact values: the worklist
+ranks on `(size, refs, lowest address)` and two of those three are untouched,
+so **nothing can reorder**. `co_reading` counts an address's source functions
+that are in a group, `sources_beyond` is the difference -- the sources that are
+not copies of one another by this relation -- and the cluster columns say the
+same for a cluster. `0x0440` is the control that keeps this a count and not a
+verdict: it loses 46 of 91 to a group and keeps 45 sources. `0x0843` keeps
+none.
+
 **The decompiled C spells an XDATA address two ways, and a census that reads
 only one of them is wrong by 41 addresses.** `build_ec_decompile.py` applies the
 generated symbol table before exporting, so the 101 addresses
@@ -201,6 +242,9 @@ Usage:
     python3 ec/tools/xdata_register_map.py --map ec/annotations/xdata-clusters.csv
     python3 ec/tools/xdata_register_map.py --threshold-sweep
     python3 ec/tools/xdata_register_map.py --threshold-sweep --no-writer-axis
+    python3 ec/tools/xdata_register_map.py --co-reading-sweep
+    python3 ec/tools/xdata_register_map.py --co-reading-group-table
+    python3 ec/tools/xdata_register_map.py --collapse-co-readings
     python3 ec/tools/xdata_register_map.py --no-eq-guard --out-registers /tmp/before-registers.csv --out-clusters /tmp/before-clusters.csv
     python3 ec/tools/xdata_register_map.py --reconcile ec/firmware/GMxMGxx_11.800
 """
@@ -246,12 +290,13 @@ REGISTER_COLUMNS = [
     "addr", "program", "spelled_as", "span_group", "cluster_id", "refs",
     "read", "write", "read+write", "passed-to-call", "address-taken",
     "readers", "writers", "functions_touched", "single_function", "name",
-    "functions", "cluster_key",
+    "functions", "cluster_key", "co_reading", "sources_beyond",
 ]
 CLUSTER_COLUMNS = [
     "cluster_id", "program", "size", "refs", "addrs", "addr_range",
     "functions_touched", "shared_functions", "callees", "named_addrs",
-    "cluster_key", "cluster_name",
+    "cluster_key", "cluster_name", "co_reading", "co_reading_refs",
+    "co_reading_dominant",
 ]
 
 # The two columns `--map` prints, one row per old cluster. A row is a *report*,
@@ -268,6 +313,28 @@ MAP_COLUMNS = [
 # default is a recorded choice rather than a tuned one.
 DEFAULT_THRESHOLD = 0.50
 SWEEP_THRESHOLDS = (0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70)
+
+# How many XDATA addresses two `.c` files in one program have to name in common
+# before they count as co-readings of each other. See the module docstring for
+# what the relation measures and what it deliberately does not decide.
+#
+# **8 is recorded, not tuned, and `--co-reading-sweep` is what records it.**
+# Largest group / files in groups, over the committed tree:
+#
+#     floor   2    4    6    8    10   12   16   20
+#     largest 282  61   42   42   42   42   42   41
+#     files   723  335  213  120  89   79   62   50
+#
+# Floors 2 and 4 are the trivially-equal-address-set artefact: two files that
+# each name a single address score a Jaccard of 1.00, so a one-line helper and a
+# 45-line routine join for no reason a reader would accept. From 6 to 16 the
+# counter sweep's 42 files hold together as one group and the file count keeps
+# falling; at 20 the sweep itself starts to break. 8 is where files-in-groups
+# halves against 6 with the largest group unchanged, and it is the last floor
+# before the curve's shape starts depending on the sweep alone. The same
+# "recorded, not tuned" argument DEFAULT_THRESHOLD makes.
+COREADING_MIN_CORE = 8
+SWEEP_COREADING_FLOORS = (2, 4, 6, 8, 10, 12, 16, 20, 24)
 
 # `cluster_key` is the content half of a cluster's identity: sha256 over the
 # program's name and the cluster's space-joined sorted `addrs`, truncated to 12
@@ -427,9 +494,118 @@ ORACLE = {
     # 150 -- so the 153 are not asserted individually. The --self-test failure
     # message enumerates every one of them, which is the place a reader is sent
     # rather than a list maintained here.
-    "named_in_tree": 153,
+    #
+    # 153 -> 162, issue #256: the drift went on, and by the time this change
+    # re-derived it the symbol table had grown from 164 to 187 names and the
+    # census from 1,171 to 1,171 distinct addresses with two of the new ones
+    # (`0x07C7`, `0x07C8`) *not* among the named-in-tree set. The failure
+    # message named exactly those two and no others, which is the arrangement
+    # the paragraph above asks for -- the count is not asserted individually, the
+    # *set* is, and the count is arithmetic over it. So both are recorded as
+    # NOT_IN_TREE entries with their registers.yaml evidence, and this pin is
+    # 187 - 25. Measured on `main` before this change touched anything: the two
+    # rows and the two missing reasons were already there.
+    "named_in_tree": 162,
 }
 ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
+# `0x08A8`'s 170 above is 42-fold: all 44 of its source functions are members of
+# a co-reading group -- 42 of them the counter sweep, the other two a four-file
+# `bank0` group -- so its `sources_beyond` is **0** and the count of sources
+# this relation can distinguish is 0 too. The pin stands as written: the census
+# counts references and does not de-duplicate them, and the second entry here
+# is the *third*-busiest address in the firmware by that count. This comment is
+# where the inflation is written down next to the number it inflates.
+# `xdata-registers.csv`'s `co_reading` and `sources_beyond` columns carry it per
+# address; COREADING_CHECKED below is the hand-read half.
+
+# The co-reading relation's own figures, in the style of the ORACLE block and
+# derived the same way: the largest group, the file total and the group count
+# are arithmetic over `co_reading_groups()` at COREADING_MIN_CORE, and the
+# oracle says so rather than leaving a reader to take them on trust.
+#
+# 24 groups over 120 files, largest 42. Re-derive with
+# `python3 ec/tools/xdata_register_map.py --co-reading-sweep`, which prints the
+# floor this is read at next to the curve it was chosen from.
+#
+# The 42 is the counter sweep of `annotations/xdata-06c2-06db-timers.md` §2 --
+# the group's common core is 19 addresses, the 42 `index.csv` sizes sum to
+# exactly 393, and 16 of them are one-instruction listings. All three are that
+# page's §2 facts, now reproduced by the tool rather than by a hand count.
+COREADING_GROUPS = 24
+COREADING_FILES = 120
+COREADING_LARGEST = 42
+# The 42 sweep files are the first and last `out_file` of the largest group, and
+# the group's size is the whole of it: a sweep split across two groups would be
+# a different claim from one group of 42, and this asserts the difference.
+# `out_file` is what `index.csv` records and what a reader greps. The last is
+# `0x80EF`, not `0x8189`: the 42 listings are the *seeds* inside the run, and
+# `0x8189` is where the run ends.
+COREADING_SWEEP = ("bank1/8001.c", "bank1/80EF.c")
+# How many addresses all 42 name. **Not 46, and the difference is the point:**
+# `8001.c` opens at the start of the run and names 46, `80EF.c` opens 238 bytes
+# in and names 19, and the core is the smaller of the two because it is the
+# intersection over all 42. The group is 42 overlapping views of one routine,
+# not 42 identical ones -- which is why `refs` is a 42-fold count for these 19
+# addresses and a smaller multiple for the rest, and why the report presents the
+# core rather than the largest file's count.
+COREADING_SWEEP_CORE = 19
+
+# Per address, `(co_reading, sources_beyond)` read off the decompiled tree by
+# hand rather than by this tool, for the same reason HAND_CHECKED exists: an
+# internal check passes on a wrong number when the wrong number is internally
+# consistent, and a whole-tree invariant cannot tell a *count of files* from a
+# count of routines. Every entry is the arithmetic of
+# `co_reading + sources_beyond == functions_touched` over the committed
+# register rows, with the derivation in the comment beside it.
+COREADING_CHECKED = {
+    # 168 references from 42 functions, and all 42 are the sweep's exports of
+    # one 393-byte routine. `grep -c 0843 ec/decompiled/bank1/8*.c` reaches all
+    # 42 and nothing outside the sweep names it. 42 + 0 = 42 touched.
+    "0x0843": (42, 0),
+    "0x0844": (42, 0),
+    # 170 from 44 functions, and **all 44 are in groups**: the 42 sweep exports
+    # plus `bank0/A139.c` and `bank0/A1A8.c`, the two members of a four-file
+    # `bank0` group that also name this address (the group's other two,
+    # `A00E.c` and `A1C8.c`, do not). So the distinct-source count this
+    # relation can support is 0, and `0x08A8` is the second entry of
+    # ORACLE_TOP_MAIN. 44 + 0 = 44 touched.
+    "0x08A8": (44, 0),
+    # 148 from 37 functions, all 37 of them members of the 42-file sweep group.
+    # The address has ONE direct `MOV DPTR,#0x6D6` site in the image (timers
+    # §2a) and the other 36 sources are that same body spelled 36 more times.
+    # 37 + 0 = 37.
+    "0x06D6": (37, 0),
+    # 126 from 52 functions: 39 in groups -- the 42-file sweep's members that
+    # spell this address, plus the six-file `bank0/8749.c` group and the
+    # two-file `bank1/B98D.c` group, with overlaps -- and 13 that are not, each
+    # of them a single reference in a file no group reaches. 39 + 13 = 52. The
+    # control against a blanket "it is all the sweep": a co-reading group does
+    # not have to contain every address the sweep touches, and this address is
+    # read in thirteen places that have nothing to do with the sweep.
+    "0x06C2": (39, 13),
+    # **The control that keeps this a count and not a verdict.** 181 references
+    # from 91 functions, and the grouped 46 are exactly three disjoint sets: the
+    # 42 sweep exports, **three** of the six `bank0/8749.c` files
+    # (`8749.c`, `8B14.c`, `8C46.c` -- the other three name `0x1804` instead),
+    # and one of the two `bank1/976E.c`/`9817.c` files. 42 + 3 + 1 = 46, and
+    # **45 are not in any group at all** -- `common/3DA8.c` and the `0x06C2`
+    # thirteen above are among them. `0x0440` is read in 45 places this
+    # relation cannot explain, it is all-read with no writer (HAND_CHECKED), and
+    # it is the most-referenced address in the firmware. A co-reading flag that
+    # retired this row would be reporting a shape as a verdict. 46 + 45 = 91.
+    "0x0440": (46, 45),
+    # 137 from 48 functions, 42 grouped and 6 not. `program=both`, and that is
+    # the point of the entry: the main EC's 45 sources are the 42-file sweep
+    # plus three singletons, and the PD image contributes three more that no
+    # group reaches -- the relation never crosses the two programs, which is
+    # what makes 42 and not 45 the grouped half. 42 + 6 = 48.
+    "0x080D": (42, 6),
+    # A PD-only address: one function, not in a group. This row is here to pin
+    # the program split rather than the number -- a relation that grouped across
+    # `main-ec` and `pd` would put the sweep's 42 exports and this together and
+    # fail. 0 + 1 = 1.
+    "0x00B6": (0, 1),
+}
 # The two symbol-table addresses register_ref_table.py finds main-EC sites for
 # that the census does not. Both are inside
 # bank0:0x94D0=copy_code_table_into_0730_07a7: 0x0733 is spelled
@@ -572,6 +748,23 @@ NOT_IN_TREE = {
     # once called "definitively gone" and were all insufficient: the Windows
     # service writes exactly this address, and Windows genuinely caps charging.
     # Zero direct `mov DPTR` sites proves only that this scan cannot see how.
+    # *** 2026-09-25, issue #256: the two rows `named_in_tree` was missing, added
+    # here rather than worked around in the pin. #282 walked both bytes and gave
+    # each a registers.yaml row with a note, and those notes are the evidence
+    # this entry is derived from. The vocabulary is the block's own: no token, no
+    # name, no hex literal and no `mov DPTR` seed in the committed tree, so the
+    # zero is a property of the methods rather than of the bytes. Both are
+    # `unknown-not-absent` in registers.yaml for exactly that reason, and
+    # `ec-07d6-07d7-sites.md` §5 is where the computed-DPTR blind spot (#110)
+    # that neither can rule out is worked through for the whole 0x07 page.
+    0x07C7: "not found by this method: no token, no name, no hex literal and no "
+            "`mov DPTR` seed in the committed tree; registers.yaml's XDATA_07C7 "
+            "note records the same zero from trace_xdata_refs.py over both "
+            "images, against the computed-DPTR blind spot of #110 that "
+            "ec-07d6-07d7-sites.md 5 works through for this page",
+    0x07C8: "not found by this method: as 0x07C7, the byte after it and outside "
+            "the same DSDT field list, with registers.yaml's XDATA_07C8 note "
+            "carrying the same two records and the same unexcluded blind spot",
     0x07B9: "not found by this method: zero direct `mov DPTR` sites, which is "
             "the signal findings.md retracted for this very address -- the "
             "Windows service writes it as part of BatteryProtection2",
@@ -1581,6 +1774,102 @@ def components(group, threshold, writers_on: bool = True):
     return out
 
 
+def co_reading_groups(census, funcs, floor: int):
+    """(group of each function key, the groups) for the co-reading relation.
+
+    Two `.c` files in one program are co-readings when they name the same
+    `floor` or more XDATA addresses; a group is a connected component of that.
+    The shape of the answer deliberately mirrors `components()`: components
+    rather than a greedy cover, because the relation is not transitive and a
+    greedy pass would make the output depend on file order, and every file
+    landing in exactly one group so the caller can account for all of them.
+
+    **Per program, and the split is the point.** The two images have separate
+    XDATA maps and a shared address number is not a shared byte, so grouping a
+    `bank1` sweep export with a `pd` reader on the same addresses would
+    manufacture the co-reading it is supposed to measure. The self-test asserts
+    that no group ever spans two programs.
+
+    Pairs are enumerated through an address -> files index rather than over all
+    pairs of files, because the relation is only decidable for files that share
+    an address at all and most of the tree's 2,710 `.c` files name none. A pair
+    is tested once and remembered, so a pair sharing forty addresses costs one
+    intersection rather than forty.
+
+    The returned group is the tuple of member keys, so it is hashable and can
+    be a dict value; `groups` carries the same membership with the `out_file`
+    names, the common core, and the listing sizes `index.csv` records for it,
+    which is what the report's group table and the two new modes print. **The
+    core is a count of addresses every member names, and a small one is the
+    normal case for a transitive group** -- the six-file `bank0` group around
+    `0x8749.c` has a one-address core -- `0x1804`, which all six read -- and
+    those are six real readers that a neighbour connects. That is why the core is reported rather than the group
+    being treated as one routine: the size pattern is the observable and "this
+    file is a slice of a larger routine" is the hypothesis."""
+    addrs_of = collections.defaultdict(set)      # out_file -> {addr}
+    program_of = {}                             # out_file -> program
+    key_of = {}                                 # out_file -> (program, addr)
+    for program, block in census.items():
+        for addr, entry in block.items():
+            for key in entry["funcs"]:
+                out_file = funcs[key]["out_file"]
+                addrs_of[out_file].add(addr)
+                program_of[out_file] = program
+                key_of[out_file] = key
+    group_of = {}
+    groups = []
+    for program in sorted(set(program_of.values())):
+        files = sorted(f for f in addrs_of if program_of[f] == program)
+        parent = {f: f for f in files}
+
+        def find(x):
+            while parent[x] != x:
+                parent[x] = parent[parent[x]]
+                x = parent[x]
+            return x
+
+        by_addr = collections.defaultdict(list)
+        for f in files:
+            for a in addrs_of[f]:
+                by_addr[a].append(f)
+        tested = set()
+        for members in by_addr.values():
+            for i in range(len(members)):
+                for j in range(i + 1, len(members)):
+                    x, y = members[i], members[j]
+                    if (x, y) in tested:
+                        continue
+                    tested.add((x, y))
+                    if len(addrs_of[x] & addrs_of[y]) < floor:
+                        continue
+                    rx, ry = find(x), find(y)
+                    if rx != ry:
+                        parent[rx] = ry
+        members_of = collections.defaultdict(list)
+        for f in files:
+            members_of[find(f)].append(f)
+        for _root, members in sorted(members_of.items()):
+            if len(members) < 2:
+                continue
+            keys = tuple(sorted(key_of[f] for f in members))
+            for key in keys:
+                group_of[key] = keys
+            groups.append({
+                "program": program,
+                "files": list(members),
+                "core": set.intersection(*(addrs_of[f] for f in members)),
+                # The listing sizes are the observable the boundary hypothesis
+                # rests on: 42 files whose sizes sum to the run's 393 bytes, 16
+                # of them a single instruction. `seed_basis` is deliberately
+                # not read here -- it records how a listing was seeded, and
+                # #179's annotation rows carried `annotation` with them, so it
+                # no longer says which hypothesis produced the boundaries.
+                # In `files` order, so a future reader can zip the two.
+                "sizes": [int(funcs[key_of[f]]["size"]) for f in members],
+            })
+    return group_of, groups
+
+
 def span_groups(addrs) -> dict:
     """Maximal runs of consecutive touched addresses -> a range label.
 
@@ -1625,9 +1914,19 @@ def resolve_callee(name, caller_program, funcs):
     return f"{chosen[0][0]}:0x{chosen[0][1]} (also {' '.join(k[0] + ':0x' + k[1] for k in chosen[1:])})"
 
 
-def build(funcs, names, symbols, census, calls, threshold):
-    """The two row sets the CSVs render, plus the summary the modes print."""
+def build(funcs, names, symbols, census, calls, threshold,
+          group_of=None):
+    """The two row sets the CSVs render, plus the summary the modes print.
+
+    `group_of` is the co-reading relation's function-key -> group map from
+    `co_reading_groups()`. It is a parameter and not a call inside so the
+    modes that sweep the floor or collapse the groups can pass a relation built
+    at a different floor or none at all, and so the two new columns and the
+    clustering are computed from the same census in one pass. Defaulting to `{}`
+    means "no groups", which is the honest reading of a relation that was not
+    computed rather than one that found nothing."""
     groups = {g: merge_group(census, PROGRAM_COL[g]) for g in GROUPS}
+    group_of = group_of or {}
     program_of = {}
     for g in GROUPS:
         for a in groups[g]:
@@ -1660,7 +1959,8 @@ def build(funcs, names, symbols, census, calls, threshold):
                 cluster_id[(g, a)] = cid
                 cluster_key_of[(g, a)] = key
             cluster_rows.append(cluster_rows_build(g, cid, key, members, groups[g],
-                                                   names, funcs, calls, symbols))
+                                                   names, funcs, calls, symbols,
+                                                   group_of))
 
     spans = {g: span_groups(groups[g]) for g in GROUPS}
     register_rows = []
@@ -1703,17 +2003,41 @@ def build(funcs, names, symbols, census, calls, threshold):
             "name": symbols.get(addr, ""),
             "functions": "; ".join(func_label(f, names) for f in sorted(funcs_touched)),
             "cluster_key": cluster_key_of.get((primary, addr), ""),
+            # The two halves of the same statement about a *source count*.
+            # `co_reading` is how many of this address's touching functions are
+            # members of a multi-file group, and `sources_beyond` is the
+            # difference -- the sources that are not copies of one another by
+            # this relation. Neither moves `refs`: a source count that a
+            # de-duplication would shrink is a claim about boundaries this
+            # change deliberately does not make, and the arithmetic
+            # `co_reading + sources_beyond == functions_touched` is what the
+            # self-test holds on every row. On a `program=both` row the two are
+            # counted over the combined function set, which is what
+            # `functions_touched` counts too, so a `main-ec` sweep export and a
+            # `pd` reader are never mistaken for co-readings of each other.
+            "co_reading": sum(1 for f in funcs_touched if f in group_of),
+            "sources_beyond": sum(1 for f in funcs_touched if f not in group_of),
         })
     return register_rows, cluster_rows, groups
 
 
-def cluster_rows_build(g, cid, key, members, group, names, funcs, calls, symbols):
+def cluster_rows_build(g, cid, key, members, group, names, funcs, calls, symbols,
+                       group_of):
     """One row of xdata-clusters.csv.
 
     `shared_functions` is the subset touching two or more of the cluster's
     addresses -- the co-occurrence that put them together. `callees` is the
     call-graph axis: the routines the most of those functions call, capped at
-    TOP_CALLEES with the overflow counted in the cell."""
+    TOP_CALLEES with the overflow counted in the cell.
+
+    The three co-reading columns ask how much of that co-occurrence one set of
+    files supplies. `co_reading` counts the cluster's touching functions that
+    are in a group, `co_reading_refs` is what the largest single group supplies
+    **of this cluster's own references**, and `co_reading_dominant` says
+    whether that is more than half. The flag is a place to look and not a
+    defect -- it is uninformative at size 1, where a single function is all of
+    the cluster's refs by construction -- so the share is the readable number
+    and the boolean is only a way to sort for it."""
     touching = collections.Counter()
     for a in members:
         for f in group[a]["funcs"]:
@@ -1737,6 +2061,16 @@ def cluster_rows_build(g, cid, key, members, group, names, funcs, calls, symbols
         callees += f" (+{rest} more called by the cluster's functions)"
     refs = sum(group[a]["refs"] for a in members)
     named = [a for a in members if a in symbols]
+    # What each co-reading group supplies of *this* cluster's references, so
+    # the comparison is against the cluster's own `refs` and not against the
+    # group's size. A group that names forty addresses contributes only what it
+    # says about this cluster's forty-three.
+    supplied = collections.Counter()
+    for a in members:
+        for f, n in group[a]["funcs"].items():
+            if f in group_of:
+                supplied[group_of[f]] += n
+    top_group_refs = supplied.most_common(1)[0][1] if supplied else 0
     return {
         "cluster_id": cid,
         "program": g,
@@ -1754,6 +2088,9 @@ def cluster_rows_build(g, cid, key, members, group, names, funcs, calls, symbols
         # from the committed census lands. Empty is "no name", which is the
         # state of 417 of the 427 clusters and is not a claim about them.
         "cluster_name": "",
+        "co_reading": sum(1 for f in touching if f in group_of),
+        "co_reading_refs": top_group_refs,
+        "co_reading_dominant": "yes" if top_group_refs * 2 > refs else "no",
     }
 
 
@@ -1783,6 +2120,25 @@ def diff(name, on_disk, generated) -> int:
     return 1
 
 
+def census_and_groups(args, funcs, by_file, names, symbols, floor=None):
+    """(census, calls, co-reading group_of, raw occurrence counts) -- the one
+    read of the tree.
+
+    `--check`, the writing default, `--self-test` and the three new modes all
+    need the same census and the same relation, and computing the relation in
+    more than one place is how two of them would come to disagree about what a
+    group is. The raw counts ride along because the self-test pins them, and
+    re-reading the tree to get them would double its cost for no other reason.
+    `floor=None` means COREADING_MIN_CORE, which is the floor the CSVs and every
+    oracle are read at."""
+    func_names = {r["name"] for r in funcs.values()}
+    census, calls, raw = scan(by_file, names, func_names, symbols,
+                              not args.no_eq_guard)
+    group_of, _groups = co_reading_groups(
+        census, funcs, COREADING_MIN_CORE if floor is None else floor)
+    return census, calls, group_of, raw
+
+
 def generate(args):
     """(register_rows, cluster_rows, groups, carry report), or None after
     printing why.
@@ -1796,11 +2152,10 @@ def generate(args):
         return None
     names = load_names(funcs)
     symbols = load_symbols()
-    func_names = {r["name"] for r in funcs.values()}
-    census, calls, _raw = scan(by_file, names, func_names, symbols,
-                               not args.no_eq_guard)
+    census, calls, group_of, _raw = census_and_groups(args, funcs, by_file,
+                                                      names, symbols)
     register_rows, cluster_rows, groups = build(funcs, names, symbols, census,
-                                               calls, args.threshold)
+                                               calls, args.threshold, group_of)
     report = name_clusters(cluster_rows, load_cluster_rows(OUT_CLUSTERS),
                            load_cluster_names())
     return register_rows, cluster_rows, groups, report
@@ -1900,7 +2255,8 @@ def self_test(args) -> int:
     names = load_names(funcs)
     symbols = load_symbols()
     func_names = {r["name"] for r in funcs.values()}
-    census, calls, raw = scan(by_file, names, func_names, symbols)
+    census, calls, group_of, raw = census_and_groups(args, funcs, by_file, names,
+                                                     symbols)
     groups = {g: merge_group(census, PROGRAM_COL[g]) for g in GROUPS}
     ok = True
 
@@ -2236,7 +2592,7 @@ def self_test(args) -> int:
           not census_has_0390)
 
     register_rows, cluster_rows, _ = build(funcs, names, symbols, census, calls,
-                                           args.threshold)
+                                           args.threshold, group_of)
     old_rows = load_cluster_rows(OUT_CLUSTERS)
     carry = name_clusters(cluster_rows, old_rows, load_cluster_names())
     by_addr = {r["addr"]: r for r in register_rows}
@@ -2258,6 +2614,122 @@ def self_test(args) -> int:
           + (f" -- disagreed on {', '.join(f'{a} (expected {e}, got {g})' for a, (e, g) in sorted(wrong.items()))}"
              if wrong else ""),
           not wrong)
+    # The co-reading relation, the same shape of oracle and the same reason:
+    # these eight are read off the decompiled tree by hand, so a relation that
+    # grouped the wrong files fails here rather than summing correctly into the
+    # two new columns. `co_reading + sources_beyond` is the arithmetic both
+    # sides of the table are read through, and it is asserted on every row
+    # below as well -- this is the external half, that one the internal one.
+    co_wrong = {}
+    for addr, expected in COREADING_CHECKED.items():
+        row = by_addr.get(addr)
+        got = ({k: int(row[k]) for k in ("co_reading", "sources_beyond")} if row
+               else {"co_reading": "no row", "sources_beyond": "no row"})
+        if got != {"co_reading": expected[0], "sources_beyond": expected[1]}:
+            co_wrong[addr] = (expected, got)
+    check(f"the hand-read co-reading oracle: {len(COREADING_CHECKED)} "
+          f"addresses, {', '.join(sorted(COREADING_CHECKED))}, each read off "
+          f"the decompiled tree by hand rather than by this tool, as "
+          f"(co_reading, sources_beyond)"
+          + (f" -- disagreed on {', '.join(f'{a} (expected {e}, got {g})' for a, (e, g) in sorted(co_wrong.items()))}"
+             if co_wrong else ""),
+          not co_wrong)
+    check("and on every register row the two columns are a partition of the "
+          "address's source functions: co_reading + sources_beyond == "
+          "functions_touched, which is what keeps the new columns a *count* of "
+          "files rather than a second reference count (rows where it does not "
+          "balance: "
+          f"{', '.join(r['addr'] for r in register_rows if int(r['co_reading']) + int(r['sources_beyond']) != int(r['functions_touched'])) or 'none'})",
+          all(int(r["co_reading"]) + int(r["sources_beyond"])
+              == int(r["functions_touched"]) for r in register_rows))
+    check("and neither column moved a counting column: `refs` is the ORACLE "
+          "total and the five bucket totals still sum to it, with the co-reading "
+          "columns reading off the same rows",
+          sum(int(r["refs"]) for r in register_rows) == total_refs and
+          all(int(r["co_reading"]) <= int(r["functions_touched"])
+              for r in register_rows))
+    # The three group figures, which is what makes COREADING_MIN_CORE a
+    # recorded choice: `--co-reading-sweep` prints this curve, and the largest
+    # group is the counter sweep at every floor from 6 to 16.
+    _go, co_groups = co_reading_groups(census, funcs, COREADING_MIN_CORE)
+    co_sizes = sorted((len(g["files"]) for g in co_groups), reverse=True)
+    check(f"the co-reading relation at floor {COREADING_MIN_CORE} -- a common "
+          f"core of that many addresses between two files in one program -- "
+          f"finds {COREADING_GROUPS} groups over {COREADING_FILES} files, "
+          f"largest {COREADING_LARGEST} (got {len(co_sizes)}, "
+          f"{sum(co_sizes)}, {co_sizes[0] if co_sizes else 0}; sizes "
+          f"{co_sizes})",
+          (len(co_sizes), sum(co_sizes), co_sizes[0] if co_sizes else 0)
+          == (COREADING_GROUPS, COREADING_FILES, COREADING_LARGEST))
+    # The program split, asserted as a property of the answer rather than of the
+    # code that computes it: the two images have separate XDATA maps, and a
+    # group spanning both would be a co-reading manufactured out of a shared
+    # address *number*.
+    spanning = [g["files"] for g in co_groups
+                if len({f.split("/")[0] for f in g["files"]}) > 1]
+    check(f"and no co-reading group spans two programs, which is the same split "
+          f"the clustering never crosses and the reason `0x00B6` is in "
+          f"COREADING_CHECKED at all (spanning groups: "
+          f"{', '.join(' '.join(g) for g in spanning) or 'none'})",
+          not spanning)
+    # The 42-file sweep is one group of exactly 42, over a 19-address common
+    # core, and the group's ends are the sweep's own first and last listing. A
+    # sweep split across two groups would be a different claim from one group,
+    # and the file count is what tells them apart. **The core is asserted, not
+    # only printed**: it is the number that says the group is 42 copies of
+    # overlapping coverage rather than 42 identical bodies, so a reader who
+    # trusts the timers page's "all 42 decompile the whole body" is trusting
+    # something this holds still.
+    big = max(co_groups, key=lambda g: len(g["files"]))
+    check(f"and the counter sweep of xdata-06c2-06db-timers.md §2 is one group "
+          f"of exactly {COREADING_LARGEST} files, {COREADING_SWEEP[0]} to "
+          f"{COREADING_SWEEP[1]}, over a {len(big['core'])}-address common "
+          f"core -- one group rather than several, which is a claim about the "
+          f"files and not about the boundaries (got "
+          f"{len(big['files'])} files, {big['files'][0]} to {big['files'][-1]}, "
+          f"core {len(big['core'])})",
+          (len(big["files"]), big["files"][0], big["files"][-1],
+           len(big["core"]))
+          == (COREADING_LARGEST,) + COREADING_SWEEP + (COREADING_SWEEP_CORE,))
+    # The §2 size pattern, now reproduced by the tool rather than counted by
+    # hand: the 42 listings tile the 393-byte run and 16 of them are a single
+    # instruction. Those three numbers are the boundary *evidence*; the
+    # hypothesis is that the files are slices of one routine, and this asserts
+    # only what index.csv records.
+    check("and the group's 42 `index.csv` listing sizes sum to the run's 393 "
+          "bytes with 16 of them a single instruction, which is the observable "
+          f"the boundary hypothesis rests on (got {sum(big['sizes'])} over "
+          f"{sum(1 for s in big['sizes'] if s == 1)} one-instruction listings)",
+          sum(big["sizes"]) == 393 and sum(1 for s in big["sizes"] if s == 1) == 16)
+    # The cluster columns, the same partition at cluster width plus the two
+    # bounds that keep `co_reading_refs` comparable against the cluster's own
+    # `refs` rather than against a group's size.
+    check("the cluster columns hold: co_reading is at most the cluster's "
+          "functions_touched, co_reading_refs at most its refs, and the "
+          "dominance flag is exactly `co_reading_refs * 2 > refs` -- so the flag "
+          "cannot disagree with the share it summarises"
+          + (f" (offending rows: {', '.join(r['cluster_id'] for r in cluster_rows if not (int(r['co_reading']) <= int(r['functions_touched']) and int(r['co_reading_refs']) <= int(r['refs']) and (r['co_reading_dominant'] == 'yes') == (int(r['co_reading_refs']) * 2 > int(r['refs']))))or 'none'})"),
+          all(int(r["co_reading"]) <= int(r["functions_touched"]) and
+              int(r["co_reading_refs"]) <= int(r["refs"]) and
+              (r["co_reading_dominant"] == "yes")
+              == (int(r["co_reading_refs"]) * 2 > int(r["refs"]))
+              for r in cluster_rows))
+    # The counter-sweep cluster, pinned as the worked example the report quotes:
+    # 93% of its references come from the one group. This is a share, and a
+    # share of a count that is itself 42-fold -- the column says how much of
+    # the cluster's co-occurrence one set of files supplies, and does not say
+    # the cluster is one routine.
+    sweep_cluster = next((r for r in cluster_rows
+                          if r["cluster_name"] == "counter-sweep"), None)
+    check(f"and the cluster named `counter-sweep` is the one whose references "
+          f"are dominated by the 42-file group"
+          + (f" -- {sweep_cluster['cluster_id']} is "
+             f"{int(sweep_cluster['co_reading_refs'])}/{sweep_cluster['refs']} = "
+             f"{int(sweep_cluster['co_reading_refs']) / int(sweep_cluster['refs']):.0%}"
+             if sweep_cluster else " -- it has no name in this generation"),
+          sweep_cluster is not None and
+          sweep_cluster["co_reading_dominant"] == "yes" and
+          int(sweep_cluster["co_reading_refs"]) == 4642)
     # Issue #280: the same question, asked of the whole tree instead of five
     # addresses. `direction_invariant()` is a second code path over the same
     # text, not a re-implementation of store_target() -- assign_after() is a
@@ -2490,6 +2962,169 @@ def threshold_sweep(args) -> int:
     return 0
 
 
+def co_reading_sweep(args) -> int:
+    """Largest group / files in groups against the floor, for the report's
+    choice of COREADING_MIN_CORE. Mirrors `--threshold-sweep`: same census, a
+    different relation, nothing written.
+
+    The curve is what makes the constant **recorded** rather than tuned, and it
+    is why the report quotes the output rather than the constant. The two low
+    floors are the trivially-equal-address-set artefact -- two files that each
+    name one address have a Jaccard of 1.00 -- and the middle of the curve is
+    where the counter sweep's 42 files stop breaking up.
+
+    `--co-reading-group-table` prints the other half: every group over two
+    files, with the common core and the listing-size pattern, which is the
+    evidence the boundary hypothesis rests on and the reason a group is not read
+    as one routine."""
+    funcs, by_file = load_index()
+    names = load_names(funcs)
+    symbols = load_symbols()
+    census, _calls, _group_of, _raw = census_and_groups(args, funcs, by_file,
+                                                       names, symbols)
+    print(f"floor,largest group,groups,files in groups,pd groups,pd files")
+    for floor in list(args.floors) + ([COREADING_MIN_CORE]
+                                      if COREADING_MIN_CORE not in args.floors
+                                      else []):
+        _go, groups = co_reading_groups(census, funcs, floor)
+        sizes = sorted((len(g["files"]) for g in groups), reverse=True)
+        pd = [g for g in groups if g["program"] == PD_PROGRAM]
+        print(f"{floor},{sizes[0] if sizes else 0},{len(sizes)},"
+              f"{sum(sizes)},{len(pd)},{sum(len(g['files']) for g in pd)}")
+    return 0
+
+
+def co_reading_group_table(args) -> int:
+    """Every multi-file group, with the evidence a reader needs to judge it.
+
+    `core` is the addresses *every* member names and `1-byte` the count of
+    listings `index.csv` records as a single instruction, because that size
+    pattern is the observable and "these files are slices of one routine" is the
+    hypothesis. A group whose core is one address is a connected component
+    rather than a set of lookalikes, and printing the core is what lets a reader
+    tell the two apart without re-deriving anything."""
+    funcs, by_file = load_index()
+    names = load_names(funcs)
+    symbols = load_symbols()
+    census, _calls, _group_of, _raw = census_and_groups(args, funcs, by_file,
+                                                       names, symbols)
+    _go, groups = co_reading_groups(census, funcs, COREADING_MIN_CORE)
+    groups.sort(key=lambda g: (-len(g["files"]), g["program"], g["files"][0]))
+    print("program,files,common core,core addrs,listing bytes,1-byte listings,"
+          "first,last")
+    for g in groups:
+        print(f"{g['program']},{len(g['files'])},{len(g['core'])},"
+              f"{' '.join(hexaddr(a) for a in sorted(g['core']))},"
+              f"{sum(g['sizes'])},{sum(1 for s in g['sizes'] if s == 1)},"
+              f"{g['files'][0]},{g['files'][-1]}")
+    print(f"{len(groups)} groups over {sum(len(g['files']) for g in groups)} "
+          f"files at floor {COREADING_MIN_CORE}", file=sys.stderr)
+    return 0
+
+
+def collapse_co_readings(args) -> int:
+    """What the boundary hypothesis would imply, printed and not written.
+
+    Each multi-file group is mapped to one pseudo-function and the census is
+    re-clustered with that as the only change, so the question "if the 42
+    exports are one routine, what does the worklist look like?" has an answer
+    instead of an assertion. **This writes neither CSV and is not the committed
+    clustering**, for the reason the report repeats: the groups' boundaries are
+    `seed_basis=call-target` -- a hypothesis
+    `annotations/xdata-06c2-06db-timers.md` §2 records -- and correcting them
+    needs `--mode rebuild-project` and its own branch. Adopting the collapsed
+    clustering on the strength of this relation would decide the boundary
+    question with a count of files.
+
+    So the number printed here is a measurement of the hypothesis, and the
+    per-group core in `--co-reading-group-table` is the reason it is not
+    adopted: the six-file `bank0` group has a one-address core, and collapsing
+    it would merge six real `0x1804` readers that only a neighbour connects,
+    three of which are also `0x0440` readers."""
+    funcs, by_file = load_index()
+    names = load_names(funcs)
+    symbols = load_symbols()
+    census, _calls, group_of, _raw = census_and_groups(args, funcs, by_file,
+                                                       names, symbols)
+    groups = {g: merge_group(census, PROGRAM_COL[g]) for g in GROUPS}
+    # The collapse, and only this: every group member's function key becomes
+    # one synthetic key. `refs` is deliberately untouched, so a cluster's size
+    # moves and its reference total does not -- which is the honest shape of the
+    # question, since de-duplicating the counts is the part this change refuses.
+    #
+    # One pseudo-function per *group*, numbered over the sorted groups so the
+    # numbering does not depend on dict order. Mapping each key to its own
+    # pseudo-function instead would leave a 42-file group as 42 functions and
+    # quietly measure a different thing.
+    pseudo_of_group = {group: ("co-reading", f"g{n:03d}")
+                       for n, group in
+                       enumerate(sorted(set(group_of.values())), 1)}
+    pseudo_of = {key: pseudo_of_group[group] for key, group in group_of.items()}
+    collapsed = {}
+    for g in GROUPS:
+        collapsed[g] = {}
+        for addr, entry in groups[g].items():
+            new = blank_entry()
+            for f, n in entry["funcs"].items():
+                new["funcs"][pseudo_of.get(f, f)] += n
+            new["refs"] = entry["refs"]
+            collapsed[g][addr] = new
+    comps = {g: (components(groups[g], args.threshold, not args.no_writer_axis),
+                 components(collapsed[g], args.threshold, not args.no_writer_axis))
+             for g in GROUPS}
+    print(f"groups collapsed: {len(pseudo_of_group)} pseudo-functions over "
+          f"{len(pseudo_of)} files")
+    print(f"{'group':8} {'clusters':>9} {'largest':>8} {'singletons':>11}")
+    for g in GROUPS:
+        was, now = comps[g]
+        sizes = sorted((len(v) for v in now.values()), reverse=True)
+        print(f"{g:8} {len(was):9d}->{len(now):<6d} "
+              f"{max((len(v) for v in was.values()), default=0):8d}->"
+              f"{sizes[0] if sizes else 0:<6d} "
+              f"{sum(1 for v in was.values() if len(v) == 1):11d}->"
+              f"{sum(1 for c in sizes if c == 1):<6d}")
+    ordered = sorted((sorted(v) for v in comps["main-ec"][1].values()),
+                     key=lambda v: (-len(v),
+                                    -sum(collapsed["main-ec"][a]["refs"] for a in v),
+                                    v[0]))
+    print("worklist head under the hypothesis (main-ec):")
+    for n, members in enumerate(ordered[:3], 1):
+        print(f"  {n:3d}. {len(members):3d} addresses, "
+              f"{sum(collapsed['main-ec'][a]["refs"] for a in members):5d} refs, "
+              f"{hexaddr(members[0])}-{hexaddr(members[-1])}")
+    # Where the biggest clusters' addresses went, which is the question the
+    # worklist head alone cannot answer: a cluster can keep its size, gain
+    # neighbours, or come apart, and "the collapse" means something different
+    # in each case. Reported for the three largest clusters as they stand now,
+    # as `surviving together / originally together, into a cluster of N`.
+    owner = {a: i for i, v in enumerate(ordered) for a in v}
+    print("the three largest clusters as they stand, under the hypothesis:")
+    was = sorted(comps["main-ec"][0].values(), key=len, reverse=True)[:3]
+    for members in was:
+        landed = collections.Counter(owner[a] for a in members if a in owner)
+        if not landed:
+            print(f"  {len(members):3d} addresses over {hexaddr(members[0])}-"
+                  f"{hexaddr(members[-1])}: none of them is in the main-EC "
+                  f"census's clustering at all")
+            continue
+        pick, n = landed.most_common(1)[0]
+        # The *other* clusters, which is not the same as the destinations that
+        # took more than one address: the picked cluster is one of them whenever
+        # it took more than one, and counting it makes every line read one too
+        # high.
+        elsewhere = sum(1 for i in landed if i != pick)
+        print(f"  {len(members):3d} addresses over {hexaddr(members[0])}-"
+              f"{hexaddr(members[-1])}: {n} stay together in a "
+              f"{len(ordered[pick])}-address cluster, {len(members) - n} do not"
+              + (f", across {elsewhere} other "
+                 f"{'cluster' if elsewhere == 1 else 'clusters'}"
+                 if elsewhere else ""))
+    print("neither CSV was written: the committed clustering is unchanged and "
+          "this mode exists so the question has an answer, not so the answer "
+          "becomes the census", file=sys.stderr)
+    return 0
+
+
 def map_census(args) -> int:
     """`--map OLD.csv`: where every row of an older clusters CSV went in this one.
 
@@ -2683,6 +3318,19 @@ def main() -> int:
     modes.add_argument("--threshold-sweep", action="store_true",
                        help="print the cluster count against each threshold in "
                             "--thresholds (the stability table in the report)")
+    modes.add_argument("--co-reading-sweep", action="store_true",
+                       help="print the largest co-reading group and the files in "
+                            "groups against each floor in --floors, which is "
+                            "what makes COREADING_MIN_CORE a recorded choice")
+    modes.add_argument("--co-reading-group-table", action="store_true",
+                       help="print every multi-file co-reading group with its "
+                            "common core and listing-size pattern; the evidence "
+                            "the boundary hypothesis rests on")
+    modes.add_argument("--collapse-co-readings", action="store_true",
+                       help="re-cluster with each co-reading group as one "
+                            "pseudo-function and print the result; writes "
+                            "nothing, because the group boundaries are a "
+                            "hypothesis rather than a description")
     modes.add_argument("--map", metavar="OLD_CSV",
                        help="print one row per cluster of OLD_CSV saying where it "
                             "went in this generation: id, cluster_key, carried "
@@ -2697,6 +3345,9 @@ def main() -> int:
                          f"{DEFAULT_THRESHOLD})")
     ap.add_argument("--thresholds", type=float, nargs="+", default=list(SWEEP_THRESHOLDS),
                     metavar="T", help="thresholds for --threshold-sweep")
+    ap.add_argument("--floors", type=int, nargs="+",
+                    default=list(SWEEP_COREADING_FLOORS), metavar="N",
+                    help="common-core floors for --co-reading-sweep")
     ap.add_argument("--no-writer-axis", action="store_true",
                     help="for --threshold-sweep: cluster on the touching-function "
                          "relation alone, which is how the second relation's "
@@ -2739,6 +3390,12 @@ def main() -> int:
         return self_test(args)
     if args.threshold_sweep:
         return threshold_sweep(args)
+    if args.co_reading_sweep:
+        return co_reading_sweep(args)
+    if args.co_reading_group_table:
+        return co_reading_group_table(args)
+    if args.collapse_co_readings:
+        return collapse_co_readings(args)
     if args.map:
         return map_census(args)
     if args.reconcile:

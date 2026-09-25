@@ -123,6 +123,7 @@ check_ghidra_tooling() {
               ec/tools/grade_name_basis.py \
               ec/tools/group_functions.py \
               ec/tools/call_graph.py \
+              ec/tools/xdata_register_map.py \
               bios/tools/bios_extract.py \
               windows/tools/decompile_native.py; do
     [ -f "$tool" ] || continue
@@ -186,6 +187,34 @@ check_ghidra_tooling() {
       # accepting everything looks exactly like a check that is working.
       *call_graph.py)
         python3 "$tool" --check && python3 "$tool" --self-test || rc=1
+        ;;
+      # The XDATA register census, which regenerates two committed CSVs from
+      # the committed decompiled tree. `--check` is the whole reproducibility
+      # claim in one command -- the tool regenerates in memory and diffs, so a
+      # CSV that no longer describes the tree fails here rather than in prose --
+      # and it needs no scratch dir, no Ghidra and no image, which is what puts
+      # it in this cheap tier. The tool's docstring has claimed a place here
+      # since it was written; issue #256 is what wired it.
+      #
+      # **`--self-test` is deliberately not run, and that is not an oversight.**
+      # It is red on `main` for a reason no census change can clear: the
+      # annotation CSV names three functions (`bank1:0x9CE8`, `bank1:0x9D53`,
+      # `bank1:0xE2D3`) that `ec/decompiled/index.csv` still spells `FUN_CODE_*`,
+      # so the "annotation CSV and index.csv agree" assertion fails. Clearing it
+      # means re-running `build_ec_decompile.py` in its default export-only
+      # mode, which rewrites the generated `ec/decompiled/**` tree and belongs to
+      # whoever landed the renames. Adding the mode to this gate before that
+      # would turn the gate red for an unrelated cause, which is the cheapest
+      # way to make a gate get switched off.
+      #
+      # Its half that *is* green is the half `--check` runs: the committed CSVs
+      # matching a fresh generation, and the counting pins (ORACLE, the five
+      # bucket totals, ORACLE_TOP_MAIN, the rank total) holding. Those are
+      # assertions inside --self-test that cannot be reached from --check, so
+      # the honest description of what is gated here is the CSVs, not the
+      # tool's whole self-test.
+      *xdata_register_map.py)
+        python3 "$tool" --check || rc=1
         ;;
       *)
         # build_ec_decompile.py and bios_extract.py both take --work.
