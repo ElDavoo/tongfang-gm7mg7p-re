@@ -12,6 +12,20 @@
    a decodable XCHD A,@R0, so 0xE582 cannot be an instruction boundary at the same time; the census
    also records an ljmp to 0xE582 from 0x9F03, so one of those two census entries is a false
    positive. Which entry the routine is actually reached through is not settled by this file pair.
+   CORRECTION (2026-09-25, issue #680): the entry is 0xE580, and the false positive is the 0x9F03
+   one. That is not settled by the frame column alone - converges_from is evidence about framing
+   rather than proof of it, and bank0,D091 is the standing warning that a data island decodes as
+   convincingly as code - so what carries it is a decode that explains the same bytes two ways:
+   0x9F02 is an 80 02 sjmp that 24 of 24 backwards anchors land on, which makes 0x9F03 that sjmp's
+   displacement byte, and the e5 82 the census read as its target address is the first instruction
+   of the committed bank1/9F04.asm listing, MOV A, DPL, at the address a linear decode from 0x9F01
+   rejoins. Full reading at docs/findings/bank1-e582-entry-framing.md. The 0x9F03 row in
+   bank-call-targets.csv is not edited, being a regenerated table; bank-call-audit.md 9 is the
+   precedent, and it adjudicates in prose. What the correction does not reach is the function entry
+   at 0xE582, which is unjustified and is filed as a follow-up because retiring it needs a --mode
+   rebuild-project. No function entry belongs at 0xE580 either: this routine begins here, at the
+   push, and 0xE580 is the lcall inside it, so seeding one there would split a register-preserving
+   forwarder in half.
    type: forwarder
    evidence: ec/decompiled/bank1/E57E.asm; ec/decompiled/bank1/E57E.c
    basis: hand-decoded

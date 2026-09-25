@@ -6467,3 +6467,40 @@ to 99 / 124 — that move runs both ways, its re-derived call graph dropping
 twelve rows that no longer cite anything while six of its own new listings join
 as citing rows. The predicate is unchanged, and the pins, the 9-and-one
 zero-gap split among `common` citers and the commands are all there.)*
+
+## 36. The `bank1,0xE582` entry is reached through 0xE580, and the census row at 0x9F03 is the phantom (2026-09-25, issue #680)
+
+The write-up is `docs/findings/bank1-e582-entry-framing.md`; this is the
+summary. Issue #680 asked which entry the contested `bank1,0xE582` routine is
+actually reached through, and the answer is **0xE580**: the routine begins at
+0xE57E with `push 0x07` and 0xE580 is the `lcall 0xE5D6` inside it, reading
+*through* 0xE582 to complete itself. **The false positive is the other census
+entry** — `bank-call-targets.csv:4420`'s `ljmp 0xE582` at 0x9F03, which is the
+displacement byte of the `80 02 sjmp` at 0x9F02, and whose target `e5 82` is the
+committed `bank1/9F04.asm` first instruction, `MOV A, DPL`. A linear decode from
+0x9F01 rejoins that listing at its own head, so the misframed read is displaced
+by a positive alternative rather than merely unbacked — `bank-call-audit.md` §9's
+argument, on the same shape, and the reason that section adjudicates census rows
+in prose: the table is `audit_call_targets.py --csv` output and regenerates byte
+for byte, so **row 4420 is not edited**.
+
+The limit travels with it. `frame_onto`/`frame_over` is "evidence about
+framing, not proof of it" and `bank0,D091` is the standing warning that a data
+island decodes as convincingly as code; what carries the reading is the byte
+pattern, not the score. The `own_bank`/`other_bank` half of the two rows is
+deliberately *not* counted as corroboration — `byte_class` is
+`find_banks.py`'s `START_OPCODES` heuristic, "a scoring aid, not a decode", and
+for a site whose byte *is* `0x12` the `entry` reading is true by construction.
+
+Both `bank1,0xE57E` and `bank1,0xE582` carried the same now-false clause, so
+both are corrected **in place** with the superseded wording left visible, in the
+`common,0x158E` idiom; correcting only the row the issue names would have left
+the pair contradicting itself a line apart. The two `.c` exports were
+regenerated (`--mode export-only`, plate comment verbatim) and their two digest
+rows rewritten. **No function entry is seeded at 0xE580** — it is the `lcall`
+inside the forwarder, and seeding there would split it in half — so no
+`--mode rebuild-project` is needed. Retiring the now-unjustified `0xE582`
+entry *does* need one and is filed as the named follow-up, together with
+crediting the 0xE580 `lcall` to the call graph, where `bank1,E5D6`'s
+`inbound=1` is a known undercount. `call-graph-callees.csv` stays
+byte-identical. No register `status:` moved, no hardware, no Windows.
