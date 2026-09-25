@@ -5288,15 +5288,39 @@ program-identity check does work no lexicon reaches — and the complementary
 case (a bank comment citing a `common` row, which is legitimate) is
 deliberately left to the frame test alone.
 
-**What is still wrong, and it is not the guard:** the new ranks 1–3 are
+**What was still wrong, and it was not the guard:** the new ranks 1–3 were
 `common,0F75`, `common,158E` and `common,1594`, 7 citations each, and all 21
-come from the same seven `bank1` `0xFF`-fill comments whose text says the
+came from the same seven `bank1` `0xFF`-fill comments whose text says the
 decompiled body "is not supported by these instructions". Each citation does
 read as a call to a code address; what the comment is attached to is fill, not
 the reset path those calls live in. That is a second defect — the comment
-refutes the decompile and still names its callees — and it is the next thing
-to fix. Nothing here is a behavioural claim: no register `status:` changed, no
+refutes the decompile and still names its callees — and ~~it is the next thing
+to fix~~. Nothing here is a behavioural claim: no register `status:` changed, no
 listing was re-read, and no live test ran.
+
+**Correction (2026-09-25, issue #525): the second defect is fixed, and this
+section's partition is superseded.** The write-up is
+`docs/findings/citing-listing-evidence.md`. `../ec/tools/citation_callers.py`
+asks the *citing* row's own listing the half of the question a frame test
+cannot see: seven `bank1` listings are an unbroken `0xFF` run, `mov R7, A`
+repeated, and cannot make the calls their comments name. Those **21 pairs are
+refused** as `fill-at-citer` and `common,0F75`/`0x158E`/`0x1594` now read
+`cited_by=1` against their own `inbound=1`, with `citing` reduced to
+`common:0070` — the real call, whose listing carries the `lcall` at
+`../ec/decompiled/common/0070.asm:12-14`. The same listing evidence **credits
+16** pairs the bounded frame window left `undecided`, so the partition moves
+out of the same 382 candidates and the top of the ranking is no longer the fill
+artifact. The new rank 1 is `common,07F0` at `cited_by == inbound == 3`, which
+was not predicted and rests on `polls` in two of its three comments rather than
+on a weak marker. One of the 16 credits is wrong — `bank0,D091`'s own comment
+says the bytes it corroborates are a CODE table, not code — and that is
+reported rather than tuned away, because the alternative conditions were each
+fitted to that one known wrong answer. The seven fill comments are **not**
+rewritten: substituting a name there would assert the call the comment denies.
+**The merged partition is 148 / 206 / 28**, which is 153 / 185 / 44 (this
+section as corrected by §25 below) with #525's two rules applied: −21 refused,
++16 credited, and the 28 the frame gate alone leaves undecided. §25 below
+records the 153 / 185 / 44 this correction started from.
 
 ## 25. The 45 undecided pairs, settled one at a time (2026-09-25, issue #526)
 
@@ -5321,15 +5345,21 @@ neighbours**: `sjmp` is `80 rel`, a signed 8-bit offset, and the committed
 `call_graph.py`'s `TRANSFERS`; it is not there, and adding it would have pulled
 every intra-function short jump into the graph.
 
-**The other 44 are readings, and the tool still reports them undecided.** They
-are settled on the listing or on the committed firmware bytes, not by a wider
-window, and the write-up says so per row rather than leaving a reader to
+**The other 44 are readings, and the tool still reports them undecided** —
+subject to the two signals §24's correction names, which between them settle 17
+of the 45 in the tool's own terms. The 44 minus the 16 the citing listing's
+transfer corroborates and the 1 this section's own lexicon word takes is the
+**28** the merged tree reports; every one of those 28 carries a reading here.
+They are settled on the listing or on the committed firmware bytes, not by a
+wider window, and the write-up says so per row rather than leaving a reader to
 discover it by counting 44 against a 45-row table. `FILLER_BUDGET` stays at 1 —
 §24's own measurement is re-confirmed at that value, not moved.
 
 **The rows are not all the same shape, which is the point of reading them.**
-16 cite a transfer the citing listing carries and the window could not reach;
-7 are jump-table claims settled by reading the table bytes out of
+16 cite a transfer the citing listing carries and the window could not reach —
+**and those 16 are exactly the pairs issue #525's `citation_callers.py` then
+credited from the same listings**, which is two independent routes to one
+answer; 7 are jump-table claims settled by reading the table bytes out of
 `ec/firmware/GMxMGxx_11.800` (`0x8A80`, `0x9AD2`, `0xAD50`, `0xC90C`,
 `0xD20D` — the last corroborated by the `lcall 0xCC2D` that follows it);
 12 name another function's *body*, an *exit* or a comparable listing, where no
@@ -5343,7 +5373,10 @@ index has no `bank1` row at that address to credit).
 **Two of those are the reason a lexicon word needs its own evidence.** The
 0xD673 pair is undecided only because the sentence writes "ACALLs" and
 `CODE_VERB` has `acall` without the plural; adding the plural would credit a
-claim its author withdrew. Every word this adds carries its evidence sentence
-and listing anchor in `../ec/tools/test_citation_frames.py`. Nothing here is a
-behavioural claim: no register `status:` changed, no listing was re-read, and
-no live test ran.
+claim its author withdrew — and issue #525's corroboration rule credits it
+anyway, from the listing, which is the same overclaim arriving by another road.
+That one wrong credit is recorded in
+`docs/findings/citing-listing-evidence.md` rather than tuned away. Every word
+this adds carries its evidence sentence and listing anchor in
+`../ec/tools/test_citation_frames.py`. Nothing here is a behavioural claim: no
+register `status:` changed, no listing was re-read, and no live test ran.

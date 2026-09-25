@@ -35,10 +35,10 @@ trees the numbers were taken on.
 | inbound sites to those | 787 |
 | anonymous rows no direct transfer reaches | 339 |
 | distinct `FUN_*` callees the `.c` files name | 822 |
-| anonymous callees a comment names | 99 |
-| comments that name one | 142 |
+| anonymous callees a comment names | 109 |
+| comments that name one | 137 |
 | — candidate (callee, comment) pairs, before the frame gate | 382 |
-| — kept / rejected / undecided by it | 153 / 185 / 44 |
+| — kept / rejected / undecided by it | 148 / 206 / 28 |
 
 **The 475 and the 822 are two framings of related things, and neither is "the"
 count.** The first is decoded out of the committed `.asm` listings; the second
@@ -115,24 +115,26 @@ over the whole sentence rejects a genuine list: seven `bank1` comments write
 "then calls to 0x110A, 0x158E, 0x0F75, 0x1594 and 0x00CF", where "to" is a
 data marker and all five are real code addresses. A code frame is *necessary*,
 a data frame is a *veto*, and **what neither settles is returned as
-`undecided`** — 44 pairs — rather than defaulted either way. The
-rejected and undecided populations are printed by the tool and are never
-dropped, because a guard that silently discards what it rejects cannot be told
-apart from one that rejects too much. **Each undecided pair has a recorded
-verdict in
+`undecided`** — 28 pairs today, 17 of which have since been settled by one of
+the two signals below — rather than defaulted either way. The rejected and
+undecided populations are printed by the tool and are never dropped, because a
+guard that silently discards what it rejects cannot be told apart from one that
+rejects too much. **Each of the 45 pairs the frame gate alone returned carries
+a recorded verdict in
 [`../../docs/findings/citation-undecided-verdicts.md`](../../docs/findings/citation-undecided-verdicts.md)**,
 one row each, settled on the listing or on the committed firmware bytes. Those
 are readings of the *sentences*, not reclassifications: the tool still reports
-the pair as undecided, and an undecided line carries the frame verdicts its
-mentions drew rather than a bare `--`. The count has moved once, to 44, and
-only because `sjmp` joined `CODE_VERB` for the one committed comment that
-needed it (`bank1,9B03`'s "it ends in an sjmp to 0x9B3C"). `sjmp` is **not** a
-member of `TRANSFERS` above and must not become one: a PC-relative branch is
-not a call, and a comment's lexicon and this tool's transfer set are
-deliberately different sets.
+a pair as undecided unless a signal settles it, and an undecided line carries
+the frame verdicts its mentions drew rather than a bare `--`. **The count has
+moved twice, from 45, and each move is accounted for**: `sjmp` joined
+`CODE_VERB` for the one committed comment that needed it (`bank1,9B03`'s "it
+ends in an sjmp to 0x9B3C"), and the citing listing's own transfer took 16 more
+(§"The third signal" below). `sjmp` is **not** a member of `TRANSFERS` above
+and must not become one: a PC-relative branch is not a call, and a comment's
+lexicon and this tool's transfer set are deliberately different sets.
 
-**Two further signals sit beside the frame, and the second is not lexical.** A
-`pd` comment cannot cite an EC row at all: the dump holds two 8051 programs
+**Two further signals sit beside the frame, and neither is lexical.** A `pd`
+comment cannot cite an EC row at all: the dump holds two 8051 programs
 with separate address spaces (`registers.yaml`'s `static-scan` caveat, and
 `build_ec_decompile.py` refusing an EC XDATA name on a `pd` row), and 45 of
 the 71 `pd`-scoped candidate pairs name one — 25 of them `common,07D0`. Three
@@ -147,25 +149,52 @@ is not the guard, and why the discriminator is lexical plus program identity.
 The full write-up, the frame census and the collision set are in
 [`../../docs/findings/citation-code-vs-data.md`](../../docs/findings/citation-code-vs-data.md).
 
-**Two known distortions in the citation count, both real and both left in.**
+**The third signal is the citing listing, and it is the one that reads bytes.**
+A frame decides what a *mention* is; it cannot see what the comment is attached
+to, and on this firmware that is the whole of the difference between a real
+citation and a comment refuting the decompile it was written from.
+`../tools/citation_callers.py` asks the citing row's own `.asm`: an unbroken
+`0xFF` run **vetoes** the pair as `fill-at-citer`, and a transfer in the listing
+that resolves to the named callee **corroborates** a pair the window left
+`undecided` — which is how the three `common,0x0070` calls, whose governing verb
+is four ordinary words and a dash-aside away, come to be counted. Both sit
+below the two vetoes, so neither can override a data frame or the program
+identity. Written up in
+[`../../docs/findings/citing-listing-evidence.md`](../../docs/findings/citing-listing-evidence.md),
+with the 30/12/21 and 979/100 measurements and the one corroborated pair that
+turns out not to be a call.
+
+**Two known distortions in the citation count, one fixed in place and one left
+in.**
 
 - *A comment that refutes the decompile still writes the address.* Seven rows
   in `bank1` share one sentence ending "is not supported by these
   instructions", and every one of them names 0x110A, 0x158E, 0x0F75, 0x1594
-  and 0x00CF inside the body it is rejecting. The frame gate keeps those
-  mentions, and it is right to: each one does read as a call, to a code
-  address, in a call enumeration. What is wrong is the **caller** — the
+  and 0x00CF inside the body it is rejecting. The frame gate reads each mention
+  as a call, and it is right to: each one does read as a call, to a code
+  address, in a call enumeration. What was wrong is the **caller** — the
   address the comment is attached to is `0xFF` fill, not the reset path those
-  calls live in. 0x110A and 0x00CF have since been named and left the
-  candidate set; the three that remain, **0x0F75, 0x158E and 0x1594, are
-  ranks 1–3 with 7 citations each, all seven of them this artifact**, and the
-  eighth citation (`common,0x0070`, which records the calls supportively) is
-  `undecided`, because the aside between its governing verb and the mention is
-  longer than the window. **So the top of the ranking is now right about the
-  addresses and still wrong about who calls them** — the second, distinct
-  defect, and the next thing to fix. Rewriting those comments to substitute a
-  new name would assert the very call the comment denies, so they were left
-  alone.
+  calls live in. 0x110A and 0x00CF have since been named and left the candidate
+  set. ~~The three that remain, **0x0F75, 0x158E and 0x1594, are ranks 1–3 with
+  7 citations each, all seven of them this artifact**, and the eighth citation
+  (`common,0x0070`, which records the calls supportively) is `undecided`,
+  because the aside between its governing verb and the mention is longer than
+  the window. **So the top of the ranking is now right about the addresses and
+  still wrong about who calls them** — the second, distinct defect, and the next
+  thing to fix.~~ **Corrected 2026-09-25, issue #525**:
+  [`../../docs/findings/citing-listing-evidence.md`](../../docs/findings/citing-listing-evidence.md).
+  `../tools/citation_callers.py` asks the citing row's own listing the question
+  the frame test could not, and the seven `bank1` listings are an unbroken `0xFF`
+  run — `mov R7, A` repeated — that cannot make any call. Those **21 pairs are
+  now refused** as `fill-at-citer` and the three rows read **`cited_by=1`
+  against their own `inbound=1`**, `citing` reduced to `common:0070`, whose
+  listing carries the three `lcall`s. The same listing evidence credits 16 pairs
+  the window left `undecided`, so the partition above is 148 / 206 / 28 — the 28
+  rather than the 29 this correction was written against because `sjmp` had
+  already taken one of them (the frame-gate paragraph above). The
+  comments themselves are **unchanged**: substituting a name there would assert
+  the very call the comment denies, and the gate now makes their text irrelevant
+  to the count.
 - *Naming a function removes it from the count.* `cited_by` is defined over
   anonymous callees only, so a row's count goes to 0 the moment it is
   annotated, whether or not its citing comments changed. The `citing` column is
@@ -235,10 +264,13 @@ inbound distribution is already spent.
 
 ## What is left, and the two limits a reader must carry
 
-**The work list is the `annotated=no` rows**, 475 of them, of which **99 are
+**The work list is the `annotated=no` rows**, 475 of them, of which **109 are
 cited** by a comment and so are the ones a reader can trace to a sentence that
 needs them. The rest are reachable but uncited: worth naming, not yet blocking
-any explanation. The ranking is the order to work them in.
+any explanation. The ranking is the order to work them in, and the top of it
+changed with issue #525: the three `0xFF`-fill rows that held ranks 1–3 are at
+`cited_by=1` each, and `common,07F0` now leads at 3 with three comments and
+three `lcall` sites agreeing.
 
 **339 anonymous rows have no direct transfer reaching them at all** — 339 of
 the 814 `FUN_*` rows, reached by function pointer, by a dispatch table, or not
