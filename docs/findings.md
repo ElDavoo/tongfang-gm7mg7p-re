@@ -7449,3 +7449,50 @@ count gate wearing a different hat, and §46's "finds two" and this file's own
 two `Left out on purpose` bullets are left as dated records. No gate was wired
 (#162 is unblocked by the evidence, not by this branch), no `.github/` file was
 touched, and nothing here was read off a machine.
+
+## 53. The opcode-table bounds shape, censused, and the one comment that named the wrong reason (2026-09-25, issue #797)
+
+The write-up is
+[`opcode-len-bounds-census.md`](findings/opcode-len-bounds-census.md); this is
+the summary. Issue #679 fixed one instance of *read a byte out of a buffer, then
+index `OPCODE_LEN` with it, before checking the buffer's end*, and wrote the
+shape down for the first time. This is the census of the rest of `ec/tools/` for
+it: **one grep, 39 lines, 25 sites in 20 rows** — the six the issue named
+are a subset, not the content — with a measured verdict per row and the other 14
+lines accounted for as docstrings, constants, dict values, byte values already
+in hand, or the adjacent `audit_call_targets.py` last-byte read. The three
+classes come out differently,
+as they should: **eight rows where the bound is `len(d)` or clamped to it need
+no change at all** (every one already has the guard or the docstring `decode()`'s
+fix established), and **ten where the bound is not `len(d)` at all** get a verdict
+rather than a guard — seven bounded by a caller's number, two by a count, one by
+a region — because a `len(d)` check there would be testing something
+other than the loop's own invariant. The deliverable is
+`ec/tools/trace_xdata_refs.py:241-242`, where the comment `# DPTR reloaded: ...`
+described the **second** disjunct of the guard and was silent on the **first** —
+the `i + 2 >= len(d)` test that holds the index in range, since the loop's own
+bound is `max_insns` and not `len(d)`, and the loop's other `len(d)` test (at
+`:230`) asks whether the *instruction* fits and so permits `i + n == len(d)`.
+**Restated as comment lines only; the fifteen-address `--check` sweep exits 0
+before and after, which is what makes it a regression test rather than a
+formality.** The restatement is
+load-bearing rather than cosmetic because the two disjuncts do not fire equally:
+driven from all 262144 offsets of `ec/firmware/GMxMGxx_11.800` the `MOV_DPTR`
+test fires 26257 times and the bounds check **10**, all from starts in the last
+10 bytes, and no committed caller passes a start there — so a reader who
+instruments the tool is actively invited to conclude the bounds check is dead
+code. It is not; delete it and the loop raises. **The issue's own vector does not
+reproduce and the correction is left visible beside it**: `b"\x01\x00\x01\x00\x01\x00"`
+is described as three non-flow instructions, but `0x01` is `ajmp`
+(`disasm8051.py:61`), so `walk()` breaks on the flow test at the first
+instruction with the guard present *and* deleted. `b"\x00\x00\x00\x00"` does
+work — two instructions with the guard, `IndexError` on the fifth iteration
+without it. `pd_index_geometry.py:600-601` gets **no guard**: its window peaks at
+`0x3002C` against a `0x40000`-byte image, so it did not raise over the range run
+— which is a statement about this input, not about the code, and a guard
+justified by "it cannot happen here" would be a guard justified by an assumption.
+Nothing here asserts any site "cannot raise", no live test ran, no capture was
+opened, and no EC or hardware was involved; the sweep bounds the table the way
+`ec/annotations/registers.yaml` bounds a zero-result scan, and the
+`converges_from` retraction at `docs/findings/citation-gap-scan.md:443-446` and
+`citation_gap_scan.py:26-46` both stay exactly as they are.
