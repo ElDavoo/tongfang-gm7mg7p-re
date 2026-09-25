@@ -836,11 +836,18 @@ magnitude.
    ```
 
    against the 389 clusters with a largest of 152 that both relations give at
-   the same threshold, in the full table below. That 479 is the one number in
-   §4.2 that the §4.3 correction does **not** move, and it should not: the
+   the same threshold, in the full table below. That **507** is the one number
+   in §4.2 that the §4.3 correction does **not** move, and it should not: the
    `touching`-only mode never reads a writer set, so the phantom writers could
    not reach it. The worked example survives the correction intact, because
    `0x04FE`/`0x04FF`'s one real writer at `bank1:0x94FA` was never a comparison.
+
+   *(Corrected 2026-09-25, issue #582: the sentence above said 479, which is
+   what the `--threshold-sweep --no-writer-axis` row read on the tree §4.2 was
+   written against. The console block beside it already carried 507, having
+   moved with issue #279's pair-accessor pass (`6bf9c234`), so the prose was
+   the stale half of one paragraph rather than a figure that was wrong twice.
+   Re-derived on the committed tree: `0.50,touching,507,74,274,61,16,36`.)*
 3. Clusters are **connected components**, not a greedy cover — the relation is
    not transitive, and a greedy pass would make the output depend on address
    order. Every address lands in exactly one; one with no neighbour is a
@@ -1076,20 +1083,46 @@ carries so a citation can outlive the ranking. Every number below is a command
 re-run over the committed tree, and the recipe is
 `xdata-06c2-06db-timers.md` §6a's with the `==` guard issue #178 added
 **removed** instead — the classifier-and-everything-it-counts regeneration, in
-its cheapest form.
+its cheapest form. That is the `--no-eq-guard` flag
+(`../tools/xdata_register_map.py:4457`) with scratch outputs, which is what §6a
+and this block's transcript now do rather than a source edit: the flag is
+refused with the committed output paths
+(`../tools/xdata_register_map.py:4495-4499`), so everything below is a report
+about the committed census and not a replacement for it. The derivation, with
+the commands and their output, is
+`../../docs/findings/xdata-4-4-identity-rederivation.md`.
 
-**The cost, measured.** 427 clusters become 439. Of the 427 committed ids, **48
-survive intact** and **379 keep the number and change the membership the number
-names** — so an id is stable for one generation, not across one. That is the
-whole of issue #253's mechanism, and it is a property of the ordering key, not
-of the census.
+**The cost, measured.** 439 clusters become 445. Of the 439 committed ids, **124
+survive intact** and **315 change what the number names** — 311 land on a
+different id outright and 4 keep the number while the membership under it moves
+— so an id is stable for one generation, not across one. That is the whole of
+issue #253's mechanism, and it is a property of the ordering key, not of the
+census.
 
-| | of 427 committed clusters |
+*(This paragraph and the table below were re-run 2026-09-25, issue #582. The
+superseded figures are issue #274's, true of the census #274 measured against
+before #327's unnamed-callee pass and #279's pair-accessor pass moved it: 427
+clusters become 439, 48 intact and 379 changed, 409 keys unchanged and 420
+reaching a new cluster. The wrong version is kept rather than deleted, per
+`../../docs/findings.md` §4a; this section's own issue-#279 correction already
+carried the 315/124 split this re-run confirms.)*
+
+| | of 439 committed clusters |
 |---|---:|
-| rank (`main-ec-NNN`) intact across the regeneration | 48 |
-| `cluster_key` — a content hash — unchanged | 409 |
-| key, else best membership overlap ≥ 0.50 | 420 |
+| rank (`main-ec-NNN`) intact across the regeneration | 124 |
+| `cluster_key` — a content hash — unchanged | 424 |
+| committed rows reaching a new cluster by key, else best membership overlap ≥ 0.50 | 434 |
 | …where the new cluster is claimed by more than one old row | 0 |
+
+**The header and the third cell count different things, and it is worth saying
+which.** 439 is a count of `ec/annotations/xdata-clusters.csv`; 434 is a count
+of what the regeneration did with those 439 rows, and the five it did not place
+are the summary's "5 with no match at 0.50". Neither is **430**, the count of
+committed clusters carrying a key and no `cluster_name` — that is 439 minus the
+nine names, and it is the same number `--check` prints as `with no name 430`.
+The old table's 420 and the old prose's 417 were that collision from the other
+direction; these figures no longer share an integer, and the two questions
+still do not answer each other.
 
 **`cluster_key` is the cheap half.** `sha256` over the program's name and the
 cluster's space-joined sorted `addrs`, truncated to 12 hex digits and spelled
@@ -1100,16 +1133,30 @@ nothing about a near miss: two clusters whose membership differs by one address
 have keys with nothing in common. The self-test asserts the keys are distinct
 rather than taking a truncated hash's word for it, and does it in both places
 that can hold it: over a fresh generation's rows, and over the **committed**
-census read back from `xdata-clusters.csv` — its 427 keys, the ones every
+census read back from `xdata-clusters.csv` — its 439 keys, the ones every
 `cluster_key` citation in the tree resolves against.
 
-**The 18 that a key cannot carry include the two the prose cares about most,
-which is why the key is not the answer.** `main-ec-002` (108 addresses) and
-`main-ec-003` (44) are two of them, and they are the two largest clusters any
-page in the tree cites. A key-only design hands the two most-cited clusters a
-brand-new identity under exactly the regeneration this section is about. Of the
-18, **11 reach a new cluster on overlap and 7 do not reach one at all** by this
-rule (best scores 0.50-0.97 for the eleven, 0.01-0.33 for the seven).
+**The 15 that a key cannot carry include the two largest clusters in the
+committed census, which is why the key is not the answer.** `main-ec-001` (152
+addresses) and `main-ec-002` (92) are two of them, and `main-ec-002` is the
+cluster `mode-oem-init` names, cited by seven pages of the tree for a membership
+it holds. A key-only design hands the two biggest a brand-new identity under
+exactly the regeneration this section is about. Of the 15, **10 reach a new
+cluster on overlap and 5 do not reach one at all** by this rule (best scores
+0.50-0.97 for the ten, 0.02-0.33 for the five).
+
+*(Correction, 2026-09-25, issue #582's re-run. This paragraph used to read "The
+18 that a key cannot carry include the two the prose cares about most …
+`main-ec-002` (108 addresses) and `main-ec-003` (44) … the two largest clusters
+any page in the tree cites … Of the 18, **11 reach a new cluster on overlap and
+7 do not reach one at all**", at 0.50-0.97 and 0.01-0.33. Those are issue #274's
+figures against the census #274 measured: the second and third largest clusters
+then, which are not the two largest now. `main-ec-003` has not changed key at
+all — it is `counter-sweep`, `seeded` at 1.00 — and it is the most-cited cluster
+in the tree (`grep -rl 'main-ec-003\b' --include=*.md .` names nine files,
+against seven for `main-ec-002`), so the "largest" claim and the "a key cannot
+carry" claim were never about the same set. The old sentence is kept in this
+correction rather than deleted, per `../../docs/findings.md` §4a.)*
 
 **`cluster_name` is the half that does.** `annotations/xdata-cluster-names.csv`
 is a hand-edited `cluster_key,cluster_name,note` file — the one place a human
@@ -1118,17 +1165,33 @@ the evidence for the name the way that file's `evidence` column is. A generation
 carries each named cluster forward by exact key first and otherwise by best
 Jaccard against the membership the key was last seen with, at
 `CARRY_MIN_JACCARD` = 0.50 (the clustering's own default, so a name and a
-cluster are carried by the same number). All ten names survive this
-regeneration; the four whose membership moved carry at 0.96, 0.64, 0.90 and
-0.78, and the other six are `seeded` — the names file's key is still this
-cluster's key. **The margin is not close**: for each of the ten, the best match
-scores 0.64 to 1.00 and the *next* named cluster scores **0.00**, so the
-threshold is not a tuned number sitting on a cliff — any value between 0.01
-and 0.64 gives these ten the same ten answers. **That the ten are the ten
-clusters the committed prose makes a membership claim about is the point, and
-it is also the limit: 417 clusters have a key and no name, and a name nobody
-cites is a column that reads as coverage it does not have.** Adding one is a
-one-row edit.
+cluster are carried by the same number). All nine names survive this
+regeneration; the one whose membership moved — `mode-oem-init`, 92 addresses in
+the committed census and 93 in this run — carries at 0.97, and the other eight
+are `seeded` — the names file's key is still this cluster's key. **The margin
+is not close**: for each of the nine, the best match scores 0.97 to 1.00 and
+the *next* named cluster scores **0.00**, so the threshold is not a tuned
+number sitting on a cliff — any value between 0.01 and 0.97 gives these nine
+the same nine answers. **That the nine are the nine clusters the committed
+prose makes a membership claim about is the point, and it is also the limit:
+430 clusters in the committed census have a key and no `cluster_name` — a count
+of that CSV, not of this regeneration, and not the 434 above — and a name
+nobody cites is a column that reads as coverage it does not have.** Adding one
+is a one-row edit.
+
+*(Correction, 2026-09-25, issue #582's re-run. This paragraph used to read "All
+ten names survive this regeneration; the four whose membership moved carry at
+0.96, 0.64, 0.90 and 0.78, and the other six are `seeded` … for each of the ten,
+the best match scores 0.64 to 1.00 … any value between 0.01 and 0.64 gives these
+ten the same ten answers … 417 clusters have a key and no name". The names file
+holds nine rows and the committed census nine `cluster_name` cells: the tenth
+name was `page-0300`, whose row issue #279's pair-accessor pass dropped when the
+nine-address `0x0300` cluster it named was absorbed into `main-ec-001` (§5's
+re-derivation records that merge, and this change re-keys nothing). So the four
+overlap carries collapse to one, and 417 is the `with no name` line of a census
+that has since been regenerated. The superseded text is kept here rather than
+deleted, per `../../docs/findings.md` §4a, and the re-keys that moved the nine
+are recorded in `xdata-cluster-names.csv`'s own `Re-keyed` notes.)*
 
 **Four outcomes, four claims.** `seeded` and `exact` are the same claim and are
 reported as two because they are two different facts about where the name came
@@ -1144,33 +1207,41 @@ stopped existing are three different things, and this column can only report
 that its own rule did not fire.
 
 ```console
-$ rm -rf /tmp/census && mkdir -p /tmp/census/ec/tools
-$ cp ec/tools/xdata_register_map.py /tmp/census/ec/tools/
-$ for d in decompiled annotations firmware ghidra; do
->   ln -s "$PWD/ec/$d" /tmp/census/ec/$d
-> done
-$ python3 - <<'EOF'
-p = '/tmp/census/ec/tools/xdata_register_map.py'
-s = open(p).read()
-guard = '''    if stripped.startswith("=="):
-        return False
-'''
-assert guard in s
-open(p, 'w').write(s.replace(guard, ''))
-EOF
-$ python3 /tmp/census/ec/tools/xdata_register_map.py \
+$ rm -rf /tmp/census && mkdir -p /tmp/census
+$ python3 ec/tools/xdata_register_map.py --no-eq-guard \
     --out-registers /tmp/census/registers.csv \
     --out-clusters /tmp/census/clusters.csv
-  names: seeded 6, exact 0, carried by overlap 4, tied, not carried 0, with no name 429
-    main-ec-002 carries mode-oem-init by overlap, Jaccard 0.96 from k5be7031564f8 -- re-key annotations/xdata-cluster-names.csv if the name moved
-    main-ec-004 carries level-block-086x by overlap, Jaccard 0.64 from k2d9004f7707b -- re-key annotations/xdata-cluster-names.csv if the name moved
-    main-ec-013 carries user-clear-bytes by overlap, Jaccard 0.90 from k76e75f349ea7 -- re-key annotations/xdata-cluster-names.csv if the name moved
-    main-ec-022 carries page-0300 by overlap, Jaccard 0.78 from k3fdd14ddea2e -- re-key annotations/xdata-cluster-names.csv if the name moved
-wrote /tmp/census/registers.csv: 1171 rows
-wrote /tmp/census/clusters.csv: 439 rows
-  main-ec: 1062 distinct addresses, 13957 references, 388 clusters at threshold 0.5
-  pd: 157 distinct addresses, 861 references, 51 clusters at threshold 0.5
+wrote /tmp/census/registers.csv: 1326 rows
+wrote /tmp/census/clusters.csv: 445 rows
+  main-ec: 1218 distinct addresses, 14838 references, 394 clusters at threshold 0.5
+  pd: 157 distinct addresses, 858 references, 51 clusters at threshold 0.5
+  names: seeded 8, exact 0, carried by overlap 1, tied, not carried 0, with no name 436
+    main-ec-002 carries mode-oem-init by overlap, Jaccard 0.97 from kefb63d82f8c7 -- re-key annotations/xdata-cluster-names.csv if the name moved
 ```
+
+**The copy-and-`str.replace` this transcript used to open with is gone, and its
+replacement is the flag the block's preamble names.** The old recipe copied the
+tool into `/tmp`, symlinked the inputs back, and deleted the `==` guard from the
+copy's source, because when the block was written nothing else removed it. It
+was a workaround one rename away from silently regenerating the guard-on census
+instead, and the tree has since taken that step: issue #302 parameterised the
+guard (`../tools/xdata_register_map.py:1582` is `if eq_guard and
+stripped.startswith("==")`) so `--no-eq-guard` could be a flag. A regeneration
+now writes to a scratch path and reads the committed decompile in place, with
+no copy of the tool and no source edit. The `--out-*` flags are not decoration
+either: the tool refuses `--no-eq-guard` with the committed output paths
+(`../tools/xdata_register_map.py:4495-4499`), which is what keeps a run of
+this transcript from overwriting the census it is measuring.
+
+*(Correction, 2026-09-25, issue #582's re-run. The transcript above is the same
+experiment re-run against the tree as it now stands; the one it supersedes
+built 1,171 register rows and 439 clusters from a copy of the tool, seeded 6
+names and carried 4 on overlap at 0.96, 0.64, 0.90 and 0.78, including
+`page-0300` from `k3fdd14ddea2e` — a name the committed names file no longer
+carries, for the reason the correction beside "All nine names survive" gives.
+The superseded transcript is kept in the correction record at
+`../../docs/findings/xdata-4-4-identity-rederivation.md` rather than here, so
+that this block holds one run rather than two.)*
 
 The `re-key` is the one hand-edit this costs, and it is named because it is
 real: the names file is keyed by `cluster_key`, so a name that survives in
@@ -1214,10 +1285,12 @@ needed and did not have. Rows go to stdout as CSV and the summary to stderr, so
 the report redirects without the prose ending up in it.
 
 ```console
-$ python3 /tmp/census/ec/tools/xdata_register_map.py \
+$ python3 ec/tools/xdata_register_map.py --no-eq-guard \
+    --out-registers /tmp/census/registers.csv \
+    --out-clusters /tmp/census/clusters.csv \
     --map ec/annotations/xdata-clusters.csv > /tmp/census/map.csv
-427 rows: 18 whose cluster_key changed, 18 whose membership changed, 7 with no
-match at 0.50, 12 carrying a name
+439 rows: 15 whose cluster_key changed, 15 whose membership changed, 5 with no
+match at 0.50, 10 carrying a name
 ```
 
 `--map` reports and does not write: `--out-clusters`/`--out-registers` default
@@ -1226,6 +1299,15 @@ very census it is mapping. The CSVs for a regeneration come from the writing
 run above — the same command without `--map` — and those are the files
 `../tools/check_cluster_citations.py --clusters/--registers` reads, so the two
 compose on one tree without either overwriting the other.
+
+**The "10 carrying a name" is not a tenth name.** It counts *old rows* whose
+new cluster carries one, and `--map` fills a `cluster_name` cell even on a row
+whose `match` is `none`: `main-ec-145`, a two-address row, is printed with
+`mode-oem-init` beside a 0.02 Jaccard because that is the best guess `--map`
+found. Nine is the number of names, 10 the number of rows that mention one, and
+the report's own rule — a claim is counted only for a row that actually matched
+(`../tools/xdata_register_map.py:4298-4300`) — is what keeps the near miss out
+of the "claimed by more than one old row" cell, which is 0 above.
 
 **The test that settles it** is `../tools/test_xdata_cluster_names.py`, which
 runs that regeneration out of a `tempfile` and then holds four things: that the
@@ -1242,6 +1324,25 @@ what their `main-ec-NNN` names** and 124 do not. `main-ec-002` is one of them
 either way, naming the committed 92-address `mode-oem-init` and a 93-address
 cluster here, so the same id is a different cluster in the two censuses — which
 is the point, and is why the rank is not an identity.
+
+*(Correction, 2026-09-25, issue #582's re-run. The 315/124 split, the
+`main-ec-003`/`k733222e83898`/43 addresses and the 92→93 are re-derived and
+stand. One clause of the paragraph above does not: the suite no longer builds
+the regeneration this paragraph describes, so none of its four holds is
+currently *running*, and the clause naming `main-ec-004` as "carried by overlap
+and not by key" is not what the committed census would give anyway —
+`level-block-086x` is `seeded` there, key and membership both unchanged, and
+`main-ec-002` is the only one of the two carried on overlap (0.97). The suite's
+own recipe is two generations behind: `GUARD`
+(`../tools/test_xdata_cluster_names.py:54`) is a literal the parameterised guard
+at `../tools/xdata_register_map.py:1582` no longer contains, and its
+two-largest case pairs `main-ec-001` with `mode-oem-init` and `main-ec-002`
+with `level-block-086x`, which the committed census puts at `main-ec-002` and
+`main-ec-004`. **The suite is red on `main` and is not wired into
+`.github/scripts/agent-gates.sh`**, so nothing has been failing CI over it.
+Fixing it is a change to a test and is a follow-up, not a line to move inside a
+documentation change; `../../docs/findings/xdata-4-4-identity-rederivation.md`
+carries the reading in full.)*
 
 *(Correction, 2026-09-25, issue #279. This paragraph used to read that only the
 rank moved — "`main-ec-003` → `main-ec-002`", the 44-address cluster ahead of
