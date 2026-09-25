@@ -250,8 +250,8 @@ can change a bucket without changing anything on disk must not be reachable
 inside a mode whose whole claim is that nothing changed. It is also refused
 unless it is given `--out-registers` and `--out-clusters`, for the same reason
 one step removed: run bare it would write the pre-#178 census over the
-committed CSVs, and `--check` would then be green because the files agree with
-each other. It exists because
+committed CSVs, and `--check` would then go red, because the refusal above
+regenerates guard-on and a guard-off file cannot match. It exists because
 `annotations/xdata-06c2-06db-timers.md` §6a measures what the guard bought, and
 that measurement has to stay re-derivable from the committed tree forever. It
 could not be, from a commit pointer: `git log --oneline -S 'startswith("==")' --
@@ -261,7 +261,9 @@ invariant added two more occurrences of the same string. Neither is the
 pre-#178 classifier, which appears only at #206's parent, a revision the search
 does not name, so the recipe was "copy the tool and patch it", which is how §6a
 came to compare the tool against itself. The numbers that recipe produced are
-real and the recipe is the problem; this flag is the recipe, kept.
+real and the recipe is the problem; this flag is the recipe, kept. Both
+refusals are pinned by `test_xdata_register_map.py`, which holds that no mode
+runs before either of them fires.
 
 Usage:
     python3 ec/tools/xdata_register_map.py               # write the two CSVs
@@ -3618,10 +3620,10 @@ def main() -> int:
                  "combined with --check or --self-test. To see the pre-#178 "
                  "buckets, write a census to a scratch path and diff it "
                  "against the committed one.")
-    # The other way this flag could do damage is quieter: run bare it writes the
-    # pre-#178 census over the committed CSVs, after which --check is green
-    # because the files now agree with each other and the source of truth is
-    # wrong. So a --no-eq-guard run must be given somewhere to write.
+    # The other way this flag could do damage is by writing at all: run bare
+    # it overwrites the committed CSVs with the pre-#178 census. --check would
+    # catch that, but only because the guard above refuses the two together
+    # and so regenerates guard-on; don't rely on it. Write somewhere scratch.
     if args.no_eq_guard and (args.out_registers == OUT_REGISTERS
                              or args.out_clusters == OUT_CLUSTERS):
         ap.error("--no-eq-guard would overwrite the committed census, so it "

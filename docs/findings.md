@@ -5774,3 +5774,49 @@ cross-program comparison are in
 by `python3 ec/tools/census_ff_fill.py` and pinned by its `--self-test`. Nothing
 here is a behavioural claim: no register `status:` changed, no listing was
 re-read, and no live test ran.
+
+## 29. `--no-eq-guard`'s two refusals are pinned, and the tripwires are why (2026-09-25, issue #556)
+
+The write-up is
+`docs/findings/xdata-no-eq-guard-refusal-contract.md`; this is the summary.
+`--no-eq-guard` carried three claims and only its first was tested; the two
+refusals, which fire in `main()` before the mode dispatch and are the reason
+the `xdata-06c2-06db-timers.md` §6a measurement stays re-derivable, now have
+`../ec/tools/test_xdata_register_map.py`. **The refused cases replace all nine
+mode entry points with recorders and assert that none of them ran**, which is
+the claim rather than the consequence: a guard moved below the dispatch fails
+the test instead of writing the pre-#178 census over
+`annotations/xdata-registers.csv` and `annotations/xdata-clusters.csv`. The
+count is nine rather than the six this work was written against because #566's
+co-reading modes joined the dispatch, and a tripwire that named only the old
+six would have let a relocated guard reach one of the three it did not mock.
+Each mutation was run against a scratch copy of `ec/` to show the suite goes
+red, and the mirror's census CSVs were byte-identical after every one — **a
+failing run of this suite cannot damage the repository.** `tools/run-tests.sh`
+is **19 of 22 suites** on this tree, and all three failures reproduce on a
+pristine `HEAD`. Two are the ones this section is about: one of them,
+`test_xdata_cluster_names.py::TheGuardOffRegeneration`, is a regression from
+#528 itself, which threaded `eq_guard` through `store_target()` and so left the
+sibling's "delete the `==` guard" recipe deleting a conditional rather than the
+rejection — **the accepted run in the new suite is currently the only working
+checked-in-suite route to a guard-off census**, and the fix is named in the
+write-up rather than folded in here — and the other is
+`test_check_site_census.py`'s `D091.c`
+line-pin drift, which #503 caused. The third,
+`test_check_cluster_citations.py`'s committed-prose case, is **main's own**:
+§26 above pairs `0x0800` with `main-ec-081`, and the committed census puts
+`0x0800` in `main-ec-100` instead. Which of the two is wrong — the name or the
+membership claim — is a correction for #564 to make in place rather than one
+this issue absorbs. Nothing here is an EC finding: no register
+`status:` changed, no hardware was involved, and the committed census is
+untouched. `--check` is now **green** — #566 regenerated the two CSVs, so
+#326's symptom is gone from the tree this lands on, which is this issue's
+requirement met ("this changed nothing about the verdict"). It does not make
+the hazard sharper: `--check` is refused with `--no-eq-guard`, so it
+regenerates guard-on and goes red on a guard-off file whether the check was
+red before or green, and `check_cluster_citations.py` goes red with 45
+disagreements. The refusals are still worth pinning because they stop the write
+*before* it lands, but the failure they prevent is a loud one rather than a
+silent one. #512 (the `--self-test` redness, which #566's gate comment names
+and deliberately does not run) and #433, with the #504 naming backlog, are left
+open.
