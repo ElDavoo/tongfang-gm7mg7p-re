@@ -82,8 +82,9 @@ into `r2 -a 8051` with no stitching needed.
   guards, so `decode()` stops cleanly on a short window now. `walk()` stays for
   the two things it carries that `decode()` does not produce: the
   per-instruction map-unassigned flag and the `truncated` column. The
-  retraction in full is in `tools/citation_gap_scan.py`, and the bounds contract
-  that pins it has a suite of its own at `tools/test_disasm8051.py`.
+  retraction in full is in `../../docs/findings/citation-gap-scan.md`, and the
+  bounds contract that pins it has a suite of its own at
+  `tools/test_disasm8051.py`.
   `--report` writes `ghidra/gap-citation-scan.csv` and nothing else does;
   `--check` recomputes every per-pair verdict and fails on any diff;
   `--self-test` runs the known answers. `call_graph.py` is not changed by it and
