@@ -122,9 +122,43 @@ INDEX_COLUMNS = ["program", "addr", "name", "size", "seed_basis", "common",
 MANIFEST_COLUMNS = ["program", "source", "sha256", "loader", "ghidra_version",
                     "functions", "decompiled", "failed", "instruction_bytes",
                     "body_bytes", "seeds_applied", "seeds_rejected",
+                    # The function layer, in the order the questions come: how
+                    # many annotation rows the exporter applied, how many of them
+                    # found no function, and -- a different question, kept apart
+                    # because it is the one the old `annotations_applied` column
+                    # was answering -- how many exported functions carry a symbol
+                    # that is not a Ghidra placeholder (ExportDecompile.java:129).
                     "annotations_applied", "annotations_unmatched",
+                    "functions_named",
                     "variables_functions", "variables_applied",
                     "variables_unmatched", "mode"]
+# The counters ApplyAnnotations.java writes into apply-<program>.tsv, and the
+# only keys of that report this driver reads. Kept as data, in one place, because
+# a counter the writer emits and the reader does not accept is a number that
+# looks measured and is not.
+#
+# The function layer is here for the same reason the variable layer was added
+# (#238): the script has always computed `annotations_applied` and
+# `annotations_unmatched` and written them to the report, and the driver used to
+# write its own constant beside them. Read back rather than recomputed, because
+# the script's count is the only one that knows what the decompiler actually
+# found. bios/tools/bios_extract.py reaches the same two numbers a different way
+# -- it derives them driver-side, from the index rows that carry an annotation
+# and from the keys that resolved to nothing (bios_extract.py:895-896, 912-913,
+# 940-941) -- and fails the build when the unmatched count is non-zero
+# (bios_extract.py:1241), so no manifest in this repository carries a counter
+# that was typed in as a constant. What the EC had not done was take the
+# script's own figure.
+APPLY_REPORT_KEYS = ("annotations_applied", "annotations_unmatched",
+                     "variables_functions", "variables_applied",
+                     "variables_unmatched")
+# `common` is an export grouping, not a Ghidra program: ApplyAnnotations.java runs
+# on the two bank programs and writes no apply-common.tsv, and the de-dup in
+# join_index() renames a folded bank0 row to `common` after the fact. The
+# manifest's `common` row therefore borrows bank0's counters, which is what the
+# variable counters have always done. Named once, so the writer and the check
+# cannot disagree about which row stands in for which.
+MANIFEST_PROGRAM_SOURCE = {"common": "bank0"}
 # c-digests.csv, beside the manifest rather than inside it. `path` is relative
 # to the repo root so the file reads the same way a citation does, and `bytes`
 # is carried alongside the hash so a truncation is named as one rather than
@@ -789,13 +823,14 @@ def join_index(raw_index, raw_listing, work):
 
 
 def apply_report_counters(work):
-    """The variable-layer counters ApplyAnnotations.java wrote, keyed by program.
+    """The counters ApplyAnnotations.java wrote, keyed by program.
 
-    Read back rather than recomputed, because the script's own count is the
-    only one that knows what the decompiler actually found: a row whose key the
-    decompiler no longer produces looks identical to a row that was never
-    written, from out here. The driver could count the CSV's rows and would get
-    that wrong the first time `--mode rebuild-project` consumed a key.
+    Both layers, for the same reason. Read back rather than recomputed, because
+    the script's own count is the only one that knows what the decompiler
+    actually found: a row whose key the decompiler no longer produces looks
+    identical to a row that was never written, from out here. The driver could
+    count the CSV's rows and would get that wrong the first time
+    `--mode rebuild-project` consumed a key.
 
     A program with no report file is a program the script never ran on, which
     is zero of everything rather than a missing entry.
@@ -811,8 +846,7 @@ def apply_report_counters(work):
         counts = {}
         for line in open(os.path.join(reports, fn), errors="replace"):
             key, _, value = line.partition("\t")
-            if key in ("variables_functions", "variables_applied",
-                       "variables_unmatched"):
+            if key in APPLY_REPORT_KEYS:
                 try:
                     counts[key] = int(value.strip())
                 except ValueError:
@@ -821,7 +855,7 @@ def apply_report_counters(work):
     return out
 
 
-def write_outputs(raw, listing, work, digest, mode, seeds_info, var_counts):
+def write_outputs(raw, listing, work, digest, mode, seeds_info, apply_counts):
     if os.path.isdir(OUTDIR):
         shutil.rmtree(OUTDIR)
     os.makedirs(OUTDIR, exist_ok=True)
@@ -874,7 +908,11 @@ def write_outputs(raw, listing, work, digest, mode, seeds_info, var_counts):
             p = per_program.get(program, {"functions": 0, "failed": 0, "body": 0,
                                            "annotated": 0})
             c = counts.get("bank0" if program == "common" else program, {})
-            v = var_counts.get("bank0" if program == "common" else program, {})
+            # One dict, both layers. `common` is an export grouping with no
+            # ApplyAnnotations report of its own, so it borrows bank0's -- the
+            # same substitution the byte counts above make, and the one
+            # MANIFEST_PROGRAM_SOURCE names for the check to reuse.
+            a = apply_counts.get(MANIFEST_PROGRAM_SOURCE.get(program, program), {})
             src = ("%s common area (0x0000-0x7FFF), exported from bank0; identical "
                    "in bank1" % program if program == "common" else
                    "ec/firmware/GMxMGxx_11.800, the %s image"
@@ -900,16 +938,18 @@ def write_outputs(raw, listing, work, digest, mode, seeds_info, var_counts):
                 "seeds_applied": seeds_info.get(
                     "bank0" if program == "common" else program, 0),
                 "seeds_rejected": seeds_info.get(program + ":rejected", 0),
-                "annotations_applied": p["annotated"],
-                # Left at 0 and reconciled as separate work: this driver used to
-                # write a constant here and never read the report back, which is
-                # how 25 index rows came to claim an annotation that is no
-                # longer in the CSV. The variable counters below are read back
-                # from the start, so they do not start that way.
-                "annotations_unmatched": 0,
-                "variables_functions": v.get("variables_functions", 0),
-                "variables_applied": v.get("variables_applied", 0),
-                "variables_unmatched": v.get("variables_unmatched", 0),
+                "annotations_applied": a.get("annotations_applied", 0),
+                "annotations_unmatched": a.get("annotations_unmatched", 0),
+                # What the old `annotations_applied` column was actually
+                # counting, kept under the name that says so:
+                # ExportDecompile.java:129 asks whether the exported symbol is
+                # still a Ghidra placeholder, which is not a question about the
+                # annotation CSV at all. docs/findings.md §18 records why the
+                # two are no longer summed into one figure.
+                "functions_named": p["annotated"],
+                "variables_functions": a.get("variables_functions", 0),
+                "variables_applied": a.get("variables_applied", 0),
+                "variables_unmatched": a.get("variables_unmatched", 0),
                 "mode": mode,
             })
     return per_program
@@ -1024,9 +1064,9 @@ def main(argv=None):
     seeds_info = {"bank0": len({a for p, a, _ in rows if p == "bank0"}),
                   "bank1": len({a for p, a, _ in rows if p == "bank1"}),
                   "pd": len({a for p, a, _ in rows if p == "pd"})}
-    var_counts = apply_report_counters(work)
+    apply_counts = apply_report_counters(work)
     per_program = write_outputs(raw, listing, work, digest, args.mode, seeds_info,
-                                var_counts)
+                                apply_counts)
     report(per_program, args.mode)
     if unattributed:
         print("\n  %d call-target rows name no bank (bucket C) and were NOT seeded: "
@@ -1152,6 +1192,176 @@ def manifest_mode_problems(manifest_rows):
     return ["%s: mode is %r, not one of %s"
             % (r.get("program", "?"), r.get("mode"), "|".join(MANIFEST_MODES))
             for r in manifest_rows if r.get("mode") not in MANIFEST_MODES]
+
+
+# --------------------------------------------------------------------------
+# The function layer's three counters, checked offline.
+#
+# `annotations_applied` and `annotations_unmatched` are read back from
+# apply-<program>.tsv, and `functions_named` is counted off the index. All three
+# are the script's own arithmetic over the two committed CSVs, so --check can
+# derive every one of them without Ghidra. That is the point: the manifest is
+# only ever written by a Ghidra run, so a counter that quietly stopped
+# describing the export had no other witness. docs/findings.md §18.
+# --------------------------------------------------------------------------
+
+def annotation_scopes_for(program):
+    """The annotation scopes one Ghidra program consumes.
+
+    This is ApplyAnnotations.java's own `mine()` (ApplyAnnotations.java:373-378):
+    the rows of that program's scope, plus every `common`-scoped row for the two
+    bank programs, because the common area is byte-identical in both and the
+    script names the function in each. Restated rather than assumed, because
+    `annotations_applied` IS this mapping -- a driver that counted one row per
+    scope would report 691 for bank0 where the report says 769, and would be
+    wrong for a reason invisible in the manifest."""
+    return {program, "common"} if program in ("bank0", "bank1") else {program}
+
+
+def index_scopes_for(program):
+    """The annotation scopes that can back one index row.
+
+    The same rule as above, differing in exactly one case: an index row the
+    de-dup renamed to `common` (join_index) is bank0's export, so a
+    `bank0`-scoped row is one of the things that could have named it."""
+    if program in ("bank0", "bank1"):
+        return {program, "common"}
+    return {"bank0", "common"} if program == "common" else {program}
+
+
+def exported_addrs(index_rows):
+    """{program: {addr}} -- where each Ghidra program holds a function.
+
+    A folded common-area function is one index row standing in for two
+    programs' copies, and the bank1 row was dropped from the index along with
+    it, so `common` counts for both banks. Leave that out and every
+    `common`-scoped annotation counts as UNRESOLVED for both bank programs: all
+    78 of them sit at a folded address today, so `annotations_unmatched` would
+    read 78 for bank0 and 78 for bank1 where the real answer is 0 for both, and
+    a red `--check` would point at rows that resolve perfectly well."""
+    out = {}
+    for r in index_rows:
+        addr = norm_addr(r["addr"])
+        out.setdefault(r["program"], set()).add(addr)
+        if r["program"] == "common":
+            out.setdefault("bank0", set()).add(addr)
+            out.setdefault("bank1", set()).add(addr)
+    return out
+
+
+def annotation_ledger(index_rows, ann_rows):
+    """The two-way gap between the annotation CSV and the exported index.
+
+    Returns `(named_without_row, applied_but_unflagged, backed)`: index rows
+    marked `annotated=yes` that no CSV row explains; CSV rows sitting behind an
+    index row that says `annotated=no`; and every index row that does carry a
+    CSV row. Pure, no I/O, one pass, so the numbers §18 quotes and the numbers
+    `--check` acts on are the same lists.
+
+    Two directions, because one is not enough. The old `annotations_applied`
+    column was the index's `annotated=yes` count under a name that promised a
+    count of CSV rows, and the gap that mismatch opened was read as stale
+    annotations. It is not stale rows: every CSV row resolves, and the gap is
+    names from somewhere else -- Ghidra's own `caseD_*` labels on switch
+    dispatchers, and symbols that were already in the committed project
+    database. A one-way count sees those and calls them drift. Counting only the
+    other direction misses its own case: `isPlaceholderName()`
+    (ExportDecompile.java:334-340) matches any name starting `thunk_`, because
+    that is how Ghidra renders an auto-thunk, and annotated rows have chosen
+    that prefix themselves -- so rows that DID apply are reported as
+    unannotated. Both halves have to be counted for either to read correctly.
+
+    The third list is the matched middle, and its length is what lets the two
+    directions be added up rather than merely reported: it says how many index
+    rows a CSV row is responsible for, so two rows naming one function shows up
+    as a count that does not reconcile."""
+    by_scope_addr = {}
+    for r in ann_rows:
+        by_scope_addr.setdefault((r["scope"], norm_addr(r["addr"])), []).append(r)
+    named_without_row, applied_but_unflagged, backed = [], [], []
+    for r in index_rows:
+        program, addr = r["program"], norm_addr(r["addr"])
+        backing = [a for s in index_scopes_for(program)
+                   for a in by_scope_addr.get((s, addr), ())]
+        if backing:
+            backed.append((r, backing))
+        if r.get("annotated") == "yes":
+            if not backing:
+                named_without_row.append(r)
+        elif backing:
+            applied_but_unflagged.append((r, backing))
+    return named_without_row, applied_but_unflagged, backed
+
+
+def annotation_ledger_mismatches(manifest_rows, index_rows, ann_rows):
+    """Manifest rows whose three function-layer counters disagree with the
+    committed files they summarise.
+
+    Three expectations, each the script's own arithmetic rather than a re-run of
+    it:
+
+      annotations_applied     rows of a scope the program consumes that found a
+                              function -- what ApplyAnnotations.java increments
+                              `applied` for.
+      annotations_unmatched   rows of a scope the program consumes that found
+                              none. The script also counts an evidence-less row
+                              as unmatched; check() refuses those earlier, so an
+                              evidence-less row never reaches this function and
+                              the count here is purely the unresolved-address
+                              case.
+      functions_named         the index's `annotated=yes` rows for the program.
+
+    A `common` manifest row is checked against the expectations for bank0, whose
+    report it borrows (MANIFEST_PROGRAM_SOURCE) -- while its `functions_named`
+    is the common index row's own 80-ish, because that one was never read from a
+    report at all. Two different questions, two different sources, and the
+    separation is the change this function exists to pin."""
+    out = []
+    addrs = exported_addrs(index_rows)
+    consumed = {}
+    for program in {r.get("program") for r in index_rows} | {"bank0", "bank1", "pd"}:
+        scopes = annotation_scopes_for(program)
+        rows = [a for a in ann_rows if a["scope"] in scopes]
+        consumed[program] = (
+            sum(1 for a in rows if norm_addr(a["addr"]) in addrs.get(program, ())),
+            sum(1 for a in rows if norm_addr(a["addr"]) not in addrs.get(program, ())))
+    named = {}
+    for r in index_rows:
+        if r.get("annotated") == "yes":
+            named[r["program"]] = named.get(r["program"], 0) + 1
+    for r in manifest_rows:
+        program = r.get("program", "?")
+        source = MANIFEST_PROGRAM_SOURCE.get(program, program)
+        want_applied, want_unmatched = consumed.get(source, (0, 0))
+        for column, want in (("annotations_applied", want_applied),
+                             ("annotations_unmatched", want_unmatched),
+                             ("functions_named", named.get(program, 0))):
+            try:
+                got = int(r[column])
+            except (KeyError, TypeError, ValueError):
+                out.append("%s: %s is %r, not a number"
+                           % (program, column, r.get(column)))
+                continue
+            if got != want:
+                out.append(
+                    "%s: manifest records %s=%d; the committed files give %d. %s"
+                    % (program, column, got, want, _ledger_hint(column)))
+    return out
+
+
+def _ledger_hint(column):
+    """What a disagreement in one counter means, in the words of the layer it
+    belongs to. The three are kept apart because they are three different
+    mistakes, and a bare "expected N got M" would read as one."""
+    if column == "annotations_applied":
+        return ("That figure came from a report, so this is a manifest no run "
+                "produced -- re-run the build rather than editing it.")
+    if column == "annotations_unmatched":
+        return ("Either an annotation names an address with no function, or one "
+                "lost its evidence citation; check() refuses the latter "
+                "separately, so say which.")
+    return ("This is the index's own `annotated=yes` count, so the two files are "
+            "from different runs -- re-run the build.")
 
 
 # A header the EC exporter writes as the first line of every .c: the program, the
@@ -1615,6 +1825,116 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("coverage: a manifest whose functions is not a number fails",
           len(_mm) == 1, str(_mm))
 
+    # The function layer's three counters, on a fixture built to contain the
+    # awkward case rather than to avoid it: a folded `common` row, which is one
+    # index row standing for two programs' functions, and a bank0-scoped
+    # annotation whose only visible index row is the common one. Clean first, for
+    # the reason the structural cases above give.
+    def _fidx(program, addr, annotated="yes", seed="annotation"):
+        return {"program": program, "addr": addr, "annotated": annotated,
+                "seed_basis": seed, "name": "n_" + addr}
+    def _fann(scope, addr, name=None):
+        return {"scope": scope, "addr": addr,
+                "name": name if name is not None else "a_" + addr}
+    _fi = [_fidx("bank0", "1000"), _fidx("bank0", "3000", seed="auto"),
+           _fidx("bank1", "1000"), _fidx("common", "0500"),
+           _fidx("pd", "2000"), _fidx("pd", "4000", "no", "auto")]
+    _fa = [_fann("bank0", "0x1000"), _fann("bank1", "0x1000"),
+           _fann("common", "0x0500"), _fann("pd", "0x2000")]
+    # `common` borrows bank0's report, so the two carry the same applied figure
+    # while functions_named counts the common index row on its own. `program`
+    # names the one row an override touches, so a case asserts on a single
+    # reported problem rather than on the same one four times.
+    def _fman(program=None, **over):
+        rows = [{"program": "bank0", "annotations_applied": "2",
+                 "annotations_unmatched": "0", "functions_named": "2"},
+                {"program": "bank1", "annotations_applied": "2",
+                 "annotations_unmatched": "0", "functions_named": "1"},
+                {"program": "common", "annotations_applied": "2",
+                 "annotations_unmatched": "0", "functions_named": "1"},
+                {"program": "pd", "annotations_applied": "1",
+                 "annotations_unmatched": "0", "functions_named": "1"}]
+        for r in rows:
+            if program is None or r["program"] == program:
+                r.update(over)
+        return rows
+    check("function layer: a manifest that agrees with both CSVs passes",
+          not annotation_ledger_mismatches(_fman(), _fi, _fa),
+          str(annotation_ledger_mismatches(_fman(), _fi, _fa)))
+    # The trap this whole function is written around: 27 addresses are declared
+    # under both bank scopes and the de-dup folds an identical common-area
+    # function into one `common` row, so counting one row per scope and counting
+    # rows per program are not the same arithmetic and only one of them is what
+    # ApplyAnnotations.java did.
+    _p = annotation_ledger_mismatches(_fman("bank0", annotations_applied="1"),
+                                      _fi, _fa)
+    check("function layer: a manifest whose annotations_applied disagrees with "
+          "the CSV fails, naming both numbers",
+          len(_p) == 1 and "=1;" in _p[0] and "give 2" in _p[0], str(_p))
+    _p = annotation_ledger_mismatches(_fman("bank0", annotations_unmatched="1"),
+                                      _fi, _fa)
+    check("function layer: a manifest claiming an unmatched row the CSV cannot "
+          "produce fails", len(_p) == 1 and "unmatched" in _p[0], str(_p))
+    # A real unmatched row is legitimate data, not a fault: the script counts and
+    # reports it, and the check's job is only to know that the manifest's figure
+    # is the one the run produced. Whether a non-zero one should also fail the
+    # build is ec/ghidra/README.md's open question, not this file's.
+    _p = annotation_ledger_mismatches(
+        _fman("pd", annotations_unmatched="1"), _fi, _fa + [_fann("pd", "0xDEAD")])
+    check("function layer: a genuinely unresolvable row is counted, and the "
+          "manifest recording that count passes",
+          not _p, str(_p))
+    _p = annotation_ledger_mismatches(_fman("bank0", functions_named="9"),
+                                      _fi, _fa)
+    check("function layer: a functions_named that disagrees with the index "
+          "fails", len(_p) == 1 and "=9;" in _p[0] and "give 2" in _p[0],
+          str(_p))
+    _p = annotation_ledger_mismatches(_fman("bank0", annotations_applied=""),
+                                      _fi, _fa)
+    check("function layer: a counter that is not a number fails", len(_p) == 1,
+          str(_p))
+    # The ledger itself, both directions. bank0 0x3000 is marked `yes` with no
+    # CSV row behind it; pd 0x4000 is `no` and has none either, so it is neither.
+    _nwr, _abu, _bk = annotation_ledger(_fi, _fa)
+    check("ledger: the export carries a non-placeholder name no CSV row wrote",
+          [(r["program"], r["addr"]) for r in _nwr] == [("bank0", "3000")],
+          str([(r["program"], r["addr"]) for r in _nwr]))
+    check("ledger: an unannotated row with no CSV row is not a mismatch",
+          _abu == [], str(_abu))
+    # The opposite direction, which is why the ledger is two-way: a `thunk_`
+    # name matches isPlaceholderName() (ExportDecompile.java:334-340) and the
+    # row that wrote it applied anyway.
+    _abu2 = annotation_ledger([_fidx("pd", "2000", "no")], _fa)[1]
+    check("ledger: a CSV row that DID apply but is reported annotated=no is "
+          "found, not passed over",
+          len(_abu2) == 1 and _abu2[0][0]["addr"] == "2000", str(_abu2))
+    # A common-scoped annotation and a bank0-scoped one are interchangeable for a
+    # folded common row, and a check that joined the two indexes on (scope, addr)
+    # would call this one unexplained.
+    _nwr2 = annotation_ledger([_fidx("common", "0500")],
+                              [_fann("bank0", "0x0500")])[0]
+    check("ledger: a bank0-scoped row is accepted as backing a folded common "
+          "index row", _nwr2 == [], str(_nwr2))
+    # ... and the converse, which is the one an address-only join gets wrong.
+    # The PD image is a separate 64 KiB program with its own address space
+    # (ec/annotations/lightbar-bat-flow.md §2), so its 0x0000 is not the EC
+    # common area's 0x0000 and a `common`-scoped row must not be handed to it --
+    # which is exactly what ApplyAnnotations.mine() refuses to do, and what the
+    # committed export shows: pd 0x0000 is `c_startup_idata_clear` with no CSV
+    # row of its own, while the only annotation at 0x0000 is common-scoped.
+    _nwr3 = annotation_ledger([_fidx("pd", "0000")],
+                              [_fann("common", "0x0000")])[0]
+    check("ledger: a common-scoped row is NOT accepted as backing a pd index "
+          "row at the same address",
+          [(r["program"], r["addr"]) for r in _nwr3] == [("pd", "0000")],
+          str(_nwr3))
+    # The matched middle, which is what lets the two directions be added up: on
+    # this fixture each of the four CSV rows backs exactly one index row.
+    check("ledger: the matched middle counts one index row per CSV row",
+          len(_bk) == len(_fa) == 4
+          and all(len(b) == 1 for _r, b in _bk),
+          "%d backed, %d row(s)" % (len(_bk), len(_fa)))
+
     # The mode vocabulary: documented, and enforced from the one place.
     check("every mode in use today is in the documented set",
           not manifest_mode_problems([{"program": "bank0", "mode": m}
@@ -1817,6 +2137,79 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
           len(_ann) == 1872 and not structure_problems("ghidra-functions.csv", _ann,
                                                        annotation_key, "(scope, addr)"),
           "%d record(s)" % len(_ann))
+    # The function layer's three counters, on the committed files, which is where
+    # docs/findings.md §18's corrected figures come from. The history of each
+    # pin, because these are the numbers that move on purpose:
+    #
+    # annotations_applied 769 / 667 / 497, summing to 1,933 program-applications
+    #   rather than 1,855 rows, because ApplyAnnotations.mine() hands a
+    #   `common`-scoped row to BOTH bank programs and the 78 of them are counted
+    #   once per program. The manifest's `common` row borrows bank0's 769
+    #   (MANIFEST_PROGRAM_SOURCE), and is excluded from the sum here for the
+    #   same reason. 1,855 -> this is not a pin that has moved: it is the first
+    #   run in which the number came from a report at all.
+    # annotations_unmatched 0 / 0 / 0. Also the first run that could have
+    #   reported otherwise -- the driver used to write a literal 0 here, so
+    #   every manifest in the repository's history recorded a match it had not
+    #   checked. 1,855 rows and zero unresolved is now a measurement.
+    # functions_named 693 / 599 / 80 / 501, summing to 1,873. These are the
+    #   figures the old `annotations_applied` column carried, unchanged: the
+    #   number did not move, it acquired the name that describes it. It was
+    #   1,787 when §18's drift paragraph was written and has grown with the
+    #   annotation tranches since (1,866 at the time of the subsystems census,
+    #   recorded in a later paragraph of the same §18 subsection, which also
+    #   measured the gap at 18); §18's correction quotes today's 1,873.
+    _want_applied = {"bank0": 769, "bank1": 667, "pd": 497}
+    check("EC: the manifest's annotations_applied is what the exporter's reports "
+          "said -- 769 / 667 / 497 across the three programs, with `common` "
+          "borrowing bank0's",
+          {r["program"]: int(r["annotations_applied"]) for r in _mr
+           if r["program"] in _want_applied} == _want_applied
+          and next(int(r["annotations_applied"]) for r in _mr
+                   if r["program"] == "common") == 769,
+          str({r["program"]: r["annotations_applied"] for r in _mr}))
+    check("EC: annotations_unmatched is 0 for all four programs, measured rather "
+          "than written as a literal",
+          all(int(r["annotations_unmatched"]) == 0 for r in _mr),
+          str({r["program"]: r["annotations_unmatched"] for r in _mr}))
+    _want_named = {"bank0": 693, "bank1": 599, "common": 80, "pd": 501}
+    check("EC: functions_named is the index's own annotated=yes count per "
+          "program, 693 / 599 / 80 / 501, summing to 1,873",
+          {r["program"]: int(r["functions_named"]) for r in _mr} == _want_named
+          and sum(_want_named.values()) == 1873
+          and not annotation_ledger_mismatches(_mr, _ir, _ann),
+          str(annotation_ledger_mismatches(_mr, _ir, _ann)[:2]))
+    # The two-way ledger on the committed files, which is the whole substance of
+    # the §18 correction. 25 and 7, and they close the arithmetic exactly:
+    # 1,855 rows - 7 applied-but-unflagged + 25 named-without-a-row = 1,873.
+    # The 25 is 15 `auto` (Ghidra's own caseD_* / default labels on switch
+    # dispatchers, which isPlaceholderName() does not list among its placeholder
+    # prefixes), 9 `call-target` and 1 `vector` -- pd 0x0000, where the only
+    # annotation row at that address is `common`-scoped and the PD image has its
+    # own separate function, so mine() correctly does not hand it over. The 7
+    # are the `thunk_to_*` / `thunk_call_*` rows: they applied, and
+    # isPlaceholderName() matched the prefix they chose for themselves.
+    _nwr, _abu, _bk = annotation_ledger(_ir, _ann)
+    _seed = {}
+    for _r in _nwr:
+        _seed[_r.get("seed_basis", "?")] = _seed.get(_r.get("seed_basis", "?"), 0) + 1
+    check("EC: the ledger's 25 named-without-a-CSV-row split 15 auto / 9 "
+          "call-target / 1 vector",
+          len(_nwr) == 25 and _seed == {"auto": 15, "call-target": 9,
+                                        "vector": 1},
+          "%d row(s), %s" % (len(_nwr), _seed))
+    check("EC: the ledger's 7 applied-but-flagged-unannotated are all "
+          "thunk_-prefixed names the rows chose themselves",
+          len(_abu) == 7
+          and all(n.startswith("thunk_") for _r, _bk in _abu for n in
+                  [b["name"] for b in _bk]),
+          str([(r["program"], r["addr"]) for r, _bk in _abu]))
+    check("EC: the two ledger directions close the arithmetic -- 1,855 - 7 + 25 "
+          "= the 1,873 functions named",
+          len(_ann) - len(_abu) + len(_nwr) == sum(_want_named.values()),
+          "%d - %d + %d = %d, not %d"
+          % (len(_ann), len(_abu), len(_nwr),
+             len(_ann) - len(_abu) + len(_nwr), sum(_want_named.values())))
     check("EC: bank-call-targets.csv is 5,998 records, no short row and no "
           "duplicate (file_offset, target)",
           len(_ct) == 5998 and not structure_problems("bank-call-targets.csv", _ct,
@@ -3292,6 +3685,73 @@ def check(work):
     _modes = manifest_mode_problems(manifest)
     if _modes:
         fail("; ".join(_modes[:3]))
+    # The function layer's three counters, against the files they summarise, and
+    # then the two-way gap printed for a reader rather than judged. The gap is
+    # informational on purpose: a name the CSV never wrote is a real thing (see
+    # the docstring) and neither direction of it is a fault. It is printed so the
+    # figure docs/findings.md §18 quotes is regenerable with one command instead
+    # of living only as prose.
+    #
+    # The annotations CSV is optional to the build, so its absence is reported
+    # as its own thing. Derived against an empty row-list every counter would
+    # read 0, and a manifest that recorded real figures would then produce a
+    # dozen mismatches that all mean "the file you need is not here".
+    _ann_rows = _read.get("ghidra-functions.csv")
+    if _ann_rows is None:
+        print("  annotation ledger: skipped, no ghidra-functions.csv to read it "
+              "from, so the three function-layer counters cannot be derived")
+    else:
+        _alm = annotation_ledger_mismatches(manifest, rows, _ann_rows)
+        for problem in _alm[:5]:
+            fail(problem)
+        if len(_alm) > 5:
+            fail("... and %d more function-layer counter problem(s)"
+                 % (len(_alm) - 5))
+        _named_none, _unflagged, _backed = annotation_ledger(rows, _ann_rows)
+        _basis = {}
+        for _r in _named_none:
+            _basis[_r.get("seed_basis", "?")] = _basis.get(_r.get("seed_basis", "?"), 0) + 1
+        print("  annotation ledger: %d function-annotation row(s), %d "
+              "program-application(s) of them (a `common` row applies to both bank "
+              "programs, and the manifest's `common` row borrows bank0's), %d "
+              "unmatched, %d function(s) named in the export"
+              % (len(_ann_rows),
+                 sum(int(r["annotations_applied"]) for r in manifest
+                     if r.get("program") in ("bank0", "bank1", "pd")),
+                 sum(int(r["annotations_unmatched"]) for r in manifest
+                     if r.get("program") in ("bank0", "bank1", "pd")),
+                 sum(int(r["functions_named"]) for r in manifest)))
+        if _named_none:
+            print("    %d exported function(s) carry a non-placeholder name that "
+                  "no CSV row wrote (%s); not a fault, and the reason the two "
+                  "counters are separate:"
+                  % (len(_named_none),
+                     ", ".join("%d %s" % (v, k) for k, v in sorted(_basis.items()))))
+            for _r in sorted(_named_none, key=lambda r: (r["program"], r["addr"])):
+                print("      %-6s %s %s (seed_basis=%s)"
+                      % (_r["program"], _r["addr"], _r["name"],
+                         _r.get("seed_basis", "?")))
+        if _unflagged:
+            print("    %d annotation row(s) DID apply and are reported "
+                  "annotated=no -- `isPlaceholderName()` matched the name they "
+                  "chose:" % len(_unflagged))
+            for _r, _backing in sorted(_unflagged, key=lambda p: (p[0]["program"],
+                                                                   p[0]["addr"])):
+                print("      %-6s %s %s"
+                      % (_r["program"], _r["addr"],
+                         ", ".join(a["name"] for a in _backing)))
+        # The two directions close against the export, which is what makes "no
+        # annotation has gone stale" a measurement rather than an absence of
+        # evidence. It reconciles because every CSV row backs exactly one index
+        # row; the count is reported rather than assumed, because two rows
+        # naming one function would break the sum and mean something worth
+        # knowing.
+        print("    %d annotation row(s) - %d unflagged + %d unnamed-by-CSV = %d "
+              "named function(s); the manifest's functions_named totals %d, and "
+              "%d index row(s) carry a CSV row"
+              % (len(_ann_rows), len(_unflagged), len(_named_none),
+                 len(_ann_rows) - len(_unflagged) + len(_named_none),
+                 sum(int(r["functions_named"]) for r in manifest), len(_backed)))
     for lock in (PROJECT,):
         for f in os.listdir(lock) if os.path.isdir(lock) else []:
             if f.endswith(".lock") or f.endswith(".lock~"):

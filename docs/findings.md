@@ -4767,6 +4767,96 @@ the whole time between.)*
    counters are read back from `apply-<program>.tsv` from the start so they do
    not start that way.
 
+**Correction, 2026-09-25 (#261): the 25-row drift was three wrong statements
+stacked, and the conclusion was the wrong one.** The sentence above is left as
+written. Measured against the committed files by
+`build_ec_decompile.py --check`, which now derives all three of the manifest's
+function-layer counters offline and prints the ledger they come from:
+
+| was read as | is actually |
+|---|---|
+| `annotations_applied` totals 1,787 against 1,769 rows, a gap of 25 | the gap is **18**, not 25 (1,787 − 1,769 = 18) — the label never matched even its own numbers. A later paragraph in this same section ("The plan's numbers were stale") had already re-measured the gap as 18 against a newer pair of totals, so the 25 was wrong twice over |
+| the two totals are comparable, so their difference is drift | the label never described either figure. `annotations_applied` was the index's `annotated=yes` count (`ExportDecompile.java:129`, `isPlaceholderName(name) ? "no" : "yes"`) — exported functions whose symbol is no longer a Ghidra placeholder, **not** rows of `ghidra-functions.csv` that applied |
+| 25 index rows "came to claim an annotation that is no longer in the CSV" | **zero** CSV rows are stale. All 1,855 resolve to an exported function, and `--check` already refuses one that does not |
+
+The gap was never rows lost from the CSV. It is the difference between two
+questions, and it decomposes exactly:
+
+| quantity | value |
+|---|---|
+| rows in `ec/annotations/ghidra-functions.csv` | **1,855** |
+| …that applied *and* are reported `annotated=yes` | **1,848** |
+| …that applied but are reported `annotated=no` | **7** |
+| exported functions named with **no** CSV row behind them | **25** |
+| `functions_named`, the old `annotations_applied` figure | **1,873** = 1,848 + 25 |
+
+1,855 − 7 + 25 = 1,873, and the 1,855 rows back exactly one index row each, so
+the two sides are reconciled rather than merely compared. `build_ec_decompile.py
+--check` prints both directions, the addresses, and the arithmetic; the table
+above is that output, not a hand count.
+
+**What the 25 are, and what they are not.** 18 of them carry names Ghidra
+generated itself: `caseD_0` on eleven of bank1's switch dispatchers, one
+`add_full_product_to_dptr` repeated across four `pd` addresses, and
+`caseD_6` / `caseD_1` / `default` on three `seed_basis=call-target` rows.
+`isPlaceholderName()` (`ExportDecompile.java:334-340`) lists `FUN_`, `LAB_`,
+`SUB_` and `thunk_` and not `caseD_*` or `default`, so a perfectly automatic
+name counts as "named". The other 7 are `seed_basis=call-target`
+(`bank0 0x031C`, `0x805B`; `bank1 0x031C`, `0x703A`; `common 0x0512`, `0x1207`)
+or `seed_basis=vector` (`pd 0x0000`, `c_startup_idata_clear`), and they carry
+readable, mechanism-shaped names that **no script in `ghidra/scripts/` can
+produce**: `SeedFunctions.java:100` calls `createFunction(a, null)` and so names
+nothing, `ApplyAnnotations.java:212` renames only functions that have a CSV row
+and these addresses have none, and `ExportDecompile.java` only reads
+`f.getName()`. Since the export takes its names from the project it was handed
+and the project is the committed one, those seven are symbols in the committed
+`.rep` — by exhaustion of the repo's own export path, not by inspection of the
+database. (A raw string search is not the way to show it: searching the
+committed `.gbf` files finds **none** of the seven, because Ghidra stores
+strings in compressed blocks. "Not found by grep" is not "absent" — the same
+caveat `ec/annotations/registers.yaml` carries, and the reason the argument
+above does not rest on a grep.)
+
+**This also corrects the issue's own attribution.** #261 quoted
+`bank0,031C,poll_d6c2_then_branch` as "a function named by `SeedFunctions.java`
+from a seed basis". The `seed_basis` column is right; the naming script is not
+— `createFunction(a, null)` passes a null name, as above.
+
+**And the opposite error, which the issue did not name.** 7 CSV rows *did*
+apply and are reported `annotated=no`: bank1 `0xF113`–`0xF123`
+(`thunk_to_f275`, `thunk_to_f290`, `thunk_to_f2ad`, `thunk_to_f2ca`,
+`thunk_to_f2f3`, `thunk_to_f198`) and `pd 0x7059` (`thunk_call_122f`).
+`isPlaceholderName()` matches any name starting `thunk_`, because that is how
+Ghidra renders an auto-thunk, and these seven rows chose the prefix
+themselves. This is why the ledger is two-way: a one-way count sees 25 extra
+names and misses 7 undercounts. Narrowing `isPlaceholderName()` is a separate
+judgement and deliberately **not** done here — the `thunk_` prefix genuinely
+covers Ghidra's auto-thunks, and changing it would move the per-row `annotated`
+column and the `[named]` marker across the whole export.
+
+**The second clause described a bug this change fixes.** `annotations_unmatched`
+was a literal `0` in `write_outputs()`, discarded from a report that
+`ApplyAnnotations.java` had been filling in all along. It is now read back from
+`apply-<program>.tsv` like the variable counters, and measured: **0** for all
+four programs, from 1,855 rows that all resolve. The BIOS driver reaches the
+same two numbers a different way — it derives them from the index rather than
+from the report (`bios_extract.py:895-896,912-913,940-941`) and fails the build
+on a non-zero unmatched count (`bios_extract.py:1241`) — so no manifest in this
+repository carries a counter typed in as a constant. The EC is the one that was
+discarding a figure its own exporter had already computed.
+
+**The corrected columns.** `manifest.csv` now carries `annotations_applied` and
+`annotations_unmatched` read back from the reports (769 / 667 / 497 across the
+three programs; `common` borrows bank0's, as the variable counters always have),
+plus a new `functions_named` (693 / 599 / 80 / 501) for the figure the old
+`annotations_applied` name was really carrying. Note the new `annotations_applied`
+sums to 1,933, not 1,855, and that is not drift either: `mine()`
+(`ApplyAnnotations.java:373-378`) hands every `common`-scoped row to **both**
+bank programs, so the 78 common rows are counted once per program. There is no
+`apply-common.tsv`; `common` is an export grouping the de-dup produces after the
+fact. The number §18's paragraph was reaching for — functions carrying a real
+name — is 1,873, and it now has a column that says so.
+
 **No hardware or Windows test is claimed here.** This change is static: the
 proof is the regenerated export, and nothing in it observes the machine.
 

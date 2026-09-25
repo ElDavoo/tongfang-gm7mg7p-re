@@ -376,18 +376,28 @@ the reading, and it has to survive the rename it describes.
 
 ### The rebuild asymmetry, and why it is deliberate
 
-An unmatched **function** row fails the build. An unmatched **variable** row is
-reported and counted in the manifest, not fatal. A function row is keyed on an
-address, stable forever; a variable row is keyed on a decompiler placeholder,
-which `--mode rebuild-project` **consumes** — once the name is persisted into
-the project, `param_1` no longer exists there, and rebuilding from the same CSV
-would find nothing to rename. Making that an error would break a documented,
-routine operation. Typos are caught by the `--check` above instead, which is
-stronger: it measures the committed output rather than the script's say-so.
+An unmatched **function** row was meant to fail the build; an unmatched
+**variable** row is reported and counted in the manifest, and deliberately not
+fatal. A function row is keyed on an address, stable forever; a variable row is
+keyed on a decompiler placeholder, which `--mode rebuild-project` **consumes** —
+once the name is persisted into the project, `param_1` no longer exists there,
+and rebuilding from the same CSV would find nothing to rename. Making that an
+error would break a documented, routine operation, and it is the reason the
+function row cannot simply be made fatal either without someone deciding what a
+routine annotation edit should do. **As of 2026-09-25 (#261) neither is fatal:**
+both layers report and count, and the function layer's count is now a real
+number read back from the report rather than a literal `0`. Whether a non-zero
+`annotations_unmatched` should fail `--check` is open. Typos are caught by the
+`--check` above either way, which is stronger: it measures the committed output
+rather than the script's say-so.
 
-`ec/ghidra/manifest.csv` carries `variables_functions` (how many functions a
-row decompiled — the cost), `variables_applied` and `variables_unmatched`, read
-back from `apply-<program>.tsv`.
+`ec/ghidra/manifest.csv` carries, for both layers, the counters read back from
+`apply-<program>.tsv`: `annotations_applied` and `annotations_unmatched` for the
+function layer, and `variables_functions` (how many functions a row decompiled
+— the cost), `variables_applied` and `variables_unmatched` for the variable one.
+`functions_named` sits beside them and is a different question: how many
+exported functions carry a symbol that is not a Ghidra placeholder, which
+`--check` derives from the index rather than from the report.
 
 ### A variable row may change a caller's arity, and that is a correction
 
