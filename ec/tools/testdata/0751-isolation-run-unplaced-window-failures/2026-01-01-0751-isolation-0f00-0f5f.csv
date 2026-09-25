@@ -4,7 +4,7 @@
 # ../../0751-isolation-run-unplaced-window/'s two blocks and two block-less
 # restores, one second after the 0700 capture's, and no change rows at all --
 # §4.2's prediction. Marks only is what a quiet page looks like from three
-# consoles. Two marks are gone from the eight this file otherwise holds: the
+# consoles. One mark is gone from the eight this file otherwise holds: the
 # 12:04 block-less restore, which is the one a console that exited before the
 # operator got to it leaves behind, and nothing else. So the 12:04 window is
 # recorded in two of the three captures while the 12:00 one, spelled 0x99 here

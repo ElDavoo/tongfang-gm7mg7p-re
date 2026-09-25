@@ -9,8 +9,8 @@
 # block and the parse can read it; what it cannot do is agree with the two
 # consoles that typed the other value.
 #
-# Every other mark is in all three captures and spelled the same way in all
-# three, and both blocks are intact, so the two strays carry the whole defect
+# Every mark in a block is in all three captures and spelled the same way in
+# all three, and both blocks are intact, so the two strays carry the whole defect
 # between them and the six block windows are that set verbatim: same 0xA0 block,
 # same duty drift, same climb. The two are the two *kinds* of refusal a window
 # in no block can be given, one each, because the tool checks them separately

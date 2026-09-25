@@ -56,9 +56,11 @@ still parse, so neither is an `unreads` case — this is the shape
 what the parse could not read rather than for what the captures said. Both
 blocks are intact and their six windows are that set verbatim.
 
-"Before" below is `git show HEAD:ec/tools/grade_0751_isolation.py` on the same
-command, and "after" is this branch's file, so the transcripts name the
-revision they were recorded against:
+"Before" below is `git show origin/main:ec/tools/grade_0751_isolation.py` on the
+same command, and "after" is this branch's file, so the transcripts name the
+revision they were recorded against. `origin/main` rather than `HEAD` because
+`HEAD` is this branch's own commit once the change is merged, and would then
+hand the reader the after tool:
 
 ```
     python3 ec/tools/grade_0751_isolation.py ec/tools/testdata/0751-isolation-run-unplaced-window-failures/*.csv
@@ -210,9 +212,10 @@ working. The last assertion above, `{}` over the clean set, is the same
 property from the other side and is the one that fails if the check fires on
 marks that agree.
 
-Both new failure tests were run against `git show HEAD`'s copy of the tool and
-fail there — the first on `rc 0 != 1`, the third on the function not existing.
-The clean test passes on both, which is what a regression guard should do.
+Both new failure tests were run against `git show origin/main`'s copy of the
+tool and fail there — the first on `rc 0 != 1`, the third on the function not
+existing. The clean test passes on both, which is what a regression guard
+should do.
 
 The 69 pre-existing tests stay green and none was edited, which is the evidence
 that nothing else moved. Measured rather than asserted: the old tool and this one
