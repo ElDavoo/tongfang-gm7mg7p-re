@@ -115,7 +115,7 @@ they have different denominators. The sweep counts **opcode sites**, a direct
 `MOV DPTR,#imm16` and the `movx` after it, which for `0x0860` is the 7
 EC-side sites of §8 and the `read 4 / write 2` among them. The census counts
 **C-level occurrences** of the address in the decompiled text, which is the
-`refs: 17` of `ec/annotations/xdata-registers.csv:662`. The 14/2/0/1 below
+`refs: 17` of `ec/annotations/xdata-registers.csv:817`. The 14/2/0/1 below
 is the bucketing of those 17, not a rival count of the 7.
 
 > **CORRECTION (2026-09-24, issue #281) to this section's opening sentence,
@@ -255,6 +255,28 @@ is the bucketing of those 17, not a rival count of the 7.
 > what the three-word vocabulary above exists to make impossible to say
 > wrongly.
 
+> **CORRECTION (2026-09-25, issue #801) to the `xdata-registers.csv:662` cell
+> in three places in this section, which named a line that has moved.** The
+> `0x0860` row is at **`ec/annotations/xdata-registers.csv:817`** of a
+> 1,327-line generated file; `:662` is the `0x077E` row. The three cells were
+> this section's opening paragraph, the PD-image row of the table below, and
+> this section's closing sentence — named that way rather than by line, because
+> a correction block that cites the line numbers of the file it is correcting
+> is stale on arrival, which is the whole failure this paragraph is about.
+> **Every figure in all three is still exactly right** — `refs: 17`, `14/2/0/1`,
+> `main-ec` — because only the pointer was wrong, and that is the failure no
+> count can catch: a sentence citing the wrong row reads as well as one citing
+> the right one. What moved it is the ordinary cause, a generated CSV growing
+> above the row: `6bf9c234` (#683) regenerated `annotations/xdata-registers.csv`
+> and moved the `0x0860` row from 662 to 817. The corrections above are the
+> same class with their own causes rather than that one -- #249's citations into
+> `ec/tools/xdata_register_map.py` went stale because that tool had grown, which
+> is #254's own stated mechanism, and #281 corrects a claim about which source
+> is authoritative rather than a pointer at all. `ec/tools/
+> check_citation_lines.py` now holds every `xdata-registers.csv:NNN` in this
+> file to the row for the address it names, and
+> `docs/findings/prose-line-citations-held.md` is the write-up.
+
 **What the census says, and what pins it.** `0x0860` is **14 read, 2 write,
 0 read+write, 1 passed-to-call**. The two stores are `bank0/D281.c:19`
 (`XDATA_0860 = 0xff`) and `bank0/D289.c:18` (`XDATA_0860 = 0`), and the one
@@ -317,13 +339,13 @@ census reads `D091.c`, and neither number is inferred.
 | `0x0D281` | `write x1` | `write x1` | `D281.c:19` | `XDATA_0860 = 0xff` |
 | `0x0D28A` | `write x1` | `write x1` | `D289.c:18` | `XDATA_0860 = 0` — `clear_0860`'s decompile entry is `0xD289`, one byte before the site, so the file and the offset do not match |
 | `0x0D31C` | `no movx found in the decoded window` | `no census occurrence` | — | `mask_dp_byte_7c_reset_dptr_0860` reloads DPTR and returns; `D319.c`'s body is `return *param_1 & 0x7c;` and never names the address |
-| `0x25CE4`, `0x25CFC` | `read x1, walks 2 consecutive…`, `read x1` | `other program` | — | the PD image, which has its own XDATA map; `xdata-registers.csv:662`'s `0x0860` row is `main-ec` |
+| `0x25CE4`, `0x25CFC` | `read x1, walks 2 consecutive…`, `read x1` | `other program` | — | the PD image, which has its own XDATA map; `xdata-registers.csv:817`'s `0x0860` row is `main-ec` |
 
 **The sums close on the committed data, which is the point of recording
 them per site:** `2+6+6 = 14` read, `2` write, `1` passed-to-call and `refs:
 17` here, against `read 4 / write 2 / no-movx 1` over §8's seven bank-0
 sites. `check_site_census.py` asserts both — the direction at every site and
-the per-bucket totals against `xdata-registers.csv:662` — so a hand-typed
+the per-bucket totals against `xdata-registers.csv:817` — so a hand-typed
 number that drifts fails instead of reading as agreement.
 
 **Three residues, named rather than left for a reader to infer.** The

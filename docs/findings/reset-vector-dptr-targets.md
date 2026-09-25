@@ -132,7 +132,7 @@ takes the `0xD980` store arm, `0x07FD`–`0x07FF` fall through to the skip, and
 carry into the first `subb` — the two ways this number has been got wrong.
 
 **The skip window is exactly the cluster, and that is all that is claimed.**
-`ec/annotations/xdata-clusters.csv:82` carries `main-ec-086` over
+`ec/annotations/xdata-clusters.csv:87` carries `main-ec-086` over
 `0x07FD`–`0x07FF` — three bytes, 6 direct citing functions, 21 total, with
 named writers among them (`bank0:0xD5D4`
 `write_33_to_1501_join_loop_d5db`, `bank0:0xD74F`
@@ -441,9 +441,9 @@ started at `docs/findings.md:5636`, carried two attributions:
 | the membership claim, "those three are the whole of the … cluster" | `0x07FD` `0x07FE` `0x07FF` | `main-ec-086` |
 | the bound operand, the `setb c` at `0xD982` making the second bound | `0x0800` | none |
 
-`0x0800` is in `ec/annotations/xdata-registers.csv:583`, so it is a known XDATA
+`0x0800` is in `ec/annotations/xdata-registers.csv:738`, so it is a known XDATA
 address, and `0x0630 0x06C4 0x0800` is `main-ec-104`
-(`ec/annotations/xdata-clusters.csv:101`) rather than the `main-ec-086` the same
+(`ec/annotations/xdata-clusters.csv:105`) rather than the `main-ec-086` the same
 unit named. The summary now says the two things in two sentences, in a fenced
 block rather than a blockquote so that the split does not depend on where the
 line breaks fall (see follow-up 6):
@@ -470,6 +470,38 @@ name, so `cited_clusters()` returns empty and the unit is skipped before any
 rule runs. Nothing was added to the tool, no regex was loosened, and no skip
 was introduced.
 
+> **CORRECTION (2026-09-25, issue #801): three line pointers in this file
+> were stale, and the sentences they sat in were not.** The superseded figures
+> stay visible here per `docs/findings.md` §4a-4d, which is also why this is a
+> blockquote rather than a paragraph in the file's own voice: a correction
+> written as ordinary prose reads as current, and `check_citation_lines.py`
+> checks a live paragraph and skips a quoted one. Each cell is named by the
+> sentence it sits in rather than by line number, because a correction citing
+> the line numbers of the file it is correcting goes stale on arrival — which
+> is this note's own subject.
+>
+> - The bound operand, "so it is a known XDATA address", cited
+>   `ec/annotations/xdata-registers.csv:583`; the `0x0800` row is at **`:738`**.
+> - The same sentence, "rather than the `main-ec-086` the same unit named",
+>   cited `ec/annotations/xdata-clusters.csv:101`; `main-ec-104` is at
+>   **`:105`**.
+> - "The skip window is exactly the cluster" and the hand re-check below both
+>   cited `ec/annotations/xdata-clusters.csv:82`; `main-ec-086` is at **`:87`**.
+>
+> **No claim changed, and no figure in any of the four sentences moved** —
+> only the pointer did, because each was a rank into a generated CSV that has
+> since grown above the row. The first two cells are issue #801's own item; the
+> third is in the same file and the same class and the issue did not reach it,
+> since `grep -n 'csv:'` over this file returns exactly these four and no
+> other. A cluster id is a rank for the reason
+> `check_cluster_citations.py`'s docstring gives at length, and a CSV line is
+> the same kind of handle with none of the fallbacks — there is no
+> `cluster_key` to resolve a line number with.
+> `ec/tools/check_citation_lines.py` now holds all four to the row for the id
+> or address they name;
+> [`prose-line-citations-held.md`](prose-line-citations-held.md) is the
+> write-up, and its table says which row each superseded line actually held.
+
 ### The measurement
 
 | | before | after |
@@ -484,7 +516,7 @@ admitted real drift would show the same way.
 ### The hand re-check
 
 `main-ec-086` is `0x07FD 0x07FE 0x07FF` and nothing else
-(`ec/annotations/xdata-clusters.csv:82`), which is what the reworded first
+(`ec/annotations/xdata-clusters.csv:87`), which is what the reworded first
 sentence still says, and the new bound sentence makes no membership claim at
 all. The `0xD96C` loop's own execution trace (recipe 4 under "Reproducing
 this") puts `0x0800` on the store arm, so **the boot-path clear stores `0x00`

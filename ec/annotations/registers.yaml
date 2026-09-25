@@ -3022,6 +3022,52 @@ registers:
       correction. No status moves. NOT NAMED: a selector and a busy mark are
       shape, not units. Per-address table:
       ec/annotations/xdata-086x-dispatch.md.
+      *** ADDENDUM 2026-09-25 (issue #801), see
+      docs/findings/prose-line-citations-held.md. The pointers this block
+      quotes have moved; the figures it asserts have not, and the block above
+      is left as written so the wrong ones stay visible. ec/annotations/
+      xdata-registers.csv:662 is now :817, which is the 0x0860 row of a
+      1,327-line file -- :662 is the 0x077E row -- and the row still reads 14
+      read, 2 write, 0 read+write, 1 passed-to-call over 17 refs, the figures
+      this block already gives. The two stores are bank0/D281.c:19 and
+      bank0/D289.c:18, not the :18 and :17 quoted above; issue #752's rewrite
+      of the D091.c header moved them, and the committed correspondence says
+      so at ec/annotations/xdata-0860-census-sites.csv:6-7. HAND_CHECKED
+      ["0x0860"] is at ec/tools/xdata_register_map.py:1399, not :359, and the
+      hand-checked direction oracle that pins those buckets -- the loop over
+      HAND_CHECKED and the check() that reports it -- is at :3606-3619, not
+      :1490-1496; :359 is now the ASSIGN tuple and :1490 is inside a comment
+      about pair accessors. Six more of the pointers the 2026-09-24 block
+      above quotes are stale for the same reason and are NOT corrected here:
+      :165 (ASSIGN, now :359), :505 (store_target(), now :1572), :515-516 and
+      :524-525 (the `==` rejection and the reason for it, now :1593-1595
+      inside that function), :523 (the tree-wide 838, now "eq_after" at
+      :1322), and :258-259 (the named_in_tree record, now :668-669 in the
+      ORACLE at :549). The block's own :64-75 still resolves and is not in
+      that list. That block is itself a quoted correction, so a second one
+      inside it would be a correction of a correction, and no check holds any
+      of the six. They are named as the follow-up issue #801's write-up
+      records, not fixed by it. An earlier draft of this sentence also listed
+      :138, :277 and the :1872-1878/:1901-1907 pair; none of those four is in
+      that block -- all four are quoted in the correction blockquotes of
+      ec/annotations/xdata-086x-dispatch.md, and that page is where their
+      record belongs.
+      NOT CHECKED HERE, and said so rather than left implied: two of the
+      three in this block quoted above that this addendum corrects ARE
+      checked, by ec/tools/check_citation_lines.py, in the two markdown
+      files in scope -- the xdata-registers.csv row in
+      xdata-086x-dispatch.md's three live cells, and the D281.c/D289.c line
+      values in that page's site table and its HAND_CHECKED comment. The
+      third, the :1399 and :3606-3619 source-file pointers, is held by
+      nothing anywhere: a pointer into a source file rather than a generated
+      CSV is one of the cases that tool's own docstring lists under what it
+      does not check, and holding it needs a prose-to-source-line checker
+      that does not exist yet. The instances in THIS file are held by
+      nothing either, because every live sentence in this note is a
+      CORRECTION paragraph and a rule that skipped corrections would check
+      nothing here. XDATA_0860 stays present-untested. No status moves, no
+      count moves, and no CSV or export was regenerated: every input here is
+      a committed file and no EC, hardware or Windows machine is involved.
 
   - name: XDATA_0862
     addr: 0x0862

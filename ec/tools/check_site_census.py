@@ -55,7 +55,16 @@ against the generated `xdata-registers.csv` row.
     be reported as unaccounted rather than quietly ignored.
   * *The prose.* This reads three CSVs and the decompile; it cannot see a
     sentence in `xdata-086x-dispatch.md`, and the page's own §9 says so. The
-    same gap `check_cluster_citations.py` concedes.
+    same gap `check_cluster_citations.py` concedes. **Corrected 2026-09-25
+    (issue #801): that is still true of this tool and no longer true of the
+    tree.** `check_citation_lines.py` reads the page's site table, its
+    `xdata-registers.csv:NNN` cells and the `HAND_CHECKED["0x0860"]` comment,
+    and holds them to the two CSVs this tool already joins -- so the *line
+    numbers the prose repeats* are now checked, for the two units named in its
+    `ROW_SCOPE`. What remains true is the first half: this tool still cannot
+    read a sentence, and a claim the prose makes about a direction is not
+    checked by anything. `docs/findings/prose-line-citations-held.md` says which
+    of the prose's cells are covered and which are held by nothing.
   * *The sweep's blind spot.* A byte reached through a computed DPTR, a
     register-indirect access or a table lookup has no site here, and a site
     the decompiler folded a `MOV DPTR` out of -- `0x0D31C` -- looks identical
