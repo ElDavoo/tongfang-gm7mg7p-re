@@ -435,18 +435,14 @@ more finely than either of the other two.
   `Offset (0x74C)`, `dsdt.dsl:52213`): GFID 7 → `ACPB`/`ACSB`, GFID 5 →
   `ACPC`/`ACSC`, GFID 3 → `ACPD`/`ACSD`, GFID 6 → `ACPE`, each arm also
   naming a 32-bit overlay (`E7B1`/`E7B2`, `E5B1`/`E5B2`, `E3B1`/`E3B2`,
-  `MQB1`). The bullet above this one used to call those "EC register
-  blocks", say they were not *declared* anywhere, say `SMRW` had no caller in
-  the disassembly, and conclude the value picks a register *bank*. **All four
-  were false negatives, and the committed tree contradicts them** (issue #267,
-  fix round 1, 2026-09-25; the text is left visible above per the calibration
-  rule). The seven buffers *are* declared — `dsdt.dsl:50383` (`ACPB`),
-  `50387` (`ACSB`), `50391` (`ACPC`), `50396` (`ACSC`), `50401` (`ACPD`),
-  `50406` (`ACSD`), `50411` (`ACPE`), each `Name (n, Buffer (m))` with
-  initial contents, 8 bytes for the first, second and seventh and 12 for the
-  other four — and `SMRW` copies a caller-supplied buffer into one
-  (`RWFG == 0xAA`) or returns a `CreateDWordField` DWord view of one
-  (`RWFG == 0xBB`), so the value picks an ASL buffer, not a register bank.
+  `MQB1`). The seven buffers *are* declared (issue #267, fix round 1,
+  2026-09-25) — `dsdt.dsl:50383` (`ACPB`), `50387` (`ACSB`), `50391` (`ACPC`),
+  `50396` (`ACSC`), `50401` (`ACPD`), `50406` (`ACSD`), `50411` (`ACPE`),
+  each `Name (n, Buffer (m))` with initial contents, 8 bytes for the first,
+  second and seventh and 12 for the other four — and `SMRW` copies a
+  caller-supplied buffer into one (`RWFG == 0xAA`) or returns a
+  `CreateDWordField` DWord view of one (`RWFG == 0xBB`), so the value picks
+  an ASL buffer, not a register bank.
   The seven overlays are the one part that is not declared: each is created
   inside its own arm, so its offset is the caller's `REOF` byte at run time.
   `SMRW`'s caller is committed as well —

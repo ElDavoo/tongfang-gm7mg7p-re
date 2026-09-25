@@ -2138,9 +2138,10 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # routines 0xC278, 0xC2C2, 0xC33C and 0xC4E7. One of those four, 0xC278,
     # is seeded inside what was a single function at 0xC26E, so that seed
     # splits the old function in two rather than only adding: C26E keeps its
-    # row and loses the 0xC278 half (12 bytes -> 10), and C278 becomes a
-    # function of its own. The split adds one to both totals, so the movement
-    # is +4 and not +3 -- C26E's row does not go away to pay for C278's.
+    # row and loses the 0xC278 half (23 bytes -> 10), the 13 bytes handed to
+    # C278 adding back to 23, and C278 becomes a function of its own. The
+    # split adds one to both totals, so the movement is +4 and not +3 --
+    # C26E's row does not go away to pay for C278's.
     check("EC: index.csv is 2,714 rows, and the manifest records 2,714 "
           "functions across 4 programs",
           len(_ir) == 2714 and len(_mr) == 4

@@ -2206,10 +2206,11 @@ it, is what
 
 **The paragraph above is corrected here rather than edited** (issue #267, fix
 round 1, 2026-09-25): it called the seven targets "EC register blocks" and
-said the select "chooses a register *bank*". The one below it said they were
-"not *declared* anywhere in it" and that `SMRW` "has no caller anywhere in the
-disassembly, so what invokes it is not in the committed inputs". All of that
-was a false negative, and the committed tree contradicts it.
+said the select "chooses a register *bank*". Two false negatives are retracted
+with it: that the seven targets are not *declared* anywhere in the committed
+inputs, and that `SMRW` "has no caller anywhere in the disassembly, so what
+invokes it is not in the committed inputs". The committed tree contradicts
+both, as the citations below show.
 The seven are declared: `Name (ACPx, Buffer (n))` with initial contents at
 `dsdt.dsl:50383` (`ACPB`), `50387` (`ACSB`), `50391` (`ACPC`), `50396` (`ACSC`),
 `50401` (`ACPD`), `50406` (`ACSD`) and `50411` (`ACPE`) — 8 bytes for the first,
@@ -2232,25 +2233,22 @@ records the driver's `SMAPCTable` entry for `SMRW` and the 0x80-byte buffer it
 marshals where the other twenty entries take integers. So the consumer is the
 vendor service through the WMI ACPI driver, not something outside the tree.
 
-`SMRW` has no caller anywhere in the disassembly, so what invokes it is not
-in the committed inputs; and none of `ACPB`, `ACSB`, `ACPC`, `ACSC`, `ACPD`,
-`ACSD`, `ACPE` or those overlays is *declared* anywhere in it either, so
-their offsets and meanings are not recovered here. Two asymmetries do fall
-out and are recorded rather than smoothed over: GFID 4 is written by the EC
-and tested by no arm, and GFID 6 is tested by an arm and written by nothing
-either committed method finds. What makes GFID 3 special to the GPU is
-still open, and
+Two asymmetries fall out of the pairing above and are recorded rather than
+smoothed over: GFID 4 is written by the EC and tested by no arm, and GFID 6
+is tested by an arm and written by nothing either committed method finds.
+What makes GFID 3 special to the GPU is still open, and
 
 [`gpu-tgp-07c4-07d7-door.md`](hardware-tests/gpu-tgp-07c4-07d7-door.md) is
 the written procedure for it — marked **not run**, and nothing here reports
 an observation from it.
 
 **What is *not* established, corrected** (issue #267 fix round 1): the two
-negatives above are both replaced, and the claim that survives is narrower than
-either. Not established is what the EC does with the buffer the select lands
-on -- the copy crosses the ASL boundary, and nothing committed shows the other
-end of it. Established, and not in doubt, is who invokes `SMRW` and what it
-addresses. The two asymmetries above are unaffected and stand.
+retracted negatives above are both replaced, and the claim that survives is
+narrower than either. Not established is what the EC does with the buffer the
+select lands on -- the copy crosses the ASL boundary, and nothing committed
+shows the other end of it. Established, and not in doubt, is who invokes
+`SMRW` and what it addresses. The two asymmetries above are unaffected and
+stand.
 
 **2026-09-25 (issue #264): the first of those is now closed, and the chain
 is drawn.** `0x09EA`/`0x09EB` have carried `registers.yaml` rows
