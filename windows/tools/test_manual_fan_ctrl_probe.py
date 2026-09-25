@@ -180,10 +180,18 @@ class Clock:
     the way a real one is.
     """
 
-    def __init__(self, step=0.1, base=1700000000.0):
+    def __init__(self, step=0.1, base=1700000000.0, stamp=0.001):
         self.t = 0.0
         self.base = base
         self.step = step
+        # What one `now()` call moves the clock by, and it moves it because
+        # the wall clock does: two stamps taken in a row are never the same
+        # instant. The early-exit row is the one that depends on it -- it is
+        # written after the last sweep of the arm and before the restore's
+        # mark, with nothing in between to advance a counter -- so on a clock
+        # that stood still it would carry the restore's timestamp and land in
+        # the restore's window, which is the window it was written before.
+        self.stamp = stamp
         self.slept = []
 
     def time(self):
@@ -191,8 +199,10 @@ class Clock:
         return self.t
 
     def now(self):
-        return (datetime.datetime.fromtimestamp(self.base + self.t)
+        here = (datetime.datetime.fromtimestamp(self.base + self.t)
                 .astimezone().isoformat(timespec="milliseconds"))
+        self.t += self.stamp
+        return here
 
     def sleep(self, s):
         self.slept.append(s)
@@ -577,54 +587,115 @@ class ProbeTests(unittest.TestCase):
         self.assertIn("not evidence the EC acted on it", readback[0])
         self.assertNotIn(restored, readback[0])
 
-    def test_a_crashed_run_records_why_and_still_closes_its_block(self):
-        # A crash part way through the write arm -- far enough in that the
-        # three marks are still more than the grader's MARK_MERGE_SECONDS
-        # apart, which is what keeps the capture three windows rather than
-        # one coalesced label. A crash on the arm's first sweep coalesces the
-        # write and the restore into one window instead, and the block reads
-        # VOID; the grader is right to say so there, and this case is about
-        # the case it cannot see. Where the crash goes is learned from a run
-        # that did not crash rather than counted here, because the number of
-        # reads a sweep costs is the fake's own.
+    def crashed_capture(self, argv=('0xA0',)):
+        """(path, ec) for a `--csv` run that dies part way through the write.
+
+        A crash far enough in that the three marks are still more than the
+        grader's `MARK_MERGE_SECONDS` apart, which is what keeps the capture
+        three windows rather than one coalesced label. A crash on the arm's
+        first sweep coalesces the write and the restore into one window
+        instead, and the block reads VOID; the grader is right to say so
+        there, and these cases are about the one it used to miss. Where the
+        crash goes is learned from a run that did not crash rather than
+        counted here, because the number of reads a sweep costs is the fake's
+        own.
+        """
         plain = FakeEc()
-        self.run_probe(argv=['0xA0'], ec=plain, clock=Clock(step=0.5))
-        crashed = FakeEc(boom_at=plain.writes_at[1] + 1
-                         + 30 * len(probe.ALL))
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "capture.csv"
-            with self.assertRaises(RuntimeError):
-                self.run_probe(argv=['0xA0', '--csv', str(path)], ec=crashed,
-                               clock=Clock(step=0.5))
-            # The capture is flushed per row and closed through the readback's
-            # own `finally`, so this is the whole of what the operator would
-            # find in the file.
-            self.assertEqual(self.mark_rows(path),
-                             list(probe.arm_labels(ORIG, TARGET)))
-            self.assertIn("# the run ended early: RuntimeError: "
-                          "observation failed mid-run", path.read_text())
-            self.assertEqual(crashed.writes[-1], (probe.MODE, ORIG))
-            rc, out, err = run_grader(str(path))
-            windows = grader.build_windows(*grader.read_capture(str(path)))
-        # The restore landed, so its mark lands, so the block is intact and
-        # the grader exits 0 over a write window cut at 30 sweeps. Nothing in
-        # the report says the window is short; the `#` row does, and only for
-        # a reader who opens the capture.
-        self.assertEqual(rc, 0, err)
+        self.run_probe(argv=list(argv), ec=plain, clock=Clock(step=0.5))
+        crashed = FakeEc(boom_at=plain.writes_at[1] + 1 + 30 * len(probe.ALL))
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        path = Path(tmp.name) / "capture.csv"
+        with self.assertRaises(RuntimeError):
+            self.run_probe(argv=list(argv) + ['--csv', str(path)], ec=crashed,
+                           clock=Clock(step=0.5))
+        return path, crashed
+
+    def test_a_crashed_run_records_why_and_still_closes_its_block(self):
+        path, crashed = self.crashed_capture()
+        # The capture is flushed per row and closed through the readback's own
+        # `finally`, so this is the whole of what the operator would find in
+        # the file: the three marks, the row, and the restore's mark.
+        self.assertEqual(self.mark_rows(path),
+                         list(probe.arm_labels(ORIG, TARGET)))
+        self.assertEqual(crashed.writes[-1], (probe.MODE, ORIG))
+        rc, out, err = run_grader(str(path))
+        windows = grader.build_windows(*grader.read_capture(str(path)))
+        # Exit 1, where this case used to pin 0 over a write window cut at 30
+        # sweeps. The restore landed, so its mark landed, so the block is
+        # intact -- and the row the handler wrote is the whole of the
+        # difference between that and a block that ran its hold. Both facts
+        # are on the block line, which is where they read alike.
+        self.assertEqual(rc, 1, err)
         self.assertIn("block 1/1: intact", out)
         self.assertIn("roles control, write, restore", out)
+        self.assertIn("NOT GRADED, its windows are not printed", out)
+        # The read line counts it, on the path where the "no MARK rows"
+        # refusal fires before anything else this tool prints.
+        self.assertIn("capture.csv: 3 mark(s), ", out)
+        self.assertIn("1 early-exit row(s)", out)
+        # And the section above the windows names it, with the window and the
+        # block it fell in and the reason quoted rather than summarised. The
+        # report wraps at 72 columns, so the prose is read flat.
+        flat = " ".join(out.split())
+        self.assertIn("=== early-exit rows (a run that did not reach its "
+                      "hold) ===", out)
+        self.assertIn("in mark 2/3 ('wrote 0x0751=0xA0') of block 0xA0 "
+                      "(block 1 of 1)", flat)
+        self.assertIn("manual_fan_ctrl_probe: RuntimeError: observation "
+                      "failed mid-run", flat)
+        # The whole block's windows are withheld, not the one the row fell in:
+        # the capture cannot say which arms before the cut are still worth
+        # reading, and the control arm's was a full hold -- which is why the
+        # section, not a per-window line, is what says the run stopped.
         self.assertEqual(len(windows), 3)
-        # And the write window really is short: it runs to the crash rather
-        # than to the end of the hold. The change rows are the same count
-        # either way, the script having saturated after three sweeps, which
-        # is the point -- the truncation is not a thing the report can show,
-        # and the grader grades the short window in the same format as the
-        # long one.
+        for n in (1, 2, 3):
+            self.assertIn(f"--- mark {n}/3:", out)
+        self.assertEqual(out.count("block: 0xA0 (block 1 of 1) -- NOT GRADED"),
+                         3)
+        self.assertNotIn("no watched byte moved in this window", out)
+        # The write window really is short, and the report above says so where
+        # the arithmetic cannot: it runs to the crash rather than to the end of
+        # the hold. The change rows are the same count either way, the script
+        # having saturated after three sweeps, which is the point -- the
+        # truncation is not a thing the windows can show, and a grader that
+        # printed them anyway would be grading the short window in the same
+        # format as the long one.
         full, _ = self.capture_path(('0xA0',), clock=Clock(step=0.5))
         held = grader.build_windows(*grader.read_capture(str(full)))
         self.assertLess((windows[2].ts - windows[1].ts).total_seconds(),
                         (held[2].ts - held[1].ts).total_seconds())
         self.assertEqual(len(windows[1].changes), len(held[1].changes))
+
+    # The row the writer writes and the rule the reader applies have to agree
+    # on *where* the run stopped, not only that one of them knows it stopped.
+    def test_the_early_exit_row_lands_in_the_arm_that_raised(self):
+        path, _ = self.crashed_capture()
+        early = grader.read_early_exits(str(path))
+        self.assertEqual(len(early), 1)
+        control, written, restored = grader.build_windows(
+            *grader.read_capture(str(path)))
+        # The row is stamped off the same clock as the marks, so the reader's
+        # rule -- the last window at or before the row -- puts it in the write
+        # arm, which is where the fake raised. The restore's mark is after it,
+        # which is what leaves the block intact rather than void.
+        self.assertGreater(early[0].ts, control.ts)
+        self.assertGreaterEqual(early[0].ts, written.ts)
+        self.assertLess(early[0].ts, restored.ts)
+        # And the reason is the exception, not the tag: the grader quotes it
+        # and claims nothing about who wrote the row.
+        self.assertEqual(early[0].reason,
+                         "manual_fan_ctrl_probe: RuntimeError: observation "
+                         "failed mid-run")
+
+    # The two spellings of the tag cannot be one constant -- `ecrw` binds
+    # kernel32 at import time, so the grader cannot import this tool -- and a
+    # drift between them fails nowhere else: the grader would match no row and
+    # every crashed run's capture would grade as one that finished. Pinned
+    # here against the real grader, by path, and again in the `--self-test` a
+    # human runs at the box.
+    def test_the_early_exit_tag_is_the_phrase_the_grader_reads(self):
+        self.assertEqual(probe.EARLY_EXIT_TAG, grader.EARLY_EXIT_TAG)
 
     def test_a_second_run_appends_to_the_same_capture(self):
         with tempfile.TemporaryDirectory() as tmp:

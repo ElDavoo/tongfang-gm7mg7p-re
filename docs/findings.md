@@ -2071,6 +2071,31 @@ and a wrong §7 call. The 76 is this merged tree's: 74 on the branch point
 unplaced-window-scope cases predate it. Write-up:
 `docs/findings/0751-grader-self-test-gate.md`.
 
+**The grader dropped the probe's "the run ended early" row, and a 5-second arm
+graded as a 30-second one.** `read_capture` skips every `#` row so an operator
+can annotate a capture by hand, and `manual_fan_ctrl_probe.py`'s
+`except BaseException` writes exactly such a row when a run stops — so the one
+record that an arm did not reach its hold was the one row nothing could see.
+The restore is in a `finally`, so its mark lands either way and the block reads
+`intact`: the capture is short a *hold*, not a mark, and the void check has
+nothing to notice. Over `multi-block/` with that row in one block's write
+window, the report was `block 1/2: intact`, all six windows printed,
+"consistent with the static prediction" — exit 0, a false green by the tool's
+own standard. A row that can be placed is now charged to the block whose window
+it fell in, withholds that block's windows and exits 1, and a section above the
+windows names the row, the window and the block — printed whole under
+`--block`, so a `--block 0x10` attachment over a day whose `0xA0` block crashed
+still passes, which is the scoping §6's per-block command line needs. A row
+that cannot be placed (no readable timestamp, none before the first mark, or a
+window in no block) refuses the run, on `unplaceable_marks`' argument. The row
+keeps its `#` prefix and gains a timestamp, so a hand `#` annotation is still
+skipped — pinned byte for byte against the unmodified fixture — and the tag is
+a second spelling of the grader's, equal by a case in the probe's suite and by
+its `--self-test`. Six new grader cases, two new probe cases, and the probe's
+own crash case rewritten: it asserted `rc == 0` over this capture. No register
+status is in question. Write-up:
+`docs/findings/0751-early-exit-row.md`.
+
 ### 7c. `0x07C4` moved on 2026-09-23, and the 15 EC-side sites of `0x07C4`-`0x07D5` (2026-09-24, issue #183)
 
 **The observation, already in the tree and written down nowhere.** §7 cites

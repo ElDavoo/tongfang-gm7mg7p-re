@@ -673,6 +673,31 @@ is that a label it accepts is one this grader can place. Both ends apply that
 one predicate, so a label the prompt accepts and this grader later refuses
 would be a bug in one of the two rather than a documented gap.
 
+**A run that did not reach its hold.** `windows/tools/manual_fan_ctrl_probe.py`
+records that in the capture itself, in one `#` row written from its
+`except BaseException` handler just before the restore mark:
+
+```
+# the run ended early: 2026-09-25T14:31:02.480+02:00,manual_fan_ctrl_probe: RuntimeError: observation failed mid-run
+```
+
+The grader reads that one row, and it is the only `#` row it reads — a `#`
+annotation you write by hand, which §6 above asks for on the snapshot, does not
+carry the phrase and is still skipped. A row it can place against a mark
+**withholds that block's windows and exits 1**: the block still holds its
+restore (the probe restores from a `finally`), so it reads `intact` over an arm
+that stopped at 5 s, and an arm that stopped at 5 s grades in the same format
+as one that ran its hold. The rest of the day is unaffected, so a
+`--block <value>` run for a value that did finish still passes, and a section
+above the windows names every row with the window and block it fell in — all of
+them, whether or not this run selected that block. A row with no readable
+timestamp, or one stamped before the first mark, cannot be placed against any
+arm at all: the run is then refused rather than partly reported, because a
+window whose length the report cannot bound is not one to quote. Re-run that
+block. **As of 2026-09-25 (issue #664)**; a capture taken with a probe older
+than this carries the same row without a timestamp and is refused for that, so
+such a capture needs the block re-run rather than an edit.
+
 Add a header comment to the snapshot in the style of
 `evidence/ec-watch/2026-09-23-power-mode-snapshot-dc.txt`: date, AC/battery,
 mode, service running or stopped, what load was held, what was written, and
