@@ -677,6 +677,116 @@ class ProbeTests(unittest.TestCase):
             self.run_probe(argv=['0xA0'])
             self.assertFalse(path.exists())
 
+    # A `--csv` run's hold is held to the grader's mark-merge window (#665).
+    # The three marks are this tool's own -- one per arm, one `hold` apart --
+    # so it knows which captures its own reader cannot read, and the failure
+    # is total and late: one coalesced window, no block, and the operator
+    # finds out at the grading. That is what makes it a refusal above the EC
+    # rather than a note in the help, and what the cases below pin.
+    def refused(self, argv):
+        """(exit code, ECs opened, capture path) for a run that should refuse.
+
+        `--csv` is appended rather than passed in, because the guard is
+        conditional on it and a case that supplied it would be exercising a
+        different run. The `opened` recorder is the whitelist case's trick: a
+        refusal that still opened the EC is a refusal that ran the hardware
+        first, and the path is a tempdir one so a guard that stopped firing
+        leaves a file in nobody's working tree.
+        """
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        opened = []
+        path = Path(tmp.name) / "capture.csv"
+        with patch.object(probe, 'Ec', lambda: opened.append(1)):
+            with self.assertRaises(SystemExit) as cm:
+                probe.main(list(argv) + ['--csv', str(path)])
+        return cm.exception.code, opened, path
+
+    def test_a_short_hold_is_refused_before_opening_the_ec(self):
+        code, opened, path = self.refused(['0xA0', '3'])
+        # The refusal and not any SystemExit: argparse exits 2 on a mistyped
+        # flag, so a bare assertRaises would pass for a run that never looked
+        # at the hold. `sys.exit(msg)` carries the message as the code.
+        self.assertIsInstance(code, str)
+        self.assertIn("hold 3s is at or under", code)
+        self.assertIn(f"MARK_MERGE_SECONDS ({probe.MARK_MERGE_SECONDS:g}s)",
+                      code)
+        # Both ways out are named, because they are different decisions: one
+        # is a longer run, the other is dropping the flag the operator asked
+        # for.
+        self.assertIn("drop --csv", code)
+        self.assertEqual(opened, [])
+        # And nothing was written either. The refusal is above the EC *and*
+        # above the capture, so a refused run leaves no header-only file for
+        # the next `--csv` run to append its rows to.
+        self.assertFalse(path.exists())
+
+    def test_a_hold_exactly_at_the_window_is_refused_too(self):
+        # `coalesce_marks` closes a group at `<= MARK_MERGE_SECONDS`, so the
+        # window itself folds the marks and the guard has to be `<=` and not
+        # `<`. A `<` would let a hold of exactly the window straight through to
+        # the one-window capture the block walk cannot read.
+        code, opened, _ = self.refused(
+            ['0xA0', f'{probe.MARK_MERGE_SECONDS:g}'])
+        self.assertIsInstance(code, str)
+        self.assertIn("at or under", code)
+        self.assertEqual(opened, [])
+
+    def test_the_hold_refusal_is_not_a_usage_error(self):
+        # The counterpart of the mistyped-flag case in section 5, because the
+        # two codes are the whole distinction. argparse's 2 means a typo; this
+        # is a value the tool will not honour, the same class as an out-of-set
+        # target, and that is why it is `sys.exit(msg)` and not `ap.error`.
+        code, _, _ = self.refused(['0xA0', '3'])
+        self.assertNotEqual(code, 2)
+        self.assertIsInstance(code, str)
+
+    def test_a_hold_just_above_the_window_still_grades_clean(self):
+        # The other side of the `<=`, on the run rather than on the guard. Half
+        # a second over the window the three marks are clear of each other,
+        # the capture is three windows, and the real grader comes back one
+        # intact block -- a guard that refused this would be refusing a
+        # capture its own reader reads.
+        hold = probe.MARK_MERGE_SECONDS + 0.5
+        path, _ = self.capture_path(('0xA0', f'{hold:g}'))
+        rc, out, err = run_grader(str(path))
+        self.assertEqual(rc, 0, err)
+        self.assertIn("block 1/1: intact", out)
+        self.assertIn("value under test 0xA0; roles control, write, restore",
+                      out)
+        self.assertNotIn("NOT GRADED", out)
+        self.assertEqual(len(grader.build_windows(
+            *grader.read_capture(str(path)))), 3)
+
+    def test_a_short_hold_without_a_capture_is_not_refused(self):
+        # The narrowing, and the reason the guard is conditional on --csv:
+        # without it there is no MARK row to coalesce and no capture to
+        # misread, so a floor here would refuse a run that cannot fail, which
+        # is the overclaim docs/findings.md §4 is written against. The hold
+        # stays the operator's.
+        ec, out = self.run_probe(argv=('0xA0', '3'))
+        self.assertIn("holding 3s each", out)
+        self.assertEqual(ec.writes,
+                         [(0x0751, ORIG), (0x0751, TARGET), (0x0751, ORIG)])
+
+    def test_the_restated_window_is_the_graders(self):
+        # Restated rather than imported because main() runs next to ecrw.py on
+        # the Windows box and must not depend on the repository layout to know
+        # a number. This is what makes the restatement safe: a window that
+        # moves in the grader fails here, by name, instead of quietly
+        # widening the floor the tool refuses on. The direction of the pin
+        # matters -- the probe's copy is what follows the grader, not the
+        # other way round.
+        self.assertEqual(probe.MARK_MERGE_SECONDS, grader.MARK_MERGE_SECONDS)
+
+    def test_the_self_test_checks_the_hold_floor(self):
+        # The row a human with no driver can run: the floor is the grader's
+        # window, a hold at it is refused, the next value up is not, and this
+        # tool's own 30 s hold clears it.
+        code, out = self.run_self_test()
+        self.assertEqual(code, 0)
+        self.assertIn("would fold the three marks and is refused", out)
+
     # 11. --self-test: the checkable half, on the tool's own logic. No EC.
     def run_self_test(self):
         out = io.StringIO()

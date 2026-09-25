@@ -6397,3 +6397,15 @@ bit addresses `0x8C` and `0x8D`; and its `listing_facts` reads a
 internal-RAM base can earn a `register-map` grade on a value the architecture
 says is not an SFR. The 37 rows' names are shaped around both, and the write-up
 says so.
+
+## 34. A `--csv` probe capture's mark spacing now has a guard at the tool's end (2026-09-25, issue #665)
+
+Issue #665: `windows/tools/manual_fan_ctrl_probe.py` took `hold` with nothing
+checking it, and at or under the grader's `MARK_MERGE_SECONDS` (5 s, where
+equality coalesces) its three marks fold into one window — a capture with no
+block to read out of. A `--csv` run under the floor is now refused with
+`sys.exit(msg)` before the EC is opened, the constant is restated rather than
+imported (the tool runs next to `ecrw.py`, off the repository layout) and
+pinned against the real grader by its own suite, and a short hold with no
+capture is deliberately *not* refused. No EC was opened and no register read.
+Write-up: `docs/findings/probe-hold-mark-merge.md`.

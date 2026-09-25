@@ -134,9 +134,13 @@ row belongs to. A run that dies part way through records why in a `#` row,
 which the reader skips by design: the restore and its mark still land, so the
 block would otherwise read `intact` over a window that was cut short. One
 `MARK` row is one action only while the marks are more than the grader's
-`MARK_MERGE_SECONDS` (5 s) apart; §3's ~30 s hold and this tool's default both
-clear that, and a `hold` under it folds the three into one window, which is a
-capture no block can be read out of.
+`MARK_MERGE_SECONDS` (5 s) apart, and a `--csv` run at or under that window is
+refused before the EC is opened rather than left to write a capture no block
+can be read out of: the grader's `coalesce_marks` closes a group at exactly the
+window, so the three marks would fold into one. §3's ~30 s hold and this
+tool's default both clear the floor, and a hold above it is the operator's
+decision again -- the re-snapshot between two arms adds to the gap by a cost
+nothing here has measured, so the floor is the conservative side.
 
 Values under test are limited to the three the vendor itself writes: 0xA0
 Office, 0x00 Gaming, 0x10 Turbo (a no-op if that is already the mode). The
@@ -145,14 +149,14 @@ value the EC already holds, so it introduces nothing the machine has not seen,
 and gating it would make the tool refuse to run in a mode the vendor UI has
 set. Restores 0x0751 in a finally block, which wraps both arms.
 
-`--self-test` opens no EC. It checks the watch set's read-safety guard, and
-hands a synthesised three-mark block to the real
-`ec/tools/grade_0751_isolation.py` -- its reader, and then the block walk and
-`check_block_marks` that issue #457 made load-bearing, with the two-mark
-capture this tool used to write kept as the negative control -- so a mark set
-the grader refuses is a failing row here rather than a green self-test. It is
-the tool's own logic on a fixture, in the sense windows/tools/ecrw_fake.py
-gives that phrase.
+`--self-test` opens no EC. It checks the watch set's read-safety guard and the
+floor a `--csv` run's hold is held to, and hands a synthesised three-mark block
+to the real `ec/tools/grade_0751_isolation.py` -- its reader, and then the
+block walk and `check_block_marks` that issue #457 made load-bearing, with the
+two-mark capture this tool used to write kept as the negative control -- so a
+mark set the grader refuses is a failing row here rather than a green
+self-test. It is the tool's own logic on a fixture, in the sense
+windows/tools/ecrw_fake.py gives that phrase.
 
 Run elevated, next to ecrw.py. Needs the vendor's ACPI driver present.
 
@@ -211,6 +215,16 @@ CLAMPS = (0x23, 0x14, 0x0F)
 # again. TEMP stops before it; this is the thing it stops before.
 FAN_TACH = list(range(0x0460, 0x0470))
 
+# How close two marks have to be to count as one action, restated from
+# ec/tools/grade_0751_isolation.py:260 rather than imported: this file runs
+# next to ecrw.py on a Windows box, so main() must not depend on the
+# repository layout to know a number (the self-test reaches the grader by
+# path, and that is the one place that may). Pinned against the grader's own
+# constant by windows/tools/test_manual_fan_ctrl_probe.py, so a window that
+# moves there fails this tool's suite and names itself. The window is the
+# grader's and stays there; 5 s is right for its three-console procedure.
+MARK_MERGE_SECONDS = 5
+
 
 def watch_set(level_block=False):
     """The addresses one sweep reads, in the order it reads them."""
@@ -239,6 +253,23 @@ def block_span(addrs):
     """
     return {a for start, length in block_runs(addrs)
             for a in range(start & ~3, ((start + length - 1) & ~3) + 4)}
+
+
+def marks_clear(hold):
+    """Whether `hold` keeps this run's three marks clear of each other.
+
+    The floor is the grader's `MARK_MERGE_SECONDS` and the test is `<=`, not
+    `<`: `coalesce_marks` closes a group at exactly the window, so a hold *at*
+    it folds the marks as surely as one under it. One place for the rule
+    because the guard, the self-test and the suite all have to read it the
+    same way, and a rule restated three times is a rule that drifts.
+
+    `hold` is judged alone, which is the conservative side: the real gap
+    between two marks is `hold` plus the re-snapshot between the arms, whose
+    cost nothing here has measured. A hold above the floor is therefore the
+    operator's decision again, not a claim that the capture is safe.
+    """
+    return hold > MARK_MERGE_SECONDS
 
 
 def now():
@@ -451,11 +482,12 @@ def report_level_block(arms):
 def self_test():
     """The tool's own logic on a fixture. Opens no EC and reads no register.
 
-    Two things it can establish. The watch set's read-safety guard is
-    arithmetic over this file's own constants, with the counts it is supposed
-    to hold to written into the check rather than read out of the thing being
-    checked. The mark set is settled by handing a synthesised capture to the
-    real `ec/tools/grade_0751_isolation.py` -- its reader, and then the block
+    Two things it can establish. The watch set's read-safety guard, and the
+    floor a `--csv` run's hold is held to, are arithmetic over this file's own
+    constants, with the counts they are supposed to hold to written into the
+    check rather than read out of the thing being checked. The mark set is
+    settled by handing a synthesised capture to the real
+    `ec/tools/grade_0751_isolation.py` -- its reader, and then the block
     walk and `check_block_marks` that #457 made load-bearing, with the
     two-mark capture this tool used to write kept beside it as the negative
     control. Reading was never the part that decided anything: the reader has
@@ -496,6 +528,12 @@ def self_test():
           "widen the access to the page #94 is about",
           not block_span(default) & set(FAN_TACH)
           and not block_span(widened) & set(FAN_TACH))
+    check("a hold at the grader's MARK_MERGE_SECONDS would fold the three "
+          "marks and is refused, the next value up is not, and this tool's "
+          "own 30 s hold clears the floor",
+          not marks_clear(MARK_MERGE_SECONDS)
+          and marks_clear(MARK_MERGE_SECONDS + 0.5)
+          and marks_clear(SELFTEST_HOLD))
 
     # Imported here, not at module scope: this tool runs next to ecrw.py on a
     # Windows box, where the repository layout is not something to depend on at
@@ -605,7 +643,10 @@ def main(argv=None):
     # Both defaults are §3's, and the docstring says so: the procedure is the
     # reference, and the tool is the half that changed to match it.
     ap.add_argument("hold", nargs="?", type=float, default=30.0,
-                    help="seconds per arm; §3's hold is ~30 s (default: 30)")
+                    help="seconds per arm; §3's hold is ~30 s (default: 30). "
+                         f"A --csv run needs a hold above the grader's "
+                         f"MARK_MERGE_SECONDS ({MARK_MERGE_SECONDS:g}s), or "
+                         "its three marks fold into one window")
     ap.add_argument("--interval", type=float, default=0.5,
                     help="seconds between sweeps; §3's starting point, not a "
                          "validated-safe value (default: 0.5)")
@@ -622,7 +663,8 @@ def main(argv=None):
                          "busy mark and the clamp constants; see "
                          "docs/hardware-tests/level-block-0860-086e.md")
     ap.add_argument("--self-test", action="store_true",
-                    help="the watch set's read-safety guard and this run's "
+                    help="the watch set's read-safety guard, the hold a "
+                         "--csv run is held to, and this run's "
                          "mark set against the real grader's reader and block "
                          "walk; opens no EC and reads no register")
     ap.add_argument("--block", action="store_true",
@@ -636,6 +678,22 @@ def main(argv=None):
     target, hold, interval = args.target, args.hold, args.interval
     if target not in ALLOWED:
         sys.exit(f"value 0x{target:02X} not in the vendor set {{0x00,0x10,0xA0}}")
+    if args.csv and not marks_clear(hold):
+        # Refused rather than warned, and only here because this is the only
+        # path a MARK row exists on. A terminal-only run at a short hold has
+        # no capture to misread, and refusing one would be a guard against a
+        # failure that cannot happen. A --csv run is the opposite case: the
+        # marks are this tool's own, one per arm and one `hold` apart, so it
+        # knows which captures its own reader cannot read -- and it finds out
+        # late and totally, at the grading, with one window and no block.
+        # `sys.exit(msg)` and not `ap.error`: a short hold is a value the tool
+        # will not honour, the same class as an out-of-set target above, and
+        # argparse's exit 2 is the code a mistyped flag gets.
+        sys.exit(f"hold {hold:g}s is at or under the grader's "
+                 f"MARK_MERGE_SECONDS ({MARK_MERGE_SECONDS:g}s): a --csv "
+                 "capture's three marks would fold into one window, and no "
+                 "block can be read out of it. Hold more than "
+                 f"{MARK_MERGE_SECONDS:g}s (the default is 30) or drop --csv")
     addrs = watch_set(args.level_block)
     ec = Ec()
     orig = ec.read(MODE)
