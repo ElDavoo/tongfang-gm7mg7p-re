@@ -21,7 +21,16 @@ before it means anything:
      hands DPTR to a subroutine (`lcall`/`acall`, or the `ljmp`/`ajmp`
      tail-call forms) instead, that is reported as exactly that --
      unresolved -- not guessed at.
-  3. *What does the C-level census say about the same site?* `--census-column`
+  3. *Why did the window stop?* A window that ended at a real terminator and
+     one that ran out of instruction budget are the same list of triples, so
+     the CSV cannot say which. `walk_why()` returns the reason with the
+     instructions and `--terminator-column` carries it as a column of the same
+     row. The five tokens are `TERMINATORS` below and `budget_end()`'s -- the
+     vocabulary `docs/findings/opcode-len-bounds-census.md`'s reproducing
+     snippet already counts in, which had to re-implement this loop to tally
+     them. `../docs/findings/walk-window-terminators.md` is the census of
+     which committed rows the budget truncates.
+  4. *What does the C-level census say about the same site?* `--census-column`
      appends a `census` column to the `--csv` table carrying
      `../annotations/xdata-0860-census-sites.csv`'s per-site correspondence:
      the bucket and occurrence count of the decompiled C's references at that
@@ -37,8 +46,9 @@ before it means anything:
 
 The decode is a linear best-effort walk, not a disassembler: it stops at
 the first control-flow instruction and cannot follow branches (disasm8051.py
-holds the opcode tables and says what else it cannot do). Treat the
-mnemonics as a reading aid and confirm anything load-bearing with
+holds the opcode tables and says what else it cannot do). It stops for four
+other reasons too, and point 3 is which of the five ended a given window.
+Treat the mnemonics as a reading aid and confirm anything load-bearing with
 `--r2-commands` output (or make_bank_image.py + r2 by hand). As with
 scan_refs.py, indirect/pointer XDATA access is invisible here, so "0 sites
 in image X" means "not found by this method", never "absent".
@@ -89,11 +99,55 @@ R2_IMAGE = {"common": "bank0.bin", "bank0": "bank0.bin",
 
 MOV_DPTR = 0x90
 
+# Why a walk stopped, in the five tokens walk_why() can return. Four are
+# constants; the fifth carries the budget that ran out, so it is a function of
+# one rather than a fifth string, and a caller holding a token can recover the
+# budget from it.
+#
+# The vocabulary is not invented here: each token is a name
+# ../../docs/findings/opcode-len-bounds-census.md's reproducing snippet
+# already prints for the same event, and the `i + 2 >= len(d)` disjunct's row
+# in its tally is the source of `end of buffer`, the `d[i] == MOV_DPTR` row's
+# of `DPTR reloaded`. That snippet had to re-implement walk()'s loop to count
+# them, which is the duplication point 3 of the docstring retires: with the
+# names here, the --terminator-column output and the 119530 that census commits
+# are one measurement in two places rather than two vocabularies for one event.
+FLOW_END = "flow opcode"
+RELOAD_END = "DPTR reloaded"
+BUFFER_END = "end of buffer"
+SHORT_END = "instruction does not fit"
+
+# The tokens that do not name a budget, in the order the loop can reach them.
+# A terminator that is none of these and does not parse as budget_end() is a
+# bug in walk_why(), and every consumer here treats it as one rather than
+# rendering it into a cell that would read as an answer.
+TERMINATORS = (FLOW_END, RELOAD_END, BUFFER_END, SHORT_END)
+
+
+def budget_end(max_insns: int) -> str:
+    """The token for a walk that used every instruction it was given.
+
+    A function rather than a constant because the number is the loop's own
+    argument, and a reader looking at a `max_insns (8) exhausted` cell has to
+    be able to see which 8 produced it."""
+    return f"max_insns ({max_insns}) exhausted"
+
+
+def is_terminator(why) -> bool:
+    """Whether `why` is one of the five tokens, budget_end()'s included.
+
+    The `isinstance` is the point and not defensive padding: this is what a
+    census calls on whatever `walk_why()` handed back, and a walk_why() that
+    returned a non-string should read as *not a terminator* here -- one more
+    thing to refuse -- rather than raise somewhere further along."""
+    return (isinstance(why, str)
+            and (why in TERMINATORS or why.startswith("max_insns (")))
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.join(HERE, os.pardir, os.pardir)
 ANNOT = os.path.join(HERE, os.pardir, "annotations")
 # The hand-typed cross-method correspondence --see the module docstring's
-# third point. Read only by --census-column.
+# fourth point. Read only by --census-column.
 CENSUS_MAP = os.path.join(ANNOT, "xdata-0860-census-sites.csv")
 # What --check compares against when it is given no path: the 0x086x page's
 # own table, the one ../annotations/xdata-086x-dispatch.md §1 names. The other
@@ -221,26 +275,53 @@ def call_target(raw: bytes, addr: int = None):
     return None
 
 
-def walk(d: bytes, start: int, max_insns: int = 8):
-    """Decode forward from a site until the first control-flow instruction."""
+def walk_why(d: bytes, start: int, max_insns: int = 8):
+    """`walk()`'s decode, and the token for which guard ended it.
+
+    The reason is returned beside the instructions because the instructions
+    cannot express it: a window cut by `max_insns` and one cut by a DPTR
+    reload are both a list of triples that simply stops, and a caller that
+    only has the list cannot tell them apart. Five guards can end the loop and
+    all five are named, the fifth carrying the budget it exhausted, so no cell
+    this feeds is a guess -- see `TERMINATORS` and
+    ../../docs/findings/walk-window-terminators.md for the committed census of
+    the rows the budget truncates.
+    """
     out = []
     i = start
+    # Set before the loop so a `max_insns` of 0 or less has a reason to give
+    # rather than falling off the end: that walk decodes nothing, and "the
+    # budget was exhausted" is what it did.
+    why = budget_end(max_insns)
     for _ in range(max_insns):
         n = OPCODE_LEN[d[i]]
         if i + n > len(d):
+            why = SHORT_END
             break
         out.append((i, d[i:i + n], mnemonic(d, i)))
         if d[i] in FLOW_OPCODES:
+            why = FLOW_END
             break
         i += n
-        # `max_insns`, not `len(d)`, bounds this loop, and the first disjunct is
-        # what holds the index: `:230` tests whether the *instruction* fits and
-        # permits `i + n == len(d)`, which can leave `i` at `len(d)` for the next
-        # `d[i]`. This asks for two more bytes, and the `or` leaves `d[i]` unread
-        # without them. The second says DPTR was reloaded -- a different access.
-        if i + 2 >= len(d) or d[i] == MOV_DPTR:
+        # `max_insns`, not `len(d)`, bounds this loop, and the first of these
+        # two tests is what holds the index: the `i + n > len(d)` test above
+        # asks whether the *instruction* fits and permits `i + n == len(d)`,
+        # which can leave `i` at `len(d)` for the next `d[i]`. This one asks
+        # for two more bytes, so the `d[i]` below it is in range.
+        if i + 2 >= len(d):
+            why = BUFFER_END
             break
-    return out
+        # The second test is safe because the first has just run, and it says
+        # DPTR was reloaded -- a different access, not a longer window.
+        if d[i] == MOV_DPTR:
+            why = RELOAD_END
+            break
+    return out, why
+
+
+def walk(d: bytes, start: int, max_insns: int = 8):
+    """Decode forward from a site until the first control-flow instruction."""
+    return walk_why(d, start, max_insns)[0]
 
 
 def classify(insns, skip: int = 1):
@@ -301,7 +382,8 @@ def sites_for(d: bytes, addr: int):
             if d[i] == MOV_DPTR and d[i + 1] == hi and d[i + 2] == lo]
 
 
-def csv_table(d: bytes, addrs, pd_verified: bool, census=None):
+def csv_table(d: bytes, addrs, pd_verified: bool, census=None,
+              terminator: bool = False):
     """(the `--csv` table, per-address counts of the sites the map does not
     cover), for a reader who wants to re-derive a table without re-running
     anything. `frame_onto`/`frame_over` are disasm8051's anchor sweep -- see
@@ -312,13 +394,19 @@ def csv_table(d: bytes, addrs, pd_verified: bool, census=None):
     ninth column; None leaves it out, and that is what keeps the other three
     committed tables this tool emits (`xdata-0400-045f-sites.csv`,
     `ec-07c4-07d5-sites.csv` and the `0x07D0` one) reproducing byte for byte
-    from the plain command."""
+    from the plain command. `terminator` appends the `terminator` column
+    after it, and is off by default for the same reason: the 0x086x table's
+    own `--check` is the regression test that no `access` or `window` cell
+    moved when the other six tables gained one, and it can only stay that
+    while the default output has no column in it."""
     buf = io.StringIO()
     w = csv.writer(buf)
     columns = ["addr", "file_offset", "region", "runtime", "frame_onto",
                "frame_over", "access", "window"]
     if census is not None:
         columns.append("census")
+    if terminator:
+        columns.append("terminator")
     w.writerow(columns)
     unmapped = collections.Counter()
     for text in addrs:
@@ -327,7 +415,7 @@ def csv_table(d: bytes, addrs, pd_verified: bool, census=None):
             name, _, _, _ = region_of(o, pd_verified)
             rt = runtime_addr(o, pd_verified)
             onto, over = converges_from(d, o)
-            insns = walk(d, o)
+            insns, why = walk_why(d, o)
             row = [f"0x{addr:04X}", f"0x{o:05X}", name,
                    f"0x{rt:04X}" if rt is not None else "",
                    onto, over, classify(insns),
@@ -338,6 +426,8 @@ def csv_table(d: bytes, addrs, pd_verified: bool, census=None):
                     cell = "not recorded"
                     unmapped[f"0x{addr:04X}"] += 1
                 row.append(cell)
+            if terminator:
+                row.append(why)
             w.writerow(row)
     return buf.getvalue(), unmapped
 
@@ -369,6 +459,24 @@ def check_table(generated: str, path: str) -> int:
     return 1
 
 
+def committed_columns(path: str):
+    """The header row of a committed table as a list, or None.
+
+    Only the header is wanted, and only so that a red `--check` can name its
+    own cause instead of leaving the reader to spot the extra column in the
+    diff. A file that cannot be read is None rather than an error, because
+    `check_table()` is what reports an unreadable path, reports it once, and
+    would otherwise be the second thing to say so. A short file is likewise
+    None: it has no header to be wrong about, and its emptiness is the diff's
+    to show."""
+    try:
+        with open(path, newline="") as f:
+            header = next(csv.reader(f), None)
+    except OSError:
+        return None
+    return header
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -384,13 +492,20 @@ def main() -> int:
                     help="with --csv, append the `census` column rendered from "
                          f"{repo_path(CENSUS_MAP)} -- read from that file, not "
                          "derived from the image")
+    ap.add_argument("--terminator-column", action="store_true",
+                    help="with --csv, append the `terminator` column: which of "
+                         "the five walk_why() terminators ended this row's "
+                         "window, so a window cut by the instruction budget is "
+                         "not in the same shape as one cut by a real terminator")
     ap.add_argument("--check", nargs="?", const=SITES_CSV, metavar="PATH",
                     help="with --csv, diff this run against a committed table and "
                          "exit non-zero on any difference (default: the 0x086x page's)")
     args = ap.parse_args()
 
-    if (args.census_column or args.check is not None) and not args.csv:
-        ap.error("--census-column and --check are about the --csv table; they need --csv")
+    if (args.census_column or args.terminator_column
+            or args.check is not None) and not args.csv:
+        ap.error("--census-column, --terminator-column and --check are about "
+                 "the --csv table; they need --csv")
 
     d = open(args.firmware, "rb").read()
     off, magic = PD_MARKER
@@ -409,13 +524,25 @@ def main() -> int:
             except (OSError, ValueError) as e:
                 print(f"note: {e}", file=sys.stderr)
                 return 1
-        table, unmapped = csv_table(d, args.addrs, pd_verified, census)
+        table, unmapped = csv_table(d, args.addrs, pd_verified, census,
+                                    terminator=args.terminator_column)
         if unmapped:
             by_addr = ", ".join(f"{a} x{n}" for a, n in sorted(unmapped.items()))
             print(f"note: {sum(unmapped.values())} site(s) have no row in "
                   f"{repo_path(CENSUS_MAP)} and read 'not recorded': {by_addr}\n",
                   file=sys.stderr)
         if args.check is not None:
+            # The one direction a diff cannot explain by itself. Six tables
+            # carry a `terminator` column and a bare run has none, so the diff
+            # is one line of "-" per row and nothing about why; this says it
+            # before the diff rather than leaving the reader to work it out.
+            # The other direction needs no note: the extra cells are the diff.
+            header = committed_columns(args.check)
+            if header and "terminator" in header and not args.terminator_column:
+                print(f"note: {repo_path(args.check)} has a `terminator` column, "
+                      "so it was re-cut with --terminator-column; this run did "
+                      "not pass it and every row is short that cell.\n",
+                      file=sys.stderr)
             return check_table(table, args.check)
         sys.stdout.write(table)
         return 0
@@ -433,13 +560,14 @@ def main() -> int:
             name, _, _, how = region_of(o, pd_verified)
             rt = runtime_addr(o, pd_verified)
             rt_text = f"runtime 0x{rt:04X}" if rt is not None else "runtime n/a"
-            insns = walk(d, o)
+            insns, why = walk_why(d, o)
             print(f"\n  file 0x{o:05X}  {name:<9} {rt_text}  [{how}]")
             print(f"    {classify(insns)}")
             for i, raw, mn in insns:
                 shown = runtime_addr(i, pd_verified)
                 label = f"0x{shown:04X}" if shown is not None else f"+0x{i - o:04X}"
                 print(f"      {label}  {raw.hex():<8} {mn}")
+            print(f"    window ended: {why}")
             if args.r2_commands and rt is not None:
                 img = R2_IMAGE.get(name, "image.bin")
                 print(f"      $ r2 -a 8051 -e scr.color=0 -q -c 's 0x{rt:04x}; pd 10' {img}")

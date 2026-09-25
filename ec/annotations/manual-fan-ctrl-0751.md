@@ -47,6 +47,7 @@ $ python3 ec/tools/trace_xdata_refs.py ec/firmware/GMxMGxx_11.800 0x0751 --count
 0x0751: 29 direct MOV DPTR site(s)  bank0=28  bank1=1
 
 $ python3 ec/tools/trace_xdata_refs.py ec/firmware/GMxMGxx_11.800 0x0751 --csv \
+          --terminator-column \
           > ec/annotations/manual-fan-ctrl-0751-sites.csv
 $ tail -n +2 ec/annotations/manual-fan-ctrl-0751-sites.csv | wc -l
 29
@@ -59,6 +60,13 @@ $ python3 ec/tools/walk_branch_arms.py ec/firmware/GMxMGxx_11.800 \
           0x0751 --callee-depth 1 --csv \
           | diff - ec/annotations/manual-fan-ctrl-0751-arms.csv
 ```
+
+The trailing `terminator` column says which of the five guards
+`walk_why()` can stop on ended this row's window, so a window the
+instruction budget cut is not in the same shape as one that stopped on a
+real terminator. This file's rows that the budget truncates are listed in
+`walk-budget-census.csv` and counted by `../../ec/tools/walk_budget_census.py`;
+the write-up is `../../docs/findings/walk-window-terminators.md`.
 
 The 29 rows are the same 29 that `registers.yaml` records as
 `static_refs_main_ec` and that `ec/tools/check_register_counts.py` recomputes

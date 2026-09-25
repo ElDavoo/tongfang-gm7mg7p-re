@@ -1,410 +1,410 @@
-addr,file_offset,region,runtime,frame_onto,frame_over,access,window
-0x0400,0x13895,bank1,0xB895,24,0,write x1,"mov a,#0x00 ; movx @dptr,a"
-0x0400,0x13F42,bank1,0xBF42,24,0,DPTR handed to lcall 0x8863 -- direction unresolved here,"mov r3,0x82 ; mov r4,0x83 ; mov a,r6 ; mov r2,a ; mov a,r5 ; mov r1,a ; lcall 0x8863"
-0x0400,0x13F52,bank1,0xBF52,24,0,no movx found in the decoded window,"mov r5,0x82 ; mov r6,0x83"
-0x0400,0x14CBB,bank1,0xCCBB,24,0,no movx found in the decoded window,"mov r1,0x82 ; mov r2,0x83"
-0x0400,0x235E9,pd-image,0x35E9,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov r7,a ; mov 0xf0,#0x60 ; ljmp 0x10bc"
-0x0400,0x236BE,pd-image,0x36BE,22,2,no movx found in the decoded window,ret
-0x0400,0x23886,pd-image,0x3886,22,2,no movx found in the decoded window,ret
-0x0400,0x26860,pd-image,0x6860,24,0,DPTR handed to lcall 0x3494 -- direction unresolved here,lcall 0x3494
-0x0401,0x1389B,bank1,0xB89B,24,0,write x1,"mov a,#0x00 ; movx @dptr,a"
-0x0402,0x134BD,bank1,0xB4BD,24,0,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892
-0x0402,0x15C14,bank1,0xDC14,24,0,DPTR handed to lcall 0x889e -- direction unresolved here,lcall 0x889e
-0x0402,0x15F7C,bank1,0xDF7C,24,0,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c
-0x0403,0x11310,bank1,0x9310,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x14 ; jc +0x11"
-0x0403,0x12269,bank1,0xA269,22,2,read x1,"movx a,@dptr ; jz +0x6b"
-0x0403,0x1227C,bank1,0xA27C,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x14 ; jc +0x1e"
-0x0403,0x134CA,bank1,0xB4CA,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x14 ; jc +0x22"
-0x0403,0x13B68,bank1,0xBB68,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x14 ; jnc +0x1e"
-0x0403,0x13BEA,bank1,0xBBEA,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x14 ; jnc +0x10"
-0x0403,0x13C13,bank1,0xBC13,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x14 ; jnc +0x10"
-0x0403,0x13DA9,bank1,0xBDA9,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x14 ; jnc +0x10"
-0x0403,0x13DD3,bank1,0xBDD3,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x14 ; jnc +0x10"
-0x0403,0x13E4A,bank1,0xBE4A,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x14 ; jnc +0x3e"
-0x0403,0x15118,bank1,0xD118,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x14 ; jnc +0x15"
-0x0404,0x0AA34,bank0,0xAA34,24,0,"read x2, walks 2 consecutive bytes (inc dptr)","movx a,@dptr ; mov r6,a ; inc dptr ; movx a,@dptr ; mov r7,a"
-0x0404,0x13214,bank1,0xB214,24,0,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892
-0x0404,0x1323B,bank1,0xB23B,23,1,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892
-0x0404,0x132B9,bank1,0xB2B9,24,0,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892
-0x0404,0x1330E,bank1,0xB30E,22,2,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892
-0x0404,0x1332F,bank1,0xB32F,24,0,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c
-0x0404,0x1350E,bank1,0xB50E,22,2,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886
-0x0404,0x14B1F,bank1,0xCB1F,24,0,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886
-0x0404,0x15C1A,bank1,0xDC1A,24,0,DPTR handed to lcall 0x889e -- direction unresolved here,lcall 0x889e
-0x0404,0x15F20,bank1,0xDF20,24,0,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c
-0x0404,0x1670B,bank1,0xE70B,24,0,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886
-0x0404,0x2447B,pd-image,0x447B,24,0,DPTR handed to lcall 0x3621 -- direction unresolved here,lcall 0x3621
-0x0404,0x2449E,pd-image,0x449E,24,0,DPTR handed to lcall 0x3635 -- direction unresolved here,lcall 0x3635
-0x0404,0x2CCE7,pd-image,0xCCE7,22,2,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497
-0x0408,0x15C2B,bank1,0xDC2B,21,3,DPTR handed to lcall 0x889e -- direction unresolved here,lcall 0x889e
-0x0408,0x15FA0,bank1,0xDFA0,23,1,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c
-0x0408,0x23480,pd-image,0x3480,22,2,DPTR handed to lcall 0x10bc -- direction unresolved here,lcall 0x10bc
-0x0408,0x234FD,pd-image,0x34FD,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov 0xf0,#0x60 ; ljmp 0x10bc"
-0x0408,0x23583,pd-image,0x3583,22,2,no movx found in the decoded window,ret
-0x0408,0x235F5,pd-image,0x35F5,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov a,r7 ; mov 0xf0,#0x60 ; ljmp 0x10bc"
-0x0408,0x23845,pd-image,0x3845,24,0,no movx found in the decoded window,ret
-0x0408,0x282C7,pd-image,0x82C7,0,24,DPTR handed to lcall 0x99c0 -- direction unresolved here,lcall 0x99c0
-0x0408,0x28336,pd-image,0x8336,24,0,DPTR handed to lcall 0x9a1c -- direction unresolved here,lcall 0x9a1c
-0x040A,0x12E31,bank1,0xAE31,23,1,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886
-0x040A,0x1351D,bank1,0xB51D,23,1,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c
-0x040A,0x13549,bank1,0xB549,23,1,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886
-0x040C,0x12E98,bank1,0xAE98,23,1,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886
-0x040C,0x1352C,bank1,0xB52C,23,1,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c
-0x040C,0x23490,pd-image,0x3490,22,2,DPTR handed to lcall 0x10bc -- direction unresolved here,"mov a,r3 ; mov 0xf0,#0x60 ; lcall 0x10bc"
-0x040C,0x286D0,pd-image,0x86D0,22,2,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497
-0x040E,0x13532,bank1,0xB532,23,1,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c
-0x040E,0x1355C,bank1,0xB55C,23,1,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886
-0x0410,0x13565,bank1,0xB565,24,0,DPTR handed to lcall 0x889e -- direction unresolved here,lcall 0x889e
-0x0410,0x2142D,pd-image,0x142D,24,0,DPTR handed to lcall 0x3493 -- direction unresolved here,lcall 0x3493
-0x0410,0x2351D,pd-image,0x351D,22,2,no movx found in the decoded window,ret
-0x0410,0x23698,pd-image,0x3698,23,1,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov 0xf0,#0x60 ; ljmp 0x10bc"
-0x0410,0x282D7,pd-image,0x82D7,24,0,DPTR handed to lcall 0x99c0 -- direction unresolved here,lcall 0x99c0
-0x0410,0x28347,pd-image,0x8347,24,0,DPTR handed to lcall 0x9a1b -- direction unresolved here,lcall 0x9a1b
-0x0418,0x222D8,pd-image,0x22D8,24,0,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497
-0x0418,0x2334A,pd-image,0x334A,24,0,DPTR handed to lcall 0x39f9 -- direction unresolved here,lcall 0x39f9
-0x0418,0x23566,pd-image,0x3566,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov r7,a ; mov 0xf0,#0x60 ; ljmp 0x10bc"
-0x0418,0x238CF,pd-image,0x38CF,22,2,no movx found in the decoded window,ret
-0x0418,0x2E049,pd-image,0xE049,22,2,DPTR handed to lcall 0xb164 -- direction unresolved here,lcall 0xb164
-0x041C,0x235BB,pd-image,0x35BB,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov r7,a ; mov 0xf0,#0x60 ; ljmp 0x10bc"
-0x041C,0x26140,pd-image,0x6140,22,2,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497
-0x041C,0x2D527,pd-image,0xD527,22,2,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497
-0x0420,0x16779,bank1,0xE779,24,0,no movx found in the decoded window,"mov r2,0x83 ; mov r1,0x82 ; ret"
-0x0420,0x21F5E,pd-image,0x1F5E,22,2,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497
-0x0420,0x22190,pd-image,0x2190,24,0,DPTR handed to lcall 0x35c8 -- direction unresolved here,lcall 0x35c8
-0x0420,0x22F21,pd-image,0x2F21,24,0,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497
-0x0420,0x234A6,pd-image,0x34A6,24,0,DPTR handed to lcall 0x10bc -- direction unresolved here,"mov r7,a ; mov 0xf0,#0x60 ; lcall 0x10bc"
-0x0420,0x2363B,pd-image,0x363B,20,4,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov a,r7 ; mov 0xf0,#0x60 ; ljmp 0x10bc"
-0x0420,0x25031,pd-image,0x5031,22,2,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497
-0x0420,0x285BA,pd-image,0x85BA,22,2,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497
-0x0420,0x29463,pd-image,0x9463,22,2,DPTR handed to lcall 0xb263 -- direction unresolved here,lcall 0xb263
-0x0420,0x2BBBD,pd-image,0xBBBD,22,2,DPTR handed to lcall 0xb263 -- direction unresolved here,lcall 0xb263
-0x0420,0x2BDE9,pd-image,0xBDE9,24,0,DPTR handed to lcall 0xb25f -- direction unresolved here,lcall 0xb25f
-0x0420,0x2CEEF,pd-image,0xCEEF,22,2,DPTR handed to lcall 0xb164 -- direction unresolved here,lcall 0xb164
-0x0424,0x21532,pd-image,0x1532,24,0,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497
-0x0424,0x21AAA,pd-image,0x1AAA,24,0,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497
-0x0424,0x21FD4,pd-image,0x1FD4,24,0,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497
-0x0424,0x225E7,pd-image,0x25E7,24,0,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497
-0x0424,0x226EC,pd-image,0x26EC,22,2,DPTR handed to lcall 0x35f8 -- direction unresolved here,lcall 0x35f8
-0x0424,0x234EF,pd-image,0x34EF,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov 0xf0,#0x60 ; ljmp 0x10bc"
-0x0424,0x24415,pd-image,0x4415,24,0,DPTR handed to lcall 0x363e -- direction unresolved here,lcall 0x363e
-0x0424,0x28279,pd-image,0x8279,24,0,DPTR handed to lcall 0x99c1 -- direction unresolved here,lcall 0x99c1
-0x0424,0x286ED,pd-image,0x86ED,24,0,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497
-0x0424,0x2CCF0,pd-image,0xCCF0,22,2,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497
-0x0424,0x2E2F2,pd-image,0xE2F2,24,0,DPTR handed to lcall 0x10bc -- direction unresolved here,lcall 0x10bc
-0x0424,0x2F4DE,pd-image,0xF4DE,24,0,DPTR handed to lcall 0x3620 -- direction unresolved here,lcall 0x3620
-0x0426,0x2CCFF,pd-image,0xCCFF,24,0,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497
-0x0428,0x235AD,pd-image,0x35AD,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov r7,a ; mov 0xf0,#0x60 ; ljmp 0x10bc"
-0x0428,0x29A61,pd-image,0x9A61,22,2,no movx found in the decoded window,ret
-0x0428,0x2CD28,pd-image,0xCD28,24,0,DPTR handed to lcall 0x3716 -- direction unresolved here,lcall 0x3716
-0x0429,0x23D2F,pd-image,0x3D2F,24,0,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497
-0x0429,0x23D76,pd-image,0x3D76,24,0,DPTR handed to lcall 0x37a7 -- direction unresolved here,lcall 0x37a7
-0x042A,0x23C80,pd-image,0x3C80,24,0,DPTR handed to lcall 0x363f -- direction unresolved here,lcall 0x363f
-0x042A,0x23C98,pd-image,0x3C98,24,0,DPTR handed to lcall 0x3690 -- direction unresolved here,lcall 0x3690
-0x042C,0x21C19,pd-image,0x1C19,24,0,DPTR handed to lcall 0x3592 -- direction unresolved here,lcall 0x3592
-0x042C,0x235C5,pd-image,0x35C5,20,4,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov a,r7 ; mov 0xf0,#0x60 ; ljmp 0x10bc"
-0x042C,0x23761,pd-image,0x3761,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov r7,a ; mov 0xf0,#0x60 ; ljmp 0x10bc"
-0x042C,0x2677F,pd-image,0x677F,24,0,DPTR handed to lcall 0x34f2 -- direction unresolved here,lcall 0x34f2
-0x042C,0x26797,pd-image,0x6797,24,0,DPTR handed to lcall 0x3500 -- direction unresolved here,lcall 0x3500
-0x042C,0x267CC,pd-image,0x67CC,24,0,DPTR handed to lcall 0x353e -- direction unresolved here,lcall 0x353e
-0x042F,0x21C0A,pd-image,0x1C0A,24,0,DPTR handed to lcall 0x3593 -- direction unresolved here,lcall 0x3593
-0x042F,0x23632,pd-image,0x3632,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov 0xf0,#0x60 ; ljmp 0x10bc"
-0x042F,0x2571F,pd-image,0x571F,22,2,DPTR handed to lcall 0x10bc -- direction unresolved here,lcall 0x10bc
-0x042F,0x28235,pd-image,0x8235,24,0,DPTR handed to lcall 0x9988 -- direction unresolved here,lcall 0x9988
-0x042F,0x29984,pd-image,0x9984,23,1,DPTR handed to lcall 0x10bc -- direction unresolved here,"mov a,r7 ; mov 0xf0,#0x60 ; lcall 0x10bc"
-0x042F,0x29A3C,pd-image,0x9A3C,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov 0xf0,#0x60 ; ljmp 0x10bc"
-0x042F,0x29F51,pd-image,0x9F51,22,2,DPTR handed to lcall 0x10bc -- direction unresolved here,lcall 0x10bc
-0x042F,0x29F64,pd-image,0x9F64,24,0,DPTR handed to lcall 0x10bc -- direction unresolved here,lcall 0x10bc
-0x042F,0x2B7C9,pd-image,0xB7C9,24,0,DPTR handed to lcall 0x34a9 -- direction unresolved here,lcall 0x34a9
-0x0432,0x0AA13,bank0,0xAA13,23,1,read x1,"movx a,@dptr ; jnb acc.1,+0x02"
-0x0432,0x131E0,bank1,0xB1E0,24,0,write x1,"movx @dptr,a ; mov r2,#0x00 ; mov r1,#0x00"
-0x0432,0x1320F,bank1,0xB20F,22,2,write x1,"movx @dptr,a ; ret"
-0x0432,0x13295,bank1,0xB295,23,1,write x1,"movx @dptr,a ; ret"
-0x0432,0x1329B,bank1,0xB29B,24,0,write x1,"movx @dptr,a ; ret"
-0x0432,0x1345E,bank1,0xB45E,24,0,read x1,"movx a,@dptr ; jz +0x23"
-0x0432,0x13499,bank1,0xB499,24,0,read x1,"movx a,@dptr ; jz +0x17"
-0x0432,0x1368C,bank1,0xB68C,24,0,read x1,"movx a,@dptr ; mov r1,a"
-0x0432,0x136B0,bank1,0xB6B0,24,0,read x1,"movx a,@dptr"
-0x0432,0x1426E,bank1,0xC26E,24,0,write x1,"movx @dptr,a"
-0x0432,0x14298,bank1,0xC298,24,0,write x1,"movx @dptr,a ; mov a,#0x05"
-0x0432,0x142A5,bank1,0xC2A5,23,1,write x1,"movx @dptr,a ; mov a,#0x05"
-0x0432,0x268EE,pd-image,0x68EE,24,0,DPTR handed to lcall 0x8727 -- direction unresolved here,lcall 0x8727
-0x0432,0x2B6F0,pd-image,0xB6F0,24,0,DPTR handed to lcall 0x39bf -- direction unresolved here,lcall 0x39bf
-0x0433,0x23617,pd-image,0x3617,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov 0xf0,#0x60 ; ljmp 0x10bc"
-0x0433,0x25982,pd-image,0x5982,22,2,DPTR handed to lcall 0x872b -- direction unresolved here,lcall 0x872b
-0x0433,0x26578,pd-image,0x6578,24,0,DPTR handed to lcall 0x3855 -- direction unresolved here,lcall 0x3855
-0x0433,0x26FD8,pd-image,0x6FD8,22,2,DPTR handed to lcall 0x10bc -- direction unresolved here,lcall 0x10bc
-0x0433,0x28853,pd-image,0x8853,22,2,DPTR handed to lcall 0x10bc -- direction unresolved here,lcall 0x10bc
-0x0434,0x0BC76,bank0,0xBC76,24,0,read x1,"movx a,@dptr ; ret"
-0x0434,0x0E38D,bank0,0xE38D,24,0,DPTR handed to lcall 0xe3c4 -- direction unresolved here,lcall 0xe3c4
-0x0434,0x118AD,bank1,0x98AD,24,0,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c
-0x0434,0x122E2,bank1,0xA2E2,24,0,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886
-0x0434,0x131E8,bank1,0xB1E8,24,0,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c
-0x0434,0x13487,bank1,0xB487,24,0,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c
-0x0434,0x143CD,bank1,0xC3CD,24,0,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886
-0x0434,0x14402,bank1,0xC402,24,0,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886
-0x0434,0x152E9,bank1,0xD2E9,24,0,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886
-0x0434,0x173E1,bank1,0xF3E1,24,0,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886
-0x0434,0x221EE,pd-image,0x21EE,24,0,DPTR handed to lcall 0x369b -- direction unresolved here,lcall 0x369b
-0x0434,0x22461,pd-image,0x2461,24,0,DPTR handed to lcall 0x35b0 -- direction unresolved here,lcall 0x35b0
-0x0434,0x237DA,pd-image,0x37DA,22,2,no movx found in the decoded window,ret
-0x0434,0x23F28,pd-image,0x3F28,24,0,DPTR handed to lcall 0x3717 -- direction unresolved here,lcall 0x3717
-0x0434,0x2878A,pd-image,0x878A,22,2,no movx found in the decoded window,ret
-0x0434,0x289D4,pd-image,0x89D4,22,2,DPTR handed to lcall 0x10bc -- direction unresolved here,lcall 0x10bc
-0x0435,0x0BC71,bank0,0xBC71,24,0,read x1,"movx a,@dptr ; mov r4,a"
-0x0435,0x0E389,bank0,0xE389,24,0,read x1,"movx a,@dptr"
-0x0436,0x0AA3C,bank0,0xAA3C,24,0,read x1,"movx a,@dptr ; xrl a,r6 ; jnz +0x03"
-0x0436,0x12E2B,bank1,0xAE2B,24,0,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892
-0x0436,0x12E5F,bank1,0xAE5F,24,0,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892
-0x0436,0x12E92,bank1,0xAE92,24,0,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892
-0x0436,0x12ECB,bank1,0xAECB,24,0,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892
-0x0436,0x131D3,bank1,0xB1D3,24,0,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c
-0x0436,0x131F5,bank1,0xB1F5,24,0,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892
-0x0436,0x1321A,bank1,0xB21A,23,1,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886
-0x0436,0x13255,bank1,0xB255,24,0,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c
-0x0436,0x132CE,bank1,0xB2CE,23,1,DPTR handed to lcall 0x889e -- direction unresolved here,lcall 0x889e
-0x0436,0x13584,bank1,0xB584,24,0,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886
-0x0436,0x13596,bank1,0xB596,23,1,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892
-0x0436,0x138BF,bank1,0xB8BF,24,0,write x1,"mov a,#0x00 ; movx @dptr,a"
-0x0436,0x13AD8,bank1,0xBAD8,24,0,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c
-0x0436,0x1428A,bank1,0xC28A,24,0,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c
-0x0436,0x15BA8,bank1,0xDBA8,24,0,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c
-0x0436,0x15F45,bank1,0xDF45,24,0,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c
-0x0437,0x138C5,bank1,0xB8C5,24,0,write x1,"mov a,#0x00 ; movx @dptr,a"
-0x0437,0x2358F,pd-image,0x358F,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov a,r5 ; mov 0xf0,#0x60 ; ljmp 0x10bc"
-0x0437,0x239BC,pd-image,0x39BC,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov 0xf0,#0x60 ; ljmp 0x10bc"
-0x0437,0x26FF1,pd-image,0x6FF1,24,0,DPTR handed to lcall 0x10bc -- direction unresolved here,lcall 0x10bc
-0x0437,0x28724,pd-image,0x8724,24,0,DPTR handed to lcall 0x10bc -- direction unresolved here,"mov r7,a ; mov 0xf0,#0x60 ; lcall 0x10bc"
-0x0437,0x28802,pd-image,0x8802,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,ljmp 0x10bc
-0x0438,0x0B15D,bank0,0xB15D,24,0,read x1,"movx a,@dptr"
-0x0438,0x0E39F,bank0,0xE39F,24,0,DPTR handed to lcall 0xe3c4 -- direction unresolved here,lcall 0xe3c4
-0x0438,0x131EE,bank1,0xB1EE,23,1,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c
-0x0438,0x1339C,bank1,0xB39C,23,1,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c
-0x0438,0x133CB,bank1,0xB3CB,23,1,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886
-0x0438,0x138CB,bank1,0xB8CB,24,0,write x1,"mov a,#0x00 ; movx @dptr,a"
-0x0438,0x139C9,bank1,0xB9C9,24,0,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892
-0x0438,0x13A35,bank1,0xBA35,23,1,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886
-0x0438,0x13D69,bank1,0xBD69,24,0,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892
-0x0438,0x145D7,bank1,0xC5D7,24,0,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892
-0x0438,0x152D9,bank1,0xD2D9,24,0,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886
-0x0438,0x15C31,bank1,0xDC31,24,0,DPTR handed to lcall 0x889e -- direction unresolved here,lcall 0x889e
-0x0438,0x15FA6,bank1,0xDFA6,23,1,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c
-0x0438,0x17420,bank1,0xF420,24,0,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886
-0x0439,0x0B158,bank0,0xB158,24,0,read x1,"movx a,@dptr ; mov r4,a"
-0x0439,0x0E39B,bank0,0xE39B,24,0,read x1,"movx a,@dptr"
-0x0439,0x138D1,bank1,0xB8D1,24,0,write x1,"mov a,#0x00 ; movx @dptr,a ; mov r2,#0x04 ; mov r1,#0xa0 ; mov r3,#0xaf ; lcall 0x89f4"
-0x043A,0x13572,bank1,0xB572,23,1,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892
-0x043A,0x13590,bank1,0xB590,24,0,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886
-0x043A,0x135A2,bank1,0xB5A2,24,0,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886
-0x043A,0x21F9B,pd-image,0x1F9B,24,0,DPTR handed to lcall 0x35c9 -- direction unresolved here,lcall 0x35c9
-0x043A,0x249AA,pd-image,0x49AA,24,0,DPTR handed to lcall 0x3764 -- direction unresolved here,lcall 0x3764
-0x043A,0x2E08E,pd-image,0xE08E,23,1,DPTR handed to lcall 0x3716 -- direction unresolved here,lcall 0x3716
-0x043B,0x27D94,pd-image,0x7D94,23,1,DPTR handed to lcall 0x39f9 -- direction unresolved here,lcall 0x39f9
-0x043B,0x2DEA8,pd-image,0xDEA8,24,0,DPTR handed to lcall 0xb160 -- direction unresolved here,lcall 0xb160
-0x043C,0x131C7,bank1,0xB1C7,24,0,read x1,"movx a,@dptr ; cjne a,#0x01,+0x01"
-0x043C,0x131DB,bank1,0xB1DB,22,2,write x1,"movx @dptr,a ; clr a"
-0x043C,0x13206,bank1,0xB206,24,0,write x1,"movx @dptr,a ; lcall 0xb2a0"
-0x043C,0x13226,bank1,0xB226,23,1,write x1,"movx @dptr,a ; lcall 0xb214"
-0x043C,0x1337E,bank1,0xB37E,24,0,read x1,"movx a,@dptr ; jnb acc.2,+0x17"
-0x043C,0x135BB,bank1,0xB5BB,24,0,read x1,"movx a,@dptr ; mov r1,a"
-0x043C,0x136A8,bank1,0xB6A8,23,1,read x1,"movx a,@dptr"
-0x043C,0x1429E,bank1,0xC29E,23,1,write x1,"movx @dptr,a ; ret"
-0x043C,0x142AB,bank1,0xC2AB,23,1,write x1,"movx @dptr,a ; ret"
-0x043C,0x142B6,bank1,0xC2B6,24,0,read x1,"movx a,@dptr ; anl a,#0x01"
-0x043D,0x0BF12,bank0,0xBF12,24,0,read x1,"movx a,@dptr"
-0x043E,0x08800,bank0,0x8800,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x5f ; jnc +0x09"
-0x043E,0x0881B,bank0,0x881B,24,0,read x1,"movx a,@dptr ; setb c ; subb a,#0x50 ; jnc +0x0f"
-0x043E,0x08978,bank0,0x8978,22,2,read x1,"movx a,@dptr ; clr c ; subb a,#0x46 ; jnc +0x1c"
-0x043E,0x08A9F,bank0,0x8A9F,24,0,read x1,"movx a,@dptr ; setb c ; subb a,r7 ; jc +0x08"
-0x043E,0x08B36,bank0,0x8B36,24,0,read x1,"movx a,@dptr ; setb c ; subb a,r5 ; jc +0x19"
-0x043E,0x08BA1,bank0,0x8BA1,24,0,read x1,"movx a,@dptr ; setb c ; subb a,r5 ; jc +0x08"
-0x043E,0x0B808,bank0,0xB808,24,0,read x1,"movx a,@dptr ; clr c ; subb a,r5 ; jnc +0x2a"
-0x043E,0x0BAD5,bank0,0xBAD5,24,0,read x1,"movx a,@dptr ; subb a,r7 ; ret"
-0x043E,0x0BB58,bank0,0xBB58,24,0,read x1,"movx a,@dptr ; subb a,r5 ; ret"
-0x043E,0x0E066,bank0,0xE066,23,1,no movx found in the decoded window,sjmp +0x26
-0x043E,0x10637,bank1,0x8637,24,0,read x1,"movx a,@dptr"
-0x043E,0x10EDB,bank1,0x8EDB,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x6e ; jnc +0x14"
-0x043E,0x10EE6,bank1,0x8EE6,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x57 ; jnc +0x09"
-0x043E,0x1126C,bank1,0x926C,24,0,read x1,"movx a,@dptr ; mov r6,a"
-0x043E,0x11BD6,bank1,0x9BD6,24,0,read x1,"movx a,@dptr ; add a,r1 ; jc +0x09"
-0x043F,0x0E070,bank0,0xE070,23,1,no movx found in the decoded window,sjmp +0x1c
-0x043F,0x10640,bank1,0x8640,24,0,read x1,"movx a,@dptr"
-0x043F,0x11D2A,bank1,0x9D2A,24,0,write x1,"movx @dptr,a ; sjmp +0x00"
-0x0440,0x01BC1,common,0x1BC1,24,0,read x1,"movx a,@dptr ; jz +0x26"
-0x0440,0x01BE0,common,0x1BE0,24,0,read x1,"movx a,@dptr ; jz +0x07"
-0x0440,0x03DA8,common,0x3DA8,24,0,read x1,"movx a,@dptr ; jnz +0x04"
-0x0440,0x087F5,bank0,0x87F5,24,0,read x1,"movx a,@dptr ; jz +0x71"
-0x0440,0x08C9D,bank0,0x8C9D,24,0,read x1,"movx a,@dptr ; jnz +0x06"
-0x0440,0x08F7C,bank0,0x8F7C,24,0,read x1,"movx a,@dptr ; jnz +0x08"
-0x0440,0x0933B,bank0,0x933B,24,0,read x1,"movx a,@dptr ; jnz +0x06"
-0x0440,0x09D05,bank0,0x9D05,24,0,read x1,"movx a,@dptr ; jnz +0x03"
-0x0440,0x0AAE5,bank0,0xAAE5,24,0,read x1,"movx a,@dptr ; jnz +0x02"
-0x0440,0x0ABA5,bank0,0xABA5,24,0,read x1,"movx a,@dptr ; jz +0x5c"
-0x0440,0x0AC0F,bank0,0xAC0F,24,0,read x1,"movx a,@dptr ; jnz +0x02"
-0x0440,0x0B065,bank0,0xB065,24,0,read x1,"movx a,@dptr ; jz +0x6c"
-0x0440,0x0B0E1,bank0,0xB0E1,21,3,read x1,"movx a,@dptr ; jz +0x2a"
-0x0440,0x0B395,bank0,0xB395,24,0,read x1,"movx a,@dptr ; jz +0x3e"
-0x0440,0x0C703,bank0,0xC703,24,0,read x1,"movx a,@dptr ; jz +0x07"
-0x0440,0x0C71A,bank0,0xC71A,24,0,read x1,"movx a,@dptr ; jz +0x40"
-0x0440,0x10088,bank1,0x8088,24,0,read x1,"movx a,@dptr ; jz +0x08"
-0x0440,0x100EC,bank1,0x80EC,24,0,read x1,"movx a,@dptr ; jz +0x08"
-0x0440,0x10153,bank1,0x8153,24,0,read x1,"movx a,@dptr ; jz +0x08"
-0x0440,0x10328,bank1,0x8328,24,0,read x1,"movx a,@dptr ; cjne a,#0x07,+0x0e"
-0x0440,0x108F0,bank1,0x88F0,24,0,read x1,"movx a,@dptr ; jz +0x1e"
-0x0440,0x1091C,bank1,0x891C,24,0,read x1,"movx a,@dptr ; jz +0x32"
-0x0440,0x10971,bank1,0x8971,24,0,read x1,"movx a,@dptr ; jz +0x03"
-0x0440,0x10FD8,bank1,0x8FD8,23,1,read x1,"movx a,@dptr ; jz +0x1b"
-0x0440,0x11046,bank1,0x9046,24,0,read x1,"movx a,@dptr ; jz +0x15"
-0x0440,0x11675,bank1,0x9675,24,0,read x1,"movx a,@dptr ; jz +0x13"
-0x0440,0x117F8,bank1,0x97F8,24,0,read x1,"movx a,@dptr ; jz +0x18"
-0x0440,0x1212D,bank1,0xA12D,24,0,read x1,"movx a,@dptr ; cjne a,#0x08,+0x03"
-0x0440,0x122F3,bank1,0xA2F3,24,0,read x1,"movx a,@dptr ; jz +0x03"
-0x0440,0x12921,bank1,0xA921,24,0,read x1,"movx a,@dptr ; jnz +0x03"
-0x0440,0x1462A,bank1,0xC62A,24,0,read x1,"movx a,@dptr ; jz +0x16"
-0x0440,0x17154,bank1,0xF154,24,0,read x1,"movx a,@dptr ; jz +0x05"
-0x0440,0x17167,bank1,0xF167,24,0,read x1,"movx a,@dptr ; jz +0x14"
-0x0440,0x1718A,bank1,0xF18A,22,2,read x1,"movx a,@dptr ; jz +0x05"
-0x0440,0x17198,bank1,0xF198,24,0,read x1,"movx a,@dptr ; jz +0x56"
-0x0440,0x17220,bank1,0xF220,24,0,read x1,"movx a,@dptr ; jz +0x1c"
-0x0440,0x1724D,bank1,0xF24D,23,1,read x1,"movx a,@dptr ; jz +0x1e"
-0x0440,0x17275,bank1,0xF275,23,1,read x1,"movx a,@dptr ; jz +0x0d"
-0x0440,0x172D5,bank1,0xF2D5,24,0,read x1,"movx a,@dptr ; cjne a,#0x05,+0x02"
-0x0440,0x172FE,bank1,0xF2FE,24,0,read x1,"movx a,@dptr ; cjne a,#0x05,+0x02"
-0x0440,0x17326,bank1,0xF326,24,0,read x1,"movx a,@dptr ; jz +0x07"
-0x0440,0x1733B,bank1,0xF33B,24,0,read x1,"movx a,@dptr ; jz +0x07"
-0x0440,0x17350,bank1,0xF350,24,0,read x1,"movx a,@dptr ; jz +0x07"
-0x0442,0x09CAD,bank0,0x9CAD,24,0,read x1,"movx a,@dptr ; jnb acc.4,+0x06"
-0x0442,0x0AD5E,bank0,0xAD5E,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0xe7 ; movx @dptr,a"
-0x0442,0x10313,bank1,0x8313,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0xef ; movx @dptr,a"
-0x0442,0x1031A,bank1,0x831A,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0xf7 ; movx @dptr,a"
-0x0442,0x10444,bank1,0x8444,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0xef ; movx @dptr,a"
-0x0442,0x1044B,bank1,0x844B,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0xf7 ; movx @dptr,a ; ret"
-0x0442,0x11F38,bank1,0x9F38,24,0,read x1,"movx a,@dptr ; anl a,#0x08 ; jnz +0x12"
-0x0442,0x12501,bank1,0xA501,24,0,read x1,"movx a,@dptr ; anl a,#0x01 ; jnz +0x13"
-0x0442,0x12933,bank1,0xA933,24,0,read x1,"movx a,@dptr ; anl a,#0x10 ; jnz +0x78"
-0x0442,0x12B31,bank1,0xAB31,24,0,read x1,"movx a,@dptr ; anl a,#0x08 ; jz +0x2a"
-0x0442,0x12B54,bank1,0xAB54,24,0,read x1,"movx a,@dptr ; anl a,#0x08 ; jnz +0x07"
-0x0443,0x172E8,bank1,0xF2E8,24,0,read x1,"movx a,@dptr ; anl a,#0x07 ; jz +0x02"
-0x0443,0x17311,bank1,0xF311,24,0,read x1,"movx a,@dptr ; anl a,#0x07 ; cjne a,#0x07,+0x02"
-0x0448,0x1742A,bank1,0xF42A,24,0,write x1,"movx @dptr,a ; ret"
-0x0448,0x17431,bank1,0xF431,23,1,write x1,"movx @dptr,a ; ret"
-0x0448,0x1743C,bank1,0xF43C,24,0,read x1,"movx a,@dptr ; mul ab ; mov r1,a ; mov r2,0xf0 ; mov r3,#0x64 ; mov r4,#0x00 ; lcall 0xa5e6"
-0x0449,0x0BE1A,bank0,0xBE1A,24,0,read x1,"movx a,@dptr ; setb c ; subb a,r7 ; ret"
-0x0449,0x173EB,bank1,0xF3EB,24,0,write x1,"movx @dptr,a ; ret"
-0x0449,0x17411,bank1,0xF411,24,0,write x1,"movx @dptr,a ; ret"
-0x0449,0x17436,bank1,0xF436,24,0,read x1,"movx a,@dptr ; mov 0xf0,a"
-0x044B,0x09A4B,bank0,0x9A4B,24,0,read x1,"movx a,@dptr ; cjne a,#0x04,+0x05"
-0x044B,0x09A57,bank0,0x9A57,24,0,read x1,"movx a,@dptr ; cjne a,#0x02,+0x05"
-0x044B,0x09A89,bank0,0x9A89,22,2,write x1,"mov a,#0x02 ; movx @dptr,a ; ret"
-0x044B,0x09A9F,bank0,0x9A9F,22,2,write x1,"mov a,#0x04 ; movx @dptr,a"
-0x044B,0x09B33,bank0,0x9B33,23,1,read x1,"movx a,@dptr ; dec a ; jz +0x29"
-0x044B,0x0BD20,bank0,0xBD20,24,0,write x1,"movx @dptr,a"
-0x044C,0x0BC39,bank0,0xBC39,24,0,read x1,"movx a,@dptr ; subb a,r7 ; ret"
-0x044C,0x0BEA3,bank0,0xBEA3,24,0,read x1,"movx a,@dptr ; clr c ; subb a,r7 ; ret"
-0x044C,0x1180C,bank1,0x980C,24,0,write x1,"movx @dptr,a ; mov a,#0x00"
-0x044C,0x118A5,bank1,0x98A5,24,0,write x1,"movx @dptr,a ; mov r2,#0x00 ; mov r1,#0x00"
-0x044C,0x15308,bank1,0xD308,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x05 ; jnc +0x01"
-0x044C,0x1561A,bank1,0xD61A,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0xa8 ; jnc +0x0d"
-0x044C,0x17450,bank1,0xF450,24,0,"read x1, write x1","movx a,@dptr ; clr c ; add a,r1 ; rrc a ; addc a,#0x00 ; movx @dptr,a ; ret"
-0x044F,0x08809,bank0,0x8809,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x57 ; jc +0x09"
-0x044F,0x08824,bank0,0x8824,24,0,read x1,"movx a,@dptr ; subb a,#0x50 ; jnc +0x07"
-0x044F,0x08981,bank0,0x8981,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x46 ; jnc +0x13"
-0x044F,0x08BF5,bank0,0x8BF5,24,0,read x1,"movx a,@dptr ; setb c ; subb a,r5 ; jc +0x08"
-0x044F,0x08C1A,bank0,0x8C1A,24,0,read x1,"movx a,@dptr ; clr c ; subb a,r7 ; jnc +0x06"
-0x044F,0x0941A,bank0,0x941A,24,0,read x1,"movx a,@dptr ; clr c ; subb a,r4 ; jc +0x08"
-0x044F,0x09444,bank0,0x9444,24,0,read x1,"movx a,@dptr ; setb c ; subb a,r4 ; jnc +0x07"
-0x044F,0x0B818,bank0,0xB818,24,0,read x1,"movx a,@dptr ; clr c ; subb a,r7 ; jnc +0x1a"
-0x044F,0x0BBE0,bank0,0xBBE0,24,0,read x1,"movx a,@dptr ; subb a,r7 ; ret"
-0x044F,0x0BDF4,bank0,0xBDF4,24,0,read x1,"movx a,@dptr ; subb a,r7 ; ret"
-0x044F,0x11416,bank1,0x9416,24,0,read x1,"movx a,@dptr ; mov r6,a"
-0x044F,0x11DB8,bank1,0x9DB8,23,1,read x1,"movx a,@dptr ; add a,r1 ; jc +0x10"
-0x044F,0x11DC0,bank1,0x9DC0,23,1,write x1,"movx @dptr,a ; clr a"
-0x044F,0x11DE2,bank1,0x9DE2,23,1,write x1,"movx @dptr,a"
-0x0450,0x107CA,bank1,0x87CA,24,0,read x1,"movx a,@dptr ; cjne a,#0x28,+0x07"
-0x0450,0x10827,bank1,0x8827,24,0,write x1,"movx @dptr,a"
-0x0451,0x1081F,bank1,0x881F,24,0,write x1,"movx @dptr,a"
-0x0452,0x1082F,bank1,0x882F,23,1,write x1,"movx @dptr,a ; ret"
-0x0454,0x0DCB2,bank0,0xDCB2,24,0,read x1,"movx a,@dptr ; mov r7,a ; ljmp 0x3f9d"
-0x0454,0x107E2,bank1,0x87E2,24,0,write x1,"movx @dptr,a ; clr a"
-0x0455,0x0DCD5,bank0,0xDCD5,24,0,read x1,"movx a,@dptr ; mov r7,a ; ljmp 0x3f9d"
-0x0455,0x107EB,bank1,0x87EB,24,0,write x1,"movx @dptr,a ; clr a"
-0x0456,0x08C69,bank0,0x8C69,24,0,read x1,"movx a,@dptr ; jb acc.7,+0x05"
-0x0456,0x093F4,bank0,0x93F4,24,0,read x1,"movx a,@dptr ; jnb acc.7,+0x7b"
-0x0456,0x0AD65,bank0,0xAD65,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0xcf ; movx @dptr,a"
-0x0456,0x0B38E,bank0,0xB38E,24,0,read x1,"movx a,@dptr ; jnb acc.5,+0x48"
-0x0456,0x0C26E,bank0,0xC26E,24,0,read x1,"movx a,@dptr ; jb acc.7,+0x03"
-0x0456,0x0DA81,bank0,0xDA81,24,0,"read x2, write x2","movx a,@dptr ; orl a,#0x40 ; movx @dptr,a ; movx a,@dptr ; orl a,#0x80 ; movx @dptr,a"
-0x0456,0x103E5,bank1,0x83E5,24,0,read x1,"movx a,@dptr ; anl a,#0xe0"
-0x0456,0x103EB,bank1,0x83EB,24,0,write x1,"movx @dptr,a ; ret"
-0x0456,0x11373,bank1,0x9373,24,0,read x1,"movx a,@dptr ; anl a,#0x80 ; jz +0x0a"
-0x0456,0x11D53,bank1,0x9D53,24,0,read x1,"movx a,@dptr ; anl a,#0x80 ; jz +0x29"
-0x0456,0x129A8,bank1,0xA9A8,24,0,read x1,"movx a,@dptr ; anl a,#0x80 ; jz +0x03"
-0x0456,0x173C9,bank1,0xF3C9,24,0,read x1,"movx a,@dptr ; anl a,#0x40 ; jz +0x03"
-0x0457,0x10190,bank1,0x8190,21,3,"read x1, write x1","movx a,@dptr ; anl a,#0xf8 ; orl a,#0xfd ; movx @dptr,a"
-0x0457,0x101D1,bank1,0x81D1,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0xf8 ; movx @dptr,a ; lcall 0x199c"
-0x0457,0x10246,bank1,0x8246,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0xf8 ; orl a,#0xfb ; movx @dptr,a ; lcall 0x1984"
-0x0457,0x1026A,bank1,0x826A,23,1,"read x1, write x1","movx a,@dptr ; anl a,#0xf8 ; orl a,#0xfd ; movx @dptr,a ; lcall 0x8ae5"
-0x0457,0x225B2,pd-image,0x25B2,24,0,DPTR handed to lcall 0x35ec -- direction unresolved here,lcall 0x35ec
-0x0458,0x0DD5C,bank0,0xDD5C,24,0,write x1,"mov a,0x32 ; movx @dptr,a ; ljmp 0x1954"
-0x0458,0x10ED0,bank1,0x8ED0,24,0,read x1,"movx a,@dptr ; anl a,#0x70 ; cjne a,#0x10,+0x02"
-0x0458,0x11C0E,bank1,0x9C0E,24,0,read x1,"movx a,@dptr ; anl a,#0x70 ; cjne a,#0x00,+0x02"
-0x0458,0x146B8,bank1,0xC6B8,23,1,read x1,"movx a,@dptr ; jb acc.7,+0x1a"
-0x0458,0x2DEBE,pd-image,0xDEBE,24,0,DPTR handed to lcall 0xb160 -- direction unresolved here,lcall 0xb160
-0x0459,0x0DCED,bank0,0xDCED,24,0,read x1,"movx a,@dptr ; mov r7,a ; ljmp 0x3f9d"
-0x0459,0x103C0,bank1,0x83C0,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0xf7 ; movx @dptr,a"
-0x0459,0x10B13,bank1,0x8B13,24,0,read x1,"movx a,@dptr ; anl a,#0x08 ; jnz +0x1a"
-0x0459,0x10B96,bank1,0x8B96,24,0,write x1,"mov a,#0x01 ; movx @dptr,a"
-0x0459,0x10BBF,bank1,0x8BBF,24,0,write x1,"mov a,#0x02 ; movx @dptr,a"
-0x0459,0x10D91,bank1,0x8D91,24,0,read x1,"movx a,@dptr ; anl a,#0x02 ; jnz +0xdb"
-0x045A,0x0AD25,bank0,0xAD25,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0x10 ; movx @dptr,a ; lcall 0xc2f7"
-0x045A,0x0DD4A,bank0,0xDD4A,24,0,"read x2, write x1","movx a,@dptr ; anl a,#0xf0 ; movx @dptr,a ; movx a,@dptr ; mov r7,a ; mov a,0x32 ; anl a,#0x0f"
-0x045A,0x10354,bank1,0x8354,18,6,write x1,"mov a,#0x00 ; movx @dptr,a"
-0x045A,0x12064,bank1,0xA064,24,0,read x1,"movx a,@dptr ; anl a,#0x01 ; jnz +0x02"
-0x045A,0x12086,bank1,0xA086,22,2,read x1,"movx a,@dptr ; jnb acc.4,+0x3e"
-0x045A,0x120CC,bank1,0xA0CC,24,0,read x1,"movx a,@dptr ; anl a,#0x01 ; jnz +0x02"
-0x045A,0x120F1,bank1,0xA0F1,24,0,read x1,"movx a,@dptr ; jnb acc.5,+0x34"
-0x045A,0x12137,bank1,0xA137,23,1,read x1,"movx a,@dptr ; anl a,#0x01 ; jz +0x7f"
-0x045A,0x1216E,bank1,0xA16E,22,2,read x1,"movx a,@dptr ; jnb acc.7,+0x49"
-0x045A,0x121BF,bank1,0xA1BF,24,0,read x1,"movx a,@dptr ; anl a,#0x01 ; jz +0x2d"
-0x045A,0x121CF,bank1,0xA1CF,22,2,read x1,"movx a,@dptr ; jb acc.4,+0x03"
-0x045A,0x121D9,bank1,0xA1D9,22,2,read x1,"movx a,@dptr ; jb acc.5,+0x03"
-0x045A,0x121E3,bank1,0xA1E3,24,0,read x1,"movx a,@dptr ; jb acc.7,+0x03"
-0x045A,0x12499,bank1,0xA499,24,0,read x1,"movx a,@dptr ; anl a,#0x60 ; jnz +0xf5"
-0x045A,0x124A2,bank1,0xA4A2,24,0,read x1,"movx a,@dptr ; jb acc.7,+0xed"
-0x045A,0x124AB,bank1,0xA4AB,24,0,read x1,"movx a,@dptr ; jb acc.4,+0xe4"
-0x045A,0x124B4,bank1,0xA4B4,24,0,read x1,"movx a,@dptr ; jb acc.5,+0xdb"
-0x045A,0x124BD,bank1,0xA4BD,24,0,read x1,"movx a,@dptr ; jb acc.6,+0xd2"
-0x045A,0x124C6,bank1,0xA4C6,24,0,read x1,"movx a,@dptr ; anl a,#0xe0 ; jnz +0xc8"
-0x045A,0x171A4,bank1,0xF1A4,23,1,read x1,"movx a,@dptr ; anl a,#0xe0 ; mov 0xf0,a ; jz +0x47"
-0x045A,0x171F8,bank1,0xF1F8,23,1,read x1,"movx a,@dptr ; anl a,#0xe0 ; mov 0xf0,a"
-0x045A,0x17253,bank1,0xF253,24,0,read x1,"movx a,@dptr ; jnb acc.4,+0x18"
-0x045B,0x0909B,bank0,0x909B,24,0,read x1,"movx a,@dptr ; jb acc.3,+0x5b"
-0x045B,0x0DCDD,bank0,0xDCDD,24,0,"read x1, write x1","movx a,@dptr ; orl a,#0x01 ; movx @dptr,a ; ret"
-0x045B,0x0DCE5,bank0,0xDCE5,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0xfe ; movx @dptr,a ; ret"
-0x045B,0x1181E,bank1,0x981E,24,0,read x1,"movx a,@dptr ; anl a,#0x08 ; jnz +0x00"
-0x045B,0x11D7A,bank1,0x9D7A,24,0,read x1,"movx a,@dptr ; anl a,#0x08 ; jnz +0x02"
-0x045B,0x11F16,bank1,0x9F16,23,1,read x1,"movx a,@dptr ; db 0xa2"
-0x045B,0x12225,bank1,0xA225,24,0,read x1,"movx a,@dptr ; anl a,#0x01 ; jz +0x07"
-0x045B,0x1464F,bank1,0xC64F,24,0,read x1,"movx a,@dptr ; anl a,#0x01 ; jz +0x34"
-0x045B,0x14659,bank1,0xC659,24,0,read x1,"movx a,@dptr ; anl a,#0x01 ; jnz +0x2a"
-0x045B,0x14661,bank1,0xC661,24,0,"read x1, write x1","movx a,@dptr ; orl a,#0x01 ; movx @dptr,a"
-0x045B,0x1468B,bank1,0xC68B,23,1,"read x1, write x1","movx a,@dptr ; anl a,#0xfe ; movx @dptr,a"
-0x045B,0x17173,bank1,0xF173,24,0,"read x1, write x1","movx a,@dptr ; cpl acc.0 ; movx @dptr,a"
-0x045C,0x114E4,bank1,0x94E4,24,0,write x1,"movx @dptr,a ; anl a,#0x07"
-0x045C,0x146BF,bank1,0xC6BF,24,0,read x1,"movx a,@dptr ; anl a,#0x07 ; jnz +0x09"
-0x045D,0x0DD3D,bank0,0xDD3D,24,0,write x1,"mov a,0x32 ; movx @dptr,a"
-0x045D,0x10B41,bank1,0x8B41,24,0,write x1,"movx @dptr,a"
-0x045D,0x10D11,bank1,0x8D11,24,0,write x1,"movx @dptr,a"
-0x045D,0x11585,bank1,0x9585,24,0,read x1,"movx a,@dptr ; jz +0x14"
-0x045D,0x115AE,bank1,0x95AE,24,0,read x1,"movx a,@dptr"
-0x045E,0x11567,bank1,0x9567,23,1,read x1,"movx a,@dptr ; mov r5,a ; lcall 0x88f0"
-0x045E,0x11578,bank1,0x9578,24,0,write x1,"movx @dptr,a ; clr a"
-0x045F,0x10609,bank1,0x8609,24,0,write x1,"mov a,#0xdb ; movx @dptr,a"
-0x045F,0x10617,bank1,0x8617,24,0,write x1,"mov a,#0x00 ; movx @dptr,a ; ret"
-0x045F,0x11081,bank1,0x9081,24,0,read x1,"movx a,@dptr ; cjne a,#0xdb,+0x0b"
-0x045F,0x1154D,bank1,0x954D,24,0,read x1,"movx a,@dptr ; cjne a,#0xdb,+0x02"
-0x045F,0x11574,bank1,0x9574,24,0,write x1,"movx @dptr,a"
-0x045F,0x121F6,bank1,0xA1F6,24,0,read x1,"movx a,@dptr ; cjne a,#0xdb,+0x13"
-0x045F,0x14815,bank1,0xC815,24,0,read x1,"movx a,@dptr ; cjne a,#0xdb,+0x02"
-0x045F,0x16341,bank1,0xE341,18,6,read x1,"movx a,@dptr ; cjne a,#0xdb,+0x0a"
-0x045F,0x16357,bank1,0xE357,22,2,read x1,"movx a,@dptr ; cjne a,#0xdb,+0x07"
-0x045F,0x163B5,bank1,0xE3B5,24,0,read x1,"movx a,@dptr ; cjne a,#0xdb,+0x4d"
+addr,file_offset,region,runtime,frame_onto,frame_over,access,window,terminator
+0x0400,0x13895,bank1,0xB895,24,0,write x1,"mov a,#0x00 ; movx @dptr,a",DPTR reloaded
+0x0400,0x13F42,bank1,0xBF42,24,0,DPTR handed to lcall 0x8863 -- direction unresolved here,"mov r3,0x82 ; mov r4,0x83 ; mov a,r6 ; mov r2,a ; mov a,r5 ; mov r1,a ; lcall 0x8863",flow opcode
+0x0400,0x13F52,bank1,0xBF52,24,0,no movx found in the decoded window,"mov r5,0x82 ; mov r6,0x83",DPTR reloaded
+0x0400,0x14CBB,bank1,0xCCBB,24,0,no movx found in the decoded window,"mov r1,0x82 ; mov r2,0x83",DPTR reloaded
+0x0400,0x235E9,pd-image,0x35E9,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov r7,a ; mov 0xf0,#0x60 ; ljmp 0x10bc",flow opcode
+0x0400,0x236BE,pd-image,0x36BE,22,2,no movx found in the decoded window,ret,flow opcode
+0x0400,0x23886,pd-image,0x3886,22,2,no movx found in the decoded window,ret,flow opcode
+0x0400,0x26860,pd-image,0x6860,24,0,DPTR handed to lcall 0x3494 -- direction unresolved here,lcall 0x3494,flow opcode
+0x0401,0x1389B,bank1,0xB89B,24,0,write x1,"mov a,#0x00 ; movx @dptr,a",DPTR reloaded
+0x0402,0x134BD,bank1,0xB4BD,24,0,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892,flow opcode
+0x0402,0x15C14,bank1,0xDC14,24,0,DPTR handed to lcall 0x889e -- direction unresolved here,lcall 0x889e,flow opcode
+0x0402,0x15F7C,bank1,0xDF7C,24,0,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c,flow opcode
+0x0403,0x11310,bank1,0x9310,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x14 ; jc +0x11",flow opcode
+0x0403,0x12269,bank1,0xA269,22,2,read x1,"movx a,@dptr ; jz +0x6b",flow opcode
+0x0403,0x1227C,bank1,0xA27C,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x14 ; jc +0x1e",flow opcode
+0x0403,0x134CA,bank1,0xB4CA,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x14 ; jc +0x22",flow opcode
+0x0403,0x13B68,bank1,0xBB68,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x14 ; jnc +0x1e",flow opcode
+0x0403,0x13BEA,bank1,0xBBEA,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x14 ; jnc +0x10",flow opcode
+0x0403,0x13C13,bank1,0xBC13,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x14 ; jnc +0x10",flow opcode
+0x0403,0x13DA9,bank1,0xBDA9,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x14 ; jnc +0x10",flow opcode
+0x0403,0x13DD3,bank1,0xBDD3,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x14 ; jnc +0x10",flow opcode
+0x0403,0x13E4A,bank1,0xBE4A,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x14 ; jnc +0x3e",flow opcode
+0x0403,0x15118,bank1,0xD118,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x14 ; jnc +0x15",flow opcode
+0x0404,0x0AA34,bank0,0xAA34,24,0,"read x2, walks 2 consecutive bytes (inc dptr)","movx a,@dptr ; mov r6,a ; inc dptr ; movx a,@dptr ; mov r7,a",DPTR reloaded
+0x0404,0x13214,bank1,0xB214,24,0,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892,flow opcode
+0x0404,0x1323B,bank1,0xB23B,23,1,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892,flow opcode
+0x0404,0x132B9,bank1,0xB2B9,24,0,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892,flow opcode
+0x0404,0x1330E,bank1,0xB30E,22,2,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892,flow opcode
+0x0404,0x1332F,bank1,0xB32F,24,0,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c,flow opcode
+0x0404,0x1350E,bank1,0xB50E,22,2,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886,flow opcode
+0x0404,0x14B1F,bank1,0xCB1F,24,0,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886,flow opcode
+0x0404,0x15C1A,bank1,0xDC1A,24,0,DPTR handed to lcall 0x889e -- direction unresolved here,lcall 0x889e,flow opcode
+0x0404,0x15F20,bank1,0xDF20,24,0,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c,flow opcode
+0x0404,0x1670B,bank1,0xE70B,24,0,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886,flow opcode
+0x0404,0x2447B,pd-image,0x447B,24,0,DPTR handed to lcall 0x3621 -- direction unresolved here,lcall 0x3621,flow opcode
+0x0404,0x2449E,pd-image,0x449E,24,0,DPTR handed to lcall 0x3635 -- direction unresolved here,lcall 0x3635,flow opcode
+0x0404,0x2CCE7,pd-image,0xCCE7,22,2,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497,flow opcode
+0x0408,0x15C2B,bank1,0xDC2B,21,3,DPTR handed to lcall 0x889e -- direction unresolved here,lcall 0x889e,flow opcode
+0x0408,0x15FA0,bank1,0xDFA0,23,1,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c,flow opcode
+0x0408,0x23480,pd-image,0x3480,22,2,DPTR handed to lcall 0x10bc -- direction unresolved here,lcall 0x10bc,flow opcode
+0x0408,0x234FD,pd-image,0x34FD,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov 0xf0,#0x60 ; ljmp 0x10bc",flow opcode
+0x0408,0x23583,pd-image,0x3583,22,2,no movx found in the decoded window,ret,flow opcode
+0x0408,0x235F5,pd-image,0x35F5,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov a,r7 ; mov 0xf0,#0x60 ; ljmp 0x10bc",flow opcode
+0x0408,0x23845,pd-image,0x3845,24,0,no movx found in the decoded window,ret,flow opcode
+0x0408,0x282C7,pd-image,0x82C7,0,24,DPTR handed to lcall 0x99c0 -- direction unresolved here,lcall 0x99c0,flow opcode
+0x0408,0x28336,pd-image,0x8336,24,0,DPTR handed to lcall 0x9a1c -- direction unresolved here,lcall 0x9a1c,flow opcode
+0x040A,0x12E31,bank1,0xAE31,23,1,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886,flow opcode
+0x040A,0x1351D,bank1,0xB51D,23,1,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c,flow opcode
+0x040A,0x13549,bank1,0xB549,23,1,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886,flow opcode
+0x040C,0x12E98,bank1,0xAE98,23,1,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886,flow opcode
+0x040C,0x1352C,bank1,0xB52C,23,1,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c,flow opcode
+0x040C,0x23490,pd-image,0x3490,22,2,DPTR handed to lcall 0x10bc -- direction unresolved here,"mov a,r3 ; mov 0xf0,#0x60 ; lcall 0x10bc",flow opcode
+0x040C,0x286D0,pd-image,0x86D0,22,2,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497,flow opcode
+0x040E,0x13532,bank1,0xB532,23,1,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c,flow opcode
+0x040E,0x1355C,bank1,0xB55C,23,1,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886,flow opcode
+0x0410,0x13565,bank1,0xB565,24,0,DPTR handed to lcall 0x889e -- direction unresolved here,lcall 0x889e,flow opcode
+0x0410,0x2142D,pd-image,0x142D,24,0,DPTR handed to lcall 0x3493 -- direction unresolved here,lcall 0x3493,flow opcode
+0x0410,0x2351D,pd-image,0x351D,22,2,no movx found in the decoded window,ret,flow opcode
+0x0410,0x23698,pd-image,0x3698,23,1,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov 0xf0,#0x60 ; ljmp 0x10bc",flow opcode
+0x0410,0x282D7,pd-image,0x82D7,24,0,DPTR handed to lcall 0x99c0 -- direction unresolved here,lcall 0x99c0,flow opcode
+0x0410,0x28347,pd-image,0x8347,24,0,DPTR handed to lcall 0x9a1b -- direction unresolved here,lcall 0x9a1b,flow opcode
+0x0418,0x222D8,pd-image,0x22D8,24,0,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497,flow opcode
+0x0418,0x2334A,pd-image,0x334A,24,0,DPTR handed to lcall 0x39f9 -- direction unresolved here,lcall 0x39f9,flow opcode
+0x0418,0x23566,pd-image,0x3566,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov r7,a ; mov 0xf0,#0x60 ; ljmp 0x10bc",flow opcode
+0x0418,0x238CF,pd-image,0x38CF,22,2,no movx found in the decoded window,ret,flow opcode
+0x0418,0x2E049,pd-image,0xE049,22,2,DPTR handed to lcall 0xb164 -- direction unresolved here,lcall 0xb164,flow opcode
+0x041C,0x235BB,pd-image,0x35BB,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov r7,a ; mov 0xf0,#0x60 ; ljmp 0x10bc",flow opcode
+0x041C,0x26140,pd-image,0x6140,22,2,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497,flow opcode
+0x041C,0x2D527,pd-image,0xD527,22,2,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497,flow opcode
+0x0420,0x16779,bank1,0xE779,24,0,no movx found in the decoded window,"mov r2,0x83 ; mov r1,0x82 ; ret",flow opcode
+0x0420,0x21F5E,pd-image,0x1F5E,22,2,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497,flow opcode
+0x0420,0x22190,pd-image,0x2190,24,0,DPTR handed to lcall 0x35c8 -- direction unresolved here,lcall 0x35c8,flow opcode
+0x0420,0x22F21,pd-image,0x2F21,24,0,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497,flow opcode
+0x0420,0x234A6,pd-image,0x34A6,24,0,DPTR handed to lcall 0x10bc -- direction unresolved here,"mov r7,a ; mov 0xf0,#0x60 ; lcall 0x10bc",flow opcode
+0x0420,0x2363B,pd-image,0x363B,20,4,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov a,r7 ; mov 0xf0,#0x60 ; ljmp 0x10bc",flow opcode
+0x0420,0x25031,pd-image,0x5031,22,2,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497,flow opcode
+0x0420,0x285BA,pd-image,0x85BA,22,2,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497,flow opcode
+0x0420,0x29463,pd-image,0x9463,22,2,DPTR handed to lcall 0xb263 -- direction unresolved here,lcall 0xb263,flow opcode
+0x0420,0x2BBBD,pd-image,0xBBBD,22,2,DPTR handed to lcall 0xb263 -- direction unresolved here,lcall 0xb263,flow opcode
+0x0420,0x2BDE9,pd-image,0xBDE9,24,0,DPTR handed to lcall 0xb25f -- direction unresolved here,lcall 0xb25f,flow opcode
+0x0420,0x2CEEF,pd-image,0xCEEF,22,2,DPTR handed to lcall 0xb164 -- direction unresolved here,lcall 0xb164,flow opcode
+0x0424,0x21532,pd-image,0x1532,24,0,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497,flow opcode
+0x0424,0x21AAA,pd-image,0x1AAA,24,0,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497,flow opcode
+0x0424,0x21FD4,pd-image,0x1FD4,24,0,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497,flow opcode
+0x0424,0x225E7,pd-image,0x25E7,24,0,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497,flow opcode
+0x0424,0x226EC,pd-image,0x26EC,22,2,DPTR handed to lcall 0x35f8 -- direction unresolved here,lcall 0x35f8,flow opcode
+0x0424,0x234EF,pd-image,0x34EF,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov 0xf0,#0x60 ; ljmp 0x10bc",flow opcode
+0x0424,0x24415,pd-image,0x4415,24,0,DPTR handed to lcall 0x363e -- direction unresolved here,lcall 0x363e,flow opcode
+0x0424,0x28279,pd-image,0x8279,24,0,DPTR handed to lcall 0x99c1 -- direction unresolved here,lcall 0x99c1,flow opcode
+0x0424,0x286ED,pd-image,0x86ED,24,0,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497,flow opcode
+0x0424,0x2CCF0,pd-image,0xCCF0,22,2,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497,flow opcode
+0x0424,0x2E2F2,pd-image,0xE2F2,24,0,DPTR handed to lcall 0x10bc -- direction unresolved here,lcall 0x10bc,flow opcode
+0x0424,0x2F4DE,pd-image,0xF4DE,24,0,DPTR handed to lcall 0x3620 -- direction unresolved here,lcall 0x3620,flow opcode
+0x0426,0x2CCFF,pd-image,0xCCFF,24,0,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497,flow opcode
+0x0428,0x235AD,pd-image,0x35AD,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov r7,a ; mov 0xf0,#0x60 ; ljmp 0x10bc",flow opcode
+0x0428,0x29A61,pd-image,0x9A61,22,2,no movx found in the decoded window,ret,flow opcode
+0x0428,0x2CD28,pd-image,0xCD28,24,0,DPTR handed to lcall 0x3716 -- direction unresolved here,lcall 0x3716,flow opcode
+0x0429,0x23D2F,pd-image,0x3D2F,24,0,DPTR handed to lcall 0x3497 -- direction unresolved here,lcall 0x3497,flow opcode
+0x0429,0x23D76,pd-image,0x3D76,24,0,DPTR handed to lcall 0x37a7 -- direction unresolved here,lcall 0x37a7,flow opcode
+0x042A,0x23C80,pd-image,0x3C80,24,0,DPTR handed to lcall 0x363f -- direction unresolved here,lcall 0x363f,flow opcode
+0x042A,0x23C98,pd-image,0x3C98,24,0,DPTR handed to lcall 0x3690 -- direction unresolved here,lcall 0x3690,flow opcode
+0x042C,0x21C19,pd-image,0x1C19,24,0,DPTR handed to lcall 0x3592 -- direction unresolved here,lcall 0x3592,flow opcode
+0x042C,0x235C5,pd-image,0x35C5,20,4,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov a,r7 ; mov 0xf0,#0x60 ; ljmp 0x10bc",flow opcode
+0x042C,0x23761,pd-image,0x3761,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov r7,a ; mov 0xf0,#0x60 ; ljmp 0x10bc",flow opcode
+0x042C,0x2677F,pd-image,0x677F,24,0,DPTR handed to lcall 0x34f2 -- direction unresolved here,lcall 0x34f2,flow opcode
+0x042C,0x26797,pd-image,0x6797,24,0,DPTR handed to lcall 0x3500 -- direction unresolved here,lcall 0x3500,flow opcode
+0x042C,0x267CC,pd-image,0x67CC,24,0,DPTR handed to lcall 0x353e -- direction unresolved here,lcall 0x353e,flow opcode
+0x042F,0x21C0A,pd-image,0x1C0A,24,0,DPTR handed to lcall 0x3593 -- direction unresolved here,lcall 0x3593,flow opcode
+0x042F,0x23632,pd-image,0x3632,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov 0xf0,#0x60 ; ljmp 0x10bc",flow opcode
+0x042F,0x2571F,pd-image,0x571F,22,2,DPTR handed to lcall 0x10bc -- direction unresolved here,lcall 0x10bc,flow opcode
+0x042F,0x28235,pd-image,0x8235,24,0,DPTR handed to lcall 0x9988 -- direction unresolved here,lcall 0x9988,flow opcode
+0x042F,0x29984,pd-image,0x9984,23,1,DPTR handed to lcall 0x10bc -- direction unresolved here,"mov a,r7 ; mov 0xf0,#0x60 ; lcall 0x10bc",flow opcode
+0x042F,0x29A3C,pd-image,0x9A3C,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov 0xf0,#0x60 ; ljmp 0x10bc",flow opcode
+0x042F,0x29F51,pd-image,0x9F51,22,2,DPTR handed to lcall 0x10bc -- direction unresolved here,lcall 0x10bc,flow opcode
+0x042F,0x29F64,pd-image,0x9F64,24,0,DPTR handed to lcall 0x10bc -- direction unresolved here,lcall 0x10bc,flow opcode
+0x042F,0x2B7C9,pd-image,0xB7C9,24,0,DPTR handed to lcall 0x34a9 -- direction unresolved here,lcall 0x34a9,flow opcode
+0x0432,0x0AA13,bank0,0xAA13,23,1,read x1,"movx a,@dptr ; jnb acc.1,+0x02",flow opcode
+0x0432,0x131E0,bank1,0xB1E0,24,0,write x1,"movx @dptr,a ; mov r2,#0x00 ; mov r1,#0x00",DPTR reloaded
+0x0432,0x1320F,bank1,0xB20F,22,2,write x1,"movx @dptr,a ; ret",flow opcode
+0x0432,0x13295,bank1,0xB295,23,1,write x1,"movx @dptr,a ; ret",flow opcode
+0x0432,0x1329B,bank1,0xB29B,24,0,write x1,"movx @dptr,a ; ret",flow opcode
+0x0432,0x1345E,bank1,0xB45E,24,0,read x1,"movx a,@dptr ; jz +0x23",flow opcode
+0x0432,0x13499,bank1,0xB499,24,0,read x1,"movx a,@dptr ; jz +0x17",flow opcode
+0x0432,0x1368C,bank1,0xB68C,24,0,read x1,"movx a,@dptr ; mov r1,a",DPTR reloaded
+0x0432,0x136B0,bank1,0xB6B0,24,0,read x1,"movx a,@dptr",DPTR reloaded
+0x0432,0x1426E,bank1,0xC26E,24,0,write x1,"movx @dptr,a",DPTR reloaded
+0x0432,0x14298,bank1,0xC298,24,0,write x1,"movx @dptr,a ; mov a,#0x05",DPTR reloaded
+0x0432,0x142A5,bank1,0xC2A5,23,1,write x1,"movx @dptr,a ; mov a,#0x05",DPTR reloaded
+0x0432,0x268EE,pd-image,0x68EE,24,0,DPTR handed to lcall 0x8727 -- direction unresolved here,lcall 0x8727,flow opcode
+0x0432,0x2B6F0,pd-image,0xB6F0,24,0,DPTR handed to lcall 0x39bf -- direction unresolved here,lcall 0x39bf,flow opcode
+0x0433,0x23617,pd-image,0x3617,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov 0xf0,#0x60 ; ljmp 0x10bc",flow opcode
+0x0433,0x25982,pd-image,0x5982,22,2,DPTR handed to lcall 0x872b -- direction unresolved here,lcall 0x872b,flow opcode
+0x0433,0x26578,pd-image,0x6578,24,0,DPTR handed to lcall 0x3855 -- direction unresolved here,lcall 0x3855,flow opcode
+0x0433,0x26FD8,pd-image,0x6FD8,22,2,DPTR handed to lcall 0x10bc -- direction unresolved here,lcall 0x10bc,flow opcode
+0x0433,0x28853,pd-image,0x8853,22,2,DPTR handed to lcall 0x10bc -- direction unresolved here,lcall 0x10bc,flow opcode
+0x0434,0x0BC76,bank0,0xBC76,24,0,read x1,"movx a,@dptr ; ret",flow opcode
+0x0434,0x0E38D,bank0,0xE38D,24,0,DPTR handed to lcall 0xe3c4 -- direction unresolved here,lcall 0xe3c4,flow opcode
+0x0434,0x118AD,bank1,0x98AD,24,0,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c,flow opcode
+0x0434,0x122E2,bank1,0xA2E2,24,0,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886,flow opcode
+0x0434,0x131E8,bank1,0xB1E8,24,0,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c,flow opcode
+0x0434,0x13487,bank1,0xB487,24,0,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c,flow opcode
+0x0434,0x143CD,bank1,0xC3CD,24,0,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886,flow opcode
+0x0434,0x14402,bank1,0xC402,24,0,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886,flow opcode
+0x0434,0x152E9,bank1,0xD2E9,24,0,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886,flow opcode
+0x0434,0x173E1,bank1,0xF3E1,24,0,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886,flow opcode
+0x0434,0x221EE,pd-image,0x21EE,24,0,DPTR handed to lcall 0x369b -- direction unresolved here,lcall 0x369b,flow opcode
+0x0434,0x22461,pd-image,0x2461,24,0,DPTR handed to lcall 0x35b0 -- direction unresolved here,lcall 0x35b0,flow opcode
+0x0434,0x237DA,pd-image,0x37DA,22,2,no movx found in the decoded window,ret,flow opcode
+0x0434,0x23F28,pd-image,0x3F28,24,0,DPTR handed to lcall 0x3717 -- direction unresolved here,lcall 0x3717,flow opcode
+0x0434,0x2878A,pd-image,0x878A,22,2,no movx found in the decoded window,ret,flow opcode
+0x0434,0x289D4,pd-image,0x89D4,22,2,DPTR handed to lcall 0x10bc -- direction unresolved here,lcall 0x10bc,flow opcode
+0x0435,0x0BC71,bank0,0xBC71,24,0,read x1,"movx a,@dptr ; mov r4,a",DPTR reloaded
+0x0435,0x0E389,bank0,0xE389,24,0,read x1,"movx a,@dptr",DPTR reloaded
+0x0436,0x0AA3C,bank0,0xAA3C,24,0,read x1,"movx a,@dptr ; xrl a,r6 ; jnz +0x03",flow opcode
+0x0436,0x12E2B,bank1,0xAE2B,24,0,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892,flow opcode
+0x0436,0x12E5F,bank1,0xAE5F,24,0,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892,flow opcode
+0x0436,0x12E92,bank1,0xAE92,24,0,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892,flow opcode
+0x0436,0x12ECB,bank1,0xAECB,24,0,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892,flow opcode
+0x0436,0x131D3,bank1,0xB1D3,24,0,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c,flow opcode
+0x0436,0x131F5,bank1,0xB1F5,24,0,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892,flow opcode
+0x0436,0x1321A,bank1,0xB21A,23,1,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886,flow opcode
+0x0436,0x13255,bank1,0xB255,24,0,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c,flow opcode
+0x0436,0x132CE,bank1,0xB2CE,23,1,DPTR handed to lcall 0x889e -- direction unresolved here,lcall 0x889e,flow opcode
+0x0436,0x13584,bank1,0xB584,24,0,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886,flow opcode
+0x0436,0x13596,bank1,0xB596,23,1,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892,flow opcode
+0x0436,0x138BF,bank1,0xB8BF,24,0,write x1,"mov a,#0x00 ; movx @dptr,a",DPTR reloaded
+0x0436,0x13AD8,bank1,0xBAD8,24,0,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c,flow opcode
+0x0436,0x1428A,bank1,0xC28A,24,0,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c,flow opcode
+0x0436,0x15BA8,bank1,0xDBA8,24,0,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c,flow opcode
+0x0436,0x15F45,bank1,0xDF45,24,0,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c,flow opcode
+0x0437,0x138C5,bank1,0xB8C5,24,0,write x1,"mov a,#0x00 ; movx @dptr,a",DPTR reloaded
+0x0437,0x2358F,pd-image,0x358F,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov a,r5 ; mov 0xf0,#0x60 ; ljmp 0x10bc",flow opcode
+0x0437,0x239BC,pd-image,0x39BC,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,"mov 0xf0,#0x60 ; ljmp 0x10bc",flow opcode
+0x0437,0x26FF1,pd-image,0x6FF1,24,0,DPTR handed to lcall 0x10bc -- direction unresolved here,lcall 0x10bc,flow opcode
+0x0437,0x28724,pd-image,0x8724,24,0,DPTR handed to lcall 0x10bc -- direction unresolved here,"mov r7,a ; mov 0xf0,#0x60 ; lcall 0x10bc",flow opcode
+0x0437,0x28802,pd-image,0x8802,24,0,DPTR handed to ljmp 0x10bc -- direction unresolved here,ljmp 0x10bc,flow opcode
+0x0438,0x0B15D,bank0,0xB15D,24,0,read x1,"movx a,@dptr",DPTR reloaded
+0x0438,0x0E39F,bank0,0xE39F,24,0,DPTR handed to lcall 0xe3c4 -- direction unresolved here,lcall 0xe3c4,flow opcode
+0x0438,0x131EE,bank1,0xB1EE,23,1,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c,flow opcode
+0x0438,0x1339C,bank1,0xB39C,23,1,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c,flow opcode
+0x0438,0x133CB,bank1,0xB3CB,23,1,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886,flow opcode
+0x0438,0x138CB,bank1,0xB8CB,24,0,write x1,"mov a,#0x00 ; movx @dptr,a",DPTR reloaded
+0x0438,0x139C9,bank1,0xB9C9,24,0,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892,flow opcode
+0x0438,0x13A35,bank1,0xBA35,23,1,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886,flow opcode
+0x0438,0x13D69,bank1,0xBD69,24,0,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892,flow opcode
+0x0438,0x145D7,bank1,0xC5D7,24,0,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892,flow opcode
+0x0438,0x152D9,bank1,0xD2D9,24,0,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886,flow opcode
+0x0438,0x15C31,bank1,0xDC31,24,0,DPTR handed to lcall 0x889e -- direction unresolved here,lcall 0x889e,flow opcode
+0x0438,0x15FA6,bank1,0xDFA6,23,1,DPTR handed to lcall 0x888c -- direction unresolved here,lcall 0x888c,flow opcode
+0x0438,0x17420,bank1,0xF420,24,0,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886,flow opcode
+0x0439,0x0B158,bank0,0xB158,24,0,read x1,"movx a,@dptr ; mov r4,a",DPTR reloaded
+0x0439,0x0E39B,bank0,0xE39B,24,0,read x1,"movx a,@dptr",DPTR reloaded
+0x0439,0x138D1,bank1,0xB8D1,24,0,write x1,"mov a,#0x00 ; movx @dptr,a ; mov r2,#0x04 ; mov r1,#0xa0 ; mov r3,#0xaf ; lcall 0x89f4",flow opcode
+0x043A,0x13572,bank1,0xB572,23,1,DPTR handed to lcall 0x8892 -- direction unresolved here,lcall 0x8892,flow opcode
+0x043A,0x13590,bank1,0xB590,24,0,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886,flow opcode
+0x043A,0x135A2,bank1,0xB5A2,24,0,DPTR handed to lcall 0x8886 -- direction unresolved here,lcall 0x8886,flow opcode
+0x043A,0x21F9B,pd-image,0x1F9B,24,0,DPTR handed to lcall 0x35c9 -- direction unresolved here,lcall 0x35c9,flow opcode
+0x043A,0x249AA,pd-image,0x49AA,24,0,DPTR handed to lcall 0x3764 -- direction unresolved here,lcall 0x3764,flow opcode
+0x043A,0x2E08E,pd-image,0xE08E,23,1,DPTR handed to lcall 0x3716 -- direction unresolved here,lcall 0x3716,flow opcode
+0x043B,0x27D94,pd-image,0x7D94,23,1,DPTR handed to lcall 0x39f9 -- direction unresolved here,lcall 0x39f9,flow opcode
+0x043B,0x2DEA8,pd-image,0xDEA8,24,0,DPTR handed to lcall 0xb160 -- direction unresolved here,lcall 0xb160,flow opcode
+0x043C,0x131C7,bank1,0xB1C7,24,0,read x1,"movx a,@dptr ; cjne a,#0x01,+0x01",flow opcode
+0x043C,0x131DB,bank1,0xB1DB,22,2,write x1,"movx @dptr,a ; clr a",DPTR reloaded
+0x043C,0x13206,bank1,0xB206,24,0,write x1,"movx @dptr,a ; lcall 0xb2a0",flow opcode
+0x043C,0x13226,bank1,0xB226,23,1,write x1,"movx @dptr,a ; lcall 0xb214",flow opcode
+0x043C,0x1337E,bank1,0xB37E,24,0,read x1,"movx a,@dptr ; jnb acc.2,+0x17",flow opcode
+0x043C,0x135BB,bank1,0xB5BB,24,0,read x1,"movx a,@dptr ; mov r1,a",DPTR reloaded
+0x043C,0x136A8,bank1,0xB6A8,23,1,read x1,"movx a,@dptr",DPTR reloaded
+0x043C,0x1429E,bank1,0xC29E,23,1,write x1,"movx @dptr,a ; ret",flow opcode
+0x043C,0x142AB,bank1,0xC2AB,23,1,write x1,"movx @dptr,a ; ret",flow opcode
+0x043C,0x142B6,bank1,0xC2B6,24,0,read x1,"movx a,@dptr ; anl a,#0x01",DPTR reloaded
+0x043D,0x0BF12,bank0,0xBF12,24,0,read x1,"movx a,@dptr",DPTR reloaded
+0x043E,0x08800,bank0,0x8800,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x5f ; jnc +0x09",flow opcode
+0x043E,0x0881B,bank0,0x881B,24,0,read x1,"movx a,@dptr ; setb c ; subb a,#0x50 ; jnc +0x0f",flow opcode
+0x043E,0x08978,bank0,0x8978,22,2,read x1,"movx a,@dptr ; clr c ; subb a,#0x46 ; jnc +0x1c",flow opcode
+0x043E,0x08A9F,bank0,0x8A9F,24,0,read x1,"movx a,@dptr ; setb c ; subb a,r7 ; jc +0x08",flow opcode
+0x043E,0x08B36,bank0,0x8B36,24,0,read x1,"movx a,@dptr ; setb c ; subb a,r5 ; jc +0x19",flow opcode
+0x043E,0x08BA1,bank0,0x8BA1,24,0,read x1,"movx a,@dptr ; setb c ; subb a,r5 ; jc +0x08",flow opcode
+0x043E,0x0B808,bank0,0xB808,24,0,read x1,"movx a,@dptr ; clr c ; subb a,r5 ; jnc +0x2a",flow opcode
+0x043E,0x0BAD5,bank0,0xBAD5,24,0,read x1,"movx a,@dptr ; subb a,r7 ; ret",flow opcode
+0x043E,0x0BB58,bank0,0xBB58,24,0,read x1,"movx a,@dptr ; subb a,r5 ; ret",flow opcode
+0x043E,0x0E066,bank0,0xE066,23,1,no movx found in the decoded window,sjmp +0x26,flow opcode
+0x043E,0x10637,bank1,0x8637,24,0,read x1,"movx a,@dptr",DPTR reloaded
+0x043E,0x10EDB,bank1,0x8EDB,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x6e ; jnc +0x14",flow opcode
+0x043E,0x10EE6,bank1,0x8EE6,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x57 ; jnc +0x09",flow opcode
+0x043E,0x1126C,bank1,0x926C,24,0,read x1,"movx a,@dptr ; mov r6,a",DPTR reloaded
+0x043E,0x11BD6,bank1,0x9BD6,24,0,read x1,"movx a,@dptr ; add a,r1 ; jc +0x09",flow opcode
+0x043F,0x0E070,bank0,0xE070,23,1,no movx found in the decoded window,sjmp +0x1c,flow opcode
+0x043F,0x10640,bank1,0x8640,24,0,read x1,"movx a,@dptr",DPTR reloaded
+0x043F,0x11D2A,bank1,0x9D2A,24,0,write x1,"movx @dptr,a ; sjmp +0x00",flow opcode
+0x0440,0x01BC1,common,0x1BC1,24,0,read x1,"movx a,@dptr ; jz +0x26",flow opcode
+0x0440,0x01BE0,common,0x1BE0,24,0,read x1,"movx a,@dptr ; jz +0x07",flow opcode
+0x0440,0x03DA8,common,0x3DA8,24,0,read x1,"movx a,@dptr ; jnz +0x04",flow opcode
+0x0440,0x087F5,bank0,0x87F5,24,0,read x1,"movx a,@dptr ; jz +0x71",flow opcode
+0x0440,0x08C9D,bank0,0x8C9D,24,0,read x1,"movx a,@dptr ; jnz +0x06",flow opcode
+0x0440,0x08F7C,bank0,0x8F7C,24,0,read x1,"movx a,@dptr ; jnz +0x08",flow opcode
+0x0440,0x0933B,bank0,0x933B,24,0,read x1,"movx a,@dptr ; jnz +0x06",flow opcode
+0x0440,0x09D05,bank0,0x9D05,24,0,read x1,"movx a,@dptr ; jnz +0x03",flow opcode
+0x0440,0x0AAE5,bank0,0xAAE5,24,0,read x1,"movx a,@dptr ; jnz +0x02",flow opcode
+0x0440,0x0ABA5,bank0,0xABA5,24,0,read x1,"movx a,@dptr ; jz +0x5c",flow opcode
+0x0440,0x0AC0F,bank0,0xAC0F,24,0,read x1,"movx a,@dptr ; jnz +0x02",flow opcode
+0x0440,0x0B065,bank0,0xB065,24,0,read x1,"movx a,@dptr ; jz +0x6c",flow opcode
+0x0440,0x0B0E1,bank0,0xB0E1,21,3,read x1,"movx a,@dptr ; jz +0x2a",flow opcode
+0x0440,0x0B395,bank0,0xB395,24,0,read x1,"movx a,@dptr ; jz +0x3e",flow opcode
+0x0440,0x0C703,bank0,0xC703,24,0,read x1,"movx a,@dptr ; jz +0x07",flow opcode
+0x0440,0x0C71A,bank0,0xC71A,24,0,read x1,"movx a,@dptr ; jz +0x40",flow opcode
+0x0440,0x10088,bank1,0x8088,24,0,read x1,"movx a,@dptr ; jz +0x08",flow opcode
+0x0440,0x100EC,bank1,0x80EC,24,0,read x1,"movx a,@dptr ; jz +0x08",flow opcode
+0x0440,0x10153,bank1,0x8153,24,0,read x1,"movx a,@dptr ; jz +0x08",flow opcode
+0x0440,0x10328,bank1,0x8328,24,0,read x1,"movx a,@dptr ; cjne a,#0x07,+0x0e",flow opcode
+0x0440,0x108F0,bank1,0x88F0,24,0,read x1,"movx a,@dptr ; jz +0x1e",flow opcode
+0x0440,0x1091C,bank1,0x891C,24,0,read x1,"movx a,@dptr ; jz +0x32",flow opcode
+0x0440,0x10971,bank1,0x8971,24,0,read x1,"movx a,@dptr ; jz +0x03",flow opcode
+0x0440,0x10FD8,bank1,0x8FD8,23,1,read x1,"movx a,@dptr ; jz +0x1b",flow opcode
+0x0440,0x11046,bank1,0x9046,24,0,read x1,"movx a,@dptr ; jz +0x15",flow opcode
+0x0440,0x11675,bank1,0x9675,24,0,read x1,"movx a,@dptr ; jz +0x13",flow opcode
+0x0440,0x117F8,bank1,0x97F8,24,0,read x1,"movx a,@dptr ; jz +0x18",flow opcode
+0x0440,0x1212D,bank1,0xA12D,24,0,read x1,"movx a,@dptr ; cjne a,#0x08,+0x03",flow opcode
+0x0440,0x122F3,bank1,0xA2F3,24,0,read x1,"movx a,@dptr ; jz +0x03",flow opcode
+0x0440,0x12921,bank1,0xA921,24,0,read x1,"movx a,@dptr ; jnz +0x03",flow opcode
+0x0440,0x1462A,bank1,0xC62A,24,0,read x1,"movx a,@dptr ; jz +0x16",flow opcode
+0x0440,0x17154,bank1,0xF154,24,0,read x1,"movx a,@dptr ; jz +0x05",flow opcode
+0x0440,0x17167,bank1,0xF167,24,0,read x1,"movx a,@dptr ; jz +0x14",flow opcode
+0x0440,0x1718A,bank1,0xF18A,22,2,read x1,"movx a,@dptr ; jz +0x05",flow opcode
+0x0440,0x17198,bank1,0xF198,24,0,read x1,"movx a,@dptr ; jz +0x56",flow opcode
+0x0440,0x17220,bank1,0xF220,24,0,read x1,"movx a,@dptr ; jz +0x1c",flow opcode
+0x0440,0x1724D,bank1,0xF24D,23,1,read x1,"movx a,@dptr ; jz +0x1e",flow opcode
+0x0440,0x17275,bank1,0xF275,23,1,read x1,"movx a,@dptr ; jz +0x0d",flow opcode
+0x0440,0x172D5,bank1,0xF2D5,24,0,read x1,"movx a,@dptr ; cjne a,#0x05,+0x02",flow opcode
+0x0440,0x172FE,bank1,0xF2FE,24,0,read x1,"movx a,@dptr ; cjne a,#0x05,+0x02",flow opcode
+0x0440,0x17326,bank1,0xF326,24,0,read x1,"movx a,@dptr ; jz +0x07",flow opcode
+0x0440,0x1733B,bank1,0xF33B,24,0,read x1,"movx a,@dptr ; jz +0x07",flow opcode
+0x0440,0x17350,bank1,0xF350,24,0,read x1,"movx a,@dptr ; jz +0x07",flow opcode
+0x0442,0x09CAD,bank0,0x9CAD,24,0,read x1,"movx a,@dptr ; jnb acc.4,+0x06",flow opcode
+0x0442,0x0AD5E,bank0,0xAD5E,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0xe7 ; movx @dptr,a",DPTR reloaded
+0x0442,0x10313,bank1,0x8313,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0xef ; movx @dptr,a",DPTR reloaded
+0x0442,0x1031A,bank1,0x831A,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0xf7 ; movx @dptr,a",DPTR reloaded
+0x0442,0x10444,bank1,0x8444,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0xef ; movx @dptr,a",DPTR reloaded
+0x0442,0x1044B,bank1,0x844B,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0xf7 ; movx @dptr,a ; ret",flow opcode
+0x0442,0x11F38,bank1,0x9F38,24,0,read x1,"movx a,@dptr ; anl a,#0x08 ; jnz +0x12",flow opcode
+0x0442,0x12501,bank1,0xA501,24,0,read x1,"movx a,@dptr ; anl a,#0x01 ; jnz +0x13",flow opcode
+0x0442,0x12933,bank1,0xA933,24,0,read x1,"movx a,@dptr ; anl a,#0x10 ; jnz +0x78",flow opcode
+0x0442,0x12B31,bank1,0xAB31,24,0,read x1,"movx a,@dptr ; anl a,#0x08 ; jz +0x2a",flow opcode
+0x0442,0x12B54,bank1,0xAB54,24,0,read x1,"movx a,@dptr ; anl a,#0x08 ; jnz +0x07",flow opcode
+0x0443,0x172E8,bank1,0xF2E8,24,0,read x1,"movx a,@dptr ; anl a,#0x07 ; jz +0x02",flow opcode
+0x0443,0x17311,bank1,0xF311,24,0,read x1,"movx a,@dptr ; anl a,#0x07 ; cjne a,#0x07,+0x02",flow opcode
+0x0448,0x1742A,bank1,0xF42A,24,0,write x1,"movx @dptr,a ; ret",flow opcode
+0x0448,0x17431,bank1,0xF431,23,1,write x1,"movx @dptr,a ; ret",flow opcode
+0x0448,0x1743C,bank1,0xF43C,24,0,read x1,"movx a,@dptr ; mul ab ; mov r1,a ; mov r2,0xf0 ; mov r3,#0x64 ; mov r4,#0x00 ; lcall 0xa5e6",flow opcode
+0x0449,0x0BE1A,bank0,0xBE1A,24,0,read x1,"movx a,@dptr ; setb c ; subb a,r7 ; ret",flow opcode
+0x0449,0x173EB,bank1,0xF3EB,24,0,write x1,"movx @dptr,a ; ret",flow opcode
+0x0449,0x17411,bank1,0xF411,24,0,write x1,"movx @dptr,a ; ret",flow opcode
+0x0449,0x17436,bank1,0xF436,24,0,read x1,"movx a,@dptr ; mov 0xf0,a",DPTR reloaded
+0x044B,0x09A4B,bank0,0x9A4B,24,0,read x1,"movx a,@dptr ; cjne a,#0x04,+0x05",flow opcode
+0x044B,0x09A57,bank0,0x9A57,24,0,read x1,"movx a,@dptr ; cjne a,#0x02,+0x05",flow opcode
+0x044B,0x09A89,bank0,0x9A89,22,2,write x1,"mov a,#0x02 ; movx @dptr,a ; ret",flow opcode
+0x044B,0x09A9F,bank0,0x9A9F,22,2,write x1,"mov a,#0x04 ; movx @dptr,a",DPTR reloaded
+0x044B,0x09B33,bank0,0x9B33,23,1,read x1,"movx a,@dptr ; dec a ; jz +0x29",flow opcode
+0x044B,0x0BD20,bank0,0xBD20,24,0,write x1,"movx @dptr,a",DPTR reloaded
+0x044C,0x0BC39,bank0,0xBC39,24,0,read x1,"movx a,@dptr ; subb a,r7 ; ret",flow opcode
+0x044C,0x0BEA3,bank0,0xBEA3,24,0,read x1,"movx a,@dptr ; clr c ; subb a,r7 ; ret",flow opcode
+0x044C,0x1180C,bank1,0x980C,24,0,write x1,"movx @dptr,a ; mov a,#0x00",DPTR reloaded
+0x044C,0x118A5,bank1,0x98A5,24,0,write x1,"movx @dptr,a ; mov r2,#0x00 ; mov r1,#0x00",DPTR reloaded
+0x044C,0x15308,bank1,0xD308,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x05 ; jnc +0x01",flow opcode
+0x044C,0x1561A,bank1,0xD61A,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0xa8 ; jnc +0x0d",flow opcode
+0x044C,0x17450,bank1,0xF450,24,0,"read x1, write x1","movx a,@dptr ; clr c ; add a,r1 ; rrc a ; addc a,#0x00 ; movx @dptr,a ; ret",flow opcode
+0x044F,0x08809,bank0,0x8809,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x57 ; jc +0x09",flow opcode
+0x044F,0x08824,bank0,0x8824,24,0,read x1,"movx a,@dptr ; subb a,#0x50 ; jnc +0x07",flow opcode
+0x044F,0x08981,bank0,0x8981,24,0,read x1,"movx a,@dptr ; clr c ; subb a,#0x46 ; jnc +0x13",flow opcode
+0x044F,0x08BF5,bank0,0x8BF5,24,0,read x1,"movx a,@dptr ; setb c ; subb a,r5 ; jc +0x08",flow opcode
+0x044F,0x08C1A,bank0,0x8C1A,24,0,read x1,"movx a,@dptr ; clr c ; subb a,r7 ; jnc +0x06",flow opcode
+0x044F,0x0941A,bank0,0x941A,24,0,read x1,"movx a,@dptr ; clr c ; subb a,r4 ; jc +0x08",flow opcode
+0x044F,0x09444,bank0,0x9444,24,0,read x1,"movx a,@dptr ; setb c ; subb a,r4 ; jnc +0x07",flow opcode
+0x044F,0x0B818,bank0,0xB818,24,0,read x1,"movx a,@dptr ; clr c ; subb a,r7 ; jnc +0x1a",flow opcode
+0x044F,0x0BBE0,bank0,0xBBE0,24,0,read x1,"movx a,@dptr ; subb a,r7 ; ret",flow opcode
+0x044F,0x0BDF4,bank0,0xBDF4,24,0,read x1,"movx a,@dptr ; subb a,r7 ; ret",flow opcode
+0x044F,0x11416,bank1,0x9416,24,0,read x1,"movx a,@dptr ; mov r6,a",DPTR reloaded
+0x044F,0x11DB8,bank1,0x9DB8,23,1,read x1,"movx a,@dptr ; add a,r1 ; jc +0x10",flow opcode
+0x044F,0x11DC0,bank1,0x9DC0,23,1,write x1,"movx @dptr,a ; clr a",DPTR reloaded
+0x044F,0x11DE2,bank1,0x9DE2,23,1,write x1,"movx @dptr,a",DPTR reloaded
+0x0450,0x107CA,bank1,0x87CA,24,0,read x1,"movx a,@dptr ; cjne a,#0x28,+0x07",flow opcode
+0x0450,0x10827,bank1,0x8827,24,0,write x1,"movx @dptr,a",DPTR reloaded
+0x0451,0x1081F,bank1,0x881F,24,0,write x1,"movx @dptr,a",DPTR reloaded
+0x0452,0x1082F,bank1,0x882F,23,1,write x1,"movx @dptr,a ; ret",flow opcode
+0x0454,0x0DCB2,bank0,0xDCB2,24,0,read x1,"movx a,@dptr ; mov r7,a ; ljmp 0x3f9d",flow opcode
+0x0454,0x107E2,bank1,0x87E2,24,0,write x1,"movx @dptr,a ; clr a",DPTR reloaded
+0x0455,0x0DCD5,bank0,0xDCD5,24,0,read x1,"movx a,@dptr ; mov r7,a ; ljmp 0x3f9d",flow opcode
+0x0455,0x107EB,bank1,0x87EB,24,0,write x1,"movx @dptr,a ; clr a",DPTR reloaded
+0x0456,0x08C69,bank0,0x8C69,24,0,read x1,"movx a,@dptr ; jb acc.7,+0x05",flow opcode
+0x0456,0x093F4,bank0,0x93F4,24,0,read x1,"movx a,@dptr ; jnb acc.7,+0x7b",flow opcode
+0x0456,0x0AD65,bank0,0xAD65,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0xcf ; movx @dptr,a",DPTR reloaded
+0x0456,0x0B38E,bank0,0xB38E,24,0,read x1,"movx a,@dptr ; jnb acc.5,+0x48",flow opcode
+0x0456,0x0C26E,bank0,0xC26E,24,0,read x1,"movx a,@dptr ; jb acc.7,+0x03",flow opcode
+0x0456,0x0DA81,bank0,0xDA81,24,0,"read x2, write x2","movx a,@dptr ; orl a,#0x40 ; movx @dptr,a ; movx a,@dptr ; orl a,#0x80 ; movx @dptr,a",DPTR reloaded
+0x0456,0x103E5,bank1,0x83E5,24,0,read x1,"movx a,@dptr ; anl a,#0xe0",DPTR reloaded
+0x0456,0x103EB,bank1,0x83EB,24,0,write x1,"movx @dptr,a ; ret",flow opcode
+0x0456,0x11373,bank1,0x9373,24,0,read x1,"movx a,@dptr ; anl a,#0x80 ; jz +0x0a",flow opcode
+0x0456,0x11D53,bank1,0x9D53,24,0,read x1,"movx a,@dptr ; anl a,#0x80 ; jz +0x29",flow opcode
+0x0456,0x129A8,bank1,0xA9A8,24,0,read x1,"movx a,@dptr ; anl a,#0x80 ; jz +0x03",flow opcode
+0x0456,0x173C9,bank1,0xF3C9,24,0,read x1,"movx a,@dptr ; anl a,#0x40 ; jz +0x03",flow opcode
+0x0457,0x10190,bank1,0x8190,21,3,"read x1, write x1","movx a,@dptr ; anl a,#0xf8 ; orl a,#0xfd ; movx @dptr,a",DPTR reloaded
+0x0457,0x101D1,bank1,0x81D1,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0xf8 ; movx @dptr,a ; lcall 0x199c",flow opcode
+0x0457,0x10246,bank1,0x8246,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0xf8 ; orl a,#0xfb ; movx @dptr,a ; lcall 0x1984",flow opcode
+0x0457,0x1026A,bank1,0x826A,23,1,"read x1, write x1","movx a,@dptr ; anl a,#0xf8 ; orl a,#0xfd ; movx @dptr,a ; lcall 0x8ae5",flow opcode
+0x0457,0x225B2,pd-image,0x25B2,24,0,DPTR handed to lcall 0x35ec -- direction unresolved here,lcall 0x35ec,flow opcode
+0x0458,0x0DD5C,bank0,0xDD5C,24,0,write x1,"mov a,0x32 ; movx @dptr,a ; ljmp 0x1954",flow opcode
+0x0458,0x10ED0,bank1,0x8ED0,24,0,read x1,"movx a,@dptr ; anl a,#0x70 ; cjne a,#0x10,+0x02",flow opcode
+0x0458,0x11C0E,bank1,0x9C0E,24,0,read x1,"movx a,@dptr ; anl a,#0x70 ; cjne a,#0x00,+0x02",flow opcode
+0x0458,0x146B8,bank1,0xC6B8,23,1,read x1,"movx a,@dptr ; jb acc.7,+0x1a",flow opcode
+0x0458,0x2DEBE,pd-image,0xDEBE,24,0,DPTR handed to lcall 0xb160 -- direction unresolved here,lcall 0xb160,flow opcode
+0x0459,0x0DCED,bank0,0xDCED,24,0,read x1,"movx a,@dptr ; mov r7,a ; ljmp 0x3f9d",flow opcode
+0x0459,0x103C0,bank1,0x83C0,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0xf7 ; movx @dptr,a",DPTR reloaded
+0x0459,0x10B13,bank1,0x8B13,24,0,read x1,"movx a,@dptr ; anl a,#0x08 ; jnz +0x1a",flow opcode
+0x0459,0x10B96,bank1,0x8B96,24,0,write x1,"mov a,#0x01 ; movx @dptr,a",DPTR reloaded
+0x0459,0x10BBF,bank1,0x8BBF,24,0,write x1,"mov a,#0x02 ; movx @dptr,a",DPTR reloaded
+0x0459,0x10D91,bank1,0x8D91,24,0,read x1,"movx a,@dptr ; anl a,#0x02 ; jnz +0xdb",flow opcode
+0x045A,0x0AD25,bank0,0xAD25,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0x10 ; movx @dptr,a ; lcall 0xc2f7",flow opcode
+0x045A,0x0DD4A,bank0,0xDD4A,24,0,"read x2, write x1","movx a,@dptr ; anl a,#0xf0 ; movx @dptr,a ; movx a,@dptr ; mov r7,a ; mov a,0x32 ; anl a,#0x0f",max_insns (8) exhausted
+0x045A,0x10354,bank1,0x8354,18,6,write x1,"mov a,#0x00 ; movx @dptr,a",DPTR reloaded
+0x045A,0x12064,bank1,0xA064,24,0,read x1,"movx a,@dptr ; anl a,#0x01 ; jnz +0x02",flow opcode
+0x045A,0x12086,bank1,0xA086,22,2,read x1,"movx a,@dptr ; jnb acc.4,+0x3e",flow opcode
+0x045A,0x120CC,bank1,0xA0CC,24,0,read x1,"movx a,@dptr ; anl a,#0x01 ; jnz +0x02",flow opcode
+0x045A,0x120F1,bank1,0xA0F1,24,0,read x1,"movx a,@dptr ; jnb acc.5,+0x34",flow opcode
+0x045A,0x12137,bank1,0xA137,23,1,read x1,"movx a,@dptr ; anl a,#0x01 ; jz +0x7f",flow opcode
+0x045A,0x1216E,bank1,0xA16E,22,2,read x1,"movx a,@dptr ; jnb acc.7,+0x49",flow opcode
+0x045A,0x121BF,bank1,0xA1BF,24,0,read x1,"movx a,@dptr ; anl a,#0x01 ; jz +0x2d",flow opcode
+0x045A,0x121CF,bank1,0xA1CF,22,2,read x1,"movx a,@dptr ; jb acc.4,+0x03",flow opcode
+0x045A,0x121D9,bank1,0xA1D9,22,2,read x1,"movx a,@dptr ; jb acc.5,+0x03",flow opcode
+0x045A,0x121E3,bank1,0xA1E3,24,0,read x1,"movx a,@dptr ; jb acc.7,+0x03",flow opcode
+0x045A,0x12499,bank1,0xA499,24,0,read x1,"movx a,@dptr ; anl a,#0x60 ; jnz +0xf5",flow opcode
+0x045A,0x124A2,bank1,0xA4A2,24,0,read x1,"movx a,@dptr ; jb acc.7,+0xed",flow opcode
+0x045A,0x124AB,bank1,0xA4AB,24,0,read x1,"movx a,@dptr ; jb acc.4,+0xe4",flow opcode
+0x045A,0x124B4,bank1,0xA4B4,24,0,read x1,"movx a,@dptr ; jb acc.5,+0xdb",flow opcode
+0x045A,0x124BD,bank1,0xA4BD,24,0,read x1,"movx a,@dptr ; jb acc.6,+0xd2",flow opcode
+0x045A,0x124C6,bank1,0xA4C6,24,0,read x1,"movx a,@dptr ; anl a,#0xe0 ; jnz +0xc8",flow opcode
+0x045A,0x171A4,bank1,0xF1A4,23,1,read x1,"movx a,@dptr ; anl a,#0xe0 ; mov 0xf0,a ; jz +0x47",flow opcode
+0x045A,0x171F8,bank1,0xF1F8,23,1,read x1,"movx a,@dptr ; anl a,#0xe0 ; mov 0xf0,a",DPTR reloaded
+0x045A,0x17253,bank1,0xF253,24,0,read x1,"movx a,@dptr ; jnb acc.4,+0x18",flow opcode
+0x045B,0x0909B,bank0,0x909B,24,0,read x1,"movx a,@dptr ; jb acc.3,+0x5b",flow opcode
+0x045B,0x0DCDD,bank0,0xDCDD,24,0,"read x1, write x1","movx a,@dptr ; orl a,#0x01 ; movx @dptr,a ; ret",flow opcode
+0x045B,0x0DCE5,bank0,0xDCE5,24,0,"read x1, write x1","movx a,@dptr ; anl a,#0xfe ; movx @dptr,a ; ret",flow opcode
+0x045B,0x1181E,bank1,0x981E,24,0,read x1,"movx a,@dptr ; anl a,#0x08 ; jnz +0x00",flow opcode
+0x045B,0x11D7A,bank1,0x9D7A,24,0,read x1,"movx a,@dptr ; anl a,#0x08 ; jnz +0x02",flow opcode
+0x045B,0x11F16,bank1,0x9F16,23,1,read x1,"movx a,@dptr ; mov c,acc.0",DPTR reloaded
+0x045B,0x12225,bank1,0xA225,24,0,read x1,"movx a,@dptr ; anl a,#0x01 ; jz +0x07",flow opcode
+0x045B,0x1464F,bank1,0xC64F,24,0,read x1,"movx a,@dptr ; anl a,#0x01 ; jz +0x34",flow opcode
+0x045B,0x14659,bank1,0xC659,24,0,read x1,"movx a,@dptr ; anl a,#0x01 ; jnz +0x2a",flow opcode
+0x045B,0x14661,bank1,0xC661,24,0,"read x1, write x1","movx a,@dptr ; orl a,#0x01 ; movx @dptr,a",DPTR reloaded
+0x045B,0x1468B,bank1,0xC68B,23,1,"read x1, write x1","movx a,@dptr ; anl a,#0xfe ; movx @dptr,a",DPTR reloaded
+0x045B,0x17173,bank1,0xF173,24,0,"read x1, write x1","movx a,@dptr ; cpl acc.0 ; movx @dptr,a",DPTR reloaded
+0x045C,0x114E4,bank1,0x94E4,24,0,write x1,"movx @dptr,a ; anl a,#0x07",DPTR reloaded
+0x045C,0x146BF,bank1,0xC6BF,24,0,read x1,"movx a,@dptr ; anl a,#0x07 ; jnz +0x09",flow opcode
+0x045D,0x0DD3D,bank0,0xDD3D,24,0,write x1,"mov a,0x32 ; movx @dptr,a",DPTR reloaded
+0x045D,0x10B41,bank1,0x8B41,24,0,write x1,"movx @dptr,a",DPTR reloaded
+0x045D,0x10D11,bank1,0x8D11,24,0,write x1,"movx @dptr,a",DPTR reloaded
+0x045D,0x11585,bank1,0x9585,24,0,read x1,"movx a,@dptr ; jz +0x14",flow opcode
+0x045D,0x115AE,bank1,0x95AE,24,0,read x1,"movx a,@dptr",DPTR reloaded
+0x045E,0x11567,bank1,0x9567,23,1,read x1,"movx a,@dptr ; mov r5,a ; lcall 0x88f0",flow opcode
+0x045E,0x11578,bank1,0x9578,24,0,write x1,"movx @dptr,a ; clr a",DPTR reloaded
+0x045F,0x10609,bank1,0x8609,24,0,write x1,"mov a,#0xdb ; movx @dptr,a",DPTR reloaded
+0x045F,0x10617,bank1,0x8617,24,0,write x1,"mov a,#0x00 ; movx @dptr,a ; ret",flow opcode
+0x045F,0x11081,bank1,0x9081,24,0,read x1,"movx a,@dptr ; cjne a,#0xdb,+0x0b",flow opcode
+0x045F,0x1154D,bank1,0x954D,24,0,read x1,"movx a,@dptr ; cjne a,#0xdb,+0x02",flow opcode
+0x045F,0x11574,bank1,0x9574,24,0,write x1,"movx @dptr,a",DPTR reloaded
+0x045F,0x121F6,bank1,0xA1F6,24,0,read x1,"movx a,@dptr ; cjne a,#0xdb,+0x13",flow opcode
+0x045F,0x14815,bank1,0xC815,24,0,read x1,"movx a,@dptr ; cjne a,#0xdb,+0x02",flow opcode
+0x045F,0x16341,bank1,0xE341,18,6,read x1,"movx a,@dptr ; cjne a,#0xdb,+0x0a",flow opcode
+0x045F,0x16357,bank1,0xE357,22,2,read x1,"movx a,@dptr ; cjne a,#0xdb,+0x07",flow opcode
+0x045F,0x163B5,bank1,0xE3B5,24,0,read x1,"movx a,@dptr ; cjne a,#0xdb,+0x4d",flow opcode
