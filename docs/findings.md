@@ -6964,3 +6964,49 @@ said 76 and the issue said 94, and neither was right for long. The other places
 the figure appears are #685's, named by path in the write-up rather than
 overwritten here. Write-up:
 `docs/findings/prepared-gate-patches.md`.
+
+## 44. §4.4's cluster-identity figures, re-run against the committed census (2026-09-25, issue #582)
+
+The write-up is
+[`xdata-4-4-identity-rederivation.md`](findings/xdata-4-4-identity-rederivation.md);
+this is the summary. `ec/annotations/xdata-register-map.md` §4.4 opens by
+promising that "Every number below is a command re-run over the committed tree"
+and then quotes a census the tree no longer holds — the block was measured
+against 427 clusters, and `xdata-clusters.csv` has held 439 since issue #279's
+pair-accessor pass moved the clustering again — 427 → 430 at issue #327's
+unnamed-callee pass, 430 → 439 at #279.
+*(Correction, 2026-09-25, issue #582. This sentence used to read "the block was
+measured against 427 clusters and `xdata-clusters.csv` has held 439 since issue
+#256's regeneration, with issue #279's pair-accessor pass moving the clustering
+again", which cannot both be true of the count and of the order. #256
+(`88a0e0ba`) left `xdata-clusters.csv` at 430 rows and
+`xdata-cluster-names.csv` at ten on either side of it — `git show
+88a0e0ba^:…` against `git show 88a0e0ba:…` — and 430 → 439 with the names file
+at nine is `6bf9c234`, #279. The wrong version is kept here rather than edited
+out, per §4a; the full derivation is in
+[`xdata-4-4-identity-rederivation.md`](findings/xdata-4-4-identity-rederivation.md)'s
+"Which tree §4.4 was measured against".)*
+Re-running the block's own recipe with the flag that now does what its
+workaround did (`--no-eq-guard`, `xdata_register_map.py:4457`) gives 439 → 445,
+124 ranks intact and 315 changed, 424 keys unchanged, 434 committed rows
+reaching a new cluster, 15 clusters a key cannot carry (10 on overlap, 5 on
+nothing), nine names carried and 430 committed clusters with a key and none.
+Every superseded figure stays visible beside a correction naming the tree it
+belongs to, which is the shape the section's own #256 and #279 corrections
+already use, and §4.2's `479` — a half the console block beside it had already
+left at `507` — is corrected the same way, closing both halves of
+[`xdata-census-totals.md`](findings/xdata-census-totals.md)'s follow-up 4. The
+census CSVs are inputs and stay untouched: the tool refuses `--no-eq-guard` with
+the committed output paths, so the re-run is a report about the committed tree
+and not a replacement for it. **Four of the five replacement figures issue #582
+proposed do not survive a check against the committed tree**, and the 430 it
+keeps citing is the tool's own `with no name 430` line rather than a row count —
+the conflation the issue itself warns about one paragraph later, so the re-run's
+figures are what the block now carries and the disagreement is written down
+rather than pasted. Two things this pass found that are not figures:
+`ec/tools/test_xdata_cluster_names.py` is **red on `main`**, because its `GUARD`
+literal predates the parameterised guard at `xdata_register_map.py:1582` and
+its two-largest case pairs ids with names a generation behind — reported, not
+edited around, and a follow-up rather than a line to move inside a
+documentation change; and `test_xdata_cluster_names.py:286` carries a
+third-generation figure in its docstring, recorded rather than fixed.

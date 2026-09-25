@@ -261,3 +261,20 @@ them.
    committed CSV "is behind a fresh generation", and since #256's regeneration
    it is not — each now carries a correction beside it saying so, with its own
    427 and `main-ec-012` row kept as the pre-regeneration figures they are.
+
+   *(Both halves closed 2026-09-25, issue #582. The `--no-writer-axis` half is
+   the 479 this item recorded as 481 and as "the 479 §4.2 quotes": the §4.2
+   console block had already moved to 507 with #279's pass and the prose beside
+   it had not, and that prose now reads 507 with the 479 kept beside a
+   correction. §4.4's `cluster_key` half is the whole of that section's
+   cluster-identity arithmetic, re-run against the committed census: 439 → 445,
+   124 ranks intact, 424 keys unchanged, 434 rows reaching a new cluster, 15
+   clusters a key cannot carry, nine names and 430 unnamed. The derivation, with
+   every superseded figure named against its tree, is
+   [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md);
+   the §4.2 correction is in `ec/annotations/xdata-register-map.md` §4.2 and the
+   §4.4 ones are in that section. **What this item listed and did not reach is
+   still outstanding** — §5's drift record and `xdata-symbols.csv`'s 177 are
+   not this change's business — and the map's §1 and §5 blocks are listed in
+   that write-up with their line numbers rather than here, so this file stays a
+   record.)*
