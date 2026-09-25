@@ -1125,10 +1125,11 @@ touching it, not the EC's sweep.
    an instruction start out of 180 (`bank1:0xABB8` `lcall 0x8001`, 24 of 24),
    with 177 of the 179 others identified as operand bytes of instructions the
    listings already carry — 135 of them a `cjne`'s `rel8` displacement — and
-   two in a committed gap no listing covers. All six boundaries this page's
-   rows argued about are overturned in the same pass, including the 28 rows
-   that put the body's start 23 bytes late at
-   `0x8018`. **What could not be done is the deletion and the re-export, and
+   two in a committed gap no listing covers. Five of the six boundaries this
+   page's rows argued about are refuted in the same pass (`0x8001` is confirmed
+   as the entry instead), including the 28 rows that put the body's start 23
+   bytes late at `0x8018`. **What could not be done is the deletion and the
+   re-export, and
    the reason is mechanical rather than a matter of effort:** `seed_rows()`
    takes the *union* of the annotation rows and the census, and every one of
    the 42 annotation addresses is also a census seed, so deleting them removes

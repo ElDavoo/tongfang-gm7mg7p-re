@@ -129,7 +129,7 @@ of the five are the `cjne` shape and only the fifth is a call:
 | `0x95D1` | 0/24 | byte 3 of 3 — `cjne A, #0x2, 0x95d4` |
 | `0xABB8` | **24/24** | **an instruction start** — `lcall 0x8001` |
 
-## 4. All six of the hypotheses the issue asked to be settled are overturned
+## 4. Five of the six hypotheses the issue asked to be settled are refuted; `0x8001` is confirmed as the entry
 
 | address | census "callers" | best frame | target in a listing | annotation row | verdict |
 |---|---:|---:|---|---|---|

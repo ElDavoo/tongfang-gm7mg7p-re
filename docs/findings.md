@@ -4235,8 +4235,9 @@ preceding routine. **One caller was confirmed by this method, which is not
 gap in a byte scan with a named blind spot, the same caveat
 `ec/annotations/bank-call-audit.md` §1 has carried for the census as a whole.
 
-**All six boundaries the annotations argued about are overturned, and two of
-this section's own framings with them.** The three seeds `0x8008`, `0x8010`
+**Five of the six boundaries the annotations argued about are refuted rather
+than confirmed, `0x8001` is confirmed as the entry instead, and two of this
+section's own framings go with them.** The three seeds `0x8008`, `0x8010`
 and `0x8017` are **refuted rather than confirmed** — no site naming them scores
 above 1 of 24. And 28 rows said the body runs `0x8018` to the `ret` at
 `0x8189`; it runs `0x8001` to that same `ret`, 393 bytes rather than 370, the
