@@ -361,6 +361,32 @@ and `0xD7CA`; `mov DPH,#0x03` at bank1 `0xD3A7`, `0xD438`, `0xD440` and `0xE37A`
 byte. A byte-level scan of the whole EC window finds the same nine and no
 `mov DPL,#0x40` and no `mov DPH,#0x44`.
 
+> **CORRECTION (2026-09-25, issue #250) to this subsection, in two places,
+> both of which run in the direction that *opens* a hole rather than closing
+> one.** The first is the "same nine": a byte-level scan of the EC window
+> `0x00000`-`0x17FFF` finds **eight**, not nine. The ninth, at `0x0E1B`, is in
+> the **PD image** — `ec/decompiled/pd/0E54.asm` — not the EC common area, so
+> it is outside the window the sentence names and the PD program has its own
+> XDATA map. The nine figure is right for the whole exported corpus, which
+> includes the `pd` scope; it is wrong for the EC window, and the sentence
+> conflates the two.
+>
+> The second is the §7.2 table's third row, which reads "`addc a,#imm`
+> immediately followed by `mov DPH,A` / `mov DPL,A` | **0**". The count is
+> **not 0**. Scanning the same EC window for the byte pattern `34 xx f5 83`
+> finds **64** `addc A,#imm ; mov DPH,A` sites and **0** of the `DPL` form, of
+> which **58** are immediately preceded by `clr A` and so build the high byte
+> exactly, and **exactly one** of the 64 builds page `0x08` — a page that
+> does not matter for `0x0440`, but the construction is real and the row is
+> not. The consequence for §5 and §6 is the same in kind as the correction
+> above: the "**Excluded**" sentence that closes this subsection is a **real
+> and open** exclusion rather than a closed one, and one instance of the shape
+> it names is a store. `ec/annotations/xdata-1c3x-consumers.md` §6.2 re-runs
+> the method, reports all 64 with their immediates, and names the six sites
+> that are not preceded by `clr A` — the residual this subsection does not
+> reach. The old rows stay visible here for the reason the rest of the tree's
+> corrections do.
+
 This is the method issue #110 is adding to `trace_xdata_refs.py`; the general
 tool is that issue's work and this is the bounded single-address version.
 **Excluded:** a DPTR built from a register or memory value that reaches `0x0440`

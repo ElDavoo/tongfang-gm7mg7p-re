@@ -76,6 +76,21 @@ This is the caveat `docs/findings.md` §4c carries, and it is why
 `0x0862` and `0x086D` are described as writerless rather than as inputs
 nobody supplies.
 
+> **CORRECTION (2026-09-25, issue #250) to that sentence's "writerless",
+> which was right about the method and wrong about the bytes.** The direct
+> `MOV DPTR` scan still finds no writer for either byte, and that half
+> stands. The other half does not: `FUN_CODE_8294` at bank0 `0x8365` stores
+> through a **computed** DPTR whose `DPH` is hard `0x08` and whose `DPL` is
+> `(2*XDATA[0x0A56] + 0xD0) mod 256`, and it stores a **pair** of consecutive
+> bytes. `0x0862` is the first of that pair when `XDATA[0x0A56]` holds
+> `0x49`/`0xC9`; `0x086D` is the second of a pair at `0x086C`/`0x086D` when
+> it holds `0x4E`/`0xCE`. The gate is observed nowhere in this repository, so
+> this is a **conditional** writer and not evidence either byte ever moves —
+> the same standard a readback fails to meet. It is the only page-`0x08`
+> `DPH` construction in the EC (1 of 64 `addc A,#imm ; mov DPH,A` sites), and
+> `ec/annotations/xdata-1c3x-consumers.md` §6.2 has the method, the counts
+> and the six sites that remain open. No `status:` moves.
+
 ## 3. The `0x0860` direction counts, and a correction to this section
 
 **One sentence per method, because they are not interchangeable.** The
@@ -430,6 +445,37 @@ and `0x1C36`-`0x1C38`, the same shape with every destination differing by
 `0x24`; `stage_1c03_1c02_1c01` stages them into `0x1C01`-`0x1C03`. Which
 routine, if any, reads those bytes is not established.
 
+> **Answered, 2026-09-25 (issue #250).** The eleven bytes this section left
+> open have now been swept over the whole image and searched with ten named
+> methods. The full result is
+> **`ec/annotations/xdata-1c3x-consumers.md`**, with the machine-readable
+> table **`xdata-1c3x-consumers-sites.csv`** (67 rows, reproducing byte for
+> byte by the command its §1 prints). What it settles, in the order the
+> question was asked:
+>
+> - **No consumer of `0x1C39`/`0x1C3A` is named.** Ten methods return zero,
+>   and each is bounded by the thing it cannot see — the computed-DPTR
+>   remainder is issue #110, and §6 of that document is the method table.
+>   This stays "not found by method X", never "no consumer exists".
+> - **`0x1C36`-`0x1C38` have no read site in any image.** Their only site
+>   each is `stage_0862_0865_into_1c36_1c38` — the routine that writes them.
+>   That is the sharpest negative in the set.
+> - **`0x1C01`-`0x1C03` have 43 direct sites between them and not one read.**
+> - **The `0x1C12`-`0x1C14` trio has five writers, not the one this page
+>   names.** Two bank-1 routines this page's fifteen-address list cannot see
+>   — `FUN_CODE_9ce8` and `FUN_CODE_9d53`, both behind a `0x1C11 == 0` test,
+>   seeding `0x48`/`0x00` with `0x99` and `0x9F` respectively — sit alongside
+>   `stage_0862_0865_into_1c12_1c14` and the two `set_1c12_*` constants. The
+>   census already carried the row (`refs 5, 0 read, 5 write`); the question
+>   was never swept by the one table that would have answered it.
+> - **`0x0862` and `0x086D` do have a writer** — a conditional computed-DPTR
+>   one, §2's correction above.
+>
+> The nine `0x1Cxx` bytes are now recorded in `registers.yaml` at
+> `present-untested`. That is an entry existing, **not** a status moving, and
+> `ec/ghidra/xdata-symbols.csv` was regenerated from the file rather than
+> edited. No name is coined for the block.
+
 ## 7. The `0x044C`-`0x05F1` group is a different mechanism
 
 **It is not the same mechanism, and the only address the two halves share is
@@ -506,13 +552,43 @@ concession.
 `.github/scripts/agent-gates.sh`) is the same check against the image: it
 recomputes all three count keys for every entry and fails on a mismatch.
 
+**The nine `0x1Cxx` rows (issue #250).** They are not in the sweep this
+table is built from, which is a literal fifteen-address list; the counts and
+directions below come from `xdata-1c3x-consumers-sites.csv` and are
+reconciled field-for-field with this table on the ten rows the two share
+(`0x1C39`, `0x1C3A` — 0 differences). The routines are named as in that
+table's §2 and §4.
+
+| addr | EC | PD | b0 | b1 | read | write | routines holding EC sites |
+|---|---:|---:|---:|---:|---:|---:|---|
+| `0x1C01` | 16 | 0 | 1 | 15 | 0 | 16 | stage_1c03_1c02_1c01, plus 15 bank-1 sites across 8 routines, 3 of them with no enclosing export |
+| `0x1C02` | 13 | 0 | 1 | 12 | 0 | 13 | stage_1c03_1c02_1c01, plus 12 bank-1 sites across 8 routines, 3 of them with no enclosing export |
+| `0x1C03` | 14 | 0 | 1 | 13 | 0 | 14 | stage_1c03_1c02_1c01, plus 13 bank-1 sites across 8 routines, 3 of them with no enclosing export |
+| `0x1C12` | 5 | 0 | 1 | 4 | 0 | 5 | stage_0862_0865_into_1c12_1c14, FUN_CODE_9ce8, FUN_CODE_9d53, set_1c12_2_and_68c_81, set_1c12_0_and_68c_83 |
+| `0x1C13` | 3 | 0 | 1 | 2 | 0 | 3 | stage_0862_0865_into_1c12_1c14, FUN_CODE_9ce8, FUN_CODE_9d53 |
+| `0x1C14` | 3 | 0 | 1 | 2 | 0 | 3 | stage_0862_0865_into_1c12_1c14, FUN_CODE_9ce8, FUN_CODE_9d53 |
+| `0x1C36` | 1 | 0 | 1 | 0 | 0 | 1 | stage_0862_0865_into_1c36_1c38 — the only site in any image |
+| `0x1C37` | 1 | 0 | 1 | 0 | 0 | 1 | stage_0862_0865_into_1c36_1c38 — the only site in any image |
+| `0x1C38` | 1 | 0 | 1 | 0 | 0 | 1 | stage_0862_0865_into_1c36_1c38 — the only site in any image |
+
+The `0x1C02` row's `read 0` is a correction to the sweep's own `access`
+column, which prints two of the thirteen as `read x1, write x1`. Both are
+writes; the two `movx a,@dptr` it counts as reads load `0x03C4` and a
+computed `0x03(A&0x7F)` at bank1 `0xE372`, and the XDATA address a CODE
+table names at bank1 `0xE4AE`. `xdata-1c3x-consumers.md` §4.1 has the
+listings.
+
 ## 9. What this does not establish
 
 - **What the EC does with `0x086B`/`0x086C`/`0x086E`.** The arithmetic is
   legible; the units are not fixed by anything here. §10 is the step that
   would settle it.
 - **What consumes `0x1C39`/`0x1C3A`, `0x1C12`-`0x1C14` or `0x1C36`-`0x1C38`.**
-  Not answered by the decompile, and not inferred from co-occurrence.
+  **Answered, in the bounded form, by issue #250** — see §6's dated block and
+  `ec/annotations/xdata-1c3x-consumers.md`. No consumer is named by any of
+  ten methods, and the computed-DPTR remainder those methods cannot see is
+  issue #110. What that does *not* settle is whether a consumer exists; the
+  result is "not found by method X", and §7 of that document says which X.
 - **Whether the case handlers at `0xD173`, `0xD198`, `0xD1C0`, `0xD1EF`,
   `0xD221` and `0xD24E` are complete functions.** They are reached by the
   `0x7151` reader's `jmp @a+dptr`, so no `lcall` names them and they have no
@@ -612,10 +688,29 @@ entries stay `present-untested`, and the names stay placeholders.
   the same relationship `ec/ghidra/xdata-symbols.csv` has with
   `registers.yaml` through `gen_xdata_symbols.py`; §3 is the long form of
   this correction.
+- **Issue #250 settles §6's open question in the bounded form**, and §11.1
+  item 1 is closed by it rather than left open. Its own summary of what
+  changed: the new **`ec/annotations/xdata-1c3x-consumers.md`** and its
+  **`xdata-1c3x-consumers-sites.csv`** (67 rows, byte-for-byte reproducible
+  by the command the document's §1 prints); **nine new `registers.yaml`
+  entries** for `0x1C01`-`0x1C03`, `0x1C12`-`0x1C14` and `0x1C36`-`0x1C38`,
+  all created **at** `present-untested` rather than promoted to it, with
+  `ec/ghidra/xdata-symbols.csv` **regenerated** by `gen_xdata_symbols.py`
+  and never hand-edited; **three new rows and one corrected** in
+  `ghidra-functions.csv` (`0x9CE8`, `0x9D53`, `0xE2D3` new, `0xE490`
+  corrected), all four resolving to existing exported functions so none needs
+  `--mode rebuild-project`; the `0x1C02` direction corrected against two
+  `.asm` listings; and a **conditional computed-DPTR writer found for
+  `0x0862` and `0x086D`**, which corrects §2 above in place.
 - **Open questions this reading raised**, for the follow-up pass:
-  1. What consumes `0x1C39`/`0x1C3A` and the two staging trios — the single
-     most useful thing a follow-up could settle, and it needs the code
-     around the handlers, not a live test.
+  1. **CLOSED by issue #250, in the bounded form.** What consumes
+     `0x1C39`/`0x1C3A` and the two staging trios: no consumer is named by any
+     of ten methods, `0x1C36`-`0x1C38` have no read site in any image, and the
+     `0x1C12` trio turned out to have five writers rather than one.
+     `ec/annotations/xdata-1c3x-consumers.md` carries the method table, the
+     reproduction, and the follow-ups it opens — issue #110's
+     computed-DPTR remainder first, then a live read of `XDATA[0x0A56]` to
+     settle whether §2's conditional writer ever fires.
   2. The six case handlers at `0xD173`-`0xD24E` have no function entry
      (§9). Seeding them is a `--mode rebuild-project` change.
   3. `0x0862` and `0x086D` have no writer this method can see (§2, §8). A

@@ -165,6 +165,15 @@ addr,name,from_register,register_status,derivation,programs
 0x086D,XDATA_086D,XDATA_086D,present-untested,scalar-name,bank0;bank1
 0x086E,XDATA_086E,XDATA_086E,present-untested,scalar-name,bank0;bank1
 0x1664,XDATA_1664,XDATA_1664,present-untested,scalar-name,bank0;bank1
+0x1C01,XDATA_1C01,XDATA_1C01,present-untested,scalar-name,bank0;bank1
+0x1C02,XDATA_1C02,XDATA_1C02,present-untested,scalar-name,bank0;bank1
+0x1C03,XDATA_1C03,XDATA_1C03,present-untested,scalar-name,bank0;bank1
+0x1C12,XDATA_1C12,XDATA_1C12,present-untested,scalar-name,bank0;bank1
+0x1C13,XDATA_1C13,XDATA_1C13,present-untested,scalar-name,bank0;bank1
+0x1C14,XDATA_1C14,XDATA_1C14,present-untested,scalar-name,bank0;bank1
+0x1C36,XDATA_1C36,XDATA_1C36,present-untested,scalar-name,bank0;bank1
+0x1C37,XDATA_1C37,XDATA_1C37,present-untested,scalar-name,bank0;bank1
+0x1C38,XDATA_1C38,XDATA_1C38,present-untested,scalar-name,bank0;bank1
 0x1C39,XDATA_1C39,XDATA_1C39,present-untested,scalar-name,bank0;bank1
 0x1C3A,XDATA_1C3A,XDATA_1C3A,present-untested,scalar-name,bank0;bank1
 0x1F01,XDATA_1F01,XDATA_1F01,present-untested,scalar-name,bank0;bank1

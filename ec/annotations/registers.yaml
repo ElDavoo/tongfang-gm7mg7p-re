@@ -2921,11 +2921,21 @@ registers:
       in stage_1c03_1c02_1c01), 0x1C13 (at 0xD2F3, in FUN_CODE_d2ef) and
       0x1C37 (at 0xD308, in FUN_CODE_d304). This method found no EC-side
       writer, which is "not found by this method" and not absence: a byte
-      reached through a computed DPTR is invisible to it. What the staged
-      value is, and what sets it, is not determined here. The census's
-      direction split for this address carries the same classifier artefact
-      described on XDATA_0860. Per-address table:
-      ec/annotations/xdata-086x-dispatch.md.
+      reached through a computed DPTR is invisible to it. That blind spot
+      IS NOT EMPTY for this byte: a later pass found the writer the direct
+      scan cannot see, and what it found is a conditional one. FUN_CODE_8294
+      at bank0 0x8365 stores through a computed DPTR whose DPH is hard 0x08
+      and whose DPL is (2*XDATA[0x0A56] + 0xD0) mod 256, and it stores a
+      PAIR of consecutive bytes -- so 0x0862 is the first of that pair when
+      XDATA[0x0A56] holds 0x49 or 0xC9, and 0x0863 the second. The gate is
+      not observed anywhere in this repository, so this is a conditional
+      writer and not evidence the byte is ever written, and a readback would
+      not settle it either. NO STATUS MOVES. What the staged value is, and
+      what the computed writer's value means, is not determined here. The
+      census's direction split for this address carries the same classifier
+      artefact described on XDATA_0860. Per-address table:
+      ec/annotations/xdata-086x-dispatch.md, and
+      ec/annotations/xdata-1c3x-consumers.md 6.2.
 
   - name: XDATA_0865
     addr: 0x0865
@@ -3058,10 +3068,21 @@ registers:
     note: >
       2 EC-side sites in bank0, both reads, no PD site. They are the two
       halves of gate_06e6_442_then_sync_046a_from_086b's 0x086B/0x086C/
-      0x086D/0x086E against 0x046A/0x046B/0x046E/0x046F comparison. This
-      method found no writer, which is "not found by this method" and not
-      absence: a byte reached through a computed DPTR is invisible to it.
-      Per-address table: ec/annotations/xdata-086x-dispatch.md.
+      0x086D/0x086E against 0x046A/0x046B/0x046E/0x046F comparison: the
+      first reads this byte and xrl's it against 0x046E, the second reads it
+      and stores it to 0x046E, so the byte is the master side of a
+      compare-then-sync into 0x046E. This method found no writer, which is
+      "not found by this method" and not absence: a byte reached through a
+      computed DPTR is invisible to it. That blind spot IS NOT EMPTY for
+      this byte either -- FUN_CODE_8294 at bank0 0x8365 stores a PAIR of
+      consecutive bytes through a computed DPTR with DPH hard 0x08, and
+      0x086D is the second of that pair (DPL 0x086C) when XDATA[0x0A56]
+      holds 0x4E or 0xCE. Not observed here, so a conditional writer and
+      not a claim the byte ever moves; 0x086C, the byte it overwrites, is
+      one of the three results compute_level_blocks_086b_086c_086e
+      computes. NO STATUS MOVES. Per-address table:
+      ec/annotations/xdata-086x-dispatch.md, and
+      ec/annotations/xdata-1c3x-consumers.md 6.2.
 
   - name: XDATA_086E
     addr: 0x086E
@@ -3111,6 +3132,182 @@ registers:
       .asm listings are the only statement of it. No upstream name.
       Per-address table: ec/annotations/xdata-06c2-06db-timers.md.
 
+  - name: XDATA_1C01
+    addr: 0x1C01
+    sources: [xdata-refs]
+    static_refs: 16
+    static_refs_main_ec: 16
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      ENTRY CREATED, NOT A STATUS MOVE: 0x1C01 had no entry in this file
+      before this one, and it is created at present-untested. 16 EC-side
+      sites, 1 in bank0 and 15 in bank1, no PD site, and every one of them a
+      write -- this is the busiest of the nine 0x1C00-block bytes and the
+      census's 14 C-level occurrences agree on the direction while counting a
+      different unit. All 15 bank-1 sites are inside the 0x1C00 block, and
+      five of the nine routines holding them write the literal 0x48 here:
+      gate_1c00_init_defaults, poll_1c00_status_up_to_100_cycles,
+      setup_and_poll_1c00_block_with_arg_48, FUN_CODE_e2d3 and
+      stage_1c00_block_from_code_table_indexed_03c4. Six of the nine gate on
+      0x1C00 == 0. UNITS NOT DETERMINED, and no name is coined: a wrong unit
+      in a symbol outlives the note that would correct it. NO CONSUMER IS
+      NAMED by any of the ten methods in
+      ec/annotations/xdata-1c3x-consumers.md 7, and a zero there is "not
+      found by this method", never absence. Per-address table:
+      ec/annotations/xdata-1c3x-consumers.md.
+
+  - name: XDATA_1C02
+    addr: 0x1C02
+    sources: [xdata-refs]
+    static_refs: 13
+    static_refs_main_ec: 13
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      ENTRY CREATED, NOT A STATUS MOVE: created at present-untested. 13
+      EC-side sites, 1 in bank0 and 12 in bank1, no PD site, 0 read and 13
+      write. The sweep's classifier prints two of the thirteen as
+      "read x1, write x1"; both are writes, and the movx a,@dptr it counts
+      as a read is of a different address -- 0x03C4 and a computed
+      0x03(A&0x7F) at bank1 0xE372 in FUN_CODE_e2d3, and the XDATA address
+      named by a CODE table at bank1 0xE4AE in
+      stage_1c00_block_from_code_table_indexed_03c4. Read the .asm, not the
+      access column, for this one. It is the destination byte of all three
+      staging routines: 0x0862 is copied into it by stage_1c03_1c02_1c01.
+      UNITS NOT DETERMINED. NO CONSUMER IS NAMED by any of the ten methods
+      in ec/annotations/xdata-1c3x-consumers.md 7. Per-address table:
+      ec/annotations/xdata-1c3x-consumers.md.
+
+  - name: XDATA_1C03
+    addr: 0x1C03
+    sources: [xdata-refs]
+    static_refs: 14
+    static_refs_main_ec: 14
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      ENTRY CREATED, NOT A STATUS MOVE: created at present-untested. 14
+      EC-side sites, 1 in bank0 and 13 in bank1, no PD site, all writes. The
+      literal 0xA0 is written here by FUN_CODE_e2d3 and
+      stage_1c00_block_from_code_table_indexed_03c4, and 0xA1 by
+      copy_03cd_03ce_03cf_to_1c02_1c04_1c05; setup_1c00_block_with_arg_4c,
+      poll_1c00_status_up_to_100_cycles and
+      setup_and_poll_1c00_block_with_arg_48 copy 0x0975 into it instead.
+      UNITS NOT DETERMINED. NO CONSUMER IS NAMED by any of the ten methods
+      in ec/annotations/xdata-1c3x-consumers.md 7. Per-address table:
+      ec/annotations/xdata-1c3x-consumers.md.
+
+  - name: XDATA_1C12
+    addr: 0x1C12
+    sources: [xdata-refs]
+    static_refs: 5
+    static_refs_main_ec: 5
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      ENTRY CREATED, NOT A STATUS MOVE: created at present-untested. 5
+      EC-side sites, 1 in bank0 and 4 in bank1, no PD site, 0 read and 5
+      write. THE WRITER SET IS FIVE ROUTINES, NOT ONE: bank0 0xD2EF
+      (stage_0862_0865_into_1c12_1c14) copies 0x0865 in unconditionally,
+      while bank1 FUN_CODE_9ce8 and FUN_CODE_9d53 each seed the 0x48/0x00
+      pair with 0x99 and 0x9F respectively behind a 0x1C11 == 0 test, and
+      bank1 set_1c12_2_and_68c_81 and set_1c12_0_and_68c_83 write the single
+      constants 0x02 and 0x00 as two cases of the dispatch at 0x9E26. The
+      two seeds were not in xdata-086x-dispatch.md, whose fifteen-address
+      list does not include 0x1C12. UNITS NOT DETERMINED: the same 0x48
+      seeds 0x1C01 elsewhere, and that is co-occurrence of a constant, not
+      a shared field. NO CONSUMER IS NAMED by any of the ten methods in
+      ec/annotations/xdata-1c3x-consumers.md 7. Per-address table:
+      ec/annotations/xdata-1c3x-consumers.md.
+
+  - name: XDATA_1C13
+    addr: 0x1C13
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      ENTRY CREATED, NOT A STATUS MOVE: created at present-untested. 3
+      EC-side sites, 1 in bank0 and 2 in bank1, no PD site, 0 read and 3
+      write. All three writers are the middle byte of the 0x1C12-0x1C14
+      trio and all three write 0x00: bank0 0xD2EF copies 0x0862 in, and
+      bank1 FUN_CODE_9ce8 and FUN_CODE_9d53 seed the literal 0x00 behind
+      their 0x1C11 == 0 test. No consumer is found by any of the ten
+      methods in ec/annotations/xdata-1c3x-consumers.md 7. Per-address table:
+      ec/annotations/xdata-1c3x-consumers.md.
+
+  - name: XDATA_1C14
+    addr: 0x1C14
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      ENTRY CREATED, NOT A STATUS MOVE: created at present-untested. 3
+      EC-side sites, 1 in bank0 and 2 in bank1, no PD site, 0 read and 3
+      write. All three writers are the high byte of the 0x1C12-0x1C14 trio
+      and they write three different things: bank0 0xD2EF stores the
+      caller's accumulator, and bank1 FUN_CODE_9ce8 and FUN_CODE_9d53 seed
+      0x99 and 0x9F. Those two constants differ in two bits and nothing
+      here says why. No consumer is found by any of the ten methods in
+      ec/annotations/xdata-1c3x-consumers.md 7. Per-address table:
+      ec/annotations/xdata-1c3x-consumers.md.
+
+  - name: XDATA_1C36
+    addr: 0x1C36
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      ENTRY CREATED, NOT A STATUS MOVE: created at present-untested. ONE
+      direct site in any image, a write at bank0 0xD314 in
+      stage_0862_0865_into_1c36_1c38, which copies 0x0865 in. The sharpest
+      negative in
+      ec/annotations/xdata-1c3x-consumers.md: the only site this byte has
+      is the routine that writes it, and no consumer is found by any of the
+      ten methods listed in that document's section 7. That is "not found by
+      this method", never absence -- the computed-DPTR remainder is issue
+      #110's and stays open. UNITS NOT DETERMINED. Per-address table:
+      ec/annotations/xdata-1c3x-consumers.md.
+
+  - name: XDATA_1C37
+    addr: 0x1C37
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      ENTRY CREATED, NOT A STATUS MOVE: created at present-untested. ONE
+      direct site in any image, a write at bank0 0xD30C in
+      stage_0862_0865_into_1c36_1c38, which copies 0x0862 in. Same shape
+      and same "not found by this method" negative as XDATA_1C36; the two
+      bytes are the middle and high of one 21-byte copy. UNITS NOT
+      DETERMINED. Per-address table:
+      ec/annotations/xdata-1c3x-consumers.md.
+
+  - name: XDATA_1C38
+    addr: 0x1C38
+    sources: [xdata-refs]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      ENTRY CREATED, NOT A STATUS MOVE: created at present-untested. ONE
+      direct site in any image, a write at bank0 0xD304 in
+      stage_0862_0865_into_1c36_1c38, which stores the caller's
+      accumulator. Same shape and same "not found by this method" negative
+      as XDATA_1C36 and XDATA_1C37; that routine is byte-for-byte the shape
+      of stage_0862_0865_into_1c12_1c14 at bank0 0xD2EF with every
+      destination differing by 0x24. UNITS NOT DETERMINED. Per-address
+      table: ec/annotations/xdata-1c3x-consumers.md.
+
   - name: XDATA_1C39
     addr: 0x1C39
     sources: [xdata-refs]
@@ -3132,8 +3329,27 @@ registers:
       "a second buffer of the same field layout" is not supported by the
       bytes. WHAT CONSUMES IT DOWNSTREAM IS NOT ANSWERED by the decompile: no
       consumer of the pair is identified here, and co-occurrence with a
-      writer is not a consumer. Per-address table:
-      ec/annotations/xdata-086x-dispatch.md.
+      writer is not a consumer. A later pass searched for that consumer and
+      did not name one: 0x1C39 and 0x1C3A were swept together with the nine
+      0x1C00-block bytes over the whole image, and ten methods were run --
+      direct MOV DPTR, sequential inc-dptr walk, register-indirect movx @Ri,
+      computed DPTR, the CODE-table copy class, the DPTR-handoff class, and
+      the three host components. The negative is bounded per method and each
+      method's blind spot is named, in
+      ec/annotations/xdata-1c3x-consumers.md 7. One structural negative is
+      worth carrying here: the computed-DPTR pair store at bank0 0x8365 in
+      FUN_CODE_8294 is NOT a writer of this byte or of 0x1C38. Its DPH is
+      hard 0x08, so every destination it builds sits on the 0x0800 page and
+      cannot reach page 0x1C00. Its DPL is (2*XDATA[0x0A56] + 0xD0) mod
+      256, so XDATA[0x0A56] holding 0x34 or 0xB4 gives DPL 0x38 -- the
+      pair 0x0838/0x0839 on page 0x08, a destination unrelated to this one.
+      Of the 64 addc-into-DPH sites in the EC image the 58 that follow a
+      clr A take exactly the immediate and none of them is 0x1C; the six that
+      do not are named as a residual in section 6.2, and a store through one
+      of them reaching a 0x1Cxx byte is not excluded -- not found by this
+      method, not absent. Per-address table:
+      ec/annotations/xdata-086x-dispatch.md, and
+      ec/annotations/xdata-1c3x-consumers.md.
 
   - name: XDATA_1C3A
     addr: 0x1C3A
@@ -3153,8 +3369,12 @@ registers:
       handlers at 0xD221 and 0xD24E also use this byte, writing it from
       0x0864 and reading it back into 0x0864 at 0xD277, so the pair is not
       even a staging area for one field. What consumes the pair downstream
-      is not answered by the decompile. Per-address table:
-      ec/annotations/xdata-086x-dispatch.md.
+      is not answered by the decompile, and a later pass that swept both
+      bytes against ten named methods named no consumer either -- see
+      ec/annotations/xdata-1c3x-consumers.md 7, where each method's blind
+      spot is stated rather than the zero left bare. Per-address table:
+      ec/annotations/xdata-086x-dispatch.md, and
+      ec/annotations/xdata-1c3x-consumers.md.
 
   - name: XDATA_1F01
     addr: 0x1F01
