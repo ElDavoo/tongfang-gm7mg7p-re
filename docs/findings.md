@@ -7340,3 +7340,31 @@ dropped the arm would pass every other case in the suite and hand the tool
 (#774 owns it), and neither is a gate call for `tools/run-tests.sh` (#775/#773).
 Still tooling hygiene: a patch, a test, and pointers — no capture opened, no EC,
 no register read back, and no hardware observation needed.
+## 50. The guard-off census is built by the flag now, and pinned to §6a's own figures (2026-09-25, issue #753)
+
+The write-up is
+[`xdata-cluster-names-guard-off-recipe.md`](findings/xdata-cluster-names-guard-off-recipe.md);
+this is the summary. `ec/tools/test_xdata_cluster_names.py` errored in
+`setUpClass` because its guard-off recipe deleted a frozen spelling of the `==`
+guard that #528 gave an `eq_guard and` conjunct in front of, so the replace was
+a no-op and the assertion caught it. The recipe is now the mechanism the tool
+already ships — `--no-eq-guard`, which §6a measures with and
+`xdata-no-eq-guard-refusal-contract.md:250-259` had already scoped as the fix —
+and the six cases the error kept out run again. The issue's own repair
+(re-point the literal) was the alternative; it is recorded in the write-up with
+the reasons the flag won, one of which is that a `source.replace()` which
+stops matching fails *silently*, which is the failure mode the issue exists to
+stop. **§6a needed no correction**: every figure it publishes reproduces on this
+tree, 833 / 210 of 1,326 / 0 of 1,326 from its own printed heredoc, so the diff
+stays off that page. What is new is a seventh case holding the census to those
+*published* figures rather than to a fresh run of the same recipe, and the
+`> 300` moved-ranks floor is left where it is at 315 measured rather than
+lowered to buy the headroom. Four sentences elsewhere that this makes false:
+two are recorded in the write-up rather than edited, and two are corrected in
+place — `docs/findings/0751-grader-self-test-gate.md:109` and
+`ec/tools/test_xdata_register_map.py:9-12`. The first of those **stands as
+written**: `gh issue view 568` shows #568 open since `2026-09-25T03:03:44Z`,
+naming this defect and this flag, so #528's failure did have an owner; what it
+lacked was a slot in the queue, and this issue is the re-file that supersedes
+#568. No CSV, `registers.yaml` or `xdata_register_map.py` was edited, no gate
+was wired, and nothing was read off a machine.

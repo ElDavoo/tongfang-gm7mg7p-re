@@ -12,9 +12,9 @@ still resolves to the membership the sentence describes.**
 
 Everything here reads committed text. The guard-off census in
 `TheGuardOffRegeneration` is a regeneration from the committed tree with the
-`==` guard removed, which is the recipe `annotations/xdata-06c2-06db-timers.md`
-§6a already records and re-runs; no image, no Ghidra, no network, and nothing
-here touched hardware.
+`==` rejection off, via `--no-eq-guard`, which is the flag
+`annotations/xdata-06c2-06db-timers.md` §6a already re-runs; no image, no
+Ghidra, no network, and nothing here touched hardware.
 """
 import csv
 import functools
@@ -46,13 +46,6 @@ SWEPT_43 = set("""0x0460 0x0468 0x055F 0x0621 0x0635 0x0636 0x0637 0x0638 0x0639
 0x0706 0x070B 0x070D 0x0723 0x07F3 0x07F6 0x0809 0x080C 0x080D 0x0811 0x0843 0x0844
 0x085B 0x0890 0x08A7 0x08A8 0x08E4 0x0981 0x0982 0x0985 0x0986 0x09CE""".split())
 
-# The guard `xdata-06c2-06db-timers.md` §6a's "after" tree added and issue
-# #178 committed. Deleting it reproduces the classifier that census was
-# measured against, which is the regeneration these cases run the cited
-# membership through. If this text is not found the recipe has drifted and the
-# test says so rather than quietly regenerating the same census twice.
-GUARD = '    if stripped.startswith("=="):\n        return False\n'
-
 
 def clusters_of(path):
     """{cluster_id: row} from a clusters CSV."""
@@ -66,34 +59,32 @@ def named_of(path):
             if r["cluster_name"]}
 
 
+def registers_of(path):
+    """{addr: row} from a per-address registers CSV."""
+    with open(path, newline="") as f:
+        return {r["addr"]: r for r in csv.DictReader(f)}
+
+
 @functools.lru_cache(maxsize=1)
 def guard_off():
-    """(clusters.csv path, registers.csv path) for the guard-off census.
+    """(tmp dir, clusters.csv path, registers.csv path, stderr) for the
+    guard-off census.
 
-    Built the way §6a builds it: the tool copied into a scratch tree with the
-    inputs symlinked back to this repository, so the run reads the committed
-    decompile and writes nothing into it. ~2 s, and the only reason the suite
-    caches it is that five cases want the same regeneration.
+    Built the way §6a builds it: the committed tool run with `--no-eq-guard`,
+    which is the switch that "re-runs the census with the `==` rejection turned
+    off" (`xdata_register_map.py:263`) and the mechanism that page re-runs its
+    figures from. The flag refuses to be given the committed output paths, so
+    both CSVs go to a scratch directory the tool is pointed at by name and the
+    run reads the committed decompile and writes nothing into it. ~2 s, and the
+    only reason the suite caches it is that six cases want the same
+    regeneration.
     """
     tmp = tempfile.mkdtemp(prefix="xdata-guard-off-")
-    ec = os.path.join(tmp, "ec")
-    os.makedirs(os.path.join(ec, "tools"))
-    tool = os.path.join(ec, "tools", "xdata_register_map.py")
-    with open(TOOL) as f:
-        source = f.read()
-    if GUARD not in source:
-        raise AssertionError(
-            "the `==` guard is not where §6a's recipe deletes it; the "
-            "guard-off census this suite builds is not the one §6a measured")
-    with open(tool, "w") as f:
-        f.write(source.replace(GUARD, ""))
-    for d in ("decompiled", "annotations", "firmware", "ghidra"):
-        os.symlink(str(EC / d), os.path.join(ec, d))
     out_clusters = os.path.join(tmp, "clusters.csv")
     out_registers = os.path.join(tmp, "registers.csv")
     proc = subprocess.run(
-        [sys.executable, tool, "--out-clusters", out_clusters,
-         "--out-registers", out_registers],
+        [sys.executable, str(TOOL), "--no-eq-guard", "--out-clusters",
+         out_clusters, "--out-registers", out_registers],
         capture_output=True, text=True, check=False)
     if proc.returncode != 0:
         raise AssertionError(f"the guard-off run failed: {proc.stderr}")
@@ -103,12 +94,10 @@ def guard_off():
 @functools.lru_cache(maxsize=1)
 def guard_off_map():
     """(csv rows, stderr) of `--map` from the guard-off census."""
-    tmp, out_clusters, out_registers, _ = guard_off()
+    _tmp, out_clusters, out_registers, _ = guard_off()
     proc = subprocess.run(
-        [sys.executable, os.path.join(tmp, "ec", "tools",
-                                      "xdata_register_map.py"),
-         "--out-clusters", out_clusters, "--out-registers", out_registers,
-         "--map", str(CLUSTERS)],
+        [sys.executable, str(TOOL), "--no-eq-guard", "--out-clusters",
+         out_clusters, "--out-registers", out_registers, "--map", str(CLUSTERS)],
         capture_output=True, text=True, check=False)
     if proc.returncode != 0:
         raise AssertionError(f"--map failed: {proc.stderr}")
@@ -282,20 +271,26 @@ class TheGuardOffRegeneration(unittest.TestCase):
     """The issue's own test, run: does a cited cluster survive a regeneration?
 
     A regeneration that moves the ranking is the cheapest one available from
-    committed text: deleting the `==` guard `xdata-06c2-06db-timers.md` §6a
-    measured. 427 clusters become 439, 48 of the ranks survive intact and 379
-    keep their number and change what the number names, which is the whole
-    reason a rank is not an identity.
+    committed text: the `==` rejection turned off with `--no-eq-guard`, which is
+    the switch `xdata-06c2-06db-timers.md` §6a measured. 427 clusters become
+    439, 48 of the ranks survive intact and 379 keep their number and change
+    what the number names, which is the whole reason a rank is not an identity.
 
     Those three figures are issue #274's, measured against the census as it
     stood then, and they are kept as the record they are. The committed census
-    has since been re-derived (`xdata-register-map.md` §1, second correction),
-    so the same regeneration over the census in the tree now gives 430 → 439
-    with 64 ranks intact and 366 changed — the same direction and a little
-    less of it, because the re-derivation had already moved several of the ids
-    #274 counted as moved. Nothing below depends on which of the two is
-    current; what depends on it is the prose, and that is where the two sets of
-    figures are recorded.
+    has since been re-derived twice -- `xdata-register-map.md` §1's second
+    correction, and then #279's, whose §6a re-derivation is the one that took
+    it to 439 clusters over 1,326 register rows -- so the same regeneration
+    over the census in the tree now gives 439 → 445 with 124 ranks intact and
+    315 changed. The pair between the two, 430 → 439 with 64 intact and 366
+    changed, was current when this docstring was last written and is no longer
+    so, for the same reason this is being corrected in place rather than
+    edited out: a total pasted into a file is a snapshot of the merge it was
+    measured on, and the tree moved under two of them. Nothing below depends
+    on any of the three; what depends on them is the prose, and that is where
+    the figures are recorded. §6a is the exception: it is a measurement rather
+    than a description, so it is held by
+    `test_the_census_is_the_one_6a_measured` instead of by a paragraph.
     """
 
     @classmethod
@@ -304,6 +299,79 @@ class TheGuardOffRegeneration(unittest.TestCase):
         cls.committed = clusters_of(CLUSTERS)
         cls.off = clusters_of(cls.clusters)
         cls.off_named = named_of(cls.clusters)
+
+    def test_the_census_is_the_one_6a_measured(self):
+        # The only case in this class that holds the run to a published figure
+        # rather than to itself. Every value below is one
+        # `xdata-06c2-06db-timers.md` §6a prints, compared against the CSVs the
+        # run above wrote -- not against a fresh run of the same recipe, which
+        # would agree with itself by construction and would go on agreeing
+        # after the recipe changed underneath it. That distinction is the whole
+        # reason this case exists (#753: the recipe had been re-pointed three
+        # times and a `source.replace()` that stopped matching failed
+        # silently). §6b prints the derivation of the first three at
+        # `xdata-06c2-06db-timers.md:921`; the 2026-09-25 re-derivation
+        # recorded beside it is what put them at their current values.
+        #
+        # `test_xdata_register_map.py::AcceptedWrite` holds the same flag and
+        # deliberately asserts *direction* instead of these counts, because it
+        # has to survive an unrelated re-derivation. The two are not in
+        # conflict: that suite is the flag's refusal contract and wants to
+        # keep passing, this one is the census-identity claim and wants to go
+        # red when the census it names has moved.
+        off = registers_of(self.registers)
+        on = registers_of(REGISTERS)
+        # The two runs are over one address universe -- §6a compares them cell
+        # for cell across "1,326 register rows" -- so a run that gained or
+        # dropped an address is not the same measurement in a small way.
+        self.assertEqual(set(off), set(on))
+
+        # 833: §6a's "references leaving `write`, all three programs", the
+        # figure its table prints in bold. Every term is non-negative, because
+        # the guard can only reject a write the pre-#178 classifier counted, so
+        # a negative one is a defect rather than a renumbering.
+        self.assertEqual(
+            sum(int(off[a]["write"]) - int(on[a]["write"]) for a in off), 833)
+
+        # 210 of 1,326, and 0 of 1,326: the other two lines of the heredoc, with
+        # the denominators it prints alongside them. The 0 is the load-bearing
+        # half of §6a's whole claim -- the guard moves references between
+        # direction buckets and out of none of them, which is what makes every
+        # row of §2a's 43-address table guard-invariant -- and a `refs` total
+        # that moved would mean something other than this guard had moved too.
+        # The denominators are pinned with the numerators because a
+        # re-derivation that changes them has changed what §6a measured, and
+        # the response to that is to re-derive §6a, not to move a number here.
+        self.assertEqual(
+            (sum(1 for a in on if off[a]["write"] != on[a]["write"]), len(on)),
+            (210, 1326), "§6a: 'addresses whose write changes: 210 of 1326'")
+        self.assertEqual(
+            (sum(1 for a in on if off[a]["refs"] != on[a]["refs"]), len(on)),
+            (0, 1326), "§6a: 'addresses whose refs changes: 0 of 1326'")
+
+        # The two named rows of §6a's table, where the totals above are visible
+        # address by address. Both are addresses the sweep covers, so they are
+        # also the two rows in the prose rather than only in the census.
+        for addr, guard_off_rw, committed_rw in (
+                ("0x08A8", ("84", "44"), ("126", "2")),
+                ("0x0843", ("84", "42"), ("126", "0"))):
+            with self.subTest(addr=addr):
+                self.assertEqual((off[addr]["read"], off[addr]["write"]),
+                                 guard_off_rw)
+                self.assertEqual((on[addr]["read"], on[addr]["write"]),
+                                 committed_rw)
+
+        # 394 against 389: §6a's "main-EC clusters at threshold 0.50", and the
+        # row the rest of this class is downstream of. The renumbering these
+        # cases are about exists because the guard-off census has five more
+        # main-EC clusters to sort ahead of the committed one, and five rows
+        # that appear in one census and not the other is where the ranks
+        # `test_the_regeneration_really_moves_the_ranks` counts come from.
+        self.assertEqual(
+            len([r for r in self.off.values() if r["program"] == "main-ec"]), 394)
+        self.assertEqual(
+            len([r for r in self.committed.values() if r["program"] == "main-ec"]),
+            389)
 
     def test_the_regeneration_really_moves_the_ranks(self):
         # If this ever stops holding, the rest of the class is testing nothing:
@@ -396,7 +464,13 @@ class TheGuardOffRegeneration(unittest.TestCase):
                 removed, set(old["addrs"].split()) - set(new["addrs"].split()),
                 f"{cid}: the reported delta is not the delta")
         # Every name the guard-off census carries is on the map, so the sweep
-        # this report drives from does not have to open the CSV as well.
+        # this report drives from does not have to open the CSV as well. Two
+        # sets and not two lists, and the difference is not cosmetic: the map
+        # carries a name on 10 rows over 9 distinct names, because
+        # `mode-oem-init` arrives on two of them -- the two old clusters the
+        # guard-off generation merged into the new `main-ec-002` are both its
+        # sources. A reader who "fixes" this to compare counts turns the case
+        # red over a correct report, so the merge is named here instead.
         carried = [r for r in rows if r["cluster_name"] != "-"]
         self.assertEqual({r["cluster_name"] for r in carried},
                          set(self.off_named))
