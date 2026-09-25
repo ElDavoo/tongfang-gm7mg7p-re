@@ -61,8 +61,8 @@ and never separately, because neither is sufficient:
   preceded by data (a dispatch table, padding) that no linear walk can decode
   into alignment", and `bank-call-audit.md` 1 makes the converse point, listing
   sites that score 24 of 24 and are plainly inside an address table. This
-  repository's own note that the anchored count is *"demonstrably not
-  phantom-free"* is why the score is never the verdict here;
+  repository's own note that "the anchored number is not the phantom-free one"
+  is why the score is never the verdict here;
 - **the listing position alone does not settle framing either**, for the same
   reason. What settles a site is both: a score *and* the committed instruction
   that owns the byte.
@@ -176,10 +176,10 @@ mis-stated. Against the entry this tool establishes, the body is `0x8001`
 Two independent blockers, each measured.
 
 **Deleting the slice rows removes no seeds at all.**
-`../ec/tools/build_ec_decompile.py:seed_rows()` (`:475`) builds each program's
+`../ec/tools/build_ec_decompile.py:seed_rows()` (`:509`) builds each program's
 seed set as a **union** of `ghidra-functions.csv` and the
 `bank-call-targets.csv` census, de-duplicated on `(program, addr)` after
-sorting by evidential strength (`STRENGTH` at `:502`, `annotation`=0 ahead of
+sorting by evidential strength (`STRENGTH` at `:536`, `annotation`=0 ahead of
 `call-target`=3). Running the tool's own `call_target_seeds()` over the
 committed census: **all 42 annotation addresses in the run are also census
 seeds** — the annotation-only count is zero — and the census independently seeds
@@ -190,7 +190,7 @@ committed CSVs alone.
 
 **Export-only mode cannot un-carve.** The default mode
 `shutil.copytree`s the committed project and opens the copy with `-noanalysis`
-(`:674`/`:676`), applying only annotation seeds. The 42 functions are already
+(`:708`/`:710`), applying only annotation seeds. The 42 functions are already
 baked into the 7.4 MB committed `.rep`, and **no script under
 `ghidra/scripts/` calls `removeFunction`, `clearListing` or `deleteFunction`**
 (grepped all five: `SeedFunctions.java`, `ApplyAnnotations.java`,
@@ -284,8 +284,8 @@ to record, not a reason to re-add slice rows.**
   that work needs, not what it needs from this page.
 - **The frame score is one method's opinion, reported beside the listing
   evidence for that reason.** `converges_from()` is the repository's own, and
-  `bank-call-audit.md` 1's note that its anchored counts are *demonstrably not
-  phantom-free* applies to the 24/24 here as much as to the 0/24s.
+  `bank-call-audit.md` 1's note that its anchored counts are demonstrably not
+  phantom-free applies to the 24/24 here as much as to the 0/24s.
 
 ## Reproducing it
 

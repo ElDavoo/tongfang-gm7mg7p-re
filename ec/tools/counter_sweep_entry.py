@@ -22,7 +22,8 @@ cannot tell from an `ljmp` opcode; 39 more are the displacement byte of another
 PC-relative branch, one is the low target byte of an `ljmp`/`lcall` the listing
 already carries, two are an immediate operand of a non-branch, and two sit in a
 committed gap between two listings. That is
-`../annotations/bank-call-audit.md` 1's "upper bound, not a partition" biting
+`../annotations/bank-call-audit.md` 1's "`upper bound / anchored`" -- a byte
+scan that over-counts -- biting
 in one measurable place, and it is why "one confirmed caller" is the whole of
 the finding: **the 179 others are not 179 absent calls**, they are 179
 byte-scan sites this method did not confirm, in a scan with a named blind spot.
@@ -320,7 +321,15 @@ def bucket_of_site(r):
         return "cjne"
     if op in REL_OPCODES and last:
         return "relative"
-    if op in (0x02, 0x12):
+    # `last` is load-bearing here, not decoration. `0x02`/`0x12` carry a
+    # 16-bit operand stored high byte first -- `disasm8051.mnemonic()` reads
+    # it as `(d[i + 1] << 8) | d[i + 2]` -- so the *low* target byte is the
+    # instruction's last one, and only that index is a target byte the census
+    # could have read as the far end of a 16-bit address. Without this guard
+    # the bucket would also swallow the high byte at index 1, which no byte
+    # scan can mistake for a call's target, and the table's "low target byte"
+    # would overstate what the bucket collects.
+    if op in (0x02, 0x12) and last:
         return "absolute"
     return "other"
 
@@ -355,8 +364,8 @@ def print_sites(rows):
           " 0xb4/0xb5 (`cjne A,#imm,rel` / `cjne A,direct,rel`) or 0xb8-0xbf"
           " (`cjne Rn,#imm,rel`) and the byte a census row reads as an `ljmp`"
           " opcode is that displacement. This is"
-          " `../annotations/bank-call-audit.md` 1's \"upper bound, not a"
-          " partition\" in one measurable place.")
+          " `../annotations/bank-call-audit.md` 1's \"`upper bound / anchored`\""
+          " -- a byte scan that over-counts -- in one measurable place.")
     print()
     anchored = [r for r in rows if r["frame_onto"] > 0]
     print("The anchored sites, most-framed first. The frame score is"
@@ -470,6 +479,7 @@ ORACLE = {
     "targets": 70,
     "at_instruction_start": 1,
     "cjne_displacement": 135,
+    "absolute_low_target": 1,
     "annotated": 42,
     "entry_frame": (24, 24),
     "runner_up_frame": (5, 24),
@@ -542,6 +552,28 @@ def self_test(d, index, annotations, rows, targets) -> int:
               for r in rows if bucket_of_site(r) == "cjne"),
           "and every one of them is the instruction's *last* byte, which is"
           " what makes it a displacement rather than the `cjne`'s immediate")
+
+    # The `absolute` bucket is guarded on the same condition, and for the same
+    # reason read the other way round: `0x02`/`0x12` store their 16-bit operand
+    # high byte first, so the low target byte -- the one a byte scan reads as
+    # the far end of a call target -- is the instruction's *last* byte. The one
+    # real site is asserted against the data, and the branch is asserted against
+    # a synthetic high byte, because no site in the census sits at index 1 and
+    # the data alone cannot tell a guarded bucket from an unguarded one.
+    absolute = [r for r in rows if bucket_of_site(r) == "absolute"]
+    check(len(absolute) == ORACLE["absolute_low_target"]
+          and all(r["owner_index"] == OPCODE_LEN[r["owner_opcode"]] - 1
+                  for r in absolute),
+          f"the {ORACLE['absolute_low_target']} `absolute` site(s) are the *low*"
+          " target byte of the `ljmp`/`lcall` the listing already carries --"
+          " the last byte, since the operand is stored high byte first")
+
+    high_byte = {"shape": "operand", "owner_opcode": 0x12, "owner_index": 1}
+    check(bucket_of_site(high_byte) == "other",
+          "and the *high* target byte at index 1 of a 0x02/0x12 is not"
+          " `absolute`: no byte scan reads it as a call target, so the bucket"
+          " is the low byte by construction, not by what the data happens"
+          " to contain")
 
     entry = by[ENTRY_TARGET]
     check((entry["frame_onto"], entry["frame_total"]) == ORACLE["entry_frame"]
