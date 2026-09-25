@@ -6825,3 +6825,33 @@ check**, and `docs/agent-pipeline.md` carries it across a template re-copy as
 its item 9. This is tooling hygiene, as the issue says: two committed files and a
 directory listing, no capture opened, no EC, no hardware, and no claim that any
 fixture is correct.
+
+## 42. The testdata-index suite's three tallies are a property of a run, not of today's tree (2026-09-25, issue #744)
+
+The write-up is `docs/findings/testdata-index-suite-count-floor.md`; this is
+the summary. §41's suite asserted the committed tree's three tallies as
+`assertEqual((directories, rows, tokens), (13, 27, 34))`, three lines under a
+comment saying the opposite — "nothing says the numbers have to stay where they
+are, only that a run reaching nothing fails" — so the correct response to the
+event that branch was about, a fourteenth fixture directory arriving, was a bare
+`(14, 28, 35) != (13, 27, 34)` from the one test named for reaching something,
+while `test_the_committed_index_and_tree_agree` stayed green throughout because
+the index and the tree did still agree. **The tool was never the thing that was
+wrong**: `check_testdata_index.py:77-82` already stated "there is no floor on
+either number … the suite asserts non-emptiness instead", as
+`tools/run-tests.sh:77-79` declines the same trade about its own counts; after
+this change that sentence is true rather than aspirational, and the tool file is
+untouched.
+
+The rule is now one root-parameterised method, so a run over a scratch tree and a
+run over the committed tree are held to the same clause, and five cases pin it
+from both sides: a tree carrying more of them than today and one carrying fewer
+are both green — a new directory and a row added, a removed one and a row
+dropped, with no integer anywhere to edit — while an empty tree, an index
+carrying no row beside a tree that has one, and a tree with one token per row are
+each refused, and each refusal asserts *which* clause said so. Three deliberate
+weakenings of the replacement are each caught by the case naming them, and a
+throwaway copy of the tree carrying a real fourteenth directory and a real row
+for it is green at `(14, 28, 35)` with no committed fixture added. Still tooling
+hygiene: strings in a `tempfile` and two committed files, no capture opened, no
+EC, no hardware.
