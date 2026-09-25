@@ -5161,3 +5161,57 @@ on the same reasoning as the `moved_groups` companion above it. The exit code
 is unchanged; a void block already returned 1. **No live run happened and none
 is implied**: the reproduction is offline over hand-written fixtures, and §7's
 `confirmed-inert` still needs #380's run.
+
+## 24. A citation is a code frame, not an address (2026-09-24, issue #453)
+
+The write-up is `docs/findings/citation-code-vs-data.md`; this is the
+summary. `../ec/tools/call_graph.py` credited a comment to whatever anonymous
+function its `0x` + 4-uppercase-hex-digit token resolved to, and on this
+firmware that token is a function entry *and* an XDATA byte constantly — 0x07D0
+is `FUN_CODE_07d0` in the index and `DBD1` in
+`../ec/annotations/registers.yaml` — so **the top of the committed call-graph
+ranking was a census of XDATA addresses**. `../ec/tools/citation_frames.py` now
+gates each citation on whether a code frame governs the mention.
+
+**The window is bounded and local, and that is the part worth keeping.** A
+data veto over the whole sentence rejects a genuine list: seven `bank1`
+comments read "then calls to 0x110A, 0x158E, 0x0F75, 0x1594 and 0x00CF", so a
+sentence-wide veto would have thrown away 21 real citations to save 27 fake
+ones — a larger corruption than the one being fixed. A code frame is
+*necessary*, a data frame is a *veto*, and what neither settles is reported as
+`undecided` rather than defaulted.
+
+**The population, partitioned for the first time: 382 candidate
+(callee, comment) pairs → 152 kept, 185 rejected, 45 undecided.** The guard
+reports both discarded sets and never drops them, following the
+`audit_call_targets.py` precedent, because a guard that silently discards what
+it rejects cannot be told apart from one that rejects too much. The cited
+callees drop from 141 to 99 and the citing comments from 315 to 142, so 45% of
+the old citation count was a call at all.
+
+**Two of the numbers are corrections, kept visible.** `common,07D0` is **2**
+citations, not the 27 the table carried and not the 0 the issue argued for:
+`common,018C` and `common,029B` both say "calls 0x07D0" and both listings
+carry the `lcall` (`../ec/decompiled/common/018C.asm:40`, `029B.asm:50`), so
+`cited_by` and `inbound` now *agree* — which is the check a guard zeroing all
+27 would have failed. And `common,1606` has six citations, all `XDATA 0x1606`,
+with **no `registers.yaml` row at all**, so a lookup against that file is not
+the guard; 0x1C00 is the limit worth carrying, 20 comments naming it and no
+row in the table at all, because no transfer reaches it.
+
+**The largest slice is not lexical.** 45 of the 71 `pd`-scoped pairs name a
+`common`/`bank` row and cannot: the dump holds two 8051 programs with separate
+address spaces. **Three of those 45 read as a code frame**, so the
+program-identity check does work no lexicon reaches — and the complementary
+case (a bank comment citing a `common` row, which is legitimate) is
+deliberately left to the frame test alone.
+
+**What is still wrong, and it is not the guard:** the new ranks 1–3 are
+`common,0F75`, `common,158E` and `common,1594`, 7 citations each, and all 21
+come from the same seven `bank1` `0xFF`-fill comments whose text says the
+decompiled body "is not supported by these instructions". Each citation does
+read as a call to a code address; what the comment is attached to is fill, not
+the reset path those calls live in. That is a second defect — the comment
+refutes the decompile and still names its callees — and it is the next thing
+to fix. Nothing here is a behavioural claim: no register `status:` changed, no
+listing was re-read, and no live test ran.
