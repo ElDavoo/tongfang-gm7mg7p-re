@@ -8,6 +8,8 @@ common,0064,FUN_CODE_0064,5,call-target,yes,no,,,,bank1,common/0064.c
 common,0ECC,FUN_CODE_0ecc,6,call-target,yes,no,,,,bank1,common/0ECC.c
 bank0,1F00,FUN_CODE_1f00,6,call-target,yes,no,,,,,bank0/1F00.c
 common,DEAD,FUN_CODE_dead,3,call-target,yes,no,,,,bank1,common/DEAD.c
+common,0D20,wait_then_jump_0d40,11,annotation,yes,yes,delay,hand-decoded,ec/decompiled/common/0D20.asm,,common/0D20.c
+common,0D40,FUN_CODE_0d40,3,call-target,yes,no,,,,bank1,common/0D40.c
 common,018C,chan_arm_1709,4,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/common/018C.asm,,common/018C.c
 common,029B,chan_arm_1708,3,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/common/029B.asm,,common/029B.c
 common,0070,reset_entry,7,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/common/0070.asm,,common/0070.c

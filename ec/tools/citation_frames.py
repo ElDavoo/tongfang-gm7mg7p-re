@@ -62,9 +62,19 @@ VERDICTS = (CODE, DATA, UNDECIDED)
 # `jmp`, `jump`, `jumps` and `jumping` are four entries because `jmps?` does
 # not match "jumps" -- the `u` is missing from the pattern, not from the
 # comments -- and a lexicon that silently fails to match costs a citation.
+# `sjmp` is here because a comment can name the listing mnemonic the way it
+# names `lcall` -- "it ends in an sjmp to 0x9B3C" is a claim about where
+# control goes -- and because the three other tools that read these bytes
+# already list it in their branch families (`audit_call_targets.py`
+# REL_FAMILIES, `grade_name_basis.py` BRANCHES, `disasm8051.py` REL_OPCODES).
+# It is NOT a wider-reaching form than its neighbours: like every PC-relative
+# opcode it is a signed 8-bit offset, -128..+127 from the following
+# instruction. What the conditional branches beside it in those three tables
+# lack is unconditionality, and no committed comment claims one as a transfer
+# to an address, which is the only thing this list is for.
 CODE_VERB = re.compile(r"""^(?:
       call | calls | called | calling
-    | lcall | lcalls | ljmp | ljmps | ajmp | acall
+    | lcall | lcalls | ljmp | ljmps | ajmp | acall | sjmp
     | jmp | jump | jumps | jumping
     | tail-?call(?:s|ing)? | tail-?jump(?:s|ing)?
     | branch(?:es)? | reach(?:es|ed)? | poll(?:s|ed)?
@@ -280,6 +290,11 @@ def rejected_rows(candidates, limit=0):
     that silently discards what it rejects cannot be told apart from a guard
     that rejects too much. Each line carries the reason, so a reader who
     disagrees with one call can see which pattern made it.
+
+    An undecided candidate carries no reason -- nothing fired against it --
+    so the line falls back to the frame verdicts its mentions drew. Without
+    that the line ends in a bare `--`, which reads as a rendering fault rather
+    than as the "the window settled nothing" answer it is.
     """
     counts = collections.Counter(c.callee for c in candidates)
     ordered = sorted(candidates,
@@ -288,7 +303,7 @@ def rejected_rows(candidates, limit=0):
         ordered = ordered[:limit]
     return ["  %s,%s cited by %s:%s -- %s"
             % (c.callee[0], c.callee[1], c.citer[0], c.citer[1],
-               "+".join(c.reasons))
+               "+".join(c.reasons or c.verdicts))
             for c in ordered]
 
 

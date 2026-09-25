@@ -249,7 +249,11 @@ report asking for a human to read the sentence.
    from "names a callee in a body it rejects".
 2. **The 45 undecided pairs** want a human reading each sentence, the way
    `common/0070.asm:12-14` settled three of them. A wider code lexicon would
-   settle more and would need its own evidence for each word it adds.
+   settle more and would need its own evidence for each word it adds. **Done
+   in issue #526**: all 45 carry a recorded verdict in
+   `docs/findings/citation-undecided-verdicts.md`, `report()` now renders the
+   population, and `FILLER_BUDGET` is unchanged at 1 — 44 of the 45 are
+   readings that re-confirm this section's measurement rather than move it.
 3. **The gate arm is wired; a template re-copy of it is the thing to watch.**
    `call_graph.py --check` and `--self-test` both run per commit from
    `check_ghidra_tooling` — the tool list at `.github/scripts/agent-gates.sh:125`
