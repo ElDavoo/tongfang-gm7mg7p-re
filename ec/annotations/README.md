@@ -220,6 +220,26 @@ which is a different reason and says so in their comments and in `--report`'s
 split line — see
 [`docs/findings/group-proxy-populations.md`](../../docs/findings/group-proxy-populations.md).
 
+**Which caller scopes reach a `common` row is recorded on the branch that
+actually ends there, because a shared address is two functions.**
+`cluster()` used to record a caller's scope against the `common` row at a
+target address before it decided whether the edge was a same-scope join or a
+proxy. For `common`→`common` that is right — both ends are `common`, so the
+edge is joined directly but the row was still reached from outside the banks.
+For a `pd` caller whose target also exists as a **`pd`** row it is not: the join
+takes the `pd` row, and `ec/decompiled/pd/0C7A.asm`
+(`mul_r7_r5_r4_into_r6r7`) is a different function from
+`ec/decompiled/common/0C7A.asm` (`clear_low_nibble_of_1304`) because the
+ITE8850-PD image is a separate program with its own address space. Nine
+addresses carry rows from both, and `reached_only_by_bank` is a subset test
+that only separates the two behaviours once a bank caller is on the same row —
+which is why the `--self-test` fixture has one. **No published figure moves**:
+the 26, the 196, the 36 targets and the 115/81 split are identical before and
+after, because no `common` row a `pd` caller reaches is also reached by a bank
+caller on this tree. `common 0x11C2`, which has no `pd` row beside it, keeps its
+real `pd` reach. See
+[`docs/findings/pd-common-address-attribution.md`](../../docs/findings/pd-common-address-attribution.md).
+
 **No group is a behavioural claim.** A group says which routines are connected
 in the call graph, not what the EC does with them. No hardware is reachable
 from a GitHub-hosted runner, so no live test is claimed here.

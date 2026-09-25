@@ -312,8 +312,9 @@ def cluster(rows, repo=REPO, min_size=4):
     cross-region edge, so there is no cluster to reject and the invariant
     cannot be violated by a bug in a later pass. The edges that cross a
     region are counted and reported, never merged, and the calling scope is
-    recorded against an annotated `common` target on the way past, so the
-    report can say which rows the method found and the rule then cut.
+    recorded against an annotated `common` target on whichever branch ended
+    there, so the report can say which rows the method found and the rule then
+    cut.
 
     "Never sees a cross-region edge" is about the union, and an edge to a
     common-area function is where that promise was being broken without
@@ -382,15 +383,28 @@ def cluster(rows, repo=REPO, min_size=4):
             # graph, keyed to the common row.
             if target < BANK_BASE:
                 taddr = "%04X" % target
-                # Recorded BEFORE the join decision, so a `common` caller
-                # reaching a `common` row counts too: that edge is joined
-                # directly rather than proxied, but it still says this row
-                # was reached from outside the banks, which is what keeps it
-                # out of `reached_only_by_bank`.
-                if taddr in by_addr.get("common", {}):
-                    reach[taddr].add(scope)
+                # Recorded on the branches whose edge really does end at the
+                # `common` row, not before the join decision. An address
+                # carrying a `common` row and a row of the caller's own scope
+                # is two different functions -- `pd/0C7A.asm` is not
+                # `common/0C7A.asm`, and the separate ITE8850-PD image has its
+                # own address space -- and a same-scope join took the other
+                # program's row as its endpoint, so recording the caller
+                # scope against the `common` row there was attributing an edge
+                # to a row the edge never touched.
+                #
+                # The `common` case is why the reach is recorded at all on this
+                # branch: both ends are `common`, so the edge is joined
+                # directly rather than proxied, but it still says the row was
+                # reached from outside the banks, which is what keeps it out
+                # of `reached_only_by_bank`. The guard is load-bearing, not
+                # cosmetic -- dropping it loses the 30 common->common edges on
+                # the committed tree, takes `reached_only_by_bank` from 26 to
+                # 35, and fails --self-test.
                 if taddr in by_addr.get(scope, {}):
                     union(caller, (scope, taddr))
+                    if scope == "common":
+                        reach[taddr].add(scope)
                 elif taddr in by_addr.get("common", {}):
                     # A common-area row is one function that both bank images
                     # carry, so a bank0 caller and a bank1 caller that both
@@ -412,6 +426,12 @@ def cluster(rows, repo=REPO, min_size=4):
                     # carrying a function is not the same function being
                     # called by both.
                     union(caller, (PROXY_SCOPE % scope, taddr))
+                    # The proxy replaces the common row as this edge's
+                    # endpoint, but the common row is the row this address
+                    # means, so the caller's scope is recorded against it:
+                    # this is the population `reached_only_by_bank` is the
+                    # other half of.
+                    reach[taddr].add(scope)
                     proxy_by_caller[scope] += 1
                     proxy_by_target[taddr] += 1
                 continue
@@ -864,6 +884,95 @@ def self_test():
           dict(stats4.proxy_by_target) == {"05E8": 4},
           "(got %r; the common->common edge is joined directly, so the target "
           "count is unchanged)" % (dict(stats4.proxy_by_target),))
+
+    # A `common` row and a `pd` row at the SAME address, reached by a bank0
+    # caller and by a `pd` caller. `ec/decompiled/pd/0C7A.asm`
+    # (`mul_r7_r5_r4_into_r6r7`) is a different function from
+    # `ec/decompiled/common/0C7A.asm` (`clear_low_nibble_of_1304`) -- the
+    # ITE8850-PD image is a separate program with its own address space -- so a
+    # same-scope `pd` join takes the `pd` row as its endpoint and the `common`
+    # row at that address is not an endpoint of that edge at all.
+    #
+    # The bank0 caller is what makes this discriminate, and it is worth saying
+    # why, because the obvious version of the fixture does not. A `pd`-ONLY
+    # reach is invisible either way: `reached_only_by_bank` is a subset test
+    # that already discards any non-bank scope, so asserting "a pd caller does
+    # not put the row in reached_only_by_bank" passes against the bug it is
+    # written for. The reach is a SET, so what separates the two behaviours is
+    # a bank reach on the same row:
+    #     ['bank0', 'pd']  (the bug) -> not a subset of the banks -> not here
+    #     ['bank0']        (the fix) -> a subset of the banks     -> here
+    shared = [
+        # No bank0 row at 0x06A0, so this caller's endpoint really is the
+        # `common` row, and the edge is proxied.
+        {"scope": "bank0", "addr": "8000", "name": "b0_shared_caller",
+         "type": "logic", "evidence": os.path.relpath(
+             asm("shared_b0.asm", ["8000     12 06 a0 lcall    0x06A0", RET]),
+             REPO)},
+        # A `pd` row at 0x06A0, so this caller's endpoint is the `pd` row.
+        {"scope": "pd", "addr": "8100", "name": "pd_shared_caller",
+         "type": "logic", "evidence": os.path.relpath(
+             asm("shared_pd.asm", ["8100     12 06 a0 lcall    0x06A0", RET]),
+             REPO)},
+        {"scope": "common", "addr": "06A0", "name": "shared_common_row",
+         "type": "logic", "evidence": os.path.relpath(
+             asm("shared_common.asm", [RET]), REPO)},
+        {"scope": "pd", "addr": "06A0", "name": "shared_pd_row",
+         "type": "logic", "evidence": os.path.relpath(
+             asm("shared_pd_row.asm", [RET]), REPO)},
+    ]
+    grouped5, stats5 = group_rows(shared, repo=REPO, min_size=2)
+    check("a pd->pd join at an address that also carries a common row is not "
+          "a reach of the common row",
+          stats5.reached_only_by_bank == {"06A0"},
+          "(got %r; the bank0 caller's edge targets the common row and the pd "
+          "caller's joins the pd row, so the common row's callers are exactly "
+          "the banks)" % (sorted(stats5.reached_only_by_bank),))
+    check("the pd caller's edge at a shared address is joined, not proxied",
+          dict(stats5.proxy_by_target) == {"06A0": 1}
+          and dict(stats5.proxy_by_caller) == {"bank0": 1},
+          "(got %r by target, %r by caller; a same-scope join is a join, so "
+          "only the bank0 edge is the rule's to cut)"
+          % (dict(stats5.proxy_by_target), dict(stats5.proxy_by_caller)))
+    check("the common row and the pd row at a shared address stay distinct",
+          grouped5[("common", "06A0")][0] != grouped5[("pd", "06A0")][0],
+          "(one address is not one function across two programs)")
+
+    # The `pd` edge that DOES target a `common` row, which is the committed
+    # `common 11C2` case: no `pd` row at that address, so the `pd` caller's
+    # endpoint is the common row and the reach is real. The bank0 caller is
+    # here for the same reason as above -- a `pd`-only reach is not observable
+    # through `reached_only_by_bank` at all, so this pins the attribution the
+    # way the surface can: with a bank reach beside it, the row must fall OUT
+    # of the population, and a `pd` reach that is dropped rather than recorded
+    # wrongly is the failure this catches.
+    boundary = [
+        {"scope": "bank0", "addr": "8000", "name": "b0_boundary_caller",
+         "type": "logic", "evidence": os.path.relpath(
+             asm("boundary_b0.asm", ["8000     12 06 b0 lcall    0x06B0", RET]),
+             REPO)},
+        {"scope": "pd", "addr": "8100", "name": "pd_boundary_caller",
+         "type": "logic", "evidence": os.path.relpath(
+             asm("boundary_pd.asm", ["8100     12 06 b0 lcall    0x06B0", RET]),
+             REPO)},
+        {"scope": "common", "addr": "06B0", "name": "boundary_common_row",
+         "type": "logic", "evidence": os.path.relpath(
+             asm("boundary_common.asm", [RET]), REPO)},
+    ]
+    _grouped6, stats6 = group_rows(boundary, repo=REPO, min_size=2)
+    check("a pd caller's edge to a common row with no pd row beside it is "
+          "still a reach of that row",
+          stats6.reached_only_by_bank == set(),
+          "(got %r; the pd caller is outside the banks, so the row is not a "
+          "found-then-cut row however the join was taken)"
+          % (sorted(stats6.reached_only_by_bank),))
+    check("both edges of a program boundary are counted by the proxy rule",
+          dict(stats6.proxy_by_caller) == {"bank0": 1, "pd": 1}
+          and dict(stats6.proxy_by_target) == {"06B0": 2},
+          "(got %r by caller, %r by target; this is the one program-boundary "
+          "edge the bank rule files under a question it cannot answer, and it "
+          "is counted rather than hidden)" % (
+              dict(stats6.proxy_by_caller), dict(stats6.proxy_by_target)))
 
     # What a reader can SEE. The refusal fixtures above all pass on a report
     # that says nothing about any of this, which is exactly how 27 came to
