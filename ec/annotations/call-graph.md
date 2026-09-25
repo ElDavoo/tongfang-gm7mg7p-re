@@ -38,7 +38,7 @@ trees the numbers were taken on.
 | anonymous callees a comment names | 99 |
 | comments that name one | 142 |
 | — candidate (callee, comment) pairs, before the frame gate | 382 |
-| — kept / rejected / undecided by it | 152 / 185 / 45 |
+| — kept / rejected / undecided by it | 153 / 185 / 44 |
 
 **The 475 and the 822 are two framings of related things, and neither is "the"
 count.** The first is decoded out of the committed `.asm` listings; the second
@@ -115,10 +115,21 @@ over the whole sentence rejects a genuine list: seven `bank1` comments write
 "then calls to 0x110A, 0x158E, 0x0F75, 0x1594 and 0x00CF", where "to" is a
 data marker and all five are real code addresses. A code frame is *necessary*,
 a data frame is a *veto*, and **what neither settles is returned as
-`undecided`** — 45 pairs today — rather than defaulted either way. The
+`undecided`** — 44 pairs — rather than defaulted either way. The
 rejected and undecided populations are printed by the tool and are never
 dropped, because a guard that silently discards what it rejects cannot be told
-apart from one that rejects too much.
+apart from one that rejects too much. **Each undecided pair has a recorded
+verdict in
+[`../../docs/findings/citation-undecided-verdicts.md`](../../docs/findings/citation-undecided-verdicts.md)**,
+one row each, settled on the listing or on the committed firmware bytes. Those
+are readings of the *sentences*, not reclassifications: the tool still reports
+the pair as undecided, and an undecided line carries the frame verdicts its
+mentions drew rather than a bare `--`. The count has moved once, to 44, and
+only because `sjmp` joined `CODE_VERB` for the one committed comment that
+needed it (`bank1,9B03`'s "it ends in an sjmp to 0x9B3C"). `sjmp` is **not** a
+member of `TRANSFERS` above and must not become one: a PC-relative branch is
+not a call, and a comment's lexicon and this tool's transfer set are
+deliberately different sets.
 
 **Two further signals sit beside the frame, and the second is not lexical.** A
 `pd` comment cannot cite an EC row at all: the dump holds two 8051 programs

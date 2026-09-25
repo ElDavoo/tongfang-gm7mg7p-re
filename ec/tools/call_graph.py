@@ -106,8 +106,10 @@ Usage:
 """
 import argparse
 import collections
+import contextlib
 import csv
 import glob
+import io
 import os
 import re
 import sys
@@ -558,6 +560,13 @@ def report(index, rows, edges, unresolved, orphan_callers, total,
           " renders all):")
     for line in citation_frames.rejected_rows(rejected, limit=10):
         print(line)
+    print("  undecided set, largest callee first; every one has a recorded"
+          " reading in")
+    print("  docs/findings/citation-undecided-verdicts.md, and the tool still"
+          " reports the")
+    print("  pair here -- a recorded reading does not reclassify it:")
+    for line in citation_frames.rejected_rows(undecided, limit=10):
+        print(line)
     print()
     print("  ranked  scope    addr    in  named  cited  name")
     for rank, r in zip(range(1, 13), cited[:12]):
@@ -768,6 +777,38 @@ def self_test() -> int:
                     ((s, a) for s, a, _ in v)} & rejected_keys)
           and not ({(k, c) for k, v in cited.items() for c in
                     ((s, a) for s, a, _ in v)} & undecided_keys))
+    # The `sjmp` case, and the reason it is one. TRANSFERS scans the four
+    # absolute forms and the comment lexicon is a different set, so a target
+    # reached only by a PC-relative branch is a citation the graph cannot
+    # rank. Both halves are asserted, because a guard that credited it
+    # *and* a graph that gave it an edge would agree on the number while
+    # disagreeing about what produced it.
+    check("an `sjmp` in the comment lexicon credits a target whose only "
+          "transfer is a PC-relative branch TRANSFERS does not scan: 0x0D40 "
+          "is cited and still has no inbound edge",
+          ("common", "0D40") in cited
+          and ("common", "0D40") not in by_key)
+    # The undecided block. This population is the one a human is handed, and
+    # it is rendered the way the rejected one is; an undecided candidate
+    # carries no reason, so each line falls back to the frame verdicts its
+    # mentions drew rather than ending in a bare `--`.
+    report_out = io.StringIO()
+    with contextlib.redirect_stdout(report_out):
+        report(index, rows, edges, unresolved, orphans, total,
+               cited, rejected, undecided)
+    report_lines = report_out.getvalue().splitlines()
+    block_at = next((i for i, line in enumerate(report_lines)
+                     if line.startswith("  undecided set,")), None)
+    block = report_lines[block_at:] if block_at is not None else []
+    rendered = [line for line in block if line.startswith("  common,5A43 ")]
+    check("the undecided population is rendered, and a line carries the "
+          "frame verdicts rather than a bare `--`: 0x5A43 cited by 0x029B",
+          block_at is not None
+          and len(rendered) == 1 and rendered[0].endswith("-- undecided"))
+    check("the rendered undecided block names every undecided candidate, "
+          "limit included: the fixture's is one",
+          len([line for line in block
+               if line.startswith("  ") and " cited by " in line]) == len(undecided))
     print("  all assertions passed" if ok else "  FAILURES ABOVE")
     return 0 if ok else 1
 

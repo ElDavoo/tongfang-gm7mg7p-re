@@ -29,8 +29,10 @@ cases where a wrong answer is a *plausible* number rather than a missing one.
 | `decompiled/common/018C.asm` | the mixed sentence: the listing carries an `lcall` to **0x07D0** and one to **0x0A5A**, and the comment below names the first as a call and the second only as the top byte of `XDATA 0x0A56-0x0A5A`. Both addresses are reachable anonymous rows in this same fixture, so "the comment mentions a function" and "the comment cites a callee" are separate questions and the guard has to answer the second one |
 | `decompiled/common/029B.asm` | the second 0x07D0 caller. Two comments say "calls 0x07D0" and two listings carry the `lcall`, so the self-test's `cited_by == inbound` is two framings agreeing rather than one number that happens to match |
 | `ghidra-functions.csv` `0x0070` | the "calls to 0x110A, 0x158E, 0x0F75, 0x1594 and 0x00CF" list, which is the real `bank1` sentence: "to" is a data marker *inside* a code list, so a data veto over the sentence would throw away 21 real citations. It credits all four anonymous addresses; the fifth, 0x00CF, is a **named** row here and so is not a candidate at all, which is the rule the named-callee assertion already pins |
-| `ghidra-functions.csv` `0x029B` | "The shared helper here is 0x5A43" — no verb inside the window, so the pair is reported `undecided` rather than credited or counted as rejected |
+| `ghidra-functions.csv` `0x029B` | "The shared helper here is 0x5A43" — no verb inside the window, so the pair is reported `undecided` rather than credited or counted as rejected. The same pair is what the undecided **rendering** assertions below check |
 | `decompiled/pd/10BC.asm` | a `pd` comment naming the common area's 0x07D0. The two programs have separate address spaces, so this is refused on program identity whatever the sentence says — the one rejection no lexical rule can reach |
+| `decompiled/common/0D20.asm` | carries an `sjmp` to 0x0D40, a form `TRANSFERS` does not scan, and the comment on that row names the same `sjmp` |
+| `ghidra-functions.csv` `0x0D20` | "it ends in an sjmp to 0x0D40" — the one committed sentence that put `sjmp` in the comment lexicon. The self-test asserts **both** halves: the citation is credited, and 0x0D40 still has no inbound edge, because the graph's transfer set and the comment lexicon are different sets |
 
 The `-` byte-column padding in `0EA2.asm`'s `ajmp` is the trap the module
 docstring names: a `[0-9a-f-]{2}` column regex matches nothing on that line
@@ -40,3 +42,8 @@ caller, which is what makes `callers` != `named_callers` checkable.
 Not a model of the real tree, and not meant to be: the real censuses are in
 `ec/annotations/call-graph.md`, and the real `.asm` files are generated. This
 tree is hand-written and hand-checked, which is what makes it an oracle.
+
+The `evidence` column in `ghidra-functions.csv` keeps the real tree's
+`ec/decompiled/…` shape for consistency and is **not resolved on disk** — the
+self-test never reads it, and the fixture-only `0x0D20`/`0x0D40` have no
+counterpart under `ec/decompiled/`.

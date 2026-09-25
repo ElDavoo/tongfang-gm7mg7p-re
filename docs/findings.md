@@ -5237,3 +5237,53 @@ the reset path those calls live in. That is a second defect — the comment
 refutes the decompile and still names its callees — and it is the next thing
 to fix. Nothing here is a behavioural claim: no register `status:` changed, no
 listing was re-read, and no live test ran.
+
+## 25. The 45 undecided pairs, settled one at a time (2026-09-25, issue #526)
+
+The write-up is `docs/findings/citation-undecided-verdicts.md`; this is the
+summary. §24's undecided population is the one `citation_frames.py` exists to
+hand a human, and `report()` printed only its size. It now renders the
+population the way the rejected one is, with each line carrying the frame
+verdicts its mentions drew — an undecided `Candidate` has no reason to print,
+so the line used to end in a bare `--`.
+
+**One lexicon word, `sjmp`, and it moved exactly one pair.** `bank1,9B03` says
+"it ends in an sjmp to 0x9B3C" and `../ec/decompiled/bank1/9B03.asm:31` is
+`9B33 80 07 - sjmp 0x9b3c`, so the census goes **152/185/45 → 153/185/44** and
+`call-graph-callees.csv` stays byte-identical (0x9B3C has no row in it: no form
+in `TRANSFERS` reaches a PC-relative branch). `sjmp` belongs with `lcall`/
+`ljmp`/`ajmp`/`acall` because a comment can name the listing mnemonic the
+way it names `lcall` — and because `audit_call_targets.py`, `grade_name_basis.py`
+and `disasm8051.py` already list `sjmp` in their branch families, so the
+comment lexicon was the odd one out. **It is not a wider-reaching form than its
+neighbours**: `sjmp` is `80 rel`, a signed 8-bit offset, and the committed
+`80 07` is the whole of a 7-byte branch. The issue's title puts the gap in
+`call_graph.py`'s `TRANSFERS`; it is not there, and adding it would have pulled
+every intra-function short jump into the graph.
+
+**The other 44 are readings, and the tool still reports them undecided.** They
+are settled on the listing or on the committed firmware bytes, not by a wider
+window, and the write-up says so per row rather than leaving a reader to
+discover it by counting 44 against a 45-row table. `FILLER_BUDGET` stays at 1 —
+§24's own measurement is re-confirmed at that value, not moved.
+
+**The rows are not all the same shape, which is the point of reading them.**
+16 cite a transfer the citing listing carries and the window could not reach;
+7 are jump-table claims settled by reading the table bytes out of
+`ec/firmware/GMxMGxx_11.800` (`0x8A80`, `0x9AD2`, `0xAD50`, `0xC90C`,
+`0xD20D` — the last corroborated by the `lcall 0xCC2D` that follows it);
+12 name another function's *body*, an *exit* or a comparable listing, where no
+transfer is claimed in either direction; 8 are XDATA mentions and true
+rejections; and 2 are neither — one is a code reading the *same comment*
+retracts (`bank0,D091`'s ACALLs, which `decode_index_table.py --at 0x0D148`
+reads as 12 well-formed table entries) and one is a resolver artifact
+(`pd,E930 ← bank1,E924`, where the mention names a bank1 fall-through and the
+index has no `bank1` row at that address to credit).
+
+**Two of those are the reason a lexicon word needs its own evidence.** The
+0xD673 pair is undecided only because the sentence writes "ACALLs" and
+`CODE_VERB` has `acall` without the plural; adding the plural would credit a
+claim its author withdrew. Every word this adds carries its evidence sentence
+and listing anchor in `../ec/tools/test_citation_frames.py`. Nothing here is a
+behavioural claim: no register `status:` changed, no listing was re-read, and
+no live test ran.

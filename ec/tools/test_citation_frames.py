@@ -57,6 +57,20 @@ class CodeFrames(unittest.TestCase):
                      "One instruction: ajmp 0xE822"):
             self.assertEqual(verdict(text).verdict, cf.CODE, text)
 
+    def test_a_short_jump_is_a_code_frame(self):
+        # bank1,0x9B03, and the one committed comment that needed this word:
+        # "it ends in an sjmp to 0x9B3C". ec/decompiled/bank1/9B03.asm:31 is
+        # `9B33 80 07 - sjmp 0x9b3c`, so the sentence is naming the branch the
+        # listing ends on. It sits with the listing forms because a comment
+        # can name the mnemonic the way it names `lcall` -- and because the
+        # conditional branches reach -128..+127 too, so range is not what
+        # separates them. Unconditionality is, and no committed comment claims
+        # one of those as a transfer to an address.
+        self.assertEqual(
+            verdict("when R7 is nonzero from both and XDATA 0x06E6 is 1 and "
+                    "0x06C2 is 0 it ends in an sjmp to 0x9B3C",
+                    "9B3C").verdict, cf.CODE)
+
     def test_a_tail_jump_is_a_code_frame(self):
         self.assertEqual(
             verdict("Anything else tail-jumps to 0x9A0D, and all").verdict,
@@ -228,6 +242,36 @@ class Reporting(unittest.TestCase):
         counts = cf.reason_counts(self.candidates)
         self.assertEqual(counts["cross-program"], 2)
         self.assertEqual(sum(counts.values()), 4)
+
+
+class UndecidedReporting(unittest.TestCase):
+    """The undecided population renders too, and a line that has no reason to
+    print says so rather than ending in a bare `--`."""
+
+    def setUp(self):
+        self.candidates = [
+            cf.Candidate(("bank1", "9B3C"), ("bank1", "9B03"), (),
+                         ("code",)),
+            cf.Candidate(("common", "1C00"), ("bank1", "E4F9"), (),
+                         ("undecided",)),
+        ]
+
+    def test_a_candidate_with_no_reasons_renders_its_frame_verdicts(self):
+        # An undecided `Candidate` carries `reasons=()`, so the line used to
+        # end in `--` and read as a rendering fault rather than as the answer
+        # "the window settled nothing". The 0x9B3C row is the case where the
+        # lexicon does reach a verdict; the 0x1C00 one is where it does not.
+        lines = cf.rejected_rows(self.candidates)
+        self.assertTrue(lines[0].endswith("-- code"), lines[0])
+        self.assertTrue(lines[1].endswith("-- undecided"), lines[1])
+
+    def test_the_three_field_form_still_renders_and_carries_no_verdict(self):
+        # `Candidate`'s `verdicts` has a default so a caller can keep building
+        # the three-argument form. A candidate built that way has neither
+        # field to print, and the line must still be a line.
+        bare = [cf.Candidate(("common", "07D0"), ("pd", "10BC"), ())]
+        line = cf.rejected_rows(bare)[0]
+        self.assertRegex(line, r"^  common,07D0 cited by pd:10BC -- ")
 
 
 if __name__ == '__main__':
