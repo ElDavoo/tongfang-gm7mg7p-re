@@ -285,8 +285,9 @@ does not contain the literal string `block: unplaced`, which is the coupling
   that reaches it is issue #725**, and it is the other side of this bullet
   rather than this bullet's own line: `withheld == 0`, `moved_groups` non-empty,
   `graded_unplaced > 0`. #725 takes reading (a), the branch scoped, over
-  reading (b), the bare form, for the reason the last sentence above gives: the
-  sentence directly under the movement line is a whole-capture claim, and the
+  reading (b), the bare form, for the reason this bullet named higher up and
+  which is restated here in full: the sentence directly under the movement
+  line is a whole-capture claim, and the
   count two lines above it has just said 2 of the run's 8 graded windows are
   attributable to no value under test. It cannot reuse this bullet's withheld
   wording, because `moved_groups` carries no window identity — the same row

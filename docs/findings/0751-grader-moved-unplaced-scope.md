@@ -46,12 +46,16 @@ invented here:
     python3 ec/tools/grade_0751_isolation.py /tmp/moved/*.csv
 
 The `sed` inserts the row *below* the 12:00:40 write mark rather than appending
-it to the end of the file. The tool reads timestamps and not file order, but the
-row belongs inside block 1's write window, which opens on that mark and closes
-at the 12:01:10 restore — a row appended at the end of the file would land in
-the last window of the day instead and grade a different run. The timestamp, not
-the position, is what puts it in block 1's window; the position is only what
-keeps the file readable.
+it to the end of the file. The tool reads timestamps and not file order, so the
+row lands in block 1's write window — which opens on that mark and closes at the
+12:01:10 restore — on the strength of the `12:00:43` timestamp it carries; the
+position is only what keeps the capture in timestamp order and readable.
+Appending it to the end of the file instead measures the same, and is worth
+saying because "appended" reads like it should change the run: byte-identical
+report to the inserted-row run once the two path prefixes are normalised, same
+`2 of the 8`, same `PL1/PL2/PL4 (§4.1)`, same scope line, exit 0 both ways.
+`build_windows` sorts its changes by `ts` (`grade_0751_isolation.py:867`), which
+is the mechanism, and it is the same one the second placement below relies on.
 
 "Before" is the tool at `061b2213`, this branch's merge base with `main`, and
 "after" is the file on this branch; the transcripts name the revision each was
