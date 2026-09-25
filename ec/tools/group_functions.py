@@ -81,13 +81,25 @@ artifact of where a boundary was drawn; and the paged `ajmp`/`acall` forms
 stay inside the caller's own region and are not edges at all. A cluster count
 is not a topology. Read the report.
 
-**And one edge the proxy rule files under a question it is not the same as.**
-A `pd` caller's edge to a `common`-scoped address is a question about two
-separate programs -- the ITE8850-PD image has its own address space, so the two
-rows are not two endpoints of one call -- and `region_of` has no way to say so,
-so the bank proxy rule is what it gets. `--report` breaks that edge out by
-caller scope so it is counted rather than hidden inside bank->common, and what
-it means is a follow-up rather than a rule this file settles.
+**And a non-bank caller scope on that proxy line is an annotation gap, not a
+second kind of region.** This paragraph used to read that a `pd` caller's edge
+to a `common`-scoped address "is a question about two separate programs" that
+`region_of` has no word for. That was a conclusion about the *images* wearing
+the clothes of a conclusion about the *rule*, and it was wrong: the proxy
+branch is reached whenever the target has no row in the **caller's own** scope,
+so for a `pd` caller it means "no `pd` row at that address" and nothing more.
+The ITE8850-PD image does have its own address space -- `region_of` and the
+`pd` grade rule both guard that -- but the branch never asks it. On the
+committed tree the last such edge was `pd 0xCB2A` -> 0x11C2, and it was a
+missing `ghidra-functions.csv` row: the `pd` listing at 0x11C2 is a two-key
+return-address table dispatcher and the `common` row at the same address is a
+bank-select trampoline, so annotating the `pd` one removed the edge rather
+than reclassifying it. A `pd` listing with no row is **not found by this
+method**, never absent from the PD program, and annotating the remaining
+unlisted `pd` addresses is ordinary annotation work rather than a
+classification problem. `--report` keeps the break-out for the case that comes
+back, and names it as a gap so it cannot read as a banking result; see
+`docs/findings/pd-common-address-spaces.md`.
 
 Usage:
     python3 ec/tools/group_functions.py --report
@@ -181,10 +193,12 @@ CALLGRAPH_NAME = re.compile(r"^callgraph_([a-z0-9]+)_([0-9A-F]{4,8})$",
 #   `cross_region` -- bucket-B edges whose target also exists in the other
 #     bank, i.e. the ones the same-bank assumption decides and this tool
 #     cannot.
-#   `proxy_edges` / `proxy_by_caller` -- edges a bank caller had to a
-#     `common` row, replaced by a per-bank proxy. Broken out by caller scope
-#     because `pd` is a different program and is not a bank question, and by
-#     target address because the edge total is not the row total: the edges
+#   `proxy_edges` / `proxy_by_caller` -- edges a caller had to a `common` row,
+#     replaced by a per-bank proxy. Broken out by caller scope because a
+#     non-bank scope here is an ANNOTATION GAP rather than a banking result --
+#     the branch is reached when the target has no row in the caller's own
+#     scope, which for `pd` means no `pd` row, not a different program -- and
+#     by target address because the edge total is not the row total: the edges
 #     spread over every `common` row they land on, found-then-cut or not.
 #   `reached_only_by_bank` -- annotated `common` rows whose caller scopes are
 #     a non-empty subset of the banks, i.e. the rows this method DID find and
@@ -938,14 +952,21 @@ def self_test():
           grouped5[("common", "06A0")][0] != grouped5[("pd", "06A0")][0],
           "(one address is not one function across two programs)")
 
-    # The `pd` edge that DOES target a `common` row, which is the committed
-    # `common 11C2` case: no `pd` row at that address, so the `pd` caller's
-    # endpoint is the common row and the reach is real. The bank0 caller is
-    # here for the same reason as above -- a `pd`-only reach is not observable
-    # through `reached_only_by_bank` at all, so this pins the attribution the
-    # way the surface can: with a bank reach beside it, the row must fall OUT
-    # of the population, and a `pd` reach that is dropped rather than recorded
-    # wrongly is the failure this catches.
+    # The `pd` edge that DOES reach the proxy branch: no `pd` row at the
+    # target, so the `pd` caller's endpoint is the `common` row and the reach
+    # is real. The bank0 caller is here for the same reason as above -- a
+    # `pd`-only reach is not observable through `reached_only_by_bank` at all,
+    # so this pins the attribution the way the surface can: with a bank reach
+    # beside it, the row must fall OUT of the population, and a `pd` reach that
+    # is dropped rather than recorded wrongly is the failure this catches.
+    #
+    # This is the shape the committed `pd 0xCB2A` -> 0x11C2 edge had, and it is
+    # kept as a fixture after that row was annotated. The rule does not change
+    # and the edge is not a special case: the target simply has no row in the
+    # caller's own program, which is an annotation gap. The one thing that
+    # changed is the reading -- the branch is not a program boundary the banking
+    # rule cannot describe, and nothing about the two images' address spaces
+    # makes it one.
     boundary = [
         {"scope": "bank0", "addr": "8000", "name": "b0_boundary_caller",
          "type": "logic", "evidence": os.path.relpath(
@@ -966,13 +987,97 @@ def self_test():
           "(got %r; the pd caller is outside the banks, so the row is not a "
           "found-then-cut row however the join was taken)"
           % (sorted(stats6.reached_only_by_bank),))
-    check("both edges of a program boundary are counted by the proxy rule",
+    check("both edges to an unlisted-in-the-caller's-program target are counted "
+          "by the proxy rule",
           dict(stats6.proxy_by_caller) == {"bank0": 1, "pd": 1}
           and dict(stats6.proxy_by_target) == {"06B0": 2},
-          "(got %r by caller, %r by target; this is the one program-boundary "
-          "edge the bank rule files under a question it cannot answer, and it "
-          "is counted rather than hidden)" % (
-              dict(stats6.proxy_by_caller), dict(stats6.proxy_by_target)))
+          "(got %r by caller, %r by target; the pd edge is an annotation gap "
+          "and is counted rather than hidden, and neither scope is a bank)"
+          % (dict(stats6.proxy_by_caller), dict(stats6.proxy_by_target)))
+
+    # The two halves of the reading, as a pair, because each one alone is a
+    # fixture that passes for the wrong reason. The committed `pd 0xCB2A` ->
+    # 0x11C2 edge was the second shape, and annotating `pd 0x11C2` took it off
+    # the report; the first shape is what the other six `pd` edges to an
+    # annotated `common` address already did. What makes this a pair is that the
+    # only difference between them is whether the target carries a row in the
+    # CALLER'S OWN SCOPE, and the branch does not look at anything else -- not
+    # at which image the caller is in, and not at whether the two images happen
+    # to overlap at that address.
+    joined_pd = [
+        {"scope": "pd", "addr": "8100", "name": "pd_joined_caller",
+         "type": "logic", "evidence": os.path.relpath(
+             asm("gap_pd_joined.asm", ["8100     12 06 c0 lcall    0x06C0", RET]),
+             REPO)},
+        # A `pd` row at the target and NO `common` row beside it, so the
+        # same-scope join is the only branch available and the proxy rule is
+        # never reached.
+        {"scope": "pd", "addr": "06C0", "name": "pd_joined_target",
+         "type": "logic", "evidence": os.path.relpath(
+             asm("gap_pd_joined_target.asm", [RET]), REPO)},
+    ]
+    grouped7, stats7 = group_rows(joined_pd, repo=REPO, min_size=2)
+    check("a pd caller whose target has a pd row proxies nothing",
+          stats7.proxy_edges == 0
+          and dict(stats7.proxy_by_caller) == {}
+          and dict(stats7.proxy_by_target) == {},
+          "(got %r edge(s), %r by caller; the edge joins the pd row, so the "
+          "banking rule is not what handles it)"
+          % (stats7.proxy_edges, dict(stats7.proxy_by_caller)))
+    check("a pd caller whose target has a pd row joins it directly",
+          grouped7[("pd", "8100")][0] == grouped7[("pd", "06C0")][0],
+          "(the two must share a component; the proxy node is what a gap would "
+          "have inserted between them)")
+
+    # ... and the gap shape: same caller, a target with a `common` row and no
+    # `pd` row. No bank caller here, which is the half that makes the printed
+    # wording unambiguous -- with a bank edge in the same population the reader
+    # cannot tell which scope the annotation-gap sentence is about.
+    gap_pd = [
+        {"scope": "pd", "addr": "8100", "name": "pd_gap_caller",
+         "type": "logic", "evidence": os.path.relpath(
+             asm("gap_pd.asm", ["8100     12 06 d0 lcall    0x06D0", RET]),
+             REPO)},
+        {"scope": "common", "addr": "06D0", "name": "gap_common_target",
+         "type": "logic", "evidence": os.path.relpath(
+             asm("gap_common.asm", [RET]), REPO)},
+    ]
+    grouped8, stats8 = group_rows(gap_pd, repo=REPO, min_size=2)
+    check("a pd caller whose target has only a common row proxies one edge",
+          stats8.proxy_edges == 1
+          and dict(stats8.proxy_by_caller) == {"pd": 1}
+          and dict(stats8.proxy_by_target) == {"06D0": 1},
+          "(got %r edge(s), %r by caller; the target has no row in the "
+          "caller's own program, so the edge ends at the proxy)"
+          % (stats8.proxy_edges, dict(stats8.proxy_by_caller)))
+    # The report half. A `pd=1` inside the `bank->common` parenthetical is what
+    # let a banking label absorb an annotation gap, so the wording is asserted
+    # rather than left to the next reader: the scope is named as a NON-BANK
+    # caller scope, and the line below says what that is.
+    out_gap = io.StringIO()
+    with contextlib.redirect_stdout(out_gap):
+        report(grouped8, stats8, gap_pd, repo=REPO)
+    printed_gap = out_gap.getvalue()
+    for label, needle in (
+            ("the proxy total is unchanged by the split",
+             "cut by the per-bank proxy rule: 1"),
+            ("a non-bank caller scope is not printed as a bank term",
+             "1 non-bank caller scope(s) (pd=1)"),
+            ("the non-bank scope is named as an annotation gap",
+             "that is an annotation gap rather than a banking result"),
+            ("the gap is stated as a missing row in the caller's own program",
+             "the target has no row in the caller's own program"),
+            ("the gap is stated as not-found rather than absent",
+             "never absent from the PD program"),
+    ):
+        check("the report prints %s for a non-bank caller scope" % label,
+              needle in printed_gap,
+              "(looked for %r in:\n%s)" % (needle, printed_gap))
+    check("a non-bank caller scope is not printed inside the bank terms",
+          "pd=1" not in printed_gap.split("non-bank caller scope(s)")[0]
+          .split("per-bank proxy rule:")[1],
+          "(the bank parenthetical must carry bank scopes only, or a gap reads "
+          "as a banking result)")
 
     # What a reader can SEE. The refusal fixtures above all pass on a report
     # that says nothing about any of this, which is exactly how 27 came to
@@ -1217,13 +1322,32 @@ def report(grouped, stats, rows, repo=REPO, is_bios=False):
     #
     # The proxy line then says which ROWS its edges landed on. Without that,
     # the only number a reader can attach to a row population is the edge
-    # total, which on the committed tree is the whole 196 for a reason the
+    # total, which on the committed tree is the whole 195 for a reason the
     # total does not describe: the edges spread over every `common` row they
-    # reach, so the 16 found-then-cut `ungrouped` rows and the 10 rows a
+    # reach, so the 16 found-then-cut `ungrouped` rows and the 9 rows a
     # non-bank caller also reaches are both inside it.
     cut_targets = stats.reached_only_by_bank
     cut_edges = sum(n for target, n in stats.proxy_by_target.items()
                     if target in cut_targets)
+    # The per-caller breakdown, split on the one distinction that changes what
+    # the number means. A bank scope is the rule doing its job; a non-bank
+    # scope is the same rule standing in for a row the caller's own program does
+    # not have, which on this tree is an annotation gap. They are printed as
+    # separate terms rather than as one `pd=1` inside a `bank->common`
+    # parenthetical, because a `bank->common` label absorbs a `pd=N` silently:
+    # the reader sees a banking figure and a caller scope they cannot reconcile
+    # with it. The count is still the whole population either way, so the terms
+    # sum to the headline and the breakdown is not a second, smaller number.
+    bank_callers = {s: n for s, n in stats.proxy_by_caller.items()
+                    if s in BANKS}
+    other_callers = {s: n for s, n in stats.proxy_by_caller.items()
+                     if s not in BANKS}
+    terms = ["%s=%d" % (s, n) for s, n in sorted(bank_callers.items())]
+    if other_callers:
+        terms.append("%d non-bank caller scope(s) (%s)"
+                     % (sum(other_callers.values()),
+                        ", ".join("%s=%d" % (s, n)
+                                  for s, n in sorted(other_callers.items()))))
     print("    cross-region edges counted, not joined: %d" % stats.cross_region)
     print("    bank->common edges cut by the per-bank proxy rule: %d (%s). A "
           "bank caller's endpoint for a common target is that bank's proxy, "
@@ -1231,11 +1355,26 @@ def report(grouped, stats, rows, repo=REPO, is_bios=False):
           "Those %d edges reach %d distinct common target(s): %d land on rows "
           "reached only by bank callers, %d on rows a non-bank caller also "
           "reaches."
-          % (stats.proxy_edges,
-             ", ".join("%s=%d" % (s, n)
-                       for s, n in sorted(stats.proxy_by_caller.items())) or "none",
+          % (stats.proxy_edges, ", ".join(terms) or "none",
              stats.proxy_edges, len(stats.proxy_by_target), cut_edges,
              stats.proxy_edges - cut_edges))
+    if other_callers:
+        # Named as a gap rather than left for the reader to work out, because
+        # the alternative is the reading this line used to invite: that a
+        # non-bank caller scope is a second kind of region the banking rule
+        # cannot describe. The branch does not ask that question. It is asked
+        # when the target has no row in the caller's own scope, and a `pd`
+        # listing with no row is not found by this method -- never absent from
+        # the PD program, and never a claim about which bank ran anything.
+        print("    %d of the %d proxied edges have a non-bank caller scope, and "
+              "that is an annotation gap rather than a banking result: the "
+              "target has no row in the caller's own program, so the row the "
+              "edge lands on is another image's function. Annotating the "
+              "listing joins the edge directly and drops it out of this line. A "
+              "listing with no row is not found by this method, never absent "
+              "from the PD program; see "
+              "docs/findings/pd-common-address-spaces.md."
+              % (sum(other_callers.values()), stats.proxy_edges))
     if stats.reached_only_by_bank:
         print("    annotated common rows reached only by bank callers: %d. The "
               "method found these and its own banking rule then cut the edges, "
