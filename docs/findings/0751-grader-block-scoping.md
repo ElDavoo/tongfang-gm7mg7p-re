@@ -125,7 +125,7 @@ one new module constant, one comment, and one test.
 
 ## What is pinned
 
-`ec/tools/test_grade_0751_isolation.py`, 57 tests before and 58 after, all
+`ec/tools/test_grade_0751_isolation.py`, 68 tests before and 69 after, all
 passing under `python3 -m unittest test_grade_0751_isolation`:
 
 | test | what it holds |
