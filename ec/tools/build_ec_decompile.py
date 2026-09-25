@@ -1236,8 +1236,8 @@ def exported_addrs(index_rows):
     programs' copies, and the bank1 row was dropped from the index along with
     it, so `common` counts for both banks. Leave that out and every
     `common`-scoped annotation counts as UNRESOLVED for both bank programs: all
-    78 of them sit at a folded address today, so `annotations_unmatched` would
-    read 78 for bank0 and 78 for bank1 where the real answer is 0 for both, and
+    95 of them sit at a folded address today, so `annotations_unmatched` would
+    read 95 for bank0 and 95 for bank1 where the real answer is 0 for both, and
     a red `--check` would point at rows that resolve perfectly well."""
     out = {}
     for r in index_rows:
@@ -2744,6 +2744,56 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
              _measured)
     check("subsystems: a census count that is missing is reported",
           len(_p) == 1 and "states no `unresolved rows` count" in _p[0], str(_p))
+    # The per-program table beside those four totals, which is the same claim
+    # split by program and the one a check that reads only the bullets cannot
+    # see. It gets its own fixture rather than riding inside _census_doc, so the
+    # cases above keep the line numbers they assert on, and the four bullets
+    # lead it because a table-only document would be reported for the counts it
+    # never states.
+    _table = {"bank0": (5, 4, 1), "bank1": (4, 3, 1),
+              "pd": (3, 2, 1), "common": (6, 2, 4)}
+    _table_rows = ("| program | exported | annotated | unannotated |\n"
+                   "|---|---|---|---|\n"
+                   "| `bank0` | 5 | 4 | 1 (20%) |\n"
+                   "| `bank1` | 4 | 3 | 1 (25%) |\n"
+                   "| `pd` | 3 | 2 | 1 (33%) |\n"
+                   "| `common` | 6 | 2 | 4 (67%) |\n")
+    _table_doc = _census_doc + "## 2. census\n" + _table_rows
+    _measured_table = dict(_measured)
+    _measured_table[SUBSYSTEM_TABLE_KEY] = _table
+    _read_table = subsystems_stated_table(_table_doc)
+    check("subsystems: the per-program table is read back out of the document",
+          _read_table == {"bank0": [(8, 5, 4, 1, 20)], "bank1": [(9, 4, 3, 1, 25)],
+                          "pd": [(10, 3, 2, 1, 33)], "common": [(11, 6, 2, 4, 67)]},
+          str(_read_table))
+    _p = _sp(_table_doc + _good_doc, _measured_table)
+    check("subsystems: a per-program table that agrees with the recount passes",
+          not _p, "; ".join(_p))
+    # The fault this was extended over: the totals are right, the bullets are
+    # right, and one program's split is left at the numbers a re-export moved.
+    _p = _sp(_table_doc.replace("| `common` | 6 | 2 | 4 (67%) |",
+                                "| `common` | 6 | 3 | 3 (50%) |") + _good_doc,
+             _measured_table)
+    check("subsystems: a per-program split that disagrees with the export is "
+          "reported",
+          len(_p) == 1 and "line 11: the census splits common as 6 exported, "
+          "3 annotated, 3 unannotated" in _p[0], str(_p))
+    _p = _sp(_table_doc.replace("| `pd` | 3 | 2 | 1 (33%) |",
+                                "| `pd` | 3 | 2 | 1 (66%) |") + _good_doc,
+             _measured_table)
+    check("subsystems: a per-program share that disagrees with its own cells "
+          "is reported",
+          len(_p) == 1 and "line 10: the census states pd as 66% unannotated"
+          in _p[0] and "1 of 3 is 33%" in _p[0], str(_p))
+    _p = _sp(_table_doc.replace("| `pd` | 3 | 2 | 1 (33%) |\n", "")
+             + _good_doc, _measured_table)
+    check("subsystems: a per-program row that is missing is reported",
+          len(_p) == 1 and "states no `pd` row" in _p[0], str(_p))
+    _p = _sp(_table_doc.replace("`pd`", "`bank2`") + _good_doc, _measured_table)
+    check("subsystems: a per-program row the export does not have is reported, "
+          "and not raised",
+          len(_p) == 2 and "line 10: the census's per-program table has a "
+          "`bank2` row" in _p[0] and "states no `pd` row" in _p[1], str(_p))
     _p = _sp("## 3. a section that cites nothing at all\n")
     check("subsystems: a document that cites no function is reported",
           len(_p) == 1 and "cites no functions" in _p[0], str(_p))
@@ -3407,6 +3457,30 @@ SUBSYSTEM_COUNT = re.compile(r"^- `(?P<label>[a-z][a-z0-9 ]+)`\s*[-—]\s*"
                             r"(?P<value>\d+)\s*$", re.M)
 SUBSYSTEM_COUNTS = ("exported functions", "annotated function rows",
                     "rows the index marks annotated", "unresolved rows")
+# The census's per-program table: the same split as the bullets, per program,
+# with the share the document rounds it to.
+#
+#     | `common` | 753 | 97 | 656 (87%) |
+#
+# It is held to the same recount as the bullets beside it, and it has to be.
+# The four totals are the whole export, so a tranche that re-exports moves them
+# only if it moves everything; the table's rows move one program at a time, and
+# a check that reads only the bullets leaves a table free to disagree with four
+# counts that were corrected eleven lines above it. That is the drift this was
+# extended over: a re-export moved the `common` split from 80 to 97, the four
+# bullets were re-derived, and this table kept the old numbers in a green build.
+# Every row is read, not the first: the document says the table once, but a
+# copied table is as wrong as an edited one and the line number is what says
+# which.
+SUBSYSTEM_TABLE = re.compile(
+    r"^\|\s*`(?P<program>[a-z0-9]+)`\s*\|\s*(?P<exported>\d+)\s*\|\s*"
+    r"(?P<annotated>\d+)\s*\|\s*(?P<unannotated>\d+)\s*"
+    r"\((?P<pct>\d+)%\)\s*\|[ \t]*$", re.M)
+# The key the per-program recount travels under in `measured`. It is not a
+# census label -- nothing in the prose states it by name -- so it sits beside
+# the four rather than among them, which is why the loop over SUBSYSTEM_COUNTS
+# does not see it.
+SUBSYSTEM_TABLE_KEY = "per-program table"
 
 
 def subsystems_citations(text):
@@ -3519,6 +3593,11 @@ def subsystems_problems(text, ann_rows, repo=REPO, stated=None, measured=None):
                         problems.append(
                             "line %d: the census states %d %s and the committed "
                             "files hold %d" % (lineno, value, label, measured[label]))
+        # ...and the per-program table beside them, which is the same claim
+        # split four ways and is read only when the caller brought a
+        # per-program recount to hold it to.
+        problems.extend(subsystems_table_problems(
+            text, measured.get(SUBSYSTEM_TABLE_KEY)))
     return problems
 
 
@@ -3535,6 +3614,77 @@ def subsystems_stated_counts(text):
     for m in SUBSYSTEM_COUNT.finditer(text):
         out.setdefault(m.group("label"), []).append(
             (text.count("\n", 0, m.start()) + 1, int(m.group("value"))))
+    return out
+
+
+def subsystems_stated_table(text):
+    """The census's per-program table, read back out of its rows.
+
+    {program: [(line, exported, annotated, unannotated, pct), ...]}, every
+    occurrence rather than the last, for the reason
+    `subsystems_stated_counts` collects every occurrence of a label. A row
+    whose cells do not parse is not read as a row at all, so it is reported as
+    the missing program it leaves behind rather than as a malformed cell --
+    the same signal either way, and the one a reader can act on.
+    """
+    out = {}
+    for m in SUBSYSTEM_TABLE.finditer(text):
+        g = m.groupdict()
+        out.setdefault(g["program"], []).append(
+            (text.count("\n", 0, m.start()) + 1, int(g["exported"]),
+             int(g["annotated"]), int(g["unannotated"]), int(g["pct"])))
+    return out
+
+
+def subsystems_table_problems(text, measured):
+    """The census's per-program table, against a per-program recount.
+
+    `measured` is {program: (exported, annotated, unannotated)} off
+    index.csv, or None when the caller has no per-program recount -- in which
+    case the table is not checked, rather than checked against nothing.
+
+    Four faults, all of them the same fault at different strengths: a program
+    with no row, a row for a program the export does not have, a row whose
+    split disagrees with the export, and a row whose share disagrees with its
+    own cells. The first is a dropped row, which the bullets cannot see because
+    the four totals still add up without it. The second is a name that no
+    recount can be made against -- a mistyped program, or one the index has not
+    got -- and it is reported rather than raised, on this file's rule that a
+    broken input is a failed check and not a traceback.
+    """
+    if not measured:
+        return []
+    out = []
+    stated = subsystems_stated_table(text)
+    for program in sorted(set(measured) | set(stated)):
+        rows = stated.get(program)
+        if not rows:
+            out.append("the census's per-program table states no `%s` row; the "
+                       "export holds %d functions there"
+                       % (program, measured[program][0]))
+            continue
+        if program not in measured:
+            out.append("line %d: the census's per-program table has a `%s` row "
+                       "and the export holds no %s program"
+                       % (rows[0][0], program, program))
+            continue
+        for lineno, exported, annotated, unannotated, pct in rows:
+            if (exported, annotated, unannotated) != measured[program]:
+                e, a, u = measured[program]
+                out.append(
+                    "line %d: the census splits %s as %d exported, %d annotated, "
+                    "%d unannotated and the committed index holds %d, %d, %d"
+                    % (lineno, program, exported, annotated, unannotated,
+                       e, a, u))
+                continue
+            # The share is stated as a whole percent off the row's own cells,
+            # so it is recounted from those cells and not from the export:
+            # this is the cell disagreeing with the cell next to it.
+            share = int(100.0 * unannotated / exported + 0.5) if exported else 0
+            if share != pct:
+                out.append("line %d: the census states %s as %d%% unannotated "
+                           "and %d of %d is %d%%"
+                           % (lineno, program, pct, unannotated, exported, share))
     return out
 
 
@@ -3558,6 +3708,17 @@ def check_subsystems(ann_rows, index_rows, repo=REPO, doc=SUBSYSTEMS):
             sum(1 for r in index_rows if r.get("annotated") == "yes"),
         "unresolved rows": sum(1 for r in ann_rows if r.get("type") == "unresolved"),
     }
+    # The census's per-program table is a split of the same index rows, so it
+    # is recounted from the same file and carried beside the four totals rather
+    # than in the prose's own labelled form.
+    per_prog = {}
+    for r in index_rows:
+        slot = per_prog.setdefault(r["program"], [0, 0])
+        slot[0] += 1
+        if r.get("annotated") == "yes":
+            slot[1] += 1
+    counts[SUBSYSTEM_TABLE_KEY] = {p: (e, a, e - a)
+                                   for p, (e, a) in per_prog.items()}
     return (subsystems_problems(text, ann_rows, repo=repo,
                                 stated=subsystems_stated_counts(text),
                                 measured=counts),

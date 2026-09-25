@@ -66,10 +66,10 @@ By program, as exported minus annotated minus the rest:
 | `bank0` | 746 | 693 | 53 (7%) |
 | `bank1` | 676 | 599 | 77 (11%) |
 | `pd` | 535 | 501 | 34 (6%) |
-| `common` | 753 | 80 | 673 (89%) |
+| `common` | 753 | 97 | 656 (87%) |
 
 **The common area is the finding.** It is 28% of the export by row count and
-89% of it is unannotated, and it is where the interrupt vectors, the BL51 stubs
+87% of it is unannotated, and it is where the interrupt vectors, the BL51 stubs
 and most of the runtime helpers live. It is also the area this document had to
 extend to say anything about interrupt entry, which is what §3 is.
 
@@ -445,7 +445,7 @@ cannot drift apart silently:
 - `rows the index marks annotated` — 1890
 - `unresolved rows` — 169
 
-**673 of the 753 common-area functions are unannotated, and that is the largest
+**656 of the 753 common-area functions are unannotated, and that is the largest
 single block of undecoded firmware in this repository** — larger than the whole
 `pd` program. It is the natural next issue, and §2 is what sizes it. The 152
 `unresolved` rows are a second, separate queue: functions that were looked at
