@@ -4850,3 +4850,54 @@ The committed cell and the computed grade are now separate keys, and
 `--self-test` carries a fixture that poisons one and asserts the other refuses
 it. It was found the unremarkable way: edit a committed cell and see whether
 the gate that claims to hold it objects.
+
+## 21. A `pd` caller's edge was attributed to a `common` row it never reached (2026-09-25, issue #471)
+
+The write-up is `docs/findings/pd-common-address-attribution.md`; this is the
+summary. One behavioural line in `cluster()` and the fixture that catches it.
+
+`cluster()` recorded a caller's scope against an annotated `common` row
+**before** it decided which branch the edge took. That was right for the
+`common`→`common` case it documented — both ends are `common`, so the edge is
+joined directly but the row was still reached from outside the banks, which is
+what keeps it out of the 26 — and wrong for the other branch, because an
+address carrying both a `common` row and a row of the caller's own scope is two
+functions in two programs. A same-scope `pd` join takes the **`pd`** row as its
+endpoint; `ec/decompiled/pd/0C7A.asm` is not `ec/decompiled/common/0C7A.asm`,
+because the ITE8850-PD image is a separate program with its own address space.
+The `common` row beside it was not an endpoint of that edge, and marking it
+reached was the same conflation the `pd` grade rule and the dominant-scope
+naming rule exist to prevent, in the bookkeeping rather than in the grouping.
+The reach now moves onto the two branches that actually end at the `common`
+row — with an explicit `scope == "common"` guard on the same-scope join, which
+is load-bearing rather than cosmetic: dropping it takes `reached_only_by_bank`
+from 26 to 35 and fails `--self-test`.
+
+**No published figure moves, and that is the strongest claim available here.
+`--report` is byte-identical before and after** (26 / 196 = bank0 126, bank1 69,
+pd 1 / 36 targets / 115-81 / 456 = 440 + 16), both group CSVs regenerate
+byte-identical, and `--check` still passes. **"Latent today" is the claim and it
+is the one to preserve** — the defect is real, it is confined to branches that
+did not target the `common` row, and no figure depends on it yet, because no
+`common` row a `pd` caller reaches is also reached by a bank caller. Do not
+upgrade that to "harmless": nine addresses carry both a `common` and a `pd` row,
+and 38 `pd` listings have no `ghidra-functions.csv` row at all, so both halves
+of the condition are properties of the current annotation state rather than of
+the rule. The `common` rows at `0C7A`/`0EF3`/`10F1` keep their `ungrouped` /
+"Not found by this method" comments — this change removes a reason they *could*
+have been counted on and supplies no new one.
+
+**The fixture the issue asked for cannot fail, which is the part worth keeping.**
+"Assert a `pd` caller does not put the row in `reached_only_by_bank`" passes
+against the very bug it is written for, because `reached_only_by_bank` is a
+subset test that already discards any non-bank scope — a `pd`-only reach is
+invisible to it either way. The reach is a set, so what discriminates is a
+**bank** reach on the same row: `['bank0','pd']` is not a subset of the banks,
+`['bank0']` is. The fixture is a `common` row and a `pd` row at one address with
+both a bank0 caller and a `pd` caller, and it fails on the unfixed tool
+(`[]`) and passes on the fix. `common 0x11C2`, which has no `pd` row beside it
+and therefore a `pd` edge that genuinely targets it, keeps its
+`['common','pd']` attribution and is pinned separately. A program-boundary rule
+for `pd`→`common` edges is still open — `region_of()` has no vocabulary for one
+— and the 7-edges-and-1-proxy ratio in
+`docs/findings/group-proxy-populations.md` is unchanged.

@@ -51,6 +51,11 @@ LCALL_0530 = "8000     12 05 30 lcall    0x0530"
 # A paged `ajmp`, which cannot leave the caller's own region and so is not a
 # banking question; the tool must not treat it as an edge.
 AJMP = "8000     01 30 - -   ajmp     0x8030"
+# A call into a common-area address that carries a row in BOTH programs. The
+# bytes say nothing about which row the caller meant -- that is the whole
+# point of `TwoProgramsOneAddress` below.
+LCALL_06A0 = "8000     12 06 a0 lcall    0x06A0"
+LCALL_06B0 = "8000     12 06 b0 lcall    0x06B0"
 
 
 def listing(directory, name, *lines):
@@ -139,6 +144,90 @@ class CrossBankEdge(unittest.TestCase):
         grouped, stats = gf.group_rows(rows, repo=gf.REPO, min_size=2)
         self.assertEqual(stats.cross_region, 0)
         self.assertEqual(grouped[('bank1', '8030')][0], 'ungrouped')
+
+
+class TwoProgramsOneAddress(unittest.TestCase):
+    """One address, two functions, because there are two programs.
+
+    `ec/decompiled/pd/0C7A.asm` and `ec/decompiled/common/0C7A.asm` are
+    different functions: the ITE8850-PD image is a separate program with its
+    own address space, which is the same program-versus-address conflation
+    `grade_name_basis.py` and the dominant-scope naming rule exist to prevent.
+    Here it is the bookkeeping rather than the grouping: an edge that joined
+    the `pd` row at a shared address says nothing about the `common` row
+    beside it, because that row is not an endpoint of the edge.
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+
+    def test_a_pd_join_at_a_shared_address_is_not_a_reach_of_the_common_row(self):
+        # A bank0 caller and a `pd` caller both reach 0x06A0, which carries a
+        # `common` row and a `pd` row.
+        #
+        # The bank0 caller is what makes this discriminate, and that is worth
+        # writing down rather than rediscovering: a `pd`-ONLY reach is
+        # invisible either way, because `reached_only_by_bank` is a subset test
+        # that already discards any non-bank scope. An assertion shaped "a `pd`
+        # caller does not put the row in reached_only_by_bank" therefore passes
+        # against the very bug it is written for. The reach is a set, and the
+        # bank reach on the same row is what separates the two behaviours:
+        # ['bank0', 'pd'] is not a subset of the banks, ['bank0'] is.
+        b0_caller = listing(self.tmp.name, 'shared_b0.asm', LCALL_06A0, RET)
+        pd_caller = listing(self.tmp.name, 'shared_pd.asm', LCALL_06A0, RET)
+        # A callee body with no calls of its own. Handing either callee the
+        # caller's listing would give that row the caller's edge, which is
+        # exactly the conflation under test.
+        common_row = listing(self.tmp.name, 'shared_common.asm', RET)
+        pd_row = listing(self.tmp.name, 'shared_pd_row.asm', RET)
+        rows = [row('bank0', '8000', 'b0_caller', b0_caller),
+                row('pd', '8100', 'pd_caller', pd_caller),
+                row('common', '06A0', 'common_row', common_row),
+                row('pd', '06A0', 'pd_row', pd_row)]
+        _grouped, stats = gf.group_rows(rows, repo=gf.REPO, min_size=2)
+        self.assertEqual(stats.reached_only_by_bank, {'06A0'},
+                         "the bank0 caller's edge targets the common row and "
+                         "the pd caller's joins the pd row, so the common row's "
+                         "callers are exactly the banks")
+
+    def test_the_two_rows_at_a_shared_address_stay_apart(self):
+        # Grouping them together would assert one function that both programs
+        # call, which is the stronger and wrong claim the whole point avoids.
+        caller = listing(self.tmp.name, 'shared_pd.asm', LCALL_06A0, RET)
+        common_row = listing(self.tmp.name, 'shared_common.asm', RET)
+        pd_row = listing(self.tmp.name, 'shared_pd_row.asm', RET)
+        rows = [row('pd', '8100', 'pd_caller', caller),
+                row('common', '06A0', 'common_row', common_row),
+                row('pd', '06A0', 'pd_row', pd_row)]
+        grouped, _ = gf.group_rows(rows, repo=gf.REPO, min_size=2)
+        self.assertNotEqual(grouped[('common', '06A0')][0],
+                            grouped[('pd', '06A0')][0],
+                            "one address is not one function across two "
+                            "programs")
+
+    def test_a_pd_edge_to_a_common_row_with_no_pd_row_beside_it_counts(self):
+        # The committed `common 11C2` case, which the attribution above must
+        # not cost: no `pd` row at that address, so the `pd` caller's endpoint
+        # IS the common row. The bank0 caller is here because a `pd`-only
+        # reach is not observable through `reached_only_by_bank` at all -- with
+        # a bank reach beside it, dropping the `pd` reach would show up as the
+        # row wrongly counted as found-then-cut.
+        b0_caller = listing(self.tmp.name, 'boundary_b0.asm', LCALL_06B0, RET)
+        pd_caller = listing(self.tmp.name, 'boundary_pd.asm', LCALL_06B0, RET)
+        common_row = listing(self.tmp.name, 'boundary_common.asm', RET)
+        rows = [row('bank0', '8000', 'b0_caller', b0_caller),
+                row('pd', '8100', 'pd_caller', pd_caller),
+                row('common', '06B0', 'common_row', common_row)]
+        _grouped, stats = gf.group_rows(rows, repo=gf.REPO, min_size=2)
+        self.assertEqual(stats.reached_only_by_bank, set(),
+                         "a pd caller is outside the banks, so the row is not "
+                         "a found-then-cut row however the join was taken")
+        # ... and it is counted rather than hidden inside bank->common, which
+        # is all the banking rule can honestly do with an edge between two
+        # programs.
+        self.assertEqual(dict(stats.proxy_by_caller), {'bank0': 1, 'pd': 1})
+        self.assertEqual(dict(stats.proxy_by_target), {'06B0': 2})
 
 
 class Seeds(unittest.TestCase):

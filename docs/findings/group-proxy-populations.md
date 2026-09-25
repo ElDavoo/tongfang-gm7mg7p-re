@@ -110,6 +110,20 @@ Three definitions are load-bearing, and all three are pinned by `--self-test`:
   the join/proxy decision, so the common→common direct join is counted too and
   the figures cannot drift from the clustering that produced them.
 
+  *** CORRECTION 2026-09-25 (issue #471), leaving the clause above as it was
+  written.*** "**before the join/proxy decision**" described the ordering this
+  issue removed, and it was too broad: recording the reach before the decision
+  also recorded it when the decision was a same-scope join to a row of the
+  *caller's own* program, which is a different function at the same address —
+  `pd/0C7A.asm` is not `common/0C7A.asm`. The common→common direct join the
+  clause was written for is still counted, and still on the same walk as the
+  union; what no longer happens is a `pd` or bank caller marking a `common` row
+  reached when its edge joined the other program's row. Every figure in this
+  file is unchanged and byte-identical under the corrected rule, because no
+  `common` row that a `pd` caller reaches is also reached by a bank caller on
+  the committed tree — see
+  [`pd-common-address-attribution.md`](pd-common-address-attribution.md).
+
 The 16 rows, for a reader who wants to look:
 
 ```
@@ -224,6 +238,15 @@ and by **no bank caller at all**, so it is one of the 10 rows in the 81, reached
 there by that single `pd` edge — and it is not one of the 26
 `reached_only_by_bank` rows, because one non-bank caller is enough to take a row
 out of that population, exactly as one `common` caller is.
+
+**What issue #471 later corrected is the *attribution* of those other 6, not
+the rule.** The 7-edges-and-1-proxy ratio above is unchanged and is still the
+right reading. But the 6 same-scope joins were also recording a `pd` reach
+against the `common` row at the same address — a row their edges never reached
+— and `common 0x11C2` keeps its real `['common', 'pd']` attribution precisely
+because it has no `pd` row beside it. See
+[`pd-common-address-attribution.md`](pd-common-address-attribution.md); the
+program-boundary question this section raises is still open.
 
 ---
 
