@@ -7534,3 +7534,44 @@ is. One of the eight is commonly mis-transcribed — the console block reads
 checklist quotes the page and names the trap rather than the wrong figure. No
 measurement moved, no CSV, `registers.yaml`, tool, gate or assertion was edited,
 no re-export was run, and nothing was read off a machine.
+
+## 55. What holds the rel8 displacement read in range, and the census's other two tools directories, measured (2026-09-25, issue #847)
+
+The write-up is
+[`rel8-displacement-bound.md`](findings/rel8-displacement-bound.md);
+this is the summary. §53's census excluded
+`ec/tools/audit_call_targets.py:171,315`'s
+`d[i + OPCODE_LEN[op] - 1]` from its 20 rows as a different shape and handed
+one question back: whether that pair wants a check of its own. The answer is
+that it does, and not the one the issue offered first. The guard in front of
+the read is `i + OPCODE_LEN[op] <= hi`, and `hi` is `region_bounds()` — a
+**constant** from `REGIONS` in `trace_xdata_refs.py`, not a bound on `len(d)`.
+What keeps the read in range is `main()`'s PD-marker check, which is a genuine
+length floor because a Python slice never raises, and which sits three frames
+from the read in a different module. A `len(d)` clamp in `relative_sites()`
+is out on the merits: `hi` is a region bound and every loop in the tool is
+region-relative, so the true invariant is `hi <= len(d)` — a property of the
+call sites, not of the loop, which is the same reason §53 gave rows 11-20 a
+measured verdict rather than a guard. So the change is a note on
+`region_bounds()` (the consumer, not the table — four of the thirteen modules
+importing from `trace_xdata_refs` import `REGIONS` by name, and the claim is
+about how this one reads it) plus one `check()` in the existing `--self-test`
+harness, labelled as beyond the issue's ask and not load-bearing for the
+verdict. **The issue's two arithmetic figures are corrected and left visible**:
+the marker is ten bytes, not five, so the slice ends at `0x2004A` and the floor
+is `0x2004A`, not `0x20045`; and the margin past the highest index `hi` admits
+is **32843**, not 33061. The reasoning is right in every step and the last two
+numbers are not. A snippet truncating the image one byte past a 3-byte form
+shows the guard admitting a site the read cannot serve, which is what makes
+the verdict defensible later. The census's other stated gap is closed by
+measurement rather than by assertion: `grep -rn 'OPCODE_LEN\[' --include=*.py
+bios/tools windows/tools` returns nothing, and the stronger reason is
+structural — `OPCODE_LEN` is defined once, in `ec/tools/disasm8051.py`, and
+nothing under `bios/` or `windows/` imports `disasm8051` at all. That is a
+negative result and is recorded as "not found by this method", naming the
+directories and the commands. Two code edits, a docstring and a `check()`:
+the tool's tables and its `--relative-csv` are byte-identical before and after.
+The census's own citations of `:307,308` were re-run to `:314,315` rather than
+left stale, since the docstring sits above them; its sweep count is unchanged
+at 39. No EC, no hardware, no Windows, no capture, and no claim about what the
+EC does — this is a property of Python walking a `bytes` object.
