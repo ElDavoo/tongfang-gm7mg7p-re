@@ -221,7 +221,24 @@ into `r2 -a 8051` with no stitching needed.
   its counts against `register_ref_table.py`'s. Its per-address columns are
   also an upper bound on *distinct* references wherever one routine is exported
   as several overlapping functions; `annotations/xdata-06c2-06db-timers.md`
-  §2a measures that at 42× on the one cluster measured so far.
+  §2a measures that at 42× on the one cluster measured so far, and
+  `annotations/xdata-export-ownership.md` now has a committed tool behind it
+  (below), which takes the census from 14,819 references to 9,401 with no
+  address lost.
+- **`tools/export_ownership.py`** — which routine each decompiled `.c` actually
+  decompiles. `decompiled/index.csv` records one row per *export*, and the
+  exporter cut `bank1:0x8001`-`0x8189` into 42 of them whose `.c` files all
+  decompile the same body, which is where the 42× above comes from. This
+  derives a containment class per group of exports and one owner per class, in
+  `annotations/xdata-export-ownership.csv` — 2,710 rows, 56 classes, 146
+  non-owner rows, the 42-file class owned by `bank1/8001.c`. `--check` holds
+  the CSV to a fresh derivation and `--self-test` pins the rule against inline
+  fixtures plus the tree-wide figures. `xdata_register_map.py
+  --export-ownership` reads each routine once, from its owner; the default is
+  **off**, because the pass is a text heuristic rather than a function boundary
+  and flipping it re-keys 35 of 430 clusters (`xdata-export-ownership.md` §5).
+  The root cause needs a project rebuild — see `xdata-06c2-06db-timers.md` §8
+  item 7 — so this is the measurement, not the fix.
 - **`tools/xdata_register_map.py --map OLD.csv`** — one row per cluster of an
   older `xdata-clusters.csv` saying where it went in this generation: the old
   and new id, whether the `cluster_key` changed, the carried name and *how* it

@@ -187,6 +187,34 @@ so a `0xFFxx` value cannot be a direct address whatever anything spelled it as.
 addresses a `90 hi lo` byte scan cannot find, because it reads the tree
 precisely for those.
 
+**One routine is exported 42 ways, and every per-address `refs` count in the
+committed CSVs is an upper bound on *distinct* references because of it.**
+`index.csv` splits `bank1:0x8001`-`0x8189` into 42 rows -- 16 of them a single
+instruction -- and every one of their `.c` files decompiles that same routine
+rather than its own bytes: 16 to 47 statements each, every member scoring 0.87
+to 0.98 containment against the owner's 47 (`xdata-export-ownership.csv`). The
+walk above adds a reference per token per *file*, so 0x0843 reads 168 times
+where the routine reads it 4, and 42 entries in the incidence matrix stand for
+one function. Clusters rank by size, then references, then address, so all of
+that is a large part of why one 393-byte routine holds those addresses near the
+top of the worklist at all. `ec/tools/export_ownership.py` derives which export
+owns which body and `--export-ownership` reads each routine once, from that one
+export, taking the census to 9,401 references with 0x0843 at 4 and one function
+behind it.
+
+**The default stays off, and that is the calibrated answer rather than a
+cowardly one.** The pass is a containment heuristic over decompiled text, not a
+function boundary: a non-owner is skipped rather than reconciled against its
+owner, so an owner that is not a superset takes the references with it. On
+this tree that costs `cluster_key` on 35 of the 430 clusters, breaks 5 of the
+10 hand names in `xdata-cluster-names.csv`, and adds 2 clusters -- a
+tree-wide renumbering to land on top of a detector known to be approximate.
+The root cause is the export boundary, and fixing it needs
+`--mode rebuild-project`, which cannot share a branch
+(annotations/xdata-06c2-06db-timers.md 8 item 7). So the pass ships measured,
+pinned by `OWNERSHIP` and reachable through the flag, and the flip is its own
+PR once the boundary lands.
+
 **A cluster has two identities and the prose needs the one that is not a rank.**
 `cluster_id` is a rank -- `build()` orders by size, then references, then
 lowest address, and `main-ec-001` is whatever sorts into first place. Issue
@@ -264,8 +292,18 @@ INDEX_CSV = os.path.join(DECOMPILED, "index.csv")
 ANNOT_CSV = os.path.join(EC_DIR, "annotations", "ghidra-functions.csv")
 SYMBOLS_CSV = os.path.join(EC_DIR, "ghidra", "xdata-symbols.csv")
 NAMES_CSV = os.path.join(EC_DIR, "annotations", "xdata-cluster-names.csv")
+OWNERSHIP_CSV = os.path.join(EC_DIR, "annotations", "xdata-export-ownership.csv")
 OUT_REGISTERS = os.path.join(EC_DIR, "annotations", "xdata-registers.csv")
 OUT_CLUSTERS = os.path.join(EC_DIR, "annotations", "xdata-clusters.csv")
+
+# export_ownership is a sibling tool in this directory, imported by bare module
+# name the way check_site_census.py imports this one. The path is put on
+# sys.path here rather than at the call site so a test loading this file by
+# path -- which does not set sys.path[0] the way running it as a script does --
+# resolves it too.
+if TOOL_DIR not in sys.path:
+    sys.path.insert(0, TOOL_DIR)
+import export_ownership  # noqa: E402
 
 # The EC firmware proper: common area plus the two CODE banks that have
 # callers in this build (ec/README.md's bank table). Never "pd" -- the two
@@ -874,6 +912,46 @@ XSPACE_WINDOW = 32
 BUCKET_TOTALS = {"read": 8341, "write": 3195, "read+write": 2482,
                  "passed-to-call": 534, "address-taken": 267}
 
+# Issue #554: what `scan(export_ownership=True)` says on this tree, pinned the
+# same way BUCKET_TOTALS is, so the de-duplicated census stays a measurement
+# rather than a number in a paragraph. The default is unchanged and
+# `xdata-06c2-06db-timers.md` 6a carries the before/after; these are the "after"
+# half of that table.
+#
+# **The default is off and stays off.** The flip is a tree-wide renumbering --
+# `cluster_key` and every citation keyed to one -- and it is the function
+# boundary that has to land first (the sibling issue, recorded in-tree as
+# xdata-06c2-06db-timers.md 8 item 7). Measured on this tree the flip moves
+# `cluster_key` on 35 of the 430 clusters, breaks 5 of the 10 hand names in
+# xdata-cluster-names.csv, and adds 2 clusters. Those four figures are the
+# argument for deferring it, so they are pinned here too, and the --self-test
+# ownership block asserts all four rather than leaving the promise to a reader.
+#
+# **The plan stage's estimate for this pass was 9112 references with 0x05E0
+# falling out of the census entirely; the committed tool measures 9401 with
+# nothing lost, and both are recorded because the difference is the detector,
+# not the arithmetic.** The plan's detector folded `bank1/8E91.c` -- the only
+# export in the tree that spells `DAT_EXTMEM_05e0` -- into a larger body, so
+# the pass skipped the one file carrying the address. This one does not:
+# 8E91.c owns its own two-file class, so the address survives. The plan's
+# "loses an address" result is not a property of export ownership, it is a
+# property of that grouping, which is why the rule is a committed tool and the
+# figures are re-derived rather than carried forward.
+OWNERSHIP = {
+    "distinct": 1171, "refs": 9401,
+    "main_distinct": 1062, "main_refs": 8543,
+    "buckets": {"read": 4920, "write": 2707, "read+write": 1018,
+                "passed-to-call": 500, "address-taken": 256},
+    # Addresses present without the pass and absent with it. Empty here, and
+    # that is a measurement rather than an absence: it is the failure the pass
+    # would have if an owner were not a superset of its non-owners, and it is
+    # pinned so a re-export that makes it non-empty says so.
+    "lost": (),
+    "moved": 228,
+    # The cost of flipping the default, which is why it has not been flipped.
+    "clusters": 432, "cluster_keys_kept": 395, "hand_names_kept": 5,
+}
+
 # Issue #280's corpus-wide direction invariant: the numbers
 # `direction_invariant()` returns against the committed tree today, pinned the
 # way BUCKET_TOTALS is so a re-export that moves either is visible in a diff.
@@ -1404,6 +1482,22 @@ def load_names(funcs) -> dict:
     return out
 
 
+def load_ownership() -> dict:
+    """out_file -> the export-ownership row, from the committed map.
+
+    Read, not re-derived: `export_ownership.py` owns that rule and `--check`
+    there holds the CSV to a fresh derivation, so re-running it here would be a
+    second implementation of the same decision in a file that does not own it.
+    An `index.csv` row the map does not know is a failure, not a default -- it
+    would mean the census was silently reading an export the map says is a
+    copy, which is the whole defect."""
+    out = {}
+    with open(OWNERSHIP_CSV, newline="") as f:
+        for row in csv.DictReader(f):
+            out[row["out_file"]] = row
+    return out
+
+
 def load_symbols() -> dict:
     """addr -> name from the generated symbol table. Read for display only:
     the table is generated and a name here implies no `status:` anywhere
@@ -1487,7 +1581,8 @@ def touches(entry, bucket: str):
     return {f for f, buckets in entry["dirs"].items() if bucket in buckets}
 
 
-def scan(by_file, names, func_names, symbols, eq_guard: bool = True):
+def scan(by_file, names, func_names, symbols, eq_guard: bool = True,
+         export_ownership: bool = False, ownership=None):
     """(per-program census, call graph, raw occurrence count) over the tree.
 
     An address is reached from many files in one program, so the per-file
@@ -1495,13 +1590,41 @@ def scan(by_file, names, func_names, symbols, eq_guard: bool = True):
 
     The raw count is what the files say before comments are blanked, kept so
     the self-test can pin the difference the ORACLE block records rather than
-    leave it as a claim in prose."""
+    leave it as a claim in prose.
+
+    **`export_ownership` reads each routine once, from the export that owns
+    it.** `index.csv` splits `bank1:0x8001`-`0x8189` into 42 rows whose `.c`
+    files all decompile the same routine -- 16 to 47 statements each, 0.87 to
+    0.98 containment against the owner's 47 -- so the walk above counts that
+    one routine 42 times: 0x0843 reads 168 references where the routine reads
+    it 4, and 42 `funcs` entries stand for 1. When the flag is set, a file the
+    map marks `shared` is not opened at all -- its references are already
+    counted through the owner, because the owner's body is the superset. That
+    is the whole of it, and the default stays off for the measured reason: the
+    pass is a text heuristic rather than a function boundary, and flipping it
+    renumbers the whole tree -- `cluster_key` on 35 of the 430 clusters and 5
+    of the 10 hand names, in OWNERSHIP. The mechanism behind that is worth
+    stating rather than only measuring: a non-owner whose owner is *not* a
+    superset would take its references out of the census with them. On this
+    tree none is, so `OWNERSHIP["lost"]` is empty; see
+    annotations/xdata-export-ownership.md."""
     pattern = occurrence_re(symbols)
     by_name = {name: addr for addr, name in symbols.items()}
     census = {p: {} for p in MAIN_PROGRAMS + (PD_PROGRAM,)}
     calls = {}
     raw = collections.Counter({s: 0 for s in SPELLINGS})
+    shared = {}
+    if export_ownership:
+        ownership = load_ownership() if ownership is None else ownership
+        missing = sorted(set(by_file) - set(ownership))
+        if missing:
+            raise SystemExit(f"error: {OWNERSHIP_CSV} has no row for "
+                             f"{len(missing)} index.csv exports, first "
+                             f"{missing[0]}: run export_ownership.py --map")
+        shared = {f for f, r in ownership.items() if r["shared"] == "yes"}
     for out_file, row in by_file.items():
+        if out_file in shared:
+            continue
         path = os.path.join(DECOMPILED, out_file)
         with open(path) as f:
             source = f.read()
@@ -2146,7 +2269,7 @@ def census_and_groups(args, funcs, by_file, names, symbols, floor=None):
     oracle are read at."""
     func_names = {r["name"] for r in funcs.values()}
     census, calls, raw = scan(by_file, names, func_names, symbols,
-                              not args.no_eq_guard)
+                              not args.no_eq_guard, args.export_ownership)
     group_of, _groups = co_reading_groups(
         census, funcs, COREADING_MIN_CORE if floor is None else floor)
     return census, calls, group_of, raw
@@ -2794,6 +2917,84 @@ def self_test(args) -> int:
           f"{' '.join(f'{k} {v}' for k, v in BUCKET_TOTALS.items())} "
           f"(got {' '.join(f'{k} {fired.get(k, 0)}' for k in BUCKET_TOTALS)})",
           all(fired.get(k, 0) == v for k, v in BUCKET_TOTALS.items()))
+
+    # Issue #554's oracle, run in-process rather than through --export-ownership:
+    # that flag is refused with --self-test, for the same reason --no-eq-guard
+    # is (the committed CSVs are the other census), so the after figures have
+    # to be reached here or they are a claim rather than a check. Nothing below
+    # writes, and the default path above is untouched by any of it.
+    own_map = load_ownership()
+    census_own, _calls_own, _raw_own = scan(by_file, names, func_names, symbols,
+                                            export_ownership=True,
+                                            ownership=own_map)
+    groups_own = {g: merge_group(census_own, PROGRAM_COL[g]) for g in GROUPS}
+    fired_own = collections.Counter()
+    for g in GROUPS:
+        for e in groups_own[g].values():
+            fired_own.update(e["buckets"])
+    own_distinct = len(set(groups_own["main-ec"]) | set(groups_own["pd"]))
+    own_refs = (sum(e["refs"] for e in groups_own["main-ec"].values())
+                + sum(e["refs"] for e in groups_own["pd"].values()))
+    check(f"oracle: the export-ownership census, both spellings -- "
+          f"{OWNERSHIP['distinct']} distinct / {OWNERSHIP['refs']} references "
+          f"(got {own_distinct}/{own_refs})",
+          own_distinct == OWNERSHIP["distinct"] and own_refs == OWNERSHIP["refs"])
+    check("and its bucket totals, "
+          f"{' '.join(f'{k} {v}' for k, v in OWNERSHIP['buckets'].items())} "
+          f"(got {' '.join(f'{k} {fired_own.get(k, 0)}' for k in OWNERSHIP['buckets'])})",
+          all(fired_own.get(k, 0) == v for k, v in OWNERSHIP["buckets"].items()))
+    lost = {hexaddr(a) for a in set(groups["main-ec"]) | set(groups["pd"])} - \
+        {hexaddr(a) for a in set(groups_own["main-ec"]) | set(groups_own["pd"])}
+    check(f"and the pass loses no address, which is the one thing it must never "
+          f"do (lost: {', '.join(sorted(lost)) or 'none'}; if this ever names an "
+          f"address, an owner was not a superset of its non-owners)",
+          lost == set(OWNERSHIP["lost"]))
+    moved = sum(1 for a in set(groups["main-ec"]) & set(groups_own["main-ec"])
+                if groups["main-ec"][a]["refs"] != groups_own["main-ec"][a]["refs"])
+    check(f"and it moves the reference count of {OWNERSHIP['moved']} addresses, "
+          f"the width of the 6a before/after (got {moved})",
+          moved == OWNERSHIP["moved"])
+    # The cost of the flip, which is the reason the default stays off. These are
+    # identities rather than counts -- `cluster_key` and the hand names are what
+    # a citation in the tree survives a regeneration on -- so they are the half
+    # of the argument the census figures above cannot make, and they are
+    # asserted here so the "pinned" above them means a check and not a promise.
+    _own_registers, own_clusters, _ = build(funcs, names, symbols, census_own,
+                                            _calls_own, args.threshold)
+    own_keys = {r["cluster_key"] for r in own_clusters}
+    committed_keys = {r["cluster_key"] for r in old_rows if r["cluster_key"]}
+    hand_keys = load_cluster_names()
+    kept = len(committed_keys & own_keys)
+    hand_kept = sum(1 for k in hand_keys if k in own_keys)
+    check(f"and the flip would renumber: {len(own_clusters)} clusters against "
+          f"the committed {len(committed_keys)}, {kept} of the committed "
+          f"cluster_keys surviving, {hand_kept} of the {len(hand_keys)} hand "
+          f"names in {os.path.relpath(NAMES_CSV, EC_DIR)} (got "
+          f"{len(own_clusters)}/{kept}/{hand_kept})",
+          len(own_clusters) == OWNERSHIP["clusters"]
+          and kept == OWNERSHIP["cluster_keys_kept"]
+          and hand_kept == OWNERSHIP["hand_names_kept"])
+    # The 42 copies, counted from the map rather than from a hand list, because
+    # the width is the claim: one routine exported 42 ways is what the whole
+    # switch exists to stop being read 42 times.
+    copies = [f for f, r in own_map.items()
+              if r["owner_out_file"] == "bank1/8001.c" and f != "bank1/8001.c"]
+    check(f"the bank1:0x8001 run is {len(copies) + 1} exports of one body, so "
+          f"the default census reads 0x0843 168 times against "
+          f"{groups_own['main-ec'][0x0843]['refs']} with the pass on",
+          len(copies) + 1 == export_ownership.OWNERSHIP_ORACLE["largest_class"]
+          and groups["main-ec"][0x0843]["refs"] == 168
+          and groups_own["main-ec"][0x0843]["refs"] == 4
+          and len(groups_own["main-ec"][0x0843]["funcs"]) == 1)
+    # The default must be untouched. If a future change made the pass the
+    # default, every figure above and every committed CSV would have to move at
+    # once, and this is the assertion that says so first.
+    check("and the default census is unchanged, so the committed CSVs are still "
+          "what a plain run produces",
+          not args.export_ownership
+          and len(groups["main-ec"]) == ORACLE["main_distinct"]
+          and sum(e["refs"] for e in groups["main-ec"].values())
+          == ORACLE["main_refs"])
     # `name` is what the symbol table calls the address, which is not the same
     # fact as `spelled_as`: the six named addresses the PD image touches are
     # named for the EC and written as DAT_EXTMEM_ there, so a PD row carries
@@ -3369,6 +3570,16 @@ def main() -> int:
                     help="count `==` as a store, the way the pre-#178 classifier "
                          "did, so the guard's effect stays measurable; refused "
                          "with --check and --self-test")
+    ap.add_argument("--export-ownership", action="store_true",
+                    help="read each routine once, from the export that owns it, "
+                         "so the 42 overlapping exports of bank1:0x8001 are not "
+                         "counted 42 times. The default is OFF: the pass is a "
+                         "text heuristic rather than a function boundary, and "
+                         "the measured cost of flipping it is a tree-wide "
+                         "renumbering (cluster_key on 35 of the 430 clusters, 5 "
+                         "of the 10 hand names; annotations/xdata-export-"
+                         "ownership.md 5). Refused with --check and --self-test, "
+                         "and without scratch outputs")
     ap.add_argument("--out-registers", default=OUT_REGISTERS,
                     help=f"per-address CSV (default: {OUT_REGISTERS})")
     ap.add_argument("--out-clusters", default=OUT_CLUSTERS,
@@ -3398,6 +3609,28 @@ def main() -> int:
         ap.error("--no-eq-guard would overwrite the committed census, so it "
                  "must be given scratch outputs: pass --out-registers and "
                  "--out-clusters (see annotations/xdata-06c2-06db-timers.md 6a).")
+
+    # The same two refusals, for the same two reasons. The flag here is the
+    # other way round from --no-eq-guard -- it turns the pass *on* rather than
+    # reproducing a removed guard -- because the default has to stay where it
+    # is: the committed CSVs are the 42-fold census, and flipping the default
+    # would move the reference count of 228 of the 1,171 register rows, move
+    # `cluster_key` on 35 of the 430 clusters and break 5 of the 10 hand
+    # cluster names. Those are OWNERSHIP's, measured on this tree and quoted
+    # here so a refusal is argued from the same numbers the rest of the file
+    # pins. So the name says what it does, where --no-eq-guard's says what
+    # removing its guard undoes. The guard itself is the same: a census this
+    # tool does not otherwise produce has to be written somewhere scratch.
+    if args.export_ownership and (args.check or args.self_test):
+        ap.error("--export-ownership changes what the census says, so it "
+                 "cannot be combined with --check or --self-test. To see the "
+                 "de-duplicated census, write one to a scratch path and diff it "
+                 "against the committed one.")
+    if args.export_ownership and (args.out_registers == OUT_REGISTERS
+                                  or args.out_clusters == OUT_CLUSTERS):
+        ap.error("--export-ownership would overwrite the committed census, so "
+                 "it must be given scratch outputs: pass --out-registers and "
+                 "--out-clusters (see annotations/xdata-export-ownership.md).")
 
     if args.self_test:
         return self_test(args)
