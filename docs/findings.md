@@ -6409,3 +6409,36 @@ imported (the tool runs next to `ecrw.py`, off the repository layout) and
 pinned against the real grader by its own suite, and a short hold with no
 capture is deliberately *not* refused. No EC was opened and no register read.
 Write-up: `docs/findings/probe-hold-mark-merge.md`.
+
+## 35. The bytes a function boundary cut out of a citing listing, measured (2026-09-25, issue #560)
+
+The write-up is `docs/findings/citation-gap-scan.md`; this is the summary.
+`citation_callers.py` cannot reach a call that Ghidra's function boundary cut
+out of the citing row's own export, and the population
+`docs/findings/citing-listing-evidence.md` measured and could not classify — 99
+citing rows, 124 `(callee, citer)` pairs — is it.
+`ec/tools/citation_gap_scan.py`
+walks the image bytes from each listing's end to three past the next exported
+entry in its own scope, decodes that window with `disasm8051.py`, and returns
+one of three verdicts: **2 `boundary-cut`, 121 `no-transfer`, 1 `not-code`**. The
+issue's premise is the exception — **86 of the 99 rows have a zero-byte
+window**, so for most of the population the question is the head of the
+neighbouring export rather than bytes stranded between two. One boundary cut is
+the issue's own `bank1,E57E` example, and it is also the ranking's **rank 3**:
+`bank1,E5D6` reads `cited_by=3` / `inbound=1`, its one inbound being
+`bank1,E5A7`'s `lcall` rather than the cut `lcall` at 0xE580. The second is
+**§33's rank-1 row** — `common,355E`, the one-`ret` shared tail, whose 25-byte
+gap to the next `common` export ends in that neighbour's `ljmp 0x3459`, so the
+head-of-the-neighbour case the lead section describes turns out to carry a real
+transfer. **32 of the 124 pairs** already have a same-scope transfer to their
+callee booked to a neighbouring function, and **15 of the 90
+`cited_by == inbound` agreements** in `call-graph-callees.csv` are carried that
+way — the two columns counting different call sites. `call_graph.py` is
+unchanged and its 1,841-row table is byte-identical; the issue asks what the
+split means for the ranking, not for the ranking to move. *(Two corrections to
+the plan's figures, both in §35's file: the plan measured 100 rows / 114 pairs;
+five more comments took it to 105 / 123, and §33's 37-row tranche then took it
+to 99 / 124 — that move runs both ways, its re-derived call graph dropping
+twelve rows that no longer cite anything while six of its own new listings join
+as citing rows. The predicate is unchanged, and the pins, the 9-and-one
+zero-gap split among `common` citers and the commands are all there.)*

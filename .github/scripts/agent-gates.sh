@@ -123,6 +123,7 @@ check_ghidra_tooling() {
               ec/tools/grade_name_basis.py \
               ec/tools/group_functions.py \
               ec/tools/call_graph.py \
+              ec/tools/citation_gap_scan.py \
               ec/tools/xdata_register_map.py \
               bios/tools/bios_extract.py \
               windows/tools/decompile_native.py; do
@@ -186,6 +187,24 @@ check_ghidra_tooling() {
       # rejections are the half that matters: a check that has quietly started
       # accepting everything looks exactly like a check that is working.
       *call_graph.py)
+        python3 "$tool" --check && python3 "$tool" --self-test || rc=1
+        ;;
+      # The call graph's own blind spot, measured. It reads the bytes Ghidra's
+      # function boundary cut out of a citing listing and returns one of three
+      # verdicts per (callee, citer) pair, so the 99-row population
+      # `citing-listing-evidence.md` named and could not classify has a
+      # committed answer rather than an estimate. Same arm shape as
+      # call_graph.py above -- it takes no --work and has no scratch dir -- and
+      # the same cheap-tier reason: both modes need only python3, the committed
+      # .asm listings and the committed firmware, no Ghidra, no network and no
+      # assembler. `--check` holds the 124-row gap-citation-scan.csv against
+      # the bytes it was derived from; `--self-test` is the half that matters,
+      # because it pins the population and the three verdicts from oracles
+      # outside the tool -- the committed listings and bank-call-targets.csv --
+      # and asserts that a report the tool cannot reproduce is rejected. A check
+      # that has quietly started accepting everything looks exactly like a
+      # check that is working.
+      *citation_gap_scan.py)
         python3 "$tool" --check && python3 "$tool" --self-test || rc=1
         ;;
       # The XDATA register census, which regenerates two committed CSVs from
