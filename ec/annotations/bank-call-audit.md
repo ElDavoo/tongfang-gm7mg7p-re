@@ -1044,6 +1044,15 @@ score is worth. So the "classic `sjmp default; <search table>`" reading in the
 issue is right about there being a search table and wrong about everything
 else.
 
+A fourth phantom was retired on the same argument, in
+[`../../docs/findings/bank1-e582-entry-framing.md`](../../docs/findings/bank1-e582-entry-framing.md)
+(issue #680): `bank-call-targets.csv:4420`'s `ljmp 0xE582` at `0x9F03` is the
+displacement byte of the `80 02` `sjmp` at `0x9F02`, and the `e5 82` it was read
+as addressing is the first instruction of the committed `bank1/9F04.asm`
+listing. A linear decode from `0x9F01` rejoins that listing at its own head,
+which is the "displaced by a positive alternative" form this section retires
+the three above on. Its CSV row is, likewise, not edited.
+
 Once those three are set aside, no edge into the eight handlers survives in
 any of the three CSVs. Every other row whose target is one of them or the
 default is one of the nine `0x8274` jumps the handlers make themselves, plus

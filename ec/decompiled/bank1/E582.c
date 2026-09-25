@@ -11,7 +11,20 @@
    into R4 and R3, rotates R7 left and masks it to 0x0E, and calls 0x889E with DPTR set to 0x03E0
    plus that masked value. R3 and R4 are not used again in this listing, so whether they are an
    argument to 0x889E or dead is not shown here. The decompiled C models this as a function
-   returning a single byte, which the instruction stream does not do.
+   returning a single byte, which the instruction stream does not do. CORRECTION (2026-09-25, issue
+   #680): the contest is over and it resolves against this row. 0xE582 is the third byte of the
+   lcall at 0xE580 and is not an instruction boundary - 24 of 24 backwards anchors step over it and
+   none lands on it - so this listing does not begin at a boundary at all, and the XCHD it opens
+   with is an artefact of reading those bytes at the wrong alignment rather than an instruction. The
+   competing census entry, the ljmp to 0xE582 from 0x9F03, is the false positive: 0x9F03 is the
+   displacement byte of the 80 02 sjmp at 0x9F02, and the e5 82 it was read as addressing is the
+   first instruction of the committed bank1/9F04.asm listing, MOV A, DPL. Read on the bytes and
+   written up at docs/findings/bank1-e582-entry-framing.md; the frame scores are the corroboration,
+   not the argument. What still stands unchanged is the decode from 0xE583 onward, which remains
+   coherent, and the note about the decompiled C's return. No register status moves and no hardware
+   is involved. Retiring this entry is filed as a follow-up rather than done here: removing the row
+   changes the export, the committed project still holds the function, and it only takes effect on a
+   --mode rebuild-project.
    type: reader
    evidence: ec/decompiled/bank1/E582.asm; ec/decompiled/bank1/E582.c
    basis: hand-decoded
