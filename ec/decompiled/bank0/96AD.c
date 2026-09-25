@@ -15,8 +15,9 @@
    0x9917, otherwise it compares XDATA 0x04AB against table byte 0x1C and then byte 0x22 and
    tail-jumps to 0x9902, 0x98FB or back to 0x9917 depending on those comparisons and on bit 6 of the
    byte the 0xBC67 call returns. ec/annotations/registers.yaml documents 0x0741, 0x0743-0x0746,
-   0x0783-0x0785, 0x0782 and 0x049F bit 1; none of the 0x08xx or 0x09xx destinations has an entry
-   there.
+   0x0783-0x0785, 0x0782 and 0x049F bit 1; of the destinations named above, 0x09EA and 0x09EB have
+   carried entries (XDATA_09EA, XDATA_09EB, both present-untested) since issue #264, and the 0x08xx
+   ones and 0x09E9 still have none.
    type: copy
    evidence: ec/decompiled/bank0/96AD.asm; ec/decompiled/bank0/96AD.c; ec/annotations/registers.yaml
    basis: hand-decoded
@@ -49,8 +50,8 @@ void apply_oem_overrides_then_fill_08xx(undefined1 param_1,char param_2)
     }
   }
   if ((CTGP_DB_CTRL & 1) != 0) {
-    DAT_EXTMEM_09ea = CTGP_DB_TPP_TARGET;
-    DAT_EXTMEM_09eb = CTGP_DB_MAX_TGP;
+    XDATA_09EA = CTGP_DB_TPP_TARGET;
+    XDATA_09EB = CTGP_DB_MAX_TGP;
     param_2 = (CTGP_DB_CTRL >> 1 & 1) != 0;
     set_07c4_bit4_from_r7();
   }

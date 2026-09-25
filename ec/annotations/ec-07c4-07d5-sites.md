@@ -62,8 +62,21 @@ print(collections.Counter(r['region'] for r in rows))"
 Counter({'pd-image': 102, 'bank0': 15})
 
 $ python3 ec/tools/check_register_counts.py ec/firmware/GMxMGxx_11.800
-73 entries / 105 addresses: every static_refs, static_refs_main_ec and static_refs_pd_image reproduced from ec/firmware/GMxMGxx_11.800
+157 entries / 189 addresses: every static_refs, static_refs_main_ec and static_refs_pd_image reproduced from ec/firmware/GMxMGxx_11.800
 ```
+
+**CORRECTION** (issue #264, 2026-09-25), leaving the number above as it was
+first written. That line read `73 entries / 105 addresses`, and it was
+**already stale before this change** — the two are counts over
+`registers.yaml` as a whole, so every entry any other issue has added since
+this file was written moved it, and 105 had not been the tool's output for
+some time. It read `155 entries / 187 addresses` on `main` immediately
+before this change, and adding `XDATA_09EA` and `XDATA_09EB` (issue #264,
+below) moved it to the 157 / 189 above. The same stale figure was
+transcribed in `static-refs-audit.md` §6 and is corrected there too. The
+`117` and the `15`/`102` split below are counts over **this file's own CSV**
+and are unaffected by any of that — only this one line was a
+whole-`registers.yaml` total.
 
 That is the reconciliation this file rests on, and a reader can re-run all
 four lines: 117 = 8+11+70+28 enumerated rows; `bank0` 15 = 5+4+2+4;
@@ -195,10 +208,16 @@ named `sync_0788_and_07d4_from_09e9` in
 That answers "what are `0x07D4`/`0x07D5` set from" as narrowly as the
 evidence allows: **from `0x09EA` and `0x09EB`**, and only when they differ
 from what is already there, and only when `CTGP_DB_CTRL` (`0x0743`) bit 0
-is set. Neither `0x09EA` nor `0x09EB` has an entry in `registers.yaml`,
-and this file does not give them one — the same gap `0x83FF`'s own
-annotation row records. What produces `0x09EA`/`0x09EB` is the open
-question this raises.
+is set. **What produces `0x09EA`/`0x09EB` was the open question this left,
+and it is now answered: §3a draws the whole four-hop chain, and
+[`ec-09e9-09eb-sites.md`](ec-09e9-09eb-sites.md) walks the nine sites of
+`0x09E9`-`0x09EB` that answer it.** The two bytes carry
+`registers.yaml` rows as `XDATA_09EA`/`XDATA_09EB`, `present-untested`,
+since issue #264. **Superseded 2026-09-25 (issue #264):** the paragraph this
+replaces said "Neither `0x09EA` nor `0x09EB` has an entry in `registers.yaml`,
+and this file does not give them one", and that was true when written and
+stopped being true on 2026-09-25; it is left here rather than deleted so the
+gap's closing is visible in the file that opened it.
 
 **The bit-3 logic is a real find, and the identification is an inference.**
 `0x843D`-`0x8496` is a read-modify-write of `0x07C4` that makes bit 3
@@ -220,6 +239,79 @@ of consecutive three-byte `lcall`/`ljmp` entries starting at `0x851B` that
 `0x83FF` runs on a mode switch, a poll or a boot chain is **not**
 established here, and the timing of the two `0x07C4` writes in §8 cannot
 be lined up against it.
+
+## 3a. The whole four-hop chain, in one place
+
+**Added 2026-09-25 (issue #264).** §3 answers "what sets `0x07D4`/`0x07D5`"
+and §4.1 answers "what sets `0x07C4` bit 4", and both stop at a byte this file
+has never walked. Following the writers back fills the gap, and the result
+is that the GPU dynamic-boost path is four hops end to end:
+
+```
+0x0745  CTGP_DB_TPP_TARGET   the Windows service, per power mode
+   |     windows/vendor-ec-map.md:84 -- SetGpuDynamicBoostTotalProcessingPowerTarget
+   v
+0x96F8  bank0:0x96AD=apply_oem_overrides_then_fill_08xx -- 0x09EA = [0x0745]
+0x9700  bank0:0x96AD, six bytes later                  -- 0x09EB = [0x0746]
+   |     both under `jnb acc.0,0x9714` at 0x96F1: CTGP_DB_CTRL (0x0743) bit 0
+   v
+0x847A  bank0:0x83FF=sync_0788_and_07d4_from_09e9     -- CPUA = [0x09EA]
+0x8482  bank0:0x83FF, eight bytes later               -- DBAP = [0x09EB]
+   |     §3's block: under 0x0743 bit 0, and only when the value differs
+   v
+0x07D4  CPUA / 0x07D5  DBAP
+   |     the ASL publishes CPUA * 8 -> NPCF.ATPP and DBAP * 8 -> NPCF.AMAT,
+   |     both under If ((DBEN == One)), at dsdt.dsl:50700-50717 (T1WR's
+   |     Arg0 == 0x73 branch) and :52796-52803 (its _Q84 twin)
+   v
+NPCF.ATPP / NPCF.AMAT   the NVIDIA platform controller
+```
+
+The two middle hops are each one contiguous run of instructions, which is
+what makes this drawable as code rather than as three citations to each
+other. `0x96AD`'s half is nine bytes (`0x96F4`-`0x9703`) and is re-derived in
+§7's r2 sweep; `0x83FF`'s half is §3's `0x8473`-`0x8482` block, already
+listed there and not repeated.
+
+**Two details that are easy to get wrong and are the reason this is written
+down at all:**
+
+- **The `0x07C4` bits are a guard on hop 3, not part of the data path.**
+  `DBEN` is bit 3 of `0x07C4`, and `0x83FF` makes bit 3 follow bit 4 — while
+  bit 4 is set from bit 1 of the *same* `0x0743` byte by the `lcall 0x94c0`
+  at `0x9711` (§4.1). So one `0x0743` byte carries both the data
+  (`0x0745`/`0x0746`, gated on bit 0) and the ASL-side enable (bit 1 ->
+  bit 4 -> bit 3 = `DBEN`). A reader who takes the chain as four data copies
+  misses that the publish is gated twice, once in the EC and once in the ASL.
+- **Hop 3 is conditional inside the EC as well.** `0x83FF` compares before it
+  writes — `xrl a,r7 ; jnz 0x8473` at `0x8460`/`0x8465`, and
+  `jz 0x849c` at `0x8467`/`0x8471` — so the copy runs only when
+  `0x07D4`/`0x07D5` differ from `0x09EA`/`0x09EB`, and when bits 3 and 4 of
+  `0x07C4` already agree it does not even reach that compare (§5 of
+  [`ec-09e9-09eb-sites.md`](ec-09e9-09eb-sites.md) works that through against
+  a committed capture).
+
+**What this establishes, and what it does not.** It establishes that the
+chain is complete on static evidence: four hops, the middle two in one
+routine each, every byte cited to a `bank0` address in a committed `.asm`,
+and the two ends to a committed `windows/vendor-ec-map.md` line and to two
+decoded ASL sites in `evidence/acpi/dsdt.dsl`. It does **not** establish
+that any hop ran — which is a different question, and the one the 2026-09-23
+capture bears on.
+
+**The two bytes are now named in the exported text, and that is worth
+recording because it was not expected.** Adding `XDATA_09EA`/`XDATA_09EB` to
+`registers.yaml` and re-running the **default** export — no
+`--mode rebuild-project` — changes `DAT_EXTMEM_09ea`/`DAT_EXTMEM_09eb` to
+`XDATA_09EA`/`XDATA_09EB` in five committed `.c` files, not two: `83FF.c`
+and `96AD.c` carry them directly, and `8038.c`, `8044.c` and `95DD.c` carry
+them too, because those three are the overlapping exports §2's is-overlap
+discussion is about. The rename reaches the text because
+`ApplyAnnotations.java` applies `ec/ghidra/xdata-symbols.csv` to the
+**project copy** the export makes, so what stays stale is the committed
+7 MB project — not the exported source. That is the same distinction
+`ec/ghidra/README.md` draws, and it is why the "not named by this method"
+Limits note does not apply here.
 
 ## 4. The other two `0x07C4` writers' neighbours, and `0x07D3`/`0x07D5`'s other writers
 
@@ -470,6 +562,50 @@ by this method reaches `0x07C4`-`0x07D5` through a computed `DPH`, and the
 (`0x8360`, `addc a,#0x08 ; mov DPH,a`) builds `0x08D0 + [0x0A56]`, a
 different page.
 
+### 6.1 The same control on the `0x09` page: one hit, and it decodes to a bound
+
+**Added 2026-09-25 (issue #264).** §3's block needs the same control run
+against the page `0x09EA`/`0x09EB` live on, because §3's "one direct writer"
+claim is a claim about the absence of a second writer and this is the method
+that would find one. The pattern is `34 09 F5 83`, and the page above
+returned zero:
+
+```console
+$ python3 - <<'EOF'
+from pathlib import Path
+ec = Path('ec/firmware/GMxMGxx_11.800').read_bytes()[:0x20000]
+for page in (0x07, 0x09):
+    pat = bytes([0x34, page, 0xf5, 0x83])
+    hits = [i for i in range(len(ec) - 3) if ec[i:i+4] == pat]
+    print(f"addc a,#0x{page:02x} ; mov DPH,a -> {len(hits)}: "
+          + ", ".join(f"0x{i:04X}" for i in hits))
+EOF
+addc a,#0x07 ; mov DPH,a -> 0:
+addc a,#0x09 ; mov DPH,a -> 1: 0x83EA
+```
+
+**One hit, not zero** — and it is in the routine entered at `0x83D6`, which
+this file does not otherwise walk, so a zero here would not have been
+evidence of much and a one has to be decoded rather than counted. The
+routine is already named `ring_push_0990` in
+[`ghidra-functions.csv`](ghidra-functions.csv) and exported as
+`../decompiled/bank0/83D6.asm`, and re-running `r2 -a 8051` over the window
+(§7's house method; `ec/tools/disasm8051.py` is the fallback, not the
+authority) gives the decoding in
+[`ec-09e9-09eb-sites.md`](ec-09e9-09eb-sites.md) §3, which is not repeated
+here. The short of it: the counter at `0x09BF` is held below `0x2F` at both
+ends of the routine, so `DPL = counter + 0x90` is `0x90`-`0xBE` with no carry
+and `DPH` is exactly `0x09`, bounding `DPTR` to **`0x0990`-`0x09BE`**. That
+range cannot reach `0x09E9`, `0x09EA` or `0x09EB`.
+
+So the `0x09` half of this file's question gets a **positive** answer to the
+§4c question §6 only gets a negative one for: among the sites this method
+finds that aim a computed `DPH` at the `0x09` page, the one that exists
+cannot reach those three bytes. It is still one idiom — the register form and
+an indirect `movx @Ri` are invisible to it, for the reasons in the paragraph
+above — so this is a decoded exclusion, not a proof that no other writer
+exists.
+
 ## 7. Spot-checks against an independent disassembler
 
 `ec/tools/disasm8051.py` is a linear decoder, not a disassembler, so every
@@ -491,6 +627,8 @@ $ r2 -a 8051 -e scr.color=0 -q -c 's 0xcc72; pd 6'   /tmp/bank0.bin   # the 0xCC
 $ r2 -a 8051 -e scr.color=0 -q -c 's 0xcc64; pd 4'   /tmp/bank0.bin   # 0xCC64's own head, the boundary §4.3 settles
 $ r2 -a 8051 -e scr.color=0 -q -c 's 0x17da; pd 2'    /tmp/bank0.bin   # the common-area trampoline that reaches it
 $ r2 -a 8051 -e scr.color=0 -q -c 's 0x854b; pd 5'   /tmp/bank0.bin   # 0x83FF's one caller, in the stub run
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0x96ed; pd 12'  /tmp/bank0.bin   # §3a's 0x96F8/0x9700 writes, issue #264
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0x83d6; pd 22'  /tmp/bank0.bin   # §6.1's computed-DPH bound, issue #264
 ```
 
 All matched the listings in §3, §4 and §6 instruction for instruction.
@@ -541,9 +679,22 @@ watches, so nothing it captures could say which process wrote the byte on
   caller is in the unresolved three-byte stub run at `0x851B`, so neither
   can be lined up against a capture timestamp. Resolving that run
   (`bank-call-audit.md`) is the way in.
-- **What `0x09EA`/`0x09EB` are.** They are the source `CPUA` and `DBAP`
-  are copied from, and neither has a `registers.yaml` entry. Following
-  their writers is the same kind of work as this file and is not done here.
+- **What `0x09EA`/`0x09EB` are — ANSWERED 2026-09-25 (issue #264), and this
+  bullet is kept rather than deleted so the closing is visible.** They are
+  the source `CPUA` and `DBAP` are copied from, and they now have
+  `registers.yaml` rows (`XDATA_09EA`/`XDATA_09EB`, both
+  `present-untested`). What is established: each has three direct `MOV DPTR`
+  sites, all in the EC and none in the PD image, and exactly **one direct
+  writer** — `0x96F8` and `0x9700` in `0x96AD`, copying `0x0745` and `0x0746`
+  when `CTGP_DB_CTRL` (`0x0743`) bit 0 is set. The one computed-`DPH` site
+  aimed at the `0x09` page is `0x83D6`, whose `DPTR` is bounded to
+  `0x0990`-`0x09BE` and so cannot reach them (§6.1). The full chain is drawn
+  in §3a. What is **not** established, and is carried forward to
+  [`ec-09e9-09eb-sites.md`](ec-09e9-09eb-sites.md) §6: `0x09E9`'s second
+  writer, `0x83D6`'s entry point, `0x080F` and `0xB9D8` (the two early-outs
+  in front of hop 3, neither of which has an entry), and whether any of this
+  ran in the 2026-09-23 capture — which that file resolves as far as a
+  passive, single-page capture can.
 - **What `0x166A` and `0x0743` bit 1 are.** The first selects between four
   `GFID` values; the second sets `0x07C4` bit 4. Both have no entry.
 - **Whether the `DBEN` identification is the right one.** §3's bit-3

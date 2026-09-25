@@ -65,6 +65,15 @@ not the result, and a capture containing it should not be discarded for it.
 
 A GPU-only TGP change is the one UI action neither bundle contains.
 
+**One limit to read before the question, added 2026-09-25 (issue #264): this
+procedure's watch set does not reach the middle of the boost path.** The chain
+`0x0745`/`0x0746` → `0x09EA`/`0x09EB` → `0x07D4`/`0x07D5` → `ATPP`/`AMAT` runs
+through page `0x09`, and `WATCH` covers `0x07C4`-`0x07D7` and
+`0x0743`-`0x0746` only. So the run can say whether the `0x07C4`-`0x07D7` half
+moved; it cannot separate "`0x83FF` did not run" from "it ran and found the
+values already equal". §6 states this in full and names the amendment it would
+need. The status line above is unchanged: **not run**.
+
 ## 1. The question
 
 `../../docs/findings.md` §4o closes on a negative and leaves a hazard in it.
@@ -327,6 +336,35 @@ Two caveats belong next to the table rather than in a footnote.
   EC acted on a byte, and the table deliberately has no "readback OK ⇒
   confirmed" column. Do not add one. `../../CLAUDE.md`: a register write being
   accepted is not evidence the EC acts on it, and this run does not even write.
+
+**A third caveat, added 2026-09-25 (issue #264): this procedure as written
+cannot answer the `0x07D4`/`0x07D5` question it looks like it can.** The
+GPU dynamic-boost path is four hops —
+`0x0745`/`0x0746` → `0x09EA`/`0x09EB` → `0x07D4`/`0x07D5` → `ATPP`/`AMAT` —
+drawn in full in `../../ec/annotations/ec-09e9-09eb-sites.md` §4. The middle
+hop is on page `0x09`, and this procedure's watch set does not cover it:
+`WINDOWS` in `../../windows/tools/gpu_block_watch.py` is `0x07C4`-`0x07D7` and
+`0x0743`-`0x0746`, 24 addresses, **no `0x09xx` among them**.
+
+So a run of this procedure can show that the `0x07C4`-`0x07D7` half did or did
+not move, and that is worth having. It cannot separate the two readings of a
+quiet `0x07D4`/`0x07D5` — "`0x83FF` did not run" versus "it ran and its
+compare-before-write found them already equal to `0x09EA`/`0x09EB`" — because
+that is a claim about a comparison between two values, and this procedure
+would have an observation on only one side of it. The same gap applies to the
+two committed captures §1 names: the 2026-09-23 file is
+`0x0700`-`0x07FF`-scoped by its own filename, so `0x09E9`-`0x09EB` appear in
+no row of it.
+
+**The amendment this needs is a second watcher window over `0x09E9`-`0x09EB`
+in the same session**, alongside the existing two, and that is a follow-up
+rather than something to do here: extending `WATCH` would break the deliberate
+24-address contract that `../../windows/tools/test_gpu_block_watch.py` pins —
+"the check that stops the tool quietly growing into a third full-range
+`0x0700`-`0x07FF` sweep, which is #94's problem to own" — and
+`windows/tools/` is a different component whose `ECRR` pacing is #94's open
+work. A human running this should know the limit before reading a zero, which
+is what this paragraph is for. **Status: still not run.**
 
 ## 7. The citation list
 

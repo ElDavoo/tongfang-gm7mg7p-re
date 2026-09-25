@@ -39,9 +39,9 @@ void index_table_base(char *param_1)
   }
   if (((CTGP_DB_CTRL & 1) != 0) &&
      (((((GPU_DYNAMIC_BOOST_STATUS >> 3 & 1) != 0) != ((GPU_DYNAMIC_BOOST_STATUS >> 4 & 1) != 0) ||
-       (CPUA != DAT_EXTMEM_09ea)) || (DBAP != DAT_EXTMEM_09eb)))) {
-    CPUA = DAT_EXTMEM_09ea;
-    DBAP = DAT_EXTMEM_09eb;
+       (CPUA != XDATA_09EA)) || (DBAP != XDATA_09EB)))) {
+    CPUA = XDATA_09EA;
+    DBAP = XDATA_09EB;
     if ((GPU_DYNAMIC_BOOST_STATUS >> 4 & 1) == 0) {
       GPU_DYNAMIC_BOOST_STATUS = GPU_DYNAMIC_BOOST_STATUS & 0xf7;
     }

@@ -1,0 +1,10 @@
+addr,file_offset,region,runtime,frame_onto,frame_over,access,window
+0x09E9,0x08425,bank0,0x8425,24,0,read x1,"movx a,@dptr ; xrl a,r7 ; jz +0x0a"
+0x09E9,0x09747,bank0,0x9747,24,0,write x1,"movx @dptr,a ; lcall 0xb93a"
+0x09E9,0x09C0D,bank0,0x9C0D,24,0,write x1,"movx @dptr,a"
+0x09EA,0x0845B,bank0,0x845B,24,0,read x1,"movx a,@dptr ; mov r7,a"
+0x09EA,0x08473,bank0,0x8473,24,0,read x1,"movx a,@dptr"
+0x09EA,0x096F8,bank0,0x96F8,24,0,write x1,"movx @dptr,a"
+0x09EB,0x08467,bank0,0x8467,24,0,read x1,"movx a,@dptr ; mov r7,a"
+0x09EB,0x0847B,bank0,0x847B,24,0,read x1,"movx a,@dptr"
+0x09EB,0x09700,bank0,0x9700,24,0,write x1,"movx @dptr,a"

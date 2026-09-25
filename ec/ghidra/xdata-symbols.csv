@@ -110,6 +110,8 @@ addr,name,from_register,register_status,derivation,programs
 0x089F,XDATA_089F,XDATA_089F,present-untested,scalar-name,bank0;bank1
 0x09E6,XDATA_09E6,XDATA_09E6,present-untested,scalar-name,bank0;bank1
 0x09E7,XDATA_09E7,XDATA_09E7,present-untested,scalar-name,bank0;bank1
+0x09EA,XDATA_09EA,XDATA_09EA,present-untested,scalar-name,bank0;bank1
+0x09EB,XDATA_09EB,XDATA_09EB,present-untested,scalar-name,bank0;bank1
 0x0460,XDATA_0460,XDATA_0460,present-untested,scalar-name,bank0;bank1
 0x0468,XDATA_0468,XDATA_0468,present-untested,scalar-name,bank0;bank1
 0x055F,XDATA_055F,XDATA_055F,present-untested,scalar-name,bank0;bank1
