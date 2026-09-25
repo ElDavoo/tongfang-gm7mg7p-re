@@ -21,11 +21,14 @@ byte count below is re-derivable from the committed image by §1, and
 > `cluster_id=main-ec-002` in `xdata-registers.csv`. The ids moved when issue
 > #4.3's census regeneration landed (#133 / #238), and moved again on the
 > 2026-09-24 re-derivation of the census on the merged tree:
-> `xdata_register_map.py:1647`
+> `xdata_register_map.py:1650-1651`
 > numbers clusters by size, so the 43-address block is now numbered ahead of
 > the 28-address one, and `xdata-register-map.md` §5 records the same hazard for
-> its own table. (That line read `:1027` until issue #254; the tool grew and
-> the sort moved with it.) Every stale id below is corrected in place. The ones
+> its own table. (`:1027`, the citation this replaces, never pointed at the sort
+> on `main` either — the key is at 1629 there, and 1027 is
+> `return oper in ("DPH", "DPL")` — so this corrects a long-stale citation
+> rather than relocating a sound one.) Every stale id below is corrected in
+> place. The ones
 > inside a quote of issue #179 are left as it wrote them with this beside them,
 > because
 > the quote is the evidence that the id moved.
@@ -225,8 +228,8 @@ and the 22 between them is a definitional split inside the tool, not staleness:
 both numbers reproduce from a fresh generation. Five of the 43 members are
 `program=both` — `0x07F3`, `0x07F6`, `0x0809`, `0x080C`, `0x080D` — and for
 those the register row absorbs both programs and counts an address once per
-program (`xdata_register_map.py:1377` `merge_group()`, `:1665-1666`) while the
-cluster row sums one program's own count (`:1647`). Two columns both named
+program (`xdata_register_map.py:1381` `merge_group()`, `:1665-1666`) while the
+cluster row sums one program's own count (`:1734`). Two columns both named
 `refs`, defined differently. The whole of the gap is those five addresses' PD
 references, 3 + 4 + 5 + 2 + 8 = 22. Only the name and spelling columns of the
 committed CSVs are stale — §6. The earlier version of this parenthetical said
@@ -589,10 +592,10 @@ longer a reason to distrust the census.
 
 **The defect.** `store_target()` decides an occurrence is a store by testing
 `stripped.startswith(a) for a in ASSIGN`, and `ASSIGN`
-(`ec/tools/xdata_register_map.py:235`) contains `"="` — so `"== 0x12"
+(`ec/tools/xdata_register_map.py:239`) contains `"="` — so `"== 0x12"
 .startswith("=")` is true, and every `==` in the tree was counted as a write.
-The rejection is at `ec/tools/xdata_register_map.py:931`, inside
-`store_target()` (`:908`), with the comment above it recording 838 occurrences
+The rejection is at `ec/tools/xdata_register_map.py:935`, inside
+`store_target()` (`:912`), with the comment above it recording 838 occurrences
 against two dereference stores. It landed in issue #178, and
 `xdata-register-map.md` §4.3 is the retraction written at the time.
 
@@ -600,7 +603,7 @@ against two dereference stores. It landed in issue #178, and
 produces.** Regenerating with no arguments reproduces every `read`, `write`,
 `refs` and `addrs` cell of both CSVs: 0 differences across 1,171 register rows
 and 430 cluster rows. The tree's own `BUCKET_TOTALS` oracle
-(`xdata_register_map.py:660`) reads `read 8341 write 3195 read+write 2482
+(`xdata_register_map.py:664`) reads `read 8341 write 3195 read+write 2482
 passed-to-call 534 address-taken 267`, which are the post-guard figures.
 
 **The effect**, from running the committed tool twice — once as it stands, and
@@ -693,10 +696,14 @@ smaller. Those have drifted with the tree and are superseded by the numbers
 above, which are the ones `--no-eq-guard` produces. Separately, `--self-test`
 and `--check` are **red on `main` at the time of writing, for an unrelated
 reason**: issue #504 annotated 88 more functions without regenerating the
-census, so the `spelled_as` / `name` / `named_addrs` / function-name columns
-drift on 38 register rows and 3 cluster rows. Every direction and membership
-column still matches, which is the 0-difference result above. That redness is a
-naming backlog, not a direction-classifier problem, and it is not fixed here.
+census, so the `name` / `functions` / `shared_functions` / `named_addrs`
+columns drift on 32 register rows and 6 cluster rows (`name` on 9 register rows,
+`functions` on 29, 6 in both; `shared_functions` on 5 cluster rows,
+`named_addrs` on 3, 6 in the union). Every direction and membership
+column still matches — `read`, `write`, `read+write`, `refs`, `size`, `addrs`
+and `spelled_as` among them — which is the 0-difference result above. That
+redness is a naming backlog, not a direction-classifier problem, and it is not
+fixed here.
 
 The issue's own "`0x08A8` is recorded as 84 reads / 44 writes / 42 read+write,
 and 42 of its comparisons are `==`" is a second, independent misreading:
@@ -827,7 +834,7 @@ touching it, not the EC's sweep.
    before/after census, and it should be read together with the de-duplication
    question below or the new numbers will be wrong in the other direction.~~
    **Closed — the diff it asked for landed in issue #178**, and the guard is at
-   `xdata_register_map.py:931`. Two things in the withdrawn text were wrong
+   `xdata_register_map.py:935`. Two things in the withdrawn text were wrong
    besides the line citation: `:277` was never the classifier's location, and
    `main-ec-002` does **not** reshape — it keeps the same 43 addresses and the
    same 4,966 references with and without the guard, because the guard moves

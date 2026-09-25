@@ -4065,9 +4065,11 @@ over `0x0460`-`0x09CE`, which is this block. The cluster that had taken the old
 half is row 4, `main-ec-003`, over `0x045C`-`0x1C3A`. Its 11-address half is
 row 12, `main-ec-011`, over `0x045E`-`0x1F07`. The four-address remainder is row
 50, `main-ec-049`. None of the three shares an address with this block. The ids
-move because `xdata_register_map.py:1647` numbers clusters by size, which is the
-hazard `ec/annotations/xdata-register-map.md` §5 records for its own table. (That
-line read `:1027` until issue #254; the tool grew and the sort moved with it.)
+move because `xdata_register_map.py:1650-1651` numbers clusters by size, which is
+the hazard `ec/annotations/xdata-register-map.md` §5 records for its own table.
+(`:1027`, the citation this replaces, never pointed at the sort on `main` either
+— the key is at 1629 there, and 1027 is `return oper in ("DPH", "DPL")` — so
+this corrects a long-stale citation rather than relocating a sound one.)
 The
 wrong ids are left standing where they quote issue #179, per §4a;
 `ec/tools/check_cluster_citations.py` is what holds the rest of the tree to the
@@ -4215,8 +4217,8 @@ and per §1 all 42 come from the overlapping exports.
 > the two figures that did reproduce: 833 references leaving `write`, 210 of
 > 1,171 addresses changing, and the `0x08A8` / `0x0843` rows.
 > Both line citations were wrong and never resolved: the classifier is
-> `store_target()` at `xdata_register_map.py:908`, its `==` rejection is at
-> `:931`, and `ASSIGN` is at `:235` — not `:277` and not line 138. The 1,172 is
+> `store_target()` at `xdata_register_map.py:912`, its `==` rejection is at
+> `:935`, and `ASSIGN` is at `:239` — not `:277` and not line 138. The 1,172 is
 > 1,171 rows.
 > The diff this called follow-up work has landed, and the census in the tree has
 > been post-guard since. `xdata_register_map.py --no-eq-guard` now re-derives
