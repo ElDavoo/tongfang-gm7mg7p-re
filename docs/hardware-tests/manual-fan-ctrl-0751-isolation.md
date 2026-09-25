@@ -708,6 +708,19 @@ there is a true statement about nothing. The `<value>-before-` /
 `<value>-after-` naming is what keeps the two files apart to begin with, and
 the tool now says so when a pair does not.
 
+A capture given twice is the same mistake on the CSV list, and it is refused
+outright where a repeated `--dump-pair` is only flagged and skipped, because
+every section of this report is about the captures: there is no part of it
+worth printing without them, and a skip would hand back a report that is
+quietly a single-capture run. The census counts captures, so one console
+would have been counted as two; the cross-console checks engage at two, so a
+file agreeing with itself would have switched them on and satisfied them; and
+the line saying they did not run would have been suppressed, which is the
+line that exists to disclose a single-console run in the first place. The
+repeat is caught by resolved path, so `x.csv` and `./x.csv` are one capture
+and not two, and the census count and the one-capture notice key on the
+distinct captures either way. Pass each of the three CSVs once.
+
 It is a first pass and not the answer. It prints §4.4's fan duty bytes
 and §4.5's temperature bytes per window so the control arm and the write can
 be compared line for line, and it sums each of them into a `window delta`

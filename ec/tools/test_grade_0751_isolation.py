@@ -4,6 +4,7 @@ and no real capture is involved."""
 import contextlib
 import importlib.util
 import io
+import os
 from pathlib import Path
 import re
 import tempfile
@@ -267,6 +268,27 @@ def marked_windows(out):
     return [(int(n), label) for n, _, label in MARK_HEADER.findall(out)]
 
 
+def as_main_reads(paths):
+    """The captures, windows and blocks `main` builds from a list of paths.
+
+    The same walk `main` does, from `read_capture` through `build_windows` to
+    `assign_blocks`, so a change to how a capture is read or a block found has
+    to be made here too rather than quietly leaving a test asserting the old
+    one. `main` refuses a repeated capture before this point, so the list the
+    callers hold through `run()` is always the distinct one -- the tests that
+    build the list themselves are the ones that reach the readers directly.
+    """
+    captures, marks, changes = [], [], []
+    for path in paths:
+        m, c = grade.read_capture(path)
+        captures.append((path, m))
+        marks += m
+        changes += c
+    windows = grade.build_windows(marks, changes)
+    blocks, unplaced = grade.assign_blocks(windows)
+    return captures, windows, blocks, unplaced
+
+
 def fixture_block_ends():
     """Each block's last mark, as the label and whether it is a restore.
 
@@ -276,11 +298,7 @@ def fixture_block_ends():
     so a change to how a block is found has to be made here too rather than
     quietly leaving this asserting the old one.
     """
-    marks = []
-    for path in BLOCK_CAPTURES:
-        m, _ = grade.read_capture(path)
-        marks += m
-    blocks, _ = grade.assign_blocks(grade.coalesce_marks(marks))
+    _, _, blocks, _ = as_main_reads(BLOCK_CAPTURES)
     return [(b.windows[-1].label,
              grade.parse_mark(b.windows[-1].label)[0] == 'restore')
             for b in blocks]
@@ -861,6 +879,60 @@ class GradeTests(unittest.TestCase):
         self.assertIn('96 address(es) compared', out)
         self.assertIn('fan table (§4.2): unchanged across the block', out)
         self.assertIn('The whole-block dump pairs above were read', out)
+
+    # The same blind spot the pair above has, on the flag that decides how many
+    # consoles the cross-console checks run over. One capture listed twice
+    # satisfies every one of those checks with a file agreeing with itself, and
+    # the one-capture notice that exists to say the checks did not run is
+    # suppressed -- so a fat-fingered duplicate reads as a passing
+    # cross-console comparison. Refused, before anything is read, and named.
+    def test_a_capture_given_twice_is_refused(self):
+        rc, out, err = run(*RUN_CAPTURES, RUN_CAPTURES[0])
+        self.assertEqual(rc, 1)
+        self.assertIn(f'{RUN_CAPTURES[0]!r} is given twice', err)
+        self.assertIn('A capture given twice is one console and not two', err)
+        # Refused before a single mark is read, so there is no report to be
+        # half-right: no per-file mark counts, no census, no windows.
+        for absent in ('mark(s),', '=== mark census', 'capture(s),',
+                       ', one label each', 'window(s), one per mark',
+                       'no watched byte moved'):
+            self.assertNotIn(absent, out)
+        # One file is one console however many times it is listed, and that
+        # holds for the single-capture form as much as for §6's three.
+        rc, out, err = run(QUIET, QUIET)
+        self.assertEqual(rc, 1)
+        self.assertIn('is given twice', err)
+        self.assertNotIn('one capture:', out)
+
+        # Identity is by resolved path, not by the string: `./x.csv` and
+        # `x.csv` are one file, and so is a symlink to it. Copied into a
+        # temporary directory rather than spelled inside the fixture tree,
+        # which §6's file list is held equal to and must not gain a name.
+        with tempfile.TemporaryDirectory() as tmp:
+            copy = Path(tmp) / Path(QUIET).name
+            copy.write_bytes(Path(QUIET).read_bytes())
+            dotted = os.path.join(tmp, '.', copy.name)
+            rc, out, err = run(str(copy), dotted)
+            self.assertEqual(rc, 1)
+            # Both spellings, and the one file they are, so the operator can
+            # see which of the two their command line dropped.
+            self.assertIn(f'{dotted!r} and {str(copy)!r}', err)
+            self.assertIn(os.path.realpath(copy), err)
+            self.assertNotIn('=== mark census', out)
+            os.symlink(copy, Path(tmp) / 'linked.csv')
+            rc, out, err = run(str(copy), str(Path(tmp) / 'linked.csv'))
+            self.assertEqual(rc, 1)
+            self.assertIn('linked.csv', err)
+            self.assertIn(os.path.realpath(copy), err)
+            self.assertNotIn('=== mark census', out)
+
+        # And the same command line without the repeat is the graded run it
+        # would have been: the refusal is pinned to the duplicate, not to this
+        # invocation.
+        rc, out, _ = run(*RUN_CAPTURES)
+        self.assertEqual(rc, 0)
+        self.assertIn('3 capture(s)', out)
+        self.assertNotIn('one capture:', out)
 
     # §6's own `rem` says the 0x0700 after-dump has to stay the last --dump,
     # and says why: the 0x0F00 range does not cover 0x0751. Putting those two
@@ -1474,6 +1546,52 @@ class MarkSetTests(unittest.TestCase):
         self.assertEqual(rc, 0)
         self.assertNotIn('the cross-console checks did not run', out)
         self.assertNotIn('one capture:', out)
+        # And a duplicate is not a way to reach the threshold. It is refused
+        # rather than counted up to two, so what a duplicate would have
+        # suppressed -- the notice that the cross-console checks did not run
+        # -- is a line in no report at all rather than a line a reader has to
+        # notice is missing.
+        rc, out, err = run(QUIET, QUIET)
+        self.assertEqual(rc, 1)
+        self.assertIn('is given twice', err)
+        self.assertNotIn('the cross-console checks did not run', out)
+        self.assertNotIn('one capture:', out)
+
+    # The refusal is in `main`, in front of the census, so the half of the fix
+    # that keys the count on the distinct captures is not observable through
+    # `run()`. Reached directly the readers hold the same line for themselves:
+    # one file in the list twice is one capture, so nothing is a missing mark,
+    # the census says the cross-console checks did not run, and a void block
+    # is reported once rather than once per copy of the file.
+    def test_the_readers_count_a_capture_given_twice_as_one_capture(self):
+        captures, windows, blocks, unplaced = as_main_reads([QUIET, QUIET])
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            problems = [p for b in blocks
+                        for p in grade.check_block_marks(b, captures)]
+            grade.report_census(captures, windows, blocks, unplaced, {}, None)
+        printed = out.getvalue()
+        # A mark is not missing from a console that is not there, and the one
+        # file's labels agree with themselves, so nothing is withheld.
+        self.assertEqual(problems, [])
+        self.assertIn('1 capture(s), 2 mark row(s), 2 action(s)', printed)
+        self.assertIn('one capture: the cross-console checks did not run',
+                      printed)
+        # The agreement sentence is reached on the file's own marks and says
+        # so: one of one capture, not one of the two the list was holding.
+        self.assertIn("'wrote 0x0751=0xA0' in 1 of 1 capture(s), one label each",
+                      printed)
+        # And the capture is listed once, not under two identical headings.
+        heading = '0751-isolation-example-quiet.csv (2 mark(s)):'
+        self.assertEqual(printed.count(heading), 1)
+        # Three copies rather than two, against the per-capture void check: a
+        # filter that dropped only one repeat would leave two reports of the
+        # same capture's void block.
+        captures, _, blocks, _ = as_main_reads([VOID_BLOCK[0]] * 3)
+        problems = [p for b in blocks
+                    for p in grade.check_block_marks(b, captures)]
+        self.assertEqual([kind for kind, _, _ in problems], ['void'])
+        self.assertIn('ends this block on', problems[0][2])
 
 
 if __name__ == '__main__':
