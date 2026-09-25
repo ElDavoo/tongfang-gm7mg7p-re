@@ -71,23 +71,29 @@ class FakeEc:
 
 
 class FakeStdin:
-    """One mark, stamped once the sweep loop reaches the last sweep.
+    """The lines the marker thread reads, in order, once the last sweep starts.
 
-    The second readline() is the proof the mark is fully committed -- Marker
-    only asks for another line after writing the previous one -- so that is
-    where the sweep loop is released.
+    The read after the list is exhausted is the proof the last mark is fully
+    committed -- Marker only asks for another line after writing the previous
+    one -- so that is where the sweep loop is released.
+
+    A bare string is the one-mark case, so the callers that stamp a single
+    label do not have to wrap it. A list is what a re-prompt needs: a blank
+    line the marker refuses comes back here as the *next* line rather than as
+    the end of the stream, because the thread is still reading.
     """
 
-    def __init__(self, ec, label):
+    def __init__(self, ec, lines):
         self._ec = ec
-        self._label = label
-        self._sent = False
+        self._lines = [lines] if isinstance(lines, str) else list(lines)
+        self._next = 0
 
     def readline(self):
         self._ec.at_last_sweep.wait(5)
-        if not self._sent:
-            self._sent = True
-            return self._label + "\n"
+        if self._next < len(self._lines):
+            line = self._lines[self._next]
+            self._next += 1
+            return line
         self._ec.marked.set()
         return ""
 
@@ -105,16 +111,17 @@ class MarkCsvTests(unittest.TestCase):
         ec = FakeEc()
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / 'capture.csv'
+            text = io.StringIO()
             with patch.object(ec_watch, 'Ec', lambda: ec), \
                  patch.object(ec_watch.sys, 'stdin', FakeStdin(ec, 'wrote 0x0751=0xA0')), \
-                 contextlib.redirect_stdout(io.StringIO()):
+                 contextlib.redirect_stdout(text):
                 rc = ec_watch.main(['--start', '0x0700', '--len', '0x4',
                                     '--interval', '0', '--csv', str(out),
                                     *extra])
-            return rc, out.read_text().splitlines()
+            return rc, out.read_text().splitlines(), text.getvalue()
 
     def test_mark_lands_in_the_csv_between_the_change_rows(self):
-        rc, rows = self.run_watch('--mark')
+        rc, rows, _ = self.run_watch('--mark')
         self.assertEqual(rc, 0)
         self.assertEqual(rows[0], 'ts,addr,old,new')
         self.assertEqual([r.split(',', 1)[1] for r in rows[1:]],
@@ -123,7 +130,7 @@ class MarkCsvTests(unittest.TestCase):
                           '0x0702,0x00,0x22'])
 
     def test_mark_row_parses_as_the_grader_expects(self):
-        _, rows = self.run_watch('--mark')
+        _, rows, _ = self.run_watch('--mark')
         mark = [r for r in rows if ',MARK,' in r][0]
         ts, addr, old, label = mark.split(',')
         self.assertEqual((addr, old, label), ('MARK', '', 'wrote 0x0751=0xA0'))
@@ -142,6 +149,102 @@ class MarkCsvTests(unittest.TestCase):
             rows = out.read_text().splitlines()
         self.assertEqual([r.split(',', 1)[1] for r in rows[1:]],
                          ['0x0701,0x00,0x11', '0x0702,0x00,0x22'])
+
+
+def marks_summary(text):
+    """The lines under the run's own `marks:` count, one per mark it took.
+
+    The block ends at the blank line the next section's leading newline
+    prints, which is what keeps the indented `quiet` and `busy` rows that
+    follow it out of the count.
+    """
+    out = []
+    for line in text.split('\nmarks:\n', 1)[1].splitlines():
+        if not line:
+            break
+        out.append(line)
+    return out
+
+
+class BlankMarkTests(unittest.TestCase):
+    """A blank press is not a mark, and the tool says so rather than naming it.
+
+    The prompt used to substitute `mark N` for an empty label, which wrote a
+    `ts,MARK,,mark N` row that `grade_0751_isolation.py`'s `parse_mark` cannot
+    read -- and one unreadable mark is fatal for the whole run rather than for
+    one block, because block attribution rests entirely on the labels
+    (`unplaceable_marks`). The substitution also read as a deliberate mark
+    rather than as a missing one, which is the half nobody could see at the
+    console. Pinned here so the shape cannot return as a `strip() or` default.
+    """
+
+    def run_watch(self, lines):
+        ec = FakeEc()
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / 'capture.csv'
+            text = io.StringIO()
+            with patch.object(ec_watch, 'Ec', lambda: ec), \
+                 patch.object(ec_watch.sys, 'stdin', FakeStdin(ec, lines)), \
+                 contextlib.redirect_stdout(text):
+                rc = ec_watch.main(['--start', '0x0700', '--len', '0x4',
+                                    '--interval', '0', '--csv', str(out),
+                                    '--mark'])
+            return rc, out.read_text().splitlines(), text.getvalue()
+
+    def test_a_blank_press_writes_no_row_and_leaves_the_real_mark_alone(self):
+        rc, rows, _ = self.run_watch(['\n', 'wrote 0x0751=0xA0\n'])
+        self.assertEqual(rc, 0)
+        self.assertEqual([r.split(',', 1)[1] for r in rows[1:]],
+                         ['0x0701,0x00,0x11',
+                          'MARK,,wrote 0x0751=0xA0',
+                          '0x0702,0x00,0x22'])
+        # The whole capture rather than the row counted above: the shape the
+        # grader refuses is a substituted mark anywhere in the file, and the
+        # grade is a property of the file rather than of where the mark fell.
+        self.assertNotIn(',MARK,,mark', '\n'.join(rows))
+
+    def test_the_console_says_the_press_was_not_recorded(self):
+        _, _, text = self.run_watch(['\n', 'wrote 0x0751=0xA0\n'])
+        # 'nothing recorded' rather than 'blank line': the banner says a blank
+        # line records nothing, and that sentence is not the notice.
+        notices = [ln for ln in text.splitlines() if 'nothing recorded' in ln]
+        self.assertEqual(len(notices), 1)
+        # Not framed as a mark: a notice that reads like one is the same
+        # confusion the refusal exists to remove.
+        self.assertNotIn('MARK:', notices[0])
+        # And the run's own count agrees with the file -- the one mark, and no
+        # substitute standing in for the press.
+        summary = marks_summary(text)
+        self.assertEqual(len(summary), 1)
+        self.assertIn('wrote 0x0751=0xA0', summary[0])
+        self.assertNotIn('mark ', summary[0])
+
+    def test_a_whitespace_only_press_is_the_same_as_an_empty_one(self):
+        rc, rows, _ = self.run_watch(['   \n', 'wrote 0x0751=0xA0\n'])
+        self.assertEqual(rc, 0)
+        self.assertEqual([r.split(',')[3] for r in rows if ',MARK,' in r],
+                         ['wrote 0x0751=0xA0'])
+
+    def test_a_padded_real_label_is_still_taken_and_stripped(self):
+        # The other half of the guard: refuse the blank press, not the
+        # whitespace. A label typed with a stray leading space is a label.
+        rc, rows, text = self.run_watch(['  wrote 0x0751=0xA0  \n'])
+        self.assertEqual(rc, 0)
+        self.assertEqual([r.split(',')[3] for r in rows if ',MARK,' in r],
+                         ['wrote 0x0751=0xA0'])
+        self.assertNotIn('nothing recorded', text)
+
+    def test_a_rejected_press_does_not_take_a_mark_number(self):
+        _, rows, text = self.run_watch(['\n', 'wrote 0x0751=0xA0\n', '\n'])
+        # Each notice names the number the press would have taken, and `_n`
+        # counts marks recorded: the first blank would have been mark 1 and
+        # was not, so the typed mark took 1 and the second blank would have
+        # been mark 2. Without the counter held back the first notice would
+        # have read "mark 2" and the capture would hold a `mark 2` row.
+        self.assertEqual(text.count('nothing recorded, no mark 1 taken'), 1)
+        self.assertEqual(text.count('nothing recorded, no mark 2 taken'), 1)
+        self.assertEqual([r.split(',')[3] for r in rows if ',MARK,' in r],
+                         ['wrote 0x0751=0xA0'])
 
 
 class BlockPathTests(unittest.TestCase):

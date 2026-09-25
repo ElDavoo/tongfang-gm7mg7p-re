@@ -24,7 +24,9 @@ before believing any of it.
 With both --mark and --csv, each mark is written into the CSV as its own row
 (`ts,MARK,,label`) as well as printed, so the capture alone says when the
 operator acted -- see ec/tools/grade_0751_isolation.py, which grades a capture
-by what moved between one mark and the next.
+by what moved between one mark and the next. A blank line is not a mark: the
+prompt records nothing, says so, and asks again, so no capture holds a mark
+the operator did not describe. `ec_watch-marks.md` is why.
 
 `--block` sweeps the same addresses four bytes per IOCTL through the driver's
 `MMRD` instead of one byte per `ECRR`, so the default 2 KiB sweep is 512 calls
@@ -42,7 +44,7 @@ Usage:
   ec_watch.py                                  # 0x0000-0x07FF until Ctrl-C
   ec_watch.py --start 0x0700 --len 0x100
   ec_watch.py --seconds 60 --csv out.csv
-  ec_watch.py --mark                           # press Enter to timestamp an action
+  ec_watch.py --mark                           # type a label + Enter to stamp a mark
   ec_watch.py --start 0x0700 --len 0x100 --block
 """
 import argparse
@@ -115,8 +117,21 @@ class Marker:
                 return
             if not label:
                 return
+            label = label.strip()
+            if not label:
+                # A blank press is not a mark, and this used to make it one:
+                # `strip() or f"mark {self._n}"` wrote a `mark N` row the 0751
+                # grader cannot read, and read at the console as a mark
+                # somebody meant to place. It was also a mark nobody described,
+                # which is the one kind the grader cannot recover -- see
+                # ec_watch-marks.md. So: record nothing, say so, ask again.
+                # `_n` counts marks recorded rather than lines read, which is
+                # what lets the notice name the number the press did not take.
+                print("--- blank line: nothing recorded, no mark "
+                      f"{self._n + 1} taken; type a label + Enter ---",
+                      flush=True)
+                continue
             self._n += 1
-            label = label.strip() or f"mark {self._n}"
             ts = now()
             self.marks.append((ts, label))
             if self._sink:
@@ -136,7 +151,8 @@ def main(argv=None):
     ap.add_argument("--csv", help="also write every change to this CSV")
     ap.add_argument("--mark", action="store_true",
                     help="read stdin; each line stamps a labelled mark, into "
-                         "the CSV too if --csv is given")
+                         "the CSV too if --csv is given. A blank line records "
+                         "nothing and the prompt asks again")
     ap.add_argument("--block", action="store_true",
                     help="sweep 4 bytes per IOCTL (MMRD) instead of 1 (ECRR); "
                          "a path that has never been run against the driver, "
@@ -189,7 +205,8 @@ def main(argv=None):
                           "different access shape, not a safer one -- run "
                           "per-byte, or move the range off it.")
             if args.mark:
-                print("type a label + Enter to stamp a mark; Ctrl-C to stop")
+                print("type a label + Enter to stamp a mark "
+                      "(a blank line records nothing); Ctrl-C to stop")
             else:
                 print("Ctrl-C to stop")
 

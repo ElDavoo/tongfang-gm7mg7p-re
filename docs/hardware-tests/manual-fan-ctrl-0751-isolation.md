@@ -237,7 +237,10 @@ later look the same in the log. With `--csv` it writes each mark into the
 capture itself as a `ts,MARK,,label` row, so the CSV is self-contained — type
 what you just did as the label (`no-op wrote 0x0751=0xA0`,
 `wrote 0x0751=0x10`, `restored 0x0751=0xA0`) rather than keeping the timing
-in separate notes. Mark the same action in all three consoles within a few
+in separate notes. **A blank line records nothing: the mark prompt says so and
+asks again**, so there is no such thing as an unnamed mark in a capture
+([`../../windows/tools/ec_watch-marks.md`](../../windows/tools/ec_watch-marks.md)).
+Mark the same action in all three consoles within a few
 seconds of each other; the grader treats marks less than five seconds apart as
 one action, which is what keeps three consoles from reporting one write as
 three windows.
@@ -247,14 +250,19 @@ grader reads the leading word to tell the control arm from the write under
 test, reads the value after `0x0751=` to name the block the window belongs
 to, and refuses a mark that is none of the three — quoting the three back,
 because a window whose opening mark cannot be placed is a window it cannot
-say what it is a window of. `ec_watch.py` stamps an empty line as `mark N`
-(`../../windows/tools/ec_watch.py:119`), so pressing Enter on a blank line
-rather than typing the action is the one way this happens by accident. A
-mistyped digit in one of the three consoles is the other, and nothing but the
-comparison catches it: the merge joins the three labels into
-`wrote 0x0751=0xA0 / wrote 0x0751=0x10` and the window opens on that, while
-the timestamps are perfectly happy because the write really did happen
-between the two marks.
+say what it is a window of. **As of 2026-09-25 (issue #474) pressing Enter on a
+blank line is no longer one way this happens by accident**: the mark prompt in
+`ec_watch.py` (`Marker._loop`) refuses the press, records nothing, prints that
+it did, and asks again. It used to substitute `mark N` for the empty label —
+the `ec_watch.py:119` this paragraph cited until now — and the substitution was
+the wrong half of the answer twice over: it wrote a label no form can parse,
+which `unplaceable_marks` treats as fatal for the whole run rather than for
+one block, and it made a mark nobody had described read as a mark somebody
+had. What still produces the shape by accident is a mistyped digit in one of
+the three consoles, and nothing but the comparison catches it: the merge joins
+the three labels into `wrote 0x0751=0xA0 / wrote 0x0751=0x10` and the window
+opens on that, while the timestamps are perfectly happy because the write
+really did happen between the two marks.
 
 Values to run, one block each: `0xA0` (Office), `0x00` (Gaming), `0x10`
 (Turbo). Start from a *different* mode each time — writing Turbo's `0x10`

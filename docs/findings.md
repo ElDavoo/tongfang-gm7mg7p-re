@@ -3973,6 +3973,19 @@ suites fake `ecrw` precisely so no Windows box is needed: no EC is opened, no
 register is read back, and no HID node is touched. What they establish is that
 the tools behave as specified on those fixtures, and nothing about the machine.
 
+### 16a. A blank press at the mark prompt was a whole capture, not one window (2026-09-25, issue #474)
+
+`windows/tools/ec_watch.py`'s mark prompt substituted `mark N` for an empty
+label, and that label is one `parse_mark` cannot read: one unreadable mark
+withholds the whole run rather than one block, because block attribution
+rests entirely on the labels. The prompt now refuses a blank press, records
+nothing, says so and asks again, and the contract is pinned in that suite's
+`BlankMarkTests` rather than left as an accident of a `strip() or` default. The
+grader is unchanged — the refusal was correct, and the place a mark should not
+be invented is the prompt. Written up in
+[ec_watch-marks.md](../windows/tools/ec_watch-marks.md), which also names the
+two other tools still carrying the substitution.
+
 ## 17. The `main-ec-002` cluster is one 393-byte routine, counted 42 times over (2026-09-23, issue #179; id corrected by #253 and by the 2026-09-24 re-derivation)
 
 **The id in this section's subject has been wrong twice, and every version of
