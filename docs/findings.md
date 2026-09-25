@@ -4886,6 +4886,29 @@ that makes the row count twice in `annotations_applied` and once here.
 **No hardware or Windows test is claimed here.** This change is static: the
 proof is the regenerated export, and nothing in it observes the machine.
 
+**Correction, 2026-09-25 (#601): where those 25 names come from, and which of
+the addresses are functions at all.** The argument above about *where* a symbol
+lives is undisturbed. The inference drawn from it -- that a
+`--mode rebuild-project` from the CSV alone could not reproduce the seven
+readable names, because nothing in `ghidra/scripts/` writes them -- does not
+follow, because the premise ranges over this repository's scripts and the
+conclusion over Ghidra. What the committed bytes say is enough to answer the
+question that was left open: **each of the seven is a body that is nothing but a
+transfer of control into a function a CSV row already backs under the same
+name**, so the name is the target's and the target's row is committed text.
+Four more of the 25 have that shape with `lcall` rather than `ljmp`, so the
+figure is 11, and the remaining 14 are Ghidra's own `switchD_*` namespace. Four
+of the seven addresses are not function entry points at all -- each is a branch
+displacement or an immediate that a byte scan read as an opcode -- which is why
+no row is added for them. Whether a rebuild re-derives the names is still open,
+and the one piece of evidence bearing on it points the other way: all seven are
+`annotated=yes`, so none of them carries the `thunk_` form Ghidra gives an
+auto-thunk. The write-up is
+[`findings/named-without-a-row.md`](findings/named-without-a-row.md), the check
+is `ec/tools/second_copy_census.py --check`, and `build_ec_decompile.py --check`
+now prints the verdict beside each of the 25 and fails on one it cannot
+account for. The counts in the table above are unchanged by it.
+
 **Merge note, 2026-09-24: applying the variable layer moved the XDATA census.**
 When this was merged, `ec/tools/xdata_register_map.py` found the C-level census
 down from 1,172 addresses / 14,801 references to 1,171 / 14,792. The branch

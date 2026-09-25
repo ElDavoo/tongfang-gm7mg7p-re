@@ -60,6 +60,14 @@ import disasm8051
 # means (issue #135). Import-safe for the same reason disasm8051 is.
 import grade_name_basis
 
+# The census that says where each of the 25 functions the ledger below reports
+# as named-without-a-row got its name. Imported rather than restated, so the
+# byte reads that decide it have one implementation; the import is one-way on
+# purpose, because second_copy_census defers *its* import of this module and so
+# each of the two can still be run on its own. Import-safe for the same reason
+# the two above are.
+import second_copy_census
+
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 FIRMWARE = os.path.join(REPO, "ec", "firmware", "GMxMGxx_11.800")
 PROJECT = os.path.join(REPO, "ec", "ghidra", "project")
@@ -3900,10 +3908,25 @@ def check(work):
                   "counters are separate:"
                   % (len(_named_none),
                      ", ".join("%d %s" % (v, k) for k, v in sorted(_basis.items()))))
-            for _r in sorted(_named_none, key=lambda r: (r["program"], r["addr"])):
-                print("      %-6s %s %s (seed_basis=%s)"
-                      % (_r["program"], _r["addr"], _r["name"],
-                         _r.get("seed_basis", "?")))
+            # Where each of those names came from, read out of the bytes and the
+            # committed .c by second_copy_census rather than transcribed here.
+            # It is a check and not a printout: a row whose name this method
+            # cannot account for fails the build, so the figure above can no
+            # longer drift away from an explanation of what its members are.
+            # The ledger above is untouched by it -- the count, the two
+            # directions and the arithmetic all stay as they were.
+            _verdicts = second_copy_census.census(_named_none, rows, _ann_rows)
+            _tally = {}
+            for _v in _verdicts:
+                _tally[_v["bucket"]] = _tally.get(_v["bucket"], 0) + 1
+            print("      of those, %s"
+                  % ", ".join("%d %s" % (n, b) for b, n in sorted(_tally.items())))
+            for _p in second_copy_census.problems(_verdicts):
+                fail(_p)
+            for _v in _verdicts:
+                print("        %-6s %s %s (seed_basis=%s) -- %s: %s"
+                      % (_v["program"], _v["addr"], _v["name"],
+                         _v["seed_basis"], _v["bucket"], _v["why"]))
         if _unflagged:
             print("    %d annotation row(s) DID apply and are reported "
                   "annotated=no -- `isPlaceholderName()` matched the name they "
