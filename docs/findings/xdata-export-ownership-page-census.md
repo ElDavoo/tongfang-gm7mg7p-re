@@ -18,6 +18,30 @@ the page is corrected only where that run disagrees. It is deliberately a
 measurements rather than suite pins, because re-pinning them would make a
 refusal-contract suite red for an unrelated re-derivation.
 
+> **(2026-09-25, issue #279: this is a snapshot, and every cluster id in it is
+> the one the #654 runs printed — not the one the census carries now.)** #279
+> re-derived the census, adding 39 `cluster_key`s among the main-EC rows
+> (380 → 389) and moving the ranking under them, so the two runs transcribed
+> below name clusters the committed census no longer numbers that way. They are
+> left as the runs printed them, per `docs/findings.md` §4a, rather than
+> renumbered into transcripts that never happened. For the two this page leans
+> on: the 43-address / 4,966-reference counter block (`main-ec-002` throughout,
+> key `k733222e83898`) is **`main-ec-003`** today, and the 28-address
+> `level-block-086x` block (`main-ec-003`, key `ka39cda99615f`) is
+> **`main-ec-004`**; `ff-fill-stubs` is still `main-ec-007` (key
+> `kea0c67af9b51`). The
+> `mode-oem-init` key is the one that did not merely move rank — `k7497cf885614`
+> names a membership the census has lost, and the name now rides
+> `kefb63d82f8c7` on `main-ec-002` (92 addresses), re-keyed for #279 in
+> `ec/annotations/xdata-cluster-names.csv`. `cluster_key` is the stable handle
+> and `main-ec-NNN` is a rank slot; every conclusion below is a relation
+> between keys or a count, and none of them turns on a rank.
+> `ec/annotations/xdata-export-ownership.md` itself has been renumbered to the
+> current ids **and its run figures re-derived from a fresh
+> `--export-ownership`**, because its rows and its §4 table are both membership
+> and measurement claims against the committed census rather than a record of a
+> run. Its own dated note at the top carries the pre-#279 figures it replaced.
+
 Nothing here is an EC finding. No register's `status:` changed, no
 `registers.yaml` row was added, no census CSV was regenerated, no hardware or
 Windows machine was involved, and both committed census CSVs are byte-identical

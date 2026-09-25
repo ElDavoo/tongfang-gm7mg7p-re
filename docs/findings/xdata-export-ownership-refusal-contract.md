@@ -201,7 +201,7 @@ survive (37 new keys appear). The same two-sidedness over the hand names is
 
 **Neither count is pinned here, and the specific breakage is named rather than
 asserted.** `xdata-export-ownership.md` §5 records that `counter-sweep`
-(`k733222e83898`) is `main-ec-002`'s own key and "does not survive as a single
+(`k733222e83898`) is `main-ec-003`'s own key and "does not survive as a single
 cluster at all" — and it does not, on this tree. But which of the ten break is a
 *membership* claim about a detector that is explicitly a text heuristic (§3's
 "Containment" choice, and §6's "a fold is not proof of identity"), so pinning it
@@ -325,7 +325,7 @@ re-derives every figure on `ec/annotations/xdata-export-ownership.md` from a
 fresh run of the two commands that page's §5 prints, and the seven stale cells
 are corrected: the census pair is 14,822 / 9,404 rather than 14,819 / 9,401,
 main-EC `refs` is 13,964 / 8,546, and `read` is 8,344 / 4,923. The two
-`main-ec-002` rows and the one column this page's own table omits — the
+`main-ec-003` rows and the one column this page's own table omits — the
 main-EC row — are derived rather than carried from the oracles, and all three
 came out where the page already had them. The table under *The direction
 reverses* and that page now agree on every column either of them prints.

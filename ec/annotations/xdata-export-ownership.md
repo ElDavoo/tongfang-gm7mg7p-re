@@ -14,6 +14,20 @@ The tool is `ec/tools/export_ownership.py`; its committed output is
 `xdata-export-ownership.csv`; `xdata_register_map.py` reads it behind
 `--export-ownership`.
 
+*(Re-derived 2026-09-25, issue #279. Every run figure below is a fresh run of
+the committed tool on this tree, which is what §4's title says it is; the
+wrong version is recorded here rather than deleted. It is the pre-#279 one:
+census 1,171 / 14,822 where this tree reads 1,326 / 15,696, de-duplicated 9,404
+against 10,178, `read` 4,923 → 5,361, `write` 2,707 → 3,043, `moved` 228 → 296,
+clusters 430 → 432 becoming 439 → 440, and 35 of 430 `cluster_key`s not
+surviving becoming 39 of 439. The cells that did **not** move are the ones the
+tool's own `OWNERSHIP` oracle pins as unmoved — the 43 addresses of
+`main-ec-003` (4,988 → 460), the 4,966 → 280 cluster, `passed-to-call`
+534 → 500, `address-taken` 267 → 256, and nothing lost — which is what says the
+movement is the census's and not this pass's. §3's figures are not in this
+note: they read `xdata-export-ownership.csv`, which issue #279 did not
+regenerate and whose 2,714 rows and 146 non-owners are unmoved.)*
+
 ## 1. The mechanism
 
 `scan()` walks `ec/decompiled/index.csv` one row at a time and adds
@@ -39,7 +53,7 @@ of `xdata-registers.csv`, which is the whole column, not the part of it the
 
 This is why the `refs` column of `xdata-registers.csv` and `xdata-clusters.csv`
 is an **upper bound on distinct references** rather than a count of them, and
-why one 393-byte routine holds about a third of the census's 14,822 references.
+why one 393-byte routine holds about a third of the census's 15,696 references.
 Clusters rank by size, then references, then address
 (`xdata_register_map.py:150`), so the inflation is not a column nobody reads —
 it is the sort key of the whole worklist. §2a of the timers page drew the
@@ -53,10 +67,10 @@ The issue's wording admits two readings, and they are not close. Both are
 measured here with the committed tools; Reading A is 25 lines over the same
 text `scan()` already reads, and is re-derivable from the table in §5.
 
-| reading | total `refs` | the 43 addresses of `main-ec-002` | addresses whose `refs` move |
+| reading | total `refs` | the 43 addresses of `main-ec-003` | addresses whose `refs` move |
 |---|---:|---:|---:|
-| **A** — read all 42 files, re-point each reference's *function key* to the owning routine | 14,822 → **14,822** | 4,988 → **4,988** | **0 of 1,171** |
-| **B** — read the routine once, from its owner export | 14,822 → **9,404** | 4,988 → **460** | **228 of 1,171** |
+| **A** — read all 42 files, re-point each reference's *function key* to the owning routine | 15,696 → **15,696** | 4,988 → **4,988** | **0 of 1,326** |
+| **B** — read the routine once, from its owner export | 15,696 → **10,178** | 4,988 → **460** | **296 of 1,326** |
 
 Reading A fixes the incidence matrix's function axis — `0x0843`'s touchers go
 42 → 1, which is the "42×" the README bullet calls an upper bound — and **moves
@@ -150,18 +164,18 @@ And what the pass does to the census, measured with
 
 | | default | `--export-ownership` |
 |---|---:|---:|
-| distinct addresses | 1,171 | 1,171 |
-| total `refs` | 14,822 | **9,404** |
-| main-EC `refs` | 13,964 | 8,546 |
-| `read` | 8,344 | 4,923 |
-| `write` | 3,195 | 2,707 |
+| distinct addresses | 1,326 | 1,326 |
+| total `refs` | 15,696 | **10,178** |
+| main-EC `refs` | 14,838 | 9,320 |
+| `read` | 8,826 | 5,361 |
+| `write` | 3,587 | 3,043 |
 | `read+write` | 2,482 | 1,018 |
 | `passed-to-call` | 534 | 500 |
 | `address-taken` | 267 | 256 |
-| the 43 addresses of `main-ec-002` | 4,988 | 460 |
-| `main-ec-002` cluster `refs` | 4,966 | 280 |
-| clusters | 430 | 432 |
-| addresses whose `refs` move | — | 228 |
+| the 43 addresses of `main-ec-003` | 4,988 | 460 |
+| `main-ec-003` cluster `refs` | 4,966 | 280 |
+| clusters | 439 | 440 |
+| addresses whose `refs` move | — | 296 |
 | **addresses lost** | — | **0** |
 
 The defect really is fixed by Reading B: `0x0843` and `0x0844` go 168 → 4 with
@@ -170,10 +184,11 @@ The defect really is fixed by Reading B: `0x0843` and `0x0844` go 168 → 4 with
 ### A correction to the plan stage's estimate, and why it happened
 
 The plan stage measured this pass on a pre-tool detector and reported **9,112**
-references with **0x05E0 dropping out of the census entirely** (1,171 → 1,170),
-on the reasoning that `bank1/8E91.c` — the only export in the tree that spells
-`DAT_EXTMEM_05e0` — was a non-owner in its class. The committed tool measures
-**9,404 with nothing lost**. The premise was right and the grouping was not:
+references with **0x05E0 dropping out of the census entirely** (1,171 → 1,170
+on the tree it ran against), on the reasoning that `bank1/8E91.c` — the only
+export in the tree that spells `DAT_EXTMEM_05e0` — was a non-owner in its
+class. The committed tool measures **10,178 with nothing lost** on the tree
+this page is written against. The premise was right and the grouping was not:
 `8E91.c` owns its own two-file class, so the one file carrying 0x05E0 is read
 and the address survives.
 
@@ -190,13 +205,13 @@ The pass ships measured and switchable; the default is unchanged, and that is
 the calibrated answer rather than a cautious one. Measured on this tree, the
 flip:
 
-- moves `cluster_key` on **35 of the 430** clusters (395 survive; 37 keys are
+- moves `cluster_key` on **39 of the 439** clusters (400 survive; 40 keys are
   new),
-- breaks **5 of the 10** hand names in `xdata-cluster-names.csv` — including
-  `counter-sweep` (`k733222e83898`), which is `main-ec-002`'s own key and does
+- breaks **5 of the 9** hand names in `xdata-cluster-names.csv` — including
+  `counter-sweep` (`k733222e83898`), which is `main-ec-003`'s own key and does
   not survive as a single cluster at all,
-- takes `main-ec-002`'s `refs` from 4,966 to 280 and adds **2** clusters
-  (430 → 432).
+- splits `main-ec-003` — 28 of its 43 addresses land in a 280-reference cluster
+  and 15 leave it — and adds **1** cluster (439 → 440).
 
 A tree-wide renumbering is not a diff, and every `cluster_key` citation in the
 tree is keyed to a membership. Landing it on top of a detector that is a text

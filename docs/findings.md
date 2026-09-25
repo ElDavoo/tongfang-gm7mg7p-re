@@ -4292,7 +4292,7 @@ fake EC; §3's commands carry the flag, and a human at the laptop sees the
 prompt. Same file:
 [ec_watch-marks.md](../windows/tools/ec_watch-marks.md).
 
-## 17. The `main-ec-002` cluster is one 393-byte routine, counted 42 times over (2026-09-23, issue #179; id corrected by #253 and by the 2026-09-24 re-derivation)
+## 17. The `main-ec-003` cluster is one 393-byte routine, counted 42 times over (2026-09-23, issue #179; id corrected by #253, by the 2026-09-24 re-derivation, and again by #279 on 2026-09-25)
 
 **The id in this section's subject has been wrong twice, and every version of
 the error is in the record.** Issue #179 asked about the cluster the committed
@@ -4302,9 +4302,9 @@ the census was re-derived on the merged tree (2026-09-24), which put it back at
 `main-ec-002` — `xdata-clusters.csv` row 3, 43 addresses and 4,966 references
 over `0x0460`-`0x09CE`, which is this block. The cluster that had taken the old
 `main-ec-002`'s meaning has itself split in that re-derivation. Its 28-address
-half is row 4, `main-ec-003`, over `0x045C`-`0x1C3A`. Its 11-address half is
-row 12, `main-ec-011`, over `0x045E`-`0x1F07`. The four-address remainder is row
-50, `main-ec-049`. None of the three shares an address with this block. The ids
+half is row 4, `main-ec-004`, over `0x045C`-`0x1C3A`. Its 11-address half is
+row 12, `main-ec-012`, over `0x045E`-`0x1F07`. The four-address remainder is row
+50, `main-ec-055`. None of the three shares an address with this block. The ids
 move because `xdata_register_map.py:1654-1655` numbers clusters by size, which is
 the hazard `ec/annotations/xdata-register-map.md` §5 records for its own table.
 (`:1027`, the citation this replaces, never pointed at the sort on `main` either
@@ -4314,6 +4314,25 @@ The
 wrong ids are left standing where they quote issue #179, per §4a;
 `ec/tools/check_cluster_citations.py` is what holds the rest of the tree to the
 census.
+
+> **(2026-09-25, issue #279: the ids moved once more, and this is where the
+> current ones live.)** The census was re-derived again for this issue — 39 new
+> `cluster_key`s among the main-EC rows, 380 → 389, and the ranking moved under
+> them, by one at the top and by more down the tail — so **the 43-address /
+> 4,966-reference sweep over `0x0460`-`0x09CE` is `main-ec-003` again**, the
+> fourth name this block has carried after `main-ec-002` on 2026-09-23,
+> `main-ec-003` under #253 and `main-ec-002` on 2026-09-24. That is why the
+> subject line above names it and the sentences beside it do not. The old
+> 44-address block's three remainders are the same memberships under their new
+> rank slots: `main-ec-004` (28 addresses, `0x045C`-`0x1C3A`, was
+> `main-ec-003`), `main-ec-012` (11, `0x045E`-`0x1F07`, was `main-ec-011`) and
+> `main-ec-055` (4, was `main-ec-049`) — each one's `cluster_key` unchanged, so
+> the key is what identifies a cluster across the move and a `main-ec-NNN` is
+> only its rank (`annotations/xdata-cluster-names.csv` is keyed by it).
+> **The renumbering this issue made is in the membership claims, not in the
+> sentences that record what #179, #253 and #254 said** — those are left as
+> they were written, per §4a, and this paragraph carries the current ids once
+> instead of rewriting them.
 
 Issue #179 asked what the `main-ec-002` cluster is: 43 addresses, 4,965
 references, 126 touching functions (the issue's figures; the census as
@@ -4507,7 +4526,7 @@ hands back, and it needs a function seed.
 
 **The reading itself.** 37 of the 43 are countdowns the same twenty
 instructions walk over, 6 are what four of them do at zero, and the two the
-clustering cut into `main-ec-123` and `main-ec-201` (`0x06C6`, `0x06CD`) are
+clustering cut into `main-ec-128` and `main-ec-214` (`0x06C6`, `0x06CD`) are
 countdowns the same routine decrements. The block is gated twice — on
 `0x0440` (43 read sites, no direct `MOV DPTR` writer, value not established —
 its one writer is the CODE-table scatter at bank1 `0xA530` that stores `0x00`
@@ -4534,7 +4553,7 @@ because `ASSIGN` at line 138 contains `"="` and `"== 0x12".startswith("=")`.
 Regenerating the census with a one-line guard that rejects a bare `=` followed
 by a second `=`: **833 references leave the `write` column across 210 of 1,172
 addresses**, `0x08A8` goes from 84 reads / 44 writes to **126 / 2**, `0x0843`
-from 84 / 42 to **126 / 0**, and **`main-ec-002` goes from 43 addresses /
+from 84 / 42 to **126 / 0**, and **`main-ec-003` goes from 43 addresses /
 4,966 references to 44 / 248** — a shape and not a row, since the guard's
 output is not the committed census. Neither figure is right yet — both still
 carry the 42-fold count above — but an issue scoped to "read `main-ec-002`"
@@ -4544,7 +4563,9 @@ and `main-ec-002` again since the 2026-09-24 re-derivation, per the correction
 above; and the 44 / 248 it lands on is the size and reference count the old
 `main-ec-002` carried, which is a coincidence of two numbers and not of a
 membership — that block has since split, and `xdata-06c2-06db-timers.md` §6a
-says so at the table.) The
+says so at the table. §17's 2026-09-25 note records the third move: the same
+membership is `main-ec-003` again, so the quoted scope resolves to this block
+today while reading `main-ec-002` in the issue.) The
 issue's own "42 of its
 comparisons are `==`" is a second, independent misreading:
 `xdata-register-map.md` §4.1 defines `read+write` as "an `=` target whose
@@ -4555,13 +4576,15 @@ and per §1 all 42 come from the overlapping exports.
 > written and three of its claims do not survive re-measurement. The lead —
 > "the direction-classifier defect reshapes the unit this issue was scoped to" —
 > is **wrong**. The defect is real, it was fixed in issue #178, and it does
-> **not** reshape this block: with the guard and without it, `main-ec-002` holds
+> **not** reshape this block: with the guard and without it, `main-ec-003` holds
 > the same 43 addresses with the same 4,966 references, membership identical
 > address for address, because the guard moves references *between* direction
 > buckets and out of none of them — **0 of 1,171 addresses have a different
 > `refs` total either way**. There is no 44-address / 248-reference cluster in
 > either generation. An issue scoped to "read `main-ec-002`" is therefore scoped
-> to a membership its own prerequisite leaves alone. The guard's real reach is
+> to a membership its own prerequisite leaves alone (§17's 2026-09-25 note
+> records the third move of that id, back to `main-ec-003`, and both readings
+> name this same membership). The guard's real reach is
 > the two figures that did reproduce: 833 references leaving `write`, 210 of
 > 1,171 addresses changing, and the `0x08A8` / `0x0843` rows.
 > Both line citations were wrong against the tool as it now stands: the
@@ -6023,7 +6046,7 @@ why no call-target census row and no byte scan ever named them. Both were
 seeded through `ghidra-functions.csv` and read. **`0xD89F` is a single `ret`
 byte, and `0xD96C` is a real routine that clears XDATA `0x0100`–`0x0FFF` except
 it steps over `0x07FD`, `0x07FE` and `0x07FF`** — 3,837 of 3,840 bytes, and
-those three are the whole of the `main-ec-081` cluster. The `setb c` at
+those three are the whole of the `main-ec-086` cluster. The `setb c` at
 `0xD982` is what makes the second bound `0x0800` rather than the `0x07FF` its
 own immediates spell out. Both score 24 of 24 on `disasm8051.py --converge`, so
 neither is an operand byte. This corrects the issue's expectation of a real
@@ -6191,8 +6214,8 @@ write-up rather than folded in here — and the other is
 `test_check_site_census.py`'s `D091.c`
 line-pin drift, which #503 caused. The third,
 `test_check_cluster_citations.py`'s committed-prose case, is **main's own**:
-§26 above pairs `0x0800` with `main-ec-081`, and the committed census puts
-`0x0800` in `main-ec-100` instead. Which of the two is wrong — the name or the
+§26 above pairs `0x0800` with `main-ec-086`, and the committed census puts
+`0x0800` in `main-ec-104` instead. Which of the two is wrong — the name or the
 membership claim — is a correction for #564 to make in place rather than one
 this issue absorbs. Nothing here is an EC finding: no register
 `status:` changed, no hardware was involved, and the committed census is
@@ -6331,13 +6354,13 @@ commands the page's §5 already prints, and the page is edited only where that
 run disagrees: **seven cells, all of them the census pair and the `read`
 bucket**, now 14,822 / 9,404, 13,964 / 8,546 and 8,344 / 4,923. **The other
 twenty-one re-derived and held**, which is the more useful half of the
-result — the two `main-ec-002` rows, the `export_ownership.py` class figures
+result — the two `main-ec-003` rows, the `export_ownership.py` class figures
 and the whole of §3's body-floor prose are all confirmed rather than assumed
 away. The two cases where "the oracles say so" would not have been enough are
 recorded for what they are: **main-EC `refs` is printed by no oracle-asserted
 table** (§31's has no main-EC row) **and `--self-test` does not assert
 `OWNERSHIP["main_refs"]`**, so it is read off each run's own per-group stdout
-line; and **the two `main-ec-002` rows are in no oracle at all**, so they are
+line; and **the two `main-ec-003` rows are in no oracle at all**, so they are
 re-derived by taking the committed row's 43 addresses and reading them back
 *by address* — a lookup on `cluster_id` is the wrong recipe, because the pass
 renumbers the cluster and the id lands on a different membership. That recipe

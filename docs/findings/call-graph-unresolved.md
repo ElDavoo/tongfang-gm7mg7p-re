@@ -228,7 +228,7 @@ decoded; naming the register is not naming the policy.
 **`bank0 0xDE83` → `init`.** The old text said "the 0x3000 block is outside the
 EC's own XDATA map". **It is not.**
 `ec/annotations/xdata-registers.csv` carries 0x3000-0x3008 as `program=main-ec`,
-`spelled_as=DAT_EXTMEM`, span group `0x3000-0x3008`, cluster `main-ec-006`,
+`spelled_as=DAT_EXTMEM`, span group `0x3000-0x3008`, cluster `main-ec-005`,
 written here and by `bank1 0x9B3C` and `bank1 0x9C53`. The routine stages a
 descriptor across the block and then probes it, **returning the result in the
 carry** — a `setb CY; ret` at 0xDF14 and a `clr CY; ret` at 0xDF1C, and the old
