@@ -39,7 +39,7 @@ of `xdata-registers.csv`, which is the whole column, not the part of it the
 
 This is why the `refs` column of `xdata-registers.csv` and `xdata-clusters.csv`
 is an **upper bound on distinct references** rather than a count of them, and
-why one 393-byte routine holds about a third of the census's 14,819 references.
+why one 393-byte routine holds about a third of the census's 14,822 references.
 Clusters rank by size, then references, then address
 (`xdata_register_map.py:150`), so the inflation is not a column nobody reads —
 it is the sort key of the whole worklist. §2a of the timers page drew the
@@ -55,8 +55,8 @@ text `scan()` already reads, and is re-derivable from the table in §5.
 
 | reading | total `refs` | the 43 addresses of `main-ec-002` | addresses whose `refs` move |
 |---|---:|---:|---:|
-| **A** — read all 42 files, re-point each reference's *function key* to the owning routine | 14,819 → **14,819** | 4,988 → **4,988** | **0 of 1,171** |
-| **B** — read the routine once, from its owner export | 14,819 → **9,401** | 4,988 → **460** | **228 of 1,171** |
+| **A** — read all 42 files, re-point each reference's *function key* to the owning routine | 14,822 → **14,822** | 4,988 → **4,988** | **0 of 1,171** |
+| **B** — read the routine once, from its owner export | 14,822 → **9,404** | 4,988 → **460** | **228 of 1,171** |
 
 Reading A fixes the incidence matrix's function axis — `0x0843`'s touchers go
 42 → 1, which is the "42×" the README bullet calls an upper bound — and **moves
@@ -151,9 +151,9 @@ And what the pass does to the census, measured with
 | | default | `--export-ownership` |
 |---|---:|---:|
 | distinct addresses | 1,171 | 1,171 |
-| total `refs` | 14,819 | **9,401** |
-| main-EC `refs` | 13,961 | 8,543 |
-| `read` | 8,341 | 4,920 |
+| total `refs` | 14,822 | **9,404** |
+| main-EC `refs` | 13,964 | 8,546 |
+| `read` | 8,344 | 4,923 |
 | `write` | 3,195 | 2,707 |
 | `read+write` | 2,482 | 1,018 |
 | `passed-to-call` | 534 | 500 |
@@ -173,7 +173,7 @@ The plan stage measured this pass on a pre-tool detector and reported **9,112**
 references with **0x05E0 dropping out of the census entirely** (1,171 → 1,170),
 on the reasoning that `bank1/8E91.c` — the only export in the tree that spells
 `DAT_EXTMEM_05e0` — was a non-owner in its class. The committed tool measures
-**9,401 with nothing lost**. The premise was right and the grouping was not:
+**9,404 with nothing lost**. The premise was right and the grouping was not:
 `8E91.c` owns its own two-file class, so the one file carrying 0x05E0 is read
 and the address survives.
 

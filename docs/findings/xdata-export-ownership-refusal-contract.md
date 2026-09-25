@@ -296,3 +296,14 @@ direction reverses* is this tree's, re-measured from the two commands that
 section prints; `ec/annotations/xdata-export-ownership.md` still quotes the
 pre-#267 pair on its own pages, and correcting that page is #267's follow-up
 rather than this work's.
+
+**The deferral above is now discharged (issue #654), and the page it deferred
+to carries this tree's figures.** `docs/findings/xdata-export-ownership-page-census.md`
+re-derives every figure on `ec/annotations/xdata-export-ownership.md` from a
+fresh run of the two commands that page's §5 prints, and the seven stale cells
+are corrected: the census pair is 14,822 / 9,404 rather than 14,819 / 9,401,
+main-EC `refs` is 13,964 / 8,546, and `read` is 8,344 / 4,923. The two
+`main-ec-002` rows and the one column this page's own table omits — the
+main-EC row — are derived rather than carried from the oracles, and all three
+came out where the page already had them. The table under *The direction
+reverses* and that page now agree on every column either of them prints.

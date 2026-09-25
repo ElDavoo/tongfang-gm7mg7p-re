@@ -4355,7 +4355,7 @@ owns which body from the committed tree, `annotations/xdata-export-ownership.csv
 is the committed map, and `xdata_register_map.py --export-ownership` reads each
 routine once from its owner. The numbers in the table above are what the
 census says **by default, and they are unchanged** — the pass takes the census
-from 14,819 references to **9,401** and these 43 rows from 4,988 to **460**,
+from 14,822 references to **9,404** and these 43 rows from 4,988 to **460**,
 with `0x0843` and `0x0844` going 168 → 4 and 42 touchers → 1, and with **no
 address lost from the census**. So the paragraph above is confirmed rather than
 overturned: those five addresses are not the firmware's busiest, and the tool
@@ -6234,3 +6234,36 @@ CSV was regenerated, and `--check` is green before and after, which this issue's
 requirement reads as "this changed nothing about the verdict". #591 (the
 `export_ownership.py` tool in no gate), #512 and #528's recipe regression are
 left open and untouched.
+
+## 32. The export-ownership page's census figures are re-derived, seven cells corrected (2026-09-25, issue #654)
+
+The write-up is
+`docs/findings/xdata-export-ownership-page-census.md`; this is the summary.
+`ec/annotations/xdata-export-ownership.md` measured what `--export-ownership`
+does to the census on a tree from before #267, and had been left quoting it
+after the tool's own `ORACLE` and `OWNERSHIP` were re-pinned for that change.
+Every figure on the page is re-derived here from a fresh run of the two
+commands the page's §5 already prints, and the page is edited only where that
+run disagrees: **seven cells, all of them the census pair and the `read`
+bucket**, now 14,822 / 9,404, 13,964 / 8,546 and 8,344 / 4,923. **The other
+twenty-one re-derived and held**, which is the more useful half of the
+result — the two `main-ec-002` rows, the `export_ownership.py` class figures
+and the whole of §3's body-floor prose are all confirmed rather than assumed
+away. The two cases where "the oracles say so" would not have been enough are
+recorded for what they are: **main-EC `refs` is printed by no oracle-asserted
+table** (§31's has no main-EC row) **and `--self-test` does not assert
+`OWNERSHIP["main_refs"]`**, so it is read off each run's own per-group stdout
+line; and **the two `main-ec-002` rows are in no oracle at all**, so they are
+re-derived by taking the committed row's 43 addresses and reading them back
+*by address* — a lookup on `cluster_id` is the wrong recipe, because the pass
+renumbers the cluster and the id lands on a different membership. That recipe
+was accepted only after it reproduced 4,988 and 4,966 on the default side,
+which is the test of whether it is the right one. §31's deferral sentence stays
+where it is, with the correction beside it, and no suite gained a pin: these
+stay page measurements, for the reason §31's *Calibration* section gives. No
+register `status:` changed, no census CSV was regenerated, both committed CSVs
+are byte-identical before and after, and `--self-test`, `--check` and the
+21-of-23 suite run are unchanged. #583, #614, #588, #582 and #591 are left
+open; the same pre-#267 pair on `xdata-06c2-06db-timers.md`,
+`xdata-register-map.md`, `ec/README.md:226` and the rest of this file's census
+prose is #583's and is not touched here.
