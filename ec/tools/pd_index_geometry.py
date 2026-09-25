@@ -248,6 +248,34 @@ def pd_bounds():
     return lo, hi
 
 
+def check_site_addr(addr: int) -> None:
+    """Refuse an address that is not a PD runtime address at all.
+
+    A `--sites` anchor is the caller's, and the region it indexes is flat, so a
+    value wider than the region has no file offset to read and the failure would
+    otherwise be an IndexError from whichever line read first. What this tests
+    is the *argument*, not this image's bytes: the region is the same width on
+    any dump, which is what separates it from the reachability guard
+    ../../docs/findings/opcode-len-bounds-census.md row 10 declined to add. The
+    instruction-boundary precondition beside it is not the tool's to make --
+    no byte says where a routine's instructions begin.
+    """
+    lo, hi = pd_bounds()
+    if 0 <= addr < hi - lo:
+        return
+    msg = (f"0x{addr:05X} is not a {PD_REGION} runtime address: that region is "
+           f"0x0000-0x{hi - lo - 1:04X} at run time, "
+           f"0x{lo:05X}-0x{hi - 1:05X} in the file")
+    if lo <= addr < hi:
+        # The plausible mistake, and the columns are the tool's own: --sites
+        # prints `file_offset` beside `runtime` and the committed CSVs carry
+        # both. What that number is, is left to the reader.
+        msg += (f"\n  0x{addr:05X} is inside the file range, which is where a "
+                f"site's file_offset lives; the runtime address there is "
+                f"0x{addr - lo:04X}")
+    raise ValueError(msg)
+
+
 def is_call(op: int) -> bool:
     return op in CALL_OPS or op & 0x1F == 0x11
 
@@ -582,10 +610,18 @@ def site_rows(d: bytes, addrs, max_insns: int = SITE_WINDOW):
 
     An address that begins with `MOV DPTR,#imm16` is treated exactly as a base
     site; any other address is decoded from its first byte, which is how a
-    mid-routine anchor gets a chain at all. Nothing checks that the address is
-    an instruction boundary -- the caller asserts that by naming it, and the
-    listing is there so a wrong assertion is visible."""
+    mid-routine anchor gets a chain at all. Two preconditions, and only one of
+    them is the tool's to make. Nothing checks that the address is an
+    instruction boundary -- the caller asserts that by naming it, and the
+    listing is there so a wrong assertion is visible. The *range* is checked:
+    check_site_addr() refuses an address outside 0x0000-0xFFFF and names the
+    file range beside it, because the tool's own output puts `file_offset`
+    next to `runtime`."""
     lo, _ = pd_bounds()
+    # Checked over the whole run first, so one bad address in a multi-address
+    # call is the diagnostic rather than a partial listing and then a traceback.
+    for addr in addrs:
+        check_site_addr(addr)
     rows = []
     for addr in addrs:
         i = lo + addr
@@ -1642,6 +1678,31 @@ def self_test(fw_path: str) -> int:
         got = fmt_terms(site_rows(d, [runtime])[0]["terms"])
         check(got == want, f"--sites 0x{runtime:04X} decodes to {want} (got {got})")
 
+    # check_site_addr() is a statement about the caller's argument, not about
+    # this image, so the top of the legal range is pinned to still walk its
+    # whole window: the last read lands at 0x3000E here, inside the 0x3002C
+    # ../../docs/findings/opcode-len-bounds-census.md row 10 puts at the end of
+    # it as the worst case of 15 three-byte instructions.
+    hi = pd_bounds()[1]
+    top = site_rows(d, [0xFFFF])[0]
+    peak = top["listing"][-1][0]
+    check(len(top["listing"]) == SITE_WINDOW and 0x3000E <= peak <= 0x3002C,
+          f"--sites 0xFFFF still walks its {SITE_WINDOW}-instruction window, "
+          f"last read at file 0x{peak:05X} (got 0x{peak:05X})")
+    # 0x1FFF1 is the first address whose window ran off the end of this image
+    # before the check, and 0x23478 is a file_offset out of
+    # ../annotations/ec-0x07d0-sites.csv -- the plausible wrong column.
+    for addr in (0x1FFF1, 0x23478):
+        try:
+            site_rows(d, [addr])
+            msg = "<no refusal>"
+        except ValueError as exc:
+            msg = str(exc)
+        check(PD_REGION in msg and "0x0000-0xFFFF" in msg
+              and f"0x{lo:05X}-0x{hi - 1:05X}" in msg,
+              f"--sites 0x{addr:05X} is refused naming {PD_REGION} and both "
+              f"ranges (got {msg!r})")
+
     for entry, want in STRIDE_HELPER_TERMS.items():
         terms, _, _ = walk_helper(d, entry)
         got = fmt_terms(terms)
@@ -1789,7 +1850,10 @@ def main() -> int:
     if bases_span is not None:
         print_bases(d, bases_span)
     if args.sites:
-        print_sites(d, [int(a, 16) for a in args.sites])
+        try:
+            print_sites(d, [int(a, 16) for a in args.sites])
+        except ValueError as exc:
+            ap.error(str(exc))
     if strides_span is not None:
         print_strides(d, strides_span)
     if args.callers:
