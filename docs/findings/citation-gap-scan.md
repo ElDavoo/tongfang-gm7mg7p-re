@@ -349,14 +349,19 @@ still there for a re-export that changes it.
 **Correction (2026-09-25), leaving the superseded heading visible rather than
 silently rewritten.** This section was filed under "The neighbouring open
 issues, and what is claimed for none of them", which read as a claim that all
-four were open. That was true when it was written and is not the reading to take
-now. Re-read with `gh issue view <n> --json state,closedAt`: **#456 closed
-2026-09-25** (`closedAt=2026-09-25T08:23:14Z`), and **#522, #465 and #543 are
-open**, so `../findings.md`'s "**#465** is the open issue" still stands. State is
-a column of its own now because an issue can close underneath a table like this
-one, and this table was filed before that happened to it. The column carries the
-read and its date so the next reader re-derives the state rather than inheriting
-it.
+four were open. The committed record puts that reading wrong from the moment the
+heading landed rather than stale: the heading and table first entered the
+repository in `a37faef9` (#668) at `2026-09-25T10:21:18Z`, about two hours after
+#456's close, so the table asserted an open state for an already-closed issue the
+moment it merged. No committed file records an earlier draft of the table, and a
+session predating that close would leave no trace here, so the provenance is
+stated as what `git log` shows and no more. Re-read with
+`gh issue view <n> --json state,closedAt`: **#456 closed 2026-09-25**
+(`closedAt=2026-09-25T08:23:14Z`), and **#522, #465 and #543 are open**, so
+`../findings.md`'s "**#465** is the open issue" still stands. State is a column
+of its own now because the heading asserted a state it had not read off the
+tracker. The column carries the read and its date so the next reader re-derives
+the state rather than inheriting it.
 
 **Nothing in the overlap is retracted.** Every claim in the middle column is a
 set intersection over the committed population, and all four still hold on this
