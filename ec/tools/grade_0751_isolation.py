@@ -71,14 +71,30 @@ One thing is read that is not a byte at all: §3's per-block integrity check.
 §3 calls that check mechanical and then leaves the operator to eyeball it
 against the mark list `ec_watch.py` prints at stop. Here the marks are grouped
 into blocks -- one per write under test, opened by the step-2 no-op control
-arm and closed by the step-5 restore -- and each block's last mark has to be
-that restore. A block whose last mark is not the restore is void: the capture
-cannot show the byte being put back, so its last window never closes. It is
-printed as void, by name and with the label it did end on, and the exit code
-is not zero. Its windows are withheld like any other block that fails a mark
-check: each prints a `not graded` line naming the capture that ends the block
-where, and the block's own line reads `-- NOT GRADED, its windows are not
-printed`.
+arm, carrying the stage boundaries §3's steps 2, 3 and 4 mark, and closed by
+the step-5 restore -- and each block's last mark has to be that restore. A
+block whose last mark is not the restore is void: the capture cannot show the
+byte being put back, so its last window never closes. It is printed as void,
+by name and with the label it did end on, and the exit code is not zero. Its
+windows are withheld like any other block that fails a mark check: each prints
+a `not graded` line naming the capture that ends the block where, and the
+block's own line reads `-- NOT GRADED, its windows are not printed`.
+
+**A mark is a stage boundary as often as it is a write.** Three of the six
+rounds §3 asks for in a block are not writes at all: `settled`, `held` and
+`watch over` name a stage, carry no `0x0751=` value, and exist because a
+window runs from one mark to the next -- so the end-of-watch mark is what
+closes the write's ~60 s observation window, and without it the write's window
+runs on into the `restored` write that §4.4's control-vs-write comparison is
+then taken over. A boundary carries no value, so it cannot name a block; it
+joins the one already open, or waits for the next `write` the way the control
+arm does, and a block reads `settle, control, hold, write, watch, restore`
+with `--block` selecting all six of its windows. **They are optional, not
+required.** A capture carrying only the three action marks grades exactly as
+it always did -- the probe's own two-mark capture, and every fixture under
+`ec/tools/testdata/0751-isolation-run-*/` but the staged one, included -- and
+what it costs is the write's window, which the block's `roles` line says on its
+face rather than a check refusing the run.
 
 **The mark set is a precondition of the windows, and is checked as one.**
 A window is arithmetic over rows: every change after a mark belongs to that
@@ -93,15 +109,17 @@ because nothing moved, and the whole run reports that in the same confident
 format as a result.
 
 So §6's "the marks in all three CSVs must carry the same labels" is checked
-rather than written down, before any window is printed: every action recorded
+rather than written down, before any window is printed: every mark recorded
 in every capture, every capture spelling it the same way, every block's last
-mark its restore *in each capture*, and every label one of the three forms
-§3 fixes. A block that fails any of those is summarised where its windows
-would be and the windows are not printed -- they are correct as arithmetic and
-wrong as evidence about a labelled action, and printing them in the usual
-format is the defect. The census that carries the diagnosis is printed whole
-either way, and names which capture is short, which two disagree, and what the
-consequence is.
+mark its restore *in each capture*, and every label one of the forms §3
+fixes. A boundary is one mark like any other here, so a `watch over` one
+console missed or that two spelled differently withholds its block's windows
+on exactly the terms a `write` would. A block that fails any of those checks
+is summarised where its windows would be and the windows are not printed --
+they are correct as arithmetic and wrong as evidence about a labelled action,
+and printing them in the usual format is the defect. The census that carries
+the diagnosis is printed whole either way, and names which capture is short,
+which two disagree, and what the consequence is.
 
 The census also names each block by the value its `write` mark carries, so a
 window list, a `--dump` pair and a §4.6 verdict can all say which block they
@@ -333,19 +351,37 @@ MARK_SET_NOTE = (
     "capture is short and what the consequence is, and the exit code is 1 "
     "until the marks do.")
 
-# §6's three label forms, spelled as §6 spells them, for the message that
-# quotes them back at a mark the parse could not read. The operator cannot fix
-# an unplaceable mark from a description of the problem; the three forms are
-# the whole of what has to change.
+# §6's label forms, spelled as §6 spells them, for the message that quotes
+# them back at a mark the parse could not read. The operator cannot fix an
+# unplaceable mark from a description of the problem; the forms are the whole
+# of what has to change. Three of them name a write and carry a value; three
+# are the stage boundaries `MARK_FORMS` gives no value to.
 REQUIRED_LABEL_FORMS = ("no-op wrote 0x0751=0xA0", "wrote 0x0751=0x10",
-                        "restored 0x0751=0xA0")
+                        "restored 0x0751=0xA0", "settled", "held",
+                        "watch over")
 
-# The leading word of each form, and the role it makes the mark. Ordered so
-# that `no-op wrote ...` reads as the control arm rather than as the write
-# under test: §3 spells the control arm out that way precisely so the two
-# cannot be confused, and the grader reading it the other way round would
-# undo the point of the prefix.
-MARK_FORMS = (("control", "no-op"), ("restore", "restored"), ("write", "wrote"))
+# The leading word of each form, the role it makes the mark, and whether the
+# form carries a `0x0751=` value. Ordered so that `no-op wrote ...` reads as
+# the control arm rather than as the write under test: §3 spells the control
+# arm out that way precisely so the two cannot be confused, and the grader
+# reading it the other way round would undo the point of the prefix.
+#
+# The last three take no value, and are the reason the flag is here: a
+# boundary is the bare word, where every action form has to be followed by
+# `0x0751=...`, so a matcher that required a trailing value could not read
+# one at all -- and a form table that said so had to be able to say which
+# forms are exempt. The stage boundaries come last because no action word
+# prefixes one of them; the order between them is the order §3's block runs in.
+MARK_FORMS = (("control", "no-op", True), ("restore", "restored", True),
+              ("write", "wrote", True), ("settle", "settled", False),
+              ("hold", "held", False), ("watch", "watch over", False))
+
+# The roles that name a stage rather than a write, read off `MARK_FORMS` so
+# the two cannot disagree about which forms carry no value. `parse_mark`
+# returns `(role, None)` for one of these and `assign_blocks` files it against
+# the block rather than opening a value under test with it.
+BOUNDARY_ROLES = tuple(role for role, _, takes_value in MARK_FORMS
+                       if not takes_value)
 
 # §6's `<value>` inside a dump's own file name -- the shape §3's step 0 and
 # step 6 redirects write. It is how a dump says which block it belongs to,
@@ -387,7 +423,7 @@ UNREAD_MARK_NOTE = (
     "what is graded, not what is known, and this refusal holds for the "
     "whole run whichever block was selected. The census above names every "
     "mark the parse could not read, per capture; the fix is the label, which "
-    "has to be one of the three forms §6 fixes. The exit code is 1 until "
+    "has to be one of the forms §6 fixes. The exit code is 1 until "
     "they do.")
 
 # The window that was read and is a window of nothing, which is the one gap
@@ -468,11 +504,16 @@ class Window:
 
 
 class Block:
-    """One §3 block: a control arm, a write under test, and its restore.
+    """One §3 block: its stage boundaries, a control arm, a write under test,
+    and its restore.
 
     `value` is what the block's `write` mark carried, and is what `--block`
     and the `block:` line take: the value under test is the one thing a
-    window, a dump and a §4.6 verdict can all be named by.
+    window, a dump and a §4.6 verdict can all be named by. The three stage
+    boundaries carry no value of their own, so a block that has them reads
+    `settle, control, hold, write, watch, restore` on its `roles` line and one
+    that has not reads the three actions alone; both grade, and the line is
+    what says which a run was handed.
     """
 
     def __init__(self, value, windows):
@@ -659,9 +700,9 @@ def parse_value(text):
 def parse_mark(label):
     """(role, value) for one mark label, or (None, None) if it carries neither.
 
-    §3 fixes the three labels the operator types and `ec_watch.py` writes them
-    into the CSV verbatim, so the leading word is the only handle on it. Only
-    that word and the value are read, case-insensitively: everything after the
+    §3 fixes the labels the operator types and `ec_watch.py` writes them into
+    the CSV verbatim, so the leading word is the only handle on it. Only that
+    word and the value are read, case-insensitively: everything after the
     value is the operator's, and what is checked here is which action the
     mark names and which value it names -- not how it was punctuated.
 
@@ -669,6 +710,14 @@ def parse_mark(label):
     test, which is the whole reason §3 spells the prefix out: read the other
     way round, the two are the same sentence with a prefix and the control arm
     becomes indistinguishable from what it is a control for.
+
+    A stage boundary is matched on the word alone -- it *is* the word, or
+    begins with the word and a space -- because §3 types it with nothing after
+    it, and every action form is followed by `0x0751=...` so none of them can
+    be. That is what the third field of `MARK_FORMS` is for: a boundary has
+    to match with no value at all rather than with a value that happens not
+    to be there, so the form table has to say which forms are exempt instead
+    of the parse inferring it from a regex that did not match.
 
     The value is `int`, not the text, because it is compared against another
     block's and against `--block`, and `0xA0` / `A0` / `a0` are one value
@@ -681,9 +730,11 @@ def parse_mark(label):
     """
     for part in label.split(" / "):
         part = part.strip().lower()
-        for role, word in MARK_FORMS:
-            if not part.startswith(word + " "):
+        for role, word, takes_value in MARK_FORMS:
+            if part != word and not part.startswith(word + " "):
                 continue
+            if not takes_value:
+                return role, None
             m = MARK_VALUE.search(part)
             return (role, int(m.group(1), 16)) if m else (None, None)
     return None, None
@@ -700,6 +751,16 @@ def assign_blocks(windows):
     own would be an arm with nothing to compare against. A `restore` closes
     the block it is in, so a block that never gets one is left open and comes
     back void rather than running into the next one.
+
+    A stage boundary names a stage rather than a write and carries no value, so
+    it cannot name a block and is filed against one that is already open:
+    `settled` and `held` sit in front of the write they belong to, and
+    `watch over` sits behind it. While no block is open a boundary waits for
+    the next `write` exactly as the control arm does, which is what keeps a
+    boundary typed between two blocks from being swallowed by the first of
+    them. §3 prints all three inside one block, so a block reads
+    `settle, control, hold, write, watch, restore` and the windows they open
+    are that block's.
 
     The labels are the only thing that says a run was one block or the next.
     A gap in the timestamps says only how long the operator took, and a mark
@@ -721,7 +782,18 @@ def assign_blocks(windows):
     blocks, unplaced, pending, current = [], [], [], None
     for w in windows:
         role, value = parse_mark(w.label)
-        if role == "control":
+        if role in BOUNDARY_ROLES:
+            # Onto the open block if there is one, and held for the next
+            # `write` if there is not. §3's three boundaries are inside one
+            # block, and `watch over` is the one that arrives with a block
+            # open; the other two are the control arm's case, and waiting is
+            # what keeps a boundary typed between two blocks from joining the
+            # wrong one.
+            if current is None:
+                pending.append(w)
+            else:
+                current.windows.append(w)
+        elif role == "control":
             # Held for the write that follows rather than added where it
             # stands: a control arm after a block's write and before its
             # restore belongs to the next block, which is what a restore that
@@ -768,7 +840,7 @@ def unplaceable_marks(unplaced):
             continue
         out[w] = [
             f"{os.path.basename(m.source)} at {m.ts.isoformat(sep=' ')}: "
-            f"{m.label!r} is not one of the three forms §6 fixes ("
+            f"{m.label!r} is not one of the forms §6 fixes ("
             + ", ".join(repr(f) for f in REQUIRED_LABEL_FORMS)
             + "), and a mark this cannot read is a mark no block can be "
               "attributed to"

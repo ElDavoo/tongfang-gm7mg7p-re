@@ -25,8 +25,8 @@ places at once:
 
 The label is the operator's own words, and the tool does not read it. The
 grader does: `grade_0751_isolation.py`'s `parse_mark` reads the leading word
-and the value after `0x0751=`, which is why §3 fixes three forms and why they
-are load-bearing rather than illustrative.
+and the value after `0x0751=`, which is why §3 fixes a fixed set of forms and
+why they are load-bearing rather than illustrative.
 
 **CORRECTION (issue #531, 2026-09-25), leaving the sentence above as it was
 written.** *The tool does not read it* was true when this was written, and is
@@ -72,16 +72,19 @@ refused exactly as a blank press is — no row, nothing appended, the counter he
 back, the same notice shape:
 
 ```
---- unplaceable label: nothing recorded, no mark 1 taken; one of: no-op wrote 0x0751=0xA0 / wrote 0x0751=0x10 / restored 0x0751=0xA0; type a label + Enter ---
+--- unplaceable label: nothing recorded, no mark 1 taken; one of: no-op wrote 0x0751=0xA0 / wrote 0x0751=0x10 / restored 0x0751=0xA0 / settled / held / watch over; type a label + Enter ---
 ```
 
 Both halves of that are the grader's rather than a copy of it. The predicate is
 `parse_mark(label)[0] is not None` — the test `unplaceable_marks` applies to
-decide a mark is unreadable — and the three forms are that module's own
+decide a mark is unreadable — and the forms are that module's own
 `REQUIRED_LABEL_FORMS`, loaded from it by path. A copy could drift from the
 grader, and a prompt that has drifted promises something the grading does not
-do. What is left is the operator correcting the label while the run is still
-going, instead of finding out at the grading that a day is withheld.
+do. The last three above are the stage boundaries §3 added for issue #472
+(`settled`, `held`, `watch over`): a mark that names a stage rather than a
+write, which the prompt reads and the grader files against a block. What is
+left is the operator correcting the label while the run is still going, instead
+of finding out at the grading that a day is withheld.
 
 **What it does not catch is as much of the point as what it does.** `parse_mark`
 reads the leading word and the value after `0x0751=`, and it knows nothing about
@@ -167,12 +170,14 @@ about the capture.
 ## Where the refusal shows up
 
 - [manual-fan-ctrl-0751-isolation.md](../../docs/hardware-tests/manual-fan-ctrl-0751-isolation.md)
-  §3 is where the operator is told what to type, and its "three forms are
+  §3 is where the operator is told what to type, and its "those forms are
   load-bearing" paragraph carries the dated correction: a blank press is no
   longer one way to produce an unplaceable mark, and the mistyped digit that
   survives is what the three-console comparison is for. Its three commands also
   carry `--label-vocab 0751`, which is where the operator turns the second
-  refusal on.
+  refusal on, and since issue #472 its console block carries a `rem` line per
+  mark round naming the exact string to type — all six of them, the three
+  stage boundaries included.
 - `windows/tools/ec_watch.py` — `load_label_vocab` and the `check`/`forms`
   keyword parameters on `Marker`. The parameters default to no check because
   `windows/tools/gpu_block_watch.py:166` constructs `Marker(sink)` and stamps
@@ -203,6 +208,6 @@ for a blank press, and both are follow-ups.
   captured with that tool and graded with this one fails the same way.
 - `ec/tools/ec_timer_capture.py:162` — `mark_loop`, the same `strip() or`
   default over a plain `for line in sys.stdin`. `grade_timer_sweep.py` reads a
-  `resumed` label rather than §3's three forms, so the consequence there is a
+  `resumed` label rather than §3's forms, so the consequence there is a
   misleading row rather than a withheld run — a smaller cost, not a smaller
   bug.

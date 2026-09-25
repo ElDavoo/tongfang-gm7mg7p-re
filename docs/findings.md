@@ -2031,6 +2031,23 @@ the graded windows that are a window of a value under test rather than over all
 of them; the exit code is unchanged. Write-up:
 `docs/findings/0751-grader-unplaced-window-scope.md`.
 
+**§3's three unlabelled mark rounds were a fourth class of mark, and the block
+model had no place for them.** §3's command block asks for six mark rounds per
+block and says so in its own `--seconds 240` paragraph, and only the three that
+name a write had a label the grader could read: a stage round is the bare word,
+`parse_mark` required a word followed by a space, so `settled`, `held` and
+`watch over` came back `(None, None)`, went to `unplaced`, and
+`unplaceable_marks` refused the run — exit 1, and a day taken as the runbook
+prints it half graded. The three are now boundary roles carrying no
+`0x0751=` value, filed against the block the control arm opens, so a block
+reads `settle, control, hold, write, watch, restore` and `--block` selects six
+windows. Boundaries are optional rather than required: a three-mark capture
+grades as it always did, and what a block without a `watch over` costs — its
+write's window runs into the restore — is stated in §3 and visible on the
+`roles` line rather than checked. The refusal message now quotes all six forms
+and takes the count from the tuple. Write-up:
+`docs/findings/0751-stage-mark-labels.md`.
+
 **Those 76 tests ran nowhere.** `grade_0751_isolation.py` had no `--check` and
 no `--self-test`, so it was absent from `check_ghidra_tooling()`'s tool list —
 and absent from it *and* without a mode, the loop's `*)` default would hand it
