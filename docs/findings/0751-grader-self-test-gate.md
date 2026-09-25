@@ -40,6 +40,19 @@ third measured on this tree on 2026-09-25.
    quoting a suite or test total, because the runner's own totals are a
    property of the merge and re-stale with the next suite to land.
 
+   **(Correction, 2026-09-25, issue #751 — the figure was one low.)** "Two" was
+   true of the tree this branch was cut from and is not true of the tree the
+   runner sees now: a third suite fails as well, `tools/test_readme_suite_table.py`,
+   and it was not a judgement about anything. `ec/tools/test_inc_dptr_sites.py`
+   had no row in `tools/README.md`'s suite table, and a runner that finds its
+   suites by `find` picks a new one up silently — the row is the one step it
+   cannot do for itself. That row has landed since, so the runner is red on the
+   two suites named below and no longer on the third. The sentence above is left
+   as it was written rather than edited to the new figure, and the count is
+   re-derived by running the runner rather than by editing the prose, for the
+   reason the sentence itself gives. The write-up is
+   `docs/findings/runner-red-suite-set.md`.
+
    The first is `ec/tools/test_check_site_census.py::test_the_committed_join_holds`
    — 14 disagreements between `ec/annotations/xdata-086x-dispatch-sites.csv`,
    `ec/annotations/xdata-0860-census-sites.csv` and the committed decompile:
@@ -55,6 +68,26 @@ third measured on this tree on 2026-09-25.
    guard-off census this suite builds is not the one §6a measured``. That is
    #528's own finding, and `db6d7d2d` is this branch's point of departure, so
    the suite was already red this way when the branch was cut.
+
+   The third is `tools/test_readme_suite_table.py` — bookkeeping in the
+   runner's own index rather than a judgement about a decompile, and the only
+   one of the three whose fix is a row beside a path:
+
+   ```
+   AssertionError: ['ec/tools/test_inc_dptr_sites.py'] is not false : tools/README.md
+   lists no row for 1 discovered suite(s):
+     ec/tools/test_inc_dptr_sites.py
+   ```
+
+   The check compares the suite table's first column against what the runner's
+   own `find` turns up, and one row was missing: the suite
+   `ec/tools/inc_dptr_sites.py` (issue #707) brought for the figures of
+   `ec/annotations/xdata-inc-dptr-only.md`. **#751 clears this one and neither
+   of the two above** — the row has landed, and the two that fail on their
+   subject are untouched and keep their own owners. A row beside a path is the
+   whole of the fix, and it is the shape a new suite takes every time: the next
+   one to land moves the runner's totals without changing what fails, which is
+   what the paragraph above's refusal to quote a count is holding against.
 
    The cause is visible in the file. `ec/decompiled/bank0/D091.c`'s header
    carries a `CORRECTION 2026-09-24, issue #180` note — the 40 bytes at
@@ -230,20 +263,26 @@ without it landing.
   be pushable, the patch applies unchanged and nothing is lost.
 - **`tools/run-tests.sh` in the gate** (#162's step, the 4-line wiring already
   written down in `docs/agent-pipeline.md:257-263`). Left for the reason in
-  finding (2): the runner is red today.
+  finding (2): the runner is red today. That was three suites when this was
+  written and is two now — #751 cleared the third, which was a missing table
+  row rather than a judgement about a decompile — and whoever lands the wiring
+  re-derives the set rather than trusting this list.
 - **The `test_check_site_census.py` failure.** Pre-existing, unrelated to this
   grader, and a judgement about the decompile rather than a mechanical edit.
   Follow-up issue: the stale `census_refs` line numbers in
   `ec/annotations/xdata-0860-census-sites.csv` against a `bank0/D091.c` that
   was hand-corrected on 2026-09-24 for #180.
-- **`tools/README.md`'s stale counts** ("seventeen today, 432 tests in all" —
-  both are past, and the runner is red today on the two suites finding (2)
-  names). Left to the same follow-up: it is a shared file, the number
-  re-stales with the next suite, and the runner deliberately asserts no count.
-  This file names the two failing suites instead of carrying a total that is
-  already wrong. `docs/agent-pipeline.md:266`'s 0.77 s figure is #162's
-  four-suite measurement; item 7 says so rather than contradicting it, and no
-  existing line is edited.
+- **`tools/README.md`'s stale counts** (the sentence has moved since this was
+  written — it read "seventeen today, 432 tests in all" here, and it is #615's
+  to fix — and the runner is red today on the two suites finding (2) names).
+  Left to the same follow-up: it is a shared file, the number re-stales with
+  the next suite, and the runner deliberately asserts no count. This file names
+  the failing suites instead of carrying a total that is already wrong; the
+  correction in finding (2) is the third, and
+  `docs/findings/runner-red-suite-set.md` records why no test notices either
+  figure. `docs/agent-pipeline.md:266`'s 0.77 s figure is #162's four-suite
+  measurement; item 7 says so rather than contradicting it, and no existing
+  line is edited.
 - **Running the 0x0751 procedure on hardware.** No laptop is reachable from a
   runner. The suite is offline by construction over committed fixtures.
 - **#512 and #416** — the same shape for a different tool and a different
