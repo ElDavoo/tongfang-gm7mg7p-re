@@ -35,16 +35,17 @@ blockquote added 16 lines to that file above it, which is precisely the
 `:NNN` written while drafting it was already wrong before the block landed.
 
 **One qualification belongs at the top rather than at the bottom, because the
-next four sections quote a runner that is not quite green.** The three suites
-this page corrects sentences about are all green, and the sentences about
-anything else are not its business. But the tree this lands on has one red
-suite — `ec/tools/test_check_cluster_citations.py` — on
-`xdata-cluster-names-guard-off-recipe.md:220`, which is **#822's** write-up and
-not one of the pages below. It reproduces on a clean `origin/main` and
-`../findings.md` §52 already records it in a merged-tree note and names it to
-that file's owner. Every transcript below is the merged tree's, not the one
-this page was drafted against; the first draft measured against `64dbde19`,
-before #822 landed.
+next four sections quote a runner that is not quite green.** The three
+*failures* this page corrects sentences about are resolved and two of the three
+suites are green, and the sentences about anything else are not its business.
+But the tree this lands on still has one red suite —
+`ec/tools/test_check_cluster_citations.py`, the third of those three, whose one
+failure is on `xdata-cluster-names-guard-off-recipe.md:220`, which is **#822's**
+write-up and not one of the pages below. It reproduces on a clean
+`origin/main`, and `../findings.md` §52 already records it in a merged-tree note
+and names it to that file's owner. Every transcript below is the merged tree's,
+not the one this page was drafted against; the first draft measured against
+`64dbde19`, before #822 landed.
 
 ## What the runner says on this tree
 
@@ -130,7 +131,7 @@ other one, **46 → 48**.
 **The checker's file-and-line total is not printed on a failing run**, so the
 figure below is the corpus walk the same tool performs, not its own output line.
 `check_cluster_citations.py` walks the repository's prose corpus, so every page
-added to it moves both numbers: **112 files / 54963 lines** on the tree this
+added to it moves both numbers: **112 files / 54972 lines** on the tree this
 lands on, over which it finds 2 problems. That is the same rule as the runner's
 totals — the figure belongs to the merge — but it cuts the other way from the
 one this page is arguing. Here the count moving is not a stale number going
@@ -172,7 +173,7 @@ paths.sort()
 read = sum(cc.check(p, members, counts, known, by_key, by_name)[1] for p in paths)
 print(f'{len(paths)} files / {read} lines')
 PY
-112 files / 54963 lines
+112 files / 54972 lines
 ```
 
 The sentences quoting it are quoting a measurement rather than a memory, so a
@@ -186,12 +187,13 @@ transcription was wrong in a way the rest of this page is about. It read
 `103 files / 50859 lines, still exit 0`, but **no tree measured prints that**:
 `check_cluster_citations.py` at `d87d877e` (#826) — the last commit it exits 0
 on — prints `103 files / 50552 lines`, and at `2ed6f030` (#822), the nearest
-tree by file count, it prints `103 files / 50668 lines` and exits 1 on #822's own
-two citations. The file count was right for those two trees and wrong here, the
-line count was right for none, and "still exit 0" was wrong on both, because the
-run that made the checker red is #822's. So the number is derived from the
-walk rather than transcribed, and the figure above is the merged tree's rather
-than any single commit's.
+tree by file count, the walk above covers `103 files / 50668 lines` while the
+tool exits 1 on #822's own two citations, printing no totals of its own. The
+file count was right for those two trees and wrong here, the line count was
+right for none, and "still exit 0" was wrong on both, because the run that made
+the checker red is #822's. So the number is derived from the walk rather than
+transcribed, and the figure above is the merged tree's rather than any single
+commit's.
 
 **The totals are a property of the merge, not a durable claim, and the red set
 is the only part of the sentence that is about anything.** A total moves when a

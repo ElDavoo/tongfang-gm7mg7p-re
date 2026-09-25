@@ -254,13 +254,16 @@ one is a regression **from the commit that added the flag this issue is about**
   > 1
   > ```
   >
-  > **The one suite still red is not one of this paragraph's three.** It is
-  > `test_check_cluster_citations.py`, the third of the three paragraphs below —
-  > and it is red on a *different* line for a *different* reason, introduced by
-  > #822's own write-up rather than by anything on this page. `docs/findings.md`
+  > **The one suite still red *is* one of this paragraph's three — the third of
+  > the three paragraphs below.** What #752 and #753 cleared are the three
+  > *failures* this paragraph counted, not the three suites: it is
+  > `test_check_cluster_citations.py`, red on a *different* line for a
+  > *different* reason, introduced by #822's own write-up rather than by
+  > anything on this page, while the other two, `test_xdata_cluster_names.py`
+  > and `test_check_site_census.py`, are green. `docs/findings.md`
   > §52 carries that measurement in a merged-tree note, and the correction under
   > the cluster-citations paragraph below records it against that paragraph
-  > rather than here. The three this paragraph names are all green.
+  > rather than here.
   >
   > The **set** is the claim; the totals are not, and are deliberately not
   > pasted into this page. A total is a property of the merge rather than of
@@ -498,7 +501,7 @@ is another file's finding from another issue.
   > failure, and it is why `bash tools/run-tests.sh` prints
   > `32 suite(s) run, 974 tests; one or more FAILED` on this tree. That
   > file-and-line total is itself a function of the corpus and moves when a page
-  > is added: 112 files / 54963 lines on the tree this lands on, which is the
+  > is added: 112 files / 54972 lines on the tree this lands on, which is the
   > tool reading the new page rather than the page escaping it.
   >
   > **Why §26 is not flagged is not a change in what the tree is checked for**,

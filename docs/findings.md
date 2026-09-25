@@ -6546,8 +6546,9 @@ recorded list nor `MODES`, and the suite stayed green with it unmocked. It now
 reads statement position too; the write-up is
 [`docs/findings/xdata-dispatch-tripwire-coverage.md`](findings/xdata-dispatch-tripwire-coverage.md).
 
-**Updated 2026-09-25, issue #816 — the three suites this section names are
-green, and the third "committed-prose case" below is not owed.** Three sentences
+**Updated 2026-09-25, issue #816 — the three failures this section names are
+resolved, two of the three suites are green, and the third
+"committed-prose case" below is not owed.** Three sentences
 of this section are left standing and are now false, so this addendum is their
 correction rather than a replacement: "19 of 22 suites", "all three failures
 reproduce on a pristine `HEAD`", and "the accepted run in the new suite is
@@ -6561,8 +6562,8 @@ still exits 1**, on the third of the three suites this section names —
 `docs/findings/xdata-cluster-names-guard-off-recipe.md:220`, which is **#822's**
 write-up and reproduces on a clean `origin/main`. `bash tools/run-tests.sh` gives
 `32 suite(s) run, 974 tests; one or more FAILED` here, with
-`git status --porcelain` empty afterwards, and §52's merged-tree note above is
-where that is recorded. There are now **two** working
+`git status --porcelain` empty afterwards, and §52's merged-tree note, further
+down this file, is where that is recorded. There are now **two** working
 scripted routes to a guard-off census rather than one, and #753 is the follow-up
 this section says the fix "belongs with" — it read this page to choose, and
 chose the flag over re-pointing the recipe. The §26 disagreement this section
@@ -7793,10 +7794,13 @@ have left a page that contradicted itself three paragraphs down. Nothing was
 rewritten or deleted — each correction is a dated block beside the sentence it
 belongs to, quoting it rather than pinning a line number, because these
 corrections add lines to the files they correct and a `:NNN` aimed at one of
-them is wrong on arrival. **The three suites these sentences are about are
-green**, at 28, 45 and 48 tests, and the red set the contract's heading counted
-is down to the third of those three — red on a *different* line for a *different*
-reason. `bash tools/run-tests.sh` still exits 1 on this tree, on
+them is wrong on arrival. **The three failures these sentences are about are
+resolved, and two of the three suites are green** —
+`test_xdata_cluster_names.py` and `test_check_site_census.py`, at 28 and 45
+tests; the third, `test_check_cluster_citations.py`, is still red at 48 tests,
+so the red set the contract's heading counted is down to the third of those
+three rather than to none — and it is red on a *different* line for a
+*different* reason. `bash tools/run-tests.sh` still exits 1 on this tree, on
 `ec/tools/test_check_cluster_citations.py`, and the failing line is
 `docs/findings/xdata-cluster-names-guard-off-recipe.md:220` — **#822's**
 write-up, reproduced on a clean `origin/main` and recorded in §52's merged-tree
