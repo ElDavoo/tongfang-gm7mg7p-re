@@ -158,8 +158,9 @@ comes from a human holding the rest of the notes.
 One action is marked in every watcher, so the same write appears as a MARK row
 per capture; marks within `MARK_MERGE_SECONDS` are one window, not several.
 
-**The closing section has three cases, not two.** A run that graded nothing
-says so, a run that graded everything reports its movement and compares it to
+**The closing section has four cases, not two.** A run that graded nothing
+says so, a run that graded every one of its windows -- and every one of those
+is a window of a value under test -- reports its movement and compares it to
 the static prediction, and a run that graded some of its windows says the
 movement over those and declines to compare it -- because "consistent with the
 static prediction" is a claim about the capture, and over a subset of the
@@ -171,6 +172,21 @@ opens the section is not what carries that, and a reader who reads only the
 line under it is the case this is for. §7's `confirmed-inert` needs all three
 values, so a day that withheld a block leaves a gap in the call that no
 sentence here can close.
+
+**A window this run read is not automatically a window of a value under
+test.** The fourth case is the one where nothing was withheld and nothing needs
+to be: a mark the block walk could not place opens a window that is graded --
+its rows are real, and there is no other arm to mis-file them under -- and
+that window is a window of nothing, because the labels are the only thing that
+attributes a window to a block. So a plain unscoped run over a day with a
+stray mark in it can print "consistent with the static prediction" over a set
+that is not the whole capture's windows of anything. The closing section counts
+those windows, beside the note for a mark that could not be read at all, and
+declines the capture-level comparison over the rest. A `--block` run makes the
+count structurally zero rather than by a guard -- `shown` is that block's own
+windows, and a window in no block is in none of them -- so the count never
+competes with the selected-block case below it. A day with a stray mark in it
+is not the three-value read either, and now says so rather than reading as one.
 
 Nothing here touches hardware; it reads files only.
 
@@ -349,6 +365,34 @@ UNREAD_MARK_NOTE = (
     "mark the parse could not read, per capture; the fix is the label, which "
     "has to be one of the three forms §6 fixes. The exit code is 1 until "
     "they do.")
+
+# The window that was read and is a window of nothing, which is the one gap
+# the banner above is not about: nothing here was refused, so there is no
+# refusal for the banner to name, and the rows are real. What a mark in no
+# block leaves unknown is the *arm* its window is a window of -- the labels
+# are the only thing that attributes a window, which is the same reasoning
+# `INTACT_BLOCK_NOTE` and `MARK_SET_NOTE` are written on. A static claim about
+# what an unattributed window would have shown is not made here either, so
+# nothing in it is a verdict about the machine.
+#
+# It ends at the count on purpose. It is printed above the whole
+# `moved_groups` / `withheld` / `graded_unplaced` chain, and which of those
+# sentences follows it is not its to decide: the movement line, the withheld
+# branch and the no-block branch carry three different denominators, and one of
+# them carries none at all. A "the claim below is over the other N" sentence
+# here was true of exactly one of them and false of the other two -- on a run
+# that also withheld a window it sat above a sentence claiming *all* `graded`,
+# unattributed ones included, which is the overclaim this note exists beside.
+# The scope is stated by the branch that owns the sentence instead, so a
+# reader never has to take the denominator of a claim from a line that does not
+# carry one.
+UNPLACED_GRADED_NOTE = (
+    "{unplaced} of the {graded} graded window(s) above are in no block: a "
+    "window is a window of a value under test only by the mark that opened "
+    "it, so these rows are real and the arm they belong to is unknown, and "
+    "the static prediction is a claim about the whole capture. The census "
+    "above names each of these by timestamp and label, in no block and so "
+    "beyond what `--block` can select.")
 
 # The bytes §4.4/§4.5 name but this script does not grade. They get their own
 # section because they are what §7's call is made on, and a reader should not
@@ -1876,6 +1920,7 @@ def main(argv=None):
     # one of §4.1-§4.3 moved" reads the same for both.
     moved_groups = []
     withheld = 0
+    graded_unplaced = 0
     for i in shown:
         w = windows[i]
         if w in unreads:
@@ -1910,6 +1955,16 @@ def main(argv=None):
                 f"{w.block.name} (block {w.block.index} of {len(blocks)})",
                 [text for _, on, text in w.block.problems if on is w])
             continue
+        if w.block is None:
+            # Counted here, where the window is printed, and not over `shown`
+            # in one go: a window can be both in no block and withheld -- the
+            # 12:00 stray in `unread-window/` is exactly that -- and the
+            # withheld banner already names it. Taking the count at the print
+            # point makes the two figures disjoint by construction, so the
+            # banner's "1 of the 8" and the note's "1 of the 7" cannot be one
+            # window counted twice, and the denominators differ the way the
+            # `graded` figure below them already does.
+            graded_unplaced += 1
         for name in report_window(w, i + 1, len(windows), w.block,
                                   len(blocks),
                                   end if i == shown[-1] else None):
@@ -1961,6 +2016,23 @@ def main(argv=None):
         # them. Next to the banner rather than inside it because the two are
         # not one count: `withheld` is this block's and `unreads` is the run's.
         print(f"  {UNREAD_MARK_NOTE}")
+    if graded_unplaced:
+        # Beside the note above and before the `moved_groups` branch rather
+        # than inside any one arm, which is what makes the branches compose
+        # with no new interaction: silent when the count is zero, so
+        # `withheld:` / `elif selected` / `else` are untouched by its presence
+        # and cannot disagree with it. A run that both selected a block and
+        # withheld part of it is scoped by the more specific of the two, as
+        # the comment inside the `moved_groups` branch argues, and that
+        # argument is unaffected. The branch below never competes with the
+        # selected-block one because a `--block` run makes this count
+        # structurally zero: `shown` is `[i for i, w in enumerate(windows) if
+        # w.block is selected]`, and `w.block is None` cannot be in it.
+        #
+        # The count and not a scope, because every branch reachable with it
+        # non-zero states its own scope below -- see `UNPLACED_GRADED_NOTE`.
+        print("  " + UNPLACED_GRADED_NOTE.format(
+            unplaced=graded_unplaced, graded=graded))
     if moved_groups:
         print(f"  At least one of the §4.1-§4.3 bytes moved after a mark: "
               f"{', '.join(moved_groups)}.")
@@ -2028,17 +2100,90 @@ def main(argv=None):
         # paths support -- the run is not a three-value read -- and it
         # declines to say which of them happened rather than picking the one it
         # was written against.
-        print(f"  None of the §4.1-§4.3 bytes moved in any of the {graded} "
-              f"window(s) that were graded: that is what those {graded} "
-              f"windows show, and the {withheld} window(s) withheld above "
-              "are not part of it. The static prediction is a claim about the "
-              "whole capture, and this output does not make it over a run it "
-              "only read part of -- a run in which every window was graded is "
-              "what would. §7's `confirmed-inert` needs all three values, and "
-              "a window this report refused to read is one this run cannot "
-              "speak for -- whether it sits in a block of its own is not "
-              "something this output can say -- so the paragraph below is as "
-              "far as this run goes.")
+        if graded_unplaced:
+            # A second reason the claim is not over every graded window, and
+            # the count above has already said how many windows it covers. A
+            # window this run *read* is not thereby a window of a value under
+            # test: a label is the only thing that attributes one, and the
+            # strays in `unread-window/` name 0x99, which no block's. So the
+            # movement is stated over the graded windows that are windows of a
+            # value under test, and the unattributed ones are named as outside
+            # it beside the withheld ones. Without this the branch prints a
+            # count naming 1 of the 7 in no block directly above a sentence
+            # claiming all 7 -- the disclosure contradicted by the claim it
+            # annotates, and #530 is about that sentence. Two reasons, one
+            # sentence: the withheld wording is kept for the windows it is
+            # about, because this branch is still the refusal-based one and
+            # `unread-window/` withheld a window whether or not it also read an
+            # unattributed one.
+            placed = graded - graded_unplaced
+            print(f"  None of the §4.1-§4.3 bytes moved in any of the "
+                  f"{placed} window(s) that were graded and belong to a value "
+                  f"under test: that is what those {placed} windows show, and "
+                  f"neither the {withheld} window(s) withheld above nor the "
+                  f"{graded_unplaced} graded window(s) in no block are part "
+                  "of it. The static prediction is a claim about the whole "
+                  "capture, and this output does not make it over a run it "
+                  "only read part of -- a run in which every window was "
+                  "graded, and every one of them a window of a value under "
+                  "test, is what would. §7's `confirmed-inert` needs all three "
+                  "values, and a window in no block, or one this report "
+                  "refused to read, is one this run cannot speak for -- "
+                  "whether the refused one sits in a block of its own is not "
+                  "something this output can say -- so the paragraph below is "
+                  "as far as this run goes.")
+        else:
+            print(f"  None of the §4.1-§4.3 bytes moved in any of the "
+                  f"{graded} window(s) that were graded: that is what those "
+                  f"{graded} windows show, and the {withheld} window(s) "
+                  "withheld above are not part of it. The static prediction is "
+                  "a claim about the whole capture, and this output does not "
+                  "make it over a run it only read part of -- a run in which "
+                  "every window was graded is what would. §7's "
+                  "`confirmed-inert` needs all three values, and a window this "
+                  "report refused to read is one this run cannot speak for -- "
+                  "whether it sits in a block of its own is not something this "
+                  "output can say -- so the paragraph below is as far as this "
+                  "run goes.")
+    elif graded_unplaced:
+        # Every window was read and some of them are a window of nothing.
+        # This is the withheld branch's gap reached from the other side:
+        # nothing was refused, so there is no banner to point at, and a count
+        # above zero means `graded > 0` and `withheld == 0`, so neither of the
+        # two branches above this one fires -- yet the run's windows are still
+        # not all windows of a value under test, and the sentence below would
+        # be the whole-capture claim over a set that is not one. The mark
+        # stream put a window here that no block's completeness check covers
+        # (`unplaced:` in the census) and whose own window-scoped checks found
+        # nothing to object to, which is the other half of how it got here --
+        # `unplaced_window_problems` reaches these windows now, and one it
+        # objects to was withheld above rather than counted here. The label is
+        # the only thing that could say which arm the surviving one is: a
+        # stray restore, or a control arm whose write never came, is real
+        # arithmetic over rows the capture really recorded, with an arm this
+        # run cannot name. That is the same reasoning `INTACT_BLOCK_NOTE`
+        # states for the other direction -- a fact about what was captured, not
+        # about what the EC did.
+        #
+        # The withheld branch's "a run it only read part of" is *not* reused,
+        # because it would be inaccurate here: this run read every window it
+        # was shown. The narrower gap is the count -- what an unattributed
+        # window is a window of -- and the sentence says that one and declines
+        # over the rest, the way the branch above declines over the withheld
+        # windows. Placed before the `selected` case because a `--block` run
+        # cannot reach either: `shown` is that block's own windows there, so
+        # `graded_unplaced` is 0 by construction rather than by a guard.
+        placed = graded - graded_unplaced
+        print(f"  None of the §4.1-§4.3 bytes moved in any of the {placed} "
+              f"window(s) that belong to a value under test: that is what "
+              f"those {placed} windows show, and the {graded_unplaced} graded "
+              "window(s) in no block above are not part of it. The static "
+              "prediction is a claim about the whole capture, and this output "
+              f"does not make it over a run in which {graded_unplaced} of its "
+              f"{graded} graded window(s) are in no block. §7's "
+              "`confirmed-inert` needs all three values, and a window in no "
+              "block is one this run read and cannot say is a window of any "
+              "of them -- so the paragraph below is as far as this run goes.")
     elif selected is not None and len(blocks) > 1:
         # A `--block` run over a day of more than one value graded every
         # window it was shown, so `graded == len(shown)`, `withheld == 0` and

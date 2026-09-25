@@ -1587,7 +1587,10 @@ class MarkSetTests(unittest.TestCase):
     # to"). So a closing sentence about a block this report refused to read
     # is a §7 fact the run denies, and it is the sentence the whole branch is
     # for. Withheld 1 of 8 here against the 2 of 8 on the mark-set path, so the
-    # counts are the fixture's rather than shared.
+    # counts are the fixture's rather than shared. It is also the only committed
+    # fixture where this branch's *other* reason fires at the same time: 1 of
+    # its 7 graded windows is in no block, so the movement is stated over the 6
+    # that are a window of a value under test (#530).
     def test_a_withheld_window_in_no_block_claims_no_block_was_refused(self):
         rc, out, _ = run(*UNREAD_WINDOW)
         self.assertEqual(rc, 1)
@@ -1596,9 +1599,21 @@ class MarkSetTests(unittest.TestCase):
         # 7 graded, and the refusal to compare with the prediction is
         # unchanged. This branch is reached either way.
         self.assertIn('1 of the 8 window(s) above were not graded', flat)
-        self.assertIn('None of the §4.1-§4.3 bytes moved in any of the 7 '
-                      'window(s) that were graded', flat)
-        self.assertIn('the 1 window(s) withheld above are not part of it', flat)
+        # Over the 6 of those 7 that are a window of a value under test, and
+        # with *both* kinds of excluded window named: the 1 withheld and the
+        # 1 graded in no block. Claiming all 7 here is the overclaim #530 is
+        # about -- the count line directly above says 1 of the 7 is in no
+        # block, so a sentence claiming the 7 contradicts the disclosure
+        # printed beside it.
+        self.assertIn('None of the §4.1-§4.3 bytes moved in any of the 6 '
+                      'window(s) that were graded and belong to a value under '
+                      'test', flat)
+        self.assertIn('neither the 1 window(s) withheld above nor the 1 graded '
+                      'window(s) in no block are part of it', flat)
+        # And the graded set as a whole is never the claim's denominator here:
+        # 7 is the count's figure, and a sentence over all 7 is the one this
+        # run must not make.
+        self.assertNotIn('in any of the 7 window(s)', flat)
         self.assertNotIn('consistent with the static prediction', out)
         # What is withheld, and the reason, are both named at the window: the
         # header says which block it is in, and here that is `unplaced`.
@@ -1613,13 +1628,138 @@ class MarkSetTests(unittest.TestCase):
         # And the clause the issue is about, which now holds on both paths
         # because it names neither: the run cannot speak for the window it
         # refused, and it does not claim a block was refused, because on this
-        # path none was.
+        # path none was. The window in no block is named alongside it, because
+        # this run read that one and still cannot speak for it; and the
+        # "sits in a block of its own" caveat is about the *refused* window,
+        # since which block that one sits in is exactly what this output
+        # cannot say -- and is not a question a window in no block raises.
         self.assertIn('`confirmed-inert` needs all three values, and a window '
-                      'this report refused to read is one this run cannot '
-                      'speak for', flat)
-        self.assertIn('whether it sits in a block of its own is not something '
-                      'this output can say', flat)
+                      'in no block, or one this report refused to read, is one '
+                      'this run cannot speak for', flat)
+        self.assertIn('whether the refused one sits in a block of its own is '
+                      'not something this output can say', flat)
         self.assertNotIn('a block this report refused to read', out)
+
+    # The case that is not a refusal at all, and was the only one of the four
+    # the closing section did not name. Nothing is withheld here and nothing
+    # needs to be: the 12:00 and 12:04 strays' labels both parse, so both
+    # windows are read, their rows are real, and the run graded all 8. But
+    # neither window is a window of any value under test -- a label is the only
+    # thing that attributes a window, and these two name 0x99, which is no
+    # block's -- so the run reached the bare `else` and printed the
+    # whole-capture sentence over a set that is not the whole capture's
+    # windows of anything. Exit 0 either way, which is what made it quiet.
+    def test_a_graded_window_in_no_block_is_scoped_where_the_prediction_is_read_from(
+            self):
+        rc, out, _ = run(*UNPLACED_WINDOW)
+        self.assertEqual(rc, 0)
+        section = out.split('=== what this does and does not settle ===')[1]
+        flat = " ".join(section.split())
+        # The count, in the section that already carries the withheld banner
+        # and the unreadable-mark note, and over the graded denominator rather
+        # than the shown one: 8 here, against 7 in the partly-withheld pair
+        # below. Written out rather than derived, so a change in either
+        # figure fails here.
+        self.assertIn('2 of the 8 graded window(s) above are in no block', flat)
+        # And the count is the whole of the note: it ends at the census. The
+        # note is printed above the whole branch chain, so which sentence
+        # follows it is not its to decide -- on a run that also withheld a
+        # window, the sentence below claims over a different set than the one
+        # this run's chain does, and a "the claim below is over the other 6"
+        # tacked onto the count would be asserting a scope the next sentence
+        # does not carry. Each branch states its own; the count is bare.
+        self.assertNotIn('The claim below is therefore over the other', out)
+        self.assertNotIn('rather than over the day', out)
+        # The movement is stated over the windows the count leaves, and the
+        # windows it leaves are named as outside it -- the withheld branch's
+        # own shape, one step over.
+        self.assertIn('None of the §4.1-§4.3 bytes moved in any of the 6 '
+                      'window(s) that belong to a value under test', flat)
+        self.assertIn('the 2 graded window(s) in no block above are not part '
+                      'of it', flat)
+        # The comparison itself is declined, and for the count's reason rather
+        # than the withheld branch's: this run read every window, so "a run
+        # it only read part of" would be false, and the sentence says the
+        # narrower thing instead.
+        self.assertIn('this output does not make it over a run in which 2 of '
+                      'its 8 graded window(s) are in no block', flat)
+        self.assertNotIn('consistent with the static prediction', section)
+        self.assertNotIn('a run it only read part of', section)
+        # Nor either of the two refusal shapes: this run refused nothing, and
+        # reaching for one of their sentences would report a day that graded
+        # clean as one this tool could not read.
+        self.assertNotIn('were not graded', out)
+        self.assertNotIn('No window in this run was graded', out)
+        # The two facts that made this a mystery, pinned as still true, so a
+        # note that quietly changed a block verdict fails here rather than
+        # passing a test that only reads prose. Both blocks are intact, the
+        # capture is complete, and the census still says of each stray that
+        # `--block` cannot select it -- a fact about selection, which is why
+        # the note had to be a second thing.
+        self.assertIn('block 1/2: intact', out)
+        self.assertIn('block 2/2: intact', out)
+        self.assertEqual(census(out).count('`--block` cannot select it'), 2)
+
+        # The composition, and the reason the count is structurally zero there
+        # rather than guarded to be: a `--block` run's `shown` is that block's
+        # own windows and a window in no block is in none of them, so the
+        # count cannot fire and cannot compete with the selected-block branch.
+        # Over the same bytes and the same marks, the run is still the
+        # per-block one, and still says nothing about a mark it could not read.
+        rc, out, _ = run(*UNPLACED_WINDOW, '--block', '0xA0')
+        self.assertEqual(rc, 0)
+        section = out.split('=== what this does and does not settle ===')[1]
+        self.assertIn('None of the §4.1-§4.3 bytes moved in any of the 3 '
+                      'window(s) in block 1 of 2, value under test 0xA0',
+                      section)
+        self.assertNotIn('graded window(s) above are in no block', section)
+        self.assertNotIn('A mark this cannot read', out)
+
+    # The two figures are over disjoint sets, and that is a property of where
+    # each is counted rather than a fact about this fixture. A window can be
+    # both in no block and withheld -- the 12:00 stray in this set is exactly
+    # that, and the banner above names it as refused -- so a count taken over
+    # `shown` rather than over the windows actually printed would read 2 of the
+    # 8 here and put the same window in both figures. Pinned on this fixture
+    # rather than only on the cleaner one above for that reason: there the two
+    # counts coincide, and a count of the wrong set would print 2 of the 8
+    # there too and only this is where the two denominators differ.
+    def test_an_unreadable_mark_does_not_count_twice_in_the_graded_unplaced_line(
+            self):
+        rc, out, _ = run(*UNREAD_WINDOW)
+        self.assertEqual(rc, 1)
+        flat = " ".join(out.split())
+        # The banner is unchanged and still over the shown denominator.
+        self.assertIn('1 of the 8 window(s) above were not graded', flat)
+        # And the count is over the graded one, one lower, naming the other
+        # stray: 12:00 is refused, 12:04 is read.
+        self.assertIn('1 of the 7 graded window(s) above are in no block', flat)
+        # The note about a mark that could not be read is still printed, and
+        # the withheld branch is still the one that carries the sentence --
+        # this run withheld, so the count line is beside its reason rather than
+        # a replacement for it.
+        self.assertIn('A mark this cannot read is a mark no block can be '
+                      'attributed to', flat)
+        # And the branch's own sentence states the same scope the count
+        # describes. This is the pairing the count cannot leave alone: the
+        # count says 1 of the 7 graded is in no block, so a sentence claiming
+        # the movement over all 7 would claim it over the one the count just
+        # excluded. The withheld branch narrows to the 6 that are a window of
+        # a value under test and names both excluded windows, so the two
+        # figures agree -- 6, not 6 and 7 in the same section.
+        self.assertIn('None of the §4.1-§4.3 bytes moved in any of the 6 '
+                      'window(s) that were graded and belong to a value under '
+                      'test', flat)
+        self.assertIn('neither the 1 window(s) withheld above nor the 1 graded '
+                      'window(s) in no block are part of it', flat)
+        self.assertNotIn('in any of the 7 window(s)', flat)
+        self.assertNotIn('consistent with the static prediction', out)
+        # And the 12:00 window is named as refused exactly once, which is the
+        # user-visible half of "counted at the print point": the count does not
+        # print a window header, so anything beyond these two figures would be
+        # a second claim about the same mark.
+        self.assertEqual(out.count('block: unplaced -- NOT GRADED'), 1)
+        self.assertEqual(out.count('block: unplaced'), 2)
 
     # The same split with something having moved, which no committed fixture
     # reached before this one: the sets above withhold every window, and the
@@ -2433,10 +2573,26 @@ class MarkSetTests(unittest.TestCase):
             (7, 'wrote 0x0751=0x10'), (8, 'restored 0x0751=0x00')])
         self.assertEqual(out.count('block: unplaced'), 2)
         # And the run is the clean one the census said it was: every window
-        # graded, so the closing section is the whole-capture sentence rather
-        # than either of the partly-graded ones.
-        self.assertIn('None of the §4.1-§4.3 bytes moved in any window: '
-                      'consistent with the static prediction', out)
+        # graded and nothing refused. It was written here to pin the
+        # whole-capture sentence as the one a fully-graded run reaches, and
+        # #530 changed that half of it -- on this very fixture, because "every
+        # window graded" is not "every graded window a window of a value under
+        # test" and the two strays are not one. The bare `else` is now reached
+        # only when both hold, so what this case pins is that *grading* is
+        # untouched by the refusal checks: the count of graded windows in no
+        # block is a disclosure, not a refusal (`were not graded` above, and
+        # `NOT GRADED` never), and the sentence under it is #530's, scoped to
+        # the 6 of the 8 that are a window of a value under test. #530's own
+        # test on this fixture
+        # (`test_a_graded_window_in_no_block_is_scoped_...`) is the one that
+        # pins that sentence in full.
+        flat = " ".join(out.split('=== what this does and does not settle '
+                                  '===')[1].split())
+        self.assertNotIn('consistent with the static prediction', flat)
+        self.assertIn('None of the §4.1-§4.3 bytes moved in any of the 6 '
+                      'window(s) that belong to a value under test', flat)
+        self.assertIn('the 2 graded window(s) in no block above are not part '
+                      'of it', flat)
         self.assertIn('block 1/2: intact', out)
         self.assertIn('block 2/2: intact', out)
 
@@ -2451,7 +2607,14 @@ class MarkSetTests(unittest.TestCase):
         self.assertEqual(rc, 1)
         self.assertEqual(out.count('block: unplaced -- NOT GRADED'), 1)
         self.assertIn('1 of the 8 window(s) above were not graded', out)
-        self.assertIn('7 window(s) that were graded', out)
+        # The 7 that were graded is still the run's graded figure, and #530
+        # moved where the closing sentence reads it from: the count line
+        # carries it, over the graded denominator, while the sentence under it
+        # states the movement over the 6 of those 7 that are a window of a
+        # value under test. What this case is about is unchanged -- the 12:00
+        # stray is refused once, the 12:04 one is read -- and the narrower
+        # sentence is #530's, pinned in full by the two tests it added.
+        self.assertIn('1 of the 7 graded window(s) above are in no block', out)
         self.assertIn('not one of the three forms §6 fixes',
                       " ".join(out.split()))
 
