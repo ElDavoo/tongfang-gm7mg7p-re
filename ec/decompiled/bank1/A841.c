@@ -18,15 +18,15 @@ void dispatch_086f_event_bits(void)
 
 {
   if ((DAT_EXTMEM_086f & 1) != 0) {
-    flag_086f_bit0_send_5a_01_88();
+    flag_086f_bit0_send_5a_01_88(DAT_EXTMEM_086f,(byte *)0x86f);
     return;
   }
   if ((DAT_EXTMEM_086f >> 1 & 1) != 0) {
-    flag_086f_bit1_send_5a_01_88_ff();
+    flag_086f_bit1_send_5a_01_88_ff(DAT_EXTMEM_086f,(byte *)0x86f);
     return;
   }
   if ((DAT_EXTMEM_086f >> 2 & 1) != 0) {
-    flag_086f_bit2_send_5a_02_88_table();
+    flag_086f_bit2_send_5a_02_88_table(DAT_EXTMEM_086f,(byte *)0x86f);
     return;
   }
   if ((DAT_EXTMEM_086f >> 3 & 1) != 0) {
@@ -34,7 +34,7 @@ void dispatch_086f_event_bits(void)
     return;
   }
   if ((DAT_EXTMEM_086f >> 4 & 1) != 0) {
-    clear_bit_e4_then_tail_a8e9();
+    clear_bit_e4_then_tail_a8e9(DAT_EXTMEM_086f,(byte *)0x86f);
     return;
   }
   if ((DAT_EXTMEM_086f >> 5 & 1) != 0) {

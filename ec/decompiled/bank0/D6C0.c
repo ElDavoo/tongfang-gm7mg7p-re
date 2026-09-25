@@ -13,10 +13,10 @@
    basis: hand-decoded
    name_basis: ec-register */
 
-void write_5a_to_1f07_then_spin(undefined1 param_1,undefined1 *param_2)
+void write_5a_to_1f07_then_spin(undefined1 a1_from_d6be,undefined1 *param_2)
 
 {
-  *param_2 = param_1;
+  *param_2 = a1_from_d6be;
   do {
                     /* WARNING: Do nothing block with infinite loop */
   } while( true );

@@ -12,10 +12,10 @@
    basis: hand-decoded
    name_basis: ec-register */
 
-undefined1 store_044b_then_read_08e2(undefined1 param_1)
+undefined1 store_044b_then_read_08e2(undefined1 value_a)
 
 {
-  XDATA_044B = param_1;
+  XDATA_044B = value_a;
   return DAT_EXTMEM_08e2;
 }
 

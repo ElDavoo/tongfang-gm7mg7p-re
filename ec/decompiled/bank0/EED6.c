@@ -18,7 +18,7 @@ void send_0x10_via_f079_then_chain(short param_1,char param_2)
   char cVar1;
   
   write_98_to_0f60();
-  store_a_0_1_zeros_at_dptr(0x10,param_1 + 1);
+  store_a_0_1_zeros_at_dptr(0x10,(undefined1 *)(param_1 + 1));
   set_r3_09_r5_80_r7_01();
   stage_0a54_0a55_then_dispatch();
   if (param_2 != '\0') {

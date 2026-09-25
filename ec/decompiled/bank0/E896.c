@@ -14,19 +14,20 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void write_0f60_0f61_then_0x7049(undefined1 param_1,char param_2)
+void write_0f60_0f61_then_0x7049
+               (undefined1 *param_1,undefined1 param_2,char param_3,undefined1 param_4,char param_5)
 
 {
-  undefined1 uVar1;
+  undefined1 value_a;
   
   FUN_CODE_713c(0xa50);
-  DAT_EXTMEM_0f60 = param_1;
-  store_a_read_0fa0_then_set_0a56_block(param_2,0xf61);
+  DAT_EXTMEM_0f60 = param_4;
+  store_a_read_0fa0_then_set_0a56_block(param_5,(undefined1 *)0xf61);
   stage_0a54_0a55_then_dispatch();
-  if (param_2 != '\0') {
-    uVar1 = DAT_EXTMEM_0f80;
-    FUN_CODE_711c(0xa50,DAT_EXTMEM_0f80);
-    write_byte_by_tag_r3(uVar1);
+  if (param_5 != '\0') {
+    value_a = DAT_EXTMEM_0f80;
+    FUN_CODE_711c(0xa50);
+    write_byte_by_tag_r3(value_a,param_1,param_2,param_3);
     return;
   }
   return;

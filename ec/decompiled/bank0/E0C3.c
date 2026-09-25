@@ -12,10 +12,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_a_or_3c_at_dptr(byte param_1,byte *param_2)
+void store_a_or_3c_at_dptr(byte a0_from_e0c2,byte *param_2)
 
 {
-  *param_2 = param_1;
+  *param_2 = a0_from_e0c2;
   *param_2 = *param_2 | DAT_INTMEM_3c;
   param_2[1] = param_2[1];
   return;

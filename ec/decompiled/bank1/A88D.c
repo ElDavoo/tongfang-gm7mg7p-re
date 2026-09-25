@@ -12,10 +12,10 @@
    basis: hand-decoded
    name_basis: register-map */
 
-void flag_086f_bit1_send_5a_01_88_ff(byte param_1,byte *param_2)
+void flag_086f_bit1_send_5a_01_88_ff(byte a_086f_bit1_cleared,byte *param_2)
 
 {
-  *param_2 = param_1 & 0xfd;
+  *param_2 = a_086f_bit1_cleared & 0xfd;
   load_dptr_85de_tail_jump_1100(0x5a,1,0x88,0xff,0);
   clear_1c15_1c16_set_1c11_ff();
   push_r5_into_070f_ring_when_gates_pass(0x78);

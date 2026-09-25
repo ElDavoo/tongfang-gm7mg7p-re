@@ -31,7 +31,7 @@ void reset_08ad_08bf_and_clear_08e2_bit7(byte *param_1)
   }
   copy_code_table_into_0730_07a7(uVar1);
   DAT_EXTMEM_08ad = 0;
-  DAT_EXTMEM_08bf = store_a_to_08cc_08cd();
+  DAT_EXTMEM_08bf = store_a_to_08cc_08cd(0);
   return;
 }
 

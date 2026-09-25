@@ -13,14 +13,14 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void call_70c7_with_0_then_5c_tail_f55c(void)
+void call_70c7_with_0_then_5c_tail_f55c(char param_1)
 
 {
   undefined1 *puVar1;
   
-  puVar1 = &DAT_EXTMEM_07d6;
-  store_a_to_dptr(0);
-  store_a_to_dptr(0x5c);
+  puVar1 = (undefined1 *)0x7d6;
+  store_a_to_dptr(0,(undefined1 *)0x7d6,param_1);
+  store_a_to_dptr(0x5c,puVar1,param_1);
   write_r5_then_f763_if_6faf_zero(*puVar1);
   return;
 }

@@ -13,19 +13,19 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void write_byte_by_tag_r3(undefined1 param_1,undefined1 *param_2,undefined1 param_3,char param_4)
+void write_byte_by_tag_r3(undefined1 value_a,undefined1 *param_2,undefined1 param_3,char param_4)
 
 {
   if (param_4 == '\x01') {
-    *(undefined1 *)CONCAT11(param_3,param_2) = param_1;
+    *(undefined1 *)CONCAT11(param_3,param_2) = value_a;
     return;
   }
   if (param_4 == '\0') {
-    *param_2 = param_1;
+    *param_2 = value_a;
     return;
   }
   if (param_4 == -2) {
-    *(undefined1 *)ZEXT12(param_2) = param_1;
+    *(undefined1 *)ZEXT12(param_2) = value_a;
   }
   return;
 }

@@ -13,10 +13,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void set_0a49_to_1_and_clear_0a4b(undefined1 param_1,short param_2)
+void set_0a49_to_1_and_clear_0a4b(undefined1 value_a,short param_2)
 
 {
-  *(undefined1 *)(param_2 + 1) = param_1;
+  *(undefined1 *)(param_2 + 1) = value_a;
   DAT_EXTMEM_0a4b = 0;
   return;
 }

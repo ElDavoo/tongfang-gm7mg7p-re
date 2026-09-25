@@ -13,10 +13,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_06c6_decrement(undefined1 param_1,undefined1 *param_2,char param_3)
+void store_06c6_decrement(undefined1 a_from_8007,undefined1 *param_2,char param_3)
 
 {
-  *param_2 = param_1;
+  *param_2 = a_from_8007;
   if (DAT_EXTMEM_06cd != '\0') {
     DAT_EXTMEM_06cd = DAT_EXTMEM_06cd + -1;
   }

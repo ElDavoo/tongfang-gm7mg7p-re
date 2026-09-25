@@ -12,10 +12,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_a_then_three_zeros(undefined1 param_1,short param_2)
+void store_a_then_three_zeros(undefined1 a60_from_f093,short param_2)
 
 {
-  *(undefined1 *)(param_2 + 1) = param_1;
+  *(undefined1 *)(param_2 + 1) = a60_from_f093;
   *(undefined1 *)(param_2 + 2) = 0;
   *(undefined1 *)(param_2 + 3) = 0;
   *(undefined1 *)(param_2 + 4) = 0;

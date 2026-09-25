@@ -28,7 +28,7 @@ void index_case_04(undefined1 param_1,undefined1 param_2)
   DAT_EXTMEM_08d9 = param_2;
   DAT_EXTMEM_0609 = add_r6_r7_to_0a58_pair_then_halve(FUN_CODE_0609);
   DAT_EXTMEM_0608 = DAT_EXTMEM_0a59;
-  store_a_to_dptr_ba3d(DAT_EXTMEM_0610 | 0x10);
+  store_a_to_dptr_ba3d(DAT_EXTMEM_0610 | 0x10,(undefined1 *)0x610);
   write_9f_to_x1904();
   index_case_epilogue(0x85);
   return;

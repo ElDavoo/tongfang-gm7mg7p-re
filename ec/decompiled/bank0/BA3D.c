@@ -13,10 +13,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_a_to_dptr_ba3d(undefined1 param_1,undefined1 *param_2)
+void store_a_to_dptr_ba3d(undefined1 value_a,undefined1 *param_2)
 
 {
-  *param_2 = param_1;
+  *param_2 = value_a;
   DAT_EXTMEM_1901 = DAT_EXTMEM_1901 & 0xfe;
   return;
 }

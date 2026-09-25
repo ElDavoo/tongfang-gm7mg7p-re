@@ -14,10 +14,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void write_a_to_dptr_then_read4_from_07d8(undefined1 param_1,undefined1 *param_2)
+void write_a_to_dptr_then_read4_from_07d8(undefined1 a_from_r7,undefined1 *param_2)
 
 {
-  *param_2 = param_1;
+  *param_2 = a_from_r7;
   read4xdata_to_r4_r7(0x7d8);
   return;
 }

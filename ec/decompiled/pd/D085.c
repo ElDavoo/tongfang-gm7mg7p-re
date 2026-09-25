@@ -33,7 +33,7 @@ char decrement_00e2_and_tail_jump_to_d07b(char param_1)
     if ((byte)-cVar1 <= bVar4) {
       DAT_EXTMEM_0ae3 = 0;
       DAT_EXTMEM_0ae4 = 0;
-      store_first_handoff_helper(6,2000);
+      store_first_handoff_helper(6,(undefined1 *)0x7d0);
       write4_inline_args();
       nop();
       nop();

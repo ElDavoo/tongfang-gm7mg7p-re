@@ -23,7 +23,7 @@ void write_3_bytes_after_f121_then_chain(short param_1,char param_2)
   *(undefined1 *)(param_1 + 1) = 6;
   *(undefined1 *)(param_1 + 2) = 0;
   *(undefined1 *)(param_1 + 3) = 0;
-  store_a_five_times();
+  store_a_five_times(0,param_1 + 3);
   set_r3_09_r5_80_r7_01();
   stage_0a54_0a55_then_dispatch();
   if (param_2 != '\0') {

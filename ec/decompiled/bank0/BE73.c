@@ -12,10 +12,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void write_a_then_zero_at_0a47_0a48(undefined1 param_1)
+void write_a_then_zero_at_0a47_0a48(undefined1 value_a)
 
 {
-  DAT_EXTMEM_0a47 = param_1;
+  DAT_EXTMEM_0a47 = value_a;
   DAT_EXTMEM_0a48 = 0;
   return;
 }

@@ -14,10 +14,10 @@
    basis: hand-decoded
    name_basis: ec-register */
 
-void stage_0862_0865_into_1c36_1c38(undefined1 param_1)
+void stage_0862_0865_into_1c36_1c38(undefined1 value_a)
 
 {
-  DAT_EXTMEM_1c38 = param_1;
+  DAT_EXTMEM_1c38 = value_a;
   DAT_EXTMEM_1c37 = XDATA_0862;
   DAT_EXTMEM_1c36 = XDATA_0865;
   return;

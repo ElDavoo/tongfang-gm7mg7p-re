@@ -56,7 +56,7 @@ void branch_on_ram_r5_then_set_indirect_bits(byte *param_1)
     cVar2 = BANK0_R7;
     cVar3 = BANK0_R7;
     make_dptr_r6_minus_3_9028(BANK0_R7);
-    write_a_to_dptr_set_r6_r4_ret6(0);
+    write_a_to_dptr_set_r6_r4_ret6(0,param_1);
     make_dptr_r6_minus_3_9028(cVar3);
     *param_1 = *param_1 | 0x22;
     make_dptr_r6_minus_3_9028(cVar2);

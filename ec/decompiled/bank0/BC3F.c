@@ -13,10 +13,10 @@
    basis: hand-decoded
    name_basis: ec-register */
 
-void store_a_then_clear_0824_bit7_and_0768_bit2(undefined1 param_1,undefined1 *param_2)
+void store_a_then_clear_0824_bit7_and_0768_bit2(undefined1 value_a,undefined1 *param_2)
 
 {
-  *param_2 = param_1;
+  *param_2 = value_a;
   DAT_EXTMEM_0824 = DAT_EXTMEM_0824 & 0x7f;
   SWITCH_STATUS = SWITCH_STATUS & 0xfb;
   return;

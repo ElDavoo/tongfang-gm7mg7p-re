@@ -13,10 +13,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void write_dptr_byte_set_00bd_bit0_clear_ff62_bit3(undefined1 param_1,undefined1 *param_2)
+void write_dptr_byte_set_00bd_bit0_clear_ff62_bit3(undefined1 value_a,undefined1 *param_2)
 
 {
-  *param_2 = param_1;
+  *param_2 = value_a;
   DAT_EXTMEM_00bd = DAT_EXTMEM_00bd | 1;
   DAT_EXTMEM_ff62 = DAT_EXTMEM_ff62 & 0xf7;
   return;

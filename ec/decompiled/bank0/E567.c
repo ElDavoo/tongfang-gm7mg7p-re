@@ -20,6 +20,7 @@ void call_e4fe_2_clear_0f60_retry(byte param_1,undefined2 param_2,char param_3)
   char cVar1;
   char in_PSW;
   char cVar2;
+  short sVar3;
   
   cVar2 = CARRY1(param_1,param_3 - (in_PSW >> 7)) << 7;
   do {
@@ -30,10 +31,11 @@ void call_e4fe_2_clear_0f60_retry(byte param_1,undefined2 param_2,char param_3)
     cVar1 = '\x02';
     write_fe_r7_to_0f61_62();
     if (cVar1 != '\0') {
+      sVar3 = 0xf60;
       DAT_EXTMEM_0f60 = 0;
       store_a_at_dptr_plus1();
       set_0a56_to_0f_60();
-      store_a_0f_80_and_r6_0f(0x10);
+      store_a_0f_80_and_r6_0f(0x10,sVar3);
       stage_0a54_0a55_then_dispatch();
       if (cVar1 != '\0') {
         return;

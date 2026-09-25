@@ -14,10 +14,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_acc_to_xdata_dptr_8018(undefined1 param_1,undefined1 *param_2,char param_3)
+void store_acc_to_xdata_dptr_8018(undefined1 a_from_8017,undefined1 *param_2,char param_3)
 
 {
-  *param_2 = param_1;
+  *param_2 = a_from_8017;
   if (XDATA_06D2 != '\0') {
     XDATA_06D2 = XDATA_06D2 + -1;
   }

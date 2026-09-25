@@ -12,14 +12,14 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_a_to_5_xdata_bytes(undefined1 param_1,undefined1 *param_2)
+void store_a_to_5_xdata_bytes(undefined1 a0_from_3544,undefined1 *param_2)
 
 {
-  *param_2 = param_1;
-  param_2[1] = param_1;
-  param_2[2] = param_1;
-  param_2[3] = param_1;
-  param_2[4] = param_1;
+  *param_2 = a0_from_3544;
+  param_2[1] = a0_from_3544;
+  param_2[2] = a0_from_3544;
+  param_2[3] = a0_from_3544;
+  param_2[4] = a0_from_3544;
   return;
 }
 

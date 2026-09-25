@@ -14,18 +14,18 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void write_1900_twice_set_1901(undefined1 param_1,undefined1 *param_2)
+void write_1900_twice_set_1901(undefined1 a88_from_8014,undefined1 *param_2)
 
 {
   undefined1 uVar1;
   short sVar2;
   
-  *param_2 = param_1;
+  *param_2 = a88_from_8014;
   *param_2 = 0x80;
   DAT_EXTMEM_1901 = 0xa0;
   DAT_EXTMEM_1902 = 0x15;
   sVar2 = 0x1905;
-  uVar1 = store_a_then_clear_08e0(0x80);
+  uVar1 = store_a_then_clear_08e0(0x80,(undefined1 *)0x1905);
   *(undefined1 *)(sVar2 + 1) = uVar1;
   return;
 }

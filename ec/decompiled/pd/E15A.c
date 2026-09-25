@@ -15,13 +15,14 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void set_0832_through_5874_58ab_ed46_56cb(undefined1 param_1)
+void set_0832_through_5874_58ab_ed46_56cb(char param_1)
 
 {
   undefined1 uVar1;
   undefined1 uVar2;
-  byte bVar3;
-  byte *pbVar4;
+  char cVar3;
+  byte bVar4;
+  byte *pbVar5;
   
   uVar2 = BANK0_R7;
   uVar1 = BANK0_R6;
@@ -37,10 +38,11 @@ void set_0832_through_5874_58ab_ed46_56cb(undefined1 param_1)
   BANK0_R1 = uVar1;
   BANK0_R2 = uVar2;
   store_3byte_r3r2r1_at_0861(DAT_EXTMEM_0832);
-  pbVar4 = &DAT_EXTMEM_0832;
-  scale_dptr_from_a_times_77_plus_73(DAT_EXTMEM_0832);
-  bVar3 = store_a_then_scaled_lookup_from_r7(1);
-  *pbVar4 = bVar3 | 4;
+  pbVar5 = (byte *)0x832;
+  cVar3 = DAT_EXTMEM_0832;
+  scale_dptr_from_a_times_77_plus_73();
+  bVar4 = store_a_then_scaled_lookup_from_r7(1,pbVar5,cVar3);
+  *pbVar5 = bVar4 | 4;
   return;
 }
 

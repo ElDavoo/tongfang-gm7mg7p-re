@@ -11,11 +11,11 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void write_a_to_x1805_and_x1808(undefined1 param_1)
+void write_a_to_x1805_and_x1808(undefined1 value_a)
 
 {
-  DAT_EXTMEM_1805 = param_1;
-  DAT_EXTMEM_1808 = param_1;
+  DAT_EXTMEM_1805 = value_a;
+  DAT_EXTMEM_1808 = value_a;
   return;
 }
 

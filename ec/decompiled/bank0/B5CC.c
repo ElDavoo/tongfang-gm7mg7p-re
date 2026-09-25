@@ -14,11 +14,11 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_a_to_089c_and_089d(undefined1 param_1)
+void store_a_to_089c_and_089d(undefined1 a0_from_b5c7)
 
 {
-  DAT_EXTMEM_089c = param_1;
-  DAT_EXTMEM_089d = param_1;
+  DAT_EXTMEM_089c = a0_from_b5c7;
+  DAT_EXTMEM_089d = a0_from_b5c7;
   return;
 }
 

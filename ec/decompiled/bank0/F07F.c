@@ -13,10 +13,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_a_then_five_zeros(undefined1 param_1,undefined1 *param_2)
+void store_a_then_five_zeros(undefined1 a_from_f07e,undefined1 *param_2)
 
 {
-  *param_2 = param_1;
+  *param_2 = a_from_f07e;
   param_2[1] = 0;
   param_2[2] = 0;
   param_2[3] = 0;

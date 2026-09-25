@@ -19,17 +19,17 @@ void update_07d4_state(byte param_1)
 
 {
   bool bVar1;
-  char cVar2;
-  byte bVar3;
-  undefined1 uVar4;
+  undefined1 uVar2;
+  char cVar3;
+  byte bVar4;
   byte in_PSW;
   undefined1 *puVar5;
   byte *pbVar6;
   
   DAT_EXTMEM_07d4 = param_1;
-  read_xdata_table_byte_idx_a_mul_17_add_14(param_1);
+  uVar2 = read_xdata_table_byte_idx_a_mul_17_add_14();
   puVar5 = &DAT_EXTMEM_07d5;
-  write_a_to_dptr();
+  write_a_to_dptr(uVar2,(undefined1 *)0x7d5,param_1);
   DAT_EXTMEM_07d6 = *puVar5;
   DAT_EXTMEM_07d7 = 0;
   pbVar6 = &DAT_EXTMEM_07d4;
@@ -37,19 +37,19 @@ void update_07d4_state(byte param_1)
   if ((*pbVar6 >> 3 & 1) != 0) {
     call_c1dd_store_r7_then_call_122f(0x11,0x94,0);
     pbVar6 = &DAT_EXTMEM_07d4;
-    cVar2 = BANK0_R7;
+    cVar3 = BANK0_R7;
     param_1 = DAT_EXTMEM_07d4;
     dptr_0a27_plus_17_times_a(DAT_EXTMEM_07d4);
-    bVar3 = *pbVar6;
-    bVar1 = (bVar3 & 4) == 0;
+    bVar4 = *pbVar6;
+    bVar1 = (bVar4 & 4) == 0;
     in_PSW = bVar1 << 7;
     DAT_EXTMEM_07d7 = !bVar1;
     pbVar6 = &DAT_EXTMEM_07d7;
-    if (DAT_EXTMEM_07d7 != cVar2) {
-      in_PSW = (cVar2 == '\0') << 7;
-      if (cVar2 == '\x01') {
+    if (DAT_EXTMEM_07d7 != cVar3) {
+      in_PSW = (cVar3 == '\0') << 7;
+      if (cVar3 == '\x01') {
         dptr_0a27_plus_17_times_a(param_1);
-        *pbVar6 = bVar3 | 4;
+        *pbVar6 = bVar4 | 4;
       }
       else {
         pbVar6 = &DAT_EXTMEM_07d4;
@@ -64,18 +64,18 @@ void update_07d4_state(byte param_1)
   dptr_0a13_plus_17_times_a(DAT_EXTMEM_07d4);
   if ((*pbVar6 >> 4 & 1) != 0) {
     call_returns_with_dptr_loaded();
-    uVar4 = (undefined1)((ushort)pbVar6 >> 8);
-    cVar2 = dptr_07d4_then_fall_through();
+    uVar2 = (undefined1)((ushort)pbVar6 >> 8);
+    cVar3 = dptr_07d4_then_fall_through();
     in_PSW = 0;
-    call_0faf_0f00_0dbc_then_r3_23(CONCAT11(uVar4,cVar2 + '\x1f'));
+    call_0faf_0f00_0dbc_then_r3_23(CONCAT11(uVar2,cVar3 + '\x1f'));
     if ((char)in_PSW < '\0') {
       pbVar6 = &DAT_EXTMEM_07d4;
       read_dptr_to_r7_then_scale();
       *pbVar6 = *pbVar6 & 0xef;
       in_PSW = 0;
-      bVar3 = read_xdata_byte_at_r6_minus_3_page_01(param_1);
+      bVar4 = read_xdata_byte_at_r6_minus_3_page_01(param_1);
       in_PSW = in_PSW & 0xdd;
-      *pbVar6 = bVar3 & 0xdf;
+      *pbVar6 = bVar4 & 0xdf;
       call_dc29_with_07d4(0x40);
     }
   }
@@ -83,13 +83,13 @@ void update_07d4_state(byte param_1)
   read4xdata_to_r4_r7();
   clr_carry(0);
   if ((char)in_PSW < '\0') {
-    bVar3 = DAT_EXTMEM_07d4;
+    bVar4 = DAT_EXTMEM_07d4;
     call_c1dd_store_r7_then_call_122f(3,0x20,1);
-    cVar2 = BANK0_R7;
-    if (bVar3 == 0) {
-      bVar3 = read_xdata_byte_at_r4_minus_3_page_01(DAT_EXTMEM_07d4);
-      bVar1 = (bVar3 & 1) != 0;
-      BANK0_R7 = cVar2;
+    cVar3 = BANK0_R7;
+    if (bVar4 == 0) {
+      bVar4 = read_xdata_byte_at_r4_minus_3_page_01(DAT_EXTMEM_07d4);
+      bVar1 = (bVar4 & 1) != 0;
+      BANK0_R7 = cVar3;
     }
     else {
       read_xdata_07d4_into_r3();
@@ -104,10 +104,10 @@ void update_07d4_state(byte param_1)
     call_returns_with_dptr_loaded();
     dptr_07d4_then_fall_through();
     dptr_from_a_add_17_second_half();
-    uVar4 = call_0faf_0f00_0dbc_return_zero();
-    cVar2 = '\0';
-    sub_or_cmp_r0_r7(uVar4,uVar4,2,0x8a);
-    if (cVar2 < '\0') {
+    uVar2 = call_0faf_0f00_0dbc_return_zero();
+    cVar3 = '\0';
+    sub_or_cmp_r0_r7(uVar2,uVar2,2,0x8a);
+    if (cVar3 < '\0') {
       read_xdata_07d4_into_r3();
       write4_inline_args();
       nop();
@@ -117,10 +117,10 @@ void update_07d4_state(byte param_1)
       FUN_CODE_f1b0(0,BANK0_R3);
     }
   }
-  bVar3 = (byte)((ushort)DAT_EXTMEM_07d4 * 0x17);
+  bVar4 = (byte)((ushort)DAT_EXTMEM_07d4 * 0x17);
                     /* WARNING: Subroutine does not return */
-  store_3byte_r3r2r1(0x7e0,bVar3 + 0x14,
-                     ((char)((ushort)DAT_EXTMEM_07d4 * 0x17 >> 8) - (((0xeb < bVar3) << 7) >> 7)) +
+  store_3byte_r3r2r1(0x7e0,bVar4 + 0x14,
+                     ((char)((ushort)DAT_EXTMEM_07d4 * 0x17 >> 8) - (((0xeb < bVar4) << 7) >> 7)) +
                      '\n',1);
 }
 

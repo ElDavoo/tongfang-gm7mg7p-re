@@ -4,14 +4,14 @@
 // Machine output carrying this repository's symbols. Not the vendor's source.
 
 
-void FUN_CODE_6673(char param_1)
+void FUN_CODE_6673(byte param_1)
 
 {
   byte bVar1;
   byte bVar2;
   byte bVar3;
-  undefined1 uVar4;
-  byte bVar5;
+  byte bVar4;
+  undefined1 uVar5;
   undefined1 uVar6;
   char cVar7;
   byte bVar8;
@@ -19,35 +19,36 @@ void FUN_CODE_6673(char param_1)
   byte *pbVar10;
   char *pcVar11;
   
-  puVar9 = &DAT_EXTMEM_07f3;
+  puVar9 = (undefined1 *)0x7f3;
   DAT_EXTMEM_07d2 = param_1;
-  zero_5_xdata_bytes();
-  uVar6 = store_a_to_5_xdata_bytes();
+  uVar5 = zero_5_xdata_bytes();
+  uVar6 = store_a_to_5_xdata_bytes(uVar5,puVar9);
   *puVar9 = uVar6;
-  uVar4 = 0x20;
-  FUN_CODE_39e6(uVar6,0x20);
+  uVar5 = 0x20;
+  FUN_CODE_39e6(uVar6);
   fill_bytes_by_ptr_kind();
   setup_3byte_store_r3r2r1_at_0807();
   write_r7_and_r3r2r1_to_0803(0xfb,7);
-  cVar7 = store_a_and_copy_07f4_masked_to_07f5(uVar4,0x7fa);
+  cVar7 = store_a_and_copy_07f4_masked_to_07f5(uVar5,(undefined1 *)0x7fa);
   if (cVar7 != '\0') goto LAB_CODE_66a0;
   do {
     store_3byte_r3r2r1_at_0803(0,8,1,DAT_EXTMEM_07d2);
     DAT_EXTMEM_0802 = DAT_EXTMEM_0801 & 0x1f;
 LAB_CODE_66a0:
-    cVar7 = DAT_EXTMEM_07d2;
+    bVar2 = DAT_EXTMEM_07d2;
     read_04a3_then_call_9a90();
-    if (((cVar7 != '\0') || (DAT_EXTMEM_07f5 != '\x0f')) || (DAT_EXTMEM_0802 != 0xf)) break;
+    bVar4 = BANK0_R6;
+    if (((bVar2 != 0) || (DAT_EXTMEM_07f5 != '\x0f')) || (DAT_EXTMEM_0802 != 0xf)) break;
     setup_3byte_store_r3r2r1_at_0807(DAT_EXTMEM_07fa);
     write_r7_and_r3r2r1_to_0803(0xfb,7);
-    cVar7 = store_a_and_copy_07f4_masked_to_07f5(0x7fa);
+    cVar7 = store_a_and_copy_07f4_masked_to_07f5(bVar4 & bVar2,(undefined1 *)0x7fa);
   } while (cVar7 == '\0');
   if (DAT_EXTMEM_07fa == '\0') {
     return;
   }
   DAT_EXTMEM_07f6 = DAT_EXTMEM_07f3 >> 1 & 7;
   DAT_EXTMEM_07f7 = DAT_EXTMEM_07f3 >> 4 & 7;
-  bVar5 = -((char)DAT_EXTMEM_07f3 >> 7);
+  bVar4 = -((char)DAT_EXTMEM_07f3 >> 7);
   cVar7 = '\x06';
   bVar2 = BANK0_R4;
   bVar8 = DAT_EXTMEM_07f4;
@@ -59,13 +60,13 @@ LAB_CODE_66a0:
     bVar2 = bVar3;
   } while (cVar7 != '\0');
   DAT_EXTMEM_07f9 = bVar1 & 3;
-  DAT_EXTMEM_07f8 = bVar5;
-  if (bVar5 == 1) {
+  DAT_EXTMEM_07f8 = bVar4;
+  if (bVar4 == 1) {
     read4xdata_to_r4_r7(0x7d3);
     DAT_EXTMEM_07fe = bVar3 & 1;
     DAT_EXTMEM_07fc = bVar3;
-    DAT_EXTMEM_07fd = bVar5;
-    DAT_EXTMEM_07ff = bVar5;
+    DAT_EXTMEM_07fd = bVar4;
+    DAT_EXTMEM_07ff = bVar4;
   }
   if (DAT_EXTMEM_07fb != '\0') {
     puVar9 = (undefined1 *)0x7d2;
@@ -79,41 +80,42 @@ LAB_CODE_66a0:
     }
   }
   if ((DAT_EXTMEM_07f5 == '\r') && (DAT_EXTMEM_07f7 == 0)) {
-    uVar4 = read_dptr_byte_then_07d2(0x7f6);
+    uVar5 = read_dptr_byte_then_07d2(0x7f6);
     pbVar10 = (byte *)0x42c;
-    add_60a_to_dptr_34f2(uVar4);
-    dph_plus_double_a_349b(uVar4);
+    add_60a_to_dptr_34f2(uVar5);
+    dph_plus_double_a_349b(uVar5);
     add_carry_into_dph();
     *pbVar10 = bVar3;
   }
   else {
-    uVar4 = set_dptr_07fb_then_fall_through();
+    uVar5 = set_dptr_07fb_then_fall_through();
     pcVar11 = (char *)0x42c;
-    add_60a_to_dptr_3500(uVar4);
-    dph_plus_double_a_349b(uVar4);
+    add_60a_to_dptr_3500(uVar5);
+    dph_plus_double_a_349b(uVar5);
     add_r6_to_dpl();
+    puVar9 = (undefined1 *)0x7f6;
     if (*pcVar11 == BANK0_R5) {
       write_3bytes_to_0a86(0x99,0xa7,0xff);
-      write_xdata_then_set_r5_2(0x11);
+      write_xdata_then_set_r5_2(0x11,puVar9);
       store_4bytes_to_0a82();
       return;
     }
-    bVar5 = DAT_EXTMEM_07f6;
-    uVar4 = set_dptr_07fb_then_fall_through(DAT_EXTMEM_07f6);
+    bVar4 = DAT_EXTMEM_07f6;
+    uVar5 = set_dptr_07fb_then_fall_through(DAT_EXTMEM_07f6);
     pbVar10 = (byte *)0x42c;
-    add_60a_to_dptr_353e(uVar4);
-    dph_plus_double_a_349b(uVar4);
+    add_60a_to_dptr_353e(uVar5);
+    dph_plus_double_a_349b(uVar5);
     add_r6_to_dpl();
-    *pbVar10 = bVar5;
+    *pbVar10 = bVar4;
   }
   pcVar11 = &DAT_EXTMEM_07d2;
-  cVar7 = DAT_EXTMEM_07d2;
+  bVar4 = DAT_EXTMEM_07d2;
   set_dptr_0424(DAT_EXTMEM_07d2);
-  dph_plus_double_a_349b(cVar7);
+  dph_plus_double_a_349b(bVar4);
   if (pcVar11[1] != '\x01' || *pcVar11 != '\0') {
-    cVar7 = BANK0_R6;
+    bVar4 = BANK0_R6;
     store_0803_0805_then_jump_c808(DAT_EXTMEM_07f5,DAT_EXTMEM_07fb);
-    if (cVar7 == '\x01') {
+    if (bVar4 == 1) {
       return;
     }
     cVar7 = ((DAT_EXTMEM_07ff < 0x1b) << 7) >> 7;

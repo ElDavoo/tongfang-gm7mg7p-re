@@ -13,10 +13,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void write_a_to_dptr_then_fall_into_c1f0(undefined1 param_1,undefined1 *param_2)
+void write_a_to_dptr_then_fall_into_c1f0(undefined1 a_from_r5,undefined1 *param_2)
 
 {
-  *param_2 = param_1;
+  *param_2 = a_from_r5;
                     /* WARNING: Subroutine does not return */
   add_dptr_to_word_0d0e_ea_guard(0xffff);
 }

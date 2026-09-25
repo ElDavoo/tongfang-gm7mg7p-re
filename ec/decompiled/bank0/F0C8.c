@@ -13,11 +13,11 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_a_twice_at_dptr(undefined1 param_1,undefined1 *param_2)
+void store_a_twice_at_dptr(undefined1 a0_from_f0c4,undefined1 *param_2)
 
 {
-  *param_2 = param_1;
-  param_2[1] = param_1;
+  *param_2 = a0_from_f0c4;
+  param_2[1] = a0_from_f0c4;
   DAT_EXTMEM_0a56 = 0xf;
   DAT_EXTMEM_0a57 = 0x60;
   DAT_EXTMEM_0a58 = 1;

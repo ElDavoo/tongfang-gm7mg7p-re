@@ -12,12 +12,12 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_a_to_xdata_at_dptr_2(undefined1 param_1,undefined1 *param_2)
+void store_a_to_xdata_at_dptr_2(undefined1 a_from_9002,undefined1 *param_2)
 
 {
   byte bVar1;
   
-  *param_2 = param_1;
+  *param_2 = a_from_9002;
   bVar1 = DAT_EXTMEM_06e1;
   DAT_EXTMEM_06e1 = DAT_EXTMEM_06e1 & 0xf7;
   if (DAT_EXTMEM_06cf == '\0') {

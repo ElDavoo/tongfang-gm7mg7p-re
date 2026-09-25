@@ -343,18 +343,48 @@ TOP_CALLEES = 3
 # therefore a lower bound on the machine code; and a pin moves only with a
 # measured reason recorded in the same change. ghidra/scripts/ApplyAnnotations.java,
 # ec/annotations/README.md and docs/findings.md 18 carry the same rule.
+#
+# *** 2026-09-25, issue #263: the pins below move, and **almost all of the
+# movement was already on `main`**. Measured against a pristine checkout of the
+# parent commit as well as against this branch:
+#
+#   what the pin said | pristine `main` | this branch | this change moved it
+#   refs              | 14818            | 14819       | +1
+#   main_refs         | 13957            | 13961       | +4
+#   pd_refs           | 861              | 858         | -3
+#   symbol_main       | 147 / 6070       | 147 / 6070  | 0
+#   named_in_tree     | 153              | 153         | 0
+#   extmem_raw        | 8757             | 8758        | +1
+#
+# So the committed pins were **26 references and 3 named addresses behind the
+# tree they were supposed to describe** before this branch touched anything, and
+# `--self-test` was already red on `main` for that reason. Both halves are
+# recorded rather than merged: the drift is not this issue's to claim, and the
+# +1 is not large enough to explain it. `ec/decompiled/bank1/19A8.c` was stale
+# against its own `ghidra-functions.csv` row (issue #255's correction landed
+# without a re-export) and this build caught it up -- measured on its own, that
+# file moves **no** census figure at all, so the whole +1 is the 88 rows.
+#
+# The +1 is still the mechanism the two blocks above describe, running in a
+# direction #238 did not see. Committing 88 signatures moved **28 functions this
+# batch never annotated**: 11 now pass more arguments than before (+25 declared
+# parameters) and 17 pass fewer (-17). Net -78 against the -86 the 88 renames
+# account for, which is arithmetically the census's own delta and is why the
+# per-address list in xdata-register-map.md 7.2 is 6 addresses and not 88.
+# Nothing here settles whether that is allowed; docs/findings.md 18 still calls
+# it open, and this is the second batch's data point rather than its answer.
 ORACLE = {
     # DAT_EXTMEM_ only, i.e. what issue #132 counted, comments excluded.
-    "extmem_distinct": 1036, "extmem_refs": 8732,
-    "extmem_raw": 8741, "extmem_commented": 9,
-    "extmem_main_distinct": 916, "extmem_main_refs": 7871,
-    "extmem_pd_distinct": 157, "extmem_pd_refs": 861,
+    "extmem_distinct": 1035, "extmem_refs": 8749,
+    "extmem_raw": 8758, "extmem_commented": 9,
+    "extmem_main_distinct": 915, "extmem_main_refs": 7891,
+    "extmem_pd_distinct": 157, "extmem_pd_refs": 858,
     # What the decompiler named, which the issue's grep could not see.
-    "symbol_main_distinct": 146, "symbol_main_refs": 6060,
+    "symbol_main_distinct": 147, "symbol_main_refs": 6070,
     "symbol_pd_distinct": 0, "symbol_pd_refs": 0,
     # The full census this tool publishes.
-    "distinct": 1171, "refs": 14792,
-    "main_distinct": 1062, "main_refs": 13931,
+    "distinct": 1171, "refs": 14819,
+    "main_distinct": 1062, "main_refs": 13961,
     "pd_only": 109, "both": 48,
     # Addresses the symbol table names AND the census reaches. It is not
     # `len(symbols)`: naming an address in registers.yaml does not put it in
@@ -370,7 +400,14 @@ ORACLE = {
     # after the ones above; the full census below does not move.
     # 131 -> 146 with issue #180's 15 0x086x/0x1Cxx/0x1Fxx entries.
     # 146 -> 150 with issue #183's 0x07C4/0x07D3/0x07D4/0x07D5.
-    "named_in_tree": 150,
+    # 150 -> 153 on `main` without this block being re-derived. Found by
+    # running --self-test on a pristine checkout of the parent commit, not by
+    # this change. Which three is the one thing here that is **not** re-derivable
+    # -- the pin is a bare integer and the prose above names only some of the
+    # 150 -- so the 153 are not asserted individually. The --self-test failure
+    # message enumerates every one of them, which is the place a reader is sent
+    # rather than a list maintained here.
+    "named_in_tree": 153,
 }
 ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
 # The two symbol-table addresses register_ref_table.py finds main-EC sites for
@@ -595,8 +632,21 @@ XSPACE_WINDOW = 32
 # `sum(buckets) == refs` either way. Presenting them as evidence that the
 # direction split is right is the mistake issue #178 exists to correct. What
 # makes the direction external is HAND_CHECKED.
-BUCKET_TOTALS = {"read": 8317, "write": 3186, "read+write": 2476,
-                 "passed-to-call": 543, "address-taken": 270}
+#
+# 2026-09-25, issue #263: read 8317 -> 8341, passed-to-call 543 -> 534,
+# address-taken 270 -> 267; write and read+write stand. Measured against a
+# pristine checkout of the parent commit as well as against this branch, and the
+# two do not agree about how much of the movement is this change's: 16 of the 24
+# read references, and all 5 of the passed-to-call ones, were already there on
+# `main` before this branch touched anything. The rest is the arity effect
+# docs/findings.md 18 records, running in the direction #238 did not see --
+# committing 88 signatures made 11 call sites pass more arguments and 17 pass
+# fewer, and the three buckets that describe an argument rather than a plain
+# access are where those land. See the dated block above ORACLE for the census
+# totals and ec/annotations/xdata-register-map.md 7.2 for the per-address
+# account.
+BUCKET_TOTALS = {"read": 8341, "write": 3195, "read+write": 2482,
+                 "passed-to-call": 534, "address-taken": 267}
 
 # Issue #280's corpus-wide direction invariant: the numbers
 # `direction_invariant()` returns against the committed tree today, pinned the
@@ -612,7 +662,16 @@ BUCKET_TOTALS = {"read": 8317, "write": 3186, "read+write": 2476,
 DIRECTION_INVARIANT = {
     # Occurrences the census buckets `write` or `read+write`, and the distinct
     # addresses carrying at least one. The width, against HAND_CHECKED's five.
-    "write_like": 5662, "write_like_addrs": 1008,
+    #
+    # 2026-09-25, issue #263: write_like 5662 -> 5677 and assign_shaped
+    # 5664 -> 5679, with `deref_surplus` and `eq_after` unchanged. Measured
+    # against a pristine checkout of the parent commit, the whole +15 was
+    # **already on `main`** before this branch: this change moved neither. The
+    # census totals in the same commit moved by one reference, so a reader who
+    # assumed the two pins move together would have blamed this batch for a
+    # drift it did not cause. The width is what a re-export changes and the
+    # surplus is what it does not, and both are worth pinning for that reason.
+    "write_like": 5677, "write_like_addrs": 1008,
     # What the second pass accepts. Two more than `write_like`, and the two
     # are not slop: they are 0x048A's `*`-dereference stores, which
     # `store_target()` excludes for cause and a necessary condition does not
@@ -620,7 +679,7 @@ DIRECTION_INVARIANT = {
     # which is the exemption rule: a per-address allowlist inside the
     # invariant would be the five-address problem at larger scale, and this
     # instead pins the surplus, its size, and its shape.
-    "assign_shaped": 5664, "deref_surplus": 2,
+    "assign_shaped": 5679, "deref_surplus": 2,
     # The tree-wide `==` count, quoted in the module docstring and in
     # xdata-register-map.md §4.3. Asserted so the prose and the code cannot
     # drift apart silently.

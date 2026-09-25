@@ -37,9 +37,10 @@
 void dispatch_on_0860(char *param_1,char *param_2)
 
 {
-  byte bVar1;
-  char cVar2;
-  code *pcVar3;
+  undefined1 uVar1;
+  byte bVar2;
+  char cVar3;
+  code *pcVar4;
   
   if (XDATA_0860 == '\0') {
     ret_only_d2be();
@@ -79,6 +80,7 @@ void dispatch_on_0860(char *param_1,char *param_2)
   else {
     XDATA_0865 = 0;
   }
+  pcVar4 = (code *)0x860;
   switch_case_dispatch(XDATA_0860);
   FUN_CODE_d673();
   *param_1 = *param_1 + '\x01';
@@ -86,29 +88,29 @@ void dispatch_on_0860(char *param_1,char *param_2)
   *param_2 = *param_2 + '\x01';
   FUN_CODE_d673();
   param_1 = param_1 + '\x01';
-  func_0xd698();
+  uVar1 = func_0xd698();
   param_2 = param_2 + '\x01';
-  write_5a_to_1f07_then_spin();
+  uVar1 = write_5a_to_1f07_then_spin(uVar1,pcVar4);
   *param_1 = *param_1 + -1;
-  write_a_to_dptr_set_1f09();
+  uVar1 = write_a_to_dptr_set_1f09(uVar1,pcVar4);
   *param_2 = *param_2 + -1;
-  write_5a_to_1f07_then_spin();
-  write_a_to_dptr_set_1f09();
+  uVar1 = write_5a_to_1f07_then_spin(uVar1,pcVar4);
+  write_a_to_dptr_set_1f09(uVar1,pcVar4);
   _4_1 = 1;
   _9_6 = 1;
   nop();
   nop();
   IE0 = 1;
   DAT_EXTMEM_1c04 = DAT_EXTMEM_0863;
-  pcVar3 = (code *)0x864;
-  bVar1 = store_a_to_1c05_then_d2d2(DAT_EXTMEM_0864);
-  stage_1c03_1c02_1c01(bVar1 & 0xfe);
+  pcVar4 = (code *)0x864;
+  bVar2 = store_a_to_1c05_then_d2d2(DAT_EXTMEM_0864);
+  stage_1c03_1c02_1c01(bVar2 & 0xfe);
   do {
-    cVar2 = set_dptr_1c00_then_d2c2();
-  } while (cVar2 == '\0');
-  cVar2 = mask_dp_byte_7c_reset_dptr_0860();
-  if (cVar2 == '\0') {
-    *pcVar3 = (code)0x0;
+    cVar3 = set_dptr_1c00_then_d2c2();
+  } while (cVar3 == '\0');
+  cVar3 = mask_dp_byte_7c_reset_dptr_0860();
+  if (cVar3 == '\0') {
+    *pcVar4 = (code)0x0;
     copy_0866_86b_to_1c04_1c3a();
     return;
   }

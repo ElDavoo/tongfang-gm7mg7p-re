@@ -12,11 +12,11 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_a_to_1621_1622(undefined1 param_1)
+void store_a_to_1621_1622(undefined1 a40_from_f116)
 
 {
-  DAT_EXTMEM_1621 = param_1;
-  DAT_EXTMEM_1622 = param_1;
+  DAT_EXTMEM_1621 = a40_from_f116;
+  DAT_EXTMEM_1622 = a40_from_f116;
   return;
 }
 

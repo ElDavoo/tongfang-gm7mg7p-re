@@ -16,11 +16,12 @@
 void build_0791_0793_0794_then_branch(void)
 
 {
+  undefined1 value_a;
   undefined1 *entry_dptr;
   
   init_0a48_and_0a59_blocks();
-  read_0a4b_after_call_445e_08();
-  load_r3_r7_from_0a48_store_a(0x790);
+  value_a = read_0a4b_after_call_445e_08();
+  load_r3_r7_from_0a48_store_a(value_a,(undefined1 *)0x790);
   DAT_EXTMEM_0791 = read_0a4b_after_call_445e_0c_b01c();
   entry_dptr = (undefined1 *)0xa4c;
   read_dptr_byte_then_set_dptr_0792((undefined1 *)0xa4c);

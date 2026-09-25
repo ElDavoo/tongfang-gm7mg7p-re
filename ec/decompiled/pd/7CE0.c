@@ -13,6 +13,7 @@ char FUN_CODE_7ce0(byte param_1,byte param_2,undefined1 param_3,char param_4,byt
   undefined1 uVar4;
   byte *pbVar5;
   undefined2 uVar6;
+  undefined1 *puVar7;
   
   uVar4 = BANK0_R7;
   DAT_EXTMEM_0a93 = 0;
@@ -39,16 +40,17 @@ char FUN_CODE_7ce0(byte param_1,byte param_2,undefined1 param_3,char param_4,byt
       bVar1 = DAT_EXTMEM_0a8b;
       read_dptr_byte_via_716c();
       if (bVar1 == 1) {
+        puVar7 = (undefined1 *)0xa8b;
         bVar1 = DAT_EXTMEM_0a8b;
         write_3bytes_to_0a86(99,0xa8,0xff,DAT_EXTMEM_0a8b);
-        write_xdata_then_set_r5_2(0x12);
+        write_xdata_then_set_r5_2(0x12,puVar7);
         store_4bytes_to_0a82();
       }
       else {
         pbVar5 = (byte *)0xa8b;
         bVar1 = DAT_EXTMEM_0a8b;
         write_3bytes_to_0a86(0x76,0xa8,0xff,DAT_EXTMEM_0a8b);
-        write_xdata_then_set_r5_2(0x13);
+        write_xdata_then_set_r5_2(0x13,pbVar5);
         store_4bytes_to_0a82();
         set_dptr_0a8b();
         cVar3 = *pbVar5 - 2;

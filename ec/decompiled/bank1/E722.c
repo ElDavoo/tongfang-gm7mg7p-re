@@ -13,14 +13,14 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void write_r1_to_tmod_and_jump_8801(undefined1 *param_1)
+void write_r1_to_tmod_and_jump_8801(undefined1 param_1,undefined1 *param_2,undefined1 *param_3)
 
 {
   undefined1 uVar1;
   
   uVar1 = TMOD;
-  *param_1 = uVar1;
-  single_movx_store_not_a_function();
+  *param_3 = uVar1;
+  single_movx_store_not_a_function(param_1,param_2);
   return;
 }
 

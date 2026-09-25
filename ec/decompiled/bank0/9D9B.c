@@ -146,7 +146,7 @@ void compute_level_blocks_086b_086c_086e(void)
   }
   if (((MANUAL_FAN_CTRL < '\0') && ((AP_OEM_6 >> 1 & 1) != 0)) && ((AP_OEM_6 & 1) != 0)) {
     puVar6 = &DAT_EXTMEM_0a47;
-    bVar2 = store_a_then_read_086c_set_cy(3);
+    bVar2 = store_a_then_read_086c_set_cy(3,(undefined1 *)0xa47);
     bVar1 = bVar2 < 0xfU - (cVar3 >> 7);
     cVar3 = bVar1 << 7;
     if (!bVar1) {

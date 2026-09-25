@@ -14,10 +14,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_a_to_0f60_and_set_0a56(undefined1 param_1)
+void store_a_to_0f60_and_set_0a56(undefined1 a88_from_f0ed)
 
 {
-  DAT_EXTMEM_0f60 = param_1;
+  DAT_EXTMEM_0f60 = a88_from_f0ed;
   DAT_EXTMEM_0a56 = 0xf;
   DAT_EXTMEM_0a57 = 0x60;
   return;

@@ -12,10 +12,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_a_then_1906_init(undefined1 param_1,undefined1 *param_2)
+void store_a_then_1906_init(undefined1 value_a,undefined1 *param_2)
 
 {
-  *param_2 = param_1;
+  *param_2 = value_a;
   DAT_EXTMEM_1906 = 0x9f;
   return;
 }

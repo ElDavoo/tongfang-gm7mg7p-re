@@ -13,10 +13,12 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void pass_r6_and_a_to_0d70(undefined1 param_1,undefined1 param_2)
+void pass_r6_and_a_to_0d70
+               (undefined1 param_1,undefined1 *param_2,undefined1 param_3,char param_4,
+               undefined1 param_5)
 
 {
-  write_two_bytes_by_ptr_kind(param_2,param_1);
+  write_two_bytes_by_ptr_kind(param_5,param_1,param_2,param_3,param_4);
   return;
 }
 

@@ -13,22 +13,22 @@
    name_basis: code-shape */
 
 void write_two_bytes_by_ptr_kind
-               (undefined1 param_1,undefined1 param_2,undefined1 *param_3,undefined1 param_4,
+               (undefined1 value_a,undefined1 param_2,undefined1 *param_3,undefined1 param_4,
                char param_5)
 
 {
   if (param_5 == '\x01') {
-    *(undefined1 *)CONCAT11(param_4,param_3) = param_1;
+    *(undefined1 *)CONCAT11(param_4,param_3) = value_a;
     ((undefined1 *)CONCAT11(param_4,param_3))[1] = param_2;
     return;
   }
   if (param_5 == '\0') {
-    *param_3 = param_1;
+    *param_3 = value_a;
     param_3['\x01'] = param_2;
     return;
   }
   if (param_5 == -2) {
-    *(undefined1 *)ZEXT12(param_3) = param_1;
+    *(undefined1 *)ZEXT12(param_3) = value_a;
     *(undefined1 *)ZEXT12(param_3 + '\x01') = param_2;
   }
   return;

@@ -19,10 +19,11 @@
 void set_state_bytes_then_0xa1c8(char param_1,char param_2)
 
 {
-  char cVar1;
-  byte *pbVar2;
-  short sVar3;
+  byte bVar1;
+  char cVar2;
+  byte *pbVar3;
   short sVar4;
+  short sVar5;
   
   DAT_EXTMEM_0983 = DAT_EXTMEM_0983 | 2;
   XDATA_08A7 = 0;
@@ -56,41 +57,46 @@ void set_state_bytes_then_0xa1c8(char param_1,char param_2)
     DAT_EXTMEM_0a49 = '\x02';
   }
   while( true ) {
-    pbVar2 = (byte *)0xa47;
+    pbVar3 = (byte *)0xa47;
     read_dptr_byte_into_r6();
     tail_call_7110_with_b6(DAT_EXTMEM_0a49);
-    if ((99 < *pbVar2) || ((DAT_EXTMEM_04ab < *pbVar2) << 7 < '\0')) break;
+    bVar1 = *pbVar3;
+    if ((99 < bVar1) || ((DAT_EXTMEM_04ab < bVar1) << 7 < '\0')) break;
     DAT_EXTMEM_0a49 = DAT_EXTMEM_0a49 + '\x01';
   }
-  sVar3 = 0xa47;
+  sVar4 = 0xa47;
   load_dptr_be16_from_xdata(0xa47);
-  tail_call_7110_with_b6(DAT_EXTMEM_0a49);
-  sVar4 = 0x872;
-  store_a_then_tail_call_7110_b6(*(undefined1 *)(sVar3 + 1));
-  DAT_EXTMEM_087a = *(undefined1 *)(sVar4 + 2);
-  sVar3 = 0xa47;
+  cVar2 = DAT_EXTMEM_0a49;
+  tail_call_7110_with_b6();
+  sVar5 = 0x872;
+  store_a_then_tail_call_7110_b6(*(undefined1 *)(sVar4 + 1),(undefined1 *)0x872,cVar2,param_1,bVar1)
+  ;
+  DAT_EXTMEM_087a = *(undefined1 *)(sVar5 + 2);
+  sVar4 = 0xa47;
   load_dptr_be16_from_xdata(0xa47);
-  tail_call_7110_with_b6(DAT_EXTMEM_0a49);
-  sVar4 = 0x88a;
-  store_a_then_tail_call_7110_b6(*(undefined1 *)(sVar3 + 3));
-  XDATA_080C = *(byte *)(sVar4 + 4);
-  sVar3 = 0xa47;
+  cVar2 = DAT_EXTMEM_0a49;
+  tail_call_7110_with_b6();
+  sVar5 = 0x88a;
+  store_a_then_tail_call_7110_b6(*(undefined1 *)(sVar4 + 3),(undefined1 *)0x88a,cVar2,param_1,bVar1)
+  ;
+  XDATA_080C = *(byte *)(sVar5 + 4);
+  sVar4 = 0xa47;
   read_dptr_byte_into_r6();
   tail_call_7110_with_b6(DAT_EXTMEM_0a49);
-  if ((char)*(byte *)(sVar3 + 5) < '\0') {
+  if ((char)*(byte *)(sVar4 + 5) < '\0') {
     XDATA_0723 = XDATA_0723 | 8;
   }
-  if ((*(byte *)(sVar3 + 5) >> 6 & 1) != 0) {
+  if ((*(byte *)(sVar4 + 5) >> 6 & 1) != 0) {
     XDATA_0985 = XDATA_0985 | 2;
   }
   if (DAT_EXTMEM_08af != '\0') {
     DAT_EXTMEM_08af = DAT_EXTMEM_08af + -1;
-    cVar1 = XDATA_080C - 3;
+    cVar2 = XDATA_080C - 3;
     if (XDATA_080C < 3) {
-      cVar1 = '\x03';
+      cVar2 = '\x03';
       XDATA_080C = 3;
     }
-    load_dptr_a916_tail_jump_1114(cVar1);
+    load_dptr_a916_tail_jump_1114(cVar2);
   }
   return;
 }

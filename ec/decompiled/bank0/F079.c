@@ -13,10 +13,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_a_0_1_zeros_at_dptr(undefined1 param_1,undefined1 *param_2)
+void store_a_0_1_zeros_at_dptr(undefined1 value_a,undefined1 *param_2)
 
 {
-  *param_2 = param_1;
+  *param_2 = value_a;
   param_2[1] = 0;
   param_2[2] = 1;
   param_2[3] = 0;

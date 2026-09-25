@@ -51,13 +51,13 @@ void copy_code_table_into_0730_07a7(undefined1 param_1,char param_2)
     load_dptr_be16_from_xdata(0xa51);
     MODE_PL_DEFAULTS_GAMING_PL1_0 = *puVar3;
     sVar4 = 0x731;
-    store_a_to_dptr_b939(*(undefined1 *)(CONCAT11(param_1,param_2) + 1));
+    store_a_to_dptr_b939(*(undefined1 *)(CONCAT11(param_1,param_2) + 1),(undefined1 *)0x731);
     MODE_PL_DEFAULTS_GAMING_PL4_2 = *(undefined1 *)(sVar4 + 2);
     puVar3 = &DAT_CODE_0733;
-    store_a_to_dptr_b939(*(char *)(CONCAT11(param_1,param_2) + 3) + '\x01');
+    store_a_to_dptr_b939(*(char *)(CONCAT11(param_1,param_2) + 3) + '\x01',&DAT_CODE_0733);
     MODE_PL_DEFAULTS_TURBO_PL1_8 = puVar3[0xc];
     sVar4 = 0x7a8;
-    store_a_to_dptr_b939(*(undefined1 *)(CONCAT11(param_1,param_2) + 0xd));
+    store_a_to_dptr_b939(*(undefined1 *)(CONCAT11(param_1,param_2) + 0xd),(undefined1 *)0x7a8);
     MODE_PL_DEFAULTS_TURBO_PL4_10 = *(undefined1 *)(sVar4 + 0xe);
     MODE_PL_DEFAULTS_TURBO_DSTATE_11 = *(char *)(CONCAT11(param_1,param_2) + 0xf) + '\x01';
     sVar4 = 0xa51;
@@ -65,7 +65,7 @@ void copy_code_table_into_0730_07a7(undefined1 param_1,char param_2)
       load_dptr_be16_from_xdata(0xa51);
       load_code_byte_to_0734(4);
       sVar5 = 0x735;
-      store_a_to_dptr_b939(*(undefined1 *)(sVar4 + 5));
+      store_a_to_dptr_b939(*(undefined1 *)(sVar4 + 5),(undefined1 *)0x735);
       load_code_byte_to_0736(6);
       bVar2 = 7;
     }
@@ -73,7 +73,7 @@ void copy_code_table_into_0730_07a7(undefined1 param_1,char param_2)
       load_dptr_be16_from_xdata(0xa51);
       load_code_byte_to_0734(8);
       sVar5 = 0x735;
-      store_a_to_dptr_b939(*(undefined1 *)(sVar4 + 9));
+      store_a_to_dptr_b939(*(undefined1 *)(sVar4 + 9),(undefined1 *)0x735);
       load_code_byte_to_0736(10);
       bVar2 = 0xb;
     }

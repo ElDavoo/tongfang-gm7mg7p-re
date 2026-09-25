@@ -12,10 +12,11 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void call_0c46_then_dptr_0d0e(void)
+void call_0c46_then_dptr_0d0e
+               (undefined1 param_1,undefined1 *param_2,undefined1 param_3,char param_4)
 
 {
-  write_byte_by_tag_r3();
+  write_byte_by_tag_r3(param_1,param_2,param_3,param_4);
   return;
 }
 

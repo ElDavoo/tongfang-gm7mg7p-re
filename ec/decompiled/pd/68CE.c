@@ -12,12 +12,12 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-undefined1 store_a_and_copy_07f4_masked_to_07f5(undefined1 param_1,undefined1 *param_2)
+undefined1 store_a_and_copy_07f4_masked_to_07f5(undefined1 value_a,undefined1 *param_2)
 
 {
   undefined1 uVar1;
   
-  *param_2 = param_1;
+  *param_2 = value_a;
   DAT_EXTMEM_07f5 = DAT_EXTMEM_07f4 & 0x1f;
   uVar1 = DAT_EXTMEM_07d2;
   read_04a3_then_call_9a90(DAT_EXTMEM_07d2);

@@ -13,10 +13,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void index_case_epilogue(void)
+void index_case_epilogue(undefined1 param_1,undefined1 *param_2)
 
 {
-  store_a_then_set_bit0_1901();
+  store_a_then_set_bit0_1901(param_1,param_2);
   DAT_EXTMEM_08e1 = 6;
   DAT_EXTMEM_08e0 = DAT_EXTMEM_08e0 + '\x01';
   index_table_default();

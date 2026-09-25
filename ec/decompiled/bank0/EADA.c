@@ -13,7 +13,7 @@ void FUN_CODE_eada(undefined1 param_1,undefined1 param_2,undefined1 param_3)
   char cVar2;
   
   DAT_EXTMEM_0a47 = param_2;
-  store_a_then_three_zeros(param_3);
+  store_a_then_three_zeros(param_3,0xa47);
   FUN_CODE_eac6();
   DAT_EXTMEM_0a53 = 1;
   DAT_EXTMEM_0a54 = 0;

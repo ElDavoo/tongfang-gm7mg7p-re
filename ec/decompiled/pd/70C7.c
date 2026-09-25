@@ -11,10 +11,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-char store_a_to_dptr(undefined1 param_1,undefined1 *param_2,char param_3)
+char store_a_to_dptr(undefined1 value_a,undefined1 *param_2,char param_3)
 
 {
-  *param_2 = param_1;
+  *param_2 = value_a;
   return '\b' - (((0x18U < (byte)(param_3 * '^')) << 7) >> 7);
 }
 

@@ -18,6 +18,8 @@
 void index_case_06(undefined1 param_1,undefined1 param_2)
 
 {
+  undefined1 *puVar1;
+  
   if (-1 < DAT_EXTMEM_1909) {
     index_table_default();
     return;
@@ -29,9 +31,10 @@ void index_case_06(undefined1 param_1,undefined1 param_2)
   DAT_EXTMEM_08dd = param_2;
   DAT_EXTMEM_060d = add_r6_r7_to_0a58_pair_then_halve(0x60d);
   DAT_EXTMEM_060c = DAT_EXTMEM_0a59;
-  store_a_to_dptr_ba3d(DAT_EXTMEM_0610 | 0x40);
+  puVar1 = (undefined1 *)0x610;
+  store_a_to_dptr_ba3d(DAT_EXTMEM_0610 | 0x40,(undefined1 *)0x610);
   write_9f_to_x1909();
-  store_a_then_set_bit0_1901(0x87);
+  store_a_then_set_bit0_1901(0x87,puVar1);
   DAT_EXTMEM_08e1 = 6;
   DAT_EXTMEM_08e0 = DAT_EXTMEM_08e0 + '\x01';
   index_table_default();

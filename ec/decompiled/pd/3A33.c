@@ -12,10 +12,10 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-char store_a_then_multiply_r7_by_5e(undefined1 param_1,undefined1 *param_2,char param_3)
+char store_a_then_multiply_r7_by_5e(undefined1 value_a,undefined1 *param_2,char param_3)
 
 {
-  *param_2 = param_1;
+  *param_2 = value_a;
   return param_3 * '^';
 }
 

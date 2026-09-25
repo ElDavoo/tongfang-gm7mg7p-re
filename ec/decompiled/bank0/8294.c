@@ -24,9 +24,9 @@ void FUN_CODE_8294(byte param_1,byte param_2)
   }
   clear_bit0_1901(param_2 - 8);
   puVar5 = &DAT_EXTMEM_1904;
-  DAT_EXTMEM_190c = store_a_then_1906_init();
+  DAT_EXTMEM_190c = store_a_then_1906_init(DAT_EXTMEM_0a56 + 0x80,(undefined1 *)0x1904);
   *puVar5 = DAT_EXTMEM_190c;
-  store_a_then_set_bits_1_and_0_of_1900(0xff,0x1944);
+  store_a_then_set_bits_1_and_0_of_1900(0xff,(undefined1 *)0x1944);
   DAT_EXTMEM_0a59 = 0;
   DAT_EXTMEM_0a5a = 0;
   DAT_EXTMEM_0a00 = '\n';
@@ -36,7 +36,7 @@ void FUN_CODE_8294(byte param_1,byte param_2)
       if ((char)DAT_EXTMEM_1904 < '\0') {
         DAT_EXTMEM_0a58 = DAT_EXTMEM_1918;
         sVar6 = 0xa57;
-        store_a_then_read_be16(DAT_EXTMEM_1919,0xa57);
+        store_a_then_read_be16(DAT_EXTMEM_1919,(undefined1 *)0xa57);
         be16_add(param_1,sVar6 + 1,param_2);
         bVar1 = bVar4 + 1;
         cVar2 = bVar4 - 7;

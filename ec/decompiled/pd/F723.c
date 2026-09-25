@@ -13,11 +13,13 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void chain_96ff_then_0c46(undefined1 *param_1,undefined1 param_2)
+void chain_96ff_then_0c46
+               (undefined1 *param_1,undefined1 *param_2,undefined1 param_3,char param_4,
+               undefined1 param_5)
 
 {
-  dptr_0a27_plus_17_times_a(param_2);
-  write_byte_by_tag_r3(*param_1);
+  dptr_0a27_plus_17_times_a(param_5);
+  write_byte_by_tag_r3(*param_1,param_2,param_3,param_4);
   return;
 }
 

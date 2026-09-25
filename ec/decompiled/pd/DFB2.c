@@ -15,38 +15,37 @@
    basis: hand-decoded
    name_basis: code-shape */
 
-void store_0x14_at_0810_and_write_0000(short param_1,undefined1 param_2)
+void store_0x14_at_0810_and_write_0000(undefined1 *param_1,undefined1 param_2)
 
 {
   undefined1 uVar1;
   undefined1 uVar2;
   byte bVar3;
   byte bVar4;
-  undefined1 *puVar5;
-  byte *pbVar6;
+  byte *pbVar5;
   
   load_dptr_ffff_into_0d0d();
-  write_a_to_dptr_then_fall_into_c1f0(param_2);
+  write_a_to_dptr_then_fall_into_c1f0(param_2,param_1);
   uVar2 = 0x14;
   uVar1 = 0;
   set_dptr_0d0e_c1d6(0,0);
-  puVar5 = (undefined1 *)(param_1 + 2);
+  param_1 = param_1 + 2;
   load_xdata_to_r0_r1_r2_or_r3();
   FUN_CODE_0dc9();
   call_0e54_with_dc_then_reenter_with_26();
   set_dptr_0d0e_c1d6();
-  *puVar5 = uVar2;
-  pbVar6 = puVar5 + 1;
-  bVar3 = *pbVar6;
+  *param_1 = uVar2;
+  pbVar5 = param_1 + 1;
+  bVar3 = *pbVar5;
   if (bVar3 == 0) {
     set_dptr_0d0e_c1d6();
-    if (0x3f < *pbVar6) {
-      *pbVar6 = 0x3f;
+    if (0x3f < *pbVar5) {
+      *pbVar5 = 0x3f;
     }
     bVar4 = read_byte_at_ffdc_plus_a(bVar3);
     bVar4 = bVar4 & 0xc0;
     set_dptr_0d0e_c1d6();
-    *(byte *)CONCAT11(uVar1,bVar3) = *pbVar6 | bVar4;
+    *(byte *)CONCAT11(uVar1,bVar3) = *pbVar5 | bVar4;
   }
                     /* WARNING: Subroutine does not return */
   add_dptr_to_word_0d0e_ea_guard(6);
