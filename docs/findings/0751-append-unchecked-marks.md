@@ -473,7 +473,7 @@ exists to prevent.
 **Deliberately not touched** — `ec/annotations/registers.yaml`, the annotation
 CSVs, `ec/ghidra/**`, `windows/decompiled/**`, `evidence/**`, `vendor/**`,
 `.github/**`, and `docs/hardware-tests/manual-fan-ctrl-0751-isolation.md`. That
-runbook already points at `ec_watch-marks.md` for this at `:127` and `:714`,
+runbook already points at `ec_watch-marks.md` for this at `:127` and `:280`,
 and the issue's Done list does not name it; a reviewer who wants a line there
 should say so rather than have it added silently. No register's `status:`
 moved, no Ghidra project was involved, and no capture is added.
@@ -482,7 +482,7 @@ moved, no Ghidra project was involved, and no capture is added.
 
 `bash tools/run-tests.sh windows/tools` (46 cases in `test_ec_watch.py`, 7 of
 them new) and, from `ec/tools`, `python3 -m unittest
-test_grade_0751_isolation` (101, 8 new). Both offline, both on fakes; no EC, no
+test_grade_0751_isolation` (102, 8 new). Both offline, both on fakes; no EC, no
 driver, no Windows box. `python3 ec/tools/grade_0751_isolation.py --self-test`
 discovers the suite by filename, so the new cases are picked up with no gate
 edit, and the count it prints decorates rather than decides. No test count is
