@@ -24,7 +24,7 @@
 # insertions into it share a context window. The two `gate` lines ship in one
 # patch or not at all. The other file is deleted and its content and rationale
 # folded in here; the item and the two write-ups that named it point here
-# instead. The filename is kept rather than given an honest one because six
+# instead. The filename is kept rather than given an honest one because seven
 # other references across four files already cite it as this repository's
 # canonical account of the prepared-not-landed shape, and a name is not worth
 # churning the long shared files for.

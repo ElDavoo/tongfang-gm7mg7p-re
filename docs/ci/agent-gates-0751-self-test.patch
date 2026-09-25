@@ -45,10 +45,17 @@
 # The 103 is what `python3 ec/tools/grade_0751_isolation.py --self-test` prints
 # on the tree this was cut from. It was 76 when this patch was first written, and
 # 94 by the time issue #745 was filed; neither was ever right for long, which is
-# the point of reading it off a run. The same figure appears in
-# `docs/findings.md` §40, `docs/findings/0751-grader-self-test-gate.md` and two
-# tool docstrings, and those are issue #685's to correct -- deliberately not
-# here, so this issue and that one cannot both be editing the same sentences.
+# the point of reading it off a run. The other occurrences of the figure are
+# issue #685's to correct -- deliberately not here, so this issue and that one
+# cannot both be editing the same sentences. They are
+# `docs/findings/0751-grader-self-test-gate.md`, which carries a count in six
+# places as a per-commit chain each figure is correct for, and
+# `docs/findings.md:2077` ("Those 76 tests ran nowhere", in §7), which is
+# historical -- past tense, about issue #532's own branch at the time -- and not
+# a live claim. The plan behind this cut also expected two tool docstrings
+# carrying the figure; a search of `ec/tools/*.py` and `windows/tools/*.py` found
+# none, because `grade_0751_isolation.py` parses the count out of the run rather
+# than asserting one.
 #
 # The comment it adds at the call site says the same thing where the next reader
 # of the gate will see it, rather than only here.
