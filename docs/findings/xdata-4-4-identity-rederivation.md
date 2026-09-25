@@ -193,6 +193,58 @@ two-address row at Jaccard 0.02 — is printed with `mode-oem-init` in its
 `cluster_name` cell while its `match` is `none`. It is a report cell showing
 the best guess, not a carry, and `--map`'s own rule is the one that says so.
 
+## The transcript this supersedes
+
+§4.4 held one run of this experiment and this change re-ran it, so there are
+two. The superseded one is reproduced here in full — the `rm -rf /tmp/census`
+heredoc through the two `main-ec:`/`pd:` lines, as
+`git show origin/main:ec/annotations/xdata-register-map.md` lines 1146-1173
+give it — because the correction beside the map's block points here for it, and
+that record should exist rather than sit in history. The map keeps the current
+run alone, so its block still reads as one experiment.
+
+```console
+$ rm -rf /tmp/census && mkdir -p /tmp/census/ec/tools
+$ cp ec/tools/xdata_register_map.py /tmp/census/ec/tools/
+$ for d in decompiled annotations firmware ghidra; do
+>   ln -s "$PWD/ec/$d" /tmp/census/ec/$d
+> done
+$ python3 - <<'EOF'
+p = '/tmp/census/ec/tools/xdata_register_map.py'
+s = open(p).read()
+guard = '''    if stripped.startswith("=="):
+        return False
+'''
+assert guard in s
+open(p, 'w').write(s.replace(guard, ''))
+EOF
+$ python3 /tmp/census/ec/tools/xdata_register_map.py \
+    --out-registers /tmp/census/registers.csv \
+    --out-clusters /tmp/census/clusters.csv
+  names: seeded 6, exact 0, carried by overlap 4, tied, not carried 0, with no name 429
+    main-ec-002 carries mode-oem-init by overlap, Jaccard 0.96 from k5be7031564f8 -- re-key annotations/xdata-cluster-names.csv if the name moved
+    main-ec-004 carries level-block-086x by overlap, Jaccard 0.64 from k2d9004f7707b -- re-key annotations/xdata-cluster-names.csv if the name moved
+    main-ec-013 carries user-clear-bytes by overlap, Jaccard 0.90 from k76e75f349ea7 -- re-key annotations/xdata-cluster-names.csv if the name moved
+    main-ec-022 carries page-0300 by overlap, Jaccard 0.78 from k3fdd14ddea2e -- re-key annotations/xdata-cluster-names.csv if the name moved
+wrote /tmp/census/registers.csv: 1171 rows
+wrote /tmp/census/clusters.csv: 439 rows
+  main-ec: 1062 distinct addresses, 13957 references, 388 clusters at threshold 0.5
+  pd: 157 distinct addresses, 861 references, 51 clusters at threshold 0.5
+```
+
+Every figure in it has moved and the table below names each: 1,171 register
+rows against 1,326, `main-ec: 1062 distinct addresses, 13957 references, 388
+clusters` against this run's 1218, 14838 and 394, `pd` 861 references against
+858, six names seeded and four carried on overlap at 0.96, 0.64, 0.90 and 0.78
+against eight seeded and one carried at 0.97, and the tenth name —
+`page-0300`, carried at 0.78 from `k3fdd14ddea2e` — which the committed names
+file no longer carries, for the reason the correction beside "All nine names
+survive" gives. Its `with no name 429` is that cell read off its own run — ten
+names against 439 clusters, 439 − 10 — where the guard-on `--check` above reads
+430 off 439, and the two figures are the same question asked of two different
+censuses rather than a disagreement, for the reasons the two-senses section
+below gives.
+
 ## Every superseded figure, and what superseded it
 
 Kept visible rather than deleted, per `docs/findings.md` §4a and the rule at
@@ -212,6 +264,7 @@ measured against, which is the form that file's own corrections use — "the tre
 | ten names, four carried on overlap | nine names, one carried on overlap | the tenth was `page-0300`, whose row issue #279's pair-accessor pass dropped (`6bf9c234`) when the nine-address `0x0300` cluster it named was absorbed into `main-ec-001`; the census's `cluster_name` column followed the file. Eight of the nine are `seeded`; `mode-oem-init` carries at 0.97 where the block's four carried at 0.96, 0.64, 0.90 and 0.78. |
 | best match 0.64-1.00 across the ten | 0.97-1.00 across the nine | same re-run; the next named cluster is 0.00 for every one, before and after |
 | 417 clusters have a key and no name | **430** | the census is 439 rows with nine `cluster_name` cells. This is also the tool's own `with no name 430` on a guard-on run — see the two senses below. |
+| §4.4's write transcript, reproduced in full above | the `--no-eq-guard` transcript at the top of this file, which is the one §4.4 now carries | same experiment, re-run; the superseded block is reproduced here rather than left in history, because the map's correction paragraph points at this file for it. It brings three figures no other row names — 1,171 register rows against 1,326, `main-ec` 1,062 distinct addresses and 388 clusters against 1,218 and 394, and `pd`'s 861 references against 858. Its seeded/carried counts and `page-0300` are the row above. |
 | §4.2's "That 479 is the one number … the §4.3 correction does not move" | 507 | the `--threshold-sweep --no-writer-axis` block beside it already read 507; the prose in the sentence after the block was the stale half. Re-derived at 0.50 `touching`: 507 clusters, largest 74, 274 singletons. |
 
 **One figure issue #582 expected to be stale is not.**
@@ -342,7 +395,7 @@ the tool is now `if eq_guard and stripped.startswith("==")` at
 `xdata_register_map.py:1582` — issue #302 parameterised it so `--no-eq-guard`
 could be a flag instead of a source edit. The test's own comment says it is
 built this way "rather than quietly regenerating the same census twice", and it
-is doing exactly that: five cases want a guard-off regeneration and the
+is doing exactly that: six cases want a guard-off regeneration and the
 assertion is what stands between them and a guard-*on* one.
 
 **There is a second, independent drift behind the first, and the `setUpClass`
