@@ -1,0 +1,22 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# timestamp below was written by hand. See ../README.md.
+# Shape: the 0x0F00-0x0F5F fan-table third of
+# ../../0751-isolation-run-unplaced-window/'s two blocks and two block-less
+# restores, one second after the 0700 capture's, and no change rows at all --
+# §4.2's prediction. Marks only is what a quiet page looks like from three
+# consoles. Two marks are gone from the eight this file otherwise holds: the
+# 12:04 block-less restore, which is the one a console that exited before the
+# operator got to it leaves behind, and nothing else. So the 12:04 window is
+# recorded in two of the three captures while the 12:00 one, spelled 0x99 here
+# and 0x0a in 0700-07ff above, is recorded in all three and disagrees. Those
+# are the two refusals a window in no block can be given, one each, and
+# neither is a disagreement in this file. Not a prediction that the table
+# stays put, nor that a mark is ever missed.
+ts,addr,old,new
+2026-01-01T12:00:03.000+01:00,MARK,,restored 0x0751=0x99
+2026-01-01T12:00:11.000+01:00,MARK,,no-op wrote 0x0751=0x10
+2026-01-01T12:00:41.000+01:00,MARK,,wrote 0x0751=0xA0
+2026-01-01T12:01:11.000+01:00,MARK,,restored 0x0751=0x10
+2026-01-01T12:05:11.000+01:00,MARK,,no-op wrote 0x0751=0x00
+2026-01-01T12:06:11.000+01:00,MARK,,wrote 0x0751=0x10
+2026-01-01T12:06:41.000+01:00,MARK,,restored 0x0751=0x00

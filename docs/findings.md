@@ -2006,6 +2006,18 @@ reason in the place the withheld count would be, whether or not anything was
 withheld. Write-up:
 `docs/findings/0751-grader-block-scoping.md`.
 
+**A window in no block was checked by one of §3's three per-window rules and
+graded anyway.** `check_block_marks` iterates `block.windows`, and a window
+`assign_blocks` could not place was passed to it by nobody — so a stray restore
+two consoles spelled differently, or that one console never recorded, was named
+by the census and then printed in full in the same confident format as a result,
+counted in `graded`, and the run exited 0. The two agreement checks now reach
+windows in no block as well; `void` does not and says why, since it is defined
+over a block and a stray has none to be void in. The refusal is window-scoped
+rather than run-wide, so a `--block` attachment is still decided by its own
+block. Write-up:
+`docs/findings/0751-grader-unplaced-window-checks.md`.
+
 ### 7c. `0x07C4` moved on 2026-09-23, and the 15 EC-side sites of `0x07C4`-`0x07D5` (2026-09-24, issue #183)
 
 **The observation, already in the tree and written down nowhere.** §7 cites
