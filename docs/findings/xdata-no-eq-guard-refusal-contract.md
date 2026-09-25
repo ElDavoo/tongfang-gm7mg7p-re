@@ -25,6 +25,22 @@ claims, and until now only the first was tested.
 | 2 | it is refused with `--check` and with `--self-test` | `Refusals.test_it_is_refused_with_check`, `..._with_self_test` |
 | 3 | it is refused unless given scratch `--out-registers` **and** `--out-clusters` | `Refusals.test_it_is_refused_bare_with_the_default_outputs`, `..._with_scratch_registers_only`, `..._with_scratch_clusters_only` |
 
+  > **Corrected 2026-09-25, issue #816.** The tail of row 1 — "that class has
+  > been in error in `setUpClass` since #528 and runs none of its six cases (see
+  > below), so of the two only the first is green today" — is left as it was
+  > written rather than edited, and both of its claims are now false. **Both
+  > halves are green.** #753 dropped the copy-and-patch recipe in favour of the
+  > flag this page is about, so the class's `setUpClass` no longer deletes
+  > anything, and its six cases run again; a seventh,
+  > `test_the_census_is_the_one_6a_measured`, was added to hold the run to
+  > §6a's published figures rather than to itself. Measured by
+  > `python3 -m unittest discover -s ec/tools -p 'test_xdata_cluster_names.py'`
+  > on the tree this correction lands on: **`Ran 28 tests … OK`**. The write-up
+  > is
+  > [`xdata-no-eq-guard-measured-state-correction.md`](xdata-no-eq-guard-measured-state-correction.md).
+  > The rest of row 1 — the two named holders, and the `--self-test` span — is
+  > undisturbed.
+
 Claim 3 is the one that matters, and the hazard is specific. `OUT_REGISTERS`
 and `OUT_CLUSTERS` (`xdata_register_map.py:298-299`) default to
 `ec/annotations/xdata-registers.csv` and `ec/annotations/xdata-clusters.csv`,
@@ -222,6 +238,40 @@ because a reader running the runner will hit all three, and because the first
 one is a regression **from the commit that added the flag this issue is about**
 (#528).
 
+  > **Corrected 2026-09-25, issue #816.** The heading above and the first two
+  > sentences of this paragraph are left standing rather than rewritten, and
+  > **all three failures this paragraph counted are resolved** — #752 re-pinned
+  > the `census_refs` cells, #753 replaced the recipe below, and the two
+  > remaining paragraphs of this section each carry their own correction.
+  > Measured by `bash tools/run-tests.sh` on the tree this lands on:
+  >
+  > ```console
+  > $ bash tools/run-tests.sh
+  > ...
+  > ec/tools/test_check_cluster_citations.py: FAILED
+  > 32 suite(s) run, 974 tests; one or more FAILED.
+  > $ echo $?
+  > 1
+  > ```
+  >
+  > **The one suite still red is not one of this paragraph's three.** It is
+  > `test_check_cluster_citations.py`, the third of the three paragraphs below —
+  > and it is red on a *different* line for a *different* reason, introduced by
+  > #822's own write-up rather than by anything on this page. `docs/findings.md`
+  > §52 carries that measurement in a merged-tree note, and the correction under
+  > the cluster-citations paragraph below records it against that paragraph
+  > rather than here. The three this paragraph names are all green.
+  >
+  > The **set** is the claim; the totals are not, and are deliberately not
+  > pasted into this page. A total is a property of the merge rather than of
+  > any suite, and
+  > [`runner-red-suite-set.md`](runner-red-suite-set.md) leaves its own out of
+  > its transcript for that reason, which `0751-grader-self-test-gate.md:38-41`
+  > had already done for the same figure. Re-derive it rather than reading it
+  > here. What is left of the paragraph's reasoning is the "Recorded here
+  > because a reader running the runner will hit all three" — that is why the
+  > section existed, and it is now why the corrections are here.
+
 **`test_xdata_cluster_names.py::TheGuardOffRegeneration` — 6 tests, none of
 which run, and 1 error in `setUpClass`.** The module reports `Ran 21 tests …
 FAILED (errors=1)`.
@@ -242,6 +292,55 @@ first, which is why the error is an `AssertionError` and not a silently
 doubled census: *"the `==` guard is not where §6a's recipe deletes it; the
 guard-off census this suite builds is not the one §6a measured."*
 
+  > **Corrected 2026-09-25, issue #816.** The whole of that paragraph and the
+  > transcript above it are left standing rather than rewritten, and none of it
+  > describes the tree this lands on. #753 replaced the recipe: the suite runs
+  > the committed tool with `--no-eq-guard` and **patches nothing at all**, so
+  > the `GUARD` literal pair this paragraph walks is not in
+  > `ec/tools/test_xdata_cluster_names.py` any more, and the `AssertionError`
+  > transcript cannot be produced by any current run. Measured by
+  > `python3 -m unittest discover -s ec/tools -p 'test_xdata_cluster_names.py'`:
+  >
+  > ```console
+  > Ran 28 tests in 15.903s
+  >
+  > OK
+  > ```
+  >
+  > `Ran 28 … OK`, against the `Ran 21 tests … FAILED (errors=1)` above. The
+  > class's seven cases run — the six the `setUpClass` error kept out, plus
+  > `test_the_census_is_the_one_6a_measured`, which #753 added to hold the run
+  > to §6a's published figures instead of to itself.
+  >
+  > **The four line pins the walk above gives are also stale, and not by one
+  > offset but by four.** Measured against the tree this correction lands on:
+  > `def store_target(text, start, end, eq_guard: bool = True)` is at
+  > `xdata_register_map.py:1572`, `if eq_guard and stripped.startswith("==")` at
+  > `:1595`, `def scan(` at `:2168`, and the `not args.no_eq_guard` flip at
+  > `:2917` — against the `:1220`, `:1243`, `:1604` and `:2292` above, so the
+  > drift is **352, 352, 564 and 625 lines**. The first two agree with each
+  > other only because they are two lines apart in both trees; the last two
+  > agree with neither, and that is the finding. A first draft of this block
+  > called all four "stale by the same 13 lines as each other", and that was
+  > wrong twice over: 13 is the offset of a *different* pair of pins, the one at
+  > `xdata-register-map.md:1228`, where it does hold; and these four have moved
+  > by between 27× and 48× even that, spread across `main` since #528 wrote them
+  > rather than by one small patch — so a reader cannot assume a single fix
+  > shifted them together. The pins are left as they are because a correction
+  > that adds lines to the file it corrects invalidates its own line numbers, and
+  > because `docs/findings.md:4885-4890` records a set of pins in this same tool
+  > that "ran exactly four lines low" for want of saying which tree they were
+  > measured against. The offsets are stated with the tree; the reasoning the
+  > pins are cited for is unaffected, since all four lines still exist and the
+  > guard is still a conditional in front of the rejection.
+  >
+  > What survives from the paragraph above is the mechanism it describes — that
+  > #528 turned a deletable pair into a parameter, which is why a
+  > `source.replace()` that stopped matching would have gone on failing
+  > **silently**. That is the failure mode #753's seventh case exists to stop,
+  > and the write-up for it is
+  > [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md).
+
 The flip used to sit in `generate()`; #566 moved the census into
 `census_and_groups()` when it added the co-reading relation, so the line to
 follow moved with it. That is the third time this recipe has been re-pointed at
@@ -258,6 +357,28 @@ favour of this suite's run); it is **not** fixed here, because it is a
 regression in another file from another issue and the fix is a one-line recipe
 change that deserves its own PR rather than a drive-by in an unrelated one.
 
+  > **Corrected 2026-09-25, issue #816.** The paragraph above is left standing
+  > and both of its load-bearing claims are now false. **There are two working
+  > scripted routes, not one**: the accepted run in `test_xdata_register_map.py`
+  > here, and — since #753 — `test_xdata_cluster_names.py`'s
+  > `TheGuardOffRegeneration`, which reaches the same guard-off census by
+  > passing the flag the tool already ships. And **#753 *is* the follow-up this
+  > paragraph defers to**: it read this page to make the choice — quoting the
+  > "The fix belongs with the follow-up that makes the two mechanisms agree…"
+  > sentence above, and its own write-up names which half of it it took — and
+  > then chose the second half of the two the sentence offers — not "delete the
+  > `==` branch from the `if eq_guard and …` line", but "drop the recipe for the
+  > flag" — which is the option the refusal contract above makes the right one
+  > anyway.
+  > The "**not** fixed here" was true when written and is a promise the tree has
+  > since kept.
+  >
+  > The sentence immediately above, on the recipe having been re-pointed three
+  > times, is **byte-untouched and still the reason**: it is the argument #753
+  > acted on, and the pins this issue corrects are 352 to 625 lines stale — four
+  > different offsets — for the same reason it gives. Both routes are green on
+  > this tree, measured by the two commands printed in the corrections above.
+
 **`test_check_site_census.py` — 45 tests, 1 failure.** 14 disagreements
 between `xdata-086x-dispatch-sites.csv`, `xdata-0860-census-sites.csv` and the
 census, all of them `bank0/D091.c` and the `0x0860` occurrences in it. It is
@@ -272,6 +393,53 @@ time is **#503**, which edited `D091.c` to name the incoming accumulator and
 shifted the bodies again. `check_site_census.py` is green at `0b04a8b9^` (7
 sites agree, 17 occurrences accounted for) and red with exactly these 14 at
 `0b04a8b9`, so that one edit is the whole of it.
+
+  > **Corrected 2026-09-25, issue #816.** The paragraph above is left standing
+  > and it is green, but its attribution stands with it: **the mover is #503**,
+  > and the paragraph's own `0b04a8b9^`/`0b04a8b9` measurement is what says so.
+  > #503's edits to `D091.c` are in the *body*, not the header — the header is
+  > byte-identical at `0b04a8b9^` and on this tree, `void dispatch_on_0860`
+  > starts at `:37` in both, and `HAND_CHECKED` appears nowhere in the file at
+  > any of the three. What moved is the declaration block at `:40-42`, which
+  > expands to four locals (`:40-43`) and so shifts everything from `:44` on by
+  > one, plus a new `pcVar4 = (code *)0x860;` at `:83`, which shifts `:82` on
+  > by another. Those two insertions are the whole of `44→45` … `82→84`.
+  >
+  > There *is* a 2026-09-24 header rewrite of this file — #225's `CORRECTION
+  > 2026-09-24, issue #180` expands `:11-15` into `:11-27`, and it is what moved
+  > the *earlier* generation of pins, the ones §48 and
+  > `runner-red-suite-set.md` record and #752 re-pinned. But `40744da2` is an
+  > **ancestor** of `0b04a8b9` (`git merge-base --is-ancestor 40744da2
+  > 0b04a8b9` succeeds), so it is already priced into `0b04a8b9^` and cannot be
+  > what separates the two trees this paragraph measures. The two episodes are
+  > easy to conflate because both are "the header grew"; only the second is the
+  > one in question here.
+  >
+  > `0b04a8b9` alone is the whole of the breakage: the four `census_refs` cells
+  > read `44,48` / `70,71` / `74,75,76` / `82` unchanged at `0b04a8b9^`,
+  > `0b04a8b9` and `f0be5173` (#632), and re-running
+  > `python3 -m unittest test_check_site_census` from `ec/tools` at each commit
+  > gives `Ran 45 tests … OK` at `0b04a8b9^`, `FAILED (failures=1)` at
+  > `0b04a8b9` and still `FAILED (failures=1)` at `f0be5173` — so **#632 is a
+  > further link in the same chain, not a needed one.** **#752 re-pinned the
+  > four `census_refs` cells** to `45, 49`, `71, 72`, `75, 76, 77` and `84`,
+  > which is what turns the suite green here: on this tree it gives **`Ran 45
+  > tests … OK`**, so the "45 tests" above is still exactly right and only the
+  > "1 failure" beside it is not.
+  >
+  > **No `census_count` moved**, which is the part worth keeping: all 17
+  > occurrences and every bucket total are unchanged, because the renames
+  > reflowed no comparison and #752's diff to
+  > `ec/annotations/xdata-0860-census-sites.csv` touches the `census_refs`
+  > column alone. So this is a retraction of line pins, not of a census. That
+  > is also why the count did not move while its neighbour's did: the suite's
+  > own cases are a different population from
+  > `test_check_cluster_citations.py`'s.
+  >
+  > The re-derivation is not repeated here, because it is already written up:
+  > [`xdata-0860-census-sites-relined.md`](xdata-0860-census-sites-relined.md)
+  > is the write-up, and the correction sits beside the citing sentence at
+  > `../ec/annotations/xdata-register-map.md`, under **#752**.
 
 It is **not** the drift `test_xdata_cluster_names.py`'s
 `TheGeneratorsAreUnchanged` steps around: that class names neither `D091` nor
@@ -299,6 +467,69 @@ the membership claim is wrong, and which one is a finding, not a formatting
 fix. It is recorded here because this suite is a reader of `docs/findings.md`
 and a reader running the runner will hit it, and it is left unfixed because it
 is another file's finding from another issue.
+
+  > **Corrected 2026-09-25, issue #816.** The paragraph above and the
+  > transcript above it are left standing, and the transcript does not
+  > reproduce. The count moved, **46 → 48**. And `docs/findings.md:5520` is not
+  > §26 any more: §26 is at `:6348`, and the `0x0800` sentence this transcript is
+  > about is its second, with `0x0800` written at `:6358`. The line the checker
+  > used to flag is not merely at a different number, so the transcript is not a
+  > drifted copy of a live failure — **§26 is not what makes this suite red.**
+  >
+  > **The suite is red again, on another file's line, and that is a separate
+  > finding.** Measured by `python3 -m unittest test_check_cluster_citations`
+  > from `ec/tools`, on the tree this correction lands on:
+  >
+  > ```console
+  > $ python3 -m unittest test_check_cluster_citations
+  > FAIL: test_committed_prose_matches_committed_census (test_check_cluster_citations.TheCommittedTree.test_committed_prose_matches_committed_census)
+  > AssertionError: 1 != 0 : docs/findings/xdata-cluster-names-guard-off-recipe.md:220: 0x0464 is not a member of any cluster this line names (...)
+  > Ran 48 tests in 0.250s
+  >
+  > FAILED (failures=1)
+  > ```
+  >
+  > `$ python3 ec/tools/check_cluster_citations.py` names the same line, with
+  > `0x0465` beside it, and exits 1. The offending prose is
+  > `xdata-cluster-names-guard-off-recipe.md` — **#822's** write-up, merged after
+  > this correction was written — and the failure reproduces on a clean
+  > `origin/main`, which is where `docs/findings.md` §52 records it and names it
+  > to that file's owner rather than fixing it here. It is the suite's one
+  > failure, and it is why `bash tools/run-tests.sh` prints
+  > `32 suite(s) run, 974 tests; one or more FAILED` on this tree. That
+  > file-and-line total is itself a function of the corpus and moves when a page
+  > is added: 112 files / 54963 lines on the tree this lands on, which is the
+  > tool reading the new page rather than the page escaping it.
+  >
+  > **Why §26 is not flagged is not a change in what the tree is checked for**,
+  > which was the open question this correction was asked to record rather than
+  > answer. The checker's rules are untouched; the *prose* changed shape. §26's
+  > `main-ec-086` claim is still there and is still **true** — the committed
+  > `xdata-clusters.csv` row for `main-ec-086` reads `0x07FD 0x07FE 0x07FF`,
+  > the three bytes the sentence names. What is no longer true is that `0x0800`
+  > sits in the same sentence as it: `check_cluster_citations.py`'s `units()`
+  > now cuts the paragraph so that `0x0800` lands in a following sentence, and
+  > that sentence names no cluster id at all — so its unit is dropped at
+  > `if not ids: continue` (`:503`) before the address is collected, and would
+  > have been skipped again at `skip (no membership claim)` (`:514-517`) since
+  > it carries none of the `MEMBERSHIP` vocabulary (`:164`). The red case was a
+  > coincidence of two claims sharing a sentence; the sentence is no longer
+  > shared. Recorded with a citation rather than asserted, and re-derivable by
+  > running the tool's own `units()` — the transcript, and the sharper form of
+  > the mechanism it turned up, are in
+  > [`xdata-no-eq-guard-measured-state-correction.md`](xdata-no-eq-guard-measured-state-correction.md).
+  >
+  > The sharper form is worth carrying here because it is what actually
+  > explains the red case: a unit naming any address, any cluster id and any
+  > membership word is read as a claim, whatever preposition sits between them,
+  > so **quoting §26's sentence is enough to turn this suite red again** — which
+  > is how the write-up's own first draft failed before it was rewritten.
+  >
+  > #564's correction is therefore not owed: there is nothing in §26 to correct.
+  > The paragraph's own judgement — that this is another file's finding from
+  > another issue — turned out to be right, and the finding never became false
+  > so much as the sentence that carried it stopped being one. The suite's
+  > present redness is a *third* file's finding, and belongs with #822's.
 
 ## The `--check` verdict, before and after
 

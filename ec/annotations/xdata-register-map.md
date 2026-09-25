@@ -2667,6 +2667,58 @@ re-measurement, so it is left for its own issue rather than folded in here.
   > gated" no longer describes anything. The two suites this bullet closes with
   > are untouched by it. Measured, with the commands, in
   > `docs/findings/xdata-census-self-test-gate.md`.
+  >
+  > **CORRECTION (2026-09-25, issue #816) to the first of those two**, and to
+  > the clause this block's own last lines introduce. The sentence above the
+  > #752 block is left as it was written rather than edited, for the §4a-4d
+  > reason, and its first half is now false: it says
+  > `test_xdata_cluster_names.py` "patches a literal `if stripped.startswith("==")`
+  > that the tool's `--no-eq-guard` switch grew an `eq_guard and` conjunct in
+  > front of". **The suite no longer patches anything.** #753 replaced the
+  > recipe with the flag itself, so the class runs the committed tool with
+  > `--no-eq-guard` and there is no `source.replace()` left to stop matching.
+  > Measured by `python3 -m unittest discover -s ec/tools -p
+  > 'test_xdata_cluster_names.py'`: `Ran 28 tests … OK`.
+  >
+  > **The #819 block above reaches the same measurement**, from the
+  > same two commands, and is left standing rather than folded in: the two were
+  > filed against the same tree by different issues and each is dated and
+  > attributed on its own, which is the shape §4a-4d asks for. (The #815 block
+  > that landed on `main` between the two corrects the `--self-test` half of the
+  > bullet above, says nothing about this pair, and is left where it is.) What
+  > this block adds is the one thing that block does not say — that the
+  > sentence is a stale twin of a correction *this same file* already carries,
+  > and that #819's block hands the rest of the sentence ("only working
+  > scripted route to a guard-off census", on the refusal-contract page and in
+  > `docs/findings.md` §29) here.
+  >
+  > So "That leaves **one** suite of the two red" is now **neither**. Neither is
+  > red: `test_check_site_census.py` by the #752 block, and
+  > `test_xdata_cluster_names.py` by this one. `bash tools/run-tests.sh` on the
+  > tree this lands on does still exit 1, but not on either: it is
+  > `ec/tools/test_check_cluster_citations.py`, failing on
+  > `docs/findings/xdata-cluster-names-guard-off-recipe.md:220` — #822's
+  > write-up, reproduced on a clean `origin/main` and recorded in
+  > `docs/findings.md` §52's merged-tree note. The set is re-derived by running
+  > the runner rather than read off this file, and
+  > `docs/findings/runner-red-suite-set.md` is still the file that tracks it —
+  > it carries its own correction under **#816**.
+  >
+  > **This sentence is a stale twin of a correction this file already carries**,
+  > which is why the paragraph reads as contradicting its own correction rather
+  > than as merely aging. §4.4 already says it outright: *"The copy-and-`str.replace`
+  > this transcript used to open with is gone, and its replacement is the flag
+  > the block's preamble names."* That is the same fact, recorded where the
+  > recipe was, and the two halves of one sentence here have now drifted a
+  > whole issue apart. The write-up for the sweep is
+  > [`xdata-cluster-names-guard-off-recipe.md`](../../docs/findings/xdata-cluster-names-guard-off-recipe.md)
+  > and the measured-state sweep is
+  > [`xdata-no-eq-guard-measured-state-correction.md`](../../docs/findings/xdata-no-eq-guard-measured-state-correction.md),
+  > summarised in `docs/findings.md` §59. The `--self-test` half of the bullet
+  > above was left to #815, as the #819 block records, and **the #815 block
+  > above is that correction** — it landed on `main` first, so both referrals
+  > the #819 block made are discharged inside this one blockquote. Nothing about
+  > the firmware is established here either.
 - **The 42 boundaries, now that §4.5 measures them.**
   `build_ec_decompile.py --mode rebuild-project` writes the 7 MB database, and
   two branches that both rebuild one cannot merge, so this still wants a branch
