@@ -33,14 +33,15 @@ $ python3 ec/tools/check_testdata_index.py --check
 Thirteen directories: the twelve `0751-isolation-run*` sets and `call-graph/`.
 Twelve are named in the index — eleven in a table row, and `0751-isolation-run/`
 in prose at the bottom of the file — and the thirteenth is self-indexed. Twenty-
-seven table rows, and 34 path tokens inside them, because seven of the cells
-name more than one fixture.
+seven table rows, and 34 path tokens inside them, because six of the cells name
+more than one fixture — five name two, `void-block-with-dumps` names three.
 
-**On the merged tree the index is not wrong.** That is the point of recording
-it: the issue is that nothing *checks* that, not that anything is. The issue's
-own summary of the merged tree — "all eleven `0751-isolation-run-*` directories
-are in fact indexed" — holds, and this check is what would have said so before a
-person had to.
+**What the run supports is the index's own invariant, and no more:** every path
+the table's first column names is on disk, and every directory is reachable
+from the index. Whether a row describes the fixture it names is the third
+column, and nothing here reads it. The issue's own summary of the merged tree —
+"all eleven `0751-isolation-run-*` directories are in fact indexed" — holds, and
+this check is what would have said so before a person had to.
 
 ## The two directions
 
@@ -53,8 +54,9 @@ suite:
   `0751-isolation-run-3blocks/`, so a bare substring test passes the former on
   the strength of the latter's row — and the former is the set §6 of the
   isolation procedure names and `test_grade_0751_isolation.py` holds equal
-  against that section's file list. A check that got this wrong would report
-  green for the one directory whose row was wrong for two merges.
+  against that section's file list. A check that got this wrong would pass the
+  directory that equality turns on, on the strength of a row about a different
+  fixture.
 - *The whole file, not the table.* `0751-isolation-run/` is named in prose at the
   bottom of the index, not in a row, so a table-only scan would report a false
   gap on it. The same search also accepts a third-column cross-reference, which

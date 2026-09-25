@@ -4,12 +4,12 @@
 The tool is a pointer-checker, so its failure mode is silence rather than a
 crash. Loosen a rule and it stops catching a fixture with no row while still
 exiting 0, and the only thing that notices is a reader who has already been
-misled -- which is how both of the hand-repairs this tool exists to stop
-happened. So what is pinned here is the line between what the tool refuses and
-what it waves through: each rule that makes it conservative gets a case saying
-so, and each rule that makes it *strict* gets one too, because a checker that
-has quietly started accepting everything looks exactly like a checker that is
-working.
+misled -- and no commit runs the tool until a human lands the gate patch, so
+that reader has to be a person. So what is pinned here is the line between what
+the tool refuses and what it waves through: each rule that makes it
+conservative gets a case saying so, and each rule that makes it *strict* gets
+one too, because a checker that has quietly started accepting everything looks
+exactly like a checker that is working.
 
 The fixtures are written inline into a scratch `testdata/` under a temporary
 root, which keeps each case readable as the tree and the index beside it rather
@@ -386,8 +386,10 @@ class ParsesOnlyTheFirstColumn(unittest.TestCase):
 class TheCommittedTree(unittest.TestCase):
     """The real thing: the index and the tree beside it currently agree.
 
-    This is the assertion that would have caught either hand-repair, and it
-    goes red on any future edit that drifts the two apart in either direction.
+    This goes red on any future edit that drifts the index and the tree apart in
+    either direction. It does not go red on an edit to what a row says its
+    fixture is: that is the third column, which this tool does not read, and
+    which both of the index's past hand-repairs were.
     """
 
     def run_tool(self):

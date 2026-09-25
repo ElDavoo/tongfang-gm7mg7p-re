@@ -2,14 +2,18 @@
 """Hold `ec/tools/testdata/README.md` and the tree under it to each other.
 
 The index is what a change greps to learn which fixture holds which grader case,
-and it is written by hand. That has been wrong twice: issue #720 fixed two rows
-it read off the grader and the CSVs by hand, and the fix before it was a
-hand-repair too. Nothing stopped the eleventh fixture directory being added with
-the same omission, because nothing read the index -- `grep -rn 'testdata/README'`
-over the suite and the gate returned two prose mentions and not one read.
+and it is written by hand. Nothing reads it -- `grep -rn 'testdata/README'` over
+the suite and the gate returns two prose mentions and not one read -- so a
+fixture directory with no row in it, and a row naming a path that is not on
+disk, would both land unremarked. Those are the two directions an index and a
+tree can disagree in, which this walks in one pass and prints each one's tally
+for.
 
-So this walks the two directions an index and a tree can disagree in, in one
-pass, and prints each one's tally.
+The index has needed a hand-repair twice, in #502 and #720, and that is not
+what these directions are for. Both were edits to a row's third column -- the
+description of a case the row already named -- and this reads the first column
+and the tree, so it would have been green through both. It is here for the
+gaps, which nothing else would have caught.
 
 **Directory -> index.** Every immediate subdirectory of `testdata/` has to be
 reachable: either the top-level index carries its name followed by a slash, or
