@@ -4128,9 +4128,11 @@ starker than the total:
 *(CORRECTION, 2026-09-25, issue #256: this row read 4,989, and 4,988 is what
 the committed CSVs sum to today. `xdata-06c2-06db-timers.md` §2a already carried
 the correction — 4,988, a gap of 22 to the cluster row's 4,966, and the gap is
-the five `program=both` members' PD references rather than staleness — so this
-section was a reader's second place to find the wrong figure. The wrong one
-stays visible per §4a.)*
+the five `program=both` members' PD references rather than staleness, 3 + 4 + 5
++ 2 + 8 — so this section was a reader's second place to find the wrong figure.
+The wrong one stays visible per §4a. Issue #554 arrived at the same 4,988 from
+the other direction and records it again; both corrections stand and neither
+moved the figure.)*
 
 **So "nine of the ten busiest addresses in the firmware" is a statement about
 the export, not about the bytes.** None of those five is among the ten busiest
@@ -4153,6 +4155,32 @@ cluster id or `cluster_key` moved, so the counts this section warns about are
 unchanged — they are just no longer the only place the effect is written down.
 The full reading, including the counter-example that keeps this a count of
 files rather than a verdict, is `ec/annotations/xdata-register-map.md` §4.5.)*
+
+**Update (2026-09-25, issue #554): the 42-fold count is now measured rather than
+inferred, and the default is unchanged.** #256 above made the effect a column;
+this makes it a switch. `ec/tools/export_ownership.py` derives which export
+owns which body from the committed tree, `annotations/xdata-export-ownership.csv`
+is the committed map, and `xdata_register_map.py --export-ownership` reads each
+routine once from its owner. The numbers in the table above are what the
+census says **by default, and they are unchanged** — the pass takes the census
+from 14,819 references to **9,401** and these 43 rows from 4,988 to **460**,
+with `0x0843` and `0x0844` going 168 → 4 and 42 touchers → 1, and with **no
+address lost from the census**. So the paragraph above is confirmed rather than
+overturned: those five addresses are not the firmware's busiest, and the tool
+that shows it is committed and re-derivable. The 4,988 the register rows sum
+to against this cluster row's 4,966 is the definitional split the correction
+above describes — 22, the five `program=both` members' PD share — and it is
+unchanged by the pass; `460` is what these 43 rows sum to with each routine
+read once.
+
+The default does not flip, because the pass is a containment heuristic over
+decompiled text rather than a function boundary, and flipping it re-keys 35 of
+the 430 clusters and breaks 5 of the 10 hand cluster names. The cause — the
+exporter really having cut one routine into 42 functions — still needs
+`--mode rebuild-project`, so the boundaries are not fixed here and this section
+does not claim to have fixed them.
+`ec/annotations/xdata-export-ownership.md` carries the measurement and what it
+does not establish; `xdata-register-map.md` §4.6 carries the flip's cost.
 
 **2. Seventeen of the issue's twenty "unnamed" functions already had rows, and
 the three that did not were the only ones that had not.** `8008`, `8010` and

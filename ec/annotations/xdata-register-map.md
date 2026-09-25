@@ -552,7 +552,7 @@ transcript carries an older set again (8,317 / 3,186 / 2,476 / 543 / 270) that
 §1 names beside itself. The published cells are the committed CSVs' own columns,
 re-derived with the same five columns over `xdata-registers.csv`, and they are
 also what the tool's `BUCKET_TOTALS` pins
-(`ec/tools/xdata_register_map.py:862`) and what `xdata-06c2-06db-timers.md` §6a
+(`ec/tools/xdata_register_map.py:912`) and what `xdata-06c2-06db-timers.md` §6a
 already quotes. From the superseded row the five cells moved by
 +22 / +9 / +6 / −15 / −4, which sums to the +18 the census moved on the same
 re-derivation: **+37** references into the three buckets whose spelling is
@@ -565,6 +565,42 @@ mechanism. That is a re-derivation and not §4.3 again — `--no-eq-guard` still
 changes the `refs` of 0 of 1,171 addresses on this tree, and moves `write` on
 210 of them. §6's `&&` bullet and §8's fix for it are restated against these
 numbers rather than the superseded ones.)*
+
+**A second set of totals exists, and the difference is the 42 overlapping
+exports rather than the buckets.** `ec/decompiled/index.csv` splits
+`bank1:0x8001`-`0x8189` into 42 rows whose `.c` files all decompile the same
+body, and the census walks one row at a time, so every reference in that
+routine is counted 42 times. `xdata_register_map.py --export-ownership` reads
+each routine once, from the export that owns it
+(`ec/tools/export_ownership.py`), and the five buckets read:
+
+| bucket | as committed | with `--export-ownership` |
+|---|---:|---:|
+| `read` | 8,341 | 4,920 |
+| `write` | 3,195 | 2,707 |
+| `read+write` | 2,482 | 1,018 |
+| `passed-to-call` | 534 | 500 |
+| `address-taken` | 267 | 256 |
+| | **14,819** | **9,401** |
+
+Every bucket moves and none of them moves by a factor of 42 on its own — the
+`read+write` row nearly halves because the routine's read-modify-writes are
+most of what the 42 copies contribute, and `passed-to-call` barely moves
+because the routine makes no calls. **Neither column is in the committed CSVs
+as a `refs` total and the default is unchanged**; the middle column is what a
+plain run produces. The "as committed" column is not stale: `--check` reports 0
+differences over the 1,171 register rows, and `--self-test` pins those five
+figures as `BUCKET_TOTALS`. §4.6 records what flipping the default would cost,
+and `xdata-export-ownership.md` §6 what the pass does not establish.
+
+The two records above are about different things and neither replaces the
+other: both re-derive the **published** five buckets from the committed CSVs and
+agree cell for cell, and the table above adds a **second, unpublished** set
+alongside them, reachable only behind `--export-ownership`. The published
+column is what the CSVs carry and what every citation in this file points at;
+the de-duplicated column is a measurement of a switch that is deliberately off,
+so a reader who takes a figure from it is reading a number no committed artefact
+carries.
 
 The totals are the tool's own, and the self-test pins them — but a pin on this
 table is internal: these are the buckets summed back to themselves, so they
@@ -1215,6 +1251,49 @@ every row and no de-duplication heuristic is attached to the tokenizer. The
 sources is the standing control. And a group is a relation over *this* export:
 a re-export that moved a boundary would move the groups, which is another
 reason the durable citation is §4.4's `cluster_key` and not an id or a flag.
+
+### 4.6 What flipping the default would cost, measured (2026-09-25, issue #554)
+
+Numbered after §4.5 rather than before it, for the reason §4.5 gives: the
+co-reading relation is the reading and this is the price of acting on it, and
+the two are the same argument read in the other order. A §4.5 that landed first
+is why the section is 4.6 rather than 4.5.
+
+This subsection is the second identity doing its job. Everything above is
+about a key surviving a regeneration; this is the measurement of what a
+regeneration actually costs, for the one change that was on the table.
+
+`--export-ownership` reads each routine once, from the export that owns it,
+instead of once per overlapping export (§4.1). Run against the committed tree
+it is a good deal on the numbers and a bad one on the identities:
+
+| | as committed | with `--export-ownership` |
+|---|---:|---:|
+| clusters | 430 | 432 |
+| committed `cluster_key`s that survive | — | **395 of 430** |
+| new `cluster_key`s | — | 37 |
+| hand names in `xdata-cluster-names.csv` that still resolve | — | **5 of 10** |
+| `counter-sweep`'s key `k733222e83898` | 43 addrs, 4,966 refs | gone; nearest is `k22aecb4dc595` at 43 addrs, 280 refs |
+| addresses lost from the census | — | **0** |
+
+**So 35 keys and 5 hand names would have to be re-issued, and `main-ec-002`'s
+membership would not survive whole as any single cluster** — which is the same
+hazard the top of this file records for the ids, one level down. That is why
+the default does not flip here. The pass is a containment heuristic over
+decompiled text rather than a function boundary, and the root cause — the
+exporter cutting one routine into 42 functions — needs
+`--mode rebuild-project`, which cannot share a branch
+(`xdata-06c2-06db-timers.md` §8 item 7). The flip is that fix's PR.
+
+The plan stage estimated this flip at 39 of 430 keys, 4 of 10 names, and **one
+address lost** (`0x05E0`, whose only export is a non-owner in its class). The
+committed tool measures 35, 5, and none: `bank1/8E91.c` owns its own two-file
+class here, so the one file in the tree that spells `DAT_EXTMEM_05e0` is still
+read. The `lost` set is pinned in the tool's `OWNERSHIP` oracle so that if a
+re-export ever makes it non-empty, that is a failing check rather than a
+census that quietly lost a byte. `xdata-export-ownership.md` §4 has the whole
+account, including why a detector's membership is worth committing rather than
+carrying forward.
 
 ## 5. The worklist, ranked
 

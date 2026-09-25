@@ -284,11 +284,44 @@ among the ten busiest addresses in the firmware once the 42-fold count is
 removed — that is what §3's table is for, and the largest of the 43 by direct
 sites is `0x080D` at 78, of which 74 are in the PD image.
 
-**This is not fixed here**, for the same reason the boundaries are not: the
+**~~This is not fixed here~~** ~~for the same reason the boundaries are not: the
 census has no notion of overlapping exports, and giving it one is the
 classifier's own issue. What this change does is record the size of the effect
 and refuse to read the inflated columns as evidence — §3 uses the image, not
-the census.
+the census.~~
+
+**Corrected by issue #554: measured, switchable, default unchanged, flip
+deferred.** The census now *has* a notion of overlapping exports.
+`ec/tools/export_ownership.py` derives which export owns which body,
+`xdata-registers.csv` gains a sibling in `xdata-export-ownership.csv`, and
+`xdata_register_map.py --export-ownership` reads each routine once from its
+owner. Measured with the committed tool:
+
+| | default | `--export-ownership` |
+|---|---:|---:|
+| total `refs` | 14,819 | 9,401 |
+| the 43 addresses above | 4,988 | **460** |
+| `0x0843` / `0x0844` | 168 each, 42 touchers each | 4 each, 1 toucher each |
+| `0x06D6` / `0x0706` | 148 / 160 | 4 / 4 |
+| `main-ec-002` cluster `refs` | 4,966 | 280 |
+| addresses whose `refs` move | — | 228 of 1,171 |
+| **addresses lost** | — | **0** |
+
+So the 4,642-of-4,988 (93%) figure above is now *measured to be removable*:
+460 is what the 43 rows sum to once the routine is read once. The numbers in
+the table higher up this section are the default's and are **still what the
+committed CSVs contain** — the flip is its own PR after the boundary fix, and
+`xdata-export-ownership.md` §5 carries the measured cost (35 of 430
+`cluster_key`s move, 5 of the 10 hand names break, 2 clusters added). The
+earlier plan-stage estimate for this pass was 9,112 with 0x05E0 falling out of
+the census; the committed tool measures 9,401 with nothing lost, and
+`xdata-export-ownership.md` §4 says why the difference is the detector rather
+than the arithmetic.
+
+**What is still not fixed is the cause.** Reading each routine once is a
+containment heuristic over decompiled text, not a function boundary: the
+exporter really did cut one routine into 42, and that needs
+`--mode rebuild-project`, which cannot share a branch (§8 item 7).
 
 > **CORRECTION, 2026-09-25 (issue #256): the census has that notion now, and
 > the first sentence above is the one that went stale.**
@@ -692,13 +725,79 @@ therefore guard-invariant, and that is the direct confirmation that §2a's
 42-fold double count is a wholly separate defect — the guard neither creates
 nor repairs it.
 
-**The last row is the one this section previously got wrong, and the wrong
-version is kept above rather than deleted.** This block used to close by
-arguing that the cluster this issue is scoped to "does not survive the
-classifier fix in its current shape", reporting `main-ec-002` going from 43
-addresses / 4,966 references to 44 / 248. **That is wrong, and the reason is
-that `main-ec-NNN` is a rank slot and not an identity** — clusters are ordered
-by size, then references, then lowest address
+### 6b. The other defect, now measured: the 42-fold export count
+
+**The guard table above and this one are independent, and the independence is
+the point.** `--no-eq-guard` moves 833 references between direction buckets and
+0 `refs` totals; `--export-ownership` moves 0 direction buckets' membership
+between runs and 228 `refs` totals. Neither repairs the other, which is what
+§2a needed a second defect to establish.
+
+`ec/tools/export_ownership.py` derives which export owns which body from
+`ec/decompiled/index.csv` and the committed `.c` text, and
+`xdata_register_map.py --export-ownership` reads each routine once, from its
+owner. Same two refusals as `--no-eq-guard` — refused with `--check` and
+`--self-test`, and refused without scratch outputs — because it is the same
+kind of question: what the committed CSVs are not.
+
+| | default | `--export-ownership` |
+|---|---:|---:|
+| total `refs` | 14,819 | 9,401 |
+| main-EC `refs` | 13,961 | 8,543 |
+| `read` / `write` / `read+write` | 8,341 / 3,195 / 2,482 | 4,920 / 2,707 / 1,018 |
+| `passed-to-call` / `address-taken` | 534 / 267 | 500 / 256 |
+| §2a's 43 addresses, register rows summed | 4,988 | **460** |
+| **`main-ec-002` (this block)** | **43 addresses, 4,966 refs, `k733222e83898`** | **28 of the 43 survive into `k22aecb4dc595` (43 addresses, 280 refs); 15 leave it** |
+| `0x0843` / `0x0844` refs | 168 / 168 | 4 / 4 |
+| `0x0843` functions touching it | 42 | 1 |
+| `0x06D6` / `0x0706` / `0x08A8` refs | 148 / 160 / 170 | 4 / 4 / 6 |
+| clusters | 430 | 432 |
+| **addresses whose `refs` move** | — | **228 of 1,171** |
+| **addresses lost** | — | **0** |
+
+So `0x08A8`'s 42 read-modify-writes below, which §2a attributes to the 42
+overlapping exports, are the 42 the pass collapses: 170 → 6.
+
+**The default does not flip, and the numbers above are not in the committed
+CSVs.** The pass is a containment heuristic over decompiled text, not a
+function boundary, so flipping the default is a tree-wide renumbering onto a
+known-approximate detector: measured, it moves `cluster_key` on 35 of the 430
+clusters, breaks 5 of the 10 hand names in `xdata-cluster-names.csv` —
+`counter-sweep` (`k733222e83898`) among them, and `main-ec-002`'s membership
+does not survive whole as any single cluster — and adds 2 clusters. The cause
+is §8 item 7, which cannot share a branch. `xdata-export-ownership.md` carries
+the full account, including why the committed tool measures 9,401 with nothing
+lost where the plan stage's detector measured 9,112 with `0x05E0` dropping out.
+
+```console
+$ python3 ec/tools/xdata_register_map.py --export-ownership \
+    --out-registers /tmp/after-registers.csv \
+    --out-clusters  /tmp/after-clusters.csv                    # read once, per owner
+  names: seeded 5, exact 0, carried by overlap 3, tied, not carried 0, with no name 424
+    main-ec-001 carries mode-oem-init by overlap, Jaccard 0.97 from k7497cf885614 -- re-key annotations/xdata-cluster-names.csv if the name moved
+    main-ec-003 carries level-block-086x by overlap, Jaccard 0.75 from ka39cda99615f -- re-key annotations/xdata-cluster-names.csv if the name moved
+    main-ec-007 carries ff-fill-stubs by overlap, Jaccard 0.60 from kea0c67af9b51 -- re-key annotations/xdata-cluster-names.csv if the name moved
+wrote /tmp/after-registers.csv: 1171 rows
+wrote /tmp/after-clusters.csv: 432 rows
+  main-ec: 1062 distinct addresses, 8543 references, 382 clusters at threshold 0.5
+  pd: 157 distinct addresses, 858 references, 50 clusters at threshold 0.5
+```
+
+**The table above is read off those two scratch CSVs, not off that run's
+stdout, and its two widest figures are printed nowhere.** 9,401 is the sum of
+the two `references` figures in the last two lines; the 228 addresses whose
+`refs` move is `--self-test`'s `OWNERSHIP["moved"]` check, which computes the
+after-census in-process because the flag is refused with `--self-test`. §6a's
+heredoc below prints its own 833 / 210 / 0, which are `--no-eq-guard` figures
+rather than this flag's.
+
+**The `main-ec-002` row of the §6a table is the one this section previously
+got wrong, and the wrong version is kept above rather than deleted.** That
+block used to close by arguing that the cluster this issue is scoped to "does
+not survive the classifier fix in its current shape", reporting `main-ec-002`
+going from 43 addresses / 4,966 references to 44 / 248. **That is wrong, and
+the reason is that `main-ec-NNN` is a rank slot and not an identity** — clusters
+are ordered by size, then references, then lowest address
 (`xdata_register_map.py:150`). Re-measured, `main-ec-002` holds the same 43
 addresses with the same 4,966 references both with and without the guard, with
 membership identical address for address, and the two runs agree on the
@@ -913,25 +1012,40 @@ touching it, not the EC's sweep.
    `xdata_register_map.py` knows that 42 exports are one routine, and until
    something does, every reference count for a byte this sweep touches is
    inflated by roughly 42× — which is most of what made this cluster look
-   like the firmware's busiest.~~ **Half closed by #256, and the half that is
-   left is the boundaries, not the measurement.** The census now knows: two
-   `.c` files in one program naming the same eight or more XDATA addresses are
-   co-readings, and the sweep is **one group of exactly 42** of them, with a
-   19-address common core and the §2 size pattern (393 bytes, 16 one-instruction
-   listings) reproduced by `--self-test`. `xdata-clusters.csv` publishes
-   `co_reading_refs = 4,642` of this cluster's 4,966 and
-   `xdata-registers.csv` publishes `sources_beyond = 0` for `0x0843`,
-   `0x0844`, `0x08A8` and `0x06D6`, so "inflated by 42×" is a cell rather than
-   a sentence. **What is still open is the part that would change a number:**
-   no `refs` value moved and no reference is de-duplicated, because doing either
-   is deciding that the 42 are one routine — a boundary claim, and the
-   boundaries are item 7. `--collapse-co-readings` prints what that assumption
-   implies — and the answer is not a tidy one: `main-ec` goes 380 → 466 clusters
-   and the largest cluster *grows* from 109 addresses to 150, taking in 30 of
-   this block's 43 and pushing the other 13 out to clusters of one, two and
-   seven. So the honest statement of where this stands is: **the inflation is
-   now visible wherever a reader looks, it is still there, and removing it would
-   not tidy the clustering up — it would merge this block into a larger one.**
+   like the firmware's busiest.~~ **Half closed twice — by #256 and by #554 —
+   and the half that is left is the boundaries, not the measurement.** *#256
+   made it visible:* the census now knows that two `.c` files in one program
+   naming the same eight or more XDATA addresses are co-readings, and the
+   sweep is **one group of exactly 42** of them, with a 19-address common core
+   and the §2 size pattern (393 bytes, 16 one-instruction listings) reproduced
+   by `--self-test`. `xdata-clusters.csv` publishes `co_reading_refs = 4,642`
+   of this cluster's 4,966 and `xdata-registers.csv` publishes
+   `sources_beyond = 0` for `0x0843`, `0x0844`, `0x08A8` and `0x06D6`, so
+   "inflated by 42×" is a cell rather than a sentence. *#554 made it a switch:*
+   `xdata_register_map.py` now has a notion of overlapping exports —
+   `ec/tools/export_ownership.py` derives which export owns which body,
+   `xdata-export-ownership.csv` is the committed map, and
+   `--export-ownership` reads each routine once from its owner. §6b has the
+   before/after: 14,819 → 9,401 references, this block's 43 addresses 4,988 →
+   460, `0x0843` 168 → 4 with 42 touchers → 1, and **no address lost**. So the
+   42× is now a measurement rather than an assumption.
+
+   **What is still open is the part that would change a number, and both issues
+   decline it for the same reason: doing either is deciding that the 42 are one
+   routine, which is a boundary claim, and the boundaries are item 7.** No
+   `refs` value moved and no reference is de-duplicated in the committed CSVs.
+   `--collapse-co-readings` prints what the first reading would imply — and the
+   answer is not a tidy one: `main-ec` goes 380 → 466 clusters and the largest
+   cluster *grows* from 109 addresses to 150, taking in 30 of this block's 43
+   and pushing the other 13 out to clusters of one, two and seven. So the
+   honest statement of where this stands is: **the inflation is now visible
+   wherever a reader looks and measurable against a committed map, it is still
+   there, and removing it would not tidy the clustering up — it would merge
+   this block into a larger one.** The flip is its own PR once the boundaries
+   land: measured, it re-keys 35 of 430 `cluster_key`s, breaks 5 of the 10 hand
+   names and adds 2 clusters (`xdata-export-ownership.md` §5,
+   `xdata-register-map.md` §4.6). Until then the `refs` columns are an upper
+   bound on *distinct* references, which `ec/README.md` says at the bullet.
 6. ~~**`0x1664` is read as a gate by the block and has no `registers.yaml`
    row.** One site, one bit, one caller — but the caller is the only countdown
    in the block whose rate is not its own value.~~ **Closed by #255**, in the
@@ -947,7 +1061,11 @@ touching it, not the EC's sweep.
    there is also a measurement of what fixing them would imply
    (`xdata_register_map.md` §4.5, `--collapse-co-readings`), and a group table
    that says which groups a different export would produce — the relation is
-   over *this* export's files, so it is a property of the boundaries too.
+   over *this* export's files, so it is a property of the boundaries too. Since
+   #554 there is a second measurement of the same fix, from the ownership side
+   rather than the co-reading side: what a de-duplicated census costs the
+   citations keyed to this tree (`xdata_register-map.md` §4.6,
+   `xdata-export-ownership.md`).
 8. **`0x0440`'s value.** 43 read sites, no direct `MOV DPTR` writer, and this
    block reads it three times. What 43 places in the firmware consult it for is
    still open (`xdata-0400-045f.md` §11 carries the same question from the
