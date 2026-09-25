@@ -4838,6 +4838,16 @@ the two sides are reconciled rather than merely compared. `build_ec_decompile.py
 --check` prints both directions, the addresses, and the arithmetic; the table
 above is that output, not a hand count.
 
+> **Correction, 2026-09-25 (#602): the table above is #261's, kept as it was
+> left, and two of its five rows have since moved.** The 7 became 0 and the
+> 1,865 became 1,872, so the whole 7 has crossed from the unflagged column to
+> the flagged one and `functions_named` is **1,897** = 1,872 + 25. The CSV row
+> count and the 25 have not moved. The cause was the reserved namespace the
+> "opposite error" paragraph below describes and deliberately did not act on;
+> #602 acted on it by renaming seven rows, which is recorded at the end of that
+> paragraph. `ec/annotations/subsystems.md` §2 carries the same correction
+> against its own census.
+
 **The "7" is only 7 on an export that has caught up with the CSV.** Measured
 against the export as this change first found it, the same `--check` reported
 **24** applied-but-unflagged and named 1,873 functions, and the manifest was 17
@@ -4898,6 +4908,37 @@ judgement and deliberately **not** done here — the `thunk_` prefix genuinely
 covers Ghidra's auto-thunks, and changing it would move the per-row `annotated`
 column and the `[named]` marker across the whole export.
 
+> **Answered, 2026-09-25 (#602): the judgement was made, and it went the other
+> way.** The reasoning above was right about the prefix and wrong about where
+> the fault was. The collision is in the row, not in the predicate: a
+> hand-chosen name that starts with a prefix Ghidra owns has chosen a name out
+> of the tool's reserved namespace, and the repository already had a convention
+> for saying "forwarder" without borrowing it — `forward_to_<addr>`, which
+> eleven rows carried before this change and seventeen after. The seven were
+> renamed to that convention, with `pd 0x7059` taking `call_122f` because it is
+> the one forwarder that is a bare `lcall` rather than an `ljmp`. Nothing in
+> `ghidra/scripts/` was touched.
+>
+> The re-export moved `annotated` and `[named]` for exactly those seven rows and
+> no others: `git diff` on `ec/decompiled/index.csv` is 7 rows, and the
+> `git diff` on `ec/ghidra/c-digests.csv` is **8**, the eighth being
+> `ec/decompiled/pd/B3ED.c`, the one committed `.c` that *calls* `pd 0x7059` and
+> so carries the new name at its call site. That is the anti-regression
+> evidence: no genuine Ghidra auto-thunk was moved off `annotated=no`, and
+> nothing outside the seven and their one caller moved at all. The ledger
+> closes `1,872 − 0 + 25 = 1,897` with the 25 unchanged at 15 auto / 9
+> call-target / 1 vector.
+>
+> What the paragraph above got right, and what is now enforced rather than
+> remembered: `thunk_` really is Ghidra's. A check
+> (`ec/tools/grade_name_basis.py`'s `reserved_prefix_problems`, on the EC side
+> only) refuses a committed row whose name is inside the namespace, and
+> `build_ec_decompile.py --self-test` holds the Python list of prefixes against
+> the Java it is transcribed from, so editing one without the other is a red
+> self-test. Full account, including the two copies of `isPlaceholderName()`
+> that had already drifted apart and the four BIOS rows that divergence
+> explains: [`findings/thunk-prefix-collision.md`](findings/thunk-prefix-collision.md).
+
 **The second clause described a bug this change fixes.** `annotations_unmatched`
 was a literal `0` in `write_outputs()`, discarded from a report that
 `ApplyAnnotations.java` had been filling in all along. It is now read back from
@@ -4925,6 +4966,11 @@ program whose `functions_named` moved with #561 (80 → 97): those 17 rows sit a
 addresses both banks carry identically, so the de-dup exports each one once,
 under `common`, and it lands there and nowhere else — which is the same folding
 that makes the row count twice in `annotations_applied` and once here.
+
+**The write-up for #602 is
+[`docs/findings/thunk-prefix-collision.md`](findings/thunk-prefix-collision.md)**
+— the rename, the two copies of `isPlaceholderName()` and the four BIOS rows
+their divergence explains, and why the rule needed no exception list.
 
 **No hardware or Windows test is claimed here.** This change is static: the
 proof is the regenerated export, and nothing in it observes the machine.

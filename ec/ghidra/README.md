@@ -875,6 +875,43 @@ cell named.
   an applied prototype on 8051 code would be a guess sitting where a fact
   reads.
 
+**`name` must not be a name Ghidra could have chosen.** The index's `annotated`
+column is `isPlaceholderName(name) ? "no" : "yes"` — it answers "did Ghidra
+name this, or did a person", not "is this name good". A row that picks its name
+out of Ghidra's reserved namespace therefore applies and is then recorded as
+unannotated, which is a fault with no other signature: the row resolves, the
+name is honest, and the export says the annotation did not happen. Seven rows
+did it, with `thunk_` (Ghidra's prefix for an auto-thunk), and the ledger read
+them as applied-but-unflagged for as long as they stood there. Issue #602
+renamed them rather than narrowing the predicate, because the collision was in
+the row: `forward_to_<addr>` is the convention this repository already had for
+saying "forwarder" — eleven rows carried it before #602, seventeen after — and
+`thunk` belongs mid-name (`bank1_switch_thunk_to_81c5`), not as a prefix.
+`../tools/grade_name_basis.py` now refuses the collision on the EC side, and
+`build_ec_decompile.py --self-test` holds that Python set against the Java it
+is transcribed from, which is the guard that makes "one definition, used by
+every exporter" true rather than aspirational.
+
+**Open, and deliberately not fixed here: the two copies of
+`isPlaceholderName()` no longer agree.** `scripts/TongFang.java` tests
+`name.equals("entry")`; `scripts/ExportDecompile.java` tests
+`name.startsWith("entry")`. The first is the canonical one and the second is
+what the `.c` exporter and the `annotated` column in `index.csv` call. The
+blast radius is measured, not guessed: **zero** EC rows, because no exported
+EC function is named `entry*`, so #602's re-export did not move a single EC row
+on account of it. Four BIOS rows are
+reported `annotated=no` on the same fault — `Setup 0x000004B0` and
+`EcPs2Kbd 0x260` (`entry`), plus `PeiOverClock FFCFBB49`
+(`entry_clamp_status`) and `OemGlobalNvsDxe 0x370` (`entry_dispatch`), the last
+two of which the canonical predicate does **not** match. The two copies visibly
+disagree in committed output: the `entry_*` pair is `no` in the index and `yes`
+in the listing export. Reconciling means re-exporting the BIOS, which is a
+different component, a different driver (`bios/tools/bios_extract.py`) and a
+49 MB project, so it is follow-up #1 rather than part of this. It is also why
+#602's new rule is modelled on the canonical copy and scoped to the EC: a check
+built on the drifted one would pin the drift as correct.
+`../../docs/findings/thunk-prefix-collision.md` has the measurement.
+
 An address with no function is counted as `annotations_unmatched` and carried
 into `manifest.csv` rather than dropped, so the figure is one a run produced.
 That is either a typo or a sign the project needs `--mode rebuild-project`; the

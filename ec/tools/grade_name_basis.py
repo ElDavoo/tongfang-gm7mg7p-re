@@ -44,6 +44,13 @@ the rule cannot drift. `--self-test` pins the vocabulary, the `pd` refusal and
 the four cross-field rules on fixture rows, because a grader that has quietly
 started accepting everything looks exactly like a grader that is working.
 
+One rule lives here that is not a `name_basis` grade: `reserved_prefix_problems`
+refuses a name out of **Ghidra's** reserved namespace, which is a different
+fault (the index cannot see the row at all) in a different direction (the name,
+not what it rests on). It is scoped by its callers rather than by `--check`,
+which grades both CSVs and would otherwise refuse two BIOS rows for a predicate
+divergence this repository has not reconciled.
+
 Usage:
     python3 ec/tools/grade_name_basis.py --report
     python3 ec/tools/grade_name_basis.py --apply
@@ -501,6 +508,78 @@ def row_problems(row, registers):
             + check_pd(row) + check_register_map(row))
 
 
+# --- the reserved naming namespace -----------------------------------------
+# A name the exporters recognise as Ghidra's own is reported `annotated=no` in
+# the index and loses the `[named]` marker on the exported file, so a row that
+# picks its name out of that namespace cannot be seen as having applied, however
+# sound the reading behind it is. The ledger in build_ec_decompile.py reads that
+# column rather than the bytes, which is what makes the collision a silent
+# fault: nothing about the row is wrong except its alphabet.
+#
+# "Whichever exporter" is not claimed here, and deliberately so. There are two
+# copies of the predicate and they have already drifted on `entry`; the nine
+# prefixes below and `thunk_` are matched identically by both, and the exact
+# match is the canonical copy's. That divergence is the next paragraph's subject
+# and this repository's open question, not something this list settles.
+#
+# Seven EC rows did -- `thunk_to_*` and `thunk_call_122f`, and `thunk_` is how
+# Ghidra renders an auto-thunk -- and the ledger reported all seven as
+# applied-but-unannotated for exactly that reason. The rows were renamed rather
+# than the predicate narrowed: the collision is in the row, `forward_to_<addr>`
+# is the convention the repository already has for saying "forwarder" without
+# borrowing the prefix, and narrowing a prefix Ghidra genuinely owns would move
+# `annotated` and `[named]` across the whole export. See
+# docs/findings/thunk-prefix-collision.md.
+#
+# Transcribed from ghidra/scripts/TongFang.java, which is the canonical copy and
+# the one every exporter and the index mean to call. The other copy,
+# ghidra/scripts/ExportDecompile.java, has already drifted from it -- it reads
+# `startsWith("entry")` where the canonical reads `equals("entry")` -- so this
+# list is a second derivation on purpose, and build_ec_decompile.py --self-test
+# is what holds the two together.
+GHIDRA_RESERVED_PREFIXES = (
+    "FUN_", "LAB_", "SUB_", "thunk_", "dt_",
+    "LABEL", "UNDEF_", "FUNCODE", "switchD_",
+)
+# `entry` is the one exact match and stays one, because the distinction is the
+# point: `entry_clamp_status` and `entry_dispatch` are people's names that
+# happen to begin with those letters, and the drifted copy above cannot tell
+# them from the module entry point.
+GHIDRA_RESERVED_EXACT = ("entry",)
+
+
+def reserved_prefix_problems(rows):
+    """Rows whose name is one of Ghidra's own, i.e. inside its reserved
+    namespace.
+
+    Takes the whole row list rather than one row because the finding is a
+    census -- how many rows collide is the number worth reporting -- and a
+    per-row predicate would leave the caller summing. It is not one of the four
+    cross-field rules and is not folded into `row_problems`, because it is
+    component-independent while the call sites are not: the same scan over
+    bios/annotations/ghidra-functions.csv finds two rows, and reconciling the
+    two Java copies that disagree about them is a BIOS re-export this
+    repository has not done.
+
+    The message states the consequence rather than the rule, because the
+    consequence is what a row author has to act on: the name reads as
+    Ghidra's, so the row applies and is still reported unannotated.
+    """
+    out = []
+    for row in rows:
+        name = row.get("name") or ""
+        hit = name if name in GHIDRA_RESERVED_EXACT else next(
+            (p for p in GHIDRA_RESERVED_PREFIXES if name.startswith(p)), None)
+        if hit:
+            out.append(
+                "%s %s (%s) takes %r, which is Ghidra's own: isPlaceholderName() "
+                "matches it, so the row applies and is still reported "
+                "annotated=no with no [named] marker. Rename it out of the "
+                "namespace -- `forward_to_<addr>` for a forwarder."
+                % (row.get("scope"), row.get("addr"), name, hit))
+    return out
+
+
 # --- the report, --apply and --check -------------------------------------
 
 def _fmt_table(distribution):
@@ -681,6 +760,38 @@ def self_test():
         row(name="spin_until_flag", comment="the listing shows 0x8E = TR1",
             name_basis="register-map"))),
         "(the name carries the claim, so the name must carry the decode)")
+
+    # --- the reserved namespace -----------------------------------------
+    # Fixtures, not the committed rows, and the two that matter most are the
+    # pair that differs by four characters: `thunk_...` is Ghidra's, and
+    # `forward_to_...` -- the same function, the same forwarder -- is not. A
+    # rule that could not tell them apart would have nothing to say.
+    check("reserved namespace refuses a hand-chosen thunk_ name",
+          bool(reserved_prefix_problems([row(name="thunk_to_f275")])))
+    check("reserved namespace refuses the exact module entry name",
+          bool(reserved_prefix_problems([row(name="entry")])))
+    check("reserved namespace refuses a FUN_ placeholder",
+          bool(reserved_prefix_problems([row(name="FUN_CODE_7401")])))
+    check("reserved namespace accepts the forward_to_ convention",
+          not reserved_prefix_problems([row(name="forward_to_f275")]))
+    # The exact-match half. Both of these are real BIOS rows, and the copy of
+    # the predicate in ExportDecompile.java refuses them; the canonical
+    # isPlaceholderName() does not, and matching it is what keeps a
+    # person's `entry_...` from being counted as a collision.
+    check("reserved namespace accepts a longer name beginning with 'entry'",
+          not reserved_prefix_problems([row(name="entry_clamp_status"),
+                                        row(name="entry_dispatch")]))
+    check("reserved namespace reports one problem per offending row",
+          len(reserved_prefix_problems([row(name="thunk_to_f275"),
+                                        row(name="forward_to_f275"),
+                                        row(name="thunk_call_122f")])) == 2)
+    # Pinned because the census in build_ec_decompile.py --self-test compares
+    # the count against TongFang.java's, and a silent change to either side
+    # would make that comparison vacuous.
+    check("reserved namespace is 9 prefixes and 1 exact name",
+          len(GHIDRA_RESERVED_PREFIXES) == 9 and len(GHIDRA_RESERVED_EXACT) == 1,
+          "%d prefix(es), %d exact" % (len(GHIDRA_RESERVED_PREFIXES),
+                                       len(GHIDRA_RESERVED_EXACT)))
 
     # --- the grader's own ladder ----------------------------------------
     tr1 = fixture_asm(os.path.join(scratch, "tr1.asm"), [

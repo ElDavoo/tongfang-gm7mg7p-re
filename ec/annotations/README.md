@@ -64,6 +64,35 @@ has the account; §20 of `docs/findings.md` is the summary.
 | `mixed` | the name asserts two things with different footing |
 | `unresolved` | the row is `type: unresolved` and the name is a placeholder claiming nothing |
 
+### The name itself: stay out of Ghidra's namespace
+
+`name_basis` grades what a name asserts. This is a different rule, about the
+name's **alphabet**, and it is not a style preference.
+
+Ghidra reserves a set of prefixes for its own placeholder names — `FUN_`,
+`LAB_`, `SUB_`, `thunk_`, `dt_`, `LABEL`, `UNDEF_`, `FUNCODE`, `switchD_`, and
+the bare name `entry` — and `isPlaceholderName()` is what every exporter and the
+index ask to decide whether a symbol is Ghidra's or a person's. A row that
+starts a name with one of those is answering that question wrong, and the
+index records `annotated=no` for it however good the reading behind it is. The
+row resolves, the name is honest, and the export reports that the annotation
+never happened: there is nothing to grep for and no error to read.
+
+Seven rows did this with `thunk_`, which is Ghidra's prefix for an auto-thunk
+(`thunk_to_f275`, `thunk_call_122f`, …), and `ec/annotations/subsystems.md` §2
+carried the consequence as a live count until this change. Issue #602 renamed
+them into the convention this file's neighbours already used:
+
+| instead of | write | for |
+|---|---|---|
+| `thunk_to_<addr>` | `forward_to_<addr>` | a forwarder — eleven rows already did, seventeen now |
+| `thunk_call_<addr>` | `call_<addr>` | a forwarder that is a single `lcall` rather than an `ljmp` |
+
+`thunk` is not banned as a word, only as a prefix: `bank1_switch_thunk_to_81c5`
+is a name about thunk-ness and sits exactly where it should, mid-name. The full
+account is [`../../docs/findings/thunk-prefix-collision.md`](../../docs/findings/thunk-prefix-collision.md),
+and the rule is enforced by `../tools/grade_name_basis.py` on the EC side.
+
 ### The grading rule, which is deliberately asymmetric
 
 **Strongest footing actually traceable to a committed input, else
@@ -116,11 +145,21 @@ the tool that writes the column and the tool that checks it cannot disagree:
    SFR in `BIT_SFR`. Rule 4 reads the **name, not the comment**, deliberately:
    a comment may discuss a decoded bit anywhere, and grading on it would make
    the grade unfalsifiable.
+5. **a `name` inside Ghidra's own reserved namespace** — the rule this section
+   above is about, added by #602. It is listed here and not folded into the
+   four because it is not a `name_basis` rule: it grades no cell, and its
+   fault is in the name's alphabet rather than in what the name rests on. It
+   is EC-scoped, and the scope is honest rather than convenient — the same scan
+   over the BIOS CSV finds two rows, and those belong to the
+   `equals("entry")` / `startsWith("entry")` divergence between the two copies
+   of `isPlaceholderName()` that this change did not reconcile. `ec/ghidra/README.md`
+   has that open, with the four BIOS addresses.
 
 `bios_extract.py` holds the BIOS CSV to the same four rules, including the
 `pd` rule, which cannot fire there — the BIOS has no PD image. It is carried
 anyway because a rule that exists on only one side of a vocabulary is a rule
-that means two different things.
+that means two different things. Rule 5 is *not* carried there, for the reason
+in its entry.
 
 ## The checks
 
