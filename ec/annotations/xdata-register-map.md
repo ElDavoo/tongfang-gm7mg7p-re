@@ -487,16 +487,39 @@ addresses. The split, from `xdata-registers.csv`:
 | pd | `DAT_EXTMEM` | 108 | 603 |
 | **total** | | **1,326** | **15,696** |
 
+**A `both` row's `spelled_as` is the union across the two programs, and cannot
+be read per-program.** `build()` absorbs a `both` row's two per-program entries
+into one, and the cell holds every spelling either image gives that address
+number — which is a statement about two programs, not about one. The CSV
+carries the per-program halves in a second column, `spellings_by_program`
+(column 21, appended last so the positional `awk -F,` commands in
+`../../docs/findings/xdata-census-totals.md` keep meaning what they mean), so
+a per-program question is read from that. Its contract, the 15 `both` rows
+whose halves differ, and the reconciliation below are
+`../../docs/findings/xdata-spelled-as-union.md`. The four `both` rows this
+matters for are the `DAT_EXTMEM+pair-literal` ones, and **only three of them
+are mixed inside the main EC**:
+
+| address | main-EC | main-EC refs | pd | pd refs | row `refs` |
+|---|---|---:|---|---:|---:|
+| `0x04A3` | `pair-literal` | 7 | `DAT_EXTMEM` | 1 | 8 |
+| `0x0834` | `DAT_EXTMEM+pair-literal` | 48 (1 + 47) | `DAT_EXTMEM` | 18 | 66 |
+| `0x0835` | `DAT_EXTMEM+pair-literal` | 48 (1 + 47) | `DAT_EXTMEM` | 4 | 52 |
+| `0x0836` | `DAT_EXTMEM+pair-literal` | 9 (1 + 8) | `DAT_EXTMEM` | 4 | 13 |
+
 **`pair-literal` is the one value in the `spelled_as` column this tool infers
 rather than reads**, and it is not a spelling at all: it records that the
 address is also reached as a literal *argument* to one of the pair accessors
 §4.7 describes. That is why the mixed rows exist — 58 addresses carry it
-alongside a token spelling, and `symbol` and `DAT_EXTMEM` are still never both
-on one row within a program, which is the invariant the self-test asserts. The
-distinct column now sums to more than the count of `symbol` rows because an
-address reached three ways is three rows of this table and one row of the CSV;
-the `refs` column does not double-count, since each row carries that address's
-whole reference count once.
+alongside a token spelling **within a program** (59 counting the CSV's union
+across both, which differs on `0x04A3` alone), and `symbol` and `DAT_EXTMEM`
+are still never both on one row within a program, which is the invariant the
+self-test asserts. The distinct column now sums to more than the count of
+`symbol` rows because an address reached three ways is three rows of this table
+and one row of the CSV; the `refs` column does not double-count, since each row
+carries that address's whole reference count once — and on a `both` row that
+count is still the sum over both programs, which `spellings_by_program` does
+not split.
 
 *(Correction, 2026-09-25, issue #557, re-transcribed against the tree #279
 superseded. Every cell of the table above is read from the committed CSV. The
@@ -540,8 +563,16 @@ Both corrections were right on their own trees and both are still the
 correction §2 exists for; only the size of the gap has moved, and 1,022 is no
 longer unchanged. The 161/902/155 above is a partition — 161 + 902 + 155 is
 1,218 exactly, and the eleven `both` rows that carry both token spellings are
-counted in the 161 and not again in the 902.)* The gap is still the blocker the
-issue describes, and it is still why this issue is on the critical path:
+counted in the 161 and not again in the 902. **That partition is worked on the
+union column, and `0x04A3` is the row where the distinction bites**: counted
+within the main EC the last term is **156**, not 155, because the main EC
+reaches `0x04A3` as a `pair-literal` and nothing else, and it is the PD image
+that spells it `DAT_EXTMEM_xxxx` — so the union moves it into the 902 and
+leaves 155 here. Both thirds are right, and the row's `spellings_by_program`
+cell is where a reader of this paragraph goes for the split;
+`../../docs/findings/xdata-spelled-as-union.md` has the whole reconciliation.)*
+The gap is still the blocker the issue describes, and it is still why this
+issue is on the critical path:
 **74%** of the register file the main EC actually uses is still spelled
 `DAT_EXTMEM_xxxx` rather than carrying a name, against 96% when this was
 written. That is better and it is not good enough — the exporter catches up with
@@ -1622,7 +1653,12 @@ pass; the 156th is `0x04A3`, which `origin/main` already carried as a
 `program=both`. So against `origin/main` the census gains **155 new rows** and
 **59 existing rows have a moved `refs`**, where the issue forecast 153 and 61.
 `xdata-registers.csv` is the per-address enumeration of both sets. §5's new
-`main-ec-001` is largely made of them.
+`main-ec-001` is largely made of them. **That 58/156 is counted within one
+program, and the CSV's own split of the same 214 is 59/155** — `0x04A3` is
+`pair-literal` in the main EC and `DAT_EXTMEM` in the PD image, so the row's
+union `spelled_as` reads it as mixed. Both numbers are right; the CSV's
+`spellings_by_program` column is where the difference is shown rather than
+argued, and `../../docs/findings/xdata-spelled-as-union.md` is the write-up.
 
 **The two worked examples, as the exact multiset rather than a total.**
 

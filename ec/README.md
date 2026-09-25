@@ -544,7 +544,13 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   are separate columns because the PD image is written with `DAT_EXTMEM_`
   tokens for addresses the symbol table names for the EC, and reading those
   rows as the PD firmware using the EC's vocabulary is
-  `pd-xdata-overlap.md`'s mistake in a new place.
+  `pd-xdata-overlap.md`'s mistake in a new place. A `program=both` row's
+  `spelled_as` is the union across the two programs, so the last column,
+  `spellings_by_program`, is the same vocabulary per program
+  (`main-ec=…;pd=…`) and is what a per-program question is read from; the
+  reference and direction counts stay sums, which
+  `../docs/findings/xdata-spelled-as-union.md` states with the per-program
+  figures.
 - **`annotations/xdata-clusters.csv`** — one row per cluster: the addresses,
   the functions that touch two or more of them, the routines most of those
   functions call, the already-named addresses inside, and the two identity

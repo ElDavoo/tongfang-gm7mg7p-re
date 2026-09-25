@@ -6592,3 +6592,38 @@ where the committed tables give 7, and read `bank1,DEC4`'s contrast mention as
 the graph booking `9A78` as a caller — it books `DEA5`, and sides with the
 comment's denial of its own site. The split, the verdicts and every site address
 reproduced.)*
+
+## 39. `spelled_as` is a union across programs, and the CSV now says which half is which (2026-09-25, issue #709)
+
+The write-up is `docs/findings/xdata-spelled-as-union.md`; this is the
+summary. `ec/annotations/xdata-registers.csv` records one `spelled_as` per
+address, and on a `program=both` row that cell is every spelling *either*
+program gives that address number. The file could not answer a per-program
+question, and on one row it was wrong read that way: `0x04A3` reads
+`DAT_EXTMEM+pair-literal`, while the main EC spells it `pair-literal` (7
+references, all through an accessor) and the PD image spells it `DAT_EXTMEM`
+(1). §4.7 of `ec/annotations/xdata-register-map.md` had the two numbers right
+and the reconciliation living in a Python comment.
+
+**The CSV now carries the per-program halves** in a new last column,
+`spellings_by_program` — `main-ec=<spellings>` on a main-EC row, `pd=<…>` on a
+pd one, `main-ec=<…>;pd=<…>` on a `both` one — so `0x04A3` reads
+`main-ec=pair-literal;pd=DAT_EXTMEM`. It is **appended, not inserted beside
+`spelled_as`**, because committed `awk -F,` commands in
+`xdata-census-totals.md` and `xdata-export-ownership-page-census.md` read this
+file by field position; `$6` still sums `refs` at 15,696 and `$7`-`$11` still
+the five buckets. **The 58/156 and 59/155 are both still right** and are now
+pinned side by side, with `PAIR_UNION_ONLY = (0x04A3,)` as their symmetric
+difference and three `--self-test` assertions — all reading the committed file,
+not a fresh generation — holding the column's contract on every row, the four
+`both | DAT_EXTMEM+pair-literal` rows' real composition, and the
+58 + 156 == 59 + 155 == 214 reconciliation. The 15 `both` rows whose halves
+differ and the four `pair-literal` ones are in the write-up; so is the union
+that **remains**, the `refs` and the direction buckets on a `both` row, with
+the four rows' per-program reference figures rather than left to be found.
+Nothing was retracted: no register `status:` moved, `xdata-clusters.csv` did
+not change a byte, no re-export, no hardware, no Windows. The follow-up this
+opens is per-program `refs` / bucket columns, and re-keying §2's `both` rows
+per program, which would take that table's `distinct` total from 1,326 to
+1,375 and invalidate three superseded-table blocks — its own change, with its
+own corrections.

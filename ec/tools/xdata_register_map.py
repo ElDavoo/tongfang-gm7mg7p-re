@@ -174,6 +174,22 @@ addresses the PD image touches -- `0x07D0` is `BATTERY_CHARGE_LIMIT_DOWN` in
 as the PD firmware calling it `BATTERY_CHARGE_LIMIT_DOWN` is the
 `pd-xdata-overlap.md` mistake in a new place.
 
+**`spelled_as` is a union across programs, and `spellings_by_program` is the
+column that says which half is which.** A `program=both` row's `spelled_as` is
+every spelling *either* program gives that address number, so `0x04A3` reads
+`DAT_EXTMEM+pair-literal` there while the main EC spells it `pair-literal` and
+the PD image spells it `DAT_EXTMEM`. That is not cosmetic: it is the whole of
+the 58-versus-59 difference in `PAIR_ROWS_MIXED` and the CSV's own 59 / 155, and
+on a reader who takes the cell at face value it is a wrong statement about one
+program rather than a loose one about two. So the registers CSV carries a second
+spelling column, `spellings_by_program` -- `main-ec=<spellings>` on a main-EC
+row, `pd=<spellings>` on a pd one, `main-ec=<spellings>;pd=<spellings>` on a
+`both` row -- and that is what a per-program question is read from. The union
+that stays is `refs` and the five direction buckets on a `both` row, which
+remain sums over the two programs; nothing here splits those, and
+`../../docs/findings/xdata-spelled-as-union.md` states it with the four rows'
+per-program reference figures beside it rather than leaving it to be found.
+
 **What settles an address's space is the encoding, not the token.** Ten of
 `pd-001`'s 34 addresses sit in `0xFF00`-`0xFFFF`, inside the width of an SFR
 byte, and the census counts them because Ghidra wrote `DAT_EXTMEM_ff80`. That
@@ -335,6 +351,11 @@ SPELLINGS = ("DAT_EXTMEM", "symbol")
 # invariant -- never `symbol` and `DAT_EXTMEM` together in one program -- rather
 # than the old "one spelling per address" that only held while there were two.
 PAIR_SPELLING = "pair-literal"
+# The order both spelling columns are written in: the exporter's two token
+# spellings first and the inferred one last. A fixed tuple rather than a walk
+# over `entry["spellings"]` because that is a set, and a set walk would make the
+# committed CSV differ between two runs of the same tree.
+SPELLING_ORDER = ("symbol", "DAT_EXTMEM", PAIR_SPELLING)
 ASSIGN = ("=", "|=", "&=", "+=", "-=", "*=", "/=", "^=", "%=", "<<=", ">>=")
 
 REGISTER_COLUMNS = [
@@ -342,6 +363,20 @@ REGISTER_COLUMNS = [
     "read", "write", "read+write", "passed-to-call", "address-taken",
     "readers", "writers", "functions_touched", "single_function", "name",
     "functions", "cluster_key", "co_reading", "sources_beyond",
+    # `spellings_by_program` is **appended rather than placed beside
+    # `spelled_as`**, because committed `awk -F,` / `cut -d,` commands read
+    # this file by position: `docs/findings/xdata-census-totals.md` sums `$6`
+    # and adds up `$7`-`$11`, and
+    # `docs/findings/xdata-export-ownership-page-census.md` does the same over
+    # its two scratch files; that page already names this as "the thing that
+    # would break first if a column were added". Inserting beside column 3
+    # moves every one of those fields; appending leaves each meaning what it
+    # means today. No committed Python tool reads the file by index --
+    # `check_cluster_citations.py`, `check_site_census.py`,
+    # `test_xdata_cluster_names.py`, `rank_common_runtime.py` and
+    # `check_capture_claims.py` all go through `csv.DictReader` or a regex over
+    # a named cell.
+    "spellings_by_program",
 ]
 CLUSTER_COLUMNS = [
     "cluster_id", "program", "size", "refs", "addrs", "addr_range",
@@ -827,13 +862,42 @@ PAIR_ACCESSORS = (
 # reached through an accessor) and a `DAT_EXTMEM_` token in the pd image (1).
 # `merge_group()` keys spellings per program, so the main-EC entry this pair
 # split is measured over carries `pair-literal` alone and the address counts
-# as pair-only -- 58 mixed / 156 pair-only here. `spelled_as` in the CSV is
-# the union across programs, so there the same row reads
-# `DAT_EXTMEM+pair-literal` and the CSV's own split is 59 / 155. Neither
-# number is wrong; they count different sets, and the one that moved is
-# `0x04A3` alone.
+# as pair-only. Every pair-reached address is a main-EC one -- the pd image's
+# own `read_be16_from_dptr` is called once with no argument -- so that is the
+# whole of the difference and it can only run in that direction.
 PAIR_ROWS = 214
 PAIR_ROWS_MIXED = 58
+# **The same 214 counted the way `xdata-registers.csv` counts them.** That file
+# records one `spelled_as` per address and a `program=both` row's cell is the
+# union across the two programs, so `0x04A3` reads `DAT_EXTMEM+pair-literal`
+# there and lands in the mixed half: the CSV's own split is 59 / 155 where the
+# per-program one above is 58 / 156. Neither number is wrong -- they count
+# different sets, PAIR_UNION_ONLY is the symmetric difference of the two mixed
+# sets, and 58 + 156 == 59 + 155 == PAIR_ROWS on both.
+#
+# What used to carry that reconciliation was this block's own prose, which is
+# where a reader of the tool found it. It is now three things that can each fail
+# on their own: the pins here, `spellings_by_program` in the CSV itself, and the
+# self-test's assertions over the committed file. The write-up is
+# `../../docs/findings/xdata-spelled-as-union.md`.
+PAIR_ROWS_MIXED_UNION = 59
+PAIR_ROWS_PAIR_ONLY = 156
+PAIR_ROWS_PAIR_ONLY_UNION = 155
+PAIR_UNION_ONLY = (0x04A3,)
+# **The four `both` rows whose union carries `pair-literal`, and what each half
+# actually is.** The CSV's one `spelled_as` column cannot say which program
+# contributed which token, and these are the rows where that is load-bearing:
+# three of them are genuinely `DAT_EXTMEM+pair-literal` *inside the main EC*,
+# and `0x04A3` is not. `(main-ec spellings, pd spellings, main-ec refs, pd
+# refs)` -- the reference figures are half of what the row's single `refs` cell
+# sums, and the self-test asserts both halves and that the sum is what the CSV
+# carries.
+PAIR_BOTH_PAIR_LITERAL = {
+    0x04A3: (("pair-literal",), ("DAT_EXTMEM",), 7, 1),
+    0x0834: (("DAT_EXTMEM", "pair-literal"), ("DAT_EXTMEM",), 48, 18),
+    0x0835: (("DAT_EXTMEM", "pair-literal"), ("DAT_EXTMEM",), 48, 4),
+    0x0836: (("DAT_EXTMEM", "pair-literal"), ("DAT_EXTMEM",), 9, 4),
+}
 # The two worked examples the issue asks for, as the exact multiset of resolved
 # sites rather than a bucket total. `0x0402` is the address whose decompile
 # Ghidra invented a *routine* at (`common/0402.c`, spelled `FUN_CODE_0402` at
@@ -2063,6 +2127,31 @@ def touches(entry, bucket: str):
     return {f for f, buckets in entry["dirs"].items() if bucket in buckets}
 
 
+def spellings_of(entry) -> str:
+    """One entry's spellings, as a `+`-joined cell in SPELLING_ORDER.
+
+    Both spelling columns render through this one function, so the two cells
+    cannot come to describe different sets -- the same "the tool that writes
+    the column and the tool that checks it" argument
+    `ec/annotations/README.md` makes for `name_basis`."""
+    return "+".join(s for s in SPELLING_ORDER if s in entry["spellings"])
+
+
+def spellings_by_program_of(groups, addr) -> str:
+    """The same spellings, one `program=…` clause per program the row touches.
+
+    `main-ec=…` alone on a main-EC row, `pd=…` alone on a pd one, and
+    `main-ec=…;pd=…` on a `both` row. A `program=both` row's `spelled_as` is
+    the union across the two, and a shared address number is not a shared byte,
+    so this is what a per-program question has to be read from. Comma-free --
+    only `+`, `;` and `=` appear -- so the positional `awk -F,` / `cut -d,`
+    commands `REGISTER_COLUMNS` names keep working, and the same reason those
+    two columns cannot contain a comma is what makes `-F,` safe on this file at
+    all (`docs/findings/xdata-census-totals.md`)."""
+    return ";".join(f"{g}={spellings_of(groups[g][addr])}"
+                    for g in GROUPS if addr in groups[g])
+
+
 def scan(by_file, names, func_names, symbols, eq_guard: bool = True,
          export_ownership: bool = False, ownership=None, accessors=None):
     """(per-program census, call graph, raw occurrence count) over the tree.
@@ -2282,12 +2371,31 @@ def load_cluster_rows(path) -> list:
 
     A census written before the `cluster_key` and `cluster_name` columns are
     still a census: `carry_names()` reads it with `dict.get`, so a missing
-    column is a cluster with no name rather than a crash."""
+    column is a cluster with no name rather than a crash. The registers CSV
+    goes through this same reader -- there is one parsing path for the two
+    census files, not two."""
     try:
         with open(path, newline="") as f:
             return list(csv.DictReader(f))
     except FileNotFoundError:
         return []
+
+
+def spellings_by_program(row) -> dict:
+    """A committed row's `spellings_by_program` cell, as {program: spellings}.
+
+    Read out of the file rather than re-rendered from a fresh generation: the
+    column's claim is about the artifact a reader opens, and a check that
+    compared the tool's output against itself would pass against a column
+    written wrong in both. `row.get` is deliberate -- a census written before
+    the column existed has none, which is a self-test failure to report rather
+    than a KeyError to traceback out of the run."""
+    out = {}
+    for clause in row.get("spellings_by_program", "").split(";"):
+        name, _, spellings = clause.partition("=")
+        if name:
+            out[name] = tuple(spellings.split("+"))
+    return out
 
 
 def carry_names(old_rows, seeded, new_rows):
@@ -2635,12 +2743,11 @@ def build(funcs, names, symbols, census, calls, threshold,
             # EC and written as `DAT_EXTMEM_` in the PD image, so both show.
             # `pair-literal` is the third value and the only one this tool
             # infers: it means the address is also reached as a literal argument
-            # to one of the accessors `load_pair_accessors()` selected. It does
-            # not compete with the other two, so the order below is the
-            # exporter's two first and the derived one last.
-            "spelled_as": "+".join(s for s in ("symbol", "DAT_EXTMEM",
-                                               PAIR_SPELLING)
-                                   if s in entry["spellings"]),
+            # to one of the accessors `load_pair_accessors()` selected. On a
+            # `program=both` row this cell is the **union** across the two
+            # programs -- which is what `spellings_by_program`, at the far end
+            # of the row, takes apart.
+            "spelled_as": spellings_of(entry),
             "span_group": spans[primary][addr],
             "cluster_id": cid or "",
             "refs": entry["refs"],
@@ -2670,6 +2777,14 @@ def build(funcs, names, symbols, census, calls, threshold,
             # `pd` reader are never mistaken for co-readings of each other.
             "co_reading": sum(1 for f in funcs_touched if f in group_of),
             "sources_beyond": sum(1 for f in funcs_touched if f not in group_of),
+            # The `both` row's per-program halves, from the same per-program
+            # entries the union above was absorbed out of -- not a second
+            # spelling pass. `refs`, the five buckets and the two co-reading
+            # columns stay summed over both programs: the pair is an argument
+            # of what the address is written as, not a split of the reference
+            # count, and `docs/findings/xdata-spelled-as-union.md` says so with
+            # the four rows' per-program reference figures beside it.
+            "spellings_by_program": spellings_by_program_of(groups, addr),
         })
     return register_rows, cluster_rows, groups
 
@@ -3188,6 +3303,85 @@ def self_test(args) -> int:
           and len(pair_mixed) == PAIR_ROWS_MIXED
           and all(PAIR_SPELLING in groups["main-ec"][a]["spellings"]
                   for a in pair_rows))
+    # ---- issue #709: the per-program column, and what it reconciles ---------
+    #
+    # Three assertions, in the order they can fail: the column's own contract
+    # on every row, the four rows the union is load-bearing for, and the
+    # reconciliation between this file's per-program pins and the CSV's own
+    # union split. All three read the **committed** registers CSV rather than a
+    # fresh generation -- the whole of the issue is that the artifact a reader
+    # opens cannot answer the question, so a check that ran against what this
+    # run would write would not be answering it.
+    committed_registers = load_cluster_rows(OUT_REGISTERS)
+    csv_rows = {r["addr"]: r for r in committed_registers}
+    union_wrong = [r["addr"] for r in committed_registers
+                   if {s for half in spellings_by_program(r).values()
+                        for s in half} != set(r["spelled_as"].split("+"))]
+    # Capped, and the overflow counted in the message rather than dropped: a
+    # silent cap reads as "covered" when it is not, which is the same objection
+    # TOP_CALLEES' cap is answered with.
+    shown = ", ".join(union_wrong[:8]) or "none"
+    if len(union_wrong) > 8:
+        shown += f" (and {len(union_wrong) - 8} more)"
+    check(f"issue #709: on all {len(committed_registers)} rows of "
+          f"{os.path.relpath(OUT_REGISTERS, EC_DIR)} the spelling tokens in "
+          f"`spellings_by_program` are exactly the ones in `spelled_as` -- the "
+          f"new column partitions the union rather than adding to it (rows "
+          f"where the two differ: {shown})",
+          not union_wrong and len(committed_registers) == total_distinct)
+    halves_wrong = []
+    for a, (main, pd, main_refs, pd_refs) in sorted(
+            PAIR_BOTH_PAIR_LITERAL.items()):
+        row = csv_rows.get(hexaddr(a))
+        halves = spellings_by_program(row) if row else {}
+        if (row is None or halves.get("main-ec") != main
+                or halves.get("pd") != pd
+                or (groups["main-ec"].get(a) or {}).get("refs") != main_refs
+                or (groups["pd"].get(a) or {}).get("refs") != pd_refs
+                or int(row["refs"]) != main_refs + pd_refs):
+            halves_wrong.append(hexaddr(a))
+    four = ", ".join(hexaddr(a) for a in PAIR_BOTH_PAIR_LITERAL)
+    check(f"and the four `both` rows whose union carries `pair-literal` say "
+          f"which program spelled what: {four} -- 0x04A3 is "
+          f"`pair-literal` in the main EC and `DAT_EXTMEM` in the PD image, "
+          f"the other three carry both spellings in the main EC and "
+          f"`DAT_EXTMEM` alone in the PD image, and each row's single `refs` "
+          f"cell is still the sum of its two halves, because the column splits "
+          f"the spelling and not the reference count (rows that disagree: "
+          f"{', '.join(halves_wrong) or 'none'})",
+          not halves_wrong)
+    # The reconciliation itself, as a set relation rather than two equal counts:
+    # a second cross-program row would keep the arithmetic true and quietly move
+    # a published figure, so what is asserted is that the two mixed sets differ
+    # by exactly PAIR_UNION_ONLY in both directions.
+    csv_mixed = {int(r["addr"], 0) for r in committed_registers
+                 if PAIR_SPELLING in r["spelled_as"] and "+" in r["spelled_as"]}
+    csv_pair_only = {int(r["addr"], 0) for r in committed_registers
+                     if r["spelled_as"] == PAIR_SPELLING}
+    per_pair_only = set(pair_rows) - set(pair_mixed)
+    only_per_program = sorted(set(pair_mixed) ^ csv_mixed)
+    only_per_program_shown = ", ".join(hexaddr(a) for a in only_per_program) \
+        or "identical"
+    check(f"and the {PAIR_ROWS_MIXED} / {PAIR_ROWS_PAIR_ONLY} this file pins "
+          f"within a program and the {PAIR_ROWS_MIXED_UNION} / "
+          f"{PAIR_ROWS_PAIR_ONLY_UNION} the CSV's union split is are the same "
+          f"{PAIR_ROWS} addresses differing by exactly "
+          f"{', '.join(hexaddr(a) for a in PAIR_UNION_ONLY) or 'nothing'} -- "
+          f"the one row the main EC spells `pair-literal` and the PD image "
+          f"spells `DAT_EXTMEM`, so the union reads it as mixed, and "
+          f"{PAIR_ROWS_MIXED} + {PAIR_ROWS_PAIR_ONLY} == "
+          f"{PAIR_ROWS_MIXED_UNION} + {PAIR_ROWS_PAIR_ONLY_UNION} == "
+          f"{PAIR_ROWS} holds on both (the per-program mixed set against the "
+          f"CSV's: {only_per_program_shown})",
+          set(pair_mixed) ^ csv_mixed == set(PAIR_UNION_ONLY)
+          and per_pair_only ^ csv_pair_only == set(PAIR_UNION_ONLY)
+          and len(pair_mixed) == PAIR_ROWS_MIXED
+          and len(per_pair_only) == PAIR_ROWS_PAIR_ONLY
+          and len(csv_mixed) == PAIR_ROWS_MIXED_UNION
+          and len(csv_pair_only) == PAIR_ROWS_PAIR_ONLY_UNION
+          and (PAIR_ROWS_MIXED + PAIR_ROWS_PAIR_ONLY
+               == PAIR_ROWS_MIXED_UNION + PAIR_ROWS_PAIR_ONLY_UNION
+               == PAIR_ROWS))
     check(f"oracle: the full census, both spellings -- {ORACLE['distinct']} "
           f"distinct / {ORACLE['refs']} references, main EC "
           f"{ORACLE['main_distinct']}/{ORACLE['main_refs']} (got {total_distinct}"
