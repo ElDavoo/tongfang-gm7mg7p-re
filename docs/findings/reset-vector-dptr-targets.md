@@ -418,6 +418,137 @@ sed -i 's/VALUE="dave"/VALUE="runner"/' /tmp/ec/project-copy/ec.rep/project.prp
 grep -h annotations_unmatched /tmp/ec/reports/apply-bank0.tsv   # 0
 ```
 
+## The §26 summary was one unit too wide
+
+`ec/tools/check_cluster_citations.py` reads §26's summary of this write-up in
+`docs/findings.md` and reported one disagreement with
+`ec/annotations/xdata-clusters.csv`:
+
+```console
+$ python3 ec/tools/check_cluster_citations.py
+docs/findings.md:5636: 0x0800 is not a member of any cluster this line names (`main-ec-081`); it is a member of `main-ec-100`
+1 citation(s) disagree with ec/annotations/xdata-clusters.csv
+```
+
+**The summary's unit was wrong — not the membership claim, and not the any-of
+fallback.** The claim is right: §26 named exactly `main-ec-081`'s three bytes.
+The fallback is doing what its docstring says it does, which is to hold a unit
+that names one cluster against that one cluster. The one unit it reported, which
+started at `docs/findings.md:5636`, carried two attributions:
+
+| attribution | addresses | cluster named |
+|---|---|---|
+| the membership claim, "those three are the whole of the … cluster" | `0x07FD` `0x07FE` `0x07FF` | `main-ec-081` |
+| the bound operand, the `setb c` at `0xD982` making the second bound | `0x0800` | none |
+
+`0x0800` is in `ec/annotations/xdata-registers.csv:583`, so it is a known XDATA
+address, and `0x0630 0x06C4 0x0800` is `main-ec-100`
+(`ec/annotations/xdata-clusters.csv:101`) rather than the `main-ec-081` the same
+unit named. The summary now says the two things in two sentences, in a fenced
+block rather than a blockquote so that the split does not depend on where the
+line breaks fall (see follow-up 6):
+
+```
+… except it steps over `0x07FD`, `0x07FE` and `0x07FF`** — 3,837 of 3,840
+bytes, and those three are the whole of the `main-ec-081` cluster.
+The `setb c` at `0xD982` is what makes the second bound `0x0800` rather than
+the `0x07FF` its own immediates spell out.
+```
+
+**No claim changed** — the same three bytes, the same 3,837, the same cluster,
+the same `setb c` and the same two bounds; only the sentence boundary moved. The
+bound sentence picks up this write-up's own wording for why `0x07FF` is not the
+bound, from "The exclusion, which is the sharper finding" above, which already
+stated it in a unit that named no cluster. **The summary should say things the
+way the write-up it points at already says them** — and the write-up was silent
+on the committed tree until now, which is why this section exists.
+
+The first sentence now names one cluster and every address it carries that the
+registers CSV knows is a member of it (`0x0100` and `0x0FFF` have no registers
+row; `0xD89F` and `0xD96C` are code). The second names no `main-ec-NNN`, key or
+name, so `cited_clusters()` returns empty and the unit is skipped before any
+rule runs. Nothing was added to the tool, no regex was loosened, and no skip
+was introduced.
+
+### The measurement
+
+| | before | after |
+|---|---|---|
+| `check_cluster_citations.py` | exit 1, 1 disagreement | exit 0 |
+| `test_check_cluster_citations.py` | 46 tests, 1 failure (`test_committed_prose_matches_committed_census`) | 48 tests, 0 failures |
+
+**The count going 1 → 0 is not the evidence**, and it is recorded next to the
+re-check below for the reason the issue gives: a rule change that silently
+admitted real drift would show the same way.
+
+### The hand re-check
+
+`main-ec-081` is `0x07FD 0x07FE 0x07FF` and nothing else
+(`ec/annotations/xdata-clusters.csv:82`), which is what the reworded first
+sentence still says, and the new bound sentence makes no membership claim at
+all. The `0xD96C` loop's own execution trace (recipe 4 under "Reproducing
+this") puts `0x0800` on the store arm, so **the boot-path clear stores `0x00`
+at `0x0800`, a byte the `main-ec-100` cluster names** — 3 addresses, 4
+references, `functions_touched` 2, one of them
+`bank1:0x8DBC=write_05_to_06c4_after_1984_check [gate]`, `co_reading` 0 and
+`co_reading_dominant` `no`.
+
+That is a **static co-membership reading from the committed image and the
+committed census**, and three things about it are not claimed:
+
+- **The store was not observed.** It is derived by executing the 24 committed
+  instructions at `0xD96C`–`0xD990` with `subb`/`jc` semantics, the same check
+  recorded under "The exclusion" above. Nothing here ran on hardware.
+- **It is not a claim that the store matters.** Whether `bank1:0x8DBC` reads
+  `0x0800`, and what a boot-path write to it does, is not established. The
+  function's name says it writes `0x06C4`, a sibling member, after a check at
+  `0x1984`; that is a reading of a name, and the body has not been read.
+- **Neither cluster is wrong.** The census is right about both, and a boot-path
+  clear that stores into one of them is ordinary. This is an observation about
+  co-membership, not a defect and not a claim about the `setb c` bound.
+
+### Why the fallback did not learn the exemption instead
+
+The issue offered the alternative — an exemption for an address a sentence
+introduces as a bound or operand — and it is declined here, in the order that
+decided it:
+
+1. **The two exemptions cited as precedent are not this family.** §5's census
+   rows (`xdata-register-map.md:1313`), the `0x06E6`/`0x0860` gate-block row
+   among them at `:1405`, are skipped by the membership rule because a
+   *structural* condition is absent: none of them says "member" anywhere, so the
+   cue never fires and `census_row()` is the only rule that reads them. §26's
+   sentence did say it, and did mean it. The difference is unit size, not the
+   cue.
+2. **"Introduced as a bound or operand" is a lexicon, and this tool is built
+   against lexicons.** Nothing marks that role structurally in markdown; it can
+   only be read off words like *bound*, *immediate*, *operand*, *target*. The
+   tool's own docstring lists a lexicon false positive — a name like
+   `charge-target` read as a citation — as a known limit, and the resolution
+   recorded there was to constrain the *input* (multi-token slugs), not to
+   loosen the matcher. A range is the one such role the tool can see without
+   words, because `0xAAAA-0xBBBB` is a single token (`SPAN`) and
+   `census_row()` reads it as a row's range rather than as two member claims.
+   A new skip would also have to earn the case the test file's docstring
+   demands — *a skip that is not deliberate is the bug* — and the set it would
+   newly admit is not enumerable from the committed tree.
+3. **A rule change needs its own corpus-wide re-run.** Whether a lower
+   disagreement count means the rule is right or means drift newly admitted is
+   not decidable from the count. That re-run is its own issue (follow-up 5), not
+   a half-measure inside a reword.
+
+The gap is real and is recorded as a follow-up rather than closed.
+
+### The case that pins the decision
+
+`ec/tools/test_check_cluster_citations.py` now carries both directions as
+`OneAttributionPerUnit`: the split pair is silent, and the re-packed
+one-sentence form still reports `0x0800`. It is a `known=` override and a
+fixture census carrying the real two clusters, so the case is self-contained
+and cannot perturb the 46 it does not touch. The re-packed case is *expected* to
+report: it says the unit was too wide, and a rule that stopped reporting it here
+would be a corpus-wide loosening made by half-measure against one sentence.
+
 ## Follow-ups
 
 1. **Seed and read `0xD8A0`** — the real init routine the `0xD89F` operand sits
@@ -436,3 +567,28 @@ grep -h annotations_unmatched /tmp/ec/reports/apply-bank0.tsv   # 0
    obvious hypothesis and is explicitly not claimed here.
 4. **The export itself**, on a machine with the nix-pinned `sdas8051`, per the
    row-by-row list above.
+5. **Whether the any-of fallback should learn an operand exemption** — it has
+   none today for an address a sentence introduces as a bound or operand, which
+   is the shape §26's summary had and `0x0800` fired on. The summary was
+   reworded instead and the tool is left conservative, so the unit-sizing gap
+   above is still open. If the exemption is wanted it is a corpus-wide
+   loosening: it needs its own re-run over every committed citation, and the
+   set of units it would newly admit is not enumerable from the committed tree,
+   so it is a separate change with its own issue rather than a tuning pass
+   against one sentence.
+6. **`units()` keeps a blockquote's `>` in the joined text, so a sentence
+   boundary inside one is recognised only where the `>` does not fall between
+   the period and the next capital.** `TERMINATOR` looks ahead for
+   `[A-Z\`*_|-]`, and `>` is not in that set, so where a quote is wrapped decides
+   whether its two sentences are one unit or two. Measured here by accident: the
+   reworded pair quoted as a blockquote passed with the period mid-line and went
+   red on the next wrap, with no change in the text. Five membership-checked
+   units in the corpus carry the markup today (two each in
+   `manual-fan-ctrl-0751.md` and `xdata-06c2-06db-timers.md`, one in
+   `xdata-086x-dispatch.md`). **Stripping every `>` in `ec/`, `docs/` and
+   `evidence/` and re-running changes no verdict** — 0 disagreements either way
+   — so this is a latent limit rather than a live false positive, and the
+   candidate fix is verdict-neutral on today's corpus. Whether a blockquote
+   citation should be split at all is still open, and the direction is not
+   settled: a merged unit carries more addresses into the fallback, while also
+   letting one denial skip a claim that shared the unit.
