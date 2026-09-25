@@ -4232,10 +4232,15 @@ class ExistingMarkLabelTests(unittest.TestCase):
                 str(latin), lambda: grade.existing_mark_findings(str(latin)))
         self.assertEqual(clean, 1)
         self.assertEqual(decode, 1)
-        # Both are one *open* and not one reader: the skip rule is still
-        # spelled in `read_capture` and in `mark_labels_of`, and the case
-        # above plus `measure_mark_provenance.py --self-test` hold the two to
-        # each other rather than a delegation that does not exist.
+        # Both are one *open* and not one reader. The skip rule is one
+        # function now -- `read_capture`, `mark_labels_of` and
+        # `partition_capture_rows` all call `skippable_row` -- so the
+        # delegation #749 said did not exist does, and this case plus
+        # `measure_mark_provenance.py --self-test` hold the count to it.
+        # What still keeps the notice from being one reader is the rest of
+        # the shape: the four-field test and the `MARK` branch are three
+        # deliberate contracts rather than one to be merged. See
+        # `docs/findings/0751-capture-row-shape.md`.
 
     def test_a_row_that_lands_at_the_read_is_not_in_this_notice(self):
         # The defect, made to land. A watcher appends a well-formed mark the

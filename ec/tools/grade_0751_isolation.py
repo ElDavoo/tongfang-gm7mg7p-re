@@ -1373,11 +1373,11 @@ def read_early_exits(path):
     why the stream's first-field normalisation reaches this reader at all:
     without it, a byte-order mark at offset 0 glued itself to the first
     field of whatever row came first, and a crash row written on line 1 was
-    invisible to the one reader that exists to find it. `read_capture`
-    refuses such a file whole, before this ever sees it; this reads one
-    because `existing_mark_findings` calls it on a file the strict reader
-    refused, and a crash row is the reason the operator is being told about
-    that file.
+    invisible to the one reader that exists to find it, and now is: the
+    normalisation is what makes it so, not a caller. The only caller is
+    `main`, which calls `read_capture` unguarded the line before, so a
+    capture the strict reader refused whole raises out of `main`; a
+    refused one is `existing_mark_findings`' to answer, via `bom_refusal`.
     """
     out = []
     for row in capture_rows(path):

@@ -713,3 +713,20 @@ its sections and its unpacking are untouched, and `ec_watch.py` needed no edit:
 unpacks a three-tuple. The four cases that hold the new behaviour are offline,
 over hand-written rows in a temporary directory, and the whole reasoning is in
 [`docs/findings/0751-notice-two-moments.md`](../../docs/findings/0751-notice-two-moments.md).
+
+> **Correction (2026-09-25, issue #750 merged on top), leaving the paragraph
+> above as it was written.** Its claim that `ec_watch.py` needed no edit and
+> that the notice's wording is untouched is no longer true of this tree, and
+> both halves fail together: #750 did edit `ec_watch.py`, and what it edited
+> was the notice's wording. The file-level remedy sentence in
+> `warn_unchecked_marks` had to serve three file-level refusals rather than
+> one, so it was rewritten to say what all three share instead of naming a
+> cause that is true of one and false of the other two — which left
+> `load_label_vocab`'s four names and `warn_unchecked_marks`' three-tuple
+> unpack, both of which are indeed untouched. The edit is described at
+> length in the byte-order-mark section above. The paragraph's other
+> claim — that nothing here has been seen against a real §3 run — is
+> unaffected and stands, and so does the prediction framing it rests on:
+> whether a Windows tool writes a mark at all is a prediction, and it is
+> stated as one in
+> [`docs/findings/0751-capture-row-shape.md`](../../docs/findings/0751-capture-row-shape.md).
