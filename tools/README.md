@@ -11,28 +11,52 @@ bash tools/run-tests.sh
 
 Every `test_*.py` under the repository, found by `find` — not a hardcoded list,
 so a suite in a directory that does not exist yet is picked up by having its
-file committed. There are thirty today, 874 tests in all — both figures
+file committed. There are thirty today, 882 tests in all — both figures
 are what the runner below prints, one line per suite and a total on its last
 line — and each is a `unittest` suite standing in for a tool's own behaviour.
-Re-derive them by running it rather than by editing this sentence. Two of the
-thirty are red in this tree and are left red here:
+Re-derive them by running it rather than by editing this sentence. None of the
+thirty is red on this tree as of the 2026-09-25 run at `64dbde19`; two were,
+and stay named here as history rather than as state, because a reader who
+took them as current would go looking for a red runner that is gone:
 `ec/tools/test_check_site_census.py` and `ec/tools/test_xdata_cluster_names.py`,
-both because their subject is stale. A third was red until #751 landed the row
-for `ec/tools/test_inc_dptr_sites.py`, and is green in this tree, which holds
-that row and the one for `ec/tools/test_disasm8051.py` this branch adds:
+both because their subject was stale. A third was red until #751 landed the row
+for `ec/tools/test_inc_dptr_sites.py`, and this tree holds that row and the one
+for `ec/tools/test_disasm8051.py` that #688 added:
 `tools/test_readme_suite_table.py` is this table's own check, and a missing row
 is the one step a runner that finds suites by `find` cannot do for itself — a
 table missing either of those two rows would fail it. The totals above count
-tests *run*, failing suites included, which is what the runner counts.
+tests *run*, failing suites included, which is what the runner counts — and
+*run* is not *collected*: a class whose `setUpClass` raises contributes none of
+its own cases, and the error is not itself counted as one, so the same
+`ec/tools/test_xdata_cluster_names.py` ran 21 of its 28 while it was red in
+`TheGuardOffRegeneration` and runs 28 now, where an ordinary failing case runs
+and is counted like any other. The total moves with *how* a suite was red and
+not only with whether it was, so a suite going green does not add a knowable
+number of cases to the figure.
 
-The totals are not a pass. On 2026-09-25 this tree's last line reads `30
-suite(s) run, 874 tests; one or more FAILED`, and the runner exits 1, on
-`ec/tools/test_check_site_census.py::test_the_committed_join_holds` and
-`ec/tools/test_xdata_cluster_names.py::TheGuardOffRegeneration.setUpClass` —
-the two named above, and nothing else. Both are red on each side of this merge
-and on `main` at `d9170a77` alike;
-`docs/findings/0751-grader-self-test-gate.md` records the causes and the
-follow-up issues that own them, so nothing here sets out to fix either.
+The totals are not a pass and never were: what says whether a tree is green is
+the runner's last line and its exit status, not a number kept in a file. On
+2026-09-25 at `64dbde19` that last line reads `All 30 suite(s) passed, 882
+tests` and the runner exits 0.
+*(Merged-tree note, 2026-09-25: `2ed6f030` (#822) added
+`docs/findings/xdata-cluster-names-guard-off-recipe.md`, and on that tree one
+suite is red — `ec/tools/test_check_cluster_citations.py`, whose
+committed-prose case rejects `:220` of that new file, where one fenced block
+prints a guard-off regeneration beside the committed census and so names
+clusters from two rankings at once, and its `joined ['0x0464', '0x0465']` line
+cites two bytes the committed census puts in `main-ec-145`, which is not one of
+the eleven ids the block names. **Both counts above are unchanged** — thirty
+suites, 882 tests — and the last line on that tree reads `30 suite(s) run, 882
+tests; one or more FAILED` with the runner exiting 1. It is #822's file rather
+than this file's and it reproduces on a clean checkout of `origin/main`, so it
+is named here rather than fixed here: the `64dbde19` sentence above is still
+true of `64dbde19`, and this is the paragraph that stops it reading as true of
+the tree it is now sitting in.)*
+`docs/findings/0751-grader-self-test-gate.md` records the red set as it stood
+and the follow-up issues that owned it, and
+[`tools-readme-totals.md`](../docs/findings/tools-readme-totals.md)
+records the run these figures are read off. Nothing here sets out to have
+fixed either suite.
 `test_readme_suite_table.py` checks the *set* of rows below and deliberately
 not these counts — its docstring gives the reason — so the paragraphs above
 are the only thing holding them, which is exactly why they have to be
