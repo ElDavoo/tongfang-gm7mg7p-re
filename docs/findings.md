@@ -7685,3 +7685,49 @@ themselves, which is this work talking to itself and not a page inheriting a
 cell), and `0x2C2FA` is quoted only in
 `pd-index-geometry.md`, not in the three pages the issue names. No capture was
 opened, no register read back, and no EC, hardware, Windows or Ghidra involved.
+
+## 58. The prose's line citations are repointed, and a check now holds them (2026-09-25, issue #801)
+
+The write-up is
+[`prose-line-citations-held.md`](findings/prose-line-citations-held.md); this
+is the summary. Issue #801 named six cells across three files that had gone
+stale when `6bf9c234` (#683) regenerated the census CSVs, and it named them as
+one class rather than as six one-line corrections. The class is now a checker:
+**`ec/tools/check_citation_lines.py`** holds the line numbers the prose repeats
+out of a generated CSV to the row for the **address or cluster
+id** they name — never to a table of expected line numbers, because a rank into
+a file that keeps growing is not an identity, the argument
+`check_cluster_citations.py` already makes at cluster length. Three rules: the
+dispatch page's site table against `xdata-0860-census-sites.csv` per site, the
+`HAND_CHECKED["0x0860"]` comment against the same CSV as an unordered union
+(a deliberately *different* rule, insensitive to how the lines group into
+sites, so a regrouping reddens the first and not the second), and every
+`xdata-registers.csv`/`xdata-clusters.csv` line pointer in the two files its
+`ROW_SCOPE` names.
+
+**Eight cells moved and not one claim did.** `xdata-086x-dispatch.md`'s three
+`xdata-registers.csv:662` → `:817`, `reset-vector-dptr-targets.md`'s `:583` →
+`:738` and `:101` → `:105`, and two `xdata-clusters.csv:82` → `:87` the issue
+did not reach and which `grep` over that file returns alongside the two it did.
+Every figure in every one of the seven sentences is still exactly right, which
+is the whole difficulty: a sentence citing the wrong row of a generated CSV
+raises no error and miscounts nothing. `registers.yaml`'s three cells are
+corrected by a dated `*** ADDENDUM` inside the existing note rather than by an
+edit, and that file's three are **held by nothing**, because every live
+sentence in that note is a `*** CORRECTION` paragraph and a rule that skipped
+corrections would check nothing there. Stated as a decision, not a gap.
+
+A paragraph announcing itself a correction is **skipped**, for the reason
+`check_capture_claims.py` skips a denial: a quoted supersession is a denial of
+currency, and §4a-4d requires the wrong figure to stay visible beside its
+correction. The skip is counted and printed, so "checked nothing" cannot read
+as "found nothing"; the run prints `26 citation(s) resolve to the row they
+name, 8 skipped as superseded`, non-zero on both counts. The vocabulary is not
+free, and this branch is where that showed: the correction written for
+`reset-vector-dptr-targets.md` was first a table in the file's own voice, and
+being live prose it was *checked* — by the new tool, against its own author's
+superseded figures. It was rewritten as the blockquote §4a-4d's siblings use,
+not loosened out of the checker. No `status:` moved (`XDATA_0860` is still
+`present-untested`), no count moved, no CSV or Ghidra export was regenerated,
+`check_site_census.py`'s output is byte-identical, and no EC, hardware or
+Windows machine is involved anywhere: every input is a committed file.

@@ -223,6 +223,31 @@ into `r2 -a 8051` with no stitching needed.
   `tools/test_check_site_census.py` rejects each of those rows' disagreement
   and asserts the committed tree currently agrees. Not run by
   `.github/scripts/agent-gates.sh`, for the same reason as the two above.
+- **`tools/check_citation_lines.py`** — holds the **line numbers the prose
+  repeats** out of a generated CSV to the row they name, which is the one
+  failure no count catches: `xdata-086x-dispatch.md` cited
+  `xdata-registers.csv:662` three times after the `xdata-registers.csv`
+  regeneration in `6bf9c234` (#683) pushed the `0x0860` row to 817, and every
+  figure in all three sentences stayed exactly right. Three rules over
+  committed files: the dispatch page's site table against
+  `annotations/xdata-0860-census-sites.csv` per site, the
+  `HAND_CHECKED["0x0860"]` comment against the same CSV as an unordered union
+  (a deliberately *different* rule, insensitive to how the lines group into
+  sites, so a regrouping reddens the first and not the second), and every
+  `xdata-registers.csv`/`xdata-clusters.csv` line pointer in the two files its
+  `ROW_SCOPE` names. **Each is held to the address or cluster id, never to a
+  table of expected line numbers** — a rank into a file that keeps growing is
+  not an identity, the argument `check_cluster_citations.py` makes at cluster
+  length. A paragraph that announces itself a correction is skipped rather than
+  checked, for the reason `check_capture_claims.py` skips a denial: a quoted
+  supersession is a denial of currency, and `docs/findings.md` §4a-4d requires
+  the wrong figure to stay visible beside its correction. The skip is counted
+  and printed, and a rule that located nothing says so rather than passing
+  quietly. `docs/findings/prose-line-citations-held.md` records which cells are
+  covered and which are held by nothing.
+  `tools/test_check_citation_lines.py` pins one case per way a citation can be
+  wrong and asserts the committed prose currently agrees. Not run by
+  `.github/scripts/agent-gates.sh`, for the same reason as the three above.
 - **`tools/register_ref_table.py`** — the whole `annotations/registers.yaml`
   table in one pass: per-image count split *and* what each site behind it does
   (`read`/`write`/`movc` CODE pointer/handed to a subroutine/…), as a markdown
