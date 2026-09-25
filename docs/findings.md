@@ -1980,6 +1980,13 @@ cannot move them, and the status vocabulary reserves `confirmed-inert` for a
 live three-value, both-service-states run that §7 of the isolation procedure
 specifies.
 
+**A partly-graded day cannot carry that `confirmed-inert` call, and the grader
+that would read it now says so instead of implying it.** The closing summary of
+`ec/tools/grade_0751_isolation.py` had two cases where a run has three, so a
+three-value day with a withheld block printed "consistent with the static
+prediction" over the 6 of its 8 windows it had actually read. Write-up:
+`docs/findings/0751-grader-partial-grade-claims.md`.
+
 ### 7c. `0x07C4` moved on 2026-09-23, and the 15 EC-side sites of `0x07C4`-`0x07D5` (2026-09-24, issue #183)
 
 **The observation, already in the tree and written down nowhere.** §7 cites

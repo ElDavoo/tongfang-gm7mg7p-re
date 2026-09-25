@@ -78,6 +78,15 @@ MULTI_BLOCK = _set('multi-block')
 # both directions a count would be wrong in -- the leftover ahead of both
 # blocks, and the one between them.
 UNPLACED_WINDOW = _set('unplaced-window')
+# `3blocks/` with one `0x0784` row added inside block 1's write window, which
+# is the address and the step `0751-isolation-example-active.csv` records, so
+# the two agree. The marks are untouched, so the block structure and the void
+# block 2 are that set verbatim: the same 2 withheld of 8, and now one of the
+# 6 that were graded moved. It is here because that combination had no
+# committed fixture at all -- the three refused sets withhold every window and
+# the two clean ones move nothing -- so the `moved_groups` branch was reached
+# only over runs with no withheld window anywhere in the chain.
+BLOCK_CAPTURES_MOVED = _set('3blocks-moved')
 # §6's per-block dumps for the two-value day, and the only ones of the four
 # that carry a <value> a reader could confuse: both pairs read the same two
 # bytes in the opposite order, so a §4.6 verdict filed under the wrong block
@@ -1253,6 +1262,30 @@ class GradeTests(unittest.TestCase):
             self.assertIn(f'{flag} \'zz\' is not a value', err)
             self.assertIn('hex, with or without the 0x', err)
 
+    # The clean case, pinned. Nothing in the repository asserted this before:
+    # the three `assertIn('None of the §4.1-§4.3 bytes moved', out)` lines
+    # elsewhere are on the opening words, and over the committed tree the
+    # phrase 'consistent with the static prediction' was in the tool and
+    # nowhere else -- so the strongest claim this tool makes could be dropped
+    # or reworded off every clean run and no test would fail. It is the third
+    # case, and the two in MarkSetTests cover the halves that were broken.
+    def test_a_clean_multi_block_run_still_gets_the_prediction_sentence(self):
+        rc, out, _ = run(*MULTI_BLOCK)
+        self.assertEqual(rc, 0)
+        self.assertIn('None of the §4.1-§4.3 bytes moved in any window: '
+                      'consistent with the static prediction', out)
+        # §5's caveat is the other half of what makes this a scoped claim
+        # rather than a verdict: a byte that held still inside the window may
+        # still move at the next suspend, AC transition or EC reset. Dropped
+        # here it would leave the sentence unqualified in the other direction.
+        self.assertIn("for this capture's window only (§5: a byte that does "
+                      'not move inside the window may still move at the next '
+                      'suspend, AC transition or EC reset)', out)
+        # And a run with nothing withheld reaches neither of the two partly
+        # shapes: the banner is a fact about this input that is not there.
+        self.assertNotIn('were not graded', out)
+        self.assertNotIn('No window in this run was graded', out)
+
 
 class MarkSetTests(unittest.TestCase):
     """§6's "the marks in all three CSVs must carry the same labels", checked.
@@ -1345,6 +1378,69 @@ class MarkSetTests(unittest.TestCase):
         # established what the control arm did.
         self.assertIn('No window in this run was graded, so this output says '
                       'nothing about §4.1-§4.3 for it', flat)
+
+    # The other way a run can end up with little to say, and the one the
+    # line above does not cover: some of its windows graded and some not. The
+    # withheld banner is right in that case, but the sentence under it is a
+    # claim about the capture, and over 6 of its 8 windows it is a claim about
+    # 6 wearing the whole capture's wording. Nothing moves here, so the
+    # sentence under test is the one that says so.
+    def test_a_partly_withheld_run_says_what_its_graded_windows_show(self):
+        rc, out, _ = run(*BLOCK_CAPTURES)
+        self.assertEqual(rc, 1)
+        flat = " ".join(out.split())
+        # The banner is unchanged and still carries its own count.
+        self.assertIn('2 of the 8 window(s) above were not graded', flat)
+        # And the line under it now names the same split from the other side,
+        # with both numbers: 6 graded is the subset the movement fact is a
+        # fact about, 2 withheld is what it says nothing about. Written out
+        # rather than derived, so a change in either count fails here.
+        self.assertIn('None of the §4.1-§4.3 bytes moved in any of the 6 '
+                      'window(s) that were graded', flat)
+        self.assertIn('the 2 window(s) withheld above are not part of it', flat)
+        # The comparison to the prediction is not made over a run the report
+        # read part of. This is the sentence the issue is about: it used to be
+        # printed here, unqualified, under the banner that says two of these
+        # windows were never looked at.
+        self.assertNotIn('consistent with the static prediction', out)
+        # Nor is this the all-withheld line. Three cases now, and the partial
+        # one may not reach for either of the other two's wording.
+        self.assertNotIn('No window in this run was graded', out)
+        # §7's call is named as out of reach rather than left to be inferred
+        # from the banner: the withheld block is one of the three values
+        # `confirmed-inert` needs, and the paragraph below already says so.
+        self.assertIn('`confirmed-inert` needs all three values, and a block '
+                      'this report refused to read is one of the three', flat)
+
+    # The same split with something having moved, which no committed fixture
+    # reached before this one: the sets above withhold every window, and the
+    # clean ones move nothing. So the `moved_groups` branch was printed over
+    # a partly-graded run with no withheld window anywhere in the chain, and
+    # the attribution underneath it read as covering the whole run.
+    def test_a_movement_in_the_graded_windows_of_a_partly_withheld_run_is_scoped(
+            self):
+        rc, out, _ = run(*BLOCK_CAPTURES_MOVED)
+        self.assertEqual(rc, 1)
+        flat = " ".join(out.split())
+        # The movement is named exactly as a clean run names it: 0x0784 steps
+        # inside block 1's write window and nothing else in the day moves.
+        self.assertIn('At least one of the §4.1-§4.3 bytes moved after a '
+                      'mark: PL1/PL2/PL4 (§4.1).', out)
+        # And it is scoped before the attribution, not by the banner above it:
+        # the graded count, the withheld count, and the same refusal to report
+        # what the withheld windows would have shown.
+        self.assertIn('That is the 6 window(s) that were graded. The 2 '
+                      'window(s) withheld above are not part of it', flat)
+        self.assertIn('what they would have shown is not reported here', flat)
+        # §5's attribution is still the sentence printed -- this is a PL move
+        # and not a mailbox poke -- and it now reads as a claim about those 6
+        # rather than about the run of 8.
+        self.assertIn('That contradicts the static prediction', out)
+        self.assertNotIn('host-written reload mailbox', out)
+        # Scoping a movement is not the same as declining to report it. The
+        # all-withheld line would be the wrong thing to reach for here: 6
+        # windows were graded, and one of them moved.
+        self.assertNotIn('No window in this run was graded', out)
 
     # The other half of the same hole, found one step earlier: two consoles
     # that disagree about what an action was. A mistyped digit in one of three

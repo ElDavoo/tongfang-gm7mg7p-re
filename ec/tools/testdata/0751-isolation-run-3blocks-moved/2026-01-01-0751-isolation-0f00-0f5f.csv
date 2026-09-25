@@ -1,0 +1,21 @@
+# CONSTRUCTED INPUT, NOT A CAPTURE. No EC was read to make this file; every
+# timestamp below was written by hand. See ../README.md.
+# Shape: the 0x0F00-0x0F5F fan-table third of the same three blocks, the same
+# eight marks a second after the 0700 capture's so the grader sees one action
+# marked in every watcher, and no change rows at all -- §4.2's prediction, and
+# the branch that keeps the grader from reading a fan-table move into this
+# day. Marks only is what a quiet page looks like from three consoles. Block 2
+# is the void one here too, on the same ground as in the 0700 capture: its
+# restore mark is absent. The one §4.1 move this set puts in a graded window
+# is in the 0700 capture; nothing here moves, so the group the closing summary
+# names is 0x0784's alone and not a fan-table one. Not a prediction that the
+# table stays put, nor that a block will come out void, nor that a PL moves.
+ts,addr,old,new
+2026-01-01T12:00:11.000+01:00,MARK,,no-op wrote 0x0751=0x10
+2026-01-01T12:00:41.000+01:00,MARK,,wrote 0x0751=0xA0
+2026-01-01T12:01:11.000+01:00,MARK,,restored 0x0751=0x10
+2026-01-01T12:05:11.000+01:00,MARK,,no-op wrote 0x0751=0xA0
+2026-01-01T12:08:31.000+01:00,MARK,,wrote 0x0751=0x00
+2026-01-01T12:15:11.000+01:00,MARK,,no-op wrote 0x0751=0x00
+2026-01-01T12:15:41.000+01:00,MARK,,wrote 0x0751=0x10
+2026-01-01T12:16:11.000+01:00,MARK,,restored 0x0751=0x00

@@ -158,6 +158,20 @@ comes from a human holding the rest of the notes.
 One action is marked in every watcher, so the same write appears as a MARK row
 per capture; marks within `MARK_MERGE_SECONDS` are one window, not several.
 
+**The closing section has three cases, not two.** A run that graded nothing
+says so, a run that graded everything reports its movement and compares it to
+the static prediction, and a run that graded some of its windows says the
+movement over those and declines to compare it -- because "consistent with the
+static prediction" is a claim about the capture, and over a subset of the
+capture's windows it is a claim about the subset wearing the whole capture's
+wording. Both halves of the partly-graded case are scoped: the "nothing moved"
+reading names the windows it is a reading of, and the "something moved" one
+says the same before the attribution underneath it. The withheld banner that
+opens the section is not what carries that, and a reader who reads only the
+line under it is the case this is for. §7's `confirmed-inert` needs all three
+values, so a day that withheld a block leaves a gap in the call that no
+sentence here can close.
+
 Nothing here touches hardware; it reads files only.
 
 Usage:
@@ -1641,6 +1655,12 @@ def main(argv=None):
             if name not in moved_groups:
                 moved_groups.append(name)
 
+    # The windows the loop above actually printed. `len(shown)` and not
+    # `len(windows)`: it is the denominator the withheld banner already uses,
+    # so the two counts agree by construction, and on a --block run it is that
+    # block's own windows rather than the whole mark stream's.
+    graded = len(shown) - withheld
+
     void = report_blocks(blocks, selected)
 
     # Both file lists are read before either is printed, so §4.6 can name a
@@ -1666,6 +1686,15 @@ def main(argv=None):
     if moved_groups:
         print(f"  At least one of the §4.1-§4.3 bytes moved after a mark: "
               f"{', '.join(moved_groups)}.")
+        if withheld:
+            # The movement is a fact about the windows that were printed, and
+            # over a run that withheld some, it is the attribution below it
+            # that decides what the fact is evidence of. Scoped here and not
+            # left to the banner, so a reader who reads only the movement
+            # line cannot take it for the whole run.
+            print(f"  That is the {graded} window(s) that were graded. The "
+                  f"{withheld} window(s) withheld above are not part of it, "
+                  "and what they would have shown is not reported here.")
         if moved_groups == [TRIGGER_GROUP]:
             # The trigger group alone, with no table byte: the difference is
             # the mailbox the host writes to ask for a copy, and reading it
@@ -1684,10 +1713,27 @@ def main(argv=None):
                   "ec/annotations/manual-fan-ctrl-0751.md §5 if it is the "
                   "PLs, or §4.2 if it is the fan table -- capture it in "
                   "full, it is the more interesting outcome.")
-    elif withheld == len(shown):
+    elif graded == 0:
         print("  No window in this run was graded, so this output says nothing "
               "about §4.1-§4.3 for it -- which is the honest answer here, and "
               "not a quiet one.")
+    elif withheld:
+        # Some windows and not all. The clean sentence below is a claim about
+        # the capture; over a subset of its windows it is a claim about the
+        # subset, and the whole difference between the two is in a phrase that
+        # does not name the windows. So the fact is stated over the windows
+        # that were read, the withheld ones are named as outside it, and the
+        # run-level comparison is declined rather than quietly narrowed -- the
+        # overclaim `docs/findings.md` §4 is a record of.
+        print(f"  None of the §4.1-§4.3 bytes moved in any of the {graded} "
+              f"window(s) that were graded: that is what those {graded} "
+              f"windows show, and the {withheld} window(s) withheld above "
+              "are not part of it. The static prediction is a claim about the "
+              "whole capture, and this output does not make it over a run it "
+              "only read part of -- a run in which every window was graded is "
+              "what would. §7's `confirmed-inert` needs all three values, and "
+              "a block this report refused to read is one of the three, so "
+              "the paragraph below is as far as this run goes.")
     else:
         print("  None of the §4.1-§4.3 bytes moved in any window: consistent "
               "with the static prediction, for this capture's window only "
