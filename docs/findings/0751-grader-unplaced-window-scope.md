@@ -227,6 +227,7 @@ fixtures off `Path(__file__).parent` at
 matter either way.
 
 Re-derived rather than restated, one count per commit that touches the suite
+plus the two commits between them that did not move it, each row self-labelling
 (`grep -c "    def test_"` at each revision, which agrees with the run at the
 tip). Every step is attributed to a commit, so **no step is a residual**:
 
@@ -237,7 +238,7 @@ tip). Every step is attributed to a commit, so **no step is a residual**:
 | `b3f30987` | 74 | +2 | #530 as #533, this change |
 | `7a26a932` | 76 | +2 | #532 as #538 |
 | `619afcb2` | 82 | +6 | #472 as #638, [`0751-stage-mark-labels.md`](0751-stage-mark-labels.md):246 |
-| `3f713159` | 82 | — | #500 as #657, no suite change |
+| `3f713159` | 82 | — | #500 as #657, assertions added inside an existing method |
 | `f0f3b251` | 88 | +6 | #664 as #674, [`0751-early-exit-row.md`](0751-early-exit-row.md):230 |
 | `0a1fef97` | 88 | — | #549 as #710, `test_ec_watch.py` only |
 | `1e0bc0f2` | **93** | +5 | #548 as #712, [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md):210 |
@@ -287,8 +288,9 @@ recorded so the chain above is not read as agreeing with them.
   **88 to 93** — five methods, of which that table names four;
   `test_a_byte_the_encoding_cannot_read_does_not_stop_the_preflight` is the one
   it does not. The same sentence's `test_ec_watch.py` "21 tests to 29" has both
-  endpoints 10 low for the same reason: #549's ten `test_a_grader_*` cases
-  (`0a1fef97`) landed in between, so that file's step is 31 to 39, not 21 to 29.
+  endpoints 10 low for the same reason: #549's ten grader-lookup cases (five of
+  them named `test_a_grader_*`) landed in between at `0a1fef97`, so that file's
+  step is 31 to 39, not 21 to 29.
 - [`0751-grader-block-scoping.md`](0751-grader-block-scoping.md):165 and :189
   cite `test_a_mark_that_is_not_one_of_the_three_forms_is_an_error` by its
   pre-#472 name. That is #498's file, so the same correction is not applied
@@ -360,10 +362,11 @@ sentence would pass the first and fail the second.
 That "only committed fixture" was re-checked the same way, over every
 `0751-isolation-run-*/` directory rather than the three runs above, and it still
 holds. Nine of them print a withheld banner or the count line; `unread-window/`
-is the only one that prints both, and the fixtures that have landed since this
-was written (`staged/`, `void-block/`, `void-block-with-dumps/`,
-`multi-block/`, `disagreeing-marks/`, `missing-mark/`) change neither half of
-the claim.
+is the only one that prints both, and the census over all eleven committed
+`0751-isolation-run-*/` directories changes neither half of the claim. Only
+`staged/` has landed since this write-up was written (`b3f30987`, the commit
+that added it); the other ten were already in the tree then, which
+`git ls-tree --name-only b3f30987:ec/tools/testdata/` shows.
 
 All three fail against the unfixed tool, and for the reasons they are here:
 the first on the count and the absence of `consistent with the static
