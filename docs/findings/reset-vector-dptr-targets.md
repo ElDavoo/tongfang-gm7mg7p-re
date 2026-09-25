@@ -132,7 +132,7 @@ takes the `0xD980` store arm, `0x07FD`–`0x07FF` fall through to the skip, and
 carry into the first `subb` — the two ways this number has been got wrong.
 
 **The skip window is exactly the cluster, and that is all that is claimed.**
-`ec/annotations/xdata-clusters.csv:82` carries `main-ec-081` over
+`ec/annotations/xdata-clusters.csv:82` carries `main-ec-086` over
 `0x07FD`–`0x07FF` — three bytes, 6 direct citing functions, 21 total, with
 named writers among them (`bank0:0xD5D4`
 `write_33_to_1501_join_loop_d5db`, `bank0:0xD74F`
@@ -426,31 +426,31 @@ grep -h annotations_unmatched /tmp/ec/reports/apply-bank0.tsv   # 0
 
 ```console
 $ python3 ec/tools/check_cluster_citations.py
-docs/findings.md:5636: 0x0800 is not a member of any cluster this line names (`main-ec-081`); it is a member of `main-ec-100`
+docs/findings.md:5636: 0x0800 is not a member of any cluster this line names (`main-ec-086`); it is a member of `main-ec-104`
 1 citation(s) disagree with ec/annotations/xdata-clusters.csv
 ```
 
 **The summary's unit was wrong — not the membership claim, and not the any-of
-fallback.** The claim is right: §26 named exactly `main-ec-081`'s three bytes.
+fallback.** The claim is right: §26 named exactly `main-ec-086`'s three bytes.
 The fallback is doing what its docstring says it does, which is to hold a unit
 that names one cluster against that one cluster. The one unit it reported, which
 started at `docs/findings.md:5636`, carried two attributions:
 
 | attribution | addresses | cluster named |
 |---|---|---|
-| the membership claim, "those three are the whole of the … cluster" | `0x07FD` `0x07FE` `0x07FF` | `main-ec-081` |
+| the membership claim, "those three are the whole of the … cluster" | `0x07FD` `0x07FE` `0x07FF` | `main-ec-086` |
 | the bound operand, the `setb c` at `0xD982` making the second bound | `0x0800` | none |
 
 `0x0800` is in `ec/annotations/xdata-registers.csv:583`, so it is a known XDATA
-address, and `0x0630 0x06C4 0x0800` is `main-ec-100`
-(`ec/annotations/xdata-clusters.csv:101`) rather than the `main-ec-081` the same
+address, and `0x0630 0x06C4 0x0800` is `main-ec-104`
+(`ec/annotations/xdata-clusters.csv:101`) rather than the `main-ec-086` the same
 unit named. The summary now says the two things in two sentences, in a fenced
 block rather than a blockquote so that the split does not depend on where the
 line breaks fall (see follow-up 6):
 
 ```
 … except it steps over `0x07FD`, `0x07FE` and `0x07FF`** — 3,837 of 3,840
-bytes, and those three are the whole of the `main-ec-081` cluster.
+bytes, and those three are the whole of the `main-ec-086` cluster.
 The `setb c` at `0xD982` is what makes the second bound `0x0800` rather than
 the `0x07FF` its own immediates spell out.
 ```
@@ -483,12 +483,12 @@ admitted real drift would show the same way.
 
 ### The hand re-check
 
-`main-ec-081` is `0x07FD 0x07FE 0x07FF` and nothing else
+`main-ec-086` is `0x07FD 0x07FE 0x07FF` and nothing else
 (`ec/annotations/xdata-clusters.csv:82`), which is what the reworded first
 sentence still says, and the new bound sentence makes no membership claim at
 all. The `0xD96C` loop's own execution trace (recipe 4 under "Reproducing
 this") puts `0x0800` on the store arm, so **the boot-path clear stores `0x00`
-at `0x0800`, a byte the `main-ec-100` cluster names** — 3 addresses, 4
+at `0x0800`, a byte the `main-ec-104` cluster names** — 3 addresses, 4
 references, `functions_touched` 2, one of them
 `bank1:0x8DBC=write_05_to_06c4_after_1984_check [gate]`, `co_reading` 0 and
 `co_reading_dominant` `no`.
@@ -561,7 +561,7 @@ would be a corpus-wide loosening made by half-measure against one sentence.
    separate change that would touch `audit_call_targets.py` and
    `bank-call-audit.md` substantially.
 3. **What XDATA `0x07FD`/`0x07FE`/`0x07FF` are** — the three bytes a boot-time
-   clear spares, which are exactly `main-ec-081` (`0x07FD`–`0x07FF`, 21 citing
+   clear spares, which are exactly `main-ec-086` (`0x07FD`–`0x07FF`, 21 citing
    functions), with no `registers.yaml` row and placeholder rows at
    `0x07F3`/`0x07F6` either side. A value preserved across a warm reset is the
    obvious hypothesis and is explicitly not claimed here.

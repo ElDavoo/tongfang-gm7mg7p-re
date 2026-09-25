@@ -322,8 +322,19 @@ PROGRAM_COL = {"main-ec": MAIN_PROGRAMS, "pd": (PD_PROGRAM,)}
 # in the report; a bucket that never fires would be a classifier that stopped
 # looking, which is why the self-test asserts two of them are non-empty.
 BUCKETS = ("read", "write", "read+write", "passed-to-call", "address-taken")
-# The two spellings, spelled as they appear in the decompiled C.
+# The two spellings, spelled as they appear in the decompiled C. `raw` counts
+# occurrences of these two and nothing else, so the `pair-literal` spelling
+# below is deliberately *not* one of them: it is not a token the decompiler
+# wrote, it is a fact this tool derived about an argument, and counting it here
+# would move `extmem_raw` for a reason no reader of that pin could see.
 SPELLINGS = ("DAT_EXTMEM", "symbol")
+# The third value `spelled_as` can carry, and the only one this tool infers
+# rather than reads. An address reaches it through a call this tool resolved
+# (see `pair_sites()`), so it is orthogonal to the two token spellings above:
+# an address can be `symbol+pair-literal`, and the self-test asserts the real
+# invariant -- never `symbol` and `DAT_EXTMEM` together in one program -- rather
+# than the old "one spelling per address" that only held while there were two.
+PAIR_SPELLING = "pair-literal"
 ASSIGN = ("=", "|=", "&=", "+=", "-=", "*=", "/=", "^=", "%=", "<<=", ">>=")
 
 REGISTER_COLUMNS = [
@@ -561,10 +572,35 @@ ORACLE = {
     # 6, where it read 4) without moving this census. The 0x1665 note in
     # registers.yaml works through that two-methods disagreement.
     #
-    # `named_in_tree` 164 -> 167 is the third name of the three: all three
-    # addresses are now in the symbol table *and* reached by a decompiled
-    # function, which is what that pin counts. Still 192 - 25, with the same two
-    # NOT_IN_TREE entries (0x07C7, 0x07C8) as issue #256 recorded.
+    # *** 2026-09-25, issue #279: the FULL census moves for the second time in
+    # this block's history, and again by a mechanism that is not a new address
+    # and not an edit to any `.asm`. 1171/14822 -> 1326/15696 (main EC
+    # 1062/13964 -> 1218/14838, PD 109/861 -> 108/858): the pair-accessor pass
+    # resolves 437 call sites' literal first arguments, each touching two
+    # adjacent bytes, which is +874 references over +155 distinct addresses.
+    # **The two token halfs above do not move, and had to be made not to.**
+    # `extmem_*` and `symbol_*` answer "how many references are *spelled* this
+    # way", and an address reached both as a token and through an accessor now
+    # has references of both kinds -- 58 of them. Summing `refs` over the
+    # addresses that carry a spelling would have quietly redefined all four
+    # pins to "references to addresses that carry this spelling somewhere" and
+    # moved them by +246 and +138, which is a different question wearing the
+    # same number. `blank_entry()` now carries `spelled_refs` for exactly that,
+    # and the 59 mixed addresses are pinned as their own figure below rather
+    # than absorbed.
+    #
+    # The cross-check that says the movement is understood is the one the
+    # comments above it have used three times now: `extmem_commented` (9), the
+    # PD half and `extmem_both` (37) are all unmoved, because none of them is
+    # reached through an accessor, so the addresses and the spellings did not
+    # change -- the census learned about 155 addresses it had a blind spot for.
+    # `pd_only` 109 -> 108 and `both` 48 -> 49 are not the pass either: 0x03DE
+    # and 0x03B8, newly reached in bank1, were already reached in the PD image,
+    # so the overlap grew by exactly one net address. (The PD half's own
+    # distinct count of 157 and 858 references are unmoved, and the address
+    # `0x03DE` the pass resolves is read through `movx` at `bank1/D37F.asm`'s
+    # `mov DPTR,#0x3de / lcall 0x8886` -- a bank1 XDATA byte that shares a
+    # *number* with a PD byte, which is the collision `program=both` records.)
     "extmem_distinct": 1021, "extmem_refs": 8675,
     "extmem_raw": 8684, "extmem_commented": 9,
     "extmem_main_distinct": 901, "extmem_main_refs": 7817,
@@ -573,10 +609,9 @@ ORACLE = {
     "symbol_main_distinct": 161, "symbol_main_refs": 6147,
     "symbol_pd_distinct": 0, "symbol_pd_refs": 0,
     # The full census this tool publishes.
-    "distinct": 1171, "refs": 14822,
-    "main_distinct": 1062, "main_refs": 13964,
-    "pd_only": 109, "both": 48,
-    # Addresses the symbol table names AND the census reaches. It is not
+    "distinct": 1326, "refs": 15696,
+    "main_distinct": 1218, "main_refs": 14838,
+    "pd_only": 108, "both": 49,
     # `len(symbols)`: naming an address in registers.yaml does not put it in
     # a decompiled function, so the two counts part company whenever a
     # register is named that no surviving function touches. It moved 44 -> 79
@@ -612,11 +647,26 @@ ORACLE = {
     # decompiled function, so both are named-in-tree. Same cause as the
     # extmem/symbol movement above, and the same cross-check applies.
     # 164 -> 167, issue #267: 0x1665, 0x1666 and 0x166A, the same three.
-    # Still 192 - 25, and the two NOT_IN_TREE entries are unchanged.
-    "named_in_tree": 167,
+    # 167 -> 175, issue #279, and 192 - 17, the same arithmetic as every block
+    # above it: eight of the 25 NOT_IN_TREE entries stop being true and the
+    # eight that stop are the eight that arrive, the same eight -- 0x0402
+    # 0x0404 0x0408 0x040A 0x040C 0x040E 0x0410 0x043A. Nothing else crosses
+    # the boundary in either direction, which is the measurement the comment
+    # asks for and which the self-test's set assertion re-derives: the high
+    # halves this pass reaches (0x0403, 0x0405, 0x043B, ...) are mostly *not*
+    # in the symbol table, so they are new census rows without moving this
+    # count. Only 0x0403, the second half of `BAT_DESIGN_CAPACITY`, is both.
+    "named_in_tree": 175,
 }
 ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
-# `0x08A8`'s 170 above is 42-fold: all 44 of its source functions are members of
+# **Unmoved by issue #279, and worth saying why rather than leaving it as a
+# coincidence.** 155 new addresses and 874 new references went in, and neither
+# of these two moved a single reference: the busiest address the pass reaches is
+# `0x0834` at 47, well under the 168 of `0x0843`/`0x0844` immediately behind
+# these. The pin is a statement about the top of the distribution, and a pass
+# that adds 155 addresses spread over the 0x03xx-0x06xx working page does not
+# touch the top of it. `0x08A8`'s 170 is 42-fold: all 44 of its source
+# functions are members of
 # a co-reading group -- 42 of them the counter sweep, the other two a four-file
 # `bank0` group -- so its `sources_beyond` is **0** and the count of sources
 # this relation can distinguish is 0 too. The pin stands as written: the census
@@ -636,13 +686,27 @@ ORACLE_TOP_MAIN = (("0x0440", 181), ("0x08A8", 170))
 # `python3 ec/tools/xdata_register_map.py --co-reading-sweep`, which prints the
 # floor this is read at next to the curve it was chosen from.
 #
+# *** 2026-09-25, issue #279: 24 -> 28 groups over 120 -> 142 files, largest
+# still 42. The relation is over *which `.c` files name which addresses*, and
+# 155 new addresses means more pairs of files have a common core of 8 or more,
+# so the relation found more structure rather than the same structure
+# differently numbered. The floor is untouched, and that is the claim the sweep
+# exists to make re-derivable: COREADING_MIN_CORE was chosen against a curve
+# and this change moves the point the curve is read at, not the curve's shape.
+# The 42 is still the counter sweep, still `bank1/8001.c` to `bank1/80EF.c`,
+# still a 19-address core -- the one group this pass does not touch, since no
+# accessor is called in the sweep and none of its 19 addresses is reached that
+# way. The eight hand-read entries in COREADING_CHECKED are all unmoved for
+# the same reason, which is the external check that the pass did not quietly
+# re-shape the relation.
+COREADING_GROUPS = 28
+COREADING_FILES = 142
+COREADING_LARGEST = 42
 # The 42 is the counter sweep of `annotations/xdata-06c2-06db-timers.md` §2 --
 # the group's common core is 19 addresses, the 42 `index.csv` sizes sum to
 # exactly 393, and 16 of them are one-instruction listings. All three are that
 # page's §2 facts, now reproduced by the tool rather than by a hand count.
-COREADING_GROUPS = 24
-COREADING_FILES = 120
-COREADING_LARGEST = 42
+#
 # The 42 sweep files are the first and last `out_file` of the largest group, and
 # the group's size is the whole of it: a sweep split across two groups would be
 # a different claim from one group of 42, and this asserts the difference.
@@ -715,6 +779,91 @@ COREADING_CHECKED = {
     # fail. 0 + 1 = 1.
     "0x00B6": (0, 1),
 }
+# Issue #279: the routines `load_pair_accessors()` selects, pinned as a *set* so
+# the rule is asserted rather than the constant. A sixth accessor annotated
+# without a change here is not a failure by itself -- the rule finds it, and its
+# callers are resolved through it -- but a *retreat* from one of these six
+# would be the resolver quietly narrowing, and that has to fail.
+#
+# Four are the issue's: 0x8886/0x888C/0x8892/0x889E. `0x8898` is the fifth the
+# issue does not name, of identical shape and already annotated; `0x9193` is a
+# sixth, byte-for-byte the same body as `0x888C` and reached only with a
+# register (`bank1/D946.c:43`, `bank1/D4D3.c:25`), so it resolves nothing.
+# Including it is what it means to read the set out of the tree instead of
+# listing the ones that pay: a name that happens to be on the list is not what
+# makes a call site resolve.
+#
+# The pd image's own pair accessor, `read_be16_from_dptr` at `pd:0x38D3`, is
+# selected by the same rule and its single caller passes no argument, so the
+# whole set resolves inside bank1. That is why no program carve-out appears in
+# `load_pair_accessors()`: scoping it to bank1 would have been a boundary with
+# a number behind it, and the number is zero.
+PAIR_ACCESSORS = (
+    ("read_xdata_pair_to_r1r2", "read"),
+    ("read_xdata_pair_to_b_and_a", "read"),
+    ("read_xdata_pair_to_r3r4", "read"),
+    ("read_be16_from_dptr", "read"),
+    ("store_r1_r2_to_xdata_at_dptr", "write"),
+    ("write_r1r2_to_xdata_pair", "write"),
+    ("write_r3r4_to_xdata_pair", "write"),
+)
+# How wide the third spelling is, as the ORACLE block pins the other two. Both
+# are arithmetic over what `pair_sites()` resolves on the committed tree: 214
+# distinct addresses, of which 58 also carry a token spelling and 156 are
+# reached *only* this way, and 874 references in all -- 437 call sites, each
+# touching two adjacent bytes because the accessor's `inc DPTR` is what makes
+# it a pair access.
+#
+# **58, not 59, and the difference is worth one line.** A register row whose
+# `spelled_as` reads `symbol+DAT_EXTMEM` is a `program=both` row the two token
+# spellings meet on, which has nothing to do with this pass; counting "rows
+# with a `+`" would have mixed those in.
+PAIR_ROWS = 214
+PAIR_ROWS_MIXED = 58
+# The two worked examples the issue asks for, as the exact multiset of resolved
+# sites rather than a bucket total. `0x0402` is the address whose decompile
+# Ghidra invented a *routine* at (`common/0402.c`, spelled `FUN_CODE_0402` at
+# ten bank1 call sites), and `0x0408` the second of the same; between them they
+# are the whole of the `FUN_CODE_` half of the pass.
+#
+# **10 against 3 is not a disagreement, it is the two methods.** The image has
+# three `mov DPTR,#0x0402` + `lcall <accessor>` encodings in bank1, which is
+# what `registers.yaml`'s `static_refs_main_ec: 3` counts and this pass does
+# not touch. The census counts ten because the decompiler emitted one block
+# into five overlapping `.c` files (B407 forwards to B40E; B40E/B415/B41C/B43B
+# are successive seeds over 0xB40E-0xB4B6, and the `mov DPTR,#0x0402` at
+# 0xB4BD is inside that span). The census is per-`.c`-file in its counting and
+# has always been a lower bound on the machine code; the inflation is a
+# pre-existing property of the whole census, not of this pass.
+PAIR_RESOLVED = {
+    # 7 read / 3 write, all ten in bank1, the writers being the three
+    # `write_r3r4_to_xdata_pair` / `write_r1r2_to_xdata_pair` sites. 0x0403
+    # picks up a writer for the first time as the `inc DPTR` half.
+    0x0402: (("bank1/AD85.c", "read"), ("bank1/B33B.c", "read"),
+             ("bank1/B407.c", "read"), ("bank1/B40E.c", "read"),
+             ("bank1/B415.c", "read"), ("bank1/B41C.c", "read"),
+             ("bank1/B43B.c", "read"), ("bank1/DB0B.c", "write"),
+             ("bank1/DEE8.c", "write"), ("bank1/DEF1.c", "write")),
+    # 3, all write, and all the same accessor: `write_r1r2_to_xdata_pair`.
+    0x0408: (("bank1/DB0B.c", "write"), ("bank1/DEE8.c", "write"),
+             ("bank1/DEF1.c", "write")),
+}
+# The double-count trap, pinned as a set. `bank1/9354.c:19` passes
+# `DAT_EXTMEM_0318` to `read_xdata_pair_to_r3r4`, and `occurrence_re` already
+# counts that argument as a `passed-to-call` reference. Resolving it as a pair
+# as well would give `0x0318` a read it has no site for and `0x0319` a reference
+# with no site behind it.
+#
+# **Three independent gates stop that and no single-point edit opens it** --
+# see `pair_sites()`. The literal gate is what does it today
+# (`DAT_EXTMEM_0318` is not one of its forms); the `fullmatch` gate catches a
+# widening of the literal gate; and the `int()` catches dropping that one. The
+# self-test pins the outcome rather than any of them: `0x0318` is reached
+# through an accessor in exactly two other files, and its row keeps the two
+# spellings separable -- 14 references spelled `DAT_EXTMEM_` and 2 spelled
+# `pair-literal`, out of 16 in all.
+PAIR_ALREADY_COUNTED = (0x0318, "bank1/DEE8.c", "bank1/DEF1.c")
+
 # The two symbol-table addresses register_ref_table.py finds main-EC sites for
 # that the census does not. Both are inside
 # bank0:0x94D0=copy_code_table_into_0730_07a7: 0x0733 is spelled
@@ -722,6 +871,15 @@ COREADING_CHECKED = {
 # all -- `sVar5 = 0x735; ... *(char *)(sVar5 + bVar2)` is an indexed access off
 # a raw base literal. Only the first is findable, so only it is checked; see
 # the self-test and the report's blind-spot section.
+#
+# **Unmoved by issue #279, and that is the point of the pair of them.** The
+# pair pass reads a `FUN_CODE_`/`DAT_CODE_` literal in exactly one context --
+# the first argument of a routine whose committed `.asm` is two `movx @DPTR`
+# an `inc DPTR` apart -- and neither address is reached that way. 0x0733 is a
+# real code pointer into `copy_code_table_into_0730_07a7`; the reason the
+# exclusion was ever relaxed for `0x0402` is that a *callee's* `movx` settles
+# the address space, and 0x0733 is not handed to such a callee. The self-test
+# asserts `code_only == {0x0733}` after the pass, not before it.
 BLIND_SPOT = (0x0733, 0x0735)
 
 # The addresses the generated symbol table names and the census does not reach:
@@ -770,39 +928,27 @@ NOT_IN_TREE = {
     # tree, spelled as a function -- which is neither `DAT_EXTMEM_` nor a
     # generated symbol name, and so matches neither half of the occurrence
     # regex. Re-derive with `grep -rn FUN_CODE_0402 ec/decompiled/`.
-    0x0402: "reached through a form the scan cannot see: the export spells the "
-            "address as a function name, `FUN_CODE_0402`, and the census's "
-            "regex matches no function name",
-    # 16 occurrences, all the same shape: the 16-bit-pair helpers take the
-    # address as a bare hex literal. `read_xdata_pair_to_r1r2(0x404)` at
-    # bank1/B214.c:19 is the first; the `mov DPTR,#0x404; lcall 0x8892` pair
-    # behind it is in bank1/B214.asm:B214.
-    0x0404: "reached through a form the scan cannot see: passed to a 16-bit "
-            "pair helper as a bare hex literal, `read_xdata_pair_to_r3r4"
-            "(0x404)` at bank1/B214.c:19",
-    # The second half of the same decompiler mistake as 0x0402, at its second
-    # site: `FUN_CODE_0408`, from `common/0408.c`.
-    0x0408: "reached through a form the scan cannot see: the export spells the "
-            "address as a function name, `FUN_CODE_0408`, and the census's "
-            "regex matches no function name",
-    0x040A: "reached through a form the scan cannot see: passed to a 16-bit "
-            "pair helper as a bare hex literal, `read_xdata_pair_to_r1r2"
-            "(0x40a)` at bank1/AE2B.c:20",
-    0x040C: "reached through a form the scan cannot see: passed to a 16-bit "
-            "pair helper as a bare hex literal, `read_xdata_pair_to_r1r2"
-            "(0x40c)` at bank1/AE92.c:18",
-    0x040E: "reached through a form the scan cannot see: passed to a 16-bit "
-            "pair helper as a bare hex literal, `write_r1r2_to_xdata_pair"
-            "(0x40e)` at bank1/B50E.c:29",
-    0x0410: "reached through a form the scan cannot see: passed to a 16-bit "
-            "pair helper as a bare hex literal, `write_r3r4_to_xdata_pair"
-            "(0x410)` at bank1/B50E.c:36",
+    #
+    # *** 2026-09-25, issue #279: the first reason below is the one this pass
+    # acts on, and 0x0402 and seven of its neighbours have left the dict
+    # because the reason stopped being true. `occurrence_re` still matches no
+    # function name -- that has not changed and should not. What changed is
+    # that `pair_sites()` resolves a `FUN_CODE_` literal handed to a callee
+    # whose committed `.asm` is two `movx @DPTR` an `inc DPTR` apart, which is
+    # the discriminator this issue is about: `movx` names the external space,
+    # so the address is XDATA whatever Ghidra called it. The 25-entry set here
+    # is 17. The eight that closed are 0x0402 0x0404 0x0408 0x040A 0x040C
+    # 0x040E 0x0410 and 0x043A, and `0x0420` is deliberately *not* one of
+    # them: it is passed to `add_full_product_to_dptr`, which is a record
+    # helper rather than a two-byte accessor and is not selected by
+    # `pair_accessor()`, so the same spelling with a different callee still
+    # says nothing. The address space is a property of the callee, not of the
+    # token.
     0x0420: "reached through a form the scan cannot see: passed to a record "
             "helper as a bare hex literal, `add_full_product_to_dptr"
-            "(0x420,0x60,...)` at pd/34A5.c:18",
-    0x043A: "reached through a form the scan cannot see: passed to a 16-bit "
-            "pair helper as a bare hex literal, `read_xdata_pair_to_r3r4"
-            "(0x43a)` at bank1/AD77.c:22",
+            "(0x420,0x60,...)` at pd/34A5.c:18 -- the callee is not a "
+            "consecutive-pair accessor, so issue #279's `movx` discriminator "
+            "does not reach it",
     # registers.yaml records four EC-side sites, all read-modify-writes, at
     # bank1 0x8190, 0x81D1, 0x8246 and 0x826A -- in the gaps between the
     # exported functions 0x80EF, 0x8202, 0x820F and 0x8300. Seeding that
@@ -975,7 +1121,17 @@ XSPACE_WINDOW = 32
 # and the write-shaped buckets do not move at all. The cross-check is the
 # census's own: the five buckets still sum to ORACLE["refs"], which moved
 # 14819 -> 14822 for the same three references.
-BUCKET_TOTALS = {"read": 8344, "write": 3195, "read+write": 2482,
+#
+# Issue #279: read 8344 -> 8826 and write 3195 -> 3587, the other three
+# unmoved, and the asymmetry between the two is the pass. 437 resolved call
+# sites split 241 read / 196 write, and each contributes two adjacent bytes,
+# so `read` takes +482 and `write` +392. The three that do not move are the
+# three that describe a *handoff* rather than a direction -- `passed-to-call`,
+# `address-taken` and `read+write` -- and a resolved site is in none of them by
+# construction: the direction is the callee's, and a call that hands an address
+# on is neither a store nor a comparison. The cross-check is again the sum:
+# 8826 + 3587 + 2482 + 534 + 267 = 15696 = ORACLE["refs"].
+BUCKET_TOTALS = {"read": 8826, "write": 3587, "read+write": 2482,
                  "passed-to-call": 534, "address-taken": 267}
 
 # Issue #554: what `scan(export_ownership=True)` says on this tree, pinned the
@@ -1004,26 +1160,50 @@ BUCKET_TOTALS = {"read": 8344, "write": 3195, "read+write": 2482,
 # property of that grouping, which is why the rule is a committed tool and the
 # figures are re-derived rather than carried forward.
 OWNERSHIP = {
-    "distinct": 1171, "refs": 9404,
-    "main_distinct": 1062, "main_refs": 8546,
-    # Issue #267, fix round 1: refs 9401 -> 9404 and read 4920 -> 4923, the
-    # other buckets unmoved, for the reason the ORACLE block gives -- the same
-    # three addresses, all three reads, re-spelled rather than re-counted.
-    # `distinct` does not move, which is the point: the de-duplicated pass
-    # removes nothing here, it only renumbers what the default census already
-    # had. `main_refs` is not asserted by --self-test (only `distinct`,
-    # `refs` and the buckets are); it is re-derived rather than carried
-    # forward, so it is not left stale beside a total that moved.
-    "buckets": {"read": 4923, "write": 2707, "read+write": 1018,
+    # *** 2026-09-25, issue #279: 1171/9404 -> 1326/10178, main EC
+    # 1062/8546 -> 1218/9320, read 4923 -> 5361 and write 2707 -> 3043, and
+    # `moved` 228 -> 296. Same shape as every re-pin in this file's history:
+    # the de-duplicated pass removes nothing (`lost` is still empty) and only
+    # renumbers what the default census already had, plus whatever this pass
+    # adds. **The three buckets that do not move are the point.** A resolved
+    # pair site lives in exactly one `.c` file per call site, and a `shared`
+    # export is skipped by this pass for the same reason it is skipped by the
+    # occurrence walk -- so a resolved site never lands on a copy of a
+    # routine, and `read+write`/`passed-to-call`/`address-taken` are untouched
+    # while the two directional buckets take the +438 and +336. The 296 of
+    # `moved` is the same width argument as the 228 before it: the pass
+    # renumbers every address whose references come from a shared export, and
+    # this one adds 68 more of them.
+    "distinct": 1326, "refs": 10178,
+    "main_distinct": 1218, "main_refs": 9320,
+    "buckets": {"read": 5361, "write": 3043, "read+write": 1018,
                 "passed-to-call": 500, "address-taken": 256},
     # Addresses present without the pass and absent with it. Empty here, and
     # that is a measurement rather than an absence: it is the failure the pass
     # would have if an owner were not a superset of its non-owners, and it is
     # pinned so a re-export that makes it non-empty says so.
     "lost": (),
-    "moved": 228,
+    "moved": 296,
     # The cost of flipping the default, which is why it has not been flipped.
-    "clusters": 432, "cluster_keys_kept": 395, "hand_names_kept": 5,
+    # 432 -> 440 clusters against the committed 439, 395 -> 400 of the
+    # committed `cluster_key`s surviving, and **5 of 10 -> 4 of 9** hand names.
+    #
+    # The key figure is the one that improved and the name figure is the one
+    # that did not, and both are the same event. De-duplication now *keeps* 400
+    # of the 439 committed keys against 395 of 430 before -- the pass makes the
+    # default census's clusters larger and the ownership pass's smaller, so
+    # fewer of them coincide -- while the hand names still lose the same five
+    # (`counter-sweep`, `level-block-086x`, `ff-fill-stubs`, `countdown-06cd`
+    # and `mode-oem-init`). The denominator fell with `page-0300`: that name is
+    # no longer carried at all, because the nine-address 0x0300-page cluster it
+    # named is now nine addresses inside a 152-address cluster, which is
+    # Jaccard 0.07 and **not carried by this method** rather than gone. It was
+    # removed from `xdata-cluster-names.csv` rather than re-keyed onto a
+    # membership 17 times its size, which would have made the name a false
+    # description of what it pointed at; `xdata-register-map.md` §5 keeps the
+    # page's own reading as prose and drops the anchor. So the flip costs one
+    # name in nine rather than one in ten, and costs the same five either way.
+    "clusters": 440, "cluster_keys_kept": 400, "hand_names_kept": 4,
 }
 
 # Issue #280's corpus-wide direction invariant: the numbers
@@ -1197,6 +1377,11 @@ IDENT_TAIL = re.compile(r"([A-Za-z_][A-Za-z_0-9]*)$")
 FUNC_KEY = re.compile(r"\b(bank0|bank1|common|pd):0x([0-9A-F]{4})=")
 # Ghidra's third spelling, read only to name the blind spot in the self-test.
 CODE_TOKEN = re.compile(r"DAT_CODE_([0-9a-fA-F]{4})")
+# The same spelling, anchored, for the one context that may read it: a literal
+# first argument to a routine `pair_accessor()` selected. `pair_sites()` is the
+# only reader outside the self-test, and the self-test asserts the two sets it
+# resolves to are the ones the issue named and nothing else.
+CODE_SPELLING = re.compile(r"(?:FUN|DAT)_CODE_([0-9a-fA-F]{4})")
 BOUNDARY = ";{}"
 # An `.asm` opcode column is up to three bytes wide with `-` standing in for the
 # absent ones, so it is matched as a token rather than by column.
@@ -1208,6 +1393,24 @@ DPTR_IMM = re.compile(r"^DPTR, #(0x[0-9a-f]{1,4})$")
 # next instruction is not necessarily the one that runs.
 XSPACE_FLOW = {"lcall", "ljmp", "acall", "ajmp", "sjmp", "jmp", "ret", "reti",
                "jb", "jbc", "jnb", "jc", "jnc", "jz", "jnz", "djnz"}
+# The first argument of a pair-accessor call, in the three literal forms the
+# export produces for an XDATA address. `FUN_CODE_`/`DAT_CODE_` are the
+# decompiler's own spelling for a routine it *invented* at an address its caller
+# used as data -- `common/0402.c` is such a routine -- and the resolver accepts
+# them for exactly the accessors `pair_accessor()` selects, and for nothing
+# else. The decimal alternative is not decoration: `D2A3.c`, `F3D7.c` and
+# `F416.c` spell the address `100` where the rest of the tree writes `0x64`.
+PAIR_LITERAL = re.compile(
+    r"^(?:0[xX][0-9a-fA-F]{1,4}|(?:FUN|DAT)_CODE_[0-9a-fA-F]{4}|[0-9]+)$")
+# Direction a pair accessor carries, keyed by the annotation `type` that says
+# the same thing. The two are cross-checked against each other rather than one
+# being derived from the other, so an annotation that stops matching its own
+# committed `.asm` is a failure here and not a silent reclassification.
+PAIR_TYPE_DIR = {"reader": "read", "writer": "write"}
+# Registers a pair accessor may shuffle between its two dereferences. Anything
+# else in the body -- an `add`, an `rrc`, a branch -- means the routine is more
+# than an accessor, and it is left out rather than resolved.
+PAIR_SHUFFLE = ("A", "B", "R0", "R1", "R2", "R3", "R4", "R5", "R6", "R7")
 
 
 def hexaddr(addr: int) -> str:
@@ -1474,6 +1677,182 @@ def xdata_space(asm, addr: int):
     return None
 
 
+def pair_accessor(seq) -> str:
+    """`"read"` or `"write"` if this listing is a consecutive-XDATA-pair
+    accessor, else None.
+
+    **The discriminator is the callee's own encoding, never the caller's
+    spelling.** `movx` is the instruction that names the external data space, so
+    a routine whose whole body is two `movx @DPTR` dereferences an `inc DPTR`
+    apart hands its caller two adjacent XDATA bytes whatever Ghidra called the
+    address. That is what makes `FUN_CODE_0402` a *data* address and not a code
+    pointer, and it is why `BLIND_SPOT`'s `0x0733` -- a real code pointer, at
+    `bank0:0x94D0` -- stays excluded: it is not handed to an accessor at all.
+
+    The test is deliberately strict about the rest of the body. Everything
+    outside the two dereferences must be an `inc DPTR` between them, a `mov` of
+    a register or the accumulator, or the closing `ret`, so a routine that reads
+    a pair and then does arithmetic on it is not an accessor and its callers'
+    literals are not resolved through it. `bank1:0x9182` is that case on this
+    tree: two `movx` and an `inc DPTR`, then `add`/`addc`/`rrc`, and its two
+    callers pass a variable rather than a literal anyway.
+    """
+    deref = [i for i, (_, mnem, oper) in enumerate(seq)
+             if mnem == "movx" and "@DPTR" in oper]
+    if len(deref) != 2 or seq[-1][1] != "ret":
+        return None
+    first, second = deref
+    if not any(m == "inc" and o == "DPTR"
+               for _, m, o in seq[first + 1:second]):
+        return None
+    for i, (_, mnem, oper) in enumerate(seq):
+        if mnem == "movx" and "@DPTR" in oper:
+            continue
+        if mnem == "inc" and oper == "DPTR" and first < i < second:
+            continue
+        if mnem == "ret" and i == len(seq) - 1:
+            continue
+        if (mnem == "mov"
+                and oper.split(",")[0].strip() in PAIR_SHUFFLE):
+            continue
+        return None
+    ops = (seq[first][2], seq[second][2])
+    if ops == ("A, @DPTR", "A, @DPTR"):
+        return "read"
+    if ops == ("@DPTR, A", "@DPTR, A"):
+        return "write"
+    return None
+
+
+def load_pair_accessors() -> dict:
+    """{accessor name: direction} for the routines `pair_accessor()` selects.
+
+    **Derived from the annotation and the disassembly together, and from neither
+    alone.** `ghidra-functions.csv` supplies the name and the direction it
+    claims; the committed `.asm` beside it says whether the body really is two
+    `movx` an `inc DPTR` apart, and a disagreement is raised rather than
+    resolved, because one of the two is then wrong about a routine this pass is
+    about to resolve callers through.
+
+    Reading the set out of the tree rather than hardcoding it is the point. The
+    issue named four accessors; `0x8898` is a fifth of identical shape that
+    happens already to carry a name, and `0x9193` a sixth whose two callers
+    both pass a register, so it resolves nothing. Both are found by the rule, so
+    neither needed a decision about whether to include it, and a seventh
+    annotated accessor is found the same way.
+
+    Tree-wide the rule selects six routines in bank1 and one in the pd image
+    (`read_be16_from_dptr`), whose single caller passes no argument at all. All
+    seven resolve nothing outside bank1, which is what the census moves.
+    """
+    asm = {}
+    out = {}
+    with open(ANNOT_CSV, newline="") as f:
+        rows = [r for r in csv.DictReader(f)
+                if r["type"] in PAIR_TYPE_DIR]
+    for row in sorted(rows, key=lambda r: (r["scope"], r["addr"])):
+        scope = row["scope"]
+        if scope not in asm:
+            asm[scope] = read_asm(scope)
+        got = pair_accessor(asm[scope].get(row["addr"], ()))
+        if got is None:
+            continue
+        want = PAIR_TYPE_DIR[row["type"]]
+        if got != want:
+            raise SystemExit(
+                f"error: {ANNOT_CSV} types {scope}:0x{row['addr']}="
+                f"{row['name']} as a {row['type']}, but its committed .asm is "
+                f"a {got} (two `movx @DPTR` an `inc DPTR` apart): the "
+                "annotation and the disassembly disagree about the direction "
+                "this pass resolves its callers in")
+        out[row["name"]] = got
+    return out
+
+
+def pair_sites(text: str, accessors: dict, pattern):
+    """[(addr, direction)] for each pair-accessor call in `text`.
+
+    Three gates, in this order. **They are not equally load-bearing and the
+    difference is measured, not assumed** -- which is why the second is here at
+    all when the third already excludes everything it would catch:
+
+    - **The callee must be a selected accessor.** This is the only place in the
+      tool that reads a `FUN_CODE_`/`DAT_CODE_` argument, and it does so only
+      for the routines whose committed `.asm` dereferences XDATA. Everywhere
+      else the code-pointer exclusion above stands.
+    - **The argument must be a bare literal.** Arithmetic (`DAT_EXTMEM_04ab +
+      0xa6`), a `CONCAT11(3,bVar3)` index and a register all describe a byte
+      this tool cannot name without guessing which one runs, and the honest
+      answer for each is the one `NOT_IN_TREE` already gives elsewhere: not
+      found by this method.
+    - **The argument must not already be an occurrence.** `bank1/9354.c` passes
+      `DAT_EXTMEM_0318` to the same accessor and `occurrence_re` already counts
+      that argument, so resolving it as a pair as well would give `0x0318` a
+      read it has no site for and `0x0319` a reference with no site behind it.
+
+      **This gate is one of three independent defences against that, and on
+      this tree it is the one that does least.** Zero of the tree's 461 first
+      arguments are both a literal and an occurrence, so the gate above has
+      already rejected all of them; widening the literal gate to admit
+      `DAT_EXTMEM_` is then caught by this one, and dropping *this* one is
+      caught by the `int()` below, which cannot read `DAT_EXTMEM_0318` as a
+      number and skips it. There is no single-point edit that opens the trap,
+      which is the property worth having and the reason the redundancy is here
+      rather than trimmed to the shortest form that works today.
+      `--self-test` pins the **outcome** -- `0x0318` is reached through an
+      accessor from exactly two files, and its row keeps 14 `DAT_EXTMEM_`
+      references separable from 2 `pair-literal` ones out of 16 -- rather than
+      any one gate, because the outcome is the fact and the gates are the
+      current means to it.
+
+    A call site's first argument can be followed by more arguments -- the
+    decompiler gives these accessors a three-parameter signature it never
+    established, so `write_r1r2_to_xdata_pair(0x434,0,0)` is the common shape --
+    so the argument is read to the first top-level comma rather than to the
+    closing paren.
+    """
+    if not accessors:
+        return
+    call = re.compile(r"\b(" + "|".join(sorted(map(re.escape, accessors),
+                                              key=len, reverse=True))
+                      + r")\s*\(")
+    for m in call.finditer(text):
+        # The alternation is built from `accessors`, so every name it matches
+        # is a key -- but `.get` rather than `[]` because a caller passing a
+        # table this function did not build is a wrong answer, not a crash the
+        # reader should have to read a traceback to understand.
+        direction = accessors.get(m.group(1))
+        if direction is None:
+            continue
+        depth, i, start = 1, m.end(), m.end()
+        while i < len(text) and depth:
+            c = text[i]
+            if c == "(":
+                depth += 1
+            elif c == ")":
+                depth -= 1
+                if not depth:
+                    break
+            elif c == "," and depth == 1:
+                break
+            i += 1
+        arg = text[start:i].strip()
+        if not PAIR_LITERAL.match(arg) or pattern.fullmatch(arg):
+            continue
+        lit = CODE_SPELLING.fullmatch(arg)
+        try:
+            addr = (int(lit.group(1), 16) if lit
+                    else int(arg, 16) if arg[:2].lower() == "0x"
+                    else int(arg, 10))
+        except ValueError:
+            # `PAIR_LITERAL` was widened to a form the arithmetic below cannot
+            # read. Skipping is the right answer and raising is not: a literal
+            # this function cannot name is "not found by this method", the
+            # same as any other first argument it declines.
+            continue
+        yield addr, direction
+
+
 def enclosing_call(text: str, start: int, func_names):
     """The call whose argument list contains `start`, or None.
 
@@ -1633,10 +2012,20 @@ def blank_entry():
     `funcs` is the ref count per function (the incidence matrix the clustering
     runs on) and `dirs` is which buckets *that function* used, because a
     reader count derived from the address's own buckets would call every one of
-    0x06E6's 50 touchers a writer when 3 of its 72 references write it."""
+    0x06E6's 50 touchers a writer when 3 of its 72 references write it.
+
+    `spelled_refs` is what the two *token* spellings in the ORACLE block are
+    about, kept apart from `refs` on purpose. While the spellings were disjoint
+    within a program the two were the same number, and the self-test's
+    `DAT_EXTMEM_`-only figure could be had by summing `refs` over the addresses
+    that carry the spelling. Issue #279 ended that: an address reached both as
+    a token and as a pair-accessor argument has references of both kinds, so
+    `refs` no longer answers "how many references are spelled `DAT_EXTMEM_`?" --
+    and a pin whose *meaning* moves under a number that moves is the one
+    conflation this file exists to prevent."""
     return {"refs": 0, "buckets": collections.Counter(),
             "funcs": collections.Counter(), "dirs": collections.defaultdict(set),
-            "spellings": set()}
+            "spellings": set(), "spelled_refs": collections.Counter()}
 
 
 def absorb(entry, src):
@@ -1645,6 +2034,7 @@ def absorb(entry, src):
     entry["buckets"].update(src["buckets"])
     entry["funcs"].update(src["funcs"])
     entry["spellings"].update(src["spellings"])
+    entry["spelled_refs"].update(src["spelled_refs"])
     for f, buckets in src["dirs"].items():
         entry["dirs"][f].update(buckets)
     return entry
@@ -1656,7 +2046,7 @@ def touches(entry, bucket: str):
 
 
 def scan(by_file, names, func_names, symbols, eq_guard: bool = True,
-         export_ownership: bool = False, ownership=None):
+         export_ownership: bool = False, ownership=None, accessors=None):
     """(per-program census, call graph, raw occurrence count) over the tree.
 
     An address is reached from many files in one program, so the per-file
@@ -1664,7 +2054,20 @@ def scan(by_file, names, func_names, symbols, eq_guard: bool = True,
 
     The raw count is what the files say before comments are blanked, kept so
     the self-test can pin the difference the ORACLE block records rather than
-    leave it as a claim in prose.
+    leave it as a claim in prose. It counts the two *token* spellings only; a
+    pair-accessor site is this tool's own reading of an argument, so it lands
+    in the census and not in `raw`.
+
+    **`accessors` is the `load_pair_accessors()` table, and it is a parameter
+    rather than a call so the self-test can pass a subset.** Every routine it
+    names contributes two references per call site -- the accessor's `inc DPTR`
+    makes the access a pair, so `a` and `a+1` are both touched -- in the
+    *callee's* direction, because the direction is the callee's body and the
+    caller's own expression says nothing about it. `0x889E`'s
+    `write_r3r4_to_xdata_pair(0x834,uVar1,uVar2)` is the case: the arguments
+    after the first are the decompiler's unestablished parameters, and reading
+    the `=` that follows one of them as a store is how this tool used to get
+    directions wrong.
 
     **`export_ownership` reads each routine once, from the export that owns
     it.** `index.csv` splits `bank1:0x8001`-`0x8189` into 42 rows whose `.c`
@@ -1684,6 +2087,7 @@ def scan(by_file, names, func_names, symbols, eq_guard: bool = True,
     annotations/xdata-export-ownership.md."""
     pattern = occurrence_re(symbols)
     by_name = {name: addr for addr, name in symbols.items()}
+    accessors = load_pair_accessors() if accessors is None else accessors
     census = {p: {} for p in MAIN_PROGRAMS + (PD_PROGRAM,)}
     calls = {}
     raw = collections.Counter({s: 0 for s in SPELLINGS})
@@ -1721,6 +2125,21 @@ def scan(by_file, names, func_names, symbols, eq_guard: bool = True,
             entry["funcs"][key] += 1
             entry["dirs"][key].add(bucket)
             entry["spellings"].add(spelling)
+            entry["spelled_refs"][spelling] += 1
+        # The pair accessors, resolved the other way round: the address is not
+        # written in this file at all, it is an *argument* to a callee whose
+        # committed `.asm` dereferences two adjacent XDATA bytes. Folded into
+        # the same `per_addr` so the readers/writers/functions columns and the
+        # clustering all see it as any other reference of the caller's own.
+        for addr, direction in pair_sites(text, accessors, pattern):
+            for byte in (addr, addr + 1):
+                entry = per_addr[byte]
+                entry["refs"] += 1
+                entry["buckets"][direction] += 1
+                entry["funcs"][key] += 1
+                entry["dirs"][key].add(direction)
+                entry["spellings"].add(PAIR_SPELLING)
+                entry["spelled_refs"][PAIR_SPELLING] += 1
         for addr, entry in per_addr.items():
             absorb(census[row["program"]].setdefault(addr, blank_entry()), entry)
     return census, calls, raw
@@ -2196,7 +2615,13 @@ def build(funcs, names, symbols, census, calls, threshold,
             # its EC references read `CPU_TEMP` and the issue's `DAT_EXTMEM_`
             # grep never saw them. 0x07D8 and its two siblings are named in the
             # EC and written as `DAT_EXTMEM_` in the PD image, so both show.
-            "spelled_as": "+".join(s for s in ("symbol", "DAT_EXTMEM")
+            # `pair-literal` is the third value and the only one this tool
+            # infers: it means the address is also reached as a literal argument
+            # to one of the accessors `load_pair_accessors()` selected. It does
+            # not compete with the other two, so the order below is the
+            # exporter's two first and the derived one last.
+            "spelled_as": "+".join(s for s in ("symbol", "DAT_EXTMEM",
+                                               PAIR_SPELLING)
                                    if s in entry["spellings"]),
             "span_group": spans[primary][addr],
             "cluster_id": cid or "",
@@ -2477,7 +2902,12 @@ def self_test(args) -> int:
             ok = False
 
     def of(g, spelling):
-        return {a: e for a, e in groups[g].items() if e["spellings"] == {spelling}}
+        # Membership, not equality. It was equality while the two token
+        # spellings were disjoint within a program, which is what the check
+        # below asserts; with `pair-literal` a third value, an address reached
+        # both as a token and through an accessor carries two of them and
+        # `==` would silently drop it from the DAT_EXTMEM_ half of the census.
+        return {a: e for a, e in groups[g].items() if spelling in e["spellings"]}
 
     print("xdata_register_map.py --self-test")
     check("index.csv and the committed .c files still describe each other",
@@ -2540,9 +2970,117 @@ def self_test(args) -> int:
           "pre-#178 miscount this flag exists to reproduce",
           all(buckets_of(s, False) == "write" for s in eq_snippets))
 
+    # ---- issue #279: the pair-accessor pass ----------------------------------
+    #
+    # Four assertions, in the order the pass could fail: the *set* it resolves
+    # through, the *encoding* each member of that set really has, the *sites*
+    # it resolves, and the *exclusions* it must not have moved. The first two
+    # are the discriminator -- a resolver keyed on the spelling rather than on
+    # the callee's `movx` would pass a site check and fail the set one -- and
+    # the last is the code-pointer exclusion that relaxing the first is only
+    # safe because of.
+    accessors = load_pair_accessors()
+    check(f"the pair-accessor set is read out of ghidra-functions.csv and the "
+          f"committed .asm rather than listed here, and it is the "
+          f"{len(PAIR_ACCESSORS)} routines below -- the issue's four, plus "
+          f"0x8898 and 0x9193, which the same rule finds and the issue did not "
+          f"name (got {len(accessors)}: {', '.join(sorted(accessors))}; "
+          f"missing {', '.join(sorted(n for n, _ in PAIR_ACCESSORS if n not in accessors)) or 'none'}"
+          f"{'; unexpected ' + ', '.join(sorted(set(accessors) - {n for n, _ in PAIR_ACCESSORS})) if set(accessors) - {n for n, _ in PAIR_ACCESSORS} else ''})",
+          sorted(accessors.items()) == sorted(PAIR_ACCESSORS))
+    # The encoding half of the discriminator, read back out of the `.asm` and
+    # not out of the table: every accessor the pass resolves through must still
+    # be two `movx @DPTR` an `inc DPTR` apart, and its direction must be the
+    # one the annotation's own `type` claims. `load_pair_accessors()` already
+    # refuses a disagreement, so reaching this line means both agree -- the
+    # check is here so that "the .asm still says so" is a fact the run
+    # asserts rather than an assumption the loader makes.
+    annotated = {r["name"]: r for r in csv.DictReader(open(ANNOT_CSV, newline=""))}
+    asm_by_program = {}
+    unbacked = []
+    for name, direction in sorted(accessors.items()):
+        row = annotated[name]
+        scope = row["scope"]
+        if scope not in asm_by_program:
+            asm_by_program[scope] = read_asm(scope)
+        listing = asm_by_program[scope].get(row["addr"], ())
+        movx = [o for _, m, o in listing if m == "movx"]
+        got = pair_accessor(listing)
+        if got != direction or len(movx) != 2:
+            unbacked.append(f"{scope}:0x{row['addr']}={name} ({got})")
+    check(f"and every one of them has two `movx` in its committed .asm, the "
+          f"instruction that names the external space -- so a literal handed to "
+          f"one of them is XDATA whatever the decompiler called the spelling, "
+          f"and `FUN_CODE_0402` is a data address rather than a code pointer "
+          f"(not backed: {', '.join(unbacked) or 'none'})",
+          not unbacked)
+    # The resolved set itself, by file and direction, for the two addresses the
+    # issue works through. This is the assertion the issue asks for "so this
+    # cannot regress the way the last classifier drift did": a per-address
+    # multiset fails on *which* site moved, where a bucket total does not.
+    resolved = collections.defaultdict(list)
+    token_re = occurrence_re(symbols)
+    for out_file in sorted(by_file):
+        text = strip_comments(open(os.path.join(DECOMPILED, out_file)).read())
+        for addr, direction in pair_sites(text, accessors, token_re):
+            resolved[addr].append((out_file, direction))
+    for addr, expected in sorted(PAIR_RESOLVED.items()):
+        got = tuple(sorted(resolved[addr]))
+        check(f"the {hexaddr(addr)} worked example: {len(expected)} resolved "
+              f"sites, {sum(1 for _, d in expected if d == 'read')} read / "
+              f"{sum(1 for _, d in expected if d == 'write')} write, at "
+              f"{', '.join(f for f, _ in expected)} (got {len(got)}: "
+              f"{', '.join(f'{f} {d}' for f, d in got) or 'none'})",
+              got == tuple(sorted(expected)))
+    # The double-count trap, asserted on the *outcome*. `bank1/9354.c:19`
+    # hands `DAT_EXTMEM_0318` to the same accessor and `occurrence_re` already
+    # counts that argument, so resolving it here as well would give `0x0318` a
+    # read it has no site for and `0x0319` a reference with no site behind it.
+    # `PAIR_LITERAL` rejects it before the `fullmatch` gate is reached (see
+    # `pair_sites()`), so this pins the fact rather than the mechanism, and it
+    # is the fact that a widened literal gate would break.
+    _a, _f1, _f2 = PAIR_ALREADY_COUNTED
+    _ea = groups["main-ec"].get(_a)
+    check(f"and {os.path.basename(_f1)}/{_f2} are the only files that reach "
+          f"{hexaddr(_a)} through an accessor -- `bank1/9354.c:19` passes "
+          f"`DAT_EXTMEM_{_a:04x}` to the same routine, which the token pass "
+          f"already counts, so resolving it again would give "
+          f"{hexaddr(_a)} a phantom read (got "
+          f"{', '.join(f for f, _ in resolved[_a]) or 'none'})",
+          tuple(sorted(f for f, _ in resolved[_a])) == tuple(sorted((_f1, _f2))))
+    check(f"and the two spellings of {hexaddr(_a)} stay separable on the row "
+          f"itself: {(_ea['spelled_refs']['DAT_EXTMEM'] if _ea else '?')} "
+          f"references spelled `DAT_EXTMEM_` against "
+          f"{(_ea['spelled_refs'][PAIR_SPELLING] if _ea else '?')} resolved "
+          f"through an accessor, out of "
+          f"{(_ea['refs'] if _ea else '?')} in all -- which is the shape a "
+          f"double-counted row would not have",
+          _ea is not None
+          and _ea["spelled_refs"]["DAT_EXTMEM"] == 14
+          and _ea["spelled_refs"][PAIR_SPELLING] == 2
+          and _ea["refs"] == 16)
+    # What the pass must NOT have done: reached a code pointer. `0x0733` is a
+    # real one, inside bank0:0x94D0, and the relaxation above is safe only
+    # because the gate is the callee's `movx` rather than the spelling -- so
+    # this is asserted after the pass has run, not before it. The
+    # `code_only == {0x0733}` check further down is the same claim from the
+    # other side; this one is here because it is the invariant the relaxation
+    # could have broken.
+    check("and no `FUN_CODE_`/`DAT_CODE_` literal is resolved through anything "
+          "but a selected accessor, so the code-spelled set the census does "
+          "not read is still exactly BLIND_SPOT's findable half",
+          0x0733 not in resolved and 0x0735 not in resolved)
+
     def tally(g, spelling=None):
-        sub = groups[g] if spelling is None else of(g, spelling)
-        return len(sub), sum(e["refs"] for e in sub.values())
+        # `spelling` asked for means *references spelled that way*, not
+        # references to addresses that carry the spelling somewhere. The two
+        # were the same number until `pair-literal` joined the vocabulary, and
+        # 59 addresses are now reached both ways.
+        if spelling is None:
+            sub = groups[g]
+            return len(sub), sum(e["refs"] for e in sub.values())
+        sub = of(g, spelling)
+        return len(sub), sum(e["spelled_refs"][spelling] for e in sub.values())
 
     distinct = {g: tally(g) for g in GROUPS}
     refs = {g: distinct[g][1] for g in GROUPS}
@@ -2590,18 +3128,48 @@ def self_test(args) -> int:
           syms["main-ec"] == (ORACLE["symbol_main_distinct"],
                               ORACLE["symbol_main_refs"]) and
           syms["pd"] == (ORACLE["symbol_pd_distinct"], ORACLE["symbol_pd_refs"]))
-    # Within a program the two spellings are disjoint: the exporter applied its
-    # symbol table to the EC programs and not to the PD image (gen_xdata_symbols
-    # refuses to name PD), so no address there is both. Across programs they
-    # differ -- 0x07D8 is `MODE_TCC_OFFSET_DEFAULTS_GAMING_0` in the EC and
-    # `DAT_EXTMEM_07d8` in the PD image -- which is why `spelled_as` can carry
-    # both.
-    check("within each program the two spellings are disjoint address for "
-          "address, so a named address is never also a DAT_EXTMEM_ token",
-          all(len(e["spellings"]) == 1 for g in GROUPS for e in groups[g].values()))
+    # Within a program the two *token* spellings are disjoint: the exporter
+    # applied its symbol table to the EC programs and not to the PD image
+    # (gen_xdata_symbols refuses to name PD), so no address there is both.
+    # Across programs they differ -- 0x07D8 is
+    # `MODE_TCC_OFFSET_DEFAULTS_GAMING_0` in the EC and `DAT_EXTMEM_07d8` in the
+    # PD image -- which is why `spelled_as` can carry both.
+    #
+    # **The assertion is about the two token spellings, not about the width of
+    # the set.** It read `len(e["spellings"]) == 1` while there were only two
+    # and they were disjoint, which is the same claim written a cheaper way;
+    # `pair-literal` is a third value and 59 addresses now carry it alongside a
+    # token spelling, so the width is no longer one and the *exclusivity* is
+    # what still has to hold. `spelled_as` reads all of them out, so a version
+    # of this that kept the old test would have failed on the very rows the
+    # issue is about.
+    check("within each program the two token spellings are disjoint address for "
+          "address, so a named address is never also a DAT_EXTMEM_ token "
+          f"(both at once: {', '.join(hexaddr(a) for g in GROUPS for a, e in groups[g].items() if {'symbol', 'DAT_EXTMEM'} <= e['spellings']) or 'none'})",
+          all(not ({"symbol", "DAT_EXTMEM"} <= e["spellings"])
+              for g in GROUPS for e in groups[g].values()))
     check("the PD image is spelled entirely in DAT_EXTMEM_ tokens, which is "
           "gen_xdata_symbols.py's own refusal to name it",
-          all(e["spellings"] == {"DAT_EXTMEM"} for e in groups["pd"].values()))
+          all(e["spellings"] <= {"DAT_EXTMEM", PAIR_SPELLING}
+              for e in groups["pd"].values()))
+    # The third spelling's own width, pinned as a count and as a split, because
+    # a resolver that silently stopped resolving would move the census back the
+    # other way and the `DAT_EXTMEM_`/`symbol` pins above would not notice --
+    # they are two spellings this pass never touches.
+    pair_rows = {a: e for g in GROUPS for a, e in groups[g].items()
+                 if PAIR_SPELLING in e["spellings"]}
+    pair_mixed = sorted(a for a, e in pair_rows.items() if len(e["spellings"]) > 1)
+    check(f"the pair-accessor pass reached {len(pair_rows)} addresses, "
+          f"{len(pair_mixed)} of them also spelled a token, for "
+          f"{sum(e['spelled_refs'][PAIR_SPELLING] for e in pair_rows.values())} "
+          f"resolved references in all -- and every one of them is in bank1, "
+          f"because pd's own `read_be16_from_dptr` is called once with no "
+          f"argument (elsewhere: "
+          f"{', '.join(hexaddr(a) for g in GROUPS for a, e in groups[g].items() if PAIR_SPELLING in e['spellings'] and g != 'main-ec') or 'none'})",
+          len(pair_rows) == PAIR_ROWS
+          and len(pair_mixed) == PAIR_ROWS_MIXED
+          and all(PAIR_SPELLING in groups["main-ec"][a]["spellings"]
+                  for a in pair_rows))
     check(f"oracle: the full census, both spellings -- {ORACLE['distinct']} "
           f"distinct / {ORACLE['refs']} references, main EC "
           f"{ORACLE['main_distinct']}/{ORACLE['main_refs']} (got {total_distinct}"
@@ -2959,13 +3527,33 @@ def self_test(args) -> int:
           not offenders)
     # The per-address form of the same necessary condition, so a failure here
     # says which address stopped balancing rather than only which occurrence.
+    #
+    # **Issue #279: the `write` side is taken over occurrences only, and the
+    # subtraction is the reason.** `direction_invariant()` walks the decompiled
+    # text with `occurrence_re`, and its hypothesis is "a `write` is followed by
+    # an assignment". A resolved pair site is a `write` bucket entry that
+    # deliberately does *not* satisfy that hypothesis: its direction is read
+    # out of a callee's committed `.asm`, six bytes away in another routine,
+    # and the caller's own expression carries no `=` to be followed. Counting
+    # them on both sides would have widened the invariant to cover evidence it
+    # never examines; counting them on neither would have let a real
+    # misclassification hide behind them. So the pair sites are subtracted from
+    # the census side and the comparison is the one that was true before, over
+    # exactly the references it was always about. The `write`-only subtraction
+    # is complete because a resolved site is never `read+write`: there is no
+    # self-reference to make it one.
     over = [hexaddr(a) for a in everywhere
             if sum(groups[g][a]["buckets"]["write"]
                    + groups[g][a]["buckets"]["read+write"]
+                   - groups[g][a]["spelled_refs"][PAIR_SPELLING]
                    for g in GROUPS if a in groups[g]) > shaped.get(a, 0)]
     check(f"and no single address is counted as more stores than the second "
           f"pass accepts, so the agreement is per address and not only in "
-          f"aggregate (over-counted: {', '.join(over) or 'none'})",
+          f"aggregate -- over the occurrences, with the "
+          f"{sum(e['spelled_refs'][PAIR_SPELLING] for g in GROUPS for e in groups[g].values())} "
+          f"pair-resolved writes subtracted, since their direction is the "
+          f"callee's and not a following `=` (over-counted: "
+          f"{', '.join(over) or 'none'})",
           not over)
     # The exemption rule, stated as a measurement rather than as a tolerance.
     # `assign_after()` drops the `*` test that `store_target()` applies, so it

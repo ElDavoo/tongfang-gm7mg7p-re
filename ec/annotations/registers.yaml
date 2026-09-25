@@ -693,6 +693,24 @@ registers:
       references over 13 functions, all of them `read`, and not one `write` or
       `read+write`. Second address where the corrected census agrees with a
       note already in this file; 0x0440 is the first.
+      *** 2026-09-25 (issue #279): the census half of the sentence above now
+      reads 28 C-level references, 25 read and 3 write, over 14 functions --
+      0x0403 picks up its first writer, because the 0x0402 pair is read and
+      written through the bank1 pair accessors and 0x0403 is the accessor's
+      `inc DPTR` half. static_refs and static_refs_main_ec are UNCHANGED at
+      [3, 11]: those are `MOV DPTR` byte-scan counts of the image, and
+      check_register_counts.py still reproduces every one of them. The census
+      now counts 10 C-level sites for 0x0402 against the image's 3, because
+      Ghidra emitted one block into five overlapping .c files (B407 forwards
+      to B40E; B40E/B415/B41C/B43B are successive seeds over 0xB40E-0xB4B6 and
+      the MOV DPTR,#0x0402 at 0xB4BD is inside that span) -- see
+      xdata-register-map.md 4.7. All three numbers are correct and describe
+      three different methods; none of them is a behavioural result, so status
+      stays present-untested. The 0x0402 name comes from
+      xdata-overrides.csv and the FUN_CODE_0402 spelling from the decompiler
+      inventing a routine at 0x0402, which is a naming artefact and not a code
+      pointer: that callee's committed .asm is two `movx @DPTR` an `inc DPTR`
+      apart.
 
   - name: XDATA_0390
     addr: 0x0390
@@ -735,6 +753,13 @@ registers:
       image and is therefore not entered. 11 EC-side sites (10 bank1, 1
       bank0), 1 read and 10 handoffs, plus 3 in the PD image. No site is
       itself a store. Per-address table: ec/annotations/xdata-0400-045f.md.
+      *** 2026-09-25 (issue #279) ***: 0x0404 has no row in
+      xdata-registers.csv before issue #279 and 13 C-level sites after, 7 read
+      and 6 write, because the callers pass 0x404 as a literal first argument
+      to the bank1 pair accessors. static_refs/static_refs_main_ec (14 / 11)
+      are unchanged and are the image count. A resolved site is a *static* read
+      or write; it is not evidence the EC acts on the byte, and status stays
+      present-untested.
 
   - name: BAT_DESIGN_VOLTAGE_1
     addr: 0x0408
@@ -750,6 +775,16 @@ registers:
       reader, and 7 in the PD image -- so most of the file-wide count is not
       an EC reference. No writer, no name from this repo's own evidence.
       Per-address table: ec/annotations/xdata-0400-045f.md.
+      *** 2026-09-25 (issue #279) *** The "no writer" half above is about the
+      image and still holds: both EC-side sites are handoffs, not stores, and
+      static_refs_main_ec is unchanged at 2. On the census side 0x0408 gains
+      3 C-level sites and all three are WRITES, all
+      write_r1r2_to_xdata_pair(0x408) at bank1/DB0B.c, DEE8.c and DEF1.c --
+      the issue's worked example for a write-only resolved set. So the byte is
+      written in static code, and the write is a store of a computed 16-bit
+      pair rather than a constant. "No writer" was never a claim about
+      behaviour and is not withdrawn; it is now stated against the method that
+      supports it. status stays present-untested.
 
   - name: XDATA_040A
     addr: 0x040A
@@ -765,6 +800,14 @@ registers:
       in this repo has read the byte: XDATA_<addr> is this file's placeholder
       for "EC-side site found, meaning not established". Per-address table:
       ec/annotations/xdata-0400-045f.md.
+      *** 2026-09-25 (issue #279) *** "no site is itself a read or a store"
+      above is about the *image* and holds: all three are `MOV DPTR` handoffs
+      and static_refs_main_ec is unchanged at 3. On the census side 0x040A has
+      3 C-level sites, 2 read and 1 write, because the callers pass 0x40a as a
+      literal first argument to the bank1 pair accessors -- so "what is written,
+      and by whom, is not established" is now "one write, through
+      write_r1r2_to_xdata_pair, of a computed 16-bit pair". A static read or
+      write is not behaviour, and status stays present-untested.
 
   - name: XDATA_040C
     addr: 0x040C
@@ -778,6 +821,9 @@ registers:
       0x888C, plus 2 further sites in the PD image. No site is itself a read
       or a store, no upstream name. Per-address table:
       ec/annotations/xdata-0400-045f.md.
+      *** 2026-09-25 (issue #279) ***: as 0x040A, 2 C-level sites resolved from
+      the literal first argument, 1 read and 1 write, against the 2 unchanged
+      image handoffs. status stays present-untested.
 
   - name: XDATA_040E
     addr: 0x040E
@@ -790,6 +836,9 @@ registers:
       2 EC-side sites, handing DPTR to the writer 0x888C and the reader
       0x8886; no PD site, no upstream name. What is written, and by whom, is
       not established. Per-address table: ec/annotations/xdata-0400-045f.md.
+      *** 2026-09-25 (issue #279) ***: 2 C-level sites resolved, 1 read and 1
+      write, against the 2 unchanged image handoffs, so the write exists and
+      what is written does not. status stays present-untested.
 
   - name: XDATA_0410
     addr: 0x0410
@@ -802,6 +851,11 @@ registers:
       1 EC-side site, a handoff, against 5 in the PD image -- the file-wide
       count is mostly the other program. No site is itself a read or a store,
       no upstream name. Per-address table: ec/annotations/xdata-0400-045f.md.
+      *** 2026-09-25 (issue #279) ***: the single EC-side handoff is a
+      write_r3r4_to_xdata_pair, and the census resolves it as 1 C-level site,
+      0 read and 1 write, against the 1 unchanged image site. Its high half
+      0x0411 has census sites and no image site and is still not entered here.
+      status stays present-untested.
 
   - name: XDATA_0420
     addr: 0x0420
@@ -942,6 +996,10 @@ registers:
       3 EC-side sites, all handing DPTR to a pair helper, no site itself a
       read or a store; 3 further sites in the PD image. No upstream name.
       Per-address table: ec/annotations/xdata-0400-045f.md.
+      *** 2026-09-25 (issue #279) ***: 6 C-level sites, **all six reads and no
+      write**, against the 3 unchanged image handoffs -- the only one of this
+      page's five whose resolved set is write-free. 0x043A had no census row at
+      all before. status stays present-untested.
 
   - name: XDATA_043C
     addr: 0x043C

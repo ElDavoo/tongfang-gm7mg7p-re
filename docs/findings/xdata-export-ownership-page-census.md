@@ -49,8 +49,8 @@ wrote /tmp/before-clusters.csv: 430 rows
 $ python3 ec/tools/xdata_register_map.py --export-ownership \
     --out-registers /tmp/after-registers.csv --out-clusters /tmp/after-clusters.csv
   names: seeded 5, exact 0, carried by overlap 3, tied, not carried 0, with no name 424
-    main-ec-001 carries mode-oem-init by overlap, Jaccard 0.97 from k7497cf885614 -- re-key annotations/xdata-cluster-names.csv if the name moved
-    main-ec-003 carries level-block-086x by overlap, Jaccard 0.75 from ka39cda99615f -- re-key annotations/xdata-cluster-names.csv if the name moved
+    main-ec-002 carries mode-oem-init by overlap, Jaccard 0.97 from k7497cf885614 -- re-key annotations/xdata-cluster-names.csv if the name moved
+    main-ec-004 carries level-block-086x by overlap, Jaccard 0.75 from ka39cda99615f -- re-key annotations/xdata-cluster-names.csv if the name moved
     main-ec-007 carries ff-fill-stubs by overlap, Jaccard 0.60 from kea0c67af9b51 -- re-key annotations/xdata-cluster-names.csv if the name moved
 wrote /tmp/after-registers.csv: 1171 rows
 wrote /tmp/after-clusters.csv: 432 rows
@@ -177,19 +177,19 @@ own stdout rather than reconstructed. `--self-test` asserts
 is re-derived rather than carried forward, so it is not left stale beside a
 total that moved." The above is that re-derivation.
 
-## The two `main-ec-002` rows, and why a lookup on `cluster_id` is the wrong recipe
+## The two `main-ec-003` rows, and why a lookup on `cluster_id` is the wrong recipe
 
-These are the page's §4 rows "the 43 addresses of `main-ec-002`" and
-"`main-ec-002` cluster `refs`", and they appear in **no** oracle — not in
+These are the page's §4 rows "the 43 addresses of `main-ec-003`" and
+"`main-ec-003` cluster `refs`", and they appear in **no** oracle — not in
 `ORACLE`, not in `OWNERSHIP`, not in `export_ownership.py`'s
 `OWNERSHIP_ORACLE`. They are a page measurement, and #267's read-only symbol
 rename is no reason to assume they held: the whole question of this issue is
 whether a page's figures still hold, and assuming is what left seven cells
 stale.
 
-The recipe is the trap. **Looking up `cluster_id == "main-ec-002"` in the after
+The recipe is the trap. **Looking up `cluster_id == "main-ec-003"` in the after
 census is wrong**, because the pass renumbers `cluster_key` on 35 of the 430
-clusters: after the pass, the cluster that carries the id `main-ec-002` is a
+clusters: after the pass, the cluster that carries the id `main-ec-003` is a
 *different membership* (28 of the 43 addresses, key `k22aecb4dc595` against the
 committed `k733222e83898`). The correct recipe is to take the 43 addresses from
 the committed row and read them back **by address**:
@@ -198,10 +198,10 @@ the committed row and read them back **by address**:
 $ python3 - <<'PY'
 import csv, collections
 
-# the 43 addresses, taken from the committed main-ec-002 row by name
+# the 43 addresses, taken from the committed main-ec-003 row by name
 want = next(r['addrs'].split() for r in
             csv.DictReader(open('ec/annotations/xdata-clusters.csv'))
-            if r['cluster_id'] == 'main-ec-002')
+            if r['cluster_id'] == 'main-ec-003')
 for side in ('before', 'after'):
     reg = {r['addr']: r for r in csv.DictReader(open(f'/tmp/{side}-registers.csv'))}
     cls = {r['cluster_id']: r for r in
@@ -215,28 +215,28 @@ for side in ('before', 'after'):
           ', '.join(f'{c} x{n}' for c, n in sorted(hold.items())))
     print(f'  the clusters the committed id lands on: ' +
           ', '.join(f'{c} refs {cls[c]["refs"]} key {cls[c]["cluster_key"]}'
-                    for c in sorted(hold) if c == 'main-ec-002'))
+                    for c in sorted(hold) if c == 'main-ec-003'))
 PY
 before: 43 addresses, missing none, sum of refs 4988
-  over 1 clusters: main-ec-002 x43
-  the clusters the committed id lands on: main-ec-002 refs 4966 key k733222e83898
+  over 1 clusters: main-ec-003 x43
+  the clusters the committed id lands on: main-ec-003 refs 4966 key k733222e83898
 after: 43 addresses, missing none, sum of refs 460
-  over 12 clusters: main-ec-001 x3, main-ec-002 x28, main-ec-003 x3, main-ec-004 x1, main-ec-118 x1, main-ec-192 x1, main-ec-194 x1, main-ec-240 x1, main-ec-243 x1, main-ec-262 x1, main-ec-263 x1, main-ec-268 x1
-  the clusters the committed id lands on: main-ec-002 refs 280 key k22aecb4dc595
+  over 12 clusters: main-ec-004 x3, main-ec-004 x28, main-ec-004 x3, main-ec-004 x1, main-ec-118 x1, main-ec-205 x1, main-ec-207 x1, main-ec-253 x1, main-ec-257 x1, main-ec-276 x1, main-ec-277 x1, main-ec-282 x1
+  the clusters the committed id lands on: main-ec-003 refs 280 key k22aecb4dc595
 ```
 
 **A recipe that does not reproduce the default side first is the wrong recipe,
 and is reported as such rather than used.** This one reproduces 4,988 and
 4,966 exactly on the side the page already had, which is the test of whether it
 is the right one; the after side then reads 460 and 280, and those are what the
-page already said too. So both of the page's `main-ec-002` rows **held** —
+page already said too. So both of the page's `main-ec-003` rows **held** —
 they are the two rows of §4 that a `cluster_id` lookup would have got wrong on
 the after side, and the reason this is a re-derivation rather than a hand-edit.
 
 Note also what the after side says that the page does not: those 43 addresses
 no longer live in one cluster. 28 of them stay together under the id
-`main-ec-002`, and the other 15 scatter into eleven other clusters. §5's "which
-is `main-ec-002`'s own key and does not survive as a single cluster at all" is
+`main-ec-003`, and the other 15 scatter into eleven other clusters. §5's "which
+is `main-ec-003`'s own key and does not survive as a single cluster at all" is
 a weaker statement of the same fact, and still true.
 
 ## What re-derived and did not move: the `export_ownership.py` family
@@ -280,7 +280,7 @@ The 4,642 of §2's prose is the counter-sweep case in the *other* tool's
 
 ```console
 $ python3 ec/tools/xdata_register_map.py --self-test | grep counter-sweep
-  ok    and the cluster named `counter-sweep` is the one whose references are dominated by the 42-file group -- main-ec-002 is 4642/4966 = 93%
+  ok    and the cluster named `counter-sweep` is the one whose references are dominated by the 42-file group -- main-ec-003 is 4642/4966 = 93%
 ```
 
 The page's §3 *prose* numbers are not in that oracle, so they get their own
@@ -359,14 +359,14 @@ a reader who runs either count without it does not think the page is wrong.
 | §4, `passed-to-call` | 534 → 500 | 534 → 500 | both | held |
 | §4, `address-taken` | 267 → 256 | 267 → 256 | both | held |
 | §4, the 43 addresses | 4,988 → 460 | 4,988 → 460 | in no oracle; by address | held |
-| §4, `main-ec-002` cluster `refs` | 4,966 → 280 | 4,966 → 280 | in no oracle; by address | held |
+| §4, `main-ec-003` cluster `refs` | 4,966 → 280 | 4,966 → 280 | in no oracle; by address | held |
 | §4, clusters | 430 → 432 | 430 → 432 | `OWNERSHIP["clusters"]` | held |
 | §4, addresses that move / lost | — / 228 / 0 | — / 228 / 0 | `OWNERSHIP["moved"]`, `["lost"]` | held |
 | §4 prose, the five addresses | 168→4, 168→4, 148→4, 160→4, 170→6 | same | `--self-test` pins `0x0843`'s 168 and 4; the other four from the derived block | held |
 | §4 correction prose, "measures N with nothing lost" | 9,401 | 9,404 | `OWNERSHIP["refs"]` | **corrected** |
 | §5, keys that move / survive / new | 35 / 395 / 37 | 35 / 395 / 37 | `OWNERSHIP["cluster_keys_kept"]` | held |
 | §5, hand names that break | 5 of 10, `counter-sweep` among them | 5 of 10, and it is | `OWNERSHIP["hand_names_kept"]` 5 | held |
-| §5, `main-ec-002` `refs` and the cluster count | 4,966 → 280, 430 → 432 | same | by address / `OWNERSHIP["clusters"]` | held |
+| §5, `main-ec-003` `refs` and the cluster count | 4,966 → 280, 430 → 432 | same | by address / `OWNERSHIP["clusters"]` | held |
 
 **Seven cells corrected, twenty-one re-derived and held.** Every corrected
 cell is the census pair and the `read` bucket, on both sides; the shape of the

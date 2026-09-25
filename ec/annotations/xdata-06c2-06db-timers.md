@@ -1,6 +1,6 @@
 # `0x06C2`-`0x06DB`: the counter sweep at `bank1:0x8001`-`0x8189`
 
-Issue #179 asked what the `main-ec-002` cluster actually is: how many distinct
+Issue #179 asked what the `main-ec-003` cluster actually is: how many distinct
 timers it holds, what decrements each, what reloads it, and what gates it. This
 is the answer, and it is a reading of `ec/decompiled/bank1/8018.c` beside
 `ec/decompiled/bank1/80EF.asm` — the machine code and one reading of it. Every
@@ -9,16 +9,16 @@ byte count below is re-derivable from the committed image by §1, and
 `registers.yaml` and fails on a mismatch.
 
 > **Correction, 2026-09-24 (issue #253).** The `main-ec-002` issue #179 asked
-> about is `main-ec-002` again in the committed census, and the block this file
-> sweeps shares not one address with the one that took the old `main-ec-002`'s
-> meaning: `xdata-clusters.csv` row 3 gives `main-ec-002` 43 addresses and 4,966
+> about is `main-ec-003` again in the committed census, and the block this file
+> sweeps shares not one address with the one that took the old `main-ec-003`'s
+> meaning: `xdata-clusters.csv` row 3 gives `main-ec-003` 43 addresses and 4,966
 > references over `0x0460`-`0x09CE`, which is this block, while the old 44-address
-> block has since split in two: its 28-address half is row 4, `main-ec-003` over
-> `0x045C`-`0x1C3A`, its 11-address half is row 12, `main-ec-011` over
+> block has since split in two: its 28-address half is row 4, `main-ec-004` over
+> `0x045C`-`0x1C3A`, its 11-address half is row 12, `main-ec-012` over
 > `0x045E`-`0x1F07`, and the four-address remainder, `0x044C 0x05F0 0x05F1 0x0841`,
-> is row 50, `main-ec-049`. None of those four `addrs` columns intersects the
+> is row 50, `main-ec-055`. None of those four `addrs` columns intersects the
 > others, and none of them holds an address §1 sweeps. All 43 addresses §1 sweeps carry
-> `cluster_id=main-ec-002` in `xdata-registers.csv`. The ids moved when issue
+> `cluster_id=main-ec-003` in `xdata-registers.csv`. The ids moved when issue
 > #4.3's census regeneration landed (#133 / #238), and moved again on the
 > 2026-09-24 re-derivation of the census on the merged tree:
 > `xdata_register_map.py:1654-1655`
@@ -33,12 +33,12 @@ byte count below is re-derivable from the committed image by §1, and
 > because
 > the quote is the evidence that the id moved.
 >
-> **Issue #254's own instruction to change this block's id to `main-ec-003` was
+> **Issue #254's own instruction to change this block's id to `main-ec-004` was
 > not applied, because the prediction it rested on was itself stale.** #254
-> predicted `main-ec-003` from the pre-split numbering; the committed census
-> puts the 43-address / 4,966-reference sweep at `main-ec-002`, and
-> `../tools/check_cluster_citations.py` passes, so this page's `main-ec-002`
-> needed no change and the stale `main-ec-003` was in `ec/README.md`, which is
+> predicted `main-ec-004` from the pre-split numbering; the committed census
+> puts the 43-address / 4,966-reference sweep at `main-ec-003`, and
+> `../tools/check_cluster_citations.py` passes, so this page's `main-ec-003`
+> needed no change and the stale `main-ec-004` was in `ec/README.md`, which is
 > the copy that moved. Left visible here so a reader holding #254 reads the
 > unapplied instruction rather than an oversight.
 > `../tools/check_cluster_citations.py` is what holds the rest of the tree to
@@ -78,8 +78,8 @@ no entry in this file or in `registers.yaml` claims a zero is an absence.
   not be turned into by accident, so §6 lists exactly what this does not settle
   and the block still gets no name.
 - **Its headline census numbers are an artefact of how the routine is
-  exported.** `main-ec-002` is credited with 4,966 references and 127 touching
-  functions (issue #179 quoted 4,965 and 126 under the id `main-ec-002`; the
+  exported.** `main-ec-003` is credited with 4,966 references and 127 touching
+  functions (issue #179 quoted 4,965 and 126 under the id `main-ec-003`; the
   figures moved by one each with the 2026-09-24 re-derivation). **At least 4,642 of those references — 93% — are the same 393
   bytes counted 42 times over**, once per overlapping function boundary. The
   43 addresses have **345 direct `MOV DPTR,#addr` sites between them in the
@@ -227,7 +227,7 @@ to — 93%**.
 >   **16** one-instruction listings. §2's three checkable facts and the census
 >   now agree by construction rather than by two people counting.
 > - **4,642 of the cluster's 4,966 is a published column.**
->   `xdata-clusters.csv`'s `co_reading_refs` is 4,642 on the `main-ec-002` row
+>   `xdata-clusters.csv`'s `co_reading_refs` is 4,642 on the `main-ec-003` row
 >   and `co_reading_dominant` is `yes`, so "93% of the references are the 42
 >   exports" is a cell a reader can check rather than a sentence they have to
 >   trust. (`co_reading_refs` is measured against the cluster row's own 4,966;
@@ -299,7 +299,7 @@ The per-address result is starker than the total:
 | **total, 43 addresses** | **4,988** | **345** |
 
 (The 4,988 is the sum of the 43 rows in `xdata-registers.csv`. The
-`main-ec-002` row in `xdata-clusters.csv` records 4,966 for the same membership,
+`main-ec-003` row in `xdata-clusters.csv` records 4,966 for the same membership,
 and the 22 between them is a definitional split inside the tool, not staleness:
 both numbers reproduce from a fresh generation. Five of the 43 members are
 `program=both` — `0x07F3`, `0x07F6`, `0x0809`, `0x080C`, `0x080D` — and for
@@ -340,7 +340,7 @@ owner. Measured with the committed tool:
 | the 43 addresses above | 4,988 | **460** |
 | `0x0843` / `0x0844` | 168 each, 42 touchers each | 4 each, 1 toucher each |
 | `0x06D6` / `0x0706` | 148 / 160 | 4 / 4 |
-| `main-ec-002` cluster `refs` | 4,966 | 280 |
+| `main-ec-003` cluster `refs` | 4,966 | 280 |
 | addresses whose `refs` move | — | 228 of 1,171 |
 | **addresses lost** | — | **0** |
 
@@ -407,7 +407,7 @@ immediates in the run, which is what the sweep actually reaches.
 **The 37/6 split is the accounting, and the two bytes missing from the cluster
 are the clustering's, not the code's.** `0x06C6` and `0x06CD` are the first two
 countdowns in the run and are decremented by it exactly like the rest, but the
-clustering put `0x06C6` in `main-ec-123` and `0x06CD` in `main-ec-201` — 7 and
+clustering put `0x06C6` in `main-ec-128` and `0x06CD` in `main-ec-214` — 7 and
 26 references on their own rows in `xdata-registers.csv`, which is where the
 issue's figures come from. Both ids are the census's; this file used to name
 `main-ec-118` for `0x06C6`, and that id is `0x03BF 0x03C3` and holds neither
@@ -672,7 +672,7 @@ version is left here rather than deleted, per `../../docs/findings.md` §4a's
 pattern.
 
 **And the two bytes the clustering cut away are the two whose reload is
-clearest.** `0x06C6` and `0x06CD` are not in `main-ec-002`, and both are reloaded
+clearest.** `0x06C6` and `0x06CD` are not in `main-ec-003`, and both are reloaded
 by an `if (byte == 0) byte = 2` store that this repository has already
 annotated: `dec_0443_low3_unless_0440_5_6_7` and
 `inc_0443_low3_unless_0440_5_6_7` write `2` to `0x06C6` at `0xF2CC` and
@@ -769,7 +769,7 @@ not a number remembered from 2026-09-23:
 | `0x08A8` read / write | 84 / 44 | **126 / 2** |
 | `0x0843` read / write | 84 / 42 | **126 / 0** |
 | main-EC clusters at threshold 0.50 | 388 | 380 |
-| **`main-ec-002` (this block)** | **43 addresses, 4,966 refs** | **43 addresses, 4,966 refs** |
+| **`main-ec-003` (this block)** | **43 addresses, 4,966 refs** | **43 addresses, 4,966 refs** |
 
 **What the guard does and does not change.** It moves references *between*
 direction buckets and out of none of them: **0 of 1,171 addresses have a
@@ -800,7 +800,7 @@ kind of question: what the committed CSVs are not.
 | `read` / `write` / `read+write` | 8,341 / 3,195 / 2,482 | 4,920 / 2,707 / 1,018 |
 | `passed-to-call` / `address-taken` | 534 / 267 | 500 / 256 |
 | §2a's 43 addresses, register rows summed | 4,988 | **460** |
-| **`main-ec-002` (this block)** | **43 addresses, 4,966 refs, `k733222e83898`** | **28 of the 43 survive into `k22aecb4dc595` (43 addresses, 280 refs); 15 leave it** |
+| **`main-ec-003` (this block)** | **43 addresses, 4,966 refs, `k733222e83898`** | **28 of the 43 survive into `k22aecb4dc595` (43 addresses, 280 refs); 15 leave it** |
 | `0x0843` / `0x0844` refs | 168 / 168 | 4 / 4 |
 | `0x0843` functions touching it | 42 | 1 |
 | `0x06D6` / `0x0706` / `0x08A8` refs | 148 / 160 / 170 | 4 / 4 / 6 |
@@ -816,7 +816,7 @@ CSVs.** The pass is a containment heuristic over decompiled text, not a
 function boundary, so flipping the default is a tree-wide renumbering onto a
 known-approximate detector: measured, it moves `cluster_key` on 35 of the 430
 clusters, breaks 5 of the 10 hand names in `xdata-cluster-names.csv` —
-`counter-sweep` (`k733222e83898`) among them, and `main-ec-002`'s membership
+`counter-sweep` (`k733222e83898`) among them, and `main-ec-003`'s membership
 does not survive whole as any single cluster — and adds 2 clusters. The cause
 is §8 item 7, which cannot share a branch. `xdata-export-ownership.md` carries
 the full account, including why the committed tool measures 9,401 with nothing
@@ -827,8 +827,8 @@ $ python3 ec/tools/xdata_register_map.py --export-ownership \
     --out-registers /tmp/after-registers.csv \
     --out-clusters  /tmp/after-clusters.csv                    # read once, per owner
   names: seeded 5, exact 0, carried by overlap 3, tied, not carried 0, with no name 424
-    main-ec-001 carries mode-oem-init by overlap, Jaccard 0.97 from k7497cf885614 -- re-key annotations/xdata-cluster-names.csv if the name moved
-    main-ec-003 carries level-block-086x by overlap, Jaccard 0.75 from ka39cda99615f -- re-key annotations/xdata-cluster-names.csv if the name moved
+    main-ec-002 carries mode-oem-init by overlap, Jaccard 0.97 from k7497cf885614 -- re-key annotations/xdata-cluster-names.csv if the name moved
+    main-ec-004 carries level-block-086x by overlap, Jaccard 0.75 from ka39cda99615f -- re-key annotations/xdata-cluster-names.csv if the name moved
     main-ec-007 carries ff-fill-stubs by overlap, Jaccard 0.60 from kea0c67af9b51 -- re-key annotations/xdata-cluster-names.csv if the name moved
 wrote /tmp/after-registers.csv: 1171 rows
 wrote /tmp/after-clusters.csv: 432 rows
@@ -847,11 +847,11 @@ rather than this flag's.
 **The `main-ec-002` row of the §6a table is the one this section previously
 got wrong, and the wrong version is kept above rather than deleted.** That
 block used to close by arguing that the cluster this issue is scoped to "does
-not survive the classifier fix in its current shape", reporting `main-ec-002`
+not survive the classifier fix in its current shape", reporting `main-ec-003`
 going from 43 addresses / 4,966 references to 44 / 248. **That is wrong, and
 the reason is that `main-ec-NNN` is a rank slot and not an identity** — clusters
 are ordered by size, then references, then lowest address
-(`xdata_register_map.py:150`). Re-measured, `main-ec-002` holds the same 43
+(`xdata_register_map.py:150`). Re-measured, `main-ec-003` holds the same 43
 addresses with the same 4,966 references both with and without the guard, with
 membership identical address for address, and the two runs agree on the
 `refs` of every one of the 1,171 rows. The cluster survives the fix intact.
@@ -1050,13 +1050,13 @@ touching it, not the EC's sweep.
    `0xC0C9` that reads `0x3202`, so that reason is gone (§5).
 4. ~~**The direction-classifier fix** at `ec/tools/xdata_register_map.py:277`,
    measured in §6a: 833 references out of `write`, 210 addresses, and
-   `main-ec-002` (this block) itself reshaped. It wants its own diff with its own
+   `main-ec-003` (this block) itself reshaped. It wants its own diff with its own
    before/after census, and it should be read together with the de-duplication
    question below or the new numbers will be wrong in the other direction.~~
    **Closed — the diff it asked for landed in issue #178**, and the guard is at
    `xdata_register_map.py:939`. Two things in the withdrawn text were wrong
    besides the line citation: `:277` was never the classifier's location, and
-   `main-ec-002` does **not** reshape — it keeps the same 43 addresses and the
+   `main-ec-003` does **not** reshape — it keeps the same 43 addresses and the
    same 4,966 references with and without the guard, because the guard moves
    references between direction buckets and out of none of them (0 of 1,171
    `refs` totals change). §6a carries the corrected measurement and

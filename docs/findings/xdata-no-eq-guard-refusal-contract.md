@@ -283,18 +283,18 @@ re-keyed or swept by this work.
 **`test_check_cluster_citations.py` — 46 tests, 1 failure.** One citation in
 `docs/findings.md` disagrees with the committed census, and it is **main's own
 prose**: §26 reads the reset vector's `0xD96C` and writes that the three bytes
-it "steps over" "are the whole of the `main-ec-081` cluster" — `0x0800` is not
-in `main-ec-081` in the committed census, and which half of that sentence is
+it "steps over" "are the whole of the `main-ec-086` cluster" — `0x0800` is not
+in `main-ec-086` in the committed census, and which half of that sentence is
 wrong is a finding for #564 to make in place rather than a formatting fix this
 issue absorbs:
 
 ```console
 $ python3 ec/tools/check_cluster_citations.py
-docs/findings.md:5520: 0x0800 is not a member of any cluster this line names (`main-ec-081`); it is a member of `main-ec-100`
+docs/findings.md:5520: 0x0800 is not a member of any cluster this line names (`main-ec-086`); it is a member of `main-ec-104`
 1 citation(s) disagree with ec/annotations/xdata-clusters.csv
 ```
 
-That is #564's correction to make in place — either the `main-ec-081` name or
+That is #564's correction to make in place — either the `main-ec-086` name or
 the membership claim is wrong, and which one is a finding, not a formatting
 fix. It is recorded here because this suite is a reader of `docs/findings.md`
 and a reader running the runner will hit it, and it is left unfixed because it

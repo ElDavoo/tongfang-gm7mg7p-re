@@ -343,7 +343,7 @@ either early-out fires: `0x83FF`/`0x8402` reads `0x080F` and `0x8405`
 `ljmp 0x849c`s if it is non-zero, and `0x8408` calls `0xB9D8` with `0x840D`
 `ljmp 0x849c` if that returns non-zero. Neither `0x080F` nor `0xB9D8` has a
 `registers.yaml` row, and neither is in the capture's window. `0x080F` is not
-hypothetical — it is `xdata-registers.csv`'s `main-ec-264`, with 11 references
+hypothetical — it is `xdata-registers.csv`'s `main-ec-278`, with 11 references
 across 5 functions, and `bank0:0x9CA6` writes `0x00` to it at `0x9CB4`-`0x9CB8`
 and decrements it at `0x9D01`-`0x9D03`, both in the same routine.
 

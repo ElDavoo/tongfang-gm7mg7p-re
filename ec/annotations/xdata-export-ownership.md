@@ -53,7 +53,7 @@ The issue's wording admits two readings, and they are not close. Both are
 measured here with the committed tools; Reading A is 25 lines over the same
 text `scan()` already reads, and is re-derivable from the table in §5.
 
-| reading | total `refs` | the 43 addresses of `main-ec-002` | addresses whose `refs` move |
+| reading | total `refs` | the 43 addresses of `main-ec-003` | addresses whose `refs` move |
 |---|---:|---:|---:|
 | **A** — read all 42 files, re-point each reference's *function key* to the owning routine | 14,822 → **14,822** | 4,988 → **4,988** | **0 of 1,171** |
 | **B** — read the routine once, from its owner export | 14,822 → **9,404** | 4,988 → **460** | **228 of 1,171** |
@@ -158,8 +158,8 @@ And what the pass does to the census, measured with
 | `read+write` | 2,482 | 1,018 |
 | `passed-to-call` | 534 | 500 |
 | `address-taken` | 267 | 256 |
-| the 43 addresses of `main-ec-002` | 4,988 | 460 |
-| `main-ec-002` cluster `refs` | 4,966 | 280 |
+| the 43 addresses of `main-ec-003` | 4,988 | 460 |
+| `main-ec-003` cluster `refs` | 4,966 | 280 |
 | clusters | 430 | 432 |
 | addresses whose `refs` move | — | 228 |
 | **addresses lost** | — | **0** |
@@ -193,9 +193,9 @@ flip:
 - moves `cluster_key` on **35 of the 430** clusters (395 survive; 37 keys are
   new),
 - breaks **5 of the 10** hand names in `xdata-cluster-names.csv` — including
-  `counter-sweep` (`k733222e83898`), which is `main-ec-002`'s own key and does
+  `counter-sweep` (`k733222e83898`), which is `main-ec-003`'s own key and does
   not survive as a single cluster at all,
-- takes `main-ec-002`'s `refs` from 4,966 to 280 and adds **2** clusters
+- takes `main-ec-003`'s `refs` from 4,966 to 280 and adds **2** clusters
   (430 → 432).
 
 A tree-wide renumbering is not a diff, and every `cluster_key` citation in the

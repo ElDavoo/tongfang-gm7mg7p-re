@@ -1,15 +1,15 @@
 # `0x0860`-`0x086E`: the EC's own level block, and what it dispatches on
 
 Issue #180 asked to read the `0x0860`-`0x086E` run in main-EC cluster
-`main-ec-003` and settle four questions: what sets `0x0860`, what the sibling
+`main-ec-004` and settle four questions: what sets `0x0860`, what the sibling
 bytes hold, what consumes the `0x1C39`/`0x1C3A` copy, and whether the
-`0x044C`-`0x05F1` group — `main-ec-049`, a different cluster — is the same
+`0x044C`-`0x05F1` group — `main-ec-055`, a different cluster — is the same
 mechanism. This is the answer.
 
-> **Correction, 2026-09-24.** Issue #180 wrote that cluster as `main-ec-002`.
-> It is `main-ec-003` in the census as re-derived on the merged tree, and
-> `main-ec-002` is now the counter block over `0x0460`-`0x09CE`, which shares
-> not one address with this run. The `0x044C`-`0x05F1` group is `main-ec-049`.
+> **Correction, 2026-09-24.** Issue #180 wrote that cluster as `main-ec-003`.
+> It is `main-ec-004` in the census as re-derived on the merged tree, and
+> `main-ec-003` is now the counter block over `0x0460`-`0x09CE`, which shares
+> not one address with this run. The `0x044C`-`0x05F1` group is `main-ec-055`.
 > This supersedes the issue #253 correction further down for the same reason and
 > leaves it standing: that one is right about the census it was written against
 > and wrong about this one. `xdata-register-map.md` §5 carries the re-derivation
@@ -28,9 +28,9 @@ human with the machine.
 > **Correction, 2026-09-24 (issue #253).** This page used to scope its subject
 > to `main-ec-003`, which is the inverse of the drift issue #253 is about — a
 > real cluster named where a different real cluster belongs. All 15 addresses
-> §1 sweeps are `main-ec-002` members in `xdata-clusters.csv` (row 3: 44
-> addresses, 248 references) and carry `cluster_id=main-ec-002` in
-> `xdata-registers.csv`. `main-ec-003` (row 4) is the 43-address counter block
+> §1 sweeps are `main-ec-003` members in `xdata-clusters.csv` (row 3: 44
+> addresses, 248 references) and carry `cluster_id=main-ec-003` in
+> `xdata-registers.csv`. `main-ec-004` (row 4) is the 43-address counter block
 > of `xdata-06c2-06db-timers.md` and shares no address with this one. The id
 > moved for the same reason as every other id in issue #253, which is issue
 > #4.3's census regeneration (#133 / #238), and
@@ -213,6 +213,36 @@ is the bucketing of those 17, not a rival count of the 7.
 > `mov DPTR,#0x402; lcall 0x889e`, and `index.csv` lists the two as
 > functions. The reasons use a three-word vocabulary with no word for
 > absence, and the self-test asserts that no line can acquire one.
+>
+> **CORRECTION (2026-09-25, issue #279) to the 23 above, which read as
+> committed when #280 wrote them. The gap is now 17, and eight of the 23 are
+> closed.** `xdata-symbols.csv` holds 192 rows and `named_in_tree` is 175, so
+> `len(symbols) - len(NOT_IN_TREE)` is 192 − 17 — the same arithmetic #280
+> established, with both terms moved. The eight that left are the ones the last
+> paragraph above was reaching for and could not name a mechanism for:
+>
+> | closed | how the census now reaches it |
+> |---|---|
+> | `0x0402`, `0x0408` | `FUN_CODE_0402` / `FUN_CODE_0408` as a **first argument** to a seeded pair accessor — the decompiler's invented function, handed as data |
+> | `0x0404`, `0x040A`, `0x040C`, `0x040E`, `0x0410`, `0x043A` | a bare hex literal as that same first argument |
+>
+> **What decided it is the callee's committed `.asm`, not the spelling.** Each
+> of the six bank1 routines it resolves through is two `movx @DPTR` an `inc
+> DPTR` apart, and `movx` names the external space — so a literal handed to one
+> of them is XDATA whatever Ghidra called it. `xdata-register-map.md` §4.7 is
+> the pass and the reasoning; the discriminator's point is that it reads no
+> spelling at all outside those six callees, which is why the correction above
+> keeps its verdict on `0x0420`: that one is passed to
+> `add_full_product_to_dptr`, a record helper rather than a two-byte accessor,
+> so the same bare-hex shape reaches it and still does not resolve.
+>
+> **The 17 that remain keep the wording they had.** `0x0420`, `0x0457`,
+> `0x0726`, `0x0733`, `0x0735`, `0x0748`, `0x0749`, `0x074A`, `0x074B`,
+> `0x0765`, `0x07B9`, `0x07C7`, `0x07C8`, `0x07E3`, `0x07E4`, `0x07E5` and
+> `0x0390` are each recorded with a reason, and **not one of those reasons is
+> "absent"** — a scan that finds no reference has found no reference, which is
+> what the three-word vocabulary above exists to make impossible to say
+> wrongly.
 
 **What the census says, and what pins it.** `0x0860` is **14 read, 2 write,
 0 read+write, 1 passed-to-call**. The two stores are `bank0/D281.c:18`

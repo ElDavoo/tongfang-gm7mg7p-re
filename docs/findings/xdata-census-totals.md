@@ -260,4 +260,4 @@ them.
    contradicted: §4.4's gap paragraph and §5's drift record both say the
    committed CSV "is behind a fresh generation", and since #256's regeneration
    it is not — each now carries a correction beside it saying so, with its own
-   427 and `main-ec-012` row kept as the pre-regeneration figures they are.
+   427 and `main-ec-013` row kept as the pre-regeneration figures they are.
