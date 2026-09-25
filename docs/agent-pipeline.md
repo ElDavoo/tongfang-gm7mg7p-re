@@ -229,9 +229,8 @@ only covers what's specific to *this* copy.
      that, the rest interpreter start) on 2026-09-25, against a cheap tier the
      paragraph above records at 5.9 s; that is one runner's figure and the
      ratio is the point, as item 6 says of its own. The 76 is the merged
-     tree's: 72 on the merge base, 2 added here, and 2 by #530's
-     unplaced-window-scope cases, which reached `main` while the branch was
-     open.
+     tree's: 74 on the branch point (`db6d7d2d`), 2 added here, and none
+     since — #530's unplaced-window-scope cases are already its ancestor.
      **Until a human lands it, no commit runs that suite and a PR that breaks
      one of those refusals still merges green.** It is not here for item 4's
      reason, template-copied file and no `workflow` scope on the token; the

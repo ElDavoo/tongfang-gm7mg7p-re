@@ -2040,9 +2040,9 @@ tool has, and the two lines that wire it in are prepared at
 lands that patch, the suite still does not run per commit. The suite is not a
 coverage claim:
 it is a dozen refusal policies, each one a gate between a human's hardware day
-and a wrong §7 call. The 76 is this merged tree's: 72 on the merge base, 2
-added by this branch, and 2 more by #530's unplaced-window-scope cases, which
-reached `main` while the branch was open. Write-up:
+and a wrong §7 call. The 76 is this merged tree's: 74 on the branch point
+(`db6d7d2d`), 2 added by this branch, and none since — #530's
+unplaced-window-scope cases predate it. Write-up:
 `docs/findings/0751-grader-self-test-gate.md`.
 
 ### 7c. `0x07C4` moved on 2026-09-23, and the 15 EC-side sites of `0x07C4`-`0x07D5` (2026-09-24, issue #183)

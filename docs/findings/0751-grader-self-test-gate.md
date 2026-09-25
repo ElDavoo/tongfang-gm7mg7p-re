@@ -34,15 +34,13 @@ third measured on this tree on 2026-09-25.
 
 2. **Option B is red on this tree today.** Option B is "a gate case invoking
    `unittest discover` for the named suites", and `tools/run-tests.sh` already
-   is that runner (issue #162). Measured from the repo root:
+   is that runner (issue #162). Run from the repo root it ends
+   `one or more FAILED`, and **two** of the suites it runs fail here, neither
+   of them this grader's. This write-up names those two by name rather than
+   quoting a suite or test total, because the runner's own totals are a
+   property of the merge and re-stale with the next suite to land.
 
-   ```
-   $ bash tools/run-tests.sh
-   19 suite(s) run; one or more FAILED.        # 14.3 s
-   ```
-
-   **Two** suites fail here, neither of them this grader's. The first is
-   `ec/tools/test_check_site_census.py::test_the_committed_join_holds`
+   The first is `ec/tools/test_check_site_census.py::test_the_committed_join_holds`
    — 14 disagreements between `ec/annotations/xdata-086x-dispatch-sites.csv`,
    `ec/annotations/xdata-0860-census-sites.csv` and the committed decompile:
 
@@ -55,9 +53,8 @@ third measured on this tree on 2026-09-25.
    The second is `ec/tools/test_xdata_cluster_names.py`, erroring in
    `setUpClass` — ``the `==` guard is not where §6a's recipe deletes it; the
    guard-off census this suite builds is not the one §6a measured``. That is
-   #528's own finding, landed on `main` while this branch was open, and it is
-   the reason this write-up's counts are not the ones the branch first
-   measured.
+   #528's own finding, and `db6d7d2d` is this branch's point of departure, so
+   the suite was already red this way when the branch was cut.
 
    The cause is visible in the file. `ec/decompiled/bank0/D091.c`'s header
    carries a `CORRECTION 2026-09-24, issue #180` note — the 40 bytes at
@@ -68,7 +65,10 @@ third measured on this tree on 2026-09-25.
    tool reports it in both directions — a cited line with no occurrence, and an
    occurrence no mapped site accounts for. Wiring the whole runner into a
    per-commit gate today would turn CI red for a drift unrelated to any PR
-   under test, at 14.3 s rather than 0.32 s.
+   under test, and it would buy that red with the runner's whole wall clock —
+   12 s on 2026-09-25, against the 0.32 s item 3 measures for the grader
+   alone. The runner prints no elapsed line of its own, so that is a
+   wall-clock measurement rather than something it reports.
 
    The census one is a real finding and it becomes a **follow-up issue**; this
    branch does not fix it. Whether the refs move or the counts change is a
@@ -85,28 +85,34 @@ third measured on this tree on 2026-09-25.
    |---|---|
    | `python3 -m unittest discover -s ec/tools -p 'test_grade_0751_isolation.py'` | `Ran 76 tests in 0.192-0.193s` |
    | `python3 ec/tools/grade_0751_isolation.py --self-test` end to end | **0.32 s** (0.32/0.32/0.33) |
-   | the cheap tier, before and after the prepared patch is applied | `All gates passed (14s elapsed)` before and after |
+   | the cheap tier, before and after the prepared patch is applied | `All gates passed` both times, at 11-12 s unpatched and 11 s patched |
 
    The issue quotes 0.100 s for the suite and that is a different machine.
    These are one runner's figures, recorded with the date for the reason
    `docs/agent-pipeline.md` item 6 records `call_graph.py`'s: the ratio, not
    either absolute number, is what a later agent raising the gate's runtime
-   budget needs. 0.32 s against a cheap tier that reads 14 s here and is
-   recorded at 5.9 s in `docs/agent-pipeline.md` is two orders of magnitude,
-   and below the one-second resolution of the gate's own printed elapsed line.
+   budget needs. 0.32 s against a cheap tier that reads 11-12 s here and is
+   recorded at 5.9 s in `docs/agent-pipeline.md` is more than thirty times.
+   That is also why the last row quotes an elapsed spread rather than a
+   before-and-after: the mode's 0.32 s is below the one-second resolution the
+   gate's own line prints, so those figures are one number seen more than
+   once, not a measurement of what the mode adds.
 
-   The 76 is this merged tree's count, and it moved twice while the branch was
-   open: 2 of them are the cases below, and 2 more arrived on `main` from
-   #530's unplaced-window-scope cases, so `main` carried 74 and the merge base
-   72. Nothing in the suite asserts a count — see `tools/run-tests.sh:68-71`
-   below — so every one of those landed without a test failing.
+   The 76 is this merged tree's count, and 74 of them predate the branch. The
+   branch point is `db6d7d2d` (#528), and #530's unplaced-window-scope cases
+   are already its ancestor — `git merge-base --is-ancestor b3f30987 db6d7d2d`
+   is true, and `grep -c 'def test_'` against that commit's copy of
+   `ec/tools/test_grade_0751_isolation.py` is 74, as it is at `origin/main`.
+   The 2 above are this branch's, so 76 is 74 + 2 and no case arrived on
+   `main` while the branch was open. Nothing in the suite asserts a count —
+   see `tools/run-tests.sh:68-71` below — so each of the two landed without a
+   test failing.
 
 ## What the suite pins, and why that is the reason to run it
 
-The 72 tests neither this branch nor #530 touched are the pinned record of
-the grader's refusal policies, and each one is a gate between a human's hardware
-day and a wrong §7 call — which is why they are worth a gate call rather than a
-note:
+The 74 tests this branch did not touch are the pinned record of the grader's
+refusal policies, and each one is a gate between a human's hardware day and a
+wrong §7 call — which is why they are worth a gate call rather than a note:
 
 | refusal | what it stops |
 |---|---|
@@ -133,7 +139,7 @@ and the refusals are the product; the suite is the only thing that holds them.
 - **`self_test()`** runs `test_grade_0751_isolation.py` by
   `unittest discover`, in a subprocess, with `sys.executable` and `-s` set to
   the tool's own absolute directory (so it works from any cwd) and `-p` set to
-  the suite's file name rather than `test_*.py` — `ec/tools/` holds nine other
+  the suite's file name rather than `test_*.py` — `ec/tools/` holds other
   suites, and naming the file is what keeps the gate's cost this suite's.
 
   The subprocess is not incidental. `test_grade_0751_isolation.py:16-20` loads
@@ -167,7 +173,7 @@ and the refusals are the product; the suite is the only thing that holds them.
   refusals over committed fixtures in `ec/tools/testdata/`, not §4 re-applied to
   a capture a human took.
 
-### `ec/tools/test_grade_0751_isolation.py` — two cases, 72 to 76
+### `ec/tools/test_grade_0751_isolation.py` — two cases, 74 to 76
 
 Both guard what the mode could break, and both are in the suite the mode runs:
 
@@ -182,10 +188,10 @@ contains the case, which runs the mode. The real discovery is what
 `python3 ec/tools/grade_0751_isolation.py --self-test` and the gate's `case` arm
 do, and neither is this file.
 
-**Those 72 are unchanged** — no assertion, message, or exit code of theirs was
-edited, and they are the evidence that nothing else moved. #530's two cases
-are likewise untouched here, and the merged suite is their union: 76 is 72 + 2
-+ 2, not a count either side overwrote.
+**Those 74 are unchanged** — no assertion, message, or exit code of theirs was
+edited, and they are the evidence that nothing else moved. They already
+include #530's two unplaced-window-scope cases, which predate this branch, so
+76 is 74 + 2 and not a count either side overwrote.
 
 ## The prepared patch
 
@@ -208,8 +214,10 @@ have is not a thing the gate should call.
 Verified on this tree: `git apply --check` is clean, `shellcheck` is clean on
 the patched script, and a full patched gate run prints
 `test_grade_0751_isolation.py: 76 tests, passed` inside the `ghidra tooling`
-gate and ends `All gates passed (14s elapsed)`. `.github/scripts/agent-gates.sh`
-itself is not edited by this branch — it is template-copied, and the prepared
+gate and ends `All gates passed` (11 s elapsed here, against 11-12 s
+unpatched — the same one-second-resolution wall clock as the cost table above).
+`.github/scripts/agent-gates.sh` itself is not edited by this branch — it is
+template-copied, and the prepared
 patch is the deliverable, so a reviewer can read the whole of what would land
 without it landing.
 
@@ -220,19 +228,20 @@ without it landing.
   scope, so a branch editing it fails at the very end rather than at the start.
   The patch route is the established answer. If `.github/scripts/` turns out to
   be pushable, the patch applies unchanged and nothing is lost.
-- **The 18 other suites** (#162's step, the 4-line wiring already written down
-  in `docs/agent-pipeline.md:257-263`). Left for the reason in finding (2):
-  the runner is red today.
+- **`tools/run-tests.sh` in the gate** (#162's step, the 4-line wiring already
+  written down in `docs/agent-pipeline.md:257-263`). Left for the reason in
+  finding (2): the runner is red today.
 - **The `test_check_site_census.py` failure.** Pre-existing, unrelated to this
   grader, and a judgement about the decompile rather than a mechanical edit.
   Follow-up issue: the stale `census_refs` line numbers in
   `ec/annotations/xdata-0860-census-sites.csv` against a `bank0/D091.c` that
   was hand-corrected on 2026-09-24 for #180.
 - **`tools/README.md`'s stale counts** ("seventeen today, 432 tests in all" —
-  it is 19 suites and 536 tests today, and two fail). Left to the same
-  follow-up: it is a shared file, the number re-stales with the next suite, and
-  the runner deliberately asserts no count. This file carries the current
-  measurement instead. `docs/agent-pipeline.md:266`'s 0.77 s figure is #162's
+  both are past, and the runner is red today on the two suites finding (2)
+  names). Left to the same follow-up: it is a shared file, the number
+  re-stales with the next suite, and the runner deliberately asserts no count.
+  This file names the two failing suites instead of carrying a total that is
+  already wrong. `docs/agent-pipeline.md:266`'s 0.77 s figure is #162's
   four-suite measurement; item 7 says so rather than contradicting it, and no
   existing line is edited.
 - **Running the 0x0751 procedure on hardware.** No laptop is reachable from a

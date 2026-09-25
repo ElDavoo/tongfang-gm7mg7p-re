@@ -22,14 +22,14 @@
 # figure and the ratio is the point; `docs/agent-pipeline.md` item 6 gives the
 # same caveat for `call_graph.py`.
 #
-# What it buys, and what it does not: the grader's 76 committed tests -- 72
-# before this branch's two, plus #530's two that reached `main` meanwhile -- are
-# the pinned record of a dozen refusal policies, and `grep -rn 'grade_0751'
-# .github/` finds nothing, so a PR that breaks one merges green. **Until a
-# human lands this, nothing runs the suite per commit, and a PR that breaks one
-# of its refusals still merges green.** No line of that patch, of the mode, or
-# of the write-up beside it is a claim about a laptop: the suite reads
-# hand-built fixtures, and no EC is opened and no register read back.
+# What it buys, and what it does not: the grader's 76 committed tests -- 74
+# before this branch's two -- are the pinned record of a dozen refusal
+# policies, and `grep -rn 'grade_0751' .github/` finds nothing, so a PR that
+# breaks one merges green. **Until a human lands this, nothing runs the suite
+# per commit, and a PR that breaks one of its refusals still merges green.** No
+# line of that patch, of the mode, or of the write-up beside it is a claim
+# about a laptop: the suite reads hand-built fixtures, and no EC is opened and
+# no register read back.
 #
 # The comment it adds at the call site says the same thing where the next reader
 # of the gate will see it, rather than only here.

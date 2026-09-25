@@ -230,7 +230,7 @@ MANUAL_FAN_CTRL = 0x0751
 # The suite `--self-test` runs, and the directory it is discovered in. Absolute
 # so the mode works from any cwd, and named by file rather than by
 # `test_*.py` so the gate's cost is this suite's and not the whole directory's
-# -- `ec/tools/` holds nine others.
+# -- `ec/tools/` holds other suites.
 SUITE_FILE = "test_grade_0751_isolation.py"
 TOOL_DIR = os.path.dirname(os.path.abspath(__file__))
 
