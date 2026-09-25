@@ -161,8 +161,9 @@ the last because `0x10FA` took a name without a CSV row of its own.
 — and the exporter renamed it `rearm_timer1_then_set_bit_4_of_internal_41`
 when the tranche named its target. So naming one function moved a second index
 row with it, which is why the per-program annotated count rises by 38 while the
-CSV gained 37 rows. It is the thirteenth "second copy of a name" §2 enumerates,
-and the only one this tranche created.
+CSV gained 37 rows. It is the twelfth "second copy of a name" §2 enumerates
+(`second_copy_census.py` reads 12 target-of-a-transfer rows out of 26), and the
+only one this tranche created.
 
 The tranche's own shape: 35 rows seeded by a call-target byte scan, one by the
 vector-target walk, one by Ghidra's auto-seeding; all 37 `also_in=bank1`, which

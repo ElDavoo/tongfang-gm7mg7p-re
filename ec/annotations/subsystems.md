@@ -130,20 +130,22 @@ basis rather than the presence of a name.
 > naming rule is in `README.md`, and a check now refuses the collision from
 > either side.
 
-**172 of the 1914 rows are `type: unresolved`, and 281 carry a name that
+**160 of the 1914 rows are `type: unresolved`, and 279 carry a name that
 describes a shape rather than a job** — `call_` (88), `load_` (120),
-`trampoline_` (29), `ret_` (29), `nop_` (9), `seed_` (6). Each is counted on the
-whole prefix, not a narrower one: the `ret_` rows are the 21 `ret_only_` ones
-plus eight that read `ret_immediately`, `ret_no_op`, `ret_stub…` or
-`ret_terminating_89f4`, and all 29 predate issue #603 — the tranche's one
+`trampoline_` (29), `ret_` (27), `nop_` (9), `seed_` (6). Each is counted on the
+whole prefix, not a narrower one: the `ret_` rows are the 19 `ret_only_` ones
+plus eight that read `ret_stub`, `ret_immediately`, `ret_no_op`,
+`ret_terminating_89f4`, `ret_stub_no_request_bit` and the two
+`ret_stub_table_f041_row..`, and all 27 predate issue #603 — the tranche's one
 `ret`-shaped name is `return_low_three_bits_of_0a49` at `0x221F`, which is
 `return_` rather than `ret_` and so falls outside this census — while 83 of the
 `load_` rows are `load_dptr_` with the other 37 the register and table loads
 beside them. `thunk_` has no row in the census at all:
 #602 renamed the last seven, so the prefix is gone rather than merely smaller.
-**This paragraph's counts were 152 and 271 over 1848 rows before issue #603,
-which had already drifted from the recounted `unresolved rows` bullet above it —
-the bullet is the figure `--check` holds and the two were never one
+**This paragraph's counts were 152 and 271 over 1848 rows before issue #603 —
+the 271 then over the seven prefixes that draft enumerated, `thunk_` included —
+and they had already drifted from the recounted `unresolved rows` bullet above
+it, the bullet being the figure `--check` holds: the two were never one
 measurement.** Both are recounted here from the tree rather than left to drift
 again.
 `sub_input_from_cpu_temp_043e` is a subtraction step; `trampoline_to_c0a2` is a
