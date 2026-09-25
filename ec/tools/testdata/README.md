@@ -172,8 +172,10 @@ named above or carries its own `README.md`, and every path the table's first
 column names resolves to something on disk. The `...-suffix.csv` and `*-glob`
 shorthands are resolved by glob rather than by splicing, and a token whose shape
 it cannot read is reported as unresolved rather than as absent. **Nothing runs
-it per commit yet** — the gate wiring is prepared at
-`docs/ci/agent-gates-testdata-index.patch` and a human lands it with `git apply
-docs/ci/agent-gates-testdata-index.patch`. `../test_check_testdata_index.py` is
+it per commit yet** — the gate wiring is prepared as half of
+`docs/ci/agent-gates-capture-claims.patch`, which carries this check and
+`check_capture_claims.py` in one file because their two `gate` lines sit at the
+same anchor and cannot both be landed (issue #745), and a human lands it with
+`git apply docs/ci/agent-gates-capture-claims.patch`. `../test_check_testdata_index.py` is
 already collected by `tools/run-tests.sh`, and it is the refusals — a directory
 with no row, a row with no file — that it holds.

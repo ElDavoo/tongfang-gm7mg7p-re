@@ -1,0 +1,86 @@
+# ec/tools/verify_gap_text.py --check, wired into the cheap gate. Prepared here
+# rather than landed, for the reason docs/ci/agent-gates-capture-claims.patch
+# gives: `.github/scripts/agent-gates.sh` is copied from the agent-pipeline
+# template and the pipeline's push token has no `workflow` scope, so a branch
+# editing it fails at the end of the PR rather than at the start of it.
+# `docs/agent-pipeline.md` carries this one across a re-copy too, as its item 4,
+# which already carries the arm this patch applies.
+#
+# To land it:
+#
+#   git apply docs/ci/agent-gates-gap-text-check.patch
+#
+# and that is the whole change.
+#
+# Added 2026-09-25 (issue #745). `docs/agent-pipeline.md` item 4 had the recipe
+# and the justification for this since issue #151, and no patch file: a human
+# landing "the prepared gate wiring" had three files, one of which existed only
+# as prose. The arm is the one item 4 states verbatim.
+#
+# Why the cheap tier and not agent-gates-deep.sh: what `--check` reads is the
+# committed firmware and the committed `.asm` listings, and the standard
+# library's `csv`. No assembler, no Ghidra, no network -- so by the split
+# `docs/agent-pipeline.md` records, it belongs beside `check_register_counts`,
+# not in the deep tier. It measures 0.30 s here, against a cheap tier recorded
+# at 5.9 s, on 2026-09-25. That is one runner's figure and the ratio is the
+# point; item 6 gives the same caveat for `call_graph.py`.
+#
+# What it buys, and what it does not: these are the 143 instructions
+# `sdas8051` cannot express, so no assembler reaches them and before this tool
+# no check read them at all. `--check` recomputes the set from the committed
+# listings rather than transcribing it, and every declined instruction records
+# which predicate declined it, so a sixth form with no cross-decode handler
+# fails the run instead of passing as coverage. The evidence is comparative
+# rather than constructive -- two decoders, no code in common, reading the same
+# byte column -- and the tool's own header says so at length. **Until a human
+# lands this, no commit runs it**, and the verdicts in
+# `ec/ghidra/gap-text-check.csv` can go stale in an otherwise-green commit.
+# It reads bytes and listings and nothing else: no capture is opened, no EC is
+# opened, no register is read back.
+#
+# One thing to know before landing it. `--check` was red on the tree this was
+# cut from, on one row's `row_name` column: a function rename had landed and
+# `ec/ghidra/gap-text-check.csv` had not been regenerated since. That is fixed
+# in the same branch, by running the tool's own `--report` (one row, one
+# column, no assembler), so `--check` is green as prepared. An earlier cut of
+# this patch, made before that was noticed, would have turned the cheap gate red
+# on landing -- the cheapest way to make a gate get switched off, and the reason
+# `.github/scripts/agent-gates.sh` carries a long comment about the census tool
+# being deliberately left out of the gate while it is red for the same reason.
+#
+# The comment it adds at the call site says the same thing where the next reader
+# of the gate will see it, rather than only here.
+
+diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
+index 125d647..4e7194a 100755
+--- a/.github/scripts/agent-gates.sh
++++ b/.github/scripts/agent-gates.sh
+@@ -119,6 +119,7 @@ check_ghidra_tooling() {
+   for tool in ec/tools/gen_xdata_symbols.py \
+               ec/tools/build_ec_decompile.py \
+               ec/tools/verify_reassembly.py \
++              ec/tools/verify_gap_text.py \
+               ec/tools/merge_annotation_shards.py \
+               ec/tools/grade_name_basis.py \
+               ec/tools/group_functions.py \
+@@ -162,6 +163,20 @@ check_ghidra_tooling() {
+         python3 "$tool" --verify-provenance \
+           --base 08b72e2 --migration a56b3bb --listings-from 8c7985e || rc=1
+         ;;
++      # The 143 instructions sdas8051 cannot express, cross-decoded by
++      # disasm8051.py, which shares no code with Ghidra's SLEIGH. What the
++      # re-encode above cannot reach was read by no check at all before
++      # verify_gap_text.py existed, so the committed verdicts in
++      # ec/ghidra/gap-text-check.csv could go stale in an otherwise-green
++      # commit (docs/findings.md §11a). --check is the whole of it: the set is
++      # recomputed from the committed listings rather than transcribed, and an
++      # instruction declined for a reason with no cross-decode handler fails
++      # the run rather than being skipped, so a sixth form cannot pass as
++      # coverage. Cheap tier for the reason the comment above gives: python3
++      # and the committed firmware, no assembler, no Ghidra, no network.
++      *verify_gap_text.py)
++        python3 "$tool" --check || rc=1
++        ;;
+       # The annotation layer's grading and grouping. The four cross-field
+       # rules do reach this gate already, indirectly, because
+       # build_ec_decompile.py and bios_extract.py import row_problems() --
