@@ -61,8 +61,9 @@ The split is the point, not an accident of the edit:
 | `grade_0751_isolation.py` `existing_mark_labels` | read | `replace` | `:740` |
 | `grade_0751_isolation.py` `refused_capture_rows` | read | `replace` | `:789` |
 | `grade_0751_isolation.py` `capture_snapshot`, which `existing_mark_findings` reads through | read | `replace` (in `capture_lines`) | `:919` |
-| `grade_0751_isolation.py` `read_early_exits` | read | — (strict) | `:1108` |
+| `grade_0751_isolation.py` `read_early_exits` | read | — (strict) | `:1112` |
 | `grade_0751_isolation.py` `read_dump` | read | — (strict) | `:1135` |
+| `grade_0751_isolation.py` `capture_rows`, the four readers' shared stream (#750) | read | the caller's — bare or `replace` | `:749` |
 | `ec_watch.py` `CsvSink` | write | — | `:143` |
 | `system_id_probe.py` `CsvSink` | write | — | `:217` |
 | `ec_validate.py` `SampleCsv` | write | — | `:163` |
@@ -70,6 +71,14 @@ The split is the point, not an accident of the edit:
 | `ec_timer_capture.py` `Sink` | write | — | `:143` |
 | `check_capture_claims.py` `read_capture` | read | — (strict) | `:228` |
 | `grade_timer_sweep.py` `load` | read | — (strict) | `:112` |
+
+The `Line` column is this page's tree and is dated: #749 then split the
+readers' bodies out (`take_capture_row`, `mark_labels_of`,
+`partition_capture_rows`, `capture_snapshot`, `capture_lines`) and #750 added
+the shared `capture_rows` stream on top. On the merged tree the first six rows
+are `:852`, `:896`, `:947`, `:1112`, `:1342` and `:1399`. The split itself —
+strict readers bare, preflights `replace` — is unchanged, and is now made once
+in `capture_rows` rather than six times.
 
 **Three of these the issue's list missed**, and taking its done-condition —
 "one named encoding, in *every* reader and writer of the `ts,addr,old,new`
