@@ -23,10 +23,11 @@ table**, where the *buffer read* is what can raise.
 It is not "the opcode table is indexed". `OPCODE_LEN` covers all 256 byte
 values — 16 rows of 16, opcode `0x00` first (`ec/tools/disasm8051.py:39-56`) —
 so `OPCODE_LEN[op]` where `op` is already a byte value cannot go out of range,
-and `counter_sweep_entry.py:384,551,565` and `audit_call_targets.py:307` index
-the table exactly that way. The distinction is the whole content of this
-census, and it is stated here because a grep for `OPCODE_LEN[` returns both
-kinds and a reader has to be told which is which.
+and `counter_sweep_entry.py:319,384,551,565` and
+`audit_call_targets.py:170,307` index the table exactly that way. The
+distinction is the whole content of this census, and it is stated here because a
+grep for `OPCODE_LEN[` returns both kinds and a reader has to be told which is
+which.
 
 Two more shapes are adjacent and are **excluded**, with the reason, so the
 sweep's boundary is stated rather than assumed:
@@ -108,7 +109,8 @@ asserted:
 | `test_disasm8051.py:52` | 1 | a comment in the test that already pins the #679 fix |
 | `pd_index_geometry.py:567,593` | 2 | `OPCODE_LEN[MOV_DPTR]` — the constant, not a buffer read |
 | `counter_sweep_entry.py:319,384,551,565` | 4 | `op` or `r["owner_opcode"]` is a byte value already in hand |
-| `audit_call_targets.py:170,171,307,308` | 4 | the adjacent last-byte-of-instruction read, excluded above |
+| `audit_call_targets.py:170,307` | 2 | the same: `op` is in hand from `d[i]` at `:169`, and `:307`'s `OPCODE_LEN[op]` is a length value with no buffer read at all |
+| `audit_call_targets.py:171,308` | 2 | the adjacent last-byte-of-instruction read, excluded above |
 
 The six sites the issue named are a subset of the table, not its content. Three
 more rows are the sweep's finding beyond both the issue and the plan that
@@ -128,7 +130,7 @@ in the function that walks.
 
 | # | site | bound | `len(d)`? | reached | measurement | settled by |
 |---|---|---|---|---|---|---|
-| 1 | `disasm8051.py:311` `decode()` | `range(count)`, `if i >= len(d): return` at `:309` | **is** | yes | #679's own fix; `test_disasm8051.py` pins it | existing guard + docstring `:302-306` |
+| 1 | `disasm8051.py:311` `decode()` | `range(count)`, `if i >= len(d): return` at `:309` | **is** | yes | #679's own fix; `test_disasm8051.py` pins it | existing guard + docstring `:303-306` |
 | 2 | `walk_branch_arms.py:212-213` `test_site()` | `range(SCAN_INSNS)`, `if off < 0 or off >= len(d): return None` at `:210` | **is** | yes | the check is on the line *before* the read | existing guard |
 | 3 | `citation_gap_scan.py:234` `walk()` | `while i < len(window)` | **is** | yes | — | existing docstring `:227-229` |
 | 4 | `pd_index_geometry.py:1064` `access_walk()` | `while used < budget`, `if not lo <= i < hi: break` at `:1057`, `hi = min(hi, len(d))` at `:1042` | region, clamped to `len(d)` | yes | — | existing guard |
@@ -143,7 +145,7 @@ in the function that walks.
 | 13 | `second_copy_census.py:468` `framing()` | `while i < off` | caller's | yes | over the committed image, exit 0 | census row + verdict |
 | 14 | `disasm8051.py:333` `converges_from()` | `while i < off` | caller's | yes | inside every `trace_xdata_refs --check` run | **no change** — #679's reason stands |
 | 15 | `pd_index_geometry.py:334-375` `walk_helper()` | `for _ in range(HELPER_MAX_INSNS)` | **no** | yes | `--helpers` over the image, exit 0 | census row + verdict |
-| 16 | `pd_index_geometry.py:502-538` `chain_from()` | `for _ in range(budget)` | **no** | yes | `--bases all`, 7270 lines, exit 0 | census row + verdict |
+| 16 | `pd_index_geometry.py:502-538` `chain_from()` | `for _ in range(max_insns)` at `:491`, `max_insns: int = 12` at `:468` | **no** | yes | `--bases all`, 7270 lines, exit 0 | census row + verdict |
 | 17 | `pd_index_geometry.py:402-403` `frame_of()` | `while i < off` | caller's | yes | driven by four of the modes: `--helpers`, `--bases`, `--sites`, `--callers` | census row + verdict |
 | 18 | `pd_index_geometry.py:703` `reaches()` | `while i < lo + site` | caller's | yes | `--callers 0x0860`, exit 0 | census row + verdict |
 | 19 | `second_copy_census.py:473` `framing()` | after the `:468` loop: `fw[last:last + OPCODE_LEN[fw[last]]]` | caller's | yes | as row 13 | census row + verdict |
@@ -158,9 +160,13 @@ class**: its `len(d)` test is a real check, but it runs *after* `d[off]` has
 already been read, which is the ordering #679 established everywhere else. It is
 safe for a different reason, and follow-up 2 is about it.
 
-Rows 11-20 are the class `decode()`'s fix does not reach: the bound is a
-caller's number, so a `len(d)` guard would be checking something other than the
-loop's own invariant. They get a verdict, not a guard.
+Rows 11-20 are the class `decode()`'s fix does not reach, and the class is not
+as uniform as "rows 1-8" is. Seven of the ten (11-14, 17-19) are bounded by
+**a caller's number**; two (15, 16) by a **count** — a module constant
+(`HELPER_MAX_INSNS`) and a parameter default (`max_insns: int = 12`) — and one
+(20) by a **region**, `range(lo, hi - 2)`. What they share is only that the
+bound is *not* `len(d)`, so a `len(d)` guard would be checking something other
+than the loop's own invariant. All ten get a verdict, not a guard.
 
 Rows 9 and 10 are the two the issue singles out, and the decisions differ.
 
@@ -379,9 +385,9 @@ python3 ec/tools/disasm8051.py --self-test
 **Note on command 1's argument list.** The plan this was implemented from names
 one address, `0x0860`, for this command. That does not reproduce the committed
 CSV and exits 1 at baseline: the file carries 105 rows the single-address sweep
-never reaches, because `xdata-086x-dispatch-sites.md` §1 names all fifteen. The
-fifteen-address form above is the one that exits 0, before and after the edit,
-and it is the form recorded on that page.
+never reaches, because `ec/annotations/xdata-086x-dispatch.md` §1 names all
+fifteen. The fifteen-address form above is the one that exits 0, before and
+after the edit, and it is the form recorded on that page.
 
 The two self-tests and `bash tools/run-tests.sh ec/tools` are green and pick up
 nothing new, which is the point: this work adds no suite. *(Merged-tree note
@@ -506,14 +512,15 @@ the 10 start(s) that reached the end-of-buffer check: 0x3FFF6 -> 0x3FFFE, 0x3FFF
 ## Follow-ups this opens
 
 1. **The count-bounded walks in `pd_index_geometry.py` are the real gap.** Rows
-   15 and 16 are bounded by a *count* (`HELPER_MAX_INSNS`, `SITE_WINDOW`) with
-   no end-of-buffer check anywhere, and they are the **parents** of the bounded
+   15 and 16 are bounded by a *count* (`HELPER_MAX_INSNS`, and `chain_from`'s
+   `max_insns: int = 12` default) with no end-of-buffer check anywhere, and they
+   are the **parents** of the bounded
    sites the table already covers — `walk_helper` and `chain_from` own the
    budgets the reachability arguments turn on. Now that the `len(d)`-bounded
    walks are written down as a class, whether these two should get a real
    bounds check is a well-posed question. It needs its own issue: the answer
-   depends on what invariant a count-bounded walk is supposed to enforce, which
-   is a design question and not a bug report.
+   depends on what invariant a count-bounded walk is supposed to enforce,
+   which is a design question and not a bug report.
 2. **`walk_branch_arms.py:328`'s `descend()` is the one contrast case whose
    check runs *after* the read.** Rows 1-7 all put the end-of-buffer test
    before the index it guards, which is the shape #679 established.

@@ -7459,12 +7459,14 @@ index `OPCODE_LEN` with it, before checking the buffer's end*, and wrote the
 shape down for the first time. This is the census of the rest of `ec/tools/` for
 it: **one grep, 39 lines, 25 sites in 20 rows** — the six the issue named
 are a subset, not the content — with a measured verdict per row and the other 14
-lines accounted for as docstrings, constants, dict values, or the adjacent
-`audit_call_targets.py` last-byte read. The three classes come out differently,
+lines accounted for as docstrings, constants, dict values, byte values already
+in hand, or the adjacent `audit_call_targets.py` last-byte read. The three
+classes come out differently,
 as they should: **eight rows where the bound is `len(d)` or clamped to it need
 no change at all** (every one already has the guard or the docstring `decode()`'s
-fix established), and **ten where the bound is a caller's number** get a verdict
-rather than a guard, because a `len(d)` check there would be testing something
+fix established), and **ten where the bound is not `len(d)` at all** get a verdict
+rather than a guard — seven bounded by a caller's number, two by a count, one by
+a region — because a `len(d)` check there would be testing something
 other than the loop's own invariant. The deliverable is
 `ec/tools/trace_xdata_refs.py:241-242`, where the comment `# DPTR reloaded: ...`
 described the **second** disjunct of the guard and was silent on the **first** —
