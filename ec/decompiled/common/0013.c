@@ -31,7 +31,7 @@ undefined1 int1_vector_forwarder_to_0556(undefined1 param_1)
     else {
       puVar1 = (undefined1 *)0x636;
       dptr_plus_a_times_b_16bit(DAT_EXTMEM_1110,2);
-      mov_dph_r2_dpl_r1_7177(puVar1[1],*puVar1);
+      jump_to_dptr_from_r1_r2(puVar1[1],*puVar1);
     }
   }
   else {

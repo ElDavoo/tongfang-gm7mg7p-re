@@ -2183,9 +2183,19 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # docs/findings/common-07f0-0f75-158e-1594-tranche.md), and 1,855 -> 1,872
     # with issue #561's seventeen common-area 0xFF fill rows
     # (docs/findings/ff-fill-census.md), then 1,872 -> 1,876 with issue #267's
-    # four `bank0` rows and 1,876 -> 1,877 with issue #470's one `pd 0x11C2`
-    # row (docs/findings/pd-common-address-spaces.md) -- all four sets of rows
-    # are in this tree.
+    # four `bank0` rows 0xC278, 0xC2C2, 0xC33C and 0xC4E7 -- the 0x1665/0x1666
+    # bit tests written up in ec/annotations/ec-07c4-07d5-sites.md -- and 1,876 ->
+    # 1,877 with issue #470's one `pd 0x11C2` row
+    # (docs/findings/pd-common-address-spaces.md). All four sets of rows are in
+    # this tree.
+    # Issue #456 retyped the twelve `unresolved` rows issue #134's tranche left
+    # behind and added **no** rows, so it did not move the pin: the five whose
+    # comments called the address a possible fragment of straight-line code are
+    # all real entries that already had one, and the four that were a bare `ret`
+    # are the callers' shared bail-out, not entries missing from this file. See
+    # docs/findings/call-graph-unresolved.md. The pin is here so a change that
+    # adds a row on purpose has to say so, and a change that adds none has to
+    # say that too.
     check("EC: annotations/ghidra-functions.csv is 1,877 records, no short row "
           "and no duplicate (scope, addr)",
           len(_ann) == 1877 and not structure_problems("ghidra-functions.csv", _ann,

@@ -20,7 +20,7 @@ void on_198a_result_advance_0394(char param_1)
     DAT_EXTMEM_0394 = 0;
   }
   else if ((DAT_EXTMEM_0490 & 6) == 6) {
-    select_dptr_by_0491_7c0_then_dispatch();
+    dptr_from_0491_031c_then_step_0e();
     copy_code_pair_to_3e0_plus_r7();
     DAT_EXTMEM_0394 = 2;
     return;

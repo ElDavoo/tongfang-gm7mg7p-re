@@ -20,7 +20,7 @@ void e0_bit2_dispatch(void)
   if ((DAT_EXTMEM_0367 >> 2 & 1) != 0) {
     call_cdcb_then_d0a6();
     FUN_CODE_d235();
-    count_0397_down_to_03b5_then_0514();
+    reset_03b5_at_limit_then_decrement_0514();
     call_d34b_then_d32c();
     return;
   }

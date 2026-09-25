@@ -57,7 +57,7 @@ Measured over the committed export, by `index.csv` for the functions and
 - `exported functions` — 2714
 - `annotated function rows` — 1877
 - `rows the index marks annotated` — 1902
-- `unresolved rows` — 169
+- `unresolved rows` — 157
 
 By program, as exported minus annotated minus the rest:
 
@@ -133,12 +133,12 @@ of the disassembler's vocabulary.
 
 > **Correction, 2026-09-25 (#602): recounted against the committed CSV, and
 > every number in the paragraph above is stale — not only the `thunk_` (7) the
-> rename removed.** The current figures are 169 `type: unresolved` rows of 1877,
-> and 269 names over the same seven prefixes: `call_` (87), `load_` (117),
-> `trampoline_` (29), `ret_only_` (21), `nop_` (9), `seed_` (6), of which 80 of
-> the `load_` rows are `load_dptr_` and the other 37 are the register and table
-> loads beside them. Only two of those moved because of the rename: `thunk_`
-> (7) is gone and `call_` gained the one `call_122f`. `load_` 115 → 117,
+> rename removed.** The current figures are 169 † `type: unresolved` rows of
+> 1877, and 269 † names over the same seven prefixes: `call_` (87), `load_`
+> (117), `trampoline_` (29), `ret_only_` (21), `nop_` (9), `seed_` (6), of which
+> 80 of the `load_` rows are `load_dptr_` and the other 37 are the register and
+> table loads beside them. Only two of those moved because of the rename:
+> `thunk_` (7) is gone and `call_` gained the one `call_122f`. `load_` 115 → 117,
 > `seed_` 4 → 6, 1848 → 1872 and 152 → 169 were **already wrong on `main`** —
 > the paragraph was written against an older CSV and nothing recounted it,
 > because unlike the four bullets above it is not one of the counts
@@ -147,10 +147,29 @@ of the disassembler's vocabulary.
 > `0x1665`/`0x1666`/`0x166A` rows and then 1876 → 1877 with issue #470's one
 > `pd 0x11C2` row; none of the five takes a name over one of the seven
 > prefixes, so the 269 and its breakdown are unchanged. The six renamed
-> `forward_to_*` rows are a shape census item too and are not in the 269,
+> `forward_to_*` rows are a shape census item too and are not in that 269,
 > because `forward_to_` is not
 > one of the seven prefixes this document enumerates; they bring that separate
 > family to 17.
+>
+> **† The two counts this block gives are left as #602 left them, and #456 moved
+> both again** — `unresolved` 169 → 157 and the shape census 269 → 267, with
+> `ret_only_` 21 → 19. The current figures are in the block below, which is the
+> one to read; the treatment matches the `†` rows in `call-graph.md`, so the
+> number a later reader would otherwise find missing stays visible.
+>
+> **Correction, 2026-09-25 (#456): 169 -> 157 and 269 -> 267, both from the same
+> twelve rows.** Issue #456 retyped issue #134's tranche's twelve
+> `type: unresolved` rows from their own bytes, and all twelve are now typed
+> from what the routine does, so none of the 169 above is a `unresolved` row
+> any more. Two of the twelve were also `ret_only_*` names, which is why the
+> shape census is two lower and the `unresolved` count twelve lower rather than
+> both twelve. Nothing else in this document moved on #456's account: it added
+> and removed no row, so `annotated function rows` and `rows the index marks
+> annotated` hold whatever the four bullets in §2 say — 1877 and 1902 on this
+> tree, from issue #267's four `bank0` rows and issue #470's one `pd 0x11C2`
+> row rather than from this issue.
+> `docs/findings/call-graph-unresolved.md` has the readings.
 
 ## 3. Reset and interrupt entry
 
@@ -514,11 +533,11 @@ cannot drift apart silently:
 - `exported functions` — 2714
 - `annotated function rows` — 1877
 - `rows the index marks annotated` — 1902
-- `unresolved rows` — 169
+- `unresolved rows` — 157
 
 **656 of the 753 common-area functions are unannotated, and that is the largest
 single block of undecoded firmware in this repository** — larger than the whole
-`pd` program. It is the natural next issue, and §2 is what sizes it. The 169
+`pd` program. It is the natural next issue, and §2 is what sizes it. The 157
 `unresolved` rows are a second, separate queue: functions that were looked at
 and are correctly described as far as the bytes go.
 
@@ -527,7 +546,7 @@ and are correctly described as far as the bytes go.
 Stated as a list, because the limit is the point of the document:
 
 1. **It is not a partition of the firmware.** §2's counts are the evidence, and
-   677 common-area functions and 169 `unresolved` rows are not in any group
+   677 common-area functions and 157 `unresolved` rows are not in any group
    here.
 2. **Nothing was observed on hardware.** No register behaviour, no interrupt
    delivery, no fan response, no charge current. Every claim above traces to a

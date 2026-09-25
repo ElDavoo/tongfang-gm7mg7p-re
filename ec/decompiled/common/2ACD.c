@@ -36,7 +36,7 @@ void FUN_CODE_2acd(byte param_1)
           FUN_CODE_3b32();
           dph_from_a_dpl_from_code_3b70();
           pcVar6 = uStack_1;
-          bVar3 = read_dptr_into_r6_then_r7_3b4e();
+          bVar3 = read_dptr_to_r6_then_dptr_3a00_plus_13x();
           *uStack_1 = (code)(param_1 | (byte)pcVar6[bVar3]);
         }
         cVar2 = cVar2 + '\x01';

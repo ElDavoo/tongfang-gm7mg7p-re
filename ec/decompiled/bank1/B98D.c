@@ -120,7 +120,7 @@ void threshold_dispatch_0438_by_0491(void)
       FUN_CODE_be10();
       return;
     }
-    mask_0491_c0_then_route_to_300x_40xx();
+    force_0491_0x21_then_base_0300_or_0180();
     return;
   }
   mask_0491_with_c0();

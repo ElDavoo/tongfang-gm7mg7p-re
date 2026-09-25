@@ -21,7 +21,7 @@ void stage_0a47_then_call_de83_r5_1a(void)
   
   mul_r7_by_8(0xa47);
   uVar1 = set_09c1_09c3_from_dptr(0xa47);
-  stage_0a49_pair_then_30xx_block(0x1a,uVar1);
+  stage_3000_block_then_probe_3000_3007(0x1a,uVar1);
   if (in_PSW < '\0') {
     return;
   }

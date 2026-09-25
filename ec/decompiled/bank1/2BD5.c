@@ -47,7 +47,7 @@ void FUN_CODE_2bd5(byte param_1,char param_2)
             FUN_CODE_3b32();
             dph_from_a_dpl_from_code_3b70();
             pcVar8 = pcVar7;
-            bVar5 = read_dptr_into_r6_then_r7_3b4e();
+            bVar5 = read_dptr_to_r6_then_dptr_3a00_plus_13x();
             *pcVar7 = (code)(param_1 | (byte)pcVar8[bVar5]);
           }
           cVar3 = cVar3 + '\x01';

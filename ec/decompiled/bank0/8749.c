@@ -120,19 +120,19 @@ void mode_tick_084c_07a5_09ee(char param_1)
     return;
   }
   if (DAT_EXTMEM_0f5d != -3) {
-    threshold_cascade_from_08eb_085f();
+    gate_0751_0741_blocks_then_tail_jump_8c46();
     return;
   }
   if (DAT_EXTMEM_0f5e != -0x37) {
-    threshold_cascade_from_08eb_085f();
+    gate_0751_0741_blocks_then_tail_jump_8c46();
     return;
   }
   if (DAT_EXTMEM_0f5f == 0) {
-    threshold_cascade_from_08eb_085f(0xff);
+    gate_0751_0741_blocks_then_tail_jump_8c46(0xff);
     return;
   }
   if (3 < DAT_EXTMEM_0f5f) {
-    threshold_cascade_from_08eb_085f(DAT_EXTMEM_0f5f - 4);
+    gate_0751_0741_blocks_then_tail_jump_8c46(DAT_EXTMEM_0f5f - 4);
     return;
   }
   if (DAT_EXTMEM_0f5f != 1) {

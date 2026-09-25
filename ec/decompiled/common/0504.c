@@ -43,7 +43,7 @@ void FUN_CODE_0504(byte *param_1,char param_2,byte param_3,byte param_4)
         param_3 = 1;
         bVar3 = *param_1;
         if (bVar3 == 0) {
-          post_05e8_init_1042_16e7();
+          post_05e8_sp_0c0_init_1042_16e7_3105();
           return;
         }
         param_4 = bVar3 & 0x3f;

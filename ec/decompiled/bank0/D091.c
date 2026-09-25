@@ -43,23 +43,23 @@ void dispatch_on_0860(char *param_1,char *param_2)
   code *pcVar4;
   
   if (XDATA_0860 == '\0') {
-    ret_only_d2be();
+    return_trampoline_d091_0860_guard_fail();
     return;
   }
   if (XDATA_0860 == -1) {
-    ret_only_d2be();
+    return_trampoline_d091_0860_guard_fail();
     return;
   }
   if ((DAT_EXTMEM_1c00 & 1) != 0) {
-    ret_only_d2be();
+    return_trampoline_d091_0860_guard_fail();
     return;
   }
   if ((DAT_EXTMEM_1c11 & 1) != 0) {
-    ret_only_d2be();
+    return_trampoline_d091_0860_guard_fail();
     return;
   }
   if ((DAT_EXTMEM_1c29 & 1) != 0) {
-    ret_only_d2be();
+    return_trampoline_d091_0860_guard_fail();
     return;
   }
   XDATA_0866 = DAT_EXTMEM_1c04;
