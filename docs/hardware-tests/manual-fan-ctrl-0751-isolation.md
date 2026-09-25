@@ -69,6 +69,24 @@ watched.
   Note it by hand at the times you mark; it is not in the EC sweep.
   Temperature is — §3's third watcher covers `0x043E`/`0x044F`, both
   `confirmed-working` in `../../ec/annotations/registers.yaml`.
+- **`ec/tools/grade_0751_isolation.py`, where §3's commands can reach it.**
+  The three watchers below carry `--label-vocab 0751`, and that flag makes each
+  of them read the label vocabulary out of that one file before it starts: a
+  watcher that cannot find it refuses, above the CSV and long above the EC, and
+  the refusal names every place it looked. A checkout has it already. A
+  directory of `windows\tools\` copied onto a Windows box needs a copy of that
+  file in the same directory as `ec_watch.py`, or `--grader <path>` naming it
+  — the search order, and what a present-but-broken copy does, are in
+  [`ec_watch-marks.md`](../../windows/tools/ec_watch-marks.md).
+- **Either grading workflow is supported, and both need the same file.** Grade
+  at the machine by running §6's command there, or bring the ten files back and
+  run the same command from a checkout: `grade_0751_isolation.py` is
+  stdlib-only and reads files rather than the machine, so §6's CSV + dump set
+  grades identically either way. What the checkout *is* needed for is the
+  command lines as written — §3's `python windows\tools\...` and §6's
+  `python ec\tools\grade_0751_isolation.py` are both repo-relative — so a
+  staged directory has to type its own paths. The tool half of §3 is the part
+  that now works either way; the grader bullet above is what makes it start.
 - Record the starting value of `0x0751`, and the current mode as the vendor
   UI reports it. `evidence/ec-watch/2026-09-23-power-mode-snapshot-dc.txt`
   is the format to copy for the snapshot.
@@ -794,6 +812,12 @@ rem  last mark its restore in each capture. A block that fails is summarised
 rem  where its windows would be and its windows are not printed, and the exit
 rem  code is 1. A mark set that cannot support its windows is a hole in the
 rem  record, not a quiet result -- see §3.
+rem
+rem  This path is repo-relative, and it is the only part of the grading that
+rem  needs a checkout rather than the files: the grader is stdlib-only and
+rem  reads these ten files rather than the machine, so running it here over
+rem  the machine's copies and running it back in a checkout over the same ten
+rem  give the same answer. §2 says which of the two §3 needs.
 python ec\tools\grade_0751_isolation.py ^
         <date>-0751-isolation-0700-07ff.csv <date>-0751-isolation-0f00-0f5f.csv ^
         <date>-0751-isolation-0400-045f.csv ^

@@ -105,12 +105,64 @@ The promise is exactly *the grader can place this row*, and the mistyped digit
 that survives is what §3's three-console comparison is for.
 
 A grader that will not load is a refusal rather than a fallback, printed before
-the CSV is opened and long before the EC is:
-`error: --label-vocab 0751 needs ec/tools/grade_0751_isolation.py at <path>`.
+the CSV is opened and long before the EC is. **Correction (issue #549,
+2026-09-25), leaving the message above as it was written.** It named one
+hard-coded path; the lookup is a list now, and what it prints is
+`error: --label-vocab 0751 needs grade_0751_isolation.py, the module this
+prompt reads its vocabulary from, and none of these is it:` followed by every
+place it looked, one per line, then the two ways out — a copy beside
+`ec_watch.py`, or a checkout that has one. *Where the grader is looked for*
+below is why the list exists.
+
 A capture taken under a promise the tool silently did not keep is #502's
 failure caught a step later rather than a step earlier, and an operator told a
 label was refused by a check that was never there has been told something
 false.
+
+## Where the grader is looked for
+
+The lookup is an ordered list, and the order is the whole of it:
+
+1. **`--grader <path>`,** and nothing else. An explicit path that quietly fell
+   through to a different file would be the silent fallback the refusal above
+   exists to prevent, in the one form where the operator has already said which
+   file they meant.
+2. **`ec/tools/grade_0751_isolation.py`** in a checkout, relative to this
+   tool. First among the built-ins so that a checkout grades its prompts
+   against the grader its own tests pin.
+3. **A copy of it in this file's own directory,** which is the case a directory
+   of tools staged onto a Windows box is in.
+
+The search advances past a candidate that is not there and **stops at one that
+is there and will not load**, naming that path. A staged copy quietly standing
+in for a committed grader that has been broken since the checkout was made is a
+capture graded against a rule the tree does not hold, and the operator would
+find that out at the grading rather than at the watcher.
+
+**What this settles is which dependency is the real one, not that there is
+none.** `load_label_vocab`'s docstring used to argue that the repository layout
+is not something to depend on, over the same line that computed
+`parents[2] / "ec/tools"` — which described the *lookup*, and the lookup was
+one hard-coded path. The layout is one of three places now. The dependency
+that survives is on the file existing somewhere: §3's three commands carry
+`--label-vocab 0751` and will not start without it, and that is a real startup
+dependency, stated rather than looked past. What does not happen is the
+dependency spreading to `main()` itself — `gpu_block_watch.py:59,166` imports
+`Marker` at module scope and stamps free-form labels through it, and it must
+not inherit a grader requirement it never asked for.
+
+**"Copy it beside the tool" is an operator action at staging time**, not a
+second committed copy. A duplicate in the tree would be exactly the drift the
+current design — loading the grader rather than copying its rules — exists to
+prevent, and the lookup above is ordered so a checkout can never grade itself
+against the staged one.
+
+None of the lookup has been exercised at a machine. The candidate order, the
+refusal and the two ways out are offline behaviour of the tool, checked against
+temp directories in `test_ec_watch.py`'s `RefusedLabelTests` rather than
+against a staged copy on Windows; an operator there starting §3's three
+watchers is the one who finds out whether the second candidate is where they
+put the file, and that is their step.
 
 ## Why the substitution went
 
@@ -186,7 +238,18 @@ about the capture.
 - `windows/tools/test_ec_watch.py`'s `RefusedLabelTests`, beside
   `BlankMarkTests`. It pins the refusal, the notice, the counter, and the
   default: with the flag absent an unplaceable label is recorded unchanged,
-  which is what those two other tools depend on.
+  which is what those two other tools depend on. Its later cases pin the
+  lookup itself — the grader in neither place, beside the tool, named with
+  `--grader`, present and broken, and the flag without a vocabulary — so the
+  candidate order and the refusal are one file's behaviour rather than a list
+  in a write-up. The committed copy needs no case of its own: every other case
+  in the class reaches it from a real checkout, so a lookup that stopped
+  looking there would fail them.
+- [`windows/README.md`](../README.md)'s staging section, and
+  §2 of
+  [manual-fan-ctrl-0751-isolation.md](../../docs/hardware-tests/manual-fan-ctrl-0751-isolation.md)
+  — the two places an operator finds out the grader has to be there before
+  §3's commands refuse to start, rather than at the refusal itself.
 - `ec/tools/grade_0751_isolation.py` — `parse_mark`, `unplaceable_marks` and
   `build_windows` are the three functions above. None of them changed: the
   grader's refusal was correct and still is.

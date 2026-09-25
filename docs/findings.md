@@ -4292,6 +4292,28 @@ fake EC; §3's commands carry the flag, and a human at the laptop sees the
 prompt. Same file:
 [ec_watch-marks.md](../windows/tools/ec_watch-marks.md).
 
+**2026-09-25 (issue #549): the grader is now looked for in three places, and
+the strictness is unchanged.** Since #531 the flag read
+`ec/tools/grade_0751_isolation.py` by one hard-coded path, over a docstring
+arguing the repository layout was not a dependency — a contradiction that
+only stayed quiet because §2 never told the operator the file had to be
+there, and a directory of tools staged onto a Windows box has no way to create
+the path the refusal named. `--label-vocab 0751` now tries `--grader <path>`
+(the only candidate when given), then the committed copy, then one beside
+`ec_watch.py`; a candidate that is there and will not load refuses rather than
+being skipped, so a staged copy cannot paper over a broken committed grader.
+The refusal still happens above the CSV and the EC, and now names every place
+it looked and both ways to satisfy it. What this settles is *which* dependency
+is real, not that there is none: the layout is one of three places, and the
+file existing somewhere is the real startup dependency for §3's three
+commands. The grader is still loaded rather than copied, so the prompt cannot
+drift from the grading. Both grading workflows are supported — the grader is
+stdlib-only and reads files, not the machine, so §6's set grades identically at
+the laptop or brought back — and §2 of the runbook now says so and lists the
+file. Offline behaviour against a fake EC and temp directories; whether a
+staged copy is where an operator puts it is a human's step. Same file:
+[ec_watch-marks.md](../windows/tools/ec_watch-marks.md).
+
 ## 17. The `main-ec-003` cluster is one 393-byte routine, counted 42 times over (2026-09-23, issue #179; id corrected by #253, by the 2026-09-24 re-derivation, and again by #279 on 2026-09-25)
 
 **The id in this section's subject has been wrong twice, and every version of

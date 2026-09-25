@@ -152,6 +152,39 @@ It prints and does not score — issue #168 grades a capture. Its procedure is
 `../docs/hardware-tests/ctgp-dben-07c4-bit3.md`, **written and not run**, and
 no `status:` in `ec/annotations/registers.yaml` moves until a human runs it.
 
+## Staging the tools onto a Windows box
+
+The tools here are plain stdlib Python 3, and the vendor driver is the only
+thing they need beyond it, so a directory of them can be copied onto a machine
+that has no checkout of this repository. The command lines in
+[`../docs/hardware-tests/manual-fan-ctrl-0751-isolation.md`](../docs/hardware-tests/manual-fan-ctrl-0751-isolation.md)
+§3 and §6 are written repo-relative — `python windows\tools\...`,
+`python ec\tools\grade_0751_isolation.py` — and a staged operator types their
+own paths instead. That is a property of the runbook's commands, not of the
+tools: `ecrw.py`, `ec_watch.py` and the probes reach each other by the
+directory they sit in.
+
+Two of them need a file from outside that directory, and both want
+[`../ec/tools/grade_0751_isolation.py`](../ec/tools/grade_0751_isolation.py)
+— the module that holds §3's mark vocabulary and reads a §6 capture.
+
+- `ec_watch.py --label-vocab 0751` loads it rather than carrying a copy of its
+  rules, and refuses to start without it: above the CSV, long above the EC, and
+  the refusal names every place it looked. Copy that one file into the same
+  directory as `ec_watch.py`, or pass `--grader <path>`.
+  [`ec_watch-marks.md`](tools/ec_watch-marks.md) has the search order, what a
+  present-but-broken copy does, and why the refusal is a refusal. **§3's three
+  watchers carry the flag**, so this is the one file a staged directory has to
+  bring for the procedure to start.
+- `manual_fan_ctrl_probe.py --self-test` reaches for the same grader by the
+  repository layout alone, so a staged copy runs the probe fine and the
+  self-test not at all. That is a known gap rather than a designed one; the
+  natural fix is for it to share the lookup above.
+
+Copying the grader beside a tool is an operator action at staging time, not a
+second committed copy: a duplicate in the tree is the drift that loading it
+rather than copying its rules exists to prevent.
+
 ## Offline tests
 
 Eight of the tools carry offline `unittest` suites, and all of them run from
