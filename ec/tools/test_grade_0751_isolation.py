@@ -1481,6 +1481,162 @@ class MarkSetTests(unittest.TestCase):
                       '0xA0', section)
         self.assertEqual(section.count('that is a readback, not evidence'), 2)
 
+    # The same attribution, one section over. A whole-block bracket is wider
+    # than a window and answers the same question, so a pair filed under the
+    # wrong block is a result about the wrong bytes rather than a redundant
+    # reading -- and the heading is unchanged either way, so the group line
+    # above the bracket is the whole of what says whose it is.
+    def test_a_dump_pair_is_read_from_the_block_being_graded(self):
+        rc, out, _ = run(*MULTI_BLOCK, '--block', '0xA0', '--wrote', '0xA0',
+                         '--dump-pair', *MULTI_A0_DUMPS)
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        self.assertIn("block 0xA0, from the <value> in these files' §6 names",
+                      section)
+        self.assertIn('16 address(es) compared', section)
+        # 0x0751 is the one address the two pages of this pair disagree on,
+        # and it lands in the "other" bucket as an address: the section says
+        # which addresses differ, not what they hold. The values are in the
+        # §4.6 readback, which is a different section about a different
+        # question.
+        self.assertIn('other addresses that differ (1), not graded here',
+                      section)
+        self.assertIn('0x0751', section)
+        # And the closing summary reports the read, because one was taken.
+        self.assertIn('The whole-block dump pairs above were read', out)
+
+        # The other block's pair, under this block. The pair is named rather
+        # than dropped, the refusal says whose it is, and the whole-block
+        # read for the block under test is reported as not taken -- the §4.6
+        # section's own wording for the same mistake.
+        rc, out, _ = run(*MULTI_BLOCK, '--block', '0x10', '--wrote', '0x10',
+                         '--dump-pair', *MULTI_A0_DUMPS)
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        self.assertIn('belongs to block 0xA0, not the block under test '
+                      '(0x10) -- not read for §4.1-§4.3 here', section)
+        self.assertIn('no --dump-pair was given for block 0x10', section)
+        # Nothing under that heading is compared, so no count is printed and
+        # no bucket is there to read as a result. Asserted on the absence
+        # rather than on a value: the two fixtures' brackets are identical
+        # apart from which block filed them, which is the next test.
+        self.assertNotIn('address(es) compared', section)
+        self.assertNotIn('other addresses that differ', section)
+        # And the closing summary does not claim a whole-block read for a
+        # run that took none.
+        self.assertNotIn('The whole-block dump pairs above were read', out)
+
+    # Why the refusal rather than a corrected label: the two pairs read the
+    # same two bytes in the opposite order, so their brackets come out
+    # byte-identical. There is no difference in a mis-filed bracket's body for
+    # a reader to notice -- the group line above it is the whole of the
+    # attribution, which is why the scoping case above asserts on the label
+    # and on what is absent rather than on a value.
+    def test_both_blocks_pairs_are_grouped_in_one_unscoped_run(self):
+        rc, out, _ = run(*MULTI_BLOCK,
+                         '--dump-pair', *MULTI_A0_DUMPS,
+                         '--dump-pair', *MULTI_10_DUMPS)
+        self.assertEqual(rc, 0)
+        section = whole_block(out).split("\n  Every `unchanged` above", 1)[0]
+        # One group per block, in the order the pairs were given.
+        self.assertEqual(section.count("from the <value> in these files' §6 "
+                                       'names'), 2)
+        self.assertLess(section.index('block 0xA0'), section.index('block 0x10'))
+        # Both read, each as its own bracket.
+        self.assertEqual(section.count('16 address(es) compared'), 2)
+        self.assertEqual(section.count('other addresses that differ (1)'), 2)
+        # And the two bodies are the same reading, bar the <value> in the two
+        # file names -- asserted here so the property the refusal rests on is
+        # pinned rather than assumed.
+        bodies = re.split(r'^  block 0x[0-9A-F]{2}, .*\n', section, flags=re.M)
+        self.assertEqual(len(bodies), 3)
+        self.assertEqual(bodies[1].replace('-a0-', '-<value>-'),
+                         bodies[2].replace('-10-', '-<value>-'))
+
+    # The one input error a pair can carry that its own flags cannot see: two
+    # file names naming two different blocks. A pair is one block's before and
+    # after, so there is no whole-block read to take from it, and picking
+    # either file's block would file a bracket over the wrong bytes. Named,
+    # not compared, and not fatal -- the same handling the same-file-twice
+    # pair gets, because the window report and the §4.6 readback the operator
+    # also needs still get printed.
+    def test_a_dump_pair_whose_names_disagree_is_not_read(self):
+        rc, out, _ = run(*MULTI_BLOCK, '--dump-pair', MULTI_A0_DUMPS[0],
+                         MULTI_10_DUMPS[1])
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        self.assertIn('the two file names name different blocks', section)
+        self.assertIn('the before side names block 0xA0 and the after side '
+                      '0x10', section)
+        # Named rather than dropped, so the operator can see which pair was
+        # not read instead of finding a missing bracket and guessing.
+        self.assertIn(f'{MULTI_A0_DUMPS[0]} -> {MULTI_10_DUMPS[1]}', section)
+        # No whole-block read for it, and none claimed in the summary.
+        self.assertNotIn('16 address(es) compared', section)
+        self.assertNotIn('The whole-block dump pairs above were read', out)
+        # The rest of the run is whole: six windows, both blocks intact.
+        self.assertIn('=== 6 window(s), one per mark ===', out)
+        self.assertEqual(len(marked_windows(out)), 6)
+        self.assertEqual(out.count('-- NOT GRADED'), 0)
+
+    # One name and a silent other side is that block's: the name is the more
+    # specific of the two statements, which is the reading `report_readback`
+    # already gives a name against `--wrote`. The group line says which of the
+    # two it was, because "these files' §6 names" would be false for the half
+    # that carries none.
+    def test_a_dump_pair_named_by_one_of_its_two_files_is_that_blocks(self):
+        rc, out, _ = run(*MULTI_BLOCK, '--dump-pair', MULTI_A0_DUMPS[0],
+                         PL2_PAIR[1])
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        self.assertIn('block 0xA0, from the <value> in one of these two file '
+                      'names; the other carries none', section)
+        # Read, and read under the block the one name gives it -- the
+        # unnamed file is not re-filed under a flag it has no name for.
+        self.assertIn('16 address(es) compared', section)
+        self.assertNotIn('belongs to block', section)
+        # The same pair under the other block, and the one name is enough to
+        # keep it out of it: the fallback is only for a pair that names
+        # nothing at all.
+        rc, out, _ = run(*MULTI_BLOCK, '--block', '0x10', '--wrote', '0x10',
+                         '--dump-pair', MULTI_A0_DUMPS[0], PL2_PAIR[1])
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        self.assertIn('belongs to block 0xA0, not the block under test '
+                      '(0x10) -- not read for §4.1-§4.3 here', section)
+        self.assertNotIn('address(es) compared', section)
+
+    # A pair whose two file names carry no `<value>` at all. §6 stamps every
+    # dump, so this is a hand-written command line rather than the procedure's
+    # own -- which is what the fallback is for, and the group line says the
+    # flag is what filed it, so a bracket read under a block no file claimed
+    # is not read as one the files named.
+    def test_a_dump_pair_that_names_no_block_falls_back_to_the_flag(self):
+        rc, out, _ = run(*MULTI_BLOCK, '--block', '0xA0', '--wrote', '0xA0',
+                         '--dump-pair', *PL2_PAIR)
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        self.assertIn('block 0xA0, from --block/--wrote; these files carry no '
+                      '<value> of their own', section)
+        self.assertIn('256 address(es) compared', section)
+        # The same two files under the other block read as that block's,
+        # which is the whole of what a flag-entered value is worth.
+        rc, out, _ = run(*MULTI_BLOCK, '--block', '0x10', '--wrote', '0x10',
+                         '--dump-pair', *PL2_PAIR)
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        self.assertIn('block 0x10, from --block/--wrote; these files carry no '
+                      '<value> of their own', section)
+        self.assertIn('256 address(es) compared', section)
+        # And with no flag there is nothing to fall back to, which the §4.6
+        # section already says for a dump.
+        rc, out, _ = run(*MULTI_BLOCK, '--dump-pair', *PL2_PAIR)
+        self.assertEqual(rc, 0)
+        section = whole_block(out)
+        self.assertIn('no block named: these files carry no §6 <value> and '
+                      'neither --block nor --wrote was given', section)
+        self.assertIn('256 address(es) compared', section)
+
     # A label the block walk cannot place is fatal, and the message quotes the
     # three forms §6 fixes rather than describing the problem. The operator
     # cannot fix an unplaceable mark from "this label is malformed"; the three
