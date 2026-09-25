@@ -7830,3 +7830,67 @@ the reasoning #753 acted on, and the four pins in that same paragraph are now
 row or gate was edited, no image was opened, no register was read back, and no
 new test was added: a check over prose nobody asserts on would duplicate a rule
 the tree made on purpose.
+
+## 60. The census checklist's held/unheld split is measured, and a constant that was a promise is now a check (2026-09-25, issue #849)
+
+> **Numbering note, added at the merge.** This section was written as §59, and
+> #816 (`2665a6a8`) took §59 on `main` while it was open, so it is renumbered
+> to the next free number rather than left to collide. §59 is now #816's
+> measured-state correction above, and this is the last section in the file.
+> Nothing this branch wrote pointed at its own section number — the write-up,
+> the checklist's correction block and both READMEs all name §2b, §3, §4a-4d
+> and the issue numbers instead — so there was no reference to repoint. A
+> section number is a property of the merge in the same way the runner's
+> totals are (see `runner-red-suite-set.md`), which is why the collision is
+> recorded here rather than left for the next reader to find.
+
+The write-up is [`doc-figure-pin-audit.md`](findings/doc-figure-pin-audit.md); this
+is the summary. §2b of the re-derivation checklist said **"Eight, unpinned"**,
+and it was wrong in both directions: a re-deriver was being sent to redo the
+seven figures the cheap gate already turns red on (five of §6b's console block,
+and from §6a's table `43` and `4,966`, which `--check` does hold), and the
+eleven that really were unheld were left looking like company.
+**`9320` was the sharpest of those** — it
+was `OWNERSHIP["main_refs"]`, a value in a constant thirty-six lines under that
+constant's own *"the --self-test ownership block asserts all four rather than
+leaving the promise to a reader"*, and **read by no check at all**. A value in a
+constant is a pin-shaped thing; it is not one. One `check()` now asserts the
+main-EC half of the export-ownership census against
+`OWNERSHIP["main_distinct"]`/`["main_refs"]`, and `--self-test` prints it
+(`ok  and its main-EC half is 1218 distinct / 9320 references … (got 1218/9320)`)
+**measured rather than copied** — if it came back red that is a finding, not a
+constant to edit to match. Since #823 a pin there is a CI failure, which is what
+makes §2b's split a distinction with consequences.
+
+The split is now a command's output.
+`ec/tools/check_doc_figure_pins.py` resolves every figure in a named section's
+tables to one of four verdicts with the `file:line` that decided it:
+`held-by-assertion` (a module-level constant **whose key is read outside its own
+span**), `held-by-check-literal`, `unheld`, or `not read by this method`, and
+exits non-zero when the page's own marking disagrees. **Eighteen figures, eight
+held, ten unheld**; the old "eight" counted table *rows*, and the issue's own
+"five of nine" is not a count of anything on the page, so the measured count is
+recorded rather than the issue's — the calibration rule applied to the issue as
+well as to the page. Every `unheld` is **"not found by this method", never
+"absent"**, and the four limits that have to be read with the verdicts are in
+the docstring; the load-bearing one is that this tool's own suite is excluded
+from the literal search, or `390` and `50` would measure held the moment a case
+named them.
+
+The wrong classification stays visible in §2b's correction block, quoted
+verbatim per §4a-4d, beside the new one. Three things this opens: **pinning
+`390` and `50`** is a new measurement rather than a correction of a false claim
+and is the natural next issue (only their sum, the pinned `440`, is held — a
+re-deriver can cross-check the pair by subtraction and cannot check either half
+alone); the eight §6a subset sums are unheld for a different reason and are not
+fixable the same way, since the guard-off census they come from is written to
+`/tmp` and committed nowhere; and **wiring the tool into a gate is a human's
+change** (`.github/` is out of an agent branch's reach — the plan stage's token
+has no `workflow` scope), so it runs by hand where
+`check_cluster_citations.py` stands today, and a case reads the gate script and
+fails if the name appears there without this being updated with it. A checker
+nobody runs is the shape of defect #819 was. `xdata-06c2-06db-timers.md` is not
+touched: its `BUCKET_TOTALS` citation is named in §3 and **#838 owns stale pins
+in this file family**. No live test ran, no register was read back, no image was
+opened, and no hardware, EC, Windows, Ghidra or `registers.yaml` row was
+involved.

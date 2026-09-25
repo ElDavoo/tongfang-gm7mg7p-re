@@ -34,7 +34,7 @@ precedent for what that costs is the #279 re-derivation note at
 superseded figures, kept visible, because that pass re-derived every *level* in
 §6a's table and none of its *differences*.
 
-## 2. The fifteen figures, in two groups
+## 2. The figures, in two groups — seven rows pinned by the test, eighteen measured
 
 ### 2a. Seven, pinned by the test — a trip here is the machine saying the census moved
 
@@ -48,28 +48,56 @@ superseded figures, kept visible, because that pass re-derived every *level* in
 | `394` guard-off, `389` committed | main-EC clusters at threshold 0.50 | `:789` |
 | `set(off) == set(on)` | the 1,326-row address universe both runs are over | the heredoc's two `of 1326` denominators, `:920-937` |
 
-### 2b. Eight, unpinned — these are the ones that decay silently
+### 2b. Eighteen figures, measured: eight held, ten unheld
 
-`ec/annotations/xdata-06c2-06db-timers.md:779-790`, §6a's table:
+**This split is a command's output, not prose.**
+`python3 ec/tools/check_doc_figure_pins.py` against this file with `--section
+2b` resolves every figure below to one of four verdicts, prints the `file:line`
+that decided it, and exits non-zero if the marking here disagrees with the
+measurement. Re-run it after any edit below; the method and its limits are in
+[`doc-figure-pin-audit.md`](doc-figure-pin-audit.md), and **every `unheld` there
+is "not found by this method", never "absent"** — the same caveat
+`ec/annotations/registers.yaml` carries for a static scan.
 
-| figure | what it is | line |
-|---|---|---|
-| `3,948` / `3,206` | main-EC `write` references, guard removed / as committed | `:781` |
-| `7,189` / `7,935` | main-EC `read` references | `:782` |
-| `193` / `142` | PD-image `write` references | `:783` |
-| `279` / `239` | references in `write` for the 49 addresses in both images | `:784` |
-| 43 addresses, `4,966` refs | `main-ec-003` (this block), **identical either way** | `:790` |
+#### §6b's console block, `ec/annotations/xdata-06c2-06db-timers.md:869-872`
 
-And the console block at `:869-872` — **§6b's `--export-ownership` run, not
-§6a's**, which is easy to misread as part of the table above:
+**§6b's `--export-ownership` run, not §6a's**, which is easy to misread as
+part of the table below:
 
-| figure | what it is | line |
-|---|---|---|
-| `1326 rows` / `440 rows` | the two `wrote …` lines | `:869-870` |
-| `1218` distinct addresses, `9320` references, `390` clusters | `main-ec` total at threshold 0.5 | `:871` |
-| `157` distinct addresses, `858` references, `50` clusters | `pd` total at threshold 0.5 | `:872` |
+| figure | what it is | line | verdict | pin |
+|---|---|---|---|---|
+| `1326` | the `wrote … after-registers.csv` row count | `:869` | held | `ORACLE["distinct"]`, `ec/tools/xdata_register_map.py:654`, asserted `:3406-3411` |
+| `440` | the `after-clusters.csv` row count | `:870` | held | `OWNERSHIP["clusters"]`, `ec/tools/xdata_register_map.py:1292`, asserted `:3889-3896` |
+| `1218` | main-EC distinct addresses | `:871` | held | `ORACLE["main_distinct"]`, `ec/tools/xdata_register_map.py:655`, asserted `:3406-3411` |
+| `9320` | main-EC references | `:871` | held | `OWNERSHIP["main_refs"]`, `ec/tools/xdata_register_map.py:1264`, asserted `:3857-3861` |
+| `157` / `858` | pd distinct addresses / references | `:872` | held | `ORACLE["extmem_pd_distinct"]` / `["extmem_pd_refs"]`, `ec/tools/xdata_register_map.py:649`, asserted `:3260-3277` |
+| `390` / `50` | main-EC / pd cluster counts | `:871-872` | unheld | |
 
-**Read all eight off the page before quoting them; three of them are commonly
+**`390` and `50` are the residual, and only their sum is pinned.** `440` above
+is their total, so a re-deriver can cross-check the pair by subtraction — but
+either half can move without the other, and nothing in the tree catches that
+today. A `"clusters_by_program": {"main-ec": 390, "pd": 50}` key on `OWNERSHIP`
+would close the pair, and it is a *new* pin rather than a correction of a false
+claim, so it is not folded in here. The write-up records it as the next call.
+
+#### §6a's table, `ec/annotations/xdata-06c2-06db-timers.md:779-790`
+
+| figure | what it is | line | verdict | pin |
+|---|---|---|---|---|
+| `3,948` / `3,206` | main-EC `write` references, guard removed / as committed | `:781` | unheld | |
+| `7,189` / `7,935` | main-EC `read` references | `:782` | unheld | |
+| `193` / `142` | PD-image `write` references | `:783` | unheld | |
+| `279` / `239` | references in `write` for the 49 addresses in both images | `:784` | unheld | |
+| 43 addresses, `4,966` refs | `main-ec-003` (this block), **identical either way** | `:790` | held | the `size` and `refs` cells of `main-ec-003`, `ec/annotations/xdata-clusters.csv:4`, compared cell-for-cell by `check()` at `ec/tools/xdata_register_map.py:2994` (`:3008`) |
+
+**The eight `unheld` figures are unheld because the per-subset sums are computed
+inline in §6a's heredoc and asserted nowhere.** The census they come from is the
+guard-off run, which is written to `/tmp` and committed nowhere, so there is no
+committed cell for `--check` to hold them to either. They are *not found* by the
+method above; the recipe's own denominator checks live in
+`ec/tools/test_xdata_cluster_names.py:303` and cover §2a's seven, not these.
+
+**Read every figure above off the page before quoting it; three are commonly
 transcribed wrong.** `14,838` is *not* a per-program total — it is §6b's own
 table cell (`main-EC refs | 14,838 | 9,320`, `:834`), and the per-program figure
 beside it is `9320`. `394` is not unpinned at all: it is the guard-off main-EC
@@ -80,6 +108,41 @@ guard-off census at
 a different run of a different flag). These are the figures a paste silently
 gets wrong, and a checklist that carried the wrong one would be worse than no
 checklist.
+
+*(Correction, 2026-09-25, issue #849. The heading this replaces read **"Eight,
+unpinned — these are the ones that decay silently"** — eight being the count of
+table *rows* above, and the section listing eighteen figures between them. It
+called every one of them unpinned, and that was wrong in both directions: eight
+are held by the cheap gate, so a re-deriver was being sent to redo work the tree
+already does, and `9320` / `390` / `50` — the ones that really are unpinned —
+were left looking like company. `9320` was the sharpest case, because it was
+`OWNERSHIP["main_refs"]`, and **a value in a constant that no check reads is a
+promise wearing the costume of a pin**; that key is now read by the "and its
+main-EC half is" check at `ec/tools/xdata_register_map.py:3857-3861`, so the
+console block above is six held against two unheld rather than five against
+three. The wrong classification is kept here verbatim, per
+[`../findings.md`](../findings.md) §4a-4d:)*
+
+> ### 2b. Eight, unpinned — these are the ones that decay silently
+>
+> `ec/annotations/xdata-06c2-06db-timers.md:779-790`, §6a's table:
+>
+> | figure | what it is | line |
+> |---|---|---|
+> | `3,948` / `3,206` | main-EC `write` references, guard removed / as committed | `:781` |
+> | `7,189` / `7,935` | main-EC `read` references | `:782` |
+> | `193` / `142` | PD-image `write` references | `:783` |
+> | `279` / `239` | references in `write` for the 49 addresses in both images | `:784` |
+> | 43 addresses, `4,966` refs | `main-ec-003` (this block), **identical either way** | `:790` |
+>
+> And the console block at `:869-872` — **§6b's `--export-ownership` run, not
+> §6a's**, which is easy to misread as part of the table above:
+>
+> | figure | what it is | line |
+> |---|---|---|
+> | `1326 rows` / `440 rows` | the two `wrote …` lines | `:869-870` |
+> | `1218` distinct addresses, `9320` references, `390` clusters | `main-ec` total at threshold 0.5 | `:871` |
+> | `157` distinct addresses, `858` references, `50` clusters | `pd` total at threshold 0.5 | `:872` |
 
 ## 3. The other four items
 

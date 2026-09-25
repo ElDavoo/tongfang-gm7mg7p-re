@@ -1237,6 +1237,14 @@ BUCKET_TOTALS = {"read": 8826, "write": 3587, "read+write": 2482,
 # "loses an address" result is not a property of export ownership, it is a
 # property of that grouping, which is why the rule is a committed tool and the
 # figures are re-derived rather than carried forward.
+#
+# **Every key below is read by a check in the --self-test ownership block**, and
+# the two that were not are named here so the reader does not have to grep for
+# them: `main_distinct`/`main_refs` are read by the "and its main-EC half is"
+# check, which `docs/findings/xdata-census-rederivation-checklist.md` §2b lists
+# as the pin for the 6b console block's `1218`/`9320` line. A value in a
+# constant that nothing reads is a promise wearing the costume of a pin, which
+# is the defect issue #849 corrected.
 OWNERSHIP = {
     # *** 2026-09-25, issue #279: 1171/9404 -> 1326/10178, main EC
     # 1062/8546 -> 1218/9320, read 4923 -> 5361 and write 2707 -> 3043, and
@@ -3840,6 +3848,17 @@ def self_test(args) -> int:
           f"{OWNERSHIP['distinct']} distinct / {OWNERSHIP['refs']} references "
           f"(got {own_distinct}/{own_refs})",
           own_distinct == OWNERSHIP["distinct"] and own_refs == OWNERSHIP["refs"])
+    # The per-program half of the same census, and the two keys the 6b console
+    # block's per-program line prints. `distinct`/`refs` above are file-wide, so
+    # before this the main-EC pair below was a value in the constant that no
+    # check read: it looked pinned and was not, which is the
+    # docs/findings/xdata-census-rederivation-checklist.md §2b case.
+    own_main_refs = sum(e["refs"] for e in groups_own["main-ec"].values())
+    check(f"and its main-EC half is {OWNERSHIP['main_distinct']} distinct / "
+          f"{own_main_refs} references, the per-program line the 6b console "
+          f"block prints (got {len(groups_own['main-ec'])}/{own_main_refs})",
+          len(groups_own["main-ec"]) == OWNERSHIP["main_distinct"]
+          and own_main_refs == OWNERSHIP["main_refs"])
     check("and its bucket totals, "
           f"{' '.join(f'{k} {v}' for k, v in OWNERSHIP['buckets'].items())} "
           f"(got {' '.join(f'{k} {fired_own.get(k, 0)}' for k in OWNERSHIP['buckets'])})",
