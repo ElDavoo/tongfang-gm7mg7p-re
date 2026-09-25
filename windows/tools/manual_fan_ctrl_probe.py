@@ -14,8 +14,11 @@ The defaults are the procedure's, not this tool's: 30 s per arm and a 0.5 s
 cadence are what §3 of docs/hardware-tests/manual-fan-ctrl-0751-isolation.md
 asks for, and that file is the reference whenever the two disagree. What the
 single-tool form does *not* do is §3b of that file: the service-stopped second
-pass, the by-hand package-power notes, the before/after range dumps §4.6 reads,
-and §6's eight-file set. This tool produces no range dump.
+pass, the by-hand package-power notes, and the other seven of §6's ten files --
+the six range dumps and the snapshot, none of which this tool writes. With
+`--csv` it does produce what §6's three CSVs hold, in one appended file rather
+than three, and the grader reads that with no conversion. This tool produces
+no range dump.
 
 Two arms, because 0x075B/0x075C (the fan duty bytes -- the vendor's
 ADDR_EC_MAIN_FAN_L/R_DUTY_BYTE, issue #123) move with the die
@@ -29,6 +32,11 @@ duty drift from thermal drift is the reader's call (§4.4).
 The two arms are labelled `no-op wrote 0x0751=0xNN` and `wrote 0x0751=0xNN` --
 the labels §3 requires and ec/tools/grade_0751_isolation.py windows on. A
 control arm that reads like the write under test is indistinguishable from it.
+The restore in the `finally` is a third mark, `restored 0x0751=0xNN` (§3's
+step 5), and it is the one the grader's block walk closes a block on: a
+capture whose last mark is not a restore comes back `VOID` with its windows
+withheld, so a run that wrote the byte back and never recorded it reads as a
+run that never put it back.
 
 0x0400-0x045F is the EC's own temperature reading (0x043E CPU_TEMP, 0x044F
 GPU_TEMP), so the duty reading is taken against a measured die rather than an
@@ -110,12 +118,22 @@ reading of a capture on the machine, and `0x086E` carries no clamps at all, so
 a `0x23` there means nothing of the kind one on `0x086B` means.
 
 `--csv` writes what `ec_watch.py --mark --csv` writes -- `ts,addr,old,new`, with
-this run's two arm boundaries as the `MARK` rows -- so the capture is read by
+this run's three marks as the `MARK` rows -- so the capture is read by
 `ec/tools/grade_0751_isolation.py` with no conversion (issue #124). The marks
-are free here: this tool performs both writes itself and so already knows when
-each landed, which is the one thing `ec_watch.py` needs a stdin thread for. The
-file is appended, so a second mode's run extends the capture rather than
-replacing it, and the marks say which arm each row belongs to.
+are free here: this tool performs both writes and the restore itself and so
+already knows when each landed, which is the one thing `ec_watch.py` needs a
+stdin thread for. The restore's mark is the one that closes the block: the
+grader's block walk refuses a capture whose last mark is not a restore, so
+without it both arms of a perfectly good run come back ungraded, and what they
+would have shown is not reported. The file is appended, so a second mode's run
+extends the capture rather than replacing it, and the marks say which arm each
+row belongs to. A run that dies part way through records why in a `#` row,
+which the reader skips by design: the restore and its mark still land, so the
+block would otherwise read `intact` over a window that was cut short. One
+`MARK` row is one action only while the marks are more than the grader's
+`MARK_MERGE_SECONDS` (5 s) apart; §3's ~30 s hold and this tool's default both
+clear that, and a `hold` under it folds the three into one window, which is a
+capture no block can be read out of.
 
 Values under test are limited to the three the vendor itself writes: 0xA0
 Office, 0x00 Gaming, 0x10 Turbo (a no-op if that is already the mode). The
@@ -124,11 +142,14 @@ value the EC already holds, so it introduces nothing the machine has not seen,
 and gating it would make the tool refuse to run in a mode the vendor UI has
 set. Restores 0x0751 in a finally block, which wraps both arms.
 
-`--self-test` opens no EC. It checks the watch set's read-safety guard and
-round-trips a synthesised mark row through the real grader's reader, so
-"conforms to the existing shape" is a check rather than a claim. It is the
-tool's own logic on a fixture, in the sense windows/tools/ecrw_fake.py gives
-that phrase.
+`--self-test` opens no EC. It checks the watch set's read-safety guard, and
+hands a synthesised three-mark block to the real
+`ec/tools/grade_0751_isolation.py` -- its reader, and then the block walk and
+`check_block_marks` that issue #457 made load-bearing, with the two-mark
+capture this tool used to write kept as the negative control -- so a mark set
+the grader refuses is a failing row here rather than a green self-test. It is
+the tool's own logic on a fixture, in the sense windows/tools/ecrw_fake.py
+gives that phrase.
 
 Run elevated, next to ecrw.py. Needs the vendor's ACPI driver present.
 
@@ -221,6 +242,44 @@ def now():
     return datetime.datetime.now().astimezone().isoformat(timespec="milliseconds")
 
 
+# The self-test's mark timeline. The grader's `coalesce_marks` folds marks
+# within `MARK_MERGE_SECONDS` (5) of each other into one window, so a self-test
+# that stamped its marks on the wall clock would hand the block walk a single
+# window with a joined label and no block at all -- a check that could not tell
+# a good mark set from a coalesced one. A hold apart is what the suite's own
+# `Clock` puts between two arms, and the stamps are the shape `now` produces,
+# so `parse_ts` reads them exactly as it reads a capture's.
+SELFTEST_EPOCH = 1700000000.0
+SELFTEST_HOLD = 30.0
+
+
+def mark_ts(seconds):
+    """A `now()`-shaped stamp `seconds` after `SELFTEST_EPOCH`."""
+    return (datetime.datetime.fromtimestamp(SELFTEST_EPOCH + seconds)
+            .astimezone().isoformat(timespec="milliseconds"))
+
+
+def arm_labels(orig, target):
+    """The three `MARK` labels one run writes, in the order it writes them.
+
+    §3's three action forms with this run's values in them: the control arm
+    writes the byte back the value it already holds, the write arm writes the
+    value under test, and the restore puts `orig` back again. One function
+    rather than an f-string at each of the four use sites, because the
+    `--self-test` and the offline suite have to exercise the labels *this tool*
+    writes -- a second spelling of them is a spelling that agrees today and
+    drifts tomorrow, and a drifted label is a capture the grader's `parse_mark`
+    cannot place, which is a whole run refused rather than one mark.
+
+    The restore carries `orig` and not `target`: the label names the value
+    being put back, which is the same value the no-op arm wrote and the one
+    the block is closed against.
+    """
+    return (f"no-op wrote 0x{MODE:04X}=0x{orig:02X}",
+            f"wrote 0x{MODE:04X}=0x{target:02X}",
+            f"restored 0x{MODE:04X}=0x{orig:02X}")
+
+
 class MarkCsv:
     """Append-only capture in `ec_watch.py --mark --csv`'s row shape.
 
@@ -234,8 +293,11 @@ class MarkCsv:
     Append is the part that carries: §4 of
     docs/hardware-tests/level-block-0860-086e.md wants the same session for
     three modes, so the second run has to extend the capture rather than
-    replace it, with the marks saying which arm each row followed. The header
-    goes to a new file only, and `read_capture` skips it either way.
+    replace it, with the marks saying which arm each row followed. What a run
+    appends is a *complete* block -- control, write, restore -- so the second
+    run extends a finished block rather than an open one, and the grader's
+    block walk reads each of them separately. The header goes to a new file
+    only, and `read_capture` skips it either way.
     """
 
     def __init__(self, path):
@@ -248,8 +310,12 @@ class MarkCsv:
         self._writer.writerow(values)
         self._fh.flush()
 
-    def mark(self, label):
-        self.row([now(), "MARK", "", label])
+    def mark(self, label, ts=None):
+        # `ts` is the self-test's, and only the self-test's: a real run wants
+        # the wall clock, and the marks it stamps have to be as far apart as
+        # the arms they bracket -- which is what the real clock says and what
+        # a self-test running in milliseconds does not.
+        self.row([now() if ts is None else ts, "MARK", "", label])
 
     def close(self):
         self._fh.close()
@@ -385,11 +451,16 @@ def self_test():
     Two things it can establish. The watch set's read-safety guard is
     arithmetic over this file's own constants, with the counts it is supposed
     to hold to written into the check rather than read out of the thing being
-    checked. The CSV's shape is settled by handing a synthesised capture to the
-    real `ec/tools/grade_0751_isolation.py` reader, so "conforms to the
-    existing shape" is a check rather than a claim. What it cannot establish
-    is anything about the machine -- the sense `ecrw_fake.py` gives that
-    phrase, and the reason this is not a substitute for the run
+    checked. The mark set is settled by handing a synthesised capture to the
+    real `ec/tools/grade_0751_isolation.py` -- its reader, and then the block
+    walk and `check_block_marks` that #457 made load-bearing, with the
+    two-mark capture this tool used to write kept beside it as the negative
+    control. Reading was never the part that decided anything: the reader has
+    not changed since, and a mark set the grader's block walk refuses is a
+    whole run ungraded, so "the grader can grade this capture" is a check
+    rather than a claim. What this cannot establish is anything about the
+    machine -- the sense `ecrw_fake.py` gives that phrase, and the reason this
+    is not a substitute for the run
     docs/hardware-tests/level-block-0860-086e.md describes.
     """
     ok = True
@@ -437,27 +508,72 @@ def self_test():
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / "self-test.csv"
         sink = MarkCsv(str(path))
-        sink.mark("no-op wrote 0x0751=0x10")
-        sink.row([now(), f"0x{BUSY:04X}", "0x00", f"0x{BUSY_VALUE:02X}"])
+        for n, label in enumerate(arm_labels(0x10, 0xA0)):
+            sink.mark(label, mark_ts(n * SELFTEST_HOLD))
+        # A change in each of the two arms' windows, so the window walk has
+        # something to file and the restore's own window is the empty one a
+        # real run's is.
+        sink.row([mark_ts(1), f"0x{BUSY:04X}", "0x00", f"0x{BUSY_VALUE:02X}"])
+        sink.row([mark_ts(SELFTEST_HOLD + 1), f"0x{BUSY:04X}",
+                  f"0x{BUSY_VALUE:02X}", "0x00"])
         sink.close()
         first = path.read_text().splitlines()
         # The second mode's run has to extend the capture rather than replace
-        # it, so both arms' marks have to survive into one file.
+        # it, and a run appends a whole block, so the first run's block has to
+        # survive intact at the front of the second run's file.
         again = MarkCsv(str(path))
-        again.mark("wrote 0x0751=0xA0")
+        for n, label in enumerate(arm_labels(0x10, 0x00), start=3):
+            again.mark(label, mark_ts(n * SELFTEST_HOLD))
         again.close()
         both = path.read_text().splitlines()
+        # The shape this tool used to write, kept as the negative control: the
+        # checks below are worth nothing if the same walk reads a capture the
+        # real one refuses as VOID, which is what that one was.
+        void_path = Path(tmp) / "no-restore.csv"
+        void_sink = MarkCsv(str(void_path))
+        for n, label in enumerate(arm_labels(0x10, 0xA0)[:2]):
+            void_sink.mark(label, mark_ts(n * SELFTEST_HOLD))
+        void_sink.close()
         marks, changes = grader.read_capture(str(path))
+        windows = grader.build_windows(marks, changes)
+        blocks, unplaced = grader.assign_blocks(windows)
+        for block in blocks:
+            block.problems = grader.check_block_marks(
+                block, [(str(path), marks)])
+        void_marks, void_changes = grader.read_capture(str(void_path))
+        void_blocks, _ = grader.assign_blocks(
+            grader.build_windows(void_marks, void_changes))
+        void_problems = [problem for block in void_blocks
+                         for problem in grader.check_block_marks(
+                             block, [(str(void_path), void_marks)])]
 
-    check("a synthesised capture round-trips through the real grader's reader",
-          len(marks) == 2 and len(changes) == 1
-          and marks[0].label == "no-op wrote 0x0751=0x10"
-          and marks[1].label == "wrote 0x0751=0xA0"
+    check("the real grader's reader takes the capture this tool writes, the "
+          "three labels in the order this run writes them",
+          len(marks) == 6 and len(changes) == 2
+          and [m.label for m in marks]
+          == list(arm_labels(0x10, 0xA0)) + list(arm_labels(0x10, 0x00))
           and changes[0].addr == BUSY and changes[0].new == BUSY_VALUE)
     check("a second run appends: the first run's rows are still there",
           both[:len(first)] == first and len(both) > len(first))
     check("the header is written once, to a new file only",
           both.count("ts,addr,old,new") == 1)
+    check("the marks are a hold apart, so the grader's coalescing keeps six "
+          "windows and does not fold them into one",
+          len(windows) == 6)
+    check("the block walk reads two blocks and files nothing in no block",
+          len(blocks) == 2 and not unplaced)
+    check("each block is intact: its last mark is its own restore",
+          all(grader.block_verdict(b) == "intact" for b in blocks))
+    check("each block's roles are control, write, restore",
+          [b.roles for b in blocks]
+          == [["control", "write", "restore"]] * 2)
+    check("no block's mark set withholds its windows",
+          not any(b.problems for b in blocks))
+    check("the two-mark capture is VOID, so a capture of that shape could not "
+          "have passed the block-walk rows above",
+          len(void_blocks) == 1
+          and grader.block_verdict(void_blocks[0]) == "void"
+          and len(void_problems) == 1)
 
     print(f"\nself-test {'passed' if ok else 'FAILED'}: the tool's own logic "
           "on a fixture. No EC was opened, no register was read, and nothing "
@@ -494,16 +610,18 @@ def main(argv=None):
                     help="append every change to this capture, in the shape "
                          "ec_watch.py --mark --csv writes and "
                          "ec/tools/grade_0751_isolation.py reads; this run's "
-                         "two arm boundaries are its MARK rows")
+                         "two arm boundaries and its restore are its MARK "
+                         "rows, and the restore is the one the grader's block "
+                         "walk closes a block on")
     ap.add_argument("--level-block", action="store_true",
                     help="also watch 0x0860-0x086E and 0x06E6 (16 more reads "
                          "per sweep, 222 in all), read-only, and report the "
                          "busy mark and the clamp constants; see "
                          "docs/hardware-tests/level-block-0860-086e.md")
     ap.add_argument("--self-test", action="store_true",
-                    help="the watch set's read-safety guard and the capture's "
-                         "row shape against the real grader's reader; opens "
-                         "no EC and reads no register")
+                    help="the watch set's read-safety guard and this run's "
+                         "mark set against the real grader's reader and block "
+                         "walk; opens no EC and reads no register")
     ap.add_argument("--block", action="store_true",
                     help="sweep 4 bytes per IOCTL (MMRD) instead of 1 (ECRR): "
                          "56 IOCTLs per sweep instead of 206, on a path that "
@@ -544,13 +662,16 @@ def main(argv=None):
     seen = ([{a: set() for a in LEVEL_BYTES}, {a: set() for a in LEVEL_BYTES}]
             if args.level_block else None)
     sink = MarkCsv(args.csv) if args.csv else None
+    # One call for all three, before the try: the `finally` names the restore's
+    # label, and a name bound inside the try would be out of scope there for a
+    # run that failed before it got there.
+    no_op, mark, restored = arm_labels(orig, target)
     try:
         # The control arm writes the byte back the value it already holds. It
         # is not the restore step and not optional: without it there is no
         # baseline to read the write's duty movement against (§4.4). The label
         # is printed before the write so it timestamps the action, and `base`
         # is the caller's so the byte's own movement stays in the record.
-        no_op = f"no-op wrote 0x0751=0x{orig:02X}"
         print(no_op)
         if sink:
             sink.mark(no_op)
@@ -561,19 +682,53 @@ def main(argv=None):
         # settled into, so the two arms share a starting point. This is what
         # the grader's per-mark windows do.
         base = snap(ec, addrs, args.block)
-        mark = f"wrote 0x0751=0x{target:02X}"
         print(mark)
         if sink:
             sink.mark(mark)
         ec.write(MODE, target)
         written = hold_and_observe(ec, hold, interval, base, mark, addrs,
                                    sink, seen[1] if seen else None, args.block)
+    except BaseException as exc:
+        # Whatever ended the run -- an observation that raised, a Ctrl-C at the
+        # keyboard -- the `finally` below still restores and still records the
+        # restore, so the block would read `intact` over a window cut short in
+        # a place nothing in the capture says. `read_capture` skips a `#` row
+        # by design, for an operator annotating a file by hand, and
+        # `build_windows` never sees one at all: this row is the only record
+        # that the arm did not run to its hold. Written before the restore
+        # mark so the reason is in the file rather than in a terminal nobody
+        # reads twice.
+        if sink:
+            sink.row([f"# the run ended early: {type(exc).__name__}: {exc}"])
+        raise
     finally:
         ec.write(MODE, orig)
-        time.sleep(0.4)
-        print(f"restored 0x0751 -> 0x{ec.read(MODE):02X}")
+        # The mark goes after the write and before the readback. After, so a
+        # restore whose write raised leaves the block VOID rather than
+        # recording a restore that did not happen; before the readback, so a
+        # readback that raises cannot cost the capture the mark that says the
+        # write landed. Printed as the same string the CSV row carries, the
+        # way the two arm boundaries are: the by-eye check and the capture the
+        # grader reads are the same run, and a restore that reached the screen
+        # and not the file is the case §3 exists to catch.
+        print(restored)
         if sink:
-            sink.close()
+            sink.mark(restored)
+        try:
+            time.sleep(0.4)
+            # Kept a line of its own, and worded as the readback it is: four
+            # matching readbacks say the byte was written and nothing about
+            # what the EC did with it (CLAUDE.md).
+            print(f"  0x{MODE:04X} readback 0x{ec.read(MODE):02X} -- a "
+                  "readback, not evidence the EC acted on it")
+        finally:
+            # The restore's mark is already on disk, so the readback is all
+            # that is left in here, and the readback is exactly what a run
+            # that has just crashed fails at. Closing regardless is what
+            # leaves a crashed run's capture a file rather than a handle
+            # waiting on the collector.
+            if sink:
+                sink.close()
 
     print("\nSUMMARY: two arms, same hold, differing only in the write.")
     report("control arm", control,

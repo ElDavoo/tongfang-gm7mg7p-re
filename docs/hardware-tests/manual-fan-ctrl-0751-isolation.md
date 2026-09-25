@@ -374,11 +374,25 @@ does §3" is not read as "the probe does all of this file".
   not there — §4.5's temperatures are in the `0x0400` pair and in neither of
   the others. A probe run answers §4.4's PWM comparison and nothing else in
   §4.
-- **§6's ten files.** A probe run produces none of them — no MARK-CSV, no
-  dumps, no snapshot — so there is nothing to index in `evidence/README.md` and
-  nothing for the grader to apply §4.1-§4.3 and §4.6 to. If the day is taken
-  with the probe, the run stays a log the way 2026-09-23's did, and §7 has no
-  capture behind it.
+- **§6's ten files, all but three of them.** A probe run with `--csv` produces
+  the three CSVs' content and none of the other seven: no dumps and no
+  snapshot, so §4.6 has nothing to read as the bullet above says, and there
+  is nothing to index in `evidence/README.md` under those names. The three go
+  into **one** appended file rather than §6's three — the probe's watch set
+  already spans all three ranges (`0x0783`-`0x0785` and `0x07C6` from the
+  `0x0700` one, the fan table, the temperature range), so §6's split is
+  `ec_watch.py`'s one-console-per-file shape rather than a coverage
+  difference — and the grader reads that one file with no conversion. Two
+  things follow for the record. The windowed §4.1-§4.3 read therefore
+  applies to a probe capture, and §4.6 does not. And with one capture there
+  is no other console for a mark to be missing from and no second spelling to
+  disagree with it, so the grader's cross-console checks do not run — its
+  census says so in as many words rather than letting one capture pass a
+  check it never ran. Each probe run appends a *complete* block (control,
+  write, restore), so a three-value session is three blocks in one file and
+  `--block <value>` takes them apart as it does for a §3 day. The capture is
+  then the run's own log, as 2026-09-23's was, and §7 still has no dump
+  behind it.
 
 And one difference in shape, which the numbers do not show. A §3 block is
 ~10 s settle + ~30 s hold + ~60 s watch, so ~100 s of observation in all, with
