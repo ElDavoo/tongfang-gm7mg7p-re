@@ -1,4 +1,4 @@
-# The XDATA register map: 1,172 addresses, attributed and clustered
+# The XDATA register map: 1,171 addresses / 14,819 references, attributed and clustered
 
 > **Census update, 2026-09-24 (merge of issue #133, PR #238; settled by issue
 > #259).** The figures below say 1,172 addresses / 14,801 references; the
@@ -29,6 +29,37 @@
 > exported `.c` and no `manifest.csv` row. The rule is carried in
 > `ghidra/scripts/ApplyAnnotations.java`, `ec/annotations/README.md` and
 > `../../docs/findings.md` §18.
+>
+> **Correction, 2026-09-25 (issue #557).** The committed tree is not
+> **1,171 / 14,792**: nothing in the committed CSVs, in the tool, or in
+> `xdata-06c2-06db-timers.md` §6a sums to 14,792, and **14,792 / 13,931 / 861
+> above are kept as the superseded version rather than deleted.** That trio
+> **was** a real, checkable measurement — the census as pinned at the #238
+> merge (`1fcd5f1e`, `xdata_register_map.py`'s `ORACLE`) — and it was
+> *superseded by later drift*, not invented: by issue #263's own measurement
+> that pin sat 26 references behind a pristine `main` (14,818), and #263's
+> `+1` brought the committed tree to 14,819. So the claim here is "not the
+> current figure", which is checkable; it is not "never was a tree". The
+> current figures are **1,171 addresses / 14,819 references** — main EC 1,062 /
+> 13,961, PD 157 / 858, 430 clusters — which is what the H1 above, §2's table,
+> §3's table and §4.1's table now carry. The 1,171 is unchanged from the line
+> above; the other three are not. The
+> self-test transcript further down is **not** the current one either, and did
+> not become so when this correction landed: it is issue #263's parent tree,
+> and §7.2 is what moved the pins. Re-derive, do not remember:
+> `../../docs/findings/xdata-census-totals.md` carries the three commands and
+> this file's every superseded figure.
+>
+> **The rule, for every number in this file.** A figure measured from the
+> committed `xdata-registers.csv` / `xdata-clusters.csv` is the current one; any
+> other figure here is historical and sits beside a correction naming the tree
+> it was measured against. Re-measure rather than pin — census-dedup
+> (#254/#256/#326) moves these — and re-measure the *table body*, not just its
+> total row, because a total its own rows do not sum to is a worse error than a
+> stale one. What this rule is about is agreement between the committed CSVs
+> and this page; it is not a claim that the census lists every address the
+> firmware touches. It does not — the note above is why, and a zero in it is
+> "not found by this method", never absent.
 
 Issue #132 asks for a register map, on the argument that the decompiled EC
 touches 1,134 XDATA addresses and that "**six** of those 1,134 are named" — so
@@ -42,12 +73,12 @@ address the main EC touches under a real symbol was outside the count.
 corrections to the issue are both about the census rather than the firmware.*
 
 * **The decompiled C spells an XDATA address two ways**, and reading only
-  `DAT_EXTMEM_` misses 41 main-EC addresses. `build_ec_decompile.py` applies
+  `DAT_EXTMEM_` misses 147 main-EC addresses. `build_ec_decompile.py` applies
   `ec/ghidra/xdata-symbols.csv` before exporting, so the registers the symbol
   table can name come out as `CPU_TEMP` and
   `MODE_TCC_OFFSET_DEFAULTS_GAMING_0`, never as `DAT_EXTMEM_043e`. Reading both
-  spellings gives **1,063** main-EC addresses in **13,937** references, of
-  which **41 carry a name** and 1,022 do not. The main EC's named count is not
+  spellings gives **1,062** main-EC addresses in **13,961** references, of
+  which **147 carry a name** and 915 do not. The main EC's named count is not
   zero and not six; §2 is the proof, and §7 reconciles the three the issue
   listed against the other method.
 * **Nine of the issue's 14,399 references are this repository's own annotation
@@ -58,7 +89,10 @@ corrections to the issue are both about the census rather than the firmware.*
   move; the census — 1,172 addresses, 14,801 references — does not. This one
   is the file correcting *itself*: `xdata-registers.csv` as first merged
   credited `0x0440` with 15 writers, and `registers.yaml` has said "**No
-  writer**" all along.
+  writer**" all along. *(The 1,172 / 14,801 is the tree §4.3 ran on, and the
+  correction at the top of this file names the committed one. §4.3's claim is
+  about buckets rather than totals, and it holds on the committed tree too:
+  `--no-eq-guard` moves no address's `refs` there either.)*
 
 The deliverable is `xdata-registers.csv` (one row per touched address) and
 `xdata-clusters.csv` (one row per cluster), both regenerable by
@@ -95,7 +129,15 @@ what the command prints — `diff()` names the first differing line and stops, s
 it reports no total of differing lines and none is attributed to it here. How
 much of each file actually differs, counted instead by generating to scratch
 with `--out-registers`/`--out-clusters` and diffing: 857 of the 1,172 register
-lines, 374 of the 428 cluster lines. This is pre-existing rather than this
+lines, 374 of the 428 cluster lines. **Every count in this parenthetical is the
+2026-09-24 merge tree it was measured on and none of them is the current one**,
+including the `1,172`/`428` in it: `--check`'s mismatch line counts the header
+on both sides, so the `428 on disk vs 431 generated` here is 427 clusters on
+disk against 430 generated, while the `1172 rows match` line in the transcript
+above counts data rows and is that tree's own 1,172. The
+second-pass correction immediately below is the one that supersedes this
+paragraph, and the correction at the top of this file carries the figures from
+there to the committed CSVs. This is pre-existing rather than this
 change's doing: the identical failure is on `origin/main`, and `--self-test`
 fails 9 assertions on both, the `ok the committed CSVs match a fresh generation`
 line in the transcript below among them. (Nine, not ten: the run's tenth line
@@ -148,10 +190,26 @@ addresses in 14,818 references — the 1,172/14,801 the paragraph below quotes i
 that paragraph's own historical figure, and the 14,801 is not the current
 total.)*
 
+*(Correction, 2026-09-25, issue #557: the `--self-test` count in that block has
+moved again, and the current one is smaller than "8" rather than the 9 above
+it. On the committed tree `--self-test` fails **one** assertion — "the
+annotation CSV and index.csv agree on every address they share", the
+`FUN_CODE_*` naming drift in `index.csv` that issue #256's §8 bullet records —
+and every counting assertion holds, `named_in_tree` (162 against 162), the five
+§4.1 bucket totals, the full-census oracle and the `ORACLE_TOP_MAIN` pair among
+them. `--check` still exits 0. The block above is left as the 2026-09-24 run it
+records, which is what the correction at the top of this file asks for; the one
+number a reader needs today is in §8's `xdata_register_map.py` bullet.)*
+
 The census is the same 1,172 addresses in the same 14,801 references as before
 — §4.3 changed which *direction* each reference is, and not one address or
 reference moved. The cluster count did, because the writer axis is built on
-direction.
+direction. *(Correction, 2026-09-25, issue #557. 1,172 / 14,801 is the tree
+§4.3 ran on; the committed census is 1,171 / 14,819, and the correction at the
+top of this file names it. The claim this paragraph actually makes still holds
+on the committed tree and is worth the re-derivation: `--no-eq-guard` against
+today's CSVs changes the `refs` of **0 of 1,171** addresses, so §4.3 moved
+direction then and moves it now.)*
 
 *(Written on issue #181's branch before #206 merged, and describing the same
 regeneration from the other side; the figures in it are that branch's and
@@ -169,7 +227,15 @@ this file that the symbol table's growth changes — issue #132's own counts
 and the 41 symbol-spelled main-EC addresses) are all unchanged, and all still
 pinned. The `spelled_as` table in §2 is unchanged for the same reason: the
 census reads how the committed `.c` spells an address, and no `.c` was
-re-exported.
+re-exported. *(Correction, 2026-09-25, issue #557. "Are all unchanged, and all
+still pinned" was true of #181's branch, the one the paragraph's own opening
+line names, and is no longer true of the committed tree: the census is
+1,171 / 14,819, main EC 1,062, and §2's `spelled_as` table has been
+re-transcribed from the committed CSV — 147 symbol-spelled main-EC addresses
+against the 41 above, because `.c` files *have* been re-exported since, by
+#194 and #179/#180/#183. The 109 PD-only, 48 both and the top two addresses
+are unchanged and still pinned. The wrong version is kept above rather than
+deleted.)*
 
 The self-test is the oracle, and it pins the issue's numbers *and* the
 corrections, so a change to what counts as a reference fails loudly instead of
@@ -249,14 +315,40 @@ that figure was measured and 44 of them were in the tree, it holds 101 now, and
 79 of those are. The pin was never updated, so that assertion has been red on
 `main` since the tool landed — the table already held 100 names in the very
 commit that added it. Re-derivable without this tool: 79 of the 1,172 rows in
-`xdata-registers.csv` have an address in `ec/ghidra/xdata-symbols.csv`.
+`xdata-registers.csv` have an address in `ec/ghidra/xdata-symbols.csv`. *(Both
+figures in that last sentence were 2026-09-24's, and the merge note below
+corrects the 79 to 88. Re-derived from the committed CSV it is **162 of
+1,171**, and re-derived from a *fresh generation* over the same tree it is
+**162 of 1,171** as well: the two agree on this column today, where on #557's
+own branch they did not (the committed CSV read 153 against a fresh 162, and
+`ORACLE['named_in_tree']` held the CSV's 153 rather than corroborating it, so
+the self-test measured 162 against the pin). That gap is closed, not papered
+over: issue #256's regeneration rewrote both CSVs from the committed tree, which
+filled the `name` column and carried `ORACLE['named_in_tree']` to 162 with it,
+and `--self-test` now measures 162 against that pin and passes. The 101 above
+is the symbol table's size on that older tree, and it holds 187 on this one —
+187 rows and 187 distinct `addr`/`name` pairs, so the count is the same under
+either reading.)*
+
+**The transcript's own census figures are the pre-#263 tree too, and three of
+them are the numbers a reader is most likely to quote.** It prints
+`1171 distinct / 14792 references, main EC 1062/13931`, `427 clusters`, and a
+§4.1 bucket total of `read 8317 write 3186 read+write 2476 passed-to-call 543
+address-taken 270`. The committed tree reads **14,819 / main EC 13,961 / 430
+clusters**, and §4.1's five cells are the ones the table further down now
+carries. This is not a transcription slip in either direction: those were the
+`ORACLE` and `BUCKET_TOTALS` values issue #263 re-pinned after finding them
+already 26 references behind on `main`, and §7.2 is the record of that
+measurement. The transcript is left as the run it was, because a rewritten
+transcript is not a run anybody can check.
 
 **That block did not pass when it was first written, and the two failures
 were both staleness rather than method.** The committed `xdata-registers.csv`
 had an empty `name` column for every row and the committed
 `xdata-clusters.csv` an empty `named_addrs` column for all 25 clusters that
-have named addresses (25 then; 52 rows of the census name one now, 39
-`main-ec` and 13 `pd`), while the tool fills both and its own self-test
+have named addresses (25 then; 162 rows of the census name one now, 145
+`main-ec`, 11 `both` and 6 `pd`, spread over 56 clusters), while the tool fills
+both and its own self-test
 asserts `name` is populated exactly for the addresses the symbol table names.
 So `--check` and `--self-test` both failed on the tree this file describes —
 nothing in `.github/scripts/agent-gates.sh` runs either mode, which is why it
@@ -305,30 +397,52 @@ $ grep -rhoE '\bCPU_TEMP\b' ec/decompiled/common/*.c ec/decompiled/bank0/*.c ec/
 ```
 
 Fifty-four mentions of `CPU_TEMP` in the EC programs, and **zero** of them
-under a `DAT_EXTMEM_043e`. The same holds for the other 40 named main-EC
+under a `DAT_EXTMEM_043e`. The same holds for the other 146 named main-EC
 addresses. The split, from `xdata-registers.csv`:
 
 | `program` | `spelled_as` | distinct | references |
 |---|---|---:|---:|
-| main-ec | `DAT_EXTMEM` | 977 | 12,692 |
-| main-ec | `symbol` | 38 | 408 |
-| both | `DAT_EXTMEM` | 45 | 1,056 |
-| both | `symbol+DAT_EXTMEM` | 3 | 40 |
-| pd | `DAT_EXTMEM` | 109 | 605 |
-| **total** | | **1,172** | **14,801** |
+| main-ec | `DAT_EXTMEM` | 878 | 7,636 |
+| main-ec | `symbol` | 136 | 5,487 |
+| both | `DAT_EXTMEM` | 37 | 378 |
+| both | `symbol+DAT_EXTMEM` | 11 | 714 |
+| pd | `DAT_EXTMEM` | 109 | 604 |
+| **total** | | **1,171** | **14,819** |
+
+*(Correction, 2026-09-25, issue #557. Every cell of this table is
+re-transcribed from the committed CSV rather than carried over from the tree it
+was written against. The wrong version, kept here rather than deleted: main-ec
+`DAT_EXTMEM` 977 / 12,692, main-ec `symbol` 38 / 408, both `DAT_EXTMEM` 45 /
+1,056, both `symbol+DAT_EXTMEM` 3 / 40, pd `DAT_EXTMEM` 109 / 605, total 1,172
+/ 14,801. This is not #259's nine-reference correction moving the numbers — it
+is the `symbol` rows growing when `.c` files were re-exported, which §1's merge
+note and its #181-branch correction both record, and which the tool's own dated
+comment above `ORACLE` walks through: #194 took the named main-EC addresses 41
+to 82, #237 two more, #179/#180/#183's 62 timer/counter and dispatch entries
+the rest of the way to 146, and the committed CSV now carries 147. The total
+row is unchanged in kind — it is the whole census — and moves only with the
+census.)*
 
 Read the `symbol` and `symbol+DAT_EXTMEM` rows as the addresses the issue's
-grep could not see: **41 addresses, 448 references**, all main EC. The
+grep could not see: **147 addresses, 6,201 references**, all main EC. The
 corrected form of the issue's claim is therefore
 
-> 41 of the 1,063 XDATA addresses the main EC touches carry a name from
-> `ec/ghidra/xdata-symbols.csv`. The other **1,022** read as
+> 147 of the 1,062 XDATA addresses the main EC touches carry a name from
+> `ec/ghidra/xdata-symbols.csv`. The other **915** read as
 > `DAT_EXTMEM_xxxx`.
 
-1,022 is unchanged — the issue's main-EC distinct count is right, and its
-coverage of it was not. That gap is still the blocker the issue describes, and
-it is still why this issue is on the critical path: 96% of the register file
-the firmware actually uses has no name.
+*(What the two sentences above said on the tree this section was written
+against: **41 addresses, 448 references**, and "41 of the 1,063 XDATA addresses
+the main EC touches carry a name … the other 1,022 read as `DAT_EXTMEM_xxxx`",
+with "1,022 is unchanged — the issue's main-EC distinct count is right, and its
+coverage of it was not". That correction was right on its own tree and is still
+the correction §2 exists for; only the size of the gap has moved, and 1,022 is
+no longer unchanged.)* The gap is still the blocker the issue describes, and it
+is still why this issue is on the critical path: **86%** of the register file
+the main EC actually uses is still spelled `DAT_EXTMEM_xxxx`, against 96% when
+this was written. That is better and it is not good enough — the exporter
+catches up with a symbol table that has been growing faster than the census is
+re-derived, which is the thing to fix.
 
 **The nine comment occurrences** are the smaller correction; the count is
 pinned by the self-test's raw figure, so a tenth appearing fails the test
@@ -343,12 +457,23 @@ an address is not the firmware touching it.
 
 **`spelled_as` and `name` are different facts.** `spelled_as` is how the
 decompiled text refers to the address; `name` is what the symbol table calls
-it. The three `symbol+DAT_EXTMEM` rows are where they come apart: `0x07D0` is
-`BATTERY_CHARGE_LIMIT_DOWN` in the `name` column and `DAT_EXTMEM_07d0` in the
-PD image's own source, because `gen_xdata_symbols.py` emits `programs=bank0;bank1`
-and refuses to name the PD program at all. Reading that row as the PD firmware
-calling it `BATTERY_CHARGE_LIMIT_DOWN` is `pd-xdata-overlap.md`'s mistake in a
-new place.
+it. The eleven `symbol+DAT_EXTMEM` rows are where they come apart: `0x07D3` is
+`GFID` in the `name` column and `DAT_EXTMEM_07d3` in the PD image's own source,
+because `xdata-symbols.csv` carries `programs=bank0;bank1` and refuses to name
+the PD program at all. Reading that row as the PD firmware calling it `GFID` is
+`pd-xdata-overlap.md`'s mistake in a new place.
+
+*(The three rows and the `0x07D0` example above are that tree's, and the wrong
+version is kept rather than deleted. The eleven are `0x07D3`-`0x07D5`
+(`GFID`/`CPUA`/`DBAP`), the `MODE_TCC_OFFSET_DEFAULTS_*` trio at
+`0x07D8`-`0x07DA`, and `0x07F3`/`0x07F6`/`0x0809`/`0x080C`/`0x080D`. `0x07D0`
+is no longer one of them at all: `registers.yaml` now derives that byte's name
+as `DBD1`, and the generated `ec/ghidra/xdata-symbols.csv` (`:16`) carries
+`BATTERY_CHARGE_LIMIT_DOWN` in its `from_register` column instead. The census
+holds `0x07D0` as a `pd` row that is `DAT_EXTMEM`-spelled with no main-EC
+side. The point the paragraph makes is unchanged and is better supported by the
+eleven than by the three: a `name` in the CSV is not a statement about how the
+committed `.c` spells the byte.)*
 
 ## 3. Two programs, and the split the clustering never crosses
 
@@ -361,16 +486,28 @@ once per program.
 
 | | distinct addresses | references |
 |---|---:|---:|
-| main EC (`common` + `bank0` + `bank1`) | 1,063 | 13,937 |
-| PD image (`pd`) | 157 | 864 |
+| main EC (`common` + `bank0` + `bank1`) | 1,062 | 13,961 |
+| PD image (`pd`) | 157 | 858 |
 | PD-only, never touched by the main EC | 109 | |
 | touched by both programs | 48 | |
-| **all of it** | **1,172** | **14,801** |
+| **all of it** | **1,171** | **14,819** |
 
-45 of the 48 both-programs addresses are `DAT_EXTMEM_`-spelled in both; the
-other three (`0x07D8`/`0x07D9`/`0x07DA`) are named in the EC and written as
-`DAT_EXTMEM_` in the PD image. A shared address *number* is not a shared byte,
+37 of the 48 both-programs addresses are `DAT_EXTMEM_`-spelled in both; the
+other eleven are named in the EC and written as `DAT_EXTMEM_` in the PD image
+(§2's `symbol+DAT_EXTMEM` row). A shared address *number* is not a shared byte,
 and the `program` column is on every row so no downstream reader can lose that.
+
+*(Correction, 2026-09-25, issue #557. The wrong version, kept here rather than
+deleted: main EC 1,063 / 13,937, PD image 157 / 864, all of it 1,172 / 14,801,
+and "45 of the 48 both-programs addresses are `DAT_EXTMEM_`-spelled in both;
+the other three (`0x07D8`/`0x07D9`/`0x07DA`)". The main EC / PD / PD-only /
+both rows are the tool's own split — what `xdata_register_map.py` prints, 1062
+distinct addresses and 13961 references for the main EC against 157 / 858 for
+the PD image — so the two reference rows sum to the 14,819 total while the
+distinct column double-counts the 48 `both` addresses by construction, as it
+always has. 45 + 3 was 48 there exactly as 37 + 11 is 48 here: the two groups
+are disjoint and both come straight from §2's `both` rows. The 109 PD-only and
+48 both figures are unchanged.)*
 
 ## 4. The method, where it can be argued with, and one correction to it
 
@@ -401,6 +538,33 @@ figure from; the wrong ones stay here because a drift record that deletes the
 drift records nothing. **None of this is §4.5's doing**: the co-reading columns
 are appended to both CSVs and `refs` is unchanged on every row, so the bucket
 totals are the same numbers a fresh generation produced before this change.
+
+*(Correction, 2026-09-25, issue #557 — a second record of the same
+re-derivation, written from the committed CSVs rather than from the diff above,
+and kept beside it rather than folded into it. The two agree cell for cell: same
+five superseded values, same five published values, same 14,819. All five cells
+and the total move together, because correcting the total alone would leave a
+table whose rows do not sum to it. The superseded cells, kept here rather than
+deleted: `read` 8,319, `write` 3,186, `read+write` 2,476, `passed-to-call` 549,
+`address-taken` 271, total 14,801 — this table's own row before either record,
+which is the 1,172-address census rather than §1's transcript, and that
+transcript carries an older set again (8,317 / 3,186 / 2,476 / 543 / 270) that
+§1 names beside itself. The published cells are the committed CSVs' own columns,
+re-derived with the same five columns over `xdata-registers.csv`, and they are
+also what the tool's `BUCKET_TOTALS` pins
+(`ec/tools/xdata_register_map.py:862`) and what `xdata-06c2-06db-timers.md` §6a
+already quotes. From the superseded row the five cells moved by
++22 / +9 / +6 / −15 / −4, which sums to the +18 the census moved on the same
+re-derivation: **+37** references into the three buckets whose spelling is
+settled (`read`, `write`, `read+write`) against **−19** out of
+`passed-to-call` and `address-taken`, a net +18. Which of those 19 were
+re-bucketed and which were genuinely gone is not something the column
+arithmetic can say, and the drift record above measures the same movement from
+the other end (#263, against a pristine checkout) rather than asserting a
+mechanism. That is a re-derivation and not §4.3 again — `--no-eq-guard` still
+changes the `refs` of 0 of 1,171 addresses on this tree, and moves `write` on
+210 of them. §6's `&&` bullet and §8's fix for it are restated against these
+numbers rather than the superseded ones.)*
 
 The totals are the tool's own, and the self-test pins them — but a pin on this
 table is internal: these are the buckets summed back to themselves, so they
@@ -557,6 +721,16 @@ row that shows how far off it could get: it read as 0 read / 13 `write` / 3
 > moved; the two were never the same number, and the difference is that site
 > rather than a comment. This is §6's `&&` limitation below, and it is the
 > adjacent finding this paragraph's wrong mechanism had hidden.
+>
+> **CORRECTION (2026-09-25, issue #557) to the `bank0/A747.c:24` line number
+> above, which is kept as it was written.** `:24` was right where it was
+> written: at `c9e0c2c4` (#206), `grep -n 'DAT_EXTMEM_076a'` over that file
+> returns lines **24 and 26**, so `:24` named this site and was the `&&` test,
+> not the store. #432's re-export `20b48329` added a line above it and moved
+> both, to **25 and 27** — so on the committed tree the site is
+> `bank0/A747.c:25`. Only the line number moved; the site, the `&&`, the bucket
+> it is misfiled under and the 838/837 arithmetic above all still hold. §6's
+> bullet and §8's follow-up carry the current `:25`.
 
 `0x0443` is the control, and it does not move: four genuine
 read-modify-writes at `bank1/F11C.c:21`, `F11F.c:23`, `F2CA.c:23` and
@@ -779,6 +953,19 @@ introduced, and closing it is a regeneration of the committed CSVs rather than
 a re-key of the names: `xdata_register_map.py --check` without `--map` is the
 command that settles it. It is written down here because the alternative is a
 red self-test that looks like this file's doing.
+
+*(Correction, 2026-09-25, issue #256's regeneration: this paragraph describes a
+gap that has since been closed, not a finding that was wrong. The re-key it
+calls for was done — `xdata-cluster-names.csv` carries `k7497cf885614` and its
+eight siblings where this transcript prints the three superseded keys, and
+`--self-test` reports no stale key — and the committed census is no longer
+behind a fresh generation, so the `main-ec-012` row below it names a membership
+the census holds. The assertion this paragraph says the self-test reports as
+red, "the committed CSVs match a fresh generation", is green; the one assertion
+still red is the `index.csv` function-naming drift, which is a different thing.
+The paragraph is kept because the gap was real on its tree and because the
+re-key it describes is what the names file's own `Re-keyed 2026-09-24` note
+cites.)*
 
 **`--map OLD_CSV` is the report a prose sweep is driven from.** One row per old
 cluster: where it went, whether its key changed, the carried name and how, the
@@ -1082,6 +1269,16 @@ symbol table.
 > `check_cluster_citations.py` resolves it against, which is the direction
 > that check exists to prevent.
 >
+> *(Correction, 2026-09-25, issue #256's regeneration: the gap named above has
+> been closed, so this record is overtaken rather than contradicted. The
+> committed CSV is no longer behind a fresh generation — both hold 430 clusters
+> — and the `main-ec-012` row it contrasts against that CSV is the row the census
+> now holds. What stays is the record of what this table was transcribed against
+> and why it was held to the committed CSV rather than to a fresh run, which is
+> the direction `check_cluster_citations.py` exists to keep. The `named inside`
+> figure in the paragraph above is stale in the same way and for the same
+> reason: `xdata-symbols.csv` holds 187 names, not 177.)*
+>
 > Issue #272 reached the same four rows independently, from the other
 > direction: it put §5's hand-typed figures behind `check_cluster_citations.py`
 > so they could not drift again, rather than re-transcribing them once. Both
@@ -1380,10 +1577,15 @@ is a human's, and the issue says so too.
   `classify()` asks only whether the text before the token ends in `&`, and
   tests that *before* it reaches the store rule, so the second `&` of a boolean
   `&&` files a plain comparison under `address-taken` instead of `read`. There
-  is exactly one such site in the committed tree — `bank0/A747.c:24`,
-  `DAT_EXTMEM_076a` — so §4.1's 271 is 270 genuine `&DAT_EXTMEM_xxxx` and one
-  comparison. No total is restated here, because none was recomputed for it and
-  the census the CSVs publish is the tool's own buckets either way; the fix is
+  is exactly one such site in the committed tree — `bank0/A747.c:25`
+  (`:24` on the tree §4.3's correction was written against; see the correction
+  block above), `DAT_EXTMEM_076a` — so §4.1's 267 is 266 genuine
+  `&DAT_EXTMEM_xxxx` and one comparison. (This bullet said 271 / 270 when §4.1's
+  table was written against the older census; both are re-derived on the
+  committed tree, where the one misfiled site is still `bank0/A747.c` and the
+  arithmetic is 266 / 1.) No total
+  is restated here, because none was recomputed for it and the census the CSVs
+  publish is the tool's own buckets either way; the fix is
   `left.endswith("&") and not left.endswith("&&")`, which would move one
   reference from `address-taken` to `read` and change no other bucket. The
   ordering is pre-existing — `git show main:ec/tools/xdata_register_map.py`
@@ -1749,10 +1951,11 @@ re-measurement, so it is left for its own issue rather than folded in here.
   unrecorded one is worse than not checking.
 - **`classify()`'s `&` test should learn to tell `&&` from address-of.** It
   files a boolean `&&` under `address-taken`, which is the one occurrence at
-  `bank0/A747.c:24` that §4.3's 838 could not correct (§6's bullet, and the
+  `bank0/A747.c:25` that §4.3's 838 could not correct (§6's bullet, and the
   correction block above). The fix is one clause — `left.endswith("&") and not
   left.endswith("&&")` — and it moves one reference from `address-taken` to
-  `read` (271/8,319 → 270/8,320) and touches no other bucket, so it is a
+  `read` (267/8,341 → 266/8,342, the committed cells; §4.1's table carried
+  271/8,319 when this was written) and touches no other bucket, so it is a
   re-run and a diff of two numbers rather than a re-derivation. It belongs in
   its own issue: the ordering is pre-existing on `main`, it is not a regression
   from #206, and folding it in here would put an unrelated classifier change

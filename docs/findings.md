@@ -4839,6 +4839,17 @@ row — issue #255's correction landed without a re-export — and this build
 caught it up; **measured on its own that file moves no census figure at all**,
 so the whole +1 belongs to the 88 rows.
 
+**The census's own write-up still said 1,172 / 14,801 / 14,792, and which one
+was current (2026-09-25, issue #557).** Three mutually inconsistent totals in
+`../ec/annotations/xdata-register-map.md`, none of them the committed one — the
+CSVs, the tool, §6a above and `../ec/README.md` had all agreed on 1,171 / 14,819
+already. Corrected in place against the committed CSVs, with every superseded
+figure kept beside a correction naming its tree, and the rule for telling them
+apart stated once at the top of that file. The measurement, the re-derivation
+command, and the list of what superseded what are in
+[`docs/findings/xdata-census-totals.md`](findings/xdata-census-totals.md) —
+which is where the next census-dedup change edits.
+
 ## 19. The map from mechanism to function, and the eleven stale evidence paths it fixed (2026-09-24, issue #136)
 
 `../ec/annotations/subsystems.md` now exists, and the issue it closes asked for
