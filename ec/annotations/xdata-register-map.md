@@ -1519,11 +1519,17 @@ common shape is `write_r1r2_to_xdata_pair(0x434,0,0)` rather than a bare
 generated symbol name, and **neither is what an argument looks like**:
 
 ```console
-$ grep -n 'read_xdata_pair_to_r3r4' ec/decompiled/bank1/B407.c | sed -n '2p'
-72:  read_xdata_pair_to_r3r4(FUN_CODE_0402);
+$ grep -n 'read_xdata_pair_to_r3r4' ec/decompiled/bank1/B407.c
+73:  read_xdata_pair_to_r3r4(FUN_CODE_0402);
 $ grep -rn 'FUN_CODE_0402' ec/decompiled/ | wc -l
-21
+15
 ```
+
+`B407.c` matches that accessor name once, at `bank1/B407.c:73`, so the line
+number is that one. The 15 are not 15 call sites: ten are the bank1 call
+sites this pass resolves, two are inside the invented routine's own body
+(`common/0402.c`), and the remaining three are the one `common/0402.asm` line
+plus the two index rows (`index.csv` and `listing-index.csv`) that list it.
 
 `FUN_CODE_0402` is the decompiler's own name for a routine it *invented* at
 `0x0402` because it read `mov DPTR,#0x0402; lcall 0x889E` as a call rather than
@@ -1581,9 +1587,11 @@ program carve-out to say so.
    through an accessor from exactly two files, and its row keeps 14
    `DAT_EXTMEM_` references separable from 2 `pair-literal` ones out of 16.
 3. **The argument must be a bare literal** — `0x…`, `FUN_CODE_…`/`DAT_CODE_…`
-   or decimal, which is how `D2A3.c` spells 0 and the 100 that is `0x64`.
+   or decimal, which is the form all six of the tree's decimal first arguments
+   take: `900` for `0x0384` at `C931.c:26`, `C979.c:22`, `CFB1.c:24` and
+   `D946.c:85`, and `1000` for `0x03E8` at `CF0B.c:23` and `CF3C.c:26`.
    Arithmetic (`DAT_EXTMEM_04ab + 0xa6` at `B224.c:37`, `DAT_EXTMEM_0577 - 6`
-   at `BABF.c:38`, `DAT_EXTMEM_0514 - 2` at `CC95.c:74`), a `CONCAT11(3,bVar3)`
+   at `BABF.c:39`, `DAT_EXTMEM_0514 - 2` at `CC95.c:76`), a `CONCAT11(3,bVar3)`
    index and a bare register are all the same shape — a base plus something
    this tool cannot name without guessing which one runs. For each the honest
    answer is the one the rest of this file already uses: **not found by this
@@ -1601,14 +1609,19 @@ parameter lists rather than calls:
 |---|---:|
 | bare hex, `0x434` | 416 |
 | `FUN_CODE_0402` and its two siblings | 15 |
-| decimal, `100` for `0x64` and `0` for `0x00` | 6 |
+| decimal, `900` for `0x0384` and `1000` for `0x03E8` | 6 |
 | **resolved** | **437** |
 | arithmetic, `CONCAT11`, a register, a parameter | 16 |
 | already an occurrence (`bank1/9354.c`'s `DAT_EXTMEM_0318`) | 1 |
 
 The 214 addresses reached include 58 that also carry a token spelling and
-**156 reached this way only** — those are the ones with no
-`xdata-registers.csv` row at all before this pass, and §5's new
+**156 reached this way only** — within the main EC no other spelling names
+them. 155 of those 156 had no `xdata-registers.csv` row at all before this
+pass; the 156th is `0x04A3`, which `origin/main` already carried as a
+`program=pd` row with 1 reference, and which this pass widens to
+`program=both`. So against `origin/main` the census gains **155 new rows** and
+**59 existing rows have a moved `refs`**, where the issue forecast 153 and 61.
+`xdata-registers.csv` is the per-address enumeration of both sets. §5's new
 `main-ec-001` is largely made of them.
 
 **The two worked examples, as the exact multiset rather than a total.**
@@ -1620,11 +1633,12 @@ The 214 addresses reached include 58 that also carry a token spelling and
 
 `0x0402` is `BAT_DESIGN_CAPACITY_0` and `0x0408` is `BAT_DESIGN_VOLTAGE_1`; both
 are in `../registers.yaml`, which is why a `grep '^0x0402,'` over
-`xdata-registers.csv` — the issue's evidence — finds nothing while the address
-was documented all along. `0x0403`, the `inc DPTR` half of the first, was
-already a row at 18 references, all 18 of them reads, over 13 functions; it
-moves to **28 references, 25 reads, 3 writes and 3 writers**, so it picks up a
-writer for the first time. All eight
+`xdata-registers.csv` on `origin/main` — the issue's evidence — finds nothing
+while the address was documented all along. It finds the row this pass added
+now; the two are the same query either side of the change. `0x0403`, the
+`inc DPTR` half of the first, was already a row at 18 references, all 18 of
+them reads, over 13 functions; it moves to **28 references, 25 reads, 3 writes
+and 3 writers**, so it picks up a writer for the first time. All eight
 `NOT_IN_TREE` entries this closes are listed in the tool: `0x0402 0x0404
 0x0408 0x040A 0x040C 0x040E 0x0410 0x043A`, which is the 25-entry set becoming
 17 and `named_in_tree` 167 → 175.

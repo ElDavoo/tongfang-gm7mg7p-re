@@ -821,10 +821,17 @@ PAIR_ACCESSORS = (
 # touching two adjacent bytes because the accessor's `inc DPTR` is what makes
 # it a pair access.
 #
-# **58, not 59, and the difference is worth one line.** A register row whose
-# `spelled_as` reads `symbol+DAT_EXTMEM` is a `program=both` row the two token
-# spellings meet on, which has nothing to do with this pass; counting "rows
-# with a `+`" would have mixed those in.
+# **58, not 59, and the difference is one address.** `0x04A3` is the single
+# row the two counts disagree on, and it disagrees because it is spelled two
+# ways in two *programs*: `pair-literal` in the main EC (7 references, all
+# reached through an accessor) and a `DAT_EXTMEM_` token in the pd image (1).
+# `merge_group()` keys spellings per program, so the main-EC entry this pair
+# split is measured over carries `pair-literal` alone and the address counts
+# as pair-only -- 58 mixed / 156 pair-only here. `spelled_as` in the CSV is
+# the union across programs, so there the same row reads
+# `DAT_EXTMEM+pair-literal` and the CSV's own split is 59 / 155. Neither
+# number is wrong; they count different sets, and the one that moved is
+# `0x04A3` alone.
 PAIR_ROWS = 214
 PAIR_ROWS_MIXED = 58
 # The two worked examples the issue asks for, as the exact multiset of resolved
@@ -1405,8 +1412,12 @@ XSPACE_FLOW = {"lcall", "ljmp", "acall", "ajmp", "sjmp", "jmp", "ret", "reti",
 # decompiler's own spelling for a routine it *invented* at an address its caller
 # used as data -- `common/0402.c` is such a routine -- and the resolver accepts
 # them for exactly the accessors `pair_accessor()` selects, and for nothing
-# else. The decimal alternative is not decoration: `D2A3.c`, `F3D7.c` and
-# `F416.c` spell the address `100` where the rest of the tree writes `0x64`.
+# else. The decimal alternative is not decoration: all six of the tree's
+# decimal *first* arguments are decimal, `900` for `0x0384` at `C931.c:26`,
+# `C979.c:22`, `CFB1.c:24` and `D946.c:85` and `1000` for `0x03E8` at
+# `CF0B.c:23` and `CF3C.c:26`. The decimal `100` in `D2A3.c`, `F3D7.c` and
+# `F416.c` is a *second* argument to a call whose address is the first
+# (`read_xdata_pair_to_r1r2(0x438,100,0)`), and is not what this reads.
 PAIR_LITERAL = re.compile(
     r"^(?:0[xX][0-9a-fA-F]{1,4}|(?:FUN|DAT)_CODE_[0-9a-fA-F]{4}|[0-9]+)$")
 # Direction a pair accessor carries, keyed by the annotation `type` that says
