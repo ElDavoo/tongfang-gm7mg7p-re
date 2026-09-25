@@ -574,10 +574,14 @@ ORACLE = {
     #
     # *** 2026-09-25, issue #279: the FULL census moves for the second time in
     # this block's history, and again by a mechanism that is not a new address
-    # and not an edit to any `.asm`. 1171/14822 -> 1326/15696 (main EC
-    # 1062/13964 -> 1218/14838, PD 109/861 -> 108/858): the pair-accessor pass
-    # resolves 437 call sites' literal first arguments, each touching two
-    # adjacent bytes, which is +874 references over +155 distinct addresses.
+    # and not an edit to any `.asm`. 1171/14822 -> 1326/15696: the pair-accessor
+    # pass resolves 437 call sites' literal first arguments, each touching two
+    # adjacent bytes, which is +874 references over +155 distinct addresses. The
+    # split under it is main EC 1062/13964 -> 1218/14838 and the `program=pd`
+    # rows 109/604 -> 108/603; the PD *half* -- every address reached in the PD
+    # image, `pd` and `both` together -- is unmoved at 157 distinct and 858
+    # references, which is what `extmem_pd_*` two lines below already says and
+    # is why no 861 belongs in this block.
     # **The two token halfs above do not move, and had to be made not to.**
     # `extmem_*` and `symbol_*` answer "how many references are *spelled* this
     # way", and an address reached both as a token and through an accessor now
@@ -594,13 +598,16 @@ ORACLE = {
     # PD half and `extmem_both` (37) are all unmoved, because none of them is
     # reached through an accessor, so the addresses and the spellings did not
     # change -- the census learned about 155 addresses it had a blind spot for.
-    # `pd_only` 109 -> 108 and `both` 48 -> 49 are not the pass either: 0x03DE
-    # and 0x03B8, newly reached in bank1, were already reached in the PD image,
-    # so the overlap grew by exactly one net address. (The PD half's own
-    # distinct count of 157 and 858 references are unmoved, and the address
-    # `0x03DE` the pass resolves is read through `movx` at `bank1/D37F.asm`'s
-    # `mov DPTR,#0x3de / lcall 0x8886` -- a bank1 XDATA byte that shares a
-    # *number* with a PD byte, which is the collision `program=both` records.)
+    # `pd_only` 109 -> 108 and `both` 48 -> 49 are not the pass's +155 either,
+    # and the address to name is `0x04A3`: it is a `program=pd` row on
+    # `origin/main` -- read at `pd/0xF22E`, `read_04a3_then_call_9a90` -- and the
+    # pass newly reaches it in six bank1 functions as the `inc DPTR` half of the
+    # `0x04A2`/`0x04A3` pair, so the overlap grows by exactly that one address.
+    # Diffing the `program` column of the committed CSV against `origin/main`
+    # returns `0x04A3: pd -> both` and no other change, which is the check that
+    # settles it; the 155 the pass adds are new `program=main-ec` rows, of which
+    # `0x03DE` and `0x03B8` are two. (A shared address *number* is not a shared
+    # byte, which is the collision `program=both` exists to carry.)
     "extmem_distinct": 1021, "extmem_refs": 8675,
     "extmem_raw": 8684, "extmem_commented": 9,
     "extmem_main_distinct": 901, "extmem_main_refs": 7817,
@@ -3529,19 +3536,31 @@ def self_test(args) -> int:
     # says which address stopped balancing rather than only which occurrence.
     #
     # **Issue #279: the `write` side is taken over occurrences only, and the
-    # subtraction is the reason.** `direction_invariant()` walks the decompiled
-    # text with `occurrence_re`, and its hypothesis is "a `write` is followed by
-    # an assignment". A resolved pair site is a `write` bucket entry that
-    # deliberately does *not* satisfy that hypothesis: its direction is read
-    # out of a callee's committed `.asm`, six bytes away in another routine,
-    # and the caller's own expression carries no `=` to be followed. Counting
-    # them on both sides would have widened the invariant to cover evidence it
-    # never examines; counting them on neither would have let a real
-    # misclassification hide behind them. So the pair sites are subtracted from
-    # the census side and the comparison is the one that was true before, over
-    # exactly the references it was always about. The `write`-only subtraction
-    # is complete because a resolved site is never `read+write`: there is no
-    # self-reference to make it one.
+    # subtraction is wider than "the pair writes".** `direction_invariant()`
+    # walks the decompiled text with `occurrence_re`, and its hypothesis is "a
+    # `write` is followed by an assignment". A resolved pair site is a `write`
+    # bucket entry that deliberately does *not* satisfy that hypothesis: its
+    # direction is read out of a callee's committed `.asm`, six bytes away in
+    # another routine, and the caller's own expression carries no `=` to be
+    # followed. Counting them on both sides would have widened the invariant to
+    # cover evidence it never examines; counting them on neither would have let
+    # a real misclassification hide behind them. So the pair sites are
+    # subtracted from the census side.
+    #
+    # **What is subtracted is every pair-resolved _reference_, read-direction
+    # included, while the sum it is subtracted from only ever holds writes.** A
+    # site touches two bytes and the pass resolves 241 read and 196 write sites,
+    # so `spelled_refs[PAIR_SPELLING]` is 874 and the left side below is
+    # occurrence-writes minus pair *reads* as well as minus pair writes. The
+    # slack is one-directional and stated rather than assumed: it can only push
+    # an address down, so it makes this check more permissive, never less, and
+    # an over-count still has to clear the read-direction references before it
+    # is flagged. **Subtracting only the write-direction half was measured, not
+    # assumed: on this tree it flags the same `none`**, so the width is not what
+    # carries the assertion. It is kept anyway because the narrow form needs a
+    # per-address count of pair sites *by direction*, which no census column
+    # carries -- deriving one here would make the check depend on a second walk
+    # of the tree that the oracle above does not make.
     over = [hexaddr(a) for a in everywhere
             if sum(groups[g][a]["buckets"]["write"]
                    + groups[g][a]["buckets"]["read+write"]
@@ -3551,9 +3570,11 @@ def self_test(args) -> int:
           f"pass accepts, so the agreement is per address and not only in "
           f"aggregate -- over the occurrences, with the "
           f"{sum(e['spelled_refs'][PAIR_SPELLING] for g in GROUPS for e in groups[g].values())} "
-          f"pair-resolved writes subtracted, since their direction is the "
-          f"callee's and not a following `=` (over-counted: "
-          f"{', '.join(over) or 'none'})",
+          f"pair-resolved references subtracted rather than the write-direction "
+          f"half of them, since a resolved site's direction is the callee's and "
+          f"not a following `=`; the left side is therefore occurrence-writes "
+          f"*minus pair reads* as well, which can only make this check more "
+          f"permissive (over-counted: {', '.join(over) or 'none'})",
           not over)
     # The exemption rule, stated as a measurement rather than as a tolerance.
     # `assign_after()` drops the `*` test that `store_target()` applies, so it

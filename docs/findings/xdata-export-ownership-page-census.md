@@ -37,8 +37,10 @@ refusal-contract suite red for an unrelated re-derivation.
 > and `main-ec-NNN` is a rank slot; every conclusion below is a relation
 > between keys or a count, and none of them turns on a rank.
 > `ec/annotations/xdata-export-ownership.md` itself has been renumbered to the
-> current ids, because its rows are membership claims against the committed
-> census rather than a record of a run.
+> current ids **and its run figures re-derived from a fresh
+> `--export-ownership`**, because its rows and its §4 table are both membership
+> and measurement claims against the committed census rather than a record of a
+> run. Its own dated note at the top carries the pre-#279 figures it replaced.
 
 Nothing here is an EC finding. No register's `status:` changed, no
 `registers.yaml` row was added, no census CSV was regenerated, no hardware or

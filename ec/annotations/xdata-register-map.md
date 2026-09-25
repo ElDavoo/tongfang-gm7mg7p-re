@@ -425,15 +425,20 @@ went unnoticed. `ORACLE['named_in_tree']` had the same problem: it read 44
 from when the 0x0400-0x045F page entries were added to `registers.yaml`
 without the constant being re-derived, against 79 in the tree. Both are
 corrected here, and §5's "named inside" column is a reading of the corrected
-CSV. That work was also said to move four of §5's rows — `main-ec-002` 20 to
-28, `main-ec-004` and `main-ec-007` from `none`, and `main-ec-013` from
+CSV. That work was also said to move four of §5's rows — `main-ec-001` 20 to
+28, `main-ec-003` and `main-ec-007` from `none`, and `main-ec-012` from
 `none` to 6 — and it did not: the table kept reading `none` for three of
-them, and `main-ec-002` at 29 rather than the 28 named here. **Issue #272
-settled that against the census**, which reads `main-ec-002` 33,
-`main-ec-004` 19, `main-ec-004` 43 (every member of the cluster), and
+them, and `main-ec-001` at 29 rather than the 28 named here. **Issue #272
+settled that against the census**, which reads `main-ec-001` 33,
+`main-ec-002` 19, `main-ec-003` 43 (every member of the cluster), and
 `main-ec-004` at the census's 26/278 rather than the 30/312 the row carried.
-The `6` was never `main-ec-013`'s: the census names no address in
-`main-ec-013`, and 6 is `main-ec-013`'s, the row above, which does read 6.
+The `6` was never `main-ec-012`'s: the census names no address in
+`main-ec-012`, and 6 is `main-ec-011`'s, the row above, which does read 6.
+**Those ids are the #256 census's and are left as they were written**, per
+`../../docs/findings.md` §4a — same rule as §5's drift record below. Two of the
+rows they name are not rows of the committed census at all: it carries no
+26-address cluster (that membership is inside `main-ec-001`) and no cluster with
+19 named addresses, so there is nothing to re-derive those two *to*.
 The count in the CSV rather than the hand-typed one in this table is the
 authority, and `tools/check_cluster_citations.py` now holds the table to it.
 
@@ -601,13 +606,19 @@ every row so no downstream reader can lose that.
 **The `both` count moved 48 -> 49 and the PD-only count 109 -> 108, and neither
 is the pair pass touching the PD image.** Its own `read_be16_from_dptr` at
 `pd:0x38D3` is selected by the same rule as the bank1 accessors and its single
-caller passes no argument at all, so the PD half's 157 / 858 are untouched. The
-movement is that one bank1 address the pass newly reaches was already reached
-in the PD image: `0x03DE`, read through `mov DPTR,#0x3de / lcall 0x8886` at
-`bank1/D37F.asm`, so the number 0x03DE now names a byte in both images — a
-*number* collision, which is exactly what the `program=both` column exists to
-carry and why §3a is the standing argument against reading one map into the
-other.
+caller passes no argument at all, so the PD half's 157 / 858 are untouched, and
+so are the `program=pd` rows' own figures but for one address: 109 rows / 604
+references become 108 / 603. The address that left them is **`0x04A3`**, a
+`program=pd` row on `origin/main` — read at `pd/0xF22E`, in
+`read_04a3_then_call_9a90` — which the pass newly reaches in six bank1
+functions as the `inc DPTR` half of the `0x04A2`/`0x04A3` pair, so the number
+0x04A3 now names a byte in both images. Diffing the `program` column of the
+committed CSV against `origin/main` returns that one change and no other, which
+is where the address comes from; the 155 addresses the pass adds are new
+`program=main-ec` rows, of which `0x03DE` and `0x03B8` are two. A shared
+address *number* is not a shared byte, which is exactly what the `program=both`
+column exists to carry and why §3a is the standing argument against reading one
+map into the other.
 
 *(Correction, 2026-09-25, issue #557, against the tree issue #279 superseded.
 The wrong version, kept here rather than deleted: main EC 1,063 / 13,937, PD
@@ -1189,15 +1200,27 @@ compose on one tree without either overwriting the other.
 runs that regeneration out of a `tempfile` and then holds four things: that the
 name `counter-sweep` still resolves to a cluster containing all 43 addresses
 `xdata-06c2-06db-timers.md` §1 sweeps; that the tool says what moved about it;
-that `main-ec-003` and `main-ec-003` are carried by **overlap and not by key**;
+that `main-ec-002` and `main-ec-004` are carried by **overlap and not by key**;
 and that no name is lost. What it measures is sharper than "nothing moved": the
-counter-sweep cluster keeps its key *and* its exact 43-address membership here,
-and only its **rank** changes, `main-ec-004` → `main-ec-004`: the 44-address
-cluster ahead of it in the committed census, `level-block-086x`, is 28
-addresses once the `==` guard is gone — it lost 16, and 28 sorts behind 43.
-A name and a key both survive that; the rank is the only one of the three that
-does not, and `main-ec-003` in the guard-off census is a different cluster from
-`main-ec-003` in the committed one.
+counter-sweep cluster keeps its key *and* its exact 43-address membership here.
+On the census this tree commits its **rank** survives that too — the
+regeneration `--no-eq-guard` builds leaves `counter-sweep` at `main-ec-003`
+with key `k733222e83898` and the same 43 addresses — and what moves instead is
+everything else in the ranking: of the 439 committed clusters, **315 change
+what their `main-ec-NNN` names** and 124 do not. `main-ec-002` is one of them
+either way, naming the committed 92-address `mode-oem-init` and a 93-address
+cluster here, so the same id is a different cluster in the two censuses — which
+is the point, and is why the rank is not an identity.
+
+*(Correction, 2026-09-25, issue #279. This paragraph used to read that only the
+rank moved — "`main-ec-003` → `main-ec-002`", the 44-address cluster ahead of
+it shrinking to 28 once the `==` guard is gone — which was true of the census
+issue #274 measured against and is not true of this one. The wrong version is
+kept here rather than deleted, per `../../docs/findings.md` §4a. The two ids
+the paragraph names beside it are re-derived from the committed
+`xdata-clusters.csv`: `mode-oem-init` is `kefb63d82f8c7` on `main-ec-002` and
+`level-block-086x` is `ka39cda99615f` on `main-ec-004`, against the
+`main-ec-001` and `main-ec-002` the #274 text named.)*
 
 **What this does not make true.** A `cluster_name` in the CSV cell does not
 record how it got there — that is what `--map` and the write transcript are for,
@@ -1350,13 +1373,21 @@ to pin that the relation never crosses the two programs.
 **Per cluster, three more columns.** `co_reading` is how many of the cluster's
 touching functions are in a group, `co_reading_refs` is what the largest single
 group supplies *of that cluster's own references*, and `co_reading_dominant`
-says whether that is more than half. It reads `yes` for **24 of the 430**
-clusters — 7/229 at size 1, 11/151 at 2-4, 3/37 at 5-9, 3/12 at 10-49, 0/1 at
+says whether that is more than half. It reads `yes` for **37 of the 439**
+clusters — 7/225 at size 1, 22/160 at 2-4, 4/40 at 5-9, 3/12 at 10-49, 1/2 at
 50+ — so it is a place to look rather than a defect, and it is uninformative
 at size 1, where one function is all of the refs by construction. **The share
 is the readable number, not the boolean.** By share, `main-ec-003` is 4,642 of
-4,966 = **93%** and the next cluster of size ≥10 is `main-ec-008` at 79%, then
-`main-ec-007` at 75% and `pd-001` at 50%.
+4,966 = **93%** and the next clusters of size ≥10 are `main-ec-008` at 79%,
+`main-ec-007` at 75%, the new `main-ec-001` at 55% and `pd-001` at 50%.
+
+*(Corrected 2026-09-25, issue #279, re-derived from the committed
+`xdata-clusters.csv`. The wrong version, kept here rather than deleted: `yes`
+for 24 of the 430 clusters, 7/229 at size 1, 11/151 at 2-4, 3/37 at 5-9, 3/12 at
+10-49 and 0/1 at 50+, which is what the pre-#279 census read. The
+`main-ec-003` share and the `main-ec-008` / `main-ec-007` / `pd-001` figures
+are unmoved; `main-ec-001` is the one the pass added into the run, at 479 of
+873.)*
 
 **What the boundary hypothesis would imply, printed and not adopted.**
 `--collapse-co-readings` maps each group to one pseudo-function and re-clusters,
@@ -1618,13 +1649,17 @@ block. A de-duplication pass over overlapping decompiles is its own issue and
 `check_register_counts.py` still exits 0, which is the mechanical proof that
 the first row did not move.
 
-**The 74 zero-`MOV DPTR` high halves are deliberately not entered in
+**The 73 zero-`MOV DPTR` high halves are deliberately not entered in
 `registers.yaml`.** 107 of the addresses this pass reaches are only ever the
-`inc DPTR` half of an accessor's pair, and **74 of those have no
+`inc DPTR` half of an accessor's pair, and **73 of those have no
 `MOV DPTR,#addr` encoding in `common`, `bank0` or `bank1` at all**:
-`0x0309 0x0311 0x0313 0x0317 0x031B 0x0333 0x0337 0x0341 0x0346 0x034F` and 64
+`0x0309 0x0311 0x0313 0x0317 0x031B 0x0333 0x0337 0x0341 0x0346 0x034F` and 63
 more, running to `0x0647`. They are reached only as `param_1 + 1` inside an
-accessor.
+accessor. The count is re-derivable with `trace_xdata_refs.sites_for` over
+those three regions of `ec/firmware/GMxMGxx_11.800`, which is the same
+`MOV DPTR` encoding `xdata-0400-045f.md` §4 admits a byte on — the regions are
+`0x00000`-`0x08000`, `0x08000`-`0x10000` and `0x10000`-`0x18000`, and a bank
+boundary read at `0x10000` rather than `0x08000` misses six of them.
 `xdata-0400-045f.md` §4 admits a byte to that file's table **if and only if**
 the image has at least one direct `MOV DPTR,#seed` site, and this pass does not
 change that. The census is a different method and must not become a back door
@@ -1687,13 +1722,18 @@ symbol table.
 > transcribed from the **committed `ec/annotations/xdata-clusters.csv`**, not
 > from a fresh `xdata_register_map.py` run, and four of them were **stale**
 > against it. `main-ec-004` was 30 addresses / 312 references and is 26 / 278;
-> `main-ec-004` had 4 named addresses inside and has 19; `main-ec-004` had
-> `none` and has all 43 of its members named; and `main-ec-002` had 29 and has
-> 33. The cause is the same as the movement the paragraph above describes and
-> none of it is about the firmware: the symbol table grew and §4.3's
-> regeneration moved the clusters, and this table is a transcription that was
-> not re-run. The hand-written last column is unchanged and is unaffected — it
-> is a reading, not a count.
+> `main-ec-002` had 4 named addresses inside and has 19; `main-ec-003` had
+> `none` and has all 43 of its members named; and `main-ec-001` had 29 and has
+> 33. **Those four ids are the 2026-09-24 table's and are left as they were
+> written**, per `../../docs/findings.md` §4a: they name the census this
+> record was measured against, not the one the table below carries, and two of
+> the memberships they name — the 26-address row and the 19-named one — are no
+> longer rows of their own in the committed census at all, so there is nothing
+> to re-derive them *to*. The cause is the same as the movement the paragraph
+> above describes and none of it is about the firmware: the symbol table grew
+> and §4.3's regeneration moved the clusters, and this table is a transcription
+> that was not re-run. The hand-written last column is unchanged and is
+> unaffected — it is a reading, not a count.
 >
 > **The committed CSV is itself behind a fresh generation, and this table is
 > the committed CSV's row for row.** A fresh run of the committed tree gives
@@ -1733,13 +1773,17 @@ symbol table.
 > — that is the point of a drift record, and the four rows it names are the ones
 > to read if you want to know what #274 found. What the table now carries is
 > the re-derived census, and the differences are not small: the counter block
-> is `main-ec-004` again and the gate block `main-ec-004`, both of which §5's
+> is `main-ec-003` again and the gate block `main-ec-004`, both of which §5's
 > own note below and the pages that cite those ids
 > (`../../docs/findings.md` §17, `xdata-06c2-06db-timers.md`,
 > `xdata-086x-dispatch.md`, `manual-fan-ctrl-0751.md`) now say in correction of
 > the ids they used. Two numbers in the drift record's own table are the ones
-> that moved most: `main-ec-004` is 26 addresses / **280** references, not
-> 278, and the old `main-ec-003` is no longer a 44-address row at all.
+> that moved most: it read 26 addresses / **280** references, not 278, and the
+> old `main-ec-003` was no longer a 44-address row at all. *Issue #279 takes
+> that 26-address row one step further: it is not a row of its own any more
+> either — all 26 of its addresses are inside the 152-address `main-ec-001`
+> (§4.7) — so `main-ec-004` is the gate block and there is no 26-address row
+> left to name.*
 
 | cluster | key | name | size | refs | range | named inside | co-reading (§4.5) | the functions the cluster's addresses share |
 |---|---|---|---:|---:|---|---|---|---|
