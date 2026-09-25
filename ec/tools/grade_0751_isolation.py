@@ -1004,6 +1004,118 @@ def report_window(w, n, total, block, total_blocks, end=None):
     return moved
 
 
+def block_verdict(block):
+    """`intact` or `void`: whether the block's last mark is its restore.
+
+    The one predicate §3's integrity check is, and it is here rather than
+    inlined at `report_blocks` because the two dump sections need the same
+    answer and a second copy of it is a thing that drifts. A block that is
+    `void` is short the mark that says the byte was put back, so its windows
+    are withheld; that is a statement about what the capture holds and
+    nothing else.
+    """
+    last = block.windows[-1]
+    return "intact" if parse_mark(last.label)[0] == "restore" else "void"
+
+
+def block_marker(block):
+    """The words one block's own reads carry, or '' if it has nothing to mark.
+
+    Keyed on `block.problems`, not on the restore check alone, and the two are
+    different facts `report_blocks` prints as two: a block can hold its
+    restore and still be short an action earlier in it. `missing-mark` and
+    `disagreeing-marks` are both that shape -- `block_verdict` calls their
+    one block `intact` and `main` still withholds every one of its windows --
+    so a marker keyed on the restore alone would print nothing for a block
+    whose windows the run refused anyway, which is the defect this exists to
+    stop.
+
+    What a marker names is the windows rather than the block's findings,
+    because the windows are what this run refused and what it is not entitled
+    to speak for. `VOID` here means the same thing `report_blocks` means by
+    it: short a restore mark, not that anything did or did not happen.
+    """
+    if not block.problems:
+        return ""
+    if block_verdict(block) == "void":
+        return "VOID, its windows were withheld above"
+    return "its mark set does not hold, its windows were withheld above"
+
+
+def verdict_marker(here):
+    """The words to carry on a read for one value, from that value's blocks.
+
+    Empty when every one of them had its windows printed, which is most
+    reads: the marker's whole job is to say a block's windows were withheld,
+    so the common path stays byte-identical to what it printed before this
+    existed.
+
+    Two blocks in one capture can share a value -- the same value written
+    twice in a day, which `Block.index` exists to tell apart -- and then a
+    read under that value spans both, so the marker names both rather than
+    only the one that was refused. A read over a withheld and a printed block
+    is not a read of one block, and a reader told only the withheld half is
+    told a half-truth.
+    """
+    markers = [block_marker(b) for b in here]
+    if not any(markers):
+        return ""
+    if len(markers) == 1:
+        return markers[0]
+    return "; ".join(f"block {i} of {len(markers)} is "
+                     + (m if m else "intact, its windows were printed")
+                     for i, m in enumerate(markers, 1))
+
+
+def verdicts_for(blocks, selected):
+    """The block verdicts the two dump sections carry, as {value: marker}.
+
+    Built from the same block set `report_blocks` checked -- every block
+    unscoped, the selected one alone otherwise. That scoping is the whole
+    reason this is not `for b in blocks`: on a `--block 0xA0` run the other
+    blocks were never looked at, and an index over all of them would print
+    "0x00 is VOID" about a block this run knows nothing of, which is the
+    defect this exists to fix, one step removed. A value this run did not
+    check gets no entry at all, and the reader says so in words rather than
+    letting the group line read as a result for a block it knows nothing of.
+
+    A value in one block that had its windows printed is in the index with an
+    empty marker rather than left out, so "checked and nothing to mark" and
+    "not checked" stay two different answers.
+    """
+    index = {}
+    for block in blocks if selected is None else [selected]:
+        index.setdefault(block.value, []).append(block)
+    return {value: verdict_marker(here) for value, here in index.items()}
+
+
+def verdict_note(value, verdicts):
+    """(marker, section-level note lines) for one read.
+
+    An empty marker when the run has nothing to say about that value's block,
+    which is most reads: the marker exists for a block whose windows were
+    withheld, and an intact block's were printed. The two ways of having
+    nothing to say are kept apart on purpose. `verdicts is None` is a caller
+    that passed no index at all, and degrades to what the report printed
+    before the marker existed; a value the index does not name is a run that
+    checked a different block, and the operator is told that rather than left
+    to read a group line that looks like a normal result.
+
+    The marker comes back bare rather than already carrying the ` -- ` the
+    group line puts in front of it, so each caller can decide how to set it:
+    one appends it to an existing line, the other only asks whether there is
+    one.
+    """
+    if value is None or verdicts is None:
+        return "", []
+    if value not in verdicts:
+        return "", [wrap_note(
+            f"no block under test 0x{value:02X} is in this run, so no "
+            "verdict is carried on this read: which blocks it did check is "
+            "in the section above")]
+    return verdicts[value], []
+
+
 def report_blocks(blocks, selected=None):
     """§3's per-block integrity check, one verdict per block, and the count
     of the ones that cannot be read as a finished block.
@@ -1044,7 +1156,7 @@ def report_blocks(blocks, selected=None):
     for block in shown:
         i = block.index
         last = block.windows[-1]
-        if parse_mark(last.label)[0] == "restore":
+        if block_verdict(block) == "intact":
             print(f"  block {i}/{total}: intact -- last mark {last.label!r} is "
                   "the restore")
         else:
@@ -1124,7 +1236,7 @@ def dump_pair_block(before, after, fallback):
     return None, "none"
 
 
-def report_dumps(dumps, wrote, pairs, block_value=None):
+def report_dumps(dumps, wrote, pairs, block_value=None, verdicts=None):
     """0x0751 in each --dump, and what the last of them says about §4.6.
 
     Coverage is stated before anything is compared. A run may hand in dumps
@@ -1143,6 +1255,14 @@ def report_dumps(dumps, wrote, pairs, block_value=None):
     given. A three-value day hands in six dumps and the `0xA0` verdict under
     the `0x10` block's windows is the shape this fixes: one number, a name
     that does not go with it, and nothing in the output to catch it.
+
+    `verdicts` carries the block section's verdict for each value, so a read
+    taken for a block whose windows were withheld is marked as one. The read
+    itself is still taken -- it is a claim about two files on disk, true
+    whatever the CSV mark set did -- so what changes is the claim's scope, and
+    `verdicts=None` degrades to the pre-marker output rather than to an
+    error. A group for a block this run did not check is given no verdict at
+    all, for the reason `verdicts_for` gives.
 
     The heading line is unchanged whatever the grouping does. It is what both
     §4.6 readers in the test suite cut the section on, and a heading that
@@ -1165,15 +1285,27 @@ def report_dumps(dumps, wrote, pairs, block_value=None):
             groups.append([value, how, [(path, values)]])
 
     for value, how, here in groups:
+        # Nothing is carried for a group this run will not read: a `--block`
+        # run's other blocks were never checked, so a verdict on one would be
+        # about a block the run knows nothing of. `verdict_note` answers for
+        # the value once, and the group line and the readback below are the
+        # two places that want it.
+        marker, notes = verdict_note(
+            value, None if block_value is not None
+            and value != block_value else verdicts)
         if value is None:
             print("  no block named: these files carry no §6 <value> and "
                   "neither --block nor --wrote was given")
-        elif how == "name":
-            print(f"  block 0x{value:02X}, from the <value> in these files' "
-                  "§6 names")
         else:
-            print(f"  block 0x{value:02X}, from --block/--wrote; these files "
-                  "carry no <value> of their own")
+            suffix = f" -- {marker}" if marker else ""
+            if how == "name":
+                print(f"  block 0x{value:02X}, from the <value> in these "
+                      f"files' §6 names{suffix}")
+            else:
+                print(f"  block 0x{value:02X}, from --block/--wrote; these "
+                      f"files carry no <value> of their own{suffix}")
+            for line in notes:
+                print(line)
         if block_value is not None and value != block_value:
             for path, _ in here:
                 print(f"    {path}: belongs to block 0x{value:02X}, not the "
@@ -1187,7 +1319,7 @@ def report_dumps(dumps, wrote, pairs, block_value=None):
                       "dump")
             else:
                 print(f"  {path}: 0x{MANUAL_FAN_CTRL:04X} = 0x{v:02X}")
-        report_readback(here, wrote, pairs, value)
+        report_readback(here, wrote, pairs, value, marker)
     if block_value is not None and not any(v == block_value
                                           for v, _, _ in groups):
         print(f"  no dump was given for block 0x{block_value:02X}, so §4.6's "
@@ -1195,7 +1327,7 @@ def report_dumps(dumps, wrote, pairs, block_value=None):
               "another block's")
 
 
-def report_readback(here, wrote, pairs, value):
+def report_readback(here, wrote, pairs, value, marker=""):
     """What the last dump of one block says about §4.6, and whether at all.
 
     Split out of `report_dumps` because the grouping above means this is now
@@ -1208,6 +1340,15 @@ def report_readback(here, wrote, pairs, value):
     one level down. Where the file name names a block and `--wrote` names
     another, the name is the more specific of the two statements and the
     disagreement is printed rather than resolved silently.
+
+    `marker` is the caller's verdict for this value, and it is why the
+    verdict sentence below is not the last word on a refused block. "The last
+    dump still holds the written 0xA0" is true or false of two files on disk
+    and is true here whatever the CSV mark set did, so the sentence is kept
+    -- and the scoping line below says what it is a reading of. The dumps
+    were still read; a block being `void` says the capture is short a mark,
+    not that these bytes were never in evidence. The marker itself is
+    already on the group line above and is not repeated here.
     """
     if here[-1][1].get(MANUAL_FAN_CTRL) is None:
         print(f"  the last --dump does not cover 0x{MANUAL_FAN_CTRL:04X}, so "
@@ -1238,9 +1379,19 @@ def report_readback(here, wrote, pairs, value):
         print(f"  the last dump holds 0x{last:02X}, not the written "
               f"0x{written:02X} -- something put it back; §3a's service-stopped "
               "run is what separates the vendor service from the EC.")
+    if marker:
+        # The marker itself is on the group line above, and is not restated
+        # here: a second copy of those words is a second thing to keep in
+        # step, and this line's job is only to say what kind of read the
+        # sentence above is.
+        print(f"  That is a read of these files and not of block "
+              f"0x{value:02X}'s windows, whose verdict is on the group line "
+              "above: it says nothing about §4.1-§4.3 for that block, and "
+              "the captures above did not hold a mark this could have been "
+              "read against.")
 
 
-def report_dump_pairs(pairs, block_value=None, wrote=None):
+def report_dump_pairs(pairs, block_value=None, wrote=None, verdicts=None):
     """The same watched bytes, read across a whole block instead of a window.
 
     A pair is §3's own bracket for one range -- step 0 and step 6, ~100 s
@@ -1301,6 +1452,16 @@ def report_dump_pairs(pairs, block_value=None, wrote=None):
     `report_dumps` gives: both §4.6 readers in the test suite cut the
     section on it.
 
+    That same "nothing in the body distinguishes it" is why the block
+    section's verdict rides on the group line rather than anywhere inside
+    the bracket. A pair for a block whose windows were withheld is still
+    compared -- a void block says the capture is short a mark, not that
+    these two files disagree about anything -- but a bracket under a group
+    line that names no verdict reads as an answer about that block's §4.1-
+    §4.3, which is the one thing this run cannot give. The marker goes on
+    the group line and nowhere else, so the bracket body and
+    `group_body()`'s cut are untouched.
+
     Returns how many pairs were actually compared, so the closing summary
     cannot report a whole-block read for a run that took none -- a `--block`
     run handed only another block's pairs is 0.
@@ -1328,6 +1489,12 @@ def report_dump_pairs(pairs, block_value=None, wrote=None):
 
     graded = 0
     for value, how, here in groups:
+        # Nothing is carried for a group this run will not read: a `--block`
+        # run's other blocks were never checked, so a verdict on one would be
+        # about a block the run knows nothing of.
+        marker, notes = verdict_note(
+            value, None if block_value is not None
+            and value != block_value else verdicts)
         if how == "disagree":
             # Before the `value is None` line, which would be false for it:
             # these two files name a value each, and it is their disagreement
@@ -1338,15 +1505,19 @@ def report_dump_pairs(pairs, block_value=None, wrote=None):
         elif value is None:
             print("  no block named: these files carry no §6 <value> and "
                   "neither --block nor --wrote was given")
-        elif how == "name":
-            print(f"  block 0x{value:02X}, from the <value> in these files' "
-                  "§6 names")
-        elif how == "one-name":
-            print(f"  block 0x{value:02X}, from the <value> in one of these "
-                  "two file names; the other carries none")
         else:
-            print(f"  block 0x{value:02X}, from --block/--wrote; these files "
-                  "carry no <value> of their own")
+            suffix = f" -- {marker}" if marker else ""
+            if how == "name":
+                print(f"  block 0x{value:02X}, from the <value> in these "
+                      f"files' §6 names{suffix}")
+            elif how == "one-name":
+                print(f"  block 0x{value:02X}, from the <value> in one of "
+                      f"these two file names; the other carries none{suffix}")
+            else:
+                print(f"  block 0x{value:02X}, from --block/--wrote; these "
+                      f"files carry no <value> of their own{suffix}")
+            for line in notes:
+                print(line)
         if how == "disagree":
             for before_path, after_path, _, _ in here:
                 b, _ = dump_block(before_path, None)
@@ -1663,6 +1834,13 @@ def main(argv=None):
 
     void = report_blocks(blocks, selected)
 
+    # The verdicts the block section just printed, indexed for the two file
+    # sections. Built here rather than passed down from `report_blocks` so the
+    # index is over the same block set that section checked -- `verdicts_for`
+    # takes `selected` and scopes itself, which is the one thing a dump
+    # section cannot work out for itself.
+    verdicts = verdicts_for(blocks, selected)
+
     # Both file lists are read before either is printed, so §4.6 can name a
     # --dump-pair that covers 0x0751 while it is saying the readback was not
     # taken. The print order is unchanged and is the one §6 documents: the
@@ -1672,9 +1850,10 @@ def main(argv=None):
     pairs = [(b, a, read_dump(b), read_dump(a))
              for b, a in args.dump_pair]
     report_dumps(dumps, wrote, pairs,
-                 selected.value if selected is not None else None)
+                 selected.value if selected is not None else None, verdicts)
     graded_pairs = report_dump_pairs(
-        pairs, selected.value if selected is not None else None, wrote)
+        pairs, selected.value if selected is not None else None, wrote,
+        verdicts)
 
     print("\n=== what this does and does not settle ===")
     if withheld:
@@ -1798,6 +1977,32 @@ def main(argv=None):
               "brackets, not two results: each has a gap the other does not "
               "close, and neither grades the duty or temperature bytes the "
               "pairs happen to print.")
+        if not graded:
+            # The pair *was* compared, so the count above it stands and the
+            # sentence stays as it is; what is added is the scope the
+            # withheld banner gives the windowed movement, applied to the
+            # bracket. The line above is otherwise a counterweight to "no
+            # window in this run was graded, so this output says nothing
+            # about §4.1-§4.3 for it", and a bracket read for a block whose
+            # windows were all refused is the one case where the two read as
+            # if they contradicted each other. Scoped here for the same
+            # reason the `moved_groups` companion is scoped there: a reader
+            # who reads only this sentence is the case.
+            #
+            # Named from `verdicts` rather than from `selected`, because the
+            # shape is not a `--block` one -- an unscoped run can withhold
+            # every window too, and `verdicts` is over the same block set
+            # the block section checked, so the names are only ever blocks
+            # this run said something about.
+            refused = [v for v, marker in verdicts.items() if marker]
+            if refused:
+                names = ", ".join(f"0x{v:02X}" for v in refused)
+                print(f"  Those pairs are a read of two dump files, and not a "
+                      f"statement about §4.1-§4.3 for block {names}, whose "
+                      "windows this run refused to print above. The bracket "
+                      "still stands as a reading of the files; what it is not "
+                      "is evidence about a block the section above has "
+                      "already given its verdict, and the reason is there.")
     print("  Any fan duty and temperature bytes printed above are "
           "context, not a result: 0x075B/0x075C are the vendor's "
           "ADDR_EC_MAIN_FAN_L/R_DUTY_BYTE (issue #123), which the Control "

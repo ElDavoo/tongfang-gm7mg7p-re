@@ -5111,3 +5111,53 @@ argument is that `--block`/`--wrote` name the value under test for the whole
 run, so one of them being wrong leaves no window in the report gradeable, which
 is not true of one pair out of three — a change to the exit-code contract rather
 than a report fix.
+
+## 23. A dump read was filed under a block whose windows the run had refused (2026-09-25, issue #499)
+
+The write-up is `docs/findings/dump-reads-for-a-refused-block.md`; this is the
+summary. It is a reporting and attribution change: **one fixture was added, no
+capture was re-read, no EC was read, and no register status moved.**
+
+`report_dumps()` and `report_dump_pairs()` were told a block's **value** and
+never its **verdict**, so in §6's own per-block command form — the one #380's
+run produces — a void block got its §4.6 readback and its whole-block bracket
+read and printed in the usual result format, two sections after the block
+section had refused its windows. The sharpest form is the closing section,
+which said this output says **nothing** about §4.1-§4.3 for the block and then
+reported a read of §4.1-§4.3 for it. **The read is kept and marked, not
+withdrawn**: `the last dump still holds the written 0xA0` is a claim about two
+files on disk and is true whatever the CSV mark set did, a void block does not
+make the two dumps agree or stop covering the addresses, and refusal in this
+tool is reserved for inputs that cannot bear the read. A block being void says
+the capture is short a mark, not that these bytes were never in evidence.
+
+**The verdict rides on the existing two-space group line, appended and never
+moved** — the group line is the whole of the attribution, since the bracket
+body itself cannot show which block it is about — and the bracket bodies and
+section headings are byte-identical, so `group_body()`'s cut and the "no third
+category" invariant both stand. `report_blocks`' inline restore check is now
+`block_verdict()`, so the block section and the two dump sections cannot
+disagree, and `verdicts_for()` is built from the **same block set
+`report_blocks` checked**. That scoping is the load-bearing part and the easy
+one to get wrong the helpful way: on a `--block 0xA0` run over `3blocks/`, a
+group naming `0x10` gets the existing `not the block under test` line and **no
+verdict at all**, because an index over every block would print "0x00 is VOID"
+about a block the same report had said it did not check. A value in no block is
+a third state, distinct from a block with nothing to mark, and says so.
+
+**"Refused" has two reasons and the marker keys on both, which the issue did
+not name.** `report_blocks` withholds on `block.problems`, not on the restore
+check alone — a block can hold its restore and still be short an action earlier
+in it — so a marker keyed on the restore alone would have left the same defect
+standing for `missing-mark/` and `disagreeing-marks/`, where `block_verdict`
+says `intact` and every window is withheld anyway. Those two now get
+`its mark set does not hold, its windows were withheld above` beside the void
+block's `VOID, ...`. It is the failure mode a "read and mark" change has while
+looking like it landed: the void case is covered and the other refusal is not.
+
+The `graded_pairs` sentence **stays** — the pair was compared, so the count does
+not drop — and gains a scoped companion when the run graded no window at all,
+on the same reasoning as the `moved_groups` companion above it. The exit code
+is unchanged; a void block already returned 1. **No live run happened and none
+is implied**: the reproduction is offline over hand-written fixtures, and §7's
+`confirmed-inert` still needs #380's run.

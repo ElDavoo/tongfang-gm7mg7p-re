@@ -302,7 +302,11 @@ into `r2 -a 8051` with no stitching needed.
   twice; §4.4's PWM comparison is left as a number for a human. `--block`
   grades one block of a multi-block capture and scopes the file sections with
   it: dumps and dump pairs are grouped by the `<value>` in their file names,
-  and a group that is not the block under test is named and not read. Its
+  and a group that is not the block under test is named and not read. A read
+  for a block whose windows §3's check refused carries that verdict on its
+  group line — the read is still taken, since it is a claim about the dump
+  files rather than about the capture's marks, and what changes is the claim's
+  scope. Its
   offline suite is `tools/test_grade_0751_isolation.py`, and
   `bash tools/run-tests.sh` from the repo root runs it with every other
   `test_*.py` in the repository (`../tools/README.md`). It runs against the
