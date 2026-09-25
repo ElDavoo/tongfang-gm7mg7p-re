@@ -11,7 +11,7 @@ bash tools/run-tests.sh
 
 Every `test_*.py` under the repository, found by `find` — not a hardcoded list,
 so a suite in a directory that does not exist yet is picked up by having its
-file committed. There are thirty-two today, 974 tests in all — both figures
+file committed. There are thirty-three today, 1018 tests in all — both figures
 are what the runner below prints, one line per suite and a total on its last
 line — and each is a `unittest` suite standing in for a tool's own behaviour.
 Re-derive them by running it rather than by editing this sentence. None of the
@@ -62,25 +62,52 @@ the runner exiting 1, and **the same suite was the red one**:
 work and running the suite alone, so nothing there caused it and nothing there
 fixes it. The `64dbde19` sentence is left reading as the record of that commit
 rather than rewritten with figures from a different one.)*
-*(Third merged-tree note, 2026-09-25, #846 and #801 together: the counts above
-are re-derived from a `bash tools/run-tests.sh` on this tree — **thirty-two
+*(Third merged-tree note, 2026-09-25, #846 and #801 together: the counts were
+re-derived from a `bash tools/run-tests.sh` on **that** tree — **thirty-two
 suites and 974 tests**, which is 882 plus the two suites each side added:
 `ec/tools/test_walk_budget_census.py` at 52 and
-`ec/tools/test_check_citation_lines.py` at 40. The last line reads `32 suite(s)
+`ec/tools/test_check_citation_lines.py` at 40. The last line read `32 suite(s)
 run, 974 tests; one or more FAILED` with the runner exiting 1, and **the red one
-is still `ec/tools/test_check_cluster_citations.py` and still the same `:220` of
-the same #822 file** — confirmed again here by running that suite alone against
-a worktree of clean `origin/main`, where it fails identically, so neither side
-of this merge caused it and neither fixes it. Both of the new suites are green,
-and a third note is here for the reason the second one was: the reason a suite
-goes red while the merge is adding green ones is the kind of thing a totals
-paragraph is for. On #801's side it was this branch's own first draft of its
-correction block in `docs/findings/reset-vector-dptr-targets.md`, which tripped
-that suite a second way by naming one address and four cluster ids in a single
-`>`-quoted paragraph — `check_cluster_citations.py` splits prose into sentences
-but a blockquote's `>` markers sit between the terminator and the next word, so
-a quoted paragraph arrives as one unit. The draft was rewritten rather than the
-suite loosened.)*
+was still `ec/tools/test_check_cluster_citations.py` and still the same `:220`
+of the same #822 file** — confirmed again there by running that suite alone
+against a worktree of clean `origin/main`, where it fails identically, so
+neither side of that merge caused it and neither fixes it. Both of the new
+suites were green, and a third note is here for the reason the second one was:
+the reason a suite goes red while the merge is adding green ones is the kind of
+thing a totals paragraph is for. On #801's side it was that branch's own first
+draft of its correction block in
+`docs/findings/reset-vector-dptr-targets.md`, which tripped that suite a second
+way by naming one address and four cluster ids in a single `>`-quoted paragraph
+— `check_cluster_citations.py` splits prose into sentences but a blockquote's
+`>` markers sit between the terminator and the next word, so a quoted paragraph
+arrives as one unit. The draft was rewritten rather than the suite loosened.)*
+*(Fourth merged-tree note, 2026-09-25, issue #849 landing beside #846: the
+figures were re-derived from a `bash tools/run-tests.sh` on **that** tree —
+thirty-two suites and 978 tests. One change moved them, and only one: #849 adds
+`ec/tools/test_check_doc_figure_pins.py` at 44 cases to the thirty-one suites
+and 934 tests the second note measured, which already counted #846's
+`ec/tools/test_walk_budget_census.py` at 52, so 934 + 44 = 978. The second
+note's thirty-one and 934 are #846's tree, left reading as the record of that
+commit the same way the `64dbde19` sentence is. The last line on that tree read
+`32 suite(s) run, 978 tests; one or more FAILED` with the runner exiting 1, and
+it was still **the same red suite**,
+`ec/tools/test_check_cluster_citations.py`, on the same `:220` of the same #822
+file — re-checked there on a clean `origin/main` worktree, where it fails
+identically, so neither issue caused it and neither fixes it.)*
+*(Fifth merged-tree note, 2026-09-25, issue #849 landing beside #801 rather than
+beside #846 alone: the counts above are this merged tree's, re-derived from a
+`bash tools/run-tests.sh` on it — **thirty-three suites and 1018 tests**. Both
+merges are in that arithmetic, because the fourth note's tree carried #846 and
+#849 and this one carries #846, #801 and #849: 978 + 40 = 1018, with #801's
+`ec/tools/test_check_citation_lines.py` at 40 the one addition. The last line
+reads `33 suite(s) run, 1018 tests; one or more FAILED` with the runner exiting
+1, and the red one is still `ec/tools/test_check_cluster_citations.py` on the
+same `:220` of the same #822 file — checked again here by running that suite
+alone in a worktree of clean `origin/main`, where it fails with the same two
+`0x0464`/`0x0465` cluster disagreements, so neither issue caused it and neither
+fixes it. Both of the newly merged suites are green:
+`test_check_citation_lines.py` at 40 and `test_check_doc_figure_pins.py` at
+44.)*
 `docs/findings/0751-grader-self-test-gate.md` records the red set as it stood
 and the follow-up issues that owned it, and
 [`tools-readme-totals.md`](../docs/findings/tools-readme-totals.md)
@@ -145,6 +172,7 @@ re-derived by running the runner rather than by arithmetic on a diff.
 | suite | what it stands in for |
 |---|---|
 | `ec/tools/test_bank1_e582_framing.py` | The byte facts behind the issue #680 reading that the `bank1,0xE582` entry is reached through 0xE580 and the census row at 0x9F03 is a displacement byte: the push/lcall/pop save-restore pair across the 0xE57E cut, `converges_from` on both halves of each site, and the `80 02` at 0x9F02 read as a `sjmp` whose displacement's landing address is the committed `9F04.asm` first instruction — asserted against the image rather than by re-running the scan that wrote the census, so a regenerated table that disagreed would fail rather than pass on a stale pair, plus that both annotation comments still carry the clause their `CORRECTION` replaces, that no entry is seeded at 0xE580, and that the phantom census row is deliberately left in place |
+| `ec/tools/test_check_doc_figure_pins.py` | `ec/tools/check_doc_figure_pins.py`'s four verdicts over a page's own tables, measured against the real `ec/tools/` rather than a stubbed tree — so the figures the checklist lists are asserted by value and a tree that changes under any of them fails here instead of quietly changing what the page claims — with the line between what it reads and what it declines, one case per shape: a thousands comma, two figures in one cell, a count with a noun after it, a hex address (stripped) beside the run that is not, a `0.5` threshold (not a figure), a `set(off) == set(on)` relation (declined, never failing), a `§2b` or `#849` reference (stripped), and a figure in a second cell (not read at all, so a prose cell's `1,169 addresses` is not a count); the four `file:line` rules no gate in this tree had, since `check_doc_links` only resolves relative `.md` links; and both directions demonstrated rather than asserted — a pinned figure marked unheld is reported, and a table that stops declaring a `verdict` column is reported too, because that second one would otherwise return the page to its pre-#849 state and report a clean run |
 | `ec/tools/test_check_capture_claims.py` | `ec/tools/check_capture_claims.py`'s address-presence and row-count rules against the committed `evidence/ec-watch/*.csv` captures, and the line between what it checks and what it deliberately skips |
 | `ec/tools/test_check_citation_lines.py` | `ec/tools/check_citation_lines.py`'s three rules over the line numbers the prose repeats out of the generated CSVs — the `xdata-086x-dispatch.md` site table and the `HAND_CHECKED["0x0860"]` comment against `xdata-0860-census-sites.csv`, and every `xdata-registers.csv`/`xdata-clusters.csv` line pointer in the two files its `ROW_SCOPE` names, each held to the row for the **address or cluster id** rather than to a table of expected line numbers, because a rank is not an identity — one case per way a citation can be wrong, and the cases a loosened test would let through: a table whose header lost the column, reported as not located rather than passing vacuously; a `—` cell over a CSV row that does cite; the merged `0x25CE4`/`0x25CFC` row read as one row and two sites; the `:49` shorthand bound to the file it follows and a bare list bound to the file named ahead of it; a header line and a line past EOF diagnosed as such; a rule that located nothing reporting that rather than returning clean; the two supersession shapes **skipped**, with the skip counted and `--verbose` naming it, and a live paragraph that merely mentions a correction still checked; the deliberate asymmetry between the per-site and the union rule, pinned from both sides; and that the committed prose and the committed census currently agree |
 | `ec/tools/test_check_cluster_citations.py` | `ec/tools/check_cluster_citations.py`'s two rules against `ec/annotations/xdata-clusters.csv` — `main-ec-NNN`/`cluster_key`/`cluster_name` citations held to their membership, and a census row's hand-typed counts held to the CSV, pinned apart as well as together — and the line between what it checks and what it deliberately skips, so that a denial, singleton wording, a mention without a membership claim, a code address and a split written as a list are each skipped rather than checked and each rule that makes it conservative gets a case saying so, because a pointer-checker's failure mode is silence, plus that the tree's committed prose currently agrees with the committed census beside it |

@@ -175,6 +175,26 @@ into `r2 -a 8051` with no stitching needed.
   `.github/scripts/agent-gates.sh` — that file is not one this repo edits
   casually (`../../CLAUDE.md`), so the tool stands as something a human can
   wire up.
+- **`tools/check_doc_figure_pins.py`** — measures, rather than assumes, which of
+  a page's figures a check actually holds, and says which. §2b of
+  `../docs/findings/xdata-census-rederivation-checklist.md` used to say eight
+  were unpinned; of its eighteen figures, seven are asserted by
+  `--check`/`--self-test` and eleven were not, and the eleven — one of them a
+  constant nobody read — were left looking like company. Every numeric figure in
+  a named section's tables is resolved to `held-by-assertion` (a module-level
+  constant **whose key is read outside its own span**), `held-by-check-literal`
+  (an int inside a `check()` or numeric `assert*` call, or a cell on a CSV line
+  the row cites), `unheld`, or `not read by this method`, with the `file:line`
+  that decided it printed alongside. A table declares itself by having a column
+  headed `verdict`; a row that marks nothing is reported, and so is a section
+  with no verdict table in it, because a page that stopped declaring its split
+  would otherwise measure nothing and exit 0. A `held` row's pin has to resolve
+  — file, line, and the file the measurement resolved to — which is the only
+  `file:line` check in the tree. Every `unheld` is "not found by this method",
+  never "absent", and the docstring names the four limits that have to be read
+  with the verdicts. It runs by hand, where `check_cluster_citations.py` stands
+  today;
+  `../docs/findings/doc-figure-pin-audit.md` is the write-up.
 - **`tools/check_capture_claims.py`** — the capture-file sibling of that one:
   it holds the prose's claims about `evidence/ec-watch/*.csv` to the capture
   they name. `check_register_counts.py` recomputes `registers.yaml`'s numeric

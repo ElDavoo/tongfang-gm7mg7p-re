@@ -342,11 +342,12 @@ class TheGuardOffRegeneration(unittest.TestCase):
         # The denominators are pinned with the numerators because a
         # re-derivation that changes them has changed what §6a measured, and
         # the response to that is to re-derive §6a, not to move a number here.
-        # That response is written out -- the seven figures below, the eight in
-        # §6a's table and §6b's console block that nothing holds, the order to
-        # run the checks in -- at
+        # That response is written out -- the seven figures below, the eighteen
+        # §2b of the checklist measures, the order to run the checks in -- at
         # docs/findings/xdata-census-rederivation-checklist.md, which is where
-        # the export instruction and §6a itself now point.
+        # the export instruction and §6a itself now point. Eight of §2b's are
+        # held and ten are not; the four §6a rows and §6b's `390` and `50` are
+        # what nothing holds, and §2b says so per figure since issue #849.
         self.assertEqual(
             (sum(1 for a in on if off[a]["write"] != on[a]["write"]), len(on)),
             (210, 1326), "§6a: 'addresses whose write changes: 210 of 1326'")
