@@ -20,8 +20,9 @@ the six range dumps and the snapshot, none of which this tool writes. With
 than three, and the grader reads that with no conversion -- but not at equal
 coverage: FANTBL and TEMP sweep their ranges whole, while WATCH reads 14
 addresses of the 0x0700-0x07FF page where §3's `ec_watch.py --start 0x0700
---len 0x0100` takes all 256, so §4.4's whole-page instruction is not
-reproduced. This tool produces no range dump.
+--len 0x0100` takes all 256. `--watch-page` sweeps that page whole, so a run
+with the flag reproduces §4.4's whole-page instruction and a default run does
+not. Either way this tool produces no range dump.
 
 Two arms, because 0x075B/0x075C (the fan duty bytes -- the vendor's
 ADDR_EC_MAIN_FAN_L/R_DUTY_BYTE, issue #123) move with the die
@@ -66,6 +67,24 @@ interval derivable without the driver and the machine (#94 is the open work), so
 `--interval`'s 0.5 s default is §3's starting point and nothing more: if the
 fans audibly change during a run, stop and raise it.
 
+**`--watch-page` is §3's first watcher, not a fourth range added to this
+one.** It puts all 256 addresses of `0x0700`-`0x07FF` where `WATCH`'s 14 sit
+and leaves FANTBL and TEMP as they already are, so the sweep is
+`0x100 + 0x60 + 0x60 = 448` ECRR reads -- the same arithmetic as §3's three
+watchers, over the same three ranges, so a reader meeting two 448s is meeting
+one figure. It is opt-in for the reason `--level-block` is: the **default**
+footprint stays as committed rather than growing under a flag nobody reading
+a run knows about. That default is 206, and the committed `2026-09-23` run
+was not taken at it: its own header in
+`evidence/ec-watch/2026-09-23-0751-isolation.txt` lists `WATCH` plus the fan
+table and no temperature range, so it swept **110**, and `TEMP` did not join
+the set until #143 the following day. 448 is 2.2x that 206 default, and
+4.1x the 110 the committed run actually swept, on the one run §3 holds under
+a **fixed load** with #94 still the open question of what that traffic does
+to a fan. Substituting rather than adding is what holds the count at 448: all
+14 `WATCH` addresses are already inside the page, so adding to them would be a
+dedup, and a set that did both would report a 270 no configuration sweeps.
+
 `--block` sweeps the same 206 addresses in **56** IOCTLs instead, through the
 driver's `MMRD` -- `ecrw.Ec.readmany`, four bytes per call. 56 is 8 + 24 + 24:
 the 14 `WATCH` addresses land on 8 blocks, the fan table is 24, the
@@ -78,6 +97,20 @@ marshals four bytes and copies four back
 BIOS hands back what four single reads would have is a live question. #94 is
 untouched by any of this: it is what makes the *per-byte* path safe, by
 skipping the fan-tach bytes and pacing, and a block read is neither of those.
+
+**`--watch-page` is the divisible case that sentence is about, and the caveat
+above it does not generalise.** `0x0700` and `0x0800` are both 4-aligned, so
+the page arm's 448 addresses decompose into `24 + 64 + 24 = 112` blocks with
+no padding at all: 112 *is* the `448/4` the default set's 56 is not, and 448
+bytes are read for 448 addresses against 224 for 206. It also reaches no
+access the default set does not already issue -- the default already reads the
+aligned dword at `0x0740` to cover `0x0743`, so only the count moves and the
+access width does not. What does move is how many of them are back to back
+inside a page the EC is actively using, 64 against 8, which is a sharper
+version of #94 than the default was and the same words apply with less behind
+them: the path has never met the driver on this machine or any other, and
+`--watch-page --block` is the combination with the least evidence of any this
+tool can be asked for.
 
 **What a human can check, and what it would not settle.** At idle -- not under
 a load, not during a probe run, since a read that moves the fans is the
@@ -108,7 +141,11 @@ its documented 206 stay as committed rather than growing under a flag nobody
 reading that run knows about. **Nothing in the level block is written.** The
 only byte this tool writes is `0x0751`, in `{0x00, 0x10, 0xA0}`; the
 `0x086x` path is read-only, and a read-only watch set is the whole reason the
-capture is safe to leave running.
+capture is safe to leave running. **So is every address of the page
+`--watch-page` adds**, which is what makes a 448-address sweep the same kind of
+read as a 206-address one and not a different kind of thing -- a claim that is
+worth more care at the larger number, not less, and is asserted on the run's
+own write list rather than left to a sentence here.
 
 With `--level-block` the summary also reports the two readings
 docs/hardware-tests/level-block-0860-086e.md §4 asks for off one capture: the
@@ -167,7 +204,8 @@ Run elevated, next to ecrw.py. Needs the vendor's ACPI driver present.
 
 Usage:
   manual_fan_ctrl_probe.py 0xA0 [hold_seconds] [--interval 0.5]
-                           [--csv PATH] [--level-block] [--block]
+                           [--csv PATH] [--level-block] [--watch-page]
+                           [--block]
   manual_fan_ctrl_probe.py 0xA0 --self-test        # no EC, no driver
 """
 import argparse
@@ -184,6 +222,10 @@ from ecrw import Ec, block_runs
 MODE = 0x0751
 WATCH = [0x0751, 0x0783, 0x0784, 0x0785, 0x0786, 0x0787,
          0x07C5, 0x07C6, 0x075B, 0x075C, 0x0743, 0x0744, 0x0745, 0x0746]
+# §3's first watcher whole, which `--watch-page` puts in WATCH's *place* and
+# not beside it: all 14 WATCH addresses are already inside these 256, so
+# adding would be a dedup rather than a widening. See watch_set.
+PAGE = list(range(0x0700, 0x0800))
 FANTBL = list(range(0x0F00, 0x0F60))
 # Exclusive of 0x0460: the fan-tach bytes are the next page (issue #94).
 TEMP = list(range(0x0400, 0x0460))
@@ -248,9 +290,25 @@ FAN_TACH = list(range(0x0460, 0x0470))
 MARK_MERGE_SECONDS = 5
 
 
-def watch_set(level_block=False):
-    """The addresses one sweep reads, in the order it reads them."""
-    return ALL + LEVEL if level_block else ALL
+def watch_set(level_block=False, watch_page=False):
+    """The addresses one sweep reads, in the order it reads them.
+
+    `watch_page` takes `PAGE` *in place of* `WATCH`, which is the whole point:
+    the two overlap, every one of the 14 `WATCH` addresses being inside the
+    page, so a set that took both would dedup to the page anyway and report a
+    270 no configuration sweeps. Substituting keeps the sweep at §3's 448
+    reads and the block figure at its exactly-divisible 112.
+
+    The list order is `PAGE + FANTBL + TEMP` rather than ascending, so the
+    sweep ends on `0x045F` exactly as the default set's does. A sweep's last
+    address is the boundary a reader reads a snapshot against -- the fake in
+    `test_manual_fan_ctrl_probe.py` closes every sweep on it -- so appending
+    the page instead would move that boundary to `0x07FF` and every scripted
+    value in the suite would land on the wrong sweep, failing as wrong numbers
+    rather than as a crash.
+    """
+    addrs = PAGE + FANTBL + TEMP if watch_page else ALL
+    return addrs + LEVEL if level_block else addrs
 
 
 def block_ioctls(addrs):
@@ -258,8 +316,12 @@ def block_ioctls(addrs):
 
     56 for the default watch set against 206 per-byte reads, and not the 52
     that `206/4` suggests: the 14 `WATCH` addresses are scattered over
-    `0x0743`-`0x07C6` and fall on 8 blocks, not on 14/4 of one. Pinned in
-    `test_ecrw.py` against the real `ecrw.block_runs` and the real watch set.
+    `0x0743`-`0x07C6` and fall on 8 blocks, not on 14/4 of one. 112 for the
+    page arm's 448, which is 24 + 64 + 24 and *is* the `448/4` -- contiguity
+    is the whole difference between the two figures, so the caveat above is a
+    fact about the scattered set and not a rule about `--block`. 117 with
+    `--level-block` on top, and 61 on the default with it. Pinned in
+    `test_ecrw.py` against the real `ecrw.block_runs` and the real watch sets.
     """
     return sum(((start + length - 1) & ~3) // 4 - (start & ~3) // 4 + 1
                for start, length in block_runs(addrs))
@@ -271,7 +333,9 @@ def block_span(addrs):
     Wider than `addrs` wherever a run's ends are unaligned -- which is what
     #94's page is about, since a block that covered `0x0460`-`0x046F` would be
     a four-byte access to the page that stalled the fans on a sibling board,
-    not a narrower one.
+    not a narrower one. 224 against the default set's 206, 244 with
+    `--level-block`, and 448 for the page arm against its 448: `0x0700` and
+    `0x0800` are both 4-aligned, so that one has no padding to measure.
     """
     return {a for start, length in block_runs(addrs)
             for a in range(start & ~3, ((start + length - 1) & ~3) + 4)}
@@ -535,6 +599,8 @@ def self_test():
     print("manual_fan_ctrl_probe.py --self-test (no EC, no driver)")
 
     default, widened = watch_set(), watch_set(level_block=True)
+    paged = watch_set(watch_page=True)
+    paged_widened = watch_set(level_block=True, watch_page=True)
     check("the default watch set is 206 addresses: 0x045F in, the fan-tach "
           "page out (#94)", len(default) == 206
           and 0x045F in default and not set(default) & set(FAN_TACH))
@@ -547,13 +613,39 @@ def self_test():
     check("0x0440 and 0x0442 are already watched, so xdata-086x-dispatch.md's "
           "clamp guards and gates need no new byte",
           0x0440 in default and 0x0442 in default)
+    # The page arm's three figures are the docstring's, written into the check
+    # rather than read out of the thing being checked: §3's 448, its 112
+    # --block IOCTLs, and the 464 with --level-block on top. 448 is §3's three
+    # watchers over the same three ranges, which is the point of the flag.
+    check("--watch-page sweeps §3's three ranges whole -- 448 addresses, and "
+          "0x0700-0x07FF rather than the 14 of WATCH",
+          set(paged) == set(range(0x0400, 0x0460)) | set(PAGE)
+          | set(range(0x0F00, 0x0F60)) and len(paged) == 448)
+    check("it substitutes for WATCH rather than adding to it, so all 14 are "
+          "still watched and none of them was already in FANTBL or TEMP",
+          set(WATCH) <= set(paged) and not set(WATCH) & set(FANTBL)
+          and not set(WATCH) & set(TEMP))
+    check("the page arm ends its sweep on 0x045F like the default, and with "
+          "--level-block on top it is 464",
+          all(watch_set(level_block=lb, watch_page=wp)[-1] == tail
+              for lb, wp, tail in ((False, False, 0x045F),
+                                   (True, False, 0x06E6),
+                                   (False, True, 0x045F),
+                                   (True, True, 0x06E6)))
+          and len(paged_widened) == 464)
     check("--block costs 56 IOCTLs for the default set, not the 52 a "
           "contiguous 206 would give",
           block_ioctls(default) == 56 and block_ioctls(widened) == 61)
-    check("no block of either set covers a fan-tach byte, so --block cannot "
-          "widen the access to the page #94 is about",
-          not block_span(default) & set(FAN_TACH)
-          and not block_span(widened) & set(FAN_TACH))
+    # ...and the page arm is the divisible case that caveat is not about: 448
+    # splits exactly, because 0x0700 and 0x0800 are both 4-aligned.
+    check("--block costs 112 IOCTLs for the page arm's 448, which is the "
+          "448/4 the default set is not, and 117 with --level-block",
+          block_ioctls(paged) == 112 and block_ioctls(paged_widened) == 117
+          and block_ioctls(paged) == len(paged) // 4)
+    check("no block of any of the four sets covers a fan-tach byte, so "
+          "--block cannot widen the access to the page #94 is about",
+          not any(block_span(addrs) & set(FAN_TACH)
+                  for addrs in (default, widened, paged, paged_widened)))
     check("a hold at the grader's MARK_MERGE_SECONDS would fold the three "
           "marks and is refused, the next value up is not, and this tool's "
           "own 30 s hold clears the floor",
@@ -693,9 +785,18 @@ def main(argv=None):
                          "walk closes a block on")
     ap.add_argument("--level-block", action="store_true",
                     help="also watch 0x0860-0x086E and 0x06E6 (16 more reads "
-                         "per sweep, 222 in all), read-only, and report the "
-                         "busy mark and the clamp constants; see "
+                         "per sweep, 222 in all on the default set), "
+                         "read-only, and report the busy mark and the clamp "
+                         "constants; see "
                          "docs/hardware-tests/level-block-0860-086e.md")
+    ap.add_argument("--watch-page", action="store_true",
+                    help="sweep 0x0700-0x07FF whole in place of WATCH's 14 "
+                         "addresses, so a run reproduces §4.4's whole-page "
+                         "instruction in one console: 448 ECRR reads per "
+                         "sweep, which is §3's three watchers over the same "
+                         "three ranges, and nothing in the page is written. "
+                         "Takes no address of its own, so the fan-tach page "
+                         "stays unreachable by typing (#94)")
     ap.add_argument("--self-test", action="store_true",
                     help="the watch set's read-safety guard, the hold a "
                          "--csv run is held to, and this run's "
@@ -703,9 +804,11 @@ def main(argv=None):
                          "walk; opens no EC and reads no register")
     ap.add_argument("--block", action="store_true",
                     help="sweep 4 bytes per IOCTL (MMRD) instead of 1 (ECRR): "
-                         "56 IOCTLs per sweep instead of 206, on a path that "
-                         "has never been run against the driver -- see this "
-                         "tool's help for the one check that settles it")
+                         "56 IOCTLs per sweep instead of 206 on the default "
+                         "set, on a path that has never been run against the "
+                         "driver -- see this tool's help for the one check "
+                         "that settles it, and for what the other two watch "
+                         "sets cost; the banner carries this run's own")
     args = ap.parse_args(argv)
     if args.self_test:
         return self_test()
@@ -728,7 +831,7 @@ def main(argv=None):
                  "capture's three marks would fold into one window, and no "
                  "block can be read out of it. Hold more than "
                  f"{MARK_MERGE_SECONDS:g}s (the default is 30) or drop --csv")
-    addrs = watch_set(args.level_block)
+    addrs = watch_set(args.level_block, args.watch_page)
     ec = Ec()
     orig = ec.read(MODE)
     print(f"0x0751 currently 0x{orig:02X}; control arm, then writing "
@@ -740,6 +843,19 @@ def main(argv=None):
         print(f"  level block: {len(LEVEL)} more addresses, {len(addrs)} ECRR "
               f"reads per sweep; 0x0860-0x086E and 0x06E6, and nothing there "
               f"is written")
+    if args.watch_page:
+        # Named before the read count and against the other two watchers'
+        # arithmetic, so the figure on screen is §3's rather than this flag's:
+        # a run that reads the page whole is doing what §3's three consoles do
+        # at once, in one. The #94 caveat above is already on the screen by
+        # this point and 2.2x the reads is what makes it more load-bearing,
+        # not less, so it is not restated here as though the page arm were a
+        # separate run with its own smaller warning.
+        print(f"  whole page: 0x0700-0x07FF in place of WATCH's {len(WATCH)} "
+              f"addresses, {len(addrs)} ECRR reads per sweep -- §3's three "
+              f"watchers over the same three ranges, and §4.4's instruction "
+              f"that a default run does not reproduce. Nothing in the page is "
+              f"written")
     if args.block:
         print(f"  --block: {block_ioctls(addrs)} MMRD IOCTLs per sweep instead "
               f"of {len(addrs)} ECRR reads, four bytes each. The path has "

@@ -119,7 +119,11 @@ walks the handler, and the one comparison that would tell a human with the
 machine whether the BIOS answers as four single reads would is written out in
 `tools/manual_fan_ctrl_probe.py`'s docstring. `tools/ec_watch.py`
 sweeps a range of it and reports what moved while you do something else in the
-vendor UI, with `--mark` rows so the capture says when you acted. Both need the
+vendor UI, with `--mark` rows so the capture says when you acted.
+`tools/manual_fan_ctrl_probe.py`'s `--watch-page` is that sweep's
+one-console form for the `0x0700-0x07FF` page — the whole page in place of the
+probe's 14 watched addresses, at 448 ECRR reads per sweep, §3's own three
+ranges — and it is opt-in, and has never been run. Both need the
 physical machine, an elevated shell and the vendor driver present — nothing
 below has been run from the pipeline that wrote it.
 
