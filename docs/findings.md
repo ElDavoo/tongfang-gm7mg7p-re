@@ -5394,3 +5394,21 @@ That one wrong credit is recorded in
 this adds carries its evidence sentence and listing anchor in
 `../ec/tools/test_citation_frames.py`. Nothing here is a behavioural claim: no
 register `status:` changed, no listing was re-read, and no live test ran.
+
+## 26. The reset vector's two DPTR-only bank-0 targets, read (2026-09-25, issue #559)
+
+The write-up is `docs/findings/reset-vector-dptr-targets.md`; this is the
+summary. The reset vector's two middle `lcall`s reach bank-0 code through
+trampolines that carry their target as a `mov DPTR,#imm16` immediate, which is
+why no call-target census row and no byte scan ever named them. Both were
+seeded through `ghidra-functions.csv` and read. **`0xD89F` is a single `ret`
+byte, and `0xD96C` is a real routine that clears XDATA `0x0100`–`0x0FFF` except
+it steps over `0x07FD` and `0x07FE`** — 3,838 of 3,840 bytes — and those two
+are the low two thirds of the `main-ec-081` cluster. Both score 24 of 24 on
+`disasm8051.py --converge`, so neither is an operand byte. This corrects the
+issue's expectation of a real routine at each: one is a bare `ret`, and it would
+join the 77 one-byte `ret`-only listings already in the tree rather than be the
+first. The audit gap is a missing census of the 403 trampoline immediates, not
+a wrong census, and the two read here license nothing for the other 401. No
+register `status:` changed, the 1,851 and 2,710 pins stand, and the export is
+deferred to a pinned-toolchain run for the reason #255 gives.

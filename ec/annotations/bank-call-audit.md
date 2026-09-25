@@ -299,6 +299,22 @@ tail call emitted outside BL51's banking discipline would not appear in the
 trampoline block, and nothing in this image rules that out. It is evidence
 about the mechanism, not an exhaustion argument.
 
+**What this section does not decode, and two of them now read.** The 403
+trampolines are counted and their callers counted, but **not one of their 403
+DPTR immediates is decoded or labelled by this audit** — the target is what
+makes the call cross-bank, and it is carried in an operand this census does not
+match. That is the blind spot §6 names, stated as a missing census rather than
+as a wrong one. Two of the 403 have since been read on their own, both reached
+from the reset vector: `common,158E`'s `mov DPTR,#0xD89F` is a single `ret`
+byte, and `common,1594`'s `mov DPTR,#0xD96C` is a 20-instruction routine that
+clears XDATA `0x0100`–`0x0FFF` except `0x07FD`/`0x07FE`
+([reset-vector-dptr-targets.md](../../docs/findings/reset-vector-dptr-targets.md),
+issue #559). **One real routine
+and one bare `ret` licenses nothing for the other 401**, and nothing about them
+is claimed: no count here moves, and the §4 buckets below classify what a
+*bucket B target* is, which is a different question from what a trampoline
+immediate points at.
+
 ## 4. Bucket B, target by target
 
 For every distinct target `≥ 0x8000` called from a bank, the byte at that
