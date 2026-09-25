@@ -139,8 +139,25 @@ big trees are not copied. Each mutation was reverted immediately, and the
 mirror's two census CSVs were `cmp`-ed against their pre-run bytes after every
 run. To get the first row honestly, this branch's **base** version of the test
 file — the reader as it was before this change — was dropped into the mirror
-(`git show HEAD:ec/tools/test_xdata_register_map.py`) and the mutated mirror run
-against it, then against the fixed one.
+(`git show 4efb8eb0:ec/tools/test_xdata_register_map.py`; `4efb8eb0` is
+`origin/main`, *"guard the probe's `--csv` hold against the grader's mark-merge
+window (#667)"*, the commit this branch forks from) and the mutated mirror run
+against it, then against the fixed one. The commit rather than the branch name
+is what keeps the recipe re-runnable by someone who is not standing in this
+branch, once `origin/main` has moved on.
+
+> **Corrected 2026-09-25, issue #608 (PR #675 review).** This recipe first said
+> `git show HEAD:ec/tools/test_xdata_register_map.py`, and `HEAD` is the wrong
+> ref for it: on this branch `HEAD` is the commit that carries the fix, so that
+> command yields the **fixed** file — it has
+> `test_a_mode_dispatched_as_a_statement_is_collected_too`, its `Dispatch`
+> reader is a `visit_Call` where the base file's is a `visit_Return`, and it is
+> not the base file. A reader following the page as written would have run the
+> mutated mirror against the fixed suite and seen 1 failure where this section
+> promises 20 green, which is the one claim the section exists to make
+> checkable. The row itself was always right; it is **20 tests, green** against
+> `origin/main`'s test file, which is what the command above now names, and the
+> base file at `4efb8eb0` is verified to be that 20-test version.
 
 The tenth mode is added the way a tenth mode is added: a `--demo-mode` flag
 registered on the mutually-exclusive group, and a branch dispatched as a
