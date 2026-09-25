@@ -181,11 +181,20 @@ The strip fixes the defect at the layer the defect is in: the header test. It
 works under whatever encoding the interpreter picked, is orthogonal to that
 decision, and became redundant-but-harmless for the strict reader the moment the
 codec was pinned — which is what it was written to be. It lives in
-`normalised_rows`, which `capture_rows` — the one place a capture is opened —
-goes through and so does `capture_snapshot`, the notice's single read since
-#749. No reader in the tree can therefore be strict about a mark in one and
-lenient about it in another, and `existing_mark_labels` must not raise on a
-BOM'd file either, and does not.
+`normalised_rows`, which `capture_rows` — the one place the four capture
+readers open a file — goes through and so does `capture_snapshot`, the
+notice's single read since #749. Within that scope no reader can be strict
+about a mark in one and lenient about it in another, and
+`existing_mark_labels` must not raise on a BOM'd file either, and does not.
+Two readers outside the scope are named rather than left to a claim the tree
+contradicts: `check_capture_encoding.py`'s `count` and
+`grade_timer_sweep.py`'s `load` each spell the `ts`/`#` test out with no
+strip, so a BOM'd header is a data row to both, and changing either is an edit
+to its own skip rule. The grader's `path_starts_with_bom` opens the same file
+again, in binary, for three bytes — to ask the file-level question a row
+cannot — which `docs/findings.md` records as a seventh open, so
+"`capture_rows` is where a capture is opened" is a claim about the four
+readers rather than about the tree.
 
 **Applied uniformly to every row's first field**, not only the first row. The
 first three bytes of a file are the only place a BOM occurs in practice, so the

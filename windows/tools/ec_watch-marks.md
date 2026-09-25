@@ -295,10 +295,16 @@ read a capture the strict reader refused, and for them the shape is what
 retires the
 mark: it is stated once, in the grader's `normalised_rows`, which strips a
 leading U+FEFF off every row's first field, so the header compares equal to
-`ts` again. `capture_rows` — the one place a capture is opened — goes through
-it, and so does `capture_snapshot`, the notice's single read since #749, so
-there is no reader left in the tree that sees a mark still glued to a first
-field. The three preflights call one `skippable_row` predicate and
+`ts` again. `capture_rows` — the one place the four capture readers open a
+file — goes through it, and so does `capture_snapshot`, the notice's single
+read since #749, so none of the five reads the grader makes of a capture
+sees a mark still glued to a first field. Two readers outside that scope are
+not covered: `ec/tools/check_capture_encoding.py`'s `count` and
+`ec/tools/grade_timer_sweep.py`'s `load` each spell the `ts`/`#` test out
+with no strip, so a BOM'd header is a data row to both, and the grader's own
+`path_starts_with_bom` opens the same file again, in binary, for three bytes
+— to ask the file-level question a row cannot — which `docs/findings.md`
+records as a seventh open. The three preflights call one `skippable_row` predicate and
 `read_early_exits` reads the same stream with its own phrase test, because
 `EARLY_EXIT_TAG` opens with `#` and that reader *keeps* the rows the other three
 drop.

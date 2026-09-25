@@ -736,10 +736,10 @@ def normalised_rows(rows):
     stream a capture through `capture_rows` cannot disagree about what a first
     field may look like: a reader that normalised and one that did not would
     differ on exactly the file where it matters, and neither would raise.
-    Applied to every row rather than to the first, for the reason
-    `capture_rows` gives: the first three bytes of a file are the only place
-    one occurs in practice, so the two readings agree on every file that
-    exists, and a uniform rule is the one that can be written down once."""
+    Applied to every row rather than to the first, and the reason is the
+    format's: the first three bytes of a file are the only place one occurs
+    in practice, so the two readings agree on every file that exists, and a
+    uniform rule is the one that can be written down once."""
     for row in rows:
         if row and row[0].startswith(BOM):
             row[0] = row[0].lstrip(BOM)
@@ -749,71 +749,71 @@ def normalised_rows(rows):
 def capture_rows(path, errors=None):
     """Every row of one capture CSV, with the first field normalised.
 
-    The one place a capture is opened, so the shape of a row is stated once
-    rather than four times: `read_capture`, `existing_mark_labels`,
-    `refused_capture_rows` and `read_early_exits` all read from here.
+    The one place the four capture readers open a file, so the shape of a
+    row is stated once rather than four times: `read_capture`,
+    `existing_mark_labels`, `refused_capture_rows` and `read_early_exits`.
+    Two other opens of a capture exist: `capture_snapshot`, the notice's own
+    single read (#749), which applies the same rule to its buffer, and
+    `path_starts_with_bom`, a seventh open of the same file, three bytes, to
+    ask the file-level question a row cannot, as `docs/findings.md` records.
 
     A stream and not a filtered iterator, because the four readers do not
     agree on which rows to drop: `skippable_row` is the filter three of them
     apply, and `read_early_exits` keeps exactly the rows the other three
-    skip -- `EARLY_EXIT_TAG` opens with `#`, so a stream that filtered here
-    would drop every early-exit row in the tree. A generator rather than a
-    list so laziness still holds, which is what lets a byte the encoding
-    cannot read come out of the loop at the row it stopped on instead of
-    out of the open.
+    skip -- `EARLY_EXIT_TAG` opens with `#`, so a stream filtering here would
+    drop every early-exit row. A generator rather than a list, so laziness
+    still holds and an undecodable byte comes out of the loop at its row.
 
     The codec is declared, not inherited: `utf-8`, the encoding the format
     is defined in, whatever the interpreter reading the file would have
-    preferred. That is what makes the same capture grade the same way on
-    every box, and it is why the single-byte-locale cases this stream used
-    to have an opinion about are gone rather than merely rare -- a cp1252
-    capture's 0xE9 is now a byte the format does not contain, and whether
-    this stream raises on it or replaces it is the caller's decision alone.
+    preferred, and it is why the single-byte-locale cases this stream used
+    to have an opinion about are gone rather than merely rare: a cp1252
+    capture's 0xE9, and the same three bytes read as `ï»¿` under one, are
+    bytes the format does not contain, and whether this stream raises on
+    such a byte or replaces it is the caller's decision. They are gone
+    because #748 declared the codec at the four readers before this change,
+    so the `ï»¿` reading is withdrawn by that rather than settled here.
 
     `errors` is that decision, passed straight through, and the two in the
     tree are deliberate and have to stay different: the strict readers
     (`read_capture`, `read_early_exits`) pass none and let a byte outside
     the format raise, and the two preflights pass `errors="replace"` so a
-    capture from before the codec was declared, or annotated in an editor
-    that saved something else, comes back with U+FFFD in a label the
-    operator is being shown anyway rather than taking down the run that was
-    about to append to that same file.
+    capture saved by something else comes back with U+FFFD in a label the
+    operator is being shown anyway, rather than taking down the run about
+    to append to that same file.
 
     A leading U+FEFF is stripped from every row's first field by
     `normalised_rows`, and that is the row's *identity* rather than a repair:
-    `EF BB BF` at offset 0 decodes under the declared `utf-8` to U+FEFF, which
-    glues itself to the first field of the header and makes `row[0] == "ts"`
-    false. Without the strip the header is a data row, `parse_ts` cannot read a
-    `ts` that opens with U+FEFF, and the notice names the row carrying the
-    column names as a row whose timestamp no reader can parse -- with a
-    fix-or-delete-the-rows-above remedy, so the row it offers for deletion is
-    the one holding the column names. It is also what lets `read_early_exits`
-    see an early-exit row written on the first line, which the U+FEFF used to
-    hide along with everything else on it. `capture_snapshot` puts the same
-    rule over the one buffer the notice reads (#749), so a leading mark is
-    never still on a first field anywhere in the tree.
+    `EF BB BF` at offset 0 decodes under the declared `utf-8` to U+FEFF,
+    which glues itself to the first field of the header and makes
+    `row[0] == "ts"` false. Without the strip the header is a data row and
+    the notice names the row carrying the column names as a row whose
+    timestamp no reader can parse, with a fix-or-delete-the-rows-above
+    remedy that offers the row holding the column names for deletion. It
+    is also what lets `read_early_exits` see a first-line early-exit row the
+    U+FEFF used to hide. With `capture_snapshot`'s pass over the one buffer
+    the notice reads (#749), none of the five reads the grader makes of a
+    capture -- the four above and `capture_snapshot` -- leaves a mark on a
+    first field. **Two readers outside that scope are not covered**:
+    `check_capture_encoding`'s `count` and `grade_timer_sweep.load` each
+    spell the `ts`/`#` test out with no strip, so a BOM'd header is a data
+    row to both, each a second copy of `skippable_row`.
 
     The strip is here rather than at the open as `encoding="utf-8-sig"`
     because the format declares utf-8 *with no BOM* and the strict reader
     refuses a file that carries one, by name (`read_capture`, through
     `path_starts_with_bom` -- the mark is gone from the rows by the time it
     gets there, and `bom_refusal` is the one sentence it says). Pinning the
-    codec retired the "the encoding is not this tool's to decide" question this
-    paragraph used to turn on; what is left of it is that the three preflights
-    still have to read such a file far enough to say what it holds, and the
-    shape is the one place that can say it. Applied to every row rather than
-    to the first: the first three bytes of a file are the only place one
-    occurs in practice, so the two readings agree on every file that exists,
-    and a uniform rule is the one that can be written down once.
+    codec retired the "the encoding is not this tool's to decide" question
+    this paragraph used to turn on, and that was #748's doing at the four
+    readers rather than this change's; what is left of it is that the three
+    preflights still have to read such a file far enough to say what it
+    holds, and among the four readers the shape is what can say it.
 
     What it does not cover, now for a different reason than it used to: a
     U+FEFF somewhere other than offset 0, which the strict reader
-    normalises rather than refuses. The file-level refusal is about the
-    first three bytes because that is the only place a byte-order mark
-    occurs in a file this format defines, and the two readings agree on
-    every such file. The same three bytes read as `ï»¿` under a single-byte
-    locale, which no U+FEFF strip catches, is not reachable at all now that
-    the codec is declared rather than inherited.
+    normalises rather than refuses -- the first three bytes being the only
+    place one occurs in a file this format defines.
     """
     with open(path, newline="", encoding="utf-8", errors=errors) as f:
         yield from normalised_rows(csv.reader(f))
@@ -1258,11 +1258,11 @@ def existing_mark_findings(path):
     A leading byte-order mark is the second refusal of the file rather than
     of a row, and it arrives the same way: `read_capture` raises before it
     reads anything, this function is told `has_bom` off the buffer it had to
-    read anyway, and the partition has nothing to add, because the shape
-    retires the mark off the first field first. The consequence for the
-    notice is the point of it -- the reason names the mark and the remedy, and
-    no row is attached for it to offer for deletion, so the operator is not
-    pointed at the header, while every mark in the file is still listed.
+    read anyway, and a file-level refusal short-circuits as the decode one
+    above it does: the partition does not run, so a second bad row in the
+    same file goes unnamed for the reason the second list is empty. For the
+    notice, the reason names the mark and the remedy, no row is attached to
+    offer for deletion, and every mark in the file is still listed.
 
     `build_windows` is deliberately not on the label path: it indexes
     `windows[0]`, so it needs a mark list and the change rows, and neither is
