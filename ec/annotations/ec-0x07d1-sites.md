@@ -44,10 +44,18 @@ $ python3 ec/tools/trace_xdata_refs.py ec/firmware/GMxMGxx_11.800 0x07D1 --count
 0x07D1: 76 direct MOV DPTR site(s)  pd-image=76
 
 $ python3 ec/tools/trace_xdata_refs.py ec/firmware/GMxMGxx_11.800 0x07D1 --csv \
+          --terminator-column \
           > ec/annotations/ec-0x07d1-sites.csv
 $ tail -n +2 ec/annotations/ec-0x07d1-sites.csv | wc -l
 76
 ```
+
+The trailing `terminator` column says which of the five guards
+`walk_why()` can stop on ended this row's window, so a window the
+instruction budget cut is not in the same shape as one that stopped on a
+real terminator. This file's rows that the budget truncates are listed in
+`walk-budget-census.csv` and counted by `../../ec/tools/walk_budget_census.py`;
+the write-up is `../../docs/findings/walk-window-terminators.md`.
 
 That is the reconciliation check this file rests on, and it is the same one
 `ec-0x07d0-sites.md` §1 rests on: the enumerated rows are the 76 that

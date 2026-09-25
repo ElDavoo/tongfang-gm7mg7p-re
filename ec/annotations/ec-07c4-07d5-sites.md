@@ -50,7 +50,7 @@ $ python3 ec/tools/trace_xdata_refs.py ec/firmware/GMxMGxx_11.800 \
 0x07D5: 28 direct MOV DPTR site(s)  bank0=4  pd-image=24
 
 $ python3 ec/tools/trace_xdata_refs.py ec/firmware/GMxMGxx_11.800 \
-      0x07C4 0x07D3 0x07D4 0x07D5 --csv \
+      0x07C4 0x07D3 0x07D4 0x07D5 --csv --terminator-column \
       > ec/annotations/ec-07c4-07d5-sites.csv
 $ tail -n +2 ec/annotations/ec-07c4-07d5-sites.csv | wc -l
 117
@@ -64,6 +64,13 @@ Counter({'pd-image': 102, 'bank0': 15})
 $ python3 ec/tools/check_register_counts.py ec/firmware/GMxMGxx_11.800
 157 entries / 189 addresses: every static_refs, static_refs_main_ec and static_refs_pd_image reproduced from ec/firmware/GMxMGxx_11.800
 ```
+
+The trailing `terminator` column says which of the five guards
+`walk_why()` can stop on ended this row's window, so a window the
+instruction budget cut is not in the same shape as one that stopped on a
+real terminator. This file's rows that the budget truncates are listed in
+`walk-budget-census.csv` and counted by `../../ec/tools/walk_budget_census.py`;
+the write-up is `../../docs/findings/walk-window-terminators.md`.
 
 **CORRECTION** (issue #264, 2026-09-25), leaving the number above as it was
 first written. That line read `73 entries / 105 addresses`, and it was

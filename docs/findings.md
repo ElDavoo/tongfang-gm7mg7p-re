@@ -7624,3 +7624,64 @@ is **byte-identical** before and after — a `diff` against the pre-change file,
 not an impression, which is what makes it a regression test. No live test ran,
 no register was read back, no capture was opened, and no hardware, EC, Windows,
 Ghidra or `registers.yaml` row was involved.
+
+## 57. `walk()`'s stop reason is a column, and the 45 rows its budget truncates are named (2026-09-25, issue #846)
+
+The write-up is `docs/findings/walk-window-terminators.md`; this is the
+summary. #805 measured that `trace_xdata_refs.walk()`'s loop is bounded by
+`max_insns` and not by `len(d)`, and drove it from every one of the image's
+262144 start offsets: `max_insns (8) exhausted` fires **119530** times. That is
+a property of the file. What it means for the committed tables the same
+function produces the `window` column of had never been asked, and it is now
+measured and committed: **45 of 1288 rows across nine tables** are truncated,
+all 45 listed in `ec/annotations/walk-budget-census.csv`, and **the issue's
+"four rows change their `access` cell" is thirteen** — all four the issue names
+are among them at exactly the values it quotes, so it is a correct subset, and
+acting on "four" would have left nine cells silently wrong. The split is
+mechanical and it is two findings, not one: for **ten** of the thirteen a
+larger budget's cell would be a *miscount*, because a direct store to DPL/DPH
+that `walk()`'s `d[i] == MOV_DPTR` guard cannot see sits in the instructions
+the budget hides and the larger window files an indexed access under the site
+register — `ec-0x07d0-sites.csv` `0x2C2FA` is the case, and
+`pd-index-geometry.md`'s own `0x08F8 + R7×0x5E` decode plus
+`pd_index_geometry.py --self-test` already refute the budget-64 reading of it.
+For **three** the budget-8 window was simply short and the larger cell is the
+same site's own further accesses, which is the issue's own "a site may have two
+accesses" possibility and is right for two of its four. So the budget does not
+move: raising it to 64 would put a wrong `access` cell into a committed table
+for 10 of the 13.
+
+`walk_why(d, start, max_insns) -> (insns, why)` now holds the loop and returns
+the reason beside the instructions, and `walk()` is its first element with its
+name, docstring and signature unchanged, so all nine call sites and the eleven
+modules that import around it are byte-identical — the fifteen-address `0x086x`
+sweep in #805's command 1 still reproduces `xdata-086x-dispatch-sites.csv` byte
+for byte, and that is the regression test. The vocabulary is five tokens and is
+**not invented**: each is a name #805's own reproducing snippet already prints,
+and lifting them into the tool is what makes the new column and the 119530 one
+measurement in two places rather than two vocabularies for one event. Six
+tables gained an opt-in `terminator` column (mirroring `--census-column`, so
+the default output and #800's table are untouched), and a `--check` against one
+of them now names its own cause on stderr. **No `access` cell changed in any of
+the six.** Exactly one `window` cell did —
+`xdata-0400-045f-sites.csv` `0x11F16`, `db 0xa2` → `mov c,acc.0` — and that is
+**pre-existing drift** in `disasm8051.py`'s mnemonic table, which reproduces on
+clean `origin/main` and has nothing to do with this change; it is named in the
+write-up and pinned by the suite rather than quietly fixed, because a re-cut
+that moves a cell is the thing a reader has to be able to see. The census
+refuses rather than guesses three times over: an unrecorded budget, a
+terminator outside the vocabulary, and a class A/B verdict whose evidence the
+`--extend` window does not reach (`undecided`, which the committed data never
+hits and `--extend 9` does). **`registers.yaml` is untouched and no `status:`
+changes** — this is about how a tool renders a window, and a re-cut table with
+an `access` column looks enough like a register finding to say so. **#799 and
+#800 are adjacent and neither is closed here**: #799's DPTR reassignment is
+*inside a callee*, which no budget reaches and which the class A verdict
+therefore says nothing about, and #800 owns the `0x086x` table's `census`
+column. Prose inheriting a moving cell was checked rather than assumed: of the
+issue's four addresses, `0x2E8D4`, `0x28B8B`, `0x0DD4A` and `0x2BECB` are
+quoted in no pre-existing page (the two files this change adds quote them
+themselves, which is this work talking to itself and not a page inheriting a
+cell), and `0x2C2FA` is quoted only in
+`pd-index-geometry.md`, not in the three pages the issue names. No capture was
+opened, no register read back, and no EC, hardware, Windows or Ghidra involved.

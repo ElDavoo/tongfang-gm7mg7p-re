@@ -605,3 +605,69 @@ the 10 start(s) that reached the end-of-buffer check: 0x3FFF6 -> 0x3FFFE, 0x3FFF
    look, because it is the single place in the table where the post-#679
    ordering is not what #679 established, and a reader scanning for "index
    before bounds" will land on it.
+
+---
+
+## Note (2026-09-25, issue #846): the 119530's per-table consequence, and where row 9's line numbers went
+
+Two records. Neither rewrites what is above: the line numbers in row 9 and in
+`docs/findings.md` §53 are a record of the tree at the time this census was
+written, and a reader checking them after #846 is reading a moved file, not a
+wrong one. The same shape the note on `tools/README.md`'s totals uses.
+
+**1. The per-table consequence of row 9's 119530.** That figure is over every
+start offset in the image. Over the committed tables it is 45, out of 1288
+rows across the nine `window` columns `walk()` produces — and that is what a
+reader of a site table actually meets, because the table row is the unit the
+CSV records:
+
+| | rows | `max_insns (8) exhausted` |
+|---|---:|---:|
+| `ec-07c4-07d5-sites.csv` | 117 | 16 |
+| `ec-07d6-07d7-sites.csv` | 213 | 13 |
+| `ec-0x07d1-sites.csv` | 76 | 10 |
+| `ec-0x07d0-sites.csv` | 254 | 4 |
+| `manual-fan-ctrl-0751-sites.csv` | 29 | 1 |
+| `xdata-0400-045f-sites.csv` | 409 | 1 |
+| `ec-09e9-09eb-sites.csv` | 9 | 0 |
+| `xdata-086x-dispatch-sites.csv` | 114 | 0 |
+| `xdata-1c3x-consumers-sites.csv` | 67 | 0 |
+
+The `0x086x` row's zero is this census's own 39/75 over the same 114 rows,
+reached by a second route. All 45 are listed in
+`ec/annotations/walk-budget-census.csv`; the write-up is
+[`walk-window-terminators.md`](walk-window-terminators.md).
+
+**2. Where row 9's line numbers moved.** `walk()`'s loop is now
+`walk_why()`'s, and `walk()` is that function's first element. The mapping, for
+anyone following a citation above:
+
+| cited above | is now | what moved |
+|---|---|---|
+| `:224-243` (`walk()`) | `:278-319` (`walk_why()`) | the whole body |
+| `:229` (`n = OPCODE_LEN[d[i]]`) | `:297` | unchanged, lifted |
+| `:230` (`if i + n > len(d)`) | `:298` | unchanged, lifted |
+| `:241-242` (the guard and its `break`) | `:311-318` | split: two guards, two `break`s, each naming its own token |
+| `:330` (a `walk()` call site) | `:418` | now `insns, why = walk_why(d, o)` |
+| `:436` (the other call site) | `:563` | likewise, in the non-CSV decode |
+
+The symbol is named in every row as well as the line, so a later edit to a
+comment moves the number without making the row unreadable: `walk_why()` at
+`:278`, `walk()` at `:322`, the two guards at `:311` and `:316`. The one
+number worth quoting and not relying on is the guard's new home, because
+`:298` still permits `i + n == len(d)` and `:311` is what holds the index —
+the same asymmetry row 9 records, now with the `or` made into two statements
+so each token can name the guard it belongs to.
+
+The 311 iterations and 114 walks of the sweep below are unchanged, and that is
+the regression test: command 1 in *Reproducing it* still reproduces
+`xdata-086x-dispatch-sites.csv` byte for byte, because the `0x086x` table was
+deliberately not re-cut. Row 9's shape — `range(max_insns)`, `len(d)` tested
+twice, only the second test bounding the index — is exactly as recorded; what
+moved is the arithmetic of the citation, and `:298`'s test still permits
+`i + n == len(d)` while `:312` is what holds the index.
+
+`walk()`'s own budget is still 8, and nothing here argues for a value. What
+#846 does add is the finding that raising it to 64 would rewrite 13 committed
+`access` cells, 10 of them wrongly — so the parameter is now a recorded fact
+with a cost attached rather than one nobody can account for.
