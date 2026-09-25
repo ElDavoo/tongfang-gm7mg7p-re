@@ -105,7 +105,7 @@ remembered to update:
      windows/tools/test_manual_fan_ctrl_probe.py:508  if len(r) == 4 and r[1] == "MARK"]
    6 call(s) of the grader's readers, none of which writes the literal:
      ec/tools/check_capture_claims.py:514  index[WATCH + "/" + name] = read_capture(os.path.join(REPO, WATCH, name))
-     ec/tools/grade_0751_isolation.py:2972  m, c = read_capture(path)
+     ec/tools/grade_0751_isolation.py:2968  m, c = read_capture(path)
      ec/tools/grade_0751_isolation.py:2977  rows = read_early_exits(path)
      ec/tools/grade_gpu_door.py:421  m, c = fan.read_capture(path)
      windows/tools/manual_fan_ctrl_probe.py:701  marks, changes = grader.read_capture(str(path))
@@ -167,17 +167,29 @@ above cannot see it. Six call sites of the grader's readers do not:
 > twice, because #749's and #750's cases both call the readers. Re-run the tool
 > rather than trusting this paragraph: it is a quotation, and a quotation rots.
 >
-> The grader's own pins are re-measured here and resolve. The split #748
-> recorded from its side no longer applies to the rest of the table: because
-> #748's retarget landed, the pins in `ec_timer_capture.py`,
-> `grade_timer_sweep.py`, `check_capture_claims.py`, `manual_fan_ctrl_probe.py`,
-> `system_id_probe.py`, `ec_watch.py` and
-> `docs/hardware-tests/manual-fan-ctrl-0751-isolation.md` all read `ok` on this
-> tree, and the section-5 transcript below is the evidence. What is left of
-> #748's caution is the rule rather than the verdict: a pin in a file this
-> page does not change is recorded rather than quietly fixed in passing,
-> because a pin corrected as a side effect is a pin whose history cannot be
-> read.
+> `windows/tools/ec_watch.py:355` and `:254`/`:280` are cited by the tool and
+> are **DRIFT against this tree** — #718's insertions moved them, #748's
+> `encoding="utf-8"` moved them again, and nothing here retargets them. The
+> same is true of the pins in `ec_timer_capture.py`, `grade_timer_sweep.py`,
+> `check_capture_claims.py`, `manual_fan_ctrl_probe.py`, `system_id_probe.py`
+> and `docs/hardware-tests/manual-fan-ctrl-0751-isolation.md`: they are
+> recorded rather than quietly fixed because they are not this change's to
+> move, and because a pin that is corrected in passing is a pin whose history
+> cannot be read. #748 recorded the same split from its side, and this page
+> re-measures the grader's own pins — the ones #749 does own — rather than
+> either side's number.
+>
+> **Correction (2026-09-25, issue #750), leaving the paragraph above as it was
+> taken.** The verdict has moved, and #750 is what moved it: #748 never
+> retargeted these pins, and all 18 of them read `DRIFT` on `origin/main` after
+> it merged. #750's change to the grader moved the `grade_0751_isolation.py`
+> lines, which is why re-anchoring the whole table fell to this branch; the
+> fifteen pins in the other capture files were drifted by #748 and #749 and are
+> re-anchored here too. They all read `ok` on this tree, and the section-5
+> transcript below is the evidence. What is left of #748's caution is the rule
+> rather than the verdict: a pin in a file this page does not change is
+> recorded rather than quietly fixed in passing, because a pin corrected as a
+> side effect is a pin whose history cannot be read.
 
 The two scans have opposite blind sides and neither is the whole tree: the
 literal scan cannot see a consumer that only counts, and the call scan cannot
@@ -339,7 +351,7 @@ though seven calls happened.
 | site | fifth column | `# provenance` row |
 |---|---|---|
 | `read_capture` (`:852`) | zero — `:1042` is `len(row) < 4` and `:1044` indexes `row[0..3]`, so the tail is dropped and `Window` is identical | zero — caught by the `row[0].startswith("#")` half of `skippable_row` at `:845` |
-| `existing_mark_labels` (`:896`) | zero — `mark_labels_of` at `:1068` returns `(row[0], row[3] if len(row) > 3 else "")`, identical at 4 or 5 columns | zero, same predicate, called at `:1061` |
+| `existing_mark_labels` (`:896`) | zero — `mark_labels_of` at `:1068` returns `(row[0], row[3] if len(row) > 3 else "")`, identical at 4 or 5 columns | zero, same predicate, called at `:1065` |
 | `read_early_exits` (`:1342`) | zero — `:1384` tests `row[0]`, and a mark row's `row[0]` is a timestamp, which cannot open with a `#` | zero *by the invariant* documented at `grade_0751_isolation.py:428`, not by the skip: the phrase test is a prefix test, and the safety is that a hand annotation does not open with that phrase |
 | `grade_gpu_door.py:421` | zero — it unpacks `read_capture`'s two-tuple, which is what the first row measured | zero, same reason |
 | `grade_0751_isolation.py:2968` | zero — `f"{path}: {len(m)} mark(s), {len(c)} change row(s)"` counts and never spells the row | zero, same reason |

@@ -275,10 +275,11 @@ The line numbers this page and
 [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md) cite moved
 twice: once for this change and once for #748's, and the citation table in
 `ec/tools/measure_mark_provenance.py` is re-anchored to the merged tree rather
-than to either branch. Its citation check also raised before printing a pin — a
-three-tuple unpack of a two-tuple set — which is why the drift counts in
-`docs/findings.md` were only ever measurable with it patched out; the fix
-belongs to this issue's change to that tool, not to #748's.
+than to either branch. Re-anchoring is the whole of the change to that tool —
+`check_citations` and the `scan` it joins against are byte-identical to
+`origin/main` — so the drift counts in `docs/findings.md` are two measurements
+of two trees rather than two readings of one, and the coupling section below
+gives both.
 
 No committed fixture was added under `ec/tools/testdata/`: the new cases write
 temp files like every case in the class, and a committed fixture would also
@@ -339,12 +340,16 @@ calibration rule is about.
 Two things were found there that are worth stating plainly rather than
 absorbing into the change:
 
-1. **The tool was not reporting at all.** `check_citations` unpacked a
-   two-element `(path, lineno)` scan site as three names, so it raised
-   `ValueError` on any tree with an unjoined site — which is every tree, since
-   the scan finds sites the table does not name. The citation block had been
-   unreachable, and no run of it since #728 could have reported the drift
-   below. The stray element is removed; nothing else in the tool changed.
+1. **The check does report, and this branch is what turned it green.** The
+   citation check is neither silent nor unreachable: on `origin/main` a bare
+   `python3 ec/tools/measure_mark_provenance.py` prints its **38** rows — 20
+   `ok` and 18 `DRIFT` — and **37 citation problem(s)**, and exits 1. Those 18
+   are #748's and #749's to have drifted, and are re-anchored below; on this
+   tree the same command prints **44** rows, all `ok`, and exits 0.
+   Re-anchoring the rows is the whole of the change to that tool —
+   `check_citations` and the `scan` it joins against are byte-identical to
+   `origin/main` — so the two counts differ because the file moved, not because
+   the check changed.
 2. **Six citation rows were already red** before this change, not the two
    the issue names. It named `read_early_exits` at `:739` and `:760`; the
    other four — `warn_unchecked_marks` at `ec_watch.py:254` and `:280`, the
@@ -357,12 +362,12 @@ absorbing into the change:
    which is a place where the scan counts prose as a decision site.
 
    **#748 drifted twenty-three more**, by editing files this table cites
-   without touching the table, and left the tool unable to say so — the crash
-   above means its own report was not reachable either way. Those are
-   re-anchored alongside, together with three rows this merged tree needs and
-   neither branch had: `read_capture`'s byte-order-mark refusal, and the two
-   `check_capture_encoding.py` sites #748 added, which the two-way join
-   correctly flagged as a gap in the census.
+   without touching the table. The tool did say so — #748's own entry records
+   the count as 6 drifted before its change and 29 after — and those are
+   re-anchored here alongside the six, together with three rows this merged
+   tree needs and neither branch had: `read_capture`'s byte-order-mark
+   refusal, and the two `check_capture_encoding.py` sites #748 added, which
+   the two-way join correctly flagged as a gap in the census.
 
    **#749 then moved the same table again**, splitting each reader's body out
    so the notice could run the strict rules over its own single read

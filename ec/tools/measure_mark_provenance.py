@@ -485,8 +485,8 @@ CITATIONS = [
     # field once, in `skippable_row` and `normalised_rows`. The two are
     # additive -- the merged tree has both -- so a fact only one side held is
     # a row only one side wrote, and the lines they landed on are the merged
-    # ones. The pins in the other files are #748's to move and are left where
-    # it left them (#748 records that red).
+    # ones. The pins in the other files were drifted by #748 and #749 and are
+    # re-anchored here too, so nothing is red on this tree.
     ("ec/tools/grade_0751_isolation.py", 1045, 'if addr == "MARK":',
      "reader: take_capture_row recognising the row, read_capture's own body"),
     ("ec/tools/grade_0751_isolation.py", 1099, 'if addr == "MARK":',

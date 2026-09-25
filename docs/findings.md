@@ -4476,14 +4476,13 @@ through a temp directory, and a reader's behaviour on a constructed file.
 > redder — 6 of its 37 pins were drifted before this change and 29 are after,
 > measured both ways and recorded rather than hidden; that tool's crash and its
 > re-anchoring are its own issue.* Both figures are confirmed here and
-> unchanged — the tool raises before it prints a pin, so 6 and 29 were only
-> ever measurable with that raise patched out in a scratch checkout, which is
-> what "measured both ways" meant and is not a measurement of the tool as
-> committed. What has changed is the debt it left: the crash's fix and the
-> re-anchoring landed with #750 in this tree, all **42** citations resolve, and
-> the two `check_capture_encoding.py` sites this issue added are cited rather
-> than left as a gap in the census. Written up in
-> [0751-capture-encoding.md](findings/0751-capture-encoding.md).
+> unchanged, and both are measurements of the tool as committed: a bare
+> `python3 ec/tools/measure_mark_provenance.py` reports them rather than
+> raising, and reported both counts at the trees they were taken on. What has
+> changed is the debt it left: the re-anchoring landed with #750 in this tree,
+> all **42** citations resolve, and the two `check_capture_encoding.py` sites
+> this issue added are cited rather than left as a gap in the census. Written
+> up in [0751-capture-encoding.md](findings/0751-capture-encoding.md).
 
 **2026-09-25 (issue #750): the shape of a capture row is stated once, and the
 readers that still open a refused capture no longer blame its header.** The
@@ -4536,10 +4535,15 @@ own edits drifted, the two new `check_capture_encoding.py` sites, and the
 this merged with #749 as well, and the two are additive: #749's own pins are
 cited at the lines the split left them at, and #750's skip-rule citations are
 three — the predicate's body plus the three readers that call it — where its
-branch had one. Its citation check raised before printing a pin — a three-tuple
-unpack of a two-tuple set — which is why the counts above were only ever
-measurable with it patched out; the fix is part of #750's change to that tool,
-not of #748's. Offline over hand-written rows and bytes; no capture taken, no
+branch had one. Its citation check reports rather than raising — a bare
+`python3 ec/tools/measure_mark_provenance.py` prints its rows and its problem
+count and exits 1 while any row is red — so the 6/29 above and the 18/37
+#749 recorded are both measurements of the tool as committed, and what
+separates them is the tree and not the check. Re-anchoring is the whole of this
+branch's change to that tool: `check_citations` and the `scan` it joins
+against are byte-identical to `origin/main`, where the same command prints 38
+rows, 18 of them `DRIFT`, and 37 citation problems before exiting 1. Offline
+over hand-written rows and bytes; no capture taken, no
 Windows box reached, and a Windows tool writing a BOM remains a prediction.
 Written up in
 [0751-capture-row-shape.md](findings/0751-capture-row-shape.md).
@@ -4560,10 +4564,10 @@ Written up in
 > retired every one of them.** `measure_mark_provenance.py` now exits 0 on it:
 > **0 drifted pins and 0 citation problems, all 44 citations resolving** and
 > the row-site join closing both ways. The fifteen pins in the other capture
-> files were re-anchored too, because #748's retarget had landed by then and
-> they resolve as a matter of record rather than by being moved here. The
-> paragraph above is left as #749 wrote it; this is the number a reader should
-> use.
+> files were drifted by #748 and #749 and are re-anchored by #750 as well —
+> #748's retarget was never applied to them, and all 18 of them read `DRIFT`
+> on `origin/main` after it merged. The paragraph above is left as #749 wrote
+> it; this is the number a reader should use.
 
 ## 17. The `main-ec-003` cluster is one 393-byte routine, counted 42 times over (2026-09-23, issue #179; id corrected by #253, by the 2026-09-24 re-derivation, and again by #279 on 2026-09-25)
 
