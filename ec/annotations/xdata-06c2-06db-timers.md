@@ -943,6 +943,28 @@ default regeneration differs from the committed CSVs in **no** `read`, `write`,
 redness does not currently fail the build; that is a gap in the gate, not a
 green light, and closing it belongs with whoever regenerates the CSVs.
 
+> **(Correction, 2026-09-25, issue #819) — neither sentence in the paragraph
+> above holds now, and one of them never did.** Both modes exit 0 on this tree:
+> `python3 ../tools/xdata_register_map.py --self-test` prints `all assertions
+> passed`, and the same tool's `--check` reports 1,326 register rows and 439
+> cluster rows matching a fresh generation from the committed tree. **"Neither
+> mode is in `agent-gates.sh`'s tool list" is false of `--check` and has been
+> since #256**: the tool is in the `for tool in` list at
+> `.github/scripts/agent-gates.sh:127`, and the arm that runs it is the
+> `*xdata_register_map.py)` case at `:235-236`, `python3 "$tool" --check
+> || rc=1`, under a comment at `:210-234` whose own words are *"Its half that
+> *is* green is the half `--check` runs"*. `xdata-register-map.md:2582-2584` has
+> said so next door since the same #256, so this paragraph has contradicted a
+> sibling page for as long as it stood. **Only `--self-test` is genuinely not
+> in the gate, and that is deliberate rather than an oversight** — the comment
+> at `:218-234` gives the reason, and the reason it gives (*"it is red on
+> `main`"*) is itself stale now. That comment, the wiring decision, and the
+> `--self-test` half of the sentence above are **#815's**, whose title names
+> them. This correction does not wire the mode: that is #815's to decide, in a
+> file copied from `ElDavoo/agent-pipeline`, and the correction is to the
+> sentence rather than to the gate. The measurement is transcribed in
+> [`../../docs/findings/xdata-green-set.md`](../../docs/findings/xdata-green-set.md).
+
 **The reproduction this replaces was a no-op, and the reason it was is worth
 keeping.** It copied the tool and patched a *second* `==` guard in, which the
 committed file has had since #178, so its two censuses came out byte-identical
@@ -975,6 +997,22 @@ union). Every direction and membership column still matches — `read`, `write`,
 the 0-difference result above. That
 redness is a naming backlog, not a direction-classifier problem, and it is not
 fixed here.
+
+> **(Correction, 2026-09-25, issue #819) — the same claim in a second phrasing,
+> and the same answer.** "Red on `main` at the time of writing" was true of
+> `main` when it was written and is not now: both modes exit 0, and the
+> commands are in the correction above. **The drift this paragraph describes
+> was real, and it has since been cleared** — its figures (9 `XDATA_` symbol
+> rows, 3 newly named functions, 32 register rows and 6 cluster rows) are left
+> standing as the record of what #504 left behind, and the current answer to
+> the same question is `--check` reporting 1,326 rows matching a fresh
+> generation. That settles only that the committed CSVs describe the committed
+> tree; the direction and membership result this paragraph rests on is
+> unchanged, and is the 0-difference figure above. "That redness … is not fixed
+> here" goes with the rest of it. The `--self-test` half is **#815's**, and the
+> gate still declines to run the mode on a reason that is now stale; the
+> measurement is in
+> [`../../docs/findings/xdata-green-set.md`](../../docs/findings/xdata-green-set.md).
 
 The issue's own "`0x08A8` is recorded as 84 reads / 44 writes / 42 read+write,
 and 42 of its comparisons are `==`" is a second, independent misreading:

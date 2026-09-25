@@ -2617,6 +2617,31 @@ re-measurement, so it is left for its own issue rather than folded in here.
   > suite of the two red, and `docs/findings/runner-red-suite-set.md` is the file
   > that tracks the set. Nothing about the firmware is established by the
   > correction; `XDATA_0860` stays `present-untested`.
+  >
+  > **(Correction, 2026-09-25, issue #819) — the set is empty, so the paragraph
+  > above names two suites that are both green, and this block's own closing
+  > clause goes with it.** `python3 -m unittest discover -s ec/tools -p
+  > 'test_xdata_cluster_names.py'` runs 28 tests, `OK`; `python3 -m unittest
+  > discover -s ec/tools -p 'test_check_site_census.py'` runs 45, `OK`; and
+  > `bash tools/run-tests.sh` prints `All 30 suite(s) passed`. **The two were
+  > cleared by two different commits rather than by one**, which is why the
+  > paragraph above is wrong twice over and each half is wrong for its own
+  > reason. The `test_check_site_census.py` half is the one this block has
+  > already retracted — those four rows cite the lines `D091.c` has since
+  > `23240095` — and that correction stands, unchanged. The
+  > `test_xdata_cluster_names.py` half describes a **recipe that no longer
+  > exists**: the suite patches no literal at all now, it runs the committed
+  > tool with `--no-eq-guard` (`../tools/test_xdata_cluster_names.py:68-90`,
+  > `guard_off()`), which is #753's own change and is written up in
+  > `../../docs/findings/xdata-cluster-names-guard-off-recipe.md` (`64dbde19`).
+  > So `../../docs/findings/runner-red-suite-set.md` is now tracking a set with
+  > no members, and the whole measurement is in
+  > `../../docs/findings/xdata-green-set.md` — which also covers the tool's two
+  > modes, phrased as red on the sibling page and corrected there. **The same
+  > commit also falsified #816's "only working scripted route to a guard-off
+  > census"**, so this paragraph and that page went stale together; that
+  > sentence is left to #816, and the `--self-test` half of the bullet above to
+  > #815, because each is mid-way through its own issue.
 - **The 42 boundaries, now that §4.5 measures them.**
   `build_ec_decompile.py --mode rebuild-project` writes the 7 MB database, and
   two branches that both rebuild one cannot merge, so this still wants a branch
