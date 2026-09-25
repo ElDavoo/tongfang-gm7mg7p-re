@@ -683,10 +683,15 @@ green light, and closing it belongs with whoever regenerates the CSVs.
 keeping.** It copied the tool and patched a *second* `==` guard in, which the
 committed file has had since #178, so its two censuses came out byte-identical
 and it compared the tool against itself. A commit pointer is not a usable
-recipe either — `git log -S 'startswith("==")'` reaches one squashed commit in
-this checkout — so `--no-eq-guard` was added instead, and the tool's self-test
-pins that it flips exactly the `==` lines of `CLASSIFIER_SHAPE` and nothing
-else. The numbers were right; the recipe was the defect.
+recipe either — `git log --oneline -S 'startswith("==")' -- ec/tools/xdata_register_map.py`
+reaches **two commits on `origin/main`**: #206, which is itself the commit that
+added the guard, and #302, whose tree-wide invariant added two more occurrences
+of the same string (three on this branch, once this issue's own docstring
+sentence is in the tree). Neither is the pre-#178 classifier, which appears only
+at #206's parent — a revision the search does not name — so `--no-eq-guard` was
+added instead, and the tool's self-test pins that it flips exactly the `==` lines
+of `CLASSIFIER_SHAPE` and nothing else. The numbers were right; the recipe was
+the defect.
 
 **A note on the figures above and on `--self-test`.** The left-hand column is
 the pre-#178 classifier run on the current tree, so it is a live measurement;

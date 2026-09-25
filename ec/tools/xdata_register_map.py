@@ -185,10 +185,14 @@ committed CSVs, and `--check` would then be green because the files agree with
 each other. It exists because
 `annotations/xdata-06c2-06db-timers.md` §6a measures what the guard bought, and
 that measurement has to stay re-derivable from the committed tree forever. It
-could not be, from a commit pointer: `git log -S 'startswith("==")'` reaches one
-squashed commit here, so the recipe was "copy the tool and patch it", which is
-how §6a came to compare the tool against itself. The numbers that recipe
-produced are real and the recipe is the problem; this flag is the recipe, kept.
+could not be, from a commit pointer: `git log --oneline -S 'startswith("==")' --
+ec/tools/xdata_register_map.py` reaches **two commits on `origin/main`** -- #206,
+which is itself the commit that added the guard, and #302, whose tree-wide
+invariant added two more occurrences of the same string. Neither is the
+pre-#178 classifier, which appears only at #206's parent, a revision the search
+does not name, so the recipe was "copy the tool and patch it", which is how §6a
+came to compare the tool against itself. The numbers that recipe produced are
+real and the recipe is the problem; this flag is the recipe, kept.
 
 Usage:
     python3 ec/tools/xdata_register_map.py               # write the two CSVs
@@ -197,7 +201,7 @@ Usage:
     python3 ec/tools/xdata_register_map.py --map ec/annotations/xdata-clusters.csv
     python3 ec/tools/xdata_register_map.py --threshold-sweep
     python3 ec/tools/xdata_register_map.py --threshold-sweep --no-writer-axis
-    python3 ec/tools/xdata_register_map.py --no-eq-guard --out-registers /tmp/before.csv
+    python3 ec/tools/xdata_register_map.py --no-eq-guard --out-registers /tmp/before-registers.csv --out-clusters /tmp/before-clusters.csv
     python3 ec/tools/xdata_register_map.py --reconcile ec/firmware/GMxMGxx_11.800
 """
 import argparse

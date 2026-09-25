@@ -173,8 +173,22 @@ is the bucketing of those 17, not a rival count of the 7.
 > the committed tree; see `xdata-06c2-06db-timers.md` §6a for the measurement
 > and for why a re-freeze is no longer the thing to fear.
 >
-> **CORRECTION (2026-09-24, issue #280) to the figures in that last
-> sentence, which read as committed above.** `xdata-symbols.csv` now holds
+> **One clause of the #249 block above is nonetheless false, and is corrected
+> here rather than edited out: "`--check` and `--self-test` both exit 0 on
+> `main`" is not true.** Measured today, both exit **1** — on `origin/main`
+> (`b4030349`) in a clean worktree, and on this branch. The cause is the naming
+> backlog §6a documents, not the direction classifier: issue #504 added 9
+> `XDATA_` symbol rows to `xdata-symbols.csv` and named 3 previously unnamed
+> functions in `ghidra-functions.csv` without regenerating the census, so the
+> `name` / `functions` / `shared_functions` / `named_addrs` columns drift. Every
+> direction and membership column still matches, which is why the rest of the
+> #249 correction — `==` excluded, the census post-guard, `0x0860` at
+> `14/2/0/1` — stands as confirmed above. `xdata_register_map.py` is not in
+> `agent-gates.sh`'s tool list, so this redness fails nothing in CI today, which
+> is the reason it is worth writing down; §6a measures it in full.
+>
+> **CORRECTION (2026-09-24, issue #280) to the 172-row / gap-22 figures in the
+> #249 block above, which read there as committed.** `xdata-symbols.csv` now holds
 > **173** rows, not 172, so the gap is **23**, not 22; `named_in_tree` is
 > still 150. The extra row is `XDATA_0390`, added by issue #259, and the
 > census did not move — which is the whole of issue #259's result, and why
