@@ -55,9 +55,9 @@ Measured over the committed export, by `index.csv` for the functions and
 `ghidra-functions.csv` for the names:
 
 - `exported functions` — 2710
-- `annotated function rows` — 1855
+- `annotated function rows` — 1872
 - `rows the index marks annotated` — 1873
-- `unresolved rows` — 152
+- `unresolved rows` — 169
 
 By program, as exported minus annotated minus the rest:
 
@@ -441,9 +441,9 @@ own. `--check` compares both occurrences against the same recount, so they
 cannot drift apart silently:
 
 - `exported functions` — 2710
-- `annotated function rows` — 1855
+- `annotated function rows` — 1872
 - `rows the index marks annotated` — 1873
-- `unresolved rows` — 152
+- `unresolved rows` — 169
 
 **673 of the 753 common-area functions are unannotated, and that is the largest
 single block of undecoded firmware in this repository** — larger than the whole

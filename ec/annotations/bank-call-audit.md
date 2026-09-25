@@ -70,6 +70,28 @@ $ python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800
 | `bank0` | 400 / 330 | 1612 / 1501 | - |
 | `bank1` | 414 / 273 | 1649 / 1441 | - |
 
+**One band makes the `anchored` half of that column mean less than it looks, and
+it is worth the three lines.** 28 rows across the three regions name the
+seventeen functions the scan seeded inside `common`'s unprogrammed
+`0x728F`-`0x7FFF` band; 20 of them are in the `common` bucket-A row above, and
+**5 of those 20 are among its 1,702 anchored sites** — the other 15 sit where
+none of the 24 byte anchors decodes onto them at all. `anchored` means a byte
+anchor decodes exactly onto the site, a candidate decoded entry point rather
+than a call; across all three regions only 7 of the 28 are anchored, and the
+committed listings put **not one of the 28 at an instruction boundary**: 22 sit
+inside another instruction and 6 are at a site no listing covers. The two
+measures disagree here, and the disagreement is the point — a site that clears
+the anchored bar is no more an opcode than one that does not. `common,0x7159`
+is the worked case: a `12 74 01` read across a `jnz`'s rel8 and the next `mov`'s
+immediate, where no byte anchor lands (`frame_onto` 0) though all 24 step over
+it (`frame_over` 24) — not an entry point of any, and no call. That is what the
+"upper bound" caveat on the seeded functions' own listing headers means where
+it bites, and it is why the seventeen carry
+`ff_filler_not_a_function_*` rows now:
+[`docs/findings/ff-fill-census.md`](../../docs/findings/ff-fill-census.md)
+census them with `ec/tools/census_ff_fill.py`, which reads back the covering
+instruction for each of the 28.
+
 ## 2. Where the linker's own cross-bank calls go
 
   stub 0x1100 selects bank 0: 350 trampoline(s) route through it
