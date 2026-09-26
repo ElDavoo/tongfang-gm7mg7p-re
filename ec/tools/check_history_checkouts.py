@@ -272,9 +272,12 @@ def load_workflows(repo):
     try:
         names = sorted(n for n in os.listdir(directory) if n.endswith(".yml"))
     except OSError as exc:
-        return [], [f"{WORKFLOW_DIR}/: not listed ({exc.strerror})"]
+        # `{}` and not `[]`, and the same on the return below: the first element
+        # is read as a mapping by every caller, so a list here crashed the run
+        # on a tree it was asked to refuse.
+        return {}, [f"{WORKFLOW_DIR}/: not listed ({exc.strerror})"]
     if not names:
-        return [], [f"{WORKFLOW_DIR}/: no *.yml in it"]
+        return {}, [f"{WORKFLOW_DIR}/: no *.yml in it"]
     workflows, unreadable = {}, []
     for name in names:
         got, jobs, why = load_workflow(os.path.join(directory, name))
@@ -616,6 +619,20 @@ def main() -> int:
     args = ap.parse_args()
 
     depth, prose = report(args.repo)
+    # The census is re-read here rather than handed back by `report()`, whose
+    # return is the two verdicts and is unpacked by cases in the report-reading
+    # suite. Eleven small YAML files parsed twice is nothing next to a run that
+    # read no workflow at all and exited 0 having found nothing wrong.
+    workflows, _unreadable = load_workflows(args.repo)
+    if not workflows:
+        # Keyed on zero workflows read and not on `unreadable` being non-empty:
+        # one file that will not parse beside a conforming one is a tree that
+        # is one bad file short of complete, and it still gets a measurement.
+        print("check_history_checkouts.py: no workflow was read, so the report "
+              "above is not a measurement of this tree -- that is a broken "
+              "census, not an empty one, and a run that read nothing does not "
+              "pass.", file=sys.stderr)
+        return 1
     problems = depth + prose
     if problems:
         print(file=sys.stderr)
