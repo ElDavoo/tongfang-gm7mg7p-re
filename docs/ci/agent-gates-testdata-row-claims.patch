@@ -37,11 +37,13 @@
 #
 # The rule is an address a row's third column attributes to a fixture having
 # to occur in a file that row names, searched across the whole set the row's
-# first column resolves to rather than per file. Six shapes are counted,
-# printed with the reason, and do not fail the run -- a checker that reported
-# its own blind spot as a broken index would be pushed to grow a rule for
-# whatever it could not read, and would end up inventing the thing it is
-# checking. The list is closed and each entry has a case.
+# first column resolves to rather than per file. The five shapes and the two
+# dated refusals -- a capture named in prose that resolves to nothing, and a
+# sentence naming two of them -- are counted, printed with the reason, and do
+# not fail the run -- a checker that reported its own blind spot as a broken
+# index would be pushed to grow a rule for whatever it could not read, and
+# would end up inventing the thing it is checking. The list is closed and each
+# entry has a case.
 #
 # **Until a human lands this, no commit runs it.** The suite
 # (`ec/tools/test_check_testdata_row_claims.py`) needs no wiring to be run at

@@ -10109,3 +10109,106 @@ that patch, and no capture, EC or register read back is involved anywhere in it.
 
 The write-up is
 [`disasm8051-oracle-from-the-annotations.md`](findings/disasm8051-oracle-from-the-annotations.md).
+
+## 78. A sentence naming two dated captures is refused whole, and not read from the first (2026-09-26, issue #979)
+
+The write-up is
+[`testdata-row-claims-multi-date-sentence.md`](findings/testdata-row-claims-multi-date-sentence.md);
+this is the summary. `ec/tools/check_testdata_row_claims.py` had one rule that
+**no case reached**: a sentence naming two or more bare dates was read from its
+`DATED_CAPTURE` **first** match, silently, and both places that said so named
+the limit in the same words. Every *shape* had an instance in the committed
+index and every dropped rule had a case; this one had neither, which is
+`docs/findings.md`'s own discipline made concrete — **a limit stated in a
+docstring is not a limit that is held.** A two-date sentence whose literals
+live in the second day's captures was reported `missing` and exited 1 on a row
+that is true, and the other direction reported `resolved` while the report line
+named the wrong day's glob as what the claim was checked against.
+
+**The reading is a refusal, and the union is declined on a measured reason.**
+A sentence naming two or more bare dates is not read: its literals come off
+`checked` onto the shapes line under a pinned reason, `two dated captures in
+one sentence`, and `claim.files` names **every** glob it carried, so a reader
+sees which dates were skipped. Unioning two days is declined because the two
+sixes in `evidence/ec-watch/` are **disjoint capture families** —
+`2026-09-23-*` is the power-mode-cycle set and `2026-09-24-*` is the `06d6` /
+`06d9` plug-in sweeps, so a sentence about one of them held to both is handed a
+twelve-file set of two unrelated families, which is the same misattribution the
+date exists to prevent along a second axis — and because a union would falsify
+the cost the tool documents at `check_testdata_row_claims.py:46-48`, *"one
+address in any of a date's files satisfying a claim about that date"*, which
+this issue's Done condition requires to stay true. **A refusal does not touch
+it**, so that sentence keeps its wording.
+
+**The census came first, and it is quoted as *not found by this method*.** Over
+`ctrc.units()` and `ctrc.DATED_CAPTURE` — the imported splitter, not a second
+copy — the committed index's 100 description sentences carry **two** bare dates
+and **zero** two-date sentences. Nothing in that proves one cannot appear in a
+later edit, which is why the shape is counted rather than deleted.
+`test_the_committed_tree_exercises_every_shape` therefore **stays at five**: a
+sixth instance would be a change to what the tree exercises, and the test is
+what makes that true.
+
+**Precedence is decided by a count and held.** What settles a two-date sentence
+is the number of `DATED_CAPTURE` matches, never what any of them resolves to, so
+a sentence of which one date resolves and one does not is still unread and the
+empty glob is named beside the full one rather than swallowed by the
+`dated capture not found` reason it competes with. Both dates reach the per-date
+breakdown, each keyed by its own glob with its own file count, so a skipped date
+is visible in the block that says the run read dates at all. **No `Result` field
+is new** and the CLI does not change: the single-date path is byte-identical,
+the six existing dated cases pass **unedited** — compared method-body by
+method-body against the tree before either issue landed, and all six are
+byte-identical there too — and, diffed against a clean `origin/main` at
+`368e9e52`, the committed run's stdout differs **only** in the summary line's
+wording while its 24 lines of stderr are byte-identical.
+
+**Three cases and three mutations, run.** The second-day case, the neither-day
+case and the precedence case are in `SkipsDeliberately`, on scratch trees — a
+case asserting this over the committed index would have to edit the index to
+exist. First-match, cross-date union, and a refusal that prints only the first
+glob were each applied to the tool and the suite run over each: 3, 3 and 2
+failures, and the run is green again on the shipped tool. `EachRuleIsLoadBearing`
+**cannot** carry a case for the new rule — it drops rules against the committed
+tree, which has no two-date sentence — and both class docstrings say so rather
+than leaving the omission to be found. The suite is 47 at this merge's base
+`368e9e52` and on clean `origin/main`, and is **50** on the merged tree — this
+issue's three cases, the whole of the step. *(The `42` a first draft of this
+paragraph read at "the fork", and the "#975's five" it added to it, are figures
+from before #982 — which implements #975 — landed in the base; those five cases
+are inside the 47 and are not this issue's.)* The 3, 3 and 2 are re-measured on
+that suite rather than carried from the branch's own.
+
+**Nothing here is a hardware claim, and no live observation closes any part of
+it.** No capture is *opened*: the files under `evidence/ec-watch/` are read as
+text, exactly as `carried_by()` already reads a fixture. **No row of
+`ec/tools/testdata/README.md` is edited, in either column** — its prose paragraph
+at the tail is the one shared line that changed, and it now names both dated
+refusals. No `status:` moved, so `ec/annotations/registers.yaml` is not touched.
+`docs/ci/agent-gates-testdata-row-claims.patch` keeps its **hunk untouched** —
+the CLI does not change — and only its header comment is reworded, so
+`tools/test_agent_gates_patches.py` still applies the set in every ordered pair;
+it remains a human's `git apply`, so no gate is wired here. **The
+`tools/README.md` totals sentence is left for the merge**, which re-derives it
+from the runner rather than from an edit: §47 already says that a total is a
+property of the merge. **(Merged-tree note, the #979 × #985 re-derivation: it is
+`1211`, and it is derived by running the runner rather than by adding two
+figures up.)** The merge measures `39 suite(s) run, 1211 tests` and `907` for
+`python3 -m unittest discover -s ec/tools`, against clean `origin/main`'s
+`1208`/`904` and this merge's base `368e9e52`'s `1177`/`873` — so the step
+this issue contributes is **+3 tests and no suite**, all three in
+`ec/tools/test_check_testdata_row_claims.py` (`47` on both the base and
+`origin/main`, `50` here). **The `38`/`1180`/`876` a first draft of this note
+carried is not this merge's**: it was measured on a tree from before #982 —
+which implements #975 — had landed in the base, and this merge's counterpart on
+`main` is **#985**. So the suite count is the half that moves, `38` → `39`, and
+it moves on the *other* side, on #985's
+`ec/tools/test_disasm8051_oracle.py` — the first time in that file's history
+that a merge's suite total had to move at all. **That the branch's own `1168`
+was *already* stale on `main` is the part worth keeping**, and it is why
+neither side's figure is the merged tree's: #982 added nine cases and did not
+re-derive. The correction fits inside the lines the sentence already had, so the
+`tools/README.md:203` pin does **not** move —
+`159 + 9 + 7 + 22 + 6 = :203`, both sides' edits landing below `:203` —
+and `check_pin_table_rows.py` still reads 106 / 106 / 106 with all seven
+classes 0. No `gh pr create` anywhere.

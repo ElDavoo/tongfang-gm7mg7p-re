@@ -189,9 +189,10 @@ nested row naming a listing that is not — that it holds.
 checks above do not: an address a row attributes to its fixture has to occur in
 a file that row names, searched across the whole set the first column resolves
 to rather than per file. Five shapes are counted, printed with the reason and do
-not fail the run — "not checked, not absent" — along with a dated capture named
-in prose that resolves to nothing, and the rest of the column is free prose that
-no rule reaches. Its wiring is prepared at
+not fail the run — "not checked, not absent" — along with both dated refusals,
+a capture named in prose that resolves to nothing and a sentence naming two of
+them, and the rest of the column is free prose that no rule reaches. Its wiring
+is prepared at
 `docs/ci/agent-gates-testdata-row-claims.patch`; **not claimed: that it would
 have caught #502 or #720**, whose repairs were both to this column. See
 `docs/findings/testdata-third-column-claims.md`.
