@@ -516,18 +516,26 @@ class TheCommittedTree(unittest.TestCase):
     """The real thing: the committed table, reconciled against the real run.
 
     The figures below are this file's own measurement of the merged tree, and
-    pinning them is what stops `105` from becoming another unpinned figure --
-    `doc-figure-pin-audit.md`'s "a pin is a check, not a promise" applied to
-    the reconciliation about the pins. They are also the one thing here a
-    reader cannot re-derive without running the tool, which is why they are in
-    a case and not only in the write-up.
+    pinning them is what stops the row count from becoming another unpinned
+    figure -- `doc-figure-pin-audit.md`'s "a pin is a check, not a promise"
+    applied to the reconciliation about the pins. They are also the one thing
+    here a reader cannot re-derive without running the tool, which is why they
+    are in a case and not only in the write-up.
+
+    **The count is 106 and was 105**, and the step is #778's merge rather than
+    anything this suite did: that issue's new write-up
+    `xdata-two-largest-case-restatement.md` brings a pin with it, and its edit
+    to `ec/tools/test_xdata_cluster_names.py` re-registered 33 more. The
+    per-pin table was re-derived from the merged tree's own run to match, and
+    one row was added, so rows and records moved together and the reconciled
+    count is what it was plus one.
     """
 
     def test_the_committed_table_reconciles_and_exits_zero(self):
         rc, out, err = run_main(check.REPO)
         self.assertEqual(rc, 0, err)
-        self.assertIn("105 table row(s) against 105 census record(s)", out)
-        self.assertIn("105 placed", out)
+        self.assertIn("106 table row(s) against 106 census record(s)", out)
+        self.assertIn("106 placed", out)
 
     def test_every_class_is_zero_on_the_committed_tree(self):
         # Not left to a prose figure. Zero is the measurement here -- the
@@ -545,15 +553,16 @@ class TheCommittedTree(unittest.TestCase):
         table, records, placed, _problems, _uncompared = check.reconcile(check.REPO)
         self.assertTrue(records)
         self.assertTrue(table)
-        self.assertEqual(placed, 105)
+        self.assertEqual(placed, 106)
 
     def test_the_committed_read_and_shape_cells_are_the_census_vocabulary(self):
         # The two vocabularies the table's own cells have to be drawn from, and
         # the fact that every committed cell is one of them. A cell outside
         # both is reported rather than passed, so this is also the case that
-        # says the alias map has not grown a hole: 52 `by-path`, 19 `by-name`
+        # says the alias map has not grown a hole: 53 `by-path`, 19 `by-name`
         # and the two `beside` rows the map exists for, with the 32 declined
-        # rows carrying the em dash on both sides.
+        # rows carrying the em dash on both sides. The 53 is the 52 plus #778's
+        # one new row, which the pin names by path.
         read, shape = {}, {}
         for _at, cells in check.reconcile(check.REPO)[0]:
             for at, vocabulary, counts in ((2, check.READ_CELLS, read),
@@ -562,11 +571,11 @@ class TheCommittedTree(unittest.TestCase):
                 with self.subTest(cell=cells[at]):
                     self.assertIsNotNone(key)
                 counts[key] = counts.get(key, 0) + 1
-        self.assertEqual(read, {census.BY_PATH: 52, census.BY_NAME: 19,
+        self.assertEqual(read, {census.BY_PATH: 53, census.BY_NAME: 19,
                                 census.BY_BESIDE: 2, "-": 32})
         self.assertEqual(shape, {census.DEF_TEST: 5, census.ASSERTION: 19,
                                  census.COMMENT: 10, census.BLANK: 6,
-                                 census.OTHER: 33, "-": 32})
+                                 census.OTHER: 34, "-": 32})
 
     def test_the_tool_is_not_in_the_cheap_gate_yet(self):
         # A check nobody runs is the shape of defect #819 was, so the standing

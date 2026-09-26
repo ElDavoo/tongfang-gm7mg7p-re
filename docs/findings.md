@@ -9100,7 +9100,7 @@ an occurrence already counted and so cannot move `refs`: guard 210 addresses /
 430 figure, because it *is* the 430 measurement. It is neither above nor below,
 it adds no point to 366 → 315, and the series is still **two** points. No
 "and it decays", and no threshold edit: `> 300` stays at
-`ec/tools/test_xdata_cluster_names.py:392`, the 15 ranks of headroom are as they
+`ec/tools/test_xdata_cluster_names.py:400`, the 15 ranks of headroom are as they
 were, and the count that is the floor's remains **315**. The size sequence
 427 → 430 → 439 is correct for the era it covers, but the census file has been
 committed at **five** sizes in all — 435, 426, 427, 430 and 439 rows, 22 commits
@@ -9249,6 +9249,7 @@ the four drift tables that quote them (`0751-mark-provenance-shapes.md`,
 `0751-capture-row-shape.md`) moved with them. The *reader set* did not: 7
 writers, 8 sites, 6 reader calls, 48 in-suite calls, the same as before, and
 the tool exits 0 again. No EC was opened, no capture taken, no register read.
+
 ## 71. The per-pin table's four mechanical columns are reconciled against the run, and the fifth is still a reading (2026-09-26, issue #942)
 
 **The gap was one join, and it had been missing since the census landed.**
@@ -9264,19 +9265,35 @@ above it. A merge that only *adds a paragraph* invalidates rows, and the only
 signal was a person re-reading `--verbose` against 105 rows.
 
 **`ec/tools/check_pin_table_rows.py` is that join.** Measured on the merged tree
-before anything was changed and again by the tool afterwards: **105 rows, 105
-records, 105 placed, and all seven classes 0** — 0 `unparsed-row`, 0
+before anything was changed and again by the tool afterwards: **106 rows, 106
+records, 106 placed, and all seven classes 0** — 0 `unparsed-row`, 0
 `unplaced-row`, 0 `row-without-record`, 0 `duplicate-key`, 0 `read-differs`, 0
 `shape-differs`, 0 `path-differs`. Green on this tree because the table *does*
 reconcile today; the point of a green check on a correct tree is that the next
 drift is loud rather than the last one silent.
+
+*(The `105` this section read when it was written is #778's merge, and the
+paragraph is re-transcribed rather than the figure quietly replaced: that
+issue's new write-up brings a pin with it and its edit to
+`ec/tools/test_xdata_cluster_names.py` re-registered 33 others, so the census
+went 105 → 106 and the per-pin table was re-derived from the merged tree's own
+run to follow it. This is the coupling stated at the foot of this section being
+paid one merge later, and it is worth reading as the cheapest possible instance
+of it — **37 rows moved** and the loud signal was a tool, not a person. The
+`37` is 33 re-registered target columns, **six** re-registered citing lines and
+the one added row, and the six is three more than #778's own merge had: the
+merge correction beside this paragraph is thirteen lines in
+[`doc-figure-pin-audit.md`](findings/doc-figure-pin-audit.md), which moved the
+three rows citing *that* file by the same thirteen. **A merge note that lands
+above three pins costs exactly the three it moves**, which is the cheapest
+possible instance of the same coupling, one file down.)*
 
 **It reads no verdict cell, and it exits 0 on a tree where every verdict is
 wrong.** That standing is what makes it safe in a gate, and the suite asserts
 it twice over — once with every verdict cell nonsense, once with the cell
 empty. So §65's *no checker* is **not** overturned: that section declines a rule
 that *renders a verdict*, and this one renders none. A green run says the table
-still describes the run; it says nothing about whether any of the 105 pins
+still describes the run; it says nothing about whether any of the 106 pins
 carries its claim.
 
 **One correction to the issue's own argument, in place per §4a-4d.** The
@@ -9390,3 +9407,57 @@ taken, no `status:` moved, no hardware or Windows run implied. The gate wiring i
 prepared rather than landed for the reason items 4 through 12 each give —
 `.github/` is template-copied and the push token has no `workflow` scope — and
 that is a change this branch does not make.
+
+## 73. The two-largest case was green and vacuous, and it now derives the names a key cannot find (2026-09-26, issue #778)
+
+> **Numbering note, added at the merge.** §70 records that it "is §70 and is
+> the last section in the file", and predicts in the same breath that the next
+> section to land below it corrects that clause beside itself rather than into
+> itself. **Three** landed below it in this merge, and only one of them is this
+> one: #942's per-pin reconciliation took **§71** on `main` in the same window
+> and #777's prose-name census took **§72**, and neither says anything of §70's
+> clause, so the correction is owed here and is placed here, in the same place
+> and for the same reason §68's and §69's were, per §4a-4d. By the rule the
+> earlier collisions set — the summary already committed on `main` does not move
+> and the branch's own gives way — this section is **§73**, and it is the last
+> section in the file. *(§70's clause is therefore true of this merge again,
+> one merge later, and says itself it is a property of the merge rather than of
+> the file.)*
+>
+> **Nothing pointed at the number that moved.** Nothing this branch wrote named
+> §70, so there was no reference to §70 to repoint, and nothing named §71 or
+> §72 either: the write-up cites §6a and this summary cites §4.4 and §50, none
+> of which is this section, and no tool, test or gate reads a section number out
+> of this file. A section number is a property of the merge in the same way the
+> runner's totals are — see [`findings/runner-red-suite-set.md`](findings/runner-red-suite-set.md)
+> — which is why the collision is recorded here rather than left for the next
+> reader to find.
+
+Write-up: [`xdata-two-largest-case-restatement.md`](findings/xdata-two-largest-case-restatement.md);
+this is the summary.
+
+**The issue's premise is stale and the defect behind it is worse than the one
+it describes.** It opens with the suite red on `main`; #753 landed the
+`--no-eq-guard` recipe and it reports `Ran 30 tests … OK`. So
+`test_the_two_largest_cited_clusters_are_carried_by_overlap_not_by_key` was
+green, and passing for the wrong reason: its two hard-coded pairs are disjoint
+clusters at **Jaccard 0.0000**, so it compared the largest cluster in the census
+— which carries no name — against an unrelated one, and `assertNotEqual` on two
+cluster keys is true of any two distinct clusters. It could not fail for the
+reason its name claimed, which is why §4.4's correction predicted this and why
+the fix is a restatement rather than a repair.
+
+**It is a rename, not an addition.** The case is now
+`test_every_name_the_key_cannot_find_is_carried_by_overlap`, and it selects the
+`how == "overlap"` records of the tool's own `carry_names` over the two
+censuses — eight `exact`, **one `overlap`** (`mode-oem-init`, 0.9681) and 436
+`none`. It reads no cluster id and no name, so #279's pair-accessor pass, which
+moved both typed names a generation behind, cannot break it again. §50's
+published "a seventh case" is why it stays a seventh case rather than an
+eighth: the count stays 30. The measured count is prose in the write-up, for
+the reason `assertTrue(movers, …)` already gives.
+
+**The negative control is what distinguishes it from the status quo.** Pointing
+the derived set at `level-block-086x` — a cluster the key *does* find — turns it
+red on `from_key != cluster_key`, naming the key that was found where overlap
+was required. The old assertion satisfies that same edit.

@@ -12,7 +12,7 @@ and [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checkli
 
 The issue asks two things and this answers both: **which clusters stopped
 moving and why**, and **whether `> 300` at
-`ec/tools/test_xdata_cluster_names.py:417` still says what the comment beside it
+`ec/tools/test_xdata_cluster_names.py:425` still says what the comment beside it
 says it says.** The answer to the second is *leave it there*, and it is decided
 by §5 below rather than by the 15 ranks of headroom
 [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md):170-175
@@ -412,7 +412,7 @@ The decision rule, quoted from the issue's own framing: *is the fall caused by
 an identified, already-happened change, or is `moved` a quantity that shrinks as
 the census grows?*
 
-**It is the first, and `> 300` stays at `test_xdata_cluster_names.py:417`,
+**It is the first, and `> 300` stays at `test_xdata_cluster_names.py:425`,
 untouched.** The re-derivation that produced the 439-row census is one already
 happened and named commit (`6bf9c234`, #279), its 155 added addresses are
 recorded, and the 94 clusters whose behaviour changed are named and measured. So
@@ -424,7 +424,7 @@ that grew 430 → 439 saw `moved` fall 366 → 315. A single observation cannot
 establish that `moved` decays as the census grows, and this file does not claim
 it does. What the measurement does support is the *structural* claim the
 `> 300` floor is actually resting on — the comment at
-`test_xdata_cluster_names.py:412-414` asks that a regeneration that renumbers
+`test_xdata_cluster_names.py:420-422` asks that a regeneration that renumbers
 nothing is not the case the identity columns exist for, and at 315 moved of 439
 it is very much not that — and the floor is left exactly where the recipe's
 argument put it, with the measurement recorded beside it. The expectation to
@@ -511,6 +511,17 @@ one whose membership the guard changes, in both generations**, and
 `level-block-086x` is intact in both. Neither is in the flipped set, so a fall
 in `moved` is **not** explained by a hand-named cluster's membership being
 absorbed.
+
+*(Confirmed and acted on, 2026-09-26, issue #778. The two names above are
+exactly the one the case now derives: the committed census gives eight `exact`
+carries, one `overlap` (`mode-oem-init`, Jaccard 0.9681) and 436 `none`, so
+"of the two, only `mode-oem-init` moves" is the whole overlap set rather than a
+coincidence of which pair was typed. The case was renamed
+`test_every_name_the_key_cannot_find_is_carried_by_overlap` and no longer
+names either pair; the old name stays visible at `:485` and `:498` above as the
+record of what it used to assert. `level-block-086x` being found by its key is
+confirmed, not corrected. The measurement is in
+[`xdata-two-largest-case-restatement.md`](xdata-two-largest-case-restatement.md).)*
 
 ## 7. The 43 swept addresses, per address
 

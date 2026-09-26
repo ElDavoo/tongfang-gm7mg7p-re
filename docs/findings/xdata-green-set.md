@@ -280,7 +280,7 @@ committed CSVs and not a re-derivation of the 32 and 6.
   `tools/test_readme_suite_table.py`'s job is the suite *index*, not the claims
   in the pages it indexes. The commands are the test, and they are above.
 - **The §6a figures.** They are right and are not re-derived here;
-  `ec/tools/test_xdata_cluster_names.py:339`
+  `ec/tools/test_xdata_cluster_names.py:347`
   (`test_the_census_is_the_one_6a_measured`) now pins all eleven — the seven it
   pinned when this was written, and the four per-subset direction rows #850
   added.

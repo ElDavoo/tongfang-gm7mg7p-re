@@ -11,11 +11,27 @@ about text.
 
 ```
 $ python3 ec/tools/check_pin_table_rows.py
-105 table row(s) against 105 census record(s) under …/tongfang-gm7mg7p-re: 105 placed
+106 table row(s) against 106 census record(s) under …/tongfang-gm7mg7p-re: 106 placed
   0 unparsed-row, 0 unplaced-row, 0 row-without-record, 0 duplicate-key, 0 read-differs, 0 shape-differs, 0 path-differs
   no verdict cell was read: whether a cited line still carries the claim it is
   cited for is a reading, and it is docs/findings/test-line-pin-census.md's table
 ```
+
+*(Transcribed again on the merged tree, per the `§4a-4d` rule this repository
+applies to its own figures: **#778's** write-up
+`xdata-two-largest-case-restatement.md` brings a pin with it, and its edit to
+`ec/tools/test_xdata_cluster_names.py` re-registered 33 others, so records went
+105 → 106 and the table was re-derived from the merged tree's own run to follow.
+That branch's own `*Pins*` section measured the same 105 → 106 and 73 → 74
+before this tool existed to report it — the two agree because the census is the
+census, not because one was copied from the other. The `105` in the block above
+is the record of the tree #942 measured and is left visible, per the same rule
+that keeps the older counts in [`test-line-pin-census.md`](test-line-pin-census.md)
+in its sentence rather than out of it. **The merged tree's re-registration count
+is 33 target columns and six citing lines, not three** — the three extra are
+`doc-figure-pin-audit.md`'s own, moved by the thirteen-line correction the
+`check_doc_figure_pins.py` fixture re-pick added to that file, which is the
+coupling this tool exists to catch being caught in the act one more time.)*
 
 ## The gap, in one sentence
 
@@ -194,7 +210,7 @@ reported rather than guessed, an unparsed row reported, a missing header
 reported, the two-header case refused, and the white-box `path-differs` case
 above. Fixtures are small inline trees built per call, the
 `test_census_test_line_pins.py` `tree()` pattern, so each case reads as the error
-it is about. The last class is the committed tree: 105 rows place, every class
+it is about. The last class is the committed tree: 106 rows place, every class
 is 0, and the read and shape cells are held to the census's own vocabulary and
 split.
 

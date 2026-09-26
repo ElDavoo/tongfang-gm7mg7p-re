@@ -1348,6 +1348,26 @@ Fixing it is a change to a test and is a follow-up, not a line to move inside a
 documentation change; `../../docs/findings/xdata-4-4-identity-rederivation.md`
 carries the reading in full.)*
 
+*(Second correction, 2026-09-26, issue #778. Two clauses above are now false,
+and the shape of the fix is the one this paragraph predicted. **The suite is no
+longer red on `main`**: #753 landed the `--no-eq-guard` recipe and
+`python3 ec/tools/test_xdata_cluster_names.py` reports `Ran 30 tests … OK`, so
+the `GUARD` clause and the id/name-pair clause are both history — the case that
+made those pairs is now
+`test_every_name_the_key_cannot_find_is_carried_by_overlap`, and it derives the
+clusters it examines from `carry_names` rather than naming any, so the pairs
+above are the defect it was restated out of rather than a claim it still makes.
+**What held is the prediction.** Repairing the recipe did not turn this case
+red; it left it green and *vacuous*, because its two pairs were disjoint
+clusters at Jaccard 0.0000 between them and `assertNotEqual` on two cluster
+keys is true of any two distinct clusters. The paragraph above is therefore
+confirmed rather than overturned, and the one clause of §4.4 it had marked
+unrunnable — that `main-ec-002` is the one of the two carried on overlap — is
+now what the suite actually asserts, over the one cluster the committed census
+gives it. `../../docs/findings/xdata-two-largest-case-restatement.md` carries
+the measurement. The suite is still not wired into
+`.github/scripts/agent-gates.sh`, so none of this is enforced in CI.)*
+
 *(Correction, 2026-09-25, issue #279. This paragraph used to read that only the
 rank moved — "`main-ec-003` → `main-ec-002`", the 44-address cluster ahead of
 it shrinking to 28 once the `==` guard is gone — which was true of the census

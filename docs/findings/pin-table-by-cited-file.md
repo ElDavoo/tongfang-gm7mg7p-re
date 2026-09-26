@@ -12,8 +12,8 @@ about text.
 verdict.** Issue #887's [`census_test_line_pins.py`](../../ec/tools/census_test_line_pins.py)
 publishes four axes on the class of `test_*.py:NNN` citations the committed
 markdown carries, and every one of them is a property of **where a pin is
-written** — 105 occurrences, 78 distinct spellings, 57 distinct resolved targets,
-27 citing files. The axis that decides how much damage an edit does is **which
+written** — 106 occurrences, 79 distinct spellings, 58 distinct resolved targets,
+28 citing files. The axis that decides how much damage an edit does is **which
 test file the pin names**, and nothing on that page breaks the class down on it.
 The tool is
 [`check_pin_table_by_cited_file.py`](../../ec/tools/check_pin_table_by_cited_file.py)
@@ -24,19 +24,23 @@ and the suite is
 records, exactly like every other figure on that page.** A pin's verdict is a
 reading of whether the cited line still says what it is cited for, it lives in
 the census write-up's per-pin table, and neither tool can produce it. Nothing
-here moves 105, 78, 57, the shape split or the verdict tally;
+here moves 106, 79, 58, the shape split or the verdict tally;
 `test_census_test_line_pins.py` is green against this merge, which is the test
-that says so rather than a promise in this paragraph.
+that says so rather than a promise in this paragraph. *(The `105`, `78`, `57` and
+`27` this paragraph was written with are the census's figures on the tree this
+issue measured on; #778's write-up added one pin and repointed 33 others, which
+is the whole of the `106`/`79`/`58`/`28`, and the correction paragraph under the
+block below says so at the length it deserves.)*
 
 ## The measurement
 
 ```console
 $ python3 ec/tools/check_pin_table_by_cited_file.py
 which test file the census's pins name, and the indexed suites none of them does
-  105 pin(s) over 37 indexed test file(s): 11 named by a pin, 26 named by none
+  106 pin(s) over 38 indexed test file(s): 11 named by a pin, 27 named by none
 
   cited test file                                   resolves out-of-range     declined  occurrences
-  ec/tools/test_xdata_cluster_names.py                    33            0           10           43
+  ec/tools/test_xdata_cluster_names.py                    34            0           10           44
   ec/tools/test_grade_0751_isolation.py                   21            0           15           36
   windows/tools/test_manual_fan_ctrl_probe.py              5            0            3            8
   ec/tools/test_disasm8051.py                              4            0            1            5
@@ -47,11 +51,11 @@ which test file the census's pins name, and the indexed suites none of them does
   ec/tools/test_check_testdata_index.py                    1            0            0            1
   ec/tools/test_citation_gap_scan.py                       1            0            0            1
   tools/test_readme_suite_table.py                         1            0            0            1
-  43 of 105 occurrence(s) name one suite, and 79 of 105 name the two above -- the cost of an edit to that file, not an accusation
+  44 of 106 occurrence(s) name one suite, and 80 of 106 name the two above -- the cost of an edit to that file, not an accusation
 
   0 unresolved-path, 0 ambiguous-path (records this file could place nowhere; counted, named, and never guessed)
 
-  indexed but named by no pin (26 of 37):
+  indexed but named by no pin (27 of 38):
     ec/tools/test_bank1_e582_framing.py
     ec/tools/test_census_test_line_pins.py
     ec/tools/test_check_capture_claims.py
@@ -73,21 +77,50 @@ which test file the census's pins name, and the indexed suites none of them does
     ec/tools/test_xdata_carry_notice.py
     linux/lightbar/test_probe_6005.py
     tools/test_agent_gates_patches.py
+    tools/test_doc_patch_refs.py
     windows/tools/test_charge_target_test.py
     windows/tools/test_ctgp_dben_probe.py
     windows/tools/test_ec_validate.py
     windows/tools/test_ecrw.py
     windows/tools/test_gpu_block_watch.py
-  read 150 markdown file(s) and 37 test file(s) under the tree, on census_test_line_pins.py's population: .git/vendor/ and docs/findings/test-line-pin-census.md excluded there
+  read 152 markdown file(s) and 38 test file(s) under the tree, on census_test_line_pins.py's population: .git/vendor/ and docs/findings/test-line-pin-census.md excluded there
   no verdict is rendered here and none fails: whether a cited line still bears the claim it is cited for is a reading, and it is docs/findings/test-line-pin-census.md's table
   every negative above is 'not read by this method', never 'absent'
 $ echo $?
 0
 ```
 
+*(Re-transcribed on the merged tree, per the same `§4a-4d` rule the rest of this
+file follows: the `105`/`37`/`26` block above is what this issue measured on its
+own tree, and **two** later merges moved it — #944's
+`tools/test_doc_patch_refs.py` and its markdown write-up beside it, and #778's
+write-up with its edit to `ec/tools/test_xdata_cluster_names.py`. Every
+figure that moved, and why:
+
+| figure | this issue's tree | merged tree | what moved it |
+|---|---:|---:|---|
+| pins | 105 | **106** | #778's write-up brings one pin, naming the `--no-eq-guard` recipe |
+| indexed test files | 37 | **38** | #944's suite; the 33 repointed pins and the one new one all name files already in the index, so the count is by construction and moved by no figure in the table |
+| named by a pin | 11 | **11** | #778's one new pin names `test_xdata_cluster_names.py`, already named |
+| indexed and unpinned | 26 | **27** | the same suite, into the tail |
+| `test_xdata_cluster_names.py` resolves | 33 | **34** | #778's one new pin, by path |
+| `test_xdata_cluster_names.py` occurrences | 43 | **44** | the same pin |
+| one suite / the two | 43 / 79 of 105 | **44 / 80 of 106** | the same pin, in the first row |
+| markdown files read | 150 | **152** | #944's two markdown files, one of them this tool's own sibling write-up |
+| resolves / declined, summed | 73 / 32 | **74 / 32** | the census's own, and `test_census_test_line_pins.py` is green at 74/32 |
+| the other nine rows | — | **unchanged** | #778's 33 repointed occurrences all resolve to `test_xdata_cluster_names.py` and to nothing else |
+
+**The 33 repointed pins are invisible in this table by construction, and that is
+the point of the axis rather than a gap in it.** A repoint moves the *line* a
+spelling names, not the file, so the `resolves` column cannot see it and no row
+here reweighted — the same distinction
+[`test-line-pin-repoint-563.md`](test-line-pin-repoint-563.md) is about, arriving
+from the other end. Only the one genuinely new pin moved a cell, and it moved the
+first row by one in each of its two columns.)*
+
 Both halves of the issue's ask are in that one command, and both reconcile: the
-`resolves` column sums to the census's own **73**, the `declined` column to its
-**32**, and the two together to the **105** occurrences it reports. A breakdown
+`resolves` column sums to the census's own **74**, the `declined` column to its
+**32**, and the two together to the **106** occurrences it reports. A breakdown
 whose columns do not add up to the census it is a breakdown of would be a second
 opinion, and a second opinion is a second set of numbers; the suite asserts both
 reconciliations on a fixture that exercises every column and both of the named
@@ -106,7 +139,7 @@ one that stopped being measured.
 
 | cited test file | resolves | declined | occurrences |
 |---|---:|---:|---:|
-| `ec/tools/test_xdata_cluster_names.py` | 33 | 10 | 43 |
+| `ec/tools/test_xdata_cluster_names.py` | 34 | 10 | 44 |
 | `ec/tools/test_grade_0751_isolation.py` | 21 | 15 | 36 |
 | `windows/tools/test_manual_fan_ctrl_probe.py` | 5 | 3 | 8 |
 | `ec/tools/test_disasm8051.py` | 4 | 1 | 5 |
@@ -118,7 +151,7 @@ one that stopped being measured.
 | `ec/tools/test_citation_gap_scan.py` | 1 | 0 | 1 |
 | `tools/test_readme_suite_table.py` | 1 | 0 | 1 |
 
-**Thirty-three sentences in the corpus name a line in
+**Thirty-four sentences in the corpus name a line in
 `ec/tools/test_xdata_cluster_names.py` and twenty-one name a line in
 `ec/tools/test_grade_0751_isolation.py`, and that is the number an edit has to be
 paid against.** Those two figures are the "done looks like" of the issue, and
@@ -128,7 +161,12 @@ and made two born-correct pins stale, and #885 wrote two more against a line tha
 was right on its own tree.
 [`test-line-pin-repoint-563.md`](test-line-pin-repoint-563.md) is the sixth of
 that series being paid: #930's two-row repoint took the first file's target count
-back down by one, and the two rows it edited are two of the 33 above.
+back down by one, and the two rows it edited are two of the 34 above. *(The
+`33` and `43` this file was written with are the record of the tree this issue
+measured on and are left beside the correction under the block above rather than
+edited out of silence, per [`../findings.md`](../findings.md) §4a-4d; the `34`
+and `44` are #778's one new pin, and its 33 repointed occurrences are invisible
+in this column by construction.)*
 
 **A heavily-cited suite is not thereby wrong, and this table is not an
 accusation.** It is a count of sentences that would need re-measuring if a line
@@ -138,11 +176,11 @@ file the census write-up records **finding 6's four pins across two citing
 files** in,
 [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md) and
 [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md) — the four bullets at
-[`test-line-pin-census.md:805-818`](test-line-pin-census.md), and two is what
+[`test-line-pin-census.md:888-903`](test-line-pin-census.md), and two is what
 the census itself counts, because that write-up's own per-pin table copies those
 four spellings rather than citing them independently and so is not a third. Its
 roll-up further down puts **findings 6 and 8's six pins in four files**
-([`test-line-pin-census.md:891`](test-line-pin-census.md)), the other two being
+([`test-line-pin-census.md:973`](test-line-pin-census.md)), the other two being
 finding 8's, and the six `> 300` pins of findings 6 and 8 are #920's and stay
 `does not carry`
 — while the pair #930 repointed onto that floor's own line carries again. The
@@ -154,8 +192,8 @@ which of these numbers is a defect.
 
 ## The other direction: which indexed suites no pin names
 
-Thirty-seven `test_*.py` files are in the tree and **eleven** of them are named by
-a pin the census resolves to a file. The other **26** are indexed and unpinned,
+Thirty-eight `test_*.py` files are in the tree and **eleven** of them are named by
+a pin the census resolves to a file. The other **27** are indexed and unpinned,
 and the tail is printed in full on every run for the reason the counts are: a
 list a reader has to ask the tool for is a list nobody checks. It includes
 `ec/tools/test_census_test_line_pins.py` and this suite, the six other
@@ -164,24 +202,24 @@ list a reader has to ask the tool for is a list nobody checks. It includes
 `linux/lightbar/test_probe_6005.py`.
 
 **This half matters for the target count, and the connection is a sentence the
-census write-up has been making from the other end.** Its argument for 57 distinct
+census write-up has been making from the other end.** Its argument for 58 distinct
 resolved targets turns on whether a target was **already named** — #890's repoint
 "split" one target into two, and #885's pair "arrived the other way … so they
 added a target rather than splitting one". Which case a new pin falls into
-depends on the population being eleven files out of thirty-seven, and until now
+depends on the population being eleven files out of thirty-eight, and until now
 that population was not written down anywhere. It is now the second table.
 
 **A suite in the tail is not a gap.** It says *no pin in this population names
 it*, which is a statement about the population and not about the suite: a suite
 whose whole job is to check a generated CSV has no reason to be cited by a line
-number, and several of the 26 are load-bearing
+number, and several of the 27 are load-bearing
 ([`tools/test_readme_suite_table.py`](../../tools/test_readme_suite_table.py) is
 not, which is the other kind). The tail is the answer to "where would a new pin
 add a target rather than split one", and it is a list that moves every time a
 suite lands — which is why no case freezes it by name and only its length is
 held.
 
-**This suite is one of the 26, and that is not an oversight.** Nothing in the
+**This suite is one of the 27, and that is not an oversight.** Nothing in the
 committed markdown cites a line of it, because it was written beside the tool
 rather than by a later prose pass, so it is in the tail exactly as
 `ec/tools/test_census_test_line_pins.py` and the six other `test_check_*`
@@ -189,7 +227,10 @@ suites are. A
 case holds the self-reference with the reason in the comment, so the two can never
 be mistaken for a miss; when a later write-up cites one of these suites' lines,
 that case goes red and the suite moves between the two tables, which is the axis
-working rather than breaking.
+working rather than breaking. *(The `37`, `26` and `57` this section was written
+with are the record of the tree this issue measured on; the extra suite is #944's
+`tools/test_doc_patch_refs.py` and the extra target is #778's, and
+`tools/test_doc_patch_refs.py` is in the tail above beside the other twenty-six.)*
 
 ## The one number that did not reproduce, and why
 
@@ -230,6 +271,13 @@ reconcile.
 
 ## What this merge moved, and what it did not
 
+*(This section is #941's own record of the merge that landed **this** file, and
+the figures in it are the ones that were true then. **Two merges have landed
+beside it since** — #944 and #778's — and their figures are the table under the
+transcript above and the paragraphs below, which are a run of the merged tree.
+Both records are kept rather than one edited into the other, per
+[`../findings.md`](../findings.md) §4a-4d.)*
+
 | figure | before | after | why |
 |---|---:|---:|---|
 | occurrences | 105 | **105** | this file carries no pin, so it added none |
@@ -257,42 +305,57 @@ a run of the tree it will merge onto, and re-typing the transcript above is what
 that costs.)*
 
 **The two runner rows above moved, and the runner they came from is red — it was
-red before this file landed.** `bash tools/run-tests.sh` reads
-`37 suite(s) run, 1139 tests; one or more FAILED` on this tree, and the one
-failure is `ec/tools/test_check_cluster_citations.py`'s
+red before this file landed.** `bash tools/run-tests.sh` read
+`37 suite(s) run, 1139 tests; one or more FAILED` on that tree, and the one
+failure was `ec/tools/test_check_cluster_citations.py`'s
 `test_committed_prose_matches_committed_census`, on
 [`xdata-cluster-names-guard-off-recipe.md:220`](xdata-cluster-names-guard-off-recipe.md)
 — `0x0464` and `0x0465` against `main-ec-145`, which is #822's file and the red
 set [`runner-red-suite-set.md`](runner-red-suite-set.md) has carried since #816.
-**It is red on a clean `origin/main` at the same case, the same line and the same
-message — the totals differ, this file and this suite being two of them — so this
-change neither causes nor fixes it; it is named here rather than fixed here,**
-which is the convention [`../findings.md`](../findings.md) §66's merge note
-follows, cited by section rather than by line here: this merge's own 26-line
-insertion into that file moves every line number below it, and a write-up whose
-subject is stale line citations is the last place to leave one. The second row
+**On the merged tree the runner reads `38 suite(s) run, 1161 tests; one or more
+FAILED`, and there are now two red suites rather than one.** The
+`test_check_cluster_citations.py` failure is unchanged — same case, same line,
+same message, and it reproduces identically on a clean `origin/main`, so neither
+this file nor #778's merge causes or fixes it; it is named here rather than fixed
+here, which is the convention [`../findings.md`](../findings.md) §66's merge note
+follows, cited by section rather than by line here: a write-up whose subject is
+stale line citations is the last place to leave one. The second red suite is
+**this one**, `ec/tools/test_check_pin_table_by_cited_file.py`, and it is this
+merge's to own: **two of its three failures are #778's** — the first row of the
+committed breakdown and the concentration pair, both moved by the one new pin, and
+both re-measured beside the transcript above. **The third is not this merge's and
+is left red deliberately**: `test_the_committed_index_figures_are_the_ones_the_write_up_publishes`
+holds 37 indexed suites, and #944's `tools/test_doc_patch_refs.py` took that to
+38 on `main` before this merge was opened — the tool's own header line has read
+`38 indexed test file(s)` since, so the pin is the last thing in the tree still
+saying `37`. It is verified red on a clean worktree at `24460001`, and it is
+named in the case's own comment rather than quietly re-measured here, because
+re-measuring another issue's figure from a merge that did not move it is the same
+error the `§4a-4d` rule exists to stop. The second row
 reconciles by arithmetic rather than by re-reading the runner: `1035 + 41` was
 #887's `1076`, #945's `test_check_pin_table_rows.py` took it to `1112` with its
-own 36 cases, and `1112 + 27` is this suite's own 27.
+own 36 cases, `1112 + 27` is this suite's own 27, and `1139 + 22` is #944's
+`tools/test_doc_patch_refs.py` — which is the whole of the move to `1161`,
+because #778's edits changed no suite's case count.
 
 **The 149 and the 36 are also printed by `census_test_line_pins.py` itself**, and
-its output line for each moves with this merge — the run now reads `150 markdown
-file(s)` and `37 test file(s)`. That transcript is quoted verbatim in
+its output line for each moves with this merge — the run then read `150 markdown
+file(s)` and `37 test file(s)`, and on the merged tree it reads **`152`** and
+**`38`**. That transcript is quoted verbatim in
 [`test-line-pin-census.md`](test-line-pin-census.md) and in a dozen
-merged-tree notes in [`../../tools/README.md`](../../tools/README.md), and
-**none of them is edited here**: that file is a merge magnet with open PRs
-against it, and re-typing eleven quoted transcripts to move a denominator would
-be a far larger diff than the measurement it records. The two figures are named
-here instead, and the run is the re-derivation. A reader who wants the old pair
-reads this table; a reader who wants the current one runs the tool.
+merged-tree notes in [`../../tools/README.md`](../../tools/README.md); the
+`test-line-pin-census.md` copy is re-transcribed above and the notes beside it
+record `152`/`38` at this merge, and the rest are left as the history they are,
+the same trade this issue made. A reader who wants the old pair
+reads this section; a reader who wants the current one runs the tool.
 
 **A write-up that is pin-free is the normal state, not a trick.** No path in this
 file is followed by a line number, because the census's reader would count each
 of those as an occurrence of the class this page is a fifth axis on. The guard is
 already committed: `test_census_test_line_pins.py`'s
-`test_the_committed_counts_are_the_ones_the_write_up_publishes` holds 105, 27, 78,
-57 and the shape split, so a stray pin turns **that** case red and the prose is
-what gets fixed. 123 of the 150 markdown files the census reads carry none.
+`test_the_committed_counts_are_the_ones_the_write_up_publishes` holds 106, 28, 79,
+58 and the shape split, so a stray pin turns **that** case red and the prose is
+what gets fixed. 124 of the 152 markdown files the census reads carry none.
 
 ## The name, which is a standing rather than a measurement
 

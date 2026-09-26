@@ -17,7 +17,7 @@ tree at 1,326 register rows and 439 cluster rows.
 
 ## 1. The tripwire, and the response
 
-`ec/tools/test_xdata_cluster_names.py:339`
+`ec/tools/test_xdata_cluster_names.py:347`
 `TheGuardOffRegeneration.test_the_census_is_the_one_6a_measured` compares the
 guard-off census against **§6a's published figures** rather than against a fresh
 run of the same recipe, which would agree with itself by construction. Its own
@@ -128,16 +128,16 @@ part of the table below:
 | `1218` | main-EC distinct addresses | `:903` | held | `ORACLE["main_distinct"]`, `ec/tools/xdata_register_map.py:744`, asserted `:3864-3869`; and, for the de-duplicated run this row is about, `OWNERSHIP["main_distinct"]`, `ec/tools/xdata_register_map.py:1414`, read by the "and its main-EC half is" check at `:4315-4319` |
 | `9320` | main-EC references | `:903` | held | `OWNERSHIP["main_refs"]`, `ec/tools/xdata_register_map.py:1414`, asserted `:4315-4319` |
 | `157` / `858` | pd distinct addresses / references | `:904` | held | `ORACLE["extmem_pd_distinct"]` / `["extmem_pd_refs"]`, `ec/tools/xdata_register_map.py:738`, asserted `:3555-3572` — **but for the *default* census, not this run's; see the paragraph above** |
-| `390` / `50` | main-EC / pd cluster counts | `:903-904` | held | `ec/tools/test_xdata_cluster_names.py:734`, `TheExportOwnershipClusters.test_the_440_splits_the_way_6b_prints_it` — **#850**; the `440` above is their sum and is held to it there |
+| `390` / `50` | main-EC / pd cluster counts | `:903-904` | held | `ec/tools/test_xdata_cluster_names.py:799`, `TheExportOwnershipClusters.test_the_440_splits_the_way_6b_prints_it` — **#850**; the `440` above is their sum and is held to it there |
 
 #### §6a's table, `ec/annotations/xdata-06c2-06db-timers.md:779-790`
 
 | figure | what it is | line | verdict | pin |
 |---|---|---|---|---|
-| `3,948` / `3,206` | main-EC `write` references, guard removed / as committed | `:781` | held | `ec/tools/test_xdata_cluster_names.py:473`, `test_the_census_is_the_one_6a_measured` — **#850** |
-| `7,189` / `7,935` | main-EC `read` references | `:782` | held | `ec/tools/test_xdata_cluster_names.py:490`, same case — **#850** |
-| `193` / `142` | PD-image `write` references | `:783` | held | `ec/tools/test_xdata_cluster_names.py:507`, same case — **#850** |
-| `279` / `239` | references in `write` for the 49 addresses in both images | `:784` | held | `ec/tools/test_xdata_cluster_names.py:524`, same case — **#850** |
+| `3,948` / `3,206` | main-EC `write` references, guard removed / as committed | `:781` | held | `ec/tools/test_xdata_cluster_names.py:481`, `test_the_census_is_the_one_6a_measured` — **#850** |
+| `7,189` / `7,935` | main-EC `read` references | `:782` | held | `ec/tools/test_xdata_cluster_names.py:498`, same case — **#850** |
+| `193` / `142` | PD-image `write` references | `:783` | held | `ec/tools/test_xdata_cluster_names.py:515`, same case — **#850** |
+| `279` / `239` | references in `write` for the 49 addresses in both images | `:784` | held | `ec/tools/test_xdata_cluster_names.py:532`, same case — **#850** |
 | 43 addresses, `4,966` refs | `main-ec-003` (this block), **identical either way** | `:790` | held | the `size` and `refs` cells of `main-ec-003`, `ec/annotations/xdata-clusters.csv:4`, compared cell-for-cell by `check()` at `ec/tools/xdata_register_map.py:3289` (`:3304`) |
 
 **The four §6a rows were `unheld` on this page until #850, and the reason is the
@@ -153,7 +153,7 @@ asserted each with the denominator §6a prints beside it.
 is kept here verbatim rather than deleted, per §4a-4d — it is what the table
 above read `unheld` beside until #850, and its claim that the denominator checks
 "cover §2a's seven, not these" is the claim #850 falsified: they are at
-`ec/tools/test_xdata_cluster_names.py:339` and cover eleven now. Its `:307` is
+`ec/tools/test_xdata_cluster_names.py:347` and cover eleven now. Its `:307` is
 the pre-#850 file's, which is what that tree said, and the eight it counts are
 the four §6a direction rows' eight figures and nothing else:)*
 
@@ -331,7 +331,7 @@ sentences they annotated are gone, and leaving them beside a paragraph that
 already carries current ones would be a second stale citation in the one place
 this tree forbids them.)*
 
-**The `> 300` floor** — `ec/tools/test_xdata_cluster_names.py:588`,
+**The `> 300` floor** — `ec/tools/test_xdata_cluster_names.py:596`,
 `assertGreater(len(moved), 300)`, measured at **315** today: **15 of headroom**.
 It is left there deliberately, and the argument is
 [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md):170-175:

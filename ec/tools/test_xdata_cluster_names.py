@@ -327,6 +327,14 @@ class TheGuardOffRegeneration(unittest.TestCase):
     measurement rather than from its headroom. §6a is the exception: it is a
     measurement rather than a description, so it is held by
     `test_the_census_is_the_one_6a_measured` instead of by a paragraph.
+
+    Which of the three is the set this class runs on is the last, and it is
+    worth saying plainly: 439 → 445 is what the tree this suite is committed in
+    gives, and a reader who took either older pair for the current reading
+    would go looking for a total the class does not compute. The assertions are
+    threshold-based for the same reason -- `> 300` moved ranks, and §6a's
+    figures held to §6a rather than to a rank count here -- so a re-derivation
+    moves all three of these without turning the class red.
     """
 
     @classmethod
@@ -652,21 +660,78 @@ class TheGuardOffRegeneration(unittest.TestCase):
             f"committed names {sorted(old_by_name)}, guard-off names "
             f"{sorted(self.off_named)}")
 
-    def test_the_two_largest_cited_clusters_are_carried_by_overlap_not_by_key(self):
-        # The case that rules a key-only design out. `main-ec-001` and
-        # `main-ec-002` are the two largest clusters the prose cites, and both
-        # change membership under this regeneration, so neither is found by its
-        # key -- a content hash alone would hand the two largest cited clusters
-        # a brand-new identity here.
-        for cid, name in (("main-ec-001", "mode-oem-init"),
-                          ("main-ec-002", "level-block-086x")):
-            old = self.committed[cid]
-            new = self.off_named[name]
-            self.assertNotEqual(
-                new["cluster_key"], old["cluster_key"],
-                f"{name} kept its key, so this case is not testing the carry")
-            self.assertNotEqual(new["addrs"], old["addrs"])
-            self.assertEqual(new["cluster_name"], name)
+    def test_every_name_the_key_cannot_find_is_carried_by_overlap(self):
+        # The case that rules a key-only design out, over every name the key
+        # fails to find rather than over two of them picked in advance. The
+        # exhibits are the tool's own carry report, so `how == "overlap"` is by
+        # construction "a named committed row whose key did not match this one
+        # and whose membership did" -- which is the whole claim. A content hash
+        # alone hands each of these a brand-new identity, and only the overlap
+        # score brings the name along.
+        #
+        # Derived rather than typed, because a typed pair goes stale silently
+        # and this one did. #279's pair-accessor pass (`6bf9c234`) moved
+        # `mode-oem-init` to `main-ec-002` and `level-block-086x` to
+        # `main-ec-004`, and the case went on comparing `main-ec-001` against
+        # `main-ec-002` and passing -- over two *disjoint* clusters, Jaccard
+        # 0.0000 between them. `assertNotEqual` on two cluster keys is true of
+        # any two distinct clusters, so it could not fail for the reason the
+        # name claimed: it compared the largest cluster in the census, which
+        # carries no name at all, against an unrelated one. Nothing here reads
+        # an id or a name, so the next re-key moves the exhibits rather than
+        # breaking them. The measured set -- one name, `mode-oem-init` at
+        # Jaccard 0.9681, out of the 445 clusters the run above generated -- is
+        # prose in `docs/findings/xdata-two-largest-case-restatement.md` and
+        # stays prose: `assertEqual(len(carried), 1)` would go red on any
+        # re-derivation for a reason that says nothing about the design being
+        # argued here, the hazard `assertTrue(movers, ...)` already avoids one
+        # case up.
+        #
+        # `carry_names` reads the committed census as `old_rows` and returns one
+        # record per row of `new_rows`, so this reads the tool's own decision
+        # rather than a second implementation of it, and it does not write back
+        # -- `self.off` is untouched for the cases after this one.
+        _names, report = xrm.carry_names(
+            list(self.committed.values()), {}, list(self.off.values()))
+        carried = [r for r in report if r["how"] == "overlap"]
+        committed_named = {r["cluster_name"] for r in self.committed.values()
+                           if r["cluster_name"]}
+        self.assertTrue(
+            carried,
+            "no committed name reached the guard-off census on membership "
+            "overlap, so nothing here shows a cluster_key is not a sufficient "
+            f"identity: {len(committed_named)} committed names "
+            f"{sorted(committed_named)}, {len(self.off_named)} in the "
+            "guard-off census, and none of them cleared "
+            f"{xrm.CARRY_MIN_JACCARD} against a cluster whose key had changed")
+        by_key = {r["cluster_key"]: r for r in self.committed.values()}
+        for record in carried:
+            with self.subTest(cluster=record["cluster_id"]):
+                # The rule, stated once: a key alone would not have found it.
+                # `exact` records carry `from_key == cluster_key` by
+                # construction, so a set that admitted one fails here.
+                self.assertNotEqual(
+                    record["from_key"], record["cluster_key"],
+                    f"{record['name']} was found by its key, so it is not one "
+                    "of the clusters a content hash alone would have lost")
+                self.assertGreaterEqual(
+                    record["jaccard"], xrm.CARRY_MIN_JACCARD,
+                    f"{record['name']} is recorded as an overlap at "
+                    f"{record['jaccard']}, below the {xrm.CARRY_MIN_JACCARD} "
+                    "the tool applies")
+                # And the two things that make the record a fact about *this*
+                # census rather than a plausible-looking dict: the guard-off row
+                # carries the name, and the key it was carried from resolves to
+                # a committed row carrying the same one.
+                self.assertEqual(
+                    self.off[record["cluster_id"]]["cluster_name"],
+                    record["name"],
+                    f"{record['cluster_id']} does not carry the name the carry "
+                    "report carried into it")
+                self.assertEqual(
+                    by_key[record["from_key"]]["cluster_name"], record["name"],
+                    f"{record['name']} was carried from committed key "
+                    f"{record['from_key']}, whose row carries another name")
 
     def test_no_name_is_lost_across_the_regeneration(self):
         # A name the committed census carries is either carried into this one

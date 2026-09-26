@@ -619,7 +619,7 @@ declines to draw in both directions:
   it stands unamended; this file records which trees could not be paired and
   why, not a reason to move the limit.
 - **No threshold edit.** `assertGreater(len(moved), 300)` at
-  `ec/tools/test_xdata_cluster_names.py:392` stays, and the 15 ranks of headroom
+  `ec/tools/test_xdata_cluster_names.py:400` stays, and the 15 ranks of headroom
   are as they were. The 427-era tree's `moved` of 366 is not a count to bank: it
   is the 430 count, and a floor argued from it would be argued from a
   measurement of the wrong tree. The count that is the floor's remains **315**.
