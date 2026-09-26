@@ -105,7 +105,9 @@ both`: the flip table is not what this check is about.
 `index_b` both have two entries and `or` picks either without consequence —
 and no existing check reads the `second` figure at all, so nothing about that
 pair can go red by itself. Measured: moving the B fixture's guard-off `pd` row
-to a different address leaves all 15 checks green.
+to a different address leaves all 15 checks green. Re-measured on the merged
+tree, where the self-test is 25 checks (see §4's merged-tree note), the same
+mutation is still green against all 25.
 
 The issue's own alternative — give the B generation's `pd` row a different
 address — is real, but it is more than a one-cell edit, and the write-up above
@@ -139,6 +141,23 @@ $ python3 ec/tools/xdata_moved_ranks.py --self-test
 
 15 checks, where there were 14, and the other 14 print verbatim. The fixture
 report itself, over the same pair, with the old `second` line and the new one:
+
+> **Merged-tree note (2026-09-26, issue #884).** The counts above — 14 before,
+> 15 after — are what this write-up's own change made of the self-test, and they
+> are left as the record of the run that produced them, for the reason the
+> `xdata-moved-ranks-fall.md is not edited` bullet below gives. On the merged
+> tree the tool prints **25** checks: #884's `cause` mode
+> ([`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md)) added ten
+> of its own to the same fixture block, and they print after check 15 — so the
+> console block above, which used to be the run's tail, is not any more. The
+> tail now is those 10 `cause` lines and `all checks passed`. **The check this
+> section is about is unchanged and still passes**, printed verbatim as it reads
+> above: it is the 13th `ok` of the 25, and the 14 lines this change left alone
+> print in the same order as they did — 12 of them ahead of it and 2 after. The
+> block above is the last two of the first group, this check, and those last
+> two. §63's summary in [`../findings.md`](../findings.md)
+> carries the same note. Nothing else here moves because of #884, which adds a
+> mode and does not touch `swept_report()`.
 
 ```console
 === the old `second` line, over the new fixture ===

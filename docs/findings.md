@@ -8024,6 +8024,31 @@ rather than a new suite row) and five one-line pointers. No CSV, YAML, threshold
 or gate was edited, no image was opened, no register was read back, and nothing
 is opened in another repository.
 
+**§62's open question has since been answered, and both mechanisms it named are
+refuted** (issue #884). The write-up is
+[`xdata-flip-cause-derivation.md`](findings/xdata-flip-cause-derivation.md). A
+new `cause` mode on the same tool follows each moved rank's substitution into the
+other generation's guard-off census, per cell, **beside the two cells that did
+not flip** — which is what makes the counts decidable. **Rank displacement**
+accounts for at most **10 of the 71** substitutions landing within two ranks —
+**10 of the 60** that reappear, against **79 in 408** for the census as a whole
+— so the flipped cell reappears and reorders at the population's rate. **The 155
+added addresses** reach **0 of the 71's 273 substitution addresses** and **0 of
+the 266 control's 450**, and **one key of the 23** (`ka01f369d385f`, whose
+substitute is `0x036E 0x036F`) —
+so across all 94 flipped keys the added set reaches exactly one. A third thing
+is located and *not* claimed as a cause: at the same ranks the 71's
+substitutions sat on the `0x03xx`–`0x05xx` page at **37.4% against 19.1%**, but
+that gap is five size-9+ rows plus a row-size distribution the two cells do not
+share, and it is written up with both against it. Two side results: the `pd`
+side of both pairs is **byte-identical**, which is why none of the 94 is a `pd`
+cluster; and **151 of the 155** added addresses are on the working page, not all
+of them as `xdata-cluster-names.csv`'s note says — recorded beside the note
+rather than edited into it. No threshold, CSV, YAML or gate moves, and
+`xdata_moved_ranks.py`'s `pair` and `across` output is unchanged. The
+`across --swept` summary's own second-holder count is derived differently by §63
+below, which leaves its printed figure on the committed pair the same.
+
 ## 63. `--swept`'s second-holder count was taken over one generation, and the rows above it over both (2026-09-26, issue #886)
 
 The write-up is
@@ -8071,6 +8096,21 @@ pair's B generation, is real but is a structural change rather than a one-cell
 edit: `b_committed` is written from the same `committed_rows` list generation A
 is, so the row has to be un-shared before it can move. Both routes were
 measured; the dedicated one is taken.
+
+> **Correction (2026-09-26, issue #884 merged below), leaving the paragraph above
+> as it was written.** The count there — "15 checks where it was 14" — is what
+> this section's own change made of the self-test, and it is still what it made
+> of it: the count moved by one here, on `main`, on the tree #884 forked from.
+> On the merged tree `python3 ec/tools/xdata_moved_ranks.py --self-test` prints
+> **25 checks**, because #884's `cause` mode added ten of its own to the same
+> fixture block and they all print `ok`. The 14 this section left verbatim are
+> the 14 that still print verbatim, in the same order, above them. A count like
+> this is a property of the merge in the same way a section number is — see the
+> numbering note at §59 — so it is recorded here rather than left for the next
+> reader to reconcile against a run. Nothing else in this section moves: the
+> fixture, the `FAIL` on the old line, the dedicated-pair argument and the
+> measured `48 rows` / `5 second holder` figure are all unchanged by #884, which
+> adds a mode and does not touch `swept_report()`.
 
 **The committed figure does not move, and that is measured rather than assumed.**
 §7's recipe re-derived from `e169a0e4` — the worktree, two guard-off census
