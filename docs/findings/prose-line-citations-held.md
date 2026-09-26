@@ -158,7 +158,10 @@ checks:
   that note at all — a folded scalar holds no blank lines, so the entry is ONE
   paragraph opening `name: XDATA_0860` and the marker is mid-paragraph. The
   convention is still what §4a-4d protects, and scoping the file in was
-  measured and goes red at once on the block's own quoted predecessor; see
+  measured and goes red at once — on the live `:662` at `registers.yaml:3008`,
+  which the 2026-09-25 addendum in that same paragraph already records as
+  superseded, not on quoted material, which there names the CSV with no row
+  number and so holds no pointer to fail on; see
   [`xdata-0860-note-live-pointers.md`](xdata-0860-note-live-pointers.md). The
   six source-file pointers #801 named and did not correct are now repointed in
   place and are likewise held by nothing.

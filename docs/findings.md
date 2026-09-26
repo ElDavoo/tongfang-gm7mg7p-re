@@ -7831,11 +7831,11 @@ corrections would check nothing there. Stated as a decision, not a gap.
 > at all, and because `POINTER` matches a `.csv:NNN` and nothing else, so a
 > `.py` pointer is outside the one pointer rule whatever the vocabulary says.
 > `supersession()` never fires on that note: a folded scalar holds no blank
-> lines, so the whole `XDATA_0860` entry is one paragraph opening
-> `name: XDATA_0860` and the `*** CORRECTION` marker is mid-paragraph.
-> #870 repointed the six source-file pointers this section's follow-up named,
-> and kept the paragraph-wide skip after measuring that scoping the file in
-> reddens at once on the block's own quoted predecessor.
+> lines, so the entry is one paragraph and the marker is mid-paragraph. #870
+> repointed the six source-file pointers this section's follow-up named, and
+> kept the paragraph-wide skip after measuring that scoping the file in
+> reddens at once — on the live `:662` at `registers.yaml:3008`, which its own
+> 2026-09-25 addendum already records as superseded, not on quoted material.
 
 A paragraph announcing itself a correction is **skipped**, for the reason
 `check_capture_claims.py` skips a denial: a quoted supersession is a denial of

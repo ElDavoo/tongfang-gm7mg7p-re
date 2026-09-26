@@ -88,10 +88,16 @@ quietly.
     `*** CORRECTION` marker sits mid-paragraph rather than at the opening.
     Scoping the file in was measured rather than assumed, and it goes red at
     once: it reports `xdata-registers.csv:662` at `registers.yaml:3008`, the
-    `0x077E` row, which is the quoted predecessor 4a-4d requires to stay
-    visible -- this rule's own stated reason for the skip, arriving on a file
-    it had only been argued about. So the paragraph-wide skip stays and the
-    file stays out of `ROW_SCOPE`, and what is left unheld is fixed by hand:
+    `0x077E` row. That is the 2026-09-24 block's own live prose -- its quoted
+    run names the CSV with no row number and holds no pointer -- and the
+    2026-09-25 addendum already records the figure as superseded in that same
+    paragraph (`:817` is the `0x0860` row), so a rule scoped to the file would
+    redden on a pointer a record already covers: this rule's own stated reason
+    for the skip, on a file it had only been argued about. The second half is
+    structural: Rule 3 scopes a `(file, csv, subject, column)` tuple, and the
+    three other CSVs this file cites would each report no declared subject.
+    So the paragraph-wide skip stays and the file stays out of `ROW_SCOPE`,
+    and what is left unheld is fixed by hand:
     the three cells #801 corrected by record, and the six source-file
     pointers #870 repointed in place -- the `store_target()` definition,
     `ASSIGN`, the `==` rejection, the reason for it, the tree-wide 838 and the

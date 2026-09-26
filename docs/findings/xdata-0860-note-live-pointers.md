@@ -78,9 +78,9 @@ eight**."
 > **Corrected 2026-09-26, issue #870.** `supersession()` **never fires on this
 > block**, and the six are **not among the eight skips**. Both are measurable,
 > and the measurement is: a YAML folded scalar contains no blank lines, so the
-> whole `XDATA_0860` entry (raw lines 2968–3103) is *one* paragraph whose
+> whole `XDATA_0860` entry (raw lines 2968–3106) is *one* paragraph whose
 > opening is `name: XDATA_0860`. The `*** CORRECTION` marker sits at 2990, the
-> `*** ADDENDUM` at 3025 and the 2026-09-26 one at 3079 — all three *inside*
+> `*** ADDENDUM` at 3025 and the 2026-09-26 one at 3082 — all three *inside*
 > that paragraph. `supersession()` tests `lines[0]`, so it returns `''` for all
 > three, verified by importing the tool and calling `supersession()` on the
 > entry's real paragraph. The three `***` markers in the tree are the reason a
@@ -128,7 +128,7 @@ call, and the number behind it is one run.
 
 Scoping the file in was measured, not assumed — `check_row_pointers` over
 `registers.yaml` with a `ROW_SCOPE` entry for `0x0860` — and it goes red
-immediately:
+immediately, with seven reports, of which the one that decides this is:
 
 ```
 ec/annotations/registers.yaml:3008: cites xdata-registers.csv:662, which is the 0x077E row,
@@ -136,22 +136,42 @@ ec/annotations/registers.yaml:3008: cites xdata-registers.csv:662, which is the 
   a citation is held to, not the number
 ```
 
-`:3008` is the 2026-09-24 block's own **quoted** predecessor — the
-`xdata-registers.csv:662` that §4a-4d requires to stay visible, and that
-`supersession()` returns `''` for, so the skip does not cover it. The run goes
-red **on the note's own quoted predecessor**.
+**`:3008` is the 2026-09-24 block's own live prose, not quoted material.** It
+reads "The committed row at ec/annotations/xdata-registers.csv:662 is 14 read, 2
+write, 0 read+write, 1 passed-to-call" — the block's own present-tense
+assertion, six lines past the quotation mark that closes the quoted run at
+`:3002`. The quoted run is the opposite case: at `:2994` it names
+`ec/annotations/xdata-registers.csv` with **no row number**, so it holds no
+pointer a check could fail on. The entry carries three `.csv:NNN` pointers in
+all, at `:3008`, `:3029` and `:3035`, and both reports for the `:662` print
+`:3008` — the addendum's second `:662`, at `:3029`, rides on the first because
+`line_of()` returns the paragraph's *first* line holding the needle.
 
-That is `check_citation_lines.py`'s own stated reason for the skip — *"a check
-that reddened on its own corrected tree would be switched off, and then nothing
-would be left"* (`check_row_pointers`, the comment on the `if why:`) — arriving
-on a file it had only been argued about. The argument now has a number behind
-it. Two smaller findings ride along, both worth a reader having: the same run
-also reports `xdata-0860-census-sites.csv:6` as a CSV with no declared subject
-(`POINTER` matches any `.csv`, and that one is a *hand-maintained*
-correspondence file, not a generated one), and both reports for the `:662` land
-on `:3008` because `line_of()` returns the paragraph's *first* line holding the
-needle, and the `*** ADDENDUM` carries a second `:662` further down the same
-paragraph.
+So the red is not §4a-4d's quoted figure, because nothing in the quotes is a
+row pointer. It is one of the **four pointers the 2026-09-25 addendum corrects
+by record and deliberately leaves standing** (the asymmetry, below): the same
+paragraph already says `:662` is the `0x077E` row and that `0x0860` is at
+`:817`. A rule scoped to the file would be red, then, on a pointer a dated
+record in the same paragraph already covers — which is
+`check_citation_lines.py`'s own stated reason for the skip (*"a check that
+reddened on its own corrected tree would be switched off, and then nothing
+would be left"*, `check_row_pointers`, the comment on the `if why:`) arriving on
+a file it had only been argued about, on the right ground rather than the one
+first claimed here.
+
+**A second reason, and the more structural one:** Rule 3 does not scope a
+*file*, it scopes a `(file, csv, subject, column)` tuple, so putting
+`registers.yaml` in `ROW_SCOPE` is an entry per CSV that file cites rather than
+one line of configuration. It cites four, and the run reports the other three —
+five pointers, each "this tool declares no subject of … in this file":
+`ec-callsites.csv:62`/`:63` and `ec-callsites-summary.csv:42`/`:43` at `:1684`,
+`:1685` and `:1793` (all outside this entry), and
+`xdata-0860-census-sites.csv:6` at `:3035`, inside it. That last one is a
+*hand-maintained* correspondence file — `ec/README.md` records it as derived
+from nothing in the image — whose columns (`region,file_offset,census_state,
+census_bucket,census_count,census_refs`) hold no address to declare a subject
+on, so `POINTER` matching any `.csv` is by itself enough to redden the file.
+Even with the `:662` recorded away, the scope entry is not one row.
 
 **Consequence, stated plainly: the six stay hand-maintained**, like the note's
 other pointers. The tool that would actually hold them is follow-up 1 in
