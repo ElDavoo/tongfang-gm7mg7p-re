@@ -70,7 +70,7 @@ same measurement is how two copies drift.
   and the generated CSVs, and it never opens the decompile.
 
 A third thing was not there and is still not: **a general prose → source-line
-checker**, for `registers.yaml:3013`'s `:359` and `:1490-1496`, the `:1399`
+checker**, for `registers.yaml:3013`'s `:359` and `:1490-1496`, the `:1557`
 the addendum writes, and the same `:770`/`:2250-2256` pair in
 `xdata-086x-dispatch.md`'s "What the census says". That is a different tool
 with its own false-positive surface, it belongs beside `citation_frames.py`,
@@ -146,12 +146,22 @@ checks:
   the site table under Rule 1 and the `HAND_CHECKED` comment under Rule 2 —
   even though the `registers.yaml` instance of them is held by nothing.
 - **`registers.yaml`'s three cells are held by nothing**, and saying so is the
-  honest thing rather than a promise: every live sentence in that note *is* a
-  `*** CORRECTION` paragraph, because §4a-4d and the 2026-09-24 block both
-  require the superseded figure to stay as text. A rule that skipped
-  corrections would check nothing there; a rule that did not would redden on
-  the quoted predecessor. This is a property of the file's convention, not a
-  gap in the checker, and it is why that file's three cells are fixed by hand.
+  honest thing rather than a promise. This was originally given as the
+  convention — every live sentence in that note *is* a `*** CORRECTION`
+  paragraph, so a rule that skipped corrections would check nothing there.
+  **Corrected 2026-09-26, issue #870: that was not the reason, and the
+  correction is in the tool's docstring, in `docs/findings.md` §58 and in the
+  note itself.** The measured reason is two mechanical things: the file is in
+  neither `bodies` nor `ROW_SCOPE`, so no rule walks it at all, and `POINTER`
+  matches a `.csv:NNN` and nothing else, so a `.py` pointer is outside the one
+  pointer rule whatever the vocabulary says. `supersession()` never fires on
+  that note at all — a folded scalar holds no blank lines, so the entry is ONE
+  paragraph opening `name: XDATA_0860` and the marker is mid-paragraph. The
+  convention is still what §4a-4d protects, and scoping the file in was
+  measured and goes red at once on the block's own quoted predecessor; see
+  [`xdata-0860-note-live-pointers.md`](xdata-0860-note-live-pointers.md). The
+  six source-file pointers #801 named and did not correct are now repointed in
+  place and are likewise held by nothing.
 - The eight **skipped** citations are eight cells that are wrong on purpose:
   three in the dispatch page's correction blockquotes, three in the one this
   branch added to `reset-vector-dptr-targets.md`, and two inside the two dated
@@ -168,6 +178,14 @@ inside the existing `note:` block, quoting the superseded figures verbatim so
 §4a-4d is satisfied, naming `:817`, `D281.c:19`/`D289.c:18`, `:1399` and
 `:3606-3619`, and stating which of them no check holds.
 
+> **Corrected 2026-09-26, issue #870.** The addendum's own two source-file
+> pointers have moved again: `HAND_CHECKED["0x0860"]` is at `:1557`, not
+> `:1399`, and the hand-checked direction oracle is at `:4073-4085`, not
+> `:3606-3619`. Both are corrected in place in the note, and a second dated
+> `*** ADDENDUM` there names the old figures beside the new ones. Everything
+> else in the paragraph above is undisturbed, and is left as written rather
+> than edited, because it is a record of what this branch did on 2026-09-25.
+
 The addendum also names six pointers the 2026-09-24 block quotes and this
 branch does **not** correct: `:165`, `:505`, `:515-516`, `:523`, `:524-525`
 and `:258-259`. They are stale for the same reason — the module has grown a
@@ -183,16 +201,29 @@ dispatch page is where their record belongs. **Not one of the counts, buckets
 or `status:` values in that note moved**, and the entry is still
 `present-untested`.
 
+> **Follow-up 2 discharged, 2026-09-26, issue #870.** Those six are now
+> repointed in place and the follow-up above is closed, in
+> [`xdata-0860-note-live-pointers.md`](xdata-0860-note-live-pointers.md). The
+> paragraph above is left as written: declining them in 2026-09-25 was sound
+> as a decision, and its *stated* reason — the file's convention, quoted above
+> and corrected under "Coverage, stated plainly" — was not the mechanism, so
+> this was not a six-number correction waiting on a rule that was already
+> there. The replacements are `:377`, `:1730`, `:1753-1754`, `:1750-1751`,
+> `:1752` and `:757-758`, each re-read rather than taken from the issue that
+> named them, and the issue's own proposed figures were stale too. The four
+> pointers corrected *by record* above were left as they stand, because
+> §4a-4d wants that record visible. **Still no count, bucket or `status:`
+> moved.**
+
 ## What this does not check
 
 In the same register as `check_site_census.py`'s own list, and the same
 caveat: every one of these is "not done by this method", never "absent".
 
-- **`registers.yaml`, at all.** See above — its convention makes "live
-  pointer" undecidable by shape, and the reasoning is the decision, not an
-  excuse.
+- **`registers.yaml`, at all.** See "Coverage, stated plainly" above for the
+  measured reason, which is not the convention this bullet originally gave.
 - **A pointer into a source file**, as against one into a generated CSV. The
-  `:359`, `:770`, `:1399`, `:1490-1496`, `:2250-2256` family. A different tool.
+  `:359`, `:770`, `:1557`, `:1490-1496`, `:2250-2256` family. A different tool.
 - **The other `xdata-registers.csv:NNN` in the tree.** Seven files carry the
   form and `ROW_SCOPE` names the two this walks. Of the five it does not,
   `docs/findings/xdata-0860-census-sites-relined.md` holds the `:662` that is
@@ -239,6 +270,14 @@ on two of them when a single `:817` in the dispatch page was changed to `:818`
 — a regenerated CSV inserting one row above `0x0860`, which is the event this
 whole issue exists to survive.
 
+> **The `40` is #801's figure and the suite now runs 41**, one case added by
+> #870 (`test_a_correction_marker_inside_a_yaml_entry_is_still_checked`). The
+> `26` / `8` above is unchanged and still what the tool prints — #870 changed
+> the docstring only, and the unchanged counts are what prove it. The whole
+> verification is at
+> [`xdata-0860-note-live-pointers.md`](xdata-0860-note-live-pointers.md) §"Verified
+> on this tree".
+
 `check_site_census.py` is unchanged, and its output is byte-identical. Its
 `0x0860` line begins `0x0860: 7 site(s) agree across both methods, 2 unchecked
 (other program), 17 occurrence(s) accounted for once each ...` — the tail past
@@ -253,9 +292,20 @@ committed tree. `registers.yaml` parses, and `XDATA_0860` is still
 
 1. **A prose → source-line checker**, for the `:359`/`:770`/`:1399`/`:1490-1496`/
    `:2250-2256` family. A different tool with its own false-positive surface,
-   beside `citation_frames.py`.
-2. **The six `xdata_register_map.py` pointers inside `registers.yaml`'s
-   2026-09-24 block**, which this branch names and does not correct.
+   beside `citation_frames.py`. **This is now the only thing left of the
+   `registers.yaml` class**: #870 closed follow-up 2 below and, in measuring
+   why, established that the file is unheld for two mechanical reasons rather
+   than for the convention argued here — the file is in neither `bodies` nor
+   `ROW_SCOPE`, and `POINTER` matches a `.csv:NNN` and nothing else, so a
+   `.py` pointer is outside the one pointer rule whatever the vocabulary says.
+   See [`xdata-0860-note-live-pointers.md`](xdata-0860-note-live-pointers.md).
+2. ~~**The six `xdata_register_map.py` pointers inside `registers.yaml`'s
+   2026-09-24 block**, which this branch names and does not correct.~~
+   **Closed by #870**, which repointed all six in place and recorded the
+   decision not to change the supersession vocabulary. What genuinely remains
+   is that they are now *correct* and still held by nothing, so the same drift
+   is possible again on the next regeneration — which is follow-up 1 above and
+   is a tool, not another correction.
 3. **A prepared gate patch** for `check_citation_lines.py`, once
    `docs/findings/prepared-gate-patches.md`'s re-merge has an anchor to
    insert at.

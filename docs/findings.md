@@ -7824,6 +7824,19 @@ edit, and that file's three are **held by nothing**, because every live
 sentence in that note is a `*** CORRECTION` paragraph and a rule that skipped
 corrections would check nothing there. Stated as a decision, not a gap.
 
+> **Reason corrected 2026-09-26, issue #870 — see
+> [`xdata-0860-note-live-pointers.md`](findings/xdata-0860-note-live-pointers.md).**
+> The *decision* above stands; the *reason* given for it does not. The file is
+> unheld because it is in neither `bodies` nor `ROW_SCOPE`, so no rule walks it
+> at all, and because `POINTER` matches a `.csv:NNN` and nothing else, so a
+> `.py` pointer is outside the one pointer rule whatever the vocabulary says.
+> `supersession()` never fires on that note: a folded scalar holds no blank
+> lines, so the whole `XDATA_0860` entry is one paragraph opening
+> `name: XDATA_0860` and the `*** CORRECTION` marker is mid-paragraph.
+> #870 repointed the six source-file pointers this section's follow-up named,
+> and kept the paragraph-wide skip after measuring that scoping the file in
+> reddens at once on the block's own quoted predecessor.
+
 A paragraph announcing itself a correction is **skipped**, for the reason
 `check_capture_claims.py` skips a denial: a quoted supersession is a denial of
 currency, and §4a-4d requires the wrong figure to stay visible beside its
@@ -11487,3 +11500,64 @@ name from outside their directory, and the failure here was not the sharing
 decision but that nothing compared either copy against the workflows. The
 checker is that comparison. **Not in any gate**, for the reason
 `tools/test_readme_suite_table.py` is not either.
+
+## 87. The `XDATA_0860` note's six live pointers are repointed, and the vocabulary that would have held them is measured and kept (2026-09-26, issue #870)
+
+The write-up is
+[`xdata-0860-note-live-pointers.md`](findings/xdata-0860-note-live-pointers.md);
+this is the summary. §58 left six `xdata_register_map.py` pointers that its
+`*** ADDENDUM` names as stale and declined to correct; this is that follow-up,
+and it ends the state §58's reason wrongly described — a live claim in
+`registers.yaml` that is wrong with no record that it is wrong.
+
+**Six numbers moved and not one figure did.** The 2026-09-24 block's
+present-tense claims now read `:1730`, `:377`, `:1753-1754`, `:1750-1751`,
+`:1752` and `:757-758` (in the `ORACLE` at `:638`), each re-read rather than
+inferred. The block's `:64-75` still resolves and was left alone. The addendum
+is extended by a dated `*** ADDENDUM` recording every old→new pair, including
+its own two source-file pointers, `:1399` → `:1557` and `:3606-3619` →
+`:4073-4085`, which had drifted again since 2026-09-25. **The four pointers §58
+corrected by record stay exactly as they are** — the difference is not which
+pointer is wrong but whether a record already says so, and the extension says
+which treatment each got so it is stated rather than inferred.
+
+**Two things the issue that named them got wrong, left visible with the
+correction beside them.** Its replacement figures were stale too, by 5 to 160
+lines, and on one row it named the wrong construct. And its mechanism claim is
+false in both halves: `supersession()` **never fires** on that block, because
+a folded scalar holds no blank lines and the whole `XDATA_0860` entry is ONE
+paragraph opening `name: XDATA_0860` with the marker mid-paragraph; and the six
+are **not among the eight skips**, which `--verbose` puts as three in the
+dispatch page, three in `reset-vector-dptr-targets.md` and two in the
+`HAND_CHECKED` comment. The two reasons that do hold are mechanical: the file
+is in neither `bodies` nor `ROW_SCOPE`, so nothing walks it, and `POINTER`
+matches a `.csv:NNN` and nothing else, so a `.py` pointer is outside the one
+pointer rule whatever the vocabulary says. §58's reason, the tool's docstring,
+the note's own `NOT CHECKED HERE` paragraph and
+[`prose-line-citations-held.md`](findings/prose-line-citations-held.md) all gave
+the correction-skip instead; all four now carry the measured reason.
+
+**The vocabulary question is decided, and it is not a taste call.** The
+paragraph-wide skip stays and `registers.yaml` stays out of `ROW_SCOPE`,
+because scoping it in was measured rather than assumed and reddens at once:
+`check_row_pointers` reports `xdata-registers.csv:662` at
+`registers.yaml:3008` — the `0x077E` row, on the note's own **quoted**
+predecessor, which `supersession()` does not cover. That is the tool's own
+stated reason for the skip ("a check that reddened on its own corrected tree
+would be switched off, and then nothing would be left") arriving on a file it
+had only been argued about. Consequence, stated plainly: **the six remain
+hand-maintained**, and the tool that would hold them is still follow-up 1.
+
+**One test, for the fact that decides it.** A blank-line-free YAML-shaped entry
+whose `*** CORRECTION` marker is mid-paragraph is still checked, because the
+announcement is not the paragraph's opening — previously implicit in
+`paragraph()`. The counterpart the issue asked for already existed and is not
+duplicated: `test_a_blockquoted_supersession_is_skipped` and
+`test_a_correction_paragraph_is_skipped` are its two halves. 41 cases green,
+up from 40. **The run is byte-identical at `26 citation(s) resolve to the row
+they name, 8 skipped as superseded`**, which is itself the proof the docstring
+edit did not widen the tool's scope, and the six were shown to be unheld by
+restoring a stale `:505` and watching every check stay green. No `status:`
+moved (`XDATA_0860` is still `present-untested`), no count moved, no CSV or
+Ghidra export regenerated, and no EC, hardware or Windows machine is involved
+anywhere: this is arithmetic over committed text.

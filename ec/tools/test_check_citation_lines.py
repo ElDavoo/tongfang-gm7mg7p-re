@@ -431,6 +431,26 @@ class Rule3RowPointers(unittest.TestCase):
                 '`xdata-registers.csv:4`, which is the 0x06E6 row.\n')
         self.assertTrue(saying(pointers, 'which is the 0x06E6 row', text=text))
 
+    def test_a_correction_marker_inside_a_yaml_entry_is_still_checked(self):
+        # The `XDATA_0860` note's own shape, and the fact that decides whether
+        # that file could be scoped at all. A folded scalar holds no blank
+        # lines, so the entry is ONE paragraph whose opening is `name:`, and
+        # the `*** CORRECTION` marker sits in the middle of it -- so the skip
+        # does not cover the note's live claims at all. The `note: >` line is
+        # here for the near-miss: a `>` that does not open its line buys
+        # nothing, exactly as a marker that does not open the paragraph does.
+        # That the note's pointers are then *wrong* is a separate question with
+        # a measured answer of its own, recorded in
+        # docs/findings/xdata-0860-note-live-pointers.md, and not this rule's.
+        text = ('  - name: XDATA_0860\n'
+                '    note: >\n'
+                '      The live claim above.\n'
+                '      *** CORRECTION 2026-09-24 (issue #249): the row is\n'
+                '      xdata-registers.csv:4, not :3.\n')
+        _, _, skipped = pointers(text)
+        self.assertEqual(skipped, 0)
+        self.assertTrue(saying(pointers, 'which is the 0x06E6 row', text=text))
+
     def test_verbose_names_what_was_passed_over_and_why(self):
         err = io.StringIO()
         text = '> quoted `xdata-registers.csv:662`.\n'
