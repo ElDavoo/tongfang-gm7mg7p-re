@@ -584,7 +584,7 @@ def interrupt_handover(region: bytes, target: int):
     """(dptr_immediate, callee, push_count) for a vector's target routine.
 
     A vector entry on this image is a wrapper: save the register file, load
-    DPTR with a per-vector XDATA address, `lcall` one shared body, restore,
+    DPTR with a per-vector CODE address, `lcall` one shared body, restore,
     `reti`. Reading the DPTR immediate out of the wrapper is what turns six
     near-identical rows into a table, and it is a walk over
     `disasm8051.py`'s lengths rather than a hardcoded offset into the body --
@@ -624,20 +624,23 @@ def interrupt_handover(region: bytes, target: int):
 
 
 def vector_pointer_table(region: bytes, owners, names):
-    """[(vector, xdata, sites, (entry, name) per site)] for the interrupt vectors.
+    """[(vector, code, sites, (entry, name) per site)] for the interrupt vectors.
 
     The half of §2 the vector table alone does not say, and the one positive
     referrer result in this tool: each of the five interrupt entries is a
-    wrapper that loads DPTR with its own XDATA address and calls one shared
+    wrapper that loads DPTR with its own CODE address and calls one shared
     body, `0x0050 call_10f1_then_jmp_1229`, which reads three CODE bytes at
-    that address and jumps to them. So the five wrappers are a dispatch through
-    an XDATA-resident table, and the XDATA address is the per-vector selector.
+    that address and jumps to them. So the five wrappers dispatch through a
+    table of CODE constants, and the CODE address is the per-vector selector.
+    The wrapper names in `ghidra-functions.csv` already say "the CODE address
+    0x0151"; this is the census's reading of the same bytes, and the two agree.
 
     `pd-base-strides.csv` already lists `0x0151`/`0x0154`/`0x0157`/`0x015A`/
     `0x015D` among its 448 `unresolved` XDATA bases and says what they are not
-    -- this is where they are named. The site count is the checkable part: one
-    site each, and the same one, so "the vector table is a table" is a
-    measurement rather than a shape someone saw.
+    -- that CSV is a scan of `MOV DPTR` immediates and cannot know which space
+    the program means by one, so it is not contradicted here. The site count is
+    the checkable part: one site each, and the same one, so "the vector table is
+    a table" is a measurement rather than a shape someone saw.
     """
     out = []
     for off, target in vector_table(region):
@@ -794,6 +797,14 @@ def provenance(zip_path: str = VENDOR_ZIP):
                                       == committed,
         "nsh_member": NSH_MEMBER,
         "nsh_text": nsh.decode("ascii", "replace").strip(),
+        # The provenance table's "the other N members" row is a count, and a
+        # count written in prose is a count that drifts. It is derived here
+        # instead: every non-empty member the container holds, less the two the
+        # table names. `infolist()` already enumerates them, so this costs
+        # nothing and cannot fall behind the zip.
+        "zip_member_count": sum(1 for i in z.infolist() if i.file_size),
+        "zip_other_members": sum(1 for i in z.infolist() if i.file_size
+                                 and i.filename not in (EC_MEMBER, ROM_MEMBER)),
     }
 
 
@@ -886,7 +897,7 @@ def figures(region: bytes, owners, names, prov, extents=None) -> dict:
         "vector_entries": str(len(table)),
         "vectors": " ".join(vectors),
         "vector_gap": erased_after_table(region, table),
-        "vector_xdata": " ".join(
+        "vector_code": " ".join(
             f"0x{dptr:04X}={n}site"
             + ("" if n else f"({NOT_FOUND})")
             + ("@" + ",".join(name for _, name in readers) if readers else "")
@@ -919,6 +930,8 @@ def figures(region: bytes, owners, names, prov, extents=None) -> dict:
         "prov_rom_ec_image_is_committed":
             str(prov["rom_ec_image_is_committed"]),
         "prov_nsh": prov["nsh_text"],
+        "prov_zip_members": str(prov["zip_member_count"]),
+        "prov_zip_other_members": str(prov["zip_other_members"]),
     }
 
 
@@ -1020,11 +1033,11 @@ def report(region: bytes, how: str, owners, names, prov) -> str:
             w(f"        mov dptr,#0x{hand[0]:04X}; lcall 0x{hand[1]:04X}; "
               f"{hand[2]} push(es) before it")
     w(f"  then: {erased_after_table(region, table)}")
-    w("  the five interrupt entries are one wrapper each, and the XDATA "
+    w("  the five interrupt entries are one wrapper each, and the CODE "
       "address it loads is the per-vector selector:")
     for off, dptr, n, readers in vector_pointer_table(region, owners, names):
         who = ",".join(name for _, name in readers) or NOT_FOUND
-        w(f"    0x{off:02X} -> xdata 0x{dptr:04X}  {n} site(s)  read by {who}")
+        w(f"    0x{off:02X} -> code 0x{dptr:04X}  {n} site(s)  read by {who}")
     w("")
     w("3. String pool")
     pool = string_rows(region, owners, names)

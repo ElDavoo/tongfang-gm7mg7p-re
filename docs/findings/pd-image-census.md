@@ -84,8 +84,8 @@ quietly producing a plausible table.
 ## The finding that was not on the issue's list: the vector table is a table
 
 **All five interrupt entries are the same wrapper with two constants swapped,
-and the constant is a per-vector XDATA address that selects a handler at run
-time.** Each pushes the register file, does `mov dptr,#<XDATA>`, `lcall
+and the constant is a per-vector CODE address that selects a handler at run
+time.** Each pushes the register file, does `mov dptr,#<CODE>`, `lcall
 0x0050`, restores, `reti`. The shared body is
 `0x0050 call_10f1_then_jmp_1229`, and both routines it reaches are already
 named in the annotations CSV:
@@ -107,21 +107,33 @@ $ r2 -a 8051 -e scr.color=0 -q -c 'pD 0x0a @ 0x1229' /tmp/pd.bin
             0x0000122b      8982           mov dpl, r1
 ```
 
-`0x10F1 read3_code_to_r3r1` reads three CODE bytes at the XDATA address the
+`0x10F1 read3_code_to_r3r1` reads three CODE bytes at the CODE address the
 wrapper loaded; `0x1229 load_dptr_then_indirect_jump` takes the middle and last
 of them as a big-endian 16-bit CODE pointer and jumps there. So
-`XDATA 0x0152`/`0x0153` *is* the handler for vector `0x03`, and the five
+`CODE 0x0152`/`0x0153` *is* the handler for vector `0x03`, and the five
 `0x0151`/`0x0154`/`0x0157`/`0x015A`/`0x015D` are a 3-byte-stride selector table
 whose last word sits at `0x015E`/`0x015F` — one byte before `ProtoVer:01.00 `
-at `0x0160`.
+at `0x0160`. The handlers are therefore **fixed in the image**, not chosen at
+run time: the table holds the constants `0xA8AE`, `0xF7AE`, `0xF7AF`, `0xF790`
+and `0xF7B0`. `0xA8AE` is the committed `event_dispatch_ff80_ffe0`; the other
+four are not committed entries and are not decoded.
+
+**The space is CODE, and the repository said so before this page did.** The
+`vector_wrapper_dp_…` rows in `ec/annotations/ghidra-functions.csv` each read
+"loads DPTR with the CODE address `0x0151`", and `pd,0x0050` reads "reads three
+CODE bytes at DPTR". An earlier draft of this write-up carried the constants as
+XDATA, on the reasoning below about `pd-base-strides.csv`; that was wrong — a
+`MOV DPTR` immediate does not name a space, and the path from `0x10F1` to the
+jump has no `MOVX` in it. See `ec/annotations/pd-image.md` §2.1.
 
 **What makes this a measurement and not a shape someone saw:** each of the
-five XDATA addresses has exactly **one** `MOV DPTR` site in the whole 64 KiB,
+five CODE addresses has exactly **one** `MOV DPTR` site in the whole 64 KiB,
 and it is the wrapper that loads it. And `ec/annotations/pd-base-strides.csv`
 already lists all five among its 448 `unresolved` XDATA bases while saying what
-they are *not*; this is where they are named. It is also the one **positive**
-referrer result in a tool whose headline result is a null, which is why both are
-worth having.
+they are *not*; that census scans `MOV DPTR` immediates and cannot know which
+space the program means by one, so it is not contradicted — it is answered. It
+is also the one **positive** referrer result in a tool whose headline result is
+a null, which is why both are worth having.
 
 The two wrapper forms differ — three push 13 registers and zero PSW, two push 5
 and set PSW to `0x10`, which selects register bank 1. That is *consistent with*
@@ -204,8 +216,12 @@ members:
   byte-identical copies of the 64 KiB region (each sha256 `30fe7fb8…`) at
   `0x020000`, `0x45CA2C`, `0x49CA4C`, `0x4DCA6C`, `0x51CA8C`, and the whole
   256 KiB EC image at `0x43CA2C`, **byte-identical, 0 differing bytes**.
-- The other seven members: the marker is **not found by this method**, by the
-  same inflation.
+- The other six members: the marker is **not found by this method**, by the
+  same inflation. The container holds 8 non-empty members and the two above are
+  named, which is where the 6 comes from — a number `pd_image_census.py`
+  derives from `zipfile`'s `infolist()` and pins as `prov_zip_members` /
+  `prov_zip_other_members`, because this line said seven until something
+  measured it.
 - `GM7MG7P/ecflash.nsh` is 29 bytes read from the zip: `IFUX64.efi GMxMGxx_11.800
   0 1`. That is **one write of the whole 256 KiB**, `0x20000` region included.
 

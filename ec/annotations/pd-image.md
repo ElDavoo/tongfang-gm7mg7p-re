@@ -130,13 +130,27 @@ anything this program says about them — the five interrupt vectors are
 interchangeable in the architecture, and nothing in the image distinguishes
 which physical source is on which.
 
-### 2.1 The five interrupt entries are one wrapper each, and the XDATA address is the selector
+### 2.1 The five interrupt entries are one wrapper each, and the CODE address is the selector
 
 This is the part of the vector table that says something, and it is a
 **positive** referrer result — the counterpart to the null in §3.
 
+**The selector is a CODE address, and this repository's own annotations already
+said so** — `../annotations/ghidra-functions.csv`'s five `vector_wrapper_dp_…`
+rows each read "loads DPTR with the CODE address `0x0151`" (and `0x0050`'s reads
+"reads three CODE bytes at DPTR into R3, R2 and R1"). An earlier draft of this
+page carried the same constants as **XDATA** addresses, on the reasoning that
+`pd-base-strides.csv` files them among its XDATA bases; that reasoning is wrong,
+because a `MOV DPTR` immediate does not name a space — on an 8051 `MOVC`
+(`0x93`) reads CODE, `MOVX` reads XDATA, and the path from `0x10F1` contains no
+`MOVX` at all. The annotations were right and the page was wrong. The
+correction is recorded here rather than made silently because the wrong label
+propagated into
+[`../../docs/hardware-tests/pd-controller-enumeration.md`](../../docs/hardware-tests/pd-controller-enumeration.md),
+where it sent a human to read the EC's memory window at a CODE address.
+
 All five wrappers are the same routine with two constants swapped. They push
-the register file, load DPTR with a per-vector **XDATA** address, `lcall
+the register file, load DPTR with a per-vector **CODE** address, `lcall
 0x0050`, restore, `reti`:
 
 | vector | `mov dptr,#…` | `lcall` | pushes before the call | `mov psw,#…` |
@@ -168,31 +182,56 @@ $ r2 -a 8051 -e scr.color=0 -q -c 'pD 0x0a @ 0x1229' /tmp/pd.bin
 ```
 
 **So the vector table is a table.** `0x10F1 read3_code_to_r3r1` reads three
-CODE bytes at the XDATA address the wrapper loaded, and `0x1229
+CODE bytes at the CODE address the wrapper loaded, and `0x1229
 load_dptr_then_indirect_jump` takes the middle and last of them as a
 big-endian 16-bit CODE pointer and jumps there. **The five interrupt handlers
-are not fixed in the image; each is whatever two XDATA bytes say:**
+are fixed in the image, in a constant table of five CODE words:**
 
-| vector | 3 bytes read from | the jump target is |
-|---|---|---|
-| `0x03` | `XDATA 0x0151`-`0x0153` | the big-endian word at `0x0152`/`0x0153` |
-| `0x0B` | `XDATA 0x0154`-`0x0156` | `0x0155`/`0x0156` |
-| `0x13` | `XDATA 0x0157`-`0x0159` | `0x0158`/`0x0159` |
-| `0x1B` | `XDATA 0x015A`-`0x015C` | `0x015B`/`0x015C` |
-| `0x23` | `XDATA 0x015D`-`0x015F` | `0x015E`/`0x015F` |
+| vector | 3 CODE bytes read from | the jump target is | that target is |
+|---|---|---|---|
+| `0x03` | `0x0151`-`0x0153` | the big-endian word at `0x0152`/`0x0153` | `0xA8AE` |
+| `0x0B` | `0x0154`-`0x0156` | `0x0155`/`0x0156` | `0xF7AE` |
+| `0x13` | `0x0157`-`0x0159` | `0x0158`/`0x0159` | `0xF7AF` |
+| `0x1B` | `0x015A`-`0x015C` | `0x015B`/`0x015C` | `0xF790` |
+| `0x23` | `0x015D`-`0x015F` | `0x015E`/`0x015F` | `0xF7B0` |
 
-The leading byte of each triple is fetched into R3 and is not used by the jump.
-Whether the compiler needs a 3-byte read for a reason this image does not show
-is **not determined** — the bytes say only that three are read.
+```console
+$ xxd -s 0x150 -l 0x10 /tmp/pd.bin
+00000150: ffff a8ae fff7 aeff f7af fff7 90ff f7b0  ................
+```
 
-That makes the five XDATA addresses a per-vector selector table with a 3-byte
+The leading byte of each triple is fetched into R3 and is not used by the jump;
+it is `0xFF` in all five, which is at least consistent with the compiler
+emitting a fixed 3-byte read. Whether it needs three for a reason this image
+does not show is **not determined** — the bytes say only that three are read.
+
+**What the five words point at, and how far that is decoded.** `0xA8AE` is a
+committed function entry, `event_dispatch_ff80_ffe0` (§4.1's table). The other
+four are **not** committed entries — no listing in `ec/decompiled/pd/` starts
+at or spans `0xF790`, `0xF7AE`, `0xF7AF` or `0xF7B0`, all four of which fall in
+the two gaps the committed extents leave, `0xF78B`-`0xF79B` (after
+`0xF786`, before `0xF79C`) and `0xF7A2`-`0xF7B1` (after `0xF79F`, before
+`0xF7B2`). Their raw bytes are `0xF790` = `12 ef ea 22` and
+`0xF7AE`/`0xF7AF`/`0xF7B0` = `22`, a bare `RET`, inside the ten-byte run of
+`0x22` at `0xF7AE`-`0xF7B7` that ends the image's used range — the committed
+`ret_only_f7b2` … `ret_only_f7b7` rows are the same shape and equally
+undecoded. **Whether those four are real handlers, padding, or an artefact of
+reading a constant pool as code is not determined here**, and the committed
+`pd,0x0056` row's careful "What the `0x0151` table entry selects is not decoded
+here" is not superseded by this section: the *address* is settled and the
+*target* is named, the *meaning* of four of the five targets is not. The
+`F7B2`-`F7B7` annotations make the same point about the same bytes.
+
+That makes the five CODE addresses a per-vector selector table with a 3-byte
 stride, and it ends exactly where `ProtoVer:01.00 ` begins: the last entry's
 word is at `0x015E`/`0x015F` and the string is at `0x0160`.
 `pd-base-strides.csv` already lists all five addresses among its 448
-`unresolved` XDATA bases and says what they are not; this is where they are
-named. Each has exactly **one** `MOV DPTR` site in the whole region, and it is
-the wrapper that loads it — so "the vector table dispatches through XDATA" is a
-site count, not a shape someone saw.
+`unresolved` XDATA bases and says what they are not; that is not contradicted
+here, because it is a census of `MOV DPTR` immediates and cannot know which
+space the program means by one. Each has exactly **one** `MOV DPTR` site in the
+whole region, and it is the wrapper that loads it — so "the vector table
+dispatches through a table of CODE constants" is a site count, not a shape
+someone saw.
 
 **Why the two wrapper forms differ.** The three that push 13 also zero PSW
 before the call and save R0-R7 explicitly; the two that push 5 set PSW to
@@ -348,7 +387,7 @@ Issue #26 asked for an I2C/SMBus or EC-mailbox dispatch table, and said that
 table is the piece that could eventually matter to a driver. Static evidence
 here gives: a 16-bit XDATA address space with a dense compiler-allocated block
 around `0x0800`-`0x0AFF` and an SFR-ish page at `0xFF00`-`0xFFFF`; an event
-word at `0xFF80`; a five-entry XDATA pointer table at `0x0151` (§2.1); and no
+word at `0xFF80`; a five-entry CODE pointer table at `0x0151` (§2.1); and no
 identified wire protocol. **No register in `0xFFE0`-`0xFFE2` is named, and
 none is claimed to be.** Whether a Linux driver could talk to this program at
 all depends on where it runs — which is §5's open question and a hardware
@@ -373,7 +412,13 @@ worth the sentence. Inflating the members:
 |---|---|
 | `GM7MG7P/GMxMGxx_11.800` | carries the region at `0x20000` and the marker at `0x20040`; **byte-identical** to the committed `ec/firmware/GMxMGxx_11.800` (both sha256 `158d1c64…`) |
 | `GM7MG7P/GMxMGxxN109A08.ROM` (13 MiB SPI image) | **five** byte-identical copies of the 64 KiB region (each sha256 `30fe7fb8…`), at `0x020000`, `0x45CA2C`, `0x49CA4C`, `0x4DCA6C`, `0x51CA8C`; and the whole 256 KiB EC image, **byte-identical, 0 differing bytes**, at `0x43CA2C` |
-| the other seven members | the marker is **not found by this method** — read, not asserted absent, by the same inflation |
+| the other six members | the marker is **not found by this method** — read, not asserted absent, by the same inflation |
+
+The container holds **8** non-empty members (`prov_zip_members`) and the table
+names two of them, so the last row is the remaining **6**
+(`prov_zip_other_members`). Both numbers are derived from `zipfile`'s
+`infolist()` and pinned, because a count written only in prose is a count that
+drifts: this page said seven until the tool measured it.
 
 `ecflash.nsh` is 29 bytes, read from the zip rather than transcribed here:
 
@@ -439,7 +484,9 @@ tell which sentences are load-bearing will over-read the ones that are.
 2. **Whether `0xFFE0`-`0xFFE2` is a host-facing register block**, and if so
    what protocol carries it. §4.2 names the addresses and nothing else.
 3. **Which physical source drives each of the five interrupt vectors**, and
-   why the two timer vectors are the short-form wrappers. §2.1.
+   why the two timer vectors are the short-form wrappers. §2.1. The five jump
+   targets are named; four of them (`0xF790`, `0xF7AE`, `0xF7AF`, `0xF7B0`) are
+   not committed entries and are not decoded.
 4. **The five region copies in the SPI image**: which one a flash tool writes,
    and whether the descriptor table makes the other four live. §5.1.
 5. **Whether the PD program runs on a die of its own.** §5.2, and it needs
@@ -478,7 +525,7 @@ longest_ff_run = 2120
 vector_entries = 6
 vectors = 0x00->0x0500@c_startup 0x03->0x0056@dptr0x0151,lcall0x0050,pushes13 0x0B->0x0094@dptr0x0154,lcall0x0050,pushes5 0x13->0x00B2@dptr0x0157,lcall0x0050,pushes13 0x1B->0x00F0@dptr0x015A,lcall0x0050,pushes5 0x23->0x010E@dptr0x015D,lcall0x0050,pushes13
 vector_gap = 0x26-0x3F erased (0xFF)
-vector_xdata = 0x0151=1site@vector_wrapper_dp_0151 0x0154=1site@vector_wrapper_dp_0154 0x0157=1site@vector_wrapper_dp_0157 0x015A=1site@vector_wrapper_dp_015a 0x015D=1site@vector_wrapper_dp_015d
+vector_code = 0x0151=1site@vector_wrapper_dp_0151 0x0154=1site@vector_wrapper_dp_0154 0x0157=1site@vector_wrapper_dp_0157 0x015A=1site@vector_wrapper_dp_015a 0x015D=1site@vector_wrapper_dp_015d
 pool_candidates = 43
 pool_referrers = 0
 code_table_inline = 0x119C=9site/0open_a_string 0x11C2=16site/0open_a_string
@@ -497,6 +544,8 @@ prov_rom_region_copy_count = 5
 prov_rom_ec_image_at = 0x43CA2C
 prov_rom_ec_image_is_committed = True
 prov_nsh = IFUX64.efi GMxMGxx_11.800 0 1
+prov_zip_members = 8
+prov_zip_other_members = 6
 ```
 
 ## Related

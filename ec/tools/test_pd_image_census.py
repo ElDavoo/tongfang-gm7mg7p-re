@@ -90,6 +90,12 @@ PROTOCOL = {
 IDENTITY = {"ITE8850-PD": 0x0040, "ProtoVer:01.00": 0x0160,
             "DriverVer:01.00": 0x0170, "UsbPdVer:01.00": 0xE1C0}
 
+# The per-issue write-up, which restates several of the page's figures. Unlike
+# the pinned block it has no `--check` on it, so a number it states in prose is
+# only held by a case that reads it -- see Provenance.
+WRITEUP = os.path.join(HERE, "..", "..", "docs", "findings",
+                       "pd-image-census.md")
+
 
 def firmware_bytes():
     """The committed 256 KiB dump, read once and closed.
@@ -564,6 +570,36 @@ class Provenance(unittest.TestCase):
                          "reporting it")
         # And the copy count is what the issue's "both" answer turns on.
         self.assertGreater(PROV["rom_region_copy_count"], 1)
+
+    def test_the_prose_member_count_is_the_measured_one(self):
+        """The page's "the other N members" row is prose, so the number has to
+        be pinned to what the container holds or it drifts.
+
+        This page said seven for a container with 8 non-empty members of which
+        the table names two. Nothing measured the figure, so nothing caught it.
+        The tool now derives both numbers from `infolist()`, and this case
+        holds the *prose* to them — the count in the page and in the write-up
+        is checked against the zip, not against another copy of itself.
+        """
+        words = {6: "six", 7: "seven", 8: "eight"}
+        other = PROV["zip_other_members"]
+        self.assertIn(other, words)
+        self.assertEqual(other,
+                         PROV["zip_member_count"] - 2,
+                         "'the other N members' is the container less the two "
+                         "the table names; if that ever stops being true, the "
+                         "table is quoting a member this case does not know")
+        with zipfile.ZipFile(pdic.VENDOR_ZIP) as z:
+            named = {pdic.EC_MEMBER, pdic.ROM_MEMBER}
+            derived = sum(1 for i in z.infolist()
+                          if i.file_size and i.filename not in named)
+        self.assertEqual(other, derived)
+        for path in (pdic.PAGE, WRITEUP):
+            with open(path, encoding="utf-8") as f:
+                text = f.read()
+            self.assertIn(f"other {words[other]} members", text,
+                          f"{path} states the count in prose; it has drifted "
+                          f"from the {other} the container holds")
 
 
 class HostSurface(unittest.TestCase):

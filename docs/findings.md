@@ -11675,12 +11675,16 @@ geometry is not the textbook one: reset at `0x00`, then `0x03 + n * 8`, with
 `0x2B`-`0x3F` erased. The sixth is the serial vector, `ljmp 0x010E`.
 8-aligning the whole table reads the padding and finds an `LJMP` at `0x00` and
 nothing at the other five. **All five interrupt entries are the same wrapper
-with two constants swapped, and the constant is a per-vector XDATA address
+with two constants swapped, and the constant is a per-vector CODE address
 (`0x0151`/`0x0154`/`0x0157`/`0x015A`/`0x015D`) that selects a handler at run
 time** — the wrapper `lcall`s `0x0050`, which reads three CODE bytes there and
-jumps through them. So the vector table is a table, and those five addresses
-are among the 448 `unresolved` XDATA bases in `pd-base-strides.csv` that now
-have a name.
+jumps through them. So the vector table is a table, and the five words in it
+are constants fixed in the image: `0xA8AE` (the committed
+`event_dispatch_ff80_ffe0`), `0xF7AE`, `0xF7AF`, `0xF790` and `0xF7B0` — the
+last four are not committed entries and are not decoded. The five addresses
+also appear among the 448 `unresolved` XDATA bases in `pd-base-strides.csv`;
+that census is a scan of `MOV DPTR` immediates and cannot know which space the
+program means by one, so the two do not conflict.
 
 **The string pool is 43 candidates and 0 of them is named by a `MOV DPTR` +
 `MOVC` pair.** That is a statement about the method, and the page says so where
