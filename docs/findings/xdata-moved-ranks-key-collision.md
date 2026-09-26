@@ -58,13 +58,15 @@ Every fixture in the old suite gave each rank its own `cluster_key`, because
 so the case was not merely untested, it was unreachable. Three ranks below share
 one key and two of them change membership, which is the one shape that loses
 from both listings at once. The before column is the **pre-change** tool —
-`git show e611e065:ec/tools/xdata_moved_ranks.py`, run from a scratch copy of
-that file — and `e611e065` is this branch's fork point, so `HEAD^1` and
-`origin/main` name the same bytes here. `HEAD` deliberately does not: after this
-merges, `git show HEAD:ec/tools/xdata_moved_ranks.py` *is* the post-change tool,
-so diffing it against the working tree reports no difference at all and an empty
-diff would read as "no published figure moved" when it means only that the
-recipe was wrong. The `<PRE-CHANGE>` placeholders below stand for that scratch
+`git show bdfddcfd:ec/tools/xdata_moved_ranks.py`, run from a scratch copy of
+that file. `bdfddcfd` is this branch's base: it is `HEAD^1`, and `origin/main`
+at this merge, so `git show HEAD^1:...` and `git show origin/main:...` name
+these same bytes and either ref names the baseline. `HEAD` deliberately does
+not: after this merges, `git show HEAD:ec/tools/xdata_moved_ranks.py` *is* the
+post-change tool, so diffing it against the working tree reports no difference
+at all and an empty diff would read as "no published figure moved" when it
+means only that the recipe was wrong. The `<PRE-CHANGE>` placeholders below
+stand for that scratch
 path. Both columns run over the same two files:
 
 ```console
@@ -246,7 +248,7 @@ Both pairs were regenerated exactly as
 writing to `/tmp` for both — and the tool was re-run over the result. The whole
 of what changed between this tool and the one the fall measurement used. The
 left column is `<PRE-CHANGE>` — the pre-change tool materialised with
-`git show e611e065:ec/tools/xdata_moved_ranks.py > /tmp/pre-change.py`, §2's
+`git show bdfddcfd:ec/tools/xdata_moved_ranks.py > /tmp/pre-change.py`, §2's
 ref and the same one there, and **not** `git show HEAD`, which after this merge
 resolves to this same tree's tool and would make both columns the after column:
 
@@ -373,10 +375,15 @@ old suite could not reach. The whole transcript is reproduced in
 was written because it is true of the tree this issue was written on, per
 `docs/findings.md` §4a-4d. On the merged tree the headcount is **30 to 36**, not
 25 to 31: the five in between are #889/#917's five `deciles()` cases, which
-landed in the same window, and the six are still this issue's. Measured —
-`git show e611e065:ec/tools/xdata_moved_ranks.py --self-test | grep -c '^  ok'`
-is **30** and `python3 ec/tools/xdata_moved_ranks.py --self-test | grep -c '^
-ok'` is **36**, and diffing those two runs' `ok` lines appends exactly the six
+landed in the same window, and the six are still this issue's. (`e611e065` is
+the base as it stood on the day, which is why it is not the `bdfddcfd` §2 and
+§4 diff against: #900 and #923 have landed on the tool since, so the two refs
+name different revisions. §7's counts are the day's, and the later merges'
+are recorded in the two blocks below.) Measured —
+`git show e611e065:ec/tools/xdata_moved_ranks.py > /tmp/pre-888.py && python3
+/tmp/pre-888.py --self-test | grep -c '^  ok'` is **30** and `python3
+ec/tools/xdata_moved_ranks.py --self-test | grep -c '^ ok'` is **36**, and
+diffing those two runs' `ok` lines appends exactly the six
 checks transcribed below while changing no earlier check's text. §9's block was
 re-transcribed to the same 36, which is why the cross-reference above no longer
 counts its lines — it would otherwise send a reader to a 31-line transcript that
