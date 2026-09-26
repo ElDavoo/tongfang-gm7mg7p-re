@@ -276,8 +276,13 @@ sixteen prose citations move every one of them: occurrences 73 → 105, `resolve
 46 → 78 — by 32 and not 16, because `spellings` counts the *matched* spelling
 and `grep -rn` prints a `./` prefix that prose does not, so each of the sixteen
 is two spellings of one pin. That test's own comment carries the derivation and
-names which change moved each figure. This page is the second of the two places
-that needed it; the tool's is the first, and neither number is derived here.
+names which change moved each figure. There were **three** places that needed it
+and this page said two, which was the count of the two it knew about: the tool's
+`ec/tools/test_census_test_line_pins.py` is the first, this page is the second,
+and the third is [`test-line-pin-census.md`](test-line-pin-census.md) — the page
+that *publishes* this census's figures, so a correction paragraph beside its
+transcript, its verdict table, its shape split and its 32 new per-pin rows went
+in with it. None of the three numbers is derived here.
 
 Nothing in this change needs hardware. The whole of it is offline behaviour of
 a text search, a line-number census and a test suite.
