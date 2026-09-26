@@ -1,7 +1,7 @@
 # Repository tools
 
-One thing lives here, and it is the one command that runs this repository's
-offline `unittest` suites:
+Two things live here: the command that runs this repository's offline
+`unittest` suites, and one checker that runs beside them.
 
 ```sh
 bash tools/run-tests.sh
@@ -11,13 +11,22 @@ bash tools/run-tests.sh
 
 Every `test_*.py` under the repository, found by `find` — not a hardcoded list,
 so a suite in a directory that does not exist yet is picked up by having its
-file committed. There are thirty-five today, 1076 tests in all — both figures
+file committed. There are thirty-seven today, 1134 tests in all — both figures
 are what the runner below prints, one line per suite and a total on its last
 line — and each is a `unittest` suite standing in for a tool's own behaviour.
 Re-derive them by running it rather than by editing this sentence, which is
 what the ninth merged-tree note below records this sentence being re-derived
-by. None of the
-thirty was red on the 2026-09-25 run recorded at `64dbde19`; two were,
+by. The last re-derivation carries **two** suites rather than one — #942's
+`ec/tools/test_check_pin_table_rows.py` at 36 and #777's
+`tools/test_doc_patch_refs.py` at 22, on top of the eleventh note's thirty-five
+and 1076 — and the **red set is unmoved** — the last line
+reads `37 suite(s) run, 1134 tests; one or more FAILED` with the runner exiting
+1, and the red one is still only `ec/tools/test_check_cluster_citations.py`, 48
+tests, on the same `:220` of the same #822 file with the same two
+`0x0464`/`0x0465` disagreements, re-checked there by running that suite alone
+against a stashed clean `271389d` where it fails identically, so neither change
+caused it nor fixes it. None of the thirty was red on the 2026-09-25
+run recorded at `64dbde19`; two were,
 and stay named here as history rather than as state, because a reader who
 took them as current would go looking for a red runner that is gone:
 `ec/tools/test_check_site_census.py` and `ec/tools/test_xdata_cluster_names.py`,
@@ -658,6 +667,7 @@ re-derived by running the runner rather than by arithmetic on a diff.
 | `windows/tools/test_gpu_block_watch.py` | the GPU-block watcher's citation table against `evidence/acpi/dsdt.dsl` and `ec/annotations/registers.yaml`, the door procedure's own copy of that table against the tool, that copy's cross-reference column for the four census-covered rows against `ec/annotations/ec-07c4-07d5-sites.csv` and its `.md`, the door grader's third copy of the window bounds and DSDT names against the tool, its watch set, and its mark reaching the CSV |
 | `windows/tools/test_ctgp_dben_probe.py` | the `0x07C4` `DBEN` probe's refusals, its two-arm byte script read back from a run that started with the value bit clear, the restore in its `finally`, its CSV column set, and the bit arithmetic pinned to `evidence/acpi/dsdt.dsl` and the `0x96AD`/`0x94C0`/`0x83FF` rows of `ec/annotations/ghidra-functions.csv` |
 | `linux/lightbar/test_probe_6005.py` | the lightbar probe's ioctl encoding, dry run, and off-after-failure |
+| `tools/test_doc_patch_refs.py` | `tools/check_doc_patch_refs.py`'s two directions between the prose and `docs/ci/`, and the line between what it reads and what it declines: a name in the prose resolves to a file, a file on disk is named somewhere, and the parse cases that keep a loosened pattern from passing vacuously — both backtick spellings (the bare one is 31 of this tree's 70 references and is how a table row's first cell has to be written), a glob-shaped span and the `.yml` sibling refused by shape rather than by a list, a link resolved to its last path component, a URL refused, and one line in both spellings counted as two; the four refusals on trees small enough to read the whole finding list, each reported by name *and* by citing file; the live direction, which is the half that broke in the suite below; one case per historical name **in both directions** — still absent from `docs/ci/`, still cited by markdown — with the two ways an exemption rots demonstrated rather than asserted on a `tempfile` copy; the rename case, on a copy of the committed tree rather than a fixture, because "red for *every* stale reference" is a claim about this tree's references — every one of the renamed patch's references, list-compared against the tree's own, with the uncited rename reported separately; and that a discovery which found nothing exits non-zero rather than reading as a clean tree. No count is asserted, for the reason the suite below's docstring gives |
 | `tools/test_agent_gates_patches.py` | the prepared `docs/ci/agent-gates-*.patch` set against the committed `.github/scripts/agent-gates.sh`, which is the file those patches exist not to edit: the set on disk against the set the suite names, both directions and by name; each patch alone; every ordered pair applied in sequence, so no landing order has to be written down anywhere; the full set landing and the result still parsing under `bash -n` and `shellcheck`, because a patch that applies and yields broken shell is still wrong; that the folded capture-claims patch still carries both `check_capture_claims` and `check_testdata_index`, so a later re-cut cannot drop half of it quietly; and that each header's `git apply` line names the file the reader is holding. A case holds the working-tree gate script byte-identical to the committed one, so a local edit under `.github/` cannot quietly change what every other case measures. Every mutation goes to a `tempfile` scratch tree and nothing writes to `.github/` |
 | `tools/test_readme_suite_table.py` | this table's own first column against what `find` discovers, both directions and by name: a discovered suite with no row and a row for a suite that is gone are different mistakes, and the half that broke is the one a missing row took. The *set* and nothing else — the descriptions are prose, and comparing counts would turn every added test into a failure. It is a discovered suite itself, so the invariant covers the file that checks it |
 
@@ -731,3 +741,13 @@ per-file loop is load-bearing, not only insurance.
 - **Not the decompiler tooling.** Those tools' `--check` and `--self-test` runs
   are the gate's, and they are a different set of files; see
   `docs/agent-pipeline.md`.
+- **The checker is not in the gate either.**
+  `check_doc_patch_refs.py` is a `--check`/`--self-test` tool of their shape and
+  it is **not** wired into `.github/scripts/agent-gates.sh`, for the same
+  template-copied-file reason: `docs/agent-pipeline.md` item 13 carries the
+  recipe, and no `docs/ci/agent-gates-*.patch` was added, for the reason
+  [`findings/prose-line-citations-held.md`](../docs/findings/prose-line-citations-held.md)
+  set out for `run-tests.sh`. Its **suite** needs no wiring to be run at all —
+  `tools/run-tests.sh` finds it, which is the whole of what a suite takes. What
+  the gate would add is per-commit coverage of the prose, and nothing here
+  claims it until a human lands the patch.
