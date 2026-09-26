@@ -28,13 +28,14 @@ row whose citing line quietly moved stayed a perfectly normal row.
 
 ## What it has cost this repository, by hand
 
-Four times, each paid by a person rather than by a run:
+Five times, each paid by a person rather than by a run:
 
 | when | what moved | what it took |
 |---|---|---|
 | #891 | `xdata-moved-ranks-fall.md`'s citing lines, as the census write-up's merged-tree note records: `:319` → `:383` and `:331` → `:395` | re-reading `--verbose` against the table |
 | #889's note | two more citing lines in that same file | the same |
 | #930 | `../findings.md:9046` → `:9077`, re-registered in the merge that landed the correction above it | the same |
+| #941 | `../findings.md:9077` → `:9103`, re-registered in the merge that landed the fifth-axis pointer above it — a 26-line insertion carrying no pin of its own | the same |
 | #920 | six `> 300` pins to repoint, still open | still open |
 
 A merge that only *adds a paragraph* invalidates rows. That is the whole
@@ -201,7 +202,8 @@ Nothing here reads firmware, opens a capture, or reads back a register, and
 nothing in it needs the machine.
 
 One red line in that run is not this branch's. `tools/run-tests.sh` ends
-`36 suite(s) run, 1112 tests; one or more FAILED`, and the single failing suite
+`37 suite(s) run, 1139 tests; one or more FAILED` on the tree #941 merges onto,
+and the single failing suite
 is `ec/tools/test_check_cluster_citations.py`'s
 `test_committed_prose_matches_committed_census`:
 [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md):220
@@ -210,3 +212,7 @@ the clusters that line names. It reproduces identically in a clean worktree at
 `origin/main`, and this branch touches neither that recipe nor
 `ec/annotations/xdata-clusters.csv`, so it is pre-existing and has nothing to do
 with the tool above. The new suite is green in the same run: 36 tests, passed.
+*(The `36` and `1112` this paragraph was first written with are the record of the
+tree it was measured on and are left here beside the correction rather than edited
+out of silence, per [`../findings.md`](../findings.md) §4a-4d: #941 adds a suite
+and a write-up, so `36 + 1` and `1112 + 27` are the pair this tree reads.)*

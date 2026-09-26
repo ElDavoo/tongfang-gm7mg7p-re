@@ -8615,7 +8615,33 @@ moved it. `73` collides with nothing in §2b either, and the measurement is
 re-run on the merged tree rather than carried over — it does not read eight-and-ten
 because #850 gave each of the ten unheld figures a literal at an `assertEqual` and
 moved the run: §2b reads `18 figure(s), 18 measured held, 0 measured unheld` over
-`190 literal(s) inside a check` on this tree, the same run `main` gives.)*
+`190 literal(s) inside a check` on this tree. *(Two later measurements, per §4a-4d
+and neither a figure any verdict above rests on: the `190` is the run the tree
+this paragraph was written on gave, #945's `test_check_pin_table_rows.py` takes
+it to the **`194`** this branch's base re-derives, and #941's new suite to the
+**`197`** this tree gives — the `18 measured held, 0 measured unheld` above
+unchanged on all three runs.)*
+
+**And a fifth axis on that same class, added by issue #941, because the four
+published above are all properties of *where* a pin is written and the one that
+decides how much damage an edit does is *which test file it names*.** The
+write-up is
+[`pin-table-by-cited-file.md`](findings/pin-table-by-cited-file.md); the tool is
+`ec/tools/check_pin_table_by_cited_file.py` and it reads this census's own
+`census()` rather than walking the markdown again, so its `resolves` and
+`declined` columns reconcile back to the **73** and **32** above. **33 of the 73
+resolving pins name a line in `ec/tools/test_xdata_cluster_names.py` and 21 in
+`ec/tools/test_grade_0751_isolation.py` — 43 of the 105 occurrences on one suite
+and 79 on two** — which is the number an edit above either file has to be paid
+against, and the other half: **11 of the 37 indexed `test_*.py` are named by any
+pin and 26 are named by none.** It renders no verdict and moves none of the
+figures above; the concentration is the cost of an edit, not an accusation, and
+the census's `carries` / `does not carry` table is untouched. *(Its own three
+denominators moved by construction, since the new file is markdown and the new
+suite is one of the 26: markdown read `149` → **`150`** and indexed test files
+`36` → **`37`**, per §4a-4d and the same treatment the 50/23 and 52/24 above
+get. The `105`, `27`, `78`, `57`, the shape split and the verdict tally do not
+move at all, and `test_census_test_line_pins.py` is green against them.)*
 
 No register `status:` moved, no `registers.yaml` figure was
 refreshed, no CSV or `xdata-symbols.csv` was regenerated, no Ghidra project was
