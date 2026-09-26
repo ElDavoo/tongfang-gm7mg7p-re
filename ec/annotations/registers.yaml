@@ -4255,3 +4255,323 @@ registers:
       both. What does reach the 0x07 page at run time, if anything, is not
       established. WALKED 2026-09-24 (issue #282): recorded rather than
       resolved. No hardware was involved.
+
+  - name: PDIN
+    addr: 0x074C
+    bits: "0-3 = PDIN; 4 unnamed"
+    sources: [dsdt(PDIN)]
+    static_refs: 9
+    static_refs_main_ec: 9
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      First entry of the DSDT ECMG field sweep (issue #30); the sweep and its
+      table are ec/annotations/dsdt-ecmg-field-sweep.md and
+      ec/annotations/dsdt-ecmg-fields.csv, extracted by
+      ec/tools/dsdt_ec_fields.py from evidence/acpi/dsdt.dsl. The name is the
+      DSDT's own: Offset (0x74C), PDIN four bits wide, then one unnamed bit
+      (dsdt.dsl:52212-52214). A DSDT field name is a hint about vendor intent
+      and not a confirmed function, and the expansion is not in the ASL.
+      The 9 are direct MOV DPTR,#0x074C sites in the main EC, recounted from
+      the committed image by ec/tools/check_register_counts.py. What a site
+      does is classified per address by ec/tools/register_ref_table.py, not
+      here: a site can build a CODE pointer or hand DPTR to a subroutine, so a
+      count is not a count of register accesses and not behaviour. The ASL
+      reads the byte by this name as well, and reads all four of PDIN's bits
+      rather than one: Method (SMRW, 1) at dsdt.dsl:50764 compares
+      ^^PCI0.LPCB.EC0.PDIN against 0x08, 0x07 and 0x05 at dsdt.dsl:50774 and
+      against 0x04 and 0x06 at dsdt.dsl:50786, inside a test on GFID, and
+      again at dsdt.dsl:50801, 50813, 50828, 50841 and 50856 for the other
+      GFID arms -- so the four bits are a value the firmware switches on
+      rather than a flag it sets. That is a fact about the ASL and not the
+      same as the EC acting on the byte. present-untested is the ceiling
+      here; promoting it needs a live read at the machine. No hardware was
+      involved in any of this.
+
+  - name: CTWA
+    addr: 0x0788
+    sources: [dsdt(CTWA)]
+    static_refs: 4
+    static_refs_main_ec: 4
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      From the DSDT ECMG field sweep (issue #30; see
+      ec/annotations/dsdt-ecmg-field-sweep.md). Offset (0x788), CTWA, eight
+      bits (dsdt.dsl:52221-52222). It sits in the 0x0783-0x0786 CPU power
+      limit run that registers.yaml already holds under other names, and
+      between them (0x0787 is declared by nothing in either direction), so a
+      reader looking at the neighbours should read this one as a question
+      rather than as part of that run: the DSDT gives it its own Offset and
+      its own name, and this file does not know what it is. 4 direct MOV
+      DPTR,#0x0788 sites, all in the main EC, recounted by
+      ec/tools/check_register_counts.py. A count is not behaviour -- see the
+      sweep's calibration section. No hardware was involved.
+
+  - name: GC6S
+    addr: 0x07A4
+    bit: 2
+    sources: [dsdt(GC6S)]
+    static_refs: 4
+    static_refs_main_ec: 4
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      From the DSDT ECMG field sweep (issue #30; see
+      ec/annotations/dsdt-ecmg-field-sweep.md). Offset (0x7A4), two unnamed
+      bits, then GC6S, one bit (dsdt.dsl:52224-52225) -- so bit 2, not bit 0,
+      and the two bits below it are declared and unallocated. The DSDT's own
+      name for the bit is a hint about intent, not a function: the expansion
+      is not in the ASL and is not guessed at here. This byte already appears
+      in this file's prose, in the note on 0x1665 (XDATA_1665), which records
+      a bank0:0xDA4F site setting bit 4 of this byte (`orl a,#0x10`) when
+      0x1665 bit 6 is set and clearing it (`anl a,#0xef`) when it is not --
+      so bit 4 of 0x07A4 is the one bit of this byte something in the
+      committed listings is known to write, and it is not GC6S. 4 direct MOV
+      DPTR,#0x07A4 sites, all in the main EC, recounted by
+      ec/tools/check_register_counts.py; the count is per byte, so it does
+      not separate GC6S from bit 4. No hardware was involved.
+
+  - name: WHMS
+    addr: 0x07C5
+    bit: 5
+    sources: [dsdt(WHMS)]
+    static_refs: 10
+    static_refs_main_ec: 10
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      From the DSDT ECMG field sweep (issue #30; see
+      ec/annotations/dsdt-ecmg-field-sweep.md). Offset (0x7C5), five unnamed
+      bits, then WHMS, one bit (dsdt.dsl:52243-52245), so bit 5. That bit is
+      independently pinned by windows/tools/gpu_block_watch.py, which watches
+      this byte for exactly this field ("(0x07C5, WHMS b5, NO_ROW,
+      dsdt.dsl:52243)"), and the two agree from opposite ends of the stack.
+      The 10 are direct MOV DPTR,#0x07C5 sites in the main EC, recounted by
+      ec/tools/check_register_counts.py; the count is per byte and does not
+      separate bit 5 from the five below it. A name is not a function and a
+      count is not behaviour -- what the sites do is register_ref_table.py's
+      question, not this file's. No hardware was involved, and
+      windows/tools/gpu_block_watch.py's rows are a prepared capture, not a
+      capture that has been run.
+
+  - name: AP01
+    addr: 0x07C0
+    sources: [dsdt(AP01)]
+    static_refs: 1
+    static_refs_main_ec: 0
+    static_refs_pd_image: 1
+    status: unknown-not-absent
+    note: >
+      From the DSDT ECMG field sweep (issue #30; see
+      ec/annotations/dsdt-ecmg-field-sweep.md). Offset (0x7BA) declares VBNL,
+      RBHF, CMPP and then AP01, AP02, AP10 at 0x07C0-0x07C2 (dsdt.dsl:52231-
+      52237), so the DSDT does name this byte. The one MOV DPTR,#0x07C0 site
+      in the whole dump is in the ITE8850-PD image at file 0x20000, not in
+      the EC firmware, and that program has its own XDATA map: the site is a
+      reference to a different program's byte and says nothing about what the
+      EC does with 0x07C0. unknown-not-absent is this file's existing value
+      for exactly that case, and it is not absent -- the EC-side count of 0
+      is "not found by this method" (docs/findings.md 4c), not a total. The
+      0x07B9 blind spot is the standing counter-example: a byte Windows
+      demonstrably writes with no direct reference anywhere in the image. No
+      hardware was involved.
+
+  - name: AP02
+    addr: 0x07C1
+    sources: [dsdt(AP02)]
+    static_refs: 1
+    static_refs_main_ec: 0
+    static_refs_pd_image: 1
+    status: unknown-not-absent
+    note: >
+      From the DSDT ECMG field sweep (issue #30; see
+      ec/annotations/dsdt-ecmg-field-sweep.md). Offset (0x7BA) declares AP01,
+      AP02, AP10 at 0x07C0-0x07C2 (dsdt.dsl:52231-52237), so the DSDT names
+      this byte. Its one MOV DPTR,#0x07C1 site is in the ITE8850-PD image,
+      not the EC firmware, and that program has its own XDATA map -- see
+      AP01's note for what that does and does not license. unknown-not-absent
+      for that reason, not absent: the EC-side 0 is "not found by this method"
+      (docs/findings.md 4c). No hardware was involved.
+
+  - name: AP10
+    addr: 0x07C2
+    sources: [dsdt(AP10)]
+    static_refs: 1
+    static_refs_main_ec: 0
+    static_refs_pd_image: 1
+    status: unknown-not-absent
+    note: >
+      From the DSDT ECMG field sweep (issue #30; see
+      ec/annotations/dsdt-ecmg-field-sweep.md). The last of the three bytes
+      Offset (0x7BA) declares after CMPP, at 0x07C2 (dsdt.dsl:52231-52237).
+      Its one MOV DPTR,#0x07C2 site is in the ITE8850-PD image, not the EC
+      firmware, and that program has its own XDATA map -- see AP01's note.
+      unknown-not-absent for that reason, not absent: the EC-side 0 is "not
+      found by this method" (docs/findings.md 4c). No hardware was involved.
+
+  - name: CTL0
+    addr: 0x0EA8
+    sources: [dsdt(CTL0)]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Head of the CTL0-CTL7 run at 0x0EA8-0x0EAF, from the DSDT ECMG field
+      sweep (issue #30; see ec/annotations/dsdt-ecmg-field-sweep.md). Offset
+      (0xEA0) declares UVER, RESV, CCI0-CCI3, then CTL0 through CTL7 and the
+      MGI/MGO banks (dsdt.dsl:52281-52327), and the CTL run has the most
+      direct MOV DPTR sites of anything on the 0x0Exx page -- 3 here and 1 in
+      each of CTL1-CTL7.
+      *** The shape of those sites, measured rather than inferred: they are a
+      straight-line copy, not a table walk. bank0 0xF335-0xF374 is eight
+      8-byte stanzas, each `mov DPTR,#src / movx A,@DPTR / mov DPTR,#dst /
+      movx @DPTR,A`, copying 0x0EA8-0x0EAF into 0x0F61-0x0F68 one byte at a
+      time with no inc dptr anywhere in it. The earlier reading of this note
+      took the eight-byte spacing for a walk and said so; it was a guess from
+      the spacing and the disassembly does not support it. Re-derive with
+      `python3 ec/tools/trace_xdata_refs.py ec/firmware/GMxMGxx_11.800
+      0x0EA8` and `make_bank_image.py ec/firmware/GMxMGxx_11.800 0 0x08000`
+      plus `r2 -a 8051 -q -c 's 0x0f335; pd 32' bank0.bin`. ***
+      The other two sites are separate: bank0 0xF221 reads this byte and
+      compares it with 0x12, and bank0 0xF335 is the copy above. So this byte
+      is a value something chooses, not a table, on this evidence -- and
+      "on this evidence" is doing real work in that sentence, since what
+      writes 0x0EA8 is still not established. Three is a count of byte
+      patterns, not of accesses. The page as a whole is the sweep's open
+      question -- 59 DSDT names over 0x0E0D-0x0ECF, of which 50 have no
+      direct site by this method at all, which is "not found", not absent
+      (docs/findings.md 4c), and is the follow-up this sweep exists to
+      produce. No hardware was involved.
+
+  - name: CTL1
+    addr: 0x0EA9
+    sources: [dsdt(CTL1)]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      From the DSDT ECMG field sweep (issue #30; see
+      ec/annotations/dsdt-ecmg-field-sweep.md). Declared by Offset (0xEA0) as
+      the second byte of the CTL0-CTL7 run at 0x0EA8-0x0EAF
+      (dsdt.dsl:52288-52295). One direct MOV DPTR,#0x0EA9 site, in the main
+      EC, recounted by ec/tools/check_register_counts.py; a count is not
+      behaviour and one site says nothing about what it does. See CTL0's
+      note for the run and for the 0x0Exx page's open question. No hardware
+      was involved.
+
+  - name: CTL2
+    addr: 0x0EAA
+    sources: [dsdt(CTL2)]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      From the DSDT ECMG field sweep (issue #30; see
+      ec/annotations/dsdt-ecmg-field-sweep.md). Third byte of the CTL0-CTL7
+      run at 0x0EA8-0x0EAF, declared by Offset (0xEA0) (dsdt.dsl:52288-52295).
+      One direct MOV DPTR site, in the main EC, recounted by
+      ec/tools/check_register_counts.py; a count is not behaviour. See CTL0's
+      note for the run. No hardware was involved.
+
+  - name: CTL3
+    addr: 0x0EAB
+    sources: [dsdt(CTL3)]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      From the DSDT ECMG field sweep (issue #30; see
+      ec/annotations/dsdt-ecmg-field-sweep.md). Fourth byte of the CTL0-CTL7
+      run at 0x0EA8-0x0EAF, declared by Offset (0xEA0) (dsdt.dsl:52288-52295).
+      One direct MOV DPTR site, in the main EC, recounted by
+      ec/tools/check_register_counts.py; a count is not behaviour. See CTL0's
+      note for the run. No hardware was involved.
+
+  - name: CTL4
+    addr: 0x0EAC
+    sources: [dsdt(CTL4)]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      From the DSDT ECMG field sweep (issue #30; see
+      ec/annotations/dsdt-ecmg-field-sweep.md). Fifth byte of the CTL0-CTL7
+      run at 0x0EA8-0x0EAF, declared by Offset (0xEA0) (dsdt.dsl:52288-52295).
+      One direct MOV DPTR site, in the main EC, recounted by
+      ec/tools/check_register_counts.py; a count is not behaviour. See CTL0's
+      note for the run. No hardware was involved.
+
+  - name: CTL5
+    addr: 0x0EAD
+    sources: [dsdt(CTL5)]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      From the DSDT ECMG field sweep (issue #30; see
+      ec/annotations/dsdt-ecmg-field-sweep.md). Sixth byte of the CTL0-CTL7
+      run at 0x0EA8-0x0EAF, declared by Offset (0xEA0) (dsdt.dsl:52288-52295).
+      One direct MOV DPTR site, in the main EC, recounted by
+      ec/tools/check_register_counts.py; a count is not behaviour. See CTL0's
+      note for the run. No hardware was involved.
+
+  - name: CTL6
+    addr: 0x0EAE
+    sources: [dsdt(CTL6)]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      From the DSDT ECMG field sweep (issue #30; see
+      ec/annotations/dsdt-ecmg-field-sweep.md). Seventh byte of the CTL0-CTL7
+      run at 0x0EA8-0x0EAF, declared by Offset (0xEA0) (dsdt.dsl:52288-52295).
+      One direct MOV DPTR site, in the main EC, recounted by
+      ec/tools/check_register_counts.py; a count is not behaviour. See CTL0's
+      note for the run. No hardware was involved.
+
+  - name: CTL7
+    addr: 0x0EAF
+    sources: [dsdt(CTL7)]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      From the DSDT ECMG field sweep (issue #30; see
+      ec/annotations/dsdt-ecmg-field-sweep.md). Last byte of the CTL0-CTL7 run
+      at 0x0EA8-0x0EAF, declared by Offset (0xEA0) (dsdt.dsl:52288-52295), and
+      the last byte before the MGI0-MGIF bank begins at 0x0EB0. One direct MOV
+      DPTR site, in the main EC, recounted by
+      ec/tools/check_register_counts.py; a count is not behaviour. See CTL0's
+      note for the run. No hardware was involved.
+
+  - name: MGI8
+    addr: 0x0EB8
+    sources: [dsdt(MGI8)]
+    static_refs: 1
+    static_refs_main_ec: 1
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      From the DSDT ECMG field sweep (issue #30; see
+      ec/annotations/dsdt-ecmg-field-sweep.md). Offset (0xEA0) declares the
+      MGI0-MGIF bank at 0x0EB0-0x0EBF and the MGO0-MGOF bank at
+      0x0EC0-0x0ECF (dsdt.dsl:52296-52327); MGI8 is the ninth byte of the
+      first of those. It is the only byte of the 32 on either bank with any
+      direct MOV DPTR site by this method -- one, in the main EC, recounted by
+      ec/tools/check_register_counts.py. Sixteen neighbouring bytes and one
+      site is a pattern this file does not explain, and the 0x0Exx page's
+      overall shape is the sweep's open question rather than a result: an
+      ASL-visible block the EC image names only here may be an
+      indirect-addressing blind spot (docs/findings.md 4c) or a subsystem the
+      EC does not touch, and one static method cannot tell those apart. The
+      other 31 are "not found by this method", never absent. No hardware was
+      involved.

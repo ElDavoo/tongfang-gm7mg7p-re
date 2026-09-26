@@ -191,3 +191,19 @@ addr,name,from_register,register_status,derivation,programs
 0x07D7,CGCT,CGCT (DSDT),unknown-not-absent,scalar-name,bank0;bank1
 0x07C7,XDATA_07C7,XDATA_07C7 (no DSDT field; no direct site found),unknown-not-absent,scalar-name,bank0;bank1
 0x07C8,XDATA_07C8,XDATA_07C8 (no DSDT field; no direct site found),unknown-not-absent,scalar-name,bank0;bank1
+0x074C,PDIN,PDIN,present-untested,scalar-name,bank0;bank1
+0x0788,CTWA,CTWA,present-untested,scalar-name,bank0;bank1
+0x07A4,GC6S,GC6S,present-untested,scalar-name,bank0;bank1
+0x07C5,WHMS,WHMS,present-untested,scalar-name,bank0;bank1
+0x07C0,AP01,AP01,unknown-not-absent,scalar-name,bank0;bank1
+0x07C1,AP02,AP02,unknown-not-absent,scalar-name,bank0;bank1
+0x07C2,AP10,AP10,unknown-not-absent,scalar-name,bank0;bank1
+0x0EA8,CTL0,CTL0,present-untested,scalar-name,bank0;bank1
+0x0EA9,CTL1,CTL1,present-untested,scalar-name,bank0;bank1
+0x0EAA,CTL2,CTL2,present-untested,scalar-name,bank0;bank1
+0x0EAB,CTL3,CTL3,present-untested,scalar-name,bank0;bank1
+0x0EAC,CTL4,CTL4,present-untested,scalar-name,bank0;bank1
+0x0EAD,CTL5,CTL5,present-untested,scalar-name,bank0;bank1
+0x0EAE,CTL6,CTL6,present-untested,scalar-name,bank0;bank1
+0x0EAF,CTL7,CTL7,present-untested,scalar-name,bank0;bank1
+0x0EB8,MGI8,MGI8,present-untested,scalar-name,bank0;bank1

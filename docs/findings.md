@@ -322,6 +322,25 @@ purpose by any of this. A cluster in `../ec/annotations/xdata-clusters.csv` is
 a co-occurrence in static code, not a meaning — that file's §6 is the
 boundary, and reading a cluster is the follow-up issue's work.
 
+**A second naming source exists, and it is the firmware's own (2026-09-26,
+issue #30).** Nothing in the paragraph above has changed: 1,022 of the 1,063
+main-EC XDATA addresses are still unnamed, and the census is still the
+measure of that. What has changed is that the unnamed majority now has
+somewhere else to be looked up. The DSDT's `Field (ECMG, ...)` element list
+(`evidence/acpi/dsdt.dsl:52194`-`52328`, over `OperationRegion (ECMG,
+SystemMemory, 0xFE410000, ...)`) names 98 fields the ACPI side can read and
+write, and it is the only name source in the repo that came from neither
+`uniwill-laptop` nor the ECSpec nor a human at the machine. Sixteen of the
+addresses it names are new `registers.yaml` entries — 13 `present-untested`,
+3 `unknown-not-absent` — which is 16 more of the 1,022 named, and the rest are
+the file's table rather than entries. The 50 of those 98 that sit on the
+`0x0Exx` page with no direct reference site are the open question the sweep
+produces, not a result: one static method cannot tell an indirect-addressing
+blind spot (§4c) from a subsystem the EC does not touch. The sweep, its
+GNVS correction — the field list the issue named is a 1,038-element NVS block
+and the count join is refused for it — and its calibration are in
+`../ec/annotations/dsdt-ecmg-field-sweep.md`.
+
 ### 3d. The 76 `0x07D1` sites, and what `DBD2` is next to `DBD1` (2026-09-24, issue #185)
 
 §3b walked `0x07D0` and named the gap it left: `static-refs-audit.md` §6
