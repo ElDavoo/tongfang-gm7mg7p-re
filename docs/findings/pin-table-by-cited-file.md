@@ -256,7 +256,7 @@ of those as an occurrence of the class this page is a fifth axis on. The guard i
 already committed: `test_census_test_line_pins.py`'s
 `test_the_committed_counts_are_the_ones_the_write_up_publishes` holds 105, 27, 78,
 57 and the shape split, so a stray pin turns **that** case red and the prose is
-what gets fixed. 121 of the 148 markdown files the census reads carry none.
+what gets fixed. 122 of the 149 markdown files the census reads carry none.
 
 ## The name, which is a standing rather than a measurement
 

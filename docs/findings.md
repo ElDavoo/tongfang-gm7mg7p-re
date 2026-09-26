@@ -8615,7 +8615,8 @@ moved it. `73` collides with nothing in §2b either, and the measurement is
 re-run on the merged tree rather than carried over — it does not read eight-and-ten
 because #850 gave each of the ten unheld figures a literal at an `assertEqual` and
 moved the run: §2b reads `18 figure(s), 18 measured held, 0 measured unheld` over
-`190 literal(s) inside a check` on this tree, the same run `main` gives.)*
+`190 literal(s) inside a check` on this tree — the `190` is the run `main` gives, and
+#941's new suite has since moved it to **`194`**, the verdicts above unchanged.)*
 
 **And a fifth axis on that same class, added by issue #941, because the four
 published above are all properties of *where* a pin is written and the one that
