@@ -1,0 +1,44 @@
+string,region_offset,file_offset,run_head,after_nul,movc_referrers,dptr_sites,verdict
+ITE8850-PD,0x0040,0x20040,0x0040,no,not found by this method,0,not found by this method
+ProtoVer:01.00 ,0x0160,0x20160,0x0160,no,not found by this method,0,not found by this method
+DriverVer:01.00,0x0170,0x20170,0x0160,yes,not found by this method,0,not found by this method
+"""NaN",0x07CC,0x207CC,0x07CC,no,not found by this method,6,not found by this method
++INF,0x07D1,0x207D1,0x07CC,yes,not found by this method,76,not found by this method
+-INF,0x07D6,0x207D6,0x07CC,yes,not found by this method,142,not found by this method
+MNOx {,0x4297,0x24297,0x4297,no,not found by this method,0,not found by this method
+*@.H,0x4300,0x24300,0x4300,no,not found by this method,0,not found by this method
+"""(null)",0x43C2,0x243C2,0x43C2,no,not found by this method,0,not found by this method
+"""Drop Retry Rx-Msg",0xA798,0x2A798,0xA798,no,not found by this method,0,not found by this method
+PR Swap,0xA7AB,0x2A7AB,0xA798,yes,not found by this method,0,not found by this method
+SW Reset wrong MsgID,0xA7B3,0x2A7B3,0xA798,yes,not found by this method,0,not found by this method
+Disable Mode,0xA7C8,0x2A7C8,0xA798,yes,not found by this method,0,not found by this method
+Error Recovery,0xA7D5,0x2A7D5,0xA798,yes,not found by this method,0,not found by this method
+Proto Disconnect,0xA7E4,0x2A7E4,0xA798,yes,not found by this method,0,not found by this method
+Set VBUS 5V,0xA818,0x2A818,0xA817,yes,not found by this method,0,not found by this method
+DR Swap,0xA824,0x2A824,0xA817,yes,not found by this method,0,not found by this method
+FR Swap,0xA82C,0x2A82C,0xA817,yes,not found by this method,0,not found by this method
+Detect cable Reset,0xA834,0x2A834,0xA817,yes,not found by this method,0,not found by this method
+Detect HW Reset,0xA847,0x2A847,0xA817,yes,not found by this method,0,not found by this method
+TX HW Reset,0xA857,0x2A857,0xA817,yes,not found by this method,0,not found by this method
+SRC Negotiate done,0xA863,0x2A863,0xA817,yes,not found by this method,0,not found by this method
+SINK Negotiate done,0xA876,0x2A876,0xA817,yes,not found by this method,0,not found by this method
+Set Ver 3,0xA88A,0x2A88A,0xA817,yes,not found by this method,0,not found by this method
+Set Ver 2,0xA894,0x2A894,0xA817,yes,not found by this method,0,not found by this method
+Protover:01.00,0xA89E,0x2A89E,0xA817,yes,not found by this method,0,not found by this method
+"""Set Ver 3",0xD616,0x2D616,0xD616,no,not found by this method,0,not found by this method
+Set Ver 2,0xD621,0x2D621,0xD616,yes,not found by this method,0,not found by this method
+Tx discard,0xD62B,0x2D62B,0xD616,yes,not found by this method,0,not found by this method
+Tx fail,0xD636,0x2D636,0xD616,yes,not found by this method,0,not found by this method
+VBUS close,0xD63E,0x2D63E,0xD616,yes,not found by this method,0,not found by this method
+VBUS open,0xD649,0x2D649,0xD616,yes,not found by this method,0,not found by this method
+VBUS High Power,0xD653,0x2D653,0xD616,yes,not found by this method,0,not found by this method
+VCONN On,0xD663,0x2D663,0xD616,yes,not found by this method,0,not found by this method
+VCONN Off,0xD66C,0x2D66C,0xD616,yes,not found by this method,0,not found by this method
+IK`<~,0xDB96,0x2DB96,0xDB96,no,not found by this method,0,not found by this method
+"""Tx Timeout",0xE19C,0x2E19C,0xE19C,no,not found by this method,0,not found by this method
+Giveup HW Reset,0xE1A8,0x2E1A8,0xE19C,yes,not found by this method,0,not found by this method
+Timeout,0xE1B8,0x2E1B8,0xE19C,yes,not found by this method,0,not found by this method
+UsbPdVer:01.00,0xE1C0,0x2E1C0,0xE19C,yes,not found by this method,0,not found by this method
+Hotfix:0000,0xE1D0,0x2E1D0,0xE19C,yes,not found by this method,0,not found by this method
+"""Connect",0xF42C,0x2F42C,0xF42C,no,not found by this method,0,not found by this method
+Disconnect,0xF435,0x2F435,0xF42C,yes,not found by this method,0,not found by this method

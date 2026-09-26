@@ -30,7 +30,10 @@ reset/interrupt vector table at its own offset 0, its own C startup stub, and
 none of the bank-switch stubs. It therefore has its own 64 KiB address space
 and its own XDATA map — a `MOV DPTR,#0x07E2` in there is not a reference to
 the EC register at `0x07E2`. `annotations/lightbar-bat-flow.md` §2 has the
-evidence, and §6 the registers it changes the reading of. Extract it with
+evidence, and §6 the registers it changes the reading of;
+`annotations/pd-image.md` maps the image itself — its layout, its complete
+six-entry vector table, its string pool, its dispatch surface and where the
+vendor ships it. Extract it with
 `dd if=firmware/GMxMGxx_11.800 of=pd.bin bs=64k skip=2 count=1`; it loads flat
 into `r2 -a 8051` with no stitching needed.
 
