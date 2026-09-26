@@ -475,26 +475,41 @@ class TheCommittedTree(unittest.TestCase):
         self.assertGreater(len({r[0] for r in records}), 1)
 
     def test_the_committed_counts_are_the_ones_the_write_up_publishes(self):
-        # Re-measured at the #850/#887 merge: every figure below moved because
-        # #850 added nineteen `test_*.py:NNN` citations to the markdown and put
-        # 239 lines into ec/tools/test_xdata_cluster_names.py, and the run on
-        # the merged tree is identical to the run on #850's own tree -- so
-        # #850 is what moved the class, not the merge. The old 50/23/37/32 and
-        # the 44/6 and 5/15/5/8/11 splits are the record of the tree this
-        # landed on, kept in the write-up beside the corrected ones per §4a-4d.
+        # Re-measured at the #888 x #890 merge, on top of the #850/#887 and
+        # #888 re-measurements these figures already carried. Three moves, each
+        # recorded in the write-up beside the figures it replaces, per §4a-4d:
+        # #850 added nineteen `test_*.py:NNN` citations to the markdown and 239
+        # lines to ec/tools/test_xdata_cluster_names.py, which is what took
+        # 50/23/37/32 and the 44/6 and 5/15/5/8/11 splits to 69/24/44/53/16 and
+        # 5/11/9/6/22; #888's write-up
+        # (`docs/findings/xdata-moved-ranks-key-collision.md`) is one new file
+        # and cites the `> 300` floor twice, taking those to 71/25/45/55/16 and
+        # 5/13/9/6/22; and #890's commit is what takes the last line below from
+        # 40 to 41 and `assertion`/`other` from 13/22 to 11/24. **The two
+        # figures #888 moved are unmoved by that** -- #890 added no pin and no
+        # markdown file -- but it moved the line #888's two new pins name.
+        # `assertGreater(len(moved), 300)` was at `test_xdata_cluster_names.py:563`
+        # on #888's tree, and #890 put 25 lines into that file above it, so the
+        # floor is at `:588` here and `:563` is now a fixture line. That is the
+        # whole of the 40 -> 41 and the 13 -> 11 / 22 -> 24: `:563` is a
+        # resolved target the branch introduced and `main` had never named, and
+        # a cited line whose shape changed under a reader rather than a new
+        # pin. It is a real defect of the kind the census exists to find, and
+        # it is recorded in the write-up rather than repointed here, for the
+        # write-up's own reason: repointing the citing prose is a follow-up.
         records, _files = census.census(census.REPO)
-        self.assertEqual(len(records), 69)
-        self.assertEqual(len({r[0] for r in records}), 24)
-        self.assertEqual(len({r[2] for r in records}), 44)
+        self.assertEqual(len(records), 71)
+        self.assertEqual(len({r[0] for r in records}), 25)
+        self.assertEqual(len({r[2] for r in records}), 45)
         self.assertEqual(verdicts(records), {
-            census.RESOLVES: 53, census.OUT_OF_RANGE: 0,
+            census.RESOLVES: 55, census.OUT_OF_RANGE: 0,
             census.UNRESOLVED: 0, census.AMBIGUOUS: 0, census.DECLINED: 16})
         self.assertEqual(shapes(records), {
             census.DEF_TEST: 5, census.ASSERTION: 11, census.COMMENT: 9,
-            census.BLANK: 6, census.OTHER: 22})
+            census.BLANK: 6, census.OTHER: 24})
         self.assertEqual(
             len({(r[4], r[2].rsplit(":", 1)[1]) for r in records
-                 if r[3] == census.RESOLVES}), 40)
+                 if r[3] == census.RESOLVES}), 41)
 
     def test_the_committed_tree_exercises_more_than_one_verdict(self):
         # Each of these classes is non-zero on the real tree and not only on a

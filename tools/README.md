@@ -367,6 +367,44 @@ was re-run and is green against all 39. The two are different kinds of record
 and the difference is the point: one is what a change did, the other is what
 the tree is, and only the second one is a measurement to repeat.)*
 
+*(A twelfth merged-tree note, 2026-09-26, issue #888 landing beside #891, and
+this one is the same story the note above tells for the fourth time: **#888 also
+rewrote `xdata-moved-ranks-fall.md`**, putting two `cluster_key unique …` lines
+and a nine-line note into its §1–§2 blocks and six `ok` lines plus their notes
+into §9, so **every anchor above the §9 transcript moved down eleven again**.
+The four the note above repointed are repointed a third time — `:458` →
+**`:469`**, `:535` → **`:546`**, `:564` → **`:575`**, `:590` → **`:601`** — and
+each was re-opened against the three-way merged file and still names what its
+sentence names; `:3` is unmoved for the fourth time running, which is the
+strongest single piece of evidence in this file that a citing line is a
+different kind of thing from a pin. `xdata-decile-small-set-contract.md`'s
+three are moved with them (`:208` → `:219`, `:240` → `:252`, `:234` → `:245`),
+plus its citation of the tool's own `deciles()`, `:277` → **`:381`**, which is
+the only anchor in the set into the `.py` rather than the write-up. The check
+count moves a fifth time: the tool prints **45** now, `25 + 5 + 9 + 6`, and the
+**39** the note above records is left visible because it is true of the tree
+#891 measured.*
+
+*(A thirteenth, 2026-09-26, issue #890 landing beside #888, and the anchors move
+a **fourth** time and the check count a sixth. #890 added `write_movement()` and
+its four `--self-test` cases to `xdata_moved_ranks.py`, so the same three
+quantities move again: the four fall-file anchors are now **`:490`**, **`:567`**,
+**`:596`** and **`:622`** (`:469`/`:546`/`:575`/`:601` are the record of the
+#888 × #891 tree, and `:458`/`:535`/`:564`/`:590` of the #891 one, and all three
+sets are kept rather than overwritten); `xdata-decile-small-set-contract.md`'s
+three are **`:240`** and **`:266`**/`:272` — the row and header its correction 1
+names, which this note also corrects, the `:252`/`:245` the note above recorded
+having been one line out on the row even on its own tree — and its citation of
+the tool's own `deciles()` is **`:436`**, `:332` on `main` and `:381` on #888's.
+`:3` is unmoved for the fifth time running, which is the point of printing it
+each time. **The check count is `25 + 5 + 9 + 4 + 6 = 49`**: #890's four print at
+21–24, ahead of #888's six, which move to 44–49. The **45** the note above
+records is left visible because it is true of the tree #888 × #891 produced.
+**Nothing else in this file moves**: `bash tools/run-tests.sh` reads
+**thirty-five suites and 1076 tests**, the eleventh note's figures unchanged, and
+the red suite is still `test_check_cluster_citations.py` — verified against a
+pristine `bdfddcfd` worktree, so it is not this merge's.)*
+
 *(Eleventh merged-tree note, 2026-09-26, issue #891 landing beside the
 `#850`/`#887` merge: the counts above are this merged tree's, re-derived from a
 `bash tools/run-tests.sh` on it — **thirty-five suites and 1076 tests**, which
@@ -418,6 +456,56 @@ above record stays a measurement of a *different* class, the plain-text grep the
 census cannot see. That grep is the one the note two above gives the count for,
 at **eighteen** here against **seven** and **ten** on the two trees those notes
 were written on.)*
+
+*(And at the #888 × #891 merge, the same sentence with the same two results. The
+census's two citing lines move **again**, to `:394` and `:406`, because #888's
+edits to the write-up sit above both; they are repointed a second time in the
+census's own table and in the two places its prose names them. **Its own figures
+move once, and only because of #888**: the run is now
+`71 pin(s) in 25 markdown file(s): 45 distinct spelling(s), 40 distinct resolved
+target(s)` with `55 resolves` and `16 declined` and shapes `5/13/9/6/22`, because
+#888's write-up is one new markdown file carrying two new `test_xdata_cluster_names.py`
+pins — one new spelling, no new target, and `test_census_test_line_pins.py` is
+green against them. **#891 moves none of it**, which is the same negative the
+paragraph above records and the reason the two merges' edits to one write-up
+cancel in the census while not cancelling in the citations into it. The plain-text
+grep is the one number this note re-derives: **twenty-one** on the three-way
+merged tree against **eighteen**, **ten** and **seven** on the trees those notes
+were written on — the three extra are #888's, and all three are one new file:
+its own `xdata-moved-ranks-fall.md):3` in the framing line and the census's two
+`xdata-moved-ranks-key-collision.md):NNN` rows beside them. **Nothing else
+appears and nothing disappears**, which is the point of re-running a grep rather
+than reasoning about it: #888 rewrote a write-up that four other files cite, and
+the count moved by the number of times the new file is cited, not by the size
+of the change.)*
+
+*(And at the #888 × #890 merge, **that note's census figures are the ones that
+do not survive, and the grep is the one that moves furthest.** #890 repointed
+56 `test_*.py:NNN` pins by +25 and the census re-run reads
+`71 pin(s) in 25 markdown file(s): 45 distinct spelling(s), 41 distinct resolved
+target(s)` with `55 resolves`, `16 declined` and shapes `5/11/9/6/24` — the
+`40` target and the `5/13/9/6/22` split in the note above being the record of the
+tree #888 × #891 produced. **The reason is one line, and it is the two pins
+#888's own write-up added**: `assertGreater(len(moved), 300)` was at `:563` of
+`ec/tools/test_xdata_cluster_names.py` on that tree and is at `:588` here, so
+the two by-name pins `:563` are now `other` rather than `assertion` and do not
+carry — which is why the target count moves as well, since the by-path spelling
+of the same span was repointed to `:588` and the two no longer share a target.
+The census's own table, its finding 7 and its follow-up list are re-measured to
+that in [`test-line-pin-census.md`](../docs/findings/test-line-pin-census.md),
+which keeps the superseded figures visible; `test_census_test_line_pins.py` is
+green against the new pins, which is why the pins there moved with them. **Both
+line numbers in that paragraph are written bare and away from the file name on
+purpose**: spelled as `test_*.py:NNN` they would be the 72nd pin in the class
+and would move the very figure the census reports, which is the reason the
+write-up gives for writing its own superseded `:392` the way it does. **The
+plain-text
+grep reads thirty on the merged tree**, against **twenty-four** on `bdfddcfd` and
+**twenty-two** on #888's tip — re-run with the same command rather than reasoned
+about, and most of the gap is this merge's own re-transcription of the census's
+table, which is eleven of the thirty by file. The earlier figures — **twenty-one**,
+**eighteen**, **ten** and **seven** — are the record of the trees they were taken
+on.)*
 
 `docs/findings/0751-grader-self-test-gate.md` records the red set as it stood
 and the follow-up issues that owned it, and

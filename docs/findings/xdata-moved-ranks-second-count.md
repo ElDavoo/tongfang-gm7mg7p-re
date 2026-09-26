@@ -125,7 +125,7 @@ red — 2 rows above a summary reading `0` — and the fix turns it green, as
 measured. A dedicated pair buys that same red state with **no existing line of
 the self-test changed** and nothing to correct in #852's 577-line write-up,
 whose §9 transcript at
-[`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):590 prints the
+[`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):622 prints the
 existing check text verbatim.
 
 The check is written as the invariant rather than as a number: it groups the
@@ -212,7 +212,7 @@ place, and the check reads:
 ## 5. The committed pair, re-derived: the figure does not move
 
 This is the point that has to be measured rather than presumed, and §7 of
-[`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):458 is the recipe —
+[`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):490 is the recipe —
 `git worktree add --detach /tmp/xdata-old e169a0e4a736956f35af5ffff65e997154c76bdd`,
 two `xdata_register_map.py --no-eq-guard --out-clusters/--out-registers` runs
 (one in the worktree, one in this tree), then the `across --swept` command over
@@ -221,11 +221,28 @@ one, on the same re-derived censuses:
 
 **48 rows for 43 addresses, and `5 address(es) have a second holder` both
 times** — `diff` over the two 86-line reports is empty. The committed line is
-byte-for-byte the one at [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):535,
+byte-for-byte the one at [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):567,
 because on this pair the two `pd` holders, `kedee1182bba5` (`pd-002`) and
 `ke928434f6676` (`pd-033`), are present in **both** generations, so B's count
 and the union's are the same five. This is a latent disagreement, not an
 observed wrong figure, and it is now a figure that cannot go wrong.
+
+*(The two citing lines above were `:458` and `:535`, and this file's four have
+now been repointed twice: to `:469` and `:546` at the #888 × #891 merge, and to
+the merged tree's `:490` and `:567` here. The same treatment #889's and #891's
+insertions into that file got, and for the same reason — #888 added two
+`cluster_key unique …` lines and a nine-line note to the fall file's §1–§2
+blocks, so everything below them moved down eleven, and #890 had already moved
+them before that. **All four of this file's citing lines that moved are moved**
+— `:564` → **`:596`** at `:289` and `:590` → **`:622`** at `:128` — while `:3`
+at `:9` is still above every insertion any of those merges makes and has never
+moved. Each of the four was re-opened against the merged file and still names
+what its sentence names: the §7 heading, the `across --swept` console line, the
+"No gate is wired" bullet and the second-holder check line respectively. That is
+a citing line rather than a pin, which is why no tool in this tree can catch the
+drift: the point
+[`test-line-pin-census.md`](test-line-pin-census.md)'s merged-tree note makes
+about its own table.*
 
 `git worktree remove /tmp/xdata-old` afterwards; `git status --porcelain`
 printed nothing but this change's own three files.
@@ -274,7 +291,7 @@ the two reads were a decision rather than a miss.
   self-test lives inside the tool, as `xdata_register_map.py`'s and
   `grade_0751_isolation.py`'s do.
 - **No gate is wired**, for the reasons
-  [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):564 gives: the tool
+  [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):596 gives: the tool
   is a read-only investigation aid and adding two census runs to every push
   would cost more than the gate gets. `CLAUDE.md` separately says
   `agent-gates.sh` is a copy from the `agent-pipeline` template this repository
