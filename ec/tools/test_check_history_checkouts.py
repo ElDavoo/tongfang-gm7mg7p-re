@@ -19,8 +19,14 @@ accidentally names a job is a control that passes for the wrong reason.
 
 The committed-tree cases at the end are tripwires, not floors: they hold the
 derivation against the workflows, so a template re-copy that drops
-`fetch-depth: 0` from `ci.yml`'s `gates` job turns this suite red, and one that
-adds a workflow does not.
+`fetch-depth: 0` from `ci.yml`'s `gates` job turns this suite red, and so do the
+two edits the class's last case exists for -- `agent-plan.yml`'s `plan` job
+taking a `fetch-depth: 0`, and `claude.yml`'s stated `fetch-depth: 1` going
+away. All nine `(job, depth, stated)` triples are compared as one mapping rather
+than as nine separate assertions, so a tenth checkout anywhere under
+`.github/workflows/` turns it red with them; this paragraph used to say one that
+adds a workflow does not, which was a property of the narrower form and is not
+one any more.
 """
 import importlib.util
 import io
@@ -101,6 +107,50 @@ CORRECTED_DOCSTRING = r'''
 ISSUE_TWO_WORKFLOW = (
     "# ci.yml's `gates` job is full-depth and claude.yml is shallow throughout")
 
+# The nine committed checkouts, as `(job, depth, stated)`, which is what the
+# table in `docs/findings/history-checkout-claims.md` and the paragraph that
+# corrects the issue's own wording in `docs/findings.md` §86 are both written
+# from. Held by value rather than by count, because a count is satisfied by any
+# nine checkouts and the sentence is about which are which.
+#
+# `stated` is the half that separates `fetch-depth: 0` from `depth 1 (the
+# action's default)`, and it is not a second copy of `depth`: `claude.yml`'s row
+# is the one checkout here that states a depth other than 0, so the same
+# integer reads as a decision there and as the action's default on the three rows
+# below it. Every case that asserted `stated` before this one ran on a synthetic
+# tree, which is what left the sentence "the only checkout that *states* a depth
+# other than 0" held by nothing on the committed tree.
+EXPECTED_CHECKOUTS = {
+    "agent-conflicts.yml": [("resolve", 0, True)],
+    "agent-fix.yml": [("fix", 0, True)],
+    "agent-followups.yml": [("followups", 1, False)],
+    "agent-implement.yml": [("implement", 0, True)],
+    "agent-plan.yml": [("plan", 1, False)],
+    "agent-review.yml": [("review", 0, True)],
+    "ci.yml": [("gates", 0, True), ("workflows", 1, False)],
+    "claude.yml": [("claude", 1, True)],
+}
+
+
+def checkout_triples(repo):
+    """-> (derived, expected) for the tree at `repo`, both sides sorted.
+
+    Both halves, so the committed case and the control beside it compare the
+    same two objects: a control that re-derived the mapping its own second way
+    would be watching that copy go red rather than the committed assertion's.
+    Sorted on both sides, so which job a workflow's YAML happens to list first
+    is not part of what is held -- "which job has which depth" is, and that is
+    the claim.
+    """
+    workflows, _unreadable = chc.load_workflows(repo)
+    derived = {}
+    for name, jobs in workflows.items():
+        for job in jobs.values():
+            for checkout in job.checkouts:
+                derived.setdefault(name, []).append(
+                    (checkout.job, checkout.depth, checkout.stated))
+    return ({name: sorted(rows) for name, rows in derived.items()},
+            {name: sorted(rows) for name, rows in EXPECTED_CHECKOUTS.items()})
 
 
 def workflow(name, jobs):
@@ -478,26 +528,19 @@ class CommittedTreeTests(unittest.TestCase):
                          chc.depth_problems(workflows))
 
     def test_the_derivation_is_what_the_claim_says_it_is(self):
-        # Held by value rather than by count, because a count is satisfied by
-        # any nine checkouts and this sentence is about which are which.
-        workflows, _unreadable = chc.load_workflows(str(REPO))
-        depths = {}
-        for name, jobs in workflows.items():
-            for job in jobs.values():
-                for checkout in job.checkouts:
-                    depths.setdefault(name, []).append((checkout.job,
-                                                        checkout.depth))
-        self.assertEqual(sorted(depths["ci.yml"]), [("gates", 0), ("workflows", 1)])
-        self.assertEqual(depths["claude.yml"], [("claude", 1)])
-        # The four agent stages, named by the job each stage runs in, because
-        # "all of them are 0" is the half of the claim that goes stale and
-        # "which four" is the half a reader has to be able to check.
-        for name, job in (("agent-implement.yml", "implement"),
-                          ("agent-fix.yml", "fix"),
-                          ("agent-review.yml", "review"),
-                          ("agent-conflicts.yml", "resolve")):
-            self.assertEqual(depths[name], [(job, 0)],
-                             f"{name}'s stage checkout is not full-depth")
+        # The whole mapping against one literal rather than seven per-key
+        # readings of it, so a failure names the row that moved instead of only
+        # which key, and so a tenth checkout -- a new workflow, or a second
+        # `actions/checkout` in one that has one -- is a failure with them. That
+        # is what a re-copy of a template adding `fetch-depth: 0` to a stage this
+        # suite had never heard of would produce, and it is the case the table in
+        # `docs/findings/history-checkout-claims.md` would need a tenth row for.
+        derived, expected = checkout_triples(str(REPO))
+        self.assertEqual(
+            derived, expected,
+            "a committed checkout's (job, depth, stated) triple is not the one "
+            "the table in docs/findings/history-checkout-claims.md and the "
+            "paragraph in docs/findings.md §86 say it is")
 
     def test_the_report_names_the_reader_that_put_each_job_on_the_list(self):
         out = io.StringIO()
@@ -540,6 +583,100 @@ class CommittedTreeTests(unittest.TestCase):
         for name in ("ci.yml / gates", "ci.yml / workflows",
                      "claude.yml / claude", "agent-plan.yml / plan"):
             self.assertIn(name, text)
+
+
+class TheTwoEdits(ScratchTree):
+    """The two edits the table exists to object to, on a copy of the workflows.
+
+    A scratch root, because neither edit can be made to the committed workflows
+    from this branch: the push token has no `workflow` scope, and the point is
+    the suite's reaction rather than the workflows' new contents. `load_workflows`
+    reads only `.github/workflows/` and `report()` degrades to silence on absent
+    prose, so a workflows-only root is all any of this needs.
+
+    **The control is watching the committed assertion, not a second copy of it.**
+    Both halves come from `checkout_triples`, the same helper the committed case
+    compares with, and the copy is asserted to hold the table before either edit
+    is applied -- a scratch tree that did not would make both edits below pass
+    for the wrong reason, which is the failure this suite's own docstring names
+    twice over and the reason the stale sentences up there are pasted verbatim.
+    """
+
+    def copy_workflows(self):
+        """The committed workflows into the scratch root, unchanged."""
+        source = os.path.join(REPO, ".github", "workflows")
+        for name in sorted(os.listdir(source)):
+            if name.endswith(".yml"):
+                with open(os.path.join(source, name), encoding="utf-8") as handle:
+                    text = handle.read()
+                self.put(os.path.join(".github", "workflows", name), text)
+
+    def edit(self, rel, old, new):
+        """Replace `old` with `new` in `rel` under the scratch root, once.
+
+        The refusal is the point. An anchor that has stopped being unique would
+        otherwise leave the file either alone or changed somewhere the case does
+        not name, and a mutation that moved nothing reds nothing -- which reads
+        exactly like a table that does not notice the edit.
+        """
+        path = os.path.join(self.root, rel)
+        with open(path, encoding="utf-8") as handle:
+            text = handle.read()
+        self.assertEqual(text.count(old), 1,
+                         f"the anchor this case edits {rel} with is not unique "
+                         f"there, so the edit would not be the one it names")
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write(text.replace(old, new))
+
+    def test_the_table_turns_red_on_each_of_the_two_edits_it_exists_for(self):
+        # Each is one of the two published sentences going false with nothing
+        # moving to contradict it: `plan` joining the four full-depth stages the
+        # retraction was about, and `claude.yml` losing the only depth in these
+        # workflows that a step *states* rather than inherits. Neither job runs a
+        # history reader, so `depth_problems()` puts no constraint on either and
+        # the table is the only thing that objects -- which is why the assertion
+        # is re-run here rather than a check of the tool's own verdicts.
+        #
+        # The last element of each case is what the edit should have produced,
+        # asserted positively: a mutation that landed under the wrong job, or one
+        # that broke the YAML and dropped the file out of the derivation
+        # altogether, would redden the table too, and for a reason that has
+        # nothing to do with the claim.
+        edits = (
+            ("agent-plan.yml's plan job takes a full-depth checkout",
+             ".github/workflows/agent-plan.yml",
+             "        with:\n          persist-credentials: false\n",
+             "        with:\n          fetch-depth: 0\n"
+             "          persist-credentials: false\n",
+             ("agent-plan.yml", [("plan", 0, True)])),
+            ("claude.yml's stated fetch-depth: 1 goes away",
+             ".github/workflows/claude.yml",
+             "        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4\n"
+             "        with:\n          fetch-depth: 1\n",
+             "        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4\n"
+             "        with:\n",
+             ("claude.yml", [("claude", 1, False)])),
+        )
+        self.copy_workflows()
+        derived, expected = checkout_triples(self.root)
+        self.assertEqual(
+            derived, expected,
+            "an unmodified copy of the committed workflows does not hold the "
+            "table, so every edit below would pass for the wrong reason")
+        for name, rel, old, new, row in edits:
+            with self.subTest(edit=name):
+                # A fresh copy per edit, so the two do not compose and a failure
+                # says which one of them the table let past.
+                self.copy_workflows()
+                self.edit(rel, old, new)
+                derived, expected = checkout_triples(self.root)
+                self.assertEqual(derived.get(row[0]), row[1],
+                                 f"the edit did not land where it says it did: "
+                                 f"{derived.get(row[0])}")
+                self.assertNotEqual(
+                    derived, expected,
+                    f"the table still holds after {name}, which is the edit the "
+                    f"committed case above cannot see and this one exists for")
 
 
 if __name__ == '__main__':

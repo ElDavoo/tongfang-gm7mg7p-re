@@ -11501,6 +11501,28 @@ decision but that nothing compared either copy against the workflows. The
 checker is that comparison. **Not in any gate**, for the reason
 `tools/test_readme_suite_table.py` is not either.
 
+**What the suite behind it held, which is now all nine rows and the `stated`
+column with them (#1035).** `ec/tools/test_check_history_checkouts.py` asserted
+seven of the nine depths by value — `ci.yml` and `claude.yml` as `(job, depth)`
+pairs and the four agent stages each against its own literal — and left three
+rows unheld: `agent-plan.yml`/`plan`, whose only appearance was a substring in a
+report-printing case that any depth and any step name satisfies;
+`agent-followups.yml`/`followups`, in no assertion at all; and the `stated?`
+column above, which no committed case read, since both cases that assert `stated`
+run on synthetic trees. The case now compares the whole
+`(job, depth, stated)` mapping against one literal, so all nine are held by value
+and a tenth checkout turns it red too, and a control copies the committed
+workflows into a scratch root to show the two edits this section's sentences do
+not survive — `plan` taking a `fetch-depth: 0`, and the stated `fetch-depth: 1`
+going away — each turning the committed assertion red. **The second is why the
+third column is not a restatement of the second: `claude.yml` losing its line
+leaves its depth at 1**, so a suite holding `(job, depth)` alone would have
+stayed green while the table's `stated?` column and the paragraph above both went
+false. Neither job runs a history reader, so the tool's own verdicts are unmoved
+by both edits — the table is the only thing that objects, and whoever makes
+either edit updates it and the sentences in the same change. Write-up:
+[`committed-checkout-triples-held.md`](findings/committed-checkout-triples-held.md).
+
 ## 87. The `XDATA_0860` note's six live pointers are repointed, and the vocabulary that would have held them is measured and kept (2026-09-26, issue #870)
 
 The write-up is

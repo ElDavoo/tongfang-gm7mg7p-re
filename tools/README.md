@@ -11,7 +11,7 @@ bash tools/run-tests.sh
 
 Every `test_*.py` under the repository, found by `find` — not a hardcoded list,
 so a suite in a directory that does not exist yet is picked up by having its
-file committed. **There are forty-three today, 1307 tests in all** — both figures
+file committed. **There are forty-three today, 1309 tests in all** — both figures
 *(Superseded at the `#845` × `#974` merge, and **both sides of that merge moved
 a figure, which no merge earlier in this run did**: `origin/main` at `0daac768`
 (#974's) reads **`41 suite(s) run, 1271 tests`** and the merged tree read
@@ -70,6 +70,67 @@ for the `test_xdata_cluster_names.py` claim this file records moved `:341` →
 the row itself now says in its verdict cell, in the established style. **The `106`
 that suite's own row and that suite's docstring superseded at #778's merge is
 left as it stands**; it is not this step's figure and no note here revises it.)*
+*(Superseded a fourth time, by the `#1034` × `#1035` merge, and **this is the
+first supersession in this run whose step is one case on a suite both sides
+already had in the base**: `origin/main` at `fe92940a` (#1034's) reads
+**`43 suite(s) run, 1307 tests`** and the merged tree reads
+**`43 suite(s) run, 1308 tests`**, the step being #1034's six cases *and*
+#1035's one, both on `ec/tools/test_check_history_checkouts.py` and nothing
+else, so `1307 + 1 = 1308` and `forty-three` is still unchanged by it. The two
+sides touched that one suite from opposite ends and neither side's figure is
+the merged tree's: #1034's `1307` counted six cases against a base of `1301`
+and #1035's `1301` predates them, so **the step is the sum of the two and
+neither branch's arithmetic is a reading of this tree** — which is what the
+`§4a-4d` rule above is for, and why all three figures stay written where they
+are. **Every figure here is measured by running the runner on the tree it is
+written about** and not differenced, on a working tree whose clone is full —
+`git rev-parse --is-shallow-repository` answers *false* — so the three cases
+`test_measure_index_repair_visibility.py` skips on a shallow one did run.
+**The red set is unchanged, pre-existing, and neither side caused it or fixed
+it**: `ec/tools/test_check_cluster_citations.py` alone, on the same `:220` of
+the same #822 file, and it fails identically on a pristine
+`git archive origin/main` extraction. **This note cost an eleventh
+re-registration of this file's own pin**: the row in
+[`../docs/findings/test-line-pin-census.md`](../docs/findings/test-line-pin-census.md)
+for the `test_xdata_cluster_names.py` claim this file records moved `:370` →
+`:399` under it, by a note about a test total and not by anything to do with
+that claim — **one move and not the pair #1034's cost**, because the shift this
+note records was written correct the first time rather than corrected beside
+itself, so nothing here moved the pin twice. **No pin was added, so the
+reconciled count did not move**: 107 rows answer 107 records as they did
+before.)*
+*(Superseded a fifth time, by the `#1034` × `#1035` × `#1038` merge, and **the
+reason this step is not the note above's is a `main` that has moved past the
+pair both sides of it name**: `origin/main` at `8c51e6ed` (#1038's) reads
+**`43 suite(s) run, 1308 tests`** and `1004` from
+`python3 -m unittest discover -s ec/tools`, and this tree reads
+**`43 suite(s) run, 1309 tests`** and `1005` from the same command, the step
+being #1035's one case on `ec/tools/test_check_history_checkouts.py` and nothing
+else, so `1308 + 1 = 1309` and `forty-three` is still unchanged by it. **The two
+`1308`s are two different trees and the agreement is a coincidence rather than a
+reading**, which is the one shape these notes have not carried yet and is worth
+naming: #1038 added a case to `ec/tools/test_check_citation_lines.py` and did
+not re-transcribe the totals, so **`main` measures `1308` while its own copy of
+this file still reads `1307`** — and #1035's branch reached the same `1308` by
+another route, off the `1307` #1034 left. **Neither figure is this tree's** and
+the sum is, per [`../docs/findings.md`](../docs/findings.md) §4a-4d, so the `1308`
+the note above wrote stays written where it is — true of the tree it was measured
+on, and not this tree's by arithmetic. **Every figure here is
+measured by running the runner on the tree it is written about** and not
+differenced, the reason the notes above give, on a working tree whose clone is
+full — `git rev-parse --is-shallow-repository` answers *false* — so the three
+cases `test_measure_index_repair_visibility.py` skips on a shallow one did run.
+**The red set is unchanged, pre-existing, and no side of this merge caused it or
+fixed it**: `ec/tools/test_check_cluster_citations.py` alone, on the same `:220`
+of the same #822 file, and it fails identically on a pristine `origin/main`
+worktree that reads `1308` too — the two readings differing by the one case
+under test and by nothing else. **This note cost a twelfth re-registration of
+this file's own pin**: the row in
+[`../docs/findings/test-line-pin-census.md`](../docs/findings/test-line-pin-census.md)
+for the `test_xdata_cluster_names.py` claim this file records moved `:399` →
+`:431` under it, by a note about a test total and not by anything to do with that
+claim. **No pin was added, so the reconciled count did not move**: 107 rows
+answer 107 records as they did before.)*
 *(The `1161` this sentence carried until #794, the `1165` it carried on #794's
 own branch, the `1168` it carried at the `#962` × `#794` merge, the `1180` the
 #979 branch proposed, the `1182` the #974 branch proposed beside it, the `1187`
@@ -2211,28 +2272,38 @@ note's rule applies from the other direction. **The base this note measures
 from is `5881153d` (#845's), where the thirty-fourth's was `0daac768`, and
 that is the whole difference between the two steps.**)*
 
-**The runner reads `43 suite(s) run, 1307 tests; one or more FAILED`, and
-`python3 -m unittest discover -s ec/tools` reads `1003`** — both re-run on this
+**The runner reads `43 suite(s) run, 1309 tests; one or more FAILED`, and
+`python3 -m unittest discover -s ec/tools` reads `1005`** — both re-run on this
 tree, both measured in a real `git worktree` rather than differenced, because
 `test_measure_index_repair_visibility.py` skips three cases where the clone is
-shallow and a `git archive` extraction is exactly that. **`1301 + 6 = 1307` and
-`997 + 6 = 1003`**, the six being #1034's cases on
-`ec/tools/test_check_history_checkouts.py` and nothing else, against #1009's
+shallow and a `git archive` extraction is exactly that. **`1301 + 8 = 1309` and
+`997 + 8 = 1005`**, the eight being #1034's six cases and #1035's one, both on
+`ec/tools/test_check_history_checkouts.py`, and #1038's one on
+`ec/tools/test_check_citation_lines.py`, and nothing else, against #1009's
 `1277 + 24 = 1301` and `973 + 24 = 997`, whose twenty-four were that merge's one
 new suite. **The suite count does not move at this step** — it is
 **`42` → `43` and that step is #1009's alone**, #845's suite having been in the
-base this note measures from rather than beside it, and #1034's six cases being
-in a suite that was already counted — the one-sidedness the twenty-second and
-twenty-third notes record in the other direction, and why
-`test_readme_suite_table.py`'s set check needed no correction on any of the three
-sides. **The `1301` and the `997` this sentence carried until #1034 stay written
-in the parenthetical above**, true of the tree they were measured on, per
-§4a-4d, as do the `1295` and the `991` its branch measured and the `1288` — whose
+base this note measures from rather than beside it, and all three changes' cases
+being in suites that were already counted — the one-sidedness
+the twenty-second and twenty-third notes record in the other direction, and why
+`test_readme_suite_table.py`'s set check needed no correction on any of the five
+sides. **This step has three changes in it and no two of them touch the same
+suite**, so **no one of them's arithmetic is a reading of this tree** — #1034's
+`1307` counted six against a base of `1301`, #1035's own branch read `1301`
+before those six existed, and #1038's `1308` counted one against the `1307`
+#1034 left; the sum is the measurement and all three figures are left written
+above, each true of the tree it was measured on, per §4a-4d. **The `1301` and
+the `997` this sentence carried until #1034 stay written
+in the parenthetical above**, and so do the `1308` and the `1004` it carried at
+the `#1034` × `#1035` merge, now in that merge's own note; as do the `1295` and
+the `991` its branch measured
+and the `1288` — whose
 commit, `a9b3b90c`, **is not an object in this repository at all** (`git
 cat-file -t a9b3b90c` answers *Not a valid object name*), so that figure is a
 record rather than a reading anyone can re-run. **The red set is unchanged and
 pre-existing**: `ec/tools/test_check_cluster_citations.py` alone, on the same
-`:220` of the same #822 file, and #1034 neither caused it nor fixes it.
+`:220` of the same #822 file, and neither #1034, #1035 nor #1038, nor any merge
+of them, caused it or fixes it.
 
 **The `tools/README.md` row in the per-pin table moved with the sentence rather
 than with a note, and this merge's step came out of the sentence's own
@@ -2246,7 +2317,7 @@ classes 0** on the merged tree, measured rather than derived.
 
 **The census and the by-cited-file axis are re-run rather than carried.**
 `census_test_line_pins.py` reads **107 pins in 29 files, 80 spellings, 59
-targets, 75 resolves against 32 declined, the `0/15/22/5/33` split, over `166`
+targets, 75 resolves against 32 declined, the `0/15/22/5/33` split, over `170`
 markdown files read and `43` test files**; and
 `check_pin_table_by_cited_file.py` reads **43 indexed / 12 named / 31 named by
 none**. **Its branch measured `42` / `12` / `30`, and the merged tree differs on
@@ -2258,7 +2329,17 @@ before. **The tail comes to the same `31` the thirty-fourth arrived at by a
 different route**: there by adding a suite, here by adding a suite and a
 crossing. `ec/tools/test_check_pin_table_by_cited_file.py`'s
 asserts are re-set to the measured triple rather than argued, with all three
-superseded ones left written above them.
+superseded ones left written above them. **The `166` markdown files this
+paragraph carried until this merge is the one figure in it that was a record
+rather than a reading, and it is left written only in the sense that every other
+superseded figure here is** — it had already stopped being true of `main` before
+this merge, and nothing in the tree turned red, because the census's own count
+of the population is a by-product of what it reports and no assertion holds it.
+`origin/main` at `8c51e6ed` reads `169` and this tree reads `170`, the step being
+this merge's own two new write-ups — #1038's
+`xdata-0860-note-live-pointers.md` and #1035's
+`committed-checkout-triples-held.md` — so **the `170` is measured and the `166`
+was correct of a tree none of this run has**.
 
 **The numbering moved a ninth time, and `main`'s is the one that does not
 move.** **§84** is #974's summary, landed by `0daac768` (whose subject line
