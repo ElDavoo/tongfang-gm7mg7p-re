@@ -2208,17 +2208,27 @@ every merged-tree note in this file sits below the pin.
 **And the reason this note is longer than a re-derivation is that this branch
 measured the totals line failing at its own job.** Deleting either of the two
 guards `walk_why()` ends on, in a copy of the tree, and re-running this runner
-over `ec/tools`, moves the **red set** — from one suite to two with the bounds
-guard gone, and to three with the `d[i] == MOV_DPTR` guard gone — and moves the
-**totals line by nothing at all**. All three runs print the byte-identical
-`29 suite(s) run, 960 tests; one or more FAILED`, because the runner counts
+over `ec/tools`, moves the **red set** — from one suite to three with the bounds
+guard gone (`ec/tools/test_check_cluster_citations.py`,
+`ec/tools/test_trace_xdata_refs.py` and `ec/tools/test_walk_budget_census.py`),
+and to four with the `d[i] == MOV_DPTR` guard gone (those plus
+`ec/tools/test_check_site_census.py`) — and moves the **totals line by nothing
+at all**. All three runs print the byte-identical
+`30 suite(s) run, 973 tests; one or more FAILED`, because the runner counts
 tests *run* and a suite that goes red, or an `IndexError` that escapes a case
-before its assertion runs, has not changed how much of it ran. That is the
+before its assertion runs, has not changed how much of it ran. Those three
+figures are the merged tree's own, re-derived here for the same reason the
+`42`/`1277`/`973` above it is: a reader of this note is entitled to one tree's
+numbers rather than a mixture, and
+[`../docs/findings/walk-bounds-guard-pinned.md`](../docs/findings/walk-bounds-guard-pinned.md)
+reports the same measurement taken on two earlier trees (`960` tests at
+`99c01938`, `966` with the new suite added to it), where the totals line is
+likewise unmoved and the red set goes one to two and one to three. That is the
 paragraph above's standing ("the totals are not a pass and never were") at its
-sharpest in this tree, and it is recorded here rather than only in
-`../docs/findings/walk-bounds-guard-pinned.md` because this is the file a
-reader watches the number in. **A reader watching this sentence to see whether
-a tree is green is watching the wrong thing**; the red set is the verdict, and
+sharpest in this tree, and it is recorded here rather than only in that page
+because this is the file a reader watches the number in. **A reader watching
+this sentence to see whether a tree is green is watching the wrong thing**; the
+red set is the verdict, and
 [`../docs/findings/runner-red-suite-set.md`](../docs/findings/runner-red-suite-set.md)
 is the page that argues why a total is a property of a merge rather than of any
 suite.*

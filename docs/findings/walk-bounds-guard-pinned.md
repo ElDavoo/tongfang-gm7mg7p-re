@@ -196,7 +196,10 @@ if `max_insns` were ever replaced by `len(d)`.
 The three runs above are the tree **as committed at `99c01938`**, which is the
 measurement the issue's claim has to be re-taken against and the one this
 page reports. The two that decide whether the new suite is worth anything are
-the same two mutations on a tree that carries it:
+the same two mutations on `99c01938` **plus this PR's
+`ec/tools/test_trace_xdata_refs.py`** — a tree that is neither the one above
+nor the one this branch merges, which is why its totals line reads `966` rather
+than either `960` or the `973` the merged tree gives:
 
 | | `bash tools/run-tests.sh ec/tools` last line | `ec/tools/test_trace_xdata_refs.py` | the fifteen-address `--check` |
 |---|---|---|---|
@@ -217,12 +220,19 @@ exists to make hard to forget, and
 [`../../tools/README.md`](../../tools/README.md)'s thirty-fourth merged-tree
 note records it beside the figures it did not move.
 
-What the load-bearing difference is, in one line: `test_walk_budget_census.py`
-goes red as **two `ERROR`s** — an `IndexError` escaping a case before its
-assertion runs — while the new suite goes red as **one `FAILURE` and four
-`ERROR`s whose own assertions name the guard**. Neither is sufficient on its
-own. The first is invisible to anyone not already running that suite; the
-second says what it is for.
+What the load-bearing difference is, in one line: **coverage and naming, not
+failure shape.** Four of the new suite's five red cases are the same escaping
+`IndexError` `test_walk_budget_census.py` produces, landing on the same
+sibling line — so the *shape* is not the contrast this page can argue from,
+and the 4-errors-1-failure split is a fact about one run rather than a
+counterpart to that suite's two. What is different: the census suite holds the
+terminator token and sees the bounds guard's loss only as a traceback naming the
+*other* guard, while the new suite asserts **which instructions came back**
+beside the reason and holds **both** disjuncts — `d[i] == MOV_DPTR` ending a
+walk, and the same fixture with filler where the reload was running on to
+`budget_end(8)` — so each case's name and comment say which contract it holds.
+A traceback is invisible to anyone not already running the suite that raised
+it, and a case's name is not.
 
 ## Two things in the census's file that this tree does not reproduce
 
