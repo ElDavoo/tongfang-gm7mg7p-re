@@ -11,13 +11,14 @@ bash tools/run-tests.sh
 
 Every `test_*.py` under the repository, found by `find` — not a hardcoded list,
 so a suite in a directory that does not exist yet is picked up by having its
-file committed. **There are forty-one today, 1264 tests in all** — both figures
+file committed. **There are forty-two today, 1270 tests in all** — both figures
 *(The `1161` this sentence carried until #794, the `1165` it carried on #794's
 own branch, the `1168` it carried at the `#962` × `#794` merge, the `1180` the
 #979 branch proposed, the `1187` #780's own branch carried, the `1211` the
 `#979` × `#985` merge re-derived it to, the `1221` and `1233` the two sides
-of one merge each measured on their own tree, and the `1243` the
-`#979` × `#973` × `#780` merge re-derived it to, are all left visible per
+of one merge each measured on their own tree, the `1243` the
+`#979` × `#973` × `#780` merge re-derived it to, and the `1264` it carried on
+#978's own, are all left visible per
 [`../docs/findings.md`](../docs/findings.md) §4a-4d, each true of the tree it
 was measured on: `1161 + 4 = 1165` and `1164 + 4 = 1168` are the four cases
 `ec/tools/test_check_testdata_row_claims.py` gained, `1177 + 31 + 3 + 10 =
@@ -42,6 +43,17 @@ is a third single-suite step and not a fourth** — #985's
 `ec/tools/test_disasm8051_oracle.py` and #973's `ec/tools/test_check_capture_names.py`
 were the first two, and #780's ten above added cases to a suite it already
 counted, which is why that merge's step left the `40` where it was.
+**`1264 + 6 = 1270` is this branch's own**, the six being #845's new
+`ec/tools/test_trace_xdata_refs.py` and nothing else, so the test count moved
+with the suite count for the same reason #978's step above did, and both
+figures are a re-derivation by running the runner here rather than the
+addition this branch could have made: `960 + 6 = 966` is the same six under
+`python3 -m unittest discover -s ec/tools`, over thirty suites rather than the
+twenty-nine that `960` was measured on. **The suite count's step is `41` → `42`,
+and it is a fourth single-suite step** — #985's, #973's and #978's were the
+first three, and as each of those was, this one lands a suite that no write-up
+cites by line, so nothing here is a pin into it and the 106 the pin census
+counts is unmoved.
 [`disasm8051-oracle-from-the-annotations.md`](../docs/findings/disasm8051-oracle-from-the-annotations.md)
 is #985's write-up. **A merge has now added a suite where the steps before it
 added none, and both sides of one did it**: `main` gained a commit after #780
@@ -59,9 +71,10 @@ above is re-derived by
 running the runner on the tree it is written on — see the twenty-second note
 below for the `#979` × `#985` merge, the twenty-third for the `#979` × `#973`
 one, the twenty-fourth for the `#929` × `#962` × `#794` × `#780` × `#985` ×
-`#979` merge the branch carried, and the twenty-fifth for the `#979` × `#973` ×
-`#780` merge this sentence is written in, which is the first of the four that
-carries a figure for a tree none of the three above measured.)*
+`#979` merge the branch carried, the twenty-fifth for the `#979` × `#973` ×
+`#780` merge that sentence is written in, which is the first of the four that
+carries a figure for a tree none of the three above measured, and the
+twenty-eighth for this branch's own `#845` step.)*
 are what the runner below prints, one line per suite and a total on its last
 line — and each is a `unittest` suite standing in for a tool's own behaviour.
 *(Corrected at the `#929` × `#942` merge, by running the runner as this sentence
@@ -1546,6 +1559,50 @@ joined it for the length of this merge and left it when the four rows were
 re-registered. Named by suite and by count rather than by line here, for the
 reason the notes above give.*
 
+*(Twenty-eighth merged-tree note, 2026-09-26, issue #845. **The suite totals
+move on this branch for the fourth single-suite step in a row**, and the
+figures are this tree's, re-derived from a `bash tools/run-tests.sh` on it:
+**forty-two suites and 1270 tests**, the new one being
+`ec/tools/test_trace_xdata_refs.py` at 6 — `1264 + 6 = 1270`, and `960 + 6 =
+966` is the same six under `python3 -m unittest discover -s ec/tools` over
+thirty suites. The last line reads `42 suite(s) run, 1270 tests; one or more
+FAILED` with the runner exiting 1, and the red one is **still only
+`ec/tools/test_check_cluster_citations.py`**, on the same `:220` of the same
+#822 file, which reproduces on a clean `origin/main` and is #830's. The
+twenty-seventh's figures are left reading as the record of that tree, and the
+`41` and `1264` this sentence carried until now stay in the parenthetical above
+beside them, per [`../docs/findings.md`](../docs/findings.md) §4a-4d.)*
+
+**A second pin in the tree moved with the suite, and it is the one a reader of
+this file is most likely to be tracking.** #845 adds a `test_*.py` to
+`ec/tools/`, and `suites()` in `ec/tools/census_test_line_pins.py` indexes
+every one of them, so `ec/tools/test_check_pin_table_by_cited_file.py`'s
+committed index figures go **41 / 11 / 30 → 42 / 11 / 31** — the tail takes the
+new suite, the eleven named by a pin do not move, and the pin count stays
+**106** because #845's write-up names the six cases by class and method and the
+suite *by path*, never as `test_trace_xdata_refs.py:NNN`, for exactly the reason
+#811's and #973's and #978's notes above give. That suite's own asserts are
+re-set to the measured value rather than argued, with the superseded triple left
+written above them in the same shape the sixth through tenth steps left theirs.*
+
+**And the reason this note is longer than a re-derivation is that this branch
+measured the totals line failing at its own job.** Deleting either of the two
+guards `walk_why()` ends on, in a copy of the tree, and re-running this runner
+over `ec/tools`, moves the **red set** — from one suite to two with the bounds
+guard gone, and to three with the `d[i] == MOV_DPTR` guard gone — and moves the
+**totals line by nothing at all**. All three runs print the byte-identical
+`29 suite(s) run, 960 tests; one or more FAILED`, because the runner counts
+tests *run* and a suite that goes red, or an `IndexError` that escapes a case
+before its assertion runs, has not changed how much of it ran. That is the
+paragraph above's standing ("the totals are not a pass and never were") at its
+sharpest in this tree, and it is recorded here rather than only in
+`../docs/findings/walk-bounds-guard-pinned.md` because this is the file a
+reader watches the number in. **A reader watching this sentence to see whether
+a tree is green is watching the wrong thing**; the red set is the verdict, and
+[`../docs/findings/runner-red-suite-set.md`](../docs/findings/runner-red-suite-set.md)
+is the page that argues why a total is a property of a merge rather than of any
+suite.*
+
 | suite | what it stands in for |
 |---|---|
 | `ec/tools/test_bank1_e582_framing.py` | The byte facts behind the issue #680 reading that the `bank1,0xE582` entry is reached through 0xE580 and the census row at 0x9F03 is a displacement byte: the push/lcall/pop save-restore pair across the 0xE57E cut, `converges_from` on both halves of each site, and the `80 02` at 0x9F02 read as a `sjmp` whose displacement's landing address is the committed `9F04.asm` first instruction — asserted against the image rather than by re-running the scan that wrote the census, so a regenerated table that disagreed would fail rather than pass on a stale pair, plus that both annotation comments still carry the clause their `CORRECTION` replaces, that no entry is seeded at 0xE580, and that the phantom census row is deliberately left in place |
@@ -1572,6 +1629,7 @@ reason the notes above give.*
 | `ec/tools/test_grade_timer_sweep.py` | `ec/tools/grade_timer_sweep.py`, the grader of the `0x8001` counter-sweep capture: its before/after-return lists re-read from the firmware image, the `0x06D6` period and the 10x rate ratio on a constructed clean capture, a flat capture reported as held rather than absent, a second writer flagged, an unresolved step warned, and a suspend gap left out of the figures and counted mod 10 |
 | `ec/tools/test_group_functions.py` | `ec/tools/group_functions.py`'s block assignment, and at its centre the refusal that makes the tool safe: nothing in an `lcall`/`ljmp` operand names a bank, so `bank0->bank1` and `bank0->bank0` are the same three bytes, and the decisive case is a same-region call and a cross-region call that are byte-identical and differ only in which bank the target happens to exist in — a tool that merged across one anyway would answer with a smaller, tidier, wrong number and nothing in its own output would say so — plus the `group_basis` vocabulary (a seed from `type`/vector/module outranking a cluster, an off-list basis refused), the cross-bank group refusal, and the committed group files passing their own `--check` |
 | `ec/tools/test_inc_dptr_sites.py` | `ec/tools/inc_dptr_sites.py`'s half-split of a pair accessor: the 107 addresses `xdata_register_map.py`'s pair pass reaches only as the `inc DPTR` half, their 73 / 34 cut and the 34's 7 entered / 27 not, the 73's own 71 with no `MOV DPTR` site in any image against 2 in the pd image only (a site in the pd image is another program's byte at the same address number, so it is not a second site), and §4.7's ten named addresses as the head of the 73 with `0x0364` as the eleventh §4.7 does not name — every figure re-derived by the tool's own `build()` against the committed firmware and the committed decompiled tree rather than read off `xdata-inc-dptr-only.csv`, so a CSV edited to match a stale claim fails rather than satisfying the suite, and the committed table held against a fresh generation as the one direction a hand-edited file can fail; the census's *shape* rather than its figures (`census_refs` closing on the bucket columns, the 73 `pair-literal`-only and main-EC-only); the ten confirmed by a second entry point beside the tool's own table, a byte scan of the image and a real `main()` run; `0x0420` as the counter-example keeping the rule off the spelling of a literal first argument, the same hex reaching `add_full_product_to_dptr` whose committed `.asm` is `mul AB / add A,DPL / addc A,DPH / ret` with no `movx` — so the address space is a property of the callee's body — beside the positive half, that every accessor the table names still dereferences XDATA; and the refusal that keeps a tool keyed to three committed CSVs harmless, from both sides: `open` replaced by a tripwire raising on any write mode for every mode, an unidentified pd marker refused rather than reported as a 73 / 0 that would read as a finding, and the module's own AST walked for a write vector no case runs |
+| `ec/tools/test_trace_xdata_refs.py` | `ec/tools/trace_xdata_refs.py`'s `walk()`/`walk_why()` bounds contract, on hand-built `common`-region buffers and reading no firmware image — the half `ec/tools/test_walk_budget_census.py` does not hold, which is *which instructions come back* where that suite holds *which guard fired*, so a walk that decoded wrongly for the right reason fails this one and passes that one, and the other way round. What it asserts: an over-ask yields what fitted, by offset and raw bytes rather than by mnemonic text, because the mnemonic table is `disasm8051.py`'s subject and `test_disasm8051.py`'s and a case coupled to its wording would go red for a change that is not a bounds defect; the same walk says the buffer ended it, kept as its own case so "it stopped" is attributable to the bounds check rather than to the budget or a flow opcode; `d[i] == MOV_DPTR` still ends a walk **and** the same fixture with the reload replaced by filler runs on to `budget_end(8)`, so neither line of the guard can go; and the loop's own bound is `max_insns` and not `len(d)`, one case and two fixtures holding the same bytes at 0x40 and at 7 bytes. Both call sites are then driven over a 7-byte fixture — `csv_table()`, whose `window` cell is asserted against what `walk_why()` returns rather than against a spelling and whose `terminator` cell can only come from a caller that has the reason, and `main()` as a subprocess over a file in a `tempfile.TemporaryDirectory()`, pinning exit 0, the printed window, the `window ended: end of buffer` line, and the stderr note a buffer with no PD marker produces, which is what keeps `common` in that output from reading as a claim about the real dump. Deleting either guard turns this suite red; the write-up is [`../docs/findings/walk-bounds-guard-pinned.md`](../docs/findings/walk-bounds-guard-pinned.md) |
 | `ec/tools/test_walk_branch_arms.py` | `ec/tools/walk_branch_arms.py`'s direction classification, bounds, refusals, and negative-result wording |
 | `ec/tools/test_walk_budget_census.py` | `ec/tools/walk_budget_census.py` and the `trace_xdata_refs.walk_why()` it reports on: one hand-built byte fixture per terminator guard, each asserting the guard that fired *and* the one that did not, so a loop that swapped two guards cannot pass; that `walk()` still returns a bare list of triples and `classify()` still re-derives every committed table's `access` cell; that the terminator vocabulary is closed, so a sixth way to stop is refused rather than rendered into a cell `--check` would go green on; that the class A/B verdict reports `undecided` rather than picking a side when the `--extend` budget is too small to reach the access in question, which the committed data never exercises; the census `--check`'s exit code on the committed CSV, on a doctored one, and its refusal of a budget that CSV does not record; and the re-cut's own load-bearing claim, as a count over the pinned pre-change commit `e198fd9`'s copy of each table -- no `access` cell and no `window` cell changed, with the one pre-existing `disasm8051.py` mnemonic drift at `xdata-0400-045f-sites.csv` `0x11F16` named rather than left to be noticed, which is what the fifteen-address `0x086x` sweep reproducing its table byte for byte is the regression test for. The ref is a SHA rather than `HEAD` or `origin/main` because both of those hold the re-cut once this lands, and a baseline that already contains the change compares each table with itself and pins nothing; an unreadable baseline fails the test instead of skipping it, for the same reason |
 | `ec/tools/test_xdata_carry_notice.py` | which census a carry line is a claim about: `census_shape()` naming the flags that put a run's cluster ids off the committed pair the names file is anchored to — and refusing to name `--no-writer-axis`, which clusters as a default run does — `carry_advice()`'s committed clause pinned to the exact string the committed transcripts carry, and the two shapes' `print_carry` stderr asserted to differ in the overlap tails and nowhere else, so the `names:` tally and the tie line stay the mode-independent facts they are. In-process on a synthetic report: no census run, because the property is a function of the flags and not of the firmware |
