@@ -83,6 +83,14 @@ These candidates have separate denominators from --bases/--strides; body-only
 evidence is not an extra caller access. low8(x) = x & 0xFF; base-add carry is
 retained and every address wraps modulo 0x10000.
 
+Every walk here is bounded by the pd-image region, not only by its instruction
+count: walk_helper() and chain_from() take both ends of pd_bounds() and stop at
+0x30000 the way access_walk() does, so a run off the region end is a named stop
+rather than a listing of the 0xFF fill past it. Six other functions have always
+kept that `hi` for their own loops; the census of every function that discards
+it is in ../../docs/findings/pd-sites-address-range.md, and the decision this
+bound rests on in ../../docs/findings/count-bounded-walk-invariant.md.
+
 Read-only: it opens the firmware image for reading and writes nothing.
 
 Usage:
@@ -259,6 +267,10 @@ def check_site_addr(addr: int) -> None:
     ../../docs/findings/opcode-len-bounds-census.md row 10 declined to add. The
     instruction-boundary precondition beside it is not the tool's to make --
     no byte says where a routine's instructions begin.
+
+    Two modes call it and both take a caller's address: `--sites` through
+    site_rows() and `--helpers` through print_helpers(). The message is already
+    mode-neutral, which is why the function is not named for either.
     """
     lo, hi = pd_bounds()
     if 0 <= addr < hi - lo:
@@ -340,8 +352,16 @@ def walk_helper(d: bytes, entry: int, depth: int = 0, seen: frozenset = frozense
     them ('A'/'B' where the caller supplies it). `note` is empty when every
     byte from the entry to the `ret` was accounted for, and otherwise says
     which instruction the term model does not cover -- that row is
-    `unmodelled` and its listing is the whole of what is claimed about it."""
-    lo, _ = pd_bounds()
+    `unmodelled` and its listing is the whole of what is claimed about it.
+
+    A count bounds work, not the buffer: the region's end bounds the walk and
+    HELPER_MAX_INSNS stays the cap on a walk that never reaches it. Which end
+    ended the walk is said in both cases, because they are different claims."""
+    lo, hi = pd_bounds()
+    # The buffer as well as the region, so a short image ends the walk where it
+    # ends rather than raising from whichever read went first. On the committed
+    # image the region ends first and this changes nothing.
+    hi = min(hi, len(d))
     if entry in seen or depth > 3:
         return [], [], f"unmodelled: tail chain not followed past 0x{entry:04X}"
     seen = seen | {entry}
@@ -349,8 +369,17 @@ def walk_helper(d: bytes, entry: int, depth: int = 0, seen: frozenset = frozense
     a_sym, b_sym = UNKNOWN_A, UNKNOWN_B
     i = lo + entry
     for _ in range(HELPER_MAX_INSNS):
+        if not lo <= i < hi:
+            return terms, listing, (
+                f"unmodelled: walk left the {PD_REGION} at runtime "
+                f"0x{i - lo:04X}, its end at file 0x{hi:05X}")
         n, term = _match_template(d, i)
         if term and not note:
+            if i + n > hi:
+                return terms, listing, (
+                    f"unmodelled: the {n}-byte term template at runtime "
+                    f"0x{i - lo:04X} crosses the {PD_REGION} end at file "
+                    f"0x{hi:05X}")
             for j, raw, _ in _insns(d, i, n):
                 listing.append((j, raw))
             terms.append(term.format(a=a_sym, b=b_sym))
@@ -360,6 +389,10 @@ def walk_helper(d: bytes, entry: int, depth: int = 0, seen: frozenset = frozense
             i += n
             continue
         op = d[i]
+        if i + OPCODE_LEN[op] > hi:
+            return terms, listing, (
+                f"unmodelled: the instruction at runtime 0x{i - lo:04X} is cut "
+                f"by the {PD_REGION} end at file 0x{hi:05X}")
         here = i - lo
         raw = d[i:i + OPCODE_LEN[op]]
         listing.append((i, raw))
@@ -512,22 +545,38 @@ def chain_from(d: bytes, start: int, a_sym: str, b_sym: str, max_insns: int = 12
     there. DPTR survives a `movx` unchanged, so continuing is arithmetic and
     not a guess -- but for a base site the access is the end of what that base
     was loaded for, which is why it is off by default and only --sites, where
-    the caller named the address deliberately, turns it on."""
-    lo, _ = pd_bounds()
+    the caller named the address deliberately, turns it on.
+
+    The same bound as walk_helper(): `max_insns` is a budget on work and the
+    region end is the bound, so the stops read differently on purpose."""
+    lo, hi = pd_bounds()
+    hi = min(hi, len(d))
     helpers, terms = [], []
     i = start
     for _ in range(max_insns):
+        if not lo <= i < hi:
+            return helpers, terms, (
+                f"walk left the {PD_REGION} at runtime 0x{i - lo:04X}, its end "
+                f"at file 0x{hi:05X}")
         # An inline template, as opposed to one reached through a call: the
         # 0x07D0 sites of ../annotations/ec-0x07d0-sites.md 4 multiply in place
         # rather than calling 0x10BC, and stopping at their `mul ab` would
         # report no term for arithmetic the model does cover.
         n, term = _match_template(d, i)
         if term:
+            if i + n > hi:
+                return helpers, terms, (
+                    f"the {n}-byte term template at runtime 0x{i - lo:04X} "
+                    f"crosses the {PD_REGION} end at file 0x{hi:05X}")
             terms.append(term.format(a=a_sym, b=b_sym))
             a_sym, b_sym = UNKNOWN_A, UNKNOWN_B
             i += n
             continue
         op = d[i]
+        if i + OPCODE_LEN[op] > hi:
+            return helpers, terms, (
+                f"the instruction at runtime 0x{i - lo:04X} is cut by the "
+                f"{PD_REGION} end at file 0x{hi:05X}")
         raw = d[i:i + OPCODE_LEN[op]]
         here = i - lo
         if op in (MOVX_A_DPTR, MOVX_DPTR_A):
@@ -854,6 +903,10 @@ def print_helpers(d: bytes, entries=None) -> None:
               "../annotations/pd-xdata-overlap.md 3 and 5.2\n")
     else:
         print(f"{len(entries)} helper entry/entries named on the command line\n")
+        # Over the whole run first, as site_rows() does, so one bad entry in a
+        # multi-entry call is the diagnostic rather than a partial listing.
+        for entry in entries:
+            check_site_addr(entry)
     for entry in entries:
         terms, listing, note = walk_helper(d, entry)
         # Terms *and* a note is the ordinary case for a mid-routine entry that
@@ -1373,15 +1426,24 @@ def _csv_rows(path: str):
         return list(csv.DictReader(fh))
 
 
-def access_self_test(d, check):
-    lo, hi = pd_bounds()
+def fixture(chunks, end=None):
+    """Synthetic image for a walk that the committed one cannot exercise: a
+    `ret` fill over the region, truncated at runtime `end` when given, with
+    each `{runtime offset: hex bytes}` chunk written at that offset.
 
-    def fixture(chunks, end=None):
-        image = bytearray(b"\x22" * (hi if end is None else lo + end))
-        for off, text in chunks.items():
-            raw = bytes.fromhex(text)
-            image[lo + off:lo + off + len(raw)] = raw
-        return bytes(image)
+    `ret` is the fill because a walk that has not been pointed anywhere useful
+    should look finished rather than decode whatever follows it. `end` shortens
+    the *buffer* below the region, which the committed image never does."""
+    lo, hi = pd_bounds()
+    image = bytearray(b"\x22" * (hi if end is None else lo + end))
+    for off, text in chunks.items():
+        raw = bytes.fromhex(text)
+        image[lo + off:lo + off + len(raw)] = raw
+    return bytes(image)
+
+
+def access_self_test(d, check):
+    lo, _ = pd_bounds()
 
     rows = access_rows(d)
     check(access_totals(rows) == dict(constructions=653, accesses=428,
@@ -1702,6 +1764,55 @@ def self_test(fw_path: str) -> int:
               and f"0x{lo:05X}-0x{hi - 1:05X}" in msg,
               f"--sites 0x{addr:05X} is refused naming {PD_REGION} and both "
               f"ranges (got {msg!r})")
+    # The same argument, the other mode that takes one. 0x1FFE9 and 0x1FFFF
+    # raised IndexError from inside the decode before print_helpers() checked;
+    # 0x1FFE8, one below the first of them, exited 0 and listed 24 erased
+    # bytes. ../../docs/findings/count-bounded-walk-invariant.md has the run.
+    for entry in (0x1FFE9, 0x1FFFF):
+        try:
+            with redirect_stdout(io.StringIO()):
+                print_helpers(d, [entry])
+            msg = "<no refusal>"
+        except ValueError as exc:
+            msg = str(exc)
+        check(PD_REGION in msg and "0x0000-0xFFFF" in msg
+              and f"0x{lo:05X}-0x{hi - 1:05X}" in msg,
+              f"--helpers 0x{entry:05X} is refused naming {PD_REGION} and both "
+              f"ranges (got {msg!r})")
+
+    # A count bounds work, not the buffer: the region end bounds the walk and
+    # the count stays the cap. 0xFFFF is a legal address and the fill past the
+    # region is 0xFF, one byte per opcode, so a count-bounded walk listed 24
+    # lines here and 23 of them were the fill past the region's end.
+    _, top_walk, top_note = walk_helper(d, 0xFFFF)
+    check(len(top_walk) == 1 and top_walk[-1][0] == hi - 1
+          and top_note.startswith("unmodelled:") and f"0x{hi:05X}" in top_note,
+          f"--helpers 0xFFFF stops at the {PD_REGION} end, {len(top_walk)} "
+          f"listing line(s) at file 0x{top_walk[-1][0]:05X}, note {top_note!r}")
+    # chain_from() cannot be reached on the committed image: at 0xFFFF it
+    # stops on its first byte, an unmodelled `mov r7,a`, which is eight
+    # instructions short of the end. The fixture is SITE_WINDOW of `mov rN,a`
+    # at the top of the region -- one byte each, and modelled, so the chain
+    # steps over them -- and the walk starts eight in, which leaves the region
+    # end inside the 12-instruction budget. The 0xFF tail past the region is
+    # the committed image's own shape and the point of the fixture: a walk
+    # bounded by len(d) instead reads it, and reports `mov r7,a` at 0x10000.
+    run = fixture({0x10000 - SITE_WINDOW: "e8" * SITE_WINDOW}) + b"\xff" * 0x100
+    stopped = chain_from(run, lo + 0x10000 - 8, UNKNOWN_A, UNKNOWN_B)[2]
+    check(f"0x{hi:05X}" in stopped and not stopped.endswith("ended"),
+          f"chain_from stops at the {PD_REGION} end rather than at its budget "
+          f"(got {stopped!r})")
+    # The buffer is the bound too, and the committed image cannot show it: it
+    # carries 65536 bytes of 0xFF past the region, so only a truncated fixture
+    # reaches the clamp. Both walkers read past `hi` on one of these and raise.
+    short = fixture({0x1F0: "e8" * SITE_WINDOW}, end=0x200)
+    _, short_walk, short_note = walk_helper(short, 0x1F8)
+    check(short_walk[-1][0] == lo + 0x1FF and f"0x{lo + 0x200:05X}" in short_note,
+          f"walk_helper stops at the end of a short image, last line at file "
+          f"0x{short_walk[-1][0]:05X}, note {short_note!r}")
+    stopped = chain_from(short, lo + 0x1F8, UNKNOWN_A, UNKNOWN_B)[2]
+    check(f"0x{lo + 0x200:05X}" in stopped and not stopped.endswith("ended"),
+          f"chain_from stops at the end of a short image (got {stopped!r})")
 
     for entry, want in STRIDE_HELPER_TERMS.items():
         terms, _, _ = walk_helper(d, entry)
@@ -1846,7 +1957,10 @@ def main() -> int:
             else:
                 print_accesses(rows, span, idx >= 2)
     if args.helpers is not None:
-        print_helpers(d, [int(a, 16) for a in args.helpers] or None)
+        try:
+            print_helpers(d, [int(a, 16) for a in args.helpers] or None)
+        except ValueError as exc:
+            ap.error(str(exc))
     if bases_span is not None:
         print_bases(d, bases_span)
     if args.sites:
