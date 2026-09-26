@@ -376,6 +376,23 @@ line is what read them. `git worktree remove /tmp/xdata-old` ran after, and
   guard-off generation is written to scratch, nothing holds *its* key uniqueness
   between runs, and the *next* re-derivation is a file that does not exist yet.
   That is the whole reason the check is in the tool rather than in a note.
+  *(**Superseded at the #962 merge, in the second clause only.** "Nothing holds
+  *its* key uniqueness between runs" was true of the tree this was written on
+  and is not true of this one:
+  `test_xdata_cluster_names.py::TheGuardOffKeyDistinctness` now holds the
+  guard-off generation's `cluster_key` distinctness by a case in the default
+  `tools/run-tests.sh` sweep, with a negative control that holds it goes red on
+  a census with a duplicated key. The *first* clause is untouched and still
+  stands — the guard-off generation is still written to scratch, and the next
+  re-derivation is still a file that does not exist yet — and that difference
+  is the whole of what separates a census whose keys are held from one whose
+  keys are not. The `e169a0e4` pair remains unheld by anything;
+  [`xdata-guard-off-key-distinctness.md`](xdata-guard-off-key-distinctness.md)
+  §1 says why. Corrected rather than edited out per `../findings.md` §4a-4d,
+  and the same sentence is corrected in place in
+  [`xdata-moved-ranks-collision-scope.md`](xdata-moved-ranks-collision-scope.md)
+  §5 — two files carried it, and correcting one would have left the other
+  standing, which is the defect #253 was filed about.)*
 - **The fixture is not evidence about any census.** It is a synthetic
   four-row pair written by `--self-test`, and the keys in §2
   (`k000000000009`, `k000000000003`) resolve to no cluster in the committed

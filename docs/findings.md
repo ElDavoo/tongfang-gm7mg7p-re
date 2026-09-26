@@ -9862,3 +9862,64 @@ merged-tree note for the `:547`, the `536` staying written in the three notes
 above it there, and the sentence this section's claim sits in is left as written
 rather than edited, per §4a-4d — the correction belongs beside the number it
 corrects, and that number appears in four places rather than one.
+
+## 75. The guard-off generation's `cluster_key` distinctness had no case behind it, and three of the four censuses are behind one now (2026-09-26, issue #962)
+
+The write-up is
+[`xdata-guard-off-key-distinctness.md`](findings/xdata-guard-off-key-distinctness.md);
+this is the summary. #929 made the collision precondition visible at every view
+that re-keys a census, and the *producer* half of it reaches two of the four
+censuses a view can re-key: `TheContentKey` reads the committed census and
+`xdata_register_map.py --self-test` checks a fresh guard-on generation. Neither
+can be pointed at a guard-off census, because `--no-eq-guard` is refused
+together with `--check` and `--self-test` at `:4976-4978` and refused without
+scratch outputs at `:4985-4987` — a correct refusal, and one this change leaves
+where it is. That left the census `cause`'s rates divide by with nothing behind
+it, which is what `xdata-moved-ranks-collision-scope.md` §5 recorded as "nothing
+holds *its* key uniqueness between runs". **Three censuses are now held and one
+is not.** The fourth, the 430-row pair at `e169a0e4`, needs that commit's
+decompiled tree and is named as unheld in three places rather than counted
+toward the three. `keyed_by`'s docstring said two in a voice that read as all of
+them; it now names all four and says which.
+
+**`test_xdata_cluster_names.py::TheGuardOffKeyDistinctness` is a sibling class,
+not an eighth case in `TheGuardOffRegeneration`,** because §50 above calls that
+class's seventh case "a seventh case" and an eighth would falsify a sentence
+this change has no business touching. Three cases over the one `guard_off()`
+regeneration the module already caches: the hold case, the registers/clusters
+agreement `TheContentKey` holds for the committed pair, and the negative
+control. **The predicate is `xdata_moved_ranks.py`'s own `duplicate_keys()`**,
+reached by the same `importlib` route the module already uses for
+`xdata_register_map.py`, so the suite's check and the report's printed line
+cannot be two implementations. The failure message names the colliding keys
+*and the ranks carrying each* rather than a bare count.
+
+**No published figure moved.** All four rows of `xdata-moved-ranks-collision-scope.md`
+§4 come back — 439, 430, 439 and 445 rows, each over as many distinct
+`cluster_key` values, 0 collisions — and so do `366/64`, `315/124`,
+`71/266/23/40` and `366 - 315 = 51`. §4 of the new write-up prints the command
+that derives each row beside it, and the `git archive e169a0e4` extraction is
+checked rather than assumed: a guard-on generation from it reproduces that
+tree's 430-row census, which is how the archive is known to be the right input.
+
+**`test_check_cluster_citations` is red exactly as on the base** — 48 tests, one
+failure, #822's `xdata-cluster-names-guard-off-recipe.md:220` on `0x0464` and
+`0x0465` — and this change adds no disagreement to it. `xdata_moved_ranks.py
+--self-test` keeps its **53** checks and `xdata_register_map.py --check` and
+`--self-test` both still exit 0; the coverage belongs in the default sweep,
+which is the issue's point about #921. Nothing was read off a machine, no CSV
+was edited, and no gate was wired.
+
+**The per-pin table moved and was re-derived, and that is the cost worth
+naming.** Correcting `guard_off()`'s docstring shifted every class body below
+it, which moves where 25 registered `test_*.py:NNN` pins land. Their shape cells
+were re-derived from the census's own `--verbose` run, the published `5/19/10/6/34`
+landing-shape split moved to `0/16/22/5/31` as a consequence and both places that
+pin it were re-derived rather than lowered, and **eight verdicts were re-read** —
+the pins that moved off a `def test_` header or an assertion, which is why
+`test-line-pin-census.md`'s "the eleven that do not carry" is now nineteen. The
+citing prose is not repointed here, per that file's own §7; the repoints are
+named in the new write-up's §6. The read column (`53/19/2/32`), the headcounts
+(106 pins, 28 files, 79 spellings, 58 targets, 74 resolving, 32 declined) and
+the red set are all unchanged, which is what makes the shape the one column a
+line shift could move on its own.

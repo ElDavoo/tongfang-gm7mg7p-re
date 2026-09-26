@@ -714,6 +714,51 @@ names are still registered to `:197` — checked by running
 `test-line-pin-census.md` correction already counted, and the note above's
 `105` is the tree before it landed.
 
+*(Twentieth merged-tree note, 2026-09-26, issue #962. **The runner reads
+`38 suite(s) run, 1164 tests; one or more FAILED`, and
+`python3 -m unittest discover -s ec/tools` reads `860`** — the note above's
+`1161` and `857` plus the three cases this merge adds, and the suite count
+unmoved at `38` because `ec/tools/test_xdata_cluster_names.py` was already
+counted. **`test_xdata_cluster_names.py` is at `33` tests, from `30`:** the
+three are `TheGuardOffKeyDistinctness`, a new class holding the guard-off
+generation's `cluster_key` distinctness, its registers/clusters agreement, and
+the negative control, over the one `guard_off()` regeneration the module
+already cached. **The red set is the single suite the notes above name** —
+`test_check_cluster_citations`, 48 tests, the one failure, on the same `:220`
+of #822's `xdata-cluster-names-guard-off-recipe.md` with the same `0x0464` and
+`0x0465` disagreements. No suite was added, none was removed, and
+`xdata_moved_ranks.py --self-test` is at **53** and
+`xdata_register_map.py --check` at **1326** register rows and **439** cluster
+rows, all unchanged; the write-up is
+[`../docs/findings/xdata-guard-off-key-distinctness.md`](../docs/findings/xdata-guard-off-key-distinctness.md),
+whose §4 re-derives the committed census at **439** rows over **439** distinct
+`cluster_key` values with **0** collisions and the guard-off regeneration at
+**445** over **445**.*
+
+*(**And the per-pin table moved with the tree, which is the cost this note
+exists to name.** Adding a class to `test_xdata_cluster_names.py` and correcting
+a docstring above it shifted every line below by 34, so **25 of the 106 rows
+changed shape cell** and the published `5/19/10/6/34` landing-shape split moved
+to `0/16/22/5/31`; both places that pin it were re-derived to the measured
+value rather than loosened, and **eight verdicts that had gone stale were
+re-read**, which is why `test-line-pin-census.md`'s "the eleven that do not
+carry" reads nineteen. The headcounts are unmoved at **106 pins, 28 files, 79
+spellings, 58 targets, 74 resolves, 32 declined**, the read column is unmoved at
+`53/19/2/32`, and `check_pin_table_rows.py` still reads **106 rows, 106 records,
+106 placed, all seven classes 0** — which is the control that says the delta is
+where each pin lands and not what the corpus contains. **This file's own `:197`
+pin does not move, and the one row it contributes is the only one of the 25 that
+moved the right way** — the line it names now reads `assertion` where it read
+`other`, landing on the `self.assertIn` in
+`test_xdata_cluster_names.py::TheCarry::test_a_tie_is_reported_and_no_winner_is_picked`.
+**Its citing line is unmoved and its claim about the old `:303` → `:307` is a
+record of a past merge**, true of the tree it was measured on, and it is left
+written rather than edited per `../docs/findings.md` §4a-4d; what moved is the
+line it names, which is what the row above now says. **Named by class and case
+rather than by line here on purpose**: a `test_*.py:NNN` in this note would be a
+107th record with no table row, and the spelling that costs a row and not a
+record is the one this file's own notes above have been steering away from.*
+
 *(Eleventh merged-tree note, 2026-09-26, issue #891 landing beside the
 `#850`/`#887` merge: the counts above are this merged tree's, re-derived from a
 `bash tools/run-tests.sh` on it — **thirty-five suites and 1076 tests**, which

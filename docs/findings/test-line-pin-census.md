@@ -714,7 +714,7 @@ the half this table exists to record.
 | `docs/agent-pipeline.md:345` | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
 | [`../findings.md`](../findings.md):4206 | `test_manual_fan_ctrl_probe.py:38-40` | by-name | comment | **records another line** |
 | [`../findings.md`](../findings.md):4208 | `test_ec_watch.py:86-89` | by-name | other | **records another line** |
-| [`../findings.md`](../findings.md):7191 † | `test_xdata_cluster_names.py:286` | by-name | assertion | **does not carry** |
+| [`../findings.md`](../findings.md):7191 † | `test_xdata_cluster_names.py:286` | by-name | other | **does not carry** |
 | [`../findings.md`](../findings.md):7370 | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
 | [`../findings.md`](../findings.md):7431 | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries |
 | [`../findings.md`](../findings.md):9173 | `ec/tools/test_xdata_cluster_names.py:400` | by-path | other | **does not carry** |
@@ -779,44 +779,44 @@ the half this table exists to record.
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):79 | `ec/tools/test_xdata_cluster_names.py:515` | — | — | **declined** (fenced) |
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):80 | `ec/tools/test_xdata_cluster_names.py:532` | — | — | **declined** (fenced) |
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):81 | `ec/tools/test_xdata_cluster_names.py:532` | — | — | **declined** (fenced) |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):190 | `ec/tools/test_xdata_cluster_names.py:307` | by-path | other | **records another line** |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):194 | `ec/tools/test_xdata_cluster_names.py:481` | by-path | other | carries |
-| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):202 | `test_xdata_cluster_names.py:307` | by-name | other | **records another line** |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):190 | `ec/tools/test_xdata_cluster_names.py:307` | by-path | comment | **records another line** |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):194 | `ec/tools/test_xdata_cluster_names.py:481` | by-path | comment | carries |
+| [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):202 | `test_xdata_cluster_names.py:307` | by-name | comment | **records another line** |
 | [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md):71 | `ec/tools/test_disasm8051.py:52` | — | — | **declined** (fenced) |
 | [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md):122 | `test_disasm8051.py:52` | by-name | comment | carries |
 | [`runner-red-suite-set.md`](runner-red-suite-set.md):103 | `tools/test_readme_suite_table.py:11-20` | by-path | other | carries |
 | [`testdata-index-suite-count-floor.md`](testdata-index-suite-count-floor.md):25 | `ec/tools/test_check_testdata_index.py:413-415` | by-path | assertion | **records another line** |
 | [`testdata-index-suite-count-floor.md`](testdata-index-suite-count-floor.md):145 | `ec/tools/test_check_site_census.py:449` | by-path | assertion | carries |
-| [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):392 | `test_xdata_cluster_names.py:54` | by-name | other | **does not carry** |
-| [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):403 | `test_xdata_cluster_names.py:659-674` | by-name | other | carries |
-| [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):447 | `ec/tools/test_xdata_cluster_names.py:307` | by-path | other | carries |
-| [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):460 | `ec/tools/test_xdata_cluster_names.py:363-378` | by-path | comment | **records another line** |
-| [`xdata-6a-direction-rows-pinned.md`](xdata-6a-direction-rows-pinned.md):87 | `ec/tools/test_xdata_cluster_names.py:481` | by-path | other | carries |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):20 | `ec/tools/test_xdata_cluster_names.py:347` | by-path | def test_ | carries |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):131 | `ec/tools/test_xdata_cluster_names.py:799` | by-path | other | carries |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):137 | `ec/tools/test_xdata_cluster_names.py:481` | by-path | other | carries |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):138 | `ec/tools/test_xdata_cluster_names.py:498` | by-path | other | carries |
+| [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):392 | `test_xdata_cluster_names.py:54` | by-name | comment | **does not carry** |
+| [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):403 | `test_xdata_cluster_names.py:659-674` | by-name | comment | carries |
+| [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):447 | `ec/tools/test_xdata_cluster_names.py:307` | by-path | comment | carries |
+| [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):460 | `ec/tools/test_xdata_cluster_names.py:363-378` | by-path | other | **records another line** |
+| [`xdata-6a-direction-rows-pinned.md`](xdata-6a-direction-rows-pinned.md):87 | `ec/tools/test_xdata_cluster_names.py:481` | by-path | comment | carries |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):20 | `ec/tools/test_xdata_cluster_names.py:347` | by-path | other | **does not carry** — this merge's shift moved the case it names to `:381` |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):131 | `ec/tools/test_xdata_cluster_names.py:799` | by-path | comment | carries |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):137 | `ec/tools/test_xdata_cluster_names.py:481` | by-path | comment | carries |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):138 | `ec/tools/test_xdata_cluster_names.py:498` | by-path | comment | carries |
 | [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):139 | `ec/tools/test_xdata_cluster_names.py:515` | by-path | other | carries |
 | [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):140 | `ec/tools/test_xdata_cluster_names.py:532` | by-path | other | carries |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):156 | `ec/tools/test_xdata_cluster_names.py:347` | by-path | def test_ | carries |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):165 | `ec/tools/test_xdata_cluster_names.py:307` | by-path | other | **records another line** |
-| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):334 | `ec/tools/test_xdata_cluster_names.py:596` | by-path | assertion | carries |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):156 | `ec/tools/test_xdata_cluster_names.py:347` | by-path | other | **does not carry** — this merge's shift moved the case it names to `:381` |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):165 | `ec/tools/test_xdata_cluster_names.py:307` | by-path | comment | **records another line** |
+| [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):334 | `ec/tools/test_xdata_cluster_names.py:596` | by-path | other | **does not carry** — this merge's shift moved the `> 300` floor it names to `:630` |
 | [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md):376 | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries |
 | [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md):401 | `test_xdata_cluster_names.py:425` | by-name | comment | **does not carry** |
-| [`xdata-green-set.md`](xdata-green-set.md):283 | `ec/tools/test_xdata_cluster_names.py:347` | by-path | def test_ | carries |
+| [`xdata-green-set.md`](xdata-green-set.md):283 | `ec/tools/test_xdata_cluster_names.py:347` | by-path | other | **does not carry** — this merge's shift moved the case it names to `:381` |
 | [`xdata-moved-ranks-427-pair.md`](xdata-moved-ranks-427-pair.md):622 | `ec/tools/test_xdata_cluster_names.py:400` | by-path | other | **does not carry** |
 | [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):15 | `ec/tools/test_xdata_cluster_names.py:425` | by-path | comment | **does not carry** |
 | [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):436 | `test_xdata_cluster_names.py:425` | by-name | comment | **does not carry** |
 | [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):448 | `test_xdata_cluster_names.py:420-422` | by-name | comment | **does not carry** |
-| [`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md):278 | `test_xdata_cluster_names.py:596` | by-name | assertion | carries § |
-| [`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md):389 | `test_xdata_cluster_names.py:596` | by-name | assertion | carries § |
-| [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):28 | `ec/tools/test_xdata_cluster_names.py:898` | by-path | other | carries |
-| [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):132 | `test_xdata_cluster_names.py:149-153` | by-name | def test_ | carries |
-| [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):149 | `test_xdata_cluster_names.py:910-916` | by-name | def test_ | carries |
+| [`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md):278 | `test_xdata_cluster_names.py:596` | by-name | other | **does not carry** — this merge's shift moved the `> 300` floor it names to `:630` |
+| [`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md):406 | `test_xdata_cluster_names.py:596` | by-name | other | **does not carry** — this merge's shift moved the `> 300` floor it names to `:630`, and moved this row's own citing line `:389` → `:406` |
+| [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):28 | `ec/tools/test_xdata_cluster_names.py:898` | by-path | comment | carries |
+| [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):132 | `test_xdata_cluster_names.py:149-153` | by-name | other | **does not carry** — this merge's shift moved the case it names to `:183` |
+| [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md):149 | `test_xdata_cluster_names.py:910-916` | by-name | other | **does not carry** — this merge's shift moved the case it names to `:944` |
 | [`xdata-two-largest-case-restatement.md`](xdata-two-largest-case-restatement.md):22 | `ec/tools/test_xdata_cluster_names.py:88` | by-path | other | carries |
-| [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):1341 | `../tools/test_xdata_cluster_names.py:54` | beside | other | **does not carry** |
-| [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):2665 | `../tools/test_xdata_cluster_names.py:68-90` | beside | blank | carries |
-| [`../../tools/README.md`](../../tools/README.md):197 | `test_xdata_cluster_names.py:303` | by-name | other | **records another line** |
+| [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):1341 | `../tools/test_xdata_cluster_names.py:54` | beside | comment | **does not carry** |
+| [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):2665 | `../tools/test_xdata_cluster_names.py:68-90` | beside | other | carries |
+| [`../../tools/README.md`](../../tools/README.md):197 | `test_xdata_cluster_names.py:303` | by-name | assertion | **records another line** |
 
 **51 carry, 2 carry on the adjacent line, 11 do not carry, 10 record another line
 on purpose, 32 are declined, and none is unresolvable.** *(Those are the counts
@@ -968,7 +968,7 @@ split in one sentence. #850 repointed `:433` to `:307`, which carries, so
 second half of the split is still right; what is lost is a worked example of it,
 and it is named rather than papered over.
 
-## The eleven that do not carry
+## The nineteen that do not carry
 
 *(The nine this section was written with, the two the #888 × #890 merge added and
 the two the #888 × #885 one added beside them are all below — but the #888 × #890
@@ -976,10 +976,18 @@ pair is no longer *on* the list, because #930 repointed it and it carries again.
 The `9`s, the `11`s and the `13` in the lead paragraphs that the three headings
 before this one carried are kept visible in the italicised notes under it rather
 than edited out, per `../findings.md` §4a-4d; item 7 below is what the repointed
-pair now reads as.)*
+pair now reads as. **The #962 merge added item 9 and moved the count from the
+eleven to the nineteen**, which is the second time this heading has moved in
+this direction after #930's thirteen to eleven: #962 shifted
+`test_xdata_cluster_names.py` by 34 lines, and the eight pins that noticed name
+four different targets, three of which are the `> 300` assertion findings 6, 7
+and 8 are about — the same assertion, wrong for the third time, by a third
+route. **No item below items 1–8 changed verdict and none was deleted**, on this
+merge's own terms: a line shift is what turns an item on, not off, and repointing
+is what turns one off again.)*
 
-**Eight items below and thirteen pins, of which item 7's two now carry, so the
-list is seven items and eleven pins — and finding 6 is the reason the count is
+**Nine items below and twenty-one pins, of which item 7's two now carry, so the
+list is eight items and nineteen pins — and finding 6 is the reason the count is
 not one higher than the items** — finding 1 was one of the six when this was
 written and #850
 repointed it into carrying, so it is kept struck through rather than deleted.
@@ -987,16 +995,19 @@ Finding 4 is one stale pin written twice, in two files, describing the same
 removed constant; finding 6 is one moved assertion written **four** times across
 **two** files; finding 7 is the same assertion written **twice** more by #888 —
 now repointed and carrying, and kept on the list for the record rather than
-deleted from it; and
+deleted from it;
 finding 8 the same assertion written **twice** again by #885 — **eight pins
 naming one line, in five files**, and the reason eleven pins sit under seven
-items. **The issue's own citing-line reference is not among
-the eleven** — it
+items; and
+finding 9 eight pins naming **four** targets in one file, moved by this merge.
+**The issue's own citing-line reference is not among
+the nineteen** — it
 was finding 1, and on this tree it carries, which is the one claim of the issue's
 two that #850's own change turned into a `carries` rather than a
 `does not carry`. Five of the thirteen carried over from the six this section
 recorded; **four are #850's** (all four finding 6), **two are #888's** (both
-finding 7) and **two are #885's** (both finding 8).
+finding 7), **two are #885's** (both finding 8) and **eight are #962's** (all
+eight finding 9).
 **Finding 7 was the eleventh and finding 8 the thirteenth, and they were the only
 two a merge in this repository produced rather than found lying in the tree** —
 two pins that were *born* correct and were made wrong, in the same commit that
@@ -1180,6 +1191,31 @@ struck out of it.)*
    counted apart because the line moved under those rather than having been
    moved before they were written.** None of the eight is repointed here,
    for the reason the follow-up list below gives.
+9. **NEW at the #962 merge, and the only entry here with no `> 300` in it.**
+   Eight pins across **four** citing files name **four different targets in one
+   file**, every one of them correct before this merge: adding a class to
+   `test_xdata_cluster_names.py` and correcting a docstring above it shifted
+   every line below by 34, and these are the pins that noticed. Three name
+   `:347` for `test_the_census_is_the_one_6a_measured` (**now `:381`**) —
+   [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):20
+   and `:156`, and
+   [`xdata-green-set.md`](xdata-green-set.md):283. Three name `:596` for the
+   `> 300` floor (**now `:630`**) —
+   [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):334,
+   and
+   [`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md):278
+   and `:389`. One names `:149-153` for
+   `test_changed_membership_is_a_new_key_not_a_collision` (**now `:183`**) and
+   one names `:910-916` for `test_every_row_records_the_evidence_for_its_name`
+   (**now `:944`**), both in
+   [`xdata-names-file-census-anchor.md`](xdata-names-file-census-anchor.md). **The
+   three `:596` pins are finding 6's assertion, one merge later and for a
+   different reason** — #850 and #885 moved it, and this merge moved it again
+   under citations that had already been repointed onto it, so the same
+   assertion is now wrong for the third time by three different routes. None of
+   the eight is repointed here, for the reason the follow-up list below gives;
+   each verdict cell names the target's new line so a re-pointer does not have
+   to re-derive it.
 
 ## The ten that record another line, and why that is the blocker
 
@@ -2499,6 +2535,73 @@ carry and ten record another line, the defect is still entirely in the
 line-*content* half, and the supersession records are still unmarked prose in
 eight of ten shapes. Nothing here moves the argument, and nothing here is a
 reason to soften it.
+
+Submitting anything upstream is unaffected: this issue touches no driver and no
+firmware, and the mission's eventual
+`Wer-Wolf/uniwill-laptop`/`tuxedo-drivers` contribution stays a prepared patch
+in this repository for a human to submit, per issue #10. Nothing is opened in
+another repository.
+
+## The `#962` merge, 2026-09-26
+
+**One test file grew and one docstring in it was corrected, and this is the
+fourth time running that those two together are the whole of what a merge does
+to this table.** The class count is unmoved: **106 pins, 28 files, 79
+spellings, 58 targets, 74 resolves, 32 declined, `0/16/22/5/31` over 154
+markdown files read and 38 test files indexed**, and the headcount is
+`106/28/79/58/74/32/154/38` against the `106/28/79/58/74/32/153/38` the
+`#929` × `#777` note above records — **one markdown file and no record**, which
+is [`xdata-guard-off-key-distinctness.md`](xdata-guard-off-key-distinctness.md)
+citing tests as `test_xdata_cluster_names.py::TheGuardOffKeyDistinctness` and by
+case name, the spelling
+`xdata-moved-ranks-collision-scope.md` §7 says these write-ups use and the one
+`census_test_line_pins.py` declines. **A write-up that names a class rather
+than a line costs the corpus a file and the table a row, and that is the whole
+of the cost.** `ec/tools/test_census_test_line_pins.py` is green at **41**,
+`ec/tools/test_check_pin_table_rows.py` at **36** and
+`ec/tools/test_check_pin_table_by_cited_file.py` at **27**, with the table
+reading **106 rows, 106 records, 106 placed, all seven classes 0**.
+
+**What this merge did to the shape split is that `5/19/10/6/34` became
+`0/16/22/5/31`, and both places that publish it were re-derived rather than
+lowered.** Every pin into `test_xdata_cluster_names.py` landed 34 lines lower
+than it did — a nine-line module-level import for `xdata_moved_ranks.py`, a
+four-line correction to `guard_off()`'s "six cases" count, and a sixteen-line
+coverage split added to `TheContentKey`'s docstring — and the landing shapes
+follow: **five pins that read a `def test_` header now read prose or code and
+none reads a header at all**, which is why `def test_` is *absent* from the
+table's vocabulary rather than zero in it. **The read column is the control and
+it does not move** — `by-path 53, by-name 19, by-beside 2, "-" 32`, the same 74
+resolving and 32 declined over the same 58 targets — so the delta is where each
+pin lands and not what the corpus contains.
+
+**Twenty-five of the 106 rows moved their shape cell, and every one was
+re-derived from the census's own `--verbose` run** rather than by reading the
+file: thirteen moved onto a comment, eleven off a `def test_` header or an
+assertion onto `other`, and one moved the other way, from `other` onto an
+assertion. **Eight of those were verdicts that had gone stale and were
+re-read** — the pins that left a `def test_` header or an assertion, which is
+item 9 above and which is why this section's heading is nineteen rather than
+eleven. **The other seventeen verdicts were left alone and the sixteen that
+moved onto a `comment` among them are the interesting half**: a comment carries
+a claim in this repository about as often as an assertion does, and re-reading
+them is what would decide it. That is a follow-up, not a merge.
+
+**No citing prose was repointed, on this file's own rule** — "that makes citing
+prose stale does not repoint it, the follow-up list does" (`:1126`). Each of the
+eight verdict cells names the target's new line instead, so a re-pointer has the
+destination rather than the arithmetic. **What is left, as follow-ups**, is
+below this section with the rest; #962's four entries are the eight item-9
+repoints, `:347` → `:381` (×3), `:596` → `:630` (×3), `:149-153` → `:183`, and
+`:910-916` → `:944`, and the one a human should read first is
+`xdata-census-rederivation-checklist.md:334`, whose sentence names `:596` and
+`assertGreater(len(moved), 300)` together and so now names neither.
+
+**The verdict on the check itself is unchanged.** Nineteen pins do not carry and
+ten record another line, the defect is still entirely in the line-*content*
+half, and the supersession records are still unmarked prose in eight of ten
+shapes. This merge moved 25 cells and read 8 verdicts; it moved no pin, and
+nothing here is a reason to soften the argument above.
 
 Submitting anything upstream is unaffected: this issue touches no driver and no
 firmware, and the mission's eventual

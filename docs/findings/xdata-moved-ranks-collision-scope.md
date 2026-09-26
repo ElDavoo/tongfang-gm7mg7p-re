@@ -321,6 +321,21 @@ register rows, 439 cluster rows, both exit 0), and the CSVs are not touched.
   generation is written to scratch, nothing holds *its* key uniqueness between
   runs, and the next re-derivation is a file that does not exist yet. That is
   the whole reason the check is in the tool rather than in a note.
+  *(**Superseded at the #962 merge, in the second clause only.** "Nothing holds
+  *its* key uniqueness between runs" was true of the tree this was written on
+  and is not true of this one:
+  `test_xdata_cluster_names.py::TheGuardOffKeyDistinctness` now holds the
+  guard-off generation's `cluster_key` distinctness by a case in the default
+  `tools/run-tests.sh` sweep, and the case's negative control holds that it goes
+  red on a census with a duplicated key. The *first* clause of that sentence is
+  untouched and still stands — the guard-off generation is still written to
+  scratch, and the next re-derivation is still a file that does not exist yet —
+  which is the whole difference between a censuses' keys being held and a
+  census's keys being unheld between runs. The fourth census, the `e169a0e4`
+  pair, is still unheld by anything, for the reason
+  [`xdata-guard-off-key-distinctness.md`](xdata-guard-off-key-distinctness.md)
+  §1 gives. The sentence is corrected rather than edited out per
+  `../findings.md` §4a-4d.)*
 - **The fixtures are not evidence about any census.** A `cluster_key` is a
   content hash over the program and the sorted membership, so two ranks with
   different memberships carrying one key is a forgery the tool's own hash would
