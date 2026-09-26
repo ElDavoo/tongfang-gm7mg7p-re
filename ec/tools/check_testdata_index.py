@@ -5,9 +5,10 @@ The index is what a change greps to learn which fixture holds which grader case,
 and it is written by hand. Nothing reads it -- `grep -rn 'testdata/README'` over
 the suite and the gate returns two prose mentions and not one read -- so a
 fixture directory with no row in it, a row naming a path that is not on disk, a
-`Feeds` cell naming a tool that has been renamed, and a self-indexed directory's
-own table naming a listing or a CSV row that is not there would all land
-unremarked. Those are the four places an index and a tree can disagree, which
+`Feeds` cell naming a tool that has been renamed, a self-indexed directory's
+own table naming a listing or a CSV row that is not there, and a fixture CSV's
+`evidence` cell naming a listing the real tree does not have would all land
+unremarked. Those are the five places an index and a tree can disagree, which
 this walks in one pass and prints each one's tally for.
 
 The index has needed a hand-repair twice, in #502 and #720, and that is not
@@ -57,6 +58,27 @@ is located by its own shape -- a `|` line immediately over a separator -- so the
 next self-indexed directory needs no edit here either, the same argument the
 self-indexed clause itself makes.
 
+**The `evidence` column of a named CSV.** The one column those CSVs carry that
+points at the **real** tree rather than at the fixture, so it is a third base:
+the repository root, beside `ec/tools/` for `Feeds` and the self-indexed
+directory for a nested `.asm`. Which CSVs are read is structural rather than an
+exemption list -- they are the ones a self-indexed directory's own tables
+already name, so the next self-indexed directory carrying one is covered with
+no edit here, the same argument the clause above makes. The column is read **by
+name** and not by position, because `evidence` is column 7 of 8 in one of the
+two committed CSVs and column 10 of 12 in the other, and a position would be
+right on the day it landed and wrong after the next edit. A cell is
+`;`-separated, because one committed row names a listing and its `.c` side by
+side. Two shapes are `unresolved` and neither is a failure: a named CSV with no
+`evidence` column at all, and a token whose shape no path rule reads. The first
+is a fact about the *CSV* rather than about a cell, so it is counted against
+`evidence_csvs` and printed on a line of its own rather than against the token
+tally: the two have to subtract from the same population, or a CSV with no
+column to read would take one more off the resolved count than it ever added
+to it. An **empty** value is neither -- it yields no pointer at all, the same
+limit the first-column rules carry, because a rule invented here would be a
+parser guessing.
+
 **What this does not check, which is as much of the point:**
 
   * *Whether a fixture is what its row says it is.* This is index/tree
@@ -67,8 +89,9 @@ self-indexed clause itself makes.
     printed and is not a failure: a shape this tool cannot read is "not
     resolved by this method", never "absent", the same caveat
     `ec/annotations/registers.yaml` carries for a static scan. The rules are in
-    `resolve()`, and falling off the end of them is the calibration line made
-    mechanical rather than a sixth verdict that guesses.
+    `resolve()`, `resolve_tool()` and `evidence_pointers()`, and falling off the
+    end of them is the calibration line made mechanical rather than a sixth
+    verdict that guesses.
   * *The `...` abbreviation, beyond the glob.* The table writes
     `` `0751-isolation-example-fixed-load-0700-07ff.csv` + `...-0400-045f.csv` ``,
     and resolving the second token by splicing the first one's stem would
@@ -81,27 +104,29 @@ self-indexed clause itself makes.
     what the issue asks for. The twenty loose `*.csv`/`*.txt` files beside the
     table are covered in the other direction, as rows, and a *new* one added
     beside them is not caught until a row names it.
-  * *The reverse direction for either new source.* A `.py` under `ec/tools/`
-    carrying no `Feeds` row, and a committed `.asm` or CSV row carrying no
-    table row in its directory's `README.md`. Both are the "top-level files
-    with no row" gap above, in the two directions added later, and both are
-    declined for the same reason.
+  * *The reverse direction for any of the three sources added later.* A `.py`
+    under `ec/tools/` carrying no `Feeds` row; a committed `.asm` or CSV row
+    carrying no table row in its directory's `README.md`; and a real
+    `ec/decompiled/**` listing that no `evidence` cell names. All three are the
+    "top-level files with no row" gap above, in the directions added later, and
+    all three are declined for the same reason.
   * *Program/scope identity in the nested CSV lookup.* A row that exists at the
     address resolves even when it says something other than the cell claims.
     The invariant is "the row the index names is in the file it names", and
     "and it says the right thing" is a question about the fixture with a
     different owner. The cost is worth stating: a typo to an address that
     happens to exist in that CSV passes.
-  * *A row whose cell holds no backticked token.* It yields no reference at
-    all, which is the shipped first-column behaviour. A rule invented here
-    would be a parser guessing, so the limit is stated rather than met.
+  * *A row whose cell holds no backticked token, and an `evidence` cell holding
+    no value.* Both yield no reference at all, which is the shipped
+    first-column behaviour. A rule invented here would be a parser guessing, so
+    the limit is stated rather than met.
   * *Prose below the table, in the index -> tree direction.* The whole file is
     searched for a directory name; only the table's two path columns are
     resolved against the disk. A path mentioned in prose is neither held to the
     disk nor reported as unchecked, which is the one place a reader could take
     silence for agreement.
 
-All four tallies print whether or not they found anything, because a run that
+All five tallies print whether or not they found anything, because a run that
 checked nothing and a run that found nothing look the same from the exit code
 alone. There is no floor on any of them, for the reason
 `docs/agent-pipeline.md` records about gates: an expected count turns every
@@ -122,6 +147,10 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 TESTDATA = os.path.join(HERE, "testdata")
 INDEX = os.path.join(TESTDATA, "README.md")
+# The third base, and a global read at call time rather than a `repo=REPO`
+# default: the suite's `run_tool()` patches it the way it patches `TESTDATA`,
+# and a default would bind at def-time and make that patch inert.
+REPO = os.path.join(HERE, os.pardir, os.pardir)
 
 
 def repo_path(path: str) -> str:
@@ -129,9 +158,12 @@ def repo_path(path: str) -> str:
 
     A `relpath` over a path the caller already made relative resolves against
     the working directory instead, which turns `ec/tools/testdata/README.md`
-    into a chain of `..` on any run from outside the repository root.
+    into a chain of `..` on any run from outside the repository root. The base
+    is the `REPO` global rather than a fresh `HERE/../..`, so a run pointed at a
+    scratch tree reports scratch-relative paths and not a chain of `..` out of
+    an unrelated root.
     """
-    return os.path.relpath(path, os.path.join(HERE, os.pardir, os.pardir))
+    return os.path.relpath(path, REPO)
 
 
 # The table is located by its own first header cell rather than by a line
@@ -165,13 +197,30 @@ RESOLVED, MISSING, UNRESOLVED = "resolved", "missing", "unresolved"
 Result = collections.namedtuple(
     "Result",
     "gaps missing unresolved feeds_missing feeds_unresolved nested_missing "
-    "nested_unresolved directories named self_indexed rows tokens feeds_cells "
-    "feeds_tokens nested_indexes nested_tables nested_rows nested_checks")
+    "nested_unresolved evidence_missing evidence_unresolved "
+    "evidence_columnless directories named "
+    "self_indexed rows tokens feeds_cells feeds_tokens nested_indexes "
+    "nested_tables nested_rows nested_checks evidence_csvs evidence_cells "
+    "evidence_tokens")
 
 # What one self-indexed directory's own README named, over the same three
 # verdicts and carrying the same `where`/`token`/`note` triple as every other
-# list here, so `check()` can add them up without a second shape of answer.
-Nested = collections.namedtuple("Nested", "tables rows checks missing unresolved")
+# list here, so `check()` can add them up without a second shape of answer. The
+# `evidence_` fields are the totals over the CSVs that directory's tables name.
+Nested = collections.namedtuple(
+    "Nested", "tables rows checks missing unresolved evidence_csvs "
+    "evidence_cells evidence_tokens evidence_missing evidence_unresolved "
+    "evidence_columnless")
+
+# What one named CSV's `evidence` column named, in that same shape. A cell and a
+# token are counted apart because a cell is `;`-separated and the one
+# multi-pointer cell in the committed tree is the reason: a tally taken per cell
+# would read 10 there and 11. `columnless` is kept out of `unresolved` for the
+# reason the module docstring gives: it is a fact about the CSV, so it counts
+# against `tokens` nowhere and `tokens - missing - unresolved` cannot go below
+# zero because of a file this tool could not read a column out of.
+Evidence = collections.namedtuple(
+    "Evidence", "cells tokens missing unresolved columnless")
 
 
 def fixture_dirs(root):
@@ -412,7 +461,7 @@ def csv_pointers(csvname, addresses, directory):
     return out
 
 
-def nested_pointers(cell, directory):
+def nested_pointers(cell, directory, csvs=None):
     """Every reference a self-indexed directory's row makes, in reading order.
 
     A cell is a relative path, a `X.csv` plus one or more addresses, or both of
@@ -420,12 +469,19 @@ def nested_pointers(cell, directory):
     second of the committed pair names two rows. A part that is none of the
     three is `unresolved` and says so, for the same reason a token the
     first-column rules fall off the end of does.
+
+    `csvs` is the set of `X.csv` names this cell already recognised, collected on
+    the way through rather than by a second pass: a second `.csv` shape test
+    would be a second thing to keep in step, and the names are the input to the
+    `evidence` rule below.
     """
     out = []
     for part in cell.split(" + "):
         tokens = TOKEN.findall(part)
         stem, extension = os.path.splitext(tokens[0]) if tokens else ("", "")
         if extension == ".csv":
+            if csvs is not None:
+                csvs.add(tokens[0])
             out.extend(csv_pointers(tokens[0], tokens[1:], directory))
         elif names_a_file(tokens[0]):
             # Resolved against the directory itself, not `testdata/`: the
@@ -445,7 +501,68 @@ def nested_pointers(cell, directory):
     return out
 
 
-def nested_index(path):
+def evidence_pointers(csvname, directory, repo):
+    """What one named CSV's `evidence` column names, and what is not there.
+
+    A third base, and the only source here that reads a file's *contents* for a
+    named column rather than a cell's backticked tokens: the column is the one
+    the two committed fixture CSVs point at the **real** tree with, and the
+    question it answers is "does `ec/decompiled/` hold that listing", which is a
+    fact about committed files and not about what the fixture exercises.
+
+    The column is read **by name** rather than by position, because it is
+    column 7 of 8 in one of the two committed CSVs and column 10 of 12 in the
+    other, and a position is right until the next column is added. A cell is
+    `;`-separated: one committed row names `0EA2.asm` and `0EA2.c` side by side,
+    and a cell read whole is a token no path rule can match. An **empty** value
+    is not a pointer at all -- the shipped first-column limit that a cell with
+    no backticked token yields no reference -- and a rule invented to read one
+    would be a parser guessing. A CSV with no `evidence` column is `unresolved`
+    rather than `missing`, for the reason `csv_pointers` gives for `addr`: "this
+    tool cannot read that shape" is not "the cell is absent". It is reported on
+    its own list rather than among the token findings, because a column that is
+    not in the file has not named anything and there is no token behind it to
+    count: leaving it in `unresolved` would subtract it from a tally of tokens
+    this CSV contributed none of, and the fifth line would read a negative count
+    of resolved paths.
+    """
+    path = os.path.join(directory, csvname)
+    where = repo_path(path)
+    if not os.path.isfile(path):
+        # Already a `missing` on the nested side, which is the finding a reader
+        # wants; opening it here would be a second report of the same edit.
+        return Evidence(0, 0, [], [], [])
+    with open(path, encoding="utf-8", newline="") as f:
+        rows = list(csv.reader(f))
+    header = rows[0] if rows else []
+    if "evidence" not in header:
+        return Evidence(0, 0, [], [],
+                        [(where, csvname,
+                          f"{csvname} has no `evidence` column")])
+    column = header.index("evidence")
+    cells, tokens, missing, unresolved = 0, 0, [], []
+    for row in rows[1:]:
+        if column >= len(row) or not row[column].strip():
+            continue
+        cells += 1
+        for token in (piece.strip() for piece in row[column].split(";")):
+            if not token:
+                continue
+            tokens += 1
+            if not names_a_file(token):
+                # A URL, an address range, a bare word: "not resolved by this
+                # method", never "absent". The note is the token, which is what
+                # a reader needs to see rather than only that something was
+                # passed over.
+                unresolved.append((where, token, token))
+                continue
+            target = os.path.normpath(os.path.join(repo, token))
+            if not os.path.exists(target):
+                missing.append((where, token, repo_path(target)))
+    return Evidence(cells, tokens, missing, unresolved, [])
+
+
+def nested_index(path, repo):
     """What one self-indexed directory's own README named, and what is not there.
 
     Column 1 of every data row of every table in the file, and nothing else: the
@@ -453,25 +570,42 @@ def nested_index(path):
     it, and a token lifted out of either would be a pointer the index never
     made. The `where` on every finding is this README rather than the top-level
     one, so a reader is told which of the two files to open.
+
+    The `evidence_` totals are over the CSVs those cells named, and each
+    distinct name is read once however many rows name it. Sorted, so the
+    findings a run prints are in a fixed order rather than in the set's.
     """
     where = repo_path(path)
+    directory = os.path.dirname(path)
     with open(path, encoding="utf-8") as f:
         tables = markdown_tables(f.read())
     rows, checks = 0, 0
     missing, unresolved = [], []
+    named = set()
     for _, table in tables:
         for row in table:
             rows += 1
-            for verdict, token, note in nested_pointers(row[0], os.path.dirname(path)):
+            for verdict, token, note in nested_pointers(row[0], directory, named):
                 checks += 1
                 if verdict == MISSING:
                     missing.append((where, token, note))
                 elif verdict == UNRESOLVED:
                     unresolved.append((where, token, note))
-    return Nested(len(tables), rows, checks, missing, unresolved)
+    cells, tokens = 0, 0
+    evidence_missing, evidence_unresolved, evidence_columnless = [], [], []
+    for csvname in sorted(named):
+        found = evidence_pointers(csvname, directory, repo)
+        cells += found.cells
+        tokens += found.tokens
+        evidence_missing += found.missing
+        evidence_unresolved += found.unresolved
+        evidence_columnless += found.columnless
+    return Nested(len(tables), rows, checks, missing, unresolved, len(named),
+                  cells, tokens, evidence_missing, evidence_unresolved,
+                  evidence_columnless)
 
 
-def check(root):
+def check(root, repo=None):
     """A `Result` for one testdata tree.
 
     The index is read from `root/README.md`, which is where it is by definition,
@@ -479,12 +613,22 @@ def check(root):
     tree. Each problem carries the repository-relative path it was found under,
     made relative here rather than in `main` for the reason `report()` gives.
 
-    `gaps` are (testdata path, directory name); the other six are (index path,
+    `gaps` are (testdata path, directory name); the other eight are (index path,
     token, what the token was read as), the `nested_` pair naming the
-    self-indexed README rather than this one. The row number is not carried: a
-    token is a unique string in a 27-row table a reader has open, and a wrong
-    line number is worse than none.
+    self-indexed README rather than this one and the `evidence_` pair naming the
+    fixture CSV whose cell disagrees, which is a third file again and the reason
+    reusing either of the other two would send a reader to a file that does not
+    contain the cell. The row number is not carried: a token is a unique string
+    in a 27-row table a reader has open, and a wrong line number is worse than
+    none.
+
+    `repo` is the base the `evidence` column resolves against, defaulted to the
+    module global **at call time** so a caller that patches `REPO` and a caller
+    that passes the argument are the same thing. A `repo=REPO` default would
+    bind at def-time and silently defeat the patch.
     """
+    if repo is None:
+        repo = REPO
     with open(os.path.join(root, "README.md"), encoding="utf-8") as f:
         index = f.read()
     where, under = repo_path(os.path.join(root, "README.md")), repo_path(root)
@@ -524,25 +668,36 @@ def check(root):
     # the top-level table merely names has no README to read, and the two
     # reachability clauses stay the two things they were.
     nested_missing, nested_unresolved = [], []
+    evidence_missing, evidence_unresolved, evidence_columnless = [], [], []
     indexes, tables, rows, checks = 0, 0, 0, 0
+    csv_read, cells_read, tokens_read = 0, 0, 0
     for name, verdict in zip(names, how):
         if verdict != "self":
             continue
         indexes += 1
-        found = nested_index(os.path.join(root, name, "README.md"))
+        found = nested_index(os.path.join(root, name, "README.md"), repo)
         tables += found.tables
         rows += found.rows
         checks += found.checks
+        csv_read += found.evidence_csvs
+        cells_read += found.evidence_cells
+        tokens_read += found.evidence_tokens
         nested_missing += found.missing
         nested_unresolved += found.unresolved
+        evidence_missing += found.evidence_missing
+        evidence_unresolved += found.evidence_unresolved
+        evidence_columnless += found.evidence_columnless
 
     return Result(gaps, missing, unresolved, feeds_missing, feeds_unresolved,
-                  nested_missing, nested_unresolved, len(how), how.count("index"),
+                  nested_missing, nested_unresolved, evidence_missing,
+                  evidence_unresolved, evidence_columnless, len(how),
+                  how.count("index"),
                   how.count("self"), len(cells), tokens, len(feeds), feeds_tokens,
-                  indexes, tables, rows, checks)
+                  indexes, tables, rows, checks, csv_read, cells_read,
+                  tokens_read)
 
 
-def report(gaps, missing, unresolved, feeds, nested):
+def report(gaps, missing, unresolved, feeds, nested, evidence, columnless):
     """Print each disagreement, and return how many there were.
 
     A disagreement here is a defect in one of the two files, and it is not a
@@ -551,10 +706,17 @@ def report(gaps, missing, unresolved, feeds, nested):
     printed so a reader can decide whether this tool's vocabulary needs a rule,
     and a check that failed on its own parser would be pushed to grow one.
 
-    `feeds` and `nested` are the (missing, unresolved) pair for the two sources
-    added later, and every line names the file it was found under: a `Feeds`
-    miss is this index and a nested miss is the self-indexed README beside it,
-    which is what the `where` a caller hands in already carries.
+    `feeds`, `nested` and `evidence` are the (missing, unresolved) pair for the
+    three sources added later, and every line names the file it was found under:
+    a `Feeds` miss is this index, a nested miss is the self-indexed README
+    beside it, and an `evidence` miss is the fixture CSV holding the cell, which
+    is what the `where` a caller hands in already carries.
+
+    `columnless` is the `evidence` source's third list, and the only one of the
+    three with wording of its own: a CSV whose header has no `evidence` column
+    in it has not named anything, so the line says the column was not found
+    rather than reusing the token wording, whose leading clause is the part a
+    reader skims.
     """
     for under, name in gaps:
         print(f"{under}/{name}/: no index names it, and it has no README.md of "
@@ -579,7 +741,17 @@ def report(gaps, missing, unresolved, feeds, nested):
     for where, token, note in nested[1]:
         print(f"{where}: the table names `{token}`, which this tool cannot "
               f"resolve ({note}) -- not checked, not absent", file=sys.stderr)
-    total = len(gaps) + len(missing) + len(feeds[0]) + len(nested[0])
+    for where, token, note in evidence[0]:
+        print(f"{where}: the `evidence` column names `{token}` (read as "
+              f"`{note}`), which is not on disk", file=sys.stderr)
+    for where, token, note in evidence[1]:
+        print(f"{where}: the `evidence` column names `{token}`, which this tool "
+              f"cannot resolve to a path ({note}) -- not checked, not absent",
+              file=sys.stderr)
+    for where, token, note in columnless:
+        print(f"{where}: {note} -- not checked, not absent", file=sys.stderr)
+    total = (len(gaps) + len(missing) + len(feeds[0]) + len(nested[0])
+             + len(evidence[0]))
     if total:
         print(f"{total} disagreement(s) between {repo_path(INDEX)} and the tree "
               f"under it", file=sys.stderr)
@@ -600,7 +772,9 @@ def main() -> int:
     result = check(TESTDATA)
     if report(result.gaps, result.missing, result.unresolved,
               (result.feeds_missing, result.feeds_unresolved),
-              (result.nested_missing, result.nested_unresolved)):
+              (result.nested_missing, result.nested_unresolved),
+              (result.evidence_missing, result.evidence_unresolved),
+              result.evidence_columnless):
         return 1
     print(f"{result.directories} testdata/ director"
           f"{'y' if result.directories == 1 else 'ies'}: {result.named} named in "
@@ -617,6 +791,20 @@ def main() -> int:
           f"check(s): {result.nested_checks - len(result.nested_missing) - len(result.nested_unresolved)} "
           f"resolved, {len(result.nested_missing)} missing, "
           f"{len(result.nested_unresolved)} unresolved")
+    # The column-less count sits with the CSVs rather than in the tally triple,
+    # because it is a fact about a file rather than about a cell: a CSV with no
+    # `evidence` column in it contributed no token, so counting it as an
+    # `unresolved` token would take one more off the resolved count than the
+    # count ever had, and the line would read a negative number of resolved
+    # paths. Every quantity here now subtracts from `evidence_tokens` and
+    # nothing else.
+    print(f"{result.evidence_csvs} fixture CSV(s), "
+          f"{len(result.evidence_columnless)} with no `evidence` column, "
+          f"{result.evidence_cells} evidence cell(s), "
+          f"{result.evidence_tokens} evidence path token(s): "
+          f"{result.evidence_tokens - len(result.evidence_missing) - len(result.evidence_unresolved)} "
+          f"resolved, {len(result.evidence_missing)} missing, "
+          f"{len(result.evidence_unresolved)} unresolved")
     return 0
 
 

@@ -11,13 +11,46 @@ bash tools/run-tests.sh
 
 Every `test_*.py` under the repository, found by `find` — not a hardcoded list,
 so a suite in a directory that does not exist yet is picked up by having its
-file committed. **There are forty today, 1233 tests in all** — both figures
-*(The `1161` this sentence carried until #794, the `1165` on #794's own branch,
-the `1168` at the #962 × #794 merge, the `1180` that branch proposed and the
-`1211` at the #979 × #985 merge are left visible per
+file committed. **There are forty today, 1243 tests in all** — both figures
+*(The `1161` this sentence carried until #794, the `1165` it carried on #794's
+own branch, the `1168` it carried at the `#962` × `#794` merge, the `1180` the
+#979 branch proposed, the `1187` #780's own branch carried, the `1211` the
+`#979` × `#985` merge re-derived it to, and the `1221` and `1233` the two sides
+of this merge each measured on their own tree, are all left visible per
 [`../docs/findings.md`](../docs/findings.md) §4a-4d, each true of the tree it
-was measured on; the suite count moves on #985's side at the twenty-second note
-and on #973's at the twenty-third, and both notes are below.)*
+was measured on: `1161 + 4 = 1165` and `1164 + 4 = 1168` are the four cases
+`ec/tools/test_check_testdata_row_claims.py` gained, `1177 + 31 + 3 + 10 =
+1221` is the `#979` × `#985` merge's arithmetic — `1177` being what `main` itself
+reads at `368e9e52`, not the `1168` the sentence carried, so that step is off
+`main` and not off the value above — with its four parts being #985's
+thirty-one cases and its new `ec/tools/test_disasm8051_oracle.py`, #979's three
+in `ec/tools/test_check_testdata_row_claims.py` and #780's ten in
+`ec/tools/test_check_testdata_index.py`, and `1233 + 10 = 1243` is this
+merged tree's, the ten being #780's again in the same suite and the suite count
+unmoved at the `40` `main` already read — the same fact the twenty-third note
+states about its own step, so **the two merges that first put a suite on this
+sentence each put theirs on the side their counterpart had none, and neither
+figure is derived by adding the other's**.
+[`disasm8051-oracle-from-the-annotations.md`](../docs/findings/disasm8051-oracle-from-the-annotations.md)
+is #985's write-up. **A merge has now added a suite where the steps before it
+added none, and both sides of one did it**: `main` gained a commit after #780
+forked, so thirty-eight became thirty-nine on the branch's own tree on #985's
+`ec/tools/test_disasm8051_oracle.py`, and thirty-nine became forty here on
+#973's `ec/tools/test_check_capture_names.py`. **"No merge added a suite" is
+therefore superseded and left standing in the twenty-first note it was written
+in**, true of every tree from `24460001` until `3e020cf4`, per §4a-4d. **The
+`1180` is from before #982 — which implements #975 — was in the base, the
+`1211` and the `1233` are re-derivations for trees #780 was not on, and the
+`1187` is #780's own branch before `main` moved at all**: four figures, four
+trees, none of them this one, which is why the sentence carries the arithmetic
+and them side by side rather than any of them. Every figure
+above is re-derived by
+running the runner on the tree it is written on — see the twenty-second note
+below for the `#979` × `#985` merge, the twenty-third for the `#979` × `#973`
+one, the twenty-fourth for the `#929` × `#962` × `#794` × `#780` × `#985` ×
+`#979` merge the branch carried, and the twenty-fifth for the `#979` × `#973` ×
+`#780` merge this sentence is written in, which is the first of the four that
+carries a figure for a tree none of the three above measured.)*
 are what the runner below prints, one line per suite and a total on its last
 line — and each is a `unittest` suite standing in for a tool's own behaviour.
 *(Corrected at the `#929` × `#942` merge, by running the runner as this sentence
@@ -841,6 +874,135 @@ and a dated-capture variant rather than six, and the dated-capture rule is
 asserted to make the run check *fewer* rather than *more*. The
 `test_readme_suite_table.py` set check is unaffected either way, since it
 compares the *set* of suites and neither merge adds one.
+*(Twenty-fourth merged-tree note, 2026-09-26, the `#929` × `#962` × `#794` ×
+`#780` × `#985` × `#979` merge. **The position matters before anything else, for
+the reason the note above gives for its own:** two notes took "Twenty-first" in
+the same window,
+and #794's, which is the one `main` held first, keeps it — the same rule
+`../docs/findings.md` §76's numbering note records for its own collision, in the
+other direction. This note is placed below it rather than beside it, which leaves
+the twenty-first's own "this note is below the twentieth rather than beside the
+nineteenth" true as written. **That rule then applies a second time, to this
+note's own number**, and this is the first place in this file it has had to:
+two notes took "Twenty-second" in the same window, this one and the `#979` ×
+`#985` note `main` committed, and the same rule gives the whole of the number to
+`main` — so **that note keeps twenty-second**, with the superseded heading a
+reader finds in the diff rather than here. **The same rule then applies a third
+time, to this note's own number, and the twenty-second's reasoning is what
+settles it rather than a new one:** `main` committed a "Twenty-third" of its
+own for the `#979` × `#973` merge in the window after this note was written, and
+the rule has said from the first of these three collisions that **the note
+already committed on `main` keeps the whole number and the branch's own gives
+way** — so `main`'s keeps twenty-third and **this one is twenty-fourth**, the
+number it was first given left in the diff beside the reasoning that gave it.
+**The file's notes are appended in merge order and are not in numeric order, so
+the number moved twice and the paragraph did not move at all:** the
+twenty-first is above this note, `main`'s twenty-second is below it, `main`'s
+twenty-third is below that, and the eleventh already sat below a "twenty-second"
+before this merge, so the ordering was the file's property and not either
+collision's.
+
+**The runner reads `39 suite(s) run, 1221 tests; one or more FAILED`, and
+`python3 -m unittest discover -s ec/tools` reads `917`** — both re-derived by
+running the two commands this file's own first note names rather than by adding
+three diffs, and **neither the note above's `1168`/`864` nor the `1187`/`883` this
+note carried on #780's own branch is the base, because `main` has moved
+twice since the note above was written.** `origin/main` at `368e9e52` reads
+`1177` and `873` of its own and at `3e020cf4` reads `1208` and `904`, each
+measured the same way, so the arithmetic is `1208 + 3 + 10 = 1221` and
+`904 + 3 + 10 = 917`. **The suite count moves for the first time in this run of
+notes, `38` → `39`, and it moves because of `main` rather than because of
+#780**: `3e020cf4` (#985) committed
+`ec/tools/test_disasm8051_oracle.py` at 31 cases, so `1177 + 31 = 1208` is that
+commit's own step. **The ten are still #780's alone, `59` → `69` in
+`ec/tools/test_check_testdata_index.py`, which was already counted, and the three
+between the two are #979's, `47` → `50` in
+`ec/tools/test_check_testdata_row_claims.py`.** **Six
+superseded pairs stay written, each
+true of the tree it was measured on**, per
+[`../docs/findings.md`](../docs/findings.md) §4a-4d: the `1211`/`907` `main`'s
+twenty-second below re-derived for the tree #780 was not on, the `1218`/`914`
+this note carried before #979's three cases were added to it, the
+`1187`/`883` this note
+carried on #780's own branch, the `1174`/`870` that branch's pre-merge tree read,
+the `1165`/`861` #794's branch read, and the
+`1164`/`860` the twentieth above names. **"What it runs" is therefore corrected a
+fifth time, `1161` → `1164` → `1165` → `1168` → `1211` → `1221`, and the fourth
+correction's own `1168` and this note's first `1187` are both now superseded** —
+the sentence carries `1177 + 31 + 3 + 10 = 1221` beside them, and this is the first of
+the five steps taken off `main` rather than off the value the sentence carried,
+which is what makes the fourth one a record rather than a base. **It is also the
+first of the five that adds a suite rather than cases to one**, so the "no merge
+added a suite" clause is superseded in the two places that carry it: the
+twenty-first note keeps it, written, true of every tree until `3e020cf4`, and
+this note's own says below what #780 did and leaves #985's suite to the figures
+above. Neither clause is edited out of silence, per §4a-4d.
+
+**The red set is the single suite the notes above name, and it was re-checked
+here rather than carried:** `test_check_cluster_citations`, 48 tests, the one
+failure, on the same `:220` of #822's `xdata-cluster-names-guard-off-recipe.md`
+with the same two `0x0464`/`0x0465` disagreements, byte-identical to the same
+failure in a `git archive origin/main` extraction — so this merge neither causes
+it nor fixes it. *(That extraction is not a git tree, so
+`ec/tools/test_walk_budget_census.py` reads red in it — its pinned baseline
+`e198fd9` is fetched with `git show`, and a directory with no `.git` cannot
+answer that — and green on the real tree, which is why the extraction is
+evidence about the one suite above rather than a second run of the runner.)* No
+suite was added **by #780**, none was removed, and the one `3e020cf4` added is
+counted in the `39` above and changes nothing else here —
+`xdata_moved_ranks.py --self-test` is at
+**53** and `xdata_register_map.py --check` at **1326** register rows and **439**
+cluster rows, all unchanged, and `check_testdata_index.py`'s own fifth-direction
+line is unmoved at **2 fixture CSV(s), 0 with no `evidence` column, 10 evidence
+cell(s), 11 evidence path token(s): 11 resolved, 0 missing, 0 unresolved** — the
+first four lines byte-identical to before, re-run rather than carried. **Nothing
+else this merge touched is a moving figure**: `check_pin_table_rows.py` reads 106
+rows, 106 records, 106 placed and all seven classes 0, and the landing-shape
+split is `0/15/22/5/32` — the twentieth's `0/16/22/5/31` with #780's one
+assertion onto prose composed on top of it, which is the same composition
+`test-line-pin-census.md`'s correction under its transcript records from the
+other end. Named by suite and by count rather than by line here on purpose, for
+the reason the note above gives.
+
+**This file's own `:203` pin moves a ninth time, and by +24, and the move is
+this note's own sentence rather than #780's.** The "What it runs" correction
+above adds twenty-four lines above `:203` on this tree — three on #780's own
+branch, seven more for #985's 31 cases and its suite beside #780's ten, three
+more for the superseded-value clause added beside them, and **eleven more for
+the two sides' figures having to be written side by side rather than one of
+them**, which is this merge's own cost and not either branch's — so
+`203 + 24 = :227` and
+`159 + 9 + 7 + 22 + 6 + 24 = :227` is the whole arithmetic; the row in
+[`../docs/findings/test-line-pin-census.md`](../docs/findings/test-line-pin-census.md)
+is re-registered to `:227` with the `:216` this note carried, the `:206` and
+`:203` above it, and `:1195` left written, per
+§4a-4d, and
+the tool reads **106 rows, 106 records, 106 placed, all seven classes 0** on
+this tree — checked by running it rather than by reading this paragraph. **The
+suite-table row for that same file is at `:1318` here, not the `:1317`, `:1315`
+and `:1294` three earlier drafts of this note gave, nor the `:1156` it carried
+on #780's own branch**, and the move is
+the sum of four: `3e020cf4`
+committed one row above it — `ec/tools/test_disasm8051_oracle.py`'s, at `:1295`
+here — and this note, its corrected parenthetical and the twenty-second note's
+supersession paragraph below the table added the rest. **Both
+positions are measured on the merged tree and on `origin/main` at `abfe76e6`
+rather than differenced**, by reading the two lines out of a `git archive`
+extraction of each: `main` reads `:1160` for the suite-table row and `:203` for
+the pin, and this tree reads `:1318` and `:227`, so `1160 + 158` and
+`203 + 24`. The `1087` this note gave for `main` at `368e9e52` is a **fourth**
+value for that denominator and the one that is furthest off: that commit reads
+`:1100`, and the base reading `1100` rather than `1087` is itself the record of
+a tree that wrote a number and did not measure it. **All of them stay written,
+each true of the tree it was measured on — or, in `:1087`'s case, the tree it
+was claimed for** — per §4a-4d, and none is edited into another. The
+twenty-first's `:1073` and the three it names as never re-derived, `:945`,
+`:1001` and `:985`, are the earlier values in that series. **The `:203` →
+`:227` step above is moved by #985's one line only in the sense that it is not
+moved by it at all**: that row is at `:1295`, below `:227`, so the two
+corrections are independent and neither is arithmetic on the other — checked by
+reading both lines rather than by assuming a merge's diff lands above a pin it
+does not name.*
 
 *(Eleventh merged-tree note, 2026-09-26, issue #891 landing beside the
 `#850`/`#887` merge: the counts above are this merged tree's, re-derived from a
@@ -1101,6 +1263,27 @@ disagreements, each against `main-ec-145`. It fails identically on the base, on
 the clean `origin/main` worktree and here, so neither #979 nor #985 caused it
 and neither fixes it, and this merge adds no second red suite.
 
+*(**Superseded at the `#979` × `#780` merge, beside this note rather than into
+it: every figure here is true of the `#979` × `#985` tree and none of it is
+this tree's.** The twenty-fourth note above re-derives the sentence for the tree
+this file now sits in, and it reads `39 suite(s) run, 1221 tests` and `917` for
+the discovery — `1211 + 10` and `907 + 10`, the ten being #780's, and
+`python3 -m unittest discover -s ec/tools` measured rather than added. **The
+`:203` clause two paragraphs below is superseded with them and left written
+where it is**, per §4a-4d: the pin does not move at *this* note's merge, which is
+true and measured — `203` is what `origin/main` at `abfe76e6` reads — and it does
+move at the next one, for the reason the twenty-fourth note sets out. **The
+`227` the branch's own tree read is not this tree's either**, because that
+merge's two sides each moved the line again: `main` gained #973's correction
+above the pin and this merge carries both sides' corrections, so the pin is at
+**`:236`** here and `159 + 9 + 7 + 22 + 6 = :203` becomes
+`159 + 9 + 7 + 22 + 6 + 33 = :236`. The `227` stays written here, true of the
+tree it was measured on. The red-set paragraph is confirmed rather than
+corrected: the single suite is still the only one in the tree this merge leaves
+behind, re-checked by running the runner here — though the twenty-fifth note
+below records the length of the merge during which a second suite was red, and
+which.*
+
 **This file's own `:203` pin does not move at this merge, and that is the
 exception worth naming** — corrections have moved it before and this one does
 not. "What it runs" above is corrected **in place within the lines it already
@@ -1149,6 +1332,62 @@ the measured **40 / 11 / 29**: #973's suite and #811's landed beside each other
 rather than one replacing the other, and the comment beside that assert and
 [`../docs/findings/pin-table-by-cited-file.md`](../docs/findings/pin-table-by-cited-file.md)
 say why. The `11` does not move, because the pin count is still **106**.*
+
+*(Twenty-fifth merged-tree note, 2026-09-26, issues #979 × #973 × #780. **The
+sentence above is re-derived by running the runner rather than by adding the two
+sides' figures up, and the arithmetic is written out only after that, as a
+description of a number already measured rather than a way of arriving at one.**
+On this merged tree `bash tools/run-tests.sh` reads `40 suite(s) run, 1243 tests;
+one or more FAILED` and `python3 -m unittest discover -s ec/tools` reads `939`,
+both measured here. The twenty-second note's `39`/`1211` and the twenty-third's
+`40`/`1233` are left visible above per [`../docs/findings.md`](../docs/findings.md)
+§4a-4d, and each was true of the tree it was measured on. **The one step is
+#780's ten, and it is the same number from either side's tree:** `1233 + 10 =
+1243` and `917 + 22 = 939` both land on what the merged run printed, with the
+twenty-two being #973's `ec/tools/test_check_capture_names.py` at 19 and its
+three cases in `ec/tools/test_check_testdata_row_claims.py`. The suite count is
+the half that does **not** move, `40` on `main` and `40` here, because #780
+adds cases to a suite it already indexed and no row to the table below — which
+is also why `test_check_pin_table_by_cited_file.py`'s `40 / 11 / 29` needs no
+correction here, unlike at the merge above.
+
+**The red set is the single suite every note above names — but it was two for
+the length of this merge, and the second is the one this note is here for.**
+`ec/tools/test_check_cluster_citations.py` is the one all of them name: 48
+tests, the single failure, on the same `:220` of #822's
+`xdata-cluster-names-guard-off-recipe.md` with the same two
+`0x0464`/`0x0465` disagreements against `main-ec-145`, confirmed here by running
+it against a clean `origin/main` worktree, where it fails identically, so
+neither #973 nor #780 caused it and neither fixes it, and this merge adds no
+second red suite in the state the tree is left in. **The one it did add is
+`ec/tools/test_check_pin_table_rows.py`**, 36 tests and three failures, and it
+is the per-pin table's own register rather than a stale citation: the row for
+`../../tools/README.md` registers the repoint list *inside* the eighth-thing
+paragraph, and both sides' corrections to the "What it runs" sentence land
+**above** it, so the line it names moved and the table did not move with it. The
+tool read **1 `unplaced-row` and 1 `row-without-record`** with the stale line
+still registered, and reads **106 rows, 106 records, 106 placed, all seven
+classes 0** once the row is re-registered to `:236` — the arithmetic is what it
+printed, not a guess at it, and it is the eighth-thing paragraph's argument
+arriving as a red suite, which is the one thing in this note that is not a
+figure the two sides' notes already carried.
+
+**The `:203` pin moves again, and this is the biggest step it has taken.**
+`main` reads `:203` and the branch's own tree read `:227`, and this tree reads
+**`:236`** — so `159 + 9 + 7 + 22 + 6 = :203` becomes
+`159 + 9 + 7 + 22 + 6 + 33 = :236`, the `+33` being the two sides' corrections
+written side by side rather than one of them, which is the whole of this merge's
+step on this line. Both superseded values stay written where they are.
+[`../docs/findings/test-line-pin-census.md`](../docs/findings/test-line-pin-census.md)
+carries the per-merge record of every one of those moves, and adds this one as
+its own. **The `../findings.md` rows are unaffected**, for the reason every note
+above gives: this merge's two edits to that file land at its `:9549` and at its
+new §80, and every one of those four rows is above them, so no repoint is owed.
+`check_pin_table_rows.py` reads **106 rows, 106 records, 106 placed, all
+seven classes 0** with that row re-registered, and the two tools that read the
+same table — `census_test_line_pins.py`'s own committed-tree census and
+`check_pin_table_by_cited_file.py` — are green on this tree without a count
+moving, because the row moved a line and not a record.*
 
 | suite | what it stands in for |
 |---|---|

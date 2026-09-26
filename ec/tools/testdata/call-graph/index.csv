@@ -8,7 +8,7 @@ common,0064,FUN_CODE_0064,5,call-target,yes,no,,,,bank1,common/0064.c
 common,0ECC,FUN_CODE_0ecc,6,call-target,yes,no,,,,bank1,common/0ECC.c
 bank0,1F00,FUN_CODE_1f00,6,call-target,yes,no,,,,,bank0/1F00.c
 common,DEAD,FUN_CODE_dead,3,call-target,yes,no,,,,bank1,common/DEAD.c
-common,0D20,wait_then_jump_0d40,11,annotation,yes,yes,delay,hand-decoded,ec/decompiled/common/0D20.asm,,common/0D20.c
+common,0D20,wait_then_jump_0d40,11,annotation,yes,yes,delay,hand-decoded,,,common/0D20.c
 common,0D40,FUN_CODE_0d40,3,call-target,yes,no,,,,bank1,common/0D40.c
 common,018C,chan_arm_1709,4,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/common/018C.asm,,common/018C.c
 common,029B,chan_arm_1708,3,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/common/029B.asm,,common/029B.c
@@ -22,7 +22,7 @@ common,0F75,FUN_CODE_0f75,3,call-target,yes,no,,,,bank1,common/0F75.c
 common,1594,FUN_CODE_1594,4,call-target,yes,no,,,,bank1,common/1594.c
 common,1400,FUN_CODE_1400,3,call-target,yes,no,,,,bank1,common/1400.c
 common,1410,FUN_CODE_1410,3,call-target,yes,no,,,,bank1,common/1410.c
-common,0071,dispatch_setup,7,annotation,yes,yes,unresolved,hand-decoded,ec/decompiled/common/0071.asm,,common/0071.c
+common,0071,dispatch_setup,7,annotation,yes,yes,unresolved,hand-decoded,,,common/0071.c
 bank1,F6A0,FUN_CODE_f6a0,4,call-target,yes,no,,,,bank0,bank1/F6A0.asm
-pd,10E0,keil_product_10e0,4,annotation,no,yes,unresolved,hand-decoded,ec/decompiled/pd/10E0.asm,,pd/10E0.c
+pd,10E0,keil_product_10e0,4,annotation,no,yes,unresolved,hand-decoded,,,pd/10E0.c
 pd,10BC,FUN_CODE_10bc,4,call-target,no,no,,,,,pd/10BC.c

@@ -9546,7 +9546,19 @@ that is a change this branch does not make.
 > and the branch's own gives way — this section is **§73**, and it is the last
 > section in the file. *(§70's clause is therefore true of this merge again,
 > one merge later, and says itself it is a property of the merge rather than of
-> the file.)*
+> the file. **This clause is itself corrected, beside itself and not into itself,
+> by the summary #780 landed below it** — written as §72, **§80** on the tree it
+> lands in after giving way to #929's §74, #962's §75, #794's §76, #811's
+> §77, #979's §78 and #973's §79, and the last section in the file rather than
+> the one
+> immediately below
+> this one — so
+> "the last section in the file" held of the tree this note was written against
+> and not of the one it is now on, which is the same property §70's has and the
+> reason both are recorded where a reader meets them. **The clause this branch
+> first wrote read "by §74 immediately below", the number that summary was first
+> given and not the one it holds; both halves are corrected here and not in it,
+> per §4a-4d, and §80's own numbering note is the record from the other end.*
 >
 > **And that clause is corrected once more at the `#929` × `#778` merge, in the
 > same place and for the same reason §68's, §69's and §70's were.** #929's
@@ -10213,6 +10225,66 @@ re-derive. The correction fits inside the lines the sentence already had, so the
 and `check_pin_table_rows.py` still reads 106 / 106 / 106 with all seven
 classes 0. No `gh pr create` anywhere.
 
+*(**Superseded at the `#979` × `#780` merge, beside this section rather than
+into it: the `1211`, the `907` and the `:203` are each true of the `#979` ×
+`#985` tree and none of the three is this tree's.** The two sides of this merge
+were written independently and each re-derived the sentence for its own half, so
+the tree they meet on is neither: `bash tools/run-tests.sh` reads
+`39 suite(s) run, 1221 tests; one or more FAILED` and
+`python3 -m unittest discover -s ec/tools` reads `917` here, against
+`origin/main` at `abfe76e6`'s `1211`/`907` and this merge's base `368e9e52`'s
+`1177`/`873` — `1211 + 10` and `907 + 10`, the ten being #780's alone in
+`ec/tools/test_check_testdata_index.py`, and the suite count unmoved at `39` on
+both sides, which is the fact §78's own paragraph is about. **The `:203` clause
+above moves with them and is left written where it is**, per §4a-4d: the pin does
+not move at *this* section's merge, which is measured — `:203` is what
+`origin/main` at `abfe76e6` reads — and it does at the next one, to **`:227`**,
+because the two sides' corrections have to be written side by side rather than
+one of them, and that is `+24` above the pin. `check_pin_table_rows.py` still
+reads **106 / 106 / 106** with all seven classes 0 on this tree, re-run here
+rather than carried, so the row is re-registered rather than repaired. The
+figures this section does *not* move — the six `DATED_CAPTURE` cases it says
+pass unedited, the `47` → `50` in `ec/tools/test_check_testdata_row_claims.py`,
+and the census's "two bare dates and zero two-date sentences" over the index's
+100 description sentences — are unchanged by #780 and are left as written.)*
+
+*(**And superseded a second time at the `#979` × `#973` × `#780` merge, again
+beside this note rather than into it: the `39`, the `1221` and the `917` above
+are each true of the branch's own tree, and so is the `227`.** The branch wrote
+that correction against a `main` that had stopped at `abfe76e6`; this tree is
+`563488c4`, one commit further on, and that commit is #973's, which committed a
+suite. So the sentence `tools/README.md` carries is corrected again, and its
+arithmetic is now `1233 + 10 = 1243` rather than `1211 + 10 = 1221`:
+`bash tools/run-tests.sh` reads **`40 suite(s) run, 1243 tests; one or more
+FAILED`** and `python3 -m unittest discover -s ec/tools` reads **`939`**, both
+measured on the merged tree rather than added. **The suite count is the half
+that moves this time**, `39` → `40`, and it moves on `main`'s side — on
+`ec/tools/test_check_capture_names.py` at 19 cases and three more in
+`ec/tools/test_check_testdata_row_claims.py`. That is the same side §78's own
+paragraph named for #985's step and **not** the mirror of it, which is worth one
+sentence: both merges put their suite on `main`, and what differs is which two
+issues are being merged rather than which side they arrive from. The pair
+`#979` × `#985` had a suite on one side and three cases on the other; this pair,
+`#780` × `#973`, has ten cases on the branch and a suite *and* three cases on
+`main`, so the same side moves for the second merge running. **The `:203` clause
+above is superseded with the rest and the `227` above it with that**, left both
+written where they are per §4a-4d: the pin does not move at *this* section's
+merge, and on this tree it reads **`:236`**, so
+`159 + 9 + 7 + 22 + 6 = :203` becomes `159 + 9 + 7 + 22 + 6 + 33 = :236` — the
+`+33` being both sides' corrections to the totals sentence written side by side
+rather than one of them, which is the reason the branch predicted `+24` and got
+more. `check_pin_table_rows.py` reads **106 / 106 / 106** with all seven classes
+0 on this tree, re-run rather than carried, so the row is re-registered rather
+than repaired, and the row it re-registers is the one
+[`test-line-pin-census.md`](findings/test-line-pin-census.md) holds. **The one
+figure above that this merge does move is the `47` → `50`**: the suite reads
+**`53`** here, `50 + 3` for #973's three cases, so §78's own `50` is superseded
+too and the `47` → `50` step it records is the step that was true of the tree it
+was measured on. The figures it does *not* move are still unmoved — the six
+`DATED_CAPTURE` cases, and the census's "two bare dates and zero two-date
+sentences" over the index's 100 description sentences, both re-run here rather
+than carried.)*
+
 ## 79. The capture root's two premises are censused, and a name breaking either is refused (2026-09-26, issue #973)
 
 > **Numbering note, added at the merge, and then at a second one.** This
@@ -10355,3 +10427,164 @@ they are the convention being held, not prose to be rewritten to match a rule.
 `captures_for()`'s resolution semantics are unchanged and re-stated as
 unchanged, no `status:` moved so `ec/annotations/registers.yaml` is not
 touched, no gate is wired, and no `gh pr create` anywhere.
+
+## 80. The fixture CSVs' `evidence` column is resolved against the real tree, and the eight cells naming nothing there are empty (2026-09-26, issue #780)
+
+> **Numbering note, added at the merge, then extended three times as `main`
+> gained three more sections, then three more times: once where `main` gained a
+> fourth, once at the merge where it gained a fifth and this section took its
+> fourth number, and once at this merge, where it gained a sixth and this section
+> took its fifth.** This section was written
+> as **§72**, and **eight**
+> summaries have taken that number or one of the ones after it: #777's
+> prose-name census (`24460001`) is **§72** and #778's two-largest restatement
+> (`77ce75df`) is **§73** in the window this branch forked in, #929's
+> collision-scope summary (`1127a935`) is **§74** and #962's guard-off
+> key-distinctness summary (`aa1f2cb0`) is **§75** in a later one, #794's
+> other-capture summary holds **§76** on `main`, #811's
+> `--self-test` oracle summary (`3e020cf4`) is **§77** — the one commit `main`
+> gained after this branch forked, and the reason the renumbering went from a
+> second to a third — #979's two-date-sentence summary
+> (`abfe76e6`, the other side of this merge) is **§78** on `main`, and #973's
+> capture-root-premises summary (`563488c4`, the commit `main` gained after
+> `abfe76e6` and the other side of this merge's own collision) is **§79** on
+> `main` too. All eight of
+> them are sections above this one, so it is renumbered to the next free number
+> rather than left to collide. **The chain is `§72` as written, `§76` on the
+> branch's own tip, `§78` on the tree #985's commit produced, `§79` on the tree
+> #979's merge produced, and `§80` here**,
+> and the last of those five numbers is the only thing this
+> final merge adds to the note. **That last step is a genuine collision rather
+> than bookkeeping** — the two summaries were written independently and **both
+> called themselves §79**, which is why this section gives way to a number it
+> does not share with anything else in the file. The rule is the one the earlier
+> collisions set and the one this same file's §76 numbering note records from the
+> other side: **the summary already committed on `main` does not move and the branch's
+> own gives way**, so #979 holds §78, #973 holds §79 and this holds §80, and the
+> section order matches the numbering. **This is the third time this note has
+> been extended for a section `main` gained after the branch forked, and the
+> first time two of them arrived on the two sides of one merge** — `abfe76e6` and
+> `563488c4` are both in the window between the branch's own tip and this tree —
+> so the sentence above names two sides rather than one, which is the same shape
+> the `tools/README.md` totals sentence takes for the same pair.
+> **Nothing this branch wrote pointed at its own
+> section number, so there was no reference to repoint**, and that is worth
+> stating rather than left for the next reader to check: the write-up names §14b
+> and its own §"A CSV with no `evidence` column" heading rather than this
+> section, landing a section is the branch's only *new section* in this file —
+> the other edit it makes here is the correction to §73's note just described —
+> and no tool, test or gate reads a section number out of this file.
+> The one reference the branch *did* add to it is corrected beside the clause it
+> qualifies rather than repointed into it, per §4a-4d: §73's note says of its
+> own "last section in the file" clause that it is "corrected, beside itself and
+> not into itself, by the summary #780 landed below it", which named this
+> section **§74** and named it wrong on this tree — it is **§80**, and it sits
+> below #929's §74, #962's §75, #794's §76, #811's §77, #979's §78 and #973's
+> §79 rather
+> than immediately below anything. The clause it corrects is true here either way,
+> so
+> the italic parenthesis is what moves: it now reads **§80** and names the six
+> sections this one gave way to, with the superseded "**by §74 immediately
+> below**" left visible and corrected in the same breath. The correction §73's
+> next paragraph already made is left as written.
+> §70's own note carries the correction its own landing makes necessary — it
+> says its "last section in the file" clause is "true of this merge, and the
+> next section to land below this one corrects it beside itself rather than
+> into itself, per §4a-4d" — so that clause is left visible and uncorrected
+> here, and **its number does not move**. **§73's own clause was already
+> corrected on `main`**, by the paragraph beneath the one just edited, which
+> records that this section keeps §73 and is no longer the last section in the
+> file. **The trailing "and §74 is" in that paragraph is the half of it this
+> landing does falsify** — six sections now sit between §73 and the end of the
+> file, so §74 is not the last one — and by the same rule it is corrected here,
+> beside itself rather than into itself, since #929's paragraph is committed on
+> `main` and does not move and this branch's gives way.
+> **§74's is the other one this landing falsifies** — its note says of itself
+> that "the file still ends here", which #962's §75, #794's §76 and #811's §77
+> had already made false before this section landed, which #979's §78 and
+> #973's §79 make
+> false a fourth and a fifth time, on the other side of this merge, and which
+> this section makes false a sixth; corrected here for the same reason and on
+> the same terms. **Neither #811's own §77, #979's own §78 nor #973's own §79
+> says anything this landing
+> falsifies**: each carries no
+> "last section in the file" clause and no section number of its own beyond the
+> one in its heading, so the rule the earlier collisions set — the summary
+> already committed on `main` does not move and the branch's own gives way —
+> gives the whole of §77 to #811, of §78 to #979 and of §79 to #973, and moves
+> this one, with no
+> correction owed beside any of them. A
+> section number is
+> a property of the merge in the same way the runner's totals are — see
+> [`findings/runner-red-suite-set.md`](findings/runner-red-suite-set.md) — which
+> is why the collision is recorded here rather than left for the next reader to
+> find.
+
+Write-up: [`testdata-index-evidence-column.md`](findings/testdata-index-evidence-column.md);
+this is the summary.
+
+**The check reads a fifth direction, and the first four lines of its output are
+byte-identical to before.** `ec/tools/check_testdata_index.py` now resolves the
+`evidence` column of the CSVs a self-indexed directory's tables name, against
+the **repository root** — a third base beside `ec/tools/` for `Feeds` and the
+self-indexed directory for a nested `.asm`. The fifth line reads
+
+```console
+2 fixture CSV(s), 0 with no `evidence` column, 10 evidence cell(s), 11 evidence path token(s): 11 resolved, 0 missing, 0 unresolved
+```
+
+and the four above it are unchanged, which is the point: a
+direction added to a checker that perturbs the others is a direction nobody can
+read the effect of.
+
+**Eight cells named a path the real tree does not have, over five distinct
+paths, against 2,711 committed `.asm` files.** That is a decidable fact about
+committed files and not a scan's silence. All eight are now empty, and the
+reasoning differs per case, which is why the write-up carries a decision for
+each rather than a list.
+
+**`ghidra-functions.csv:3` is the one the issue calls a typo, and it is not
+nearly one.** `bank0,0EA3,mentions_absent_target` is a *synthetic* row — its own
+comment says it exists to pin that a comment naming an absent address produces
+no citation, and it names `0xBEEF`. There is no real `bank0/0EA3.asm` either, so
+repointing the cell at the real `0EA2.asm` would make a `resolved` cell assert
+that this row's decompilation is a *different function's* file: a false identity
+claim wearing a green check. The digit slip is the reason the cell was wrong,
+not a different fix from the other four — and it is the same class of wrong cell
+#746 caught at `call-graph/README.md:16`, one column over.
+
+**The other four were explicable all along, and the file now says so.**
+`0x0D20` was already declared fixture-only, `bank1/F6A0` was already declared
+"deliberately not one of them", and `common/0071` / `pd/10E0` are
+fixture-invented addresses whose real neighbours (`common/0070.asm`,
+`pd/10BC.asm` — a different function, `add_full_product_to_dptr`) *are* present,
+which is what makes the absences a fact rather than a missing directory.
+
+**Discovery is structural, not an exemption list, and the calibration rule is
+intact.** The CSVs read are the ones a nested table already names, so the next
+self-indexed directory carrying one is covered with no edit here. Three
+refusals are `unresolved` and none fails the run: a named CSV with no `evidence`
+column, a token matching no path rule, and — as a stated *limit* rather than a
+verdict — a cell carrying no value at all, which yields no pointer because a
+rule invented to read an empty cell would be a parser guessing. A finding's
+`where` is the fixture CSV, a third file from either index, so a reader is not
+sent to a file that does not contain the cell.
+
+**The red case was run, not just asserted.** Putting one absent path back into a
+cell gives exit 1 and a stderr line naming the CSV, the token and the path it
+was read as; reverting gives exit 0. The suite is 69 cases, up from 59, and the
+four new rules were each dropped in turn and the whole suite re-run against each
+— all four caught, by 5, 14, 15 and 2 cases respectively.
+
+**The `out_file` column stays out, and the reason is stronger than scope:**
+resolving it would make the run red on the day it landed, since
+`ec/decompiled/common/05E8.c` and `.../00CF.c` exist while `.../DEAD.c` and
+`.../bank1/F6A0.c` do not. A check that false-positives is worse than no check,
+which is the condition #746 set on this whole direction.
+
+**Until a human lands the prepared patch, no commit runs this check.**
+`docs/ci/agent-gates-capture-claims.patch` is regenerated — the `gate` line, the
+command, the old-side blob and the patch's applicability are unchanged, and only
+the new-side hash and the two call-site comments move, four directions to five.
+No EC was opened, no capture taken, no register read, and nothing here is a
+claim about what the fixture exercises.

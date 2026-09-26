@@ -22,7 +22,7 @@ files. No fixture is added and no claim is made that any fixture is correct.
 ## The measured defect
 
 Three lines above the assertion, the comment said the opposite of it. At the
-time of writing, `ec/tools/test_check_testdata_index.py:413-415`:
+time of writing the file read:
 
 ```python
         # A run that reports 0 directories and 0 rows is green for the wrong
@@ -31,11 +31,32 @@ time of writing, `ec/tools/test_check_testdata_index.py:413-415`:
         # only that a run reaching nothing fails.
 ```
 
-and `:420`, three lines below it:
+and three lines below it:
 
 ```python
         self.assertEqual((directories, rows, tokens), (13, 27, 34))
 ```
+
+> **Correction, added 2026-09-26 (issue #780).** Both quoted lines are **gone**,
+> and this branch removed them: they are what `TheReachedSomethingRule`
+> replaced, so the two quotes above are a record of what the file said before
+> this write-up's own change, not a pointer at anything a reader can open. The
+> line pin used to sit on them and the census kept resolving it, but it had
+> stopped carrying the claim, and #780's additions above that point moved it
+> off the shape the census recorded it as. The live successor is
+> `ec/tools/test_check_testdata_index.py:1180-1184`, the docstring of the rule
+> that replaced both lines, and the census pin now points there — which moves
+> the census one record from `assertion` to `other` and moves nothing else.
+> Per §4a-4d the wrong version is left visible above rather than edited into.
+>
+> **Re-measured in the same issue's fix round.** The pin was `:1090-1094` when
+> this block was written and is `:1180-1184` now: the fix round extracted
+> `run_tool()` into a `RunsTheTool` base so a case that needs the *printed* line
+> and not only the `Result` fields can reach it, and that plus the case itself
+> moved the docstring down by 90. The same five prose lines, so the shape the
+> census records is still `other` and the census moves by nothing — which is
+> the point of re-measuring rather than assuming: the span moved and the split
+> did not.
 
 **What that costs.** The event is a new fixture directory arriving. The correct
 response to it — add `ec/tools/testdata/0751-isolation-run-<case>/` and a row

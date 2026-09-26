@@ -69,14 +69,24 @@ and its suite hold.
 
 | quantity | measured |
 |---|---|
-| table data rows | **105** (header `:459`, separator `:460`, rows `:461`–`:565`) |
-| census records over the same markdown | **105** — 73 `resolves`, 32 `declined`, and 0 of each of the other three |
+| table data rows | **106** (header `:883`, separator `:884`, rows `:885`–`:989` — re-derived on the `#929` × `#962` × `#794` × `#780` × `#985` × `#979` tree, +1 on the `105` the `#942 × #780` merge measured; the `:846`/`:847`–`:952` a first draft of this row carried and the `:470`/`:472`–`:576` it names are that other tree's) |
+| census records over the same markdown | **106** — 74 `resolves`, 32 `declined`, and 0 of each of the other three |
 | rows that could not be placed | **0** |
 | records with no row | **0** |
 | read-kind, shape and resolved-path differences | **0** |
 | duplicate `(citing file, citing line, spelling)` keys | **0** |
-| read cells, of the 73 that resolve | 52 `by-path`, 19 `by-name`, 2 `beside` |
-| shape cells | 5 `def test_`, 19 `assertion`, 10 `comment`, 6 `blank`, 33 `other`, plus 32 `—` |
+| read cells, of the 74 that resolve | 53 `by-path`, 19 `by-name`, 2 `beside` |
+| shape cells | 0 `def test_`, 15 `assertion`, 22 `comment`, 5 `blank`, 32 `other`, plus 32 `—` — the merged split, and both of its movements are other issues': `main`'s re-measurement moved five pins off a `def test_` header onto prose or code when #962 corrected a docstring above them, and #780's repoint of the `testdata-index-suite-count-floor.md:25 → :47` row at the rule that replaced the code it cited landed its pin on prose rather than on an assertion. The `5`/`18`/`10`/`6`/`34` the `#942 × #780` merge published and the `19`/`34` this page was written with are each left here as what the tree they were measured on read, per §4a-4d. |
+
+**Every figure above is re-derived on this tree by running the two tools rather
+than by carrying either side's reading, and the run is the check the table is
+for.** `ec/tools/check_pin_table_rows.py` reads **106 table row(s) against 106
+census record(s): 106 placed, 0 unparsed-row, 0 unplaced-row, 0
+row-without-record, 0 duplicate-key, 0 read-differs, 0 shape-differs, 0
+path-differs**, and the read and shape columns above are counted out of that
+table rather than out of anything in this page. The `105`/`73` the
+`#942 × #780` merge measured and the `105`/`37`/`26` this page was written with
+stay written where they are, each true of the tree it was measured on.
 
 So the table reconciles today, which is the calibration the issue claims and the
 reason the tool lands green. The point of a green check on a correct tree is not
@@ -96,7 +106,7 @@ abbreviation is in the same table and is handled the same way: the 32 declined
 rows write an em dash where the census writes a bare hyphen, and reading that as
 an unknown cell would redden a third of a correct tree.
 
-**Finding B — the citing cell has two spellings, 104 : 1.** 104 rows write
+**Finding B — the citing cell has two spellings, 105 : 1.** 105 rows write
 `[`path`](path)` with `:NNN` outside the link, one of them with a trailing `†`
 marker. One row writes `` `docs/agent-pipeline.md:345` `` with the line *inside*
 the code span. A parser that handled only the first form would report the whole
@@ -136,7 +146,7 @@ carries for a static scan, load-bearing here for the same reason it is there.
 - **A verdict that has quietly stopped being true.** By construction. This tool
   checks that the table still *describes* the run; whether a pin carries its
   claim is a reading, and a reading is a human looking at a line. A green run is
-  not a statement about any of the 105 verdicts.
+  not a statement about any of the 106 verdicts.
 - **A row that is *right* about a stale line.** If a merge moves a line and the
   citing prose is re-registered in the same commit, this tool is green and the
   *claim* is no better than it was. The tool tracks the table against the run;
