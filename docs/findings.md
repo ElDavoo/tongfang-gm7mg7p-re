@@ -9223,3 +9223,73 @@ the four drift tables that quote them (`0751-mark-provenance-shapes.md`,
 `0751-capture-row-shape.md`) moved with them. The *reader set* did not: 7
 writers, 8 sites, 6 reader calls, 48 in-suite calls, the same as before, and
 the tool exits 0 again. No EC was opened, no capture taken, no register read.
+## 71. The per-pin table's four mechanical columns are reconciled against the run, and the fifth is still a reading (2026-09-26, issue #942)
+
+**The gap was one join, and it had been missing since the census landed.**
+`docs/findings/test-line-pin-census.md`'s per-pin table carries five columns and
+`census_test_line_pins.py` computes four of them — the citing file, the citing
+line, the cited target, the read kind and the shape — so only the verdict is a
+judgement, and **nothing held the other four to the run.** A row whose citing
+line quietly moved therefore kept reading as an ordinary row, and this
+repository has paid for that by hand four times: #891 re-registered two citing
+lines, #889's note moved two more, and #930 re-registered
+`../findings.md:9046` → `:9077` in the very merge that landed the correction
+above it. A merge that only *adds a paragraph* invalidates rows, and the only
+signal was a person re-reading `--verbose` against 105 rows.
+
+**`ec/tools/check_pin_table_rows.py` is that join.** Measured on the merged tree
+before anything was changed and again by the tool afterwards: **105 rows, 105
+records, 105 placed, and all seven classes 0** — 0 `unparsed-row`, 0
+`unplaced-row`, 0 `row-without-record`, 0 `duplicate-key`, 0 `read-differs`, 0
+`shape-differs`, 0 `path-differs`. Green on this tree because the table *does*
+reconcile today; the point of a green check on a correct tree is that the next
+drift is loud rather than the last one silent.
+
+**It reads no verdict cell, and it exits 0 on a tree where every verdict is
+wrong.** That standing is what makes it safe in a gate, and the suite asserts
+it twice over — once with every verdict cell nonsense, once with the cell
+empty. So §65's *no checker* is **not** overturned: that section declines a rule
+that *renders a verdict*, and this one renders none. A green run says the table
+still describes the run; it says nothing about whether any of the 105 pins
+carries its claim.
+
+**One correction to the issue's own argument, in place per §4a-4d.** The
+separate `path-differs` class was argued to catch a citing file moving to a
+different directory. Measured, that does not survive the match key: a record's
+`path` has exactly one source, `census.resolve()`, and the key pins both of its
+inputs, so the re-derivation is an identity on a placed row and the case is
+already caught by `read-differs`. The class is kept — it is the assertion that
+fires if `census.resolve()` stops being a pure function of its inputs — and the
+suite demonstrates it fires rather than leaving that as a claim.
+
+Two findings about the table's own spelling came out of building it: the table
+abbreviates the census's `beside-the-citing-file` as `beside`, and writes an em
+dash where the census writes a bare hyphen in all 32 declined rows. Both are
+carried as an alias map with the reason in a comment — normalising them in the
+table would edit a shared, actively churning file for a cosmetic reason — and an
+**unrecognised** cell is a reported problem rather than a pass, so a fourth
+spelling fails rather than slips through. The citing cell also has two spellings
+at 104 : 1, and a parser that took only the common one would have reported the
+whole table unparsed.
+
+**Not in any gate.** `.github/` is template-copied and the push token has no
+`workflow` scope, so the wiring is prepared at
+`docs/ci/agent-gates-pin-table-rows.patch` for a human to `git apply`, in a new
+item 12 of `docs/agent-pipeline.md`, with its `gate` line at the *head* of the
+list so it composes with item 5's and item 10's in either order —
+`tools/test_agent_gates_patches.py` applies the set in every ordered pair, and
+all six now land together, parse, and are shellcheck-clean. The suite
+(`ec/tools/test_check_pin_table_rows.py`, 36 cases) needs no wiring to be run:
+`tools/run-tests.sh` discovers every `test_*.py` in the repository.
+
+**The coupling this adds, stated because it is a cost.** The census reads every
+markdown file except the write-up above, so writing a `test_*.py:NNN` citation
+into any other one now requires a new row in that table, and omitting one is a
+`row-without-record`. Nothing in this section, in the write-up, or in the other
+three files this issue touches spells one, deliberately, rather than growing the
+table a row at a time.
+
+The write-up is
+[`docs/findings/pin-table-row-reconciliation.md`](findings/pin-table-row-reconciliation.md).
+No image was opened, no capture taken, no register read back, and no laptop, EC
+or Windows machine was involved: this is bookkeeping over committed text.
