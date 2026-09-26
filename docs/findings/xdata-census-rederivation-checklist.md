@@ -56,7 +56,7 @@ Seven of these were here when this file was written; the last four arrived with
 
 | figure | what it is | where §6a prints it |
 |---|---|---|
-| `833` | references leaving `write`, all three programs | `xdata-06c2-06db-timers.md:785` |
+| `833` | references entering `write`, all three programs † | `xdata-06c2-06db-timers.md:785` |
 | `210` of `1,326` | addresses whose `write` column changes | `:786` |
 | `0` of `1,326` | addresses whose `refs` column changes | `:969` |
 | `0x08A8` `84/44` guard-off, `126/2` committed | read / write | `:787` |
@@ -67,6 +67,16 @@ Seven of these were here when this file was written; the last four arrived with
 | **`7,189` / `7,935`** | **main-EC `read` references, over that same arm** | **`:782`** |
 | **`193` / `142`** | **PD-image `write` references, over the 108 `program=pd` rows** | **`:783`** |
 | **`279` / `239`** | **`write` references for the 49 `program=both` rows** | **`:784`** |
+
+† **The word, corrected 2026-09-26 (issue #890); the figure is unchanged.** The
+`833` row read *references leaving `write`* and the arithmetic behind it was
+always a signed sum of *guard-off minus committed*, which is positive: the
+references **enter** `write` and none leave, because `--no-eq-guard` lifts one
+exclusion and lifting an exclusion only admits. §6a's row is corrected in place
+with the wrong wording left visible, and the measurement behind the word — over
+both censuses, 210 addresses' `write` rises and none falls — is in
+[`xdata-write-direction-correction.md`](xdata-write-direction-correction.md).
+Nothing else in either table changes.
 
 The four bold rows carry their arm's denominators in the same assertion, for the
 reason the `210` and the `0` carry theirs: `1,169` addresses / `13,891` refs,
@@ -118,16 +128,16 @@ part of the table below:
 | `1218` | main-EC distinct addresses | `:903` | held | `ORACLE["main_distinct"]`, `ec/tools/xdata_register_map.py:744`, asserted `:3864-3869`; and, for the de-duplicated run this row is about, `OWNERSHIP["main_distinct"]`, `ec/tools/xdata_register_map.py:1414`, read by the "and its main-EC half is" check at `:4315-4319` |
 | `9320` | main-EC references | `:903` | held | `OWNERSHIP["main_refs"]`, `ec/tools/xdata_register_map.py:1414`, asserted `:4315-4319` |
 | `157` / `858` | pd distinct addresses / references | `:904` | held | `ORACLE["extmem_pd_distinct"]` / `["extmem_pd_refs"]`, `ec/tools/xdata_register_map.py:738`, asserted `:3555-3572` — **but for the *default* census, not this run's; see the paragraph above** |
-| `390` / `50` | main-EC / pd cluster counts | `:903-904` | held | `ec/tools/test_xdata_cluster_names.py:709`, `TheExportOwnershipClusters.test_the_440_splits_the_way_6b_prints_it` — **#850**; the `440` above is their sum and is held to it there |
+| `390` / `50` | main-EC / pd cluster counts | `:903-904` | held | `ec/tools/test_xdata_cluster_names.py:734`, `TheExportOwnershipClusters.test_the_440_splits_the_way_6b_prints_it` — **#850**; the `440` above is their sum and is held to it there |
 
 #### §6a's table, `ec/annotations/xdata-06c2-06db-timers.md:779-790`
 
 | figure | what it is | line | verdict | pin |
 |---|---|---|---|---|
-| `3,948` / `3,206` | main-EC `write` references, guard removed / as committed | `:781` | held | `ec/tools/test_xdata_cluster_names.py:448`, `test_the_census_is_the_one_6a_measured` — **#850** |
-| `7,189` / `7,935` | main-EC `read` references | `:782` | held | `ec/tools/test_xdata_cluster_names.py:465`, same case — **#850** |
-| `193` / `142` | PD-image `write` references | `:783` | held | `ec/tools/test_xdata_cluster_names.py:482`, same case — **#850** |
-| `279` / `239` | references in `write` for the 49 addresses in both images | `:784` | held | `ec/tools/test_xdata_cluster_names.py:499`, same case — **#850** |
+| `3,948` / `3,206` | main-EC `write` references, guard removed / as committed | `:781` | held | `ec/tools/test_xdata_cluster_names.py:473`, `test_the_census_is_the_one_6a_measured` — **#850** |
+| `7,189` / `7,935` | main-EC `read` references | `:782` | held | `ec/tools/test_xdata_cluster_names.py:490`, same case — **#850** |
+| `193` / `142` | PD-image `write` references | `:783` | held | `ec/tools/test_xdata_cluster_names.py:507`, same case — **#850** |
+| `279` / `239` | references in `write` for the 49 addresses in both images | `:784` | held | `ec/tools/test_xdata_cluster_names.py:524`, same case — **#850** |
 | 43 addresses, `4,966` refs | `main-ec-003` (this block), **identical either way** | `:790` | held | the `size` and `refs` cells of `main-ec-003`, `ec/annotations/xdata-clusters.csv:4`, compared cell-for-cell by `check()` at `ec/tools/xdata_register_map.py:3289` (`:3304`) |
 
 **The four §6a rows were `unheld` on this page until #850, and the reason is the
@@ -321,7 +331,7 @@ sentences they annotated are gone, and leaving them beside a paragraph that
 already carries current ones would be a second stale citation in the one place
 this tree forbids them.)*
 
-**The `> 300` floor** — `ec/tools/test_xdata_cluster_names.py:563`,
+**The `> 300` floor** — `ec/tools/test_xdata_cluster_names.py:588`,
 `assertGreater(len(moved), 300)`, measured at **315** today: **15 of headroom**.
 It is left there deliberately, and the argument is
 [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md):170-175:

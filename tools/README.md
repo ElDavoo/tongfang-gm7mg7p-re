@@ -332,7 +332,7 @@ which did not exist on the branch's tree, and **all three went stale under
 repointed to `:208` and `:240` with the flipped-cluster header they name moved
 from `:214` to `:234` and two `rank A` / `rank B` columns wider, and its one
 citation into the tool, `xdata_moved_ranks.py:243`, which is `def deciles()` on
-`main` and `:277` here. Seven are #887's own, in
+`main`, `:277` after #891 and `:332` on this branch beside it. Seven are #887's own, in
 [`docs/findings/test-line-pin-census.md`](../docs/findings/test-line-pin-census.md):
 three rows of its per-pin table, three bullets of its finding-6 list and its
 follow-up 1, which the `):NNN` end of the pattern catches precisely because the

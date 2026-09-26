@@ -25,7 +25,7 @@ combination**:
 | the statement | where |
 |---|---|
 | the comment scoping `--self-test`'s stale-key check | `ec/tools/xdata_register_map.py:4117-4132` |
-| `TheNamesFile`'s class docstring, *"the editable surface, and it is anchored"* | `ec/tools/test_xdata_cluster_names.py:808` |
+| `TheNamesFile`'s class docstring, *"the editable surface, and it is anchored"* | `ec/tools/test_xdata_cluster_names.py:833` |
 | §4.4's *"The names are anchored to the committed census"* paragraph | `ec/annotations/xdata-register-map.md:1255-1269` |
 | the checklist's §3 bullet | [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md) §3 |
 
@@ -146,7 +146,7 @@ one the check answers, and this file says so rather than blurring the two.
 **The residual, recorded rather than fixed.** The `note` column is the only record
 of the membership judgements (`counter-sweep`'s *"43 addresses and 4,966
 references"*, *"membership did not move in the 2026-09-24 re-derivation"*), and
-nothing reads it. `test_xdata_cluster_names.py:820-826` requires the column
+nothing reads it. `test_xdata_cluster_names.py:845-851` requires the column
 non-empty and checks nothing else in it, and `ec/tools/check_cluster_citations.py`
 never opens the names file at all. A note checker cannot be key-anchored: it would
 have to parse prose (*"43 addresses and 4,966 references"*), or the file would need

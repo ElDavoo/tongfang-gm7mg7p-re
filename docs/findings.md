@@ -8575,3 +8575,61 @@ sequence and `tools/README.md`'s first paragraph the current pair; the red suite
 `ec/tools/test_check_cluster_citations.py` on
 `docs/findings/xdata-cluster-names-guard-off-recipe.md:220`, which is #822's
 file, is red on a clean `origin/main`, and is named here rather than fixed here.
+
+## 67. The 833 enters `write`, and the word "leaving" was the whole of the error (2026-09-26, issue #890)
+
+**The figure is unchanged and one word was wrong, in four places, because a
+tool printed it that way.** `xdata_moved_ranks.py pair`'s §6a line summed
+**signed** `offreg - on` differences and printed the total under the label
+"references leaving `write`". The tool's convention is committed →
+guard-off, so a column that rises has references **entering** `write` and none
+leaving — `--no-eq-guard` lifts the `==` rejection at
+`xdata_register_map.py:1753` and lifting one exclusion only admits. A signed
+sum of non-negative terms is a gross figure wearing a directional label, and
+three committed pages carry the label: `xdata-06c2-06db-timers.md:785`,
+`xdata-moved-ranks-fall.md:142` and `:150-159`. All three are corrected in
+place, the wrong wording left visible per §4a-4d, and **the 833, the 210 and the
+0 are byte-identical** — re-measured on this tree, per program and in total.
+
+**Measured, not recalled.** Over the 1,326 committed rows: **210** addresses'
+`write` rises, **0** falls, gross increase **833**, gross decrease **0**, net
+**+833**, `refs` changes on **0**. The gross and the net coincide *because no
+address decreases*, which is the property nothing held and the net alone cannot
+show; it is now asserted per address by
+`test_xdata_cluster_names.py::TheGuardOffRegeneration::test_the_census_is_the_one_6a_measured`.
+
+**The tool reports gross movement in each direction beside the net**, from one
+`write_movement()` helper the report and four new `--self-test` cases both
+read — the line had no case at all before, because the only `pair_report()`
+call in `self_test()` passed `registers=None`. A `closes:` line in the file's
+existing `across_report` idiom marks `MISMATCH` if `write changes` and the
+movement disagree.
+
+**One correction to the issue's own arithmetic, stated because it is
+arithmetic.** Its `sum(max(0, on - off))` would print **0** and discard the
+833; and the closure it asked for, `entering + leaving == changed`, cannot
+hold — one is a sum over references and the other a count of addresses, and
+this census moves 833 across 210. The closure that is available is per address
+(`len(entering) + len(leaving) == changed`), and that is what is printed. The
+four pages that still carry the old wording as a *record* of a run, and the one
+that carries the opposite convention correctly, are each named with a verdict
+in the write-up. §62's summary at `:8091` says "leaving" and is left as the
+shared-file edit it is; this section is the correction beside it.
+
+> **Numbering note.** The plan this implements read §63 as the next free
+> number, from a tree where §62 was last. Four sections have landed since
+> (§63–§66), so this takes **§67**. No in-place pointer is renumbered by it:
+> nothing elsewhere cites a number that this one took, and unlike the five
+> renumberings §66's note records, there is no earlier summary competing for it.
+
+The measurement, every carrier of the word with its verdict, the four new
+self-test cases and the known-answer transcript are in
+[`findings/xdata-write-direction-correction.md`](findings/xdata-write-direction-correction.md).
+No image was opened, no register read back, no laptop, EC or Windows machine
+involved; both censuses are committed text plus a regeneration into `/tmp`.
+Nothing was re-derived: 210, 0, 833, 1,326 and 445 all reproduce, so §6a, §6b
+and `xdata-moved-ranks-fall.md` keep their figures. `ec/tools/test_check_cluster_citations.py`
+is red on this branch and was red before it, for the two `0x0464`/`0x0465`
+disagreements §66 records; `bash tools/run-tests.sh` read 35 suites and 1,076
+tests before this change with that one red, and the 43 `--self-test` checks
+and 30 tests of `test_xdata_cluster_names.py` pass after it.

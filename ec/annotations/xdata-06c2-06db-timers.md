@@ -782,12 +782,32 @@ not a number remembered from 2026-09-23:
 | main-EC `read` references | 7,189 | 7,935 |
 | PD-image `write` references (108 addresses, 603 refs) | 193 | 142 |
 | references in `write` for the 49 addresses in both images | 279 | 239 |
-| **references leaving `write`, all three programs** | — | **833** |
+| **references entering `write`, all three programs** † | — | **833** |
 | **addresses whose `write` column changes** | — | **210 of 1,326** |
 | `0x08A8` read / write | 84 / 44 | **126 / 2** |
 | `0x0843` read / write | 84 / 42 | **126 / 0** |
 | main-EC clusters at threshold 0.50 | 394 | 389 |
 | **`main-ec-003` (this block)** | **43 addresses, 4,966 refs** | **43 addresses, 4,966 refs** |
+
+† **Corrected in place, 2026-09-26, issue #890. The row read "references
+leaving `write`" and the figure is unchanged.** The arithmetic behind it was
+always a signed sum of *guard-off minus committed* over the same 1,326 rows, and
+that sum is positive, so the label named the direction the census never had: the
+`==` rejection the guard installs is the only thing `--no-eq-guard` lifts, and
+lifting it can admit a write the committed census did not count but cannot
+remove one. The two `0x08A8`/`0x0843` rows are the same direction read
+address by address — guard-off `84 / 44` against committed `126 / 2` is a
+`write` that rose and a `read` that fell — and they were the corroboration
+already sitting in this table. **The figure was never wrong and the word was,
+so nothing downstream of the `833` moves.** The per-address form of the same
+property, that no address's `write` falls under `--no-eq-guard`, is measured
+over both censuses in
+[`../../docs/findings/xdata-write-direction-correction.md`](../../docs/findings/xdata-write-direction-correction.md)
+and held by `test_xdata_cluster_names.py::TheGuardOffRegeneration::test_the_census_is_the_one_6a_measured`.
+The wrong wording stays visible per [`../../docs/findings.md`](../../docs/findings.md)
+§4a-4d — the "833 references leave `write`" in the 2026-09-25 re-derivation note
+below the table is the other place this page carried it, and it is a record of
+that run, so it stays as written.
 
 **What the guard does and does not change.** It moves references *between*
 direction buckets and out of none of them: **0 of 1,326 addresses have a

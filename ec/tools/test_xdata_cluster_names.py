@@ -362,12 +362,37 @@ class TheGuardOffRegeneration(unittest.TestCase):
         # dropped an address is not the same measurement in a small way.
         self.assertEqual(set(off), set(on))
 
-        # 833: §6a's "references leaving `write`, all three programs", the
-        # figure its table prints in bold. Every term is non-negative, because
-        # the guard can only reject a write the pre-#178 classifier counted, so
-        # a negative one is a defect rather than a renumbering.
+        # 833: §6a's "references entering `write`, all three programs", the
+        # figure its table prints in bold. The word was "leaving" and the
+        # arithmetic was a signed sum of `off - on` throughout, so the label
+        # named a direction the sum did not check; it is corrected in place at
+        # `xdata-06c2-06db-timers.md:785` and at
+        # `docs/findings/xdata-write-direction-correction.md`, and the figure
+        # itself is unchanged, because the terms are all non-negative and a net
+        # that happens to equal a gross is a property of these 1,326 rows
+        # rather than of the sum.
         self.assertEqual(
             sum(int(off[a]["write"]) - int(on[a]["write"]) for a in off), 833)
+
+        # The half of that the figure alone cannot say: not one of the 1,326
+        # addresses has a *lower* `write` under the guard-off run. The 833
+        # above is a net, and a net cannot distinguish "833 arrived, none left"
+        # from "900 arrived and 67 left" -- the two are the same number with
+        # opposite meanings for what the guard does, and only the per-address
+        # sign separates them. A decrease would be a defect rather than a
+        # renumbering: the guard can only lift a rejection, so lifting it adds
+        # `==` occurrences the pre-#178 classifier counted as stores and cannot
+        # take one away. The direction is measured here and asserted as what it
+        # is -- a property of this census against this flag -- which is what
+        # makes 833 a gross figure a reader can bank rather than a net that
+        # happens to agree with one.
+        decreased = {a: (int(on[a]["write"]), int(off[a]["write"]))
+                     for a in on if int(off[a]["write"]) < int(on[a]["write"])}
+        self.assertEqual(
+            decreased, {},
+            f"§6a: {len(decreased)} address(es) have a lower `write` under "
+            f"--no-eq-guard, which the guard's own removal of the `==` "
+            f"rejection cannot cause")
 
         # 210 of 1,326, and 0 of 1,326: the other two lines of the heredoc, with
         # the denominators it prints alongside them. The 0 is the load-bearing
@@ -523,7 +548,7 @@ class TheGuardOffRegeneration(unittest.TestCase):
                   for program in ("main-ec", "pd", "both")]
         self.assertEqual(
             sum(deltas), 833,
-            "§6a 'references leaving `write`, all three programs' (`:785`): the "
+            "§6a 'references entering `write`, all three programs' (`:785`): the "
             f"three per-program deltas are {deltas}, which sum to "
             f"{sum(deltas)}; the page prints that sum in bold, so a set that "
             "does not add up to it has a row transcribed from the wrong column "
