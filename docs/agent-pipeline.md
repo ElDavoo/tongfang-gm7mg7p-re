@@ -378,6 +378,48 @@ only covers what's specific to *this* copy.
      `*xdata_register_map.py)`, both outside the four other patches' context
      windows — and the patch header says so, because tidying either one back
      breaks every-ordered-pair landing while each patch still applies alone.
+  12. **`check_pin_table_rows.py` is not in the cheap tier yet, and should
+     be** (2026-09-26, issue #942). It holds the 105 rows of the per-pin table
+     in `docs/findings/test-line-pin-census.md` to the run
+     `census_test_line_pins.py` makes of the same markdown: the citing file, the
+     citing line, the cited target, the read kind and the shape. Four of that
+     table's five columns are not a reading at all — the census computes all
+     five and prints them under `--verbose` — and no rule joined them to the
+     run, so a row whose citing line moved kept reading as an ordinary row. This
+     repository has paid for that by hand four times (#930 re-registered one
+     row, #891 two, #889's note two more), each time by a person re-reading
+     `--verbose` against 105 rows. Adding it is a `check_pin_table_rows()`
+     function and a `gate` line, and the whole of it is prepared at
+     `docs/ci/agent-gates-pin-table-rows.patch` — a patch of its own, which must
+     ship in one file and compose with item 5's and item 10's:
+     `tools/test_agent_gates_patches.py` applies the set in every ordered pair,
+     so no landing order has to be written down anywhere. Cheap tier for item
+     4's reason: the committed tree and the standard library — no firmware
+     image, no Ghidra, no network, no assembler; 0.26 s here (0.26-0.27 s over
+     six runs) on 2026-09-26 against the cheap tier the paragraph above
+     records at 5.9 s, on item 6's caveat that the ratio is the point. It takes
+     no `--work` and no `--check`/`--self-test`, so the gate line calls it
+     bare:
+     ```sh
+     check_pin_table_rows() {
+       python3 ec/tools/check_pin_table_rows.py
+     }
+     ```
+     **It reads no verdict cell and exits 0 on a tree where every verdict is
+     wrong**, which is what makes it safe in a gate: the fifth column is a
+     reading a human looked at, the write-up's `*Why no checker*` gives why at
+     length, and a gate that reddened on it would redden on sentences that are
+     true. It exits non-zero only on a row the run does not describe, or on a
+     run that placed nothing. It is not here for item 4's reason,
+     template-copied file and no `workflow` scope on the token, and **until a
+     human lands it, no commit runs it** and a drifted row arrives in a green
+     tree. Its own suite (`ec/tools/test_check_pin_table_rows.py`) needs no
+     wiring to be run at all, for item 5's reason: `tools/run-tests.sh`
+     discovers every `test_*.py` in the repository, so it is already collected
+     by the runner below. Its `gate` line goes at the **head** of the list
+     rather than the end, for item 10's reason — the end is that patch's context
+     window, and two patches editing one contiguous region cannot both be
+     applied in either order.
 - **`tools/run-tests.sh`, and the gate line that would call it**
   (2026-09-23, issue #162) — the four offline `unittest` suites
   (`ec/tools/test_grade_0751_isolation.py`, `windows/tools/test_ec_watch.py`,

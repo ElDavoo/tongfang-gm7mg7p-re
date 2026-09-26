@@ -1339,6 +1339,21 @@ rendered by anything to record it.)*
    carries them was new to the census and the tool that would have said so is
    not in any gate. That is this file's own argument — *no checker* — costing
    two pins, and it is the strongest evidence in it for a supersession marker.
+   **Issue #942 has since added a tool that says so about the bookkeeping, and
+   it does not overturn the sentence above.** `ec/tools/check_pin_table_rows.py`
+   holds the 105 rows of the table above to the run this census makes of the
+   same markdown, and reports any row it cannot place, any record with no row,
+   and any row whose read kind, shape or resolved path differs — all four
+   mechanical columns, which are five things this census already computes. **It
+   reads no verdict cell, and it exits 0 on a tree where every verdict is
+   wrong**, so the checker declined above and the checker that now exists are
+   not the same thing: this file's argument is against a rule that *renders a
+   verdict*, and this one renders none. What it does not catch is the larger
+   half: a verdict that has quietly stopped being true, and a row that is right
+   about a stale line. It is not in any gate either — the prepared patch is
+   `docs/ci/agent-gates-pin-table-rows.patch` — so until a human lands it, a
+   drifted row still arrives in a green tree. The write-up is
+   [`pin-table-row-reconciliation.md`](pin-table-row-reconciliation.md).
    **And finding 8's two are a fourth kind again, and the only kind where no
    tree is wrong at any point.** Taken together the eight `> 300` pins are one
    follow-up with four causes: #850's four, #888's two and #885's two all →

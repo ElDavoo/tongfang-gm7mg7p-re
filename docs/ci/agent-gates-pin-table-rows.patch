@@ -1,0 +1,96 @@
+# ec/tools/check_pin_table_rows.py, wired into the cheap gate. Prepared here
+# rather than landed, for the reason docs/ci/agent-gates-capture-claims.patch
+# gives: `.github/scripts/agent-gates.sh` is copied from the agent-pipeline
+# template and the pipeline's push token has no `workflow` scope, so a branch
+# editing it fails at the end of the PR rather than at the start of it.
+# `docs/agent-pipeline.md` carries this one across a re-copy too, as its item
+# 12.
+#
+# To land it:
+#
+#   git apply docs/ci/agent-gates-pin-table-rows.patch
+#
+# and that is the whole change.
+#
+# Added 2026-09-26 (issue #942). `docs/findings/pin-table-row-reconciliation.md`
+# is the write-up and says what the tool does and, at more length, what it
+# does not.
+#
+# Why the cheap tier: what it reads is the committed tree and the standard
+# library. No firmware image, no Ghidra, no network, no assembler. It measures
+# 0.26 s here (0.26-0.27 s over six runs) on 2026-09-26, against a cheap tier
+# docs/agent-pipeline.md records at 5.9 s. That is one runner's figure and the
+# ratio is the point, as item 6 says of its own.
+#
+# What it buys, and what it does not. It holds the 105 rows of the per-pin
+# table in `docs/findings/test-line-pin-census.md` to the run
+# `census_test_line_pins.py` makes of the same markdown: the citing file, the
+# citing line, the cited target, the read kind and the shape. Four of the
+# table's five columns are not a reading at all, and nothing joined them to
+# the run -- so a row whose citing line moved kept reading as an ordinary row,
+# and this repository has paid for that by hand four times (#930 re-registered
+# one row, #891 two, #889's note two more), each time by a person re-reading
+# `--verbose` against 105 rows.
+#
+# **It reads no verdict cell and exits 0 on a tree where every verdict is
+# wrong.** That standing is the whole reason it is safe to put in a gate: the
+# fifth column is a reading a human looked at, `docs/findings/test-line-pin-census.md`'s
+# `*Why no checker*` gives why at length, and a gate that reddened on it would
+# redden on sentences that are true. It exits non-zero only on a row the run
+# does not describe, or on a run that placed nothing -- the vacuous-pass guard
+# `check_citation_lines.py` and `tools/run-tests.sh` both carry.
+#
+# It is green as prepared, and that was measured before this patch was cut
+# rather than after: 105 rows place against 105 records and all seven classes
+# are 0 on the tree this was cut from. A patch that lands a red gate is the
+# cheapest way to get a gate switched off, so the figure is here rather than
+# assumed, and the comment it adds at the call site says the same thing where
+# the next reader of the gate will see it, rather than only in this header.
+#
+# Its neighbours are placed for composition rather than for reading, and
+# `docs/findings/prepared-gate-patches.md` records why. The function goes
+# between `check_shellcheck()` and `check_doc_links()`, which no patch in the
+# set has a hunk in; the `gate` line goes at the *head* of the list, above
+# `gate 'registers.yaml'`, rather than at the end where a reader would put it
+# and where `agent-gates-testdata-row-claims.patch` already has a hunk. Both
+# placements are outside every other patch's context window, which is what
+# `tools/test_agent_gates_patches.py` applies the set in every ordered pair to
+# prove. List order is cosmetic -- the `gate` calls are independent and
+# nothing reads the order -- so the cost is a placement that looks wrong, the
+# same trade item 11's patch made for the same reason.
+
+diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
+index de5db1f..deec3ec 100755
+--- a/.github/scripts/agent-gates.sh
++++ b/.github/scripts/agent-gates.sh
+@@ -280,6 +280,22 @@ check_shellcheck() {
+   return "$rc"
+ }
+ 
++# The per-pin table in docs/findings/test-line-pin-census.md against the run
++# census_test_line_pins.py makes of it: the citing file, the citing line, the
++# cited target, the read kind and the shape are all things that run already
++# computes, and nothing joined them to the table -- so a row whose citing line
++# moved stayed a perfectly normal row, four times, at a cost of a human
++# re-reading --verbose against 105 rows. It reads no verdict cell and exits 0
++# on a tree where every one is wrong; the write-up's `*Why no checker*` gives
++# why, and that the reading stays a reading somebody looked at is the whole
++# reason this is here. Exits non-zero only on a row the run does not describe,
++# or on a run that placed nothing. Cheap tier because of what it reads: the
++# committed tree and the standard library, no firmware image, no Ghidra, no
++# network, no assembler.
++check_pin_table_rows() {
++  python3 ec/tools/check_pin_table_rows.py
++}
++
+ # A relative markdown link that 404s is a documentation bug that's
+ # otherwise invisible until someone clicks it -- and CLAUDE.md/findings.md
+ # cross-reference each other and ec/annotations/registers.yaml constantly.
+@@ -294,6 +310,7 @@ check_doc_links() {
+   return "$broken"
+ }
+ 
++gate 'pin table rows'  check_pin_table_rows
+ gate 'registers.yaml'  check_registers_yaml
+ gate 'scan_refs.py smoke test' check_scan_refs_smoke_test
+ gate 'register counts'  check_register_counts
