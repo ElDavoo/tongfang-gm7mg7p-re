@@ -143,6 +143,27 @@ one: that line is the whole of the difference, and `across`, `across --swept`
 and `cause` diff empty. It is left in the transcripts so they still reproduce
 rather than being annotated as short; the numbers above it are unchanged.
 
+**Two lines in each `pair` block are now newer than the measurement, and every
+figure in both blocks is still not.** The paragraph above is left as written per
+[`../findings.md`](../findings.md) §4a-4d, `cause` included in its "diff empty"
+list, because what falsified both is
+[`xdata-moved-ranks-collision-scope.md`](xdata-moved-ranks-collision-scope.md)
+(issue #929), which printed the precondition for a pair's **guard-off** census as
+well as its committed one. Re-running both blocks with the pre-change tool
+(`git show 31f683e5:ec/tools/xdata_moved_ranks.py`) against this one, each
+diffs at `7a8` and at nothing else:
+`cluster_key unique across the … guard-off row(s): 0 collision(s)`, over the
+439-row guard-off census in the first block and the 445-row one in the second.
+Neither is in the two blocks above and both stay out, so each block remains the
+record of the run that produced it — the same treatment the direction-wording
+note below gives the `§6a:` line, and for the same reason. **`cause` does not
+diff empty any more either**: it gains the same line over each of its two
+guard-off censuses, both between `the added set is 155 address(es)` and the
+`the population:` line they qualify, with every figure in that block unchanged —
+[`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md) §2 carries the
+note beside it. `across` and `across --swept` still diff **empty**, so no figure
+in §3 below moves.
+
 The two pair blocks above, read together, are the whole measurement. Three of the
 rows are the ones the count does not show:
 
@@ -685,8 +706,12 @@ xdata_moved_ranks.py --self-test
   ok    the listing holds a row per rank rather than a row per key, and the counts still close over the ranks the two censuses share: 2 moved + 2 intact = 4 ranks, 4 rows
   ok    the collision is a line of its own, naming the key and every rank carrying it, rather than a count that came out smaller
   ok    a census whose keys are distinct reports no collision and says it looked, and a census that collides reports every rank on the key
-  ok    the key-indexed half reports the collision it cannot absorb -- two moved ranks on one key -- and the closure closes anyway
+  ok    the key-indexed half reports the collision it cannot absorb -- three committed ranks on one key, of which two moved -- and the closure closes anyway
   ok    the swept cross-reference says so too: both generations are named, and the holder count below is over the key rather than over the rank
+  ok    a guard-off collision between two ranks that both stayed put is a line of its own: `pair` checked the census it does not join on and left the one `cause` does as a clean bill of health
+  ok    a committed census whose only collision is between two ranks that did not move still prints it: the population is the census the cells are drawn from, so `collapsed` is not the moved subset of it, and a zero moved count is not a reason to say nothing
+  ok    both guard-off censuses carry their own precondition line, above the population they qualify: 3 rows are 2 keys, and every rate below divides by that 2
+  ok    every view that re-keys a census carries a line about that census: `pair` for both of the two it reads, `across`, `--swept` and `cause` for the committed pair, and `cause` for the guard-off one -- which is the claim `keyed_by`'s docstring makes about the file
   all checks passed
 
 $ python3 ec/tools/xdata_register_map.py --check && python3 ec/tools/xdata_register_map.py --self-test
@@ -742,7 +767,7 @@ OK
 > reproduce. This is §9's own subject: a figure a merge moved and no run re-read,
 > and a note that says it re-read one it did not.)*
 
-**This block now reads 49 checks, and it read 14 when this section was written.**
+**This block now reads 53 checks, and it read 14 when this section was written.**
 The superseded figures are left visible rather than edited out, per
 [`../findings.md`](../findings.md) §4a-4d, and the deltas close:
 **#884**'s `cause` mode
@@ -758,10 +783,19 @@ correction
 added the four that start at `a fixture where five references entered \`write\``
 and run at 21–24 rather than at the end, and **#888**
 ([`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md))
-added the last six — `14 + 10 + 1 + 5 + 9 + 4 + 6 = 49`, with nothing else added
-and no earlier check's text changed. The six are the case the others could not
-reach: `write_census()` takes a key per row and every fixture gave each rank its
-own, so nothing above could put two ranks on one.
+added the six after them — `14 + 10 + 1 + 5 + 9 + 4 + 6 = 49`, with nothing else
+added and no earlier check's text changed. The six are the case the others could
+not reach: `write_census()` takes a key per row and every fixture gave each rank
+its own, so nothing above could put two ranks on one.
+
+**The four after those, from
+[`xdata-moved-ranks-collision-scope.md`](xdata-moved-ranks-collision-scope.md)
+(issue #929), take it to 53 — and they are the six above's own blind spot, not
+a new subject.** The six put two ranks on one key, and two of those three ranks
+also moved; every case in the block was reached through a census with a mover in
+it. #929 adds a fixture whose *only* colliding rank is intact, so the check is
+exercised where nothing moved, plus the case that holds `keyed_by`'s coverage
+claim. `14 + 10 + 1 + 5 + 9 + 4 + 6 + 4 = 53`.
 
 *(Re-transcribed at the #888 merge, 2026-09-26, and the block above is the
 merged tree's own run rather than the 31 the branch transcribed: #889/#917 landed
@@ -783,6 +817,22 @@ byte-identical to `python3 ec/tools/xdata_moved_ranks.py --self-test` on the
 merged tree — every one of its 49 `ok` lines and the `all checks passed` under
 them, checked by `diff` rather than by eye. `31`, `36` and `45` stay visible for
 the three trees they were measured on.)*
+
+*(And re-transcribed a fourth time, at the **#929** merge, where the **49 becomes
+53**: four checks appended at **50–53**, the four that case `pair`'s guard-off
+census, an intact-only collision, `cause`'s guard-off population, and
+`keyed_by`'s coverage claim. One **earlier** line also changed — #888's
+key-indexed one, from `two moved ranks on one key` to `three committed ranks on
+one key, of which two moved` — which is the only edit to an existing `ok` line
+any of these four merges has made, and it happened because #929 widened
+`flip_table`'s `collapsed` population from the moved ranks to the whole
+committed census. The block above is byte-identical to
+`python3 ec/tools/xdata_moved_ranks.py --self-test` on the merged tree, all 53
+`ok` lines and the `all checks passed` under them, checked by `diff`. **The
+`1326/439` and 30-test lines below were re-measured on this tree too, and
+reproduce**: `xdata_register_map.py --check` exits 0 over 1326 register rows and
+439 cluster rows, and `test_xdata_cluster_names.py` runs 30 tests, OK. `31`, `36`
+and `45` stay visible for the three trees they were measured on.)*
 
 **The known-answer run is §1 through §4 above**: the tool is what produced
 366/64/439 and 315/124/445, the 71/266/23/40 flip table, the size

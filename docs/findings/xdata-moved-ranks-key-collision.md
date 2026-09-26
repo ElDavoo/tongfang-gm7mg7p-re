@@ -94,6 +94,7 @@ pair dup
   intact     2
   committed ranks the guard-off census does not carry: 0
   cluster_key COLLISION: 1 of the 4 committed keys carried by more than one rank (k000000000009 on main-ec-001, main-ec-002, main-ec-003) -- the moved and intact counts above are per rank and are unaffected; across and --swept join on the key and are not
+  cluster_key COLLISION: 1 of the 4 guard-off keys carried by more than one rank (k000000000009 on main-ec-001, main-ec-002, main-ec-003) -- the moved and intact counts above are per rank and are unaffected; across and --swept do not read this census, but cause's population and its per-program holder index are over the key and are not
   of the moved ranks, 2 hold a guard-off row of the same size and 0 share no address with it
   guard-off membership delta over the 4 rank(s) the two censuses share: 4 address-slots
 
@@ -103,6 +104,16 @@ pair dup
   k000000000009  -                main-ec-003  main-ec-003      1      0  intact
   k000000000003  -                pd-001       pd-001           2      0  intact
 ```
+
+*(The `guard-off` line is this file's §2 transcript re-transcribed at the #929
+merge, 2026-09-26: `pair` now prints the precondition for **both** censuses it
+reads, and the line it did not print is the one §2 was arguing was missing for
+the other mode. It is added after the committed line it was checked over; the
+committed line's own text is unchanged, byte for byte, and `moved 2 / intact 2`
+and the four listing rows are the same. The `before` column above is untouched
+and still says what it said. See
+[`xdata-moved-ranks-collision-scope.md`](xdata-moved-ranks-collision-scope.md)
+§3.)*
 
 **What the before column shows, which is worse than a count that is one
 small.** It claimed `moved 1` and `intact 3` — four ranks, correctly summed,
@@ -128,11 +139,20 @@ across A -> B
      1  moved in both
      0  intact in A, moved in B
      1  intact in both
-  the counts below are keys, not the ranks `pair` counts: 4 moved rank(s) across 2 generation(s) share a key with another moved rank (A: k000000000009 on main-ec-001, main-ec-002; B: k000000000009 on main-ec-001, main-ec-002)
+  the counts below are keys, not the ranks `pair` counts: 6 committed rank(s) across 2 generation(s) share a key with another committed rank (A: k000000000009 on main-ec-001, main-ec-002, main-ec-003; B: k000000000009 on main-ec-001, main-ec-002, main-ec-003)
   of the one-sided keys, 0 moved in A and 0 moved in B
   closes: 1 - 1 = 0, over the four terms: (0 - 0) + (0 - 0) = 0
   ...
 ```
+
+*(The counts line is re-transcribed at the #929 merge, 2026-09-26: it read
+`4 moved rank(s) across 2 generation(s) share a key with another moved rank (A:
+k000000000009 on main-ec-001, main-ec-002; B: ... same)`, because
+`flip_table`'s `collapsed` was derived from the *moved* ranks. It is now the
+whole committed census, so the third rank of the key — `main-ec-003`, intact —
+is in it and the count is 6. The four cells, the one-sided line and the closure
+are unchanged, which is the point: a widening over a colliding census changes
+which ranks are named, not which keys are counted.)*
 
 **The four-term closure closes anyway**, which is the point: it is set algebra
 over one key universe, so it cannot distinguish "two ranks moved" from "one
@@ -159,12 +179,24 @@ $ python3 ec/tools/xdata_moved_ranks.py across --label-a A --label-b B \
     --old-b /tmp/dupfix/dup-committed.csv --new-b /tmp/dupfix/dup-off.csv --swept 0x0E
   swept addresses: 1
   address  cluster_key    program  rank A       rank B       verdict
-  generation A cluster_key COLLISION: 1 of its 4 keys carried by more than one rank (k000000000009 on main-ec-001, main-ec-002, main-ec-003) -- the rows below and the counts that follow them are over the key, so a shared key hides a rank
-  generation B cluster_key COLLISION: 1 of its 4 keys carried by more than one rank (k000000000009 on main-ec-001, main-ec-002, main-ec-003) -- the rows below and the counts that follow them are over the key, so a shared key hides a rank
+  cluster_key COLLISION: 1 of the 4 committed A keys carried by more than one rank (k000000000009 on main-ec-001, main-ec-002, main-ec-003) -- the rows below and the counts that follow them are over the key, so a shared key hides a rank
+  cluster_key COLLISION: 1 of the 4 committed B keys carried by more than one rank (k000000000009 on main-ec-001, main-ec-002, main-ec-003) -- the rows below and the counts that follow them are over the key, so a shared key hides a rank
   0x0E     -              -        -            -            in no committed cluster
   0 committed cluster(s) hold at least one of the 1: 0 main-ec, 0 pd; 0 hold all of them; 0 address(es) have a second holder
   of those 0, 0 flipped; 0 moved in A and 0 moved in B
 ```
+
+*(Those two lines are re-transcribed at the #929 merge, 2026-09-26, and they
+**wording** changed, not their content: `swept_report` hand-rolled this sentence
+rather than calling `collision_line()`, so it read `generation A cluster_key
+COLLISION: 1 of its 4 keys carried by more than one rank (…)` and now reads what
+the shared helper prints with the census named. The superseded spelling is the
+one in the git history of this line and in
+[`xdata-moved-ranks-collision-scope.md`](xdata-moved-ranks-collision-scope.md)
+§3's account of why the third spelling had to go: it was a hand-rolled copy of
+a helper's line, and having it is how the property came to be checked at one
+site and not another. `in no committed cluster` and the two summary lines below
+are unchanged, which is the whole of what this section argues.)*
 
 **"in no committed cluster" is a *false negative about the census*, not a small
 number.** All three `main-ec` ranks of the fixture carry `k000000000009`, so the
@@ -174,6 +206,19 @@ Both columns print that denial, because the index was `keyed_by` before this
 change too; what the change adds is the collision line above it, which says a
 rank is hidden rather than letting the denial stand as a fact about the census.
 The fixture key is also one the committed census does not carry.
+
+> **Correction, 2026-09-26 (issue #929): the argument above is right and its
+> reach was one census narrower than it reads.** The sentence is a claim about
+> *any* re-keyed census, and every case supporting it below is a census whose
+> colliding ranks are also its **moved** ranks — this fixture's `main-ec-001`
+> and `main-ec-002` both change membership, and the two above it in the same
+> shape. The check that existed after #888 could not reach a census whose
+> colliding ranks had not moved, so the argument was carried entirely by the one
+> case that could reach it, and a reader was left to infer the general form. It
+> is now measured: §2 of
+> [`xdata-moved-ranks-collision-scope.md`](xdata-moved-ranks-collision-scope.md)
+> runs a census where the only colliding rank is intact and `across` reports it,
+> which is the shape the six cases this section describes could not express.
 
 **The other half of the same index is the quieter one, and it is absorbed
 rather than printed wrong.** An address the two colliding ranks *both* hold is
@@ -189,12 +234,17 @@ $ python3 ec/tools/xdata_moved_ranks.py across --label-a A --label-b B \
     --old-b /tmp/dupfix/same-committed.csv --new-b /tmp/dupfix/same-off.csv --swept 0x0E
   swept addresses: 1
   address  cluster_key    program  rank A       rank B       verdict
-  generation A cluster_key COLLISION: 1 of its 2 keys carried by more than one rank (k000000000009 on main-ec-001, main-ec-002) -- the rows below and the counts that follow them are over the key, so a shared key hides a rank
-  generation B cluster_key COLLISION: 1 of its 2 keys carried by more than one rank (k000000000009 on main-ec-001, main-ec-002) -- the rows below and the counts that follow them are over the key, so a shared key hides a rank
+  cluster_key COLLISION: 1 of the 2 committed A keys carried by more than one rank (k000000000009 on main-ec-001, main-ec-002) -- the rows below and the counts that follow them are over the key, so a shared key hides a rank
+  cluster_key COLLISION: 1 of the 2 committed B keys carried by more than one rank (k000000000009 on main-ec-001, main-ec-002) -- the rows below and the counts that follow them are over the key, so a shared key hides a rank
   0x0E     k000000000009  main-ec  main-ec-002  main-ec-002  intact in both
   1 committed cluster(s) hold at least one of the 1: 1 main-ec, 0 pd; 1 hold all of them; 0 address(es) have a second holder
   of those 1, 0 flipped; 0 moved in A and 0 moved in B
 ```
+
+*(The two collision lines here carry the same #929 rewording as the transcript
+above; the row below them and both summary lines are unchanged, which is the
+point this section is making — two holders read as one and the count is what
+says so.)*
 
 Two holders read as one, and `0 address(es) have a second holder` is the number
 that says so — the count is over the key's rows, so the collision costs it the
@@ -205,6 +255,22 @@ the change buys is that the report says so instead of reading as a census that
 does not hold the address.
 
 ## 3. What changed, in one helper checked at each of its three uses
+
+> **Correction, 2026-09-26 (issue #929). The heading above is wrong and is left
+> as it was written.** "Each of its three uses" is three of six: `duplicate_keys`
+> was reached from three sites, over three of the four censuses
+> `keyed_by()`'s call sites re-key, and the guard-off census — the one
+> `cause_report`'s population is drawn from and the one
+> `holders_by_program()` indexes — was not among them. `pair_report` printed the
+> check for its committed census only, so a run that read a pair printed a clean
+> bill of health for a census it had not looked at. The argument *for* checking
+> at each view is unchanged and is what the tool now does; what was wrong was
+> the count. [`xdata-moved-ranks-collision-scope.md`](xdata-moved-ranks-collision-scope.md)
+> §1 has the per-site table and §2 the measured case that the old count could not
+> reach. The three bullets below stand, with two qualifications: the second
+> bullet's "`across` and `cause` print a line only when the key projection is not
+> injective" is still true, and the population behind "not injective" is now the
+> whole committed census rather than its moved ranks.
 
 - **`moved_ranks()` is keyed on `cluster_id`.** A rank is the key of the dict
   `clusters_of()` returns, so this join cannot collapse by construction, and
@@ -397,6 +463,21 @@ would move two of the very figures it reports.)*
 
 ## 6. What this opens
 
+> **Correction, 2026-09-26 (issue #929): the second bullet below reads as though
+> `cause` were covered, and it was covered over the moved ranks alone.** What
+> that bullet is about — `cause` drawing its cells from the same join `across`
+> does, and so printing the same collapse line — is true and unchanged. What it
+> leaves out is that `cause` re-keys the **guard-off** census too, for the
+> population every rate in the report is divided by and for the per-program
+> holder index `holders_by_program()` builds, and *that* census had no check at
+> all: a collision there made `2 guard-off key(s)` out of three rows with
+> nothing else in the report looking wrong. Both are now printed, above the
+> figures they qualify, in
+> [`xdata-moved-ranks-collision-scope.md`](xdata-moved-ranks-collision-scope.md)
+> §2's third transcript. The `destination()` half of the bullet is still not
+> done and is still a change of what the mode measures rather than a report of
+> it. The first and third bullets are untouched.
+
 - **`write_census()` could take an optional key per row it is told to repeat**,
   so the fixture above stops needing its CSV written by hand. Not done: the
   fixture is five lines in the tool's own `--self-test` and a second knob on a
@@ -465,6 +546,27 @@ is re-transcribed to the same 49, its arithmetic corrected to
 `36`, `39` and `45` stay visible per `docs/findings.md` §4a-4d, because each is
 true of the tree it was measured on.)*
 
+*(Re-measured once more at the **#929** merge, and the **49 becomes 53**: four
+more checks, from
+[`xdata-moved-ranks-collision-scope.md`](xdata-moved-ranks-collision-scope.md)
+— the fixture whose *only* colliding rank is intact, which is the shape the six
+this section describes could not express, plus the case that holds `keyed_by`'s
+coverage claim. Measured on the merged tree:
+`python3 ec/tools/xdata_moved_ranks.py --self-test | grep -c '^  ok'` is **53**
+and the run ends `all checks passed`. Diffing the `ok` lines of the pre-change
+run against this one appends exactly those four and changes exactly one earlier
+check's text — this issue's own key-indexed one, whose `4 moved rank(s)` became
+`6 committed rank(s)` when `collapsed`'s population widened from the moved ranks
+to the whole committed census — and no other check's text moved. **Nothing here
+about the *tool's behaviour* moves**: the committed census still measures 439
+rows over 439 distinct `cluster_key` values and 0 collisions, all four censuses
+of §4's table come back at 0, and §2's before-and-after still diff as they did.
+The `31`, `36`, `39`, `45` and `49` stay visible per `docs/findings.md` §4a-4d,
+because each is true of the tree it was measured on. §9's block is
+re-transcribed to the same 53, its arithmetic corrected to
+`14 + 10 + 1 + 5 + 9 + 4 + 6 + 4 = 53`, and the block above is this merge's own
+run rather than a carried-over 49.)*
+
 ```console
 $ python3 ec/tools/xdata_moved_ranks.py --self-test
 ...
@@ -472,8 +574,12 @@ $ python3 ec/tools/xdata_moved_ranks.py --self-test
   ok    the listing holds a row per rank rather than a row per key, and the counts still close over the ranks the two censuses share: 2 moved + 2 intact = 4 ranks, 4 rows
   ok    the collision is a line of its own, naming the key and every rank carrying it, rather than a count that came out smaller
   ok    a census whose keys are distinct reports no collision and says it looked, and a census that collides reports every rank on the key
-  ok    the key-indexed half reports the collision it cannot absorb -- two moved ranks on one key -- and the closure closes anyway
+  ok    the key-indexed half reports the collision it cannot absorb -- three committed ranks on one key, of which two moved -- and the closure closes anyway
   ok    the swept cross-reference says so too: both generations are named, and the holder count below is over the key rather than over the rank
+  ok    a guard-off collision between two ranks that both stayed put is a line of its own: `pair` checked the census it does not join on and left the one `cause` does as a clean bill of health
+  ok    a committed census whose only collision is between two ranks that did not move still prints it: the population is the census the cells are drawn from, so `collapsed` is not the moved subset of it, and a zero moved count is not a reason to say nothing
+  ok    both guard-off censuses carry their own precondition line, above the population they qualify: 3 rows are 2 keys, and every rate below divides by that 2
+  ok    every view that re-keys a census carries a line about that census: `pair` for both of the two it reads, `across`, `--swept` and `cause` for the committed pair, and `cause` for the guard-off one -- which is the claim `keyed_by`'s docstring makes about the file
   all checks passed
 
 $ python3 -m unittest discover -s ec/tools -p 'test_xdata_cluster_names.py'

@@ -357,6 +357,36 @@ already committed: `test_census_test_line_pins.py`'s
 58 and the shape split, so a stray pin turns **that** case red and the prose is
 what gets fixed. 124 of the 152 markdown files the census reads carry none.
 
+**The `150` and the `37` above are this file's own tree, and both are one short
+of it; the tree this lands in reads `153` and `38`, and `125` of the `153` carry
+no pin.** Measured, not differenced, and each of the three steps is one markdown
+file and not one record: a `git archive origin/main` extraction gave
+`census_test_line_pins.py` reading `151` markdown files and `38` indexed test
+files, the `#929` × `#777` merge that put this write-up beside
+[`xdata-moved-ranks-collision-scope.md`](xdata-moved-ranks-collision-scope.md)
+and [`doc-patch-reference-gate.md`](doc-patch-reference-gate.md) took it to
+`152` and left the indexed count at `38`, and the `#929` × `#778` merge that put
+[`xdata-two-largest-case-restatement.md`](xdata-two-largest-case-restatement.md)
+beside it takes the corpus to **`153`** while leaving the indexed count at `38`
+again. **The `152` and the `124` this paragraph first recorded are superseded by
+that one file and are left written here**, and the `151` is superseded in turn by
+`main` having taken #778 since the extraction was taken.
+
+**The step is one file each and not a record each**, which is the point this
+write-up's own axis is about: of the three new files only #778's carries a
+`test_*.py:NNN` pin, and it carries exactly the one its own
+[`test-line-pin-census.md`](test-line-pin-census.md) correction already counted,
+so the class is the same size it was on this file's own tree — **`106`** pins in
+**`28`** files, `79` spellings and `58` targets — and the count of files carrying
+no pin is the only figure above that moves. All
+superseded values stay written per [`../findings.md`](../findings.md) §4a-4d,
+[`test-line-pin-census.md`](test-line-pin-census.md) carries the re-transcribed
+block and a per-merge section for it, and this write-up's own
+`test_check_pin_table_by_cited_file.py` index pin is re-set to the measured
+**38 indexed / 11 named / 27 named by none** with the reason in the comment
+beside it — which `main` left red on purpose and this change, as the next owner
+of that file, is the one its note was waiting for.
+
 ## The name, which is a standing rather than a measurement
 
 The issue asked for `ec/tools/check_pin_table_by_cited_file.py` and for

@@ -128,10 +128,26 @@ def keyed_by(rows):
     `test_xdata_cluster_names.py::TheContentKey` holds that, and the committed
     census measures clean -- so this is a bijective re-keying and the last row
     wins for none. "Unique" is the one claim here a map cannot show failing, so
-    every caller of this prints `duplicate_keys()` over what it re-keyed rather
-    than relying on it: two ranks on one key leave a shorter map, not a wrong
-    shape, and a shorter map is exactly what a count reads as a smaller
-    measurement."""
+    each **view** over a census prints `duplicate_keys()` over the census it
+    re-keyed rather than inheriting the check from a sibling function: two
+    ranks on one key leave a shorter map, not a wrong shape, and a shorter map
+    is exactly what a count reads as a smaller measurement.
+
+    The unit is the view rather than the caller, and that is the whole of the
+    claim. The seven call sites reach four distinct censuses -- the two
+    committed and the two guard-off -- by more routes than that:
+    `flip_table` and `swept_report` re-key both committed ones, `cause_report`
+    re-keys the guard-off pair for its population and reaches the committed
+    pair, and `holders_by_program`'s census, again in its per-cell lookup. So
+    the census is what the check belongs to and the report that reads it is
+    what prints it: `pair_report` covers both censuses of the pair it reads,
+    `collapse_line` covers the committed pair for `across` and `cause` and
+    `collision_line` covers it again under `--swept`, and `cause_report`'s
+    population block covers the guard-off pair -- which is what covers the
+    per-cell lookup's and `holders_by_program`'s, because those re-key the
+    same two censuses. Nothing is covered by virtue of some other census
+    having been checked.
+    """
     return {r["cluster_key"]: r for r in rows.values()}
 
 
@@ -151,18 +167,32 @@ def duplicate_keys(rows):
     return {k: ranks for k, ranks in held.items() if len(ranks) > 1}
 
 
-def collision_line(rows, consequence=""):
-    """The one line `pair` prints about the precondition of its two counts.
+def collision_line(rows, label="committed", consequence="", only_if_collision=False):
+    """The line a report prints about the precondition of a census it re-keyed.
 
     Printed either way, so a run that reports nothing is a run that looked and
-    found nothing, which is a different claim from a run that never looked.
+    found nothing, which is a different claim from a run that never looked. The
+    one exception is `only_if_collision`, for the views that print this only
+    when it bites -- `collapse_line`'s silent-on-clean rule, which holds for
+    the census `pair` checks unconditionally and would be a second opinion
+    otherwise. That case returns the empty string rather than a clean bill of
+    health, so a caller that appends the result unconditionally cannot print
+    the finding twice.
+
+    `label` names the census in the sentence. It was the literal word
+    `committed` in both f-strings, which is why the guard-off censuses could
+    not be pointed at this helper at all and were carrying their own spelling
+    of the same line; `label="committed"` is what the four committed census
+    reports print, unchanged.
     """
     dups = duplicate_keys(rows)
     if not dups:
-        return (f"  cluster_key unique across the {len(rows)} committed row(s): "
+        if only_if_collision:
+            return ""
+        return (f"  cluster_key unique across the {len(rows)} {label} row(s): "
                 f"0 collision(s)")
     named = "; ".join(f"{k} on {', '.join(ranks)}" for k, ranks in dups.items())
-    return (f"  cluster_key COLLISION: {len(dups)} of the {len(rows)} committed "
+    return (f"  cluster_key COLLISION: {len(dups)} of the {len(rows)} {label} "
             f"keys carried by more than one rank ({named})"
             + (f" -- {consequence}" if consequence else ""))
 
@@ -294,15 +324,24 @@ def pair_report(label, committed_path, off_path, registers=None):
     out.append(f"  intact     {intact}")
     out.append(f"  committed ranks the guard-off census does not carry: {len(absent)}"
                + (f" ({', '.join(absent[:5])}...)" if absent else ""))
-    # The precondition of the two counts above, stated rather than inherited
-    # from the sibling function that documents it. They are per rank, so a
-    # duplicated key cannot make either of them wrong; what it costs is the
-    # key-indexed views `across` and `--swept` build, and those say so in
-    # their own terms.
+    # The precondition of the two counts above, stated for **both** censuses
+    # this read rather than for the one whose key some other report joins on,
+    # and stated rather than inherited from the sibling function that documents
+    # it. `moved` and `intact` are per rank, so a duplicated key cannot make
+    # either of them wrong; what it costs is whichever view reads the key. The
+    # committed census is joined on by `across` and `--swept`, and the guard-off
+    # one by `cause`'s population and its `holders_by_program` index, so each
+    # line names the view it costs and neither of them is this report's.
     out.append(collision_line(committed,
                               consequence="the moved and intact counts above are "
                                           "per rank and are unaffected; across and "
                                           "--swept join on the key and are not"))
+    out.append(collision_line(off, "guard-off",
+                              consequence="the moved and intact counts above are "
+                                          "per rank and are unaffected; across and "
+                                          "--swept do not read this census, but "
+                                          "cause's population and its per-program "
+                                          "holder index are over the key and are not"))
 
     # A moved rank is a *different* cluster at the same number, so the two
     # shapes it can take are worth counting separately: a same-sized
@@ -386,14 +425,18 @@ def flip_table(committed_a, off_a, committed_b, off_b):
 
     Every count in the table is a **key** count, which is the right unit for a
     join on the key and not the same unit as `pair`'s rank counts. That is only
-    the same number when keys are unique within a census, so the moved ranks
-    that share one come back as `collapsed`, in generation order, and
-    `across_report` prints a line when it is not empty. The four-term closure
-    still closes either way -- it is set algebra over one key universe -- which
-    is precisely why the closure cannot be the thing that notices.
+    the same number when keys are unique within a census, so the ranks of a
+    committed census that share one come back as `collapsed`, in generation
+    order, and `across_report` prints a line when it is not empty. The
+    population is the whole committed census and not its moved ranks, because
+    that is the census every count above is drawn from: two ranks that share a
+    key and neither of which moved still leave one of them unnamed by the key,
+    and a table that is silent about it reports the collision's one case that
+    costs no count as though it were the only case. The four-term closure still
+    closes either way -- it is set algebra over one key universe -- which is
+    precisely why the closure cannot be the thing that notices.
     """
     a, b = keyed_by(committed_a), keyed_by(committed_b)
-    moved = (moved_ranks(committed_a, off_a), moved_ranks(committed_b, off_b))
     moved_a, moved_b = (moved_keys(committed_a, off_a), moved_keys(committed_b, off_b))
     shared = sorted(set(a) & set(b))
     return {
@@ -405,20 +448,28 @@ def flip_table(committed_a, off_a, committed_b, off_b):
         "neither": [k for k in shared if k not in moved_a and k not in moved_b],
         "only_a": sorted(set(a) - set(b)),
         "only_b": sorted(set(b) - set(a)),
-        # Per generation, the moved ranks sharing a key. Empty on any census
-        # whose keys are distinct, which is every census this tree holds.
-        "collapsed": [duplicate_keys({cid: old for cid, (old, _new) in m.items()})
-                      for m in moved],
+        # Per generation, the ranks of the whole committed census sharing a key.
+        # Empty on any census whose keys are distinct, which is every census
+        # this tree holds, so widening the population from the moved ranks to
+        # the census they are drawn from is a superset rather than a change.
+        "collapsed": [duplicate_keys(committed_a), duplicate_keys(committed_b)],
     }
 
 
 def collapse_line(table, label_a, label_b):
-    """The line `across` and `cause` print when a key-indexed view loses a moved
-    rank to a collision, and nothing at all when none is lost.
+    """The line `across` and `cause` print when a key-indexed view loses a rank
+    to a collision, and nothing at all when none is lost.
 
     Silent on the clean case on purpose: `pair` prints its precondition
     unconditionally, and a conditional line here reads as a second opinion on
     the same census rather than as the property the key-indexed counts rest on.
+    The census is now the same one `pair` checks unconditionally, which is what
+    makes that silence a summary rather than a second opinion.
+
+    The ranks named are the ones the keys are read from, which is the whole
+    committed census and not the moved part of it -- so a line here is not
+    restricted to collisions that happened to cost a count, and the counts are
+    named as key counts whether or not any of them is wrong.
     """
     collapsed = [(label, dups)
                  for label, dups in zip((label_a, label_b), table["collapsed"]) if dups]
@@ -429,8 +480,8 @@ def collapse_line(table, label_a, label_b):
                       for label, dups in collapsed)
     ranks = sum(len(rs) for _label, dups in collapsed for rs in dups.values())
     return [f"  the counts below are keys, not the ranks `pair` counts: "
-            f"{ranks} moved rank(s) across {len(collapsed)} generation(s) share "
-            f"a key with another moved rank ({named})"]
+            f"{ranks} committed rank(s) across {len(collapsed)} generation(s) "
+            f"share a key with another committed rank ({named})"]
 
 
 def deciles(sizes):
@@ -691,15 +742,20 @@ def swept_report(committed_a, committed_b, table, addrs):
     # ranks of one generation share leaves a holder neither the rows below nor
     # the summary can name -- and the summary counts holders, so it would come
     # out short rather than look wrong. Stated here, next to the count it
-    # qualifies. `pair` prints the same check over the same census.
+    # qualifies, and stated in `collision_line`'s words rather than a second
+    # spelling of them: this used to hand-roll the sentence, which is how the
+    # property ended up checked at one site and not the other. Conditional, the
+    # way the key-indexed views are: `pair` prints the same check over the same
+    # census either way, and an unconditional line here would be a second
+    # opinion on a census two blocks of output away from that one.
     for census, label in ((committed_a, "A"), (committed_b, "B")):
-        dups = duplicate_keys(census)
-        if dups:
-            named = "; ".join(f"{k} on {', '.join(ranks)}" for k, ranks in dups.items())
-            out.append(f"  generation {label} cluster_key COLLISION: {len(dups)} of its "
-                       f"{len(census)} keys carried by more than one rank ({named}) -- "
-                       f"the rows below and the counts that follow them are over the "
-                       f"key, so a shared key hides a rank")
+        line = collision_line(census, f"committed {label}",
+                              consequence="the rows below and the counts that "
+                                          "follow them are over the key, so a "
+                                          "shared key hides a rank",
+                              only_if_collision=True)
+        if line:
+            out.append(line)
     keys = set()
     # The loop's rows are kept as well as printed, so the second-holder count
     # below is over the rows this loop made rather than a second reading of the
@@ -893,6 +949,22 @@ def cause_report(label_a, committed_a_path, off_a_path,
     out = [f"cause {label_a} -> {label_b}",
            f"  page {page_str}; the added set is {len(added)} address(es)"]
     out.append("")
+    # The two population censuses, checked over themselves, and above the block
+    # they qualify rather than inside it. `keys_a` and `keys_b` above are
+    # `keyed_by` maps, so this is the one re-keying in the file whose counts
+    # *are* the population: the `N guard-off key(s)` figure the line below
+    # prints, every rate's `population` column, and `holders_by_program`'s
+    # per-program index are all read off the key, and a collision makes the
+    # first of those come out short with nothing else in the report looking
+    # wrong. Printed either way for the reason `collision_line` says. `across`
+    # gets no such line: it re-keys only the committed censuses, which
+    # `collapse_line` covers, and a guard-off line there would be a second
+    # opinion about a census the mode never reads.
+    for census, label in ((off_a, label_a), (off_b, label_b)):
+        out.append(collision_line(census, "guard-off",
+                                  consequence=f"the population and every rate's "
+                                              f"{label} column are over the key, "
+                                              f"so a shared key hides a rank"))
     out.append(f"  the population: {len(keys_a)} guard-off key(s) in {label_a}, "
                f"{len(keys_b)} in {label_b}")
     out.append(f"    {len(both)} of the first reappear in the second under the same key, "
@@ -1762,15 +1834,26 @@ def self_test() -> int:
     # four terms close over them regardless. A closure that closes is not
     # evidence that nothing was lost, which is the whole reason the line is
     # printed rather than left to be inferred from the arithmetic.
+    #
+    # The expectation in this check was
+    # `{key(9): ["main-ec-001", "main-ec-002"]}` and "4 moved rank(s)", and
+    # both moved when `flip_table`'s `collapsed` population was widened from
+    # the moved ranks to the whole committed census the table's cells are drawn
+    # from: `k9` carries a third rank, and `main-ec-003` is intact. Nothing else
+    # in the check moved with it -- the two movers, the four-term closure and
+    # the absence of a `MISMATCH` are the same three assertions as before, which
+    # is what a widening is supposed to look like from here.
     lines, t3 = across_report("A", dup_committed, dup_off,
                               "B", dup_committed, dup_off)
-    check(t3["collapsed"] == [{key(9): ["main-ec-001", "main-ec-002"]}] * 2
+    check(t3["collapsed"] == [{key(9): ["main-ec-001", "main-ec-002",
+                                        "main-ec-003"]}] * 2
           and any("the counts below are keys, not the ranks `pair` counts" in ln
-                  and "4 moved rank(s) across 2 generation(s)" in ln
+                  and "6 committed rank(s) across 2 generation(s)" in ln
                   and key(9) in ln for ln in lines)
           and not any("MISMATCH" in ln for ln in lines),
-          "the key-indexed half reports the collision it cannot absorb -- two "
-          "moved ranks on one key -- and the closure closes anyway")
+          "the key-indexed half reports the collision it cannot absorb -- three "
+          "committed ranks on one key, of which two moved -- and the closure "
+          "closes anyway")
 
     # The swept cross-reference, over the same census: its holder index is
     # `keyed_by` too, so 0x0E's `main-ec` holder is whichever of the two ranks
@@ -1780,6 +1863,123 @@ def self_test() -> int:
           and any("hides a rank" in ln and key(9) in ln for ln in lines),
           "the swept cross-reference says so too: both generations are named, "
           "and the holder count below is over the key rather than over the rank")
+
+    # ------------------------------------------------------------------------
+    # The scope of the check, over the one shape the six cases above cannot
+    # reach. `dup_committed` has movers, and every one of those six cases reads
+    # it: a collision between two ranks that both stayed put was silent by
+    # construction rather than by decision, so the property was never reached
+    # in the one census where it costs nothing and says everything.
+    # `write_census()` needed no new knob to express it -- it takes a key per
+    # row, and the only thing wrong with the old fixtures was that every caller
+    # passed a distinct one.
+    #
+    # The fixtures below are censuses this tool's own hash would never produce:
+    # `cluster_key` is a content hash over the program and the sorted
+    # membership, so two ranks with different memberships carrying one key is
+    # a forgery. That is the point rather than the objection -- the census this
+    # check is not guaranteed to receive is written by a regeneration, not by
+    # `xdata_register_map.py`'s hash of the same tree.
+    intact_committed = write_census(tmp, "intact-committed.csv", [
+        ("main-ec-001", "main-ec", ["0x0E", "0x0F"], key(1)),
+        ("main-ec-002", "main-ec", ["0x10"], key(2)),
+        ("pd-001", "pd", ["0x20", "0x21"], key(3))])
+    intact_off = write_census(tmp, "intact-off.csv", [
+        ("main-ec-001", "main-ec", ["0x0E", "0x0F"], key(9)),
+        ("main-ec-002", "main-ec", ["0x10"], key(9)),
+        ("pd-001", "pd", ["0x20", "0x21"], key(3))])
+
+    # `pair` reads two censuses. It printed the precondition for the one whose
+    # key `across` and `--swept` join on and said nothing about the one `cause`
+    # reads by key -- and the line it did print says so unconditionally, so the
+    # silence on the second read as a clean bill of health for the pair.
+    lines, _c, _o, _m = pair_report("intact", intact_committed, intact_off, None)
+    check(any("cluster_key unique across the 3 committed row(s): 0 collision(s)" in ln
+              for ln in lines)
+          and any("cluster_key COLLISION" in ln and "of the 3 guard-off keys" in ln
+                  and key(9) in ln
+                  and all(cid in ln for cid in ("main-ec-001", "main-ec-002"))
+                  for ln in lines)
+          and any(ln.startswith("  moved      0") for ln in lines)
+          and any(ln.startswith("  intact     3") for ln in lines),
+          "a guard-off collision between two ranks that both stayed put is a "
+          "line of its own: `pair` checked the census it does not join on and "
+          "left the one `cause` does as a clean bill of health")
+
+    # `collapsed` was derived from the moved ranks, so a census whose only
+    # collision is between two intact ones reported nothing at all -- while the
+    # censuses the same collision is drawn from in every other case would have
+    # caught it. Nothing moved here and nothing is wrong with the four cells.
+    across_committed = write_census(tmp, "across-intact-committed.csv", [
+        ("main-ec-001", "main-ec", ["0x0E", "0x0F"], key(9)),
+        ("main-ec-002", "main-ec", ["0x10"], key(9)),
+        ("pd-001", "pd", ["0x20", "0x21"], key(3))])
+    across_off = write_census(tmp, "across-intact-off.csv", [
+        ("main-ec-001", "main-ec", ["0x0E", "0x0F"], key(9)),
+        ("main-ec-002", "main-ec", ["0x10"], key(9)),
+        ("pd-001", "pd", ["0x20", "0x21"], key(3))])
+    lines, t4 = across_report("A", across_committed, across_off,
+                              "B", across_committed, across_off)
+    check(t4["collapsed"] == [{key(9): ["main-ec-001", "main-ec-002"]}] * 2
+          and not t4["moved_a"] and not t4["moved_b"]
+          and collapse_line(t4, "A", "B")
+          and any("4 committed rank(s) across 2 generation(s) share a key" in ln
+                  and key(9) in ln for ln in lines)
+          and not any("MISMATCH" in ln for ln in lines),
+          "a committed census whose only collision is between two ranks that "
+          "did not move still prints it: the population is the census the cells "
+          "are drawn from, so `collapsed` is not the moved subset of it, and a "
+          "zero moved count is not a reason to say nothing")
+
+    # The guard-off population of `cause`, which is the one re-keying in the file
+    # whose counts *are* the population: `len(keys_a)` prints it, every rate's
+    # `population` column divides by it, and `holders_by_program` indexes it.
+    # `dup_committed`/`dup_off` would do here too, but the fixture above is the
+    # one whose ranks are intact, so the collision is visible in the report as
+    # 3 rows over 2 keys and nothing else in the output moves.
+    lines, _t, _cells = cause_report("A", intact_committed, intact_off,
+                                     "B", intact_committed, intact_off,
+                                     registers=(on_a, off_a, on_b, off_b))
+    guard = [i for i, ln in enumerate(lines)
+             if "cluster_key COLLISION" in ln and "of the 3 guard-off keys" in ln]
+    population = next((i for i, ln in enumerate(lines)
+                       if ln.lstrip().startswith("the population:")), -1)
+    check(len(guard) == 2 and 0 <= population and all(i < population for i in guard)
+          and all(key(9) in lines[i] and "main-ec-001" in lines[i]
+                  and "main-ec-002" in lines[i] for i in guard)
+          and lines[population].strip() == "the population: 2 guard-off key(s) "
+                                          "in A, 2 in B",
+          "both guard-off censuses carry their own precondition line, above the "
+          "population they qualify: 3 rows are 2 keys, and every rate below "
+          "divides by that 2")
+
+    # The docstring's claim, as a case rather than as a sentence: each of the
+    # six (view, census) pairs `keyed_by`'s docstring names carries a line about
+    # the census in question. All four views run over one census that collides,
+    # so a view that lost its check is a red run rather than prose nobody
+    # executes. The wanted substring is the line the check emits and never the
+    # cross-reference's own `cluster_key` column header, which every report
+    # printing a key-indexed table has and which says nothing about whether the
+    # check ran.
+    pair_lines, _c, _o, _m = pair_report("cover", dup_committed, dup_off, None)
+    across_lines, _t = across_report("A", dup_committed, dup_off,
+                                     "B", dup_committed, dup_off)
+    swept_lines = swept_report(dup_c, dup_c,
+                               flip_table(dup_c, dup_o, dup_c, dup_o), ["0x0E"])
+    cause_lines, _t, _c = cause_report("A", dup_committed, dup_off,
+                                       "B", dup_committed, dup_off,
+                                       registers=(on_a, off_a, on_b, off_b))
+    covered = (("pair", pair_lines, "of the 4 committed keys"),
+               ("pair", pair_lines, "of the 4 guard-off keys"),
+               ("across", across_lines, "the counts below are keys"),
+               ("--swept", swept_lines, "cluster_key COLLISION"),
+               ("cause", cause_lines, "the counts below are keys"),
+               ("cause", cause_lines, "of the 4 guard-off keys"))
+    check(all(any(wanted in ln for ln in lines) for _view, lines, wanted in covered),
+          "every view that re-keys a census carries a line about that census: "
+          "`pair` for both of the two it reads, `across`, `--swept` and `cause` "
+          "for the committed pair, and `cause` for the guard-off one -- which is "
+          "the claim `keyed_by`'s docstring makes about the file")
 
     print(f"  {'FAILED' if bad else 'all checks passed'}"
           + (f" ({bad})" if bad else ""))

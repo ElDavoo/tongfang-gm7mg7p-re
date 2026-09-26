@@ -108,7 +108,7 @@ before this branch and are now the sets they are.
 ## What the code does now
 
 Three branches, in the order the docstring states them, at
-`ec/tools/xdata_moved_ranks.py:436`:
+`ec/tools/xdata_moved_ranks.py:487`:
 
 - **empty** — `no rows`, reported before the floor rule applies. An empty set
   is not a set too small to cut; it is no set at all, and the two are told
@@ -120,6 +120,21 @@ Three branches, in the order the docstring states them, at
   read in a transcript, which is the property the whole floor is for.
 - **10 rows and up** — the ten-cell nearest-rank read, **byte-identical to
   what it was**. This is what keeps every published string standing.
+
+*(Repointed at the **#929 × #885** merge, 2026-09-26: the line named above was
+**`:436`**, which was right on the tree this forked from, and #929 retargeted it
+to **`:487`** — `def deciles(sizes):` is at `:487` there. **#885 is not what
+moved it**: its twenty-five lines in `xdata-moved-ranks-fall.md` land somewhere
+else entirely, so they leave the tool's line numbers exactly where #929 put
+them. The superseded `:436` stays visible here per
+[`../findings.md`](../findings.md) §4a-4d rather than edited into the sentence
+above. **There is an interlude between the two, and it lives in
+[`../../tools/README.md`](../../tools/README.md)'s fourteenth and fifteenth
+notes rather than here**: a first-pass value of **`:485`** sits between them,
+two short of `deciles()`, and that file records it. `:485` appears nowhere in
+this file, so a reader checking the sentence above will not find it. **Nothing
+else in this section moves**: the three branches, the floor, and the published
+figures below are the same on the merged tree.)*
 
 ## The published figures did not move
 

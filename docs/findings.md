@@ -8643,6 +8643,38 @@ suite is one of the 26: markdown read `149` → **`150`** and indexed test files
 get. The `105`, `27`, `78`, `57`, the shape split and the verdict tally do not
 move at all, and `test_census_test_line_pins.py` is green against them.)*
 
+*(And both of the figures that parenthetical gives for `main` are one short of
+`main`'s own tree, measured here rather than asserted, because the same window
+brought a second markdown file and a second suite and this note counted the
+first of each. **A `git archive origin/main` extraction reads `151` markdown
+files and `38` indexed test files**, against the `150` and `37` above, and
+`census_test_line_pins.py` on the merge this section lands in reads **`152` and
+`38`** — the one markdown file being #929's
+[`xdata-moved-ranks-collision-scope.md`](findings/xdata-moved-ranks-collision-scope.md)
+and the `38` being a suite either branch added and both added. **The pair this
+note is actually about moves with them and is the half worth reading**: the
+**11 named / 26 named by none** above becomes **11 named / 27 named by none** on
+the merged tree, the `26` → `27` step being #777's `tools/test_doc_patch_refs.py`
+rather than anything #941 wrote, and `ec/tools/test_check_pin_table_by_cited_file.py`'s
+own index pin was re-set to the measured **38 / 11 / 27** with the reason in the
+comment beside it. All four superseded values stay written per §4a-4d, and
+[`findings/test-line-pin-census.md`](findings/test-line-pin-census.md) carries
+the re-transcribed block and a per-merge section for it.*
+
+*(Two of that note's three denominators are superseded by movement rather than by
+anything being wrong, and the values stay written above per §4a-4d. #778's merge
+(`77ce75df`) landed after the branch measured, so **`origin/main` now reads `152`
+markdown files rather than the `151` above** — verified by extracting it again
+rather than by differencing — and the tree this section lands in reads **`153`
+and `38`**, the one file being #778's
+[`xdata-two-largest-case-restatement.md`](findings/xdata-two-largest-case-restatement.md).
+**`11` named and `27` named by none are unchanged by either**, because the file
+that moved the corpus count carries one pin of its own and #929's carries none;
+§74 carries the full correction and the extraction table. The suite the note
+names is `tools/test_doc_patch_refs.py` — issue **#777**'s work, landed as
+`24460001`, which is PR **#944** — so that #777 and #944 are two numbers for one
+commit rather than two files.)*
+
 No register `status:` moved, no `registers.yaml` figure was
 refreshed, no CSV or `xdata-symbols.csv` was regenerated, no Ghidra project was
 opened, no gate was edited, no register was read back, and nothing is opened in
@@ -8990,6 +9022,30 @@ above carries the same figure against the 39 it first recorded. The 31, 36, 39
 and 45 all stay visible per §4a-4d, because each is true of the tree it was
 measured on.)*
 
+*(Re-measured a fourth time at the **#929** merge, where the **49 becomes 53** —
+and the only figure that moves is the headcount again, for the fourth time
+running. §929's four checks print at **50–53**, after this issue's six at
+44–49, and are the same six' own blind spot rather than a new subject: every
+case in the suite was reached through a census with a mover in it, and §929
+adds one whose only colliding rank is intact. Measured on the merged tree,
+`python3 ec/tools/xdata_moved_ranks.py --self-test` prints **53**,
+`all checks passed`, and all four censuses the §929 re-derivation read — 439,
+430, 439 and 445 rows — measure **0 collisions** over their distinct keys, with
+`across` and `across --swept` diffing **empty** against the pre-change tool. So
+nothing this section reports about the *tool's behaviour* moves: the committed
+census still measures 439 rows over 439 distinct `cluster_key` values and 0
+collisions, and the `366/64` and `315/124`, the **71/266/23/40** and
+`closes: 366 - 315 = 51` figures all come back unchanged.
+`xdata-moved-ranks-fall.md` §9 carries the merged transcript and closes the
+arithmetic as **`14 + 10 + 1 + 5 + 9 + 4 + 6 + 4 = 53`**. **What does move is
+this section's own coverage claim**, and it is corrected in place in
+[`xdata-moved-ranks-key-collision.md`](findings/xdata-moved-ranks-key-collision.md)
+§3 rather than here: the check was made at three of six uses, over three of the
+four censuses `keyed_by`'s call sites reach, and the guard-off census had none.
+§74 below carries that, and §68's write-up's §2, §3, §6 and §7 carry the
+corrections. The 31, 36, 39, 45 and 49 all stay visible per §4a-4d, because each
+is true of the tree it was measured on.)*
+
 ## 69. The 427-row census is stale at `e6c88864` and unreadable at `1fcd5f1e`, and the guard's per-address effect is measured a third time (2026-09-26, issue #885)
 
 > **Numbering note, added at the merge, then extended by each of the merges
@@ -9041,6 +9097,20 @@ measured on.)*
 > and therefore the one that keeps it. The write-up's
 > [`xdata-moved-ranks-427-pair.md`](findings/xdata-moved-ranks-427-pair.md)
 > and §67's correction table are unaffected for the same reason.)*
+
+> *(And one clause of the note above is corrected at this merge, in the same
+> place and for the same reason §68's was: "so **this is §69** … It is the last
+> section in the file" was true when it was written, and #929's collision-scope
+> summary has landed below it, so §69 is no longer the last section. **That
+> summary's own number gave way four times by the same rule the rest of this
+> note sets** — to #885's §69, then #771's §70, then #942's §71, all in one
+> window, #777's §72 in a later one, and #778's §73 in a later one still — so
+> **§74**, and the file ends there.
+> **§69's number does not move**, and the correction is beside the clause
+> rather than in it, per §4a-4d. The clause is the one a reader looking for the
+> last section would be misled by; nothing else in the note is affected: #888's
+> section is still the one immediately above this one, and the six references
+> below still carry **§69** with it.)*
 
 The write-up is
 [`xdata-moved-ranks-427-pair.md`](findings/xdata-moved-ranks-427-pair.md);
@@ -9182,7 +9252,28 @@ citations before and after this change, both **#822's** at
 > this merge, and the next section to land below this one corrects it beside
 > itself rather than into itself, per §4a-4d. It is the sixth such note in this
 > file and the second to arrive in one merge, which is what two branches adding a
-> summary each in the same window looks like from here.)* **Nothing this branch
+> summary each in the same window looks like from here.)*
+>
+> *(And the clause above is corrected at this merge, in the same place and for
+> the same reason §68's and §69's were: "this is **§70** and is the last section
+> in the file" was true of the **#932** merge, and #929's collision-scope summary
+> landed below it in the same window, so §70 is no longer the last section and
+> the file ends at **§74**. **Its number does not move**, and the second collision
+> runs the other way from the one this note opens with: #929's summary was
+> written as §69 as well and gives way to *all five* — the §69 above, this §70,
+> #942's §71, #777's §72 and #778's §73 — so it is renumbered **§74** below. The
+> correction is beside the clause rather than
+> in it, per §4a-4d, and the sentence above counting these at "the sixth such
+> note" and "the second to arrive in one merge" is left as written rather than
+> edited to the seventh and the third, for the same reason each of the six was.
+> **Its own references are unaffected, and that is the half of the note this
+> merge does not touch:** nothing in #771's write-up, in this section's body, in
+> the two other edits this branch makes in this file, or in the four drift tables
+> that moved with the twelve pins names this section's number, and the one line
+> the census re-registered *at* this section —
+> [`test-line-pin-census.md`](findings/test-line-pin-census.md)'s `:9046` — is
+> moved again below by #929's added prose rather than by this section, which is
+> what that file's own note for the row now says.)* **Nothing this branch
 > wrote pointed at its own section number, so there was no reference to
 > repoint**, and that is worth stating rather than left for the next reader to
 > check: the write-up cites `docs/findings.md` §6a and §4a-4d and
@@ -9407,7 +9498,6 @@ taken, no `status:` moved, no hardware or Windows run implied. The gate wiring i
 prepared rather than landed for the reason items 4 through 12 each give —
 `.github/` is template-copied and the push token has no `workflow` scope — and
 that is a change this branch does not make.
-
 ## 73. The two-largest case was green and vacuous, and it now derives the names a key cannot find (2026-09-26, issue #778)
 
 > **Numbering note, added at the merge.** §70 records that it "is §70 and is
@@ -9423,6 +9513,19 @@ that is a change this branch does not make.
 > section in the file. *(§70's clause is therefore true of this merge again,
 > one merge later, and says itself it is a property of the merge rather than of
 > the file.)*
+>
+> **And that clause is corrected once more at the `#929` × `#778` merge, in the
+> same place and for the same reason §68's, §69's and §70's were.** #929's
+> collision-scope summary
+> ([`findings/xdata-moved-ranks-collision-scope.md`](findings/xdata-moved-ranks-collision-scope.md))
+> landed below this one, and its own number gave way for a fifth time by the
+> rule this note applies — written as §69, it has been renumbered to **§70**,
+> **§71**, **§72** and now **§74** — so **this section keeps §73** and is no
+> longer the last section in the file, and §74 is. **Its number does not
+> move**, and the correction is beside the clause rather than in it, per
+> §4a-4d. Nothing else in the note is affected: #942's §71, #777's §72 and this
+> §73 are still the three sections between §70 and the end, in that order, and
+> the paragraph below is about §70 and still holds.
 >
 > **Nothing pointed at the number that moved.** Nothing this branch wrote named
 > §70, so there was no reference to §70 to repoint, and nothing named §71 or
@@ -9461,3 +9564,301 @@ the reason `assertTrue(movers, …)` already gives.
 the derived set at `level-block-086x` — a cluster the key *does* find — turns it
 red on `from_key != cluster_key`, naming the key that was found where overlap
 was required. The old assertion satisfies that same edit.
+## 74. The collision check covered the moving part of each census, and `keyed_by`'s docstring said it covered all of it (2026-09-26, issue #929)
+
+> **Numbering note, added at the merge, then extended by the second, third and
+> fourth collisions.**
+> This section was written as §69, and #885's 427-row pair
+> ([`xdata-moved-ranks-427-pair.md`](findings/xdata-moved-ranks-427-pair.md),
+> PR #892) took §69 on `main` in the same window, so by the rule §62's note set
+> and every one after it applied — the summary already committed on `main` does
+> not move, and the branch's own gives way — this was renumbered to **§70**.
+> **A second summary took §70 on `main` in the same window**, so the same rule
+> applies one more time and for the same reason: #771's
+> [`0751-path-taking-reader-fates.md`](findings/0751-path-taking-reader-fates.md)
+> summary (PR #932) holds **§70**, this is **§71**, and the two sections it gave
+> way to are the ones above it. **A third took §71 on `main` in the same
+> window** — #942's
+> [`pin-table-row-reconciliation.md`](findings/pin-table-row-reconciliation.md)
+> summary (PR #945) holds **§71** — so the rule applies a third time and for the
+> same reason: this is **§72**, the three sections it gave way to are the ones
+> above it, and the file ends here. **A fourth took §72 on `main` in a later
+> window** — #777's
+> [`doc-patch-reference-gate.md`](findings/doc-patch-reference-gate.md) summary
+> (PR #944) holds **§72** — so the rule applies a fourth time and for the same
+> reason: this is **§73**, the four sections it gave way to are the ones above
+> it. **A fifth took §73 on `main` in a later window still** — #778's
+> [`xdata-two-largest-case-restatement.md`](findings/xdata-two-largest-case-restatement.md)
+> summary (PR #947) holds **§73** — so the rule applies a fifth time and for the
+> same reason: this is **§74**, the five sections it gave way to are the four
+> above it and that one, and the file still ends here. **The five summaries are
+> ordered by what
+> `main` held first, not by which branch merged**, and that is the whole content
+> of the rule — which is why neither §69's number above nor §70's moves, and why
+> §70 records the collision beside its own "last section" clause rather than in
+> it. **Everything else in this note still stands, because nothing else in it
+> named the number.** The three references this branch makes to its own summary
+> are the closing sentence of the fourth re-measurement note at the end of §68,
+> the correction §69's numbering note carries beside its "last section" clause,
+> and the one this branch adds to §70's numbering note beside the same clause;
+> all three read "§70" as the branch first wrote them, "§71" on the tree #942
+> merged into, "§72" on this branch's tip, and **§74** on the tree this lands in,
+> and each is corrected in place rather than repointed, since none was committed
+> anywhere. The write-up names §68, the
+> property this one corrects, and §4a-4d, and none of those is this section. A
+> section number is a property of the merge, the same reason the runner's totals
+> are — see `runner-red-suite-set.md`.
+
+The write-up is
+[`xdata-moved-ranks-collision-scope.md`](findings/xdata-moved-ranks-collision-scope.md);
+this is the summary, and §68 is where a reader looking for the property lands.
+
+**§68's fix left the check covering a *subset* of each census it re-keys, and
+`keyed_by()`'s docstring said it covered all of it.** The claim was *"every
+caller of this prints `duplicate_keys()` over what it re-keyed rather than
+relying on it"*, and measured it was three of six census re-keyings, over three
+of the four censuses the seven call sites reach. `pair_report` printed the
+precondition for its **committed** census only, so a run that read a pair
+printed an unconditional clean bill of health for a census it had not looked at
+— the guard-off one, which is the population every rate in `cause` is divided
+by. `flip_table`'s `collapsed` ran `duplicate_keys` over the **moved** ranks, so
+a committed census whose only collision was between two ranks that stayed put
+reported nothing at all. And `swept_report` hand-rolled its own copy of the
+collision sentence rather than calling the helper, which is how one site ended
+up checked and another not.
+
+**This is a fix to what a report *says*, and no published figure moves.** Both
+pairs were regenerated exactly as §68 prescribes —
+`xdata_register_map.py --no-eq-guard` writing to `/tmp` for both, and the
+430-row half's decompiled tree read out with `git archive e169a0e4 | tar -x`
+rather than by adding a worktree — and the pre-change tool (`git show
+31f683e5:…`, this issue's base) was diffed against this one. **`across` and
+`across --swept` diff empty; `pair` gains one line and `cause` gains two, and
+every added line reads 0 collisions.** The empty diffs are the load-bearing
+half: the whole-census check and the old moved-subset check are both empty on a
+clean census, so widening the population is a superset rather than a change of
+behaviour. **366/64** and **315/124**, the **71/266/23/40** flip table,
+`closes: 366 - 315 = 51` over `(71 - 23) + (29 - 26)`, and the four §68 §4
+mean-delta cells all come back unchanged, and all four censuses the run read —
+439, 430, 439 and 445 rows — measure **0 collisions** over their distinct keys.
+`xdata_register_map.py --check` passes, the CSVs are not touched, and the `> 300`
+floor and `TheContentKey` are untouched.
+
+**What changed:** `collision_line` grew a `label` and an `only_if_collision`
+(the word `committed` was hardcoded in both f-strings, which is *why* the
+guard-off censuses could not be pointed at the helper at all);
+`pair_report` prints the line for **both** censuses it reads; `collapsed` is the
+whole committed census rather than its moved ranks, which is the population the
+cells above it are drawn from; `collapse_line` says "committed rank(s)" rather
+than "moved rank(s)"; `swept_report` folded into the helper; and `cause` prints
+both guard-off lines above the population they qualify. `keyed_by`'s docstring is
+narrowed from "every caller" to the unit that is actually enforced — **the
+view**, not the function, because seven call lines reach four censuses by more
+routes than four.
+
+**And the check is now reachable where it was not.** `--self-test` goes from 49
+to **53**, and the four are the shape the six §68 added could not express: a
+fixture whose *only* colliding rank is intact, so the property is exercised in
+the census where it costs no count. The fourth case is the first that *holds*
+`keyed_by`'s claim rather than restating it — one case running `pair`, `across`,
+`--swept` and `cause` over a colliding census and asserting a line for each of
+the six (view, census) pairs the docstring names. **It can go red, and that was
+demonstrated by reverting each edit in a scratch copy:** four of the five
+reverts (the `cause` lines, `pair`'s guard-off line, `swept_report`'s loop and
+`collapse_line` returning `[]`) are red on the coverage case. **The `collapsed`
+widening is the fifth and it is not** — the coverage case's census collides on a
+key two of whose three ranks moved, so the line is emitted over the moved subset
+too and the case stays green; case 2 is what holds that population.
+[`xdata-moved-ranks-collision-scope.md`](findings/xdata-moved-ranks-collision-scope.md)
+§7 carries the per-revert result. The one earlier check whose expectation moved
+is amended in place, with
+what it was left visible beside it: `4 moved rank(s)` became `6 committed
+rank(s)` when the population widened, and the two movers, the four-term closure
+and the absence of a `MISMATCH` are the same three assertions as before.
+
+**Four shared files are amended in place rather than edited, per §4a-4d, and
+none of the superseded text is edited down:**
+[`xdata-moved-ranks-key-collision.md`](findings/xdata-moved-ranks-key-collision.md)
+§2 (the "false negative" argument's reach, and three transcripts re-transcribed
+because the swept line's wording and `collapsed`'s population changed), §3 (the
+heading says three uses; it was three of six), §6 (the `holders_by_program()`
+bullet reads as though `cause` were covered; it was covered over the moved ranks
+alone) and §7 (the headcount);
+[`xdata-moved-ranks-fall.md`](findings/xdata-moved-ranks-fall.md) §9 (the
+transcript and its arithmetic, `14 + 10 + 1 + 5 + 9 + 4 + 6 + 4 = 53`, verified
+byte-identical to the run by `diff`); this section; and `tools/README.md`'s
+merged-tree note. **One pin is repointed** —
+[`xdata-decile-small-set-contract.md`](findings/xdata-decile-small-set-contract.md)'s
+`xdata_moved_ranks.py:436` for `deciles()`, correct before this change and not
+after it. **Two already-stale pins are left alone**: `tools/README.md`'s
+`:243` and `xdata-write-direction-correction.md`'s `:181` were already wrong on
+this change's base `31f683e5`, and deciding what a drifted pin was meant to name
+is a next pass's call and not a merge's.**
+
+**Nothing here is a hardware claim, and no live observation closes any part of
+it.** The tool reads committed CSVs and synthetic fixtures, opens no image, and
+touches no firmware. `test_check_cluster_citations` is red, as it is on the base
+`31f683e5` with the same single failure (#822's write-up at
+`xdata-cluster-names-guard-off-recipe.md:220`); this change neither fixes it nor
+adds to it, and the new file contributes nothing to it. `--self-test` being in
+no gate is #921's and is untouched, and no `--strict` flag and no refusal were
+added: the counts are correct under a collision, and what is ambiguous is which
+rank a key names — a caveat to state, not a run to abort. Nothing is opened in
+another repository.
+
+**Three figures in this branch's own write-up did not survive the merge beside
+it, and all three are corrected in place above with the wrong value left visible,
+per §4a-4d.** None is a claim about the collision check itself; all three are
+line numbers and a corpus count, and all three are recorded here because
+`test-line-pin-census.md` is where a reader lands, not here.
+
+**The `:9083` was 31 lines low, and the table row was right.** The `#929` merge
+section of [`test-line-pin-census.md`](findings/test-line-pin-census.md) printed
+`:9046 + 37 = :9083` for the `> 300` floor's citing line, and the row in the
+per-pin table it says it registered was registered to **`:9114`** — the two
+contradicted each other on the branch's own tree, and the table was the right one
+of the two. The cause is the same one the census's own exclusion exists to
+measure: the base was read off the tree *before* #930 and the run was taken on the
+tree *after* it. `git show 84a89d9a:docs/findings.md` has that line at `:9046` and
+`git show 271389d7:docs/findings.md` at `:9077`, so **`:9077 + 37 = :9114`** is
+the whole arithmetic and `:9046 + 37 = :9083` double-counts #930's move. The
+`:9081` first pass stays visible beside it, and the row needed no re-registration
+because it was never wrong. **On the tree this section lands in the row reads
+:9158` rather than `:9114`, and that is #946 rather than #929**: #946's summary
+edit to §65 above adds **26** lines, all of them above the `> 300` floor's
+citing line in this file and none of them below it, and this section's own
+correction to the same §65 note adds **18** more, so
+`:9077 + 37 + 26 + 18 = :9158` is the whole of that move, and
+[`test-line-pin-census.md`](findings/test-line-pin-census.md)'s per-pin table is
+re-registered to `:9158` with the `:9114` above left visible as the branch's own
+value, per §4a-4d.
+
+**`13dfc146` does not exist on any tree here.** The `#929` × `#930` section
+names it as the branch commit its figures were read off, and the review round
+rewrote it; the branch tip is **`706f8946`**, which resolves. That section's
+`149` corpus count
+is likewise **`150`** on the branch's tree, because #942 added
+[`pin-table-row-reconciliation.md`](findings/pin-table-row-reconciliation.md) to
+the corpus, and the re-transcribed block at the top of that file takes both its
+markdown-file count (`149` → `150`) and its test-file count (`35` → `36`, #942's
+`ec/tools/test_check_pin_table_rows.py`) with it. `tools/README.md` gets a
+seventeenth merged-tree note for the same two figures. **On this tree both
+figures move once more, to `152` and `38`**, the two markdown files being #941's
+[`pin-table-by-cited-file.md`](findings/pin-table-by-cited-file.md) and #777's
+[`doc-patch-reference-gate.md`](findings/doc-patch-reference-gate.md) and the
+suite being #777's `tools/test_doc_patch_refs.py` on top of #941's
+`ec/tools/test_check_pin_table_by_cited_file.py`. **The `150`/`36` above and
+`main`'s own `150`/`37` are both left written**, and neither was a defect: they
+are each true of the tree they were measured on, and each side counted from the
+same `149`/`36` base without seeing the other's two files.
+
+**What the merge did *not* move is the larger half, and it was re-measured
+rather than assumed.** All six rows `#929`'s edits had shifted still reconcile on
+the merged tree — `check_pin_table_rows.py` reads **105 rows, 105 records, 105
+placed, and all seven classes 0**, the `:9158` row included — because #942's
+additions to this file all landed *below* every citing line the census reads.
+`xdata_moved_ranks.py --self-test` still reads **53**,
+`xdata_register_map.py --check` still passes at 1326 register rows and 439 cluster
+rows, the committed census is still 439 rows over 439 distinct `cluster_key`
+values with 0 collisions, and the four drift-table anchors `tools/README.md`'s
+notes name — `deciles()` at `:487`, `write_movement()` at `:257`, `fall.md`'s §7
+heading at `:536` and this file's pin registered at `:487` — are where those
+notes say they are. **The suite totals are the one figure the window moved that is not
+about the census**, and `tools/README.md`'s "What it runs" sentence is corrected
+in place for it: the runner reads **38 suites and 1161 tests** where the three
+merged-tree notes above record thirty-five and 1076 and #929's seventeenth
+records thirty-six and 1112, and `python3 -m unittest discover -s ec/tools`
+reads **857** where the same note records 830. The steps are `194` on the base
+`c68f89df`, `830` after #942's 36 cases from
+`ec/tools/test_check_pin_table_rows.py`, `857` on `main` after #941's 27, and
+`857` here after #777's 22 — **which is the same 857 twice**, since #777 added a
+suite and the literal count `check_doc_figure_pins.py` reports is what #929's
+`xdata_moved_ranks.py` moved, and the two are different tools' figures. `test_check_cluster_citations` is the single
+failure, red on pristine `main` at `c68f89df` with the identical two
+`0x0464`/`0x0465` disagreements at `:220` of #822's write-up.
+
+**The one prose line this branch added above a citing line was
+kept the same length as the line it replaced**, so the `:9114` above is the
+branch's value and not a fourth one: §69's numbering-note correction gained a
+clause and lost a line elsewhere to pay for it, which is why the section this one
+is numbered for was §72 and not §71, and why nothing below had to be
+re-registered *on this branch*. **On the merged tree it did have to be, and by
+the other side's move rather than this one** — the paragraph above gives the
+arithmetic. **The section numbers are unmoved by all of that**, which is the
+half worth stating: `:9158` is a line number, and a line number is a property of
+the merge for the same reason the section number is.
+
+**One pin did move, and it is `tools/README.md`'s own `:159`, because the
+correction this merge owed it is above it.** The sentence saying how many suites
+the runner finds was stale the moment #942 added
+`ec/tools/test_check_pin_table_rows.py` — `c68f89df` added the suite without
+re-deriving that sentence, so the figure was wrong on `main` before this merge and
+is corrected in place, thirty-eight and 1161 where it read thirty-five and 1076.
+The repoint list below it moved `:159` → **`:166`** on the branch and to
+`main`'s **`:168`** on `main`, and the merged tree reads **`:197`**: the two
+sides' seven and nine lines, plus the twenty-two this merge's own two corrections to
+to that sentence add beside both, is `159 + 9 + 7 + 22 = :197` and is the whole of
+it. `test-line-pin-census.md`'s per-pin table, its supersession-shape legend and
+the blocker argument that name the line are re-registered to `:197`; the
+branch's sixteenth note, which says nothing either branch wrote lands above that
+line, is true of the tree it measured and stays. **That is this merge's own breakage, and
+it is recorded here for the reason the rest of this section records its pins: a
+merge that only adds a paragraph invalidates a row, and the row is the evidence
+that the paragraph landed where the pin checker could see it.**
+
+**And the `#929` × `#778` merge that puts this section at `§74` moved three of the
+figures above, and all three are corrected here with the superseded value left
+written, per §4a-4d.** None of the three is about the collision check, and none
+is a new pin: they are a line, a corpus denominator and a table headcount, and
+they are recorded because
+[`test-line-pin-census.md`](findings/test-line-pin-census.md) and
+`tools/README.md` are where a reader lands rather than here.
+
+**The `> 300` floor's citing line is `:9173`, not the `:9158` above, and its
+target is `main`'s `:400` rather than the `:392` this section's own paragraph
+names.** The move is this merge's own and it is prose all the way down: the §69
+numbering-note correction above took two lines where it had one, and the §65
+correction beside the re-derived census figures took fourteen more, so
+`9158 + 1 + 14 = :9173` is the whole of it and both halves of it are
+corrections this section carries. The `:400` is #778's own re-registration of
+the target, and `main` was right to make it — `git show :1:docs/findings.md` and
+`git show :3:docs/findings.md` both spell the line `:392`, at `:9103` and
+`:9158` respectively, and `77ce75df` is what moved the spelling. So the merged
+row is `../findings.md` at **`:9173`**, naming `test_xdata_cluster_names.py`'s
+`:400`, which is what `census_test_line_pins.py --verbose` prints and what
+`check_pin_table_rows.py` reconciles at **0 read-differs**. The `:9158` and the
+`:392` above stay written, each true of the tree it was measured on, and
+`:9077 + 37 + 26 + 18 = :9158` is still the whole of the branch's move.
+
+**The corpus denominator is `153`, not the `152` above, and both sides' `152`
+was one short of the merged tree for the same reason.** Each counted the other
+branch's markdown file and not its own, and `git archive` extractions of
+`24460001`, of `origin/main` at `77ce75df` and of this tree read **`151`**,
+**`152`** and **`153`** through the census tool's own walk. The branch's
+correction in `test-line-pin-census.md` which records `main`'s pair as one short
+of its own tree at `151` was right about the tree it measured and is superseded
+by `main` taking #778 rather than by anything being wrong. **The class itself is
+unmoved through all of it** — `106` pins, `28` files, `79` spellings, `58`
+targets, `74` resolves, `32` declined and the `5/19/10/6/34` split — because
+#778's write-up brings exactly the one pin its own correction already counted
+and #929's brings none.
+
+**`check_pin_table_rows.py` reads `106` rows, not the `105` above**, by that same
+one pin and for the same reason, and the other six rows the two sides disagreed
+about are re-registered in place in
+[`test-line-pin-census.md`](findings/test-line-pin-census.md) rather than added.
+
+**The one claim in this section that does not survive is the drift-table anchor,
+and it is a `#778` move rather than a `#929` one.**
+`xdata-moved-ranks-fall.md`'s §7 heading is at **`:547`**, not the `:536` the
+paragraph above calls one of four anchors that "are where those notes say they
+are". #778 added an eleven-line "Confirmed and acted on" paragraph to that
+write-up *above* the §7 heading, `536 + 11 = :547` is the whole of it, and it is
+the only line in this merge that lands above an anchor four notes in
+`tools/README.md` name. The other three are unmoved and were re-measured rather
+than carried: `deciles()` at `:487`, `write_movement()` at `:257`, and this
+file's registered pin at `:487`. `tools/README.md` carries a nineteenth
+merged-tree note for the `:547`, the `536` staying written in the three notes
+above it there, and the sentence this section's claim sits in is left as written
+rather than edited, per §4a-4d — the correction belongs beside the number it
+corrects, and that number appears in four places rather than one.
