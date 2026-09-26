@@ -972,7 +972,7 @@ the half this table exists to record.
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):190 | `ec/tools/test_xdata_cluster_names.py:307` | by-path | comment | **records another line** |
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):194 | `ec/tools/test_xdata_cluster_names.py:481` | by-path | comment | carries |
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):202 | `test_xdata_cluster_names.py:307` | by-name | comment | **records another line** |
-| [`history-checkout-claims.md`](history-checkout-claims.md):252 | `ec/tools/test_measure_index_repair_visibility.py:373-391` | by-path | other | carries |
+| [`history-checkout-claims.md`](history-checkout-claims.md):262 | `ec/tools/test_measure_index_repair_visibility.py:373-391` | by-path | other | carries |
 | [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md):71 | `ec/tools/test_disasm8051.py:52` | — | — | **declined** (fenced) |
 | [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md):169 | `test_disasm8051.py:52` | by-name | comment | carries |
 | [`runner-red-suite-set.md`](runner-red-suite-set.md):103 | `tools/test_readme_suite_table.py:11-20` | by-path | other | carries |
@@ -1007,7 +1007,7 @@ the half this table exists to record.
 | [`xdata-two-largest-case-restatement.md`](xdata-two-largest-case-restatement.md):22 | `ec/tools/test_xdata_cluster_names.py:88` | by-path | other | carries |
 | [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):1341 | `../tools/test_xdata_cluster_names.py:54` | beside | comment | **does not carry** |
 | [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):2665 | `../tools/test_xdata_cluster_names.py:68-90` | beside | other | carries |
-| [`../../tools/README.md`](../../tools/README.md):341 † | `test_xdata_cluster_names.py:303` | by-name | assertion | **records another line** — and this merge's shift moved the row's own citing line `:279` → `:341`, the eighth re-registration for this one row and this file's fourteenth change; the `:312` the `#845` × `#974` merge measured and the `:346` #1009's own branch did are each left written beside it per [`../findings.md`](../findings.md) §4a-4d, each true of the tree it was measured on |
+| [`../../tools/README.md`](../../tools/README.md):370 † | `test_xdata_cluster_names.py:303` | by-name | assertion | **records another line** — and this merge's shift moved the row's own citing line `:279` → `:341`, the eighth re-registration for this one row and this file's fourteenth change; the `:312` the `#845` × `#974` merge measured and the `:346` #1009's own branch did are each left written beside it per [`../findings.md`](../findings.md) §4a-4d, each true of the tree it was measured on. **#1034's shift moved it twice more, `:341` → `:366` → `:370`**, by a supersession note for the test totals and not by anything to do with the `test_xdata_cluster_names.py` claim this row reconciles — the ninth and tenth re-registrations for this row, and the reason a note about a different suite's figure still costs this one a cell, twice: the second move was this change recording the first |
 
 **43 carry, 2 carry on the adjacent line, 19 do not carry, 10 record another line
 on purpose, 32 are declined, and none is unresolvable.** *(Those are the counts

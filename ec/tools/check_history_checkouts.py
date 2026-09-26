@@ -36,11 +36,52 @@ claim about a workflow, printed with its `file:line` and the derived fact the
 sentence should have come from, so the next re-derivation starts from a list
 rather than a grep. One rule is asserted there, and it is the only one that is
 decidable without reading English meaning: **a sentence that asserts a
-workflow's checkout depth names the job.** All four stale sentences fail it --
-"ci.yml's checkouts", "ci.yml uses", "both of ci.yml's checkouts" and "The
-agent stages and ci.yml both check out with" name no job -- and the corrected
-ones pass. The rule is a floor and not a proof: a job id is a plain word
-(`plan`, `fix`, `gates`), so a sentence that names one by accident passes.
+workflow's checkout depth names the job of every workflow it names.** All four
+stale sentences fail it -- "ci.yml's checkouts", "ci.yml uses", "both of
+ci.yml's checkouts" and "The agent stages and ci.yml both check out with" name
+no job -- and the corrected ones pass. The rule is per *workflow* rather than
+per sentence, and one problem is reported per workflow for which the sentence
+names no job, naming that workflow: a job of one of them silences the other
+otherwise. **The first version of this paragraph stated the rule over the first
+readable workflow a sentence named and no other** -- `known[0]`, the
+alphabetically-first of them -- so a sentence that named a job of `ci.yml` and
+nothing at all about `claude.yml` passed on the first. That was the rule this
+one corrects, and it is the same defect the four stale sentences are: the report
+printed both names all along and judged one.
+
+**The second reading of that rule is the same judgement, and is not implemented
+separately.** It reads as "a sentence must name a job of each workflow it makes
+a depth claim about", and the two agree here because **this method cannot tell
+a claim from a mention**: any workflow named in a sentence carrying a depth word
+counts as one the sentence claims about. That coarseness is pre-existing -- the
+first readable workflow alone was reached by a depth word anywhere in the
+sentence paired with a name anywhere in it -- and it is now applied once per
+workflow rather than once per sentence. So "`ci.yml`'s `gates` job is full-depth,
+as `agent-fix.yml`'s is too" reports `agent-fix.yml`, which is a true positive
+under the rule as stated: the sentence does assert a depth about that workflow
+and names no job of it. Telling that sentence apart from one that mentions
+`agent-fix.yml` in passing needs the depth word attached to a particular name at
+clause level, and the whole design of this half is that one rule is asserted --
+the one decidable without reading English meaning.
+
+The rule is a floor and not a proof: a job id is a plain word (`plan`, `fix`,
+`gates`), so a sentence that names one by accident passes, and **a job id two
+workflows share satisfies the rule for both** -- `gates` in `ci.yml` and
+`gates` in some other file is one word naming two jobs, and no defect is
+reported. That is the same plain-word caveat and not a second one: the rule
+cannot tell which of the two the sentence meant, so it declines to say that
+either lacks one. **A job id is not read out of the workflow name beside it**,
+which is the one accidental match that had to be closed rather than accepted:
+`claude.yml`'s job is `claude`, so a matcher that read the raw sentence found
+that job inside the filename the sentence was required to carry, and the
+sentence the rule exists to report passed on its own name. The names are
+blanked out before the job ids are looked for -- see `job_text()`.
+
+A readable workflow with **no jobs at all** is a flag and not an excuse. The file
+parsed, so "there is no job here to name" is a fact about the workflow rather
+than a limit on what this method can see, which is the distinction
+`load_workflow()`'s docstring above already draws between a workflow with no
+jobs and a file this tool could not read. An unreadable one is never judged.
 
 **What is not found by this method, and is never reported as absent.** A
 checkout behind a composite action, a checkout expressed through a `${{ }}`
@@ -355,6 +396,32 @@ def workflow_names(workflows, unreadable):
     return matched, unread
 
 
+def job_text(sentence, named):
+    """`sentence` with the span of every workflow name it carries blanked out.
+
+    This is the text a job id has to be found in, and the blanking is what
+    keeps a job id that is its own workflow's filename stem from standing in
+    for a mention of the job: `claude.yml` is a name the sentence has to
+    carry anyway, so a matcher that read it would let the filename satisfy the
+    rule for the `claude` job. That is not hypothetical -- the committed tree's
+    `claude.yml` holds exactly that job -- and before this the sentence
+    "`ci.yml`'s `gates` job is full-depth and claude.yml is shallow throughout"
+    passed, which is the sentence the rule exists to report.
+
+    **Blanking rather than tightening `names_job()`'s trailing boundary**, which
+    would also stop the match, is the deliberate half of the choice: a job id
+    at the end of a sentence is followed by a period, so excluding `.` would
+    trade this false negative for a worse one, in a reword nobody would read as
+    a change. Blanked spans are replaced by spaces, so the text either side
+    keeps the boundaries it had.
+    """
+    for name in named:
+        sentence = re.sub(
+            r"(?<![A-Za-z0-9_.-])%s(?![A-Za-z0-9_-])" % re.escape(name),
+            lambda blanked: " " * len(blanked.group()), sentence)
+    return sentence
+
+
 def names_job(sentence, jobs):
     """Whether a sentence names one of `jobs`, the job ids of one workflow.
 
@@ -362,6 +429,10 @@ def names_job(sentence, jobs):
     not read as a job called `gates`. It is deliberately a loose test and the
     docstring says so: job ids here are ordinary English words, so the rule
     catches a sentence that names no job and not one that names the wrong one.
+
+    `sentence` is the text `job_text()` blanks the workflow names out of, and
+    that is what it has to be: read on the raw sentence, a job id spelled the
+    same way as its own workflow's stem is found inside the filename.
     """
     for job_id in jobs:
         if re.search(r"(?<![A-Za-z0-9_.-])%s(?![A-Za-z0-9_-])" % re.escape(job_id),
@@ -385,13 +456,20 @@ def readable(sentence):
 
 
 def prose_sites(repo, workflows, unreadable):
-    """-> [(relpath, line, sentence, named workflows, job)] for each depth claim.
+    """-> [(relpath, line, sentence, named workflows, jobs by workflow)].
 
-    `job` is the job id the sentence names, `None` when it names none, and
-    `False` when the workflow it names could not be read -- three answers
-    rather than two, because "this method has not read that file" and "this
-    sentence names no job" are not the same finding and only the second one is
-    a rule broken.
+    The last element is `{workflow: job id or None}` over the *readable* named
+    workflows, so the rule below is judged once per workflow rather than once
+    per sentence. **It was a scalar**, the job of the first readable workflow a
+    sentence named, `None` when it named none, and `False` when the workflow it
+    named could not be read -- three answers rather than two, because "this
+    method has not read that file" and "this sentence names no job" are not the
+    same finding and only the second one is a rule broken. The three collapse
+    into the mapping without losing one, and a reader of the old code looking
+    for the `False` will find it here as the empty mapping: a sentence whose
+    every named workflow was unreadable has nothing to judge. Those names stay
+    in the fourth element, where `report()` prints them as not found by this
+    method.
     """
     matched, unread = workflow_names(workflows, unreadable)
     sites = []
@@ -411,21 +489,37 @@ def prose_sites(repo, workflows, unreadable):
                                    sentence)]
             if not named or not DEPTH_WORD.search(sentence):
                 continue
-            known = [n for n in named if n in matched]
-            job = names_job(sentence, matched[known[0]]) if known else False
-            sites.append((rel, line, sentence, named, job))
+            # `named` is already in `matched`'s sorted order, so the mapping is
+            # built in the order the report prints the names under, and the
+            # problems below come out in that order too. The names are blanked
+            # out of the text the job ids are looked for in, so that a job id
+            # spelled like its own workflow's stem is not read off the filename.
+            free = job_text(sentence, named)
+            jobs = {name: names_job(free, matched[name])
+                    for name in named if name in matched}
+            sites.append((rel, line, sentence, named, jobs))
     return sites
 
 
 def prose_problems(sites):
-    """The one structural rule: a depth claim about a workflow names its job."""
+    """The one structural rule: a depth claim names the job of every workflow.
+
+    One problem per *workflow*, naming it, rather than one per sentence: "the
+    `gates` job is full-depth and claude.yml is shallow throughout" is broken
+    once, by the half that names no job, and a report that only said "this
+    sentence" would leave the reader to work out which half. A workflow that
+    could not be read is not in the mapping and so is not judged here at all --
+    `report()` prints it as not found by this method, which is a different
+    finding from a rule broken.
+    """
     problems = []
-    for rel, line, sentence, named, job in sites:
-        if job is not None or job is False:
-            continue
-        problems.append(
-            f"{rel}:{line}: a sentence asserting a checkout depth names "
-            f"{'/'.join(named)} and no job of it -- {readable(sentence)!r}")
+    for rel, line, sentence, _named, jobs in sites:
+        for name, job in jobs.items():
+            if job is not None:
+                continue
+            problems.append(
+                f"{rel}:{line}: a sentence asserting a checkout depth names "
+                f"{name} and no job of it -- {readable(sentence)!r}")
     return problems
 
 
@@ -501,8 +595,12 @@ def report(repo, stream=None):
                             else ", runs no history reader")
                     say(f"      {name}/{checkout.job}: {depth_text}{runs}")
     prose = prose_problems(sites)
-    say("  every one of them names the job it is about"
-        if not prose else f"  {len(prose)} of them name no job")
+    # Claim(s), not sentence(s): one sentence naming two workflows and no job
+    # of one of them is two problems, so the old count here read a half of
+    # what the rule below has found.
+    say("  every one of them names the job of every workflow it names"
+        if not prose else
+        f"  {len(prose)} of the claims name no job, in {len(sites)} sentence(s)")
     return depth, prose
 
 

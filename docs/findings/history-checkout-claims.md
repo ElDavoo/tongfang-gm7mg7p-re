@@ -180,6 +180,16 @@ here are ordinary English words (`plan`, `fix`, `gates`), so a sentence that
 names one by accident passes, and a sentence that names the *wrong* job also
 passes. What it holds is the defect's shape, not its content.
 
+**That wording is superseded, and the correction is
+[`history-checkout-claim-per-workflow.md`](history-checkout-claim-per-workflow.md)
+(#1034).** The rule above was stated over *the* job, and applied to the first
+readable workflow a sentence named and no other — so a sentence naming `ci.yml`
+and `claude.yml` with a job of one of them passed. It is now **per workflow**:
+every readable workflow a sentence names is judged, and one problem is reported
+per workflow it names no job of, naming which. The floor above is unchanged and
+gained a second case; the file-granularity limit below is a different one and
+#1031 owns it.
+
 The line number it reports is the depth word's, not the sentence's. The
 docstring's claim sits eleven lines below the `Usage:` line it belongs to,
 because a list of commands is not prose and nothing in it ends a sentence until

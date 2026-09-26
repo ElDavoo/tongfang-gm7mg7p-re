@@ -11458,6 +11458,15 @@ corrected sites pass it in the five sentences they now occupy. It is a floor
 and not a proof — job ids here are ordinary English words, so it holds the
 defect's shape and not its content.
 
+**The rule is per workflow and not per sentence, since #1034 — see
+[`docs/findings/history-checkout-claim-per-workflow.md`](findings/history-checkout-claim-per-workflow.md).**
+The wording above was applied to the first readable workflow a sentence named
+and to no other, so a sentence naming `ci.yml` and `claude.yml` with a job of
+one of them passed; every readable workflow a sentence names is now judged and
+one problem is reported per workflow it names no job of, naming which. No
+committed sentence names two workflows, so this flags nothing new on the tree as
+it stands.
+
 **A measurement worth its own line, because the issue's own wording repeats the
 defect it describes:** the issue said `claude.yml:72`'s `fetch-depth: 1` is "the
 only shallow checkout" in the repository's own workflows. It is not — it is the
