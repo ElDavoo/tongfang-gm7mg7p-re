@@ -8138,20 +8138,23 @@ is read, per #849's rule. Both `--check` and `--self-test` are already gated
 (`agent-gates.sh:261-262`, since #815), so none of this can be removed without
 CI going red.
 
-**Three places said no per-program count exists; all three were incomplete, not
-wrong**, and each gets a dated correction *beside* the original rather than a
-silent edit — the sibling page's "The union that remains", the
-`xdata-registers.csv` bullet in `ec/README.md`, and the `build()` comment that
-said "nothing here splits those". Nothing was retracted and no figure moved: the
-numbers the sibling page publishes for `0x04A3` and `0x0834` are the same ones
-these columns publish, and the two agree. §39's closing sentence is left exactly
-as written, because the **re-keying half of that follow-up is still open** —
-`xdata-register-map.md` §2's `both` rows per program, which would take that
-table's `distinct` from 1,326 to 1,375 and invalidate its three superseded-table
-blocks. That is the next issue, deliberately not this one: two large edits to
-one long shared file is the merge conflict `CLAUDE.md`'s "new work goes in new
-files" rule exists to prevent. Also not done, and named in the write-up: the
-function-count columns (`readers`, `writers`, `co_reading`, …) and
+**Four places said no per-program count exists; all four were incomplete, not
+wrong**, and they were not corrected the same way. The sibling page's "The union
+that remains" got a dated correction *beside* the original rather than a silent
+edit; the other three were in-place edits, which is what the issue's per-file
+spec asked for and what actually landed — the `xdata-registers.csv` bullet in
+`ec/README.md` and the `build()` comment that said "nothing here splits those"
+both rewritten, and §2's "which `spellings_by_program` does not split" given a
+naming clause pointing at columns 22–33. Nothing was retracted and no figure
+moved: the numbers the sibling page publishes for `0x04A3` and `0x0834` are the
+same ones these columns publish, and the two agree. §39's closing sentence is
+left exactly as written, because the **re-keying half of that follow-up is
+still open** — `xdata-register-map.md` §2's `both` rows per program, which
+would take that table's `distinct` from 1,326 to 1,375 and invalidate its three
+superseded-table blocks. That is the next issue, deliberately not this one: two
+large edits to one long shared file is the merge conflict `CLAUDE.md`'s "new work
+goes in new files" rule exists to prevent. Also not done, and named in the
+write-up: the function-count columns (`readers`, `writers`, `co_reading`, …) and
 `registers.yaml`'s 160 `static_refs_main_ec` / `static_refs_pd_image` entries,
 which are a different method over different bytes. Two pre-existing stales were
 found and left alone on purpose — `xdata-census-totals.md`'s `8341` bucket line

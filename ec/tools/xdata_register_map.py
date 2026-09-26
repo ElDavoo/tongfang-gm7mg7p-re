@@ -193,18 +193,19 @@ over the two programs, which reads as a statement about one of them: `0x04A3`
 carries 4 `read` / 3 `write` / 0 / 0 / 1, and a reader looking for a writer
 sees three bank1 writes and a single pd `address-taken` with nothing in the row
 to say which program each came from. So the row now also carries
-`refs_<program>` and the five buckets once per program -- 22 columns' worth, of
-which `spellings_by_program` is one -- written on **every** row and not only on
-the 49 `both` ones, so `refs == refs_main_ec + refs_pd` holds on all 1,326 and
-`csv.DictReader` consumers never meet an empty cell. It is a split, not a second
-pass: `refs`, the five buckets, `readers`, `writers`, `co_reading`,
-`sources_beyond` and every `ORACLE` / `BUCKET_TOTALS` figure are exactly what
-they were, and a shared address *number* is still not a shared byte -- the two
-are separate address spaces and a per-program `write` is a static shape, not
-evidence the EC acts on the byte. The unsuffixed cells stay the row's own
-figures, which is the only reason a reader who reads them still gets the
-census. `../../docs/findings/xdata-per-program-counts.md` has the worked rows,
-the arithmetic, and what a zero in the other program's column does and does not
+`refs_<program>` and the five buckets once per program -- twelve new columns at
+22-33, with `spellings_by_program` still at 21, so thirteen per-program columns
+on the row -- written on **every** row and not only on the 49 `both` ones, so
+`refs == refs_main_ec + refs_pd` holds on all 1,326 and `csv.DictReader`
+consumers never meet an empty cell. It is a split, not a second pass: `refs`,
+the five buckets, `readers`, `writers`, `co_reading`, `sources_beyond` and
+every `ORACLE` / `BUCKET_TOTALS` figure are exactly what they were, and a
+shared address *number* is still not a shared byte -- the two are separate
+address spaces and a per-program `write` is a static shape, not evidence the
+EC acts on the byte. The unsuffixed cells stay the row's own figures, which
+is the only reason a reader who reads them still gets the census.
+`../../docs/findings/xdata-per-program-counts.md` has the worked rows, the
+arithmetic, and what a zero in the other program's column does and does not
 say.
 
 **What settles an address's space is the encoding, not the token.** Ten of

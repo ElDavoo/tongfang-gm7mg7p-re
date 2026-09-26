@@ -442,18 +442,20 @@ for nothing else — no `status:` moved and none of those figures was refreshed.
   against the tool file instead of being reworded inside a change about the
   CSV.
 
-## The three places that said no per-program count exists, corrected in place
+## The four places that said no per-program count exists, and how each was corrected
 
-None of the three was *wrong* — `refs` really is still the sum on a `both` row,
-and that sentence is unchanged. Each was incomplete, and each gets a dated,
-attributed correction **beside** the original rather than a silent edit, per
-the `docs/findings.md` §4a-4d pattern:
+None of the four was *wrong* — `refs` really is still the sum on a `both` row,
+and that sentence is unchanged. Each was incomplete, and they were not corrected
+the same way. Only the sibling page's got a dated, attributed correction
+**beside** the original, per the `docs/findings.md` §4a-4d pattern; the other
+three were edited in place, which is what the issue's per-file spec asked for:
 
 | where | what it said | what changed |
 |---|---|---|
 | `docs/findings/xdata-spelled-as-union.md`, "The union that remains" | `refs` and the five buckets "stay sums" / "None of this is fixed here" | a dated note beside the closing paragraph: true of the unsuffixed cells, no longer true of the row as a whole |
-| `ec/README.md`, the `xdata-registers.csv` bullet | "the last column" for `spellings_by_program`, and "the reference and direction counts stay sums" | a pointer to columns 22–33 and to this page; the second clause kept, narrowed |
+| `ec/README.md`, the `xdata-registers.csv` bullet | "the last column" for `spellings_by_program`, and "the reference and direction counts stay sums" | rewritten in place: a pointer to columns 22–33 and to this page; the second clause kept, narrowed |
 | `ec/tools/xdata_register_map.py`, the `build()` comment | "`refs`, the five buckets … stay summed over both programs … nothing here splits those" | the block rewritten in place to say the unsuffixed cells stay summed *and* that the twelve after them split the counts |
+| `ec/annotations/xdata-register-map.md` §2, the `both`-row sentence | `refs` on a `both` row "is still the sum over both programs, which `spellings_by_program` does not split" | an in-place clause added: the twelve per-program columns after it, 22–33, do, with a link to this page |
 
 `docs/findings.md` §39's closing sentence — "The follow-up this opens is
 per-program `refs` / bucket columns, and re-keying §2's `both` rows per

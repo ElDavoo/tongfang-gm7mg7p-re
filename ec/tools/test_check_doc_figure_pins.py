@@ -424,12 +424,14 @@ class TheOracleRule(unittest.TestCase):
         # tree this was written on, `:3981-3987` after #851's `census_shape` /
         # `carry_advice` landed above it in the same file, `:4359-4365` after
         # #713's twelve per-program count columns and their pin block landed
-        # above it. Re-measured, not shifted by arithmetic.
+        # above it, `:4360-4366` after #713's docstring had its column count
+        # corrected and the corrected sentence took one line more than the one
+        # it replaced. Re-measured, not shifted by arithmetic.
         self.assertEqual(
             cdfp.where(cdfp.reads("export_ownership", "OWNERSHIP_ORACLE",
                                   "largest_class", 1, 2, found["texts"],
                                   found["asserted"])),
-            "ec/tools/xdata_register_map.py:4359-4365")
+            "ec/tools/xdata_register_map.py:4360-4366")
 
     def test_the_census_csvs_are_read_from_the_tool_that_writes_them(self):
         # Derived from `OUT_REGISTERS`/`OUT_CLUSTERS` rather than named here, so
@@ -452,16 +454,18 @@ class TheOracleRule(unittest.TestCase):
         # on) and the `extmem_both` sum at `#3329` (was `:3250`), both moved by
         # #851's insertions above them in the same file; and `:3339-3356` /
         # `#3329` -> `:3554-3571` / `#3544` after #713's per-program columns and
-        # the new `--self-test` assertions landed above them. Re-measured here.
-        self.assertIn("3554-3571", detail)
-        self.assertNotIn(":3544", detail)
+        # the new `--self-test` assertions landed above them, then `:3555-3572` /
+        # `#3545` when the docstring's column count was corrected and cost one
+        # more line. Re-measured here.
+        self.assertIn("3555-3572", detail)
+        self.assertNotIn(":3545", detail)
         # The span opens on the `check(` and encloses the comparison, so a reader
         # following it lands on the call rather than on the sum above it.
         lines = FOUND["texts"]["xdata_register_map.py"].split("\n")
-        self.assertIn("extmem_both", lines[3543])
-        self.assertIn("check(", lines[3553])
+        self.assertIn("extmem_both", lines[3544])
+        self.assertIn("check(", lines[3554])
         self.assertIn('(ORACLE["extmem_pd_distinct"], ORACLE["extmem_pd_refs"]',
-                      lines[3570])
+                      lines[3571])
 
 
 class SectionSelection(unittest.TestCase):
