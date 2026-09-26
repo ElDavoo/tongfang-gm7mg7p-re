@@ -435,7 +435,7 @@ changes exactly one earlier check's text, and that one is the widened
 expectation below.
 
 ```console
-$ python3 ec/tools/xdata_moved-ranks.py --self-test | grep -c '^  ok'
+$ python3 ec/tools/xdata_moved_ranks.py --self-test | grep -c '^  ok'
 53
 ```
 

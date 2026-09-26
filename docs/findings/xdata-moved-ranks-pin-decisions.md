@@ -70,7 +70,7 @@ The enumerator, and the reason the two pins went unseen is not that they were
 missed by a sweep but that **no sweep of the class existed**:
 
 ```console
-$ grep -rno 'xdata_moved_ranks\.py:[0-9-]*' --include=*.md . | grep -v '^\./vendor'
+$ grep -rno 'xdata_moved_ranks\.py:[0-9-]*' --include=*.md . | grep -v '^\./vendor' | grep -v 'xdata-moved-ranks-pin-decisions.md'
 ./tools/README.md:372:xdata_moved_ranks.py:243
 ./tools/README.md:462:xdata_moved_ranks.py:243
 ./docs/findings/xdata-decile-small-set-contract.md:111:xdata_moved_ranks.py:487
@@ -88,11 +88,13 @@ $ grep -rno 'xdata_moved_ranks\.py:[0-9-]*' --include=*.md . | grep -v '^\./vend
 below is therefore a reading of the **citing lines whole**, with the grep as the
 enumerator and the elided forms named as elided.
 
-**This file is excluded from its own population**, the way
-[`test-line-pin-census.md`](test-line-pin-census.md) excludes itself: the block
-above is the tree as it stood before this write-up, and re-running it now also
-returns this file's own spellings. That is not a discrepancy to be resolved at
-the next merge, it is the enumerator seeing its own result.
+**This file is excluded from its own population by name**, the way
+[`test-line-pin-census.md`](test-line-pin-census.md) excludes itself, so the
+block above and the re-run published under it are one population: the eight are
+the tree as it stood before this write-up, the twelve are the tree with it.
+Drop the second `grep -v` and this file's own eleven spellings join the count —
+23 rather than twelve — which is the enumerator seeing its own result, not a
+discrepancy to be resolved at the next merge.
 
 **The amendments move the count too, and in the one direction they should.** On
 the merged tree the same grep returns **twelve** lines rather than eight. The
@@ -240,7 +242,7 @@ false claim standing.
 The issue's point is that `:181` and `:243` are *"values no tree carried"* rather
 than drifted values, and that the distinction must stay visible. **Settle it by
 measurement, not by assertion.** `agent-implement.yml` checks out with
-`fetch-depth: 0` (`.github/workflows/agent-implement.yml:119`), so the full
+`fetch-depth: 0` (`.github/workflows/agent-implement.yml:118`), so the full
 history is here; *this plan* was written against a depth-1 checkout, which is
 exactly the case CLAUDE.md's "your runner is not the one the change gets built
 on" warns about.
@@ -383,6 +385,7 @@ $ python3 ec/tools/census_test_line_pins.py
   74 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 32 declined
   5 def test_, 19 assertion, 10 comment, 6 blank, 34 other (of the pins that resolve)
   read 154 markdown file(s) under the tree, excluding .git/vendor/ and docs/findings/test-line-pin-census.md; resolved against 38 test file(s) in it
+  no claim is measured here: whether a cited line still carries the claim it is cited for is a reading, and it is docs/findings/test-line-pin-census.md's table
 ```
 
 Identical to the pre-change run but for `153` → `154` markdown files, the `+1`
@@ -396,6 +399,7 @@ the two stayed consistent and the two decided pins were not registered in it:
 $ python3 ec/tools/check_pin_table_rows.py
 106 table row(s) against 106 census record(s) under …: 106 placed
   0 unparsed-row, 0 unplaced-row, 0 row-without-record, 0 duplicate-key, 0 read-differs, 0 shape-differs, 0 path-differs
+  no verdict cell was read: whether a cited line still carries the claim it is cited for is a reading, and it is docs/findings/test-line-pin-census.md's table
 ```
 
 **3. The module-scoped census itself** is the §2 enumerator, and every row of
