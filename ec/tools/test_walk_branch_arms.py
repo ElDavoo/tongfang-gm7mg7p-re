@@ -14,7 +14,9 @@ firmware, so a case keeps testing what it was written to test if the bytes
 around some address in the image change. They are walked in the `common`
 region, whose file offset equals its runtime address, so a 0x40-byte buffer is
 its own address space and the addresses in a test are the offsets in the
-fixture.
+fixture -- except the one case that names the `pd-image` region, where a
+runtime address and its file offset are two different numbers and the point of
+the case is the gap between them.
 """
 import importlib.util
 from pathlib import Path
@@ -177,6 +179,35 @@ class BoundTests(unittest.TestCase):
     def test_an_unresolvable_indirect_jump_is_reported_as_a_cut(self):
         arm = walk(fixture(bytes([0x73, 0x22])))
         self.assertTrue(any(e.startswith(wba.END_INDIRECT) for e in arm.ends))
+        self.assertTrue(wba.arm_status(arm).startswith("cut:"))
+
+    def test_an_index_past_the_end_of_the_buffer_is_reported_as_a_cut(self):
+        # Ten one-byte opcodes, so the walk decodes all ten and then steps to
+        # off == len(d) and reads one past it. `off + n > len(d)` is false on
+        # the last byte -- 9 + 1 > 10 is not -- so that test never fires: it
+        # asks whether the *instruction* fits, not whether the index is
+        # readable. Before the pre-read guard this is an IndexError out of
+        # `op = d[off]`, which is a traceback rather than a result.
+        arm = walk(bytes(10))
+        self.assertTrue(any(e.startswith(wba.END_IMAGE) for e in arm.ends))
+        self.assertTrue(wba.arm_status(arm).startswith("cut:"))
+        self.assertEqual(arm.insns, 10)
+
+    def test_the_pds_highest_offset_is_above_the_length_main_certifies(self):
+        # The region that puts the two numbers furthest apart, named so the
+        # case above is not read as an artefact of a short fixture. For
+        # `pd-image` the highest offset `offset_for_runtime()` will return is
+        # the last address of the region, 0x2FFFF, while main()'s PD-marker
+        # check -- a slice comparison, which cannot raise -- certifies a buffer
+        # of 0x2004A. This buffer is the one main() accepts, and an arm one
+        # byte past the floor has to say so rather than read out of range.
+        d = Path(FIRMWARE).read_bytes()
+        off, magic = wba.PD_MARKER
+        cut = d[:off + len(magic)]
+        self.assertEqual(cut[off:off + len(magic)], magic)
+        self.assertEqual(wba.offset_for_runtime(0xFFFF, "pd-image"), 0x2FFFF)
+        arm = wba.descend(cut, "pd-image", 0x004A, None, DEPTH, INSNS, True)
+        self.assertTrue(any(e.startswith(wba.END_IMAGE) for e in arm.ends))
         self.assertTrue(wba.arm_status(arm).startswith("cut:"))
 
     def test_an_ljmp_ends_the_arm_and_becomes_a_callee(self):
