@@ -7050,8 +7050,10 @@ other in both directions: a directory no index names is a gap, and a path the
 index's table names that is not on disk is a miss. **Those two are the error
 class, and not a repair history**: the index needed hand-repair twice, in #502
 and #720, both in a row's third column — the description, which this check does
-not read. **Measured over both pre-repair trees (#978): 0 gaps, 0 misses, 1 on
-an untracked `.asm`** — see `docs/findings/testdata-row-claims-repair-measurement.md`.
+not read. **Measured over both pre-repair trees (#978): 0 gaps, 0 misses, and 1
+nested — a stale `common`/`bank0` spelling in `call-graph/README.md`'s own cell,
+since fixed on `main`** — see
+`docs/findings/testdata-row-claims-repair-measurement.md`.
 
 **The merged tree is green, and that is the finding rather than a defect** —
 13 directories, 12 named in the index, `call-graph/` self-indexed, 27 rows, 34
@@ -10663,10 +10665,13 @@ flag is reported per row and is a stated limit, never a negative result.
 candidate answer** — it never reads the third column, so it could not have
 caught either repair by construction, and running it converts "green through
 both" from an assertion into a measurement: **0 gaps, 0 path misses, 0 `Feeds`
-misses, and 1 nested miss naming `call-graph/decompiled/common/0EA2.asm`, an
-`.asm` that is on no commit at any revision.** That last one is an artefact of
-extracting history, not a fact about either repair, and it is reported rather
-than folded into a clean zero.
+misses, and 1 nested miss.** That last one is a stale bank in an index cell —
+`call-graph/README.md` named `decompiled/common/0EA2.asm` at both pre-repair
+revisions while the tracked listing is `decompiled/bank0/0EA2.asm` — so it is a
+real, decidable fact about those revisions and **not** an artefact of extracting
+history; `docs/findings/testdata-index-feeds-and-call-graph.md` had already found
+it and `1813fe98` (issue #746) repointed the cell. It says nothing about either
+repair, and it is reported rather than folded into a clean zero.
 
 **The post-repair control is what makes the pre-repair number mean anything** —
 a `missing` is evidence only if the same row is green after the repair, and the

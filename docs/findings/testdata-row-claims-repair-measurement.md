@@ -108,7 +108,10 @@ Both revisions are the ones the corpus already named: `565b6f3c` is the
 publishes, and `docs/agent-pipeline.md` item 9 records #720's. Neither is a
 merge commit — `git log --merges --oneline -- ec/tools/testdata/README.md`
 returns **nothing** on this history, because the pipeline lands squashed — so
-the shas come from the content detector over `git log`, not from that command.
+the shas came from `git log --format=%s` on the `(#502)` and `(#720)` subjects,
+and the content detector then **confirmed** them independently: it found
+third-column changes at exactly the rows those two subjects describe, row 24 for
+#502 and rows 23 and 24 for #720, both `0751-isolation-*`.
 
 ## Why the number is zero, read rather than inferred
 
@@ -153,23 +156,41 @@ answer.** It reads the first column, the `Feeds` column and the nested tables
 and never the third, so by construction it could not have caught either repair.
 Running it converts *"it would have been green through both"* from an assertion
 into a measurement — and the measurement is **0 gaps, 0 path misses, 0 `Feeds`
-misses at both revisions, and 1 nested miss.**
+misses and 1 nested miss, at both revisions.**
 
-The nested miss is `decompiled/common/0EA2.asm` under `call-graph/`, and it is
-**not a fact about either revision**:
+The nested miss is `call-graph/`'s own nested cell naming
+`decompiled/common/0EA2.asm`, and it **is** a fact about both revisions: a stale
+bank, in an index cell, naming a directory the tracked listing does not have.
 
 ```
-$ git ls-files --error-unmatch ec/tools/testdata/call-graph/decompiled/common/0EA2.asm
-error: pathspec ... did not match any file(s) known to git
+$ git ls-tree -r --name-only 13a0236a -- ec/tools/testdata/call-graph/decompiled/ | grep 0EA2
+ec/tools/testdata/call-graph/decompiled/bank0/0EA2.asm
+$ git show 13a0236a:ec/tools/testdata/call-graph/README.md | grep 0EA2.asm | head -1
+| `decompiled/common/0EA2.asm` | the issue's worked example: 2 `lcall`s to 0x0EE8, and a 2-byte `ajmp` to 0x5A43 |
 ```
 
-That `.asm` is **untracked** — present in this working tree, carried by no
-commit at any revision — so history cannot supply it and the extraction cannot
-have it. It is the same single miss at both revisions, it is absent at `HEAD`
-only because the untracked file happens to be on this machine, and it says
-nothing about either repair. `check_testdata_index.py`'s own green is therefore
-confirmed for everything it reads, with that one exception stated rather than
-folded into a clean zero.
+The #720 pre-repair revision reads the same way, and so do both post-repair
+revisions — the cell is untouched by both repairs, which is why this is the same
+single miss in all four runs. **It is a decidable static fact about committed
+files, not an artefact of extracting history**: the extraction supplies
+`call-graph/` perfectly well, and the `common`/`bank0` disagreement is legible
+in the very tree it was run over.
+
+**It is also already found and fixed.**
+[`testdata-index-feeds-and-call-graph.md`](testdata-index-feeds-and-call-graph.md)
+reached this same reading from three committed artifacts and fixed it the index
+way round rather than by loosening a rule — *"the fix is the index, not the
+rule"* — and `1813fe98` (issue #746) repointed the cell to
+`` `decompiled/bank0/0EA2.asm` ``. That is cited here as prior art rather than
+re-decided. **It is unrelated to either repair**: it is why the control's one
+non-zero is non-zero, and neither #502 nor #720 is in it.
+
+`check_testdata_index.py`'s own green is therefore confirmed for everything it
+reads, with that one miss stated rather than folded into a clean zero. At `HEAD`
+the cell reads `decompiled/bank0/0EA2.asm` and the check is green outright —
+`1 self-indexed README(s), 3 table(s), 19 row(s), 21 check(s): 21 resolved, 0
+missing` — so what the four runs above measure is a residue those revisions
+carried and `main` no longer has.
 
 **The post-repair control is what makes the pre-repair number mean anything.**
 A `missing` is only evidence if the same row is green *after* the repair;
@@ -279,12 +300,6 @@ revision — never how many.
     `test_grade_0751_isolation.py` already grades the *run* — the gap is
     between the index's prose and that grader, and this measurement does not
     close it.
-  * **`check_testdata_index.py`'s green is partly supplied by an untracked
-    file.** `call-graph/decompiled/common/0EA2.asm` is named by a nested row,
-    is on no commit, and is the only reason a fresh clone would report a nested
-    miss. That is a separate issue about the index and this tree's tracked
-    files; nothing in this change's evidence bears on it, and it is named here
-    rather than fixed beside it.
   * **`verify_reassembly.py:1313-1319` still says** *"both of ci.yml's
     checkouts are default-depth"*. `ci.yml:39` is `fetch-depth: 0` now, with a
     comment saying so — which is why this write-up's fourth limit is worded

@@ -17,10 +17,11 @@ description of a case the row already named -- and this reads the first column,
 the second and the nested tables, not the third. Run over both pre-repair
 trees it reported 0 gaps, 0 path misses and 0 `Feeds` misses, so the "green
 through both" this used to assert is now a measurement; the one nested miss it
-does report names an untracked `.asm` that no revision carries, and is an
-artefact of extracting history rather than a fact about either repair (issue
-#978, `docs/findings/testdata-row-claims-repair-measurement.md`). It is here
-for the gaps, which nothing else would have caught.
+does report is a stale `common`/`bank0` spelling in this check's own nested
+cell, a real index defect at those revisions and since fixed on `main`, and
+unrelated to either repair (issue #978,
+`docs/findings/testdata-row-claims-repair-measurement.md`). It is here for the
+gaps, which nothing else would have caught.
 
 **Directory -> index.** Every immediate subdirectory of `testdata/` has to be
 reachable: either the top-level index carries its name followed by a slash, or
