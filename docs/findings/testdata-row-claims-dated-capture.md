@@ -194,9 +194,31 @@ many files it resolved to, and what became of each literal.
 
 - **That a fixture or a capture is what its row says it is.** Presence is
   **textual** — does the file carry `0xNNNN` anywhere, in any case — so a
-  fixture that mentions an address in a comment satisfies the rule. The
+  fixture that mentions an address in a comment satisfies the rule. ~~The
   narrower question, "is there a row with this in the `addr` column", is
-  `check_capture_claims.py`'s, over real captures, with a different owner.
+  `check_capture_claims.py`'s, over real captures, with a different owner.~~
+  **That hand-off named an owner that could not see the column, and #975
+  corrected it in place rather than deleting it, per `docs/findings.md` §4a.**
+  `check_capture_claims.py` resolves a capture out of a *path* a unit names,
+  and a bare date is not a path, so it never saw a dated claim at all. The
+  question is now `check_testdata_row_claims.py`'s, **for a dated claim**: a
+  date that resolved means the sentence is about a real capture, whose schema
+  is `ts,addr,old,new`, so the literal is held to the `addr` column of the
+  date's `.csv` members. Every other claim keeps the textual read above, since
+  a mark label rows 20, 22 and 25 claim has no column to be read in. The two
+  readings agree on row 7's two literals, so the tallies are unchanged — which
+  is the check that the change moved the question rather than the answer. See
+  [`testdata-addr-column-claim.md`](testdata-addr-column-claim.md). (The dated
+  line quoted under "The run, above" is left as this file's dated record; a run
+  today prints `2026-09-23-* (6 capture(s) under evidence/ec-watch, 2 with an
+  addr column)` there instead, the clause that reports the `.txt` half of a
+  date as having no column to read.)
+
+  **Also corrected here: this file's own causal story for row 7's `resolved`.**
+  The claim above that the union reached all six files "`.txt` included" is
+  measured, and the `.txt` half contributed nothing under either reading — the
+  file carrying both addresses is a `.csv` the sibling already indexed. The
+  verdict was never in doubt; the attribution was.
 - **Which of a date's files a sentence meant.** The union is over the date, and
   narrowing it by a word in the prose is declined on purpose (§ above). A
   sentence claiming a byte of one capture is satisfied by that byte in any of

@@ -81,6 +81,19 @@ disagreement is a fact about the prose rather than a race to be re-tried.
     checker has `xdata-registers.csv`, so a code address that collides with
     an XDATA one in a unit also naming a capture is a possible false
     failure. None is in the tree as merged.
+  * *A bare date in prose, and therefore the `addr`-column question.* This tool
+    resolves a capture out of a path a unit names, and a bare date is not a
+    path: `captures_in()` finds one in 0 of the 100 units of the testdata
+    index's third column, which is the whole of the deferral #975 measured
+    and then declined to build on here. Giving it the date resolution is a
+    separate piece of work, and it is not a small one -- over the 309 units
+    of `ROOTS` whose bare date resolves to a capture, holding each unit's
+    literals to the `addr` column puts 124 literals MISSING against 56 that
+    hold, and 17 of the misses are EC code addresses at or above `0x8000`
+    for which the "no code census to filter against" caveat above is the whole
+    story. That is a blanket rule turning a green run red, so the dated
+    columnar read is `check_testdata_row_claims.py`'s, where the date is
+    already resolved and the corpus is two claims' worth.
 
 Every one of those is "not found by this method", never "absent" -- the same
 caveat `ec/annotations/registers.yaml` carries for a static scan. The
@@ -100,6 +113,18 @@ the skips above, several of which are deliberate and one of which -- the
 That count is a number to read, not a target: a re-run prints it, so a
 future change that widens or narrows the surface is visible rather than
 silent.
+
+**The run also reports on itself at file granularity, and that is #975's
+half.** A file that yields no claim is named in `--verbose` and counted on a
+line of its own, because the `N capture claims checked` figure covers claims
+and cannot be decomposed -- and almost every file under `ROOTS` names none, so
+without the count those files looked like files nobody opened. The census is
+in `docs/findings/testdata-addr-column-claim.md`, which is where a number
+belongs; the figure is deliberately not written here, because a file count
+quoted in a docstring is invalidated by the next document added to the tree and
+this paragraph is one a future `docs/` file invalidates. A per-*unit* line is
+declined for the same reason the count is enough: the corpus is 27,032 units,
+so that is not a `--verbose` anyone runs.
 
 Usage:
     python3 ec/tools/check_capture_claims.py [--check] [--verbose]
@@ -466,8 +491,18 @@ def check(path, index, verbose):
                 problems.append((where, at, capture, address,
                                  "count", stated, index[capture][0].get(address, 0)))
 
-    if verbose and checked:
-        print(f"  {where}: {checked} claim(s) checked", file=sys.stderr)
+    if verbose:
+        # The two halves of one self-report. A file that yielded a claim is
+        # named with the count; a file that yielded none is named too, because
+        # `if not captures: continue` above is the one skip in this function
+        # that used to be silent, and a file read in full and finding nothing
+        # is otherwise indistinguishable, in `--verbose` and in the summary
+        # alike, from a file nobody opened. The summary counts the same set,
+        # so neither reading stands alone.
+        if checked:
+            print(f"  {where}: {checked} claim(s) checked", file=sys.stderr)
+        else:
+            print(f"  {where}: read in full, no claim to check", file=sys.stderr)
     return problems, len(lines), checked
 
 
@@ -523,17 +558,25 @@ def main() -> int:
 
     problems = []
     read = checked = 0
+    uncounted = 0
     for path in paths:
         found, lines, seen = check(path, index, args.verbose)
         problems += found
         read += lines
         checked += seen
+        if not seen:
+            uncounted += 1
 
     if report(problems):
         return 1
     print(f"{len(paths)} files / {read} lines / {checked} capture claims checked "
           f"against {len(index)} committed captures: every checked claim agrees "
           "with the capture it names")
+    # On its own line, and that is a constraint rather than a style: the suite
+    # parses the claim count out of the line above by splitting on
+    # `' lines / '`, so anything appended to it moves what that split returns.
+    print(f"{uncounted} of those {len(paths)} file(s) were read in full and "
+          f"named no capture claim; `--verbose` names each one")
     return 0
 
 
