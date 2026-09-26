@@ -7836,9 +7836,12 @@ the tree made on purpose.
 > **Numbering note, added at the merge.** This section was written as §59, and
 > #816 (`2665a6a8`) took §59 on `main` while it was open, so it is renumbered
 > to the next free number rather than left to collide. §59 is now #816's
-> measured-state correction above. It is not, as this note first said, the last
-> section in the file: #851's summary renumbered from the same §59 in the same
-> window, collided here a second time, and gave way to land as §61 below.
+> measured-state correction above, and this was the last section in the file as
+> #849 landed it. It is not, as this note first said, the last one now: #851's
+> summary renumbered from the same §59 in the same window, collided here a
+> second time, and gave way to land as §61 below; #852's moved-rank measurement,
+> renumbered from §60 for #849 taking it, followed it to the next free number
+> and is **§62**.
 > Nothing this branch wrote pointed at its own section number — the write-up,
 > the checklist's correction block and both READMEs all name §2b, §3, §4a-4d
 > and the issue numbers instead — so there was no reference to repoint. A
@@ -7905,13 +7908,20 @@ involved.
 > to §60; #849's doc-figure-pin-audit summary (`a00fe940`) then took §60 on
 > `main` in the same window, having renumbered from the same §59 for the same
 > reason, so this one moves again to the next free number and sits below it. §59
-> is now #816's, §60 #849's, and this is the last section in the file. The
+> is now #816's, §60 #849's, and this is #851's at §61. The
 > collision is recorded here rather than left for the next reader. Nothing else
 > cites a number for this section: the write-up names the census and
 > `carry_advice`, not a section, and the `§59` pointers in
 > `xdata-cluster-names-guard-off-recipe.md`,
 > `xdata-no-eq-guard-measured-state-correction.md` and `xdata-register-map.md`
 > all belong to #816's summary above, so only the heading moves.
+>
+> **Amended at the second merge.** This note first said this was the last
+> section in the file, and on the merged tree it is not: #852's moved-rank
+> measurement (`xdata-moved-ranks-fall.md`) was written as §60, gave way to
+> #849 taking §60, and then gave way again to this one taking §61, so it sits at
+> **§62** below. It is left visible here rather than corrected out, because the
+> two §61s are the same collision twice and the sequence is the record.
 
 `ec/annotations/xdata-cluster-names.csv` is anchored to the **committed** census
 — the two CSVs as committed, which is the run `--check` reproduces — and four
@@ -7934,3 +7944,82 @@ would need either prose-scraping or a new column on the one file a human edits b
 hand. The write-up is
 [`xdata-names-file-census-anchor.md`](findings/xdata-names-file-census-anchor.md);
 this is the summary, and it restates no measurement.
+
+## 62. The guard-off moved-rank fall is measured, and §3's guess about it is refuted (2026-09-25, issue #852)
+
+> **Numbering note, added at the merge.** This section was written as §60, and
+> #849 (`a00fe940`) took §60 on `main` in the same window, so it is renumbered
+> to the next free number rather than left to collide. §60 is now #849's
+> held/unheld measurement above. It then gave way a second time, to #851's
+> summary (`a02de81b`) taking §61, so it is **§62** and is the last section in
+> the file. Nothing this branch wrote pointed at its own section number — the
+> write-up, the checklist's correction block and the
+> `xdata-4-4-identity-rederivation.md` note all name the issue, the write-up and
+> the sections they measure instead — so there was no reference to repoint; the
+> two notes that do name it, §60's and §61's above, were written by the merges
+> that took the numbers and name §62. A section number is a property of the
+> merge in the same way the runner's totals are (see
+> `runner-red-suite-set.md`), which is why the collision is recorded here rather
+> than left for the next reader to find.
+
+The write-up is
+[`xdata-moved-ranks-fall.md`](findings/xdata-moved-ranks-fall.md);
+this is the summary. §54's checklist named the `> 300` floor, measured it at
+315, recorded that the count had fallen once (**366 → 315**) and declined to say
+why — "a re-derivation that lands addresses in already-large clusters would move
+fewer membership sets, which is the obvious shape of it, but that is a guess and
+not a measurement". This is the measurement, and **the guess is wrong on both
+halves.**
+
+**The 366 is re-derived, not carried.** The 430-row census is `e169a0e4`'s, whose
+tool already carries `--no-eq-guard` (#528 is an ancestor), so the old pair needs
+no copy-and-patch route; `git worktree add --detach` plus two census runs, all
+writing to `/tmp`, reproduce **366 moved / 64 intact / 439 rows** exactly, and
+the present tree gives **315 / 124 / 445**. No committed rank is missing from
+either guard-off census, so both pairs' arithmetic closes — a fall, not two
+different measurements.
+
+**The flipped set, keyed on `cluster_key` and not on the rank**, is **71
+moved-then-intact, 266 moved in both, 23 intact-then-moved, 40 intact in both**,
+plus the one-sided key sets split by moved/intact as 29 and 26, which closes the
+difference over four terms: `(71 − 23) + (29 − 26) = 51 = 366 − 315`. The 94
+flipped clusters' **committed membership did not grow at all** — a key is a hash
+of the membership, so all 400 keys the two committed censuses share have
+byte-identical membership and the `grew` column is `0` on every row. Nor are they
+"the large clusters": their size deciles are `1 1 1 1 2 2 4 4 5 6` against the
+census's `1 1 1 1 1 1 2 2 4 5`, 5 of the 23 clusters of 8 addresses or more
+flipped, and the largest, at 152 addresses, is not among them.
+
+**What moved is the guard's membership delta, and the guard itself did not
+change.** §6a's per-address triple is *identical* in both generations — 210
+addresses whose `write` differs, 0 whose `refs` does, 833 references leaving
+`write` — while the cluster-level total fell **1,623 → 1,030** address-slots. The
+mean delta over the 71 clusters that went quiet is **7.66 → 0.00**; over the 23
+that started, **0.00 → 3.65**. Across both pairs a moved rank is overwhelmingly a
+**substitution** — 351 of 366 and 307 of 315 hold a guard-off row of the same
+size, and 364 and 311 share *no address* with it — so `moved` counts a ranking
+disagreement, not a magnitude of perturbation. **How far that is established**:
+the flipped set is fully accounted for, 94 of 94 keys named and the arithmetic
+closing; which re-partition change closed the delta on those 71 is *not*
+derived, and is left as a follow-up rather than asserted.
+
+**The hand-named clusters are not the explanation.** Exactly one of the nine
+names moves in either pair — `mode-oem-init`, in **both**, and so not among the
+94; `level-block-086x`, one of the two names a generation behind their ids, is
+intact in both. Of §2a's 43 swept addresses, the cluster holding all of them is
+`k733222e83898` (`counter-sweep`), intact in both pairs and not flipped; the only
+swept address whose cluster moves is `0x080D`, in `ke928434f6676`, and that moved
+in both pairs too. **Zero of the three holding clusters flipped.**
+
+**`> 300` stays where it is**, decided from the measurement rather than from the
+15 ranks of headroom: the re-derivation is one named commit whose 155 added
+addresses are recorded, so `moved` is a property of a classifier generation
+rather than a drift — and, stated as the limit of that, one observed
+re-derivation is one data point, so this measurement does **not** claim `moved`
+decays as the census grows. A future re-derivation moves it again and the
+direction is not predicted. The floor, the class docstring's three figures and
+every other assertion are unchanged; the deliverable is one new read-only tool
+(`ec/tools/xdata_moved_ranks.py`, with `--self-test` over synthetic fixtures
+rather than a new suite row) and five one-line pointers. No CSV, YAML, threshold
+or gate was edited, no image was opened, no register was read back, and nothing
+is opened in another repository.

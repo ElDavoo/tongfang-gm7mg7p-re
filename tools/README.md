@@ -133,6 +133,40 @@ suite that pins a line is the same defect a page that pins one is. That suite wa
 red for the duration and is green again; it is named here rather than left as a
 detail of the diff because "the merge only renumbered some prose" is the reading
 this file exists to make impossible.)*
+
+*(Seventh merged-tree note, 2026-09-26, issue #852 landing beside #801, #849 and
+#851: the counts above are this merged tree's, re-derived from a `bash
+tools/run-tests.sh` on it — **thirty-four suites and 1033 tests**, which are the
+sixth note's figures **unchanged**, because #852 adds no `test_*.py` and so no
+row to the table below. The last line reads `34 suite(s) run, 1033 tests; one or
+more FAILED` with the runner exiting 1, and the red one is **still only**
+`ec/tools/test_check_cluster_citations.py`, 48 tests, on the same `:220` of the
+same #822 file with the same two `0x0464`/`0x0465` disagreements — so #852
+neither caused it nor fixes it. The paragraph above is #851's "seventh thing",
+not a note: it is the seventh *item of this kind* rather than the seventh
+merged-tree note, and the two are numbered from different things on purpose.)*
+
+*(An eighth thing this merge moved, of the kind the paragraph above names.
+#852's only edit to a code file is four lines added to
+`ec/tools/test_xdata_cluster_names.py`'s `TheGuardOffRegeneration` docstring, at
+`:291`, so **every `file:line` the tree cites into that file past `:291` was
+stale the moment it landed** — and #851 (`a02de81b`) had already put nine lines
+into `xdata-census-rederivation-checklist.md` above the guess its own new
+write-up cites at `:184-187`. Every citation the two moves actually displaced
+was re-measured against the merged files and repointed, both sides' and the new
+write-up's: `test_xdata_cluster_names.py:303` → `:307` in four places,
+`:387` → `:392` in the checklist and twice inside #852's own
+`xdata_moved_ranks.py`, `:576` → `:581` and `:588-594` → `:592-598` in
+`xdata-names-file-census-anchor.md`, and
+`xdata-moved-ranks-fall.md`'s `:184-187` → `:193-196`. Two citations into the
+same files were **already stale before either merge** — the `:355-370` in
+`xdata-4-4-identity-rederivation.md` and the `:406-407` in
+`xdata-census-self-test-gate.md` — and those are recorded in the first file's
+"Deliberately not fixed" list rather than repointed, because deciding what a
+drifted pin was meant to name is a next pass's call and not a merge's. What is
+*not* held by any of this: nothing checks a citation into a test file, which is
+why the two pre-existing ones are still wrong and this paragraph is the only
+thing saying so.)*
 `docs/findings/0751-grader-self-test-gate.md` records the red set as it stood
 and the follow-up issues that owned it, and
 [`tools-readme-totals.md`](../docs/findings/tools-readme-totals.md)

@@ -436,8 +436,24 @@ carry a correction naming their tree are left as they are.
   guard-on re-run of the committed tree is 439 → 439 with nothing moved, since
   `--check` is green. The suite's *assertions* are threshold-based
   (`assertGreater(len(moved), 300)`) and do not depend on any of it.
+  *(Measured, 2026-09-25, issue #852: the second generation re-derives from
+  `e169a0e4` and gives 366 / 64 / 439 exactly, and the fall from it to 315 is
+  accounted for by 94 named clusters — see
+  [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md). The docstring bullet
+  itself stands as written: the figures are the trees they were measured on.)*
 - `ec/tools/xdata_register_map.py:2723` and `:2885` — two comments in the tool
   carrying "the committed 427 ids" and "417 of the 427 clusters".
+- `ec/tools/test_xdata_cluster_names.py:355-370` — this file's own `:403` cites
+  the suite at `:355-370` for
+  `test_the_two_largest_cited_clusters_are_carried_by_overlap_not_by_key`, which
+  is at `:459-473`; the cited span is §6a's assertion block, which pairs no ids.
+  **Stale before the #852 merge and recorded rather than repointed**, because
+  the pin is #582's, written when the suite was that much shorter, and
+  `check_citation_lines.py` holds citations into the generated CSVs and the
+  decompile rather than into a test file, so nothing turns it red — which is the
+  same "not found by this method" the checker prints. The same is true of
+  `xdata-census-self-test-gate.md:221`'s
+  `xdata-cluster-names-guard-off-recipe.md:406-407`, for a sentence at `:446-447`.
 - `ec/tools/check_cluster_citations.py:17-20` — its module docstring carries the
   427/439/48 and the 425/59/366/413 figures. **Not a false claim**: the checker
   is green because it resolves citations against the committed CSV, and the

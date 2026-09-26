@@ -152,7 +152,7 @@ way: they are per-subset sums computed inline in §6a's own heredoc, and the
 census they come from is the guard-off run, which is written to `/tmp` and
 committed nowhere. There is no committed cell for `--check` to hold them to. The
 recipe's denominator checks live in
-`ec/tools/test_xdata_cluster_names.py:303` and cover §2a's seven, not these.
+`ec/tools/test_xdata_cluster_names.py:307` and cover §2a's seven, not these.
 
 ## What the method cannot see
 

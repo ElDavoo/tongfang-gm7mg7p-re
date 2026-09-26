@@ -288,8 +288,12 @@ class TheGuardOffRegeneration(unittest.TestCase):
     edited out: a total pasted into a file is a snapshot of the merge it was
     measured on, and the tree moved under two of them. Nothing below depends
     on any of the three; what depends on them is the prose, and that is where
-    the figures are recorded. §6a is the exception: it is a measurement rather
-    than a description, so it is held by
+    the figures are recorded. The fall from the middle pair to the last one is
+    measured, with the cluster ids named, in
+    `docs/findings/xdata-moved-ranks-fall.md` -- which is also where the floor
+    `test_the_regeneration_really_moves_the_ranks` holds is argued from that
+    measurement rather than from its headroom. §6a is the exception: it is a
+    measurement rather than a description, so it is held by
     `test_the_census_is_the_one_6a_measured` instead of by a paragraph.
     """
 

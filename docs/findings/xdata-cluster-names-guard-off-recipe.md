@@ -351,6 +351,14 @@ are kept in the docstring beside it, per `../findings.md` §4a-4d, because a tot
 pasted into a file is a snapshot of the merge it was measured on and this one has
 been overtaken twice.
 
+> **The fall from 366 to 315 is now measured, not just recorded** (issue #852).
+> The intermediate pair is re-derivable from `e169a0e4` and reproduces
+> 366 / 64 / 439 exactly, so the fall is a fall and not two different
+> measurements; `docs/findings/xdata-moved-ranks-fall.md` names the 94 clusters
+> whose guard-off membership delta opened or closed, and the write-up is where
+> the `> 300` floor at `:170-175` above is argued from that measurement. The
+> 15 ranks of headroom stay what they are, a snapshot of one merge.
+
 ## Superseded claims, recorded here rather than edited
 
 Four sentences in the tree became false when this landed. Two are corrected in
