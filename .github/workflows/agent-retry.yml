@@ -41,12 +41,22 @@ name: Agent · retry
 # find. This one recognises the shape such a run leaves behind instead, and is what turns the
 # group from a serial drop into a serial queue.
 #
-# The same idea covers the other stages a displacement can drop, each by the trace it leaves:
-# a pull request with no review of its head commit, and an issue labelled `agent:queued` whose
-# plan never ran. They run nearest-to-merge first -- review, then implement, then plan -- and at
-# most one of them starts anything per sweep: each records PIPELINE_STARTED in the job
-# environment, and every later one checks it. That is an env var rather than chained step ids so
-# a repository can add a queue step of its own without threading its id through all the others.
+# The same idea covers the other stages a drop can lose, each by the trace it leaves: a pull
+# request with no review of its head commit, an issue labelled `agent:planned` whose implement
+# run never started, and an issue carrying no `agent:*` label at all, whose plan has not been
+# written yet.
+#
+# LOCAL CHANGE (2026-09-26): the two queue sweeps below are no longer a recovery path. With
+# `issues: [opened]` gone from agent-plan.yml they are the pipeline's only intake, which changed
+# two things here. They draw on FREE_SLOTS while the conflict, review and follow-up sweeps draw
+# on a separate OP_SLOTS that stops short of a reserve -- sharing one decrementing budget, the
+# opportunistic three ran first and took all of it, so both queue sweeps were skipped on every
+# recent run. And they pick in `order_queue`'s order, which is age-bucketed and seeded rather
+# than plain oldest-first.
+#
+# (This paragraph used to describe a `PIPELINE_STARTED` job env var gating the sweeps to one
+# dispatch per run. Nothing implemented that; the loops have always spent a shared slot budget.
+# Left here rather than deleted silently, in the spirit of the calibration rule in CLAUDE.md.)
 
 # workflow_run is a wake-up here, not an input. The job reads one field of the run that woke it
 # -- whether it was skipped -- and checks out no code, downloads no artifact and interpolates no
@@ -217,7 +227,17 @@ jobs:
           # Local change (not from the template): the `agent-pipeline` group is now one group per
           # issue/branch, so up to this many agent runs share the token budget at once. "Idle"
           # below means "has a free slot", not "nothing running".
-          MAX_PARALLEL_AGENTS: '5'
+          #
+          # LOCAL CHANGE (2026-09-26): 5 -> 8. The pipeline was sitting at 4-5 runs in flight
+          # against a budget of 5, so a typical run had 0-2 slots to hand out.
+          MAX_PARALLEL_AGENTS: '8'
+          # LOCAL CHANGE (2026-09-26): slots held back from the conflict, review and follow-up
+          # sweeps for the two queue sweeps. All five shared one decrementing budget, the
+          # opportunistic three run first, and they took all of it -- on every recent run both
+          # queue sweeps were skipped, which is the pipeline's only intake. A 554-deep backlog
+          # did not move at all, and the only work being picked up was whatever an `issues:
+          # opened` event happened to deliver.
+          INTAKE_RESERVED: '2'
         run: |
           set -euo pipefail
 
@@ -251,7 +271,17 @@ jobs:
           free=$(( MAX_PARALLEL_AGENTS - busy ))
           [ "$free" -lt 0 ] && free=0
           echo "$busy pipeline run(s) in flight, $free of $MAX_PARALLEL_AGENTS slot(s) free"
+
+          # Two budgets, derived once so the steps below cannot drift them apart. FREE_SLOTS is
+          # what intake may spend; OP_SLOTS is what the sweeps that run ahead of intake may
+          # spend, and it stops short of the reserve. The conflict sweep took both free slots in
+          # one observed run -- "conflict sweep done, 0 slot(s) left" -- and the two queue sweeps
+          # behind it were skipped.
+          op=$(( free - INTAKE_RESERVED ))
+          [ "$op" -lt 0 ] && op=0
+          echo "$op slot(s) for the conflict/review/follow-up sweeps, $(( free - op )) held for intake"
           echo "FREE_SLOTS=$free" >> "$GITHUB_ENV"
+          echo "OP_SLOTS=$op" >> "$GITHUB_ENV"
           if [ "$free" -gt 0 ]; then
             echo "idle=true" >> "$GITHUB_OUTPUT"
           else
@@ -260,8 +290,12 @@ jobs:
 
           # Sourced by the sweeps below. `busy_issue N [title]`: a run in flight on the issue's
           # branch, or whose title names it ("Plan issue #N", "Implement issue #N") or equals the
-          # issue's own title (an event-triggered plan). `busy_pr N branch`: the same for a PR.
+          # issue's own title. `busy_pr N branch`: the same for a PR.
           # `take_slot`: spend one free slot, persisted for the later steps.
+          # `take_op_slot`: spend one of the opportunistic sweeps' slots. Separate from
+          # `take_slot` on purpose -- it draws on OP_SLOTS, which stops short of the intake
+          # reserve, so the sweeps that run first cannot take the budget the queue sweeps need.
+          # `order_queue`: the queue sweeps' pick order. See its own comment.
           cat > "$RUNNER_TEMP/slots.sh" <<'EOF'
           busy_issue() {
             jq -e --arg n "$1" --arg t "${2:-}" 'any(.[];
@@ -277,6 +311,39 @@ jobs:
             FREE_SLOTS=$(( FREE_SLOTS - 1 ))
             echo "FREE_SLOTS=$FREE_SLOTS" >> "$GITHUB_ENV"
           }
+          take_op_slot() {
+            OP_SLOTS=$(( OP_SLOTS - 1 ))
+            echo "OP_SLOTS=$OP_SLOTS" >> "$GITHUB_ENV"
+          }
+          # Pick order for the two queue sweeps. Strict oldest-first was the intent, but the head
+          # of the queue never clears: an issue too large to finish in one pull request holds it
+          # indefinitely, and #20 -- "full symbolized disassembly of the EC firmware" -- is
+          # exactly that, sitting at the head of a 554-deep backlog. So age decides only between
+          # week-long buckets, and the order inside one is a lottery. Old work still wins, and
+          # nothing is guaranteed the front of the queue twice running.
+          #
+          # Seeded from the issue number and the current ISO week rather than /dev/urandom, so a
+          # re-run of a cancelled sweep picks the same issue and any pick can be re-derived from
+          # the run log. A repository whose findings are meant to be reproducible from committed
+          # inputs should not have a scheduler whose choices cannot be replayed.
+          #
+          # `order_queue N`: N is the 1-based field holding createdAt. Reads tab-separated
+          # candidates whose first field is the issue number, writes them back in pick order
+          # with every other field intact.
+          order_queue() {
+            local cf=$1 week now created epoch age n
+            week=$(date -u +%G-%V)
+            now=$(date -u +%s)
+            while IFS= read -r line; do
+              n=${line%%$'\t'*}
+              created=$(printf '%s' "$line" | cut -f"$cf")
+              epoch=$(date -u -d "$created" +%s 2>/dev/null || echo "$now")
+              age=$(( ( now - epoch ) / 604800 ))
+              [ "$age" -lt 0 ] && age=0
+              printf '%s\t%s\t%s\n' "$(( 0 - age ))" \
+                "$(printf '%s' "$n-$week" | sha256sum | cut -c1-8)" "$line"
+            done | sort -k1,1n -k2,2 | cut -f3-
+          }
           EOF
 
       # LOCAL (see the header): a pull request that conflicts with main gets no CI, no review and
@@ -286,7 +353,7 @@ jobs:
       # written to conflicting.txt, dispatched or not, so the review sweep below does not restart
       # a review that cannot run.
       - name: Resolve the next pull request that conflicts with main
-        if: steps.idle.outputs.idle == 'true' && env.FREE_SLOTS != '0'
+        if: steps.idle.outputs.idle == 'true' && env.OP_SLOTS != '0'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
@@ -311,15 +378,15 @@ jobs:
             done
             [ "$state" = CONFLICTING ] || continue
             echo "$pr" >> "$RUNNER_TEMP/conflicting.txt"
-            [ "$FREE_SLOTS" -gt 0 ] || continue
+            [ "$OP_SLOTS" -gt 0 ] || continue
             if busy_pr "$pr" "$branch"; then
               continue
             fi
             echo "PR #$pr conflicts with main — dispatching the conflicts stage"
             GH_TOKEN="$DISPATCH_TOKEN" gh workflow run agent-conflicts.yml -f pr="$pr"
-            take_slot
+            take_op_slot
           done 3<<<"$prs"
-          echo "conflict sweep done, $FREE_SLOTS slot(s) left"
+          echo "conflict sweep done, $OP_SLOTS opportunistic slot(s) left"
 
       # A review displaced out of the group. agent-review.yml declares the group at workflow level
       # (it calls the reusable fix stage, see README.md), so a cancelled review leaves no job and no
@@ -337,7 +404,7 @@ jobs:
       # need more than three restarts across its commits, but three on the same commit is a
       # review that fails before recording anything, every time.
       - name: Review the next pull request whose review never came
-        if: steps.idle.outputs.idle == 'true' && env.FREE_SLOTS != '0'
+        if: steps.idle.outputs.idle == 'true' && env.OP_SLOTS != '0'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
@@ -360,7 +427,7 @@ jobs:
 
           . "$RUNNER_TEMP/slots.sh"
           while read -r pr sha <&3; do
-            [ "$FREE_SLOTS" -gt 0 ] || break
+            [ "$OP_SLOTS" -gt 0 ] || break
             # No CI and no review can run on a conflicting head; the conflict sweep owns it.
             if grep -qxF "$pr" "$RUNNER_TEMP/conflicting.txt"; then
               continue
@@ -396,10 +463,10 @@ jobs:
             GH_TOKEN="$DISPATCH_TOKEN" gh pr reopen "$pr"
             GH_TOKEN="$DISPATCH_TOKEN" gh pr merge --auto --squash "$pr" \
               || echo "::warning::could not re-arm auto-merge on PR #$pr"
-            take_slot
+            take_op_slot
           done 3<<<"$prs"
 
-          echo "review sweep done, $FREE_SLOTS slot(s) left"
+          echo "review sweep done, $OP_SLOTS opportunistic slot(s) left"
 
       # Not in the upstream template: agent-followups.yml is this repository's own stage, and
       # it can be displaced like any other. Its trace is a recent merge with neither a finished
@@ -412,7 +479,7 @@ jobs:
       # Bounded at three starts per pull request; past that it logs and moves on rather than
       # labelling anything, since nothing downstream waits on this stage.
       - name: Propose follow-ups for the next merge whose turn never came
-        if: steps.idle.outputs.idle == 'true' && env.FREE_SLOTS != '0'
+        if: steps.idle.outputs.idle == 'true' && env.OP_SLOTS != '0'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
@@ -443,7 +510,7 @@ jobs:
 
           . "$RUNNER_TEMP/slots.sh"
           while read -r pr sha branch <&3; do
-            [ "$FREE_SLOTS" -gt 0 ] || break
+            [ "$OP_SLOTS" -gt 0 ] || break
             if busy_pr "$pr" "$branch"; then
               continue
             fi
@@ -469,7 +536,7 @@ jobs:
             # start is counted once whether this sweep or a human dispatched it.
             echo "pipeline idle — proposing follow-ups for PR #$pr"
             GH_TOKEN="$DISPATCH_TOKEN" gh workflow run agent-followups.yml -f pr="$pr"
-            take_slot
+            take_op_slot
           done 3<<<"$merged"
 
           echo "every recent merge has had its follow-up pass"
@@ -485,9 +552,9 @@ jobs:
       # and the stage falls back to the issue title. So a redundant dispatch costs a run and
       # rebuilds the same branch; it cannot land the wrong plan or half of one.
       #
-      # One issue per sweep, and only when nothing else is running. Starting two would undo the
-      # thing this exists to serve, and the same five-hour cadence that suits a usage window
-      # suits a queue whose items take the better part of an hour.
+      # Drains as many as the reserved budget allows, not one: the loop below takes a slot per
+      # dispatch. What order it drains in is `order_queue`'s, not arrival order -- see that
+      # function for why plain oldest-first was not enough.
       - name: Start the next issue whose turn never came
         if: steps.idle.outputs.idle == 'true' && env.FREE_SLOTS != '0'
         env:
@@ -504,24 +571,25 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Oldest first, so a displaced issue is not overtaken by every issue filed after it.
-          # The label filters are the same kill switches every other stage honours, plus
-          # agent:stalled, which belongs to the sweep above rather than to this one.
-          candidates=$(gh issue list --state open --label 'agent:planned' --limit 100 \
-                      --json number,labels --jq '
+          . "$RUNNER_TEMP/slots.sh"
+          # `agent:planned` with no branch of its own: the plan finished, the implement stage
+          # never started. The label filters are the same kill switches every other stage
+          # honours, plus agent:stalled, which belongs to the sweep above rather than this one.
+          candidates=$(gh issue list --state open --label 'agent:planned' --limit 1000 \
+                      --search "sort:created-asc" \
+                      --json number,createdAt,labels --jq '
                       [ .[] | select([.labels[].name]
                                      | any(IN("agent:stop","no-agent","agent:stuck",
                                               "agent:stalled","agent:working",
                                               "needs-hardware-test"))
                                      | not)
-                            | .number ] | sort | .[]')
+                            | "\(.number)\t\(.createdAt)" ] | .[]' | order_queue 2)
           if [ -z "$candidates" ]; then
             echo "nothing waiting"
             exit 0
           fi
 
-          . "$RUNNER_TEMP/slots.sh"
-          for waiting in $candidates; do
+          while IFS=$'\t' read -r waiting created <&3; do
           [ "$FREE_SLOTS" -gt 0 ] || break
           if busy_issue "$waiting"; then
             echo "issue $waiting has a run in flight — leaving it"
@@ -566,16 +634,25 @@ jobs:
           GH_TOKEN="$DISPATCH_TOKEN" gh workflow run agent-implement.yml \
             -f issue="$waiting" -f author="$author"
           take_slot
-          done
+          done 3<<<"$candidates"
 
-      # The same drain for the plan stage. Its signature is `agent:queued` -- put there by
-      # agent-plan.yml's triage, for an issue it cleared to run -- with none of the labels a plan
-      # that got further would have added. An issue filed before that label existed carries no
-      # trace and is never picked up here; dispatch agent-plan.yml for it by hand.
+      # The same drain for the plan stage, and now its main intake: with `issues: [opened]` gone
+      # from agent-plan.yml, this sweep is the only thing that starts new work.
+      #
+      # LOCAL CHANGE (2026-09-26): a candidate is an open issue carrying none of the pipeline's
+      # *state* labels -- `agent:planned`, `agent:working`, `agent:stalled`, `agent:stuck` --
+      # rather than one carrying `agent:queued`. Nothing creates `agent:queued` any more, and
+      # requiring its absence rather than its presence means the 554 issues already carrying it
+      # stay candidates without a bulk relabel: a legacy `agent:queued` issue is simply one
+      # nothing has started yet, which is what it means. The kill switches stay excluded by
+      # name, because those are the pipeline's own opt-outs rather than its state.
       #
       # Dispatching is safe for the same reason it is for the implement stage: agent-plan.yml's
       # triage re-reads the issue and refuses one that is closed or already past planning, so a
       # dispatch that races a plan finishing is a skipped run rather than a plan of the plan.
+      # What triage cannot see is a plan that is in flight and has not yet added `agent:planned`
+      # -- the one window where this sweep would dispatch a second plan for the same issue.
+      # `busy_issue` below is what closes it.
       - name: Plan the next issue whose turn never came
         if: steps.idle.outputs.idle == 'true' && env.FREE_SLOTS != '0'
         env:
@@ -587,10 +664,15 @@ jobs:
           # CUSTOMISE: keep equal to MAX_OPEN_AGENT_PRS in agent-plan.yml. Checked here too so a
           # sweep does not spend one of an issue's three starts on a plan run that would only
           # decline at the cap.
-          MAX_OPEN_AGENT_PRS: '2'
+          #
+          # LOCAL CHANGE (2026-09-26): 2 -> 8, in step with agent-plan.yml. At 2 the check below
+          # was not a cap but a deadlock: the count is never enforced, so it had drifted to 6
+          # open agent PRs and this step declined on every single run.
+          MAX_OPEN_AGENT_PRS: '8'
         run: |
           set -euo pipefail
 
+          . "$RUNNER_TEMP/slots.sh"
           open=$(gh pr list --state open --json headRefName \
                    --jq '[.[] | select(.headRefName | startswith("agent/"))] | length')
           if [ "$open" -ge "$MAX_OPEN_AGENT_PRS" ]; then
@@ -598,21 +680,25 @@ jobs:
             exit 0
           fi
 
-          candidates=$(gh issue list --state open --label 'agent:queued' --limit 100 \
-                      --json number,title,labels --jq '
+          # `sort:created-asc` and a limit well above the backlog, together: `gh issue list`
+          # returns the newest first and truncates at the limit, so without the sort a
+          # 554-deep backlog would lose its oldest entries here -- which are the whole point --
+          # before order_queue ever saw them. Ascending means any truncation drops the newest
+          # instead.
+          candidates=$(gh issue list --state open --limit 1000 --search "sort:created-asc" \
+                      --json number,title,createdAt,labels --jq '
                       [ .[] | select([.labels[].name]
-                                     | any(IN("agent:stop","no-agent","agent:stuck","agent:stalled",
+                                     | any(IN("agent:stop","no-agent","needs-hardware-test",
                                               "agent:planned","agent:working",
-                                              "needs-hardware-test"))
+                                              "agent:stalled","agent:stuck"))
                                      | not)
-                            | "\(.number)\t\(.title)" ] | sort_by(split("\t")[0] | tonumber) | .[]')
+                            | "\(.number)\t\(.title)\t\(.createdAt)" ] | .[]' | order_queue 3)
           if [ -z "$candidates" ]; then
             echo "no plan waiting"
             exit 0
           fi
 
-          . "$RUNNER_TEMP/slots.sh"
-          while IFS=$'\t' read -r waiting title <&3; do
+          while IFS=$'\t' read -r waiting title created <&3; do
           [ "$FREE_SLOTS" -gt 0 ] || break
           [ "$(( open ))" -lt "$MAX_OPEN_AGENT_PRS" ] || { echo "at the open-PR cap — stopping"; break; }
           if busy_issue "$waiting" "$title"; then

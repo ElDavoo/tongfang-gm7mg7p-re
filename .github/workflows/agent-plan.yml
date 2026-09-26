@@ -7,13 +7,17 @@ name: Agent · plan
 # CUSTOMISE: the prompt below carries this project's house rules -- what a plan must name, and
 # which constraints it has to route around. Everything else in this file is project-agnostic.
 #
-# It fires on `opened` and must never fire on `edited`. The job's entire output is a rewritten
-# issue body, so an `edited` trigger would re-plan its own writing, forever, at a token cost.
+# LOCAL CHANGE (2026-09-26): it no longer fires on `opened`. Selection is agent-retry.yml's
+# queue sweep and nothing else, so that the order work is picked up in is a policy this
+# repository sets rather than an accident of when an issue happened to be filed. The `opened`
+# trigger had no ordering at all, and the followups generator files continuously, so newest-
+# first was the only policy in effect: the day-one mission issues sat at the bottom of a
+# 554-deep backlog that nothing would ever reach. The sweep's own gate is a shared, decrementing
+# slot budget that the conflict and review sweeps ahead of it spent first, so intake was starved
+# even with the backlog full -- see agent-retry.yml's reserved floor.
 #
-# It can also be dispatched with an issue number. That is how agent-retry.yml restarts a plan
-# that was displaced out of the concurrency group, and how a human plans an issue filed before
-# this workflow existed. A dispatch re-reads the issue from the API and refuses one the pipeline
-# has already taken past planning -- see the triage job.
+# A dispatch re-reads the issue from the API and refuses one the pipeline has already taken past
+# planning, which is what makes being swept safe against a human dispatching the same issue.
 #
 # The stage is read-only over the repository on purpose: Claude is given no write tool at all
 # and returns the plan as structured output, and the shell steps below are what edit the issue.
@@ -21,8 +25,6 @@ name: Agent · plan
 # act on it.
 
 on:
-  issues:
-    types: [opened]
   workflow_dispatch:
     inputs:
       issue:
@@ -30,10 +32,7 @@ on:
         required: true
         type: number
 
-run-name: >-
-  ${{ github.event_name == 'workflow_dispatch'
-      && format('Plan issue #{0}', inputs.issue)
-      || github.event.issue.title }}
+run-name: Plan issue #${{ inputs.issue }}
 
 # Granted per job rather than here: a workflow-level block hands the same token to the gate
 # as to the stage that runs the agent, and the gate exists precisely to decide whether the
@@ -71,15 +70,28 @@ permissions: {}
 # the signature agent-retry.yml's second sweep looks for.
 #
 # For this stage the same loss used to be unrecoverable, because a plan that never ran left
-# nothing behind to sweep for. So the group is taken by the plan job only, and triage -- which
-# runs straight away, outside it -- leaves the trace itself: an issue it has cleared to run is
-# labelled `agent:queued`, and only a plan that actually finishes swaps that for `agent:planned`.
-# An open issue still labelled `agent:queued` with nothing after it is one whose plan never ran,
-# and agent-retry.yml's third sweep dispatches this workflow for it.
+# nothing behind to sweep for. triage used to leave a trace for it -- an issue it had cleared to
+# run got `agent:queued`, and agent-retry.yml's third sweep dispatched this workflow for anything
+# still carrying that label. LOCAL CHANGE (2026-09-26): nothing sets that label any more, and
+# the sweep now selects on the *state* labels' absence instead -- a candidate is an issue with
+# none of `agent:planned`, `agent:working`, `agent:stalled`, `agent:stuck`. The 554 issues
+# already carrying `agent:queued` therefore stay candidates without a bulk relabel: a legacy
+# `agent:queued` is just an issue nothing has started yet, which is what it means. A separate
+# label for "cleared to run" was a second piece of state to keep in step with the first, and
+# triage no longer runs on the `opened` path where it would have been set. The trade is that a
+# dispatch is refused by the checks in triage rather than by a label -- see the `taken` list
+# there, which is what stops the sweep planning an issue whose plan is already in flight.
 
 env:
   # A cap on work in flight, not on work queued -- see the capacity step below.
-  MAX_OPEN_AGENT_PRS: '2'
+  #
+  # LOCAL CHANGE (2026-09-26): 2 -> 8. The cap is checked but never enforced -- nothing closes a
+  # pull request when the count drifts over -- so it had drifted to 6 open agent PRs against a
+  # limit of 2, and a limit that is permanently exceeded is a limit that blocks all intake
+  # forever: both queue sweeps declined at it on every run. 8 sits above the observed steady
+  # state with headroom, and stays a hard gate -- over the cap this stage still declines, rather
+  # than proceeding quietly.
+  MAX_OPEN_AGENT_PRS: '8'
 
 jobs:
   # Who filed it decides whether this runs unattended, and the question asked is "could this
@@ -97,10 +109,12 @@ jobs:
     # issue is a live run on the laptop or on Windows, which no runner can do; planning it
     # anyway produced PRs that re-prepared finished preparation or described runs that never
     # happened. Preparation for a run is its own issue without the label (agent-followups.yml).
-    if: >-
-      !contains(github.event.issue.labels.*.name, 'no-agent')
-      && !contains(github.event.issue.labels.*.name, 'agent:stop')
-      && !contains(github.event.issue.labels.*.name, 'needs-hardware-test')
+    #
+    # LOCAL CHANGE (2026-09-26): the `if:` that enforced those three labels is gone. It read
+    # `github.event.issue.labels.*.name`, which is empty on a dispatch and so would have tested
+    # three empty arrays and passed everything through. The labels are now read from the API in
+    # the step below, where the rest of this dispatch's state comes from too, so the check
+    # travels with the trigger that can actually reach it.
     runs-on: ubuntu-latest
     outputs:
       proceed: ${{ steps.who.outputs.proceed }}
@@ -114,36 +128,27 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # No checkout in this job, so gh cannot infer the repository from a git remote.
           GH_REPO: ${{ github.repository }}
-          EVENT: ${{ github.event_name }}
-          EVENT_ISSUE: ${{ github.event.issue.number }}
-          EVENT_AUTHOR: ${{ github.event.issue.user.login }}
-          INPUT_ISSUE: ${{ inputs.issue }}
+          ISSUE: ${{ inputs.issue }}
         run: |
           set -euo pipefail
 
-          if [ "$EVENT" = workflow_dispatch ]; then
-            # A dispatch carries only a number, so everything the `issues` event would have
-            # handed over is read back from the API -- including the author, because trust is
-            # about who wrote the request, not who pressed the button.
-            #
-            # Refused unless the issue is open and the pipeline has not taken it past planning:
-            # re-planning an issue whose body is already a plan would plan the plan, and one
-            # under a kill switch or already being worked is not this stage's to restart. A
-            # refusal is a clean skip rather than a failure, since the sweep can race a human.
-            issue="$INPUT_ISSUE"
-            view=$(gh issue view "$issue" --json state,author,labels)
-            author=$(jq -r .author.login <<<"$view")
-            state=$(jq -r .state <<<"$view")
-            taken=$(jq -r '[.labels[].name] | map(select(IN("no-agent","agent:stop","needs-hardware-test","agent:planned",
-                             "agent:working","agent:stalled","agent:stuck"))) | join(",")' <<<"$view")
-            if [ "$state" != OPEN ] || [ -n "$taken" ]; then
-              echo "::notice::not planning issue $issue: state=$state labels=${taken:-none}"
-              echo "proceed=false" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-          else
-            issue="$EVENT_ISSUE"
-            author="$EVENT_AUTHOR"
+          # A dispatch carries only a number, so everything is read back from the API --
+          # including the author, because trust is about who wrote the request, not who
+          # pressed the button.
+          #
+          # Refused unless the issue is open and the pipeline has not taken it past planning:
+          # re-planning an issue whose body is already a plan would plan the plan, and one
+          # under a kill switch or already being worked is not this stage's to restart. A
+          # refusal is a clean skip rather than a failure, since the sweep can race a human.
+          view=$(gh issue view "$ISSUE" --json state,author,labels)
+          author=$(jq -r .author.login <<<"$view")
+          state=$(jq -r .state <<<"$view")
+          taken=$(jq -r '[.labels[].name] | map(select(IN("no-agent","agent:stop","needs-hardware-test","agent:planned",
+                           "agent:working","agent:stalled","agent:stuck"))) | join(",")' <<<"$view")
+          if [ "$state" != OPEN ] || [ -n "$taken" ]; then
+            echo "::notice::not planning issue $ISSUE: state=$state labels=${taken:-none}"
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
 
           perm=$(gh api "repos/${GITHUB_REPOSITORY}/collaborators/${author}/permission" \
@@ -156,18 +161,9 @@ jobs:
           {
             echo "proceed=true"
             echo "trusted=${trusted}"
-            echo "issue=${issue}"
+            echo "issue=${ISSUE}"
             echo "author=${author}"
           } >> "$GITHUB_OUTPUT"
-
-          # The trace a displaced plan leaves behind -- see the concurrency comment above. Only
-          # for a trusted author here; an outside issue gets it from the gate, once approved, so
-          # an issue nobody approved is never restarted by the sweep. A missing label warns
-          # rather than fails: the plan still runs, it just cannot be recovered if displaced.
-          if [ "$trusted" = true ]; then
-            gh issue edit "$issue" --add-label 'agent:queued' \
-              || echo "::warning::could not add agent:queued -- create the label (README.md, Labels) or a displaced plan will not be recovered"
-          fi
 
   # An issue from someone who could not push the change themselves queues here until a
   # maintainer presses Approve on the `agent-approval` environment -- and the queue happens
@@ -192,8 +188,6 @@ jobs:
           ISSUE: ${{ needs.triage.outputs.issue }}
         run: |
           echo "Approved by $APPROVER for issue $ISSUE"
-          gh issue edit "$ISSUE" --add-label 'agent:queued' \
-            || echo "::warning::could not add agent:queued -- a displaced plan will not be recovered"
 
   plan:
     permissions:
@@ -218,12 +212,13 @@ jobs:
       && needs.triage.outputs.proceed == 'true'
       && needs.gate.result != 'failure'
       && needs.gate.result != 'cancelled'
-    # On this job rather than the workflow, so triage and the gate run outside the group: triage
-    # has to leave its `agent:queued` trace even when this job is about to be displaced, and an
+    # On this job rather than the workflow, so triage and the gate run outside the group: an
     # outside issue waiting on approval should not hold the pipeline's one pending slot while it
-    # waits. See the canonical comment at the top of this file.
+    # waits. (The other reason triage was outside it -- that it had to leave a trace before this
+    # job could be displaced -- went away with `agent:queued`.) See the canonical comment at the
+    # top of this file.
     concurrency:
-      group: agent-pipeline/agent/issue-${{ github.event.issue.number || inputs.issue }}
+      group: agent-pipeline/agent/issue-${{ inputs.issue }}
       cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -234,30 +229,22 @@ jobs:
         with:
           persist-credentials: false
 
-      # From the event payload when there is one, because that is the text a maintainer approved
-      # against; from the API on a dispatch, which has no payload. The body is untrusted and
-      # multi-line, so it goes through a random heredoc delimiter -- a fixed one is a line an
-      # issue author could write to inject outputs of their own.
+      # From the API. This workflow is dispatch-only now, so there is no event payload to prefer,
+      # and the text a maintainer approved against is the body as it stands. The body is
+      # untrusted and multi-line, so it goes through a random heredoc delimiter -- a fixed one is
+      # a line an issue author could write to inject outputs of their own.
       - name: Read the issue
         id: issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # No checkout in this job, so gh cannot infer the repository from a git remote.
           GH_REPO: ${{ github.repository }}
-          EVENT: ${{ github.event_name }}
           ISSUE: ${{ needs.triage.outputs.issue }}
-          EVENT_TITLE: ${{ github.event.issue.title }}
-          EVENT_BODY: ${{ github.event.issue.body }}
         run: |
           set -euo pipefail
-          if [ "$EVENT" = workflow_dispatch ]; then
-            view=$(gh issue view "$ISSUE" --json title,body)
-            title=$(jq -r .title <<<"$view")
-            body=$(jq -r '.body // ""' <<<"$view")
-          else
-            title="$EVENT_TITLE"
-            body="$EVENT_BODY"
-          fi
+          view=$(gh issue view "$ISSUE" --json title,body)
+          title=$(jq -r .title <<<"$view")
+          body=$(jq -r '.body // ""' <<<"$view")
           delim="EOF_$(openssl rand -hex 16)"
           {
             printf 'title<<%s\n%s\n%s\n' "$delim" "$title" "$delim"
@@ -288,7 +275,8 @@ jobs:
           OPEN: ${{ steps.capacity.outputs.open }}
         run: |
           set -euo pipefail
-          # `agent:queued` is left in place, so agent-retry.yml plans this once there is room.
+          # No label is added and none is removed, so the issue is still a fresh candidate and
+          # agent-retry.yml's plan sweep comes back for it once there is room.
           gh issue comment "$ISSUE" --body "Not planning this yet: ${OPEN} agent pull requests are already open, which is the cap. The retry sweep will plan it once one is merged or closed, or dispatch \`Agent · plan\` with this issue number to do it sooner."
           exit 1
 
@@ -465,11 +453,11 @@ jobs:
           } > /tmp/issue-body.md
 
           gh issue edit "$ISSUE" --body-file /tmp/issue-body.md
+          # `agent:planned` is the whole of the hand-off, and the only `agent:*` label a plan
+          # adds. It is what tells agent-retry.yml's implement sweep there is a finished plan
+          # with no pull request behind it yet; a plan that never ran leaves no label at all,
+          # which is the state the plan sweep selects on.
           gh issue edit "$ISSUE" --add-label 'agent:planned'
-          # Separate and allowed to fail: removing a label the repository never created is an
-          # error, and a copy set up before `agent:queued` existed must still get this far. The
-          # retry sweep ignores an issue that has `agent:planned`, so a leftover is harmless.
-          gh issue edit "$ISSUE" --remove-label 'agent:queued' || true
 
       - name: Hand over to the implement stage
         env:
