@@ -10706,3 +10706,45 @@ to make a tool green is why the edit is a paragraph. No `status:` moved, so
 `ec/annotations/registers.yaml` is not touched; no fixture, row, capture, `.asm`
 or `.c` is edited; no gate is wired, which is also the right tier call for a
 mode that needs full history; and no `gh pr create` anywhere.
+
+## 82. The bounds disjunct is pinned by two cases, and the totals line sees neither guard go (2026-09-26, issue #845)
+
+Issue #845's central claim was a measurement — delete the bounds disjunct of
+`walk_why()`'s guard and the runner prints the same `19 suite(s) run, 600
+tests` with the same single failure, so it is "pinned by nothing". **That
+measurement is stale and this tree says otherwise**: deleting only the
+`i + 2 >= len(d)` block, located by its source text, turns
+`ec/tools/test_walk_budget_census.py` red with two `IndexError` **errors**, and
+the totals line is *byte-identical* to the baseline's. The other half of the
+issue's measurement still holds and is still the reason the disjunct reads as
+dead code: the fifteen-address `--check` sweep exits 0 with the guard gone,
+because the smallest `len(d) - i` any committed walk reaches is 94109 bytes.
+The correction is recorded beside the claim rather than in place of it — no
+committed file asserted the wrong one.
+
+The two disjuncts are not held equally, and that is the finding rather than a
+defence of either. The `d[i] == MOV_DPTR` guard is held from three directions
+and its loss makes the `--check` sweep exit 1 with **75 of 114 committed rows**
+rewritten; the bounds guard is held from one, in a neighbouring suite, and the
+sweep cannot see it at all. The traceback a reader gets for it lands on
+`if d[i] == MOV_DPTR:` — **the other guard's line**, the one the census says
+does all the work — so the last frame names the line that did not do it.
+
+Two things in [#805's census](findings/opcode-len-bounds-census.md) do not
+reproduce on this tree, and neither disturbs its conclusion: its reproducing
+snippet's locator takes the first *mention* of `i + 2 >= len(d)`, which #846's
+comment near the token constants now precedes, so its `guard deleted` rows are
+measured with the guard present; and the per-iteration trace under its derived
+vector shows four appends and a fourth-iteration guard where the run gives two
+appends and a second-iteration one. Both are named as follow-ups there and
+neither file was edited by this work.
+
+`ec/tools/test_trace_xdata_refs.py` lands with it: six cases, no firmware read,
+holding **which instructions come back** where
+`ec/tools/test_walk_budget_census.py` holds **which guard fired** — the two are
+complementary, and a walk that decoded wrongly for the right reason would pass
+one and fail the other. Both call sites (`csv_table()` and `main()`) are driven
+over a hand-built 7-byte fixture whose window only the bounds guard can end.
+
+The write-up is
+[`walk-bounds-guard-pinned.md`](findings/walk-bounds-guard-pinned.md).

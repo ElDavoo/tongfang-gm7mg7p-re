@@ -1006,7 +1006,7 @@ the half this table exists to record.
 | [`xdata-two-largest-case-restatement.md`](xdata-two-largest-case-restatement.md):22 | `ec/tools/test_xdata_cluster_names.py:88` | by-path | other | carries |
 | [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):1341 | `../tools/test_xdata_cluster_names.py:54` | beside | comment | **does not carry** |
 | [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):2665 | `../tools/test_xdata_cluster_names.py:68-90` | beside | other | carries |
-| [`../../tools/README.md`](../../tools/README.md):247 † | `test_xdata_cluster_names.py:303` | by-name | assertion | **records another line** |
+| [`../../tools/README.md`](../../tools/README.md):260 † | `test_xdata_cluster_names.py:303` | by-name | assertion | **records another line** — and this merge's shift moved the row's own citing line `:247` → `:260`, thirteen lines of #845's totals re-derivation added above it |
 
 **43 carry, 2 carry on the adjacent line, 19 do not carry, 10 record another line
 on purpose, 32 are declined, and none is unresolvable.** *(Those are the counts
