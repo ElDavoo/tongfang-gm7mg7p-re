@@ -8218,15 +8218,25 @@ measured; the dedicated one is taken.
 > this section's own change made of the self-test, and it is still what it made
 > of it: the count moved by one here, on `main`, on the tree #884 forked from.
 > On the merged tree `python3 ec/tools/xdata_moved_ranks.py --self-test` prints
-> **25 checks**, because #884's `cause` mode added ten of its own to the same
-> fixture block and they all print `ok`. The 14 this section left verbatim are
-> the 14 that still print verbatim, in the same order, above them. A count like
+> **39 checks**: #884's `cause` mode added ten of its own to the same
+> fixture block and they all print `ok`, #891 landed beside it with nine
+> more after those, and #889 landed beside both with five more — those five
+> print at 10–14, between the two halves of the first fifteen, so they are
+> not in the tail — so the **25** this note first recorded is the 15 above plus
+> those ten, and `25 + 9 + 5 = 39`. The 14 this section left verbatim are
+> the 14 that still print verbatim, in the same order, ahead of both blocks. A
+> count like
 > this is a property of the merge in the same way a section number is — see the
 > numbering note at §59 — so it is recorded here rather than left for the next
-> reader to reconcile against a run. Nothing else in this section moves: the
+> reader to reconcile against a run. *(The 34 this note first carried is the
+> same tool without #889's five beside it, and is left visible here per §4a-4d
+> rather than edited out; the figure that stands is the one re-run on the tree
+> this lands on.)* Nothing else in this section moves: the
 > fixture, the `FAIL` on the old line, the dedicated-pair argument and the
-> measured `48 rows` / `5 second holder` figure are all unchanged by #884, which
-> adds a mode and does not touch `swept_report()`.
+> measured `48 rows` / `5 second holder` figure are all unchanged by either
+> merge; #884 adds a mode and #891 adds columns and a `--cell`, and **neither
+> touches `swept_report()`**, which is byte-identical across the base commit,
+> `main` and the merged tree.
 
 **The committed figure does not move, and that is measured rather than assumed.**
 §7's recipe re-derived from `e169a0e4` — the worktree, two guard-off census
@@ -8237,7 +8247,11 @@ reports empty. On this pair the two `pd` holders are present in both
 generations, so B's count and the union's are the same five — a latent
 disagreement, not an observed wrong figure, and now a figure that cannot go
 wrong. No CSV, YAML, threshold, `status:` or gate was edited, no `test_*.py` is
-added so the runner's 34 suites and 1033 tests are unmoved, the `> 300` floor
+added so the runner's totals are unmoved by this section (34 suites and 1033
+tests on the tree it merged into, 35 and 1076 on the tree it lands on, the
+additions being #887's `ec/tools/test_census_test_line_pins.py` at 41 and
+#850's two cases in `ec/tools/test_xdata_cluster_names.py` — see
+`tools/README.md`'s ninth merged-tree note), the `> 300` floor
 stays where §62's recipe put it, no image was opened, no register was read
 back, and nothing is opened in another repository.
 
