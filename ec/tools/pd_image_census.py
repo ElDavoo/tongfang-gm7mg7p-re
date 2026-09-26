@@ -27,19 +27,18 @@ already there, not by a decision.
 hardcoded list of standard 8051 offsets would produce a table that looks
 plausible and is wrong. This image puts the reset vector at `0x00` and then
 pads each of the five interrupt entries to an 8-byte stride, so the entries are
-at `0x00` and `0x03 + n * 8` -- six of them, with `0x2B`-`0x3F` erased. The
+at `0x00` and `0x03 + n * 8` -- six of them, with `0x26`-`0x3F` erased. The
 3-byte `LJMP` is what makes each a real entry; a `0xFF` byte is not an entry and
 the walk stops there.
 
 **A null in this tool is a statement about a search, never about the firmware.**
 Every census below is a byte scan or a read of a committed file, and each one
-reports what it looked for and where. `unreferenced by this method` is the
+reports what it looked for and where. `not found by this method` is the
 token, `absent` never is, and `read_region()` refuses a dump whose marker is not
 where this one is rather than reporting an empty region -- the same contract
 `trace_xdata_refs.py:region_of()` implements when `PD_MARKER` fails. The
 string-pool result is the one that needs it most: 43 NUL-terminated printable
-candidates, **zero** of them named by a `MOV DPTR` + `MOVC` pair, and a byte
-pair that does not appear anywhere in the image for any of them. That is a
+candidates, **zero** of them named by a `MOV DPTR` + `MOVC` pair. That is a
 finding about a method, and it is worth exactly what the method is worth.
 
 **What the string-pool null does *not* say.** It does not say the strings are
@@ -174,9 +173,11 @@ ERASED = 0xFF
 TRANSFER_END = frozenset((0x02, 0x22, 0x32, 0x73))
 
 # How far past a `MOV DPTR,#imm16` a `MOVC` still counts as mediated by it.
-# Four instructions is the shape Keil and SDCC both emit for a string copy
-# (`mov dptr,#str` / `clr a` / `movc a,@a+dptr` / ...), and the window is
-# reported alongside every count so a reader can widen it.
+# In bytes, and four is one or two instructions -- the shape Keil and SDCC both
+# emit for a string copy (`mov dptr,#str` / `clr a` / `movc a,@a+dptr` / ...).
+# The page states the window next to the count it bounds, and `movc_follows()`
+# takes it as an argument, so a wider one is a different measurement rather
+# than an edit to this.
 MOVC_WINDOW = 4
 
 
@@ -939,6 +940,60 @@ def figures(region: bytes, owners, names, prov, extents=None) -> dict:
 # --check
 
 
+# Which figures each `--section` name re-derives, as key prefixes. Explicit
+# because the alternative -- taking the name as a substring of the key -- made
+# three of the five names select nothing at all: no key contains `layout`,
+# `command` or `provenance` (the provenance figures are `prov_`-prefixed), so
+# `--section command` over a page whose `host_block` was wrong printed "all 0
+# pinned figure(s) re-derive" and exited 0, and `--section strings` missed
+# `pool_candidates` and `pool_referrers` -- the two the page's central claim
+# rests on -- while catching `identity_strings` instead. That is the vacuous
+# green `docs/findings.md` §88 names, reached through the switch meant to
+# narrow the check rather than through the check itself.
+#
+# Prefixes rather than a list of keys, so a figure added later is reachable by
+# name; `select_section()` is what refuses a name that still reaches nothing,
+# and `test_every_derived_figure_is_reachable_by_a_section_name` is what keeps
+# a key out of all five at once -- the one way to be unreachable that a
+# non-empty check cannot see. The `vector` prefix is written without its
+# trailing `_` because the table's own key is `vectors`.
+SECTIONS = {
+    "layout": ("region_", "firmware_sha256", "used_end", "erased_tail",
+               "ff_bytes", "longest_ff_run"),
+    "vector": ("vector",),
+    "strings": ("pool_", "identity_strings", "code_table_inline"),
+    "command": ("host_block", "pd_"),
+    "provenance": ("prov_",),
+}
+
+
+def in_section(key: str, section: str) -> bool:
+    """Whether `key` is one of the figures `section` names."""
+    return section == "all" or any(key.startswith(p)
+                                    for p in SECTIONS[section])
+
+
+def select_section(section: str, derived: dict) -> dict:
+    """`derived` narrowed to `section`, or `Refusal` when the name reaches none.
+
+    A refusal rather than an empty selection, because the two are the same
+    command and only one of them tells the reader anything: an empty selection
+    prints "all 0 pinned figure(s) re-derive" and exits 0, which is a check
+    that passed because it did nothing.
+    """
+    if section == "all":
+        return derived
+    kept = {k: v for k, v in derived.items() if in_section(k, section)}
+    if not kept:
+        raise Refusal(f"--section {section} names none of this tool's "
+                      f"{len(derived)} figure(s) -- it looks for a key "
+                      f"starting with one of "
+                      f"{', '.join(repr(p) for p in SECTIONS[section])} and "
+                      f"finds none, so it would check nothing and report a "
+                      f"pass; fix SECTIONS or use --section all")
+    return kept
+
+
 def check_table(generated: str, path: str) -> int:
     """Exit code for the CSV half of `--check`: 0 when this run reproduces it.
 
@@ -1146,10 +1201,11 @@ def main() -> int:
     ap.add_argument("--self-test", action="store_true",
                     help="run ec/tools/test_pd_image_census.py")
     ap.add_argument("--section", default="all",
-                    choices=["all", "layout", "vector", "strings", "command",
-                             "provenance"],
+                    choices=["all", *SECTIONS],
                     help="with --check, which figures to re-derive; 'all' is "
-                         "what the page's pinned block is written against")
+                         "what the page's pinned block is written against, and "
+                         "a name that selects no figure is refused rather "
+                         "than passed")
     args = ap.parse_args()
 
     if args.self_test:
@@ -1168,10 +1224,9 @@ def main() -> int:
             prov = provenance(args.zip)
             derived = figures(region, owners, names, prov, extents)
             pinned = pinned_figures(args.page)
-            if args.section != "all":
-                keep = {k for k in derived if args.section in k}
-                derived = {k: v for k, v in derived.items() if k in keep}
-                pinned = {k: v for k, v in pinned.items() if k in keep}
+            derived = select_section(args.section, derived)
+            pinned = {k: v for k, v in pinned.items()
+                      if in_section(k, args.section)}
             return rc or check_figures(pinned, derived)
         prov = provenance(args.zip)
         print(report(region, how, owners, names, prov))

@@ -293,10 +293,9 @@ $ r2 -a 8051 -e scr.color=0 -q -c 'p8 0x10 @ 0xe1c0' /tmp/pd.bin
 The census reports it as `not found by this method` in every row, and that
 wording is load-bearing. Concretely, the tool looked for the 3-byte
 `90 hi lo` sequence with `hi:lo` equal to each candidate's address, anywhere in
-the 64 KiB, and then for a `MOVC` within four instructions; and separately, for
-the two address bytes as an adjacent pair in either byte order anywhere in the
-image. Neither is found for any candidate, and the two address bytes of the
-pool head `0xA799` are not in the image either.
+the 64 KiB, and then for a `MOVC` within four bytes of the site. Not one
+candidate is named by such a pair. The two address bytes of the pool head
+`0xA799`, read on their own, occur zero times in the 64 KiB in either order.
 
 **This is not evidence the strings are unreachable.** Three ways this program
 reaches CODE that a literal `MOV DPTR` scan cannot see, all of them present in

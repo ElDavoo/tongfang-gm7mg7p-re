@@ -55,9 +55,10 @@ Everything is offline and reproducible from the committed tree.
 |---|---|
 | `dd if=ec/firmware/GMxMGxx_11.800 of=/tmp/pd.bin bs=64k skip=2 count=1` | 64 KiB, sha256 `30fe7fb8…` |
 | `python3 ec/tools/pd_image_census.py` | five sections, every number quoted below |
-| `python3 ec/tools/pd_image_census.py --check` | CSV reproduced byte for byte; all 30 pinned figures re-derive |
-| `python3 ec/tools/test_pd_image_census.py` | `Ran 51 tests … OK` |
-| `python3 ec/tools/pd_image_census.py --self-test` | the same 51, through the flag |
+| `python3 ec/tools/pd_image_census.py --check` | CSV reproduced byte for byte, and `all <n> pinned figure(s) re-derive` over every figure in §7's block |
+| `python3 ec/tools/pd_image_census.py --check --section <name>` | each name re-derives its own section's figures; a name that reaches none is refused, not passed |
+| `python3 ec/tools/test_pd_image_census.py` | `OK` — the case count is in the run's own last line, which is where a reader should take it from |
+| `python3 ec/tools/pd_image_census.py --self-test` | the same suite, through the flag, and the exit code a gate would read |
 | `r2 -a 8051` on `/tmp/pd.bin` at `0x0`, `0xa799`, `0xd663`, `0xe1c0`, `0x10f1`, `0x1229` | the transcripts on the page, verbatim |
 
 **Layout.** In use `0x0000`-`0xF7B7`; `0xF7B8`-`0xFFFF` erased (2,120 bytes);
@@ -68,7 +69,7 @@ listings, 498 annotated rows, **0** addresses held by two listings.
 
 **Vector table: six entries, where §2's table has five.** `0x00` and then
 `0x03 + n * 8` — `0x00`, `0x03`, `0x0B`, `0x13`, `0x1B`, `0x23` — with
-`0x2B`-`0x3F` erased. The sixth is the serial vector, `ljmp 0x010E`.
+`0x26`-`0x3F` erased. The sixth is the serial vector, `ljmp 0x010E`.
 
 **This is the one detail that is easy to get wrong in a way that does not look
 like a mistake**, so it is worth stating as its own finding. 8-aligning the
@@ -151,10 +152,9 @@ here** and the page says so in the same paragraph as the observation.
 DPTR,#addr` + `MOVC` pair.** The census reports `not found by this method` in
 every row, and that wording is the finding rather than a disclaimer on it. It
 looked for the 3-byte `90 hi lo` sequence for each candidate's address anywhere
-in the 64 KiB, then for a `MOVC` within four instructions; and separately for
-the two address bytes as an adjacent pair in either byte order anywhere in the
-image. Neither is found for any candidate, and the two address bytes of the
-pool head `0xA799` are not in the image either.
+in the 64 KiB, then for a `MOVC` within four bytes of the site. Not one
+candidate is named by such a pair. The two address bytes of the pool head
+`0xA799`, read on their own, occur zero times in the 64 KiB in either order.
 
 **This is not evidence the strings are unreachable, and the page says so where
 the number is.** Three ways this program reaches CODE that a literal `MOV DPTR`

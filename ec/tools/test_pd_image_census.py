@@ -33,6 +33,14 @@ with it. Without it the attribution could return the nearest function start,
 or None, or a constant, and every other case in this file would stay green --
 which is the same vacuous-green shape §88 names.
 
+`test_every_section_name_goes_red_on_a_figure_of_its_own` is the second such
+case, and it exists because `--section` was a substring match on the figure key
+that made three of its five names select nothing: `--section command` over a
+page whose `host_block` was wrong exited 0 having checked no figures at all. A
+check that cannot be wrong is not a check, so each name gets a figure of its
+own here, and the "rejected at the door" cases -- a name that reaches nothing,
+a key no name reaches -- hold the mapping rather than the report.
+
 Run it directly, or through `python3 ec/tools/pd_image_census.py --self-test`.
 **Not in any gate**: see `docs/findings/pd-image-census.md` for the reason, and
 note that `.github/scripts/agent-gates.sh` is a pipeline file this branch's
@@ -137,7 +145,7 @@ class VectorTable(unittest.TestCase):
     def test_the_table_ends_in_erased_bytes(self):
         off = pdic.vector_table(REGION)[-1][0] + 3
         self.assertTrue(all(b == 0xFF for b in REGION[off:0x40]),
-                        "0x2B-0x3F are not erased, so the six-entry walk is "
+                        "0x26-0x3F are not erased, so the six-entry walk is "
                         "stopping for the wrong reason")
         self.assertEqual(pdic.erased_after_table(REGION,
                                                 pdic.vector_table(REGION)),
@@ -755,6 +763,77 @@ class CommandLine(unittest.TestCase):
         self.assertEqual(r.returncode, 1)
         self.assertIn("vector_entries", r.stderr)
         self.assertIn("the bytes say '6'", r.stderr)
+
+    # One figure per `--section` name, so a name that stopped selecting its
+    # own section's figures shows here rather than as a green run.
+    SECTION_FIGURE = {
+        "layout": "used_end = 0xF7B7",
+        "vector": "vector_entries = 6",
+        "strings": "pool_candidates = 43",
+        "command": "host_block = 0xFF80=5",
+        "provenance": "prov_zip_members = 8",
+    }
+
+    def test_every_section_name_goes_red_on_a_figure_of_its_own(self):
+        """`--section` used to match the name as a substring of the key, and
+        three of the five names matched nothing: `--section command` over a
+        page whose `host_block` was wrong printed "all 0 pinned figure(s)
+        re-derive" and exited 0. `strings` was the quiet one -- it caught
+        `identity_strings` and missed `pool_candidates` and `pool_referrers`,
+        which are the figures §3.1's claim is made of.
+
+        One corrupted figure per name is what keeps that from coming back, and
+        a subTest keeps the five failures apart rather than reporting only the
+        first.
+        """
+        with open(pdic.PAGE, encoding="utf-8") as f:
+            text = f.read()
+        for section, figure in self.SECTION_FIGURE.items():
+            with self.subTest(section=section):
+                wrong = figure.rsplit(" = ", 1)[0] + " = 999"
+                mutated = text.replace(figure, wrong)
+                self.assertNotEqual(
+                    text, mutated,
+                    f"the page no longer pins {figure!r}, so the {section} "
+                    f"case has stopped testing the mutation")
+                with tempfile.TemporaryDirectory() as d:
+                    page = os.path.join(d, "pd-image.md")
+                    with open(page, "w", encoding="utf-8") as f:
+                        f.write(mutated)
+                    r = self.run_tool("--check", "--section", section,
+                                      "--page", page)
+                self.assertEqual(
+                    r.returncode, 1,
+                    f"--section {section} exited {r.returncode} on a page "
+                    f"whose {figure!r} is wrong")
+                self.assertIn(figure.split(" = ")[0], r.stderr)
+
+    def test_a_section_name_that_selects_no_figure_is_a_refusal(self):
+        """The other half: a name that reaches nothing must say so.
+
+        `select_section()` cannot be reached through the command line for any
+        name argparse accepts, which is the point -- argparse's `choices` and
+        the mapping are two guards, and this case is what holds the second one
+        if a prefix is ever narrowed until it matches nothing.
+        """
+        self.assertEqual(pdic.select_section("all", FIGURES), FIGURES)
+        with self.assertRaises(pdic.Refusal):
+            pdic.select_section("strings", {"used_end": "0xF7B7"})
+
+    def test_every_derived_figure_is_reachable_by_a_section_name(self):
+        """A key no name selects is unreachable except by `all`, and no
+        non-empty check can see it -- `select_section()` refuses an *empty*
+        section, not one that is merely missing a figure.
+
+        This is not hypothetical: the first cut of SECTIONS wrote the vector
+        prefix as `vector_` and silently dropped `vectors`, whose key has no
+        underscore, so `--section vector` checked three of the table's four
+        figures and reported a pass.
+        """
+        orphans = sorted(k for k in FIGURES
+                         if not any(pdic.in_section(k, s)
+                                    for s in pdic.SECTIONS))
+        self.assertEqual(orphans, [], f"no --section name reaches {orphans}")
 
     def test_a_page_that_gained_a_figure_is_also_red(self):
         """The other direction, and the one a one-way check cannot catch: a

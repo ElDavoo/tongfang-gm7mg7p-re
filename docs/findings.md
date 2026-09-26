@@ -11672,7 +11672,7 @@ three things it produced worth carrying here are these.
 
 **Its vector table has six entries, not the five §2's table shows**, and the
 geometry is not the textbook one: reset at `0x00`, then `0x03 + n * 8`, with
-`0x2B`-`0x3F` erased. The sixth is the serial vector, `ljmp 0x010E`.
+`0x26`-`0x3F` erased. The sixth is the serial vector, `ljmp 0x010E`.
 8-aligning the whole table reads the padding and finds an `LJMP` at `0x00` and
 nothing at the other five. **All five interrupt entries are the same wrapper
 shape in two forms — three long-form (`0x0056`/`0x00B2`/`0x010E`,
