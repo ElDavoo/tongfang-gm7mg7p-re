@@ -7307,7 +7307,14 @@ span (2), and a firmware code address (1). That sixth one is the census's own
 find rather than the issue's, and it is why the code filter is
 `ghidra-functions.csv` **minus** `xdata-registers.csv` rather than either
 alone: on this firmware `0x07D0` is both `FUN_CODE_07d0` and a door byte, and
-it is a claim in two rows.
+it is a claim in two rows. **The list is five shapes and a variant since #794**
+— a bare date in a third-column sentence is now resolved against
+`evidence/ec-watch/<date>-*` and its literals are held to those files rather
+than passed over, so the sixth entry above is a dated capture that *resolves to
+nothing*; the counts in this paragraph are a 2026-09-25 measurement and are
+left exactly as they stand, and
+[`testdata-row-claims-dated-capture.md`](findings/testdata-row-claims-dated-capture.md)
+carries the re-derivation and the three decisions in the rule.
 
 **Three readings were measured rather than assumed, and each one is a rule.**
 No `MOVEMENT` predicate: 18 of the 54 literals sit in a sentence carrying none
@@ -9923,3 +9930,101 @@ named in the new write-up's §6. The read column (`53/19/2/32`), the headcounts
 (106 pins, 28 files, 79 spellings, 58 targets, 74 resolving, 32 declined) and
 the red set are all unchanged, which is what makes the shape the one column a
 line shift could move on its own.
+
+## 76. The other-capture exemption is the narrowest shape rather than the widest, and the tool's own worst hole is a retraction (2026-09-26, issue #794)
+
+> **Numbering note, added at the merge.** This section was written as §75, and
+> #962's
+> [`xdata-guard-off-key-distinctness.md`](findings/xdata-guard-off-key-distinctness.md)
+> summary (PR #965) holds **§75** on `main` in the same window, so it is
+> renumbered to the next free number rather than left to collide. §75 is now
+> #962's summary above, and this is **§76**. That runs the same collision the
+> other way round from the one §74's note opens with — there #929's summary
+> gives way to five sections; here this branch's is the one that gives way, and
+> the section that keeps the number is the one that landed on `main` first.
+> **Its own references are unaffected, and that is the half of the note this
+> merge does not touch:** nothing in #794's write-up, in this section's body, or
+> in the seven lines this branch adds to §47 above names this section's number —
+> the write-up cites §47, §4a and §4a-4d rather than this section, the §47 edit
+> names lines in a file rather than a section, and no tool, test or gate reads a
+> section number out of this file. **A "last section in the file" clause is
+> left off rather than written**, since §74's numbering note already carries one
+> and §75 does not correct it either: what this merge adds is a section *below*
+> both of those, and a clause asserting a position is what the next merge has to
+> contradict beside itself. The record of where the file ends stays §74's note,
+> and its count is untouched by this merge: the five summaries that note counts
+> are all at or above §74, and §76 is not one of them.
+
+The write-up is
+[`testdata-row-claims-dated-capture.md`](findings/testdata-row-claims-dated-capture.md);
+this is the summary, and §47 is where a reader looking for the property lands.
+`ec/tools/check_testdata_row_claims.py` named its own worst hole in its
+docstring: the `another capture's address` shape passed over **every** literal
+in a sentence naming a dated capture in running prose — *"the rule buys one
+correct row at the price of not checking that sentence at all."* **The shape is
+gone and a resolution is in its place.** A **bare** (unbackticked) date in a
+third-column sentence is now resolved against `evidence/ec-watch/<date>-*` and
+the sentence's literals are held to the files that date resolves to, so the two
+literals the run reported under the shape are two `checked` claims instead.
+
+**The census came first and the sizing is the whole of the cost.** Four date
+tokens in `ec/tools/testdata/README.md`, of which two are bare and **one**
+carries literals: row 7's `0x0F58`/`0x0F5C`. `evidence/ec-watch/` is flat and
+dates every capture in its own filename, so `<date>-*` is a glob and not a
+guess; `2026-09-23-*` resolves to **six** files and both addresses are in one of
+them (`2026-09-23-power-mode-cycle-0f00-0f5f.csv`, 4 and 6 lines). The run goes
+**28 → 30 resolved, 26 → 24 unresolved, 28 → 30 checked, 14 → 15 claiming
+rows**, the `another capture's address 2` entry leaves the shapes line, and the
+other five shapes' counts are byte-identical — which is what says the change
+moved what it was meant to and nothing else. The tool now prints a per-date
+block naming each literal with the file set it was checked against.
+
+**Three decisions are in the rule and none of them was free.** `DATED_CAPTURE`
+itself **does not change** — the spelling already told a *file* from a
+*capture*, and it stops being a reason and becomes the selector of the file set.
+The two file sets are **never unioned**: a union would let row 7 pass on its
+own after-dump, which covers `0x0F00-0x0F5F`, so the suite pins one case that
+fails if the date is ignored and another — the one shape of this change that can
+turn the run red — that fails if the two are unioned. And the union is taken
+**over the date**, not narrowed by a word in the prose, which would be the
+parser guessing; the cost of that is one address in any of a date's six files
+satisfying a claim about that date, and it is written down in the tool's
+docstring and in the write-up rather than designed away.
+
+**A date that resolves to nothing is today's `unresolved`, with the glob it
+searched, and never `absent`** — the §4 calibration made mechanical, and the
+sixth entry of the closed shape list with a case of its own. **The docstring's
+own "widest exemption here" bullet is retracted in place**, wrong wording left
+visible with the correction beside it per §4a, which is the pattern this
+repository uses for a conclusion that was stated more strongly than its
+evidence supported — the same failure §4a-4d records twice. `reason_for()` lost
+its last branch, so the ordering argument that said none of the six needs the
+file set is repaired rather than left standing on five.
+
+**One suite case could not survive the change and did not.** `test_the_other_capture_rule`
+asserted that loosening the rule makes the run check *more*; the direction is
+now inverted, so it became a sibling helper asserting it checks **fewer** with
+an empty capture root, and the class docstring says why the sign differs rather
+than leaving a reader to wonder whether the assertion is weaker.
+`test_the_committed_tree_exercises_every_shape` dropped the sixth name — the
+committed tree has **five** shapes with instances, and a test naming a shape
+the fix removed is a test that fails on the fix. **The per-date block is
+asserted on scratch trees, not as a count on the committed one**: the dated
+sentences there resolve, so an expected number would turn every dated sentence a
+later PR adds into a failure. Three wrong implementations were applied to the
+tool in place and the suite run over each — union, ignore-the-date, and
+drop-the-reason — and each is red, so "the fix can fail" is demonstrated rather
+than asserted.
+
+**Nothing here is a hardware claim, and no live observation closes any part of
+it.** No capture is *opened*: the CSVs and `.txt` files under
+`evidence/ec-watch/` are read as text, exactly as `carried_by()` already reads a
+fixture. **Not claimed: that this would have caught #502 or #720** — carried
+forward from §47 verbatim, since both repairs were to this column and neither
+has been read back as a diff this tool could have been run over. No `status:`
+moved, so `ec/annotations/registers.yaml` is not touched; row 7's sentence in
+`ec/tools/testdata/README.md` is **not edited**, because it is true, it is now
+checked, and editing prose to make a tool green is what this repository forbids.
+`docs/ci/agent-gates-testdata-row-claims.patch` is **not** touched — the CLI is
+unchanged — and it remains a human's `git apply`, so no gate is wired here. No
+`gh pr create` anywhere.
