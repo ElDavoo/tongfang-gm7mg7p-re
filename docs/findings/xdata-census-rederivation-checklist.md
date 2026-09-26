@@ -372,6 +372,24 @@ measurement.
 > flip — which is what turns a per-cell number into a null rather than a
 > mechanism.
 
+> **There is no third pair to find, and the count above is the floor's to this
+> day** (issue #885).
+> [`xdata-moved-ranks-427-pair.md`](xdata-moved-ranks-427-pair.md) went looking
+> for the generation before `e169a0e4` and did not find one. Two commits carry a
+> 427-row census. At `e6c88864` it is a file its own tree does not derive —
+> `--check` exits 1 there, and that commit's own `--self-test` fails on "the
+> committed CSVs match a fresh generation" — and that tree derives the
+> **430-row** census, so measuring there re-measures `e169a0e4` (**366**, **0**
+> clusters flipped, the same 210 addresses). At `1fcd5f1e`, the only other
+> 427-row commit, the tree does derive 427 rows and the pair is **not
+> measurable with the committed tools**: `cluster_key` first exists at
+> `e6c88864`, the census commit right after it, and `xdata_moved_ranks.py`
+> raises `KeyError: 'cluster_key'` on any earlier census. Two points, not three,
+> and nothing here says `moved` decays. **Run
+> `--check` on the tree you are about to measure**: a stale committed census is
+> a pair whose `moved` counts the guard and the drift together, and the two are
+> separable only because the guard cannot change `refs`.
+
 ## 4. The order the work happens
 
 1. **`python3 ec/tools/xdata_register_map.py --check` — first.** It is the only

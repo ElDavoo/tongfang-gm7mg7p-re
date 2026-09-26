@@ -122,7 +122,11 @@ conclude from the hits alone that every one of them is a defect.
 Every occurrence of the signed-sum label in the tree, with its verdict. Five
 are corrected here and two more in place on the pages that carry it; the rest
 are records of runs, a copy of a record, or the opposite convention, and the
-reason each is left is beside it.
+reason each is left is beside it. **Three more arrived with #885, which merged
+into this one afterwards**, and they are listed with the rest rather than in a
+note of their own: two table headers on its new write-up and the one sentence in
+`findings.md` §69 that quotes §62's figure. Each is corrected in place, the word
+only, and the same figure stands.
 
 | where | what it is | verdict |
 |---|---|---|
@@ -134,9 +138,12 @@ reason each is left is beside it.
 | `xdata-06c2-06db-timers.md:785` | §6a's bold row | **corrected in place**, wrong wording left visible in the 2026-09-25 re-derivation note below the table |
 | `xdata-moved-ranks-fall.md:148` | §2's table row | **corrected in place**; both cells stay 833 |
 | `xdata-moved-ranks-fall.md:156-165` | "the guard itself did not change" | **corrected in place**, the word only — the paragraph's claim is untouched and re-measured |
+| `xdata-moved-ranks-427-pair.md:262,716` | §3's three-pair table header and §6's three-tree table header | **corrected in place** at the #885 merge, the word only; all six figures in both tables stand, and each header now carries a `†` to the footnote on that page. No transcript on that page carries the old word — the three `pair` runs §3 prints are the corrected convention, and the only other `pair` run there is the `KeyError` in §5, which never reaches the line — so there was no record to leave |
+| `findings.md` §69 | "§62's structural claim now rests on three measurements" | **corrected in place** at the #885 merge, the word only; the 833, the 210 and the 0 are byte-identical, and the wrong wording is left visible with the correction beside it |
 | `xdata-06c2-06db-timers.md` 2026-09-25 note | a re-derivation record | **left** — a record of that run, per §4a-4d; named from the footnote under the table |
 | `xdata-06c2-06db-timers.md:980,987` | §6b's heredoc and its output | **left** — a runnable reproduction of §6a. Relabelling the `print()` would make the transcript below it something the command no longer prints |
 | `xdata-moved-ranks-fall.md:116,129` | the two `pair` transcripts | **left** — records of two runs, the way the stale figures at `:297-307` are kept |
+| `xdata-moved-ranks-427-pair.md` §3, §5 | its `pair` transcripts | **left** — records of runs. §3's three print the corrected convention, the same word that page's two table headers now carry, and §5's is the `KeyError` that never reaches the line, so neither is a record of the old wording to keep |
 | `xdata-cluster-names-guard-off-recipe.md:129,153,160` | a copy of §6b's heredoc and a table derived from it | **left** — same reason, and it is §6b's page to correct |
 | `xdata-6a-direction-rows-pinned.md:147` | a quoted `AssertionError` | **left** — a record of a failing run |
 | `findings.md:4880` | a blockquoted historical claim | **left** — a quotation |
