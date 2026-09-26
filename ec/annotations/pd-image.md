@@ -149,9 +149,13 @@ propagated into
 [`../../docs/hardware-tests/pd-controller-enumeration.md`](../../docs/hardware-tests/pd-controller-enumeration.md),
 where it sent a human to read the EC's memory window at a CODE address.
 
-All five wrappers are the same routine with two constants swapped. They push
-the register file, load DPTR with a per-vector **CODE** address, `lcall
-0x0050`, restore, `reti`:
+The five wrappers share a shape but come in two forms, not one routine with a
+constant swapped: three are long-form (`0x0056`, `0x00B2`, `0x010E`, which do
+`mov psw,#0x00` and then push R0-R7 explicitly) and two are short-form
+(`0x0094`, `0x00F0`, which do `mov psw,#0x10` and push no R0-R7). Within a form
+the bytes are identical apart from the three DPTR immediate bytes; what
+separates the forms is PSW and the push set. All five load DPTR with a
+per-vector **CODE** address, `lcall 0x0050`, restore, `reti`:
 
 | vector | `mov dptr,#…` | `lcall` | pushes before the call | `mov psw,#…` |
 |---|---|---|---|---|

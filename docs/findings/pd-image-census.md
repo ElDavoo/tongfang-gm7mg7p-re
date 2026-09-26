@@ -83,10 +83,13 @@ quietly producing a plausible table.
 
 ## The finding that was not on the issue's list: the vector table is a table
 
-**All five interrupt entries are the same wrapper with two constants swapped,
-and the constant is a per-vector CODE address that selects a handler at run
-time.** Each pushes the register file, does `mov dptr,#<CODE>`, `lcall
-0x0050`, restores, `reti`. The shared body is
+**All five interrupt entries are the same wrapper shape in two forms, and the
+constant in each is a per-vector CODE address that selects a handler at run
+time.** Three are long-form (`0x0056`, `0x00B2`, `0x010E`: `mov psw,#0x00`
+plus eight explicit R0-R7 pushes) and two short-form (`0x0094`, `0x00F0`:
+`mov psw,#0x10`, no R0-R7 pushes), identical within a form apart from the three
+DPTR immediate bytes. Each does `mov dptr,#<CODE>`, `lcall 0x0050`, restores,
+`reti`. The shared body is
 `0x0050 call_10f1_then_jmp_1229`, and both routines it reaches are already
 named in the annotations CSV:
 

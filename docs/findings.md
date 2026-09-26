@@ -11675,10 +11675,14 @@ geometry is not the textbook one: reset at `0x00`, then `0x03 + n * 8`, with
 `0x2B`-`0x3F` erased. The sixth is the serial vector, `ljmp 0x010E`.
 8-aligning the whole table reads the padding and finds an `LJMP` at `0x00` and
 nothing at the other five. **All five interrupt entries are the same wrapper
-with two constants swapped, and the constant is a per-vector CODE address
+shape in two forms — three long-form (`0x0056`/`0x00B2`/`0x010E`,
+`mov psw,#0x00` plus eight explicit R0-R7 pushes) and two short-form
+(`0x0094`/`0x00F0`, `mov psw,#0x10`, no R0-R7 pushes), identical within a form
+apart from the three DPTR immediate bytes — and the constant in each is a
+per-vector CODE address
 (`0x0151`/`0x0154`/`0x0157`/`0x015A`/`0x015D`) that selects a handler at run
-time** — the wrapper `lcall`s `0x0050`, which reads three CODE bytes there and
-jumps through them. So the vector table is a table, and the five words in it
+time.** Each `lcall`s `0x0050`, which reads three CODE bytes there and jumps
+through them. So the vector table is a table, and the five words in it
 are constants fixed in the image: `0xA8AE` (the committed
 `event_dispatch_ff80_ffe0`), `0xF7AE`, `0xF7AF`, `0xF790` and `0xF7B0` — the
 last four are not committed entries and are not decoded. The five addresses
