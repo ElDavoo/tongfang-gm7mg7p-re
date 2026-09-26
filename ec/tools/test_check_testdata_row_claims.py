@@ -7,17 +7,21 @@ passing over while still exiting 0, and the only thing that notices is a
 reader who has already been misled -- which is how the index needed hand-repair
 twice, in #502 and #720, with no check reading that column either time. So what
 is pinned here is the line between what the tool claims and what it declines
-to check, from both sides: each rule that makes it strict, each of the six
-shapes that makes it conservative, and then **each of the nine rules dropped in
-turn**, because a rule that stops changing the answer has stopped mattering,
-which is the same defect in the suite as a check that stops firing.
+to check, from both sides: each rule that makes it strict, each of the five
+shapes and the dated-capture variant that make it conservative, and then
+**each of the nine rules dropped in turn** -- eight of them asserted to make
+the run check *more* and the ninth, the dated-capture resolution, in the other
+direction, because a rule that stops changing the answer has stopped
+mattering, whichever way the answer moves, and that is the same defect in the
+suite as a check that stops firing.
 
 The descriptions are written inline rather than stored beside the tree, and
 that is the same reason the sibling suite keeps its prose inline: a sentence
 naming a fixture and claiming an address in it is exactly what this tool
 flags, so committing one under `ec/` would make the committed-tree case red by
-construction. What the scratch cases check *against* is real text on disk, so
-the presence read is exercised rather than stubbed. The last class is the
+construction. What the scratch cases check *against* is real text on disk --
+the fixtures beside the scratch index, and the captures beside them -- so the
+presence read is exercised rather than stubbed. The last class is the
 committed tree itself, and it asserts the run reached something rather than any
 figure it reached.
 """
@@ -72,24 +76,32 @@ def a_csv(*addresses):
 
 
 class ScratchIndex:
-    """A throwaway `testdata/` and the rows of index that describe it.
+    """A throwaway `testdata/`, its `ec-watch/`, and the index that describes
+    them.
 
     One cell per row, because a case here is about a sentence, and a second
     row would only be a second thing to keep true. `note` is the third column
     verbatim, which is the point: the cell is the unit under test, not a
-    paraphrase of it.
+    paraphrase of it. The second root is `evidence/ec-watch/`, where a
+    sentence naming a dated capture is resolved, and it is empty in every case
+    that is not about one -- which is itself the point of the near-miss cases,
+    since a backticked date has to stay about the row's own fixture whether or
+    not a capture of that date exists beside it.
     """
 
     def setUp(self):
         self.root = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, self.root)
         self.testdata = os.path.join(self.root, "testdata")
+        self.captures = os.path.join(self.root, "ec-watch")
         os.mkdir(self.testdata)
+        os.mkdir(self.captures)
         self.rows = []
 
-    def write(self, rel, text=''):
-        """Create `rel` under the scratch `testdata/`, parents and all."""
-        path = os.path.join(self.testdata, rel)
+    def write(self, rel, text='', root=None):
+        """Create `rel` under the scratch `testdata/` (or `root`), parents
+        and all."""
+        path = os.path.join(root or self.testdata, rel)
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w", encoding="utf-8") as f:
             f.write(text)
@@ -104,15 +116,27 @@ class ScratchIndex:
         """Write a change-log fixture at `rel` carrying `addresses`."""
         return self.write(rel, a_csv(*addresses))
 
+    def capture(self, rel, *addresses):
+        """Write a change-log capture at `rel` under the scratch `ec-watch/`.
+
+        The same schema as a fixture, deliberately: the tool reads both as
+        text, and a capture written in a schema of its own would be testing a
+        reader no committed file exercises.
+        """
+        return self.write(rel, a_csv(*addresses), root=self.captures)
+
     def check(self):
         """The tool's `Result` for this scratch tree.
 
         The index is written to disk rather than handed in, because the tool
         reads it from `testdata/README.md` and a case that bypassed that would
-        be testing a reader no run ever uses.
+        be testing a reader no run ever uses. The capture root is handed in
+        for the same reason: it is the other tree, and a case that could not
+        point the tool at a scratch one would be a case about the committed
+        captures only.
         """
         self.write("README.md", HEADER + "".join(r + "\n" for r in self.rows))
-        return ctrc.check(self.testdata)
+        return ctrc.check(self.testdata, captures=self.captures)
 
     def verdicts(self):
         """{address: verdict} for this scratch tree, checked reading order.
@@ -190,7 +214,8 @@ class ReportsRealDrift(ScratchIndex, unittest.TestCase):
 
 
 class SkipsDeliberately(ScratchIndex, unittest.TestCase):
-    """The six shapes and the entry predicate, each as a case saying so.
+    """The five shapes, the dated-capture variant, and the entry predicate,
+    each as a case saying so.
 
     Every one of them would otherwise report a row which is true today, and a
     skip that is not deliberate is the bug. Each rule gets both halves where
@@ -341,21 +366,75 @@ class SkipsDeliberately(ScratchIndex, unittest.TestCase):
                                            "0x888D": "unresolved",
                                            "0x07D0": "resolved"})
 
-    def test_an_address_belonging_to_another_capture_is_not_this_rows(self):
-        # Row 7's own sentence. The rule is the *spelling* of the date, and
-        # the case above is why: backticked, the same date names the file the
-        # comparison is drawn from and leaves the sentence's literals about
-        # this row's own fixture.
+    def test_a_bare_date_resolves_and_its_literals_are_the_captures(self):
+        # Row 7's own sentence, and the case #794 was filed about: the two
+        # literals are `resolved` **against the capture**, and the row's own
+        # fixture carries neither, so the run is green only because the date
+        # was resolved. An implementation that ignored the date and held the
+        # sentence to the row's own files would report two misses here, and
+        # saying so is the point of the case.
         self.set("example.csv", 0x0F5D)
+        self.capture("2026-09-23-cycle-0f00-0f5f.csv", 0x0F58, 0x0F5C)
         self.row("example.csv", "is the shape the 2026-09-23 power-mode-cycle "
                                 "capture shows, where they track "
                                 "`0x0F58-0x0F5C`.")
-        self.assertEqual(self.shapes(), {"0x0F58": "another capture's address",
-                                         "0x0F5C": "another capture's address"})
+        self.assertEqual(self.shapes(), {})
+        self.assertEqual(self.verdicts(), {"0x0F58": "resolved",
+                                           "0x0F5C": "resolved"})
+        # And the claim names what it was held to, so a reader of the report
+        # cannot mistake a dated claim for one about the row's own cell.
+        self.assertEqual({c.files for c in self.check().claims},
+                         {"2026-09-23-*"})
+
+    def test_a_dated_claim_is_not_also_the_rows_own(self):
+        # The other half of the rule, and the one that makes "instead of"
+        # mean something. The row's own fixture *does* carry `0x0F58` and the
+        # capture of the date does not, so the union the issue forbade would
+        # report this as resolved where this reading reports the one
+        # disagreement the tool can raise. It is the case that makes the fix
+        # able to fail, and it is why a dated `missing` needed no wording of
+        # its own: a false claim in a dated sentence is a defect in the
+        # index's prose about a fixture exactly as one in an undated sentence
+        # is.
+        self.set("example.csv", 0x0F58)
+        self.capture("2026-09-23-cycle-0f00-0f5f.csv", 0x0F5C)
+        self.row("example.csv", "is the shape the 2026-09-23 power-mode-cycle "
+                                "capture shows, where they track "
+                                "`0x0F58-0x0F5C`.")
+        self.assertEqual(self.verdicts(), {"0x0F58": "missing",
+                                           "0x0F5C": "resolved"})
+        with contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(ctrc.report(self.check()), 1)
+
+    def test_a_bare_date_resolving_to_nothing_is_unresolved_and_not_absent(self):
+        # The other half of the whole change, and the calibration line made
+        # mechanical: a date whose `<date>-*` glob is empty has no file set to
+        # hold the sentence's literals to, so the answer is the one the other
+        # five shapes give -- "not checked by this method", never absent --
+        # and the report line names the glob that came back empty, so a reader
+        # can see *which* date failed rather than only that one did.
+        self.set("example.csv", 0x0F58)
+        self.row("example.csv", "is the shape the 2026-01-01 power-mode-cycle "
+                                "capture shows, where they track `0x0F58`.")
+        self.assertEqual(self.shapes(), {"0x0F58": "dated capture not found"})
+        result = self.check()
+        self.assertEqual(self.verdicts(), {"0x0F58": "unresolved"})
+        self.assertEqual(result.missing, 0)
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            self.assertEqual(ctrc.report(result), 0)
+        self.assertIn("2026-01-01-*", err.getvalue())
+        self.assertIn("dated capture not found", err.getvalue())
+        self.assertIn("not absent", err.getvalue())
 
     def test_a_backticked_date_is_a_file_the_comparison_is_drawn_from(self):
-        # Row 9's own sentence, and the counterpart of the case above.
+        # Row 9's own sentence, and the counterpart of the cases above: the
+        # rule is the *spelling* of the date, and this one is load-bearing in
+        # a way it was not before #794, because a capture of that date now
+        # exists beside the fixture and does *not* carry these two addresses.
+        # Read as a bare date they would both be misses.
         self.set("example.csv", 0x07C4, 0x07C6)
+        self.capture("2026-09-23-example-0700-07ff.csv", 0x07D4)
         self.row("example.csv", "A log in the committed `2026-09-23` file's "
                                 "shape — the two `0x07C4` writes and a "
                                 "`0x07C6` run.")
@@ -398,6 +477,44 @@ class SkipsDeliberately(ScratchIndex, unittest.TestCase):
         self.assertIn("not absent", err.getvalue())
         self.assertIn("watched-set span", err.getvalue())
 
+    def test_the_dated_breakdown_names_each_literal_and_its_file_set(self):
+        # The issue's "reporting each with the file it was checked against".
+        # Asserted on a **scratch** tree and never as a count over the
+        # committed one: the dated sentences there resolve, so an expected
+        # number of them would turn every dated sentence a later PR adds into a
+        # failure, which is the same trade `docs/agent-pipeline.md` records
+        # against a floor. What is pinned is that the block exists, says which
+        # glob, how wide the file set was, and what became of each literal.
+        self.set("example.csv", 0x0F5D)
+        self.capture("2026-09-23-cycle-a.csv", 0x0F58)
+        self.capture("2026-09-23-cycle-b.csv", 0x0F5C)
+        self.row("example.csv", "is the shape the 2026-09-23 power-mode-cycle "
+                                "capture shows, where they track "
+                                "`0x0F58-0x0F5C`.")
+        result = self.check()
+        self.assertEqual([pattern for pattern, _, _ in result.dated],
+                         ["2026-09-23-*"])
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            ctrc.dated_report(result)
+        block = out.getvalue()
+        self.assertIn("2026-09-23-* (2 capture(s)", block)
+        self.assertIn("row 1 0x0F58 resolved", block)
+        self.assertIn("row 1 0x0F5C resolved", block)
+
+    def test_an_unresolving_date_is_listed_in_the_breakdown_too(self):
+        # The other half of the block: a date that resolved to nothing still
+        # appears, with its verdict and its empty file set, rather than being
+        # absent from the report that says the run reached something.
+        self.set("example.csv", 0x0F58)
+        self.row("example.csv", "is the shape the 2026-01-01 power-mode-cycle "
+                                "capture shows, where they track `0x0F58`.")
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            ctrc.dated_report(self.check())
+        self.assertIn("2026-01-01-* (0 capture(s)", out.getvalue())
+        self.assertIn("row 1 0x0F58 unresolved", out.getvalue())
+
 
 class EachRuleIsLoadBearing(unittest.TestCase):
     """Every rule the tool has, dropped in turn, against the committed tree.
@@ -410,12 +527,23 @@ class EachRuleIsLoadBearing(unittest.TestCase):
     against a figure, so a fixture row added to the index later does not break
     any of them. None is a floor on the tree's size.
 
-    Four of the six shapes cannot make the run *red* by being dropped, and
+    **One rule is asserted the other way round**, the dated-capture
+    resolution, and the reason is in the helper's own name: before #794 it was
+    the `another capture's address` shape, whose loosening made the run check
+    *more*, and it is now the rule that turns row 7's two literals into claims
+    in the first place, so loosening it -- pointing the run at a capture root
+    with nothing in it -- takes them back out. A rule whose direction has
+    inverted still has to change the answer or it has stopped mattering, so the
+    assertion is the same claim with the other sign; what changed is which way
+    the answer moves.
+
+    Three of the five shapes cannot make the run *red* by being dropped, and
     saying so is part of the case: `0x07C4`/`0x07D7` really are in the file
-    row 11 names, `0x0750`/`0x0010` in the dumps row 22 names, `0x888D` in the
-    fixture header row 8 names, and `0x0F58`/`0x0F5C` in the page row 7's
-    after-dump covers. What dropping those rules does is under-report, which
-    is what the assertion is about.
+    row 11 names, `0x0750`/`0x0010` in the dumps row 22 names, and `0x888D` in
+    the fixture header row 8 names. What dropping those rules does is
+    under-report, which is what the assertion is about. The sixth entry of the
+    shape list, a dated capture that resolved to nothing, has no instance in
+    the committed tree at all, so it is pinned in a scratch case instead.
     """
 
     NEVER = re.compile(r"(?!x)x")
@@ -425,6 +553,18 @@ class EachRuleIsLoadBearing(unittest.TestCase):
         with mock.patch.multiple(ctrc, **patches):
             after = ctrc.check()
         self.assertGreater(after.checked, before.checked, why)
+
+    def assert_the_rule_costs_less_without(self, why, captures):
+        """The dated-capture resolution, whose loosening checks *fewer*.
+
+        The sibling of the helper above rather than a second copy of it: the
+        two differ in the sign of the comparison and in what is loosened, and
+        keeping them apart is what makes the inversion legible instead of a
+        special case buried in a general assertion.
+        """
+        before = ctrc.check()
+        after = ctrc.check(captures=captures)
+        self.assertLess(after.checked, before.checked, why)
 
     def test_the_page_range_rule(self):
         self.assert_the_rule_is_load_bearing(
@@ -463,11 +603,18 @@ class EachRuleIsLoadBearing(unittest.TestCase):
             "as a byte in a capture",
             code_addresses=lambda *a, **k: set())
 
-    def test_the_other_capture_rule(self):
-        self.assert_the_rule_is_load_bearing(
-            "dropping the other-capture rule checks the addresses the index "
-            "attributes to a capture this row does not name",
-            DATED_CAPTURE=self.NEVER)
+    def test_the_dated_capture_rule(self):
+        # The inverted one. With the capture root emptied, row 7's date
+        # resolves to nothing, both of its literals become the sixth shape, and
+        # the run checks two fewer claims -- which is the whole of what the
+        # resolution is for, asserted in the direction it now works.
+        empty = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, empty)
+        self.assert_the_rule_costs_less_without(
+            "with no capture root, the addresses the index attributes to a "
+            "dated capture are not checked at all, which is the exemption "
+            "#794 removed",
+            empty)
 
     def test_the_width_rule(self):
         self.assert_the_rule_is_load_bearing(
@@ -530,7 +677,8 @@ class TheCommittedTree(unittest.TestCase):
                             ('checked claims', 'claim(s) checked'),
                             ('claiming rows', 'claiming row(s)'),
                             ('passed-over literals',
-                             'passed over under the six shapes')):
+                             'passed over under the five shapes and a dated '
+                             'capture that resolves to nothing')):
             self.assertGreater(
                 counts.get(label, 0), 0,
                 f"the run reached no {name}: a run that checked nothing and a "
@@ -571,15 +719,17 @@ class TheCommittedTree(unittest.TestCase):
         self.assertEqual(self.result.rows, ctdi.check(ctdi.TESTDATA).rows)
 
     def test_the_committed_tree_exercises_every_shape(self):
-        # Each of the six has an instance in the committed index, so none of
-        # them is a rule that only ever runs in a scratch tree -- and a seventh
+        # Each of the five has an instance in the committed index, so none of
+        # them is a rule that only ever runs in a scratch tree -- and a sixth
         # shape appearing here is a change to the docstring rather than a
-        # silent widening of the check.
+        # silent widening of the check. The sixth *entry* of the docstring's
+        # list, a dated capture that resolved to nothing, is not named: the
+        # one dated sentence in the tree resolves, so the shape has no instance
+        # here by construction and the case that pins it is a scratch one.
         self.assertEqual(
             sorted({reason for _, _, reason in self.result.shapes}),
-            sorted(["another capture's address", "capture/window bound",
-                    "denial", "dump-command argument", "firmware code address",
-                    "watched-set span"]))
+            sorted(["capture/window bound", "denial", "dump-command argument",
+                    "firmware code address", "watched-set span"]))
 
     def test_the_two_door_discriminations_the_issue_names(self):
         # `0751-isolation-run-3blocks/` has no `0x0784` row and
