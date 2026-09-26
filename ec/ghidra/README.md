@@ -799,9 +799,22 @@ tallies above. That is why it is one-shot and why the tallies here are still the
 nix-pinned measurement. Auditing what it wrote is a separate command,
 `--verify-provenance` below, and it needs the full git history the two
 revisions it names live in: `git clone` without `--depth`. The agent stages
-check out with `fetch-depth: 0` and can run it; both of `ci.yml`'s checkouts
-are default-depth and cannot resolve `08b72e2` at all, which is why it is a
-full-clone command and not part of the per-commit gate.
+check out with `fetch-depth: 0` and can run it, and so does `ci.yml`'s `gates`
+job — **which is why it *is* part of the per-commit gate**:
+`.github/scripts/agent-gates.sh` runs the mode after `--check` and
+`--self-test`, and the `gates` job is the one that runs that script.
+*(Corrected 2026-09-26, issue #1009. The sentence this replaces read: "The
+agent stages check out with `fetch-depth: 0` and can run it; both of `ci.yml`'s
+checkouts are default-depth and cannot resolve `08b72e2` at all, which is why
+it is a full-clone command and not part of the per-commit gate." Both halves
+were wrong: `ci.yml:39` has been `fetch-depth: 0` since #407, and
+`agent-gates.sh:160-163` is the branch that calls the mode — so the mode has
+been in the per-commit gate, and the default-depth checkout the sentence named
+as the reason is `ci.yml`'s `workflows` job, which runs actionlint and zizmor
+and no history reader. Left visible per [`../../docs/findings.md`](../../docs/findings.md)
+§4a-4d; [`../../docs/findings/history-checkout-claims.md`](../../docs/findings/history-checkout-claims.md)
+has the rest of it, and `check_history_checkouts.py` re-derives the jobs from
+the committed workflows.)*
 
 **That warning has since been measured rather than predicted**
 (`../../docs/findings.md` §14h, issue #157). The runner's `sdas8051` was

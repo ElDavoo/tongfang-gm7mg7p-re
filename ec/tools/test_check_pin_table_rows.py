@@ -522,20 +522,26 @@ class TheCommittedTree(unittest.TestCase):
     here a reader cannot re-derive without running the tool, which is why they
     are in a case and not only in the write-up.
 
-    **The count is 106 and was 105**, and the step is #778's merge rather than
+    **The count is 107 and was 106**, and the step is #778's merge rather than
     anything this suite did: that issue's new write-up
     `xdata-two-largest-case-restatement.md` brings a pin with it, and its edit
     to `ec/tools/test_xdata_cluster_names.py` re-registered 33 more. The
     per-pin table was re-derived from the merged tree's own run to match, and
     one row was added, so rows and records moved together and the reconciled
     count is what it was plus one.
+    **The 106 is superseded with it**: #1009's write-up brings one pin of its
+    own, and its edits to `docs/findings.md` and `docs/agent-pipeline.md` move
+    seven citing lines, so one row was added and seven were repointed before
+    the run placed anything. Rows and records still move together, and all
+    seven classes are still 0 -- which is the figure that says the table
+    describes the tree rather than a total that agrees with it by accident.
     """
 
     def test_the_committed_table_reconciles_and_exits_zero(self):
         rc, out, err = run_main(check.REPO)
         self.assertEqual(rc, 0, err)
-        self.assertIn("106 table row(s) against 106 census record(s)", out)
-        self.assertIn("106 placed", out)
+        self.assertIn("107 table row(s) against 107 census record(s)", out)
+        self.assertIn("107 placed", out)
 
     def test_every_class_is_zero_on_the_committed_tree(self):
         # Not left to a prose figure. Zero is the measurement here -- the
@@ -553,7 +559,7 @@ class TheCommittedTree(unittest.TestCase):
         table, records, placed, _problems, _uncompared = check.reconcile(check.REPO)
         self.assertTrue(records)
         self.assertTrue(table)
-        self.assertEqual(placed, 106)
+        self.assertEqual(placed, 107)
 
     def test_the_committed_read_and_shape_cells_are_the_census_vocabulary(self):
         # The two vocabularies the table's own cells have to be drawn from, and
@@ -563,6 +569,13 @@ class TheCommittedTree(unittest.TestCase):
         # and the two `beside` rows the map exists for, with the 32 declined
         # rows carrying the em dash on both sides. The 53 is the 52 plus #778's
         # one new row, which the pin names by path.
+        #
+        # **#1009 takes `by-path` to 54 and nothing else**, because its one new
+        # row names its target by path too. The seven repointed rows read the
+        # same way they read before -- a repoint moves a citing line, not a
+        # spelling -- which is the same distinction the counts above are
+        # separated on, and the reason this figure moves by one here rather
+        # than by sixteen.
         read, shape = {}, {}
         for _at, cells in check.reconcile(check.REPO)[0]:
             for at, vocabulary, counts in ((2, check.READ_CELLS, read),
@@ -571,7 +584,7 @@ class TheCommittedTree(unittest.TestCase):
                 with self.subTest(cell=cells[at]):
                     self.assertIsNotNone(key)
                 counts[key] = counts.get(key, 0) + 1
-        self.assertEqual(read, {census.BY_PATH: 53, census.BY_NAME: 19,
+        self.assertEqual(read, {census.BY_PATH: 54, census.BY_NAME: 19,
                                 census.BY_BESIDE: 2, "-": 32})
         # The shape split is re-derived rather than lowered, twice. #962 adds a
         # class to `test_xdata_cluster_names.py` and corrects a docstring above
@@ -592,8 +605,14 @@ class TheCommittedTree(unittest.TestCase):
         # compares key sets, so a `census.DEF_TEST: 0` term would redden on a
         # table that is correct. This pin follows the run rather than the page
         # it was written on.
+        #
+        # #1009's one new row is a `class` header read as prose, so `other`
+        # takes it and the split is `0/15/22/5/33`. The read column above is the
+        # control for it in the other direction: the row is new rather than
+        # moved, so unlike the seven repointed rows it cannot have changed where
+        # anything lands.
         self.assertEqual(shape, {census.ASSERTION: 15, census.COMMENT: 22,
-                                 census.BLANK: 5, census.OTHER: 32, "-": 32})
+                                 census.BLANK: 5, census.OTHER: 33, "-": 32})
 
     def test_the_tool_is_not_in_the_cheap_gate_yet(self):
         # A check nobody runs is the shape of defect #819 was, so the standing

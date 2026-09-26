@@ -95,19 +95,32 @@ only covers what's specific to *this* copy.
      `--check`-only case, so this has to be re-applied with it.** The
      re-encode of the committed listing is still the deep tier's, and is
      still unscheduled.
-  3. **`--verify-provenance` needs a full git history, and `ci.yml` does not
-     have one** (2026-09-23, issue #159). The mode audits a `listing_digest`
+  3. **`--verify-provenance` needs a full git history, and every job that
+     reaches it has one** (2026-09-23, issue #159; corrected 2026-09-26, issue
+     #1009). The mode audits a `listing_digest`
      migration against two committed revisions (`docs/findings.md` §14f), so
      how deep the clone is is part of its contract the way the assembler is part
      of `--report`'s: the agent stages check out with `fetch-depth: 0`
-     (`agent-implement.yml:118`, `agent-fix.yml:116`, `agent-review.yml:64`)
-     and can run it, while both of `ci.yml`'s checkouts (`:34`, `:64`) are
-     default-depth, and `08b72e2` and `a56b3bb` do not resolve from one. It
-     therefore fails there with its history requirement rather than auditing
-     whatever happened to be checked out, and it is not in the gate for that
-     reason. Putting it in the per-commit gate is a one-line
-     `fetch-depth: 0` on those two checkouts that a human lands, and whether
-     that is worth growing every checkout for — or whether the mode stays a
+     (`agent-implement.yml:118`, `agent-fix.yml:116`, `agent-review.yml:85`,
+     `agent-conflicts.yml:156`)
+     and can run it. As this entry was first written, `ci.yml` was the other
+     half of the claim: both of its checkouts (`:39` and `:66-69` today, the
+     lines having moved since) were default-depth, and `08b72e2` and `a56b3bb`
+     did not resolve from one, so the mode failed there with its history
+     requirement rather than auditing whatever happened to be checked out, and
+     it was not in the gate for that reason. The decision below landed the next
+     day, so that is now the record of 2026-09-23 rather than a claim about the
+     tree this file sits in. **The heading this replaces read "`--
+     verify-provenance` needs a full git history, and `ci.yml` does not have
+     one",** which the decision had contradicted eleven lines below it for
+     however long it stood; it is quoted rather than deleted per
+     [`findings.md`](../docs/findings.md) §4a-4d, and
+     [`findings/history-checkout-claims.md`](findings/history-checkout-claims.md)
+     has the other copies and the derivation. Putting it in the per-commit gate
+     is a one-line
+     `fetch-depth: 0` on the `gates` job's checkout that a human lands, and
+     whether
+     that is worth growing that checkout for — or whether the mode stays a
      full-clone command like `--add-digest-column` and `--report` — is the open
      question. It is not made here: `.github/` is template-copied and the
      pipeline token has no `workflow` scope, the same reason item 1's schedule
