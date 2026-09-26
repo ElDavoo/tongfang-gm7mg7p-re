@@ -229,7 +229,16 @@ point: they read the report, and the report is unchanged.
 ## What is not claimed
 
 - **That any gate or workflow runs this tool.** None does, before or after.
-  `docs/ci/` holds five `agent-gates-*.patch` files and none for this checker;
+  `docs/ci/` holds **six** `agent-gates-*.patch` files and none for this
+  checker. Six is a count taken rather than one carried: `ls docs/ci/*.patch`
+  reads six here, and on `d3304785`, and on `origin/main`'s `5244f119` — and
+  [`../findings.md`](../findings.md) already reasons about "a seventh", so
+  this page's **five** was the outlier and it matched no tree this branch
+  could have measured. It is the issue's plan's figure, brought here into a
+  page whose stated value is that its figures were run, and it is left written
+  with this correction beside it per §4a-4d rather than quietly overwritten.
+  The half of the claim that carries the argument needs no number at all:
+  **no patch under `docs/ci/` names `check_history_checkouts.py`.**
   `.github/scripts/agent-gates.sh` is copied from `ElDavoo/agent-pipeline`, so
   a gate call is an upstream change and a re-copy, not a line here. #1033 is
   the issue that wants one, and this page is written so it starts from a

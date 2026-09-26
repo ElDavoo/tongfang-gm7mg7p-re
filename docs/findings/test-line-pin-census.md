@@ -1014,12 +1014,17 @@ on purpose, 32 are declined, and none is unresolvable.** *(Those are the counts
 on the merged tree; the 27/3/1/6/7/6 this page was written with, the
 32/3/0/9/10/16 #850's merge measured, the 34/2/9/10/16 #888's, the
 32/2/11/10/16 #888 × #890's, the 32/2/13/10/16 #888 × #885's, the
-48/2/13/10/32 #885 × #771's, the 50/2/11/10/32 #930's repoint,
-the 51/2/11/10/32 #778's merge and the 43/2/19/10/32 `d3304785` measured are
+48/2/13/10/32 #885 × #771's, the 50/2/11/10/32 #930's repoint and
+the 51/2/11/10/32 #778's merge measured are
 the record of the trees they were taken on and
-are kept in the sentence rather than deleted, per §4a-4d — the last of them
-being the figure this sentence read at every commit from `d3304785` to
-`origin/main`'s `5244f119`, and the step that made it stale is named in its own
+are kept in the sentence rather than deleted, per §4a-4d. The
+`43/2/19/10/32` this sentence also carried is the one entry here that is
+**not a measurement of any tree**: it is the figure the sentence held
+unre-counted from `d3304785`, whose own table is 107 rows and reads
+`44/2/19/10/32` — as `5244f119` and this tree do — so the five columns summed
+to 106 over a 107-row table for the whole of that window, and the head
+sentence reads `44` for that reason. It is left written rather than deleted,
+per §4a-4d, and the step that made it stale is named in its own
 paragraph below.** Nine moves, and the
 fifth is the one worth reading twice: #850's took the class 50 → 69 pins, #888's
 took it 69 → 71 by adding two rows that **carried** on its own tree, #890's
