@@ -78,8 +78,10 @@ Usage:
     python3 ec/tools/verify_reassembly.py --add-digest-column       # one-shot
     python3 ec/tools/verify_reassembly.py --verify-provenance \\
         --base 08b72e2 --migration a56b3bb --listings-from 8c7985e
-        # audit a digest migration against history; needs a full clone,
-        # so ci.yml's default-depth checkouts cannot run it
+        # audit a digest migration against history; needs a full clone.
+        # ci.yml's `gates` job has one (`fetch-depth: 0`) and is the job that
+        # runs the gate; its `workflows` job is default-depth and runs no
+        # history reader, so it never reaches this mode
 """
 import argparse
 import csv
@@ -1310,15 +1312,19 @@ PROVENANCE_KEY = ("program", "addr")
 
 # The mode reads two revisions out of the repository's own history, so how deep
 # the clone is is part of its contract the way the assembler is part of
-# --report's. The agent stages check out with `fetch-depth: 0` and can run it;
-# both of ci.yml's checkouts are default-depth and cannot resolve the
-# revisions §14f names at all. See docs/agent-pipeline.md.
+# --report's. Every job that runs `.github/scripts/agent-gates.sh` -- ci.yml's
+# `gates` and the agent stages' `implement`, `fix` and `resolve` -- checks out
+# with `fetch-depth: 0` and can run it. ci.yml's other checkout, its `workflows`
+# job, is the default-depth one and runs actionlint and zizmor only, so it never
+# reaches the mode. The four are re-derived from the committed workflows by
+# `check_history_checkouts.py`, and see docs/agent-pipeline.md.
 HISTORY_REQUIREMENT = (
     "  This mode answers from the repository's history, so it needs a full\n"
     "  clone: `git clone` without --depth, or `git fetch --unshallow` in one\n"
     "  that is shallow. A default-depth checkout -- actions/checkout's default,\n"
-    "  which is what ci.yml uses -- has neither revision, and a mode that\n"
-    "  carried on anyway would be auditing whatever happened to be checked out.")
+    "  which is what ci.yml's `workflows` job uses, though that job runs no\n"
+    "  history reader -- has neither revision, and a mode that carried on\n"
+    "  anyway would be auditing whatever happened to be checked out.")
 
 
 def _git(*args):

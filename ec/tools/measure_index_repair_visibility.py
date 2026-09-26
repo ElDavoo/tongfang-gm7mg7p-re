@@ -106,17 +106,22 @@ UNPACK = ({"filter": "data"}
 
 # The mode answers from the repository's own history, so how deep the clone is
 # is part of its contract the way the assembler is part of
-# `verify_reassembly.py --report`'s. Worded from what the workflows say today
-# rather than carried over from `verify_reassembly.py`'s own copy of that
-# sentence, which was written before `ci.yml` moved to a full checkout and no
-# longer matches it.
+# `verify_reassembly.py --report`'s. Worded from the workflows themselves rather
+# than carried over from the sibling's copy of the paragraph, which named no
+# job and called all of `ci.yml` default-depth while its `gates` job -- the one
+# that runs the gate -- has been `fetch-depth: 0` since #407 (`cc2ab10d`). The
+# two files agree now; `docs/findings/history-checkout-claims.md` carries the
+# wording this replaces beside the correction, per `docs/findings.md` §4a-4d, and
+# `check_history_checkouts.py` re-derives the jobs it names from the committed
+# workflows.
 HISTORY_REQUIREMENT = (
     "  This tool answers from the repository's history, so it needs a full\n"
     "  clone: `git clone` without --depth, or `git fetch --unshallow` in one\n"
-    "  that is shallow. The agent stages and ci.yml both check out with\n"
-    "  `fetch-depth: 0` and can resolve these revisions; a default-depth\n"
-    "  checkout has neither of them, and this tool would go on to report a\n"
-    "  count of zero over a tree it never read.")
+    "  that is shallow. The jobs that run a history reader -- ci.yml's `gates`\n"
+    "  and the agent stages' -- check out with `fetch-depth: 0` and can resolve\n"
+    "  these revisions; a default-depth checkout, which is what ci.yml's\n"
+    "  `workflows` job uses, has neither of them, and this tool would go on to\n"
+    "  report a count of zero over a tree it never read.")
 
 
 def _git(*args, repo=None):

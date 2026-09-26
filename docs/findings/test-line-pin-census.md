@@ -34,10 +34,10 @@ census, and the count it starts from.
 
 ```console
 $ python3 ec/tools/census_test_line_pins.py
-106 pin(s) in 28 markdown file(s): 79 distinct spelling(s), 58 distinct resolved target(s)
-  74 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 32 declined
-  0 def test_, 15 assertion, 22 comment, 5 blank, 32 other (of the pins that resolve)
-  read 161 markdown file(s) under the tree, excluding .git/vendor/ and docs/findings/test-line-pin-census.md; resolved against 40 test file(s) in it
+107 pin(s) in 29 markdown file(s): 80 distinct spelling(s), 59 distinct resolved target(s)
+  75 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 32 declined
+  0 def test_, 15 assertion, 22 comment, 5 blank, 33 other (of the pins that resolve)
+  read 163 markdown file(s) under the tree, excluding .git/vendor/ and docs/findings/test-line-pin-census.md; resolved against 42 test file(s) in it
   no claim is measured here: whether a cited line still carries the claim it is cited for is a reading, and it is docs/findings/test-line-pin-census.md's table
 $ echo $?
 0
@@ -901,13 +901,13 @@ the claim it is cited for", which is the half no tool in this tree can make and
 the half this table exists to record.
 
 | citing | cited target | read | shape | verdict |
-| `docs/agent-pipeline.md:345` | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
-| [`../findings.md`](../findings.md):4206 | `test_manual_fan_ctrl_probe.py:38-40` | by-name | comment | **records another line** |
-| [`../findings.md`](../findings.md):4208 | `test_ec_watch.py:86-89` | by-name | other | **records another line** |
-| [`../findings.md`](../findings.md):7193 † | `test_xdata_cluster_names.py:286` | by-name | other | **does not carry** |
-| [`../findings.md`](../findings.md):7406 † | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
-| [`../findings.md`](../findings.md):7467 † | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries |
-| [`../findings.md`](../findings.md):9209 † | `ec/tools/test_xdata_cluster_names.py:400` | by-path | other | **does not carry** |
+| `docs/agent-pipeline.md:358` | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
+| [`../findings.md`](../findings.md):4212 | `test_manual_fan_ctrl_probe.py:38-40` | by-name | comment | **records another line** |
+| [`../findings.md`](../findings.md):4214 | `test_ec_watch.py:86-89` | by-name | other | **records another line** |
+| [`../findings.md`](../findings.md):7199 † | `test_xdata_cluster_names.py:286` | by-name | other | **does not carry** |
+| [`../findings.md`](../findings.md):7412 † | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
+| [`../findings.md`](../findings.md):7473 † | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries |
+| [`../findings.md`](../findings.md):9215 † | `ec/tools/test_xdata_cluster_names.py:400` | by-path | other | **does not carry** |
 | [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md):221 | `test_manual_fan_ctrl_probe.py:905` | by-name | assertion | carries |
 | [`0751-capture-row-shape.md`](0751-capture-row-shape.md):41 | `test_grade_0751_isolation.py:3608` | by-name | other | **records another line** |
 | [`0751-grader-block-scoping.md`](0751-grader-block-scoping.md):99 | `ec/tools/test_grade_0751_isolation.py:2232-2233` | by-path | assertion | **does not carry** |
@@ -972,6 +972,7 @@ the half this table exists to record.
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):190 | `ec/tools/test_xdata_cluster_names.py:307` | by-path | comment | **records another line** |
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):194 | `ec/tools/test_xdata_cluster_names.py:481` | by-path | comment | carries |
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):202 | `test_xdata_cluster_names.py:307` | by-name | comment | **records another line** |
+| [`history-checkout-claims.md`](history-checkout-claims.md):243 | `ec/tools/test_measure_index_repair_visibility.py:373-391` | by-path | other | carries |
 | [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md):71 | `ec/tools/test_disasm8051.py:52` | — | — | **declined** (fenced) |
 | [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md):122 | `test_disasm8051.py:52` | by-name | comment | carries |
 | [`runner-red-suite-set.md`](runner-red-suite-set.md):103 | `tools/test_readme_suite_table.py:11-20` | by-path | other | carries |
@@ -3124,3 +3125,48 @@ firmware, and the mission's eventual
 `Wer-Wolf/uniwill-laptop`/`tuxedo-drivers` contribution stays a prepared patch
 in this repository for a human to submit, per issue #10. Nothing is opened in
 another repository.
+
+*(A #1009 merge note, 2026-09-26, and it is the seventh time this page's own
+headcount has been re-derived rather than differenced. **107 pins in 29 files,
+80 spellings, 59 targets, 75 resolves against 32 declined**, the shape split
+`0/15/22/5/33`, and the block at the top re-transcribed from a run on this tree:
+the `106` / `28` / `79` / `58` / `74` / `32` / `0/15/22/5/32` and the `161`
+markdown files and `40` test files it carried are left written above, each true
+of the tree it was measured on, per
+[`../findings.md`](../findings.md) §4a-4d. **Every one of the six moved by
++1 and the arithmetic is a single new record:**
+[`history-checkout-claims.md`](history-checkout-claims.md) cites
+`ec/tools/test_measure_index_repair_visibility.py:373-391` by path — a
+`class CommittedRepairTests` header read as prose, which is why `other` is the
+column that takes it and not one of the others. `check_pin_table_rows.py` reads
+**107 rows, 107 records, 107 placed, all seven classes 0**; the `106` the prose
+above carries stays written. The table gained that one row, in sorted position
+between `doc-figure-pin-audit.md:202` and `opcode-len-bounds-census.md:71`.)*
+
+*(**The seven repointed rows are not in that arithmetic, and the distinction is
+the one this page exists to make.** #1009's corrections to `docs/findings.md`'s
+§14f and to `docs/agent-pipeline.md`'s item 3 are retractions written in place
+per §4a-4d, and in place means in those files: **six lines go into
+`findings.md` above every pin into it, and thirteen into `agent-pipeline.md`
+above the one pin into that.** So `agent-pipeline.md:345` is now `:358` and
+`findings.md`'s `4206`/`4208`/`7193`/`7406`/`7467`/`9209` are now
+`4212`/`4214`/`7199`/`7412`/`7473`/`9215`, each repointed in place and each
+checked to still name what its sentence names. **A repoint moves a citing line
+and not a record**, so none of the seven is in the headcount above, the `by-path`
+column takes exactly one from the new row rather than sixteen, and the
+`test_*.py:NNN` targets are all unmoved — which is the difference between this
+merge and the six before it, and the reason `check_pin_table_rows.py` rather
+than `census_test_line_pins.py` is the tool that had to be run to find them.)*
+
+*(**The by-cited-file axis moves two of its three figures, and #978's did not.**
+`ec/tools/test_check_history_checkouts.py` is indexed and no committed markdown
+cites a line of it, so it joins the tail — and #1009's write-up's one pin names
+`test_measure_index_repair_visibility.py`, which no pin named before, so that
+suite *leaves* it. One in and one out, and the reading is **42 indexed / 12
+named / 30 named by none**, with the tail's own figure unmoved at `30`; the
+`41 / 11 / 30` stays written, true of the tree between #978's merge and this
+one. The concentration the argument rests on is untouched: `44 of 107` name one
+suite and `80 of 107` name the two, the two rows themselves reading `44` and
+`36` exactly as before. **A pin added to a file the table did not carry is
+invisible in the concentration and visible only in the total**, which is what
+separates this axis from the count above it.)*

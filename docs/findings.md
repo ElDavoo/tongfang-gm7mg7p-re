@@ -3373,9 +3373,15 @@ The numbers are this section's: the 2,705 control, the empty diff, the
 2,705/2,705. `--listings-from` is passed rather than defaulted, because
 `8c7985e` is not `08b72e2`'s direct parent and the printed count should not
 depend on it being one. It reads the two revisions out of the repository's
-history, so it needs a full clone — the agent stages have one
-(`fetch-depth: 0`) and `ci.yml`'s two checkouts do not; the mode says so in the
-failure message and `docs/agent-pipeline.md` records it. What it prints is the
+history, so it needs a full clone — every job that runs a history reader has
+one (`fetch-depth: 0`, `ci.yml`'s `gates` job included, since #407), while
+`ci.yml`'s `workflows` job is the default-depth one and runs no history reader;
+the mode says so in the failure message and `docs/agent-pipeline.md` records it.
+*(Corrected 2026-09-26, issue #1009: this sentence read "the agent stages have
+one (`fetch-depth: 0`) and `ci.yml`'s two checkouts do not", which was true of
+no committed tree since #407 and is left here per §4a-4d.
+[`findings/history-checkout-claims.md`](findings/history-checkout-claims.md)
+has the derivation and the four further copies.)* What it prints is the
 claim above and nothing more: the digests are of the text the last full
 `--report` measured, and they attest to that text rather than verifying it.
 
@@ -10706,3 +10712,62 @@ to make a tool green is why the edit is a paragraph. No `status:` moved, so
 `ec/annotations/registers.yaml` is not touched; no fixture, row, capture, `.asm`
 or `.c` is edited; no gate is wired, which is also the right tier call for a
 mode that needs full history; and no `gh pr create` anywhere.
+
+## 80. Seven sentences about CI's checkouts are corrected, and one checker now re-derives them (2026-09-26, issue #1009)
+
+Four sentences in `ec/tools/verify_reassembly.py` and
+`ec/tools/measure_index_repair_visibility.py` described what this repository's
+checkouts can do, and all four said the whole of `ci.yml` was default-depth.
+**`ci.yml`'s `gates` job has been `fetch-depth: 0` since 2026-09-24** —
+commit `cc2ab10d`, PR #411 closing #407 — and that same commit added the
+`--verify-provenance` call to `.github/scripts/agent-gates.sh`. The sentence
+naming the shallow case was naming the *other* job in the file, `workflows`,
+which runs actionlint and zizmor and no history reader. §14f's sentence above
+and `ec/ghidra/README.md`'s were the two further copies; `docs/agent-pipeline.md`
+item 3 was the sharpest, its heading contradicted by its own decision
+paragraph eleven lines below. **Seven sites, all left readable with the old
+wording beside the correction**; the write-up is
+[`history-checkout-claims.md`](findings/history-checkout-claims.md).
+
+**This is a correction to prose and not to behaviour.** `--verify-provenance`
+still needs a full clone and nothing here changes what the mode does. **And
+nothing here is a claim that the mode has ever passed in CI** — a workflow that
+says a job runs a gate is not an observation of the gate having run, and the
+issue does not claim that either.
+
+**`ec/tools/check_history_checkouts.py` is new, a separate file per
+`CLAUDE.md`'s rule, and it re-derives the claim from the committed workflows.**
+It prints every `actions/checkout` step's effective depth — the explicit
+`fetch-depth`, or the action's default of 1 where a step states none — and
+asserts the **inverse** of the stale claim: every job that runs a history reader
+has a full-depth checkout. A re-copy of `ci.yml` from the `agent-pipeline`
+template that drops the `fetch-depth: 0` breaks no job and turns the cheap gate
+red with a *history requirement* message that reads like a provenance failure
+rather than like a workflow accident, which is the failure it exists to catch.
+The second half prints every depth claim in the two tools with its `file:line`
+and the fact it should have been derived from, and asserts the one rule
+decidable without reading English: **a sentence that asserts a workflow's
+checkout depth names the job.** All four stale sentences fail it; all four
+corrected ones pass. It is a floor and not a proof — job ids here are ordinary
+English words, so it holds the defect's shape and not its content.
+
+**A measurement worth its own line, because the issue's own wording repeats the
+defect it describes:** the issue said `claude.yml:72`'s `fetch-depth: 1` is "the
+only shallow checkout" in the repository's own workflows. It is not — it is the
+only one that *states* a depth other than 0. `agent-plan.yml`'s `plan` job and
+`agent-followups.yml`'s `followups` job state nothing and are the action's
+default, which is also 1. The four are all shallow; the table says which of
+them said so, and that word is the whole correction.
+
+**Two facts recorded for other issues rather than acted on here.** #997's "the
+tree's only suite that reads git history" is no longer true —
+`ec/tools/test_measure_index_repair_visibility.py`'s `CommittedRepairTests`
+resolves both repair revisions in `setUp` and skips when the clone is shallow —
+and no committed
+file carries that sentence, so there is nothing here to retract. And the
+shared-definition option for the two tools' copies is **declined with a reason
+on the page**: the strings differ by a word, the tools are not importable by
+name from outside their directory, and the failure here was not the sharing
+decision but that nothing compared either copy against the workflows. The
+checker is that comparison. **Not in any gate**, for the reason
+`tools/test_readme_suite_table.py` is not either.
