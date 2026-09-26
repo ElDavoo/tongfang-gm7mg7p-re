@@ -25,8 +25,9 @@ decided*, 5 of the 73 that resolve land on a `def test_` header and 6 land on
 a blank line, so no single anchor covers them and a rule that rendered a
 verdict would redden on sentences that are true. What this checks is that the
 table still **describes** the run. Whether a pin carries its claim stays a
-reading a human looked at, and `docs/findings/test-line-repoint-563.md`'s "*
-`carries` is a reading, and it is a reading somebody looked at*" stays true.
+reading a human looked at, and `docs/findings/test-line-pin-repoint-563.md`'s
+:33 — **"Both carry" is a reading, and it is a reading somebody looked at.** —
+stays true.
 
 **And it exits 0 on a tree where every verdict is wrong.** That standing is the
 whole reason this is not the checker the write-up declines to ship, and the

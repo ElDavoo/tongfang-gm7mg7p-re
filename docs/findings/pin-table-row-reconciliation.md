@@ -32,8 +32,8 @@ Four times, each paid by a person rather than by a run:
 
 | when | what moved | what it took |
 |---|---|---|
-| #891 | the census write-up's own citing lines, `:319` → `:383` and `:331` → `:395` | re-reading `--verbose` against the table |
-| #889's note | two more citing lines in the same file | the same |
+| #891 | `xdata-moved-ranks-fall.md`'s citing lines, as the census write-up's merged-tree note records: `:319` → `:383` and `:331` → `:395` | re-reading `--verbose` against the table |
+| #889's note | two more citing lines in that same file | the same |
 | #930 | `../findings.md:9046` → `:9077`, re-registered in the merge that landed the correction above it | the same |
 | #920 | six `> 300` pins to repoint, still open | still open |
 
@@ -199,3 +199,14 @@ split.
 
 Nothing here reads firmware, opens a capture, or reads back a register, and
 nothing in it needs the machine.
+
+One red line in that run is not this branch's. `tools/run-tests.sh` ends
+`36 suite(s) run, 1112 tests; one or more FAILED`, and the single failing suite
+is `ec/tools/test_check_cluster_citations.py`'s
+`test_committed_prose_matches_committed_census`:
+[`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md):220
+cites `0x0464` and `0x0465`, which are members of `main-ec-145` and of none of
+the clusters that line names. It reproduces identically in a clean worktree at
+`origin/main`, and this branch touches neither that recipe nor
+`ec/annotations/xdata-clusters.csv`, so it is pre-existing and has nothing to do
+with the tool above. The new suite is green in the same run: 36 tests, passed.

@@ -313,8 +313,8 @@ class StandingTests(unittest.TestCase):
         # The standing, and the reason this is not the checker
         # `docs/findings/test-line-pin-census.md` declines to ship. It renders
         # no verdict, so the reading stays a reading somebody looked at, and
-        # `docs/findings/test-line-repoint-563.md`'s "carries is a reading, and
-        # it is a reading somebody looked at" stays true.
+        # `docs/findings/test-line-pin-repoint-563.md`'s :33 — **"Both carry" is
+        # a reading, and it is a reading somebody looked at.** — stays true.
         rc, out, _err = run_main(tree(green(**{DOC: table(self.WRONG)})))
         self.assertEqual(rc, 0)
         self.assertIn("1 placed", out)
