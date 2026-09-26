@@ -645,12 +645,24 @@ class TheCommittedTree(unittest.TestCase):
         # write-up did two issues ago. One in, none out, and the named count
         # unmoved: **44 / 12 / 32**. The `43 / 12 / 31` above stays written, true
         # of the tree it was measured on, per §4a-4d.
+        # **Issue #95's step is `44 -> 45` and it moves one figure, for #811's
+        # reason a fourth time.** Its `bios/tools/test_ifr_census.py` is indexed
+        # and no committed markdown cites a line of it -- `tools/README.md`'s
+        # suite row, `bios/ifr/README.md` and
+        # `docs/findings/ifr-charge-and-battery-options.md` each name the suite
+        # and the tool *by path* -- so the tail takes it. That was the choice
+        # again rather than an accident: a line pin would have added a record and
+        # moved the 107 / 80 / 59 the census prints and the 107-row table
+        # `check_pin_table_rows.py` reconciles, and that table is a second
+        # shared-file edit with no bearing on this axis. One in, none out, and
+        # the named count unmoved: **45 / 12 / 33**. The `44 / 12 / 32` above
+        # stays written, true of the tree it was measured on, per §4a-4d.
         records, _files = census.census(tool.REPO)
         files, _index = census.suites(tool.REPO)
         tail = tool.unpinned(records, files)
-        self.assertEqual(len(files), 44)
+        self.assertEqual(len(files), 45)
         self.assertEqual(len(files) - len(tail), 12)
-        self.assertEqual(len(tail), 32)
+        self.assertEqual(len(tail), 33)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):
         # The self-reference, held with its reason rather than left to be

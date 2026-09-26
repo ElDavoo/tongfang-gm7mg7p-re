@@ -1,0 +1,20 @@
+Program version: 1.6.1, Extraction mode: UEFI, SHA256: ed5dd2a0d9cbfa546ca06d1758d9a21715b44978f1889f1bd025f2b96dc364a6
+0x6B78: FormSet Guid: 5E39CF2E-6712-45AB-84C4-35D3C6A3686D, Title: "NVMe controller and Drive information", Help: "NVMe controller and Drive information." { 0E A7 2E CF 39 5E 12 67 AB 45 84 C4 35 D3 C6 A3 68 6D 03 00 04 00 01 71 99 03 93 45 85 04 4B B4 5E 32 EB 83 26 04 0E }
+0x6B9F: 	Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Class, Class: 0xD1 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 03 D1 00 }
+0x6BB4: 	Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: SubClass, SubClass: 0x0 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 04 00 00 }
+0x6BC9: 	DefaultStore DefaultId: 0x0, Name: "" { 5C 06 00 00 00 00 }
+0x6BCF: 	DefaultStore DefaultId: 0x1, Name: "" { 5C 06 00 00 01 00 }
+0x6BD5: 	VarStore Guid: BCBF9F27-91AB-4098-A21C-8BC16E089901, VarStoreId: 0x28DD, Size: 0x4, Name: "NvmeDynamicSetupVar" { 24 2A 27 9F BF BC AB 91 98 40 A2 1C 8B C1 6E 08 99 01 DD 28 04 00 4E 76 6D 65 44 79 6E 61 6D 69 63 53 65 74 75 70 56 61 72 00 }
+0x6BFF: 	Form FormId: 0x1, Title: "NVMe controller and Drive information" { 01 86 01 00 03 00 }
+0x6C05: 		Subtitle Prompt: "NVMe Configuration", Help: "", Flags: 0x0 { 02 87 02 00 00 00 00 }
+0x6C0C: 		End  { 29 02 }
+0x6C0E: 		Subtitle Prompt: "", Help: "", Flags: 0x0 { 02 87 1C 00 00 00 00 }
+0x6C15: 		End  { 29 02 }
+0x6C17: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x640 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 00 10 }
+0x6C2C: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0x641 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 01 10 }
+0x6C41: 	End  { 29 02 }
+0x6C43: 	Form FormId: 0x2, Title: "NVMe controller and Drive information" { 01 86 02 00 03 00 }
+0x6C49: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0xC80 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 00 20 }
+0x6C5E: 		Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Label, LabelNumber: 0xC81 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 00 01 20 }
+0x6C73: 	End  { 29 02 }
+0x6C75: End  { 29 02 }

@@ -1,0 +1,104 @@
+Program version: 1.6.1, Extraction mode: UEFI, SHA256: ac6c79971d03cd1898dfe9ed621950178068ff6aee61d15efd32f74488f4eefc
+0x1FC78: FormSet Guid: CEE81408-4764-4314-AB17-5D61691BDA1F, Title: "Realtek Ethernet Controller", Help: "Get driver information and configure Realtek ethernet controller parameter" { 0E A7 08 14 E8 CE 64 47 14 43 AB 17 5D 61 69 1B DA 1F 02 00 03 00 01 71 99 03 93 45 85 04 4B B4 5E 32 EB 83 26 04 0E }
+0x1FC9F: 	Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Class, Class: 0x4 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 03 04 00 }
+0x1FCB4: 	Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: SubClass, SubClass: 0x0 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 04 00 00 }
+0x1FCC9: 	DefaultStore DefaultId: 0x0, Name: "" { 5C 06 00 00 00 00 }
+0x1FCCF: 	DefaultStore DefaultId: 0x1, Name: "" { 5C 06 00 00 01 00 }
+0x1FCD5: 	VarStore Guid: CEE81408-4764-4314-AB17-5D61691BDA1F, VarStoreId: 0x1200, Size: 0x7DE, Name: "RtkNvData" { 24 20 08 14 E8 CE 64 47 14 43 AB 17 5D 61 69 1B DA 1F 00 12 DE 07 52 74 6B 4E 76 44 61 74 61 00 }
+0x1FCF5: 	Form FormId: 0x1, Title: "Realtek Ethernet Controller Configuration" { 01 86 01 00 04 00 }
+0x1FCFB: 		Subtitle Prompt: "Driver Information", Help: "", Flags: 0x0 { 02 87 18 00 00 00 00 }
+0x1FD02: 		End  { 29 02 }
+0x1FD04: 		Text Prompt: "Driver Name:", Help: "", Text: "%s" { 03 08 1A 00 17 00 1B 00 }
+0x1FD0C: 		Text Prompt: "Driver Version:", Help: "", Text: "%s" { 03 08 1C 00 17 00 1D 00 }
+0x1FD14: 		Text Prompt: "Driver Released Date:", Help: "", Text: "%s" { 03 08 1E 00 17 00 1F 00 }
+0x1FD1C: 		Subtitle Prompt: "", Help: "", Flags: 0x0 { 02 87 17 00 00 00 00 }
+0x1FD23: 		End  { 29 02 }
+0x1FD25: 		Subtitle Prompt: "Device Information", Help: "", Flags: 0x0 { 02 87 20 00 00 00 00 }
+0x1FD2C: 		End  { 29 02 }
+0x1FD2E: 		Text Prompt: "Device Name:", Help: "", Text: "%s" { 03 08 21 00 17 00 22 00 }
+0x1FD36: 		Text Prompt: "PCI Slot:", Help: "The PCI address of Realtek ethernet controller", Text: "%02d:%02d:%02d" { 03 08 26 00 27 00 28 00 }
+0x1FD3E: 		Text Prompt: "MAC Address:", Help: "Current network address", Text: "%02x:%02x:%02x:%02x:%02x:%02x" { 03 08 23 00 24 00 25 00 }
+0x1FD46: 		Subtitle Prompt: "", Help: "", Flags: 0x0 { 02 87 17 00 00 00 00 }
+0x1FD4D: 		End  { 29 02 }
+0x1FD4F: 		Subtitle Prompt: "Patent Information", Help: "", Flags: 0x0 { 02 87 2B 00 00 00 00 }
+0x1FD56: 		End  { 29 02 }
+0x1FD58: 		Text Prompt: "This product is covered by one or more of the following patents:", Help: "", Text: "" { 03 08 2C 00 17 00 00 00 }
+0x1FD60: 		Text Prompt: "%s", Help: "", Text: "" { 03 08 2D 00 17 00 00 00 }
+0x1FD68: 		Subtitle Prompt: "", Help: "", Flags: 0x0 { 02 87 17 00 00 00 00 }
+0x1FD6F: 		End  { 29 02 }
+0x1FD71: 		DisableIf  { 1E 82 }
+0x1FD73: 			EqIdVal QuestionId: 0x2, Value: 0x0 { 12 06 02 00 00 00 }
+0x1FD79: 			Ref Prompt: "RealManage Setup", Help: "", QuestionFlags: 0x4, QuestionId: 0x3000, VarStoreId: 0x0, VarStoreInfo: 0xFFFF, FormId: 0xB { 0F 0F 2E 00 17 00 00 30 00 00 FF FF 04 0B 00 }
+0x1FD88: 		End  { 29 02 }
+0x1FD8A: 	End  { 29 02 }
+0x1FD8C: 	Form FormId: 0xB, Title: "Realtek RealManage Setup" { 01 86 0B 00 30 00 }
+0x1FD92: 		Subtitle Prompt: "Realtek RealManage Setup", Help: "", Flags: 0x0 { 02 87 30 00 00 00 00 }
+0x1FD99: 		End  { 29 02 }
+0x1FD9B: 		Ref Prompt: "RealManage Setup", Help: "Configure DASH(Desktop and Mobile Architecture for System Hardware) setting. DASH is a web services-based standard that can support both in-band and out-of-band management.", QuestionFlags: 0x4, QuestionId: 0x3002, VarStoreId: 0x0, VarStoreInfo: 0xFFFF, FormId: 0x2 { 0F 0F 2E 00 2F 00 02 30 00 00 FF FF 04 02 00 }
+0x1FDAA: 	End  { 29 02 }
+0x1FDAC: 	Form FormId: 0x2, Title: "Realtek RealManage Setup" { 01 86 02 00 30 00 }
+0x1FDB2: 		Subtitle Prompt: "Realtek RealManage Setup", Help: "", Flags: 0x0 { 02 87 30 00 00 00 00 }
+0x1FDB9: 		End  { 29 02 }
+0x1FDBB: 		DisableIf  { 1E 82 }
+0x1FDBD: 			EqIdVal QuestionId: 0x1, Value: 0x0 { 12 06 01 00 00 00 }
+0x1FDC3: 			Ref Prompt: "Host Configuration", Help: "Configure DASH host settings", QuestionFlags: 0x4, QuestionId: 0x3003, VarStoreId: 0x0, VarStoreInfo: 0xFFFF, FormId: 0x3 { 0F 0F 31 00 32 00 03 30 00 00 FF FF 04 03 00 }
+0x1FDD2: 			Ref Prompt: "TCP/IP Configuration", Help: "Configure DASH TCP/IP settings", QuestionFlags: 0x4, QuestionId: 0x3004, VarStoreId: 0x0, VarStoreInfo: 0xFFFF, FormId: 0x4 { 0F 0F 34 00 35 00 04 30 00 00 FF FF 04 04 00 }
+0x1FDE1: 			Ref Prompt: "Setup and Configuration", Help: "Configure DASH security settings", QuestionFlags: 0x4, QuestionId: 0x3006, VarStoreId: 0x0, VarStoreInfo: 0xFFFF, FormId: 0x6 { 0F 0F 3A 00 3B 00 06 30 00 00 FF FF 04 06 00 }
+0x1FDF0: 			Action Prompt: "Save RealManage Configuration", Help: "Save RealManage Configuration to NvRam", QuestionFlags: 0x4, QuestionId: 0x1006, VarStoreId: 0x0, VarStoreInfo: 0xFFFF, QuestionConfig: "" { 0C 8F 10 00 11 00 06 10 00 00 FF FF 04 00 00 }
+0x1FDFF: 			End  { 29 02 }
+0x1FE01: 		End  { 29 02 }
+0x1FE03: 	End  { 29 02 }
+0x1FE05: 	Form FormId: 0x3, Title: "Host Configuration" { 01 86 03 00 33 00 }
+0x1FE0B: 		Subtitle Prompt: "Host Configuration", Help: "", Flags: 0x0 { 02 87 33 00 00 00 00 }
+0x1FE12: 		End  { 29 02 }
+0x1FE14: 		String Prompt: "Host Name", Help: "Set or change DASH host name", QuestionFlags: 0x4, QuestionId: 0x2001, VarStoreId: 0x1200, VarStoreInfo: 0x148, MinSize: 0x6, MaxSize: 0xF, Flags: 0x0 { 1C 90 3D 00 3E 00 01 20 00 12 48 01 04 06 0F 00 }
+0x1FE24: 		End  { 29 02 }
+0x1FE26: 	End  { 29 02 }
+0x1FE28: 	Form FormId: 0x4, Title: "TCP/IP Configuration" { 01 86 04 00 36 00 }
+0x1FE2E: 		Subtitle Prompt: "TCP/IP Configuration", Help: "", Flags: 0x0 { 02 87 36 00 00 00 00 }
+0x1FE35: 		End  { 29 02 }
+0x1FE37: 		OneOf Prompt: "DHCPv4", Help: "Enable or Disble DASH DHCP service", QuestionFlags: 0x14, QuestionId: 0x2003, VarStoreId: 0x1200, VarOffset: 0x1E8, Flags: 0x10, Size: 8, Min: 0x0, Max: 0x1, Step: 0x0 { 05 91 41 00 42 00 03 20 00 12 E8 01 14 10 00 01 00 }
+0x1FE48: 			Write  { 2E 02 }
+0x1FE4A: 			This  { 58 82 }
+0x1FE4C: 				Set VarStoreId: 0x1200, VarStoreInfo: 0x1E9, VarStoreType: 0x0 { 2C 07 00 12 E9 01 00 }
+0x1FE53: 			End  { 29 02 }
+0x1FE55: 			OneOfOption Option: "Disabled" Value: 0, Default { 09 07 0F 00 10 00 00 }
+0x1FE5C: 			OneOfOption Option: "Enabled" Value: 1 { 09 07 0E 00 00 00 01 }
+0x1FE63: 		End  { 29 02 }
+0x1FE65: 		SuppressIf  { 0A 82 }
+0x1FE67: 			EqIdVal QuestionId: 0x2003, Value: 0x1 { 12 06 03 20 01 00 }
+0x1FE6D: 			String Prompt: "OOBip", Help: "Set or change DASH IP", QuestionFlags: 0x4, QuestionId: 0x2004, VarStoreId: 0x1200, VarStoreInfo: 0x1EA, MinSize: 0x7, MaxSize: 0xF, Flags: 0x0 { 1C 90 43 00 44 00 04 20 00 12 EA 01 04 07 0F 00 }
+0x1FE7D: 			End  { 29 02 }
+0x1FE7F: 			String Prompt: "Subnetmask", Help: "Set or change DASH subnetmask", QuestionFlags: 0x4, QuestionId: 0x2005, VarStoreId: 0x1200, VarStoreInfo: 0x20A, MinSize: 0x7, MaxSize: 0xF, Flags: 0x0 { 1C 90 45 00 46 00 05 20 00 12 0A 02 04 07 0F 00 }
+0x1FE8F: 			End  { 29 02 }
+0x1FE91: 			String Prompt: "Gateway", Help: "Set or change DASH gateway", QuestionFlags: 0x4, QuestionId: 0x2006, VarStoreId: 0x1200, VarStoreInfo: 0x22A, MinSize: 0x7, MaxSize: 0xF, Flags: 0x0 { 1C 90 47 00 48 00 06 20 00 12 2A 02 04 07 0F 00 }
+0x1FEA1: 			End  { 29 02 }
+0x1FEA3: 			String Prompt: "DNS", Help: "Set or change DASH DNS", QuestionFlags: 0x4, QuestionId: 0x2007, VarStoreId: 0x1200, VarStoreInfo: 0x24A, MinSize: 0x7, MaxSize: 0xF, Flags: 0x0 { 1C 90 49 00 4A 00 07 20 00 12 4A 02 04 07 0F 00 }
+0x1FEB3: 			End  { 29 02 }
+0x1FEB5: 		End  { 29 02 }
+0x1FEB7: 		OneOf Prompt: "Echoservice", Help: "Enable or Disble DASH Echoservice", QuestionFlags: 0x14, QuestionId: 0x2008, VarStoreId: 0x1200, VarOffset: 0x26A, Flags: 0x10, Size: 8, Min: 0x0, Max: 0x1, Step: 0x0 { 05 91 4B 00 4C 00 08 20 00 12 6A 02 14 10 00 01 00 }
+0x1FEC8: 			OneOfOption Option: "Disabled" Value: 0, Default { 09 07 0F 00 10 00 00 }
+0x1FECF: 			OneOfOption Option: "Enabled" Value: 1 { 09 07 0E 00 00 00 01 }
+0x1FED6: 		End  { 29 02 }
+0x1FED8: 	End  { 29 02 }
+0x1FEDA: 	Form FormId: 0x6, Title: "Setup and Configuration" { 01 86 06 00 3C 00 }
+0x1FEE0: 		Subtitle Prompt: "Setup and Configuration", Help: "", Flags: 0x0 { 02 87 3C 00 00 00 00 }
+0x1FEE7: 		End  { 29 02 }
+0x1FEE9: 		Ref Prompt: "Security Configuration", Help: "Configure DASH account settings", QuestionFlags: 0x4, QuestionId: 0x3007, VarStoreId: 0x0, VarStoreInfo: 0xFFFF, FormId: 0x7 { 0F 0F 5A 00 5B 00 07 30 00 00 FF FF 04 07 00 }
+0x1FEF8: 	End  { 29 02 }
+0x1FEFA: 	Form FormId: 0x7, Title: "Security Configuration" { 01 86 07 00 5A 00 }
+0x1FF00: 		Subtitle Prompt: "Security Configuration", Help: "", Flags: 0x0 { 02 87 5A 00 00 00 00 }
+0x1FF07: 		End  { 29 02 }
+0x1FF09: 		String Prompt: "Modify username", Help: "Set or change DASH username", QuestionFlags: 0x4, QuestionId: 0x200D, VarStoreId: 0x1200, VarStoreInfo: 0x290, MinSize: 0x0, MaxSize: 0xF, Flags: 0x0 { 1C 90 5C 00 5D 00 0D 20 00 12 90 02 04 00 0F 00 }
+0x1FF19: 		End  { 29 02 }
+0x1FF1B: 		Password Prompt: "Modify password", Help: "Set or change DASH password", QuestionFlags: 0x4, QuestionId: 0x200E, VarStoreId: 0x1200, VarStoreInfo: 0x2B0, MinSize: 0x0, MaxSize: 0xF { 08 91 5E 00 5F 00 0E 20 00 12 B0 02 04 00 00 0F 00 }
+0x1FF2C: 		End  { 29 02 }
+0x1FF2E: 		DisableIf  { 1E 82 }
+0x1FF30: 			True  { 46 02 }
+0x1FF32: 			Numeric Prompt: "", Help: "", QuestionFlags: 0x0, QuestionId: 0x1, VarStoreId: 0x1200, VarOffset: 0x144, Flags: 0x11, Size: 16, Min: 0x0, Max: 0xFFFF, Step: 0x0 { 07 94 00 00 00 00 01 00 00 12 44 01 00 11 00 00 FF FF 00 00 }
+0x1FF46: 			End  { 29 02 }
+0x1FF48: 			Numeric Prompt: "", Help: "", QuestionFlags: 0x0, QuestionId: 0x2, VarStoreId: 0x1200, VarOffset: 0x142, Flags: 0x11, Size: 16, Min: 0x0, Max: 0xFFFF, Step: 0x0 { 07 94 00 00 00 00 02 00 00 12 42 01 00 11 00 00 FF FF 00 00 }
+0x1FF5C: 			End  { 29 02 }
+0x1FF5E: 		End  { 29 02 }
+0x1FF60: 	End  { 29 02 }
+0x1FF62: End  { 29 02 }

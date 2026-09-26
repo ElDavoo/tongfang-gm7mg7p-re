@@ -1,0 +1,37 @@
+Program version: 1.6.1, Extraction mode: UEFI, SHA256: 82647feefb86f4e51bfae934272733f089d3f543d40e9c9832a90694d8d60f28
+0x2618: FormSet Guid: 932D37B0-0D4A-11E0-81E0-0800200C9A66, Title: "!!!! PCI Resource ERROR !!!!", Help: "" { 0E A7 B0 37 2D 93 4A 0D E0 11 81 E0 08 00 20 0C 9A 66 03 00 02 00 01 71 99 03 93 45 85 04 4B B4 5E 32 EB 83 26 04 0E }
+0x263F: 	Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: Class, Class: 0x79 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 03 79 00 }
+0x2654: 	Guid Guid: 0F0B1735-87A0-4193-B266-538C38AF48CE, ExtendedOpCode: SubClass, SubClass: 0x0 { 5F 15 35 17 0B 0F A0 87 93 41 B2 66 53 8C 38 AF 48 CE 04 00 00 }
+0x2669: 	DefaultStore DefaultId: 0x0, Name: "" { 5C 06 00 00 00 00 }
+0x266F: 	DefaultStore DefaultId: 0x1, Name: "" { 5C 06 00 00 01 00 }
+0x2675: 	Form FormId: 0x1, Title: "!!!! PCI Resource ERROR !!!!" { 01 86 01 00 03 00 }
+0x267B: 		Subtitle Prompt: "PCI OUT OF RESOURCES CONDITION:", Help: "", Flags: 0x0 { 02 87 04 00 00 00 00 }
+0x2682: 		End  { 29 02 }
+0x2684: 		Subtitle Prompt: "", Help: "", Flags: 0x0 { 02 87 02 00 00 00 00 }
+0x268B: 		End  { 29 02 }
+0x268D: 		Subtitle Prompt: "ERROR: Insufficient PCI Resources Detected!!!", Help: "", Flags: 0x0 { 02 87 05 00 00 00 00 }
+0x2694: 		End  { 29 02 }
+0x2696: 		Subtitle Prompt: "", Help: "", Flags: 0x0 { 02 87 02 00 00 00 00 }
+0x269D: 		End  { 29 02 }
+0x269F: 		Subtitle Prompt: "System is running with Insufficient PCI Resources!", Help: "", Flags: 0x0 { 02 87 06 00 00 00 00 }
+0x26A6: 		End  { 29 02 }
+0x26A8: 		Subtitle Prompt: "In order to display this message some", Help: "", Flags: 0x0 { 02 87 07 00 00 00 00 }
+0x26AF: 		End  { 29 02 }
+0x26B1: 		Subtitle Prompt: "PCI devices were set to disabled state!", Help: "", Flags: 0x0 { 02 87 08 00 00 00 00 }
+0x26B8: 		End  { 29 02 }
+0x26BA: 		Subtitle Prompt: "It is strongly recommended to Power Off the system ", Help: "", Flags: 0x0 { 02 87 09 00 00 00 00 }
+0x26C1: 		End  { 29 02 }
+0x26C3: 		Subtitle Prompt: "and remove some PCI/PCI Express cards from the system!", Help: "", Flags: 0x0 { 02 87 0A 00 00 00 00 }
+0x26CA: 		End  { 29 02 }
+0x26CC: 		Subtitle Prompt: "To continue booting, proceed to <Save & Exit> Menu Option ", Help: "", Flags: 0x0 { 02 87 0B 00 00 00 00 }
+0x26D3: 		End  { 29 02 }
+0x26D5: 		Subtitle Prompt: "and select Boot Device or <Discard Changes and Exit>.", Help: "", Flags: 0x0 { 02 87 0C 00 00 00 00 }
+0x26DC: 		End  { 29 02 }
+0x26DE: 		Subtitle Prompt: "", Help: "", Flags: 0x0 { 02 87 02 00 00 00 00 }
+0x26E5: 		End  { 29 02 }
+0x26E7: 		Subtitle Prompt: "WARNING: If you choose to continue booting some Operating", Help: "", Flags: 0x0 { 02 87 0D 00 00 00 00 }
+0x26EE: 		End  { 29 02 }
+0x26F0: 		Subtitle Prompt: "    Systems might not be able to complete boot correctly!", Help: "", Flags: 0x0 { 02 87 0E 00 00 00 00 }
+0x26F7: 		End  { 29 02 }
+0x26F9: 	End  { 29 02 }
+0x26FB: End  { 29 02 }
