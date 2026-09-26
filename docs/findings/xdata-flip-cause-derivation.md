@@ -101,6 +101,30 @@ cause the 430-row pair -> the 439-row pair
     the pd side: committed identical (50 pd row(s) either way); guard-off identical (51 pd row(s) either way)
 ```
 
+> **Correction (2026-09-26, issue #929): `cause` now prints two lines the block
+> above does not have, between the blank line under the header and the
+> `the population:` line they qualify.**
+>
+> ```console
+>   cluster_key unique across the 439 guard-off row(s): 0 collision(s)
+>   cluster_key unique across the 445 guard-off row(s): 0 collision(s)
+> ```
+>
+> **`cause` now checks each guard-off census it re-keys before printing the
+> population it reads off the key**, and both read **0 collision(s)** here, which
+> is why the population below them is the figure the block has always claimed:
+> 155 added addresses, 439 and 445 keys, 408/31/37, mean +6.80, 1219
+> memberships over 1171 distinct addresses and 425 in the 439-row pair. Every
+> figure in the block is unchanged, and nothing else in it moves — re-derived by
+> diffing the pre-change tool (`git show
+> 31f683e5:ec/tools/xdata_moved_ranks.py`) against this one over the same pair.
+> **The block above is left as the record of the run that produced it**, the way
+> §9's merged-tree note leaves its block and for the same reason, rather than
+> re-transcribed with the superseded version kept visible. See
+> [`xdata-moved-ranks-collision-scope.md`](xdata-moved-ranks-collision-scope.md)
+> §3, and [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md) §2 for the same
+> correction to the two `pair` blocks there.
+
 **Three things are established here and every rate below is read against them.**
 
 - **A guard-off row reappears in the other generation 408 times in 439 — 92.9%** —

@@ -498,29 +498,41 @@ class TheCommittedTree(unittest.TestCase):
         self.assertEqual(len(records), 106)
 
     def test_the_committed_index_figures_are_the_ones_the_write_up_publishes(self):
-        # 37 indexed, 11 named, 26 named by none -- the three figures that move
+        # 38 indexed, 11 named, 27 named by none -- the three figures that move
         # by construction the moment this suite itself lands, since `suites()`
         # indexes every `test_*.py` in the tree and this is one. The superseded
-        # 36 / 11 / 25 are the record of the tree this branch's base is, per
-        # §4a-4d, and the first two are the ones to read first if one of these
-        # ever disagrees with the run.
+        # 36 / 11 / 25 and then 37 / 11 / 26 are the record of the trees this
+        # branch's base and `main` were, per §4a-4d, and the first two are the
+        # ones to read first if one of these ever disagrees with the run.
         #
-        # **This case is red on `origin/main` and is left red here.** #944 landed
-        # `tools/test_doc_patch_refs.py` after the `37` was measured, so the
-        # indexed count is **38** and the tail is **27** on any tree carrying
-        # #944 -- the tool's own header line has read `38 indexed test file(s)`
-        # since, and this pin is the only thing in the tree still saying `37`.
-        # Re-measuring it belongs to whichever change next owns this file, the
-        # same way the red sets in `runner-red-suite-set.md` are named and not
-        # quietly fixed from a branch that did not cause them; neither #778's
-        # merge nor anything in it moved a `test_*.py` into or out of the tree,
-        # so the three figures are this issue's own, unchanged by it.
+        # **The 37 -> 38 step is one suite, and both sides of this merge name
+        # the same one by a different number.** `tools/test_doc_patch_refs.py`
+        # was landed by `24460001`, which is PR **#944** and is issue #777's
+        # work -- `main`'s comment named the PR and the branch's named the
+        # issue, and `git log --diff-filter=A -- tools/test_doc_patch_refs.py`
+        # says `24460001` and settles it. Nothing else moved a `test_*.py` into
+        # or out of the tree in this window, so the indexed count is **38** and
+        # the tail **27** on any tree carrying `24460001`, and no pin anywhere
+        # names the step.
+        #
+        # **`main` left this case red on purpose and this change is the one it
+        # was waiting for.** The `37` was measured before `24460001` landed, so
+        # on every tree since -- the tool's own header line has read
+        # `38 indexed test file(s)` throughout -- these three asserts were the
+        # only thing in the tree still saying `37`. `main`'s note deferred the
+        # re-measurement to "whichever change next owns this file", the same way
+        # the red sets in `runner-red-suite-set.md` are named and not quietly
+        # fixed from a branch that did not cause them, and neither #778's merge
+        # nor anything in it moved a `test_*.py`: this merge owns the file, so
+        # the pin is re-set to the measured **38 / 11 / 27** here. The `37/11/26`
+        # and the `36/11/25` stay written above, each true of the tree it was
+        # measured on, per §4a-4d.
         records, _files = census.census(tool.REPO)
         files, _index = census.suites(tool.REPO)
         tail = tool.unpinned(records, files)
-        self.assertEqual(len(files), 37)
+        self.assertEqual(len(files), 38)
         self.assertEqual(len(files) - len(tail), 11)
-        self.assertEqual(len(tail), 26)
+        self.assertEqual(len(tail), 27)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):
         # The self-reference, held with its reason rather than left to be
