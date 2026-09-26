@@ -127,11 +127,18 @@ END_INDIRECT = "indirect jump -- target not resolvable from the bytes"
 END_DEPTH = "depth limit"
 END_BUDGET = "instruction budget"
 END_LOOP = "loop"
+END_IMAGE = "index past the end of the image"
 
 # Stop reasons that mean the walk gave up rather than finished. A `loop` is not
 # one of them: an arm that cycles has been fully explored, it just comes back
-# round, and saying `cut` there would understate what was read.
-CUTS = (END_DEPTH, END_BUDGET, END_INDIRECT)
+# round, and saying `cut` there would understate what was read. END_IMAGE is one
+# of them because the arm stopped at the first address it could not read, and
+# an IndexError is not a result -- adding it can only widen what no_claim() and
+# arm_status() say about an arm, which is the safe direction. It fires zero
+# times over the committed image at the default bounds; see
+# ../../docs/findings/descend-index-guard.md for the count and the vector that
+# reaches it.
+CUTS = (END_DEPTH, END_BUDGET, END_INDIRECT, END_IMAGE)
 
 
 class Arm:
@@ -296,9 +303,9 @@ def descend(d: bytes, region: str, start: int, dptr, max_depth: int, max_insns: 
     the pointer the branch left behind, so an arm that reads the mode byte
     again is credited to the mode byte rather than to nothing.
 
-    The bounds are a transfer depth and an instruction budget, and both are
-    reported on the row when they bite. Neither is a claim that the walk saw
-    everything after the cut."""
+    The bounds are a transfer depth, an instruction budget and the end of the
+    buffer, and each is reported on the row when it bites. None of them is a
+    claim that the walk saw everything after the cut."""
     arm = Arm("", start, region)
     budget = max_insns
     # Explicit list rather than recursion: an arm can re-enter itself through a
@@ -324,8 +331,25 @@ def descend(d: bytes, region: str, start: int, dptr, max_depth: int, max_insns: 
             if budget <= 0:
                 arm.end(f"{END_BUDGET} at 0x{pc:04X}")
                 break
+            # `offset_for_runtime()` bounds the *runtime address* against its
+            # region (trace_xdata_refs.py:256), not the file offset it hands back
+            # against this buffer, and nothing here says the two coincide. The
+            # highest offset it can return is the pd-image row's last address,
+            # 0x2FFFF -- the `erased` row at 0x30000 has base None, and its
+            # `next()` never selects it -- so a buffer satisfying the region
+            # table would be 0x30000 long, and main()'s PD-marker check
+            # certifies only 0x2004A of that. The read is in range because the
+            # buffer is long enough.
+            if off < 0 or off >= len(d):
+                arm.end(f"{END_IMAGE} at 0x{pc:04X}")
+                break
             op = d[off]
             n = OPCODE_LEN[op]
+            # A different question, and it stays: this asks whether the
+            # *instruction* fits, which `off + n == len(d)` satisfies, so a
+            # one-byte opcode at the very last byte decodes and the walk is
+            # allowed to land exactly on len(d). The test above is what holds
+            # the index; deleting this one would not make that read safe.
             if off + n > len(d):
                 arm.end(f"0x{pc:04X} runs past the end of the image")
                 break

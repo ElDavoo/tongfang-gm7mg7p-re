@@ -61,11 +61,11 @@ either gets the same list or finds a correction to make.
 $ grep -rn 'OPCODE_LEN\[' --include=*.py ec/tools
 ```
 ```
-ec/tools/trace_xdata_refs.py:229:        n = OPCODE_LEN[d[i]]
-ec/tools/disasm8051.py:108:    `disp` is the instruction's *last* byte -- `d[i + OPCODE_LEN[op] - 1]`, not
-ec/tools/disasm8051.py:114:    return (addr + OPCODE_LEN[op] + (disp - 256 if disp > 127 else disp)) & 0xFFFF
-ec/tools/disasm8051.py:311:        n = OPCODE_LEN[d[i]]
-ec/tools/disasm8051.py:333:            i += OPCODE_LEN[d[i]]
+ec/tools/trace_xdata_refs.py:297:        n = OPCODE_LEN[d[i]]
+ec/tools/disasm8051.py:109:    `disp` is the instruction's *last* byte -- `d[i + OPCODE_LEN[op] - 1]`, not
+ec/tools/disasm8051.py:115:    return (addr + OPCODE_LEN[op] + (disp - 256 if disp > 127 else disp)) & 0xFFFF
+ec/tools/disasm8051.py:312:        n = OPCODE_LEN[d[i]]
+ec/tools/disasm8051.py:334:            i += OPCODE_LEN[d[i]]
 ec/tools/second_copy_census.py:468:            i += OPCODE_LEN[fw[i]]
 ec/tools/second_copy_census.py:473:        raw = fw[last:last + OPCODE_LEN[fw[last]]]
 ec/tools/test_disasm8051.py:52:        # `OPCODE_LEN[d[1]]` before its own bounds check -- an IndexError from
@@ -92,8 +92,8 @@ ec/tools/counter_sweep_entry.py:319:    last = idx == OPCODE_LEN[op] - 1
 ec/tools/counter_sweep_entry.py:384:            n = OPCODE_LEN[r["owner_opcode"]]
 ec/tools/counter_sweep_entry.py:551:    check(all(r["owner_index"] == OPCODE_LEN[r["owner_opcode"]] - 1
 ec/tools/counter_sweep_entry.py:565:          and all(r["owner_index"] == OPCODE_LEN[r["owner_opcode"]] - 1
-ec/tools/walk_branch_arms.py:213:        n = OPCODE_LEN[op]
-ec/tools/walk_branch_arms.py:328:            n = OPCODE_LEN[op]
+ec/tools/walk_branch_arms.py:220:        n = OPCODE_LEN[op]
+ec/tools/walk_branch_arms.py:347:            n = OPCODE_LEN[op]
 ec/tools/audit_call_targets.py:170:        if op in REL_OPCODES and i + OPCODE_LEN[op] <= hi:
 ec/tools/audit_call_targets.py:171:            yield i, op, relative_target(op, d[i + OPCODE_LEN[op] - 1],
 ec/tools/audit_call_targets.py:314:                "length": OPCODE_LEN[op],
@@ -115,9 +115,34 @@ loop above the listing add no `OPCODE_LEN[` of their own, so the count is
 unchanged at 39 and the sweep still exits 0. The block above is the grep re-run,
 not the old output edited by hand.)*
 
+*(Re-run again by #844, which moved both `walk_branch_arms.py` sites: `:213` is
+`:220` and `:328` is `:347`, because the new `END_IMAGE` stop reason and its
+`CUTS` entry sit above `test_site()` and the pre-read guard sits between them
+and `descend()`'s read. The count is unchanged at 39. **This re-run also picked
+up four lines that were already stale before #844 touched anything**, and they
+are recorded here so they are not credited to it: `trace_xdata_refs.py:229` is
+`:297` — the #846 note further down this file records that same move, and this
+block was not updated with it — and the four `disasm8051.py` lines are each one
+higher, `:108,114,311,333` becoming `:109,115,312,334`. A partial hand-edit of
+two lines would have left the block neither the old output nor the new one,
+which is what the sentence above exists to prevent, so all six are the re-run.
+The `not a site` table's first row cites `disasm8051.py:108,114` and needs
+`109,115`; it is the one row in that table this change moves.)*
+
+*(The per-site table's rows 2 and 8 are **deliberately left at `:212-213` and
+`:327-328`**, and the `three more rows` paragraph at its `:328` with them. Row 8
+is the most conflict-prone cell in the file, both rows name their function
+beside the number, and follow-up 2's correction clause below carries the update
+— which is why the answer went there rather than here. The mapping for a reader
+who follows one of those citations: row 2's `test_site()` guard is `:217` and
+its read and table index are `:219` and `:220`; row 8's `descend()` read and
+index are `:346` and `:347`, its new pre-read guard is `:343`, and its
+`off + n > len(d)` test is `:353`. This is the same shape as the #846 note
+below — a moved file, not a wrong one.)*
+
 | not a site | lines | why |
 |---|---|---|
-| `disasm8051.py:108,114` | 2 | `relative_target()`'s docstring and body, indexing by the `op` **argument** — a byte value, and this function indexes no buffer at all |
+| `disasm8051.py:109,115` | 2 | `relative_target()`'s docstring and body, indexing by the `op` **argument** — a byte value, and this function indexes no buffer at all |
 | `citation_gap_scan.py:28` | 1 | the module docstring, quoting the retracted `decode()` claim |
 | `test_disasm8051.py:52` | 1 | a comment in the test that already pins the #679 fix |
 | `pd_index_geometry.py:595,629` | 2 | `OPCODE_LEN[MOV_DPTR]` — the constant, not a buffer read |
@@ -605,6 +630,27 @@ the 10 start(s) that reached the end-of-buffer check: 0x3FFF6 -> 0x3FFFE, 0x3FFF
    look, because it is the single place in the table where the post-#679
    ordering is not what #679 established, and a reader scanning for "index
    before bounds" will land on it.
+
+   **(2026-09-26, #844: the reason in the paragraph above is wrong as a general
+   claim, and the ordering it describes no longer exists. The paragraph stands
+   as the record; this is the correction beside it.)** It says the read is in
+   range "`before the length test is reached", on the strength of
+   `offset_for_runtime()` being `None`-checked. **`None`-checked is not the same
+   as in-range**: returning non-`None` says the *runtime address* is inside a
+   mapped region, and nothing in it says the *file offset* it computes is inside
+   the buffer. Those coincide only while the buffer is as long as the region
+   table implies, and `descend()` never said so. The arithmetic is in
+   [`descend-index-guard.md`](descend-index-guard.md); the short version is that
+   the region table's ceiling is `0x2FFFF` and `main()`'s PD-marker check
+   certifies only `0x2004A`, so 65461 bytes of the range are unguarded.
+   **The verdict is the pre-read check** `test_site()` already has, now at
+   `walk_branch_arms.py:343`, above the read at `:346`; the `off + n > len(d)`
+   test stays at `:353` because it answers a different question (does the
+   *instruction* fit, which `off + n == len(d)` satisfies) and was never what
+   held the index. The line numbers above are the pre-#844 ones: the read is
+   `:327`→`:346`, the index `:328`→`:347`, the fits test `:329`→`:353`, the
+   `None`-check `:321-322`→`:328-329`, and the operand comment `:337-339`
+   →`:361-363`.
 
 ---
 

@@ -973,7 +973,7 @@ the half this table exists to record.
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):194 | `ec/tools/test_xdata_cluster_names.py:481` | by-path | comment | carries |
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):202 | `test_xdata_cluster_names.py:307` | by-name | comment | **records another line** |
 | [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md):71 | `ec/tools/test_disasm8051.py:52` | — | — | **declined** (fenced) |
-| [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md):122 | `test_disasm8051.py:52` | by-name | comment | carries |
+| [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md):147 | `test_disasm8051.py:52` | by-name | comment | carries |
 | [`runner-red-suite-set.md`](runner-red-suite-set.md):103 | `tools/test_readme_suite_table.py:11-20` | by-path | other | carries |
 | [`testdata-index-suite-count-floor.md`](testdata-index-suite-count-floor.md):47 | `ec/tools/test_check_testdata_index.py:1180-1184` | by-path | other | **records another line** |
 | [`testdata-index-suite-count-floor.md`](testdata-index-suite-count-floor.md):166 | `ec/tools/test_check_site_census.py:449` | by-path | assertion | carries |
