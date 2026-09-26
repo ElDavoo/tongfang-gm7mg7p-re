@@ -8205,3 +8205,65 @@ passed-to-call 534 address-taken 267` and 214. No register `status:` moved, no
 `registers.yaml` figure was refreshed, no image or Ghidra project was opened, no
 gate was edited, no register was read back, and nothing is opened in another
 repository.
+
+## 65. Every `test_*.py:NNN` the markdown carries is censused, and the checker is declined on the measurement (2026-09-26, issue #887)
+
+The write-up is
+[`test-line-pin-census.md`](findings/test-line-pin-census.md);
+this is the summary. §58's `check_citation_lines.py` holds pointers into the
+generated CSVs and `check_cluster_citations.py` holds cluster claims; neither
+reaches a line number written into a **test file**, which is what
+`tools/README.md`'s eighth-thing paragraph said out loud: *"nothing checks a
+citation into a test file, which is why the two pre-existing ones are still
+wrong."* This is the census of that class, and it is a census rather than a check
+on purpose — the tool renders no verdict on whether a line still carries its
+claim, and exits 0 on a tree where every pin is wrong.
+
+**Fifty occurrences, 37 distinct spellings and 32 distinct resolved targets,
+across 23 markdown files**, all three printed on every run because a census
+whose own headcount cannot be reconciled is the failure it is measuring. Both of
+the issue's claims are confirmed exactly as filed, and its own citing-line
+reference is not: the first pin is at `:403` and not at the `:154-157` the issue
+places it. **Five of the six that do not carry the claim they are cited for are
+new** — a comment quoted from `:2687` and cited at `:2232-2233`, a
+`Path(__file__).parent` cited at the blank line above it, two `:54` pins naming
+a `GUARD` constant #753 removed from the file, and a "third-generation figure"
+that is the second — and each is named in the write-up with where the line is.
+
+**Two of the issue's extraction numbers did not reproduce, and both are the
+scan's fault rather than the tree's.** Its "12 ambiguous `tools/` pins" are four
+`windows/tools/` citations a prefix-recognising regex truncates into `tools/`
+and two `../tools/…` paths `ec/annotations/xdata-register-map.md` writes
+relative to itself — so the class has **no** unresolvable path on this tree, and
+`out-of-range` and `ambiguous-path` are 0 as well. Every pin names a file that is
+in it and a span it has: **the whole defect is in the line-content half.**
+
+**The checker is declined, and the measurement is the argument rather than my
+having to assert it.** Only 5 of the 44 resolving pins name a test's `def` line;
+15 name an assertion, 5 a comment, 8 a blank line and 11 something else, so no
+single anchor covers the class. And supersession in it is unmarked prose in at
+least six shapes — a repoint list naming the stale value, a "deliberately not
+fixed" bullet, a "the check caught it here" sentence, an "At the time of writing"
+lead-in, a pin qualified by a commit, a dated findings section — of which the
+two-shape vocabulary `check_citation_lines.py` already uses catches exactly one,
+and the one it catches is a *correct* citation. A checker would redden on
+sentences that are true, which is the surest way to get a check switched off. The
+re-open condition is written down: a supersession marker this class's authors
+would use, or a decision that pins into a test file must name a `def`.
+
+No citing prose is repointed here — twenty-three files' worth of edits against
+open agent PRs, and both of the issue's two are already recorded in place under
+§4a-4d — and the per-pin table is the hand-off for that pass. The wider
+`.py:NNN` class (373 occurrences, 229 targets, 34 files) is measured for scope
+and not censused. **One other shared file moved, a constant and a comment:**
+`check_doc_figure_pins.py` reads an int inside any asserting call in `ec/tools/`
+as a pin, so this census's own committed-tree figure `50` made the checklist's
+unrelated §2b `50` measure held and reddened #849's suite; its `SELF_MODULES`
+tuple already carries the rule for exactly this, and adding the two census
+modules to it puts §2b back at eight held and ten unheld and its printed
+denominator back at the `175` the doc-figure audit quotes.
+
+No register `status:` moved, no `registers.yaml` figure was
+refreshed, no CSV or `xdata-symbols.csv` was regenerated, no Ghidra project was
+opened, no gate was edited, no register was read back, and nothing is opened in
+another repository.
