@@ -108,7 +108,7 @@ before this branch and are now the sets they are.
 ## What the code does now
 
 Three branches, in the order the docstring states them, at
-`ec/tools/xdata_moved_ranks.py:332`:
+`ec/tools/xdata_moved_ranks.py:436`:
 
 - **empty** — `no rows`, reported before the floor rule applies. An empty set
   is not a set too small to cut; it is no set at all, and the two are told
@@ -130,7 +130,16 @@ Recomputing the census side from the committed
 1 1 1 1 1 1 2 2 4 5
 ```
 
-byte-identical to `xdata-moved-ranks-fall.md:208` and `../findings.md:8086`.
+byte-identical to `xdata-moved-ranks-fall.md:240` and `../findings.md:8086`.
+*(The two anchors in this file that name the write-up are re-opened against the
+merged tree, and only the write-up's own line numbers moved: `:219` → **`:240`**
+and the correction 1 pair below. #888's two `cluster_key unique …` lines and
+their nine-line note sit above both in `xdata-moved-ranks-fall.md`'s §1–§2
+blocks, so everything under them came down eleven — `:219` was `:229` on
+`main` and the merged figure is `:240`; `:332` for the tool above is `:436`
+here, `write_movement()` having been added above `deciles()` by #890 in the same
+window. The strings themselves are byte-identical on all three trees, which is
+what §4's claim is and what none of this touches.)*
 The flipped side is 94 keys and the census side 439, both far above the floor,
 which is why neither can move. The four `deciles` reads quoted in
 [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md) are over
@@ -172,10 +181,14 @@ shape.
 **1. The issue's `xdata-moved-ranks-fall.md:220` does not hold the sentence.**
 That line is one of the twelve rows of the flipped-cluster transcript, under
 the `cluster_key / name / size / grew / delta A / delta B / verdict` header at
-`:214` — a data row, `moved->intact`. *(The row itself is at `:240` and the
-header at `:234` on the tree this file now sits in, the same two columns wider
-for the `rank A` / `rank B` #891 added; `:220`/`:214` are the tree this
-correction was measured on, and the correction holds on this one too — the
+`:214` — a data row, `moved->intact`. *(The row itself is at `:272` and the
+header at `:266` on the merged tree. The `:252`/`:245` this note first recorded
+is #888's own tree, and it was one line out on the row: the header is at
+`:245` there and the row six below it, `:251`. `:240`/`:234` was the tree
+before the #888 × #891 merge — the same two columns wider for the `rank A` /
+`rank B` #891 added, and then eleven lines further down for #888's two
+`cluster_key unique …` lines and its note. `:220`/`:214` are the tree this
+correction was measured on, and the correction holds on every one of these: the
 sentence is still in the **tool**, not in the write-up.)* Repo-wide before this branch, the phrase
 existed in exactly one place: the tool's own docstring. The correction that
 was needed was therefore not beside a claim in that document but **in the
@@ -190,6 +203,20 @@ the 25 **asserted on** a size distribution, which is why the stretch survived.
 The stronger claim is §2's, not this one: the A/B fixture did not merely reach
 one, it printed the stretched string beside a real read on a green run, and
 read as a distribution doing it.
+
+*(The `30` above is the tree #889 was written on, and the merged tree's own run
+prints **49**: `25 + 5 + 9 + 4 + 6`, the five being this issue's `deciles()`
+floor, the nine #891's rank-shift block, the four #890's `write_movement()`
+cases and the six
+[#888](xdata-moved-ranks-key-collision.md)'s collision fixture. **The "before"
+figure is unaffected and is the one the correction is about** — none of the 25
+cases this branch was written against asserted on a size distribution, and none
+of the nineteen added since does either, so the count moving does not weaken the
+finding; it is the same `14 → 25` understatement, four times further out. What
+would weaken it is the opposite, and it is not the case:
+`test_xdata_cluster_names.py` is 30 tests on the merged tree, unchanged, and
+`bash tools/run-tests.sh` reads 35 suites and 1,076 tests with the same one red
+suite named below.)*
 
 ## What is left open
 

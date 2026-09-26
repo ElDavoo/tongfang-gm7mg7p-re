@@ -111,6 +111,7 @@ pair the 430-row pair
   moved      366  (main-ec 346, pd 20)
   intact     64
   committed ranks the guard-off census does not carry: 0
+  cluster_key unique across the 430 committed row(s): 0 collision(s)
   of the moved ranks, 351 hold a guard-off row of the same size and 364 share no address with it
   guard-off membership delta over the 430 rank(s) the two censuses share: 1623 address-slots
   §6a: address universe identical (1171 rows); write changes 210 of 1171; refs changes 0 of 1171; references leaving write 833
@@ -124,6 +125,7 @@ pair the 439-row pair
   moved      315  (main-ec 295, pd 20)
   intact     124
   committed ranks the guard-off census does not carry: 0
+  cluster_key unique across the 439 committed row(s): 0 collision(s)
   of the moved ranks, 307 hold a guard-off row of the same size and 311 share no address with it
   guard-off membership delta over the 439 rank(s) the two censuses share: 1030 address-slots
   §6a: address universe identical (1326 rows); write changes 210 of 1326; refs changes 0 of 1326; references leaving write 833
@@ -131,6 +133,15 @@ pair the 439-row pair
 $ git worktree remove /tmp/xdata-old
 $ git status --porcelain
 ```
+
+**One line in each `pair` block is newer than the measurement, and every figure
+in both blocks is not.** `cluster_key unique across the … committed row(s): 0
+collision(s)` was added by
+[`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md) (issue
+#888), which re-derived both pairs and diffed the pre-change tool against this
+one: that line is the whole of the difference, and `across`, `across --swept`
+and `cause` diff empty. It is left in the transcripts so they still reproduce
+rather than being annotated as short; the numbers above it are unchanged.
 
 The two pair blocks above, read together, are the whole measurement. Three of the
 rows are the ones the count does not show:
@@ -611,6 +622,10 @@ xdata_moved_ranks.py --self-test
   ok    the second-holder count is over both generations' holders, so it equals the number of addresses that printed more than one row: 2 rows for 1 address, counted once
   ok    whether the two generations perturb the same addresses is reported on its own, not inferred from two matching counts
   ok    two runs can agree on a count and disagree on which addresses, and an address a re-derivation adds can be outside the guard's reach entirely
+  ok    a fixture where five references entered `write` and none left says so, and the signed sum of that is not printed under the word 'leaving' -- which is what it used to be
+  ok    a pair that moves one reference each way reports both counts, and the closes: line says they are over the two addresses that moved
+  ok    a negative net is still a net: entering and leaving are counts, each naming the address it moved, and neither carries a sign
+  ok    when `changed` and the movement disagree the closes: line says so: a `05` against a `5` is a change as text and no movement as a number
   ok    all four cells are filled from the fixture, the two controls included -- a mode that read only the flipped cells would see two of these and pass nothing
   ok    the population a cell's rate is read against is printed, with the one-sided keys named and the survivors' rank deltas spread
   ok    a substitution that reappears at a neighbouring rank is reported as reappearing, with that rank, rather than as a row that went missing
@@ -630,6 +645,12 @@ xdata_moved_ranks.py --self-test
   ok    the default cell is the flipped one, so the table is the one the report has always printed with two rank columns beside it
   ok    --cell walks a cell the default does not: a key that never changed cell gets a row of its own, and only that key gets one
   ok    --cell all is every shared key, so the cells are walkable together as well as one at a time
+  ok    a duplicated cluster_key costs a moved rank nothing: both movers are counted, and the count is the suite's own two-line predicate's over the same pair, on a census where the two carry one key
+  ok    the listing holds a row per rank rather than a row per key, and the counts still close over the ranks the two censuses share: 2 moved + 2 intact = 4 ranks, 4 rows
+  ok    the collision is a line of its own, naming the key and every rank carrying it, rather than a count that came out smaller
+  ok    a census whose keys are distinct reports no collision and says it looked, and a census that collides reports every rank on the key
+  ok    the key-indexed half reports the collision it cannot absorb -- two moved ranks on one key -- and the closure closes anyway
+  ok    the swept cross-reference says so too: both generations are named, and the holder count below is over the key rather than over the rank
   all checks passed
 
 $ python3 ec/tools/xdata_register_map.py --check && python3 ec/tools/xdata_register_map.py --self-test
@@ -637,7 +658,7 @@ $ python3 ec/tools/xdata_register_map.py --check && python3 ec/tools/xdata_regis
 
 $ python3 -m unittest discover -s ec/tools -p 'test_xdata_cluster_names.py'
 ............................
-Ran 28 tests in 15.721s
+Ran 30 tests in 18.006s
 
 OK
 ```
@@ -649,7 +670,7 @@ OK
 > above in the order they run: the 15 checks this file already listed are checks
 > 1–9 and 15–20, #884's `cause` block
 > ([`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md)) is
-> 21–30, and this change's own rank-shift block is 31–39 — so the tree prints
+> 21–30, and this change's own rank-shift block is 31–39 — so the tree printed
 > **39 checks**, not the 24 this file's own change left and not the 25 the
 > `cause` merge left. **A third block landed beside both and is why that figure
 > is 39 rather than the 34 this note first recorded**: #889's five `deciles()`
@@ -667,6 +688,65 @@ OK
 > the merged tree and are **byte-identical** to the transcripts above them, so
 > every figure in §1–§4 stands as printed, and the 1326/439 and 28-test lines
 > in this block were re-measured the same way.
+>
+> *(The 39 above is the tree this note was written against. **#888's six
+> collision checks landed beside it** and the block above is this merge's own
+> run, so the tree now prints **45**; see the merge note below, which is where
+> the arithmetic closes. The 39 is left as it was written, per
+> [`../findings.md`](../findings.md) §4a-4d, because it is true of the tree
+> #891 measured.)*
+>
+> *(And one clause of this note is corrected at the same merge, rather than left
+> standing: the **28-test line was not re-measured**, and re-running it on the
+> merged tree prints **30**, because #850 put two cases
+> (`TheExportOwnershipClusters`) into
+> `ec/tools/test_xdata_cluster_names.py` in the same window. The block above now
+> reads 30, the 28 is the record of the tree this note was written against, and
+> the correction is the whole of the delta — the `1326/439` line beside it does
+> reproduce. This is §9's own subject: a figure a merge moved and no run re-read,
+> and a note that says it re-read one it did not.)*
+
+**This block now reads 49 checks, and it read 14 when this section was written.**
+The superseded figures are left visible rather than edited out, per
+[`../findings.md`](../findings.md) §4a-4d, and the deltas close:
+**#884**'s `cause` mode
+([`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md)) added the
+ten that end at `a committed rank with no row in the guard-off census is in no
+cell`, **#886**'s `--swept` second-holder fix inserted the one about
+the second-holder count thirteen lines down, **#889**/#917's `deciles()` floor
+added the five about a flipped set of two clusters that a reader would take for
+a decile distribution, **#891**'s rank-shift block added the nine that start at
+`a rank is the number after the last hyphen`, **#890**'s `write_movement()`
+correction
+([`xdata-write-direction-correction.md`](xdata-write-direction-correction.md))
+added the four that start at `a fixture where five references entered \`write\``
+and run at 21–24 rather than at the end, and **#888**
+([`xdata-moved-ranks-key-collision.md`](xdata-moved-ranks-key-collision.md))
+added the last six — `14 + 10 + 1 + 5 + 9 + 4 + 6 = 49`, with nothing else added
+and no earlier check's text changed. The six are the case the others could not
+reach: `write_census()` takes a key per row and every fixture gave each rank its
+own, so nothing above could put two ranks on one.
+
+*(Re-transcribed at the #888 merge, 2026-09-26, and the block above is the
+merged tree's own run rather than the 31 the branch transcribed: #889/#917 landed
+in the same window and added five checks this transcript had never carried, so
+the figure was **36** rather than 31 and the five were put in the block itself,
+in the order the tool prints them. **This merge adds a sixth block beside those**
+— #891's nine rank-shift checks, which the branch had not seen — so the figure
+the merged tool prints is **45** and the block above carries all six additions in
+print order, at 10–14, 31–39 and 40–45. The `31` and the `36` are the records of
+the two trees those measurements were taken on; `36` is what §68's summary
+reports, `45` is what the tool prints, and the delta is the whole of it.)*
+
+*(And re-transcribed once more at the **#888 × #890** merge, the same day, where
+the **45 becomes 49** for the reason the paragraph above gives: #890's four
+`write_movement()` cases print at **21–24**, in the middle of the `cause` block
+rather than at the end, so they were spliced into the transcript at that
+position and this issue's six moved to **44–49**. The block above is
+byte-identical to `python3 ec/tools/xdata_moved_ranks.py --self-test` on the
+merged tree — every one of its 49 `ok` lines and the `all checks passed` under
+them, checked by `diff` rather than by eye. `31`, `36` and `45` stay visible for
+the three trees they were measured on.)*
 
 **The known-answer run is §1 through §4 above**: the tool is what produced
 366/64/439 and 315/124/445, the 71/266/23/40 flip table, the size
