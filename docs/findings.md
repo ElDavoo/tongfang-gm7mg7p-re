@@ -323,10 +323,15 @@ a co-occurrence in static code, not a meaning — that file's §6 is the
 boundary, and reading a cluster is the follow-up issue's work.
 
 **A second naming source exists, and it is the firmware's own (2026-09-26,
-issue #30).** Nothing in the paragraph above has changed: 1,022 of the 1,063
-main-EC XDATA addresses are still unnamed, and the census is still the
-measure of that. What has changed is that the unnamed majority now has
-somewhere else to be looked up. The DSDT's `Field (ECMG, ...)` element list
+issue #30).** Nothing in the paragraph above has changed, and neither did the
+count: §3c's 1,022-of-1,063 unnamed pair is *that section's* dated
+(2026-09-23) census reading and this sweep did not move it, and the census
+is still the measure of that. The census has since moved under the figure —
+`xdata_register_map.py --self-test` reports 1,218 main-EC addresses, not
+1,063 — so the current named/unnamed pair is whatever re-running that tool
+says, and is not restated here. What has changed is that the unnamed majority
+now has somewhere else to be looked up. The DSDT's `Field (ECMG, ...)`
+element list
 (`evidence/acpi/dsdt.dsl:52194`-`52328`, over `OperationRegion (ECMG,
 SystemMemory, 0xFE410000, ...)`) names 98 fields the ACPI side can read and
 write, and it is the only name source in the repo that came from neither
@@ -335,14 +340,22 @@ addresses it names are new `registers.yaml` entries — 13 `present-untested`,
 3 `unknown-not-absent` — and the rest are the file's table rather than
 entries. None of the sixteen has moved the 1,022, and §3c's own definition
 is why: that figure counts what the committed `.c` spells by symbol, and
-this does not re-export the decompile, so all sixteen still read
-`DAT_EXTMEM_*` in it. Thirteen are in the main-EC census and `0x07C0`-`0x07C2`
-are PD-image-only, so a re-export would carry the named count 41 → 54 and the
-unnamed one 1,022 → 1,009 — arithmetic on the sweep's §6 rather than a
-measurement taken here, and both numbers stand today. The 50 of those 98 that
-sit on the `0x0Exx` page with no direct reference site are the open question
-the sweep produces, not a result: one static method cannot tell an
-indirect-addressing blind spot (§4c) from a subsystem the EC does not touch.
+this does not re-export the decompile. **Six** of the sixteen — `0x074C`,
+`0x0788`, `0x07A4`, `0x07C5`, `0x0EA8`, `0x0EB8` — are in the main-EC census
+and still read `DAT_EXTMEM_*` in the committed `.c` for exactly that reason.
+The other ten are not in the committed decompile at all, so nothing there
+spells them either way, and they fail in two different ways a re-export
+cannot cross: `CTL1`-`CTL7` are in the firmware but their only site is the
+unexported straight-line copy at bank0 `0xF335`, and `0x07C0`-`0x07C2` are
+PD-image-only. So a re-export would carry the named count 41 → 47 and the
+unnamed one 1,022 → 1,016 — arithmetic on the sweep's §6 over §3c's dated
+pair, not a measurement taken here. `../ec/annotations/dsdt-ecmg-field-sweep.md`
+§6, the `ORACLE` comment in `../ec/tools/xdata_register_map.py` and the
+correction block in `../ec/annotations/xdata-086x-dispatch.md` work the same
+six the same way. The 50 of those 98 that sit on the `0x0Exx` page with no
+direct reference site are the open question the sweep produces, not a result:
+one static method cannot tell an indirect-addressing blind spot (§4c) from a
+subsystem the EC does not touch.
 The sweep, its GNVS correction — the field list the issue named is a
 1,038-element NVS block and the count join is refused for it — and its
 calibration are in `../ec/annotations/dsdt-ecmg-field-sweep.md`.
