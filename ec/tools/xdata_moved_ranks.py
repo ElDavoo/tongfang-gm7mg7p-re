@@ -352,7 +352,10 @@ def swept_report(committed_a, committed_b, table, addrs):
     of a `main-ec` cluster and of a `pd` one at the same time, and a
     cross-reference that reported one of the two would be right by accident on
     43 of 43 addresses and wrong on 5 of them. The second row per address is
-    not noise, and the summary counts the `pd` holders separately.
+    not noise, and the summary counts the `pd` holders separately. Its
+    second-holder count is over the rows this loop makes -- the union of both
+    generations' holders -- so the summary cannot disagree with the rows above
+    it.
     """
     a, b = keyed_by(committed_a), keyed_by(committed_b)
     index_a = {addr: [k for k, row in a.items() if addr in addrs_of(row)]
@@ -363,10 +366,19 @@ def swept_report(committed_a, committed_b, table, addrs):
            f"  {'address':<8} {'cluster_key':<14} {'program':<8} "
            f"{'rank A':<12} {'rank B':<12} verdict"]
     keys = set()
+    # The loop's rows are kept as well as printed, so the second-holder count
+    # below is over the rows this loop made rather than a second reading of the
+    # two holder indexes -- which is how the count and the loop came to
+    # disagree, the `or` having picked one generation without saying which. A
+    # list rather than a map because the loop is over `sorted(addrs)`, so an
+    # address passed twice is printed twice and is counted once per visit
+    # rather than collapsed into one.
+    printed = []
     for addr in sorted(addrs):
         held = index_a.get(addr, [])
         rows = [(k, a[k], b.get(k)) for k in held]
         rows += [(k, None, b[k]) for k in index_b.get(addr, []) if k not in held]
+        printed.append(rows)
         if not rows:
             out.append(f"  {addr:<8} {'-':<14} {'-':<8} {'-':<12} {'-':<12} "
                        f"in no committed cluster")
@@ -386,8 +398,7 @@ def swept_report(committed_a, committed_b, table, addrs):
                        f"{(rb['cluster_id'] if rb else '-'):<12} {verdict}")
     pd_keys = {k for k in keys if (b.get(k) or a[k])["program"] == "pd"}
     flipped = keys & (set(table["a_to_b"]) | set(table["b_to_a"]))
-    second = sum(1 for addr in addrs
-                 if len(index_b.get(addr) or index_a.get(addr)) > 1)
+    second = sum(1 for rows in printed if len(rows) > 1)
     wanted = set(addrs)
     complete = [k for k in keys if wanted <= addrs_of(b.get(k) or a[k])]
     out.append(f"  {len(keys)} committed cluster(s) hold at least one of the "
@@ -556,6 +567,33 @@ def self_test() -> int:
           and any("2 main-ec, 1 pd" in ln for ln in lines),
           "a cluster that flipped is labelled FLIPPED, one that did not is "
           "not, and the summary counts the `pd` holders separately")
+
+    # A census pair of its own, because the pair above cannot be the case: its
+    # `0x0E` is held by two clusters in *both* generations, so a count reading
+    # either generation's holders gets the same two. Here generation A holds the
+    # address under a `main-ec` and a `pd` key and generation B under the
+    # `main-ec` key alone. Each census is passed as its own guard-off, so
+    # nothing moves and every row reads `intact in both`.
+    second_a = write_census(tmp, "second-a.csv", [
+        ("main-ec-001", "main-ec", ["0x0E"], key(1)),
+        ("pd-001", "pd", ["0x0E", "0x20"], key(2))])
+    second_b = write_census(tmp, "second-b.csv", [
+        ("main-ec-002", "main-ec", ["0x0E"], key(1))])
+    sa, sb = clusters_of(second_a), clusters_of(second_b)
+    lines = swept_report(sa, sb, flip_table(sa, sa, sb, sb), ["0x0E"])
+    # The figure is read back out of the tool's own summary line rather than
+    # recomputed beside it, so the two are compared as a reader would read them.
+    per_addr = {}
+    for ln in lines:
+        if ln.startswith("  0x"):
+            per_addr[ln.split()[0]] = per_addr.get(ln.split()[0], 0) + 1
+    summary = [ln for ln in lines if "second holder" in ln]
+    said = int(summary[0].rsplit("; ", 1)[1].split(" ")[0]) if summary else -1
+    check(per_addr.get("0x0E") == 2 and said == 1
+          and said == sum(1 for n in per_addr.values() if n > 1),
+          "the second-holder count is over both generations' holders, so it "
+          "equals the number of addresses that printed more than one row: "
+          "2 rows for 1 address, counted once")
 
     # §6a across two generations. The same perturbed count over two different
     # address sets is the case a per-pair line cannot see, so the fixture

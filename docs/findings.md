@@ -8023,3 +8023,64 @@ every other assertion are unchanged; the deliverable is one new read-only tool
 rather than a new suite row) and five one-line pointers. No CSV, YAML, threshold
 or gate was edited, no image was opened, no register was read back, and nothing
 is opened in another repository.
+
+## 63. `--swept`'s second-holder count was taken over one generation, and the rows above it over both (2026-09-26, issue #886)
+
+The write-up is
+[`xdata-moved-ranks-second-count.md`](findings/xdata-moved-ranks-second-count.md);
+this is the summary. A defect in the tool §62 added, in the summary line that
+is supposed to describe the rows printed immediately above it.
+
+**The row loop built each address's rows from the union of both generations'
+holder indexes; the count read one of them.** `index_b.get(addr) or
+index_a.get(addr)` falls through to A only when B's list is empty or missing,
+so the second-holder count could only ever be B's — an address generation A
+holds twice and B holds once printed **two rows** and counted as one. The other
+numbers on the line were already union-based and right: `keys` is accumulated
+from the rows, so `main-ec` holders were counted across both generations while
+`second` was not. The disagreement needs `|B| <= 1 < |A ∪ B|`, and the reverse
+asymmetry is invisible to it — which is why the fixture's shape is forced rather
+than chosen.
+
+**The fix derives the count from the rows instead of re-reading the indexes.**
+The loop appends each address's `rows` to a list as it makes them and the
+summary counts the entries with more than one row, so there is one definition of
+"the rows for this address" and the line cannot drift from it again. It is a
+list rather than a `{addr: rows}` map because the loop is over `sorted(addrs)`,
+so a repeated address is counted once per visit rather than collapsed into one —
+`--swept 0x0E 0x0E` over the shape the committed pair has is 4 rows and `2`
+before and after, unchanged. The two sibling `b.get(k) or a[k]` reads at the
+`pd_keys` and `complete` figures were examined and **deliberately left**: a key
+is a content hash over the program and the membership, so a key in both censuses
+carries the same membership either way and there is no disagreement to fix.
+
+**A dedicated census pair in the tool's own `--self-test` is the fixture, and it
+goes red.** Three rows — generation A holding one address under a `main-ec` and
+a `pd` key, generation B under the `main-ec` key alone — reached through a
+direct `flip_table()` call, plus one new check that counts the addresses which
+printed more than one row, reads the figure back out of the tool's summary line
+and requires the two equal, with the concrete `2` rows / `1` second holder
+asserted alongside so a vacuous loosening still fails. With the old line
+restored it prints `FAIL`; the self-test is 15 checks where it was 14, and the
+other 14 print verbatim. The A/B pair above it **cannot** be the fixture — its
+`0x0E` is held by two clusters in *both* generations, so `or` picks either
+without consequence, and no existing check reads the `second` figure at all — so
+a dedicated pair is why no existing line of the self-test changed and nothing had
+to be corrected in §62's transcript. The issue's own alternative, mutating that
+pair's B generation, is real but is a structural change rather than a one-cell
+edit: `b_committed` is written from the same `committed_rows` list generation A
+is, so the row has to be un-shared before it can move. Both routes were
+measured; the dedicated one is taken.
+
+**The committed figure does not move, and that is measured rather than assumed.**
+§7's recipe re-derived from `e169a0e4` — the worktree, two guard-off census
+runs into `/tmp`, then the 43-address `across --swept` — was run with the old
+line and again with the new one: **48 rows for 43 addresses and `5
+address(es) have a second holder` both times**, `diff` over the two 86-line
+reports empty. On this pair the two `pd` holders are present in both
+generations, so B's count and the union's are the same five — a latent
+disagreement, not an observed wrong figure, and now a figure that cannot go
+wrong. No CSV, YAML, threshold, `status:` or gate was edited, no `test_*.py` is
+added so the runner's 34 suites and 1033 tests are unmoved, the `> 300` floor
+stays where §62's recipe put it, no image was opened, no register was read
+back, and nothing is opened in another repository.
