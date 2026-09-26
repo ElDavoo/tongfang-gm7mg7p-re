@@ -52,11 +52,12 @@ which are the same in both. A case in the suite records that the two spellings o
 
 The last three rows are the calibration, and the wording is the repository's own
 for an unsearched population rather than an empty one. `grep -rn
-"0xEDA4\|0xeda4" --include=*.md .` returns nothing, and `0x9287` appears in the
-annotations only as one end of an anchor span, never as a transcription — so the
-bit-form sites are **not found by this method**, which is not the same as
-`registers.yaml`'s own caveat about a static scan finding no reference. Writing a
-listing to hold them would be a transcription project, not a parsing one.
+"0xEDA4\|0xeda4" --include=*.md ec/annotations/` returns nothing, and `0x9287`
+appears in the annotations only as one end of an anchor span, never as a
+transcription — so the bit-form sites are **not found by this method**, which is
+not the same as `registers.yaml`'s own caveat about a static scan finding no
+reference. Writing a listing to hold them would be a transcription project, not
+a parsing one.
 
 ## The vacuity guard, which is the whole point
 

@@ -10098,11 +10098,11 @@ right.
 
 **Not claimed.** The 11 `BIT_SITES` and the `TEXTBOOK_BIT_SITES` pair have no
 committed transcription to reconcile against — `grep -rn "0xEDA4\|0xeda4"
---include=*.md .` returns nothing — so they are **not found by this method**,
-which is `registers.yaml`'s own wording and not "absent". The `0xB330` block is
-printed as a *report* (6 transcribed rows the table has never carried), not
-added. `docs/ci/agent-gates-disasm8051-self-test.patch` needed **no change** and
-`test_agent_gates_patches.py` needed none: both sentences the patch carries
+--include=*.md ec/annotations/` returns nothing — so they are **not found by this
+method**, which is `registers.yaml`'s own wording and not "absent". The `0xB330`
+block is printed as a *report* (6 transcribed rows the table has never carried),
+not added. `docs/ci/agent-gates-disasm8051-self-test.patch` needed **no change**
+and `test_agent_gates_patches.py` needed none: both sentences the patch carries
 become true the moment the code reads the files, so a re-cut should not go
 looking for a correction to make. No gate runs any of this until a human applies
 that patch, and no capture, EC or register read back is involved anywhere in it.

@@ -29,13 +29,13 @@ dialects are a problem for a text diff, not for a byte diff.
 
 **What is not covered here, and why: found by this method, not absent.** The 11
 `BIT_SITES` and the `TEXTBOOK_BIT_SITES` pair have no committed transcription
-to reconcile against -- `grep -rn "0xEDA4\\|0xeda4" --include=*.md .` returns
-nothing, and `0x9287` appears in the annotations only as one end of an anchor
-span, never as a transcription -- so they stay literals, which is the same
-wording `registers.yaml`'s own caveat and `charge-profile-flow.md` §3 use. Nor
-is the `paged_target()` page-rule edge here: it is arithmetic, deliberately
-stated rather than transcribed. Writing a listing to hold the other groups
-would be a transcription project, not a parsing one.
+to reconcile against -- `grep -rn "0xEDA4\\|0xeda4" --include=*.md
+ec/annotations/` returns nothing, and `0x9287` appears in the annotations only
+as one end of an anchor span, never as a transcription -- so they stay literals,
+which is the same wording `registers.yaml`'s own caveat and
+`charge-profile-flow.md` §3 use. Nor is the `paged_target()` page-rule edge here:
+it is arithmetic, deliberately stated rather than transcribed. Writing a listing
+to hold the other groups would be a transcription project, not a parsing one.
 
 Nothing here reads firmware, opens a capture, opens an EC or reads back a
 register: two committed markdown files and a hard-coded table.
