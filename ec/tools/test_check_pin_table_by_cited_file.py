@@ -498,11 +498,12 @@ class TheCommittedTree(unittest.TestCase):
         self.assertEqual(len(records), 106)
 
     def test_the_committed_index_figures_are_the_ones_the_write_up_publishes(self):
-        # 38 indexed, 11 named, 27 named by none -- the three figures that move
+        # 40 indexed, 11 named, 29 named by none -- the three figures that move
         # by construction the moment this suite itself lands, since `suites()`
         # indexes every `test_*.py` in the tree and this is one. The superseded
-        # 36 / 11 / 25 and then 37 / 11 / 26 are the record of the trees this
-        # branch's base and `main` were, per §4a-4d, and the first two are the
+        # 36 / 11 / 25, then 37 / 11 / 26, then 38 / 11 / 27 and then 39 / 11 /
+        # 28 are the record of the trees this branch's base, `main`, and
+        # `main` again after #811 were, per §4a-4d, and the first two are the
         # ones to read first if one of these ever disagrees with the run.
         #
         # **The 37 -> 38 step is one suite, and both sides of this merge name
@@ -539,12 +540,31 @@ class TheCommittedTree(unittest.TestCase):
         # stays **11**, and the tail takes the 38th unpinned suite: **39 / 11 /
         # 28**. The 38 / 11 / 27 stays written above, true of every tree from
         # `24460001` until this one.
+        #
+        # **The 39 -> 40 step is the same shape again, and is a second suite
+        # rather than a different reading of the first.** Issue #973's
+        # `ec/tools/test_check_capture_names.py` landed beside #811's, so this
+        # merge carries *two* new `test_*.py` files that no pin names, not one:
+        # both write-ups cite their suite *by path* and never as
+        # `<module>.py:NNN`, and both cite the capture root's names rather than
+        # a line of either suite. `suites()` indexes every `test_*.py` in the
+        # tree, so the indexed count is **40** and the tail **29** on any tree
+        # carrying both, and `11` named by a pin does not move at all because
+        # the pin count is still **106** -- `census.census()` is unchanged by
+        # either suite. Each side of this merge re-measured to `39 / 11 / 28`
+        # against a tree the other side's suite was not on, and each was right:
+        # the two steps are additive, so the merged tree takes both and lands on
+        # **40 / 11 / 29**. That is what this pin is for -- a merge that adds a
+        # suite is exactly what it is for -- so it is re-set to the measured
+        # value rather than argued. The `39/11/28` and the `38/11/27` stay
+        # written above, each figure triple true of the tree it was measured
+        # on, per §4a-4d.
         records, _files = census.census(tool.REPO)
         files, _index = census.suites(tool.REPO)
         tail = tool.unpinned(records, files)
-        self.assertEqual(len(files), 39)
+        self.assertEqual(len(files), 40)
         self.assertEqual(len(files) - len(tail), 11)
-        self.assertEqual(len(tail), 28)
+        self.assertEqual(len(tail), 29)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):
         # The self-reference, held with its reason rather than left to be

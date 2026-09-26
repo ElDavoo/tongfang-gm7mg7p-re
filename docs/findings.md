@@ -10212,3 +10212,146 @@ re-derive. The correction fits inside the lines the sentence already had, so the
 `159 + 9 + 7 + 22 + 6 = :203`, both sides' edits landing below `:203` —
 and `check_pin_table_rows.py` still reads 106 / 106 / 106 with all seven
 classes 0. No `gh pr create` anywhere.
+
+## 79. The capture root's two premises are censused, and a name breaking either is refused (2026-09-26, issue #973)
+
+> **Numbering note, added at the merge, and then at a second one.** This
+> section was written as §77. #811's
+> [`disasm8051-oracle-from-the-annotations.md`](findings/disasm8051-oracle-from-the-annotations.md)
+> summary holds **§77** on `main` in the same window, so it was renumbered to the
+> next free number; by the time the second merge ran, #979's summary above had
+> taken **§78** on `main` too, so it is renumbered again to **§79**. §76's
+> note's rule applies unchanged, and it is the rule §62's, as §74's note
+> records: the summary already committed on `main` does not move and this one
+> gives way — twice, to two different summaries, and §78 is the second of the
+> two numbers this section has held. That runs the collision the same way round
+> as §76's, where #962's summary gave way to #794's, so **the two adjacent
+> numbering notes in this file now name opposite keepers, once each**, and
+> neither is a claim about which summary matters more. §77 and §78 are #811's
+> and #979's summaries above, in that order.
+> **Its own references are unaffected, and that is the half of the note this
+> merge does not touch:** nothing in
+> [`capture-filename-date-prefix.md`](findings/capture-filename-date-prefix.md),
+> in this section's body, or in the tool changes below names this section's
+> number — the page cites §14b and §4a-4d rather than this section,
+> and no tool, test or gate reads a section number out of this file. **A "last
+> section in the file" clause is left off**, for the reason §76 gives: §74's note
+> already carries one and §75 does not correct it, and a clause asserting a
+> position is what the next merge has to contradict beside itself.
+>
+> **One figure in this section's neighbourhood moved at this merge rather than
+> at the renumber, and it is named here rather than left to be rediscovered.**
+> #811's and #973's summaries above and beside it each added a `test_*.py` that
+> no pin names, so `test_check_pin_table_by_cited_file.py`'s own index pin took
+> **two** steps where each side took one, and the merged tree measures
+> **40 / 11 / 29** where both sides measured **39 / 11 / 28**. The reason is in
+> the comment beside the assert and in
+> [`pin-table-by-cited-file.md`](findings/pin-table-by-cited-file.md); **no
+> figure in this section is touched by it** — the `15` captures, the `6` reached,
+> the `0 of 15`, and the `30 resolved, 0 missing, 24 unresolved` tallies are all
+> re-measured on the merged tree in
+> [`capture-filename-date-prefix.md`](findings/capture-filename-date-prefix.md)
+> and all four are unchanged.
+>
+> **#979's summary is above this one and the two are about the same glob, so
+> what holds them together is recorded here rather than left to be found.** The
+> census below holds the premise the dated glob rests on; §78's refusal decides
+> what a sentence naming *two* of those globs is read against. Neither changes
+> the other's question — a name is a naming question and a two-date sentence is
+> a prose one, which is why both are in the tree and neither is folded into the
+> other — and **the merged tool carries both**: `check_testdata_row_claims.py`
+> has `census()` imported for its denominator *and* `captures_for()`'s
+> multi-date refusal, so the two run over one capture root and cannot come to
+> answer differently about it. The write-up's own §"Not claimed" now says
+> `captures_for()`'s resolution semantics are unchanged by *this* issue, which
+> is true and narrower than it was on the tree the page was written against:
+> **#979 changed them, beside this issue rather than under it.**
+
+The write-up is
+[`capture-filename-date-prefix.md`](findings/capture-filename-date-prefix.md);
+this is the summary, and §76 is where a reader looking for the dated-capture
+rule lands. `captures_for()` globs `evidence/ec-watch/<date>-*`, and that glob
+is a glob rather than a guess only because of two properties of the capture
+root that **nothing on the tree read**: every file in it is dated in its own
+filename, and the root is flat. §76's own write-up states both as premises,
+and the tool's docstring gives them as the reasons its glob is one. Both
+were measured here before anything was changed: **15 captures, 15 conforming,
+0 non-conforming, 0 subdirectories**, over four commands quoted in full on the
+page.
+
+**The two questions are told apart, because conflating them would be a false
+alarm.** The run *reached* 6 of the 15 files, because it globs the dates the
+index names and **the index is not a manifest of `evidence/ec-watch/`** — the
+other 9 are conforming captures no dated sentence mentions, which is normal
+and not a finding. **0 of 15** is the other question: the files no `<date>-*`
+glob can reach, and the only one of the two that is a property of the naming
+convention. A line reporting the first would read as an alarm about nine files
+for as long as the corpus is heterogeneously dated, so both the printed
+denominator and the new refusal report the second.
+
+**A refusal, not a wider glob.** The census sizes the rule's users at one
+dated sentence and two literals. Teaching `captures_for()` to try an *embedded*
+date would change **what a claim is held to** on a rule with almost no users —
+a filename carrying two dates is ambiguous, and a widened resolution can turn
+a calibrated `unresolved` into a red `missing` or a green `resolved` with
+nobody having edited a file. That is a coverage change wearing a naming
+guard's clothes, and it is declined here as a separate issue with its own
+census, with the case that pins the refusal rather than the acceptance
+(`power-mode-…-2026-09-23.csv` is out of reach, because the glob is
+`<date>-*`).
+
+**`ec/tools/check_capture_names.py` is new, a separate file per `CLAUDE.md`'s
+rule, and it refuses two things in two vocabularies** — a name with no date
+prefix, and a subdirectory in the root — decidable from one listing, with
+`--check` the only mode in which a refusal is the verdict. The subdirectory
+half is **the second premise, previously unchecked anywhere**, and it is a
+real blind spot rather than a hypothetical one: `glob.glob()` returns
+directories and `carried_by()` skips anything that is not a file, so a
+subdirectory in the root would resolve a date to a file set nothing is read
+from and report the sentence's literal as `missing` — a red verdict pointing
+at the index's prose when the thing to fix is a directory.
+
+**Nothing here is a verdict change.** `check_testdata_row_claims.py` gains one
+field on `Result` carrying the root it was handed, so the dated block names
+the tree it measured rather than the module-level `CAPTURES` — a scratch case
+and a committed one used to print the same path — and one line beneath that
+block: `0 of 15 capture(s) … are out of the reach of every <date>-* glob: none`.
+The tallies are byte-identical at `30 resolved, 0 missing, 24 unresolved`,
+which is the check that this moved reporting and not verdicts.
+
+*(Merged-tree note, 2026-09-26, #975 landing beside #973: the dated block the
+run above prints now carries a **third** clause on the file-count line, and
+this section accounts for two of them. The merged line reads `2026-09-23-* (6
+capture(s) under evidence/ec-watch, 2 with an addr column): row 7 0x0F58
+resolved, row 7 0x0F5C resolved`. The `2 with an addr column` is #975's, and
+the page that owns it is
+[`testdata-addr-column-claim.md`](findings/testdata-addr-column-claim.md); the
+`under evidence/ec-watch` is this section's, read off the `Result` field rather
+than off the module constant. **The two are not in tension and neither moved a
+figure here**: one clause counts the date's `.csv` members and the other counts
+the files the run was handed, and the line beneath them — the only denominator
+this section is about — is byte-identical at `0 of 15`. The tallies are too, so
+this section's check that it moved reporting and not verdicts still holds with
+#975's clause on the same line.)*
+
+**The refusals have teeth, and the cost of that is written down rather than
+designed away.** The suite asserts the committed root has **no** non-conforming
+name and **no** subdirectory. That is a tripwire, not a floor: a future
+capture that arrives unprefixed turns the case red, which is exactly what a
+refusal is for, and **no count of captures is asserted anywhere**, so the corpus
+stays free to grow. Both refusals fire on a scratch root, because nothing in
+the committed tree is non-conforming and a case over a conformant tree proves
+only that the tool runs. **Eight wrong implementations were applied to the two
+tools in place and both suites run over each** — so "the fix can fail" is
+demonstrated rather than asserted — and the one worth naming is the numerator
+reporting the count the run *reached*: that is the conflation this section is
+about, and it is red.
+
+**Not claimed: that any current capture is misnamed, that the glob has ever
+silently missed a file, or that this would have caught #502 or #720** — the
+last carried forward from §47 and §76 verbatim, and not this issue's.
+`ec/tools/testdata/README.md:6` and `evidence/README.md:65` are **not edited**:
+they are the convention being held, not prose to be rewritten to match a rule.
+`captures_for()`'s resolution semantics are unchanged and re-stated as
+unchanged, no `status:` moved so `ec/annotations/registers.yaml` is not
+touched, no gate is wired, and no `gh pr create` anywhere.

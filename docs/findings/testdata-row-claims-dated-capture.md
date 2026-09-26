@@ -212,7 +212,13 @@ many files it resolved to, and what became of each literal.
   line quoted under "The run, above" is left as this file's dated record; a run
   today prints `2026-09-23-* (6 capture(s) under evidence/ec-watch, 2 with an
   addr column)` there instead, the clause that reports the `.txt` half of a
-  date as having no column to read.)
+  date as having no column to read. **And a run today prints one more line
+  beneath it**, `0 of 15 capture(s) in evidence/ec-watch are out of the reach of
+  every <date>-* glob: none` — #973's denominator over the two premises this
+  file states above and holds nowhere, reported beside the block rather than
+  inside it. The transcript under "The run, above" is left whole; neither
+  clause moves a figure on it, and the tallies are still
+  `30 resolved, 0 missing, 24 unresolved`.)
 
   **Also corrected here: this file's own causal story for row 7's `resolved`.**
   The claim above that the union reached all six files "`.txt` included" is

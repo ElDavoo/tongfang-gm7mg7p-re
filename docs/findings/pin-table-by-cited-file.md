@@ -387,6 +387,37 @@ block and a per-merge section for it, and this write-up's own
 beside it — which `main` left red on purpose and this change, as the next owner
 of that file, is the one its note was waiting for.
 
+*(**And that pin has since moved twice more, by the same rule and one suite
+each.** Issue #811's `ec/tools/test_disasm8051_oracle.py` and issue #973's
+`ec/tools/test_check_capture_names.py` are both new `test_*.py` files that no
+pin names — both write-ups cite their suite *by path* and never as
+`<module>.py:NNN` — so the two landed beside each other rather than one
+replacing the other, and the pin is re-set to the measured **40 indexed / 11
+named / 29 named by none**. The `39/11/28` and the `38/11/27` above stay
+written, each figure true of the tree it was measured on per
+[`../findings.md`](../findings.md) §4a-4d; `39/11/28` is triple-true, because
+each side of the merge re-measured to it against a tree the other side's suite
+was not on, and the two steps are additive. `11` named by a pin does not move
+because the pin count is still **106**; the `38` → `39` → `40` and `27` → `28`
+→ `29` steps are those two suites. **The `console` transcript above is
+deliberately left at `38`/`152`** — it is a record of one run on the tree this
+issue measured on, and it reads `152` markdown files where the tree now carries
+more, so it has been a dated snapshot rather than a live claim since before
+these steps and stays one.)*
+
+*(**And the same `40 / 11 / 29` holds on the second merge's tree, which is the
+one this landed on, for a reason worth one sentence.** The two suites named
+above are #811's and #973's, and this write-up's two merges are `47 → 38` and
+then `39 → 40`, so which of the two merges the second suite arrives in does not
+change the answer — `test_check_capture_names.py` is in the tail either way, and
+so is `test_disasm8051_oracle.py`. **The figure was re-measured on the merged
+tree rather than carried, and it is the same one**, which is what a pin whose
+inputs are "the set of `test_*.py` files" should do: the merge order is not a
+variable. The `106` behind the `11` is unmoved on this tree too —
+`check_pin_table_rows.py` reads 106 / 106 / 106 with all seven classes 0 — so
+nothing here needed re-deriving beyond running the one suite that owns the
+assert.)*
+
 ## The name, which is a standing rather than a measurement
 
 The issue asked for `ec/tools/check_pin_table_by_cited_file.py` and for
