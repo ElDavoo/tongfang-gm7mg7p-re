@@ -7049,9 +7049,11 @@ invisible. `ec/tools/check_testdata_index.py` now holds the two files to each
 other in both directions: a directory no index names is a gap, and a path the
 index's table names that is not on disk is a miss. **Those two are the error
 class, and not a repair history**: the index needed hand-repair twice, in #502
-and #720, and both repairs were to a row's third column — the description — so
-this check would have been green through both. Not claimed: that it would have
-caught them.
+and #720, both in a row's third column — the description, which this check does
+not read. **Measured over both pre-repair trees (#978): 0 gaps, 0 misses, and 1
+nested — a stale `common`/`bank0` spelling in `call-graph/README.md`'s own cell,
+since fixed on `main`** — see
+`docs/findings/testdata-row-claims-repair-measurement.md`.
 
 **The merged tree is green, and that is the finding rather than a defect** —
 13 directories, 12 named in the index, `call-graph/` self-indexed, 27 rows, 34
@@ -7281,11 +7283,11 @@ this is the summary. §41's check reads the index's first column, its `Feeds`
 column and the nested tables, and §45 added the two it was missing — but the
 **third** column, the description, is the one a reader opens the index to read
 and the one that names the addresses each fixture is supposed to contain, and
-both of the index's hand-repairs (#502, #720) were to that column. Every check
-on the index was green through both. **Not claimed: that this would have
-caught either** — what those two repairs changed is in the issues, not in the
-tree, and neither has been read back as a diff this tool could have been run
-over.
+both of the index's hand-repairs (#502, #720) were to that column. **Measured
+since #978 rather than assumed: 0 `missing` over both pre-repair trees**, and
+the reason is content — every row either repair touched spells zero backticked
+`0xNNNN` literals before and after. A blind spot with its reason — see
+`docs/findings/testdata-row-claims-repair-measurement.md`.
 
 `ec/tools/check_testdata_row_claims.py` is a **new file**, not a mode on
 `check_capture_claims.py`, for the reason that tool's docstring records, and
@@ -10058,12 +10060,14 @@ than asserted.
 **Nothing here is a hardware claim, and no live observation closes any part of
 it.** No capture is *opened*: the CSVs and `.txt` files under
 `evidence/ec-watch/` are read as text, exactly as `carried_by()` already reads a
-fixture. **Not claimed: that this would have caught #502 or #720** — carried
-forward from §47 verbatim, since both repairs were to this column and neither
-has been read back as a diff this tool could have been run over. No `status:`
-moved, so `ec/annotations/registers.yaml` is not touched; row 7's sentence in
-`ec/tools/testdata/README.md` is **not edited**, because it is true, it is now
-checked, and editing prose to make a tool green is what this repository forbids.
+fixture. **The §47 hand-off is now a measurement** (issue #978): 0 `missing`
+over both pre-repair trees, and the reason is that the rows either repair
+touched carry no address claim to be wrong about — see
+[`testdata-row-claims-repair-measurement.md`](findings/testdata-row-claims-repair-measurement.md).
+No `status:` moved, so `ec/annotations/registers.yaml` is not touched; row 7's
+sentence in `ec/tools/testdata/README.md` is **not edited**, because it is
+true, it is now checked, and editing prose to make a tool green is what this
+repository forbids.
 `docs/ci/agent-gates-testdata-row-claims.patch` is **not** touched — the CLI is
 unchanged — and it remains a human's `git apply`, so no gate is wired here. No
 `gh pr create` anywhere.
@@ -10419,9 +10423,12 @@ demonstrated rather than asserted — and the one worth naming is the numerator
 reporting the count the run *reached*: that is the conflation this section is
 about, and it is red.
 
-**Not claimed: that any current capture is misnamed, that the glob has ever
-silently missed a file, or that this would have caught #502 or #720** — the
-last carried forward from §47 and §76 verbatim, and not this issue's.
+**Not claimed: that any current capture is misnamed, or that the glob has ever
+silently missed a file.** The third clause this used to carry — *that this would
+have caught #502 or #720* — belonged to §47 and §76, and was retired as a
+measurement by issue #978, which is about `check_testdata_row_claims.py` and
+not about the dates this section censused:
+[`testdata-row-claims-repair-measurement.md`](findings/testdata-row-claims-repair-measurement.md).
 `ec/tools/testdata/README.md:6` and `evidence/README.md:65` are **not edited**:
 they are the convention being held, not prose to be rewritten to match a rule.
 `captures_for()`'s resolution semantics are unchanged and re-stated as
@@ -10588,3 +10595,114 @@ command, the old-side blob and the patch's applicability are unchanged, and only
 the new-side hash and the two call-site comments move, four directions to five.
 No EC was opened, no capture taken, no register read, and nothing here is a
 claim about what the fixture exercises.
+
+## 81. Both index hand-repairs are measured, and the third column's checker is a blind spot with a reason (2026-09-26, issue #978)
+
+> **Numbering note, added at the merge.** This section was written as §80.
+> #780's summary above holds **§80** on `main` in the same window, so it is
+> renumbered to the next free number. §79's note's rule applies unchanged, and
+> it is the rule §76's records: the summary already committed on `main` does
+> not move and this one gives way. §77, §78, §79 and §80 are #811's, #979's,
+> #973's and #780's summaries above, in that order, and the section order
+> matches the numbering.
+>
+> **Its own references are unaffected, and that is the half of the note a
+> reader would otherwise have to check:** nothing in
+> [`testdata-row-claims-repair-measurement.md`](findings/testdata-row-claims-repair-measurement.md),
+> in this section's body, or in the tool changes below names this section's own
+> number. The four places in this file the retirement touches are named **by
+> their own numbers** — §41, §47, §76 and §79 — and all four are sections above
+> this one, so the renumber moves none of them; the write-up's census of where
+> the fourteen sentences lived names those same four. No tool, test or gate
+> reads a section number out of this file. **A "last section in the file"
+> clause is left off**, for the reason §79's note gives: a clause asserting a
+> position is what the next merge has to contradict beside itself, and §80's own
+> note records the corrections four earlier landings had to make for exactly
+> that.
+>
+> **What the landing below does to §80's note is a supersession rather than a
+> correction, and it is named here rather than left for the next reader.**
+> §80's note closes on "this merge's step is a genuine collision rather than
+> bookkeeping", having given the whole of §77 to #811, of §78 to #979 and of
+> §79 to #973, and this landing is a fourth application of the same rule rather
+> than a departure from it: §80 keeps §80, this one gives way to §81, and the
+> "does not move / gives way" pair the note states is the one that decided it.
+> Nothing in §80's body or its note is made false by a section landing below it
+> — unlike §74's, whose "the file still ends here" §80's note corrected beside
+> itself — so **no correction is owed beside §80, and none is made.** The
+> `#780` §80 measures, and the `40 / 11 / 29` and `:236` figures its
+> `tools/README.md` note derives, are the figures of that merge's tree and are
+> left written there per §4a-4d; the twenty-sixth note beside them re-derives
+> the two of them this landing moves, to `41 / 11 / 30` and to `:247`, and both
+> steps are the same shape as the ones above them — one suite, and one edit
+> written above a pin.
+
+The write-up is
+[`testdata-row-claims-repair-measurement.md`](findings/testdata-row-claims-repair-measurement.md);
+this is the summary. §41, §47, §76 and §79 each carried the same disclaimer:
+the index needed hand-repair twice, in #502 and #720, both times in a row's
+third column, and **nobody had run either checker over the pre-repair tree**,
+so whether they were red there was unknown. That was an open question in
+fourteen sentences across eight files.
+
+**It is now a number with a reason.
+`ec/tools/measure_index_repair_visibility.py` extracted each pre-repair tree
+and ran both checkers in-process over it: 0 `missing` at row 24 for #502 and
+at rows 23 and 24 for #720.** The reason is content, not coincidence — every
+row either repair touched spells **zero** backticked `0xNNNN` literals, before
+and after, because #502 and #720 rewrote prose about mark labels, block
+membership and which grader branch a run reaches, and
+`check_testdata_row_claims.py` reads addresses. **That is a recorded blind
+spot with the reason it missed**, which is the second of the two answers issue
+#978 offered, and it is not "it would have caught them".
+
+**All three rows were runnable at their own pre-repair revision** — each first
+column resolved to 3 files — so this is not the vacuous case, where a row's
+claims fail for the uninteresting reason that the row resolves to nothing. That
+flag is reported per row and is a stated limit, never a negative result.
+
+**`check_testdata_index.py` over the same two trees is a control rather than a
+candidate answer** — it never reads the third column, so it could not have
+caught either repair by construction, and running it converts "green through
+both" from an assertion into a measurement: **0 gaps, 0 path misses, 0 `Feeds`
+misses, and 1 nested miss.** That last one is a stale bank in an index cell —
+`call-graph/README.md` named `decompiled/common/0EA2.asm` at both pre-repair
+revisions while the tracked listing is `decompiled/bank0/0EA2.asm` — so it is a
+real, decidable fact about those revisions and **not** an artefact of extracting
+history; `docs/findings/testdata-index-feeds-and-call-graph.md` had already found
+it and `1813fe98` (issue #746) repointed the cell. It says nothing about either
+repair, and it is reported rather than folded into a clean zero.
+
+**The post-repair control is what makes the pre-repair number mean anything** —
+a `missing` is evidence only if the same row is green after the repair, and the
+tool exits 1 when it would not be. All three rows are green at their own repair
+revision.
+
+**Four limits, and the first is the one a reader has to hold: today's checker
+over the old prose.** Neither tool existed at either revision, so there is no
+version of either to run, and the direction of the measurement has to be
+stated with it — a checker green on an old tree says only that *this rule over
+this text* is green. Only `root` moves (`functions`, `registers` and
+`captures` stay at the committed HEAD paths, and no extracted file is ever
+executed); an unrunnable row is a stated limit; and a full clone is required,
+with an unresolvable revision reported as *"not measurable in this clone"* at
+exit 2 rather than a count of zero.
+
+**What is not claimed, beyond the above:** that the checker is *right* about
+these rows. It is not asked — it does not ask whether a fixture is what its row
+says it is, and **a green run is not a claim that
+`0751-isolation-run-unread-window/` carries the two block-less restores its row
+describes.** A checker that reads marks, block membership and where a count is
+taken is the open question this leaves, and it has a different owner.
+
+The fourteen sentences are retired **in place**, each keeping its claim that
+the repairs were to the third column and pointing here rather than repeating
+the open question; the older wording is superseded beside itself, not deleted,
+per §4a-4d. `ec/tools/testdata/README.md` is edited **below its table, never
+in a description cell** — both checkers read table rows only, and the
+replacement is kept free of backticked addresses anyway, so it stays inert if
+the paragraph is ever reflowed into the table; §4's rule against editing prose
+to make a tool green is why the edit is a paragraph. No `status:` moved, so
+`ec/annotations/registers.yaml` is not touched; no fixture, row, capture, `.asm`
+or `.c` is edited; no gate is wired, which is also the right tier call for a
+mode that needs full history; and no `gh pr create` anywhere.

@@ -22,6 +22,13 @@ one level further from the data.
 read back as a diff this tool could have been run over. What it holds is the
 tree as it stands.
 
+> **Superseded, 2026-09-26, by issue #978,** which is about
+> `check_testdata_row_claims.py` and not about a capture's name: the pre-repair
+> trees were extracted and the checker run over each, and the answer is 0
+> `missing` at every row either repair touched. The paragraph above is kept as
+> it stood rather than edited out, per `docs/findings.md` §4a; see
+> [`testdata-row-claims-repair-measurement.md`](testdata-row-claims-repair-measurement.md).
+
 ## The census, measured on this tree, 2026-09-26
 
 The four commands, run from the repository root, and their output verbatim:
@@ -313,7 +320,10 @@ section is about, and it is red.
   misnamed capture in an earlier commit would be a claim about history this
   branch has not walked.
 - **That this would have caught #502 or #720.** Carried forward verbatim
-  above; it belongs to `#747`/`#794` and not to this issue.
+  above; it belongs to `#747`/`#794` and not to this issue. Retired as a
+  measurement by #978, which ran the checker over both pre-repair trees: 0
+  `missing`, because the rows either repair touched carry no address claim to
+  be wrong about.
 - **That a date in a filename is a real day.** `20\d\d-\d\d-\d\d-` is a shape.
 - **That a conforming file is a capture.** This reads a directory listing. It
   never opens a file, never reads a byte, and never runs a
