@@ -184,11 +184,28 @@ on a reader who takes the cell at face value it is a wrong statement about one
 program rather than a loose one about two. So the registers CSV carries a second
 spelling column, `spellings_by_program` -- `main-ec=<spellings>` on a main-EC
 row, `pd=<spellings>` on a pd one, `main-ec=<spellings>;pd=<spellings>` on a
-`both` row -- and that is what a per-program question is read from. The union
-that stays is `refs` and the five direction buckets on a `both` row, which
-remain sums over the two programs; nothing here splits those, and
-`../../docs/findings/xdata-spelled-as-union.md` states it with the four rows'
-per-program reference figures beside it rather than leaving it to be found.
+`both` row -- and that is what a per-program question is read from.
+
+**The counts were the same mistake one column later, and the twelve
+per-program cells at the end of the row are the column that says which half is
+which.** `refs` and the five direction buckets on a `both` row are the *sum*
+over the two programs, which reads as a statement about one of them: `0x04A3`
+carries 4 `read` / 3 `write` / 0 / 0 / 1, and a reader looking for a writer
+sees three bank1 writes and a single pd `address-taken` with nothing in the row
+to say which program each came from. So the row now also carries
+`refs_<program>` and the five buckets once per program -- 22 columns' worth, of
+which `spellings_by_program` is one -- written on **every** row and not only on
+the 49 `both` ones, so `refs == refs_main_ec + refs_pd` holds on all 1,326 and
+`csv.DictReader` consumers never meet an empty cell. It is a split, not a second
+pass: `refs`, the five buckets, `readers`, `writers`, `co_reading`,
+`sources_beyond` and every `ORACLE` / `BUCKET_TOTALS` figure are exactly what
+they were, and a shared address *number* is still not a shared byte -- the two
+are separate address spaces and a per-program `write` is a static shape, not
+evidence the EC acts on the byte. The unsuffixed cells stay the row's own
+figures, which is the only reason a reader who reads them still gets the
+census. `../../docs/findings/xdata-per-program-counts.md` has the worked rows,
+the arithmetic, and what a zero in the other program's column does and does not
+say.
 
 **What settles an address's space is the encoding, not the token.** Ten of
 `pd-001`'s 34 addresses sit in `0xFF00`-`0xFFFF`, inside the width of an SFR
@@ -358,6 +375,59 @@ PAIR_SPELLING = "pair-literal"
 SPELLING_ORDER = ("symbol", "DAT_EXTMEM", PAIR_SPELLING)
 ASSIGN = ("=", "|=", "&=", "+=", "-=", "*=", "/=", "^=", "%=", "<<=", ">>=")
 
+# The metrics the per-program count columns carry: the row's whole `refs` and
+# each of the five buckets, in the same order the unsuffixed columns above sit
+# in ($6 through $11), so `$6` and `$22`/`$23` answer the same question about
+# different address spaces.
+PER_PROGRAM_METRICS = ("refs",) + BUCKETS
+
+
+def program_suffix(g: str) -> str:
+    """The per-program columns' suffix for one `GROUPS` key: `main-ec` ->
+    `_main_ec`.
+
+    A function rather than a table, so the `program` column's two spellings of
+    a program and the column names' two cannot come to be different mappings.
+
+    **`_pd`, not `_pd_image`,** deliberately.
+    `ec/annotations/registers.yaml` writes its own per-program reference
+    figures `static_refs_main_ec` / `static_refs_pd_image`, and that is the
+    precedent; this CSV's vocabulary is already `pd` -- the `program` column's
+    value, the `cluster_id` prefix, the `pd=` label in `spellings_by_program`
+    two columns to the left on the same row -- so writing `_pd_image` here would
+    put two spellings of one program in one line, which is the confusion the
+    columns exist to remove. The divergence from `registers.yaml` is recorded
+    here and in the write-up rather than left for a reader to trip over.
+    """
+    return "_" + g.replace("-", "_")
+
+
+def per_program_columns() -> tuple:
+    """The twelve per-program count columns, in CSV order.
+
+    Metric first, then program: `refs_main_ec`, `refs_pd`, `read_main_ec`,
+    `read_pd`, and so on through the five buckets, so one program's whole half
+    is a contiguous run and a `cut -d, -f22-33` gives the main EC while
+    `-f23,25,27,29,31,33` gives the pd image's. Metric-major rather than
+    program-major because the two halves of a `both` row are what a reader
+    compares, and metric-major puts the two numbers for one metric next to
+    each other with the summed cell 16 columns to their left.
+
+    A function rather than a literal list so the column names and the cells
+    `build()` writes cannot come to describe different sets -- the same
+    "the tool that writes the column and the tool that checks it" argument
+    `spellings_of()` makes for the two spelling columns, and it answers the one
+    failure mode `DictWriter` cannot report: a name in `fieldnames` with no
+    cell in a row is written as `''` rather than raised, so a drift here would
+    leave a plausible CSV with empty numeric cells in it, which `--check`
+    catches only as a byte diff and `--self-test` only as a `ValueError` that
+    points at the wrong line. The self-test asserts the two halves against each
+    other.
+    """
+    return tuple(f"{metric}{program_suffix(g)}" for metric in PER_PROGRAM_METRICS
+                 for g in GROUPS)
+
+
 REGISTER_COLUMNS = [
     "addr", "program", "spelled_as", "span_group", "cluster_id", "refs",
     "read", "write", "read+write", "passed-to-call", "address-taken",
@@ -377,7 +447,25 @@ REGISTER_COLUMNS = [
     # `check_capture_claims.py` all go through `csv.DictReader` or a regex over
     # a named cell.
     "spellings_by_program",
+    # The twelve per-program count columns are appended **on the same terms**,
+    # for the same reason and by the same argument: `$6`-`$11` keep meaning
+    # what they mean today, and the two positional readers above are unchanged
+    # rather than only un-broken. Two things follow from the append that did
+    # not hold for a first append. **`spellings_by_program` is no longer the
+    # last column** -- it is `$21` and the fields after it are interior, so
+    # `cut -d, -f21` still selects it and a reader who asks for "the last
+    # column" now gets `address-taken_pd`. And **comma-free is load-bearing
+    # here in a way it was only advisory for a spelling cell**: every one of
+    # these twelve is a bare integer read by the positional readers, so a
+    # thousand separator or a unit suffix in any one of them would make
+    # `awk -F,` shift the field. `per_program_counts_of()` can only write an
+    # `int`, which is what makes the guarantee mechanical rather than a rule
+    # somebody has to remember. The write-up is
+    # `../../docs/findings/xdata-per-program-counts.md`.
+    *per_program_columns(),
 ]
+
+
 CLUSTER_COLUMNS = [
     "cluster_id", "program", "size", "refs", "addrs", "addr_range",
     "functions_touched", "shared_functions", "callees", "named_addrs",
@@ -897,6 +985,67 @@ PAIR_BOTH_PAIR_LITERAL = {
     0x0834: (("DAT_EXTMEM", "pair-literal"), ("DAT_EXTMEM",), 48, 18),
     0x0835: (("DAT_EXTMEM", "pair-literal"), ("DAT_EXTMEM",), 48, 4),
     0x0836: (("DAT_EXTMEM", "pair-literal"), ("DAT_EXTMEM",), 9, 4),
+}
+# **The same four rows' direction buckets, per program** -- `(main-ec's five,
+# pd's five)`, in `BUCKETS` order. A sibling rather than a sixth and seventh
+# element of the block above, so issue #711's assertion over
+# `PAIR_BOTH_PAIR_LITERAL` is untouched and the two readings stay separately
+# readable: that one says what each program *spells*, this one says what it
+# *does with* the byte.
+#
+# **Two of the four are already published per program, which is what makes the
+# assertion an independent one.** `docs/findings/xdata-spelled-as-union.md` and
+# `ec/annotations/xdata-register-map.md` §2 both state `0x04A3`'s main-EC
+# seven as 4 `read` + 3 `write` against the pd one's 1 `address-taken`, and
+# `0x0834`'s main-EC 48 as 40 / 7 / 0 / 1 / 0 against the pd 18's 16 / 1 / 1 /
+# 0 / 0. A column written wrongly in both the tool and the file would still
+# close against prose nobody re-derived for it, so these two are the rows where
+# the pin has a second, independent source. `0x0835` and `0x0836` have no
+# published per-program bucket figures and are derived from the tool; they are
+# here for the same reason as the other two, not because anything else rests
+# on them.
+PAIR_BOTH_PAIR_LITERAL_BUCKETS = {
+    0x04A3: ((4, 3, 0, 0, 0), (0, 0, 0, 0, 1)),
+    0x0834: ((40, 7, 0, 1, 0), (16, 1, 1, 0, 0)),
+    0x0835: ((40, 7, 0, 1, 0), (2, 2, 0, 0, 0)),
+    0x0836: ((4, 4, 0, 1, 0), (4, 0, 0, 0, 0)),
+}
+# The per-program count columns' own pins. Every key here is read by a `check()`
+# in the `--self-test`, the rule issue #849 corrected: a value in a
+# module-level dict that nothing subscripts is a promise wearing the costume of
+# a pin. The aggregate block is what says the split *partitions* this census
+# rather than re-counting it -- the per-program totals the tool already pins
+# are each the single-program rows plus one half of the `both` rows, and the
+# twelve columns have to reproduce that arithmetic out of the committed file.
+PER_PROGRAM = {
+    # Every reference the PD image makes, `pd` and `both` rows together: the
+    # same 858 as `ORACLE["extmem_pd_refs"]` and the same figure, not a second
+    # spelling of it -- within the PD program the two token spellings are
+    # disjoint (asserted above), so every reference in that program is spelled
+    # `DAT_EXTMEM_` and the two pins cannot differ. Written out rather than
+    # referenced so the aggregate assertion is a measurement of the new column
+    # against the tree and not an equality between two old pins.
+    "pd_refs": 858,
+    # The 49 `both` rows, which carry this many references across the two
+    # address spaces. 947 + 255 == 1202, and 1202 is what the row's own unsuffixed
+    # `refs` column sums to over those rows -- the same number, stated both
+    # ways, which is the point: the row's figure is unmoved and a second,
+    # per-program figure now sits beside it.
+    #
+    # These are the *arithmetic identity* that says the split is this census and
+    # not a second one. `ORACLE["main_refs"]` (14,838) is 13,891 over the
+    # `main-ec` rows plus these 947, and the PD half above is 603 over the `pd`
+    # rows plus these 255. Neither half can be satisfied by a column that moved
+    # a reference between programs.
+    "both_refs": 1202, "both_main_refs": 947, "both_pd_refs": 255,
+    # The same 49 rows' buckets, each program separately rather than summed,
+    # in `BUCKETS` order. Per program rather than over both because the summed
+    # form is already published -- 641 / 239 / 214 / 72 / 36 on the `both` rows,
+    # and the five bucket totals this file pins -- and adding it up is exactly
+    # what these two rows replace. main-ec 947 = 546+165+212+16+8 against pd 255
+    # = 95+74+2+56+28.
+    "both_main_buckets": (546, 165, 212, 16, 8),
+    "both_pd_buckets": (95, 74, 2, 56, 28),
 }
 # The two worked examples the issue asks for, as the exact multiset of resolved
 # sites rather than a bucket total. `0x0402` is the address whose decompile
@@ -2173,6 +2322,47 @@ def spellings_by_program_of(groups, addr) -> str:
                     for g in GROUPS if addr in groups[g])
 
 
+def per_program_counts_of(groups, addr) -> dict:
+    """Every count on a row, once per program, from the per-program entries.
+
+    The same per-program entries `spellings_by_program_of()` reads and the
+    union in `build()` is absorbed out of, so the halves and the sum cannot
+    disagree about which reference went where -- and this is a *split*, not a
+    second pass: no reference is counted here that the unsuffixed columns do not
+    already carry, which is what leaves `refs`, the five buckets and every
+    `ORACLE` / `BUCKET_TOTALS` figure exactly where they were.
+
+    **All twelve cells are written on every row, not only on the 49 `both`
+    ones.** On a `main-ec` row `refs_main_ec` is the row's whole `refs` and
+    `refs_pd` is `0`; on a `pd` row the reverse. A column populated on 49 rows
+    and empty on 1,277 is a shape no `csv.DictReader` consumer can rely on --
+    `int('')` where `int` is the natural read -- and the partition
+    `refs == refs_main_ec + refs_pd` is only checkable corpus-wide if every row
+    carries both halves.
+
+    **A zero in the other program's column means the census found no reference
+    in that program, and nothing more.** It is "not found by this method over
+    the committed decompiled tree", never "absent from the image" and never a
+    claim that the program cannot reach the byte; see the calibration rule in
+    `CLAUDE.md` and the write-up's "What this does not establish". Nor is a
+    per-program `write` anything but a static shape: not evidence the EC acts on
+    the byte.
+
+    Comma-free -- bare integers and nothing else -- which is what keeps the
+    positional `awk -F,` / `cut -d,` readers `REGISTER_COLUMNS` names exact.
+    `int` in, `int` out, so the constraint is mechanical rather than a rule
+    somebody has to remember."""
+    out = {}
+    for metric in PER_PROGRAM_METRICS:
+        for g in GROUPS:
+            half = groups[g].get(addr)
+            out[f"{metric}{program_suffix(g)}"] = (
+                0 if half is None
+                else half["refs"] if metric == "refs"
+                else half["buckets"].get(metric, 0))
+    return out
+
+
 def scan(by_file, names, func_names, symbols, eq_guard: bool = True,
          export_ownership: bool = False, ownership=None, accessors=None):
     """(per-program census, call graph, raw occurrence count) over the tree.
@@ -2424,6 +2614,26 @@ def spellings_by_program(row) -> dict:
         if name:
             out[name] = tuple(spellings.split("+"))
     return out
+
+
+def per_program_cell(row, column) -> int:
+    """One per-program count cell, as an int, from a committed row.
+
+    `int(row[column])` would raise on a census written before the column
+    existed, and -- worse for whoever is reading the failure -- on an **empty**
+    cell. `render()` writes a name in `fieldnames` that a row does not carry as
+    `''` rather than raising (`extrasaction` governs the other direction), so a
+    name added to `REGISTER_COLUMNS` and forgotten in one `build()` branch
+    produces a plausible CSV that `--check` catches only as a byte diff and this
+    mode only as a `ValueError` pointing at the wrong line. A missing or blank
+    cell is a self-test failure to report with the address beside it, which is
+    what this returns: -1 for "this row has no usable cell here", a value
+    outside every count in the census so no partition can be satisfied by it."""
+    raw = (row.get(column) or "").strip()
+    try:
+        return int(raw)
+    except ValueError:
+        return -1
 
 
 def carry_names(old_rows, seeded, new_rows):
@@ -2807,12 +3017,17 @@ def build(funcs, names, symbols, census, calls, threshold,
             "sources_beyond": sum(1 for f in funcs_touched if f not in group_of),
             # The `both` row's per-program halves, from the same per-program
             # entries the union above was absorbed out of -- not a second
-            # spelling pass. `refs`, the five buckets and the two co-reading
-            # columns stay summed over both programs: the pair is an argument
-            # of what the address is written as, not a split of the reference
-            # count, and `docs/findings/xdata-spelled-as-union.md` says so with
-            # the four rows' per-program reference figures beside it.
+            # spelling pass. The spelling was split first and the counts were
+            # not; the twelve cells after this one split them, out of the same
+            # entries and on the same terms. `refs`, the five buckets and the
+            # two co-reading columns **stay** summed over both programs -- the
+            # union is the row's own figure and moving it would move every
+            # published reference figure the census quotes -- so a per-program
+            # question is read from the suffixed cells and nothing else changes
+            # meaning. `docs/findings/xdata-per-program-counts.md` has the
+            # worked rows and the arithmetic.
             "spellings_by_program": spellings_by_program_of(groups, addr),
+            **per_program_counts_of(groups, addr),
         })
     return register_rows, cluster_rows, groups
 
@@ -3482,6 +3697,169 @@ def self_test(args) -> int:
           and (PAIR_ROWS_MIXED + PAIR_ROWS_PAIR_ONLY
                == PAIR_ROWS_MIXED_UNION + PAIR_ROWS_PAIR_ONLY_UNION
                == PAIR_ROWS))
+    # ---- issue #713: the twelve per-program count columns ------------------
+    #
+    # Four assertions, in the order they can fail: what the columns claim on
+    # their own, where they sit; what they claim against a **fresh
+    # generation**; the arithmetic that says the split partitions this census
+    # rather than re-counting it; and the four `pair-literal` rows the union is
+    # load-bearing for. Three of the four read the **committed** registers CSV
+    # rather than a fresh one -- the whole of the issue is that the artifact a
+    # reader opens could not answer the question, so a check against what this
+    # run would write would not be answering it. The second is the deliberate
+    # exception: a file and a tool wrong *together* is a failure only something
+    # outside both can catch, which is why it compares the committed cells to
+    # `groups` rather than to a rendered row.
+    #
+    # #711's three assertions above are untouched. A new column is not a
+    # licence to weaken what the old one is held to, and the one thing a reader
+    # of that block is entitled to assume is that `refs` on a `both` row is
+    # still the sum -- which is what the first assertion below holds.
+    columns = per_program_columns()
+    split_bad = []
+    for r in committed_registers:
+        cells = {c: per_program_cell(r, c) for c in columns}
+        for metric in PER_PROGRAM_METRICS:
+            halves = sum(cells[f"{metric}{program_suffix(g)}"] for g in GROUPS)
+            if per_program_cell(r, metric) != halves:
+                split_bad.append(f"{r['addr']}:{metric}")
+        # The `program` column's own contract, and it is a two-way one: a
+        # single-program row must carry nothing at all for the program it is
+        # not, and a `both` row must carry something in both. The second half
+        # is a real assertion rather than a tautology -- an address in
+        # `groups[g]` has at least one reference there by construction, so a
+        # `both` row with a zero half means the file and the tool disagree
+        # about which programs touch the address number at all, which is the
+        # `program=both` collision the column exists to make checkable.
+        #
+        # The two branches are exclusive and the `both` one is checked first,
+        # because `"both"` is not a `GROUPS` key: a loop that skipped on
+        # `g == row["program"]` would never skip on a `both` row and would
+        # then read "every cell is non-zero" as "every cell is zero".
+        if r["program"] == "both":
+            if any(cells[f"refs{program_suffix(g)}"] <= 0 for g in GROUPS):
+                split_bad.append(f"{r['addr']}:both/zero-half")
+        else:
+            for g in GROUPS:
+                if g == r["program"]:
+                    continue
+                for metric in PER_PROGRAM_METRICS:
+                    if cells[f"{metric}{program_suffix(g)}"] != 0:
+                        split_bad.append(
+                            f"{r['addr']}:{r['program']}"
+                            f"/{metric}{program_suffix(g)}")
+    split_shown = ", ".join(split_bad[:8]) or "none"
+    if len(split_bad) > 8:
+        split_shown += f" (and {len(split_bad) - 8} more)"
+    check(f"issue #713: the {len(columns)} per-program columns sit at "
+          f"{REGISTER_COLUMNS.index(columns[0]) + 1}-"
+          f"{REGISTER_COLUMNS.index(columns[-1]) + 1} with "
+          f"`{REGISTER_COLUMNS[20]}` still at "
+          f"{REGISTER_COLUMNS.index(REGISTER_COLUMNS[20]) + 1}, and on all "
+          f"{len(committed_registers)} rows of "
+          f"{os.path.relpath(OUT_REGISTERS, EC_DIR)} each of the six "
+          f"unsuffixed counts is the sum of its two halves -- `refs == "
+          f"refs_main_ec + refs_pd` and the same for all five buckets -- "
+          f"while a `main-ec` row carries nothing for `pd`, a `pd` row nothing "
+          f"for `main-ec`, and a `both` row carries both (rows that disagree: "
+          f"{split_shown})",
+          not split_bad and len(committed_registers) == total_distinct
+          and REGISTER_COLUMNS[20] == "spellings_by_program"
+          and REGISTER_COLUMNS[21:] == list(columns))
+    # The cross-check that makes the file's own columns mean something. A
+    # column written wrongly in *both* `build()` and the CSV is internally
+    # consistent and the assertion above would pass it; this one compares the
+    # committed cells to the per-program entries they were supposed to be
+    # rendered from, and an address in no program of `groups` expects a zero
+    # rather than being skipped -- a row the file has and the tree does not is
+    # a failure, not an absence.
+    attributed_bad = []
+    for r in committed_registers:
+        addr = int(r["addr"], 0)
+        for g in GROUPS:
+            half = groups[g].get(addr)
+            for metric in PER_PROGRAM_METRICS:
+                want = 0 if half is None else (
+                    half["refs"] if metric == "refs"
+                    else half["buckets"].get(metric, 0))
+                if per_program_cell(r, f"{metric}{program_suffix(g)}") != want:
+                    attributed_bad.append(f"{r['addr']}/{g}/{metric}")
+    attributed_shown = ", ".join(attributed_bad[:8]) or "none"
+    if len(attributed_bad) > 8:
+        attributed_shown += f" (and {len(attributed_bad) - 8} more)"
+    check(f"and every one of those cells is the per-program entry it claims "
+          f"to be, read against a fresh generation of the census rather than "
+          f"against a rendered row -- {len(groups['main-ec'])} main-EC and "
+          f"{len(groups['pd'])} pd program-addresses, so a `both` row's halves "
+          f"come out of two different entries and a single-program row's other "
+          f"half comes out of nothing at all (cells that disagree: "
+          f"{attributed_shown})",
+          not attributed_bad)
+    # The reconciliation, which is what says the split *partitions* this census.
+    # `ORACLE["main_refs"]` and `PER_PROGRAM["pd_refs"]` are each the sum of the
+    # single-program rows plus one half of the `both` rows, so a column that
+    # moved a reference between programs would keep `refs == refs_main_ec +
+    # refs_pd` true and fail here.
+    both_rows = [r for r in committed_registers if r["program"] == "both"]
+    col = {g: sum(per_program_cell(r, f"refs{program_suffix(g)}")
+                  for r in committed_registers) for g in GROUPS}
+    both_col = {g: sum(per_program_cell(r, f"refs{program_suffix(g)}")
+                       for r in both_rows) for g in GROUPS}
+    both_buckets = {g: tuple(sum(per_program_cell(r, f"{m}{program_suffix(g)}")
+                                 for r in both_rows) for m in BUCKETS)
+                    for g in GROUPS}
+    both_summed = sum(per_program_cell(r, "refs") for r in both_rows)
+    check(f"and the split partitions the census rather than re-counting it: "
+          f"the two columns sum to {ORACLE['main_refs']} + "
+          f"{PER_PROGRAM['pd_refs']} = {ORACLE['refs']} over all "
+          f"{len(committed_registers)} rows (got {col['main-ec']} + "
+          f"{col['pd']}), each side being the single-program rows plus one half "
+          f"of the {len(both_rows)} `both` rows, which carry "
+          f"{PER_PROGRAM['both_main_refs']} main-EC + "
+          f"{PER_PROGRAM['both_pd_refs']} pd = {both_summed} -- the same "
+          f"{PER_PROGRAM['both_refs']} the rows' own `refs` column sums to "
+          f"(got {both_col['main-ec']} + {both_col['pd']}) -- and those rows' "
+          f"five buckets per program, in {', '.join(BUCKETS)} order, are "
+          f"{', '.join(str(n) for n in both_buckets['main-ec'])} main-EC "
+          f"against {', '.join(str(n) for n in both_buckets['pd'])} pd "
+          f"(got {', '.join(str(n) for n in both_buckets['main-ec'])} and "
+          f"{', '.join(str(n) for n in both_buckets['pd'])})",
+          col["main-ec"] == ORACLE["main_refs"]
+          and col["pd"] == PER_PROGRAM["pd_refs"]
+          and col["main-ec"] + col["pd"] == ORACLE["refs"]
+          and len(both_rows) == ORACLE["both"]
+          and (both_col["main-ec"], both_col["pd"], both_summed)
+          == (PER_PROGRAM["both_main_refs"], PER_PROGRAM["both_pd_refs"],
+              PER_PROGRAM["both_refs"])
+          and both_buckets["main-ec"] == PER_PROGRAM["both_main_buckets"]
+          and both_buckets["pd"] == PER_PROGRAM["both_pd_buckets"])
+    # The four rows whose union carries `pair-literal`, now to the bucket. The
+    # first two have their per-program bucket figures in committed prose
+    # (`docs/findings/xdata-spelled-as-union.md` and
+    # `ec/annotations/xdata-register-map.md` §2), which is what makes this an
+    # independent check and not a self-consistent one; `0x0835` and `0x0836`
+    # are derived from the tool and are here for the same reason as the other
+    # two rather than because anything else rests on them.
+    bucket_bad = []
+    for a, (want_main, want_pd) in sorted(
+            PAIR_BOTH_PAIR_LITERAL_BUCKETS.items()):
+        row = csv_rows.get(hexaddr(a))
+        got = (tuple(per_program_cell(row, f"{m}_main_ec") for m in BUCKETS)
+               if row else None,
+               tuple(per_program_cell(row, f"{m}_pd") for m in BUCKETS)
+               if row else None)
+        if got != (want_main, want_pd):
+            bucket_bad.append(hexaddr(a))
+    four_713 = ", ".join(hexaddr(a) for a in PAIR_BOTH_PAIR_LITERAL_BUCKETS)
+    check(f"and those four rows say which program does what: {four_713} -- "
+          f"0x04A3's seven main-EC references are 4 `read` and 3 `write` and "
+          f"its single pd one is 1 `address-taken`, which is the row's own 4 / "
+          f"3 / 0 / 0 / 1 with nothing left to guess, and 0x0834's 48 are 40 / "
+          f"7 / 0 / 1 / 0 against the pd 18's 16 / 1 / 1 / 0 / 0 -- two of "
+          f"these four were already published per program, so the column is "
+          f"checked against prose nobody re-derived for it (rows that "
+          f"disagree: {', '.join(bucket_bad) or 'none'})",
+          not bucket_bad)
     check(f"oracle: the full census, both spellings -- {ORACLE['distinct']} "
           f"distinct / {ORACLE['refs']} references, main EC "
           f"{ORACLE['main_distinct']}/{ORACLE['main_refs']} (got {total_distinct}"
