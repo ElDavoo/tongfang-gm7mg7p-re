@@ -243,12 +243,24 @@ def flip_table(committed_a, off_a, committed_b, off_b):
 def deciles(sizes):
     """Ten size cut points, so "the large clusters" is a distribution and not
     an adjective. A tenth is a whole number of rows, so this is a
-    nearest-rank read rather than an interpolation, and a set too small to cut
-    ten ways is reported as the set it is rather than stretched over ten
-    cells."""
+    nearest-rank read rather than an interpolation: cell `i` is the value at
+    0-based rank `(n * i) // 10`, and ten rows is the smallest `n` at which
+    that is one whole row per cell with none doubled up at the ends.
+
+    Below the floor the cells are returned as the set itself, marked so that a
+    reader of a transcript cannot take a stretched handful for a distribution:
+    two clusters of two addresses each is one distinct value, and printed over
+    ten cells it is a shape. The floor is the comparison itself that needs it --
+    two of these strings are read cell for cell against each other, which says
+    something only if each cell is a row of its own. The empty set is reported
+    before the floor rule applies; it is not a set too small to cut, it is no
+    set at all."""
     ordered = sorted(sizes)
     if not ordered:
         return "no rows"
+    if len(ordered) < 10:
+        return (f"{len(ordered)} row(s), too few to cut ten ways: "
+                + " ".join(str(n) for n in ordered))
     return " ".join(str(ordered[min(len(ordered) - 1, (len(ordered) * i) // 10)])
                     for i in range(10))
 
@@ -940,6 +952,31 @@ def self_test() -> int:
           "membership change")
     check(any("MISMATCH" in ln for ln in lines) is False,
           "the moved-count difference closes over the four terms it is made of")
+
+    # `deciles`, whose floor this fixture is the case for: its flipped set is
+    # the two clusters k1 and k3, two addresses each, and that line is printed
+    # beside a five-row census on the theory that both are ten-cell reads. It
+    # is `across_report` that puts the two side by side, so the report line is
+    # asserted on as well as the helper -- a helper that stopped stretching
+    # would still leave a caller free to print the stretched string itself.
+    check(any("the flipped set's size distribution" in ln
+              and "too few to cut ten ways" in ln for ln in lines)
+          and not any("2 2 2 2 2 2 2 2 2 2" in ln for ln in lines),
+          "a flipped set of two clusters is reported as the two sizes it is, "
+          "on the line itself -- not `2 2 2 2 2 2 2 2 2 2` read as a decile "
+          "distribution beside the census's")
+    check(deciles([]) == "no rows",
+          "an empty set is reported before the floor rule applies")
+    check(deciles(range(1, 11)) == "1 2 3 4 5 6 7 8 9 10"
+          and len(deciles(range(1, 12)).split()) == 10,
+          "ten rows is the floor: one whole row per cell, and crossing it does "
+          "not change the shape of the read")
+    check("too few to cut ten ways" in deciles(range(1, 10)),
+          "nine rows is below the floor -- the cells already double up at the "
+          "ends there, so the set is returned rather than repeated")
+    check(deciles([3, 1, 2]) == "3 row(s), too few to cut ten ways: 1 2 3",
+          "a set below the floor comes back sorted and marked, as the set it "
+          "is and not as ten numbers a reader would take for deciles")
 
     # Keys present in only one generation, named rather than netted off.
     c_committed = write_census(tmp, "c-committed.csv", [

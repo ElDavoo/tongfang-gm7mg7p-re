@@ -273,6 +273,18 @@ the **23** committed clusters of 8 addresses or more, **5** flipped; of the
 and it is not in the flipped set at all. §2a's "the large `main-ec` clusters"
 are not what stopped moving.
 
+**Note, 2026-09-26 (issue #889): what this read needs to be one, and what it
+prints without.** `xdata_moved_ranks.py`'s `deciles()` is a nearest-rank read
+of ten cells, and it needs **ten rows or more** to be one: below that it
+returns the set itself, marked, rather than ten cells drawn from fewer than ten
+rows. The two figures above are over 94 keys and 439 rows, so **neither moves**,
+and neither did any other read quoted here. None of them was ever a below-floor
+read; the tool used to clamp the other way, and a cell of a few keys printed as
+a handful of values repeated across ten cells — a shape indistinguishable from
+a real read on a line of its own, which is the reason the floor exists. The
+contract and the measurement are in
+[`xdata-decile-small-set-contract.md`](xdata-decile-small-set-contract.md).
+
 **Half two — the column that does move, and it moves in both directions.** The
 guard-off delta `|addrs(off) Δ addrs(committed)|` of the cluster carrying each
 key, per cell, as a distribution rather than an average — a mean would hide that
