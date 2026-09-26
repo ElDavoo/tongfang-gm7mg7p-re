@@ -592,6 +592,35 @@ class TheCommittedTree(unittest.TestCase):
         # recording, because a reader who sees the denominators move and the head
         # count not has the measurement rather than the guess.
         #
+        # **Re-measured a ninth time on the `#778 × #780` tree, and the ninth is
+        # the only one where the two sides' shape movements compose.** #780
+        # repointed one stale line pin at the rule that replaced the code it
+        # cited, which is a move from `assertion` to `other` -- 19 -> 18 and
+        # 33 -> 34 on its own tree, against a headcount it held at 105. #778
+        # moved `other` 33 -> 34 for the other reason, one *new* pin. Both
+        # apply here, so the split reads **18 / 35 over 74**: five of the
+        # movement are the new pin and the sixth is the repoint, and the six
+        # headcount figures above are unchanged by either, which is the whole
+        # of what a repoint is. The other denominator moved once more, `152` ->
+        # `153` markdown files read, because this merge adds #780's write-up
+        # beside #778's where each of them saw only its own.
+        #
+        # **Re-run a tenth time on the tree this lands in, where the two shape
+        # movements above are no longer the whole story and the ninth paragraph's
+        # `18 / 35` is not this tree's split.** #962 corrected a
+        # `guard_off()` docstring and added a class, which moved every pin
+        # landing inside `test_xdata_cluster_names.py` off a `def test_` header
+        # onto prose or code -- the `0/16/22/5/31` the assertion below already
+        # records as #962's own step -- and `main` then took the suite count to
+        # 39. So the repoint composes on top of that rather than beside it, the
+        # live split is `0/15/22/5/32`, and the ninth paragraph's `18 / 35` is
+        # left written as the `#778 x #780` tree's figure rather than edited into
+        # this one. The denominator is `160` markdown files read against `39` test
+        # files, measured on the merged tree and on `origin/main` at `abfe76e6`
+        # (which reads `159`), and the step between them is #780's own write-up
+        # -- the eighth paragraph's `152 -> 153` is the `#778 x #780` tree's and
+        # is left written in the same breath.
+        #
         # The `carries` / `does not carry` counts (51 and 11 here, 50 and 11
         # before #778, 48 and 13 before that) are **not** here on purpose: they
         # are a reading of whether a
@@ -612,17 +641,22 @@ class TheCommittedTree(unittest.TestCase):
         self.assertEqual(verdicts(records), {
             census.RESOLVES: 74, census.OUT_OF_RANGE: 0,
             census.UNRESOLVED: 0, census.AMBIGUOUS: 0, census.DECLINED: 32})
-        # Re-derived for #962, not lowered. Its class and a docstring above it
-        # grew, so every pin into `test_xdata_cluster_names.py` lands `N` lines
-        # lower than it did, and the landing *shapes* follow: five pins that
-        # read a `def test_` header now read prose or code, and the split moves
-        # from `5/19/10/6/34` to `0/16/22/5/31`. Nothing above this changed --
-        # 106 records over 28 files and 79 spellings, the same 74 resolving and
-        # 32 declined, the same 58 targets -- which is what makes the shape the
-        # one column a line shift can move on its own.
+        # Re-derived for #962, then again here, and not lowered either time.
+        # #962's class and a docstring above it grew, so every pin into
+        # `test_xdata_cluster_names.py` lands `N` lines lower than it did, and
+        # the landing *shapes* follow: five pins that read a `def test_` header
+        # now read prose or code, and the split moves from `5/19/10/6/34` to
+        # `0/16/22/5/31`. The ninth paragraph above adds #780's own repoint on
+        # top of that -- one assertion onto prose, `19` -> `18` and `34` -> `35`
+        # -- and it is a different pin from any of the five, so the two
+        # movements compose rather than one replacing the other and the merged
+        # tree reads `0/15/22/5/32`. Nothing above this changed: 106 records
+        # over 28 files and 79 spellings, the same 74 resolving and 32 declined,
+        # the same 58 targets -- which is what makes the shape the one column a
+        # line shift can move on its own.
         self.assertEqual(shapes(records), {
-            census.DEF_TEST: 0, census.ASSERTION: 16, census.COMMENT: 22,
-            census.BLANK: 5, census.OTHER: 31})
+            census.DEF_TEST: 0, census.ASSERTION: 15, census.COMMENT: 22,
+            census.BLANK: 5, census.OTHER: 32})
         self.assertEqual(
             len({(r[4], r[2].rsplit(":", 1)[1]) for r in records
                  if r[3] == census.RESOLVES}), 58)

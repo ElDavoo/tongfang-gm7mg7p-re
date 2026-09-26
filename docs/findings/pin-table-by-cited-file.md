@@ -37,7 +37,7 @@ block below says so at the length it deserves.)*
 ```console
 $ python3 ec/tools/check_pin_table_by_cited_file.py
 which test file the census's pins name, and the indexed suites none of them does
-  106 pin(s) over 38 indexed test file(s): 11 named by a pin, 27 named by none
+  106 pin(s) over 40 indexed test file(s): 11 named by a pin, 29 named by none
 
   cited test file                                   resolves out-of-range     declined  occurrences
   ec/tools/test_xdata_cluster_names.py                    34            0           10           44
@@ -55,10 +55,11 @@ which test file the census's pins name, and the indexed suites none of them does
 
   0 unresolved-path, 0 ambiguous-path (records this file could place nowhere; counted, named, and never guessed)
 
-  indexed but named by no pin (27 of 38):
+  indexed but named by no pin (29 of 40):
     ec/tools/test_bank1_e582_framing.py
     ec/tools/test_census_test_line_pins.py
     ec/tools/test_check_capture_claims.py
+    ec/tools/test_check_capture_names.py
     ec/tools/test_check_citation_lines.py
     ec/tools/test_check_cluster_citations.py
     ec/tools/test_check_doc_figure_pins.py
@@ -67,6 +68,7 @@ which test file the census's pins name, and the indexed suites none of them does
     ec/tools/test_check_testdata_row_claims.py
     ec/tools/test_citation_callers.py
     ec/tools/test_citation_frames.py
+    ec/tools/test_disasm8051_oracle.py
     ec/tools/test_export_ownership.py
     ec/tools/test_grade_gpu_door.py
     ec/tools/test_grade_timer_sweep.py
@@ -83,7 +85,7 @@ which test file the census's pins name, and the indexed suites none of them does
     windows/tools/test_ec_validate.py
     windows/tools/test_ecrw.py
     windows/tools/test_gpu_block_watch.py
-  read 152 markdown file(s) and 38 test file(s) under the tree, on census_test_line_pins.py's population: .git/vendor/ and docs/findings/test-line-pin-census.md excluded there
+  read 161 markdown file(s) and 40 test file(s) under the tree, on census_test_line_pins.py's population: .git/vendor/ and docs/findings/test-line-pin-census.md excluded there
   no verdict is rendered here and none fails: whether a cited line still bears the claim it is cited for is a reading, and it is docs/findings/test-line-pin-census.md's table
   every negative above is 'not read by this method', never 'absent'
 $ echo $?
@@ -92,23 +94,62 @@ $ echo $?
 
 *(Re-transcribed on the merged tree, per the same `§4a-4d` rule the rest of this
 file follows: the `105`/`37`/`26` block above is what this issue measured on its
-own tree, and **two** later merges moved it — #944's
-`tools/test_doc_patch_refs.py` and its markdown write-up beside it, and #778's
-write-up with its edit to `ec/tools/test_xdata_cluster_names.py`. Every
-figure that moved, and why:
+own tree, and **six** later merges moved it — #944's
+`tools/test_doc_patch_refs.py` and its markdown write-up beside it, #778's
+write-up with its edit to `ec/tools/test_xdata_cluster_names.py`, and then the
+four that name no pin of this class and so move only the denominator beside it:
+#780's `testdata-index-evidence-column.md`, the two `main` gained in the same
+window — #964's `testdata-row-claims-dated-capture.md` and #982's
+`testdata-addr-column-claim.md` — and #979's
+`testdata-row-claims-multi-date-sentence.md`; #980 adds none, editing a write-up
+already counted. **#985 is the first of the six that moved a suite as well as a
+denominator**, `main` having gained it after this branch forked. Every figure
+that moved, and why:
 
 | figure | this issue's tree | merged tree | what moved it |
 |---|---:|---:|---|
 | pins | 105 | **106** | #778's write-up brings one pin, naming the `--no-eq-guard` recipe |
-| indexed test files | 37 | **38** | #944's suite; the 33 repointed pins and the one new one all name files already in the index, so the count is by construction and moved by no figure in the table |
+| indexed test files | 37 | **39** | #944's suite and then #985's `ec/tools/test_disasm8051_oracle.py`; the 33 repointed pins and the one new one all name files already in the index, so the count is by construction and moved by no figure in the table |
 | named by a pin | 11 | **11** | #778's one new pin names `test_xdata_cluster_names.py`, already named |
-| indexed and unpinned | 26 | **27** | the same suite, into the tail |
+| indexed and unpinned | 26 | **28** | the same two suites, into the tail |
 | `test_xdata_cluster_names.py` resolves | 33 | **34** | #778's one new pin, by path |
 | `test_xdata_cluster_names.py` occurrences | 43 | **44** | the same pin |
 | one suite / the two | 43 / 79 of 105 | **44 / 80 of 106** | the same pin, in the first row |
-| markdown files read | 150 | **152** | #944's two markdown files, one of them this tool's own sibling write-up |
+| markdown files read | 150 | **160** | #944's two markdown files, one of them this tool's own sibling write-up, #780's `testdata-index-evidence-column.md`, the two `main` gained in the same window (#964's and #982's write-ups), #985's `disasm8051-oracle-from-the-annotations.md`, and #979's `testdata-row-claims-multi-date-sentence.md` |
 | resolves / declined, summed | 73 / 32 | **74 / 32** | the census's own, and `test_census_test_line_pins.py` is green at 74/32 |
 | the other nine rows | — | **unchanged** | #778's 33 repointed occurrences all resolve to `test_xdata_cluster_names.py` and to nothing else |
+
+**#780's is the cheapest merge in this series and it is worth naming as such
+rather than leaving the denominator's move unattributed.** Its write-up
+(`testdata-index-evidence-column.md`) is one of the markdown files the
+census reads, it cites no `test_*.py:NNN`, and it added no suite — so it moved
+that denominator by one file and **nothing else on the block**, `157` → `158`
+measured against `origin/main` at `368e9e52` and one more than the `156` its own
+tree read. **#985's is the same kind of move and one file larger, `158` → `159`,
+and it is the only one of the six that also took the suite denominator** — its
+`disasm8051-oracle-from-the-annotations.md` is a markdown file the census reads,
+its `test_disasm8051_oracle.py` a suite the index counts, and the suite joined
+the tail rather than the named set, for the reason the twenty-first note in
+`tools/README.md` gives and this file's own `thirty-nine` correction above
+records. **#979's is the same kind of move again and the last of them, `159` →
+`160`**: `abfe76e6` committed
+[`testdata-row-claims-multi-date-sentence.md`](testdata-row-claims-multi-date-sentence.md),
+one of the files the census walks and the only thing it moved — measured on both
+sides by this tool's own walk on a `git archive` of each rather than by counting
+the diff, so the step is a run and not an assumption, and `159` at `abfe76e6` and
+`160` here are both that walk's output. *(The `124` this paragraph first recorded
+is a fourth value for the
+same denominator, superseded twice before this paragraph and left written per
+§4a-4d, as the paragraph at the foot of this file records for the `151` and the
+`152`.)* Its own re-registering edit, the
+`testdata-index-suite-count-floor.md:25 → :47` repoint, is a `file.py:NNN` pin
+rather than a markdown one and so does not appear in this table at all; it is a
+`shape` movement in
+[`test-line-pin-census.md`](test-line-pin-census.md)'s own table, and it is the
+one that makes the merged shape split **`0/15/22/5/32`** rather than `main`'s
+`0/16/22/5/31` — `main`'s own re-measurement having superseded the `18`/`35`
+this paragraph first published, which was #780's own tree's two-way
+assertion/`other` reading before #962's five-pin shift moved it.*
 
 **The 33 repointed pins are invisible in this table by construction, and that is
 the point of the axis rather than a gap in it.** A repoint moves the *line* a
@@ -176,11 +217,11 @@ file the census write-up records **finding 6's four pins across two citing
 files** in,
 [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md) and
 [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md) — the four bullets at
-[`test-line-pin-census.md:888-903`](test-line-pin-census.md), and two is what
+[`test-line-pin-census.md:1451-1466`](test-line-pin-census.md), and two is what
 the census itself counts, because that write-up's own per-pin table copies those
 four spellings rather than citing them independently and so is not a third. Its
 roll-up further down puts **findings 6 and 8's six pins in four files**
-([`test-line-pin-census.md:973`](test-line-pin-census.md)), the other two being
+([`test-line-pin-census.md:1094`](test-line-pin-census.md)), the other two being
 finding 8's, and the six `> 300` pins of findings 6 and 8 are #920's and stay
 `does not carry`
 — while the pair #930 repointed onto that floor's own line carries again. The
@@ -189,6 +230,44 @@ about, and neither of those is a consequence of the other. The tool prints the
 cost and stops there: it renders no verdict on a single pin, and the
 concentration line says so on every run rather than leaving a reader to work out
 which of these numbers is a defect.
+
+*(**Correction, 2026-09-26, at the `#778 × #780` merge, re-measured at the
+`#929` × `#962` × `#794` × `#780` × `#985` merge: the two
+`test-line-pin-census.md` line references above are repointed, and they are
+re-pointed again here — `1373-1392` → `1435-1454` and `:1057` → `:1078`, and
+nothing about what they name has changed.** The first correction records the
+third position those two references took, each side of that merge having measured
+a different one of the first two: #780's own tree read them at `828-841`/`:914`
+and #778's at `888-903`/`:973`, neither of which is the base, and its
+`940-955`/`:1026` was the composed tree's. **Those two values were themselves
+already stale on the tree that wrote them**, which is the half of this correction
+worth recording plainly rather than only the new numbers: the four bullets are at
+`:1373` and the roll-up at `:1057` on #780's own tip, not the `940-955`/`:1026`
+its paragraph gives, because that paragraph was written before the branch's own
+later edits to that write-up's measurement block. **This merge settles all three
+trees by extraction rather than by differencing**, the way the rest of this file
+does: `origin/main` at `368e9e52` reads `:1204`/`:908`, this branch's tip reads
+`:1373`/`:1057`, and this merged tree reads `:1434`/`:1078` — `+61` and `+21`
+over the branch's own, which is this merge's census correction above the roll-up
+and its seventh correction note between the two. The four bullets and
+the roll-up line are the same four bullets and the same roll-up line on all three
+trees; only where they sit moved. They are re-read on the merged tree rather than
+carried across, and the superseded pairs stay visible here per §4a-4d rather than
+edited out of silence. **No other file cites a line of that write-up**, so the
+move stops here.)*
+
+*(**Correction, 2026-09-26, at the `#979` × `#780` merge: both references above are
+re-pointed a fourth time — `1435-1454` → `1451-1466` and `:1078` → `:1094` — and
+again nothing about what they name has changed.** The whole of the `+16` is the
+sixteen-line correction that write-up itself gained above the roll-up, recording
+that `main` gained `abfe76e6` (#979) after its `#985` paragraph was written and
+taking the markdown-file denominator from `159` to `160`; the same edit is
+`#780`'s and the correction records both sides' halves rather than only this
+branch's. **The `:1434` a first draft of the paragraph above gives is off by one
+on its own tree and is left written**, since it was a shorthand for the start of
+the range it names and the range it named — `1435-1454` — is the one that was
+right. Re-read on the merged tree rather than carried across, and the superseded
+pair stays visible here per §4a-4d rather than edited out of silence.)*
 
 ## The other direction: which indexed suites no pin names
 
@@ -206,8 +285,16 @@ census write-up has been making from the other end.** Its argument for 58 distin
 resolved targets turns on whether a target was **already named** — #890's repoint
 "split" one target into two, and #885's pair "arrived the other way … so they
 added a target rather than splitting one". Which case a new pin falls into
-depends on the population being eleven files out of thirty-eight, and until now
+depends on the population being eleven files out of thirty-nine, and until now
 that population was not written down anywhere. It is now the second table.
+*(The `thirty-eight` and the `27` this sentence carried are `thirty-nine` and
+**`28`** on this merged tree, and the `eleven` is unmoved: #985's
+`ec/tools/test_disasm8051_oracle.py` took the denominator by one and, as the
+block above re-transcribes, joined the tail rather than
+the named set — its write-up cites it by path and never as
+`test_disasm8051_oracle.py:NNN`, deliberately, for the reason
+`test-line-pin-census.md` records. The superseded values are left written per
+§4a-4d.)*
 
 **A suite in the tail is not a gap.** It says *no pin in this population names
 it*, which is a statement about the population and not about the suite: a suite
@@ -312,40 +399,61 @@ failure was `ec/tools/test_check_cluster_citations.py`'s
 [`xdata-cluster-names-guard-off-recipe.md:220`](xdata-cluster-names-guard-off-recipe.md)
 — `0x0464` and `0x0465` against `main-ec-145`, which is #822's file and the red
 set [`runner-red-suite-set.md`](runner-red-suite-set.md) has carried since #816.
-**On the merged tree the runner reads `38 suite(s) run, 1161 tests; one or more
-FAILED`, and there are now two red suites rather than one.** The
+**On the merged tree the runner reads `40 suite(s) run, 1243 tests; one or more
+FAILED`, and the red set is back to the single suite the paragraph above names
+rather than the two the `#778 × #780` tree carried.** The
 `test_check_cluster_citations.py` failure is unchanged — same case, same line,
 same message, and it reproduces identically on a clean `origin/main`, so neither
 this file nor #778's merge causes or fixes it; it is named here rather than fixed
 here, which is the convention [`../findings.md`](../findings.md) §66's merge note
 follows, cited by section rather than by line here: a write-up whose subject is
-stale line citations is the last place to leave one. The second red suite is
-**this one**, `ec/tools/test_check_pin_table_by_cited_file.py`, and it is this
-merge's to own: **two of its three failures are #778's** — the first row of the
-committed breakdown and the concentration pair, both moved by the one new pin, and
-both re-measured beside the transcript above. **The third is not this merge's and
-is left red deliberately**: `test_the_committed_index_figures_are_the_ones_the_write_up_publishes`
-holds 37 indexed suites, and #944's `tools/test_doc_patch_refs.py` took that to
-38 on `main` before this merge was opened — the tool's own header line has read
-`38 indexed test file(s)` since, so the pin is the last thing in the tree still
-saying `37`. It is verified red on a clean worktree at `24460001`, and it is
-named in the case's own comment rather than quietly re-measured here, because
-re-measuring another issue's figure from a merge that did not move it is the same
-error the `§4a-4d` rule exists to stop. The second row
+stale line citations is the last place to leave one. **The second red suite the
+`#778 × #780` tree carried is this one,
+`ec/tools/test_check_pin_table_by_cited_file.py`, and it is green here**, so the
+"two red suites" clause above is superseded at this merge and left written in
+the one that measured it. **It was red because
+`test_the_committed_index_figures_are_the_ones_the_write_up_publishes` held 37
+indexed suites** — `main` having deferred that re-measurement to "whichever
+change next owns this file" after #944's `tools/test_doc_patch_refs.py` took the
+count to 38, so the pin was the last thing in the tree still saying `37` — and
+because two of its three failures were #778's, the committed breakdown's first
+row and the concentration pair, both moved by the one new pin and both
+re-measured beside the transcript above. **#780 owns the file and re-set the
+pin**, to **39 / 11 / 28**: `ec/tools/test_disasm8051_oracle.py` is #811's
+suite and its write-up cites it by path and never as
+`test_disasm8051_oracle.py:NNN`, deliberately, so nothing new is pinned,
+`len(files) - len(tail)` stays **11**, and the tail takes the 39th unpinned
+suite. The `37/11/26`, the `36/11/25` and the `38/11/27` stay written in that
+case's own comment, each true of the tree it was measured on, per §4a-4d. The
+second row
 reconciles by arithmetic rather than by re-reading the runner: `1035 + 41` was
 #887's `1076`, #945's `test_check_pin_table_rows.py` took it to `1112` with its
-own 36 cases, `1112 + 27` is this suite's own 27, and `1139 + 22` is #944's
-`tools/test_doc_patch_refs.py` — which is the whole of the move to `1161`,
-because #778's edits changed no suite's case count.
+own 36 cases, `1112 + 27` is this suite's own 27, `1139 + 22` is #944's
+`tools/test_doc_patch_refs.py` — the whole of the move to `1161`, because #778's
+edits changed no suite's case count — and **`1161 + 10` is #780's own step**:
+`ec/tools/test_check_testdata_index.py` grew from 59 cases to 69, and #778's and
+#780's are both suite-growth-free apart from that one. **The `1171` above is
+superseded on this tree, and so is the `1211` that replaced it on `main`** —
+`origin/main` at `abfe76e6` re-derived `1211` for the `#979` × `#985` merge, and
+`1211 + 10 = 1221` is this merge's step on top of it, with the suite count
+moving `38` → `39` on `main`'s side for the reason the twenty-first note in
+`tools/README.md` records. **Neither pair is this tree's**: `main` has since
+gained #973's commit, so the sentence `tools/README.md` carries is corrected
+again and this tree reads `40 suite(s) run, 1243 tests` and `939` for
+`python3 -m unittest discover -s ec/tools` — `1233 + 10 = 1243`, the same one
+step #780 contributes measured from the other side's tree, with the suite count
+unmoved at the `40` `main` already read. Both superseded pairs stay written
+above, each true of the tree it was measured on, per §4a-4d.
 
 **The 149 and the 36 are also printed by `census_test_line_pins.py` itself**, and
 its output line for each moves with this merge — the run then read `150 markdown
-file(s)` and `37 test file(s)`, and on the merged tree it reads **`152`** and
-**`38`**. That transcript is quoted verbatim in
+file(s)` and `37 test file(s)`, and on the merged tree it reads **`161`** and
+**`40`**. That transcript is quoted verbatim in
 [`test-line-pin-census.md`](test-line-pin-census.md) and in a dozen
 merged-tree notes in [`../../tools/README.md`](../../tools/README.md); the
 `test-line-pin-census.md` copy is re-transcribed above and the notes beside it
-record `152`/`38` at this merge, and the rest are left as the history they are,
+record `153`/`38` at the `#778 × #780` merge and `161`/`40` at this one, and the
+rest are left as the history they are,
 the same trade this issue made. A reader who wants the old pair
 reads this section; a reader who wants the current one runs the tool.
 
@@ -355,10 +463,10 @@ of those as an occurrence of the class this page is a fifth axis on. The guard i
 already committed: `test_census_test_line_pins.py`'s
 `test_the_committed_counts_are_the_ones_the_write_up_publishes` holds 106, 28, 79,
 58 and the shape split, so a stray pin turns **that** case red and the prose is
-what gets fixed. 124 of the 152 markdown files the census reads carry none.
+what gets fixed. 133 of the 161 markdown files the census reads carry none.
 
 **The `150` and the `37` above are this file's own tree, and both are one short
-of it; the tree this lands in reads `153` and `38`, and `125` of the `153` carry
+of it; the tree this lands in reads `161` and `40`, and `133` of the `161` carry
 no pin.** Measured, not differenced, and each of the three steps is one markdown
 file and not one record: a `git archive origin/main` extraction gave
 `census_test_line_pins.py` reading `151` markdown files and `38` indexed test
@@ -368,9 +476,20 @@ and [`doc-patch-reference-gate.md`](doc-patch-reference-gate.md) took it to
 `152` and left the indexed count at `38`, and the `#929` × `#778` merge that put
 [`xdata-two-largest-case-restatement.md`](xdata-two-largest-case-restatement.md)
 beside it takes the corpus to **`153`** while leaving the indexed count at `38`
-again. **The `152` and the `124` this paragraph first recorded are superseded by
+again. **The tree this merge lands in reads `161` and `40`**, and the eight
+markdown files between `153` and `161` are the five `main` gained in the same
+window — #964's, #982's, #985's, #979's and #973's write-ups — with #780's own
+beside them, every one of them a write-up that cites no line of a test file,
+which is
+the same shape the three steps above record and the reason no record moved with
+them. **The `153`, the `38` and the `125` are left written, each true of the
+`#778 × #780` tree it was measured on**, per §4a-4d. **The `152` and the `124`
+this paragraph first recorded are superseded by
 that one file and are left written here**, and the `151` is superseded in turn by
-`main` having taken #778 since the extraction was taken.
+`main` having taken #778 since the extraction was taken. **The `160` and the
+`39` this paragraph carried when it was written are superseded the same way, by
+#973's commit landing beside #780's rather than replacing it**, and both stay
+written above each true of the tree it was measured on.
 
 **The step is one file each and not a record each**, which is the point this
 write-up's own axis is about: of the three new files only #778's carries a
@@ -383,9 +502,12 @@ superseded values stay written per [`../findings.md`](../findings.md) §4a-4d,
 [`test-line-pin-census.md`](test-line-pin-census.md) carries the re-transcribed
 block and a per-merge section for it, and this write-up's own
 `test_check_pin_table_by_cited_file.py` index pin is re-set to the measured
-**38 indexed / 11 named / 27 named by none** with the reason in the comment
+**39 indexed / 11 named / 28 named by none** with the reason in the comment
 beside it — which `main` left red on purpose and this change, as the next owner
-of that file, is the one its note was waiting for.
+of that file, is the one its note was waiting for. *(The `38`/`11`/`27` this
+paragraph carried is the value the pin held between that re-set and #985's
+suite, and it is left written; the case's own comment carries all three
+superseded triples beside the live one, per §4a-4d.)*
 
 *(**And that pin has since moved twice more, by the same rule and one suite
 each.** Issue #811's `ec/tools/test_disasm8051_oracle.py` and issue #973's
@@ -403,7 +525,16 @@ because the pin count is still **106**; the `38` → `39` → `40` and `27` → 
 deliberately left at `38`/`152`** — it is a record of one run on the tree this
 issue measured on, and it reads `152` markdown files where the tree now carries
 more, so it has been a dated snapshot rather than a live claim since before
-these steps and stays one.)*
+these steps and stays one. **That clause is superseded, beside itself and not
+into itself, per §4a-4d: the transcript is re-run rather than left, and it reads
+`40`/`161` here** — the branch re-ran it to `39`/`160` for the `#778 × #780`
+merge and this merge re-ran it again on the tree that carries both, so the
+`38`/`152` and the `39`/`160` are two further values in a history that has three
+entries in it, each of which the diff carries and none of which the file states
+as current. Re-running it is what costs the two suites their place in the
+sentence above: `test_disasm8051_oracle.py` and `test_check_capture_names.py`
+are in the transcript's tail list because the run that produced it is this
+merge's, not because the paragraph naming them was edited.)*
 
 *(**And the same `40 / 11 / 29` holds on the second merge's tree, which is the
 one this landed on, for a reason worth one sentence.** The two suites named

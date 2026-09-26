@@ -53,7 +53,18 @@ Not a model of the real tree, and not meant to be: the real censuses are in
 `ec/annotations/call-graph.md`, and the real `.asm` files are generated. This
 tree is hand-written and hand-checked, which is what makes it an oracle.
 
-The `evidence` column in `ghidra-functions.csv` keeps the real tree's
-`ec/decompiled/…` shape for consistency and is **not resolved on disk** — the
-self-test never reads it, and the fixture-only `0x0D20`/`0x0D40` have no
-counterpart under `ec/decompiled/`.
+The `evidence` column in both CSVs keeps the real tree's `ec/decompiled/…`
+shape, and `../check_testdata_index.py` **does** resolve it — against the
+repository root, which is a third base beside the one `Feeds` uses and the one a
+nested `.asm` is read from. The self-test still never reads it. A cell whose
+path the real tree does not have turns the check red, so six of this fixture's
+addresses have their cell **empty**: `0x0D20` and `0x0D40` are fixture-only by
+the two cases above, `0x0EA3` is a synthetic row naming an address that is named
+nowhere, and `0x0071`, `0xF6A0` and `0x10E0` are fixture-invented addresses with
+no counterpart under `ec/decompiled/` at all — `bank1/F6A0` is the one that the
+`F6A0` table row above already declares "deliberately not one of them". The
+neighbouring real listings (`common/0070.asm`, `pd/10BC.asm`) are present, which
+is what makes `0071` and `10E0` absences rather than a directory that went
+missing. `bank0,0EA3`'s cell is empty for the same reason its neighbours' are
+not: repointing it at the real `bank0/0EA2.asm` would make it assert that this
+row's decompilation is a *different function's* file.

@@ -16,15 +16,16 @@ root, which keeps each case readable as the tree and the index beside it rather
 than as a diff against a stored pair. The real committed tree is the last class,
 and it is what says the index and the tree currently agree.
 
-**Four sources, one rule.** A path the index names has to be there, and the four
-places this tree reads one from are the four lines the tool prints: the table's
-first column, its `Feeds` column, and the tables in every self-indexed
-directory's own README. The first two are one class each; the third is
-`ReadsASelfIndexedReadme`; and the one rule over all four is
+**Five sources, one rule.** A path the index names has to be there, and the five
+places this tree reads one from are the five lines the tool prints: the table's
+first column, its `Feeds` column, the tables in every self-indexed directory's
+own README, and the `evidence` column of the CSVs those tables name. The first
+two are one class each; the third is `ReadsASelfIndexedReadme`; the fourth is
+`ReadsTheEvidenceColumn`; and the one rule over all five is
 `assert_the_run_reached_something`, which every class below holds itself to.
 
 **Nothing here reads a capture, an EC, or a laptop.** Every path is a
-hand-written string in a `tempfile`, and the last class reads two committed
+hand-written string in a `tempfile`, and the last class reads three committed
 files with `open()`.
 """
 import contextlib
@@ -63,6 +64,47 @@ FEEDS = '`../grade_0751_isolation.py`'
 NESTED_HEADER = '| file / row | what it pins |\n|---|---|\n'
 
 
+class RunsTheTool:
+    """One run of the tool, over a tree that is not the committed one.
+
+    Split out of `TheReachedSomethingRule` for the one case that needs the
+    runner and not the rule: a refusal whose `Result` fields are right and whose
+    *printed* line is wrong is only visible through a run, and the column-less
+    CSV in `ReadsTheEvidenceColumn` is that shape. It is a base rather than a
+    method on `ScratchIndex` because `TheCommittedTree` runs the tool too and
+    inherits no scratch tree, so the runner belongs to neither the fixture
+    builder nor the tally rule on its own.
+    """
+
+    def run_tool(self, root, repo=None):
+        """(exit code, stdout, stderr) for one run of the tool over `root`.
+
+        `main()` reads the committed `TESTDATA` and `INDEX` as module globals
+        and has no flag pointing it anywhere else, so a scratch tree is reached
+        by patching both -- `report()` prints `INDEX` on its summary line, so
+        patching only the first would have a run over a `tempfile` report a
+        disagreement against the committed index. `REPO` is the third of the
+        same three, and it is what the `evidence` column resolves against, so a
+        run over a scratch tree has to be given the scratch root or it would
+        answer about the committed one. All three go back in the same `finally`
+        that already restored `sys.argv`, for the reason `tools/` §16 records
+        for the suites that used to leave a fake installed.
+        """
+        out, err = io.StringIO(), io.StringIO()
+        argv, was = sys.argv, (ctti.TESTDATA, ctti.INDEX, ctti.REPO)
+        sys.argv = ['check_testdata_index.py', '--check']
+        ctti.TESTDATA, ctti.INDEX = root, os.path.join(root, "README.md")
+        if repo is not None:
+            ctti.REPO = repo
+        try:
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                rc = ctti.main()
+        finally:
+            sys.argv = argv
+            ctti.TESTDATA, ctti.INDEX, ctti.REPO = was
+        return rc, out.getvalue(), err.getvalue()
+
+
 class ScratchIndex:
     """A throwaway `testdata/` and the index that is supposed to describe it.
 
@@ -77,6 +119,13 @@ class ScratchIndex:
         self.addCleanup(shutil.rmtree, self.root)
         self.testdata = os.path.join(self.root, "testdata")
         os.mkdir(self.testdata)
+        # The repository root, for the `evidence` column: the one base that is
+        # neither the fixture tree nor its parent, and the reason
+        # `write_repo()` below can put a real-tree path on disk and have the
+        # rule resolved rather than asserted. The same scratch root the tools
+        # live in, for the same reason: it is a base, not a hardcoded
+        # directory the committed tree happens to have.
+        self.repo = self.root
         # The tools live beside `testdata/`, which is what a `../tool.py` in a
         # `Feeds` cell names. Without it every row built here would report a
         # `Feeds` miss the moment that column started being read.
@@ -88,6 +137,21 @@ class ScratchIndex:
         path = os.path.join(self.root, name)
         with open(path, "w", encoding="utf-8") as f:
             f.write("# a tool the index names\n")
+        return path
+
+    def write_repo(self, rel, text='; a listing under the real tree\n'):
+        """Create `rel` under the scratch repository root, parents and all.
+
+        The counterpart to `write()`, which creates under `testdata/`. A
+        committed `evidence` cell is written from the repository root's point of
+        view -- `ec/decompiled/bank0/0EA2.asm`, not `decompiled/bank0/0EA2.asm`
+        -- so the two cannot be the same base, and a case that used `write()`
+        would be asserting the rule rather than exercising it.
+        """
+        path = os.path.join(self.repo, rel)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(text)
         return path
 
     def row(self, cell, feeds=FEEDS, note='a fixture'):
@@ -118,6 +182,13 @@ class ScratchIndex:
         os.makedirs(path, exist_ok=True)
         return path
 
+    def nested_tables(self, name, *rows):
+        """Put `rows` into a self-indexed directory's README as one table."""
+        directory = self.mkdir(name)
+        body = NESTED_HEADER + "".join(f"| {row} |\n" for row in rows)
+        self.write(f"{name}/README.md", "# the set\n\n" + body)
+        return directory
+
     def self_indexed(self, name="a-self-indexed-set", tables=1):
         """A directory the top-level index does not name, with its own tables.
 
@@ -126,13 +197,22 @@ class ScratchIndex:
         nested rules have something to resolve and neither is vacuous; a
         self-indexed directory whose README holds no table reaches the third
         direction not at all, which is a case of its own.
+
+        The `index.csv` it writes carries an `evidence` column, and the file
+        that column names is written under `self.repo` rather than under
+        `testdata/`. Without it the four `TheTalliesAreNotAFloor` cases stop
+        reaching the fifth direction at all and the shared helper refuses all
+        four — which is the failure `ThatClassIsAbout`.
         """
         self.mkdir(f"{name}/decompiled/common")
         self.write(f"{name}/decompiled/common/00CF.asm", "; a listing\n")
-        self.write(f"{name}/index.csv", "program,addr,name\ncommon,00CF,walker\n")
+        self.write_repo("ec/decompiled/common/00CF.asm")
+        self.write(f"{name}/index.csv", "program,addr,name,evidence\n"
+                  "common,00CF,walker,ec/decompiled/common/00CF.asm\n")
         body = NESTED_HEADER + (
             "| `decompiled/common/00CF.asm` | a listing |\n"
-            "| `index.csv` row `0x00CF` | the row that listing came from |\n")
+            "| `index.csv` row `0x00CF` | the row that listing came from, and "
+            "the `evidence` cell in it names a real-tree listing |\n")
         if tables > 1:
             body += "\n" + NESTED_HEADER + (
                 "| `decompiled/common/05E8.asm` | a second table's row |\n")
@@ -156,10 +236,11 @@ class ScratchIndex:
 
         The index is written to disk rather than handed in, because the tool
         reads it from `testdata/README.md` and a case that bypassed that would
-        pass against a reader no run ever uses.
+        pass against a reader no run ever uses. `repo` is the scratch root, for
+        the reason `write_repo()` gives.
         """
         self.write_index(index)
-        return ctti.check(self.testdata)
+        return ctti.check(self.testdata, repo=self.repo)
 
     def verdicts(self, index=None):
         """(gaps, missing, unresolved) as bare names, for compact assertions."""
@@ -179,6 +260,12 @@ class ScratchIndex:
         result = self.check(index)
         return ([token for _, token, _ in result.nested_missing],
                 [token for _, token, _ in result.nested_unresolved])
+
+    def evidence(self, index=None):
+        """(missing, unresolved) for the `evidence` column, as bare names."""
+        result = self.check(index)
+        return ([token for _, token, _ in result.evidence_missing],
+                [token for _, token, _ in result.evidence_unresolved])
 
 
 class DirectoryReachability(ScratchIndex, unittest.TestCase):
@@ -284,11 +371,12 @@ class AcceptsBothReachableDirectories(ScratchIndex, unittest.TestCase):
         # Stated rather than assumed: a checker with no fixtures to look at has
         # nothing to be wrong about, and this says so rather than reaching for
         # a floor that a legitimate emptying of the directory would trip. Every
-        # count is written out, which is what says the two directions added
+        # count is written out, which is what says the three directions added
         # later are reached by nothing here and fail on nothing either.
         result = self.check()
-        self.assertEqual(result, ctti.Result([], [], [], [], [], [], [],
-                                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+        self.assertEqual(result, ctti.Result([], [], [], [], [], [], [], [], [],
+                                              [], 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                              0, 0, 0, 0))
 
 
 class RefusesARowWithNoFile(ScratchIndex, unittest.TestCase):
@@ -381,7 +469,9 @@ class ReadsTheFeedsColumn(ScratchIndex, unittest.TestCase):
         with contextlib.redirect_stderr(err):
             total = ctti.report(result.gaps, result.missing, result.unresolved,
                                (result.feeds_missing, result.feeds_unresolved),
-                               (result.nested_missing, result.nested_unresolved))
+                               (result.nested_missing, result.nested_unresolved),
+                               (result.evidence_missing, result.evidence_unresolved),
+                               result.evidence_columnless)
         self.assertEqual(total, 1)
         self.assertIn('`Feeds` column names `../no_such_tool.py`',
                       err.getvalue())
@@ -448,7 +538,9 @@ class ReadsTheFeedsColumn(ScratchIndex, unittest.TestCase):
         with contextlib.redirect_stderr(err):
             total = ctti.report(result.gaps, result.missing, result.unresolved,
                                 (result.feeds_missing, result.feeds_unresolved),
-                                (result.nested_missing, result.nested_unresolved))
+                                (result.nested_missing, result.nested_unresolved),
+                                (result.evidence_missing, result.evidence_unresolved),
+                                result.evidence_columnless)
         self.assertEqual(total, 0)
         self.assertEqual([token for _, token, _ in result.feeds_unresolved],
                          ["0x0700-0x07FF"])
@@ -538,7 +630,8 @@ class SaysUnresolvedRatherThanAbsent(ScratchIndex, unittest.TestCase):
         err = io.StringIO()
         with contextlib.redirect_stderr(err):
             self.assertEqual(ctti.report(result.gaps, result.missing,
-                                         result.unresolved, ([], []), ([], [])), 0)
+                                         result.unresolved, ([], []), ([], []),
+                                         ([], []), []), 0)
         self.assertIn('not checked, not absent', err.getvalue())
 
     def test_the_shape_the_unresolved_note_prints_is_the_token(self):
@@ -560,13 +653,6 @@ class ReadsASelfIndexedReadme(ScratchIndex, unittest.TestCase):
     states -- a path the index names has to be there -- in the two shapes that
     cell uses, plus the `unresolved` line for anything neither of them reads.
     """
-
-    def nested_tables(self, name, *rows):
-        """Put `rows` into a self-indexed directory's README as one table."""
-        directory = self.mkdir(name)
-        body = NESTED_HEADER + "".join(f"| {row} |\n" for row in rows)
-        self.write(f"{name}/README.md", "# the set\n\n" + body)
-        return directory
 
     def test_a_second_and_a_third_table_are_read(self):
         # The defect the issue names, and the one `table_cells` had by
@@ -725,29 +811,297 @@ class ReadsASelfIndexedReadme(ScratchIndex, unittest.TestCase):
         self.assertEqual((result.nested_missing, result.gaps), ([], []))
 
     def test_nothing_is_double_counted(self):
-        # One `Feeds` finding names the top-level index and one nested finding
-        # names the self-indexed README beside it, which is the only way a
-        # reader of the report knows which file to open. Both lists are handed
-        # to `report()` as the same triple, so this is where it is said.
+        # Three findings, three files, which is the only way a reader of the
+        # report knows which one to open: the top-level index, the self-indexed
+        # README beside it, and the fixture CSV holding the disagreeing cell.
+        # The last is why an `evidence` finding does not reuse the README's
+        # `where` -- neither of the other two files contains the cell. All three
+        # lists are handed to `report()` as the same triple, so this is where it
+        # is said.
         self.write("a.csv")
         self.row("`a.csv`", feeds="`../no_such_tool.py`")
         name = "a-set"
-        self.nested_tables(name, "`decompiled/common/0EA2.asm` | a listing")
+        self.nested_tables(name, "`decompiled/common/0EA2.asm` | a listing",
+                           "`ghidra-functions.csv` row `0x00CF` | the other one")
+        self.write(f"{name}/ghidra-functions.csv",
+                   "scope,addr,name,evidence\ncommon,00CF,walker,"
+                   "ec/decompiled/common/0EA2.asm\n")
         result = self.check()
         err = io.StringIO()
         with contextlib.redirect_stderr(err):
             ctti.report(result.gaps, result.missing, result.unresolved,
                         (result.feeds_missing, result.feeds_unresolved),
-                        (result.nested_missing, result.nested_unresolved))
+                        (result.nested_missing, result.nested_unresolved),
+                        (result.evidence_missing, result.evidence_unresolved),
+                        result.evidence_columnless)
         out = err.getvalue()
         feeds_where = [where for where, _, _ in result.feeds_missing]
         nested_where = [where for where, _, _ in result.nested_missing]
-        self.assertNotEqual(feeds_where, nested_where)
+        evidence_where = [where for where, _, _ in result.evidence_missing]
+        self.assertEqual(len(set(feeds_where + nested_where + evidence_where)), 3)
         self.assertTrue(feeds_where[0].endswith('testdata/README.md'),
                         feeds_where[0])
         self.assertTrue(nested_where[0].endswith('testdata/a-set/README.md'),
                         nested_where[0])
+        self.assertTrue(evidence_where[0].endswith('testdata/a-set/ghidra-functions.csv'),
+                        evidence_where[0])
         self.assertNotIn(f'{nested_where[0]}: the `Feeds` column', out)
+        self.assertNotIn(f'{evidence_where[0]}: the table names', out)
+
+
+class ReadsTheEvidenceColumn(ScratchIndex, RunsTheTool, unittest.TestCase):
+    """The one column that points at the real tree, read against the real root.
+
+    A third base -- neither the fixture tree nor its parent -- and the only
+    source here that reads a named column out of a file's contents rather than
+    backticked tokens out of a cell. The three refusals the issue names are one
+    case each, and the two rules the committed tree needs in order to be green
+    at all are pinned here rather than left to the committed case. `RunsTheTool`
+    is a base for the one case below that has to see what a run *printed*; the
+    fields it asserts on their own are what the other cases read.
+    """
+
+    def self_indexed_with(self, header, rows, name="a-set"):
+        """A self-indexed directory whose `index.csv` the README names.
+
+        The `evidence` rule only reaches a CSV a nested table already names, so
+        every case here has to go through the same door the committed
+        `call-graph` fixture does rather than dropping a CSV beside a directory
+        nothing points at.
+        """
+        self.write(f"{name}/index.csv", header + "".join(rows))
+        self.nested_tables(name, "`index.csv` row `0x00CF` | the row")
+
+    def test_a_real_listing_renamed_out_from_under_the_cell_fails_the_run(self):
+        # The issue's "done looks like": a cell naming a path the real tree does
+        # not have turns the run red with a line naming it. The listing is
+        # written and then not written, so what is refused is the *cell* rather
+        # than a tree that was never there to be right.
+        self.write_repo("ec/decompiled/common/00CF.asm")
+        self.self_indexed_with("program,addr,name,evidence\n",
+                               rows=["common,00CF,walker,"
+                                     "ec/decompiled/common/00CF.asm\n"])
+        result = self.check()
+        self.assertEqual((result.evidence_missing, result.evidence_unresolved),
+                         ([], []))
+        os.remove(os.path.join(self.repo, "ec/decompiled/common/00CF.asm"))
+        missing, unresolved = self.evidence()
+        self.assertEqual(missing, ["ec/decompiled/common/00CF.asm"])
+        self.assertEqual(unresolved, [])
+        # The `where` is the CSV rather than the README that named it, and the
+        # note is the repository-relative path the token was read as: a reader
+        # who opens either of the other two files finds no such cell.
+        renamed = self.check()
+        where, _, note = renamed.evidence_missing[0]
+        self.assertTrue(where.endswith('testdata/a-set/index.csv'), where)
+        self.assertTrue(note.endswith('ec/decompiled/common/00CF.asm'), note)
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            total = ctti.report(renamed.gaps, renamed.missing, renamed.unresolved,
+                                (renamed.feeds_missing, renamed.feeds_unresolved),
+                                (renamed.nested_missing, renamed.nested_unresolved),
+                                (renamed.evidence_missing,
+                                 renamed.evidence_unresolved),
+                                renamed.evidence_columnless)
+        self.assertEqual(total, 1)
+        self.assertIn('the `evidence` column names '
+                      '`ec/decompiled/common/00CF.asm`', err.getvalue())
+        self.assertIn('which is not on disk', err.getvalue())
+
+    def test_a_row_with_no_evidence_value_yields_no_pointer(self):
+        # The stated limit, made a case. An empty cell is not a path the tree
+        # lacks -- it is a cell that carries nothing, which is the shipped
+        # first-column behaviour that a cell with no backticked token yields no
+        # reference. Six committed rows are in exactly this state, and they are
+        # why: a rule invented to read an empty value would be a parser
+        # guessing, and a guess here is a `missing` against the real tree.
+        self.write_repo("ec/decompiled/common/00CF.asm")
+        self.self_indexed_with("program,addr,name,evidence\n",
+                               rows=["common,00CF,walker,\n",
+                                     "common,00CE,other,   \n",
+                                     "common,00CD,third,ec/decompiled/common/00CF.asm\n"])
+        result = self.check()
+        self.assertEqual((result.evidence_missing, result.evidence_unresolved),
+                         ([], []))
+        # Two cells carried nothing and one carried a path: counted as cells and
+        # as tokens apart, which is what a per-cell tally could not say.
+        self.assertEqual((result.evidence_csvs, result.evidence_cells,
+                          result.evidence_tokens), (1, 1, 1))
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            self.assertEqual(ctti.report(
+                result.gaps, result.missing, result.unresolved,
+                (result.feeds_missing, result.feeds_unresolved),
+                (result.nested_missing, result.nested_unresolved),
+                (result.evidence_missing, result.evidence_unresolved),
+                result.evidence_columnless), 0)
+        self.assertEqual(err.getvalue(), '')
+
+    def test_a_csv_with_no_evidence_column_is_unresolved_and_not_missing(self):
+        # "this tool cannot read that shape" and "the path is not there" are
+        # different claims and only the second is a failure. The issue's
+        # condition on the whole direction is the one #746 set: a check that
+        # false-positives is worse than no check, and a column-less CSV is the
+        # shape most likely to arrive by accident.
+        self.self_indexed_with("program,addr,name\n",
+                               rows=["common,00CF,walker\n"])
+        result = self.check()
+        self.assertEqual(result.evidence_missing, [])
+        # Its own list rather than among the token findings, for the reason the
+        # tool's docstring gives: this is a fact about the CSV and there is no
+        # token behind it, so a reader counting tokens here would be counting
+        # one the CSV never contributed.
+        self.assertEqual(result.evidence_unresolved, [])
+        self.assertEqual([token for _, token, _ in result.evidence_columnless],
+                         ['index.csv'])
+        self.assertEqual([note for _, _, note in result.evidence_columnless],
+                         ['index.csv has no `evidence` column'])
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            self.assertEqual(ctti.report(
+                result.gaps, result.missing, result.unresolved,
+                (result.feeds_missing, result.feeds_unresolved),
+                (result.nested_missing, result.nested_unresolved),
+                (result.evidence_missing, result.evidence_unresolved),
+                result.evidence_columnless), 0)
+        # Its own wording too, and the point of that is the clause this case
+        # exists for: a column that is not in the file has not named anything,
+        # so the line says the column was not found. The old wording opened
+        # "the `evidence` column names `index.csv`", which is the false claim
+        # and the part a reader skims.
+        self.assertIn('has no `evidence` column', err.getvalue())
+        self.assertNotIn('the `evidence` column names', err.getvalue())
+        self.assertIn('not checked, not absent', err.getvalue())
+
+        # And the printed tally, which is the half the fields above cannot
+        # reach. This is the shape the tool's own docstring gives the fifth
+        # line its purpose for -- "a run that checked nothing and a run that
+        # found nothing look the same from the exit code alone" -- and it is
+        # where the two populations used to disagree: the finding is not a
+        # token, so leaving it among the token findings subtracted one more
+        # than the count held and the line read `0 evidence path token(s): -1
+        # resolved`, a tally contradicting itself in the one shape this
+        # direction is most likely to meet. Asserted as the relation rather
+        # than as today's wording, so the case says what has to hold: the
+        # resolved count is the token count less the two that were subtracted
+        # from it, and cannot go below zero however many CSVs have no column.
+        rc, out, err = self.run_tool(self.testdata, self.repo)
+        self.assertEqual(rc, 0, err)
+        line = [one for one in out.splitlines()
+                if 'evidence path token(s)' in one]
+        self.assertEqual(len(line), 1, out)
+        found = re.search(
+            r'(\d+) with no `evidence` column, \d+ evidence cell\(s\), '
+            r'(\d+) evidence path token\(s\): (-?\d+) resolved, (\d+) missing, '
+            r'(\d+) unresolved', line[0])
+        self.assertIsNotNone(found, line[0])
+        columnless, tokens, resolved, missing, unresolved = (
+            int(found.group(n)) for n in range(1, 6))
+        self.assertEqual((columnless, tokens, resolved, missing, unresolved),
+                         (1, 0, 0, 0, 0))
+        self.assertEqual(resolved, tokens - missing - unresolved)
+
+    def test_the_column_is_read_by_name_and_not_by_position(self):
+        # `evidence` is column 7 of 8 in one committed CSV and column 10 of 12
+        # in the other, so a position is right on the day it lands and wrong
+        # after the next column is added. The two cells here hold the path in
+        # the same column of a different width, and a positional read gets
+        # neither.
+        self.write_repo("ec/decompiled/common/00CF.asm")
+        self.self_indexed_with(
+            "program,addr,name,also_in,basis,evidence\n",
+            rows=["common,00CF,walker,,hand-decoded,"
+                  "ec/decompiled/common/00CF.asm\n"])
+        result = self.check()
+        self.assertEqual((result.evidence_missing, result.evidence_unresolved),
+                         ([], []))
+        self.assertEqual((result.evidence_cells, result.evidence_tokens), (1, 1))
+
+    def test_a_semicolon_joined_cell_is_two_pointers_and_two_paths(self):
+        # The committed `bank0,0EA2` row, in the shape it has there: one cell
+        # naming a listing and its `.c` side by side. Read whole, the cell is a
+        # single token no path rule can match, and the run would be green for
+        # the wrong reason -- which is what the two tallies being separate is
+        # there to make visible.
+        self.write_repo("ec/decompiled/common/00CF.asm")
+        self.write_repo("ec/decompiled/common/00CF.c", "; a decompile\n")
+        self.self_indexed_with(
+            "program,addr,name,evidence\n",
+            rows=["common,00CF,walker,ec/decompiled/common/00CF.asm; "
+                  "ec/decompiled/common/00CF.c\n"])
+        result = self.check()
+        self.assertEqual((result.evidence_missing, result.evidence_unresolved),
+                         ([], []))
+        self.assertEqual((result.evidence_cells, result.evidence_tokens), (1, 2))
+
+    def test_a_path_the_repository_root_does_not_hold_is_a_missing(self):
+        # The base is the repository root and not the fixture tree, which is the
+        # half that has to be exercised rather than asserted: the same relative
+        # path is a file under `testdata/` and not under the root, so a rule
+        # that resolved against the wrong one would be green here.
+        self.write("decompiled/common/00CF.asm", "; a listing\n")
+        self.self_indexed_with("program,addr,name,evidence\n",
+                               rows=["common,00CF,walker,"
+                                     "decompiled/common/00CF.asm\n"])
+        result = self.check()
+        self.assertEqual([token for _, token, _ in result.evidence_missing],
+                         ["decompiled/common/00CF.asm"])
+        self.assertEqual(result.evidence_unresolved, [])
+
+    def test_a_token_matching_no_path_rule_is_unresolved_and_does_not_fail(self):
+        # The calibration line again, in the fifth direction: a URL or an
+        # address range is "not resolved by this method" and never "absent".
+        self.self_indexed_with(
+            "program,addr,name,evidence\n",
+            rows=["common,00CF,walker,0x0700-0x07FF\n",
+                  "common,00CE,other,see the build log\n"])
+        result = self.check()
+        self.assertEqual(result.evidence_missing, [])
+        self.assertEqual([token for _, token, _ in result.evidence_unresolved],
+                         ['0x0700-0x07FF', 'see the build log'])
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            self.assertEqual(ctti.report(
+                result.gaps, result.missing, result.unresolved,
+                (result.feeds_missing, result.feeds_unresolved),
+                (result.nested_missing, result.nested_unresolved),
+                (result.evidence_missing, result.evidence_unresolved),
+                result.evidence_columnless), 0)
+        self.assertIn('not checked, not absent', err.getvalue())
+
+    def test_a_csv_named_twice_is_read_once(self):
+        # Which CSVs are read is structural -- the ones a nested table names --
+        # and the committed README names `ghidra-functions.csv` five times.
+        # Reading it per row rather than per distinct name would count the same
+        # cell five times and make the tally a statement about the README's
+        # prose instead of about the column.
+        self.write_repo("ec/decompiled/common/00CF.asm")
+        name = "a-set"
+        self.write(f"{name}/index.csv",
+                   "program,addr,name,evidence\ncommon,00CF,walker,"
+                   "ec/decompiled/common/00CF.asm\n")
+        self.nested_tables(
+            name, "`index.csv` row `0x00CF` | the row",
+            "`index.csv` row `0x00CF` | named a second time",
+            "`index.csv` row `0x00CF` | and a third")
+        result = self.check()
+        self.assertEqual((result.evidence_csvs, result.evidence_cells,
+                          result.evidence_tokens), (1, 1, 1))
+        self.assertEqual((result.evidence_missing, result.evidence_unresolved),
+                         ([], []))
+
+    def test_a_csv_nobody_names_is_not_read(self):
+        # The discovery rule, from the other side. A `*.csv` beside a directory
+        # is the "top-level files with no row" gap the shipped tool already
+        # declines, and walking every CSV under `testdata/` would print an
+        # `unresolved` line for each of the twenty-odd loose fixtures on every
+        # run -- for a shape no index promised anything about.
+        self.write(f"loose.csv", "program,addr,name,evidence\ncommon,00CF,w,\n")
+        self.nested_tables("a-set", "`decompiled/common/00CF.asm` | a listing")
+        result = self.check()
+        self.assertEqual((result.evidence_csvs, result.evidence_cells,
+                          result.evidence_tokens, result.evidence_missing,
+                          result.evidence_unresolved), (0, 0, 0, [], []))
 
 
 class ParsesOnlyTheFirstColumn(unittest.TestCase):
@@ -820,7 +1174,7 @@ class ParsesOnlyTheFirstColumn(unittest.TestCase):
                          ['`../tool.py`', '`../tool.py`'])
 
 
-class TheReachedSomethingRule:
+class TheReachedSomethingRule(RunsTheTool):
     """The one rule about a run's tallies, over whatever tree it is handed.
 
     `check_testdata_index.py`'s docstring says there is no floor on either tally
@@ -828,35 +1182,16 @@ class TheReachedSomethingRule:
     a parameter rather than `ctti.TESTDATA` so the rule is a property of a run
     and can be pointed at a scratch tree beside the committed one; the two are
     held to the same method, so neither half can be edited alone.
+
+    `run_tool()` is inherited from `RunsTheTool` rather than written here, so
+    the committed case below and a scratch case that only wants the runner are
+    the same runner.
     """
 
-    def run_tool(self, root):
-        """(exit code, stdout, stderr) for one run of the tool over `root`.
-
-        `main()` reads the committed `TESTDATA` and `INDEX` as module globals
-        and has no flag pointing it anywhere else, so a scratch tree is reached
-        by patching both -- `report()` prints `INDEX` on its summary line, so
-        patching only the first would have a run over a `tempfile` report a
-        disagreement against the committed index. Both go back in the same
-        `finally` that already restored `sys.argv`, for the reason `tools/`
-        §16 records for the suites that used to leave a fake installed.
-        """
-        out, err = io.StringIO(), io.StringIO()
-        argv, was = sys.argv, (ctti.TESTDATA, ctti.INDEX)
-        sys.argv = ['check_testdata_index.py', '--check']
-        ctti.TESTDATA, ctti.INDEX = root, os.path.join(root, "README.md")
-        try:
-            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
-                rc = ctti.main()
-        finally:
-            sys.argv = argv
-            ctti.TESTDATA, ctti.INDEX = was
-        return rc, out.getvalue(), err.getvalue()
-
-    def assert_the_run_reached_something(self, root):
+    def assert_the_run_reached_something(self, root, repo=None):
         """Assert a run over `root` read something, and that it read it.
 
-        Each of the four tallies non-zero, and `tokens > rows` on top of them.
+        Each of the five tallies non-zero, and `tokens > rows` on top of them.
         The tallies are parsed out of what the run *printed* rather than read
         off a `Result`, because the claim being pinned is the docstring's: they
         print whether or not they found anything, since a run that checked
@@ -868,9 +1203,12 @@ class TheReachedSomethingRule:
         refused should be refused by the *first* thing it failed to reach:
         a tree with a directory and a rowless index is short a row, not short
         everything, and a tree with one token per row is short only the
-        relation between two tallies it did reach.
+        relation between two tallies it did reach. Every label is unique across
+        the printed lines, because the parse keys one flat dict by label --
+        `row(s)` and `path token(s)` are already taken by the two directions
+        before it.
         """
-        rc, out, err = self.run_tool(root)
+        rc, out, err = self.run_tool(root, repo)
         self.assertEqual(rc, 0, err)
         counts = {}
         for line in out.splitlines():
@@ -884,7 +1222,10 @@ class TheReachedSomethingRule:
                             ('feeds cells', 'Feeds cell(s)'),
                             ('feeds pointers', 'tool pointer(s)'),
                             ('nested rows', 'row(s)'),
-                            ('nested checks', 'check(s)')):
+                            ('nested checks', 'check(s)'),
+                            ('fixture CSVs', 'fixture CSV(s)'),
+                            ('evidence cells', 'evidence cell(s)'),
+                            ('evidence tokens', 'evidence path token(s)')):
             self.assertGreater(
                 counts.get(label, 0), 0,
                 f"the run reached no {name}: a run that checked nothing and a "
@@ -898,7 +1239,7 @@ class TheCommittedTree(TheReachedSomethingRule, unittest.TestCase):
     """The real thing: the index and the tree beside it currently agree.
 
     This goes red on any future edit that drifts the index and the tree apart in
-    any of the four directions. It does not go red on an edit to what a row says
+    any of the five directions. It does not go red on an edit to what a row says
     its fixture is: that is the third column, which this tool does not read, and
     which both of the index's past hand-repairs were. It does not go red on the
     tree being a different size either, which is what
@@ -946,9 +1287,14 @@ class TheCommittedTree(TheReachedSomethingRule, unittest.TestCase):
         # `check()` hands back a repository-relative path, so `report()` joins
         # it rather than resolving it again against the working directory. A
         # report nobody can paste into an editor is a report nobody opens. The
-        # two pairs added later are passed here too, and they are where the
-        # `where` earns its keep: one of the four lines names this index and
-        # another names the self-indexed README beside it.
+        # three pairs added later are passed here too, and they are where the
+        # `where` earns its keep: one of the six lines names this index, one
+        # names the self-indexed README beside it, one names the fixture CSV
+        # holding the cell, and the sixth names the fixture CSV that has no
+        # `evidence` column in it at all. The last three carry a path this tool
+        # has to make relative against `REPO` rather than against a fresh
+        # `HERE/../..`, which under a patched scratch base would print a `..`
+        # chain. None of the six is a disagreement, so the count is still five.
         err = io.StringIO()
         with contextlib.redirect_stderr(err):
             self.assertEqual(ctti.report(
@@ -956,21 +1302,34 @@ class TheCommittedTree(TheReachedSomethingRule, unittest.TestCase):
                 [('ec/tools/testdata/README.md', 'gone.csv', 'gone.csv')], [],
                 ([('ec/tools/testdata/README.md', '../gone.py', 'gone.py')], []),
                 ([('ec/tools/testdata/call-graph/README.md', 'gone.asm',
-                   'gone.asm')], [])), 4)
+                   'gone.asm')], []),
+                ([('ec/tools/testdata/call-graph/ghidra-functions.csv',
+                   'ec/decompiled/bank0/0EA2.asm',
+                   'ec/decompiled/bank0/0EA2.asm')], []),
+                [('ec/tools/testdata/call-graph/index.csv', 'index.csv',
+                  'index.csv has no `evidence` column')]), 5)
         lines = err.getvalue().splitlines()
         self.assertTrue(lines[0].startswith('ec/tools/testdata/newset/:'), lines[0])
         self.assertIn('ec/tools/testdata/README.md', lines[1])
         self.assertIn('`Feeds` column', lines[2])
         self.assertIn('ec/tools/testdata/call-graph/README.md', lines[3])
+        self.assertIn('`evidence` column', lines[4])
+        self.assertTrue(lines[5].startswith(
+            'ec/tools/testdata/call-graph/index.csv:'), lines[5])
+        # Six findings and the count, which is five because the sixth is not a
+        # disagreement. A run whose line count drifted from its own total is a
+        # report that has grown a seventh shape nobody is reading.
+        self.assertEqual(len(lines), 7)
+        self.assertTrue(lines[6].startswith('5 disagreement(s)'), lines[6])
         for line in lines:
             self.assertNotIn('/../', line)
             self.assertFalse(line.startswith('/'), line)
 
-    def test_the_committed_run_reads_all_four_sources(self):
+    def test_the_committed_run_reads_all_five_sources(self):
         # The figures are today's, and the claim is not that they have to stay:
         # it is that a run which reached nothing is distinguishable from a run
         # which found nothing. `TheTalliesAreNotAFloor` is what says the first
-        # of those two things, and this is the same four tallies on the real
+        # of those two things, and this is the same five tallies on the real
         # tree rather than a scratch one.
         rc, out, err = self.run_tool(ctti.TESTDATA)
         self.assertEqual(rc, 0, err)
@@ -990,13 +1349,18 @@ class TheCommittedTree(TheReachedSomethingRule, unittest.TestCase):
         self.assertEqual((counts['self-indexed README(s)'], counts['table(s)'],
                           counts['row(s)'], counts['check(s)']),
                          (1, 3, 19, 21))
+        # Ten cells carry a value and eleven tokens are checked over them: the
+        # one `;`-joined cell is the difference, and it is a decidable fact
+        # about the two committed CSVs. Not a floor -- see the comment above.
+        self.assertEqual((counts['fixture CSV(s)'], counts['evidence cell(s)'],
+                          counts['evidence path token(s)']), (2, 10, 11))
         # Every pointer is resolved and nothing is unreadable, which is the
         # "the index and the tree currently agree" half. It is a statement
         # about today and not a floor: the tallies above are what a run that
         # reached nothing would be caught by, in either direction.
         self.assertEqual([line.rsplit(', ', 2)[1:] for line in out.splitlines()
                           if ' resolved, ' in line],
-                         [['0 missing', '0 unresolved']] * 3)
+                         [['0 missing', '0 unresolved']] * 4)
 
     def test_the_committed_feeds_column_carries_a_flag_suffix(self):
         # The issue's "also asserted over the committed tree, where three rows
@@ -1028,6 +1392,28 @@ class TheCommittedTree(TheReachedSomethingRule, unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(
             ctti.TESTDATA, 'call-graph', 'decompiled', 'bank0', '0EA2.asm')))
 
+    def test_the_committed_evidence_cells_name_listings_the_real_tree_has(self):
+        # The fix #780 makes, pinned here so it is in the suite and not only in
+        # the write-up: no `evidence` cell in either fixture CSV names a path the
+        # real tree lacks, and the one `;`-joined cell resolves as two pointers
+        # rather than one. A decidable fact about three committed files, and
+        # nothing at all about what the fixture exercises -- the `.c` beside the
+        # `.asm` is a pointer this check confirms exists, and says nothing
+        # about whether it is a correct reading of the function.
+        directory = os.path.join(ctti.TESTDATA, 'call-graph')
+        found = ctti.evidence_pointers('ghidra-functions.csv', directory,
+                                       ctti.REPO)
+        self.assertEqual((found.missing, found.unresolved), ([], []))
+        self.assertEqual((found.cells, found.tokens), (5, 6))
+        found = ctti.evidence_pointers('index.csv', directory, ctti.REPO)
+        self.assertEqual((found.missing, found.unresolved), ([], []))
+        self.assertEqual((found.cells, found.tokens), (5, 5))
+        # The `;` split is what makes the two tallies differ at all, and the
+        # committed `bank0,0EA2` row is the one cell that carries both: without
+        # it, `tokens` and `cells` would be the same number over both files and
+        # a reader could not tell the rule apart from a per-cell count.
+        self.assertEqual(found.tokens, found.cells)
+
 
 class TheTalliesAreNotAFloor(ScratchIndex, TheReachedSomethingRule,
                              unittest.TestCase):
@@ -1048,6 +1434,13 @@ class TheTalliesAreNotAFloor(ScratchIndex, TheReachedSomethingRule,
     case calls the method the committed case calls: a floor reinstated in the
     helper fails here, and a clause dropped here fails on the committed tree
     being the wrong size to notice.
+
+    **This class is the reason `ScratchIndex.self_indexed()` grows an `evidence`
+    column**, and the docstring above is why that edit is not optional rather
+    than tidy. The helper now refuses a run that reached no `evidence` cell, so
+    a `self_indexed()` without one would refuse all four of these on the fifth
+    clause and answer the event this class exists to handle with a failure
+    nobody had caused.
     """
 
     def test_a_tree_carrying_more_of_them_than_today_is_green(self):
@@ -1069,7 +1462,7 @@ class TheTalliesAreNotAFloor(ScratchIndex, TheReachedSomethingRule,
         # case would be proving the wrong thing.
         self.row(f"`{names[0]}/a.csv` + `{names[0]}/c.csv`")
         self.write_index()
-        self.assert_the_run_reached_something(self.testdata)
+        self.assert_the_run_reached_something(self.testdata, self.repo)
 
     def test_a_tree_carrying_fewer_of_them_than_today_is_green(self):
         # The other direction a floor would catch, and the same two edits from
@@ -1084,7 +1477,7 @@ class TheTalliesAreNotAFloor(ScratchIndex, TheReachedSomethingRule,
         self.self_indexed()
         self.row("`0751-isolation-run-only/a.csv` + `0751-isolation-run-only/c.csv`")
         self.write_index()
-        self.assert_the_run_reached_something(self.testdata)
+        self.assert_the_run_reached_something(self.testdata, self.repo)
 
     def test_an_empty_tree_reaches_nothing(self):
         # The rule is not "any tree passes". `(0, 0, 0)` is the vacuous check
@@ -1092,7 +1485,7 @@ class TheTalliesAreNotAFloor(ScratchIndex, TheReachedSomethingRule,
         # refuses it names the first tally because that is the one that is zero.
         self.write_index()
         with self.assertRaises(AssertionError) as caught:
-            self.assert_the_run_reached_something(self.testdata)
+            self.assert_the_run_reached_something(self.testdata, self.repo)
         self.assertIn('directories', str(caught.exception))
 
     def test_a_tree_with_a_directory_and_a_rowless_index_reaches_no_row(self):
@@ -1109,7 +1502,7 @@ class TheTalliesAreNotAFloor(ScratchIndex, TheReachedSomethingRule,
         self.self_indexed()
         self.write_index()
         with self.assertRaises(AssertionError) as caught:
-            self.assert_the_run_reached_something(self.testdata)
+            self.assert_the_run_reached_something(self.testdata, self.repo)
         self.assertIn('rows', str(caught.exception))
 
     def test_one_token_per_row_is_refused(self):
@@ -1126,7 +1519,7 @@ class TheTalliesAreNotAFloor(ScratchIndex, TheReachedSomethingRule,
         self.row("`0751-isolation-run-one-token/a.csv`")
         self.write_index()
         with self.assertRaises(AssertionError) as caught:
-            self.assert_the_run_reached_something(self.testdata)
+            self.assert_the_run_reached_something(self.testdata, self.repo)
         self.assertIn('only the first is read', str(caught.exception))
 
 

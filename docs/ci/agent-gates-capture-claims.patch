@@ -47,12 +47,15 @@
 # clause #270 had to retract in place -- and both were caught by a re-reading,
 # because check_register_counts.py verifies the file's numeric keys from the
 # image and never opens a `note:`. check_testdata_index holds
-# `ec/tools/testdata/README.md` to the tree under it in all four directions: a
+# `ec/tools/testdata/README.md` to the tree under it in all five directions: a
 # fixture directory no index names is a gap; a path its table's first column
 # names that is not on disk is a miss; a `Feeds` cell naming a tool that is not
-# there is a miss of its own; and a self-indexed directory's own README is read
+# there is a miss of its own; a self-indexed directory's own README is read
 # as a nested index, so a listing or a `ghidra-functions.csv` row it names that
-# is not there is a miss too. That index is hand-written and has been repaired
+# is not there is a miss too; and the `evidence` column of a CSV those tables
+# name is resolved against the repository root, so a cell naming a listing
+# under ec/decompiled/ that the real tree does not have is a miss as well.
+# That index is hand-written and has been repaired
 # by hand twice, and nothing read it before. **Until a human lands this, no
 # commit runs either**, and the next false capture claim -- or the eleventh
 # fixture directory with no row -- merges the way the earlier ones did.
@@ -69,10 +72,10 @@
 # the next reader of the gate will see it, rather than only here.
 
 diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
-index 125d6478..f7a613ea 100755
+index 125d6478..30df515a 100755
 --- a/.github/scripts/agent-gates.sh
 +++ b/.github/scripts/agent-gates.sh
-@@ -84,6 +84,36 @@ check_register_counts() {
+@@ -84,6 +84,38 @@ check_register_counts() {
    python3 ec/tools/check_register_counts.py ec/firmware/GMxMGxx_11.800
  }
  
@@ -93,8 +96,10 @@ index 125d6478..f7a613ea 100755
 +# A fixture directory under ec/tools/testdata/ with no row in the index, a row
 +# naming a path that is not on disk, a `Feeds` cell naming a tool that is not
 +# there, a self-indexed directory's own table naming a listing or a CSV row
-+# that is not there: all four are invisible to anyone who greps the index to
-+# learn which fixture holds which grader case, and the index is written by hand.
++# that is not there, a fixture CSV's `evidence` cell naming a listing under
++# ec/decompiled/ that the real tree does not have: all five are invisible to
++# anyone who greps the index to learn which fixture holds which grader case,
++# and the index is written by hand.
 +# That is what this closes, and it is not a check on whether a fixture is what
 +# its row says it is -- the third column, and a separate piece of work. Cheap
 +# tier because of what it reads: the committed tree under ec/tools/testdata/,
@@ -109,7 +114,7 @@ index 125d6478..f7a613ea 100755
  check_python_syntax() {
    local f rc=0
    for f in ec/tools/*.py bios/tools/*.py windows/tools/*.py ghidra/tools/*.py; do
-@@ -271,6 +301,8 @@ check_doc_links() {
+@@ -271,6 +303,8 @@ check_doc_links() {
  gate 'registers.yaml'  check_registers_yaml
  gate 'scan_refs.py smoke test' check_scan_refs_smoke_test
  gate 'register counts'  check_register_counts

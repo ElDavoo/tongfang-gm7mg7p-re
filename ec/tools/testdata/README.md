@@ -167,12 +167,16 @@ and outside §6 on purpose — they feed a different tool and are not a §6 run 
 so the assertion is over the run directory rather than over everything here.
 
 **What keeps this index honest.** `../check_testdata_index.py` holds this file
-and the tree under it to each other in four directions: every directory here is
+and the tree under it to each other in five directions: every directory here is
 named above or carries its own `README.md`; every path the table's first column
 names resolves to something on disk; every tool the `Feeds` column names is still
-there under that name, resolved beside this directory rather than inside it; and
+there under that name, resolved beside this directory rather than inside it;
 every table in a self-indexed directory's own `README.md` is read too, so a
-listing or a CSV row that one names is held to the disk in the same way. The
+listing or a CSV row that one names is held to the disk in the same way; and the
+`evidence` column of a CSV those tables name is resolved against the repository
+root, so a cell naming a listing under `ec/decompiled/` the real tree does not
+have is a miss as well (issue #780 — see
+`docs/findings/testdata-index-evidence-column.md`). The
 `...-suffix.csv` and `*-glob` shorthands are resolved by glob rather than by
 splicing, and a token whose shape it cannot read is reported as unresolved rather
 than as absent. **Nothing runs
