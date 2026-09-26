@@ -3064,11 +3064,14 @@ registers:
       CSV is one of the cases that tool's own docstring lists under what it
       does not check, and holding it needs a prose-to-source-line checker
       that does not exist yet. The instances in THIS file are held by
-      nothing either, and that is measured rather than assumed:
-      ec/tools/check_citation_lines.py reads this file in neither `bodies`
-      nor `ROW_SCOPE`, so it is not walked at all, and its one pointer rule,
-      POINTER, matches a `.csv:NNN` and nothing else, so a `.py` pointer is
-      outside it whatever the supersession vocabulary says. Supersession is
+      nothing either. That was originally given as because every live
+      sentence in this note is a CORRECTION paragraph and a rule that
+      skipped corrections would check nothing here; **corrected
+      2026-09-26, issue #870: that is not the reason** -- the file is in
+      neither `bodies` nor `ROW_SCOPE` of ec/tools/check_citation_lines.py,
+      so it is not walked at all, and its one pointer rule, POINTER,
+      matches a `.csv:NNN` and nothing else, so a `.py` pointer is outside
+      it whatever the supersession vocabulary says. Supersession is
       not the reason and in fact never fires on this note: a folded scalar
       holds no blank lines, so this whole entry is ONE paragraph opening
       `- name: XDATA_0860`, and the *** CORRECTION marker sits inside that

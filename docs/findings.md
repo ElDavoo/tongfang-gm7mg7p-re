@@ -11522,8 +11522,8 @@ pointer is wrong but whether a record already says so, and the extension says
 which treatment each got so it is stated rather than inferred.
 
 **Two things the issue that named them got wrong, left visible with the
-correction beside them.** Its replacement figures were stale too, by 5 to 160
-lines, and on one row it named the wrong construct. And its mechanism claim is
+correction beside them.** Its replacement figures were stale too, by 18 to
+430 lines, and on one row it named the wrong construct. And its mechanism claim is
 false in both halves: `supersession()` **never fires** on that block, because
 a folded scalar holds no blank lines and the whole `XDATA_0860` entry is ONE
 paragraph opening `name: XDATA_0860` with the marker mid-paragraph; and the six

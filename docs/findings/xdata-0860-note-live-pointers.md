@@ -35,10 +35,11 @@ re-read rather than inferred:
 
 **The issue's own replacement figures were stale too, and that is worth
 recording rather than quietly using the right numbers anyway.** Every one of
-the six is wrong in the issue, by 18 to 160 lines: `:1593-1595` is inside
-`store_target` but well short of the two constructs the block is about, and
-`:1322` is a blank line rather than a line number pointing at anything. On the
-`:523` row it also names the wrong *shape*: the entry it means,
+the six is wrong in the issue, five of them by 18 to 160 lines and the sixth
+— the `:523` row — by 430: `:1593-1595` is inside `store_target` but well
+short of the two constructs the block is about, and `:1322` is a blank line
+rather than a line number pointing at anything. On the `:523` row it also
+names the wrong *shape*: the entry it means,
 `DIRECTION_INVARIANT["eq_after"]`, is real and is at `:1480` — but the block's
 `:523` sits between the reason and the rejection, so it is a
 `store_target`-internal pointer and lands on the `# 838 occurrences` comment at
@@ -109,7 +110,13 @@ This is also why the docstring's `registers.yaml` bullet, `prose-line-citations-
 was wrong on its own terms — each said the file's cells are unheld *because*
 every live sentence in the note is a `*** CORRECTION` paragraph. That reads
 well and is not what is happening. All three now carry the measured reason, and
-`§4a-4d` is still what it was: the quoted predecessor has to stay visible.
+`§4a-4d` is still what it was: the quoted predecessor has to stay visible. In
+`registers.yaml` that is an **inline correction beside the standing clause**, not
+a rewrite of it: the `NOT CHECKED HERE` paragraph keeps its 2026-09-25 "because
+every live sentence in this note is a `CORRECTION` paragraph" verbatim, and the
+measured reason follows it under a dated bold correction. That file is the one
+where the distinction costs most — the merge is a squash, so once this lands the
+2026-09-25 wording is recoverable only from what the file itself still says.
 
 ## The vocabulary question, decided
 
