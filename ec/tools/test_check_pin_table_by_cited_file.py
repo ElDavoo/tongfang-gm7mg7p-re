@@ -527,12 +527,24 @@ class TheCommittedTree(unittest.TestCase):
         # the pin is re-set to the measured **38 / 11 / 27** here. The `37/11/26`
         # and the `36/11/25` stay written above, each true of the tree it was
         # measured on, per §4a-4d.
+        #
+        # **The 38 -> 39 step is `ec/tools/test_disasm8051_oracle.py`, and the
+        # tail moves with it while the pinned count does not.** Issue #811 added
+        # a suite, and the suite is the reason the tail grew: its write-up cites
+        # it *by path* and never as `test_disasm8051_oracle.py:NNN`, deliberately,
+        # because a line pin would add a record and move the 106 / 79 / 58 in
+        # `test_census_test_line_pins.py` and the 106-row table
+        # `check_pin_table_rows.py` reconciles -- a second shared-file edit with
+        # no bearing on this axis. So nothing new is pinned, `len(files) - len(tail)`
+        # stays **11**, and the tail takes the 38th unpinned suite: **39 / 11 /
+        # 28**. The 38 / 11 / 27 stays written above, true of every tree from
+        # `24460001` until this one.
         records, _files = census.census(tool.REPO)
         files, _index = census.suites(tool.REPO)
         tail = tool.unpinned(records, files)
-        self.assertEqual(len(files), 38)
+        self.assertEqual(len(files), 39)
         self.assertEqual(len(files) - len(tail), 11)
-        self.assertEqual(len(tail), 27)
+        self.assertEqual(len(tail), 28)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):
         # The self-reference, held with its reason rather than left to be

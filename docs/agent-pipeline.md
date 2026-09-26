@@ -365,14 +365,26 @@ only covers what's specific to *this* copy.
      `ec/firmware/GMxMGxx_11.800`, two hand transcriptions in
      `ec/annotations/` and a hard-coded table — no Ghidra, no network, no
      assembler, and no `r2` either, which is in the *provenance* of those
-     transcriptions rather than in the run. It measures **0.02 s** here over
+     transcriptions rather than in the run. **(2026-09-26, issue #811) The mode
+     now opens two more committed files than it did when this item was
+     written** — it re-reads the two windows and §8 out of
+     `ec/annotations/charge-profile-flow.md` and
+     `ec/annotations/bank-call-audit.md` rather than only citing them, which is
+     what makes the patch's own `case` comment true, so a re-copy needs the
+     item to say the mode reads those files and not merely a table. It measures
+     **0.02 s** here over
      five runs on 2026-09-25, against a cheap tier the paragraph above records
      at 5.9 s, on item 6's caveat about the ratio being the point. The whole of
      it is prepared in `docs/ci/agent-gates-disasm8051-self-test.patch` — a
      patch of its own, and **a re-copy restores the eleven-tool list**, so this
      item and that patch are the only things carrying it. It is not here for
      item 4's reason, template-copied file and no `workflow` scope on the
-     token, and **until a human lands it, no commit runs the mode**. Its
+     token, and **until a human lands it, no commit runs the mode**. **A red
+     run from this check, once it is landed, means a transcription and the
+     table built from it disagree** — not that the gate is wrong — and which of
+     the two is at fault is answerable in `r2 -a 8051` against a
+     `make_bank_image.py` image, so the cheapest red in this tier is also the
+     easiest to diagnose; do not switch it off. Its
      neighbours in the patch are placed for composition rather than for reading
      — the tool-list entry is at the end of the list and the arm is after
      `*xdata_register_map.py)`, both outside the four other patches' context
