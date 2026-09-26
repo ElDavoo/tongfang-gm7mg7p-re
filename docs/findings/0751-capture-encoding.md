@@ -59,10 +59,10 @@ The split is the point, not an accident of the edit:
 |---|---|---|---|
 | `grade_0751_isolation.py` `read_capture` | read | — (strict) | `:852` |
 | `grade_0751_isolation.py` `existing_mark_labels` | read | `replace` | `:896` |
-| `grade_0751_isolation.py` `refused_capture_rows` | read | `replace` | `:947` |
-| `grade_0751_isolation.py` `capture_snapshot`, which `existing_mark_findings` reads through | read | `replace` (in `capture_lines`) | `:1112` |
-| `grade_0751_isolation.py` `read_early_exits` | read | — (strict) | `:1342` |
-| `grade_0751_isolation.py` `read_dump` | read | — (strict) | `:1399` |
+| `grade_0751_isolation.py` `refused_capture_rows` | read | `replace` | `:957` |
+| `grade_0751_isolation.py` `capture_snapshot`, which `existing_mark_findings` reads through | read | `replace` (in `capture_lines`) | `:1134` |
+| `grade_0751_isolation.py` `read_early_exits` | read | — (strict) | `:1364` |
+| `grade_0751_isolation.py` `read_dump` | read | — (strict) | `:1421` |
 | `grade_0751_isolation.py` `capture_rows`, the four readers' shared stream (#750) | read | the caller's — bare or `replace` | `:749` |
 | `ec_watch.py` `CsvSink` | write | — | `:143` |
 | `system_id_probe.py` `CsvSink` | write | — | `:217` |
@@ -74,12 +74,13 @@ The split is the point, not an accident of the edit:
 
 The `Line` column is the merged tree's, and every value in it is a line that
 opens, names or reads the site in its own row. It was this page's own tree when
-the page was written and has moved twice since: #749 split the readers' bodies
-out (`take_capture_row`, `mark_labels_of`, `partition_capture_rows`,
-`capture_snapshot`, `capture_lines`) and #750 added the shared `capture_rows`
-stream on top. The first six rows sat at `:693`, `:740`, `:789`, `:919`,
-`:1108` and `:1135` before that, and the last two of those were already stale
-even on #748's own tree — `read_early_exits` is at `:937` and `read_dump` at
+the page was written and has moved three times since: #749 split the readers'
+bodies out (`take_capture_row`, `mark_labels_of`, `partition_capture_rows`,
+`capture_snapshot`, `capture_lines`), #750 added the shared `capture_rows`
+stream on top, and #771 added docstring prose above `refused_capture_rows` and
+changed no line of code. The first six rows sat at `:693`, `:740`, `:789`,
+`:919`, `:1108` and `:1135` before that, and the last two of those were already
+stale even on #748's own tree — `read_early_exits` is at `:937` and `read_dump` at
 `:979` there — so all six are re-anchored here rather than left naming the
 wrong function. The split itself — strict readers bare, preflights `replace` —
 is unchanged, and is now made once in `capture_rows` rather than six times.

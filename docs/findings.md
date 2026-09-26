@@ -4442,8 +4442,9 @@ readers called on temp files, **both shapes cost zero** — the readers index
 rather than unpack, and the issue's "`row[0..3]` unpacks" is explicit indexing
 at `grade_0751_isolation.py:691`, so a fifth column is ignored where the
 issue's reading predicts a `ValueError`. (That line number is this paragraph's
-own tree, as the rest of it is — #749's split moved it to `:830` and #750's
-consolidation to `:1044`; the measurement is quoted from
+own tree, as the rest of it is — #749's split moved it to `:830`, #750's
+consolidation to `:1044` and #771's docstring prose to `:1063`; the
+measurement is quoted from
 `0751-mark-provenance-shapes.md`, which is the half that is re-derived.) The one number the shapes differ on is
 3-of-3 marks carrying provenance in their own row against 0-of-3, which is why
 the page recommends the fifth column and states what it costs. It corrects the
@@ -4544,10 +4545,10 @@ own edits drifted, the two new `check_capture_encoding.py` sites, and the
 `path_starts_with_bom` line. The count is 44 because both branches' pins are
 cited: #749's own at the lines the split left them at, and #750's skip-rule
 citations are four — the predicate's body plus the three readers that call it,
-`:845`, `:890`, `:1065` and `:1086` — where `origin/main` had two, the rule
+`:845`, `:890`, `:1084` and `:1108` — where `origin/main` had two, the rule
 written out twice at `:695` and `:871`. That 2 → 4 is worth 2 of the run and
 the rest is this
-branch's four newly cited sites, `grade_0751_isolation.py:976`, its
+branch's four newly cited sites, `grade_0751_isolation.py:986`, its
 byte-order-mark refusal at `:886`, and `check_capture_encoding.py:166` and
 `:243`: 38 rows on `origin/main`, + 2 for the rule, + 4 new sites, is 44. Its
 citation check reports rather than raising — a bare
@@ -8966,6 +8967,23 @@ measured on.)*
 > §4a-4d. **§67's does not** — that note claims the number was free rather than
 > that its section was last, which is why it needed no correction here and is
 > not listed among the four.
+>
+> *(And this section's own note joins them at this merge, in the same place and
+> for the same reason §68's was corrected: "It is the last section in the file"
+> was true when it was written, and #771's summary landed below it, so §69 is no
+> longer the last section. **Its number does not move** — #771's is that
+> branch's own summary and gives way, as the rule three collisions up states —
+> and the correction is beside the clause rather than in it, per §4a-4d. The
+> sentence above counting the corrected notes at four is left as written rather
+> than edited to five, for the same reason each of the four was. **Its own
+> references are unaffected, and that is the half of the note this merge does
+> not touch:** the pointer closing §62, the parenthetical in §64's note, and the
+> ones in §65 above and in
+> [`test-line-pin-census.md`](findings/test-line-pin-census.md) all name §69,
+> which is still this section, because §69 is the number `main` already held
+> and therefore the one that keeps it. The write-up's
+> [`xdata-moved-ranks-427-pair.md`](findings/xdata-moved-ranks-427-pair.md)
+> and §67's correction table are unaffected for the same reason.)*
 
 The write-up is
 [`xdata-moved-ranks-427-pair.md`](findings/xdata-moved-ranks-427-pair.md);
@@ -9094,3 +9112,83 @@ patched file in this work is a copy of the 427-era tool inside a `/tmp` worktree
 that has been removed. `check_cluster_citations.py` reports the same two
 citations before and after this change, both **#822's** at
 [`xdata-cluster-names-guard-off-recipe.md`](findings/xdata-cluster-names-guard-off-recipe.md):220.
+
+## 70. The two path-taking readers are kept, and their docstrings name their callers (2026-09-26, issue #771)
+
+> **Numbering note, added at the merge.** This section was written as §69, and
+> #885's 427-row-pair summary took §69 on `main` in the same window, so it is
+> renumbered to the next free number rather than left to collide. §69 is now
+> #885's summary above — whose own note records this same collision from the
+> other side, and whose "last section in the file" is corrected beside it rather
+> than into it — and this is **§70** and is the last section in the file. *(And
+> that clause is in exactly the position §68's and §69's were in: it is true of
+> this merge, and the next section to land below this one corrects it beside
+> itself rather than into itself, per §4a-4d. It is the sixth such note in this
+> file and the second to arrive in one merge, which is what two branches adding a
+> summary each in the same window looks like from here.)* **Nothing this branch
+> wrote pointed at its own section number, so there was no reference to
+> repoint**, and that is worth stating rather than left for the next reader to
+> check: the write-up cites `docs/findings.md` §6a and §4a-4d and
+> `0751-capture-encoding.md` §2 rather than this section, the two other edits
+> this branch makes in this file name lines in a tool rather than a section (the
+> `#771's docstring prose to :1063` and the `:1084`/`:1108`/`:986` repoint
+> above), and no tool, test or gate reads a section number out of this file. A
+> section number is a property of the merge in the same way the runner's totals
+> are — see [`findings/runner-red-suite-set.md`](findings/runner-red-suite-set.md)
+> — which is why the collision is recorded here rather than left for the next
+> reader to find.
+
+Write-up: [`0751-path-taking-reader-fates.md`](findings/0751-path-taking-reader-fates.md);
+this is the summary.
+
+**Both functions are kept, and the docstring that asserted a caller who does
+not exist now names the three that do.** #749's split left
+`refused_capture_rows` as an open-and-delegate whose last paragraph read
+*"kept for a caller that holds a path rather than rows"* — naming no one, which
+is the failure mode `0751-notice-two-moments.md` says it had already closed
+for another docstring, recurring one function down in one the same merge added.
+
+**The issue's own central claim is stale against this tree.** It greps for
+`refused_capture_rows` and reports *"no caller, in production or in the
+suite."* There are **three**, all in `test_grade_0751_isolation.py`, and the
+write-up quotes the `grep -rn` that finds them. One of the three is
+load-bearing rather than incidental: `existing_mark_findings` pastes
+`read_capture`'s exception over the *first* reason, so the order of the checks
+is only observable through a path-taking entry that does not paste it, which is
+a property `refused_capture_rows` has and `existing_mark_findings` does not.
+The deleted option was also the more expensive one: `0751-capture-encoding.md`
+§2 is titled *"The sites, all thirteen"* and carries a row naming the function,
+so deleting it would mean retracting a shared findings file's own count for a
+function whose callers are real. Keeping it costs zero retractions.
+
+**`existing_mark_labels` is a published API, not a test fixture**, and now says
+so. Three things outside the grader's own suite depend on it:
+`measure_mark_provenance.py`'s `families` oracle table, which the census run
+consumes as well as `--self-test`; `ec_watch.py`'s `load_label_vocab`, which
+reads its *name* into a liveness probe; and `ec_watch-marks.md`, which
+documents it as the reader the prompt reaches.
+
+**Two cross-references were describing where a body used to live**, in
+`take_capture_row` and in `partition_capture_rows` — the latter crediting the
+lenient read to the delegate into itself, which cannot be the source of a
+reason it has already applied. Both now name the function whose body makes the
+claim. The cross-references that name the *path* a reader takes were already
+right and were deliberately left alone, and the anti-drift guard's test **body**
+is untouched: #749 left it green on purpose and it is what holds
+`partition_capture_rows` to `take_capture_row`. Two anchors the issue also named
+are not recoverable — the `:690` is not on this tree at all — and are recorded
+as checked and found rotten rather than reconstructed.
+
+**One consequence the issue could not have predicted, and the reason this
+section is not just a docstring edit.** `measure_mark_provenance.py` pins exact
+line numbers into `grade_0751_isolation.py`, and this change is prose *in that
+file*: growing four docstrings moved twelve pins and took the full census from
+44 `ok` rows and exit 0 to 20 problems and exit 1. That is the tool working as
+designed — its comment says a moved line is a mismatch *"whether it moved
+because the file grew above it or because the claim was wrong, and the two need
+a reader, not a guess"* — so the pins were **re-measured, not relaxed**, and
+the four drift tables that quote them (`0751-mark-provenance-shapes.md`,
+`0751-notice-two-moments.md`, `0751-capture-encoding.md`,
+`0751-capture-row-shape.md`) moved with them. The *reader set* did not: 7
+writers, 8 sites, 6 reader calls, 48 in-suite calls, the same as before, and
+the tool exits 0 again. No EC was opened, no capture taken, no register read.

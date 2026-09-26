@@ -3623,11 +3623,13 @@ class ExistingMarkLabelTests(unittest.TestCase):
 
     def test_the_refusal_reasons_are_read_captures_own(self):
         # The anti-drift guard, and the one that makes the per-row conditions
-        # in `refused_capture_rows` safe rather than a second rule. Over every
-        # fixture `read_capture` refuses, the first reason this returns is the
-        # exception `read_capture` itself raised, byte for byte. Tighten
-        # that check or widen `parse_ts` and this fails -- rather than the
-        # notice going on explaining a refusal the grading no longer makes.
+        # in `partition_capture_rows` -- reached here through
+        # `existing_mark_findings`, which reads once and delegates -- safe
+        # rather than a second rule. Over every fixture `read_capture`
+        # refuses, the first reason this returns is the exception
+        # `read_capture` itself raised, byte for byte. Tighten that check or
+        # widen `parse_ts` and this fails -- rather than the notice going on
+        # explaining a refusal the grading no longer makes.
         #
         # The *order* of those checks is pinned by the last fixture below, not
         # by that first reason: `existing_mark_findings` replaces the first

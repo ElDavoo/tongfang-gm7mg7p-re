@@ -299,8 +299,13 @@ skipped and no gate was weakened.
 
 Inserting above `read_capture` moved every citation at and below it, #748's
 edits moved most of them again, and #749's split of the readers' bodies moved
-them once more. The `at c9e72c1` column is the state the issue measured; the
-`now` column is the merged tree, after all three:
+them once more. #771 moved the `now` column a fourth time, and only the
+numbers: it rewrote four docstrings in `grade_0751_isolation.py` to name the
+callers they actually have, which is prose and changed no line of code, so
+every symbol below `existing_mark_labels` sits lower than the two tables in
+`0751-notice-two-moments.md` and `0751-capture-encoding.md` had it, and those
+were re-anchored in the same change. The `at c9e72c1` column is the state the
+issue measured; the `now` column is the merged tree, after all four:
 
 | symbol | at `c9e72c1` | now |
 |---|---|---|
@@ -309,17 +314,17 @@ them once more. The `at c9e72c1` column is the state the issue measured; the
 | `read_capture` | `:678` | `:852` |
 | its byte-order-mark refusal | — (added) | `:886` — `path_starts_with_bom(path)` |
 | its call to the predicate | `:687` | `:890` |
-| its length test | `:689` | `:1042` — `take_capture_row`, not `read_capture` |
-| its explicit indexing | `:691` | `:1044` — same body |
-| its mark branch | `:692` | `:1045` — same body |
+| its length test | `:689` | `:1061` — `take_capture_row`, not `read_capture` |
+| its explicit indexing | `:691` | `:1063` — same body |
+| its mark branch | `:692` | `:1064` — same body |
 | `existing_mark_labels` | `:700` | `:896` |
-| its call to the predicate | `:732` | `:1065` — in `mark_labels_of`, which it delegates to |
-| its `(ts, label)` pair | `:735` | `:1068` — same helper |
-| the partition's docstring quoting the mark branch | — (added) | `:976` |
-| `refused_capture_rows`' mark branch | `:789` | `:1099` — in `partition_capture_rows`, over the notice's own read |
-| `read_early_exits` | `:902` | `:1342` |
-| its phrase test | `:923` | `:1384` |
-| the per-capture census line | `:2510` | `:2972` |
+| its call to the predicate | `:732` | `:1084` — in `mark_labels_of`, which it delegates to |
+| its `(ts, label)` pair | `:735` | `:1087` — same helper |
+| the partition's docstring quoting the mark branch | — (added) | `:986` |
+| `refused_capture_rows`' mark branch | `:789` | `:1121` — in `partition_capture_rows`, over the notice's own read |
+| `read_early_exits` | `:902` | `:1364` |
+| its phrase test | `:923` | `:1406` |
+| the per-capture census line | `:2510` | `:2994` |
 | `warn_unchecked_marks` | `ec_watch.py:276` | `ec_watch.py:288` |
 | the notice's call into the reader | `ec_watch.py:339` | `ec_watch.py:361` |
 | `Marker._loop`'s writer | `ec_watch.py:446` | `ec_watch.py:473` |
@@ -374,8 +379,8 @@ absorbing into the change:
    line at `grade_0751_isolation.py:2347` — were red for #719 and the commit
    after it and nothing named them. All six are re-anchored here, and two
    rows are added for sites the scan found and no citation named: the
-   partition's own mark branch (`:1099` in the merged tree, `:973` on this
-   branch), and its docstring's quotation of that branch (`:976`, `:928`),
+   partition's own mark branch (`:1121` in the merged tree, `:973` on this
+   branch), and its docstring's quotation of that branch (`:986`, `:928`),
    which is a place where the scan counts prose as a decision site.
 
    **#748 drifted twenty-three more**, by editing files this table cites
@@ -399,9 +404,9 @@ absorbing into the change:
    `origin/main` cited it on — `:695` and `:871`, the same test written out
    twice, in `read_capture` and in the reader the notice used — to the four
    this table holds: `skippable_row`'s body at `:845` and the three readers
-   that call it, at `:890`, `:1065` and `:1086`. That 2 → 4 is worth 2 of the
+   that call it, at `:890`, `:1084` and `:1108`. That 2 → 4 is worth 2 of the
    run; the other 4 are this branch's newly cited sites,
-   `grade_0751_isolation.py:976`, its byte-order-mark refusal at `:886`, and
+   `grade_0751_isolation.py:986`, its byte-order-mark refusal at `:886`, and
    `check_capture_encoding.py:166` and `:243`. So 38 rows on `origin/main`, + 2
    for the rule and + 4 new sites, is the **44** the tool prints. The tool
    now prints `ok` for all **44** rows and exits 0, and

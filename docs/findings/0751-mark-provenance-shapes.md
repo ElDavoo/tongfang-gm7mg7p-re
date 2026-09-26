@@ -40,17 +40,17 @@ first is the rule rather than a use of it (`ec/tools/grade_0751_isolation.py`):
 |---|---|
 | `:845` | `return not row or row[0].startswith("#") or row[0] == "ts"` |
 | `:890` | `if skippable_row(row):` |
-| `:1042` | `if len(row) < 4:` |
-| `:1044` | `ts, addr, old, new = row[0], row[1], row[2], row[3]` |
+| `:1061` | `if len(row) < 4:` |
+| `:1063` | `ts, addr, old, new = row[0], row[1], row[2], row[3]` |
 
 `:845` is `skippable_row`'s own body, the one place the skip rule is written
-down (#750). `:890` is `read_capture` at `:852` calling it, and `:1042` and
-`:1044` are `take_capture_row`'s at `:1015`, the loop body `read_capture` hands
+down (#750). `:890` is `read_capture` at `:852` calling it, and `:1061` and
+`:1063` are `take_capture_row`'s at `:1034`, the loop body `read_capture` hands
 every row the rule lets past (#749). That extraction is #749's and the
 consolidation is #750's; nothing about the shape is different, the row is read
 by the same code in the same order.
 
-`:1044` is explicit indexing of the first four fields, not an unpack of `row`.
+`:1063` is explicit indexing of the first four fields, not an unpack of `row`.
 A fifth column is therefore **ignored** — `Window` is constructed from `new`,
 which is `row[3]` — where the issue's reading predicts a `ValueError`. The
 conclusion the issue draws is the same and the reason is the opposite, so the
@@ -58,7 +58,7 @@ reasons are worth getting right: a shape that would have raised on the next
 field is a shape that can be extended a field at a time, and one that raises
 is a format change every existing reader has to be reopened for.
 
-`:1042` is a real test in the other direction, and the tool's self-test asserts
+`:1061` is a real test in the other direction, and the tool's self-test asserts
 it: a *three*-column mark row still raises `ValueError`. The first version of
 that assertion wrote `MARK,,x`, which is four columns, and the self-test failed
 by passing for the wrong reason. A threshold that had stopped testing anything
@@ -97,16 +97,16 @@ remembered to update:
    8 site(s) consuming it:
      ec/tools/check_capture_encoding.py:166  if len(row) > 1 and row[1] == "MARK":
      ec/tools/check_capture_encoding.py:243  row = ["2026-01-01T12:00:00.000+01:00", "MARK", "", PROBE]
-     ec/tools/grade_0751_isolation.py:976  `addr == "MARK"` before the `int()` calls, and so does this. That test
-     ec/tools/grade_0751_isolation.py:1045  if addr == "MARK":
-     ec/tools/grade_0751_isolation.py:1067  if len(row) > 1 and row[1] == "MARK":
-     ec/tools/grade_0751_isolation.py:1099  if addr == "MARK":
+     ec/tools/grade_0751_isolation.py:986  `addr == "MARK"` before the `int()` calls, and so does this. That test
+     ec/tools/grade_0751_isolation.py:1064  if addr == "MARK":
+     ec/tools/grade_0751_isolation.py:1086  if len(row) > 1 and row[1] == "MARK":
+     ec/tools/grade_0751_isolation.py:1121  if addr == "MARK":
      ec/tools/grade_timer_sweep.py:138  if r[1] == "MARK":
      windows/tools/test_manual_fan_ctrl_probe.py:508  if len(r) == 4 and r[1] == "MARK"]
    6 call(s) of the grader's readers, none of which writes the literal:
      ec/tools/check_capture_claims.py:514  index[WATCH + "/" + name] = read_capture(os.path.join(REPO, WATCH, name))
-     ec/tools/grade_0751_isolation.py:2968  m, c = read_capture(path)
-     ec/tools/grade_0751_isolation.py:2977  rows = read_early_exits(path)
+     ec/tools/grade_0751_isolation.py:2990  m, c = read_capture(path)
+     ec/tools/grade_0751_isolation.py:2999  rows = read_early_exits(path)
      ec/tools/grade_gpu_door.py:421  m, c = fan.read_capture(path)
      windows/tools/manual_fan_ctrl_probe.py:701  marks, changes = grader.read_capture(str(path))
      windows/tools/manual_fan_ctrl_probe.py:707  void_marks, void_changes = grader.read_capture(str(void_path))
@@ -114,9 +114,9 @@ remembered to update:
 ```
 
 Six of the eight decide a row rather than describing one, and one of those six
-(`:1099`) is a second decision inside the grader, in the partition
+(`:1121`) is a second decision inside the grader, in the partition
 `partition_capture_rows` — it has to make the same call `read_capture` makes or
-it would accept a row the grading refuses. The seventh, `:976`, is prose: the
+it would accept a row the grading refuses. The seventh, `:986`, is prose: the
 partition's docstring quoting that branch, which the scan matches because it
 spells the same literal in a sentence. The eighth is neither: a *constructed*
 row, at `check_capture_encoding.py:243`, which the scan files as a consumer only
@@ -140,8 +140,8 @@ above cannot see it. Six call sites of the grader's readers do not:
 ```console
    6 call(s) of the grader's readers, none of which writes the literal:
      ec/tools/check_capture_claims.py:514  index[WATCH + "/" + name] = read_capture(os.path.join(REPO, WATCH, name))
-     ec/tools/grade_0751_isolation.py:2968  m, c = read_capture(path)
-     ec/tools/grade_0751_isolation.py:2977  rows = read_early_exits(path)
+     ec/tools/grade_0751_isolation.py:2990  m, c = read_capture(path)
+     ec/tools/grade_0751_isolation.py:2999  rows = read_early_exits(path)
      ec/tools/grade_gpu_door.py:421  m, c = fan.read_capture(path)
      windows/tools/manual_fan_ctrl_probe.py:701  marks, changes = grader.read_capture(str(path))
      windows/tools/manual_fan_ctrl_probe.py:707  void_marks, void_changes = grader.read_capture(str(void_path))
@@ -343,18 +343,18 @@ those lines would be reading the table upside down.
 Per reader. The first three rows and the last are the ones the tool *calls*;
 the middle three it does not, and their cells follow from a citation the tool
 verifies — `grade_gpu_door.py:421` and `check_capture_claims.py:514` call the
-`read_capture` the first row measured, and `grade_0751_isolation.py:2968`
+`read_capture` the first row measured, and `grade_0751_isolation.py:2990`
 counts that function's return. That is a checked link rather than a second
 measurement, and it is worth saying so rather than presenting seven rows as
 though seven calls happened.
 
 | site | fifth column | `# provenance` row |
 |---|---|---|
-| `read_capture` (`:852`) | zero — `:1042` is `len(row) < 4` and `:1044` indexes `row[0..3]`, so the tail is dropped and `Window` is identical | zero — caught by the `row[0].startswith("#")` half of `skippable_row` at `:845` |
-| `existing_mark_labels` (`:896`) | zero — `mark_labels_of` at `:1068` returns `(row[0], row[3] if len(row) > 3 else "")`, identical at 4 or 5 columns | zero, same predicate, called at `:1065` |
-| `read_early_exits` (`:1342`) | zero — `:1384` tests `row[0]`, and a mark row's `row[0]` is a timestamp, which cannot open with a `#` | zero *by the invariant* documented at `grade_0751_isolation.py:428`, not by the skip: the phrase test is a prefix test, and the safety is that a hand annotation does not open with that phrase |
+| `read_capture` (`:852`) | zero — `:1061` is `len(row) < 4` and `:1063` indexes `row[0..3]`, so the tail is dropped and `Window` is identical | zero — caught by the `row[0].startswith("#")` half of `skippable_row` at `:845` |
+| `existing_mark_labels` (`:896`) | zero — `mark_labels_of` at `:1087` returns `(row[0], row[3] if len(row) > 3 else "")`, identical at 4 or 5 columns | zero, same predicate, called at `:1084` |
+| `read_early_exits` (`:1364`) | zero — `:1406` tests `row[0]`, and a mark row's `row[0]` is a timestamp, which cannot open with a `#` | zero *by the invariant* documented at `grade_0751_isolation.py:428`, not by the skip: the phrase test is a prefix test, and the safety is that a hand annotation does not open with that phrase |
 | `grade_gpu_door.py:421` | zero — it unpacks `read_capture`'s two-tuple, which is what the first row measured | zero, same reason |
-| `grade_0751_isolation.py:2968` | zero — `f"{path}: {len(m)} mark(s), {len(c)} change row(s)"` counts and never spells the row | zero, same reason |
+| `grade_0751_isolation.py:2990` | zero — `f"{path}: {len(m)} mark(s), {len(c)} change row(s)"` counts and never spells the row | zero, same reason |
 | `check_capture_claims.py:514` | zero — it calls the same `read_capture` over committed captures | zero, same reason |
 | `grade_timer_sweep.py:138` | zero — `r[1] == "MARK"` then `"resumed" in r[3]` at `:139`; both index, `r[4]` is never read | zero — `:115` drops every `#` line before the CSV parse and only three phrase regexes survive it |
 
@@ -416,7 +416,7 @@ position.
 The real cost is that nothing returns the position:
 
 - `existing_mark_labels` (`:896`) returns a flat `(ts, label)` list — its
-  `mark_labels_of` at `:1068` builds it — with no index, no line number and no
+  `mark_labels_of` at `:1087` builds it — with no index, no line number and no
   row. A reader that wanted to bind a provenance row to a mark has to re-read
   the file and re-derive an ordering the preflight deliberately flattened.
 - The binding is *positional*, so it is fragile in a way a column is not. An
@@ -424,7 +424,7 @@ The real cost is that nothing returns the position:
   after the marks it describes, silently reassigns every mark beneath it. A
   column cannot be reordered away from its mark.
 - And under shape A the fifth column is *also* invisible to
-  `existing_mark_labels` (`:1068` reads `row[3]` and never `row[4]`). The
+  `existing_mark_labels` (`:1087` reads `row[3]` and never `row[4]`). The
   difference is not that shape A is preflight-visible and shape B is not. It is
   that shape A's answer sits on the mark's own row, where a reader can reach it
   without first inventing the order the preflight threw away.
@@ -508,8 +508,8 @@ their provenance in their own row, against 0 of 3** — and 1 of 1 against 0 of
    per-process row answers a different, coarser question and makes the reader
    re-derive the per-mark one.
 2. **It costs zero in all seven consumers** — four called directly and three
-   reached through them — because each indexes rather than unpacks: `:1044`
-   for `read_capture`, `:1068` for `existing_mark_labels`, `r[3]` for
+   reached through them — because each indexes rather than unpacks: `:1063`
+   for `read_capture`, `:1087` for `existing_mark_labels`, `r[3]` for
    `grade_timer_sweep`, and the three programs that only take
    `read_capture`'s two-tuple.
 3. **It does not spend the `#` namespace.** The skip rule is documented as
@@ -543,7 +543,7 @@ their provenance in their own row, against 0 of 3** — and 1 of 1 against 0 of
   canary and not an argument against the shape, but it is a real cost to name:
   the first thing a widened implementation hits is a failing assertion.
 - **It does not make the notice say anything.** Under either shape
-  `existing_mark_labels` at `:896`, building at `:1068`, returns the same flat
+  `existing_mark_labels` at `:896`, building at `:1087`, returns the same flat
   list, so `warn_unchecked_marks` is unchanged. The value lands in the grader
   and in whatever tool reads provenance later, and the implementation issue
   should not promise the operator a better warning as part of it.
@@ -608,10 +608,10 @@ a line number to a file.
    ok   ec/tools/ec_timer_capture.py:210  writer: auto_mark_loop, the machine-state branch
    ok   ec/tools/ec_timer_capture.py:232  writer: input_mark_loop
    ok   windows/tools/manual_fan_ctrl_probe.py:443  writer: MarkCsv.mark
-   ok   ec/tools/grade_0751_isolation.py:1045  reader: take_capture_row recognising the row, read_capture's own body
-   ok   ec/tools/grade_0751_isolation.py:1099  reader: partition_capture_rows recognising the row -- the fourth site over this shape, and the one the notice partitions its own read with, so a mark row is never hex-read there either
-   ok   ec/tools/grade_0751_isolation.py:1067  reader: mark_labels_of recognising the row, existing_mark_labels' own extraction
-   ok   ec/tools/grade_0751_isolation.py:976  the partition's docstring quoting that branch, which the scan matches because it is the same literal spelled in prose
+   ok   ec/tools/grade_0751_isolation.py:1064  reader: take_capture_row recognising the row, read_capture's own body
+   ok   ec/tools/grade_0751_isolation.py:1121  reader: partition_capture_rows recognising the row -- the fourth site over this shape, and the one the notice partitions its own read with, so a mark row is never hex-read there either
+   ok   ec/tools/grade_0751_isolation.py:1086  reader: mark_labels_of recognising the row, existing_mark_labels' own extraction
+   ok   ec/tools/grade_0751_isolation.py:986  the partition's docstring quoting that branch, which the scan matches because it is the same literal spelled in prose
    ok   ec/tools/grade_timer_sweep.py:138  reader: grade_timer_sweep.load recognising the row
    ok   ec/tools/check_capture_encoding.py:166  reader: the encoding check's own mark/change census, written against the same shape and declared against the same codec
    ok   ec/tools/check_capture_encoding.py:243  a constructed row rather than a writer: `check_capture_encoding` builds one to hand a writer that takes a label alone, and the literal scan counts it as a consumer because the `.row(` call is on the next line
@@ -622,16 +622,16 @@ a line number to a file.
    ok   ec/tools/grade_0751_isolation.py:845  the one skip rule, where a `# provenance` row goes
    ok   ec/tools/grade_0751_isolation.py:886  read_capture refusing a byte-order mark before it reads a row, which is what keeps the header out of the row shape's data rows
    ok   ec/tools/grade_0751_isolation.py:890  read_capture calls that one skip rule rather than spelling it
-   ok   ec/tools/grade_0751_isolation.py:1042  read_capture's only length test: a fifth column passes it
-   ok   ec/tools/grade_0751_isolation.py:1044  explicit indexing, not an unpack of row -- the correction to the issue
+   ok   ec/tools/grade_0751_isolation.py:1061  read_capture's only length test: a fifth column passes it
+   ok   ec/tools/grade_0751_isolation.py:1063  explicit indexing, not an unpack of row -- the correction to the issue
    ok   ec/tools/grade_0751_isolation.py:896  existing_mark_labels
-   ok   ec/tools/grade_0751_isolation.py:1065  mark_labels_of takes that one skip rule, so existing_mark_labels -- which delegates its extraction to it -- cannot spell a second copy
-   ok   ec/tools/grade_0751_isolation.py:1086  and so does the partition, over the notice's own read
-   ok   ec/tools/grade_0751_isolation.py:1068  the (ts, label) pair: no position, and no fifth column either
-   ok   ec/tools/grade_0751_isolation.py:1342  read_early_exits
-   ok   ec/tools/grade_0751_isolation.py:1384  the phrase test: a mark's row[0] is a timestamp
+   ok   ec/tools/grade_0751_isolation.py:1084  mark_labels_of takes that one skip rule, so existing_mark_labels -- which delegates its extraction to it -- cannot spell a second copy
+   ok   ec/tools/grade_0751_isolation.py:1108  and so does the partition, over the notice's own read
+   ok   ec/tools/grade_0751_isolation.py:1087  the (ts, label) pair: no position, and no fifth column either
+   ok   ec/tools/grade_0751_isolation.py:1364  read_early_exits
+   ok   ec/tools/grade_0751_isolation.py:1406  the phrase test: a mark's row[0] is a timestamp
    ok   ec/tools/grade_0751_isolation.py:428  the one machine phrase the `#` namespace spends in this family
-   ok   ec/tools/grade_0751_isolation.py:2972  the per-capture census line, which counts rather than spells
+   ok   ec/tools/grade_0751_isolation.py:2994  the per-capture census line, which counts rather than spells
    ok   ec/tools/grade_gpu_door.py:421  the second consumer of read_capture's two-tuple
    ok   ec/tools/check_capture_claims.py:514  a third, and the only one that reads every committed capture
    ok   ec/tools/grade_timer_sweep.py:115  grade_timer_sweep drops every `#` line before the CSV parse
