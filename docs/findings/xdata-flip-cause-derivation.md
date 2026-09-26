@@ -331,14 +331,21 @@ should not be reintroduced:
 **One** of the five is wholly a page row — `k0ebf038645b0`, 12 of its 12 — and
 **four** of them carry more page addresses than the committed 430-row census's
 row at the same rank, which hold 0, 0, 1, 0 and 0 of them in page; only
-`kea0c67af9b51` matches the row it displaced, at 0 against 0. **Two of these
-five are the same clusters seen from the other side of the pair** —
-`k733571bb7f66` is the committed key of a `moved in both` row, and
-`kea0c67af9b51` is the subject row of `ke96d2e265d5d`'s — so the large page
-clusters are being permuted among the top ten ranks, and which of them lands in
-the quiet cell rather than the moving one is close to arbitrary. This is
-`mode-oem-init`'s neighbourhood: the one hand name that moves, at
-`main-ec-001`/`main-ec-002`, the ranks just above these.
+`kea0c67af9b51` matches the row it displaced, at 0 against 0. **One of the
+five is a large page cluster seen from both cells, and a second is two of the
+five stacked a rank apart inside the flipped one.** `k733571bb7f66` is a
+`moved -> intact` key of the table above *and* the subject row the
+`cause --rows` listing shows under committed key `k2a30862cf8eb` at
+`main-ec-011`, landing at `main-ec-010` — the rank this table has it at, and
+one rank from the `main-ec-011` the 266's own key sits at. `kea0c67af9b51` is
+the subject row of `ke96d2e265d5d`'s at `main-ec-008`, and `ke96d2e265d5d` is
+the fourth row of this same table, so that one is a chain inside the 71 rather
+than a hop across the cells. What is measured is the overlap: the large page
+clusters are being permuted across `main-ec-006` through `main-ec-012` — the
+band the table's five ranks and the `moved in both` row above both fall in —
+with the same key turning up as a row of the quiet cell and a row of the
+moving one. This is `mode-oem-init`'s neighbourhood: the one hand name that
+moves, at `main-ec-001`/`main-ec-002`, the ranks just above these.
 
 **The claim, at its count: the guard's substitution at those 71 ranks sat on the
 working page more often than the control's did — 37.4% against 19.1%, measured
