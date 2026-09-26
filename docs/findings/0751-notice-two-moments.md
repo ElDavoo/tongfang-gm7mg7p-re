@@ -310,14 +310,20 @@ and moved every line again, because it stated the row's skip rule and first
 field once (`skippable_row`, `normalised_rows`) and put the open itself in
 `capture_rows`. The same symbols on the merged tree are
 `read_capture` `:852`, `existing_mark_labels` `:896`,
-`refused_capture_rows` `:947`, `take_capture_row` `:1015`,
-`mark_labels_of` `:1052`, `partition_capture_rows` `:1072`,
-`capture_snapshot` `:1112`, `capture_lines` `:1155`,
-`existing_mark_findings` `:1175`, `read_early_exits` `:1342`,
-`coalesce_marks` `:1447`, `unplaceable_marks` `:1650`, and `main`'s two call
-sites `:2968` and `:2977`. Those two changes are additive — #749 split the
+`refused_capture_rows` `:957`, `take_capture_row` `:1034`,
+`mark_labels_of` `:1071`, `partition_capture_rows` `:1091`,
+`capture_snapshot` `:1134`, `capture_lines` `:1177`,
+`existing_mark_findings` `:1197`, `read_early_exits` `:1364`,
+`coalesce_marks` `:1469`, `unplaceable_marks` `:1672`, and `main`'s two call
+sites `:2990` and `:2999`. Those two changes are additive — #749 split the
 readers' bodies out, #750 consolidated the shape — so nothing above is
-withdrawn; the numbers simply moved a second time. The merged line numbers
+withdrawn; the numbers simply moved a second time. **They have moved a third
+time since**, and only the numbers: #771 rewrote four docstrings in this file
+to name the callers they have, which is prose, so every symbol below
+`existing_mark_labels` sits lower than the table above this paragraph says and
+the twelve `measure_mark_provenance.py` citations that point into it were
+re-anchored with it. `existing_mark_labels`, `read_capture`, `skippable_row`,
+`path_starts_with_bom` and `capture_rows` did not move. The merged line numbers
 `measure_mark_provenance.py` cites are re-anchored there, and that tool exits 0
 on this tree.
 

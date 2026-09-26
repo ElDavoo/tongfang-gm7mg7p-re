@@ -940,6 +940,16 @@ def existing_mark_labels(path):
     `mark_labels_of`, which `existing_mark_findings` also calls -- over the
     rows of its own single read, so a mark the notice lists is a mark it read
     in the same breath (#749).
+
+    A published reader, not a test fixture, and three things outside this
+    module's own suite are why. `measure_mark_provenance.py` holds this in
+    the `families` oracle table and compares what it returns on a constructed
+    file -- the census run as much as `--self-test`. `ec_watch.py`'s
+    `load_label_vocab` reads this *name* off the grader, so a staged copy
+    that predates it is refused by a message naming the path, and
+    `test_ec_watch.py` holds what the staged one returns against this one.
+    `ec_watch-marks.md` documents it as the reader the prompt reaches and as
+    the extraction `existing_mark_findings` shares.
     """
     return mark_labels_of(capture_rows(path, errors="replace"))
 
@@ -1006,8 +1016,17 @@ def refused_capture_rows(path):
     The path here is the entry point, and the only part of this that opens
     anything: `existing_mark_findings` reads once and hands its own rows
     straight to `partition_capture_rows` (#749), so what is left of this is
-    the open -- lenient, through `capture_rows` -- and a delegate, kept for
-    a caller that holds a path rather than rows.
+    the open -- lenient, through `capture_rows` -- and a delegate. Three
+    cases in `test_grade_0751_isolation.py` reach it:
+    `test_the_shape_agrees_across_all_four_readers` partitions beside the
+    other three readers, `test_on_a_file_the_strict_reader_refuses_the_
+    partition_names_every_row` beside `existing_mark_labels` over the same
+    path, and `test_a_change_row_bad_in_two_hex_fields_names_the_earlier_one`
+    directly -- that last one because `existing_mark_findings` pastes
+    `read_capture`'s own exception over the first reason, so the order of
+    the checks is only observable through a path-taking entry that does not
+    do that. **No program in the tree calls it**, and that is what a search
+    of this tree finds rather than a claim that none ever will.
     """
     return partition_capture_rows(capture_rows(path, errors="replace"), path)
 
@@ -1025,7 +1044,7 @@ def take_capture_row(row, path, marks, changes):
     The order inside the `Change(...)` call is load-bearing and is left exactly
     as it was: Python evaluates its arguments left to right, so the timestamp
     is read before the hex and a change row bad in both ways is refused for the
-    timestamp. `refused_capture_rows` spells that order again to *name* the
+    timestamp. `partition_capture_rows` spells that order again to *name* the
     rows rather than stop at them, and
     `test_the_refusal_reasons_are_read_captures_own` holds the two together.
 
@@ -1078,8 +1097,11 @@ def partition_capture_rows(rows, path):
     the two lists the notice prints cannot then be describing two different
     files, because there is only one file in this function (#749). The rows are
     read through `capture_rows` by whoever opens the file, leniently, for the
-    reason `refused_capture_rows` gives; the skip rule is that same stream's
-    `skippable_row`, so the shape is not spelled here a second time.
+    reason `existing_mark_labels` argues -- a preflight has to survive a file
+    the grading will not -- which `capture_rows` states as its one split,
+    strict readers bare and preflights `errors="replace"`. The skip rule is
+    that same stream's `skippable_row`, so the shape is not spelled here a
+    second time.
     """
     accepted, refused = [], []
     for row in rows:

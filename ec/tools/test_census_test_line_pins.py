@@ -510,19 +510,49 @@ class TheCommittedTree(unittest.TestCase):
         # `decreased, {},`, the last line of the assertion holding that no
         # address's `write` decreases -- so `assertion` stays at 11 for the
         # fourth time running. Measured with the tool, not derived.
+        #
+        # Re-measured a fifth time, at the #885 x #771 merge, and this is the
+        # first move here that `declined` does *not* stay still on. #771's write-up
+        # (`docs/findings/0751-path-taking-reader-fates.md`) is one new file
+        # carrying sixteen `test_*.py:NNN` pins, and all sixteen sat inside two
+        # fenced `grep` transcripts -- the one shape the fence rule declines --
+        # with no live-prose twin, so each was a transcript-only citation of a
+        # line the tree named nowhere else. That is the case
+        # `test_every_declined_pin_is_also_cited_in_live_prose` exists to catch,
+        # and it caught all sixteen. The fix is in the write-up rather than
+        # here: it now names all sixteen in live prose as well, so each declined
+        # pin is a *declined duplicate* of a citation that is present, which is
+        # what the fence rule is safe on. So the sixteen transcript records stay
+        # declined, the sixteen prose records are new and all resolve, and
+        # occurrences go 73 -> 105, `resolves` 57 -> 73, `declined` 16 -> 32 and
+        # targets 42 -> 58, over one new file.
+        #
+        # Spellings move 46 -> 78, by 32 and not by 16, and the reason is worth
+        # stating because it is a property of the tool rather than of the tree:
+        # `spellings` counts `r[2]`, the *matched* spelling, and `grep -rn`
+        # prints `./ec/tools/...` where prose writes `ec/tools/...`. The
+        # transcript's sixteen and the prose's sixteen are therefore two
+        # spellings of one pin each, and a count of 62 would have meant editing
+        # a verbatim transcript to drop a prefix the tool really did print.
+        # `targets` is unaffected by the same prefix, because it keys on the
+        # *resolved* path, which is why it moves by 16 rather than 32. The shape
+        # split is the landing shape of the sixteen prose lines and nothing
+        # else: `assertion` 11 -> 17, `comment` 9 -> 10, `other` 26 -> 35, and
+        # `blank` and `def test_` do not move. Measured with the tool, not
+        # derived.
         records, _files = census.census(census.REPO)
-        self.assertEqual(len(records), 73)
-        self.assertEqual(len({r[0] for r in records}), 26)
-        self.assertEqual(len({r[2] for r in records}), 46)
+        self.assertEqual(len(records), 105)
+        self.assertEqual(len({r[0] for r in records}), 27)
+        self.assertEqual(len({r[2] for r in records}), 78)
         self.assertEqual(verdicts(records), {
-            census.RESOLVES: 57, census.OUT_OF_RANGE: 0,
-            census.UNRESOLVED: 0, census.AMBIGUOUS: 0, census.DECLINED: 16})
+            census.RESOLVES: 73, census.OUT_OF_RANGE: 0,
+            census.UNRESOLVED: 0, census.AMBIGUOUS: 0, census.DECLINED: 32})
         self.assertEqual(shapes(records), {
-            census.DEF_TEST: 5, census.ASSERTION: 11, census.COMMENT: 9,
-            census.BLANK: 6, census.OTHER: 26})
+            census.DEF_TEST: 5, census.ASSERTION: 17, census.COMMENT: 10,
+            census.BLANK: 6, census.OTHER: 35})
         self.assertEqual(
             len({(r[4], r[2].rsplit(":", 1)[1]) for r in records
-                 if r[3] == census.RESOLVES}), 42)
+                 if r[3] == census.RESOLVES}), 58)
 
     def test_the_committed_tree_exercises_more_than_one_verdict(self):
         # Each of these classes is non-zero on the real tree and not only on a

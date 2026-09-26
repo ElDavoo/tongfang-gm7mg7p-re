@@ -34,10 +34,10 @@ census, and the count it starts from.
 
 ```console
 $ python3 ec/tools/census_test_line_pins.py
-73 pin(s) in 26 markdown file(s): 46 distinct spelling(s), 42 distinct resolved target(s)
-  57 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 16 declined
-  5 def test_, 11 assertion, 9 comment, 6 blank, 26 other (of the pins that resolve)
-  read 146 markdown file(s) under the tree, excluding .git/vendor/ and docs/findings/test-line-pin-census.md; resolved against 35 test file(s) in it
+105 pin(s) in 27 markdown file(s): 78 distinct spelling(s), 58 distinct resolved target(s)
+  73 resolves, 0 out-of-range, 0 unresolved-path, 0 ambiguous-path, 32 declined
+  5 def test_, 17 assertion, 10 comment, 6 blank, 35 other (of the pins that resolve)
+  read 147 markdown file(s) under the tree, excluding .git/vendor/ and docs/findings/test-line-pin-census.md; resolved against 35 test file(s) in it
   no claim is measured here: whether a cited line still carries the claim it is cited for is a reading, and it is docs/findings/test-line-pin-census.md's table
 $ echo $?
 0
@@ -173,37 +173,93 @@ join finding 6 in it. **The `144` above is `145` here**: #890 added
 > `5/11/9/6/24` are the records of the two trees above and stay visible per
 > §4a-4d; the suite's pin carries a comment saying which addition moved it.
 
+> **Correction, 2026-09-26, at the `#885` × `#771` merge: this census is 105 pins
+> in 27 files, not the 73 in 26 the block above reads.** The block is re-run on
+> the merged tree and every count this page publishes is re-transcribed from it;
+> the `73`/`26`/`46`/`42`, the `57`/`16`, the `5/11/9/6/26` and the `146` this
+> page was last measured with all stay visible in the blockquote above rather
+> than edited out of silence, per §4a-4d. The movement is
+> [#771](0751-path-taking-reader-fates.md)'s write-up, **one new markdown file
+> carrying 32 records and no second cause.**
+>
+> **Thirty-two records from one new file, and half of them are sixteen pins
+> written twice.** The file's two fenced `grep` transcripts print sixteen
+> `test_*.py:NNN` lines between them, and the fence rule declines any pin whose
+> only occurrence is inside a fenced block — so those sixteen are `declined` —
+> and the suite's `test_every_declined_pin_is_also_cited_in_live_prose` requires
+> every declined pin to have a live-prose twin, so the write-up cites all sixteen
+> in prose as well and those sixteen resolve. Occurrences go 73 → **105**,
+> `resolves` 57 → **73**, `declined` 16 → **32** and files 26 → **27**.
+>
+> **`spellings` moves by 32 where `targets` moves by 16, and the difference is a
+> property of the tool rather than of the tree.** `spellings` counts `r[2]`, the
+> *matched* spelling, and `grep -rn` prints a `./` prefix that prose does not —
+> so each of the sixteen is **two spellings of one pin** and 46 + 32 = **78**.
+> `targets` keys on the *resolved* path, which the prefix does not change, so
+> 42 + 16 = **58**. The shape split is the landing shape of the sixteen prose
+> lines and nothing else: `assertion` 11 → **17**, `comment` 9 → **10**, `other`
+> 26 → **35**, with `def test_` and `blank` still 5 and 6.
+>
+> **`147` markdown files read, and `148` in a local checkout, which is worth one
+> line rather than a figure.** `146` on `main` plus this merge's one new file is
+> 147; a tree the pipeline has written `.claude-pr/CLAUDE.md` into reads 148,
+> because `.git/info/exclude` keeps that path out of the diff and no commit
+> carries it. The block above is the clean tree's run, taken in a worktree at
+> this branch's tip, and the extra file is not a document anyone cited.
+>
+> **The whole move is carrying rows, and the size of that is the new thing —
+> the shape is not, and the shape that produced it is.** Every earlier merge this
+> page has taken a figure from added a file's *own* citations, and one of them
+> (#888's) added nothing but carrying rows; this one added a transcript of a
+> search, and the fence rule then obliged the write-up to cite in prose each line
+> that transcript had printed. So the class grows 73 → 105 in one commit **and
+> not one of the 32 new rows joins the thirteen that do not carry** — the carry
+> count goes 32 → **48**, the largest step in it and the only one arrived at
+> without a line moving, on a move that is sixteen times the size of any before it.
+> That is the fence rule working rather than being worked around, and it is the
+> same rule that made this page necessary: a transcript that had become a file's
+> only citation of a line would be a quiet loss, and the suite is what says so.
+
 **Each count below is a different thing, and every one of them is printed**,
 which is the only reason a census like this can be trusted: a headcount that
 cannot be reconciled against itself is the failure it is measuring.
 
-- **73 occurrences** — every pin, counted once per place it is written. Thirty
+- **105 occurrences** — every pin, counted once per place it is written. Sixty-two
   spellings are written once, seven twice, eight three times and one five times
   (`ec/tools/test_xdata_cluster_names.py:473`, five times over), which is the
-  whole of the gap: `7 + 16 + 4 = 27`, and `73 - 27 = 46`. *(`:448` is what this
+  whole of the gap: `7 + 16 + 4 = 27`, and `105 - 27 = 78`. *(`:448` is what this
   bullet named on #888's tree and is stale here: #890 repointed that spelling
   by +25 in the four files that carry it, and this file's own mentions of it
   are not counted by the census — the tool excludes this file — so nothing
   repointed them. The distribution beside it is unchanged and reproduces. The
-  50/23/37/32 figures #887 published and the 69 this bullet read at the #850
-  merge are the record of the trees they were measured on and stay visible here
-  per §4a-4d; the gap was 13, then 25, then 26, and is 27 above. **The last step
-  is the only one two merges have ever taken together**: the gap is 26 on each of
-  the two trees alone and 27 on the tree carrying both, because the `:392` pair
-  #885 wrote lands *beside* the `:417` pair #890's repoint created rather than
-  replacing it.)*
-- **46 distinct spellings** — the pin exactly as written, so `test_a.py:12` and
+  50/23/37/32 figures #887 published, the 69 this bullet read at the #850
+  merge and the 73 the `#888` × `#885` blockquote above records are the trees
+  they were measured on and stay visible here per §4a-4d; the gap was 13, then
+  25, then 26, then 27, and is 27 again. **The gap is 27 for the second time
+  running and the thirty-two that made it nothing are thirty-two new singletons**,
+  because #771's write-up cites sixteen lines once in a transcript and once in
+  prose and shares no spelling with the tree that carried it — sixteen spellings
+  written twice and sixteen written once, all of them new. The step from 26 to 27
+  was the only one two merges had ever taken together, and it was taken by the
+  `:392` pair #885 wrote landing *beside* the `:417` pair #890's repoint created
+  rather than replacing it.)*
+- **78 distinct spellings** — the pin exactly as written, so `test_a.py:12` and
   `ec/tools/test_a.py:12` are two. This is the figure the issue's grep reported
   for a tree half this size and it is the one that moved least. *(`#885`'s own
-  merge note read `45` and `#887` read `37`; the tree this bullet sits in
-  carries `test_xdata_cluster_names.py:563` beside the `:392` pair `#885`
-  added, so 46 is the sum of two unrelated additions rather than a third
-  revision of the same one.)*
-- **42 distinct resolved targets** — distinct `(file, span)` pairs after
-  resolution, so the two spellings of one span are one target. **Both merges'
-  four new pins are the whole of the move, 40 → 42**, and the two got there by
-  opposite routes, which is why neither merge's note predicted the other's
-  figure. On #888's tree the corpus already wrote the same span **by path** —
+  merge note read `45`, `#887` read `37` and the tree this bullet last sat in
+  carried 46 as the sum of two unrelated additions rather than a third revision
+  of the same one; 46 → 78 is #771's write-up alone, and it moves by 32 rather
+  than 16 for a reason the correction under the transcript gives — `grep -rn`
+  prints a `./` prefix that prose does not, and this count is over the *matched*
+  spelling. The distinction this bullet exists to draw is the reason the step
+  looks twice the size of the one above it, and it is the same distinction the
+  `#888` section drew about a spelling and a target being two measurements.)*
+- **58 distinct resolved targets** — distinct `(file, span)` pairs after
+  resolution, so the two spellings of one span are one target. **All three
+  merges' additions are the whole of the move, 40 → 42 → 58**, and the first two
+  got there by opposite routes, which is why neither merge's note predicted the
+  other's figure. On #888's tree the corpus already wrote the same span **by
+  path** —
   `ec/tools/test_xdata_cluster_names.py:563` in
   [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md):334
   — so the two new by-name pins arrived against a target that was already there
@@ -214,10 +270,15 @@ cannot be reconciled against itself is the failure it is measuring.
   the other way** — `ec/tools/test_xdata_cluster_names.py:392`, which neither
   tree carried, so they added a target rather than splitting one. It is the same
   line moving as finding 7 below, counted from the other end, and a different
-  line moving as finding 8.
-- **26 files** carry at least one;
-  [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md) carries
-  ten, [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md) thirteen,
+  line moving as finding 8. **#771's sixteen are the 42 → 58 step, and they are
+  the first of the three moves to add targets without any line moving at all**:
+  fifteen of the sixteen are in `ec/tools/test_grade_0751_isolation.py` and one
+  is in `windows/tools/test_ec_watch.py`, and none of them is a span the tree
+  already carried.
+- **27 files** carry at least one;
+  [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md) carries
+  thirty-two, [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md) thirteen,
+  [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md) ten,
   [`xdata-census-rederivation-checklist.md`](xdata-census-rederivation-checklist.md)
   nine and [`../findings.md`](../findings.md) six.
 
@@ -225,9 +286,10 @@ cannot be reconciled against itself is the failure it is measuring.
 extractor's fault rather than the tree's.** The issue's own grep reported 37
 distinct pins across 22 files; the plan built on it counted 49 occurrences over
 the same 22, and **called 12 of those 49 an ambiguous `tools/` prefix**. This
-tree carries **73 occurrences across 26 files** — twenty-three pins and three
+tree carries **105 occurrences across 27 files** — fifty-five pins and four
 files written since, two of them by [#888](xdata-moved-ranks-key-collision.md)'s
-own write-up and two by `#885`'s (the corrections above) — and
+own write-up, two by `#885`'s and thirty-two by `#771`'s (the corrections above) —
+and
 **none** of them ambiguous, for two reasons that are findings in their own right
 and are the reason the tool is written the way it is:
 
@@ -250,24 +312,25 @@ and are the reason the tool is written the way it is:
    tree does not have it, beside the citing file — and says which of the two
    answered for every pin.
 
-**So the measured headcount of this class is 73 occurrences, 46 spellings, 42
+**So the measured headcount of this class is 105 occurrences, 78 spellings, 58
 resolved targets — and zero of the twelve the plan's scan called an ambiguous
 prefix is one.** The figures that moved from the plan's are recorded as a defect
 in the method that produced them rather than as a drift in the tree, and a census
 that reports the wrong population with great confidence is worth less than no
-census. The `50`/`23` and `69`/`24` this paragraph was written with are the
-record of the two trees it was measured on, and stay visible beside the
-`73`/`26` for the same reason they do everywhere else in this file.
+census. The `50`/`23` and `69`/`24` this paragraph was written with, and the
+`73`/`26` it was last restated at, are the record of the trees they were
+measured on, and stay visible beside the `105`/`27` for the same reason they do
+everywhere else in this file.
 
 ### Verdicts, and what each one is not
 
 | verdict | what it means | here |
 |---|---|---|
-| `resolves` | the file was found and the span is one it has | **57** |
+| `resolves` | the file was found and the span is one it has | **73** |
 | `out-of-range` | the file is there and the span ends past its end | 0 |
 | `unresolved-path` | no such file under either reading | 0 |
 | `ambiguous-path` | a bare module name two files in the tree could answer to | 0 |
-| `declined` | a shape the reader refuses: the pin is inside a fenced block, so it is a **transcript of a run** and not a citation | **16** |
+| `declined` | a shape the reader refuses: the pin is inside a fenced block, so it is a **transcript of a run** and not a citation | **32** |
 
 **Every negative here is "not read by this method", never "absent"** — the caveat
 `ec/annotations/registers.yaml` carries for a static scan and
@@ -282,13 +345,23 @@ side by a case in the suite, because a `test_export_*.py` rename would put two
 files of one name in the index and make every bare-name pin to that module
 undecidable).
 
-The sixteen `declined` are the tool's only refusal, and declining them is not a
+The thirty-two `declined` are the tool's only refusal, and declining them is not a
 guess: five are `ok …` lines of a literal-scan transcript in
 [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md), one is a
 `grep` transcript in [`opcode-len-bounds-census.md`](opcode-len-bounds-census.md),
-and ten are `AssertionError:` lines of a perturbation transcript in
+ten are `AssertionError:` lines of a perturbation transcript in
 [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md) — five distinct targets,
-each written twice.
+each written twice — **and sixteen are this page's own two `grep` transcripts in
+[`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md)**, four in
+the first and twelve in the second, all of them `test_*.py` lines the two
+transcripts print as a `grep -rn` walk. **Sixteen distinct targets, each written
+twice, and the last sixteen are the only declined pins in the class whose live-prose
+twin this file's own author had to add deliberately** — the first sixteen were
+duplicates of a citation the file already carried, and #771's write-up was new to
+the census and born with a transcript as the only citation of sixteen lines, so
+`test_every_declined_pin_is_also_cited_in_live_prose` caught all sixteen and the
+twins were added in prose rather than by weakening the fence rule. That is the
+one place in this census where the fix was made to the *citing* side.
 **Every declined target is also cited in live prose in the same file** — that is
 a case, not an observation, because a transcript that had become a file's only
 citation of a line would make the count a quiet loss rather than a declined
@@ -299,26 +372,29 @@ duplicate.
 | shape | here | what a pin naming it is pointing at |
 |---|---|---|
 | `def test_` | **5** | the header of a test case |
-| assertion | **11** | the `assertEqual`/`assertGreater` that decides the claim |
-| comment | 9 | prose the case is annotated with |
+| assertion | **17** | the `assertEqual`/`assertGreater` that decides the claim |
+| comment | 10 | prose the case is annotated with |
 | `blank` | 6 | nothing at all — the blank line above what the span is about |
-| other | 26 | a `def` that is not a test, an assignment, a `setUpClass` body |
+| other | 35 | a `def` that is not a test, an assignment, a `setUpClass` body |
 
-*(The split has now been measured five times and the only rows that have ever
+*(The split has now been measured six times and the only rows that have ever
 moved are the assertions and `other`: **5 / 15 / 5 / 8 / 11 over 44** as the
 issue was filed, **5 / 11 / 9 / 6 / 22 over 53** after #850, **5 / 13 / 9 / 6 / 22
 over 55** on the #888 × #891 tree, **5 / 11 / 9 / 6 / 24 over 55** on the
-#888 × #890 one, and the **5 / 11 / 9 / 6 / 26 over 57** above. The first four
-are the record of the trees they were taken on and stay visible per §4a-4d. The
-two that moved back are the `> 300` floor's own `assertGreater` and the `other`
-row it became when #890 put 25 lines above it; the last step is arithmetic rather
-than a fourth cause, being the two `:563` rows and the two `:392` rows the two
-merges added between them, all four of which are `other` here. That a
-figure this close to stable still moves at every one of the merges since
-the issue was filed is the reason the distribution is printed on every run rather
-than quoted once.)*
+#888 × #890 one, **5 / 11 / 9 / 6 / 26 over 57** on the #888 × #885 one, and the
+**5 / 17 / 10 / 6 / 35 over 73** above. The first five are the record of the
+trees they were taken on and stay visible per §4a-4d. The two that moved back
+are the `> 300` floor's own `assertGreater` and the `other` row it became when
+#890 put 25 lines above it; the step before this one is arithmetic rather than a
+fourth cause, being the two `:563` rows and the two `:392` rows the two merges
+added between them, all four of which are `other` here. **This one is neither:
+six assertions, one comment and nine `other` from one new file, and the fifteen
+that are not assertions are the call sites and the assignments a
+`grep -rn` transcript prints.** That a figure this close to stable still moves at
+every one of the merges since the issue was filed is the reason the distribution
+is printed on every run rather than quoted once.)*
 
-**Six of the 57 resolving pins land on a blank line**, and that is the house
+**Six of the 73 resolving pins land on a blank line**, and that is the house
 spelling rather than a mistake: a span is written from the line *above* the thing
 it is about. `ec/tools/test_disasm8051.py:3-6` is a module docstring that opens
 on its own blank line; `ec/tools/test_grade_0751_isolation.py:16-20` is an import
@@ -340,10 +416,10 @@ the half this table exists to record.
 | `docs/agent-pipeline.md:345` | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
 | [`../findings.md`](../findings.md):4206 | `test_manual_fan_ctrl_probe.py:38-40` | by-name | comment | **records another line** |
 | [`../findings.md`](../findings.md):4208 | `test_ec_watch.py:86-89` | by-name | other | **records another line** |
-| [`../findings.md`](../findings.md):7190 † | `test_xdata_cluster_names.py:286` | by-name | assertion | **does not carry** |
-| [`../findings.md`](../findings.md):7369 | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
-| [`../findings.md`](../findings.md):7430 | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries |
-| [`../findings.md`](../findings.md):9028 | `ec/tools/test_xdata_cluster_names.py:392` | by-path | other | **does not carry** |
+| [`../findings.md`](../findings.md):7191 † | `test_xdata_cluster_names.py:286` | by-name | assertion | **does not carry** |
+| [`../findings.md`](../findings.md):7370 | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
+| [`../findings.md`](../findings.md):7431 | `ec/tools/test_xdata_register_map.py:9-12` | by-path | other | carries |
+| [`../findings.md`](../findings.md):9046 | `ec/tools/test_xdata_cluster_names.py:392` | by-path | other | **does not carry** |
 | [`0751-append-unchecked-marks.md`](0751-append-unchecked-marks.md):221 | `test_manual_fan_ctrl_probe.py:905` | by-name | assertion | carries |
 | [`0751-capture-row-shape.md`](0751-capture-row-shape.md):41 | `test_grade_0751_isolation.py:3608` | by-name | other | **records another line** |
 | [`0751-grader-block-scoping.md`](0751-grader-block-scoping.md):99 | `ec/tools/test_grade_0751_isolation.py:2232-2233` | by-path | assertion | **does not carry** |
@@ -361,6 +437,38 @@ the half this table exists to record.
 | [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):619 | `windows/tools/test_ec_watch.py:145` | — | — | **declined** (fenced) |
 | [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):620 | `windows/tools/test_system_id_probe.py:311` | — | — | **declined** (fenced) |
 | [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md):641 | `windows/tools/test_manual_fan_ctrl_probe.py:515` | — | — | **declined** (fenced) |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):59 | `./ec/tools/test_grade_0751_isolation.py:3736` | — | — | **declined** (fenced) |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):60 | `./ec/tools/test_grade_0751_isolation.py:3795` | — | — | **declined** (fenced) |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):61 | `./ec/tools/test_grade_0751_isolation.py:3916` | — | — | **declined** (fenced) |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):62 | `./ec/tools/test_grade_0751_isolation.py:3926` | — | — | **declined** (fenced) |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):79 | `ec/tools/test_grade_0751_isolation.py:3736` | by-path | other | carries |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):80 | `ec/tools/test_grade_0751_isolation.py:3795` | by-path | other | carries |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):81 | `ec/tools/test_grade_0751_isolation.py:3926` | by-path | other | carries |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):84 | `ec/tools/test_grade_0751_isolation.py:3916` | by-path | comment | carries |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):98 | `./windows/tools/test_ec_watch.py:1134` | — | — | **declined** (fenced) |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):100 | `./ec/tools/test_grade_0751_isolation.py:3500` | — | — | **declined** (fenced) |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):101 | `./ec/tools/test_grade_0751_isolation.py:3520` | — | — | **declined** (fenced) |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):102 | `./ec/tools/test_grade_0751_isolation.py:3551` | — | — | **declined** (fenced) |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):103 | `./ec/tools/test_grade_0751_isolation.py:3580` | — | — | **declined** (fenced) |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):104 | `./ec/tools/test_grade_0751_isolation.py:3735` | — | — | **declined** (fenced) |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):105 | `./ec/tools/test_grade_0751_isolation.py:3796` | — | — | **declined** (fenced) |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):106 | `./ec/tools/test_grade_0751_isolation.py:3858` | — | — | **declined** (fenced) |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):107 | `./ec/tools/test_grade_0751_isolation.py:4049` | — | — | **declined** (fenced) |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):108 | `./ec/tools/test_grade_0751_isolation.py:4057` | — | — | **declined** (fenced) |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):109 | `./ec/tools/test_grade_0751_isolation.py:4166` | — | — | **declined** (fenced) |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):110 | `./ec/tools/test_grade_0751_isolation.py:4356` | — | — | **declined** (fenced) |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):118 | `ec/tools/test_grade_0751_isolation.py:3500` | by-path | assertion | carries |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):119 | `ec/tools/test_grade_0751_isolation.py:3520` | by-path | assertion | carries |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):120 | `ec/tools/test_grade_0751_isolation.py:3551` | by-path | other | carries |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):121 | `ec/tools/test_grade_0751_isolation.py:3580` | by-path | assertion | carries |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):122 | `ec/tools/test_grade_0751_isolation.py:3735` | by-path | other | carries |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):123 | `ec/tools/test_grade_0751_isolation.py:3796` | by-path | other | carries |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):124 | `ec/tools/test_grade_0751_isolation.py:3858` | by-path | other | carries |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):125 | `ec/tools/test_grade_0751_isolation.py:4049` | by-path | assertion | carries |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):126 | `ec/tools/test_grade_0751_isolation.py:4057` | by-path | assertion | carries |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):127 | `ec/tools/test_grade_0751_isolation.py:4166` | by-path | other | carries |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):128 | `ec/tools/test_grade_0751_isolation.py:4356` | by-path | assertion | carries |
+| [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md):139 | `windows/tools/test_ec_watch.py:1134` | by-path | other | carries |
 | [`bank1-e582-entry-framing.md`](bank1-e582-entry-framing.md):68 | `ec/tools/test_citation_gap_scan.py:109` | by-path | assertion | carries |
 | [`disasm8051-self-test-gate.md`](disasm8051-self-test-gate.md):27 | `ec/tools/test_disasm8051.py:3-6` | by-path | blank | carries |
 | [`doc-figure-pin-audit.md`](doc-figure-pin-audit.md):72 | `ec/tools/test_xdata_cluster_names.py:734` | — | — | **declined** (fenced) |
@@ -411,25 +519,30 @@ the half this table exists to record.
 | [`../../ec/annotations/xdata-register-map.md`](../../ec/annotations/xdata-register-map.md):2645 | `../tools/test_xdata_cluster_names.py:68-90` | beside | blank | carries |
 | [`../../tools/README.md`](../../tools/README.md):159 | `test_xdata_cluster_names.py:303` | by-name | other | **records another line** |
 
-**32 carry, 2 carry on the adjacent line, 13 do not carry, 10 record another line
-on purpose, 16 are declined, and none is unresolvable.** *(Those are the counts
+**48 carry, 2 carry on the adjacent line, 13 do not carry, 10 record another line
+on purpose, 32 are declined, and none is unresolvable.** *(Those are the counts
 on the merged tree; the 27/3/1/6/7/6 this page was written with, the
-32/3/0/9/10/16 #850's merge measured, the 34/2/9/10/16 #888's and the
-32/2/11/10/16 #888 × #890's are the record of the trees they were taken on and
-are kept in the sentence rather than deleted, per §4a-4d. Four moves, and the
-fourth is the one worth reading twice: #850's took the class 50 → 69 pins, #888's
-took it 69 → 71 by adding two rows that **carried** on its own tree, #890's
-landing beside them took those same two rows to **`does not carry`** — so the
-carry count is **32**, the same number `main` had before either of them, and the
-headcount is two higher than it was — and #885's landing beside those added two
-more rows that do not carry either, for the same reason and by a different route.
-**The carry count is therefore 32 for the second time running and the headcount
-is 73, four higher than `main` had**: four rows added, none of which carries.
-The thirteen that do not carry are the nine #850 left, #888's two and #885's
-two; see the correction under the transcript above and the note at the foot of
-this file.)*
+32/3/0/9/10/16 #850's merge measured, the 34/2/9/10/16 #888's, the
+32/2/11/10/16 #888 × #890's and the 32/2/13/10/16 #888 × #885's are the record of
+the trees they were taken on and are kept in the sentence rather than deleted,
+per §4a-4d. Five moves, and the fourth is the one worth reading twice: #850's
+took the class 50 → 69 pins, #888's took it 69 → 71 by adding two rows that
+**carried** on its own tree, #890's landing beside them took those same two rows
+to **`does not carry`** — so the carry count is **32**, the same number `main` had
+before either of them, and the headcount is two higher than it was — and #885's
+landing beside those added two more rows that do not carry either, for the same
+reason and by a different route. **The fifth is the one that breaks the pattern
+of the four, and it is the only move this page has recorded that leaves the
+defect count exactly where it was while the class grows by nearly half.** #771
+added 32 rows and **all thirty-two carry** — sixteen of them are the live-prose
+twins the fence rule obliged its write-up to add, and the other sixteen are the
+transcripts they twin — so the carry count is **48** for the first time since
+`main`, the headcount is 105 rather than 73, and **the thirteen that do not carry
+are still the same thirteen**: the nine #850 left, #888's two and #885's two, with
+#771's contribution to that column **zero**. See the correction under the
+transcript above and the note at the foot of this file.)*
 **"carries, adjacent"** is
-a pin one line off the thing it names, and it is two of seventy-three because
+a pin one line off the thing it names, and it is two of one hundred and five because
 this corpus writes *"is at `:1862`"* against a `def` on the next line. No rule can
 decide whether that is a pin or a typo, which is the first reason the judgement
 half is a table and not a verdict.
@@ -474,13 +587,16 @@ markdown file at all — its `142` → `143` was a correction of a stale
 transcript, since the tool reports `143` on the tree this branch forked from as
 well as on `main` — and the new file carries no `test_*.py:NNN` pin, which is
 why 69/24/44/40 and 53/16 are untouched while the denominator moved. The three
-prose places that name `tools/README.md:157` are repointed with the row.
+prose places that name `tools/README.md:157` are repointed with the row. **The
+`:7369` and `:7430` this note registers were not moved again by either merge
+after it; `#771`'s is the one that did, by exactly one line each, to the
+`:7370` and `:7431` the table above carries.**
 
 **The "carries in part" row is gone from this tree, and the argument it carried
 is not.** It was the sharpest of the three qualified values:
 [`xdata-4-4-identity-rederivation.md`](xdata-4-4-identity-rederivation.md):433
 cited `:286` for *two* figures in the suite's docstring and named the second,
-while [`../findings.md`](../findings.md):7190 says `:286` holds a third-generation
+while [`../findings.md`](../findings.md):7191 says `:286` holds a third-generation
 figure and `:286` was the second — **one line, two verdicts, and nothing
 mechanical in the tree able to tell them apart**, which was the argument for the
 split in one sentence. #850 repointed `:433` to `:307`, which carries, so
@@ -566,7 +682,7 @@ when finding 8 landed beside it.)*
    exists. *(`:54` was a blank line on the tree this was written on; #850's
    239 lines into the suite put a statement there. The pin is the same defect
    either way and is now wrong in a second way as well.)*
-5. **[`../findings.md`](../findings.md):7190** — `test_xdata_cluster_names.py:286`,
+5. **[`../findings.md`](../findings.md):7191** — `test_xdata_cluster_names.py:286`,
    cited for *"`…:286` carries a third-generation figure in its docstring"*.
    `:286` is `self.assertEqual(names, {})`; the third generation, *"427 clusters
    become 439, 48 … 379"*, is at `:307-309` and the second, *"430 → 439 with 64
@@ -723,14 +839,17 @@ this issue does not make, to say so rather than shipping a checker that reddens
 on the next merge. **It needs that judgement, and the measurement says so rather
 than my having to assert it.** Four things, in the order they decide it:
 
-1. **The pins are not one kind of thing.** 5 name a `def test_` line, 11 an
-   assertion, 9 a comment, **6 a blank line** and 26 something else. The
+1. **The pins are not one kind of thing.** 5 name a `def test_` line, 17 an
+   assertion, 10 a comment, **6 a blank line** and 35 something else. The
    citation means "the line where this claim is decided", and that line is the
-   test header in 5 cases out of 57. A `def`-anchored rule is wrong; an
+   test header in 5 cases out of 73. A `def`-anchored rule is wrong; an
    assertion-anchored rule is wrong; a blank-line-anchored rule is worse than
    both, because the blank is an artefact of the span convention and 6 of them
    move whenever a line is inserted one line above. **No single anchor covers
-   them and the range form needs a third rule on top.**
+   them and the range form needs a third rule on top.** *(`11`/`9`/`26` and `57`
+   are what this item was written with; #771's write-up is the sixth assertion,
+   the tenth comment and the ninth `other` the move adds, and the four figures are
+   re-measured rather than derived.)*
 2. **Supersession is unmarked prose in this class, and that is the blocker.**
    `check_citation_lines.py` gets away with a two-shape skip because a
    supersession there *has* a shape. Here it does not: eight of the ten
@@ -881,12 +1000,14 @@ committed-tree figures was **`50`** — so the moment the suite landed, the cens
 own count made the checklist's §2b console-block cluster count `50` (an unrelated
 figure that happens to be the same integer) measure `held-by-check-literal`, and
 §2b's own `unheld` marking disagreed with the measurement. *(That figure is
-**`69`** after #850's merge, **`71`** after #888's and **`73`** on the tree this
-now lands in, for the reason the note at the foot of this file gives; the
-exclusion is what keeps it from mattering, which is the point of an exclusion
-rather than of the number — and it is **preventive rather than current** on this
-tree, since `73` is not a figure §2b's tables hold, which is checked rather than
-assumed.)*
+**`69`** after #850's merge, **`71`** after #888's, **`73`** on the tree the
+`#888` × `#885` merge produced and **`105`** on the tree this now lands in, for
+the reason the note at the foot of this file gives; the exclusion is what keeps it
+from mattering, which is the point of an exclusion rather than of the number — and
+it is **preventive rather than current** on this tree, since `105` is not a figure
+§2b's tables hold, which is checked rather than assumed: the tool reads
+**18 figure(s), 18 measured held, 0 measured unheld** over
+**190 literal(s) inside a check**, the same run `main` gives.)*
 §2b's own `unheld` marking disagreed with the measurement. *(That figure is:
 **`71`** on the tree #885 merged into, `69` at the #850 merge and `50` when the
 suite landed — for the reason the note at the foot of this file gives. `71`
@@ -1040,7 +1161,7 @@ these merges makes. `144` markdown files read becomes `145`.)*
    `:2687`; [`0751-grader-unplaced-window-scope.md`](0751-grader-unplaced-window-scope.md):226
    → `:17`; the two `:54` pins → wherever `GUARD` now is, which is nowhere, so
    the sentence rather than the line is what needs rewriting;
-   [`../findings.md`](../findings.md):7190's "third-generation" → the sentence
+   [`../findings.md`](../findings.md):7191's "third-generation" → the sentence
    has to distinguish `:307-309` from `:286` or drop one of the two; **and the
    four `> 300` pins of finding 6 → `:588`, with
    [`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md):427 → `:584-585`;
@@ -1428,6 +1549,77 @@ over: it reads **18 figure(s), 18 measured held, 0 measured unheld** over
 **190 literal(s) inside a check**, the same run `main` gives. The suite's own pin
 in `ec/tools/test_census_test_line_pins.py` carries a comment saying which
 addition moved each figure, and the shape split is the fourth one it has had to
+follow.
+
+**The verdict is unchanged and so is the re-open condition.** Thirteen pins do
+not carry and ten record another line, the defect is still entirely in the
+line-*content* half, and the supersession records are still unmarked prose in
+eight of ten shapes. Nothing here moves the argument, and nothing here is a
+reason to soften it.
+
+## The `#885` × `#771` merge, 2026-09-26
+
+**One new file, 32 new records, and the class is larger than it has ever been
+while the defect count is exactly where it was.** The run on the merged tree is
+**105 pins, 27 files, 78 spellings, 58 targets, 73 resolves, 32 declined,
+5/17/10/6/35 over 147 markdown files read**, against 73/26/46/42/57/16/5/11/9/6/26
+over 146 on either side alone. The correction under the transcript above carries
+the arithmetic; what is worth reading twice here is that **the whole of the move
+is carrying rows** — 32 added, 32 carrying, the carry count 32 → **48**. #888's
+merge also added nothing but carrying rows, so the shape is not new; what is new
+is the size, one commit moving the class by nearly half where the largest before
+it moved it by two.
+
+**The shape of the addition is new to the class, and the fence rule is what
+produced it.** #771's write-up quotes two `grep -rn` walks, and a `grep` walk
+prints `test_*.py:NNN` lines as its output, so all sixteen of the lines those
+transcripts print would have been the file's **only** citation of them. The
+census declines a pin whose only occurrence is inside a fenced block, and the
+suite's `test_every_declined_pin_is_also_cited_in_live_prose` requires every
+declined pin to have a live-prose twin, so the write-up cites all sixteen in
+prose as well. **The fix was made to the citing side rather than to the rule**,
+which is the outcome this file's "no checker" verdict would have got wrong: a
+transcript-only citation is a quiet loss, and the tool that says so is a suite
+case rather than a prose habit.
+
+**Nothing in findings 1–8 changed verdict, and that is the first merge on record
+where the defective rows are untouched by a move of this size.** All 32 new rows
+carry: fifteen are in `ec/tools/test_grade_0751_isolation.py` and one in
+`windows/tools/test_ec_watch.py`, each resolving to the exact line the write-up
+cites it for — the three `refused_capture_rows` call sites, the suite comment
+beside the fourth, the eleven `existing_mark_labels` call sites and the
+`test_ec_watch.py` comparison against the staged copy. **The thirteen that do not
+carry are still the same thirteen**, the nine #850 left, #888's two and #885's
+two, and no re-reading was needed.
+
+**What the merge did to this table's own citing column, which is a repointing
+and the one the census cannot see.** `--verbose` re-run on the merged tree gives
+**`:7191`**, **`:7370`** and **`:7431`** for the three `../findings.md` rows
+above, against the `:7190`, `:7369` and `:7430` `main` carried, and
+**`:9046`** for the fourth, against `:9028` — `#771` added a §70 to
+[`../findings.md`](../findings.md), one line above the first three and eighteen
+above the last. All four are re-registered in the table and in the three prose
+places that name the first; the `32/2/11/10/16` the `#888` × `#885` note above
+records is the tree that produced `:9028` and stays visible per §4a-4d. **The
+`0751-mark-provenance-shapes.md` pair did not move**, for the reason the `#885`
+section gives: #771's write-up is a new file and put no line into that one.
+
+**What is deliberately not re-measured here, and why.** The wider `.py:NNN` class
+— 373 occurrences, 229 targets, 34 files — is not re-run, for the reason the
+#850/#887 note gives: it was measured with a scratch definition that is not
+committed. **#771's 32 new pins cannot move it in any case**, because every one of
+them names a `test_*.py`, which is the class that wider census excludes. That is
+a fact about what #771 added, not a re-run, and the difference is the reason it is
+written here as its own paragraph.
+
+**The `SELF_MODULES` exclusion did its job a fifth time, over a figure that has
+now moved four times.** The census's committed-tree figure is `105` here, `73`
+on either side alone, `69` at the #850 merge and `50` when the suite landed, and
+`check_doc_figure_pins.py` was re-run on the merged tree rather than carried
+over: it reads **18 figure(s), 18 measured held, 0 measured unheld** over
+**190 literal(s) inside a check**, the same run `main` gives. The suite's own pin
+in `ec/tools/test_census_test_line_pins.py` carries a comment saying which
+addition moved each figure, and the shape split is the fifth one it has had to
 follow.
 
 **The verdict is unchanged and so is the re-open condition.** Thirteen pins do
