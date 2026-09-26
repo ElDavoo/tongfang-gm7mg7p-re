@@ -370,7 +370,7 @@ which did not exist on the branch's tree, and **all three went stale under
 repointed to `:208` and `:240` with the flipped-cluster header they name moved
 from `:214` to `:234` and two `rank A` / `rank B` columns wider, and its one
 citation into the tool, `xdata_moved_ranks.py:243`, which is `def deciles()` on
-`main`, `:277` after #891 and `:332` on this branch beside it. Seven are #887's own, in
+`main`, `:277` after #891 and `:332` on this branch beside it — it **records another line**. Seven are #887's own, in
 [`docs/findings/test-line-pin-census.md`](../docs/findings/test-line-pin-census.md):
 three rows of its per-pin table, three bullets of its finding-6 list and its
 follow-up 1, which the `):NNN` end of the pattern catches precisely because the
@@ -465,7 +465,18 @@ before this merge (`deciles()` is at `:485` and `write_movement()` at `:255`
 here, and neither was at `:243`/`:181` on this merge's base `31f683e5` either),
 and this file's own rule is that deciding what a drifted pin was meant to name
 is a next pass's call and not a merge's. Those two are the ones this change can
-see; it is not a claim that the family has no others.
+see; it is not a claim that the family has no others. **Those two are decided
+now**, and the sentence above is corrected beside itself rather than edited
+down. `xdata_moved_ranks.py:243` is at `:487`, so the `:485` this note prints for
+`deciles()` and the `:255` it prints for `write_movement()` are `:487` and
+`:257` on the merged tree, and the `:485` this note says the
+`xdata-decile-small-set-contract.md` pin was repointed *to* is likewise `:487`.
+Each superseded value stays written, each true of the tree it was measured on.
+**The two decisions differ because the two sentences differ**: `:372` is a
+record of a past tree and **records another line**, while the parenthetical
+above asserts the present tree and is simply wrong. The walk behind both — and
+it corrects this note's own reading of them — is in
+[`xdata-moved-ranks-pin-decisions.md`](../docs/findings/xdata-moved-ranks-pin-decisions.md).
 **`xdata-decile-small-set-contract.md`:3` is unmoved for the sixth time
 running**, which is the point of printing it each time; the
 `xdata-moved-ranks-key-collision.md`:3-11`, `xdata-moved-ranks-fall.md`:3-11` and

@@ -1731,6 +1731,24 @@ rendered by anything to record it.)*
    this merge; what is left of this follow-up is the standing rule the two
    branches agreed on and neither applied, which is that a branch adding a suite
    re-derives the totals in the same PR.
+6. **A pin into a non-test `.py` is outside this census entirely**, and the two
+   that were open are now decided rather than left to be re-raised. This census's
+   population is `test_*.py` — the regex is
+   `(?P<path>[\w./-]*test_[a-z0-9_]+\.py)` at
+   [`../../ec/tools/census_test_line_pins.py`](../../ec/tools/census_test_line_pins.py):113
+   — so a markdown pin into `ec/tools/xdata_moved_ranks.py` is not one of the
+   `106`, and the per-pin table cannot take a row for it without turning
+   [`check_pin_table_rows.py`](../../ec/tools/check_pin_table_rows.py)'s
+   106-against-106 reconciliation red. `tools/README.md`'s
+   `xdata_moved_ranks.py:243` and
+   [`xdata-write-direction-correction.md`](xdata-write-direction-correction.md)'s
+   `:181` sat in exactly that position, which is the mechanical reason three
+   merges walked past them: **they are not in the class this file measures.**
+   Both are decided in
+   [`xdata-moved-ranks-pin-decisions.md`](xdata-moved-ranks-pin-decisions.md),
+   which reads the eight markdown lines that spell that one module rather than
+   asserting a population no sweep here can see. A general `.py:NNN` resolver is
+   follow-up 2 above and is not this file's to write.
 
 ## The `#850`/`#887` merge, 2026-09-26
 
