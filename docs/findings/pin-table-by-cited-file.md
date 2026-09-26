@@ -133,8 +133,17 @@ back down by one, and the two rows it edited are two of the 33 above.
 accusation.** It is a count of sentences that would need re-measuring if a line
 moved, which is a different fact from whether any of them is already stale. The
 clearest case is the first row: `ec/tools/test_xdata_cluster_names.py` is the
-file the census write-up records **finding 6's four pins across two files** in,
-and the six `> 300` pins of findings 6 and 8 are #920's and stay `does not carry`
+file the census write-up records **finding 6's four pins across two citing
+files** in,
+[`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md) and
+[`xdata-moved-ranks-fall.md`](xdata-moved-ranks-fall.md) — the four bullets at
+[`test-line-pin-census.md:805-818`](test-line-pin-census.md), and two is what
+the census itself counts, because that write-up's own per-pin table copies those
+four spellings rather than citing them independently and so is not a third. Its
+roll-up further down puts **findings 6 and 8's six pins in four files**
+([`test-line-pin-census.md:891`](test-line-pin-census.md)), the other two being
+finding 8's, and the six `> 300` pins of findings 6 and 8 are #920's and stay
+`does not carry`
 — while the pair #930 repointed onto that floor's own line carries again. The
 same file is both the most-cited in the corpus and one the census holds a record
 about, and neither of those is a consequence of the other. The tool prints the
@@ -174,7 +183,8 @@ held.
 **This suite is one of the 25, and that is not an oversight.** Nothing in the
 committed markdown cites a line of it, because it was written beside the tool
 rather than by a later prose pass, so it is in the tail exactly as
-`ec/tools/test_census_test_line_pins.py` and the six `test_check_*` suites are. A
+`ec/tools/test_census_test_line_pins.py` and the five other `test_check_*`
+suites are. A
 case holds the self-reference with the reason in the comment, so the two can never
 be mistaken for a miss; when a later write-up cites one of these suites' lines,
 that case goes red and the suite moves between the two tables, which is the axis
@@ -229,6 +239,7 @@ reconcile.
 | named by a pin | 11 | **11** | this suite is in the tail, not this table |
 | indexed and unpinned | 24 | **25** | the same suite |
 | suites in the runner | 35 | **36** | `bash tools/run-tests.sh` finds it |
+| tests in the runner | 1076 | **1103** | this suite's 27 cases, and nothing else moved |
 
 **The three moved figures move by construction and the four did not move at all,
 which is the same distinction
@@ -238,6 +249,21 @@ in the *population* the breakdown is a breakdown of, so this suite is one of the
 25 rather than one of the eleven. The **148**, **35** and **24** are the record
 of the tree the issue was measured on and are left here beside the corrections
 rather than edited out of silence, per [`../findings.md`](../findings.md) §4a-4d.
+
+**The two runner rows above moved, and the runner they came from is red — it was
+red before this file landed.** `bash tools/run-tests.sh` reads
+`36 suite(s) run, 1103 tests; one or more FAILED` on this tree, and the one
+failure is `ec/tools/test_check_cluster_citations.py`'s
+`test_committed_prose_matches_committed_census`, on
+[`xdata-cluster-names-guard-off-recipe.md:220`](xdata-cluster-names-guard-off-recipe.md)
+— `0x0464` and `0x0465` against `main-ec-145`, which is #822's file and the red
+set [`runner-red-suite-set.md`](runner-red-suite-set.md) has carried since #816.
+**It is red on a clean `origin/main` and the run is byte-identical there, so this
+change neither causes nor fixes it; it is named here rather than fixed here,**
+which is the convention [`../findings.md`](../findings.md) §66's merge note
+follows at `8801-8810`. The second row reconciles by arithmetic rather than by
+re-reading the runner: `1035 + 41` was #887's `1076`, and `1076 + 27` is this
+suite's own 27 cases.
 
 **The 148 and the 35 are also printed by `census_test_line_pins.py` itself**, and
 its output line for each moves with this merge — the run now reads `149 markdown
