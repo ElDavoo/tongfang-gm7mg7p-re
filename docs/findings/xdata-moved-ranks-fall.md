@@ -57,14 +57,14 @@ f0be5173d2c9f6807cf5aaaaabb5de78902f8516 431
 e6c88864505068a5bcd43d1042bd22b3911503ee 428        # the last 427-row census
 
 $ git show e169a0e4:ec/tools/xdata_register_map.py | grep -c 'no-eq-guard'
-20
+11
 $ git worktree add --detach /tmp/xdata-old e169a0e4a736956f35af5ffff65e997154c76bdd
 HEAD is now at e169a0e4 rank the 455 not-yet-owned unannotated common-area functions
 by a stated criterion, and land a 37-row first tranche of the runtime-helper tail (#620)
 $ cd /tmp/xdata-old && python3 ec/tools/xdata_register_map.py --check
   names: seeded 10, exact 0, carried by overlap 0, tied, not carried 0, with no name 420
-ec/annotations/xdata-registers.csv: 1171 rows match a fresh generation from the committed tree at threshold 0.5
-ec/annotations/xdata-clusters.csv: 430 rows match a fresh generation from the committed tree at threshold 0.5
+/tmp/xdata-old/ec/annotations/xdata-registers.csv: 1171 rows match a fresh generation from the committed tree at threshold 0.5
+/tmp/xdata-old/ec/annotations/xdata-clusters.csv: 430 rows match a fresh generation from the committed tree at threshold 0.5
 $ cd /tmp/xdata-old && python3 ec/tools/xdata_register_map.py --no-eq-guard \
     --out-clusters /tmp/old-off-clusters.csv --out-registers /tmp/old-off-registers.csv
   names: seeded 8, exact 0, carried by overlap 2, tied, not carried 0, with no name 429
@@ -89,7 +89,7 @@ after them and `git status --porcelain` prints nothing.
 $ python3 ec/tools/xdata_register_map.py --no-eq-guard \
     --out-clusters /tmp/new-off-clusters.csv --out-registers /tmp/new-off-registers.csv
   names: seeded 8, exact 0, carried by overlap 1, tied, not carried 0, with no name 436
-    main-ec-002 carries mode-oem-init by overlap, Jaccard 0.97 from kefb63d82f8c7 -- re-key annotations/xdata-cluster-names.csv if the name moved
+    main-ec-002 carries mode-oem-init by overlap, Jaccard 0.97 from kefb63d82f8c7 -- this run's ids are not the committed census's (--no-eq-guard), and annotations/xdata-cluster-names.csv is anchored to the committed one, so a carry here is arithmetic over a different clustering, not a re-key request
 wrote /tmp/new-off-registers.csv: 1326 rows
 wrote /tmp/new-off-clusters.csv: 445 rows
   main-ec: 1218 distinct addresses, 14838 references, 394 clusters at threshold 0.5
