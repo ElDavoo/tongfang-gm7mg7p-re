@@ -10743,8 +10743,8 @@ a caller error, rejected at the CLI — and the `site_rows` listing loop itself
 is left alone on purpose, because its contract is a fixed `SITE_WINDOW`-long
 window whose end is the answer, which is the whole difference between it and a
 walk that ends when something stops it; that loop is the named follow-up.
-**Sixteen modes are byte-identical against the pre-change file from `HEAD`, and
-all five committed CSVs regenerate byte for byte**; the one output that moved
+**Sixteen modes are byte-identical against the pre-change file from `99c01938`,
+and all five committed CSVs regenerate byte for byte**; the one output that moved
 is `--helpers 0xFFFF`, 24 listing lines to 1, reported as a **correction** — the
 23 lines it dropped were erased bytes presented as instructions — and
 `--helpers 0x1FFE8` moves from exit 0 to exit 2, having never been a 16-bit

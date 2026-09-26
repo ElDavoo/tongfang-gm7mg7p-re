@@ -717,8 +717,10 @@ argument #848 made for `--sites` and it is the concrete form of the issue's
 *"say where the caller is checked"*.
 
 **Nothing else in the table moved.** The 16 modes were re-run against the
-pre-change file extracted from `HEAD` and every one is byte-identical, and all
-five committed CSVs regenerate byte for byte — which is also why rows 15 and
+pre-change file extracted from `99c01938` — the commit before this one, which
+is `HEAD^1` and `origin/main` at this merge, and unlike `HEAD` keeps naming the
+pre-change file afterwards — and every one is byte-identical, and all five
+committed CSVs regenerate byte for byte — which is also why rows 15 and
 16's "exposure / yes / exit 0" cells above are still literally true. The one
 output that changed is `--helpers 0xFFFF`, from 24 listing lines to 1; it is
 reported as a correction in the write-up rather than as a repair, because the

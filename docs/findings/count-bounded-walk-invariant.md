@@ -191,9 +191,13 @@ That is unchanged and is not counted below as a fix.
 ## Three behaviour changes, each reported as a change
 
 The plan's "nothing changed on the committed inputs" is true and is a `diff`,
-not an impression: the pre-change file was extracted from `HEAD`, both copies
-were run over the same image and the outputs compared. **Sixteen modes, all
-byte-identical** — `--helpers`, `--helpers-csv`, `--bases`, `--bases all`,
+not an impression: the pre-change file was extracted from `99c01938` — the
+commit before this one, and `HEAD^1` and `origin/main` at this merge — and both
+copies were run over the same image and the outputs compared. `HEAD` is not the
+ref and cannot be: once this merges it *is* the post-change file, so the diff
+would compare the after column with itself and an empty result would read as
+"nothing moved" when it means only that the recipe was wrong. **Sixteen modes,
+all byte-identical** — `--helpers`, `--helpers-csv`, `--bases`, `--bases all`,
 `--strides all`, `--strides-csv all`, `--callers 0x0860`, `--callers-csv`,
 `--accesses`, `--accesses-csv`, `--access-strides`, `--access-strides-csv`,
 `--sites 0xFFF0`, `--sites 0xFFFF`, `--sites 0xC2FA 0xDA9B`, `--helpers 0x34D9
@@ -277,9 +281,29 @@ that nothing on the committed inputs moved.
 ```sh
 # the legal address that crossed, before and after. The extracted copy needs
 # PYTHONPATH: outside ec/tools/ it cannot find disasm8051 and trace_xdata_refs.
-git show HEAD:ec/tools/pd_index_geometry.py > /tmp/old-pd.py
+# 99c01938 is this branch's base and the commit before this one, so it keeps
+# naming the pre-change file after the merge; `git show HEAD:` would name the
+# post-change one and both runs here would be the after column.
+git show 99c01938:ec/tools/pd_index_geometry.py > /tmp/old-pd.py
 PYTHONPATH=ec/tools python3 /tmp/old-pd.py ec/firmware/GMxMGxx_11.800 --helpers 0xFFFF
 python3 ec/tools/pd_index_geometry.py ec/firmware/GMxMGxx_11.800 --helpers 0xFFFF
+
+# the diff pair: the sixteen modes, each run by both copies over the same
+# image, stdout and stderr and the exit code. Silent on every one of them,
+# because every one of them is byte-identical. `--helpers 0xFFFF` is not in
+# this list and never could be -- it is the one output that moved, and it is
+# the pair above.
+for m in '--helpers' '--helpers-csv' '--bases' '--bases all' \
+         '--strides all' '--strides-csv all' '--callers 0x0860' '--callers-csv' \
+         '--accesses' '--accesses-csv' '--access-strides' '--access-strides-csv' \
+         '--sites 0xFFF0' '--sites 0xFFFF' '--sites 0xC2FA 0xDA9B' \
+         '--helpers 0x34D9 0x578E'; do
+  PYTHONPATH=ec/tools python3 /tmp/old-pd.py ec/firmware/GMxMGxx_11.800 $m \
+    >/tmp/pd-old.out 2>&1; echo "exit=$?" >>/tmp/pd-old.out
+  python3 ec/tools/pd_index_geometry.py ec/firmware/GMxMGxx_11.800 $m \
+    >/tmp/pd-new.out 2>&1; echo "exit=$?" >>/tmp/pd-new.out
+  diff /tmp/pd-old.out /tmp/pd-new.out || echo "MOVED: $m"
+done
 
 # the refusals, the other mode
 python3 ec/tools/pd_index_geometry.py ec/firmware/GMxMGxx_11.800 --helpers 0x1FFE8   # exit 2
