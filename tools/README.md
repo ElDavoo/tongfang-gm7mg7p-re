@@ -11,15 +11,15 @@ bash tools/run-tests.sh
 
 Every `test_*.py` under the repository, found by `find` — not a hardcoded list,
 so a suite in a directory that does not exist yet is picked up by having its
-file committed. **There are forty-one today, 1269 tests in all** — both figures
+file committed. **There are forty-one today, 1271 tests in all** — both figures
 *(The `1161` this sentence carried until #794, the `1165` it carried on #794's
 own branch, the `1168` it carried at the `#962` × `#794` merge, the `1180` the
 #979 branch proposed, the `1182` the #974 branch proposed beside it, the `1187`
 #780's own branch carried, the `1211` the `#979` × `#985` merge re-derived it to,
 the `1216`, `1221`, `1233`, `1238` and `1243` the four two-sided merges before
-this one measured between them, and the `1248` and `1264` this merge's own two
-sides measured apart, each on the tree its own side stood on, are all
-left visible per
+this one measured between them, the `1248` and `1264` this merge's own two
+sides measured apart, and the `1269` the two commands read on the `#978` ×
+`#974` tree, are all left visible per
 [`../docs/findings.md`](../docs/findings.md) §4a-4d, each true of the tree it
 was measured on: `1161 + 4 = 1165` and `1164 + 4 = 1168` are the four cases
 `ec/tools/test_check_testdata_row_claims.py` gained, `1177 + 31 + 3 + 10 =
@@ -45,22 +45,22 @@ its own contributor to the `1233` the two shared, and the `1248` is the one figu
 there that added both** — measured by running the runner on that tree first and
 written down afterwards, the rule the twenty-fifth note below states and the
 thirty-first applies. **`1243 + 21 = 1264` is `#978`'s side of this merge** and
-`1233 + 10 + 5 = 1248` is the other's, so **`1243 + 21 + 5 = 1269` is this merged
-tree's**: the twenty-one being #978's own new
-`ec/tools/test_measure_index_repair_visibility.py` and the five #974's five in
-`ec/tools/test_check_testdata_row_claims.py`, and both sides' figures are left
-written above per [`../docs/findings.md`](../docs/findings.md) §4a-4d, each true
-of the tree it was measured on. **The merged figure is a re-derivation by
-running the runner here rather than the addition either side could have made** —
-`939 + 21 + 5 = 965` is the same twenty-one and five under `python3 -m unittest
-discover -s ec/tools`, and the `939` is the twenty-fifth note's own figure both
-sides built on. **The suite count's step is `40` → `41`, and it is a third single-suite step
+`1233 + 10 + 5 = 1248` is the other's, both left written where each was
+measured per [`../docs/findings.md`](../docs/findings.md) §4a-4d. **This tree's
+figures are `1271` and `967`, re-derived by running both commands here rather
+than by adding the two sides up**: `origin/main` measures `1266` and `962` on a
+clean worktree at `39b32188`, so `1266 + 5 = 1271` and `962 + 5 = 967`, the
+five being #974's five in `ec/tools/test_check_testdata_row_claims.py`. **That
+supersedes `1243 + 21 + 5 = 1269` and `939 + 21 + 5 = 965`**, which stay written
+in the thirty-second note per §4a-4d: each was the addition, on a `1243` base
+that was stale before use, `main` reading `1266` where its own sentence says
+`1264`. **The suite count's step is `40` → `41`, and it is a third single-suite step
 and not a fourth** — #985's `ec/tools/test_disasm8051_oracle.py` and #973's
 `ec/tools/test_check_capture_names.py` were the first two, and #780's ten above
 added cases to a suite it already counted, which is why that merge's step left
 the `40` where it was. **It moves on `main`'s side alone**: #978's suite is the
 only `test_*.py` either side of this merge added, so the thirty-first's own
-figure would have read `40` and `1248` where this one reads `41` and `1269` — the
+figure would have read `40` and `1248` where this one reads `41` and `1271` — the
 same one-sidedness the twenty-second and twenty-third notes record, and the
 reason `test_readme_suite_table.py`'s set check needed no correction on the
 branch and needs none here either.
@@ -74,10 +74,10 @@ therefore superseded and left standing in the twenty-first note it was written
 in**, true of every tree from `24460001` until `3e020cf4`, per §4a-4d. **The
 `1180` and the `1182` are both from trees before #982 — which implements #975 —
 and #979 were in the base, the `1211`, the `1216`, the `1233`, the `1238`, the
-`1243`, the `1248` and the `1264` are re-derivations for trees the branch that
+`1243`, the `1248`, `1264` and `1269` are re-derivations for trees the branch that
 wrote each one down was not on, and the `1187` is #780's own branch before `main`
-moved at all**: fourteen
-figures, fourteen trees, none of them this one, which is why the sentence carries
+moved at all**: fifteen
+figures, fifteen trees, none of them this one, which is why the sentence carries
 the arithmetic and them side by side rather than any of them. Every figure
 above is re-derived by
 running the runner on the tree it is written on — see the twenty-second note
@@ -1917,6 +1917,29 @@ indexed. **So a run that had taken the thirty-first's side of the sentence rathe
 than this one would read `40` and `1248` where this one reads `41` and `1269`** —
 the arithmetic is the same three terms in a different grouping and the count is
 not, and that is the whole of what one-sidedness costs a totals sentence.
+
+*(Corrected on the `#844` × `#974` merge this note now sits in, by running both
+commands on this tree rather than by editing the figures blind: **the `1269` and
+the `965` above are the `#978` × `#974` tree's own and stay written per
+[`../docs/findings.md`](../docs/findings.md) §4a-4d, but on this tree the same
+two commands read `41 suite(s) run, 1271 tests; one or more FAILED` and `967`**,
+re-measured here and not carried — the whole of what the thirty-third note below
+already recorded. The step is **`+5` tests and no suite**, and it is all of
+#974's five cases in `ec/tools/test_check_testdata_row_claims.py`: a clean
+`origin/main` worktree at `39b32188` reads `41`/`1266` and `962` against this
+tree's `41`/`1271` and `967`.
+
+**What needed correcting was the provenance as well as the number, and "each
+lands on what the merged run printed" is the clause that was wrong.**
+`1243 + 21 + 5 = 1269` and `939 + 21 + 5 = 965` were the addition either side
+could have made — which is what the "What it runs" paragraph above said in the
+same breath that they were not — and their shared `1233`/`939` base was stale
+before either was added to: **#1011's two new cases in
+`ec/tools/test_walk_branch_arms.py` took `main` from `1264` to `1266` after the
+last renumber, and `main`'s own sentence still reads `1264`** at its
+`tools/README.md:14` on `39b32188`. The corrected paragraph above derives from
+a base measured here rather than one added to, which is the twenty-fifth note's
+rule.)*
 
 **The `:203` pin moves a twelfth time, by `+32`, and this is the second step above
 `+30`.** `main` reads `:247` and the branch's own tree read `:249`, and this tree
