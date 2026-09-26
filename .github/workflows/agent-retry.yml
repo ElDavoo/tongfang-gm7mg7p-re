@@ -589,7 +589,11 @@ jobs:
             exit 0
           fi
 
-          while IFS=$'\t' read -r waiting created <&3; do
+          # `_` is the createdAt `order_queue` sorted on. It rode along because that function's
+          # contract is to hand every field back intact, and it is spent by the time a line gets
+          # here -- nothing in this loop reads the age, so it is not bound under a name that
+          # would only look used.
+          while IFS=$'\t' read -r waiting _ <&3; do
           [ "$FREE_SLOTS" -gt 0 ] || break
           if busy_issue "$waiting"; then
             echo "issue $waiting has a run in flight — leaving it"
@@ -698,7 +702,8 @@ jobs:
             exit 0
           fi
 
-          while IFS=$'\t' read -r waiting title created <&3; do
+          # `_`, as in the step above: order_queue's sort key, already spent.
+          while IFS=$'\t' read -r waiting title _ <&3; do
           [ "$FREE_SLOTS" -gt 0 ] || break
           [ "$(( open ))" -lt "$MAX_OPEN_AGENT_PRS" ] || { echo "at the open-PR cap — stopping"; break; }
           if busy_issue "$waiting" "$title"; then
