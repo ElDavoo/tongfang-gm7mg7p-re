@@ -19,8 +19,12 @@ here as XDATA addresses because two independent things say so, and neither is
 this tool:
 
   * `ECRW`/`ECRR` (dsdt.dsl:50497, 50504) compute `0xFE410000 + Arg0` and
-    MMRW it. The same base, added to a caller's literal, is how the firmware
-    reaches an EC byte. The field list and the accessor agree on the window.
+    MMRW it -- the ECMG `OperationRegion`'s own base, added to a caller's
+    literal, so the accessor and the field list are two descriptions of one
+    window. Nothing calls them: `grep -n "ECRW\\|ECRR\\|T1WR"
+    evidence/acpi/dsdt.dsl` is the three `Method` declarations and an
+    unrelated `CreateBitField` at dsdt.dsl:4437-4438. So this is the declared
+    base agreeing, not the firmware observed reaching an EC byte through it.
   * Nine of the addresses ECMG names are ones `registers.yaml` holds under a
     name it got from somewhere else, and they land on the same bytes:
     `CPTM` 0x043E / `CPU_TEMP`, `VGAT` 0x044F / `GPU_TEMP`, `GNEN`+`ECDC`

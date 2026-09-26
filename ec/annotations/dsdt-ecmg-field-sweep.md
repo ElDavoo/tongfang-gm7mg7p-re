@@ -50,13 +50,19 @@ Read as ASL, `Offset (0x43E)` in a `SystemMemory` region based at
 are read here as XDATA addresses, and two independent things say so — neither
 of them this sweep:
 
-1. **The accessor agrees with the field list.** `Method (ECRR, 1)` at
+1. **The accessor declares the same window.** `Method (ECRR, 1)` at
    `dsdt.dsl:50497` and `Method (ECRW, 2)` at `dsdt.dsl:50504` both compute
    `0xFE410000 + Arg0` and `MMRW` it. That is the ECMG `OperationRegion`'s
-   base, added to a caller's literal — so the firmware reaches an EC byte
-   through this window, and the field list is a description of the same
-   window. Read the pair together, the declared base is the *EC's* XDATA
+   base, added to a caller's literal, so the accessor and the field list are
+   two descriptions of one window: the declared base is the *EC's* XDATA
    window viewed from the CPU, and the offsets are XDATA addresses in it.
+   What this does **not** show is the firmware reaching an EC byte through
+   the window. `grep -n "ECRW\|ECRR\|T1WR" evidence/acpi/dsdt.dsl` is five
+   lines: the three `Method` declarations above and at `dsdt.dsl:50635`, and
+   an unrelated `CreateBitField (BUF0, 0x0C48, ECRW)` pair at
+   `dsdt.dsl:4437`-`4438`. Nothing calls them, so the access is *not found by
+   this method* in use, not absent. The argument is the agreement of the
+   declared base, and it is the second bullet below that carries the weight.
 2. **Nine addresses agree with names reached from somewhere else.** When this
    sweep ran, 21 of the addresses ECMG names were already in
    `registers.yaml`; nine of those were held under a name the DSDT did not
@@ -362,22 +368,28 @@ the no-entry claim over the addresses that still have none. The other two rows
 this sweep touched, `bank0:F221` and `bank1:92DC`, moved `name_basis` only;
 neither comment carried the idiom.
 
-**The committed decompile has not been rebuilt.** `xdata-symbols.csv` is
-applied by `build_ec_decompile.py` at build time, so the names reach the
-exported C on the next `--mode rebuild-project` run, not in this tree. The
-committed `.c` still spells `DAT_EXTMEM_0ea8`, and §3c's "41 main-EC
-addresses the decompile spells by symbol" is unchanged by this sweep. The
-eight reworded plate comments travel the same route, so a reader diffing this
-tree against `ec/decompiled/bank0/` will find eight exported `.c` files still
-carrying the pre-#30 sentences. Five carry the literal "0x074C has no entry in
+**The committed decompile has not been re-exported.** `ANNOTATIONS` and
+`XDATA` are both passed as `-postScript` arguments to `ExportDecompile.java`
+(`../tools/build_ec_decompile.py:721`-`722`, and again at `:700`-`701` on the
+rebuild path), so the names and the reworded comments are applied at *export*
+time — in `export-only` mode as much as in `rebuild-project`, since that mode
+copies the committed project to scratch and applies both to the copy. Only
+`rebuild-project` writes the `.gpr`/`.rep`, so a plain re-export would pick
+all of this up without the mode two branches cannot both run. The committed
+`.c` simply has not been re-exported: re-exporting is a separate, large diff
+and is not this change. Until it happens the committed `.c` still spells
+`DAT_EXTMEM_0ea8`, and §3c's "41 main-EC addresses the decompile spells by
+symbol" is unchanged by this sweep. The eight reworded plate comments travel
+the same route, so a reader diffing this tree against `ec/decompiled/bank0/`
+will find eight exported `.c` files still carrying the pre-#30 sentences. Five
+carry the literal "0x074C has no entry in
 ec/annotations/registers.yaml" or "0x07C5 has no entry" for bytes that now hold
 `PDIN` and `WHMS` (`9167.c`, `BA36.c`, `BB80.c`, `BB81.c`, `C4F8.c`); the other
 three carry the same idiom in its list form (`CC64.c` and `CCFC.c` over
 `0x07C5`/`0x0788`, `83FF.c` over the `0x0788` that `0x09E9` is synced into —
 though `83FF.c`'s own no-entry claim is about `0x09E9` and is still true, so
 what is stale there is only the missing `CTWA`). That is expected until the
-rebuild and nothing in the generated files is edited to hide it. A rebuild
-writes the Ghidra project, which two branches cannot both do.
+re-export, and nothing in the generated files is edited to hide it.
 
 ## 7. A note on `static-refs-audit.md`'s scope line
 

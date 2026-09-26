@@ -332,14 +332,20 @@ SystemMemory, 0xFE410000, ...)`) names 98 fields the ACPI side can read and
 write, and it is the only name source in the repo that came from neither
 `uniwill-laptop` nor the ECSpec nor a human at the machine. Sixteen of the
 addresses it names are new `registers.yaml` entries — 13 `present-untested`,
-3 `unknown-not-absent` — which is 16 more of the 1,022 named, and the rest are
-the file's table rather than entries. The 50 of those 98 that sit on the
-`0x0Exx` page with no direct reference site are the open question the sweep
-produces, not a result: one static method cannot tell an indirect-addressing
-blind spot (§4c) from a subsystem the EC does not touch. The sweep, its
-GNVS correction — the field list the issue named is a 1,038-element NVS block
-and the count join is refused for it — and its calibration are in
-`../ec/annotations/dsdt-ecmg-field-sweep.md`.
+3 `unknown-not-absent` — and the rest are the file's table rather than
+entries. None of the sixteen has moved the 1,022, and §3c's own definition
+is why: that figure counts what the committed `.c` spells by symbol, and
+this does not re-export the decompile, so all sixteen still read
+`DAT_EXTMEM_*` in it. Thirteen are in the main-EC census and `0x07C0`-`0x07C2`
+are PD-image-only, so a re-export would carry the named count 41 → 54 and the
+unnamed one 1,022 → 1,009 — arithmetic on the sweep's §6 rather than a
+measurement taken here, and both numbers stand today. The 50 of those 98 that
+sit on the `0x0Exx` page with no direct reference site are the open question
+the sweep produces, not a result: one static method cannot tell an
+indirect-addressing blind spot (§4c) from a subsystem the EC does not touch.
+The sweep, its GNVS correction — the field list the issue named is a
+1,038-element NVS block and the count join is refused for it — and its
+calibration are in `../ec/annotations/dsdt-ecmg-field-sweep.md`.
 
 ### 3d. The 76 `0x07D1` sites, and what `DBD2` is next to `DBD1` (2026-09-24, issue #185)
 
