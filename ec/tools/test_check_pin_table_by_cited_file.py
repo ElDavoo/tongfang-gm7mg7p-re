@@ -571,12 +571,29 @@ class TheCommittedTree(unittest.TestCase):
         # file, the tail takes it, and the pinned count does not move at all:
         # **41 / 11 / 30**. The 40 / 11 / 29 stays written above, true of every
         # tree from #973's merge until this one.
+        #
+        # **The 41 -> 42 step is one suite and the same reasoning for the
+        # fourth time.** Issue #845's `ec/tools/test_trace_xdata_refs.py` pins
+        # `walk_why()`'s bounds contract, and its write-up
+        # (`docs/findings/walk-bounds-guard-pinned.md`) names the six cases by
+        # class and method and the suite *by path*, never as
+        # `test_trace_xdata_refs.py:NNN`, for #811's reason again: a line pin
+        # would add a record and move the 106 / 79 / 58 above and the 106-row
+        # table `check_pin_table_rows.py` reconciles, which is a second
+        # shared-file edit with no bearing on this axis. The write-up quotes one
+        # `unittest` traceback verbatim, and a traceback spells a line as
+        # `line 150` rather than `:150`, so it is a transcript and not one of
+        # this class's pins. So the pin count stays **106**,
+        # `len(files) - len(tail)` stays **11**, the tail takes the 42nd file:
+        # **42 / 11 / 31**. The 41 / 11 / 30 stays written above, true of every
+        # tree from #978's merge until this one. Measured with the tool, not
+        # derived.
         records, _files = census.census(tool.REPO)
         files, _index = census.suites(tool.REPO)
         tail = tool.unpinned(records, files)
-        self.assertEqual(len(files), 41)
+        self.assertEqual(len(files), 42)
         self.assertEqual(len(files) - len(tail), 11)
-        self.assertEqual(len(tail), 30)
+        self.assertEqual(len(tail), 31)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):
         # The self-reference, held with its reason rather than left to be

@@ -11,15 +11,16 @@ bash tools/run-tests.sh
 
 Every `test_*.py` under the repository, found by `find` — not a hardcoded list,
 so a suite in a directory that does not exist yet is picked up by having its
-file committed. **There are forty-one today, 1271 tests in all** — both figures
+file committed. **There are forty-two today, 1277 tests in all** — both figures
 *(The `1161` this sentence carried until #794, the `1165` it carried on #794's
 own branch, the `1168` it carried at the `#962` × `#794` merge, the `1180` the
 #979 branch proposed, the `1182` the #974 branch proposed beside it, the `1187`
 #780's own branch carried, the `1211` the `#979` × `#985` merge re-derived it to,
 the `1216`, `1221`, `1233`, `1238` and `1243` the four two-sided merges before
-this one measured between them, the `1248` and `1264` this merge's own two
-sides measured apart, and the `1269` the two commands read on the `#978` ×
-`#974` tree, are all left visible per
+`#974`'s measured between them, the `1248` and `1264` that merge's own two sides
+measured apart, the `1269` the two commands read on the `#978` × `#974` tree, the
+`1270` and `1272` this merge's own two sides measured apart in their turn, are
+all left visible per
 [`../docs/findings.md`](../docs/findings.md) §4a-4d, each true of the tree it
 was measured on: `1161 + 4 = 1165` and `1164 + 4 = 1168` are the four cases
 `ec/tools/test_check_testdata_row_claims.py` gained, `1177 + 31 + 3 + 10 =
@@ -32,38 +33,63 @@ in `ec/tools/test_check_testdata_row_claims.py` and #780's ten in
 `#979` × `#973` × `#780` merge's, the ten being #780's again in the same suite
 and the suite count unmoved at the `40` `main` already read — the same fact the
 twenty-third note states about its own step — and **`1233 + 10 + 5 = 1248` is
-#974's side of this merge**, the ten again #780's ten in that same suite and the
-five #974's five in `ec/tools/test_check_testdata_row_claims.py`, **with the
-suite count unmoved at the `40` `main` already read on *both* sides** — the count
-moves on #985's side at the twenty-second note, on #973's at the twenty-third, and
-on neither side there, which is the same fact the twenty-third note states about
-its own step and the twenty-ninth about #974's, so **the two merges that first
-put a suite on this sentence each put theirs on the side their counterpart had
-none, and neither figure is derived by adding the other's**. **The `1238` and the
-`1243` are the `#780` × `#974` merge's two sides measured apart, each adding only
-its own contributor to the `1233` the two shared, and the `1248` is the one figure
-there that added both** — measured by running the runner on that tree first and
-written down afterwards, the rule the twenty-fifth note below states and the
-thirty-first applies. **`1243 + 21 = 1264` is `#978`'s side of this merge** and
-`1233 + 10 + 5 = 1248` is the other's, both left written where each was
-measured per [`../docs/findings.md`](../docs/findings.md) §4a-4d. **This tree's
-figures are `1271` and `967`, re-derived by running both commands here rather
-than by adding the two sides up**: `origin/main` measures `1266` and `962` on a
-clean worktree at `39b32188`, so `1266 + 5 = 1271` and `962 + 5 = 967`, the
-five being #974's five in `ec/tools/test_check_testdata_row_claims.py`. **That
-supersedes `1243 + 21 + 5 = 1269` and `939 + 21 + 5 = 965`**, which stay written
-in the thirty-second note per §4a-4d: each was the addition, on a `1243` base
-that was stale before use, `main` reading `1266` where its own sentence says
-`1264`. **The suite count's step is `40` → `41`, and it is a third single-suite step
-and not a fourth** — #985's `ec/tools/test_disasm8051_oracle.py` and #973's
-`ec/tools/test_check_capture_names.py` were the first two, and #780's ten above
-added cases to a suite it already counted, which is why that merge's step left
-the `40` where it was. **It moves on `main`'s side alone**: #978's suite is the
-only `test_*.py` either side of this merge added, so the thirty-first's own
-figure would have read `40` and `1248` where this one reads `41` and `1271` — the
-same one-sidedness the twenty-second and twenty-third notes record, and the
-reason `test_readme_suite_table.py`'s set check needed no correction on the
-branch and needs none here either.
+#974's side of the `#780` × `#974` merge**, the ten again #780's ten in that same
+suite and the five #974's five in `ec/tools/test_check_testdata_row_claims.py`,
+**with the suite count unmoved at the `40` `main` already read on *both* sides** —
+the count moves on #985's side at the twenty-second note, on #973's at the
+twenty-third, and on neither side there, which is the same fact the twenty-third
+note states about its own step and the twenty-ninth about #974's, so **the two
+merges that first put a suite on this sentence each put theirs on the side their
+counterpart had none, and neither figure is derived by adding the other's**.
+**The `1238` and the `1243` are the `#780` × `#974` merge's two sides measured
+apart, each adding only its own contributor to the `1233` the two shared, and the
+`1248` is the one figure there that added both** — measured by running the runner
+on that tree first and written down afterwards, the rule the twenty-fifth note
+below states and the thirty-first applies. **`1243 + 21 = 1264` is `#978`'s side
+of the `#978` × `#974` merge** and `1233 + 10 + 5 = 1248` is the other's, both
+left written where each was measured per
+[`../docs/findings.md`](../docs/findings.md) §4a-4d. **This tree's figures are
+`1277` and `973`, re-derived by running both commands here rather than by adding
+the two sides up**: a clean `origin/main` worktree at `0daac768` measures `1271`
+and `967`, so `1271 + 6 = 1277` and `967 + 6 = 973`, the six being #845's six in
+its new `ec/tools/test_trace_xdata_refs.py` and nothing else. **The base is
+`main`'s and not the `39b32188` the paragraph beside this one measured from**,
+because #981 took `main` from `1266` and `962` to the same `1271` and `967` in
+the same week: its five cases are in
+`ec/tools/test_check_testdata_row_claims.py` where #974's five were, so the two
+fives are not the same five and only the figure is common to both trees. **The
+`1271` and `967` this sentence carried until now are therefore not superseded at
+all — they are the base this merge adds to**, and the arithmetic above is the one
+a reader can reproduce from `origin/main` as it stands. **What the merge did
+supersede is the attribution rather than the figure**: `1266 + 5 = 1271` is the
+`#844` × `#974` tree's own reading and `main` reached the same number by a
+different step, so the sentence's own arithmetic no longer describes how
+`origin/main` arrived there — the same "a base that was stale before use" the
+thirty-second note corrected in the other direction, and the `1269` and `965` it
+records stay written there beside this, each true of the tree it was measured on,
+per [`../docs/findings.md`](../docs/findings.md) §4a-4d. **The suite count's step is `40` → `41` → `42`, and the
+second of those is a fourth single-suite step and not a fifth** — #985's
+`ec/tools/test_disasm8051_oracle.py` and #973's
+`ec/tools/test_check_capture_names.py` were the first two, #978's
+`ec/tools/test_measure_index_repair_visibility.py` the third, and #780's ten
+above added cases to a suite it already counted, which is why that merge's step
+left the `40` where it was. **Each of the two `+1` steps is one-sided, and this
+merge is the first with a suite on either side of it**: #978's suite is the only
+`test_*.py` the `#978` × `#974` merge added and #845's is the only one this one
+did, so the thirty-first's own figure would have read `40` and `1248` where this
+one reads `42` and `1277`, and a run that had taken the thirty-second's side
+rather than this one would have read `41` and `1271` — the same one-sidedness the
+twenty-second and twenty-third notes record, and the reason
+`test_readme_suite_table.py`'s set check needed no correction on either branch
+and needs none here either. **The other side of each of those two merges moved
+the test count alone**, and #974's five cases in
+`ec/tools/test_check_testdata_row_claims.py` are that half twice over: at the
+`#978` × `#974` merge they moved a suite #978 had already indexed, and here they
+move a suite #845's own tree already indexed. **#845's own side read `1270`
+and `966`, and the `#844` × `#845` merge read `1272` and `968`** — `1264 + 6` and
+`960 + 6` over thirty suites, then the same six plus #844's two — all four left
+written in the thirty-fourth note below, each true of the tree it was measured
+on, per [`../docs/findings.md`](../docs/findings.md) §4a-4d.
 [`disasm8051-oracle-from-the-annotations.md`](../docs/findings/disasm8051-oracle-from-the-annotations.md)
 is #985's write-up. **A merge has now added a suite where the steps before it
 added none, and both sides of one did it**: `main` gained a commit after #780
@@ -73,11 +99,11 @@ forked, so thirty-eight became thirty-nine on the branch's own tree on #985's
 therefore superseded and left standing in the twenty-first note it was written
 in**, true of every tree from `24460001` until `3e020cf4`, per §4a-4d. **The
 `1180` and the `1182` are both from trees before #982 — which implements #975 —
-and #979 were in the base, the `1211`, the `1216`, the `1233`, the `1238`, the
-`1243`, the `1248`, `1264` and `1269` are re-derivations for trees the branch that
-wrote each one down was not on, and the `1187` is #780's own branch before `main`
-moved at all**: fifteen
-figures, fifteen trees, none of them this one, which is why the sentence carries
+and #979 were in the base, the `1211`, the `1216`, `1221` and `1233`, the
+`1238`, the `1243`, the `1248`, `1264`, `1269`, `1270` and `1272` are
+re-derivations for trees the branch that wrote each one down was not on, and the
+`1187` is #780's own branch before `main` moved at all**: seventeen
+figures, seventeen trees, none of them this one, which is why the sentence carries
 the arithmetic and them side by side rather than any of them. Every figure
 above is re-derived by
 running the runner on the tree it is written on — see the twenty-second note
@@ -85,15 +111,22 @@ below for the `#979` × `#985` merge, the twenty-third for the `#979` × `#973`
 one, the twenty-fourth for the `#929` × `#962` × `#794` × `#780` × `#985` ×
 `#979` merge #780 carried, the twenty-fifth for the `#979` × `#973` × `#780`
 merge both sides of this one built on, the thirty-first for the `#780` × `#974`
-merge, and the thirty-second for this one — the last being the second to carry a
-figure for a tree none of the five above measured, and the first to stop at two
-sides' figures and add its own to them, which is one term more than the
-thirty-first added to the twenty-fifth's. The thirty-second is also the first
-note here to record **both sides owning a number**, because `main` took
-twenty-six and twenty-seventh before this branch did: **those two keep their
+merge, the thirty-second for the `#978` × `#974` one, the thirty-third for the
+`#844` × `#974` one, and the thirty-fourth for this one — the last being the
+second to stop at two sides' figures and add its own to them, which is the same
+one term more the thirty-second added to the thirty-first's, and the first to add
+them to a base `main` itself had already moved. The thirty-second is
+also the first note here to record **both sides owning a number**, because `main`
+took twenty-six and twenty-seventh before that branch did: **those two keep their
 numbers and the branch's own four give way** to the twenty-eighth, twenty-ninth,
 thirtieth and thirty-first, on the rule the twenty-fourth states and every note
-after it applies.)*
+after it applies. **The thirty-fourth is written on a tree where that had already
+happened twice over**, so the number #845's own note was first given is taken
+again and that note is renumbered here rather than left as a second twenty-eighth
+— the same collision the tenth note records from the other direction, and the same
+rule: the one `main` held first keeps it. Every figure inside it is its own
+tree's and unmoved by the rename, which is what makes the renumber cost it
+nothing but its name.)*
 are what the runner below prints, one line per suite and a total on its last
 line — and each is a `unittest` suite standing in for a tool's own behaviour.
 *(Corrected at the `#929` × `#942` merge, by running the runner as this sentence
@@ -2109,6 +2142,87 @@ same `:220` of #822's `xdata-cluster-names-guard-off-recipe.md` with the same tw
 `origin/main` worktree and red there identically**, so it is neither #844's nor
 #974's and neither fixes it.
 
+*(Thirty-fourth merged-tree note, 2026-09-26, issues #845 × #974. **Both sides of
+this merge moved a figure, which no merge earlier in this run did**, and that is
+why the sentence above is re-derived from a base measured here rather than built
+by adding either side's figure to the other's — the thirty-second's own rule,
+applied to two sides rather than one. **It is the thirty-fourth and not the
+twenty-eighth it was first given on #845's own branch**, because `main` took
+twenty-eighth for #974 landing beside #982 while that branch was open, and the
+one `main` held first keeps it; the tenth note records the same collision from
+the other direction. Every figure inside this note is its own tree's and unmoved
+by the rename, which is what makes the rename cost it nothing but its name, and
+the two notes' subjects do not overlap: that one is about `main`'s side, this
+one about #845's.
+
+`bash tools/run-tests.sh` on this tree reads **`42 suite(s) run, 1277 tests; one
+or more FAILED`** and `python3 -m unittest discover -s ec/tools` reads
+**`973`**, both measured by running the two commands here before the arithmetic
+below was written down, which is the rule the twenty-fifth note states and every
+note after it applies. **The step is `1271 + 6 = 1277` and `967 + 6 = 973`**,
+off a clean `origin/main` worktree at `0daac768` rather than off a figure either
+side could have added to, and **not** off the `39b32188` the thirty-second's
+correction named: #981 has since taken `main` from `1266` and `962` to the same
+`1271` and `967`, with its own five cases in the same
+`ec/tools/test_check_testdata_row_claims.py` #974's five went into, so the two
+sides' fives are not the same five and only the figure is common. The six are
+#845's, whose `ec/tools/test_trace_xdata_refs.py` is the only `test_*.py` either
+side added. **Both sides' own figures are left written above and in the
+sentence's parenthetical** — the thirty-second's `1271` and `967`, now `main`'s
+own rather than a superseded value, and this branch's `1272` and `968`, with
+`1270` and `966` under them, each true of the tree it was measured on, per
+[`../docs/findings.md`](../docs/findings.md) §4a-4d — and **the `+2` that
+separates `1270` from `1272` is #844's, not #845's**: two cases in
+`ec/tools/test_walk_branch_arms.py` and no suite, so it moves the test count
+alone. `#844` is in the base this note measures from rather than beside it, which
+is the whole difference between this note's arithmetic and the one its branch
+wrote. **The suite count's step is `41` → `42`, and it is a fourth single-suite
+step** — #985's, #973's, #978's and this one, in that order, and as each of those
+was, this one lands a suite that no write-up cites by line, so nothing here is a
+pin into it and the 106 the pin census counts is unmoved. The last line reads
+`42 suite(s) run, 1277 tests; one or more FAILED` with the runner exiting 1, and
+the red one is **still only `ec/tools/test_check_cluster_citations.py`**, on the
+same `:220` of the same #822 file, which reproduces on a clean `origin/main` at
+`0daac768` and is #830's. The thirty-third's figures are left reading as the
+record of the tree it measured, and the thirty-second's correction beside them as
+the record of the one before it.)*
+
+**A second pin in the tree moved with the suite, and it is the one a reader of
+this file is most likely to be tracking.** #845 adds a `test_*.py` to
+`ec/tools/`, and `suites()` in `ec/tools/census_test_line_pins.py` indexes
+every one of them, so `ec/tools/test_check_pin_table_by_cited_file.py`'s
+committed index figures go **41 / 11 / 30 → 42 / 11 / 31** — the tail takes the
+new suite, the eleven named by a pin do not move, and the pin count stays
+**106** because #845's write-up names the six cases by class and method and the
+suite *by path*, never as `test_trace_xdata_refs.py:NNN`, for exactly the reason
+the twenty-first, twenty-third and twenty-sixth notes above give. That suite's
+own asserts are re-set to the measured value rather than argued, with the
+superseded triple left written above them in the same shape the sixth through
+tenth steps left theirs. **The `tools/README.md` row in the per-pin table moved
+with the sentence rather than with a note**, and the thirteenth change in
+[`../docs/findings/test-line-pin-census.md`](../docs/findings/test-line-pin-census.md)
+is its record: this is the seventh re-registration for that one row, and the step
+came out of the sentence's own parenthetical rather than out of any note, because
+every merged-tree note in this file sits below the pin.
+
+**And the reason this note is longer than a re-derivation is that this branch
+measured the totals line failing at its own job.** Deleting either of the two
+guards `walk_why()` ends on, in a copy of the tree, and re-running this runner
+over `ec/tools`, moves the **red set** — from one suite to two with the bounds
+guard gone, and to three with the `d[i] == MOV_DPTR` guard gone — and moves the
+**totals line by nothing at all**. All three runs print the byte-identical
+`29 suite(s) run, 960 tests; one or more FAILED`, because the runner counts
+tests *run* and a suite that goes red, or an `IndexError` that escapes a case
+before its assertion runs, has not changed how much of it ran. That is the
+paragraph above's standing ("the totals are not a pass and never were") at its
+sharpest in this tree, and it is recorded here rather than only in
+`../docs/findings/walk-bounds-guard-pinned.md` because this is the file a
+reader watches the number in. **A reader watching this sentence to see whether
+a tree is green is watching the wrong thing**; the red set is the verdict, and
+[`../docs/findings/runner-red-suite-set.md`](../docs/findings/runner-red-suite-set.md)
+is the page that argues why a total is a property of a merge rather than of any
+suite.*
+
 | suite | what it stands in for |
 |---|---|
 | `ec/tools/test_bank1_e582_framing.py` | The byte facts behind the issue #680 reading that the `bank1,0xE582` entry is reached through 0xE580 and the census row at 0x9F03 is a displacement byte: the push/lcall/pop save-restore pair across the 0xE57E cut, `converges_from` on both halves of each site, and the `80 02` at 0x9F02 read as a `sjmp` whose displacement's landing address is the committed `9F04.asm` first instruction — asserted against the image rather than by re-running the scan that wrote the census, so a regenerated table that disagreed would fail rather than pass on a stale pair, plus that both annotation comments still carry the clause their `CORRECTION` replaces, that no entry is seeded at 0xE580, and that the phantom census row is deliberately left in place |
@@ -2135,6 +2249,7 @@ same `:220` of #822's `xdata-cluster-names-guard-off-recipe.md` with the same tw
 | `ec/tools/test_grade_timer_sweep.py` | `ec/tools/grade_timer_sweep.py`, the grader of the `0x8001` counter-sweep capture: its before/after-return lists re-read from the firmware image, the `0x06D6` period and the 10x rate ratio on a constructed clean capture, a flat capture reported as held rather than absent, a second writer flagged, an unresolved step warned, and a suspend gap left out of the figures and counted mod 10 |
 | `ec/tools/test_group_functions.py` | `ec/tools/group_functions.py`'s block assignment, and at its centre the refusal that makes the tool safe: nothing in an `lcall`/`ljmp` operand names a bank, so `bank0->bank1` and `bank0->bank0` are the same three bytes, and the decisive case is a same-region call and a cross-region call that are byte-identical and differ only in which bank the target happens to exist in — a tool that merged across one anyway would answer with a smaller, tidier, wrong number and nothing in its own output would say so — plus the `group_basis` vocabulary (a seed from `type`/vector/module outranking a cluster, an off-list basis refused), the cross-bank group refusal, and the committed group files passing their own `--check` |
 | `ec/tools/test_inc_dptr_sites.py` | `ec/tools/inc_dptr_sites.py`'s half-split of a pair accessor: the 107 addresses `xdata_register_map.py`'s pair pass reaches only as the `inc DPTR` half, their 73 / 34 cut and the 34's 7 entered / 27 not, the 73's own 71 with no `MOV DPTR` site in any image against 2 in the pd image only (a site in the pd image is another program's byte at the same address number, so it is not a second site), and §4.7's ten named addresses as the head of the 73 with `0x0364` as the eleventh §4.7 does not name — every figure re-derived by the tool's own `build()` against the committed firmware and the committed decompiled tree rather than read off `xdata-inc-dptr-only.csv`, so a CSV edited to match a stale claim fails rather than satisfying the suite, and the committed table held against a fresh generation as the one direction a hand-edited file can fail; the census's *shape* rather than its figures (`census_refs` closing on the bucket columns, the 73 `pair-literal`-only and main-EC-only); the ten confirmed by a second entry point beside the tool's own table, a byte scan of the image and a real `main()` run; `0x0420` as the counter-example keeping the rule off the spelling of a literal first argument, the same hex reaching `add_full_product_to_dptr` whose committed `.asm` is `mul AB / add A,DPL / addc A,DPH / ret` with no `movx` — so the address space is a property of the callee's body — beside the positive half, that every accessor the table names still dereferences XDATA; and the refusal that keeps a tool keyed to three committed CSVs harmless, from both sides: `open` replaced by a tripwire raising on any write mode for every mode, an unidentified pd marker refused rather than reported as a 73 / 0 that would read as a finding, and the module's own AST walked for a write vector no case runs |
+| `ec/tools/test_trace_xdata_refs.py` | `ec/tools/trace_xdata_refs.py`'s `walk()`/`walk_why()` bounds contract, on hand-built `common`-region buffers and reading no firmware image — the half `ec/tools/test_walk_budget_census.py` does not hold, which is *which instructions come back* where that suite holds *which guard fired*, so a walk that decoded wrongly for the right reason fails this one and passes that one, and the other way round. What it asserts: an over-ask yields what fitted, by offset and raw bytes rather than by mnemonic text, because the mnemonic table is `disasm8051.py`'s subject and `test_disasm8051.py`'s and a case coupled to its wording would go red for a change that is not a bounds defect; the same walk says the buffer ended it, kept as its own case so "it stopped" is attributable to the bounds check rather than to the budget or a flow opcode; `d[i] == MOV_DPTR` still ends a walk **and** the same fixture with the reload replaced by filler runs on to `budget_end(8)`, so neither line of the guard can go; and the loop's own bound is `max_insns` and not `len(d)`, one case and two fixtures holding the same bytes at 0x40 and at 7 bytes. Both call sites are then driven over a 7-byte fixture — `csv_table()`, whose `window` cell is asserted against what `walk_why()` returns rather than against a spelling and whose `terminator` cell can only come from a caller that has the reason, and `main()` as a subprocess over a file in a `tempfile.TemporaryDirectory()`, pinning exit 0, the printed window, the `window ended: end of buffer` line, and the stderr note a buffer with no PD marker produces, which is what keeps `common` in that output from reading as a claim about the real dump. Deleting either guard turns this suite red; the write-up is [`../docs/findings/walk-bounds-guard-pinned.md`](../docs/findings/walk-bounds-guard-pinned.md) |
 | `ec/tools/test_walk_branch_arms.py` | `ec/tools/walk_branch_arms.py`'s direction classification, bounds, refusals, and negative-result wording |
 | `ec/tools/test_walk_budget_census.py` | `ec/tools/walk_budget_census.py` and the `trace_xdata_refs.walk_why()` it reports on: one hand-built byte fixture per terminator guard, each asserting the guard that fired *and* the one that did not, so a loop that swapped two guards cannot pass; that `walk()` still returns a bare list of triples and `classify()` still re-derives every committed table's `access` cell; that the terminator vocabulary is closed, so a sixth way to stop is refused rather than rendered into a cell `--check` would go green on; that the class A/B verdict reports `undecided` rather than picking a side when the `--extend` budget is too small to reach the access in question, which the committed data never exercises; the census `--check`'s exit code on the committed CSV, on a doctored one, and its refusal of a budget that CSV does not record; and the re-cut's own load-bearing claim, as a count over the pinned pre-change commit `e198fd9`'s copy of each table -- no `access` cell and no `window` cell changed, with the one pre-existing `disasm8051.py` mnemonic drift at `xdata-0400-045f-sites.csv` `0x11F16` named rather than left to be noticed, which is what the fifteen-address `0x086x` sweep reproducing its table byte for byte is the regression test for. The ref is a SHA rather than `HEAD` or `origin/main` because both of those hold the re-cut once this lands, and a baseline that already contains the change compares each table with itself and pins nothing; an unreadable baseline fails the test instead of skipping it, for the same reason |
 | `ec/tools/test_xdata_carry_notice.py` | which census a carry line is a claim about: `census_shape()` naming the flags that put a run's cluster ids off the committed pair the names file is anchored to — and refusing to name `--no-writer-axis`, which clusters as a default run does — `carry_advice()`'s committed clause pinned to the exact string the committed transcripts carry, and the two shapes' `print_carry` stderr asserted to differ in the overlap tails and nowhere else, so the `names:` tally and the tie line stay the mode-independent facts they are. In-process on a synthetic report: no census run, because the property is a function of the flags and not of the firmware |
