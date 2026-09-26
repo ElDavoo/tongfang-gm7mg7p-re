@@ -462,6 +462,14 @@ class TheCommittedTree(unittest.TestCase):
         # other row is unchanged, which is the distinction
         # `test-line-pin-repoint-563.md` is about arriving from the other end --
         # a repoint moves a line, not a name.
+        #
+        # **#1009 adds a twelfth row rather than moving one**, for that same
+        # reason read from this end: its write-up's one pin names
+        # `ec/tools/test_measure_index_repair_visibility.py`, a suite no pin
+        # named before, so a file enters the table at `(1, 0)`. It is the row
+        # that sorts between `test_disasm8051.py` and `test_xdata_cluster_names.py`
+        # and it does not disturb a count of files anywhere else -- which is
+        # what "a repoint moves a line, not a name" is for.
         records, _files = census.census(tool.REPO)
         files, index = census.suites(tool.REPO)
         table, _buckets = tool.charged(records, files, index)
@@ -477,6 +485,7 @@ class TheCommittedTree(unittest.TestCase):
              "ec/tools/test_check_site_census.py": (1, 0),
              "ec/tools/test_check_testdata_index.py": (1, 0),
              "ec/tools/test_citation_gap_scan.py": (1, 0),
+             "ec/tools/test_measure_index_repair_visibility.py": (1, 0),
              "tools/test_readme_suite_table.py": (1, 0)})
 
     def test_the_committed_concentration_is_the_figure_the_argument_rests_on(self):
@@ -489,13 +498,21 @@ class TheCommittedTree(unittest.TestCase):
         # these ever disagree. Each of the three moved by exactly #778's one new
         # pin -- 43 -> 44, 79 -> 80, 105 -> 106 -- and the second row is held at
         # 36 because that file was not edited.
+        #
+        # **#1009 moves only the denominator, `106 -> 107`, and that is the
+        # point of reading the two figures out of the table rather than typing
+        # them.** Its one pin names a suite the table did not carry, so the two
+        # rows the argument rests on are untouched at `44` and `36` and the sum
+        # stays `80` -- a merge that added a pin to a *new* file is invisible in
+        # the concentration and visible only in the total, which is the
+        # distinction the class docstring draws.
         records, _files = census.census(tool.REPO)
         files, index = census.suites(tool.REPO)
         table, _buckets = tool.charged(records, files, index)
         cited = tool.rows(table)
         self.assertEqual([row[4] for row in cited[:2]], [44, 36])
         self.assertEqual(cited[0][4] + cited[1][4], 80)
-        self.assertEqual(len(records), 106)
+        self.assertEqual(len(records), 107)
 
     def test_the_committed_index_figures_are_the_ones_the_write_up_publishes(self):
         # 40 indexed, 11 named, 29 named by none -- the three figures that move
@@ -572,8 +589,14 @@ class TheCommittedTree(unittest.TestCase):
         # **41 / 11 / 30**. The 40 / 11 / 29 stays written above, true of every
         # tree from #973's merge until this one.
         #
-        # **The 41 -> 42 step is one suite and the same reasoning for the
-        # fourth time.** Issue #845's `ec/tools/test_trace_xdata_refs.py` pins
+        # **Each side's step is `41 -> 42`, and the merged tree takes a 43rd
+        # suite and a second crossing, so the triple is `43 / 12 / 31`.** Two
+        # steps compose rather than one replacing the other, and the figure is
+        # measured on this tree with the tool below rather than derived from
+        # either side's arithmetic.
+        #
+        # **main's side, `41 -> 42`, moves one figure and for #845's reason
+        # again.** Issue #845's `ec/tools/test_trace_xdata_refs.py` pins
         # `walk_why()`'s bounds contract, and its write-up
         # (`docs/findings/walk-bounds-guard-pinned.md`) names the six cases by
         # class and method and the suite *by path*, never as
@@ -585,14 +608,34 @@ class TheCommittedTree(unittest.TestCase):
         # `line 150` rather than `:150`, so it is a transcript and not one of
         # this class's pins. So the pin count stays **106**,
         # `len(files) - len(tail)` stays **11**, the tail takes the 42nd file:
-        # **42 / 11 / 31**. The 41 / 11 / 30 stays written above, true of every
-        # tree from #978's merge until this one. Measured with the tool, not
-        # derived.
+        # **42 / 11 / 31**.
+        #
+        # **#1009's step also reads `41 -> 42` and it moves two of the three
+        # figures, which main's did not.** Its
+        # `ec/tools/test_check_history_checkouts.py` is indexed and no committed
+        # markdown cites a line of it, so it joins the tail -- and its write-up's
+        # one pin names `test_measure_index_repair_visibility.py`, a suite that
+        # no pin named before, so that suite *leaves* it. One in and one out:
+        # **42 / 12 / 30**, with the tail's own figure unmoved. A suite crossing
+        # between the two tables is this axis working, and the case below says so
+        # for this suite's own side of it: it is in the tail, and a later
+        # write-up citing it turns that red.
+        #
+        # **The merged tree is neither, and neither side's figure is the
+        # merged tree's.** Two suites are indexed rather than one, so the
+        # denominator takes both; one crossing rather than none, so the named
+        # count takes #1009's `12` and not main's `11`; and the tail takes the
+        # 43rd suite and loses the one #1009's pin crossed out:
+        # `43 - 12 = 31`, **the same `31` main's own step arrived at by a
+        # different route** -- there by adding a suite, here by adding a suite
+        # and a crossing. The `42 / 11 / 31`, the `42 / 12 / 30` and the
+        # `41 / 11 / 30` above each stay written, true of the tree it was
+        # measured on, per §4a-4d. Measured with the tool, not derived.
         records, _files = census.census(tool.REPO)
         files, _index = census.suites(tool.REPO)
         tail = tool.unpinned(records, files)
-        self.assertEqual(len(files), 42)
-        self.assertEqual(len(files) - len(tail), 11)
+        self.assertEqual(len(files), 43)
+        self.assertEqual(len(files) - len(tail), 12)
         self.assertEqual(len(tail), 31)
 
     def test_this_suite_is_one_of_the_files_the_tail_reports_as_unpinned(self):

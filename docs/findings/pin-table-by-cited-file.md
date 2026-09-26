@@ -549,6 +549,79 @@ variable. The `106` behind the `11` is unmoved on this tree too —
 nothing here needed re-deriving beyond running the one suite that owns the
 assert.)*
 
+*(**And the pin has moved twice more since that paragraph, and the second of the
+two is the only step in this page's history where a suite leaves the tail rather
+than joining it.** The first is #978's, and it is the ordinary shape the two
+paragraphs above describe: `99c01938` brought
+`ec/tools/test_measure_index_repair_visibility.py` with it, its write-up cites
+the suite *by path* and never as `<module>.py:NNN`, so the file is indexed and
+unpinned — **`40` → `41` indexed, `29` → `30` unpinned, `11` unmoved.** The
+second is #1009's, and it moves the named count for the first time on this page
+for a reason that is two suites moving in opposite directions at once:
+`ec/tools/test_check_history_checkouts.py` arrives indexed with no pin naming
+it and so **joins the tail**, while #1009's own write-up cites
+`ec/tools/test_measure_index_repair_visibility.py` *by path* and so **takes that
+suite out of it** — one in, one out, and the tail's own figure does not move at
+all. The pin is re-set to the measured **`42` indexed / **`12`** named / **`30`**
+named by none**, re-run on the merged tree rather than carried. Every superseded
+value stays written per [`../findings.md`](../findings.md) §4a-4d: the
+`40/11/29` above, and the `41/11/30` triple-true of the tree between #978's
+merge and this one. **A suite crossing between the two tables is this axis doing
+the thing the axis is for** — the same `by-path` citation that put it in the
+tail is what takes it out, and the pin count behind `12` is **`107`**, with
+`44`-of-`107` and `80`-of-`107` unmoved, because a pin that names a suite the
+table did not carry is invisible in the concentration and visible only in the
+total. **#844's `39b32188` moves nothing on this axis**: it committed no suite
+and no pin, which is why the `#1009 × #844` landing needed no repoint here at
+all — and, the branch standing on `39b32188` as `origin/main`'s own tip, its
+movements of the census page's file denominator and `tools/README.md`'s cited
+line are movements **inside** the branch's tree rather than of a second side,
+for the reason `test-line-pin-census.md`'s third #1009 merge note re-derives.
+**This paragraph is written without a `<module>.py:NNN` spelling for
+the same reason the two above give** — a correction that cites a line here adds a
+record to `census_test_line_pins.py` and a row to `test-line-pin-census.md`'s
+table, and the first draft of it did exactly that, which is worth one sentence
+because it is the failure this axis is most exposed to and nothing catches it
+but the two tools.)*
+*(**And the second side of this merge is #974, not #844, and it moves nothing on
+this axis — which is a measurement and not an assumption.** The paragraph above
+names `#844`'s `39b32188` as the counterpart and reads as though there were no
+other: `agent-conflicts.yml` squashed the branch onto `39b32188` and `main` then
+gained `0daac768` (#974's §84 — the commit's subject line reads `(#981)`, which
+is not the section's issue), so the counterpart is that commit. **Its landing
+commits no `test_*.py` and adds no `test_*.py:NNN` pin** — the whole of it is
+`ec/tools/check_testdata_row_claims.py`, its suite, a new write-up
+(`testdata-row-claims-report-naming.md`) that cites no suite line, and six edits
+to `tools/README.md` — so `origin/main` reads **`41` indexed / `11` named / `30`
+named by none** over **`106`** records, measured on a clean `git archive` of it,
+and this tree's **`42` / `12` / `30`** over **`107`** is that figure plus #1009's
+step, the same `44`-of-`107` and `80`-of-`107` either way. **Three superseded
+claims stay written per [`../findings.md`](../findings.md) §4a-4d** — the
+`40/11/29` above, the `41/11/30` this page recorded, and this paragraph's own
+"movements **inside** the branch's tree rather than of a second side", which was
+true of the tree it was measured on and is false of this one.*
+
+*(**And the second side of the second merge is #845, which moves the axis where
+#974 did not.** `main` gained `5881153d` after the branch forked, carrying
+#845's `ec/tools/test_trace_xdata_refs.py` — indexed, and cited by no committed
+markdown, so it **joins the tail** for #845's reason, the same one
+`opcode-len-bounds-census.md` and the sixth cases give. `origin/main` at that
+commit reads **`42` indexed / `11` named / `31` named by none** over **`106`**
+records, and **this tree reads `43` / `12` / `31`** over **`107`**: the indexed
+count takes #845's suite, the named count keeps #1009's `12`, and the tail's own
+figure is **the same `31` #1009's landing measured, reached by a different
+route** — there by one suite in and one out over `107`, here by that crossing
+plus a second suite in over the same `107`. **The `42`/`12`/`30` the paragraph
+above records stays written, true of the tree it was measured on**, and
+`ec/tools/test_check_pin_table_by_cited_file.py`'s asserts are re-set to the
+measured triple rather than argued. The `44`-of-`107` and the
+`80`-of-`107` are unmoved by either merge, which is the point the sentence above
+makes: a suite joining the tail is invisible in the concentration and visible
+only in the denominator. **This paragraph is written without a `<module>.py:NNN`
+spelling for the reason the three above give**, and the first draft of it did
+name `test_trace_xdata_refs.py` by line, which is the same self-inflicted record
+the paragraph above records for the other direction.*
+
 ## The name, which is a standing rather than a measurement
 
 The issue asked for `ec/tools/check_pin_table_by_cited_file.py` and for
