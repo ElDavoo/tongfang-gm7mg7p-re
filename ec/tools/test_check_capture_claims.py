@@ -334,6 +334,102 @@ class CaptureParsing(unittest.TestCase):
         self.assertEqual(drifted(text, REAL_INDEX), (0, None))
 
 
+class TheFileLevelSelfReport(unittest.TestCase):
+    """A file read in full that names no claim is named and counted.
+
+    #975's second half. `if not captures: continue` was the one skip in
+    `check()` that printed nothing, so a file walked end to end and finding
+    no claim looked exactly like a file nobody opened -- which is most of the
+    corpus, and how a whole column of claims stayed invisible to a reader who
+    had every reason to look. The count is at **file** granularity and not at
+    unit granularity deliberately: the corpus is 27,032 units, so a per-unit
+    line is not a `--verbose` anyone runs, and the invisibility the issue
+    names is a property of the file, not of the sentence.
+    """
+
+    NO_CLAIM = 'A paragraph that names no capture at all.\n'
+
+    def verbose_check(self, text, index=None):
+        """(problems, checked, the `--verbose` lines) for one piece of prose."""
+        with tempfile.NamedTemporaryFile('w', suffix='.md', delete=False) as f:
+            f.write(text)
+            path = f.name
+        err = io.StringIO()
+        try:
+            with contextlib.redirect_stderr(err):
+                problems, _, checked = ccc.check(path, index or INDEX, True)
+        finally:
+            os.unlink(path)
+        return problems, checked, err.getvalue()
+
+    def test_a_file_naming_no_claim_says_so_in_verbose(self):
+        problems, checked, err = self.verbose_check(self.NO_CLAIM)
+        self.assertEqual((problems, checked), ([], 0))
+        self.assertIn('read in full, no claim to check', err)
+
+    def test_a_file_naming_a_claim_is_counted_instead_of_reported_empty(self):
+        # The other half: the new line is an `else`, not an addition. A file
+        # that *does* yield a claim keeps the count it always had and is not
+        # also reported as one that found nothing.
+        text = f'`0x07C4` moved at the AC plug-in in {POWER}.\n'
+        problems, checked, err = self.verbose_check(text)
+        self.assertEqual((problems, checked), ([], 1))
+        self.assertIn('1 claim(s) checked', err)
+        self.assertNotIn('no claim to check', err)
+
+    def test_the_summary_count_decomposes_the_file_total(self):
+        # The number is worth having only if a reader can take it apart, and
+        # this is what takes it apart: the two `--verbose` lines partition the
+        # files the summary counts, and the two partition sums to it. Nothing
+        # here is a floor -- the point is the arithmetic, not the figures.
+        out, err = io.StringIO(), io.StringIO()
+        argv = sys.argv
+        sys.argv = ['check_capture_claims.py', '--check', '--verbose']
+        try:
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                rc = ccc.main()
+        finally:
+            sys.argv = argv
+        self.assertEqual(rc, 0, err.getvalue())
+        verbose = err.getvalue().splitlines()
+        claiming = sum(1 for line in verbose if 'claim(s) checked' in line)
+        empty = sum(1 for line in verbose if 'no claim to check' in line)
+        summary = [line for line in out.getvalue().splitlines()
+                   if ' files / ' in line]
+        self.assertEqual(len(summary), 1, "the summary line moved or split")
+        total = int(summary[0].split(' files / ')[0])
+        self.assertEqual(claiming + empty, total)
+        counted = [line for line in out.getvalue().splitlines()
+                   if 'no capture claim' in line]
+        self.assertEqual(len(counted), 1)
+        self.assertEqual(int(counted[0].split(' ')[0]), empty,
+                         "the summary's own count disagrees with the lines "
+                         "`--verbose` printed for the same run")
+
+    def test_the_new_line_is_not_the_one_the_suite_parses(self):
+        # `test_committed_prose_matches_committed_captures` reads the claim
+        # count by splitting the summary on `' lines / '`, so the new count
+        # has to be a line of its own rather than something appended to that
+        # one. This is the constraint written down, and it is a constraint on
+        # the shape of the output rather than on its wording.
+        out = io.StringIO()
+        argv = sys.argv
+        sys.argv = ['check_capture_claims.py', '--check']
+        try:
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
+                ccc.main()
+        finally:
+            sys.argv = argv
+        text = out.getvalue()
+        head, _, tail = text.partition('\n')
+        self.assertNotIn(' lines / ', tail,
+                         "the new count must be a line of its own")
+        # The suite's own parse, unchanged: the claim count is still the first
+        # number after ` lines / ` on the line that has always held it.
+        checked = int(head.split(' lines / ')[1].split(' ')[0])
+        self.assertIn(f'{checked} capture claims checked', head)
+
+
 class TheCommittedTree(unittest.TestCase):
     """The real thing: the prose and the captures beside it currently agree.
 

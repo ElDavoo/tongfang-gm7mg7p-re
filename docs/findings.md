@@ -10028,3 +10028,20 @@ checked, and editing prose to make a tool green is what this repository forbids.
 `docs/ci/agent-gates-testdata-row-claims.patch` is **not** touched — the CLI is
 unchanged — and it remains a human's `git apply`, so no gate is wired here. No
 `gh pr create` anywhere.
+
+**The hand-off §47 left above had an owner that could not see the column, and
+it has one now.** The write-up's closing bullet deferred *"is there a row with
+this in the `addr` column"* to `check_capture_claims.py`, "with a different
+owner" — and that tool resolves a capture out of a *path* a unit names, while a
+bare date is not a path, so it never saw a dated claim at all. **A *dated* claim
+in the third column is now held to the `addr` column of the `.csv` members of
+the file set its date resolved to**, read with `read_capture()` imported from
+that same sibling; every other claim keeps the textual read, because a mark
+label is a real way for a fixture to carry an address and has no column. **§47's
+numbers are unchanged and are left standing**: row 7's two literals were
+`resolved` before and after, so the tallies are byte-identical, and that is the
+check that the change moved the question being asked rather than the answer.
+`check_capture_claims.py` also stopped skipping silently — a file read in full
+that names no claim is now named in `--verbose` and counted on a line of its
+own. The write-up is
+[`testdata-addr-column-claim.md`](findings/testdata-addr-column-claim.md).

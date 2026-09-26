@@ -91,13 +91,26 @@ the tree is a change to this docstring, not an invitation to add a regex:
     sentence names a capture in prose, whether it occurs in a file that
     capture's date resolves to. It does not ask whether the file constructs
     the shape described, and a green run is not a claim that it does.
-  * *That the address has a row in a particular column.* Presence here is
-    textual: does the file carry `0xNNNN` anywhere, in any case. A mark label
-    (`restored 0x0751=0x0a`) and a dump line (`0780:`) are both how a fixture
-    carries an address, and a mark label is precisely what rows 20, 22 and 25
-    claim. A fixture that mentions an address in a comment therefore satisfies
-    the rule, and the narrower question -- is there a row with this in the
-    `addr` column -- is `check_capture_claims.py`'s, over real captures.
+  * *That the address has a row in a particular column.* Presence over a
+    **fixture** is textual: does the file carry `0xNNNN` anywhere, in any
+    case. A mark label (`restored 0x0751=0x0a`) and a dump line (`0780:`) are
+    both how a fixture carries an address, and a mark label is precisely what
+    rows 20, 22 and 25 claim. A fixture that mentions an address in a comment
+    therefore satisfies the rule. ~~The narrower question -- is there a row
+    with this in the `addr` column -- is `check_capture_claims.py`'s, over real
+    captures.~~ **That sentence was false and is corrected here rather than
+    deleted, per `docs/findings.md` §4a.** The question had no owner:
+    `check_capture_claims.py` resolves captures out of a path the unit names,
+    and a bare date is not a path, so it never saw one. **It is this tool's,
+    for a dated claim** -- a date that resolved means the sentence is about a
+    real capture, where the `.csv` schema is `ts,addr,old,new` and the column
+    *is* the question, so the claim is held to the `addr` column of the date's
+    `.csv` members and a hex token in a `#` header block or a comment does not
+    satisfy it. Every other claim keeps the textual read above, and a date
+    resolving to `.txt` dumps alone has no column to ask, which is the row 6
+    and row 8 shape and is reported beside the file count rather than passed
+    over. **A claim about a fixture is textual; a claim about a capture is
+    columnar, and the date in the sentence is what tells them apart.**
   * *Row counts, timestamps and mark values.* Row 18's `0x0F0A` row *at*
     12:00:08.500 is a count-and-timestamp claim, decidable in principle and
     deliberately not here: it is a different invariant with a different owner,
@@ -162,8 +175,12 @@ from check_cluster_citations import REGISTERS, units
 # lives, imported rather than written out a second time for the same reason
 # `units()` is imported: one place decides, and a second copy is a second
 # thing to fall out of date. It is the one constant of that tool this borrows
-# rather than a second reader of its job.
-from check_capture_claims import WATCH
+# rather than a second reader of its job. `read_capture()` comes on the same
+# line for the same reason and is the whole of the columnar read below: it
+# already drops `#` header blocks before the header is read and already knows
+# the `change_count` schema, so borrowing it is what keeps this tool from
+# growing a second parser that has to learn both of those separately.
+from check_capture_claims import WATCH, read_capture
 
 # The index checker is imported for what it got right, and re-implemented for
 # the one thing it does not expose. `resolve()` returns `(verdict, note)` and
@@ -456,11 +473,15 @@ def reason_for(address, token, sentence, offset, code, capture):
 def carried_by(address: str, paths):
     """Whether any of `paths` carries the address, in any case.
 
-    Textual, and that is the whole of the question: a mark label, a dump
-    line and a change row are three ways a fixture carries an address, and
-    this column claims all three. It is not the sibling's question -- is
-    there a row for it in the `addr` column -- which is a different tool over
-    a different corpus with a different owner.
+    Textual, and for a **fixture** that is the whole of the question: a mark
+    label, a dump line and a change row are three ways a fixture carries an
+    address, and this column claims all three. ~~It is not the sibling's
+    question -- is there a row for it in the `addr` column -- which is a
+    different tool over a different corpus with a different owner.~~ **That
+    sentence named an owner that had no way to reach the question, and
+    #975 gave it one: the columnar read below.** It is a different question
+    for a different corpus, and the corpus is what tells them apart -- see
+    `carried_by_column()`.
     """
     for path in paths:
         if not os.path.isfile(path):
@@ -469,6 +490,49 @@ def carried_by(address: str, paths):
             if re.search(r"0x" + address[2:] + r"\b", f.read(), re.IGNORECASE):
                 return True
     return False
+
+
+def carried_by_column(address: str, paths):
+    """Whether a `.csv` of `paths` has a row with the address in `addr`.
+
+    The other question from `carried_by()`, and it is asked only of a date's
+    captures because a capture is not a fixture. A capture is a change log
+    whose schema is `ts,addr,old,new`, so the column *is* the question: the
+    claim is that the address has a row there, and a hex token in a `#`
+    header block, a filename or a comment is not a row. Over a fixture that
+    reasoning is backwards -- rows 20, 22 and 25 claim mark labels, which are
+    a comment-shaped way of carrying an address and have no `addr` column at
+    all -- which is why this is a second reader beside the first rather than a
+    change to it. **A claim about a fixture is textual; a claim about a
+    capture is columnar, and the bare date in the sentence is what tells them
+    apart.**
+
+    `read_capture()` is the sibling's, imported at the top rather than
+    re-derived: it is already the reader that drops `#` lines before the
+    header is read, which is the whole of what makes a `#`-header mention not
+    count, and a second parser here would have to learn that separately.
+    """
+    for path in paths:
+        if not path.endswith(".csv") or not os.path.isfile(path):
+            continue
+        if read_capture(path)[0].get(address):
+            return True
+    return False
+
+
+def with_column(paths):
+    """How many of `paths` have an `addr` column to read a claim against.
+
+    A date can resolve to `.txt` dumps alone -- `ecrw.py dump` output, with no
+    column at all -- and then the columnar read has nothing to ask. That is
+    the row 6 and row 8 shape and it is a fact about the *file set* rather
+    than about any literal's spelling, so it is reported in the dated block
+    beside the file count rather than added to the closed shape list, whose
+    docstring says a sixth shape appearing in the tree is a change to that
+    docstring and not an invitation to add a regex.
+    """
+    return sum(1 for path in paths
+               if path.endswith(".csv") and os.path.isfile(path))
 
 
 def code_addresses(functions=FUNCTIONS, registers=REGISTERS):
@@ -535,7 +599,8 @@ def check(root=TESTDATA, functions=FUNCTIONS, registers=REGISTERS,
             # `or`, never a union: a date that resolves redirects the sentence
             # away from the row's own fixtures, so a claim about a capture
             # cannot be satisfied by a row that names the byte in its after-dump.
-            held = captures_of if found == RESOLVED else paths
+            about_capture = found == RESOLVED
+            held = captures_of if about_capture else paths
             for address, token, offset in literals(sentence):
                 literal_rows.add(number)
                 reason = reason_for(address, token, sentence, offset, code,
@@ -547,9 +612,17 @@ def check(root=TESTDATA, functions=FUNCTIONS, registers=REGISTERS,
                                         UNRESOLVED))
                 else:
                     per_row[number] += 1
+                    # Which reader, and it is the corpus rather than a flag:
+                    # a date that resolved means the sentence is about a real
+                    # capture, and a capture's `addr` column is the question.
+                    # Every other claim is about a fixture, where a mark label
+                    # is a real way to carry an address and there is no column
+                    # to read.
+                    carried = (carried_by_column(address, held)
+                               if about_capture
+                               else carried_by(address, held))
                     claims.append(Claim(number, against, address, token, None,
-                                        RESOLVED if carried_by(address, held)
-                                        else MISSING))
+                                        RESOLVED if carried else MISSING))
                 if pattern:
                     dated.setdefault(pattern, [captures_of, []])[1].append(
                         claims[-1])
@@ -607,6 +680,12 @@ def dated_report(result):
     is a dated disagreement -- an empty block would otherwise be
     indistinguishable from a run that read no dates at all, which is the
     failure mode the counts exist to prevent.
+
+    The `N with an addr column` clause sits on the file-count line rather than
+    in the shape list, and that is where a fact about a *file set* belongs: a
+    date resolving to `.txt` dumps alone has no column for the columnar read to
+    ask, and a reader seeing a claim `resolved` has no other way to learn that
+    the other files of the date carried no column to consult.
     """
     if not result.dated:
         return
@@ -614,7 +693,8 @@ def dated_report(result):
           "never to the row's own fixtures:")
     for pattern, paths, dated in result.dated:
         print(f"  {pattern} ({len(paths)} capture(s) under "
-              f"{repo_path(CAPTURES)}): " + ", ".join(
+              f"{repo_path(CAPTURES)}, {with_column(paths)} with an addr "
+              f"column): " + ", ".join(
                   f"row {c.row} {c.address} {c.verdict}" for c in dated))
 
 

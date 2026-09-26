@@ -125,6 +125,23 @@ class ScratchIndex:
         """
         return self.write(rel, a_csv(*addresses), root=self.captures)
 
+    def header_capture(self, rel, *addresses, rows=()):
+        """A capture naming `addresses` in its `#` header block.
+
+        `rows` are written as real `addr` rows, so a case can put an address
+        in the header alone, in the rows alone, or in both. A header mention
+        is not a row, and that is the whole distinction a columnar read turns
+        on. The header is a real shape rather than a contrived one:
+        `read_capture()` drops `#` lines before it reads the header precisely
+        because `2026-09-18-ac-plugin-sweep-summary.csv` opens with three.
+        """
+        head = "".join(f"# page swept at 0x{a:04X}\n" for a in addresses)
+        return self.write(rel, head + a_csv(*rows), root=self.captures)
+
+    def txt_capture(self, rel, text):
+        """An `ecrw.py dump` capture: text, with no column to read."""
+        return self.write(rel, text, root=self.captures)
+
     def check(self):
         """The tool's `Result` for this scratch tree.
 
@@ -516,6 +533,89 @@ class SkipsDeliberately(ScratchIndex, unittest.TestCase):
         self.assertIn("row 1 0x0F58 unresolved", out.getvalue())
 
 
+class TheDatedClaimIsHeldToTheColumn(ScratchIndex, unittest.TestCase):
+    """A claim about a capture is columnar, and a claim about a fixture is not.
+
+    #975 gave the `addr`-column question an owner, and it is this tool: a
+    sentence naming a dated capture is about a real capture, where the schema
+    is `ts,addr,old,new` and the column *is* the question. The same reasoning
+    over a fixture would be wrong -- rows 20, 22 and 25 claim mark labels,
+    which are a comment-shaped way of carrying an address and have no column
+    at all -- which is why this is a second reader beside the textual one and
+    not a change to it.
+
+    So these cases are the half the issue asked for and the one that can fail.
+    An implementation that resolved the date and then fell back to the textual
+    read would pass row 7's committed claims either way, because there the two
+    readings agree, and the only thing that separates them is a capture that
+    names an address somewhere a text search finds it and a column does not.
+    """
+
+    SENTENCE = ("is the shape the 2026-09-23 power-mode-cycle capture shows, "
+                "where they track `{address}`.")
+
+    def dated_row(self, address):
+        """One row whose sentence names `address` and a date of its own."""
+        self.set("example.csv", 0x0F5D)
+        return self.row("example.csv", self.SENTENCE.format(address=address))
+
+    def test_a_header_mention_is_not_a_row_and_the_claim_is_missing(self):
+        # The case the whole rule exists for. `0x0F58` is in the capture --
+        # a `re.search` over the bytes finds it on the first `#` line -- and
+        # there is no `addr` row for it, so the claim about the capture is a
+        # disagreement. Reading this textually is the wrong implementation,
+        # and it is green, which is why it needs a case rather than a claim.
+        self.dated_row("0x0F58")
+        self.header_capture("2026-09-23-cycle-0f00-0f5f.csv", 0x0F58)
+        self.assertEqual(self.verdicts(), {"0x0F58": "missing"})
+        with contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(ctrc.report(self.check()), 1)
+
+    def test_an_addr_row_resolves_even_with_the_address_also_in_the_header(self):
+        # The other half, and what keeps the case above from being satisfied
+        # by a reader that simply refuses every address it finds in a comment.
+        # The header names both addresses, one of which has a row and one of
+        # which does not, so the pair separates "drops `#` lines" from
+        # "rejects commented addresses".
+        self.dated_row("0x0F5A")
+        self.header_capture("2026-09-23-cycle-0f00-0f5f.csv", 0x0F5A, 0x0F5B,
+                            rows=(0x0F5A,))
+        self.assertEqual(self.verdicts(), {"0x0F5A": "resolved"})
+
+    def test_a_txt_only_date_reports_that_it_has_no_column_to_read(self):
+        # A date can resolve to `ecrw.py dump` output alone, and then the
+        # columnar read has nothing to ask. That is the row 6 and row 8 shape,
+        # and it is a fact about the *file set* rather than about any
+        # literal's spelling, so it is reported on the file-count line beside
+        # the count and not added to the closed shape list.
+        self.dated_row("0x0F58")
+        self.txt_capture("2026-09-23-dump.txt", "0x0F58: 0x00 -> 0x6e\n")
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            ctrc.dated_report(self.check())
+        block = out.getvalue()
+        self.assertIn("2026-09-23-* (1 capture(s)", block)
+        self.assertIn(", 0 with an addr column)", block)
+
+    def test_the_rule_is_load_bearing_rather_than_asserted_to_be(self):
+        # The refusal, in the form the suite uses elsewhere: put the wrong
+        # implementation in and watch the case above go green. The direction
+        # is the one place this suite's drop-it-in-turn form differs from
+        # `EachRuleIsLoadBearing` -- there, dropping a rule changes how *many*
+        # claims are checked; here the claim is still checked either way and
+        # what moves is its *verdict*, so the assertion is a flip and there
+        # is no count to compare.
+        self.dated_row("0x0F58")
+        self.header_capture("2026-09-23-cycle-0f00-0f5f.csv", 0x0F58)
+        with mock.patch.object(ctrc, "carried_by_column",
+                               ctrc.carried_by):
+            self.assertEqual(
+                self.verdicts(), {"0x0F58": "resolved"},
+                "reverting the dated claim to the textual read satisfies a "
+                "claim the capture has no row for, so this case would not "
+                "have failed before the rule and does now")
+
+
 class EachRuleIsLoadBearing(unittest.TestCase):
     """Every rule the tool has, dropped in turn, against the committed tree.
 
@@ -730,6 +830,24 @@ class TheCommittedTree(unittest.TestCase):
             sorted({reason for _, _, reason in self.result.shapes}),
             sorted(["capture/window bound", "denial", "dump-command argument",
                     "firmware code address", "watched-set span"]))
+
+    def test_the_dated_claims_resolve_in_the_addr_column(self):
+        # Row 7's two literals are `resolved` under **both** readings, and
+        # that is the check that #975 moved the question being asked of them
+        # rather than the answer it gives -- the tallies are byte-identical
+        # across the change. So what is pinned here is *which* reader
+        # resolved them, asserted on the run as shipped rather than against a
+        # figure: each is in the `addr` column of the date's captures. Four
+        # of that date's six files are `.txt` dumps with no column at all, so
+        # the text they carry is not what the claim rests on either.
+        dated = [claim for _, _, claims in self.result.dated for claim in claims]
+        self.assertTrue(dated, "the run read no dated sentence at all")
+        for claim in dated:
+            self.assertEqual(claim.verdict, ctrc.RESOLVED, claim.address)
+        for pattern, paths, _ in self.result.dated:
+            self.assertLess(ctrc.with_column(paths), len(paths),
+                            f"{pattern} resolved to .csv files only, so this "
+                            "run no longer exercises the .txt half of a date")
 
     def test_the_two_door_discriminations_the_issue_names(self):
         # `0751-isolation-run-3blocks/` has no `0x0784` row and
